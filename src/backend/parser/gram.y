@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.144 2000/02/18 09:29:40 inoue Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.145 2000/02/19 08:25:49 thomas Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -263,14 +263,15 @@ static Node *doNegate(Node *n);
 %type <str>		TypeId
 
 %type <node>	TableConstraint
-%type <list>	ColPrimaryKey, ColQualList, ColQualifier
+%type <list>	ColQualList, ColQualifier
 %type <list>	ColQualListWithNull
-%type <node>	ColConstraint, ColConstraintElem
+%type <node>	ColConstraint, ColConstraintElem, PrimaryKey, NotNull
+%type <node>	DefaultClause, DefaultExpr
 %type <node>	ColConstraintWithNull, ColConstraintElemWithNull
-%type <ival>	key_actions, key_action, key_reference
+%type <ival>	key_actions, key_delete, key_update, key_reference
 %type <str>		key_match
-%type <ival>	ConstraintAttributeSpec, ConstraintDeferrabilitySpec,
-				ConstraintTimeSpec
+%type <ival>	ConstraintAttribute, DeferrabilityClause,
+				TimeClause
 
 %type <list>	constraints_set_list
 %type <list>	constraints_set_namelist
@@ -1028,38 +1029,130 @@ OptTableElement:  columnDef						{ $$ = $1; }
 			| TableConstraint					{ $$ = $1; }
 		;
 
-columnDef:  ColId Typename ColQualifier
+columnDef:  ColId Typename ColQualifier opt_collate
 				{
 					ColumnDef *n = makeNode(ColumnDef);
 					n->colname = $1;
 					n->typename = $2;
+#if 0
 					n->raw_default = NULL;
 					n->cooked_default = NULL;
 					n->is_not_null = FALSE;
+#endif
 					n->constraints = $3;
+
+					if ($4 != NULL)
+						elog(NOTICE,"CREATE TABLE/COLLATE %s not yet implemented"
+							 "; clause ignored", $4);
+
 					$$ = (Node *)n;
 				}
-			| ColId SERIAL ColPrimaryKey
+			| ColId SERIAL PrimaryKey
 				{
 					ColumnDef *n = makeNode(ColumnDef);
 					n->colname = $1;
 					n->typename = makeNode(TypeName);
 					n->typename->name = xlateSqlType("integer");
 					n->typename->typmod = -1;
+#if 0
 					n->raw_default = NULL;
 					n->cooked_default = NULL;
+#endif
 					n->is_not_null = TRUE;
 					n->is_sequence = TRUE;
-					n->constraints = $3;
+					n->constraints = lcons($3, NIL);
 
 					$$ = (Node *)n;
 				}
 		;
 
-ColQualifier:  ColQualList					{ $$ = $1; }
-			| NULL_P ColQualListWithNull	{ $$ = $2; }
-			| NULL_P						{ $$ = NULL; }
+/*
+ * ColQualifier encapsulates an entire column qualification,
+ * including DEFAULT, constraints, and constraint attributes.
+ * Note that the DefaultClause handles the empty case.
+ */
+ColQualifier:  DefaultClause ColQualList
+				{
+					if ($1 != NULL)
+						$$ = lcons($1, $2);
+					else
+						$$ = $2;
+				}
+			| NotNull DefaultClause ColQualListWithNull
+				{
+					$$ = lcons($1, $3);
+					if ($2 != NULL)
+						$$ = lcons($2, $$);
+				}
+			| DefaultExpr NotNull ColQualListWithNull
+				{
+					$$ = lcons($2, $3);
+					if ($1 != NULL)
+						$$ = lcons($1, $$);
+				}
+			| DefaultExpr NotNull
+				{
+					$$ = lcons($2, NIL);
+					if ($1 != NULL)
+						$$ = lcons($1, $$);
+				}
+			| NotNull DefaultClause
+				{
+					$$ = lcons($1, NIL);
+					if ($2 != NULL)
+						$$ = lcons($2, $$);
+				}
+			| NULL_P DefaultClause ColQualListWithNull
+				{
+					$$ = $3;
+					if ($2 != NULL)
+						$$ = lcons($2, $$);
+				}
+			| NULL_P DefaultClause
+				{
+					if ($2 != NULL)
+						$$ = lcons($2, NIL);
+					else
+						$$ = NIL;
+				}
+			| DefaultClause
+				{
+					if ($1 != NULL)
+						$$ = lcons($1, NIL);
+					else
+						$$ = NIL;
+				}
+		;
+
+/*
+ * DEFAULT expression must be b_expr not a_expr to prevent shift/reduce
+ * conflict on NOT (since NOT might start a subsequent NOT NULL constraint,
+ * or be part of a_expr NOT LIKE or similar constructs).
+ */
+DefaultClause:  DefaultExpr					{ $$ = $1; }
 			| /*EMPTY*/						{ $$ = NULL; }
+		;
+
+DefaultExpr:  DEFAULT NULL_P
+				{
+					Constraint *n = makeNode(Constraint);
+					n->contype = CONSTR_DEFAULT;
+					n->name = NULL;
+					n->raw_expr = NULL;
+					n->cooked_expr = NULL;
+					n->keys = NULL;
+					$$ = (Node *)n;
+				}
+			| DEFAULT b_expr
+				{
+					Constraint *n = makeNode(Constraint);
+					n->contype = CONSTR_DEFAULT;
+					n->name = NULL;
+					n->raw_expr = $2;
+					n->cooked_expr = NULL;
+					n->keys = NULL;
+					$$ = (Node *)n;
+				}
 		;
 
 ColQualList:  ColQualList ColConstraint
@@ -1078,12 +1171,12 @@ ColQualList:  ColQualList ColConstraint
 				}
 		;
 
-ColQualListWithNull:  ColQualListWithNull ColConstraintWithNull
+ColQualListWithNull:  ColConstraintWithNull ColQualListWithNull
 				{
-					if ($2 != NULL)
-						$$ = lappend($1, $2);
+					if ($1 != NULL)
+						$$ = lcons($1, $2);
 					else
-						$$ = $1;
+						$$ = $2;
 				}
 			| ColConstraintWithNull
 				{
@@ -1094,21 +1187,7 @@ ColQualListWithNull:  ColQualListWithNull ColConstraintWithNull
 				}
 		;
 
-ColPrimaryKey:  PRIMARY KEY
-				{
-					Constraint *n = makeNode(Constraint);
-					n->contype = CONSTR_PRIMARY;
-					n->name = NULL;
-					n->raw_expr = NULL;
-					n->cooked_expr = NULL;
-					n->keys = NULL;
-					$$ = lcons((Node *)n, NIL);
-				}
-			| /*EMPTY*/							{ $$ = NULL; }
-		;
-
-ColConstraint:
-		CONSTRAINT name ColConstraintElem
+ColConstraint: CONSTRAINT name ColConstraintElem
 				{
 					switch (nodeTag($3))
 					{
@@ -1133,8 +1212,7 @@ ColConstraint:
 				{ $$ = $1; }
 		;
 
-ColConstraintWithNull:
-		CONSTRAINT name ColConstraintElemWithNull
+ColConstraintWithNull:  CONSTRAINT name ColConstraintElemWithNull
 				{
 					switch (nodeTag($3))
 					{
@@ -1169,24 +1247,10 @@ ColConstraintWithNull:
  * that a column may have that value. WITH NULL leads to
  * shift/reduce conflicts with WITH TIME ZONE anyway.
  * - thomas 1999-01-08
- *
- * DEFAULT expression must be b_expr not a_expr to prevent shift/reduce
- * conflict on NOT (since NOT might start a subsequent NOT NULL constraint,
- * or be part of a_expr NOT LIKE or similar constructs).
  */
 ColConstraintElem:  ColConstraintElemWithNull
 				{
 					$$ = $1;
-				}
-			| NOT NULL_P
-				{
-					Constraint *n = makeNode(Constraint);
-					n->contype = CONSTR_NOTNULL;
-					n->name = NULL;
-					n->raw_expr = NULL;
-					n->cooked_expr = NULL;
-					n->keys = NULL;
-					$$ = (Node *)n;
 				}
 			| UNIQUE
 				{
@@ -1198,15 +1262,9 @@ ColConstraintElem:  ColConstraintElemWithNull
 					n->keys = NULL;
 					$$ = (Node *)n;
 				}
-			| PRIMARY KEY
+			| PrimaryKey
 				{
-					Constraint *n = makeNode(Constraint);
-					n->contype = CONSTR_PRIMARY;
-					n->name = NULL;
-					n->raw_expr = NULL;
-					n->cooked_expr = NULL;
-					n->keys = NULL;
-					$$ = (Node *)n;
+					$$ = $1;
 				}
 		;
 
@@ -1220,31 +1278,23 @@ ColConstraintElemWithNull:  CHECK '(' a_expr ')'
 					n->keys = NULL;
 					$$ = (Node *)n;
 				}
-			| DEFAULT NULL_P
+			| REFERENCES ColId opt_column_list
+				key_match key_actions ConstraintAttribute
 				{
-					Constraint *n = makeNode(Constraint);
-					n->contype = CONSTR_DEFAULT;
-					n->name = NULL;
-					n->raw_expr = NULL;
-					n->cooked_expr = NULL;
-					n->keys = NULL;
+					FkConstraint *n = makeNode(FkConstraint);
+					n->constr_name		= NULL;
+					n->pktable_name		= $2;
+					n->fk_attrs			= NIL;
+					n->pk_attrs			= $3;
+					n->match_type		= $4;
+					n->actions			= $5;
+					n->deferrable		= (($6 & 1) != 0);
+					n->initdeferred		= (($6 & 2) != 0);
 					$$ = (Node *)n;
 				}
-			| DEFAULT b_expr
+			| REFERENCES ColId opt_column_list
+				key_match key_actions
 				{
-					Constraint *n = makeNode(Constraint);
-					n->contype = CONSTR_DEFAULT;
-					n->name = NULL;
-					n->raw_expr = $2;
-					n->cooked_expr = NULL;
-					n->keys = NULL;
-					$$ = (Node *)n;
-				}
-			| REFERENCES ColId opt_column_list key_match key_actions 
-				{
-					/* XXX
-					 *	Need ConstraintAttributeSpec as $6 -- Jan
-					 */
 					FkConstraint *n = makeNode(FkConstraint);
 					n->constr_name		= NULL;
 					n->pktable_name		= $2;
@@ -1254,13 +1304,32 @@ ColConstraintElemWithNull:  CHECK '(' a_expr ')'
 					n->actions			= $5;
 					n->deferrable		= true;
 					n->initdeferred		= false;
-					/*
-					n->deferrable		= ($6 & 1) != 0;
-					n->initdeferred		= ($6 & 2) != 0;
-					*/
 					$$ = (Node *)n;
 				}
 		;
+
+PrimaryKey:  PRIMARY KEY
+				{
+					Constraint *n = makeNode(Constraint);
+					n->contype = CONSTR_PRIMARY;
+					n->name = NULL;
+					n->raw_expr = NULL;
+					n->cooked_expr = NULL;
+					n->keys = NULL;
+					$$ = (Node *)n;
+				}
+		;
+
+NotNull:  NOT NULL_P
+				{
+					Constraint *n = makeNode(Constraint);
+					n->contype = CONSTR_NOTNULL;
+					n->name = NULL;
+					n->raw_expr = NULL;
+					n->cooked_expr = NULL;
+					n->keys = NULL;
+					$$ = (Node *)n;
+				}
 
 /* ConstraintElem specifies constraint syntax which is not embedded into
  *  a column definition. ColConstraintElem specifies the embedded form.
@@ -1310,17 +1379,14 @@ ConstraintElem:  CHECK '(' a_expr ')'
 					n->keys = $3;
 					$$ = (Node *)n;
 				}
-		| PRIMARY KEY '(' columnList ')'
+		| PrimaryKey '(' columnList ')'
 				{
-					Constraint *n = makeNode(Constraint);
-					n->contype = CONSTR_PRIMARY;
-					n->name = NULL;
-					n->raw_expr = NULL;
-					n->cooked_expr = NULL;
-					n->keys = $4;
+					Constraint *n = (Constraint *)$1;
+					n->keys = $3;
 					$$ = (Node *)n;
 				}
-		| FOREIGN KEY '(' columnList ')' REFERENCES ColId opt_column_list key_match key_actions ConstraintAttributeSpec
+		| FOREIGN KEY '(' columnList ')' REFERENCES ColId opt_column_list
+				key_match key_actions ConstraintAttribute
 				{
 					FkConstraint *n = makeNode(FkConstraint);
 					n->constr_name		= NULL;
@@ -1333,6 +1399,20 @@ ConstraintElem:  CHECK '(' a_expr ')'
 					n->initdeferred		= ($11 & 2) != 0;
 					$$ = (Node *)n;
 				}
+		| FOREIGN KEY '(' columnList ')' REFERENCES ColId opt_column_list
+				key_match key_actions
+				{
+					FkConstraint *n = makeNode(FkConstraint);
+					n->constr_name		= NULL;
+					n->pktable_name		= $7;
+					n->fk_attrs			= $4;
+					n->pk_attrs			= $8;
+					n->match_type		= $9;
+					n->actions			= $10;
+					n->deferrable		= false;
+					n->initdeferred		= false;
+					$$ = (Node *)n;
+				}
 		;
 
 key_match:  MATCH FULL
@@ -1341,7 +1421,7 @@ key_match:  MATCH FULL
 			}
 		| MATCH PARTIAL
 			{
-				elog(ERROR, "FOREIGN KEY match type PARTIAL not implemented yet");
+				elog(ERROR, "FOREIGN KEY/MATCH PARTIAL not yet implemented");
 				$$ = "PARTIAL";
 			}
 		| /*EMPTY*/
@@ -1350,13 +1430,17 @@ key_match:  MATCH FULL
 			}
 		;
 
-key_actions:  key_action key_action		{ $$ = $1 | $2; }
-		| key_action					{ $$ = $1; }
+key_actions:  key_delete				{ $$ = $1; }
+		| key_update					{ $$ = $1; }
+		| key_delete key_update			{ $$ = $1 | $2; }
+		| key_update key_delete			{ $$ = $1 | $2; }
 		| /*EMPTY*/						{ $$ = 0; }
 		;
 
-key_action:  ON DELETE key_reference	{ $$ = $3 << FKCONSTR_ON_DELETE_SHIFT; }
-		| ON UPDATE key_reference		{ $$ = $3 << FKCONSTR_ON_UPDATE_SHIFT; }
+key_delete:  ON DELETE key_reference	{ $$ = $3 << FKCONSTR_ON_DELETE_SHIFT; }
+		;
+
+key_update:  ON UPDATE key_reference	{ $$ = $3 << FKCONSTR_ON_UPDATE_SHIFT; }
 		;
 
 key_reference:  NO ACTION				{ $$ = FKCONSTR_ON_KEY_NOACTION; }
@@ -1558,7 +1642,7 @@ CreateTrigStmt:  CREATE TRIGGER name TriggerActionTime TriggerEvents ON
 				}
 		| CREATE CONSTRAINT TRIGGER name AFTER TriggerEvents ON
 				relation_name OptConstrFromTable 
-				ConstraintAttributeSpec
+				ConstraintAttribute
 				FOR EACH ROW EXECUTE PROCEDURE name '(' TriggerFuncArgs ')'
 				{
 					CreateTrigStmt *n = makeNode(CreateTrigStmt);
@@ -1658,41 +1742,37 @@ OptConstrFromTable:			/* Empty */
 				}
 		;
 
-ConstraintAttributeSpec:  ConstraintDeferrabilitySpec
-			{ $$ = $1; }
-		| ConstraintDeferrabilitySpec ConstraintTimeSpec
+ConstraintAttribute:  DeferrabilityClause
 			{
-				if ($1 == 0 && $2 != 0)
-					elog(ERROR, "INITIALLY DEFERRED constraint must be DEFERRABLE");
-				$$ = $1 | $2;
+				$$ = $1;
 			}
-		| ConstraintTimeSpec
+		| TimeClause
 			{
 				if ($1 != 0)
 					$$ = 3;
 				else
 					$$ = 0;
 			}
-		| ConstraintTimeSpec ConstraintDeferrabilitySpec
+		| DeferrabilityClause TimeClause
+			{
+				if ($1 == 0 && $2 != 0)
+					elog(ERROR, "INITIALLY DEFERRED constraint must be DEFERRABLE");
+				$$ = $1 | $2;
+			}
+		| TimeClause DeferrabilityClause
 			{
 				if ($2 == 0 && $1 != 0)
 					elog(ERROR, "INITIALLY DEFERRED constraint must be DEFERRABLE");
 				$$ = $1 | $2;
 			}
-		| /* Empty */
-			{ $$ = 0; }
 		;
 
-ConstraintDeferrabilitySpec: NOT DEFERRABLE
-			{ $$ = 0; }
-		| DEFERRABLE
-			{ $$ = 1; }
+DeferrabilityClause:  DEFERRABLE				{ $$ = 1; }
+		| NOT DEFERRABLE						{ $$ = 0; }
 		;
 
-ConstraintTimeSpec: INITIALLY IMMEDIATE
-			{ $$ = 0; }
-		| INITIALLY DEFERRED
-			{ $$ = 2; }
+TimeClause:  INITIALLY IMMEDIATE				{ $$ = 0; }
+		| INITIALLY DEFERRED					{ $$ = 2; }
 		;
 
 
@@ -2734,18 +2814,7 @@ CreatedbStmt:  CREATE DATABASE database_name WITH createdb_opt_location createdb
                     n = makeNode(CreatedbStmt);
 					n->dbname = $3;
 					n->dbpath = $5;
-#ifdef MULTIBYTE
-					if ($6 != NULL) {
-						n->encoding = pg_char_to_encoding($6);
-						if (n->encoding < 0) {
-							elog(ERROR, "Encoding name '%s' is invalid", $6);
-						}
-					} else {
-						n->encoding = GetTemplateEncoding();
-					}
-#else
-					n->encoding = 0;
-#endif
+					n->encoding = $6;
 					$$ = (Node *)n;
 				}
 		| CREATE DATABASE database_name
@@ -2795,7 +2864,7 @@ createdb_opt_encoding:
 #ifdef MULTIBYTE
             $$ = GetTemplateEncoding();
 #else
-            $$ = -1;
+            $$ = 0;
 #endif
         }
         | /*EMPTY*/
@@ -2803,7 +2872,7 @@ createdb_opt_encoding:
 #ifdef MULTIBYTE
             $$ = GetTemplateEncoding();
 #else
-            $$= -1;
+            $$= 0;
 #endif
         }
         ;
@@ -3935,7 +4004,7 @@ Character:  character '(' Iconst ')'
 				}
 		;
 
-character:  CHARACTER opt_varying opt_charset opt_collate
+character:  CHARACTER opt_varying opt_charset
 				{
 					char *type, *c;
 					if (($3 == NULL) || (strcasecmp($3, "sql_text") == 0)) {
@@ -3951,8 +4020,6 @@ character:  CHARACTER opt_varying opt_charset opt_collate
 							type = xlateSqlType($3);
 						}
 					};
-					if ($4 != NULL)
-						elog(NOTICE,"COLLATE %s not yet implemented; clause ignored",$4);
 					$$ = type;
 				}
 		| CHAR opt_varying						{ $$ = xlateSqlType($2? "varchar": "char"); }
