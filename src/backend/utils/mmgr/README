@@ -1,4 +1,4 @@
-$Header: /cvsroot/pgsql/src/backend/utils/mmgr/README,v 1.3 2001/02/15 21:38:26 tgl Exp $
+$Header: /cvsroot/pgsql/src/backend/utils/mmgr/README,v 1.4 2003/04/30 19:04:12 tgl Exp $
 
 Notes about memory allocation redesign
 --------------------------------------
@@ -110,109 +110,121 @@ children of a given context, but don't reset or delete that context
 itself".
 
 
-Top-level contexts
-------------------
+Globally known contexts
+-----------------------
 
-There will be several top-level contexts --- these contexts have no parent
-and will be referenced by global variables.  At any instant the system may
+There will be several widely-known contexts that will typically be
+referenced through global variables.  At any instant the system may
 contain many additional contexts, but all other contexts should be direct
-or indirect children of one of the top-level contexts to ensure they are
-not leaked in event of an error.  I presently envision these top-level
-contexts:
+or indirect children of one of these contexts to ensure they are not
+leaked in event of an error.
 
-TopMemoryContext --- allocating here is essentially the same as "malloc",
-because this context will never be reset or deleted.  This is for stuff
-that should live forever, or for stuff that you know you will delete
-at the appropriate time.  An example is fd.c's tables of open files,
-as well as the context management nodes for memory contexts themselves.
-Avoid allocating stuff here unless really necessary, and especially
-avoid running with CurrentMemoryContext pointing here.
+TopMemoryContext --- this is the actual top level of the context tree;
+every other context is a direct or indirect child of this one.  Allocating
+here is essentially the same as "malloc", because this context will never
+be reset or deleted.  This is for stuff that should live forever, or for
+stuff that the controlling module will take care of deleting at the
+appropriate time.  An example is fd.c's tables of open files, as well as
+the context management nodes for memory contexts themselves.  Avoid
+allocating stuff here unless really necessary, and especially avoid
+running with CurrentMemoryContext pointing here.
 
 PostmasterContext --- this is the postmaster's normal working context.
 After a backend is spawned, it can delete PostmasterContext to free its
 copy of memory the postmaster was using that it doesn't need.  (Anything
 that has to be passed from postmaster to backends will be passed in
-TopMemoryContext.  The postmaster will probably have only TopMemoryContext,
-PostmasterContext, and possibly ErrorContext --- the remaining top-level
-contexts will be set up in each backend during startup.)
+TopMemoryContext.  The postmaster will have only TopMemoryContext,
+PostmasterContext, and ErrorContext --- the remaining top-level contexts
+will be set up in each backend during startup.)
 
 CacheMemoryContext --- permanent storage for relcache, catcache, and
 related modules.  This will never be reset or deleted, either, so it's
 not truly necessary to distinguish it from TopMemoryContext.  But it
 seems worthwhile to maintain the distinction for debugging purposes.
-(Note: CacheMemoryContext may well have child-contexts with shorter
-lifespans.  For example, a child context seems like the best place to
-keep the subsidiary storage associated with a relcache entry; that way
-we can free rule parsetrees and so forth easily, without having to depend
-on constructing a reliable version of freeObject().)
+(Note: CacheMemoryContext will have child-contexts with shorter lifespans.
+For example, a child context is the best place to keep the subsidiary
+storage associated with a relcache entry; that way we can free rule
+parsetrees and so forth easily, without having to depend on constructing
+a reliable version of freeObject().)
 
-QueryContext --- this is where the storage holding a received query string
-is kept, as well as storage that should live as long as the query string,
-notably the parsetree constructed from it.  This context will be reset at
-the top of each cycle of the outer loop of PostgresMain, thereby freeing
-the old query and parsetree.  We must keep this separate from
-TopTransactionContext because a query string might need to live either a
-longer or shorter time than a transaction, depending on whether it
-contains begin/end commands or not.  (This'll also fix the nasty bug that
-"vacuum; anything else" crashes if submitted as a single query string,
-because vacuum's xact commit frees the memory holding the parsetree...)
+MessageContext --- this context holds the current command message from the
+frontend, as well as any derived storage that need only live as long as
+the current message (for example, in simple-Query mode the parse and plan
+trees can live here).  This context will be reset, and any children
+deleted, at the top of each cycle of the outer loop of PostgresMain.  This
+is kept separate from per-transaction and per-portal contexts because a
+query string might need to live either a longer or shorter time than any
+single transaction or portal.
 
 TopTransactionContext --- this holds everything that lives until end of
 transaction (longer than one statement within a transaction!).  An example
 of what has to be here is the list of pending NOTIFY messages to be sent
 at xact commit.  This context will be reset, and all its children deleted,
-at conclusion of each transaction cycle.  Note: presently I envision that
-this context will NOT be cleared immediately upon error; its contents
-will survive anyway until the transaction block is exited by
-COMMIT/ROLLBACK.  This seems appropriate since we want to move in the
-direction of allowing a transaction to continue processing after an error.
+at conclusion of each transaction cycle.  Note: this context is NOT
+cleared immediately upon error; its contents will survive until the
+transaction block is exited by COMMIT/ROLLBACK.
+(If we ever implement nested transactions, TopTransactionContext may need
+to be split into a true "top" pointer and a "current transaction" pointer.)
 
-TransactionCommandContext --- this is really a child of
-TopTransactionContext, not a top-level context, but we'll probably store a
-link to it in a global variable anyway for convenience.  All the memory
-allocated during planning and execution lives here or in a child context.
-This context is deleted at statement completion, whether normal completion
-or error abort.
+QueryContext --- this is not actually a separate context, but a global
+variable pointing to the context that holds the current command's parse
+and plan trees.  (In simple-Query mode this points to MessageContext;
+when executing a prepared statement it will point at the prepared
+statement's private context.)  Generally it is not appropriate for any
+code to use QueryContext as an allocation target --- from the point of
+view of any code that would be referencing the QueryContext variable,
+it's a read-only context.
 
-ErrorContext --- this permanent context will be switched into
-for error recovery processing, and then reset on completion of recovery.
-We'll arrange to have, say, 8K of memory available in it at all times.
-In this way, we can ensure that some memory is available for error
-recovery even if the backend has run out of memory otherwise.  This should
-allow out-of-memory to be treated as a normal ERROR condition, not a FATAL
-error.
+PortalContext --- this is not actually a separate context either, but a
+global variable pointing to the per-portal context of the currently active
+execution portal.  This can be used if it's necessary to allocate storage
+that will live just as long as the execution of the current portal requires.
 
-If we ever implement nested transactions, there may need to be some
-additional levels of transaction-local contexts between
-TopTransactionContext and TransactionCommandContext, but that's beyond
-the scope of this proposal.
+ErrorContext --- this permanent context will be switched into for error
+recovery processing, and then reset on completion of recovery.  We'll
+arrange to have, say, 8K of memory available in it at all times.  In this
+way, we can ensure that some memory is available for error recovery even
+if the backend has run out of memory otherwise.  This allows out-of-memory
+to be treated as a normal ERROR condition, not a FATAL error.
+
+
+Contexts for prepared statements and portals
+--------------------------------------------
+
+A prepared-statement object has an associated private context, in which
+the parse and plan trees for its query are stored.  Because these trees
+are read-only to the executor, the prepared statement can be re-used many
+times without further copying of these trees.  QueryContext points at this
+private context while executing any portal built from the prepared
+statement.
+
+An execution-portal object has a private context that is referenced by
+PortalContext when the portal is active.  In the case of a portal created
+by DECLARE CURSOR, this private context contains the query parse and plan
+trees (there being no other object that can hold them).  Portals created
+from prepared statements simply reference the prepared statements' trees,
+and won't actually need any storage allocated in their private contexts.
 
 
 Transient contexts during execution
 -----------------------------------
 
-The planner will probably have a transient context in which it stores
-pathnodes; this will allow it to release the bulk of its temporary space
-usage (which can be a lot, for large joins) at completion of planning.
-The completed plan tree will be in TransactionCommandContext.
+When creating a prepared statement, the parse and plan trees will be built
+in a temporary context that's a child of MessageContext (so that it will
+go away automatically upon error).  On success, the finished plan is
+copied to the prepared statement's private context, and the temp context
+is released; this allows planner temporary space to be recovered before
+execution begins.  (In simple-Query mode we'll not bother with the extra
+copy step, so the planner temp space stays around till end of query.)
 
 The top-level executor routines, as well as most of the "plan node"
-execution code, will normally run in a context with command lifetime.
-(This will be TransactionCommandContext for normal queries, but when
-executing a cursor, it will be a context associated with the cursor.)
-Most of the memory allocated in these routines is intended to live until
-end of query, so this is appropriate for those purposes.  We already have
-a mechanism --- "tuple table slots" --- for avoiding leakage of tuples,
-which is the major kind of short-lived data handled by these routines.
-This still leaves a certain amount of explicit pfree'ing needed by plan
-node code, but that code largely exists already and is probably not worth
-trying to remove.  I looked at the possibility of running in a shorter-
-lived context (such as a context that gets reset per-tuple), but this
-seems fairly impractical.  The biggest problem with it is that code in
-the index access routines, as well as some other complex algorithms like
-tuplesort.c, assumes that palloc'd storage will live across tuples.
-For example, rtree uses a palloc'd state stack to keep track of an index
-scan.
+execution code, will normally run in a context that is created by
+ExecutorStart and destroyed by ExecutorEnd; this context also holds the
+"plan state" tree built during ExecutorStart.  Most of the memory
+allocated in these routines is intended to live until end of query,
+so this is appropriate for those purposes.  The executor's top context
+is a child of PortalContext, that is, the per-portal context of the
+portal that represents the query's execution.
 
 The main improvement needed in the executor is that expression evaluation
 --- both for qual testing and for computation of targetlist entries ---
@@ -277,7 +289,7 @@ be released on error.  Currently it does that through a "portal",
 which is essentially a child context of TopMemoryContext.  While that
 way still works, it's ugly since xact abort needs special processing
 to delete the portal.  Better would be to use a context that's a child
-of QueryContext and hence is certain to go away as part of normal
+of PortalContext and hence is certain to go away as part of normal
 processing.  (Eventually we might have an even better solution from
 nested transactions, but this'll do fine for now.)
 
@@ -371,12 +383,14 @@ the relcache's per-relation contexts).
 Also, it will be possible to specify a minimum context size.  If this
 value is greater than zero then a block of that size will be grabbed
 immediately upon context creation, and cleared but not released during
-context resets.  This feature is needed for ErrorContext (see above).
-It is also useful for per-tuple contexts, which will be reset frequently
-and typically will not allocate very much space per tuple cycle.  We can
-save a lot of unnecessary malloc traffic if these contexts hang onto one
-allocation block rather than releasing and reacquiring the block on
-each tuple cycle.
+context resets.  This feature is needed for ErrorContext (see above),
+but will most likely not be used for other contexts.
+
+We expect that per-tuple contexts will be reset frequently and typically
+will not allocate very much space per tuple cycle.  To make this usage
+pattern cheap, the first block allocated in a context is not given
+back to malloc() during reset, but just cleared.  This avoids malloc
+thrashing.
 
 
 Other notes
