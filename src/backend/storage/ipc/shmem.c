@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/shmem.c,v 1.23 1998/06/27 04:53:36 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/shmem.c,v 1.24 1998/06/27 14:06:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -490,12 +490,9 @@ ShmemInitStruct(char *name, unsigned long size, bool *foundPtr)
 
 	if (!BindingTable)
 	{
-		/* Assert() is a macro now. substitutes inside quotes. */
 #ifdef USE_ASSERT_CHECKING
 		char	   *strname = "BindingTable";
-
 #endif
-
 		/*
 		 * If the binding table doesnt exist, we fake it.
 		 *
@@ -531,7 +528,6 @@ ShmemInitStruct(char *name, unsigned long size, bool *foundPtr)
 
 	if (!result)
 	{
-
 		SpinRelease(BindingLock);
 
 		elog(ERROR, "ShmemInitStruct: Binding Table corrupted");
@@ -540,7 +536,6 @@ ShmemInitStruct(char *name, unsigned long size, bool *foundPtr)
 	}
 	else if (*foundPtr)
 	{
-
 		/*
 		 * Structure is in the binding table so someone else has allocated
 		 * it already.	The size better be the same as the size we are
@@ -558,7 +553,6 @@ ShmemInitStruct(char *name, unsigned long size, bool *foundPtr)
 	}
 	else
 	{
-
 		/* It isn't in the table yet. allocate and initialize it */
 		structPtr = ShmemAlloc((long) size);
 		if (!structPtr)

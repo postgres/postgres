@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.91 1998/06/27 13:24:19 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.92 1998/06/27 14:06:40 momjian Exp $
  *
  * NOTES
  *
@@ -1032,7 +1032,7 @@ CleanupProc(int pid,
 		if (DebugLvl)
 			fprintf(stderr, "%s: CleanupProc: reinitializing shared memory and semaphores\n",
 					progname);
-		shmem_exit();
+		shmem_exit(0);
 		reset_shared(PostPortName);
 	}
 }
