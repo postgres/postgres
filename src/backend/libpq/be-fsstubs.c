@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/be-fsstubs.c,v 1.55 2000/10/24 01:38:26 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/be-fsstubs.c,v 1.56 2000/10/24 03:14:08 tgl Exp $
  *
  * NOTES
  *	  This should be moved to a more appropriate place.  It is here
@@ -49,15 +49,18 @@
 /* [PA] is Pascal André <andre@via.ecp.fr> */
 
 /*#define FSDB 1*/
-#define MAX_LOBJ_FDS	256
 #define BUFSIZE			8192
 
 /*
- * LO "FD"s are indexes into this array.
+ * LO "FD"s are indexes into the cookies array.
+ *
  * A non-null entry is a pointer to a LargeObjectDesc allocated in the
- * LO private memory context.
+ * LO private memory context.  The cookies array itself is also dynamically
+ * allocated in that context.  Its current allocated size is cookies_len
+ * entries, of which any unused entries will be NULL.
  */
-static LargeObjectDesc *cookies[MAX_LOBJ_FDS];
+static LargeObjectDesc **cookies = NULL;
+static int cookies_size = 0;
 
 static MemoryContext fscxt = NULL;
 
@@ -104,13 +107,7 @@ lo_open(PG_FUNCTION_ARGS)
 
 	fd = newLOfd(lobjDesc);
 
-	/* switch context back to orig. */
 	MemoryContextSwitchTo(currentContext);
-
-#if FSDB
-	if (fd < 0)					/* newLOfd couldn't find a slot */
-		elog(NOTICE, "Out of space for large object FDs");
-#endif
 
 	PG_RETURN_INT32(fd);
 }
@@ -121,15 +118,10 @@ lo_close(PG_FUNCTION_ARGS)
 	int32		fd = PG_GETARG_INT32(0);
 	MemoryContext currentContext;
 
-	if (fd < 0 || fd >= MAX_LOBJ_FDS)
-	{
-		elog(ERROR, "lo_close: large obj descriptor (%d) out of range", fd);
-		PG_RETURN_INT32(-2);
-	}
-	if (cookies[fd] == NULL)
+	if (fd < 0 || fd >= cookies_size || cookies[fd] == NULL)
 	{
 		elog(ERROR, "lo_close: invalid large obj descriptor (%d)", fd);
-		PG_RETURN_INT32(-3);
+		PG_RETURN_INT32(-1);
 	}
 #if FSDB
 	elog(NOTICE, "lo_close(%d)", fd);
@@ -162,15 +154,10 @@ lo_read(int fd, char *buf, int len)
 	MemoryContext currentContext;
 	int			status;
 
-	if (fd < 0 || fd >= MAX_LOBJ_FDS)
-	{
-		elog(ERROR, "lo_read: large obj descriptor (%d) out of range", fd);
-		return -2;
-	}
-	if (cookies[fd] == NULL)
+	if (fd < 0 || fd >= cookies_size || cookies[fd] == NULL)
 	{
 		elog(ERROR, "lo_read: invalid large obj descriptor (%d)", fd);
-		return -3;
+		return -1;
 	}
 
 	Assert(fscxt != NULL);
@@ -189,15 +176,10 @@ lo_write(int fd, char *buf, int len)
 	MemoryContext currentContext;
 	int			status;
 
-	if (fd < 0 || fd >= MAX_LOBJ_FDS)
-	{
-		elog(ERROR, "lo_write: large obj descriptor (%d) out of range", fd);
-		return -2;
-	}
-	if (cookies[fd] == NULL)
+	if (fd < 0 || fd >= cookies_size || cookies[fd] == NULL)
 	{
 		elog(ERROR, "lo_write: invalid large obj descriptor (%d)", fd);
-		return -3;
+		return -1;
 	}
 
 	Assert(fscxt != NULL);
@@ -220,15 +202,10 @@ lo_lseek(PG_FUNCTION_ARGS)
 	MemoryContext currentContext;
 	int			status;
 
-	if (fd < 0 || fd >= MAX_LOBJ_FDS)
-	{
-		elog(ERROR, "lo_lseek: large obj descriptor (%d) out of range", fd);
-		PG_RETURN_INT32(-2);
-	}
-	if (cookies[fd] == NULL)
+	if (fd < 0 || fd >= cookies_size || cookies[fd] == NULL)
 	{
 		elog(ERROR, "lo_lseek: invalid large obj descriptor (%d)", fd);
-		PG_RETURN_INT32(-3);
+		PG_RETURN_INT32(-1);
 	}
 
 	Assert(fscxt != NULL);
@@ -280,15 +257,10 @@ lo_tell(PG_FUNCTION_ARGS)
 {
 	int32		fd = PG_GETARG_INT32(0);
 
-	if (fd < 0 || fd >= MAX_LOBJ_FDS)
-	{
-		elog(ERROR, "lo_tell: large object descriptor (%d) out of range", fd);
-		PG_RETURN_INT32(-2);
-	}
-	if (cookies[fd] == NULL)
+	if (fd < 0 || fd >= cookies_size || cookies[fd] == NULL)
 	{
 		elog(ERROR, "lo_tell: invalid large object descriptor (%d)", fd);
-		PG_RETURN_INT32(-3);
+		PG_RETURN_INT32(-1);
 	}
 
 	/*
@@ -305,12 +277,29 @@ lo_unlink(PG_FUNCTION_ARGS)
 	Oid			lobjId = PG_GETARG_OID(0);
 
 	/*
+	 * If there are any open LO FDs referencing that ID, close 'em.
+	 */
+	if (fscxt != NULL)
+	{
+		MemoryContext currentContext;
+		int			i;
+
+		currentContext = MemoryContextSwitchTo(fscxt);
+		for (i = 0; i < cookies_size; i++)
+		{
+			if (cookies[i] != NULL && cookies[i]->id == lobjId)
+			{
+				inv_close(cookies[i]);
+				deleteLOfd(i);
+			}
+		}
+		MemoryContextSwitchTo(currentContext);
+	}
+
+	/*
 	 * inv_drop does not need a context switch, indeed it doesn't touch
 	 * any LO-specific data structures at all.	(Again, that's probably
 	 * more than this module ought to be assuming.)
-	 *
-	 * XXX there ought to be some code to clean up any open LO FDs that
-	 * reference the specified LO... as is, they remain "open".
 	 */
 	PG_RETURN_INT32(inv_drop(lobjId));
 }
@@ -502,7 +491,7 @@ lo_commit(bool isCommit)
 	 * Clean out still-open index scans (not necessary if aborting) and
 	 * clear cookies array so that LO fds are no longer good.
 	 */
-	for (i = 0; i < MAX_LOBJ_FDS; i++)
+	for (i = 0; i < cookies_size; i++)
 	{
 		if (cookies[i] != NULL)
 		{
@@ -511,6 +500,10 @@ lo_commit(bool isCommit)
 			cookies[i] = NULL;
 		}
 	}
+
+	/* Needn't actually pfree since we're about to zap context */
+	cookies = NULL;
+	cookies_size = 0;
 
 	MemoryContextSwitchTo(currentContext);
 
@@ -527,18 +520,45 @@ lo_commit(bool isCommit)
 static int
 newLOfd(LargeObjectDesc *lobjCookie)
 {
-	int			i;
+	int			i,
+				newsize;
 
-	for (i = 0; i < MAX_LOBJ_FDS; i++)
+	/* Try to find a free slot */
+	for (i = 0; i < cookies_size; i++)
 	{
-
 		if (cookies[i] == NULL)
 		{
 			cookies[i] = lobjCookie;
 			return i;
 		}
 	}
-	return -1;
+
+	/* No free slot, so make the array bigger */
+	if (cookies_size <= 0)
+	{
+		/* First time through, arbitrarily make 64-element array */
+		i = 0;
+		newsize = 64;
+		cookies = (LargeObjectDesc **)
+			palloc(newsize * sizeof(LargeObjectDesc *));
+		MemSet(cookies, 0, newsize * sizeof(LargeObjectDesc *));
+		cookies_size = newsize;
+	}
+	else
+	{
+		/* Double size of array */
+		i = cookies_size;
+		newsize = cookies_size * 2;
+		cookies = (LargeObjectDesc **)
+			repalloc(cookies, newsize * sizeof(LargeObjectDesc *));
+		MemSet(cookies + cookies_size, 0,
+			   (newsize - cookies_size) * sizeof(LargeObjectDesc *));
+		cookies_size = newsize;
+	}
+
+	Assert(cookies[i] == NULL);
+	cookies[i] = lobjCookie;
+	return i;
 }
 
 static void
