@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.81 1998/06/08 04:27:59 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.82 1998/06/08 19:15:05 momjian Exp $
  *
  * NOTES
  *
@@ -1387,5 +1387,5 @@ PostmasterRandom(void)
 		initialized = true;
 	}
 
-	return ramdom() ^ random_seed;
+	return random() ^ random_seed;
 }
