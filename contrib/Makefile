@@ -1,10 +1,11 @@
-# $Header: /cvsroot/pgsql/contrib/Makefile,v 1.9 2000/10/31 13:11:28 petere Exp $
+# $Header: /cvsroot/pgsql/contrib/Makefile,v 1.10 2000/12/11 20:40:59 tgl Exp $
 
 subdir = contrib
 top_builddir = ..
 include $(top_builddir)/src/Makefile.global
 
 WANTED_DIRS =	array		\
+		cube		\
 		earthdistance	\
 		findoidjoins	\
 		fulltextindex	\
@@ -18,6 +19,7 @@ WANTED_DIRS =	array		\
 		pg_dumplo	\
 		pgbench		\
 		pgcrypto	\
+		seg		\
 		soundex		\
 		spi		\
 		string		\

@@ -29,6 +29,10 @@ array -
 	Array iterator functions
 	by Massimo Dal Zotto <dz@cs.unitn.it>
 
+cube -
+	Multidimensional-cube datatype (GiST indexing example)
+	by Gene Selkov, Jr. <selkovjr@mcs.anl.gov>
+
 earthdistance -
 	Operator for computing earth distance for two points
 	by Hal Snyder <hal@vailsys.com>
@@ -81,6 +85,10 @@ pgbench -
 pgcrypto -
 	Cryptographic hash functions
 	by Marko Kreen <marko@l-t.ee>
+
+seg -
+	Confidence-interval datatype (GiST indexing example)
+	by Gene Selkov, Jr. <selkovjr@mcs.anl.gov>
 
 soundex -
 	Soundex function
