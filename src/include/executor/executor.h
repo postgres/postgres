@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: executor.h,v 1.6 1996/11/13 20:51:31 scrappy Exp $
+ * $Id: executor.h,v 1.7 1996/12/26 17:53:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -52,6 +52,7 @@ extern HeapTuple ExecRemoveJunk(JunkFilter *junkfilter, TupleTableSlot *slot);
 /*
  * prototypes from functions in execMain.c
  */
+extern int ExecutorLimit(int limit);
 extern TupleDesc ExecutorStart(QueryDesc *queryDesc, EState *estate);
 extern TupleTableSlot* ExecutorRun(QueryDesc *queryDesc, EState *estate, int feature, int count);
 extern void ExecutorEnd(QueryDesc *queryDesc, EState *estate);
