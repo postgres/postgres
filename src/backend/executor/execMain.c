@@ -27,7 +27,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.107 2000/01/26 05:56:21 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.108 2000/02/03 00:02:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -596,19 +596,19 @@ InitPlan(CmdType operation, Query *parseTree, Plan *plan, EState *estate)
 	estate->es_rowMark = NULL;
 	if (parseTree->rowMark != NULL)
 	{
-		Relation	relation;
-		Oid			relid;
-		RowMark    *rm;
 		List	   *l;
-		execRowMark *erm;
 
 		foreach(l, parseTree->rowMark)
 		{
-			rm = lfirst(l);
-			relid = rt_fetch(rm->rti, rangeTable)->relid;
-			relation = heap_open(relid, RowShareLock);
+			RowMark    *rm = lfirst(l);
+			Oid			relid;
+			Relation	relation;
+			execRowMark *erm;
+
 			if (!(rm->info & ROW_MARK_FOR_UPDATE))
 				continue;
+			relid = rt_fetch(rm->rti, rangeTable)->relid;
+			relation = heap_open(relid, RowShareLock);
 			erm = (execRowMark *) palloc(sizeof(execRowMark));
 			erm->relation = relation;
 			erm->rti = rm->rti;
@@ -756,6 +756,7 @@ EndPlan(Plan *plan, EState *estate)
 {
 	RelationInfo *resultRelationInfo;
 	Relation	intoRelationDesc;
+	List	   *l;
 
 	/*
 	 * get information from state
@@ -796,10 +797,20 @@ EndPlan(Plan *plan, EState *estate)
 	}
 
 	/*
-	 * close the "into" relation if necessary
+	 * close the "into" relation if necessary, again keeping lock
 	 */
 	if (intoRelationDesc != NULL)
 		heap_close(intoRelationDesc, NoLock);
+
+	/*
+	 * close any relations selected FOR UPDATE, again keeping locks
+	 */
+	foreach(l, estate->es_rowMark)
+	{
+		execRowMark *erm = lfirst(l);
+
+		heap_close(erm->relation, NoLock);
+	}
 }
 
 /* ----------------------------------------------------------------
@@ -926,16 +937,16 @@ lnext:	;
 			else if (estate->es_rowMark != NULL)
 			{
 				List	   *l;
-				execRowMark *erm;
-				Buffer		buffer;
-				HeapTupleData tuple;
-				TupleTableSlot *newSlot;
-				int			test;
 
 		lmark:	;
 				foreach(l, estate->es_rowMark)
 				{
-					erm = lfirst(l);
+					execRowMark *erm = lfirst(l);
+					Buffer		buffer;
+					HeapTupleData tuple;
+					TupleTableSlot *newSlot;
+					int			test;
+
 					if (!ExecGetJunkAttribute(junkfilter,
 											  slot,
 											  erm->resname,
