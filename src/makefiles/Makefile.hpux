@@ -21,8 +21,9 @@ ifeq ($(HPUX_MAJOR), 09)
 endif
 
 # On all HPUX versions, embed LIBDIR as the shared library search path
-# so that the executables don't need SHLIB_PATH to be set.
-LDFLAGS+= -Wl,+b -Wl,$(LIBDIR)
+# so that the executables don't need SHLIB_PATH to be set, and enable -z
+# to catch null pointer dereferences.
+LDFLAGS+= -Wl,+b -Wl,$(LIBDIR) -Wl,-z
 
 # Does anyone use this stuff?
 #ifdef ENFORCE_ALIGNMENT
