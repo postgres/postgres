@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Attic/Makefile.global,v 1.19.2.13 1996/10/25 09:26:56 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/Attic/Makefile.global,v 1.19.2.14 1996/10/25 09:33:44 scrappy Exp $
 #
 # NOTES
 #    This is seen by any Makefiles that include mk/postgres.mk. To
@@ -158,7 +158,7 @@ ENFORCE_ALIGNMENT= true
 #    and READLINE_LIBDIR to reflect the location of the readline and history
 #    headers and libraries.
 #
-USE_READLINE= true
+#USE_READLINE= true
 
 # directories for the readline and history libraries.
 READLINE_INC=  -I/home/tools/include
