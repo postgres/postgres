@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.64 2001/11/19 03:58:24 tgl Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.65 2001/11/21 05:52:01 thomas Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -38,7 +38,8 @@ su - postgres
 
   <para>
    In general, a modern Unix-compatible platform should be able to run
-   PostgreSQL. The platforms that had received explicit testing at the
+   <productname>PostgreSQL</>.
+    The platforms that had received explicit testing at the
    time of release are listed in <xref linkend="supported-platforms">
    below. In the <filename>doc</> subdirectory of the distribution
    there are several platform-specific <acronym>FAQ</> documents you
@@ -171,7 +172,8 @@ su - postgres
 <userinput>tar xf postgresql-&version;.tar</userinput>
 </screen>
    This will create a directory
-   <filename>postgresql-&version;</filename> with the <productname>PostgreSQL</> sources
+   <filename>postgresql-&version;</filename> with the
+    <productname>PostgreSQL</> sources 
    in the current directory. Change into that directory for the rest
    of the installation procedure.
   </para>
@@ -452,7 +454,8 @@ su - postgres
 
      <note>
       <para>
-       Care has been taken to make it possible to install PostgreSQL
+       Care has been taken to make it possible to install
+	<productname>PostgreSQL</> 
        into shared installation locations (such as
        <filename>/usr/local/include</filename>) without interfering
        with the namespace of the rest of the system.  First, the
@@ -1380,17 +1383,18 @@ gunzip -c user.ps.gz \
         <entry></entry>
        </row>
        <row>
-	<entry><systemitem class="osname">FreeBSD 4.3</></entry>
+	<entry><systemitem class="osname">FreeBSD</></entry>
 	<entry><systemitem>x86</></entry>
-	<entry>7.1</entry>
-	<entry>2001-03-19, Vince Vielhaber (<email>vev@hub.org</email>)</entry>
+	<entry>7.2</entry>
+	<entry>2001-11-14, Chris Kings-Lynne
+	(<email>chriskl@familyhealth.com.au</email>)</entry>
         <entry></entry>
        </row>
        <row>
 	<entry><systemitem class="osname">HP-UX</></entry>
 	<entry><systemitem>PA-RISC</></entry>
-	<entry>7.1</entry>
-	<entry>2001-03-19, 10.20 Tom Lane (<email>tgl@sss.pgh.pa.us</email>),
+	<entry>7.2</entry>
+	<entry>2001-11-16, 10.20 Tom Lane (<email>tgl@sss.pgh.pa.us</email>),
 	       2001-03-22, 11.00, 11i Giles Lean (<email>giles@nemeton.com.au</email>)</entry>
         <entry>32- and 64-bit on 11.00; see also <filename>doc/FAQ_HPUX</filename></entry>
        </row>
@@ -1402,11 +1406,11 @@ gunzip -c user.ps.gz \
 	<entry>32-bit compilation model</entry>
        </row>
        <row>
-	<entry><systemitem class="osname">Linux 2.2.x</></entry>
+	<entry><systemitem class="osname">Linux 2.2.18</></entry>
 	<entry><systemitem>Alpha</></entry>
-	<entry>7.1</entry>
-	<entry>2001-01-23, Ryan Kirkpatrick (<email>pgsql@rkirkpat.net</email>)</entry>
-	<entry></entry>
+	<entry>7.2</entry>
+	<entry>2001-11-16, Tom Lane (<email>tgl@sss.pgh.pa.us</email>)</entry>
+	<entry>Tested at SourceForge</entry>
        </row>
        <row>
 	<entry><systemitem class="osname">Linux 2.2.x</></entry>
@@ -1418,15 +1422,15 @@ gunzip -c user.ps.gz \
        <row>
 	<entry><systemitem class="osname">Linux 2.0.x</></entry>
 	<entry><systemitem>MIPS</></entry>
-	<entry>7.1</entry>
-	<entry>2001-03-30, Dominic Eidson (<email>sauron@the-infinite.org</email>)</entry>
-	<entry><productname>Cobalt Qube</></entry>
+	<entry>7.2</entry>
+	<entry>2001-11-15, Hisao Shibuya (<email>shibuya@alpha.or.jp</>)</entry>
+	<entry><productname>Cobalt Qube2</></entry>
        </row>
        <row>
 	<entry><systemitem class="osname">Linux 2.2.18</></entry>
 	<entry><systemitem>PPC74xx</></entry>
-	<entry>7.1</entry>
-	<entry>2001-03-19, Tom Lane (<email>tgl@sss.pgh.pa.us</email>)</entry>
+	<entry>7.2</entry>
+	<entry>2001-11-16, Tom Lane (<email>tgl@sss.pgh.pa.us</email>)</entry>
 	<entry>Apple G3</entry>
        </row>
        <row>
@@ -1446,23 +1450,22 @@ gunzip -c user.ps.gz \
        <row>
 	<entry><systemitem class="osname">Linux</></entry>
 	<entry><systemitem>x86</></entry>
-	<entry>7.1</entry>
-	<entry>2001-03-19, Thomas Lockhart (<email>thomas@fourpalms.org</email>)</entry>
-	<entry>2.0.x, 2.2.x, 2.4.2</entry>
+	<entry>7.2</entry>
+	<entry>2001-11-15, Thomas Lockhart (<email>lockhart@fourpalms.org</email>)</entry>
+	<entry>2.0.x, 2.2.x, 2.4.x</entry>
        </row>
        <row>
 	<entry><systemitem class="osname">MacOS X</></entry>
 	<entry><systemitem>PPC</></entry>
-	<entry>7.1</entry>
-	<entry>2000-12-11, Peter Bierman (<email>bierman@apple.com</email>),
-	       2000-12-11, Daniel Luke (<email>dluke@geeklair.net</email>)</entry>
-	<entry>Darwin (only) Beta-2 or higher</entry>
+	<entry>7.2</entry>
+	<entry>2001-11-16, Tom Lane (<email>tgl@sss.pgh.pa.us</email>)</entry>
+	<entry>Darwin 10.1</entry>
        </row>
        <row>
-	<entry><systemitem class="osname">NetBSD 1.5</></entry>
+	<entry><systemitem class="osname">NetBSD 1.5W</></entry>
 	<entry><systemitem>Alpha</></entry>
-	<entry>7.1</entry>
-	<entry>2001-03-22, Giles Lean (<email>giles@nemeton.com.au</email>)</entry>
+	<entry>7.2</entry>
+	<entry>2001-11-20, Thomas Thai (<email>tom@minnesota.com</email>)</entry>
 	<entry></entry>
        </row>
        <row>
@@ -1529,12 +1532,11 @@ gunzip -c user.ps.gz \
 	<entry><productname>UDK FS</productname> compiler; see also <filename>doc/FAQ_SCO</filename></entry>
        </row>
        <row>
-	<entry><systemitem class="osname">Solaris 2.7-8</></entry>
+	<entry><systemitem class="osname">Solaris</></entry>
 	<entry><systemitem>Sparc</></entry>
-	<entry>7.1</entry>
-	<entry>2001-03-22, Marc Fournier (<email>scrappy@hub.org</email>),
-       2001-03-25, Justin Clift (<email>justin@postgresql.org</email>)</entry>
-	<entry>see also <filename>doc/FAQ_Solaris</filename></entry>
+	<entry>7.2</entry>
+	<entry>2001-11-12, Andrew Sullivan (<email>andrew@libertyrms.com</email>)</entry>
+	<entry>2.6-8; see also <filename>doc/FAQ_Solaris</filename></entry>
        </row>
        <row>
 	<entry><systemitem class="osname">Solaris 2.8</></entry>
@@ -1675,3 +1677,21 @@ gunzip -c user.ps.gz \
  </sect1>
 
 </chapter>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+mode:sgml
+sgml-omittag:nil
+sgml-shorttag:t
+sgml-minimize-attributes:nil
+sgml-always-quote-attributes:t
+sgml-indent-step:1
+sgml-indent-tabs-mode:nil
+sgml-indent-data:t
+sgml-parent-document:nil
+sgml-default-dtd-file:"./reference.ced"
+sgml-exposed-tags:nil
+sgml-local-catalogs:("/usr/share/sgml/catalog")
+sgml-local-ecat-files:nil
+End:
+-->
