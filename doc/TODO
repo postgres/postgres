@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Fri May 30 22:31:44 EDT 2003
+Last updated:		Fri May 30 22:54:51 EDT 2003
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -77,6 +77,8 @@ Data Types
 * Allow pg_dump to dump sequences using NO_MAXVALUE and NO_MINVALUE
 * Allow better handling of numeric constants, type conversion [typeconv]
 * Allow backend to output result sets in XML
+* Prevent whole-row references from leaking memory, e.g. SELECT COUNT(tab.*)
+
 
 * ARRAYS
 	o Allow nulls in arrays
