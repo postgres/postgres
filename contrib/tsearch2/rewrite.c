@@ -177,6 +177,7 @@ clean_NOT_v2(ITEM * ptr, int4 *len)
 #define V_UNKNOWN	0
 #define V_TRUE		1
 #define V_FALSE		2
+#define V_STOP		3
 
 /*
  * Clean query tree from values which is always in
@@ -190,10 +191,10 @@ clean_fakeval_intree(NODE * node, char *result)
 
 	if (node->valnode->type == VAL)
 		return node;
-	else if (node->valnode->type == VALTRUE)
+	else if (node->valnode->type == VALSTOP)
 	{
 		pfree(node);
-		*result = V_TRUE;
+		*result = V_STOP;
 		return NULL;
 	}
 
@@ -203,40 +204,10 @@ clean_fakeval_intree(NODE * node, char *result)
 		node->right = clean_fakeval_intree(node->right, &rresult);
 		if (!node->right)
 		{
-			*result = (rresult == V_TRUE) ? V_FALSE : V_TRUE;
+			*result = V_STOP;
 			freetree(node);
 			return NULL;
 		}
-	}
-	else if (node->valnode->val == (int4) '|')
-	{
-		NODE	   *res = node;
-
-		node->left = clean_fakeval_intree(node->left, &lresult);
-		node->right = clean_fakeval_intree(node->right, &rresult);
-		if (lresult == V_TRUE || rresult == V_TRUE)
-		{
-			freetree(node);
-			*result = V_TRUE;
-			return NULL;
-		}
-		else if (lresult == V_FALSE && rresult == V_FALSE)
-		{
-			freetree(node);
-			*result = V_FALSE;
-			return NULL;
-		}
-		else if (lresult == V_FALSE)
-		{
-			res = node->right;
-			pfree(node);
-		}
-		else if (rresult == V_FALSE)
-		{
-			res = node->left;
-			pfree(node);
-		}
-		return res;
 	}
 	else
 	{
@@ -244,24 +215,18 @@ clean_fakeval_intree(NODE * node, char *result)
 
 		node->left = clean_fakeval_intree(node->left, &lresult);
 		node->right = clean_fakeval_intree(node->right, &rresult);
-		if (lresult == V_FALSE || rresult == V_FALSE)
+		if (lresult == V_STOP && rresult == V_STOP)
 		{
 			freetree(node);
-			*result = V_FALSE;
+			*result = V_STOP;
 			return NULL;
 		}
-		else if (lresult == V_TRUE && rresult == V_TRUE)
-		{
-			freetree(node);
-			*result = V_TRUE;
-			return NULL;
-		}
-		else if (lresult == V_TRUE)
+		else if (lresult == V_STOP)
 		{
 			res = node->right;
 			pfree(node);
 		}
-		else if (rresult == V_TRUE)
+		else if (rresult == V_STOP)
 		{
 			res = node->left;
 			pfree(node);
