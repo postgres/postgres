@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/sinval.c,v 1.31 2001/05/18 21:24:20 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/sinval.c,v 1.32 2001/06/01 20:07:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -283,15 +283,24 @@ GetSnapshotData(bool serializable)
 	int			index;
 	int			count = 0;
 
+	if (snapshot == NULL)
+		elog(ERROR, "Memory exhausted in GetSnapshotData");
+
+	snapshot->xmin = GetCurrentTransactionId();
+
+	SpinAcquire(SInvalLock);
+
 	/*
 	 * There can be no more than lastBackend active transactions, so this
 	 * is enough space:
 	 */
 	snapshot->xip = (TransactionId *)
 		malloc(segP->lastBackend * sizeof(TransactionId));
-	snapshot->xmin = GetCurrentTransactionId();
-
-	SpinAcquire(SInvalLock);
+	if (snapshot->xip == NULL)
+	{
+		SpinRelease(SInvalLock);
+		elog(ERROR, "Memory exhausted in GetSnapshotData");
+	}
 
 	/*
 	 * Unfortunately, we have to call ReadNewTransactionId() after
