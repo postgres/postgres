@@ -1174,6 +1174,8 @@ AC_DEFINE_UNQUOTED(MAXIMUM_ALIGNOF, $MAX_ALIGNOF, [Define as the maximum alignme
 # doesn't work the way we want to.
 AC_CHECK_SIZEOF(int8, 0)
 AC_CHECK_SIZEOF(uint8, 0)
+AC_CHECK_SIZEOF(int64, 0)
+AC_CHECK_SIZEOF(uint64, 0)
 
 PGAC_FUNC_POSIX_SIGNALS
 

@@ -8,7 +8,7 @@
  * or in pg_config.h afterwards.  Of course, if you edit pg_config.h, then your
  * changes will be overwritten the next time you run configure.
  *
- * $Id: pg_config.h.in,v 1.12 2001/11/15 16:09:34 momjian Exp $
+ * $Id: pg_config.h.in,v 1.13 2001/11/15 16:35:19 momjian Exp $
  */
 
 #ifndef PG_CONFIG_H
@@ -699,6 +699,8 @@ extern int fdatasync(int fildes);
 
 #undef SIZEOF_INT8
 #undef SIZEOF_UINT8
+#undef SIZEOF_INT64
+#undef SIZEOF_UINT64
 
 /*
  *------------------------------------------------------------------------
