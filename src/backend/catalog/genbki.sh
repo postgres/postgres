@@ -10,7 +10,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/catalog/Attic/genbki.sh,v 1.4 1996/08/24 20:38:56 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/backend/catalog/Attic/genbki.sh,v 1.5 1996/08/26 06:04:49 scrappy Exp $
 #
 # NOTES
 #    non-essential whitespace is removed from the generated file.
@@ -58,7 +58,7 @@ done
 cat $SYSFILES | \
 sed -e 's/\/\*.*\*\///g' \
     -e 's/;[ 	]*$//g'  \
-    -e 's/^[ 	]*//g' \
+    -e 's/^[ 	]*//' \
     -e 's/\ Oid/\ oid/g' \
     -e 's/\ NameData/\ name/g' \
     -e 's/^Oid/oid/g' \
