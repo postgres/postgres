@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/initdb/Makefile,v 1.11 1998/07/26 04:31:16 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/bin/initdb/Makefile,v 1.12 1999/05/12 10:35:43 wieck Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -17,7 +17,9 @@ include ../../Makefile.global
 all: initdb
 
 initdb: initdb.sh
-	sed 's/__MULTIBYTE__/$(MULTIBYTE)/' initdb.sh > initdb
+	sed -e 's/__MULTIBYTE__/$(MULTIBYTE)/' 			\
+		-e 's/__DLSUFFIX__/$(DLSUFFIX)/'			\
+			initdb.sh > initdb
 
 install: initdb
 	$(INSTALL) $(INSTL_EXE_OPTS) $< $(BINDIR)/$<

@@ -66,6 +66,5 @@ alter_table
 portals_p2
 rules
 limit
-install_plpgsql
 plpgsql
 temp
