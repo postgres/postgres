@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.98 1999/09/14 06:06:31 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.99 1999/09/23 17:02:46 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -122,6 +122,7 @@ Oid	param_type(int t); /* used in parse_expr.c */
 %type <node>	stmt,
 		AddAttrStmt, ClosePortalStmt,
 		CopyStmt, CreateStmt, CreateAsStmt, CreateSeqStmt, DefineStmt, DestroyStmt,
+		TruncateStmt,
 		ExtendStmt, FetchStmt,	GrantStmt, CreateTrigStmt, DropTrigStmt,
 		CreatePLangStmt, DropPLangStmt,
 		IndexStmt, ListenStmt, UnlistenStmt, LockStmt, OptimizableStmt,
@@ -318,7 +319,7 @@ Oid	param_type(int t); /* used in parse_expr.c */
 		OFFSET, OIDS, OPERATOR, PASSWORD, PROCEDURAL,
 		RENAME, RESET, RETURNS, ROW, RULE,
 		SEQUENCE, SERIAL, SETOF, SHARE, SHOW, START, STATEMENT, STDIN, STDOUT,
-		TRUSTED, 
+		TRUNCATE, TRUSTED, 
 		UNLISTEN, UNTIL, VACUUM, VALID, VERBOSE, VERSION
 
 /* Special keywords, not in the query language - see the "lex" file */
@@ -383,7 +384,8 @@ stmt :	  AddAttrStmt
 		| CreateUserStmt
 		| ClusterStmt
 		| DefineStmt
-		| DestroyStmt
+		| DestroyStmt		
+		| TruncateStmt
 		| DropPLangStmt
 		| DropTrigStmt
 		| DropUserStmt
@@ -1607,6 +1609,20 @@ DestroyStmt:  DROP TABLE relation_name_list
 				}
 		;
 
+/*****************************************************************************
+ *
+ *		QUERY:
+ *				truncate table relname
+ *
+ *****************************************************************************/
+
+TruncateStmt:  TRUNCATE TABLE relation_name
+				{
+					TruncateStmt *n = makeNode(TruncateStmt);
+					n->relName = $3;
+					$$ = (Node *)n;
+				}
+			;
 
 /*****************************************************************************
  *
@@ -2370,7 +2386,6 @@ ClusterStmt:  CLUSTER index_name ON relation_name
 				   $$ = (Node*)n;
 				}
 		;
-
 
 /*****************************************************************************
  *

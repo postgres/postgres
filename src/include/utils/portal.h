@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: portal.h,v 1.18 1999/09/09 16:25:23 tgl Exp $
+ * $Id: portal.h,v 1.19 1999/09/23 17:03:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -60,6 +60,7 @@ struct PortalD
  * Special portals (well, their names anyway)
  */
 #define VACPNAME		"<vacuum>"
+#define TRUNCPNAME              "<truncate>"
 
 extern bool PortalNameIsSpecial(char *pname);
 extern void AtEOXact_portals(void);

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.96 1999/09/18 19:06:33 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.97 1999/09/23 17:02:34 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -30,6 +30,7 @@
 #include "miscadmin.h"
 
 #include "access/heapam.h"
+#include "access/genam.h"
 #include "access/xact.h"
 #include "catalog/catalog.h"
 #include "catalog/catname.h"
@@ -40,6 +41,7 @@
 #include "catalog/pg_index.h"
 #include "catalog/pg_inherits.h"
 #include "catalog/pg_ipl.h"
+#include "catalog/pg_proc.h"
 #include "catalog/pg_relcheck.h"
 #include "commands/trigger.h"
 #include "optimizer/tlist.h"
@@ -49,6 +51,7 @@
 #include "storage/smgr.h"
 #include "tcop/tcopprot.h"
 #include "utils/builtins.h"
+#include "utils/portal.h"
 #include "utils/relcache.h"
 #include "utils/syscache.h"
 #include "utils/temprel.h"
@@ -1055,6 +1058,233 @@ DeleteRelationTuple(Relation rel)
 
 	heap_close(pg_class_desc, RowExclusiveLock);
 }
+
+/* --------------------------------
+ * RelationTruncateIndexes - This routine is used to truncate all
+ * indices associated with the heap relation to zero tuples.
+ * The routine will truncate and then reconstruct the indices on
+ * the relation specified by the heapRelation parameter.
+ * --------------------------------
+*/
+
+static void 
+RelationTruncateIndexes(Relation heapRelation) {
+
+  Relation indexRelation, currentIndex;
+  ScanKeyData entry;
+  HeapScanDesc scan;  
+  HeapTuple indexTuple, procTuple, classTuple;
+  Form_pg_index index;
+  Oid heapId, indexId, procId, accessMethodId;
+  Node *oldPred = NULL;
+  PredInfo *predInfo;
+  List *cnfPred = NULL;
+  AttrNumber *attributeNumberA;
+  FuncIndexInfo fInfo, *funcInfo = NULL;
+  int i, numberOfAttributes;
+  char *predString;
+
+  /*** Save the id of the heap relation ***/
+
+  heapId = RelationGetRelid(heapRelation);
+  
+  /*** Open the System relation, pg_index ***/
+
+  indexRelation = heap_openr(IndexRelationName);
+  
+  /*** Scan pg_index For indexes related to heap relation ***/
+
+  ScanKeyEntryInitialize(&entry, 0x0, Anum_pg_index_indrelid, F_OIDEQ,
+			 ObjectIdGetDatum(heapId));
+
+  scan = heap_beginscan(indexRelation, false, SnapshotNow, 1, &entry);
+  while (HeapTupleIsValid(indexTuple = heap_getnext(scan, 0))) {
+      
+    /*** For each index, fetch index attributes ***/
+
+    index = (Form_pg_index) GETSTRUCT(indexTuple);
+    indexId = index->indexrelid;
+    procId = index->indproc;
+    
+    for (i = 0; i < INDEX_MAX_KEYS; i++) {
+      if (index->indkey[i] == InvalidAttrNumber) break;
+    }
+    numberOfAttributes = i;
+    
+    /*** If a valid where predicate, compute predicate Node ***/
+
+    if (VARSIZE(&index->indpred) != 0) {	
+      predString = fmgr(F_TEXTOUT, &index->indpred);
+      oldPred = stringToNode(predString);
+      pfree(predString);
+    }
+    
+    predInfo = (PredInfo *) palloc(sizeof(PredInfo));
+    predInfo->pred = (Node *) cnfPred;
+    /* predInfo->pred = (Node *) oldPred; */
+    predInfo->oldPred = oldPred;
+
+    /*** Assign Index keys to attributes array ***/
+
+    attributeNumberA = (AttrNumber *) palloc(numberOfAttributes * 
+					     sizeof(attributeNumberA[0]));    
+    for (i = 0; i < numberOfAttributes; i++) {
+      attributeNumberA[i] = index->indkey[i];
+    }
+    
+    /*** If this is a procedural index, initialize our FuncIndexInfo ***/
+
+    if (procId != InvalidOid) {
+      funcInfo = &fInfo;
+      FIsetnArgs(funcInfo, numberOfAttributes);      
+      procTuple = SearchSysCacheTuple(PROOID, ObjectIdGetDatum(procId),
+				      0, 0, 0);
+      if (!HeapTupleIsValid(procTuple)) {
+	elog(ERROR, "RelationTruncateIndexes: index procedure not found");
+      }
+      namecpy(&(funcInfo->funcName),
+	      &(((Form_pg_proc) GETSTRUCT(procTuple))->proname));
+      FIsetProcOid(funcInfo, procTuple->t_data->t_oid);
+    }
+
+    /*** Fetch the classTuple associated with this index ***/
+    
+    classTuple = SearchSysCacheTupleCopy(RELOID, ObjectIdGetDatum(indexId),
+					 0, 0, 0);
+    if (!HeapTupleIsValid(classTuple)) {
+      elog(ERROR, "RelationTruncateIndexes: index access method not found");
+    }
+    accessMethodId = ((Form_pg_class) GETSTRUCT(classTuple))->relam;
+
+    /*** Open our index relation ***/
+    
+    currentIndex = index_open(indexId);
+    if (currentIndex == NULL) {
+      elog(ERROR, "RelationTruncateIndexes: can't open index relation");
+    }
+
+    /*** Truncate the index before building ***/
+
+    smgrtruncate(DEFAULT_SMGR, currentIndex, 0);
+    currentIndex->rd_nblocks = 0;
+    
+    /*** Initialize the index and rebuild ***/
+
+    InitIndexStrategy(numberOfAttributes, currentIndex, accessMethodId);
+    index_build(heapRelation, currentIndex, numberOfAttributes,
+		attributeNumberA, 0, NULL, funcInfo, predInfo);
+
+    /*** Re-open our heap relation and re-lock, since index_build ***/
+    /*** will close and unlock the relation ***/
+
+    heapRelation = heap_open(heapId);
+    LockRelation(heapRelation, AccessExclusiveLock);
+
+    /*** RelationUnsetLockForWrite(currentIndex); ***/
+    
+  }
+
+  /*** Complete the scan and close the Catalogueindex Relation ***/
+  
+  heap_endscan(scan);
+  heap_close(indexRelation);
+
+}
+
+/* ----------------------------
+ *   heap_truncate
+ *   
+ *   This routine is used to truncate the data from the 
+ *   storange manager of any data within the relation handed
+ *   to this routine.  The routine assumes that the relation 
+ *   handed to this routine is an open relation.  
+ *
+ * ----------------------------
+ */
+
+void 
+heap_truncate(char *relname) {
+  
+  Relation rel;
+  Oid rid; 	
+  Portal portal;
+  char *pname;
+  MemoryContext old;
+  PortalVariableMemory pmem;
+  NameData truncRel;
+
+  /*
+   * Create a portal for safe memory across transctions. We need to
+   * palloc the name space for it because our hash function expects the
+   * name to be on a longword boundary.  CreatePortal copies the name to
+   * safe storage for us.
+   */
+  
+  pname = (char *) palloc(strlen(TRUNCPNAME) + 1);
+  strcpy(pname, TRUNCPNAME);
+  portal = CreatePortal(pname);
+  pfree(pname);
+
+  /* relname gets de-allocated on transaction commit */
+  
+  strcpy(truncRel.data, relname);
+  
+  pmem = PortalGetVariableMemory(portal);
+  old = MemoryContextSwitchTo((MemoryContext) pmem);
+  MemoryContextSwitchTo(old);
+  
+  /* Commit the current transaction */
+  
+  CommitTransactionCommand();
+  StartTransactionCommand();
+     
+  /* Open relation for processing */
+
+  rel = heap_openr(truncRel.data);
+  if (rel == NULL)
+    elog(ERROR, "Relation %s Does Not Exist!", truncRel.data);
+  rid = rel->rd_id;
+
+  LockRelation(rel, AccessExclusiveLock); 
+
+  /* Release any buffers associated with this relation */
+
+  ReleaseRelationBuffers(rel);  
+  BlowawayRelationBuffers(rel, 0);
+
+  /* Now truncate the actual data and set blocks to zero */
+  
+  smgrtruncate(DEFAULT_SMGR, rel, 0);
+  rel->rd_nblocks = 0;
+
+  /* If this relation has indexes, truncate the indexes, which */
+  /* will unlock the relation as a result.  Otherwise, unlock */
+  /* the relation ourselves. */
+  
+  if (rel->rd_rel->relhasindex) {
+    RelationTruncateIndexes(rel);
+  } else {
+    UnlockRelation(rel, AccessExclusiveLock);
+  }
+
+  /* Close our relation */
+  
+  heap_close(rel);
+  RelationForgetRelation(rid);
+  
+  /* Destoy cross-transaction memory */
+
+  PortalDestroy(&portal);
+
+  /* Start new transaction */
+
+  CommitTransactionCommand();
+  StartTransactionCommand();
+  
+  return;
+
+}
+
 
 /* --------------------------------
  *		DeleteAttributeTuples

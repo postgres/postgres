@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nodes.h,v 1.51 1999/08/16 02:17:39 tgl Exp $
+ * $Id: nodes.h,v 1.52 1999/09/23 17:03:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -151,6 +151,7 @@ typedef enum NodeTag
 	T_VersionStmt,
 	T_DefineStmt,
 	T_DestroyStmt,
+	T_TruncateStmt,
 	T_ExtendStmt,
 	T_FetchStmt,
 	T_IndexStmt,

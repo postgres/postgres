@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/creatinh.c,v 1.46 1999/09/18 19:06:40 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/creatinh.c,v 1.47 1999/09/23 17:02:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -157,6 +157,26 @@ RemoveRelation(char *name)
 	heap_destroy_with_catalog(name);
 }
 
+/*
+ * TruncateRelation --
+ *                Removes all the rows from a relation
+ *
+ * Exceptions:
+ *                BadArg if name is invalid
+ *
+ *
+ * Note:
+ *                Rows are removed, indices are truncated and reconstructed.
+ */
+
+void
+TruncateRelation(char *name)
+{
+
+  AssertArg(name);
+  heap_truncate(name);
+
+}
 
 /*
  * MergeAttributes

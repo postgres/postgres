@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: psqlHelp.h,v 1.72 1999/07/11 22:47:21 ishii Exp $
+ * $Id: psqlHelp.h,v 1.73 1999/09/23 17:03:04 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,11 +23,11 @@ static struct _helpStruct QL_HELP[] = {
 	"\
 \tabort [transaction|work];"},
 	{"alter table",
-		"add/rename attributes, rename tables",
+		"add/rename columns, rename tables",
 	"\
-\tALTER TABLE class_name [*] ADD COLUMN attr type\n\
-\tALTER TABLE class_name [*] RENAME [COLUMN] attr1 TO attr2\n\
-\tALTER TABLE class_name1 RENAME TO class_name2"},
+\tALTER TABLE tablename [*] ADD COLUMN colname type\n\
+\tALTER TABLE tablename [*] RENAME [COLUMN] colname1 TO colname2\n\
+\tALTER TABLE tablename1 RENAME TO tablename2"},
 	{"alter user",
 		"alter system information for a user",
 	"\
@@ -56,7 +56,7 @@ static struct _helpStruct QL_HELP[] = {
 	{"copy",
 		"copy data to and from a table",
 	"\
-\tCOPY [BINARY] class_name [WITH OIDS]\n\
+\tCOPY [BINARY] tablename [WITH OIDS]\n\
 \tTO|FROM filename|STDIN|STDOUT [USING DELIMITERS 'delim'];"},
 	{"create",
 		"Please be more specific:",
@@ -93,8 +93,8 @@ static struct _helpStruct QL_HELP[] = {
 	{"create index",
 		"construct an index",
 	"\
-\tCREATE [UNIQUE] INDEX indexname ON class_name [USING access_method]\n\
-( attr1 [type_class1], ...attrN | funcname(attr1, ...) [type_class] );"},
+\tCREATE [UNIQUE] INDEX indexname ON tablename [USING access_method]\n\
+( colname1 [type_class1], ...colnameN | funcname(colname1, ...) [type_class] );"},
 	{"create operator",
 		"create a user-defined operator",
 	"\
@@ -124,16 +124,16 @@ static struct _helpStruct QL_HELP[] = {
 	{"create table",
 		"create a new table",
 	"\
-\tCREATE [TEMP] TABLE class_name\n\
-\t(attr1 type1 [DEFAULT expression] [NOT NULL], ...attrN\n\
+\tCREATE [TEMP] TABLE tablename\n\
+\t(colname1 type1 [DEFAULT expression] [NOT NULL], ...colnameN\n\
 \t[[CONSTRAINT name] CHECK condition1, ...conditionN] )\n\
-\t[INHERITS (class_name1, ...class_nameN)\n\
+\t[INHERITS (tablename1, ...tablenameN)\n\
 ;"},
 	{"create trigger",
 		"create a new trigger",
 	"\
 \tCREATE TRIGGER trigger_name AFTER|BEFORE event1 [OR event2 [OR event3] ]\n\
-\tON class_name FOR EACH ROW|STATEMENT\n\
+\tON tablename FOR EACH ROW|STATEMENT\n\
 \tEXECUTE PROCEDURE func_name ([arguments])\n\
 \n\
 \teventX is one of INSERT, DELETE, UPDATE"},
@@ -159,8 +159,8 @@ static struct _helpStruct QL_HELP[] = {
 		"create a view",
 	"\
 \tCREATE VIEW view_name AS\n\
-\tSELECT [DISTINCT [ON attrN]]\n\
-\texpr1 [AS attr1], ...exprN\n\
+\tSELECT [DISTINCT [ON colnameN]]\n\
+\texpr1 [AS colname1], ...exprN\n\
 \t[FROM from_list]\n\
 \t[WHERE qual]\n\
 \t[GROUP BY group_list];"},
@@ -168,18 +168,18 @@ static struct _helpStruct QL_HELP[] = {
 		"set up a cursor",
 	"\
 \tDECLARE cursorname [BINARY] CURSOR FOR\n\
-\tSELECT [DISTINCT [ON attrN]]\n\
-\texpr1 [AS attr1], ...exprN\n\
+\tSELECT [DISTINCT [ON colnameN]]\n\
+\texpr1 [AS colname1], ...exprN\n\
 \t[FROM from_list]\n\
 \t[WHERE qual]\n\
 \t[GROUP BY group_list]\n\
 \t[HAVING having_clause]\n\
-\t[ORDER BY attr1 [USING op1], ...attrN]\n\
+\t[ORDER BY colname1 [USING op1], ...colnameN]\n\
 \t[ { UNION [ALL] | INTERSECT | EXCEPT } SELECT ...];"},
 	{"delete",
 		"delete tuples",
 	"\
-\tDELETE FROM class_name [WHERE qual];"},
+\tDELETE FROM tablename [WHERE qual];"},
 	{"drop",
 		"Please be more specific:",
 	"\
@@ -225,11 +225,11 @@ static struct _helpStruct QL_HELP[] = {
 	{"drop table",
 		"remove a table",
 	"\
-\tDROP TABLE class_name1, ...class_nameN;"},
+\tDROP TABLE tablename1, ...tablenameN;"},
 	{"drop trigger",
 		"remove a trigger",
 	"\
-\tDROP TRIGGER trigger_name ON class_name;"},
+\tDROP TRIGGER trigger_name ON tablename;"},
 	{"drop type",
 		"remove a user-defined base type",
 	"\
@@ -263,9 +263,9 @@ static struct _helpStruct QL_HELP[] = {
 	{"insert",
 		"insert tuples",
 	"\
-\tINSERT INTO class_name [(attr1, ...attrN)]\n\
+\tINSERT INTO tablename [(colname1, ...colnameN)]\n\
 \tVALUES (expr1,..exprN) |\n\
-\tSELECT [DISTINCT [ON attrN]]\n\
+\tSELECT [DISTINCT [ON colnameN]]\n\
 \texpr1, ...exprN\n\
 \t[FROM from_clause]\n\
 \t[WHERE qual]\n\
@@ -283,7 +283,7 @@ static struct _helpStruct QL_HELP[] = {
 	{"lock",
 		"exclusive lock a table inside a transaction",
 	"\
-\tLOCK [TABLE] class_name \n\
+\tLOCK [TABLE] tablename \n\
 \t[IN [ROW|ACCESS] [SHARE|EXCLUSIVE] | [SHARE ROW EXCLUSIVE] MODE];"},
 	{"move",
 		"move an cursor position",
@@ -311,15 +311,15 @@ TIMEZONE|XACTISOLEVEL|CLIENT_ENCODING|SERVER_ENCODING"},
 	{"select",
 		"retrieve tuples",
 	"\
-\tSELECT [DISTINCT [ON attrN]] expr1 [AS attr1], ...exprN\n\
-\t[INTO [TEMP] [TABLE] class_name]\n\
+\tSELECT [DISTINCT [ON colnameN]] expr1 [AS colname1], ...exprN\n\
+\t[INTO [TEMP] [TABLE] tablename]\n\
 \t[FROM from_list]\n\
 \t[WHERE qual]\n\
 \t[GROUP BY group_list]\n\
 \t[HAVING having_clause]\n\
 \t[ { UNION [ALL] | INTERSECT | EXCEPT } SELECT ...]\n\
-\t[ORDER BY attr1 [ASC|DESC] [USING op1], ...attrN ]\n\
-\t[FOR UPDATE [OF class_name...]]\n\
+\t[ORDER BY colname1 [ASC|DESC] [USING op1], ...colnameN ]\n\
+\t[FOR UPDATE [OF tablename...]]\n\
 \t[LIMIT count [OFFSET|, count]];"},
 	{"set",
 		"set run-time environment",
@@ -346,10 +346,14 @@ TIMEZONE|XACTISOLEVEL|CLIENT_ENCODING|SERVER_ENCODING"},
 		"stop listening for notification on a condition name",
 	"\
 \tUNLISTEN name|\"non-name string\"|\"*\""},
+	{"truncate",
+		"quickly removes all rows from a table",
+	"\
+\tTRUNCATE TABLE tablename"},
 	{"update",
 		"update tuples",
 	"\
-\tUPDATE class_name SET attr1 = expr1, ...attrN = exprN\n\
+\tUPDATE tablename SET colname1 = expr1, ...colnameN = exprN\n\
 \t[FROM from_clause]\n\
 \t[WHERE qual];"},
 	{"vacuum",
@@ -357,7 +361,7 @@ TIMEZONE|XACTISOLEVEL|CLIENT_ENCODING|SERVER_ENCODING"},
 	"\
 \tVACUUM [VERBOSE] [ANALYZE] [table]\n\
 \tor\n\
-\tVACUUM [VERBOSE]  ANALYZE  [table [(attr1, ...attrN)]];"},
+\tVACUUM [VERBOSE]  ANALYZE  [table [(colname1, ...colnameN)]];"},
 	{NULL, NULL, NULL}			/* important to keep a NULL terminator
 								 * here! */
 };

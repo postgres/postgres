@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsenodes.h,v 1.78 1999/08/21 03:49:09 tgl Exp $
+ * $Id: parsenodes.h,v 1.79 1999/09/23 17:03:22 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -282,6 +282,16 @@ typedef struct DestroyStmt
 	bool		sequence;
 } DestroyStmt;
 
+/* ----------------------
+ *              Truncate Table Statement
+ * ----------------------
+ */
+typedef struct TruncateStmt
+{
+        NodeTag         type;
+        char	   *relName;            /* relation to be truncated */
+} TruncateStmt;
+      
 /* ----------------------
  *		Extend Index Statement
  * ----------------------

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/keywords.c,v 1.60 1999/07/17 20:17:22 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/keywords.c,v 1.61 1999/09/23 17:02:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -225,6 +225,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"trigger", TRIGGER},
 	{"trim", TRIM},
 	{"true", TRUE_P},
+	{"truncate", TRUNCATE},
 	{"trusted", TRUSTED},
 	{"type", TYPE_P},
 	{"union", UNION},

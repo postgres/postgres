@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: bufmgr.h,v 1.29 1999/07/17 20:18:33 momjian Exp $
+ * $Id: bufmgr.h,v 1.30 1999/09/23 17:03:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -161,6 +161,7 @@ extern void BufferRefCountReset(int *refcountsave);
 extern void BufferRefCountRestore(int *refcountsave);
 extern int	SetBufferWriteMode(int mode);
 extern void SetBufferCommitInfoNeedsSave(Buffer buffer);
+extern int BlowawayRelationBuffers(Relation rel, BlockNumber block);
 
 extern void UnlockBuffers(void);
 extern void LockBuffer(Buffer buffer, int mode);

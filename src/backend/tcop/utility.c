@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.65 1999/09/18 19:07:44 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.66 1999/09/23 17:02:52 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -203,6 +203,38 @@ ProcessUtility(Node *parsetree,
 					relname = strVal(lfirst(arg));
 					RemoveRelation(relname);
 				}
+			}
+			break;
+
+		case T_TruncateStmt:     
+		        {
+
+			  Relation	rel;
+
+			  PS_SET_STATUS(commandTag = "TRUNCATE");
+			  CHECK_IF_ABORTED();		
+
+			  relname = ((TruncateStmt *) parsetree)->relName;			  
+			  if (!allowSystemTableMods && IsSystemRelationName(relname)) {
+			    elog(ERROR, "TRUNCATE cannot be used on system tables. '%s' is a system table", 
+				 relname);
+			  }			  
+			  
+			  rel = heap_openr(relname);
+			  if (RelationIsValid(rel)) {
+			    if (rel->rd_rel->relkind == RELKIND_SEQUENCE) {
+			      elog(ERROR, "TRUNCATE cannot be used on sequences. '%s' is a sequence", 
+				   relname);
+			    }			    
+			    heap_close(rel);
+			  }
+#ifndef NO_SECURITY
+			  if (!pg_ownercheck(userName, relname, RELNAME)) {
+			    elog(ERROR, "you do not own class \"%s\"", relname);
+			  }
+#endif
+			  TruncateRelation(((TruncateStmt *) parsetree)->relName);
+			  
 			}
 			break;
 
