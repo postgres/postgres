@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Thu Apr  4 22:03:20 EST 2002
+Last updated:		Fri Apr  5 06:57:19 EST 2002
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -218,7 +218,7 @@ COMMANDS
 * INSERT
 	o Allow INSERT/UPDATE of system-generated oid value for a row
 	o Allow INSERT INTO tab (col1, ..) VALUES (val1, ..), (val2, ..)
-	o Allow INSERT INTO my_table VALUES (a, b, c, DEFAULT, x, y, z, ...)
+	o -Allow INSERT INTO my_table VALUES (a, b, c, DEFAULT, x, y, z, ...)
 	o Disallow missing columns in INSERT ... VALUES, per ANSI
 	o Allow INSERT/UPDATE ... RETURNING new.col or old.col; handle
 	  RULE cases (Philip)
