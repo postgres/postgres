@@ -178,6 +178,9 @@ pg_regcomp(regex_t *preg, const char *pattern, int cflags)
 	int			i;
 	size_t		len;
 	pg_wchar   *wcp;
+	size_t	csetsize;
+
+	csetsize = (pg_database_encoding_max_length() == 1)?(SCHAR_MAX - SCHAR_MIN + 1):NC;
 
 	if (cclasses == NULL)
 		cclasses = cclass_init();
@@ -211,7 +214,7 @@ pg_regcomp(regex_t *preg, const char *pattern, int cflags)
 
 	/* do the mallocs early so failure handling is easy */
 	g = (struct re_guts *) malloc(sizeof(struct re_guts) +
-								  (NC - 1) * sizeof(cat_t));
+								  (csetsize - 1) * sizeof(cat_t));
 	if (g == NULL)
 		return REG_ESPACE;
 	p->ssize = len / (size_t) 2 *(size_t) 3 + (size_t) 1;		/* ugh */
@@ -235,7 +238,7 @@ pg_regcomp(regex_t *preg, const char *pattern, int cflags)
 		p->pbegin[i] = 0;
 		p->pend[i] = 0;
 	}
-	g->csetsize = NC;
+	g->csetsize = csetsize;
 	g->sets = NULL;
 	g->setbits = NULL;
 	g->ncsets = 0;
@@ -248,7 +251,7 @@ pg_regcomp(regex_t *preg, const char *pattern, int cflags)
 	g->nsub = 0;
 	g->ncategories = 1;			/* category 0 is "everything else" */
 	g->categories = &g->catspace[-(CHAR_MIN)];
-	memset((char *) g->catspace, 0, NC * sizeof(cat_t));
+	memset((char *) g->catspace, 0, csetsize * sizeof(cat_t));
 	g->backrefs = 0;
 
 	/* do it */
