@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.118 1999/05/29 10:25:30 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.119 1999/07/02 18:09:27 momjian Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -1483,17 +1483,6 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 		puts("\treset_client_encoding() done.");
 #endif
 
-	/* ----------------
-	 * if stable main memory is assumed (-S(old) flag is set), it is necessary
-	 * to flush all dirty shared buffers before exit
-	 * plai 8/7/90
-	 * this used to be done further down, causing an additional entry in
-	 * the shmem exit list for every error :-( ... tgl 10/1/98
-	 * ----------------
-	 */
-	if (!TransactionFlushEnabled())
-		on_shmem_exit(FlushBufferPool, NULL);
-
 	on_shmem_exit(remove_all_temp_relations, NULL);
 
 	/* ----------------
@@ -1536,7 +1525,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.118 $ $Date: 1999/05/29 10:25:30 $\n");
+		puts("$Revision: 1.119 $ $Date: 1999/07/02 18:09:27 $\n");
 	}
 
 	/* ----------------

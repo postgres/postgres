@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.106 1999/06/04 21:14:46 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.107 1999/07/02 18:09:27 momjian Exp $
  *
  * NOTES
  *
@@ -1483,8 +1483,8 @@ DoBackend(Port *port)
 	 * Let's clean up ourselves as the postmaster child
 	 */
 
-	on_exit_reset();			/* we don't want the postmaster's
-								 * proc_exit() handlers */
+	/* We don't want the postmaster's proc_exit() handlers */
+	on_exit_reset();	
 
 	/* ----------------
 	 *	register signal handlers.
