@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/include/storage/s_lock.h,v 1.9 1997/10/02 18:32:58 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/include/storage/s_lock.h,v 1.10 1997/10/03 15:27:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -97,7 +97,7 @@
  * (see storage/ipc.h).
  */
 
-#if defined(__alpha__) || defined(__alpha)
+#if (defined(__alpha__) || defined(__alpha)) && !defined(linux)
 
 #define	S_LOCK(lock)	do \
 						{ \
