@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_table.sgml,v 1.6 1999/07/22 15:09:11 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_table.sgml,v 1.7 2000/07/21 04:37:10 momjian Exp $
 Postgres documentation
 -->
 
@@ -120,7 +120,7 @@ ERROR Relation "<replaceable class="parameter">name</replaceable>" Does Not Exis
   </title>
   <para>
    To destroy two tables, <literal>films</literal> and 
-   <command>distributors</command>:
+   <literal>distributors</literal>:
 
    <programlisting>
 DROP TABLE films, distributors;
