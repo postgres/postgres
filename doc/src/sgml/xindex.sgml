@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/xindex.sgml,v 1.8 2000/02/17 03:39:39 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/xindex.sgml,v 1.9 2000/03/28 02:53:02 tgl Exp $
 Postgres documentation
 -->
 
@@ -91,11 +91,10 @@ Postgres documentation
    <programlisting>
 SELECT oid FROM pg_am WHERE amname = 'btree';
 
-         +----+
-         |oid |
-         +----+
-         |403 |
-         +----+
+ oid
+-----
+ 403
+(1 row)
    </programlisting>
 
    We will use that <command>SELECT</command> in a <command>WHERE</command>
@@ -210,7 +209,8 @@ SELECT oid FROM pg_am WHERE amname = 'btree';
   </para>
 
   <para>
-   The <filename>amstrategies</filename> entry in pg_am is just the number
+   The <filename>amstrategies</filename> entry in <filename>pg_am</filename>
+   is just the number
    of strategies defined for the access method in question.  The procedures
    for less than, less equal, and so on don't appear in
    <filename>pg_am</filename>.  Similarly, <filename>amsupport</filename>
@@ -228,28 +228,28 @@ SELECT oid FROM pg_am WHERE amname = 'btree';
   </para>
 
   <para>
-   The next class of interest is pg_opclass.  This class exists only to
-   associate a name and default type with an oid.  In pg_amop, every
-   <acronym>B-tree</acronym> operator class has a set of procedures, one
-   through five, above. Some existing opclasses are <filename>int2_ops,
-    int4_ops, and oid_ops</filename>.  You need to add an instance with your
-   opclass name (for example, <filename>complex_abs_ops</filename>) to
+   The next class of interest is <filename>pg_opclass</filename>.  This class
+   exists only to associate an operator class name and perhaps a default type
+   with an operator class oid. Some existing opclasses are <filename>int2_ops,
+   int4_ops,</filename> and <filename>oid_ops</filename>.  You need to add an
+   instance with your opclass name (for example,
+   <filename>complex_abs_ops</filename>) to
    <filename>pg_opclass</filename>.  The <filename>oid</filename> of
-   this instance is a foreign key in other classes.
+   this instance will be a foreign key in other classes, notably
+   <filename>pg_amop</filename>.
 
    <programlisting>
 INSERT INTO pg_opclass (opcname, opcdeftype)
-    SELECT 'complex_abs_ops', oid FROM pg_type WHERE typname = 'complex_abs';
+    SELECT 'complex_abs_ops', oid FROM pg_type WHERE typname = 'complex';
 
 SELECT oid, opcname, opcdeftype
     FROM pg_opclass
     WHERE opcname = 'complex_abs_ops';
 
-         +------+-----------------+------------+
-         |oid   | opcname         | opcdeftype |
-         +------+-----------------+------------+
-         |17314 | complex_abs_ops |      29058 |
-         +------+-----------------+------------+
+  oid   |     opcname     | opcdeftype
+--------+-----------------+------------
+ 277975 | complex_abs_ops |     277946
+(1 row)
    </programlisting>
 
    Note that the oid for your <filename>pg_opclass</filename> instance will
@@ -258,10 +258,22 @@ SELECT oid, opcname, opcdeftype
   </para>
 
   <para>
+   The above example assumes that you want to make this new opclass the
+   default index opclass for the <filename>complex</filename> datatype.
+   If you don't, just insert zero into <filename>opcdeftype</filename>,
+   rather than inserting the datatype's oid:
+
+   <programlisting>
+INSERT INTO pg_opclass (opcname, opcdeftype) VALUES ('complex_abs_ops', 0);
+   </programlisting>
+
+  </para>
+
+  <para>
    So now we have an access method and an operator  class.
-   We  still  need  a  set of operators; the procedure for
+   We  still  need  a  set of operators.  The procedure for
    defining operators was discussed earlier in  this  manual.
-   For  the  complex_abs_ops  operator  class on Btrees,
+   For  the  <filename>complex_abs_ops</filename>  operator  class on Btrees,
    the operators we require are:
 
    <programlisting>
@@ -280,7 +292,7 @@ SELECT oid, opcname, opcdeftype
   </para>
 
   <para>
-   Part of the code look like this: (note that we will only show the
+   Part of the C code looks like this: (note that we will only show the
    equality operator for the rest of the examples.  The other four
    operators are very similar.  Refer to <filename>complex.c</filename>
    or <filename>complex.source</filename> for the details.)
@@ -298,30 +310,50 @@ SELECT oid, opcname, opcdeftype
   </para>
 
   <para>
-   There are a couple of important things that are happening below.
+   We make the function known to Postgres like this:
+   <programlisting>
+CREATE FUNCTION complex_abs_eq(complex, complex)
+              RETURNS bool
+              AS 'PGROOT/tutorial/obj/complex.so'
+              LANGUAGE 'c';
+   </programlisting>
   </para>
 
   <para>
-   First, note that operators for less-than, less-than-or equal, equal,
-   greater-than-or-equal, and greater-than for <filename>int4</filename>
-   are being defined.  All of these operators are already defined for
-   <filename>int4</filename> under the names &lt;, &lt;=, =, &gt;=,
-   and &gt;. The new operators behave differently, of course.  In order
-   to guarantee that <productname>Postgres</productname> uses these
-   new operators rather than the old ones, they need to be named differently
-   from the old ones.  This is a key point: you can overload operators in
-   <productname>Postgres</productname>, but only if the operator isn't
-   already defined for the argument types.  That is, if you have &lt;
-   defined for (int4, int4), you can't define it again.
-   <productname>Postgres</productname> does not check this when you define
-   your operator, so be careful.  To avoid this problem, odd names will be
-   used for the operators.  If you get this wrong, the access methods
-   are likely to crash when you try to do scans.
+   There are some important things that are happening here.
   </para>
 
   <para>
-   The other important point is that all the operator functions return
-   Boolean values.  The access methods rely on this fact.  (On the other
+   First, note that operators for less-than, less-than-or-equal, equal,
+   greater-than-or-equal, and greater-than for <filename>complex</filename>
+   are being defined.  We can only have one operator named, say, = and
+   taking type <filename>complex</filename> for both operands.  In this case
+   we don't have any other operator = for <filename>complex</filename>,
+   but if we were building a practical datatype we'd probably want = to
+   be the ordinary equality operation for complex numbers.  In that case,
+   we'd need to use some other operator name for complex_abs_eq.
+  </para>
+
+  <para>
+   Second, although Postgres can cope with operators having
+   the same name as long as they have different input datatypes, C can only
+   cope with one global routine having a given name, period.  So we shouldn't
+   name the C function something simple like <filename>abs_eq</filename>.
+   Usually it's a good practice to include the datatype name in the C
+   function name, so as not to conflict with functions for other datatypes.
+  </para>
+
+  <para>
+   Third, we could have made the Postgres name of the function
+   <filename>abs_eq</filename>, relying on Postgres to distinguish it
+   by input datatypes from any other Postgres function of the same name.
+   To keep the example simple, we make the function have the same names
+   at the C level and Postgres level.
+  </para>
+
+  <para>
+   Finally, note that these operator functions return Boolean values.
+   The access methods rely on this fact.  (On the other
    hand, the support function returns whatever the particular access method
    expects -- in this case, a signed integer.) The final routine in the
    file is the "support routine" mentioned when we discussed the amsupport
@@ -330,96 +362,31 @@ SELECT oid, opcname, opcdeftype
   </para>
 
   <para>
-   <programlisting>
-CREATE FUNCTION complex_abs_eq(complex_abs, complex_abs)
-              RETURNS bool
-              AS 'PGROOT/tutorial/obj/complex.so'
-              LANGUAGE 'c';
-   </programlisting>
-  </para>
-
-  <para>
-   Now define the operators that use them.  As noted, the operator names
-   must be unique among all operators that take two <filename>int4</filename>
-   operands.  In order to see if the operator names listed below are taken,
-   we can do a query  on <filename>pg_operator</filename>:
-
-   <programlisting>
-    /*
-     * this query uses the regular expression operator (~)
-     * to find three-character operator names that end in
-     * the character &amp;
-     */
-    SELECT *
-     FROM pg_operator
-     WHERE oprname ~ '^..&amp;$'::text;
-   </programlisting>
-
-  </para>
-
-  <para>
-   to see if your name is taken for the types you want.  The important
-   things here are the procedure (which are the <acronym>C</acronym>
-   functions defined above) and the restriction and join selectivity
-   functions.  You should just use the ones used below--note that there
-   are different such functions for the less-than, equal, and greater-than
-   cases.  These must be supplied, or the access method will crash when it
-   tries to use the operator.  You should copy the names for restrict and
-   join, but use the procedure names you defined in the last step.
+   Now we are ready to define the operators:
 
    <programlisting>
 CREATE OPERATOR = (
-     leftarg = complex_abs, rightarg = complex_abs,
+     leftarg = complex, rightarg = complex,
      procedure = complex_abs_eq,
      restrict = eqsel, join = eqjoinsel
          )
    </programlisting>
+
+   The important
+   things here are the procedure names (which are the <acronym>C</acronym>
+   functions defined above) and the restriction and join selectivity
+   functions.  You should just use the selectivity functions used in
+   the example (see <filename>complex.source</filename>).
+   Note that there
+   are different such functions for the less-than, equal, and greater-than
+   cases.  These must be supplied, or the optimizer will be unable to
+   make effective use of the index.
   </para>
 
   <para>
-   Notice that five operators corresponding to less,  less equal, equal,
-   greater, and greater equal are defined.
-  </para>
-
-  <para>
-   We're just about finished. the last thing we need to do is to update
-   the <filename>pg_amop</filename> relation.  To do this, we need the
-   following attributes:
-
-   <table tocentry="1">
-    <title><filename>pg_amproc</filename> Schema</title>
-    <titleabbrev><filename>pg_amproc</filename></titleabbrev>
-    <tgroup cols="2">
-     <thead>
-      <row>
-       <entry>Attribute</entry>
-       <entry>Description</entry>
-      </row>
-     </thead>
-     <tbody>
-      <row>
-       <entry>amopid</entry>
-       <entry>the <filename>oid</filename> of the <filename>pg_am</filename> instance
-	for  B-tree (== 403, see above)</entry>
-      </row>
-      <row>
-       <entry>amopclaid</entry>
-       <entry>the <filename>oid</filename> of the
-	<filename>pg_opclass</filename>  instance for <filename>complex_abs_ops</filename>
-	(== whatever you got instead  of <filename>17314</filename>, see above)</entry>
-      </row>
-      <row>
-       <entry>amopopr</entry>
-       <entry>the <filename>oid</filename>s of the  operators  for the opclass
-	(which we'll get in just a minute)</entry>
-      </row>
-     </tbody>
-    </tgroup>
-   </table>
-  </para>
-
-  <para>
-   So we need the <filename>oid</filename>s of the operators we just
+   The next step is to add entries for these operators to
+   the <filename>pg_amop</filename> relation.  To do this,
+   we'll need the <filename>oid</filename>s of the operators we just
    defined.  We'll look up the names of all the operators that take
    two <filename>complex</filename>es, and pick ours out:
    
@@ -428,26 +395,22 @@ CREATE OPERATOR = (
      INTO TABLE complex_ops_tmp
      FROM pg_operator o, pg_type t
      WHERE o.oprleft = t.oid and o.oprright = t.oid
-      and t.typname = 'complex_abs';
+      and t.typname = 'complex';
 
-         +------+---------+
-         |oid   | oprname |
-         +------+---------+
-         |17321 | &lt;       |
-         +------+---------+
-         |17322 | &lt;=      |
-         +------+---------+
-         |17323 |  =      |
-         +------+---------+
-         |17324 | &gt;=      |
-         +------+---------+
-         |17325 | &gt;       |
-         +------+---------+
+ opoid  | oprname
+--------+---------
+ 277963 | +
+ 277970 | &lt;
+ 277971 | &lt;=
+ 277972 | =
+ 277973 | &gt;=
+ 277974 | &gt;
+(6 rows)
    </programlisting>
 
    (Again, some of your <filename>oid</filename> numbers will almost
    certainly be different.)  The operators we are interested in are those
-   with <filename>oid</filename>s 17321 through 17325.  The values you
+   with <filename>oid</filename>s 277970 through 277974.  The values you
    get will probably be different, and you should substitute them for the
    values below.  We will do this with a select statement.
   </para>
@@ -455,13 +418,13 @@ CREATE OPERATOR = (
   <para>
    Now we're ready to update <filename>pg_amop</filename> with our new
    operator class.  The most important thing in this entire discussion
-   is that the operators are ordered, from less equal through greater
-   equal, in <filename>pg_amop</filename>.  We add the instances we need:
+   is that the operators are ordered, from less than through greater
+   than, in <filename>pg_amop</filename>.  We add the instances we need:
 
    <programlisting>
     INSERT INTO pg_amop (amopid, amopclaid, amopopr, amopstrategy)
         SELECT am.oid, opcl.oid, c.opoid, 1
-        FROM pg_am am, pg_opclass opcl, complex_abs_ops_tmp c
+        FROM pg_am am, pg_opclass opcl, complex_ops_tmp c
         WHERE amname = 'btree' AND
             opcname = 'complex_abs_ops' AND
             c.oprname = '<';
@@ -493,15 +456,13 @@ CREATE OPERATOR = (
     SELECT oid, proname FROM pg_proc
      WHERE proname = 'complex_abs_cmp';
 
-         +------+-----------------+
-         |oid   | proname         |
-         +------+-----------------+
-         |17328 | complex_abs_cmp |
-         +------+-----------------+
+  oid   |     proname
+--------+-----------------
+ 277997 | complex_abs_cmp
+(1 row)
    </programlisting>
 
-   (Again, your <filename>oid</filename> number will probably be different
-   and you should substitute the value you see for the value below.)
+   (Again, your <filename>oid</filename> number will probably be different.)
    We can add the new instance as follows:
 
    <programlisting>
@@ -515,76 +476,8 @@ CREATE OPERATOR = (
   </para>
 
   <para>
-   Now we need to add a hashing strategy to allow the type to be indexed.
-   We do this by using another type in pg_am but we reuse the same ops.
-
-   <programlisting>
-    INSERT INTO pg_amop (amopid, amopclaid, amopopr, amopstrategy)
-        SELECT am.oid, opcl.oid, c.opoid, 1
-        FROM pg_am am, pg_opclass opcl, complex_abs_ops_tmp c
-        WHERE amname = 'hash' AND
-            opcname = 'complex_abs_ops' AND
-            c.oprname = '=';
-   </programlisting>
-  </para>
-
-  <para>
-   In order to use this index in a where clause, we need to modify the
-   <filename>pg_operator</filename> class as follows.
-
-   <programlisting>
-    UPDATE pg_operator
-        SET oprrest = 'eqsel'::regproc, oprjoin = 'eqjoinsel'
-        WHERE oprname = '=' AND
-            oprleft = oprright AND
-            oprleft = (SELECT oid FROM pg_type WHERE typname = 'complex_abs');
-    
-    UPDATE pg_operator
-        SET oprrest = 'neqsel'::regproc, oprjoin = 'neqjoinsel'
-        WHERE oprname = '<filename>' AND
-            oprleft = oprright AND
-            oprleft = (SELECT oid FROM pg_type WHERE typname = 'complex_abs');
-    
-    UPDATE pg_operator
-        SET oprrest = 'neqsel'::regproc, oprjoin = 'neqjoinsel'
-        WHERE oprname = '<filename>' AND
-            oprleft = oprright AND
-            oprleft = (SELECT oid FROM pg_type WHERE typname = 'complex_abs');
-    
-    UPDATE pg_operator
-        SET oprrest = 'scalarltsel'::regproc, oprjoin = 'scalarltjoinsel'
-        WHERE oprname = '<' AND 
-            oprleft = oprright AND
-            oprleft = (SELECT oid FROM pg_type WHERE typname = 'complex_abs');
-    
-    UPDATE pg_operator
-        SET oprrest = 'scalarltsel'::regproc, oprjoin = 'scalarltjoinsel'
-        WHERE oprname = '<=' AND
-            oprleft = oprright AND
-            oprleft = (SELECT oid FROM pg_type WHERE typname = 'complex_abs');
-    
-    UPDATE pg_operator
-        SET oprrest = 'scalargtsel'::regproc, oprjoin = 'scalargtjoinsel'
-        WHERE oprname = '>' AND
-            oprleft = oprright AND
-            oprleft = (SELECT oid FROM pg_type WHERE typname = 'complex_abs');
-    
-    UPDATE pg_operator
-        SET oprrest = 'scalargtsel'::regproc, oprjoin = 'scalargtjoinsel'
-        WHERE oprname = '>=' AND
-            oprleft = oprright AND
-            oprleft = (SELECT oid FROM pg_type WHERE typname = 'complex_abs');</filename></filename>
-   </programlisting> 
-  </para>
-
-  <para>
-   And last (Finally!) we register a description of this type.
-
-   <programlisting>
-    INSERT INTO pg_description (objoid, description) 
-    SELECT oid, 'Two part G/L account'
-	    FROM pg_type WHERE typname = 'complex_abs';
-   </programlisting> 
+   And we're done!  (Whew.)  It should now be possible to create
+   and use btree indexes on <filename>complex</filename> columns.
   </para>
 
  </chapter>
