@@ -11,10 +11,10 @@ Overview
    SCHEMA SUPPORT
 
            Schemas allow users to create objects in their own namespace
-           so two people can have the same table with the same name. 
-           There is also a public schema for shared tables.  Table/index
-           creation can be restricted by removing permissions on the
-           public schema.
+           so two people or applications can have tables with the same
+           name. There is also a public schema for shared tables.
+           Table/index creation can be restricted by removing
+           permissions on the public schema.
 
    DROP COLUMN
 
@@ -308,7 +308,7 @@ Add locale awareness to regular expression character classes
 Enable multibyte support by default (Tatso)
 Add GUC variables client_encoding (Tom)
 Add GB18030 multibyte support (Bill Huang)
-Add CREATE/DROP CONVERSION, allowing loadable encodings (Tatsuo)
+Add CREATE/DROP CONVERSION, allowing loadable encodings (Tatsuo, Kaori)
 Add pg_conversion table (Tatsuo)
 Add SQL99 CONVERT() function (Tatsuo)
 
