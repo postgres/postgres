@@ -66,11 +66,11 @@ create table domarrtest
            ( testint4arr domainint4arr
            , testtextarr domaintextarr
             );
-INSERT INTO domarrtest values ('{2,2}', '{{"a","b"}{"c","d"}}');
-INSERT INTO domarrtest values ('{{2,2}{2,2}}', '{{"a","b"}}');
-INSERT INTO domarrtest values ('{2,2}', '{{"a","b"}{"c","d"}{"e"}}');
-INSERT INTO domarrtest values ('{2,2}', '{{"a"}{"c"}}');
-INSERT INTO domarrtest values (NULL, '{{"a","b"}{"c","d","e"}}');
+INSERT INTO domarrtest values ('{2,2}', '{{"a","b"},{"c","d"}}');
+INSERT INTO domarrtest values ('{{2,2},{2,2}}', '{{"a","b"}}');
+INSERT INTO domarrtest values ('{2,2}', '{{"a","b"},{"c","d"},{"e","f"}}');
+INSERT INTO domarrtest values ('{2,2}', '{{"a"},{"c"}}');
+INSERT INTO domarrtest values (NULL, '{{"a","b","c"},{"d","e","f"}}');
 select * from domarrtest;
 select testint4arr[1], testtextarr[2:2] from domarrtest;
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.105 2004/06/16 01:26:47 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.106 2004/08/05 03:29:37 joe Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -217,7 +217,7 @@ array_in(PG_FUNCTION_ARGS)
 					 errmsg("number of array dimensions (%d) exceeds the maximum allowed (%d)",
 							ndim, MAXDIM)));
 
-		for (q = p; isdigit((unsigned char) *q); q++);
+		for (q = p; isdigit((unsigned char) *q) || (*q == '-') || (*q == '+'); q++);
 		if (q == p)				/* no digits? */
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
@@ -229,7 +229,7 @@ array_in(PG_FUNCTION_ARGS)
 			*q = '\0';
 			lBound[ndim] = atoi(p);
 			p = q + 1;
-			for (q = p; isdigit((unsigned char) *q); q++);
+			for (q = p; isdigit((unsigned char) *q) || (*q == '-') || (*q == '+'); q++);
 			if (q == p)			/* no digits? */
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
@@ -270,6 +270,9 @@ array_in(PG_FUNCTION_ARGS)
 	}
 	else
 	{
+		int			ndim_braces,
+					dim_braces[MAXDIM];
+
 		/* If array dimensions are given, expect '=' operator */
 		if (strncmp(p, ASSGN, strlen(ASSGN)) != 0)
 			ereport(ERROR,
@@ -278,6 +281,27 @@ array_in(PG_FUNCTION_ARGS)
 		p += strlen(ASSGN);
 		while (isspace((unsigned char) *p))
 			p++;
+
+		/*
+		 * intuit dimensions from brace structure -- it better match what
+		 * we were given
+		 */
+		if (*p != '{')
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
+					 errmsg("array value must start with \"{\" or dimension information")));
+		ndim_braces = ArrayCount(p, dim_braces, typdelim);
+		if (ndim_braces != ndim)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
+					 errmsg("array dimensions incompatible with array literal")));
+		for (i = 0; i < ndim; ++i)
+		{
+			if (dim[i] != dim_braces[i])
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
+						errmsg("array dimensions incompatible with array literal")));
+		}
 	}
 
 #ifdef ARRAYDEBUG
@@ -303,7 +327,6 @@ array_in(PG_FUNCTION_ARGS)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 				 errmsg("missing left brace")));
-
 	dataPtr = ReadArrayStr(p, nitems, ndim, dim, &my_extra->proc, typioparam,
 						   typmod, typdelim, typlen, typbyval, typalign,
 						   &nbytes);
@@ -334,13 +357,18 @@ ArrayCount(char *str, int *dim, char typdelim)
 	int			nest_level = 0,
 				i;
 	int			ndim = 1,
-				temp[MAXDIM];
+				temp[MAXDIM],
+				nelems[MAXDIM],
+				nelems_last[MAXDIM];
 	bool		scanning_string = false;
 	bool		eoArray = false;
 	char	   *ptr;
 
 	for (i = 0; i < MAXDIM; ++i)
+	{
 		temp[i] = dim[i] = 0;
+		nelems_last[i] = nelems[i] = 1;
+	}
 
 	if (strncmp(str, "{}", 2) == 0)
 		return 0;
@@ -394,6 +422,16 @@ ArrayCount(char *str, int *dim, char typdelim)
 							(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 							 errmsg("malformed array literal: \"%s\"", str)));
 						nest_level--;
+
+						if ((nelems_last[nest_level] != 1) &&
+							(nelems[nest_level] != nelems_last[nest_level]))
+							ereport(ERROR,
+								(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
+								 errmsg("multidimensional arrays must have "
+										"array expressions with matching "
+										"dimensions")));
+						nelems_last[nest_level] = nelems[nest_level];
+						nelems[nest_level] = 1;
 						if (nest_level == 0)
 							eoArray = itemdone = true;
 						else
@@ -408,7 +446,10 @@ ArrayCount(char *str, int *dim, char typdelim)
 					break;
 				default:
 					if (*ptr == typdelim && !scanning_string)
+					{
 						itemdone = true;
+						nelems[nest_level - 1]++;
+					}
 					break;
 			}
 			if (!itemdone)
@@ -684,8 +725,15 @@ array_out(PG_FUNCTION_ARGS)
 	char	   *p,
 			   *tmp,
 			   *retval,
-			  **values;
-	bool	   *needquotes;
+			  **values,
+				/*
+				 * 33 per dim since we assume 15 digits per number + ':' +'[]'
+				 *
+				 * +2 allows for assignment operator + trailing null
+				 */
+				dims_str[(MAXDIM * 33) + 2];
+	bool	   *needquotes,
+				needdims = false;
 	int			nitems,
 				overall_length,
 				i,
@@ -693,7 +741,8 @@ array_out(PG_FUNCTION_ARGS)
 				k,
 				indx[MAXDIM];
 	int			ndim,
-			   *dim;
+			   *dim,
+			   *lb;
 	ArrayMetaState *my_extra;
 
 	element_type = ARR_ELEMTYPE(v);
@@ -734,12 +783,26 @@ array_out(PG_FUNCTION_ARGS)
 
 	ndim = ARR_NDIM(v);
 	dim = ARR_DIMS(v);
+	lb = ARR_LBOUND(v);
 	nitems = ArrayGetNItems(ndim, dim);
 
 	if (nitems == 0)
 	{
 		retval = pstrdup("{}");
 		PG_RETURN_CSTRING(retval);
+	}
+
+	/*
+	 * we will need to add explicit dimensions if any dimension
+	 * has a lower bound other than one
+	 */
+	for (i = 0; i < ndim; i++)
+	{
+		if (lb[i] != 1)
+		{
+			needdims = true;
+			break;
+		}
 	}
 
 	/*
@@ -798,12 +861,28 @@ array_out(PG_FUNCTION_ARGS)
 	 */
 	for (i = j = 0, k = 1; i < ndim; k *= dim[i++], j += k);
 
-	retval = (char *) palloc(overall_length + 2 * j);
+	/* add explicit dimensions if required */
+	if (needdims)
+	{
+		char   *ptr = dims_str;
+
+		for (i = 0; i < ndim; i++)
+		{
+			sprintf(ptr, "[%d:%d]", lb[i], lb[i] + dim[i] - 1);
+			ptr += strlen(ptr);
+		}
+		*ptr++ = *ASSGN;
+		*ptr = '\0';
+	}
+
+	retval = (char *) palloc(strlen(dims_str) + overall_length + 2 * j);
 	p = retval;
 
 #define APPENDSTR(str)	(strcpy(p, (str)), p += strlen(p))
 #define APPENDCHAR(ch)	(*p++ = (ch), *p = '\0')
 
+	if (needdims)
+		APPENDSTR(dims_str);
 	APPENDCHAR('{');
 	for (i = 0; i < ndim; indx[i++] = 0);
 	j = 0;

@@ -72,29 +72,29 @@ create table domarrtest
            ( testint4arr domainint4arr
            , testtextarr domaintextarr
             );
-INSERT INTO domarrtest values ('{2,2}', '{{"a","b"}{"c","d"}}');
-INSERT INTO domarrtest values ('{{2,2}{2,2}}', '{{"a","b"}}');
-INSERT INTO domarrtest values ('{2,2}', '{{"a","b"}{"c","d"}{"e"}}');
-INSERT INTO domarrtest values ('{2,2}', '{{"a"}{"c"}}');
-INSERT INTO domarrtest values (NULL, '{{"a","b"}{"c","d","e"}}');
+INSERT INTO domarrtest values ('{2,2}', '{{"a","b"},{"c","d"}}');
+INSERT INTO domarrtest values ('{{2,2},{2,2}}', '{{"a","b"}}');
+INSERT INTO domarrtest values ('{2,2}', '{{"a","b"},{"c","d"},{"e","f"}}');
+INSERT INTO domarrtest values ('{2,2}', '{{"a"},{"c"}}');
+INSERT INTO domarrtest values (NULL, '{{"a","b","c"},{"d","e","f"}}');
 select * from domarrtest;
   testint4arr  |     testtextarr     
 ---------------+---------------------
- {2,2}         | {{a,c},{"",d}}
- {{2,2},{0,2}} | {{a,b}}
- {2,2}         | {{a},{c},{e}}
- {2,2}         | {{c},{""}}
-               | {{a,c,""},{"",d,e}}
+ {2,2}         | {{a,b},{c,d}}
+ {{2,2},{2,2}} | {{a,b}}
+ {2,2}         | {{a,b},{c,d},{e,f}}
+ {2,2}         | {{a},{c}}
+               | {{a,b,c},{d,e,f}}
 (5 rows)
 
 select testint4arr[1], testtextarr[2:2] from domarrtest;
  testint4arr | testtextarr 
 -------------+-------------
-           2 | {{"",d}}
+           2 | {{c,d}}
              | 
+           2 | {{c,d}}
            2 | {{c}}
-           2 | {{""}}
-             | {{"",d,e}}
+             | {{d,e,f}}
 (5 rows)
 
 drop table domarrtest;

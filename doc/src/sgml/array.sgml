@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/array.sgml,v 1.35 2004/06/07 04:04:47 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/array.sgml,v 1.36 2004/08/05 03:29:11 joe Exp $ -->
 
 <sect1 id="arrays">
  <title>Arrays</title>
@@ -121,12 +121,23 @@ CREATE TABLE tictactoe (
 INSERT INTO sal_emp
     VALUES ('Bill',
     '{10000, 10000, 10000, 10000}',
-    '{{"meeting", "lunch"}, {}}');
+    '{{"meeting", "lunch"}, {"meeting"}}');
+ERROR:  multidimensional arrays must have array expressions with matching dimensions
+</programlisting>
+
+  Note that multidimensional arrays must have matching extents for each
+  dimension. A mismatch causes an error report.
+
+<programlisting>
+INSERT INTO sal_emp
+    VALUES ('Bill',
+    '{10000, 10000, 10000, 10000}',
+    '{{"meeting", "lunch"}, {"training", "presentation"}}');
 
 INSERT INTO sal_emp
     VALUES ('Carol',
     '{20000, 25000, 25000, 25000}',
-    '{{"talk", "consult"}, {"meeting"}}');
+    '{{"breakfast", "consulting"}, {"meeting", "lunch"}}');
 </programlisting>
   </para>
 
@@ -138,27 +149,16 @@ INSERT INTO sal_emp
   </para>
 
  <para>
-  This can lead to surprising results. For example, the result of the
-  previous two inserts looks like this:
+  The result of the previous two inserts looks like this:
 <programlisting>
 SELECT * FROM sal_emp;
- name  |      pay_by_quarter       |      schedule
--------+---------------------------+--------------------
- Bill  | {10000,10000,10000,10000} | {{meeting},{""}}
- Carol | {20000,25000,25000,25000} | {{talk},{meeting}}
+ name  |      pay_by_quarter       |                 schedule
+-------+---------------------------+-------------------------------------------
+ Bill  | {10000,10000,10000,10000} | {{meeting,lunch},{training,presentation}}
+ Carol | {20000,25000,25000,25000} | {{breakfast,consulting},{meeting,lunch}}
 (2 rows)
 </programlisting>
-  Because the <literal>[2][2]</literal> element of
-  <structfield>schedule</structfield> is missing in each of the
-  <command>INSERT</command> statements, the <literal>[1][2]</literal>
-  element is discarded.
  </para>
-
- <note>
-  <para>
-   Fixing this is on the to-do list.
-  </para>
- </note>
 
  <para>
   The <literal>ARRAY</literal> expression syntax may also be used:
@@ -166,31 +166,14 @@ SELECT * FROM sal_emp;
 INSERT INTO sal_emp
     VALUES ('Bill',
     ARRAY[10000, 10000, 10000, 10000],
-    ARRAY[['meeting', 'lunch'], ['','']]);
+    ARRAY[['meeting', 'lunch'], ['training', 'presentation']]);
 
 INSERT INTO sal_emp
     VALUES ('Carol',
     ARRAY[20000, 25000, 25000, 25000],
-    ARRAY[['talk', 'consult'], ['meeting', '']]);
-SELECT * FROM sal_emp;
- name  |      pay_by_quarter       |           schedule
--------+---------------------------+-------------------------------
- Bill  | {10000,10000,10000,10000} | {{meeting,lunch},{"",""}}
- Carol | {20000,25000,25000,25000} | {{talk,consult},{meeting,""}}
-(2 rows)
+    ARRAY[['breakfast', 'consulting'], ['meeting', 'lunch']]);
 </programlisting>
-  Note that with this syntax, multidimensional arrays must have matching
-  extents for each dimension. A mismatch causes an error report, rather than
-  silently discarding values as in the previous case.
-  For example:
-<programlisting>
-INSERT INTO sal_emp
-    VALUES ('Carol',
-    ARRAY[20000, 25000, 25000, 25000],
-    ARRAY[['talk', 'consult'], ['meeting']]);
-ERROR:  multidimensional arrays must have array expressions with matching dimensions
-</programlisting>
-  Also notice that the array elements are ordinary SQL constants or
+  Notice that the array elements are ordinary SQL constants or
   expressions; for instance, string literals are single quoted, instead of
   double quoted as they would be in an array literal.  The <literal>ARRAY</>
   expression syntax is discussed in more detail in <xref
@@ -247,9 +230,9 @@ SELECT pay_by_quarter[3] FROM sal_emp;
 <programlisting>
 SELECT schedule[1:2][1:1] FROM sal_emp WHERE name = 'Bill';
 
-      schedule
---------------------
- {{meeting},{""}}
+        schedule
+------------------------
+ {{meeting},{training}}
 (1 row)
 </programlisting>
 
@@ -266,9 +249,10 @@ SELECT schedule[1:2][1] FROM sal_emp WHERE name = 'Bill';
   is specified, as in this example:
 <programlisting>
 SELECT schedule[1:2][2] FROM sal_emp WHERE name = 'Bill';
-         schedule
----------------------------
- {{meeting,lunch},{"",""}}
+
+                 schedule
+-------------------------------------------
+ {{meeting,lunch},{training,presentation}}
 (1 row)
 </programlisting>
  </para>
@@ -544,6 +528,47 @@ SELECT * FROM sal_emp WHERE 10000 = ALL (pay_by_quarter);
    brace, or before any individual item string.  Whitespace after an item
    is not ignored, however: after skipping leading whitespace, everything
    up to the next right brace or delimiter is taken as the item value.
+  </para>
+
+  <para>
+   By default, the lower bound index value of an array's dimensions is
+   set to one. If any of an array's dimensions has a lower bound index not
+   equal to one, an additional decoration that indicates the actual
+   array dimensions will precede the array structure decoration.
+   The decoration consists of square braces (<literal>[</> and <literal>]</>)
+   around each array dimension's lower and upper bound indicies, plus
+   a colon (<literal>:</>) delimiter character inbetween. Delimiting the
+   array dimension decoration from the array structure decoration is a
+   single assignment operator (<literal>=</>). For example:
+<programlisting>
+SELECT 1 || ARRAY[2,3] AS array;
+
+     array
+---------------
+ [0:2]={1,2,3}
+(1 row)
+
+SELECT ARRAY[1,2] || ARRAY[[3,4]] AS array;
+
+          array
+--------------------------
+ [0:1][1:2]={{1,2},{3,4}}
+(1 row)
+</programlisting>
+  </para>
+
+  <para>
+   In a similar fashion, an array with non-default indicies may be specified
+   using the same literal syntax. For example:
+<programlisting>
+SELECT f1[1][-2][3] AS e1, f1[1][-1][5] AS e2
+ FROM (SELECT '[1:1][-2:-1][3:5]={{{1,2,3},{4,5,6}}}'::int[] AS f1) AS ss;
+
+ e1 | e2
+----+----
+  1 |  6
+(1 row)
+</programlisting>
   </para>
 
   <para>
