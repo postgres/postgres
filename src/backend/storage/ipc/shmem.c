@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/ipc/shmem.c,v 1.75 2003/12/20 17:31:21 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/ipc/shmem.c,v 1.76 2003/12/21 04:30:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -258,9 +258,7 @@ InitShmemIndex(void)
  * ShmemInitHash -- Create/Attach to and initialize
  *		shared memory hash table.
  *
- * Notes:
- *
- * assume caller is doing some kind of synchronization
+ * We assume caller is doing some kind of synchronization
  * so that two people dont try to create/initialize the
  * table at once.
  */
