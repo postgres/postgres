@@ -6,7 +6,7 @@
 # and "pg_group" tables, which belong to the whole installation rather
 # than any one individual database.
 #
-# $Header: /cvsroot/pgsql/src/bin/pg_dump/Attic/pg_dumpall.sh,v 1.9 2000/12/19 22:12:47 petere Exp $
+# $Header: /cvsroot/pgsql/src/bin/pg_dump/Attic/pg_dumpall.sh,v 1.10 2001/01/25 17:28:15 petere Exp $
 
 CMDNAME=`basename $0`
 
@@ -192,7 +192,7 @@ test "$globals_only" = yes && exit 0
 # connect to them anyway (and besides, we don't want to dump template0).
 
 $PSQL -d template1 -At -F ' ' \
-  -c "SELECT datname, usename, pg_encoding_to_char(d.encoding), datistemplate, datpath FROM pg_database d LEFT JOIN pg_shadow u ON (datdba = usesysid) WHERE datallowconn;" | \
+  -c "SELECT datname, coalesce(usename, (select usename from pg_shadow where usesysid=(select datdba from pg_database where datname='template0'))), pg_encoding_to_char(d.encoding), datistemplate, datpath FROM pg_database d LEFT JOIN pg_shadow u ON (datdba = usesysid) WHERE datallowconn;" | \
 while read DATABASE DBOWNER ENCODING ISTEMPLATE DBPATH; do
     echo
     echo "--"
