@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/spi.c,v 1.81 2002/12/15 21:01:34 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/spi.c,v 1.82 2002/12/17 15:51:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -218,9 +218,6 @@ SPI_execp(void *plan, Datum *Values, char *Nulls, int tcount)
 	res = _SPI_begin_call(true);
 	if (res < 0)
 		return res;
-
-	/* copy plan to current (executor) context */
-	plan = (void *) _SPI_copy_plan(plan, _SPI_CPLAN_CURCXT);
 
 	res = _SPI_execute_plan((_SPI_plan *) plan, Values, Nulls, tcount);
 
@@ -1480,7 +1477,7 @@ _SPI_copy_plan(_SPI_plan *plan, int location)
 		parentcxt = _SPI_current->procCxt;
 	else if (location == _SPI_CPLAN_TOPCXT)
 		parentcxt = TopMemoryContext;
-	else
+	else						/* (this case not currently used) */
 		parentcxt = CurrentMemoryContext;
 
 	/*
