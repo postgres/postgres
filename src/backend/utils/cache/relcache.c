@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/relcache.c,v 1.212 2004/11/20 20:19:52 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/relcache.c,v 1.213 2004/12/12 05:07:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -257,8 +257,8 @@ static Relation RelationSysNameCacheGetRelation(const char *relationName);
 static bool load_relcache_init_file(void);
 static void write_relcache_init_file(void);
 
-static void formrdesc(const char *relationName, int natts,
-		  FormData_pg_attribute *att);
+static void formrdesc(const char *relationName, Oid relationReltype,
+					  bool hasoids, int natts, FormData_pg_attribute *att);
 
 static HeapTuple ScanPgRelation(RelationBuildDescInfo buildinfo, bool indexOK);
 static Relation AllocateRelationDesc(Relation relation, Form_pg_class relp);
@@ -1265,16 +1265,15 @@ LookupOpclassInfo(Oid operatorClassOid,
  * NOTE: we assume we are already switched into CacheMemoryContext.
  */
 static void
-formrdesc(const char *relationName,
-		  int natts,
-		  FormData_pg_attribute *att)
+formrdesc(const char *relationName, Oid relationReltype,
+		  bool hasoids, int natts, FormData_pg_attribute *att)
 {
 	Relation	relation;
 	int			i;
 	bool		has_not_null;
 
 	/*
-	 * allocate new relation desc clear all fields of reldesc
+	 * allocate new relation desc, clear all fields of reldesc
 	 */
 	relation = (Relation) palloc0(sizeof(RelationData));
 	relation->rd_targblock = InvalidBlockNumber;
@@ -1306,6 +1305,7 @@ formrdesc(const char *relationName,
 
 	namestrcpy(&relation->rd_rel->relname, relationName);
 	relation->rd_rel->relnamespace = PG_CATALOG_NAMESPACE;
+	relation->rd_rel->reltype = relationReltype;
 
 	/*
 	 * It's important to distinguish between shared and non-shared
@@ -1318,7 +1318,7 @@ formrdesc(const char *relationName,
 	relation->rd_rel->relpages = 1;
 	relation->rd_rel->reltuples = 1;
 	relation->rd_rel->relkind = RELKIND_RELATION;
-	relation->rd_rel->relhasoids = true;
+	relation->rd_rel->relhasoids = hasoids;
 	relation->rd_rel->relnatts = (int16) natts;
 
 	/*
@@ -1327,12 +1327,10 @@ formrdesc(const char *relationName,
 	 * Unlike the case with the relation tuple, this data had better be right
 	 * because it will never be replaced.  The input values must be
 	 * correctly defined by macros in src/include/catalog/ headers.
-	 *
-	 * Note however that rd_att's tdtypeid, tdtypmod, tdhasoid fields are not
-	 * right at this point.  They will be fixed later when the real
-	 * pg_class row is loaded.
 	 */
-	relation->rd_att = CreateTemplateTupleDesc(natts, false);
+	relation->rd_att = CreateTemplateTupleDesc(natts, hasoids);
+	relation->rd_att->tdtypeid = relationReltype;
+	relation->rd_att->tdtypmod = -1;	/* unnecessary, but... */
 
 	/*
 	 * initialize tuple desc info
@@ -1380,10 +1378,12 @@ formrdesc(const char *relationName,
 	/*
 	 * initialize the rel-has-index flag, using hardwired knowledge
 	 */
-	relation->rd_rel->relhasindex = false;
-
-	/* In bootstrap mode, we have no indexes */
-	if (!IsBootstrapProcessingMode())
+	if (IsBootstrapProcessingMode())
+	{
+		/* In bootstrap mode, we have no indexes */
+		relation->rd_rel->relhasindex = false;
+	}
+	else
 	{
 		/* Otherwise, all the rels formrdesc is used for have indexes */
 		relation->rd_rel->relhasindex = true;
@@ -2348,14 +2348,14 @@ RelationCacheInitialize(void)
 	if (IsBootstrapProcessingMode() ||
 		!load_relcache_init_file())
 	{
-		formrdesc(RelationRelationName,
-				  Natts_pg_class, Desc_pg_class);
-		formrdesc(AttributeRelationName,
-				  Natts_pg_attribute, Desc_pg_attribute);
-		formrdesc(ProcedureRelationName,
-				  Natts_pg_proc, Desc_pg_proc);
-		formrdesc(TypeRelationName,
-				  Natts_pg_type, Desc_pg_type);
+		formrdesc(RelationRelationName, PG_CLASS_RELTYPE_OID,
+				  true, Natts_pg_class, Desc_pg_class);
+		formrdesc(AttributeRelationName, PG_ATTRIBUTE_RELTYPE_OID,
+				  false, Natts_pg_attribute, Desc_pg_attribute);
+		formrdesc(ProcedureRelationName, PG_PROC_RELTYPE_OID,
+				  true, Natts_pg_proc, Desc_pg_proc);
+		formrdesc(TypeRelationName, PG_TYPE_RELTYPE_OID,
+				  true, Natts_pg_type, Desc_pg_type);
 
 #define NUM_CRITICAL_RELS	4	/* fix if you change list above */
 	}
@@ -3422,16 +3422,22 @@ write_relcache_init_file(void)
 		/*
 		 * OK, rename the temp file to its final name, deleting any
 		 * previously-existing init file.
+		 *
+		 * Note: a failure here is possible under Cygwin, if some other
+		 * backend is holding open an unlinked-but-not-yet-gone init file.
+		 * So treat this as a noncritical failure; just remove the useless
+		 * temp file on failure.
 		 */
-		rename(tempfilename, finalfilename);
-		LWLockRelease(RelCacheInitLock);
+		if (rename(tempfilename, finalfilename) < 0)
+			unlink(tempfilename);
 	}
 	else
 	{
 		/* Delete the already-obsolete temp file */
 		unlink(tempfilename);
-		LWLockRelease(RelCacheInitLock);
 	}
+
+	LWLockRelease(RelCacheInitLock);
 }
 
 /*
