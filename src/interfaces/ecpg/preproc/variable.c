@@ -322,7 +322,7 @@ adjust_array(enum ECPGttype type_enum, int *dimension, int *length, int type_dim
 	if (pointer_len>2)
 	{	sprintf(errortext, "No multilevel (more than 2) pointer supported %d",pointer_len);
 	    mmerror(ET_FATAL, errortext);
-//		mmerror(ET_FATAL, "No multilevel (more than 2) pointer supported %d",pointer_len);
+/*		mmerror(ET_FATAL, "No multilevel (more than 2) pointer supported %d",pointer_len);*/
 	}
 	if (pointer_len>1 && type_enum!=ECPGt_char && type_enum!=ECPGt_unsigned_char)
 		mmerror(ET_FATAL, "No pointer to pointer supported for this type");
