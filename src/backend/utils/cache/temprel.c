@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/Attic/temprel.c,v 1.35 2001/03/22 03:59:58 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/Attic/temprel.c,v 1.36 2002/03/29 19:06:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -227,13 +227,7 @@ remove_all_temp_relations(void)
 			continue;			/* ignore it if deleted already */
 
 		if (temp_rel->relkind != RELKIND_INDEX)
-		{
-			char		relname[NAMEDATALEN];
-
-			/* safe from deallocation */
-			strcpy(relname, NameStr(temp_rel->user_relname));
-			heap_drop_with_catalog(relname, allowSystemTableMods);
-		}
+			heap_drop_with_catalog(temp_rel->relid, allowSystemTableMods);
 		else
 			index_drop(temp_rel->relid);
 		/* advance cmd counter to make catalog changes visible */

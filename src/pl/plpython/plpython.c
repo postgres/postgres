@@ -29,7 +29,7 @@
  * MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	$Header: /cvsroot/pgsql/src/pl/plpython/plpython.c,v 1.16 2002/03/06 18:50:32 momjian Exp $
+ *	$Header: /cvsroot/pgsql/src/pl/plpython/plpython.c,v 1.17 2002/03/29 19:06:27 tgl Exp $
  *
  *********************************************************************
  */
@@ -49,16 +49,16 @@
 
 /* postgreSQL stuff
  */
-#include "executor/spi.h"
-#include "commands/trigger.h"
-#include "utils/elog.h"
-#include "fmgr.h"
 #include "access/heapam.h"
-
-#include "tcop/tcopprot.h"
-#include "utils/syscache.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_type.h"
+#include "commands/trigger.h"
+#include "executor/spi.h"
+#include "fmgr.h"
+#include "nodes/makefuncs.h"
+#include "parser/parse_type.h"
+#include "tcop/tcopprot.h"
+#include "utils/syscache.h"
 
 #include <Python.h>
 #include "plpython.h"
@@ -2086,16 +2086,8 @@ PLy_spi_prepare(PyObject * self, PyObject * args)
 					RAISE_EXC(1);
 				}
 				sptr = PyString_AsString(optr);
-				typeTup = SearchSysCache(TYPENAME, PointerGetDatum(sptr),
-										 0, 0, 0);
-				if (!HeapTupleIsValid(typeTup))
-				{
-					PLy_exception_set(PLy_exc_spi_error,
-									"Cache lookup for type `%s' failed.",
-									  sptr);
-					RAISE_EXC(1);
-				}
-
+				/* XXX should extend this to allow qualified type names */
+				typeTup = typenameType(makeTypeName(sptr));
 				Py_DECREF(optr);
 				optr = NULL;	/* this is important */
 

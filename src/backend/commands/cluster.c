@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/cluster.c,v 1.73 2002/03/26 19:15:35 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/cluster.c,v 1.74 2002/03/29 19:06:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -129,7 +129,7 @@ cluster(RangeVar *oldrelation, char *oldindexname)
 	CommandCounterIncrement();
 
 	/* Destroy old heap (along with its index) and rename new. */
-	heap_drop_with_catalog(saveoldrelation->relname, allowSystemTableMods);
+	heap_drop_with_catalog(OIDOldHeap, allowSystemTableMods);
 
 	CommandCounterIncrement();
 

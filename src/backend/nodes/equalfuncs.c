@@ -20,7 +20,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.121 2002/03/22 02:56:31 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.122 2002/03/29 19:06:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -836,7 +836,7 @@ _equalDefineStmt(DefineStmt *a, DefineStmt *b)
 {
 	if (a->defType != b->defType)
 		return false;
-	if (!equalstr(a->defname, b->defname))
+	if (!equal(a->defnames, b->defnames))
 		return false;
 	if (!equal(a->definition, b->definition))
 		return false;
@@ -928,7 +928,7 @@ _equalProcedureStmt(ProcedureStmt *a, ProcedureStmt *b)
 {
 	if (a->replace != b->replace)
 		return false;
-	if (!equalstr(a->funcname, b->funcname))
+	if (!equal(a->funcname, b->funcname))
 		return false;
 	if (!equal(a->argTypes, b->argTypes))
 		return false;
@@ -1071,7 +1071,7 @@ _equalLoadStmt(LoadStmt *a, LoadStmt *b)
 static bool
 _equalCreateDomainStmt(CreateDomainStmt *a, CreateDomainStmt *b)
 {
-	if (!equalstr(a->domainname, b->domainname))
+	if (!equal(a->domainname, b->domainname))
 		return false;
 	if (!equal(a->typename, b->typename))
 		return false;
@@ -1572,11 +1572,15 @@ _equalRangeSubselect(RangeSubselect *a, RangeSubselect *b)
 static bool
 _equalTypeName(TypeName *a, TypeName *b)
 {
-	if (!equalstr(a->name, b->name))
+	if (!equal(a->names, b->names))
+		return false;
+	if (a->typeid != b->typeid)
 		return false;
 	if (a->timezone != b->timezone)
 		return false;
 	if (a->setof != b->setof)
+		return false;
+	if (a->pct_type != b->pct_type)
 		return false;
 	if (a->typmod != b->typmod)
 		return false;

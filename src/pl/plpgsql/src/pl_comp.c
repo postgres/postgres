@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.39 2002/03/26 19:17:02 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.40 2002/03/29 19:06:27 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -47,14 +47,15 @@
 #include "access/heapam.h"
 #include "catalog/catname.h"
 #include "catalog/namespace.h"
-#include "catalog/pg_proc.h"
-#include "catalog/pg_type.h"
-#include "catalog/pg_class.h"
 #include "catalog/pg_attribute.h"
 #include "catalog/pg_attrdef.h"
+#include "catalog/pg_class.h"
+#include "catalog/pg_proc.h"
+#include "catalog/pg_type.h"
 #include "commands/trigger.h"
 #include "executor/spi.h"
 #include "fmgr.h"
+#include "nodes/makefuncs.h"
 #include "parser/gramparse.h"
 #include "parser/parse_type.h"
 #include "tcop/tcopprot.h"
@@ -851,10 +852,8 @@ plpgsql_parse_wordtype(char *word)
 {
 	PLpgSQL_nsitem *nse;
 	char	   *cp;
-	HeapTuple	typeTup;
-	Form_pg_type typeStruct;
-	char	   *typeXlated;
 	bool		old_nsstate;
+	Oid			typeOid;
 
 	/*
 	 * We do our lookups case insensitive
@@ -887,39 +886,46 @@ plpgsql_parse_wordtype(char *word)
 	/*
 	 * Word wasn't found on the namestack. Try to find a data type with
 	 * that name, but ignore pg_type entries that are in fact class types.
+	 *
+	 * XXX this should be improved to handle qualified-type-name references.
 	 */
-	typeXlated = xlateSqlType(cp);
-	typeTup = SearchSysCache(TYPENAME,
-							 PointerGetDatum(typeXlated),
-							 0, 0, 0);
-	if (HeapTupleIsValid(typeTup))
+	typeOid = LookupTypeName(makeTypeName(xlateSqlType(cp)));
+	if (OidIsValid(typeOid))
 	{
-		PLpgSQL_type *typ;
+		HeapTuple	typeTup;
 
-		typeStruct = (Form_pg_type) GETSTRUCT(typeTup);
-
-		if (typeStruct->typrelid != InvalidOid)
+		typeTup = SearchSysCache(TYPEOID,
+								 ObjectIdGetDatum(typeOid),
+								 0, 0, 0);
+		if (HeapTupleIsValid(typeTup))
 		{
+			Form_pg_type typeStruct = (Form_pg_type) GETSTRUCT(typeTup);
+			PLpgSQL_type *typ;
+
+			if (!typeStruct->typisdefined ||
+				typeStruct->typrelid != InvalidOid)
+			{
+				ReleaseSysCache(typeTup);
+				pfree(cp);
+				return T_ERROR;
+			}
+
+			typ = (PLpgSQL_type *) malloc(sizeof(PLpgSQL_type));
+
+			typ->typname = strdup(NameStr(typeStruct->typname));
+			typ->typoid = typeOid;
+			perm_fmgr_info(typeStruct->typinput, &(typ->typinput));
+			typ->typelem = typeStruct->typelem;
+			typ->typbyval = typeStruct->typbyval;
+			typ->typlen = typeStruct->typlen;
+			typ->atttypmod = -1;
+
+			plpgsql_yylval.dtype = typ;
+
 			ReleaseSysCache(typeTup);
 			pfree(cp);
-			return T_ERROR;
+			return T_DTYPE;
 		}
-
-		typ = (PLpgSQL_type *) malloc(sizeof(PLpgSQL_type));
-
-		typ->typname = strdup(NameStr(typeStruct->typname));
-		typ->typoid = typeTup->t_data->t_oid;
-		perm_fmgr_info(typeStruct->typinput, &(typ->typinput));
-		typ->typelem = typeStruct->typelem;
-		typ->typbyval = typeStruct->typbyval;
-		typ->typlen = typeStruct->typlen;
-		typ->atttypmod = -1;
-
-		plpgsql_yylval.dtype = typ;
-
-		ReleaseSysCache(typeTup);
-		pfree(cp);
-		return T_DTYPE;
 	}
 
 	/*

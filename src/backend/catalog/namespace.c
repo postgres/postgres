@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/namespace.c,v 1.1 2002/03/26 19:15:32 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/namespace.c,v 1.2 2002/03/29 19:06:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,6 +22,7 @@
 #include "catalog/namespace.h"
 #include "catalog/pg_namespace.h"
 #include "miscadmin.h"
+#include "nodes/makefuncs.h"
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
 
@@ -123,4 +124,93 @@ RelnameGetRelid(const char *relname)
 {
 	/* XXX Wrong!  must search search path */
 	return get_relname_relid(relname, PG_CATALOG_NAMESPACE);
+}
+
+/*
+ * QualifiedNameGetCreationNamespace
+ *		Given a possibly-qualified name for an object (in List-of-Values
+ *		format), determine what namespace the object should be created in.
+ *		Also extract and return the object name (last component of list).
+ */
+Oid
+QualifiedNameGetCreationNamespace(List *names, char **objname_p)
+{
+	char	   *catalogname;
+	char	   *schemaname = NULL;
+	char	   *objname = NULL;
+	Oid			namespaceId;
+
+	/* deconstruct the name list */
+	switch (length(names))
+	{
+		case 1:
+			objname = strVal(lfirst(names));
+			break;
+		case 2:
+			schemaname = strVal(lfirst(names));
+			objname = strVal(lsecond(names));
+			break;
+		case 3:
+			catalogname = strVal(lfirst(names));
+			schemaname = strVal(lsecond(names));
+			objname = strVal(lfirst(lnext(lnext(names))));
+			/*
+			 * We check the catalog name and then ignore it.
+			 */
+			if (strcmp(catalogname, DatabaseName) != 0)
+				elog(ERROR, "Cross-database references are not implemented");
+			break;
+		default:
+			elog(ERROR, "Improper qualified name (too many dotted names)");
+			break;
+	}
+
+	if (schemaname)
+	{
+		namespaceId = GetSysCacheOid(NAMESPACENAME,
+									 CStringGetDatum(schemaname),
+									 0, 0, 0);
+		if (!OidIsValid(namespaceId))
+			elog(ERROR, "Namespace \"%s\" does not exist",
+				 schemaname);
+	}
+	else
+	{
+		/* XXX Wrong!  Need to get a default schema from somewhere */
+		namespaceId = PG_CATALOG_NAMESPACE;
+	}
+
+	*objname_p = objname;
+	return namespaceId;
+}
+
+/*
+ * makeRangeVarFromNameList
+ *		Utility routine to convert a qualified-name list into RangeVar form.
+ */
+RangeVar *
+makeRangeVarFromNameList(List *names)
+{
+	RangeVar   *rel = makeRangeVar(NULL, NULL);
+
+	switch (length(names))
+	{
+		case 1:
+			rel->relname = strVal(lfirst(names));
+			break;
+		case 2:
+			rel->schemaname = strVal(lfirst(names));
+			rel->relname = strVal(lsecond(names));
+			break;
+		case 3:
+			rel->catalogname = strVal(lfirst(names));
+			rel->schemaname = strVal(lsecond(names));
+			rel->relname = strVal(lfirst(lnext(lnext(names))));
+			break;
+		default:
+			elog(ERROR, "Improper relation name (too many dotted names)");
+			break;
+	}
+
+	return rel;
 }

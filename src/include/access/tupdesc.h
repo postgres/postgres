@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: tupdesc.h,v 1.33 2001/11/05 17:46:31 momjian Exp $
+ * $Id: tupdesc.h,v 1.34 2002/03/29 19:06:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -65,7 +65,7 @@ extern void FreeTupleDesc(TupleDesc tupdesc);
 
 extern bool equalTupleDescs(TupleDesc tupdesc1, TupleDesc tupdesc2);
 
-extern bool TupleDescInitEntry(TupleDesc desc,
+extern void TupleDescInitEntry(TupleDesc desc,
 				   AttrNumber attributeNumber,
 				   char *attributeName,
 				   Oid oidtypeid,
@@ -73,6 +73,6 @@ extern bool TupleDescInitEntry(TupleDesc desc,
 				   int attdim,
 				   bool attisset);
 
-extern TupleDesc BuildDescForRelation(List *schema, char *relname);
+extern TupleDesc BuildDescForRelation(List *schema);
 
 #endif   /* TUPDESC_H */

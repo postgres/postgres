@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parse_type.h,v 1.20 2001/11/05 17:46:35 momjian Exp $
+ * $Id: parse_type.h,v 1.21 2002/03/29 19:06:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,12 +15,18 @@
 #define PARSE_TYPE_H
 
 #include "access/htup.h"
+#include "parser/parse_node.h"
+
 
 typedef HeapTuple Type;
 
+extern Oid	LookupTypeName(const TypeName *typename);
+extern char *TypeNameToString(const TypeName *typename);
+extern Oid	typenameTypeId(const TypeName *typename);
+extern Type typenameType(const TypeName *typename);
+
 extern bool typeidIsValid(Oid id);
 extern Type typeidType(Oid id);
-extern Type typenameType(char *s);
 
 extern Oid	typeTypeId(Type tp);
 extern int16 typeLen(Type t);
@@ -32,7 +38,6 @@ extern Datum stringTypeDatum(Type tp, char *string, int32 atttypmod);
 
 extern char *typeidTypeName(Oid id);
 extern Oid	typeidTypeRelid(Oid type_id);
-extern Oid	typenameTypeId(char *s);
 
 extern void parseTypeString(const char *str, Oid *type_id, int32 *typmod);
 

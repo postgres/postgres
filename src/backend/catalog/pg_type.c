@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_type.c,v 1.69 2002/03/20 19:43:38 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_type.c,v 1.70 2002/03/29 19:06:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,134 +19,42 @@
 #include "catalog/indexing.h"
 #include "catalog/pg_type.h"
 #include "miscadmin.h"
-#include "parser/parse_func.h"
 #include "utils/builtins.h"
-#include "utils/fmgroids.h"
 #include "utils/syscache.h"
 
 
-static Oid TypeShellMakeWithOpenRelation(Relation pg_type_desc,
-							  char *typeName);
-
 /* ----------------------------------------------------------------
- *		TypeGetWithOpenRelation
+ *		TypeShellMake
  *
- *		preforms a scan on pg_type for a type tuple with the
- *		given type name.
- * ----------------------------------------------------------------
- *		pg_type_desc			 -- reldesc for pg_type
- *		typeName				 -- name of type to be fetched
- *		defined					 -- has the type been defined?
- */
-static Oid
-TypeGetWithOpenRelation(Relation pg_type_desc,
-						char *typeName,
-						bool *defined)
-{
-	HeapScanDesc scan;
-	HeapTuple	tup;
-	Oid			typoid;
-	ScanKeyData typeKey[1];
-
-	/*
-	 * initialize the scan key and begin a scan of pg_type
-	 */
-	ScanKeyEntryInitialize(&typeKey[0],
-						   0,
-						   Anum_pg_type_typname,
-						   F_NAMEEQ,
-						   PointerGetDatum(typeName));
-
-	scan = heap_beginscan(pg_type_desc,
-						  0,
-						  SnapshotSelf, /* cache? */
-						  1,
-						  typeKey);
-
-	/*
-	 * get the type tuple, if it exists.
-	 */
-	tup = heap_getnext(scan, 0);
-
-	/*
-	 * if no type tuple exists for the given type name, then end the scan
-	 * and return appropriate information.
-	 */
-	if (!HeapTupleIsValid(tup))
-	{
-		heap_endscan(scan);
-		*defined = false;
-		return InvalidOid;
-	}
-
-	/*
-	 * here, the type tuple does exist so we pull information from the
-	 * typisdefined field of the tuple and return the tuple's oid, which
-	 * is the oid of the type.
-	 */
-	*defined = (bool) ((Form_pg_type) GETSTRUCT(tup))->typisdefined;
-	typoid = tup->t_data->t_oid;
-
-	heap_endscan(scan);
-
-	return typoid;
-}
-
-/* ----------------------------------------------------------------
- *		TypeGet
+ *		This procedure inserts a "shell" tuple into the type
+ *		relation.  The type tuple inserted has invalid values
+ *		and in particular, the "typisdefined" field is false.
  *
- *		Finds the ObjectId of a type, even if uncommitted; "defined"
- *		is only set if the type has actually been defined, i.e., if
- *		the type tuple is not a shell.
- *
- *		Note: the meat of this function is now in the function
- *			  TypeGetWithOpenRelation().  -cim 6/15/90
- *
- *		Also called from util/remove.c
+ *		This is used so that a tuple exists in the catalogs.
+ *		The invalid fields should be fixed up sometime after
+ *		this routine is called, and then the "typeisdefined"
+ *		field is set to true. -cim 6/15/90
  * ----------------------------------------------------------------
  */
 Oid
-TypeGet(char *typeName,			/* name of type to be fetched */
-		bool *defined)			/* has the type been defined? */
+TypeShellMake(const char *typeName, Oid typeNamespace)
 {
 	Relation	pg_type_desc;
-	Oid			typeoid;
-
-	/*
-	 * open the pg_type relation
-	 */
-	pg_type_desc = heap_openr(TypeRelationName, AccessShareLock);
-
-	/*
-	 * scan the type relation for the information we want
-	 */
-	typeoid = TypeGetWithOpenRelation(pg_type_desc,
-									  typeName,
-									  defined);
-
-	/*
-	 * close the type relation and return the type oid.
-	 */
-	heap_close(pg_type_desc, AccessShareLock);
-
-	return typeoid;
-}
-
-/* ----------------------------------------------------------------
- *		TypeShellMakeWithOpenRelation
- *
- * ----------------------------------------------------------------
- */
-static Oid
-TypeShellMakeWithOpenRelation(Relation pg_type_desc, char *typeName)
-{
+	TupleDesc	tupDesc;
 	int			i;
 	HeapTuple	tup;
 	Datum		values[Natts_pg_type];
 	char		nulls[Natts_pg_type];
 	Oid			typoid;
 	NameData	name;
-	TupleDesc	tupDesc;
+
+	Assert(PointerIsValid(typeName));
+
+	/*
+	 * open pg_type
+	 */
+	pg_type_desc = heap_openr(TypeRelationName, RowExclusiveLock);
+	tupDesc = pg_type_desc->rd_att;
 
 	/*
 	 * initialize our *nulls and *values arrays
@@ -162,34 +70,33 @@ TypeShellMakeWithOpenRelation(Relation pg_type_desc, char *typeName)
 	 */
 	i = 0;
 	namestrcpy(&name, typeName);
-	values[i++] = NameGetDatum(&name);	/* 1 */
-	values[i++] = ObjectIdGetDatum(InvalidOid); /* 2 */
-	values[i++] = Int16GetDatum(0);		/* 3 */
-	values[i++] = Int16GetDatum(0);		/* 4 */
-	values[i++] = BoolGetDatum(false);	/* 5 */
-	values[i++] = CharGetDatum(0);		/* 6 */
-	values[i++] = BoolGetDatum(false);	/* 7 */
-	values[i++] = CharGetDatum(0);		/* 8 */
-	values[i++] = ObjectIdGetDatum(InvalidOid); /* 9 */
-	values[i++] = ObjectIdGetDatum(InvalidOid); /* 10 */
-	values[i++] = ObjectIdGetDatum(InvalidOid); /* 11 */
-	values[i++] = ObjectIdGetDatum(InvalidOid); /* 12 */
-	values[i++] = ObjectIdGetDatum(InvalidOid); /* 13 */
-	values[i++] = ObjectIdGetDatum(InvalidOid); /* 14 */
-	values[i++] = CharGetDatum('i');			/* 15 */
-	values[i++] = CharGetDatum('p');			/* 16 */
-	values[i++] = BoolGetDatum(false);			/* 17 */
-	values[i++] = ObjectIdGetDatum(InvalidOid);	/* 18 */
-	values[i++] = Int32GetDatum(-1);			/* 19 */
-	values[i++] = Int32GetDatum(0);				/* 20 */
-	nulls[i++] = 'n';			/* 21 */
-	nulls[i++] = 'n';			/* 22 */
+	values[i++] = NameGetDatum(&name);	/* typname */
+	values[i++] = ObjectIdGetDatum(typeNamespace); /* typnamespace */
+	values[i++] = ObjectIdGetDatum(InvalidOid); /* typowner */
+	values[i++] = Int16GetDatum(0);		/* typlen */
+	values[i++] = Int16GetDatum(0);		/* typprtlen */
+	values[i++] = BoolGetDatum(false);	/* typbyval */
+	values[i++] = CharGetDatum(0);		/* typtype */
+	values[i++] = BoolGetDatum(false);	/* typisdefined */
+	values[i++] = CharGetDatum(0);		/* typdelim */
+	values[i++] = ObjectIdGetDatum(InvalidOid); /* typrelid */
+	values[i++] = ObjectIdGetDatum(InvalidOid); /* typelem */
+	values[i++] = ObjectIdGetDatum(InvalidOid); /* typinput */
+	values[i++] = ObjectIdGetDatum(InvalidOid); /* typoutput */
+	values[i++] = ObjectIdGetDatum(InvalidOid); /* typreceive */
+	values[i++] = ObjectIdGetDatum(InvalidOid); /* typsend */
+	values[i++] = CharGetDatum('i');			/* typalign */
+	values[i++] = CharGetDatum('p');			/* typstorage */
+	values[i++] = BoolGetDatum(false);			/* typnotnull */
+	values[i++] = ObjectIdGetDatum(InvalidOid);	/* typbasetype */
+	values[i++] = Int32GetDatum(-1);			/* typtypmod */
+	values[i++] = Int32GetDatum(0);				/* typndims */
+	nulls[i++] = 'n';			/* typdefaultbin */
+	nulls[i++] = 'n';			/* typdefault */
 
 	/*
-	 * create a new type tuple with FormHeapTuple
+	 * create a new type tuple
 	 */
-	tupDesc = pg_type_desc->rd_att;
-
 	tup = heap_formtuple(tupDesc, values, nulls);
 
 	/*
@@ -208,47 +115,9 @@ TypeShellMakeWithOpenRelation(Relation pg_type_desc, char *typeName)
 	}
 
 	/*
-	 * free the tuple and return the type-oid
+	 * clean up and return the type-oid
 	 */
 	heap_freetuple(tup);
-
-	return typoid;
-}
-
-/* ----------------------------------------------------------------
- *		TypeShellMake
- *
- *		This procedure inserts a "shell" tuple into the type
- *		relation.  The type tuple inserted has invalid values
- *		and in particular, the "typisdefined" field is false.
- *
- *		This is used so that a tuple exists in the catalogs.
- *		The invalid fields should be fixed up sometime after
- *		this routine is called, and then the "typeisdefined"
- *		field is set to true. -cim 6/15/90
- * ----------------------------------------------------------------
- */
-Oid
-TypeShellMake(char *typeName)
-{
-	Relation	pg_type_desc;
-	Oid			typoid;
-
-	Assert(PointerIsValid(typeName));
-
-	/*
-	 * open pg_type
-	 */
-	pg_type_desc = heap_openr(TypeRelationName, RowExclusiveLock);
-
-	/*
-	 * insert the shell tuple
-	 */
-	typoid = TypeShellMakeWithOpenRelation(pg_type_desc, typeName);
-
-	/*
-	 * close pg_type and return the tuple's oid.
-	 */
 	heap_close(pg_type_desc, RowExclusiveLock);
 
 	return typoid;
@@ -266,77 +135,38 @@ TypeShellMake(char *typeName)
  * ----------------------------------------------------------------
  */
 Oid
-TypeCreate(char *typeName,
+TypeCreate(const char *typeName,
+		   Oid typeNamespace,
 		   Oid assignedTypeOid,
 		   Oid relationOid,			/* only for 'c'atalog typeTypes */
 		   int16 internalSize,
 		   int16 externalSize,
 		   char typeType,
 		   char typDelim,
-		   char *inputProcedure,
-		   char *outputProcedure,
-		   char *receiveProcedure,
-		   char *sendProcedure,
-		   char *elementTypeName,
-		   char *baseTypeName,
-		   char *defaultTypeValue,	/* human readable rep */
-		   char *defaultTypeBin,	/* cooked rep */
+		   Oid inputProcedure,
+		   Oid outputProcedure,
+		   Oid receiveProcedure,
+		   Oid sendProcedure,
+		   Oid elementType,
+		   Oid baseType,
+		   const char *defaultTypeValue,	/* human readable rep */
+		   const char *defaultTypeBin,	/* cooked rep */
 		   bool passedByValue,
 		   char alignment,
 		   char storage,
 		   int32 typeMod,
-		   int32 typNDims,			/* Array dimensions for baseTypeName */
+		   int32 typNDims,			/* Array dimensions for baseType */
 		   bool typeNotNull)
 {
-	int			i,
-				j;
 	Relation	pg_type_desc;
-	HeapScanDesc pg_type_scan;
 	Oid			typeObjectId;
-	Oid			elementObjectId = InvalidOid;
-	Oid			baseObjectId = InvalidOid;
 	HeapTuple	tup;
 	char		nulls[Natts_pg_type];
 	char		replaces[Natts_pg_type];
 	Datum		values[Natts_pg_type];
-	char	   *procname;
-	char	   *procs[4];
-	bool		defined;
 	NameData	name;
 	TupleDesc	tupDesc;
-	Oid			argList[FUNC_MAX_ARGS];
-	ScanKeyData typeKey[1];
-
-	/*
-	 * check that the type is not already defined.	It might exist as a
-	 * shell type, however (but only if assignedTypeOid is not given).
-	 */
-	typeObjectId = TypeGet(typeName, &defined);
-	if (OidIsValid(typeObjectId) &&
-		(defined || assignedTypeOid != InvalidOid))
-		elog(ERROR, "type named %s already exists", typeName);
-
-	/*
-	 * if this type has an associated elementType, then we check that it
-	 * is defined.
-	 */
-	if (elementTypeName)
-	{
-		elementObjectId = TypeGet(elementTypeName, &defined);
-		if (!defined)
-			elog(ERROR, "type %s does not exist", elementTypeName);
-	}
-
-	/*
-	 * if this type has an associated baseType, then we check that it
-	 * is defined.
-	 */
-	if (baseTypeName)
-	{
-		baseObjectId = TypeGet(baseTypeName, &defined);
-		if (!defined)
-			elog(ERROR, "type %s does not exist", baseTypeName);
-	}
+	int			i;
 
 	/*
 	 * validate size specifications: either positive (fixed-length) or -1
@@ -353,7 +183,7 @@ TypeCreate(char *typeName,
 		elog(ERROR, "TypeCreate: fixed size types must have storage PLAIN");
 
 	/*
-	 * initialize arrays needed by FormHeapTuple
+	 * initialize arrays needed for heap_formtuple or heap_modifytuple
 	 */
 	for (i = 0; i < Natts_pg_type; ++i)
 	{
@@ -367,94 +197,27 @@ TypeCreate(char *typeName,
 	 */
 	i = 0;
 	namestrcpy(&name, typeName);
-	values[i++] = NameGetDatum(&name);	/* 1 */
-	values[i++] = Int32GetDatum(GetUserId());	/* 2 */
-	values[i++] = Int16GetDatum(internalSize);	/* 3 */
-	values[i++] = Int16GetDatum(externalSize);	/* 4 */
-	values[i++] = BoolGetDatum(passedByValue);	/* 5 */
-	values[i++] = CharGetDatum(typeType);		/* 6 */
-	values[i++] = BoolGetDatum(true);	/* 7 */
-	values[i++] = CharGetDatum(typDelim);		/* 8 */
-	values[i++] = ObjectIdGetDatum(typeType == 'c' ? relationOid : InvalidOid); /* 9 */
-	values[i++] = ObjectIdGetDatum(elementObjectId);	/* 10 */
-
-	procs[0] = inputProcedure;
-	procs[1] = outputProcedure;
-	procs[2] = (receiveProcedure) ? receiveProcedure : inputProcedure;
-	procs[3] = (sendProcedure) ? sendProcedure : outputProcedure;
-
-	for (j = 0; j < 4; ++j)
-	{
-		Oid			procOid;
-
-		procname = procs[j];
-
-		/*
-		 * First look for a 1-argument func with all argtypes 0. This is
-		 * valid for all four kinds of procedure.
-		 */
-		MemSet(argList, 0, FUNC_MAX_ARGS * sizeof(Oid));
-
-		procOid = GetSysCacheOid(PROCNAME,
-								 PointerGetDatum(procname),
-								 Int32GetDatum(1),
-								 PointerGetDatum(argList),
-								 0);
-
-		if (!OidIsValid(procOid))
-		{
-			/*
-			 * For array types, the input procedures may take 3 args (data
-			 * value, element OID, atttypmod); the pg_proc argtype
-			 * signature is 0,OIDOID,INT4OID.  The output procedures may
-			 * take 2 args (data value, element OID).
-			 */
-			if (OidIsValid(elementObjectId) || OidIsValid(baseObjectId))
-			{
-				int			nargs;
-
-				if (j % 2)
-				{
-					/* output proc */
-					nargs = 2;
-					argList[1] = OIDOID;
-				}
-				else
-				{
-					/* input proc */
-					nargs = 3;
-					argList[1] = OIDOID;
-					argList[2] = INT4OID;
-				}
-				procOid = GetSysCacheOid(PROCNAME,
-										 PointerGetDatum(procname),
-										 Int32GetDatum(nargs),
-										 PointerGetDatum(argList),
-										 0);
-			}
-
-			if (!OidIsValid(procOid))
-				func_error("TypeCreate", procname, 1, argList, NULL);
-		}
-
-		values[i++] = ObjectIdGetDatum(procOid);		/* 11 - 14 */
-	}
-
-	/*
-	 * set default alignment
-	 */
-	values[i++] = CharGetDatum(alignment);		/* 15 */
-
-	/*
-	 * set default storage for TOAST
-	 */
-	values[i++] = CharGetDatum(storage);		/* 16 */
-
-	/* set typnotnull, typbasetype, typtypmod, typndims */
-	values[i++] = BoolGetDatum(typeNotNull);		/* 17 */
-	values[i++] = ObjectIdGetDatum(baseObjectId);	/* 18 */
-	values[i++] = Int32GetDatum(typeMod);			/* 19 */
-	values[i++] = Int32GetDatum(typNDims);			/* 20 */
+	values[i++] = NameGetDatum(&name);	/* typname */
+	values[i++] = ObjectIdGetDatum(typeNamespace);	/* typnamespace */
+	values[i++] = Int32GetDatum(GetUserId());	/* typowner */
+	values[i++] = Int16GetDatum(internalSize);	/* typlen */
+	values[i++] = Int16GetDatum(externalSize);	/* typprtlen */
+	values[i++] = BoolGetDatum(passedByValue);	/* typbyval */
+	values[i++] = CharGetDatum(typeType);		/* typtype */
+	values[i++] = BoolGetDatum(true);			/* typisdefined */
+	values[i++] = CharGetDatum(typDelim);		/* typdelim */
+	values[i++] = ObjectIdGetDatum(typeType == 'c' ? relationOid : InvalidOid); /* typrelid */
+	values[i++] = ObjectIdGetDatum(elementType);	/* typelem */
+	values[i++] = ObjectIdGetDatum(inputProcedure);	/* typinput */
+	values[i++] = ObjectIdGetDatum(outputProcedure); /* typoutput */
+	values[i++] = ObjectIdGetDatum(receiveProcedure); /* typreceive */
+	values[i++] = ObjectIdGetDatum(sendProcedure);	/* typsend */
+	values[i++] = CharGetDatum(alignment);		/* typalign */
+	values[i++] = CharGetDatum(storage);		/* typstorage */
+	values[i++] = BoolGetDatum(typeNotNull);		/* typnotnull */
+	values[i++] = ObjectIdGetDatum(baseType);		/* typbasetype */
+	values[i++] = Int32GetDatum(typeMod);			/* typtypmod */
+	values[i++] = Int32GetDatum(typNDims);			/* typndims */
 
 	/*
 	 * initialize the default binary value for this type.  Check for
@@ -465,7 +228,7 @@ TypeCreate(char *typeName,
 										CStringGetDatum(defaultTypeBin));
 	else
 		nulls[i] = 'n';
-	i++;						/* 21 */
+	i++;						/* typdefaultbin */
 
 	/*
 	 * initialize the default value for this type.
@@ -475,36 +238,33 @@ TypeCreate(char *typeName,
 										CStringGetDatum(defaultTypeValue));
 	else
 		nulls[i] = 'n';
-	i++;						/* 22 */
+	i++;						/* typdefault */
 
 	/*
-	 * open pg_type and begin a scan for the type name.
+	 * open pg_type and prepare to insert or update a row.
+	 *
+	 * NOTE: updating will not work correctly in bootstrap mode; but we don't
+	 * expect to be overwriting any shell types in bootstrap mode.
 	 */
 	pg_type_desc = heap_openr(TypeRelationName, RowExclusiveLock);
 
-	ScanKeyEntryInitialize(&typeKey[0],
-						   0,
-						   Anum_pg_type_typname,
-						   F_NAMEEQ,
-						   PointerGetDatum(typeName));
-
-	pg_type_scan = heap_beginscan(pg_type_desc,
-								  0,
-								  SnapshotSelf, /* cache? */
-								  1,
-								  typeKey);
-
-	/*
-	 * define the type either by adding a tuple to the type relation, or
-	 * by updating the fields of the "shell" tuple already there.
-	 */
-	tup = heap_getnext(pg_type_scan, 0);
+	tup = SearchSysCacheCopy(TYPENAMENSP,
+							 CStringGetDatum(typeName),
+							 ObjectIdGetDatum(typeNamespace),
+							 0, 0);
 	if (HeapTupleIsValid(tup))
 	{
-		/* should not happen given prior test? */
-		if (assignedTypeOid != InvalidOid)
+		/*
+		 * check that the type is not already defined.	It may exist as a
+		 * shell type, however (but only if assignedTypeOid is not given).
+		 */
+		if (((Form_pg_type) GETSTRUCT(tup))->typisdefined ||
+			assignedTypeOid != InvalidOid)
 			elog(ERROR, "type %s already exists", typeName);
 
+		/*
+		 * Okay to update existing "shell" type tuple
+		 */
 		tup = heap_modifytuple(tup,
 							   pg_type_desc,
 							   values,
@@ -531,11 +291,7 @@ TypeCreate(char *typeName,
 		typeObjectId = tup->t_data->t_oid;
 	}
 
-	/*
-	 * finish up
-	 */
-	heap_endscan(pg_type_scan);
-
+	/* Update indices (not necessary if bootstrapping) */
 	if (RelationGetForm(pg_type_desc)->relhasindex)
 	{
 		Relation	idescs[Num_pg_type_indices];
@@ -545,19 +301,25 @@ TypeCreate(char *typeName,
 		CatalogCloseIndices(Num_pg_type_indices, idescs);
 	}
 
+	/*
+	 * finish up
+	 */
 	heap_close(pg_type_desc, RowExclusiveLock);
 
 	return typeObjectId;
 }
 
-/* ----------------------------------------------------------------
- *		TypeRename
- *
+/*
+ * TypeRename
  *		This renames a type
- * ----------------------------------------------------------------
+ *
+ * Note: any associated array type is *not* renamed; caller must make
+ * another call to handle that case.  Currently this is only used for
+ * renaming types associated with tables, for which there are no arrays.
  */
 void
-TypeRename(const char *oldTypeName, const char *newTypeName)
+TypeRename(const char *oldTypeName, Oid typeNamespace,
+		   const char *newTypeName)
 {
 	Relation	pg_type_desc;
 	Relation	idescs[Num_pg_type_indices];
@@ -565,15 +327,17 @@ TypeRename(const char *oldTypeName, const char *newTypeName)
 
 	pg_type_desc = heap_openr(TypeRelationName, RowExclusiveLock);
 
-	tuple = SearchSysCacheCopy(TYPENAME,
-							   PointerGetDatum(oldTypeName),
-							   0, 0, 0);
+	tuple = SearchSysCacheCopy(TYPENAMENSP,
+							   CStringGetDatum(oldTypeName),
+							   ObjectIdGetDatum(typeNamespace),
+							   0, 0);
 	if (!HeapTupleIsValid(tuple))
 		elog(ERROR, "type %s does not exist", oldTypeName);
 
-	if (SearchSysCacheExists(TYPENAME,
-							 PointerGetDatum(newTypeName),
-							 0, 0, 0))
+	if (SearchSysCacheExists(TYPENAMENSP,
+							 CStringGetDatum(newTypeName),
+							 ObjectIdGetDatum(typeNamespace),
+							 0, 0))
 		elog(ERROR, "type named %s already exists", newTypeName);
 
 	namestrcpy(&(((Form_pg_type) GETSTRUCT(tuple))->typname), newTypeName);
@@ -596,7 +360,7 @@ TypeRename(const char *oldTypeName, const char *newTypeName)
  * the caller is responsible for pfreeing the result
  */
 char *
-makeArrayTypeName(char *typeName)
+makeArrayTypeName(const char *typeName)
 {
 	char	   *arr;
 

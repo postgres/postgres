@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.173 2002/03/22 02:56:31 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.174 2002/03/29 19:06:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1637,10 +1637,11 @@ _copyTypeName(TypeName *from)
 {
 	TypeName   *newnode = makeNode(TypeName);
 
-	if (from->name)
-		newnode->name = pstrdup(from->name);
+	Node_Copy(from, newnode, names);
+	newnode->typeid = from->typeid;
 	newnode->timezone = from->timezone;
 	newnode->setof = from->setof;
+	newnode->pct_type = from->pct_type;
 	newnode->typmod = from->typmod;
 	Node_Copy(from, newnode, arrayBounds);
 
@@ -2008,7 +2009,7 @@ _copyDefineStmt(DefineStmt *from)
 	DefineStmt *newnode = makeNode(DefineStmt);
 
 	newnode->defType = from->defType;
-	newnode->defname = pstrdup(from->defname);
+	Node_Copy(from, newnode, defnames);
 	Node_Copy(from, newnode, definition);
 
 	return newnode;
@@ -2089,7 +2090,7 @@ _copyProcedureStmt(ProcedureStmt *from)
 	ProcedureStmt *newnode = makeNode(ProcedureStmt);
 
 	newnode->replace = from->replace;
-	newnode->funcname = pstrdup(from->funcname);
+	Node_Copy(from, newnode, funcname);
 	Node_Copy(from, newnode, argTypes);
 	Node_Copy(from, newnode, returnType);
 	Node_Copy(from, newnode, withClause);
@@ -2229,8 +2230,7 @@ _copyCreateDomainStmt(CreateDomainStmt *from)
 {
 	CreateDomainStmt *newnode = makeNode(CreateDomainStmt);
 
-	if (from->domainname)
-		newnode->domainname = pstrdup(from->domainname);
+	Node_Copy(from, newnode, domainname);
 	Node_Copy(from, newnode, typename);
 	Node_Copy(from, newnode, constraints);
 

@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.223 2002/03/26 19:15:56 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.224 2002/03/29 19:06:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -108,11 +108,7 @@ static void transformIndexConstraints(ParseState *pstate,
 						  CreateStmtContext *cxt);
 static void transformFKConstraints(ParseState *pstate,
 					   CreateStmtContext *cxt);
-static Node *transformTypeRefs(ParseState *pstate, Node *stmt);
-
 static void applyColumnNames(List *dst, List *src);
-static void transformTypeRefsList(ParseState *pstate, List *l);
-static void transformTypeRef(ParseState *pstate, TypeName *tn);
 static List *getSetColTypes(ParseState *pstate, Node *node);
 static void transformForUpdate(Query *qry, List *forUpdate);
 static void transformConstraintAttrs(List *constraintList);
@@ -307,18 +303,6 @@ transformStmt(ParseState *pstate, Node *parseTree,
 			else
 				result = transformSetOperationStmt(pstate,
 											   (SelectStmt *) parseTree);
-			break;
-
-			/*
-			 * Convert use of %TYPE in statements where it is permitted.
-			 */
-		case T_ProcedureStmt:
-		case T_CommentStmt:
-		case T_RemoveFuncStmt:
-		case T_DefineStmt:
-			result = makeNode(Query);
-			result->commandType = CMD_UTILITY;
-			result->utilityStmt = transformTypeRefs(pstate, parseTree);
 			break;
 
 		default:
@@ -792,17 +776,24 @@ transformColumnDefinition(ParseState *pstate, CreateStmtContext *cxt,
 
 	/* Check for SERIAL pseudo-types */
 	is_serial = false;
-	if (strcmp(column->typename->name, "serial") == 0 ||
-		strcmp(column->typename->name, "serial4") == 0)
+	if (length(column->typename->names) == 1)
 	{
-		is_serial = true;
-		column->typename->name = pstrdup("int4");
-	}
-	else if (strcmp(column->typename->name, "bigserial") == 0 ||
-			 strcmp(column->typename->name, "serial8") == 0)
-	{
-		is_serial = true;
-		column->typename->name = pstrdup("int8");
+		char	   *typname = strVal(lfirst(column->typename->names));
+
+		if (strcmp(typname, "serial") == 0 ||
+			strcmp(typname, "serial4") == 0)
+		{
+			is_serial = true;
+			column->typename->names = NIL;
+			column->typename->typeid = INT4OID;
+		}
+		else if (strcmp(typname, "bigserial") == 0 ||
+				 strcmp(typname, "serial8") == 0)
+		{
+			is_serial = true;
+			column->typename->names = NIL;
+			column->typename->typeid = INT8OID;
+		}
 	}
 
 	/* Do necessary work on the column type declaration */
@@ -2634,110 +2625,6 @@ transformAlterTableStmt(ParseState *pstate, AlterTableStmt *stmt,
 	return qry;
 }
 
-/*
- * Transform uses of %TYPE in a statement.
- */
-static Node *
-transformTypeRefs(ParseState *pstate, Node *stmt)
-{
-	switch (nodeTag(stmt))
-	{
-		case T_ProcedureStmt:
-			{
-				ProcedureStmt *ps = (ProcedureStmt *) stmt;
-
-				transformTypeRefsList(pstate, ps->argTypes);
-				transformTypeRef(pstate, (TypeName *) ps->returnType);
-				transformTypeRefsList(pstate, ps->withClause);
-			}
-			break;
-
-		case T_CommentStmt:
-			{
-				CommentStmt *cs = (CommentStmt *) stmt;
-
-				transformTypeRefsList(pstate, cs->objlist);
-			}
-			break;
-
-		case T_RemoveFuncStmt:
-			{
-				RemoveFuncStmt *rs = (RemoveFuncStmt *) stmt;
-
-				transformTypeRefsList(pstate, rs->args);
-			}
-			break;
-
-		case T_DefineStmt:
-			{
-				DefineStmt *ds = (DefineStmt *) stmt;
-				List	   *ele;
-
-				foreach(ele, ds->definition)
-				{
-					DefElem    *de = (DefElem *) lfirst(ele);
-
-					if (de->arg != NULL
-						&& IsA(de->arg, TypeName))
-						transformTypeRef(pstate, (TypeName *) de->arg);
-				}
-			}
-			break;
-
-		default:
-			elog(ERROR, "Unsupported type %d in transformTypeRefs",
-				 nodeTag(stmt));
-			break;
-	}
-
-	return stmt;
-}
-
-/*
- * Transform uses of %TYPE in a list.
- */
-static void
-transformTypeRefsList(ParseState *pstate, List *l)
-{
-	List	   *ele;
-
-	foreach(ele, l)
-	{
-		Node	   *elem = lfirst(ele);
-
-		if (elem && IsA(elem, TypeName))
-			transformTypeRef(pstate, (TypeName *) elem);
-	}
-}
-
-/*
- * Transform a TypeName to not use %TYPE.
- */
-static void
-transformTypeRef(ParseState *pstate, TypeName *tn)
-{
-	ColumnRef  *cref;
-	Node	   *n;
-	Var		   *v;
-	char	   *tyn;
-
-	if (tn->attrname == NULL)
-		return;
-	/* XXX this needs work; can't type name be qualified? */
-	cref = makeNode(ColumnRef);
-	cref->fields = makeList2(makeString(tn->name), makeString(tn->attrname));
-	cref->indirection = NIL;
-	n = transformExpr(pstate, (Node *) cref);
-	if (!IsA(n, Var))
-		elog(ERROR, "unsupported expression in %%TYPE");
-	v = (Var *) n;
-	tyn = typeidTypeName(v->vartype);
-	elog(NOTICE, "%s.%s%%TYPE converted to %s", tn->name, tn->attrname, tyn);
-	tn->name = tyn;
-	tn->typmod = v->vartypmod;
-	tn->attrname = NULL;
-}
-
 /* exported so planner can check again after rewriting, query pullup, etc */
 void
 CheckSelectForUpdate(Query *qry)
@@ -3059,15 +2946,7 @@ transformFkeyGetColType(CreateStmtContext *cxt, char *colname)
 		ColumnDef  *col = lfirst(cols);
 
 		if (strcmp(col->colname, colname) == 0)
-		{
-			char	   *buff = TypeNameToInternalName(col->typename);
-
-			result = typenameTypeId(buff);
-			if (!OidIsValid(result))
-				elog(ERROR, "Unable to lookup type %s",
-					 col->typename->name);
-			return result;
-		}
+			return typenameTypeId(col->typename);
 	}
 	/* Perhaps it's a system column name */
 	sysatt = SystemAttributeByName(colname, cxt->hasoids);
@@ -3092,7 +2971,6 @@ transformFkeyGetColType(CreateStmtContext *cxt, char *colname)
 			if (strcmp(name, colname) == 0)
 			{
 				result = rel->rd_att->attrs[count]->atttypid;
-
 				heap_close(rel, NoLock);
 				return result;
 			}
@@ -3111,7 +2989,6 @@ transformFkeyGetColType(CreateStmtContext *cxt, char *colname)
 		if (HeapTupleIsValid(atttuple))
 		{
 			result = ((Form_pg_attribute) GETSTRUCT(atttuple))->atttypid;
-
 			ReleaseSysCache(atttuple);
 			return result;
 		}
@@ -3233,7 +3110,7 @@ static void
 transformColumnType(ParseState *pstate, ColumnDef *column)
 {
 	TypeName   *typename = column->typename;
-	Type		ctype = typenameType(typename->name);
+	Type		ctype = typenameType(typename);
 
 	/*
 	 * Is this the name of a complex type? If so, implement it as a set.

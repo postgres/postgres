@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.120 2002/03/22 02:56:34 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.121 2002/03/29 19:06:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,6 +20,7 @@
 #include "catalog/indexing.h"
 #include "catalog/pg_aggregate.h"
 #include "catalog/pg_inherits.h"
+#include "catalog/pg_namespace.h"
 #include "catalog/pg_proc.h"
 #include "nodes/makefuncs.h"
 #include "parser/parse_agg.h"
@@ -969,9 +970,14 @@ func_get_detail(char *funcname,
 		{
 			Oid			targetType;
 
-			targetType = GetSysCacheOid(TYPENAME,
+			/* XXX WRONG: need to search searchpath for name; but little
+			 * point in fixing before we revise this code for qualified
+			 * funcnames too.
+			 */
+			targetType = GetSysCacheOid(TYPENAMENSP,
 										PointerGetDatum(funcname),
-										0, 0, 0);
+										ObjectIdGetDatum(PG_CATALOG_NAMESPACE),
+										0, 0);
 			if (OidIsValid(targetType) &&
 				!ISCOMPLEX(targetType))
 			{
@@ -1222,13 +1228,11 @@ find_inheritors(Oid relid, Oid **supervec)
 		{
 			/* return the type id, rather than the relation id */
 			Relation	rd;
-			Oid			trelid;
 
 			relid = lfirsti(elt);
 			rd = heap_open(relid, NoLock);
-			trelid = typenameTypeId(RelationGetRelationName(rd));
+			*relidvec++ = rd->rd_rel->reltype;
 			heap_close(rd, NoLock);
-			*relidvec++ = trelid;
 		}
 	}
 	else
@@ -1473,7 +1477,9 @@ ParseComplexProjection(ParseState *pstate,
  * argument types
  */
 void
-func_error(char *caller, char *funcname, int nargs, Oid *argtypes, char *msg)
+func_error(const char *caller, const char *funcname,
+		   int nargs, const Oid *argtypes,
+		   const char *msg)
 {
 	char		p[(NAMEDATALEN + 2) * FUNC_MAX_ARGS],
 			   *ptr;
@@ -1488,9 +1494,9 @@ func_error(char *caller, char *funcname, int nargs, Oid *argtypes, char *msg)
 			*ptr++ = ',';
 			*ptr++ = ' ';
 		}
-		if (argtypes[i] != 0)
+		if (OidIsValid(argtypes[i]))
 		{
-			strcpy(ptr, typeidTypeName(argtypes[i]));
+			strncpy(ptr, typeidTypeName(argtypes[i]), NAMEDATALEN);
 			*(ptr + NAMEDATALEN) = '\0';
 		}
 		else

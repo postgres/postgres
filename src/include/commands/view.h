@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: view.h,v 1.13 2001/11/05 17:46:33 momjian Exp $
+ * $Id: view.h,v 1.14 2002/03/29 19:06:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,7 +16,7 @@
 
 #include "nodes/parsenodes.h"
 
-extern void DefineView(char *view_name, Query *view_parse);
-extern void RemoveView(char *view_name);
+extern void DefineView(const RangeVar *view, Query *view_parse);
+extern void RemoveView(const RangeVar *view);
 
 #endif   /* VIEW_H */

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsenodes.h,v 1.165 2002/03/26 19:16:53 tgl Exp $
+ * $Id: parsenodes.h,v 1.166 2002/03/29 19:06:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -104,16 +104,25 @@ typedef struct Query
 
 /*
  * TypeName - specifies a type in definitions
+ *
+ * For TypeName structures generated internally, it is often easier to
+ * specify the type by OID than by name.  If "names" is NIL then the
+ * actual type OID is given by typeid, otherwise typeid is unused.
+ *
+ * If pct_type is TRUE, then names is actually a field name and we look up
+ * the type of that field.  Otherwise (the normal case), names is a type
+ * name possibly qualified with schema and database name.
  */
 typedef struct TypeName
 {
 	NodeTag		type;
-	char	   *name;			/* name of the type */
+	List	   *names;			/* qualified name (list of Value strings) */
+	Oid			typeid;			/* type identified by OID */
 	bool		timezone;		/* timezone specified? */
 	bool		setof;			/* is a set? */
+	bool		pct_type;		/* %TYPE specified? */
 	int32		typmod;			/* type modifier */
 	List	   *arrayBounds;	/* array bounds */
-	char	   *attrname;		/* field name when using %TYPE */
 } TypeName;
 
 /*
@@ -1023,7 +1032,7 @@ typedef struct DefineStmt
 {
 	NodeTag		type;
 	int			defType;		/* OPERATOR|TYPE_P|AGGREGATE */
-	char	   *defname;
+	List	   *defnames;		/* qualified name (list of Value strings) */
 	List	   *definition;		/* a list of DefElem */
 } DefineStmt;
 
@@ -1034,9 +1043,9 @@ typedef struct DefineStmt
 typedef struct CreateDomainStmt
 {
 	NodeTag		type;
-	char	   *domainname;			/* name of domain to create */
-	TypeName   *typename;			/* the base type */
-	List	   *constraints;		/* constraints (list of Constraint nodes) */
+	List	   *domainname;		/* qualified name (list of Value strings) */
+	TypeName   *typename;		/* the base type */
+	List	   *constraints;	/* constraints (list of Constraint nodes) */
 } CreateDomainStmt;
 
 /* ----------------------
@@ -1055,7 +1064,7 @@ typedef struct CreateDomainStmt
 typedef struct DropStmt
 {
 	NodeTag		type;
-	List	   *objects;
+	List	   *objects;		/* list of sublists of names (as Values) */
 	int			removeType;
 	int	   		behavior;		/* CASCADE or RESTRICT drop behavior */
 } DropStmt;
@@ -1135,9 +1144,9 @@ typedef struct ProcedureStmt
 {
 	NodeTag		type;
 	bool		replace;		/* T => replace if already exists */
-	char	   *funcname;		/* name of function to create */
+	List	   *funcname;		/* name of function to create */
 	List	   *argTypes;		/* list of argument types (TypeName nodes) */
-	Node	   *returnType;		/* the return type (a TypeName node) */
+	TypeName   *returnType;		/* the return type */
 	List	   *withClause;		/* a list of DefElem */
 	List	   *as;				/* definition of function body */
 	char	   *language;		/* C, SQL, etc */
@@ -1151,7 +1160,7 @@ typedef struct RemoveAggrStmt
 {
 	NodeTag		type;
 	char	   *aggname;		/* aggregate to drop */
-	Node	   *aggtype;		/* TypeName for input datatype, or NULL */
+	TypeName   *aggtype;		/* TypeName for input datatype, or NULL */
 } RemoveAggrStmt;
 
 /* ----------------------

@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_aggregate.h,v 1.35 2001/11/05 17:46:32 momjian Exp $
+ * $Id: pg_aggregate.h,v 1.36 2002/03/29 19:06:18 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -155,12 +155,13 @@ DATA(insert OID = 0 ( stddev	PGUID numeric_accum  numeric_stddev		1700 1231 1700
 /*
  * prototypes for functions in pg_aggregate.c
  */
-extern void AggregateCreate(char *aggName,
-				char *aggtransfnName,
-				char *aggfinalfnName,
-				char *aggbasetypeName,
-				char *aggtranstypeName,
-				char *agginitval);
+extern void AggregateCreate(const char *aggName,
+							Oid aggNamespace,
+							char *aggtransfnName,
+							char *aggfinalfnName,
+							Oid aggBaseType,
+							Oid aggTransType,
+							const char *agginitval);
 
 extern Datum AggNameGetInitVal(char *aggName, Oid basetype,
 				  bool *isNull);

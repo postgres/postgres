@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: indexing.h,v 1.59 2002/03/26 19:16:26 tgl Exp $
+ * $Id: indexing.h,v 1.60 2002/03/29 19:06:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -89,7 +89,7 @@
 #define TriggerConstrRelidIndex		"pg_trigger_tgconstrrelid_index"
 #define TriggerRelidIndex			"pg_trigger_tgrelid_index"
 #define TriggerOidIndex				"pg_trigger_oid_index"
-#define TypeNameIndex				"pg_type_typname_index"
+#define TypeNameNspIndex			"pg_type_typname_nsp_index"
 #define TypeOidIndex				"pg_type_oid_index"
 
 /* Arrays of names of indices for each system catalog */
@@ -189,7 +189,7 @@ DECLARE_INDEX(pg_trigger_tgconstrrelid_index on pg_trigger using btree(tgconstrr
 DECLARE_INDEX(pg_trigger_tgrelid_index on pg_trigger using btree(tgrelid oid_ops));
 DECLARE_UNIQUE_INDEX(pg_trigger_oid_index on pg_trigger using btree(oid oid_ops));
 DECLARE_UNIQUE_INDEX(pg_type_oid_index on pg_type using btree(oid oid_ops));
-DECLARE_UNIQUE_INDEX(pg_type_typname_index on pg_type using btree(typname name_ops));
+DECLARE_UNIQUE_INDEX(pg_type_typname_nsp_index on pg_type using btree(typname name_ops, typnamespace oid_ops));
 
 /* last step of initialization script: build the indices declared above */
 BUILD_INDICES

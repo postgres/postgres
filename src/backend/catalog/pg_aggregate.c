@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_aggregate.c,v 1.41 2002/03/20 19:43:35 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_aggregate.c,v 1.42 2002/03/29 19:06:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,34 +23,21 @@
 #include "miscadmin.h"
 #include "parser/parse_coerce.h"
 #include "parser/parse_func.h"
+#include "parser/parse_type.h"
 #include "utils/builtins.h"
 #include "utils/syscache.h"
 
-/* ----------------
+/*
  * AggregateCreate
- *
- * aggregates overloading has been added.  Instead of the full
- * overload support we have for functions, aggregate overloading only
- * applies to exact basetype matches.  That is, we don't check the
- * inheritance hierarchy
- *
- * OLD COMMENTS:
- *		Currently, redefining aggregates using the same name is not
- *		supported.	In such a case, a warning is printed that the
- *		aggregate already exists.  If such is not the case, a new tuple
- *		is created and inserted in the aggregate relation.
- *		All types and functions must have been defined
- *		prior to defining the aggregate.
- *
- * ---------------
  */
 void
-AggregateCreate(char *aggName,
+AggregateCreate(const char *aggName,
+				Oid aggNamespace,
 				char *aggtransfnName,
 				char *aggfinalfnName,
-				char *aggbasetypeName,
-				char *aggtranstypeName,
-				char *agginitval)
+				Oid aggBaseType,
+				Oid aggTransType,
+				const char *agginitval)
 {
 	Relation	aggdesc;
 	HeapTuple	tup;
@@ -59,16 +46,12 @@ AggregateCreate(char *aggName,
 	Form_pg_proc proc;
 	Oid			transfn;
 	Oid			finalfn = InvalidOid;	/* can be omitted */
-	Oid			basetype;
-	Oid			transtype;
 	Oid			finaltype;
 	Oid			fnArgs[FUNC_MAX_ARGS];
 	int			nargs;
 	NameData	aname;
 	TupleDesc	tupDesc;
 	int			i;
-
-	MemSet(fnArgs, 0, FUNC_MAX_ARGS * sizeof(Oid));
 
 	/* sanity checks */
 	if (!aggName)
@@ -77,44 +60,21 @@ AggregateCreate(char *aggName,
 	if (!aggtransfnName)
 		elog(ERROR, "aggregate must have a transition function");
 
-	/*
-	 * Handle the aggregate's base type (input data type).  This can be
-	 * specified as 'ANY' for a data-independent transition function, such
-	 * as COUNT(*).
-	 */
-	basetype = GetSysCacheOid(TYPENAME,
-							  PointerGetDatum(aggbasetypeName),
-							  0, 0, 0);
-	if (!OidIsValid(basetype))
-	{
-		if (strcasecmp(aggbasetypeName, "ANY") != 0)
-			elog(ERROR, "data type %s does not exist",
-				 aggbasetypeName);
-		basetype = InvalidOid;
-	}
-
 	/* make sure there is no existing agg of same name and base type */
 	if (SearchSysCacheExists(AGGNAME,
 							 PointerGetDatum(aggName),
-							 ObjectIdGetDatum(basetype),
+							 ObjectIdGetDatum(aggBaseType),
 							 0, 0))
 		elog(ERROR,
 			 "aggregate function \"%s\" with base type %s already exists",
-			 aggName, aggbasetypeName);
-
-	/* handle transtype */
-	transtype = GetSysCacheOid(TYPENAME,
-							   PointerGetDatum(aggtranstypeName),
-							   0, 0, 0);
-	if (!OidIsValid(transtype))
-		elog(ERROR, "data type %s does not exit",
-			 aggtranstypeName);
+			 aggName, typeidTypeName(aggBaseType));
 
 	/* handle transfn */
-	fnArgs[0] = transtype;
-	if (OidIsValid(basetype))
+	MemSet(fnArgs, 0, FUNC_MAX_ARGS * sizeof(Oid));
+	fnArgs[0] = aggTransType;
+	if (OidIsValid(aggBaseType))
 	{
-		fnArgs[1] = basetype;
+		fnArgs[1] = aggBaseType;
 		nargs = 2;
 	}
 	else
@@ -129,9 +89,9 @@ AggregateCreate(char *aggName,
 	transfn = tup->t_data->t_oid;
 	Assert(OidIsValid(transfn));
 	proc = (Form_pg_proc) GETSTRUCT(tup);
-	if (proc->prorettype != transtype)
+	if (proc->prorettype != aggTransType)
 		elog(ERROR, "return type of transition function %s is not %s",
-			 aggtransfnName, aggtranstypeName);
+			 aggtransfnName, typeidTypeName(aggTransType));
 
 	/*
 	 * If the transfn is strict and the initval is NULL, make sure input
@@ -141,7 +101,7 @@ AggregateCreate(char *aggName,
 	 */
 	if (proc->proisstrict && agginitval == NULL)
 	{
-		if (!IsBinaryCompatible(basetype, transtype))
+		if (!IsBinaryCompatible(aggBaseType, aggTransType))
 			elog(ERROR, "must not omit initval when transfn is strict and transtype is not compatible with input type");
 	}
 	ReleaseSysCache(tup);
@@ -149,7 +109,7 @@ AggregateCreate(char *aggName,
 	/* handle finalfn, if supplied */
 	if (aggfinalfnName)
 	{
-		fnArgs[0] = transtype;
+		fnArgs[0] = aggTransType;
 		fnArgs[1] = 0;
 		tup = SearchSysCache(PROCNAME,
 							 PointerGetDatum(aggfinalfnName),
@@ -169,7 +129,7 @@ AggregateCreate(char *aggName,
 		/*
 		 * If no finalfn, aggregate result type is type of the state value
 		 */
-		finaltype = transtype;
+		finaltype = aggTransType;
 	}
 	Assert(OidIsValid(finaltype));
 
@@ -184,8 +144,8 @@ AggregateCreate(char *aggName,
 	values[Anum_pg_aggregate_aggowner - 1] = Int32GetDatum(GetUserId());
 	values[Anum_pg_aggregate_aggtransfn - 1] = ObjectIdGetDatum(transfn);
 	values[Anum_pg_aggregate_aggfinalfn - 1] = ObjectIdGetDatum(finalfn);
-	values[Anum_pg_aggregate_aggbasetype - 1] = ObjectIdGetDatum(basetype);
-	values[Anum_pg_aggregate_aggtranstype - 1] = ObjectIdGetDatum(transtype);
+	values[Anum_pg_aggregate_aggbasetype - 1] = ObjectIdGetDatum(aggBaseType);
+	values[Anum_pg_aggregate_aggtranstype - 1] = ObjectIdGetDatum(aggTransType);
 	values[Anum_pg_aggregate_aggfinaltype - 1] = ObjectIdGetDatum(finaltype);
 
 	if (agginitval)

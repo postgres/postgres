@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/tupdesc.c,v 1.77 2002/02/27 19:34:11 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/tupdesc.c,v 1.78 2002/03/29 19:05:59 tgl Exp $
  *
  * NOTES
  *	  some of the executor utility code such as "ExecTypeFromTL" should be
@@ -322,7 +322,7 @@ equalTupleDescs(TupleDesc tupdesc1, TupleDesc tupdesc2)
  *		a preallocated tuple descriptor.
  * ----------------------------------------------------------------
  */
-bool
+void
 TupleDescInitEntry(TupleDesc desc,
 				   AttrNumber attributeNumber,
 				   char *attributeName,
@@ -377,39 +377,11 @@ TupleDescInitEntry(TupleDesc desc,
 	att->attnotnull = false;
 	att->atthasdef = false;
 
-	/* ----------------
-	 *	search the system cache for the type tuple of the attribute
-	 *	we are creating so that we can get the typeid and some other
-	 *	stuff.
-	 *
-	 *	Note: in the special case of
-	 *
-	 *		create EMP (name = text, manager = EMP)
-	 *
-	 *	RelationNameCreateHeapRelation() calls BuildDesc() which
-	 *	calls this routine and since EMP does not exist yet, the
-	 *	system cache lookup below fails.  That's fine, but rather
-	 *	then doing a elog(ERROR) we just leave that information
-	 *	uninitialized, return false, then fix things up later.
-	 *	-cim 6/14/90
-	 * ----------------
-	 */
 	tuple = SearchSysCache(TYPEOID,
 						   ObjectIdGetDatum(oidtypeid),
 						   0, 0, 0);
 	if (!HeapTupleIsValid(tuple))
-	{
-		/*
-		 * here type info does not exist yet so we just fill the attribute
-		 * with dummy information and return false.
-		 */
-		att->atttypid = InvalidOid;
-		att->attlen = (int16) 0;
-		att->attbyval = (bool) 0;
-		att->attalign = 'i';
-		att->attstorage = 'p';
-		return false;
-	}
+		elog(ERROR, "Unable to look up type id %u", oidtypeid);
 
 	/*
 	 * type info exists so we initialize our attribute information from
@@ -477,56 +449,16 @@ TupleDescInitEntry(TupleDesc desc,
 	}
 
 	ReleaseSysCache(tuple);
-
-	return true;
 }
 
 
-/* ----------------------------------------------------------------
- *		TupleDescMakeSelfReference
+/*
+ * BuildDescForRelation
  *
- *		This function initializes a "self-referential" attribute like
- *		manager in "create EMP (name=text, manager = EMP)".
- *		It calls TypeShellMake() which inserts a "shell" type
- *		tuple into pg_type.  A self-reference is one kind of set, so
- *		its size and byval are the same as for a set.  See the comments
- *		above in TupleDescInitEntry.
- * ----------------------------------------------------------------
- */
-static void
-TupleDescMakeSelfReference(TupleDesc desc,
-						   AttrNumber attnum,
-						   char *relname)
-{
-	Form_pg_attribute att;
-
-	att = desc->attrs[attnum - 1];
-	att->atttypid = TypeShellMake(relname);
-	att->attlen = sizeof(Oid);
-	att->attbyval = true;
-	att->attalign = 'i';
-	att->attstorage = 'p';
-	att->attndims = 0;
-}
-
-/* ----------------------------------------------------------------
- *		BuildDescForRelation
- *
- *		This is a general purpose function identical to BuildDesc
- *		but is used by the DefineRelation() code to catch the
- *		special case where you
- *
- *				create FOO ( ..., x = FOO )
- *
- *		here, the initial type lookup for "x = FOO" will fail
- *		because FOO isn't in the catalogs yet.  But since we
- *		are creating FOO, instead of doing an elog() we add
- *		a shell type tuple to pg_type and fix things later
- *		in amcreate().
- * ----------------------------------------------------------------
+ * Given a relation schema (list of ColumnDef nodes), build a TupleDesc.
  */
 TupleDesc
-BuildDescForRelation(List *schema, char *relname)
+BuildDescForRelation(List *schema)
 {
 	int			natts;
 	AttrNumber	attnum;
@@ -535,7 +467,6 @@ BuildDescForRelation(List *schema, char *relname)
 	AttrDefault *attrdef = NULL;
 	TupleConstr *constr = (TupleConstr *) palloc(sizeof(TupleConstr));
 	char	   *attname;
-	char		typename[NAMEDATALEN];
 	int32		atttypmod;
 	int			attdim;
 	int			ndef = 0;
@@ -553,7 +484,6 @@ BuildDescForRelation(List *schema, char *relname)
 	foreach(p, schema)
 	{
 		ColumnDef  *entry = lfirst(p);
-		List	   *arry;
 
 		/*
 		 * for each entry in the list, get the name and type information
@@ -563,39 +493,13 @@ BuildDescForRelation(List *schema, char *relname)
 		attnum++;
 
 		attname = entry->colname;
-		arry = entry->typename->arrayBounds;
 		attisset = entry->typename->setof;
 		atttypmod = entry->typename->typmod;
+		attdim = length(entry->typename->arrayBounds);
 
-		if (arry != NIL)
-		{
-			/* array of XXX is _XXX */
-			snprintf(typename, NAMEDATALEN,
-					 "_%.*s", NAMEDATALEN - 2, entry->typename->name);
-			attdim = length(arry);
-		}
-		else
-		{
-			StrNCpy(typename, entry->typename->name, NAMEDATALEN);
-			attdim = 0;
-		}
-
-		if (!TupleDescInitEntry(desc, attnum, attname,
-								typenameTypeId(typename),
-								atttypmod, attdim, attisset))
-		{
-			/*
-			 * if TupleDescInitEntry() fails, it means there is no type in
-			 * the system catalogs.  So now we check if the type name
-			 * equals the relation name.  If so we have a self reference,
-			 * otherwise it's an error.
-			 */
-			if (strcmp(typename, relname) == 0)
-				TupleDescMakeSelfReference(desc, attnum, relname);
-			else
-				elog(ERROR, "DefineRelation: no such type %s",
-					 typename);
-		}
+		TupleDescInitEntry(desc, attnum, attname,
+						   typenameTypeId(entry->typename),
+						   atttypmod, attdim, attisset);
 
 		/* This is for constraints */
 		if (entry->is_not_null)

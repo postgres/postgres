@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.192 2002/03/26 19:15:25 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.193 2002/03/29 19:05:59 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -74,8 +74,10 @@ static void DeleteRelationTuple(Relation rel);
 static void DeleteTypeTuple(Relation rel);
 static void RelationRemoveIndexes(Relation relation);
 static void RelationRemoveInheritance(Relation relation);
-static void AddNewRelationType(char *typeName, Oid new_rel_oid,
-				   Oid new_type_oid);
+static void AddNewRelationType(const char *typeName,
+							   Oid typeNamespace,
+							   Oid new_rel_oid,
+							   Oid new_type_oid);
 static void StoreAttrDefault(Relation rel, AttrNumber attnum, char *adbin);
 static void StoreRelCheck(Relation rel, char *ccname, char *ccbin);
 static void StoreConstraints(Relation rel, TupleDesc tupdesc);
@@ -242,7 +244,7 @@ heap_create(char *relname,
 	 * have to take special care for those rels that should be nailed
 	 * in cache and/or are shared across databases.
 	 */
-	if (relname && relnamespace == PG_CATALOG_NAMESPACE)
+	if (relnamespace == PG_CATALOG_NAMESPACE)
 	{
 		if (strcmp(TypeRelationName, relname) == 0)
 		{
@@ -622,7 +624,10 @@ AddNewRelationTuple(Relation pg_class_desc,
  * --------------------------------
  */
 static void
-AddNewRelationType(char *typeName, Oid new_rel_oid, Oid new_type_oid)
+AddNewRelationType(const char *typeName,
+				   Oid typeNamespace,
+				   Oid new_rel_oid,
+				   Oid new_type_oid)
 {
 	/*
 	 * The sizes are set to oid size because it makes implementing sets
@@ -634,18 +639,19 @@ AddNewRelationType(char *typeName, Oid new_rel_oid, Oid new_type_oid)
 	 * true makes sets much easier, and it isn't used by anything else.
 	 */
 	TypeCreate(typeName,		/* type name */
+			   typeNamespace,	/* type namespace */
 			   new_type_oid,	/* preassigned oid for type */
 			   new_rel_oid,		/* relation oid */
 			   sizeof(Oid),		/* internal size */
 			   -1,				/* external size */
-			   'c',				/* type-type (catalog) */
+			   'c',				/* type-type (complex) */
 			   ',',				/* default array delimiter */
-			   "oidin",			/* input procedure */
-			   "oidout",		/* output procedure */
-			   "oidin",			/* receive procedure */
-			   "oidout",		/* send procedure */
-			   NULL,			/* array element type - irrelevant */
-			   NULL,			/* baseType Name -- typically for domains */
+			   F_OIDIN,			/* input procedure */
+			   F_OIDOUT,		/* output procedure */
+			   F_OIDIN,			/* receive procedure */
+			   F_OIDOUT,		/* send procedure */
+			   InvalidOid,		/* array element type - irrelevant */
+			   InvalidOid,		/* domain base type - irrelevant */
 			   NULL,			/* default type value - none */
 			   NULL,			/* default type binary representation */
 			   true,			/* passed by value */
@@ -744,7 +750,7 @@ heap_create_with_catalog(char *relname,
 	 * NOTE: we could get a unique-index failure here, in case the same name
 	 * has already been used for a type.
 	 */
-	AddNewRelationType(relname, new_rel_oid, new_type_oid);
+	AddNewRelationType(relname, relnamespace, new_rel_oid, new_type_oid);
 
 	/*
 	 * now add tuples to pg_attribute for the attributes in our new
@@ -1002,15 +1008,13 @@ RelationTruncateIndexes(Oid heapId)
  */
 
 void
-heap_truncate(const char *relname)
+heap_truncate(Oid rid)
 {
 	Relation	rel;
-	Oid			rid;
 
 	/* Open relation for processing, and grab exclusive access on it. */
 
-	rel = heap_openr(relname, AccessExclusiveLock);
-	rid = RelationGetRelid(rel);
+	rel = heap_open(rid, AccessExclusiveLock);
 
 	/*
 	 * TRUNCATE TABLE within a transaction block is dangerous, because if
@@ -1217,21 +1221,22 @@ DeleteTypeTuple(Relation rel)
  * ----------------------------------------------------------------
  */
 void
-heap_drop_with_catalog(const char *relname,
+heap_drop_with_catalog(Oid rid,
 					   bool allow_system_table_mods)
 {
 	Relation	rel;
-	Oid			rid;
+	Oid			toasttableOid;
 	bool		has_toasttable;
-	bool		istemp = is_temp_rel_name(relname);
+	bool		istemp;
 	int			i;
 
 	/*
 	 * Open and lock the relation.
 	 */
-	rel = heap_openr(relname, AccessExclusiveLock);
-	rid = RelationGetRelid(rel);
+	rel = heap_open(rid, AccessExclusiveLock);
 	has_toasttable = rel->rd_rel->reltoastrelid != InvalidOid;
+	toasttableOid = rel->rd_rel->reltoastrelid;
+	istemp = is_temp_rel_name(RelationGetRelationName(rel));
 
 	/*
 	 * prevent deletion of system relations
@@ -1319,12 +1324,7 @@ heap_drop_with_catalog(const char *relname,
 		remove_temp_rel_by_relid(rid);
 
 	if (has_toasttable)
-	{
-		char		toast_relname[NAMEDATALEN];
-
-		sprintf(toast_relname, "pg_toast_%u", rid);
-		heap_drop_with_catalog(toast_relname, true);
-	}
+		heap_drop_with_catalog(toasttableOid, true);
 }
 
 

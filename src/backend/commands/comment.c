@@ -7,7 +7,7 @@
  * Copyright (c) 1999-2001, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/comment.c,v 1.37 2002/03/26 19:15:38 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/comment.c,v 1.38 2002/03/29 19:06:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,9 +27,10 @@
 #include "catalog/pg_type.h"
 #include "commands/comment.h"
 #include "miscadmin.h"
+#include "nodes/makefuncs.h"
 #include "parser/parse_agg.h"
-#include "parser/parse_expr.h"
 #include "parser/parse_func.h"
+#include "parser/parse_type.h"
 #include "parser/parse.h"
 #include "rewrite/rewriteRemove.h"
 #include "utils/acl.h"
@@ -51,14 +52,16 @@
 
 static void CommentRelation(int objtype, char * schemaname, char *relation,
 							char *comment);
-static void CommentAttribute(char *relation, char *attrib, char *comment);
+static void CommentAttribute(char * schemaname, char *relation,
+							 char *attrib, char *comment);
 static void CommentDatabase(char *database, char *comment);
 static void CommentRewrite(char *rule, char *comment);
 static void CommentType(char *type, char *comment);
 static void CommentAggregate(char *aggregate, List *arguments, char *comment);
 static void CommentProc(char *function, List *arguments, char *comment);
 static void CommentOperator(char *opname, List *arguments, char *comment);
-static void CommentTrigger(char *trigger, char *relation, char *comments);
+static void CommentTrigger(char *trigger, char *schemaname, char *relation,
+						   char *comments);
 
 
 /*------------------------------------------------------------------
@@ -88,7 +91,7 @@ CommentObject(int objtype, char *schemaname, char *objname, char *objproperty,
 			CommentRelation(objtype, schemaname, objname, comment);
 			break;
 		case COLUMN:
-			CommentAttribute(objname, objproperty, comment);
+			CommentAttribute(schemaname, objname, objproperty, comment);
 			break;
 		case DATABASE:
 			CommentDatabase(objname, comment);
@@ -109,7 +112,7 @@ CommentObject(int objtype, char *schemaname, char *objname, char *objproperty,
 			CommentOperator(objname, objlist, comment);
 			break;
 		case TRIGGER:
-			CommentTrigger(objname, objproperty, comment);
+			CommentTrigger(objname, schemaname, objproperty, comment);
 			break;
 		default:
 			elog(ERROR, "An attempt was made to comment on a unknown type: %d",
@@ -391,14 +394,18 @@ CommentRelation(int reltype, char *schemaname, char *relname, char *comment)
 */
 
 static void
-CommentAttribute(char *relname, char *attrname, char *comment)
+CommentAttribute(char *schemaname, char *relname, char *attrname, char *comment)
 {
+	RangeVar   *rel = makeNode(RangeVar);
 	Relation	relation;
 	AttrNumber	attnum;
 
 	/* Open the containing relation to ensure it won't go away meanwhile */
 
-	relation = heap_openr(relname, AccessShareLock);
+	rel->relname = relname;
+	rel->schemaname = schemaname;
+	rel->istemp = false;
+	relation = heap_openrv(rel, AccessShareLock);
 
 	/* Check object security */
 
@@ -539,11 +546,8 @@ CommentType(char *type, char *comment)
 
 	/* Find the type's oid */
 
-	oid = GetSysCacheOid(TYPENAME,
-						 PointerGetDatum(type),
-						 0, 0, 0);
-	if (!OidIsValid(oid))
-		elog(ERROR, "type '%s' does not exist", type);
+	/* XXX WRONG: need to deal with qualified type names */
+	oid = typenameTypeId(makeTypeName(type));
 
 	/* Check object security */
 
@@ -570,21 +574,13 @@ static void
 CommentAggregate(char *aggregate, List *arguments, char *comment)
 {
 	TypeName   *aggtype = (TypeName *) lfirst(arguments);
-	char	   *aggtypename;
 	Oid			baseoid,
 				oid;
 	Oid			classoid;
-	bool		defined;
 
 	/* First, attempt to determine the base aggregate oid */
-
 	if (aggtype)
-	{
-		aggtypename = TypeNameToInternalName(aggtype);
-		baseoid = TypeGet(aggtypename, &defined);
-		if (!OidIsValid(baseoid))
-			elog(ERROR, "type '%s' does not exist", aggtypename);
-	}
+		baseoid = typenameTypeId(aggtype);
 	else
 		baseoid = InvalidOid;
 
@@ -648,20 +644,19 @@ CommentProc(char *function, List *arguments, char *comment)
 	for (i = 0; i < argcount; i++)
 	{
 		TypeName   *t = (TypeName *) lfirst(arguments);
-		char	   *typnam = TypeNameToInternalName(t);
+
+		argoids[i] = LookupTypeName(t);
+		if (!OidIsValid(argoids[i]))
+		{
+			char      *typnam = TypeNameToString(t);
+
+			if (strcmp(typnam, "opaque") == 0)
+				argoids[i] = InvalidOid;
+			else
+				elog(ERROR, "Type \"%s\" does not exist", typnam);
+		}
 
 		arguments = lnext(arguments);
-
-		if (strcmp(typnam, "opaque") == 0)
-			argoids[i] = InvalidOid;
-		else
-		{
-			argoids[i] = GetSysCacheOid(TYPENAME,
-										PointerGetDatum(typnam),
-										0, 0, 0);
-			if (!OidIsValid(argoids[i]))
-				elog(ERROR, "CommentProc: type '%s' not found", typnam);
-		}
 	}
 
 	/* Now, find the corresponding oid for this procedure */
@@ -707,40 +702,20 @@ CommentOperator(char *opername, List *arguments, char *comment)
 {
 	TypeName   *typenode1 = (TypeName *) lfirst(arguments);
 	TypeName   *typenode2 = (TypeName *) lsecond(arguments);
-	char		oprtype = 0,
-			   *lefttype = NULL,
-			   *righttype = NULL;
+	char		oprtype = 0;
 	Form_pg_operator data;
 	HeapTuple	optuple;
 	Oid			oid,
 				leftoid = InvalidOid,
 				rightoid = InvalidOid;
-	bool		defined;
 
-	/* Initialize our left and right argument types */
-
+	/* Attempt to fetch the left type oid, if specified */
 	if (typenode1 != NULL)
-		lefttype = TypeNameToInternalName(typenode1);
+		leftoid = typenameTypeId(typenode1);
+
+	/* Attempt to fetch the right type oid, if specified */
 	if (typenode2 != NULL)
-		righttype = TypeNameToInternalName(typenode2);
-
-	/* Attempt to fetch the left oid, if specified */
-
-	if (lefttype != NULL)
-	{
-		leftoid = TypeGet(lefttype, &defined);
-		if (!OidIsValid(leftoid))
-			elog(ERROR, "left type '%s' does not exist", lefttype);
-	}
-
-	/* Attempt to fetch the right oid, if specified */
-
-	if (righttype != NULL)
-	{
-		rightoid = TypeGet(righttype, &defined);
-		if (!OidIsValid(rightoid))
-			elog(ERROR, "right type '%s' does not exist", righttype);
-	}
+		rightoid = typenameTypeId(typenode2);
 
 	/* Determine operator type */
 
@@ -797,8 +772,9 @@ CommentOperator(char *opername, List *arguments, char *comment)
 */
 
 static void
-CommentTrigger(char *trigger, char *relname, char *comment)
+CommentTrigger(char *trigger, char *schemaname, char *relname, char *comment)
 {
+	RangeVar   *rel = makeNode(RangeVar);
 	Relation	pg_trigger,
 				relation;
 	HeapTuple	triggertuple;
@@ -808,7 +784,10 @@ CommentTrigger(char *trigger, char *relname, char *comment)
 
 	/* First, validate the user's action */
 
-	relation = heap_openr(relname, AccessShareLock);
+	rel->relname = relname;
+	rel->schemaname = schemaname;
+	rel->istemp = false;
+	relation = heap_openrv(rel, AccessShareLock);
 
 	if (!pg_class_ownercheck(RelationGetRelid(relation), GetUserId()))
 		elog(ERROR, "you are not permitted to comment on trigger '%s' %s '%s'",

@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: view.c,v 1.60 2002/03/22 02:56:31 tgl Exp $
+ *	$Id: view.c,v 1.61 2002/03/29 19:06:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -14,6 +14,7 @@
 
 #include "access/xact.h"
 #include "catalog/heap.h"
+#include "catalog/namespace.h"
 #include "commands/creatinh.h"
 #include "commands/view.h"
 #include "miscadmin.h"
@@ -24,6 +25,7 @@
 #include "rewrite/rewriteManip.h"
 #include "rewrite/rewriteRemove.h"
 #include "rewrite/rewriteSupport.h"
+#include "utils/syscache.h"
 
 
 /*---------------------------------------------------------------------
@@ -38,10 +40,9 @@
  *---------------------------------------------------------------------
  */
 static Oid
-DefineVirtualRelation(char *relname, List *tlist)
+DefineVirtualRelation(const RangeVar *relation, List *tlist)
 {
 	CreateStmt *createStmt = makeNode(CreateStmt);
-	RangeVar   *rel = makeNode(RangeVar);
 	List	   *attrList,
 			   *t;
 
@@ -57,14 +58,12 @@ DefineVirtualRelation(char *relname, List *tlist)
 
 		if (!res->resjunk)
 		{
-			char	   *resname = res->resname;
-			char	   *restypename = typeidTypeName(res->restype);
 			ColumnDef  *def = makeNode(ColumnDef);
 			TypeName   *typename = makeNode(TypeName);
 
-			def->colname = pstrdup(resname);
+			def->colname = pstrdup(res->resname);
 
-			typename->name = pstrdup(restypename);
+			typename->typeid = res->restype;
 			typename->typmod = res->restypmod;
 			def->typename = typename;
 
@@ -84,10 +83,7 @@ DefineVirtualRelation(char *relname, List *tlist)
 	 * now create the parameters for keys/inheritance etc. All of them are
 	 * nil...
 	 */
-	rel->relname = relname;
-	rel->schemaname = NULL;		/* XXX wrong */
-	rel->istemp = false;
-	createStmt->relation = rel;
+	createStmt->relation = (RangeVar *) relation;
 	createStmt->tableElts = attrList;
 	createStmt->inhRelations = NIL;
 	createStmt->constraints = NIL;
@@ -100,25 +96,19 @@ DefineVirtualRelation(char *relname, List *tlist)
 }
 
 static RuleStmt *
-FormViewRetrieveRule(char *viewName, Query *viewParse)
+FormViewRetrieveRule(const RangeVar *view, Query *viewParse)
 {
 	RuleStmt   *rule;
 	char	   *rname;
-	RangeVar   *rel;
 
 	/*
 	 * Create a RuleStmt that corresponds to the suitable rewrite rule
 	 * args for DefineQueryRewrite();
 	 */
-	rname = MakeRetrieveViewRuleName(viewName);
-
-	rel = makeNode(RangeVar);
-	rel->relname = pstrdup(viewName);
-	rel->inhOpt = INH_NO;
-	rel->alias = NULL;
+	rname = MakeRetrieveViewRuleName(view->relname);
 
 	rule = makeNode(RuleStmt);
-	rule->relation = rel;
+	rule->relation = copyObject((RangeVar *) view);
 	rule->rulename = pstrdup(rname);
 	rule->whereClause = NULL;
 	rule->event = CMD_SELECT;
@@ -129,7 +119,7 @@ FormViewRetrieveRule(char *viewName, Query *viewParse)
 }
 
 static void
-DefineViewRules(char *viewName, Query *viewParse)
+DefineViewRules(const RangeVar *view, Query *viewParse)
 {
 	RuleStmt   *retrieve_rule;
 
@@ -139,13 +129,13 @@ DefineViewRules(char *viewName, Query *viewParse)
 	RuleStmt   *delete_rule;
 #endif
 
-	retrieve_rule = FormViewRetrieveRule(viewName, viewParse);
+	retrieve_rule = FormViewRetrieveRule(view, viewParse);
 
 #ifdef NOTYET
 
-	replace_rule = FormViewReplaceRule(viewName, viewParse);
-	append_rule = FormViewAppendRule(viewName, viewParse);
-	delete_rule = FormViewDeleteRule(viewName, viewParse);
+	replace_rule = FormViewReplaceRule(view, viewParse);
+	append_rule = FormViewAppendRule(view, viewParse);
+	delete_rule = FormViewDeleteRule(view, viewParse);
 #endif
 
 	DefineQueryRewrite(retrieve_rule);
@@ -231,7 +221,7 @@ UpdateRangeTableOfViewParse(Oid viewOid, Query *viewParse)
  *-------------------------------------------------------------------
  */
 void
-DefineView(char *viewName, Query *viewParse)
+DefineView(const RangeVar *view, Query *viewParse)
 {
 	Oid			viewOid;
 
@@ -240,7 +230,7 @@ DefineView(char *viewName, Query *viewParse)
 	 *
 	 * NOTE: if it already exists, the xact will be aborted.
 	 */
-	viewOid = DefineVirtualRelation(viewName, viewParse->targetList);
+	viewOid = DefineVirtualRelation(view, viewParse->targetList);
 
 	/*
 	 * The relation we have just created is not visible to any other
@@ -258,7 +248,7 @@ DefineView(char *viewName, Query *viewParse)
 	/*
 	 * Now create the rules associated with the view.
 	 */
-	DefineViewRules(viewName, viewParse);
+	DefineViewRules(view, viewParse);
 }
 
 /*------------------------------------------------------------------
@@ -268,11 +258,14 @@ DefineView(char *viewName, Query *viewParse)
  *------------------------------------------------------------------
  */
 void
-RemoveView(char *viewName)
+RemoveView(const RangeVar *view)
 {
+	Oid			viewOid;
+
+	viewOid = RangeVarGetRelid(view, false);
 	/*
 	 * We just have to drop the relation; the associated rules will be
 	 * cleaned up automatically.
 	 */
-	heap_drop_with_catalog(viewName, allowSystemTableMods);
+	heap_drop_with_catalog(viewOid, allowSystemTableMods);
 }

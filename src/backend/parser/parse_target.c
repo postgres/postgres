@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_target.c,v 1.79 2002/03/22 02:56:34 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_target.c,v 1.80 2002/03/29 19:06:12 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -525,8 +525,15 @@ FigureColnameInternal(Node *node, char **name)
 		case T_A_Const:
 			if (((A_Const *) node)->typename != NULL)
 			{
-				*name = ((A_Const *) node)->typename->name;
-				return 1;
+				List	   *names = ((A_Const *) node)->typename->names;
+
+				if (names != NIL)
+				{
+					while (lnext(names) != NIL)
+						names = lnext(names);
+					*name = strVal(lfirst(names));
+					return 1;
+				}
 			}
 			break;
 		case T_TypeCast:
@@ -536,8 +543,15 @@ FigureColnameInternal(Node *node, char **name)
 			{
 				if (((TypeCast *) node)->typename != NULL)
 				{
-					*name = ((TypeCast *) node)->typename->name;
-					return 1;
+					List	   *names = ((TypeCast *) node)->typename->names;
+
+					if (names != NIL)
+					{
+						while (lnext(names) != NIL)
+							names = lnext(names);
+						*name = strVal(lfirst(names));
+						return 1;
+					}
 				}
 			}
 			break;

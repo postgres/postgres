@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: syscache.h,v 1.40 2002/03/26 19:16:59 tgl Exp $
+ * $Id: syscache.h,v 1.41 2002/03/29 19:06:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -57,7 +57,7 @@
 #define SHADOWNAME		26
 #define SHADOWSYSID		27
 #define STATRELATT		28
-#define TYPENAME		29
+#define TYPENAMENSP		29
 #define TYPEOID			30
 
 

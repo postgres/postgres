@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/rename.c,v 1.65 2002/03/26 19:15:43 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/rename.c,v 1.66 2002/03/29 19:06:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -69,16 +69,14 @@ static void update_ri_trigger_args(Oid relid,
  *		delete original attribute from attribute catalog
  */
 void
-renameatt(char *relname,
+renameatt(Oid relid,
 		  char *oldattname,
 		  char *newattname,
-		  int recurse)
+		  bool recurse)
 {
 	Relation	targetrelation;
 	Relation	attrelation;
-	HeapTuple	reltup,
-				atttup;
-	Oid			relid;
+	HeapTuple	atttup;
 	List	   *indexoidlist;
 	List	   *indexoidscan;
 
@@ -86,8 +84,7 @@ renameatt(char *relname,
 	 * Grab an exclusive lock on the target table, which we will NOT
 	 * release until end of transaction.
 	 */
-	targetrelation = heap_openr(relname, AccessExclusiveLock);
-	relid = RelationGetRelid(targetrelation);
+	targetrelation = heap_open(relid, AccessExclusiveLock);
 
 	/*
 	 * permissions checking.  this would normally be done in utility.c,
@@ -95,12 +92,13 @@ renameatt(char *relname,
 	 *
 	 * normally, only the owner of a class can change its schema.
 	 */
-	if (!allowSystemTableMods && IsSystemRelationName(relname))
+	if (!allowSystemTableMods 
+		&& IsSystemRelationName(RelationGetRelationName(targetrelation)))
 		elog(ERROR, "renameatt: class \"%s\" is a system catalog",
-			 relname);
+			 RelationGetRelationName(targetrelation));
 	if (!pg_class_ownercheck(relid, GetUserId()))
 		elog(ERROR, "renameatt: you do not own class \"%s\"",
-			 relname);
+			 RelationGetRelationName(targetrelation));
 
 	/*
 	 * if the 'recurse' flag is set then we are supposed to rename this
@@ -127,25 +125,11 @@ renameatt(char *relname,
 		foreach(child, children)
 		{
 			Oid			childrelid = lfirsti(child);
-			char		childname[NAMEDATALEN];
 
 			if (childrelid == relid)
 				continue;
-			reltup = SearchSysCache(RELOID,
-									ObjectIdGetDatum(childrelid),
-									0, 0, 0);
-			if (!HeapTupleIsValid(reltup))
-			{
-				elog(ERROR, "renameatt: can't find catalog entry for inheriting class with oid %u",
-					 childrelid);
-			}
-			/* make copy of cache value, could disappear in call */
-			StrNCpy(childname,
-					NameStr(((Form_pg_class) GETSTRUCT(reltup))->relname),
-					NAMEDATALEN);
-			ReleaseSysCache(reltup);
 			/* note we need not recurse again! */
-			renameatt(childname, oldattname, newattname, 0);
+			renameatt(childrelid, oldattname, newattname, false);
 		}
 	}
 
@@ -356,7 +340,7 @@ renamerel(const RangeVar *relation, const char *newrelname)
 	 * Also rename the associated type, if any.
 	 */
 	if (relkind != RELKIND_INDEX)
-		TypeRename(relation->relname, newrelname);
+		TypeRename(relation->relname, namespaceId, newrelname);
 
 	/*
 	 * If it's a view, must also rename the associated ON SELECT rule.

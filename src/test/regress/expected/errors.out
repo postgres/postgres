@@ -137,7 +137,7 @@ drop aggregate 314159 (int);
 ERROR:  parser: parse error at or near "314159"
 -- bad aggregate type
 drop aggregate newcnt (nonesuch);
-ERROR:  RemoveAggregate: type 'nonesuch' does not exist
+ERROR:  Type "nonesuch" does not exist
 -- no such aggregate 
 drop aggregate nonesuch (int4);
 ERROR:  RemoveAggregate: aggregate 'nonesuch' for type integer does not exist
@@ -167,7 +167,7 @@ drop type 314159;
 ERROR:  parser: parse error at or near "314159"
 -- no such type 
 drop type nonesuch;
-ERROR:  RemoveType: type 'nonesuch' does not exist
+ERROR:  Type "nonesuch" does not exist
 --
 -- DROP OPERATOR
  
@@ -203,10 +203,10 @@ drop operator = ( , int4);
 ERROR:  parser: parse error at or near ","
 -- no such type1 
 drop operator = (nonesuch, int4);
-ERROR:  RemoveOperator: type 'nonesuch' does not exist
+ERROR:  Type "nonesuch" does not exist
 -- no such type2 
 drop operator = (int4, nonesuch);
-ERROR:  RemoveOperator: type 'nonesuch' does not exist
+ERROR:  Type "nonesuch" does not exist
 -- no such type2 
 drop operator = (int4, );
 ERROR:  parser: parse error at or near ")"

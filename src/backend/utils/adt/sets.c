@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/sets.c,v 1.40 2002/02/18 23:11:23 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/sets.c,v 1.41 2002/03/29 19:06:14 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,6 +21,7 @@
 #include "catalog/catname.h"
 #include "catalog/indexing.h"
 #include "catalog/pg_language.h"
+#include "catalog/pg_namespace.h"
 #include "catalog/pg_proc.h"
 #include "executor/executor.h"
 #include "utils/fcache.h"
@@ -36,7 +37,7 @@
  *	  in pg_proc.
  */
 Oid
-SetDefine(char *querystr, char *typename)
+SetDefine(char *querystr, Oid elemType)
 {
 	Oid			setoid;
 	char	   *procname = GENERICSETNAME;
@@ -52,9 +53,10 @@ SetDefine(char *querystr, char *typename)
 	char		repl[Natts_pg_proc];
 
 	setoid = ProcedureCreate(procname,	/* changed below, after oid known */
+							 PG_CATALOG_NAMESPACE, /* XXX wrong */
 							 false,		/* don't replace */
 							 true,		/* returnsSet */
-							 typename,	/* returnTypeName */
+							 elemType,	/* returnType */
 							 SQLlanguageId,	/* language */
 							 querystr,	/* sourceCode */
 							 fileName,	/* fileName */

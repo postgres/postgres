@@ -1,6 +1,6 @@
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
- $Header: /cvsroot/pgsql/doc/src/sgml/catalogs.sgml,v 2.38 2002/03/26 19:15:10 tgl Exp $
+ $Header: /cvsroot/pgsql/doc/src/sgml/catalogs.sgml,v 2.39 2002/03/29 19:05:57 tgl Exp $
  -->
 
 <chapter id="catalogs">
@@ -2361,6 +2361,15 @@
       <entry><type>name</type></entry>
       <entry></entry>
       <entry>Data type name</entry>
+     </row>
+
+     <row>
+      <entry>typnamespace</entry>
+      <entry><type>oid</type></entry>
+      <entry>pg_namespace.oid</entry>
+      <entry>
+       The OID of the namespace that contains this type
+      </entry>
      </row>
 
      <row>

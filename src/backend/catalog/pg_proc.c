@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_proc.c,v 1.66 2002/03/20 19:43:36 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_proc.c,v 1.67 2002/03/29 19:06:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -41,9 +41,10 @@ static void checkretval(Oid rettype, List *queryTreeList);
  */
 Oid
 ProcedureCreate(char *procedureName,
+				Oid procNamespace,
 				bool replace,
 				bool returnsSet,
-				char *returnTypeName,
+				Oid returnType,
 				Oid languageObjectId,
 				char *prosrc,
 				char *probin,
@@ -60,17 +61,14 @@ ProcedureCreate(char *procedureName,
 	Relation	rel;
 	HeapTuple	tup;
 	HeapTuple	oldtup;
-	bool		defined;
 	uint16		parameterCount;
 	char		nulls[Natts_pg_proc];
 	Datum		values[Natts_pg_proc];
 	char		replaces[Natts_pg_proc];
-	Oid			typeObjectId;
 	List	   *x;
 	List	   *querytree_list;
 	Oid			typev[FUNC_MAX_ARGS];
 	Oid			relid;
-	Oid			toid;
 	NameData	procname;
 	TupleDesc	tupDesc;
 	Oid			retval;
@@ -86,28 +84,31 @@ ProcedureCreate(char *procedureName,
 	foreach(x, argList)
 	{
 		TypeName   *t = (TypeName *) lfirst(x);
-		char	   *typnam = TypeNameToInternalName(t);
+		Oid			toid;
 
 		if (parameterCount >= FUNC_MAX_ARGS)
 			elog(ERROR, "functions cannot have more than %d arguments",
 				 FUNC_MAX_ARGS);
 
-		if (strcmp(typnam, "opaque") == 0)
+		toid = LookupTypeName(t);
+		if (OidIsValid(toid))
 		{
-			if (languageObjectId == SQLlanguageId)
-				elog(ERROR, "SQL functions cannot have arguments of type \"opaque\"");
-			toid = InvalidOid;
+			if (!get_typisdefined(toid))
+				elog(WARNING, "Argument type \"%s\" is only a shell",
+					 TypeNameToString(t));
 		}
 		else
 		{
-			toid = TypeGet(typnam, &defined);
+			char      *typnam = TypeNameToString(t);
 
-			if (!OidIsValid(toid))
-				elog(ERROR, "argument type %s does not exist",
-					 typnam);
-			if (!defined)
-				elog(WARNING, "argument type %s is only a shell",
-					 typnam);
+			if (strcmp(typnam, "opaque") == 0)
+			{
+				if (languageObjectId == SQLlanguageId)
+					elog(ERROR, "SQL functions cannot have arguments of type \"opaque\"");
+				toid = InvalidOid;
+			}
+			else
+				elog(ERROR, "Type \"%s\" does not exist", typnam);
 		}
 
 		if (t->setof)
@@ -154,41 +155,21 @@ ProcedureCreate(char *procedureName,
 		}
 	}
 
-	if (strcmp(returnTypeName, "opaque") == 0)
+	if (!OidIsValid(returnType))
 	{
 		if (languageObjectId == SQLlanguageId)
 			elog(ERROR, "SQL functions cannot return type \"opaque\"");
-		typeObjectId = InvalidOid;
-	}
-	else
-	{
-		typeObjectId = TypeGet(returnTypeName, &defined);
-
-		if (!OidIsValid(typeObjectId))
-		{
-			elog(WARNING, "ProcedureCreate: type %s is not yet defined",
-				 returnTypeName);
-			typeObjectId = TypeShellMake(returnTypeName);
-			if (!OidIsValid(typeObjectId))
-				elog(ERROR, "could not create type %s",
-					 returnTypeName);
-		}
-		else if (!defined)
-			elog(WARNING, "return type %s is only a shell",
-				 returnTypeName);
 	}
 
 	/*
 	 * don't allow functions of complex types that have the same name as
 	 * existing attributes of the type
 	 */
-	if (parameterCount == 1 &&
-		(toid = TypeGet(strVal(lfirst(argList)), &defined)) &&
-		defined &&
-		(relid = typeidTypeRelid(toid)) != 0 &&
+	if (parameterCount == 1 && OidIsValid(typev[0]) &&
+		(relid = typeidTypeRelid(typev[0])) != 0 &&
 		get_attnum(relid, procedureName) != InvalidAttrNumber)
 		elog(ERROR, "method %s already an attribute of type %s",
-			 procedureName, strVal(lfirst(argList)));
+			 procedureName, typeidTypeName(typev[0]));
 
 	/*
 	 * If this is a postquel procedure, we parse it here in order to be
@@ -201,7 +182,7 @@ ProcedureCreate(char *procedureName,
 	{
 		querytree_list = pg_parse_and_rewrite(prosrc, typev, parameterCount);
 		/* typecheck return value */
-		checkretval(typeObjectId, querytree_list);
+		checkretval(returnType, querytree_list);
 	}
 
 	/*
@@ -271,7 +252,7 @@ ProcedureCreate(char *procedureName,
 	values[i++] = BoolGetDatum(isStrict);
 	values[i++] = UInt16GetDatum(parameterCount);
 	values[i++] = BoolGetDatum(returnsSet);
-	values[i++] = ObjectIdGetDatum(typeObjectId);
+	values[i++] = ObjectIdGetDatum(returnType);
 	values[i++] = PointerGetDatum(typev);
 	values[i++] = Int32GetDatum(byte_pct);		/* probyte_pct */
 	values[i++] = Int32GetDatum(perbyte_cpu);	/* properbyte_cpu */
@@ -308,7 +289,7 @@ ProcedureCreate(char *procedureName,
 		 * Not okay to change the return type of the existing proc, since
 		 * existing rules, views, etc may depend on the return type.
 		 */
-		if (typeObjectId != oldproc->prorettype ||
+		if (returnType != oldproc->prorettype ||
 			returnsSet != oldproc->proretset)
 			elog(ERROR, "ProcedureCreate: cannot change return type of existing function."
 				 "\n\tUse DROP FUNCTION first.");

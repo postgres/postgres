@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/lsyscache.c,v 1.66 2002/03/26 19:16:09 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/lsyscache.c,v 1.67 2002/03/29 19:06:15 tgl Exp $
  *
  * NOTES
  *	  Eventually, the index information should go through here, too.
@@ -737,6 +737,33 @@ get_rel_type_id(Oid relid)
 }
 
 /*				---------- TYPE CACHE ----------						 */
+
+/*
+ * get_typisdefined
+ *
+ *		Given the type OID, determine whether the type is defined
+ *		(if not, it's only a shell).
+ */
+bool
+get_typisdefined(Oid typid)
+{
+	HeapTuple	tp;
+
+	tp = SearchSysCache(TYPEOID,
+						ObjectIdGetDatum(typid),
+						0, 0, 0);
+	if (HeapTupleIsValid(tp))
+	{
+		Form_pg_type typtup = (Form_pg_type) GETSTRUCT(tp);
+		bool		result;
+
+		result = typtup->typisdefined;
+		ReleaseSysCache(tp);
+		return result;
+	}
+	else
+		return false;
+}
 
 /*
  * get_typlen

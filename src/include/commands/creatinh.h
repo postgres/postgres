@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: creatinh.h,v 1.19 2002/03/22 02:56:36 tgl Exp $
+ * $Id: creatinh.h,v 1.20 2002/03/29 19:06:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,7 +17,7 @@
 #include "nodes/parsenodes.h"
 
 extern Oid	DefineRelation(CreateStmt *stmt, char relkind);
-extern void RemoveRelation(const char *name);
-extern void TruncateRelation(const char *name);
+extern void RemoveRelation(const RangeVar *relation);
+extern void TruncateRelation(const RangeVar *relation);
 
 #endif   /* CREATINH_H */

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.166 2002/03/26 19:15:36 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.167 2002/03/29 19:06:03 tgl Exp $
  *
  * NOTES
  *	  The PerformAddAttribute() code, like most of the relation
@@ -42,11 +42,12 @@
 #include "optimizer/clauses.h"
 #include "optimizer/planmain.h"
 #include "optimizer/prep.h"
+#include "parser/analyze.h"
 #include "parser/parse.h"
 #include "parser/parse_expr.h"
 #include "parser/parse_oper.h"
 #include "parser/parse_relation.h"
-#include "parser/analyze.h"
+#include "parser/parse_type.h"
 #include "tcop/utility.h"
 #include "utils/acl.h"
 #include "utils/builtins.h"
@@ -58,8 +59,8 @@
 
 static void drop_default(Oid relid, int16 attnum);
 static bool needs_toast_table(Relation rel);
-static void AlterTableOwnerId(Oid relationOid, int32 newOwnerSysId);
 static void CheckTupleType(Form_pg_class tuple_class);
+
 
 /* --------------------------------
  *		PortalCleanup
@@ -309,13 +310,13 @@ PerformPortalClose(char *name, CommandDest dest)
  * ----------------
  */
 void
-AlterTableAddColumn(const char *relationName,
+AlterTableAddColumn(Oid myrelid,
 					bool inherits,
 					ColumnDef *colDef)
 {
 	Relation	rel,
+				pgclass,
 				attrdesc;
-	Oid			myrelid;
 	HeapTuple	reltup;
 	HeapTuple	newreltup;
 	HeapTuple	attributeTuple;
@@ -326,19 +327,17 @@ AlterTableAddColumn(const char *relationName,
 				maxatts;
 	HeapTuple	typeTuple;
 	Form_pg_type tform;
-	char	   *typename;
 	int			attndims;
 
 	/*
 	 * Grab an exclusive lock on the target table, which we will NOT
 	 * release until end of transaction.
 	 */
-	rel = heap_openr(relationName, AccessExclusiveLock);
-	myrelid = RelationGetRelid(rel);
+	rel = heap_open(myrelid, AccessExclusiveLock);
 
 	if (rel->rd_rel->relkind != RELKIND_RELATION)
 		elog(ERROR, "ALTER TABLE: relation \"%s\" is not a table",
-			 relationName);
+			 RelationGetRelationName(rel));
 
 	/*
 	 * permissions checking.  this would normally be done in utility.c,
@@ -346,13 +345,13 @@ AlterTableAddColumn(const char *relationName,
 	 *
 	 * normally, only the owner of a class can change its schema.
 	 */
-	if (!allowSystemTableMods && IsSystemRelationName(relationName))
+	if (!allowSystemTableMods
+		&& IsSystemRelationName(RelationGetRelationName(rel)))
 		elog(ERROR, "ALTER TABLE: relation \"%s\" is a system catalog",
-			 relationName);
+			 RelationGetRelationName(rel));
 	if (!pg_class_ownercheck(myrelid, GetUserId()))
-		elog(ERROR, "ALTER TABLE: permission denied");
-
-	heap_close(rel, NoLock);	/* close rel but keep lock! */
+		elog(ERROR, "ALTER TABLE: \"%s\": permission denied",
+			 RelationGetRelationName(rel));
 
 	/*
 	 * Recurse to add the column to child classes, if requested.
@@ -377,17 +376,11 @@ AlterTableAddColumn(const char *relationName,
 		foreach(child, children)
 		{
 			Oid			childrelid = lfirsti(child);
-			char	   *childrelname;
 
 			if (childrelid == myrelid)
 				continue;
-			rel = heap_open(childrelid, AccessExclusiveLock);
-			childrelname = pstrdup(RelationGetRelationName(rel));
-			heap_close(rel, AccessExclusiveLock);
 
-			AlterTableAddColumn(childrelname, false, colDef);
-
-			pfree(childrelname);
+			AlterTableAddColumn(childrelid, false, colDef);
 		}
 	}
 
@@ -412,23 +405,21 @@ AlterTableAddColumn(const char *relationName,
 		elog(ERROR, "Adding NOT NULL columns is not implemented."
 			 "\n\tAdd the column, then use ALTER TABLE ADD CONSTRAINT.");
 
-
-	rel = heap_openr(RelationRelationName, RowExclusiveLock);
+	pgclass = heap_openr(RelationRelationName, RowExclusiveLock);
 
 	reltup = SearchSysCache(RELOID,
 							ObjectIdGetDatum(myrelid),
 							0, 0, 0);
-
 	if (!HeapTupleIsValid(reltup))
 		elog(ERROR, "ALTER TABLE: relation \"%s\" not found",
-			 relationName);
+			 RelationGetRelationName(rel));
 
 	if (SearchSysCacheExists(ATTNAME,
 							 ObjectIdGetDatum(myrelid),
 							 PointerGetDatum(colDef->colname),
 							 0, 0))
 		elog(ERROR, "ALTER TABLE: column name \"%s\" already exists in table \"%s\"",
-			 colDef->colname, relationName);
+			 colDef->colname, RelationGetRelationName(rel));
 
 	minattnum = ((Form_pg_class) GETSTRUCT(reltup))->relnatts;
 	maxatts = minattnum + 1;
@@ -440,21 +431,11 @@ AlterTableAddColumn(const char *relationName,
 	attrdesc = heap_openr(AttributeRelationName, RowExclusiveLock);
 
 	if (colDef->typename->arrayBounds)
-	{
 		attndims = length(colDef->typename->arrayBounds);
-		typename = makeArrayTypeName(colDef->typename->name);
-	}
 	else
-	{
 		attndims = 0;
-		typename = colDef->typename->name;
-	}
 
-	typeTuple = SearchSysCache(TYPENAME,
-							   PointerGetDatum(typename),
-							   0, 0, 0);
-	if (!HeapTupleIsValid(typeTuple))
-		elog(ERROR, "ALTER TABLE: type \"%s\" does not exist", typename);
+	typeTuple = typenameType(colDef->typename);
 	tform = (Form_pg_type) GETSTRUCT(typeTuple);
 
 	attributeTuple = heap_addheader(Natts_pg_attribute,
@@ -494,7 +475,7 @@ AlterTableAddColumn(const char *relationName,
 		CatalogCloseIndices(Num_pg_attr_indices, idescs);
 	}
 
-	heap_close(attrdesc, NoLock);
+	heap_close(attrdesc, RowExclusiveLock);
 
 	/*
 	 * Update number of attributes in pg_class tuple
@@ -502,22 +483,24 @@ AlterTableAddColumn(const char *relationName,
 	newreltup = heap_copytuple(reltup);
 
 	((Form_pg_class) GETSTRUCT(newreltup))->relnatts = maxatts;
-	simple_heap_update(rel, &newreltup->t_self, newreltup);
+	simple_heap_update(pgclass, &newreltup->t_self, newreltup);
 
 	/* keep catalog indices current */
-	if (RelationGetForm(rel)->relhasindex)
+	if (RelationGetForm(pgclass)->relhasindex)
 	{
 		Relation	ridescs[Num_pg_class_indices];
 
 		CatalogOpenIndices(Num_pg_class_indices, Name_pg_class_indices, ridescs);
-		CatalogIndexInsert(ridescs, Num_pg_class_indices, rel, newreltup);
+		CatalogIndexInsert(ridescs, Num_pg_class_indices, pgclass, newreltup);
 		CatalogCloseIndices(Num_pg_class_indices, ridescs);
 	}
 
 	heap_freetuple(newreltup);
 	ReleaseSysCache(reltup);
 
-	heap_close(rel, NoLock);
+	heap_close(pgclass, NoLock);
+
+	heap_close(rel, NoLock);	/* close rel but keep lock! */
 
 	/*
 	 * Make our catalog updates visible for subsequent steps.
@@ -549,29 +532,28 @@ AlterTableAddColumn(const char *relationName,
  * ALTER TABLE ALTER COLUMN SET/DROP DEFAULT
  */
 void
-AlterTableAlterColumnDefault(const char *relationName,
+AlterTableAlterColumnDefault(Oid myrelid,
 							 bool inh, const char *colName,
 							 Node *newDefault)
 {
 	Relation	rel;
 	HeapTuple	tuple;
 	int16		attnum;
-	Oid			myrelid;
 
-	rel = heap_openr(relationName, AccessExclusiveLock);
-	myrelid = RelationGetRelid(rel);
+	rel = heap_open(myrelid, AccessExclusiveLock);
 
 	if (rel->rd_rel->relkind != RELKIND_RELATION)
 		elog(ERROR, "ALTER TABLE: relation \"%s\" is not a table",
-			 relationName);
+			 RelationGetRelationName(rel));
 
-	if (!allowSystemTableMods && IsSystemRelationName(relationName))
+	if (!allowSystemTableMods
+		&& IsSystemRelationName(RelationGetRelationName(rel)))
 		elog(ERROR, "ALTER TABLE: relation \"%s\" is a system catalog",
-			 relationName);
-	if (!pg_class_ownercheck(myrelid, GetUserId()))
-		elog(ERROR, "ALTER TABLE: permission denied");
+			 RelationGetRelationName(rel));
 
-	heap_close(rel, NoLock);
+	if (!pg_class_ownercheck(myrelid, GetUserId()))
+		elog(ERROR, "ALTER TABLE: \"%s\" permission denied",
+			 RelationGetRelationName(rel));
 
 	/*
 	 * Propagate to children if desired
@@ -595,17 +577,12 @@ AlterTableAlterColumnDefault(const char *relationName,
 
 			if (childrelid == myrelid)
 				continue;
-			rel = heap_open(childrelid, AccessExclusiveLock);
-			AlterTableAlterColumnDefault(RelationGetRelationName(rel),
+			AlterTableAlterColumnDefault(childrelid,
 										 false, colName, newDefault);
-			heap_close(rel, AccessExclusiveLock);
 		}
 	}
 
 	/* -= now do the thing on this relation =- */
-
-	/* reopen the business */
-	rel = heap_openr(relationName, AccessExclusiveLock);
 
 	/*
 	 * get the number of the attribute
@@ -616,7 +593,7 @@ AlterTableAlterColumnDefault(const char *relationName,
 						   0, 0);
 	if (!HeapTupleIsValid(tuple))
 		elog(ERROR, "ALTER TABLE: relation \"%s\" has no column \"%s\"",
-			 relationName, colName);
+			 RelationGetRelationName(rel), colName);
 
 	attnum = ((Form_pg_attribute) GETSTRUCT(tuple))->attnum;
 	ReleaseSysCache(tuple);
@@ -718,43 +695,42 @@ drop_default(Oid relid, int16 attnum)
  * ALTER TABLE ALTER COLUMN SET STATISTICS / STORAGE
  */
 void
-AlterTableAlterColumnFlags(const char *relationName,
+AlterTableAlterColumnFlags(Oid myrelid,
 								bool inh, const char *colName,
 								Node *flagValue, const char *flagType)
 {
 	Relation	rel;
-	Oid			myrelid;
 	int			newtarget = 1;
 	char        newstorage = 'x';
 	char        *storagemode;
 	Relation	attrelation;
 	HeapTuple	tuple;
 
-	rel = heap_openr(relationName, AccessExclusiveLock);
-	myrelid = RelationGetRelid(rel);
+	rel = heap_open(myrelid, AccessExclusiveLock);
 
 	if (rel->rd_rel->relkind != RELKIND_RELATION)
 		elog(ERROR, "ALTER TABLE: relation \"%s\" is not a table",
-			 relationName);
+			 RelationGetRelationName(rel));
 
-	/* we allow statistics case for system tables */
-	if (*flagType == 'M' &&
-		!allowSystemTableMods && IsSystemRelationName(relationName))
+	/*	
+	 * we allow statistics case for system tables
+	 */	
+	if (*flagType != 'S' &&
+		!allowSystemTableMods
+		&& IsSystemRelationName(RelationGetRelationName(rel)))
 		elog(ERROR, "ALTER TABLE: relation \"%s\" is a system catalog",
-			 relationName);
+			 RelationGetRelationName(rel));
+
 	if (!pg_class_ownercheck(myrelid, GetUserId()))
-		elog(ERROR, "ALTER TABLE: permission denied");
-
-	heap_close(rel, NoLock);	/* close rel, but keep lock! */
-
+		elog(ERROR, "ALTER TABLE: \"%s\" permission denied",
+			 RelationGetRelationName(rel));
 
 	/*
 	 * Check the supplied parameters before anything else
 	 */
-	if (*flagType == 'S')           /*
-									 * STATISTICS
-									 */
+	if (*flagType == 'S')
 	{
+		/* STATISTICS */
 		Assert(IsA(flagValue, Integer));
 		newtarget = intVal(flagValue);
 
@@ -766,10 +742,9 @@ AlterTableAlterColumnFlags(const char *relationName,
 		else if (newtarget > 1000)
 			newtarget = 1000;
 	}
-	else if (*flagType == 'M')      /*
-									 * STORAGE
-									 */
+	else if (*flagType == 'M')
 	{
+		/* STORAGE */
 		Assert(IsA(flagValue, Value));
 
 		storagemode = strVal(flagValue);
@@ -813,10 +788,8 @@ AlterTableAlterColumnFlags(const char *relationName,
 
 			if (childrelid == myrelid)
 				continue;
-			rel = heap_open(childrelid, AccessExclusiveLock);
-			AlterTableAlterColumnFlags(RelationGetRelationName(rel),
-											false, colName, flagValue, flagType);
-			heap_close(rel, AccessExclusiveLock);
+			AlterTableAlterColumnFlags(childrelid,
+									   false, colName, flagValue, flagType);
 		}
 	}
 
@@ -830,7 +803,7 @@ AlterTableAlterColumnFlags(const char *relationName,
 							   0, 0);
 	if (!HeapTupleIsValid(tuple))
 		elog(ERROR, "ALTER TABLE: relation \"%s\" has no column \"%s\"",
-			 relationName, colName);
+			 RelationGetRelationName(rel), colName);
 
 	if (((Form_pg_attribute) GETSTRUCT(tuple))->attnum < 0)
 		elog(ERROR, "ALTER TABLE: cannot change system attribute \"%s\"",
@@ -864,6 +837,7 @@ AlterTableAlterColumnFlags(const char *relationName,
 
 	heap_freetuple(tuple);
 	heap_close(attrelation, NoLock);
+	heap_close(rel, NoLock);	/* close rel, but keep lock! */
 }
 
 
@@ -1006,14 +980,13 @@ RemoveColumnReferences(Oid reloid, int attnum, bool checkonly, HeapTuple reltup)
  * ALTER TABLE DROP COLUMN
  */
 void
-AlterTableDropColumn(const char *relationName,
+AlterTableDropColumn(Oid myrelid,
 					 bool inh, const char *colName,
 					 int behavior)
 {
 #ifdef	_DROP_COLUMN_HACK__
 	Relation	rel,
 				attrdesc;
-	Oid			myrelid;
 	HeapTuple	reltup;
 	HeapTupleData classtuple;
 	Buffer		buffer;
@@ -1031,12 +1004,16 @@ AlterTableDropColumn(const char *relationName,
 	 * Grab an exclusive lock on the target table, which we will NOT
 	 * release until end of transaction.
 	 */
-	rel = heap_openr(relationName, AccessExclusiveLock);
-	myrelid = RelationGetRelid(rel);
+	rel = heap_open(myrelid, AccessExclusiveLock);
 
 	if (rel->rd_rel->relkind != RELKIND_RELATION)
 		elog(ERROR, "ALTER TABLE: relation \"%s\" is not a table",
-			 relationName);
+			 RelationGetRelationName(rel));
+
+	if (!allowSystemTableMods
+		&& IsSystemRelationName(RelationGetRelationName(rel))
+		elog(ERROR, "ALTER TABLE: relation \"%s\" is a system catalog",
+			 RelationGetRelationName(rel));
 
 	/*
 	 * permissions checking.  this would normally be done in utility.c,
@@ -1044,9 +1021,6 @@ AlterTableDropColumn(const char *relationName,
 	 *
 	 * normally, only the owner of a class can change its schema.
 	 */
-	if (!allowSystemTableMods && IsSystemRelationName(relationName))
-		elog(ERROR, "ALTER TABLE: relation \"%s\" is a system catalog",
-			 relationName);
 	if (!pg_class_ownercheck(myrelid, GetUserId()))
 		elog(ERROR, "ALTER TABLE: permission denied");
 
@@ -1066,8 +1040,17 @@ AlterTableDropColumn(const char *relationName,
 							ObjectIdGetDatum(myrelid),
 							0, 0, 0);
 	if (!HeapTupleIsValid(reltup))
+	{
+		Relation	myrel;
+		char       *myrelname;
+
+		myrel = heap_open(myrelid, AccessExclusiveLock);
+		myrelname = pstrdup(RelationGetRelationName(myrel));
+		heap_close(myrel, AccessExclusiveLock);
+		
 		elog(ERROR, "ALTER TABLE: relation \"%s\" not found",
-			 relationName);
+			 myrelname);
+	}
 	classtuple.t_self = reltup->t_self;
 	ReleaseSysCache(reltup);
 
@@ -1092,8 +1075,17 @@ AlterTableDropColumn(const char *relationName,
 							 PointerGetDatum(colName),
 							 0, 0);
 	if (!HeapTupleIsValid(tup))
+	{
+		Relation	myrel;
+		char       *myrelname;
+
+		myrel = heap_open(myrelid, AccessExclusiveLock);
+		myrelname = pstrdup(RelationGetRelationName(myrel));
+		heap_close(myrel, AccessExclusiveLock);
+		
 		elog(ERROR, "ALTER TABLE: column name \"%s\" doesn't exist in table \"%s\"",
-			 colName, relationName);
+			 colName, myrelname);
+	}
 
 	attribute = (Form_pg_attribute) GETSTRUCT(tup);
 	attnum = attribute->attnum;
@@ -1164,29 +1156,30 @@ AlterTableDropColumn(const char *relationName,
  * ALTER TABLE ADD CONSTRAINT
  */
 void
-AlterTableAddConstraint(char *relationName,
+AlterTableAddConstraint(Oid myrelid,
 						bool inh, List *newConstraints)
 {
 	Relation	rel;
-	Oid			myrelid;
 	List	   *listptr;
 
 	/*
 	 * Grab an exclusive lock on the target table, which we will NOT
 	 * release until end of transaction.
 	 */
-	rel = heap_openr(relationName, AccessExclusiveLock);
-	myrelid = RelationGetRelid(rel);
+	rel = heap_open(myrelid, AccessExclusiveLock);
 
 	if (rel->rd_rel->relkind != RELKIND_RELATION)
 		elog(ERROR, "ALTER TABLE: relation \"%s\" is not a table",
-			 relationName);
+			 RelationGetRelationName(rel));
 
-	if (!allowSystemTableMods && IsSystemRelationName(relationName))
+	if (!allowSystemTableMods
+		&& IsSystemRelationName(RelationGetRelationName(rel)))
 		elog(ERROR, "ALTER TABLE: relation \"%s\" is a system catalog",
-			 relationName);
+			 RelationGetRelationName(rel));
+
 	if (!pg_class_ownercheck(myrelid, GetUserId()))
-		elog(ERROR, "ALTER TABLE: permission denied");
+		elog(ERROR, "ALTER TABLE: \"%s\": permission denied",
+			 RelationGetRelationName(rel));
 
 	if (inh)
 	{
@@ -1204,16 +1197,10 @@ AlterTableAddConstraint(char *relationName,
 		foreach(child, children)
 		{
 			Oid			childrelid = lfirsti(child);
-			char	   *childrelname;
-			Relation	childrel;
 
 			if (childrelid == myrelid)
 				continue;
-			childrel = heap_open(childrelid, AccessExclusiveLock);
-			childrelname = pstrdup(RelationGetRelationName(childrel));
-			heap_close(childrel, AccessExclusiveLock);
-			AlterTableAddConstraint(childrelname, false, newConstraints);
-			pfree(childrelname);
+			AlterTableAddConstraint(childrelid, false, newConstraints);
 		}
 	}
 
@@ -1262,7 +1249,7 @@ AlterTableAddConstraint(char *relationName,
 								pstate = make_parsestate(NULL);
 								rte = addRangeTableEntryForRelation(pstate,
 																	myrelid,
-																	makeAlias(relationName, NIL),
+											makeAlias(RelationGetRelationName(rel), NIL),
 																	false,
 																	true);
 								addRTEtoQuery(pstate, rte, true, true);
@@ -1286,7 +1273,7 @@ AlterTableAddConstraint(char *relationName,
 								 */
 								if (length(pstate->p_rtable) != 1)
 									elog(ERROR, "Only relation '%s' can be referenced in CHECK",
-										 relationName);
+										 RelationGetRelationName(rel));
 
 								/*
 								 * Might as well try to reduce any
@@ -1358,7 +1345,7 @@ AlterTableAddConstraint(char *relationName,
 					int			count;
 
 					if (is_temp_rel_name(fkconstraint->pktable->relname) &&
-						!is_temp_rel_name(relationName))
+						!is_temp_rel_name(RelationGetRelationName(rel)))
 						elog(ERROR, "ALTER TABLE / ADD CONSTRAINT: Unable to reference temporary table from permanent table constraint.");
 
 					/*
@@ -1408,7 +1395,7 @@ AlterTableAddConstraint(char *relationName,
 						trig.tgargs[0] = fkconstraint->constr_name;
 					else
 						trig.tgargs[0] = "<unknown>";
-					trig.tgargs[1] = (char *) relationName;
+					trig.tgargs[1] = pstrdup(RelationGetRelationName(rel));
 					trig.tgargs[2] = fkconstraint->pktable->relname;
 					trig.tgargs[3] = fkconstraint->match_type;
 					count = 4;
@@ -1483,12 +1470,11 @@ AlterTableAddConstraint(char *relationName,
  * Christopher Kings-Lynne
  */
 void
-AlterTableDropConstraint(const char *relationName,
+AlterTableDropConstraint(Oid myrelid,
 						 bool inh, const char *constrName,
 						 int behavior)
 {
 	Relation	rel;
-	Oid			myrelid;
 	int			deleted;
 
 	/*
@@ -1502,19 +1488,21 @@ AlterTableDropConstraint(const char *relationName,
 	 * Acquire an exclusive lock on the target relation for the duration
 	 * of the operation.
 	 */
-	rel = heap_openr(relationName, AccessExclusiveLock);
-	myrelid = RelationGetRelid(rel);
+	rel = heap_open(myrelid, AccessExclusiveLock);
 
 	/* Disallow DROP CONSTRAINT on views, indexes, sequences, etc */
 	if (rel->rd_rel->relkind != RELKIND_RELATION)
 		elog(ERROR, "ALTER TABLE: relation \"%s\" is not a table",
-			 relationName);
+			 RelationGetRelationName(rel));
 
-	if (!allowSystemTableMods && IsSystemRelationName(relationName))
+	if (!allowSystemTableMods
+		&& IsSystemRelationName(RelationGetRelationName(rel)))
 		elog(ERROR, "ALTER TABLE: relation \"%s\" is a system catalog",
-			 relationName);
+			 RelationGetRelationName(rel));
+
 	if (!pg_class_ownercheck(myrelid, GetUserId()))
-		elog(ERROR, "ALTER TABLE: permission denied");
+		elog(ERROR, "ALTER TABLE: \"%s\": permission denied",
+			 RelationGetRelationName(rel));
 
 	/*
 	 * Since all we have is the name of the constraint, we have to look
@@ -1554,30 +1542,7 @@ AlterTableDropConstraint(const char *relationName,
  * ALTER TABLE OWNER
  */
 void
-AlterTableOwner(const RangeVar *tgtrel, const char *newOwnerName)
-{
-	Relation	rel;
-	Oid			myrelid;
-	int32		newOwnerSysId;
-
-	/* check that we are the superuser */
-	if (!superuser())
-		elog(ERROR, "ALTER TABLE: permission denied");
-
-	/* lookup the OID of the target relation */
-	rel = relation_openrv(tgtrel, AccessExclusiveLock);
-	myrelid = RelationGetRelid(rel);
-	heap_close(rel, NoLock);	/* close rel but keep lock! */
-
-	/* lookup the sysid of the new owner */
-	newOwnerSysId = get_usesysid(newOwnerName);
-
-	/* do all the actual work */
-	AlterTableOwnerId(myrelid, newOwnerSysId);
-}
-
-static void
-AlterTableOwnerId(Oid relationOid, int32 newOwnerSysId)
+AlterTableOwner(Oid relationOid, int32 newOwnerSysId)
 {
 	Relation		target_rel;
 	Relation		class_rel;
@@ -1629,7 +1594,7 @@ AlterTableOwnerId(Oid relationOid, int32 newOwnerSysId)
 		/* For each index, recursively change its ownership */
 		foreach(i, index_oid_list)
 		{
-			AlterTableOwnerId(lfirsti(i), newOwnerSysId);
+			AlterTableOwner(lfirsti(i), newOwnerSysId);
 		}
 
 		freeList(index_oid_list);
@@ -1640,7 +1605,7 @@ AlterTableOwnerId(Oid relationOid, int32 newOwnerSysId)
 		/* If it has a toast table, recurse to change its ownership */
 		if (tuple_class->reltoastrelid != InvalidOid)
 		{
-			AlterTableOwnerId(tuple_class->reltoastrelid, newOwnerSysId);
+			AlterTableOwner(tuple_class->reltoastrelid, newOwnerSysId);
 		}
 	}
 

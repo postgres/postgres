@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/syscache.c,v 1.70 2002/03/26 19:16:14 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/syscache.c,v 1.71 2002/03/29 19:06:15 tgl Exp $
  *
  * NOTES
  *	  These routines allow the parser/planner/executor to perform
@@ -384,13 +384,13 @@ static const struct cachedesc cacheinfo[] = {
 			0,
 			0
 	}},
-	{TypeRelationName,			/* TYPENAME */
-		TypeNameIndex,
+	{TypeRelationName,			/* TYPENAMENSP */
+		TypeNameNspIndex,
 		Anum_pg_type_typrelid,
-		1,
+		2,
 		{
 			Anum_pg_type_typname,
-			0,
+			Anum_pg_type_typnamespace,
 			0,
 			0
 	}},
@@ -515,7 +515,7 @@ SearchSysCache(int cacheId,
 	 * when sought.  This is a kluge ... temp table substitution should be
 	 * happening at a higher level ...
 	 */
-	if (cacheId == RELNAMENSP || cacheId == TYPENAME)
+	if (cacheId == RELNAMENSP || cacheId == TYPENAMENSP)
 	{
 		char	   *nontemp_relname;
 

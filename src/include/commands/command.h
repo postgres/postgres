@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: command.h,v 1.35 2002/03/26 19:16:40 tgl Exp $
+ * $Id: command.h,v 1.36 2002/03/29 19:06:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,31 +40,27 @@ extern void PortalCleanup(Portal portal);
 /*
  * ALTER TABLE variants
  */
-extern void AlterTableAddColumn(const char *relationName,
-					bool inh, ColumnDef *colDef);
+extern void AlterTableAddColumn(Oid myrelid, bool inherits, ColumnDef *colDef);
 
-extern void AlterTableAlterColumnDefault(const char *relationName,
-							 bool inh, const char *colName,
-							 Node *newDefault);
+extern void AlterTableAlterColumnDefault(Oid myrelid, bool inh,
+										 const char *colName, Node *newDefault);
 
-extern void AlterTableAlterColumnFlags(const char *relationName,
-								bool inh, const char *colName,
-								Node *flagValue, const char *flagType);
+extern void AlterTableAlterColumnFlags(Oid myrelid,
+									   bool inh, const char *colName,
+									   Node *flagValue, const char *flagType);
 
-extern void AlterTableDropColumn(const char *relationName,
-					 bool inh, const char *colName,
-					 int behavior);
+extern void AlterTableDropColumn(Oid myrelid, bool inh,
+					 			 const char *colName, int behavior);
 
-extern void AlterTableAddConstraint(char *relationName,
-						bool inh, List *newConstraints);
+extern void AlterTableAddConstraint(Oid myrelid,
+									bool inh, List *newConstraints);
 
-extern void AlterTableDropConstraint(const char *relationName,
-						 bool inh, const char *constrName,
-						 int behavior);
+extern void AlterTableDropConstraint(Oid myrelid,
+									 bool inh, const char *constrName, int behavior);
 
 extern void AlterTableCreateToastTable(Oid relOid, bool silent);
 
-extern void AlterTableOwner(const RangeVar *tgtrel, const char *newOwnerName);
+extern void AlterTableOwner(Oid relationOid, int32 newOwnerSysId);
 
 /*
  * LOCK

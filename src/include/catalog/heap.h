@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: heap.h,v 1.47 2002/03/26 19:16:23 tgl Exp $
+ * $Id: heap.h,v 1.48 2002/03/29 19:06:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,10 +39,9 @@ extern Oid heap_create_with_catalog(char *relname, Oid relnamespace,
 						 char relkind, bool relhasoids, bool istemp,
 						 bool allow_system_table_mods);
 
-extern void heap_drop_with_catalog(const char *relname,
-					   bool allow_system_table_mods);
+extern void heap_drop_with_catalog(Oid rid, bool allow_system_table_mods);
 
-extern void heap_truncate(const char *relname);
+extern void heap_truncate(Oid rid);
 
 extern void AddRelationRawConstraints(Relation rel,
 						  List *rawColDefaults,

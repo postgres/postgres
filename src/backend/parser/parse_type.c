@@ -8,19 +8,249 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_type.c,v 1.37 2001/10/25 05:49:40 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_type.c,v 1.38 2002/03/29 19:06:12 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
+#include "catalog/namespace.h"
+#include "catalog/pg_namespace.h"
 #include "catalog/pg_type.h"
+#include "lib/stringinfo.h"
+#include "miscadmin.h"
+#include "nodes/makefuncs.h"
 #include "nodes/parsenodes.h"
 #include "parser/parser.h"
 #include "parser/parse_expr.h"
 #include "parser/parse_type.h"
+#include "utils/lsyscache.h"
 #include "utils/syscache.h"
 
+
+/*
+ * LookupTypeName
+ *		Given a TypeName object, get the OID of the referenced type.
+ *		Returns InvalidOid if no such type can be found.
+ *
+ * NB: even if the returned OID is not InvalidOid, the type might be
+ * just a shell.  Caller should check typisdefined before using the type.
+ */
+Oid
+LookupTypeName(const TypeName *typename)
+{
+	Oid			restype;
+
+	/* Easy if it's an internally generated TypeName */
+	if (typename->names == NIL)
+		return typename->typeid;
+
+	if (typename->pct_type)
+	{
+		/* Handle %TYPE reference to type of an existing field */
+		RangeVar   *rel = makeRangeVar(NULL, NULL);
+		char	   *field = NULL;
+		Oid			relid;
+		AttrNumber	attnum;
+
+		/* deconstruct the name list */
+		switch (length(typename->names))
+		{
+			case 1:
+				elog(ERROR, "Improper %%TYPE reference (too few dotted names)");
+				break;
+			case 2:
+				rel->relname = strVal(lfirst(typename->names));
+				field = strVal(lsecond(typename->names));
+				break;
+			case 3:
+				rel->schemaname = strVal(lfirst(typename->names));
+				rel->relname = strVal(lsecond(typename->names));
+				field = strVal(lfirst(lnext(lnext(typename->names))));
+				break;
+			case 4:
+				rel->catalogname = strVal(lfirst(typename->names));
+				rel->schemaname = strVal(lsecond(typename->names));
+				rel->relname = strVal(lfirst(lnext(lnext(typename->names))));
+				field = strVal(lfirst(lnext(lnext(lnext(typename->names)))));
+				break;
+			default:
+				elog(ERROR, "Improper %%TYPE reference (too many dotted names)");
+				break;
+		}
+
+		/* look up the field */
+		relid = RangeVarGetRelid(rel, false);
+		attnum = get_attnum(relid, field);
+		if (attnum == InvalidAttrNumber)
+			elog(ERROR, "'%s' is not an attribute of class '%s'",
+				 field, rel->relname);
+		restype = get_atttype(relid, attnum);
+
+		/* this construct should never have an array indicator */
+		Assert(typename->arrayBounds == NIL);
+
+		/* emit nuisance warning */
+		elog(NOTICE, "%s converted to %s",
+			 TypeNameToString(typename), typeidTypeName(restype));
+	}
+	else
+	{
+		/* Normal reference to a type name */
+		char	   *catalogname;
+		char	   *schemaname = NULL;
+		char	   *typname = NULL;
+
+		/* deconstruct the name list */
+		switch (length(typename->names))
+		{
+			case 1:
+				typname = strVal(lfirst(typename->names));
+				break;
+			case 2:
+				schemaname = strVal(lfirst(typename->names));
+				typname = strVal(lsecond(typename->names));
+				break;
+			case 3:
+				catalogname = strVal(lfirst(typename->names));
+				schemaname = strVal(lsecond(typename->names));
+				typname = strVal(lfirst(lnext(lnext(typename->names))));
+				/*
+				 * We check the catalog name and then ignore it.
+				 */
+				if (strcmp(catalogname, DatabaseName) != 0)
+					elog(ERROR, "Cross-database references are not implemented");
+				break;
+			default:
+				elog(ERROR, "Improper type name (too many dotted names)");
+				break;
+		}
+
+		/* If an array reference, look up the array type instead */
+		if (typename->arrayBounds != NIL)
+			typname = makeArrayTypeName(typname);
+
+		if (schemaname)
+		{
+			Oid		namespaceId;
+
+			namespaceId = GetSysCacheOid(NAMESPACENAME,
+										 CStringGetDatum(schemaname),
+										 0, 0, 0);
+			if (!OidIsValid(namespaceId))
+				elog(ERROR, "Namespace \"%s\" does not exist",
+					 schemaname);
+			restype = GetSysCacheOid(TYPENAMENSP,
+									 PointerGetDatum(typname),
+									 ObjectIdGetDatum(namespaceId),
+									 0, 0);
+		}
+		else
+		{
+			/* XXX wrong, should use namespace search */
+			restype = GetSysCacheOid(TYPENAMENSP,
+									 PointerGetDatum(typname),
+									 ObjectIdGetDatum(PG_CATALOG_NAMESPACE),
+									 0, 0);
+		}
+	}
+
+	return restype;
+}
+
+/*
+ * TypeNameToString
+ *		Produce a string representing the name of a TypeName.
+ *
+ * NB: this must work on TypeNames that do not describe any actual type;
+ * it is mostly used for reporting lookup errors.
+ */
+char *
+TypeNameToString(const TypeName *typename)
+{
+	StringInfoData string;
+
+	initStringInfo(&string);
+
+	if (typename->names != NIL)
+	{
+		/* Emit possibly-qualified name as-is */
+		List		*l;
+
+		foreach(l, typename->names)
+		{
+			if (l != typename->names)
+				appendStringInfoChar(&string, '.');
+			appendStringInfo(&string, "%s", strVal(lfirst(l)));
+		}
+	}
+	else
+	{
+		/* Look up internally-specified type */
+		appendStringInfo(&string, "%s", typeidTypeName(typename->typeid));
+	}
+
+	/*
+	 * Add decoration as needed, but only for fields considered by
+	 * LookupTypeName
+	 */
+	if (typename->pct_type)
+		appendStringInfo(&string, "%%TYPE");
+
+	if (typename->arrayBounds != NIL)
+		appendStringInfo(&string, "[]");
+
+	return string.data;
+}
+
+/*
+ * typenameTypeId - given a TypeName, return the type's OID
+ *
+ * This is equivalent to LookupTypeName, except that this will report
+ * a suitable error message if the type cannot be found or is not defined.
+ */
+Oid
+typenameTypeId(const TypeName *typename)
+{
+	Oid			typoid;
+
+	typoid = LookupTypeName(typename);
+	if (!OidIsValid(typoid))
+		elog(ERROR, "Type \"%s\" does not exist",
+			 TypeNameToString(typename));
+	if (!get_typisdefined(typoid))
+		elog(ERROR, "Type \"%s\" is only a shell",
+			 TypeNameToString(typename));
+	return typoid;
+}
+
+/*
+ * typenameType - given a TypeName, return a Type structure
+ *
+ * This is equivalent to typenameTypeId + syscache fetch of Type tuple.
+ * NB: caller must ReleaseSysCache the type tuple when done with it.
+ */
+Type
+typenameType(const TypeName *typename)
+{
+	Oid			typoid;
+	HeapTuple	tup;
+
+	typoid = LookupTypeName(typename);
+	if (!OidIsValid(typoid))
+		elog(ERROR, "Type \"%s\" does not exist",
+			 TypeNameToString(typename));
+	tup = SearchSysCache(TYPEOID,
+						 ObjectIdGetDatum(typoid),
+						 0, 0, 0);
+	if (!HeapTupleIsValid(tup))
+		elog(ERROR, "Type \"%s\" does not exist",
+			 TypeNameToString(typename));
+	if (! ((Form_pg_type) GETSTRUCT(tup))->typisdefined)
+		elog(ERROR, "Type \"%s\" is only a shell",
+			 TypeNameToString(typename));
+	return (Type) tup;
+}
 
 /* check to see if a type id is valid,
  * returns true if it is. By using this call before calling
@@ -48,24 +278,6 @@ typeidType(Oid id)
 						 0, 0, 0);
 	if (!HeapTupleIsValid(tup))
 		elog(ERROR, "Unable to locate type oid %u in catalog", id);
-	return (Type) tup;
-}
-
-/* return a Type structure, given type name */
-/* NB: caller must ReleaseSysCache the type tuple when done with it */
-Type
-typenameType(char *s)
-{
-	HeapTuple	tup;
-
-	if (s == NULL)
-		elog(ERROR, "typenameType: Null typename");
-
-	tup = SearchSysCache(TYPENAME,
-						 PointerGetDatum(s),
-						 0, 0, 0);
-	if (!HeapTupleIsValid(tup))
-		elog(ERROR, "Unable to locate type name '%s' in catalog", s);
 	return (Type) tup;
 }
 
@@ -207,6 +419,7 @@ typeidOutfunc(Oid type_id)
 #endif
 
 /* return a type name, given a typeid */
+/* nb: type name is NOT unique; use this only for error messages */
 char *
 typeidTypeName(Oid id)
 {
@@ -248,18 +461,6 @@ typeidTypeRelid(Oid type_id)
 	type = (Form_pg_type) GETSTRUCT(typeTuple);
 	result = type->typrelid;
 	ReleaseSysCache(typeTuple);
-	return result;
-}
-
-/* given a type name, return the type's typeid */
-Oid
-typenameTypeId(char *s)
-{
-	Type		typ = typenameType(s);
-	Oid			result;
-
-	result = typ->t_data->t_oid;
-	ReleaseSysCache(typ);
 	return result;
 }
 
@@ -327,7 +528,7 @@ parseTypeString(const char *str, Oid *type_id, int32 *typmod)
 		!IsA(typename, TypeName))
 		elog(ERROR, "Invalid type name '%s'", str);
 
-	*type_id = typenameTypeId(TypeNameToInternalName(typename));
+	*type_id = typenameTypeId(typename);
 	*typmod = typename->typmod;
 
 	pfree(buf);

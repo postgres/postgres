@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/creatinh.c,v 1.92 2002/03/26 19:15:40 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/creatinh.c,v 1.93 2002/03/29 19:06:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,6 +27,7 @@
 #include "commands/creatinh.h"
 #include "miscadmin.h"
 #include "optimizer/clauses.h"
+#include "parser/parse_type.h"
 #include "utils/acl.h"
 #include "utils/syscache.h"
 #include "utils/temprel.h"
@@ -108,7 +109,7 @@ DefineRelation(CreateStmt *stmt, char relkind)
 	 * (BuildDescForRelation takes care of the inherited defaults, but we
 	 * have to copy inherited constraints here.)
 	 */
-	descriptor = BuildDescForRelation(schema, relname);
+	descriptor = BuildDescForRelation(schema);
 
 	if (old_constraints != NIL)
 	{
@@ -238,10 +239,12 @@ DefineRelation(CreateStmt *stmt, char relkind)
  * themselves will be destroyed, too.
  */
 void
-RemoveRelation(const char *name)
+RemoveRelation(const RangeVar *relation)
 {
-	AssertArg(name);
-	heap_drop_with_catalog(name, allowSystemTableMods);
+	Oid			relOid;
+
+	relOid = RangeVarGetRelid(relation, false);
+	heap_drop_with_catalog(relOid, allowSystemTableMods);
 }
 
 /*
@@ -255,34 +258,36 @@ RemoveRelation(const char *name)
  *				  Rows are removed, indices are truncated and reconstructed.
  */
 void
-TruncateRelation(const char *relname)
+TruncateRelation(const RangeVar *relation)
 {
+	Oid			relid;
 	Relation	rel;
 
-	AssertArg(relname);
+	relid = RangeVarGetRelid(relation, false);
 
 	/* Grab exclusive lock in preparation for truncate */
-	rel = heap_openr(relname, AccessExclusiveLock);
+	rel = heap_open(relid, AccessExclusiveLock);
 
 	if (rel->rd_rel->relkind == RELKIND_SEQUENCE)
 		elog(ERROR, "TRUNCATE cannot be used on sequences. '%s' is a sequence",
-			 relname);
+			 RelationGetRelationName(rel));
 
 	if (rel->rd_rel->relkind == RELKIND_VIEW)
 		elog(ERROR, "TRUNCATE cannot be used on views. '%s' is a view",
-			 relname);
+			 RelationGetRelationName(rel));
 
-	if (!allowSystemTableMods && IsSystemRelationName(relname))
+	if (!allowSystemTableMods && IsSystemRelationName(RelationGetRelationName(rel)))
 		elog(ERROR, "TRUNCATE cannot be used on system tables. '%s' is a system table",
-			 relname);
+			 RelationGetRelationName(rel));
 
 	if (!pg_class_ownercheck(RelationGetRelid(rel), GetUserId()))
-		elog(ERROR, "you do not own relation \"%s\"", relname);
+		elog(ERROR, "you do not own relation \"%s\"",
+			 RelationGetRelationName(rel));
 
 	/* Keep the lock until transaction commit */
 	heap_close(rel, NoLock);
 
-	heap_truncate(relname);
+	heap_truncate(relid);
 }
 
 
@@ -308,12 +313,7 @@ MergeDomainAttributes(List *schema)
 		HeapTuple  tuple;
 		Form_pg_type typeTup;
 
-		tuple = SearchSysCache(TYPENAME,
-							   CStringGetDatum(coldef->typename->name),
-							   0,0,0);
-		if (!HeapTupleIsValid(tuple))
-			elog(ERROR, "MergeDomainAttributes: Type %s does not exist",
-				 coldef->typename->name);
+		tuple = typenameType(coldef->typename);
 		typeTup = (Form_pg_type) GETSTRUCT(tuple);
 
 		if (typeTup->typtype == 'd')
@@ -486,25 +486,10 @@ MergeAttributes(List *schema, List *supers, bool istemp,
 			 parent_attno++)
 		{
 			Form_pg_attribute attribute = tupleDesc->attrs[parent_attno - 1];
-			char	   *attributeName;
-			char	   *attributeType;
-			HeapTuple	tuple;
+			char	   *attributeName = NameStr(attribute->attname);
 			int			exist_attno;
 			ColumnDef  *def;
 			TypeName   *typename;
-
-			/*
-			 * Get name and type name of attribute
-			 */
-			attributeName = NameStr(attribute->attname);
-			tuple = SearchSysCache(TYPEOID,
-								   ObjectIdGetDatum(attribute->atttypid),
-								   0, 0, 0);
-			if (!HeapTupleIsValid(tuple))
-				elog(ERROR, "CREATE TABLE: cache lookup failed for type %u",
-					 attribute->atttypid);
-			attributeType = pstrdup(NameStr(((Form_pg_type) GETSTRUCT(tuple))->typname));
-			ReleaseSysCache(tuple);
 
 			/*
 			 * Does it conflict with some previously inherited column?
@@ -519,10 +504,12 @@ MergeAttributes(List *schema, List *supers, bool istemp,
 				elog(NOTICE, "CREATE TABLE: merging multiple inherited definitions of attribute \"%s\"",
 					 attributeName);
 				def = (ColumnDef *) nth(exist_attno - 1, inhSchema);
-				if (strcmp(def->typename->name, attributeType) != 0 ||
+				if (typenameTypeId(def->typename) != attribute->atttypid ||
 					def->typename->typmod != attribute->atttypmod)
 					elog(ERROR, "CREATE TABLE: inherited attribute \"%s\" type conflict (%s and %s)",
-					  attributeName, def->typename->name, attributeType);
+						 attributeName,
+						 TypeNameToString(def->typename),
+						 typeidTypeName(attribute->atttypid));
 				/* Merge of NOT NULL constraints = OR 'em together */
 				def->is_not_null |= attribute->attnotnull;
 				/* Default and other constraints are handled below */
@@ -536,7 +523,7 @@ MergeAttributes(List *schema, List *supers, bool istemp,
 				def = makeNode(ColumnDef);
 				def->colname = pstrdup(attributeName);
 				typename = makeNode(TypeName);
-				typename->name = attributeType;
+				typename->typeid = attribute->atttypid;
 				typename->typmod = attribute->atttypmod;
 				def->typename = typename;
 				def->is_not_null = attribute->attnotnull;
@@ -640,7 +627,6 @@ MergeAttributes(List *schema, List *supers, bool istemp,
 		{
 			ColumnDef  *newdef = lfirst(entry);
 			char	   *attributeName = newdef->colname;
-			char	   *attributeType = newdef->typename->name;
 			int			exist_attno;
 
 			/*
@@ -658,10 +644,12 @@ MergeAttributes(List *schema, List *supers, bool istemp,
 				elog(NOTICE, "CREATE TABLE: merging attribute \"%s\" with inherited definition",
 					 attributeName);
 				def = (ColumnDef *) nth(exist_attno - 1, inhSchema);
-				if (strcmp(def->typename->name, attributeType) != 0 ||
+				if (typenameTypeId(def->typename) != typenameTypeId(newdef->typename) ||
 					def->typename->typmod != newdef->typename->typmod)
 					elog(ERROR, "CREATE TABLE: attribute \"%s\" type conflict (%s and %s)",
-					  attributeName, def->typename->name, attributeType);
+						 attributeName,
+						 TypeNameToString(def->typename),
+						 TypeNameToString(newdef->typename));
 				/* Merge of NOT NULL constraints = OR 'em together */
 				def->is_not_null |= newdef->is_not_null;
 				/* If new def has a default, override previous default */

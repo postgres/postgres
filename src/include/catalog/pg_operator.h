@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_operator.h,v 1.99 2001/11/05 17:46:32 momjian Exp $
+ * $Id: pg_operator.h,v 1.100 2002/03/29 19:06:19 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -843,18 +843,18 @@ DATA(insert OID = 2068 (  "-"	   PGUID 0 b t f 1114 1186 1114    0	0 0 0 timesta
 /*
  * function prototypes
  */
-extern void OperatorCreate(char *operatorName,
-			   char *leftTypeName,
-			   char *rightTypeName,
-			   char *procedureName,
+extern void OperatorCreate(const char *operatorName,
+			   Oid leftTypeId,
+			   Oid rightTypeId,
+			   const char *procedureName,
 			   uint16 precedence,
 			   bool isLeftAssociative,
-			   char *commutatorName,
-			   char *negatorName,
-			   char *restrictionName,
-			   char *joinName,
+			   const char *commutatorName,
+			   const char *negatorName,
+			   const char *restrictionName,
+			   const char *joinName,
 			   bool canHash,
-			   char *leftSortName,
-			   char *rightSortName);
+			   const char *leftSortName,
+			   const char *rightSortName);
 
 #endif   /* PG_OPERATOR_H */

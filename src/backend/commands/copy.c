@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.151 2002/03/21 23:27:20 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.152 2002/03/29 19:06:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,6 +21,7 @@
 #include "access/printtup.h"
 #include "catalog/catname.h"
 #include "catalog/index.h"
+#include "catalog/namespace.h"
 #include "catalog/pg_index.h"
 #include "catalog/pg_shadow.h"
 #include "catalog/pg_type.h"
@@ -228,7 +229,7 @@ CopyDonePeek(FILE *fp, int c, bool pickup)
 /*
  *	 DoCopy executes the SQL COPY statement.
  *
- * Either unload or reload contents of table <relname>, depending on <from>.
+ * Either unload or reload contents of table <relation>, depending on <from>.
  * (<from> = TRUE means we are inserting into the table.)
  *
  * If <pipe> is false, transfer is between the table and the file named
@@ -260,7 +261,7 @@ CopyDonePeek(FILE *fp, int c, bool pickup)
  * the table.
  */
 void
-DoCopy(char *relname, bool binary, bool oids, bool from, bool pipe,
+DoCopy(const RangeVar *relation, bool binary, bool oids, bool from, bool pipe,
 	   char *filename, char *delim, char *null_print)
 {
 	FILE	   *fp;
@@ -271,7 +272,7 @@ DoCopy(char *relname, bool binary, bool oids, bool from, bool pipe,
 	/*
 	 * Open and lock the relation, using the appropriate lock type.
 	 */
-	rel = heap_openr(relname, (from ? RowExclusiveLock : AccessShareLock));
+	rel = heap_openrv(relation, (from ? RowExclusiveLock : AccessShareLock));
 
 	/* Check permissions. */
 	aclresult = pg_class_aclcheck(RelationGetRelid(rel), GetUserId(),
@@ -312,11 +313,14 @@ DoCopy(char *relname, bool binary, bool oids, bool from, bool pipe,
 		if (rel->rd_rel->relkind != RELKIND_RELATION)
 		{
 			if (rel->rd_rel->relkind == RELKIND_VIEW)
-				elog(ERROR, "You cannot copy view %s", relname);
+				elog(ERROR, "You cannot copy view %s",
+					 RelationGetRelationName(rel));
 			else if (rel->rd_rel->relkind == RELKIND_SEQUENCE)
-				elog(ERROR, "You cannot change sequence relation %s", relname);
+				elog(ERROR, "You cannot change sequence relation %s",
+					 RelationGetRelationName(rel));
 			else
-				elog(ERROR, "You cannot copy object %s", relname);
+				elog(ERROR, "You cannot copy object %s",
+					 RelationGetRelationName(rel));
 		}
 		if (pipe)
 		{
@@ -354,11 +358,14 @@ DoCopy(char *relname, bool binary, bool oids, bool from, bool pipe,
 		if (rel->rd_rel->relkind != RELKIND_RELATION)
 		{
 			if (rel->rd_rel->relkind == RELKIND_VIEW)
-				elog(ERROR, "You cannot copy view %s", relname);
+				elog(ERROR, "You cannot copy view %s",
+					 RelationGetRelationName(rel));
 			else if (rel->rd_rel->relkind == RELKIND_SEQUENCE)
-				elog(ERROR, "You cannot copy sequence %s", relname);
+				elog(ERROR, "You cannot copy sequence %s",
+					 RelationGetRelationName(rel));
 			else
-				elog(ERROR, "You cannot copy object %s", relname);
+				elog(ERROR, "You cannot copy object %s",
+					 RelationGetRelationName(rel));
 		}
 		if (pipe)
 		{

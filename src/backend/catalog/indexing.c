@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/indexing.c,v 1.85 2002/03/26 19:15:30 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/indexing.c,v 1.86 2002/03/29 19:06:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -76,7 +76,7 @@ char	   *Name_pg_statistic_indices[Num_pg_statistic_indices] =
 char	   *Name_pg_trigger_indices[Num_pg_trigger_indices] =
 {TriggerRelidIndex, TriggerConstrNameIndex, TriggerConstrRelidIndex, TriggerOidIndex};
 char	   *Name_pg_type_indices[Num_pg_type_indices] =
-{TypeNameIndex, TypeOidIndex};
+{TypeNameNspIndex, TypeOidIndex};
 char	   *Name_pg_description_indices[Num_pg_description_indices] =
 {DescriptionObjIndex};
 

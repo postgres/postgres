@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.296 2002/03/22 02:56:33 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.297 2002/03/29 19:06:10 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -53,6 +53,7 @@
 #include "access/htup.h"
 #include "catalog/index.h"
 #include "catalog/pg_type.h"
+#include "nodes/makefuncs.h"
 #include "nodes/params.h"
 #include "nodes/parsenodes.h"
 #include "parser/gramparse.h"
@@ -122,8 +123,6 @@ static void doNegateFloat(Value *v);
 	ResTarget			*target;
 	PrivTarget			*privtarget;
 
-	DefineStmt			*dstmt;
-	RuleStmt			*rstmt;
 	InsertStmt			*istmt;
 }
 
@@ -175,7 +174,8 @@ static void doNegateFloat(Value *v);
 
 %type <str>		relation_name, copy_file_name, copy_delimiter, copy_null,
 		database_name, access_method_clause, access_method, attr_name,
-		class, index_name, name, func_name, file_name
+		class, index_name, name, function_name, file_name,
+		func_name, handler_name
 
 %type <range>	qualified_name, OptConstrFromTable
 
@@ -200,8 +200,8 @@ static void doNegateFloat(Value *v);
 		opt_column_list, columnList, opt_name_list,
 		sort_clause, sortby_list, index_params, index_list, name_list,
 		from_clause, from_list, opt_array_bounds, qualified_name_list,
-		expr_list, attrs, opt_attrs, target_list, update_target_list,
-		insert_column_list,
+		any_name, any_name_list, expr_list, dotted_name, attrs,
+		target_list, update_target_list, insert_column_list,
 		def_list, opt_indirection, group_clause, TriggerFuncArgs,
 		select_limit, opt_select_limit
 
@@ -411,10 +411,10 @@ static void doNegateFloat(Value *v);
 /* Unary Operators */
 %left		AT ZONE			/* sets precedence for AT TIME ZONE */
 %right		UMINUS
-%left		'.'
 %left		'[' ']'
 %left		'(' ')'
 %left		TYPECAST
+%left		'.'
 %%
 
 /*
@@ -1812,7 +1812,7 @@ IntegerOnly:  Iconst
  *****************************************************************************/
 
 CreatePLangStmt:  CREATE opt_trusted opt_procedural LANGUAGE ColId_or_Sconst
-			HANDLER func_name opt_lancompiler
+			HANDLER handler_name opt_lancompiler
 			{
 				CreatePLangStmt *n = makeNode(CreatePLangStmt);
 				n->plname = $5;
@@ -1825,6 +1825,16 @@ CreatePLangStmt:  CREATE opt_trusted opt_procedural LANGUAGE ColId_or_Sconst
 
 opt_trusted:  TRUSTED			{ $$ = TRUE; }
 			| /*EMPTY*/			{ $$ = FALSE; }
+		;
+
+/* This ought to be just func_name, but that causes reduce/reduce conflicts
+ * (CREATE LANGUAGE is the only place where func_name isn't followed by '(').
+ * Work around by using name and dotted_name separately.
+ */
+handler_name: name
+				{ $$ = $1; }
+			| dotted_name
+				{ $$ = strVal(lfirst($1)); /* XXX changing soon */ }
 		;
 
 opt_lancompiler: LANCOMPILER Sconst { $$ = $2; }
@@ -1853,7 +1863,7 @@ opt_procedural: PROCEDURAL		{ $$ = TRUE; }
 
 CreateTrigStmt:  CREATE TRIGGER name TriggerActionTime TriggerEvents ON
 				qualified_name TriggerForSpec EXECUTE PROCEDURE
-				name '(' TriggerFuncArgs ')'
+				func_name '(' TriggerFuncArgs ')'
 				{
 					CreateTrigStmt *n = makeNode(CreateTrigStmt);
 					n->trigname = $3;
@@ -1877,7 +1887,8 @@ CreateTrigStmt:  CREATE TRIGGER name TriggerActionTime TriggerEvents ON
 		| CREATE CONSTRAINT TRIGGER name AFTER TriggerEvents ON
 				qualified_name OptConstrFromTable 
 				ConstraintAttributeSpec
-				FOR EACH ROW EXECUTE PROCEDURE name '(' TriggerFuncArgs ')'
+				FOR EACH ROW EXECUTE PROCEDURE
+				func_name '(' TriggerFuncArgs ')'
 				{
 					CreateTrigStmt *n = makeNode(CreateTrigStmt);
 					n->trigname = $4;
@@ -2043,7 +2054,7 @@ DefineStmt:  CREATE AGGREGATE func_name definition
 				{
 					DefineStmt *n = makeNode(DefineStmt);
 					n->defType = AGGREGATE;
-					n->defname = $3;
+					n->defnames = makeList1(makeString($3)); /* XXX */
 					n->definition = $4;
 					$$ = (Node *)n;
 				}
@@ -2051,15 +2062,15 @@ DefineStmt:  CREATE AGGREGATE func_name definition
 				{
 					DefineStmt *n = makeNode(DefineStmt);
 					n->defType = OPERATOR;
-					n->defname = $3;
+					n->defnames = makeList1(makeString($3)); /* XXX */
 					n->definition = $4;
 					$$ = (Node *)n;
 				}
-		| CREATE TYPE_P name definition
+		| CREATE TYPE_P any_name definition
 				{
 					DefineStmt *n = makeNode(DefineStmt);
 					n->defType = TYPE_P;
-					n->defname = $3;
+					n->defnames = $3;
 					n->definition = $4;
 					$$ = (Node *)n;
 				}
@@ -2102,10 +2113,7 @@ def_arg:  func_return  					{  $$ = (Node *)$1; }
  *
  *****************************************************************************/
 
-/* DropStmt needs to use qualified_name_list as many of the objects
- * are relations or other schema objects (names can be schema-qualified) */
- 
-DropStmt:  DROP drop_type qualified_name_list opt_drop_behavior
+DropStmt:  DROP drop_type any_name_list opt_drop_behavior
 				{
 					DropStmt *n = makeNode(DropStmt);
 					n->removeType = $2;
@@ -2122,6 +2130,18 @@ drop_type: TABLE								{ $$ = DROP_TABLE; }
 		| RULE									{ $$ = DROP_RULE; }
 		| TYPE_P								{ $$ = DROP_TYPE; }
 		| DOMAIN_P								{ $$ = DROP_DOMAIN; }
+		;
+
+any_name_list:  any_name
+			{ $$ = makeList1($1); }
+		| any_name_list ',' any_name
+			{ $$ = lappend($1, $3); }
+		;
+
+any_name: ColId
+			{ $$ = makeList1(makeString($1)); }
+		| dotted_name
+			{ $$ = $1; }
 		;
 
 /*****************************************************************************
@@ -2192,7 +2212,7 @@ CommentStmt:	COMMENT ON comment_type name IS comment_text
 				n->comment = $10;
 				$$ = (Node *) n;
 			}
-		| COMMENT ON AGGREGATE name '(' aggr_argtype ')' IS comment_text
+		| COMMENT ON AGGREGATE func_name '(' aggr_argtype ')' IS comment_text
 			{
 				CommentStmt *n = makeNode(CommentStmt);
 				n->objtype = AGGREGATE;
@@ -2201,18 +2221,6 @@ CommentStmt:	COMMENT ON comment_type name IS comment_text
 				n->objproperty = NULL;
 				n->objlist = makeList1($6);
 				n->comment = $9;
-				$$ = (Node *) n;
-			}
-		| COMMENT ON AGGREGATE name aggr_argtype IS comment_text
-			{
-				/* Obsolete syntax, but must support for awhile */
-				CommentStmt *n = makeNode(CommentStmt);
-				n->objtype = AGGREGATE;
-				n->objschema = NULL;
-				n->objname = $4;
-				n->objproperty = NULL;
-				n->objlist = makeList1($5);
-				n->comment = $7;
 				$$ = (Node *) n;
 			}
 		| COMMENT ON FUNCTION func_name func_args IS comment_text
@@ -2691,9 +2699,9 @@ ProcedureStmt:	CREATE opt_or_replace FUNCTION func_name func_args
 				{
 					ProcedureStmt *n = makeNode(ProcedureStmt);
 					n->replace = $2;
-					n->funcname = $4;
+					n->funcname = makeList1(makeString($4)); /* XXX */
 					n->argTypes = $5;
-					n->returnType = (Node *) $7;
+					n->returnType = $7;
 					n->withClause = $12;
 					n->as = $9;
 					n->language = $11;
@@ -2765,19 +2773,19 @@ func_return:  func_type
 		;
 
 /*
- * We would like to make the second production here be ColId '.' ColId etc,
+ * We would like to make the second production here be ColId attrs etc,
  * but that causes reduce/reduce conflicts.  type_name is next best choice.
  */
 func_type:	Typename
 				{
 					$$ = $1;
 				}
-		| type_name '.' ColId '%' TYPE_P
+		| type_name attrs '%' TYPE_P
 				{
 					$$ = makeNode(TypeName);
-					$$->name = $1;
+					$$->names = lcons(makeString($1), $2);
+					$$->pct_type = true;
 					$$->typmod = -1;
-					$$->attrname = $3;
 				}
 		;
 
@@ -2804,15 +2812,7 @@ RemoveAggrStmt:  DROP AGGREGATE func_name '(' aggr_argtype ')'
 				{
 						RemoveAggrStmt *n = makeNode(RemoveAggrStmt);
 						n->aggname = $3;
-						n->aggtype = (Node *) $5;
-						$$ = (Node *)n;
-				}
-		| DROP AGGREGATE func_name aggr_argtype
-				{
-						/* Obsolete syntax, but must support for awhile */
-						RemoveAggrStmt *n = makeNode(RemoveAggrStmt);
-						n->aggname = $3;
-						n->aggtype = (Node *) $4;
+						n->aggtype = $5;
 						$$ = (Node *)n;
 				}
 		;
@@ -3293,7 +3293,7 @@ DropdbStmt:	DROP DATABASE database_name
  *
  *****************************************************************************/
 
-CreateDomainStmt:  CREATE DOMAIN_P name opt_as Typename ColQualList opt_collate
+CreateDomainStmt:  CREATE DOMAIN_P any_name opt_as Typename ColQualList opt_collate
 				{
 					CreateDomainStmt *n = makeNode(CreateDomainStmt);
 					n->domainname = $3;
@@ -4237,6 +4237,14 @@ opt_array_bounds:	opt_array_bounds '[' ']'
 				{  $$ = NIL; }
 		;
 
+/*
+ * XXX ideally, the production for a qualified typename should be ColId attrs
+ * (there's no obvious reason why the first name should need to be restricted)
+ * and should be an alternative of GenericType (so that it can be used to
+ * specify a type for a literal in AExprConst).  However doing either causes
+ * reduce/reduce conflicts that I haven't been able to find a workaround
+ * for.  FIXME later.
+ */
 SimpleTypename:  ConstTypename
 		| ConstInterval opt_interval
 				{
@@ -4249,6 +4257,12 @@ SimpleTypename:  ConstTypename
 					$$ = $1;
 					$$->typmod = ((($5 & 0x7FFF) << 16) | $3);
 				}
+		| type_name attrs
+				{
+					$$ = makeNode(TypeName);
+					$$->names = lcons(makeString($1), $2);
+					$$->typmod = -1;
+				}
 		;
 
 ConstTypename:  GenericType
@@ -4260,9 +4274,7 @@ ConstTypename:  GenericType
 
 GenericType:  type_name
 				{
-					$$ = makeNode(TypeName);
-					$$->name = xlateSqlType($1);
-					$$->typmod = -1;
+					$$ = makeTypeName(xlateSqlType($1));
 				}
 		;
 
@@ -4273,32 +4285,25 @@ GenericType:  type_name
  */
 Numeric:  FLOAT opt_float
 				{
-					$$ = makeNode(TypeName);
-					$$->name = $2; /* already xlated */
-					$$->typmod = -1;
+					$$ = makeTypeName($2); /* already xlated */
 				}
 		| DOUBLE PRECISION
 				{
-					$$ = makeNode(TypeName);
-					$$->name = xlateSqlType("float8");
-					$$->typmod = -1;
+					$$ = makeTypeName(xlateSqlType("float8"));
 				}
 		| DECIMAL opt_decimal
 				{
-					$$ = makeNode(TypeName);
-					$$->name = xlateSqlType("decimal");
+					$$ = makeTypeName(xlateSqlType("decimal"));
 					$$->typmod = $2;
 				}
 		| DEC opt_decimal
 				{
-					$$ = makeNode(TypeName);
-					$$->name = xlateSqlType("decimal");
+					$$ = makeTypeName(xlateSqlType("decimal"));
 					$$->typmod = $2;
 				}
 		| NUMERIC opt_numeric
 				{
-					$$ = makeNode(TypeName);
-					$$->name = xlateSqlType("numeric");
+					$$ = makeTypeName(xlateSqlType("numeric"));
 					$$->typmod = $2;
 				}
 		;
@@ -4379,8 +4384,7 @@ opt_decimal:  '(' Iconst ',' Iconst ')'
  */
 Bit:  bit '(' Iconst ')'
 				{
-					$$ = makeNode(TypeName);
-					$$->name = $1;
+					$$ = makeTypeName($1);
 					if ($3 < 1)
 						elog(ERROR,"length for type '%s' must be at least 1",
 							 $1);
@@ -4391,8 +4395,7 @@ Bit:  bit '(' Iconst ')'
 				}
 		| bit
 				{
-					$$ = makeNode(TypeName);
-					$$->name = $1;
+					$$ = makeTypeName($1);
 					/* bit defaults to bit(1), varbit to no limit */
 					if (strcmp($1, "bit") == 0)
 						$$->typmod = 1;
@@ -4418,8 +4421,19 @@ bit:  BIT opt_varying
  */
 Character:  character '(' Iconst ')' opt_charset
 				{
-					$$ = makeNode(TypeName);
-					$$->name = $1;
+					if (($5 != NULL) && (strcmp($5, "sql_text") != 0))
+					{
+						char *type;
+
+						type = palloc(strlen($1) + 1 + strlen($5) + 1);
+						strcpy(type, $1);
+						strcat(type, "_");
+						strcat(type, $5);
+						$1 = xlateSqlType(type);
+					}
+
+					$$ = makeTypeName($1);
+
 					if ($3 < 1)
 						elog(ERROR,"length for type '%s' must be at least 1",
 							 $1);
@@ -4433,36 +4447,27 @@ Character:  character '(' Iconst ')' opt_charset
 					 * truncate where necessary)
 					 */
 					$$->typmod = VARHDRSZ + $3;
-
-					if (($5 != NULL) && (strcmp($5, "sql_text") != 0)) {
-						char *type;
-
-						type = palloc(strlen($$->name) + 1 + strlen($5) + 1);
-						strcpy(type, $$->name);
-						strcat(type, "_");
-						strcat(type, $5);
-						$$->name = xlateSqlType(type);
-					};
 				}
 		| character opt_charset
 				{
-					$$ = makeNode(TypeName);
-					$$->name = $1;
+					if (($2 != NULL) && (strcmp($2, "sql_text") != 0))
+					{
+						char *type;
+
+						type = palloc(strlen($1) + 1 + strlen($2) + 1);
+						strcpy(type, $1);
+						strcat(type, "_");
+						strcat(type, $2);
+						$1 = xlateSqlType(type);
+					}
+
+					$$ = makeTypeName($1);
+
 					/* char defaults to char(1), varchar to no limit */
 					if (strcmp($1, "bpchar") == 0)
 						$$->typmod = VARHDRSZ + 1;
 					else
 						$$->typmod = -1;
-
-					if (($2 != NULL) && (strcmp($2, "sql_text") != 0)) {
-						char *type;
-
-						type = palloc(strlen($$->name) + 1 + strlen($2) + 1);
-						strcpy(type, $$->name);
-						strcat(type, "_");
-						strcat(type, $2);
-						$$->name = xlateSqlType(type);
-					};
 				}
 		;
 
@@ -4488,11 +4493,10 @@ opt_collate:  COLLATE ColId						{ $$ = $2; }
 
 ConstDatetime:  TIMESTAMP '(' Iconst ')' opt_timezone_x
 				{
-					$$ = makeNode(TypeName);
 					if ($5)
-						$$->name = xlateSqlType("timestamptz");
+						$$ = makeTypeName(xlateSqlType("timestamptz"));
 					else
-						$$->name = xlateSqlType("timestamp");
+						$$ = makeTypeName(xlateSqlType("timestamp"));
 					/* XXX the timezone field seems to be unused
 					 * - thomas 2001-09-06
 					 */
@@ -4504,11 +4508,10 @@ ConstDatetime:  TIMESTAMP '(' Iconst ')' opt_timezone_x
 				}
 		| TIMESTAMP opt_timezone_x
 				{
-					$$ = makeNode(TypeName);
 					if ($2)
-						$$->name = xlateSqlType("timestamptz");
+						$$ = makeTypeName(xlateSqlType("timestamptz"));
 					else
-						$$->name = xlateSqlType("timestamp");
+						$$ = makeTypeName(xlateSqlType("timestamp"));
 					/* XXX the timezone field seems to be unused
 					 * - thomas 2001-09-06
 					 */
@@ -4524,11 +4527,10 @@ ConstDatetime:  TIMESTAMP '(' Iconst ')' opt_timezone_x
 				}
 		| TIME '(' Iconst ')' opt_timezone
 				{
-					$$ = makeNode(TypeName);
 					if ($5)
-						$$->name = xlateSqlType("timetz");
+						$$ = makeTypeName(xlateSqlType("timetz"));
 					else
-						$$->name = xlateSqlType("time");
+						$$ = makeTypeName(xlateSqlType("time"));
 					if (($3 < 0) || ($3 > 13))
 						elog(ERROR,"TIME(%d)%s precision must be between %d and %d",
 							 $3, ($5 ? " WITH TIME ZONE": ""), 0, 13);
@@ -4536,11 +4538,10 @@ ConstDatetime:  TIMESTAMP '(' Iconst ')' opt_timezone_x
 				}
 		| TIME opt_timezone
 				{
-					$$ = makeNode(TypeName);
 					if ($2)
-						$$->name = xlateSqlType("timetz");
+						$$ = makeTypeName(xlateSqlType("timetz"));
 					else
-						$$->name = xlateSqlType("time");
+						$$ = makeTypeName(xlateSqlType("time"));
 					/* SQL99 specified a default precision of zero.
 					 * See comments for timestamp above on why we will
 					 * leave this unspecified for now. - thomas 2001-12-07
@@ -4551,9 +4552,7 @@ ConstDatetime:  TIMESTAMP '(' Iconst ')' opt_timezone_x
 
 ConstInterval:  INTERVAL
 				{
-					$$ = makeNode(TypeName);
-					$$->name = xlateSqlType("interval");
-					$$->typmod = -1;
+					$$ = makeTypeName(xlateSqlType("interval"));
 				}
 		;
 
@@ -5161,7 +5160,7 @@ c_expr:  columnref
 		| CURRENT_DATE opt_empty_parentheses
 				{
 					/*
-					 * Translate as "date('now'::text)".
+					 * Translate as "'now'::text::date".
 					 *
 					 * We cannot use "'now'::date" because coerce_type() will
 					 * immediately reduce that to a constant representing
@@ -5174,43 +5173,30 @@ c_expr:  columnref
 					 * of type-input conversion functions...
 					 */
 					A_Const *s = makeNode(A_Const);
-					TypeName *t = makeNode(TypeName);
-					TypeName *d = makeNode(TypeName);
+					TypeName *d;
 
 					s->val.type = T_String;
 					s->val.val.str = "now";
-					s->typename = t;
+					s->typename = makeTypeName(xlateSqlType("text"));
 
-					t->name = xlateSqlType("text");
-					t->setof = FALSE;
-					t->typmod = -1;
-
-					d->name = xlateSqlType("date");
-					d->setof = FALSE;
-					d->typmod = -1;
+					d = makeTypeName(xlateSqlType("date"));
 
 					$$ = (Node *)makeTypeCast((Node *)s, d);
 				}
 		| CURRENT_TIME opt_empty_parentheses
 				{
 					/*
-					 * Translate as "timetz('now'::text)".
+					 * Translate as "'now'::text::timetz".
 					 * See comments for CURRENT_DATE.
 					 */
 					A_Const *s = makeNode(A_Const);
-					TypeName *t = makeNode(TypeName);
-					TypeName *d = makeNode(TypeName);
+					TypeName *d;
 
 					s->val.type = T_String;
 					s->val.val.str = "now";
-					s->typename = t;
+					s->typename = makeTypeName(xlateSqlType("text"));
 
-					t->name = xlateSqlType("text");
-					t->setof = FALSE;
-					t->typmod = -1;
-
-					d->name = xlateSqlType("timetz");
-					d->setof = FALSE;
+					d = makeTypeName(xlateSqlType("timetz"));
 					/* SQL99 mandates a default precision of zero for TIME
 					 * fields in schemas. However, for CURRENT_TIME
 					 * let's preserve the microsecond precision we
@@ -5223,23 +5209,17 @@ c_expr:  columnref
 		| CURRENT_TIME '(' Iconst ')'
 				{
 					/*
-					 * Translate as "timetz('now'::text)".
+					 * Translate as "'now'::text::timetz(n)".
 					 * See comments for CURRENT_DATE.
 					 */
 					A_Const *s = makeNode(A_Const);
-					TypeName *t = makeNode(TypeName);
-					TypeName *d = makeNode(TypeName);
+					TypeName *d;
 
 					s->val.type = T_String;
 					s->val.val.str = "now";
-					s->typename = t;
+					s->typename = makeTypeName(xlateSqlType("text"));
 
-					t->name = xlateSqlType("text");
-					t->setof = FALSE;
-					t->typmod = -1;
-
-					d->name = xlateSqlType("timetz");
-					d->setof = FALSE;
+					d = makeTypeName(xlateSqlType("timetz"));
 					if (($3 < 0) || ($3 > 13))
 						elog(ERROR,"CURRENT_TIME(%d) precision must be between %d and %d",
 							 $3, 0, 13);
@@ -5250,23 +5230,17 @@ c_expr:  columnref
 		| CURRENT_TIMESTAMP opt_empty_parentheses
 				{
 					/*
-					 * Translate as "timestamptz('now'::text)".
+					 * Translate as "'now'::text::timestamptz".
 					 * See comments for CURRENT_DATE.
 					 */
 					A_Const *s = makeNode(A_Const);
-					TypeName *t = makeNode(TypeName);
-					TypeName *d = makeNode(TypeName);
+					TypeName *d;
 
 					s->val.type = T_String;
 					s->val.val.str = "now";
-					s->typename = t;
+					s->typename = makeTypeName(xlateSqlType("text"));
 
-					t->name = xlateSqlType("text");
-					t->setof = FALSE;
-					t->typmod = -1;
-
-					d->name = xlateSqlType("timestamptz");
-					d->setof = FALSE;
+					d = makeTypeName(xlateSqlType("timestamptz"));
 					/* SQL99 mandates a default precision of 6 for timestamp.
 					 * Also, that is about as precise as we will get since
 					 * we are using a microsecond time interface.
@@ -5279,23 +5253,17 @@ c_expr:  columnref
 		| CURRENT_TIMESTAMP '(' Iconst ')'
 				{
 					/*
-					 * Translate as "timestamptz('now'::text)".
+					 * Translate as "'now'::text::timestamptz(n)".
 					 * See comments for CURRENT_DATE.
 					 */
 					A_Const *s = makeNode(A_Const);
-					TypeName *t = makeNode(TypeName);
-					TypeName *d = makeNode(TypeName);
+					TypeName *d;
 
 					s->val.type = T_String;
 					s->val.val.str = "now";
-					s->typename = t;
+					s->typename = makeTypeName(xlateSqlType("text"));
 
-					t->name = xlateSqlType("text");
-					t->setof = FALSE;
-					t->typmod = -1;
-
-					d->name = xlateSqlType("timestamptz");
-					d->setof = FALSE;
+					d = makeTypeName(xlateSqlType("timestamptz"));
 					if (($3 < 0) || ($3 > 13))
 						elog(ERROR,"CURRENT_TIMESTAMP(%d) precision must be between %d and %d",
 							 $3, 0, 13);
@@ -5645,24 +5613,24 @@ columnref: relation_name opt_indirection
 					$$->fields = makeList1(makeString($1));
 					$$->indirection = $2;
 				}
-		| relation_name attrs opt_indirection
+		| dotted_name opt_indirection
 				{
 					$$ = makeNode(ColumnRef);
-					$$->fields = lcons(makeString($1), $2);
-					$$->indirection = $3;
+					$$->fields = $1;
+					$$->indirection = $2;
 				}
 		;
 
-attrs:	  opt_attrs '.' attr_name
-				{ $$ = lappend($1, makeString($3)); }
-		| opt_attrs '.' '*'
-				{ $$ = lappend($1, makeString("*")); }
+dotted_name: relation_name attrs
+				{ $$ = lcons(makeString($1), $2); }
 		;
 
-opt_attrs: /*EMPTY*/
-				{ $$ = NIL; }
-		| opt_attrs '.' attr_name
-				{ $$ = lappend($1, makeString($3)); }
+attrs:  '.' attr_name
+				{ $$ = makeList1(makeString($2)); }
+		| '.' '*'
+				{ $$ = makeList1(makeString("*")); }
+		| '.' attr_name attrs
+				{ $$ = lcons(makeString($2), $3); }
 		;
 
 opt_empty_parentheses: '(' ')' { $$ = TRUE; }
@@ -5742,11 +5710,11 @@ relation_name:	SpecialRuleRelation
 					$$ = $1;
 				}
 		;
-		
+
 qualified_name_list:  qualified_name
-				{	$$ = makeList1($1); }
+				{ $$ = makeList1($1); }
 		| qualified_name_list ',' qualified_name
-				{	$$ = lappend($1, $3); }
+				{ $$ = lappend($1, $3); }
 		;
 
 qualified_name: ColId
@@ -5786,6 +5754,21 @@ attr_name:				ColId			{ $$ = $1; };
 class:					ColId			{ $$ = $1; };
 index_name:				ColId			{ $$ = $1; };
 file_name:				Sconst			{ $$ = $1; };
+
+/* func_name will soon return a List ... but not yet */
+/*
+func_name: function_name
+			{ $$ = makeList1(makeString($1)); }
+		| dotted_name
+			{ $$ = $1; }
+		;
+*/
+func_name: function_name
+			{ $$ = $1; }
+		| dotted_name
+			{ $$ = strVal(lfirst($1)); }
+		;
+
 
 /* Constants
  * Include TRUE/FALSE for SQL3 support. - thomas 1997-10-24
@@ -5867,9 +5850,7 @@ AexprConst:  Iconst
 					A_Const *n = makeNode(A_Const);
 					n->val.type = T_String;
 					n->val.val.str = "t";
-					n->typename = makeNode(TypeName);
-					n->typename->name = xlateSqlType("bool");
-					n->typename->typmod = -1;
+					n->typename = makeTypeName(xlateSqlType("bool"));
 					$$ = (Node *)n;
 				}
 		| FALSE_P
@@ -5877,9 +5858,7 @@ AexprConst:  Iconst
 					A_Const *n = makeNode(A_Const);
 					n->val.type = T_String;
 					n->val.val.str = "f";
-					n->typename = makeNode(TypeName);
-					n->typename->name = xlateSqlType("bool");
-					n->typename->typmod = -1;
+					n->typename = makeTypeName(xlateSqlType("bool"));
 					$$ = (Node *)n;
 				}
 		| NULL_P
@@ -5920,7 +5899,7 @@ type_name:  IDENT						{ $$ = $1; }
 
 /* Function identifier --- names that can be function names.
  */
-func_name:  IDENT						{ $$ = xlateSqlFunc($1); }
+function_name:  IDENT					{ $$ = xlateSqlFunc($1); }
 		| unreserved_keyword			{ $$ = xlateSqlFunc($1); }
 		| func_name_keyword				{ $$ = xlateSqlFunc($1); }
 		;
@@ -6304,6 +6283,7 @@ static Node *
 makeStringConst(char *str, TypeName *typename)
 {
 	A_Const *n = makeNode(A_Const);
+
 	n->val.type = T_String;
 	n->val.val.str = str;
 	n->typename = typename;
@@ -6315,12 +6295,10 @@ static Node *
 makeFloatConst(char *str)
 {
 	A_Const *n = makeNode(A_Const);
-	TypeName *t = makeNode(TypeName);
+
 	n->val.type = T_Float;
 	n->val.val.str = str;
-	t->name = xlateSqlType("float");
-	t->typmod = -1;
-	n->typename = t;
+	n->typename = makeTypeName(xlateSqlType("float"));
 
 	return (Node *)n;
 }
@@ -6434,7 +6412,6 @@ makeSetOp(SetOperation op, bool all, Node *larg, Node *rarg)
 	n->rarg = (SelectStmt *) rarg;
 	return (Node *) n;
 }
-
 
 /* xlateSqlFunc()
  * Convert alternate function names to internal Postgres functions.

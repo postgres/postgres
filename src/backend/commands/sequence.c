@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/sequence.c,v 1.74 2002/03/22 02:56:31 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/sequence.c,v 1.75 2002/03/29 19:06:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,6 +17,7 @@
 #include <ctype.h>
 
 #include "access/heapam.h"
+#include "catalog/pg_type.h"
 #include "commands/creatinh.h"
 #include "commands/sequence.h"
 #include "miscadmin.h"
@@ -85,8 +86,6 @@ DefineSequence(CreateSeqStmt *seq)
 {
 	FormData_pg_sequence new;
 	CreateStmt *stmt = makeNode(CreateStmt);
-	ColumnDef  *coldef;
-	TypeName   *typnam;
 	Oid			seqoid;
 	Relation	rel;
 	Buffer		buf;
@@ -108,9 +107,12 @@ DefineSequence(CreateSeqStmt *seq)
 	stmt->tableElts = NIL;
 	for (i = SEQ_COL_FIRSTCOL; i <= SEQ_COL_LASTCOL; i++)
 	{
+		ColumnDef  *coldef;
+		TypeName   *typnam;
+
 		typnam = makeNode(TypeName);
 		typnam->setof = FALSE;
-		typnam->arrayBounds = NULL;
+		typnam->arrayBounds = NIL;
 		typnam->typmod = -1;
 		coldef = makeNode(ColumnDef);
 		coldef->typename = typnam;
@@ -122,48 +124,48 @@ DefineSequence(CreateSeqStmt *seq)
 		switch (i)
 		{
 			case SEQ_COL_NAME:
-				typnam->name = "name";
+				typnam->typeid = NAMEOID;
 				coldef->colname = "sequence_name";
 				namestrcpy(&name, seq->sequence->relname);
 				value[i - 1] = NameGetDatum(&name);
 				break;
 			case SEQ_COL_LASTVAL:
-				typnam->name = "int8";
+				typnam->typeid = INT8OID;
 				coldef->colname = "last_value";
 				value[i - 1] = Int64GetDatumFast(new.last_value);
 				break;
 			case SEQ_COL_INCBY:
-				typnam->name = "int8";
+				typnam->typeid = INT8OID;
 				coldef->colname = "increment_by";
 				value[i - 1] = Int64GetDatumFast(new.increment_by);
 				break;
 			case SEQ_COL_MAXVALUE:
-				typnam->name = "int8";
+				typnam->typeid = INT8OID;
 				coldef->colname = "max_value";
 				value[i - 1] = Int64GetDatumFast(new.max_value);
 				break;
 			case SEQ_COL_MINVALUE:
-				typnam->name = "int8";
+				typnam->typeid = INT8OID;
 				coldef->colname = "min_value";
 				value[i - 1] = Int64GetDatumFast(new.min_value);
 				break;
 			case SEQ_COL_CACHE:
-				typnam->name = "int8";
+				typnam->typeid = INT8OID;
 				coldef->colname = "cache_value";
 				value[i - 1] = Int64GetDatumFast(new.cache_value);
 				break;
 			case SEQ_COL_LOG:
-				typnam->name = "int8";
+				typnam->typeid = INT8OID;
 				coldef->colname = "log_cnt";
 				value[i - 1] = Int64GetDatum((int64) 1);
 				break;
 			case SEQ_COL_CYCLE:
-				typnam->name = "bool";
+				typnam->typeid = BOOLOID;
 				coldef->colname = "is_cycled";
 				value[i - 1] = BoolGetDatum(new.is_cycled);
 				break;
 			case SEQ_COL_CALLED:
-				typnam->name = "bool";
+				typnam->typeid = BOOLOID;
 				coldef->colname = "is_called";
 				value[i - 1] = BoolGetDatum(false);
 				break;

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/remove.c,v 1.71 2002/03/21 23:27:21 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/remove.c,v 1.72 2002/03/29 19:06:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,8 +24,8 @@
 #include "miscadmin.h"
 #include "parser/parse.h"
 #include "parser/parse_agg.h"
-#include "parser/parse_expr.h"
 #include "parser/parse_func.h"
+#include "parser/parse_type.h"
 #include "utils/acl.h"
 #include "utils/builtins.h"
 #include "utils/syscache.h"
@@ -43,29 +43,20 @@
  */
 void
 RemoveOperator(char *operatorName,		/* operator name */
-			   char *typeName1, /* left argument type name */
-			   char *typeName2) /* right argument type name */
+			   TypeName *typeName1, /* left argument type name */
+			   TypeName *typeName2) /* right argument type name */
 {
 	Relation	relation;
 	HeapTuple	tup;
 	Oid			typeId1 = InvalidOid;
 	Oid			typeId2 = InvalidOid;
-	bool		defined;
 	char		oprtype;
 
 	if (typeName1)
-	{
-		typeId1 = TypeGet(typeName1, &defined);
-		if (!OidIsValid(typeId1))
-			elog(ERROR, "RemoveOperator: type '%s' does not exist", typeName1);
-	}
+		typeId1 = typenameTypeId(typeName1);
 
 	if (typeName2)
-	{
-		typeId2 = TypeGet(typeName2, &defined);
-		if (!OidIsValid(typeId2))
-			elog(ERROR, "RemoveOperator: type '%s' does not exist", typeName2);
-	}
+		typeId2 = typenameTypeId(typeName2);
 
 	if (OidIsValid(typeId1) && OidIsValid(typeId2))
 		oprtype = 'b';
@@ -99,20 +90,20 @@ RemoveOperator(char *operatorName,		/* operator name */
 		{
 			elog(ERROR, "RemoveOperator: binary operator '%s' taking '%s' and '%s' does not exist",
 				 operatorName,
-				 typeName1,
-				 typeName2);
+				 TypeNameToString(typeName1),
+				 TypeNameToString(typeName2));
 		}
 		else if (OidIsValid(typeId1))
 		{
 			elog(ERROR, "RemoveOperator: right unary operator '%s' taking '%s' does not exist",
 				 operatorName,
-				 typeName1);
+				 TypeNameToString(typeName1));
 		}
 		else
 		{
 			elog(ERROR, "RemoveOperator: left unary operator '%s' taking '%s' does not exist",
 				 operatorName,
-				 typeName2);
+				 TypeNameToString(typeName2));
 		}
 	}
 	heap_freetuple(tup);
@@ -213,16 +204,13 @@ AttributeAndRelationRemove(Oid typeOid)
 	rel = heap_openr(RelationRelationName, RowExclusiveLock);
 	while (PointerIsValid((char *) optr->next))
 	{
-		key[0].sk_argument = (Datum) (optr++)->reloid;
+		Oid		relOid = (optr++)->reloid;
+
+		key[0].sk_argument = ObjectIdGetDatum(relOid);
 		scan = heap_beginscan(rel, 0, SnapshotNow, 1, key);
 		tup = heap_getnext(scan, 0);
 		if (HeapTupleIsValid(tup))
-		{
-			char	   *name;
-
-			name = NameStr(((Form_pg_class) GETSTRUCT(tup))->relname);
-			heap_drop_with_catalog(name, allowSystemTableMods);
-		}
+			heap_drop_with_catalog(relOid, allowSystemTableMods);
 		heap_endscan(scan);
 	}
 	heap_close(rel, RowExclusiveLock);
@@ -231,42 +219,68 @@ AttributeAndRelationRemove(Oid typeOid)
 
 /*
  *	TypeRemove
- *		Removes the type 'typeName' and all attributes and relations that
- *		use it.
+ *		Removes a datatype.
+ *
+ * NOTE: since this tries to remove the associated array type too, it'll
+ * only work on scalar types.
  */
 void
-RemoveType(char *typeName)		/* type name to be removed */
+RemoveType(List *names)
 {
+	TypeName   *typename;
 	Relation	relation;
+	Oid			typeoid;
 	HeapTuple	tup;
-	char	   *shadow_type;
+
+	/* Make a TypeName so we can use standard type lookup machinery */
+	typename = makeNode(TypeName);
+	typename->names = names;
+	typename->typmod = -1;
+	typename->arrayBounds = NIL;
 
 	relation = heap_openr(TypeRelationName, RowExclusiveLock);
 
-	tup = SearchSysCache(TYPENAME,
-						 PointerGetDatum(typeName),
+	/* Use LookupTypeName here so that shell types can be removed. */
+	typeoid = LookupTypeName(typename);
+	if (!OidIsValid(typeoid))
+		elog(ERROR, "Type \"%s\" does not exist",
+			 TypeNameToString(typename));
+
+	tup = SearchSysCache(TYPEOID,
+						 ObjectIdGetDatum(typeoid),
 						 0, 0, 0);
 	if (!HeapTupleIsValid(tup))
-		elog(ERROR, "RemoveType: type '%s' does not exist", typeName);
+		elog(ERROR, "Type \"%s\" does not exist",
+			 TypeNameToString(typename));
 
-	if (!pg_type_ownercheck(tup->t_data->t_oid, GetUserId()))
+	if (!pg_type_ownercheck(typeoid, GetUserId()))
 		elog(ERROR, "RemoveType: type '%s': permission denied",
-			 typeName);
+			 TypeNameToString(typename));
 
 	/* Delete any comments associated with this type */
-	DeleteComments(tup->t_data->t_oid, RelationGetRelid(relation));
+	DeleteComments(typeoid, RelationGetRelid(relation));
 
+	/* Remove the type tuple from pg_type */
 	simple_heap_delete(relation, &tup->t_self);
 
 	ReleaseSysCache(tup);
 
-	/* Also, delete the "array of" that type */
-	shadow_type = makeArrayTypeName(typeName);
-	tup = SearchSysCache(TYPENAME,
-						 PointerGetDatum(shadow_type),
+	/* Now, delete the "array of" that type */
+	typename->arrayBounds = makeList1(makeInteger(1));
+
+	typeoid = LookupTypeName(typename);
+	if (!OidIsValid(typeoid))
+		elog(ERROR, "Type \"%s\" does not exist",
+			 TypeNameToString(typename));
+
+	tup = SearchSysCache(TYPEOID,
+						 ObjectIdGetDatum(typeoid),
 						 0, 0, 0);
 	if (!HeapTupleIsValid(tup))
-		elog(ERROR, "RemoveType: type '%s' does not exist", shadow_type);
+		elog(ERROR, "Type \"%s\" does not exist",
+			 TypeNameToString(typename));
+
+	DeleteComments(typeoid, RelationGetRelid(relation));
 
 	simple_heap_delete(relation, &tup->t_self);
 
@@ -277,13 +291,14 @@ RemoveType(char *typeName)		/* type name to be removed */
 
 /*
  *	RemoveDomain
- *		Removes the domain 'typeName' and all attributes and relations that
- *		use it.
+ *		Removes a domain.
  */
 void
-RemoveDomain(char *domainName, int behavior)
+RemoveDomain(List *names, int behavior)
 {
+	TypeName   *typename;
 	Relation	relation;
+	Oid			typeoid;
 	HeapTuple	tup;
 	char		typtype;
 
@@ -291,30 +306,43 @@ RemoveDomain(char *domainName, int behavior)
 	if (behavior == CASCADE)
 		elog(ERROR, "DROP DOMAIN does not support the CASCADE keyword");
 
+	/* Make a TypeName so we can use standard type lookup machinery */
+	typename = makeNode(TypeName);
+	typename->names = names;
+	typename->typmod = -1;
+	typename->arrayBounds = NIL;
+
 	relation = heap_openr(TypeRelationName, RowExclusiveLock);
 
-	tup = SearchSysCache(TYPENAME,
-						 PointerGetDatum(domainName),
+	typeoid = typenameTypeId(typename);
+
+	tup = SearchSysCache(TYPEOID,
+						 ObjectIdGetDatum(typeoid),
 						 0, 0, 0);
 	if (!HeapTupleIsValid(tup))
-		elog(ERROR, "RemoveType: type '%s' does not exist", domainName);
+		elog(ERROR, "RemoveDomain: type '%s' does not exist",
+			 TypeNameToString(typename));
 
-	if (!pg_type_ownercheck(tup->t_data->t_oid, GetUserId()))
+	if (!pg_type_ownercheck(typeoid, GetUserId()))
 		elog(ERROR, "RemoveDomain: type '%s': permission denied",
-			 domainName);
+			 TypeNameToString(typename));
 
 	/* Check that this is actually a domain */
 	typtype = ((Form_pg_type) GETSTRUCT(tup))->typtype;
 
 	if (typtype != 'd')
-		elog(ERROR, "%s is not a domain", domainName);
+		elog(ERROR, "%s is not a domain",
+			 TypeNameToString(typename));
 
 	/* Delete any comments associated with this type */
-	DeleteComments(tup->t_data->t_oid, RelationGetRelid(relation));
+	DeleteComments(typeoid, RelationGetRelid(relation));
 
+	/* Remove the type tuple from pg_type */
 	simple_heap_delete(relation, &tup->t_self);
 
 	ReleaseSysCache(tup);
+
+	/* At present, domains don't have associated array types */
 
 	heap_close(relation, RowExclusiveLock);
 }
@@ -345,20 +373,19 @@ RemoveFunction(char *functionName,		/* function name to be removed */
 	for (i = 0; i < nargs; i++)
 	{
 		TypeName   *t = (TypeName *) lfirst(argTypes);
-		char	   *typnam = TypeNameToInternalName(t);
+
+		argList[i] = LookupTypeName(t);
+		if (!OidIsValid(argList[i]))
+		{
+			char      *typnam = TypeNameToString(t);
+
+			if (strcmp(typnam, "opaque") == 0)
+				argList[i] = InvalidOid;
+			else
+				elog(ERROR, "Type \"%s\" does not exist", typnam);
+		}
 
 		argTypes = lnext(argTypes);
-
-		if (strcmp(typnam, "opaque") == 0)
-			argList[i] = InvalidOid;
-		else
-		{
-			argList[i] = GetSysCacheOid(TYPENAME,
-										PointerGetDatum(typnam),
-										0, 0, 0);
-			if (!OidIsValid(argList[i]))
-				elog(ERROR, "RemoveFunction: type '%s' not found", typnam);
-		}
 	}
 
 	relation = heap_openr(ProcedureRelationName, RowExclusiveLock);
@@ -393,12 +420,11 @@ RemoveFunction(char *functionName,		/* function name to be removed */
 }
 
 void
-RemoveAggregate(char *aggName, char *aggType)
+RemoveAggregate(char *aggName, TypeName *aggType)
 {
 	Relation	relation;
 	HeapTuple	tup;
 	Oid			basetypeID;
-	bool		defined;
 
 	/*
 	 * if a basetype is passed in, then attempt to find an aggregate for
@@ -410,11 +436,7 @@ RemoveAggregate(char *aggName, char *aggType)
 	 */
 
 	if (aggType)
-	{
-		basetypeID = TypeGet(aggType, &defined);
-		if (!OidIsValid(basetypeID))
-			elog(ERROR, "RemoveAggregate: type '%s' does not exist", aggType);
-	}
+		basetypeID = typenameTypeId(aggType);
 	else
 		basetypeID = InvalidOid;
 

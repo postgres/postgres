@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/makefuncs.c,v 1.29 2002/03/22 02:56:32 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/makefuncs.c,v 1.30 2002/03/29 19:06:09 tgl Exp $
  */
 #include "postgres.h"
 
@@ -208,4 +208,18 @@ makeRangeVar(char *schemaname, char *relname)
 	r->alias = NULL;
 
 	return r;
+}
+
+/*
+ * makeTypeName -
+ *	build a TypeName node for an unqualified name.
+ */
+TypeName *
+makeTypeName(char *typnam)
+{
+	TypeName   *n = makeNode(TypeName);
+
+	n->names = makeList1(makeString(typnam));
+	n->typmod = -1;
+	return n;
 }

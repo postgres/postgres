@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.140 2002/03/26 19:16:03 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.141 2002/03/29 19:06:13 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,13 +38,16 @@
 #include "commands/variable.h"
 #include "commands/view.h"
 #include "miscadmin.h"
+#include "nodes/makefuncs.h"
 #include "parser/parse.h"
 #include "parser/parse_clause.h"
 #include "parser/parse_expr.h"
+#include "parser/parse_type.h"
 #include "rewrite/rewriteDefine.h"
 #include "rewrite/rewriteRemove.h"
 #include "tcop/utility.h"
 #include "utils/acl.h"
+#include "utils/lsyscache.h"
 #include "utils/syscache.h"
 #include "utils/temprel.h"
 #include "access/xlog.h"
@@ -280,45 +283,48 @@ ProcessUtility(Node *parsetree,
 
 				foreach(arg, stmt->objects)
 				{
-					RangeVar   *rel = (RangeVar *) lfirst(arg);
-
-					relname = rel->relname;
+					List   *names = (List *) lfirst(arg);
+					RangeVar   *rel;
 
 					switch (stmt->removeType)
 					{
 						case DROP_TABLE:
+							rel = makeRangeVarFromNameList(names);
 							CheckDropPermissions(rel, RELKIND_RELATION);
-							RemoveRelation(relname);
+							RemoveRelation(rel);
 							break;
 
 						case DROP_SEQUENCE:
+							rel = makeRangeVarFromNameList(names);
 							CheckDropPermissions(rel, RELKIND_SEQUENCE);
-							RemoveRelation(relname);
+							RemoveRelation(rel);
 							break;
 
 						case DROP_VIEW:
+							rel = makeRangeVarFromNameList(names);
 							CheckDropPermissions(rel, RELKIND_VIEW);
-							RemoveView(relname);
+							RemoveView(rel);
 							break;
 
 						case DROP_INDEX:
+							rel = makeRangeVarFromNameList(names);
 							CheckDropPermissions(rel, RELKIND_INDEX);
 							RemoveIndex(rel);
 							break;
 
 						case DROP_RULE:
 							/* RemoveRewriteRule checks permissions */
-							RemoveRewriteRule(relname);
+							RemoveRewriteRule(names);
 							break;
 
 						case DROP_TYPE:
 							/* RemoveType does its own permissions checks */
-							RemoveType(relname);
+							RemoveType(names);
 							break;
 
 						case DROP_DOMAIN:
 							/* RemoveDomain does its own permissions checks */
-							RemoveDomain(relname, stmt->behavior);
+							RemoveDomain(names, stmt->behavior);
 							break;
 					}
 
@@ -334,16 +340,15 @@ ProcessUtility(Node *parsetree,
 
 		case T_TruncateStmt:
 			{
-				relname = ((TruncateStmt *) parsetree)->relation->relname;
-				TruncateRelation(relname);
+				TruncateStmt	*stmt = (TruncateStmt *) parsetree;
+
+				TruncateRelation(stmt->relation);
 			}
 			break;
 
 		case T_CommentStmt:
 			{
-				CommentStmt *stmt;
-
-				stmt = ((CommentStmt *) parsetree);
+				CommentStmt *stmt = (CommentStmt *) parsetree;
 
 				CommentObject(stmt->objtype, stmt->objschema, stmt->objname,
 							  stmt->objproperty, stmt->objlist, stmt->comment);
@@ -357,7 +362,7 @@ ProcessUtility(Node *parsetree,
 				if (stmt->direction != FROM)
 					SetQuerySnapshot();
 
-				DoCopy(stmt->relation->relname,
+				DoCopy(stmt->relation,
 					   stmt->binary,
 					   stmt->oids,
 					   (bool) (stmt->direction == FROM),
@@ -408,7 +413,7 @@ ProcessUtility(Node *parsetree,
 					/*
 					 * rename attribute
 					 */
-					renameatt(relname,	/* relname */
+					renameatt(RangeVarGetRelid(stmt->relation, false),	/* relation */
 							  stmt->column,		/* old att name */
 							  stmt->newname,	/* new att name */
 							  interpretInhOption(stmt->relation->inhOpt));		/* recursive? */
@@ -429,38 +434,63 @@ ProcessUtility(Node *parsetree,
 				switch (stmt->subtype)
 				{
 					case 'A':	/* ADD COLUMN */
-						AlterTableAddColumn(stmt->relation->relname,
-										interpretInhOption((stmt->relation)->inhOpt),
+						/*
+						 * Recursively add column to table and,
+						 * if requested, to descendants
+						 */
+						AlterTableAddColumn(RangeVarGetRelid(stmt->relation, false),
+											interpretInhOption(stmt->relation->inhOpt),
 											(ColumnDef *) stmt->def);
 						break;
 					case 'T':	/* ALTER COLUMN DEFAULT */
-						AlterTableAlterColumnDefault(stmt->relation->relname,
-										interpretInhOption((stmt->relation)->inhOpt),
+						/* 
+						 * Recursively alter column default for table and,
+						 * if requested, for descendants
+						 */
+						AlterTableAlterColumnDefault(RangeVarGetRelid(stmt->relation, false),
+													 interpretInhOption(stmt->relation->inhOpt),
 													 stmt->name,
 													 stmt->def);
 						break;
 					case 'S':	/* ALTER COLUMN STATISTICS */
 					case 'M':   /* ALTER COLUMN STORAGE */
-						AlterTableAlterColumnFlags(stmt->relation->relname,
-										interpretInhOption(stmt->relation->inhOpt),
-														stmt->name,
-														stmt->def,
-												        &(stmt->subtype));
+						/*
+						 * Recursively alter column statistics for table and,
+						 * if requested, for descendants
+						 */
+						AlterTableAlterColumnFlags(RangeVarGetRelid(stmt->relation, false),
+												   interpretInhOption(stmt->relation->inhOpt),
+												   stmt->name,
+												   stmt->def,
+												   &(stmt->subtype));
 						break;
 					case 'D':	/* DROP COLUMN */
-						AlterTableDropColumn(stmt->relation->relname,
-										interpretInhOption(stmt->relation->inhOpt),
+						/* 
+						 * XXX We don't actually recurse yet, but what we should do would be:
+						 * Recursively drop column from table and,
+						 * if requested, from descendants
+						 */
+						AlterTableDropColumn(RangeVarGetRelid(stmt->relation, false),
+											 interpretInhOption(stmt->relation->inhOpt),
 											 stmt->name,
 											 stmt->behavior);
 						break;
 					case 'C':	/* ADD CONSTRAINT */
-						AlterTableAddConstraint(stmt->relation->relname,
-										interpretInhOption(stmt->relation->inhOpt),
+						/*
+						 * Recursively add constraint to table and,
+						 * if requested, to descendants
+						 */
+						AlterTableAddConstraint(RangeVarGetRelid(stmt->relation, false),
+											 	interpretInhOption(stmt->relation->inhOpt),
 												(List *) stmt->def);
 						break;
 					case 'X':	/* DROP CONSTRAINT */
-						AlterTableDropConstraint(stmt->relation->relname,
-										interpretInhOption(stmt->relation->inhOpt),
+						/* 
+						 * Recursively drop constraint from table and,
+						 * if requested, from descendants
+						 */
+						AlterTableDropConstraint(RangeVarGetRelid(stmt->relation, false),
+											 	 interpretInhOption(stmt->relation->inhOpt),
 												 stmt->name,
 												 stmt->behavior);
 						break;
@@ -469,8 +499,12 @@ ProcessUtility(Node *parsetree,
 												   false);
 						break;
 					case 'U':	/* ALTER OWNER */
-						AlterTableOwner(stmt->relation,
-										stmt->name);
+						/* check that we are the superuser */
+						if (!superuser())
+							elog(ERROR, "ALTER TABLE: permission denied");
+						/* get_usesysid raises an error if no such user */
+						AlterTableOwner(RangeVarGetRelid(stmt->relation, false),
+										get_usesysid(stmt->name));
 						break;
 					default:	/* oops */
 						elog(ERROR, "T_AlterTableStmt: unknown subtype");
@@ -500,15 +534,13 @@ ProcessUtility(Node *parsetree,
 				switch (stmt->defType)
 				{
 					case OPERATOR:
-						DefineOperator(stmt->defname,	/* operator name */
-									   stmt->definition);		/* rest */
+						DefineOperator(stmt->defnames, stmt->definition);
 						break;
 					case TYPE_P:
-						DefineType(stmt->defname, stmt->definition);
+						DefineType(stmt->defnames, stmt->definition);
 						break;
 					case AGGREGATE:
-						DefineAggregate(stmt->defname,	/* aggregate name */
-										stmt->definition);		/* rest */
+						DefineAggregate(stmt->defnames, stmt->definition);
 						break;
 				}
 			}
@@ -518,7 +550,7 @@ ProcessUtility(Node *parsetree,
 			{
 				ViewStmt   *stmt = (ViewStmt *) parsetree;
 
-				DefineView(stmt->view->relname, stmt->query);	/* retrieve parsetree */
+				DefineView(stmt->view, stmt->query);
 			}
 			break;
 
@@ -554,12 +586,8 @@ ProcessUtility(Node *parsetree,
 		case T_RemoveAggrStmt:
 			{
 				RemoveAggrStmt *stmt = (RemoveAggrStmt *) parsetree;
-				char	   *typename = (char *) NULL;
 
-				if (stmt->aggtype != NULL)
-					typename = TypeNameToInternalName((TypeName *) stmt->aggtype);
-
-				RemoveAggregate(stmt->aggname, typename);
+				RemoveAggregate(stmt->aggname, stmt->aggtype);
 			}
 			break;
 
@@ -576,15 +604,8 @@ ProcessUtility(Node *parsetree,
 				RemoveOperStmt *stmt = (RemoveOperStmt *) parsetree;
 				TypeName   *typenode1 = (TypeName *) lfirst(stmt->args);
 				TypeName   *typenode2 = (TypeName *) lsecond(stmt->args);
-				char	   *typename1 = (char *) NULL;
-				char	   *typename2 = (char *) NULL;
 
-				if (typenode1 != NULL)
-					typename1 = TypeNameToInternalName(typenode1);
-				if (typenode2 != NULL)
-					typename2 = TypeNameToInternalName(typenode2);
-
-				RemoveOperator(stmt->opname, typename1, typename2);
+				RemoveOperator(stmt->opname, typenode1, typenode2);
 			}
 			break;
 

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.223 2002/02/18 23:11:36 petere Exp $
+ * $Id: pg_proc.h,v 1.224 2002/03/29 19:06:19 tgl Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -2873,12 +2873,13 @@ DESCR("time zone");
 
 
 /*
- * prototypes for functions pg_proc.c
+ * prototypes for functions in pg_proc.c
  */
 extern Oid ProcedureCreate(char *procedureName,
+				Oid procNamespace,
 				bool replace,
 				bool returnsSet,
-				char *returnTypeName,
+				Oid returnType,
 				Oid languageObjectId,
 				char *prosrc,
 				char *probin,

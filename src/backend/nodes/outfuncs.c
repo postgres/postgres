@@ -5,7 +5,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.151 2002/03/22 02:56:32 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.152 2002/03/29 19:06:09 tgl Exp $
  *
  * NOTES
  *	  Every (plan) node in POSTGRES has an associated "out" routine which
@@ -187,11 +187,14 @@ _outColumnDef(StringInfo str, ColumnDef *node)
 static void
 _outTypeName(StringInfo str, TypeName *node)
 {
-	appendStringInfo(str, " TYPENAME :name ");
-	_outToken(str, node->name);
-	appendStringInfo(str, " :timezone %s :setof %s typmod %d :arrayBounds ",
+	appendStringInfo(str, " TYPENAME :names ");
+	_outNode(str, node->names);
+	appendStringInfo(str, " :typeid %u :timezone %s :setof %s"
+					 " :pct_type %s typmod %d :arrayBounds ",
+					 node->typeid,
 					 booltostr(node->timezone),
 					 booltostr(node->setof),
+					 booltostr(node->pct_type),
 					 node->typmod);
 	_outNode(str, node->arrayBounds);
 }

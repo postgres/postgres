@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/define.c,v 1.71 2002/03/20 19:43:44 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/define.c,v 1.72 2002/03/29 19:06:06 tgl Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -41,6 +41,7 @@
 #include "access/heapam.h"
 #include "catalog/catname.h"
 #include "catalog/heap.h"
+#include "catalog/namespace.h"
 #include "catalog/pg_aggregate.h"
 #include "catalog/pg_language.h"
 #include "catalog/pg_operator.h"
@@ -50,13 +51,19 @@
 #include "fmgr.h"
 #include "miscadmin.h"
 #include "optimizer/cost.h"
-#include "parser/parse_expr.h"
+#include "parser/parse_func.h"
+#include "parser/parse_type.h"
 #include "utils/acl.h"
 #include "utils/builtins.h"
+#include "utils/fmgroids.h"
+#include "utils/lsyscache.h"
 #include "utils/syscache.h"
 
+
+static Oid	findTypeIOFunction(const char *procname, bool isOutput);
 static char *defGetString(DefElem *def);
 static double defGetNumeric(DefElem *def);
+static TypeName *defGetTypeName(DefElem *def);
 static int	defGetTypeLength(DefElem *def);
 
 #define DEFAULT_TYPDELIM		','
@@ -77,16 +84,59 @@ case_translate_language_name(const char *input, char *output)
 }
 
 
-
-static void
-compute_return_type(TypeName *returnType,
-					char **prorettype_p, bool *returnsSet_p)
-{
 /*
  *	 Examine the "returns" clause returnType of the CREATE FUNCTION statement
  *	 and return information about it as *prorettype_p and *returnsSet.
+ *
+ * This is more complex than the average typename lookup because we want to
+ * allow a shell type to be used, or even created if the specified return type
+ * doesn't exist yet.  (Without this, there's no way to define the I/O procs
+ * for a new type.)  But SQL function creation won't cope, so error out if
+ * the target language is SQL.
  */
-	*prorettype_p = TypeNameToInternalName(returnType);
+static void
+compute_return_type(TypeName *returnType, Oid languageOid,
+					Oid *prorettype_p, bool *returnsSet_p)
+{
+	Oid		rettype;
+
+	rettype = LookupTypeName(returnType);
+
+	if (OidIsValid(rettype))
+	{
+		if (!get_typisdefined(rettype))
+		{
+			if (languageOid == SQLlanguageId)
+				elog(ERROR, "SQL functions cannot return shell types");
+			else
+				elog(WARNING, "Return type \"%s\" is only a shell",
+					 TypeNameToString(returnType));
+		}
+	}
+	else
+	{
+		char      *typnam = TypeNameToString(returnType);
+
+		if (strcmp(typnam, "opaque") == 0)
+			rettype = InvalidOid;
+		else
+		{
+			Oid			namespaceId;
+			char	   *typname;
+
+			if (languageOid == SQLlanguageId)
+				elog(ERROR, "Type \"%s\" does not exist", typnam);
+			elog(WARNING, "ProcedureCreate: type %s is not yet defined",
+				 typnam);
+			namespaceId = QualifiedNameGetCreationNamespace(returnType->names,
+															&typname);
+			rettype = TypeShellMake(typname, namespaceId);
+			if (!OidIsValid(rettype))
+				elog(ERROR, "could not create type %s", typnam);
+		}
+	}
+
+	*prorettype_p = rettype;
 	*returnsSet_p = returnType->setof;
 }
 
@@ -211,34 +261,31 @@ interpret_AS_clause(Oid languageOid, const char *languageName, const List *as,
 void
 CreateFunction(ProcedureStmt *stmt)
 {
-	/* pathname of executable file that executes this function, if any */
 	char	   *probin_str;
-	/* SQL that executes this function, if any */
 	char	   *prosrc_str;
-	/* Type of return value (or member of set of values) from function */
-	char	   *prorettype;
-	/* name of language of function, with case adjusted */
-	char		languageName[NAMEDATALEN];
-	/* The function returns a set of values, as opposed to a singleton. */
+	Oid			prorettype;
 	bool		returnsSet;
-	/*
-	 * The following are optional user-supplied attributes of the
-	 * function.
-	 */
+	char		languageName[NAMEDATALEN];
+	Oid			languageOid;
+	char	   *funcname;
+	Oid			namespaceId;
 	int32		byte_pct,
 				perbyte_cpu,
 				percall_cpu,
 				outin_ratio;
 	bool		canCache,
 				isStrict;
-
 	HeapTuple	languageTuple;
 	Form_pg_language languageStruct;
-	Oid languageOid;
+
+	/* Convert list of names to a name and namespace */
+	namespaceId = QualifiedNameGetCreationNamespace(stmt->funcname,
+													&funcname);
 
 	/* Convert language name to canonical case */
 	case_translate_language_name(stmt->language, languageName);
 
+	/* Look up the language and validate permissions */
 	languageTuple = SearchSysCache(LANGNAME,
 								   PointerGetDatum(languageName),
 								   0, 0, 0);
@@ -259,21 +306,22 @@ CreateFunction(ProcedureStmt *stmt)
 	 * Convert remaining parameters of CREATE to form wanted by
 	 * ProcedureCreate.
 	 */
-	Assert(IsA(stmt->returnType, TypeName));
-	compute_return_type((TypeName *) stmt->returnType,
+	compute_return_type(stmt->returnType, languageOid,
 						&prorettype, &returnsSet);
 
 	compute_full_attributes(stmt->withClause,
 							&byte_pct, &perbyte_cpu, &percall_cpu,
 							&outin_ratio, &canCache, &isStrict);
 
-	interpret_AS_clause(languageOid, languageName, stmt->as, &prosrc_str, &probin_str);
+	interpret_AS_clause(languageOid, languageName, stmt->as,
+						&prosrc_str, &probin_str);
 
 	/*
 	 * And now that we have all the parameters, and know we're permitted
 	 * to do so, go ahead and create the function.
 	 */
-	ProcedureCreate(stmt->funcname,
+	ProcedureCreate(funcname,
+					namespaceId,
 					stmt->replace,
 					returnsSet,
 					prorettype,
@@ -292,27 +340,28 @@ CreateFunction(ProcedureStmt *stmt)
 
 
 
-/* --------------------------------
+/*
  * DefineOperator
- *
  *		this function extracts all the information from the
  *		parameter list generated by the parser and then has
  *		OperatorCreate() do all the actual work.
  *
  * 'parameters' is a list of DefElem
- * --------------------------------
  */
 void
-DefineOperator(char *oprName,
-			   List *parameters)
+DefineOperator(List *names, List *parameters)
 {
+	char	   *oprName;
+	Oid			oprNamespace;
 	uint16		precedence = 0; /* operator precedence */
 	bool		canHash = false;	/* operator hashes */
 	bool		isLeftAssociative = true;		/* operator is left
 												 * associative */
 	char	   *functionName = NULL;	/* function for operator */
-	char	   *typeName1 = NULL;		/* first type name */
-	char	   *typeName2 = NULL;		/* second type name */
+	TypeName   *typeName1 = NULL;		/* first type name */
+	TypeName   *typeName2 = NULL;		/* second type name */
+	Oid			typeId1 = InvalidOid;	/* types converted to OID */
+	Oid			typeId2 = InvalidOid;
 	char	   *commutatorName = NULL;	/* optional commutator operator
 										 * name */
 	char	   *negatorName = NULL;		/* optional negator operator name */
@@ -323,6 +372,9 @@ DefineOperator(char *oprName,
 	char	   *sortName2 = NULL;		/* optional second sort operator */
 	List	   *pl;
 
+	/* Convert list of names to a name and namespace */
+	oprNamespace = QualifiedNameGetCreationNamespace(names, &oprName);
+
 	/*
 	 * loop over the definition list and extract the information we need.
 	 */
@@ -332,16 +384,14 @@ DefineOperator(char *oprName,
 
 		if (strcasecmp(defel->defname, "leftarg") == 0)
 		{
-			typeName1 = defGetString(defel);
-			if (IsA(defel->arg, TypeName) &&
-				((TypeName *) defel->arg)->setof)
+			typeName1 = defGetTypeName(defel);
+			if (typeName1->setof)
 				elog(ERROR, "setof type not implemented for leftarg");
 		}
 		else if (strcasecmp(defel->defname, "rightarg") == 0)
 		{
-			typeName2 = defGetString(defel);
-			if (IsA(defel->arg, TypeName) &&
-				((TypeName *) defel->arg)->setof)
+			typeName2 = defGetTypeName(defel);
+			if (typeName2->setof)
 				elog(ERROR, "setof type not implemented for rightarg");
 		}
 		else if (strcasecmp(defel->defname, "procedure") == 0)
@@ -367,15 +417,7 @@ DefineOperator(char *oprName,
 		else if (strcasecmp(defel->defname, "hashes") == 0)
 			canHash = TRUE;
 		else if (strcasecmp(defel->defname, "sort1") == 0)
-		{
-			/* ----------------
-			 * XXX ( ... [ , sort1 = oprname ] [ , sort2 = oprname ] ... )
-			 * XXX is undocumented in the reference manual source as of
-			 * 89/8/22.
-			 * ----------------
-			 */
 			sortName1 = defGetString(defel);
-		}
 		else if (strcasecmp(defel->defname, "sort2") == 0)
 			sortName2 = defGetString(defel);
 		else
@@ -391,12 +433,18 @@ DefineOperator(char *oprName,
 	if (functionName == NULL)
 		elog(ERROR, "Define: \"procedure\" unspecified");
 
+	/* Transform type names to type OIDs */
+	if (typeName1)
+		typeId1 = typenameTypeId(typeName1);
+	if (typeName2)
+		typeId2 = typenameTypeId(typeName2);
+
 	/*
 	 * now have OperatorCreate do all the work..
 	 */
 	OperatorCreate(oprName,		/* operator name */
-				   typeName1,	/* first type name */
-				   typeName2,	/* second type name */
+				   typeId1,		/* left type id */
+				   typeId2,		/* right type id */
 				   functionName,	/* function for operator */
 				   precedence,	/* operator precedence */
 				   isLeftAssociative,	/* operator is left associative */
@@ -412,19 +460,25 @@ DefineOperator(char *oprName,
 
 }
 
-/* -------------------
+/*
  *	DefineAggregate
- * ------------------
  */
 void
-DefineAggregate(char *aggName, List *parameters)
+DefineAggregate(List *names, List *parameters)
 {
+	char	   *aggName;
+	Oid			aggNamespace;
 	char	   *transfuncName = NULL;
 	char	   *finalfuncName = NULL;
-	char	   *baseType = NULL;
-	char	   *transType = NULL;
+	TypeName   *baseType = NULL;
+	TypeName   *transType = NULL;
 	char	   *initval = NULL;
+	Oid			baseTypeId;
+	Oid			transTypeId;
 	List	   *pl;
+
+	/* Convert list of names to a name and namespace */
+	aggNamespace = QualifiedNameGetCreationNamespace(names, &aggName);
 
 	foreach(pl, parameters)
 	{
@@ -441,11 +495,11 @@ DefineAggregate(char *aggName, List *parameters)
 		else if (strcasecmp(defel->defname, "finalfunc") == 0)
 			finalfuncName = defGetString(defel);
 		else if (strcasecmp(defel->defname, "basetype") == 0)
-			baseType = defGetString(defel);
+			baseType = defGetTypeName(defel);
 		else if (strcasecmp(defel->defname, "stype") == 0)
-			transType = defGetString(defel);
+			transType = defGetTypeName(defel);
 		else if (strcasecmp(defel->defname, "stype1") == 0)
-			transType = defGetString(defel);
+			transType = defGetTypeName(defel);
 		else if (strcasecmp(defel->defname, "initcond") == 0)
 			initval = defGetString(defel);
 		else if (strcasecmp(defel->defname, "initcond1") == 0)
@@ -466,13 +520,39 @@ DefineAggregate(char *aggName, List *parameters)
 		elog(ERROR, "Define: \"sfunc\" unspecified");
 
 	/*
+	 * Handle the aggregate's base type (input data type).  This can be
+	 * specified as 'ANY' for a data-independent transition function, such
+	 * as COUNT(*).
+	 */
+	baseTypeId = LookupTypeName(baseType);
+	if (OidIsValid(baseTypeId))
+	{
+		/* no need to allow aggregates on as-yet-undefined types */
+		if (!get_typisdefined(baseTypeId))
+			elog(ERROR, "Type \"%s\" is only a shell",
+				 TypeNameToString(baseType));
+	}
+	else
+	{
+		char      *typnam = TypeNameToString(baseType);
+
+		if (strcasecmp(typnam, "ANY") != 0)
+			elog(ERROR, "Type \"%s\" does not exist", typnam);
+		baseTypeId = InvalidOid;
+	}
+
+	/* handle transtype --- no special cases here */
+	transTypeId = typenameTypeId(transType);
+
+	/*
 	 * Most of the argument-checking is done inside of AggregateCreate
 	 */
 	AggregateCreate(aggName,	/* aggregate name */
+					aggNamespace,	/* namespace */
 					transfuncName,		/* step function name */
 					finalfuncName,		/* final function name */
-					baseType,	/* type of data being aggregated */
-					transType,	/* transition data type */
+					baseTypeId,	/* type of data being aggregated */
+					transTypeId,	/* transition data type */
 					initval);	/* initial condition */
 }
 
@@ -483,12 +563,14 @@ DefineAggregate(char *aggName, List *parameters)
 void
 DefineDomain(CreateDomainStmt *stmt)
 {
+	char	   *domainName;
+	Oid			domainNamespace;
 	int16		internalLength;
 	int16		externalLength;
-	char	   *inputName;
-	char	   *outputName;
-	char	   *sendName;
-	char	   *receiveName;
+	Oid			inputProcedure;
+	Oid			outputProcedure;
+	Oid			receiveProcedure;
+	Oid			sendProcedure;
 	bool		byValue;
 	char		delimiter;
 	char		alignment;
@@ -500,46 +582,27 @@ DefineDomain(CreateDomainStmt *stmt)
 	char	   *defaultValueBin = NULL;
 	bool		typNotNull = false;
 	Oid			basetypelem;
-	char		*elemName = NULL;
-	int32		typNDims = 0;	/* No array dimensions by default */
+	int32		typNDims = length(stmt->typename->arrayBounds);
 	HeapTuple	typeTup;
-	char	   *typeName = stmt->typename->name;
 	List	   *schema = stmt->constraints;
 	List	   *listptr;
+
+	/* Convert list of names to a name and namespace */
+	domainNamespace = QualifiedNameGetCreationNamespace(stmt->domainname,
+														&domainName);
 
 	/*
 	 * Domainnames, unlike typenames don't need to account for the '_'
 	 * prefix.  So they can be one character longer.
 	 */
-	if (strlen(stmt->domainname) > (NAMEDATALEN - 1))
+	if (strlen(domainName) > (NAMEDATALEN - 1))
 		elog(ERROR, "CREATE DOMAIN: domain names must be %d characters or less",
 			 NAMEDATALEN - 1);
 
-	/* Test for existing Domain (or type) of that name */
-	typeTup = SearchSysCache(TYPENAME,
-							 PointerGetDatum(stmt->domainname),
-							 0, 0, 0);
-	if (HeapTupleIsValid(typeTup))
-		elog(ERROR, "CREATE DOMAIN: domain or type %s already exists",
-			 stmt->domainname);
-
 	/*
-	 * When the type is an array for some reason we don't actually receive
-	 * the name here.  We receive the base types name.  Lets set Dims while
-	 * were at it.
+	 * Look up the base type.
 	 */
-	if (stmt->typename->arrayBounds > 0) {
-		typeName = makeArrayTypeName(stmt->typename->name);
-
-		typNDims = length(stmt->typename->arrayBounds);
-	}
-
-	typeTup = SearchSysCache(TYPENAME,
-							 PointerGetDatum(typeName),
-							 0, 0, 0);
-	if (!HeapTupleIsValid(typeTup))
-		elog(ERROR, "CREATE DOMAIN: type %s does not exist",
-			 stmt->typename->name);
+	typeTup = typenameType(stmt->typename);
 
 	/*
 	 * What we really don't want is domains of domains.  This could cause all sorts
@@ -550,7 +613,7 @@ DefineDomain(CreateDomainStmt *stmt)
 	typtype = ((Form_pg_type) GETSTRUCT(typeTup))->typtype;
 	if (typtype != 'b')
 		elog(ERROR, "DefineDomain: %s is not a basetype",
-			 stmt->typename->name);
+			 TypeNameToString(stmt->typename));
 
 	/* passed by value */
 	byValue = ((Form_pg_type) GETSTRUCT(typeTup))->typbyval;
@@ -570,43 +633,20 @@ DefineDomain(CreateDomainStmt *stmt)
 	/* Array element Delimiter */
 	delimiter = ((Form_pg_type) GETSTRUCT(typeTup))->typdelim;
 
-	/*
-	 * XXX this is pretty bogus: should be passing function OIDs to
-	 * TypeCreate, not names which aren't unique.
-	 */
-
-	/* Input Function Name */
-	datum = SysCacheGetAttr(TYPENAME, typeTup, Anum_pg_type_typinput, &isnull);
-	Assert(!isnull);
-
-	inputName = DatumGetCString(DirectFunctionCall1(regprocout, datum));
-
-	/* Output Function Name */
-	datum = SysCacheGetAttr(TYPENAME, typeTup, Anum_pg_type_typoutput, &isnull);
-	Assert(!isnull);
-
-	outputName = DatumGetCString(DirectFunctionCall1(regprocout, datum));
-
-	/* ReceiveName */
-	datum = SysCacheGetAttr(TYPENAME, typeTup, Anum_pg_type_typreceive, &isnull);
-	Assert(!isnull);
-
-	receiveName = DatumGetCString(DirectFunctionCall1(regprocout, datum));
-
-	/* SendName */
-	datum = SysCacheGetAttr(TYPENAME, typeTup, Anum_pg_type_typsend, &isnull);
-	Assert(!isnull);
-
-	sendName = DatumGetCString(DirectFunctionCall1(regprocout, datum));
+	/* I/O Functions */
+	inputProcedure = ((Form_pg_type) GETSTRUCT(typeTup))->typinput;
+	outputProcedure = ((Form_pg_type) GETSTRUCT(typeTup))->typoutput;
+	receiveProcedure = ((Form_pg_type) GETSTRUCT(typeTup))->typreceive;
+	sendProcedure = ((Form_pg_type) GETSTRUCT(typeTup))->typsend;
 
 	/* Inherited default value */
-	datum =	SysCacheGetAttr(TYPENAME, typeTup,
+	datum =	SysCacheGetAttr(TYPEOID, typeTup,
 							Anum_pg_type_typdefault, &isnull);
 	if (!isnull)
 		defaultValue = DatumGetCString(DirectFunctionCall1(textout, datum));
 
 	/* Inherited default binary value */
-	datum =	SysCacheGetAttr(TYPENAME, typeTup,
+	datum =	SysCacheGetAttr(TYPEOID, typeTup,
 							Anum_pg_type_typdefaultbin, &isnull);
 	if (!isnull)
 		defaultValueBin = DatumGetCString(DirectFunctionCall1(textout, datum));
@@ -617,16 +657,6 @@ DefineDomain(CreateDomainStmt *stmt)
 	 * This is what enables us to make a domain of an array
 	 */
 	basetypelem = ((Form_pg_type) GETSTRUCT(typeTup))->typelem;
-	if (basetypelem != InvalidOid)
-	{
-		HeapTuple tup;
-
-		tup = SearchSysCache(TYPEOID,
-							 ObjectIdGetDatum(basetypelem),
-							 0, 0, 0);
-		elemName = pstrdup(NameStr(((Form_pg_type) GETSTRUCT(tup))->typname));
-		ReleaseSysCache(tup);
-	}
 
 	/*
 	 * Run through constraints manually to avoid the additional
@@ -661,14 +691,14 @@ DefineDomain(CreateDomainStmt *stmt)
 				expr = cookDefault(pstate, colDef->raw_expr,
 								   typeTup->t_data->t_oid,
 								   stmt->typename->typmod,
-								   stmt->typename->name);
+								   domainName);
 				/*
 				 * Expression must be stored as a nodeToString result,
 				 * but we also require a valid textual representation
 				 * (mainly to make life easier for pg_dump).
 				 */
 				defaultValue = deparse_expression(expr,
-								deparse_context_for(stmt->domainname,
+								deparse_context_for(domainName,
 													InvalidOid),
 												   false);
 				defaultValueBin = nodeToString(expr);
@@ -723,19 +753,20 @@ DefineDomain(CreateDomainStmt *stmt)
 	/*
 	 * Have TypeCreate do all the real work.
 	 */
-	TypeCreate(stmt->domainname,	/* type name */
+	TypeCreate(domainName,			/* type name */
+			   domainNamespace,		/* namespace */
 			   InvalidOid,			/* preassigned type oid (not done here) */
 			   InvalidOid,			/* relation oid (n/a here) */
 			   internalLength,		/* internal size */
 			   externalLength,		/* external size */
 			   'd',					/* type-type (domain type) */
 			   delimiter,			/* array element delimiter */
-			   inputName,			/* input procedure */
-			   outputName,			/* output procedure */
-			   receiveName,			/* receive procedure */
-			   sendName,			/* send procedure */
-			   elemName,			/* element type name */
-			   typeName,			/* base type name */
+			   inputProcedure,		/* input procedure */
+			   outputProcedure,		/* output procedure */
+			   receiveProcedure,	/* receive procedure */
+			   sendProcedure,		/* send procedure */
+			   basetypelem,			/* element type ID */
+			   typeTup->t_data->t_oid,	/* base type ID */
 			   defaultValue,		/* default type value (text) */
 			   defaultValueBin,		/* default type value (binary) */
 			   byValue,				/* passed by value */
@@ -743,7 +774,7 @@ DefineDomain(CreateDomainStmt *stmt)
 			   storage,				/* TOAST strategy */
 			   stmt->typename->typmod, /* typeMod value */
 			   typNDims,			/* Array dimensions for base type */
-			   typNotNull);	/* Type NOT NULL */
+			   typNotNull);			/* Type NOT NULL */
 
 	/*
 	 * Now we can clean up.
@@ -756,11 +787,13 @@ DefineDomain(CreateDomainStmt *stmt)
  *		Registers a new type.
  */
 void
-DefineType(char *typeName, List *parameters)
+DefineType(List *names, List *parameters)
 {
+	char	   *typeName;
+	Oid			typeNamespace;
 	int16		internalLength = -1;	/* int2 */
 	int16		externalLength = -1;	/* int2 */
-	char	   *elemName = NULL;
+	Oid			elemType = InvalidOid;
 	char	   *inputName = NULL;
 	char	   *outputName = NULL;
 	char	   *sendName = NULL;
@@ -768,10 +801,18 @@ DefineType(char *typeName, List *parameters)
 	char	   *defaultValue = NULL;
 	bool		byValue = false;
 	char		delimiter = DEFAULT_TYPDELIM;
-	char	   *shadow_type;
-	List	   *pl;
 	char		alignment = 'i';	/* default alignment */
 	char		storage = 'p';	/* default TOAST storage method */
+	Oid			inputOid;
+	Oid			outputOid;
+	Oid			sendOid;
+	Oid			receiveOid;
+	char	   *shadow_type;
+	List	   *pl;
+	Oid			typoid;
+
+	/* Convert list of names to a name and namespace */
+	typeNamespace = QualifiedNameGetCreationNamespace(names, &typeName);
 
 	/*
 	 * Type names must be one character shorter than other names, allowing
@@ -796,16 +837,16 @@ DefineType(char *typeName, List *parameters)
 			outputName = defGetString(defel);
 		else if (strcasecmp(defel->defname, "send") == 0)
 			sendName = defGetString(defel);
+		else if (strcasecmp(defel->defname, "receive") == 0)
+			receiveName = defGetString(defel);
 		else if (strcasecmp(defel->defname, "delimiter") == 0)
 		{
 			char	   *p = defGetString(defel);
 
 			delimiter = p[0];
 		}
-		else if (strcasecmp(defel->defname, "receive") == 0)
-			receiveName = defGetString(defel);
 		else if (strcasecmp(defel->defname, "element") == 0)
-			elemName = defGetString(defel);
+			elemType = typenameTypeId(defGetTypeName(defel));
 		else if (strcasecmp(defel->defname, "default") == 0)
 			defaultValue = defGetString(defel);
 		else if (strcasecmp(defel->defname, "passedbyvalue") == 0)
@@ -867,30 +908,44 @@ DefineType(char *typeName, List *parameters)
 	if (outputName == NULL)
 		elog(ERROR, "Define: \"output\" unspecified");
 
+	/* Convert I/O proc names to OIDs */
+	inputOid = findTypeIOFunction(inputName, false);
+	outputOid = findTypeIOFunction(outputName, true);
+	if (sendName)
+		sendOid = findTypeIOFunction(sendName, true);
+	else
+		sendOid = outputOid;
+	if (receiveName)
+		receiveOid = findTypeIOFunction(receiveName, false);
+	else
+		receiveOid = inputOid;
+
 	/*
 	 * now have TypeCreate do all the real work.
 	 */
-	TypeCreate(typeName,		/* type name */
-			   InvalidOid,		/* preassigned type oid (not done here) */
-			   InvalidOid,		/* relation oid (n/a here) */
-			   internalLength,	/* internal size */
-			   externalLength,	/* external size */
-			   'b',				/* type-type (base type) */
-			   delimiter,		/* array element delimiter */
-			   inputName,		/* input procedure */
-			   outputName,		/* output procedure */
-			   receiveName,		/* receive procedure */
-			   sendName,		/* send procedure */
-			   elemName,		/* element type name */
-			   NULL,			/* base type name (only for domains) */
-			   defaultValue,	/* default type value */
-			   NULL,			/* no binary form available */
-			   byValue,			/* passed by value */
-			   alignment,		/* required alignment */
-			   storage,			/* TOAST strategy */
-			   -1,				/* typMod (Domains only) */
-			   0,				/* Array Dimensions of typbasetype */
-			   'f');			/* Type NOT NULL */
+	typoid =
+		TypeCreate(typeName,		/* type name */
+				   typeNamespace,	/* namespace */
+				   InvalidOid,		/* preassigned type oid (not done here) */
+				   InvalidOid,		/* relation oid (n/a here) */
+				   internalLength,	/* internal size */
+				   externalLength,	/* external size */
+				   'b',				/* type-type (base type) */
+				   delimiter,		/* array element delimiter */
+				   inputOid,		/* input procedure */
+				   outputOid,		/* output procedure */
+				   receiveOid,		/* receive procedure */
+				   sendOid,			/* send procedure */
+				   elemType,		/* element type ID */
+				   InvalidOid,		/* base type ID (only for domains) */
+				   defaultValue,	/* default type value */
+				   NULL,			/* no binary form available */
+				   byValue,			/* passed by value */
+				   alignment,		/* required alignment */
+				   storage,			/* TOAST strategy */
+				   -1,				/* typMod (Domains only) */
+				   0,				/* Array Dimensions of typbasetype */
+				   false);			/* Type NOT NULL */
 
 	/*
 	 * When we create a base type (as opposed to a complex type) we need
@@ -902,18 +957,19 @@ DefineType(char *typeName, List *parameters)
 	alignment = (alignment == 'd') ? 'd' : 'i';
 
 	TypeCreate(shadow_type,		/* type name */
+			   typeNamespace,	/* namespace */
 			   InvalidOid,		/* preassigned type oid (not done here) */
 			   InvalidOid,		/* relation oid (n/a here) */
 			   -1,				/* internal size */
 			   -1,				/* external size */
 			   'b',				/* type-type (base type) */
 			   DEFAULT_TYPDELIM,	/* array element delimiter */
-			   "array_in",		/* input procedure */
-			   "array_out",		/* output procedure */
-			   "array_in",		/* receive procedure */
-			   "array_out",		/* send procedure */
-			   typeName,		/* element type name */
-			   NULL,			/* base type name */
+			   F_ARRAY_IN,		/* input procedure */
+			   F_ARRAY_OUT,		/* output procedure */
+			   F_ARRAY_IN,		/* receive procedure */
+			   F_ARRAY_OUT,		/* send procedure */
+			   typoid,			/* element type ID */
+			   InvalidOid,		/* base type ID */
 			   NULL,			/* never a default type value */
 			   NULL,			/* binary default isn't sent either */
 			   false,			/* never passed by value */
@@ -921,10 +977,64 @@ DefineType(char *typeName, List *parameters)
 			   'x',				/* ARRAY is always toastable */
 			   -1,				/* typMod (Domains only) */
 			   0,				/* Array dimensions of typbasetype */
-			   'f');			/* Type NOT NULL */
+			   false);			/* Type NOT NULL */
 
 	pfree(shadow_type);
 }
+
+static Oid
+findTypeIOFunction(const char *procname, bool isOutput)
+{
+	Oid			argList[FUNC_MAX_ARGS];
+	int			nargs;
+	Oid			procOid;
+
+	/*
+	 * First look for a 1-argument func with all argtypes 0. This is
+	 * valid for all kinds of procedure.
+	 */
+	MemSet(argList, 0, FUNC_MAX_ARGS * sizeof(Oid));
+
+	procOid = GetSysCacheOid(PROCNAME,
+							 PointerGetDatum(procname),
+							 Int32GetDatum(1),
+							 PointerGetDatum(argList),
+							 0);
+
+	if (!OidIsValid(procOid))
+	{
+		/*
+		 * Alternatively, input procedures may take 3 args (data
+		 * value, element OID, atttypmod); the pg_proc argtype
+		 * signature is 0,OIDOID,INT4OID.  Output procedures may
+		 * take 2 args (data value, element OID).
+		 */
+		if (isOutput)
+		{
+			/* output proc */
+			nargs = 2;
+			argList[1] = OIDOID;
+		}
+		else
+		{
+			/* input proc */
+			nargs = 3;
+			argList[1] = OIDOID;
+			argList[2] = INT4OID;
+		}
+		procOid = GetSysCacheOid(PROCNAME,
+								 PointerGetDatum(procname),
+								 Int32GetDatum(nargs),
+								 PointerGetDatum(argList),
+								 0);
+
+		if (!OidIsValid(procOid))
+			func_error("TypeCreate", procname, 1, argList, NULL);
+	}
+
+	return procOid;
+}
+
 
 static char *
 defGetString(DefElem *def)
@@ -951,7 +1061,7 @@ defGetString(DefElem *def)
 		case T_String:
 			return strVal(def->arg);
 		case T_TypeName:
-			return TypeNameToInternalName((TypeName *) def->arg);
+			return TypeNameToString((TypeName *) def->arg);
 		default:
 			elog(ERROR, "Define: cannot interpret argument of \"%s\"",
 				 def->defname);
@@ -978,6 +1088,32 @@ defGetNumeric(DefElem *def)
 	return 0;					/* keep compiler quiet */
 }
 
+static TypeName *
+defGetTypeName(DefElem *def)
+{
+	if (def->arg == NULL)
+		elog(ERROR, "Define: \"%s\" requires a parameter",
+			 def->defname);
+	switch (nodeTag(def->arg))
+	{
+		case T_TypeName:
+			return (TypeName *) def->arg;
+		case T_String:
+		{
+			/* Allow quoted typename for backwards compatibility */
+			TypeName   *n = makeNode(TypeName);
+
+			n->names = makeList1(def->arg);
+			n->typmod = -1;
+			return n;
+		}
+		default:
+			elog(ERROR, "Define: argument of \"%s\" must be a type name",
+				 def->defname);
+	}
+	return NULL;				/* keep compiler quiet */
+}
+
 static int
 defGetTypeLength(DefElem *def)
 {
@@ -998,7 +1134,7 @@ defGetTypeLength(DefElem *def)
 			break;
 		case T_TypeName:
 			/* cope if grammar chooses to believe "variable" is a typename */
-			if (strcasecmp(TypeNameToInternalName((TypeName *) def->arg),
+			if (strcasecmp(TypeNameToString((TypeName *) def->arg),
 						   "variable") == 0)
 				return -1;		/* variable length */
 			break;
