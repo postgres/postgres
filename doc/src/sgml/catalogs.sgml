@@ -1,6 +1,6 @@
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.80 2003/11/29 19:51:36 pgsql Exp $
+ $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.81 2003/12/06 23:10:21 joe Exp $
  -->
 
 <chapter id="catalogs">
@@ -4049,6 +4049,24 @@
       <entry><type>text</type></entry>
       <entry></entry>
       <entry>current value of the parameter</entry>
+     </row>
+     <row>
+      <entry><structfield>category</structfield></entry>
+      <entry><type>text</type></entry>
+      <entry></entry>
+      <entry>logical group of the parameter</entry>
+     </row>
+     <row>
+      <entry><structfield>short_desc</structfield></entry>
+      <entry><type>text</type></entry>
+      <entry></entry>
+      <entry>a brief description of the parameter</entry>
+     </row>
+     <row>
+      <entry><structfield>extra_desc</structfield></entry>
+      <entry><type>text</type></entry>
+      <entry></entry>
+      <entry>additional, more detailed, information about the parameter</entry>
      </row>
      <row>
       <entry><structfield>context</structfield></entry>

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.225 2003/12/04 21:24:56 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.226 2003/12/06 23:10:23 joe Exp $
 -->
 
 <Chapter Id="runtime">
@@ -2515,6 +2515,81 @@ dynamic_library_path = '/usr/local/lib/postgresql:/home/my_project/lib:$libdir'
 
      </variablelist>
     </sect3>
+   </sect2>
+
+   <sect2 id="runtime-config-compiler">
+    <title>Compiled-in Options</title>
+
+    <para>
+     The following options are available read-only, and are determined
+     at source code compile time.  As such, they have been excluded from the
+     sample <filename>postgresql.conf</> file.  They determine various aspects
+     of <productname>PostgreSQL</productname> behavior that may be of interest
+     to certain applications, particularly administrative front-ends.
+    </para>
+
+    <variablelist>
+
+     <varlistentry>
+      <term><varname>block_size</varname> (<type>integer</type>)</term>
+      <listitem>
+       <para>
+        Shows the size of a disk block.  It is determined by the value
+        of <literal>BLCKSZ</> when building the server. The default
+        value is 8192 bytes.  The <varname>shared_buffers</varname> setting is
+        influenced by <varname>block_size</varname>.  See
+        <xref linkend="runtime-config-resource"> for information.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><varname>integer_datetimes</varname> (<type>boolean</type>)</term>
+      <listitem>
+       <para>
+        Shows <literal>on</literal> if <productname>PostgreSQL</productname>
+        was built with support for 64-bit integer dates and times.  It is
+        set by configuring with <literal>--enable-integer-datetimes</literal>.
+        The default value is <literal>off</literal>.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><varname>max_function_args</varname> (<type>integer</type>)</term>
+      <listitem>
+       <para>
+        Shows the maximum number of function arguments. It is determined by
+        the value of <literal>FUNC_MAX_ARGS</> when building the server. The
+        default value is 32.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><varname>max_identifier_length</varname> (<type>integer</type>)</term>
+      <listitem>
+       <para>
+        Shows the maximum identifier length. It is determined as one less than
+        the value of <literal>NAMEDATALEN</> when building the server. The
+        default value of NAMEDATALEN is 64; therefore the default
+        <varname>max_identifier_length</varname> is 63.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><varname>max_index_keys</varname> (<type>integer</type>)</term>
+      <listitem>
+       <para>
+        Shows the maximum number of index keys. It is determined by
+        the value of <literal>INDEX_MAX_KEYS</> when building the server. The
+        default value is 32.
+       </para>
+      </listitem>
+     </varlistentry>
+
+    </variablelist>
    </sect2>
 
    <sect2 id="runtime-config-developer">
