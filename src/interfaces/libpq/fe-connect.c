@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-connect.c,v 1.275 2004/06/19 04:22:17 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-connect.c,v 1.276 2004/07/12 14:11:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3193,10 +3193,16 @@ default_threadlock(int acquire)
 #ifndef WIN32
 	static pthread_mutex_t singlethread_lock = PTHREAD_MUTEX_INITIALIZER;
 #else
-	static pthread_mutex_t singlethread_lock;
-        static long mutex_initialized = 0;
-        if (!InterlockedExchange(&mutex_initialized, 1L))
-                pthread_mutex_init(&singlethread_lock, NULL);
+	static pthread_mutex_t singlethread_lock = NULL;
+	static long mutex_initlock = 0;
+
+	if (singlethread_lock == NULL) {
+		while(InterlockedExchange(&mutex_initlock, 1) == 1)
+			/* loop, another thread own the lock */ ;
+		if (singlethread_lock == NULL)
+			pthread_mutex_init(&singlethread_lock, NULL);
+		InterlockedExchange(&mutex_initlock,0);
+	}
 #endif
 	if (acquire)
 		pthread_mutex_lock(&singlethread_lock);
