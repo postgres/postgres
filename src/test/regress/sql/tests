@@ -11,7 +11,6 @@ float4
 float8
 int2
 int4
-misc
 oid
 oidint2
 oidint4
