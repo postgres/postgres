@@ -1,14 +1,14 @@
 # ru.po
-# LIBPQ TRANSLATED MESSAGES IN RUSSIAN LANGUAGE (KOI8-R)
-# SERGUEI A. MOKHOV <STGUNYA@YAHOO.COM>, 2001.
+# LIBPQ Translated Messages In Russian Language (KOI8-R)
+# Serguei A. Mokhov <stgunya@yahoo.com>, August 2001.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 7.2\n"
 "POT-Creation-Date: 2001-07-15 15:49+0200\n"
-"PO-Revision-Date: 2001-07-31 23:40-0500\n"
-"Last-Translator: SERGUEI A. MOKHOV <STGUNYA@YAHOO.COM>\n"
-"Language-Team: RUSSIAN <RU@li.org>\n"
+"PO-Revision-Date: 2001-08-17 21:57-0500\n"
+"Last-Translator: Serguei A. Mokhov <stgunya@yahoo.com>\n"
+"Language-Team: Serguei A. Mokhov <stgunya@yahoo.com>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=koi8-r\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -19,18 +19,18 @@ msgstr "Ошибка Kerberos 4: %s\n"
 
 #: fe-auth.c:387
 #, c-format
-msgid "could not set socket to blocking mode: %s"
-msgstr "не получилось установить сокет в блокирующий режим: %s"
+msgid "could not set socket to blocking mode: %s\n"
+msgstr "не получилось установить сокет в блокирующий режим: %s\n"
 
 #: fe-auth.c:403
 #, c-format
-msgid "Kerberos 5 authentication rejected: %*s"
-msgstr "Аутентификация Kerberos 5 отклонена: %*s"
+msgid "Kerberos 5 authentication rejected: %*s\n"
+msgstr "Аутентификация Kerberos 5 отклонена: %*s\n"
 
 #: fe-auth.c:424
 #, c-format
-msgid "could not restore non-blocking mode on socket: %s"
-msgstr "не получилось восстановить не блокирующий режим для сокета: %s"
+msgid "could not restore non-blocking mode on socket: %s\n"
+msgstr "не получилось восстановить не блокирующий режим для сокета: %s\n"
 
 #: fe-auth.c:468
 msgid "Kerberos 4 authentication failed\n"
@@ -55,8 +55,8 @@ msgstr "метод аутентификации %u не поддерживается\n"
 
 #: fe-auth.c:551
 #, c-format
-msgid "invalid authentication service name \"%s\", ignored"
-msgstr "неправильное имя сервиса аутентификации \"%s\", игнорируется"
+msgid "invalid authentication service name \"%s\", ignored\n"
+msgstr "неправильное имя сервиса аутентификации \"%s\", игнорируется\n"
 
 #: fe-auth.c:608
 #, c-format
