@@ -4,12 +4,14 @@ exec sql whenever sqlerror sqlprint;
 
 exec sql include sqlca;
 
+exec sql define AMOUNT 5;
+
 int
 main ()
 {
 exec sql begin declare section;
-        int amount[5];
-        char name[5][8];
+        int amount[AMOUNT];
+        char name[AMOUNT][8];
 exec sql end declare section;
 	char msg[128], command[128];
         FILE *dbgs;
