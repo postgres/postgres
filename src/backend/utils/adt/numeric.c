@@ -14,7 +14,7 @@
  * Copyright (c) 1998-2003, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/numeric.c,v 1.59 2003/03/21 01:58:04 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/numeric.c,v 1.60 2003/04/21 00:22:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1964,23 +1964,18 @@ numeric_variance(PG_FUNCTION_ARGS)
 	if (NUMERIC_IS_NAN(N) || NUMERIC_IS_NAN(sumX) || NUMERIC_IS_NAN(sumX2))
 		PG_RETURN_NUMERIC(make_result(&const_nan));
 
-	/* We define VARIANCE of no values to be NULL, of 1 value to be 0 */
-	/* N is zero iff no digits (cf. numeric_uminus) */
-	if (N->varlen == NUMERIC_HDRSZ)
-		PG_RETURN_NULL();
-
+	/* Sample variance is undefined when N is 0 or 1, so return NULL */
 	init_var(&vN);
 	set_var_from_num(N, &vN);
 
-	init_var(&vNminus1);
-	sub_var(&vN, &const_one, &vNminus1);
-
-	if (cmp_var(&vNminus1, &const_zero) <= 0)
+	if (cmp_var(&vN, &const_one) <= 0)
 	{
 		free_var(&vN);
-		free_var(&vNminus1);
-		PG_RETURN_NUMERIC(make_result(&const_zero));
+		PG_RETURN_NULL();
 	}
+
+	init_var(&vNminus1);
+	sub_var(&vN, &const_one, &vNminus1);
 
 	init_var(&vsumX);
 	set_var_from_num(sumX, &vsumX);
@@ -2045,23 +2040,18 @@ numeric_stddev(PG_FUNCTION_ARGS)
 	if (NUMERIC_IS_NAN(N) || NUMERIC_IS_NAN(sumX) || NUMERIC_IS_NAN(sumX2))
 		PG_RETURN_NUMERIC(make_result(&const_nan));
 
-	/* We define STDDEV of no values to be NULL, of 1 value to be 0 */
-	/* N is zero iff no digits (cf. numeric_uminus) */
-	if (N->varlen == NUMERIC_HDRSZ)
-		PG_RETURN_NULL();
-
+	/* Sample stddev is undefined when N is 0 or 1, so return NULL */
 	init_var(&vN);
 	set_var_from_num(N, &vN);
 
-	init_var(&vNminus1);
-	sub_var(&vN, &const_one, &vNminus1);
-
-	if (cmp_var(&vNminus1, &const_zero) <= 0)
+	if (cmp_var(&vN, &const_one) <= 0)
 	{
 		free_var(&vN);
-		free_var(&vNminus1);
-		PG_RETURN_NUMERIC(make_result(&const_zero));
+		PG_RETURN_NULL();
 	}
+
+	init_var(&vNminus1);
+	sub_var(&vN, &const_one, &vNminus1);
 
 	init_var(&vsumX);
 	set_var_from_num(sumX, &vsumX);
