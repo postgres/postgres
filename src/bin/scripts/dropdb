@@ -11,7 +11,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/dropdb,v 1.13 2001/09/30 22:17:51 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/dropdb,v 1.14 2002/02/18 05:48:44 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -89,6 +89,11 @@ do
 		;;
 	 *)
 		dbname="$1"
+		if [ "$#" -ne 1 ]; then
+			echo "$CMDNAME: invalid option: $2" 1>&2
+	                echo "Try '$CMDNAME --help' for more information." 1>&2
+			exit 1
+		fi
 		;;
     esac
     shift

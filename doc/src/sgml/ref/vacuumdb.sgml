@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/vacuumdb.sgml,v 1.20 2001/12/08 03:24:40 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/vacuumdb.sgml,v 1.21 2002/02/18 05:48:43 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -23,13 +23,13 @@ PostgreSQL documentation
   <cmdsynopsis>
    <command>vacuumdb</command>
    <arg rep="repeat"><replaceable>connection-options</replaceable></arg>
-   <arg><arg>-d</arg> <replaceable>dbname</replaceable></arg>
    <group><arg>--full</arg><arg>-f</arg></group>
    <group><arg>--verbose</arg><arg>-v</arg></group>
    <group><arg>--analyze</arg><arg>-z</arg></group>
-   <arg>--table '<replaceable>table</replaceable>
+   <arg>--table | -t '<replaceable>table</replaceable>
     <arg>( <replaceable class="parameter">column</replaceable> [,...] )</arg>'
    </arg>
+   <arg><replaceable>dbname</replaceable></arg>
    <sbr>
    <command>vacuumdb</command>
    <arg rep="repeat"><replaceable>connection-options</replaceable></arg>

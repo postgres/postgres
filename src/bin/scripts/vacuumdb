@@ -12,7 +12,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/vacuumdb,v 1.19 2001/09/30 22:17:51 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/vacuumdb,v 1.20 2002/02/18 05:48:45 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -112,6 +112,11 @@ do
 		;;
 	*)
 		dbname="$1"
+		if [ "$#" -ne 1 ]; then
+			echo "$CMDNAME: invalid option: $2" 1>&2
+	                echo "Try '$CMDNAME --help' for more information." 1>&2
+			exit 1
+		fi
 		;;
     esac
     shift
@@ -151,9 +156,12 @@ if [ "$alldb" ]; then
 	dbname=`${PATHNAME}psql $PSQLOPT -q -t -A -d template1 -c 'SELECT datname FROM pg_database WHERE datallowconn'`
 
 elif [ -z "$dbname" ]; then
-	echo "$CMDNAME: missing required argument: database name" 1>&2
-        echo "Try '$CMDNAME -?' for help." 1>&2
-	exit 1
+        if [ "$PGUSER" ]; then
+                dbname="$PGUSER"
+        else
+                dbname=`${PATHNAME}pg_id -u -n`
+        fi
+        [ "$?" -ne 0 ] && exit 1
 fi
 
 for db in $dbname

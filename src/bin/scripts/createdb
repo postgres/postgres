@@ -12,7 +12,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/createdb,v 1.18 2001/09/30 22:17:51 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/createdb,v 1.19 2002/02/18 05:48:44 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -104,10 +104,16 @@ do
 		exit 1
 		;;
 	*)
-		if [ -z "$dbname" ]; then
-			dbname="$1"
-		else
+		dbname="$1"
+		if [ "$2" ]
+		then
+			shift
 			dbcomment="$1"
+		fi
+		if [ "$#" -ne 1 ]; then
+			echo "$CMDNAME: invalid option: $2" 1>&2
+	                echo "Try '$CMDNAME --help' for more information." 1>&2
+			exit 1
 		fi
 		;;
     esac
@@ -118,7 +124,7 @@ if [ "$usage" ]; then
         echo "$CMDNAME creates a PostgreSQL database."
         echo
 	echo "Usage:"
-        echo "  $CMDNAME [options] dbname [description]"
+        echo "  $CMDNAME [options] [dbname] [description]"
         echo
 	echo "Options:"
 	echo "  -D, --location=PATH             Alternative place to store the database"

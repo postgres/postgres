@@ -7,7 +7,7 @@
 # Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/bin/scripts/Attic/createlang.sh,v 1.32 2002/01/03 05:30:04 momjian Exp $
+# $Header: /cvsroot/pgsql/src/bin/scripts/Attic/createlang.sh,v 1.33 2002/02/18 05:48:44 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -115,6 +115,11 @@ do
 				dbname="$1"
 			fi
 		else	dbname="$1"
+		fi
+		if [ "$#" -ne 1 ]; then
+			echo "$CMDNAME: invalid option: $2" 1>&2
+	                echo "Try '$CMDNAME --help' for more information." 1>&2
+			exit 1
 		fi
                 ;;
     esac

@@ -9,7 +9,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/dropuser,v 1.14 2001/09/30 22:17:51 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/dropuser,v 1.15 2002/02/18 05:48:45 momjian Exp $
 #
 # Note - this should NOT be setuid.
 #
@@ -91,6 +91,11 @@ do
 		;;
          *)
 		DelUser="$1"
+		if [ "$#" -ne 1 ]; then
+			echo "$CMDNAME: invalid option: $2" 1>&2
+	                echo "Try '$CMDNAME --help' for more information." 1>&2
+			exit 1
+		fi
 		;;
     esac
     shift;

@@ -9,7 +9,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/createuser,v 1.22 2001/09/30 22:17:51 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/createuser,v 1.23 2002/02/18 05:48:44 momjian Exp $
 #
 # Note - this should NOT be setuid.
 #
@@ -123,6 +123,11 @@ do
 		;;
          *)
 		NewUser="$1"
+		if [ "$#" -ne 1 ]; then
+			echo "$CMDNAME: invalid option: $2" 1>&2
+	                echo "Try '$CMDNAME --help' for more information." 1>&2
+			exit 1
+		fi
 		;;
     esac
     shift;
