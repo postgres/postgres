@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.169 2001/07/20 17:45:05 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.170 2001/07/21 04:32:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -70,7 +70,7 @@ static SSL_CTX *SSL_context = NULL;
 
 #define NOTIFYLIST_INITIAL_SIZE 10
 #define NOTIFYLIST_GROWBY 10
-
+#define WIN32_NON_BLOCKING_CONNECTIONS
 
 /* ----------
  * Definition of the conninfo parameters and their fallback resources.
@@ -932,9 +932,15 @@ connectDBStart(PGconn *conn)
 	 * Thus, we have make arrangements for all eventualities.
 	 * ----------
 	 */
+#ifndef WIN32
 	if (connect(conn->sock, &conn->raddr.sa, conn->raddr_len) < 0)
 	{
 		if (errno == EINPROGRESS || errno == 0)
+#else
+ if (connect(conn->sock, &conn->raddr.sa, conn->raddr_len) != 0)
+ {
+  if (errno == EINPROGRESS || errno == EWOULDBLOCK)
+#endif
 		{
 
 			/*
@@ -1208,15 +1214,6 @@ keep_going:						/* We will come back to here until there
 			{
 				ACCEPT_TYPE_ARG3 laddrlen;
 
-#ifndef WIN32
-				int			optval;
-
-#else
-				char		optval;
-
-#endif
-				ACCEPT_TYPE_ARG3 optlen = sizeof(optval);
-
 				/*
 				 * Write ready, since we've made it here, so the
 				 * connection has been made.
@@ -1227,6 +1224,10 @@ keep_going:						/* We will come back to here until there
 				 * state waiting for us on the socket.
 				 */
 
+#ifndef WIN32
+				int   optval;
+				ACCEPT_TYPE_ARG3 optlen = sizeof(optval);
+
 				if (getsockopt(conn->sock, SOL_SOCKET, SO_ERROR,
 							   (char *) &optval, &optlen) == -1)
 				{
@@ -1235,6 +1236,20 @@ keep_going:						/* We will come back to here until there
 									  strerror(errno));
 					goto error_return;
 				}
+#else
+				char far  optval[8];
+				ACCEPT_TYPE_ARG3 optlen = sizeof(optval);
+			
+				int OptResult=getsockopt(conn->sock, SOL_SOCKET, SO_ERROR,optval, &optlen);
+				if (OptResult==SOCKET_ERROR)
+				{
+					printfPQExpBuffer(&conn->errorMessage,
+							"PQconnectPoll() -- getsockopt() failed: "
+							"errno=%i\n", errno);
+					connectFailureMessage(conn, OptResult);
+					goto error_return;
+				}
+#endif
 				else if (optval != 0)
 				{
 
