@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/index/indexam.c,v 1.62.2.1 2003/01/08 19:41:57 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/index/indexam.c,v 1.62.2.2 2003/03/23 21:55:14 tgl Exp $
  *
  * INTERFACE ROUTINES
  *		index_open		- open an index relation by relation OID
@@ -415,7 +415,12 @@ index_getnext(IndexScanDesc scan, ScanDirection direction)
 	 *
 	 * Note that we hold the pin on the single tuple's buffer throughout
 	 * the scan once we are in this state.
+	 *
+	 * XXX disabled for 7.3.3 because it results in intra-query buffer leak
+	 * when a multi-index indexscan is done.  Full fix seems too risky to
+	 * backpatch.
 	 */
+#ifdef NOT_USED
 	if (scan->keys_are_unique && scan->got_tuple)
 	{
 		if (ScanDirectionIsForward(direction))
@@ -433,6 +438,7 @@ index_getnext(IndexScanDesc scan, ScanDirection direction)
 		else
 			return NULL;
 	}
+#endif
 
 	/* Release any previously held pin */
 	if (BufferIsValid(scan->xs_cbuf))
