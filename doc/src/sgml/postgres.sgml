@@ -1,11 +1,15 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/postgres.sgml,v 1.15 1998/12/18 16:23:34 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/postgres.sgml,v 1.16 1999/01/07 02:59:45 thomas Exp $
 
 Postgres integrated documentation.
 Other subset docs should be copied and shrunk from here.
 thomas 1998-02-23
 
 $Log: postgres.sgml,v $
+Revision 1.16  1999/01/07 02:59:45  thomas
+Include installation instructions for WIN32 client-side libraries.
+From Magnus Hagander <mha@sollentuna.net>.
+
 Revision 1.15  1998/12/18 16:23:34  thomas
 Fix typos in rules.sgml.
 Add Emacs configuration block to postgres.sgml.
@@ -78,6 +82,7 @@ Move SQL reference pages up into the User's Guide.
 <!entity config   SYSTEM "config.sgml">
 <!entity current  SYSTEM "current.sgml">
 <!entity install  SYSTEM "install.sgml">
+<!entity installw SYSTEM "install-win32.sgml">
 <!entity intro-ag SYSTEM "intro-ag.sgml">
 <!entity options  SYSTEM "pg_options.sgml">
 <!entity ports    SYSTEM "ports.sgml">
@@ -240,6 +245,7 @@ Installation and maintenance information.
 &ports;
 &config;
 &install;
+&installw;
 &runtime;
 &options;
 &start-ag;
