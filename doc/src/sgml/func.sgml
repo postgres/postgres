@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.219 2004/09/28 10:18:22 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.220 2004/10/04 08:15:41 neilc Exp $
 PostgreSQL documentation
 -->
 
@@ -671,7 +671,7 @@ PostgreSQL documentation
 
       <row>
        <entry><literal><function>setseed</function>(<type>dp</type>)</literal></entry>
-       <entry><type>int32</type></entry>
+       <entry><type>integer</type></entry>
        <entry>set seed for subsequent <literal>random()</literal> calls</entry>
        <entry><literal>setseed(0.54823)</literal></entry>
        <entry><literal>1177314959</literal></entry>
