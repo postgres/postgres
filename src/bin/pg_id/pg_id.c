@@ -6,20 +6,13 @@
  *
  * Copyright (C) 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/pg_id/Attic/pg_id.c,v 1.18 2001/02/27 08:13:28 ishii Exp $
+ * $Header: /cvsroot/pgsql/src/bin/pg_id/Attic/pg_id.c,v 1.19 2001/03/01 05:05:29 ishii Exp $
  */
 #include "postgres_fe.h"
 
 #ifdef HAVE_GETOPT_H
 #include <getopt.h>
-#else
-#ifdef HAVE_OPTARG_DECL
-#include <unistd.h>
-#else
-extern char *optarg;
-extern int optind, opterr, optopt;
-#endif	/* HAVE_OPTARG_DECL */
-#endif	/* HAVE_GETOPT_H */
+#endif
 
 #include <pwd.h>
 #include <stdio.h>
@@ -37,6 +30,9 @@ main(int argc, char *argv[])
 	const char *username = NULL;
 
 	struct passwd *pw;
+
+	extern int	optind;
+	extern char *optarg;
 
 	while ((c = getopt(argc, argv, "nru")) != -1)
 	{

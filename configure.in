@@ -777,9 +777,6 @@ AC_CHECK_FUNCS([fcvt getopt_long memmove pstat setproctitle setsid sigprocmask s
 dnl Check whether <unistd.h> declares fdatasync().
 AC_EGREP_HEADER(fdatasync, unistd.h, AC_DEFINE(HAVE_FDATASYNC_DECL))
 
-dnl Check whether <unistd.h> declares optarg
-AC_EGREP_HEADER(optarg, unistd.h, AC_DEFINE(HAVE_OPTARG_DECL))
-
 AC_CACHE_CHECK([for PS_STRINGS], [pgac_cv_var_PS_STRINGS],
 [AC_TRY_LINK(
 [#include <machine/vmparam.h>

@@ -8,9 +8,6 @@
 
 #ifdef HAVE_GETOPT_H
 #include "getopt.h"
-#else
-extern char *optarg;
-extern int optind, opterr, optopt;
 #endif
 
 #include "extern.h"
@@ -63,6 +60,9 @@ main(int argc, char *const argv[])
 				verbose = false,
 				out_option = 0;
 	struct _include_path *ip;
+
+	extern int	optind;
+	extern char *optarg;
 
 	add_include_path("/usr/include");
 	add_include_path(INCLUDE_PATH);

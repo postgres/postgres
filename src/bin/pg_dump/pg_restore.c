@@ -67,14 +67,7 @@
 
 #ifdef HAVE_GETOPT_H 
 #include <getopt.h>
-#else
-#ifdef HAVE_OPTARG_DECL
-#include <unistd.h>
-#else
-extern char *optarg;
-extern int optind, opterr, optopt;
-#endif	/* HAVE_OPTARG_DECL */
-#endif	/* HAVE_GETOPT_H */
+#endif
 
 /* Forward decls */
 static void usage(const char *progname);
@@ -120,6 +113,8 @@ int main(int argc, char **argv)
 	int		c;
 	Archive*    	AH;
 	char		*fileSpec = NULL;
+	extern int	optind;
+	extern char *optarg;
 
 	opts = NewRestoreOptions();
 
