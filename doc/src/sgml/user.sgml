@@ -1,11 +1,19 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/user.sgml,v 1.8 1999/05/04 02:26:06 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/user.sgml,v 1.9 1999/05/20 05:39:29 thomas Exp $
 
 Postgres User's Manual.
 Derived from postgres.sgml.
 thomas 1998-02-24
 
 $Log: user.sgml,v $
+Revision 1.9  1999/05/20 05:39:29  thomas
+Rearrange and consolidate the Admin Guide.
+Add reference pages for utilities and remove standalone chapters for same.
+Add material for an appendix on date/time properties, but not yet
+ integrated with the User's Guide.
+Break up the former chapter on pg_options
+ into Admin and Programmer's Guides.
+
 Revision 1.8  1999/05/04 02:26:06  thomas
 Include new introductory chapter on SQL from Stefan S.
 Should this be in the tutorial instead?
@@ -48,9 +56,6 @@ Move SQL reference pages up into the User's Guide.
 <!entity keys     SYSTEM "keys.sgml">
 <!entity manage   SYSTEM "manage.sgml">
 <!entity oper     SYSTEM "oper.sgml">
-<!entity pgaccess SYSTEM "pgaccess.sgml">
-<!entity psql     SYSTEM "psql.sgml">
-<!entity query-ug SYSTEM "query-ug.sgml">
 <!entity sql      SYSTEM "sql.sgml">
 <!entity storage  SYSTEM "storage.sgml">
 <!entity syntax   SYSTEM "syntax.sgml">
@@ -65,42 +70,42 @@ Move SQL reference pages up into the User's Guide.
 
 <!-- Title information -->
 
-<Title>PostgreSQL User's Guide</Title>
-<BookInfo>
-    <ReleaseInfo>Covering v6.4 for general release</ReleaseInfo>
-    <BookBiblio>
-    <AuthorGroup>
-      <CorpAuthor>The PostgreSQL Development Team</CorpAuthor>
-    </AuthorGroup>
+ <Title>PostgreSQL User's Guide</Title>
+ <BookInfo>
+  <ReleaseInfo>Covering v6.5 for general release</ReleaseInfo>
+  <BookBiblio>
+   <AuthorGroup>
+    <CorpAuthor>The PostgreSQL Development Team</CorpAuthor>
+   </AuthorGroup>
 <!-- editor in authorgroup is not supported
-    <AuthorGroup>
+  <AuthorGroup>
 -->
-      <Editor>
-        <FirstName>Thomas</FirstName>
-        <SurName>Lockhart</SurName>
-        <Affiliation>
-          <OrgName>Caltech/JPL</OrgName>
-        </Affiliation>
-      </Editor>
+   <Editor>
+    <FirstName>Thomas</FirstName>
+    <SurName>Lockhart</SurName>
+    <Affiliation>
+     <OrgName>Caltech/JPL</OrgName>
+    </Affiliation>
+   </Editor>
 <!--
-    </AuthorGroup>
+  </AuthorGroup>
 -->
  
 <!--
-    <AuthorInitials>TGL</AuthorInitials>
+  <AuthorInitials>TGL</AuthorInitials>
 -->
 
-    <Date>(last updated 1998-02-23)</Date>
-    </BookBiblio>
+   <Date>(last updated 1999-05-19)</Date>
+  </BookBiblio>
 
-<LegalNotice>
-<Para>
-<ProductName>PostgreSQL</ProductName> is copyright (C) 1998 
-by the Postgres Global Development Group.
-</Para>
-</LegalNotice>
+  <LegalNotice>
+   <Para>
+    <ProductName>PostgreSQL</ProductName> is copyright (&copy;) 1998-9
+    by the Postgres Global Development Group.
+   </Para>
+  </LegalNotice>
 
-</BookInfo>
+ </BookInfo>
 
 <!--
 <TOC> </TOC>
@@ -115,42 +120,39 @@ Your name here...
 </Dedication>
 -->
 
-<preface id="preface">
-<Title>Summary</Title>
+ <preface id="preface">
+  <Title>Summary</Title>
 
-<Para>
-<ProductName>Postgres</ProductName>, 
- developed originally in the UC Berkeley Computer Science Department,
- pioneered many of the object-relational concepts
- now becoming available in some commercial databases.
-It provides SQL92/SQL3 language support,
- transaction integrity, and type extensibility.
- <ProductName>PostgreSQL</ProductName> is a public-domain, open source descendant
- of this original Berkeley code.
-</Para>
-</Preface>
+  <Para>
+   <ProductName>Postgres</ProductName>, 
+   developed originally in the UC Berkeley Computer Science Department,
+   pioneered many of the object-relational concepts
+   now becoming available in some commercial databases.
+   It provides SQL92/SQL3 language support,
+   transaction integrity, and type extensibility.
+   <ProductName>PostgreSQL</ProductName> is a public-domain, open source descendant
+   of this original Berkeley code.
+  </Para>
+ </Preface>
 
-  &intro;
+ &intro;
  &sql;
-  &environ;
- &manage;
  &syntax;
-  &datatype;
-  &oper;
-  &func;
-  &typeconv;
+ &datatype;
+ &oper;
+ &func;
+ &typeconv;
  &keys;
-  &array;
-  &inherit;
-  &query-ug;
-  &storage;
-  &psql;
-  &pgaccess;
-  &commands;
-
-<!--
-&contacts;
--->
+ &array;
+ &inherit;
+ &environ;
+ &manage;
+ &storage;
+ &commands;
+ 
+ <!--
+ &contacts;
+ -->
 
  &biblio;
 

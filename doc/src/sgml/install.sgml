@@ -1,114 +1,116 @@
-<Chapter Id="install">
-<Title>Installation</Title>
+ <Chapter Id="install">
+  <Title>Installation</Title>
 
-<Abstract>
-<Para>
-Complete installation instructions for 
-<ProductName>Postgres</ProductName> v6.5.
-</Para>
-</Abstract>
+  <Abstract>
+   <Para>
+    Complete installation instructions for 
+    <ProductName>Postgres</ProductName> v6.5.
+   </Para>
+  </Abstract>
 
-<Para>
-Before installing <ProductName>Postgres</ProductName>, you may wish to visit
-<ULink url="http://www.postgresql.org">www.postgresql.org</ULink>
-for up to date information, patches, etc.
-</Para>
+  <Para>
+   Before installing <ProductName>Postgres</ProductName>, you may wish to visit
+   <ULink url="http://www.postgresql.org">www.postgresql.org</ULink>
+   for up to date information, patches, etc.
+  </Para>
 
-<Para>
-These installation instructions assume:
+  <Para>
+   These installation instructions assume:
 
-<ItemizedList Mark="bullet" Spacing="compact">
-<ListItem>
-<Para>
-Commands are Unix-compatible. See note below.
-</Para>
-</ListItem>
-<ListItem>
-<Para>
-Defaults are used except where noted.
-</Para>
-</ListItem>
-<ListItem>
-<Para>
-User <literal>postgres</literal> is the <ProductName>Postgres</ProductName> superuser.
-</Para>
-</ListItem>
-<ListItem>
-<Para>
-The source path is <filename>/usr/src/pgsql</filename> (other paths are possible).
-</Para>
-</ListItem>
-<ListItem>
-<Para>
-The runtime path is <filename>/usr/local/pgsql</filename> (other paths are possible).
-</Para>
-</ListItem>
-</ItemizedList>
-</para>
-<Para>
-Commands were tested on RedHat Linux version 4.2 using the tcsh shell.
-Except where noted, they will probably work on most systems. Commands
-like <command>ps</command> and <command>tar</command> may vary wildly 
-between platforms on what options you should use.
-<Emphasis>Use common sense</Emphasis> before typing in these commands.
-</Para>
+   <ItemizedList Mark="bullet" Spacing="compact">
+    <ListItem>
+     <Para>
+      Commands are Unix-compatible. See note below.
+     </Para>
+    </ListItem>
+    <ListItem>
+     <Para>
+      Defaults are used except where noted.
+     </Para>
+    </ListItem>
+    <ListItem>
+     <Para>
+      User <literal>postgres</literal> is the <ProductName>Postgres</ProductName> superuser.
+     </Para>
+    </ListItem>
+    <ListItem>
+     <Para>
+      The source path is <filename>/usr/src/pgsql</filename> (other paths are possible).
+     </Para>
+    </ListItem>
+    <ListItem>
+     <Para>
+      The runtime path is <filename>/usr/local/pgsql</filename> (other paths are possible).
+     </Para>
+    </ListItem>
+   </ItemizedList>
+  </para>
 
-<Para>
-Our Makefiles require GNU <Application>make</Application> (called
-<Quote>gmake</Quote> in this document).  They will <Emphasis>not</Emphasis>
-work with non-GNU <Application>make</Application> programs.  If you
-have GNU <Application>make</Application> installed under the name 
-<Quote>make</Quote> instead of <Quote>gmake</Quote>, then you will use the
-command <command>make</command> instead. That's OK, but
-you need to have the GNU form of <Application>make</Application> to succeed with
-an installation.
-</Para>
+  <Para>
+   Commands were tested on RedHat Linux version 5.2 using the tcsh shell.
+   Except where noted, they will probably work on most systems. Commands
+   like <command>ps</command> and <command>tar</command> may vary wildly 
+   between platforms on what options you should use.
+   <Emphasis>Use common sense</Emphasis> before typing in these commands.
+  </Para>
 
-<Sect1>
-<Title>Requirements to Run <ProductName>Postgres</ProductName></Title>
+  <Para>
+   Our Makefiles require GNU <Application>make</Application> (called
+   <Quote>gmake</Quote> in this document).  They will <Emphasis>not</Emphasis>
+   work with non-GNU <Application>make</Application> programs.  If you
+   have GNU <Application>make</Application> installed under the name 
+   <Quote>make</Quote> instead of <Quote>gmake</Quote>, then you will use the
+   command <command>make</command> instead. That's OK, but
+   you need to have the GNU form of <Application>make</Application> to succeed with
+   an installation.
+  </Para>
 
-<Para>
-Up to date information on supported platforms is at
-<ulink url="http://www.postgresql.org/docs/admin/install.htm">
-http://www.postgresql.org/docs/admin/install.htm</ulink>.
+  <Sect1>
+   <Title>Requirements to Run <ProductName>Postgres</ProductName></Title>
 
- In general, most Unix-compatible
-platforms with modern libraries should be able to run <ProductName>Postgres</ProductName>.
-</para>
-<para>
-Although the minimum required memory for running <ProductName>Postgres</ProductName>
-is as little as 8MB, there are noticable improvements in runtimes for the regression
-tests when expanding memory up to 96MB on a relatively fast dual-processor system
-running X-Windows.
-The rule is you can never have too much memory.
-</para>
-<Para>
-Check that you have sufficient disk space.  You will need about
-      30 Mbytes for <filename>/usr/src/pgsql</filename>, 
-about 5 Mbytes for <filename>/usr/local/pgsql</filename>
-      (excluding your database) and 1 Mbyte for an empty database.
-      The database will temporarily grow to about 20 Mbytes during the
-      regression tests.  You will also need about 3 Mbytes for the
-      distribution tar file.
-</Para>
+   <Para>
+    Up to date information on supported platforms is at
+    <ulink url="http://www.postgresql.org/docs/admin/install.htm">
+     http://www.postgresql.org/docs/admin/install.htm</ulink>.
 
-<Para>
-      We therefore recommend that during installation and testing you
-      have well over 20 Mbytes free under <filename>/usr/local</filename> and another 25 Mbytes
-      free on the disk partition containing your database.  Once you
-      delete the source files, tar file and regression database, you
-      will need 2 Mbytes for <filename>/usr/local/pgsql</filename>, 1 Mbyte for the empty
-      database, plus about five times the space you would require to
-      store your database data in a flat file.
-</Para>
+    In general, most Unix-compatible
+    platforms with modern libraries should be able to run
+    <ProductName>Postgres</ProductName>.
+   </para>
+   <para>
+    Although the minimum required memory for running <ProductName>Postgres</ProductName>
+    is as little as 8MB, there are noticable improvements in runtimes for the regression
+    tests when expanding memory up to 96MB on a relatively fast dual-processor system
+    running X-Windows.
+    The rule is you can never have too much memory.
+   </para>
+   <Para>
+    Check that you have sufficient disk space.  You will need about
+    30 Mbytes for <filename>/usr/src/pgsql</filename>, 
+    about 5 Mbytes for <filename>/usr/local/pgsql</filename>
+    (excluding your database) and 1 Mbyte for an empty database.
+    The database will temporarily grow to about 20 Mbytes during the
+    regression tests.  You will also need about 3 Mbytes for the
+    distribution tar file.
+   </Para>
 
-<Para>
-      To check for disk space, use 
-<programlisting>
+   <Para>
+    We therefore recommend that during installation and testing you
+    have well over 20 Mbytes free under <filename>/usr/local</filename> and another 25 Mbytes
+    free on the disk partition containing your database.  Once you
+    delete the source files, tar file and regression database, you
+    will need 2 Mbytes for <filename>/usr/local/pgsql</filename>, 1 Mbyte for the empty
+    database, plus about five times the space you would require to
+    store your database data in a flat file.
+   </Para>
+
+   <Para>
+    To check for disk space, use 
+    <programlisting>
 $ df -k
-</programlisting>
-</para>
-</Sect1>
+    </programlisting>
+   </para>
+  </Sect1>
 
 <Sect1>
 <Title>Installation Procedure</Title>
@@ -1300,95 +1302,30 @@ For more information on the various support mailing lists.
 </Para>
 </Sect1>
 
-<Sect1>
-<Title>Porting Notes</Title>
+  <Sect1>
+   <Title>Porting Notes</Title>
 
-<Note>
-<Para>
-Check for any platform-specific FAQs in the <filename>doc/</filename> directory of
-the source distribution. For some ports, the notes below may be out of date.
-</Para>
-</Note>
-
-  <Sect2>
-   <Title>Ultrix4.x</Title>
-   
-   <para>
-    <note>
-     <para>
-      There have been no recent reports of Ultrix usage with <productname>Postgres</productname>.
-     </para>
-    </note>
-   </para>
-   <para>
-    You need to install the libdl-1.1 package since Ultrix 4.x doesn't
-    have a dynamic loader. It's available in
-    s2k-ftp.CS.Berkeley.EDU:pub/personal/andrew/libdl-1.1.tar.Z
+   <Para>
+    Check for any platform-specific FAQs in the <filename>doc/</filename> directory of
+    the source distribution.
    </Para>
-  </Sect2>
-  
-  <Sect2>
-   <Title>Linux</Title>
-   
-   <Sect3>
-    <Sect3Info>
-     <Author>
-      <FirstName>Thomas G.</FirstName>
-      <SurName>Lockhart</SurName>
-     </Author>
-     <Date>1998-02-19</Date>
-    </Sect3Info>
-    <Title>Linux ELF</Title>
-    
-    <Para>
-     The regression test reference machine is
-     a linux-2.0.30/libc-5.3.12/RedHat-4.2 installation running on a dual processor i686.
-     The linux-elf port installs cleanly. See the Linux FAQ for more details.
-    </Para>
-   </Sect3>
-
-<Sect3>
-<Sect3Info>
-<Date>1995-05-11</Date>
-</Sect3Info>
-<Title>Linux a.out</Title>
-
-<Para>
-        For non-ELF Linux, the dld library MUST be obtained and installed on
-        the system. It enables dynamic link loading capability to the <ProductName>Postgres</ProductName>
-        port. The dld library can be obtained from the sunsite linux
-        distributions. The current name is dld-3.2.5.
-<ULink url="sneaker@powergrid.electriciti.com">Jalon Q. Zimmerman</ULink>
-</Para>
-</Sect3>
-</Sect2>
-
-<Sect2>
-<Title>BSD/OS</Title>
-
-<Para>
-        For BSD/OS 2.0 and 2.01, you will need to get the GNU dld library.
-</Para>
-</Sect2>
-
-<Sect2>
-<Title>NeXT</Title>
-
-<Para>
-        The NeXT port for v1.09 was supplied by 
-<ULink url="mailto:tom@basil.icce.rug.nl">Tom R. Hageman</ULink>.
-        It requires a SysV IPC emulation library and header files for
-        shared libary and semaphore stuff.   Tom just happens to sell such
-        a product so contact him for information.  He has also indicated that
-        binary releases of <ProductName>Postgres</ProductName> for NEXTSTEP will be made available to
-        the general public.  Contact Info@RnA.nl for information.
-</para>
-<Para>
-We have no recent reports of successful NeXT installations (as of v6.2.1). 
-However, the client-side libraries should work even
-if the backend is not supported.
-</Para>
-</Sect2>
-</Sect1>
+  </sect1>
 
 </Chapter>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-omittag:nil
+sgml-shorttag:t
+sgml-minimize-attributes:nil
+sgml-always-quote-attributes:t
+sgml-indent-step:1
+sgml-indent-data:t
+sgml-parent-document:nil
+sgml-default-dtd-file:"./reference.ced"
+sgml-exposed-tags:nil
+sgml-local-catalogs:"/usr/lib/sgml/CATALOG"
+sgml-local-ecat-files:nil
+End:
+-->

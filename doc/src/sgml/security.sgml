@@ -183,6 +183,9 @@
 	two exceptions: manual system catalog updates are not permitted if the
 	user does not have <literal>pg_user.usecatupd</literal> set, and destruction of
 	system catalogs (or modification of their schemas) is never allowed.
+       </para>
+      </listitem>
+     </varlistentry>
 
      <varlistentry>
       <term>

@@ -1,45 +1,45 @@
-<Chapter Id="pg-options">
-<DocInfo>
-<AuthorGroup>
-<Author>
-<FirstName>Massimo</FirstName>
-<Surname>Dal Zotto</Surname>
-</Author>
-</AuthorGroup>
-<Date>Transcribed 1998-10-16</Date>
-</DocInfo>
+ <Chapter Id="pg-options">
+  <DocInfo>
+   <AuthorGroup>
+    <Author>
+     <FirstName>Massimo</FirstName>
+     <Surname>Dal Zotto</Surname>
+    </Author>
+   </AuthorGroup>
+   <Date>Transcribed 1998-10-16</Date>
+  </DocInfo>
 
-<Title>Using pg_options</Title>
+  <Title>pg_options</Title>
 
-<Para>
-<Note>
-<Para>
-Contributed by <ULink url="mailto:dz@cs.unitn.it">Massimo Dal Zotto</ULink>
-</Para>
-</Note>
-</para>
-<Para>
-The optional file <filename>data/pg_options</filename> contains runtime
-options used by the backend to control trace messages and other backend
-tunable parameters.
-What makes this file interesting is the fact that it is re-read by a backend
-when it receives a SIGHUP signal, making thus possible to change run-time
-options on the fly without needing to restart 
-<productname>Postgres</productname>.
-The options specified in this file may be debugging flags used by the trace
-package (<filename>backend/utils/misc/trace.c</filename>) or numeric
-parameters which can be used by the backend to control its behaviour.
-New options and parameters must be defined in
-<filename>backend/utils/misc/trace.c</filename> and
-<filename>backend/include/utils/trace.h</filename>.
-</para>
-<Para>
-For example suppose we want to add conditional trace messages and a tunable
-numeric parameter to the code in file <filename>foo.c</filename>.
-All we need to do is to add the constant TRACE_FOO and OPT_FOO_PARAM into
-<filename>backend/include/utils/trace.h</filename>:
+  <Para>
+   <Note>
+    <Para>
+     Contributed by <ULink url="mailto:dz@cs.unitn.it">Massimo Dal Zotto</ULink>
+    </Para>
+   </Note>
+  </para>
+  <Para>
+   The optional file <filename>data/pg_options</filename> contains runtime
+   options used by the backend to control trace messages and other backend
+   tunable parameters.
+   What makes this file interesting is the fact that it is re-read by a backend
+   when it receives a SIGHUP signal, making thus possible to change run-time
+   options on the fly without needing to restart 
+   <productname>Postgres</productname>.
+   The options specified in this file may be debugging flags used by the trace
+   package (<filename>backend/utils/misc/trace.c</filename>) or numeric
+   parameters which can be used by the backend to control its behaviour.
+   New options and parameters must be defined in
+   <filename>backend/utils/misc/trace.c</filename> and
+   <filename>backend/include/utils/trace.h</filename>.
+  </para>
+  <Para>
+   For example suppose we want to add conditional trace messages and a tunable
+   numeric parameter to the code in file <filename>foo.c</filename>.
+   All we need to do is to add the constant TRACE_FOO and OPT_FOO_PARAM into
+   <filename>backend/include/utils/trace.h</filename>:
 
-<programlisting>
+   <programlisting>
 /* file trace.h */
 enum pg_option_enum {
     ...
@@ -48,23 +48,23 @@ enum pg_option_enum {
 
     NUM_PG_OPTIONS              /* must be the last item of enum */
 };
-</programlisting>
+   </programlisting>
 
-and a corresponding line in <filename>backend/utils/misc/trace.c</filename>:
+   and a corresponding line in <filename>backend/utils/misc/trace.c</filename>:
 
-<programlisting>
+   <programlisting>
 /* file trace.c */
 static char *opt_names[] = {
     ...
     "foo",            		/* trace foo functions */
     "fooparam"         		/* foo tunable parameter */
 };
-</programlisting>
+   </programlisting>
 
-Options in the two files must be specified in exactly the same order.
-In the foo source files we can now reference the new flags with:
+   Options in the two files must be specified in exactly the same order.
+   In the foo source files we can now reference the new flags with:
 
-<programlisting>
+   <programlisting>
 /* file foo.c */
 #include "trace.h"
 #define foo_param pg_options[OPT_FOO_PARAM]
@@ -77,54 +77,54 @@ foo_function(int x, int y)
         do_more_foo(x, y);
     }
 }
-</programlisting>
-</para>
-<para>
-Existing files using private trace flags can be changed by simply adding
-the following code:
+   </programlisting>
+  </para>
+  <para>
+   Existing files using private trace flags can be changed by simply adding
+   the following code:
 
-<programlisting>
+   <programlisting>
 #include "trace.h"
 /* int my_own_flag = 0; -- removed */
 #define my_own_flag pg_options[OPT_MY_OWN_FLAG]
-</programlisting>
-</para>
-<para>
-All pg_options are initialized to zero at backend startup. If we need a
-different default value we must add some initialization code at the beginning
-of <function>PostgresMain</function>.
+   </programlisting>
+  </para>
+  <para>
+   All pg_options are initialized to zero at backend startup. If we need a
+   different default value we must add some initialization code at the beginning
+   of <function>PostgresMain</function>.
 
-Now we can set the foo_param and enable foo trace by writing values into the
-<filename>data/pg_options</filename> file:
+   Now we can set the foo_param and enable foo trace by writing values into the
+   <filename>data/pg_options</filename> file:
 
-<programlisting>
+   <programlisting>
 # file pg_options
 ...
 foo=1
 fooparam=17
-</programlisting>
-</para>
-<para>
-The new options will be read by all new backends when they are started.
-To make effective the changes for all running backends we need to send a
-SIGHUP to the postmaster. The signal will be automatically sent to all the
-backends. We can also activate the changes only for a specific backend by
-sending the SIGHUP directly to it.
-</para>
-<para>
-pg_options can also be specified with the <option>-T</option> switch of 
-<productname>Postgres</productname>:
+   </programlisting>
+  </para>
+  <para>
+   The new options will be read by all new backends when they are started.
+   To make effective the changes for all running backends we need to send a
+   SIGHUP to the postmaster. The signal will be automatically sent to all the
+   backends. We can also activate the changes only for a specific backend by
+   sending the SIGHUP directly to it.
+  </para>
+  <para>
+   pg_options can also be specified with the <option>-T</option> switch of 
+   <productname>Postgres</productname>:
 
-<programlisting>
+   <programlisting>
 postgres <replaceable>options</replaceable> -T "verbose=2,query,hostlookup-"
-</programlisting>
-</para>
-<Para>
-The functions used for printing errors and debug messages can now make use
-of the <citetitle>syslog(2)</citetitle> facility. Message printed to stdout
-or stderr are prefixed by a timestamp containing also the backend pid:
-
-<programlisting>
+   </programlisting>
+  </para>
+  <Para>
+   The functions used for printing errors and debug messages can now make use
+   of the <citetitle>syslog(2)</citetitle> facility. Message printed to stdout
+   or stderr are prefixed by a timestamp containing also the backend pid:
+   
+   <programlisting>
 #timestamp          #pid    #message
 980127.17:52:14.173 [29271] StartTransactionCommand
 980127.17:52:14.174 [29271] ProcessUtility: drop table t;
@@ -134,518 +134,103 @@ or stderr are prefixed by a timestamp containing also the backend pid:
 980127.19:52:14.292 [29286] Async_NotifyFrontEnd
 980127.19:52:14.413 [29286] Async_NotifyFrontEnd done
 980127.19:52:14.466 [29286] Async_NotifyHandler done
-</programlisting>
-</para>
-<para>
-This format improves readability of the logs and allows people to understand
-exactly which backend is doing what and at which time. It also makes
-easier to write simple awk or perl scripts which monitor the log to
-detect database errors or problem, or to compute transaction time statistics.
-</para>
-<para>
-Messages printed to syslog use the log facility LOG_LOCAL0.
-The use of syslog can be controlled with the syslog pg_option.
-Unfortunately many functions call directly <function>printf()</function>
-to print their messages to stdout or stderr and this output can't be
-redirected to syslog or have timestamps in it. 
-It would be advisable that all calls to printf would be replaced with the
-PRINTF macro and output to stderr be changed to use EPRINTF instead so that
-we can control all output in a uniform way.
-</Para>
+   </programlisting>
+  </para>
+  <para>
+   This format improves readability of the logs and allows people to understand
+   exactly which backend is doing what and at which time. It also makes
+   easier to write simple awk or perl scripts which monitor the log to
+   detect database errors or problem, or to compute transaction time statistics.
+  </para>
+  <para>
+   Messages printed to syslog use the log facility LOG_LOCAL0.
+   The use of syslog can be controlled with the syslog pg_option.
+   Unfortunately many functions call directly <function>printf()</function>
+   to print their messages to stdout or stderr and this output can't be
+   redirected to syslog or have timestamps in it. 
+   It would be advisable that all calls to printf would be replaced with the
+   PRINTF macro and output to stderr be changed to use EPRINTF instead so that
+   we can control all output in a uniform way.
+  </Para>
 
-<Para>
-The new pg_options mechanism is more convenient than defining new backend
-option switches because:
+  <Para>
+   The new pg_options mechanism is more convenient than defining new backend
+   option switches because:
 
-<ItemizedList Mark="bullet" Spacing="compact">
-<ListItem>
-<Para>
-we don't have to define a different switch for each thing we want to control.
-All options are defined as keywords in an external file stored in the data
-directory.
-</Para>
-</ListItem>
+   <ItemizedList Mark="bullet" Spacing="compact">
+    <ListItem>
+     <Para>
+      we don't have to define a different switch for each thing we want to control.
+      All options are defined as keywords in an external file stored in the data
+      directory.
+     </Para>
+    </ListItem>
 
-<ListItem>
-<Para>
-we don't have to restart <productname>Postgres</productname> to change
- the setting of some option.
-Normally backend options are specified to the postmaster and passed to each
-backend when it is started. Now they are read from a file.
-</Para>
-</ListItem>
+    <ListItem>
+     <Para>
+      we don't have to restart <productname>Postgres</productname> to change
+      the setting of some option.
+      Normally backend options are specified to the postmaster and passed to each
+      backend when it is started. Now they are read from a file.
+     </Para>
+    </ListItem>
 
-<ListItem>
-<Para>
-we can change options on the fly while a backend is running. We can thus
-investigate some problem by activating debug messages only when the problem
-appears. We can also try different values for tunable parameters.
-</Para>
-</ListItem>
-</ItemizedList>
+    <ListItem>
+     <Para>
+      we can change options on the fly while a backend is running. We can thus
+      investigate some problem by activating debug messages only when the problem
+      appears. We can also try different values for tunable parameters.
+     </Para>
+    </ListItem>
+   </ItemizedList>
 
-The format of the <filename>pg_options</filename> file is as follows:
+   The format of the <filename>pg_options</filename> file is as follows:
 
-<programlisting>
+   <programlisting>
 # <replaceable>comment</replaceable>
 <replaceable>option</replaceable>=<replaceable class="parameter">integer_value</replaceable>  # set value for <replaceable>option</replaceable>
 <replaceable>option</replaceable>                # set <replaceable>option</replaceable> = 1
 <replaceable>option</replaceable>+               # set <replaceable>option</replaceable> = 1
 <replaceable>option</replaceable>-               # set <replaceable>option</replaceable> = 0
-</programlisting>
+   </programlisting>
 
-Note that <replaceable class="parameter">keyword</replaceable> can also be
-an abbreviation of the option name defined in
-<filename>backend/utils/misc/trace.c</filename>.
-</Para>
+   Note that <replaceable class="parameter">keyword</replaceable> can also be
+   an abbreviation of the option name defined in
+   <filename>backend/utils/misc/trace.c</filename>.
+  </Para>
 
-<Para>
-The options currently defined in
-<filename>backend/utils/misc/trace.c</filename> are the following:
+  <para>
+   Refer to <citetitle>The Administrator's Guide</citetitle> chapter
+   on runtime options for a complete list of currently supported
+   options.
+  </para>
 
-<variablelist>
-<varlistentry>
-<term>
-all
-</term>
-<listitem>
-<para>
-Global trace flag. Allowed values are:
-</para>
+  <Para>
+   Some of the existing code using private variables and option switches has
+   been changed to make use of the pg_options feature, mainly in
+   <filename>postgres.c</filename>. It would be advisable to modify
+   all existing code
+   in this way, so that we can get rid of many of the switches on
+   the <productname>Postgres</productname> command line 
+   and can have more tunable options 
+   with a unique place to put option values.
+  </Para>
 
-<variablelist>
-<varlistentry>
-<term>
-0
-</term>
-<listitem>
-<para>
-Trace messages enabled individually
-</para>
-</listitem>
-</varlistentry>
+ </Chapter>
 
-<varlistentry>
-<term>
-1
-</term>
-<listitem>
-<para>
-Enable all trace messages
-</para>
-</listitem>
-</varlistentry>
-
-<varlistentry>
-<term>
--1
-</term>
-<listitem>
-<para>
-Disable all trace messages
-</para>
-</listitem>
-</varlistentry>
-
-</variablelist>
-</listitem>
-</varlistentry>
-
-<varlistentry>
-<term>
-verbose
-</term>
-<listitem>
-<para>
-Verbosity flag. Allowed values are:
-</para>
-
-<variablelist>
-<varlistentry>
-<term>
-0
-</term>
-<listitem>
-<para>
-No messages. This is the default.
-</para>
-</listitem>
-</varlistentry>
-
-<varlistentry>
-<term>
-1
-</term>
-<listitem>
-<para>
-Print information messages.
-</para>
-</listitem>
-</varlistentry>
-
-<varlistentry>
-<term>
-2
-</term>
-<listitem>
-<para>
-Print more information messages.
-</para>
-</listitem>
-</varlistentry>
-
-</variablelist>
-</listitem>
-</varlistentry>
-
-<varlistentry>
-<term>
-query
-</term>
-<listitem>
-<para>
-Query trace flag. Allowed values are:
-</para>
-
-<variablelist>
-<varlistentry>
-<term>
-0
-</term>
-<listitem>
-<para>
-Don't print query.
-</para>
-</listitem>
-</varlistentry>
-
-<varlistentry>
-<term>
-1
-</term>
-<listitem>
-<para>
-Print a condensed query in one line.
-</para>
-</listitem>
-</varlistentry>
-
-<varlistentry>
-<term>
-4
-</term>
-<listitem>
-<para>
-Print the full query.
-</para>
-</listitem>
-</varlistentry>
-
-</variablelist>
-</listitem>
-</varlistentry>
-
-<varlistentry>
-<term>
-plan
-</term>
-<listitem>
-<para>
-Print query plan.
-</para>
-</listitem>
-</varlistentry>
-
-<varlistentry>
-<term>
-parse
-</term>
-<listitem>
-<para>
-Print parser output.
-</para>
-</listitem>
-</varlistentry>
-
-<varlistentry>
-<term>
-rewritten
-</term>
-<listitem>
-<para>
-Print rewritten query.
-</para>
-</listitem>
-</varlistentry>
-
-<varlistentry>
-<term>
-parserstats
-</term>
-<listitem>
-<para>
-Print parser statistics.
-</para>
-</listitem>
-</varlistentry>
-
-<varlistentry>
-<term>
-plannerstats
-</term>
-<listitem>
-<para>
-Print planner statistics.
-</para>
-</listitem>
-</varlistentry>
-
-<varlistentry>
-<term>
-executorstats
-</term>
-<listitem>
-<para>
-Print executor statistics.
-</para>
-</listitem>
-</varlistentry>
-
-<varlistentry>
-<term>
-shortlocks
-</term>
-<listitem>
-<para>
-Currently unused but needed to enable features in the future.
-</para>
-</listitem>
-</varlistentry>
-
-<varlistentry>
-<term>
-locks
-</term>
-<listitem>
-<para>
-Trace locks.
-</para>
-</listitem>
-</varlistentry>
-
-<varlistentry>
-<term>
-userlocks
-</term>
-<listitem>
-<para>
-Trace user locks.
-</para>
-</listitem>
-</varlistentry>
-
-<varlistentry>
-<term>
-spinlocks
-</term>
-<listitem>
-<para>
-Trace spin locks.
-</para>
-</listitem>
-</varlistentry>
-
-<varlistentry>
-<term>
-notify
-</term>
-<listitem>
-<para>
-Trace notify functions.
-</para>
-</listitem>
-</varlistentry>
-
-<varlistentry>
-<term>
-malloc
-</term>
-<listitem>
-<para>
-Currently unused.
-</para>
-</listitem>
-</varlistentry>
-
-<varlistentry>
-<term>
-palloc
-</term>
-<listitem>
-<para>
-Currently unused.
-</para>
-</listitem>
-</varlistentry>
-
-<varlistentry>
-<term>
-lock_debug_oidmin
-</term>
-<listitem>
-<para>
-Minimum relation oid traced by locks.
-</para>
-</listitem>
-</varlistentry>
-
-<varlistentry>
-<term>
-lock_debug_relid
-</term>
-<listitem>
-<para>
-oid, if not zero, of relation traced by locks.
-</para>
-</listitem>
-</varlistentry>
-
-<varlistentry>
-<term>
-lock_read_priority
-</term>
-<listitem>
-<para>
-Currently unused.
-</para>
-</listitem>
-</varlistentry>
-
-<varlistentry>
-<term>
-deadlock_timeout
-</term>
-<listitem>
-<para>
-Deadlock check timer.
-</para>
-</listitem>
-</varlistentry>
-
-<varlistentry>
-<term>
-syslog
-</term>
-<listitem>
-<para>
-syslog flag. Allowed values are:
-</para>
-
-<variablelist>
-<varlistentry>
-<term>
-0
-</term>
-<listitem>
-<para>
-Messages to stdout/stderr.
-</para>
-</listitem>
-</varlistentry>
-
-<varlistentry>
-<term>
-1
-</term>
-<listitem>
-<para>
-Messages to stdout/stderr and syslog.
-</para>
-</listitem>
-</varlistentry>
-
-<varlistentry>
-<term>
-2
-</term>
-<listitem>
-<para>
-Messages only to syslog.
-</para>
-</listitem>
-</varlistentry>
-
-</variablelist>
-</listitem>
-</varlistentry>
-
-<varlistentry>
-<term>
-hostlookup
-</term>
-<listitem>
-<para>
-Enable hostname lookup in ps_status.
-</para>
-</listitem>
-</varlistentry>
-
-<varlistentry>
-<term>
-showportnumber
-</term>
-<listitem>
-<para>
-Show port number in ps_status.
-</para>
-</listitem>
-</varlistentry>
-
-<varlistentry>
-<term>
-notifyunlock
-</term>
-<listitem>
-<para>
-Unlock of pg_listener after notify.
-</para>
-</listitem>
-</varlistentry>
-
-<varlistentry>
-<term>
-notifyhack
-</term>
-<listitem>
-<para>
-Remove duplicate tuples from pg_listener.
-</para>
-</listitem>
-</varlistentry>
-
-</variablelist>
-
-For example my pg_options file contains the following values:
-
-<programlisting>
-verbose=2
-query
-hostlookup
-showportnumber
-</programlisting>
-
-</Para>
-
-
-<Para>
-Some of the existing code using private variables and option switches has
-been changed to make use of the pg_options feature, mainly in
-<filename>postgres.c</filename>. It would be advisable to modify
-all existing code
-in this way, so that we can get rid of many of the switches on
-the <productname>Postgres</productname> command line 
-and can have more tunable options 
-with a unique place to put option values.
-</Para>
-
-</Chapter>
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-omittag:nil
+sgml-shorttag:t
+sgml-minimize-attributes:nil
+sgml-always-quote-attributes:t
+sgml-indent-step:1
+sgml-indent-data:t
+sgml-parent-document:nil
+sgml-default-dtd-file:"./reference.ced"
+sgml-exposed-tags:nil
+sgml-local-catalogs:"/usr/lib/sgml/CATALOG"
+sgml-local-ecat-files:nil
+End:
+-->

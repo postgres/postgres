@@ -1,93 +1,632 @@
-<Chapter Id="runtime">
-<Title>Runtime Environment</Title>
+ <Chapter Id="runtime">
+  <Title>Runtime Environment</Title>
 
-<Para>
-This chapter outlines the interaction between <Productname>Postgres</Productname> and
-the operating system.
-</para>
-<sect1>
-<title>Using <Productname>Postgres</Productname> from Unix</title>
+  <Para>
+   This chapter outlines the interaction between <Productname>Postgres</Productname> and
+   the operating system.
+  </para>
 
-<para>
-All <Productname>Postgres</Productname> commands that are executed 
-directly from a Unix shell are
-found in the directory <quote>.../bin</quote>.  Including this directory in
-your search path will make executing the commands easier.
-</para>
-<para>
-A collection of system catalogs exist at each site.  These include a
-class (<literal>pg_user</literal>) that contains an instance for each valid
-<Productname>Postgres</Productname> user.  The instance specifies a set of
- <Productname>Postgres</Productname> privileges, such as
-the ability to act as <Productname>Postgres</Productname> super-user,
- the ability to create/destroy
-databases, and the ability to update the system catalogs.  A Unix
-user cannot do anything with <Productname>Postgres</Productname> 
-until an appropriate instance is
-installed in this class.  Further information on the system catalogs
-is available by running queries on the appropriate classes.
-</para>
-</sect1>
-</chapter>
+  <sect1>
+   <title>Using <Productname>Postgres</Productname> from Unix</title>
 
-<chapter id="layout">
-<Title>System Layout</Title>
+   <para>
+    All <Productname>Postgres</Productname> commands that are executed 
+    directly from a Unix shell are
+    found in the directory <quote>.../bin</quote>.  Including this directory in
+    your search path will make executing the commands easier.
+   </para>
 
-<Para>
-<Figure Id="ADMIN-LAYOUT">
-<Title><ProductName>Postgres</ProductName> file layout</Title>
-<Graphic Align="center" FileRef="layout.gif" Format="GIF"></Graphic>
-</Figure>
+   <para>
+    A collection of system catalogs exist at each site.  These include a
+    class (<literal>pg_user</literal>) that contains an instance for each valid
+    <Productname>Postgres</Productname> user.  The instance specifies a set of
+    <Productname>Postgres</Productname> privileges, such as
+    the ability to act as <Productname>Postgres</Productname> super-user,
+    the ability to create/destroy
+    databases, and the ability to update the system catalogs.  A Unix
+    user cannot do anything with <Productname>Postgres</Productname> 
+    until an appropriate instance is
+    installed in this class.  Further information on the system catalogs
+    is available by running queries on the appropriate classes.
+   </para>
+  </sect1>
 
-<XRef LinkEnd="ADMIN-LAYOUT" EndTerm="ADMIN-LAYOUT">
-shows how the <ProductName>Postgres</ProductName>  distribution  is  laid
-     out  when installed in the default way. For simplicity,
-     we will assume that <ProductName>Postgres</ProductName>
- has been installed in  the
-     directory  <filename>/usr/local/pgsql</filename>.   Therefore, wherever
-     you see the directory <filename>/usr/local/pgsql</filename> you  should
-     substitute  the name of the directory where
- <ProductName>Postgres</ProductName> is
-     actually installed.
-     All <ProductName>Postgres</ProductName> commands are installed
-     in  the  directory
-     <filename>/usr/local/pgsql/bin</filename>.   Therefore,  you should add
-     this directory to your shell command path.  If you  use
-     a variant of the Berkeley C shell, such as csh or tcsh,
-     you would add
-<ProgramListing>
-set path = ( /usr/local/pgsql/bin path )
-</ProgramListing>
-     in the .login file in your home directory.  If you  use
-     a  variant  of  the  Bourne  shell, such as sh, ksh, or
-     bash, then you would add
-<ProgramListing>
-PATH=/usr/local/pgsql/bin:$PATH
-export PATH
-</ProgramListing>
-     to the .profile file in your home directory.
-     From now on, we will assume that  you  have  added  the
-     <ProductName>Postgres</ProductName>  bin  directory to your path.
-     In addition, we
-     will make frequent reference to "setting a shell  
-     variable"  or  "setting an environment variable" throughout
-     this document.  If you did  not  fully  understand  the
-     last  paragraph  on  modifying  your  search  path, you
-     should consult the UNIX manual pages that describe your
-     shell before going any further.
-</Para>
+  <sect1 Id="postmaster">
+   <Title>Starting <Application>postmaster</Application></Title>
 
-<Para>
-If you have not set things up in the
-default  way,  you may have some more work to do.  
-For example, if the database server machine is a remote machine, you
-will need to set the <envar>PGHOST</envar> environment variable to the name
-of the database server machine.   The  environment  variable
-<envar>PGPORT</envar> may also have to be set.  The bottom line is this: if
-you try to start an application  program  and  it  complains
-that it cannot connect to the <Application>postmaster</Application>,
-you must go back and make sure that your
-environment is properly set up.
-</Para>
+   <Para>
+    Nothing can happen to a database unless the
+    <Application>postmaster</Application>
+    process  is  running.  As the site administrator, there
+    are a number  of  things  you  should  remember  before
+    starting  the  <Application>postmaster</Application>.   
+    These are discussed in the installation and configuration sections
+    of this manual.
+    However, if <ProductName>Postgres</ProductName> has been installed by following 
+    the installation instructions exactly  as  written,  the  
+    following  simple  command is all you should
+    need to start the <Application>postmaster</Application>:
+
+    <ProgramListing>
+% postmaster
+    </ProgramListing>
+   </para>
+
+   <para>
+    The <Application>postmaster</Application> occasionally prints out  
+    messages  which
+    are  often helpful during troubleshooting.  If you wish
+    to view debugging messages from the <Application>postmaster</Application>, 
+    you can
+    start  it with the -d option and redirect the output to
+    the log file:
+
+    <ProgramListing>
+% postmaster -d >& pm.log &
+    </ProgramListing>
+
+    If you do not wish to see these messages, you can type
+    <ProgramListing>
+% postmaster -S
+    </ProgramListing>
+    and the <Application>postmaster</Application> will be "S"ilent.  
+    Notice that there
+    is no ampersand ("&amp") at the end of the last example so
+    postmaster will be running in the foreground.
+   </Para>
+  </sect1>
+
+  <sect1 Id="pg-options">
+   <Title id="pg-options-title">Using pg_options</Title>
+
+   <Para>
+    <Note>
+     <Para>
+      Contributed by <ULink url="mailto:dz@cs.unitn.it">Massimo Dal Zotto</ULink>
+     </Para>
+    </Note>
+   </para>
+   <Para>
+    The optional file <filename>data/pg_options</filename> contains runtime
+    options used by the backend to control trace messages and other backend
+    tunable parameters.
+    The file is re-read by a backend
+    when it receives a SIGHUP signal, making thus possible to change run-time
+    options on the fly without needing to restart 
+    <productname>Postgres</productname>.
+    The options specified in this file may be debugging flags used by the trace
+    package (<filename>backend/utils/misc/trace.c</filename>) or numeric
+    parameters which can be used by the backend to control its behaviour.
+   </para>
+
+   <para>
+    All pg_options are initialized to zero at backend startup.
+    New or modified options will be read by all new backends when they are started.
+    To make effective any changes for all running backends we need to send a
+    SIGHUP to the postmaster. The signal will be automatically sent to all the
+    backends. We can also activate the changes only for a specific backend by
+    sending the SIGHUP directly to it.
+   </para>
+   <para>
+    pg_options can also be specified with the <option>-T</option> switch of 
+    <productname>Postgres</productname>:
+
+    <programlisting>
+postgres <replaceable>options</replaceable> -T "verbose=2,query,hostlookup-"
+    </programlisting>
+   </para>
+
+   <Para>
+    The functions used for printing errors and debug messages can now make use
+    of the <citetitle>syslog(2)</citetitle> facility. Message printed to stdout
+    or stderr are prefixed by a timestamp containing also the backend pid:
+
+    <programlisting>
+#timestamp          #pid    #message
+980127.17:52:14.173 [29271] StartTransactionCommand
+980127.17:52:14.174 [29271] ProcessUtility: drop table t;
+980127.17:52:14.186 [29271] SIIncNumEntries: table is 70% full
+980127.17:52:14.186 [29286] Async_NotifyHandler
+980127.17:52:14.186 [29286] Waking up sleeping backend process
+980127.19:52:14.292 [29286] Async_NotifyFrontEnd
+980127.19:52:14.413 [29286] Async_NotifyFrontEnd done
+980127.19:52:14.466 [29286] Async_NotifyHandler done
+    </programlisting>
+   </para>
+   <para>
+    This format improves readability of the logs and allows people to understand
+    exactly which backend is doing what and at which time. It also makes
+    easier to write simple awk or perl scripts which monitor the log to
+    detect database errors or problem, or to compute transaction time statistics.
+   </para>
+   <para>
+    Messages printed to syslog use the log facility LOG_LOCAL0.
+    The use of syslog can be controlled with the syslog pg_option.
+    Unfortunately many functions call directly <function>printf()</function>
+    to print their messages to stdout or stderr and this output can't be
+    redirected to syslog or have timestamps in it. 
+    It would be advisable that all calls to printf would be replaced with the
+    PRINTF macro and output to stderr be changed to use EPRINTF instead so that
+    we can control all output in a uniform way.
+   </Para>
+
+   <para>
+    The format of the <filename>pg_options</filename> file is as follows:
+
+    <programlisting>
+# <replaceable>comment</replaceable>
+<replaceable>option</replaceable>=<replaceable class="parameter">integer_value</replaceable>  # set value for <replaceable>option</replaceable>
+<replaceable>option</replaceable>                # set <replaceable>option</replaceable> = 1
+<replaceable>option</replaceable>+               # set <replaceable>option</replaceable> = 1
+<replaceable>option</replaceable>-               # set <replaceable>option</replaceable> = 0
+    </programlisting>
+
+    Note that <replaceable class="parameter">keyword</replaceable> can also be
+    an abbreviation of the option name defined in
+    <filename>backend/utils/misc/trace.c</filename>.
+
+    <example>
+     <title>pg_options File</title>
+
+     <para>
+      For example my pg_options file contains the following values:
+
+      <programlisting>
+verbose=2
+query
+hostlookup
+showportnumber
+      </programlisting>
+     </para>
+    </example>
+   </para>
+
+   <sect2>
+    <title>Recognized Options</title>
+
+    <Para>
+     The options currently defined are:
+
+     <variablelist>
+      <varlistentry>
+       <term>
+	all
+       </term>
+       <listitem>
+	<para>
+	 Global trace flag. Allowed values are:
+	</para>
+
+       <variablelist>
+	<varlistentry>
+	 <term>
+	  0
+	 </term>
+	 <listitem>
+	  <para>
+	   Trace messages enabled individually
+	  </para>
+	 </listitem>
+	</varlistentry>
+
+	<varlistentry>
+	 <term>
+	  1
+	 </term>
+	 <listitem>
+	  <para>
+	   Enable all trace messages
+	  </para>
+	 </listitem>
+	</varlistentry>
+	
+	<varlistentry>
+	 <term>
+	  -1
+	 </term>
+	 <listitem>
+	  <para>
+	   Disable all trace messages
+	  </para>
+	 </listitem>
+	</varlistentry>
+
+       </variablelist>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>
+       verbose
+      </term>
+      <listitem>
+       <para>
+	Verbosity flag. Allowed values are:
+       </para>
+
+       <variablelist>
+	<varlistentry>
+	 <term>
+	  0
+	 </term>
+	 <listitem>
+	  <para>
+	   No messages. This is the default.
+	  </para>
+	 </listitem>
+	</varlistentry>
+
+	<varlistentry>
+	 <term>
+	  1
+	 </term>
+	 <listitem>
+	  <para>
+	   Print information messages.
+	  </para>
+	 </listitem>
+	</varlistentry>
+
+	<varlistentry>
+	 <term>
+	  2
+	 </term>
+	 <listitem>
+	  <para>
+	   Print more information messages.
+	  </para>
+	 </listitem>
+	</varlistentry>
+
+       </variablelist>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>
+       query
+      </term>
+      <listitem>
+       <para>
+	Query trace flag. Allowed values are:
+       </para>
+
+       <variablelist>
+	<varlistentry>
+	 <term>
+	  0
+	 </term>
+	 <listitem>
+	  <para>
+	   Don't print query.
+	  </para>
+	 </listitem>
+	</varlistentry>
+
+	<varlistentry>
+	 <term>
+	  1
+	 </term>
+	 <listitem>
+	  <para>
+	   Print a condensed query in one line.
+	  </para>
+	 </listitem>
+	</varlistentry>
+
+	<varlistentry>
+	 <term>
+	  4
+	 </term>
+	 <listitem>
+	  <para>
+	   Print the full query.
+	  </para>
+	 </listitem>
+	</varlistentry>
+
+       </variablelist>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>
+       plan
+      </term>
+      <listitem>
+       <para>
+	Print query plan.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>
+       parse
+      </term>
+      <listitem>
+       <para>
+	Print parser output.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>
+       rewritten
+      </term>
+      <listitem>
+       <para>
+	Print rewritten query.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>
+       parserstats
+      </term>
+      <listitem>
+       <para>
+	Print parser statistics.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>
+       plannerstats
+      </term>
+      <listitem>
+       <para>
+	Print planner statistics.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>
+       executorstats
+      </term>
+      <listitem>
+       <para>
+	Print executor statistics.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>
+       shortlocks
+      </term>
+      <listitem>
+       <para>
+	Currently unused but needed to enable features in the future.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>
+       locks
+      </term>
+      <listitem>
+       <para>
+	Trace locks.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>
+       userlocks
+      </term>
+      <listitem>
+       <para>
+	Trace user locks.
+       </para>
+      </listitem>
+     </varlistentry>
+     
+     <varlistentry>
+      <term>
+       spinlocks
+      </term>
+      <listitem>
+       <para>
+	Trace spin locks.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>
+       notify
+      </term>
+      <listitem>
+       <para>
+	Trace notify functions.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>
+       malloc
+      </term>
+      <listitem>
+       <para>
+	Currently unused.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>
+       palloc
+      </term>
+      <listitem>
+       <para>
+	Currently unused.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>
+       lock_debug_oidmin
+      </term>
+      <listitem>
+       <para>
+	Minimum relation oid traced by locks.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>
+       lock_debug_relid
+      </term>
+      <listitem>
+       <para>
+	oid, if not zero, of relation traced by locks.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>
+       lock_read_priority
+      </term>
+      <listitem>
+       <para>
+	Currently unused.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>
+       deadlock_timeout
+      </term>
+      <listitem>
+       <para>
+	Deadlock check timer.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>
+       syslog
+      </term>
+      <listitem>
+       <para>
+	syslog flag. Allowed values are:
+       </para>
+
+       <variablelist>
+	<varlistentry>
+	 <term>
+	  0
+	 </term>
+	 <listitem>
+	  <para>
+	   Messages to stdout/stderr.
+	  </para>
+	 </listitem>
+	</varlistentry>
+
+	<varlistentry>
+	 <term>
+	  1
+	 </term>
+	 <listitem>
+	  <para>
+	   Messages to stdout/stderr and syslog.
+	  </para>
+	 </listitem>
+	</varlistentry>
+
+	<varlistentry>
+	 <term>
+	  2
+	 </term>
+	 <listitem>
+	  <para>
+	   Messages only to syslog.
+	  </para>
+	 </listitem>
+	</varlistentry>
+
+       </variablelist>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>
+       hostlookup
+      </term>
+      <listitem>
+       <para>
+	Enable hostname lookup in ps_status.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>
+       showportnumber
+      </term>
+      <listitem>
+       <para>
+	Show port number in ps_status.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>
+       notifyunlock
+      </term>
+      <listitem>
+       <para>
+	Unlock of pg_listener after notify.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>
+       notifyhack
+      </term>
+      <listitem>
+       <para>
+	Remove duplicate tuples from pg_listener.
+       </para>
+      </listitem>
+     </varlistentry>
+
+    </variablelist>
+    </para>
+   </sect2>
+  </sect1>
 
 </Chapter>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-omittag:nil
+sgml-shorttag:t
+sgml-minimize-attributes:nil
+sgml-always-quote-attributes:t
+sgml-indent-step:1
+sgml-indent-data:t
+sgml-parent-document:nil
+sgml-default-dtd-file:"./reference.ced"
+sgml-exposed-tags:nil
+sgml-local-catalogs:"/usr/lib/sgml/CATALOG"
+sgml-local-ecat-files:nil
+End:
+-->

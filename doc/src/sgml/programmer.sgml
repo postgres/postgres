@@ -1,10 +1,18 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/programmer.sgml,v 1.13 1999/04/08 13:28:22 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/programmer.sgml,v 1.14 1999/05/20 05:39:27 thomas Exp $
 
 Postgres Programmer's Guide.
 - thomas 1998-10-27
 
 $Log: programmer.sgml,v $
+Revision 1.14  1999/05/20 05:39:27  thomas
+Rearrange and consolidate the Admin Guide.
+Add reference pages for utilities and remove standalone chapters for same.
+Add material for an appendix on date/time properties, but not yet
+ integrated with the User's Guide.
+Break up the former chapter on pg_options
+ into Admin and Programmer's Guides.
+
 Revision 1.13  1999/04/08 13:28:22  thomas
 Add emacs editor hints to bottom of file.
 
@@ -80,6 +88,7 @@ Bigger updates to the installation instructions (install and config).
 <!entity jdbc     SYSTEM "jdbc.sgml">
 <!entity xplang   SYSTEM "xplang.sgml">
 
+<!-- developer's guide -->
 <!entity arch-dev SYSTEM "arch-dev.sgml">
 <!entity biblio   SYSTEM "biblio.sgml">
 <!entity bki      SYSTEM "bki.sgml">
@@ -87,6 +96,7 @@ Bigger updates to the installation instructions (install and config).
 <!entity contacts SYSTEM "contacts.sgml">
 <!entity docguide SYSTEM "docguide.sgml">
 <!entity geqo     SYSTEM "geqo.sgml">
+<!entity options  SYSTEM "pg_options.sgml">
 <!entity page     SYSTEM "page.sgml">
 <!entity protocol SYSTEM "protocol.sgml">
 <!entity signals  SYSTEM "signals.sgml">
@@ -96,23 +106,23 @@ Bigger updates to the installation instructions (install and config).
 
 <!-- Title information -->
 
-<Title>PostgreSQL Programmer's Guide</Title>
-<BookInfo>
-    <ReleaseInfo>Covering v6.4 for general release</ReleaseInfo>
-    <BookBiblio>
-    <AuthorGroup>
-      <CorpAuthor>The PostgreSQL Development Team</CorpAuthor>
-    </AuthorGroup>
+ <Title>PostgreSQL Programmer's Guide</Title>
+ <BookInfo>
+  <ReleaseInfo>Covering v6.5 for general release</ReleaseInfo>
+  <BookBiblio>
+   <AuthorGroup>
+    <CorpAuthor>The PostgreSQL Development Team</CorpAuthor>
+   </AuthorGroup>
 <!-- editor in authorgroup is not supported
     <AuthorGroup>
 -->
-      <Editor>
-        <FirstName>Thomas</FirstName>
-        <SurName>Lockhart</SurName>
-        <Affiliation>
-          <OrgName>Caltech/JPL</OrgName>
-        </Affiliation>
-      </Editor>
+   <Editor>
+    <FirstName>Thomas</FirstName>
+    <SurName>Lockhart</SurName>
+    <Affiliation>
+     <OrgName>Caltech/JPL</OrgName>
+    </Affiliation>
+   </Editor>
 <!--
     </AuthorGroup>
 -->
@@ -121,17 +131,17 @@ Bigger updates to the installation instructions (install and config).
     <AuthorInitials>TGL</AuthorInitials>
 -->
 
-    <Date>(last updated 1998-10-27)</Date>
-    </BookBiblio>
+   <Date>(last updated 1999-05-19)</Date>
+  </BookBiblio>
 
-<LegalNotice>
-<Para>
-<ProductName>PostgreSQL</ProductName> is copyright (C) 1998 
-by the Postgres Global Development Group.
-</Para>
-</LegalNotice>
+  <LegalNotice>
+   <Para>
+    <ProductName>PostgreSQL</ProductName> is copyright (&copy;) 1998-9
+    by the Postgres Global Development Group.
+   </Para>
+  </LegalNotice>
 
-</BookInfo>
+ </BookInfo>
 
 <!--
 <TOC> </TOC>
@@ -146,33 +156,33 @@ Your name here...
 </Dedication>
 -->
 
-<Preface id="preface">
-<Title>Summary</Title>
+ <Preface id="preface">
+  <Title>Summary</Title>
 
-<Para>
-<ProductName>Postgres</ProductName>, 
- developed originally in the UC Berkeley Computer Science Department,
- pioneered many of the object-relational concepts
- now becoming available in some commercial databases.
-It provides SQL92/SQL3 language support,
- transaction integrity, and type extensibility.
- <ProductName>PostgreSQL</ProductName> is a public-domain, 
- open source descendant of this original Berkeley code.
-</Para>
-</Preface>
+  <Para>
+   <ProductName>Postgres</ProductName>, 
+   developed originally in the UC Berkeley Computer Science Department,
+   pioneered many of the object-relational concepts
+   now becoming available in some commercial databases.
+   It provides SQL92/SQL3 language support,
+   transaction integrity, and type extensibility.
+   <ProductName>PostgreSQL</ProductName> is a public-domain, 
+   open source descendant of this original Berkeley code.
+  </Para>
+ </Preface>
 
-&intro-pg;
-&arch-pg;
-&extend;
-&xfunc;
-&xtypes;
-&xoper;
-&xaggr;
-&rules;
-&xindex;
-&gist;
-&xplang;
-&dfunc;
+  &intro-pg;
+  &arch-pg;
+  &extend;
+  &xfunc;
+  &xtypes;
+  &xoper;
+  &xaggr;
+  &rules;
+  &xindex;
+  &gist;
+  &xplang;
+  &dfunc;
 
 <!-- reference -->
 
@@ -183,33 +193,34 @@ Disable it until we put in some info.
 &func-ref;
 -->
 
-&trigger;
-&spi;
-&lobj;
-&libpq;
-&libpqpp;
-&libpgtcl;
-&ecpg;
-&odbc;
-&jdbc;
-
+  &trigger;
+  &spi;
+  &lobj;
+  &libpq;
+  &libpqpp;
+  &libpgtcl;
+  &ecpg;
+  &odbc;
+  &jdbc;
+ 
 <!-- development -->
-
-&arch-dev; 
-&geqo;
-&protocol;
-&signals;
-&compiler;
-&bki;
-&page;
+ 
+  &arch-dev; 
+  &options;
+  &geqo;
+  &protocol;
+  &signals;
+  &compiler;
+  &bki;
+  &page;
 
 <!-- appendices -->
 
-&docguide;
+  &docguide;
 <!--
 &contacts;
 -->
-&biblio;
+  &biblio;
 
 <!--
 <index id="index">

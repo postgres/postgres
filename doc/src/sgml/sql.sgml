@@ -288,7 +288,7 @@ attributes are taken from. We often write a relation scheme as
     <parameter>D<subscript>i</subscript></parameter>,
     for each attribute
     <parameter>A<subscript>i</subscript></parameter>,
-    1 &le; <literal>i</literal> &le; <literal>k</literal>,
+    1 &lt;&equal; <literal>i</literal> &lt;&equal; <literal>k</literal>,
     where the values of the attributes are taken from. We often write
     a relation scheme as
     <literal>R(<parameter>A<subscript>1</subscript></parameter>,
@@ -325,10 +325,12 @@ attributes are taken from. We often write a relation scheme as
      integers. We define this by assigning a data type to each
      attribute. The type of <classname>SNAME</classname> will be
      <type>VARCHAR(20)</type> (this is the <acronym>SQL</acronym> type
-     for character strings of length &le; 20), the type of <classname>SNO</classname> will be
+     for character strings of length &lt;&equal; 20),
+     the type of <classname>SNO</classname> will be
      <type>INTEGER</type>. With the assignment of a data type we also have selected
      a domain for an attribute. The domain of <classname>SNAME</classname> is the set of all
-     character strings of length &le; 20, the domain of <classname>SNO</classname> is the set of
+     character strings of length &lt;&equal; 20,
+     the domain of <classname>SNO</classname> is the set of
      all integer numbers.
     </para>
    </sect2>
@@ -339,7 +341,7 @@ attributes are taken from. We often write a relation scheme as
     Model</title>
 
    <para>
-    In section <xref linkend="formal-notion" endterm="formal-notion">
+    In <xref linkend="formal-notion" endterm="formal-notion">
     we defined the mathematical notion of
     the relational model. Now we know how the data can be stored using a
     relational data model but we do not know what to do with all these
@@ -481,19 +483,23 @@ attributes are taken from. We often write a relation scheme as
 	projecting out the duplicate column.
        </para>
 
-       <para id="join-example">
-	Let's have a look at the tables that are produced by evaluating the steps
-	necessary for a join.
-	Let the following two tables be given:
+       <example id="join-example">
+	<title>An Inner Join</title>
 
-	<programlisting>
+	<para>
+	 Let's have a look at the tables that are produced by evaluating the steps
+	 necessary for a join.
+	 Let the following two tables be given:
+
+	 <programlisting>
          R   A | B | C      S   C | D | E
             ---+---+---        ---+---+---
              1 | 2 | 3          3 | a | b
              4 | 5 | 6          6 | c | d
              7 | 8 | 9
-	</programlisting>
-       </para>
+	 </programlisting>
+	</para>
+       </example>
 
        <para>
 	First we calculate the Cartesian product
