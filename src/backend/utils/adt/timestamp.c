@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/timestamp.c,v 1.109 2004/06/03 17:57:09 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/timestamp.c,v 1.110 2004/08/20 03:45:13 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2727,11 +2727,26 @@ timestamp_trunc(PG_FUNCTION_ARGS)
 				fsec = 0;
 				break;
 			case DTK_MILLENNIUM:
-				tm->tm_year = (tm->tm_year / 1000) * 1000;
+				/* see comments in timestamptz_trunc */
+				if (tm->tm_year > 0)
+					tm->tm_year = ((tm->tm_year+999) / 1000) * 1000 - 999;
+				else
+					tm->tm_year = - ((999 - (tm->tm_year-1))/1000) * 1000 + 1;
 			case DTK_CENTURY:
-				tm->tm_year = (tm->tm_year / 100) * 100;
+				/* see comments in timestamptz_trunc */
+				if (tm->tm_year > 0)
+					tm->tm_year = ((tm->tm_year+99) / 100) * 100 - 99;
+				else
+					tm->tm_year = - ((99 - (tm->tm_year-1))/100) * 100 + 1;
 			case DTK_DECADE:
-				tm->tm_year = (tm->tm_year / 10) * 10;
+				/* see comments in timestamptz_trunc */
+				if (val != DTK_MILLENNIUM && val != DTK_CENTURY)
+				{
+					if (tm->tm_year > 0)
+						tm->tm_year = (tm->tm_year / 10) * 10;
+					else
+						tm->tm_year = - ((8-(tm->tm_year-1)) / 10) * 10;
+				}
 			case DTK_YEAR:
 				tm->tm_mon = 1;
 			case DTK_QUARTER:
@@ -2830,12 +2845,33 @@ timestamptz_trunc(PG_FUNCTION_ARGS)
 				tm->tm_sec = 0;
 				fsec = 0;
 				break;
+				/* one may consider DTK_THOUSAND and DTK_HUNDRED... */
 			case DTK_MILLENNIUM:
-				tm->tm_year = (tm->tm_year / 1000) * 1000;
+				/* truncating to the millennium? what is this supposed to mean?
+				 * let us put the first year of the millennium... 
+				 * i.e. -1000, 1, 1001, 2001...
+				 */
+				if (tm->tm_year > 0)
+					tm->tm_year = ((tm->tm_year+999) / 1000) * 1000 - 999;
+				else
+					tm->tm_year = - ((999 - (tm->tm_year-1))/1000) * 1000 + 1;
 			case DTK_CENTURY:
-				tm->tm_year = (tm->tm_year / 100) * 100;
+				/* truncating to the century? as above: -100, 1, 101... */
+				if (tm->tm_year > 0)
+					tm->tm_year = ((tm->tm_year+99) / 100) * 100 - 99 ;
+				else
+					tm->tm_year = - ((99 - (tm->tm_year-1))/100) * 100 + 1;
 			case DTK_DECADE:
-				tm->tm_year = (tm->tm_year / 10) * 10;
+				/* truncating to the decade? first year of the decade.
+				 * must not be applied if year was truncated before!
+				 */
+				if (val != DTK_MILLENNIUM && val != DTK_CENTURY)
+				{
+					if (tm->tm_year > 0)
+						tm->tm_year = (tm->tm_year / 10) * 10;
+					else
+						tm->tm_year = - ((8-(tm->tm_year-1)) / 10) * 10;
+				}
 			case DTK_YEAR:
 				tm->tm_mon = 1;
 			case DTK_QUARTER:
@@ -2923,10 +2959,13 @@ interval_trunc(PG_FUNCTION_ARGS)
 			switch (val)
 			{
 				case DTK_MILLENNIUM:
+					/* caution: C division may have negative remainder */
 					tm->tm_year = (tm->tm_year / 1000) * 1000;
 				case DTK_CENTURY:
+					/* caution: C division may have negative remainder */
 					tm->tm_year = (tm->tm_year / 100) * 100;
 				case DTK_DECADE:
+					/* caution: C division may have negative remainder */
 					tm->tm_year = (tm->tm_year / 10) * 10;
 				case DTK_YEAR:
 					tm->tm_mon = 0;
@@ -3221,7 +3260,14 @@ timestamp_part(PG_FUNCTION_ARGS)
 				break;
 
 			case DTK_DECADE:
-				result = (tm->tm_year / 10);
+				/* what is a decade wrt dates?
+				 * let us assume that decade 199 is 1990 thru 1999...
+				 * decade 0 starts on year 1 BC, and -1 is 11 BC thru 2 BC...
+				 */
+				if (tm->tm_year>=0)
+					result = (tm->tm_year / 10);
+				else
+					result = -((8-(tm->tm_year-1)) / 10);
 				break;
 
 			case DTK_CENTURY:
@@ -3232,7 +3278,7 @@ timestamp_part(PG_FUNCTION_ARGS)
 				if (tm->tm_year > 0)
 					result = ((tm->tm_year+99) / 100);
 				else
-					/* caution: C division may yave negative remainder */
+					/* caution: C division may have negative remainder */
 					result = - ((99 - (tm->tm_year-1))/100);
 				break;
 
@@ -3445,15 +3491,27 @@ timestamptz_part(PG_FUNCTION_ARGS)
 				break;
 
 			case DTK_DECADE:
-				result = (tm->tm_year / 10);
+				/* see comments in timestamp_part */
+				if (tm->tm_year>0)
+					result = (tm->tm_year / 10);
+				else
+					result = - ((8-(tm->tm_year-1)) / 10);
 				break;
 
 			case DTK_CENTURY:
-				result = (tm->tm_year / 100);
+				/* see comments in timestamp_part */
+				if (tm->tm_year > 0)
+					result = ((tm->tm_year+99) / 100);
+				else
+					result = - ((99 - (tm->tm_year-1))/100);
 				break;
 
 			case DTK_MILLENNIUM:
-				result = (tm->tm_year / 1000);
+				/* see comments in timestamp_part */
+				if (tm->tm_year > 0)
+					result = ((tm->tm_year+999) / 1000);
+				else
+					result = - ((999 - (tm->tm_year-1))/1000);
 				break;
 
 			case DTK_JULIAN:
@@ -3606,14 +3664,17 @@ interval_part(PG_FUNCTION_ARGS)
 					break;
 
 				case DTK_DECADE:
+					/* caution: C division may have negative remainder */
 					result = (tm->tm_year / 10);
 					break;
 
 				case DTK_CENTURY:
+					/* caution: C division may have negative remainder */
 					result = (tm->tm_year / 100);
 					break;
 
 				case DTK_MILLENNIUM:
+					/* caution: C division may have negative remainder */
 					result = (tm->tm_year / 1000);
 					break;
 

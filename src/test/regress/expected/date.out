@@ -930,3 +930,152 @@ SELECT EXTRACT(MILLENNIUM FROM CURRENT_DATE);         --  3
          3
 (1 row)
 
+--
+-- decade
+--
+SELECT EXTRACT(DECADE FROM DATE '1994-12-25');    -- 199
+ date_part 
+-----------
+       199
+(1 row)
+
+SELECT EXTRACT(DECADE FROM DATE '0010-01-01');    --   1
+ date_part 
+-----------
+         1
+(1 row)
+
+SELECT EXTRACT(DECADE FROM DATE '0009-12-31');    --   0
+ date_part 
+-----------
+         0
+(1 row)
+
+SELECT EXTRACT(DECADE FROM DATE '0001-01-01 BC'); --   0
+ date_part 
+-----------
+         0
+(1 row)
+
+SELECT EXTRACT(DECADE FROM DATE '0002-12-31 BC'); --  -1
+ date_part 
+-----------
+        -1
+(1 row)
+
+SELECT EXTRACT(DECADE FROM DATE '0011-01-01 BC'); --  -1
+ date_part 
+-----------
+        -1
+(1 row)
+
+SELECT EXTRACT(DECADE FROM DATE '0012-12-31 BC'); --  -2
+ date_part 
+-----------
+        -2
+(1 row)
+
+--
+-- some other types:
+--
+-- on a timestamp.
+SELECT EXTRACT(CENTURY FROM NOW())>=21 AS True;       -- true
+ true 
+------
+ t
+(1 row)
+
+SELECT EXTRACT(CENTURY FROM TIMESTAMP '1970-03-20 04:30:00.00000'); -- 20
+ date_part 
+-----------
+        20
+(1 row)
+
+-- on an interval
+SELECT EXTRACT(CENTURY FROM INTERVAL '100 y');  -- 1
+ date_part 
+-----------
+         1
+(1 row)
+
+SELECT EXTRACT(CENTURY FROM INTERVAL '99 y');   -- 0
+ date_part 
+-----------
+         0
+(1 row)
+
+SELECT EXTRACT(CENTURY FROM INTERVAL '-99 y');  -- 0
+ date_part 
+-----------
+         0
+(1 row)
+
+SELECT EXTRACT(CENTURY FROM INTERVAL '-100 y'); -- -1
+ date_part 
+-----------
+        -1
+(1 row)
+
+--
+-- test trunc function!
+--
+SELECT DATE_TRUNC('MILLENNIUM', TIMESTAMP '1970-03-20 04:30:00.00000'); -- 1001
+        date_trunc        
+--------------------------
+ Thu Jan 01 00:00:00 1001
+(1 row)
+
+SELECT DATE_TRUNC('MILLENNIUM', DATE '1970-03-20'); -- 1001-01-01
+          date_trunc          
+------------------------------
+ Thu Jan 01 00:00:00 1001 PST
+(1 row)
+
+SELECT DATE_TRUNC('CENTURY', TIMESTAMP '1970-03-20 04:30:00.00000'); -- 1901
+        date_trunc        
+--------------------------
+ Tue Jan 01 00:00:00 1901
+(1 row)
+
+SELECT DATE_TRUNC('CENTURY', DATE '1970-03-20'); -- 1901
+          date_trunc          
+------------------------------
+ Tue Jan 01 00:00:00 1901 PST
+(1 row)
+
+SELECT DATE_TRUNC('CENTURY', DATE '2004-08-10'); -- 2001-01-01
+          date_trunc          
+------------------------------
+ Mon Jan 01 00:00:00 2001 PST
+(1 row)
+
+SELECT DATE_TRUNC('CENTURY', DATE '0002-02-04'); -- 0001-01-01
+          date_trunc          
+------------------------------
+ Mon Jan 01 00:00:00 0001 PST
+(1 row)
+
+SELECT DATE_TRUNC('CENTURY', DATE '0055-08-10 BC'); -- 0100-01-01 BC
+           date_trunc            
+---------------------------------
+ Tue Jan 01 00:00:00 0100 PST BC
+(1 row)
+
+SELECT DATE_TRUNC('DECADE', DATE '1993-12-25'); -- 1990-01-01
+          date_trunc          
+------------------------------
+ Mon Jan 01 00:00:00 1990 PST
+(1 row)
+
+SELECT DATE_TRUNC('DECADE', DATE '0004-12-25'); -- 0001-01-01 BC
+           date_trunc            
+---------------------------------
+ Sat Jan 01 00:00:00 0001 PST BC
+(1 row)
+
+SELECT DATE_TRUNC('DECADE', DATE '0002-12-31 BC'); -- 0011-01-01 BC
+           date_trunc            
+---------------------------------
+ Mon Jan 01 00:00:00 0011 PST BC
+(1 row)
+
