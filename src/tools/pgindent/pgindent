@@ -38,10 +38,9 @@ do
 # mark some comments for special treatment later
 	sed 's;/\*  *---;/*---X_X;g' |
 # workaround for indent bug with 'else' handling
-	sed 's;\([ 	]*\)else[ 	]*\(/\*.*\)$;\1else\
-\1\2;g' |
-	sed 's;\([ 	]*\)\(}[ 	]\)else[ 	]*\(/\*.*\)$;\1\2else\
-\1\3;g' |
+# indent comment so BSD indent will move it
+	sed 's;\([} 	]\)else[ 	]*\(/\*.*\)$;\1else\
+    \2;g' | 
 	detab -t4 -qc |
 # work around bug where function that defines no local variables misindents
 # switch() case lines and line after #else.  Do not do for struct/enum.
