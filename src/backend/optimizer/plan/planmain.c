@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planmain.c,v 1.8 1997/09/25 12:21:15 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planmain.c,v 1.9 1997/12/18 03:03:38 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -362,7 +362,7 @@ make_result(List *tlist,
 	Plan	   *plan = &node->plan;
 
 	tlist = generate_fjoin(tlist);
-	plan->cost = 0.0;
+    plan->cost = (subplan ? subplan->cost : 0);
 	plan->state = (EState *) NULL;
 	plan->targetlist = tlist;
 	plan->lefttree = subplan;

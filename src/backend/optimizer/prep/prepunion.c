@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepunion.c,v 1.9 1997/11/25 22:00:10 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepunion.c,v 1.10 1997/12/18 03:03:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -241,6 +241,9 @@ plan_union_query(List *relids,
 /*		new_root->uniqueFlag = false; */
 		new_root->uniqueFlag = NULL;
 		new_root->sortClause = NULL;
+		new_root->groupClause = NULL;
+		new_root->qry_numAgg = 0;
+		new_root->qry_aggs = NULL;
 		fix_parsetree_attnums(rt_index,
 							  rt_entry->relid,
 							  relid,

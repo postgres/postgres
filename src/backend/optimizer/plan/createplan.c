@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.16 1997/11/25 21:59:56 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.17 1997/12/18 03:03:35 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -943,7 +943,7 @@ make_seqscan(List *qptlist,
 	SeqScan    *node = makeNode(SeqScan);
 	Plan	   *plan = &node->plan;
 
-	plan->cost = 0.0;
+    plan->cost = (lefttree ? lefttree->cost : 0);
 	plan->state = (EState *) NULL;
 	plan->targetlist = qptlist;
 	plan->qual = qpqual;
@@ -989,7 +989,8 @@ make_nestloop(List *qptlist,
 	NestLoop   *node = makeNode(NestLoop);
 	Plan	   *plan = &node->join;
 
-	plan->cost = 0.0;
+    plan->cost = (lefttree ? lefttree->cost : 0) +
+		 (righttree ? righttree->cost : 0);
 	plan->state = (EState *) NULL;
 	plan->targetlist = qptlist;
 	plan->qual = qpqual;
@@ -1010,6 +1011,8 @@ make_hashjoin(List *tlist,
 	HashJoin   *node = makeNode(HashJoin);
 	Plan	   *plan = &node->join;
 
+    plan->cost = (lefttree ? lefttree->cost : 0) +
+		 (righttree ? righttree->cost : 0);
 	plan->cost = 0.0;
 	plan->state = (EState *) NULL;
 	plan->targetlist = tlist;
@@ -1031,6 +1034,7 @@ make_hash(List *tlist, Var *hashkey, Plan *lefttree)
 	Hash	   *node = makeNode(Hash);
 	Plan	   *plan = &node->plan;
 
+    plan->cost = (lefttree ? lefttree->cost : 0);
 	plan->cost = 0.0;
 	plan->state = (EState *) NULL;
 	plan->targetlist = tlist;
@@ -1058,7 +1062,8 @@ make_mergesort(List *tlist,
 	MergeJoin  *node = makeNode(MergeJoin);
 	Plan	   *plan = &node->join;
 
-	plan->cost = 0.0;
+    plan->cost = (lefttree ? lefttree->cost : 0) +
+		 (righttree ? righttree->cost : 0);
 	plan->state = (EState *) NULL;
 	plan->targetlist = tlist;
 	plan->qual = qpqual;
@@ -1078,7 +1083,7 @@ make_sort(List *tlist, Oid tempid, Plan *lefttree, int keycount)
 	Sort	   *node = makeNode(Sort);
 	Plan	   *plan = &node->plan;
 
-	plan->cost = 0.0;
+    plan->cost = (lefttree ? lefttree->cost : 0);
 	plan->state = (EState *) NULL;
 	plan->targetlist = tlist;
 	plan->qual = NIL;
@@ -1099,7 +1104,7 @@ make_material(List *tlist,
 	Material   *node = makeNode(Material);
 	Plan	   *plan = &node->plan;
 
-	plan->cost = 0.0;
+    plan->cost = (lefttree ? lefttree->cost : 0);
 	plan->state = (EState *) NULL;
 	plan->targetlist = tlist;
 	plan->qual = NIL;
@@ -1137,7 +1142,7 @@ make_group(List *tlist,
 {
 	Group	   *node = makeNode(Group);
 
-	node->plan.cost = 0.0;
+    node->plan.cost = (lefttree ? lefttree->plan.cost : 0);
 	node->plan.state = (EState *) NULL;
 	node->plan.qual = NULL;
 	node->plan.targetlist = tlist;
@@ -1164,7 +1169,7 @@ make_unique(List *tlist, Plan *lefttree, char *uniqueAttr)
 	Unique	   *node = makeNode(Unique);
 	Plan	   *plan = &node->plan;
 
-	plan->cost = 0.0;
+    plan->cost = (lefttree ? lefttree->cost : 0);
 	plan->state = (EState *) NULL;
 	plan->targetlist = tlist;
 	plan->qual = NIL;
