@@ -86,7 +86,7 @@ CREATE FUNCTION g_int_decompress(opaque) RETURNS opaque
 	AS 'MODULE_PATHNAME' LANGUAGE 'c';
 
 CREATE FUNCTION g_int_penalty(opaque,opaque,opaque) RETURNS opaque
-	AS 'MODULE_PATHNAME' LANGUAGE 'c';
+	AS 'MODULE_PATHNAME' LANGUAGE 'c' with (isstrict);
 
 CREATE FUNCTION g_int_picksplit(opaque, opaque) RETURNS opaque
 	AS 'MODULE_PATHNAME' LANGUAGE 'c';
@@ -105,7 +105,7 @@ INSERT INTO pg_opclass (opcamid, opcname, opcintype, opcdefault, opckeytype)
         'gist__int_ops',
         (SELECT oid FROM pg_type WHERE typname = '_int4'),
         true,
-        (SELECT oid FROM pg_type WHERE typname = '_int4'));
+        0);
 
 
 -- get the comparators for _intments and store them in a tmp table
@@ -252,7 +252,7 @@ INSERT INTO pg_opclass (opcamid, opcname, opcintype, opcdefault, opckeytype)
         'gist__intbig_ops',
         (SELECT oid FROM pg_type WHERE typname = '_int4'),
         false,
-        (SELECT oid FROM pg_type WHERE typname = '_int4'));
+        0);
 
 
 -- get the comparators for _intments and store them in a tmp table

@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/gist/gist.c,v 1.82 2001/08/21 16:35:59 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/gist/gist.c,v 1.83 2001/08/22 18:24:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,21 +19,15 @@
 #include "access/gistscan.h"
 #include "access/heapam.h"
 #include "catalog/index.h"
-#include "catalog/pg_index.h"
-#include "catalog/pg_opclass.h"
-#include "executor/executor.h"
 #include "miscadmin.h"
-#include "utils/lsyscache.h"
-#include "utils/syscache.h"
-#include "access/xlogutils.h"
 
 
 #undef GIST_PAGEADDITEM
 
-#define ATTSIZE( datum, Rel, i, isnull ) \
+#define ATTSIZE( datum, TupDesc, i, isnull ) \
 	( \
 		( isnull ) ? 0 : \
-			att_addlength(0, (Rel)->rd_att->attrs[(i)-1]->attlen, (datum)) \
+			att_addlength(0, (TupDesc)->attrs[(i)-1]->attlen, (datum)) \
 	)
 
 /* result's status */
@@ -214,6 +208,7 @@ gistbuild(PG_FUNCTION_ARGS)
 		UpdateStats(irelid, buildstate.indtuples);
 	}
 
+	freeGISTstate( &buildstate.giststate );
 #ifdef GISTDEBUG
 	gist_dumptree(index, 0, GISTP_ROOT, 0);
 #endif
@@ -253,7 +248,7 @@ gistbuildCallback(Relation index,
 					   (Relation) NULL, (Page) NULL, (OffsetNumber) 0,
 					   -1 /* size is currently bogus */ , TRUE, FALSE);
 			if (attdata[i] != tmpcentry.key &&
-				!(buildstate->giststate.attbyval[i]))
+				!( isAttByVal(&buildstate->giststate, i)))
 				compvec[i] = TRUE;
 			else
 				compvec[i] = FALSE;
@@ -262,7 +257,7 @@ gistbuildCallback(Relation index,
 	}
 
 	/* form an index tuple and point it at the heap tuple */
-	itup = index_formtuple(RelationGetDescr(index), attdata, nulls);
+	itup = index_formtuple(buildstate->giststate.tupdesc, attdata, nulls);
 	itup->t_tid = htup->t_self;
 
 	/*
@@ -330,14 +325,14 @@ gistinsert(PG_FUNCTION_ARGS)
 			gistcentryinit(&giststate, i, &tmpentry, datum[i],
 					   (Relation) NULL, (Page) NULL, (OffsetNumber) 0,
 					   -1 /* size is currently bogus */ , TRUE, FALSE );
-			if (datum[i] != tmpentry.key && !(giststate.attbyval[i]))
+			if (datum[i] != tmpentry.key && !( isAttByVal( &giststate, i)))
 				compvec[i] = TRUE;
 			else
 				compvec[i] = FALSE;
 			datum[i] = tmpentry.key;
 		}
 	}
-	itup = index_formtuple(RelationGetDescr(r), datum, nulls);
+	itup = index_formtuple(giststate.tupdesc, datum, nulls);
 	itup->t_tid = *ht_ctid;
 
 	res = (InsertIndexResult) palloc(sizeof(InsertIndexResultData));
@@ -347,6 +342,7 @@ gistinsert(PG_FUNCTION_ARGS)
 		if (compvec[i] == TRUE)
 			pfree(DatumGetPointer(datum[i]));
 	pfree(itup);
+	freeGISTstate( &giststate );
 
 	PG_RETURN_POINTER(res);
 }
@@ -663,15 +659,15 @@ gistunion(Relation r, IndexTuple *itvec, int len, GISTSTATE *giststate) {
 	for (j = 0; j < r->rd_att->natts; j++) {
 		reallen=0; 
 		for (i = 0; i < len; i++) {
-			datum = index_getattr(itvec[i], j+1, r->rd_att, &IsNull);
+			datum = index_getattr(itvec[i], j+1, giststate->tupdesc, &IsNull);
 			if ( IsNull ) continue;
 
 			gistdentryinit(giststate, j,
 						   &((GISTENTRY *) VARDATA(evec))[reallen],
 						   datum,
 						   (Relation) NULL, (Page) NULL, (OffsetNumber) NULL,
-						   ATTSIZE( datum, r, j+1, IsNull ), FALSE, IsNull);
-			if ( (!giststate->attbyval[j]) &&  
+						   ATTSIZE( datum, giststate->tupdesc, j+1, IsNull ), FALSE, IsNull);
+			if ( (!isAttByVal(giststate,j)) &&  
 				  ((GISTENTRY *) VARDATA(evec))[reallen].key != datum ) 
 				needfree[reallen] = TRUE;
 			else
@@ -706,7 +702,7 @@ gistunion(Relation r, IndexTuple *itvec, int len, GISTSTATE *giststate) {
 				datumsize, FALSE, FALSE);
 			isnull[j] = ' ';
 			attr[j] =  centry[j].key;
-			if ( !giststate->attbyval[j] ) {
+			if ( !isAttByVal( giststate, j ) ) {
 				whatfree[j] = TRUE;
 				if ( centry[j].key != datum )
 					pfree(DatumGetPointer(datum));
@@ -718,7 +714,7 @@ gistunion(Relation r, IndexTuple *itvec, int len, GISTSTATE *giststate) {
 	pfree(evec);
 	pfree(needfree);
 
-	newtup = (IndexTuple) index_formtuple(r->rd_att, attr, isnull);
+	newtup = (IndexTuple) index_formtuple(giststate->tupdesc, attr, isnull);
 	for (j = 0; j < r->rd_att->natts; j++)
 		if ( whatfree[j] )
 			pfree(DatumGetPointer(attr[j]));
@@ -802,7 +798,7 @@ gistgetadjusted(Relation r, IndexTuple oldtup, IndexTuple addtup, GISTSTATE *gis
 	
 			isnull[j] = ' ';
 			attr[j] =  centry[j].key;
-			if ( (!giststate->attbyval[j]) ) {
+			if ( (!isAttByVal( giststate, j ) ) ) {
 				whatfree[j] = TRUE;
 				if ( centry[j].key != datum )
 					pfree(DatumGetPointer(datum));
@@ -814,7 +810,7 @@ gistgetadjusted(Relation r, IndexTuple oldtup, IndexTuple addtup, GISTSTATE *gis
 
 	if (neednew) {
 		/* need to update key */
-		newtup = (IndexTuple) index_formtuple(r->rd_att, attr, isnull);
+		newtup = (IndexTuple) index_formtuple(giststate->tupdesc, attr, isnull);
 		newtup->t_tid = oldtup->t_tid;
 	}
 	
@@ -861,7 +857,7 @@ gistunionsubkey( Relation r, GISTSTATE *giststate, IndexTuple *itvec, GIST_SPLIT
 				if ( spl->spl_idgrp[ entries[i] ] )
 					continue;
 				datum = index_getattr(itvec[ entries[i]-1 ], j+1,
-									  r->rd_att, &IsNull);
+									  giststate->tupdesc, &IsNull);
 				if ( IsNull )
 					continue;
 				gistdentryinit(giststate, j,
@@ -869,8 +865,8 @@ gistunionsubkey( Relation r, GISTSTATE *giststate, IndexTuple *itvec, GIST_SPLIT
 							   datum,
 							   (Relation) NULL, (Page) NULL,
 							   (OffsetNumber) NULL,
-							   ATTSIZE( datum, r, j+1, IsNull ), FALSE, IsNull);
-				if ( (!giststate->attbyval[j]) &&
+							   ATTSIZE( datum, giststate->tupdesc, j+1, IsNull ), FALSE, IsNull);
+				if ( (!isAttByVal( giststate, j )) &&
 						((GISTENTRY *) VARDATA(evec))[reallen].key != datum )
 					needfree[reallen] = TRUE;
 				else
@@ -1064,7 +1060,7 @@ gistadjsubkey(Relation r,
 									  PointerGetDatum(evec),
 									  PointerGetDatum(&datumsize));
 
-					if ( (!giststate->attbyval[j]) && !v->spl_lisnull[j] )
+					if ( (!isAttByVal( giststate, j )) && !v->spl_lisnull[j] )
 						pfree( DatumGetPointer(v->spl_lattr[j]) );
 					v->spl_lattr[j] = datum;
 					v->spl_lattrsize[j] = datumsize;
@@ -1089,7 +1085,7 @@ gistadjsubkey(Relation r,
 									  PointerGetDatum(evec),
 									  PointerGetDatum(&datumsize));
 
-					if ( (!giststate->attbyval[j]) && !v->spl_risnull[j] )
+					if ( (!isAttByVal( giststate, j)) && !v->spl_risnull[j] )
 						pfree( DatumGetPointer(v->spl_rattr[j]) );
 
 					v->spl_rattr[j] = datum;
@@ -1171,11 +1167,11 @@ gistSplit(Relation r,
 	VARATT_SIZEP(entryvec) = (*len + 1) * sizeof(GISTENTRY) + VARHDRSZ;
 	for (i = 1; i <= *len; i++)
 	{
-		datum = index_getattr(itup[i - 1], 1, r->rd_att, &IsNull);
+		datum = index_getattr(itup[i - 1], 1, giststate->tupdesc, &IsNull);
 		gistdentryinit(giststate, 0,&((GISTENTRY *) VARDATA(entryvec))[i],
 					datum, r, p, i,
-					ATTSIZE( datum, r, 1, IsNull ), FALSE, IsNull);
-		if ( (!giststate->attbyval[0]) && ((GISTENTRY *) VARDATA(entryvec))[i].key != datum )  
+					ATTSIZE( datum, giststate->tupdesc, 1, IsNull ), FALSE, IsNull);
+		if ( (!isAttByVal(giststate,0)) && ((GISTENTRY *) VARDATA(entryvec))[i].key != datum )  
 			decompvec[i] = TRUE;
 		else
 			decompvec[i] = FALSE;
@@ -1250,7 +1246,7 @@ gistSplit(Relation r,
 			  (res && rvectup[nlen - 1] == itup[*len - 1]) ? res : NULL);
 		ReleaseBuffer(rightbuf);
 		for( j=1; j<r->rd_att->natts; j++ ) 
-			if ( (!giststate->attbyval[j]) && !v.spl_risnull[j] )
+			if ( (!isAttByVal(giststate,j)) && !v.spl_risnull[j] )
 				pfree( DatumGetPointer(v.spl_rattr[j]) ); 
 	}
 	else
@@ -1280,7 +1276,7 @@ gistSplit(Relation r,
 		ReleaseBuffer(leftbuf);
 
 		for( j=1; j<r->rd_att->natts; j++ ) 
-			if ( (!giststate->attbyval[j]) && !v.spl_lisnull[j] )
+			if ( (!isAttByVal(giststate,j)) && !v.spl_lisnull[j] )
 				pfree( DatumGetPointer(v.spl_lattr[j]) ); 
 
 		newtup = gistjoinvector(newtup, &nlen, lntup, llen);
@@ -1382,11 +1378,11 @@ gistchoose(Relation r, Page p, IndexTuple it,	/* it has compressed entry */
 		IndexTuple itup = (IndexTuple) PageGetItem(p, PageGetItemId(p, i));
 		sum_grow=0;
 		for (j=0; j<r->rd_att->natts; j++) {
-			datum = index_getattr(itup, j+1, r->rd_att, &IsNull);
-			gistdentryinit(giststate, j, &entry, datum, r, p, i, ATTSIZE( datum, r, j+1, IsNull ), FALSE, IsNull);
+			datum = index_getattr(itup, j+1, giststate->tupdesc, &IsNull);
+			gistdentryinit(giststate, j, &entry, datum, r, p, i, ATTSIZE( datum, giststate->tupdesc, j+1, IsNull ), FALSE, IsNull);
 			gistpenalty( giststate, j, &entry, IsNull, &identry[j], isnull[j], &usize); 
 
-			if ( (!giststate->attbyval[j]) && entry.key != datum) 
+			if ( (!isAttByVal(giststate,j)) && entry.key != datum) 
 				pfree(DatumGetPointer(entry.key));
 
 			if ( which_grow[j]<0 || usize < which_grow[j] ) {
@@ -1553,25 +1549,13 @@ initGISTstate(GISTSTATE *giststate, Relation index)
 				penalty_proc,
 				picksplit_proc,
 				equal_proc;
-	HeapTuple	itup;
-	HeapTuple	ctup;
-	Form_pg_index itupform;
-	Form_pg_opclass opclassform;
-	Oid			inputtype;
-	Oid			keytype;
 	int i;
 
 	if (index->rd_att->natts > INDEX_MAX_KEYS)
 		elog(ERROR, "initGISTstate: numberOfAttributes %d > %d",
 			 index->rd_att->natts, INDEX_MAX_KEYS);
 
-	itup = SearchSysCache(INDEXRELID,
-						  ObjectIdGetDatum(RelationGetRelid(index)),
-						  0, 0, 0);
-	if (!HeapTupleIsValid(itup))
-		elog(ERROR, "initGISTstate: index %u not found",
-			 RelationGetRelid(index));
-	itupform = (Form_pg_index) GETSTRUCT(itup);
+	giststate->tupdesc = index->rd_att;
 
 	for (i = 0; i < index->rd_att->natts; i++)
 	{
@@ -1589,36 +1573,12 @@ initGISTstate(GISTSTATE *giststate, Relation index)
 		fmgr_info(penalty_proc, 	&((giststate->penaltyFn)[i]) 		);
 		fmgr_info(picksplit_proc, 	&((giststate->picksplitFn)[i]) 		);
 		fmgr_info(equal_proc, 		&((giststate->equalFn)[i]) 		);
-
-		/* Check opclass entry to see if there is a keytype */
-		ctup = SearchSysCache(CLAOID,
-							  ObjectIdGetDatum(itupform->indclass[i]),
-							  0, 0, 0);
-		if (!HeapTupleIsValid(ctup))
-			elog(ERROR, "cache lookup failed for opclass %u",
-				 itupform->indclass[i]);
-		opclassform = (Form_pg_opclass) GETSTRUCT(ctup);
-		inputtype = opclassform->opcintype;
-		keytype = opclassform->opckeytype;
-		ReleaseSysCache(ctup);
-
-		if (OidIsValid(keytype))
-		{
-			/* index column type is (possibly) different from input data */
-			giststate->haskeytype[i] = true;
-			giststate->attbyval[i] = get_typbyval(inputtype);
-			giststate->keytypbyval[i] = index->rd_att->attrs[i]->attbyval;
-		}
-		else
-		{
-			/* Normal case where index column type is same as input data */
-			giststate->haskeytype[i] = false;
-			giststate->attbyval[i] = index->rd_att->attrs[i]->attbyval;
-			giststate->keytypbyval[i] = false;	/* not actually used */
-		}
 	}
+}
 
-	ReleaseSysCache(itup);
+void
+freeGISTstate(GISTSTATE *giststate) {
+	/* no work */
 }
 
 #ifdef GIST_PAGEADDITEM
@@ -1678,22 +1638,25 @@ gistdentryinit(GISTSTATE *giststate, int nkey, GISTENTRY *e,
 			   Datum k, Relation r, Page pg, OffsetNumber o,
 			   int b, bool l, bool isNull)
 {
-	GISTENTRY  *dep;
-
-	gistentryinit(*e, k, r, pg, o, b, l);
-	if (giststate->haskeytype[nkey])
+	if ( b && ! isNull )
 	{
-		if ( b && ! isNull ) {
-			dep = (GISTENTRY *)
-				DatumGetPointer(FunctionCall1(&giststate->decompressFn[nkey],
+		GISTENTRY  *dep;
+
+		gistentryinit(*e, k, r, pg, o, b, l);
+		dep = (GISTENTRY *)
+			DatumGetPointer(FunctionCall1(&giststate->decompressFn[nkey],
 										  PointerGetDatum(e)));
-			gistentryinit(*e, dep->key, dep->rel, dep->page, dep->offset, dep->bytes,
-					  dep->leafkey);
-			if (dep != e)
-				pfree(dep);
-		} else {
-			gistentryinit(*e, (Datum) 0, r, pg, o, 0, l);
+		/* decompressFn may just return the given pointer */
+		if (dep != e)
+		{
+			gistentryinit(*e, dep->key, dep->rel, dep->page, dep->offset,
+						  dep->bytes, dep->leafkey);
+			pfree(dep);
 		}
+	}
+	else
+	{
+		gistentryinit(*e, (Datum) 0, r, pg, o, 0, l);
 	}
 }
 
@@ -1706,22 +1669,25 @@ gistcentryinit(GISTSTATE *giststate, int nkey,
 			   GISTENTRY *e, Datum k, Relation r,
 			   Page pg, OffsetNumber o, int b, bool l, bool isNull)
 {
-	GISTENTRY  *cep;
-
-	gistentryinit(*e, k, r, pg, o, b, l);
-	if (giststate->haskeytype[nkey])
+	if (!isNull)
 	{
-		if ( ! isNull ) {
-			cep = (GISTENTRY *)
-				DatumGetPointer(FunctionCall1(&giststate->compressFn[nkey],
+		GISTENTRY  *cep;
+
+		gistentryinit(*e, k, r, pg, o, b, l);
+		cep = (GISTENTRY *)
+			DatumGetPointer(FunctionCall1(&giststate->compressFn[nkey],
 										  PointerGetDatum(e)));
+		/* compressFn may just return the given pointer */
+		if (cep != e)
+		{
 			gistentryinit(*e, cep->key, cep->rel, cep->page, cep->offset,
 						  cep->bytes, cep->leafkey);
-			if (cep != e)
-				pfree(cep);
-		} else {
-			gistentryinit(*e, (Datum) 0, r, pg, o, 0, l);
+			pfree(cep);
 		}
+	}
+	else
+	{
+		gistentryinit(*e, (Datum) 0, r, pg, o, 0, l);
 	}
 }
 
@@ -1747,7 +1713,7 @@ gistFormTuple( GISTSTATE *giststate, Relation r,
 				datumsize[j], FALSE, FALSE);
 			isnullchar[j] = ' ';
 			compatt[j] = centry[j].key;
-			if ( !giststate->attbyval[j] ) {
+			if ( !isAttByVal(giststate,j) ) {
 				whatfree[j] = TRUE;
 				if ( centry[j].key != attdata[j] )
 					pfree(DatumGetPointer(attdata[j]));
@@ -1756,7 +1722,7 @@ gistFormTuple( GISTSTATE *giststate, Relation r,
 		}
 	}
 
-	tup = (IndexTuple) index_formtuple(r->rd_att, compatt, isnullchar);
+	tup = (IndexTuple) index_formtuple(giststate->tupdesc, compatt, isnullchar);
 	for (j = 0; j < r->rd_att->natts; j++)
 		if ( whatfree[j] ) pfree(DatumGetPointer(compatt[j]));
 
@@ -1770,11 +1736,11 @@ gistDeCompressAtt( GISTSTATE *giststate, Relation r, IndexTuple tuple, Page p,
 	Datum	datum;
 
 	for(i=0; i < r->rd_att->natts; i++ ) {
-		datum = index_getattr(tuple, i+1, r->rd_att, &isnull[i]);
+		datum = index_getattr(tuple, i+1, giststate->tupdesc, &isnull[i]);
 		gistdentryinit(giststate, i, &attdata[i],
 					datum, r, p, o,
-					ATTSIZE( datum, r, i+1, isnull[i] ), FALSE, isnull[i]);
-		if ( giststate->attbyval[i] ) 
+					ATTSIZE( datum, giststate->tupdesc, i+1, isnull[i] ), FALSE, isnull[i]);
+		if ( isAttByVal(giststate,i) ) 
 			decompvec[i] = FALSE;
 		else {
 			if (attdata[i].key == datum || isnull[i] )

@@ -19,7 +19,7 @@ select count(*) from boxtmp where b && '(1000,1000,0,0)'::box;
 (1 row)
 
 drop index bix;
-create index bix on boxtmp using gist (b gist_box_ops);
+create index bix on boxtmp using gist (b);
 select count(*) from boxtmp where b && '(1000,1000,0,0)'::box;
  count 
 -------
@@ -36,7 +36,7 @@ select count(*) from polytmp where p && '(1000,1000),(0,0)'::polygon;
 (1 row)
 
 drop index pix;
-create index pix on polytmp using gist (p gist_poly_ops);
+create index pix on polytmp using gist (p);
 select count(*) from polytmp where p && '(1000,1000),(0,0)'::polygon;
  count 
 -------

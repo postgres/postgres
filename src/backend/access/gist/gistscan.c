@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/gist/gistscan.c,v 1.38 2001/07/15 22:48:15 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/gist/gistscan.c,v 1.39 2001/08/22 18:24:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -234,6 +234,8 @@ gistendscan(PG_FUNCTION_ARGS)
 	{
 		gistfreestack(p->s_stack);
 		gistfreestack(p->s_markstk);
+		if ( p->giststate != NULL ) 
+			freeGISTstate( p->giststate );
 		pfree(s->opaque);
 	}
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.161 2001/08/21 16:36:00 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.162 2001/08/22 18:24:26 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -33,6 +33,7 @@
 #include "catalog/index.h"
 #include "catalog/indexing.h"
 #include "catalog/pg_index.h"
+#include "catalog/pg_opclass.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_type.h"
 #include "commands/comment.h"
@@ -62,9 +63,11 @@
 /* non-export function prototypes */
 static Oid GetHeapRelationOid(char *heapRelationName, char *indexRelationName,
 				   bool istemp);
-static TupleDesc BuildFuncTupleDesc(Oid funcOid);
+static TupleDesc BuildFuncTupleDesc(Oid funcOid,
+									Oid *classObjectId);
 static TupleDesc ConstructTupleDescriptor(Relation heapRelation,
-						 int numatts, AttrNumber *attNums);
+										  int numatts, AttrNumber *attNums,
+										  Oid *classObjectId);
 static void ConstructIndexReldesc(Relation indexRelation, Oid amoid);
 static Oid	UpdateRelationRelation(Relation indexRelation, char *temp_relname);
 static void InitializeAttributeOids(Relation indexRelation,
@@ -124,11 +127,14 @@ GetHeapRelationOid(char *heapRelationName, char *indexRelationName, bool istemp)
 }
 
 static TupleDesc
-BuildFuncTupleDesc(Oid funcOid)
+BuildFuncTupleDesc(Oid funcOid,
+				   Oid *classObjectId)
 {
 	TupleDesc	funcTupDesc;
 	HeapTuple	tuple;
+	Oid			keyType;
 	Oid			retType;
+	Form_pg_type typeTup;
 
 	/*
 	 * Allocate and zero a tuple descriptor for a one-column tuple.
@@ -156,25 +162,41 @@ BuildFuncTupleDesc(Oid funcOid)
 	ReleaseSysCache(tuple);
 
 	/*
-	 * Lookup the return type in pg_type for the type length etc.
+	 * Check the opclass to see if it provides a keytype (overriding the
+	 * function result type).
 	 */
-	tuple = SearchSysCache(TYPEOID,
-						   ObjectIdGetDatum(retType),
+	tuple = SearchSysCache(CLAOID,
+						   ObjectIdGetDatum(classObjectId[0]),
 						   0, 0, 0);
 	if (!HeapTupleIsValid(tuple))
-		elog(ERROR, "Type %u does not exist", retType);
+		elog(ERROR, "Opclass %u does not exist", classObjectId[0]);
+	keyType = ((Form_pg_opclass) GETSTRUCT(tuple))->opckeytype;
+	ReleaseSysCache(tuple);
+
+	if (!OidIsValid(keyType))
+		keyType = retType;
+
+	/*
+	 * Lookup the key type in pg_type for the type length etc.
+	 */
+	tuple = SearchSysCache(TYPEOID,
+						   ObjectIdGetDatum(keyType),
+						   0, 0, 0);
+	if (!HeapTupleIsValid(tuple))
+		elog(ERROR, "Type %u does not exist", keyType);
+	typeTup = (Form_pg_type) GETSTRUCT(tuple);
 
 	/*
 	 * Assign some of the attributes values. Leave the rest as 0.
 	 */
-	funcTupDesc->attrs[0]->attlen = ((Form_pg_type) GETSTRUCT(tuple))->typlen;
-	funcTupDesc->attrs[0]->atttypid = retType;
 	funcTupDesc->attrs[0]->attnum = 1;
-	funcTupDesc->attrs[0]->attbyval = ((Form_pg_type) GETSTRUCT(tuple))->typbyval;
+	funcTupDesc->attrs[0]->atttypid = keyType;
+	funcTupDesc->attrs[0]->attlen = typeTup->typlen;
+	funcTupDesc->attrs[0]->attbyval = typeTup->typbyval;
 	funcTupDesc->attrs[0]->attcacheoff = -1;
 	funcTupDesc->attrs[0]->atttypmod = -1;
-	funcTupDesc->attrs[0]->attstorage = ((Form_pg_type) GETSTRUCT(tuple))->typstorage;
-	funcTupDesc->attrs[0]->attalign = ((Form_pg_type) GETSTRUCT(tuple))->typalign;
+	funcTupDesc->attrs[0]->attstorage = typeTup->typstorage;
+	funcTupDesc->attrs[0]->attalign = typeTup->typalign;
 
 	ReleaseSysCache(tuple);
 
@@ -190,7 +212,8 @@ BuildFuncTupleDesc(Oid funcOid)
 static TupleDesc
 ConstructTupleDescriptor(Relation heapRelation,
 						 int numatts,
-						 AttrNumber *attNums)
+						 AttrNumber *attNums,
+						 Oid *classObjectId)
 {
 	TupleDesc	heapTupDesc;
 	TupleDesc	indexTupDesc;
@@ -217,6 +240,8 @@ ConstructTupleDescriptor(Relation heapRelation,
 		AttrNumber	atnum;		/* attributeNumber[attributeOffset] */
 		Form_pg_attribute from;
 		Form_pg_attribute to;
+		HeapTuple	tuple;
+		Oid			keyType;
 
 		/*
 		 * get the attribute number and make sure it's valid; determine
@@ -269,6 +294,40 @@ ConstructTupleDescriptor(Relation heapRelation,
 		 * fix it later.
 		 */
 		to->attrelid = InvalidOid;
+
+		/*
+		 * Check the opclass to see if it provides a keytype (overriding
+		 * the attribute type).
+		 */
+		tuple = SearchSysCache(CLAOID,
+							   ObjectIdGetDatum(classObjectId[i]),
+							   0, 0, 0);
+		if (!HeapTupleIsValid(tuple))
+			elog(ERROR, "Opclass %u does not exist", classObjectId[i]);
+		keyType = ((Form_pg_opclass) GETSTRUCT(tuple))->opckeytype;
+		ReleaseSysCache(tuple);
+
+		if (OidIsValid(keyType) && keyType != to->atttypid)
+		{
+			/* index value and heap value have different types */
+			Form_pg_type typeTup;
+
+			tuple = SearchSysCache(TYPEOID,
+								   ObjectIdGetDatum(keyType),
+								   0, 0, 0);
+			if (!HeapTupleIsValid(tuple))
+				elog(ERROR, "Type %u does not exist", keyType);
+			typeTup = (Form_pg_type) GETSTRUCT(tuple);
+
+			to->atttypid   = keyType;
+			to->atttypmod  = -1;
+			to->attlen     = typeTup->typlen;
+			to->attbyval   = typeTup->typbyval;
+			to->attalign   = typeTup->typalign;
+			to->attstorage = typeTup->typstorage;
+
+			ReleaseSysCache(tuple);
+		}
 	}
 
 	return indexTupDesc;
@@ -703,19 +762,21 @@ index_create(char *heapRelationName,
 	heapRelation = heap_open(heapoid, ShareLock);
 
 	/*
-	 * construct new tuple descriptor
+	 * construct tuple descriptor for index tuples
 	 */
 	if (OidIsValid(indexInfo->ii_FuncOid))
-		indexTupDesc = BuildFuncTupleDesc(indexInfo->ii_FuncOid);
+		indexTupDesc = BuildFuncTupleDesc(indexInfo->ii_FuncOid,
+										  classObjectId);
 	else
 		indexTupDesc = ConstructTupleDescriptor(heapRelation,
 												indexInfo->ii_NumKeyAttrs,
-										   indexInfo->ii_KeyAttrNumbers);
+												indexInfo->ii_KeyAttrNumbers,
+												classObjectId);
 
 	if (istemp)
 	{
 		/* save user relation name because heap_create changes it */
-		temp_relname = pstrdup(indexRelationName);		/* save original value */
+		temp_relname = pstrdup(indexRelationName);		/* save original */
 		indexRelationName = palloc(NAMEDATALEN);
 		strcpy(indexRelationName, temp_relname);		/* heap_create will
 														 * change this */

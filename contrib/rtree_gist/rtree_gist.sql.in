@@ -27,7 +27,7 @@ INSERT INTO pg_opclass (opcamid, opcname, opcintype, opcdefault, opckeytype)
         (SELECT oid FROM pg_am WHERE amname = 'gist'),
         'gist_box_ops',
         (SELECT oid FROM pg_type WHERE typname = 'box'),
-        false,
+        true,
         0);
 
 -- get the comparators for boxes and store them in a tmp table
@@ -183,22 +183,14 @@ create function gpoly_consistent(opaque,polygon,int4) returns bool as 'MODULE_PA
 
 create function gpoly_compress(opaque) returns opaque as 'MODULE_PATHNAME' language 'C';
 
-create function gpoly_penalty(opaque,opaque,opaque) returns opaque as 'MODULE_PATHNAME' language 'C';
-
-create function gpoly_picksplit(opaque, opaque) returns opaque as 'MODULE_PATHNAME' language 'C';
-
-create function gpoly_union(bytea, opaque) returns opaque as 'MODULE_PATHNAME' language 'C';
-
-create function gpoly_same(opaque, opaque, opaque) returns opaque as 'MODULE_PATHNAME' language 'C';
-
 -- add a new opclass (non-default)
 INSERT INTO pg_opclass (opcamid, opcname, opcintype, opcdefault, opckeytype)
     VALUES (
         (SELECT oid FROM pg_am WHERE amname = 'gist'),
         'gist_poly_ops',
         (SELECT oid FROM pg_type WHERE typname = 'polygon'),
-        false,
-        0);
+        true,
+        (SELECT oid FROM pg_type WHERE typname = 'box'));
 
 -- get the comparators for polygons and store them in a tmp table
 -- hack for 757 (poly_contain_pt) Teodor
@@ -211,7 +203,7 @@ WHERE o.oprleft = t.oid and o.oid <> 757
 -- using the tmp table, generate the amop entries 
 -- poly_left
 INSERT INTO pg_amop (amopclaid, amopstrategy, amopreqcheck, amopopr) 
-   SELECT opcl.oid, 1, false, c.opoid
+   SELECT opcl.oid, 1, true, c.opoid
    FROM pg_opclass opcl, rt_ops_tmp c
    WHERE
       opcamid = (SELECT oid FROM pg_am WHERE amname = 'gist')
@@ -220,7 +212,7 @@ INSERT INTO pg_amop (amopclaid, amopstrategy, amopreqcheck, amopopr)
 
 -- poly_overleft
 INSERT INTO pg_amop (amopclaid, amopstrategy, amopreqcheck, amopopr) 
-   SELECT opcl.oid, 2, false, c.opoid
+   SELECT opcl.oid, 2, true, c.opoid
    FROM pg_opclass opcl, rt_ops_tmp c
    WHERE
       opcamid = (SELECT oid FROM pg_am WHERE amname = 'gist')
@@ -229,7 +221,7 @@ INSERT INTO pg_amop (amopclaid, amopstrategy, amopreqcheck, amopopr)
 
 -- poly_overlap
 INSERT INTO pg_amop (amopclaid, amopstrategy, amopreqcheck, amopopr) 
-   SELECT opcl.oid, 3, false, c.opoid
+   SELECT opcl.oid, 3, true, c.opoid
    FROM pg_opclass opcl, rt_ops_tmp c
    WHERE
       opcamid = (SELECT oid FROM pg_am WHERE amname = 'gist')
@@ -238,7 +230,7 @@ INSERT INTO pg_amop (amopclaid, amopstrategy, amopreqcheck, amopopr)
 
 -- poly_overright
 INSERT INTO pg_amop (amopclaid, amopstrategy, amopreqcheck, amopopr) 
-   SELECT opcl.oid, 4, false, c.opoid
+   SELECT opcl.oid, 4, true, c.opoid
    FROM pg_opclass opcl, rt_ops_tmp c
    WHERE
       opcamid = (SELECT oid FROM pg_am WHERE amname = 'gist')
@@ -247,7 +239,7 @@ INSERT INTO pg_amop (amopclaid, amopstrategy, amopreqcheck, amopopr)
 
 -- poly_right
 INSERT INTO pg_amop (amopclaid, amopstrategy, amopreqcheck, amopopr)
-   SELECT opcl.oid, 5, false, c.opoid
+   SELECT opcl.oid, 5, true, c.opoid
    FROM pg_opclass opcl, rt_ops_tmp c
    WHERE
       opcamid = (SELECT oid FROM pg_am WHERE amname = 'gist')
@@ -256,7 +248,7 @@ INSERT INTO pg_amop (amopclaid, amopstrategy, amopreqcheck, amopopr)
 
 -- poly_same
 INSERT INTO pg_amop (amopclaid, amopstrategy, amopreqcheck, amopopr) 
-   SELECT opcl.oid, 6, false, c.opoid
+   SELECT opcl.oid, 6, true, c.opoid
    FROM pg_opclass opcl, rt_ops_tmp c
    WHERE
       opcamid = (SELECT oid FROM pg_am WHERE amname = 'gist')
@@ -265,7 +257,7 @@ INSERT INTO pg_amop (amopclaid, amopstrategy, amopreqcheck, amopopr)
 
 -- poly_contains
 INSERT INTO pg_amop (amopclaid, amopstrategy, amopreqcheck, amopopr)
-   SELECT opcl.oid, 7, false, c.opoid
+   SELECT opcl.oid, 7, true, c.opoid
    FROM pg_opclass opcl, rt_ops_tmp c
    WHERE
       opcamid = (SELECT oid FROM pg_am WHERE amname = 'gist')
@@ -274,7 +266,7 @@ INSERT INTO pg_amop (amopclaid, amopstrategy, amopreqcheck, amopopr)
 
 -- poly_contained
 INSERT INTO pg_amop (amopclaid, amopstrategy, amopreqcheck, amopopr)
-   SELECT opcl.oid, 8, false, c.opoid
+   SELECT opcl.oid, 8, true, c.opoid
    FROM pg_opclass opcl, rt_ops_tmp c
    WHERE
       opcamid = (SELECT oid FROM pg_am WHERE amname = 'gist')
@@ -300,7 +292,7 @@ INSERT INTO pg_amproc (amopclaid, amprocnum, amproc)
    WHERE
       opcamid = (SELECT oid FROM pg_am WHERE amname = 'gist')
       and opcname = 'gist_poly_ops'
-      and proname = 'gpoly_union';
+      and proname = 'gbox_union';
 
 INSERT INTO pg_amproc (amopclaid, amprocnum, amproc)
    SELECT opcl.oid, 3, pro.oid
@@ -324,7 +316,7 @@ INSERT INTO pg_amproc (amopclaid, amprocnum, amproc)
    WHERE
       opcamid = (SELECT oid FROM pg_am WHERE amname = 'gist')
       and opcname = 'gist_poly_ops'
-      and proname = 'gpoly_penalty';
+      and proname = 'gbox_penalty';
 
 INSERT INTO pg_amproc (amopclaid, amprocnum, amproc)
    SELECT opcl.oid, 6, pro.oid
@@ -332,7 +324,7 @@ INSERT INTO pg_amproc (amopclaid, amprocnum, amproc)
    WHERE
       opcamid = (SELECT oid FROM pg_am WHERE amname = 'gist')
       and opcname = 'gist_poly_ops'
-      and proname = 'gpoly_picksplit';
+      and proname = 'gbox_picksplit';
 
 INSERT INTO pg_amproc (amopclaid, amprocnum, amproc)
    SELECT opcl.oid, 7, pro.oid
@@ -340,7 +332,7 @@ INSERT INTO pg_amproc (amopclaid, amprocnum, amproc)
    WHERE
       opcamid = (SELECT oid FROM pg_am WHERE amname = 'gist')
       and opcname = 'gist_poly_ops'
-      and proname = 'gpoly_same';
+      and proname = 'gbox_same';
 
 end transaction;
 
