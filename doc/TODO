@@ -6,7 +6,7 @@ TODO list for PostgreSQL
 Bracketed items "[]" have more detail.
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Mon Nov  8 15:16:11 EST 2004
+Last updated:		Mon Nov  8 22:57:34 EST 2004
 
 The most recent version of this document can be viewed at the PostgreSQL web
 site, http://www.PostgreSQL.org.
@@ -815,8 +815,17 @@ Miscellaneous
 * Use mmap() rather than SYSV shared memory or to write WAL files (?) [mmap]
 
   This would remove the requirement for SYSV SHM but would introduce
-  portability issues. Anonymous mmap is required to prevent I/O
-  overhead.
+  portability issues. Anonymous mmap (or mmap to /dev/zero) is required 
+  to prevent I/O overhead.  
+
+* Consider mmap()'ing files into a backend?
+
+  Doing I/O to large tables would consume a lot of address space or 
+  require frequent mapping/unmapping.  Extending the file also causes 
+  mapping problems that might require mapping only individual pages, 
+  leading to thousands of mappings.  Another problem is that there is no
+  way to _prevent_ I/O to disk from the dirty shared buffers so changes 
+  could hit disk before WAL is written.
 
 * Add a script to ask system configuration questions and tune postgresql.conf
 * Use a phantom command counter for nested subtransactions to reduce
