@@ -26,7 +26,7 @@ import java.sql.Timestamp;
 import java.sql.Types;
 import java.util.Vector;
 
-/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/AbstractJdbc1Statement.java,v 1.34 2003/09/08 17:30:22 barry Exp $
+/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/AbstractJdbc1Statement.java,v 1.35 2003/09/09 10:49:16 barry Exp $
  * This class defines methods of the jdbc1 specification.  This class is
  * extended by org.postgresql.jdbc2.AbstractJdbc2Statement which adds the jdbc2
  * methods.  The real Statement class (for jdbc1) is org.postgresql.jdbc1.Jdbc1Statement
@@ -203,7 +203,7 @@ public abstract class AbstractJdbc1Statement implements BaseStatement
 		while (result != null && !result.reallyResultSet())
 			result = (BaseResultSet) result.getNext();
 		if (result == null)
-			throw new PSQLException("postgresql.stat.noresult");
+			throw new PSQLException("postgresql.stat.noresult", PSQLState.NO_DATA);
 		return (ResultSet) result;
 	}
 
@@ -443,9 +443,9 @@ public abstract class AbstractJdbc1Statement implements BaseStatement
 		if (isFunction)
 		{
 			if (!result.reallyResultSet())
-				throw new PSQLException("postgresql.call.noreturnval");
+				throw new PSQLException("postgresql.call.noreturnval", PSQLState.NO_DATA);
 			if (!result.next ())
-				throw new PSQLException ("postgresql.call.noreturnval");
+				throw new PSQLException ("postgresql.call.noreturnval", PSQLState.NO_DATA);
 			callResult = result.getObject(1);
 			int columnType = result.getMetaData().getColumnType(1);
 			if (columnType != functionReturnType)
@@ -1293,11 +1293,11 @@ public abstract class AbstractJdbc1Statement implements BaseStatement
 			}
 			catch (UnsupportedEncodingException l_uee)
 			{
-				throw new PSQLException("postgresql.unusual", l_uee);
+				throw new PSQLException("postgresql.unusual", PSQLState.UNEXPECTED_ERROR, l_uee);
 			}
 			catch (IOException l_ioe)
 			{
-				throw new PSQLException("postgresql.unusual", l_ioe);
+				throw new PSQLException("postgresql.unusual", PSQLState.UNEXPECTED_ERROR, l_ioe);
 			}
 		}
 		else
@@ -1342,11 +1342,11 @@ public abstract class AbstractJdbc1Statement implements BaseStatement
 			}
 			catch (UnsupportedEncodingException l_uee)
 			{
-				throw new PSQLException("postgresql.unusual", l_uee);
+				throw new PSQLException("postgresql.unusual", PSQLState.UNEXPECTED_ERROR, l_uee);
 			}
 			catch (IOException l_ioe)
 			{
-				throw new PSQLException("postgresql.unusual", l_ioe);
+				throw new PSQLException("postgresql.unusual", PSQLState.UNEXPECTED_ERROR, l_ioe);
 			}
 		}
 		else
@@ -1389,7 +1389,7 @@ public abstract class AbstractJdbc1Statement implements BaseStatement
 			}
 			catch (IOException l_ioe)
 			{
-				throw new PSQLException("postgresql.unusual", l_ioe);
+				throw new PSQLException("postgresql.unusual", PSQLState.UNEXPECTED_ERROR, l_ioe);
 			}
 			if (l_bytesRead == length)
 			{
@@ -1429,7 +1429,7 @@ public abstract class AbstractJdbc1Statement implements BaseStatement
 			}
 			catch (IOException se)
 			{
-				throw new PSQLException("postgresql.unusual", se);
+				throw new PSQLException("postgresql.unusual", PSQLState.UNEXPECTED_ERROR, se);
 			}
 			// lob is closed by the stream so don't call lob.close()
 			setInt(parameterIndex, oid);
@@ -2097,7 +2097,7 @@ public abstract class AbstractJdbc1Statement implements BaseStatement
 		}
 		catch (Exception e)
 		{
-			throw new PSQLException("postgresql.format.baddate", PSQLState.UNKNOWN_STATE, s , "yyyy-MM-dd[-tz]");
+			throw new PSQLException("postgresql.format.baddate", PSQLState.BAD_DATETIME_FORMAT, s , "yyyy-MM-dd[-tz]");
 		}
 		timezone = 0;
 		if (timezoneLocation>7 && timezoneLocation+3 == s.length())
@@ -2128,7 +2128,7 @@ public abstract class AbstractJdbc1Statement implements BaseStatement
 		}
 		catch (Exception e)
 		{
-			throw new PSQLException("postgresql.format.badtime", PSQLState.UNKNOWN_STATE, s, "HH:mm:ss[-tz]");
+			throw new PSQLException("postgresql.format.badtime", PSQLState.BAD_DATETIME_FORMAT, s, "HH:mm:ss[-tz]");
 		}
 		timezone = 0;
 		if (timezoneLocation != -1 && timezoneLocation+3 == s.length())
@@ -2167,7 +2167,7 @@ public abstract class AbstractJdbc1Statement implements BaseStatement
 		}
 		catch (Exception e)
 		{
-			throw new PSQLException("postgresql.format.badtimestamp", PSQLState.UNKNOWN_STATE, s, "yyyy-MM-dd HH:mm:ss[.xxxxxx][-tz]");
+			throw new PSQLException("postgresql.format.badtimestamp", PSQLState.BAD_DATETIME_FORMAT, s, "yyyy-MM-dd HH:mm:ss[.xxxxxx][-tz]");
 		}
 		timezone = 0;
 		if (nanospos != -1)

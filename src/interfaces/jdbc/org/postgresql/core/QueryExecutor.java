@@ -6,7 +6,7 @@
  * Copyright (c) 2003, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/core/Attic/QueryExecutor.java,v 1.24 2003/09/08 17:30:22 barry Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/core/Attic/QueryExecutor.java,v 1.25 2003/09/09 10:49:16 barry Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -340,7 +340,7 @@ public class QueryExecutor
 		}
 		catch (IOException e)
 		{
-			throw new PSQLException("postgresql.con.ioerror", e);
+			throw new PSQLException("postgresql.con.ioerror", PSQLState.CONNECTION_FAILURE_DURING_TRANSACTION, e);
 		}
 	}
 
@@ -370,7 +370,7 @@ public class QueryExecutor
 		}
 		catch (IOException e)
 		{
-			throw new PSQLException("postgresql.con.ioerror", e);
+			throw new PSQLException("postgresql.con.ioerror", PSQLState.CONNECTION_FAILURE_DURING_TRANSACTION, e);
 		}
 	}
 

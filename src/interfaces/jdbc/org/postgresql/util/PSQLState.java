@@ -28,6 +28,11 @@
 	// begin constant state codes
 	public final static PSQLState UNKNOWN_STATE = new PSQLState("");
 	public final static PSQLState COMMUNICATION_ERROR = new PSQLState("08S01");
+	public final static PSQLState NO_DATA = new PSQLState("02000");
+	public final static PSQLState CONNECTION_FAILURE_DURING_TRANSACTION = new PSQLState("08007");
+	public final static PSQLState UNEXPECTED_ERROR = new PSQLState("99999");
+	public final static PSQLState NUMERIC_VALUE_OUT_OF_RANGE = new PSQLState("22003");
+	public final static PSQLState BAD_DATETIME_FORMAT = new PSQLState("22007");
 	public final static PSQLState DATA_ERROR = new PSQLState("22000");
 	public final static PSQLState CONNECTION_DOES_NOT_EXIST = new PSQLState("08003");
 	public final static PSQLState CONNECTION_REJECTED = new PSQLState("08004");

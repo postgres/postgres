@@ -9,7 +9,7 @@
  * Copyright (c) 2003, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/AbstractJdbc1ResultSet.java,v 1.16 2003/09/08 17:30:22 barry Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/AbstractJdbc1ResultSet.java,v 1.17 2003/09/09 10:49:16 barry Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -242,7 +242,7 @@ public abstract class AbstractJdbc1ResultSet implements BaseResultSet
 			}
 			catch (NumberFormatException e)
 			{
-				throw new PSQLException("postgresql.res.badshort", s);
+				throw new PSQLException("postgresql.res.badshort", PSQLState.NUMERIC_VALUE_OUT_OF_RANGE, s);
 			}
 		}
 		return 0; // SQL NULL
@@ -368,7 +368,7 @@ public abstract class AbstractJdbc1ResultSet implements BaseResultSet
 			}
 			catch (UnsupportedEncodingException l_uee)
 			{
-				throw new PSQLException("postgresql.unusual", l_uee);
+				throw new PSQLException("postgresql.unusual", PSQLState.UNEXPECTED_ERROR, l_uee);
 			}
 		}
 		else
@@ -399,7 +399,7 @@ public abstract class AbstractJdbc1ResultSet implements BaseResultSet
 			}
 			catch (UnsupportedEncodingException l_uee)
 			{
-				throw new PSQLException("postgresql.unusual", l_uee);
+				throw new PSQLException("postgresql.unusual", PSQLState.UNEXPECTED_ERROR, l_uee);
 			}
 		}
 		else
@@ -814,7 +814,7 @@ public abstract class AbstractJdbc1ResultSet implements BaseResultSet
 			}
 			catch (NumberFormatException e)
 			{
-				throw new PSQLException ("postgresql.res.badint", s);
+				throw new PSQLException ("postgresql.res.badint", PSQLState.NUMERIC_VALUE_OUT_OF_RANGE, s);
 			}
 		}
 		return 0;		// SQL NULL
@@ -831,7 +831,7 @@ public abstract class AbstractJdbc1ResultSet implements BaseResultSet
 			}
 			catch (NumberFormatException e)
 			{
-				throw new PSQLException ("postgresql.res.badlong", s);
+				throw new PSQLException ("postgresql.res.badlong", PSQLState.NUMERIC_VALUE_OUT_OF_RANGE, s);
 			}
 		}
 		return 0;		// SQL NULL
@@ -849,7 +849,7 @@ public abstract class AbstractJdbc1ResultSet implements BaseResultSet
 			}
 			catch (NumberFormatException e)
 			{
-				throw new PSQLException ("postgresql.res.badbigdec", s);
+				throw new PSQLException ("postgresql.res.badbigdec", PSQLState.NUMERIC_VALUE_OUT_OF_RANGE, s);
 			}
 			if (scale == -1)
 				return val;
@@ -859,7 +859,7 @@ public abstract class AbstractJdbc1ResultSet implements BaseResultSet
 			}
 			catch (ArithmeticException e)
 			{
-				throw new PSQLException ("postgresql.res.badbigdec", s);
+				throw new PSQLException ("postgresql.res.badbigdec", PSQLState.NUMERIC_VALUE_OUT_OF_RANGE, s);
 			}
 		}
 		return null;		// SQL NULL
@@ -876,7 +876,7 @@ public abstract class AbstractJdbc1ResultSet implements BaseResultSet
 			}
 			catch (NumberFormatException e)
 			{
-				throw new PSQLException ("postgresql.res.badfloat", s);
+				throw new PSQLException ("postgresql.res.badfloat", PSQLState.NUMERIC_VALUE_OUT_OF_RANGE, s);
 			}
 		}
 		return 0;		// SQL NULL
@@ -893,7 +893,7 @@ public abstract class AbstractJdbc1ResultSet implements BaseResultSet
 			}
 			catch (NumberFormatException e)
 			{
-				throw new PSQLException ("postgresql.res.baddouble", s);
+				throw new PSQLException ("postgresql.res.baddouble", PSQLState.NUMERIC_VALUE_OUT_OF_RANGE, s);
 			}
 		}
 		return 0;		// SQL NULL
@@ -912,7 +912,7 @@ public abstract class AbstractJdbc1ResultSet implements BaseResultSet
 		}
 		catch (NumberFormatException e)
 		{
-			throw new PSQLException("postgresql.res.baddate", s);
+			throw new PSQLException("postgresql.res.baddate",PSQLState.BAD_DATETIME_FORMAT, s);
 		}
 	}
 
@@ -954,7 +954,7 @@ public abstract class AbstractJdbc1ResultSet implements BaseResultSet
 		}
 		catch (NumberFormatException e)
 		{
-			throw new PSQLException("postgresql.res.badtime", s);
+			throw new PSQLException("postgresql.res.badtime", PSQLState.BAD_DATETIME_FORMAT, s);
 		}
 	}
 
@@ -1055,7 +1055,7 @@ public abstract class AbstractJdbc1ResultSet implements BaseResultSet
 						}
 					catch (NumberFormatException e)
 						{
-							throw new PSQLException("postgresql.unusual", e);
+							throw new PSQLException("postgresql.unusual", PSQLState.UNEXPECTED_ERROR, e);
 						}
 
 					// The nanos field stores nanoseconds. Adjust the parsed
@@ -1140,7 +1140,7 @@ public abstract class AbstractJdbc1ResultSet implements BaseResultSet
 			}
 			catch (ParseException e)
 			{
-				throw new PSQLException("postgresql.res.badtimestamp", PSQLState.UNKNOWN_STATE, new Integer(e.getErrorOffset()), s);
+				throw new PSQLException("postgresql.res.badtimestamp", PSQLState.BAD_DATETIME_FORMAT, new Integer(e.getErrorOffset()), s);
 			}
 		}
 	}

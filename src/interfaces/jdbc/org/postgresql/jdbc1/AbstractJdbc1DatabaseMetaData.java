@@ -6,6 +6,7 @@ import java.util.*;
 import org.postgresql.core.BaseStatement;
 import org.postgresql.core.Field;
 import org.postgresql.util.PSQLException;
+import org.postgresql.util.PSQLState;
 import org.postgresql.Driver;
 
 public abstract class AbstractJdbc1DatabaseMetaData
@@ -43,7 +44,7 @@ public abstract class AbstractJdbc1DatabaseMetaData
 			String sql = "SELECT t1.typlen/t2.typlen FROM "+from+" t1.typelem=t2.oid AND t1.typname='oidvector'";
 			ResultSet rs = connection.createStatement().executeQuery(sql);
 			if (!rs.next()) {
-				throw new PSQLException("postgresql.unexpected");
+				throw new PSQLException("postgresql.unexpected", PSQLState.UNEXPECTED_ERROR);
 			}
 			INDEX_MAX_KEYS = rs.getInt(1);
 			rs.close();
@@ -61,7 +62,7 @@ public abstract class AbstractJdbc1DatabaseMetaData
 			}
 			ResultSet rs = connection.createStatement().executeQuery(sql);
 			if (!rs.next()) {
-				throw new PSQLException("postgresql.unexpected");
+				throw new PSQLException("postgresql.unexpected", PSQLState.UNEXPECTED_ERROR);
 			}
 			NAMEDATALEN = rs.getInt("typlen");
 			rs.close();
