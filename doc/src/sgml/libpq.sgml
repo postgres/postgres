@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/libpq.sgml,v 1.46 2000/11/13 23:37:51 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/libpq.sgml,v 1.47 2000/11/14 01:53:37 momjian Exp $
 -->
 
  <chapter id="libpq-chapter">
@@ -87,9 +87,10 @@ PGconn *PQconnectdb(const char *conninfo)
      <term><literal>host</literal></term>
      <listitem>
      <para>
-      Name of host to connect to. If a non-zero-length string is
-      specified, TCP/IP communication is used, else Unix sockets.
+      Name of host to connect to. 
       Using this parameter causes a hostname look-up.  See hostaddr.
+      If it begins with a slash, it is used
+      as the path to a unix domain socket.
      </para>
      </listitem>
     </varlistentry>
@@ -1838,7 +1839,8 @@ application programs.
 <listitem>
 <para>
 <envar>PGHOST</envar> sets the default server name.
-If a non-zero-length string is specified, TCP/IP communication is used.
+If it beings with a slash, it is used as the path to a unix domain
+socket.
 Without a host name, libpq will connect using a local Unix domain socket.
 </para>
 </listitem>
