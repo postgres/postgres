@@ -791,7 +791,7 @@ CopyVar(SplitVar *s, int makedup) {
 static SplitVar*
 SplitToVariants( IspellDict * Conf, SPNode *snode, SplitVar * orig, char *word, int wordlen, int startpos, int minpos ) {
 	SplitVar *var=NULL;
-	SPNodeData *StopLow, *StopHigh, *StopMiddle;
+	SPNodeData *StopLow, *StopHigh, *StopMiddle = NULL;
 	SPNode *node = (snode) ? snode : Conf->Dictionary;
 	int level=(snode) ? minpos : startpos; /* recursive minpos==level*/
 	int lenaff;
