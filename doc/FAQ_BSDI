@@ -1,27 +1,39 @@
-This outlines how to increase the number of shared memory buffers
-supported by BSD/OS.  By default, only 4MB of shared memory is supported
-by BSDI.
+This outlines modifications to BSD/OS for running PostgreSQL:
 
-Keep in mind that shared memory is not pageable.  It is locked in RAM.
+1)  How to increase resource limits
+2)  How to increase the number of shared memory buffers
 
-Bruce Momjian (pgman@candle.pha.pa.us)
+Bruce Momjian (pgman@candle.pha.pa.us)  2000-06-09
 
 ---------------------------------------------------------------------------
 
-Increase SHMMAXPGS by 1024 for every additional 4MB of shared
-memory:
+1)  To increase the amount of malloc'ed memory and files opened by
+PostgreSQL, add this:
+
+          :datasize-cur=600M:\
+          :openfiles-cur=256:
+
+to your /etc/login.conf file.
+
+---------------------------------------------------------------------------
+
+2a)  By default, only 4MB of shared memory is supported by BSDI. Keep in
+mind that shared memory is not pageable.  It is locked in RAM.
+
+To increase the number of buffers supported by the postmaseter, increase
+SHMMAXPGS by 1024 for every additional 4MB of shared memory:
 
 /sys/sys/shm.h:69:#define       SHMMAXPGS       1024    /* max hardware pages...
 
 The default setting of 1024 is for a maximum of 4MB of shared memory.
 
 For those running 4.1 or later, just recompile the kernel and reboot. 
-For those running earlier releases, there are more steps outlined below.
+For those running earlier releases, see step 2b.
 
 ---------------------------------------------------------------------------
 
-Use bpatch to find the sysptsize value for the current kernel. 
-This is computed dynamically at bootup.
+2b)  For 4.01 and earlier, use bpatch to find the sysptsize value for
+the current kernel.  This is computed dynamically at bootup.
 
 	$ bpatch -r sysptsize
 	0x9 = 9
