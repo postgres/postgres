@@ -12,82 +12,82 @@
 #pragma prefix ""
 
 module PostgreSQL {
-	
+
 	// Built-in types
-	
+
 	module Types {
 		// Arrays in network order
 		typedef short int2;
 		typedef long int4;
 		typedef long int8[2];
 	};
-	
-	
+
+
 	// NULL support
-	
+
 	typedef boolean Null;
-	
+
 	union Value switch (Null) {
 	  case FALSE: any value;
 	};
-	
-	
+
+
 	// Row definition
-	
+
 	typedef sequence<Value> Row;
-	
+
 	// <info>
 	// More about the application of COSS:
-	// 
+	//
 	// A Table will be a QueryableCollection of Rows
 	// A Database will be a QueryableCollection of Tables
 	// (Currently Tables are not exported... maybe later.)
 	// Both will be queryable via the Query Service
-	// 
+	//
 	// Other relations will be representable using the Relationship Service
 	// This includes primary/foreign keys and anything else :)
-	// 
+	//
 	// GRANT/REVOKE can be supplied via the Security Service
-	// 
+	//
 	// See a pattern here? The whole of SQL can be implemented by these services!
 	// The statements go through a parser. Queries and subqueries are passed to the
 	// database for processing. Returned items are handled appropriately:
-	// 
+	//
 	// SELECT: return the items to the caller
 	// UPDATE: modify the items (direct)
 	// DELETE: call delete() on each Row (direct)
 	// GRANT/REVOKE: modify ACLs (via Security Service)
 	// ALTER: modify the items (direct) and/or the relations (via Relationship Service)
 	// etc.
-	// 
+	//
 	// I'm not sure yet about LOCK and UNLOCK.
 	// </info>
-	
+
 	// Expirable object
-	
+
 	interface Expirable {
 		/* oneway? */ void keepalive();
 		void remove();
 	};
-	
-	
+
+
 	// Upcall object
-	
+
 	interface Upcall {
 		void notice(in string message);
 		void abort();
 	};
-	
-		
+
+
 	// Connected database object
-	
+
 	interface Database : CosQuery::QueryableCollection, Expirable {
 		void setupcall(in Upcall obj);
 	};
-	
-	
+
+
 	// Server object (stateless)
-	
+
 	interface Server {
 		Database connect(in string db, in string user, in string password);
 	};

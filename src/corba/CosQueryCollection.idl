@@ -1,4 +1,4 @@
-/* RCS $Id: CosQueryCollection.idl,v 1.1 1998/11/16 18:03:34 scrappy Exp $
+/* RCS $Id: CosQueryCollection.idl,v 1.2 2000/12/03 14:43:59 thomas Exp $
  *
  * ----------------------------------------------------------------------------
  * This is unmarked software provided by the Object Management Group,Inc. (OMG)
@@ -7,7 +7,7 @@
 
 
 /**
- * CosQueryCollection is the Common Object Services Specification query 
+ * CosQueryCollection is the Common Object Services Specification query
  * query colleciton module as it it appears in COSS1, v1.0.
  */
 
@@ -17,51 +17,51 @@
 
 module CosQueryCollection {
 
-  exception ElementInvalid {}; 
-  exception IteratorInvalid {}; 
+  exception ElementInvalid {};
+  exception IteratorInvalid {};
   exception PositionInvalid {};
 
-  typedef string Istring; 
+  typedef string Istring;
   struct NVPair {
-    Istring name; 
+    Istring name;
     any value;
-  }; 
+  };
 
   typedef sequence<NVPair> ParameterList;
 
-  interface Collection; 
+  interface Collection;
   interface Iterator;
 
-  interface CollectionFactory { 
-    Collection create (in ParameterList params); 
+  interface CollectionFactory {
+    Collection create (in ParameterList params);
   };
 
-  interface Collection { 
+  interface Collection {
 
     readonly attribute long cardinality;
 
-    void add_element (in any element) 
-      raises(ElementInvalid); 
-
-    void add_all_elements (in Collection elements)  
+    void add_element (in any element)
       raises(ElementInvalid);
 
-    void insert_element_at (in any element, in Iterator where)  
+    void add_all_elements (in Collection elements)
+      raises(ElementInvalid);
+
+    void insert_element_at (in any element, in Iterator where)
       raises(IteratorInvalid,
 	     ElementInvalid);
 
-    void replace_element_at (in any element, in Iterator  where) 
+    void replace_element_at (in any element, in Iterator  where)
       raises(IteratorInvalid,
 	     PositionInvalid,
 	     ElementInvalid);
 
-    void remove_element_at (in Iterator where)  
+    void remove_element_at (in Iterator where)
       raises(IteratorInvalid,
-	     PositionInvalid); 
+	     PositionInvalid);
 
     void remove_all_elements ();
 
-    any retrieve_element_at (in Iterator where)  
+    any retrieve_element_at (in Iterator where)
       raises(IteratorInvalid,
 	     PositionInvalid);
 
@@ -69,13 +69,13 @@ module CosQueryCollection {
 
   };
 
-  interface Iterator { 
+  interface Iterator {
     any next ()
       raises(IteratorInvalid,
 	     PositionInvalid);
     void reset ();
-    boolean more (); 
-  }; 
+    boolean more ();
+  };
 
 };
 
