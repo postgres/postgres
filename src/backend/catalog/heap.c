@@ -7,17 +7,18 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.37 1997/11/26 04:50:19 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.38 1997/11/28 04:39:34 momjian Exp $
  *
  * INTERFACE ROUTINES
- *		heap_creatr()			- Create an uncataloged heap relation
- *		heap_create()			- Create a cataloged relation
+ *		heap_create()			- Create an uncataloged heap relation
+ *		heap_create_and_catalog() - Create a cataloged relation
  *		heap_destroy()			- Removes named relation from catalogs
  *
  * NOTES
  *	  this code taken from access/heap/create.c, which contains
- *	  the old heap_creater, amcreate, and amdestroy.  those routines
- *	  will soon call these routines using the function manager,
+ *	  the old heap_create_and_catalogr, amcreate, and amdestroy.
+ *	  those routines will soon call these routines using the function
+ *	  manager,
  *	  just like the poorly named "NewXXX" routines do.	The
  *	  "New" routines are all going to die soon, once and for all!
  *		-cim 1/13/91
@@ -148,7 +149,7 @@ static TempRelList *tempRels = NULL;
 
 
 /* ----------------------------------------------------------------
- *		heap_creatr		- Create an uncataloged heap relation
+ *		heap_create		- Create an uncataloged heap relation
  *
  *		Fields relpages, reltuples, reltuples, relkeys, relhistory,
  *		relisindexed, and relkind of rdesc->rd_rel are initialized
@@ -160,12 +161,12 @@ static TempRelList *tempRels = NULL;
  *		into the transaction context block.
  *
  *
- * if heap_creatr is called with "" as the name, then heap_creatr will create a
- * temporary name	"temp_$RELOID" for the relation
+ * if heap_create is called with "" as the name, then heap_create will create
+ * a temporary name	"temp_$RELOID" for the relation
  * ----------------------------------------------------------------
  */
 Relation
-heap_creatr(char *name,
+heap_create(char *name,
 			TupleDesc tupDesc)
 {
 	register unsigned i;
@@ -331,7 +332,7 @@ heap_creatr(char *name,
 
 
 /* ----------------------------------------------------------------
- *		heap_create		- Create a cataloged relation
+ *		heap_create_and_catalog		- Create a cataloged relation
  *
  *		this is done in 6 steps:
  *
@@ -342,8 +343,8 @@ heap_creatr(char *name,
  *		   preforms a scan to ensure that no relation with the
  *		   same name already exists.
  *
- *		3) heap_creater() is called to create the new relation on
- *		   disk.
+ *		3) heap_create_and_catalogr() is called to create the new relation
+ *		   on disk.
  *
  *		4) TypeDefine() is called to define a new type corresponding
  *		   to the new relation.
@@ -375,8 +376,8 @@ heap_creatr(char *name,
  *		create new relation
  *		insert new relation into attribute catalog
  *
- *		Should coordinate with heap_creater().	Either it should
- *		not be called or there should be a way to prevent
+ *		Should coordinate with heap_create_and_catalogr().	Either
+ *		it should not be called or there should be a way to prevent
  *		the relation from being removed at the end of the
  *		transaction if it is successful ('u'/'r' may be enough).
  *		Also, if the transaction does not commit, then the
@@ -738,14 +739,14 @@ addNewRelationType(char *typeName, Oid new_rel_oid)
 }
 
 /* --------------------------------
- *		heap_create
+ *		heap_create_and_catalog
  *
  *		creates a new cataloged relation.  see comments above.
  * --------------------------------
  */
 Oid
-heap_create(char relname[],
-			TupleDesc tupdesc)
+heap_create_and_catalog(char relname[],
+						TupleDesc tupdesc)
 {
 	Relation	pg_class_desc;
 	Relation	new_rel_desc;
@@ -782,11 +783,11 @@ heap_create(char relname[],
 	 *	create an uncataloged relation and pull its relation oid
 	 *	from the newly formed relation descriptor.
 	 *
-	 *	Note: The call to heap_creatr() does all the "real" work
+	 *	Note: The call to heap_create() does all the "real" work
 	 *	of creating the disk file for the relation.
 	 * ----------------
 	 */
-	new_rel_desc = heap_creatr(relname, tupdesc);
+	new_rel_desc = heap_create(relname, tupdesc);
 	new_rel_oid = new_rel_desc->rd_att->attrs[0]->attrelid;
 
 	/* ----------------

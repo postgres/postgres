@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execAmi.c,v 1.11 1997/11/27 02:23:01 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execAmi.c,v 1.12 1997/11/28 04:40:03 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -443,10 +443,10 @@ ExecCreatR(TupleDesc tupType,
 */
 
 		/*
-		 * heap_creatr creates a name if the argument to heap_creatr is
+		 * heap_create creates a name if the argument to heap_create is
 		 * '\0 '
 		 */
-		relDesc = heap_creatr("", tupType);
+		relDesc = heap_create("", tupType);
   	}
 	else
 	{

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/large_object/inv_api.c,v 1.22 1997/11/21 19:02:37 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/large_object/inv_api.c,v 1.23 1997/11/28 04:40:28 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -139,7 +139,7 @@ inv_create(int flags)
 	 * be located on whatever storage manager the user requested.
 	 */
 
-	heap_create(objname, tupdesc);
+	heap_create_and_catalog(objname, tupdesc);
 
 	/* make the relation visible in this transaction */
 	CommandCounterIncrement();
