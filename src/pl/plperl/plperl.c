@@ -33,7 +33,7 @@
  *	  ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plperl/plperl.c,v 1.27 2002/01/24 16:53:42 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plperl/plperl.c,v 1.28 2002/01/24 21:40:44 tgl Exp $
  *
  **********************************************************************/
 
@@ -80,7 +80,14 @@
 
 #include "EXTERN.h"
 #include "perl.h"
+#include "XSUB.h"
 #include "ppport.h"
+
+/* just in case these symbols aren't provided */
+#ifndef pTHX_
+#define pTHX_
+#define pTHX void
+#endif
 
 
 /**********************************************************************
@@ -124,7 +131,7 @@ static Datum plperl_func_handler(PG_FUNCTION_ARGS);
 static plperl_proc_desc *compile_plperl_function(Oid fn_oid, bool is_trigger);
 
 static SV  *plperl_build_tuple_argument(HeapTuple tuple, TupleDesc tupdesc);
-static void plperl_init_shared_libs(void);
+static void plperl_init_shared_libs(pTHX);
 
 
 /*
@@ -350,11 +357,11 @@ plperl_create_sub(char *s, bool trusted)
  *
  **********************************************************************/
 
-extern void boot_DynaLoader _((CV * cv));
-extern void boot_SPI _((CV * cv));
+EXTERN_C void boot_DynaLoader(pTHX_ CV* cv);
+EXTERN_C void boot_SPI(pTHX_ CV* cv);
 
 static void
-plperl_init_shared_libs(void)
+plperl_init_shared_libs(pTHX)
 {
 	char	   *file = __FILE__;
 
