@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/cluster.sgml,v 1.17 2002/08/10 20:43:46 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/cluster.sgml,v 1.18 2002/08/10 21:03:33 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -183,9 +183,12 @@ SELECT <replaceable class="parameter">columnlist</replaceable> INTO TABLE <repla
    </para>
 
    <para>
-    As opposed to previous releases, CLUSTER does not lose GRANT,
-    inheritance or foreign key information, and preserves indexes
-    other than the one being used for the CLUSTER.
+    CLUSTER preserves GRANT, inheritance index, and foreign key information.
+   </para>
+
+   <para>
+    Because the optimizer records the cluster status of tables, it is 
+    advised to run <command>ANALYZE</command> on the newly clustered table.
    </para>
 
   </refsect2>
@@ -238,3 +241,4 @@ sgml-local-catalogs:"/usr/lib/sgml/catalog"
 sgml-local-ecat-files:nil
 End:
 -->
+
