@@ -1,17 +1,14 @@
-Official releases of PostgreSQL contain INSTALL and HISTORY files in
-this directory.
-
-For people using CVS checkouts, you can view the install instructions
-at:
-
-	http://developer.postgresql.org/docs/postgres/installation.html
-
-The release notes can be viewed at:
-
-	http://developer.postgresql.org/docs/postgres/release.html
-
 (This file does not appear in release tarballs.)
 
-Note that users compiling from CVS will also need compatible versions
-of Bison and Flex, as discussed in the install documentation (Bison
-and Flex are not needed when using an official release of PostgreSQL.)
+In a release or snapshot tarball of PostgreSQL, documentation files named
+INSTALL and HISTORY will appear in this directory.  However, these files are
+not stored in CVS and so will not be present if you are using a CVS checkout.
+If you are using CVS, you can view the most recent install instructions at:
+	http://developer.postgresql.org/docs/postgres/installation.html
+and the current release notes at:
+	http://developer.postgresql.org/docs/postgres/release.html
+
+Users compiling from CVS will also need compatible versions of Bison and
+Flex, as discussed in the install documentation.  Bison and Flex are not
+needed when using a tarball, since the files they are needed to build are
+already present in the tarball.
