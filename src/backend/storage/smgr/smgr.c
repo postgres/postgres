@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/smgr.c,v 1.22 1999/02/13 23:18:39 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/smgr.c,v 1.23 1999/04/23 19:37:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -170,7 +170,7 @@ smgrextend(int16 which, Relation reln, char *buffer)
 	status = (*(smgrsw[which].smgr_extend)) (reln, buffer);
 
 	if (status == SM_FAIL)
-		elog(ERROR, "%s: cannot extend", reln->rd_rel->relname.data);
+		elog(ERROR, "%s: cannot extend.  Check free disk space.", reln->rd_rel->relname.data);
 
 	return status;
 }
