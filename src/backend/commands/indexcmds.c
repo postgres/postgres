@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.60 2001/10/25 05:49:25 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.61 2001/11/20 02:46:13 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -637,6 +637,9 @@ ReindexDatabase(const char *dbname, bool force, bool all)
 											ALLOCSET_DEFAULT_INITSIZE,
 											ALLOCSET_DEFAULT_MAXSIZE);
 
+	/*
+	 * Scan pg_class to build a list of the relations we need to reindex.
+	 */
 	relationRelation = heap_openr(RelationRelationName, AccessShareLock);
 	scan = heap_beginscan(relationRelation, false, SnapshotNow, 0, NULL);
 	relcnt = relalc = 0;
@@ -645,8 +648,6 @@ ReindexDatabase(const char *dbname, bool force, bool all)
 		if (!all)
 		{
 			if (!IsSystemRelationName(NameStr(((Form_pg_class) GETSTRUCT(tuple))->relname)))
-				continue;
-			if (((Form_pg_class) GETSTRUCT(tuple))->relhasrules)
 				continue;
 		}
 		if (((Form_pg_class) GETSTRUCT(tuple))->relkind == RELKIND_RELATION)
@@ -670,6 +671,7 @@ ReindexDatabase(const char *dbname, bool force, bool all)
 	heap_endscan(scan);
 	heap_close(relationRelation, AccessShareLock);
 
+	/* Now reindex each rel in a separate transaction */
 	CommitTransactionCommand();
 	for (i = 0; i < relcnt; i++)
 	{

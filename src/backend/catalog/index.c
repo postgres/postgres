@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.169 2001/11/05 17:46:24 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.170 2001/11/20 02:46:13 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1874,9 +1874,26 @@ reindex_index(Oid indexId, bool force, bool inplace)
 	 * REINDEX within a transaction block is dangerous, because if the
 	 * transaction is later rolled back we have no way to undo truncation
 	 * of the index's physical file.  Disallow it.
+	 *
+	 * XXX if we're not doing an inplace rebuild, wouldn't this be okay?
 	 */
 	if (IsTransactionBlock())
 		elog(ERROR, "REINDEX cannot run inside a transaction block");
+
+	/*
+	 * Open our index relation and get an exclusive lock on it.
+	 *
+	 * Note: doing this before opening the parent heap relation means
+	 * there's a possibility for deadlock failure against another xact
+	 * that is doing normal accesses to the heap and index.  However,
+	 * it's not real clear why you'd be needing to do REINDEX on a table
+	 * that's in active use, so I'd rather have the protection of making
+	 * sure the index is locked down.
+	 */
+	iRel = index_open(indexId);
+	if (iRel == NULL)
+		elog(ERROR, "reindex_index: can't open index relation");
+	LockRelation(iRel, AccessExclusiveLock);
 
 	old = SetReindexProcessing(true);
 
@@ -1898,22 +1915,17 @@ reindex_index(Oid indexId, bool force, bool inplace)
 	heap_endscan(scan);
 	heap_close(indexRelation, AccessShareLock);
 
-	/* Open our index relation */
+	/* Open the parent heap relation */
 	heapRelation = heap_open(heapId, ExclusiveLock);
 	if (heapRelation == NULL)
 		elog(ERROR, "reindex_index: can't open heap relation");
-	iRel = index_open(indexId);
-	if (iRel == NULL)
-		elog(ERROR, "reindex_index: can't open index relation");
 
-	if (!inplace)
-	{
-		inplace = iRel->rd_rel->relisshared;
-		if (!inplace)
-			setNewRelfilenode(iRel);
-	}
-	/* Obtain exclusive lock on it, just to be sure */
-	LockRelation(iRel, AccessExclusiveLock);
+	/*
+	 * Force inplace processing if it's a shared index.  Necessary because
+	 * we have no way to update relfilenode in other databases.
+	 */
+	if (iRel->rd_rel->relisshared)
+		inplace = true;
 
 	if (inplace)
 	{
@@ -1927,6 +1939,13 @@ reindex_index(Oid indexId, bool force, bool inplace)
 		smgrtruncate(DEFAULT_SMGR, iRel, 0);
 		iRel->rd_nblocks = 0;
 		iRel->rd_targblock = InvalidBlockNumber;
+	}
+	else
+	{
+		/*
+		 * We'll build a new physical relation for the index.
+		 */
+		setNewRelfilenode(iRel);
 	}
 
 	/* Initialize the index and rebuild */
@@ -1982,11 +2001,9 @@ reindex_relation(Oid relid, bool force)
 	HeapTuple	indexTuple;
 	bool		old,
 				reindexed;
-
 	bool		deactivate_needed,
 				overwrite,
 				upd_pg_class_inplace;
-
 	Relation	rel;
 
 	overwrite = upd_pg_class_inplace = deactivate_needed = false;
