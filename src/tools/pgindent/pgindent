@@ -1664,7 +1664,7 @@ do
 -Tyy_state_type \
 -Tyysigned_char \
 -Tz_stream \
--Tz_streamp
+-Tz_streamp \
 /tmp/$$a >/tmp/$$ 2>&1
 	if [ "$?" -ne 0 -o -s /tmp/$$ ]
 	then	echo
