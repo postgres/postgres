@@ -7,4 +7,4 @@ sort tags >/tmp/$$ && mv /tmp/$$ tags
 find . -type d -print |while read DIR
 do
 	[ "$DIR" != "." ] && ln -f -s `pwd`/tags $DIR/tags
-done
+done 
