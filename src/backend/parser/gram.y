@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.115 1999/11/20 21:39:36 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.116 1999/11/30 03:57:24 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -137,6 +137,7 @@ static Node *doNegate(Node *n);
 
 %type <pboolean> user_createdb_clause, user_createuser_clause
 %type <str>		user_passwd_clause
+%type <ival>            sysid_clause
 %type <str>		user_valid_clause
 %type <list>	user_group_list, user_group_clause
 
@@ -295,6 +296,7 @@ static Node *doNegate(Node *n);
 		VALUES, VARCHAR, VARYING, VIEW,
 		WHEN, WHERE, WITH, WORK, YEAR_P, ZONE
 
+
 /* Keywords (in SQL3 reserved words) */
 %token	DEFERRABLE, DEFERRED,
 		IMMEDIATE, INITIALLY,
@@ -323,7 +325,7 @@ static Node *doNegate(Node *n);
 		NEW, NOCREATEDB, NOCREATEUSER, NONE, NOTHING, NOTIFY, NOTNULL,
 		OFFSET, OIDS, OPERATOR, PASSWORD, PROCEDURAL,
 		RENAME, RESET, RETURNS, ROW, RULE,
-		SEQUENCE, SERIAL, SETOF, SHARE, SHOW, START, STATEMENT, STDIN, STDOUT,
+		SEQUENCE, SERIAL, SETOF, SHARE, SHOW, START, STATEMENT, STDIN, STDOUT, SYSID,
 		TRUNCATE, TRUSTED, 
 		UNLISTEN, UNTIL, VACUUM, VALID, VERBOSE, VERSION
 
@@ -443,18 +445,34 @@ stmt :	  AddAttrStmt
  *
  *****************************************************************************/
 
-CreateUserStmt:  CREATE USER UserId user_passwd_clause user_createdb_clause
-			user_createuser_clause user_group_clause user_valid_clause
+CreateUserStmt:  CREATE USER UserId
+                 user_createdb_clause user_createuser_clause user_group_clause
+                 user_valid_clause
 				{
 					CreateUserStmt *n = makeNode(CreateUserStmt);
 					n->user = $3;
-					n->password = $4;
-					n->createdb = $5;
-					n->createuser = $6;
-					n->groupElts = $7;
-					n->validUntil = $8;
+                    n->sysid = -1;
+					n->password = NULL;
+					n->createdb = $4;
+					n->createuser = $5;
+					n->groupElts = $6;
+					n->validUntil = $7;
 					$$ = (Node *)n;
 				}
+                | CREATE USER UserId WITH sysid_clause user_passwd_clause
+                user_createdb_clause user_createuser_clause user_group_clause
+                user_valid_clause
+               {
+					CreateUserStmt *n = makeNode(CreateUserStmt);
+					n->user = $3;
+                    n->sysid = $5;
+					n->password = $6;
+					n->createdb = $7;
+					n->createuser = $8;
+					n->groupElts = $9;
+					n->validUntil = $10;
+					$$ = (Node *)n;
+               }                   
 		;
 
 /*****************************************************************************
@@ -464,16 +482,31 @@ CreateUserStmt:  CREATE USER UserId user_passwd_clause user_createdb_clause
  *
  *****************************************************************************/
 
-AlterUserStmt:  ALTER USER UserId user_passwd_clause user_createdb_clause
-			user_createuser_clause user_group_clause user_valid_clause
+AlterUserStmt:  ALTER USER UserId user_createdb_clause
+                user_createuser_clause user_group_clause user_valid_clause
 				{
 					AlterUserStmt *n = makeNode(AlterUserStmt);
 					n->user = $3;
-					n->password = $4;
-					n->createdb = $5;
-					n->createuser = $6;
-					n->groupElts = $7;
-					n->validUntil = $8;
+                    n->sysid = -1;
+					n->password = NULL;
+					n->createdb = $4;
+					n->createuser = $5;
+					n->groupElts = $6;
+					n->validUntil = $7;
+					$$ = (Node *)n;
+				}
+              | ALTER USER UserId WITH sysid_clause user_passwd_clause
+                user_createdb_clause
+                user_createuser_clause user_group_clause user_valid_clause
+				{
+					AlterUserStmt *n = makeNode(AlterUserStmt);
+					n->user = $3;
+                    n->sysid = $5;
+					n->password = $6;
+					n->createdb = $7;
+					n->createuser = $8;
+					n->groupElts = $9;
+					n->validUntil = $10;
 					$$ = (Node *)n;
 				}
 		;
@@ -493,9 +526,13 @@ DropUserStmt:  DROP USER UserId
 				}
 		;
 
-user_passwd_clause:  WITH PASSWORD UserId		{ $$ = $3; }
-			| /*EMPTY*/							{ $$ = NULL; }
+user_passwd_clause:  PASSWORD UserId		        { $$ = $2; }
+                        | /*EMPTY*/					{ $$ = NULL; }
 		;
+
+sysid_clause: SYSID Iconst                              { $$ = $2; }
+                        | /*EMPTY*/                     { $$ = -1; }
+        ;
 
 user_createdb_clause:  CREATEDB
 				{
@@ -537,7 +574,13 @@ user_group_list:  user_group_list ',' UserId
 				}
 		;
 
-user_group_clause:  IN GROUP user_group_list	{ $$ = $3; }
+user_group_clause:  IN GROUP user_group_list
+                                {
+                                        /* the backend doesn't actually process this,
+                                         * so an error message is probably fairer */
+                                        yyerror("IN GROUP is not implemented");
+                                        /* $$ = $3; */
+                                }
 			| /*EMPTY*/							{ $$ = NULL; }
 		;
 
@@ -4764,6 +4807,7 @@ ColId:  IDENT							{ $$ = $1; }
 		| STATEMENT						{ $$ = "statement"; }
 		| STDIN							{ $$ = "stdin"; }
 		| STDOUT						{ $$ = "stdout"; }
+                | SYSID                                                 { $$ = "sysid"; }
 		| TIME							{ $$ = "time"; }
 		| TIMESTAMP						{ $$ = "timestamp"; }
 		| TIMEZONE_HOUR					{ $$ = "timezone_hour"; }

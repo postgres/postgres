@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_user.sgml,v 1.9 1999/10/07 16:40:36 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_user.sgml,v 1.10 1999/11/30 03:57:23 momjian Exp $
 Postgres documentation
 -->
 
@@ -23,8 +23,10 @@ Postgres documentation
    <date>1999-07-20</date>
   </refsynopsisdivinfo>
   <synopsis>
-CREATE USER<replaceable class="PARAMETER"> username</replaceable>
-    [ WITH PASSWORD <replaceable class="PARAMETER">password</replaceable> ]
+CREATE USER <replaceable class="PARAMETER">username</replaceable>
+    [ WITH
+     [ SYSID <replaceable class="PARAMETER">uid</replaceable> ]
+     [ PASSWORD <replaceable class="PARAMETER">password</replaceable> ] ]
     [ CREATEDB   | NOCREATEDB ] [ CREATEUSER | NOCREATEUSER ]
     [ IN GROUP     <replaceable class="PARAMETER">groupname</replaceable> [, ...] ]
     [ VALID UNTIL  '<replaceable class="PARAMETER">abstime</replaceable>' ]
@@ -50,10 +52,27 @@ CREATE USER<replaceable class="PARAMETER"> username</replaceable>
      </varlistentry>
 
      <varlistentry>
+      <term><replaceable class="parameter">uid</replaceable></term>
+      <listitem>
+       <para>
+        The <literal>SYSID</literal> clause can be used to choose
+        the <productname>PostgreSQL</productname> user id of the user
+        that is being created. It is not at all necessary that those
+        match the <acronym>UNIX</acronym> user ids, but some people
+        choose to keep the numbers the same.
+       </para>
+       <para>
+        If this is not specified, the highest assigned user id plus one
+        will be used as default.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term><replaceable class="parameter">password</replaceable></term>
       <listitem>
        <para>
-	The WITH PASSWORD clause sets the user's password within
+	The PASSWORD clause sets the user's password within
 	the "<filename>pg_shadow</filename>" table. For this reason,
 	<filename>"pg_shadow</filename>" is no
 	longer accessible to the instance of
@@ -173,30 +192,9 @@ CREATE USER
   </title>
   <para>
    CREATE USER will add a new user to an instance of 
-   <productname>Postgres</productname>.
+   <productname>PostgreSQL</productname>.
   </para>
 
-  <para>
-   The new user will be given a <filename>usesysid</filename> of:
-
-   <programlisting>
-SELECT MAX(usesysid) + 1 FROM pg_shadow;
-   </programlisting>
-
-   This means that 
-   <productname>Postgres</productname> users' <filename>usesysid</filename>s will not
-   correspond to their operating
-   system(OS) user ids. The exception to this rule is
-   the <literal>postgres</literal> superuser, whose OS user id
-   is used as the
-   <filename>usesysid</filename> during the initdb process. 
-   If you still want the
-   OS user id and the <filename>usesysid</filename> to match
-   for any given user,
-   use the <application>createuser</application> script provided with
-   the <productname>Postgres</productname> distribution.
-  </para>
-  
   <refsect2 id="R2-SQL-CREATEUSER-3">
    <refsect2info>
     <date>1998-09-21</date>
@@ -216,19 +214,17 @@ SELECT MAX(usesysid) + 1 FROM pg_shadow;
     Refer to the <filename>pg_shadow</filename> table for further information.
    </para>
    <programlisting>
-   Table    = pg_shadow
-   +--------------------------+--------------------------+-------+
-   |          Field           |          Type            | Length|
-   +--------------------------+--------------------------+-------+
-   | usename                  | name                     |    32 |
-   | usesysid                 | int4                     |     4 |
-   | usecreatedb              | bool                     |     1 |
-   | usetrace                 | bool                     |     1 |
-   | usesuper                 | bool                     |     1 |
-   | usecatupd                | bool                     |     1 |
-   | passwd                   | text                     |   var |
-   | valuntil                 | abstime                  |     4 |
-   +--------------------------+--------------------------+-------+
+      Table "pg_shadow"
+  Attribute  |  Type   | Extra
+-------------+---------+-------
+ usename     | name    |
+ usesysid    | int4    |
+ usecreatedb | bool    |
+ usetrace    | bool    |
+ usesuper    | bool    |
+ usecatupd   | bool    |
+ passwd      | text    |
+ valuntil    | abstime |
    </programlisting>
   </refsect2>
  </refsect1>

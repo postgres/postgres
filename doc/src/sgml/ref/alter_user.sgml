@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_user.sgml,v 1.8 1999/07/22 15:09:06 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_user.sgml,v 1.9 1999/11/30 03:57:22 momjian Exp $
 Postgres documentation
 -->
 
@@ -23,7 +23,10 @@ Postgres documentation
    <date>1999-07-20</date>
   </refsynopsisdivinfo>
   <synopsis>
-ALTER USER <replaceable class="PARAMETER">username</replaceable> [ WITH PASSWORD <replaceable class="PARAMETER">password</replaceable> ]
+ALTER USER <replaceable class="PARAMETER">username</replaceable>
+    [ WITH
+     [ SYSID <replaceable class="PARAMETER">uid</replaceable> ]
+     [ PASSWORD <replaceable class="PARAMETER">password</replaceable> ] ]
     [ CREATEDB | NOCREATEDB ] [ CREATEUSER | NOCREATEUSER ]
     [ IN GROUP <replaceable class="PARAMETER">groupname</replaceable> [, ...] ]
     [ VALID UNTIL '<replaceable class="PARAMETER">abstime</replaceable>' ]
@@ -58,6 +61,22 @@ ALTER USER <replaceable class="PARAMETER">username</replaceable> [ WITH PASSWORD
       <listitem>
        <para>
 	The new password to be used for this account.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><replaceable class="parameter">uid</replaceable></term>
+      <listitem>
+       <para>
+        The new <productname>PostgreSQL</productname> user id of the user.
+        Since this number is used as a key into the
+        <literal>pg_shadow</literal>/<literal>pg_user</literal> table
+        throughout the system catalogs, it is not recommended that you change
+        it unless the user in question does not own anything at all and/or
+        you really know what you are doing. Note that it is not necessary that
+        database and <acronym>UNIX</acronym> user ids match, but some people
+        choose to keep the numbers the same.
        </para>
       </listitem>
      </varlistentry>
@@ -130,9 +149,7 @@ ERROR: alterUser: user "username" does not exist
   <para>
    <command>ALTER USER</command> is used to change the attributes of a user's
    <productname>Postgres</productname> account.
-   Please note that it is not possible
-   to alter a user's "<literal>usesysid</literal>" via the alter user
-   statement. Also, it is only possible for the
+   Also, it is only possible for the
    <productname>Postgres</productname>
    user or any user with read and modify permissions on
    <literal>pg_shadow</literal> to alter user passwords.
@@ -161,9 +178,7 @@ ERROR: alterUser: user "username" does not exist
     to create or remove a user account.
    </para>
    <para>
-    In the current release (v6.5), the IN GROUP clause is parsed
-    but has no affect.  When it is fully implemented, it is
-    intended to modify the pg_group relation.
+    The IN GROUP clause is not yet implemented.
    </para>
   </refsect2>
  </refsect1>

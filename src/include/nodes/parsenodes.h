@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsenodes.h,v 1.86 1999/10/26 03:12:39 momjian Exp $
+ * $Id: parsenodes.h,v 1.87 1999/11/30 03:57:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -237,6 +237,7 @@ typedef struct CreateUserStmt
 	NodeTag		type;
 	char	   *user;			/* PostgreSQL user login			  */
 	char	   *password;		/* PostgreSQL user password			  */
+    int         sysid;          /* PgSQL system id (-1 if don't care) */
 	bool	   *createdb;		/* Can the user create databases?	  */
 	bool	   *createuser;		/* Can this user create users?		  */
 	List	   *groupElts;		/* The groups the user is a member of */

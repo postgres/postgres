@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: user.c,v 1.38 1999/11/24 16:52:32 momjian Exp $
+ * $Id: user.c,v 1.39 1999/11/30 03:57:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -105,14 +105,15 @@ DefineUser(CreateUserStmt *stmt, CommandDest dest)
 	TupleDesc	pg_shadow_dsc;
 	HeapScanDesc scan;
 	HeapTuple	tuple;
-	Datum		datum;
-	bool		exists = false,
-				n,
+	bool		user_exists = false,
+                sysid_exists = false,
 				inblock,
+                havesysid,
 				havepassword,
 				havevaluntil;
 	int			max_id = -1;
 
+    havesysid    = stmt->sysid >= 0;
 	havepassword = stmt->password && stmt->password[0];
 	havevaluntil = stmt->validUntil && stmt->validUntil[0];
 
@@ -129,13 +130,13 @@ DefineUser(CreateUserStmt *stmt, CommandDest dest)
 	if (pg_aclcheck(ShadowRelationName, pg_shadow, ACL_RD | ACL_WR | ACL_AP) != ACLCHECK_OK)
 	{
 		UserAbortTransactionBlock();
-		elog(ERROR, "defineUser: user \"%s\" does not have SELECT and INSERT privilege for \"%s\"",
+		elog(ERROR, "DefineUser: user \"%s\" does not have SELECT and INSERT privilege for \"%s\"",
 			 pg_shadow, ShadowRelationName);
 		return;
 	}
 
 	/*
-	 * Scan the pg_shadow relation to be certain the user doesn't already
+	 * Scan the pg_shadow relation to be certain the user or id doesn't already
 	 * exist.  Note we secure exclusive lock, because we also need to be
 	 * sure of what the next usesysid should be, and we need to protect
 	 * our update of the flat password file.
@@ -144,25 +145,33 @@ DefineUser(CreateUserStmt *stmt, CommandDest dest)
 	pg_shadow_dsc = RelationGetDescr(pg_shadow_rel);
 
 	scan = heap_beginscan(pg_shadow_rel, false, SnapshotNow, 0, NULL);
-	while (HeapTupleIsValid(tuple = heap_getnext(scan, 0)))
+	while (!user_exists && !sysid_exists && HeapTupleIsValid(tuple = heap_getnext(scan, 0)))
 	{
-		datum = heap_getattr(tuple, Anum_pg_shadow_usename, pg_shadow_dsc, &n);
+        Datum		datum;
+        bool        null;
 
-		if (!exists && !strncmp((char *) datum, stmt->user, strlen(stmt->user)))
-			exists = true;
+		datum = heap_getattr(tuple, Anum_pg_shadow_usename, pg_shadow_dsc, &null);
+		user_exists = datum && !null && (strcmp((char *) datum, stmt->user) == 0);
 
-		datum = heap_getattr(tuple, Anum_pg_shadow_usesysid, pg_shadow_dsc, &n);
-		if ((int) datum > max_id)
-			max_id = (int) datum;
+		datum = heap_getattr(tuple, Anum_pg_shadow_usesysid, pg_shadow_dsc, &null);
+        if (havesysid) /* customized id wanted */
+            sysid_exists = datum && !null && ((int)datum == stmt->sysid);
+        else /* pick 1 + max */
+        {
+            if ((int) datum > max_id)
+                max_id = (int) datum;
+        }
 	}
 	heap_endscan(scan);
 
-	if (exists)
+	if (user_exists || sysid_exists)
 	{
 		heap_close(pg_shadow_rel, AccessExclusiveLock);
 		UserAbortTransactionBlock();
-		elog(ERROR,
-		 "defineUser: user \"%s\" has already been created", stmt->user);
+        if (user_exists)
+            elog(ERROR, "DefineUser: user name \"%s\" already exists", stmt->user);
+        else
+            elog(ERROR, "DefineUser: sysid %d is already assigned", stmt->sysid);
 		return;
 	}
 
@@ -184,7 +193,7 @@ DefineUser(CreateUserStmt *stmt, CommandDest dest)
 			 "values('%s',%d,'%c','f','%c','%c',%s%s%s,%s%s%s)",
 			 ShadowRelationName,
 			 stmt->user,
-			 max_id + 1,
+			 havesysid ? stmt->sysid : max_id + 1,
 			 (stmt->createdb && *stmt->createdb) ? 't' : 'f',
 			 (stmt->createuser && *stmt->createuser) ? 't' : 'f',
 			 ((stmt->createdb && *stmt->createdb) ||
@@ -234,6 +243,7 @@ AlterUser(AlterUserStmt *stmt, CommandDest dest)
 	TupleDesc	pg_shadow_dsc;
 	HeapTuple	tuple;
 	bool		inblock;
+    bool        comma = false;
 
 	if (stmt->password)
 		CheckPgUserAclNotNull();
@@ -248,7 +258,7 @@ AlterUser(AlterUserStmt *stmt, CommandDest dest)
 	if (pg_aclcheck(ShadowRelationName, pg_shadow, ACL_RD | ACL_WR) != ACLCHECK_OK)
 	{
 		UserAbortTransactionBlock();
-		elog(ERROR, "alterUser: user \"%s\" does not have SELECT and UPDATE privilege for \"%s\"",
+		elog(ERROR, "AlterUser: user \"%s\" does not have SELECT and UPDATE privilege for \"%s\"",
 			 pg_shadow, ShadowRelationName);
 		return;
 	}
@@ -268,43 +278,79 @@ AlterUser(AlterUserStmt *stmt, CommandDest dest)
 	{
 		heap_close(pg_shadow_rel, AccessExclusiveLock);
 		UserAbortTransactionBlock();
-		elog(ERROR, "alterUser: user \"%s\" does not exist", stmt->user);
+		elog(ERROR, "AlterUser: user \"%s\" does not exist", stmt->user);
 	}
+
+    /* look for duplicate sysid */
+	tuple = SearchSysCacheTuple(USESYSID,
+								Int32GetDatum(stmt->sysid),
+								0, 0, 0);
+    if (HeapTupleIsValid(tuple))
+    {
+        Datum datum;
+        bool null;
+
+		datum = heap_getattr(tuple, Anum_pg_shadow_usename, pg_shadow_dsc, &null);
+        if (datum && !null && strcmp((char *) datum, stmt->user) != 0)
+        {
+            heap_close(pg_shadow_rel, AccessExclusiveLock);
+            UserAbortTransactionBlock();
+            elog(ERROR, "AlterUser: sysid %d is already assigned", stmt->sysid);
+        }
+    }
+
 
 	/*
 	 * Create the update statement to modify the user.
 	 *
 	 * XXX see diatribe in preceding routine.  This code is just as bogus.
 	 */
-	snprintf(sql, SQL_LENGTH, "update %s set", ShadowRelationName);
+	snprintf(sql, SQL_LENGTH, "update %s set ", ShadowRelationName);
 
 	if (stmt->password)
+    {
 		snprintf(sql + strlen(sql), SQL_LENGTH - strlen(sql),
-				 " passwd = '%s'", stmt->password);
+				 "passwd = '%s'", stmt->password);
+        comma = true;
+    }
+
+    if (stmt->sysid>=0)
+    {
+        if (comma)
+            strcat(sql, ", ");
+        snprintf(sql + strlen(sql), SQL_LENGTH - strlen(sql),
+                 "usesysid = %d", stmt->sysid);
+        comma = true;
+    }
 
 	if (stmt->createdb)
-	{
+    {
+        if (comma)
+            strcat(sql, ", ");
 		snprintf(sql + strlen(sql), SQL_LENGTH - strlen(sql),
-				 "%s usecreatedb='%s'",
-				 stmt->password ? "," : "",
-				 *stmt->createdb ? "t" : "f");
-	}
+				 "usecreatedb='%c'",
+				 *stmt->createdb ? 't' : 'f');
+        comma = true;
+    }
 
 	if (stmt->createuser)
-	{
+    {
+        if (comma)
+            strcat(sql, ", ");
 		snprintf(sql + strlen(sql), SQL_LENGTH - strlen(sql),
-				 "%s usesuper='%s'",
-				 (stmt->password || stmt->createdb) ? "," : "",
-				 *stmt->createuser ? "t" : "f");
-	}
+				 "usesuper='%c'",
+				 *stmt->createuser ? 't' : 'f');
+        comma = true;
+    }
 
 	if (stmt->validUntil)
-	{
+    {
+        if (comma)
+            strcat(sql, ", ");
 		snprintf(sql + strlen(sql), SQL_LENGTH - strlen(sql),
-				 "%s valuntil='%s'",
-		(stmt->password || stmt->createdb || stmt->createuser) ? "," : "",
+				 "valuntil='%s'",
 				 stmt->validUntil);
-	}
+    }
 
 	snprintf(sql + strlen(sql), SQL_LENGTH - strlen(sql),
 			 " where usename = '%s'",
@@ -362,7 +408,7 @@ RemoveUser(char *user, CommandDest dest)
 	if (pg_aclcheck(ShadowRelationName, pg_shadow, ACL_RD | ACL_WR) != ACLCHECK_OK)
 	{
 		UserAbortTransactionBlock();
-		elog(ERROR, "removeUser: user \"%s\" does not have SELECT and DELETE privilege for \"%s\"",
+		elog(ERROR, "RemoveUser: user \"%s\" does not have SELECT and DELETE privilege for \"%s\"",
 			 pg_shadow, ShadowRelationName);
 	}
 
@@ -381,7 +427,7 @@ RemoveUser(char *user, CommandDest dest)
 	{
 		heap_close(pg_shadow_rel, AccessExclusiveLock);
 		UserAbortTransactionBlock();
-		elog(ERROR, "removeUser: user \"%s\" does not exist", user);
+		elog(ERROR, "RemoveUser: user \"%s\" does not exist", user);
 	}
 
 	usesysid = (int32) heap_getattr(tuple, Anum_pg_shadow_usesysid, pg_dsc, &n);
