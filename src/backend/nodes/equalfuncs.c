@@ -20,7 +20,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.153 2002/08/19 15:08:46 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.154 2002/08/26 17:53:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -258,7 +258,7 @@ _equalSubLink(SubLink *a, SubLink *b)
 static bool
 _equalArrayRef(ArrayRef *a, ArrayRef *b)
 {
-	if (a->refelemtype != b->refelemtype)
+	if (a->refrestype != b->refrestype)
 		return false;
 	if (a->refattrlength != b->refattrlength)
 		return false;
@@ -266,13 +266,17 @@ _equalArrayRef(ArrayRef *a, ArrayRef *b)
 		return false;
 	if (a->refelembyval != b->refelembyval)
 		return false;
+	if (a->refelemalign != b->refelemalign)
+		return false;
 	if (!equal(a->refupperindexpr, b->refupperindexpr))
 		return false;
 	if (!equal(a->reflowerindexpr, b->reflowerindexpr))
 		return false;
 	if (!equal(a->refexpr, b->refexpr))
 		return false;
-	return equal(a->refassgnexpr, b->refassgnexpr);
+	if (!equal(a->refassgnexpr, b->refassgnexpr))
+		return false;
+	return true;
 }
 
 static bool

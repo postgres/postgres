@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.205 2002/08/24 15:00:46 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.206 2002/08/26 17:53:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1056,10 +1056,11 @@ _copyArrayRef(ArrayRef *from)
 	/*
 	 * copy remainder of node
 	 */
+	newnode->refrestype = from->refrestype;
 	newnode->refattrlength = from->refattrlength;
 	newnode->refelemlength = from->refelemlength;
-	newnode->refelemtype = from->refelemtype;
 	newnode->refelembyval = from->refelembyval;
+	newnode->refelemalign = from->refelemalign;
 
 	Node_Copy(from, newnode, refupperindexpr);
 	Node_Copy(from, newnode, reflowerindexpr);

@@ -5,7 +5,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.168 2002/08/19 15:08:46 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.169 2002/08/26 17:53:58 tgl Exp $
  *
  * NOTES
  *	  Every (plan) node in POSTGRES has an associated "out" routine which
@@ -831,16 +831,18 @@ static void
 _outArrayRef(StringInfo str, ArrayRef *node)
 {
 	appendStringInfo(str,
-		" ARRAYREF :refelemtype %u :refattrlength %d :refelemlength %d ",
-					 node->refelemtype,
+		" ARRAYREF :refrestype %u :refattrlength %d :refelemlength %d ",
+					 node->refrestype,
 					 node->refattrlength,
 					 node->refelemlength);
 
-	appendStringInfo(str, " :refelembyval %c :refupperindex ",
-					 node->refelembyval ? 't' : 'f');
+	appendStringInfo(str,
+					 ":refelembyval %s :refelemalign %c :refupperindexpr ",
+					 booltostr(node->refelembyval),
+					 node->refelemalign);
 	_outNode(str, node->refupperindexpr);
 
-	appendStringInfo(str, " :reflowerindex ");
+	appendStringInfo(str, " :reflowerindexpr ");
 	_outNode(str, node->reflowerindexpr);
 
 	appendStringInfo(str, " :refexpr ");

@@ -502,6 +502,7 @@ dblink_build_sql_insert(PG_FUNCTION_ARGS)
 	/*
 	 * get array of pointers to c-strings from the input source array
 	 */
+	Assert(ARR_ELEMTYPE(src_pkattvals_arry) == TEXTOID);
 	src_pkattvals = (char **) palloc(src_nitems * sizeof(char *));
 	ptr = ARR_DATA_PTR(src_pkattvals_arry);
 	for (i = 0; i < src_nitems; i++)
@@ -527,6 +528,7 @@ dblink_build_sql_insert(PG_FUNCTION_ARGS)
 	/*
 	 * get array of pointers to c-strings from the input target array
 	 */
+	Assert(ARR_ELEMTYPE(tgt_pkattvals_arry) == TEXTOID);
 	tgt_pkattvals = (char **) palloc(tgt_nitems * sizeof(char *));
 	ptr = ARR_DATA_PTR(tgt_pkattvals_arry);
 	for (i = 0; i < tgt_nitems; i++)
@@ -621,6 +623,7 @@ dblink_build_sql_delete(PG_FUNCTION_ARGS)
 	/*
 	 * get array of pointers to c-strings from the input target array
 	 */
+	Assert(ARR_ELEMTYPE(tgt_pkattvals_arry) == TEXTOID);
 	tgt_pkattvals = (char **) palloc(tgt_nitems * sizeof(char *));
 	ptr = ARR_DATA_PTR(tgt_pkattvals_arry);
 	for (i = 0; i < tgt_nitems; i++)
@@ -725,6 +728,7 @@ dblink_build_sql_update(PG_FUNCTION_ARGS)
 	/*
 	 * get array of pointers to c-strings from the input source array
 	 */
+	Assert(ARR_ELEMTYPE(src_pkattvals_arry) == TEXTOID);
 	src_pkattvals = (char **) palloc(src_nitems * sizeof(char *));
 	ptr = ARR_DATA_PTR(src_pkattvals_arry);
 	for (i = 0; i < src_nitems; i++)
@@ -750,6 +754,7 @@ dblink_build_sql_update(PG_FUNCTION_ARGS)
 	/*
 	 * get array of pointers to c-strings from the input target array
 	 */
+	Assert(ARR_ELEMTYPE(tgt_pkattvals_arry) == TEXTOID);
 	tgt_pkattvals = (char **) palloc(tgt_nitems * sizeof(char *));
 	ptr = ARR_DATA_PTR(tgt_pkattvals_arry);
 	for (i = 0; i < tgt_nitems; i++)

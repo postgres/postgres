@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: primnodes.h,v 1.65 2002/07/04 15:24:11 thomas Exp $
+ * $Id: primnodes.h,v 1.66 2002/08/26 17:54:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -397,20 +397,20 @@ typedef struct SubLink
  * varlena structures and have refattrlength = -1.	In any case,
  * an array type is never pass-by-value.
  *
- * Note: currently, refelemtype is NOT the element type, but the array type,
- * when doing subarray fetch or either type of store.  It would be cleaner
- * to add more fields so we can distinguish the array element type from the
- * result type of the ArrayRef operator...
+ * Note: refrestype is NOT the element type, but the array type,
+ * when doing subarray fetch or either type of store.  It might be a good
+ * idea to include a refelemtype field as well.
  * ----------------
  */
 typedef struct ArrayRef
 {
 	NodeTag		type;
+	Oid			refrestype;		/* type of the result of the ArrayRef
+								 * operation */
 	int			refattrlength;	/* typlen of array type */
 	int			refelemlength;	/* typlen of the array element type */
-	Oid			refelemtype;	/* type of the result of the ArrayRef
-								 * operation */
 	bool		refelembyval;	/* is the element type pass-by-value? */
+	char		refelemalign;	/* typalign of the element type */
 	List	   *refupperindexpr;/* expressions that evaluate to upper
 								 * array indexes */
 	List	   *reflowerindexpr;/* expressions that evaluate to lower

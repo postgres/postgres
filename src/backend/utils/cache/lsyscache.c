@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/lsyscache.c,v 1.79 2002/08/22 00:01:44 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/lsyscache.c,v 1.80 2002/08/26 17:53:59 tgl Exp $
  *
  * NOTES
  *	  Eventually, the index information should go through here, too.
@@ -885,6 +885,30 @@ get_typlenbyval(Oid typid, int16 *typlen, bool *typbyval)
 	ReleaseSysCache(tp);
 }
 
+/*
+ * get_typlenbyvalalign
+ *
+ *		A three-fer: given the type OID, return typlen, typbyval, typalign.
+ */
+void
+get_typlenbyvalalign(Oid typid, int16 *typlen, bool *typbyval,
+					 char *typalign)
+{
+	HeapTuple	tp;
+	Form_pg_type typtup;
+
+	tp = SearchSysCache(TYPEOID,
+						ObjectIdGetDatum(typid),
+						0, 0, 0);
+	if (!HeapTupleIsValid(tp))
+		elog(ERROR, "cache lookup failed for type %u", typid);
+	typtup = (Form_pg_type) GETSTRUCT(tp);
+	*typlen = typtup->typlen;
+	*typbyval = typtup->typbyval;
+	*typalign = typtup->typalign;
+	ReleaseSysCache(tp);
+}
+
 #ifdef NOT_USED
 char
 get_typalign(Oid typid)
@@ -1287,7 +1311,9 @@ get_attstatsslot(HeapTuple statstuple,
 		 * Do initial examination of the array.  This produces a list of
 		 * text Datums --- ie, pointers into the text array value.
 		 */
-		deconstruct_array(statarray, false, -1, 'i', values, nvalues);
+		deconstruct_array(statarray,
+						  TEXTOID, -1, false, 'i',
+						  values, nvalues);
 		narrayelem = *nvalues;
 
 		/*
@@ -1346,8 +1372,8 @@ get_attstatsslot(HeapTuple statstuple,
 		 */
 		narrayelem = ARR_DIMS(statarray)[0];
 		if (ARR_NDIM(statarray) != 1 || narrayelem <= 0 ||
-			ARR_SIZE(statarray) != (ARR_OVERHEAD(1) + narrayelem * sizeof(float4)))
-			elog(ERROR, "get_attstatsslot: stanumbers is bogus");
+			ARR_ELEMTYPE(statarray) != FLOAT4OID)
+			elog(ERROR, "get_attstatsslot: stanumbers is not a 1-D float4 array");
 		*numbers = (float4 *) palloc(narrayelem * sizeof(float4));
 		memcpy(*numbers, ARR_DATA_PTR(statarray), narrayelem * sizeof(float4));
 		*nnumbers = narrayelem;

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/acl.c,v 1.75 2002/08/09 16:45:14 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/acl.c,v 1.76 2002/08/26 17:53:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,6 +18,7 @@
 
 #include "catalog/namespace.h"
 #include "catalog/pg_shadow.h"
+#include "catalog/pg_type.h"
 #include "commands/dbcommands.h"
 #include "miscadmin.h"
 #include "utils/acl.h"
@@ -252,6 +253,7 @@ makeacl(int n)
 	new_acl->size = size;
 	new_acl->ndim = 1;
 	new_acl->flags = 0;
+	new_acl->elemtype = ACLITEMOID;
 	ARR_LBOUND(new_acl)[0] = 0;
 	ARR_DIMS(new_acl)[0] = n;
 	return new_acl;

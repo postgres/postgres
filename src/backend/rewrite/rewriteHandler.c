@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.105 2002/08/02 18:15:07 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.106 2002/08/26 17:53:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -381,8 +381,8 @@ process_matched_tle(TargetEntry *src_tle,
 		((ArrayRef *) src_tle->expr)->refassgnexpr == NULL ||
 		prior_tle->expr == NULL || !IsA(prior_tle->expr, ArrayRef) ||
 		((ArrayRef *) prior_tle->expr)->refassgnexpr == NULL ||
-		((ArrayRef *) src_tle->expr)->refelemtype !=
-		((ArrayRef *) prior_tle->expr)->refelemtype)
+		((ArrayRef *) src_tle->expr)->refrestype !=
+		((ArrayRef *) prior_tle->expr)->refrestype)
 		elog(ERROR, "Multiple assignments to same attribute \"%s\"",
 			 resdom->resname);
 

@@ -5,7 +5,7 @@
  *
  *	1998 Jan Wieck
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/numeric.c,v 1.50 2002/02/18 14:25:40 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/numeric.c,v 1.51 2002/08/26 17:53:58 tgl Exp $
  *
  * ----------
  */
@@ -18,6 +18,7 @@
 #include <errno.h>
 #include <sys/types.h>
 
+#include "catalog/pg_type.h"
 #include "utils/array.h"
 #include "utils/builtins.h"
 #include "utils/int8.h"
@@ -1734,7 +1735,7 @@ do_numeric_accum(ArrayType *transarray, Numeric newval)
 
 	/* We assume the input is array of numeric */
 	deconstruct_array(transarray,
-					  false, -1, 'i',
+					  NUMERICOID, -1, false, 'i',
 					  &transdatums, &ndatums);
 	if (ndatums != 3)
 		elog(ERROR, "do_numeric_accum: expected 3-element numeric array");
@@ -1755,7 +1756,7 @@ do_numeric_accum(ArrayType *transarray, Numeric newval)
 	transdatums[2] = sumX2;
 
 	result = construct_array(transdatums, 3,
-							 false, -1, 'i');
+							 NUMERICOID, -1, false, 'i');
 
 	return result;
 }
@@ -1825,7 +1826,7 @@ numeric_avg(PG_FUNCTION_ARGS)
 
 	/* We assume the input is array of numeric */
 	deconstruct_array(transarray,
-					  false, -1, 'i',
+					  NUMERICOID, -1, false, 'i',
 					  &transdatums, &ndatums);
 	if (ndatums != 3)
 		elog(ERROR, "numeric_avg: expected 3-element numeric array");
@@ -1861,7 +1862,7 @@ numeric_variance(PG_FUNCTION_ARGS)
 
 	/* We assume the input is array of numeric */
 	deconstruct_array(transarray,
-					  false, -1, 'i',
+					  NUMERICOID, -1, false, 'i',
 					  &transdatums, &ndatums);
 	if (ndatums != 3)
 		elog(ERROR, "numeric_variance: expected 3-element numeric array");
@@ -1940,7 +1941,7 @@ numeric_stddev(PG_FUNCTION_ARGS)
 
 	/* We assume the input is array of numeric */
 	deconstruct_array(transarray,
-					  false, -1, 'i',
+					  NUMERICOID, -1, false, 'i',
 					  &transdatums, &ndatums);
 	if (ndatums != 3)
 		elog(ERROR, "numeric_stddev: expected 3-element numeric array");

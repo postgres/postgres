@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.264 2002/08/23 16:41:37 tgl Exp $
+ * $Id: pg_proc.h,v 1.265 2002/08/26 17:53:59 tgl Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -985,9 +985,9 @@ DESCR("session user name");
 
 DATA(insert OID = 747 (  array_dims		   PGNSP PGUID 12 f f t f i 1 25 "2277" array_dims - _null_ ));
 DESCR("array dimensions");
-DATA(insert OID = 750 (  array_in		   PGNSP PGUID 12 f f t f i 3 2277 "2275 26 23"  array_in - _null_ ));
+DATA(insert OID = 750 (  array_in		   PGNSP PGUID 12 f f t f s 3 2277 "2275 26 23"  array_in - _null_ ));
 DESCR("array");
-DATA(insert OID = 751 (  array_out		   PGNSP PGUID 12 f f t f i 2 2275 "2281 26"  array_out - _null_ ));
+DATA(insert OID = 751 (  array_out		   PGNSP PGUID 12 f f t f s 1 2275 "2277"  array_out - _null_ ));
 DESCR("array");
 
 DATA(insert OID = 760 (  smgrin			   PGNSP PGUID 12 f f t f s 1 210 "2275"  smgrin - _null_ ));
@@ -3083,7 +3083,7 @@ DATA(insert OID = 2295 (  any_out			PGNSP PGUID 12 f f t f i 1 2275 "2276"	any_o
 DESCR("(internal)");
 DATA(insert OID = 2296 (  anyarray_in		PGNSP PGUID 12 f f t f i 1 2277 "2275"	anyarray_in - _null_ ));
 DESCR("(internal)");
-DATA(insert OID = 2297 (  anyarray_out		PGNSP PGUID 12 f f t f i 1 2275 "2277"	anyarray_out - _null_ ));
+DATA(insert OID = 2297 (  anyarray_out		PGNSP PGUID 12 f f t f s 1 2275 "2277"	anyarray_out - _null_ ));
 DESCR("(internal)");
 DATA(insert OID = 2298 (  void_in			PGNSP PGUID 12 f f t f i 1 2278 "2275"	void_in - _null_ ));
 DESCR("(internal)");

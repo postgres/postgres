@@ -59,7 +59,7 @@ _ltree_compress(PG_FUNCTION_ARGS) {
 
 	if ( entry->leafkey ) { /* ltree */
 		ltree_gist	*key;
-		ArrayType	*val = (ArrayType*)DatumGetPointer(PG_DETOAST_DATUM(entry->key));
+		ArrayType	*val = DatumGetArrayTypeP(entry->key);
 		int4 len = LTG_HDRSIZE + ASIGLEN;
 		int num=ArrayGetNItems( ARR_NDIM(val), ARR_DIMS(val) );
 		ltree   *item = (ltree*)ARR_DATA_PTR(val);

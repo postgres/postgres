@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/timestamp.c,v 1.69 2002/08/04 06:44:47 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/timestamp.c,v 1.70 2002/08/26 17:53:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,6 +24,7 @@
 
 #include "access/hash.h"
 #include "access/xact.h"
+#include "catalog/pg_type.h"
 #include "miscadmin.h"
 #include "utils/array.h"
 #include "utils/builtins.h"
@@ -1917,7 +1918,7 @@ interval_accum(PG_FUNCTION_ARGS)
 
 	/* We assume the input is array of interval */
 	deconstruct_array(transarray,
-					  false, 12, 'd',
+					  INTERVALOID, 12, false, 'd',
 					  &transdatums, &ndatums);
 	if (ndatums != 2)
 		elog(ERROR, "interval_accum: expected 2-element interval array");
@@ -1943,7 +1944,7 @@ interval_accum(PG_FUNCTION_ARGS)
 	transdatums[1] = IntervalPGetDatum(&N);
 
 	result = construct_array(transdatums, 2,
-							 false, 12, 'd');
+							 INTERVALOID, 12, false, 'd');
 
 	PG_RETURN_ARRAYTYPE_P(result);
 }
@@ -1959,7 +1960,7 @@ interval_avg(PG_FUNCTION_ARGS)
 
 	/* We assume the input is array of interval */
 	deconstruct_array(transarray,
-					  false, 12, 'd',
+					  INTERVALOID, 12, false, 'd',
 					  &transdatums, &ndatums);
 	if (ndatums != 2)
 		elog(ERROR, "interval_avg: expected 2-element interval array");

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.128 2002/08/10 20:44:48 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.129 2002/08/26 17:53:58 tgl Exp $
  *
  * NOTES
  *	  Most of the read functions for plan nodes are tested. (In fact, they
@@ -992,9 +992,9 @@ _readArrayRef(void)
 
 	local_node = makeNode(ArrayRef);
 
-	token = pg_strtok(&length); /* eat :refelemtype */
-	token = pg_strtok(&length); /* get refelemtype */
-	local_node->refelemtype = atooid(token);
+	token = pg_strtok(&length); /* eat :refrestype */
+	token = pg_strtok(&length); /* get refrestype */
+	local_node->refrestype = atooid(token);
 
 	token = pg_strtok(&length); /* eat :refattrlength */
 	token = pg_strtok(&length); /* get refattrlength */
@@ -1008,10 +1008,14 @@ _readArrayRef(void)
 	token = pg_strtok(&length); /* get refelembyval */
 	local_node->refelembyval = strtobool(token);
 
-	token = pg_strtok(&length); /* eat :refupperindex */
+	token = pg_strtok(&length); /* eat :refelemalign */
+	token = pg_strtok(&length); /* get refelemalign */
+	local_node->refelemalign = token[0];
+
+	token = pg_strtok(&length); /* eat :refupperindexpr */
 	local_node->refupperindexpr = nodeRead(true);
 
-	token = pg_strtok(&length); /* eat :reflowerindex */
+	token = pg_strtok(&length); /* eat :reflowerindexpr */
 	local_node->reflowerindexpr = nodeRead(true);
 
 	token = pg_strtok(&length); /* eat :refexpr */

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varchar.c,v 1.90 2002/06/20 20:29:38 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varchar.c,v 1.91 2002/08/26 17:53:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -283,7 +283,7 @@ bpchar(PG_FUNCTION_ARGS)
 Datum
 _bpchar(PG_FUNCTION_ARGS)
 {
-	ArrayType  *v = (ArrayType *) PG_GETARG_VARLENA_P(0);
+	ArrayType  *v = PG_GETARG_ARRAYTYPE_P(0);
 	int32		len = PG_GETARG_INT32(1);
 	FunctionCallInfoData locfcinfo;
 
@@ -533,7 +533,7 @@ varchar(PG_FUNCTION_ARGS)
 Datum
 _varchar(PG_FUNCTION_ARGS)
 {
-	ArrayType  *v = (ArrayType *) PG_GETARG_VARLENA_P(0);
+	ArrayType  *v = PG_GETARG_ARRAYTYPE_P(0);
 	int32		len = PG_GETARG_INT32(1);
 	FunctionCallInfoData locfcinfo;
 

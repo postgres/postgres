@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/float.c,v 1.79 2002/06/20 20:29:37 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/float.c,v 1.80 2002/08/26 17:53:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -61,6 +61,7 @@
 #include <ieeefp.h>
 #endif
 
+#include "catalog/pg_type.h"
 #include "fmgr.h"
 #include "utils/array.h"
 #include "utils/builtins.h"
@@ -1480,9 +1481,9 @@ check_float8_array(ArrayType *transarray, const char *caller)
 	 * don't need to use deconstruct_array() since the array data is just
 	 * going to look like a C array of 3 float8 values.
 	 */
-	if (ARR_SIZE(transarray) != (ARR_OVERHEAD(1) + 3 * sizeof(float8)) ||
-		ARR_NDIM(transarray) != 1 ||
-		ARR_DIMS(transarray)[0] != 3)
+	if (ARR_NDIM(transarray) != 1 ||
+		ARR_DIMS(transarray)[0] != 3 ||
+		ARR_ELEMTYPE(transarray) != FLOAT8OID)
 		elog(ERROR, "%s: expected 3-element float8 array", caller);
 	return (float8 *) ARR_DATA_PTR(transarray);
 }
@@ -1513,7 +1514,8 @@ float8_accum(PG_FUNCTION_ARGS)
 	transdatums[2] = Float8GetDatumFast(sumX2);
 
 	result = construct_array(transdatums, 3,
-						 false /* float8 byval */ , sizeof(float8), 'd');
+							 FLOAT8OID,
+							 sizeof(float8), false /*float8 byval*/, 'd');
 
 	PG_RETURN_ARRAYTYPE_P(result);
 }
@@ -1548,7 +1550,8 @@ float4_accum(PG_FUNCTION_ARGS)
 	transdatums[2] = Float8GetDatumFast(sumX2);
 
 	result = construct_array(transdatums, 3,
-						 false /* float8 byval */ , sizeof(float8), 'd');
+							 FLOAT8OID,
+							 sizeof(float8), false /*float8 byval*/, 'd');
 
 	PG_RETURN_ARRAYTYPE_P(result);
 }

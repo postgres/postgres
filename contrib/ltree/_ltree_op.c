@@ -61,7 +61,7 @@ array_iterator( ArrayType *la, PGCALL2 callback, void* param, ltree ** found) {
 
 Datum
 _ltree_isparent(PG_FUNCTION_ARGS) {
-	ArrayType	*la = (ArrayType *)DatumGetPointer(PG_DETOAST_DATUM(PG_GETARG_DATUM(0)));
+	ArrayType	*la = PG_GETARG_ARRAYTYPE_P(0);
 	ltree		*query = PG_GETARG_LTREE(1);
 	bool res = array_iterator( la, ltree_isparent, (void*)query, NULL );
 	PG_FREE_IF_COPY(la,0);
@@ -79,7 +79,7 @@ _ltree_r_isparent(PG_FUNCTION_ARGS) {
 
 Datum
 _ltree_risparent(PG_FUNCTION_ARGS) {
-	ArrayType	*la = (ArrayType *)DatumGetPointer(PG_DETOAST_DATUM(PG_GETARG_DATUM(0)));
+	ArrayType	*la = PG_GETARG_ARRAYTYPE_P(0);
 	ltree		*query = PG_GETARG_LTREE(1);
 	bool res = array_iterator( la, ltree_risparent, (void*)query, NULL );
 	PG_FREE_IF_COPY(la,0);
@@ -97,7 +97,7 @@ _ltree_r_risparent(PG_FUNCTION_ARGS) {
 
 Datum
 _ltq_regex(PG_FUNCTION_ARGS) {
-	ArrayType	*la = (ArrayType *)DatumGetPointer(PG_DETOAST_DATUM(PG_GETARG_DATUM(0)));
+	ArrayType	*la = PG_GETARG_ARRAYTYPE_P(0);
 	lquery		*query = PG_GETARG_LQUERY(1);
 	bool res = array_iterator( la, ltq_regex, (void*)query, NULL );
 	PG_FREE_IF_COPY(la,0);
@@ -115,7 +115,7 @@ _ltq_rregex(PG_FUNCTION_ARGS) {
 
 Datum   
 _ltxtq_exec(PG_FUNCTION_ARGS) {
-	ArrayType	*la = (ArrayType *)DatumGetPointer(PG_DETOAST_DATUM(PG_GETARG_DATUM(0)));
+	ArrayType	*la = PG_GETARG_ARRAYTYPE_P(0);
 	ltxtquery	*query = PG_GETARG_LTXTQUERY(1);
 	bool res = array_iterator( la, ltxtq_exec, (void*)query, NULL );
 	PG_FREE_IF_COPY(la,0);
@@ -134,7 +134,7 @@ _ltxtq_rexec(PG_FUNCTION_ARGS) {
 
 Datum 
 _ltree_extract_isparent(PG_FUNCTION_ARGS) {
-	ArrayType	*la = (ArrayType *)DatumGetPointer(PG_DETOAST_DATUM(PG_GETARG_DATUM(0)));
+	ArrayType	*la = PG_GETARG_ARRAYTYPE_P(0);
 	ltree		*query = PG_GETARG_LTREE(1);
 	ltree		*found,*item;
 
@@ -154,7 +154,7 @@ _ltree_extract_isparent(PG_FUNCTION_ARGS) {
 
 Datum 
 _ltree_extract_risparent(PG_FUNCTION_ARGS) {
-	ArrayType	*la = (ArrayType *)DatumGetPointer(PG_DETOAST_DATUM(PG_GETARG_DATUM(0)));
+	ArrayType	*la = PG_GETARG_ARRAYTYPE_P(0);
 	ltree		*query = PG_GETARG_LTREE(1);
 	ltree		*found,*item;
 
@@ -174,7 +174,7 @@ _ltree_extract_risparent(PG_FUNCTION_ARGS) {
 
 Datum 
 _ltq_extract_regex(PG_FUNCTION_ARGS) {
-	ArrayType	*la = (ArrayType *)DatumGetPointer(PG_DETOAST_DATUM(PG_GETARG_DATUM(0)));
+	ArrayType	*la = PG_GETARG_ARRAYTYPE_P(0);
 	lquery		*query = PG_GETARG_LQUERY(1);
 	ltree		*found,*item;
 
@@ -194,7 +194,7 @@ _ltq_extract_regex(PG_FUNCTION_ARGS) {
 
 Datum 
 _ltxtq_extract_exec(PG_FUNCTION_ARGS) {
-	ArrayType	*la = (ArrayType *)DatumGetPointer(PG_DETOAST_DATUM(PG_GETARG_DATUM(0)));
+	ArrayType	*la = PG_GETARG_ARRAYTYPE_P(0);
 	ltxtquery	*query = PG_GETARG_LTXTQUERY(1);
 	ltree		*found,*item;
 
@@ -214,7 +214,7 @@ _ltxtq_extract_exec(PG_FUNCTION_ARGS) {
 
 Datum
 _lca(PG_FUNCTION_ARGS) {
-	ArrayType       *la = (ArrayType *)DatumGetPointer(PG_DETOAST_DATUM(PG_GETARG_DATUM(0)));
+	ArrayType	*la = PG_GETARG_ARRAYTYPE_P(0);
 	int num=ArrayGetNItems( ARR_NDIM(la), ARR_DIMS(la));
 	ltree	*item = (ltree*)ARR_DATA_PTR(la);
         ltree **a,*res;

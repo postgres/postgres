@@ -1,23 +1,23 @@
 #ifndef ARRAY_ITERATOR_H
 #define ARRAY_ITERATOR_H
 
-static int32 array_iterator(Oid elemtype, Oid proc, int and,
+static int32 array_iterator(Oid proc, int and,
 			   ArrayType *array, Datum value);
 
-int32		array_texteq(ArrayType *array, char *value);
-int32		array_all_texteq(ArrayType *array, char *value);
-int32		array_textregexeq(ArrayType *array, char *value);
-int32		array_all_textregexeq(ArrayType *array, char *value);
+int32		array_texteq(ArrayType *array, void *value);
+int32		array_all_texteq(ArrayType *array, void *value);
+int32		array_textregexeq(ArrayType *array, void *value);
+int32		array_all_textregexeq(ArrayType *array, void *value);
 
-int32		array_varchareq(ArrayType *array, char *value);
-int32		array_all_varchareq(ArrayType *array, char *value);
-int32		array_varcharregexeq(ArrayType *array, char *value);
-int32		array_all_varcharregexeq(ArrayType *array, char *value);
+int32		array_varchareq(ArrayType *array, void *value);
+int32		array_all_varchareq(ArrayType *array, void *value);
+int32		array_varcharregexeq(ArrayType *array, void *value);
+int32		array_all_varcharregexeq(ArrayType *array, void *value);
 
-int32		array_bpchareq(ArrayType *array, char *value);
-int32		array_all_bpchareq(ArrayType *array, char *value);
-int32		array_bpcharregexeq(ArrayType *array, char *value);
-int32		array_all_bpcharregexeq(ArrayType *array, char *value);
+int32		array_bpchareq(ArrayType *array, void *value);
+int32		array_all_bpchareq(ArrayType *array, void *value);
+int32		array_bpcharregexeq(ArrayType *array, void *value);
+int32		array_all_bpcharregexeq(ArrayType *array, void *value);
 
 int32		array_int4eq(ArrayType *array, int4 value);
 int32		array_all_int4eq(ArrayType *array, int4 value);
@@ -35,16 +35,9 @@ int32		array_all_int4le(ArrayType *array, int4 value);
 int32		array_oideq(ArrayType *array, Oid value);
 int32		array_all_oidne(ArrayType *array, Oid value);
 
-int32		array_ineteq(ArrayType *array, Oid value);
-int32		array_all_ineteq(ArrayType *array, Oid value);
-int32		array_inetne(ArrayType *array, Oid value);
-int32		array_all_inetne(ArrayType *array, Oid value);
-#endif
+int32		array_ineteq(ArrayType *array, void *value);
+int32		array_all_ineteq(ArrayType *array, void *value);
+int32		array_inetne(ArrayType *array, void *value);
+int32		array_all_inetne(ArrayType *array, void *value);
 
-/*
- * Local Variables:
- *	tab-width: 4
- *	c-indent-level: 4
- *	c-basic-offset: 4
- * End:
- */
+#endif

@@ -4,19 +4,19 @@
 --
 create or replace function array_texteq(_text, text) returns bool
   as 'MODULE_PATHNAME' 
-  language 'c';
+  language C with (isStrict);
 
 create or replace function array_all_texteq(_text, text) returns bool
   as 'MODULE_PATHNAME' 
-  language 'c';
+  language C with (isStrict);
 
 create or replace function array_textregexeq(_text, text) returns bool
   as 'MODULE_PATHNAME' 
-  language 'c';
+  language C with (isStrict);
 
 create or replace function array_all_textregexeq(_text, text) returns bool
   as 'MODULE_PATHNAME' 
-  language 'c';
+  language C with (isStrict);
 
 create operator *= (
   leftarg=_text, 
@@ -45,19 +45,19 @@ create operator **~ (
 --
 create or replace function array_varchareq(_varchar, varchar) returns bool
   as 'MODULE_PATHNAME' 
-  language 'c';
+  language C with (isStrict);
 
 create or replace function array_all_varchareq(_varchar, varchar) returns bool
   as 'MODULE_PATHNAME' 
-  language 'c';
+  language C with (isStrict);
 
 create or replace function array_varcharregexeq(_varchar, varchar) returns bool
   as 'MODULE_PATHNAME' 
-  language 'c';
+  language C with (isStrict);
 
 create or replace function array_all_varcharregexeq(_varchar, varchar) returns bool
   as 'MODULE_PATHNAME' 
-  language 'c';
+  language C with (isStrict);
 
 create operator *= (
   leftarg=_varchar, 
@@ -84,19 +84,19 @@ create operator **~ (
 --
 create or replace function array_bpchareq(_bpchar, bpchar) returns bool
   as 'MODULE_PATHNAME' 
-  language 'c';
+  language C with (isStrict);
 
 create or replace function array_all_bpchareq(_bpchar, bpchar) returns bool
   as 'MODULE_PATHNAME' 
-  language 'c';
+  language C with (isStrict);
 
 create or replace function array_bpcharregexeq(_bpchar, bpchar) returns bool
   as 'MODULE_PATHNAME' 
-  language 'c';
+  language C with (isStrict);
 
 create or replace function array_all_bpcharregexeq(_bpchar, bpchar) returns bool
   as 'MODULE_PATHNAME' 
-  language 'c';
+  language C with (isStrict);
 
 create operator *= (
   leftarg=_bpchar, 
@@ -123,51 +123,51 @@ create operator **~ (
 --
 create or replace function array_int4eq(_int4, int4) returns bool
   as 'MODULE_PATHNAME' 
-  language 'c';
+  language C with (isStrict);
 
 create or replace function array_all_int4eq(_int4, int4) returns bool
   as 'MODULE_PATHNAME' 
-  language 'c';
+  language C with (isStrict);
 
 create or replace function array_int4ne(_int4, int4) returns bool
   as 'MODULE_PATHNAME' 
-  language 'c';
+  language C with (isStrict);
 
 create or replace function array_all_int4ne(_int4, int4) returns bool
   as 'MODULE_PATHNAME' 
-  language 'c';
+  language C with (isStrict);
 
 create or replace function array_int4gt(_int4, int4) returns bool
   as 'MODULE_PATHNAME' 
-  language 'c';
+  language C with (isStrict);
 
 create or replace function array_all_int4gt(_int4, int4) returns bool
   as 'MODULE_PATHNAME' 
-  language 'c';
+  language C with (isStrict);
 
 create or replace function array_int4ge(_int4, int4) returns bool
   as 'MODULE_PATHNAME' 
-  language 'c';
+  language C with (isStrict);
 
 create or replace function array_all_int4ge(_int4, int4) returns bool
   as 'MODULE_PATHNAME' 
-  language 'c';
+  language C with (isStrict);
 
 create or replace function array_int4lt(_int4, int4) returns bool
   as 'MODULE_PATHNAME' 
-  language 'c';
+  language C with (isStrict);
 
 create or replace function array_all_int4lt(_int4, int4) returns bool
   as 'MODULE_PATHNAME' 
-  language 'c';
+  language C with (isStrict);
 
 create or replace function array_int4le(_int4, int4) returns bool
   as 'MODULE_PATHNAME' 
-  language 'c';
+  language C with (isStrict);
 
 create or replace function array_all_int4le(_int4, int4) returns bool
   as 'MODULE_PATHNAME' 
-  language 'c';
+  language C with (isStrict);
 
 create operator *= (
   leftarg=_int4,
@@ -233,11 +233,11 @@ create operator **<= (
 --
 create or replace function array_oideq(_oid, oid) returns bool
   as 'MODULE_PATHNAME' 
-  language 'c';
+  language C with (isStrict);
 
 create or replace function array_all_oidne(_oid, oid) returns bool
   as 'MODULE_PATHNAME' 
-  language 'c';
+  language C with (isStrict);
 
 create operator *= (
   leftarg=_oid, 
@@ -253,19 +253,19 @@ create operator **<> (
 
 create or replace function array_ineteq(_inet, inet) returns bool
   as 'MODULE_PATHNAME'
-  language 'c';
+  language C with (isStrict);
 
 create or replace function array_all_ineteq(_inet, inet) returns bool
   as 'MODULE_PATHNAME'
-  language 'c';
+  language C with (isStrict);
 
 create or replace function array_inetne(_inet, inet) returns bool
   as 'MODULE_PATHNAME'
-  language 'c';
+  language C with (isStrict);
 
 create or replace function array_all_inetne(_inet, inet) returns bool
   as 'MODULE_PATHNAME'
-  language 'c';
+  language C with (isStrict);
 
 create operator *= (
   leftarg=_inet,

@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varbit.c,v 1.23 2002/08/04 06:33:48 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varbit.c,v 1.24 2002/08/26 17:53:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -226,7 +226,7 @@ bit(PG_FUNCTION_ARGS)
 Datum
 _bit(PG_FUNCTION_ARGS)
 {
-	ArrayType  *v = (ArrayType *) PG_GETARG_VARLENA_P(0);
+	ArrayType  *v = PG_GETARG_ARRAYTYPE_P(0);
 	int32		len = PG_GETARG_INT32(1);
 	FunctionCallInfoData locfcinfo;
 
@@ -439,7 +439,7 @@ varbit(PG_FUNCTION_ARGS)
 Datum
 _varbit(PG_FUNCTION_ARGS)
 {
-	ArrayType  *v = (ArrayType *) PG_GETARG_VARLENA_P(0);
+	ArrayType  *v = PG_GETARG_ARRAYTYPE_P(0);
 	int32		len = PG_GETARG_INT32(1);
 	FunctionCallInfoData locfcinfo;
 

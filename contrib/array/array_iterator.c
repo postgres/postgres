@@ -27,6 +27,7 @@
 #include "miscadmin.h"
 #include "utils/array.h"
 #include "utils/builtins.h"
+#include "utils/fmgroids.h"
 #include "utils/memutils.h"
 #include "utils/lsyscache.h"
 
@@ -34,10 +35,12 @@
 
 
 static int32
-array_iterator(Oid elemtype, Oid proc, int and, ArrayType *array, Datum value)
+array_iterator(Oid proc, int and, ArrayType *array, Datum value)
 {
+	Oid			elemtype;
 	int16		typlen;
 	bool		typbyval;
+	char		typalign;
 	int			nitems,
 				i;
 	Datum		result;
@@ -63,7 +66,8 @@ array_iterator(Oid elemtype, Oid proc, int and, ArrayType *array, Datum value)
 		return (0);
 
 	/* Lookup element type information */
-	get_typlenbyval(elemtype, &typlen, &typbyval);
+	elemtype = ARR_ELEMTYPE(array);
+	get_typlenbyvalalign(elemtype, &typlen, &typbyval, &typalign);
 
 	/* Lookup the function entry point */
 	fmgr_info(proc, &finfo);
@@ -82,10 +86,8 @@ array_iterator(Oid elemtype, Oid proc, int and, ArrayType *array, Datum value)
 
 		itemvalue = fetch_att(p, typbyval, typlen);
 
-		if (typlen > 0)
-			p += typlen;
-		else
-			p += INTALIGN(*(int32 *) p);
+		p = att_addlength(p, typlen, PointerGetDatum(p));
+		p = (char *) att_align(p, typalign);
 
 		result = FunctionCall2(&finfo, itemvalue, value);
 
@@ -112,37 +114,33 @@ array_iterator(Oid elemtype, Oid proc, int and, ArrayType *array, Datum value)
  */
 
 int32
-array_texteq(ArrayType *array, char *value)
+array_texteq(ArrayType *array, void *value)
 {
-	return array_iterator((Oid) 25,		/* text */
-						  (Oid) 67,		/* texteq */
+	return array_iterator(F_TEXTEQ,
 						  0,	/* logical or */
 						  array, (Datum) value);
 }
 
 int32
-array_all_texteq(ArrayType *array, char *value)
+array_all_texteq(ArrayType *array, void *value)
 {
-	return array_iterator((Oid) 25,		/* text */
-						  (Oid) 67,		/* texteq */
+	return array_iterator(F_TEXTEQ,
 						  1,	/* logical and */
 						  array, (Datum) value);
 }
 
 int32
-array_textregexeq(ArrayType *array, char *value)
+array_textregexeq(ArrayType *array, void *value)
 {
-	return array_iterator((Oid) 25,		/* text */
-						  (Oid) 1254,	/* textregexeq */
+	return array_iterator(F_TEXTREGEXEQ,
 						  0,	/* logical or */
 						  array, (Datum) value);
 }
 
 int32
-array_all_textregexeq(ArrayType *array, char *value)
+array_all_textregexeq(ArrayType *array, void *value)
 {
-	return array_iterator((Oid) 25,		/* text */
-						  (Oid) 1254,	/* textregexeq */
+	return array_iterator(F_TEXTREGEXEQ,
 						  1,	/* logical and */
 						  array, (Datum) value);
 }
@@ -153,37 +151,33 @@ array_all_textregexeq(ArrayType *array, char *value)
  */
 
 int32
-array_varchareq(ArrayType *array, char *value)
+array_varchareq(ArrayType *array, void *value)
 {
-	return array_iterator((Oid) 1043,	/* varchar */
-						  (Oid) 1070,	/* varchareq */
+	return array_iterator(F_VARCHAREQ,
 						  0,	/* logical or */
 						  array, (Datum) value);
 }
 
 int32
-array_all_varchareq(ArrayType *array, char *value)
+array_all_varchareq(ArrayType *array, void *value)
 {
-	return array_iterator((Oid) 1043,	/* varchar */
-						  (Oid) 1070,	/* varchareq */
+	return array_iterator(F_VARCHAREQ,
 						  1,	/* logical and */
 						  array, (Datum) value);
 }
 
 int32
-array_varcharregexeq(ArrayType *array, char *value)
+array_varcharregexeq(ArrayType *array, void *value)
 {
-	return array_iterator((Oid) 1043,	/* varchar */
-						  (Oid) 1254,	/* textregexeq */
+	return array_iterator(F_TEXTREGEXEQ,
 						  0,	/* logical or */
 						  array, (Datum) value);
 }
 
 int32
-array_all_varcharregexeq(ArrayType *array, char *value)
+array_all_varcharregexeq(ArrayType *array, void *value)
 {
-	return array_iterator((Oid) 1043,	/* varchar */
-						  (Oid) 1254,	/* textregexeq */
+	return array_iterator(F_TEXTREGEXEQ,
 						  1,	/* logical and */
 						  array, (Datum) value);
 }
@@ -194,37 +188,33 @@ array_all_varcharregexeq(ArrayType *array, char *value)
  */
 
 int32
-array_bpchareq(ArrayType *array, char *value)
+array_bpchareq(ArrayType *array, void *value)
 {
-	return array_iterator((Oid) 1042,	/* bpchar */
-						  (Oid) 1048,	/* bpchareq */
+	return array_iterator(F_BPCHAREQ,
 						  0,	/* logical or */
 						  array, (Datum) value);
 }
 
 int32
-array_all_bpchareq(ArrayType *array, char *value)
+array_all_bpchareq(ArrayType *array, void *value)
 {
-	return array_iterator((Oid) 1042,	/* bpchar */
-						  (Oid) 1048,	/* bpchareq */
+	return array_iterator(F_BPCHAREQ,
 						  1,	/* logical and */
 						  array, (Datum) value);
 }
 
 int32
-array_bpcharregexeq(ArrayType *array, char *value)
+array_bpcharregexeq(ArrayType *array, void *value)
 {
-	return array_iterator((Oid) 1042,	/* bpchar */
-						  (Oid) 1254,	/* textregexeq */
+	return array_iterator(F_TEXTREGEXEQ,
 						  0,	/* logical or */
 						  array, (Datum) value);
 }
 
 int32
-array_all_bpcharregexeq(ArrayType *array, char *value)
+array_all_bpcharregexeq(ArrayType *array, void *value)
 {
-	return array_iterator((Oid) 1042,	/* bpchar */
-						  (Oid) 1254,	/* textregexeq */
+	return array_iterator(F_TEXTREGEXEQ,
 						  1,	/* logical and */
 						  array, (Datum) value);
 }
@@ -236,8 +226,7 @@ array_all_bpcharregexeq(ArrayType *array, char *value)
 int32
 array_int4eq(ArrayType *array, int4 value)
 {
-	return array_iterator((Oid) 23,		/* int4 */
-						  (Oid) 65,		/* int4eq */
+	return array_iterator(F_INT4EQ,
 						  0,	/* logical or */
 						  array, (Datum) value);
 }
@@ -245,8 +234,7 @@ array_int4eq(ArrayType *array, int4 value)
 int32
 array_all_int4eq(ArrayType *array, int4 value)
 {
-	return array_iterator((Oid) 23,		/* int4 */
-						  (Oid) 65,		/* int4eq */
+	return array_iterator(F_INT4EQ,
 						  1,	/* logical and */
 						  array, (Datum) value);
 }
@@ -254,8 +242,7 @@ array_all_int4eq(ArrayType *array, int4 value)
 int32
 array_int4ne(ArrayType *array, int4 value)
 {
-	return array_iterator((Oid) 23,		/* int4 */
-						  (Oid) 144,	/* int4ne */
+	return array_iterator(F_INT4NE,
 						  0,	/* logical or */
 						  array, (Datum) value);
 }
@@ -263,8 +250,7 @@ array_int4ne(ArrayType *array, int4 value)
 int32
 array_all_int4ne(ArrayType *array, int4 value)
 {
-	return array_iterator((Oid) 23,		/* int4 */
-						  (Oid) 144,	/* int4ne */
+	return array_iterator(F_INT4NE,
 						  1,	/* logical and */
 						  array, (Datum) value);
 }
@@ -272,8 +258,7 @@ array_all_int4ne(ArrayType *array, int4 value)
 int32
 array_int4gt(ArrayType *array, int4 value)
 {
-	return array_iterator((Oid) 23,		/* int4 */
-						  (Oid) 147,	/* int4gt */
+	return array_iterator(F_INT4GT,
 						  0,	/* logical or */
 						  array, (Datum) value);
 }
@@ -281,8 +266,7 @@ array_int4gt(ArrayType *array, int4 value)
 int32
 array_all_int4gt(ArrayType *array, int4 value)
 {
-	return array_iterator((Oid) 23,		/* int4 */
-						  (Oid) 147,	/* int4gt */
+	return array_iterator(F_INT4GT,
 						  1,	/* logical and */
 						  array, (Datum) value);
 }
@@ -290,8 +274,7 @@ array_all_int4gt(ArrayType *array, int4 value)
 int32
 array_int4ge(ArrayType *array, int4 value)
 {
-	return array_iterator((Oid) 23,		/* int4 */
-						  (Oid) 150,	/* int4ge */
+	return array_iterator(F_INT4GE,
 						  0,	/* logical or */
 						  array, (Datum) value);
 }
@@ -299,8 +282,7 @@ array_int4ge(ArrayType *array, int4 value)
 int32
 array_all_int4ge(ArrayType *array, int4 value)
 {
-	return array_iterator((Oid) 23,		/* int4 */
-						  (Oid) 150,	/* int4ge */
+	return array_iterator(F_INT4GE,
 						  1,	/* logical and */
 						  array, (Datum) value);
 }
@@ -308,8 +290,7 @@ array_all_int4ge(ArrayType *array, int4 value)
 int32
 array_int4lt(ArrayType *array, int4 value)
 {
-	return array_iterator((Oid) 23,		/* int4 */
-						  (Oid) 66,		/* int4lt */
+	return array_iterator(F_INT4LT,
 						  0,	/* logical or */
 						  array, (Datum) value);
 }
@@ -317,8 +298,7 @@ array_int4lt(ArrayType *array, int4 value)
 int32
 array_all_int4lt(ArrayType *array, int4 value)
 {
-	return array_iterator((Oid) 23,		/* int4 */
-						  (Oid) 66,		/* int4lt */
+	return array_iterator(F_INT4LT,
 						  1,	/* logical and */
 						  array, (Datum) value);
 }
@@ -326,8 +306,7 @@ array_all_int4lt(ArrayType *array, int4 value)
 int32
 array_int4le(ArrayType *array, int4 value)
 {
-	return array_iterator((Oid) 23,		/* int4 */
-						  (Oid) 149,	/* int4le */
+	return array_iterator(F_INT4LE,
 						  0,	/* logical or */
 						  array, (Datum) value);
 }
@@ -335,8 +314,7 @@ array_int4le(ArrayType *array, int4 value)
 int32
 array_all_int4le(ArrayType *array, int4 value)
 {
-	return array_iterator((Oid) 23,		/* int4 */
-						  (Oid) 149,	/* int4le */
+	return array_iterator(F_INT4LE,
 						  1,	/* logical and */
 						  array, (Datum) value);
 }
@@ -346,8 +324,7 @@ array_all_int4le(ArrayType *array, int4 value)
 int32
 array_oideq(ArrayType *array, Oid value)
 {
-	return array_iterator((Oid) 26,		/* oid */
-						  (Oid) 184,	/* oideq */
+	return array_iterator(F_OIDEQ,
 						  0,	/* logical or */
 						  array, (Datum) value);
 }
@@ -355,52 +332,39 @@ array_oideq(ArrayType *array, Oid value)
 int32
 array_all_oidne(ArrayType *array, Oid value)
 {
-	return array_iterator((Oid) 26,		/* int4 */
-						  (Oid) 185,	/* oidne */
+	return array_iterator(F_OIDNE,
 						  1,	/* logical and */
 						  array, (Datum) value);
 }
 
 int32
-array_ineteq(ArrayType *array, Oid value)
+array_ineteq(ArrayType *array, void *value)
 {
-	return array_iterator((Oid) 869,	/* inet */
-						  (Oid) 920,	/* network_eq */
+	return array_iterator(F_NETWORK_EQ,
 						  0,	/* logical or */
 						  array, (Datum) value);
 }
 
 int32
-array_all_ineteq(ArrayType *array, Oid value)
+array_all_ineteq(ArrayType *array, void *value)
 {
-	return array_iterator((Oid) 869,	/* inet */
-						  (Oid) 920,	/* network_eq */
+	return array_iterator(F_NETWORK_EQ,
 						  1,	/* logical and */
 						  array, (Datum) value);
 }
 
 int32
-array_inetne(ArrayType *array, Oid value)
+array_inetne(ArrayType *array, void *value)
 {
-	return array_iterator((Oid) 869,	/* inet */
-						  (Oid) 925,	/* network_ne */
+	return array_iterator(F_NETWORK_NE,
 						  0,	/* logical and */
 						  array, (Datum) value);
 }
 
 int32
-array_all_inetne(ArrayType *array, Oid value)
+array_all_inetne(ArrayType *array, void *value)
 {
-	return array_iterator((Oid) 869,	/* inet */
-						  (Oid) 925,	/* network_ne */
+	return array_iterator(F_NETWORK_NE,
 						  1,	/* logical and */
 						  array, (Datum) value);
 }
-
-/*
- * Local Variables:
- *	tab-width: 4
- *	c-indent-level: 4
- *	c-basic-offset: 4
- * End:
- */

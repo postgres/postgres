@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.125 2002/08/08 01:44:30 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.126 2002/08/26 17:53:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -877,7 +877,7 @@ exprType(Node *expr)
 			type = ((Const *) expr)->consttype;
 			break;
 		case T_ArrayRef:
-			type = ((ArrayRef *) expr)->refelemtype;
+			type = ((ArrayRef *) expr)->refrestype;
 			break;
 		case T_Aggref:
 			type = ((Aggref *) expr)->aggtype;

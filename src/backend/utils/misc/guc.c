@@ -5,7 +5,7 @@
  * command, configuration file, and command line options.
  * See src/backend/utils/misc/README for more information.
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.83 2002/08/18 03:03:25 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.84 2002/08/26 17:53:59 tgl Exp $
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  * Written by Peter Eisentraut <peter_e@gmx.net>.
@@ -2680,6 +2680,7 @@ assign_defaultxactisolevel(const char *newval, bool doit, bool interactive)
 
 /*
  * Handle options fetched from pg_database.datconfig or pg_shadow.useconfig.
+ * The array parameter must be an array of TEXT.
  */
 void
 ProcessGUCArray(ArrayType *array, GucSource source)
@@ -2687,6 +2688,9 @@ ProcessGUCArray(ArrayType *array, GucSource source)
 	int		i;
 
 	Assert(array != NULL);
+	Assert(ARR_ELEMTYPE(array) == TEXTOID);
+	Assert(ARR_NDIM(array) == 1);
+	Assert(ARR_LBOUND(array)[0] == 1);
 	Assert(source == PGC_S_DATABASE || source == PGC_S_USER);
 
 	for (i = 1; i <= ARR_DIMS(array)[0]; i++)
@@ -2698,9 +2702,10 @@ ProcessGUCArray(ArrayType *array, GucSource source)
 		char	   *value;
 
 		d = array_ref(array, 1, &i,
-					  false /*notbyvalue*/,
-					  -1 /*varlenelem*/,
 					  -1 /*varlenarray*/,
+					  -1 /*TEXT's typlen*/,
+					  false /*TEXT's typbyval*/,
+					  'i' /*TEXT's typalign*/,
 					  &isnull);
 
 		if (isnull)
@@ -2756,6 +2761,10 @@ GUCArrayAdd(ArrayType *array, const char *name, const char *value)
 		bool	isnull;
 		int		i;
 
+		Assert(ARR_ELEMTYPE(array) == TEXTOID);
+		Assert(ARR_NDIM(array) == 1);
+		Assert(ARR_LBOUND(array)[0] == 1);
+
 		index = ARR_DIMS(array)[0] + 1;	/* add after end */
 
 		for (i = 1; i <= ARR_DIMS(array)[0]; i++)
@@ -2764,10 +2773,13 @@ GUCArrayAdd(ArrayType *array, const char *name, const char *value)
 			char	   *current;
 
 			d = array_ref(array, 1, &i,
-						  false /*notbyvalue*/,
-						  -1 /*varlenelem*/,
 						  -1 /*varlenarray*/,
+						  -1 /*TEXT's typlen*/,
+						  false /*TEXT's typbyval*/,
+						  'i' /*TEXT's typalign*/,
 						  &isnull);
+			if (isnull)
+				continue;
 			current = DatumGetCString(DirectFunctionCall1(textout, d));
 			if (strncmp(current, newval, strlen(name) + 1)==0)
 			{
@@ -2777,10 +2789,18 @@ GUCArrayAdd(ArrayType *array, const char *name, const char *value)
 		}
 
 		isnull = false;
-		a = array_set(array, 1, &index, datum, false/*notbyval*/, -1, -1, &isnull);
+		a = array_set(array, 1, &index,
+					  datum,
+					  -1 /*varlenarray*/,
+					  -1 /*TEXT's typlen*/,
+					  false /*TEXT's typbyval*/,
+					  'i' /*TEXT's typalign*/,
+					  &isnull);
 	}
 	else
-		a = construct_array(&datum, 1, false, -1, 'i');
+		a = construct_array(&datum, 1,
+							TEXTOID,
+							-1, false, 'i');
 
 	return a;
 }
@@ -2802,7 +2822,9 @@ GUCArrayDelete(ArrayType *array, const char *name)
 					  superuser() ? PGC_SUSET : PGC_USERSET,
 					  PGC_S_SESSION, false, false);
 
-	newarray = construct_array(NULL, 0, false, -1, 'i');
+	newarray = construct_array(NULL, 0,
+							   TEXTOID,
+							   -1, false, 'i');
 	index = 1;
 
 	for (i = 1; i <= ARR_DIMS(array)[0]; i++)
@@ -2812,10 +2834,13 @@ GUCArrayDelete(ArrayType *array, const char *name)
 		bool		isnull;
 
 		d = array_ref(array, 1, &i,
-					  false /*notbyvalue*/,
-					  -1 /*varlenelem*/,
 					  -1 /*varlenarray*/,
+					  -1 /*TEXT's typlen*/,
+					  false /*TEXT's typbyval*/,
+					  'i' /*TEXT's typalign*/,
 					  &isnull);
+		if (isnull)
+			continue;
 		val = DatumGetCString(DirectFunctionCall1(textout, d));
 
 		if (strncmp(val, name, strlen(name))==0
@@ -2823,7 +2848,13 @@ GUCArrayDelete(ArrayType *array, const char *name)
 			continue;
 
 		isnull = false;
-		newarray = array_set(newarray, 1, &index, d, false/*notbyval*/, -1, -1, &isnull);
+		newarray = array_set(newarray, 1, &index,
+							 d,
+							 -1 /*varlenarray*/,
+							 -1 /*TEXT's typlen*/,
+							 false /*TEXT's typbyval*/,
+							 'i' /*TEXT's typalign*/,
+							 &isnull);
 		index++;
 	}
 

@@ -12,13 +12,14 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/name.c,v 1.39 2002/06/20 20:29:37 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/name.c,v 1.40 2002/08/26 17:53:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
 #include "catalog/namespace.h"
+#include "catalog/pg_type.h"
 #include "miscadmin.h"
 #include "utils/array.h"
 #include "utils/builtins.h"
@@ -271,8 +272,9 @@ current_schemas(PG_FUNCTION_ARGS)
 	}
 
 	array = construct_array(names, nnames,
-							false, /* Name is not by-val */
+							NAMEOID,
 							NAMEDATALEN, /* sizeof(Name) */
+							false, /* Name is not by-val */
 							'i'); /* alignment of Name */
 
 	PG_RETURN_POINTER(array);

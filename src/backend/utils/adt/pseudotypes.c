@@ -16,12 +16,13 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/pseudotypes.c,v 1.2 2002/08/24 15:00:46 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/pseudotypes.c,v 1.3 2002/08/26 17:53:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
+#include "utils/array.h"
 #include "utils/builtins.h"
 
 
@@ -112,13 +113,13 @@ anyarray_in(PG_FUNCTION_ARGS)
 
 /*
  * anyarray_out		- output routine for pseudo-type ANYARRAY.
+ *
+ * We may as well allow this, since array_out will in fact work.
  */
 Datum
 anyarray_out(PG_FUNCTION_ARGS)
 {
-	elog(ERROR, "Cannot display a value of type %s", "ANYARRAY");
-
-	PG_RETURN_VOID();			/* keep compiler quiet */
+	return array_out(fcinfo);
 }
 
 

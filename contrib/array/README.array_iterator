@@ -41,9 +41,9 @@ attribute equal to a given value or matching a regular expression:
 
 The scheme is quite general, each operator which operates on a base type
 can be iterated over the elements of an array. It seem to work well but
-defining each new operators requires writing a different C function.
-Furthermore in each function there are two hardcoded OIDs which reference
-a base type and a procedure. Not very portable. Can anyone suggest a
-better and more portable way to do it ?
+defining each new operator requires writing a different C function.
+This is tedious, and error-prone since one must take care that the correct
+datatypes are associated with the selected underlying function.
+Can anyone suggest a better and more portable way to do it ?
 
 See also array_iterator.sql for an example on how to use this module.

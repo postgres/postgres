@@ -38,9 +38,9 @@
 #include "utils/lsyscache.h"
 
 
-/* This is actually a postgres version of a one dimentional array */
+/* This is actually a postgres version of a one dimensional array */
 
-typedef struct agg
+typedef struct
 {
 	ArrayType a;
 	int 	items;
@@ -95,8 +95,9 @@ static PGARRAY * GetPGArray(int4 state, int fAdd)
 		}
 
 		p->a.size = cb;
-		p->a.ndim= 0;
+		p->a.ndim = 0;
 		p->a.flags = 0;
+		p->a.elmtype = INT4OID;
 		p->items = 0;
 		p->lower= START_NUM;
 	}
@@ -149,6 +150,7 @@ static PGARRAY *ShrinkPGArray(PGARRAY *p)
 			pnew->a.size = cb;
 			pnew->a.ndim=1;
 			pnew->a.flags = 0;
+			pnew->a.elmtype = INT4OID;
 			pnew->lower = 0;
 		}
 		else
