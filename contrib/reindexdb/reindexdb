@@ -1,6 +1,6 @@
 #!/bin/sh
 # -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- #
-# Package : reindexdb                 Version : $Revision: 1.4 $
+# Package : reindexdb                 Version : $Revision: 1.5 $
 # Date    : 05/08/2002                Author  : Shaun Thomas
 # Req     : psql, sh, perl, sed         Type  : Utility
 #
@@ -26,7 +26,7 @@ usage()
   echo "  -a, --all                       Reindex all databases"
   echo "  -t, --table=TABLE               Reindex specific table only"
   echo "  -i, --index=INDEX               Reindex specific index only"
-  echo "  -e, --echo                      Show the command being sent to the backend"
+  echo "  -e, --echo                      Show the command(s) sent to the backend"
   echo "  -q, --quiet                     Don't write any output"
   echo
   echo "Read the description of the SQL command REINDEX for details."
@@ -41,7 +41,7 @@ usage()
 CMDNAME=`basename "$0"`
 PATHNAME=`echo $0 | sed "s,$CMDNAME\$,,"`
 
-# Try valliantly to get the location of psql, since you can't ever
+# Try valiantly to get the location of psql, since you can't ever
 # really know where it has been placed.  We'll start by trying the
 # path.  If that fails, we'll try the directory where this script
 # resides.  Then on to whereis, and finally locate.  Wish us luck.
@@ -95,9 +95,9 @@ do
       ECHOOPT="-e"
       ;;
 
-    # Do not echo messages.  We'll direct all output to /dev/null.
+    # Do not echo messages.
     --quiet|-q)
-      ECHOOPT="$ECHOOPT -o /dev/null"
+      ECHOOPT="-q"
       quiet=1
       ;;
 
@@ -172,8 +172,9 @@ if [ "$alldb" ]; then
 
   # Execute a command to pull back all databases the user specified can
   # connect to.  That's the list we'll be using.  It's also why it's
-  # a good idea for this to be a super-user.
-  dbname=`$PSQL $PSQLOPT -q -t -A -d template1 -c 'SELECT datname FROM pg_database WHERE datallowconn'`
+  # a good idea for this to be run as a super-user.
+  sql='SELECT datname FROM pg_database WHERE datallowconn'
+  dbname=`$PSQL $PSQLOPT -q -t -A -d template1 -c "$sql"`
 
 # Ok, if it's not all databases, make sure at least one database is
 # specified before continuing.
@@ -191,42 +192,61 @@ if [ "$table" ] && [ "$index" ]; then
   exit 1
 fi
 
-# If index was set, reindex that index.
+# If index was selected, reindex that index.
 if [ "$index" ]; then
-  $PSQL $PSQLOPT $ECHOOPT -c "REINDEX INDEX $index" -d $dbname
+  $PSQL $PSQLOPT $ECHOOPT -c "REINDEX INDEX \"$index\"" -d "$dbname"
+  if [ "$?" -ne 0 ]; then
+    echo "$CMDNAME: reindex index \"$index\" failed" 1>&2
+    exit 1
+  fi
 
 # Ok, no index.  Is there a specific table to reindex?
 elif [ "$table" ]; then
-    $PSQL $PSQLOPT $ECHOOPT -c "REINDEX TABLE \"$table\"" -d $dbname
+  $PSQL $PSQLOPT $ECHOOPT -c "REINDEX TABLE \"$table\"" -d "$dbname"
+  if [ "$?" -ne 0 ]; then
+    echo "$CMDNAME: reindex table \"$table\" failed" 1>&2
+    exit 1
+  fi
 
 # No specific table, no specific index, either we have a specific database,
 # or were told to do all databases.  Do it!
 else
 
-  sql="SELECT distinct tablename FROM pg_indexes WHERE tablename NOT LIKE 'pg_%'"
+  # We set IFS to newline only so that the for-loops won't misinterpret
+  # spaces in the lists we retrieved via psql.  Note also the use of
+  # regclass to handle spaces, mixed-case names, and schema awareness.
+  sql="SELECT DISTINCT c.oid::pg_catalog.regclass FROM pg_catalog.pg_index x JOIN pg_catalog.pg_class c ON c.oid = x.indrelid JOIN pg_catalog.pg_namespace n ON c.relnamespace = n.oid WHERE nspname NOT LIKE 'pg\\\\_%'"
+
+  IFS='
+'
   for db in $dbname; do
 
     # Only print which database we're currently reindexing if not in
     # quiet mode, and we're doing more than one database.
     [ "$alldb" ] && [ -z "$quiet" ] && echo "Reindexing $db"
 
-    # Ok, reindex every table in the database.  Use the same method
-    # we used to get a list of databases, and get a list of tables in this
-    # database that we may reindex.
-    tables=`$PSQL $PSQLOPT -q -t -A -d $db -c "$sql"`
+    IFS=' 	
+'
+    # Get a list of non-system tables that have indexes.
+    tables=`$PSQL $PSQLOPT -q -t -A -d "$db" -c "$sql"`
+
+    # Ok, reindex every table in the database.
+    IFS='
+'
     for tab in $tables; do
-        $PSQL $PSQLOPT $ECHOOPT -c "REINDEX TABLE \"$tab\"" -d $db
+	IFS=' 	
+'
+        $PSQL $PSQLOPT $ECHOOPT -c "REINDEX TABLE $tab" -d "$db"
+        if [ "$?" -ne 0 ]; then
+          echo "$CMDNAME: reindex table $tab failed" 1>&2
+          exit 1
+        fi
+	IFS='
+'
     done
 
   done
 
-fi
-
-# If any of the commands we've executed above failed in any way, bail
-# out with an error.
-if [ "$?" -ne 0 ]; then
-  echo "$CMDNAME: reindex $index $table $dbname failed" 1>&2
-  exit 1
 fi
 
 exit 0
