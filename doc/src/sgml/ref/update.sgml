@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/update.sgml,v 1.19 2002/04/23 02:07:16 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/update.sgml,v 1.20 2002/08/15 02:59:18 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -40,7 +40,15 @@ UPDATE [ ONLY ] <replaceable class="PARAMETER">table</replaceable> SET <replacea
       <term><replaceable class="PARAMETER">table</replaceable></term>
       <listitem>
        <para>
-	The name (optionally schema-qualified) of an existing table.
+	The name (optionally schema-qualified) of an existing table. If
+	<literal>ONLY</> is specified, only that table is updated.  If
+	<literal>ONLY</> is not specified, the table and all its
+	descendant tables (if any) are updated. <literal>*</> can be
+	appended to the table name to indicate that descendant tables are
+	to be scanned, but in the current version, this is the default
+	behavior.  (In releases before 7.1, <literal>ONLY</> was the
+	default behavior.)  The default can be altered by changing the
+	<option>SQL_INHERITANCE</option> configuration option.
        </para>
       </listitem>
      </varlistentry>

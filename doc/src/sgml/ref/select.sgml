@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/select.sgml,v 1.55 2002/08/04 19:48:09 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/select.sgml,v 1.56 2002/08/15 02:59:18 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -131,7 +131,9 @@ where <replaceable class="PARAMETER">from_item</replaceable> can be:
 	tables (if any) are scanned.  <literal>*</> can be appended to the
 	table name to indicate that descendant tables are to be scanned, but
 	in the current version, this is the default behavior.  (In releases
-	before 7.1, <literal>ONLY</> was the default behavior.)
+	before 7.1, <literal>ONLY</> was the default behavior.)  The
+	default behavior can be modified by changing the
+	<option>SQL_INHERITANCE</option> configuration option.
        </para>
       </listitem>
      </varlistentry>
