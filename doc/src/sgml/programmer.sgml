@@ -1,9 +1,12 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/programmer.sgml,v 1.20 1999/12/06 16:37:11 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/programmer.sgml,v 1.21 2000/02/02 16:25:04 thomas Exp $
 
 Postgres Programmer's Guide.
 
 $Log: programmer.sgml,v $
+Revision 1.21  2000/02/02 16:25:04  thomas
+Add short chapter in developer's guide on formatting source code.
+
 Revision 1.20  1999/12/06 16:37:11  thomas
 Remove references to PostgreSQL as "public-domain" since that has a
  specific meaning wrt copyright (or lack thereof).
@@ -81,6 +84,7 @@ Make new file current.sgml to hold release info for the current release.
 <!entity page     SYSTEM "page.sgml">
 <!entity protocol SYSTEM "protocol.sgml">
 <!entity signals  SYSTEM "signals.sgml">
+<!entity sources  SYSTEM "sources.sgml">
 ]>
 
 <book id="programmer">
@@ -187,6 +191,7 @@ Disable it until we put in some info.
  
 <!-- development -->
  
+  &sources;
   &arch-dev; 
   &options;
   &geqo;
@@ -214,7 +219,7 @@ Disable it until we put in some info.
 
 <!-- Keep this comment at the end of the file
 Local variables:
-mode: sgml
+mode:sgml
 sgml-omittag:nil
 sgml-shorttag:t
 sgml-minimize-attributes:nil
@@ -224,7 +229,7 @@ sgml-indent-data:t
 sgml-parent-document:nil
 sgml-default-dtd-file:"./reference.ced"
 sgml-exposed-tags:nil
-sgml-local-catalogs:"/usr/lib/sgml/CATALOG"
+sgml-local-catalogs:("/usr/lib/sgml/CATALOG")
 sgml-local-ecat-files:nil
 End:
 -->

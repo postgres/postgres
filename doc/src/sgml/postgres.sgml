@@ -91,6 +91,7 @@
 <!entity page     SYSTEM "page.sgml">
 <!entity protocol SYSTEM "protocol.sgml">
 <!entity signals  SYSTEM "signals.sgml">
+<!entity sources  SYSTEM "sources.sgml">
 ]>
 <!-- entity manpages SYSTEM "man/manpages.sgml" subdoc -->
 <Book Id="postgres">
@@ -268,6 +269,7 @@ Your name here...
     suggestions for future development.
    </Para>
   </PartIntro>
+   &sources;
    &arch-dev;
    &options;
    &geqo;
