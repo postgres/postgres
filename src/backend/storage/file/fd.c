@@ -6,7 +6,7 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *    $Id: fd.c,v 1.15 1997/02/14 04:16:26 momjian Exp $
+ *    $Id: fd.c,v 1.16 1997/02/20 22:54:18 scrappy Exp $
  *
  * NOTES:
  *
@@ -847,8 +847,8 @@ AllocateFile()
             FreeFd = 0;
             AssertLruRoom();
         } else {
-            elog(WARN,"Open: %s in %s line %d\n", Nulldev,
-                 __FILE__, __LINE__);
+            elog(WARN,"Open: %s in %s line %d, %s\n", Nulldev,
+                 __FILE__, __LINE__, strerror(errno));
         }
     }
     close(fd);
