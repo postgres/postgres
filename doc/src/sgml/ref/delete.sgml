@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/delete.sgml,v 1.8 1999/10/01 15:24:46 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/delete.sgml,v 1.9 1999/10/04 04:37:46 momjian Exp $
 Postgres documentation
 -->
 
@@ -111,7 +111,7 @@ DELETE <replaceable class="parameter">count</replaceable>
 
    <tip>
     <para>
-     <xref linkend="sql-truncate" endterm="squ-truncate-title"> is a
+     <xref linkend="sql-truncate" endterm="sql-truncate-title"> is a
      <productname>Postgres</productname> extension which provides a
      faster mechanism to remove all rows from a table.
     </para>
