@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: execnodes.h,v 1.98 2003/05/28 16:04:00 tgl Exp $
+ * $Id: execnodes.h,v 1.99 2003/06/22 22:04:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -353,6 +353,7 @@ typedef struct TupleHashTableData
 	int			numCols;		/* number of columns in lookup key */
 	AttrNumber *keyColIdx;		/* attr numbers of key columns */
 	FmgrInfo   *eqfunctions;	/* lookup data for comparison functions */
+	FmgrInfo   *hashfunctions;	/* lookup data for hash functions */
 	MemoryContext tablecxt;		/* memory context containing table */
 	MemoryContext tempcxt;		/* context for function evaluations */
 	Size		entrysize;		/* actual size to make each hash entry */
@@ -521,6 +522,7 @@ typedef struct SubPlanState
 	ExprContext *innerecontext;	/* working context for comparisons */
 	AttrNumber *keyColIdx;		/* control data for hash tables */
 	FmgrInfo   *eqfunctions;	/* comparison functions for hash tables */
+	FmgrInfo   *hashfunctions;	/* lookup data for hash functions */
 } SubPlanState;
 
 /* ----------------
@@ -900,6 +902,7 @@ typedef struct MergeJoinState
  *								 unless OuterTupleSlot is nonempty!)
  *		hj_OuterHashKeys		the outer hash keys in the hashjoin condition
  *		hj_InnerHashKeys		the inner hash keys in the hashjoin condition
+ *		hj_HashOperators		the join operators in the hashjoin condition
  *		hj_OuterTupleSlot		tuple slot for outer tuples
  *		hj_HashTupleSlot		tuple slot for hashed tuples
  *		hj_NullInnerTupleSlot	prepared null tuple for left outer joins
@@ -917,6 +920,7 @@ typedef struct HashJoinState
 	HashJoinTuple hj_CurTuple;
 	List	   *hj_OuterHashKeys;	/* list of ExprState nodes */
 	List	   *hj_InnerHashKeys;	/* list of ExprState nodes */
+	List	   *hj_HashOperators;	/* list of operator OIDs */
 	TupleTableSlot *hj_OuterTupleSlot;
 	TupleTableSlot *hj_HashTupleSlot;
 	TupleTableSlot *hj_NullInnerTupleSlot;
@@ -992,6 +996,7 @@ typedef struct AggState
 	List	   *aggs;			/* all Aggref nodes in targetlist & quals */
 	int			numaggs;		/* length of list (could be zero!) */
 	FmgrInfo   *eqfunctions;	/* per-grouping-field equality fns */
+	FmgrInfo   *hashfunctions;	/* per-grouping-field hash fns */
 	AggStatePerAgg peragg;		/* per-Aggref information */
 	MemoryContext aggcontext;	/* memory context for long-lived data */
 	ExprContext *tmpcontext;	/* econtext for input expressions */

@@ -364,10 +364,6 @@ WHERE p1.oprlsortop != p1.oprrsortop AND
 -- since the hash itself depends on the bitwise representation of the type.
 -- Check that allegedly hashable operators look like they might be "=".
 
--- NOTE: as of 7.3, this search finds xideqint4.  Since we do not mark
--- xid and int4 as binary-equivalent in pg_cast, there's no easy way to
--- recognize that case as OK; just leave that tuple in the expected output.
-
 SELECT p1.oid, p1.oprname
 FROM pg_operator AS p1
 WHERE p1.oprcanhash AND NOT
@@ -397,6 +393,16 @@ WHERE p1.oprcanhash AND NOT
 SELECT p1.oid, p1.oprname
 FROM pg_operator AS p1, pg_proc AS p2
 WHERE p1.oprcanhash AND p1.oprcode = p2.oid AND p2.proname = 'array_eq';
+
+-- Hashable operators should appear as members of hash index opclasses.
+
+SELECT p1.oid, p1.oprname
+FROM pg_operator AS p1
+WHERE p1.oprcanhash AND NOT EXISTS
+  (SELECT 1 FROM pg_opclass op JOIN pg_amop p ON op.oid = amopclaid
+   WHERE opcamid = (SELECT oid FROM pg_am WHERE amname = 'hash') AND
+         amopopr = p1.oid);
+
 
 -- Check that each operator defined in pg_operator matches its oprcode entry
 -- in pg_proc.  Easiest to do this separately for each oprkind.
@@ -665,3 +671,22 @@ WHERE p3.opcamid = (SELECT oid FROM pg_am WHERE amname = 'btree')
      OR pronargs != 2
      OR NOT binary_coercible(opcintype, proargtypes[0])
      OR proargtypes[0] != proargtypes[1]);
+
+-- For hash we can also do a little better: the support routines must be
+-- of the form hash(something) returns int4.  Ideally we'd check that the
+-- opcintype is binary-coercible to the function's input, but there are
+-- enough cases where that fails that I'll just leave out the check for now.
+
+SELECT p1.amopclaid, p1.amprocnum,
+	p2.oid, p2.proname,
+	p3.opcname
+FROM pg_amproc AS p1, pg_proc AS p2, pg_opclass AS p3
+WHERE p3.opcamid = (SELECT oid FROM pg_am WHERE amname = 'hash')
+    AND p1.amopclaid = p3.oid AND p1.amproc = p2.oid AND
+    (opckeytype != 0
+     OR amprocnum != 1
+     OR proretset
+     OR prorettype != 23
+     OR pronargs != 1
+--   OR NOT physically_coercible(opcintype, proargtypes[0])
+);

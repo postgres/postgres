@@ -1,6 +1,6 @@
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
- $Header: /cvsroot/pgsql/doc/src/sgml/catalogs.sgml,v 2.71 2003/05/28 16:03:55 tgl Exp $
+ $Header: /cvsroot/pgsql/doc/src/sgml/catalogs.sgml,v 2.72 2003/06/22 22:04:54 tgl Exp $
  -->
 
 <chapter id="catalogs">
@@ -2525,7 +2525,7 @@
       <entry><structfield>oprcanhash</structfield></entry>
       <entry><type>bool</type></entry>
       <entry></entry>
-      <entry>This operator supports hash joins.</entry>
+      <entry>This operator supports hash joins</entry>
      </row>
 
      <row>

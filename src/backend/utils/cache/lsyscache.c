@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/lsyscache.c,v 1.95 2003/05/26 00:11:27 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/lsyscache.c,v 1.96 2003/06/22 22:04:54 tgl Exp $
  *
  * NOTES
  *	  Eventually, the index information should go through here, too.
@@ -16,8 +16,10 @@
 #include "postgres.h"
 #include "miscadmin.h"
 
+#include "access/hash.h"
 #include "access/tupmacs.h"
 #include "catalog/pg_amop.h"
+#include "catalog/pg_amproc.h"
 #include "catalog/pg_namespace.h"
 #include "catalog/pg_opclass.h"
 #include "catalog/pg_operator.h"
@@ -28,6 +30,7 @@
 #include "nodes/makefuncs.h"
 #include "utils/array.h"
 #include "utils/builtins.h"
+#include "utils/catcache.h"
 #include "utils/datum.h"
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
@@ -104,6 +107,72 @@ get_opclass_member(Oid opclass, int16 strategy)
 	result = amop_tup->amopopr;
 	ReleaseSysCache(tp);
 	return result;
+}
+
+/*
+ * get_op_hash_function
+ *		Get the OID of the datatype-specific hash function associated with
+ *		a hashable equality operator.
+ *
+ * Returns InvalidOid if no hash function can be found.  (This indicates
+ * that the operator should not have been marked oprcanhash.)
+ */
+Oid
+get_op_hash_function(Oid opno)
+{
+	CatCList   *catlist;
+	int			i;
+	HeapTuple	tuple;
+	Oid			opclass = InvalidOid;
+
+	/*
+	 * Search pg_amop to see if the target operator is registered as the "="
+	 * operator of any hash opclass.  If the operator is registered in
+	 * multiple opclasses, assume we can use the associated hash function
+	 * from any one.
+	 */
+	catlist = SearchSysCacheList(AMOPOPID, 1,
+								 ObjectIdGetDatum(opno),
+								 0, 0, 0);
+
+	for (i = 0; i < catlist->n_members; i++)
+	{
+		Form_pg_amop aform;
+
+		tuple = &catlist->members[i]->tuple;
+		aform = (Form_pg_amop) GETSTRUCT(tuple);
+
+		if (aform->amopstrategy == HTEqualStrategyNumber &&
+			opclass_is_hash(aform->amopclaid))
+		{
+			opclass = aform->amopclaid;
+			break;
+		}
+	}
+
+	ReleaseSysCacheList(catlist);
+
+	if (OidIsValid(opclass))
+	{
+		/* Found a suitable opclass, get its hash support function */
+		tuple = SearchSysCache(AMPROCNUM,
+							   ObjectIdGetDatum(opclass),
+							   Int16GetDatum(HASHPROC),
+							   0, 0);
+		if (HeapTupleIsValid(tuple))
+		{
+			Form_pg_amproc aform = (Form_pg_amproc) GETSTRUCT(tuple);
+			RegProcedure result;
+
+			result = aform->amproc;
+			ReleaseSysCache(tuple);
+			Assert(RegProcedureIsValid(result));
+			return result;
+		}
+	}
+
+	/* Didn't find a match... */
+	return InvalidOid;
 }
 
 
@@ -280,6 +349,31 @@ opclass_is_btree(Oid opclass)
 	cla_tup = (Form_pg_opclass) GETSTRUCT(tp);
 
 	result = (cla_tup->opcamid == BTREE_AM_OID);
+	ReleaseSysCache(tp);
+	return result;
+}
+
+/*
+ * opclass_is_hash
+ *
+ *		Returns TRUE iff the specified opclass is associated with the
+ *		hash index access method.
+ */
+bool
+opclass_is_hash(Oid opclass)
+{
+	HeapTuple	tp;
+	Form_pg_opclass cla_tup;
+	bool		result;
+
+	tp = SearchSysCache(CLAOID,
+						ObjectIdGetDatum(opclass),
+						0, 0, 0);
+	if (!HeapTupleIsValid(tp))
+		elog(ERROR, "cache lookup failed for opclass %u", opclass);
+	cla_tup = (Form_pg_opclass) GETSTRUCT(tp);
+
+	result = (cla_tup->opcamid == HASH_AM_OID);
 	ReleaseSysCache(tp);
 	return result;
 }

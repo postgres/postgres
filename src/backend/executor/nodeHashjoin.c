@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeHashjoin.c,v 1.51 2003/05/30 20:23:10 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeHashjoin.c,v 1.52 2003/06/22 22:04:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -117,7 +117,8 @@ ExecHashJoin(HashJoinState *node)
 		 * create the hash table
 		 */
 		Assert(hashtable == NULL);
-		hashtable = ExecHashTableCreate((Hash *) hashNode->ps.plan);
+		hashtable = ExecHashTableCreate((Hash *) hashNode->ps.plan,
+										node->hj_HashOperators);
 		node->hj_HashTable = hashtable;
 
 		/*
@@ -305,6 +306,7 @@ ExecInitHashJoin(HashJoin *node, EState *estate)
 	Plan	   *outerNode;
 	Hash	   *hashNode;
 	List	   *hclauses;
+	List	   *hoperators;
 	List	   *hcl;
 
 	/*
@@ -406,8 +408,9 @@ ExecInitHashJoin(HashJoin *node, EState *estate)
 
 	/*
 	 * The planner already made a list of the inner hashkeys for us,
-	 * but we also need a list of the outer hashkeys.  Each list of
-	 * exprs must then be prepared for execution.
+	 * but we also need a list of the outer hashkeys, as well as a list
+	 * of the hash operator OIDs.  Both lists of exprs must then be prepared
+	 * for execution.
 	 */
 	hjstate->hj_InnerHashKeys = (List *)
 		ExecInitExpr((Expr *) hashNode->hashkeys,
@@ -416,13 +419,19 @@ ExecInitHashJoin(HashJoin *node, EState *estate)
 		hjstate->hj_InnerHashKeys;
 
 	hclauses = NIL;
+	hoperators = NIL;
 	foreach(hcl, node->hashclauses)
 	{
-		hclauses = lappend(hclauses, get_leftop(lfirst(hcl)));
+		OpExpr	   *hclause = (OpExpr *) lfirst(hcl);
+
+		Assert(IsA(hclause, OpExpr));
+		hclauses = lappend(hclauses, get_leftop((Expr *) hclause));
+		hoperators = lappendo(hoperators, hclause->opno);
 	}
 	hjstate->hj_OuterHashKeys = (List *)
 		ExecInitExpr((Expr *) hclauses,
 					 (PlanState *) hjstate);
+	hjstate->hj_HashOperators = hoperators;
 
 	hjstate->js.ps.ps_OuterTupleSlot = NULL;
 	hjstate->js.ps.ps_TupFromTlist = false;

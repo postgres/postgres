@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: hashjoin.h,v 1.27 2002/11/30 00:08:20 tgl Exp $
+ * $Id: hashjoin.h,v 1.28 2003/06/22 22:04:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -69,13 +69,12 @@ typedef struct HashTableData
 								 * file */
 
 	/*
-	 * Info about the datatypes being hashed.  We assume that the inner and
-	 * outer sides of each hashclause are the same type, or at least
-	 * binary-compatible types.  Each of these fields points to an array
-	 * of the same length as the number of hash keys.
+	 * Info about the datatype-specific hash functions for the datatypes
+	 * being hashed.  We assume that the inner and outer sides of each
+	 * hashclause are the same type, or at least share the same hash function.
+	 * This is an array of the same length as the number of hash keys.
 	 */
-	int16	   *typLens;
-	bool	   *typByVals;
+	FmgrInfo   *hashfunctions;	/* lookup data for hash functions */
 
 	/*
 	 * During 1st scan of inner relation, we get tuples from executor. If

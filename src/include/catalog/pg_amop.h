@@ -16,7 +16,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_amop.h,v 1.49 2003/05/26 00:11:27 tgl Exp $
+ * $Id: pg_amop.h,v 1.50 2003/06/22 22:04:55 tgl Exp $
  *
  * NOTES
  *	 the genbki.sh script reads this file and generates .bki
@@ -465,5 +465,27 @@ DATA(insert (	2001 1 f 1550 ));
 DATA(insert (	2004 1 f   98 ));
 /* timestamp_ops */
 DATA(insert (	2040 1 f 2060 ));
+/* bool_ops */
+DATA(insert (	2222 1 f   91 ));
+/* bytea_ops */
+DATA(insert (	2223 1 f 1955 ));
+/* int2vector_ops */
+DATA(insert (	2224 1 f  386 ));
+/* xid_ops */
+DATA(insert (	2225 1 f  352 ));
+/* cid_ops */
+DATA(insert (	2226 1 f  385 ));
+/* abstime_ops */
+DATA(insert (	2227 1 f  560 ));
+/* reltime_ops */
+DATA(insert (	2228 1 f  566 ));
+/* text_pattern_ops */
+DATA(insert (	2229 1 f 2316 ));
+/* varchar_pattern_ops */
+DATA(insert (	2230 1 f 2316 ));
+/* bpchar_pattern_ops */
+DATA(insert (	2231 1 f 2328 ));
+/* name_pattern_ops */
+DATA(insert (	2232 1 f 2334 ));
 
 #endif   /* PG_AMOP_H */

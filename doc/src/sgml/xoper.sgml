@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/xoper.sgml,v 1.23 2003/04/10 01:22:45 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/xoper.sgml,v 1.24 2003/06/22 22:04:54 tgl Exp $
 -->
 
  <sect1 id="xoper">
@@ -315,46 +315,34 @@ table1.column1 OP table2.column2
      same hash code.  If two values get put in different hash buckets, the
      join will never compare them at all, implicitly assuming that the
      result of the join operator must be false.  So it never makes sense
-     to specify <literal>HASHES</literal> for operators that do not represent equality.
+     to specify <literal>HASHES</literal> for operators that do not represent
+     equality.
     </para>
 
     <para>
-     In fact, logical equality is not good enough either; the operator
-     had better represent pure bitwise equality, because the hash
-     function will be computed on the memory representation of the
-     values regardless of what the bits mean.  For example, the
-     polygon operator <literal>~=</literal>, which checks whether two
-     polygons are the same, is not bitwise equality, because two
-     polygons can be considered the same even if their vertices are
-     specified in a different order.  What this means is that a join
-     using <literal>~=</literal> between polygon fields would yield
-     different results if implemented as a hash join than if
-     implemented another way, because a large fraction of the pairs
-     that should match will hash to different values and will never be
-     compared by the hash join.  But if the optimizer chooses to use a
-     different kind of join, all the pairs that the operator
-     <literal>~=</literal> says are the same will be found.  We don't
-     want that kind of inconsistency, so we don't mark the polygon
-     operator <literal>~=</literal> as hashable.
+     To be marked <literal>HASHES</literal>, the join operator must appear
+     in a hash index operator class.  This is not enforced when you create
+     the operator, since of course the referencing operator class couldn't
+     exist yet.  But attempts to use the operator in hash joins will fail
+     at runtime if no such operator class exists.  The system needs the
+     operator class to find the datatype-specific hash function for the
+     operator's input datatype.  Of course, you must also supply a suitable
+     hash function before you can create the operator class.
     </para>
 
     <para>
-     There are also machine-dependent ways in which a hash join might fail
-     to do the right thing.  For example, if your data type
-     is a structure in which there may be uninteresting pad bits, it's unsafe
-     to mark the equality operator <literal>HASHES</>.  (Unless you write
-     your other operators and functions to ensure that the unused bits are always zero, which is the recommended strategy.)
-     Another example is that the floating-point data types are unsafe for hash
-     joins.  On machines that meet the <acronym>IEEE</> floating-point standard, negative
-     zero and positive zero are different values (different bit patterns) but
-     they are defined to compare equal.  So, if the equality operator on floating-point data types were marked
-     <literal>HASHES</>, a negative zero and a positive zero would probably not be matched up
-     by a hash join, but they would be matched up by any other join process.
-    </para>
-
-    <para>
-     The bottom line is that you should probably only use <literal>HASHES</literal> for
-     equality operators that are (or could be) implemented by <function>memcmp()</function>.
+     Care should be exercised when preparing a hash function, because there
+     are machine-dependent ways in which it might fail to do the right thing.
+     For example, if your data type is a structure in which there may be
+     uninteresting pad bits, you can't simply pass the whole structure to
+     <function>hash_any</>.  (Unless you write your other operators and
+     functions to ensure that the unused bits are always zero, which is the
+     recommended strategy.)
+     Another example is that on machines that meet the <acronym>IEEE</>
+     floating-point standard, negative zero and positive zero are different
+     values (different bit patterns) but they are defined to compare equal.
+     If a float value might contain negative zero then extra steps are needed
+     to ensure it generates the same hash value as positive zero.
     </para>
 
     <note>

@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_am.h,v 1.25 2003/03/10 22:28:19 tgl Exp $
+ * $Id: pg_am.h,v 1.26 2003/06/22 22:04:55 tgl Exp $
  *
  * NOTES
  *		the genbki.sh script reads this file and generates .bki
@@ -107,6 +107,7 @@ DESCR("b-tree index access method");
 #define BTREE_AM_OID 403
 DATA(insert OID = 405 (  hash	PGUID	1 1 0 f f f t hashgettuple hashinsert hashbeginscan hashrescan hashendscan hashmarkpos hashrestrpos hashbuild hashbulkdelete - hashcostestimate ));
 DESCR("hash index access method");
+#define HASH_AM_OID 405
 DATA(insert OID = 783 (  gist	PGUID 100 7 0 f t f f gistgettuple gistinsert gistbeginscan gistrescan gistendscan gistmarkpos gistrestrpos gistbuild gistbulkdelete - gistcostestimate ));
 DESCR("GiST index access method");
 #define GIST_AM_OID 783

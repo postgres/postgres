@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeHash.c,v 1.75 2003/03/27 16:51:27 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeHash.c,v 1.76 2003/06/22 22:04:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -192,7 +192,7 @@ ExecEndHash(HashState *node)
  * ----------------------------------------------------------------
  */
 HashJoinTable
-ExecHashTableCreate(Hash *node)
+ExecHashTableCreate(Hash *node, List *hashOperators)
 {
 	HashJoinTable hashtable;
 	Plan	   *outerNode;
@@ -201,7 +201,7 @@ ExecHashTableCreate(Hash *node)
 	int			nbatch;
 	int			nkeys;
 	int			i;
-	List	   *hk;
+	List	   *ho;
 	MemoryContext oldcxt;
 
 	/*
@@ -237,17 +237,20 @@ ExecHashTableCreate(Hash *node)
 	hashtable->outerBatchSize = NULL;
 
 	/*
-	 * Get info about the datatypes of the hash keys.
+	 * Get info about the hash functions to be used for each hash key.
 	 */
-	nkeys = length(node->hashkeys);
-	hashtable->typLens = (int16 *) palloc(nkeys * sizeof(int16));
-	hashtable->typByVals = (bool *) palloc(nkeys * sizeof(bool));
+	nkeys = length(hashOperators);
+	hashtable->hashfunctions = (FmgrInfo *) palloc(nkeys * sizeof(FmgrInfo));
 	i = 0;
-	foreach(hk, node->hashkeys)
+	foreach(ho, hashOperators)
 	{
-		get_typlenbyval(exprType(lfirst(hk)),
-						&hashtable->typLens[i],
-						&hashtable->typByVals[i]);
+		Oid		hashfn;
+
+		hashfn = get_op_hash_function(lfirsto(ho));
+		if (!OidIsValid(hashfn))
+			elog(ERROR, "Could not find hash function for hash operator %u",
+				 lfirsto(ho));
+		fmgr_info(hashfn, &hashtable->hashfunctions[i]);
 		i++;
 	}
 
@@ -520,7 +523,7 @@ ExecHashGetBucket(HashJoinTable hashtable,
 
 	/*
 	 * We reset the eval context each time to reclaim any memory leaked in
-	 * the hashkey expressions or ComputeHashFunc itself.
+	 * the hashkey expressions.
 	 */
 	ResetExprContext(econtext);
 
@@ -545,9 +548,11 @@ ExecHashGetBucket(HashJoinTable hashtable,
 		 */
 		if (!isNull)			/* treat nulls as having hash key 0 */
 		{
-			hashkey ^= ComputeHashFunc(keyval,
-									   (int) hashtable->typLens[i],
-									   hashtable->typByVals[i]);
+			uint32		hkey;
+
+			hkey = DatumGetUInt32(FunctionCall1(&hashtable->hashfunctions[i],
+												keyval));
+			hashkey ^= hkey;
 		}
 
 		i++;

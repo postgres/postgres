@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/xfunc.sgml,v 1.68 2003/05/29 20:40:36 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/xfunc.sgml,v 1.69 2003/06/22 22:04:54 tgl Exp $
 -->
 
  <sect1 id="xfunc">
@@ -1442,11 +1442,10 @@ concat_text(PG_FUNCTION_ARGS)
       <listitem>
        <para>
         Always zero the bytes of your structures using
-        <function>memset</function> or <function>bzero</function>.
-        Several routines (such as the hash access method, hash joins,
-        and the sort algorithm) compute functions of the raw bits
-        contained in your structure.  Even if you initialize all
-        fields of your structure, there may be several bytes of
+	<function>memset</function>.  Without this, it's difficult to
+	support hash indexes or hash joins, as you must pick out only
+	the significant bits of your data structure to compute a hash.
+        Even if you initialize all fields of your structure, there may be
         alignment padding (holes in the structure) that may contain
         garbage values.
        </para>

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.303 2003/06/11 09:23:55 petere Exp $
+ * $Id: pg_proc.h,v 1.304 2003/06/22 22:04:55 tgl Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -836,9 +836,13 @@ DATA(insert OID = 454 (  hashchar		   PGNSP PGUID 12 f f t f i 1 23 "18"  hashch
 DESCR("hash");
 DATA(insert OID = 455 (  hashname		   PGNSP PGUID 12 f f t f i 1 23 "19"  hashname - _null_ ));
 DESCR("hash");
+DATA(insert OID = 400 (  hashtext		   PGNSP PGUID 12 f f t f i 1 23 "25" hashtext - _null_ ));
+DESCR("hash");
 DATA(insert OID = 456 (  hashvarlena	   PGNSP PGUID 12 f f t f i 1 23 "2281" hashvarlena - _null_ ));
 DESCR("hash any varlena type");
 DATA(insert OID = 457 (  hashoidvector	   PGNSP PGUID 12 f f t f i 1 23 "30"  hashoidvector - _null_ ));
+DESCR("hash");
+DATA(insert OID = 398 (  hashint2vector	   PGNSP PGUID 12 f f t f i 1 23 "22"  hashint2vector - _null_ ));
 DESCR("hash");
 DATA(insert OID = 399 (  hashmacaddr	   PGNSP PGUID 12 f f t f i 1 23 "829"	hashmacaddr - _null_ ));
 DESCR("hash");

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/catcache.c,v 1.103 2003/05/27 17:49:46 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/catcache.c,v 1.104 2003/06/22 22:04:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -81,22 +81,6 @@
 /* Cache management header --- pointer is NULL until created */
 static CatCacheHeader *CacheHdr = NULL;
 
-/*
- *		EQPROC is used in CatalogCacheInitializeCache to find the equality
- *		functions for system types that are used as cache key fields.
- *		See also GetCCHashFunc, which should support the same set of types.
- *
- *		XXX this should be replaced by catalog lookups,
- *		but that seems to pose considerable risk of circularity...
- */
-static const Oid eqproc[] = {
-	F_BOOLEQ, InvalidOid, F_CHAREQ, F_NAMEEQ, InvalidOid,
-	F_INT2EQ, F_INT2VECTOREQ, F_INT4EQ, F_OIDEQ, F_TEXTEQ,
-	F_OIDEQ, InvalidOid, InvalidOid, InvalidOid, F_OIDVECTOREQ
-};
-
-#define EQPROC(SYSTEMTYPEOID)	eqproc[(SYSTEMTYPEOID)-BOOLOID]
-
 
 static uint32 CatalogCacheComputeHashValue(CatCache *cache, int nkeys,
 							 ScanKey cur_skey);
@@ -119,24 +103,46 @@ static HeapTuple build_dummy_tuple(CatCache *cache, int nkeys, ScanKey skeys);
  *					internal support functions
  */
 
-static PGFunction
-GetCCHashFunc(Oid keytype)
+/*
+ * Look up the hash and equality functions for system types that are used
+ * as cache key fields.
+ *
+ * XXX this should be replaced by catalog lookups,
+ * but that seems to pose considerable risk of circularity...
+ */
+static void
+GetCCHashEqFuncs(Oid keytype, PGFunction *hashfunc, RegProcedure *eqfunc)
 {
 	switch (keytype)
 	{
 		case BOOLOID:
+			*hashfunc = hashchar;
+			*eqfunc = F_BOOLEQ;
+			break;
 		case CHAROID:
-			return hashchar;
+			*hashfunc = hashchar;
+			*eqfunc = F_CHAREQ;
+			break;
 		case NAMEOID:
-			return hashname;
+			*hashfunc = hashname;
+			*eqfunc = F_NAMEEQ;
+			break;
 		case INT2OID:
-			return hashint2;
+			*hashfunc = hashint2;
+			*eqfunc = F_INT2EQ;
+			break;
 		case INT2VECTOROID:
-			return hashint2vector;
+			*hashfunc = hashint2vector;
+			*eqfunc = F_INT2VECTOREQ;
+			break;
 		case INT4OID:
-			return hashint4;
+			*hashfunc = hashint4;
+			*eqfunc = F_INT4EQ;
+			break;
 		case TEXTOID:
-			return hashvarlena;
+			*hashfunc = hashtext;
+			*eqfunc = F_TEXTEQ;
+			break;
 		case OIDOID:
 		case REGPROCOID:
 		case REGPROCEDUREOID:
@@ -144,13 +150,17 @@ GetCCHashFunc(Oid keytype)
 		case REGOPERATOROID:
 		case REGCLASSOID:
 		case REGTYPEOID:
-			return hashoid;
+			*hashfunc = hashoid;
+			*eqfunc = F_OIDEQ;
+			break;
 		case OIDVECTOROID:
-			return hashoidvector;
+			*hashfunc = hashoidvector;
+			*eqfunc = F_OIDVECTOREQ;
+			break;
 		default:
-			elog(FATAL, "GetCCHashFunc: type %u unsupported as catcache key",
+			elog(FATAL, "GetCCHashEqFuncs: type %u unsupported as catcache key",
 				 keytype);
-			return (PGFunction) NULL;
+			break;
 	}
 }
 
@@ -941,16 +951,16 @@ CatalogCacheInitializeCache(CatCache *cache)
 			keytype = OIDOID;
 		}
 
-		cache->cc_hashfunc[i] = GetCCHashFunc(keytype);
+		GetCCHashEqFuncs(keytype,
+						 &cache->cc_hashfunc[i],
+						 &cache->cc_skey[i].sk_procedure);
 
 		cache->cc_isname[i] = (keytype == NAMEOID);
 
 		/*
-		 * If GetCCHashFunc liked the type, safe to index into eqproc[]
+		 * Do equality-function lookup (we assume this won't need a catalog
+		 * lookup for any supported type)
 		 */
-		cache->cc_skey[i].sk_procedure = EQPROC(keytype);
-
-		/* Do function lookup */
 		fmgr_info_cxt(cache->cc_skey[i].sk_procedure,
 					  &cache->cc_skey[i].sk_func,
 					  CacheMemoryContext);

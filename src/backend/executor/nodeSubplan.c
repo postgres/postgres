@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSubplan.c,v 1.46 2003/06/06 15:04:01 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSubplan.c,v 1.47 2003/06/22 22:04:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -519,6 +519,7 @@ buildSubPlanHash(SubPlanState *node)
 	node->hashtable = BuildTupleHashTable(ncols,
 										  node->keyColIdx,
 										  node->eqfunctions,
+										  node->hashfunctions,
 										  nbuckets,
 										  sizeof(TupleHashEntryData),
 										  node->tablecxt,
@@ -537,6 +538,7 @@ buildSubPlanHash(SubPlanState *node)
 		node->hashnulls = BuildTupleHashTable(ncols,
 											  node->keyColIdx,
 											  node->eqfunctions,
+											  node->hashfunctions,
 											  nbuckets,
 											  sizeof(TupleHashEntryData),
 											  node->tablecxt,
@@ -700,6 +702,7 @@ ExecInitSubPlan(SubPlanState *node, EState *estate)
 	node->innerecontext = NULL;
 	node->keyColIdx = NULL;
 	node->eqfunctions = NULL;
+	node->hashfunctions = NULL;
 
 	/*
 	 * create an EState for the subplan
@@ -797,11 +800,12 @@ ExecInitSubPlan(SubPlanState *node, EState *estate)
 		 * ExecTypeFromTL).
 		 *
 		 * We also extract the combining operators themselves to initialize
-		 * the equality functions for the hash tables.
+		 * the equality and hashing functions for the hash tables.
 		 */
 		lefttlist = righttlist = NIL;
 		leftptlist = rightptlist = NIL;
 		node->eqfunctions = (FmgrInfo *) palloc(ncols * sizeof(FmgrInfo));
+		node->hashfunctions = (FmgrInfo *) palloc(ncols * sizeof(FmgrInfo));
 		i = 1;
 		foreach(lexpr, node->exprs)
 		{
@@ -811,6 +815,7 @@ ExecInitSubPlan(SubPlanState *node, EState *estate)
 			Expr	   *expr;
 			TargetEntry *tle;
 			GenericExprState *tlestate;
+			Oid			hashfn;
 
 			Assert(IsA(fstate, FuncExprState));
 			Assert(IsA(opexpr, OpExpr));
@@ -849,6 +854,13 @@ ExecInitSubPlan(SubPlanState *node, EState *estate)
 			/* Lookup the combining function */
 			fmgr_info(opexpr->opfuncid, &node->eqfunctions[i-1]);
 			node->eqfunctions[i-1].fn_expr = (Node *) opexpr;
+
+			/* Lookup the associated hash function */
+			hashfn = get_op_hash_function(opexpr->opno);
+			if (!OidIsValid(hashfn))
+				elog(ERROR, "Could not find hash function for hash operator %u",
+					 opexpr->opno);
+			fmgr_info(hashfn, &node->hashfunctions[i-1]);
 
 			i++;
 		}

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: executor.h,v 1.94 2003/05/06 20:26:28 tgl Exp $
+ * $Id: executor.h,v 1.95 2003/06/22 22:04:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -57,9 +57,14 @@ extern bool execTuplesUnequal(HeapTuple tuple1,
 extern FmgrInfo *execTuplesMatchPrepare(TupleDesc tupdesc,
 					   int numCols,
 					   AttrNumber *matchColIdx);
-extern uint32 ComputeHashFunc(Datum key, int typLen, bool byVal);
+extern void execTuplesHashPrepare(TupleDesc tupdesc,
+								  int numCols,
+								  AttrNumber *matchColIdx,
+								  FmgrInfo **eqfunctions,
+								  FmgrInfo **hashfunctions);
 extern TupleHashTable BuildTupleHashTable(int numCols, AttrNumber *keyColIdx,
 										  FmgrInfo *eqfunctions,
+										  FmgrInfo *hashfunctions,
 										  int nbuckets, Size entrysize,
 										  MemoryContext tablecxt,
 										  MemoryContext tempcxt);

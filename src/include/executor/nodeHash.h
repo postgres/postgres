@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nodeHash.h,v 1.29 2003/01/10 23:54:24 tgl Exp $
+ * $Id: nodeHash.h,v 1.30 2003/06/22 22:04:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,7 +22,7 @@ extern TupleTableSlot *ExecHash(HashState *node);
 extern void ExecEndHash(HashState *node);
 extern void ExecReScanHash(HashState *node, ExprContext *exprCtxt);
 
-extern HashJoinTable ExecHashTableCreate(Hash *node);
+extern HashJoinTable ExecHashTableCreate(Hash *node, List *hashOperators);
 extern void ExecHashTableDestroy(HashJoinTable hashtable);
 extern void ExecHashTableInsert(HashJoinTable hashtable,
 					ExprContext *econtext,

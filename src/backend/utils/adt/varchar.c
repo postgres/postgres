@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varchar.c,v 1.97 2003/05/26 00:11:27 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varchar.c,v 1.98 2003/06/22 22:04:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -704,6 +704,8 @@ bpcharcmp(PG_FUNCTION_ARGS)
 /*
  * bpchar needs a specialized hash function because we want to ignore
  * trailing blanks in comparisons.
+ *
+ * XXX is there any need for locale-specific behavior here?
  */
 Datum
 hashbpchar(PG_FUNCTION_ARGS)

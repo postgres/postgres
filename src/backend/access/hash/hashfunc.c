@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashfunc.c,v 1.35 2002/09/04 20:31:09 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashfunc.c,v 1.36 2003/06/22 22:04:54 tgl Exp $
  *
  * NOTES
  *	  These functions are stored in pg_amproc.	For each operator class
@@ -22,6 +22,7 @@
 #include "access/hash.h"
 
 
+/* Note: this is used for both "char" and boolean datatypes */
 Datum
 hashchar(PG_FUNCTION_ARGS)
 {
@@ -58,6 +59,14 @@ hashfloat4(PG_FUNCTION_ARGS)
 {
 	float4		key = PG_GETARG_FLOAT4(0);
 
+	/*
+	 * On IEEE-float machines, minus zero and zero have different bit patterns
+	 * but should compare as equal.  We must ensure that they have the same
+	 * hash value, which is most easily done this way:
+	 */
+	if (key == (float4) 0)
+		PG_RETURN_UINT32(0);
+
 	return hash_any((unsigned char *) &key, sizeof(key));
 }
 
@@ -65,6 +74,14 @@ Datum
 hashfloat8(PG_FUNCTION_ARGS)
 {
 	float8		key = PG_GETARG_FLOAT8(0);
+
+	/*
+	 * On IEEE-float machines, minus zero and zero have different bit patterns
+	 * but should compare as equal.  We must ensure that they have the same
+	 * hash value, which is most easily done this way:
+	 */
+	if (key == (float8) 0)
+		PG_RETURN_UINT32(0);
 
 	return hash_any((unsigned char *) &key, sizeof(key));
 }
@@ -77,11 +94,6 @@ hashoidvector(PG_FUNCTION_ARGS)
 	return hash_any((unsigned char *) key, INDEX_MAX_KEYS * sizeof(Oid));
 }
 
-/*
- * Note: hashint2vector currently can't be used as a user hash table
- * hash function, because it has no pg_proc entry.	We only need it
- * for catcache indexing.
- */
 Datum
 hashint2vector(PG_FUNCTION_ARGS)
 {
@@ -100,6 +112,26 @@ hashname(PG_FUNCTION_ARGS)
 										 * correctly */
 
 	return hash_any((unsigned char *) key, keylen);
+}
+
+Datum
+hashtext(PG_FUNCTION_ARGS)
+{
+	text	   *key = PG_GETARG_TEXT_P(0);
+	Datum		result;
+
+	/*
+	 * Note: this is currently identical in behavior to hashvarlena,
+	 * but it seems likely that we may need to do something different
+	 * in non-C locales.  (See also hashbpchar, if so.)
+	 */
+	result = hash_any((unsigned char *) VARDATA(key),
+					  VARSIZE(key) - VARHDRSZ);
+
+	/* Avoid leaking memory for toasted inputs */
+	PG_FREE_IF_COPY(key, 0);
+
+	return result;
 }
 
 /*

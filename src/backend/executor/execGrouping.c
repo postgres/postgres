@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execGrouping.c,v 1.2 2003/01/12 04:03:34 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execGrouping.c,v 1.3 2003/06/22 22:04:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,6 +19,8 @@
 #include "executor/executor.h"
 #include "parser/parse_oper.h"
 #include "utils/memutils.h"
+#include "utils/lsyscache.h"
+#include "utils/syscache.h"
 
 
 /*****************************************************************************
@@ -213,76 +215,46 @@ execTuplesMatchPrepare(TupleDesc tupdesc,
 	return eqfunctions;
 }
 
-
-/*****************************************************************************
- *		Utility routines for hashing
- *****************************************************************************/
-
 /*
- * ComputeHashFunc
+ * execTuplesHashPrepare
+ *		Look up the equality and hashing functions needed for a TupleHashTable.
  *
- *		the hash function for hash joins (also used for hash aggregation)
- *
- *		XXX this probably ought to be replaced with datatype-specific
- *		hash functions, such as those already implemented for hash indexes.
+ * This is similar to execTuplesMatchPrepare, but we also need to find the
+ * hash functions associated with the equality operators.  *eqfunctions and
+ * *hashfunctions receive the palloc'd result arrays.
  */
-uint32
-ComputeHashFunc(Datum key, int typLen, bool byVal)
+void
+execTuplesHashPrepare(TupleDesc tupdesc,
+					  int numCols,
+					  AttrNumber *matchColIdx,
+					  FmgrInfo **eqfunctions,
+					  FmgrInfo **hashfunctions)
 {
-	unsigned char *k;
+	int			i;
 
-	if (byVal)
+	*eqfunctions = (FmgrInfo *) palloc(numCols * sizeof(FmgrInfo));
+	*hashfunctions = (FmgrInfo *) palloc(numCols * sizeof(FmgrInfo));
+
+	for (i = 0; i < numCols; i++)
 	{
-		/*
-		 * If it's a by-value data type, just hash the whole Datum value.
-		 * This assumes that datatypes narrower than Datum are
-		 * consistently padded (either zero-extended or sign-extended, but
-		 * not random bits) to fill Datum; see the XXXGetDatum macros in
-		 * postgres.h. NOTE: it would not work to do hash_any(&key, len)
-		 * since this would get the wrong bytes on a big-endian machine.
-		 */
-		k = (unsigned char *) &key;
-		typLen = sizeof(Datum);
-	}
-	else
-	{
-		if (typLen > 0)
-		{
-			/* fixed-width pass-by-reference type */
-			k = (unsigned char *) DatumGetPointer(key);
-		}
-		else if (typLen == -1)
-		{
-			/*
-			 * It's a varlena type, so 'key' points to a "struct varlena".
-			 * NOTE: VARSIZE returns the "real" data length plus the
-			 * sizeof the "vl_len" attribute of varlena (the length
-			 * information). 'key' points to the beginning of the varlena
-			 * struct, so we have to use "VARDATA" to find the beginning
-			 * of the "real" data.	Also, we have to be careful to detoast
-			 * the datum if it's toasted.  (We don't worry about freeing
-			 * the detoasted copy; that happens for free when the
-			 * per-tuple memory context is reset in ExecHashGetBucket.)
-			 */
-			struct varlena *vkey = PG_DETOAST_DATUM(key);
+		AttrNumber	att = matchColIdx[i];
+		Oid			typid = tupdesc->attrs[att - 1]->atttypid;
+		Operator	optup;
+		Oid			eq_opr;
+		Oid			eq_function;
+		Oid			hash_function;
 
-			typLen = VARSIZE(vkey) - VARHDRSZ;
-			k = (unsigned char *) VARDATA(vkey);
-		}
-		else if (typLen == -2)
-		{
-			/* It's a null-terminated C string */
-			typLen = strlen(DatumGetCString(key)) + 1;
-			k = (unsigned char *) DatumGetPointer(key);
-		}
-		else
-		{
-			elog(ERROR, "ComputeHashFunc: Invalid typLen %d", typLen);
-			k = NULL;			/* keep compiler quiet */
-		}
+		optup = equality_oper(typid, false);
+		eq_opr = oprid(optup);
+		eq_function = oprfuncid(optup);
+		ReleaseSysCache(optup);
+		hash_function = get_op_hash_function(eq_opr);
+		if (!OidIsValid(hash_function))
+			elog(ERROR, "Could not find hash function for hash operator %u",
+				 eq_opr);
+		fmgr_info(eq_function, &(*eqfunctions)[i]);
+		fmgr_info(hash_function, &(*hashfunctions)[i]);
 	}
-
-	return DatumGetUInt32(hash_any(k, typLen));
 }
 
 
@@ -299,19 +271,21 @@ ComputeHashFunc(Datum key, int typLen, bool byVal)
  *
  *	numCols, keyColIdx: identify the tuple fields to use as lookup key
  *	eqfunctions: equality comparison functions to use
+ *	hashfunctions: datatype-specific hashing functions to use
  *	nbuckets: number of buckets to make
  *	entrysize: size of each entry (at least sizeof(TupleHashEntryData))
  *	tablecxt: memory context in which to store table and table entries
  *	tempcxt: short-lived context for evaluation hash and comparison functions
  *
- * The eqfunctions array may be made with execTuplesMatchPrepare().
+ * The function arrays may be made with execTuplesHashPrepare().
  *
- * Note that keyColIdx and eqfunctions must be allocated in storage that
- * will live as long as the hashtable does.
+ * Note that keyColIdx, eqfunctions, and hashfunctions must be allocated in
+ * storage that will live as long as the hashtable does.
  */
 TupleHashTable
 BuildTupleHashTable(int numCols, AttrNumber *keyColIdx,
 					FmgrInfo *eqfunctions,
+					FmgrInfo *hashfunctions,
 					int nbuckets, Size entrysize,
 					MemoryContext tablecxt, MemoryContext tempcxt)
 {
@@ -328,6 +302,7 @@ BuildTupleHashTable(int numCols, AttrNumber *keyColIdx,
 	hashtable->numCols = numCols;
 	hashtable->keyColIdx = keyColIdx;
 	hashtable->eqfunctions = eqfunctions;
+	hashtable->hashfunctions = hashfunctions;
 	hashtable->tablecxt = tablecxt;
 	hashtable->tempcxt = tempcxt;
 	hashtable->entrysize = entrysize;
@@ -375,11 +350,15 @@ LookupTupleHashEntry(TupleHashTable hashtable, TupleTableSlot *slot,
 		hashkey = (hashkey << 1) | ((hashkey & 0x80000000) ? 1 : 0);
 
 		attr = heap_getattr(tuple, att, tupdesc, &isNull);
-		if (isNull)
-			continue;			/* treat nulls as having hash key 0 */
-		hashkey ^= ComputeHashFunc(attr,
-								   (int) tupdesc->attrs[att - 1]->attlen,
-								   tupdesc->attrs[att - 1]->attbyval);
+
+		if (!isNull)			/* treat nulls as having hash key 0 */
+		{
+			uint32		hkey;
+
+			hkey = DatumGetUInt32(FunctionCall1(&hashtable->hashfunctions[i],
+												attr));
+			hashkey ^= hkey;
+		}
 	}
 	bucketno = hashkey % (uint32) hashtable->nbuckets;
 

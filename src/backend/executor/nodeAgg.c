@@ -45,7 +45,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeAgg.c,v 1.106 2003/06/06 15:04:01 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeAgg.c,v 1.107 2003/06/22 22:04:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -582,6 +582,7 @@ build_hash_table(AggState *aggstate)
 	aggstate->hashtable = BuildTupleHashTable(node->numCols,
 											  node->grpColIdx,
 											  aggstate->eqfunctions,
+											  aggstate->hashfunctions,
 											  node->numGroups,
 											  entrysize,
 											  aggstate->aggcontext,
@@ -1035,6 +1036,7 @@ ExecInitAgg(Agg *node, EState *estate)
 	aggstate->aggs = NIL;
 	aggstate->numaggs = 0;
 	aggstate->eqfunctions = NULL;
+	aggstate->hashfunctions = NULL;
 	aggstate->peragg = NULL;
 	aggstate->agg_done = false;
 	aggstate->pergroup = NULL;
@@ -1123,14 +1125,23 @@ ExecInitAgg(Agg *node, EState *estate)
 	}
 
 	/*
-	 * If we are grouping, precompute fmgr lookup data for inner loop
+	 * If we are grouping, precompute fmgr lookup data for inner loop.
+	 * We need both equality and hashing functions to do it by hashing,
+	 * but only equality if not hashing.
 	 */
 	if (node->numCols > 0)
 	{
-		aggstate->eqfunctions =
-			execTuplesMatchPrepare(ExecGetScanType(&aggstate->ss),
-								   node->numCols,
-								   node->grpColIdx);
+		if (node->aggstrategy == AGG_HASHED)
+			execTuplesHashPrepare(ExecGetScanType(&aggstate->ss),
+								  node->numCols,
+								  node->grpColIdx,
+								  &aggstate->eqfunctions,
+								  &aggstate->hashfunctions);
+		else
+			aggstate->eqfunctions =
+				execTuplesMatchPrepare(ExecGetScanType(&aggstate->ss),
+									   node->numCols,
+									   node->grpColIdx);
 	}
 
 	/*
