@@ -34,7 +34,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/Makefile,v 1.30 1998/01/04 19:12:02 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/backend/Makefile,v 1.31 1998/04/06 01:35:19 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -125,31 +125,31 @@ clean:
 # and (2) the parameters of a database system should be set at initdb time,
 # not at postgres build time.
 
-install: $(LIBDIR) $(BINDIR) $(HEADERDIR) postgres $(POSTGRES_IMP) fmgr.h\
+install: $(DESTDIR)$(LIBDIR) $(DESTDIR)$(BINDIR) $(DESTDIR)$(HEADERDIR) postgres $(POSTGRES_IMP) fmgr.h\
          global1.bki.source local1_template1.bki.source \
          global1.description local1_template1.description \
          libpq/pg_hba.conf.sample optimizer/geqo/pg_geqo.sample
-	$(INSTALL) $(INSTL_EXE_OPTS) postgres $(BINDIR)/postgres
+	$(INSTALL) $(INSTL_EXE_OPTS) postgres $(DESTDIR)$(BINDIR)/postgres
 ifeq ($(MAKE_EXPORTS), true)
-	$(INSTALL) $(INSTLOPTS) $(POSTGRES_IMP) $(LIBDIR)/$(POSTGRES_IMP)
+	$(INSTALL) $(INSTLOPTS) $(POSTGRES_IMP) $(DESTDIR)$(LIBDIR)/$(POSTGRES_IMP)
 endif
-	@rm -f $(BINDIR)/postmaster
-	ln -s postgres $(BINDIR)/postmaster
-	$(INSTALL) $(INSTLOPTS) fmgr.h $(HEADERDIR)/fmgr.h
+	@rm -f $(DESTDIR)$(BINDIR)/postmaster
+	ln -s postgres $(DESTDIR)$(BINDIR)/postmaster
+	$(INSTALL) $(INSTLOPTS) fmgr.h $(DESTDIR)$(HEADERDIR)/fmgr.h
 	$(INSTALL) $(INSTLOPTS) global1.bki.source \
-	  $(LIBDIR)/global1.bki.source
+	  $(DESTDIR)$(LIBDIR)/global1.bki.source
 	$(INSTALL) $(INSTLOPTS) global1.description \
-	  $(LIBDIR)/global1.description
+	  $(DESTDIR)$(LIBDIR)/global1.description
 	$(INSTALL) $(INSTLOPTS) local1_template1.bki.source \
-	  $(LIBDIR)/local1_template1.bki.source
+	  $(DESTDIR)$(LIBDIR)/local1_template1.bki.source
 	$(INSTALL) $(INSTLOPTS) local1_template1.description \
-	  $(LIBDIR)/local1_template1.description
+	  $(DESTDIR)$(LIBDIR)/local1_template1.description
 	$(INSTALL) $(INSTLOPTS) libpq/pg_hba.conf.sample \
-	  $(LIBDIR)/pg_hba.conf.sample
+	  $(DESTDIR)$(LIBDIR)/pg_hba.conf.sample
 	$(INSTALL) $(INSTLOPTS) optimizer/geqo/pg_geqo.sample \
-	  $(LIBDIR)/pg_geqo.sample
+	  $(DESTDIR)$(LIBDIR)/pg_geqo.sample
 
-$(BINDIR) $(LIBDIR) $(HEADERDIR): 
+$(DESTDIR)$(BINDIR) $(DESTDIR)$(LIBDIR) $(DESTDIR)$(HEADERDIR): 
 	mkdir $@
 
 #############################################################################

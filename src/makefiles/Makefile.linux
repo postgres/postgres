@@ -1,4 +1,4 @@
-LDFLAGS+= -export-dynamic -Wl,-rpath -Wl,$(LIBDIR)
+LDFLAGS+= -export-dynamic #-Wl,-rpath -Wl,$(DESTDIR)$(LIBDIR)
 MK_NO_LORDER= true
 
 %.so: %.o

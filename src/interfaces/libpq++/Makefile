@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/interfaces/libpq++/Attic/Makefile,v 1.13 1998/04/06 01:16:47 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/interfaces/libpq++/Attic/Makefile,v 1.14 1998/04/06 01:36:07 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -45,7 +45,13 @@ INSTALL-SHLIB-DEP :=
 ifeq ($(PORTNAME), i386_solaris)
   INSTALL-SHLIB-DEP := install-shlib
   SHLIB := libpq++.so.1
-  LDFLAGS_SL = -G -z text
+  LDFLAGS_SL = -G -z text -shared -soname $(SHLIB)
+  CFLAGS += $(CFLAGS_SL)
+endif
+ifeq ($(PORTNAME), linux)
+  INSTALL-SHLIB-DEP := install-shlib
+  SHLIB := libpq++.so.1
+  LDFLAGS_SL = -shared -soname $(SHLIB)
   CFLAGS += $(CFLAGS_SL)
 endif
 ifeq ($(PORTNAME), hpux)
@@ -55,7 +61,7 @@ ifeq ($(PORTNAME), hpux)
   CFLAGS += $(CFLAGS_SL)
 endif
 
-all: $(LIBNAME).a $(SHLIB) install examples
+all: $(LIBNAME).a $(SHLIB)
 
 $(LIBNAME).a: $(OBJS)
 ifdef MK_NO_LORDER
@@ -88,15 +94,15 @@ LIBPGXXHEADERS = pgenv.h \
 		 pglobject.h
 
 install-headers: beforeinstall-headers $(MAINHEADER)
-	@$(INSTALL) $(INSTLOPTS) $(MAINHEADER) $(HEADERDIR)/$(MAINHEADER)
+	@$(INSTALL) $(INSTLOPTS) $(MAINHEADER) $(DESTDIR)/$(HEADERDIR)/$(MAINHEADER)
 	@for i in ${LIBPGXXHEADERS}; do \
 		echo "Installing $(LIBPGXXHEADERDIR)/$$i."; \
-		$(INSTALL) $(INSTLOPTS) $$i $(LIBPGXXHEADERDIR)/$$i; \
+		$(INSTALL) $(INSTLOPTS) $$i $(DESTDIR)/$(LIBPGXXHEADERDIR)/$$i; \
 	done
 
 beforeinstall-headers:
-	@if [ ! -d $(HEADERDIR) ]; then mkdir $(HEADERDIR); fi
-	@if [ ! -d $(LIBPGXXHEADERDIR) ]; then mkdir $(LIBPGXXHEADERDIR); fi
+	@if [ ! -d $(DESTDIR)/$(HEADERDIR) ]; then mkdir $(DESTDIR)/$(HEADERDIR); fi
+	@if [ ! -d $(DESTDIR)/$(LIBPGXXHEADERDIR) ]; then mkdir $(DESTDIR)/$(LIBPGXXHEADERDIR); fi
 
 beforeinstall-lib:
 	@if [ ! -d $(DESTDIR)/$(LIBDIR) ] ; then mkdir $(DESTDIR)/$(LIBDIR); fi

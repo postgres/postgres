@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/Makefile.in,v 1.9 1998/04/06 01:16:38 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/Makefile.in,v 1.10 1998/04/06 01:35:43 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -88,10 +88,10 @@ $(shlib): $(OBJS)
 install: install-headers install-libpgtcl $(install-shlib-dep)
 
 install-headers: beforeinstall-headers libpgtcl.h
-	$(INSTALL) $(INSTLOPTS) libpgtcl.h $(HEADERDIR)/libpgtcl.h
+	$(INSTALL) $(INSTLOPTS) libpgtcl.h $(DESTDIR)$(HEADERDIR)/libpgtcl.h
 
 beforeinstall-headers:
-	@if [ ! -d $(HEADERDIR) ]; then mkdir $(HEADERDIR); fi
+	@if [ ! -d $(DESTDIR)$(HEADERDIR) ]; then mkdir $(DESTDIR)$(HEADERDIR); fi
 
 install-libpgtcl: libpgtcl.a
 	$(INSTALL) $(INSTL_LIB_OPTS) libpgtcl.a $(DESTDIR)$(LIBDIR)/libpgtcl.a
