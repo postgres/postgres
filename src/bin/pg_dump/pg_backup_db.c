@@ -5,7 +5,7 @@
  *	Implements the basic DB functions used by the archiver.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_db.c,v 1.58 2004/09/10 20:05:18 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_db.c,v 1.59 2004/10/01 17:25:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -174,12 +174,11 @@ _connectDB(ArchiveHandle *AH, const char *reqdb, const char *requser)
 
 			if (noPwd || badPwd)
 			{
-
 				if (badPwd)
 					fprintf(stderr, "Password incorrect\n");
 
 				fprintf(stderr, "Connecting to %s as %s\n",
-						PQdb(AH->connection), newuser);
+						newdb, newuser);
 
 				need_pass = true;
 				if (password)
@@ -189,6 +188,7 @@ _connectDB(ArchiveHandle *AH, const char *reqdb, const char *requser)
 			else
 				die_horribly(AH, modulename, "could not reconnect to database: %s",
 							 PQerrorMessage(newConn));
+			PQfinish(newConn);
 		}
 	} while (need_pass);
 
@@ -266,7 +266,7 @@ ConnectDatabase(Archive *AHX,
 	/* check to see that the backend connection was successfully made */
 	if (PQstatus(AH->connection) == CONNECTION_BAD)
 		die_horribly(AH, modulename, "connection to database \"%s\" failed: %s",
-				   PQdb(AH->connection), PQerrorMessage(AH->connection));
+					 dbname, PQerrorMessage(AH->connection));
 
 	/* check for version mismatch */
 	_check_database_version(AH, ignoreVersion);
