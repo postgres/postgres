@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/optimizer/path/allpaths.c,v 1.7 1997/06/01 02:55:44 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/optimizer/path/allpaths.c,v 1.8 1997/06/02 11:14:40 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,6 +38,7 @@ bool _use_geqo_ = true;
 #else
 bool _use_geqo_ = false;
 #endif
+int32 _use_geqo_rels_ = GEQO_RELS;
 
 
 static void find_rel_paths(Query *root, List *rels);
@@ -173,7 +174,7 @@ find_join_paths(Query *root, List *outer_rels, int levels_left)
      *    <utesch@aut.tu-freiberg.de>          *
      *******************************************/
 
-    if ( (_use_geqo_) || length(root->base_relation_list_) >= GEQO_RELS )
+    if ( (_use_geqo_) && length(root->base_relation_list_) >= _use_geqo_rels_ )
     	return lcons(geqo(root), NIL); /* returns *one* Rel, so lcons it */
 
      /*******************************************
