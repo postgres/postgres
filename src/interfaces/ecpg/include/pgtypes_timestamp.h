@@ -23,6 +23,8 @@ extern int	PGTYPEStimestamp_sub(timestamp *, timestamp *, interval *);
 extern int	PGTYPEStimestamp_fmt_asc(timestamp *, char *, int, char *);
 extern void PGTYPEStimestamp_current(timestamp *);
 extern int	PGTYPEStimestamp_defmt_asc(char *, char *, timestamp *);
+extern int  PGTYPEStimestamp_add_interval(timestamp *tin, interval *span, timestamp *tout);
+extern int  PGTYPEStimestamp_sub_interval(timestamp *tin, interval *span, timestamp *tout);
 
 #ifdef __cplusplus
 }
