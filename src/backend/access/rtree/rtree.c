@@ -7,34 +7,69 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtree.c,v 1.3 1996/10/18 05:21:27 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtree.c,v 1.4 1996/10/20 09:27:07 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
-#include "postgres.h"
 
-#include "storage/bufmgr.h"
+#include "postgres.h"
+ 
+#include "catalog/pg_attribute.h"
+#include "access/attnum.h"
+#include "nodes/pg_list.h"
+#include "access/tupdesc.h"
+#include "storage/fd.h"
+#include "catalog/pg_am.h"
+#include "catalog/pg_class.h"
+#include "nodes/nodes.h"
+#include "rewrite/prs2lock.h"
+#include "access/skey.h"
+#include "access/strat.h" 
+#include "utils/rel.h"
+ 
+#include "storage/block.h"
+#include "storage/off.h"
+#include "storage/itemptr.h"
+#include <time.h>
+#include "utils/nabstime.h"
+#include "access/htup.h"
+ 
+#include "access/itup.h"
+ 
+#include "utils/tqual.h"
+#include "storage/buf.h"
+#include "access/relscan.h"  
+ 
+#include "storage/itemid.h"
+#include "storage/item.h" 
 #include "storage/bufpage.h"
 
-#include "utils/elog.h"
-#include "utils/palloc.h"
-#include "utils/rel.h"
-#include "utils/excid.h"
+#include "access/rtree.h"
+
+#include "access/funcindex.h"
+ 
+#include "nodes/params.h"
+#include "access/sdir.h"
+#include "executor/hashjoin.h"
+#include "nodes/primnodes.h"
+#include "nodes/memnodes.h"
+#include "executor/tuptable.h"
+#include "nodes/execnodes.h"
+ 
+#include <stdio.h>
+#include "storage/ipc.h"
+#include "storage/bufmgr.h"
+
+#include "utils/geo-decls.h"
+ 
+#include "nodes/plannodes.h"
+#include "nodes/parsenodes.h"
+#include "tcop/dest.h"
+#include "executor/execdesc.h"
+#include "catalog/pg_index.h"
+#include "executor/executor.h"
 
 #include "access/heapam.h"
-#include "access/genam.h"
-#include "access/rtree.h"
-#include "access/rtscan.h"
-#include "access/funcindex.h"
-#include "access/tupdesc.h"
-
-#include "nodes/execnodes.h"
-#include "nodes/plannodes.h"
-
-#include "executor/executor.h"
-#include "executor/tuptable.h"
-
-#include "catalog/index.h"
 
 typedef struct SPLITVEC {
     OffsetNumber	*spl_left;
@@ -906,7 +941,6 @@ static void initRtstate(RTSTATE *rtstate, Relation index)
 }
 
 #ifdef RTDEBUG
-#include "utils/geo-decls.h"
 
 void
 _rtdump(Relation r)

@@ -8,29 +8,52 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/index/Attic/istrat.c,v 1.1.1.1 1996/07/09 06:21:11 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/index/Attic/istrat.c,v 1.2 1996/10/20 09:27:24 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
+
 #include "postgres.h"
-
+ 
+#include "catalog/pg_attribute.h"
 #include "access/attnum.h"
-#include "access/heapam.h"
-#include "access/istrat.h"
-#include "access/itup.h"	/* for MaxIndexAttributeNumber */
+#include "nodes/pg_list.h"
+#include "access/tupdesc.h"
+#include "storage/fd.h"
+#include "catalog/pg_am.h"
+#include "catalog/pg_class.h"
+#include "nodes/nodes.h"
+#include "rewrite/prs2lock.h"
 #include "access/skey.h"
-#include "utils/tqual.h"	/* for NowTimeQual */
-
-#include "fmgr.h"
-#include "utils/elog.h"
+#include "access/strat.h"  
 #include "utils/rel.h"
+ 
+#include "storage/block.h" 
+#include "storage/off.h"
+#include "storage/itemptr.h"
+#include <time.h>
+#include "utils/nabstime.h"
+#include "access/htup.h"
+#include "utils/tqual.h"
+#include "storage/buf.h"
+#include "access/relscan.h"
 
-#include "catalog/catname.h"
-#include "catalog/pg_amop.h"
-#include "catalog/pg_amproc.h"
-#include "catalog/pg_index.h"
+#include "tcop/dest.h"
 #include "catalog/pg_proc.h"
 
+#include "catalog/pg_operator.h"
+
+#include "catalog/catname.h"
+
+#include "catalog/pg_index.h"
+
+#include "catalog/pg_amop.h"
+
+#include "catalog/pg_amproc.h"
+
+#include "utils/memutils.h" /* could have been access/itup.h */
+
+#include "access/heapam.h"
 /* ----------------------------------------------------------------
  *	           misc strategy support routines
  * ----------------------------------------------------------------

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/index/genam.c,v 1.1.1.1 1996/07/09 06:21:11 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/index/genam.c,v 1.2 1996/10/20 09:27:21 scrappy Exp $
  *
  * NOTES
  *    many of the old access method routines have been turned into
@@ -43,27 +43,43 @@
  *	next item pointer using the flags.
  * ----------------------------------------------------------------
  */
+
 #include "postgres.h"
 
-#include "access/attnum.h"
-#include "access/genam.h"
-#include "access/heapam.h"
-#include "access/itup.h"
-#include "access/relscan.h"
-#include "access/sdir.h"
-#include "access/skey.h"
-
-#include "storage/bufmgr.h"
-#include "utils/elog.h"
-#include "utils/palloc.h"
-#include "utils/rel.h"
-
-#include "catalog/catname.h"
 #include "catalog/pg_attribute.h"
-#include "catalog/pg_index.h"
-#include "catalog/pg_proc.h"
+#include "access/attnum.h"
+#include "nodes/pg_list.h"   
+#include "access/tupdesc.h"
+#include "storage/fd.h"
+#include "catalog/pg_am.h"
+#include "catalog/pg_class.h"
+#include "nodes/nodes.h"
+#include "rewrite/prs2lock.h"
+#include "access/skey.h"
+#include "access/strat.h"
+#include "utils/rel.h"
+ 
+#include "storage/block.h"
+#include "storage/off.h"
+#include "storage/itemptr.h"
+#include <time.h>
+#include "utils/nabstime.h"
+#include "access/htup.h"
 
-#include "catalog/index.h"
+#include "utils/tqual.h"
+#include "storage/buf.h"
+#include "access/relscan.h"
+ 
+#include "access/itup.h"
+
+#include "access/sdir.h"
+
+#include "lib/dllist.h"
+#include "nodes/memnodes.h"
+#include "utils/catcache.h"
+
+#include "access/funcindex.h"
+#include "access/genam.h"
 
 /* ----------------------------------------------------------------
  *	general access method routines
