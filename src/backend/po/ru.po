@@ -1,11 +1,11 @@
-# POSTGRESQL Translated Messages in Russian Language (KOI8-R)
-# Serguei A. Mokhov <stgunya@yahoo.com>, September 2001.
+# POSTGRES Translated Messages in Russian Language (KOI8-R)
+# Serguei A. Mokhov <stgunya@yahoo.com>, September-October 2001.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 7.2\n"
 "POT-Creation-Date: 2001-09-17 22:06+0200\n"
-"PO-Revision-Date: 2001-09-23 23:54-0500\n"
+"PO-Revision-Date: 2001-10-29 17:28-0500\n"
 "Last-Translator: Serguei A. Mokhov <stgunya@yahoo.com>\n"
 "Language-Team: Serguei A. Mokhov <stgunya@yahoo.com>\n"
 "MIME-Version: 1.0\n"
@@ -14,11 +14,11 @@ msgstr ""
 
 #: ../access/common/heaptuple.c:171
 msgid "heap_attisnull: zero attnum disallowed"
-msgstr ""
+msgstr "heap_attisnull: нулевой attnum не дозволен"
 
 #: ../access/common/heaptuple.c:174
 msgid "heap_attisnull: undefined negative attnum"
-msgstr ""
+msgstr "heap_attisnull: отрицательный attnum не определён"
 
 #: ../access/common/heaptuple.c:459
 #, c-format
@@ -28,32 +28,32 @@ msgstr ""
 #: ../access/common/heaptuple.c:585
 #, c-format
 msgid "heap_formtuple: numberOfAttributes of %d > %d"
-msgstr ""
+msgstr "heap_formtuple: numberOfAttributes для %d > %d"
 
 #: ../access/common/heaptuple.c:688
 #, c-format
 msgid "heap_modifytuple: repl is \\%3d"
-msgstr ""
+msgstr "heap_modifytuple: значение repl: \\%3d"
 
 #: ../access/common/indextuple.c:56
 #, c-format
 msgid "index_formtuple: numberOfAttributes %d > %d"
-msgstr ""
+msgstr "index_formtuple: numberOfAttributes для %d > %d"
 
 #: ../access/common/indextuple.c:163
 #, c-format
 msgid "index_formtuple: data takes %lu bytes, max is %d"
-msgstr ""
+msgstr "index_formtuple: данные занимают %lu байт(ов), при максимуме: %d"
 
 #: ../access/common/printtup.c:49
 #, c-format
 msgid "getTypeOutputInfo: Cache lookup of type %u failed"
-msgstr ""
+msgstr "getTypeOutputInfo: Поиск в кзше типа %u не удался"
 
 #: ../access/common/tupdesc.c:598
 #, c-format
 msgid "DefineRelation: no such type %s"
-msgstr ""
+msgstr "DefineRelation: %s - не такого типа"
 
 #: ../access/gist/gist.c:171 ../access/hash/hash.c:72
 #: ../access/nbtree/nbtree.c:128 ../access/rtree/rtree.c:119
@@ -64,22 +64,22 @@ msgstr "%s уже содержит данные"
 #: ../access/gist/gist.c:390 ../access/gist/gist.c:584
 #, c-format
 msgid "gist: failed to add index item to %s"
-msgstr ""
+msgstr "gist: не получилось добавить элемент индекса к %s"
 
 #: ../access/gist/gist.c:1555
 #, c-format
 msgid "initGISTstate: numberOfAttributes %d > %d"
-msgstr ""
+msgstr "initGISTstate: numberOfAttributes для %d > %d"
 
 #: ../access/gist/gist.c:1799
 #, c-format
 msgid "%sPage: %d %s blk: %d maxoff: %d free: %d"
-msgstr ""
+msgstr "%sСтр.: %d %s блк: %d макс для: %d свободно: %d"
 
 #: ../access/gist/gist.c:1809
 #, c-format
 msgid "%s  Tuple. blk: %d size: %d"
-msgstr ""
+msgstr "%s  Запись. блк: %d размер: %d"
 
 #: ../access/gist/gist.c:1825
 msgid "gist_redo: unimplemented"
@@ -2774,15 +2774,17 @@ msgstr ""
 msgid "AlterTableAddConstraint: rejected due to CHECK constraint %s"
 msgstr ""
 
-#: ../commands/command.c:1421
+#: ../commands/command.c:1435
 #, c-format
-msgid "ALTER TABLE/ADD CONSTRAINT: Index \"%u\" not found"
-msgstr ""
+msgid "ALTER TABLE / ADD CONSTRAINT: Index \"%u\" not found"
+msgstr "ALTER TABLE / ADD CONSTRAINT: Индекс \"%u\" не найден"
 
-#: ../commands/command.c:1455
-#, c-format
-msgid "ALTER TABLE/ADD CONSTRAINT: Key \"%u[%u]\" not found"
-msgstr ""
+# [SM]: Looks like this entry has gone from the current
+#       sources
+# #: ../commands/command.c:1455
+# #, c-format
+# msgid "ALTER TABLE / ADD CONSTRAINT: Key \"%u[%u]\" not found"
+# msgstr "ALTER TABLE / ADD CONSTRAINT: Ключ \"%u[%u]\" не найден"
 
 #: ../commands/command.c:1471
 #, c-format
@@ -2796,12 +2798,12 @@ msgid ""
 "s\""
 msgstr ""
 
-#: ../commands/command.c:1487
+#: ../commands/command.c:1513
 #, c-format
-msgid "ALTER TABLE/ADD UNIQUE will create implicit index '%s' for table '%s'"
-msgstr ""
+msgid "ALTER TABLE / ADD UNIQUE will create implicit index '%s' for table '%s'"
+msgstr "ALTER TABLE / ADD UNIQUE создаст неявный индекс '%s' для таблицы '%s'"
 
-#: ../commands/command.c:1490
+#: ../commands/command.c:1516
 #, c-format
 msgid ""
 "Unique constraint supercedes existing index on relation \"%s\".  Drop the "
@@ -6685,52 +6687,52 @@ msgstr ""
 msgid "GLOBAL TEMPORARY TABLE is not currently supported"
 msgstr ""
 
-#: gram.y:1252
+#: gram.y:1303
 #, c-format
-msgid "CREATE TABLE/COLLATE %s not yet implemented; clause ignored"
-msgstr ""
+msgid "CREATE TABLE / COLLATE %s not yet implemented; clause ignored"
+msgstr "CREATE TABLE / COLLATE %s ещё не имплементировано; выражение проигнорировано"
 
 #: gram.y:1508
 msgid "FOREIGN KEY/MATCH PARTIAL not yet implemented"
 msgstr ""
 
-#: gram.y:1563
-msgid "CREATE TABLE/AS SELECT may not specify INTO"
-msgstr ""
+#: gram.y:1614
+msgid "CREATE TABLE / AS SELECT may not specify INTO"
+msgstr "CREATE TABLE / AS SELECT не может указывать INTO"
 
-#: gram.y:2127
-msgid "FETCH/RELATIVE at current position is not supported"
-msgstr ""
+#: gram.y:2174
+msgid "FETCH / RELATIVE at current position is not supported"
+msgstr "FETCH / RELATIVE в текущей позиции не поддерживается"
 
-#: gram.y:2255
-msgid "FETCH/ABSOLUTE not supported, using RELATIVE"
-msgstr ""
+#: gram.y:2302
+msgid "FETCH / ABSOLUTE not supported, using RELATIVE"
+msgstr "FETCH / ABSOLUTE не поддерживается, используется RELATIVE"
 
 #: gram.y:2372
 msgid ""
 "WITH GRANT OPTION is not supported.  Only relation owners can set privileges"
 msgstr ""
 
-#: gram.y:2557
-msgid "CREATE FUNCTION/OUT parameters are not supported"
-msgstr ""
+#: gram.y:2608
+msgid "CREATE FUNCTION / OUT parameters are not supported"
+msgstr "CREATE FUNCTION / OUT параметры не поддерживаются"
 
-#: gram.y:2562
-msgid "CREATE FUNCTION/INOUT parameters are not supported"
-msgstr ""
+#: gram.y:2613
+msgid "CREATE FUNCTION / INOUT parameters are not supported"
+msgstr "CREATE FUNCTION / INOUT параметры не поддерживаются"
 
 #: gram.y:2639
 msgid "parser: argument type missing (use NONE for unary operators)"
 msgstr ""
 
-#: gram.y:2899
-msgid "COMMIT/CHAIN not yet supported"
-msgstr ""
+#: gram.y:2958
+msgid "COMMIT / CHAIN not yet supported"
+msgstr "COMMIT / CHAIN не поддерживается"
 
 #: gram.y:3019
 #, c-format
 msgid "%s is not a valid encoding name"
-msgstr ""
+msgstr "%s не является верным именем кодировки"
 
 #: ../utils/adt/ascii.c:33 gram.y:3022 gram.y:3034
 msgid "Multi-byte support is not enabled"
@@ -6828,9 +6830,9 @@ msgstr ""
 msgid "Operator '%s' not implemented for row expressions"
 msgstr ""
 
-#: gram.y:5963
-msgid "CREATE TABLE/AS SELECT has mismatched column count"
-msgstr ""
+#: gram.y:6116
+msgid "CREATE TABLE / AS SELECT has mismatched column count"
+msgstr "CREATE TABLE / AS SELECT - не совпадает число колонок"
 
 #: gram.y:6007
 msgid "Multiple ORDER BY clauses not allowed"
