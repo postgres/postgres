@@ -26,6 +26,8 @@ SELECT [ALL|DISTINCT [ON <replaceable class="PARAMETER">column</replaceable>] ]
     [ HAVING <replaceable class="PARAMETER">condition</replaceable> [, ...] ]
     [ { UNION [ALL] | INTERSECT | EXCEPT } <replaceable class="PARAMETER">select</replaceable> ]
     [ ORDER BY <replaceable class="PARAMETER">column</replaceable> [ ASC | DESC ] [, ...] ]
+    [ FOR UPDATE [OF class_name...]]
+    [ LIMIT count [OFFSET|, count]]
   </synopsis>
   
   <refsect2 id="R2-SQL-SELECT-1">
@@ -242,6 +244,15 @@ including duplicates.</para>
    The EXCEPT give you the rows in the upper query not in the lower query.
    (See EXCEPT clause).</para>
    
+  <para>
+   The FOR UPDATE clause allows the SELECT statement to perform 
+   exclusive locking of selected rows.
+   (See EXCEPT clause).</para>
+   
+  <para>
+   The LIMIT...OFFSET clause allows control over which rows are
+   returned by the query.</para>   
+
   <para>
    You must have SELECT privilege to a table to read its values
    (See <command>GRANT</command>/<command>REVOKE</command> statements).
@@ -709,6 +720,8 @@ SELECT [ ALL | DISTINCT ] <replaceable class="PARAMETER">expression</replaceable
     [ HAVING <replaceable class="PARAMETER">condition</replaceable> [, ...] ]
     [ { UNION [ALL] | INTERSECT | EXCEPT } <replaceable class="PARAMETER">select</replaceable>]
     [ ORDER BY <replaceable class="PARAMETER">column</replaceable> [ ASC | DESC ] [, ...] ]
+    [ FOR UPDATE [OF class_name...]]
+    [ LIMIT count [OFFSET|, count]]
   </synopsis>
   
   <refsect2 id="R2-SQL-SELECTINTO-1">

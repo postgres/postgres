@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: psqlHelp.h,v 1.67 1999/06/03 19:17:59 momjian Exp $
+ * $Id: psqlHelp.h,v 1.68 1999/06/03 19:52:08 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -317,8 +317,10 @@ TIMEZONE|XACTISOLEVEL|CLIENT_ENCODING|SERVER_ENCODING"},
 \t[WHERE qual]\n\
 \t[GROUP BY group_list]\n\
 \t[HAVING having_clause]\n\
+\t[ { UNION [ALL] | INTERSECT | EXCEPT } SELECT ...]\n\
 \t[ORDER BY attr1 [ASC|DESC] [USING op1], ...attrN ]\n\
-\t[ { UNION [ALL] | INTERSECT | EXCEPT } SELECT ...];"},
+\t[FOR UPDATE [OF class_name...]]\n\
+\t[LIMIT count [OFFSET|, count]];"},
 	{"set",
 		"set run-time environment",
 	"\
