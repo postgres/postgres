@@ -5,18 +5,19 @@
 # It also dumps the pg_user table
 #
 # to adapt to System V vs. BSD 'echo'
-set -x
+#set -x
 if echo '\\' | grep '\\\\' >/dev/null 2>&1
 then	
 	BS='\'			# BSD
 else
 	BS='\\'			# System V
 fi
-psql -l -A -q -t|cut -d"|" -f1 | grep -v '^template1$' | \
-while read DATABASE
+psql -l -A -q -t|cut -d"|" -f1-2 | tr '|' ' ' | grep -v '^template1 ' | \
+while read DATABASE USER
 do
 	echo "${BS}connect template1"
 	echo "create database $DATABASE;"
+	echo "update pg_database set datdba = $USER where datname = '$DATABASE';"
 	echo "${BS}connect $DATABASE"
 	pg_dump "$@" $DATABASE
 done
