@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.91 2000/07/14 22:17:38 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.92 2000/08/03 19:19:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -430,7 +430,6 @@ boot_openrel(char *relname)
 	if (Typ == (struct typmap **) NULL)
 	{
 		rel = heap_openr(TypeRelationName, NoLock);
-		Assert(rel);
 		scan = heap_beginscan(rel, 0, SnapshotNow, 0, (ScanKey) NULL);
 		i = 0;
 		while (HeapTupleIsValid(tup = heap_getnext(scan, 0)))
@@ -462,7 +461,6 @@ boot_openrel(char *relname)
 			   (int) ATTRIBUTE_TUPLE_SIZE);
 
 	reldesc = heap_openr(relname, NoLock);
-	Assert(reldesc);
 	numattr = reldesc->rd_rel->relnatts;
 	for (i = 0; i < numattr; i++)
 	{
@@ -822,7 +820,6 @@ gettype(char *type)
 		if (DebugMode)
 			printf("bootstrap.c: External Type: %s\n", type);
 		rel = heap_openr(TypeRelationName, NoLock);
-		Assert(rel);
 		scan = heap_beginscan(rel, 0, SnapshotNow, 0, (ScanKey) NULL);
 		i = 0;
 		while (HeapTupleIsValid(tup = heap_getnext(scan, 0)))
@@ -1116,9 +1113,7 @@ build_indices()
 		Relation	ind;
 
 		heap = heap_openr(ILHead->il_heap, NoLock);
-		Assert(heap);
 		ind = index_openr(ILHead->il_ind);
-		Assert(ind);
 		index_build(heap, ind, ILHead->il_info, NULL);
 
 		/*

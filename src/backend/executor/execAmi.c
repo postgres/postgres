@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: execAmi.c,v 1.50 2000/07/25 23:43:38 tgl Exp $
+ *	$Id: execAmi.c,v 1.51 2000/08/03 19:19:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -97,9 +97,6 @@ ExecOpenScanR(Oid relOid,
 		relation = index_open(relOid);
 	else
 		relation = heap_open(relOid, NoLock);
-
-	if (relation == NULL)
-		elog(ERROR, "ExecOpenScanR: failed to open relation %u", relOid);
 
 	scanDesc = ExecBeginScan(relation,
 							 nkeys,

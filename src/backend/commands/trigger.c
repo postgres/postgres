@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/trigger.c,v 1.74 2000/08/03 16:34:01 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/trigger.c,v 1.75 2000/08/03 19:19:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -92,9 +92,6 @@ CreateTrigger(CreateTrigStmt *stmt)
 			 * interested in getting the relation's OID...
 			 */
 			rel = heap_openr(stmt->constrrelname, NoLock);
-			if (rel == NULL)
-				elog(ERROR, "table \"%s\" does not exist",
-					 stmt->constrrelname);
 			constrrelid = rel->rd_id;
 			heap_close(rel, NoLock);
 		}
@@ -440,12 +437,12 @@ RelationRemoveTriggers(Relation rel)
 		pg_trigger = (Form_pg_trigger) GETSTRUCT(tup);
 
 		refrel = heap_open(pg_trigger->tgrelid, NoLock);
-
 		stmt.relname = pstrdup(RelationGetRelationName(refrel));
+		heap_close(refrel, NoLock);
+
 		stmt.trigname = DatumGetCString(DirectFunctionCall1(nameout,
 						NameGetDatum(&pg_trigger->tgname)));
 
-		heap_close(refrel, NoLock);
 
 		elog(NOTICE, "DROP TABLE implicitly drops referential integrity trigger from table \"%s\"", stmt.relname);
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.85 2000/06/15 04:09:54 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.86 2000/08/03 19:19:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -382,7 +382,7 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 			if (attisset)
 			{
 				toid = exprType(first_arg);
-				rd = heap_openr(typeidTypeName(toid), NoLock);
+				rd = heap_openr_nofail(typeidTypeName(toid));
 				if (RelationIsValid(rd))
 				{
 					relname = RelationGetRelationName(rd);
@@ -1376,8 +1376,6 @@ find_inheritors(Oid relid, Oid **supervec)
 
 			relid = lfirsti(elt);
 			rd = heap_open(relid, NoLock);
-			if (!RelationIsValid(rd))
-				elog(ERROR, "Relid %u does not exist", relid);
 			trelid = typeTypeId(typenameType(RelationGetRelationName(rd)));
 			heap_close(rd, NoLock);
 			*relidvec++ = trelid;
@@ -1627,7 +1625,7 @@ ParseComplexProjection(ParseState *pstate,
 					 */
 
 					/* add a tlist to the func node and return the Iter */
-					rd = heap_openr(typeidTypeName(argtype), NoLock);
+					rd = heap_openr_nofail(typeidTypeName(argtype));
 					if (RelationIsValid(rd))
 					{
 						relid = RelationGetRelid(rd);
@@ -1679,29 +1677,24 @@ ParseComplexProjection(ParseState *pstate,
 					(attnum = get_attnum(argrelid, funcname))
 					!= InvalidAttrNumber)
 				{
+					Expr	   *newexpr;
 
 					/* add a tlist to the func node */
 					rd = heap_openr(typeidTypeName(argtype), NoLock);
-					if (RelationIsValid(rd))
-					{
-						Expr	   *newexpr;
 
-						relid = RelationGetRelid(rd);
-						funcnode->func_tlist = setup_tlist(funcname, argrelid);
-						funcnode->functype = attnumTypeId(rd, attnum);
+					relid = RelationGetRelid(rd);
+					funcnode->func_tlist = setup_tlist(funcname, argrelid);
+					funcnode->functype = attnumTypeId(rd, attnum);
 
-						newexpr = makeNode(Expr);
-						newexpr->typeOid = funcnode->functype;
-						newexpr->opType = FUNC_EXPR;
-						newexpr->oper = (Node *) funcnode;
-						newexpr->args = expr->args;
+					newexpr = makeNode(Expr);
+					newexpr->typeOid = funcnode->functype;
+					newexpr->opType = FUNC_EXPR;
+					newexpr->oper = (Node *) funcnode;
+					newexpr->args = expr->args;
 
-						heap_close(rd, NoLock);
+					heap_close(rd, NoLock);
 
-						return (Node *) newexpr;
-					}
-					/* XXX why not an error condition if it's not there? */
-
+					return (Node *) newexpr;
 				}
 
 				break;
@@ -1714,7 +1707,7 @@ ParseComplexProjection(ParseState *pstate,
 				 * If the Param is a complex type, this could be a
 				 * projection
 				 */
-				rd = heap_openr(typeidTypeName(param->paramtype), NoLock);
+				rd = heap_openr_nofail(typeidTypeName(param->paramtype));
 				if (RelationIsValid(rd))
 				{
 					relid = RelationGetRelid(rd);

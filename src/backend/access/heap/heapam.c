@@ -8,13 +8,14 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.82 2000/07/22 11:18:46 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.83 2000/08/03 19:18:54 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
  *		heapgettup		- fetch next heap tuple from a scan
  *		heap_open		- open a heap relation by relationId
  *		heap_openr		- open a heap relation by name
+ *		heap_open[r]_nofail	- same, but return NULL on failure instead of elog
  *		heap_close		- close a heap relation
  *		heap_beginscan	- begin relation scan
  *		heap_rescan		- restart a relation scan
@@ -560,19 +561,17 @@ fastgetattr(HeapTuple tup, int attnum, TupleDesc tupleDesc,
 #endif /* defined(DISABLE_COMPLEX_MACRO)*/
 
 
-
 /* ----------------------------------------------------------------
  *					 heap access method interface
  * ----------------------------------------------------------------
  */
+
 /* ----------------
  *		heap_open - open a heap relation by relationId
  *
- *		If lockmode is "NoLock", no lock is obtained on the relation,
- *		and the caller must check for a NULL return value indicating
- *		that no such relation exists.
- *		Otherwise, an error is raised if the relation does not exist,
- *		and the specified kind of lock is obtained on the relation.
+ *		If lockmode is not "NoLock", the specified kind of lock is
+ *		obtained on the relation.
+ *		An error is raised if the relation does not exist.
  * ----------------
  */
 Relation
@@ -592,17 +591,15 @@ heap_open(Oid relationId, LOCKMODE lockmode)
 	/* The relcache does all the real work... */
 	r = RelationIdGetRelation(relationId);
 
-	/* Under no circumstances will we return an index as a relation. */
-	if (RelationIsValid(r) && r->rd_rel->relkind == RELKIND_INDEX)
-		elog(ERROR, "%s is an index relation", RelationGetRelationName(r));
-
-	if (lockmode == NoLock)
-		return r;				/* caller must check RelationIsValid! */
-
 	if (!RelationIsValid(r))
 		elog(ERROR, "Relation %u does not exist", relationId);
 
-	LockRelation(r, lockmode);
+	/* Under no circumstances will we return an index as a relation. */
+	if (r->rd_rel->relkind == RELKIND_INDEX)
+		elog(ERROR, "%s is an index relation", RelationGetRelationName(r));
+
+	if (lockmode != NoLock)
+		LockRelation(r, lockmode);
 
 	return r;
 }
@@ -610,11 +607,9 @@ heap_open(Oid relationId, LOCKMODE lockmode)
 /* ----------------
  *		heap_openr - open a heap relation by name
  *
- *		If lockmode is "NoLock", no lock is obtained on the relation,
- *		and the caller must check for a NULL return value indicating
- *		that no such relation exists.
- *		Otherwise, an error is raised if the relation does not exist,
- *		and the specified kind of lock is obtained on the relation.
+ *		If lockmode is not "NoLock", the specified kind of lock is
+ *		obtained on the relation.
+ *		An error is raised if the relation does not exist.
  * ----------------
  */
 Relation
@@ -624,6 +619,73 @@ heap_openr(const char *relationName, LOCKMODE lockmode)
 
 	Assert(lockmode >= NoLock && lockmode < MAX_LOCKMODES);
 
+	/* ----------------
+	 *	increment access statistics
+	 * ----------------
+	 */
+	IncrHeapAccessStat(local_openr);
+	IncrHeapAccessStat(global_openr);
+
+	/* The relcache does all the real work... */
+	r = RelationNameGetRelation(relationName);
+
+	if (!RelationIsValid(r))
+		elog(ERROR, "Relation '%s' does not exist", relationName);
+
+	/* Under no circumstances will we return an index as a relation. */
+	if (r->rd_rel->relkind == RELKIND_INDEX)
+		elog(ERROR, "%s is an index relation", RelationGetRelationName(r));
+
+	if (lockmode != NoLock)
+		LockRelation(r, lockmode);
+
+	return r;
+}
+
+/* ----------------
+ *		heap_open_nofail - open a heap relation by relationId,
+ *				do not raise error on failure
+ *
+ *		The caller must check for a NULL return value indicating
+ *		that no such relation exists.
+ *		No lock is obtained on the relation, either.
+ * ----------------
+ */
+Relation
+heap_open_nofail(Oid relationId)
+{
+	Relation	r;
+
+	/* ----------------
+	 *	increment access statistics
+	 * ----------------
+	 */
+	IncrHeapAccessStat(local_open);
+	IncrHeapAccessStat(global_open);
+
+	/* The relcache does all the real work... */
+	r = RelationIdGetRelation(relationId);
+
+	/* Under no circumstances will we return an index as a relation. */
+	if (RelationIsValid(r) && r->rd_rel->relkind == RELKIND_INDEX)
+		elog(ERROR, "%s is an index relation", RelationGetRelationName(r));
+
+	return r;
+}
+
+/* ----------------
+ *		heap_openr_nofail - open a heap relation by name,
+ *				do not raise error on failure
+ *
+ *		The caller must check for a NULL return value indicating
+ *		that no such relation exists.
+ *		No lock is obtained on the relation, either.
+ * ----------------
+ */
+Relation
+heap_openr_nofail(const char *relationName)
+{
+	Relation	r;
 
 	/* ----------------
 	 *	increment access statistics
@@ -638,14 +700,6 @@ heap_openr(const char *relationName, LOCKMODE lockmode)
 	/* Under no circumstances will we return an index as a relation. */
 	if (RelationIsValid(r) && r->rd_rel->relkind == RELKIND_INDEX)
 		elog(ERROR, "%s is an index relation", RelationGetRelationName(r));
-
-	if (lockmode == NoLock)
-		return r;				/* caller must check RelationIsValid! */
-
-	if (!RelationIsValid(r))
-		elog(ERROR, "Relation '%s' does not exist", relationName);
-
-	LockRelation(r, lockmode);
 
 	return r;
 }

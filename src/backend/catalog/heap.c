@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.141 2000/08/03 16:33:52 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.142 2000/08/03 19:19:08 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1134,7 +1134,6 @@ RelationTruncateIndexes(Relation heapRelation)
 		 * by heap_truncate.
 		 */
 		heapRelation = heap_open(heapId, NoLock);
-		Assert(heapRelation != NULL);
 	}
 
 	/* Complete the scan and close pg_index */

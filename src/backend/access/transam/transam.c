@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/transam.c,v 1.34 2000/04/12 17:14:52 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/transam.c,v 1.35 2000/08/03 19:18:55 tgl Exp $
  *
  * NOTES
  *	  This file contains the high level access-method interface to the
@@ -408,9 +408,7 @@ InitializeTransactionLog(void)
 	 * ----------------
 	 */
 	logRelation = heap_openr(LogRelationName, NoLock);
-	Assert(logRelation != NULL);
 	VariableRelation = heap_openr(VariableRelationName, NoLock);
-	Assert(VariableRelation != NULL);
 
 	/* ----------------
 	 *	 XXX TransactionLogUpdate requires that LogRelation

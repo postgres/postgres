@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.92 2000/08/03 16:34:01 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.93 2000/08/03 19:19:18 tgl Exp $
  *
  * NOTES
  *	  The PerformAddAttribute() code, like most of the relation
@@ -1614,8 +1614,6 @@ LockTableCommand(LockStmt *lockstmt)
 	int			aclresult;
 
 	rel = heap_openr(lockstmt->relname, NoLock);
-	if (!RelationIsValid(rel))
-		elog(ERROR, "Relation '%s' does not exist", lockstmt->relname);
 
 	if (lockstmt->mode == AccessShareLock)
 		aclresult = pg_aclcheck(lockstmt->relname, GetPgUserName(), ACL_RD);

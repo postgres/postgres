@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeTidscan.c,v 1.10 2000/07/12 02:37:04 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeTidscan.c,v 1.11 2000/08/03 19:19:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -481,8 +481,6 @@ ExecInitTidScan(TidScan *node, EState *estate, Plan *parent)
 	reloid = rtentry->relid;
 
 	currentRelation = heap_open(reloid, AccessShareLock);
-	if (currentRelation == NULL)
-		elog(ERROR, "ExecInitTidScan heap_open failed.");
 	scanstate->css_currentRelation = currentRelation;
 	scanstate->css_currentScanDesc = 0;
 
