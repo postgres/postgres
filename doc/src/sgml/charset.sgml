@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/charset.sgml,v 2.41 2003/11/29 19:51:36 pgsql Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/charset.sgml,v 2.42 2003/12/30 23:36:19 tgl Exp $ -->
 
 <chapter id="charset">
  <title>Localization</>
@@ -235,8 +235,7 @@ initdb --locale=sv_SE
     settings including <envar>LC_MESSAGES</> and <envar>LC_MONETARY</>
     are initially determined by the environment the server is started
     in.  You can check the <envar>LC_COLLATE</> and <envar>LC_CTYPE</>
-    settings of a database with the utility program
-    <command>pg_controldata</>.
+    settings of a database using the <command>SHOW</> command.
    </para>
 
    <para>
