@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.91 2002/10/19 20:15:08 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.92 2002/10/21 22:06:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -560,15 +560,10 @@ ReindexIndex(RangeVar *indexRelation, bool force /* currently unused */ )
 {
 	Oid			indOid;
 	HeapTuple	tuple;
-	bool		overwrite = false;
+	bool		overwrite;
 
-	/*
-	 * REINDEX within a transaction block is dangerous, because if the
-	 * transaction is later rolled back we have no way to undo truncation
-	 * of the index's physical file.  Disallow it.
-	 */
-	if (IsTransactionBlock())
-		elog(ERROR, "REINDEX cannot run inside a BEGIN/END block");
+	/* Choose in-place-or-not mode */
+	overwrite = IsIgnoringSystemIndexes();
 
 	indOid = RangeVarGetRelid(indexRelation, false);
 	tuple = SearchSysCache(RELOID,
@@ -595,8 +590,14 @@ ReindexIndex(RangeVar *indexRelation, bool force /* currently unused */ )
 
 	ReleaseSysCache(tuple);
 
-	if (IsIgnoringSystemIndexes())
-		overwrite = true;
+	/*
+	 * In-place REINDEX within a transaction block is dangerous, because
+	 * if the transaction is later rolled back we have no way to undo
+	 * truncation of the index's physical file.  Disallow it.
+	 */
+	if (overwrite)
+		PreventTransactionChain((void *) indexRelation, "REINDEX");
+
 	if (!reindex_index(indOid, force, overwrite))
 		elog(WARNING, "index \"%s\" wasn't reindexed", indexRelation->relname);
 }
@@ -611,20 +612,23 @@ ReindexTable(RangeVar *relation, bool force)
 	Oid			heapOid;
 	char		relkind;
 
-	/*
-	 * REINDEX within a transaction block is dangerous, because if the
-	 * transaction is later rolled back we have no way to undo truncation
-	 * of the index's physical file.  Disallow it.
-	 */
-	if (IsTransactionBlock())
-		elog(ERROR, "REINDEX cannot run inside a BEGIN/END block");
-
 	heapOid = RangeVarGetRelid(relation, false);
 	relkind = get_rel_relkind(heapOid);
 
 	if (relkind != RELKIND_RELATION && relkind != RELKIND_TOASTVALUE)
 		elog(ERROR, "relation \"%s\" is of type \"%c\"",
 			 relation->relname, relkind);
+
+	/*
+	 * In-place REINDEX within a transaction block is dangerous, because
+	 * if the transaction is later rolled back we have no way to undo
+	 * truncation of the index's physical file.  Disallow it.
+	 *
+	 * XXX we assume that in-place reindex will only be done if
+	 * IsIgnoringSystemIndexes() is true.
+	 */
+	if (IsIgnoringSystemIndexes())
+		PreventTransactionChain((void *) relation, "REINDEX");
 
 	if (!reindex_relation(heapOid, force))
 		elog(WARNING, "table \"%s\" wasn't reindexed", relation->relname);
@@ -666,12 +670,7 @@ ReindexDatabase(const char *dbname, bool force, bool all)
 	 * transaction, then our commit- and start-transaction-command calls
 	 * would not have the intended effect!
 	 */
-	if (IsTransactionBlock())
-		elog(ERROR, "REINDEX DATABASE cannot run inside a BEGIN/END block");
-
-	/* Running this from a function would free the function context */
-	if (!MemoryContextContains(QueryContext, (void *) dbname))
-		elog(ERROR, "REINDEX DATABASE cannot be executed from a function");
+	PreventTransactionChain((void *) dbname, "REINDEX");
 
 	/*
 	 * Create a memory context that will survive forced transaction

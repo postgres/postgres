@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/tablecmds.c,v 1.49 2002/10/21 20:31:51 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/tablecmds.c,v 1.50 2002/10/21 22:06:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -374,6 +374,16 @@ TruncateRelation(const RangeVar *relation)
 
 	if (!pg_class_ownercheck(relid, GetUserId()))
 		aclcheck_error(ACLCHECK_NOT_OWNER, RelationGetRelationName(rel));
+
+	/*
+	 * Truncate within a transaction block is dangerous, because if
+	 * the transaction is later rolled back we have no way to undo
+	 * truncation of the relation's physical file.  Disallow it except for
+	 * a rel created in the current xact (which would be deleted on abort,
+	 * anyway).
+	 */
+	if (!rel->rd_isnew)
+		PreventTransactionChain((void *) relation, "TRUNCATE TABLE");
 
 	/*
 	 * Don't allow truncate on temp tables of other backends ... their

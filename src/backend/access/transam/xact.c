@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.133 2002/10/21 19:46:45 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.134 2002/10/21 22:06:18 tgl Exp $
  *
  * NOTES
  *		Transaction aborts can now occur two ways:
@@ -1280,9 +1280,12 @@ CommitTransactionCommand(bool forceCommit)
 			 *
 			 * Autocommit mode is forced by either a true forceCommit
 			 * parameter to me, or a true preventChain parameter to the
-			 * preceding StartTransactionCommand call.	This is needed so
-			 * that commands like VACUUM can ensure that the right things
-			 * happen.
+			 * preceding StartTransactionCommand call, or a
+			 * PreventTransactionChain call during the transaction.
+			 * (The parameters could be omitted, but it turns out most
+			 * callers of StartTransactionCommand/CommitTransactionCommand
+			 * want to force autocommit, so making them all call
+			 * PreventTransactionChain would just be extra notation.)
 			 */
 		case TBLOCK_DEFAULT:
 			if (autocommit || forceCommit || suppressChain)
@@ -1428,6 +1431,60 @@ AbortCurrentTransaction(void)
 			break;
 	}
 }
+
+/* --------------------------------
+ *		PreventTransactionChain
+ *
+ * This routine is to be called by statements that must not run inside
+ * a transaction block, typically because they have non-rollback-able
+ * side effects or do internal commits.
+ *
+ * If we have already started a transaction block, issue an error; also issue
+ * an error if we appear to be running inside a user-defined function (which
+ * could issue more commands and possibly cause a failure after the statement
+ * completes).  In autocommit-off mode, we allow the statement if a block is
+ * not already started, and force the statement to be autocommitted despite
+ * the mode.
+ *
+ * stmtNode: pointer to parameter block for statement; this is used in
+ * a very klugy way to determine whether we are inside a function.
+ * stmtType: statement type name for error messages.
+ * --------------------------------
+ */
+void
+PreventTransactionChain(void *stmtNode, const char *stmtType)
+{
+	/*
+	 * xact block already started?
+	 */
+	if (IsTransactionBlock())
+	{
+		/* translator: %s represents an SQL statement name */
+		elog(ERROR, "%s cannot run inside a transaction block", stmtType);
+	}
+	/*
+	 * Are we inside a function call?  If the statement's parameter block
+	 * was allocated in QueryContext, assume it is an interactive command.
+	 * Otherwise assume it is coming from a function.
+	 */
+	if (!MemoryContextContains(QueryContext, stmtNode))
+	{
+		/* translator: %s represents an SQL statement name */
+		elog(ERROR, "%s cannot be executed from a function", stmtType);
+	}
+	/* If we got past IsTransactionBlock test, should be in default state */
+	if (CurrentTransactionState->blockState != TBLOCK_DEFAULT)
+		elog(ERROR, "PreventTransactionChain: can't prevent chain");
+	/* okay to set the flag */
+	suppressChain = true;
+	/* If we're in autocommit-off node, generate a notice */
+	if (!autocommit)
+	{
+		/* translator: %s represents an SQL statement name */
+		elog(NOTICE, "%s will be committed automatically", stmtType);
+	}
+}
+
 
 /* ----------------------------------------------------------------
  *					   transaction block support

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.201 2002/09/27 15:05:23 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.202 2002/10/21 22:06:19 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1739,16 +1739,6 @@ reindex_index(Oid indexId, bool force, bool inplace)
 	IndexInfo  *indexInfo;
 	Oid			heapId;
 	bool		old;
-
-	/*
-	 * REINDEX within a transaction block is dangerous, because if the
-	 * transaction is later rolled back we have no way to undo truncation
-	 * of the index's physical file.  Disallow it.
-	 *
-	 * XXX if we're not doing an inplace rebuild, wouldn't this be okay?
-	 */
-	if (IsTransactionBlock())
-		elog(ERROR, "REINDEX cannot run inside a transaction block");
 
 	/*
 	 * Open our index relation and get an exclusive lock on it.

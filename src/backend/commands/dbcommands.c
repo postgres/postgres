@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.105 2002/09/04 20:31:15 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.106 2002/10/21 22:06:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -152,8 +152,7 @@ createdb(const CreatedbStmt *stmt)
 	}
 
 	/* don't call this in a transaction block */
-	if (IsTransactionBlock())
-		elog(ERROR, "CREATE DATABASE: may not be called in a transaction block");
+	PreventTransactionChain((void *) stmt, "CREATE DATABASE");
 
 	/*
 	 * Check for db name conflict.	There is a race condition here, since
@@ -382,8 +381,7 @@ dropdb(const char *dbname)
 	if (strcmp(dbname, DatabaseName) == 0)
 		elog(ERROR, "DROP DATABASE: cannot be executed on the currently open database");
 
-	if (IsTransactionBlock())
-		elog(ERROR, "DROP DATABASE: may not be called in a transaction block");
+	PreventTransactionChain((void *) dbname, "DROP DATABASE");
 
 	/*
 	 * Obtain exclusive lock on pg_database.  We need this to ensure that

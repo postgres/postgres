@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.252 2002/10/20 00:31:53 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.253 2002/10/21 22:06:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1631,16 +1631,6 @@ transformSelectStmt(ParseState *pstate, SelectStmt *stmt)
 		if (stmt->forUpdate)
 			elog(ERROR, "DECLARE/UPDATE is not supported"
 				 "\n\tCursors must be READ ONLY");
-
-		/*
-		 * 15 august 1991 -- since 3.0 postgres does locking right, we
-		 * discovered that portals were violating locking protocol. portal
-		 * locks cannot span xacts. as a short-term fix, we installed the
-		 * check here. -- mao
-		 */
-		if (!IsTransactionBlock())
-			elog(ERROR, "DECLARE CURSOR may only be used in begin/end transaction blocks");
-
 		qry->into = makeNode(RangeVar);
 		qry->into->relname = stmt->portalname;
 		qry->isPortal = TRUE;
@@ -1849,16 +1839,6 @@ transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt)
 		if (forUpdate)
 			elog(ERROR, "DECLARE/UPDATE is not supported"
 				 "\n\tCursors must be READ ONLY");
-
-		/*
-		 * 15 august 1991 -- since 3.0 postgres does locking right, we
-		 * discovered that portals were violating locking protocol. portal
-		 * locks cannot span xacts. as a short-term fix, we installed the
-		 * check here. -- mao
-		 */
-		if (!IsTransactionBlock())
-			elog(ERROR, "DECLARE CURSOR may only be used in begin/end transaction blocks");
-
 		qry->into = makeNode(RangeVar);
 		qry->into->relname = portalname;
 		qry->isPortal = TRUE;

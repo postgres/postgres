@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: xact.h,v 1.45 2002/08/30 22:18:07 tgl Exp $
+ * $Id: xact.h,v 1.46 2002/10/21 22:06:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -113,6 +113,7 @@ extern void EndTransactionBlock(void);
 extern bool IsTransactionBlock(void);
 extern void UserAbortTransactionBlock(void);
 extern void AbortOutOfAnyTransaction(void);
+extern void PreventTransactionChain(void *stmtNode, const char *stmtType);
 
 extern void RecordTransactionCommit(void);
 
