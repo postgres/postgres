@@ -6,7 +6,7 @@
 # Copyright (c) 1998, Regents of the University of California
 #
 # IDENTIFICATION
-#    $PostgreSQL: pgsql/src/Makefile.shlib,v 1.81 2004/10/12 04:48:34 neilc Exp $
+#    $PostgreSQL: pgsql/src/Makefile.shlib,v 1.82 2004/10/12 22:20:17 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -309,13 +309,10 @@ endif # PORTNAME == beos
 else # PORTNAME == cygwin
 
 # Cygwin case
-$(shlib) lib$(NAME).a: $(OBJS) $(DLLINIT)
+$(shlib) lib$(NAME).a: $(OBJS)
 	$(DLLTOOL) --export-all $(DLLTOOL_DEFFLAGS) --output-def $(NAME).def $(OBJS)
-	$(DLLWRAP) -o $(shlib) --dllname $(shlib) $(DLLWRAP_FLAGS) --def $(NAME).def $(OBJS) $(DLLINIT) $(SHLIB_LINK)
+	$(DLLWRAP) -o $(shlib) --dllname $(shlib) $(DLLWRAP_FLAGS) --def $(NAME).def $(OBJS) $(SHLIB_LINK)
 	$(DLLTOOL) --dllname $(shlib) $(DLLTOOL_LIBFLAGS) --def $(NAME).def --output-lib lib$(NAME).a
-
-$(DLLINIT): $(DLLINIT:%.o=%.c)
-	$(MAKE) -C $(@D) $(@F)
 
 endif # PORTNAME == cygwin
 
