@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/date.c,v 1.53 2000/12/03 14:51:01 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/date.c,v 1.54 2000/12/07 18:38:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -529,37 +529,122 @@ time_smaller(PG_FUNCTION_ARGS)
 	PG_RETURN_TIMEADT((time1 < time2) ? time1 : time2);
 }
 
-/* overlaps_time()
- * Implements the SQL92 OVERLAPS operator.
- * Algorithm from Date and Darwen, 1997
+/* overlaps_time() --- implements the SQL92 OVERLAPS operator.
+ *
+ * Algorithm is per SQL92 spec.  This is much harder than you'd think
+ * because the spec requires us to deliver a non-null answer in some cases
+ * where some of the inputs are null.
  */
 Datum
 overlaps_time(PG_FUNCTION_ARGS)
 {
-	TimeADT		ts1 = PG_GETARG_TIMEADT(0);
-	TimeADT		te1 = PG_GETARG_TIMEADT(1);
-	TimeADT		ts2 = PG_GETARG_TIMEADT(2);
-	TimeADT		te2 = PG_GETARG_TIMEADT(3);
+	/* The arguments are TimeADT, but we leave them as generic Datums
+	 * to avoid dereferencing nulls (TimeADT is pass-by-reference!)
+	 */
+	Datum		ts1 = PG_GETARG_DATUM(0);
+	Datum		te1 = PG_GETARG_DATUM(1);
+	Datum		ts2 = PG_GETARG_DATUM(2);
+	Datum		te2 = PG_GETARG_DATUM(3);
+	bool		ts1IsNull = PG_ARGISNULL(0);
+	bool		te1IsNull = PG_ARGISNULL(1);
+	bool		ts2IsNull = PG_ARGISNULL(2);
+	bool		te2IsNull = PG_ARGISNULL(3);
 
-	/* Make sure we have ordered pairs... */
-	if (ts1 > te1)
+#define TIMEADT_GT(t1,t2) \
+	(DatumGetTimeADT(t1) > DatumGetTimeADT(t2))
+#define TIMEADT_LT(t1,t2) \
+	(DatumGetTimeADT(t1) < DatumGetTimeADT(t2))
+
+	/*
+	 * If both endpoints of interval 1 are null, the result is null (unknown).
+	 * If just one endpoint is null, take ts1 as the non-null one.
+	 * Otherwise, take ts1 as the lesser endpoint.
+	 */
+	if (ts1IsNull)
 	{
-		TimeADT		tt = ts1;
-
+		if (te1IsNull)
+			PG_RETURN_NULL();
+		/* swap null for non-null */
 		ts1 = te1;
-		te1 = tt;
+		te1IsNull = true;
 	}
-	if (ts2 > te2)
+	else if (!te1IsNull)
 	{
-		TimeADT		tt = ts2;
+		if (TIMEADT_GT(ts1, te1))
+		{
+			Datum	tt = ts1;
 
-		ts2 = te2;
-		te2 = tt;
+			ts1 = te1;
+			te1 = tt;
+		}
 	}
 
-	PG_RETURN_BOOL((ts1 > ts2 && (ts1 < te2 || te1 < te2)) ||
-				   (ts1 < ts2 && (ts2 < te1 || te2 < te1)) ||
-				   (ts1 == ts2));
+	/* Likewise for interval 2. */
+	if (ts2IsNull)
+	{
+		if (te2IsNull)
+			PG_RETURN_NULL();
+		/* swap null for non-null */
+		ts2 = te2;
+		te2IsNull = true;
+	}
+	else if (!te2IsNull)
+	{
+		if (TIMEADT_GT(ts2, te2))
+		{
+			Datum	tt = ts2;
+
+			ts2 = te2;
+			te2 = tt;
+		}
+	}
+
+	/*
+	 * At this point neither ts1 nor ts2 is null, so we can consider three
+	 * cases: ts1 > ts2, ts1 < ts2, ts1 = ts2
+	 */
+	if (TIMEADT_GT(ts1, ts2))
+	{
+		/* This case is ts1 < te2 OR te1 < te2, which may look redundant
+		 * but in the presence of nulls it's not quite completely so.
+		 */
+		if (te2IsNull)
+			PG_RETURN_NULL();
+		if (TIMEADT_LT(ts1, te2))
+			PG_RETURN_BOOL(true);
+		if (te1IsNull)
+			PG_RETURN_NULL();
+		/* If te1 is not null then we had ts1 <= te1 above, and we just
+		 * found ts1 >= te2, hence te1 >= te2.
+		 */
+		PG_RETURN_BOOL(false);
+	}
+	else if (TIMEADT_LT(ts1, ts2))
+	{
+		/* This case is ts2 < te1 OR te2 < te1 */
+		if (te1IsNull)
+			PG_RETURN_NULL();
+		if (TIMEADT_LT(ts2, te1))
+			PG_RETURN_BOOL(true);
+		if (te2IsNull)
+			PG_RETURN_NULL();
+		/* If te2 is not null then we had ts2 <= te2 above, and we just
+		 * found ts2 >= te1, hence te2 >= te1.
+		 */
+		PG_RETURN_BOOL(false);
+	}
+	else
+	{
+		/* For ts1 = ts2 the spec says te1 <> te2 OR te1 = te2, which is a
+		 * rather silly way of saying "true if both are nonnull, else null".
+		 */
+		if (te1IsNull || te2IsNull)
+			PG_RETURN_NULL();
+		PG_RETURN_BOOL(true);
+	}
+
+#undef TIMEADT_GT
+#undef TIMEADT_LT
 }
 
 /* timestamp_time()
@@ -964,53 +1049,122 @@ timetz_mi_interval(PG_FUNCTION_ARGS)
 	PG_RETURN_TIMETZADT_P(result);
 }
 
-/* overlaps_timetz()
- * Implements the SQL92 OVERLAPS operator.
- * Algorithm from Date and Darwen, 1997
+/* overlaps_timetz() --- implements the SQL92 OVERLAPS operator.
+ *
+ * Algorithm is per SQL92 spec.  This is much harder than you'd think
+ * because the spec requires us to deliver a non-null answer in some cases
+ * where some of the inputs are null.
  */
 Datum
 overlaps_timetz(PG_FUNCTION_ARGS)
 {
 	/* The arguments are TimeTzADT *, but we leave them as generic Datums
-	 * for convenience of notation.
+	 * for convenience of notation --- and to avoid dereferencing nulls.
 	 */
 	Datum		ts1 = PG_GETARG_DATUM(0);
 	Datum		te1 = PG_GETARG_DATUM(1);
 	Datum		ts2 = PG_GETARG_DATUM(2);
 	Datum		te2 = PG_GETARG_DATUM(3);
+	bool		ts1IsNull = PG_ARGISNULL(0);
+	bool		te1IsNull = PG_ARGISNULL(1);
+	bool		ts2IsNull = PG_ARGISNULL(2);
+	bool		te2IsNull = PG_ARGISNULL(3);
 
 #define TIMETZ_GT(t1,t2) \
 	DatumGetBool(DirectFunctionCall2(timetz_gt,t1,t2))
 #define TIMETZ_LT(t1,t2) \
 	DatumGetBool(DirectFunctionCall2(timetz_lt,t1,t2))
-#define TIMETZ_EQ(t1,t2) \
-	DatumGetBool(DirectFunctionCall2(timetz_eq,t1,t2))
 
-	/* Make sure we have ordered pairs... */
-	if (TIMETZ_GT(ts1, te1))
+	/*
+	 * If both endpoints of interval 1 are null, the result is null (unknown).
+	 * If just one endpoint is null, take ts1 as the non-null one.
+	 * Otherwise, take ts1 as the lesser endpoint.
+	 */
+	if (ts1IsNull)
 	{
-		Datum		tt = ts1;
-
+		if (te1IsNull)
+			PG_RETURN_NULL();
+		/* swap null for non-null */
 		ts1 = te1;
-		te1 = tt;
+		te1IsNull = true;
 	}
-	if (TIMETZ_GT(ts2, te2))
+	else if (!te1IsNull)
 	{
-		Datum		tt = ts2;
+		if (TIMETZ_GT(ts1, te1))
+		{
+			Datum	tt = ts1;
 
-		ts2 = te2;
-		te2 = tt;
+			ts1 = te1;
+			te1 = tt;
+		}
 	}
 
-	PG_RETURN_BOOL((TIMETZ_GT(ts1, ts2) &&
-					(TIMETZ_LT(ts1, te2) || TIMETZ_LT(te1, te2))) ||
-				   (TIMETZ_GT(ts2, ts1) &&
-					(TIMETZ_LT(ts2, te1) || TIMETZ_LT(te2, te1))) ||
-				   TIMETZ_EQ(ts1, ts2));
+	/* Likewise for interval 2. */
+	if (ts2IsNull)
+	{
+		if (te2IsNull)
+			PG_RETURN_NULL();
+		/* swap null for non-null */
+		ts2 = te2;
+		te2IsNull = true;
+	}
+	else if (!te2IsNull)
+	{
+		if (TIMETZ_GT(ts2, te2))
+		{
+			Datum	tt = ts2;
+
+			ts2 = te2;
+			te2 = tt;
+		}
+	}
+
+	/*
+	 * At this point neither ts1 nor ts2 is null, so we can consider three
+	 * cases: ts1 > ts2, ts1 < ts2, ts1 = ts2
+	 */
+	if (TIMETZ_GT(ts1, ts2))
+	{
+		/* This case is ts1 < te2 OR te1 < te2, which may look redundant
+		 * but in the presence of nulls it's not quite completely so.
+		 */
+		if (te2IsNull)
+			PG_RETURN_NULL();
+		if (TIMETZ_LT(ts1, te2))
+			PG_RETURN_BOOL(true);
+		if (te1IsNull)
+			PG_RETURN_NULL();
+		/* If te1 is not null then we had ts1 <= te1 above, and we just
+		 * found ts1 >= te2, hence te1 >= te2.
+		 */
+		PG_RETURN_BOOL(false);
+	}
+	else if (TIMETZ_LT(ts1, ts2))
+	{
+		/* This case is ts2 < te1 OR te2 < te1 */
+		if (te1IsNull)
+			PG_RETURN_NULL();
+		if (TIMETZ_LT(ts2, te1))
+			PG_RETURN_BOOL(true);
+		if (te2IsNull)
+			PG_RETURN_NULL();
+		/* If te2 is not null then we had ts2 <= te2 above, and we just
+		 * found ts2 >= te1, hence te2 >= te1.
+		 */
+		PG_RETURN_BOOL(false);
+	}
+	else
+	{
+		/* For ts1 = ts2 the spec says te1 <> te2 OR te1 = te2, which is a
+		 * rather silly way of saying "true if both are nonnull, else null".
+		 */
+		if (te1IsNull || te2IsNull)
+			PG_RETURN_NULL();
+		PG_RETURN_BOOL(true);
+	}
 
 #undef TIMETZ_GT
 #undef TIMETZ_LT
-#undef TIMETZ_EQ
 }
 
 /* timestamp_timetz()

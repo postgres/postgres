@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.176 2000/12/03 14:51:09 thomas Exp $
+ * $Id: pg_proc.h,v 1.177 2000/12/07 18:38:58 tgl Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -1510,7 +1510,7 @@ DESCR("absolute value");
 DATA(insert OID = 1263 (  interval		   PGUID 12 f t f t 1 f 1186 "25" 100 0 0 100  text_interval - ));
 DESCR("convert text to interval");
 
-DATA(insert OID = 1271 (  overlaps		   PGUID 12 f t t t 4 f 16 "1266 1266 1266 1266" 100 0 0 100  overlaps_timetz - ));
+DATA(insert OID = 1271 (  overlaps		   PGUID 12 f t t f 4 f 16 "1266 1266 1266 1266" 100 0 0 100  overlaps_timetz - ));
 DESCR("SQL92 interval comparison");
 DATA(insert OID = 1272 (  datetime_pl	   PGUID 12 f t f t 2 f 1184 "1082 1083" 100 0 0 100	datetime_timestamp - ));
 DESCR("convert date and time to timestamp");
@@ -1569,22 +1569,22 @@ DESCR("restriction selectivity for containment comparison operators");
 DATA(insert OID = 1303 (  contjoinsel	   PGUID 12 f t f t 5 f 701 "26 26 21 26 21" 100 0 0 100	contjoinsel - ));
 DESCR("join selectivity for containment comparison operators");
 
-DATA(insert OID = 1304 ( overlaps			 PGUID 12 f t t t 4 f 16 "1184 1184 1184 1184" 100 0 0 100	overlaps_timestamp - ));
+DATA(insert OID = 1304 ( overlaps			 PGUID 12 f t t f 4 f 16 "1184 1184 1184 1184" 100 0 0 100	overlaps_timestamp - ));
 DESCR("SQL92 interval comparison");
-DATA(insert OID = 1305 ( overlaps			 PGUID 14 f t t t 4 f 16 "1184 1186 1184 1186" 100 0 0 100	"select ($1, ($1 + $2)) overlaps ($3, ($3 + $4))" - ));
+DATA(insert OID = 1305 ( overlaps			 PGUID 14 f t t f 4 f 16 "1184 1186 1184 1186" 100 0 0 100	"select ($1, ($1 + $2)) overlaps ($3, ($3 + $4))" - ));
 DESCR("SQL92 interval comparison");
-DATA(insert OID = 1306 ( overlaps			 PGUID 14 f t t t 4 f 16 "1184 1184 1184 1186" 100 0 0 100	"select ($1, $2) overlaps ($3, ($3 + $4))" - ));
+DATA(insert OID = 1306 ( overlaps			 PGUID 14 f t t f 4 f 16 "1184 1184 1184 1186" 100 0 0 100	"select ($1, $2) overlaps ($3, ($3 + $4))" - ));
 DESCR("SQL92 interval comparison");
-DATA(insert OID = 1307 ( overlaps			 PGUID 14 f t t t 4 f 16 "1184 1186 1184 1184" 100 0 0 100	"select ($1, ($1 + $2)) overlaps ($3, $4)" - ));
+DATA(insert OID = 1307 ( overlaps			 PGUID 14 f t t f 4 f 16 "1184 1186 1184 1184" 100 0 0 100	"select ($1, ($1 + $2)) overlaps ($3, $4)" - ));
 DESCR("SQL92 interval comparison");
 
-DATA(insert OID = 1308 ( overlaps			 PGUID 12 f t t t 4 f 16 "1083 1083 1083 1083" 100 0 0 100	overlaps_time - ));
+DATA(insert OID = 1308 ( overlaps			 PGUID 12 f t t f 4 f 16 "1083 1083 1083 1083" 100 0 0 100	overlaps_time - ));
 DESCR("SQL92 interval comparison");
-DATA(insert OID = 1309 ( overlaps			 PGUID 14 f t t t 4 f 16 "1083 1186 1083 1186" 100 0 0 100	"select ($1, ($1 + $2)) overlaps ($3, ($3 + $4))" - ));
+DATA(insert OID = 1309 ( overlaps			 PGUID 14 f t t f 4 f 16 "1083 1186 1083 1186" 100 0 0 100	"select ($1, ($1 + $2)) overlaps ($3, ($3 + $4))" - ));
 DESCR("SQL92 interval comparison");
-DATA(insert OID = 1310 ( overlaps			 PGUID 14 f t t t 4 f 16 "1083 1083 1083 1186" 100 0 0 100	"select ($1, $2) overlaps ($3, ($3 + $4))" - ));
+DATA(insert OID = 1310 ( overlaps			 PGUID 14 f t t f 4 f 16 "1083 1083 1083 1186" 100 0 0 100	"select ($1, $2) overlaps ($3, ($3 + $4))" - ));
 DESCR("SQL92 interval comparison");
-DATA(insert OID = 1311 ( overlaps			 PGUID 14 f t t t 4 f 16 "1083 1186 1083 1083" 100 0 0 100	"select ($1, ($1 + $2)) overlaps ($3, $4)" - ));
+DATA(insert OID = 1311 ( overlaps			 PGUID 14 f t t f 4 f 16 "1083 1186 1083 1083" 100 0 0 100	"select ($1, ($1 + $2)) overlaps ($3, $4)" - ));
 DESCR("SQL92 interval comparison");
 
 DATA(insert OID = 1314 (  timestamp_cmp		 PGUID 12 f t f t 2 f   23 "1184 1184" 100 0 0 100  timestamp_cmp - ));

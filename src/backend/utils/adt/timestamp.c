@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/timestamp.c,v 1.39 2000/12/03 20:45:36 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/timestamp.c,v 1.40 2000/12/07 18:38:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -825,53 +825,123 @@ interval_hash(PG_FUNCTION_ARGS)
 	return hash_any((char *) key, sizeof(double) + sizeof(int4));
 }
 
-/* overlaps_timestamp()
- * Implements the SQL92 OVERLAPS operator.
- * Algorithm from Date and Darwen, 1997
+/* overlaps_timestamp() --- implements the SQL92 OVERLAPS operator.
+ *
+ * Algorithm is per SQL92 spec.  This is much harder than you'd think
+ * because the spec requires us to deliver a non-null answer in some cases
+ * where some of the inputs are null.
  */
 Datum
 overlaps_timestamp(PG_FUNCTION_ARGS)
 {
 	/* The arguments are Timestamps, but we leave them as generic Datums
-	 * to avoid unnecessary conversions between value and reference forms...
+	 * to avoid unnecessary conversions between value and reference forms
+	 * --- not to mention possible dereferences of null pointers.
 	 */
 	Datum		ts1 = PG_GETARG_DATUM(0);
 	Datum		te1 = PG_GETARG_DATUM(1);
 	Datum		ts2 = PG_GETARG_DATUM(2);
 	Datum		te2 = PG_GETARG_DATUM(3);
+	bool		ts1IsNull = PG_ARGISNULL(0);
+	bool		te1IsNull = PG_ARGISNULL(1);
+	bool		ts2IsNull = PG_ARGISNULL(2);
+	bool		te2IsNull = PG_ARGISNULL(3);
 
 #define TIMESTAMP_GT(t1,t2) \
 	DatumGetBool(DirectFunctionCall2(timestamp_gt,t1,t2))
 #define TIMESTAMP_LT(t1,t2) \
 	DatumGetBool(DirectFunctionCall2(timestamp_lt,t1,t2))
-#define TIMESTAMP_EQ(t1,t2) \
-	DatumGetBool(DirectFunctionCall2(timestamp_eq,t1,t2))
 
-	/* Make sure we have ordered pairs... */
-	if (TIMESTAMP_GT(ts1, te1))
+	/*
+	 * If both endpoints of interval 1 are null, the result is null (unknown).
+	 * If just one endpoint is null, take ts1 as the non-null one.
+	 * Otherwise, take ts1 as the lesser endpoint.
+	 */
+	if (ts1IsNull)
 	{
-		Datum		tt = ts1;
-
+		if (te1IsNull)
+			PG_RETURN_NULL();
+		/* swap null for non-null */
 		ts1 = te1;
-		te1 = tt;
+		te1IsNull = true;
 	}
-	if (TIMESTAMP_GT(ts2, te2))
+	else if (!te1IsNull)
 	{
-		Datum		tt = ts2;
+		if (TIMESTAMP_GT(ts1, te1))
+		{
+			Datum	tt = ts1;
 
-		ts2 = te2;
-		te2 = tt;
+			ts1 = te1;
+			te1 = tt;
+		}
 	}
 
-	PG_RETURN_BOOL((TIMESTAMP_GT(ts1, ts2) &&
-					(TIMESTAMP_LT(ts1, te2) || TIMESTAMP_LT(te1, te2))) ||
-				   (TIMESTAMP_GT(ts2, ts1) &&
-					(TIMESTAMP_LT(ts2, te1) || TIMESTAMP_LT(te2, te1))) ||
-				   TIMESTAMP_EQ(ts1, ts2));
+	/* Likewise for interval 2. */
+	if (ts2IsNull)
+	{
+		if (te2IsNull)
+			PG_RETURN_NULL();
+		/* swap null for non-null */
+		ts2 = te2;
+		te2IsNull = true;
+	}
+	else if (!te2IsNull)
+	{
+		if (TIMESTAMP_GT(ts2, te2))
+		{
+			Datum	tt = ts2;
+
+			ts2 = te2;
+			te2 = tt;
+		}
+	}
+
+	/*
+	 * At this point neither ts1 nor ts2 is null, so we can consider three
+	 * cases: ts1 > ts2, ts1 < ts2, ts1 = ts2
+	 */
+	if (TIMESTAMP_GT(ts1, ts2))
+	{
+		/* This case is ts1 < te2 OR te1 < te2, which may look redundant
+		 * but in the presence of nulls it's not quite completely so.
+		 */
+		if (te2IsNull)
+			PG_RETURN_NULL();
+		if (TIMESTAMP_LT(ts1, te2))
+			PG_RETURN_BOOL(true);
+		if (te1IsNull)
+			PG_RETURN_NULL();
+		/* If te1 is not null then we had ts1 <= te1 above, and we just
+		 * found ts1 >= te2, hence te1 >= te2.
+		 */
+		PG_RETURN_BOOL(false);
+	}
+	else if (TIMESTAMP_LT(ts1, ts2))
+	{
+		/* This case is ts2 < te1 OR te2 < te1 */
+		if (te1IsNull)
+			PG_RETURN_NULL();
+		if (TIMESTAMP_LT(ts2, te1))
+			PG_RETURN_BOOL(true);
+		if (te2IsNull)
+			PG_RETURN_NULL();
+		/* If te2 is not null then we had ts2 <= te2 above, and we just
+		 * found ts2 >= te1, hence te2 >= te1.
+		 */
+		PG_RETURN_BOOL(false);
+	}
+	else
+	{
+		/* For ts1 = ts2 the spec says te1 <> te2 OR te1 = te2, which is a
+		 * rather silly way of saying "true if both are nonnull, else null".
+		 */
+		if (te1IsNull || te2IsNull)
+			PG_RETURN_NULL();
+		PG_RETURN_BOOL(true);
+	}
 
 #undef TIMESTAMP_GT
 #undef TIMESTAMP_LT
-#undef TIMESTAMP_EQ
 }
 
 
