@@ -10,7 +10,7 @@
                                       
    Major changes in this release:
    
-   IN/NOT IN subqueries are now much more efficient
+   IN / NOT IN subqueries are now much more efficient
           In previous releases, IN/NOT IN subqueries were joined to the
           upper query by sequentially scanning the subquery looking for a
           match. The 7.4 code uses the same sophisticated techniques used
