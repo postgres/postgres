@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/access/transam/xlog.c,v 1.111 2003/01/25 03:06:04 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/access/transam/xlog.c,v 1.112 2003/02/21 00:06:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1203,16 +1203,6 @@ XLogFlush(XLogRecPtr record)
 	XLogRecPtr	WriteRqstPtr;
 	XLogwrtRqst WriteRqst;
 
-	if (XLOG_DEBUG)
-	{
-		elog(LOG, "XLogFlush%s%s: request %X/%X; write %X/%X; flush %X/%X",
-			 (IsBootstrapProcessingMode()) ? "(bootstrap)" : "",
-			 (InRedo) ? "(redo)" : "",
-			 record.xlogid, record.xrecoff,
-			 LogwrtResult.Write.xlogid, LogwrtResult.Write.xrecoff,
-			 LogwrtResult.Flush.xlogid, LogwrtResult.Flush.xrecoff);
-	}
-
 	/* Disabled during REDO */
 	if (InRedo)
 		return;
@@ -1220,6 +1210,15 @@ XLogFlush(XLogRecPtr record)
 	/* Quick exit if already known flushed */
 	if (XLByteLE(record, LogwrtResult.Flush))
 		return;
+
+	if (XLOG_DEBUG)
+	{
+		elog(LOG, "XLogFlush%s: request %X/%X; write %X/%X; flush %X/%X",
+			 (IsBootstrapProcessingMode()) ? "(bootstrap)" : "",
+			 record.xlogid, record.xrecoff,
+			 LogwrtResult.Write.xlogid, LogwrtResult.Write.xrecoff,
+			 LogwrtResult.Flush.xlogid, LogwrtResult.Flush.xrecoff);
+	}
 
 	START_CRIT_SECTION();
 
@@ -2515,6 +2514,12 @@ StartupXLOG(void)
 		elog(LOG, "database system was interrupted at %s",
 			 str_time(ControlFile->time));
 
+	/* This is just to allow attaching to startup process with a debugger */
+#ifdef XLOG_REPLAY_DELAY
+	if (XLOG_DEBUG && ControlFile->state != DB_SHUTDOWNED)
+		sleep(60);
+#endif
+
 	/*
 	 * Get the last valid checkpoint record.  If the latest one according
 	 * to pg_control is broken, try the next-to-last one.
@@ -2578,13 +2583,22 @@ StartupXLOG(void)
 	/* REDO */
 	if (InRecovery)
 	{
+		int		rmid;
+
 		elog(LOG, "database system was not properly shut down; "
 			 "automatic recovery in progress");
 		ControlFile->state = DB_IN_RECOVERY;
 		ControlFile->time = time(NULL);
 		UpdateControlFile();
 
+		/* Start up the recovery environment */
 		XLogInitRelationCache();
+
+		for (rmid = 0; rmid <= RM_MAX_ID; rmid++)
+		{
+			if (RmgrTable[rmid].rm_startup != NULL)
+				RmgrTable[rmid].rm_startup();
+		}
 
 		/* Is REDO required ? */
 		if (XLByteLT(checkPoint.redo, RecPtr))
@@ -2737,7 +2751,25 @@ StartupXLOG(void)
 
 	if (InRecovery)
 	{
+		int		rmid;
+
 		/*
+		 * Allow resource managers to do any required cleanup.
+		 */
+		for (rmid = 0; rmid <= RM_MAX_ID; rmid++)
+		{
+			if (RmgrTable[rmid].rm_cleanup != NULL)
+				RmgrTable[rmid].rm_cleanup();
+		}
+
+		/* suppress in-transaction check in CreateCheckPoint */
+		MyLastRecPtr.xrecoff = 0;
+		MyXactMadeXLogEntry = false;
+		MyXactMadeTempRelUpdate = false;
+
+		/*
+		 * Perform a new checkpoint to update our recovery activity to disk.
+		 *
 		 * In case we had to use the secondary checkpoint, make sure that
 		 * it will still be shown as the secondary checkpoint after this
 		 * CreateCheckPoint operation; we don't want the broken primary
@@ -2745,6 +2777,10 @@ StartupXLOG(void)
 		 */
 		ControlFile->checkPoint = checkPointLoc;
 		CreateCheckPoint(true, true);
+
+		/*
+		 * Close down recovery environment
+		 */
 		XLogCloseRelationCache();
 	}
 

@@ -35,7 +35,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtsort.c,v 1.70 2002/11/15 01:26:08 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtsort.c,v 1.71 2003/02/21 00:06:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -43,6 +43,7 @@
 #include "postgres.h"
 
 #include "access/nbtree.h"
+#include "miscadmin.h"
 #include "utils/tuplesort.h"
 
 
@@ -76,7 +77,7 @@ typedef struct BTPageState
 	BTItem		btps_minkey;	/* copy of minimum key (first item) on
 								 * page */
 	OffsetNumber btps_lastoff;	/* last item offset loaded */
-	int			btps_level;		/* tree level (0 = leaf) */
+	uint32		btps_level;		/* tree level (0 = leaf) */
 	Size		btps_full;		/* "full" if less than this much free
 								 * space */
 	struct BTPageState *btps_next;		/* link to parent level, if any */
@@ -90,8 +91,9 @@ typedef struct BTPageState
 	 0)
 
 
-static void _bt_blnewpage(Relation index, Buffer *buf, Page *page, int flags);
-static BTPageState *_bt_pagestate(Relation index, int flags, int level);
+static void _bt_blnewpage(Relation index, Buffer *buf, Page *page,
+						  uint32 level);
+static BTPageState *_bt_pagestate(Relation index, uint32 level);
 static void _bt_slideleft(Relation index, Buffer buf, Page page);
 static void _bt_sortaddtup(Page page, Size itemsize,
 			   BTItem btitem, OffsetNumber itup_off);
@@ -179,7 +181,7 @@ _bt_leafbuild(BTSpool *btspool, BTSpool *btspool2)
  * allocate a new, clean btree page, not linked to any siblings.
  */
 static void
-_bt_blnewpage(Relation index, Buffer *buf, Page *page, int flags)
+_bt_blnewpage(Relation index, Buffer *buf, Page *page, uint32 level)
 {
 	BTPageOpaque opaque;
 
@@ -192,10 +194,54 @@ _bt_blnewpage(Relation index, Buffer *buf, Page *page, int flags)
 	/* Initialize BT opaque state */
 	opaque = (BTPageOpaque) PageGetSpecialPointer(*page);
 	opaque->btpo_prev = opaque->btpo_next = P_NONE;
-	opaque->btpo_flags = flags;
+	opaque->btpo.level = level;
+	opaque->btpo_flags = (level > 0) ? 0 : BTP_LEAF;
 
 	/* Make the P_HIKEY line pointer appear allocated */
 	((PageHeader) *page)->pd_lower += sizeof(ItemIdData);
+}
+
+/*
+ * emit a completed btree page, and release the lock and pin on it.
+ * This is essentially _bt_wrtbuf except we also emit a WAL record.
+ */
+static void
+_bt_blwritepage(Relation index, Buffer buf)
+{
+	Page		pg = BufferGetPage(buf);
+
+	/* NO ELOG(ERROR) from here till newpage op is logged */
+	START_CRIT_SECTION();
+
+	/* XLOG stuff */
+	if (!index->rd_istemp)
+	{
+		xl_btree_newpage xlrec;
+		XLogRecPtr	recptr;
+		XLogRecData rdata[2];
+
+		xlrec.node = index->rd_node;
+		xlrec.blkno = BufferGetBlockNumber(buf);
+
+		rdata[0].buffer = InvalidBuffer;
+		rdata[0].data = (char *) &xlrec;
+		rdata[0].len = SizeOfBtreeNewpage;
+		rdata[0].next = &(rdata[1]);
+
+		rdata[1].buffer = buf;
+		rdata[1].data = (char *) pg;
+		rdata[1].len = BLCKSZ;
+		rdata[1].next = NULL;
+
+		recptr = XLogInsert(RM_BTREE_ID, XLOG_BTREE_NEWPAGE, rdata);
+
+		PageSetLSN(pg, recptr);
+		PageSetSUI(pg, ThisStartUpID);
+	}
+
+	END_CRIT_SECTION();
+
+	_bt_wrtbuf(index, buf);
 }
 
 /*
@@ -203,12 +249,12 @@ _bt_blnewpage(Relation index, Buffer *buf, Page *page, int flags)
  * is suitable for immediate use by _bt_buildadd.
  */
 static BTPageState *
-_bt_pagestate(Relation index, int flags, int level)
+_bt_pagestate(Relation index, uint32 level)
 {
 	BTPageState *state = (BTPageState *) palloc0(sizeof(BTPageState));
 
 	/* create initial page */
-	_bt_blnewpage(index, &(state->btps_buf), &(state->btps_page), flags);
+	_bt_blnewpage(index, &(state->btps_buf), &(state->btps_page), level);
 
 	state->btps_minkey = (BTItem) NULL;
 	/* initialize lastoff so first item goes into P_FIRSTKEY */
@@ -365,9 +411,8 @@ _bt_buildadd(Relation index, BTPageState *state, BTItem bti)
 		ItemId		hii;
 		BTItem		obti;
 
-		/* Create new page */
-		_bt_blnewpage(index, &nbuf, &npage,
-					  (state->btps_level > 0) ? 0 : BTP_LEAF);
+		/* Create new page on same level */
+		_bt_blnewpage(index, &nbuf, &npage, state->btps_level);
 
 		/*
 		 * We copy the last item on the page into the new page, and then
@@ -396,10 +441,8 @@ _bt_buildadd(Relation index, BTPageState *state, BTItem bti)
 		 * btree level.
 		 */
 		if (state->btps_next == (BTPageState *) NULL)
-		{
-			state->btps_next =
-				_bt_pagestate(index, 0, state->btps_level + 1);
-		}
+			state->btps_next = _bt_pagestate(index, state->btps_level + 1);
+
 		Assert(state->btps_minkey != NULL);
 		ItemPointerSet(&(state->btps_minkey->bti_itup.t_tid),
 					   BufferGetBlockNumber(obuf), P_HIKEY);
@@ -414,16 +457,7 @@ _bt_buildadd(Relation index, BTPageState *state, BTItem bti)
 		state->btps_minkey = _bt_formitem(&(obti->bti_itup));
 
 		/*
-		 * Set the sibling links for both pages, and parent links too.
-		 *
-		 * It's not necessary to set the parent link at all, because it's
-		 * only used for handling concurrent root splits, but we may as
-		 * well do it as a debugging aid.  Note we set new page's link as
-		 * well as old's, because if the new page turns out to be the last
-		 * of the level, _bt_uppershutdown won't change it.  The links may
-		 * be out of date by the time the build finishes, but that's OK;
-		 * they need only point to a left-sibling of the true parent.  See
-		 * the README file for more info.
+		 * Set the sibling links for both pages.
 		 */
 		{
 			BTPageOpaque oopaque = (BTPageOpaque) PageGetSpecialPointer(opage);
@@ -431,9 +465,7 @@ _bt_buildadd(Relation index, BTPageState *state, BTItem bti)
 
 			oopaque->btpo_next = BufferGetBlockNumber(nbuf);
 			nopaque->btpo_prev = BufferGetBlockNumber(obuf);
-			nopaque->btpo_next = P_NONE;
-			oopaque->btpo_parent = nopaque->btpo_parent =
-				BufferGetBlockNumber(state->btps_next->btps_buf);
+			nopaque->btpo_next = P_NONE; /* redundant */
 		}
 
 		/*
@@ -441,7 +473,7 @@ _bt_buildadd(Relation index, BTPageState *state, BTItem bti)
 		 * can give up our lock (if we had one; most likely BuildingBtree
 		 * is set, so we aren't locking).
 		 */
-		_bt_wrtbuf(index, obuf);
+		_bt_blwritepage(index, obuf);
 
 		/*
 		 * Reset last_off to point to new page
@@ -519,7 +551,7 @@ _bt_uppershutdown(Relation index, BTPageState *state)
 		 * slid back one slot.	Then we can dump out the page.
 		 */
 		_bt_slideleft(index, s->btps_buf, s->btps_page);
-		_bt_wrtbuf(index, s->btps_buf);
+		_bt_blwritepage(index, s->btps_buf);
 	}
 }
 
@@ -603,7 +635,7 @@ _bt_load(Relation index, BTSpool *btspool, BTSpool *btspool2)
 
 			/* When we see first tuple, create first index page */
 			if (state == NULL)
-				state = _bt_pagestate(index, BTP_LEAF, 0);
+				state = _bt_pagestate(index, 0);
 
 			if (load1)
 			{
@@ -623,13 +655,13 @@ _bt_load(Relation index, BTSpool *btspool, BTSpool *btspool2)
 		_bt_freeskey(indexScanKey);
 	}
 	else
-/* merge is unnecessary */
 	{
+		/* merge is unnecessary */
 		while (bti = (BTItem) tuplesort_getindextuple(btspool->sortstate, true, &should_free), bti != (BTItem) NULL)
 		{
 			/* When we see first tuple, create first index page */
 			if (state == NULL)
-				state = _bt_pagestate(index, BTP_LEAF, 0);
+				state = _bt_pagestate(index, 0);
 
 			_bt_buildadd(index, state, bti);
 			if (should_free)

@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtsearch.c,v 1.72 2002/06/20 20:29:25 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtsearch.c,v 1.73 2003/02/21 00:06:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -896,6 +896,89 @@ _bt_step(IndexScanDesc scan, Buffer *bufP, ScanDirection dir)
 }
 
 /*
+ * _bt_get_endpoint() -- Find the first or last page on a given tree level
+ *
+ * If the index is empty, we will return InvalidBuffer; any other failure
+ * condition causes elog().
+ *
+ * The returned buffer is pinned and read-locked.
+ */
+Buffer
+_bt_get_endpoint(Relation rel, uint32 level, bool rightmost)
+{
+	Buffer		buf;
+	Page		page;
+	BTPageOpaque opaque;
+	OffsetNumber offnum;
+	BlockNumber blkno;
+	BTItem		btitem;
+	IndexTuple	itup;
+
+	/*
+	 * If we are looking for a leaf page, okay to descend from fast root;
+	 * otherwise better descend from true root.  (There is no point in being
+	 * smarter about intermediate levels.)
+	 */
+	if (level == 0)
+		buf = _bt_getroot(rel, BT_READ);
+	else
+		buf = _bt_gettrueroot(rel);
+
+	if (!BufferIsValid(buf))
+	{
+		/* empty index... */
+		return InvalidBuffer;
+	}
+
+	page = BufferGetPage(buf);
+	opaque = (BTPageOpaque) PageGetSpecialPointer(page);
+
+	for (;;)
+	{
+		/*
+		 * If we landed on a deleted page, step right to find a live page
+		 * (there must be one).  Also, if we want the rightmost page,
+		 * step right if needed to get to it (this could happen if the
+		 * page split since we obtained a pointer to it).
+		 */
+		while (P_ISDELETED(opaque) ||
+			   (rightmost && !P_RIGHTMOST(opaque)))
+		{
+			blkno = opaque->btpo_next;
+			if (blkno == P_NONE)
+				elog(ERROR, "_bt_get_endpoint: ran off end of btree");
+			_bt_relbuf(rel, buf);
+			buf = _bt_getbuf(rel, blkno, BT_READ);
+			page = BufferGetPage(buf);
+			opaque = (BTPageOpaque) PageGetSpecialPointer(page);
+		}
+
+		/* Done? */
+		if (opaque->btpo.level == level)
+			break;
+		if (opaque->btpo.level < level)
+			elog(ERROR, "_bt_get_endpoint: btree level %u not found", level);
+
+		/* Step to leftmost or rightmost child page */
+		if (rightmost)
+			offnum = PageGetMaxOffsetNumber(page);
+		else
+			offnum = P_FIRSTDATAKEY(opaque);
+
+		btitem = (BTItem) PageGetItem(page, PageGetItemId(page, offnum));
+		itup = &(btitem->bti_itup);
+		blkno = ItemPointerGetBlockNumber(&(itup->t_tid));
+
+		_bt_relbuf(rel, buf);
+		buf = _bt_getbuf(rel, blkno, BT_READ);
+		page = BufferGetPage(buf);
+		opaque = (BTPageOpaque) PageGetSpecialPointer(page);
+	}
+
+	return buf;
+}
+
+/*
  *	_bt_endpoint() -- Find the first or last key in the index.
  *
  * This is used by _bt_first() to set up a scan when we've determined
@@ -910,8 +993,7 @@ _bt_endpoint(IndexScanDesc scan, ScanDirection dir)
 	Page		page;
 	BTPageOpaque opaque;
 	ItemPointer current;
-	OffsetNumber offnum,
-				maxoff;
+	OffsetNumber maxoff;
 	OffsetNumber start;
 	BlockNumber blkno;
 	BTItem		btitem;
@@ -929,7 +1011,7 @@ _bt_endpoint(IndexScanDesc scan, ScanDirection dir)
 	 * simplified version of _bt_search().	We don't maintain a stack
 	 * since we know we won't need it.
 	 */
-	buf = _bt_getroot(rel, BT_READ);
+	buf = _bt_get_endpoint(rel, 0, ScanDirectionIsBackward(dir));
 
 	if (!BufferIsValid(buf))
 	{
@@ -942,51 +1024,14 @@ _bt_endpoint(IndexScanDesc scan, ScanDirection dir)
 	blkno = BufferGetBlockNumber(buf);
 	page = BufferGetPage(buf);
 	opaque = (BTPageOpaque) PageGetSpecialPointer(page);
+	Assert(P_ISLEAF(opaque));
 
-	for (;;)
-	{
-		if (P_ISLEAF(opaque))
-			break;
-
-		if (ScanDirectionIsForward(dir))
-			offnum = P_FIRSTDATAKEY(opaque);
-		else
-			offnum = PageGetMaxOffsetNumber(page);
-
-		btitem = (BTItem) PageGetItem(page, PageGetItemId(page, offnum));
-		itup = &(btitem->bti_itup);
-		blkno = ItemPointerGetBlockNumber(&(itup->t_tid));
-
-		_bt_relbuf(rel, buf);
-		buf = _bt_getbuf(rel, blkno, BT_READ);
-
-		page = BufferGetPage(buf);
-		opaque = (BTPageOpaque) PageGetSpecialPointer(page);
-
-		/*
-		 * Race condition: If the child page we just stepped onto was just
-		 * split, we need to make sure we're all the way at the right edge
-		 * of the tree.  See the paper by Lehman and Yao.
-		 */
-		if (ScanDirectionIsBackward(dir) && !P_RIGHTMOST(opaque))
-		{
-			do
-			{
-				blkno = opaque->btpo_next;
-				_bt_relbuf(rel, buf);
-				buf = _bt_getbuf(rel, blkno, BT_READ);
-				page = BufferGetPage(buf);
-				opaque = (BTPageOpaque) PageGetSpecialPointer(page);
-			} while (!P_RIGHTMOST(opaque));
-		}
-	}
-
-	/* okay, we've got the {left,right}-most page in the tree */
 	maxoff = PageGetMaxOffsetNumber(page);
 
 	if (ScanDirectionIsForward(dir))
 	{
-		Assert(P_LEFTMOST(opaque));
+		/* There could be dead pages to the left, so not this: */
+		/* Assert(P_LEFTMOST(opaque)); */
 
 		start = P_FIRSTDATAKEY(opaque);
 	}

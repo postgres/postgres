@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: xlog.h,v 1.40 2002/11/15 02:44:57 momjian Exp $
+ * $Id: xlog.h,v 1.41 2003/02/21 00:06:22 tgl Exp $
  */
 #ifndef XLOG_H
 #define XLOG_H
@@ -145,10 +145,12 @@ typedef XLogPageHeaderData *XLogPageHeader;
  */
 typedef struct RmgrData
 {
-	char	   *rm_name;
+	const char *rm_name;
 	void		(*rm_redo) (XLogRecPtr lsn, XLogRecord *rptr);
 	void		(*rm_undo) (XLogRecPtr lsn, XLogRecord *rptr);
 	void		(*rm_desc) (char *buf, uint8 xl_info, char *rec);
+	void		(*rm_startup) (void);
+	void		(*rm_cleanup) (void);
 } RmgrData;
 
 extern RmgrData RmgrTable[];
