@@ -15,9 +15,12 @@
 
 #include "environ.h"
 #include "connection.h"
+#include "dlg_specific.h"
 #include "statement.h"
 #include <stdlib.h>
 #include <string.h>
+
+extern GLOBAL_VALUES globals;
 
 /* The one instance of the handles */
 ConnectionClass *conns[MAX_CONNECTIONS];
@@ -25,9 +28,18 @@ ConnectionClass *conns[MAX_CONNECTIONS];
 
 RETCODE SQL_API SQLAllocEnv(HENV FAR *phenv)
 {
-static char *func = "SQLAllocEnv";
+    static char *func = "SQLAllocEnv";
 
-mylog("**** in SQLAllocEnv ** \n");
+	mylog("**** in SQLAllocEnv ** \n");
+
+	/*
+	 * Hack for systems on which none of the constructor-making techniques
+	 * in psqlodbc.c work: if globals appears not to have been initialized,
+	 * then cause it to be initialized.  Since this should be the first
+	 * function called in this shared library, doing it here should work.
+	 */
+	if (globals.socket_buffersize <= 0)
+		getGlobalDefaults(DBMS_NAME, ODBCINST_INI, FALSE);
 
 	*phenv = (HENV) EN_Constructor();
 	if ( ! *phenv) {
