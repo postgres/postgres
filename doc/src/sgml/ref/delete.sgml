@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/delete.sgml,v 1.7 1999/07/22 15:09:09 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/delete.sgml,v 1.8 1999/10/01 15:24:46 thomas Exp $
 Postgres documentation
 -->
 
@@ -15,7 +15,7 @@ Postgres documentation
    DELETE
   </refname>
   <refpurpose>
-   Deletes rows from a table
+   Removes rows from a table
   </refpurpose>
 
  </refnamediv>
@@ -108,6 +108,14 @@ DELETE <replaceable class="parameter">count</replaceable>
    If the <firstterm>condition</firstterm> (WHERE clause) is absent,
    the effect is to delete all rows in the table.
    The result is a valid, but empty table.
+
+   <tip>
+    <para>
+     <xref linkend="sql-truncate" endterm="squ-truncate-title"> is a
+     <productname>Postgres</productname> extension which provides a
+     faster mechanism to remove all rows from a table.
+    </para>
+   </tip>
   </para>
 
   <para>
