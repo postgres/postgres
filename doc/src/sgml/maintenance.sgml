@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/maintenance.sgml,v 1.30 2003/12/14 00:10:32 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/maintenance.sgml,v 1.31 2004/03/15 14:15:45 momjian Exp $
 -->
 
 <chapter id="maintenance">
@@ -464,13 +464,19 @@ VACUUM
    rotation, the <application>logrotate</application> program can be
    configured to work with log files from
    <application>syslog</application>.
-
   </para>
 
   <para>
-   On many systems, however, <application>syslog</> is not very reliable, particularly
-   with large log messages; it may truncate or drop messages just when
-   you need them the most. You may find it more useful to pipe the
+   On many systems, however, <application>syslog</> is not very reliable,
+   particularly with large log messages; it may truncate or drop messages
+   just when you need them the most.  Also, on <productname>linux</>,
+   <appication>syslog</> will sync each message to disk, yielding poor
+   performance.  Use a <literal>-</> at the start of the file name
+   in the <application>syslog</> config file to disable this behavior.
+  </para>
+
+  <para>
+   You may find it more useful to pipe the
    <systemitem>stderr</> of the <command>postmaster</> to some type of
    log rotation program. If you start the server with
    <command>pg_ctl</>, then the <systemitem>stderr</> of the <command>postmaster</command>
