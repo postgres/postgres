@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parse_func.h,v 1.44 2003/04/08 23:20:04 tgl Exp $
+ * $Id: parse_func.h,v 1.45 2003/04/29 22:13:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,6 +15,7 @@
 #define PARSER_FUNC_H
 
 #include "parser/parse_node.h"
+
 
 /*
  *	This structure is used to explore the inheritance hierarchy above
@@ -49,7 +50,8 @@ extern FuncDetailCode func_get_detail(List *funcname, List *fargs,
 
 extern bool typeInheritsFrom(Oid subclassTypeId, Oid superclassTypeId);
 
-extern void make_fn_arguments(List *fargs,
+extern void make_fn_arguments(ParseState *pstate,
+							  List *fargs,
 							  Oid *actual_arg_types,
 							  Oid *declared_arg_types);
 

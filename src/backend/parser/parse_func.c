@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.146 2003/04/24 21:16:43 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.147 2003/04/29 22:13:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -253,7 +253,8 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 		 * We can do it as a trivial coercion. coerce_type can handle
 		 * these cases, so why duplicate code...
 		 */
-		return coerce_type(lfirst(fargs), actual_arg_types[0], rettype,
+		return coerce_type(pstate, lfirst(fargs), actual_arg_types[0],
+						   rettype,
 						   COERCION_EXPLICIT, COERCE_EXPLICIT_CALL);
 	}
 	else if (fdresult == FUNCDETAIL_NORMAL)
@@ -316,7 +317,7 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 											   rettype);
 
 	/* perform the necessary typecasting of arguments */
-	make_fn_arguments(fargs, actual_arg_types, declared_arg_types);
+	make_fn_arguments(pstate, fargs, actual_arg_types, declared_arg_types);
 
 	/* build the appropriate output structure */
 	if (fdresult == FUNCDETAIL_NORMAL)
@@ -1145,9 +1146,13 @@ typeInheritsFrom(Oid subclassTypeId, Oid superclassTypeId)
  * allowed.
  *
  * Caution: given argument list is modified in-place.
+ *
+ * As with coerce_type, pstate may be NULL if no special unknown-Param
+ * processing is wanted.
  */
 void
-make_fn_arguments(List *fargs,
+make_fn_arguments(ParseState *pstate,
+				  List *fargs,
 				  Oid *actual_arg_types,
 				  Oid *declared_arg_types)
 {
@@ -1159,7 +1164,8 @@ make_fn_arguments(List *fargs,
 		/* types don't match? then force coercion using a function call... */
 		if (actual_arg_types[i] != declared_arg_types[i])
 		{
-			lfirst(current_fargs) = coerce_type(lfirst(current_fargs),
+			lfirst(current_fargs) = coerce_type(pstate,
+												lfirst(current_fargs),
 												actual_arg_types[i],
 												declared_arg_types[i],
 												COERCION_IMPLICIT,

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.135 2003/04/27 20:09:44 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.136 2003/04/29 22:13:09 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -1747,17 +1747,17 @@ inline_function(Oid funcid, Oid result_type, List *args,
 
 	/*
 	 * We just do parsing and parse analysis, not rewriting, because
-	 * rewriting will not affect SELECT-only queries, which is all that
-	 * we care about.  Also, we can punt as soon as we detect more than
+	 * rewriting will not affect table-free-SELECT-only queries, which is all
+	 * that we care about.  Also, we can punt as soon as we detect more than
 	 * one command in the function body.
 	 */
-	raw_parsetree_list = pg_parse_query(src,
-										funcform->proargtypes,
-										funcform->pronargs);
+	raw_parsetree_list = pg_parse_query(src);
 	if (length(raw_parsetree_list) != 1)
 		goto fail;
 
-	querytree_list = parse_analyze(lfirst(raw_parsetree_list), NULL);
+	querytree_list = parse_analyze(lfirst(raw_parsetree_list),
+								   funcform->proargtypes,
+								   funcform->pronargs);
 
 	if (length(querytree_list) != 1)
 		goto fail;

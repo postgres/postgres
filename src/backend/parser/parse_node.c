@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_node.c,v 1.77 2003/04/08 23:20:02 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_node.c,v 1.78 2003/04/29 22:13:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,7 +39,12 @@ make_parsestate(ParseState *parentParseState)
 	pstate = palloc0(sizeof(ParseState));
 
 	pstate->parentParseState = parentParseState;
-	pstate->p_last_resno = 1;
+
+	/* Fill in fields that don't start at null/false/zero */
+	pstate->p_next_resno = 1;
+
+	if (parentParseState)
+		pstate->p_variableparams = parentParseState->p_variableparams;
 
 	return pstate;
 }
@@ -166,7 +171,8 @@ transformArraySubscripts(ParseState *pstate,
 			{
 				subexpr = transformExpr(pstate, ai->lidx);
 				/* If it's not int4 already, try to coerce */
-				subexpr = coerce_to_target_type(subexpr, exprType(subexpr),
+				subexpr = coerce_to_target_type(pstate,
+												subexpr, exprType(subexpr),
 												INT4OID, -1,
 												COERCION_ASSIGNMENT,
 												COERCE_IMPLICIT_CAST);
@@ -186,7 +192,8 @@ transformArraySubscripts(ParseState *pstate,
 		}
 		subexpr = transformExpr(pstate, ai->uidx);
 		/* If it's not int4 already, try to coerce */
-		subexpr = coerce_to_target_type(subexpr, exprType(subexpr),
+		subexpr = coerce_to_target_type(pstate,
+										subexpr, exprType(subexpr),
 										INT4OID, -1,
 										COERCION_ASSIGNMENT,
 										COERCE_IMPLICIT_CAST);
@@ -205,7 +212,8 @@ transformArraySubscripts(ParseState *pstate,
 
 		if (typesource != InvalidOid)
 		{
-			assignFrom = coerce_to_target_type(assignFrom, typesource,
+			assignFrom = coerce_to_target_type(pstate,
+											   assignFrom, typesource,
 											   typeneeded, arrayTypMod,
 											   COERCION_ASSIGNMENT,
 											   COERCE_IMPLICIT_CAST);

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_coerce.c,v 2.95 2003/04/10 02:47:46 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_coerce.c,v 2.96 2003/04/29 22:13:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,6 +17,7 @@
 #include "catalog/pg_cast.h"
 #include "catalog/pg_proc.h"
 #include "nodes/makefuncs.h"
+#include "nodes/params.h"
 #include "optimizer/clauses.h"
 #include "parser/parse_coerce.h"
 #include "parser/parse_expr.h"
@@ -49,6 +50,7 @@ static Node *build_func_call(Oid funcid, Oid rettype, List *args,
  * conversion is not possible.  (We do this, rather than elog'ing directly,
  * so that callers can generate custom error messages indicating context.)
  *
+ * pstate - parse state (can be NULL, see coerce_type)
  * expr - input expression tree (already transformed by transformExpr)
  * exprtype - result type of expr
  * targettype - desired result type
@@ -56,13 +58,13 @@ static Node *build_func_call(Oid funcid, Oid rettype, List *args,
  * ccontext, cformat - context indicators to control coercions
  */
 Node *
-coerce_to_target_type(Node *expr, Oid exprtype,
+coerce_to_target_type(ParseState *pstate, Node *expr, Oid exprtype,
 					  Oid targettype, int32 targettypmod,
 					  CoercionContext ccontext,
 					  CoercionForm cformat)
 {
 	if (can_coerce_type(1, &exprtype, &targettype, ccontext))
-		expr = coerce_type(expr, exprtype, targettype,
+		expr = coerce_type(pstate, expr, exprtype, targettype,
 						   ccontext, cformat);
 	/*
 	 * String hacks to get transparent conversions for char and varchar:
@@ -79,7 +81,7 @@ coerce_to_target_type(Node *expr, Oid exprtype,
 
 		if (can_coerce_type(1, &exprtype, &text_id, ccontext))
 		{
-			expr = coerce_type(expr, exprtype, text_id,
+			expr = coerce_type(pstate, expr, exprtype, text_id,
 							   ccontext, cformat);
 			/* Need a RelabelType if no typmod coercion is performed */
 			if (targettypmod < 0)
@@ -117,9 +119,14 @@ coerce_to_target_type(Node *expr, Oid exprtype,
  * call coerce_type_typmod as well, if a typmod constraint is wanted.
  * (But if the target type is a domain, it may internally contain a
  * typmod constraint, which will be applied inside coerce_to_domain.)
+ *
+ * pstate is only used in the case that we are able to resolve the type of
+ * a previously UNKNOWN Param.  It is okay to pass pstate = NULL if the
+ * caller does not want type information updated for Params.
  */
 Node *
-coerce_type(Node *node, Oid inputTypeId, Oid targetTypeId,
+coerce_type(ParseState *pstate, Node *node,
+			Oid inputTypeId, Oid targetTypeId,
 			CoercionContext ccontext, CoercionForm cformat)
 {
 	Node	   *result;
@@ -129,9 +136,9 @@ coerce_type(Node *node, Oid inputTypeId, Oid targetTypeId,
 		node == NULL)
 	{
 		/* no conversion needed */
-		result = node;
+		return node;
 	}
-	else if (inputTypeId == UNKNOWNOID && IsA(node, Const))
+	if (inputTypeId == UNKNOWNOID && IsA(node, Const))
 	{
 		/*
 		 * Input is a string constant with previously undetermined type.
@@ -187,17 +194,62 @@ coerce_type(Node *node, Oid inputTypeId, Oid targetTypeId,
 									  cformat);
 
 		ReleaseSysCache(targetType);
+
+		return result;
 	}
-	else if (targetTypeId == ANYOID ||
-			 targetTypeId == ANYARRAYOID ||
-			 targetTypeId == ANYELEMENTOID)
+	if (inputTypeId == UNKNOWNOID && IsA(node, Param) &&
+		((Param *) node)->paramkind == PARAM_NUM &&
+		pstate != NULL && pstate->p_variableparams)
+	{
+		/*
+		 * Input is a Param of previously undetermined type, and we want
+		 * to update our knowledge of the Param's type.  Find the topmost
+		 * ParseState and update the state.
+		 */
+		Param	   *param = (Param *) node;
+		int			paramno = param->paramid;
+		ParseState *toppstate;
+
+		toppstate = pstate;
+		while (toppstate->parentParseState != NULL)
+			toppstate = toppstate->parentParseState;
+
+		if (paramno <= 0 ||		/* shouldn't happen, but... */
+			paramno > toppstate->p_numparams)
+			elog(ERROR, "Parameter '$%d' is out of range", paramno);
+
+		if (toppstate->p_paramtypes[paramno-1] == UNKNOWNOID)
+		{
+			/* We've successfully resolved the type */
+			toppstate->p_paramtypes[paramno-1] = targetTypeId;
+		}
+		else if (toppstate->p_paramtypes[paramno-1] == targetTypeId)
+		{
+			/* We previously resolved the type, and it matches */
+		}
+		else
+		{
+			/* Ooops */
+			elog(ERROR, "Inconsistent types deduced for parameter '$%d'"
+				 "\n\tCould be either %s or %s",
+				 paramno,
+				 format_type_be(toppstate->p_paramtypes[paramno-1]),
+				 format_type_be(targetTypeId));
+		}
+
+		param->paramtype = targetTypeId;
+		return (Node *) param;
+	}
+	if (targetTypeId == ANYOID ||
+		targetTypeId == ANYARRAYOID ||
+		targetTypeId == ANYELEMENTOID)
 	{
 		/* assume can_coerce_type verified that implicit coercion is okay */
 		/* NB: we do NOT want a RelabelType here */
-		result = node;
+		return node;
 	}
-	else if (find_coercion_pathway(targetTypeId, inputTypeId, ccontext,
-								   &funcId))
+	if (find_coercion_pathway(targetTypeId, inputTypeId, ccontext,
+							  &funcId))
 	{
 		if (OidIsValid(funcId))
 		{
@@ -247,27 +299,23 @@ coerce_type(Node *node, Oid inputTypeId, Oid targetTypeId,
 												  cformat);
 			}
 		}
+		return result;
 	}
-	else if (typeInheritsFrom(inputTypeId, targetTypeId))
+	if (typeInheritsFrom(inputTypeId, targetTypeId))
 	{
 		/*
 		 * Input class type is a subclass of target, so nothing to do ---
 		 * except relabel the type.  This is binary compatibility for
 		 * complex types.
 		 */
-		result = (Node *) makeRelabelType((Expr *) node,
-										  targetTypeId, -1,
-										  cformat);
+		return (Node *) makeRelabelType((Expr *) node,
+										targetTypeId, -1,
+										cformat);
 	}
-	else
-	{
-		/* If we get here, caller blew it */
-		elog(ERROR, "coerce_type: no conversion function from %s to %s",
-			 format_type_be(inputTypeId), format_type_be(targetTypeId));
-		result = NULL;			/* keep compiler quiet */
-	}
-
-	return result;
+	/* If we get here, caller blew it */
+	elog(ERROR, "coerce_type: no conversion function from %s to %s",
+		 format_type_be(inputTypeId), format_type_be(targetTypeId));
+	return NULL;				/* keep compiler quiet */
 }
 
 
@@ -484,15 +532,19 @@ coerce_type_typmod(Node *node, Oid targetTypeId, int32 targetTypMod,
  *		(AND, OR, NOT, etc).  Also check that input is not a set.
  *
  * Returns the possibly-transformed node tree.
+ *
+ * As with coerce_type, pstate may be NULL if no special unknown-Param
+ * processing is wanted.
  */
 Node *
-coerce_to_boolean(Node *node, const char *constructName)
+coerce_to_boolean(ParseState *pstate, Node *node,
+				  const char *constructName)
 {
 	Oid			inputTypeId = exprType(node);
 
 	if (inputTypeId != BOOLOID)
 	{
-		node = coerce_to_target_type(node, inputTypeId,
+		node = coerce_to_target_type(pstate, node, inputTypeId,
 									 BOOLOID, -1,
 									 COERCION_ASSIGNMENT,
 									 COERCE_IMPLICIT_CAST);
@@ -594,16 +646,20 @@ select_common_type(List *typeids, const char *context)
  * This is used following select_common_type() to coerce the individual
  * expressions to the desired type.  'context' is a phrase to use in the
  * error message if we fail to coerce.
+ *
+ * As with coerce_type, pstate may be NULL if no special unknown-Param
+ * processing is wanted.
  */
 Node *
-coerce_to_common_type(Node *node, Oid targetTypeId, const char *context)
+coerce_to_common_type(ParseState *pstate, Node *node,
+					  Oid targetTypeId, const char *context)
 {
 	Oid			inputTypeId = exprType(node);
 
 	if (inputTypeId == targetTypeId)
 		return node;			/* no work */
 	if (can_coerce_type(1, &inputTypeId, &targetTypeId, COERCION_IMPLICIT))
-		node = coerce_type(node, inputTypeId, targetTypeId,
+		node = coerce_type(pstate, node, inputTypeId, targetTypeId,
 						   COERCION_IMPLICIT, COERCE_IMPLICIT_CAST);
 	else
 		elog(ERROR, "%s unable to convert to type %s",

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.147 2003/04/08 23:20:02 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.148 2003/04/29 22:13:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,7 +39,8 @@ static int	expr_depth_counter = 0;
 
 bool		Transform_null_equals = false;
 
-static Node *typecast_expression(Node *expr, TypeName *typename);
+static Node *typecast_expression(ParseState *pstate, Node *expr,
+								 TypeName *typename);
 static Node *transformColumnRef(ParseState *pstate, ColumnRef *cref);
 static Node *transformIndirection(ParseState *pstate, Node *basenode,
 					 List *indirection);
@@ -112,17 +113,54 @@ transformExpr(ParseState *pstate, Node *expr)
 			{
 				ParamRef   *pref = (ParamRef *) expr;
 				int			paramno = pref->number;
-				Oid			paramtyp = param_type(paramno);
+				ParseState *toppstate;
 				Param	   *param;
 				List	   *fields;
 
-				if (!OidIsValid(paramtyp))
-					elog(ERROR, "Parameter '$%d' is out of range", paramno);
+				/*
+				 * Find topmost ParseState, which is where paramtype info
+				 * lives.
+				 */
+				toppstate = pstate;
+				while (toppstate->parentParseState != NULL)
+					toppstate = toppstate->parentParseState;
+
+				/* Check parameter number is in range */
+				if (paramno <= 0) /* probably can't happen? */
+					elog(ERROR, "Parameter '$%d' is out of range",
+						 paramno);
+				if (paramno > toppstate->p_numparams)
+				{
+					if (!toppstate->p_variableparams)
+						elog(ERROR, "Parameter '$%d' is out of range",
+							 paramno);
+					/* Okay to enlarge param array */
+					if (toppstate->p_paramtypes)
+						toppstate->p_paramtypes =
+							(Oid *) repalloc(toppstate->p_paramtypes,
+											 paramno * sizeof(Oid));
+					else
+						toppstate->p_paramtypes =
+							(Oid *) palloc(paramno * sizeof(Oid));
+					/* Zero out the previously-unreferenced slots */
+					MemSet(toppstate->p_paramtypes + toppstate->p_numparams,
+						   0,
+						   (paramno - toppstate->p_numparams) * sizeof(Oid));
+					toppstate->p_numparams = paramno;
+				}
+				if (toppstate->p_variableparams)
+				{
+					/* If not seen before, initialize to UNKNOWN type */
+					if (toppstate->p_paramtypes[paramno-1] == InvalidOid)
+						toppstate->p_paramtypes[paramno-1] = UNKNOWNOID;
+				}
+
 				param = makeNode(Param);
 				param->paramkind = PARAM_NUM;
 				param->paramid = (AttrNumber) paramno;
-				param->paramtype = paramtyp;
+				param->paramtype = toppstate->p_paramtypes[paramno-1];
 				result = (Node *) param;
+
 				/* handle qualification, if any */
 				foreach(fields, pref->fields)
 				{
@@ -143,7 +181,8 @@ transformExpr(ParseState *pstate, Node *expr)
 
 				result = (Node *) make_const(val);
 				if (con->typename != NULL)
-					result = typecast_expression(result, con->typename);
+					result = typecast_expression(pstate, result,
+												 con->typename);
 				break;
 			}
 		case T_ExprFieldSelect:
@@ -170,7 +209,7 @@ transformExpr(ParseState *pstate, Node *expr)
 				TypeCast   *tc = (TypeCast *) expr;
 				Node	   *arg = transformExpr(pstate, tc->arg);
 
-				result = typecast_expression(arg, tc->typename);
+				result = typecast_expression(pstate, arg, tc->typename);
 				break;
 			}
 		case T_A_Expr:
@@ -212,7 +251,8 @@ transformExpr(ParseState *pstate, Node *expr)
 								Node	   *rexpr = transformExpr(pstate,
 																  a->rexpr);
 
-								result = (Node *) make_op(a->name,
+								result = (Node *) make_op(pstate,
+														  a->name,
 														  lexpr,
 														  rexpr);
 							}
@@ -225,8 +265,8 @@ transformExpr(ParseState *pstate, Node *expr)
 							Node	   *rexpr = transformExpr(pstate,
 															  a->rexpr);
 
-							lexpr = coerce_to_boolean(lexpr, "AND");
-							rexpr = coerce_to_boolean(rexpr, "AND");
+							lexpr = coerce_to_boolean(pstate, lexpr, "AND");
+							rexpr = coerce_to_boolean(pstate, rexpr, "AND");
 
 							result = (Node *) makeBoolExpr(AND_EXPR,
 														   makeList2(lexpr,
@@ -240,8 +280,8 @@ transformExpr(ParseState *pstate, Node *expr)
 							Node	   *rexpr = transformExpr(pstate,
 															  a->rexpr);
 
-							lexpr = coerce_to_boolean(lexpr, "OR");
-							rexpr = coerce_to_boolean(rexpr, "OR");
+							lexpr = coerce_to_boolean(pstate, lexpr, "OR");
+							rexpr = coerce_to_boolean(pstate, rexpr, "OR");
 
 							result = (Node *) makeBoolExpr(OR_EXPR,
 														   makeList2(lexpr,
@@ -253,7 +293,7 @@ transformExpr(ParseState *pstate, Node *expr)
 							Node	   *rexpr = transformExpr(pstate,
 															  a->rexpr);
 
-							rexpr = coerce_to_boolean(rexpr, "NOT");
+							rexpr = coerce_to_boolean(pstate, rexpr, "NOT");
 
 							result = (Node *) makeBoolExpr(NOT_EXPR,
 														   makeList1(rexpr));
@@ -266,7 +306,8 @@ transformExpr(ParseState *pstate, Node *expr)
 							Node	   *rexpr = transformExpr(pstate,
 															  a->rexpr);
 
-							result = (Node *) make_op(a->name,
+							result = (Node *) make_op(pstate,
+													  a->name,
 													  lexpr,
 													  rexpr);
 							if (((OpExpr *) result)->opresulttype != BOOLOID)
@@ -284,7 +325,8 @@ transformExpr(ParseState *pstate, Node *expr)
 							Node	   *rexpr = transformExpr(pstate,
 															  a->rexpr);
 
-							result = (Node *) make_op(a->name,
+							result = (Node *) make_op(pstate,
+													  a->name,
 													  lexpr,
 													  rexpr);
 							if (((OpExpr *) result)->opresulttype != BOOLOID)
@@ -375,7 +417,7 @@ transformExpr(ParseState *pstate, Node *expr)
 					break;
 				}
 				pstate->p_hasSubLinks = true;
-				qtrees = parse_analyze(sublink->subselect, pstate);
+				qtrees = parse_sub_analyze(sublink->subselect, pstate);
 				if (length(qtrees) != 1)
 					elog(ERROR, "Bad query in subselect");
 				qtree = (Query *) lfirst(qtrees);
@@ -523,7 +565,7 @@ transformExpr(ParseState *pstate, Node *expr)
 
 					if (needNot)
 					{
-						expr = coerce_to_boolean(expr, "NOT");
+						expr = coerce_to_boolean(pstate, expr, "NOT");
 						expr = (Node *) makeBoolExpr(NOT_EXPR,
 													 makeList1(expr));
 					}
@@ -561,7 +603,8 @@ transformExpr(ParseState *pstate, Node *expr)
 					}
 					neww->expr = (Expr *) transformExpr(pstate, warg);
 
-					neww->expr = (Expr *) coerce_to_boolean((Node *) neww->expr,
+					neww->expr = (Expr *) coerce_to_boolean(pstate,
+															(Node *) neww->expr,
 															"CASE/WHEN");
 
 					/*
@@ -615,7 +658,8 @@ transformExpr(ParseState *pstate, Node *expr)
 
 				/* Convert default result clause, if necessary */
 				newc->defresult = (Expr *)
-					coerce_to_common_type((Node *) newc->defresult,
+					coerce_to_common_type(pstate,
+										  (Node *) newc->defresult,
 										  ptype,
 										  "CASE/ELSE");
 
@@ -625,7 +669,8 @@ transformExpr(ParseState *pstate, Node *expr)
 					CaseWhen   *w = (CaseWhen *) lfirst(args);
 
 					w->result = (Expr *)
-						coerce_to_common_type((Node *) w->result,
+						coerce_to_common_type(pstate,
+											  (Node *) w->result,
 											  ptype,
 											  "CASE/WHEN");
 				}
@@ -666,7 +711,9 @@ transformExpr(ParseState *pstate, Node *expr)
 					Node *e = (Node *) lfirst(element);
 					Node *newe;
 
-					newe = coerce_to_common_type(e, element_type, "ARRAY");
+					newe = coerce_to_common_type(pstate, e,
+												 element_type,
+												 "ARRAY");
 					newcoercedelems = lappend(newcoercedelems, newe);
 				}
 
@@ -753,7 +800,8 @@ transformExpr(ParseState *pstate, Node *expr)
 					Node *e = (Node *) lfirst(args);
 					Node *newe;
 
-					newe = coerce_to_common_type(e, newc->coalescetype,
+					newe = coerce_to_common_type(pstate, e,
+												 newc->coalescetype,
 												 "COALESCE");
 					newcoercedargs = lappend(newcoercedargs, newe);
 				}
@@ -806,7 +854,9 @@ transformExpr(ParseState *pstate, Node *expr)
 
 				b->arg = (Expr *) transformExpr(pstate, (Node *) b->arg);
 
-				b->arg = (Expr *) coerce_to_boolean((Node *) b->arg, clausename);
+				b->arg = (Expr *) coerce_to_boolean(pstate,
+													(Node *) b->arg,
+													clausename);
 
 				result = expr;
 				break;
@@ -1404,7 +1454,7 @@ exprIsLengthCoercion(Node *expr, int32 *coercedTypmod)
  * the type name and then apply any necessary coercion function(s).
  */
 static Node *
-typecast_expression(Node *expr, TypeName *typename)
+typecast_expression(ParseState *pstate, Node *expr, TypeName *typename)
 {
 	Oid			inputType = exprType(expr);
 	Oid			targetType;
@@ -1414,7 +1464,7 @@ typecast_expression(Node *expr, TypeName *typename)
 	if (inputType == InvalidOid)
 		return expr;			/* do nothing if NULL input */
 
-	expr = coerce_to_target_type(expr, inputType,
+	expr = coerce_to_target_type(pstate, expr, inputType,
 								 targetType, typename->typmod,
 								 COERCION_EXPLICIT,
 								 COERCE_EXPLICIT_CAST);

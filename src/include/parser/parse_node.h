@@ -1,12 +1,13 @@
 /*-------------------------------------------------------------------------
  *
  * parse_node.h
+ *		Internal definitions for parser
  *
  *
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parse_node.h,v 1.34 2003/04/08 23:20:04 tgl Exp $
+ * $Id: parse_node.h,v 1.35 2003/04/29 22:13:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,6 +33,15 @@
  * joinlist.  Note that an RTE that is present in p_namespace, but does not
  * have its inFromCl flag set, is accessible only with an explicit qualifier;
  * lookups of unqualified column names should ignore it.
+ *
+ * p_paramtypes: an array of p_numparams type OIDs for $n parameter symbols
+ * (zeroth entry in array corresponds to $1).  If p_variableparams is true, the
+ * set of param types is not predetermined; in that case, a zero array entry
+ * means that parameter number hasn't been seen, and UNKNOWNOID means the
+ * parameter has been used but its type is not yet known.  NOTE: in a stack
+ * of ParseStates, only the topmost ParseState contains paramtype info; but
+ * we copy the p_variableparams flag down to the child nodes for speed in
+ * coerce_type.
  */
 typedef struct ParseState
 {
@@ -40,9 +50,12 @@ typedef struct ParseState
 	List	   *p_joinlist;		/* join items so far (will become FromExpr
 								 * node's fromlist) */
 	List	   *p_namespace;	/* current lookup namespace (join items) */
-	int			p_last_resno;	/* last targetlist resno assigned */
+	Oid		   *p_paramtypes;	/* OIDs of types for $n parameter symbols */
+	int			p_numparams;	/* allocated size of p_paramtypes[] */
+	int			p_next_resno;	/* next targetlist resno to assign */
 	List	   *p_forUpdate;	/* FOR UPDATE clause, if any (see gram.y) */
 	Node	   *p_value_substitute;	/* what to replace VALUE with, if any */
+	bool		p_variableparams;
 	bool		p_hasAggs;
 	bool		p_hasSubLinks;
 	bool		p_is_insert;

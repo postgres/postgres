@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/typecmds.c,v 1.33 2003/04/08 16:57:45 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/typecmds.c,v 1.34 2003/04/29 22:13:08 tgl Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -1601,7 +1601,7 @@ domainAddConstraint(Oid domainOid, Oid domainNamespace, Oid baseTypeOid,
 	/*
 	 * Make sure it yields a boolean result.
 	 */
-	expr = coerce_to_boolean(expr, "CHECK");
+	expr = coerce_to_boolean(pstate, expr, "CHECK");
 
 	/*
 	 * Make sure no outside relations are

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.112 2003/03/22 01:49:38 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.113 2003/04/29 22:13:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -54,7 +54,7 @@ static RangeTblRef *transformRangeFunction(ParseState *pstate,
 					   RangeFunction *r);
 static Node *transformFromClauseItem(ParseState *pstate, Node *n,
 						List **containedRels);
-static Node *buildMergedJoinVar(JoinType jointype,
+static Node *buildMergedJoinVar(ParseState *pstate, JoinType jointype,
 				   Var *l_colvar, Var *r_colvar);
 static TargetEntry *findTargetlistEntry(ParseState *pstate, Node *node,
 					List *tlist, int clause);
@@ -284,7 +284,7 @@ transformJoinUsingClause(ParseState *pstate, List *leftVars, List *rightVars)
 	 */
 	result = transformExpr(pstate, result);
 
-	result = coerce_to_boolean(result, "JOIN/USING");
+	result = coerce_to_boolean(pstate, result, "JOIN/USING");
 
 	return result;
 }	/* transformJoinUsingClause() */
@@ -318,7 +318,7 @@ transformJoinOnClause(ParseState *pstate, JoinExpr *j,
 	/* This part is just like transformWhereClause() */
 	result = transformExpr(pstate, j->quals);
 
-	result = coerce_to_boolean(result, "JOIN/ON");
+	result = coerce_to_boolean(pstate, result, "JOIN/ON");
 
 	pstate->p_namespace = save_namespace;
 
@@ -398,7 +398,7 @@ transformRangeSubselect(ParseState *pstate, RangeSubselect *r)
 	/*
 	 * Analyze and transform the subquery.
 	 */
-	parsetrees = parse_analyze(r->subquery, pstate);
+	parsetrees = parse_sub_analyze(r->subquery, pstate);
 
 	/*
 	 * Check that we got something reasonable.	Some of these conditions
@@ -759,7 +759,8 @@ transformFromClauseItem(ParseState *pstate, Node *n, List **containedRels)
 
 				res_colnames = lappend(res_colnames, lfirst(ucol));
 				res_colvars = lappend(res_colvars,
-									  buildMergedJoinVar(j->jointype,
+									  buildMergedJoinVar(pstate,
+														 j->jointype,
 														 l_colvar,
 														 r_colvar));
 			}
@@ -836,7 +837,8 @@ transformFromClauseItem(ParseState *pstate, Node *n, List **containedRels)
  *	  generate a suitable replacement expression for a merged join column
  */
 static Node *
-buildMergedJoinVar(JoinType jointype, Var *l_colvar, Var *r_colvar)
+buildMergedJoinVar(ParseState *pstate, JoinType jointype,
+				   Var *l_colvar, Var *r_colvar)
 {
 	Oid			outcoltype;
 	int32		outcoltypmod;
@@ -869,7 +871,7 @@ buildMergedJoinVar(JoinType jointype, Var *l_colvar, Var *r_colvar)
 	 * typmod is not same as input.
 	 */
 	if (l_colvar->vartype != outcoltype)
-		l_node = coerce_type((Node *) l_colvar, l_colvar->vartype,
+		l_node = coerce_type(pstate, (Node *) l_colvar, l_colvar->vartype,
 							 outcoltype,
 							 COERCION_IMPLICIT, COERCE_IMPLICIT_CAST);
 	else if (l_colvar->vartypmod != outcoltypmod)
@@ -880,7 +882,7 @@ buildMergedJoinVar(JoinType jointype, Var *l_colvar, Var *r_colvar)
 		l_node = (Node *) l_colvar;
 
 	if (r_colvar->vartype != outcoltype)
-		r_node = coerce_type((Node *) r_colvar, r_colvar->vartype,
+		r_node = coerce_type(pstate, (Node *) r_colvar, r_colvar->vartype,
 							 outcoltype,
 							 COERCION_IMPLICIT, COERCE_IMPLICIT_CAST);
 	else if (r_colvar->vartypmod != outcoltypmod)
@@ -953,7 +955,7 @@ transformWhereClause(ParseState *pstate, Node *clause)
 
 	qual = transformExpr(pstate, clause);
 
-	qual = coerce_to_boolean(qual, "WHERE");
+	qual = coerce_to_boolean(pstate, qual, "WHERE");
 
 	return qual;
 }

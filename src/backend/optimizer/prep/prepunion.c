@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepunion.c,v 1.93 2003/04/24 23:43:09 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepunion.c,v 1.94 2003/04/29 22:13:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -418,7 +418,8 @@ generate_setop_tlist(List *colTypes, int flag,
 		}
 		else
 		{
-			expr = coerce_to_common_type(expr,
+			expr = coerce_to_common_type(NULL, /* no UNKNOWNs here */
+										 expr,
 										 colType,
 										 "UNION/INTERSECT/EXCEPT");
 			colTypmod = -1;

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.118 2003/02/25 23:47:43 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.119 2003/04/29 22:13:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -498,7 +498,8 @@ build_column_default(Relation rel, int attrno)
 	 */
 	exprtype = exprType(expr);
 
-	expr = coerce_to_target_type(expr, exprtype,
+	expr = coerce_to_target_type(NULL, /* no UNKNOWN params here */
+								 expr, exprtype,
 								 atttype, atttypmod,
 								 COERCION_ASSIGNMENT,
 								 COERCE_IMPLICIT_CAST);

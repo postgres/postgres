@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/spi.c,v 1.92 2003/04/29 03:21:29 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/spi.c,v 1.93 2003/04/29 22:13:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -993,7 +993,7 @@ _SPI_execute(const char *src, int tcount, _SPI_plan *plan)
 	/*
 	 * Parse the request string into a list of raw parse trees.
 	 */
-	raw_parsetree_list = pg_parse_query(src, argtypes, nargs);
+	raw_parsetree_list = pg_parse_query(src);
 
 	/*
 	 * Do parse analysis and rule rewrite for each raw parsetree.
@@ -1036,7 +1036,7 @@ _SPI_execute(const char *src, int tcount, _SPI_plan *plan)
 		if (plan)
 			plan->origCmdType = origCmdType;
 
-		query_list = pg_analyze_and_rewrite(parsetree);
+		query_list = pg_analyze_and_rewrite(parsetree, argtypes, nargs);
 
 		query_list_list = lappend(query_list_list, query_list);
 

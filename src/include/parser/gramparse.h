@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: gramparse.h,v 1.26 2003/04/27 20:09:44 tgl Exp $
+ * $Id: gramparse.h,v 1.27 2003/04/29 22:13:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,9 +17,8 @@
 
 #include "nodes/parsenodes.h"
 
+
 /* from parser.c */
-extern void parser_param_set(Oid *typev, int nargs);
-extern Oid	param_type(int t);
 extern int	yylex(void);
 
 /* from scan.l */

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.325 2003/04/27 20:09:44 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.326 2003/04/29 22:13:11 tgl Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -339,8 +339,8 @@ ReadCommand(StringInfo inBuf)
  */
 List *
 pg_parse_and_rewrite(const char *query_string, /* string to execute */
-					 Oid *typev,	/* parameter types */
-					 int nargs) /* number of parameters */
+					 Oid *paramTypes,	/* parameter types */
+					 int numParams) /* number of parameters */
 {
 	List	   *raw_parsetree_list;
 	List	   *querytree_list;
@@ -349,7 +349,7 @@ pg_parse_and_rewrite(const char *query_string, /* string to execute */
 	/*
 	 * (1) parse the request string into a list of raw parse trees.
 	 */
-	raw_parsetree_list = pg_parse_query(query_string, typev, nargs);
+	raw_parsetree_list = pg_parse_query(query_string);
 
 	/*
 	 * (2) Do parse analysis and rule rewrite.
@@ -360,7 +360,9 @@ pg_parse_and_rewrite(const char *query_string, /* string to execute */
 		Node	   *parsetree = (Node *) lfirst(list_item);
 
 		querytree_list = nconc(querytree_list,
-							   pg_analyze_and_rewrite(parsetree));
+							   pg_analyze_and_rewrite(parsetree,
+													  paramTypes,
+													  numParams));
 	}
 
 	return querytree_list;
@@ -380,7 +382,7 @@ pg_parse_and_rewrite(const char *query_string, /* string to execute */
  * commands are not processed any further than the raw parse stage.
  */
 List *
-pg_parse_query(const char *query_string, Oid *typev, int nargs)
+pg_parse_query(const char *query_string)
 {
 	List	   *raw_parsetree_list;
 
@@ -390,7 +392,7 @@ pg_parse_query(const char *query_string, Oid *typev, int nargs)
 	if (log_parser_stats)
 		ResetUsage();
 
-	raw_parsetree_list = parser(query_string, typev, nargs);
+	raw_parsetree_list = raw_parser(query_string);
 
 	if (log_parser_stats)
 		ShowUsage("PARSER STATISTICS");
@@ -399,8 +401,8 @@ pg_parse_query(const char *query_string, Oid *typev, int nargs)
 }
 
 /*
- * Given a raw parsetree (gram.y output), perform parse analysis and
- * rule rewriting.
+ * Given a raw parsetree (gram.y output), and optionally information about
+ * types of parameter symbols ($n), perform parse analysis and rule rewriting.
  *
  * A list of Query nodes is returned, since either the analyzer or the
  * rewriter might expand one query to several.
@@ -408,7 +410,7 @@ pg_parse_query(const char *query_string, Oid *typev, int nargs)
  * NOTE: for reasons mentioned above, this must be separate from raw parsing.
  */
 List *
-pg_analyze_and_rewrite(Node *parsetree)
+pg_analyze_and_rewrite(Node *parsetree, Oid *paramTypes, int numParams)
 {
 	List	   *querytree_list;
 	List	   *list_item;
@@ -421,7 +423,7 @@ pg_analyze_and_rewrite(Node *parsetree)
 	if (log_parser_stats)
 		ResetUsage();
 
-	querytree_list = parse_analyze(parsetree, NULL);
+	querytree_list = parse_analyze(parsetree, paramTypes, numParams);
 
 	if (log_parser_stats)
 	{
@@ -562,8 +564,7 @@ pg_plan_query(Query *querytree)
  *
  * ----------------------------------------------------------------
  */
-
-void
+static void
 pg_exec_query_string(const char *query_string,	/* string to execute */
 					 CommandDest dest,	/* where results should go */
 					 MemoryContext parse_context)		/* context for
@@ -614,7 +615,7 @@ pg_exec_query_string(const char *query_string,	/* string to execute */
 	 * Do basic parsing of the query or queries (this should be safe even
 	 * if we are in aborted transaction state!)
 	 */
-	parsetree_list = pg_parse_query(query_string, NULL, 0);
+	parsetree_list = pg_parse_query(query_string);
 
 	/*
 	 * Switch back to execution context to enter the loop.
@@ -710,7 +711,7 @@ pg_exec_query_string(const char *query_string,	/* string to execute */
 		 */
 		oldcontext = MemoryContextSwitchTo(parse_context);
 
-		querytree_list = pg_analyze_and_rewrite(parsetree);
+		querytree_list = pg_analyze_and_rewrite(parsetree, NULL, 0);
 
 		/*
 		 * Switch back to execution context for planning and execution.
@@ -1826,7 +1827,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.325 $ $Date: 2003/04/27 20:09:44 $\n");
+		puts("$Revision: 1.326 $ $Date: 2003/04/29 22:13:11 $\n");
 	}
 
 	/*

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_oper.c,v 1.62 2003/04/08 23:20:02 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_oper.c,v 1.63 2003/04/29 22:13:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1019,9 +1019,12 @@ unary_op_error(List *op, Oid arg, bool is_left_op)
  *
  * Transform operator expression ensuring type compatibility.
  * This is where some type conversion happens.
+ *
+ * As with coerce_type, pstate may be NULL if no special unknown-Param
+ * processing is wanted.
  */
 Expr *
-make_op(List *opname, Node *ltree, Node *rtree)
+make_op(ParseState *pstate, List *opname, Node *ltree, Node *rtree)
 {
 	Oid			ltypeId,
 				rtypeId;
@@ -1052,7 +1055,7 @@ make_op(List *opname, Node *ltree, Node *rtree)
 	}
 
 	/* Do typecasting and build the expression tree */
-	result = make_op_expr(tup, ltree, rtree, ltypeId, rtypeId);
+	result = make_op_expr(pstate, tup, ltree, rtree, ltypeId, rtypeId);
 
 	ReleaseSysCache(tup);
 
@@ -1063,9 +1066,13 @@ make_op(List *opname, Node *ltree, Node *rtree)
 /*
  * make_op_expr()
  *		Build operator expression using an already-looked-up operator.
+ *
+ * As with coerce_type, pstate may be NULL if no special unknown-Param
+ * processing is wanted.
  */
 Expr *
-make_op_expr(Operator op, Node *ltree, Node *rtree,
+make_op_expr(ParseState *pstate, Operator op,
+			 Node *ltree, Node *rtree,
 			 Oid ltypeId, Oid rtypeId)
 {
 	Form_pg_operator opform = (Form_pg_operator) GETSTRUCT(op);
@@ -1114,7 +1121,7 @@ make_op_expr(Operator op, Node *ltree, Node *rtree,
 											   opform->oprresult);
 
 	/* perform the necessary typecasting of arguments */
-	make_fn_arguments(args, actual_arg_types, declared_arg_types);
+	make_fn_arguments(pstate, args, actual_arg_types, declared_arg_types);
 
 	/* and build the expression node */
 	result = makeNode(OpExpr);

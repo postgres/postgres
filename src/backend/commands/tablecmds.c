@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/tablecmds.c,v 1.71 2003/04/21 15:19:55 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/tablecmds.c,v 1.72 2003/04/29 22:13:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2852,7 +2852,7 @@ AlterTableAddCheckConstraint(Relation rel, Constraint *constr)
 	/*
 	 * Make sure it yields a boolean result.
 	 */
-	expr = coerce_to_boolean(expr, "CHECK");
+	expr = coerce_to_boolean(pstate, expr, "CHECK");
 
 	/*
 	 * Make sure no outside relations are referred to.

@@ -14,7 +14,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parser.c,v 1.56 2003/04/27 20:09:44 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parser.c,v 1.57 2003/04/29 22:13:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,32 +30,27 @@
 
 List	   *parsetree;			/* result of parsing is left here */
 
-static Oid *param_type_info;	/* state for param_type() */
-static int	param_count;
-
 static int	lookahead_token;	/* one-token lookahead */
 static bool have_lookahead;		/* lookahead_token set? */
 
 
 /*
- * parser
- *		Given a query in string form, and optionally info about
- *		parameter types, do lexical and syntactic analysis.
+ * raw_parser
+ *		Given a query in string form, do lexical and grammatical analysis.
  *
  * Returns a list of raw (un-analyzed) parse trees.
  */
 List *
-parser(const char *str, Oid *typev, int nargs)
+raw_parser(const char *str)
 {
 	int			yyresult;
 
-	parsetree = NIL;			/* in case parser forgets to set it */
+	parsetree = NIL;			/* in case grammar forgets to set it */
 	have_lookahead = false;
 
 	scanner_init(str);
 	parser_init();
 	parse_expr_init();
-	parser_param_set(typev, nargs);
 
 	yyresult = yyparse();
 
@@ -66,35 +61,6 @@ parser(const char *str, Oid *typev, int nargs)
 		return NIL;
 
 	return parsetree;
-}
-
-
-/*
- * Save information needed to fill out the type of Param references ($n)
- *
- * This is used for SQL functions, PREPARE statements, etc.  It's split
- * out from parser() setup because PREPARE needs to change the info after
- * the grammar runs and before parse analysis is done on the preparable
- * query.
- */
-void
-parser_param_set(Oid *typev, int nargs)
-{
-	param_type_info = typev;
-	param_count = nargs;
-}
-
-/*
- * param_type()
- *
- * Fetch a parameter type previously passed to parser_param_set
- */
-Oid
-param_type(int t)
-{
-	if (t > param_count || t <= 0)
-		return InvalidOid;
-	return param_type_info[t - 1];
 }
 
 

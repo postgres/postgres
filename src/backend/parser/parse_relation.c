@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_relation.c,v 1.80 2002/12/12 15:49:39 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_relation.c,v 1.81 2003/04/29 22:13:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1447,7 +1447,7 @@ expandRelAttrs(ParseState *pstate, RangeTblEntry *rte)
 		Node	   *varnode = (Node *) lfirst(vars);
 		TargetEntry *te = makeNode(TargetEntry);
 
-		te->resdom = makeResdom((AttrNumber) (pstate->p_last_resno)++,
+		te->resdom = makeResdom((AttrNumber) pstate->p_next_resno++,
 								exprType(varnode),
 								exprTypmod(varnode),
 								label,

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_target.c,v 1.99 2003/04/08 23:20:02 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_target.c,v 1.100 2003/04/29 22:13:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -73,7 +73,7 @@ transformTargetEntry(ParseState *pstate,
 		colname = FigureColname(node);
 	}
 
-	resnode = makeResdom((AttrNumber) pstate->p_last_resno++,
+	resnode = makeResdom((AttrNumber) pstate->p_next_resno++,
 						 type_id,
 						 type_mod,
 						 colname,
@@ -290,7 +290,8 @@ updateTargetListEntry(ParseState *pstate,
 		if (type_id != InvalidOid)
 		{
 			tle->expr = (Expr *)
-				coerce_to_target_type((Node *) tle->expr, type_id,
+				coerce_to_target_type(pstate,
+									  (Node *) tle->expr, type_id,
 									  attrtype, attrtypmod,
 									  COERCION_ASSIGNMENT,
 									  COERCE_IMPLICIT_CAST);

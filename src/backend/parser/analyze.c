@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.267 2003/04/29 03:21:29 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.268 2003/04/29 22:13:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -84,6 +84,7 @@ typedef struct
 } CreateStmtContext;
 
 
+static List *do_parse_analyze(Node *parseTree, ParseState *pstate);
 static Query *transformStmt(ParseState *pstate, Node *stmt,
 			  List **extras_before, List **extras_after);
 static Query *transformDeleteStmt(ParseState *pstate, DeleteStmt *stmt);
@@ -125,10 +126,12 @@ static void release_pstate_resources(ParseState *pstate);
 static FromExpr *makeFromExpr(List *fromlist, Node *quals);
 
 
-
 /*
- * parse_analyze -
- *	  analyze a raw parse tree and transform it to Query form.
+ * parse_analyze
+ *		Analyze a raw parse tree and transform it to Query form.
+ *
+ * Optionally, information about $n parameter types can be supplied.
+ * References to $n indexes not defined by paramTypes[] are disallowed.
  *
  * The result is a List of Query nodes (we need a list since some commands
  * produce multiple Queries).  Optimizable statements require considerable
@@ -136,11 +139,74 @@ static FromExpr *makeFromExpr(List *fromlist, Node *quals);
  * a dummy CMD_UTILITY Query node.
  */
 List *
-parse_analyze(Node *parseTree, ParseState *parentParseState)
+parse_analyze(Node *parseTree, Oid *paramTypes, int numParams)
+{
+	ParseState *pstate = make_parsestate(NULL);
+	List	   *result;
+
+	pstate->p_paramtypes = paramTypes;
+	pstate->p_numparams = numParams;
+	pstate->p_variableparams = false;
+
+	result = do_parse_analyze(parseTree, pstate);
+
+	pfree(pstate);
+
+	return result;
+}
+
+/*
+ * parse_analyze_varparams
+ *
+ * This variant is used when it's okay to deduce information about $n
+ * symbol datatypes from context.  The passed-in paramTypes[] array can
+ * be modified or enlarged (via repalloc).
+ */
+List *
+parse_analyze_varparams(Node *parseTree, Oid **paramTypes, int *numParams)
+{
+	ParseState *pstate = make_parsestate(NULL);
+	List	   *result;
+
+	pstate->p_paramtypes = *paramTypes;
+	pstate->p_numparams = *numParams;
+	pstate->p_variableparams = true;
+
+	result = do_parse_analyze(parseTree, pstate);
+
+	*paramTypes = pstate->p_paramtypes;
+	*numParams = pstate->p_numparams;
+
+	pfree(pstate);
+
+	return result;
+}
+
+/*
+ * parse_sub_analyze
+ *		Entry point for recursively analyzing a sub-statement.
+ */
+List *
+parse_sub_analyze(Node *parseTree, ParseState *parentParseState)
+{
+	ParseState *pstate = make_parsestate(parentParseState);
+	List	   *result;
+
+	result = do_parse_analyze(parseTree, pstate);
+
+	pfree(pstate);
+
+	return result;
+}
+
+/*
+ * do_parse_analyze
+ *		Workhorse code shared by the above variants of parse_analyze.
+ */
+static List *
+do_parse_analyze(Node *parseTree, ParseState *pstate)
 {
 	List	   *result = NIL;
-	ParseState *pstate = make_parsestate(parentParseState);
-
 	/* Lists to return extra commands from transformation */
 	List	   *extras_before = NIL;
 	List	   *extras_after = NIL;
@@ -148,11 +214,14 @@ parse_analyze(Node *parseTree, ParseState *parentParseState)
 	List	   *listscan;
 
 	query = transformStmt(pstate, parseTree, &extras_before, &extras_after);
+
+	/* don't need to access result relation any more */
 	release_pstate_resources(pstate);
 
 	while (extras_before != NIL)
 	{
-		result = nconc(result, parse_analyze(lfirst(extras_before), pstate));
+		result = nconc(result,
+					   parse_sub_analyze(lfirst(extras_before), pstate));
 		extras_before = lnext(extras_before);
 	}
 
@@ -160,13 +229,14 @@ parse_analyze(Node *parseTree, ParseState *parentParseState)
 
 	while (extras_after != NIL)
 	{
-		result = nconc(result, parse_analyze(lfirst(extras_after), pstate));
+		result = nconc(result,
+					   parse_sub_analyze(lfirst(extras_after), pstate));
 		extras_after = lnext(extras_after);
 	}
 
 	/*
 	 * Make sure that only the original query is marked original. We have
-	 * to do this explicitly since recursive calls of parse_analyze will
+	 * to do this explicitly since recursive calls of do_parse_analyze will
 	 * have marked some of the added-on queries as "original".
 	 */
 	foreach(listscan, result)
@@ -175,8 +245,6 @@ parse_analyze(Node *parseTree, ParseState *parentParseState)
 
 		q->querySource = (q == query ? QSRC_ORIGINAL : QSRC_PARSER);
 	}
-
-	pfree(pstate);
 
 	return result;
 }
@@ -423,7 +491,14 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt,
 	 */
 	if (stmt->selectStmt)
 	{
-		ParseState *sub_pstate = make_parsestate(pstate->parentParseState);
+		/*
+		 * We make the sub-pstate a child of the outer pstate so that it
+		 * can see any Param definitions supplied from above.  Since the
+		 * outer pstate's rtable and namespace are presently empty, there
+		 * are no side-effects of exposing names the sub-SELECT shouldn't
+		 * be able to see.
+		 */
+		ParseState *sub_pstate = make_parsestate(pstate);
 		Query	   *selectQuery;
 		RangeTblEntry *rte;
 		RangeTblRef *rtr;
@@ -475,12 +550,12 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt,
 		 * separate from the subquery's tlist because we may add columns,
 		 * insert datatype coercions, etc.)
 		 *
-		 * HACK: constants in the INSERT's targetlist are copied up as-is
-		 * rather than being referenced as subquery outputs.  This is
-		 * mainly to ensure that when we try to coerce them to the target
-		 * column's datatype, the right things happen for UNKNOWN
-		 * constants. Otherwise this fails: INSERT INTO foo SELECT 'bar',
-		 * ... FROM baz
+		 * HACK: unknown-type constants and params in the INSERT's targetlist
+		 * are copied up as-is rather than being referenced as subquery
+		 * outputs.  This is to ensure that when we try to coerce them
+		 * to the target column's datatype, the right things happen (see
+		 * special cases in coerce_type).  Otherwise, this fails:
+		 *		INSERT INTO foo SELECT 'bar', ... FROM baz
 		 */
 		qry->targetList = NIL;
 		foreach(tl, selectQuery->targetList)
@@ -491,7 +566,9 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt,
 
 			if (resnode->resjunk)
 				continue;
-			if (tle->expr && IsA(tle->expr, Const))
+			if (tle->expr &&
+				(IsA(tle->expr, Const) || IsA(tle->expr, Param)) &&
+				exprType((Node *) tle->expr) == UNKNOWNOID)
 				expr = tle->expr;
 			else
 				expr = (Expr *) makeVar(rtr->rtindex,
@@ -500,7 +577,7 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt,
 										resnode->restypmod,
 										0);
 			resnode = copyObject(resnode);
-			resnode->resno = (AttrNumber) pstate->p_last_resno++;
+			resnode->resno = (AttrNumber) pstate->p_next_resno++;
 			qry->targetList = lappend(qry->targetList,
 									  makeTargetEntry(resnode, expr));
 		}
@@ -520,8 +597,8 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt,
 	 */
 
 	/* Prepare to assign non-conflicting resnos to resjunk attributes */
-	if (pstate->p_last_resno <= pstate->p_target_relation->rd_rel->relnatts)
-		pstate->p_last_resno = pstate->p_target_relation->rd_rel->relnatts + 1;
+	if (pstate->p_next_resno <= pstate->p_target_relation->rd_rel->relnatts)
+		pstate->p_next_resno = pstate->p_target_relation->rd_rel->relnatts + 1;
 
 	/* Validate stmt->cols list, or build default list if no list given */
 	icolumns = checkInsertTargets(pstate, stmt->cols, &attrnos);
@@ -1484,7 +1561,7 @@ transformRuleStmt(ParseState *pstate, RuleStmt *stmt,
 		List	   *newactions = NIL;
 
 		/*
-		 * transform each statement, like parse_analyze()
+		 * transform each statement, like parse_sub_analyze()
 		 */
 		foreach(oldactions, stmt->actions)
 		{
@@ -1789,7 +1866,7 @@ transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt)
 		Resdom	   *resdom;
 		Expr	   *expr;
 
-		resdom = makeResdom((AttrNumber) pstate->p_last_resno++,
+		resdom = makeResdom((AttrNumber) pstate->p_next_resno++,
 							colType,
 							-1,
 							colName,
@@ -1938,7 +2015,7 @@ transformSetOperationTree(ParseState *pstate, SelectStmt *stmt)
 		 * of this sub-query, because they are not in the toplevel
 		 * pstate's namespace list.
 		 */
-		selectList = parse_analyze((Node *) stmt, pstate);
+		selectList = parse_sub_analyze((Node *) stmt, pstate);
 
 		Assert(length(selectList) == 1);
 		selectQuery = (Query *) lfirst(selectList);
@@ -2132,8 +2209,8 @@ transformUpdateStmt(ParseState *pstate, UpdateStmt *stmt)
 	 */
 
 	/* Prepare to assign non-conflicting resnos to resjunk attributes */
-	if (pstate->p_last_resno <= pstate->p_target_relation->rd_rel->relnatts)
-		pstate->p_last_resno = pstate->p_target_relation->rd_rel->relnatts + 1;
+	if (pstate->p_next_resno <= pstate->p_target_relation->rd_rel->relnatts)
+		pstate->p_next_resno = pstate->p_target_relation->rd_rel->relnatts + 1;
 
 	/* Prepare non-junk columns for assignment to target table */
 	origTargetList = stmt->targetList;
@@ -2151,7 +2228,7 @@ transformUpdateStmt(ParseState *pstate, UpdateStmt *stmt)
 			 * columns; else rewriter or planner might get confused.
 			 */
 			resnode->resname = "?resjunk?";
-			resnode->resno = (AttrNumber) pstate->p_last_resno++;
+			resnode->resno = (AttrNumber) pstate->p_next_resno++;
 			continue;
 		}
 		if (origTargetList == NIL)
@@ -2316,11 +2393,10 @@ static Query *
 transformPrepareStmt(ParseState *pstate, PrepareStmt *stmt)
 {
 	Query	   *result = makeNode(Query);
-	List	   *extras_before = NIL,
-			   *extras_after = NIL;
 	List	   *argtype_oids = NIL;		/* argtype OIDs in a list */
-	Oid		   *argtoids = NULL;	/* as an array for parser_param_set */
+	Oid		   *argtoids = NULL;		/* and as an array */
 	int			nargs;
+	List	   *queries;
 
 	result->commandType = CMD_UTILITY;
 	result->utilityStmt = (Node *) stmt;
@@ -2348,24 +2424,19 @@ transformPrepareStmt(ParseState *pstate, PrepareStmt *stmt)
 	stmt->argtype_oids = argtype_oids;
 
 	/*
-	 * We need to adjust the parameters expected by the rest of the
-	 * system, so that $1, ... $n are parsed properly.
-	 *
-	 * This is somewhat of a hack; however, the main parser interface only
-	 * allows parameters to be specified when working with a raw query
-	 * string, which is not helpful here.
+	 * Analyze the statement using these parameter types (any parameters
+	 * passed in from above us will not be visible to it).
 	 */
-	parser_param_set(argtoids, nargs);
+	queries = parse_analyze((Node *) stmt->query, argtoids, nargs);
 
-	stmt->query = transformStmt(pstate, (Node *) stmt->query,
-								&extras_before, &extras_after);
-
-	/* Shouldn't get any extras, since grammar only allows OptimizableStmt */
-	if (extras_before || extras_after)
+	/*
+	 * Shouldn't get any extra statements, since grammar only allows
+	 * OptimizableStmt
+	 */
+	if (length(queries) != 1)
 		elog(ERROR, "transformPrepareStmt: internal error");
 
-	/* Remove links to our local parameters */
-	parser_param_set(NULL, 0);
+	stmt->query = lfirst(queries);
 
 	return result;
 }
@@ -2409,7 +2480,7 @@ transformExecuteStmt(ParseState *pstate, ExecuteStmt *stmt)
 			given_type_id = exprType(expr);
 			expected_type_id = lfirsto(paramtypes);
 
-			expr = coerce_to_target_type(expr, given_type_id,
+			expr = coerce_to_target_type(pstate, expr, given_type_id,
 										 expected_type_id, -1,
 										 COERCION_ASSIGNMENT,
 										 COERCE_IMPLICIT_CAST);

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parse_coerce.h,v 1.50 2003/04/08 23:20:04 tgl Exp $
+ * $Id: parse_coerce.h,v 1.51 2003/04/29 22:13:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,6 +16,7 @@
 
 #include "catalog/pg_type.h"
 #include "parser/parse_node.h"
+
 
 typedef enum CATEGORY
 {
@@ -38,22 +39,26 @@ extern bool IsBinaryCoercible(Oid srctype, Oid targettype);
 extern bool IsPreferredType(CATEGORY category, Oid type);
 extern CATEGORY TypeCategory(Oid type);
 
-extern Node *coerce_to_target_type(Node *expr, Oid exprtype,
+extern Node *coerce_to_target_type(ParseState *pstate,
+								   Node *expr, Oid exprtype,
 								   Oid targettype, int32 targettypmod,
 								   CoercionContext ccontext,
 								   CoercionForm cformat);
 extern bool can_coerce_type(int nargs, Oid *input_typeids, Oid *target_typeids,
 							CoercionContext ccontext);
-extern Node *coerce_type(Node *node, Oid inputTypeId, Oid targetTypeId,
+extern Node *coerce_type(ParseState *pstate, Node *node,
+						 Oid inputTypeId, Oid targetTypeId,
 						 CoercionContext ccontext, CoercionForm cformat);
 extern Node *coerce_to_domain(Node *arg, Oid baseTypeId, Oid typeId,
 							  CoercionForm cformat);
 
-extern Node *coerce_to_boolean(Node *node, const char *constructName);
+extern Node *coerce_to_boolean(ParseState *pstate, Node *node,
+							   const char *constructName);
 
 extern Oid	select_common_type(List *typeids, const char *context);
-extern Node *coerce_to_common_type(Node *node, Oid targetTypeId,
-					  const char *context);
+extern Node *coerce_to_common_type(ParseState *pstate, Node *node,
+								   Oid targetTypeId,
+								   const char *context);
 
 extern bool check_generic_type_consistency(Oid *actual_arg_types,
 										   Oid *declared_arg_types,
