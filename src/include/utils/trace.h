@@ -27,6 +27,7 @@ char	   *tprintf_timestamp(void);
 #define TIMESTAMP_SIZE 0
 #endif
 
+extern int	tprintf1(const char *fmt, ...);
 extern int	tprintf(int flag, const char *fmt,...);
 extern int	eprintf(const char *fmt,...);
 extern int	option_flag(int flag);
@@ -75,9 +76,15 @@ enum pg_option_enum
 
 extern int	pg_options[NUM_PG_OPTIONS];
 
-#define PRINTF(args...)			tprintf(TRACE_ALL, args)
-#define EPRINTF(args...)		eprintf(args)
+#ifdef __GNUC__
+#define PRINTF(args...)			tprintf1(args)
+#define EPRINTF(args...) 		eprintf(args)
 #define TPRINTF(flag, args...)	tprintf(flag, args)
+#else
+#define PRINTF	tprintf1
+#define EPRINTF eprintf
+#define TPRINTF	tprintf
+#endif
 
 #endif	 /* TRACE_H */
 

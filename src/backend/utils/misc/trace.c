@@ -130,6 +130,34 @@ tprintf(int flag, const char *fmt,...)
 }
 
 /*
+ * Print a timestamp and a message to stdout or to syslog.
+ */
+int
+tprintf1(const char *fmt, ... )
+{
+	va_list		ap;
+	char		line[ELOG_MAXLEN+TIMESTAMP_SIZE+1];
+
+	va_start(ap, fmt);
+#ifdef ELOG_TIMESTAMPS
+	strcpy(line, tprintf_timestamp());
+#endif
+	vsprintf(line+TIMESTAMP_SIZE, fmt, ap);
+	va_end(ap);
+
+#ifdef USE_SYSLOG
+	write_syslog(LOG_INFO, line+TIMESTAMP_SIZE);
+#endif
+
+	if (UseSyslog <= 1) {
+		puts(line);
+		fflush(stdout);
+	}
+
+	return 1;
+}
+
+/*
  * Print a timestamp and a message to stderr.
  */
 int
