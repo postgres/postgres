@@ -5,7 +5,9 @@ AROPT:crs
 # This is defined here because a bunch of clients include tmp/c.h,
 # which is where the work is done on HP-UX.  It only affects the
 # backend on Ultrix and OSF/1.
+CC:cc
 CFLAGS:-D__alpha__ -DNOFIXADE -std -O4 -Olimit 2000
+LDFLAGS='-rpath $(LIBDIR)'
 SHARED_LIB:
 ALL:
 SRCH_INC:
@@ -13,3 +15,5 @@ SRCH_LIB:
 DLSUFFIX:.so
 YFLAGS:-d
 YACC:
+CCC:cxx
+CXXFLAGS:-D__alpha__ -DNOFIXADE -O4 -Olimit 2000

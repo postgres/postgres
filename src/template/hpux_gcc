@@ -4,8 +4,9 @@ SHARED_LIB:-fPIC
 ALL:
 SRCH_INC:
 SRCH_LIB:
-USE_LOCALE:no
 DL_LIB:/usr/lib/libdld.sl
 DLSUFFIX:.sl
 YFLAGS:-d
 YACC:
+CC:gcc
+CCC:g++
