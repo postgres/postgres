@@ -43,7 +43,7 @@ ac_help="$ac_help
 ac_help="$ac_help
   --with-tcl              build Tcl and Tk interfaces"
 ac_help="$ac_help
-  --with-pltcl-unknown    build pl/tcl unknown support if Tcl is enabled"
+  --enable-pltcl-unknown    build pl/tcl unknown support if Tcl is enabled"
 ac_help="$ac_help
   --without-tk            do not build Tk interfaces if Tcl is enabled"
 ac_help="$ac_help
@@ -1761,9 +1761,9 @@ else
 
 fi
 else
-  with_pltcl_unknown=no
+  enable_pltcl_unknown=no
 fi
-echo "$ac_t""$with_pltcl_unknown" 1>&6
+echo "$ac_t""$enable_pltcl_unknown" 1>&6
 
 
 # If Tcl is enabled (above) then Tk is also, unless the user disables it using --without-tk
@@ -8126,7 +8126,7 @@ s%@GCC@%$GCC%g
 s%@autodepend@%$autodepend%g
 s%@INCLUDES@%$INCLUDES%g
 s%@with_tcl@%$with_tcl%g
-s%@with_pltcl_unknown@%$with_pltcl_unknown%g
+s%@enable_pltcl_unknown@%$enable_pltcl_unknown%g
 s%@with_tk@%$with_tk%g
 s%@with_perl@%$with_perl%g
 s%@PYTHON@%$PYTHON%g
