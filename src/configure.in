@@ -44,7 +44,7 @@ esac
 
 if test $need_tas = "yes"
 then
-	AC_LINK_FILES(backend/port/tas/${os}.s, backend/port/${os}.s)
+	AC_LINK_FILES(backend/port/tas/${os}.s, backend/port/tas.s)
 	TAS=tas.o
 	AC_SUBST(TAS) 
 fi

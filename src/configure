@@ -4765,7 +4765,7 @@ EOF
 
 cat >> $CONFIG_STATUS <<EOF
 ac_sources="backend/port/tas/${os}.s backend/port/dynloader/${os}.c backend/port/dynloader/${os}.h include/port/${os}.h makefiles/Makefile.${os}"
-ac_dests="backend/port/${os}.s backend/port/dynloader.c include/dynloader.h include/os.h Makefile.port"
+ac_dests="backend/port/tas.s backend/port/dynloader.c include/dynloader.h include/os.h Makefile.port"
 EOF
 
 cat >> $CONFIG_STATUS <<\EOF
