@@ -25,6 +25,7 @@ horology/sparc-sun-solaris=horology-solaris-1947
 horology/sparc-sun-sunos4.*=horology-no-DST-before-1970
 horology/.*-sysv5=horology-solaris-1947
 horology/.*-sco=horology-solaris-1947
+horology/win32=horology-no-DST-before-1970
 int8/.*-qnx=int8-exp-three-digits
 int8/win32=int8-exp-three-digits-win32
 tinterval/.*-aix4=tinterval-solaris-1947
