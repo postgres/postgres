@@ -1,7 +1,7 @@
 QUERY: select 1
 select
 select * from nonesuch;
-WARN:parser: parse error at or near "select"
+WARN:parser: syntax error at or near "select"
 
 QUERY: select nonesuch from pg_database;
 WARN:attribute "nonesuch" not found
@@ -10,22 +10,22 @@ WARN:attribute "nonesuch" not found
 QUERY: select * from pg_database where pg_database.datname = nonesuch;
 WARN:attribute "nonesuch" not found
 QUERY: select distinct on foobar from pg_database;
-WARN:parser: parse error at or near "from"
+WARN:parser: syntax error at or near "from"
 
 QUERY: select distinct on foobar * from pg_database;
 WARN:The field specified in the UNIQUE ON clause is not in the targetlist
 QUERY: delete from;
-WARN:parser: parse error at or near ";"
+WARN:parser: syntax error at or near ";"
 
 QUERY: delete from nonesuch;
 WARN:nonesuch: Table does not exist.
 QUERY: drop table;
-WARN:parser: parse error at or near ";"
+WARN:parser: syntax error at or near ";"
 
 QUERY: drop table nonesuch;
 WARN:Relation nonesuch Does Not Exist!
 QUERY: alter table rename;
-WARN:parser: parse error at or near "rename"
+WARN:parser: syntax error at or near "rename"
 
 QUERY: alter table nonesuch rename to newnonesuch;
 WARN:renamerel: relation "nonesuch" does not exist
@@ -84,54 +84,54 @@ QUERY: create aggregate newcnt1 (sfunc2 = int4inc,
 			  stype2 = int4);
 WARN:AggregateCreate: transition function 2 MUST have an initial value
 QUERY: drop index;
-WARN:parser: parse error at or near ";"
+WARN:parser: syntax error at or near ";"
 
 QUERY: drop index 314159;
-WARN:parser: parse error at or near "314159"
+WARN:parser: syntax error at or near "314159"
 
 QUERY: drop index nonesuch;
 WARN:index "nonesuch" nonexistent
 QUERY: drop aggregate;
-WARN:parser: parse error at or near ";"
+WARN:parser: syntax error at or near ";"
 
 QUERY: drop aggregate 314159;
-WARN:parser: parse error at or near "314159"
+WARN:parser: syntax error at or near "314159"
 
 QUERY: drop aggregate nonesuch;
 WARN:RemoveAggregate: aggregate 'nonesuch' does not exist
 QUERY: drop function ();
-WARN:parser: parse error at or near "("
+WARN:parser: syntax error at or near "("
 
 QUERY: drop function 314159();
-WARN:parser: parse error at or near "314159"
+WARN:parser: syntax error at or near "314159"
 
 QUERY: drop function nonesuch();
 WARN:RemoveFunction: function nonesuch() does not exist
 QUERY: drop type;
-WARN:parser: parse error at or near ";"
+WARN:parser: syntax error at or near ";"
 
 QUERY: drop type 314159;
-WARN:parser: parse error at or near "314159"
+WARN:parser: syntax error at or near "314159"
 
 QUERY: drop type nonesuch;
 WARN:RemoveType: type 'nonesuch' does not exist
 QUERY: drop operator;
-WARN:parser: parse error at or near ";"
+WARN:parser: syntax error at or near ";"
 
 QUERY: drop operator equals;
-WARN:parser: parse error at or near "equals"
+WARN:parser: syntax error at or near "equals"
 
 QUERY: drop operator ===;
-WARN:parser: parse error at or near ";"
+WARN:parser: syntax error at or near ";"
 
 QUERY: drop operator int4, int4;
-WARN:parser: parse error at or near "int4"
+WARN:parser: syntax error at or near "int4"
 
 QUERY: drop operator (int4, int4);
-WARN:parser: parse error at or near "("
+WARN:parser: syntax error at or near "("
 
 QUERY: drop operator === ();
-WARN:parser: parse error at or near ")"
+WARN:parser: syntax error at or near ")"
 
 QUERY: drop operator === (int4);
 WARN:parser: argument type missing (use NONE for unary operators)
@@ -140,29 +140,29 @@ WARN:RemoveOperator: binary operator '===' taking 'int4' and 'int4' does not exi
 QUERY: drop operator = (nonesuch);
 WARN:parser: argument type missing (use NONE for unary operators)
 QUERY: drop operator = ( , int4);
-WARN:parser: parse error at or near ","
+WARN:parser: syntax error at or near ","
 
 QUERY: drop operator = (nonesuch, int4);
 WARN:RemoveOperator: type 'nonesuch' does not exist
 QUERY: drop operator = (int4, nonesuch);
 WARN:RemoveOperator: type 'nonesuch' does not exist
 QUERY: drop operator = (int4, );
-WARN:parser: parse error at or near ")"
+WARN:parser: syntax error at or near ")"
 
 QUERY: drop rule;
-WARN:parser: parse error at or near ";"
+WARN:parser: syntax error at or near ";"
 
 QUERY: drop rule 314159;
-WARN:parser: parse error at or near "314159"
+WARN:parser: syntax error at or near "314159"
 
 QUERY: drop rule nonesuch;
 WARN:RewriteGetRuleEventRel: rule "nonesuch" not found
 QUERY: drop tuple rule nonesuch;
-WARN:parser: parse error at or near "tuple"
+WARN:parser: syntax error at or near "tuple"
 
 QUERY: drop instance rule nonesuch;
-WARN:parser: parse error at or near "instance"
+WARN:parser: syntax error at or near "instance"
 
 QUERY: drop rewrite rule nonesuch;
-WARN:parser: parse error at or near "rewrite"
+WARN:parser: syntax error at or near "rewrite"
 
