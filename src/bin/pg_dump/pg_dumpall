@@ -4,7 +4,7 @@
 # dumps all databases to standard output
 # It also dumps the pg_user table
 #
-psql -l -A -q -t|unesc|cut -d"|" -f1 | grep -v '^template1$' | \
+psql -l -A -q -t|cut -d"|" -f1 | grep -v '^template1$' | \
 while read DATABASE
 do
 	/bin/echo '\connect template1'
