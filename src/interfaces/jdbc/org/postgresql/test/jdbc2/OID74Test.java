@@ -7,18 +7,17 @@ import java.sql.*;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
+import java.util.Properties;
 import java.sql.*;
 
 /**
  * User: alexei
  * Date: 17-Dec-2003
  * Time: 11:01:44
- * @version $Id: OID74Test.java,v 1.2 2003/12/17 15:45:05 davec Exp $
+ * @version $Id: OID74Test.java,v 1.3 2003/12/18 04:08:30 davec Exp $
  */
 public class OID74Test  extends TestCase
 {
-	private Connection con;
-    
 
 	public OID74Test( String name )
 	{
@@ -30,36 +29,23 @@ public class OID74Test  extends TestCase
 	public void tearDown() throws Exception
 	{
 	}
-	public void testBinaryStream()
+	public void testBinaryStream() throws SQLException
 	{
 		//set up conection here
-		Connection c = null;
+		Properties props = new Properties();
+		props.setProperty("compatible","7.1");
+		Connection c = TestUtil.openDB(props);
+		c.setAutoCommit(false);
+
+		TestUtil.createTable(c,"temp","col oid");
     		
       		Statement st = null; 
-      		try 
-		{
-			c =  DriverManager.getConnection("jdbc:postgresql://localhost/test?compatible=7.1&user=test");
-    			c.setAutoCommit(false);
-			st = c.createStatement();
-        		st.execute("CREATE temp TABLE temp (col oid)");
-      		}
-		 catch (SQLException e) 
-		{
-        		//another issue: when connecting to 7.3 database and this exception occurs because the table already exists,
-		        //st.setBinaryStream throws internal error in LargeObjectManager initialisation code
-		        fail("table creating error, probably already exists, code=" + e.getErrorCode());
-      		}
-		finally
-		{
-			try{ if (st != null) st.close(); }catch(SQLException ex){};
-		}
       		
 		PreparedStatement pstmt = null;
     		try 
 		{
 	      	
 			pstmt = c.prepareStatement("INSERT INTO temp VALUES (?)");
-			//in case of 7.4 server, should block here
 		      	pstmt.setBinaryStream(1, new ByteArrayInputStream(new byte[]{1, 2, 3, 4, 5}), 5);
 			assertTrue( (pstmt.executeUpdate() == 1) );
 		      	pstmt.close();
@@ -69,13 +55,13 @@ public class OID74Test  extends TestCase
 
 		      	assertTrue("No results from query", rs.next() );
 
-			//in case of 7.4 server, should block here
 			InputStream in = rs.getBinaryStream(1);
 		      	int data;
+			int i = 1;
 		      	while ((data = in.read()) != -1)
-		        	System.out.println(data);
+				assertEquals(data,i++);
 		      	rs.close();
-		      	st.close();
+		      	pstmt.close();
 			c.createStatement().executeUpdate("DELETE FROM temp");
 			c.commit();
 		}
@@ -86,14 +72,9 @@ public class OID74Test  extends TestCase
 		catch (SQLException ex)
 		{
 			fail( ex.getMessage() );
-		} 
-		finally 
-		{
-			try
-			{
-				if ( c!=null) c.close();
-			}
-			catch( SQLException e1){}
 		}
+
+		TestUtil.dropTable(c,"temp");
+		TestUtil.closeDB(c);
   	}	
 }
