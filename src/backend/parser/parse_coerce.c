@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_coerce.c,v 2.35 2000/03/14 23:06:32 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_coerce.c,v 2.36 2000/03/16 06:35:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -103,6 +103,11 @@ coerce_type(ParseState *pstate, Node *node, Oid inputTypeId,
 
 		result = (Node *) relabel;
 	}
+	else if (typeInheritsFrom(inputTypeId, targetTypeId))
+	{
+		/* Input class type is a subclass of target, so nothing to do */
+		result = node;
+	}
 	else
 	{
 		/*
@@ -156,62 +161,69 @@ coerce_type(ParseState *pstate, Node *node, Oid inputTypeId,
 bool
 can_coerce_type(int nargs, Oid *input_typeids, Oid *func_typeids)
 {
-	HeapTuple	ftup;
 	int			i;
-	Type		tp;
+	HeapTuple	ftup;
 	Oid			oid_array[FUNC_MAX_ARGS];
 
 	/* run through argument list... */
 	for (i = 0; i < nargs; i++)
 	{
-		if (input_typeids[i] != func_typeids[i])
+		Oid		inputTypeId = input_typeids[i];
+		Oid		targetTypeId = func_typeids[i];
+
+		/* no problem if same type */
+		if (inputTypeId == targetTypeId)
+			continue;
+
+		/*
+		 * one of the known-good transparent conversions? then drop
+		 * through...
+		 */
+		if (IS_BINARY_COMPATIBLE(inputTypeId, targetTypeId))
+			continue;
+
+		/* don't know what to do for the output type? then quit... */
+		if (targetTypeId == InvalidOid)
+			return false;
+		/* don't know what to do for the input type? then quit... */
+		if (inputTypeId == InvalidOid)
+			return false;
+
+		/*
+		 * If input is an untyped string constant, assume we can
+		 * convert it to anything except a class type.
+		 */
+		if (inputTypeId == UNKNOWNOID)
 		{
-
-			/*
-			 * one of the known-good transparent conversions? then drop
-			 * through...
-			 */
-			if (IS_BINARY_COMPATIBLE(input_typeids[i], func_typeids[i]))
-				;
-
-			/* don't know what to do for the output type? then quit... */
-			else if (func_typeids[i] == InvalidOid)
+			if (ISCOMPLEX(targetTypeId))
 				return false;
-			/* don't know what to do for the input type? then quit... */
-			else if (input_typeids[i] == InvalidOid)
-				return false;
-
-			/*
-			 * if not unknown input type, try for explicit conversion
-			 * using functions...
-			 */
-			else if (input_typeids[i] != UNKNOWNOID)
-			{
-				MemSet(oid_array, 0, FUNC_MAX_ARGS * sizeof(Oid));
-				oid_array[0] = input_typeids[i];
-
-				/*
-				 * look for a single-argument function named with the
-				 * target type name
-				 */
-				ftup = SearchSysCacheTuple(PROCNAME,
-						PointerGetDatum(typeidTypeName(func_typeids[i])),
-										   Int32GetDatum(1),
-										   PointerGetDatum(oid_array),
-										   0);
-
-				/*
-				 * should also check the function return type just to be
-				 * safe...
-				 */
-				if (!HeapTupleIsValid(ftup))
-					return false;
-			}
-
-			tp = typeidType(input_typeids[i]);
-			if (typeTypeFlag(tp) == 'c')
-				return false;
+			continue;
 		}
+
+		/*
+		 * If input is a class type that inherits from target, no problem
+		 */
+		if (typeInheritsFrom(inputTypeId, targetTypeId))
+			continue;
+
+		/*
+		 * Else, try for explicit conversion using functions:
+		 * look for a single-argument function named with the
+		 * target type name and accepting the source type.
+		 */
+		MemSet(oid_array, 0, FUNC_MAX_ARGS * sizeof(Oid));
+		oid_array[0] = inputTypeId;
+
+		ftup = SearchSysCacheTuple(PROCNAME,
+							PointerGetDatum(typeidTypeName(targetTypeId)),
+								   Int32GetDatum(1),
+								   PointerGetDatum(oid_array),
+								   0);
+		if (!HeapTupleIsValid(ftup))
+			return false;
+		/*
+		 * should also check the function return type just to be safe...
+		 */
 	}
 
 	return true;

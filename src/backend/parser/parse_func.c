@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.74 2000/03/14 23:06:32 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.75 2000/03/16 06:35:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -68,7 +68,6 @@ static Oid *func_select_candidate(int nargs, Oid *input_typeids,
 static int	agg_get_candidates(char *aggname, Oid typeId, CandidateList *candidates);
 static Oid	agg_select_candidate(Oid typeid, CandidateList candidates);
 
-#define ISCOMPLEX(type) (typeidTypeRelid(type) ? true : false)
 
 /*
  ** ParseNestedFuncOrColumn
@@ -1357,6 +1356,40 @@ gen_cross_product(InhPaths *arginh, int nargs)
 
 		*iter++ = oneres;
 	}
+}
+
+
+/*
+ * Given two type OIDs, determine whether the first is a complex type
+ * (class type) that inherits from the second.
+ */
+bool
+typeInheritsFrom(Oid subclassTypeId, Oid superclassTypeId)
+{
+	Oid			relid;
+	Oid		   *supervec;
+	int			nsupers,
+				i;
+	bool		result;
+
+	if (!ISCOMPLEX(subclassTypeId) || !ISCOMPLEX(superclassTypeId))
+		return false;
+	relid = typeidTypeRelid(subclassTypeId);
+	if (relid == InvalidOid)
+		return false;
+	nsupers = find_inheritors(relid, &supervec);
+	result = false;
+	for (i = 0; i < nsupers; i++)
+	{
+		if (supervec[i] == superclassTypeId)
+		{
+			result = true;
+			break;
+		}
+	}
+	if (supervec)
+		pfree(supervec);
+	return result;
 }
 
 
