@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.176 2002/09/22 20:56:28 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.177 2002/10/14 16:51:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1716,11 +1716,11 @@ RelationClearRelation(Relation relation, bool rebuild)
 	/*
 	 * Free all the subsidiary data structures of the relcache entry. We
 	 * cannot free rd_att if we are trying to rebuild the entry, however,
-	 * because pointers to it may be cached in various places. The trigger
-	 * manager might also have pointers into the trigdesc, and the rule
-	 * manager might have pointers into the rewrite rules. So to begin
+	 * because pointers to it may be cached in various places. The rule
+	 * manager might also have pointers into the rewrite rules. So to begin
 	 * with, we can only get rid of these fields:
 	 */
+	FreeTriggerDesc(relation->trigdesc);
 	if (relation->rd_index)
 		pfree(relation->rd_index);
 	if (relation->rd_am)
@@ -1743,22 +1743,20 @@ RelationClearRelation(Relation relation, bool rebuild)
 		FreeTupleDesc(relation->rd_att);
 		if (relation->rd_rulescxt)
 			MemoryContextDelete(relation->rd_rulescxt);
-		FreeTriggerDesc(relation->trigdesc);
 		pfree(relation);
 	}
 	else
 	{
 		/*
 		 * When rebuilding an open relcache entry, must preserve ref count
-		 * and rd_isnew flag.  Also attempt to preserve the tupledesc,
-		 * rewrite rules, and trigger substructures in place.
+		 * and rd_isnew flag.  Also attempt to preserve the tupledesc and
+		 * rewrite-rule substructures in place.
 		 */
 		int			old_refcnt = relation->rd_refcnt;
 		bool		old_isnew = relation->rd_isnew;
 		TupleDesc	old_att = relation->rd_att;
 		RuleLock   *old_rules = relation->rd_rules;
 		MemoryContext old_rulescxt = relation->rd_rulescxt;
-		TriggerDesc *old_trigdesc = relation->trigdesc;
 		RelationBuildDescInfo buildinfo;
 
 		buildinfo.infotype = INFO_RELID;
@@ -1770,7 +1768,6 @@ RelationClearRelation(Relation relation, bool rebuild)
 			FreeTupleDesc(old_att);
 			if (old_rulescxt)
 				MemoryContextDelete(old_rulescxt);
-			FreeTriggerDesc(old_trigdesc);
 			pfree(relation);
 			elog(ERROR, "RelationClearRelation: relation %u deleted while still in use",
 				 buildinfo.i.info_id);
@@ -1796,13 +1793,6 @@ RelationClearRelation(Relation relation, bool rebuild)
 			if (old_rulescxt)
 				MemoryContextDelete(old_rulescxt);
 		}
-		if (equalTriggerDescs(old_trigdesc, relation->trigdesc))
-		{
-			FreeTriggerDesc(relation->trigdesc);
-			relation->trigdesc = old_trigdesc;
-		}
-		else
-			FreeTriggerDesc(old_trigdesc);
 
 		/*
 		 * Update rd_nblocks.  This is kind of expensive, but I think we

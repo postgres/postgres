@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.175 2002/09/20 16:56:02 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.176 2002/10/14 16:51:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -780,7 +780,7 @@ CopyFrom(Relation rel, List *attnumlist, bool binary, bool oids,
 	resultRelInfo = makeNode(ResultRelInfo);
 	resultRelInfo->ri_RangeTableIndex = 1;		/* dummy */
 	resultRelInfo->ri_RelationDesc = rel;
-	resultRelInfo->ri_TrigDesc = rel->trigdesc;
+	resultRelInfo->ri_TrigDesc = CopyTriggerDesc(rel->trigdesc);
 
 	ExecOpenIndices(resultRelInfo);
 

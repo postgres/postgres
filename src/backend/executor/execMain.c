@@ -27,7 +27,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.179 2002/09/23 22:57:44 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.180 2002/10/14 16:51:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -799,7 +799,8 @@ initResultRelInfo(ResultRelInfo *resultRelInfo,
 	resultRelInfo->ri_NumIndices = 0;
 	resultRelInfo->ri_IndexRelationDescs = NULL;
 	resultRelInfo->ri_IndexRelationInfo = NULL;
-	resultRelInfo->ri_TrigDesc = resultRelationDesc->trigdesc;
+	/* make a copy so as not to depend on relcache info not changing... */
+	resultRelInfo->ri_TrigDesc = CopyTriggerDesc(resultRelationDesc->trigdesc);
 	resultRelInfo->ri_TrigFunctions = NULL;
 	resultRelInfo->ri_ConstraintExprs = NULL;
 	resultRelInfo->ri_junkFilter = NULL;

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/trigger.c,v 1.134 2002/10/03 21:06:23 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/trigger.c,v 1.135 2002/10/14 16:51:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -49,7 +49,7 @@ static HeapTuple ExecCallTriggerFunc(TriggerData *trigdata,
 static void DeferredTriggerSaveEvent(ResultRelInfo *relinfo, int event,
 						 HeapTuple oldtup, HeapTuple newtup);
 static void DeferredTriggerExecute(DeferredTriggerEvent event, int itemno,
-					   Relation rel, FmgrInfo *finfo,
+					   Relation rel, TriggerDesc *trigdesc, FmgrInfo *finfo,
 					   MemoryContext per_tuple_context);
 
 
@@ -680,9 +680,12 @@ renametrig(Oid relid,
 /*
  * Build trigger data to attach to the given relcache entry.
  *
- * Note that trigger data must be allocated in CacheMemoryContext
- * to ensure it survives as long as the relcache entry.  But we
- * are probably running in a less long-lived working context.
+ * Note that trigger data attached to a relcache entry must be stored in
+ * CacheMemoryContext to ensure it survives as long as the relcache entry.
+ * But we should be running in a less long-lived working context.  To avoid
+ * leaking cache memory if this routine fails partway through, we build a
+ * temporary TriggerDesc in working memory and then copy the completed
+ * structure into cache memory.
  */
 void
 RelationBuildTriggers(Relation relation)
@@ -695,9 +698,11 @@ RelationBuildTriggers(Relation relation)
 	ScanKeyData skey;
 	SysScanDesc tgscan;
 	HeapTuple	htup;
+	MemoryContext oldContext;
 
-	triggers = (Trigger *) MemoryContextAlloc(CacheMemoryContext,
-											  ntrigs * sizeof(Trigger));
+	Assert(ntrigs > 0);			/* else I should not have been called */
+
+	triggers = (Trigger *) palloc(ntrigs * sizeof(Trigger));
 
 	/*
 	 * Note: since we scan the triggers using TriggerRelidNameIndex, we
@@ -726,9 +731,8 @@ RelationBuildTriggers(Relation relation)
 		build = &(triggers[found]);
 
 		build->tgoid = HeapTupleGetOid(htup);
-		build->tgname = MemoryContextStrdup(CacheMemoryContext,
-							 DatumGetCString(DirectFunctionCall1(nameout,
-									NameGetDatum(&pg_trigger->tgname))));
+		build->tgname = DatumGetCString(DirectFunctionCall1(nameout,
+									NameGetDatum(&pg_trigger->tgname)));
 		build->tgfoid = pg_trigger->tgfoid;
 		build->tgtype = pg_trigger->tgtype;
 		build->tgenabled = pg_trigger->tgenabled;
@@ -753,13 +757,10 @@ RelationBuildTriggers(Relation relation)
 				elog(ERROR, "RelationBuildTriggers: tgargs IS NULL for rel %s",
 					 RelationGetRelationName(relation));
 			p = (char *) VARDATA(val);
-			build->tgargs = (char **)
-				MemoryContextAlloc(CacheMemoryContext,
-								   build->tgnargs * sizeof(char *));
+			build->tgargs = (char **) palloc(build->tgnargs * sizeof(char *));
 			for (i = 0; i < build->tgnargs; i++)
 			{
-				build->tgargs[i] = MemoryContextStrdup(CacheMemoryContext,
-													   p);
+				build->tgargs[i] = pstrdup(p);
 				p += strlen(p) + 1;
 			}
 		}
@@ -778,18 +779,30 @@ RelationBuildTriggers(Relation relation)
 			 RelationGetRelationName(relation));
 
 	/* Build trigdesc */
-	trigdesc = (TriggerDesc *) MemoryContextAlloc(CacheMemoryContext,
-												  sizeof(TriggerDesc));
+	trigdesc = (TriggerDesc *) palloc(sizeof(TriggerDesc));
 	MemSet(trigdesc, 0, sizeof(TriggerDesc));
 	trigdesc->triggers = triggers;
 	trigdesc->numtriggers = ntrigs;
 	for (found = 0; found < ntrigs; found++)
 		InsertTrigger(trigdesc, &(triggers[found]), found);
 
-	relation->trigdesc = trigdesc;
+	/* Copy completed trigdesc into cache storage */
+	oldContext = MemoryContextSwitchTo(CacheMemoryContext);
+	relation->trigdesc = CopyTriggerDesc(trigdesc);
+	MemoryContextSwitchTo(oldContext);
+
+	/* Release working memory */
+	FreeTriggerDesc(trigdesc);
 }
 
-/* Insert the given trigger into the appropriate index list(s) for it */
+/*
+ * Insert the given trigger into the appropriate index list(s) for it
+ *
+ * To simplify storage management, we allocate each index list at the max
+ * possible size (trigdesc->numtriggers) if it's used at all.  This does
+ * not waste space permanently since we're only building a temporary
+ * trigdesc at this point.
+ */
 static void
 InsertTrigger(TriggerDesc *trigdesc, Trigger *trigger, int indx)
 {
@@ -830,11 +843,7 @@ InsertTrigger(TriggerDesc *trigdesc, Trigger *trigger, int indx)
 	{
 		tp = &(t[TRIGGER_EVENT_INSERT]);
 		if (*tp == NULL)
-			*tp = (int *) MemoryContextAlloc(CacheMemoryContext,
-											 sizeof(int));
-		else
-			*tp = (int *) repalloc(*tp, (n[TRIGGER_EVENT_INSERT] + 1) *
-								   sizeof(int));
+			*tp = (int *) palloc(trigdesc->numtriggers * sizeof(int));
 		(*tp)[n[TRIGGER_EVENT_INSERT]] = indx;
 		(n[TRIGGER_EVENT_INSERT])++;
 	}
@@ -843,11 +852,7 @@ InsertTrigger(TriggerDesc *trigdesc, Trigger *trigger, int indx)
 	{
 		tp = &(t[TRIGGER_EVENT_DELETE]);
 		if (*tp == NULL)
-			*tp = (int *) MemoryContextAlloc(CacheMemoryContext,
-											 sizeof(int));
-		else
-			*tp = (int *) repalloc(*tp, (n[TRIGGER_EVENT_DELETE] + 1) *
-								   sizeof(int));
+			*tp = (int *) palloc(trigdesc->numtriggers * sizeof(int));
 		(*tp)[n[TRIGGER_EVENT_DELETE]] = indx;
 		(n[TRIGGER_EVENT_DELETE])++;
 	}
@@ -856,16 +861,113 @@ InsertTrigger(TriggerDesc *trigdesc, Trigger *trigger, int indx)
 	{
 		tp = &(t[TRIGGER_EVENT_UPDATE]);
 		if (*tp == NULL)
-			*tp = (int *) MemoryContextAlloc(CacheMemoryContext,
-											 sizeof(int));
-		else
-			*tp = (int *) repalloc(*tp, (n[TRIGGER_EVENT_UPDATE] + 1) *
-								   sizeof(int));
+			*tp = (int *) palloc(trigdesc->numtriggers * sizeof(int));
 		(*tp)[n[TRIGGER_EVENT_UPDATE]] = indx;
 		(n[TRIGGER_EVENT_UPDATE])++;
 	}
 }
 
+/*
+ * Copy a TriggerDesc data structure.
+ *
+ * The copy is allocated in the current memory context.
+ */
+TriggerDesc *
+CopyTriggerDesc(TriggerDesc *trigdesc)
+{
+	TriggerDesc *newdesc;
+	uint16	   *n;
+	int		  **t,
+			   *tnew;
+	Trigger    *trigger;
+	int			i;
+
+	if (trigdesc == NULL || trigdesc->numtriggers <= 0)
+		return NULL;
+
+	newdesc = (TriggerDesc *) palloc(sizeof(TriggerDesc));
+	memcpy(newdesc, trigdesc, sizeof(TriggerDesc));
+
+	trigger = (Trigger *) palloc(trigdesc->numtriggers * sizeof(Trigger));
+	memcpy(trigger, trigdesc->triggers,
+		   trigdesc->numtriggers * sizeof(Trigger));
+	newdesc->triggers = trigger;
+
+	for (i = 0; i < trigdesc->numtriggers; i++)
+	{
+		trigger->tgname = pstrdup(trigger->tgname);
+		if (trigger->tgnargs > 0)
+		{
+			char  **newargs;
+			int16	j;
+
+			newargs = (char **) palloc(trigger->tgnargs * sizeof(char *));
+			for (j = 0; j < trigger->tgnargs; j++)
+				newargs[j] = pstrdup(trigger->tgargs[j]);
+			trigger->tgargs = newargs;
+		}
+		trigger++;
+	}
+
+	n = newdesc->n_before_statement;
+	t = newdesc->tg_before_statement;
+	for (i = 0; i < TRIGGER_NUM_EVENT_CLASSES; i++)
+	{
+		if (n[i] > 0)
+		{
+			tnew = (int *) palloc(n[i] * sizeof(int));
+			memcpy(tnew, t[i], n[i] * sizeof(int));
+			t[i] = tnew;
+		}
+		else
+			t[i] = NULL;
+	}
+	n = newdesc->n_before_row;
+	t = newdesc->tg_before_row;
+	for (i = 0; i < TRIGGER_NUM_EVENT_CLASSES; i++)
+	{
+		if (n[i] > 0)
+		{
+			tnew = (int *) palloc(n[i] * sizeof(int));
+			memcpy(tnew, t[i], n[i] * sizeof(int));
+			t[i] = tnew;
+		}
+		else
+			t[i] = NULL;
+	}
+	n = newdesc->n_after_row;
+	t = newdesc->tg_after_row;
+	for (i = 0; i < TRIGGER_NUM_EVENT_CLASSES; i++)
+	{
+		if (n[i] > 0)
+		{
+			tnew = (int *) palloc(n[i] * sizeof(int));
+			memcpy(tnew, t[i], n[i] * sizeof(int));
+			t[i] = tnew;
+		}
+		else
+			t[i] = NULL;
+	}
+	n = newdesc->n_after_statement;
+	t = newdesc->tg_after_statement;
+	for (i = 0; i < TRIGGER_NUM_EVENT_CLASSES; i++)
+	{
+		if (n[i] > 0)
+		{
+			tnew = (int *) palloc(n[i] * sizeof(int));
+			memcpy(tnew, t[i], n[i] * sizeof(int));
+			t[i] = tnew;
+		}
+		else
+			t[i] = NULL;
+	}
+
+	return newdesc;
+}
+
+/*
+ * Free a TriggerDesc data structure.
+ */
 void
 FreeTriggerDesc(TriggerDesc *trigdesc)
 {
@@ -909,6 +1011,10 @@ FreeTriggerDesc(TriggerDesc *trigdesc)
 	pfree(trigdesc);
 }
 
+/*
+ * Compare two TriggerDesc structures for logical equality.
+ */
+#ifdef NOT_USED
 bool
 equalTriggerDescs(TriggerDesc *trigdesc1, TriggerDesc *trigdesc2)
 {
@@ -966,6 +1072,7 @@ equalTriggerDescs(TriggerDesc *trigdesc1, TriggerDesc *trigdesc2)
 		return false;
 	return true;
 }
+#endif /* NOT_USED */
 
 /*
  * Call a trigger function.
@@ -1455,17 +1562,17 @@ deferredTriggerAddEvent(DeferredTriggerEvent event)
  *	event: event currently being fired.
  *	itemno: item within event currently being fired.
  *	rel: open relation for event.
- *	finfo: array of fmgr lookup cache entries (one per trigger of relation).
+ *	trigdesc: working copy of rel's trigger info.
+ *	finfo: array of fmgr lookup cache entries (one per trigger in trigdesc).
  *	per_tuple_context: memory context to call trigger function in.
  * ----------
  */
 static void
 DeferredTriggerExecute(DeferredTriggerEvent event, int itemno,
-					   Relation rel, FmgrInfo *finfo,
+					   Relation rel, TriggerDesc *trigdesc, FmgrInfo *finfo,
 					   MemoryContext per_tuple_context)
 {
 	Oid			tgoid = event->dte_item[itemno].dti_tgoid;
-	TriggerDesc *trigdesc = rel->trigdesc;
 	TriggerData LocTriggerData;
 	HeapTupleData oldtuple;
 	HeapTupleData newtuple;
@@ -1530,7 +1637,7 @@ DeferredTriggerExecute(DeferredTriggerEvent event, int itemno,
 	}
 
 	/*
-	 * Call the trigger and throw away an eventually returned updated
+	 * Call the trigger and throw away any eventually returned updated
 	 * tuple.
 	 */
 	rettuple = ExecCallTriggerFunc(&LocTriggerData,
@@ -1569,6 +1676,7 @@ deferredTriggerInvokeEvents(bool immediate_only)
 				prev_event = NULL;
 	MemoryContext per_tuple_context;
 	Relation	rel = NULL;
+	TriggerDesc *trigdesc = NULL;
 	FmgrInfo   *finfo = NULL;
 
 	/*
@@ -1637,6 +1745,7 @@ deferredTriggerInvokeEvents(bool immediate_only)
 				{
 					if (rel)
 						heap_close(rel, NoLock);
+					FreeTriggerDesc(trigdesc);
 					if (finfo)
 						pfree(finfo);
 
@@ -1647,16 +1756,25 @@ deferredTriggerInvokeEvents(bool immediate_only)
 					rel = heap_open(event->dte_relid, NoLock);
 
 					/*
-					 * Allocate space to cache fmgr lookup info for
-					 * triggers of this relation.
+					 * Copy relation's trigger info so that we have a stable
+					 * copy no matter what the called triggers do.
+					 */
+					trigdesc = CopyTriggerDesc(rel->trigdesc);
+
+					if (trigdesc == NULL)
+						elog(ERROR, "deferredTriggerInvokeEvents: relation %u has no triggers",
+							 event->dte_relid);
+
+					/*
+					 * Allocate space to cache fmgr lookup info for triggers.
 					 */
 					finfo = (FmgrInfo *)
-						palloc(rel->trigdesc->numtriggers * sizeof(FmgrInfo));
+						palloc(trigdesc->numtriggers * sizeof(FmgrInfo));
 					MemSet(finfo, 0,
-						   rel->trigdesc->numtriggers * sizeof(FmgrInfo));
+						   trigdesc->numtriggers * sizeof(FmgrInfo));
 				}
 
-				DeferredTriggerExecute(event, i, rel, finfo,
+				DeferredTriggerExecute(event, i, rel, trigdesc, finfo,
 									   per_tuple_context);
 
 				event->dte_item[i].dti_state |= TRIGGER_DEFERRED_DONE;
@@ -1708,6 +1826,7 @@ deferredTriggerInvokeEvents(bool immediate_only)
 	/* Release working resources */
 	if (rel)
 		heap_close(rel, NoLock);
+	FreeTriggerDesc(trigdesc);
 	if (finfo)
 		pfree(finfo);
 	MemoryContextDelete(per_tuple_context);

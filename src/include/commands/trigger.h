@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: trigger.h,v 1.38 2002/09/04 20:31:42 momjian Exp $
+ * $Id: trigger.h,v 1.39 2002/10/14 16:51:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -112,9 +112,9 @@ extern void renametrig(Oid relid, const char *oldname, const char *newname);
 
 extern void RelationBuildTriggers(Relation relation);
 
-extern void FreeTriggerDesc(TriggerDesc *trigdesc);
+extern TriggerDesc *CopyTriggerDesc(TriggerDesc *trigdesc);
 
-extern bool equalTriggerDescs(TriggerDesc *trigdesc1, TriggerDesc *trigdesc2);
+extern void FreeTriggerDesc(TriggerDesc *trigdesc);
 
 extern HeapTuple ExecBRInsertTriggers(EState *estate,
 					 ResultRelInfo *relinfo,
