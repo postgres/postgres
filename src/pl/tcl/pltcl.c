@@ -31,7 +31,7 @@
  *	  ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/tcl/pltcl.c,v 1.74 2003/08/04 00:43:33 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/tcl/pltcl.c,v 1.75 2003/08/04 18:40:50 tgl Exp $
  *
  **********************************************************************/
 
@@ -708,63 +708,74 @@ pltcl_trigger_handler(PG_FUNCTION_ARGS)
 	else if (TRIGGER_FIRED_AFTER(trigdata->tg_event))
 		Tcl_DStringAppendElement(&tcl_cmd, "AFTER");
 	else
-		Tcl_DStringAppendElement(&tcl_cmd, "UNKNOWN");
+		elog(ERROR, "unrecognized WHEN tg_event: %u", trigdata->tg_event);
 
 	/* The level part of the event for TG_level */
 	if (TRIGGER_FIRED_FOR_ROW(trigdata->tg_event))
+	{
 		Tcl_DStringAppendElement(&tcl_cmd, "ROW");
+
+		/* Build the data list for the trigtuple */
+		pltcl_build_tuple_argument(trigdata->tg_trigtuple,
+								   tupdesc, &tcl_trigtup);
+
+		/*
+		 * Now the command part of the event for TG_op and data for NEW and
+		 * OLD
+		 */
+		if (TRIGGER_FIRED_BY_INSERT(trigdata->tg_event))
+		{
+			Tcl_DStringAppendElement(&tcl_cmd, "INSERT");
+
+			Tcl_DStringAppendElement(&tcl_cmd, Tcl_DStringValue(&tcl_trigtup));
+			Tcl_DStringAppendElement(&tcl_cmd, "");
+
+			rettup = trigdata->tg_trigtuple;
+		}
+		else if (TRIGGER_FIRED_BY_DELETE(trigdata->tg_event))
+		{
+			Tcl_DStringAppendElement(&tcl_cmd, "DELETE");
+
+			Tcl_DStringAppendElement(&tcl_cmd, "");
+			Tcl_DStringAppendElement(&tcl_cmd, Tcl_DStringValue(&tcl_trigtup));
+
+			rettup = trigdata->tg_trigtuple;
+		}
+		else if (TRIGGER_FIRED_BY_UPDATE(trigdata->tg_event))
+		{
+			Tcl_DStringAppendElement(&tcl_cmd, "UPDATE");
+
+			pltcl_build_tuple_argument(trigdata->tg_newtuple,
+									   tupdesc, &tcl_newtup);
+
+			Tcl_DStringAppendElement(&tcl_cmd, Tcl_DStringValue(&tcl_newtup));
+			Tcl_DStringAppendElement(&tcl_cmd, Tcl_DStringValue(&tcl_trigtup));
+
+			rettup = trigdata->tg_newtuple;
+		}
+		else
+			elog(ERROR, "unrecognized OP tg_event: %u", trigdata->tg_event);
+	}
 	else if (TRIGGER_FIRED_FOR_STATEMENT(trigdata->tg_event))
+	{
 		Tcl_DStringAppendElement(&tcl_cmd, "STATEMENT");
-	else
-		Tcl_DStringAppendElement(&tcl_cmd, "UNKNOWN");
 
-	/* Build the data list for the trigtuple */
-	pltcl_build_tuple_argument(trigdata->tg_trigtuple,
-							   tupdesc, &tcl_trigtup);
-
-	/*
-	 * Now the command part of the event for TG_op and data for NEW and
-	 * OLD
-	 */
-	if (TRIGGER_FIRED_BY_INSERT(trigdata->tg_event))
-	{
-		Tcl_DStringAppendElement(&tcl_cmd, "INSERT");
-
-		Tcl_DStringAppendElement(&tcl_cmd, Tcl_DStringValue(&tcl_trigtup));
-		Tcl_DStringAppendElement(&tcl_cmd, "");
-
-		rettup = trigdata->tg_trigtuple;
-	}
-	else if (TRIGGER_FIRED_BY_DELETE(trigdata->tg_event))
-	{
-		Tcl_DStringAppendElement(&tcl_cmd, "DELETE");
+		if (TRIGGER_FIRED_BY_INSERT(trigdata->tg_event))
+			Tcl_DStringAppendElement(&tcl_cmd, "INSERT");
+		else if (TRIGGER_FIRED_BY_DELETE(trigdata->tg_event))
+			Tcl_DStringAppendElement(&tcl_cmd, "DELETE");
+		else if (TRIGGER_FIRED_BY_UPDATE(trigdata->tg_event))
+			Tcl_DStringAppendElement(&tcl_cmd, "UPDATE");
+		else
+			elog(ERROR, "unrecognized OP tg_event: %u", trigdata->tg_event);
 
 		Tcl_DStringAppendElement(&tcl_cmd, "");
-		Tcl_DStringAppendElement(&tcl_cmd, Tcl_DStringValue(&tcl_trigtup));
+		Tcl_DStringAppendElement(&tcl_cmd, "");
 
-		rettup = trigdata->tg_trigtuple;
-	}
-	else if (TRIGGER_FIRED_BY_UPDATE(trigdata->tg_event))
-	{
-		Tcl_DStringAppendElement(&tcl_cmd, "UPDATE");
-
-		pltcl_build_tuple_argument(trigdata->tg_newtuple,
-								   tupdesc, &tcl_newtup);
-
-		Tcl_DStringAppendElement(&tcl_cmd, Tcl_DStringValue(&tcl_newtup));
-		Tcl_DStringAppendElement(&tcl_cmd, Tcl_DStringValue(&tcl_trigtup));
-
-		rettup = trigdata->tg_newtuple;
+		rettup = (HeapTuple) NULL;
 	}
 	else
-	{
-		Tcl_DStringAppendElement(&tcl_cmd, "UNKNOWN");
-
-		Tcl_DStringAppendElement(&tcl_cmd, Tcl_DStringValue(&tcl_trigtup));
-		Tcl_DStringAppendElement(&tcl_cmd, Tcl_DStringValue(&tcl_trigtup));
-
-		rettup = trigdata->tg_trigtuple;
-	}
+		elog(ERROR, "unrecognized LEVEL tg_event: %u", trigdata->tg_event);
 
 	memcpy(&Warn_restart, &save_restart, sizeof(Warn_restart));
 	Tcl_DStringFree(&tcl_trigtup);

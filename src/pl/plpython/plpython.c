@@ -29,7 +29,7 @@
  * MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	$Header: /cvsroot/pgsql/src/pl/plpython/plpython.c,v 1.38 2003/08/04 01:57:58 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/pl/plpython/plpython.c,v 1.39 2003/08/04 18:40:50 tgl Exp $
  *
  *********************************************************************
  */
@@ -651,68 +651,96 @@ PLy_trigger_build_args(FunctionCallInfo fcinfo, PLyProcedure * proc, HeapTuple *
 	Py_DECREF(pltrelid);
 	pfree(stroid);
 
-
-
 	if (TRIGGER_FIRED_BEFORE(tdata->tg_event))
 		pltwhen = PyString_FromString("BEFORE");
 	else if (TRIGGER_FIRED_AFTER(tdata->tg_event))
 		pltwhen = PyString_FromString("AFTER");
 	else
-		pltwhen = PyString_FromString("UNKNOWN");
+	{
+		elog(ERROR, "unrecognized WHEN tg_event: %u", tdata->tg_event);
+		pltwhen = NULL;			/* keep compiler quiet */
+	}
 	PyDict_SetItemString(pltdata, "when", pltwhen);
 	Py_DECREF(pltwhen);
 
 	if (TRIGGER_FIRED_FOR_ROW(tdata->tg_event))
+	{
 		pltlevel = PyString_FromString("ROW");
-	else if (TRIGGER_FIRED_FOR_STATEMENT(tdata->tg_event))
-		pltlevel = PyString_FromString("STATEMENT");
-	else
-		pltlevel = PyString_FromString("UNKNOWN");
-	PyDict_SetItemString(pltdata, "level", pltlevel);
-	Py_DECREF(pltlevel);
+		PyDict_SetItemString(pltdata, "level", pltlevel);
+		Py_DECREF(pltlevel);
 
-	if (TRIGGER_FIRED_BY_INSERT(tdata->tg_event))
+		if (TRIGGER_FIRED_BY_INSERT(tdata->tg_event))
+		{
+			pltevent = PyString_FromString("INSERT");
+
+			PyDict_SetItemString(pltdata, "old", Py_None);
+			pytnew = PLyDict_FromTuple(&(proc->result), tdata->tg_trigtuple,
+									   tdata->tg_relation->rd_att);
+			PyDict_SetItemString(pltdata, "new", pytnew);
+			Py_DECREF(pytnew);
+			*rv = tdata->tg_trigtuple;
+		}
+		else if (TRIGGER_FIRED_BY_DELETE(tdata->tg_event))
+		{
+			pltevent = PyString_FromString("DELETE");
+
+			PyDict_SetItemString(pltdata, "new", Py_None);
+			pytold = PLyDict_FromTuple(&(proc->result), tdata->tg_trigtuple,
+									   tdata->tg_relation->rd_att);
+			PyDict_SetItemString(pltdata, "old", pytold);
+			Py_DECREF(pytold);
+			*rv = tdata->tg_trigtuple;
+		}
+		else if (TRIGGER_FIRED_BY_UPDATE(tdata->tg_event))
+		{
+			pltevent = PyString_FromString("UPDATE");
+
+			pytnew = PLyDict_FromTuple(&(proc->result), tdata->tg_newtuple,
+									   tdata->tg_relation->rd_att);
+			PyDict_SetItemString(pltdata, "new", pytnew);
+			Py_DECREF(pytnew);
+			pytold = PLyDict_FromTuple(&(proc->result), tdata->tg_trigtuple,
+									   tdata->tg_relation->rd_att);
+			PyDict_SetItemString(pltdata, "old", pytold);
+			Py_DECREF(pytold);
+			*rv = tdata->tg_newtuple;
+		}
+		else
+		{
+			elog(ERROR, "unrecognized OP tg_event: %u", tdata->tg_event);
+			pltevent = NULL;	/* keep compiler quiet */
+		}
+
+		PyDict_SetItemString(pltdata, "event", pltevent);
+		Py_DECREF(pltevent);
+	}
+	else if (TRIGGER_FIRED_FOR_STATEMENT(tdata->tg_event))
 	{
-		pltevent = PyString_FromString("INSERT");
+		pltlevel = PyString_FromString("STATEMENT");
+		PyDict_SetItemString(pltdata, "level", pltlevel);
+		Py_DECREF(pltlevel);
+
 		PyDict_SetItemString(pltdata, "old", Py_None);
-		pytnew = PLyDict_FromTuple(&(proc->result), tdata->tg_trigtuple,
-								   tdata->tg_relation->rd_att);
-		PyDict_SetItemString(pltdata, "new", pytnew);
-		Py_DECREF(pytnew);
-		*rv = tdata->tg_trigtuple;
-	}
-	else if (TRIGGER_FIRED_BY_DELETE(tdata->tg_event))
-	{
-		pltevent = PyString_FromString("DELETE");
 		PyDict_SetItemString(pltdata, "new", Py_None);
-		pytold = PLyDict_FromTuple(&(proc->result), tdata->tg_trigtuple,
-								   tdata->tg_relation->rd_att);
-		PyDict_SetItemString(pltdata, "old", pytold);
-		Py_DECREF(pytold);
-		*rv = tdata->tg_trigtuple;
-	}
-	else if (TRIGGER_FIRED_BY_UPDATE(tdata->tg_event))
-	{
-		pltevent = PyString_FromString("UPDATE");
-		pytnew = PLyDict_FromTuple(&(proc->result), tdata->tg_newtuple,
-								   tdata->tg_relation->rd_att);
-		PyDict_SetItemString(pltdata, "new", pytnew);
-		Py_DECREF(pytnew);
-		pytold = PLyDict_FromTuple(&(proc->result), tdata->tg_trigtuple,
-								   tdata->tg_relation->rd_att);
-		PyDict_SetItemString(pltdata, "old", pytold);
-		Py_DECREF(pytold);
-		*rv = tdata->tg_newtuple;
+		*rv = (HeapTuple) NULL;
+
+		if (TRIGGER_FIRED_BY_INSERT(tdata->tg_event))
+			pltevent = PyString_FromString("INSERT");
+		else if (TRIGGER_FIRED_BY_DELETE(tdata->tg_event))
+			pltevent = PyString_FromString("DELETE");
+		else if (TRIGGER_FIRED_BY_UPDATE(tdata->tg_event))
+			pltevent = PyString_FromString("UPDATE");
+		else
+		{
+			elog(ERROR, "unrecognized OP tg_event: %u", tdata->tg_event);
+			pltevent = NULL;	/* keep compiler quiet */
+		}
+
+		PyDict_SetItemString(pltdata, "event", pltevent);
+		Py_DECREF(pltevent);
 	}
 	else
-	{
-		pltevent = PyString_FromString("UNKNOWN");
-		PyDict_SetItemString(pltdata, "old", Py_None);
-		PyDict_SetItemString(pltdata, "new", Py_None);
-		*rv = tdata->tg_trigtuple;
-	}
-	PyDict_SetItemString(pltdata, "event", pltevent);
-	Py_DECREF(pltevent);
+		elog(ERROR, "unrecognized LEVEL tg_event: %u", tdata->tg_event);
 
 	if (tdata->tg_trigger->tgnargs)
 	{
