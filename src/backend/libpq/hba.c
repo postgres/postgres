@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/hba.c,v 1.101 2003/06/12 02:12:58 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/hba.c,v 1.102 2003/06/12 07:00:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -588,7 +588,6 @@ parse_hba(List *line, hbaPort *port, bool *found_p, bool *error_p)
 	else if (strcmp(token, "host") == 0 || strcmp(token, "hostssl") == 0)
 	{
 		SockAddr file_ip_addr, mask;
-		char * cidr_slash;
 
 		if (strcmp(token, "hostssl") == 0)
 		{
@@ -619,48 +618,26 @@ parse_hba(List *line, hbaPort *port, bool *found_p, bool *error_p)
 			goto hba_syntax;
 		user = lfirst(line);
 
-		/* Read the IP address field. (with or without CIDR netmask) */
+		/* Read the IP address field. */
 		line = lnext(line);
 		if (!line)
 			goto hba_syntax;
 		token = lfirst(line);
 
-		/* Check if it has a CIDR suffix and if so isolate it */
-		cidr_slash = strchr(token,'/');
-		if (cidr_slash)
-			*cidr_slash = '\0';
-
-		/* Get the IP address either way */
 		if(SockAddr_pton(&file_ip_addr, token) < 0)
-		{
-			if (cidr_slash)
-				*cidr_slash = '/';
 			goto hba_syntax;
-		}
 
-		/* Get the netmask */
-		if (cidr_slash)
-		{
-			*cidr_slash = '/';
-			if (SockAddr_cidr_mask(&mask, ++cidr_slash, file_ip_addr.sa.sa_family) < 0)
-				goto hba_syntax;
-		}
-		else
-		{
-			/* Read the mask field. */
-			line = lnext(line);
-			if (!line)
-				goto hba_syntax;
-			token = lfirst(line);
+		/* Read the mask field. */
+		line = lnext(line);
+		if (!line)
+			goto hba_syntax;
+		token = lfirst(line);
 
-			if(SockAddr_pton(&mask, token) < 0)
-				goto hba_syntax;
+		if(SockAddr_pton(&mask, token) < 0)
+			goto hba_syntax;
 
-			if(file_ip_addr.sa.sa_family != mask.sa.sa_family)
-				goto hba_syntax;
-		}
-
-
+		if(file_ip_addr.sa.sa_family != mask.sa.sa_family)
+			goto hba_syntax;
 
 		/* Read the rest of the line. */
 		line = lnext(line);

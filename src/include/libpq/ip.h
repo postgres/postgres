@@ -5,7 +5,7 @@
  *
  * Copyright (c) 2003, PostgreSQL Global Development Group
  *
- * $Id: ip.h,v 1.6 2003/06/12 02:12:58 momjian Exp $
+ * $Id: ip.h,v 1.7 2003/06/12 07:00:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,8 +24,6 @@ extern void  freeaddrinfo2(int hint_ai_family, struct addrinfo *ai);
 extern char *SockAddr_ntop(const SockAddr *sa, char *dst, size_t cnt,
 						   int v4conv);
 extern int   SockAddr_pton(SockAddr *sa, const char *src);
-
-extern int SockAddr_cidr_mask(SockAddr *mask, char *numbits, int family);
 
 extern int   isAF_INETx(const int family);
 extern int   rangeSockAddr(const SockAddr *addr, const SockAddr *netaddr,
