@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Attic/GNUmakefile.in,v 1.7 1997/02/19 14:14:40 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/Attic/GNUmakefile.in,v 1.8 1997/02/28 15:35:50 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -69,7 +69,7 @@ ifneq ($(wildcard man), )
 endif
 	rm -f Makefile.global include/config.h GNUmakefile
 
-.DEFAULT all:
+.DEFAULT:
 	@if test $(PORTNAME) = UNDEFINED; then \
 	  echo You must set the PORTNAME value in Makefile.global before \
 	       you can build Postgres. ;\
