@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.411 2004/05/19 19:39:27 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.412 2004/05/19 21:17:33 momjian Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -2190,7 +2190,8 @@ PostgresMain(int argc, char *argv[], const char *username)
 				gettext("%s: could not locate my own executable path"),
 						argv[0]);
 	
-	get_pkglib_path(my_exec_path, pkglib_path);
+	if (pkglib_path[0] == '\0')
+		get_pkglib_path(my_exec_path, pkglib_path);
 
 	/*
 	 * Set default values for command-line options.
