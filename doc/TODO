@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Wed Mar 28 16:20:32 EST 2001
+Last updated:		Wed Mar 28 19:12:47 EST 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -360,6 +360,7 @@ SOURCE CODE
 * Make elog(LOG) in WAL its own output type, distinct from DEBUG
 * Rename some /contrib modules from pg* to pg_*
 * Remove warnings created by -Wcast-align
+* Move platform-specific ps status display info from ps_status.c to ports
 
 ---------------------------------------------------------------------------
 
