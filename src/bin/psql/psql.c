@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.31 1996/11/22 04:43:48 bryanh Exp $
+ *    $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.32 1996/11/22 06:45:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1099,7 +1099,12 @@ HandleSlashCmds(PsqlSettings * settings,
 	    break;
 	}
     case 'g':			/* \g means send query */
-	settings->gfname = strdup(optarg);
+	if (!optarg)
+	    settings->gfname = NULL;
+	else if (!(settings->gfname = strdup(optarg))) {
+	    perror("malloc");
+	    exit(1);
+	}
 	status = 0;
 	break;
     case 'h':			/* help */
