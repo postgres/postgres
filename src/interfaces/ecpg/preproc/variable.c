@@ -298,22 +298,22 @@ get_typedef(char *name)
 }
 
 void
-adjust_array(enum ECPGttype type_enum, int *dimension, int *length, int type_dimension, int type_index, int pointer_len)
+adjust_array(enum ECPGttype type_enum, char **dimension, char **length, char *type_dimension, char *type_index, int pointer_len)
 {
-	if (type_index >= 0)
+	if (atoi(type_index) >= 0)
 	{
-		if (*length >= 0)
+		if (atoi(*length) >= 0)
 			mmerror(PARSE_ERROR, ET_FATAL, "No multi-dimensional array support");
 
 		*length = type_index;
 	}
 
-	if (type_dimension >= 0)
+	if (atoi(type_dimension) >= 0)
 	{
-		if (*dimension >= 0 && *length >= 0)
+		if (atoi(*dimension) >= 0 && atoi(*length) >= 0)
 			mmerror(PARSE_ERROR, ET_FATAL, "No multi-dimensional array support");
 
-		if (*dimension >= 0)
+		if (atoi(*dimension) >= 0)
 			*length = *dimension;
 
 		*dimension = type_dimension;
@@ -328,10 +328,10 @@ adjust_array(enum ECPGttype type_enum, int *dimension, int *length, int type_dim
 	if (pointer_len > 1 && type_enum != ECPGt_char && type_enum != ECPGt_unsigned_char)
 		mmerror(PARSE_ERROR, ET_FATAL, "No pointer to pointer supported for this type");
 
-	if (pointer_len > 1 && (*length >= 0 || *dimension >= 0))
+	if (pointer_len > 1 && (atoi(*length) >= 0 || atoi(*dimension) >= 0))
 		mmerror(PARSE_ERROR, ET_FATAL, "No multi-dimensional array support");
 
-	if (*length >= 0 && *dimension >= 0 && pointer_len)
+	if (atoi(*length) >= 0 && atoi(*dimension) >= 0 && pointer_len)
 		mmerror(PARSE_ERROR, ET_FATAL, "No multi-dimensional array support");
 
 	switch (type_enum)
@@ -342,23 +342,23 @@ adjust_array(enum ECPGttype type_enum, int *dimension, int *length, int type_dim
 			if (pointer_len)
 			{
 				*length = *dimension;
-				*dimension = 0;
+				*dimension = make_str("0");
 			}
 
-			if (*length >= 0)
+			if (atoi(*length) >= 0)
 				mmerror(PARSE_ERROR, ET_FATAL, "No multi-dimensional array support for structures");
 
 			break;
 		case ECPGt_varchar:
 			/* pointer has to get dimension 0 */
 			if (pointer_len)
-				*dimension = 0;
+				*dimension = make_str("0");
 
 			/* one index is the string length */
-			if (*length < 0)
+			if (atoi(*length) < 0)
 			{
 				*length = *dimension;
-				*dimension = -1;
+				*dimension = make_str("-1");
 			}
 
 			break;
@@ -367,19 +367,19 @@ adjust_array(enum ECPGttype type_enum, int *dimension, int *length, int type_dim
 			/* char ** */
 			if (pointer_len == 2)
 			{
-				*length = *dimension = 0;
+				*length = *dimension = make_str("0");
 				break;
 			}
 
 			/* pointer has to get length 0 */
 			if (pointer_len == 1)
-				*length = 0;
+				*length = make_str("0");
 
 			/* one index is the string length */
-			if (*length < 0)
+			if (atoi(*length) < 0)
 			{
-				*length = (*dimension < 0) ? 1 : *dimension;
-				*dimension = -1;
+				*length = (atoi(*dimension) < 0) ? make_str("1") : *dimension;
+				*dimension = make_str("-1");
 			}
 			break;
 		default:
@@ -387,10 +387,10 @@ adjust_array(enum ECPGttype type_enum, int *dimension, int *length, int type_dim
 			if (pointer_len)
 			{
 				*length = *dimension;
-				*dimension = 0;
+				*dimension = make_str("0");
 			}
 
-			if (*length >= 0)
+			if (atoi(*length) >= 0)
 				mmerror(PARSE_ERROR, ET_FATAL, "No multi-dimensional array support for simple data types");
 
 			break;

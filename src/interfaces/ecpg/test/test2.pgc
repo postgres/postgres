@@ -9,7 +9,8 @@ typedef char* c;
 exec sql type ind is union { int integer; short smallint; };
 typedef union { int integer; short smallint; } ind;
 
-exec sql type str is varchar[8];
+#define BUFSIZ 8
+exec sql type str is varchar[BUFSIZ];
 
 int
 main ()

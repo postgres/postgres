@@ -26,6 +26,9 @@ extern int risnull(int, char *);
 extern int rsetnull(int, char *);
 extern int rtypalign(int, int);
 extern int rtypmsize(int, int);
+extern int rtypwidth(int, int);
 extern void rupshift(char *);
 
-
+extern int byleng(char *, int);
+extern void ldchar(char *, int, char *);
+	

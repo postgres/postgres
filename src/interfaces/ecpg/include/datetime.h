@@ -15,4 +15,4 @@ extern int dtsub (dtime_t *, dtime_t *, intrvl_t *);
 extern int dttoasc (dtime_t *, char *);
 extern int dttofmtasc (dtime_t *, char *, int, char *);
 extern int intoasc(intrvl_t *, char *);
-
+extern int dtcvfmtasc(char *, char *, dtime_t *);

@@ -1408,6 +1408,12 @@ Tue May  6 11:51:33 CEST 2003
 Tue May 13 13:34:12 CEST 2003
 
 	- Fixed order of include search path.
+	
+Wed May 14 13:05:49 CEST 2003
+
+	- Added more compatibility functions.
+	- Accept CPP defines for type definitions.
+	- Do not parse system include files automatically for Informix mode
 	- Set ecpg version to 2.12.0.
 	- Set ecpg library to 3.4.2.
 	- Set pgtypes library to 1.0.0

@@ -609,6 +609,28 @@ rfmtlong(long lng_val, char *fmt, char *outbuf)
 	return 0;
 }
 
+void
+rupshift(char *str)
+{
+	for (; *str != '\0'; str++)
+		if (islower(*str)) *str = toupper(*str);
+	return;
+}
+
+int
+byleng(char *str, int len)
+{
+        for (len--; str[len] && str[len] == ' '; len--);
+        return (len+1);
+}
+
+void
+ldchar(char *src, int len, char *dest)
+{
+        memmove(dest, src, len);
+        dest[len]=0;
+}
+
 int
 rgetmsg(int msgnum, char *s, int maxsize)
 {
@@ -639,13 +661,15 @@ rtypmsize(int type, int len)
 	return 0;
 }
 
-void
-rupshift(char *str)
+int
+rtypwidth(int sqltype, int sqllen)
 {
-	for (; *str != '\0'; str++)
-		if (islower(*str)) *str = toupper(*str);
-	return;
+	return 0;
 }
 
-
+int
+dtcvfmtasc (char *inbuf, char *fmtstr, dtime_t *dtvalue)
+{
+	return 0;
+}
 

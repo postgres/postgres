@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/Attic/preproc.y,v 1.216 2003/05/02 14:43:25 meskes Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/Attic/preproc.y,v 1.217 2003/05/14 14:37:35 meskes Exp $ */
 
 /* Copyright comment */
 %{
@@ -139,8 +139,8 @@ make_name(void)
 
 %union {
 	double	dval;
-	int		ival;
 	char	*str;
+	int     ival;
 	struct	when		action;
 	struct	index		index;
 	int		tagname;
@@ -289,7 +289,7 @@ make_name(void)
 %type  <str>	CreateAsElement OptCreateAs CreateAsList CreateAsStmt
 %type  <str>	comment_text ConstraintDeferrabilitySpec TableElementList
 %type  <str>	key_match ColLabel SpecialRuleRelation ColId columnDef
-%type  <str>	ColConstraint ColConstraintElem drop_type Bconst
+%type  <str>	ColConstraint ColConstraintElem drop_type Bconst Iresult
 %type  <str>	TableConstraint OptTableElementList Xconst opt_transaction 
 %type  <str>	ConstraintElem key_actions ColQualList type_name
 %type  <str>	target_list target_el update_target_list alias_clause
@@ -404,8 +404,6 @@ make_name(void)
 %type  <action> action
 
 %type  <index>	opt_array_bounds 
-
-%type  <ival>	Iresult
 
 %%
 prog: statements;
@@ -2955,34 +2953,33 @@ Typename:  SimpleTypename opt_array_bounds
 
 opt_array_bounds:  '[' ']' opt_array_bounds
 		{
-			$$.index1 = 0;
+			$$.index1 = make_str("0");
 			$$.index2 = $3.index1;
 			$$.str = cat2_str(make_str("[]"), $3.str);
 		}
 		| '[' Iresult ']' opt_array_bounds
 		{
-			char *txt = mm_alloc(20L);
-
-			sprintf (txt, "%d", $2);
-			$$.index1 = $2;
+			$$.index1 = strdup($2);
 			$$.index2 = $4.index1;
-			$$.str = cat_str(4, make_str("["), txt, make_str("]"), $4.str);
+			$$.str = cat_str(4, make_str("["), $2, make_str("]"), $4.str);
 		}
 		| /* EMPTY */
 		{
-			$$.index1 = -1;
-			$$.index2 = -1;
+			$$.index1 = make_str("-1");
+			$$.index2 = make_str("-1");
 			$$.str= EMPTY;
 		}
 		;
 
-Iresult:	PosIntConst				{ $$ = atol($1); }
-		|	'(' Iresult ')'			{ $$ = $2; }
-		|	Iresult '+' Iresult		{ $$ = $1 + $3; }
-		|	Iresult '-' Iresult		{ $$ = $1 - $3; }
-		|	Iresult '*' Iresult		{ $$ = $1 * $3; }
-		|	Iresult '/' Iresult		{ $$ = $1 / $3; }
-		|	Iresult '%' Iresult		{ $$ = $1 % $3; }
+Iresult:	PosIntConst		{ $$ = $1; }
+		| '(' Iresult ')'	{ $$ = cat_str(3, make_str("("), $2, make_str(")")); }
+		| Iresult '+' Iresult	{ $$ = cat_str(3, $1, make_str("+"), $3); }
+		| Iresult '-' Iresult	{ $$ = cat_str(3, $1, make_str("-"), $3); }
+		| Iresult '*' Iresult	{ $$ = cat_str(3, $1, make_str("*"), $3); }
+		| Iresult '/' Iresult	{ $$ = cat_str(3, $1, make_str("/"), $3); }
+		| Iresult '%' Iresult	{ $$ = cat_str(3, $1, make_str("%"), $3); }
+		| Sconst		{ $$ = $1; }
+		| ColId			{ $$ = $1; }
 		;
 
 SimpleTypename:  GenericType		{ $$ = $1; }
@@ -4199,72 +4196,72 @@ single_vt_type: common_type
 			{
 				$$.type_enum = ECPGt_varchar;
 				$$.type_str = EMPTY;
-				$$.type_dimension = -1;
-				$$.type_index = -1;
+				$$.type_dimension = make_str("-1");
+				$$.type_index = make_str("-1");
 				$$.type_sizeof = NULL;
 			}
 			else if (strcmp($1, "float") == 0)
 			{
 				$$.type_enum = ECPGt_float;
 				$$.type_str = make_str("float");
-				$$.type_dimension = -1;
-				$$.type_index = -1;
+				$$.type_dimension = make_str("-1");
+				$$.type_index = make_str("-1");
 				$$.type_sizeof = NULL;
 			}
 			else if (strcmp($1, "double") == 0)
 			{
 				$$.type_enum = ECPGt_double;
 				$$.type_str = make_str("double");
-				$$.type_dimension = -1;
-				$$.type_index = -1;
+				$$.type_dimension = make_str("-1");
+				$$.type_index = make_str("-1");
 				$$.type_sizeof = NULL;
 			}
 			else if (strcmp($1, "numeric") == 0)
 			{
 				$$.type_enum = ECPGt_numeric;
 				$$.type_str = EMPTY;
-				$$.type_dimension = -1;
-				$$.type_index = -1;
+				$$.type_dimension = make_str("-1");
+				$$.type_index = make_str("-1");
 				$$.type_sizeof = NULL;
 			}
 			else if (strcmp($1, "decimal") == 0)
 			{
 				$$.type_enum = ECPGt_numeric;
 				$$.type_str = EMPTY;
-				$$.type_dimension = -1;
-				$$.type_index = -1;
+				$$.type_dimension = make_str("-1");
+				$$.type_index = make_str("-1");
 				$$.type_sizeof = NULL;
 			}
 			else if (strcmp($1, "date") == 0)
 			{
 				$$.type_enum = ECPGt_date;
 				$$.type_str = make_str("Date");
-				$$.type_dimension = -1;
-				$$.type_index = -1;
+				$$.type_dimension = make_str("-1");
+				$$.type_index = make_str("-1");
 				$$.type_sizeof = NULL;
 			}
 			else if (strcmp($1, "timestamp") == 0)
 			{
 				$$.type_enum = ECPGt_timestamp;
 				$$.type_str = make_str("Timestamp");
-				$$.type_dimension = -1;
-				$$.type_index = -1;
+				$$.type_dimension = make_str("-1");
+				$$.type_index = make_str("-1");
 				$$.type_sizeof = NULL;
 			}
 			else if (strcmp($1, "datetime") == 0)
 			{
 				$$.type_enum = ECPGt_timestamp;
 				$$.type_str = make_str("Timestamp");
-				$$.type_dimension = -1;
-				$$.type_index = -1;
+				$$.type_dimension = make_str("-1");
+				$$.type_index = make_str("-1");
 				$$.type_sizeof = NULL;
 			}
 			else if (strcmp($1, "interval") == 0)
 			{
 				$$.type_enum = ECPGt_interval;
 				$$.type_str = EMPTY;
-				$$.type_dimension = -1;
-				$$.type_index = -1;
+				$$.type_dimension = make_str("-1");
+				$$.type_index = make_str("-1");
 				$$.type_sizeof = NULL;
 			}
 			else
@@ -4323,8 +4320,8 @@ type_declaration: S_TYPEDEF
 	{
 		/* add entry to list */
 		struct typedefs *ptr, *this;
-		int dimension = $6.index1;
-		int length = $6.index2;
+		char * dimension = $6.index1;
+		char * length = $6.index2;
 
 		if (($3.type_enum == ECPGt_struct ||
 		     $3.type_enum == ECPGt_union) &&
@@ -4364,7 +4361,7 @@ type_declaration: S_TYPEDEF
 			if ($3.type_enum != ECPGt_varchar &&
 			    $3.type_enum != ECPGt_char &&
 	        	    $3.type_enum != ECPGt_unsigned_char &&
-			    this->type->type_index >= 0)
+			    atoi(this->type->type_index) >= 0)
 				mmerror(PARSE_ERROR, ET_ERROR, "No multi-dimensional array support for simple data types");
 
 			types = this;
@@ -4420,32 +4417,32 @@ common_type: simple_type
 		{
 			$$.type_enum = $1;
 			$$.type_str = mm_strdup(ECPGtype_name($1));
-			$$.type_dimension = -1;
-			$$.type_index = -1;
+			$$.type_dimension = make_str("-1");
+			$$.type_index = make_str("-1");
 			$$.type_sizeof = NULL;
 		}
 		| struct_type
 		{
 			$$.type_enum = ECPGt_struct;
 			$$.type_str = $1;
-			$$.type_dimension = -1;
-			$$.type_index = -1;
+			$$.type_dimension = make_str("-1");
+			$$.type_index = make_str("-1");
 			$$.type_sizeof = ECPGstruct_sizeof;
 		}
 		| union_type
 		{
 			$$.type_enum = ECPGt_union;
 			$$.type_str = $1;
-			$$.type_dimension = -1;
-			$$.type_index = -1;
+			$$.type_dimension = make_str("-1");
+			$$.type_index = make_str("-1");
 			$$.type_sizeof = NULL;
 		}
 		| enum_type
 		{
 			$$.type_str = $1;
 			$$.type_enum = ECPGt_int;
-			$$.type_dimension = -1;
-			$$.type_index = -1;
+			$$.type_dimension = make_str("-1");
+			$$.type_index = make_str("-1");
 			$$.type_sizeof = NULL;
 		}
 		| ECPGColLabelCommon '(' precision opt_scale ')'
@@ -4455,8 +4452,8 @@ common_type: simple_type
 			
 			$$.type_enum = ECPGt_numeric;
 			$$.type_str = EMPTY;
-			$$.type_dimension = -1;
-			$$.type_index = -1;
+			$$.type_dimension = make_str("-1");
+			$$.type_index = make_str("-1");
 			$$.type_sizeof = NULL;
 		}
 		;
@@ -4475,72 +4472,72 @@ var_type:	common_type
 			{
 				$$.type_enum = ECPGt_varchar;
 				$$.type_str = EMPTY; /*make_str("varchar");*/
-				$$.type_dimension = -1;
-				$$.type_index = -1;
+				$$.type_dimension = make_str("-1");
+				$$.type_index = make_str("-1");
 				$$.type_sizeof = NULL;
 			}
 			else if (strcmp($1, "float") == 0)
 			{
 				$$.type_enum = ECPGt_float;
 				$$.type_str = make_str("float");
-				$$.type_dimension = -1;
-				$$.type_index = -1;
+				$$.type_dimension = make_str("-1");
+				$$.type_index = make_str("-1");
 				$$.type_sizeof = NULL;
 			}
 			else if (strcmp($1, "double") == 0)
 			{
 				$$.type_enum = ECPGt_double;
 				$$.type_str = make_str("double");
-				$$.type_dimension = -1;
-				$$.type_index = -1;
+				$$.type_dimension = make_str("-1");
+				$$.type_index = make_str("-1");
 				$$.type_sizeof = NULL;
 			}
 			else if (strcmp($1, "numeric") == 0)
 			{
 				$$.type_enum = ECPGt_numeric;
 				$$.type_str = EMPTY;
-				$$.type_dimension = -1;
-				$$.type_index = -1;
+				$$.type_dimension = make_str("-1");
+				$$.type_index = make_str("-1");
 				$$.type_sizeof = NULL;
 			}
 			else if (strcmp($1, "decimal") == 0)
 			{
 				$$.type_enum = ECPGt_numeric;
 				$$.type_str = EMPTY;
-				$$.type_dimension = -1;
-				$$.type_index = -1;
+				$$.type_dimension = make_str("-1");
+				$$.type_index = make_str("-1");
 				$$.type_sizeof = NULL;
 			}
 			else if (strcmp($1, "date") == 0)
 			{
 				$$.type_enum = ECPGt_date;
 				$$.type_str = make_str("Date");
-				$$.type_dimension = -1;
-				$$.type_index = -1;
+				$$.type_dimension = make_str("-1");
+				$$.type_index = make_str("-1");
 				$$.type_sizeof = NULL;
 			}
 			else if (strcmp($1, "timestamp") == 0)
 			{
 				$$.type_enum = ECPGt_timestamp;
 				$$.type_str = make_str("Timestamp");
-				$$.type_dimension = -1;
-				$$.type_index = -1;
+				$$.type_dimension = make_str("-1");
+				$$.type_index = make_str("-1");
 				$$.type_sizeof = NULL;
 			}
 			else if (strcmp($1, "interval") == 0)
 			{
 				$$.type_enum = ECPGt_interval;
 				$$.type_str = EMPTY;
-				$$.type_dimension = -1;
-				$$.type_index = -1;
+				$$.type_dimension = make_str("-1");
+				$$.type_index = make_str("-1");
 				$$.type_sizeof = NULL;
 			}
 			else if (strcmp($1, "datetime") == 0)
 			{
 				$$.type_enum = ECPGt_timestamp;
 				$$.type_str = make_str("Timestamp");
-				$$.type_dimension = -1;
-				$$.type_index = -1;
+				$$.type_dimension = make_str("-1");
+				$$.type_index = make_str("-1");
 				$$.type_sizeof = NULL;
 			}
 			else
@@ -4672,8 +4669,8 @@ variable_list: variable
 variable: opt_pointer ECPGColLabelCommon opt_array_bounds opt_initializer
 		{
 			struct ECPGtype * type;
-			int dimension = $3.index1; /* dimension of array */
-			int length = $3.index2;    /* lenght of string */
+			char *dimension = $3.index1; /* dimension of array */
+			char *length = $3.index2;    /* lenght of string */
 			char dim[14L], ascii_len[12];
 
 			adjust_array(actual_type[struct_level].type_enum, &dimension, &length, actual_type[struct_level].type_dimension, actual_type[struct_level].type_index, strlen($1));
@@ -4682,7 +4679,7 @@ variable: opt_pointer ECPGColLabelCommon opt_array_bounds opt_initializer
 			{
 				case ECPGt_struct:
 				case ECPGt_union:
-					if (dimension < 0)
+					if (atoi(dimension) < 0)
 						type = ECPGmake_struct_type(struct_member_list[struct_level], actual_type[struct_level].type_enum, actual_type[struct_level].type_sizeof);
 					else
 						type = ECPGmake_array_type(ECPGmake_struct_type(struct_member_list[struct_level], actual_type[struct_level].type_enum, actual_type[struct_level].type_sizeof), dimension);
@@ -4691,36 +4688,27 @@ variable: opt_pointer ECPGColLabelCommon opt_array_bounds opt_initializer
 					break;
 
 				case ECPGt_varchar:
-					if (dimension < 0)
+					if (atoi(dimension) < 0)
 						type = ECPGmake_simple_type(actual_type[struct_level].type_enum, length);
 					else
 						type = ECPGmake_array_type(ECPGmake_simple_type(actual_type[struct_level].type_enum, length), dimension);
 
-					switch(dimension)
-					{
-						case 0:
-						case -1:
-						case 1:
+					if (strcmp(dimension, "0") == 0 || abs(atoi(dimension)) == 1)
 							*dim = '\0';
-							break;
-						default:
-							sprintf(dim, "[%d]", dimension);
-							break;
-					}
-					sprintf(ascii_len, "%d", length);
-
-					if (length == 0)
+					else	
+							sprintf(dim, "[%s]", dimension);
+					if (strcmp(length, "0") == 0)
 						mmerror(PARSE_ERROR, ET_ERROR, "pointer to varchar are not implemented");
 
-					if (dimension == 0)
-						$$ = cat_str(7, mm_strdup(actual_storage[struct_level]), make2_str(make_str(" struct varchar_"), mm_strdup($2)), make_str(" { int len; char arr["), mm_strdup(ascii_len), make_str("]; } *"), mm_strdup($2), $4);
+					if (strcmp(dimension, "0") == 0)
+						$$ = cat_str(7, mm_strdup(actual_storage[struct_level]), make2_str(make_str(" struct varchar_"), mm_strdup($2)), make_str(" { int len; char arr["), mm_strdup(length), make_str("]; } *"), mm_strdup($2), $4);
 					else
-					   $$ = cat_str(8, mm_strdup(actual_storage[struct_level]), make2_str(make_str(" struct varchar_"), mm_strdup($2)), make_str(" { int len; char arr["), mm_strdup(ascii_len), make_str("]; } "), mm_strdup($2), mm_strdup(dim), $4);
+					   $$ = cat_str(8, mm_strdup(actual_storage[struct_level]), make2_str(make_str(" struct varchar_"), mm_strdup($2)), make_str(" { int len; char arr["), mm_strdup(length), make_str("]; } "), mm_strdup($2), mm_strdup(dim), $4);
 					break;
 
 				case ECPGt_char:
 				case ECPGt_unsigned_char:
-					if (dimension == -1)
+					if (atoi(dimension) == -1)
 						type = ECPGmake_simple_type(actual_type[struct_level].type_enum, length);
 					else
 						type = ECPGmake_array_type(ECPGmake_simple_type(actual_type[struct_level].type_enum, length), dimension);
@@ -4729,34 +4717,34 @@ variable: opt_pointer ECPGColLabelCommon opt_array_bounds opt_initializer
 					break;
 
 				case ECPGt_numeric:
-					if (dimension < 0)
+					if (atoi(dimension) < 0)
                                                 type = ECPGmake_simple_type(actual_type[struct_level].type_enum, length);
                                         else
                                                 type = ECPGmake_array_type(ECPGmake_simple_type(actual_type[struct_level].type_enum, length), dimension);
 
-					if (dimension < 0)
+					if (atoi(dimension) < 0)
 						$$ = cat_str(4, mm_strdup(actual_storage[struct_level]), make_str("Numeric"), mm_strdup($2), $4);
 					else
 						$$ = cat_str(5, mm_strdup(actual_storage[struct_level]), make_str("Numeric"), mm_strdup($2), mm_strdup(dim), $4);
 					break;
 				
 				case ECPGt_interval:
-					if (dimension < 0)
+					if (atoi(dimension) < 0)
                                                 type = ECPGmake_simple_type(actual_type[struct_level].type_enum, length);
                                         else
                                                 type = ECPGmake_array_type(ECPGmake_simple_type(actual_type[struct_level].type_enum, length), dimension);
 
-					if (dimension < 0)
+					if (atoi(dimension) < 0)
 						$$ = cat_str(4, mm_strdup(actual_storage[struct_level]), make_str("Interval"), mm_strdup($2), $4);
 					else
 						$$ = cat_str(5, mm_strdup(actual_storage[struct_level]), make_str("Interval"), mm_strdup($2), mm_strdup(dim), $4);
 					break;
 					
 				default:
-					if (dimension < 0)
-						type = ECPGmake_simple_type(actual_type[struct_level].type_enum, 1);
+					if (atoi(dimension) < 0)
+						type = ECPGmake_simple_type(actual_type[struct_level].type_enum, make_str("1"));
 					else
-						type = ECPGmake_array_type(ECPGmake_simple_type(actual_type[struct_level].type_enum, 1), dimension);
+						type = ECPGmake_array_type(ECPGmake_simple_type(actual_type[struct_level].type_enum, make_str("1")), dimension);
 
 					$$ = cat_str(4, $1, mm_strdup($2), $3.str, $4);
 					break;
@@ -5026,8 +5014,8 @@ ECPGTypedef: TYPE_P
 		{
 			/* add entry to list */
 			struct typedefs *ptr, *this;
-			int dimension = $6.index1;
-			int length = $6.index2;
+			char *dimension = $6.index1;
+			char *length = $6.index2;
 
 			if (($5.type_enum == ECPGt_struct ||
 				 $5.type_enum == ECPGt_union) &&
@@ -5064,7 +5052,7 @@ ECPGTypedef: TYPE_P
 				if ($5.type_enum != ECPGt_varchar &&
 					$5.type_enum != ECPGt_char &&
 					$5.type_enum != ECPGt_unsigned_char &&
-					this->type->type_index >= 0)
+					atoi(this->type->type_index) >= 0)
 					mmerror(PARSE_ERROR, ET_ERROR, "No multi-dimensional array support for simple data types");
 
 				types = this;
@@ -5093,8 +5081,8 @@ ECPGVar: SQL_VAR
 		ColLabel IS var_type opt_array_bounds opt_reference
 		{
 			struct variable *p = find_variable($3);
-			int dimension = $6.index1;
-			int length = $6.index2;
+			char *dimension = $6.index1;
+			char *length = $6.index2;
 			struct ECPGtype * type;
 
 			if (($5.type_enum == ECPGt_struct ||
@@ -5109,14 +5097,14 @@ ECPGVar: SQL_VAR
 				{
 					case ECPGt_struct:
 					case ECPGt_union:
-						if (dimension < 0)
+						if (atoi(dimension) < 0)
 							type = ECPGmake_struct_type(struct_member_list[struct_level], $5.type_enum, $5.type_sizeof);
 						else
 							type = ECPGmake_array_type(ECPGmake_struct_type(struct_member_list[struct_level], $5.type_enum,$5.type_sizeof), dimension);
 						break;
 
 					case ECPGt_varchar:
-						if (dimension == -1)
+						if (atoi(dimension) == -1)
 							type = ECPGmake_simple_type($5.type_enum, length);
 						else
 							type = ECPGmake_array_type(ECPGmake_simple_type($5.type_enum, length), dimension);
@@ -5124,20 +5112,20 @@ ECPGVar: SQL_VAR
 
 					case ECPGt_char:
 					case ECPGt_unsigned_char:
-						if (dimension == -1)
+						if (atoi(dimension) == -1)
 							type = ECPGmake_simple_type($5.type_enum, length);
 						else
 							type = ECPGmake_array_type(ECPGmake_simple_type($5.type_enum, length), dimension);
 						break;
 
 					default:
-						if (length >= 0)
+						if (atoi(length) >= 0)
 							mmerror(PARSE_ERROR, ET_ERROR, "No multi-dimensional array support for simple data types");
 
-						if (dimension < 0)
-							type = ECPGmake_simple_type($5.type_enum, 1);
+						if (atoi(dimension) < 0)
+							type = ECPGmake_simple_type($5.type_enum, make_str("1"));
 						else
-							type = ECPGmake_array_type(ECPGmake_simple_type($5.type_enum, 1), dimension);
+							type = ECPGmake_array_type(ECPGmake_simple_type($5.type_enum, make_str("1")), dimension);
 						break;
 				}
 
