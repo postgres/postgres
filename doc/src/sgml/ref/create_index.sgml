@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_index.sgml,v 1.31 2002/05/18 15:44:47 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_index.sgml,v 1.32 2002/06/21 03:25:53 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -328,6 +328,11 @@ ERROR: Cannot create index: 'index_name' already exists.
     query optimizer will consider using a hash index whenever
     an indexed attribute is involved in a comparison using
     the <literal>=</literal> operator.
+   </para>
+   <para>
+     Testing has shown that hash indexes are slower than btree indexes,
+     and the size and build time for hash indexes is much worse. For
+     these reasons, hash index use is discouraged.
    </para>
 
    <para>

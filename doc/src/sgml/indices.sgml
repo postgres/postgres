@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/indices.sgml,v 1.31 2002/01/07 02:29:12 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/indices.sgml,v 1.32 2002/06/21 03:25:53 momjian Exp $ -->
 
 <chapter id="indexes">
  <title id="indexes-title">Indexes</title>
@@ -181,12 +181,9 @@ CREATE INDEX <replaceable>name</replaceable> ON <replaceable>table</replaceable>
 </synopsis>
    <note>
     <para>
-     Because of the limited utility of hash indexes, a B-tree index
-     should generally be preferred over a hash index.  We do not have
-     sufficient evidence that hash indexes are actually faster than
-     B-trees even for <literal>=</literal> comparisons.  Moreover,
-     hash indexes require coarser locks; see <xref
-     linkend="locking-indexes">.
+     Testing has shown that hash indexes are slower than btree indexes,
+     and the size and build time for hash indexes is much worse. For
+     these reasons, hash index use is discouraged.
     </para>
    </note>  
   </para>

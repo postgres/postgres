@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/xindex.sgml,v 1.25 2002/05/29 17:36:40 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/xindex.sgml,v 1.26 2002/06/21 03:25:53 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -11,9 +11,9 @@ PostgreSQL documentation
 
   <para>
    The procedures described thus far let you define new types, new
-   functions, and new operators.  However, we cannot yet define a secondary
-   index (such as a B-tree, R-tree, or
-   hash access method) over a new type or its operators.
+   functions, and new operators. However, we cannot yet define a
+   secondary index (such as a B-tree, R-tree, or hash access method)
+   over a new type or its operators.
   </para>
 
   <para>
