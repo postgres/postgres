@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.334 2003/06/25 03:56:31 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.335 2003/06/25 04:08:19 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -5347,8 +5347,7 @@ dumpOneTable(Archive *fout, TableInfo *tbinfo, TableInfo *g_tblinfo)
 				if (actual_atts + j > 0)
 					appendPQExpBuffer(q, ",\n    ");
 
-				if (name[0] != '$')
-					appendPQExpBuffer(q, "CONSTRAINT %s ",
+				appendPQExpBuffer(q, "CONSTRAINT %s ",
 									  fmtId(name));
 				appendPQExpBuffer(q, "%s", expr);
 			}
