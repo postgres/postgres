@@ -193,9 +193,6 @@
 #  define SIG_BLOCK	00
 #  define SIG_UNBLOCK	01
 #  define SIG_SETMASK	02
-#  define NO_SIGACTION
-#  define NO_SETSID
-#  define NO_SIGPROCMASK
 #  define NEED_SIG_JMP
 # endif
 
