@@ -578,3 +578,65 @@ Myron Scott
 mkscott@sacadia.com
 
 
+From lamar.owen@wgcr.org Thu Jun 28 11:14:10 2001
+Return-path: <lamar.owen@wgcr.org>
+Received: from www.wgcr.org (IDENT:root@www.wgcr.org [206.74.232.194])
+	by candle.pha.pa.us (8.10.1/8.10.1) with ESMTP id f5SFE9U18758
+	for <pgman@candle.pha.pa.us>; Thu, 28 Jun 2001 11:14:09 -0400 (EDT)
+Received: from lowen.wgcr.org (IDENT:lowen@[10.1.2.3])
+	by www.wgcr.org (8.9.3/8.9.3/WGCR) with SMTP id LAA11879;
+	Thu, 28 Jun 2001 11:14:14 -0400
+Content-Type: text/plain;
+  charset="iso-8859-1"
+From: Lamar Owen <lamar.owen@wgcr.org>
+To: Bruce Momjian <pgman@candle.pha.pa.us>
+Subject: Process weight (was:Re: [GENERAL] Re: Red Hat to support PostgreSQL)
+Date: Thu, 28 Jun 2001 11:14:09 -0400
+X-Mailer: KMail [version 1.2]
+References: <200106272258.f5RMwIb26959@candle.pha.pa.us>
+In-Reply-To: <200106272258.f5RMwIb26959@candle.pha.pa.us>
+MIME-Version: 1.0
+Message-ID: <01062811140902.01118@lowen.wgcr.org>
+Content-Transfer-Encoding: 8bit
+Status: ORr
+
+On Wednesday 27 June 2001 18:58, Bruce Momjian wrote:
+> > I had almost given up on using Postgres for this system because under
+> > Solaris, it just couldn't cut it (MySQL could do the work with one CPU
+> > while Postgres took up even more CPU and required *both* CPUs to be
+> > enabled), but when we moved the system to a Linux box, things worked
+> > much better.
+
+> Ah, back to a PostgreSQL topic.  :-)
+
+> My guess on this one is that Solaris is slower for PostgreSQL because
+> process switching is _much_ heavier on Solaris than other OS's.  This is
+> because of the way they implemented processes in SVr4.  They got quite
+> heavy, almost requiring kernel threads so you weren't switching
+> processes all the time.
+
+Now, the question of the week:
+Is supporting a thread model for an inefficient OS a desirable thing to do, 
+when more efficient OS kernels are available such as FreeBSD 4.x and Linux 
+2.4?  My opinion is that our existing model, when used with a 
+connection-pooling frontend, is rather efficient.  (Yes, I use a 
+connection-pooling frontend.  Performance is rather nice, and I don't have to 
+have a full backend spawned for every page hit.)
+
+In fact, on a Linux box threads show as processes.  While I know that the 
+kernel actually supports themin a slightly different manner than processes, 
+they have more similarities than differences.
+
+However, even on OS's where threads are supported, the mechanism to support 
+those threads must be an efficient one -- not all pthreads libraries are 
+created equal.  Many are frontends (expensive ones, at that) for plain old 
+processes.
+
+Does anyone know of a resource that details the 'weight' of processes for our 
+supported platforms?  [reply off-list -- I'll be glad to summarize responses 
+to HACKERS, ADMIN, or PORTS, as appropriate, if desired.]
+--
+Lamar Owen
+WGCR Internet Radio
+1 Peter 4:11
+
