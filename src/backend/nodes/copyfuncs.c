@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.141 2001/05/07 00:43:18 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.142 2001/05/20 20:28:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1071,7 +1071,7 @@ _copyRelOptInfo(RelOptInfo *from)
 	newnode->pruneable = from->pruneable;
 
 	newnode->issubquery = from->issubquery;
-	newnode->indexed = from->indexed;
+	Node_Copy(from, newnode, indexlist);
 	newnode->pages = from->pages;
 	newnode->tuples = from->tuples;
 	Node_Copy(from, newnode, subplan);
@@ -1093,47 +1093,44 @@ static IndexOptInfo *
 _copyIndexOptInfo(IndexOptInfo *from)
 {
 	IndexOptInfo *newnode = makeNode(IndexOptInfo);
-	int			i,
-				len;
+	Size		len;
 
 	newnode->indexoid = from->indexoid;
 	newnode->pages = from->pages;
 	newnode->tuples = from->tuples;
 
+	newnode->ncolumns = from->ncolumns;
+	newnode->nkeys = from->nkeys;
+
 	if (from->classlist)
 	{
-		for (len = 0; from->classlist[len] != 0; len++)
-			;
-		newnode->classlist = (Oid *) palloc(sizeof(Oid) * (len + 1));
-		for (i = 0; i < len; i++)
-			newnode->classlist[i] = from->classlist[i];
-		newnode->classlist[len] = 0;
+		/* copy the trailing zero too */
+		len = (from->ncolumns + 1) * sizeof(Oid);
+		newnode->classlist = (Oid *) palloc(len);
+		memcpy(newnode->classlist, from->classlist, len);
 	}
 
 	if (from->indexkeys)
 	{
-		for (len = 0; from->indexkeys[len] != 0; len++)
-			;
-		newnode->indexkeys = (int *) palloc(sizeof(int) * (len + 1));
-		for (i = 0; i < len; i++)
-			newnode->indexkeys[i] = from->indexkeys[i];
-		newnode->indexkeys[len] = 0;
+		/* copy the trailing zero too */
+		len = (from->nkeys + 1) * sizeof(int);
+		newnode->indexkeys = (int *) palloc(len);
+		memcpy(newnode->indexkeys, from->indexkeys, len);
 	}
 
 	if (from->ordering)
 	{
-		for (len = 0; from->ordering[len] != 0; len++)
-			;
-		newnode->ordering = (Oid *) palloc(sizeof(Oid) * (len + 1));
-		for (i = 0; i < len; i++)
-			newnode->ordering[i] = from->ordering[i];
-		newnode->ordering[len] = 0;
+		/* copy the trailing zero too */
+		len = (from->ncolumns + 1) * sizeof(Oid);
+		newnode->ordering = (Oid *) palloc(len);
+		memcpy(newnode->ordering, from->ordering, len);
 	}
 
 	newnode->relam = from->relam;
 	newnode->amcostestimate = from->amcostestimate;
 	newnode->indproc = from->indproc;
 	Node_Copy(from, newnode, indpred);
+	newnode->unique = from->unique;
 	newnode->lossy = from->lossy;
 
 	return newnode;
@@ -1196,7 +1193,7 @@ _copyIndexPath(IndexPath *from)
 	/*
 	 * copy remainder of node
 	 */
-	newnode->indexid = listCopy(from->indexid);
+	Node_Copy(from, newnode, indexinfo);
 	Node_Copy(from, newnode, indexqual);
 	newnode->indexscandir = from->indexscandir;
 	newnode->joinrelids = listCopy(from->joinrelids);
@@ -1749,8 +1746,8 @@ _copyQuery(Query *from)
 
 	/*
 	 * We do not copy the planner internal fields: base_rel_list,
-	 * join_rel_list, equi_key_list, query_pathkeys. Not entirely clear if
-	 * this is right?
+	 * other_rel_list, join_rel_list, equi_key_list, query_pathkeys.
+	 * Not entirely clear if this is right?
 	 */
 
 	return newnode;

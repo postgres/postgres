@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.104 2001/03/23 04:49:53 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.105 2001/05/20 20:28:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -127,18 +127,15 @@ static Const *string_to_const(const char *str, Oid datatype);
  * consideration in nested-loop joins.
  *
  * 'rel' is the relation for which we want to generate index paths
- * 'indices' is a list of available indexes for 'rel'
  */
 void
-create_index_paths(Query *root,
-				   RelOptInfo *rel,
-				   List *indices)
+create_index_paths(Query *root, RelOptInfo *rel)
 {
 	List	   *restrictinfo_list = rel->baserestrictinfo;
 	List	   *joininfo_list = rel->joininfo;
 	List	   *ilist;
 
-	foreach(ilist, indices)
+	foreach(ilist, rel->indexlist)
 	{
 		IndexOptInfo *index = (IndexOptInfo *) lfirst(ilist);
 		List	   *restrictclauses;
@@ -1435,10 +1432,10 @@ index_innerjoin(Query *root, RelOptInfo *rel, IndexOptInfo *index,
 
 		/*
 		 * Note that we are making a pathnode for a single-scan indexscan;
-		 * therefore, both indexid and indexqual should be single-element
+		 * therefore, both indexinfo and indexqual should be single-element
 		 * lists.
 		 */
-		pathnode->indexid = makeListi1(index->indexoid);
+		pathnode->indexinfo = makeList1(index);
 		pathnode->indexqual = makeList1(indexquals);
 
 		/* We don't actually care what order the index scans in ... */
@@ -2030,7 +2027,6 @@ find_operator(const char *opname, Oid datatype)
 static Datum
 string_to_datum(const char *str, Oid datatype)
 {
-
 	/*
 	 * We cheat a little by assuming that textin() will do for bpchar and
 	 * varchar constants too...

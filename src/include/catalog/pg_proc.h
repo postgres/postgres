@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.185 2001/05/09 23:13:35 tgl Exp $
+ * $Id: pg_proc.h,v 1.186 2001/05/20 20:28:19 tgl Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -219,21 +219,21 @@ DESCR("btree cost estimator");
 
 DATA(insert OID = 100 (  int8fac		   PGUID 12 f t t t 1 f 20 "20" 100 0 0 100  int8fac - ));
 DESCR("factorial");
-DATA(insert OID = 101 (  eqsel			   PGUID 12 f t f t 5 f 701 "26 26 21 0 23" 100 0 0 100  eqsel - ));
+DATA(insert OID = 101 (  eqsel			   PGUID 12 f t f t 4 f 701 "0 26 0 23" 100 0 0 100  eqsel - ));
 DESCR("restriction selectivity of = and related operators");
-DATA(insert OID = 102 (  neqsel			   PGUID 12 f t f t 5 f 701 "26 26 21 0 23" 100 0 0 100  neqsel - ));
+DATA(insert OID = 102 (  neqsel			   PGUID 12 f t f t 4 f 701 "0 26 0 23" 100 0 0 100  neqsel - ));
 DESCR("restriction selectivity of <> and related operators");
-DATA(insert OID = 103 (  scalarltsel	   PGUID 12 f t f t 5 f 701 "26 26 21 0 23" 100 0 0 100  scalarltsel - ));
+DATA(insert OID = 103 (  scalarltsel	   PGUID 12 f t f t 4 f 701 "0 26 0 23" 100 0 0 100  scalarltsel - ));
 DESCR("restriction selectivity of < and related operators on scalar datatypes");
-DATA(insert OID = 104 (  scalargtsel	   PGUID 12 f t f t 5 f 701 "26 26 21 0 23" 100 0 0 100  scalargtsel - ));
+DATA(insert OID = 104 (  scalargtsel	   PGUID 12 f t f t 4 f 701 "0 26 0 23" 100 0 0 100  scalargtsel - ));
 DESCR("restriction selectivity of > and related operators on scalar datatypes");
-DATA(insert OID = 105 (  eqjoinsel		   PGUID 12 f t f t 5 f 701 "26 26 21 26 21" 100 0 0 100	eqjoinsel - ));
+DATA(insert OID = 105 (  eqjoinsel		   PGUID 12 f t f t 3 f 701 "0 26 0" 100 0 0 100	eqjoinsel - ));
 DESCR("join selectivity of = and related operators");
-DATA(insert OID = 106 (  neqjoinsel		   PGUID 12 f t f t 5 f 701 "26 26 21 26 21" 100 0 0 100	neqjoinsel - ));
+DATA(insert OID = 106 (  neqjoinsel		   PGUID 12 f t f t 3 f 701 "0 26 0" 100 0 0 100	neqjoinsel - ));
 DESCR("join selectivity of <> and related operators");
-DATA(insert OID = 107 (  scalarltjoinsel   PGUID 12 f t f t 5 f 701 "26 26 21 26 21" 100 0 0 100	scalarltjoinsel - ));
+DATA(insert OID = 107 (  scalarltjoinsel   PGUID 12 f t f t 3 f 701 "0 26 0" 100 0 0 100	scalarltjoinsel - ));
 DESCR("join selectivity of < and related operators on scalar datatypes");
-DATA(insert OID = 108 (  scalargtjoinsel   PGUID 12 f t f t 5 f 701 "26 26 21 26 21" 100 0 0 100	scalargtjoinsel - ));
+DATA(insert OID = 108 (  scalargtjoinsel   PGUID 12 f t f t 3 f 701 "0 26 0" 100 0 0 100	scalargtjoinsel - ));
 DESCR("join selectivity of > and related operators on scalar datatypes");
 
 DATA(insert OID = 112 (  text			   PGUID 12 f t t t 1 f  25 "23" 100 0 0 100	int4_text - ));
@@ -292,9 +292,9 @@ DATA(insert OID = 137 (  on_ppath		   PGUID 12 f t t t 2 f 16 "600 602" 100 0 0 
 DESCR("contained in");
 DATA(insert OID = 138 (  box_center		   PGUID 12 f t t t 1 f 600 "603" 100 0 0 100  box_center - ));
 DESCR("center of");
-DATA(insert OID = 139 (  areasel		   PGUID 12 f t f t 5 f 701 "26 26 21 0 23" 100 0 0 100  areasel - ));
+DATA(insert OID = 139 (  areasel		   PGUID 12 f t f t 4 f 701 "0 26 0 23" 100 0 0 100  areasel - ));
 DESCR("restriction selectivity for area-comparison operators");
-DATA(insert OID = 140 (  areajoinsel	   PGUID 12 f t f t 5 f 701 "26 26 21 26 21" 100 0 0 100	areajoinsel - ));
+DATA(insert OID = 140 (  areajoinsel	   PGUID 12 f t f t 3 f 701 "0 26 0" 100 0 0 100	areajoinsel - ));
 DESCR("join selectivity for area-comparison operators");
 DATA(insert OID = 141 (  int4mul		   PGUID 12 f t t t 2 f 23 "23 23" 100 0 0 100	int4mul - ));
 DESCR("multiply");
@@ -1562,13 +1562,13 @@ DESCR("current transaction time");
 
 /* OIDS 1300 - 1399 */
 
-DATA(insert OID = 1300 (  positionsel		   PGUID 12 f t f t 5 f 701 "26 26 21 0 23" 100 0 0 100  positionsel - ));
+DATA(insert OID = 1300 (  positionsel		   PGUID 12 f t f t 4 f 701 "0 26 0 23" 100 0 0 100  positionsel - ));
 DESCR("restriction selectivity for position-comparison operators");
-DATA(insert OID = 1301 (  positionjoinsel	   PGUID 12 f t f t 5 f 701 "26 26 21 26 21" 100 0 0 100	positionjoinsel - ));
+DATA(insert OID = 1301 (  positionjoinsel	   PGUID 12 f t f t 3 f 701 "0 26 0" 100 0 0 100	positionjoinsel - ));
 DESCR("join selectivity for position-comparison operators");
-DATA(insert OID = 1302 (  contsel		   PGUID 12 f t f t 5 f 701 "26 26 21 0 23" 100 0 0 100  contsel - ));
+DATA(insert OID = 1302 (  contsel		   PGUID 12 f t f t 4 f 701 "0 26 0 23" 100 0 0 100  contsel - ));
 DESCR("restriction selectivity for containment comparison operators");
-DATA(insert OID = 1303 (  contjoinsel	   PGUID 12 f t f t 5 f 701 "26 26 21 26 21" 100 0 0 100	contjoinsel - ));
+DATA(insert OID = 1303 (  contjoinsel	   PGUID 12 f t f t 3 f 701 "0 26 0" 100 0 0 100	contjoinsel - ));
 DESCR("join selectivity for containment comparison operators");
 
 DATA(insert OID = 1304 ( overlaps			 PGUID 12 f t t f 4 f 16 "1184 1184 1184 1184" 100 0 0 100	overlaps_timestamp - ));
@@ -2465,37 +2465,37 @@ DATA(insert OID = 1799 (  oidout		   PGUID 12 f t t t 1 f 23 "0" 100 0 0 100	oid
 DESCR("(internal)");
 
 /* Selectivity estimators for LIKE and related operators */
-DATA(insert OID = 1814 ( iclikesel			PGUID 12 f t f t 5 f 701 "26 26 21 0 23" 100 0 0 100  iclikesel - ));
+DATA(insert OID = 1814 ( iclikesel			PGUID 12 f t f t 4 f 701 "0 26 0 23" 100 0 0 100  iclikesel - ));
 DESCR("restriction selectivity of ILIKE");
-DATA(insert OID = 1815 ( icnlikesel			PGUID 12 f t f t 5 f 701 "26 26 21 0 23" 100 0 0 100  icnlikesel - ));
+DATA(insert OID = 1815 ( icnlikesel			PGUID 12 f t f t 4 f 701 "0 26 0 23" 100 0 0 100  icnlikesel - ));
 DESCR("restriction selectivity of NOT ILIKE");
-DATA(insert OID = 1816 ( iclikejoinsel		PGUID 12 f t f t 5 f 701 "26 26 21 26 21" 100 0 0 100	iclikejoinsel - ));
+DATA(insert OID = 1816 ( iclikejoinsel		PGUID 12 f t f t 3 f 701 "0 26 0" 100 0 0 100	iclikejoinsel - ));
 DESCR("join selectivity of ILIKE");
-DATA(insert OID = 1817 ( icnlikejoinsel		PGUID 12 f t f t 5 f 701 "26 26 21 26 21" 100 0 0 100	icnlikejoinsel - ));
+DATA(insert OID = 1817 ( icnlikejoinsel		PGUID 12 f t f t 3 f 701 "0 26 0" 100 0 0 100	icnlikejoinsel - ));
 DESCR("join selectivity of NOT ILIKE");
-DATA(insert OID = 1818 ( regexeqsel			PGUID 12 f t f t 5 f 701 "26 26 21 0 23" 100 0 0 100  regexeqsel - ));
+DATA(insert OID = 1818 ( regexeqsel			PGUID 12 f t f t 4 f 701 "0 26 0 23" 100 0 0 100  regexeqsel - ));
 DESCR("restriction selectivity of regex match");
-DATA(insert OID = 1819 ( likesel			PGUID 12 f t f t 5 f 701 "26 26 21 0 23" 100 0 0 100  likesel - ));
+DATA(insert OID = 1819 ( likesel			PGUID 12 f t f t 4 f 701 "0 26 0 23" 100 0 0 100  likesel - ));
 DESCR("restriction selectivity of LIKE");
-DATA(insert OID = 1820 ( icregexeqsel		PGUID 12 f t f t 5 f 701 "26 26 21 0 23" 100 0 0 100  icregexeqsel - ));
+DATA(insert OID = 1820 ( icregexeqsel		PGUID 12 f t f t 4 f 701 "0 26 0 23" 100 0 0 100  icregexeqsel - ));
 DESCR("restriction selectivity of case-insensitive regex match");
-DATA(insert OID = 1821 ( regexnesel			PGUID 12 f t f t 5 f 701 "26 26 21 0 23" 100 0 0 100  regexnesel - ));
+DATA(insert OID = 1821 ( regexnesel			PGUID 12 f t f t 4 f 701 "0 26 0 23" 100 0 0 100  regexnesel - ));
 DESCR("restriction selectivity of regex non-match");
-DATA(insert OID = 1822 ( nlikesel			PGUID 12 f t f t 5 f 701 "26 26 21 0 23" 100 0 0 100  nlikesel - ));
+DATA(insert OID = 1822 ( nlikesel			PGUID 12 f t f t 4 f 701 "0 26 0 23" 100 0 0 100  nlikesel - ));
 DESCR("restriction selectivity of NOT LIKE");
-DATA(insert OID = 1823 ( icregexnesel		PGUID 12 f t f t 5 f 701 "26 26 21 0 23" 100 0 0 100  icregexnesel - ));
+DATA(insert OID = 1823 ( icregexnesel		PGUID 12 f t f t 4 f 701 "0 26 0 23" 100 0 0 100  icregexnesel - ));
 DESCR("restriction selectivity of case-insensitive regex non-match");
-DATA(insert OID = 1824 ( regexeqjoinsel		PGUID 12 f t f t 5 f 701 "26 26 21 26 21" 100 0 0 100	regexeqjoinsel - ));
+DATA(insert OID = 1824 ( regexeqjoinsel		PGUID 12 f t f t 3 f 701 "0 26 0" 100 0 0 100	regexeqjoinsel - ));
 DESCR("join selectivity of regex match");
-DATA(insert OID = 1825 ( likejoinsel		PGUID 12 f t f t 5 f 701 "26 26 21 26 21" 100 0 0 100	likejoinsel - ));
+DATA(insert OID = 1825 ( likejoinsel		PGUID 12 f t f t 3 f 701 "0 26 0" 100 0 0 100	likejoinsel - ));
 DESCR("join selectivity of LIKE");
-DATA(insert OID = 1826 ( icregexeqjoinsel	PGUID 12 f t f t 5 f 701 "26 26 21 26 21" 100 0 0 100	icregexeqjoinsel - ));
+DATA(insert OID = 1826 ( icregexeqjoinsel	PGUID 12 f t f t 3 f 701 "0 26 0" 100 0 0 100	icregexeqjoinsel - ));
 DESCR("join selectivity of case-insensitive regex match");
-DATA(insert OID = 1827 ( regexnejoinsel		PGUID 12 f t f t 5 f 701 "26 26 21 26 21" 100 0 0 100	regexnejoinsel - ));
+DATA(insert OID = 1827 ( regexnejoinsel		PGUID 12 f t f t 3 f 701 "0 26 0" 100 0 0 100	regexnejoinsel - ));
 DESCR("join selectivity of regex non-match");
-DATA(insert OID = 1828 ( nlikejoinsel		PGUID 12 f t f t 5 f 701 "26 26 21 26 21" 100 0 0 100	nlikejoinsel - ));
+DATA(insert OID = 1828 ( nlikejoinsel		PGUID 12 f t f t 3 f 701 "0 26 0" 100 0 0 100	nlikejoinsel - ));
 DESCR("join selectivity of NOT LIKE");
-DATA(insert OID = 1829 ( icregexnejoinsel	PGUID 12 f t f t 5 f 701 "26 26 21 26 21" 100 0 0 100	icregexnejoinsel - ));
+DATA(insert OID = 1829 ( icregexnejoinsel	PGUID 12 f t f t 3 f 701 "0 26 0" 100 0 0 100	icregexnejoinsel - ));
 DESCR("join selectivity of case-insensitive regex non-match");
 
 /* Aggregate-related functions */

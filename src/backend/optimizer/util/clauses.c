@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.84 2001/03/27 17:12:34 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.85 2001/05/20 20:28:19 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -46,7 +46,6 @@ static bool pull_subplans_walker(Node *node, List **listptr);
 static bool check_subplans_for_ungrouped_vars_walker(Node *node,
 										 Query *context);
 static bool contain_noncachable_functions_walker(Node *node, void *context);
-static int	is_single_func(Node *node);
 static Node *eval_const_expressions_mutator(Node *node, void *context);
 static Expr *simplify_op_or_func(Expr *expr, List *args);
 
@@ -795,202 +794,6 @@ NumRelids(Node *clause)
 
 	freeList(varno_list);
 	return result;
-}
-
-/*
- * get_relattval
- *		Extract information from a restriction or join clause for
- *		selectivity estimation.  The inputs are an expression
- *		and a relation number (which can be 0 if we don't care which
- *		relation is used; that'd normally be the case for restriction
- *		clauses, where the caller already knows that only one relation
- *		is referenced in the clause).  The routine checks that the
- *		expression is of the form (var op something) or (something op var)
- *		where the var is an attribute of the specified relation, or
- *		a function of a var of the specified relation.	If so, it
- *		returns the following info:
- *			the found relation number (same as targetrelid unless that is 0)
- *			the found var number (or InvalidAttrNumber if a function)
- *			if the "something" is a constant, the value of the constant
- *			flags indicating whether a constant was found, and on which side.
- *		Default values are returned if the expression is too complicated,
- *		specifically 0 for the relid and attno, 0 for the constant value.
- *
- *		Note that negative attno values are *not* invalid, but represent
- *		system attributes such as OID.	It's sufficient to check for relid=0
- *		to determine whether the routine succeeded.
- */
-void
-get_relattval(Node *clause,
-			  int targetrelid,
-			  int *relid,
-			  AttrNumber *attno,
-			  Datum *constval,
-			  int *flag)
-{
-	Var		   *left,
-			   *right,
-			   *other;
-	int			funcvarno;
-
-	/* Careful; the passed clause might not be a binary operator at all */
-
-	if (!is_opclause(clause))
-		goto default_results;
-
-	left = get_leftop((Expr *) clause);
-	right = get_rightop((Expr *) clause);
-
-	if (!right)
-		goto default_results;
-
-	/* Ignore any binary-compatible relabeling */
-
-	if (IsA(left, RelabelType))
-		left = (Var *) ((RelabelType *) left)->arg;
-	if (IsA(right, RelabelType))
-		right = (Var *) ((RelabelType *) right)->arg;
-
-	/* First look for the var or func */
-
-	if (IsA(left, Var) &&
-		(targetrelid == 0 || targetrelid == left->varno))
-	{
-		*relid = left->varno;
-		*attno = left->varattno;
-		*flag = SEL_RIGHT;
-	}
-	else if (IsA(right, Var) &&
-			 (targetrelid == 0 || targetrelid == right->varno))
-	{
-		*relid = right->varno;
-		*attno = right->varattno;
-		*flag = 0;
-	}
-	else if ((funcvarno = is_single_func((Node *) left)) != 0 &&
-			 (targetrelid == 0 || targetrelid == funcvarno))
-	{
-		*relid = funcvarno;
-		*attno = InvalidAttrNumber;
-		*flag = SEL_RIGHT;
-	}
-	else if ((funcvarno = is_single_func((Node *) right)) != 0 &&
-			 (targetrelid == 0 || targetrelid == funcvarno))
-	{
-		*relid = funcvarno;
-		*attno = InvalidAttrNumber;
-		*flag = 0;
-	}
-	else
-	{
-		/* Duh, it's too complicated for me... */
-default_results:
-		*relid = 0;
-		*attno = 0;
-		*constval = 0;
-		*flag = 0;
-		return;
-	}
-
-	/* OK, we identified the var or func; now look at the other side */
-
-	other = (*flag == 0) ? left : right;
-
-	if (IsA(other, Const) &&
-		!((Const *) other)->constisnull)
-	{
-		*constval = ((Const *) other)->constvalue;
-		*flag |= SEL_CONSTANT;
-	}
-	else
-		*constval = 0;
-}
-
-/*
- * is_single_func
- *	 If the given expression is a function of a single relation,
- *	 return the relation number; else return 0
- */
-static int
-is_single_func(Node *node)
-{
-	if (is_funcclause(node))
-	{
-		List	   *varnos = pull_varnos(node);
-
-		if (length(varnos) == 1)
-		{
-			int			funcvarno = lfirsti(varnos);
-
-			freeList(varnos);
-			return funcvarno;
-		}
-		freeList(varnos);
-	}
-	return 0;
-}
-
-/*
- * get_rels_atts
- *
- * Returns the info
- *				( relid1 attno1 relid2 attno2 )
- *		for a joinclause.
- *
- * If the clause is not of the form (var op var) or if any of the vars
- * refer to nested attributes, then zeroes are returned.
- */
-void
-get_rels_atts(Node *clause,
-			  int *relid1,
-			  AttrNumber *attno1,
-			  int *relid2,
-			  AttrNumber *attno2)
-{
-	/* set default values */
-	*relid1 = 0;
-	*attno1 = 0;
-	*relid2 = 0;
-	*attno2 = 0;
-
-	if (is_opclause(clause))
-	{
-		Var		   *left = get_leftop((Expr *) clause);
-		Var		   *right = get_rightop((Expr *) clause);
-
-		if (left && right)
-		{
-			int			funcvarno;
-
-			/* Ignore any binary-compatible relabeling */
-			if (IsA(left, RelabelType))
-				left = (Var *) ((RelabelType *) left)->arg;
-			if (IsA(right, RelabelType))
-				right = (Var *) ((RelabelType *) right)->arg;
-
-			if (IsA(left, Var))
-			{
-				*relid1 = left->varno;
-				*attno1 = left->varattno;
-			}
-			else if ((funcvarno = is_single_func((Node *) left)) != 0)
-			{
-				*relid1 = funcvarno;
-				*attno1 = InvalidAttrNumber;
-			}
-
-			if (IsA(right, Var))
-			{
-				*relid2 = right->varno;
-				*attno2 = right->varattno;
-			}
-			else if ((funcvarno = is_single_func((Node *) right)) != 0)
-			{
-				*relid2 = funcvarno;
-				*attno2 = InvalidAttrNumber;
-			}
-		}
-	}
 }
 
 /*--------------------

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/relnode.c,v 1.32 2001/02/16 00:03:08 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/relnode.c,v 1.33 2001/05/20 20:28:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,6 +22,7 @@
 #include "parser/parsetree.h"
 
 
+static RelOptInfo *make_base_rel(Query *root, int relid);
 static List *new_join_tlist(List *tlist, int first_resdomno);
 static List *build_joinrel_restrictlist(RelOptInfo *joinrel,
 						   RelOptInfo *outer_rel,
@@ -36,26 +37,33 @@ static void subbuild_joinrel_joinlist(RelOptInfo *joinrel,
 
 
 /*
- * get_base_rel
+ * build_base_rel
  *	  Returns relation entry corresponding to 'relid', creating a new one
  *	  if necessary.  This is for base relations.
  */
 RelOptInfo *
-get_base_rel(Query *root, int relid)
+build_base_rel(Query *root, int relid)
 {
-	List	   *baserels;
+	List	   *rels;
 	RelOptInfo *rel;
 
-	foreach(baserels, root->base_rel_list)
+	/* Already made? */
+	foreach(rels, root->base_rel_list)
 	{
-		rel = (RelOptInfo *) lfirst(baserels);
+		rel = (RelOptInfo *) lfirst(rels);
 
-		/*
-		 * We know length(rel->relids) == 1 for all members of
-		 * base_rel_list
-		 */
+		/* length(rel->relids) == 1 for all members of base_rel_list */
 		if (lfirsti(rel->relids) == relid)
 			return rel;
+	}
+
+	/* It should not exist as an "other" rel */
+	foreach(rels, root->other_rel_list)
+	{
+		rel = (RelOptInfo *) lfirst(rels);
+
+		if (lfirsti(rel->relids) == relid)
+			elog(ERROR, "build_base_rel: rel already exists as 'other' rel");
 	}
 
 	/* No existing RelOptInfo for this base rel, so make a new one */
@@ -68,16 +76,52 @@ get_base_rel(Query *root, int relid)
 }
 
 /*
+ * build_other_rel
+ *	  Returns relation entry corresponding to 'relid', creating a new one
+ *	  if necessary.  This is for 'other' relations, which are just like
+ *	  base relations except that they live in a different list.
+ */
+RelOptInfo *
+build_other_rel(Query *root, int relid)
+{
+	List	   *rels;
+	RelOptInfo *rel;
+
+	/* Already made? */
+	foreach(rels, root->other_rel_list)
+	{
+		rel = (RelOptInfo *) lfirst(rels);
+
+		/* length(rel->relids) == 1 for all members of other_rel_list */
+		if (lfirsti(rel->relids) == relid)
+			return rel;
+	}
+
+	/* It should not exist as a base rel */
+	foreach(rels, root->base_rel_list)
+	{
+		rel = (RelOptInfo *) lfirst(rels);
+
+		if (lfirsti(rel->relids) == relid)
+			elog(ERROR, "build_other_rel: rel already exists as base rel");
+	}
+
+	/* No existing RelOptInfo for this other rel, so make a new one */
+	rel = make_base_rel(root, relid);
+
+	/* and add it to the list */
+	root->other_rel_list = lcons(rel, root->other_rel_list);
+
+	return rel;
+}
+
+/*
  * make_base_rel
  *	  Construct a base-relation RelOptInfo for the specified rangetable index.
  *
- * This is split out of get_base_rel so that inheritance-tree processing can
- * construct baserel nodes for child tables.  We need a RelOptInfo so we can
- * plan a suitable access path for each child table, but we do NOT want to
- * enter the child nodes into base_rel_list.  In most contexts, get_base_rel
- * should be called instead.
+ * Common code for build_base_rel and build_other_rel.
  */
-RelOptInfo *
+static RelOptInfo *
 make_base_rel(Query *root, int relid)
 {
 	RelOptInfo *rel = makeNode(RelOptInfo);
@@ -92,7 +136,7 @@ make_base_rel(Query *root, int relid)
 	rel->cheapest_total_path = NULL;
 	rel->pruneable = true;
 	rel->issubquery = false;
-	rel->indexed = false;
+	rel->indexlist = NIL;
 	rel->pages = 0;
 	rel->tuples = 0;
 	rel->subplan = NULL;
@@ -108,8 +152,12 @@ make_base_rel(Query *root, int relid)
 	if (relationObjectId != InvalidOid)
 	{
 		/* Plain relation --- retrieve statistics from the system catalogs */
-		relation_info(relationObjectId,
-					  &rel->indexed, &rel->pages, &rel->tuples);
+		bool	indexed;
+
+		get_relation_info(relationObjectId,
+						  &indexed, &rel->pages, &rel->tuples);
+		if (indexed)
+			rel->indexlist = find_secondary_indexes(relationObjectId);
 	}
 	else
 	{
@@ -121,12 +169,45 @@ make_base_rel(Query *root, int relid)
 }
 
 /*
+ * find_base_rel
+ *	  Find a base or other relation entry, which must already exist
+ *	  (since we'd have no idea which list to add it to).
+ */
+RelOptInfo *
+find_base_rel(Query *root, int relid)
+{
+	List	   *rels;
+	RelOptInfo *rel;
+
+	foreach(rels, root->base_rel_list)
+	{
+		rel = (RelOptInfo *) lfirst(rels);
+
+		/* length(rel->relids) == 1 for all members of base_rel_list */
+		if (lfirsti(rel->relids) == relid)
+			return rel;
+	}
+
+	foreach(rels, root->other_rel_list)
+	{
+		rel = (RelOptInfo *) lfirst(rels);
+
+		if (lfirsti(rel->relids) == relid)
+			return rel;
+	}
+
+	elog(ERROR, "find_base_rel: no relation entry for relid %d", relid);
+
+	return NULL;				/* keep compiler quiet */
+}
+
+/*
  * find_join_rel
  *	  Returns relation entry corresponding to 'relids' (a list of RT indexes),
  *	  or NULL if none exists.  This is for join relations.
  *
  * Note: there is probably no good reason for this to be called from
- * anywhere except get_join_rel, but keep it as a separate routine
+ * anywhere except build_join_rel, but keep it as a separate routine
  * just in case.
  */
 static RelOptInfo *
@@ -146,7 +227,7 @@ find_join_rel(Query *root, Relids relids)
 }
 
 /*
- * get_join_rel
+ * build_join_rel
  *	  Returns relation entry corresponding to the union of two given rels,
  *	  creating a new relation entry if none already exists.
  *
@@ -161,11 +242,11 @@ find_join_rel(Query *root, Relids relids)
  * duplicated calculation of the restrictlist...
  */
 RelOptInfo *
-get_join_rel(Query *root,
-			 RelOptInfo *outer_rel,
-			 RelOptInfo *inner_rel,
-			 JoinType jointype,
-			 List **restrictlist_ptr)
+build_join_rel(Query *root,
+			   RelOptInfo *outer_rel,
+			   RelOptInfo *inner_rel,
+			   JoinType jointype,
+			   List **restrictlist_ptr)
 {
 	List	   *joinrelids;
 	RelOptInfo *joinrel;
@@ -212,7 +293,7 @@ get_join_rel(Query *root,
 	joinrel->cheapest_total_path = NULL;
 	joinrel->pruneable = true;
 	joinrel->issubquery = false;
-	joinrel->indexed = false;
+	joinrel->indexlist = NIL;
 	joinrel->pages = 0;
 	joinrel->tuples = 0;
 	joinrel->subplan = NULL;

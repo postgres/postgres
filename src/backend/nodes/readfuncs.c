@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.108 2001/05/07 00:43:19 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.109 2001/05/20 20:28:18 tgl Exp $
  *
  * NOTES
  *	  Most of the read functions for plan nodes are tested. (In fact, they
@@ -1318,88 +1318,6 @@ _readJoinExpr(void)
 	return local_node;
 }
 
-/*
- *	Stuff from relation.h
- */
-
-/* ----------------
- *		_readRelOptInfo
- * ----------------
- */
-static RelOptInfo *
-_readRelOptInfo(void)
-{
-	RelOptInfo *local_node;
-	char	   *token;
-	int			length;
-
-	local_node = makeNode(RelOptInfo);
-
-	token = pg_strtok(&length); /* get :relids */
-	local_node->relids = toIntList(nodeRead(true));		/* now read it */
-
-	token = pg_strtok(&length); /* get :rows */
-	token = pg_strtok(&length); /* now read it */
-	local_node->rows = atof(token);
-
-	token = pg_strtok(&length); /* get :width */
-	token = pg_strtok(&length); /* now read it */
-	local_node->width = atoi(token);
-
-	token = pg_strtok(&length); /* get :targetlist */
-	local_node->targetlist = nodeRead(true);	/* now read it */
-
-	token = pg_strtok(&length); /* get :pathlist */
-	local_node->pathlist = nodeRead(true);		/* now read it */
-
-	token = pg_strtok(&length); /* get :cheapest_startup_path */
-	local_node->cheapest_startup_path = nodeRead(true); /* now read it */
-
-	token = pg_strtok(&length); /* get :cheapest_total_path */
-	local_node->cheapest_total_path = nodeRead(true);	/* now read it */
-
-	token = pg_strtok(&length); /* eat :pruneable */
-	token = pg_strtok(&length); /* get :pruneable */
-	local_node->pruneable = strtobool(token);
-
-	token = pg_strtok(&length); /* get :issubquery */
-	token = pg_strtok(&length); /* now read it */
-	local_node->issubquery = strtobool(token);
-
-	token = pg_strtok(&length); /* get :indexed */
-	token = pg_strtok(&length); /* now read it */
-	local_node->indexed = strtobool(token);
-
-	token = pg_strtok(&length); /* get :pages */
-	token = pg_strtok(&length); /* now read it */
-	local_node->pages = atol(token);
-
-	token = pg_strtok(&length); /* get :tuples */
-	token = pg_strtok(&length); /* now read it */
-	local_node->tuples = atof(token);
-
-	token = pg_strtok(&length); /* get :subplan */
-	local_node->subplan = nodeRead(true);		/* now read it */
-
-	token = pg_strtok(&length); /* get :baserestrictinfo */
-	local_node->baserestrictinfo = nodeRead(true);		/* now read it */
-
-	token = pg_strtok(&length); /* get :baserestrictcost */
-	token = pg_strtok(&length); /* now read it */
-	local_node->baserestrictcost = (Cost) atof(token);
-
-	token = pg_strtok(&length); /* get :outerjoinset */
-	local_node->outerjoinset = toIntList(nodeRead(true));		/* now read it */
-
-	token = pg_strtok(&length); /* get :joininfo */
-	local_node->joininfo = nodeRead(true);		/* now read it */
-
-	token = pg_strtok(&length); /* get :innerjoin */
-	local_node->innerjoin = nodeRead(true);		/* now read it */
-
-	return local_node;
-}
-
 /* ----------------
  *		_readTargetEntry
  * ----------------
@@ -1557,8 +1475,8 @@ _readIndexPath(void)
 	token = pg_strtok(&length); /* get :pathkeys */
 	local_node->path.pathkeys = nodeRead(true); /* now read it */
 
-	token = pg_strtok(&length); /* get :indexid */
-	local_node->indexid = toOidList(nodeRead(true));
+	token = pg_strtok(&length); /* get :indexinfo */
+	local_node->indexinfo = nodeRead(true);		/* now read it */
 
 	token = pg_strtok(&length); /* get :indexqual */
 	local_node->indexqual = nodeRead(true);		/* now read it */
@@ -2008,8 +1926,6 @@ parsePlanString(void)
 		return_value = _readOper();
 	else if (length == 5 && strncmp(token, "PARAM", length) == 0)
 		return_value = _readParam();
-	else if (length == 10 && strncmp(token, "RELOPTINFO", length) == 0)
-		return_value = _readRelOptInfo();
 	else if (length == 11 && strncmp(token, "TARGETENTRY", length) == 0)
 		return_value = _readTargetEntry();
 	else if (length == 3 && strncmp(token, "RTE", length) == 0)

@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: paths.h,v 1.52 2001/03/22 04:00:54 momjian Exp $
+ * $Id: paths.h,v 1.53 2001/05/20 20:28:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,7 +35,7 @@ extern RelOptInfo *make_fromexpr_rel(Query *root, FromExpr *from);
  * indxpath.c
  *	  routines to generate index paths
  */
-extern void create_index_paths(Query *root, RelOptInfo *rel, List *indices);
+extern void create_index_paths(Query *root, RelOptInfo *rel);
 extern Oid indexable_operator(Expr *clause, Oid opclass, Oid relam,
 				   bool indexkey_on_left);
 extern List *extract_or_indexqual_conditions(RelOptInfo *rel,

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinrels.c,v 1.52 2001/03/22 03:59:35 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinrels.c,v 1.53 2001/05/20 20:28:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -332,7 +332,7 @@ make_rels_by_clauseless_joins(Query *root,
 
 /*
  * make_jointree_rel
- *		Find or build a RelOptInfojoin rel representing a specific
+ *		Find or build a RelOptInfo join rel representing a specific
  *		jointree item.	For JoinExprs, we only consider the construction
  *		path that corresponds exactly to what the user wrote.
  */
@@ -343,7 +343,7 @@ make_jointree_rel(Query *root, Node *jtnode)
 	{
 		int			varno = ((RangeTblRef *) jtnode)->rtindex;
 
-		return get_base_rel(root, varno);
+		return build_base_rel(root, varno);
 	}
 	else if (IsA(jtnode, FromExpr))
 	{
@@ -402,7 +402,7 @@ make_join_rel(Query *root, RelOptInfo *rel1, RelOptInfo *rel2,
 	 * Find or build the join RelOptInfo, and compute the restrictlist
 	 * that goes with this particular joining.
 	 */
-	joinrel = get_join_rel(root, rel1, rel2, jointype, &restrictlist);
+	joinrel = build_join_rel(root, rel1, rel2, jointype, &restrictlist);
 
 	/*
 	 * Consider paths using each rel as both outer and inner.

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/initsplan.c,v 1.61 2001/05/14 20:25:00 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/initsplan.c,v 1.62 2001/05/20 20:28:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -73,8 +73,8 @@ build_base_rel_tlists(Query *root, List *tlist)
 /*
  * add_vars_to_targetlist
  *	  For each variable appearing in the list, add it to the relation's
- *	  targetlist if not already present.  Rel nodes will also be created
- *	  if not already present.
+ *	  targetlist if not already present.  Corresponding base rel nodes
+ *	  will be created if not already present.
  */
 static void
 add_vars_to_targetlist(Query *root, List *vars)
@@ -84,7 +84,7 @@ add_vars_to_targetlist(Query *root, List *vars)
 	foreach(temp, vars)
 	{
 		Var		   *var = (Var *) lfirst(temp);
-		RelOptInfo *rel = get_base_rel(root, var->varno);
+		RelOptInfo *rel = build_base_rel(root, var->varno);
 
 		add_var_to_tlist(rel, var);
 	}
@@ -120,8 +120,8 @@ add_missing_rels_to_query(Query *root, Node *jtnode)
 	{
 		int			varno = ((RangeTblRef *) jtnode)->rtindex;
 
-		/* This call to get_base_rel does the primary work... */
-		RelOptInfo *rel = get_base_rel(root, varno);
+		/* This call to build_base_rel does the primary work... */
+		RelOptInfo *rel = build_base_rel(root, varno);
 
 		result = makeList1(rel);
 	}
@@ -299,7 +299,7 @@ mark_baserels_for_outer_join(Query *root, Relids rels, Relids outerrels)
 	foreach(relid, rels)
 	{
 		int			relno = lfirsti(relid);
-		RelOptInfo *rel = get_base_rel(root, relno);
+		RelOptInfo *rel = build_base_rel(root, relno);
 
 		/*
 		 * Since we do this bottom-up, any outer-rels previously marked
@@ -422,7 +422,7 @@ distribute_qual_to_rels(Query *root, Node *clause,
 		can_be_equijoin = true;
 		foreach(relid, relids)
 		{
-			RelOptInfo *rel = get_base_rel(root, lfirsti(relid));
+			RelOptInfo *rel = build_base_rel(root, lfirsti(relid));
 
 			if (rel->outerjoinset &&
 				!is_subseti(rel->outerjoinset, relids))
@@ -454,12 +454,11 @@ distribute_qual_to_rels(Query *root, Node *clause,
 
 	if (length(relids) == 1)
 	{
-
 		/*
 		 * There is only one relation participating in 'clause', so
 		 * 'clause' is a restriction clause for that relation.
 		 */
-		RelOptInfo *rel = get_base_rel(root, lfirsti(relids));
+		RelOptInfo *rel = build_base_rel(root, lfirsti(relids));
 
 		rel->baserestrictinfo = lappend(rel->baserestrictinfo,
 										restrictinfo);
@@ -564,7 +563,7 @@ add_join_info_to_rels(Query *root, RestrictInfo *restrictinfo,
 		 * Find or make the joininfo node for this combination of rels,
 		 * and add the restrictinfo node to it.
 		 */
-		joininfo = find_joininfo_node(get_base_rel(root, cur_relid),
+		joininfo = find_joininfo_node(build_base_rel(root, cur_relid),
 									  unjoined_relids);
 		joininfo->jinfo_restrictinfo = lappend(joininfo->jinfo_restrictinfo,
 											   restrictinfo);
@@ -609,8 +608,11 @@ process_implied_equality(Query *root, Node *item1, Node *item2,
 	 * If both vars belong to same rel, we need to look at that rel's
 	 * baserestrictinfo list.  If different rels, each will have a
 	 * joininfo node for the other, and we can scan either list.
+	 *
+	 * All baserel entries should already exist at this point, so use
+	 * find_base_rel not build_base_rel.
 	 */
-	rel1 = get_base_rel(root, irel1);
+	rel1 = find_base_rel(root, irel1);
 	if (irel1 == irel2)
 		restrictlist = rel1->baserestrictinfo;
 	else

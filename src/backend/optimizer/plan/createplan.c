@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.105 2001/05/07 00:43:20 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.106 2001/05/20 20:28:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,7 +18,6 @@
 
 #include <sys/types.h>
 
-#include "catalog/pg_index.h"
 #include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
 #include "optimizer/clauses.h"
@@ -27,6 +26,7 @@
 #include "optimizer/planmain.h"
 #include "optimizer/restrictinfo.h"
 #include "optimizer/tlist.h"
+#include "optimizer/var.h"
 #include "parser/parse_expr.h"
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
@@ -56,11 +56,11 @@ static HashJoin *create_hashjoin_plan(HashPath *best_path, List *tlist,
 					 Plan *outer_plan, List *outer_tlist,
 					 Plan *inner_plan, List *inner_tlist);
 static List *fix_indxqual_references(List *indexquals, IndexPath *index_path);
-static List *fix_indxqual_sublist(List *indexqual, int baserelid, Oid relam,
-					 Form_pg_index index);
+static List *fix_indxqual_sublist(List *indexqual, int baserelid,
+								  IndexOptInfo *index);
 static Node *fix_indxqual_operand(Node *node, int baserelid,
-					 Form_pg_index index,
-					 Oid *opclass);
+								  IndexOptInfo *index,
+								  Oid *opclass);
 static List *switch_outer(List *clauses);
 static void copy_path_costsize(Plan *dest, Path *src);
 static void copy_plan_costsize(Plan *dest, Plan *src);
@@ -365,7 +365,7 @@ create_seqscan_plan(Path *best_path, List *tlist, List *scan_clauses)
  * The indexqual of the path contains a sublist of implicitly-ANDed qual
  * conditions for each scan of the index(es); if there is more than one
  * scan then the retrieved tuple sets are ORed together.  The indexqual
- * and indexid lists must have the same length, ie, the number of scans
+ * and indexinfo lists must have the same length, ie, the number of scans
  * that will occur.  Note it is possible for a qual condition sublist
  * to be empty --- then no index restrictions will be applied during that
  * scan.
@@ -380,9 +380,10 @@ create_indexscan_plan(Query *root,
 	Index		baserelid;
 	List	   *qpqual;
 	List	   *fixed_indxqual;
-	List	   *ixid;
+	List	   *indexids;
+	List	   *ixinfo;
 	IndexScan  *scan_plan;
-	bool		lossy = false;
+	bool		lossy;
 
 	/* there should be exactly one base rel involved... */
 	Assert(length(best_path->path.parent->relids) == 1);
@@ -390,25 +391,18 @@ create_indexscan_plan(Query *root,
 
 	baserelid = lfirsti(best_path->path.parent->relids);
 
-	/* check to see if any of the indices are lossy */
-	foreach(ixid, best_path->indexid)
+	/*
+	 * Build list of index OIDs, and check to see if any of the indices
+	 * are lossy.
+	 */
+	indexids = NIL;
+	lossy = false;
+	foreach(ixinfo, best_path->indexinfo)
 	{
-		HeapTuple	indexTuple;
-		Form_pg_index index;
+		IndexOptInfo *index = (IndexOptInfo *) lfirst(ixinfo);
 
-		indexTuple = SearchSysCache(INDEXRELID,
-									ObjectIdGetDatum(lfirsti(ixid)),
-									0, 0, 0);
-		if (!HeapTupleIsValid(indexTuple))
-			elog(ERROR, "create_plan: index %u not found", lfirsti(ixid));
-		index = (Form_pg_index) GETSTRUCT(indexTuple);
-		if (index->indislossy)
-		{
-			lossy = true;
-			ReleaseSysCache(indexTuple);
-			break;
-		}
-		ReleaseSysCache(indexTuple);
+		indexids = lappendi(indexids, index->indexoid);
+		lossy |= index->lossy;
 	}
 
 	/*
@@ -471,7 +465,7 @@ create_indexscan_plan(Query *root,
 	scan_plan = make_indexscan(tlist,
 							   qpqual,
 							   baserelid,
-							   best_path->indexid,
+							   indexids,
 							   fixed_indxqual,
 							   indxqual,
 							   best_path->indexscandir);
@@ -895,45 +889,19 @@ fix_indxqual_references(List *indexquals, IndexPath *index_path)
 {
 	List	   *fixed_quals = NIL;
 	int			baserelid = lfirsti(index_path->path.parent->relids);
-	List	   *indexids = index_path->indexid;
+	List	   *ixinfo = index_path->indexinfo;
 	List	   *i;
 
 	foreach(i, indexquals)
 	{
 		List	   *indexqual = lfirst(i);
-		Oid			indexid = lfirsti(indexids);
-		HeapTuple	indexTuple;
-		Oid			relam;
-		Form_pg_index index;
-
-		/* Get the relam from the index's pg_class entry */
-		indexTuple = SearchSysCache(RELOID,
-									ObjectIdGetDatum(indexid),
-									0, 0, 0);
-		if (!HeapTupleIsValid(indexTuple))
-			elog(ERROR, "fix_indxqual_references: index %u not found in pg_class",
-				 indexid);
-		relam = ((Form_pg_class) GETSTRUCT(indexTuple))->relam;
-		ReleaseSysCache(indexTuple);
-
-		/* Need the index's pg_index entry for other stuff */
-		indexTuple = SearchSysCache(INDEXRELID,
-									ObjectIdGetDatum(indexid),
-									0, 0, 0);
-		if (!HeapTupleIsValid(indexTuple))
-			elog(ERROR, "fix_indxqual_references: index %u not found in pg_index",
-				 indexid);
-		index = (Form_pg_index) GETSTRUCT(indexTuple);
+		IndexOptInfo *index = (IndexOptInfo *) lfirst(ixinfo);
 
 		fixed_quals = lappend(fixed_quals,
 							  fix_indxqual_sublist(indexqual,
 												   baserelid,
-												   relam,
 												   index));
-
-		ReleaseSysCache(indexTuple);
-
-		indexids = lnext(indexids);
+		ixinfo = lnext(ixinfo);
 	}
 	return fixed_quals;
 }
@@ -946,8 +914,7 @@ fix_indxqual_references(List *indexquals, IndexPath *index_path)
  * of the clause.)	Also change the operator if necessary.
  */
 static List *
-fix_indxqual_sublist(List *indexqual, int baserelid, Oid relam,
-					 Form_pg_index index)
+fix_indxqual_sublist(List *indexqual, int baserelid, IndexOptInfo *index)
 {
 	List	   *fixed_qual = NIL;
 	List	   *i;
@@ -955,25 +922,13 @@ fix_indxqual_sublist(List *indexqual, int baserelid, Oid relam,
 	foreach(i, indexqual)
 	{
 		Expr	   *clause = (Expr *) lfirst(i);
-		int			relid;
-		AttrNumber	attno;
-		Datum		constval;
-		int			flag;
 		Expr	   *newclause;
+		List	   *leftvarnos;
 		Oid			opclass,
 					newopno;
 
-		if (!is_opclause((Node *) clause) ||
-			length(clause->args) != 2)
+		if (!is_opclause((Node *) clause) || length(clause->args) != 2)
 			elog(ERROR, "fix_indxqual_sublist: indexqual clause is not binary opclause");
-
-		/*
-		 * Which side is the indexkey on?
-		 *
-		 * get_relattval sets flag&SEL_RIGHT if the indexkey is on the LEFT.
-		 */
-		get_relattval((Node *) clause, baserelid,
-					  &relid, &attno, &constval, &flag);
 
 		/*
 		 * Make a copy that will become the fixed clause.
@@ -984,9 +939,15 @@ fix_indxqual_sublist(List *indexqual, int baserelid, Oid relam,
 		 */
 		newclause = (Expr *) copyObject((Node *) clause);
 
-		/* If the indexkey is on the right, commute the clause. */
-		if ((flag & SEL_RIGHT) == 0)
+		/*
+		 * Check to see if the indexkey is on the right; if so, commute
+		 * the clause.  The indexkey should be the side that refers to
+		 * (only) the base relation.
+		 */
+		leftvarnos = pull_varnos((Node *) lfirst(newclause->args));
+		if (length(leftvarnos) != 1 || lfirsti(leftvarnos) != baserelid)
 			CommuteClause(newclause);
+		freeList(leftvarnos);
 
 		/*
 		 * Now, determine which index attribute this is, change the
@@ -1002,7 +963,7 @@ fix_indxqual_sublist(List *indexqual, int baserelid, Oid relam,
 		 * is merely binary-compatible with the index.	This shouldn't
 		 * fail, since indxpath.c found it before...
 		 */
-		newopno = indexable_operator(newclause, opclass, relam, true);
+		newopno = indexable_operator(newclause, opclass, index->relam, true);
 		if (newopno == InvalidOid)
 			elog(ERROR, "fix_indxqual_sublist: failed to find substitute op");
 		((Oper *) newclause->oper)->opno = newopno;
@@ -1013,7 +974,7 @@ fix_indxqual_sublist(List *indexqual, int baserelid, Oid relam,
 }
 
 static Node *
-fix_indxqual_operand(Node *node, int baserelid, Form_pg_index index,
+fix_indxqual_operand(Node *node, int baserelid, IndexOptInfo *index,
 					 Oid *opclass)
 {
 
@@ -1033,27 +994,29 @@ fix_indxqual_operand(Node *node, int baserelid, Form_pg_index index,
 	if (IsA(node, Var))
 	{
 		/* If it's a var, find which index key position it occupies */
+		Assert(index->indproc == InvalidOid);
+
 		if (((Var *) node)->varno == baserelid)
 		{
 			int			varatt = ((Var *) node)->varattno;
 			int			pos;
 
-			for (pos = 0; pos < INDEX_MAX_KEYS; pos++)
+			for (pos = 0; pos < index->nkeys; pos++)
 			{
-				if (index->indkey[pos] == varatt)
+				if (index->indexkeys[pos] == varatt)
 				{
 					Node	   *newnode = copyObject(node);
 
 					((Var *) newnode)->varattno = pos + 1;
 					/* return the correct opclass, too */
-					*opclass = index->indclass[pos];
+					*opclass = index->classlist[pos];
 					return newnode;
 				}
 			}
 		}
 
 		/*
-		 * Oops, this Var isn't the indexkey!
+		 * Oops, this Var isn't an indexkey!
 		 */
 		elog(ERROR, "fix_indxqual_operand: var is not index attribute");
 	}
@@ -1063,11 +1026,11 @@ fix_indxqual_operand(Node *node, int baserelid, Form_pg_index index,
 	 * Since we currently only support single-column functional indexes,
 	 * the returned varattno must be 1.
 	 */
+	Assert(index->indproc != InvalidOid);
+	Assert(is_funcclause(node)); /* not a very thorough check, but easy */
 
-	Assert(is_funcclause(node));/* not a very thorough check, but easy */
-
-	/* indclass[0] is the only class of a functional index */
-	*opclass = index->indclass[0];
+	/* classlist[0] is the only class of a functional index */
+	*opclass = index->classlist[0];
 
 	return (Node *) makeVar(baserelid, 1, exprType(node), -1, 0);
 }

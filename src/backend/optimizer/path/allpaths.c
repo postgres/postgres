@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/allpaths.c,v 1.73 2001/05/08 17:25:28 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/allpaths.c,v 1.74 2001/05/20 20:28:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,8 +35,8 @@ static void set_base_rel_pathlists(Query *root);
 static void set_plain_rel_pathlist(Query *root, RelOptInfo *rel,
 					   RangeTblEntry *rte);
 static void set_inherited_rel_pathlist(Query *root, RelOptInfo *rel,
-						   RangeTblEntry *rte,
-						   List *inheritlist);
+									   Index rti, RangeTblEntry *rte,
+									   List *inheritlist);
 static RelOptInfo *make_one_rel_by_joins(Query *root, int levels_needed,
 					  List *initial_rels);
 
@@ -69,7 +69,7 @@ make_one_rel(Query *root)
 	rel = make_fromexpr_rel(root, root->jointree);
 
 	/*
-	 * The result should join all the query's rels.
+	 * The result should join all the query's base rels.
 	 */
 	Assert(length(rel->relids) == length(root->base_rel_list));
 
@@ -190,10 +190,11 @@ set_base_rel_pathlists(Query *root)
 			/* Select cheapest path (pretty easy in this case...) */
 			set_cheapest(rel);
 		}
-		else if ((inheritlist = expand_inherted_rtentry(root, rti)) != NIL)
+		else if ((inheritlist = expand_inherted_rtentry(root, rti, true))
+				 != NIL)
 		{
 			/* Relation is root of an inheritance tree, process specially */
-			set_inherited_rel_pathlist(root, rel, rte, inheritlist);
+			set_inherited_rel_pathlist(root, rel, rti, rte, inheritlist);
 		}
 		else
 		{
@@ -210,8 +211,6 @@ set_base_rel_pathlists(Query *root)
 static void
 set_plain_rel_pathlist(Query *root, RelOptInfo *rel, RangeTblEntry *rte)
 {
-	List	   *indices = find_secondary_indexes(rte->relid);
-
 	/* Mark rel with estimated output rows, width, etc */
 	set_baserel_size_estimates(root, rel);
 
@@ -230,13 +229,9 @@ set_plain_rel_pathlist(Query *root, RelOptInfo *rel, RangeTblEntry *rte)
 	create_tidscan_paths(root, rel);
 
 	/* Consider index paths for both simple and OR index clauses */
-	create_index_paths(root, rel, indices);
+	create_index_paths(root, rel);
 
-	/*
-	 * Note: create_or_index_paths depends on create_index_paths to have
-	 * marked OR restriction clauses with relevant indices; this is why it
-	 * doesn't need to be given the list of indices.
-	 */
+	/* create_index_paths must be done before create_or_index_paths */
 	create_or_index_paths(root, rel, rel->baserestrictinfo);
 
 	/* Now find the cheapest of the paths for this rel */
@@ -248,14 +243,26 @@ set_plain_rel_pathlist(Query *root, RelOptInfo *rel, RangeTblEntry *rte)
  *	  Build access paths for a inheritance tree rooted at rel
  *
  * inheritlist is a list of RT indexes of all tables in the inheritance tree,
- * including the parent itself.  Note we will not come here unless there's
- * at least one child in addition to the parent.
+ * including a duplicate of the parent itself.  Note we will not come here
+ * unless there's at least one child in addition to the parent.
+ *
+ * NOTE: the passed-in rel and RTE will henceforth represent the appended
+ * result of the whole inheritance tree.  The members of inheritlist represent
+ * the individual tables --- in particular, the inheritlist member that is a
+ * duplicate of the parent RTE represents the parent table alone.
+ * We will generate plans to scan the individual tables that refer to
+ * the inheritlist RTEs, whereas Vars elsewhere in the plan tree that
+ * refer to the original RTE are taken to refer to the append output.
+ * In particular, this means we have separate RelOptInfos for the parent
+ * table and for the append output, which is a good thing because they're
+ * not the same size.
  */
 static void
-set_inherited_rel_pathlist(Query *root, RelOptInfo *rel, RangeTblEntry *rte,
+set_inherited_rel_pathlist(Query *root, RelOptInfo *rel,
+						   Index rti, RangeTblEntry *rte,
 						   List *inheritlist)
 {
-	int			parentRTindex = lfirsti(rel->relids);
+	int			parentRTindex = rti;
 	Oid			parentOID = rte->relid;
 	List	   *subpaths = NIL;
 	List	   *il;
@@ -268,7 +275,15 @@ set_inherited_rel_pathlist(Query *root, RelOptInfo *rel, RangeTblEntry *rte,
 		elog(ERROR, "SELECT FOR UPDATE is not supported for inherit queries");
 
 	/*
-	 * Recompute size estimates for whole inheritance tree
+	 * The executor will check the parent table's access permissions when it
+	 * examines the parent's inheritlist entry.  There's no need to check
+	 * twice, so turn off access check bits in the original RTE.
+	 */
+	rte->checkForRead = false;
+	rte->checkForWrite = false;
+
+	/*
+	 * Initialize to compute size estimates for whole inheritance tree
 	 */
 	rel->rows = 0;
 	rel->width = 0;
@@ -289,21 +304,17 @@ set_inherited_rel_pathlist(Query *root, RelOptInfo *rel, RangeTblEntry *rte,
 
 		/*
 		 * Make a RelOptInfo for the child so we can do planning.  Do NOT
-		 * attach the RelOptInfo to the query's base_rel_list, however.
-		 *
-		 * NOTE: when childRTindex == parentRTindex, we create a second
-		 * RelOptInfo for the same relation.  This RelOptInfo will
-		 * represent the parent table alone, whereas the original
-		 * RelOptInfo represents the union of the inheritance tree
-		 * members.
+		 * attach the RelOptInfo to the query's base_rel_list, however,
+		 * since the child is not part of the main join tree.  Instead,
+		 * the child RelOptInfo is added to other_rel_list.
 		 */
-		childrel = make_base_rel(root, childRTindex);
+		childrel = build_other_rel(root, childRTindex);
 
 		/*
 		 * Copy the parent's targetlist and restriction quals to the
-		 * child, with attribute-number adjustment if needed.  We don't
+		 * child, with attribute-number adjustment as needed.  We don't
 		 * bother to copy the join quals, since we can't do any joining
-		 * here.
+		 * of the individual tables.
 		 */
 		childrel->targetlist = (List *)
 			adjust_inherited_attrs((Node *) rel->targetlist,

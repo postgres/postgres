@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepunion.c,v 1.63 2001/05/07 00:43:22 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepunion.c,v 1.64 2001/05/20 20:28:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -515,6 +515,11 @@ find_all_inheritors(Oid parentrel)
  *		whole inheritance set (parent and children).
  *		If not, return NIL.
  *
+ * When dup_parent is false, the initially given RT index is part of the
+ * returned list (if any).  When dup_parent is true, the given RT index
+ * is *not* in the returned list; a duplicate RTE will be made for the
+ * parent table.
+ *
  * A childless table is never considered to be an inheritance set; therefore
  * the result will never be a one-element list.  It'll be either empty
  * or have two or more elements.
@@ -525,7 +530,7 @@ find_all_inheritors(Oid parentrel)
  * for the case of an inherited UPDATE/DELETE target relation.
  */
 List *
-expand_inherted_rtentry(Query *parse, Index rti)
+expand_inherted_rtentry(Query *parse, Index rti, bool dup_parent)
 {
 	RangeTblEntry *rte = rt_fetch(rti, parse->rtable);
 	Oid			parentOID = rte->relid;
@@ -544,7 +549,6 @@ expand_inherted_rtentry(Query *parse, Index rti)
 		return NIL;
 	/* Scan for all members of inheritance set */
 	inhOIDs = find_all_inheritors(parentOID);
-
 	/*
 	 * Check that there's at least one descendant, else treat as no-child
 	 * case.  This could happen despite above has_subclass() check, if
@@ -553,15 +557,19 @@ expand_inherted_rtentry(Query *parse, Index rti)
 	if (lnext(inhOIDs) == NIL)
 		return NIL;
 	/* OK, it's an inheritance set; expand it */
-	inhRTIs = makeListi1(rti);
+	if (dup_parent)
+		inhRTIs = NIL;
+	else
+		inhRTIs = makeListi1(rti); /* include original RTE in result */
+
 	foreach(l, inhOIDs)
 	{
 		Oid			childOID = (Oid) lfirsti(l);
 		RangeTblEntry *childrte;
 		Index		childRTindex;
 
-		/* parent will be in the list too, so ignore it */
-		if (childOID == parentOID)
+		/* parent will be in the list too; skip it if not dup requested */
+		if (childOID == parentOID && !dup_parent)
 			continue;
 
 		/*
@@ -578,6 +586,7 @@ expand_inherted_rtentry(Query *parse, Index rti)
 
 		inhRTIs = lappendi(inhRTIs, childRTindex);
 	}
+
 	return inhRTIs;
 }
 

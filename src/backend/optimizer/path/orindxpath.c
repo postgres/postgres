@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/orindxpath.c,v 1.42 2001/01/24 19:42:58 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/orindxpath.c,v 1.43 2001/05/20 20:28:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,8 +26,8 @@ static void best_or_subclause_indices(Query *root, RelOptInfo *rel,
 						  IndexPath *pathnode);
 static void best_or_subclause_index(Query *root, RelOptInfo *rel,
 						Expr *subclause, List *indices,
+						IndexOptInfo **retIndexInfo,
 						List **retIndexQual,
-						Oid *retIndexid,
 						Cost *retStartupCost,
 						Cost *retTotalCost);
 
@@ -122,14 +122,14 @@ create_or_index_paths(Query *root,
  *	  of an 'or' clause and the cost of scanning a relation using these
  *	  indices.	The cost is the sum of the individual index costs, since
  *	  the executor will perform a scan for each subclause of the 'or'.
+ *	  Returns a list of IndexOptInfo nodes, one per scan.
  *
- * This routine also creates the indexqual and indexid lists that will
- * be needed by the executor.  The indexqual list has one entry for each
- * scan of the base rel, which is a sublist of indexqual conditions to
- * apply in that scan.	The implicit semantics are AND across each sublist
- * of quals, and OR across the toplevel list (note that the executor
- * takes care not to return any single tuple more than once).  The indexid
- * list gives the OID of the index to be used in each scan.
+ * This routine also creates the indexqual list that will be needed by
+ * the executor.  The indexqual list has one entry for each scan of the base
+ * rel, which is a sublist of indexqual conditions to apply in that scan.
+ * The implicit semantics are AND across each sublist of quals, and OR across
+ * the toplevel list (note that the executor takes care not to return any
+ * single tuple more than once).
  *
  * 'rel' is the node of the relation on which the indexes are defined
  * 'subclauses' are the subclauses of the 'or' clause
@@ -138,9 +138,9 @@ create_or_index_paths(Query *root,
  * 'pathnode' is the IndexPath node being built.
  *
  * Results are returned by setting these fields of the passed pathnode:
+ * 'indexinfo' gets a list of the index IndexOptInfo nodes, one per scan
  * 'indexqual' gets the constructed indexquals for the path (a list
  *		of sublists of clauses, one sublist per scan of the base rel)
- * 'indexid' gets a list of the index OIDs for each scan of the rel
  * 'startup_cost' and 'total_cost' get the complete path costs.
  *
  * 'startup_cost' is the startup cost for the first index scan only;
@@ -161,28 +161,28 @@ best_or_subclause_indices(Query *root,
 {
 	List	   *slist;
 
+	pathnode->indexinfo = NIL;
 	pathnode->indexqual = NIL;
-	pathnode->indexid = NIL;
 	pathnode->path.startup_cost = 0;
 	pathnode->path.total_cost = 0;
 
 	foreach(slist, subclauses)
 	{
 		Expr	   *subclause = lfirst(slist);
+		IndexOptInfo *best_indexinfo;
 		List	   *best_indexqual;
-		Oid			best_indexid;
 		Cost		best_startup_cost;
 		Cost		best_total_cost;
 
 		best_or_subclause_index(root, rel, subclause, lfirst(indices),
-								&best_indexqual, &best_indexid,
+								&best_indexinfo, &best_indexqual,
 								&best_startup_cost, &best_total_cost);
 
-		Assert(best_indexid != InvalidOid);
+		Assert(best_indexinfo != NULL);
 
+		pathnode->indexinfo = lappend(pathnode->indexinfo, best_indexinfo);
 		pathnode->indexqual = lappend(pathnode->indexqual, best_indexqual);
-		pathnode->indexid = lappendi(pathnode->indexid, best_indexid);
-		if (slist == subclauses)/* first scan? */
+		if (slist == subclauses) /* first scan? */
 			pathnode->path.startup_cost = best_startup_cost;
 		pathnode->path.total_cost += best_total_cost;
 
@@ -199,8 +199,8 @@ best_or_subclause_indices(Query *root,
  * 'rel' is the node of the relation on which the index is defined
  * 'subclause' is the OR subclause being considered
  * 'indices' is a list of IndexOptInfo nodes that match the subclause
+ * '*retIndexInfo' gets the IndexOptInfo of the best index
  * '*retIndexQual' gets a list of the indexqual conditions for the best index
- * '*retIndexid' gets the OID of the best index
  * '*retStartupCost' gets the startup cost of a scan with that index
  * '*retTotalCost' gets the total cost of a scan with that index
  */
@@ -209,8 +209,8 @@ best_or_subclause_index(Query *root,
 						RelOptInfo *rel,
 						Expr *subclause,
 						List *indices,
+						IndexOptInfo **retIndexInfo, /* return value */
 						List **retIndexQual,	/* return value */
-						Oid *retIndexid,		/* return value */
 						Cost *retStartupCost,	/* return value */
 						Cost *retTotalCost)		/* return value */
 {
@@ -218,8 +218,8 @@ best_or_subclause_index(Query *root,
 	List	   *ilist;
 
 	/* if we don't match anything, return zeros */
+	*retIndexInfo = NULL;
 	*retIndexQual = NIL;
-	*retIndexid = InvalidOid;
 	*retStartupCost = 0;
 	*retTotalCost = 0;
 
@@ -238,8 +238,8 @@ best_or_subclause_index(Query *root,
 
 		if (first_time || subclause_path.total_cost < *retTotalCost)
 		{
+			*retIndexInfo = index;
 			*retIndexQual = indexqual;
-			*retIndexid = index->indexoid;
 			*retStartupCost = subclause_path.startup_cost;
 			*retTotalCost = subclause_path.total_cost;
 			first_time = false;

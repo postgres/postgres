@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_operator.c,v 1.57 2001/03/22 06:16:10 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_operator.c,v 1.58 2001/05/20 20:28:17 tgl Exp $
  *
  * NOTES
  *	  these routines moved here from commands/define.c and somewhat cleaned up.
@@ -69,7 +69,7 @@ static void OperatorUpd(Oid baseId, Oid commId, Oid negId);
 /* ----------------------------------------------------------------
  *		OperatorGetWithOpenRelation
  *
- *		preforms a scan on pg_operator for an operator tuple
+ *		performs a scan on pg_operator for an operator tuple
  *		with given name and left/right type oids.
  * ----------------------------------------------------------------
  *	  pg_operator_desc	-- reldesc for pg_operator
@@ -570,26 +570,25 @@ OperatorDef(char *operatorName,
 	ReleaseSysCache(tup);
 
 	/*
-	 * find restriction
+	 * find restriction estimator
 	 */
 	if (restrictionName)
 	{							/* optional */
 		Oid			restOid;
 
 		MemSet(typeId, 0, FUNC_MAX_ARGS * sizeof(Oid));
-		typeId[0] = OIDOID;		/* operator OID */
-		typeId[1] = OIDOID;		/* relation OID */
-		typeId[2] = INT2OID;	/* attribute number */
-		typeId[3] = 0;			/* value - can be any type	*/
-		typeId[4] = INT4OID;	/* flags - left or right selectivity */
+		typeId[0] = 0;			/* Query (opaque type) */
+		typeId[1] = OIDOID;		/* operator OID */
+		typeId[2] = 0;			/* args list (opaque type) */
+		typeId[3] = INT4OID;	/* varRelid */
 
 		restOid = GetSysCacheOid(PROCNAME,
 								 PointerGetDatum(restrictionName),
-								 Int32GetDatum(5),
+								 Int32GetDatum(4),
 								 PointerGetDatum(typeId),
 								 0);
 		if (!OidIsValid(restOid))
-			func_error("OperatorDef", restrictionName, 5, typeId, NULL);
+			func_error("OperatorDef", restrictionName, 4, typeId, NULL);
 
 		values[Anum_pg_operator_oprrest - 1] = ObjectIdGetDatum(restOid);
 	}
@@ -597,26 +596,24 @@ OperatorDef(char *operatorName,
 		values[Anum_pg_operator_oprrest - 1] = ObjectIdGetDatum(InvalidOid);
 
 	/*
-	 * find join - only valid for binary operators
+	 * find join estimator
 	 */
 	if (joinName)
 	{							/* optional */
 		Oid			joinOid;
 
 		MemSet(typeId, 0, FUNC_MAX_ARGS * sizeof(Oid));
-		typeId[0] = OIDOID;		/* operator OID */
-		typeId[1] = OIDOID;		/* relation OID 1 */
-		typeId[2] = INT2OID;	/* attribute number 1 */
-		typeId[3] = OIDOID;		/* relation OID 2 */
-		typeId[4] = INT2OID;	/* attribute number 2 */
+		typeId[0] = 0;			/* Query (opaque type) */
+		typeId[1] = OIDOID;		/* operator OID */
+		typeId[2] = 0;			/* args list (opaque type) */
 
 		joinOid = GetSysCacheOid(PROCNAME,
 								 PointerGetDatum(joinName),
-								 Int32GetDatum(5),
+								 Int32GetDatum(3),
 								 PointerGetDatum(typeId),
 								 0);
 		if (!OidIsValid(joinOid))
-			func_error("OperatorDef", joinName, 5, typeId, NULL);
+			func_error("OperatorDef", joinName, 3, typeId, NULL);
 
 		values[Anum_pg_operator_oprjoin - 1] = ObjectIdGetDatum(joinOid);
 	}
@@ -1044,10 +1041,8 @@ OperatorCreate(char *operatorName,
 		/* If it's not a binary op, these things mustn't be set: */
 		if (commutatorName)
 			elog(ERROR, "OperatorCreate: only binary operators can have commutators");
-		if (negatorName)
-			elog(ERROR, "OperatorCreate: only binary operators can have negators");
-		if (restrictionName || joinName)
-			elog(ERROR, "OperatorCreate: only binary operators can have selectivity");
+		if (joinName)
+			elog(ERROR, "OperatorCreate: only binary operators can have join selectivity");
 		if (canHash)
 			elog(ERROR, "OperatorCreate: only binary operators can hash");
 		if (leftSortName || rightSortName)

@@ -5,7 +5,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.140 2001/03/22 03:59:32 momjian Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.141 2001/05/20 20:28:18 tgl Exp $
  *
  * NOTES
  *	  Every (plan) node in POSTGRES has an associated "out" routine which
@@ -953,56 +953,6 @@ _outJoinExpr(StringInfo str, JoinExpr *node)
 }
 
 /*
- *	Stuff from relation.h
- */
-
-static void
-_outRelOptInfo(StringInfo str, RelOptInfo *node)
-{
-	appendStringInfo(str, " RELOPTINFO :relids ");
-	_outIntList(str, node->relids);
-
-	appendStringInfo(str, " :rows %.0f :width %d :targetlist ",
-					 node->rows,
-					 node->width);
-	_outNode(str, node->targetlist);
-
-	appendStringInfo(str, " :pathlist ");
-	_outNode(str, node->pathlist);
-	appendStringInfo(str, " :cheapest_startup_path ");
-	_outNode(str, node->cheapest_startup_path);
-	appendStringInfo(str, " :cheapest_total_path ");
-	_outNode(str, node->cheapest_total_path);
-
-	appendStringInfo(str, " :pruneable %s :issubquery %s :indexed %s :pages %ld :tuples %.0f :subplan ",
-					 booltostr(node->pruneable),
-					 booltostr(node->issubquery),
-					 booltostr(node->indexed),
-					 node->pages,
-					 node->tuples);
-	_outNode(str, node->subplan);
-
-	appendStringInfo(str, " :baserestrictinfo ");
-	_outNode(str, node->baserestrictinfo);
-	appendStringInfo(str, " :baserestrictcost %.2f :outerjoinset ",
-					 node->baserestrictcost);
-	_outIntList(str, node->outerjoinset);
-	appendStringInfo(str, " :joininfo ");
-	_outNode(str, node->joininfo);
-	appendStringInfo(str, " :innerjoin ");
-	_outNode(str, node->innerjoin);
-}
-
-static void
-_outIndexOptInfo(StringInfo str, IndexOptInfo *node)
-{
-	appendStringInfo(str, " INDEXOPTINFO :indexoid %u :pages %ld :tuples %g ",
-					 node->indexoid,
-					 node->pages,
-					 node->tuples);
-}
-
-/*
  *	TargetEntry is a subclass of Node.
  */
 static void
@@ -1064,8 +1014,8 @@ _outIndexPath(StringInfo str, IndexPath *node)
 					 node->path.total_cost);
 	_outNode(str, node->path.pathkeys);
 
-	appendStringInfo(str, " :indexid ");
-	_outOidList(str, node->indexid);
+	appendStringInfo(str, " :indexinfo ");
+	_outNode(str, node->indexinfo);
 
 	appendStringInfo(str, " :indexqual ");
 	_outNode(str, node->indexqual);
@@ -1628,12 +1578,6 @@ _outNode(StringInfo str, void *obj)
 				break;
 			case T_JoinExpr:
 				_outJoinExpr(str, obj);
-				break;
-			case T_RelOptInfo:
-				_outRelOptInfo(str, obj);
-				break;
-			case T_IndexOptInfo:
-				_outIndexOptInfo(str, obj);
 				break;
 			case T_TargetEntry:
 				_outTargetEntry(str, obj);

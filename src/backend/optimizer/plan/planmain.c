@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planmain.c,v 1.64 2001/03/22 03:59:37 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planmain.c,v 1.65 2001/05/20 20:28:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -194,6 +194,7 @@ subplanner(Query *root,
 	 * construction.
 	 */
 	root->base_rel_list = NIL;
+	root->other_rel_list = NIL;
 	root->join_rel_list = NIL;
 	root->equi_key_list = NIL;
 

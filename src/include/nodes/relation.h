@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: relation.h,v 1.55 2001/05/07 00:43:26 tgl Exp $
+ * $Id: relation.h,v 1.56 2001/05/20 20:28:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -72,8 +72,8 @@ typedef enum CostSelector
  *	 * If the relation is a base relation it will have these fields set:
  *
  *		issubquery - true if baserel is a subquery RTE rather than a table
- *		indexed - true if the relation has secondary indices (always false
- *				  if it's a subquery)
+ *		indexlist - list of IndexOptInfo nodes for relation's indexes
+ *					(always NIL if it's a subquery)
  *		pages - number of disk pages in relation (zero if a subquery)
  *		tuples - number of tuples in relation (not considering restrictions)
  *		subplan - plan for subquery (NULL if it's a plain table)
@@ -150,7 +150,7 @@ typedef struct RelOptInfo
 
 	/* information about a base rel (not set for join rels!) */
 	bool		issubquery;
-	bool		indexed;
+	List	   *indexlist;
 	long		pages;
 	double		tuples;
 	struct Plan *subplan;
@@ -178,20 +178,30 @@ typedef struct RelOptInfo
  *		and indexes, but that created confusion without actually doing anything
  *		useful.  So now we have a separate IndexOptInfo struct for indexes.
  *
- *		indexoid - OID of the index relation itself
- *		pages - number of disk pages in index
- *		tuples - number of index tuples in index
+ *		indexoid  - OID of the index relation itself
+ *		pages     - number of disk pages in index
+ *		tuples    - number of index tuples in index
+ *		ncolumns  - number of columns in index
+ *		nkeys     - number of keys used by index (input columns)
  *		classlist - List of PG_AMOPCLASS OIDs for the index
  *		indexkeys - List of base-relation attribute numbers that are index keys
- *		ordering - List of PG_OPERATOR OIDs which order the indexscan result
- *		relam	  - the OID of the pg_am of the index
+ *		ordering  - List of PG_OPERATOR OIDs which order the indexscan result
+ *		relam     - the OID of the pg_am of the index
  *		amcostestimate - OID of the relam's cost estimator
  *		indproc   - OID of the function if a functional index, else 0
  *		indpred   - index predicate if a partial index, else NULL
+ *		unique	  - true if index is unique
  *		lossy	  - true if index is lossy (may return non-matching tuples)
  *
- *		NB. the last element of the arrays classlist, indexkeys and ordering
- *			is always 0.
+ *		ncolumns and nkeys are the same except for a functional index,
+ *		wherein ncolumns is 1 (the single function output) while nkeys
+ *		is the number of table columns passed to the function. classlist[]
+ *		and ordering[] have ncolumns entries, while indexkeys[] has nkeys
+ *		entries.
+ * 
+ *		Note: for historical reasons, the arrays classlist, indexkeys and
+ *		ordering have an extra entry that is always zero.  Some code scans
+ *		until it sees a zero rather than looking at ncolumns or nkeys.
  */
 
 typedef struct IndexOptInfo
@@ -205,15 +215,18 @@ typedef struct IndexOptInfo
 	double		tuples;
 
 	/* index descriptor information */
-	Oid		   *classlist;		/* classes of AM operators */
-	int		   *indexkeys;		/* keys over which we're indexing */
-	Oid		   *ordering;		/* OIDs of sort operators for each key */
+	int			ncolumns;		/* number of columns in index */
+	int			nkeys;			/* number of keys used by index */
+	Oid		   *classlist;		/* AM operator classes for columns */
+	int		   *indexkeys;		/* column numbers of index's keys */
+	Oid		   *ordering;		/* OIDs of sort operators for each column */
 	Oid			relam;			/* OID of the access method (in pg_am) */
 
 	RegProcedure amcostestimate;/* OID of the access method's cost fcn */
 
 	Oid			indproc;		/* if a functional index */
 	List	   *indpred;		/* if a partial index */
+	bool		unique;			/* if a unique index */
 	bool		lossy;			/* if a lossy index */
 } IndexOptInfo;
 
@@ -275,7 +288,7 @@ typedef struct Path
  * tuples matched during any scan.	(The executor is smart enough not to return
  * the same tuple more than once, even if it is matched in multiple scans.)
  *
- * 'indexid' is a list of index relation OIDs, one per scan to be performed.
+ * 'indexinfo' is a list of IndexOptInfo nodes, one per scan to be performed.
  *
  * 'indexqual' is a list of index qualifications, also one per scan.
  * Each entry in 'indexqual' is a sublist of qualification expressions with
@@ -313,7 +326,7 @@ typedef struct Path
 typedef struct IndexPath
 {
 	Path		path;
-	List	   *indexid;
+	List	   *indexinfo;
 	List	   *indexqual;
 	ScanDirection indexscandir;
 	Relids		joinrelids;		/* other rels mentioned in indexqual */
@@ -533,7 +546,7 @@ typedef struct RestrictInfo
 typedef struct JoinInfo
 {
 	NodeTag		type;
-	Relids		unjoined_relids;/* some rels not yet part of my RelOptInfo */
+	Relids		unjoined_relids; /* some rels not yet part of my RelOptInfo */
 	List	   *jinfo_restrictinfo;		/* relevant RestrictInfos */
 } JoinInfo;
 

@@ -20,7 +20,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.89 2001/05/07 00:43:19 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.90 2001/05/20 20:28:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -405,7 +405,7 @@ _equalIndexPath(IndexPath *a, IndexPath *b)
 {
 	if (!_equalPath((Path *) a, (Path *) b))
 		return false;
-	if (!equali(a->indexid, b->indexid))
+	if (!equal(a->indexinfo, b->indexinfo))
 		return false;
 	if (!equal(a->indexqual, b->indexqual))
 		return false;
@@ -623,9 +623,9 @@ _equalQuery(Query *a, Query *b)
 
 	/*
 	 * We do not check the internal-to-the-planner fields: base_rel_list,
-	 * join_rel_list, equi_key_list, query_pathkeys. They might not be set
-	 * yet, and in any case they should be derivable from the other
-	 * fields.
+	 * other_rel_list, join_rel_list, equi_key_list, query_pathkeys.
+	 * They might not be set yet, and in any case they should be derivable
+	 * from the other fields.
 	 */
 	return true;
 }

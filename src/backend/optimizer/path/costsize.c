@@ -42,7 +42,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/costsize.c,v 1.73 2001/05/09 23:13:34 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/costsize.c,v 1.74 2001/05/20 20:28:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -773,7 +773,7 @@ estimate_hash_bucketsize(Query *root, Var *var)
 	if (relid == InvalidOid)
 		return 0.1;
 
-	rel = get_base_rel(root, var->varno);
+	rel = find_base_rel(root, var->varno);
 
 	if (rel->tuples <= 0.0 || rel->rows <= 0.0)
 		return 0.1;				/* ensure we can divide below */

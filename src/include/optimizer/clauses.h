@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: clauses.h,v 1.43 2001/03/22 04:00:53 momjian Exp $
+ * $Id: clauses.h,v 1.44 2001/05/20 20:28:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,14 +15,6 @@
 #define CLAUSES_H
 
 #include "nodes/relation.h"
-
-/*
- *	Flag bits returned by get_relattval().
- *	These are used in selectivity-estimation routines, too.
- */
-#define SEL_CONSTANT	1		/* operator's non-var arg is a constant */
-#define SEL_RIGHT		2		/* operator's non-var arg is on the right */
-
 
 extern Expr *make_clause(int type, Node *oper, List *args);
 
@@ -61,11 +53,6 @@ extern List *pull_constant_clauses(List *quals, List **constantQual);
 
 extern void clause_get_relids_vars(Node *clause, Relids *relids, List **vars);
 extern int	NumRelids(Node *clause);
-extern void get_relattval(Node *clause, int targetrelid,
-			  int *relid, AttrNumber *attno,
-			  Datum *constval, int *flag);
-extern void get_rels_atts(Node *clause, int *relid1,
-			  AttrNumber *attno1, int *relid2, AttrNumber *attno2);
 extern void CommuteClause(Expr *clause);
 
 extern Node *eval_const_expressions(Node *node);

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/plancat.c,v 1.65 2001/05/07 00:43:22 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/plancat.c,v 1.66 2001/05/20 20:28:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,9 +23,12 @@
 #include "catalog/pg_amop.h"
 #include "catalog/pg_inherits.h"
 #include "catalog/pg_index.h"
+#include "optimizer/clauses.h"
 #include "optimizer/plancat.h"
+#include "parser/parsetree.h"
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
+#include "utils/lsyscache.h"
 #include "utils/relcache.h"
 #include "utils/syscache.h"
 #include "catalog/catalog.h"
@@ -33,7 +36,7 @@
 
 
 /*
- * relation_info -
+ * get_relation_info -
  *	  Retrieves catalog information for a given relation.
  *	  Given the Oid of the relation, return the following info:
  *				whether the relation has secondary indices
@@ -41,8 +44,8 @@
  *				number of tuples
  */
 void
-relation_info(Oid relationObjectId,
-			  bool *hasindex, long *pages, double *tuples)
+get_relation_info(Oid relationObjectId,
+				  bool *hasindex, long *pages, double *tuples)
 {
 	HeapTuple	relationTuple;
 	Form_pg_class relation;
@@ -51,16 +54,19 @@ relation_info(Oid relationObjectId,
 								   ObjectIdGetDatum(relationObjectId),
 								   0, 0, 0);
 	if (!HeapTupleIsValid(relationTuple))
-		elog(ERROR, "relation_info: Relation %u not found",
+		elog(ERROR, "get_relation_info: Relation %u not found",
 			 relationObjectId);
 	relation = (Form_pg_class) GETSTRUCT(relationTuple);
 
-	if (IsIgnoringSystemIndexes() && IsSystemRelationName(NameStr(relation->relname)))
+	if (IsIgnoringSystemIndexes() &&
+		IsSystemRelationName(NameStr(relation->relname)))
 		*hasindex = false;
 	else
-		*hasindex = (relation->relhasindex) ? true : false;
+		*hasindex = relation->relhasindex;
+
 	*pages = relation->relpages;
 	*tuples = relation->reltuples;
+
 	ReleaseSysCache(relationTuple);
 }
 
@@ -110,8 +116,8 @@ find_secondary_indexes(Oid relationObjectId)
 		info = makeNode(IndexOptInfo);
 
 		/*
-		 * Need to make these arrays large enough to be sure there is a
-		 * terminating 0 at the end of each one.
+		 * Need to make these arrays large enough to be sure there is
+		 * room for a terminating 0 at the end of each one.
 		 */
 		info->classlist = (Oid *) palloc(sizeof(Oid) * (INDEX_MAX_KEYS + 1));
 		info->indexkeys = (int *) palloc(sizeof(int) * (INDEX_MAX_KEYS + 1));
@@ -131,14 +137,26 @@ find_secondary_indexes(Oid relationObjectId)
 		}
 		else
 			info->indpred = NIL;
+		info->unique = index->indisunique;
 		info->lossy = index->indislossy;
 
 		for (i = 0; i < INDEX_MAX_KEYS; i++)
-			info->indexkeys[i] = index->indkey[i];
-		info->indexkeys[INDEX_MAX_KEYS] = 0;
-		for (i = 0; i < INDEX_MAX_KEYS; i++)
+		{
+			if (index->indclass[i] == (Oid) 0)
+				break;
 			info->classlist[i] = index->indclass[i];
-		info->classlist[INDEX_MAX_KEYS] = (Oid) 0;
+		}
+		info->classlist[i] = (Oid) 0;
+		info->ncolumns = i;
+
+		for (i = 0; i < INDEX_MAX_KEYS; i++)
+		{
+			if (index->indkey[i] == 0)
+				break;
+			info->indexkeys[i] = index->indkey[i];
+		}
+		info->indexkeys[i] = 0;
+		info->nkeys = i;
 
 		/* Extract info from the relation descriptor for the index */
 		indexRelation = index_open(index->indexrelid);
@@ -156,7 +174,7 @@ find_secondary_indexes(Oid relationObjectId)
 		MemSet(info->ordering, 0, sizeof(Oid) * (INDEX_MAX_KEYS + 1));
 		if (amorderstrategy != 0)
 		{
-			for (i = 0; i < INDEX_MAX_KEYS && index->indclass[i]; i++)
+			for (i = 0; i < info->ncolumns; i++)
 			{
 				HeapTuple	amopTuple;
 				Form_pg_amop amop;
@@ -193,30 +211,34 @@ find_secondary_indexes(Oid relationObjectId)
 /*
  * restriction_selectivity
  *
- * Returns the selectivity of a specified operator.
+ * Returns the selectivity of a specified restriction operator clause.
  * This code executes registered procedures stored in the
  * operator relation, by calling the function manager.
  *
- * XXX The assumption in the selectivity procedures is that if the
- *		relation OIDs or attribute numbers are 0, then the clause
- *		isn't of the form (op var const).
+ * varRelid is either 0 or a rangetable index.  See clause_selectivity()
+ * for details about its meaning.
  */
 Selectivity
-restriction_selectivity(Oid functionObjectId,
-						Oid operatorObjectId,
-						Oid relationObjectId,
-						AttrNumber attributeNumber,
-						Datum constValue,
-						int constFlag)
+restriction_selectivity(Query *root,
+						Oid operator,
+						List *args,
+						int varRelid)
 {
+	RegProcedure oprrest = get_oprrest(operator);
 	float8		result;
 
-	result = DatumGetFloat8(OidFunctionCall5(functionObjectId,
-									  ObjectIdGetDatum(operatorObjectId),
-									  ObjectIdGetDatum(relationObjectId),
-										  Int16GetDatum(attributeNumber),
-											 constValue,
-											 Int32GetDatum(constFlag)));
+	/*
+	 * if the oprrest procedure is missing for whatever reason,
+	 * use a selectivity of 0.5
+	 */
+	if (!oprrest)
+		return (Selectivity) 0.5;
+
+	result = DatumGetFloat8(OidFunctionCall4(oprrest,
+											 PointerGetDatum(root),
+											 ObjectIdGetDatum(operator),
+											 PointerGetDatum(args),
+											 Int32GetDatum(varRelid)));
 
 	if (result < 0.0 || result > 1.0)
 		elog(ERROR, "restriction_selectivity: bad value %f", result);
@@ -227,29 +249,29 @@ restriction_selectivity(Oid functionObjectId,
 /*
  * join_selectivity
  *
- * Returns the selectivity of an operator, given the join clause
- * information.
- *
- * XXX The assumption in the selectivity procedures is that if the
- *		relation OIDs or attribute numbers are 0, then the clause
- *		isn't of the form (op var var).
+ * Returns the selectivity of a specified join operator clause.
+ * This code executes registered procedures stored in the
+ * operator relation, by calling the function manager.
  */
 Selectivity
-join_selectivity(Oid functionObjectId,
-				 Oid operatorObjectId,
-				 Oid relationObjectId1,
-				 AttrNumber attributeNumber1,
-				 Oid relationObjectId2,
-				 AttrNumber attributeNumber2)
+join_selectivity(Query *root,
+				 Oid operator,
+				 List *args)
 {
+	RegProcedure oprjoin = get_oprjoin(operator);
 	float8		result;
 
-	result = DatumGetFloat8(OidFunctionCall5(functionObjectId,
-									  ObjectIdGetDatum(operatorObjectId),
-									 ObjectIdGetDatum(relationObjectId1),
-										 Int16GetDatum(attributeNumber1),
-									 ObjectIdGetDatum(relationObjectId2),
-									   Int16GetDatum(attributeNumber2)));
+	/*
+	 * if the oprjoin procedure is missing for whatever reason,
+	 * use a selectivity of 0.5
+	 */
+	if (!oprjoin)
+		return (Selectivity) 0.5;
+
+	result = DatumGetFloat8(OidFunctionCall3(oprjoin,
+											 PointerGetDatum(root),
+											 ObjectIdGetDatum(operator),
+											 PointerGetDatum(args)));
 
 	if (result < 0.0 || result > 1.0)
 		elog(ERROR, "join_selectivity: bad value %f", result);
@@ -329,4 +351,37 @@ has_subclass(Oid relationId)
 	result = ((Form_pg_class) GETSTRUCT(tuple))->relhassubclass;
 	ReleaseSysCache(tuple);
 	return result;
+}
+
+/*
+ * has_unique_index
+ *
+ * Detect whether there is a unique index on the specified attribute
+ * of the specified relation, thus allowing us to conclude that all
+ * the (non-null) values of the attribute are distinct.
+ */
+bool
+has_unique_index(RelOptInfo *rel, AttrNumber attno)
+{
+	List	   *ilist;
+
+	foreach(ilist, rel->indexlist)
+	{
+		IndexOptInfo *index = (IndexOptInfo *) lfirst(ilist);
+
+		/*
+		 * Note: ignore functional, partial, or lossy indexes, since they
+		 * don't allow us to conclude that all attr values are distinct.
+		 * Also, a multicolumn unique index doesn't allow us to conclude
+		 * that just the specified attr is unique.
+		 */
+		if (index->unique &&
+			index->nkeys == 1 &&
+			index->indexkeys[0] == attno &&
+			index->indproc == InvalidOid &&
+			index->indpred == NIL &&
+			!index->lossy)
+			return true;
+	}
+	return false;
 }

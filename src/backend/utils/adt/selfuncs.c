@@ -15,9 +15,55 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.89 2001/05/09 23:13:35 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.90 2001/05/20 20:28:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
+ */
+
+/*----------
+ * Operator selectivity estimation functions are called to estimate the
+ * selectivity of WHERE clauses whose top-level operator is their operator.
+ * We divide the problem into two cases:
+ *		Restriction clause estimation: the clause involves vars of just
+ *			one relation.
+ *		Join clause estimation: the clause involves vars of multiple rels.
+ * Join selectivity estimation is far more difficult and usually less accurate
+ * than restriction estimation.
+ *
+ * When dealing with the inner scan of a nestloop join, we consider the
+ * join's joinclauses as restriction clauses for the inner relation, and
+ * treat vars of the outer relation as parameters (a/k/a constants of unknown
+ * values).  So, restriction estimators need to be able to accept an argument
+ * telling which relation is to be treated as the variable.
+ *
+ * The call convention for a restriction estimator (oprrest function) is
+ *
+ *		Selectivity oprrest (Query *root,
+ *							 Oid operator,
+ *							 List *args,
+ *							 int varRelid);
+ *
+ * root: general information about the query (rtable and RelOptInfo lists
+ * are particularly important for the estimator).
+ * operator: OID of the specific operator in question.
+ * args: argument list from the operator clause.
+ * varRelid: if not zero, the relid (rtable index) of the relation to
+ * be treated as the variable relation.  May be zero if the args list
+ * is known to contain vars of only one relation.
+ *
+ * This is represented at the SQL level (in pg_proc) as
+ *
+ *		float8 oprrest (opaque, oid, opaque, int4);
+ *
+ * The call convention for a join estimator (oprjoin function) is similar
+ * except that varRelid is not needed:
+ *
+ *		Selectivity oprjoin (Query *root,
+ *							 Oid operator,
+ *							 List *args);
+ *
+ *		float8 oprjoin (opaque, oid, opaque);
+ *----------
  */
 
 #include "postgres.h"
@@ -35,8 +81,11 @@
 #include "catalog/pg_statistic.h"
 #include "catalog/pg_type.h"
 #include "mb/pg_wchar.h"
+#include "nodes/makefuncs.h"
 #include "optimizer/clauses.h"
 #include "optimizer/cost.h"
+#include "optimizer/pathnode.h"
+#include "optimizer/plancat.h"
 #include "parser/parse_func.h"
 #include "parser/parse_oper.h"
 #include "parser/parsetree.h"
@@ -46,17 +95,28 @@
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
 
-/* N is not a valid var/constant or relation id */
-#define NONVALUE(N)		((N) == 0)
+/*
+ * Note: the default selectivity estimates are not chosen entirely at random.
+ * We want them to be small enough to ensure that indexscans will be used if
+ * available, for typical table densities of ~100 tuples/page.  Thus, for
+ * example, 0.01 is not quite small enough, since that makes it appear that
+ * nearly all pages will be hit anyway.  Also, since we sometimes estimate
+ * eqsel as 1/num_distinct, we probably want DEFAULT_NUM_DISTINCT to equal
+ * 1/DEFAULT_EQ_SEL.
+ */
 
 /* default selectivity estimate for equalities such as "A = b" */
-#define DEFAULT_EQ_SEL	0.01
+#define DEFAULT_EQ_SEL	0.005
 
 /* default selectivity estimate for inequalities such as "A < b" */
 #define DEFAULT_INEQ_SEL  (1.0 / 3.0)
 
 /* default selectivity estimate for pattern-match operators such as LIKE */
-#define DEFAULT_MATCH_SEL	0.01
+#define DEFAULT_MATCH_SEL	0.005
+
+/* default number of distinct values in a table */
+#define DEFAULT_NUM_DISTINCT  200
+
 
 static bool convert_to_scalar(Datum value, Oid valuetypid, double *scaledvalue,
 				  Datum lobound, Datum hibound, Oid boundstypid,
@@ -72,19 +132,19 @@ static double convert_one_string_to_scalar(unsigned char *value,
 							 int rangelo, int rangehi);
 static unsigned char *convert_string_datum(Datum value, Oid typid);
 static double convert_timevalue_to_scalar(Datum value, Oid typid);
-static void getattproperties(Oid relid, AttrNumber attnum,
-							 Oid *typid, int32 *typmod);
-static double get_att_numdistinct(Oid relid, AttrNumber attnum, Oid typid,
+static double get_att_numdistinct(Query *root, Var *var,
 								  Form_pg_statistic stats);
-static Selectivity prefix_selectivity(char *prefix,
-				   Oid relid,
-				   AttrNumber attno,
-				   Oid datatype);
+static bool get_restriction_var(List *args, int varRelid,
+								Var **var, Node **other,
+								bool *varonleft);
+static void get_join_vars(List *args, Var **var1, Var **var2);
+static Selectivity prefix_selectivity(Query *root, Var *var, char *prefix);
 static Selectivity pattern_selectivity(char *patt, Pattern_Type ptype);
 static bool string_lessthan(const char *str1, const char *str2,
 				Oid datatype);
 static Oid	find_operator(const char *opname, Oid datatype);
 static Datum string_to_datum(const char *str, Oid datatype);
+static Const *string_to_const(const char *str, Oid datatype);
 
 
 /*
@@ -93,20 +153,19 @@ static Datum string_to_datum(const char *str, Oid datatype);
  * Note: this routine is also used to estimate selectivity for some
  * operators that are not "=" but have comparable selectivity behavior,
  * such as "~=" (geometric approximate-match).	Even for "=", we must
- * keep in mind that the left and right datatypes may differ, so the type
- * of the given constant "value" may be different from the type of the
- * attribute.
+ * keep in mind that the left and right datatypes may differ.
  */
 Datum
 eqsel(PG_FUNCTION_ARGS)
 {
-	Oid			opid = PG_GETARG_OID(0);
-	Oid			relid = PG_GETARG_OID(1);
-	AttrNumber	attno = PG_GETARG_INT16(2);
-	Datum		value = PG_GETARG_DATUM(3);
-	int32		flag = PG_GETARG_INT32(4);
-	Oid			typid;
-	int32		typmod;
+	Query	   *root = (Query *) PG_GETARG_POINTER(0);
+	Oid			operator = PG_GETARG_OID(1);
+	List	   *args = (List *) PG_GETARG_POINTER(2);
+	int			varRelid = PG_GETARG_INT32(3);
+	Var		   *var;
+	Node	   *other;
+	bool		varonleft;
+	Oid			relid;
 	HeapTuple	statsTuple;
 	Datum	   *values;
 	int			nvalues;
@@ -114,16 +173,29 @@ eqsel(PG_FUNCTION_ARGS)
 	int			nnumbers;
 	double		selec;
 
-	if (NONVALUE(relid) || NONVALUE(attno))
+	/*
+	 * If expression is not var = something or something = var for
+	 * a simple var of a real relation (no subqueries, for now),
+	 * then punt and return a default estimate.
+	 */
+	if (!get_restriction_var(args, varRelid,
+							 &var, &other, &varonleft))
+		PG_RETURN_FLOAT8(DEFAULT_EQ_SEL);
+	relid = getrelid(var->varno, root->rtable);
+	if (relid == InvalidOid)
 		PG_RETURN_FLOAT8(DEFAULT_EQ_SEL);
 
-	/* get info about the attribute */
-	getattproperties(relid, attno, &typid, &typmod);
+	/*
+	 * If the something is a NULL constant, assume operator is strict
+	 * and return zero, ie, operator will never return TRUE.
+	 */
+	if (IsA(other, Const) && ((Const *) other)->constisnull)
+		PG_RETURN_FLOAT8(0.0);
 
 	/* get stats for the attribute, if available */
 	statsTuple = SearchSysCache(STATRELATT,
 								ObjectIdGetDatum(relid),
-								Int16GetDatum(attno),
+								Int16GetDatum(var->varattno),
 								0, 0);
 	if (HeapTupleIsValid(statsTuple))
 	{
@@ -131,8 +203,10 @@ eqsel(PG_FUNCTION_ARGS)
 
 		stats = (Form_pg_statistic) GETSTRUCT(statsTuple);
 
-		if (flag & SEL_CONSTANT)
+		if (IsA(other, Const))
 		{
+			/* Var is being compared to a known non-null constant */
+			Datum	constval = ((Const *) other)->constvalue;
 			bool	match = false;
 			int		i;
 
@@ -143,25 +217,25 @@ eqsel(PG_FUNCTION_ARGS)
 			 * is an appropriate test.  If you don't like this, maybe you
 			 * shouldn't be using eqsel for your operator...)
 			 */
-			if (get_attstatsslot(statsTuple, typid, typmod,
+			if (get_attstatsslot(statsTuple, var->vartype, var->vartypmod,
 								 STATISTIC_KIND_MCV, InvalidOid,
 								 &values, &nvalues,
 								 &numbers, &nnumbers))
 			{
 				FmgrInfo	eqproc;
 
-				fmgr_info(get_opcode(opid), &eqproc);
+				fmgr_info(get_opcode(operator), &eqproc);
 
 				for (i = 0; i < nvalues; i++)
 				{
 					/* be careful to apply operator right way 'round */
-					if (flag & SEL_RIGHT)
+					if (varonleft)
 						match = DatumGetBool(FunctionCall2(&eqproc,
 														   values[i],
-														   value));
+														   constval));
 					else
 						match = DatumGetBool(FunctionCall2(&eqproc,
-														   value,
+														   constval,
 														   values[i]));
 					if (match)
 						break;
@@ -203,8 +277,7 @@ eqsel(PG_FUNCTION_ARGS)
 				 * share this remaining fraction equally, so we
 				 * divide by the number of other distinct values.
 				 */
-				otherdistinct = get_att_numdistinct(relid, attno,
-													typid, stats)
+				otherdistinct = get_att_numdistinct(root, var, stats)
 					- nnumbers;
 				if (otherdistinct > 1)
 					selec /= otherdistinct;
@@ -217,7 +290,8 @@ eqsel(PG_FUNCTION_ARGS)
 					selec = numbers[nnumbers-1];
 			}
 
-			free_attstatsslot(typid, values, nvalues, numbers, nnumbers);
+			free_attstatsslot(var->vartype, values, nvalues,
+							  numbers, nnumbers);
 		}
 		else
 		{
@@ -234,21 +308,21 @@ eqsel(PG_FUNCTION_ARGS)
 			 * frequency in the table.  Is that a good idea?)
 			 */
 			selec = 1.0 - stats->stanullfrac;
-			ndistinct = get_att_numdistinct(relid, attno, typid, stats);
+			ndistinct = get_att_numdistinct(root, var, stats);
 			if (ndistinct > 1)
 				selec /= ndistinct;
 			/*
 			 * Cross-check: selectivity should never be
 			 * estimated as more than the most common value's.
 			 */
-			if (get_attstatsslot(statsTuple, typid, typmod,
+			if (get_attstatsslot(statsTuple, var->vartype, var->vartypmod,
 								 STATISTIC_KIND_MCV, InvalidOid,
 								 NULL, NULL,
 								 &numbers, &nnumbers))
 			{
 				if (nnumbers > 0 && selec > numbers[0])
 					selec = numbers[0];
-				free_attstatsslot(typid, NULL, 0, numbers, nnumbers);
+				free_attstatsslot(var->vartype, NULL, 0, numbers, nnumbers);
 			}
 		}
 
@@ -262,7 +336,7 @@ eqsel(PG_FUNCTION_ARGS)
 		 * equally common.  (The guess is unlikely to be very good,
 		 * but we do know a few special cases.)
 		 */
-		selec = 1.0 / get_att_numdistinct(relid, attno, typid, NULL);
+		selec = 1.0 / get_att_numdistinct(root, var, NULL);
 	}
 
 	/* result should be in range, but make sure... */
@@ -284,27 +358,25 @@ eqsel(PG_FUNCTION_ARGS)
 Datum
 neqsel(PG_FUNCTION_ARGS)
 {
-	Oid			opid = PG_GETARG_OID(0);
-	Oid			relid = PG_GETARG_OID(1);
-	AttrNumber	attno = PG_GETARG_INT16(2);
-	Datum		value = PG_GETARG_DATUM(3);
-	int32		flag = PG_GETARG_INT32(4);
-	Oid			eqopid;
+	Query	   *root = (Query *) PG_GETARG_POINTER(0);
+	Oid			operator = PG_GETARG_OID(1);
+	List	   *args = (List *) PG_GETARG_POINTER(2);
+	int			varRelid = PG_GETARG_INT32(3);
+	Oid			eqop;
 	float8		result;
 
 	/*
 	 * We want 1 - eqsel() where the equality operator is the one
 	 * associated with this != operator, that is, its negator.
 	 */
-	eqopid = get_negator(opid);
-	if (eqopid)
+	eqop = get_negator(operator);
+	if (eqop)
 	{
-		result = DatumGetFloat8(DirectFunctionCall5(eqsel,
-												ObjectIdGetDatum(eqopid),
-												 ObjectIdGetDatum(relid),
-													Int16GetDatum(attno),
-													value,
-													Int32GetDatum(flag)));
+		result = DatumGetFloat8(DirectFunctionCall4(eqsel,
+											 PointerGetDatum(root),
+											 ObjectIdGetDatum(eqop),
+											 PointerGetDatum(args),
+											 Int32GetDatum(varRelid)));
 	}
 	else
 	{
@@ -316,28 +388,26 @@ neqsel(PG_FUNCTION_ARGS)
 }
 
 /*
- *		scalarltsel		- Selectivity of "<" (also "<=") for scalars.
+ *	scalarineqsel		- Selectivity of "<", "<=", ">", ">=" for scalars.
+ *
+ * This is the guts of both scalarltsel and scalargtsel.  The caller has
+ * commuted the clause, if necessary, so that we can treat the Var as
+ * being on the left.
  *
  * This routine works for any datatype (or pair of datatypes) known to
  * convert_to_scalar().  If it is applied to some other datatype,
  * it will return a default estimate.
  */
-Datum
-scalarltsel(PG_FUNCTION_ARGS)
+static double
+scalarineqsel(Query *root, Oid operator, bool isgt,
+			  Var *var, Node *other)
 {
-	Oid			opid = PG_GETARG_OID(0);
-	Oid			relid = PG_GETARG_OID(1);
-	AttrNumber	attno = PG_GETARG_INT16(2);
-	Datum		value = PG_GETARG_DATUM(3);
-	int32		flag = PG_GETARG_INT32(4);
-	bool		isgt;
-	HeapTuple	oprTuple;
+	Oid			relid;
+	Datum		constval;
+	Oid			consttype;
 	HeapTuple	statsTuple;
 	Form_pg_statistic stats;
-	Oid			contype;
 	FmgrInfo	opproc;
-	Oid			typid;
-	int32		typmod;
 	Datum	   *values;
 	int			nvalues;
 	float4	   *numbers;
@@ -348,61 +418,43 @@ scalarltsel(PG_FUNCTION_ARGS)
 	double		selec;
 	int			i;
 
-	if (NONVALUE(relid) || NONVALUE(attno))
-		PG_RETURN_FLOAT8(DEFAULT_INEQ_SEL);
-
-	/* Can't do anything useful if no constant to compare against, either */
-	if (!(flag & SEL_CONSTANT))
-		PG_RETURN_FLOAT8(DEFAULT_INEQ_SEL);
+	/*
+	 * If expression is not var op something or something op var for
+	 * a simple var of a real relation (no subqueries, for now),
+	 * then punt and return a default estimate.
+	 */
+	relid = getrelid(var->varno, root->rtable);
+	if (relid == InvalidOid)
+		return DEFAULT_INEQ_SEL;
 
 	/*
-	 * Force the constant to be on the right to simplify later logic.
-	 * This means that we may be dealing with either "<" or ">" cases.
+	 * Can't do anything useful if the something is not a constant, either.
 	 */
-	if (flag & SEL_RIGHT)
-	{
-		/* we have x < const */
-		isgt = false;
-	}
-	else
-	{
-		/* we have const < x, commute to make x > const */
-		opid = get_commutator(opid);
-		if (!opid)
-		{
-			/* Use default selectivity (should we raise an error instead?) */
-			PG_RETURN_FLOAT8(DEFAULT_INEQ_SEL);
-		}
-		isgt = true;
-	}
+	if (! IsA(other, Const))
+		return DEFAULT_INEQ_SEL;
 
 	/*
-	 * The constant might not be the same datatype as the column;
-	 * look at the operator's input types to find out what it is.
-	 * Also set up to be able to call the operator's execution proc.
+	 * If the constant is NULL, assume operator is strict
+	 * and return zero, ie, operator will never return TRUE.
 	 */
-	oprTuple = SearchSysCache(OPEROID,
-							  ObjectIdGetDatum(opid),
-							  0, 0, 0);
-	if (!HeapTupleIsValid(oprTuple))
-		elog(ERROR, "scalarltsel: no tuple for operator %u", opid);
-	contype = ((Form_pg_operator) GETSTRUCT(oprTuple))->oprright;
-	fmgr_info(((Form_pg_operator) GETSTRUCT(oprTuple))->oprcode, &opproc);
-	ReleaseSysCache(oprTuple);
+	if (((Const *) other)->constisnull)
+		return 0.0;
+	constval = ((Const *) other)->constvalue;
+	consttype = ((Const *) other)->consttype;
 
-	/* Now get info and stats about the attribute */
-	getattproperties(relid, attno, &typid, &typmod);
-
+	/* get stats for the attribute */
 	statsTuple = SearchSysCache(STATRELATT,
 								ObjectIdGetDatum(relid),
-								Int16GetDatum(attno),
+								Int16GetDatum(var->varattno),
 								0, 0);
 	if (!HeapTupleIsValid(statsTuple))
 	{
 		/* no stats available, so default result */
-		PG_RETURN_FLOAT8(DEFAULT_INEQ_SEL);
+		return DEFAULT_INEQ_SEL;
 	}
 	stats = (Form_pg_statistic) GETSTRUCT(statsTuple);
+
+	fmgr_info(get_opcode(operator), &opproc);
 
 	/*
 	 * If we have most-common-values info, add up the fractions of the
@@ -413,7 +465,7 @@ scalarltsel(PG_FUNCTION_ARGS)
 	mcv_selec = 0.0;
 	sumcommon = 0.0;
 
-	if (get_attstatsslot(statsTuple, typid, typmod,
+	if (get_attstatsslot(statsTuple, var->vartype, var->vartypmod,
 						 STATISTIC_KIND_MCV, InvalidOid,
 						 &values, &nvalues,
 						 &numbers, &nnumbers))
@@ -422,11 +474,11 @@ scalarltsel(PG_FUNCTION_ARGS)
 		{
 			if (DatumGetBool(FunctionCall2(&opproc,
 										   values[i],
-										   value)))
+										   constval)))
 				mcv_selec += numbers[i];
 			sumcommon += numbers[i];
 		}
-		free_attstatsslot(typid, values, nvalues, numbers, nnumbers);
+		free_attstatsslot(var->vartype, values, nvalues, numbers, nnumbers);
 	}
 
 	/*
@@ -440,11 +492,11 @@ scalarltsel(PG_FUNCTION_ARGS)
 	 * have at hand!  (For example, we might have a '<=' operator rather
 	 * than the '<' operator that will appear in staop.)  For now, assume
 	 * that whatever appears in pg_statistic is sorted the same way our
-	 * operator sorts.
+	 * operator sorts, or the reverse way if isgt is TRUE.
 	 */
 	hist_selec = 0.0;
 
-	if (get_attstatsslot(statsTuple, typid, typmod,
+	if (get_attstatsslot(statsTuple, var->vartype, var->vartypmod,
 						 STATISTIC_KIND_HISTOGRAM, InvalidOid,
 						 &values, &nvalues,
 						 NULL, NULL))
@@ -456,7 +508,7 @@ scalarltsel(PG_FUNCTION_ARGS)
 
 			ltcmp = DatumGetBool(FunctionCall2(&opproc,
 											   values[0],
-											   value));
+											   constval));
 			if (isgt)
 				ltcmp = !ltcmp;
 			if (!ltcmp)
@@ -475,7 +527,7 @@ scalarltsel(PG_FUNCTION_ARGS)
 				{
 					ltcmp = DatumGetBool(FunctionCall2(&opproc,
 													   values[i],
-													   value));
+													   constval));
 					if (isgt)
 						ltcmp = !ltcmp;
 					if (!ltcmp)
@@ -500,8 +552,9 @@ scalarltsel(PG_FUNCTION_ARGS)
 					 * values to a uniform comparison scale, and do a linear
 					 * interpolation within this bin.
 					 */
-					if (convert_to_scalar(value, contype, &val,
-										  values[i-1], values[i], typid,
+					if (convert_to_scalar(constval, consttype, &val,
+										  values[i-1], values[i],
+										  var->vartype,
 										  &low, &high))
 					{
 						if (high <= low)
@@ -520,10 +573,10 @@ scalarltsel(PG_FUNCTION_ARGS)
 					{
 						/*
 						 * Ideally we'd produce an error here, on the grounds
-						 * that the given operator shouldn't have scalarltsel
+						 * that the given operator shouldn't have scalarXXsel
 						 * registered as its selectivity func unless we can
 						 * deal with its operand types.  But currently, all
-						 * manner of stuff is invoking scalarltsel, so give a
+						 * manner of stuff is invoking scalarXXsel, so give a
 						 * default estimate until that can be fixed.
 						 */
 						binfrac = 0.5;
@@ -549,13 +602,13 @@ scalarltsel(PG_FUNCTION_ARGS)
 			 * don't believe extremely small or large selectivity
 			 * estimates.
 			 */
-			if (hist_selec < 0.001)
-				hist_selec = 0.001;
-			else if (hist_selec > 0.999)
-				hist_selec = 0.999;
+			if (hist_selec < 0.0001)
+				hist_selec = 0.0001;
+			else if (hist_selec > 0.9999)
+				hist_selec = 0.9999;
 		}
 
-		free_attstatsslot(typid, values, nvalues, NULL, 0);
+		free_attstatsslot(var->vartype, values, nvalues, NULL, 0);
 	}
 
 	/*
@@ -586,141 +639,210 @@ scalarltsel(PG_FUNCTION_ARGS)
 	else if (selec > 1.0)
 		selec = 1.0;
 
+	return selec;
+}
+
+/*
+ *		scalarltsel		- Selectivity of "<" (also "<=") for scalars.
+ */
+Datum
+scalarltsel(PG_FUNCTION_ARGS)
+{
+	Query	   *root = (Query *) PG_GETARG_POINTER(0);
+	Oid			operator = PG_GETARG_OID(1);
+	List	   *args = (List *) PG_GETARG_POINTER(2);
+	int			varRelid = PG_GETARG_INT32(3);
+	Var		   *var;
+	Node	   *other;
+	bool		varonleft;
+	bool		isgt;
+	double		selec;
+
+	/*
+	 * If expression is not var op something or something op var for
+	 * a simple var of a real relation (no subqueries, for now),
+	 * then punt and return a default estimate.
+	 */
+	if (!get_restriction_var(args, varRelid,
+							 &var, &other, &varonleft))
+		PG_RETURN_FLOAT8(DEFAULT_INEQ_SEL);
+
+	/*
+	 * Force the var to be on the left to simplify logic in scalarineqsel.
+	 */
+	if (varonleft)
+	{
+		/* we have var < other */
+		isgt = false;
+	}
+	else
+	{
+		/* we have other < var, commute to make var > other */
+		operator = get_commutator(operator);
+		if (!operator)
+		{
+			/* Use default selectivity (should we raise an error instead?) */
+			PG_RETURN_FLOAT8(DEFAULT_INEQ_SEL);
+		}
+		isgt = true;
+	}
+
+	selec = scalarineqsel(root, operator, isgt, var, other);
+
 	PG_RETURN_FLOAT8((float8) selec);
 }
 
 /*
  *		scalargtsel		- Selectivity of ">" (also ">=") for integers.
- *
- * See above comments for scalarltsel.
  */
 Datum
 scalargtsel(PG_FUNCTION_ARGS)
 {
-	Oid			opid = PG_GETARG_OID(0);
-	Oid			relid = PG_GETARG_OID(1);
-	AttrNumber	attno = PG_GETARG_INT16(2);
-	Datum		value = PG_GETARG_DATUM(3);
-	int32		flag = PG_GETARG_INT32(4);
-	Oid			ltopid;
+	Query	   *root = (Query *) PG_GETARG_POINTER(0);
+	Oid			operator = PG_GETARG_OID(1);
+	List	   *args = (List *) PG_GETARG_POINTER(2);
+	int			varRelid = PG_GETARG_INT32(3);
+	Var		   *var;
+	Node	   *other;
+	bool		varonleft;
+	bool		isgt;
+	double		selec;
 
 	/*
-	 * Commute so that we have a "<" or "<=" operator, then apply
-	 * scalarltsel.
+	 * If expression is not var op something or something op var for
+	 * a simple var of a real relation (no subqueries, for now),
+	 * then punt and return a default estimate.
 	 */
-	ltopid = get_commutator(opid);
-	if (!ltopid)
-	{
-		/* Use default selectivity (should we raise an error instead?) */
+	if (!get_restriction_var(args, varRelid,
+							 &var, &other, &varonleft))
 		PG_RETURN_FLOAT8(DEFAULT_INEQ_SEL);
+
+	/*
+	 * Force the var to be on the left to simplify logic in scalarineqsel.
+	 */
+	if (varonleft)
+	{
+		/* we have var > other */
+		isgt = true;
+	}
+	else
+	{
+		/* we have other > var, commute to make var < other */
+		operator = get_commutator(operator);
+		if (!operator)
+		{
+			/* Use default selectivity (should we raise an error instead?) */
+			PG_RETURN_FLOAT8(DEFAULT_INEQ_SEL);
+		}
+		isgt = false;
 	}
 
-	flag ^= SEL_RIGHT;
-	return DirectFunctionCall5(scalarltsel,
-							   ObjectIdGetDatum(ltopid),
-							   ObjectIdGetDatum(relid),
-							   Int16GetDatum(attno),
-							   value,
-							   Int32GetDatum(flag));
+	selec = scalarineqsel(root, operator, isgt, var, other);
+
+	PG_RETURN_FLOAT8((float8) selec);
 }
 
 /*
  * patternsel			- Generic code for pattern-match selectivity.
  */
-static Datum
+static double
 patternsel(PG_FUNCTION_ARGS, Pattern_Type ptype)
 {
-	Oid			opid = PG_GETARG_OID(0);
-	Oid			relid = PG_GETARG_OID(1);
-	AttrNumber	attno = PG_GETARG_INT16(2);
-	Datum		value = PG_GETARG_DATUM(3);
-	int32		flag = PG_GETARG_INT32(4);
-	float8		result;
+	Query	   *root = (Query *) PG_GETARG_POINTER(0);
+#ifdef NOT_USED
+	Oid			operator = PG_GETARG_OID(1);
+#endif
+	List	   *args = (List *) PG_GETARG_POINTER(2);
+	int			varRelid = PG_GETARG_INT32(3);
+	Var		   *var;
+	Node	   *other;
+	bool		varonleft;
+	Oid			relid;
+	Datum		constval;
+	char	   *patt;
+	Pattern_Prefix_Status pstatus;
+	char	   *prefix;
+	char	   *rest;
+	double		result;
 
-	/* Must have a constant for the pattern, or cannot learn anything */
-	if ((flag & (SEL_CONSTANT | SEL_RIGHT)) != (SEL_CONSTANT | SEL_RIGHT))
-		result = DEFAULT_MATCH_SEL;
+	/*
+	 * If expression is not var op constant for
+	 * a simple var of a real relation (no subqueries, for now),
+	 * then punt and return a default estimate.
+	 */
+	if (!get_restriction_var(args, varRelid,
+							 &var, &other, &varonleft))
+		return DEFAULT_MATCH_SEL;
+	if (!varonleft || !IsA(other, Const))
+		return DEFAULT_MATCH_SEL;
+	relid = getrelid(var->varno, root->rtable);
+	if (relid == InvalidOid)
+		return DEFAULT_MATCH_SEL;
+
+	/*
+	 * If the constant is NULL, assume operator is strict
+	 * and return zero, ie, operator will never return TRUE.
+	 */
+	if (((Const *) other)->constisnull)
+		return 0.0;
+	constval = ((Const *) other)->constvalue;
+	/* the right-hand const is type text for all supported operators */
+	Assert(((Const *) other)->consttype == TEXTOID);
+	patt = DatumGetCString(DirectFunctionCall1(textout, constval));
+
+	/* divide pattern into fixed prefix and remainder */
+	pstatus = pattern_fixed_prefix(patt, ptype, &prefix, &rest);
+
+	if (pstatus == Pattern_Prefix_Exact)
+	{
+		/*
+		 * Pattern specifies an exact match, so pretend operator is '='
+		 */
+		Oid			eqopr = find_operator("=", var->vartype);
+		Const	   *eqcon;
+		List	   *eqargs;
+
+		if (eqopr == InvalidOid)
+			elog(ERROR, "patternsel: no = operator for type %u",
+				 var->vartype);
+		eqcon = string_to_const(prefix, var->vartype);
+		eqargs = makeList2(var, eqcon);
+		result = DatumGetFloat8(DirectFunctionCall4(eqsel,
+													PointerGetDatum(root),
+													ObjectIdGetDatum(eqopr),
+													PointerGetDatum(eqargs),
+													Int32GetDatum(varRelid)));
+	}
 	else
 	{
-		HeapTuple	oprTuple;
-		Oid			ltype,
-					rtype;
-		char	   *patt;
-		Pattern_Prefix_Status pstatus;
-		char	   *prefix;
-		char	   *rest;
-
 		/*
-		 * Get left and right datatypes of the operator so we know what
-		 * type the attribute is.
+		 * Not exact-match pattern.  We estimate selectivity of the
+		 * fixed prefix and remainder of pattern separately, then
+		 * combine the two.
 		 */
-		oprTuple = SearchSysCache(OPEROID,
-								  ObjectIdGetDatum(opid),
-								  0, 0, 0);
-		if (!HeapTupleIsValid(oprTuple))
-			elog(ERROR, "patternsel: no tuple for operator %u", opid);
-		ltype = ((Form_pg_operator) GETSTRUCT(oprTuple))->oprleft;
-		rtype = ((Form_pg_operator) GETSTRUCT(oprTuple))->oprright;
-		ReleaseSysCache(oprTuple);
+		Selectivity prefixsel;
+		Selectivity restsel;
+		Selectivity selec;
 
-		/* the right-hand const is type text for all supported operators */
-		Assert(rtype == TEXTOID);
-		patt = DatumGetCString(DirectFunctionCall1(textout, value));
-
-		/* divide pattern into fixed prefix and remainder */
-		pstatus = pattern_fixed_prefix(patt, ptype, &prefix, &rest);
-
-		if (pstatus == Pattern_Prefix_Exact)
-		{
-
-			/*
-			 * Pattern specifies an exact match, so pretend operator is
-			 * '='
-			 */
-			Oid			eqopr = find_operator("=", ltype);
-			Datum		eqcon;
-
-			if (eqopr == InvalidOid)
-				elog(ERROR, "patternsel: no = operator for type %u", ltype);
-			eqcon = string_to_datum(prefix, ltype);
-			result = DatumGetFloat8(DirectFunctionCall5(eqsel,
-												 ObjectIdGetDatum(eqopr),
-												 ObjectIdGetDatum(relid),
-													Int16GetDatum(attno),
-														eqcon,
-							   Int32GetDatum(SEL_CONSTANT | SEL_RIGHT)));
-			pfree(DatumGetPointer(eqcon));
-		}
+		if (pstatus == Pattern_Prefix_Partial)
+			prefixsel = prefix_selectivity(root, var, prefix);
 		else
-		{
-
-			/*
-			 * Not exact-match pattern.  We estimate selectivity of the
-			 * fixed prefix and remainder of pattern separately, then
-			 * combine the two.
-			 */
-			Selectivity prefixsel;
-			Selectivity restsel;
-			Selectivity selec;
-
-			if (pstatus == Pattern_Prefix_Partial)
-				prefixsel = prefix_selectivity(prefix, relid, attno, ltype);
-			else
-				prefixsel = 1.0;
-			restsel = pattern_selectivity(rest, ptype);
-			selec = prefixsel * restsel;
-			/* result should be in range, but make sure... */
-			if (selec < 0.0)
-				selec = 0.0;
-			else if (selec > 1.0)
-				selec = 1.0;
-			result = (float8) selec;
-		}
-		if (prefix)
-			pfree(prefix);
-		pfree(patt);
+			prefixsel = 1.0;
+		restsel = pattern_selectivity(rest, ptype);
+		selec = prefixsel * restsel;
+		/* result should be in range, but make sure... */
+		if (selec < 0.0)
+			selec = 0.0;
+		else if (selec > 1.0)
+			selec = 1.0;
+		result = selec;
 	}
-	PG_RETURN_FLOAT8(result);
+
+	if (prefix)
+		pfree(prefix);
+	pfree(patt);
+
+	return result;
 }
 
 /*
@@ -729,7 +851,7 @@ patternsel(PG_FUNCTION_ARGS, Pattern_Type ptype)
 Datum
 regexeqsel(PG_FUNCTION_ARGS)
 {
-	return patternsel(fcinfo, Pattern_Type_Regex);
+	PG_RETURN_FLOAT8(patternsel(fcinfo, Pattern_Type_Regex));
 }
 
 /*
@@ -738,7 +860,7 @@ regexeqsel(PG_FUNCTION_ARGS)
 Datum
 icregexeqsel(PG_FUNCTION_ARGS)
 {
-	return patternsel(fcinfo, Pattern_Type_Regex_IC);
+	PG_RETURN_FLOAT8(patternsel(fcinfo, Pattern_Type_Regex_IC));
 }
 
 /*
@@ -747,7 +869,7 @@ icregexeqsel(PG_FUNCTION_ARGS)
 Datum
 likesel(PG_FUNCTION_ARGS)
 {
-	return patternsel(fcinfo, Pattern_Type_Like);
+	PG_RETURN_FLOAT8(patternsel(fcinfo, Pattern_Type_Like));
 }
 
 /*
@@ -756,7 +878,7 @@ likesel(PG_FUNCTION_ARGS)
 Datum
 iclikesel(PG_FUNCTION_ARGS)
 {
-	return patternsel(fcinfo, Pattern_Type_Like_IC);
+	PG_RETURN_FLOAT8(patternsel(fcinfo, Pattern_Type_Like_IC));
 }
 
 /*
@@ -765,9 +887,9 @@ iclikesel(PG_FUNCTION_ARGS)
 Datum
 regexnesel(PG_FUNCTION_ARGS)
 {
-	float8		result;
+	double		result;
 
-	result = DatumGetFloat8(patternsel(fcinfo, Pattern_Type_Regex));
+	result = patternsel(fcinfo, Pattern_Type_Regex);
 	result = 1.0 - result;
 	PG_RETURN_FLOAT8(result);
 }
@@ -778,9 +900,9 @@ regexnesel(PG_FUNCTION_ARGS)
 Datum
 icregexnesel(PG_FUNCTION_ARGS)
 {
-	float8		result;
+	double		result;
 
-	result = DatumGetFloat8(patternsel(fcinfo, Pattern_Type_Regex_IC));
+	result = patternsel(fcinfo, Pattern_Type_Regex_IC);
 	result = 1.0 - result;
 	PG_RETURN_FLOAT8(result);
 }
@@ -791,9 +913,9 @@ icregexnesel(PG_FUNCTION_ARGS)
 Datum
 nlikesel(PG_FUNCTION_ARGS)
 {
-	float8		result;
+	double		result;
 
-	result = DatumGetFloat8(patternsel(fcinfo, Pattern_Type_Like));
+	result = patternsel(fcinfo, Pattern_Type_Like);
 	result = 1.0 - result;
 	PG_RETURN_FLOAT8(result);
 }
@@ -804,9 +926,9 @@ nlikesel(PG_FUNCTION_ARGS)
 Datum
 icnlikesel(PG_FUNCTION_ARGS)
 {
-	float8		result;
+	double		result;
 
-	result = DatumGetFloat8(patternsel(fcinfo, Pattern_Type_Like_IC));
+	result = patternsel(fcinfo, Pattern_Type_Like_IC);
 	result = 1.0 - result;
 	PG_RETURN_FLOAT8(result);
 }
@@ -817,25 +939,21 @@ icnlikesel(PG_FUNCTION_ARGS)
 Datum
 eqjoinsel(PG_FUNCTION_ARGS)
 {
+	Query	   *root = (Query *) PG_GETARG_POINTER(0);
 #ifdef NOT_USED					/* see neqjoinsel() before removing me! */
-	Oid			opid = PG_GETARG_OID(0);
+	Oid			operator = PG_GETARG_OID(1);
 #endif
-	Oid			relid1 = PG_GETARG_OID(1);
-	AttrNumber	attno1 = PG_GETARG_INT16(2);
-	Oid			relid2 = PG_GETARG_OID(3);
-	AttrNumber	attno2 = PG_GETARG_INT16(4);
-	bool		unknown1 = NONVALUE(relid1) || NONVALUE(attno1);
-	bool		unknown2 = NONVALUE(relid2) || NONVALUE(attno2);
+	List	   *args = (List *) PG_GETARG_POINTER(2);
+	Var		   *var1;
+	Var		   *var2;
 	double		selec;
 
-	if (unknown1 && unknown2)
+	get_join_vars(args, &var1, &var2);
+
+	if (var1 == NULL && var2 == NULL)
 		selec = DEFAULT_EQ_SEL;
 	else
 	{
-		Oid			typid1;
-		Oid			typid2;
-		int32		typmod1;
-		int32		typmod2;
 		HeapTuple	statsTuple1 = NULL;
 		HeapTuple	statsTuple2 = NULL;
 		Form_pg_statistic stats1 = NULL;
@@ -843,44 +961,52 @@ eqjoinsel(PG_FUNCTION_ARGS)
 		double		nd1,
 					nd2;
 
-		if (unknown1)
+		if (var1 == NULL)
 		{
-			nd1 = 100.0;
+			nd1 = DEFAULT_NUM_DISTINCT;
 		}
 		else
 		{
-			/* get info about the attribute */
-			getattproperties(relid1, attno1, &typid1, &typmod1);
-
 			/* get stats for the attribute, if available */
-			statsTuple1 = SearchSysCache(STATRELATT,
-										 ObjectIdGetDatum(relid1),
-										 Int16GetDatum(attno1),
-										 0, 0);
-			if (HeapTupleIsValid(statsTuple1))
-				stats1 = (Form_pg_statistic) GETSTRUCT(statsTuple1);
+			Oid		relid1 = getrelid(var1->varno, root->rtable);
 
-			nd1 = get_att_numdistinct(relid1, attno1, typid1, stats1);
+			if (relid1 == InvalidOid)
+				nd1 = DEFAULT_NUM_DISTINCT;
+			else
+			{
+				statsTuple1 = SearchSysCache(STATRELATT,
+											 ObjectIdGetDatum(relid1),
+											 Int16GetDatum(var1->varattno),
+											 0, 0);
+				if (HeapTupleIsValid(statsTuple1))
+					stats1 = (Form_pg_statistic) GETSTRUCT(statsTuple1);
+
+				nd1 = get_att_numdistinct(root, var1, stats1);
+			}
 		}
 
-		if (unknown2)
+		if (var2 == NULL)
 		{
-			nd2 = 100.0;
+			nd2 = DEFAULT_NUM_DISTINCT;
 		}
 		else
 		{
-			/* get info about the attribute */
-			getattproperties(relid2, attno2, &typid2, &typmod2);
-
 			/* get stats for the attribute, if available */
-			statsTuple2 = SearchSysCache(STATRELATT,
-										 ObjectIdGetDatum(relid2),
-										 Int16GetDatum(attno2),
-										 0, 0);
-			if (HeapTupleIsValid(statsTuple2))
-				stats2 = (Form_pg_statistic) GETSTRUCT(statsTuple2);
+			Oid		relid2 = getrelid(var2->varno, root->rtable);
 
-			nd2 = get_att_numdistinct(relid2, attno2, typid2, stats2);
+			if (relid2 == InvalidOid)
+				nd2 = DEFAULT_NUM_DISTINCT;
+			else
+			{
+				statsTuple2 = SearchSysCache(STATRELATT,
+											 ObjectIdGetDatum(relid2),
+											 Int16GetDatum(var2->varattno),
+											 0, 0);
+				if (HeapTupleIsValid(statsTuple2))
+					stats2 = (Form_pg_statistic) GETSTRUCT(statsTuple2);
+
+				nd2 = get_att_numdistinct(root, var2, stats2);
+			}
 		}
 
 		/*
@@ -903,7 +1029,6 @@ eqjoinsel(PG_FUNCTION_ARGS)
 			ReleaseSysCache(statsTuple1);
 		if (HeapTupleIsValid(statsTuple2))
 			ReleaseSysCache(statsTuple2);
-
 	}
 	PG_RETURN_FLOAT8((float8) selec);
 }
@@ -1062,27 +1187,26 @@ convert_to_scalar(Datum value, Oid valuetypid, double *scaledvalue,
 {
 	switch (valuetypid)
 	{
-
-			/*
-			 * Built-in numeric types
-			 */
-			case BOOLOID:
-			case INT2OID:
-			case INT4OID:
-			case INT8OID:
-			case FLOAT4OID:
-			case FLOAT8OID:
-			case NUMERICOID:
-			case OIDOID:
-			case REGPROCOID:
+		/*
+		 * Built-in numeric types
+		 */
+		case BOOLOID:
+		case INT2OID:
+		case INT4OID:
+		case INT8OID:
+		case FLOAT4OID:
+		case FLOAT8OID:
+		case NUMERICOID:
+		case OIDOID:
+		case REGPROCOID:
 			*scaledvalue = convert_numeric_to_scalar(value, valuetypid);
 			*scaledlobound = convert_numeric_to_scalar(lobound, boundstypid);
 			*scaledhibound = convert_numeric_to_scalar(hibound, boundstypid);
 			return true;
 
-			/*
-			 * Built-in string types
-			 */
+		/*
+		 * Built-in string types
+		 */
 		case CHAROID:
 		case BPCHAROID:
 		case VARCHAROID:
@@ -1102,9 +1226,9 @@ convert_to_scalar(Datum value, Oid valuetypid, double *scaledvalue,
 				return true;
 			}
 
-			/*
-			 * Built-in time types
-			 */
+		/*
+		 * Built-in time types
+		 */
 		case TIMESTAMPOID:
 		case ABSTIMEOID:
 		case DATEOID:
@@ -1376,7 +1500,7 @@ convert_timevalue_to_scalar(Datum value, Oid typid)
 {
 	switch (typid)
 	{
-			case TIMESTAMPOID:
+		case TIMESTAMPOID:
 			return DatumGetTimestamp(value);
 		case ABSTIMEOID:
 			return DatumGetTimestamp(DirectFunctionCall1(abstime_timestamp,
@@ -1420,50 +1544,16 @@ convert_timevalue_to_scalar(Datum value, Oid typid)
 
 
 /*
- * getattproperties
- *	  Retrieve pg_attribute properties for an attribute,
- *	  including type OID and typmod.
- */
-static void
-getattproperties(Oid relid, AttrNumber attnum,
-				 Oid *typid, int32 *typmod)
-{
-	HeapTuple	atp;
-	Form_pg_attribute att_tup;
-
-	atp = SearchSysCache(ATTNUM,
-						 ObjectIdGetDatum(relid),
-						 Int16GetDatum(attnum),
-						 0, 0);
-	if (!HeapTupleIsValid(atp))
-		elog(ERROR, "getattproperties: no attribute tuple %u %d",
-			 relid, (int) attnum);
-	att_tup = (Form_pg_attribute) GETSTRUCT(atp);
-
-	*typid = att_tup->atttypid;
-	*typmod = att_tup->atttypmod;
-
-	ReleaseSysCache(atp);
-}
-
-/*
  * get_att_numdistinct
- *
  *	  Estimate the number of distinct values of an attribute.
  *
- * relid, attnum: identify the attribute to examine.
- * typid: type of attribute.
+ * var: identifies the attribute to examine.
  * stats: pg_statistic tuple for attribute, or NULL if not available.
- *
- * XXX possible future improvement: look to see if there is a unique
- * index on the attribute.  If so, we can estimate ndistinct = ntuples.
- * This should probably override any info from pg_statistic.
  */
 static double
-get_att_numdistinct(Oid relid, AttrNumber attnum, Oid typid,
-					Form_pg_statistic stats)
+get_att_numdistinct(Query *root, Var *var, Form_pg_statistic stats)
 {
-	HeapTuple	reltup;
+	RelOptInfo *rel;
 	double		ntuples;
 
 	/*
@@ -1471,42 +1561,42 @@ get_att_numdistinct(Oid relid, AttrNumber attnum, Oid typid,
 	 *
 	 * Are there any other cases we should wire in special estimates for?
 	 */
-	if (typid == BOOLOID)
+	if (var->vartype == BOOLOID)
 		return 2.0;
-
-	/*
-	 * If VACUUM ANALYZE determined a fixed estimate, use it.
-	 */
-	if (stats && stats->stadistinct > 0.0)
-		return stats->stadistinct;
 
 	/*
 	 * Otherwise we need to get the relation size.
 	 */
-	reltup = SearchSysCache(RELOID,
-							ObjectIdGetDatum(relid),
-							0, 0, 0);
-	if (!HeapTupleIsValid(reltup))
-		elog(ERROR, "get_att_numdistinct: no relation tuple %u", relid);
-
-	ntuples = ((Form_pg_class) GETSTRUCT(reltup))->reltuples;
-
-	ReleaseSysCache(reltup);
+	rel = find_base_rel(root, var->varno);
+	ntuples = rel->tuples;
 
 	if (ntuples <= 0.0)
-		return 100.0;			/* no data available; return a default */
+		return DEFAULT_NUM_DISTINCT; /* no data available; return a default */
 
 	/*
-	 * If VACUUM ANALYZE determined a scaled estimate, use it.
+	 * Look to see if there is a unique index on the attribute.
+	 * If so, we assume it's distinct, ignoring pg_statistic info
+	 * which could be out of date.
 	 */
-	if (stats && stats->stadistinct < 0.0)
-		return - stats->stadistinct * ntuples;
+	if (has_unique_index(rel, var->varattno))
+		return ntuples;
 
 	/*
-	 * VACUUM ANALYZE does not compute stats for system attributes,
+	 * If ANALYZE determined a fixed or scaled estimate, use it.
+	 */
+	if (stats)
+	{
+		if (stats->stadistinct > 0.0)
+			return stats->stadistinct;
+		if (stats->stadistinct < 0.0)
+			return - stats->stadistinct * ntuples;
+	}
+
+	/*
+	 * ANALYZE does not compute stats for system attributes,
 	 * but some of them can reasonably be assumed unique anyway.
 	 */
-	switch (attnum)
+	switch (var->varattno)
 	{
 		case ObjectIdAttributeNumber:
 		case SelfItemPointerAttributeNumber:
@@ -1516,12 +1606,116 @@ get_att_numdistinct(Oid relid, AttrNumber attnum, Oid typid,
 	}
 
 	/*
-	 * Estimate ndistinct = ntuples if the table is small, else 100.
+	 * Estimate ndistinct = ntuples if the table is small, else use default.
 	 */
-	if (ntuples < 100.0)
+	if (ntuples < DEFAULT_NUM_DISTINCT)
 		return ntuples;
 
-	return 100.0;
+	return DEFAULT_NUM_DISTINCT;
+}
+
+/*
+ * get_restriction_var
+ *		Examine the args of a restriction clause to see if it's of the
+ *		form (var op something) or (something op var).  If so, extract
+ *		and return the var and the other argument.
+ *
+ * Inputs:
+ *	args: clause argument list
+ *	varRelid: see specs for restriction selectivity functions
+ *
+ * Outputs: (these are set only if TRUE is returned)
+ *	*var: gets Var node
+ *	*other: gets other clause argument
+ *	*varonleft: set TRUE if var is on the left, FALSE if on the right
+ *
+ * Returns TRUE if a Var is identified, otherwise FALSE.
+ */
+static bool
+get_restriction_var(List *args,
+					int varRelid,
+					Var **var,
+					Node **other,
+					bool *varonleft)
+{
+	Node	   *left,
+			   *right;
+
+	if (length(args) != 2)
+		return false;
+
+	left = (Node *) lfirst(args);
+	right = (Node *) lsecond(args);
+
+	/* Ignore any binary-compatible relabeling */
+
+	if (IsA(left, RelabelType))
+		left = ((RelabelType *) left)->arg;
+	if (IsA(right, RelabelType))
+		right = ((RelabelType *) right)->arg;
+
+	/* Look for the var */
+
+	if (IsA(left, Var) &&
+		(varRelid == 0 || varRelid == ((Var *) left)->varno))
+	{
+		*var = (Var *) left;
+		*other = right;
+		*varonleft = true;
+	}
+	else if (IsA(right, Var) &&
+			 (varRelid == 0 || varRelid == ((Var *) right)->varno))
+	{
+		*var = (Var *) right;
+		*other = left;
+		*varonleft = false;
+	}
+	else
+	{
+		/* Duh, it's too complicated for me... */
+		return false;
+	}
+
+	return true;
+}
+
+/*
+ * get_join_vars
+ *
+ * Extract the two Vars from a join clause's argument list.  Returns
+ * NULL for arguments that are not simple vars.
+ */
+static void
+get_join_vars(List *args, Var **var1, Var **var2)
+{
+	Node	   *left,
+			   *right;
+
+	if (length(args) != 2)
+	{
+		*var1 = NULL;
+		*var2 = NULL;
+		return;
+	}
+
+	left = (Node *) lfirst(args);
+	right = (Node *) lsecond(args);
+
+	/* Ignore any binary-compatible relabeling */
+	if (IsA(left, RelabelType))
+		left = ((RelabelType *) left)->arg;
+	if (IsA(right, RelabelType))
+		right = ((RelabelType *) right)->arg;
+
+	if (IsA(left, Var))
+		*var1 = (Var *) left;
+	else
+		*var1 = NULL;
+
+	if (IsA(right, Var))
+		*var2 = (Var *) right;
+	else
+		*var2 = NULL;
 }
 
 /*-------------------------------------------------------------------------
@@ -1755,54 +1949,49 @@ pattern_fixed_prefix(char *patt, Pattern_Type ptype,
  * more useful to use the upper-bound code than not.
  */
 static Selectivity
-prefix_selectivity(char *prefix,
-				   Oid relid,
-				   AttrNumber attno,
-				   Oid datatype)
+prefix_selectivity(Query *root, Var *var, char *prefix)
 {
 	Selectivity prefixsel;
 	Oid			cmpopr;
-	Datum		prefixcon;
+	Const	   *prefixcon;
+	List	   *cmpargs;
 	char	   *greaterstr;
 
-	cmpopr = find_operator(">=", datatype);
+	cmpopr = find_operator(">=", var->vartype);
 	if (cmpopr == InvalidOid)
 		elog(ERROR, "prefix_selectivity: no >= operator for type %u",
-			 datatype);
-	prefixcon = string_to_datum(prefix, datatype);
+			 var->vartype);
+	prefixcon = string_to_const(prefix, var->vartype);
+	cmpargs = makeList2(var, prefixcon);
 	/* Assume scalargtsel is appropriate for all supported types */
-	prefixsel = DatumGetFloat8(DirectFunctionCall5(scalargtsel,
-												ObjectIdGetDatum(cmpopr),
-												 ObjectIdGetDatum(relid),
-												   Int16GetDatum(attno),
-												   prefixcon,
-							   Int32GetDatum(SEL_CONSTANT | SEL_RIGHT)));
-	pfree(DatumGetPointer(prefixcon));
+	prefixsel = DatumGetFloat8(DirectFunctionCall4(scalargtsel,
+												   PointerGetDatum(root),
+												   ObjectIdGetDatum(cmpopr),
+												   PointerGetDatum(cmpargs),
+												   Int32GetDatum(0)));
 
 	/*-------
 	 * If we can create a string larger than the prefix, say
 	 *	"x < greaterstr".
 	 *-------
 	 */
-	greaterstr = make_greater_string(prefix, datatype);
+	greaterstr = make_greater_string(prefix, var->vartype);
 	if (greaterstr)
 	{
 		Selectivity topsel;
 
-		cmpopr = find_operator("<", datatype);
+		cmpopr = find_operator("<", var->vartype);
 		if (cmpopr == InvalidOid)
 			elog(ERROR, "prefix_selectivity: no < operator for type %u",
-				 datatype);
-		prefixcon = string_to_datum(greaterstr, datatype);
+				 var->vartype);
+		prefixcon = string_to_const(greaterstr, var->vartype);
+		cmpargs = makeList2(var, prefixcon);
 		/* Assume scalarltsel is appropriate for all supported types */
-		topsel = DatumGetFloat8(DirectFunctionCall5(scalarltsel,
-												ObjectIdGetDatum(cmpopr),
-												 ObjectIdGetDatum(relid),
-													Int16GetDatum(attno),
-													prefixcon,
-							   Int32GetDatum(SEL_CONSTANT | SEL_RIGHT)));
-		pfree(DatumGetPointer(prefixcon));
-		pfree(greaterstr);
+		topsel = DatumGetFloat8(DirectFunctionCall4(scalarltsel,
+													PointerGetDatum(root),
+													ObjectIdGetDatum(cmpopr),
+													PointerGetDatum(cmpargs),
+													Int32GetDatum(0)));
 
 		/*
 		 * Merge the two selectivities in the same way as for a range
@@ -1828,7 +2017,7 @@ prefix_selectivity(char *prefix,
 				 * No data available --- use a default estimate that is
 				 * small, but not real small.
 				 */
-				prefixsel = 0.01;
+				prefixsel = 0.005;
 			}
 			else
 			{
@@ -2074,7 +2263,7 @@ locale_is_like_safe(void)
 		result = false;
 	return (bool) result;
 #else							/* not USE_LOCALE */
-				return true;	/* We must be in C locale, which is OK */
+	return true;				/* We must be in C locale, which is OK */
 #endif	 /* USE_LOCALE */
 }
 
@@ -2208,7 +2397,6 @@ find_operator(const char *opname, Oid datatype)
 static Datum
 string_to_datum(const char *str, Oid datatype)
 {
-
 	/*
 	 * We cheat a little by assuming that textin() will do for bpchar and
 	 * varchar constants too...
@@ -2217,6 +2405,18 @@ string_to_datum(const char *str, Oid datatype)
 		return DirectFunctionCall1(namein, CStringGetDatum(str));
 	else
 		return DirectFunctionCall1(textin, CStringGetDatum(str));
+}
+
+/*
+ * Generate a Const node of the appropriate type from a C string.
+ */
+static Const *
+string_to_const(const char *str, Oid datatype)
+{
+	Datum		conval = string_to_datum(str, datatype);
+
+	return makeConst(datatype, ((datatype == NAMEOID) ? NAMEDATALEN : -1),
+					 conval, false, false, false, false);
 }
 
 /*-------------------------------------------------------------------------

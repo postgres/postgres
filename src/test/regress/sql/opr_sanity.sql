@@ -349,32 +349,30 @@ WHERE p1.oprcode = p2.oid AND
 -- If oprrest is set, the operator must return boolean,
 -- and it must link to a proc with the right signature
 -- to be a restriction selectivity estimator.
--- The proc signature we want is: float8 proc(oid, oid, int2, <any>, int4)
+-- The proc signature we want is: float8 proc(opaque, oid, opaque, int4)
 
 SELECT p1.oid, p1.oprname, p2.oid, p2.proname
 FROM pg_operator AS p1, pg_proc AS p2
 WHERE p1.oprrest = p2.oid AND
     (p1.oprresult != 16 OR
      p2.prorettype != 701 OR p2.proretset OR
-     p2.pronargs != 5 OR
-     p2.proargtypes[0] != 26 OR p2.proargtypes[1] != 26 OR
-     p2.proargtypes[2] != 21 OR p2.proargtypes[3] != 0 OR
-     p2.proargtypes[4] != 23);
+     p2.pronargs != 4 OR
+     p2.proargtypes[0] != 0 OR p2.proargtypes[1] != 26 OR
+     p2.proargtypes[2] != 0 OR p2.proargtypes[3] != 23);
 
 -- If oprjoin is set, the operator must be a binary boolean op,
 -- and it must link to a proc with the right signature
 -- to be a join selectivity estimator.
--- The proc signature we want is: float8 proc(oid, oid, int2, oid, int2)
+-- The proc signature we want is: float8 proc(opaque, oid, opaque)
 
 SELECT p1.oid, p1.oprname, p2.oid, p2.proname
 FROM pg_operator AS p1, pg_proc AS p2
 WHERE p1.oprjoin = p2.oid AND
     (p1.oprkind != 'b' OR p1.oprresult != 16 OR
      p2.prorettype != 701 OR p2.proretset OR
-     p2.pronargs != 5 OR
-     p2.proargtypes[0] != 26 OR p2.proargtypes[1] != 26 OR
-     p2.proargtypes[2] != 21 OR p2.proargtypes[3] != 26 OR
-     p2.proargtypes[4] != 21);
+     p2.pronargs != 3 OR
+     p2.proargtypes[0] != 0 OR p2.proargtypes[1] != 26 OR
+     p2.proargtypes[2] != 0);
 
 -- **************** pg_aggregate ****************
 

@@ -8,13 +8,15 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/clausesel.c,v 1.43 2001/03/23 04:49:53 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/clausesel.c,v 1.44 2001/05/20 20:28:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
 #include "catalog/pg_operator.h"
+#include "catalog/pg_type.h"
+#include "nodes/makefuncs.h"
 #include "optimizer/clauses.h"
 #include "optimizer/cost.h"
 #include "optimizer/plancat.h"
@@ -22,6 +24,12 @@
 #include "parser/parsetree.h"
 #include "utils/fmgroids.h"
 #include "utils/lsyscache.h"
+
+
+/* note that pg_type.h hardwires size of bool as 1 ... duplicate it */
+#define MAKEBOOLCONST(val,isnull) \
+	((Node *) makeConst(BOOLOID, 1, (Datum) (val), \
+						(isnull), true, false, false))
 
 
 /*
@@ -39,7 +47,7 @@ typedef struct RangeQueryClause
 } RangeQueryClause;
 
 static void addRangeClause(RangeQueryClause **rqlist, Node *clause,
-			   int flag, bool isLTsel, Selectivity s2);
+						   bool varonleft, bool isLTsel, Selectivity s2);
 static Selectivity clause_selectivity(Query *root,
 				   Node *clause,
 				   int varRelid);
@@ -131,35 +139,24 @@ clauselist_selectivity(Query *root,
 		 * match what clause_selectivity() would do in the cases it
 		 * handles.
 		 */
-		if (varRelid != 0 || NumRelids(clause) == 1)
+		if (is_opclause(clause) &&
+			(varRelid != 0 || NumRelids(clause) == 1))
 		{
-			int			relidx;
-			AttrNumber	attno;
-			Datum		constval;
-			int			flag;
+			Expr	   *expr = (Expr *) clause;
 
-			get_relattval(clause, varRelid,
-						  &relidx, &attno, &constval, &flag);
-			if (relidx != 0)
+			if (length(expr->args) == 2)
 			{
-				/* if get_relattval succeeded, it must be an opclause */
-				Var		   *other;
+				bool		varonleft = true;
 
-				other = (flag & SEL_RIGHT) ? get_rightop((Expr *) clause) :
-					get_leftop((Expr *) clause);
-				if (is_pseudo_constant_clause((Node *) other))
+				if (is_pseudo_constant_clause(lsecond(expr->args)) ||
+					(varonleft = false,
+					 is_pseudo_constant_clause(lfirst(expr->args))))
 				{
-					Oid			opno = ((Oper *) ((Expr *) clause)->oper)->opno;
+					Oid			opno = ((Oper *) expr->oper)->opno;
 					RegProcedure oprrest = get_oprrest(opno);
 
-					if (!oprrest)
-						s2 = (Selectivity) 0.5;
-					else
-						s2 = restriction_selectivity(oprrest, opno,
-													 getrelid(relidx,
-														   root->rtable),
-													 attno,
-													 constval, flag);
+					s2 = restriction_selectivity(root, opno,
+												 expr->args, varRelid);
 
 					/*
 					 * If we reach here, we have computed the same result
@@ -171,10 +168,12 @@ clauselist_selectivity(Query *root,
 					switch (oprrest)
 					{
 						case F_SCALARLTSEL:
-							addRangeClause(&rqlist, clause, flag, true, s2);
+							addRangeClause(&rqlist, clause,
+										   varonleft, true, s2);
 							break;
 						case F_SCALARGTSEL:
-							addRangeClause(&rqlist, clause, flag, false, s2);
+							addRangeClause(&rqlist, clause,
+										   varonleft, false, s2);
 							break;
 						default:
 							/* Just merge the selectivity in generically */
@@ -220,7 +219,7 @@ clauselist_selectivity(Query *root,
 					 * No data available --- use a default estimate that
 					 * is small, but not real small.
 					 */
-					s2 = 0.01;
+					s2 = 0.005;
 				}
 				else
 				{
@@ -259,14 +258,13 @@ clauselist_selectivity(Query *root,
  */
 static void
 addRangeClause(RangeQueryClause **rqlist, Node *clause,
-			   int flag, bool isLTsel, Selectivity s2)
+			   bool varonleft, bool isLTsel, Selectivity s2)
 {
 	RangeQueryClause *rqelem;
 	Node	   *var;
 	bool		is_lobound;
 
-	/* get_relattval sets flag&SEL_RIGHT if the var is on the LEFT. */
-	if (flag & SEL_RIGHT)
+	if (varonleft)
 	{
 		var = (Node *) get_leftop((Expr *) clause);
 		is_lobound = !isLTsel;	/* x < something is high bound */
@@ -405,12 +403,12 @@ clause_selectivity(Query *root,
 				 * is equivalent to the clause reln.attribute = 't', so we
 				 * compute the selectivity as if that is what we have.
 				 */
-				s1 = restriction_selectivity(F_EQSEL,
+				s1 = restriction_selectivity(root,
 											 BooleanEqualOperator,
-											 rte->relid,
-											 var->varattno,
-											 BoolGetDatum(true),
-											 SEL_CONSTANT | SEL_RIGHT);
+											 makeList2(var,
+													   MAKEBOOLCONST(true,
+																	 false)),
+											 varRelid);
 			}
 		}
 	}
@@ -486,57 +484,14 @@ clause_selectivity(Query *root,
 		if (is_join_clause)
 		{
 			/* Estimate selectivity for a join clause. */
-			RegProcedure oprjoin = get_oprjoin(opno);
-
-			/*
-			 * if the oprjoin procedure is missing for whatever reason,
-			 * use a selectivity of 0.5
-			 */
-			if (!oprjoin)
-				s1 = (Selectivity) 0.5;
-			else
-			{
-				int			relid1,
-							relid2;
-				AttrNumber	attno1,
-							attno2;
-				Oid			reloid1,
-							reloid2;
-
-				get_rels_atts(clause, &relid1, &attno1, &relid2, &attno2);
-				reloid1 = relid1 ? getrelid(relid1, root->rtable) : InvalidOid;
-				reloid2 = relid2 ? getrelid(relid2, root->rtable) : InvalidOid;
-				s1 = join_selectivity(oprjoin, opno,
-									  reloid1, attno1,
-									  reloid2, attno2);
-			}
+			s1 = join_selectivity(root, opno, 
+								  ((Expr *) clause)->args);
 		}
 		else
 		{
 			/* Estimate selectivity for a restriction clause. */
-			RegProcedure oprrest = get_oprrest(opno);
-
-			/*
-			 * if the oprrest procedure is missing for whatever reason,
-			 * use a selectivity of 0.5
-			 */
-			if (!oprrest)
-				s1 = (Selectivity) 0.5;
-			else
-			{
-				int			relidx;
-				AttrNumber	attno;
-				Datum		constval;
-				int			flag;
-				Oid			reloid;
-
-				get_relattval(clause, varRelid,
-							  &relidx, &attno, &constval, &flag);
-				reloid = relidx ? getrelid(relidx, root->rtable) : InvalidOid;
-				s1 = restriction_selectivity(oprrest, opno,
-											 reloid, attno,
-											 constval, flag);
-			}
+			s1 = restriction_selectivity(root, opno, 
+										 ((Expr *) clause)->args, varRelid);
 		}
 	}
 	else if (is_funcclause(clause))
@@ -555,7 +510,7 @@ clause_selectivity(Query *root,
 		/*
 		 * Just for the moment! FIX ME! - vadim 02/04/98
 		 */
-		s1 = 1.0;
+		s1 = (Selectivity) 0.5;
 	}
 	else if (IsA(clause, RelabelType))
 	{
