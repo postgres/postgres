@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.131 2005/01/22 22:31:52 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.132 2005/01/22 23:22:19 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -2179,11 +2179,11 @@ testdb=&gt; <userinput>INSERT INTO my_table VALUES (:content);</userinput>
     they don't cause a syntax error when the second line is processed. This
     could be done with the program <command>sed</command>:
 <programlisting>
-testdb=&gt; <userinput>\set content '\'' `sed -e "s/'/\\\\\\'/g" < my_file.txt` '\''</userinput>
+testdb=&gt; <userinput>\set content '\'' `sed -e "s/'/\\\\\\'/g" &lt; my_file.txt` '\''</userinput>
 </programlisting>
     Observe the correct number of backslashes (6)! It works
     this way: After <application>psql</application> has parsed this
-    line, it passes <literal>sed -e "s/'/\\\'/g" < my_file.txt</literal>
+    line, it passes <literal>sed -e "s/'/\\\'/g" &lt; my_file.txt</literal>
     to the shell. The shell will do its own thing inside the double
     quotes and execute <command>sed</command> with the arguments
     <literal>-e</literal> and <literal>s/'/\\'/g</literal>. When
@@ -2243,8 +2243,8 @@ testdb=&gt; <userinput>\set content '\'' `sed -e "s/'/\\\\\\'/g" < my_file.txt` 
           The full host name (with domain name) of the database server,
           or <literal>[local]</literal> if the connection is over a Unix
           domain socket, or
-          <literal>[local:<replaceable>/dir/name</replaceable>]</literal
-          >, if the Unix domain socket is not at the compiled in default
+          <literal>[local:<replaceable>/dir/name</replaceable>]</literal>, 
+          if the Unix domain socket is not at the compiled in default
           location.
         </para>
        </listitem>
@@ -2632,8 +2632,8 @@ Field separator is "oo".
   input. Notice the changing prompt:
 <programlisting>
 testdb=&gt; <userinput>CREATE TABLE my_table (</userinput>
-testdb(> <userinput> first integer not null default 0,</userinput>
-testdb(> <userinput> second text)</userinput>
+testdb(&gt; <userinput> first integer not null default 0,</userinput>
+testdb(&gt; <userinput> second text)</userinput>
 testdb-&gt; <userinput>;</userinput>
 CREATE TABLE
 </programlisting>

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/select.sgml,v 1.80 2005/01/04 08:59:45 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/select.sgml,v 1.81 2005/01/22 23:22:19 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -874,7 +874,7 @@ SELECT kind, sum(len) AS total FROM films GROUP BY kind;
 SELECT kind, sum(len) AS total
     FROM films
     GROUP BY kind
-    HAVING sum(len) < interval '5 hours';
+    HAVING sum(len) &lt; interval '5 hours';
 
    kind   | total
 ----------+-------

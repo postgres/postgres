@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_table.sgml,v 1.90 2005/01/05 18:03:19 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_table.sgml,v 1.91 2005/01/22 23:22:17 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -732,7 +732,7 @@ CREATE TABLE films (
 
 <programlisting>
 CREATE TABLE distributors (
-    did     integer CHECK (did > 100),
+    did     integer CHECK (did &gt; 100),
     name    varchar(40)
 );
 </programlisting>
@@ -745,7 +745,7 @@ CREATE TABLE distributors (
 CREATE TABLE distributors (
     did     integer,
     name    varchar(40)
-    CONSTRAINT con1 CHECK (did > 100 AND name &lt;&gt; '')
+    CONSTRAINT con1 CHECK (did &gt; 100 AND name &lt;&gt; '')
 );
 </programlisting>
   </para>

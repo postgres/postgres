@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/grant.sgml,v 1.44 2004/11/05 19:15:51 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/grant.sgml,v 1.45 2005/01/22 23:22:18 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -308,7 +308,7 @@ GRANT { CREATE | ALL [ PRIVILEGES ] }
     Use <xref linkend="app-psql">'s <command>\z</command> command
     to obtain information about existing privileges, for example:
 <programlisting>
-=> \z mytable
+=&gt; \z mytable
 
                         Access privileges for database "lusitania"
  Schema |  Name   | Type  |                     Access privileges
