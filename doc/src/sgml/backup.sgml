@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.47 2004/08/29 21:08:47 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.48 2004/09/30 10:30:10 neilc Exp $
 -->
 <chapter id="backup">
  <title>Backup and Restore</title>
@@ -950,13 +950,17 @@ restore_command = 'cp /mnt/server/archivedir/%f %p'
    storage formats. For example, releases 7.0.1, 7.1.2, and 7.2 are
    not compatible, whereas 7.1.1 and 7.1.2 are. When you update
    between compatible versions, you can simply replace the executables
-   and reuse the data area on disk. Otherwise you need to
-   <quote>back up</> your data and <quote>restore</> it on the new
-   server, using <application>pg_dump</>. (There are checks in place
-   that prevent you from doing the wrong thing, so no harm can be done
-   by confusing these things.) The precise installation procedure is
-   not the subject of this section; those details are in <xref
-   linkend="installation">.
+   and reuse the data area on disk. Otherwise you need to <quote>back
+   up</> your data and <quote>restore</> it on the new server, using
+   <application>pg_dump</>. There are checks in place that prevent you
+   from using a data area with an incompatible version of
+   <productname>PostgreSQL</productname>, so no harm can be done by
+   confusing these things. It is recommended that you use the
+   <application>pg_dump</> program from the newer version of
+   <productname>PostgreSQL</> to take advantage of any enhancements in
+   <application>pg_dump</> that may have been made. The precise
+   installation procedure is not the subject of this section; those
+   details are in <xref linkend="installation">.
   </para>
 
   <para>
