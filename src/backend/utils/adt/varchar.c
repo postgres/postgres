@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/varchar.c,v 1.2 1996/07/15 19:11:23 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/varchar.c,v 1.3 1996/08/26 20:38:52 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -245,13 +245,18 @@ int32
 bpcharle(char *arg1, char *arg2)
 {
     int len1, len2;
+    int cmp;
 
     if (arg1 == NULL || arg2 == NULL)
 	return((int32) 0);
     len1 = bcTruelen(arg1);
     len2 = bcTruelen(arg2);
 
-    return(strncmp(arg1+4, arg2+4, Min(len1,len2)) <= 0);
+    cmp = strncmp(arg1+4, arg2+4, Min(len1,len2));
+    if (0 == cmp)
+      return (int32)(len1 <= len2 ? 1 : 0);
+    else
+      return (int32)(cmp <= 0);
 }
 
 int32
@@ -276,24 +281,34 @@ int32
 bpcharge(char *arg1, char *arg2)
 {
     int len1, len2;
+    int cmp;
 
     if (arg1 == NULL || arg2 == NULL)
 	return((int32) 0);
     len1 = bcTruelen(arg1);
     len2 = bcTruelen(arg2);
 
-    return(strncmp(arg1+4, arg2+4, Min(len1,len2)) >= 0);
+    cmp = strncmp(arg1+4, arg2+4, Min(len1,len2));
+    if (0 == cmp)
+      return (int32)(len1 >= len2 ? 1 : 0);
+    else
+      return (int32)(cmp >= 0);
 }
 
 int32
 bpcharcmp(char *arg1, char *arg2)
 {
     int len1, len2;
+    int cmp;
 
     len1 = bcTruelen(arg1);
     len2 = bcTruelen(arg2);
 
-    return(strncmp(arg1+4, arg2+4, Min(len1,len2)));
+    cmp = strncmp(arg1+4, arg2+4, Min(len1,len2));
+    if ((0 == cmp) && (len1 != len2))
+      return (int32)(len1 < len2 ? -1 : 1);
+    else
+      return cmp;
 }
 
 /*****************************************************************************
@@ -369,13 +384,18 @@ int32
 varcharle(char *arg1, char *arg2)
 {
     int len1, len2;
+    int cmp;
 
     if (arg1 == NULL || arg2 == NULL)
 	return((int32) 0);
     len1 = vcTruelen(arg1);
     len2 = vcTruelen(arg2);
 
-    return(strncmp(arg1+4, arg2+4, Min(len1,len2)) <= 0);
+    cmp = strncmp(arg1+4, arg2+4, Min(len1,len2));
+    if (0 == cmp)
+      return (int32)( len1 <= len2 ? 1 : 0);
+    else
+      return (int32)(cmp <= 0);
 }
 
 int32
@@ -400,24 +420,34 @@ int32
 varcharge(char *arg1, char *arg2)
 {
     int len1, len2;
+    int cmp;
 
     if (arg1 == NULL || arg2 == NULL)
 	return((int32) 0);
     len1 = vcTruelen(arg1);
     len2 = vcTruelen(arg2);
 
-    return(strncmp(arg1+4, arg2+4, Min(len1,len2)) >= 0);
+    cmp = strncmp(arg1+4, arg2+4, Min(len1,len2));
+    if (0 == cmp)
+      return (int32)(len1 >= len2 ? 1 : 0);
+    else 
+      return (int32)(cmp >= 0);
+
 }
 
 int32
 varcharcmp(char *arg1, char *arg2)
 {
     int len1, len2;
+    int cmp;
 
     len1 = vcTruelen(arg1);
     len2 = vcTruelen(arg2);
-
-    return(strncmp(arg1+4, arg2+4, Min(len1,len2)));
+    cmp = (strncmp(arg1+4, arg2+4, Min(len1,len2)));
+    if ((0 == cmp) && (len1 != len2))
+      return (int32)(len1 < len2 ? -1 : 1);
+    else
+      return (int32)(cmp);
 }
 
 /*****************************************************************************
