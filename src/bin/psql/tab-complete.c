@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2004, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/tab-complete.c,v 1.115 2004/09/01 00:10:01 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/tab-complete.c,v 1.116 2004/09/22 04:25:16 neilc Exp $
  */
 
 /*----------------------------------------------------------------------
@@ -386,6 +386,15 @@ static const SchemaQuery Query_for_list_of_views = {
 "       and pg_catalog.quote_ident(c1.relname)='%s'"\
 "       and pg_catalog.pg_table_is_visible(c2.oid)"
 
+/* the silly-looking length condition is just to eat up the current word */
+#define Query_for_list_of_tables_for_trigger \
+"SELECT pg_catalog.quote_ident(relname) "\
+"  FROM pg_catalog.pg_class"\
+" WHERE (%d = length('%s'))"\
+"   AND oid IN "\
+"       (SELECT tgrelid FROM pg_catalog.pg_trigger "\
+"         WHERE pg_catalog.quote_ident(tgname)='%s')"
+
 /*
  * This is a list of all "things" in Pgsql, which can show up after CREATE or
  * DROP; and there is also a query to get a list of them.
@@ -637,11 +646,13 @@ psql_completion(char *text, int start, int end)
 	else if (!prev_wd)
 		COMPLETE_WITH_LIST(sql_commands);
 
-/* CREATE or DROP but not ALTER TABLE sth DROP */
+/* CREATE or DROP but not ALTER (TABLE|DOMAIN|GROUP) sth DROP */
 	/* complete with something you can create or drop */
 	else if (pg_strcasecmp(prev_wd, "CREATE") == 0 ||
 			 (pg_strcasecmp(prev_wd, "DROP") == 0 &&
-			  pg_strcasecmp(prev3_wd, "TABLE") != 0))
+			  pg_strcasecmp(prev3_wd, "TABLE") != 0 &&
+			  pg_strcasecmp(prev3_wd, "DOMAIN") != 0 &&
+			  pg_strcasecmp(prev3_wd, "GROUP") != 0))
 		matches = completion_matches(text, create_command_generator);
 
 /* ALTER */
@@ -694,6 +705,22 @@ psql_completion(char *text, int start, int end)
 		COMPLETE_WITH_LIST(list_ALTERINDEX);
 	}
 
+	/* ALTER LANGUAGE <name> */
+	else if (pg_strcasecmp(prev3_wd, "ALTER") == 0 &&
+			 pg_strcasecmp(prev2_wd, "LANGUAGE") == 0)
+		COMPLETE_WITH_CONST("RENAME TO");
+
+	/* ALTER USER <name> */
+	else if (pg_strcasecmp(prev3_wd, "ALTER") == 0 &&
+			 pg_strcasecmp(prev2_wd, "USER") == 0)
+	{
+		static const char *const list_ALTERUSER[] =
+		{"ENCRYPTED", "UNENCRYPTED", "CREATEDB", "NOCREATEDB", "CREATEUSER",
+		 "NOCREATEUSER", "VALID UNTIL", "RENAME TO", "SET", "RESET", NULL};
+
+		COMPLETE_WITH_LIST(list_ALTERUSER);
+	}
+
 	/* ALTER DOMAIN <name> */
 	else if (pg_strcasecmp(prev3_wd, "ALTER") == 0 &&
 			 pg_strcasecmp(prev2_wd, "DOMAIN") == 0)
@@ -709,7 +736,7 @@ psql_completion(char *text, int start, int end)
 			 pg_strcasecmp(prev_wd, "DROP") == 0)
 	{
 		static const char *const list_ALTERDOMAIN2[] =
-		{"CONSTRAINT", "DEFAULT", "NOT NULL", "OWNER TO", NULL};
+		{"CONSTRAINT", "DEFAULT", "NOT NULL", NULL};
 
 		COMPLETE_WITH_LIST(list_ALTERDOMAIN2);
 	}
@@ -723,11 +750,36 @@ psql_completion(char *text, int start, int end)
 
 		COMPLETE_WITH_LIST(list_ALTERDOMAIN3);
 	}
+	/* ALTER SEQUENCE <name> */
+	else if (pg_strcasecmp(prev3_wd, "ALTER") == 0 &&
+			 pg_strcasecmp(prev2_wd, "SEQUENCE") == 0)
+	{
+			static const char *const list_ALTERSCHEMA[] =
+			{"INCREMENT", "MINVALUE", "MAXVALUE", "RESTART", "NO", "CACHE", "CYCLE", NULL};
+
+			COMPLETE_WITH_LIST(list_ALTERSCHEMA);
+	}
+	/* ALTER SEQUENCE <name> NO */
+	else if (pg_strcasecmp(prev4_wd, "ALTER") == 0 &&
+			 pg_strcasecmp(prev3_wd, "SEQUENCE") == 0 &&
+			 pg_strcasecmp(prev_wd, "NO") == 0)
+	{
+			static const char *const list_ALTERSCHEMA2[] =
+			{"MINVALUE", "MAXVALUE", "CYCLE", NULL};
+			
+			COMPLETE_WITH_LIST(list_ALTERSCHEMA2);
+	}
 	/* ALTER TRIGGER <name>, add ON */
 	else if (pg_strcasecmp(prev3_wd, "ALTER") == 0 &&
-			 pg_strcasecmp(prev2_wd, "TRIGGER") == 0 &&
-			 pg_strcasecmp(prev_wd, "ON") != 0)
+			 pg_strcasecmp(prev2_wd, "TRIGGER") == 0)
 		COMPLETE_WITH_CONST("ON");
+	
+	else if (pg_strcasecmp(prev4_wd, "ALTER") == 0 &&
+			 pg_strcasecmp(prev3_wd, "TRIGGER") == 0)
+	{
+		completion_info_charp = prev2_wd;
+		COMPLETE_WITH_QUERY(Query_for_list_of_tables_for_trigger);
+	}
 
 	/*
 	 * If we have ALTER TRIGGER <sth> ON, then add the correct tablename
@@ -736,6 +788,11 @@ psql_completion(char *text, int start, int end)
 			 pg_strcasecmp(prev3_wd, "TRIGGER") == 0 &&
 			 pg_strcasecmp(prev_wd, "ON") == 0)
 		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_tables, NULL);
+
+	/* ALTER TRIGGER <name> ON <name> */
+	else if (pg_strcasecmp(prev4_wd, "TRIGGER") == 0 &&
+			 pg_strcasecmp(prev2_wd, "ON") == 0)
+		COMPLETE_WITH_CONST("RENAME TO");
 
 	/*
 	 * If we detect ALTER TABLE <name>, suggest either ADD, DROP, ALTER,
@@ -756,6 +813,11 @@ psql_completion(char *text, int start, int end)
 			  pg_strcasecmp(prev_wd, "RENAME") == 0))
 		COMPLETE_WITH_ATTR(prev2_wd);
 
+	/* ALTER TABLE xxx RENAME yyy */
+	else if (pg_strcasecmp(prev4_wd, "TABLE") == 0 &&
+			 pg_strcasecmp(prev2_wd, "RENAME") == 0)
+		COMPLETE_WITH_CONST("TO");
+
 	/* If we have TABLE <sth> DROP, provide COLUMN or CONSTRAINT */
 	else if (pg_strcasecmp(prev3_wd, "TABLE") == 0 &&
 			 pg_strcasecmp(prev_wd, "DROP") == 0)
@@ -770,6 +832,19 @@ psql_completion(char *text, int start, int end)
 			 pg_strcasecmp(prev2_wd, "DROP") == 0 &&
 			 pg_strcasecmp(prev_wd, "COLUMN") == 0)
 		COMPLETE_WITH_ATTR(prev3_wd);
+	/* ALTER TABLE ALTER [COLUMN] <foo> */
+	else if ((pg_strcasecmp(prev3_wd, "ALTER") == 0 &&
+			  pg_strcasecmp(prev2_wd, "COLUMN") == 0) ||
+			 (pg_strcasecmp(prev4_wd, "TABLE") == 0 &&
+			  pg_strcasecmp(prev2_wd, "ALTER") == 0))
+	{
+		/* DROP ... does not work well yet */
+		static const char *const list_COLUMNALTER[] = 
+		{"TYPE", "SET DEFAULT", "DROP DEFAULT", "SET NOT NULL",
+		 "DROP NOT NULL", "SET STATISTICS", "SET STORAGE", NULL};
+
+		COMPLETE_WITH_LIST(list_COLUMNALTER);
+	}
 	else if (pg_strcasecmp(prev3_wd, "TABLE") == 0 &&
 			 pg_strcasecmp(prev_wd, "CLUSTER") == 0)
 		COMPLETE_WITH_CONST("ON");
@@ -817,12 +892,12 @@ psql_completion(char *text, int start, int end)
 	else if (pg_strcasecmp(prev3_wd, "ALTER") == 0 &&
 			 pg_strcasecmp(prev2_wd, "TYPE") == 0)
 		COMPLETE_WITH_CONST("OWNER TO");
-	/* complete ALTER GROUP <foo> with ADD or DROP */
+	/* complete ALTER GROUP <foo> */
 	else if (pg_strcasecmp(prev3_wd, "ALTER") == 0 &&
 			 pg_strcasecmp(prev2_wd, "GROUP") == 0)
 	{
 		static const char *const list_ALTERGROUP[] =
-		{"ADD", "DROP", NULL};
+		{"ADD USER", "DROP USER", "RENAME TO", NULL};
 
 		COMPLETE_WITH_LIST(list_ALTERGROUP);
 	}
@@ -926,12 +1001,43 @@ psql_completion(char *text, int start, int end)
 	else if (pg_strcasecmp(prev2_wd, "COPY") == 0 ||
 			 pg_strcasecmp(prev2_wd, "\\copy") == 0 ||
 			 pg_strcasecmp(prev2_wd, "BINARY") == 0)
-	{
-		static const char *const list_FROMTO[] =
-		{"FROM", "TO", NULL};
+		{
+			static const char *const list_FROMTO[] =
+			{"FROM", "TO", NULL};
+			
+			COMPLETE_WITH_LIST(list_FROMTO);
+		}
+	/* If we have COPY|BINARY <sth> FROM|TO, complete with filename */
+	else if ((pg_strcasecmp(prev3_wd, "COPY") == 0 ||
+			  pg_strcasecmp(prev3_wd, "\\copy") == 0 ||
+			  pg_strcasecmp(prev3_wd, "BINARY") == 0) &&
+			 (pg_strcasecmp(prev_wd, "FROM") == 0 ||
+			  pg_strcasecmp(prev_wd, "TO") == 0))
+		matches = completion_matches(text, filename_completion_function);
 
-		COMPLETE_WITH_LIST(list_FROMTO);
-	}
+	/* Handle COPY|BINARY <sth> FROM|TO filename */
+	else if ((pg_strcasecmp(prev4_wd, "COPY") == 0 ||
+			  pg_strcasecmp(prev4_wd, "\\copy") == 0 ||
+			  pg_strcasecmp(prev4_wd, "BINARY") == 0) &&
+			 (pg_strcasecmp(prev2_wd, "FROM") == 0 ||
+			  pg_strcasecmp(prev2_wd, "TO") == 0))
+		{
+			static const char *const list_COPY[] =
+			{"BINARY", "OIDS", "DELIMETER", "NULL", "CSV", NULL};
+
+			COMPLETE_WITH_LIST(list_COPY);
+		}
+
+	/* Handle COPY|BINARY <sth> FROM|TO filename CSV */
+	else if (pg_strcasecmp(prev_wd, "CSV") == 0 && 
+			 (pg_strcasecmp(prev3_wd, "FROM") == 0 ||
+			  pg_strcasecmp(prev3_wd, "TO") == 0))
+		{
+			static const char *const list_CSV[] =
+			{"QUOTE", "ESCAPE", "FORCE QUOTE", NULL};
+
+			COMPLETE_WITH_LIST(list_CSV);
+		}
 
 /* CREATE INDEX */
 	/* First off we complete CREATE UNIQUE with "INDEX" */
@@ -1353,7 +1459,9 @@ psql_completion(char *text, int start, int end)
 		COMPLETE_WITH_QUERY(Query_for_list_of_users);
 	/* Complete SET <var> with "TO" */
 	else if (pg_strcasecmp(prev2_wd, "SET") == 0 &&
-			 pg_strcasecmp(prev4_wd, "UPDATE") != 0)
+			 pg_strcasecmp(prev4_wd, "UPDATE") != 0 &&
+			 pg_strcasecmp(prev_wd, "TABLESPACE") != 0 &&
+			 pg_strcasecmp(prev4_wd, "DOMAIN") != 0)
 		COMPLETE_WITH_CONST("TO");
 	/* Suggest possible variable values */
 	else if (pg_strcasecmp(prev3_wd, "SET") == 0 &&
@@ -1432,7 +1540,9 @@ psql_completion(char *text, int start, int end)
 
 /* ... FROM ... */
 /* TODO: also include SRF ? */
-	else if (pg_strcasecmp(prev_wd, "FROM") == 0)
+	else if (pg_strcasecmp(prev_wd, "FROM") == 0 &&
+			 pg_strcasecmp(prev3_wd, "COPY") != 0 &&
+			 pg_strcasecmp(prev3_wd, "\\copy") != 0)
 		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_tsv, NULL);
 
 
