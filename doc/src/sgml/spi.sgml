@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/spi.sgml,v 1.23 2002/09/02 06:11:42 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/spi.sgml,v 1.23.2.1 2003/01/21 22:06:36 tgl Exp $
 -->
 
 <Chapter id="spi">
@@ -476,7 +476,7 @@ You may pass multiple queries in one string or query string may be
    The actual number of tuples for which the (last) query was executed is
    returned in the global variable SPI_processed (if not <ReturnValue>SPI_OK_UTILITY</ReturnValue>).
 
-   If <ReturnValue>SPI_OK_SELECT</ReturnValue> is returned and SPI_processed &gt; 0 then you may use global
+   If <ReturnValue>SPI_OK_SELECT</ReturnValue> is returned then you may use global
    pointer SPITupleTable *SPI_tuptable to access the result tuples.
 </Para>
 
@@ -517,7 +517,7 @@ You may pass multiple queries in one string or query string may be
 <TITLE>Structures
 </TITLE>
 <Para>
-   If <ReturnValue>SPI_OK_SELECT</ReturnValue> is returned and SPI_processed &gt; 0 then you may use the global
+   If <ReturnValue>SPI_OK_SELECT</ReturnValue> is returned then you may use the global
    pointer SPITupleTable *SPI_tuptable to access the selected tuples.
 </Para>
 

@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/dest.c,v 1.49 2002/06/20 20:29:36 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/dest.c,v 1.49.2.1 2003/01/21 22:06:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -64,7 +64,7 @@ static DestReceiver debugtupDR = {
 	debugtup, debugSetup, donothingCleanup
 };
 static DestReceiver spi_printtupDR = {
-	spi_printtup, donothingSetup, donothingCleanup
+	spi_printtup, spi_dest_setup, donothingCleanup
 };
 
 /* ----------------
