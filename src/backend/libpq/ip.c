@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/ip.c,v 1.21 2003/09/05 23:07:21 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/ip.c,v 1.22 2003/09/08 00:56:13 tgl Exp $
  *
  * This file and the IPV6 implementation were initially provided by
  * Nigel Kukard <nkukard@lbsd.net>, Linux Based Systems Design
@@ -413,10 +413,10 @@ promote_v4_to_v6_addr(struct sockaddr_storage * addr)
 {
 	struct sockaddr_in addr4;
 	struct sockaddr_in6 addr6;
-	uint32		s_addr;
+	uint32		ip4addr;
 
 	memcpy(&addr4, addr, sizeof(addr4));
-	s_addr = ntohl(addr4.sin_addr.s_addr);
+	ip4addr = ntohl(addr4.sin_addr.s_addr);
 
 	memset(&addr6, 0, sizeof(addr6));
 
@@ -424,10 +424,10 @@ promote_v4_to_v6_addr(struct sockaddr_storage * addr)
 
 	addr6.sin6_addr.s6_addr[10] = 0xff;
 	addr6.sin6_addr.s6_addr[11] = 0xff;
-	addr6.sin6_addr.s6_addr[12] = (s_addr >> 24) & 0xFF;
-	addr6.sin6_addr.s6_addr[13] = (s_addr >> 16) & 0xFF;
-	addr6.sin6_addr.s6_addr[14] = (s_addr >> 8) & 0xFF;
-	addr6.sin6_addr.s6_addr[15] = (s_addr) & 0xFF;
+	addr6.sin6_addr.s6_addr[12] = (ip4addr >> 24) & 0xFF;
+	addr6.sin6_addr.s6_addr[13] = (ip4addr >> 16) & 0xFF;
+	addr6.sin6_addr.s6_addr[14] = (ip4addr >> 8) & 0xFF;
+	addr6.sin6_addr.s6_addr[15] = (ip4addr) & 0xFF;
 
 	memcpy(addr, &addr6, sizeof(addr6));
 }
@@ -448,11 +448,11 @@ promote_v4_to_v6_mask(struct sockaddr_storage * addr)
 {
 	struct sockaddr_in addr4;
 	struct sockaddr_in6 addr6;
-	uint32		s_addr;
+	uint32		ip4addr;
 	int			i;
 
 	memcpy(&addr4, addr, sizeof(addr4));
-	s_addr = ntohl(addr4.sin_addr.s_addr);
+	ip4addr = ntohl(addr4.sin_addr.s_addr);
 
 	memset(&addr6, 0, sizeof(addr6));
 
@@ -461,10 +461,10 @@ promote_v4_to_v6_mask(struct sockaddr_storage * addr)
 	for (i = 0; i < 12; i++)
 		addr6.sin6_addr.s6_addr[i] = 0xff;
 
-	addr6.sin6_addr.s6_addr[12] = (s_addr >> 24) & 0xFF;
-	addr6.sin6_addr.s6_addr[13] = (s_addr >> 16) & 0xFF;
-	addr6.sin6_addr.s6_addr[14] = (s_addr >> 8) & 0xFF;
-	addr6.sin6_addr.s6_addr[15] = (s_addr) & 0xFF;
+	addr6.sin6_addr.s6_addr[12] = (ip4addr >> 24) & 0xFF;
+	addr6.sin6_addr.s6_addr[13] = (ip4addr >> 16) & 0xFF;
+	addr6.sin6_addr.s6_addr[14] = (ip4addr >> 8) & 0xFF;
+	addr6.sin6_addr.s6_addr[15] = (ip4addr) & 0xFF;
 
 	memcpy(addr, &addr6, sizeof(addr6));
 }
