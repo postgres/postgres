@@ -53,12 +53,13 @@ autoinc(PG_FUNCTION_ARGS)
 
 	for (i = 0; i < nargs;)
 	{
-		text	   *seqname;
 		int			attnum = SPI_fnumber(tupdesc, args[i]);
 		int32		val;
+		Datum		seqname;
 
 		if (attnum < 0)
-			elog(ERROR, "autoinc (%s): there is no attribute %s", relname, args[i]);
+			elog(ERROR, "autoinc (%s): there is no attribute %s",
+				 relname, args[i]);
 		if (SPI_gettypeid(tupdesc, attnum) != INT4OID)
 			elog(ERROR, "autoinc (%s): attribute %s must be of INT4 type",
 				 relname, args[i]);
@@ -73,13 +74,12 @@ autoinc(PG_FUNCTION_ARGS)
 
 		i++;
 		chattrs[chnattrs] = attnum;
-		seqname = textin(args[i]);
-		newvals[chnattrs] = DirectFunctionCall1(nextval,
-												PointerGetDatum(seqname));
+		seqname = DirectFunctionCall1(textin,
+									  CStringGetDatum(args[i]));
+		newvals[chnattrs] = DirectFunctionCall1(nextval, seqname);
 		if (DatumGetInt32(newvals[chnattrs]) == 0)
-			newvals[chnattrs] = DirectFunctionCall1(nextval,
-													PointerGetDatum(seqname));
-		pfree(seqname);
+			newvals[chnattrs] = DirectFunctionCall1(nextval, seqname);
+		pfree(DatumGetTextP(seqname));
 		chnattrs++;
 		i++;
 	}

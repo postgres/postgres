@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.123 2000/07/05 16:17:37 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.124 2000/07/05 23:11:06 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -680,11 +680,13 @@ UpdateIndexRelation(Oid indexoid,
 	if (predicate != NULL)
 	{
 		predString = nodeToString(predicate);
-		predText = textin(predString);
+		predText = DatumGetTextP(DirectFunctionCall1(textin,
+											CStringGetDatum(predString)));
 		pfree(predString);
 	}
 	else
-		predText = textin("");
+		predText = DatumGetTextP(DirectFunctionCall1(textin,
+													 CStringGetDatum("")));
 
 	predLen = VARSIZE(predText);
 	itupLen = predLen + sizeof(FormData_pg_index);
@@ -824,11 +826,13 @@ UpdateIndexPredicate(Oid indexoid, Node *oldPred, Node *predicate)
 	if (newPred != NULL)
 	{
 		predString = nodeToString(newPred);
-		predText = textin(predString);
+		predText = DatumGetTextP(DirectFunctionCall1(textin,
+											CStringGetDatum(predString)));
 		pfree(predString);
 	}
 	else
-		predText = textin("");
+		predText = DatumGetTextP(DirectFunctionCall1(textin,
+													 CStringGetDatum("")));
 
 	/* open the index system catalog relation */
 	pg_index = heap_openr(IndexRelationName, RowExclusiveLock);
@@ -1337,7 +1341,7 @@ IndexesAreActive(Oid relid, bool confirmCommitted)
 		elog(ERROR, "IndexesAreActive couldn't lock %u", relid);
 	if (((Form_pg_class) GETSTRUCT(&tuple))->relkind != RELKIND_RELATION &&
 	    ((Form_pg_class) GETSTRUCT(&tuple))->relkind != RELKIND_TOASTVALUE)
-		elog(ERROR, "relation %u isn't an relation", relid);
+		elog(ERROR, "relation %u isn't an indexable relation", relid);
 	isactive = ((Form_pg_class) GETSTRUCT(&tuple))->relhasindex;
 	ReleaseBuffer(buffer);
 	if (isactive)
@@ -2080,7 +2084,8 @@ reindex_index(Oid indexId, bool force)
 	/* If a valid where predicate, compute predicate Node */
 	if (VARSIZE(&index->indpred) != 0)
 	{
-		predString = textout(&index->indpred);
+		predString = DatumGetCString(DirectFunctionCall1(textout,
+											PointerGetDatum(&index->indpred)));
 		oldPred = stringToNode(predString);
 		pfree(predString);
 	}

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varlena.c,v 1.61 2000/07/03 23:09:54 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varlena.c,v 1.62 2000/07/05 23:11:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -146,54 +146,46 @@ byteaout(bytea *vlena)
 /*
  *		textin			- converts "..." to internal representation
  */
-text *
-textin(char *inputText)
+Datum
+textin(PG_FUNCTION_ARGS)
 {
+	char	   *inputText = PG_GETARG_CSTRING(0);
 	text	   *result;
 	int			len;
-
-	if (inputText == NULL)
-		return NULL;
 
 	len = strlen(inputText) + VARHDRSZ;
 	result = (text *) palloc(len);
 	VARATT_SIZEP(result) = len;
 
-	memmove(VARDATA(result), inputText, len - VARHDRSZ);
+	memcpy(VARDATA(result), inputText, len - VARHDRSZ);
 
 #ifdef CYR_RECODE
 	convertstr(VARDATA(result), len - VARHDRSZ, 0);
 #endif
 
-	return result;
+	PG_RETURN_TEXT_P(result);
 }
 
 /*
  *		textout			- converts internal representation to "..."
  */
-char *
-textout(text *vlena)
+Datum
+textout(PG_FUNCTION_ARGS)
 {
+	text	   *t = PG_GETARG_TEXT_P(0);
 	int			len;
 	char	   *result;
 
-	if (vlena == NULL)
-	{
-		result = (char *) palloc(2);
-		result[0] = '-';
-		result[1] = '\0';
-		return result;
-	}
-	len = VARSIZE(vlena) - VARHDRSZ;
+	len = VARSIZE(t) - VARHDRSZ;
 	result = (char *) palloc(len + 1);
-	memmove(result, VARDATA(vlena), len);
+	memcpy(result, VARDATA(t), len);
 	result[len] = '\0';
 
 #ifdef CYR_RECODE
 	convertstr(result, len, 1);
 #endif
 
-	return result;
+	PG_RETURN_CSTRING(result);
 }
 
 

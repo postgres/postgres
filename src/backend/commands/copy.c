@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.116 2000/06/28 06:05:36 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.117 2000/07/05 23:11:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -676,7 +676,8 @@ CopyFrom(Relation rel, bool binary, bool oids, FILE *fp, char *delim, char *null
 				indexNatts[i] = natts;
 				if (VARSIZE(&pgIndexP[i]->indpred) != 0)
 				{
-					predString = textout(&pgIndexP[i]->indpred);
+					predString = DatumGetCString(DirectFunctionCall1(textout,
+									PointerGetDatum(&pgIndexP[i]->indpred)));
 					indexPred[i] = stringToNode(predString);
 					pfree(predString);
 					/* make dummy ExprContext for use by ExecQual */

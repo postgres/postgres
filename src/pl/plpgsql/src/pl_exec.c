@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.23 2000/05/30 04:24:58 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.24 2000/07/05 23:11:58 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -606,7 +606,7 @@ plpgsql_exec_trigger(PLpgSQL_function * func,
 		rec_new->tupdesc = trigdata->tg_relation->rd_att;
 		rec_old->tup = NULL;
 		rec_old->tupdesc = NULL;
-		var->value = (Datum) textin("INSERT");
+		var->value = DirectFunctionCall1(textin, CStringGetDatum("INSERT"));
 	}
 	else if (TRIGGER_FIRED_BY_UPDATE(trigdata->tg_event))
 	{
@@ -614,7 +614,7 @@ plpgsql_exec_trigger(PLpgSQL_function * func,
 		rec_new->tupdesc = trigdata->tg_relation->rd_att;
 		rec_old->tup = trigdata->tg_trigtuple;
 		rec_old->tupdesc = trigdata->tg_relation->rd_att;
-		var->value = (Datum) textin("UPDATE");
+		var->value = DirectFunctionCall1(textin, CStringGetDatum("UPDATE"));
 	}
 	else if (TRIGGER_FIRED_BY_DELETE(trigdata->tg_event))
 	{
@@ -622,13 +622,13 @@ plpgsql_exec_trigger(PLpgSQL_function * func,
 		rec_new->tupdesc = NULL;
 		rec_old->tup = trigdata->tg_trigtuple;
 		rec_old->tupdesc = trigdata->tg_relation->rd_att;
-		var->value = (Datum) textin("DELETE");
+		var->value = DirectFunctionCall1(textin, CStringGetDatum("DELETE"));
 	}
 	else
 	{
 		rec_new->tup = NULL;
 		rec_new->tupdesc = NULL;
-		var->value = (Datum) textin("UNKNOWN");
+		var->value = DirectFunctionCall1(textin, CStringGetDatum("UNKNOWN"));
 	}
 
 	/* ----------
@@ -642,20 +642,20 @@ plpgsql_exec_trigger(PLpgSQL_function * func,
 	var = (PLpgSQL_var *) (estate.datums[func->tg_when_varno]);
 	var->isnull = false;
 	if (TRIGGER_FIRED_BEFORE(trigdata->tg_event))
-		var->value = (Datum) textin("BEFORE");
+		var->value = DirectFunctionCall1(textin, CStringGetDatum("BEFORE"));
 	else if (TRIGGER_FIRED_AFTER(trigdata->tg_event))
-		var->value = (Datum) textin("AFTER");
+		var->value = DirectFunctionCall1(textin, CStringGetDatum("AFTER"));
 	else
-		var->value = (Datum) textin("UNKNOWN");
+		var->value = DirectFunctionCall1(textin, CStringGetDatum("UNKNOWN"));
 
 	var = (PLpgSQL_var *) (estate.datums[func->tg_level_varno]);
 	var->isnull = false;
 	if (TRIGGER_FIRED_FOR_ROW(trigdata->tg_event))
-		var->value = (Datum) textin("ROW");
+		var->value = DirectFunctionCall1(textin, CStringGetDatum("ROW"));
 	else if (TRIGGER_FIRED_FOR_STATEMENT(trigdata->tg_event))
-		var->value = (Datum) textin("STATEMENT");
+		var->value = DirectFunctionCall1(textin, CStringGetDatum("STATEMENT"));
 	else
-		var->value = (Datum) textin("UNKNOWN");
+		var->value = DirectFunctionCall1(textin, CStringGetDatum("UNKNOWN"));
 
 	var = (PLpgSQL_var *) (estate.datums[func->tg_relid_varno]);
 	var->isnull = false;
@@ -682,7 +682,8 @@ plpgsql_exec_trigger(PLpgSQL_function * func,
 	{
 		estate.trig_argv = palloc(sizeof(Datum) * estate.trig_nargs);
 		for (i = 0; i < trigdata->tg_trigger->tgnargs; i++)
-			estate.trig_argv[i] = (Datum) textin(trigdata->tg_trigger->tgargs[i]);
+			estate.trig_argv[i] = DirectFunctionCall1(textin,
+							CStringGetDatum(trigdata->tg_trigger->tgargs[i]));
 	}
 
 	/* ----------
@@ -1611,7 +1612,8 @@ exec_stmt_raise(PLpgSQL_execstate * estate, PLpgSQL_stmt_raise * stmt)
 							if (value < 0 || value >= estate->trig_nargs)
 								extval = "<OUT_OF_RANGE>";
 							else
-								extval = textout((text *) (estate->trig_argv[value]));
+								extval = DatumGetCString(DirectFunctionCall1(textout,
+													estate->trig_argv[value]));
 						}
 						plpgsql_dstring_append(&ds, extval);
 					}

@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.20 2000/05/11 04:00:00 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.21 2000/07/05 23:11:58 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -142,7 +142,8 @@ plpgsql_compile(Oid fn_oid, int functype)
 	 * ----------
 	 */
 	procStruct = (Form_pg_proc) GETSTRUCT(procTup);
-	proc_source = textout(&(procStruct->prosrc));
+	proc_source = DatumGetCString(DirectFunctionCall1(textout,
+									PointerGetDatum(&procStruct->prosrc)));
 	plpgsql_setinput(proc_source, functype);
 	plpgsql_error_funcname = nameout(&(procStruct->proname));
 	plpgsql_error_lineno = 0;

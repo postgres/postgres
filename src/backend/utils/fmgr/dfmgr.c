@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/dfmgr.c,v 1.43 2000/06/28 03:32:31 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/dfmgr.c,v 1.44 2000/07/05 23:11:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -71,21 +71,17 @@ fmgr_dynamic(Oid functionId)
 
 	prosrcattr = SysCacheGetAttr(PROCOID, procedureTuple,
 								 Anum_pg_proc_prosrc, &isnull);
-	if (isnull || !PointerIsValid(prosrcattr))
-	{
+	if (isnull)
 		elog(ERROR, "fmgr: Could not extract prosrc for %u from pg_proc",
 			 functionId);
-	}
-	prosrcstring = textout((text *) DatumGetPointer(prosrcattr));
+	prosrcstring = DatumGetCString(DirectFunctionCall1(textout, prosrcattr));
 
 	probinattr = SysCacheGetAttr(PROCOID, procedureTuple,
 								 Anum_pg_proc_probin, &isnull);
-	if (isnull || !PointerIsValid(probinattr))
-	{
+	if (isnull)
 		elog(ERROR, "fmgr: Could not extract probin for %u from pg_proc",
 			 functionId);
-	}
-	probinstring = textout((text *) DatumGetPointer(probinattr));
+	probinstring = DatumGetCString(DirectFunctionCall1(textout, probinattr));
 
 	user_fn = load_external_function(probinstring, prosrcstring);
 

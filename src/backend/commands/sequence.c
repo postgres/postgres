@@ -377,7 +377,8 @@ setval(PG_FUNCTION_ARGS)
 static char *
 get_seq_name(text *seqin)
 {
-	char	   *rawname = textout(seqin);
+	char	   *rawname = DatumGetCString(DirectFunctionCall1(textout,
+													PointerGetDatum(seqin)));
 	int			rawlen = strlen(rawname);
 	char	   *seqname;
 

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: builtins.h,v 1.118 2000/06/19 03:54:48 tgl Exp $
+ * $Id: builtins.h,v 1.119 2000/07/05 23:11:51 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -436,8 +436,8 @@ extern int32 varcharlen(char *arg);
 extern int32 varcharoctetlen(char *arg);
 
 /* varlena.c */
-extern text *textin(char *inputText);
-extern char *textout(text *vlena);
+extern Datum textin(PG_FUNCTION_ARGS);
+extern Datum textout(PG_FUNCTION_ARGS);
 extern text *textcat(text *arg1, text *arg2);
 extern bool texteq(text *arg1, text *arg2);
 extern bool textne(text *arg1, text *arg2);

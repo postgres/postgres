@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_aggregate.c,v 1.33 2000/05/30 04:24:36 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_aggregate.c,v 1.34 2000/07/05 23:11:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -238,12 +238,14 @@ AggregateCreate(char *aggName,
 	values[Anum_pg_aggregate_aggfinaltype - 1] = ObjectIdGetDatum(fret);
 
 	if (agginitval1)
-		values[Anum_pg_aggregate_agginitval1 - 1] = PointerGetDatum(textin(agginitval1));
+		values[Anum_pg_aggregate_agginitval1 - 1] =
+			DirectFunctionCall1(textin, CStringGetDatum(agginitval1));
 	else
 		nulls[Anum_pg_aggregate_agginitval1 - 1] = 'n';
 
 	if (agginitval2)
-		values[Anum_pg_aggregate_agginitval2 - 1] = PointerGetDatum(textin(agginitval2));
+		values[Anum_pg_aggregate_agginitval2 - 1] =
+			DirectFunctionCall1(textin, CStringGetDatum(agginitval2));
 	else
 		nulls[Anum_pg_aggregate_agginitval2 - 1] = 'n';
 
@@ -277,7 +279,7 @@ AggNameGetInitVal(char *aggName, Oid basetype, int xfuncno, bool *isNull)
 	Oid			transtype,
 				typinput,
 				typelem;
-	text	   *textInitVal;
+	Datum		textInitVal;
 	char	   *strInitVal;
 	Datum		initVal;
 
@@ -312,17 +314,15 @@ AggNameGetInitVal(char *aggName, Oid basetype, int xfuncno, bool *isNull)
 		initValAttno = Anum_pg_aggregate_agginitval2;
 	}
 
-	textInitVal = (text *) fastgetattr(tup, initValAttno,
-									   RelationGetDescr(aggRel),
-									   isNull);
-	if (!PointerIsValid(textInitVal))
-		*isNull = true;
+	textInitVal = fastgetattr(tup, initValAttno,
+							  RelationGetDescr(aggRel),
+							  isNull);
 	if (*isNull)
 	{
 		heap_close(aggRel, AccessShareLock);
 		return PointerGetDatum(NULL);
 	}
-	strInitVal = textout(textInitVal);
+	strInitVal = DatumGetCString(DirectFunctionCall1(textout, textInitVal));
 
 	heap_close(aggRel, AccessShareLock);
 

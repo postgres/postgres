@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execUtils.c,v 1.61 2000/06/19 23:40:47 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execUtils.c,v 1.62 2000/07/05 23:11:14 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -850,7 +850,8 @@ ExecOpenIndices(RelationInfo *resultRelationInfo)
 		{
 			char	   *predString;
 
-			predString = textout(&indexStruct->indpred);
+			predString = DatumGetCString(DirectFunctionCall1(textout,
+									PointerGetDatum(&indexStruct->indpred)));
 			predicate = (PredInfo *) stringToNode(predString);
 			pfree(predString);
 		}

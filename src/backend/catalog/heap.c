@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.138 2000/07/04 06:11:23 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.139 2000/07/05 23:11:06 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1121,7 +1121,8 @@ RelationTruncateIndexes(Relation heapRelation)
 		/* If a valid where predicate, compute predicate Node */
 		if (VARSIZE(&index->indpred) != 0)
 		{
-			predString = textout(&index->indpred);
+			predString = DatumGetCString(DirectFunctionCall1(textout,
+											PointerGetDatum(&index->indpred)));
 			oldPred = stringToNode(predString);
 			pfree(predString);
 		}
@@ -1602,8 +1603,10 @@ StoreAttrDefault(Relation rel, AttrNumber attnum, char *adbin,
 
 	values[Anum_pg_attrdef_adrelid - 1] = RelationGetRelid(rel);
 	values[Anum_pg_attrdef_adnum - 1] = attnum;
-	values[Anum_pg_attrdef_adbin - 1] = PointerGetDatum(textin(adbin));
-	values[Anum_pg_attrdef_adsrc - 1] = PointerGetDatum(textin(adsrc));
+	values[Anum_pg_attrdef_adbin - 1] = DirectFunctionCall1(textin,
+													CStringGetDatum(adbin));
+	values[Anum_pg_attrdef_adsrc - 1] = DirectFunctionCall1(textin,
+													CStringGetDatum(adsrc));
 	adrel = heap_openr(AttrDefaultRelationName, RowExclusiveLock);
 	tuple = heap_formtuple(adrel->rd_att, values, nulls);
 	heap_insert(adrel, tuple);
@@ -1685,8 +1688,10 @@ StoreRelCheck(Relation rel, char *ccname, char *ccbin)
 
 	values[Anum_pg_relcheck_rcrelid - 1] = RelationGetRelid(rel);
 	values[Anum_pg_relcheck_rcname - 1] = PointerGetDatum(namein(ccname));
-	values[Anum_pg_relcheck_rcbin - 1] = PointerGetDatum(textin(ccbin));
-	values[Anum_pg_relcheck_rcsrc - 1] = PointerGetDatum(textin(ccsrc));
+	values[Anum_pg_relcheck_rcbin - 1] = DirectFunctionCall1(textin,
+													CStringGetDatum(ccbin));
+	values[Anum_pg_relcheck_rcsrc - 1] = DirectFunctionCall1(textin,
+													CStringGetDatum(ccsrc));
 	rcrel = heap_openr(RelCheckRelationName, RowExclusiveLock);
 	tuple = heap_formtuple(rcrel->rd_att, values, nulls);
 	heap_insert(rcrel, tuple);

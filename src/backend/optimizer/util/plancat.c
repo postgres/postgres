@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/plancat.c,v 1.58 2000/06/20 04:22:14 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/plancat.c,v 1.59 2000/07/05 23:11:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -125,8 +125,10 @@ find_secondary_indexes(Query *root, Index relid)
 		info->indproc = index->indproc; /* functional index ?? */
 		if (VARSIZE(&index->indpred) != 0)		/* partial index ?? */
 		{
-			char	   *predString = textout(&index->indpred);
+			char	   *predString;
 
+			predString = DatumGetCString(DirectFunctionCall1(textout,
+											PointerGetDatum(&index->indpred)));
 			info->indpred = (List *) stringToNode(predString);
 			pfree(predString);
 		}

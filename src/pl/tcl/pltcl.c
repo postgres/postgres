@@ -31,7 +31,7 @@
  *	  ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/tcl/pltcl.c,v 1.26 2000/06/05 07:29:13 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/tcl/pltcl.c,v 1.27 2000/07/05 23:12:03 tgl Exp $
  *
  **********************************************************************/
 
@@ -561,7 +561,8 @@ pltcl_func_handler(PG_FUNCTION_ARGS)
 			sprintf(buf, "array set %d $__PLTcl_Tup_%d\n", i + 1, i + 1);
 			Tcl_DStringAppend(&proc_internal_body, buf, -1);
 		}
-		proc_source = textout(&(procStruct->prosrc));
+		proc_source = DatumGetCString(DirectFunctionCall1(textout,
+									PointerGetDatum(&procStruct->prosrc)));
 		Tcl_DStringAppend(&proc_internal_body, proc_source, -1);
 		pfree(proc_source);
 		Tcl_DStringAppendElement(&proc_internal_def,
@@ -836,7 +837,8 @@ pltcl_trigger_handler(PG_FUNCTION_ARGS)
 						  "}\n"
 						  "unset i v\n\n", -1);
 
-		proc_source = textout(&(procStruct->prosrc));
+		proc_source = DatumGetCString(DirectFunctionCall1(textout,
+									PointerGetDatum(&procStruct->prosrc)));
 		Tcl_DStringAppend(&proc_internal_body, proc_source, -1);
 		pfree(proc_source);
 		Tcl_DStringAppendElement(&proc_internal_def,

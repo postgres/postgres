@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.73 2000/06/15 03:32:29 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.74 2000/07/05 23:11:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -442,7 +442,7 @@ patternsel(PG_FUNCTION_ARGS, Pattern_Type ptype)
 
 		/* the right-hand const is type text for all supported operators */
 		Assert(rtype == TEXTOID);
-		patt = textout((text *) DatumGetPointer(value));
+		patt = DatumGetCString(DirectFunctionCall1(textout, value));
 
 		/* divide pattern into fixed prefix and remainder */
 		pstatus = pattern_fixed_prefix(patt, ptype, &prefix, &rest);
@@ -1184,9 +1184,9 @@ getattstatistics(Oid relid,
 	 */
 	if (commonval)
 	{
-		text	   *val = (text *) SysCacheGetAttr(STATRELID, tuple,
+		Datum		val = SysCacheGetAttr(STATRELID, tuple,
 										  Anum_pg_statistic_stacommonval,
-												   &isnull);
+										  &isnull);
 
 		if (isnull)
 		{
@@ -1195,7 +1195,8 @@ getattstatistics(Oid relid,
 		}
 		else
 		{
-			char	   *strval = textout(val);
+			char	   *strval = DatumGetCString(DirectFunctionCall1(textout,
+																	 val));
 
 			*commonval = FunctionCall3(&inputproc,
 									   CStringGetDatum(strval),
@@ -1207,9 +1208,9 @@ getattstatistics(Oid relid,
 
 	if (loval)
 	{
-		text	   *val = (text *) SysCacheGetAttr(STATRELID, tuple,
-												   Anum_pg_statistic_staloval,
-												   &isnull);
+		Datum		val = SysCacheGetAttr(STATRELID, tuple,
+										  Anum_pg_statistic_staloval,
+										  &isnull);
 
 		if (isnull)
 		{
@@ -1218,7 +1219,8 @@ getattstatistics(Oid relid,
 		}
 		else
 		{
-			char	   *strval = textout(val);
+			char	   *strval = DatumGetCString(DirectFunctionCall1(textout,
+																	 val));
 
 			*loval = FunctionCall3(&inputproc,
 								   CStringGetDatum(strval),
@@ -1230,9 +1232,9 @@ getattstatistics(Oid relid,
 
 	if (hival)
 	{
-		text	   *val = (text *) SysCacheGetAttr(STATRELID, tuple,
-											  Anum_pg_statistic_stahival,
-												   &isnull);
+		Datum		val = SysCacheGetAttr(STATRELID, tuple,
+										  Anum_pg_statistic_stahival,
+										  &isnull);
 
 		if (isnull)
 		{
@@ -1241,7 +1243,8 @@ getattstatistics(Oid relid,
 		}
 		else
 		{
-			char	   *strval = textout(val);
+			char	   *strval = DatumGetCString(DirectFunctionCall1(textout,
+																	 val));
 
 			*hival = FunctionCall3(&inputproc,
 								   CStringGetDatum(strval),
@@ -1868,7 +1871,6 @@ find_operator(const char *opname, Oid datatype)
 static Datum
 string_to_datum(const char *str, Oid datatype)
 {
-
 	/*
 	 * We cheat a little by assuming that textin() will do for bpchar and
 	 * varchar constants too...
@@ -1876,7 +1878,7 @@ string_to_datum(const char *str, Oid datatype)
 	if (datatype == NAMEOID)
 		return PointerGetDatum(namein((char *) str));
 	else
-		return PointerGetDatum(textin((char *) str));
+		return DirectFunctionCall1(textin, CStringGetDatum(str));
 }
 
 /*-------------------------------------------------------------------------

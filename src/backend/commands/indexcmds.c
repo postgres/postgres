@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.33 2000/07/04 06:11:27 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.34 2000/07/05 23:11:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -304,7 +304,8 @@ ExtendIndex(char *indexRelationName, Expr *predicate, List *rangetable)
 	{
 		char	   *predString;
 
-		predString = textout(&index->indpred);
+		predString = DatumGetCString(DirectFunctionCall1(textout,
+											PointerGetDatum(&index->indpred)));
 		oldPred = stringToNode(predString);
 		pfree(predString);
 	}

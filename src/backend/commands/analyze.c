@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/analyze.c,v 1.2 2000/05/30 04:25:00 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/analyze.c,v 1.3 2000/07/05 23:11:08 tgl Exp $
  *
 
  *-------------------------------------------------------------------------
@@ -515,8 +515,8 @@ update_attstats(Oid relid, int natts, VacAttrStats *vacattrstats)
 			 */
 			if (VacAttrStatsLtGtValid(stats) && stats->initialized)
 			{
-				float32data nullratio;
-				float32data bestratio;
+				float4		nullratio;
+				float4		bestratio;
 				FmgrInfo	out_function;
 				char	   *out_string;
 				double		best_cnt_d = stats->best_cnt,
@@ -541,26 +541,28 @@ update_attstats(Oid relid, int natts, VacAttrStats *vacattrstats)
 				values[i++] = ObjectIdGetDatum(relid);		/* starelid */
 				values[i++] = Int16GetDatum(attp->attnum);	/* staattnum */
 				values[i++] = ObjectIdGetDatum(stats->op_cmplt); /* staop */
-				/* hack: this code knows float4 is pass-by-ref */
-				values[i++] = Float32GetDatum(&nullratio);	/* stanullfrac */
-				values[i++] = Float32GetDatum(&bestratio);	/* stacommonfrac */
+				values[i++] = Float4GetDatum(nullratio);	/* stanullfrac */
+				values[i++] = Float4GetDatum(bestratio);	/* stacommonfrac */
 				out_string = DatumGetCString(FunctionCall3(&out_function,
 											 stats->best,
 											 ObjectIdGetDatum(stats->typelem),
 											 Int32GetDatum(stats->attr->atttypmod)));
-				values[i++] = PointerGetDatum(textin(out_string));	/* stacommonval */
+				values[i++] = DirectFunctionCall1(textin,	/* stacommonval */
+												  CStringGetDatum(out_string));
 				pfree(out_string);
 				out_string = DatumGetCString(FunctionCall3(&out_function,
 											 stats->min,
 											 ObjectIdGetDatum(stats->typelem),
 											 Int32GetDatum(stats->attr->atttypmod)));
-				values[i++] = PointerGetDatum(textin(out_string));	/* staloval */
+				values[i++] = DirectFunctionCall1(textin,	/* staloval */
+												  CStringGetDatum(out_string));
 				pfree(out_string);
 				out_string = DatumGetCString(FunctionCall3(&out_function,
 											 stats->max,
 											 ObjectIdGetDatum(stats->typelem),
 											 Int32GetDatum(stats->attr->atttypmod)));
-				values[i++] = PointerGetDatum(textin(out_string));	/* stahival */
+				values[i++] = DirectFunctionCall1(textin,	/* stahival */
+												  CStringGetDatum(out_string));
 				pfree(out_string);
 
 				stup = heap_formtuple(sd->rd_att, values, nulls);

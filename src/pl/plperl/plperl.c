@@ -33,7 +33,7 @@
  *	  ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plperl/plperl.c,v 1.11 2000/06/05 07:29:11 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plperl/plperl.c,v 1.12 2000/07/05 23:11:55 tgl Exp $
  *
  **********************************************************************/
 
@@ -594,8 +594,8 @@ plperl_func_handler(PG_FUNCTION_ARGS)
 		 * through the reference.
 		 *
 		 ************************************************************/
-		proc_source = textout(&(procStruct->prosrc));
-
+		proc_source = DatumGetCString(DirectFunctionCall1(textout,
+									PointerGetDatum(&procStruct->prosrc)));
 
 		/************************************************************
 		 * Create the procedure in the interpreter
@@ -789,7 +789,8 @@ plperl_trigger_handler(PG_FUNCTION_ARGS)
 						  "}\n"
 						  "unset i v\n\n", -1);
 
-		proc_source = textout(&(procStruct->prosrc));
+		proc_source = DatumGetCString(DirectFunctionCall1(textout,
+									PointerGetDatum(&procStruct->prosrc)));
 		Tcl_DStringAppend(&proc_internal_body, proc_source, -1);
 		pfree(proc_source);
 		Tcl_DStringAppendElement(&proc_internal_def,

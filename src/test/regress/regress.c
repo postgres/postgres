@@ -1,5 +1,5 @@
 /*
- * $Header: /cvsroot/pgsql/src/test/regress/regress.c,v 1.40 2000/06/13 07:35:34 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/test/regress/regress.c,v 1.41 2000/07/05 23:12:09 tgl Exp $
  */
 
 #include <float.h>				/* faked on sunos */
@@ -524,7 +524,8 @@ ttdummy(PG_FUNCTION_ARGS)
 	}
 
 	{
-		text   *seqname = textin("ttdummy_seq");
+		text   *seqname = DatumGetTextP(DirectFunctionCall1(textin,
+											CStringGetDatum("ttdummy_seq")));
 
 		newoff = DirectFunctionCall1(nextval,
 									 PointerGetDatum(seqname));

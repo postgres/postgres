@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_coerce.c,v 2.44 2000/06/15 03:32:19 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_coerce.c,v 2.45 2000/07/05 23:11:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -77,7 +77,8 @@ coerce_type(ParseState *pstate, Node *node, Oid inputTypeId,
 		if (!con->constisnull)
 		{
 			/* We know the source constant is really of type 'text' */
-			char	   *val = textout((text *) con->constvalue);
+			char	   *val = DatumGetCString(DirectFunctionCall1(textout,
+														con->constvalue));
 
 			newcon->constvalue = stringTypeDatum(targetType, val, atttypmod);
 			pfree(val);

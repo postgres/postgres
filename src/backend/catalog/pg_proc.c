@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_proc.c,v 1.45 2000/06/28 03:31:23 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_proc.c,v 1.46 2000/07/05 23:11:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -156,7 +156,8 @@ ProcedureCreate(char *procedureName,
 			 */
 			text	   *prosrctext;
 
-			prosrctext = textin(prosrc);
+			prosrctext = DatumGetTextP(DirectFunctionCall1(textin,
+													CStringGetDatum(prosrc)));
 			tup = SearchSysCacheTuple(PROSRC,
 									  PointerGetDatum(prosrctext),
 									  0, 0, 0);
@@ -306,8 +307,10 @@ ProcedureCreate(char *procedureName,
 	values[i++] = Int32GetDatum(perbyte_cpu);	/* properbyte_cpu */
 	values[i++] = Int32GetDatum(percall_cpu);	/* propercall_cpu */
 	values[i++] = Int32GetDatum(outin_ratio);	/* prooutin_ratio */
-	values[i++] = (Datum) textin(prosrc);		/* prosrc */
-	values[i++] = (Datum) textin(probin);		/* probin */
+	values[i++] = DirectFunctionCall1(textin,	/* prosrc */
+									  CStringGetDatum(prosrc));
+	values[i++] = DirectFunctionCall1(textin,	/* probin */
+									  CStringGetDatum(probin));
 
 	rel = heap_openr(ProcedureRelationName, RowExclusiveLock);
 

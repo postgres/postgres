@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------
  * formatting.c
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/formatting.c,v 1.18 2000/07/03 23:09:50 wieck Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/formatting.c,v 1.19 2000/07/05 23:11:35 tgl Exp $
  *
  *
  *	 Portions Copyright (c) 1999-2000, PostgreSQL, Inc
@@ -2420,8 +2420,8 @@ timestamp_to_char(PG_FUNCTION_ARGS)
 
 	len = VARSIZE(fmt) - VARHDRSZ;
 
-	if ((!len) || (TIMESTAMP_NOT_FINITE(dt)))
-		return PointerGetDatum(textin(""));
+	if (len <= 0 || TIMESTAMP_NOT_FINITE(dt))
+		return DirectFunctionCall1(textin, CStringGetDatum(""));
 
 	ZERO_tm(tm);	
 	tzn = NULL;
@@ -3956,13 +3956,11 @@ NUM_processor(FormatNode *node, NUMDesc *Num, char *inout, char *number,
 #define NUM_TOCHAR_prepare \
 do { \
 	len = VARSIZE(fmt) - VARHDRSZ;					\
-									\
 	if (len <= 0)							\
-		return PointerGetDatum(textin(""));			\
-									\
+		return DirectFunctionCall1(textin, CStringGetDatum(""));	\
 	result	= (text *) palloc( (len * NUM_MAX_ITEM_SIZ) + 1 + VARHDRSZ); \
 	format	= NUM_cache(len, &Num, VARDATA(fmt), &flag);		\
-} while(0)
+} while (0)
 
 /* ----------
  * MACRO: Finish part of NUM

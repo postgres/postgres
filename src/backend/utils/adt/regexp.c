@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/regexp.c,v 1.30 2000/01/26 05:57:14 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/regexp.c,v 1.31 2000/07/05 23:11:35 tgl Exp $
  *
  *		Alistair Crooks added the code for the regex caching
  *		agc - cached the regular expressions used - there's a good chance
@@ -68,7 +68,8 @@ RE_compile_and_execute(struct varlena * text_re, char *text, int cflags)
 	char	   *re;
 	int			regcomp_result;
 
-	re = textout(text_re);
+	re = DatumGetCString(DirectFunctionCall1(textout,
+											 PointerGetDatum(text_re)));
 	/* find a previously compiled regular expression */
 	for (i = 0; i < rec; i++)
 	{

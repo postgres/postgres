@@ -62,7 +62,7 @@ insert_username(PG_FUNCTION_ARGS)
 			 relname, args[0]);
 
 	/* create fields containing name */
-	newval = PointerGetDatum(textin(GetPgUserName()));
+	newval = DirectFunctionCall1(textin, CStringGetDatum(GetPgUserName()));
 
 	/* construct new tuple */
 	rettuple = SPI_modifytuple(rel, rettuple, 1, &attnum, &newval, NULL);

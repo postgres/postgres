@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.87 2000/07/05 16:17:38 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.88 2000/07/05 23:11:09 tgl Exp $
  *
  * NOTES
  *	  The PerformAddAttribute() code, like most of the relation
@@ -788,7 +788,6 @@ RemoveColumnReferences(Oid reloid, int attnum, bool checkonly, HeapTuple reltup)
 	HeapTuple	htup,
 				indexTuple;
 	Form_pg_index index;
-	Form_pg_relcheck relcheck;
 	Form_pg_class pgcform = (Form_pg_class) NULL;
 	int			i;
 	bool		checkok = true;
@@ -807,13 +806,13 @@ RemoveColumnReferences(Oid reloid, int attnum, bool checkonly, HeapTuple reltup)
 
 	while (HeapTupleIsValid(htup = systable_getnext(sysscan)))
 	{
+		Form_pg_relcheck relcheck;
 		char	   *ccbin;
 		Node	   *node;
 
 		relcheck = (Form_pg_relcheck) GETSTRUCT(htup);
-		ccbin = textout(&relcheck->rcbin);
-		if (!ccbin)
-			continue;
+		ccbin = DatumGetCString(DirectFunctionCall1(textout,
+										PointerGetDatum(&relcheck->rcbin)));
 		node = stringToNode(ccbin);
 		pfree(ccbin);
 		if (find_attribute_in_node(node, attnum))
@@ -1322,10 +1321,12 @@ AlterTableCreateToastTable(const char *relationName, bool silent)
 					   BYTEAOID,
 					   -1, 0, false);
 
-	/* XXX what if owning relation is temp?  need we mark toasttable too? */
-	/* XXX How do we know? No naming collisions possible because names    */
-	/*     are OID based. And toast table disappears when master table    */
-	/*     is destroyed. So what is it good for anyway? Jan               */
+	/*
+	 * Note: the toast relation is considered a "normal" relation even if
+	 * its master relation is a temp table.  There cannot be any naming
+	 * collision, and the toast rel will be destroyed when its master is,
+	 * so there's no need to handle the toast rel as temp.
+	 */
 	heap_create_with_catalog(toast_relname, tupdesc, RELKIND_TOASTVALUE,
 							 false, true);
 
@@ -1399,7 +1400,7 @@ AlterTableCreateToastTable(const char *relationName, bool silent)
 	heap_freetuple(reltup);
 
 	/*
-	 * Close relatons and make changes visible
+	 * Close relations and make changes visible
 	 */
 	heap_close(class_rel, NoLock);
 	heap_close(rel, NoLock);

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_node.c,v 1.42 2000/06/14 18:17:36 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_node.c,v 1.43 2000/07/05 23:11:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -462,7 +462,7 @@ make_const(Value *value)
 			break;
 
 		case T_String:
-			val = PointerGetDatum(textin(strVal(value)));
+			val = DirectFunctionCall1(textin, CStringGetDatum(strVal(value)));
 
 			typeid = UNKNOWNOID;/* will be coerced later */
 			typelen = -1;		/* variable len */

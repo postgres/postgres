@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_type.c,v 1.53 2000/07/03 23:09:28 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_type.c,v 1.54 2000/07/05 23:11:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -167,32 +167,29 @@ TypeShellMakeWithOpenRelation(Relation pg_type_desc, char *typeName)
 	}
 
 	/* ----------------
-	 *	initialize *values with the type name and
+	 *	initialize *values with the type name and dummy values
 	 * ----------------
 	 */
 	i = 0;
 	namestrcpy(&name, typeName);
-	values[i++] = NameGetDatum(&name);	/* 1 */
-	values[i++] = (Datum) InvalidOid;	/* 2 */
-	values[i++] = (Datum) (int16) 0;	/* 3 */
-	values[i++] = (Datum) (int16) 0;	/* 4 */
-	values[i++] = (Datum) (bool) 0;		/* 5 */
-	values[i++] = (Datum) (bool) 0;		/* 6 */
-	values[i++] = (Datum) (bool) 0;		/* 7 */
-	values[i++] = (Datum) (bool) 0;		/* 8 */
-	values[i++] = (Datum) InvalidOid;	/* 9 */
-	values[i++] = (Datum) InvalidOid;	/* 10 */
-	values[i++] = (Datum) InvalidOid;	/* 11 */
-	values[i++] = (Datum) InvalidOid;	/* 12 */
-	values[i++] = (Datum) InvalidOid;	/* 13 */
-	values[i++] = (Datum) InvalidOid;	/* 14 */
-	values[i++] = (Datum) 'p';			/* 15 */
-	values[i++] = (Datum) 'i';			/* 16 */
-
-	/*
-	 * ... and fill typdefault with a bogus value
-	 */
-	values[i++] = (Datum) textin(typeName);		/* 15 */
+	values[i++] = NameGetDatum(&name);			/* 1 */
+	values[i++] = ObjectIdGetDatum(InvalidOid);	/* 2 */
+	values[i++] = Int16GetDatum(0);				/* 3 */
+	values[i++] = Int16GetDatum(0);				/* 4 */
+	values[i++] = BoolGetDatum(false);			/* 5 */
+	values[i++] = BoolGetDatum(false);			/* 6 */
+	values[i++] = BoolGetDatum(false);			/* 7 */
+	values[i++] = BoolGetDatum(false);			/* 8 */
+	values[i++] = ObjectIdGetDatum(InvalidOid);	/* 9 */
+	values[i++] = ObjectIdGetDatum(InvalidOid);	/* 10 */
+	values[i++] = ObjectIdGetDatum(InvalidOid);	/* 11 */
+	values[i++] = ObjectIdGetDatum(InvalidOid);	/* 12 */
+	values[i++] = ObjectIdGetDatum(InvalidOid);	/* 13 */
+	values[i++] = ObjectIdGetDatum(InvalidOid);	/* 14 */
+	values[i++] = CharGetDatum('p');			/* 15 */
+	values[i++] = CharGetDatum('i');			/* 16 */
+	values[i++] = DirectFunctionCall1(textin,
+									  CStringGetDatum(typeName));	/* 17 */
 
 	/* ----------------
 	 *	create a new type tuple with FormHeapTuple
@@ -460,9 +457,8 @@ TypeCreate(char *typeName,
 	 *	initialize the default value for this type.
 	 * ----------------
 	 */
-	values[i] = (Datum) textin(PointerIsValid(defaultTypeValue)	/* 17 */
-							   ? defaultTypeValue : "-"); /* XXX default
-														   * typdefault */
+	values[i] = DirectFunctionCall1(textin,	/* 17 */
+				CStringGetDatum(defaultTypeValue ? defaultTypeValue : "-"));
 
 	/* ----------------
 	 *	open pg_type and begin a scan for the type name.

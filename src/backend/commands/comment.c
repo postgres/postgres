@@ -151,7 +151,7 @@ CreateComments(Oid oid, char *comment)
 		}
 		i = 0;
 		values[i++] = ObjectIdGetDatum(oid);
-		values[i++] = (Datum) textin(comment);
+		values[i++] = DirectFunctionCall1(textin, CStringGetDatum(comment));
 	}
 
 	/*** Now, open pg_description and attempt to find the old tuple ***/

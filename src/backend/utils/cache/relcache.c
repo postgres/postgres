@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.105 2000/06/30 07:04:10 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.106 2000/07/05 23:11:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1901,7 +1901,7 @@ AttrDefaultFetch(Relation relation)
 	IndexScanDesc sd = (IndexScanDesc) NULL;
 	HeapScanDesc adscan = (HeapScanDesc) NULL;
 	RetrieveIndexResult indexRes;
-	struct varlena *val;
+	Datum		val;
 	bool		isnull;
 	int			found;
 	int			i;
@@ -1959,16 +1959,17 @@ AttrDefaultFetch(Relation relation)
 					 NameStr(relation->rd_att->attrs[adform->adnum - 1]->attname),
 					 RelationGetRelationName(relation));
 
-			val = (struct varlena *) fastgetattr(htup,
-												 Anum_pg_attrdef_adbin,
-												 adrel->rd_att, &isnull);
+			val = fastgetattr(htup,
+							  Anum_pg_attrdef_adbin,
+							  adrel->rd_att, &isnull);
 			if (isnull)
 				elog(NOTICE, "AttrDefaultFetch: adbin IS NULL for attr %s in rel %s",
 					 NameStr(relation->rd_att->attrs[adform->adnum - 1]->attname),
 					 RelationGetRelationName(relation));
 			else
 				attrdef[i].adbin = MemoryContextStrdup(CacheMemoryContext,
-													   textout(val));
+								DatumGetCString(DirectFunctionCall1(textout,
+																	val)));
 			break;
 		}
 		if (hasindex)
@@ -2008,7 +2009,7 @@ RelCheckFetch(Relation relation)
 	HeapScanDesc rcscan = (HeapScanDesc) NULL;
 	RetrieveIndexResult indexRes;
 	Name		rcname;
-	struct varlena *val;
+	Datum		val;
 	bool		isnull;
 	int			found;
 	bool		hasindex;
@@ -2066,14 +2067,15 @@ RelCheckFetch(Relation relation)
 				 RelationGetRelationName(relation));
 		check[found].ccname = MemoryContextStrdup(CacheMemoryContext,
 												  NameStr(*rcname));
-		val = (struct varlena *) fastgetattr(htup,
-											 Anum_pg_relcheck_rcbin,
-											 rcrel->rd_att, &isnull);
+		val = fastgetattr(htup,
+						  Anum_pg_relcheck_rcbin,
+						  rcrel->rd_att, &isnull);
 		if (isnull)
 			elog(ERROR, "RelCheckFetch: rcbin IS NULL for rel %s",
 				 RelationGetRelationName(relation));
 		check[found].ccbin = MemoryContextStrdup(CacheMemoryContext,
-												 textout(val));
+								DatumGetCString(DirectFunctionCall1(textout,
+																	val)));
 		found++;
 		if (hasindex)
 			ReleaseBuffer(buffer);

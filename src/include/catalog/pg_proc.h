@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.141 2000/06/19 03:54:45 tgl Exp $
+ * $Id: pg_proc.h,v 1.142 2000/07/05 23:11:45 tgl Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -129,9 +129,9 @@ DATA(insert OID =  44 (  regprocin		   PGUID 12 f t f t 1 f 24 "0" 100 0 0 100  
 DESCR("(internal)");
 DATA(insert OID =  45 (  regprocout		   PGUID 12 f t f t 1 f 23 "0" 100 0 0 100  regprocout - ));
 DESCR("(internal)");
-DATA(insert OID =  46 (  textin			   PGUID 11 f t t t 1 f 25 "0" 100 0 0 100  textin - ));
+DATA(insert OID =  46 (  textin			   PGUID 12 f t t t 1 f 25 "0" 100 0 0 100  textin - ));
 DESCR("(internal)");
-DATA(insert OID =  47 (  textout		   PGUID 11 f t t t 1 f 23 "0" 100 0 0 100  textout - ));
+DATA(insert OID =  47 (  textout		   PGUID 12 f t t t 1 f 23 "0" 100 0 0 100  textout - ));
 DESCR("(internal)");
 DATA(insert OID =  48 (  tidin			   PGUID 11 f t t t 1 f 27 "0" 100 0 0 100  tidin - ));
 DESCR("(internal)");

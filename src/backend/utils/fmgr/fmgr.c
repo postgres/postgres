@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/fmgr.c,v 1.43 2000/06/05 07:28:55 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/fmgr.c,v 1.44 2000/07/05 23:11:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -164,7 +164,8 @@ fmgr_info(Oid functionId, FmgrInfo *finfo)
 			 * stored in prosrc (it doesn't have to be the same as the
 			 * name of the alias!)
 			 */
-			prosrc = textout(&(procedureStruct->prosrc));
+			prosrc = DatumGetCString(DirectFunctionCall1(textout,
+								PointerGetDatum(&procedureStruct->prosrc)));
 			fbp = fmgr_lookupByName(prosrc);
 			if (fbp == NULL)
 				elog(ERROR, "fmgr_info: function %s not in internal table",

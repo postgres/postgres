@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.85 2000/05/30 00:49:47 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.86 2000/07/05 23:11:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1658,7 +1658,8 @@ match_special_index_operator(Expr *clause, Oid opclass, Oid relam,
 		case OID_VARCHAR_LIKE_OP:
 		case OID_NAME_LIKE_OP:
 			/* the right-hand const is type text for all of these */
-			patt = textout((text *) DatumGetPointer(constvalue));
+			patt = DatumGetCString(DirectFunctionCall1(textout,
+													   constvalue));
 			isIndexable = pattern_fixed_prefix(patt, Pattern_Type_Like,
 											   &prefix, &rest) != Pattern_Prefix_None;
 			if (prefix)
@@ -1671,7 +1672,8 @@ match_special_index_operator(Expr *clause, Oid opclass, Oid relam,
 		case OID_VARCHAR_REGEXEQ_OP:
 		case OID_NAME_REGEXEQ_OP:
 			/* the right-hand const is type text for all of these */
-			patt = textout((text *) DatumGetPointer(constvalue));
+			patt = DatumGetCString(DirectFunctionCall1(textout,
+													   constvalue));
 			isIndexable = pattern_fixed_prefix(patt, Pattern_Type_Regex,
 											   &prefix, &rest) != Pattern_Prefix_None;
 			if (prefix)
@@ -1684,7 +1686,8 @@ match_special_index_operator(Expr *clause, Oid opclass, Oid relam,
 		case OID_VARCHAR_ICREGEXEQ_OP:
 		case OID_NAME_ICREGEXEQ_OP:
 			/* the right-hand const is type text for all of these */
-			patt = textout((text *) DatumGetPointer(constvalue));
+			patt = DatumGetCString(DirectFunctionCall1(textout,
+													   constvalue));
 			isIndexable = pattern_fixed_prefix(patt, Pattern_Type_Regex_IC,
 											   &prefix, &rest) != Pattern_Prefix_None;
 			if (prefix)
@@ -1784,7 +1787,8 @@ expand_indexqual_conditions(List *indexquals)
 			case OID_NAME_LIKE_OP:
 				/* the right-hand const is type text for all of these */
 				constvalue = ((Const *) rightop)->constvalue;
-				patt = textout((text *) DatumGetPointer(constvalue));
+				patt = DatumGetCString(DirectFunctionCall1(textout,
+														   constvalue));
 				pstatus = pattern_fixed_prefix(patt, Pattern_Type_Like,
 											   &prefix, &rest);
 				resultquals = nconc(resultquals,
@@ -1801,7 +1805,8 @@ expand_indexqual_conditions(List *indexquals)
 			case OID_NAME_REGEXEQ_OP:
 				/* the right-hand const is type text for all of these */
 				constvalue = ((Const *) rightop)->constvalue;
-				patt = textout((text *) DatumGetPointer(constvalue));
+				patt = DatumGetCString(DirectFunctionCall1(textout,
+														   constvalue));
 				pstatus = pattern_fixed_prefix(patt, Pattern_Type_Regex,
 											   &prefix, &rest);
 				resultquals = nconc(resultquals,
@@ -1818,7 +1823,8 @@ expand_indexqual_conditions(List *indexquals)
 			case OID_NAME_ICREGEXEQ_OP:
 				/* the right-hand const is type text for all of these */
 				constvalue = ((Const *) rightop)->constvalue;
-				patt = textout((text *) DatumGetPointer(constvalue));
+				patt = DatumGetCString(DirectFunctionCall1(textout,
+														   constvalue));
 				pstatus = pattern_fixed_prefix(patt, Pattern_Type_Regex_IC,
 											   &prefix, &rest);
 				resultquals = nconc(resultquals,
@@ -1965,7 +1971,6 @@ find_operator(const char *opname, Oid datatype)
 static Datum
 string_to_datum(const char *str, Oid datatype)
 {
-
 	/*
 	 * We cheat a little by assuming that textin() will do for bpchar and
 	 * varchar constants too...
@@ -1973,7 +1978,7 @@ string_to_datum(const char *str, Oid datatype)
 	if (datatype == NAMEOID)
 		return PointerGetDatum(namein((char *) str));
 	else
-		return PointerGetDatum(textin((char *) str));
+		return DirectFunctionCall1(textin, CStringGetDatum(str));
 }
 
 /*

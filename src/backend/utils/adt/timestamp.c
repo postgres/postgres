@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/timestamp.c,v 1.31 2000/07/03 23:09:53 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/timestamp.c,v 1.32 2000/07/05 23:11:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1487,7 +1487,9 @@ timestamp_trunc(PG_FUNCTION_ARGS)
 			   *tm = &tt;
 
 	if (VARSIZE(units) - VARHDRSZ > MAXDATELEN)
-		elog(ERROR, "Interval units '%s' not recognized", textout(units));
+		elog(ERROR, "Interval units '%s' not recognized",
+			 DatumGetCString(DirectFunctionCall1(textout,
+												 PointerGetDatum(units))));
 	up = VARDATA(units);
 	lp = lowunits;
 	for (i = 0; i < (VARSIZE(units) - VARHDRSZ); i++)
@@ -1625,7 +1627,9 @@ interval_trunc(PG_FUNCTION_ARGS)
 	result = (Interval *) palloc(sizeof(Interval));
 
 	if (VARSIZE(units) - VARHDRSZ > MAXDATELEN)
-		elog(ERROR, "Interval units '%s' not recognized", textout(units));
+		elog(ERROR, "Interval units '%s' not recognized",
+			 DatumGetCString(DirectFunctionCall1(textout,
+												 PointerGetDatum(units))));
 	up = VARDATA(units);
 	lp = lowunits;
 	for (i = 0; i < (VARSIZE(units) - VARHDRSZ); i++)
@@ -1706,7 +1710,9 @@ interval_trunc(PG_FUNCTION_ARGS)
 #endif
 	else
 	{
-		elog(ERROR, "Interval units '%s' not recognized", textout(units));
+		elog(ERROR, "Interval units '%s' not recognized",
+			 DatumGetCString(DirectFunctionCall1(textout,
+												 PointerGetDatum(units))));
 		PG_RETURN_NULL();
 	}
 
@@ -1738,7 +1744,9 @@ timestamp_part(PG_FUNCTION_ARGS)
 			   *tm = &tt;
 
 	if (VARSIZE(units) - VARHDRSZ > MAXDATELEN)
-		elog(ERROR, "Interval units '%s' not recognized", textout(units));
+		elog(ERROR, "Interval units '%s' not recognized",
+			 DatumGetCString(DirectFunctionCall1(textout,
+												 PointerGetDatum(units))));
 	up = VARDATA(units);
 	lp = lowunits;
 	for (i = 0; i < (VARSIZE(units) - VARHDRSZ); i++)
@@ -1926,7 +1934,9 @@ interval_part(PG_FUNCTION_ARGS)
 			   *tm = &tt;
 
 	if (VARSIZE(units) - VARHDRSZ > MAXDATELEN)
-		elog(ERROR, "Interval units '%s' not recognized", textout(units));
+		elog(ERROR, "Interval units '%s' not recognized",
+			 DatumGetCString(DirectFunctionCall1(textout,
+												 PointerGetDatum(units))));
 	up = VARDATA(units);
 	lp = lowunits;
 	for (i = 0; i < (VARSIZE(units) - VARHDRSZ); i++)
@@ -2000,7 +2010,8 @@ interval_part(PG_FUNCTION_ARGS)
 
 				default:
 					elog(ERROR, "Interval units '%s' not yet supported",
-						 textout(units));
+						 DatumGetCString(DirectFunctionCall1(textout,
+													PointerGetDatum(units))));
 					result = 0;
 			}
 
@@ -2022,7 +2033,9 @@ interval_part(PG_FUNCTION_ARGS)
 	}
 	else
 	{
-		elog(ERROR, "Interval units '%s' not recognized", textout(units));
+		elog(ERROR, "Interval units '%s' not recognized",
+			 DatumGetCString(DirectFunctionCall1(textout,
+												 PointerGetDatum(units))));
 		result = 0;
 	}
 
@@ -2056,7 +2069,9 @@ timestamp_zone(PG_FUNCTION_ARGS)
 	int			len;
 
 	if (VARSIZE(zone) - VARHDRSZ > MAXDATELEN)
-		elog(ERROR, "Time zone '%s' not recognized", textout(zone));
+		elog(ERROR, "Time zone '%s' not recognized",
+			 DatumGetCString(DirectFunctionCall1(textout,
+												 PointerGetDatum(zone))));
 	up = VARDATA(zone);
 	lp = lowzone;
 	for (i = 0; i < (VARSIZE(zone) - VARHDRSZ); i++)
