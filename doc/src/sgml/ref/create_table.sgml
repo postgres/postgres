@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_table.sgml,v 1.21 2000/04/12 04:40:03 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_table.sgml,v 1.22 2000/04/13 07:19:27 momjian Exp $
 Postgres documentation
 -->
 
@@ -393,21 +393,6 @@ DEFAULT <replaceable class="PARAMETER">value</replaceable>
     </variablelist>
    </para>
 
-   <para>
-    In the current release (v7.0), <productname>Postgres</productname>
-    evaluates all default expressions at the time the table is defined.
-    Hence, functions which are "non-cacheable" such as
-    <function>CURRENT_TIMESTAMP</function> may not produce the desired
-    effect. For the particular case of date/time types, one can work
-    around this behavior by using 
-    <quote>DEFAULT TEXT 'now'</quote>
-    instead of
-    <quote>DEFAULT 'now'</quote>
-    or
-    <quote>DEFAULT CURRENT_TIMESTAMP</quote>.
-    This forces <productname>Postgres</productname> to consider the constant a string
-    type and then to convert the value to <type>timestamp</type> at runtime.
-   </para>
   </refsect2>
   <refsect2 id="R2-SQL-DEFAULTCLAUSE-4">
    <title>
