@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Mon Jan 31 21:35:15 EST 2005
+   Last updated: Mon Jan 31 21:40:28 EST 2005
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -808,18 +808,18 @@
    uncertain how a cross-database query should even behave.
    
    contrib/dblink allows cross-database queries using function calls. Of
-   course, a client can make simultaneous connections to different
+   course, a client can also make simultaneous connections to different
    databases and merge the results on the client side.
    
     4.19) How do I return multiple rows or columns from a function?
     
-   In 7.3, you can easily return multiple rows or columns from a
-   function, http://techdocs.postgresql.org/guides/SetReturningFunctions.
+   It is easy using set-returning functions,
+   http://techdocs.postgresql.org/guides/SetReturningFunctions.
    
     4.20) Why can't I reliably create/drop temporary tables in PL/PgSQL
     functions?
     
-   PL/PgSQL caches function contents, and an unfortunate side effect is
+   PL/PgSQL caches function scripts, and an unfortunate side effect is
    that if a PL/PgSQL function accesses a temporary table, and that table
    is later dropped and recreated, and the function called again, the
    function will fail because the cached function contents still point to
@@ -838,8 +838,7 @@
        possible to use a third-party encrypted transport, such as stunnel
        or ssh, rather than PostgreSQL's native SSL connections.)
      * Database user passwords are automatically encrypted when stored in
-       version 7.3. In previous versions, you must enable the option
-       PASSWORD_ENCRYPTION in postgresql.conf.
+       the system tables.
      * The server can run using an encrypted file system.
      _________________________________________________________________
    

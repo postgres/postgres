@@ -10,7 +10,7 @@
   alink="#0000ff">
     <H1>Frequently Asked Questions (FAQ) for PostgreSQL</H1>
 
-    <P>Last updated: Mon Jan 31 21:35:15 EST 2005</P>
+    <P>Last updated: Mon Jan 31 21:40:28 EST 2005</P>
 
     <P>Current maintainer: Bruce Momjian (<A href=
     "mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</A>)
@@ -1040,25 +1040,25 @@ length</TD></TR>
     uncertain how a cross-database query should even behave.</P>
 
     <P><I>contrib/dblink</I> allows cross-database queries using
-    function calls. Of course, a client can make simultaneous
+    function calls. Of course, a client can also make simultaneous
     connections to different databases and merge the results on the
     client side.</P>
 
     <H4><A name="4.19">4.19</A>) How do I return multiple rows or
     columns from a function?</H4>
 
-    <P>In 7.3, you can easily return multiple rows or columns from a
-    function,
+    <P>It is easy using set-returning functions, 
     <a href="http://techdocs.postgresql.org/guides/SetReturningFunctions">
     http://techdocs.postgresql.org/guides/SetReturningFunctions</a>.
 
     <H4><A name="4.20">4.20</A>) Why can't I reliably create/drop
     temporary tables in PL/PgSQL functions?</H4>
-    <P>PL/PgSQL caches function contents, and an unfortunate side effect
+
+    <P>PL/PgSQL caches function scripts, and an unfortunate side effect
     is that if a PL/PgSQL function accesses a temporary table, and that
-    table is later dropped and recreated, and the function called
-    again, the function will fail because the cached function contents
-    still point to the old temporary table. The solution is to use
+    table is later dropped and recreated, and the function called again,
+    the function will fail because the cached function contents still
+    point to the old temporary table. The solution is to use
     <SMALL>EXECUTE</SMALL> for temporary table access in PL/PgSQL. This
     will cause the query to be reparsed every time.</P>
 
@@ -1075,8 +1075,7 @@ length</TD></TR>
     encrypted transport, such as stunnel or ssh, rather than PostgreSQL's
     native SSL connections.)
     <LI>Database user passwords are automatically encrypted when stored in
-    version 7.3. In previous versions, you must enable the option
-    <I>PASSWORD_ENCRYPTION</I> in <I>postgresql.conf</I>.</LI>
+    the system tables.</LI>
     <LI>The server can run using an encrypted file system.</LI>
     </UL>
 
