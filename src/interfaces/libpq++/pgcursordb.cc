@@ -10,7 +10,7 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq++/Attic/pgcursordb.cc,v 1.3 1999/05/30 15:17:57 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq++/Attic/pgcursordb.cc,v 1.4 1999/06/01 02:43:37 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,9 +31,9 @@ PgCursor::PgCursor(const char* conninfo, const char* cursor)
 // Do not make a connection to the backend -- just query
 // Connection should not be closed after the object destructs since some
 // other object is using the connection
-PgCursor::PgCursor(const PgConnection& conn, const char* cursor)
-   : PgTransaction(conn), pgCursor(cursor)
-{}
+//PgCursor::PgCursor(const PgConnection& conn, const char* cursor)
+//   : PgTransaction(conn), pgCursor(cursor)
+//{}
 
 // Destructor: End the transaction block
 PgCursor::~PgCursor()
