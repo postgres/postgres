@@ -127,7 +127,7 @@ SELECT * FROM crosstab('SELECT rowid, attribute, val FROM ct where rowclass = ''
 -- hash based crosstab
 --
 create table cth(id serial, rowid text, rowdt timestamp, attribute text, val text);
-NOTICE:  CREATE TABLE will create implicit sequence "cth_id_seq" for "serial" column "cth.id"
+NOTICE:  CREATE TABLE will create implicit sequence "cth_id_seq" for serial column "cth.id"
 insert into cth values(DEFAULT,'test1','01 March 2003','temperature','42');
 insert into cth values(DEFAULT,'test1','01 March 2003','test_result','PASS');
 -- the next line is intentionally left commented and is therefore a "missing" attribute
@@ -193,6 +193,24 @@ SELECT * FROM crosstab(
   'SELECT DISTINCT rowdt, attribute FROM cth ORDER BY 2')
 AS c(rowid text, rowdt timestamp, temperature int4, test_result text, test_startdate timestamp, volts float8);
 ERROR:  provided "categories" SQL must return 1 column of at least one row
+-- if source query returns zero rows, get zero rows returned
+SELECT * FROM crosstab(
+  'SELECT rowid, rowdt, attribute, val FROM cth WHERE false ORDER BY 1',
+  'SELECT DISTINCT attribute FROM cth ORDER BY 1')
+AS c(rowid text, rowdt timestamp, temperature text, test_result text, test_startdate text, volts text);
+ rowid | rowdt | temperature | test_result | test_startdate | volts 
+-------+-------+-------------+-------------+----------------+-------
+(0 rows)
+
+-- if source query returns zero rows, get zero rows returned even if category query generates no rows
+SELECT * FROM crosstab(
+  'SELECT rowid, rowdt, attribute, val FROM cth WHERE false ORDER BY 1',
+  'SELECT DISTINCT attribute FROM cth WHERE false ORDER BY 1')
+AS c(rowid text, rowdt timestamp, temperature text, test_result text, test_startdate text, volts text);
+ rowid | rowdt | temperature | test_result | test_startdate | volts 
+-------+-------+-------------+-------------+----------------+-------
+(0 rows)
+
 --
 -- connectby
 --

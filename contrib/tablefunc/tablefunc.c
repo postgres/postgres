@@ -821,15 +821,6 @@ load_categories_hash(char *cats_sql, MemoryContext per_query_ctx)
 			MemoryContextSwitchTo(SPIcontext);
 		}
 	}
-	else
-	{
-		/* no qualifying tuples */
-		SPI_finish();
-		ereport(ERROR,
-				(errcode(ERRCODE_SYNTAX_ERROR),
-				 errmsg("provided \"categories\" SQL must " \
-						"return 1 column of at least one row")));
-	}
 
 	if (SPI_finish() != SPI_OK_FINISH)
 		/* internal error */
@@ -878,6 +869,15 @@ get_crosstab_tuplestore(char *sql,
 		int			i,
 					j;
 		int			result_ncols;
+
+		if (num_categories == 0)
+		{
+			/* no qualifying category tuples */
+			ereport(ERROR,
+					(errcode(ERRCODE_SYNTAX_ERROR),
+					errmsg("provided \"categories\" SQL must " \
+							"return 1 column of at least one row")));
+		}
 
 		/*
 		 * The provided SQL query must always return at least three
@@ -993,11 +993,6 @@ get_crosstab_tuplestore(char *sql,
 		/* now reset the context */
 		MemoryContextSwitchTo(SPIcontext);
 
-	}
-	else
-	{
-		/* no qualifying tuples */
-		SPI_finish();
 	}
 
 	if (SPI_finish() != SPI_OK_FINISH)
