@@ -1,9 +1,16 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/docguide.sgml,v 1.11 1998/10/30 19:36:57 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/docguide.sgml,v 1.12 1998/12/18 16:17:29 thomas Exp $
 Documentation Guide
 Thomas Lockhart
 
 $Log: docguide.sgml,v $
+Revision 1.12  1998/12/18 16:17:29  thomas
+Include more details on editing with Emacs.
+Remove mention of the old "migration" flat files.
+Change URLs for resources to point to areas, not particular files.
+ That way things stay correct even when version of tools change.
+ Suggested by Vince Vielhaber.
+
 Revision 1.11  1998/10/30 19:36:57  thomas
 Minor editing and markup changes as a result of preparing the Postscript
  documentation for v6.4.
@@ -113,6 +120,57 @@ Description
 There are man pages available for installation, as well as a large number
 of plain-text README-type files throughout the <productname>Postgres</productname>
 source tree.
+
+<sect1>
+<title>The Documentation Project</title>
+
+<para>
+Packaged documentation is available in both
+<acronym>HTML</acronym> and <firstterm>Postscript</firstterm>
+formats. These are available as part of the standard
+<productname>Postgres</productname> installation. We discuss here
+working with the documentation sources and generating documentation
+packages.
+
+<para>
+The purpose of <productname>DocBook</productname> <acronym>SGML</acronym>
+ is to allow an author to
+specify the structure and content of a document (e.g. using the
+<productname>DocBook</productname> <acronym>DTD</acronym>),  and to
+have a document style define how that content is rendered into a
+final form (e.g. using Norm Walsh's 
+<productname>Modular Style Sheets</productname>).</para>
+
+<para>
+See <ulink url="http://nis-www.lanl.gov/~rosalia/mydocs/docbook-intro.html">
+Introduction to DocBook</ulink> for a nice "quickstart" summary of
+DocBook features.
+<ulink url="http://www.ora.com/homepages/dtdparse/docbook/3.0/"> DocBook Elements</ulink>
+provides a powerful cross-reference for features of
+<productname>DocBook</productname>.
+
+<para>
+This documentation set is constructed using several tools, including
+James Clark's 
+<ulink url="http://www.jclark.com/jade/"> <productname>jade</productname></ulink>
+ and Norm Walsh's 
+<ulink url="http://www.berkshire.net/~norm/docbook/dsssl">Modular DocBook Stylesheets</ulink>.
+
+<para>
+Currently, hardcopy is produced by importing <firstterm>Rich Text
+Format</firstterm> (<acronym>RTF</acronym>) output from
+<application>jade</application> into
+<productname>ApplixWare</productname> for minor formatting fixups then
+exporting as a Postscript file.</para>
+
+<para>
+<ulink url="http://sunsite.unc.edu/pub/packages/TeX/systems/unix/">
+<productname>TeX</productname></ulink> is a supported format for
+<application>jade</application> output, but was not used at this time
+for several reasons, including the inability to make minor format
+fixes before committing to hardcopy and generally inadequate table
+support in the <productname>TeX</productname>
+stylesheets.</para>
 
 <sect1>
 <title>Documentation Sources</title>
@@ -251,6 +309,7 @@ The Administrator's Guide. Include installation and release notes.
 Disable for the hardcopy production release.
 Too much tabular info and not very helpful in hardcopy.
 - thomas 1998-10-27
+-->
 
 <sect2>
 <title>Documentation Files</title>
@@ -481,15 +540,6 @@ Status
 <row><entry> ./doc/README.support	</entry><entry>	Not converted	</entry></row>
 <row><entry> ./doc/TODO.GEQO	</entry><entry>	Removed. Superceded by geqo.sgml	</entry></row>
 <row><entry> ./doc/userguide.ps	</entry><entry>	Removed (converted to SGML)	</entry></row>
-<row><entry> ./migration/1.02_to_1.02.1	</entry><entry>	Removed. Superceded by release.sgml	</entry></row>
-<row><entry> ./migration/1.09_to_6.0	</entry><entry>	Removed. Superceded by release.sgml	</entry></row>
-<row><entry> ./migration/1.0_to_1.01	</entry><entry>	Removed. Superceded by release.sgml	</entry></row>
-<row><entry> ./migration/6.0_to_6.1	</entry><entry>	Removed. Superceded by release.sgml	</entry></row>
-<row><entry> ./migration/6.1_to_6.1.1	</entry><entry>	Removed. Superceded by release.sgml	</entry></row>
-<row><entry> ./migration/6.1_to_6.2	</entry><entry>	Removed. Superceded by release.sgml	</entry></row>
-<row><entry> ./migration/6.2.1_to_6.3	</entry><entry>	Removed. Superceded by release.sgml	</entry></row>
-<row><entry> ./migration/6.2_to_6.2.1	</entry><entry>	Removed. Superceded by release.sgml	</entry></row>
-<row><entry> ./migration/6.3.1_to_6.3.2	</entry><entry>	Removed. Superceded by release.sgml	</entry></row>
 <row><entry> ./src/DEVELOPERS	</entry><entry>	Not converted	</entry></row>
 <row><entry> ./src/backend/access/nbtree/README	</entry><entry>	Not converted	</entry></row>
 <row><entry> ./src/backend/catalog/README	</entry><entry>	Not converted	</entry></row>
@@ -670,64 +720,6 @@ Status
 </tgroup>
 </table>
 
--->
-
-<sect1>
-<title>The Documentation Project</title>
-
-<para>
-Packaged documentation is available in both
-<acronym>HTML</acronym> and <firstterm>Postscript</firstterm>
-formats. These are available as part of the standard
-<productname>Postgres</productname> installation. We discuss here
-working with the documentation sources and generating documentation
-packages.
-
-<note>
-<para>
-This is the first release of new <productname>Postgres</productname>
-documentation in three years. The content and environment are in flux
-and still evolving.
-</para>
-</note></para>
-
-<para>
-The purpose of <acronym>SGML</acronym> is to allow an author to
-specify the structure and content of a document (e.g. using the
-<productname>DocBook</productname> <acronym>DTD</acronym>),  and to
-have the document style define how that content is rendered into a
-final form (e.g. using Norm Walsh's stylesheets).</para>
-
-<para>
-See <ulink url="http://nis-www.lanl.gov/~rosalia/mydocs/docbook-intro.html">
-Introduction to DocBook</ulink> for a nice "quickstart" summary of
-DocBook features.
-<ulink url="http://www.ora.com/homepages/dtdparse/docbook/3.0/"> DocBook
-Elements</ulink> provides a powerful cross-reference for features of
-<productname>DocBook</productname>.</para>
-
-<para>
-This documentation set is constructed using several tools, including
-James Clark's 
-<ulink url="http://www.jclark.com/jade/"> <productname>jade</productname></ulink>
- and Norm Walsh's 
-<ulink url="http://www.berkshire.net/~norm/docbook/dsssl">Modular DocBook Stylesheets</ulink>.
-
-<para>
-Currently, hardcopy is produced by importing <firstterm>Rich Text
-Format</firstterm> (<acronym>RTF</acronym>) output from
-<application>jade</application> into
-<productname>ApplixWare</productname> for minor formatting fixups then
-exporting as a Postscript file.</para>
-
-<para>
-<ulink url="http://sunsite.unc.edu/pub/packages/TeX/systems/unix/">
-<productname>TeX</productname></ulink> is a supported format for
-<application>jade</application> output, but was not used at this time
-for several reasons, including the inability to make minor format
-fixes before committing to hardcopy and generally inadequate table
-support in the <productname>TeX</productname>
-stylesheets.</para>
 
 <sect2>
 <title>Styles and Conventions</title>
@@ -776,12 +768,12 @@ be included below.
 -->
 
 <sect2>
-<title>Authoring Tools</title>
+<title>SGML Authoring Tools</title>
 
 <para>
-The current <acronym>Postgres</acronym> documentation set is written using
+The current <acronym>Postgres</acronym> documentation set was written using
 a plain text editor (or emacs/psgml; see below) with the content marked up using 
-<acronym>SGML</acronym>.
+<acronym>SGML</acronym> DocBook tags.
 
 <para>
 <acronym>SGML</acronym> and <productname>DocBook</productname> do not suffer
@@ -793,7 +785,63 @@ On some systems (e.g. RedHat Linux) these tools are provided in a typical full i
 <title>emacs/psgml</title>
 
 <para>
-When using emacs/psgml, a comfortable way of working with
+<application>emacs</application> (and <application>xemacs</application>) have
+an <acronym>SGML</acronym> <firstterm>major mode</firstterm>. When properly configured,
+this will allow you to use <application>emacs</application> to insert tags and
+check markup consistancy.
+
+<para>
+     Put the following in your <filename>~/.emacs</filename> environment file:
+
+<programlisting>
+; ********** for SGML mode (psgml)
+
+(setq sgml-catalog-files "/usr/lib/sgml/CATALOG")
+(setq sgml-local-catalogs "/usr/lib/sgml/CATALOG")
+
+(autoload 'sgml-mode "psgml" "Major mode to edit SGML files." t )
+</programlisting>
+
+and add an entry in the same file
+for <acronym>SGML</acronym> into the (existing) definition for
+auto-mode-alist:
+
+<programlisting>
+(setq
+  auto-mode-alist
+  '(("\\.sgml$" . sgml-mode)
+   ))
+</programlisting>
+
+Each <acronym>SGML</acronym> source file has the following block at the
+end of the file:
+
+<programlisting>
+<sgmltag>!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-omittag:t
+sgml-shorttag:t
+sgml-minimize-attributes:nil
+sgml-always-quote-attributes:t
+sgml-indent-step:1
+sgml-indent-data:t
+sgml-parent-document:nil
+sgml-default-dtd-file:"./reference.ced"
+sgml-exposed-tags:nil
+sgml-local-catalogs:"/usr/lib/sgml/catalog"
+sgml-local-ecat-files:nil
+End:
+--<sgmltag>
+</programlisting>
+
+<para>
+     The <productname>Postgres</productname> distribution includes a
+     parsed DTD definitions file <filename>reference.ced</filename>.
+You may find that
+
+<para>
+When using <application>emacs</application>/psgml, a comfortable way of working with
 these separate files of book parts is to insert a proper DOCTYPE
 declaration while you're editing them.  If you are working on this source, for instance,
 it's an appendix chapter, so you would specify the document as an "appendix" instance of
@@ -1041,9 +1089,10 @@ and <acronym>RTF</acronym>.
 
 <para>
 These instructions do not cover new <application>jade</application>/DocBook
-support in the <productname>sgml-tools</productname> package. The authors have
-not tried this package since it adopted DocBook, but it is almost certainly 
-a good candidate for use.
+support in the 
+<ulink url="http://www.sgmltools.org/"><productname>sgml-tools</productname></ulink>
+package. The authors have not tried this package since it adopted DocBook, 
+but it is almost certainly a good candidate for use.
 
 <sect3><title>Prerequisites</title>
 
@@ -1061,21 +1110,23 @@ a good candidate for use.
 
 <itemizedlist>
 <listitem>
-<para><ulink url="ftp://ftp.jclark.com/pub/jade/jade1_1.zip">
-James Clark's <productname>Jade</productname> version 1.1</ulink>
+<para><ulink url="ftp://ftp.jclark.com/pub/jade/">
+James Clark's <productname>Jade</productname></ulink>
+(version 1.1 in file <filename>jade1_1.zip</filename> was current at the time of writing)
 </para></listitem>
 <listitem>
 <para><ulink url="http://www.ora.com/davenport/docbook/current/docbk30.zip">
 <productname>DocBook</productname> version 3.0</ulink>
 </para></listitem>
 <listitem>
-<para><ulink url="http://nwalsh.com/docbook/dsssl/db119.zip">
-Norman Walsh's <productname>Modular Stylesheets</productname>
-version 1.19</ulink>
+<para><ulink url="http://nwalsh.com/docbook/dsssl/">
+Norman Walsh's <productname>Modular Stylesheets</productname></ulink>
+(version 1.19 was used to produce these documents)
 </para></listitem>
 <listitem>
-<para><ulink url="ftp://ftp.lysator.liu.se/pub/sgml/psgml-1.0.1.tar.gz">
-Lennart Staflin's <productname>PSGML</productname> version 1.0.1</ulink>
+<para><ulink url="ftp://ftp.lysator.liu.se/pub/sgml/">
+Lennart Staflin's <productname>PSGML</productname></ulink>
+(version 1.0.1 in <filename>psgml-1.0.1.tar.gz</filename> was available at the time of writing)
 </para></listitem>
 </itemizedlist>
 
@@ -1266,14 +1317,14 @@ kit in a suitable place.  A good place to dot this would be
 directory tree under <filename>/usr/local/share/docbook</filename>.
 The command will be something like
 <programlisting>
-unzip -aU db107.zip
+unzip -aU db119.zip
 </programlisting>
 </para>
 
 <step performance="required">
 <para>One way to test the installation is to build the
 <acronym>HTML</acronym> and <acronym>RTF</acronym> forms of the
-<productname>PostgreSQL</productname> manual.  
+<citetitle><productname>PostgreSQL</productname> User's Guide</citetitle>.
 
 <substeps>
 
@@ -1316,7 +1367,7 @@ URL.</para>
 <para>Unpack the distribution file, run configure, make and make
 install to put the byte-compiled files and info library in place.
 
-<step performance="required">
+<step performance="required" id="psgml-setup">
 <para>
 Then add the following lines to your
 <filename>/usr/local/share/emacs/site-lisp/site-start.el</filename>
@@ -1522,3 +1573,19 @@ Run <productname>texhash</productname> to update the tex database.
 
 </appendix>
 
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-omittag:t
+sgml-shorttag:t
+sgml-minimize-attributes:nil
+sgml-always-quote-attributes:t
+sgml-indent-step:1
+sgml-indent-data:t
+sgml-parent-document:nil
+sgml-default-dtd-file:"./reference.ced"
+sgml-exposed-tags:nil
+sgml-local-catalogs:"/usr/lib/sgml/catalog"
+sgml-local-ecat-files:nil
+End:
+-->
