@@ -1,5 +1,5 @@
 --
--- UNION
+-- UNION (also INTERSECT, EXCEPT)
 --
 -- Simple UNION constructs
 SELECT 1 AS two UNION SELECT 2;
@@ -71,10 +71,10 @@ SELECT 1 AS two UNION SELECT 2.2;
  two 
 -----
    1
-   2
+ 2.2
 (2 rows)
 
-SELECT 1 AS one UNION SELECT 1.1;
+SELECT 1 AS one UNION SELECT 1.0;
  one 
 -----
    1
@@ -87,35 +87,42 @@ SELECT 1.1 AS two UNION ALL SELECT 2;
    2
 (2 rows)
 
-SELECT 1 AS two UNION ALL SELECT 1;
+SELECT 1.0 AS two UNION ALL SELECT 1;
  two 
 -----
    1
    1
 (2 rows)
 
-SELECT 1 AS three UNION SELECT 2 UNION SELECT 3;
+SELECT 1.1 AS three UNION SELECT 2 UNION SELECT 3;
  three 
 -------
-     1
+   1.1
      2
      3
 (3 rows)
 
-SELECT 1 AS two UNION SELECT 2 UNION SELECT 2;
+SELECT 1.1 AS two UNION SELECT 2 UNION SELECT 2.0;
  two 
 -----
-   1
+ 1.1
    2
 (2 rows)
 
-SELECT 1 AS three UNION SELECT 2 UNION ALL SELECT 2;
+SELECT 1.1 AS three UNION SELECT 2 UNION ALL SELECT 2;
  three 
 -------
-     1
+   1.1
      2
      2
 (3 rows)
+
+SELECT 1.1 AS two UNION (SELECT 2 UNION ALL SELECT 2);
+ two 
+-----
+ 1.1
+   2
+(2 rows)
 
 --
 -- Try testing from tables...
@@ -246,4 +253,62 @@ SELECT TRIM(TRAILING FROM f1) FROM CHAR_TBL;
  doh!
  hi de ho neighbor
 (5 rows)
+
+--
+-- INTERSECT and EXCEPT
+--
+SELECT q2 FROM int8_tbl INTERSECT SELECT q1 FROM int8_tbl;
+        q2        
+------------------
+              123
+ 4567890123456789
+(2 rows)
+
+SELECT q2 FROM int8_tbl INTERSECT ALL SELECT q1 FROM int8_tbl;
+        q2        
+------------------
+              123
+ 4567890123456789
+ 4567890123456789
+(3 rows)
+
+SELECT q2 FROM int8_tbl EXCEPT SELECT q1 FROM int8_tbl;
+        q2         
+-------------------
+ -4567890123456789
+               456
+(2 rows)
+
+SELECT q2 FROM int8_tbl EXCEPT ALL SELECT q1 FROM int8_tbl;
+        q2         
+-------------------
+ -4567890123456789
+               456
+(2 rows)
+
+SELECT q2 FROM int8_tbl EXCEPT ALL SELECT DISTINCT q1 FROM int8_tbl;
+        q2         
+-------------------
+ -4567890123456789
+               456
+  4567890123456789
+(3 rows)
+
+--
+-- Mixed types
+--
+SELECT f1 FROM float8_tbl INTERSECT SELECT f1 FROM int4_tbl;
+ f1 
+----
+  0
+(1 row)
+
+SELECT f1 FROM float8_tbl EXCEPT SELECT f1 FROM int4_tbl;
+          f1           
+-----------------------
+ -1.2345678901234e+200
+               -1004.3
+                -34.84
+ -1.2345678901234e-200
+(4 rows)
 

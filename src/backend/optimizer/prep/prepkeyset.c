@@ -20,6 +20,8 @@
 
 bool		_use_keyset_query_optimizer = FALSE;
 
+#ifdef ENABLE_KEY_SET_QUERY
+
 static int	inspectOpNode(Expr *expr);
 static int	inspectAndNode(Expr *expr);
 static int	inspectOrNode(Expr *expr);
@@ -213,3 +215,5 @@ inspectOpNode(Expr *expr)
 	secondExpr = lsecond(expr->args);
 	return (firstExpr && secondExpr && nodeTag(firstExpr) == T_Var && nodeTag(secondExpr) == T_Const);
 }
+
+#endif /* ENABLE_KEY_SET_QUERY */

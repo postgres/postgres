@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.76 2000/09/29 18:21:23 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.77 2000/10/05 19:11:32 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -1636,8 +1636,8 @@ simplify_op_or_func(Expr *expr, List *args)
  * so that a scan of a target list can be handled without additional code.
  * (But only the "expr" part of a TargetEntry is examined, unless the walker
  * chooses to process TargetEntry nodes specially.)  Also, RangeTblRef,
- * FromExpr, and JoinExpr nodes are handled, so that qual expressions in a
- * jointree can be processed without additional code.
+ * FromExpr, JoinExpr, and SetOperationStmt nodes are handled, so that query
+ * jointrees and setOperation trees can be processed without additional code.
  *
  * expression_tree_walker will handle SubLink and SubPlan nodes by recursing
  * normally into the "lefthand" arguments (which belong to the outer plan).
@@ -1654,7 +1654,8 @@ simplify_op_or_func(Expr *expr, List *args)
  *		if (IsA(node, Query))
  *		{
  *			adjust context for subquery;
- *			result = query_tree_walker((Query *) node, my_walker, context);
+ *			result = query_tree_walker((Query *) node, my_walker, context,
+ *									   true); // to visit subquery RTEs too
  *			restore context if needed;
  *			return result;
  *		}
@@ -1827,6 +1828,16 @@ expression_tree_walker(Node *node,
 				 */
 			}
 			break;
+		case T_SetOperationStmt:
+			{
+				SetOperationStmt *setop = (SetOperationStmt *) node;
+
+				if (walker(setop->larg, context))
+					return true;
+				if (walker(setop->rarg, context))
+					return true;
+			}
+			break;
 		default:
 			elog(ERROR, "expression_tree_walker: Unexpected node type %d",
 				 nodeTag(node));
@@ -1843,11 +1854,17 @@ expression_tree_walker(Node *node,
  * for starting a walk at top level of a Query regardless of whether the
  * walker intends to descend into subqueries.  It is also useful for
  * descending into subqueries within a walker.
+ *
+ * If visitQueryRTEs is true, the walker will also be called on sub-Query
+ * nodes present in subquery rangetable entries of the given Query.  This
+ * is optional since some callers handle those sub-queries separately,
+ * or don't really want to see subqueries anyway.
  */
 bool
 query_tree_walker(Query *query,
 				  bool (*walker) (),
-				  void *context)
+				  void *context,
+				  bool visitQueryRTEs)
 {
 	Assert(query != NULL && IsA(query, Query));
 
@@ -1855,11 +1872,23 @@ query_tree_walker(Query *query,
 		return true;
 	if (walker((Node *) query->jointree, context))
 		return true;
+	if (walker(query->setOperations, context))
+		return true;
 	if (walker(query->havingQual, context))
 		return true;
-	/*
-	 * XXX for subselect-in-FROM, may need to examine rtable as well?
-	 */
+	if (visitQueryRTEs)
+	{
+		List   *rt;
+
+		foreach(rt, query->rtable)
+		{
+			RangeTblEntry *rte = (RangeTblEntry *) lfirst(rt);
+
+			if (rte->subquery)
+				if (walker(rte->subquery, context))
+					return true;
+		}
+	}
 	return false;
 }
 
@@ -2158,6 +2187,17 @@ expression_tree_mutator(Node *node,
 				return (Node *) newnode;
 			}
 			break;
+		case T_SetOperationStmt:
+			{
+				SetOperationStmt *setop = (SetOperationStmt *) node;
+				SetOperationStmt *newnode;
+
+				FLATCOPY(newnode, setop, SetOperationStmt);
+				MUTATE(newnode->larg, setop->larg, Node *);
+				MUTATE(newnode->rarg, setop->rarg, Node *);
+				return (Node *) newnode;
+			}
+			break;
 		default:
 			elog(ERROR, "expression_tree_mutator: Unexpected node type %d",
 				 nodeTag(node));
@@ -2165,4 +2205,59 @@ expression_tree_mutator(Node *node,
 	}
 	/* can't get here, but keep compiler happy */
 	return NULL;
+}
+
+
+/*
+ * query_tree_mutator --- initiate modification of a Query's expressions
+ *
+ * This routine exists just to reduce the number of places that need to know
+ * where all the expression subtrees of a Query are.  Note it can be used
+ * for starting a walk at top level of a Query regardless of whether the
+ * mutator intends to descend into subqueries.  It is also useful for
+ * descending into subqueries within a mutator.
+ *
+ * The specified Query node is modified-in-place; do a FLATCOPY() beforehand
+ * if you don't want to change the original.  All substructure is safely
+ * copied, however.
+ *
+ * If visitQueryRTEs is true, the mutator will also be called on sub-Query
+ * nodes present in subquery rangetable entries of the given Query.  This
+ * is optional since some callers handle those sub-queries separately,
+ * or don't really want to see subqueries anyway.
+ */
+void
+query_tree_mutator(Query *query,
+				   Node *(*mutator) (),
+				   void *context,
+				   bool visitQueryRTEs)
+{
+	Assert(query != NULL && IsA(query, Query));
+
+	MUTATE(query->targetList, query->targetList, List *);
+	MUTATE(query->jointree, query->jointree, FromExpr *);
+	MUTATE(query->setOperations, query->setOperations, Node *);
+	MUTATE(query->havingQual, query->havingQual, Node *);
+	if (visitQueryRTEs)
+	{
+		List   *newrt = NIL;
+		List   *rt;
+
+		foreach(rt, query->rtable)
+		{
+			RangeTblEntry *rte = (RangeTblEntry *) lfirst(rt);
+
+			if (rte->subquery)
+			{
+				RangeTblEntry *newrte;
+
+				FLATCOPY(newrte, rte, RangeTblEntry);
+				CHECKFLATCOPY(newrte->subquery, rte->subquery, Query);
+				MUTATE(newrte->subquery, newrte->subquery, Query *);
+				rte = newrte;
+			}
+			newrt = lappend(newrt, rte);
+		}
+		query->rtable = newrt;
+	}
 }

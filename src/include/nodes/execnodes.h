@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: execnodes.h,v 1.50 2000/09/29 18:21:38 tgl Exp $
+ * $Id: execnodes.h,v 1.51 2000/10/05 19:11:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -348,7 +348,6 @@ typedef struct ResultState
  *		whichplan		which plan is being executed
  *		nplans			how many plans are in the list
  *		initialized		array of ExecInitNode() results
- *		rtentries		range table for the current plan
  *		result_relation_info_list  array of each subplan's result relation info
  *		junkFilter_list  array of each subplan's junk filter
  * ----------------
@@ -359,7 +358,6 @@ typedef struct AppendState
 	int			as_whichplan;
 	int			as_nplans;
 	bool	   *as_initialized;
-	List	   *as_rtentries;
 	List	   *as_result_relation_info_list;
 	List	   *as_junkFilter_list;
 } AppendState;
@@ -460,14 +458,12 @@ typedef struct TidScanState
  *		The sub-query will have its own EState, which we save here.
  *		ScanTupleSlot references the current output tuple of the sub-query.
  *
- *		SubQueryDesc	   queryDesc for sub-query
  *		SubEState		   exec state for sub-query
  * ----------------
  */
 typedef struct SubqueryScanState
 {
 	CommonScanState csstate;	/* its first field is NodeTag */
-	struct QueryDesc *sss_SubQueryDesc;
 	EState	   *sss_SubEState;
 } SubqueryScanState;
 
@@ -658,6 +654,26 @@ typedef struct UniqueState
 	HeapTuple	priorTuple;		/* most recently returned tuple, or NULL */
 	MemoryContext tempContext;	/* short-term context for comparisons */
 } UniqueState;
+
+/* ----------------
+ *	 SetOpState information
+ *
+ *		SetOp nodes are used "on top of" sort nodes to discard
+ *		duplicate tuples returned from the sort phase.  These are
+ *		more complex than a simple Unique since we have to count
+ *		how many duplicates to return.
+ * ----------------
+ */
+typedef struct SetOpState
+{
+	CommonState cstate;			/* its first field is NodeTag */
+	FmgrInfo   *eqfunctions;	/* per-field lookup data for equality fns */
+	bool		subplan_done;	/* has subplan returned EOF? */
+	long		numLeft;		/* number of left-input dups of cur group */
+	long		numRight;		/* number of right-input dups of cur group */
+	long		numOutput;		/* number of dups left to output */
+	MemoryContext tempContext;	/* short-term context for comparisons */
+} SetOpState;
 
 
 /* ----------------

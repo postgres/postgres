@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.91 2000/09/29 18:21:33 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.92 2000/10/05 19:11:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -48,7 +48,6 @@ static List *make_subplanTargetList(Query *parse, List *tlist,
 static Plan *make_groupplan(List *group_tlist, bool tuplePerGroup,
 			   List *groupClause, AttrNumber *grpColIdx,
 			   bool is_presorted, Plan *subplan);
-static Plan *make_sortplan(List *tlist, Plan *plannode, List *sortcls);
 
 /*****************************************************************************
  *
@@ -60,43 +59,32 @@ planner(Query *parse)
 {
 	Plan	   *result_plan;
 	Index		save_PlannerQueryLevel;
-	List	   *save_PlannerInitPlan;
 	List	   *save_PlannerParamVar;
-	int			save_PlannerPlanId;
 
 	/*
-	 * The outer planner can be called recursively, for example to process
-	 * a subquery in the rangetable.  (A less obvious example occurs when
-	 * eval_const_expressions tries to simplify an SQL function.)
-	 * So, global state variables must be saved and restored.
+	 * The planner can be called recursively (an example is when
+	 * eval_const_expressions tries to simplify an SQL function).
+	 * So, these global state variables must be saved and restored.
 	 *
-	 * (Perhaps these should be moved into the Query structure instead?)
+	 * These vars cannot be moved into the Query structure since their
+	 * whole purpose is communication across multiple sub-Queries.
+	 *
+	 * Note we do NOT save and restore PlannerPlanId: it exists to assign
+	 * unique IDs to SubPlan nodes, and we want those IDs to be unique
+	 * for the life of a backend.  Also, PlannerInitPlan is saved/restored
+	 * in subquery_planner, not here.
 	 */
 	save_PlannerQueryLevel = PlannerQueryLevel;
-	save_PlannerInitPlan = PlannerInitPlan;
 	save_PlannerParamVar = PlannerParamVar;
-	save_PlannerPlanId = PlannerPlanId;
 
-	/* Initialize state for subselects */
-	PlannerQueryLevel = 1;
-	PlannerInitPlan = NULL;
-	PlannerParamVar = NULL;
-	PlannerPlanId = 0;
+	/* Initialize state for handling outer-level references and params */
+	PlannerQueryLevel = 0;		/* will be 1 in top-level subquery_planner */
+	PlannerParamVar = NIL;
 
-	/* this should go away sometime soon */
-	transformKeySetQuery(parse);
-
-	/* primary planning entry point (may recurse for sublinks) */
+	/* primary planning entry point (may recurse for subqueries) */
 	result_plan = subquery_planner(parse, -1.0 /* default case */ );
 
-	Assert(PlannerQueryLevel == 1);
-
-	/* if top-level query had subqueries, do housekeeping for them */
-	if (PlannerPlanId > 0)
-	{
-		(void) SS_finalize_plan(result_plan);
-		result_plan->initPlan = PlannerInitPlan;
-	}
+	Assert(PlannerQueryLevel == 0);
 
 	/* executor wants to know total number of Params used overall */
 	result_plan->nParamExec = length(PlannerParamVar);
@@ -106,9 +94,7 @@ planner(Query *parse)
 
 	/* restore state for outer planner, if any */
 	PlannerQueryLevel = save_PlannerQueryLevel;
-	PlannerInitPlan = save_PlannerInitPlan;
 	PlannerParamVar = save_PlannerParamVar;
-	PlannerPlanId = save_PlannerPlanId;
 
 	return result_plan;
 }
@@ -125,14 +111,9 @@ planner(Query *parse)
  *
  * Basically, this routine does the stuff that should only be done once
  * per Query object.  It then calls union_planner, which may be called
- * recursively on the same Query node in order to handle UNIONs and/or
- * inheritance.  subquery_planner is called recursively from subselect.c
- * to handle sub-Query nodes found within the query's expressions.
- *
- * prepunion.c uses an unholy combination of calling union_planner when
- * recursing on the primary Query node, or subquery_planner when recursing
- * on a UNION'd Query node that hasn't previously been seen by
- * subquery_planner.  That whole chunk of code needs rewritten from scratch.
+ * recursively on the same Query node in order to handle inheritance.
+ * subquery_planner will be called recursively to handle sub-Query nodes
+ * found within the query's expressions and rangetable.
  *
  * Returns a query plan.
  *--------------------
@@ -140,6 +121,20 @@ planner(Query *parse)
 Plan *
 subquery_planner(Query *parse, double tuple_fraction)
 {
+	List	   *saved_initplan = PlannerInitPlan;
+	int			saved_planid = PlannerPlanId;
+	Plan	   *plan;
+	List	   *lst;
+
+	/* Set up for a new level of subquery */
+	PlannerQueryLevel++;
+	PlannerInitPlan = NIL;
+
+#ifdef ENABLE_KEY_SET_QUERY
+	/* this should go away sometime soon */
+	transformKeySetQuery(parse);
+#endif
+
 	/*
 	 * Check to see if any subqueries in the rangetable can be merged into
 	 * this query.
@@ -179,9 +174,9 @@ subquery_planner(Query *parse, double tuple_fraction)
 											  EXPRKIND_HAVING);
 
 	/*
-	 * Do the main planning (potentially recursive)
+	 * Do the main planning (potentially recursive for inheritance)
 	 */
-	return union_planner(parse, tuple_fraction);
+	plan = union_planner(parse, tuple_fraction);
 
 	/*
 	 * XXX should any more of union_planner's activity be moved here?
@@ -190,6 +185,35 @@ subquery_planner(Query *parse, double tuple_fraction)
 	 * but I suspect it would pay off in simplicity and avoidance of
 	 * wasted cycles.
 	 */
+
+	/*
+	 * If any subplans were generated, or if we're inside a subplan,
+	 * build subPlan, extParam and locParam lists for plan nodes.
+	 */
+	if (PlannerPlanId != saved_planid || PlannerQueryLevel > 1)
+	{
+		(void) SS_finalize_plan(plan);
+		/*
+		 * At the moment, SS_finalize_plan doesn't handle initPlans
+		 * and so we assign them to the topmost plan node.
+		 */
+		plan->initPlan = PlannerInitPlan;
+		/* Must add the initPlans' extParams to the topmost node's, too */
+		foreach(lst, plan->initPlan)
+		{
+			SubPlan *subplan = (SubPlan *) lfirst(lst);
+
+			plan->extParam = set_unioni(plan->extParam,
+										subplan->plan->extParam);
+		}
+	}
+
+	/* Return to outer subquery context */
+	PlannerQueryLevel--;
+	PlannerInitPlan = saved_initplan;
+	/* we do NOT restore PlannerPlanId; that's not an oversight! */
+
+	return plan;
 }
 
 /*
@@ -320,9 +344,10 @@ is_simple_subquery(Query *subquery)
 	if (subquery->limitOffset || subquery->limitCount)
 		elog(ERROR, "LIMIT is not supported in subselects");
 	/*
-	 * Can't currently pull up a union query.  Maybe after querytree redesign.
+	 * Can't currently pull up a query with setops.
+	 * Maybe after querytree redesign...
 	 */
-	if (subquery->unionClause)
+	if (subquery->setOperations)
 		return false;
 	/*
 	 * Can't pull up a subquery involving grouping, aggregation, or sorting.
@@ -573,7 +598,7 @@ preprocess_qual_conditions(Query *parse, Node *jtnode)
 
 /*--------------------
  * union_planner
- *	  Invokes the planner on union-type queries (both regular UNIONs and
+ *	  Invokes the planner on union-type queries (both set operations and
  *	  appends produced by inheritance), recursing if necessary to get them
  *	  all, then processes normal plans.
  *
@@ -606,24 +631,31 @@ union_planner(Query *parse,
 	Index		rt_index;
 	List	   *inheritors;
 
-	if (parse->unionClause)
+	if (parse->setOperations)
 	{
-		result_plan = plan_union_queries(parse);
-		/* XXX do we need to do this? bjm 12/19/97 */
-		tlist = preprocess_targetlist(tlist,
-									  parse->commandType,
-									  parse->resultRelation,
-									  parse->rtable);
+		/*
+		 * Construct the plan for set operations.  The result will
+		 * not need any work except perhaps a top-level sort.
+		 */
+		result_plan = plan_set_operations(parse);
+
+		/*
+		 * We should not need to call preprocess_targetlist, since we must
+		 * be in a SELECT query node.
+		 */
+		Assert(parse->commandType == CMD_SELECT);
 
 		/*
 		 * We leave current_pathkeys NIL indicating we do not know sort
-		 * order.  This is correct for the appended-together subplan
-		 * results, even if the subplans themselves produced sorted results.
+		 * order.  This is correct when the top set operation is UNION ALL,
+		 * since the appended-together results are unsorted even if the
+		 * subplans were sorted.  For other set operations we could be
+		 * smarter --- future improvement!
 		 */
 
 		/*
 		 * Calculate pathkeys that represent grouping/ordering
-		 * requirements
+		 * requirements (grouping should always be null, but...)
 		 */
 		group_pathkeys = make_pathkeys_for_sortclauses(parse->groupClause,
 													   tlist);
@@ -886,7 +918,7 @@ union_planner(Query *parse,
 				tuple_fraction = 0.25;
 		}
 
-		/* Generate the (sub) plan */
+		/* Generate the basic plan for this Query */
 		result_plan = query_planner(parse,
 									sub_tlist,
 									tuple_fraction);
@@ -1176,7 +1208,7 @@ make_groupplan(List *group_tlist,
  * make_sortplan
  *	  Add a Sort node to implement an explicit ORDER BY clause.
  */
-static Plan *
+Plan *
 make_sortplan(List *tlist, Plan *plannode, List *sortcls)
 {
 	List	   *sort_tlist;

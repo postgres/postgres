@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.193 2000/09/29 18:21:36 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.194 2000/10/05 19:11:33 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -78,6 +78,7 @@ static Node *makeA_Expr(int oper, char *opname, Node *lexpr, Node *rexpr);
 static Node *makeTypeCast(Node *arg, TypeName *typename);
 static Node *makeRowExpr(char *opr, List *largs, List *rargs);
 static void mapTargetColumns(List *source, List *target);
+static SelectStmt *findLeftmostSelect(Node *node);
 static bool exprIsNullConstant(Node *arg);
 static Node *doNegate(Node *n);
 static void doNegateFloat(Value *v);
@@ -112,25 +113,26 @@ static void doNegateFloat(Value *v);
 	VersionStmt			*vstmt;
 	DefineStmt			*dstmt;
 	RuleStmt			*rstmt;
-	InsertStmt			*astmt;
+	InsertStmt			*istmt;
 }
 
 %type <node>	stmt,
-		AlterSchemaStmt, AlterTableStmt, ClosePortalStmt,
-		CopyStmt, CreateStmt, CreateAsStmt, CreateSchemaStmt, CreateSeqStmt, DefineStmt, DropStmt,
-		TruncateStmt, CommentStmt,
-		ExtendStmt, FetchStmt,	GrantStmt, CreateTrigStmt, DropSchemaStmt, DropTrigStmt,
-		CreatePLangStmt, DropPLangStmt,
-		IndexStmt, ListenStmt, UnlistenStmt, LockStmt, OptimizableStmt,
-		ProcedureStmt, ReindexStmt, RemoveAggrStmt, RemoveOperStmt,
-		RemoveFuncStmt, RemoveStmt,
-		RenameStmt, RevokeStmt, RuleStmt, SetSessionStmt, TransactionStmt, ViewStmt, LoadStmt,
-		CreatedbStmt, DropdbStmt, VacuumStmt, CursorStmt, SubSelect,
-		UpdateStmt, InsertStmt, select_clause, SelectStmt, NotifyStmt, DeleteStmt, 
-		ClusterStmt, ExplainStmt, VariableSetStmt, VariableShowStmt, VariableResetStmt,
-		CreateUserStmt, AlterUserStmt, DropUserStmt, RuleActionStmt,
-		RuleActionStmtOrEmpty, ConstraintsSetStmt,
-		CreateGroupStmt, AlterGroupStmt, DropGroupStmt
+		AlterGroupStmt, AlterSchemaStmt, AlterTableStmt, AlterUserStmt,
+		ClosePortalStmt, ClusterStmt, CommentStmt, ConstraintsSetStmt,
+		CopyStmt, CreateAsStmt, CreateGroupStmt, CreatePLangStmt,
+		CreateSchemaStmt, CreateSeqStmt, CreateStmt, CreateTrigStmt,
+		CreateUserStmt, CreatedbStmt, CursorStmt, DefineStmt, DeleteStmt,
+		DropGroupStmt, DropPLangStmt, DropSchemaStmt, DropStmt, DropTrigStmt,
+		DropUserStmt, DropdbStmt, ExplainStmt, ExtendStmt, FetchStmt,
+		GrantStmt, IndexStmt, InsertStmt, ListenStmt, LoadStmt, LockStmt,
+		NotifyStmt, OptimizableStmt, ProcedureStmt, ReindexStmt,
+		RemoveAggrStmt, RemoveFuncStmt, RemoveOperStmt, RemoveStmt,
+		RenameStmt, RevokeStmt, RuleActionStmt, RuleActionStmtOrEmpty,
+		RuleStmt, SelectStmt, SetSessionStmt, TransactionStmt, TruncateStmt,
+		UnlistenStmt, UpdateStmt, VacuumStmt, VariableResetStmt,
+		VariableSetStmt, VariableShowStmt, ViewStmt
+
+%type <node>	select_clause, select_subclause
 
 %type <list>	SessionList
 %type <node>	SessionClause
@@ -212,7 +214,7 @@ static void doNegateFloat(Value *v);
 %type <list>	OptSeqList
 %type <defelt>	OptSeqElem
 
-%type <astmt>	insert_rest
+%type <istmt>	insert_rest
 
 %type <node>	OptTableElement, ConstraintElem
 %type <node>	columnDef
@@ -1533,16 +1535,16 @@ OptInherit:  INHERITS '(' relation_name_list ')'		{ $$ = $3; }
 
 CreateAsStmt:  CREATE OptTemp TABLE relation_name OptUnder OptCreateAs AS SelectStmt
 				{
-					SelectStmt *n = (SelectStmt *)$8;
-                    if ($5 != NIL)
-						yyerror("CREATE TABLE/AS SELECT does not support UNDER");
-					if ($6 != NIL)
-						mapTargetColumns($6, n->targetList);
+					SelectStmt *n = findLeftmostSelect($8);
 					if (n->into != NULL)
 						elog(ERROR,"CREATE TABLE/AS SELECT may not specify INTO");
 					n->istemp = $2;
 					n->into = $4;
-					$$ = (Node *)n;
+                    if ($5 != NIL)
+						yyerror("CREATE TABLE/AS SELECT does not support UNDER");
+					if ($6 != NIL)
+						mapTargetColumns($6, n->targetList);
+					$$ = $8;
 				}
 		;
 
@@ -2909,11 +2911,7 @@ ViewStmt:  CREATE VIEW name opt_column_list AS SelectStmt
 					ViewStmt *n = makeNode(ViewStmt);
 					n->viewname = $3;
 					n->aliases = $4;
-					n->query = (Query *)$6;
-					if (((SelectStmt *)n->query)->unionClause != NULL)
-						elog(ERROR,"UNION in views is not implemented");
-					if (((SelectStmt *)n->query)->forUpdate != NULL)
-						elog(ERROR, "SELECT FOR UPDATE is not allowed in CREATE VIEW");
+					n->query = (Query *) $6;
 					$$ = (Node *)n;
 				}
 		;
@@ -3156,78 +3154,37 @@ InsertStmt:  INSERT INTO relation_name insert_rest
 insert_rest:  VALUES '(' target_list ')'
 				{
 					$$ = makeNode(InsertStmt);
-					$$->cols = NULL;
-					$$->distinctClause = NIL;
+					$$->cols = NIL;
 					$$->targetList = $3;
-					$$->fromClause = NIL;
-					$$->whereClause = NULL;
-					$$->groupClause = NIL;
-					$$->havingClause = NULL;
-					$$->unionClause = NIL;
+					$$->selectStmt = NULL;
 				}
 		| DEFAULT VALUES
 				{
 					$$ = makeNode(InsertStmt);
-					$$->distinctClause = NIL;
+					$$->cols = NIL;
 					$$->targetList = NIL;
-					$$->fromClause = NIL;
-					$$->whereClause = NULL;
-					$$->groupClause = NIL;
-					$$->havingClause = NULL;
-					$$->unionClause = NIL;
-				 	$$->intersectClause = NIL;
+					$$->selectStmt = NULL;
 				}
-/* We want the full power of SelectStatements including INTERSECT and EXCEPT
- * for insertion.  However, we can't support sort or limit clauses.
- */
 		| SelectStmt
 				{
-					SelectStmt *n = (SelectStmt *) $1;
-					if (n->sortClause)
-						elog(ERROR, "ORDER BY is not allowed in INSERT/SELECT");
 					$$ = makeNode(InsertStmt);
 					$$->cols = NIL;
-					$$->distinctClause = n->distinctClause;
-					$$->targetList = n->targetList;
-					$$->fromClause = n->fromClause;
-					$$->whereClause = n->whereClause;
-					$$->groupClause = n->groupClause;
-					$$->havingClause = n->havingClause;
-					$$->unionClause = n->unionClause;
-					$$->intersectClause = n->intersectClause;
-					$$->unionall = n->unionall;
-					$$->forUpdate = n->forUpdate;
+					$$->targetList = NIL;
+					$$->selectStmt = $1;
 				}
 		| '(' columnList ')' VALUES '(' target_list ')'
 				{
 					$$ = makeNode(InsertStmt);
 					$$->cols = $2;
-					$$->distinctClause = NIL;
 					$$->targetList = $6;
-					$$->fromClause = NIL;
-					$$->whereClause = NULL;
-					$$->groupClause = NIL;
-					$$->havingClause = NULL;
-					$$->unionClause = NIL; 
-				 	$$->intersectClause = NIL;
+					$$->selectStmt = NULL;
 				}
 		| '(' columnList ')' SelectStmt
 				{
-					SelectStmt *n = (SelectStmt *) $4;
-					if (n->sortClause)
-						elog(ERROR, "ORDER BY is not allowed in INSERT/SELECT");
 					$$ = makeNode(InsertStmt);
 					$$->cols = $2;
-					$$->distinctClause = n->distinctClause;
-					$$->targetList = n->targetList;
-					$$->fromClause = n->fromClause;
-					$$->whereClause = n->whereClause;
-					$$->groupClause = n->groupClause;
-					$$->havingClause = n->havingClause;
-					$$->unionClause = n->unionClause;
-					$$->intersectClause = n->intersectClause;
-					$$->unionall = n->unionall;
-					$$->forUpdate = n->forUpdate;
+					$$->targetList = NIL;
+					$$->selectStmt = $4;
 				}
 		;
 
@@ -3324,26 +3281,10 @@ UpdateStmt:  UPDATE opt_only relation_name
  *****************************************************************************/
 CursorStmt:  DECLARE name opt_cursor CURSOR FOR SelectStmt
   				{
- 					SelectStmt *n;
-  
- 					n= (SelectStmt *)$6;
-  					/* from PORTAL name */
-  					/*
-  					 *	15 august 1991 -- since 3.0 postgres does locking
-					 *	right, we discovered that portals were violating
-					 *	locking protocol.  portal locks cannot span xacts.
-					 *	as a short-term fix, we installed the check here.
-					 *							-- mao
-					 */
-					if (!IsTransactionBlock())
-						elog(ERROR,"Named portals may only be used in begin/end transaction blocks");
-
+ 					SelectStmt *n = findLeftmostSelect($6);
 					n->portalname = $2;
 					n->binary = $3;
-					if (n->forUpdate != NULL)
-							elog(ERROR,"DECLARE/UPDATE is not supported"
-								 		"\n\tCursors must be READ ONLY");
-					$$ = (Node *)n;
+					$$ = $6;
 				}
 		;
 
@@ -3364,92 +3305,22 @@ opt_cursor:  BINARY						{ $$ = TRUE; }
 /* A complete SELECT statement looks like this.  Note sort, for_update,
  * and limit clauses can only appear once, not in each set operation.
  * 
- * The rule returns a SelectStmt Node having the set operations attached to 
- * unionClause and intersectClause (NIL if no set operations were present)
+ * The rule returns either a SelectStmt node or a SetOperationStmt tree.
+ * One-time clauses are attached to the leftmost SelectStmt leaf.
+ *
+ * NOTE: only the leftmost SelectStmt leaf should have INTO, either.
+ * However, this is not checked by the grammar; parse analysis must check it.
  */
 
 SelectStmt:	  select_clause sort_clause for_update_clause opt_select_limit
 			{
-				if IsA($1, SelectStmt)
-				{
-					/* There were no set operations, so just attach the
-					 * one-time clauses.
-					 */
-					SelectStmt *n = (SelectStmt *) $1;
-					n->sortClause = $2;
-					n->forUpdate = $3;
-					n->limitOffset = nth(0, $4);
-					n->limitCount = nth(1, $4);
-					$$ = (Node *) n;
-                }
-				else
-				{
-					/* There were set operations.  The root of the operator
-					 * tree is delivered by $1, but we must hand back a
-					 * SelectStmt node not an A_Expr Node.
-					 * So we find the leftmost 'SelectStmt' in the operator
-					 * tree $1 (which is the first Select Statement in the
-					 * query), which will be the returned node.
-					 * Then we attach the whole operator tree to that node's
-					 * 'intersectClause', and a list of all 'SelectStmt' Nodes
-					 * in the tree to its 'unionClause'. (NOTE that this means
-					 * the top node has indirect recursive pointers to itself!
-					 * This would cause trouble if we tried copyObject!!)
-					 * The intersectClause and unionClause subtrees will be
-					 * left untouched by the main parser, and will only be
-					 * processed when control gets to the function
-					 * Except_Intersect_Rewrite() (in rewriteHandler.c).
-					 */
-					Node *op = (Node *) $1;
-					List *select_list = NIL;
-					SelectStmt *first_select;
-					bool	intersect_present = FALSE,
-						unionall_present = FALSE;
+				SelectStmt *n = findLeftmostSelect($1);
 
-					/* Take the operator tree as an argument and create a
-					 * list of all SelectStmt Nodes found in the tree.
-					 *
-					 * If one of the SelectStmt Nodes has the 'unionall' flag
-					 * set to true the 'unionall_present' flag is also set to
-					 * true.
-					 */
-					create_select_list(op, &select_list, &unionall_present);
-
-					/* Replace all the A_Expr Nodes in the operator tree by
-					 * Expr Nodes.
-					 *
-					 * If an INTERSECT or an EXCEPT is present, the 
-					 * 'intersect_present' flag is set to true
-					 */
-					op = A_Expr_to_Expr(op, &intersect_present);
-
-					/* If both flags are set to true we have a UNION ALL
-					 * statement mixed up with INTERSECT or EXCEPT 
-					 * which can not be handled at the moment.
-					 */
-					if (intersect_present && unionall_present)
-						elog(ERROR, "UNION ALL not allowed in mixed set operations");
-
-					/* Get the leftmost SeletStmt Node (which automatically
-					 * represents the first Select Statement of the query!)
-					 */
-					first_select = (SelectStmt *) lfirst(select_list);
-
-					/* Attach the list of all SeletStmt Nodes to unionClause */
-					first_select->unionClause = select_list;
-
-					/* Attach the whole operator tree to intersectClause */
-					first_select->intersectClause = (List *) op;
-
-					/* finally attach the sort clause &etc */
-					first_select->sortClause = $2;
-					first_select->forUpdate = $3;
-					first_select->limitOffset = nth(0, $4);
-					first_select->limitCount = nth(1, $4);
-					$$ = (Node *) first_select;
-				}		
-				if (((SelectStmt *)$$)->forUpdate != NULL && QueryIsRule)
-					elog(ERROR, "SELECT/FOR UPDATE is not allowed in CREATE RULE");
+				n->sortClause = $2;
+				n->forUpdate = $3;
+				n->limitOffset = nth(0, $4);
+				n->limitCount = nth(1, $4);
+				$$ = $1;
 			}
 		;
 
@@ -3458,82 +3329,69 @@ SelectStmt:	  select_clause sort_clause for_update_clause opt_select_limit
  * the ordering of the set operations.  Without '(' and ')' we want the
  * operations to be ordered per the precedence specs at the head of this file.
  *
+ * Since parentheses around SELECTs also appear in the expression grammar,
+ * there is a parse ambiguity if parentheses are allowed at the top level of a
+ * select_clause: are the parens part of the expression or part of the select?
+ * We separate select_clause into two levels to resolve this: select_clause
+ * can have top-level parentheses, select_subclause cannot.
+ *
  * Note that sort clauses cannot be included at this level --- a sort clause
  * can only appear at the end of the complete Select, and it will be handled
  * by the topmost SelectStmt rule.  Likewise FOR UPDATE and LIMIT.
- * 
- * The rule builds up an operator tree using A_Expr Nodes. AND Nodes represent
- * INTERSECTs, OR Nodes represent UNIONs, and AND NOT nodes represent EXCEPTs. 
- * The SelectStatements to be connected are the left and right arguments to
- * the A_Expr Nodes.
- * If no set operations appear in the query, the tree consists only of one
- * SelectStmt Node.
  */
-select_clause: '(' select_clause ')'
+select_clause: '(' select_subclause ')'
 			{
 				$$ = $2; 
 			}
-		| SubSelect
+		| select_subclause
 			{
 				$$ = $1; 
 			}
-		| select_clause EXCEPT opt_all select_clause
-			{
-				$$ = (Node *)makeA_Expr(AND,NULL,$1,
-										makeA_Expr(NOT,NULL,NULL,$4));
-				if ($3)
-					elog(ERROR, "EXCEPT ALL is not implemented yet");
-			}
-		| select_clause UNION opt_all select_clause
-			{	
-				if (IsA($4, SelectStmt))
-				{
-					SelectStmt *n = (SelectStmt *)$4;
-					n->unionall = $3;
-					/* NOTE: if UNION ALL appears with a parenthesized set
-					 * operation to its right, the ALL is silently discarded.
-					 * Should we generate an error instead?  I think it may
-					 * be OK since ALL with UNION to its right is ignored
-					 * anyway...
-					 */
-				}
-				$$ = (Node *)makeA_Expr(OR,NULL,$1,$4);
-			}
-		| select_clause INTERSECT opt_all select_clause
-			{
-				$$ = (Node *)makeA_Expr(AND,NULL,$1,$4);
-				if ($3)
-					elog(ERROR, "INTERSECT ALL is not implemented yet");
-			}
-		; 
+		;
 
-SubSelect:	SELECT opt_distinct target_list
+select_subclause: SELECT opt_distinct target_list
 			 result from_clause where_clause
 			 group_clause having_clause
 				{
 					SelectStmt *n = makeNode(SelectStmt);
 					n->distinctClause = $2;
-					n->unionall = FALSE;
 					n->targetList = $3;
-					/* This is new: Subselects support the INTO clause
-					 * which allows queries that are not part of the
-					 * SQL92 standard and should not be formulated!
-					 * We need it for INTERSECT and EXCEPT and I did not
-					 * want to create a new rule 'SubSelect1' including the
-					 * feature. If it makes troubles we will have to add 
-					 * a new rule and change this to prevent INTOs in 
-					 * Subselects again.
-					 */
 					n->istemp = (bool) ((Value *) lfirst($4))->val.ival;
 					n->into = (char *) lnext($4);
-
 					n->fromClause = $5;
 					n->whereClause = $6;
 					n->groupClause = $7;
 					n->havingClause = $8;
 					$$ = (Node *)n;
 				}
-		;
+		| select_clause UNION opt_all select_clause
+			{	
+				SetOperationStmt *n = makeNode(SetOperationStmt);
+				n->op = SETOP_UNION;
+				n->all = $3;
+				n->larg = $1;
+				n->rarg = $4;
+				$$ = (Node *) n;
+			}
+		| select_clause INTERSECT opt_all select_clause
+			{
+				SetOperationStmt *n = makeNode(SetOperationStmt);
+				n->op = SETOP_INTERSECT;
+				n->all = $3;
+				n->larg = $1;
+				n->rarg = $4;
+				$$ = (Node *) n;
+			}
+		| select_clause EXCEPT opt_all select_clause
+			{
+				SetOperationStmt *n = makeNode(SetOperationStmt);
+				n->op = SETOP_EXCEPT;
+				n->all = $3;
+				n->larg = $1;
+				n->rarg = $4;
+				$$ = (Node *) n;
+			}
+		; 
 
 		/* easy way to return two values. Can someone improve this?  bjm */
 result:  INTO OptTempTableName			{ $$ = $2; }
@@ -3763,7 +3621,7 @@ table_ref:  relation_expr
 					$1->name = $2;
 					$$ = (Node *) $1;
 				}
-		| '(' select_clause ')' alias_clause
+		| '(' select_subclause ')' alias_clause
 				{
 					RangeSubselect *n = makeNode(RangeSubselect);
 					n->subquery = $2;
@@ -4316,7 +4174,7 @@ opt_interval:  datetime							{ $$ = makeList1($1); }
  * Define row_descriptor to allow yacc to break the reduce/reduce conflict
  *  with singleton expressions.
  */
-row_expr: '(' row_descriptor ')' IN '(' SubSelect ')'
+row_expr: '(' row_descriptor ')' IN '(' select_subclause ')'
 				{
 					SubLink *n = makeNode(SubLink);
 					n->lefthand = $2;
@@ -4326,7 +4184,7 @@ row_expr: '(' row_descriptor ')' IN '(' SubSelect ')'
 					n->subselect = $6;
 					$$ = (Node *)n;
 				}
-		| '(' row_descriptor ')' NOT IN '(' SubSelect ')'
+		| '(' row_descriptor ')' NOT IN '(' select_subclause ')'
 				{
 					SubLink *n = makeNode(SubLink);
 					n->lefthand = $2;
@@ -4336,7 +4194,7 @@ row_expr: '(' row_descriptor ')' IN '(' SubSelect ')'
 					n->subselect = $7;
 					$$ = (Node *)n;
 				}
-		| '(' row_descriptor ')' all_Op sub_type '(' SubSelect ')'
+		| '(' row_descriptor ')' all_Op sub_type '(' select_subclause ')'
 				{
 					SubLink *n = makeNode(SubLink);
 					n->lefthand = $2;
@@ -4349,7 +4207,7 @@ row_expr: '(' row_descriptor ')' IN '(' SubSelect ')'
 					n->subselect = $7;
 					$$ = (Node *)n;
 				}
-		| '(' row_descriptor ')' all_Op '(' SubSelect ')'
+		| '(' row_descriptor ')' all_Op '(' select_subclause ')'
 				{
 					SubLink *n = makeNode(SubLink);
 					n->lefthand = $2;
@@ -4680,7 +4538,7 @@ a_expr:  c_expr
 						$$ = n;
 					}
 				}
-		| a_expr all_Op sub_type '(' SubSelect ')'
+		| a_expr all_Op sub_type '(' select_subclause ')'
 				{
 					SubLink *n = makeNode(SubLink);
 					n->lefthand = makeList1($1);
@@ -5076,7 +4934,7 @@ c_expr:  attr
 					n->agg_distinct = FALSE;
 					$$ = (Node *)n;
 				}
-		| '(' SubSelect ')'
+		| '(' select_subclause ')'
 				{
 					SubLink *n = makeNode(SubLink);
 					n->lefthand = NIL;
@@ -5086,7 +4944,7 @@ c_expr:  attr
 					n->subselect = $2;
 					$$ = (Node *)n;
 				}
-		| EXISTS '(' SubSelect ')'
+		| EXISTS '(' select_subclause ')'
 				{
 					SubLink *n = makeNode(SubLink);
 					n->lefthand = NIL;
@@ -5185,7 +5043,7 @@ trim_list:  a_expr FROM expr_list
 				{ $$ = $1; }
 		;
 
-in_expr:  SubSelect
+in_expr:  select_subclause
 				{
 					SubLink *n = makeNode(SubLink);
 					n->subselect = $1;
@@ -5910,6 +5768,19 @@ mapTargetColumns(List *src, List *dst)
 	}
 	return;
 } /* mapTargetColumns() */
+
+
+/* findLeftmostSelect()
+ *		Find the leftmost SelectStmt in a SetOperationStmt parsetree.
+ */
+static SelectStmt *
+findLeftmostSelect(Node *node)
+{
+	while (node && IsA(node, SetOperationStmt))
+		node = ((SetOperationStmt *) node)->larg;
+	Assert(node && IsA(node, SelectStmt));
+	return (SelectStmt *) node;
+}
 
 
 /* xlateSqlFunc()

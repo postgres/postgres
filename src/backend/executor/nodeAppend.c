@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeAppend.c,v 1.35 2000/07/12 02:37:03 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeAppend.c,v 1.36 2000/10/05 19:11:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -80,11 +80,9 @@ exec_append_initialize_next(Append *node)
 	AppendState *appendstate;
 	TupleTableSlot *result_slot;
 	List	   *rangeTable;
-
 	int			whichplan;
 	int			nplans;
-	List	   *rtables;
-	List	   *rtable;
+	List	   *inheritrtable;
 	RangeTblEntry *rtentry;
 
 	/* ----------------
@@ -98,8 +96,7 @@ exec_append_initialize_next(Append *node)
 
 	whichplan = appendstate->as_whichplan;
 	nplans = appendstate->as_nplans;
-	rtables = node->unionrtables;
-	rtable = node->inheritrtable;
+	inheritrtable = node->inheritrtable;
 
 	if (whichplan < 0)
 	{
@@ -131,19 +128,17 @@ exec_append_initialize_next(Append *node)
 		/* ----------------
 		 *		initialize the scan
 		 *		(and update the range table appropriately)
-		 *		  (doesn't this leave the range table hosed for anybody upstream
-		 *		   of the Append node??? - jolly )
+		 *
+		 *		(doesn't this leave the range table hosed for anybody upstream
+		 *		 of the Append node??? - jolly )
 		 * ----------------
 		 */
 		if (node->inheritrelid > 0)
 		{
-			rtentry = nth(whichplan, rtable);
+			rtentry = nth(whichplan, inheritrtable);
 			Assert(rtentry != NULL);
-
 			rt_store(node->inheritrelid, rangeTable, rtentry);
 		}
-		else
-			estate->es_range_table = nth(whichplan, rtables);
 
 		if (appendstate->as_junkFilter_list)
 		{
@@ -181,7 +176,7 @@ ExecInitAppend(Append *node, EState *estate, Plan *parent)
 {
 	AppendState *appendstate;
 	int			nplans;
-	List	   *rtable;
+	List	   *inheritrtable;
 	List	   *appendplans;
 	bool	   *initialized;
 	int			i;
@@ -201,7 +196,7 @@ ExecInitAppend(Append *node, EState *estate, Plan *parent)
 
 	appendplans = node->appendplans;
 	nplans = length(appendplans);
-	rtable = node->inheritrtable;
+	inheritrtable = node->inheritrtable;
 
 	initialized = (bool *) palloc(nplans * sizeof(bool));
 	MemSet(initialized, 0, nplans * sizeof(bool));
@@ -214,7 +209,6 @@ ExecInitAppend(Append *node, EState *estate, Plan *parent)
 	appendstate->as_whichplan = 0;
 	appendstate->as_nplans = nplans;
 	appendstate->as_initialized = initialized;
-	appendstate->as_rtentries = rtable;
 
 	node->appendstate = appendstate;
 
@@ -250,7 +244,7 @@ ExecInitAppend(Append *node, EState *estate, Plan *parent)
 
 		inherited_result_rel = true;
 
-		foreach(rtentryP, rtable)
+		foreach(rtentryP, inheritrtable)
 		{
 			RangeTblEntry *rtentry = lfirst(rtentryP);
 			Oid			reloid = rtentry->relid;
@@ -522,8 +516,7 @@ ExecEndAppend(Append *node)
 	estate->es_result_relation_info = NULL;
 
 	/*
-	 * XXX should free appendstate->as_rtentries  and
-	 * appendstate->as_junkfilter_list here
+	 * XXX should free appendstate->as_junkfilter_list here
 	 */
 }
 void

@@ -3,7 +3,7 @@
  *				back to source text
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.64 2000/09/29 18:21:37 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.65 2000/10/05 19:11:34 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -97,6 +97,10 @@ static void get_select_query_def(Query *query, deparse_context *context);
 static void get_insert_query_def(Query *query, deparse_context *context);
 static void get_update_query_def(Query *query, deparse_context *context);
 static void get_delete_query_def(Query *query, deparse_context *context);
+static void get_basic_select_query(Query *query, deparse_context *context);
+static void get_setop_query(Node *setOp, Query *query,
+							deparse_context *context, bool toplevel);
+static bool simple_distinct(List *distinctClause, List *targetList);
 static RangeTblEntry *get_rte_for_var(Var *var, deparse_context *context);
 static void get_rule_expr(Node *node, deparse_context *context);
 static void get_func_expr(Expr *expr, deparse_context *context);
@@ -876,6 +880,63 @@ static void
 get_select_query_def(Query *query, deparse_context *context)
 {
 	StringInfo	buf = context->buf;
+	bool		shortform_orderby;
+	char	   *sep;
+	List	   *l;
+
+	/* ----------
+	 * If the Query node has a setOperations tree, then it's the top
+	 * level of a UNION/INTERSECT/EXCEPT query; only the ORDER BY field
+	 * is interesting in the top query itself.
+	 * ----------
+	 */
+	if (query->setOperations)
+	{
+		get_setop_query(query->setOperations, query, context, true);
+		/* ORDER BY clauses must be simple in this case */
+		shortform_orderby = true;
+	}
+	else
+	{
+		get_basic_select_query(query, context);
+		shortform_orderby = false;
+	}
+
+	/* Add the ORDER BY clause if given */
+	if (query->sortClause != NIL)
+	{
+		appendStringInfo(buf, " ORDER BY ");
+		sep = "";
+		foreach(l, query->sortClause)
+		{
+			SortClause *srt = (SortClause *) lfirst(l);
+			TargetEntry *sorttle;
+			char	   *opname;
+
+			sorttle = get_sortgroupclause_tle(srt,
+											  query->targetList);
+			appendStringInfo(buf, sep);
+			if (shortform_orderby)
+				appendStringInfo(buf, "%d", sorttle->resdom->resno);
+			else
+				get_rule_expr(sorttle->expr, context);
+			opname = get_opname(srt->sortop);
+			if (strcmp(opname, "<") != 0)
+			{
+				if (strcmp(opname, ">") == 0)
+					appendStringInfo(buf, " DESC");
+				else
+					appendStringInfo(buf, " USING %s", opname);
+			}
+			sep = ", ";
+		}
+	}
+}
+
+static void
+get_basic_select_query(Query *query, deparse_context *context)
+{
+	StringInfo	buf = context->buf;
 	char	   *sep;
 	List	   *l;
 
@@ -884,6 +945,32 @@ get_select_query_def(Query *query, deparse_context *context)
 	 * ----------
 	 */
 	appendStringInfo(buf, "SELECT");
+
+	/* Add the DISTINCT clause if given */
+	if (query->distinctClause != NIL)
+	{
+		if (simple_distinct(query->distinctClause, query->targetList))
+		{
+			appendStringInfo(buf, " DISTINCT");
+		}
+		else
+		{
+			appendStringInfo(buf, " DISTINCT ON (");
+			sep = "";
+			foreach(l, query->distinctClause)
+			{
+				SortClause *srt = (SortClause *) lfirst(l);
+				Node	   *sortexpr;
+
+				sortexpr = get_sortgroupclause_expr(srt,
+													query->targetList);
+				appendStringInfo(buf, sep);
+				get_rule_expr(sortexpr, context);
+				sep = ", ";
+			}
+			appendStringInfo(buf, ")");
+		}
+	}
 
 	/* Then we tell what to select (the targetlist) */
 	sep = " ";
@@ -931,7 +1018,7 @@ get_select_query_def(Query *query, deparse_context *context)
 		get_rule_expr(query->jointree->quals, context);
 	}
 
-	/* Add the GROUP BY CLAUSE */
+	/* Add the GROUP BY clause if given */
 	if (query->groupClause != NULL)
 	{
 		appendStringInfo(buf, " GROUP BY ");
@@ -948,6 +1035,94 @@ get_select_query_def(Query *query, deparse_context *context)
 			sep = ", ";
 		}
 	}
+
+	/* Add the HAVING clause if given */
+	if (query->havingQual != NULL)
+	{
+		appendStringInfo(buf, " HAVING ");
+		get_rule_expr(query->havingQual, context);
+	}
+}
+
+static void
+get_setop_query(Node *setOp, Query *query, deparse_context *context,
+				bool toplevel)
+{
+	StringInfo	buf = context->buf;
+
+	if (IsA(setOp, RangeTblRef))
+	{
+		RangeTblRef *rtr = (RangeTblRef *) setOp;
+		RangeTblEntry *rte = rt_fetch(rtr->rtindex, query->rtable);
+		Query  *subquery = rte->subquery;
+
+		Assert(subquery != NULL);
+		get_query_def(subquery, buf, context->rangetables);
+	}
+	else if (IsA(setOp, SetOperationStmt))
+	{
+		SetOperationStmt *op = (SetOperationStmt *) setOp;
+
+		/* Must suppress parens at top level of a setop tree because
+		 * of grammar limitations...
+		 */
+		if (! toplevel)
+			appendStringInfo(buf, "(");
+		get_setop_query(op->larg, query, context, false);
+		switch (op->op)
+		{
+			case SETOP_UNION:
+				appendStringInfo(buf, " UNION ");
+				break;
+			case SETOP_INTERSECT:
+				appendStringInfo(buf, " INTERSECT ");
+				break;
+			case SETOP_EXCEPT:
+				appendStringInfo(buf, " EXCEPT ");
+				break;
+			default:
+				elog(ERROR, "get_setop_query: unexpected set op %d",
+					 (int) op->op);
+		}
+		if (op->all)
+			appendStringInfo(buf, "ALL ");
+		get_setop_query(op->rarg, query, context, false);
+		if (! toplevel)
+			appendStringInfo(buf, ")");
+	}
+	else
+	{
+		elog(ERROR, "get_setop_query: unexpected node %d",
+			 (int) nodeTag(setOp));
+	}
+}
+
+/*
+ * Detect whether a DISTINCT list can be represented as just DISTINCT
+ * or needs DISTINCT ON.  It's simple if it contains exactly the nonjunk
+ * targetlist items.
+ */
+static bool
+simple_distinct(List *distinctClause, List *targetList)
+{
+	while (targetList)
+	{
+		TargetEntry *tle = (TargetEntry *) lfirst(targetList);
+
+		if (! tle->resdom->resjunk)
+		{
+			if (distinctClause == NIL)
+				return false;
+			if (((SortClause *) lfirst(distinctClause))->tleSortGroupRef !=
+				tle->resdom->ressortgroupref)
+				return false;
+			distinctClause = lnext(distinctClause);
+		}
+		targetList = lnext(targetList);
+	}
+	if (distinctClause != NIL)
+		return false;
+	return true;
 }
 
 
@@ -959,33 +1134,24 @@ static void
 get_insert_query_def(Query *query, deparse_context *context)
 {
 	StringInfo	buf = context->buf;
-	char	   *sep;
-	bool		rt_constonly = TRUE;
+	RangeTblEntry *select_rte = NULL;
 	RangeTblEntry *rte;
-	int			i;
+	char	   *sep;
 	List	   *l;
 
 	/* ----------
-	 * We need to know if other tables than *NEW* or *OLD*
-	 * are used in the query. If not, it's an INSERT ... VALUES,
-	 * otherwise an INSERT ... SELECT.  (Pretty klugy ... fix this
-	 * when we redesign querytrees!)
+	 * If it's an INSERT ... SELECT there will be a single subquery RTE
+	 * for the SELECT.
 	 * ----------
 	 */
-	i = 0;
 	foreach(l, query->rtable)
 	{
 		rte = (RangeTblEntry *) lfirst(l);
-		i++;
-		if (strcmp(rte->eref->relname, "*NEW*") == 0)
+		if (rte->subquery == NULL)
 			continue;
-		if (strcmp(rte->eref->relname, "*OLD*") == 0)
-			continue;
-		if (rangeTableEntry_used((Node *) query, i, 0))
-		{
-			rt_constonly = FALSE;
-			break;
-		}
+		if (select_rte)
+			elog(ERROR, "get_insert_query_def: too many RTEs in INSERT!");
+		select_rte = rte;
 	}
 
 	/* ----------
@@ -1012,7 +1178,7 @@ get_insert_query_def(Query *query, deparse_context *context)
 	appendStringInfo(buf, ") ");
 
 	/* Add the VALUES or the SELECT */
-	if (rt_constonly && query->jointree->quals == NULL)
+	if (select_rte == NULL)
 	{
 		appendStringInfo(buf, "VALUES (");
 		sep = "";
@@ -1030,7 +1196,9 @@ get_insert_query_def(Query *query, deparse_context *context)
 		appendStringInfoChar(buf, ')');
 	}
 	else
-		get_select_query_def(query, context);
+	{
+		get_query_def(select_rte->subquery, buf, NIL);
+	}
 }
 
 
@@ -1809,7 +1977,7 @@ get_from_clause_item(Node *jtnode, Query *query, deparse_context *context)
 			/* Subquery RTE */
 			Assert(rte->subquery != NULL);
 			appendStringInfoChar(buf, '(');
-			get_query_def(rte->subquery, buf, NIL);
+			get_query_def(rte->subquery, buf, context->rangetables);
 			appendStringInfoChar(buf, ')');
 		}
 		if (rte->alias != NULL)

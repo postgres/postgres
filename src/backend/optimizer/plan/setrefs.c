@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/setrefs.c,v 1.66 2000/09/29 18:21:33 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/setrefs.c,v 1.67 2000/10/05 19:11:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -103,9 +103,15 @@ set_plan_references(Plan *plan)
 			fix_expr_references(plan, (Node *) plan->qual);
 			break;
 		case T_SubqueryScan:
+			/*
+			 * We do not do set_uppernode_references() here, because
+			 * a SubqueryScan will always have been created with correct
+			 * references to its subplan's outputs to begin with.
+			 */
 			fix_expr_references(plan, (Node *) plan->targetlist);
 			fix_expr_references(plan, (Node *) plan->qual);
-			/* No need to recurse into the subplan, it's fixed already */
+			/* Recurse into subplan too */
+			set_plan_references(((SubqueryScan *) plan)->subplan);
 			break;
 		case T_NestLoop:
 			set_join_references((Join *) plan);
@@ -132,6 +138,7 @@ set_plan_references(Plan *plan)
 		case T_Material:
 		case T_Sort:
 		case T_Unique:
+		case T_SetOp:
 		case T_Hash:
 
 			/*
@@ -170,6 +177,7 @@ set_plan_references(Plan *plan)
 			 * Append, like Sort et al, doesn't actually evaluate its
 			 * targetlist or quals, and we haven't bothered to give it
 			 * its own tlist copy.  So, don't fix targetlist/qual.
+			 * But do recurse into subplans.
 			 */
 			foreach(pl, ((Append *) plan)->appendplans)
 				set_plan_references((Plan *) lfirst(pl));

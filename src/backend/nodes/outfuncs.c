@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.127 2000/09/29 18:21:29 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.128 2000/10/05 19:11:27 tgl Exp $
  *
  * NOTES
  *	  Every (plan) node in POSTGRES has an associated "out" routine which
@@ -147,6 +147,7 @@ _outIndexStmt(StringInfo str, IndexStmt *node)
 static void
 _outSelectStmt(StringInfo str, SelectStmt *node)
 {
+	/* XXX this is pretty durn incomplete */
 	appendStringInfo(str, "SELECT :where ");
 	_outNode(str, node->whereClause);
 }
@@ -258,11 +259,10 @@ _outQuery(StringInfo str, Query *node)
 	_outToken(str, node->into);
 
 	appendStringInfo(str, " :isPortal %s :isBinary %s :isTemp %s"
-					 " :unionall %s :hasAggs %s :hasSubLinks %s :rtable ",
+					 " :hasAggs %s :hasSubLinks %s :rtable ",
 					 node->isPortal ? "true" : "false",
 					 node->isBinary ? "true" : "false",
 					 node->isTemp ? "true" : "false",
-					 node->unionall ? "true" : "false",
 					 node->hasAggs ? "true" : "false",
 					 node->hasSubLinks ? "true" : "false");
 	_outNode(str, node->rtable);
@@ -270,17 +270,11 @@ _outQuery(StringInfo str, Query *node)
 	appendStringInfo(str, " :jointree ");
 	_outNode(str, node->jointree);
 
-	appendStringInfo(str, " :targetList ");
-	_outNode(str, node->targetList);
-
 	appendStringInfo(str, " :rowMarks ");
 	_outIntList(str, node->rowMarks);
 
-	appendStringInfo(str, " :distinctClause ");
-	_outNode(str, node->distinctClause);
-
-	appendStringInfo(str, " :sortClause ");
-	_outNode(str, node->sortClause);
+	appendStringInfo(str, " :targetList ");
+	_outNode(str, node->targetList);
 
 	appendStringInfo(str, " :groupClause ");
 	_outNode(str, node->groupClause);
@@ -288,17 +282,20 @@ _outQuery(StringInfo str, Query *node)
 	appendStringInfo(str, " :havingQual ");
 	_outNode(str, node->havingQual);
 
-	appendStringInfo(str, " :intersectClause ");
-	_outNode(str, node->intersectClause);
+	appendStringInfo(str, " :distinctClause ");
+	_outNode(str, node->distinctClause);
 
-	appendStringInfo(str, " :unionClause ");
-	_outNode(str, node->unionClause);
+	appendStringInfo(str, " :sortClause ");
+	_outNode(str, node->sortClause);
 
 	appendStringInfo(str, " :limitOffset ");
 	_outNode(str, node->limitOffset);
 
 	appendStringInfo(str, " :limitCount ");
 	_outNode(str, node->limitCount);
+
+	appendStringInfo(str, " :setOperations ");
+	_outNode(str, node->setOperations);
 }
 
 static void
@@ -313,6 +310,19 @@ _outGroupClause(StringInfo str, GroupClause *node)
 {
 	appendStringInfo(str, " GROUPCLAUSE :tleSortGroupRef %d :sortop %u ",
 					 node->tleSortGroupRef, node->sortop);
+}
+
+static void
+_outSetOperationStmt(StringInfo str, SetOperationStmt *node)
+{
+	appendStringInfo(str, " SETOPERATIONSTMT :op %d :all %s :larg ",
+					 (int) node->op,
+					 node->all ? "true" : "false");
+	_outNode(str, node->larg);
+	appendStringInfo(str, " :rarg ");
+	_outNode(str, node->rarg);
+	appendStringInfo(str, " :colTypes ");
+	_outIntList(str, node->colTypes);
 }
 
 /*
@@ -384,11 +394,7 @@ _outAppend(StringInfo str, Append *node)
 	appendStringInfo(str, " :appendplans ");
 	_outNode(str, node->appendplans);
 
-	appendStringInfo(str, " :unionrtables ");
-	_outNode(str, node->unionrtables);
-
-	appendStringInfo(str,
-					 " :inheritrelid %u :inheritrtable ",
+	appendStringInfo(str, " :inheritrelid %u :inheritrtable ",
 					 node->inheritrelid);
 	_outNode(str, node->inheritrtable);
 }
@@ -599,6 +605,22 @@ _outUnique(StringInfo str, Unique *node)
 					 node->numCols);
 	for (i = 0; i < node->numCols; i++)
 		appendStringInfo(str, "%d ", (int) node->uniqColIdx[i]);
+}
+
+static void
+_outSetOp(StringInfo str, SetOp *node)
+{
+	int		i;
+
+	appendStringInfo(str, " SETOP ");
+	_outPlanInfo(str, (Plan *) node);
+
+	appendStringInfo(str, " :cmd %d :numCols %d :dupColIdx ",
+					 (int) node->cmd, node->numCols);
+	for (i = 0; i < node->numCols; i++)
+		appendStringInfo(str, "%d ", (int) node->dupColIdx[i]);
+	appendStringInfo(str, " :flagColIdx %d ",
+					 (int) node->flagColIdx);
 }
 
 /*
@@ -1480,6 +1502,9 @@ _outNode(StringInfo str, void *obj)
 			case T_GroupClause:
 				_outGroupClause(str, obj);
 				break;
+			case T_SetOperationStmt:
+				_outSetOperationStmt(str, obj);
+				break;
 			case T_Plan:
 				_outPlan(str, obj);
 				break;
@@ -1530,6 +1555,9 @@ _outNode(StringInfo str, void *obj)
 				break;
 			case T_Unique:
 				_outUnique(str, obj);
+				break;
+			case T_SetOp:
+				_outSetOp(str, obj);
 				break;
 			case T_Hash:
 				_outHash(str, obj);

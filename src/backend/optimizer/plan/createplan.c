@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.97 2000/09/29 18:21:33 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.98 2000/10/05 19:11:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -68,8 +68,6 @@ static IndexScan *make_indexscan(List *qptlist, List *qpqual, Index scanrelid,
 			   ScanDirection indexscandir);
 static TidScan *make_tidscan(List *qptlist, List *qpqual, Index scanrelid,
 			 List *tideval);
-static SubqueryScan *make_subqueryscan(List *qptlist, List *qpqual,
-									   Index scanrelid, Plan *subplan);
 static NestLoop *make_nestloop(List *tlist,
 							   List *joinclauses, List *otherclauses,
 							   Plan *lefttree, Plan *righttree,
@@ -86,7 +84,6 @@ static MergeJoin *make_mergejoin(List *tlist,
 								 Plan *lefttree, Plan *righttree,
 								 JoinType jointype);
 static void copy_path_costsize(Plan *dest, Path *src);
-static void copy_plan_costsize(Plan *dest, Plan *src);
 
 /*
  * create_plan
@@ -1109,7 +1106,7 @@ copy_path_costsize(Plan *dest, Path *src)
  * but it helps produce more reasonable-looking EXPLAIN output.
  * (Some callers alter the info after copying it.)
  */
-static void
+void
 copy_plan_costsize(Plan *dest, Plan *src)
 {
 	if (src)
@@ -1206,7 +1203,7 @@ make_tidscan(List *qptlist,
 	return node;
 }
 
-static SubqueryScan *
+SubqueryScan *
 make_subqueryscan(List *qptlist,
 				  List *qpqual,
 				  Index scanrelid,
@@ -1589,6 +1586,67 @@ make_unique(List *tlist, Plan *lefttree, List *distinctList)
 
 	node->numCols = numCols;
 	node->uniqColIdx = uniqColIdx;
+
+	return node;
+}
+
+/*
+ * distinctList is a list of SortClauses, identifying the targetlist items
+ * that should be considered by the SetOp filter.
+ */
+
+SetOp *
+make_setop(SetOpCmd cmd, List *tlist, Plan *lefttree,
+		   List *distinctList, AttrNumber flagColIdx)
+{
+	SetOp	   *node = makeNode(SetOp);
+	Plan	   *plan = &node->plan;
+	int			numCols = length(distinctList);
+	int			keyno = 0;
+	AttrNumber *dupColIdx;
+	List	   *slitem;
+
+	copy_plan_costsize(plan, lefttree);
+
+	/*
+	 * Charge one cpu_operator_cost per comparison per input tuple. We
+	 * assume all columns get compared at most of the tuples.
+	 */
+	plan->total_cost += cpu_operator_cost * plan->plan_rows * numCols;
+
+	/*
+	 * As for Group, we make the unsupported assumption that there will be
+	 * 10% as many tuples out as in.
+	 */
+	plan->plan_rows *= 0.1;
+	if (plan->plan_rows < 1)
+		plan->plan_rows = 1;
+
+	plan->state = (EState *) NULL;
+	plan->targetlist = tlist;
+	plan->qual = NIL;
+	plan->lefttree = lefttree;
+	plan->righttree = NULL;
+
+	/*
+	 * convert SortClause list into array of attr indexes, as wanted by
+	 * exec
+	 */
+	Assert(numCols > 0);
+	dupColIdx = (AttrNumber *) palloc(sizeof(AttrNumber) * numCols);
+
+	foreach(slitem, distinctList)
+	{
+		SortClause *sortcl = (SortClause *) lfirst(slitem);
+		TargetEntry *tle = get_sortgroupclause_tle(sortcl, tlist);
+
+		dupColIdx[keyno++] = tle->resdom->resno;
+	}
+
+	node->cmd = cmd;
+	node->numCols = numCols;
+	node->dupColIdx = dupColIdx;
+	node->flagColIdx = flagColIdx;
 
 	return node;
 }

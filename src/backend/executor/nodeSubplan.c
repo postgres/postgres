@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSubplan.c,v 1.27 2000/08/24 03:29:03 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSubplan.c,v 1.28 2000/10/05 19:11:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -328,7 +328,14 @@ ExecInitSubPlan(SubPlan *node, EState *estate, Plan *parent)
 /* ----------------------------------------------------------------
  *		ExecSetParamPlan
  *
- *		Executes plan of node and sets parameters.
+ *		Executes an InitPlan subplan and sets its output parameters.
+ *
+ * This is called from ExecEvalParam() when the value of a PARAM_EXEC
+ * parameter is requested and the param's execPlan field is set (indicating
+ * that the param has not yet been evaluated).  This allows lazy evaluation
+ * of initplans: we don't run the subplan until/unless we need its output.
+ * Note that this routine MUST clear the execPlan fields of the plan's
+ * output parameters after evaluating them!
  * ----------------------------------------------------------------
  */
 void
@@ -424,13 +431,13 @@ ExecSetParamPlan(SubPlan *node, ExprContext *econtext)
 		}
 	}
 
-	MemoryContextSwitchTo(oldcontext);
-
 	if (plan->extParam == NULL) /* un-correlated ... */
 	{
 		ExecEndNode(plan, plan);
 		node->needShutdown = false;
 	}
+
+	MemoryContextSwitchTo(oldcontext);
 }
 
 /* ----------------------------------------------------------------
@@ -470,6 +477,9 @@ ExecReScanSetParamPlan(SubPlan *node, Plan *parent)
 	 * node->plan->chgParam is not NULL... ExecReScan (plan, NULL, plan);
 	 */
 
+	/*
+	 * Mark this subplan's output parameters as needing recalculation
+	 */
 	foreach(lst, node->setParam)
 	{
 		ParamExecData *prm = &(plan->state->es_param_exec_vals[lfirsti(lst)]);

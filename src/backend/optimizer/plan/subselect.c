@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/subselect.c,v 1.42 2000/09/29 18:21:33 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/subselect.c,v 1.43 2000/10/05 19:11:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,7 +29,8 @@
 Index		PlannerQueryLevel;	/* level of current query */
 List	   *PlannerInitPlan;	/* init subplans for current query */
 List	   *PlannerParamVar;	/* to get Var from Param->paramid */
-int			PlannerPlanId;		/* to assign unique ID to subquery plans */
+
+int			PlannerPlanId = 0;	/* to assign unique ID to subquery plans */
 
 /*--------------------
  * PlannerParamVar is a list of Var nodes, wherein the n'th entry
@@ -81,7 +82,7 @@ replace_var(Var *var)
 
 	/*
 	 * If there's already a PlannerParamVar entry for this same Var, just
-	 * use it.	NOTE: in situations involving UNION or inheritance, it is
+	 * use it.	NOTE: in sufficiently complex querytrees, it is
 	 * possible for the same varno/varlevel to refer to different RTEs in
 	 * different parts of the parsetree, so that different fields might
 	 * end up sharing the same Param number.  As long as we check the
@@ -128,11 +129,6 @@ make_subplan(SubLink *slink)
 	Plan	   *plan;
 	List	   *lst;
 	Node	   *result;
-	List	   *saved_ip = PlannerInitPlan;
-
-	PlannerInitPlan = NULL;
-
-	PlannerQueryLevel++;		/* we become child */
 
 	/*
 	 * Check to see if this node was already processed; if so we have
@@ -181,45 +177,30 @@ make_subplan(SubLink *slink)
 	else
 		tuple_fraction = -1.0;	/* default behavior */
 
+	/*
+	 * Generate the plan for the subquery.
+	 */
 	node->plan = plan = subquery_planner(subquery, tuple_fraction);
 
-	/*
-	 * Assign subPlan, extParam and locParam to plan nodes. At the moment,
-	 * SS_finalize_plan doesn't handle initPlan-s and so we assign them to
-	 * the topmost plan node and take care about its extParam too.
-	 */
-	(void) SS_finalize_plan(plan);
-	plan->initPlan = PlannerInitPlan;
+	node->plan_id = PlannerPlanId++; /* Assign unique ID to this SubPlan */
 
-	/* Create extParam list as union of InitPlan-s' lists */
-	foreach(lst, PlannerInitPlan)
-	{
-		List	   *lp;
-
-		foreach(lp, ((SubPlan *) lfirst(lst))->plan->extParam)
-		{
-			if (!intMember(lfirsti(lp), plan->extParam))
-				plan->extParam = lappendi(plan->extParam, lfirsti(lp));
-		}
-	}
-
-	/* and now we are parent again */
-	PlannerInitPlan = saved_ip;
-	PlannerQueryLevel--;
-
-	node->plan_id = PlannerPlanId++;
 	node->rtable = subquery->rtable;
 	node->sublink = slink;
+
 	slink->subselect = NULL;	/* cool ?! see error check above! */
 
-	/* make parParam list of params coming from current query level */
+	/*
+	 * Make parParam list of params that current query level will pass
+	 * to this child plan.
+	 */
 	foreach(lst, plan->extParam)
 	{
-		Var		   *var = nth(lfirsti(lst), PlannerParamVar);
+		int			paramid = lfirsti(lst);
+		Var		   *var = nth(paramid, PlannerParamVar);
 
 		/* note varlevelsup is absolute level number */
 		if (var->varlevelsup == PlannerQueryLevel)
-			node->parParam = lappendi(node->parParam, lfirsti(lst));
+			node->parParam = lappendi(node->parParam, paramid);
 	}
 
 	/*
@@ -625,6 +606,11 @@ SS_finalize_plan(Plan *plan)
 								 SS_finalize_plan((Plan *) lfirst(lst)));
 			break;
 
+		case T_SubqueryScan:
+			results.paramids = set_unioni(results.paramids,
+						SS_finalize_plan(((SubqueryScan *) plan)->subplan));
+			break;
+
 		case T_IndexScan:
 			finalize_primnode((Node *) ((IndexScan *) plan)->indxqual,
 							  &results);
@@ -667,10 +653,10 @@ SS_finalize_plan(Plan *plan)
 
 		case T_Agg:
 		case T_SeqScan:
-		case T_SubqueryScan:
 		case T_Material:
 		case T_Sort:
 		case T_Unique:
+		case T_SetOp:
 		case T_Group:
 			break;
 
@@ -689,17 +675,18 @@ SS_finalize_plan(Plan *plan)
 
 	foreach(lst, results.paramids)
 	{
-		Var		   *var = nth(lfirsti(lst), PlannerParamVar);
+		int			paramid = lfirsti(lst);
+		Var		   *var = nth(paramid, PlannerParamVar);
 
 		/* note varlevelsup is absolute level number */
 		if (var->varlevelsup < PlannerQueryLevel)
-			extParam = lappendi(extParam, lfirsti(lst));
+			extParam = lappendi(extParam, paramid);
 		else if (var->varlevelsup > PlannerQueryLevel)
 			elog(ERROR, "SS_finalize_plan: plan shouldn't reference subplan's variable");
 		else
 		{
 			Assert(var->varno == 0 && var->varattno == 0);
-			locParam = lappendi(locParam, lfirsti(lst));
+			locParam = lappendi(locParam, paramid);
 		}
 	}
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_coerce.c,v 2.46 2000/07/30 22:13:50 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_coerce.c,v 2.47 2000/10/05 19:11:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -310,6 +310,100 @@ coerce_type_typmod(ParseState *pstate, Node *node,
 		node = transformExpr(pstate, (Node *) func, EXPR_COLUMN_FIRST);
 	}
 
+	return node;
+}
+
+
+/* select_common_type()
+ *		Determine the common supertype of a list of input expression types.
+ *		This is used for determining the output type of CASE and UNION
+ *		constructs.
+ *
+ * typeids is a nonempty integer list of type OIDs.  Note that earlier items
+ * in the list will be preferred if there is doubt.
+ * 'context' is a phrase to use in the error message if we fail to select
+ * a usable type.
+ *
+ * XXX this code is WRONG, since (for example) given the input (int4,int8)
+ * it will select int4, whereas according to SQL92 clause 9.3 the correct
+ * answer is clearly int8.  To fix this we need a notion of a promotion
+ * hierarchy within type categories --- something more complete than
+ * just a single preferred type.
+ */
+Oid
+select_common_type(List *typeids, const char *context)
+{
+	Oid			ptype;
+	CATEGORY	pcategory;
+	List	   *l;
+
+	Assert(typeids != NIL);
+	ptype = (Oid) lfirsti(typeids);
+	pcategory = TypeCategory(ptype);
+	foreach(l, lnext(typeids))
+	{
+		Oid		ntype = (Oid) lfirsti(l);
+
+		/* move on to next one if no new information... */
+		if (ntype && (ntype != UNKNOWNOID) && (ntype != ptype))
+		{
+			if (!ptype || ptype == UNKNOWNOID)
+			{
+				/* so far, only nulls so take anything... */
+				ptype = ntype;
+				pcategory = TypeCategory(ptype);
+			}
+			else if (TypeCategory(ntype) != pcategory)
+			{
+				/*
+				 * both types in different categories? then
+				 * not much hope...
+				 */
+				elog(ERROR, "%s types \"%s\" and \"%s\" not matched",
+					 context, typeidTypeName(ptype), typeidTypeName(ntype));
+			}
+			else if (IsPreferredType(pcategory, ntype)
+					 && can_coerce_type(1, &ptype, &ntype))
+			{
+				/*
+				 * new one is preferred and can convert? then
+				 * take it...
+				 */
+				ptype = ntype;
+				pcategory = TypeCategory(ptype);
+			}
+		}
+	}
+	return ptype;
+}
+
+/* coerce_to_common_type()
+ *		Coerce an expression to the given type.
+ *
+ * This is used following select_common_type() to coerce the individual
+ * expressions to the desired type.  'context' is a phrase to use in the
+ * error message if we fail to coerce.
+ *
+ * NOTE: pstate may be NULL.
+ */
+Node *
+coerce_to_common_type(ParseState *pstate, Node *node,
+					  Oid targetTypeId,
+					  const char *context)
+{
+	Oid			inputTypeId = exprType(node);
+
+	if (inputTypeId == targetTypeId)
+		return node;			/* no work */
+	if (can_coerce_type(1, &inputTypeId, &targetTypeId))
+	{
+		node = coerce_type(pstate, node, inputTypeId, targetTypeId, -1);
+	}
+	else
+	{
+		elog(ERROR, "%s unable to convert to type \"%s\"",
+			 context, typeidTypeName(targetTypeId));
+	}
 	return node;
 }
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.97 2000/09/29 18:21:29 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.98 2000/10/05 19:11:27 tgl Exp $
  *
  * NOTES
  *	  Most of the read functions for plan nodes are tested. (In fact, they
@@ -109,10 +109,6 @@ _readQuery()
 	token = lsptok(NULL, &length);		/* get isTemp */
 	local_node->isTemp = (token[0] == 't') ? true : false;
 
-	token = lsptok(NULL, &length);		/* skip :unionall */
-	token = lsptok(NULL, &length);		/* get unionall */
-	local_node->unionall = (token[0] == 't') ? true : false;
-
 	token = lsptok(NULL, &length);		/* skip the :hasAggs */
 	token = lsptok(NULL, &length);		/* get hasAggs */
 	local_node->hasAggs = (token[0] == 't') ? true : false;
@@ -127,17 +123,11 @@ _readQuery()
 	token = lsptok(NULL, &length);		/* skip :jointree */
 	local_node->jointree = nodeRead(true);
 
-	token = lsptok(NULL, &length);		/* skip :targetlist */
-	local_node->targetList = nodeRead(true);
-
 	token = lsptok(NULL, &length);		/* skip :rowMarks */
 	local_node->rowMarks = toIntList(nodeRead(true));
 
-	token = lsptok(NULL, &length);		/* skip :distinctClause */
-	local_node->distinctClause = nodeRead(true);
-
-	token = lsptok(NULL, &length);		/* skip :sortClause */
-	local_node->sortClause = nodeRead(true);
+	token = lsptok(NULL, &length);		/* skip :targetlist */
+	local_node->targetList = nodeRead(true);
 
 	token = lsptok(NULL, &length);		/* skip :groupClause */
 	local_node->groupClause = nodeRead(true);
@@ -145,17 +135,20 @@ _readQuery()
 	token = lsptok(NULL, &length);		/* skip :havingQual */
 	local_node->havingQual = nodeRead(true);
 
-	token = lsptok(NULL, &length);		/* skip :intersectClause */
-	local_node->intersectClause = nodeRead(true);
+	token = lsptok(NULL, &length);		/* skip :distinctClause */
+	local_node->distinctClause = nodeRead(true);
 
-	token = lsptok(NULL, &length);		/* skip :unionClause */
-	local_node->unionClause = nodeRead(true);
+	token = lsptok(NULL, &length);		/* skip :sortClause */
+	local_node->sortClause = nodeRead(true);
 
 	token = lsptok(NULL, &length);		/* skip :limitOffset */
 	local_node->limitOffset = nodeRead(true);
 
 	token = lsptok(NULL, &length);		/* skip :limitCount */
 	local_node->limitCount = nodeRead(true);
+
+	token = lsptok(NULL, &length);		/* skip :setOperations */
+	local_node->setOperations = nodeRead(true);
 
 	return local_node;
 }
@@ -204,6 +197,39 @@ _readGroupClause()
 	token = lsptok(NULL, &length);		/* skip :sortop */
 	token = lsptok(NULL, &length);		/* get sortop */
 	local_node->sortop = strtoul(token, NULL, 10);
+
+	return local_node;
+}
+
+/* ----------------
+ *		_readSetOperationStmt
+ * ----------------
+ */
+static SetOperationStmt *
+_readSetOperationStmt()
+{
+	SetOperationStmt *local_node;
+	char	   *token;
+	int			length;
+
+	local_node = makeNode(SetOperationStmt);
+
+	token = lsptok(NULL, &length);		/* eat :op */
+	token = lsptok(NULL, &length);		/* get op */
+	local_node->op = (SetOperation) atoi(token);
+
+	token = lsptok(NULL, &length);		/* eat :all */
+	token = lsptok(NULL, &length);		/* get all */
+	local_node->all = (token[0] == 't') ? true : false;
+
+	token = lsptok(NULL, &length);		/* eat :larg */
+	local_node->larg = nodeRead(true);	/* get larg */
+
+	token = lsptok(NULL, &length);		/* eat :rarg */
+	local_node->rarg = nodeRead(true);	/* get rarg */
+
+	token = lsptok(NULL, &length);		/* eat :colTypes */
+	local_node->colTypes = toIntList(nodeRead(true));
 
 	return local_node;
 }
@@ -321,9 +347,6 @@ _readAppend()
 
 	token = lsptok(NULL, &length);		/* eat :appendplans */
 	local_node->appendplans = nodeRead(true);	/* now read it */
-
-	token = lsptok(NULL, &length);		/* eat :unionrtables */
-	local_node->unionrtables = nodeRead(true);	/* now read it */
 
 	token = lsptok(NULL, &length);		/* eat :inheritrelid */
 	token = lsptok(NULL, &length);		/* get inheritrelid */
@@ -1995,6 +2018,8 @@ parsePlanString(void)
 		return_value = _readSortClause();
 	else if (length == 11 && strncmp(token, "GROUPCLAUSE", length) == 0)
 		return_value = _readGroupClause();
+	else if (length == 16 && strncmp(token, "SETOPERATIONSTMT", length) == 0)
+		return_value = _readSetOperationStmt();
 	else if (length == 4 && strncmp(token, "CASE", length) == 0)
 		return_value = _readCaseExpr();
 	else if (length == 4 && strncmp(token, "WHEN", length) == 0)

@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: analyze.c,v 1.159 2000/09/29 18:21:36 tgl Exp $
+ *	$Id: analyze.c,v 1.160 2000/10/05 19:11:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,8 +20,10 @@
 #include "nodes/makefuncs.h"
 #include "parser/analyze.h"
 #include "parser/parse.h"
+#include "parser/parsetree.h"
 #include "parser/parse_agg.h"
 #include "parser/parse_clause.h"
+#include "parser/parse_coerce.h"
 #include "parser/parse_relation.h"
 #include "parser/parse_target.h"
 #include "parser/parse_type.h"
@@ -44,11 +46,13 @@ static Query *transformIndexStmt(ParseState *pstate, IndexStmt *stmt);
 static Query *transformExtendStmt(ParseState *pstate, ExtendStmt *stmt);
 static Query *transformRuleStmt(ParseState *query, RuleStmt *stmt);
 static Query *transformSelectStmt(ParseState *pstate, SelectStmt *stmt);
+static Query *transformSetOperationStmt(ParseState *pstate, SetOperationStmt *stmt);
+static Node *transformSetOperationTree(ParseState *pstate, Node *node);
 static Query *transformUpdateStmt(ParseState *pstate, UpdateStmt *stmt);
-static Query *transformCursorStmt(ParseState *pstate, SelectStmt *stmt);
 static Query *transformCreateStmt(ParseState *pstate, CreateStmt *stmt);
 static Query *transformAlterTableStmt(ParseState *pstate, AlterTableStmt *stmt);
 
+static List *getSetColTypes(ParseState *pstate, Node *node);
 static void transformForUpdate(Query *qry, List *forUpdate);
 static void transformFkeyGetPrimaryKey(FkConstraint *fkconstraint);
 static void transformConstraintAttrs(List *constraintList);
@@ -156,7 +160,7 @@ transformStmt(ParseState *pstate, Node *parseTree)
 			{
 				ViewStmt   *n = (ViewStmt *) parseTree;
 
-				n->query = (Query *) transformStmt(pstate, (Node *) n->query);
+				n->query = transformStmt(pstate, (Node *) n->query);
 
 				/*
 				 * If a list of column names was given, run through and
@@ -258,20 +262,17 @@ transformStmt(ParseState *pstate, Node *parseTree)
 			break;
 
 		case T_SelectStmt:
-			if (!((SelectStmt *) parseTree)->portalname)
-			{
-				result = transformSelectStmt(pstate, (SelectStmt *) parseTree);
-				result->limitOffset = ((SelectStmt *) parseTree)->limitOffset;
-				result->limitCount = ((SelectStmt *) parseTree)->limitCount;
-			}
-			else
-				result = transformCursorStmt(pstate, (SelectStmt *) parseTree);
+			result = transformSelectStmt(pstate, (SelectStmt *) parseTree);
+			break;
+
+		case T_SetOperationStmt:
+			result = transformSetOperationStmt(pstate, (SetOperationStmt *) parseTree);
 			break;
 
 		default:
 
 			/*
-			 * other statments don't require any transformation-- just
+			 * other statements don't require any transformation-- just
 			 * return the original parsetree, yea!
 			 */
 			result = makeNode(Query);
@@ -313,7 +314,7 @@ transformDeleteStmt(ParseState *pstate, DeleteStmt *stmt)
 	if (pstate->p_hasAggs)
 		parseCheckAggregates(pstate, qry, qual);
 
-	return (Query *) qry;
+	return qry;
 }
 
 /*
@@ -324,7 +325,6 @@ static Query *
 transformInsertStmt(ParseState *pstate, InsertStmt *stmt)
 {
 	Query	   *qry = makeNode(Query);
-	Node	   *qual;
 	List	   *icolumns;
 	List	   *attrnos;
 	List	   *attnos;
@@ -335,59 +335,89 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt)
 	qry->commandType = CMD_INSERT;
 	pstate->p_is_insert = true;
 
-	/*----------
-	 * Initial processing steps are just like SELECT, which should not
-	 * be surprising, since we may be handling an INSERT ... SELECT.
-	 * It is important that we finish processing all the SELECT subclauses
-	 * before we start doing any INSERT-specific processing; otherwise
-	 * the behavior of SELECT within INSERT might be different from a
-	 * stand-alone SELECT.	(Indeed, Postgres up through 6.5 had bugs of
-	 * just that nature...)
-	 *----------
-	 */
-
-	/* set up a range table --- note INSERT target is not in it yet */
-	makeRangeTable(pstate, stmt->fromClause);
-
-	qry->targetList = transformTargetList(pstate, stmt->targetList);
-
-	qual = transformWhereClause(pstate, stmt->whereClause);
-
 	/*
-	 * Initial processing of HAVING clause is just like WHERE clause.
-	 * Additional work will be done in optimizer/plan/planner.c.
+	 * Is it INSERT ... SELECT or INSERT ... VALUES?
 	 */
-	qry->havingQual = transformWhereClause(pstate, stmt->havingClause);
+	if (stmt->selectStmt)
+	{
+		List   *selectList;
+		Query  *selectQuery;
+		RangeTblEntry *rte;
+		RangeTblRef *rtr;
 
-	qry->groupClause = transformGroupClause(pstate,
-											stmt->groupClause,
-											qry->targetList);
+		/*
+		 * Process the source SELECT.
+		 *
+		 * It is important that this be handled just like a standalone SELECT;
+		 * otherwise the behavior of SELECT within INSERT might be different
+		 * from a stand-alone SELECT. (Indeed, Postgres up through 6.5 had
+		 * bugs of just that nature...)
+		 */
+		selectList = parse_analyze(makeList1(stmt->selectStmt), pstate);
+		Assert(length(selectList) == 1);
 
-	/* An InsertStmt has no sortClause */
-	qry->sortClause = NIL;
+		selectQuery = (Query *) lfirst(selectList);
+		Assert(IsA(selectQuery, Query));
+		Assert(selectQuery->commandType == CMD_SELECT);
+		if (selectQuery->into || selectQuery->isPortal)
+			elog(ERROR, "INSERT ... SELECT may not specify INTO");
+		/*
+		 * Make the source be a subquery in the INSERT's rangetable,
+		 * and add it to the joinlist.
+		 */
+		rte = addRangeTableEntryForSubquery(pstate,
+											selectQuery,
+											makeAttr("*SELECT*", NULL),
+											true);
+		rtr = makeNode(RangeTblRef);
+		/* assume new rte is at end */
+		rtr->rtindex = length(pstate->p_rtable);
+		Assert(rte == rt_fetch(rtr->rtindex, pstate->p_rtable));
+		pstate->p_joinlist = lappend(pstate->p_joinlist, rtr);
+		/*
+		 * Generate a targetlist for the INSERT that selects all
+		 * the non-resjunk columns from the subquery.  (We need this to
+		 * be separate from the subquery's tlist because we may add
+		 * columns, insert datatype coercions, etc.)
+		 *
+		 * HACK: constants in the INSERT's targetlist are copied up as-is
+		 * rather than being referenced as subquery outputs.  This is mainly
+		 * to ensure that when we try to coerce them to the target column's
+		 * datatype, the right things happen for UNKNOWN constants.
+		 * Otherwise this fails:
+		 *		INSERT INTO foo SELECT 'bar', ... FROM baz
+		 */
+		qry->targetList = NIL;
+		foreach(tl, selectQuery->targetList)
+		{
+			TargetEntry *tle = (TargetEntry *) lfirst(tl);
+			Resdom	   *resnode = tle->resdom;
+			Node	   *expr;
 
-	qry->distinctClause = transformDistinctClause(pstate,
-												  stmt->distinctClause,
-												  qry->targetList,
-												  &qry->sortClause);
-
-	qry->hasSubLinks = pstate->p_hasSubLinks;
-	qry->hasAggs = pstate->p_hasAggs;
-	if (pstate->p_hasAggs || qry->groupClause || qry->havingQual)
-		parseCheckAggregates(pstate, qry, qual);
-
-	/*
-	 * The INSERT INTO ... SELECT ... could have a UNION in child, so
-	 * unionClause may be false
-	 */
-	qry->unionall = stmt->unionall;
-
-	/*
-	 * Just hand through the unionClause and intersectClause. We will
-	 * handle it in the function Except_Intersect_Rewrite()
-	 */
-	qry->unionClause = stmt->unionClause;
-	qry->intersectClause = stmt->intersectClause;
+			if (resnode->resjunk)
+				continue;
+			if (tle->expr && IsA(tle->expr, Const))
+				expr = tle->expr;
+			else
+				expr = (Node *) makeVar(rtr->rtindex,
+										resnode->resno,
+										resnode->restype,
+										resnode->restypmod,
+										0);
+			resnode = copyObject(resnode);
+			resnode->resno = (AttrNumber) pstate->p_last_resno++;
+			qry->targetList = lappend(qry->targetList,
+									  makeTargetEntry(resnode, expr));
+		}
+	}
+	else
+	{
+		/*
+		 * For INSERT ... VALUES, transform the given list of values
+		 * to form a targetlist for the INSERT.
+		 */
+		qry->targetList = transformTargetList(pstate, stmt->targetList);
+	}
 
 	/*
 	 * Now we are done with SELECT-like processing, and can get on with
@@ -400,11 +430,6 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt)
 	 */
 	setTargetTable(pstate, stmt->relname, false, false);
 
-	/* now the range table and jointree will not change */
-	qry->rtable = pstate->p_rtable;
-	qry->jointree = makeFromExpr(pstate->p_joinlist, qual);
-	qry->resultRelation = refnameRangeTablePosn(pstate, stmt->relname, NULL);
-
 	/* Prepare to assign non-conflicting resnos to resjunk attributes */
 	if (pstate->p_last_resno <= pstate->p_target_relation->rd_rel->relnatts)
 		pstate->p_last_resno = pstate->p_target_relation->rd_rel->relnatts + 1;
@@ -412,7 +437,9 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt)
 	/* Validate stmt->cols list, or build default list if no list given */
 	icolumns = checkInsertTargets(pstate, stmt->cols, &attrnos);
 
-	/* Prepare non-junk columns for assignment to target table */
+	/*
+	 * Prepare columns for assignment to target table.
+	 */
 	numuseratts = 0;
 	attnos = attrnos;
 	foreach(tl, qry->targetList)
@@ -421,18 +448,7 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt)
 		Resdom	   *resnode = tle->resdom;
 		Ident	   *id;
 
-		if (resnode->resjunk)
-		{
-
-			/*
-			 * Resjunk nodes need no additional processing, but be sure
-			 * they have names and resnos that do not match any target
-			 * columns; else rewriter or planner might get confused.
-			 */
-			resnode->resname = "?resjunk?";
-			resnode->resno = (AttrNumber) pstate->p_last_resno++;
-			continue;
-		}
+		Assert(!resnode->resjunk);
 		if (icolumns == NIL || attnos == NIL)
 			elog(ERROR, "INSERT has more expressions than target columns");
 		id = (Ident *) lfirst(icolumns);
@@ -458,7 +474,8 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt)
 	 * have defaults and were not assigned to by the user.
 	 *
 	 * XXX wouldn't it make more sense to do this further downstream, after
-	 * the rule rewriter?
+	 * the rule rewriter?  As is, altering a column default will not change
+	 * the behavior of INSERTs in already-defined rules.
 	 */
 	rd_att = pstate->p_target_relation->rd_att;
 	if (rd_att->constr && rd_att->constr->num_defval > 0)
@@ -498,13 +515,17 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt)
 		}
 	}
 
-	if (stmt->forUpdate != NULL)
-		transformForUpdate(qry, stmt->forUpdate);
+	/* done building the range table and jointree */
+	qry->rtable = pstate->p_rtable;
+	qry->jointree = makeFromExpr(pstate->p_joinlist, NULL);
+	qry->resultRelation = refnameRangeTablePosn(pstate, stmt->relname, NULL);
 
-	/* in case of subselects in default clauses... */
 	qry->hasSubLinks = pstate->p_hasSubLinks;
+	qry->hasAggs = pstate->p_hasAggs;
+	if (pstate->p_hasAggs)
+		parseCheckAggregates(pstate, qry, NULL);
 
-	return (Query *) qry;
+	return qry;
 }
 
 /*
@@ -1608,6 +1629,7 @@ transformRuleStmt(ParseState *pstate, RuleStmt *stmt)
  * transformSelectStmt -
  *	  transforms a Select Statement
  *
+ * Note: this is also used for DECLARE CURSOR statements.
  */
 static Query *
 transformSelectStmt(ParseState *pstate, SelectStmt *stmt)
@@ -1617,13 +1639,42 @@ transformSelectStmt(ParseState *pstate, SelectStmt *stmt)
 
 	qry->commandType = CMD_SELECT;
 
+	if (stmt->portalname)
+	{
+		/* DECLARE CURSOR */
+		if (stmt->into)
+			elog(ERROR, "DECLARE CURSOR must not specify INTO");
+		if (stmt->forUpdate)
+			elog(ERROR, "DECLARE/UPDATE is not supported"
+				 "\n\tCursors must be READ ONLY");
+		/*
+		 *	15 august 1991 -- since 3.0 postgres does locking
+		 *	right, we discovered that portals were violating
+		 *	locking protocol.  portal locks cannot span xacts.
+		 *	as a short-term fix, we installed the check here.
+		 *							-- mao
+		 */
+		if (!IsTransactionBlock())
+			elog(ERROR, "DECLARE CURSOR may only be used in begin/end transaction blocks");
+
+		qry->into = stmt->portalname;
+		qry->isTemp = stmt->istemp;
+		qry->isPortal = TRUE;
+		qry->isBinary = stmt->binary; /* internal portal */
+	}
+	else
+	{
+		/* SELECT */
+		qry->into = stmt->into;
+		qry->isTemp = stmt->istemp;
+		qry->isPortal = FALSE;
+		qry->isBinary = FALSE;
+	}
+
 	/* set up a range table */
 	makeRangeTable(pstate, stmt->fromClause);
 
-	qry->into = stmt->into;
-	qry->isTemp = stmt->istemp;
-	qry->isPortal = FALSE;
-
+	/* transform targetlist and WHERE */
 	qry->targetList = transformTargetList(pstate, stmt->targetList);
 
 	qual = transformWhereClause(pstate, stmt->whereClause);
@@ -1647,23 +1698,13 @@ transformSelectStmt(ParseState *pstate, SelectStmt *stmt)
 												  qry->targetList,
 												  &qry->sortClause);
 
+	qry->limitOffset = stmt->limitOffset;
+	qry->limitCount = stmt->limitCount;
+
 	qry->hasSubLinks = pstate->p_hasSubLinks;
 	qry->hasAggs = pstate->p_hasAggs;
 	if (pstate->p_hasAggs || qry->groupClause || qry->havingQual)
 		parseCheckAggregates(pstate, qry, qual);
-
-	/*
-	 * The INSERT INTO ... SELECT ... could have a UNION in child, so
-	 * unionClause may be false
-	 */
-	qry->unionall = stmt->unionall;
-
-	/*
-	 * Just hand through the unionClause and intersectClause. We will
-	 * handle it in the function Except_Intersect_Rewrite()
-	 */
-	qry->unionClause = stmt->unionClause;
-	qry->intersectClause = stmt->intersectClause;
 
 	qry->rtable = pstate->p_rtable;
 	qry->jointree = makeFromExpr(pstate->p_joinlist, qual);
@@ -1671,8 +1712,341 @@ transformSelectStmt(ParseState *pstate, SelectStmt *stmt)
 	if (stmt->forUpdate != NULL)
 		transformForUpdate(qry, stmt->forUpdate);
 
-	return (Query *) qry;
+	return qry;
 }
+
+/*
+ * transformSetOperationsStmt -
+ *	  transforms a SetOperations Statement
+ *
+ * SetOperations is actually just a SELECT, but with UNION/INTERSECT/EXCEPT
+ * structure to it.  We must transform each leaf SELECT and build up a top-
+ * level Query that contains the leaf SELECTs as subqueries in its rangetable.
+ * The SetOperations tree (with leaf SelectStmts replaced by RangeTblRef nodes)
+ * becomes the setOperations field of the top-level Query.
+ */
+static Query *
+transformSetOperationStmt(ParseState *pstate, SetOperationStmt *stmt)
+{
+	Query	   *qry = makeNode(Query);
+	Node	   *node;
+	SelectStmt *leftmostSelect;
+	Query	   *leftmostQuery;
+	char	   *into;
+	char	   *portalname;
+	bool		binary;
+	bool		istemp;
+	List	   *sortClause;
+	Node	   *limitOffset;
+	Node	   *limitCount;
+	List	   *forUpdate;
+	List	   *lefttl,
+			   *dtlist;
+	int			tllen;
+
+	qry->commandType = CMD_SELECT;
+
+	/*
+	 * Find leftmost leaf SelectStmt and extract the one-time-only items
+	 * from it.
+	 */
+	node = stmt->larg;
+	while (node && IsA(node, SetOperationStmt))
+		node = ((SetOperationStmt *) node)->larg;
+	Assert(node && IsA(node, SelectStmt));
+	leftmostSelect = (SelectStmt *) node;
+
+	into = leftmostSelect->into;
+	portalname = leftmostSelect->portalname;
+	binary = leftmostSelect->binary;
+	istemp = leftmostSelect->istemp;
+	sortClause = leftmostSelect->sortClause;
+	limitOffset = leftmostSelect->limitOffset;
+	limitCount = leftmostSelect->limitCount;
+	forUpdate = leftmostSelect->forUpdate;
+
+	/* clear them to prevent complaints in transformSetOperationTree() */
+	leftmostSelect->into = NULL;
+	leftmostSelect->portalname = NULL;
+	leftmostSelect->binary = false;
+	leftmostSelect->istemp = false;
+	leftmostSelect->sortClause = NIL;
+	leftmostSelect->limitOffset = NULL;
+	leftmostSelect->limitCount = NULL;
+	leftmostSelect->forUpdate = NIL;
+
+	/* We don't actually support forUpdate with set ops at the moment. */
+	if (forUpdate)
+		elog(ERROR, "SELECT FOR UPDATE is not allowed with UNION/INTERSECT/EXCEPT");
+
+	/*
+	 * Recursively transform the components of the tree.
+	 */
+	stmt = (SetOperationStmt *)
+		transformSetOperationTree(pstate, (Node *) stmt);
+	Assert(stmt && IsA(stmt, SetOperationStmt));
+	qry->setOperations = (Node *) stmt;
+
+	/*
+	 * Re-find leftmost SELECT (now it's a sub-query in rangetable)
+	 */
+	node = stmt->larg;
+	while (node && IsA(node, SetOperationStmt))
+		node = ((SetOperationStmt *) node)->larg;
+	Assert(node && IsA(node, RangeTblRef));
+	leftmostQuery = rt_fetch(((RangeTblRef *) node)->rtindex,
+							 pstate->p_rtable)->subquery;
+	Assert(leftmostQuery != NULL);
+	/*
+	 * Generate dummy targetlist for outer query using column names of
+	 * leftmost select and common datatypes of topmost set operation
+	 */
+	qry->targetList = NIL;
+	lefttl = leftmostQuery->targetList;
+	foreach(dtlist, stmt->colTypes)
+	{
+		Oid		colType = (Oid) lfirsti(dtlist);
+		char   *colName = ((TargetEntry *) lfirst(lefttl))->resdom->resname;
+		Resdom *resdom;
+		Node   *expr;
+
+		resdom = makeResdom((AttrNumber) pstate->p_last_resno++,
+							colType,
+							-1,
+							pstrdup(colName),
+							false);
+		expr = (Node *) makeVar(1,
+								resdom->resno,
+								colType,
+								-1,
+								0);
+		qry->targetList = lappend(qry->targetList,
+								  makeTargetEntry(resdom, expr));
+		lefttl = lnext(lefttl);
+	}
+	/*
+	 * Insert one-time items into top-level query
+	 *
+	 * This needs to agree with transformSelectStmt!
+	 */
+	if (portalname)
+	{
+		/* DECLARE CURSOR */
+		if (into)
+			elog(ERROR, "DECLARE CURSOR must not specify INTO");
+		if (forUpdate)
+			elog(ERROR, "DECLARE/UPDATE is not supported"
+				 "\n\tCursors must be READ ONLY");
+		/*
+		 *	15 august 1991 -- since 3.0 postgres does locking
+		 *	right, we discovered that portals were violating
+		 *	locking protocol.  portal locks cannot span xacts.
+		 *	as a short-term fix, we installed the check here.
+		 *							-- mao
+		 */
+		if (!IsTransactionBlock())
+			elog(ERROR, "DECLARE CURSOR may only be used in begin/end transaction blocks");
+
+		qry->into = portalname;
+		qry->isTemp = istemp;
+		qry->isPortal = TRUE;
+		qry->isBinary = binary; /* internal portal */
+	}
+	else
+	{
+		/* SELECT */
+		qry->into = into;
+		qry->isTemp = istemp;
+		qry->isPortal = FALSE;
+		qry->isBinary = FALSE;
+	}
+
+	/*
+	 * For now, we don't support resjunk sort clauses on the output of a
+	 * setOperation tree --- you can only use the SQL92-spec options of
+	 * selecting an output column by name or number.  Enforce by checking
+	 * that transformSortClause doesn't add any items to tlist.
+	 */
+	tllen = length(qry->targetList);
+
+	qry->sortClause = transformSortClause(pstate,
+										  sortClause,
+										  qry->targetList);
+
+	if (tllen != length(qry->targetList))
+		elog(ERROR, "ORDER BY on a UNION/INTERSECT/EXCEPT result must be on one of the result columns");
+
+	qry->limitOffset = limitOffset;
+	qry->limitCount = limitCount;
+
+	qry->hasSubLinks = pstate->p_hasSubLinks;
+	qry->hasAggs = pstate->p_hasAggs;
+	if (pstate->p_hasAggs || qry->groupClause || qry->havingQual)
+		parseCheckAggregates(pstate, qry, NULL);
+
+	qry->rtable = pstate->p_rtable;
+	qry->jointree = makeFromExpr(pstate->p_joinlist, NULL);
+
+	if (forUpdate != NULL)
+		transformForUpdate(qry, forUpdate);
+
+	return qry;
+}
+
+/*
+ * transformSetOperationTree
+ *		Recursively transform leaves and internal nodes of a set-op tree
+ */
+static Node *
+transformSetOperationTree(ParseState *pstate, Node *node)
+{
+	if (IsA(node, SelectStmt))
+	{
+		SelectStmt *stmt = (SelectStmt *) node;
+		List   *save_rtable;
+		List   *selectList;
+		Query  *selectQuery;
+		char	selectName[32];
+		RangeTblEntry *rte;
+		RangeTblRef *rtr;
+
+		/*
+		 * Validity-check leaf SELECTs for disallowed ops.  INTO check is
+		 * necessary, the others should have been disallowed by grammar.
+		 */
+		if (stmt->into)
+			elog(ERROR, "INTO is only allowed on first SELECT of UNION/INTERSECT/EXCEPT");
+		if (stmt->portalname)
+			elog(ERROR, "Portal is only allowed on first SELECT of UNION/INTERSECT/EXCEPT");
+		if (stmt->sortClause)
+			elog(ERROR, "ORDER BY is only allowed at end of UNION/INTERSECT/EXCEPT");
+		if (stmt->limitOffset || stmt->limitCount)
+			elog(ERROR, "LIMIT is only allowed at end of UNION/INTERSECT/EXCEPT");
+		if (stmt->forUpdate)
+			elog(ERROR, "FOR UPDATE is only allowed at end of UNION/INTERSECT/EXCEPT");
+		/*
+		 * Transform SelectStmt into a Query.  We do not want any previously
+		 * transformed leaf queries to be visible in the outer context of
+		 * this sub-query, so temporarily make the top-level pstate have an
+		 * empty rtable.  (We needn't do the same with the joinlist because
+		 * we aren't entering anything in the top-level joinlist.)
+		 */
+		save_rtable = pstate->p_rtable;
+		pstate->p_rtable = NIL;
+		selectList = parse_analyze(makeList1(stmt), pstate);
+		pstate->p_rtable = save_rtable;
+
+		Assert(length(selectList) == 1);
+		selectQuery = (Query *) lfirst(selectList);
+		/*
+		 * Make the leaf query be a subquery in the top-level rangetable.
+		 */
+		sprintf(selectName, "*SELECT* %d", length(pstate->p_rtable) + 1);
+		rte = addRangeTableEntryForSubquery(pstate,
+											selectQuery,
+											makeAttr(pstrdup(selectName),
+													 NULL),
+											false);
+		/*
+		 * Return a RangeTblRef to replace the SelectStmt in the set-op tree.
+		 */
+		rtr = makeNode(RangeTblRef);
+		/* assume new rte is at end */
+		rtr->rtindex = length(pstate->p_rtable);
+		Assert(rte == rt_fetch(rtr->rtindex, pstate->p_rtable));
+		return (Node *) rtr;
+	}
+	else if (IsA(node, SetOperationStmt))
+	{
+		SetOperationStmt *op = (SetOperationStmt *) node;
+		List   *lcoltypes;
+		List   *rcoltypes;
+		const char *context;
+
+		context = (op->op == SETOP_UNION ? "UNION" :
+				   (op->op == SETOP_INTERSECT ? "INTERSECT" :
+					"EXCEPT"));
+		/*
+		 * Recursively transform the child nodes.
+		 */
+		op->larg = transformSetOperationTree(pstate, op->larg);
+		op->rarg = transformSetOperationTree(pstate, op->rarg);
+		/*
+		 * Verify that the two children have the same number of non-junk
+		 * columns, and determine the types of the merged output columns.
+		 */
+		lcoltypes = getSetColTypes(pstate, op->larg);
+		rcoltypes = getSetColTypes(pstate, op->rarg);
+		if (length(lcoltypes) != length(rcoltypes))
+			elog(ERROR, "Each %s query must have the same number of columns",
+				 context);
+		op->colTypes = NIL;
+		while (lcoltypes != NIL)
+		{
+			Oid		lcoltype = (Oid) lfirsti(lcoltypes);
+			Oid		rcoltype = (Oid) lfirsti(rcoltypes);
+			Oid		rescoltype;
+
+			rescoltype = select_common_type(makeListi2(lcoltype, rcoltype),
+											context);
+			op->colTypes = lappendi(op->colTypes, rescoltype);
+			lcoltypes = lnext(lcoltypes);
+			rcoltypes = lnext(rcoltypes);
+		}
+		return (Node *) op;
+	}
+	else
+	{
+		elog(ERROR, "transformSetOperationTree: unexpected node %d",
+			 (int) nodeTag(node));
+		return NULL;			/* keep compiler quiet */
+	}
+}
+
+/*
+ * getSetColTypes
+ *		Get output column types of an (already transformed) set-op node
+ */
+static List *
+getSetColTypes(ParseState *pstate, Node *node)
+{
+	if (IsA(node, RangeTblRef))
+	{
+		RangeTblRef *rtr = (RangeTblRef *) node;
+		RangeTblEntry *rte = rt_fetch(rtr->rtindex, pstate->p_rtable);
+		Query  *selectQuery = rte->subquery;
+		List   *result = NIL;
+		List   *tl;
+
+		Assert(selectQuery != NULL);
+		/* Get types of non-junk columns */
+		foreach(tl, selectQuery->targetList)
+		{
+			TargetEntry *tle = (TargetEntry *) lfirst(tl);
+			Resdom	   *resnode = tle->resdom;
+
+			if (resnode->resjunk)
+				continue;
+			result = lappendi(result, resnode->restype);
+		}
+		return result;
+	}
+	else if (IsA(node, SetOperationStmt))
+	{
+		SetOperationStmt *op = (SetOperationStmt *) node;
+
+		/* Result already computed during transformation of node */
+		Assert(op->colTypes != NIL);
+		return op->colTypes;
+	}
+	else
+	{
+		elog(ERROR, "getSetColTypes: unexpected node %d",
+			 (int) nodeTag(node));
+		return NIL;				/* keep compiler quiet */
+	}
+}
+
 
 /*
  * transformUpdateStmt -
@@ -1755,26 +2129,6 @@ transformUpdateStmt(ParseState *pstate, UpdateStmt *stmt)
 	}
 	if (origTargetList != NIL)
 		elog(ERROR, "UPDATE target count mismatch --- internal error");
-
-	return (Query *) qry;
-}
-
-/*
- * transformCursorStmt -
- *	  transform a Create Cursor Statement
- *
- */
-static Query *
-transformCursorStmt(ParseState *pstate, SelectStmt *stmt)
-{
-	Query	   *qry;
-
-	qry = transformSelectStmt(pstate, stmt);
-
-	qry->into = stmt->portalname;
-	qry->isTemp = stmt->istemp;
-	qry->isPortal = TRUE;
-	qry->isBinary = stmt->binary;		/* internal portal */
 
 	return qry;
 }
@@ -2039,106 +2393,11 @@ transformAlterTableStmt(ParseState *pstate, AlterTableStmt *stmt)
 	return qry;
 }
 
-
-/* This function steps through the tree
- * built up by the select_w_o_sort rule
- * and builds a list of all SelectStmt Nodes found
- * The built up list is handed back in **select_list.
- * If one of the SelectStmt Nodes has the 'unionall' flag
- * set to true *unionall_present hands back 'true' */
-void
-create_select_list(Node *ptr, List **select_list, bool *unionall_present)
-{
-	if (IsA(ptr, SelectStmt))
-	{
-		*select_list = lappend(*select_list, ptr);
-		if (((SelectStmt *) ptr)->unionall == TRUE)
-			*unionall_present = TRUE;
-		return;
-	}
-
-	/* Recursively call for all arguments. A NOT expr has no lexpr! */
-	if (((A_Expr *) ptr)->lexpr != NULL)
-		create_select_list(((A_Expr *) ptr)->lexpr, select_list, unionall_present);
-	create_select_list(((A_Expr *) ptr)->rexpr, select_list, unionall_present);
-}
-
-/* Changes the A_Expr Nodes to Expr Nodes and exchanges ANDs and ORs.
- * The reason for the exchange is easy: We implement INTERSECTs and EXCEPTs
- * by rewriting these queries to semantically equivalent queries that use
- * IN and NOT IN subselects. To be able to use all three operations
- * (UNIONs INTERSECTs and EXCEPTs) in one complex query we have to
- * translate the queries into Disjunctive Normal Form (DNF). Unfortunately
- * there is no function 'dnfify' but there is a function 'cnfify'
- * which produces DNF when we exchange ANDs and ORs before calling
- * 'cnfify' and exchange them back in the result.
- *
- * If an EXCEPT or INTERSECT is present *intersect_present
- * hands back 'true' */
-Node *
-A_Expr_to_Expr(Node *ptr, bool *intersect_present)
-{
-	Node	   *result = NULL;
-
-	switch (nodeTag(ptr))
-	{
-		case T_A_Expr:
-			{
-				A_Expr	   *a = (A_Expr *) ptr;
-
-				switch (a->oper)
-				{
-					case AND:
-						{
-							Expr	   *expr = makeNode(Expr);
-							Node	   *lexpr = A_Expr_to_Expr(((A_Expr *) ptr)->lexpr, intersect_present);
-							Node	   *rexpr = A_Expr_to_Expr(((A_Expr *) ptr)->rexpr, intersect_present);
-
-							*intersect_present = TRUE;
-
-							expr->typeOid = BOOLOID;
-							expr->opType = OR_EXPR;
-							expr->args = makeList2(lexpr, rexpr);
-							result = (Node *) expr;
-							break;
-						}
-					case OR:
-						{
-							Expr	   *expr = makeNode(Expr);
-							Node	   *lexpr = A_Expr_to_Expr(((A_Expr *) ptr)->lexpr, intersect_present);
-							Node	   *rexpr = A_Expr_to_Expr(((A_Expr *) ptr)->rexpr, intersect_present);
-
-							expr->typeOid = BOOLOID;
-							expr->opType = AND_EXPR;
-							expr->args = makeList2(lexpr, rexpr);
-							result = (Node *) expr;
-							break;
-						}
-					case NOT:
-						{
-							Expr	   *expr = makeNode(Expr);
-							Node	   *rexpr = A_Expr_to_Expr(((A_Expr *) ptr)->rexpr, intersect_present);
-
-							expr->typeOid = BOOLOID;
-							expr->opType = NOT_EXPR;
-							expr->args = makeList1(rexpr);
-							result = (Node *) expr;
-							break;
-						}
-				}
-				break;
-			}
-		default:
-			result = ptr;
-	}
-	return result;
-}
-
 void
 CheckSelectForUpdate(Query *qry)
 {
-	if (qry->unionClause || qry->intersectClause)
-		elog(ERROR, "SELECT FOR UPDATE is not allowed with UNION/INTERSECT/EXCEPT clause");
+	if (qry->setOperations)
+		elog(ERROR, "SELECT FOR UPDATE is not allowed with UNION/INTERSECT/EXCEPT");
 	if (qry->distinctClause != NIL)
 		elog(ERROR, "SELECT FOR UPDATE is not allowed with DISTINCT clause");
 	if (qry->groupClause != NIL)

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/print.c,v 1.42 2000/09/29 18:21:29 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/print.c,v 1.43 2000/10/05 19:11:27 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -337,6 +337,9 @@ plannode_type(Plan *p)
 			break;
 		case T_Unique:
 			return "UNIQUE";
+			break;
+		case T_SetOp:
+			return "SETOP";
 			break;
 		case T_Hash:
 			return "HASH";

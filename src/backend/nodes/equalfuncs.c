@@ -20,7 +20,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.74 2000/09/29 18:21:29 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.75 2000/10/05 19:11:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,8 +32,6 @@
 #include "utils/acl.h"
 #include "utils/datum.h"
 
-
-static bool equali(List *a, List *b);
 
 /* Macro for comparing string fields that might be NULL */
 #define equalstr(a, b)  \
@@ -600,8 +598,6 @@ _equalQuery(Query *a, Query *b)
 		return false;
 	if (a->isTemp != b->isTemp)
 		return false;
-	if (a->unionall != b->unionall)
-		return false;
 	if (a->hasAggs != b->hasAggs)
 		return false;
 	if (a->hasSubLinks != b->hasSubLinks)
@@ -610,25 +606,23 @@ _equalQuery(Query *a, Query *b)
 		return false;
 	if (!equal(a->jointree, b->jointree))
 		return false;
-	if (!equal(a->targetList, b->targetList))
-		return false;
 	if (!equali(a->rowMarks, b->rowMarks))
 		return false;
-	if (!equal(a->distinctClause, b->distinctClause))
-		return false;
-	if (!equal(a->sortClause, b->sortClause))
+	if (!equal(a->targetList, b->targetList))
 		return false;
 	if (!equal(a->groupClause, b->groupClause))
 		return false;
 	if (!equal(a->havingQual, b->havingQual))
 		return false;
-	if (!equal(a->intersectClause, b->intersectClause))
+	if (!equal(a->distinctClause, b->distinctClause))
 		return false;
-	if (!equal(a->unionClause, b->unionClause))
+	if (!equal(a->sortClause, b->sortClause))
 		return false;
 	if (!equal(a->limitOffset, b->limitOffset))
 		return false;
 	if (!equal(a->limitCount, b->limitCount))
+		return false;
+	if (!equal(a->setOperations, b->setOperations))
 		return false;
 
 	/*
@@ -645,27 +639,11 @@ _equalInsertStmt(InsertStmt *a, InsertStmt *b)
 {
 	if (!equalstr(a->relname, b->relname))
 		return false;
-	if (!equal(a->distinctClause, b->distinctClause))
-		return false;
 	if (!equal(a->cols, b->cols))
 		return false;
 	if (!equal(a->targetList, b->targetList))
 		return false;
-	if (!equal(a->fromClause, b->fromClause))
-		return false;
-	if (!equal(a->whereClause, b->whereClause))
-		return false;
-	if (!equal(a->groupClause, b->groupClause))
-		return false;
-	if (!equal(a->havingClause, b->havingClause))
-		return false;
-	if (!equal(a->unionClause, b->unionClause))
-		return false;
-	if (a->unionall != b->unionall)
-		return false;
-	if (!equal(a->intersectClause, b->intersectClause))
-		return false;
-	if (!equal(a->forUpdate, b->forUpdate))
+	if (!equal(a->selectStmt, b->selectStmt))
 		return false;
 
 	return true;
@@ -718,12 +696,6 @@ _equalSelectStmt(SelectStmt *a, SelectStmt *b)
 		return false;
 	if (!equal(a->havingClause, b->havingClause))
 		return false;
-	if (!equal(a->intersectClause, b->intersectClause))
-		return false;
-	if (!equal(a->exceptClause, b->exceptClause))
-		return false;
-	if (!equal(a->unionClause, b->unionClause))
-		return false;
 	if (!equal(a->sortClause, b->sortClause))
 		return false;
 	if (!equalstr(a->portalname, b->portalname))
@@ -732,13 +704,28 @@ _equalSelectStmt(SelectStmt *a, SelectStmt *b)
 		return false;
 	if (a->istemp != b->istemp)
 		return false;
-	if (a->unionall != b->unionall)
-		return false;
 	if (!equal(a->limitOffset, b->limitOffset))
 		return false;
 	if (!equal(a->limitCount, b->limitCount))
 		return false;
 	if (!equal(a->forUpdate, b->forUpdate))
+		return false;
+
+	return true;
+}
+
+static bool
+_equalSetOperationStmt(SetOperationStmt *a, SetOperationStmt *b)
+{
+	if (a->op != b->op)
+		return false;
+	if (a->all != b->all)
+		return false;
+	if (!equal(a->larg, b->larg))
+		return false;
+	if (!equal(a->rarg, b->rarg))
+		return false;
+	if (!equali(a->colTypes, b->colTypes))
 		return false;
 
 	return true;
@@ -1929,6 +1916,9 @@ equal(void *a, void *b)
 		case T_SelectStmt:
 			retval = _equalSelectStmt(a, b);
 			break;
+		case T_SetOperationStmt:
+			retval = _equalSetOperationStmt(a, b);
+			break;
 		case T_AlterTableStmt:
 			retval = _equalAlterTableStmt(a, b);
 			break;
@@ -2158,26 +2148,4 @@ equal(void *a, void *b)
 	}
 
 	return retval;
-}
-
-/*
- * equali
- *	  compares two lists of integers
- */
-static bool
-equali(List *a, List *b)
-{
-	List	   *l;
-
-	foreach(l, a)
-	{
-		if (b == NIL)
-			return false;
-		if (lfirsti(l) != lfirsti(b))
-			return false;
-		b = lnext(b);
-	}
-	if (b != NIL)
-		return false;
-	return true;
 }

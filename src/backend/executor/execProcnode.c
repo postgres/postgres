@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execProcnode.c,v 1.20 2000/09/29 18:21:29 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execProcnode.c,v 1.21 2000/10/05 19:11:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -88,6 +88,7 @@
 #include "executor/nodeNestloop.h"
 #include "executor/nodeResult.h"
 #include "executor/nodeSeqscan.h"
+#include "executor/nodeSetOp.h"
 #include "executor/nodeSort.h"
 #include "executor/nodeSubplan.h"
 #include "executor/nodeSubqueryscan.h"
@@ -197,6 +198,10 @@ ExecInitNode(Plan *node, EState *estate, Plan *parent)
 
 		case T_Unique:
 			result = ExecInitUnique((Unique *) node, estate, parent);
+			break;
+
+		case T_SetOp:
+			result = ExecInitSetOp((SetOp *) node, estate, parent);
 			break;
 
 		case T_Group:
@@ -322,6 +327,10 @@ ExecProcNode(Plan *node, Plan *parent)
 			result = ExecUnique((Unique *) node);
 			break;
 
+		case T_SetOp:
+			result = ExecSetOp((SetOp *) node);
+			break;
+
 		case T_Group:
 			result = ExecGroup((Group *) node);
 			break;
@@ -400,6 +409,9 @@ ExecCountSlotsNode(Plan *node)
 
 		case T_Unique:
 			return ExecCountSlotsUnique((Unique *) node);
+
+		case T_SetOp:
+			return ExecCountSlotsSetOp((SetOp *) node);
 
 		case T_Group:
 			return ExecCountSlotsGroup((Group *) node);
@@ -517,6 +529,10 @@ ExecEndNode(Plan *node, Plan *parent)
 
 		case T_Unique:
 			ExecEndUnique((Unique *) node);
+			break;
+
+		case T_SetOp:
+			ExecEndSetOp((SetOp *) node);
 			break;
 
 		case T_Group:

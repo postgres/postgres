@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/allpaths.c,v 1.65 2000/09/29 18:21:31 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/allpaths.c,v 1.66 2000/10/05 19:11:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -98,7 +98,8 @@ set_base_rel_pathlist(Query *root)
 			 */
 
 			/* Generate the plan for the subquery */
-			rel->subplan = planner(rte->subquery);
+			rel->subplan = subquery_planner(rte->subquery,
+											-1.0 /* default case */ );
 
 			/* Copy number of output rows from subplan */
 			rel->tuples = rel->subplan->plan_rows;

@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/preptlist.c,v 1.38 2000/08/08 15:41:48 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/preptlist.c,v 1.39 2000/10/05 19:11:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -49,6 +49,17 @@ preprocess_targetlist(List *tlist,
 					  Index result_relation,
 					  List *range_table)
 {
+	/*
+	 * Sanity check: if there is a result relation, it'd better be a
+	 * real relation not a subquery.  Else parser or rewriter messed up.
+	 */
+	if (result_relation)
+	{
+		RangeTblEntry *rte = rt_fetch(result_relation, range_table);
+
+		if (rte->subquery != NULL || rte->relid == InvalidOid)
+			elog(ERROR, "preprocess_targetlist: subquery cannot be result relation");
+	}
 
 	/*
 	 * for heap_formtuple to work, the targetlist must match the exact

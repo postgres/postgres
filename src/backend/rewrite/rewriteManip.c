@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteManip.c,v 1.49 2000/09/29 18:21:24 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteManip.c,v 1.50 2000/10/05 19:11:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -48,7 +48,7 @@ checkExprHasAggs(Node *node)
 	 */
 	if (node && IsA(node, Query))
 		return query_tree_walker((Query *) node, checkExprHasAggs_walker,
-								 NULL);
+								 NULL, false);
 	else
 		return checkExprHasAggs_walker(node, NULL);
 }
@@ -78,7 +78,7 @@ checkExprHasSubLink(Node *node)
 	 */
 	if (node && IsA(node, Query))
 		return query_tree_walker((Query *) node, checkExprHasSubLink_walker,
-								 NULL);
+								 NULL, false);
 	else
 		return checkExprHasSubLink_walker(node, NULL);
 }
@@ -101,7 +101,7 @@ checkExprHasSubLink_walker(Node *node, void *context)
  * Find all Var nodes in the given tree with varlevelsup == sublevels_up,
  * and increment their varno fields (rangetable indexes) by 'offset'.
  * The varnoold fields are adjusted similarly.  Also, RangeTblRef nodes
- * in join trees are adjusted.
+ * in join trees and setOp trees are adjusted.
  *
  * NOTE: although this has the form of a walker, we cheat and modify the
  * nodes in-place.	The given expression tree should have been copied
@@ -136,6 +136,7 @@ OffsetVarNodes_walker(Node *node, OffsetVarNodes_context *context)
 
 		if (context->sublevels_up == 0)
 			rtr->rtindex += context->offset;
+		/* the subquery itself is visited separately */
 		return false;
 	}
 	if (IsA(node, Query))
@@ -145,7 +146,7 @@ OffsetVarNodes_walker(Node *node, OffsetVarNodes_context *context)
 
 		context->sublevels_up++;
 		result = query_tree_walker((Query *) node, OffsetVarNodes_walker,
-								   (void *) context);
+								   (void *) context, true);
 		context->sublevels_up--;
 		return result;
 	}
@@ -168,7 +169,7 @@ OffsetVarNodes(Node *node, int offset, int sublevels_up)
 	 */
 	if (node && IsA(node, Query))
 		query_tree_walker((Query *) node, OffsetVarNodes_walker,
-						  (void *) &context);
+						  (void *) &context, true);
 	else
 		OffsetVarNodes_walker(node, &context);
 }
@@ -179,7 +180,7 @@ OffsetVarNodes(Node *node, int offset, int sublevels_up)
  * Find all Var nodes in the given tree belonging to a specific relation
  * (identified by sublevels_up and rt_index), and change their varno fields
  * to 'new_index'.	The varnoold fields are changed too.  Also, RangeTblRef
- * nodes in join trees are adjusted.
+ * nodes in join trees and setOp trees are adjusted.
  *
  * NOTE: although this has the form of a walker, we cheat and modify the
  * nodes in-place.	The given expression tree should have been copied
@@ -217,6 +218,7 @@ ChangeVarNodes_walker(Node *node, ChangeVarNodes_context *context)
 		if (context->sublevels_up == 0 &&
 			rtr->rtindex == context->rt_index)
 			rtr->rtindex = context->new_index;
+		/* the subquery itself is visited separately */
 		return false;
 	}
 	if (IsA(node, Query))
@@ -226,7 +228,7 @@ ChangeVarNodes_walker(Node *node, ChangeVarNodes_context *context)
 
 		context->sublevels_up++;
 		result = query_tree_walker((Query *) node, ChangeVarNodes_walker,
-								   (void *) context);
+								   (void *) context, true);
 		context->sublevels_up--;
 		return result;
 	}
@@ -250,7 +252,7 @@ ChangeVarNodes(Node *node, int rt_index, int new_index, int sublevels_up)
 	 */
 	if (node && IsA(node, Query))
 		query_tree_walker((Query *) node, ChangeVarNodes_walker,
-						  (void *) &context);
+						  (void *) &context, true);
 	else
 		ChangeVarNodes_walker(node, &context);
 }
@@ -300,7 +302,7 @@ IncrementVarSublevelsUp_walker(Node *node,
 		context->min_sublevels_up++;
 		result = query_tree_walker((Query *) node,
 								   IncrementVarSublevelsUp_walker,
-								   (void *) context);
+								   (void *) context, true);
 		context->min_sublevels_up--;
 		return result;
 	}
@@ -324,7 +326,7 @@ IncrementVarSublevelsUp(Node *node, int delta_sublevels_up,
 	 */
 	if (node && IsA(node, Query))
 		query_tree_walker((Query *) node, IncrementVarSublevelsUp_walker,
-						  (void *) &context);
+						  (void *) &context, true);
 	else
 		IncrementVarSublevelsUp_walker(node, &context);
 }
@@ -332,7 +334,7 @@ IncrementVarSublevelsUp(Node *node, int delta_sublevels_up,
 
 /*
  * rangeTableEntry_used - detect whether an RTE is referenced somewhere
- *	in var nodes or jointree nodes of a query or expression.
+ *	in var nodes or join or setOp trees of a query or expression.
  */
 
 typedef struct
@@ -363,6 +365,7 @@ rangeTableEntry_used_walker(Node *node,
 		if (rtr->rtindex == context->rt_index &&
 			context->sublevels_up == 0)
 			return true;
+		/* the subquery itself is visited separately */
 		return false;
 	}
 	if (IsA(node, Query))
@@ -372,7 +375,7 @@ rangeTableEntry_used_walker(Node *node,
 
 		context->sublevels_up++;
 		result = query_tree_walker((Query *) node, rangeTableEntry_used_walker,
-								   (void *) context);
+								   (void *) context, true);
 		context->sublevels_up--;
 		return result;
 	}
@@ -395,7 +398,7 @@ rangeTableEntry_used(Node *node, int rt_index, int sublevels_up)
 	 */
 	if (node && IsA(node, Query))
 		return query_tree_walker((Query *) node, rangeTableEntry_used_walker,
-								 (void *) &context);
+								 (void *) &context, true);
 	else
 		return rangeTableEntry_used_walker(node, &context);
 }
@@ -437,7 +440,7 @@ attribute_used_walker(Node *node,
 
 		context->sublevels_up++;
 		result = query_tree_walker((Query *) node, attribute_used_walker,
-								   (void *) context);
+								   (void *) context, true);
 		context->sublevels_up--;
 		return result;
 	}
@@ -461,7 +464,7 @@ attribute_used(Node *node, int rt_index, int attno, int sublevels_up)
 	 */
 	if (node && IsA(node, Query))
 		return query_tree_walker((Query *) node, attribute_used_walker,
-								 (void *) &context);
+								 (void *) &context, true);
 	else
 		return attribute_used_walker(node, &context);
 }
@@ -681,10 +684,8 @@ ResolveNew_mutator(Node *node, ResolveNew_context *context)
 		FLATCOPY(newnode, sublink, SubLink);
 		MUTATE(newnode->lefthand, sublink->lefthand, List *,
 			   ResolveNew_mutator, context);
-		context->sublevels_up++;
 		MUTATE(newnode->subselect, sublink->subselect, Node *,
 			   ResolveNew_mutator, context);
-		context->sublevels_up--;
 		return (Node *) newnode;
 	}
 	if (IsA(node, Query))
@@ -693,12 +694,9 @@ ResolveNew_mutator(Node *node, ResolveNew_context *context)
 		Query	   *newnode;
 
 		FLATCOPY(newnode, query, Query);
-		MUTATE(newnode->targetList, query->targetList, List *,
-			   ResolveNew_mutator, context);
-		MUTATE(newnode->jointree, query->jointree, FromExpr *,
-			   ResolveNew_mutator, context);
-		MUTATE(newnode->havingQual, query->havingQual, Node *,
-			   ResolveNew_mutator, context);
+		context->sublevels_up++;
+		query_tree_mutator(newnode, ResolveNew_mutator, context, true);
+		context->sublevels_up--;
 		return (Node *) newnode;
 	}
 	return expression_tree_mutator(node, ResolveNew_mutator,
@@ -718,11 +716,22 @@ ResolveNew(Node *node, int target_varno, int sublevels_up,
 	context.update_varno = update_varno;
 
 	/*
-	 * Note: if an entire Query is passed, the right things will happen,
-	 * because ResolveNew_mutator increments sublevels_up when it sees
-	 * a SubLink, not a Query.
+	 * Must be prepared to start with a Query or a bare expression tree;
+	 * if it's a Query, go straight to query_tree_mutator to make sure that
+	 * sublevels_up doesn't get incremented prematurely.
 	 */
-	return ResolveNew_mutator(node, &context);
+	if (node && IsA(node, Query))
+	{
+		Query	   *query = (Query *) node;
+		Query	   *newnode;
+
+		FLATCOPY(newnode, query, Query);
+		query_tree_mutator(newnode, ResolveNew_mutator,
+						   (void *) &context, true);
+		return (Node *) newnode;
+	}
+	else
+		return ResolveNew_mutator(node, &context);
 }
 
 /*
@@ -740,12 +749,8 @@ FixNew(RewriteInfo *info, Query *parsetree)
 	context.event = info->event;
 	context.update_varno = info->current_varno;
 
-	info->rule_action->targetList = (List *)
-		ResolveNew_mutator((Node *) info->rule_action->targetList, &context);
-	info->rule_action->jointree = (FromExpr *)
-		ResolveNew_mutator((Node *) info->rule_action->jointree, &context);
-	info->rule_action->havingQual =
-		ResolveNew_mutator(info->rule_action->havingQual, &context);
+	query_tree_mutator(info->rule_action, ResolveNew_mutator,
+					   (void *) &context, true);
 }
 
 
@@ -837,10 +842,8 @@ HandleRIRAttributeRule_mutator(Node *node,
 		FLATCOPY(newnode, sublink, SubLink);
 		MUTATE(newnode->lefthand, sublink->lefthand, List *,
 			   HandleRIRAttributeRule_mutator, context);
-		context->sublevels_up++;
 		MUTATE(newnode->subselect, sublink->subselect, Node *,
 			   HandleRIRAttributeRule_mutator, context);
-		context->sublevels_up--;
 		return (Node *) newnode;
 	}
 	if (IsA(node, Query))
@@ -849,14 +852,10 @@ HandleRIRAttributeRule_mutator(Node *node,
 		Query	   *newnode;
 
 		FLATCOPY(newnode, query, Query);
-		MUTATE(newnode->targetList, query->targetList, List *,
-			   HandleRIRAttributeRule_mutator, context);
-		MUTATE(newnode->jointree, query->jointree, FromExpr *,
-			   HandleRIRAttributeRule_mutator, context);
-		MUTATE(newnode->havingQual, query->havingQual, Node *,
-			   HandleRIRAttributeRule_mutator, context);
-
-
+		context->sublevels_up++;
+		query_tree_mutator(newnode, HandleRIRAttributeRule_mutator,
+						   context, true);
+		context->sublevels_up--;
 		return (Node *) newnode;
 	}
 	return expression_tree_mutator(node, HandleRIRAttributeRule_mutator,
@@ -882,15 +881,8 @@ HandleRIRAttributeRule(Query *parsetree,
 	context.badsql = badsql;
 	context.sublevels_up = 0;
 
-	parsetree->targetList = (List *)
-		HandleRIRAttributeRule_mutator((Node *) parsetree->targetList,
-									   &context);
-	parsetree->jointree = (FromExpr *)
-		HandleRIRAttributeRule_mutator((Node *) parsetree->jointree,
-									   &context);
-	parsetree->havingQual =
-		HandleRIRAttributeRule_mutator(parsetree->havingQual,
-									   &context);
+	query_tree_mutator(parsetree, HandleRIRAttributeRule_mutator,
+					   (void *) &context, true);
 }
 
 #endif /* NOT_USED */

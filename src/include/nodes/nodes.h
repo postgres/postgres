@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nodes.h,v 1.77 2000/09/29 18:21:38 tgl Exp $
+ * $Id: nodes.h,v 1.78 2000/10/05 19:11:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -45,7 +45,7 @@ typedef enum NodeTag
 	T_Agg,
 	T_Unique,
 	T_Hash,
-	T_Choose_XXX,				/* not used anymore; this tag# is available */
+	T_SetOp,
 	T_Group,
 	T_SubPlan,
 	T_TidScan,
@@ -121,6 +121,7 @@ typedef enum NodeTag
 	T_HashState,
 	T_TidScanState,
 	T_SubqueryScanState,
+	T_SetOpState,
 
 	/*---------------------
 	 * TAGS FOR MEMORY NODES (memnodes.h)
@@ -141,7 +142,7 @@ typedef enum NodeTag
 	T_Null,
 
 	/*---------------------
-	 * TAGS FOR PARSE TREE NODES (parsenode.h)
+	 * TAGS FOR PARSE TREE NODES (parsenodes.h)
 	 *---------------------
 	 */
 	T_Query = 600,
@@ -150,7 +151,7 @@ typedef enum NodeTag
 	T_UpdateStmt,
 	T_SelectStmt,
 	T_AlterTableStmt,
-	T_AggregateStmtXXX,			/* not used anymore; this tag# is available */
+	T_SetOperationStmt,
 	T_ChangeACLStmt,
 	T_ClosePortalStmt,
 	T_ClusterStmt,

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.68 2000/09/29 18:21:36 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.69 2000/10/05 19:11:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -347,7 +347,8 @@ transformTableEntry(ParseState *pstate, RangeVar *r)
 static RangeTblRef *
 transformRangeSubselect(ParseState *pstate, RangeSubselect *r)
 {
-	SelectStmt *subquery = (SelectStmt *) r->subquery;
+	List	   *save_rtable;
+	List	   *save_joinlist;
 	List	   *parsetrees;
 	Query	   *query;
 	RangeTblEntry *rte;
@@ -362,19 +363,21 @@ transformRangeSubselect(ParseState *pstate, RangeSubselect *r)
 		elog(ERROR, "sub-select in FROM must have an alias");
 
 	/*
-	 * subquery node might not be SelectStmt if user wrote something like
-	 * FROM (SELECT ... UNION SELECT ...).  Our current implementation of
-	 * UNION/INTERSECT/EXCEPT is too messy to deal with here, so punt until
-	 * we redesign querytrees to make it more reasonable.
+	 * Analyze and transform the subquery.  This is a bit tricky because
+	 * we don't want the subquery to be able to see any FROM items already
+	 * created in the current query (per SQL92, the scope of a FROM item
+	 * does not include other FROM items).  But it does need to be able to
+	 * see any further-up parent states, so we can't just pass a null parent
+	 * pstate link.  So, temporarily make the current query level have an
+	 * empty rtable and joinlist.
 	 */
-	if (subquery == NULL || !IsA(subquery, SelectStmt))
-		elog(ERROR, "Set operations not yet supported in subselects in FROM");
-
-	/*
-	 * Analyze and transform the subquery as if it were an independent
-	 * statement (we do NOT want it to see the outer query as a parent).
-	 */
-	parsetrees = parse_analyze(makeList1(subquery), NULL);
+	save_rtable = pstate->p_rtable;
+	save_joinlist = pstate->p_joinlist;
+	pstate->p_rtable = NIL;
+	pstate->p_joinlist = NIL;
+	parsetrees = parse_analyze(makeList1(r->subquery), pstate);
+	pstate->p_rtable = save_rtable;
+	pstate->p_joinlist = save_joinlist;
 
 	/*
 	 * Check that we got something reasonable.  Some of these conditions
@@ -1181,108 +1184,3 @@ exprIsInSortList(Node *expr, List *sortList, List *targetList)
 	}
 	return false;
 }
-
-/* transformUnionClause()
- * Transform a UNION clause.
- * Note that the union clause is actually a fully-formed select structure.
- * So, it is evaluated as a select, then the resulting target fields
- *	are matched up to ensure correct types in the results.
- * The select clause parsing is done recursively, so the unions are evaluated
- *	right-to-left. One might want to look at all columns from all clauses before
- *	trying to coerce, but unless we keep track of the call depth we won't know
- *	when to do this because of the recursion.
- * Let's just try matching in pairs for now (right to left) and see if it works.
- * - thomas 1998-05-22
- */
-#ifdef NOT_USED
-static List *
-transformUnionClause(List *unionClause, List *targetlist)
-{
-	List	   *union_list = NIL;
-	List	   *qlist,
-			   *qlist_item;
-
-	if (unionClause)
-	{
-		/* recursion */
-		qlist = parse_analyze(unionClause, NULL);
-
-		foreach(qlist_item, qlist)
-		{
-			Query	   *query = (Query *) lfirst(qlist_item);
-			List	   *prev_target = targetlist;
-			List	   *next_target;
-			int			prev_len = 0,
-						next_len = 0;
-
-			foreach(prev_target, targetlist)
-				if (!((TargetEntry *) lfirst(prev_target))->resdom->resjunk)
-				prev_len++;
-
-			foreach(next_target, query->targetList)
-				if (!((TargetEntry *) lfirst(next_target))->resdom->resjunk)
-				next_len++;
-
-			if (prev_len != next_len)
-				elog(ERROR, "Each UNION clause must have the same number of columns");
-
-			foreach(next_target, query->targetList)
-			{
-				Oid			itype;
-				Oid			otype;
-
-				otype = ((TargetEntry *) lfirst(prev_target))->resdom->restype;
-				itype = ((TargetEntry *) lfirst(next_target))->resdom->restype;
-
-				/* one or both is a NULL column? then don't convert... */
-				if (otype == InvalidOid)
-				{
-					/* propagate a known type forward, if available */
-					if (itype != InvalidOid)
-						((TargetEntry *) lfirst(prev_target))->resdom->restype = itype;
-#if FALSE
-					else
-					{
-						((TargetEntry *) lfirst(prev_target))->resdom->restype = UNKNOWNOID;
-						((TargetEntry *) lfirst(next_target))->resdom->restype = UNKNOWNOID;
-					}
-#endif
-				}
-				else if (itype == InvalidOid)
-				{
-				}
-				/* they don't match in type? then convert... */
-				else if (itype != otype)
-				{
-					Node	   *expr;
-
-					expr = ((TargetEntry *) lfirst(next_target))->expr;
-					expr = CoerceTargetExpr(NULL, expr, itype, otype, -1);
-					if (expr == NULL)
-					{
-						elog(ERROR, "Unable to transform %s to %s"
-							 "\n\tEach UNION clause must have compatible target types",
-							 typeidTypeName(itype),
-							 typeidTypeName(otype));
-					}
-					((TargetEntry *) lfirst(next_target))->expr = expr;
-					((TargetEntry *) lfirst(next_target))->resdom->restype = otype;
-				}
-
-				/* both are UNKNOWN? then evaluate as text... */
-				else if (itype == UNKNOWNOID)
-				{
-					((TargetEntry *) lfirst(next_target))->resdom->restype = TEXTOID;
-					((TargetEntry *) lfirst(prev_target))->resdom->restype = TEXTOID;
-				}
-				prev_target = lnext(prev_target);
-			}
-			union_list = lappend(union_list, query);
-		}
-		return union_list;
-	}
-	else
-		return NIL;
-}
-
-#endif

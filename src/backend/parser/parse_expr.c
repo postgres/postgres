@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.84 2000/09/29 18:21:36 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.85 2000/10/05 19:11:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -412,9 +412,9 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 			{
 				CaseExpr   *c = (CaseExpr *) expr;
 				CaseWhen   *w;
+				List	   *typeids = NIL;
 				List	   *args;
 				Oid			ptype;
-				CATEGORY	pcategory;
 
 				/* transform the list of arguments */
 				foreach(args, c->args)
@@ -432,6 +432,7 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 						w->expr = (Node *) a;
 					}
 					lfirst(args) = transformExpr(pstate, (Node *) w, precedence);
+					typeids = lappendi(typeids, exprType(w->result));
 				}
 
 				/*
@@ -452,104 +453,26 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 					c->defresult = (Node *) n;
 				}
 				c->defresult = transformExpr(pstate, c->defresult, precedence);
+				/*
+				 * Note: default result is considered the most significant
+				 * type in determining preferred type.  This is how the code
+				 * worked before, but it seems a little bogus to me --- tgl
+				 */
+				typeids = lconsi(exprType(c->defresult), typeids);
 
-				/* now check types across result clauses... */
-				c->casetype = exprType(c->defresult);
-				ptype = c->casetype;
-				pcategory = TypeCategory(ptype);
-				foreach(args, c->args)
-				{
-					Oid			wtype;
-
-					w = lfirst(args);
-					wtype = exprType(w->result);
-					/* move on to next one if no new information... */
-					if (wtype && (wtype != UNKNOWNOID)
-						&& (wtype != ptype))
-					{
-						if (!ptype || ptype == UNKNOWNOID)
-						{
-							/* so far, only nulls so take anything... */
-							ptype = wtype;
-							pcategory = TypeCategory(ptype);
-						}
-						else if ((TypeCategory(wtype) != pcategory)
-								 || ((TypeCategory(wtype) == USER_TYPE)
-							&& (TypeCategory(c->casetype) == USER_TYPE)))
-						{
-
-							/*
-							 * both types in different categories? then
-							 * not much hope...
-							 */
-							elog(ERROR, "CASE/WHEN types '%s' and '%s' not matched",
-								 typeidTypeName(c->casetype), typeidTypeName(wtype));
-						}
-						else if (IsPreferredType(pcategory, wtype)
-								 && can_coerce_type(1, &ptype, &wtype))
-						{
-
-							/*
-							 * new one is preferred and can convert? then
-							 * take it...
-							 */
-							ptype = wtype;
-							pcategory = TypeCategory(ptype);
-						}
-					}
-				}
+				ptype = select_common_type(typeids, "CASE");
+				c->casetype = ptype;
 
 				/* Convert default result clause, if necessary */
-				if (c->casetype != ptype)
-				{
-					if (!c->casetype || c->casetype == UNKNOWNOID)
-					{
+				c->defresult = coerce_to_common_type(pstate, c->defresult,
+													 ptype, "CASE/ELSE");
 
-						/*
-						 * default clause is NULL, so assign preferred
-						 * type from WHEN clauses...
-						 */
-						c->casetype = ptype;
-					}
-					else if (can_coerce_type(1, &c->casetype, &ptype))
-					{
-						c->defresult = coerce_type(pstate, c->defresult,
-												 c->casetype, ptype, -1);
-						c->casetype = ptype;
-					}
-					else
-					{
-						elog(ERROR, "CASE/ELSE unable to convert to type '%s'",
-							 typeidTypeName(ptype));
-					}
-				}
-
-				/* Convert when clauses, if not null and if necessary */
+				/* Convert when-clause results, if necessary */
 				foreach(args, c->args)
 				{
-					Oid			wtype;
-
 					w = lfirst(args);
-					wtype = exprType(w->result);
-
-					/*
-					 * only bother with conversion if not NULL and
-					 * different type...
-					 */
-					if (wtype && (wtype != UNKNOWNOID)
-						&& (wtype != ptype))
-					{
-						if (can_coerce_type(1, &wtype, &ptype))
-						{
-							w->result = coerce_type(pstate, w->result, wtype,
-													ptype, -1);
-						}
-						else
-						{
-							elog(ERROR, "CASE/WHEN unable to convert to type '%s'",
-								 typeidTypeName(ptype));
-						}
-					}
+					w->result = coerce_to_common_type(pstate, w->result,
+													  ptype, "CASE/WHEN");
 				}
 
 				result = expr;
@@ -560,7 +483,7 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 			{
 				CaseWhen   *w = (CaseWhen *) expr;
 
-				w->expr = transformExpr(pstate, (Node *) w->expr, precedence);
+				w->expr = transformExpr(pstate, w->expr, precedence);
 				if (exprType(w->expr) != BOOLOID)
 					elog(ERROR, "WHEN clause must have a boolean result");
 
@@ -575,7 +498,7 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 					n->val.type = T_Null;
 					w->result = (Node *) n;
 				}
-				w->result = transformExpr(pstate, (Node *) w->result, precedence);
+				w->result = transformExpr(pstate, w->result, precedence);
 				result = expr;
 				break;
 			}

@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planmain.c,v 1.60 2000/09/29 18:21:33 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planmain.c,v 1.61 2000/10/05 19:11:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -174,8 +174,6 @@ subplanner(Query *root,
 	List	   *brel;
 	RelOptInfo *final_rel;
 	Plan	   *resultplan;
-	MemoryContext mycontext;
-	MemoryContext oldcxt;
 	Path	   *cheapestpath;
 	Path	   *presortedpath;
 
@@ -226,24 +224,6 @@ subplanner(Query *root,
 	 * form.
 	 */
 	root->query_pathkeys = canonicalize_pathkeys(root, root->query_pathkeys);
-
-	/*
-	 * We might allocate quite a lot of storage during planning (due to
-	 * constructing lots of Paths), but all of it can be reclaimed after
-	 * we generate the finished Plan tree.  Work in a temporary context
-	 * to let that happen.  We make the context a child of
-	 * TransactionCommandContext so it will be freed if error abort.
-	 *
-	 * Note: beware of trying to move this up to the start of this routine.
-	 * Some of the data structures built above --- notably the pathkey
-	 * equivalence sets --- will still be needed after this routine exits.
-	 */
-	mycontext = AllocSetContextCreate(TransactionCommandContext,
-									  "Planner",
-									  ALLOCSET_DEFAULT_MINSIZE,
-									  ALLOCSET_DEFAULT_INITSIZE,
-									  ALLOCSET_DEFAULT_MAXSIZE);
-	oldcxt = MemoryContextSwitchTo(mycontext);
 
 	/*
 	 * Ready to do the primary planning.
@@ -354,26 +334,6 @@ subplanner(Query *root,
 	resultplan = create_plan(root, cheapestpath);
 
 plan_built:
-
-	/*
-	 * Must copy the completed plan tree and its pathkeys out of temporary
-	 * context.  We also have to copy the rtable in case it contains any
-	 * subqueries.  (If it does, they'll have been modified during the
-	 * recursive invocation of planner.c, and hence will contain substructure
-	 * allocated in my temporary context...)
-	 */
-	MemoryContextSwitchTo(oldcxt);
-
-	resultplan = copyObject(resultplan);
-
-	root->query_pathkeys = copyObject(root->query_pathkeys);
-
-	root->rtable = copyObject(root->rtable);
-
-	/*
-	 * Now we can release the Path storage.
-	 */
-	MemoryContextDelete(mycontext);
 
 	return resultplan;
 }

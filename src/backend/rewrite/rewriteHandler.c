@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.81 2000/09/29 18:21:24 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.82 2000/10/05 19:11:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,12 +44,7 @@ static List *adjustJoinTreeList(Query *parsetree, int rt_index, bool *found);
 static List *matchLocks(CmdType event, RuleLock *rulelocks,
 						int varno, Query *parsetree);
 static Query *fireRIRrules(Query *parsetree);
-static Query *Except_Intersect_Rewrite(Query *parsetree);
-static void check_targetlists_are_compatible(List *prev_target,
-								 List *current_target);
-static void create_intersect_list(Node *ptr, List **intersect_list);
-static Node *intersect_tree_analyze(Node *tree, Node *first_select,
-					   Node *parsetree);
+
 
 /*
  * gatherRewriteMeta -
@@ -462,7 +457,8 @@ fireRIRrules(Query *parsetree)
 	 * Recurse into sublink subqueries, too.
 	 */
 	if (parsetree->hasSubLinks)
-		query_tree_walker(parsetree, fireRIRonSubLink, NULL);
+		query_tree_walker(parsetree, fireRIRonSubLink, NULL,
+						  false /* already handled the ones in rtable */);
 
 	/*
 	 * If the query was marked having aggregates, check if this is
@@ -856,7 +852,7 @@ deepRewriteQuery(Query *parsetree)
 
 
 /*
- * QueryOneRewrite -
+ * QueryRewriteOne -
  *	  rewrite one query
  */
 static List *
@@ -872,17 +868,20 @@ QueryRewriteOne(Query *parsetree)
 
 
 /*
- * BasicQueryRewrite -
- *	  rewrite one query via query rewrite system, possibly returning 0
- *	  or many queries
+ * QueryRewrite -
+ *	  Primary entry point to the query rewriter.
+ *	  Rewrite one query via query rewrite system, possibly returning 0
+ *	  or many queries.
+ *
+ * NOTE: The code in QueryRewrite was formerly in pg_parse_and_plan(), and was
+ * moved here so that it would be invoked during EXPLAIN.
  */
-static List *
-BasicQueryRewrite(Query *parsetree)
+List *
+QueryRewrite(Query *parsetree)
 {
 	List	   *querylist;
 	List	   *results = NIL;
 	List	   *l;
-	Query	   *query;
 
 	/*
 	 * Step 1
@@ -898,550 +897,41 @@ BasicQueryRewrite(Query *parsetree)
 	 */
 	foreach(l, querylist)
 	{
-		query = fireRIRrules((Query *) lfirst(l));
+		Query   *query = (Query *) lfirst(l);
+
+		query = fireRIRrules(query);
+
+		/*
+		 * If the query target was rewritten as a view, complain.
+		 */
+		if (query->resultRelation)
+		{
+			RangeTblEntry *rte = rt_fetch(query->resultRelation,
+										  query->rtable);
+
+			if (rte->subquery)
+			{
+				switch (query->commandType)
+				{
+					case CMD_INSERT:
+						elog(ERROR, "Cannot insert into a view without an appropriate rule");
+						break;
+					case CMD_UPDATE:
+						elog(ERROR, "Cannot update a view without an appropriate rule");
+						break;
+					case CMD_DELETE:
+						elog(ERROR, "Cannot delete from a view without an appropriate rule");
+						break;
+					default:
+						elog(ERROR, "QueryRewrite: unexpected commandType %d",
+							 (int) query->commandType);
+						break;
+				}
+			}
+		}
+
 		results = lappend(results, query);
 	}
 
 	return results;
-}
-
-/*
- * QueryRewrite -
- *	  Primary entry point to the query rewriter.
- *	  Rewrite one query via query rewrite system, possibly returning 0
- *	  or many queries.
- *
- * NOTE: The code in QueryRewrite was formerly in pg_parse_and_plan(), and was
- * moved here so that it would be invoked during EXPLAIN.  The division of
- * labor between this routine and BasicQueryRewrite is not obviously correct
- * ... at least not to me ... tgl 5/99.
- */
-List *
-QueryRewrite(Query *parsetree)
-{
-	List	   *rewritten,
-			   *rewritten_item;
-
-	/*
-	 * Rewrite Union, Intersect and Except Queries to normal Union Queries
-	 * using IN and NOT IN subselects
-	 */
-	if (parsetree->intersectClause)
-		parsetree = Except_Intersect_Rewrite(parsetree);
-
-	/* Rewrite basic queries (retrieve, append, delete, replace) */
-	rewritten = BasicQueryRewrite(parsetree);
-
-	/*
-	 * Rewrite the UNIONS.
-	 */
-	foreach(rewritten_item, rewritten)
-	{
-		Query	   *qry = (Query *) lfirst(rewritten_item);
-		List	   *union_result = NIL;
-		List	   *union_item;
-
-		foreach(union_item, qry->unionClause)
-		{
-			union_result = nconc(union_result,
-						BasicQueryRewrite((Query *) lfirst(union_item)));
-		}
-		qry->unionClause = union_result;
-	}
-
-	return rewritten;
-}
-
-/* This function takes two targetlists as arguments and checks if the
- * targetlists are compatible (i.e. both select for the same number of
- * attributes and the types are compatible */
-static void
-check_targetlists_are_compatible(List *prev_target, List *current_target)
-{
-	List	   *tl;
-	int			prev_len = 0,
-				next_len = 0;
-
-	foreach(tl, prev_target)
-		if (!((TargetEntry *) lfirst(tl))->resdom->resjunk)
-			prev_len++;
-
-	foreach(tl, current_target)
-		if (!((TargetEntry *) lfirst(tl))->resdom->resjunk)
-			next_len++;
-
-	if (prev_len != next_len)
-		elog(ERROR, "Each UNION | EXCEPT | INTERSECT query must have the same number of columns.");
-
-	foreach(tl, current_target)
-	{
-		TargetEntry	   *next_tle = (TargetEntry *) lfirst(tl);
-		TargetEntry	   *prev_tle;
-		Oid				itype;
-		Oid				otype;
-
-		if (next_tle->resdom->resjunk)
-			continue;
-
-		/* This loop must find an entry, since we counted them above. */
-		do
-		{
-			prev_tle = (TargetEntry *) lfirst(prev_target);
-			prev_target = lnext(prev_target);
-		} while (prev_tle->resdom->resjunk);
-
-		itype = next_tle->resdom->restype;
-		otype = prev_tle->resdom->restype;
-
-		/* one or both is a NULL column? then don't convert... */
-		if (otype == InvalidOid)
-		{
-			/* propagate a known type forward, if available */
-			if (itype != InvalidOid)
-				prev_tle->resdom->restype = itype;
-#ifdef NOT_USED
-			else
-			{
-				prev_tle->resdom->restype = UNKNOWNOID;
-				next_tle->resdom->restype = UNKNOWNOID;
-			}
-#endif
-		}
-		else if (itype == InvalidOid)
-		{
-		}
-		/* they don't match in type? then convert... */
-		else if (itype != otype)
-		{
-			Node	   *expr;
-
-			expr = next_tle->expr;
-			expr = CoerceTargetExpr(NULL, expr, itype, otype, -1);
-			if (expr == NULL)
-			{
-				elog(ERROR, "Unable to transform %s to %s"
-					 "\n\tEach UNION | EXCEPT | INTERSECT clause must have compatible target types",
-					 typeidTypeName(itype),
-					 typeidTypeName(otype));
-			}
-			next_tle->expr = expr;
-			next_tle->resdom->restype = otype;
-		}
-
-		/* both are UNKNOWN? then evaluate as text... */
-		else if (itype == UNKNOWNOID)
-		{
-			next_tle->resdom->restype = TEXTOID;
-			prev_tle->resdom->restype = TEXTOID;
-		}
-	}
-}
-
-/*
- * Rewrites UNION INTERSECT and EXCEPT queries to semantically equivalent
- * queries that use IN and NOT IN subselects.
- *
- * The operator tree is attached to 'intersectClause' (see rule
- * 'SelectStmt' in gram.y) of the 'parsetree' given as an
- * argument. First we remember some clauses (the sortClause, the
- * distinctClause etc.)  Then we translate the operator tree to DNF
- * (disjunctive normal form) by 'cnfify'. (Note that 'cnfify' produces
- * CNF but as we exchanged ANDs with ORs in function A_Expr_to_Expr()
- * earlier we get DNF after exchanging ANDs and ORs again in the
- * result.) Now we create a new query by evaluating the new operator
- * tree which is in DNF now. For every AND we create an entry in the
- * union list and for every OR we create an IN subselect. (NOT IN
- * subselects are created for OR NOT nodes). The first entry of the
- * union list is handed back but before that the remembered clauses
- * (sortClause etc) are attached to the new top Node (Note that the
- * new top Node can differ from the parsetree given as argument because of
- * the translation to DNF. That's why we have to remember the sortClause
- * and so on!)
- */
-static Query *
-Except_Intersect_Rewrite(Query *parsetree)
-{
-
-	SubLink    *n;
-	Query	   *result,
-			   *intersect_node;
-	List	   *elist,
-			   *intersect_list = NIL,
-			   *intersect,
-			   *intersectClause;
-	List	   *union_list = NIL,
-			   *sortClause,
-			   *distinctClause;
-	List	   *left_expr,
-			   *resnames = NIL;
-	char	   *op,
-			   *into;
-	bool		isBinary,
-				isPortal,
-				isTemp;
-	Node	   *limitOffset,
-			   *limitCount;
-	CmdType		commandType = CMD_SELECT;
-	RangeTblEntry *rtable_insert = NULL;
-	List	   *prev_target = NIL;
-
-	/*
-	 * Remember the Resnames of the given parsetree's targetlist (these
-	 * are the resnames of the first Select Statement of the query
-	 * formulated by the user and he wants the columns named by these
-	 * strings. The transformation to DNF can cause another Select
-	 * Statment to be the top one which uses other names for its columns.
-	 * Therefore we remember the original names and attach them to the
-	 * targetlist of the new topmost Node at the end of this function
-	 */
-	foreach(elist, parsetree->targetList)
-	{
-		TargetEntry *tent = (TargetEntry *) lfirst(elist);
-
-		if (! tent->resdom->resjunk)
-			resnames = lappend(resnames, tent->resdom->resname);
-	}
-
-	/*
-	 * If the Statement is an INSERT INTO ... (SELECT...) statement using
-	 * UNIONs, INTERSECTs or EXCEPTs and the transformation to DNF makes
-	 * another Node to the top node we have to transform the new top node
-	 * to an INSERT node and the original INSERT node to a SELECT node
-	 */
-	if (parsetree->commandType == CMD_INSERT)
-	{
-
-		/*
-		 * The result relation ( = the one to insert into) has to be
-		 * attached to the rtable list of the new top node
-		 */
-		rtable_insert = rt_fetch(parsetree->resultRelation, parsetree->rtable);
-
-		parsetree->commandType = CMD_SELECT;
-		commandType = CMD_INSERT;
-		parsetree->resultRelation = 0;
-	}
-
-	/*
-	 * Save some items, to be able to attach them to the resulting top
-	 * node at the end of the function
-	 */
-	sortClause = parsetree->sortClause;
-	distinctClause = parsetree->distinctClause;
-	into = parsetree->into;
-	isBinary = parsetree->isBinary;
-	isPortal = parsetree->isPortal;
-	isTemp = parsetree->isTemp;
-	limitOffset = parsetree->limitOffset;
-	limitCount = parsetree->limitCount;
-
-	/*
-	 * The operator tree attached to parsetree->intersectClause is still
-	 * 'raw' ( = the leaf nodes are still SelectStmt nodes instead of
-	 * Query nodes) So step through the tree and transform the nodes using
-	 * parse_analyze().
-	 *
-	 * The parsetree (given as an argument to Except_Intersect_Rewrite()) has
-	 * already been transformed and transforming it again would cause
-	 * troubles.  So we give the 'raw' version (of the cooked parsetree)
-	 * to the function to prevent an additional transformation. Instead we
-	 * hand back the 'cooked' version also given as an argument to
-	 * intersect_tree_analyze()
-	 */
-	intersectClause =
-		(List *) intersect_tree_analyze((Node *) parsetree->intersectClause,
-								 (Node *) lfirst(parsetree->unionClause),
-										(Node *) parsetree);
-
-	/* intersectClause is no longer needed so set it to NIL */
-	parsetree->intersectClause = NIL;
-
-	/*
-	 * unionClause will be needed later on but the list it delivered is no
-	 * longer needed, so set it to NIL
-	 */
-	parsetree->unionClause = NIL;
-
-	/*
-	 * Transform the operator tree to DNF (remember ANDs and ORs have been
-	 * exchanged, that's why we get DNF by using cnfify)
-	 *
-	 * After the call, explicit ANDs are removed and all AND operands are
-	 * simply items in the intersectClause list
-	 */
-	intersectClause = cnfify((Expr *) intersectClause, true);
-
-	/*
-	 * For every entry of the intersectClause list we generate one entry
-	 * in the union_list
-	 */
-	foreach(intersect, intersectClause)
-	{
-
-		/*
-		 * for every OR we create an IN subselect and for every OR NOT we
-		 * create a NOT IN subselect, so first extract all the Select
-		 * Query nodes from the tree (that contains only OR or OR NOTs any
-		 * more because we did a transformation to DNF
-		 *
-		 * There must be at least one node that is not negated (i.e. just OR
-		 * and not OR NOT) and this node will be the first in the list
-		 * returned
-		 */
-		intersect_list = NIL;
-		create_intersect_list((Node *) lfirst(intersect), &intersect_list);
-
-		/*
-		 * This one will become the Select Query node, all other nodes are
-		 * transformed into subselects under this node!
-		 */
-		intersect_node = (Query *) lfirst(intersect_list);
-		intersect_list = lnext(intersect_list);
-
-		/*
-		 * Check if all Select Statements use the same number of
-		 * attributes and if all corresponding attributes are of the same
-		 * type
-		 */
-		if (prev_target)
-			check_targetlists_are_compatible(prev_target, intersect_node->targetList);
-		prev_target = intersect_node->targetList;
-
-		/*
-		 * Transform all nodes remaining into subselects and add them to
-		 * the qualifications of the Select Query node
-		 */
-		while (intersect_list != NIL)
-		{
-
-			n = makeNode(SubLink);
-
-			/* Here we got an OR so transform it to an IN subselect */
-			if (IsA(lfirst(intersect_list), Query))
-			{
-
-				/*
-				 * Check if all Select Statements use the same number of
-				 * attributes and if all corresponding attributes are of
-				 * the same type
-				 */
-				check_targetlists_are_compatible(prev_target,
-						 ((Query *) lfirst(intersect_list))->targetList);
-
-				n->subselect = lfirst(intersect_list);
-				op = "=";
-				n->subLinkType = ANY_SUBLINK;
-				n->useor = false;
-			}
-
-			/*
-			 * Here we got an OR NOT node so transform it to a NOT IN
-			 * subselect
-			 */
-			else
-			{
-
-				/*
-				 * Check if all Select Statements use the same number of
-				 * attributes and if all corresponding attributes are of
-				 * the same type
-				 */
-				check_targetlists_are_compatible(prev_target,
-												 ((Query *) lfirst(((Expr *) lfirst(intersect_list))->args))->targetList);
-
-				n->subselect = (Node *) lfirst(((Expr *) lfirst(intersect_list))->args);
-				op = "<>";
-				n->subLinkType = ALL_SUBLINK;
-				n->useor = true;
-			}
-
-			/*
-			 * Prepare the lefthand side of the Sublinks: All the entries
-			 * of the targetlist must be (IN) or must not be (NOT IN) the
-			 * subselect
-			 */
-			n->lefthand = NIL;
-			foreach(elist, intersect_node->targetList)
-			{
-				TargetEntry *tent = (TargetEntry *) lfirst(elist);
-
-				if (! tent->resdom->resjunk)
-					n->lefthand = lappend(n->lefthand, tent->expr);
-			}
-
-			/*
-			 * Also prepare the list of Opers that must be used for the
-			 * comparisons (they depend on the specific datatypes
-			 * involved!)
-			 */
-			left_expr = n->lefthand;
-			n->oper = NIL;
-
-			foreach(elist, ((Query *) (n->subselect))->targetList)
-			{
-				TargetEntry *tent = (TargetEntry *) lfirst(elist);
-				Node	   *lexpr;
-				Operator	optup;
-				Form_pg_operator opform;
-				Oper	   *newop;
-
-				if (tent->resdom->resjunk)
-					continue;
-
-				lexpr = lfirst(left_expr);
-
-				optup = oper(op,
-							 exprType(lexpr),
-							 exprType(tent->expr),
-							 FALSE);
-				opform = (Form_pg_operator) GETSTRUCT(optup);
-
-				if (opform->oprresult != BOOLOID)
-					elog(ERROR, "parser: '%s' must return 'bool' to be used with quantified predicate subquery", op);
-
-				newop = makeOper(oprid(optup),	/* opno */
-								 InvalidOid,	/* opid */
-								 opform->oprresult);
-
-				n->oper = lappend(n->oper, newop);
-
-				left_expr = lnext(left_expr);
-			}
-
-			Assert(left_expr == NIL); /* should have used 'em all */
-
-			/*
-			 * If the Select Query node has aggregates in use add all the
-			 * subselects to the HAVING qual else to the WHERE qual
-			 */
-			if (intersect_node->hasAggs)
-				AddHavingQual(intersect_node, (Node *) n);
-			else
-				AddQual(intersect_node, (Node *) n);
-
-			/* Now we got sublinks */
-			intersect_node->hasSubLinks = true;
-			intersect_list = lnext(intersect_list);
-		}
-		intersect_node->intersectClause = NIL;
-		union_list = lappend(union_list, intersect_node);
-	}
-
-	/* The first entry to union_list is our new top node */
-	result = (Query *) lfirst(union_list);
-	/* attach the rest to unionClause */
-	result->unionClause = lnext(union_list);
-	/* Attach all the items remembered in the beginning of the function */
-	result->sortClause = sortClause;
-	result->distinctClause = distinctClause;
-	result->into = into;
-	result->isPortal = isPortal;
-	result->isBinary = isBinary;
-	result->isTemp = isTemp;
-	result->limitOffset = limitOffset;
-	result->limitCount = limitCount;
-
-	/*
-	 * The relation to insert into is attached to the range table of the
-	 * new top node
-	 */
-	if (commandType == CMD_INSERT)
-	{
-		result->rtable = lappend(result->rtable, rtable_insert);
-		result->resultRelation = length(result->rtable);
-		result->commandType = commandType;
-	}
-
-	/*
-	 * The resnames of the originally first SelectStatement are attached
-	 * to the new first SelectStatement
-	 */
-	foreach(elist, result->targetList)
-	{
-		TargetEntry *tent = (TargetEntry *) lfirst(elist);
-
-		if (tent->resdom->resjunk)
-			continue;
-
-		tent->resdom->resname = lfirst(resnames);
-		resnames = lnext(resnames);
-	}
-
-	return result;
-}
-
-/*
- * Create a list of nodes that are either Query nodes of NOT Expr
- * nodes followed by a Query node. The tree given in ptr contains at
- * least one non negated Query node. This node is attached to the
- * beginning of the list.
- */
-static void
-create_intersect_list(Node *ptr, List **intersect_list)
-{
-	List	   *arg;
-
-	if (IsA(ptr, Query))
-	{
-		/* The non negated node is attached at the beginning (lcons) */
-		*intersect_list = lcons(ptr, *intersect_list);
-		return;
-	}
-
-	if (IsA(ptr, Expr))
-	{
-		if (((Expr *) ptr)->opType == NOT_EXPR)
-		{
-			/* negated nodes are appended to the end (lappend) */
-			*intersect_list = lappend(*intersect_list, ptr);
-			return;
-		}
-		else
-		{
-			foreach(arg, ((Expr *) ptr)->args)
-				create_intersect_list(lfirst(arg), intersect_list);
-			return;
-		}
-		return;
-	}
-}
-
-/*
- * The nodes given in 'tree' are still 'raw' so 'cook' them using
- * parse_analyze().  The node given in first_select has already been cooked,
- * so don't transform it again but return a pointer to the previously cooked
- * version given in 'parsetree' instead.
- */
-static Node *
-intersect_tree_analyze(Node *tree, Node *first_select, Node *parsetree)
-{
-	Node	   *result = (Node *) NIL;
-	List	   *arg;
-
-	if (IsA(tree, SelectStmt))
-	{
-
-		/*
-		 * If we get to the tree given in first_select return parsetree
-		 * instead of performing parse_analyze()
-		 */
-		if (tree == first_select)
-			result = parsetree;
-		else
-		{
-			/* transform the 'raw' nodes to 'cooked' Query nodes */
-			List	   *qtree = parse_analyze(makeList1(tree), NULL);
-
-			result = (Node *) lfirst(qtree);
-		}
-	}
-
-	if (IsA(tree, Expr))
-	{
-		/* Call recursively for every argument of the node */
-		foreach(arg, ((Expr *) tree)->args)
-			lfirst(arg) = intersect_tree_analyze(lfirst(arg), first_select, parsetree);
-		result = tree;
-	}
-	return result;
 }

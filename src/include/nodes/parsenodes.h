@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsenodes.h,v 1.114 2000/09/29 18:21:38 tgl Exp $
+ * $Id: parsenodes.h,v 1.115 2000/10/05 19:11:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,7 +29,6 @@
  *
  * we need the isPortal flag because portal names can be null too; can
  * get rid of it if we support CURSOR as a commandType.
- *
  */
 typedef struct Query
 {
@@ -45,32 +44,31 @@ typedef struct Query
 	bool		isPortal;		/* is this a retrieve into portal? */
 	bool		isBinary;		/* binary portal? */
 	bool		isTemp;			/* is 'into' a temp table? */
-	bool		unionall;		/* union without unique sort */
+
 	bool		hasAggs;		/* has aggregates in tlist or havingQual */
 	bool		hasSubLinks;	/* has subquery SubLink */
 
 	List	   *rtable;			/* list of range table entries */
 	FromExpr   *jointree;		/* table join tree (FROM and WHERE clauses) */
 
-	List	   *targetList;		/* target list (of TargetEntry) */
-
 	List	   *rowMarks;		/* integer list of RT indexes of relations
 								 * that are selected FOR UPDATE */
 
-	List	   *distinctClause; /* a list of SortClause's */
-
-	List	   *sortClause;		/* a list of SortClause's */
+	List	   *targetList;		/* target list (of TargetEntry) */
 
 	List	   *groupClause;	/* a list of GroupClause's */
 
 	Node	   *havingQual;		/* qualifications applied to groups */
 
-	List	   *intersectClause;
-	List	   *unionClause;	/* unions are linked under the previous
-								 * query */
+	List	   *distinctClause; /* a list of SortClause's */
+
+	List	   *sortClause;		/* a list of SortClause's */
 
 	Node	   *limitOffset;	/* # of result tuples to skip */
 	Node	   *limitCount;		/* # of result tuples to return */
+
+	Node	   *setOperations;	/* set-operation tree if this is top level
+								 * of a UNION/INTERSECT/EXCEPT query */
 
 	/* internal to planner */
 	List	   *base_rel_list;	/* list of base-relation RelOptInfos */
@@ -785,19 +783,14 @@ typedef struct InsertStmt
 {
 	NodeTag		type;
 	char	   *relname;		/* relation to insert into */
-	List	   *distinctClause; /* NULL, list of DISTINCT ON exprs, or
-								 * lcons(NIL,NIL) for all (SELECT
-								 * DISTINCT) */
-	List	   *cols;			/* names of the columns */
+	List	   *cols;			/* optional: names of the target columns */
+	/*
+	 * An INSERT statement has *either* VALUES or SELECT, never both.
+	 * If VALUES, a targetList is supplied (empty for DEFAULT VALUES).
+	 * If SELECT, a complete SelectStmt (or SetOperation tree) is supplied.
+	 */
 	List	   *targetList;		/* the target list (of ResTarget) */
-	List	   *fromClause;		/* the from clause */
-	Node	   *whereClause;	/* qualifications */
-	List	   *groupClause;	/* GROUP BY clauses */
-	Node	   *havingClause;	/* having conditional-expression */
-	List	   *unionClause;	/* union subselect parameters */
-	bool		unionall;		/* union without unique sort */
-	List	   *intersectClause;
-	List	   *forUpdate;		/* FOR UPDATE clause */
+	Node	   *selectStmt;		/* the source SELECT */
 } InsertStmt;
 
 /* ----------------------
@@ -842,19 +835,49 @@ typedef struct SelectStmt
 	Node	   *whereClause;	/* qualifications */
 	List	   *groupClause;	/* GROUP BY clauses */
 	Node	   *havingClause;	/* having conditional-expression */
-	List	   *intersectClause;
-	List	   *exceptClause;
-
-	List	   *unionClause;	/* union subselect parameters */
 	List	   *sortClause;		/* sort clause (a list of SortGroupBy's) */
 	char	   *portalname;		/* the portal (cursor) to create */
 	bool		binary;			/* a binary (internal) portal? */
 	bool		istemp;			/* into is a temp table */
-	bool		unionall;		/* union without unique sort */
 	Node	   *limitOffset;	/* # of result tuples to skip */
 	Node	   *limitCount;		/* # of result tuples to return */
 	List	   *forUpdate;		/* FOR UPDATE clause */
 } SelectStmt;
+
+/* ----------------------
+ *		Select Statement with Set Operations
+ *
+ * UNION/INTERSECT/EXCEPT operations are represented in the output of gram.y
+ * as a tree whose leaves are SelectStmts and internal nodes are
+ * SetOperationStmts.  The statement-wide info (ORDER BY, etc clauses)
+ * is placed in the leftmost SelectStmt leaf.
+ *
+ * After parse analysis, there is a top-level Query node containing the leaf
+ * SELECTs as subqueries in its range table.  Its setOperations field is the
+ * SetOperationStmt tree with leaf SelectStmt nodes replaced by RangeTblRef
+ * nodes.  The statement-wide options such as ORDER BY are attached to this
+ * top-level Query.
+ * ----------------------
+ */
+typedef enum SetOperation
+{
+	SETOP_UNION,
+	SETOP_INTERSECT,
+	SETOP_EXCEPT
+} SetOperation;
+
+typedef struct SetOperationStmt
+{
+	NodeTag		type;
+	SetOperation op;			/* type of set op */
+	bool		all;			/* ALL specified? */
+	Node	   *larg;			/* left child */
+	Node	   *rarg;			/* right child */
+	/* Eventually add fields for CORRESPONDING spec here */
+
+	/* This field is filled in during parse analysis: */
+	List	   *colTypes;		/* integer list of OIDs of output column types */
+} SetOperationStmt;
 
 /****************************************************************************
  *	Supporting data structures for Parse Trees

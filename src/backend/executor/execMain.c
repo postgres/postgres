@@ -27,7 +27,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.128 2000/09/29 18:21:28 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.129 2000/10/05 19:11:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -463,7 +463,6 @@ ExecCheckPlanPerms(Plan *plan, List *rangeTable, CmdType operation)
 					/* Append implements expansion of inheritance */
 					ExecCheckRTPerms(app->inheritrtable, operation);
 
-					/* Check appended plans w/outer rangetable */
 					foreach(appendplans, app->appendplans)
 					{
 						ExecCheckPlanPerms((Plan *) lfirst(appendplans),
@@ -474,15 +473,11 @@ ExecCheckPlanPerms(Plan *plan, List *rangeTable, CmdType operation)
 				else
 				{
 					/* Append implements UNION, which must be a SELECT */
-					List	   *rtables = app->unionrtables;
-
-					/* Check appended plans with their rangetables */
 					foreach(appendplans, app->appendplans)
 					{
 						ExecCheckPlanPerms((Plan *) lfirst(appendplans),
-										   (List *) lfirst(rtables),
+										   rangeTable,
 										   CMD_SELECT);
-						rtables = lnext(rtables);
 					}
 				}
 				break;

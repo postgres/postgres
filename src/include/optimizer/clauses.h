@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: clauses.h,v 1.40 2000/09/29 18:21:40 tgl Exp $
+ * $Id: clauses.h,v 1.41 2000/10/05 19:11:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -75,7 +75,9 @@ extern bool expression_tree_walker(Node *node, bool (*walker) (),
 extern Node *expression_tree_mutator(Node *node, Node *(*mutator) (),
 									 void *context);
 extern bool query_tree_walker(Query *query, bool (*walker) (),
-							  void *context);
+							  void *context, bool visitQueryRTEs);
+extern void query_tree_mutator(Query *query, Node *(*mutator) (),
+							   void *context, bool visitQueryRTEs);
 
 #define is_subplan(clause)	((clause) != NULL && \
 							 IsA(clause, Expr) && \

@@ -3,12 +3,16 @@
  * nodeSubqueryscan.c
  *	  Support routines for scanning subqueries (subselects in rangetable).
  *
+ * This is just enough different from sublinks (nodeSubplan.c) to mean that
+ * we need two sets of code.  Ought to look at trying to unify the cases.
+ *
+ *
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSubqueryscan.c,v 1.1 2000/09/29 18:21:29 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSubqueryscan.c,v 1.2 2000/10/05 19:11:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -49,9 +53,7 @@ SubqueryNext(SubqueryScan *node)
 	SubqueryScanState *subquerystate;
 	EState	   *estate;
 	ScanDirection direction;
-	int			execdir;
 	TupleTableSlot *slot;
-	Const		countOne;
 
 	/* ----------------
 	 *	get information from the estate and scan state
@@ -60,7 +62,6 @@ SubqueryNext(SubqueryScan *node)
 	estate = node->scan.plan.state;
 	subquerystate = (SubqueryScanState *) node->scan.scanstate;
 	direction = estate->es_direction;
-	execdir = ScanDirectionIsBackward(direction) ? EXEC_BACK : EXEC_FOR;
 	slot = subquerystate->csstate.css_ScanTupleSlot;
 
 	/*
@@ -85,25 +86,13 @@ SubqueryNext(SubqueryScan *node)
 		return (slot);
 	}
 
-	memset(&countOne, 0, sizeof(countOne));
-	countOne.type = T_Const;
-	countOne.consttype = INT4OID;
-	countOne.constlen = sizeof(int4);
-	countOne.constvalue = Int32GetDatum(1);
-	countOne.constisnull = false;
-	countOne.constbyval = true;
-	countOne.constisset = false;
-	countOne.constiscast = false;
-
 	/* ----------------
 	 *	get the next tuple from the sub-query
 	 * ----------------
 	 */
-	slot = ExecutorRun(subquerystate->sss_SubQueryDesc,
-					   subquerystate->sss_SubEState,
-					   execdir,
-					   NULL,	/* offset */
-					   (Node *) &countOne);
+	subquerystate->sss_SubEState->es_direction = direction;
+
+	slot = ExecProcNode(node->subplan, node->subplan);
 
 	subquerystate->csstate.css_ScanTupleSlot = slot;
 
@@ -139,6 +128,7 @@ ExecInitSubqueryScan(SubqueryScan *node, EState *estate, Plan *parent)
 {
 	SubqueryScanState *subquerystate;
 	RangeTblEntry *rte;
+	EState	   *sp_estate;
 
 	/* ----------------
 	 *	SubqueryScan should not have any "normal" children.
@@ -177,18 +167,25 @@ ExecInitSubqueryScan(SubqueryScan *node, EState *estate, Plan *parent)
 
 	/* ----------------
 	 *	initialize subquery
+	 *
+	 *	This should agree with ExecInitSubPlan
 	 * ----------------
 	 */
 	rte = rt_fetch(node->scan.scanrelid, estate->es_range_table);
 	Assert(rte->subquery != NULL);
 
-	subquerystate->sss_SubQueryDesc = CreateQueryDesc(rte->subquery,
-													  node->subplan,
-													  None);
-	subquerystate->sss_SubEState = CreateExecutorState();
+	sp_estate = CreateExecutorState();
+	subquerystate->sss_SubEState = sp_estate;
 
-	ExecutorStart(subquerystate->sss_SubQueryDesc,
-				  subquerystate->sss_SubEState);
+	sp_estate->es_range_table = rte->subquery->rtable;
+	sp_estate->es_param_list_info = estate->es_param_list_info;
+	sp_estate->es_param_exec_vals = estate->es_param_exec_vals;
+	sp_estate->es_tupleTable =
+		ExecCreateTupleTable(ExecCountSlotsNode(node->subplan) + 10);
+	sp_estate->es_snapshot = estate->es_snapshot;
+
+	if (!ExecInitNode(node->subplan, sp_estate, NULL))
+		return false;
 
 	subquerystate->csstate.css_ScanTupleSlot = NULL;
 	subquerystate->csstate.cstate.cs_TupFromTlist = false;
@@ -247,10 +244,9 @@ ExecEndSubqueryScan(SubqueryScan *node)
 	 * close down subquery
 	 * ----------------
 	 */
-	ExecutorEnd(subquerystate->sss_SubQueryDesc,
-				subquerystate->sss_SubEState);
+	ExecEndNode(node->subplan, node->subplan);
 
-	/* XXX we seem to be leaking the querydesc and sub-EState... */
+	/* XXX we seem to be leaking the sub-EState and tuple table... */
 
 	subquerystate->csstate.css_ScanTupleSlot = NULL;
 
@@ -284,6 +280,7 @@ ExecSubqueryReScan(SubqueryScan *node, ExprContext *exprCtxt, Plan *parent)
 		return;
 	}
 
-	ExecReScan(node->subplan, NULL, NULL);
+	ExecReScan(node->subplan, NULL, node->subplan);
+
 	subquerystate->csstate.css_ScanTupleSlot = NULL;
 }

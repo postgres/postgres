@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: execAmi.c,v 1.52 2000/09/29 18:21:28 tgl Exp $
+ *	$Id: execAmi.c,v 1.53 2000/10/05 19:11:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,6 +42,7 @@
 #include "executor/nodeNestloop.h"
 #include "executor/nodeResult.h"
 #include "executor/nodeSeqscan.h"
+#include "executor/nodeSetOp.h"
 #include "executor/nodeSort.h"
 #include "executor/nodeSubplan.h"
 #include "executor/nodeSubqueryscan.h"
@@ -343,6 +344,10 @@ ExecReScan(Plan *node, ExprContext *exprCtxt, Plan *parent)
 
 		case T_Unique:
 			ExecReScanUnique((Unique *) node, exprCtxt, parent);
+			break;
+
+		case T_SetOp:
+			ExecReScanSetOp((SetOp *) node, exprCtxt, parent);
 			break;
 
 		case T_Sort:

@@ -1,27 +1,32 @@
 /*-------------------------------------------------------------------------
  *
  * prepunion.c
- *	  Routines to plan inheritance, union, and version queries
+ *	  Routines to plan set-operation and inheritance queries.  The filename
+ *	  is a leftover from a time when only UNIONs were handled.
  *
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepunion.c,v 1.53 2000/09/29 18:21:34 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepunion.c,v 1.54 2000/10/05 19:11:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
-#include <sys/types.h>
-
 #include "postgres.h"
 
+#include <sys/types.h>
+
+#include "catalog/pg_type.h"
+#include "nodes/makefuncs.h"
 #include "optimizer/clauses.h"
 #include "optimizer/plancat.h"
+#include "optimizer/planmain.h"
 #include "optimizer/planner.h"
 #include "optimizer/prep.h"
 #include "optimizer/tlist.h"
 #include "parser/parse_clause.h"
+#include "parser/parse_coerce.h"
 #include "parser/parsetree.h"
 #include "utils/lsyscache.h"
 
@@ -33,221 +38,398 @@ typedef struct
 	Oid			new_relid;
 } fix_parsetree_attnums_context;
 
+static Plan *recurse_set_operations(Node *setOp, Query *parse,
+									List *colTypes, int flag,
+									List *refnames_tlist);
+static Plan *generate_union_plan(SetOperationStmt *op, Query *parse,
+								 List *refnames_tlist);
+static Plan *generate_nonunion_plan(SetOperationStmt *op, Query *parse,
+									List *refnames_tlist);
+static List *recurse_union_children(Node *setOp, Query *parse,
+									SetOperationStmt *top_union,
+									List *refnames_tlist);
+static List *generate_setop_tlist(List *colTypes, int flag,
+								  List *input_tlist,
+								  List *refnames_tlist);
+static bool tlist_same_datatypes(List *tlist, List *colTypes);
 static void fix_parsetree_attnums(Index rt_index, Oid old_relid,
 					  Oid new_relid, Query *parsetree);
 static bool fix_parsetree_attnums_walker(Node *node,
 							 fix_parsetree_attnums_context *context);
 static RangeTblEntry *new_rangetable_entry(Oid new_relid,
 					 RangeTblEntry *old_entry);
-static Append *make_append(List *appendplans, List *unionrtables,
-			Index rt_index,
-			List *inheritrtable, List *tlist);
+static Append *make_append(List *appendplans, Index rt_index,
+						   List *inheritrtable, List *tlist);
 
 
 /*
- * plan_union_queries
+ * plan_set_operations
  *
- *	  Plans the queries for a given UNION.
+ *	  Plans the queries for a tree of set operations (UNION/INTERSECT/EXCEPT)
  *
- * Returns an Append plan that combines the results of the unioned queries.
- * Note that Append output is correct for UNION ALL, but caller still needs
- * to take care of sort/unique processing if it's a plain UNION.  We set or
- * clear the Query's fields so that the right things will happen back in
- * union_planner.  (This control structure is an unholy mess...)
+ * This routine only deals with the setOperations tree of the given query.
+ * Any top-level ORDER BY requested in parse->sortClause will be added on
+ * back in union_planner.
  */
 Plan *
-plan_union_queries(Query *parse)
+plan_set_operations(Query *parse)
 {
-	List	   *union_plans = NIL,
-			   *ulist,
-			   *union_all_queries,
-			   *union_rts,
-			   *last_union = NIL,
-			   *hold_sortClause = parse->sortClause;
-	bool		union_all_found = false,
-				union_found = false,
-				last_union_all_flag = false;
+	SetOperationStmt *topop = (SetOperationStmt *) parse->setOperations;
+	Node	   *node;
+	Query	   *leftmostQuery;
 
-	/*------------------------------------------------------------------
-	 *
-	 * Do we need to split up our unions because we have UNION and UNION
-	 * ALL?
-	 *
-	 * We are checking for the case of: SELECT 1 UNION SELECT 2 UNION SELECT
-	 * 3 UNION ALL SELECT 4 UNION ALL SELECT 5
-	 *
-	 * where we have to do a DISTINCT on the output of the first three
-	 * queries, then add the rest.	If they have used UNION and UNION ALL,
-	 * we grab all queries up to the last UNION query, make them their own
-	 * UNION with the owner as the first query in the list.  Then, we take
-	 * the remaining queries, which is UNION ALL, and add them to the list
-	 * of union queries.
-	 *
-	 * So the above query becomes:
-	 *
-	 *	Append Node
-	 *	{
-	 *		Sort and Unique
-	 *		{
-	 *			Append Node
-	 *			{
-	 *				SELECT 1		This is really a sub-UNION.
-	 *				unionClause		We run a DISTINCT on these.
-	 *				{
-	 *					SELECT 2
-	 *					SELECT 3
-	 *				}
-	 *			}
-	 *		}
-	 *		SELECT 4
-	 *		SELECT 5
-	 *	}
-	 *
-	 *---------------------------------------------------------------------
-	 */
-
-	foreach(ulist, parse->unionClause)
-	{
-		Query	   *union_query = lfirst(ulist);
-
-		if (union_query->unionall)
-			union_all_found = true;
-		else
-		{
-			union_found = true;
-			last_union = ulist;
-		}
-		last_union_all_flag = union_query->unionall;
-	}
-
-	/* Is this a simple one */
-	if (!union_all_found ||
-		!union_found ||
-	/* A trailing UNION negates the effect of earlier UNION ALLs */
-		!last_union_all_flag)
-	{
-		List	   *hold_unionClause = parse->unionClause;
-		double		tuple_fraction = -1.0;		/* default processing */
-
-		/* we will do sorting later, so don't do it now */
-		if (!union_all_found ||
-			!last_union_all_flag)
-		{
-			parse->sortClause = NIL;
-			parse->distinctClause = NIL;
-
-			/*
-			 * force lower-level planning to assume that all tuples will
-			 * be retrieved, even if it sees a LIMIT in the query node.
-			 */
-			tuple_fraction = 0.0;
-		}
-
-		parse->unionClause = NIL;		/* prevent recursion */
-		union_plans = lcons(union_planner(parse, tuple_fraction), NIL);
-		union_rts = lcons(parse->rtable, NIL);
-
-		foreach(ulist, hold_unionClause)
-		{
-			Query	   *union_query = lfirst(ulist);
-
-			/*
-			 * use subquery_planner here because the union'd queries have
-			 * not been preprocessed yet.  My goodness this is messy...
-			 */
-			union_plans = lappend(union_plans,
-								  subquery_planner(union_query,
-												   tuple_fraction));
-			union_rts = lappend(union_rts, union_query->rtable);
-		}
-	}
-	else
-	{
-
-		/*
-		 * We have mixed unions and non-unions
-		 *
-		 * We need to restructure this to put the UNIONs on their own so we
-		 * can do a DISTINCT.
-		 */
-
-		/* save off everthing past the last UNION */
-		union_all_queries = lnext(last_union);
-
-		/* clip off the list to remove the trailing UNION ALLs */
-		lnext(last_union) = NIL;
-
-		/*
-		 * Recursion, but UNION only. The last one is a UNION, so it will
-		 * not come here in recursion.
-		 *
-		 * XXX is it OK to pass default -1 to union_planner in this path, or
-		 * should we force a tuple_fraction value?
-		 */
-		union_plans = lcons(union_planner(parse, -1.0), NIL);
-		union_rts = lcons(parse->rtable, NIL);
-
-		/* Append the remaining UNION ALLs */
-		foreach(ulist, union_all_queries)
-		{
-			Query	   *union_all_query = lfirst(ulist);
-
-			/*
-			 * use subquery_planner here because the union'd queries have
-			 * not been preprocessed yet.  My goodness this is messy...
-			 */
-			union_plans = lappend(union_plans,
-								subquery_planner(union_all_query, -1.0));
-			union_rts = lappend(union_rts, union_all_query->rtable);
-		}
-	}
-
-	/* We have already split UNION and UNION ALL and we made it consistent */
-	if (!last_union_all_flag)
-	{
-
-		/*
-		 * Need SELECT DISTINCT behavior to implement UNION. Put back the
-		 * held sortClause, add any missing columns to the sort clause,
-		 * and set distinctClause properly.
-		 */
-		List	   *slitem;
-
-		parse->sortClause = addAllTargetsToSortList(hold_sortClause,
-													parse->targetList);
-		parse->distinctClause = NIL;
-		foreach(slitem, parse->sortClause)
-		{
-			SortClause *scl = (SortClause *) lfirst(slitem);
-			TargetEntry *tle = get_sortgroupclause_tle(scl, parse->targetList);
-
-			if (!tle->resdom->resjunk)
-				parse->distinctClause = lappend(parse->distinctClause,
-												copyObject(scl));
-		}
-	}
-	else
-	{
-		/* needed so we don't take SELECT DISTINCT from the first query */
-		parse->distinctClause = NIL;
-	}
+	Assert(topop && IsA(topop, SetOperationStmt));
 
 	/*
-	 * Make sure we don't try to apply the first query's grouping stuff to
-	 * the Append node, either.  Basically we don't want union_planner to
-	 * do anything when we return control, except add the top sort/unique
-	 * nodes for DISTINCT processing if this wasn't UNION ALL, or the top
-	 * sort node if it was UNION ALL with a user-provided sort clause.
+	 * Find the leftmost component Query.  We need to use its column names
+	 * for all generated tlists (else SELECT INTO won't work right).
 	 */
-	parse->groupClause = NULL;
-	parse->havingQual = NULL;
-	parse->hasAggs = false;
+	node = topop->larg;
+	while (node && IsA(node, SetOperationStmt))
+		node = ((SetOperationStmt *) node)->larg;
+	Assert(node && IsA(node, RangeTblRef));
+	leftmostQuery = rt_fetch(((RangeTblRef *) node)->rtindex,
+							 parse->rtable)->subquery;
+	Assert(leftmostQuery != NULL);
 
-	return (Plan *) make_append(union_plans,
-								union_rts,
-								0,
-								NIL,
-								parse->targetList);
+	/*
+	 * Recurse on setOperations tree to generate plans for set ops.
+	 * The final output plan should have just the column types shown
+	 * as the output from the top-level node.
+	 */
+	return recurse_set_operations((Node *) topop, parse,
+								  topop->colTypes, -1,
+								  leftmostQuery->targetList);
+}
+
+/*
+ * recurse_set_operations
+ *	  Recursively handle one step in a tree of set operations
+ *
+ * colTypes: integer list of type OIDs of expected output columns
+ * flag: if >= 0, add a resjunk output column indicating value of flag
+ * refnames_tlist: targetlist to take column names from
+ */
+static Plan *
+recurse_set_operations(Node *setOp, Query *parse,
+					   List *colTypes, int flag,
+					   List *refnames_tlist)
+{
+	if (IsA(setOp, RangeTblRef))
+	{
+		RangeTblRef *rtr = (RangeTblRef *) setOp;
+		RangeTblEntry *rte = rt_fetch(rtr->rtindex, parse->rtable);
+		Query  *subquery = rte->subquery;
+		Plan   *subplan,
+			   *plan;
+
+		Assert(subquery != NULL);
+		/*
+		 * Generate plan for primitive subquery
+		 */
+		subplan = subquery_planner(subquery,
+								   -1.0 /* default case */ );
+		/*
+		 * Add a SubqueryScan with the caller-requested targetlist
+		 */
+		plan = (Plan *)
+			make_subqueryscan(generate_setop_tlist(colTypes, flag,
+												   subplan->targetlist,
+												   refnames_tlist),
+							  NIL,
+							  rtr->rtindex,
+							  subplan);
+		copy_plan_costsize(plan, subplan);
+		return plan;
+	}
+	else if (IsA(setOp, SetOperationStmt))
+	{
+		SetOperationStmt *op = (SetOperationStmt *) setOp;
+		Plan   *plan;
+
+		/* UNIONs are much different from INTERSECT/EXCEPT */
+		if (op->op == SETOP_UNION)
+			plan = generate_union_plan(op, parse, refnames_tlist);
+		else
+			plan = generate_nonunion_plan(op, parse, refnames_tlist);
+		/*
+		 * If necessary, add a Result node to project the caller-requested
+		 * output columns.
+		 *
+		 * XXX you don't really want to know about this: setrefs.c will apply
+		 * replace_vars_with_subplan_refs() to the Result node's tlist.
+		 * This would fail if the input plan's non-resjunk tlist entries were
+		 * not all simple Vars equal() to the referencing Vars generated by
+		 * generate_setop_tlist().  However, since the input plan was
+		 * generated by generate_union_plan() or generate_nonunion_plan(),
+		 * the referencing Vars will equal the tlist entries they reference.
+		 * Ugly but I don't feel like making that code more general right now.
+		 */
+		if (flag >= 0 || ! tlist_same_datatypes(plan->targetlist, colTypes))
+		{
+			plan = (Plan *)
+				make_result(generate_setop_tlist(colTypes, flag,
+												 plan->targetlist,
+												 refnames_tlist),
+							NULL,
+							plan);
+		}
+		return plan;
+	}
+	else
+	{
+		elog(ERROR, "recurse_set_operations: unexpected node %d",
+			 (int) nodeTag(setOp));
+		return NULL;			/* keep compiler quiet */
+	}
+}
+
+/*
+ * Generate plan for a UNION or UNION ALL node
+ */
+static Plan *
+generate_union_plan(SetOperationStmt *op, Query *parse,
+					List *refnames_tlist)
+{
+	List   *planlist;
+	Plan   *plan;
+
+	/*
+	 * If any of my children are identical UNION nodes (same op, all-flag,
+	 * and colTypes) then they can be merged into this node so that we
+	 * generate only one Append and Sort for the lot.  Recurse to find
+	 * such nodes and compute their children's plans.
+	 */
+	planlist = nconc(recurse_union_children(op->larg, parse,
+											op, refnames_tlist),
+					 recurse_union_children(op->rarg, parse,
+											op, refnames_tlist));
+	/*
+	 * Append the child results together.
+	 *
+	 * The tlist for an Append plan isn't important as far as the Append
+	 * is concerned, but we must make it look real anyway for the benefit
+	 * of the next plan level up.
+	 */
+	plan = (Plan *)
+		make_append(planlist,
+					0,
+					NIL,
+					generate_setop_tlist(op->colTypes, -1,
+									((Plan *) lfirst(planlist))->targetlist,
+									refnames_tlist));
+	/*
+	 * For UNION ALL, we just need the Append plan.  For UNION,
+	 * need to add Sort and Unique nodes to produce unique output.
+	 */
+	if (! op->all)
+	{
+		List   *tlist,
+			   *sortList;
+
+		tlist = new_unsorted_tlist(plan->targetlist);
+		sortList = addAllTargetsToSortList(NIL, tlist);
+		plan = make_sortplan(tlist, plan, sortList);
+		plan = (Plan *) make_unique(tlist, plan, copyObject(sortList));
+	}
+	return plan;
+}
+
+/*
+ * Generate plan for an INTERSECT, INTERSECT ALL, EXCEPT, or EXCEPT ALL node
+ */
+static Plan *
+generate_nonunion_plan(SetOperationStmt *op, Query *parse,
+					   List *refnames_tlist)
+{
+	Plan   *lplan,
+		   *rplan,
+		   *plan;
+	List   *tlist,
+		   *sortList;
+	SetOpCmd cmd;
+
+	/* Recurse on children, ensuring their outputs are marked */
+	lplan = recurse_set_operations(op->larg, parse,
+								   op->colTypes, 0,
+								   refnames_tlist);
+	rplan = recurse_set_operations(op->rarg, parse,
+								   op->colTypes, 1,
+								   refnames_tlist);
+	/*
+	 * Append the child results together.
+	 *
+	 * The tlist for an Append plan isn't important as far as the Append
+	 * is concerned, but we must make it look real anyway for the benefit
+	 * of the next plan level up.
+	 */
+	plan = (Plan *)
+		make_append(makeList2(lplan, rplan),
+					0,
+					NIL,
+					generate_setop_tlist(op->colTypes, 0,
+										 lplan->targetlist,
+										 refnames_tlist));
+	/*
+	 * Sort the child results, then add a SetOp plan node to
+	 * generate the correct output.
+	 */
+	tlist = new_unsorted_tlist(plan->targetlist);
+	sortList = addAllTargetsToSortList(NIL, tlist);
+	plan = make_sortplan(tlist, plan, sortList);
+	switch (op->op)
+	{
+		case SETOP_INTERSECT:
+			cmd = op->all ? SETOPCMD_INTERSECT_ALL : SETOPCMD_INTERSECT;
+			break;
+		case SETOP_EXCEPT:
+			cmd = op->all ? SETOPCMD_EXCEPT_ALL : SETOPCMD_EXCEPT;
+			break;
+		default:
+			elog(ERROR, "generate_nonunion_plan: bogus operation code");
+			cmd = SETOPCMD_INTERSECT; /* keep compiler quiet */
+			break;
+	}
+	plan = (Plan *) make_setop(cmd, tlist, plan, sortList,
+							   length(op->colTypes)+1);
+	return plan;
+}
+
+/*
+ * Pull up children of a UNION node that are identically-propertied UNIONs.
+ *
+ * NOTE: we can also pull a UNION ALL up into a UNION, since the distinct
+ * output rows will be lost anyway.
+ */
+static List *
+recurse_union_children(Node *setOp, Query *parse,
+					   SetOperationStmt *top_union,
+					   List *refnames_tlist)
+{
+	if (IsA(setOp, SetOperationStmt))
+	{
+		SetOperationStmt *op = (SetOperationStmt *) setOp;
+
+		if (op->op == top_union->op &&
+			(op->all == top_union->all || op->all) &&
+			equali(op->colTypes, top_union->colTypes))
+		{
+			/* Same UNION, so fold children into parent's subplan list */
+			return nconc(recurse_union_children(op->larg, parse,
+												top_union, refnames_tlist),
+						 recurse_union_children(op->rarg, parse,
+												top_union, refnames_tlist));
+		}
+	}
+	/* Not same, so plan this child separately */
+	return makeList1(recurse_set_operations(setOp, parse,
+											top_union->colTypes, -1,
+											refnames_tlist));
+}
+
+/*
+ * Generate targetlist for a set-operation plan node
+ */
+static List *
+generate_setop_tlist(List *colTypes, int flag,
+					 List *input_tlist,
+					 List *refnames_tlist)
+{
+	List	   *tlist = NIL;
+	int			resno = 1;
+	List	   *i;
+	Resdom	   *resdom;
+	Node	   *expr;
+
+	foreach(i, colTypes)
+	{
+		Oid		colType = (Oid) lfirsti(i);
+		TargetEntry *inputtle = (TargetEntry *) lfirst(input_tlist);
+		TargetEntry *reftle = (TargetEntry *) lfirst(refnames_tlist);
+
+		Assert(inputtle->resdom->resno == resno);
+		Assert(reftle->resdom->resno == resno);
+		Assert(!inputtle->resdom->resjunk);
+		Assert(!reftle->resdom->resjunk);
+		/*
+		 * Generate columns referencing input columns and having
+		 * appropriate data types and column names.  Insert datatype
+		 * coercions where necessary.
+		 *
+		 * HACK: constants in the input's targetlist are copied up as-is
+		 * rather than being referenced as subquery outputs.  This is mainly
+		 * to ensure that when we try to coerce them to the output column's
+		 * datatype, the right things happen for UNKNOWN constants.
+		 */
+		resdom = makeResdom((AttrNumber) resno++,
+							colType,
+							-1,
+							pstrdup(reftle->resdom->resname),
+							false);
+		if (inputtle->expr && IsA(inputtle->expr, Const))
+			expr = inputtle->expr;
+		else
+			expr = (Node *) makeVar(0,
+									inputtle->resdom->resno,
+									inputtle->resdom->restype,
+									inputtle->resdom->restypmod,
+									0);
+		expr = coerce_to_common_type(NULL,
+									 expr,
+									 colType,
+									 "UNION/INTERSECT/EXCEPT");
+		tlist = lappend(tlist, makeTargetEntry(resdom, expr));
+		input_tlist = lnext(input_tlist);
+		refnames_tlist = lnext(refnames_tlist);
+	}
+
+	if (flag >= 0)
+	{
+		/* Add a resjunk column yielding specified flag value */
+		resdom = makeResdom((AttrNumber) resno++,
+							INT4OID,
+							-1,
+							pstrdup("flag"),
+							true);
+		expr = (Node *) makeConst(INT4OID,
+								  sizeof(int4),
+								  Int32GetDatum(flag),
+								  false,
+								  true,
+								  false,
+								  false);
+		tlist = lappend(tlist, makeTargetEntry(resdom, expr));
+	}
+
+	return tlist;
+}
+
+/*
+ * Does tlist have same datatypes as requested colTypes?
+ *
+ * Resjunk columns are ignored.
+ */
+static bool
+tlist_same_datatypes(List *tlist, List *colTypes)
+{
+	List	   *i;
+
+	foreach(i, tlist)
+	{
+		TargetEntry *tle = (TargetEntry *) lfirst(i);
+
+		if (!tle->resdom->resjunk)
+		{
+			if (colTypes == NIL)
+				return false;
+			if (tle->resdom->restype != (Oid) lfirsti(colTypes))
+				return false;
+			colTypes = lnext(colTypes);
+		}
+	}
+	if (colTypes != NIL)
+		return false;
+	return true;
 }
 
 
@@ -372,7 +554,6 @@ plan_inherit_queries(Query *root, List *tlist,
 
 	/* Construct the finished Append plan. */
 	return (Plan *) make_append(union_plans,
-								NIL,
 								rt_index,
 								union_rtentries,
 								((Plan *) lfirst(union_plans))->targetlist);
@@ -530,7 +711,8 @@ fix_parsetree_attnums(Index rt_index,
 
 	query_tree_walker(parsetree,
 					  fix_parsetree_attnums_walker,
-					  (void *) &context);
+					  (void *) &context,
+					  true);
 }
 
 /*
@@ -570,7 +752,8 @@ fix_parsetree_attnums_walker(Node *node,
 		context->sublevels_up++;
 		result = query_tree_walker((Query *) node,
 								   fix_parsetree_attnums_walker,
-								   (void *) context);
+								   (void *) context,
+								   true);
 		context->sublevels_up--;
 		return result;
 	}
@@ -580,7 +763,6 @@ fix_parsetree_attnums_walker(Node *node,
 
 static Append *
 make_append(List *appendplans,
-			List *unionrtables,
 			Index rt_index,
 			List *inheritrtable,
 			List *tlist)
@@ -589,7 +771,6 @@ make_append(List *appendplans,
 	List	   *subnode;
 
 	node->appendplans = appendplans;
-	node->unionrtables = unionrtables;
 	node->inheritrelid = rt_index;
 	node->inheritrtable = inheritrtable;
 	node->plan.startup_cost = 0;

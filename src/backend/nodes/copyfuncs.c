@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.123 2000/09/29 18:21:29 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.124 2000/10/05 19:11:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -176,7 +176,6 @@ _copyAppend(Append *from)
 	 * ----------------
 	 */
 	Node_Copy(from, newnode, appendplans);
-	Node_Copy(from, newnode, unionrtables);
 	newnode->inheritrelid = from->inheritrelid;
 	Node_Copy(from, newnode, inheritrtable);
 
@@ -565,6 +564,33 @@ _copyUnique(Unique *from)
 	return newnode;
 }
 
+/* ----------------
+ *		_copySetOp
+ * ----------------
+ */
+static SetOp *
+_copySetOp(SetOp *from)
+{
+	SetOp	   *newnode = makeNode(SetOp);
+
+	/* ----------------
+	 *	copy node superclass fields
+	 * ----------------
+	 */
+	CopyPlanFields((Plan *) from, (Plan *) newnode);
+
+	/* ----------------
+	 *	copy remainder of node
+	 * ----------------
+	 */
+	newnode->cmd = from->cmd;
+	newnode->numCols = from->numCols;
+	newnode->dupColIdx = palloc(from->numCols * sizeof(AttrNumber));
+	memcpy(newnode->dupColIdx, from->dupColIdx, from->numCols * sizeof(AttrNumber));
+	newnode->flagColIdx = from->flagColIdx;
+
+	return newnode;
+}
 
 /* ----------------
  *		_copyHash
@@ -1696,27 +1722,25 @@ _copyQuery(Query *from)
 	newnode->isPortal = from->isPortal;
 	newnode->isBinary = from->isBinary;
 	newnode->isTemp = from->isTemp;
-	newnode->unionall = from->unionall;
 	newnode->hasAggs = from->hasAggs;
 	newnode->hasSubLinks = from->hasSubLinks;
 
 	Node_Copy(from, newnode, rtable);
 	Node_Copy(from, newnode, jointree);
 
-	Node_Copy(from, newnode, targetList);
-
 	newnode->rowMarks = listCopy(from->rowMarks);
 
-	Node_Copy(from, newnode, distinctClause);
-	Node_Copy(from, newnode, sortClause);
+	Node_Copy(from, newnode, targetList);
+
 	Node_Copy(from, newnode, groupClause);
 	Node_Copy(from, newnode, havingQual);
-
-	/* why is intersectClause missing? */
-	Node_Copy(from, newnode, unionClause);
+	Node_Copy(from, newnode, distinctClause);
+	Node_Copy(from, newnode, sortClause);
 
 	Node_Copy(from, newnode, limitOffset);
 	Node_Copy(from, newnode, limitCount);
+
+	Node_Copy(from, newnode, setOperations);
 
 	/*
 	 * We do not copy the planner internal fields: base_rel_list,
@@ -1734,17 +1758,9 @@ _copyInsertStmt(InsertStmt *from)
 	
 	if (from->relname)
 		newnode->relname = pstrdup(from->relname);
-	Node_Copy(from, newnode, distinctClause);
 	Node_Copy(from, newnode, cols);
 	Node_Copy(from, newnode, targetList);
-	Node_Copy(from, newnode, fromClause);
-	Node_Copy(from, newnode, whereClause);
-	Node_Copy(from, newnode, groupClause);
-	Node_Copy(from, newnode, havingClause);
-	Node_Copy(from, newnode, unionClause);
-	newnode->unionall = from->unionall;
-	Node_Copy(from, newnode, intersectClause);
-	Node_Copy(from, newnode, forUpdate);
+	Node_Copy(from, newnode, selectStmt);
 
 	return newnode;
 }
@@ -1790,18 +1806,28 @@ _copySelectStmt(SelectStmt *from)
 	Node_Copy(from, newnode, whereClause);
 	Node_Copy(from, newnode, groupClause);
 	Node_Copy(from, newnode, havingClause);
-	Node_Copy(from, newnode, intersectClause);
-	Node_Copy(from, newnode, exceptClause);
-	Node_Copy(from, newnode, unionClause);
 	Node_Copy(from, newnode, sortClause);
 	if (from->portalname)
 		newnode->portalname = pstrdup(from->portalname);
 	newnode->binary = from->binary;
 	newnode->istemp = from->istemp;
-	newnode->unionall = from->unionall;
 	Node_Copy(from, newnode, limitOffset);
 	Node_Copy(from, newnode, limitCount);
 	Node_Copy(from, newnode, forUpdate);
+
+	return newnode;
+}
+
+static SetOperationStmt *
+_copySetOperationStmt(SetOperationStmt *from)
+{
+	SetOperationStmt *newnode = makeNode(SetOperationStmt);
+	
+	newnode->op = from->op;
+	newnode->all = from->all;
+	Node_Copy(from, newnode, larg);
+	Node_Copy(from, newnode, rarg);
+	newnode->colTypes = listCopy(from->colTypes);
 
 	return newnode;
 }
@@ -2553,6 +2579,9 @@ copyObject(void *from)
 		case T_Unique:
 			retval = _copyUnique(from);
 			break;
+		case T_SetOp:
+			retval = _copySetOp(from);
+			break;
 		case T_Hash:
 			retval = _copyHash(from);
 			break;
@@ -2699,6 +2728,9 @@ copyObject(void *from)
 			break;
 		case T_SelectStmt:
 			retval = _copySelectStmt(from);
+			break;
+		case T_SetOperationStmt:
+			retval = _copySetOperationStmt(from);
 			break;
 		case T_AlterTableStmt:
 			retval = _copyAlterTableStmt(from);
