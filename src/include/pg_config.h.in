@@ -8,7 +8,7 @@
  * or in pg_config.h afterwards.  Of course, if you edit pg_config.h, then your
  * changes will be overwritten the next time you run configure.
  *
- * $Id: pg_config.h.in,v 1.17 2002/02/23 04:17:46 petere Exp $
+ * $Id: pg_config.h.in,v 1.18 2002/02/25 17:11:22 tgl Exp $
  */
 
 #ifndef PG_CONFIG_H
@@ -124,6 +124,7 @@
  * should reduce the need to have large tuples, since fields can now
  * be spread across multiple tuples).
  *
+ * BLCKSZ must be a power of 2.
  * The maximum possible value of BLCKSZ is currently 2^15 (32768).
  * This is determined by the 15-bit widths of the lp_off and lp_len
  * fields in ItemIdData (see include/storage/itemid.h).
