@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.79 1999/05/20 12:12:55 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.80 1999/05/21 04:40:04 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -5347,7 +5347,7 @@ mapTargetColumns(List *src, List *dst)
 static Node *makeIndexable(char *opname, Node *lexpr, Node *rexpr)
 {
 	Node *result = NULL;
-
+	
 	/* we do this so indexes can be used */
 	if (strcmp(opname,"~") == 0 ||
 		strcmp(opname,"~*") == 0)
@@ -5360,47 +5360,64 @@ static Node *makeIndexable(char *opname, Node *lexpr, Node *rexpr)
 			char *match_least = palloc(strlen(n->val.val.str)+2);
 			char *match_most = palloc(strlen(n->val.val.str)+2);
 			int pos, match_pos=0;
+			bool found_pipe = false;
 
-			/* skip leading ^ */
 			for (pos = 1; n->val.val.str[pos]; pos++)
 			{
-				if (n->val.val.str[pos] == '.' ||
-					n->val.val.str[pos] == '?' ||
-					n->val.val.str[pos] == '*' ||
-					n->val.val.str[pos] == '[' ||
-					n->val.val.str[pos] == '$' ||
-					(strcmp(opname,"~*") == 0 && isalpha(n->val.val.str[pos])))
-		     		break;
+				if (n->val.val.str[pos] == '|')
+				{
+					found_pipe = true;
+					break;
+				}
 		     	if (n->val.val.str[pos] == '\\')
 					pos++;
-				match_least[match_pos] = n->val.val.str[pos];
-				match_most[match_pos++] = n->val.val.str[pos];
 			}
 
-			if (match_pos != 0)
+			/* skip leading ^ */
+			if (!found_pipe)
 			{
-				A_Const *least = makeNode(A_Const);
-				A_Const *most = makeNode(A_Const);
-				
-				/* make strings to be used in index use */
-				match_least[match_pos] = '\0';
-				match_most[match_pos] = '\377';
-				match_most[match_pos+1] = '\0';
-				least->val.type = T_String;
-				least->val.val.str = match_least;
-				most->val.type = T_String;
-				most->val.val.str = match_most;
+				for (pos = 1; n->val.val.str[pos]; pos++)
+				{
+					if (n->val.val.str[pos] == '.' ||
+						n->val.val.str[pos] == '?' ||
+						n->val.val.str[pos] == '*' ||
+						n->val.val.str[pos] == '[' ||
+						n->val.val.str[pos] == '$' ||
+						(strcmp(opname,"~*") == 0 && isalpha(n->val.val.str[pos])))
+			     		break;
+			     	if (n->val.val.str[pos] == '\\')
+						pos++;
+					if (n->val.val.str[pos] == '\0')
+						break;
+					match_least[match_pos] = n->val.val.str[pos];
+					match_most[match_pos++] = n->val.val.str[pos];
+				}
+	
+				if (match_pos != 0)
+				{
+					A_Const *least = makeNode(A_Const);
+					A_Const *most = makeNode(A_Const);
+					
+					/* make strings to be used in index use */
+					match_least[match_pos] = '\0';
+					match_most[match_pos] = '\377';
+					match_most[match_pos+1] = '\0';
+					least->val.type = T_String;
+					least->val.val.str = match_least;
+					most->val.type = T_String;
+					most->val.val.str = match_most;
 #ifdef USE_LOCALE
-				result = makeA_Expr(AND, NULL,
-						makeA_Expr(OP, "~", lexpr, rexpr),
-						makeA_Expr(OP, ">=", lexpr, (Node *)least));
+					result = makeA_Expr(AND, NULL,
+							makeA_Expr(OP, "~", lexpr, rexpr),
+							makeA_Expr(OP, ">=", lexpr, (Node *)least));
 #else
-				result = makeA_Expr(AND, NULL,
-						makeA_Expr(OP, "~", lexpr, rexpr),
-						makeA_Expr(AND, NULL,
-							makeA_Expr(OP, ">=", lexpr, (Node *)least),
-							makeA_Expr(OP, "<=", lexpr, (Node *)most)));
+					result = makeA_Expr(AND, NULL,
+							makeA_Expr(OP, "~", lexpr, rexpr),
+							makeA_Expr(AND, NULL,
+								makeA_Expr(OP, ">=", lexpr, (Node *)least),
+								makeA_Expr(OP, "<=", lexpr, (Node *)most)));
 #endif
+				}
 			}
 		}
 	}
@@ -5420,9 +5437,9 @@ static Node *makeIndexable(char *opname, Node *lexpr, Node *rexpr)
 					 n->val.val.str[pos+1] != '%')
 					break;
 				if(n->val.val.str[pos] == '_')
-			     		break;
-			     	if (n->val.val.str[pos] == '\\' ||
-				     	n->val.val.str[pos] == '%')
+					break;
+		     	if (n->val.val.str[pos] == '\\' ||
+			     	n->val.val.str[pos+1] == '%')
 					pos++;
 				if (n->val.val.str[pos] == '\0')
 					break;
