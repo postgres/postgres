@@ -6,7 +6,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/pg_encoding/Attic/Makefile,v 1.5 2000/03/08 01:58:20 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/bin/pg_encoding/Attic/Makefile,v 1.6 2000/03/31 14:14:32 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -36,7 +36,7 @@ depend dep:
 	$(CC) -MM $(CFLAGS) *.c >depend
 
 clean: 
-	rm -f pg_encoding pg_encoding.o
+	rm -f pg_encoding$(X) pg_encoding.o
 
 ifeq (depend,$(wildcard depend))
 include depend

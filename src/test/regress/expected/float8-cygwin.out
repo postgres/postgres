@@ -1,0 +1,262 @@
+--
+-- FLOAT8
+--
+CREATE TABLE FLOAT8_TBL(f1 float8);
+INSERT INTO FLOAT8_TBL(f1) VALUES ('0.0');
+INSERT INTO FLOAT8_TBL(f1) VALUES ('1004.30');
+INSERT INTO FLOAT8_TBL(f1) VALUES ('-34.84');
+INSERT INTO FLOAT8_TBL(f1) VALUES ('1.2345678901234e+200');
+INSERT INTO FLOAT8_TBL(f1) VALUES ('1.2345678901234e-200');
+SELECT '' AS five, FLOAT8_TBL.*;
+ five |          f1          
+------+----------------------
+      |                    0
+      |               1004.3
+      |               -34.84
+      | 1.2345678901234e+200
+      | 1.2345678901234e-200
+(5 rows)
+
+SELECT '' AS four, f.* FROM FLOAT8_TBL f WHERE f.f1 <> '1004.3';
+ four |          f1          
+------+----------------------
+      |                    0
+      |               -34.84
+      | 1.2345678901234e+200
+      | 1.2345678901234e-200
+(4 rows)
+
+SELECT '' AS one, f.* FROM FLOAT8_TBL f WHERE f.f1 = '1004.3';
+ one |   f1   
+-----+--------
+     | 1004.3
+(1 row)
+
+SELECT '' AS three, f.* FROM FLOAT8_TBL f WHERE '1004.3' > f.f1;
+ three |          f1          
+-------+----------------------
+       |                    0
+       |               -34.84
+       | 1.2345678901234e-200
+(3 rows)
+
+SELECT '' AS three, f.* FROM FLOAT8_TBL f WHERE  f.f1 < '1004.3';
+ three |          f1          
+-------+----------------------
+       |                    0
+       |               -34.84
+       | 1.2345678901234e-200
+(3 rows)
+
+SELECT '' AS four, f.* FROM FLOAT8_TBL f WHERE '1004.3' >= f.f1;
+ four |          f1          
+------+----------------------
+      |                    0
+      |               1004.3
+      |               -34.84
+      | 1.2345678901234e-200
+(4 rows)
+
+SELECT '' AS four, f.* FROM FLOAT8_TBL f WHERE  f.f1 <= '1004.3';
+ four |          f1          
+------+----------------------
+      |                    0
+      |               1004.3
+      |               -34.84
+      | 1.2345678901234e-200
+(4 rows)
+
+SELECT '' AS three, f.f1, f.f1 * '-10' AS x 
+   FROM FLOAT8_TBL f
+   WHERE f.f1 > '0.0';
+ three |          f1          |           x           
+-------+----------------------+-----------------------
+       |               1004.3 |                -10043
+       | 1.2345678901234e+200 | -1.2345678901234e+201
+       | 1.2345678901234e-200 | -1.2345678901234e-199
+(3 rows)
+
+SELECT '' AS three, f.f1, f.f1 + '-10' AS x
+   FROM FLOAT8_TBL f
+   WHERE f.f1 > '0.0';
+ three |          f1          |          x           
+-------+----------------------+----------------------
+       |               1004.3 |                994.3
+       | 1.2345678901234e+200 | 1.2345678901234e+200
+       | 1.2345678901234e-200 |                  -10
+(3 rows)
+
+SELECT '' AS three, f.f1, f.f1 / '-10' AS x
+   FROM FLOAT8_TBL f
+   WHERE f.f1 > '0.0';
+ three |          f1          |           x           
+-------+----------------------+-----------------------
+       |               1004.3 |               -100.43
+       | 1.2345678901234e+200 | -1.2345678901234e+199
+       | 1.2345678901234e-200 | -1.2345678901234e-201
+(3 rows)
+
+SELECT '' AS three, f.f1, f.f1 - '-10' AS x
+   FROM FLOAT8_TBL f
+   WHERE f.f1 > '0.0';
+ three |          f1          |          x           
+-------+----------------------+----------------------
+       |               1004.3 |               1014.3
+       | 1.2345678901234e+200 | 1.2345678901234e+200
+       | 1.2345678901234e-200 |                   10
+(3 rows)
+
+SELECT '' AS one, f.f1 ^ '2.0' AS square_f1
+   FROM FLOAT8_TBL f where f.f1 = '1004.3';
+ one | square_f1  
+-----+------------
+     | 1008618.49
+(1 row)
+
+-- absolute value 
+SELECT '' AS five, f.f1, @f.f1 AS abs_f1 
+   FROM FLOAT8_TBL f;
+ five |          f1          |        abs_f1        
+------+----------------------+----------------------
+      |                    0 |                    0
+      |               1004.3 |               1004.3
+      |               -34.84 |                34.84
+      | 1.2345678901234e+200 | 1.2345678901234e+200
+      | 1.2345678901234e-200 | 1.2345678901234e-200
+(5 rows)
+
+-- truncate 
+SELECT '' AS five, f.f1, %f.f1 AS trunc_f1
+   FROM FLOAT8_TBL f;
+ five |          f1          |       trunc_f1       
+------+----------------------+----------------------
+      |                    0 |                    0
+      |               1004.3 |                 1004
+      |               -34.84 |                  -34
+      | 1.2345678901234e+200 | 1.2345678901234e+200
+      | 1.2345678901234e-200 |                    0
+(5 rows)
+
+-- round 
+SELECT '' AS five, f.f1, f.f1 % AS round_f1
+   FROM FLOAT8_TBL f;
+ five |          f1          |       round_f1       
+------+----------------------+----------------------
+      |                    0 |                    0
+      |               1004.3 |                 1004
+      |               -34.84 |                  -35
+      | 1.2345678901234e+200 | 1.2345678901234e+200
+      | 1.2345678901234e-200 |                    0
+(5 rows)
+
+SELECT sqrt(float8 '64') AS eight;
+ eight 
+-------
+     8
+(1 row)
+
+-- square root 
+SELECT |/ float8 '64' AS eight;
+ eight 
+-------
+     8
+(1 row)
+
+SELECT '' AS three, f.f1, |/f.f1 AS sqrt_f1
+   FROM FLOAT8_TBL f
+   WHERE f.f1 > '0.0';
+ three |          f1          |        sqrt_f1        
+-------+----------------------+-----------------------
+       |               1004.3 |      31.6906926399535
+       | 1.2345678901234e+200 | 1.11111110611109e+100
+       | 1.2345678901234e-200 | 1.11111110611109e-100
+(3 rows)
+
+-- take exp of ln(f.f1) 
+SELECT '' AS three, f.f1, exp(ln(f.f1)) AS exp_ln_f1
+   FROM FLOAT8_TBL f
+   WHERE f.f1 > '0.0';
+ three |          f1          |       exp_ln_f1       
+-------+----------------------+-----------------------
+       |               1004.3 |                1004.3
+       | 1.2345678901234e+200 | 1.23456789012338e+200
+       | 1.2345678901234e-200 | 1.23456789012339e-200
+(3 rows)
+
+-- cube root 
+SELECT ||/ float8 '27' AS three;
+ three 
+-------
+     3
+(1 row)
+
+SELECT '' AS five, f.f1, ||/f.f1 AS cbrt_f1 FROM FLOAT8_TBL f;
+ five |          f1          |       cbrt_f1        
+------+----------------------+----------------------
+      |                    0 |                    0
+      |               1004.3 |      10.014312837827
+      |               -34.84 |    -3.26607421344208
+      | 1.2345678901234e+200 | 4.97933859234765e+66
+      | 1.2345678901234e-200 |  2.3112042409018e-67
+(5 rows)
+
+SELECT '' AS five, FLOAT8_TBL.*;
+ five |          f1          
+------+----------------------
+      |                    0
+      |               1004.3
+      |               -34.84
+      | 1.2345678901234e+200
+      | 1.2345678901234e-200
+(5 rows)
+
+UPDATE FLOAT8_TBL
+   SET f1 = FLOAT8_TBL.f1 * '-1'
+   WHERE FLOAT8_TBL.f1 > '0.0';
+SELECT '' AS bad, f.f1 * '1e200' from FLOAT8_TBL f;
+ERROR:  Bad float8 input format -- overflow
+SELECT '' AS bad, f.f1 ^ '1e200' from FLOAT8_TBL f;
+ERROR:  pow() result is out of range
+SELECT '' AS bad, ln(f.f1) from FLOAT8_TBL f where f.f1 = '0.0' ;
+ERROR:  can't take log of zero
+SELECT '' AS bad, ln(f.f1) from FLOAT8_TBL f where f.f1 < '0.0' ;
+ERROR:  can't take log of a negative number
+SELECT '' AS bad, exp(f.f1) from FLOAT8_TBL f;
+ERROR:  exp() result is out of range
+SELECT '' AS bad, f.f1 / '0.0' from FLOAT8_TBL f;
+ERROR:  float8div: divide by zero error
+SELECT '' AS five, FLOAT8_TBL.*;
+ five |          f1           
+------+-----------------------
+      |                     0
+      |                -34.84
+      |               -1004.3
+      | -1.2345678901234e+200
+      | -1.2345678901234e-200
+(5 rows)
+
+-- test for over- and underflow 
+INSERT INTO FLOAT8_TBL(f1) VALUES ('10e400');
+ERROR:  Input '10e400' is out of range for float8
+INSERT INTO FLOAT8_TBL(f1) VALUES ('-10e400');
+ERROR:  Input '-10e400' is out of range for float8
+INSERT INTO FLOAT8_TBL(f1) VALUES ('10e-400');
+INSERT INTO FLOAT8_TBL(f1) VALUES ('-10e-400');
+-- maintain external table consistency across platforms
+-- delete all values and reinsert well-behaved ones
+DELETE FROM FLOAT8_TBL;
+INSERT INTO FLOAT8_TBL(f1) VALUES ('0.0');
+INSERT INTO FLOAT8_TBL(f1) VALUES ('-34.84');
+INSERT INTO FLOAT8_TBL(f1) VALUES ('-1004.30');
+INSERT INTO FLOAT8_TBL(f1) VALUES ('-1.2345678901234e+200');
+INSERT INTO FLOAT8_TBL(f1) VALUES ('-1.2345678901234e-200');
+SELECT '' AS five, FLOAT8_TBL.*;
+ five |          f1           
+------+-----------------------
+      |                     0
+      |                -34.84
+      |               -1004.3
+      | -1.2345678901234e+200
+      | -1.2345678901234e-200
+(5 rows)
+

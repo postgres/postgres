@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.68 2000/03/30 05:29:20 tgl Exp $
+#    $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.69 2000/03/31 14:14:31 momjian Exp $
 #
 # NOTES
 #    Essentially all Postgres make files include this file and use the
@@ -53,11 +53,11 @@ BSD_SHLIB= true
 # systems now.  May be applicable to other systems to?
 ELF_SYSTEM= @ELF_SYS@
 
-LIBPQDIR:= $(SRCDIR)/interfaces/libpq
-LIBPGTCLDIR:= $(SRCDIR)/interfaces/libpgtcl
+LIBPQDIR= $(SRCDIR)/interfaces/libpq
+LIBPGTCLDIR= $(SRCDIR)/interfaces/libpgtcl
 
-LIBPQ:= -L$(LIBPQDIR) -lpq
-LIBPGTCL:= -L$(LIBPGTCLDIR) -lpgtcl
+LIBPQ= -L$(LIBPQDIR) -lpq
+LIBPGTCL= -L$(LIBPGTCLDIR) -lpgtcl
 
 # For convenience, POSTGRESDIR is where BINDIR, and LIBDIR
 # and other target destinations are rooted.  Of course, each of these is

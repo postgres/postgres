@@ -5,7 +5,7 @@
 #
 # Copyright (C) 2000 by PostgreSQL Global Development Team
 #
-# $Header: /cvsroot/pgsql/src/bin/pg_id/Attic/Makefile,v 1.15 2000/02/09 16:23:42 momjian Exp $
+# $Header: /cvsroot/pgsql/src/bin/pg_id/Attic/Makefile,v 1.16 2000/03/31 14:14:32 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -26,7 +26,7 @@ depend dep:
 	$(CC) -MM $(CFLAGS) *.c >depend
 
 clean:
-	rm -f pg_id $(OBJS)
+	rm -f pg_id$(X) $(OBJS)
 
 ifeq (depend,$(wildcard depend))
 include depend
