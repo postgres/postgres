@@ -29,15 +29,13 @@ Datum		gbt_timetz_consistent(PG_FUNCTION_ARGS);
 Datum		gbt_time_penalty(PG_FUNCTION_ARGS);
 Datum		gbt_time_same(PG_FUNCTION_ARGS);
 
-/* bug in utils/date.h: TimeADT is always store as float8 */
-#define P_TimeADTGetDatum(x)	PointerGetDatum( &( (double) (x) ) )
-#define PointerTimeADTGetDatum(x)       PointerGetDatum( &( *(double*)(x) ) )
+#define P_TimeADTGetDatum(x)	PointerGetDatum( &(x) )
 
 static bool
 gbt_timegt(const void *a, const void *b)
 {
 	return DatumGetBool(
-						DirectFunctionCall2(time_gt, PointerTimeADTGetDatum(a), PointerTimeADTGetDatum(b))
+						DirectFunctionCall2(time_gt, PointerGetDatum(a), PointerGetDatum(b))
 		);
 }
 
@@ -45,7 +43,7 @@ static bool
 gbt_timege(const void *a, const void *b)
 {
 	return DatumGetBool(
-						DirectFunctionCall2(time_ge, PointerTimeADTGetDatum(a), PointerTimeADTGetDatum(b))
+						DirectFunctionCall2(time_ge, PointerGetDatum(a), PointerGetDatum(b))
 		);
 }
 
@@ -53,7 +51,7 @@ static bool
 gbt_timeeq(const void *a, const void *b)
 {
 	return DatumGetBool(
-						DirectFunctionCall2(time_eq, PointerTimeADTGetDatum(a), PointerTimeADTGetDatum(b))
+						DirectFunctionCall2(time_eq, PointerGetDatum(a), PointerGetDatum(b))
 		);
 }
 
@@ -61,7 +59,7 @@ static bool
 gbt_timele(const void *a, const void *b)
 {
 	return DatumGetBool(
-						DirectFunctionCall2(time_le, PointerTimeADTGetDatum(a), PointerTimeADTGetDatum(b))
+						DirectFunctionCall2(time_le, PointerGetDatum(a), PointerGetDatum(b))
 		);
 }
 
@@ -69,7 +67,7 @@ static bool
 gbt_timelt(const void *a, const void *b)
 {
 	return DatumGetBool(
-						DirectFunctionCall2(time_lt, PointerTimeADTGetDatum(a), PointerTimeADTGetDatum(b))
+						DirectFunctionCall2(time_lt, PointerGetDatum(a), PointerGetDatum(b))
 		);
 }
 
@@ -119,17 +117,20 @@ Datum
 gbt_timetz_compress(PG_FUNCTION_ARGS)
 {
 	GISTENTRY  *entry = (GISTENTRY *) PG_GETARG_POINTER(0);
-	GISTENTRY  *retval;
+	GISTENTRY  *retval = entry;
 
 	if (entry->leafkey)
 	{
 		timeKEY    *r = (timeKEY *) palloc(sizeof(timeKEY));
 		TimeTzADT  *tz = DatumGetTimeTzADTP(entry->key);
+		void *qqq = DatumGetPointer( TimeADTGetDatum(tz->time + tz->zone) );  
 
 		retval = palloc(sizeof(GISTENTRY));
 
 		/* We are using the time + zone only to compress */
-		r->lower = r->upper = (tz->time + tz->zone);
+		memcpy( &(r->lower), qqq, sizeof(TimeADT) );
+		memcpy( &(r->upper), qqq, sizeof(TimeADT) );
+		pfree(qqq);
 		gistentryinit(*retval, PointerGetDatum(r),
 					  entry->rel, entry->page,
 					  entry->offset, sizeof(timeKEY), FALSE);
@@ -144,7 +145,6 @@ Datum
 gbt_time_consistent(PG_FUNCTION_ARGS)
 {
 	GISTENTRY  *entry = (GISTENTRY *) PG_GETARG_POINTER(0);
-	TimeADT		query = PG_GETARG_TIMEADT(1);
 	timeKEY    *kkk = (timeKEY *) DatumGetPointer(entry->key);
 	GBT_NUMKEY_R key;
 	StrategyNumber strategy = (StrategyNumber) PG_GETARG_UINT16(2);
@@ -154,7 +154,7 @@ gbt_time_consistent(PG_FUNCTION_ARGS)
 
 
 	PG_RETURN_BOOL(
-				   gbt_num_consistent(&key, (void *) &query, &strategy, GIST_LEAF(entry), &tinfo)
+				   gbt_num_consistent(&key, (void *) PG_GETARG_POINTER(1), &strategy, GIST_LEAF(entry), &tinfo)
 		);
 }
 
@@ -163,17 +163,19 @@ gbt_timetz_consistent(PG_FUNCTION_ARGS)
 {
 	GISTENTRY  *entry = (GISTENTRY *) PG_GETARG_POINTER(0);
 	TimeTzADT  *query = PG_GETARG_TIMETZADT_P(1);
-	TimeADT		qqq = query->time + query->zone;
+	void*		qqq = DatumGetPointer( TimeADTGetDatum(query->time + query->zone) );
 	timeKEY    *kkk = (timeKEY *) DatumGetPointer(entry->key);
 	GBT_NUMKEY_R key;
 	StrategyNumber strategy = (StrategyNumber) PG_GETARG_UINT16(2);
+	bool res;
 
 	key.lower = (GBT_NUMKEY *) & kkk->lower;
 	key.upper = (GBT_NUMKEY *) & kkk->upper;
 
-	PG_RETURN_BOOL(
-				   gbt_num_consistent(&key, (void *) &qqq, &strategy, GIST_LEAF(entry), &tinfo)
-		);
+	res = gbt_num_consistent(&key, qqq, &strategy, GIST_LEAF(entry), &tinfo);
+	pfree(qqq);
+
+	PG_RETURN_BOOL( res );
 }
 
 
