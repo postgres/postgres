@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/dt.c,v 1.60 1998/12/31 16:30:57 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/dt.c,v 1.61 1999/01/10 17:20:54 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2839,12 +2839,15 @@ DecodeDateTime(char **field, int *ftype, int nf,
 			case DTK_NUMBER:
 				flen = strlen(field[i]);
 
-				if (flen > 4)
+				/* long numeric string and either no date or no time read yet?
+				 * then interpret as a concatenated date or time... */
+				if ((flen > 4) && !((fmask & DTK_DATE_M) && (fmask & DTK_TIME_M)))
 				{
 					if (DecodeNumberField(flen, field[i], fmask, &tmask, tm, fsec) != 0)
 						return -1;
 
 				}
+				/* otherwise it is a single date/time field... */
 				else
 				{
 					if (DecodeNumber(flen, field[i], fmask, &tmask, tm, fsec) != 0)
@@ -3000,7 +3003,12 @@ DecodeDateTime(char **field, int *ftype, int nf,
 
 	/* there is no year zero in AD/BC notation; i.e. "1 BC" == year 0 */
 	if (bc)
-		tm->tm_year = -(tm->tm_year - 1);
+	{
+		if (tm->tm_year > 0)
+			tm->tm_year = -(tm->tm_year - 1);
+		else
+			elog(ERROR,"Inconsistant use of year %04d and 'BC'", tm->tm_year);
+	}
 
 	if ((mer != HR24) && (tm->tm_hour > 12))
 		return -1;
@@ -3375,8 +3383,23 @@ DecodeNumber(int flen, char *str, int fmask, int *tmask, struct tm * tm, double 
 	printf("DecodeNumber- %s is %d fmask=%08x tmask=%08x\n", str, val, fmask, *tmask);
 #endif
 
-	/* enough digits to be unequivocal year? */
-	if (flen == 4)
+	/* Special case day of year? */
+	if ((flen == 3) && (fmask & DTK_M(YEAR))
+		&& ((val >= 1) && (val <= 366)))
+	{
+		*tmask = (DTK_M(DOY) | DTK_M(MONTH) | DTK_M(DAY));
+		tm->tm_yday = val;
+		j2date((date2j(tm->tm_year, 1, 1) + tm->tm_yday - 1),
+			   &tm->tm_year, &tm->tm_mon, &tm->tm_mday);
+
+	}
+	/* Enough digits to be unequivocal year?
+	 * Used to test for 4 digits or more,
+	 * but we now test first for a three-digit doy
+	 * so anything bigger than two digits had better be
+	 * an explicit year. - thomas 1999-01-09
+	 */
+	else if (flen > 2)
 	{
 #ifdef DATEDEBUG
 		printf("DecodeNumber- match %d (%s) as year\n", val, str);
@@ -3399,18 +3422,8 @@ DecodeNumber(int flen, char *str, int fmask, int *tmask, struct tm * tm, double 
 
 		tm->tm_year = val;
 
-		/* special case day of year? */
 	}
-	else if ((flen == 3) && (fmask & DTK_M(YEAR))
-			 && ((val >= 1) && (val <= 366)))
-	{
-		*tmask = (DTK_M(DOY) | DTK_M(MONTH) | DTK_M(DAY));
-		tm->tm_yday = val;
-		j2date((date2j(tm->tm_year, 1, 1) + tm->tm_yday - 1),
-			   &tm->tm_year, &tm->tm_mon, &tm->tm_mday);
-
-		/* already have year? then could be month */
-	}
+	/* already have year? then could be month */
 	else if ((fmask & DTK_M(YEAR)) && (!(fmask & DTK_M(MONTH)))
 			 && ((val >= 1) && (val <= 12)))
 	{
@@ -3460,10 +3473,15 @@ DecodeNumber(int flen, char *str, int fmask, int *tmask, struct tm * tm, double 
 #endif
 		*tmask = DTK_M(YEAR);
 		tm->tm_year = val;
-		if (tm->tm_year < 70)
-			tm->tm_year += 2000;
-		else if (tm->tm_year < 100)
-			tm->tm_year += 1900;
+
+		/* adjust ONLY if exactly two digits... */
+		if (flen == 2)
+		{
+			if (tm->tm_year < 70)
+				tm->tm_year += 2000;
+			else if (tm->tm_year < 100)
+				tm->tm_year += 1900;
+		}
 
 	}
 	else
@@ -3527,8 +3545,29 @@ DecodeNumberField(int len, char *str, int fmask, int *tmask, struct tm * tm, dou
 			tm->tm_mon = atoi(str + 2);
 			*(str + 2) = '\0';
 			tm->tm_year = atoi(str + 0);
+
+			if (tm->tm_year < 70)
+				tm->tm_year += 2000;
+			else if (tm->tm_year < 100)
+				tm->tm_year += 1900;
 		}
 
+	}
+	else if ((len == 5) && !(fmask & DTK_DATE_M))
+	{
+#ifdef DATEDEBUG
+		printf("DecodeNumberField- %s is 5 characters fmask=%08x tmask=%08x\n", str, fmask, *tmask);
+#endif
+		*tmask = DTK_DATE_M;
+		tm->tm_mday = atoi(str + 2);
+		*(str + 2) = '\0';
+		tm->tm_mon = 1;
+		tm->tm_year = atoi(str + 0);
+
+		if (tm->tm_year < 70)
+			tm->tm_year += 2000;
+		else if (tm->tm_year < 100)
+			tm->tm_year += 1900;
 	}
 	else if (strchr(str, '.') != NULL)
 	{
