@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.103 2000/09/12 21:06:47 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.104 2000/09/29 18:21:26 tgl Exp $
  *
  * NOTES
  *	  The PerformAddAttribute() code, like most of the relation
@@ -1135,7 +1135,7 @@ AlterTableAddConstraint(char *relationName,
 					else
 						name="<unnamed>";
 
-					constlist=lcons(constr, NIL);
+					constlist = makeList1(constr);
 
 					rel = heap_openr(relationName, AccessExclusiveLock);
 
@@ -1158,10 +1158,11 @@ AlterTableAddConstraint(char *relationName,
 					makeRangeTable(pstate, NULL);
 					rte = addRangeTableEntry(pstate, relationName, NULL,
 											 false, true);
-					addRTEtoJoinTree(pstate, rte);
+					addRTEtoJoinList(pstate, rte);
 
 					/* Convert the A_EXPR in raw_expr into an EXPR */
-					expr = transformExpr(pstate, constr->raw_expr, EXPR_COLUMN_FIRST);
+					expr = transformExpr(pstate, constr->raw_expr,
+										 EXPR_COLUMN_FIRST);
 
 					/*
 					 * Make sure it yields a boolean result.
@@ -1185,14 +1186,14 @@ AlterTableAddConstraint(char *relationName,
 					/* And fix the opids */
 					fix_opids(expr);
 
-					qual = lcons(expr, NIL);
+					qual = makeList1(expr);
 
 					rte = makeNode(RangeTblEntry);
 					rte->relname = relationName;
 					rte->relid = RelationGetRelid(rel);
 					rte->eref = makeNode(Attr);
 					rte->eref->relname = relationName;
-					rtlist = lcons(rte, NIL);
+					rtlist = makeList1(rte);
 
 					/* 
 					 * Scan through the rows now, making the necessary things

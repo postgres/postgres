@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: execnodes.h,v 1.49 2000/09/12 21:07:10 tgl Exp $
+ * $Id: execnodes.h,v 1.50 2000/09/29 18:21:38 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -452,6 +452,24 @@ typedef struct TidScanState
 	ItemPointer *tss_TidList;
 	HeapTupleData tss_htup;
 } TidScanState;
+
+/* ----------------
+ *	 SubqueryScanState information
+ *
+ *		SubqueryScanState is used for scanning a sub-query in the range table.
+ *		The sub-query will have its own EState, which we save here.
+ *		ScanTupleSlot references the current output tuple of the sub-query.
+ *
+ *		SubQueryDesc	   queryDesc for sub-query
+ *		SubEState		   exec state for sub-query
+ * ----------------
+ */
+typedef struct SubqueryScanState
+{
+	CommonScanState csstate;	/* its first field is NodeTag */
+	struct QueryDesc *sss_SubQueryDesc;
+	EState	   *sss_SubEState;
+} SubqueryScanState;
 
 /* ----------------------------------------------------------------
  *				 Join State Information

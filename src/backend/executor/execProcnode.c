@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execProcnode.c,v 1.19 2000/08/13 02:50:03 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execProcnode.c,v 1.20 2000/09/29 18:21:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -90,6 +90,7 @@
 #include "executor/nodeSeqscan.h"
 #include "executor/nodeSort.h"
 #include "executor/nodeSubplan.h"
+#include "executor/nodeSubqueryscan.h"
 #include "executor/nodeUnique.h"
 #include "miscadmin.h"
 #include "tcop/tcopprot.h"
@@ -153,6 +154,15 @@ ExecInitNode(Plan *node, EState *estate, Plan *parent)
 			result = ExecInitIndexScan((IndexScan *) node, estate, parent);
 			break;
 
+		case T_TidScan:
+			result = ExecInitTidScan((TidScan *) node, estate, parent);
+			break;
+
+		case T_SubqueryScan:
+			result = ExecInitSubqueryScan((SubqueryScan *) node, estate,
+										  parent);
+			break;
+
 			/* ----------------
 			 *		join nodes
 			 * ----------------
@@ -163,6 +173,14 @@ ExecInitNode(Plan *node, EState *estate, Plan *parent)
 
 		case T_MergeJoin:
 			result = ExecInitMergeJoin((MergeJoin *) node, estate, parent);
+			break;
+
+		case T_Hash:
+			result = ExecInitHash((Hash *) node, estate, parent);
+			break;
+
+		case T_HashJoin:
+			result = ExecInitHashJoin((HashJoin *) node, estate, parent);
 			break;
 
 			/* ----------------
@@ -187,18 +205,6 @@ ExecInitNode(Plan *node, EState *estate, Plan *parent)
 
 		case T_Agg:
 			result = ExecInitAgg((Agg *) node, estate, parent);
-			break;
-
-		case T_Hash:
-			result = ExecInitHash((Hash *) node, estate, parent);
-			break;
-
-		case T_HashJoin:
-			result = ExecInitHashJoin((HashJoin *) node, estate, parent);
-			break;
-
-		case T_TidScan:
-			result = ExecInitTidScan((TidScan *) node, estate, parent);
 			break;
 
 		default:
@@ -272,6 +278,14 @@ ExecProcNode(Plan *node, Plan *parent)
 			result = ExecIndexScan((IndexScan *) node);
 			break;
 
+		case T_TidScan:
+			result = ExecTidScan((TidScan *) node);
+			break;
+
+		case T_SubqueryScan:
+			result = ExecSubqueryScan((SubqueryScan *) node);
+			break;
+
 			/* ----------------
 			 *		join nodes
 			 * ----------------
@@ -282,6 +296,14 @@ ExecProcNode(Plan *node, Plan *parent)
 
 		case T_MergeJoin:
 			result = ExecMergeJoin((MergeJoin *) node);
+			break;
+
+		case T_Hash:
+			result = ExecHash((Hash *) node);
+			break;
+
+		case T_HashJoin:
+			result = ExecHashJoin((HashJoin *) node);
 			break;
 
 			/* ----------------
@@ -306,18 +328,6 @@ ExecProcNode(Plan *node, Plan *parent)
 
 		case T_Agg:
 			result = ExecAgg((Agg *) node);
-			break;
-
-		case T_Hash:
-			result = ExecHash((Hash *) node);
-			break;
-
-		case T_HashJoin:
-			result = ExecHashJoin((HashJoin *) node);
-			break;
-
-		case T_TidScan:
-			result = ExecTidScan((TidScan *) node);
 			break;
 
 		default:
@@ -356,6 +366,12 @@ ExecCountSlotsNode(Plan *node)
 		case T_IndexScan:
 			return ExecCountSlotsIndexScan((IndexScan *) node);
 
+		case T_TidScan:
+			return ExecCountSlotsTidScan((TidScan *) node);
+
+		case T_SubqueryScan:
+			return ExecCountSlotsSubqueryScan((SubqueryScan *) node);
+
 			/* ----------------
 			 *		join nodes
 			 * ----------------
@@ -365,6 +381,12 @@ ExecCountSlotsNode(Plan *node)
 
 		case T_MergeJoin:
 			return ExecCountSlotsMergeJoin((MergeJoin *) node);
+
+		case T_Hash:
+			return ExecCountSlotsHash((Hash *) node);
+
+		case T_HashJoin:
+			return ExecCountSlotsHashJoin((HashJoin *) node);
 
 			/* ----------------
 			 *		materialization nodes
@@ -384,15 +406,6 @@ ExecCountSlotsNode(Plan *node)
 
 		case T_Agg:
 			return ExecCountSlotsAgg((Agg *) node);
-
-		case T_Hash:
-			return ExecCountSlotsHash((Hash *) node);
-
-		case T_HashJoin:
-			return ExecCountSlotsHashJoin((HashJoin *) node);
-
-		case T_TidScan:
-			return ExecCountSlotsTidScan((TidScan *) node);
 
 		default:
 			elog(ERROR, "ExecCountSlotsNode: node not yet supported: %d",
@@ -462,6 +475,14 @@ ExecEndNode(Plan *node, Plan *parent)
 			ExecEndIndexScan((IndexScan *) node);
 			break;
 
+		case T_TidScan:
+			ExecEndTidScan((TidScan *) node);
+			break;
+
+		case T_SubqueryScan:
+			ExecEndSubqueryScan((SubqueryScan *) node);
+			break;
+
 			/* ----------------
 			 *		join nodes
 			 * ----------------
@@ -472,6 +493,14 @@ ExecEndNode(Plan *node, Plan *parent)
 
 		case T_MergeJoin:
 			ExecEndMergeJoin((MergeJoin *) node);
+			break;
+
+		case T_Hash:
+			ExecEndHash((Hash *) node);
+			break;
+
+		case T_HashJoin:
+			ExecEndHashJoin((HashJoin *) node);
 			break;
 
 			/* ----------------
@@ -496,22 +525,6 @@ ExecEndNode(Plan *node, Plan *parent)
 
 		case T_Agg:
 			ExecEndAgg((Agg *) node);
-			break;
-
-			/* ----------------
-			 *		XXX add hooks to these
-			 * ----------------
-			 */
-		case T_Hash:
-			ExecEndHash((Hash *) node);
-			break;
-
-		case T_HashJoin:
-			ExecEndHashJoin((HashJoin *) node);
-			break;
-
-		case T_TidScan:
-			ExecEndTidScan((TidScan *) node);
 			break;
 
 		default:

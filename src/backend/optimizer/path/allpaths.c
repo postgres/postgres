@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/allpaths.c,v 1.64 2000/09/19 18:42:34 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/allpaths.c,v 1.65 2000/09/29 18:21:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,6 +19,9 @@
 #include "optimizer/geqo.h"
 #include "optimizer/pathnode.h"
 #include "optimizer/paths.h"
+#include "optimizer/plancat.h"
+#include "optimizer/planner.h"
+#include "parser/parsetree.h"
 
 
 bool		enable_geqo = true;
@@ -26,7 +29,6 @@ int			geqo_rels = DEFAULT_GEQO_RELS;
 
 
 static void set_base_rel_pathlist(Query *root);
-static List *build_jointree_rels(Query *root);
 static RelOptInfo *make_one_rel_by_joins(Query *root, int levels_needed,
 										 List *initial_rels);
 
@@ -44,20 +46,7 @@ static void debug_print_rel(Query *root, RelOptInfo *rel);
 RelOptInfo *
 make_one_rel(Query *root)
 {
-	int			levels_needed;
-	List	   *initial_rels;
-
-	/*
-	 * Count the number of top-level jointree nodes.  This is the depth
-	 * of the dynamic-programming algorithm we must employ to consider
-	 * all ways of joining the top-level nodes.  Currently, we build
-	 * JoinExpr joins in exactly the order implied by the join expression,
-	 * so no dynamic-programming search is needed within a JoinExpr.
-	 */
-	levels_needed = length(root->jointree);
-
-	if (levels_needed <= 0)
-		return NULL;			/* nothing to do? */
+	RelOptInfo *rel;
 
 	/*
 	 * Generate access paths for the base rels.
@@ -65,27 +54,18 @@ make_one_rel(Query *root)
 	set_base_rel_pathlist(root);
 
 	/*
-	 * Construct a list of rels corresponding to the toplevel jointree nodes.
-	 * This may contain both base rels and rels constructed according to
-	 * explicit JOIN directives.
+	 * Generate access paths for the entire join tree.
 	 */
-	initial_rels = build_jointree_rels(root);
+	Assert(root->jointree != NULL && IsA(root->jointree, FromExpr));
 
-	if (levels_needed == 1)
-	{
-		/*
-		 * Single jointree node, so we're done.
-		 */
-		return (RelOptInfo *) lfirst(initial_rels);
-	}
-	else
-	{
+	rel = make_fromexpr_rel(root, root->jointree);
 
-		/*
-		 * Generate join tree.
-		 */
-		return make_one_rel_by_joins(root, levels_needed, initial_rels);
-	}
+	/*
+	 * The result should join all the query's rels.
+	 */
+	Assert(length(rel->relids) == length(root->base_rel_list));
+
+	return rel;
 }
 
 /*
@@ -102,36 +82,67 @@ set_base_rel_pathlist(Query *root)
 	foreach(rellist, root->base_rel_list)
 	{
 		RelOptInfo *rel = (RelOptInfo *) lfirst(rellist);
-		List	   *indices = find_relation_indices(root, rel);
+		RangeTblEntry *rte;
 
-		/* Mark rel with estimated output rows, width, etc */
-		set_baserel_size_estimates(root, rel);
+		Assert(length(rel->relids) == 1); /* better be base rel */
+		rte = rt_fetch(lfirsti(rel->relids), root->rtable);
 
-		/*
-		 * Generate paths and add them to the rel's pathlist.
-		 *
-		 * Note: add_path() will discard any paths that are dominated by
-		 * another available path, keeping only those paths that are
-		 * superior along at least one dimension of cost or sortedness.
-		 */
+		if (rel->issubquery)
+		{
+			/* Subquery --- generate a separate plan for it */
 
-		/* Consider sequential scan */
-		add_path(rel, create_seqscan_path(rel));
+			/*
+			 * XXX for now, we just apply any restrict clauses that came
+			 * from the outer query as qpquals of the SubqueryScan node.
+			 * Later, think about pushing them down into the subquery itself.
+			 */
 
-		/* Consider TID scans */
-		create_tidscan_paths(root, rel);
+			/* Generate the plan for the subquery */
+			rel->subplan = planner(rte->subquery);
 
-		/* Consider index paths for both simple and OR index clauses */
-		create_index_paths(root, rel, indices,
-						   rel->baserestrictinfo,
-						   rel->joininfo);
+			/* Copy number of output rows from subplan */
+			rel->tuples = rel->subplan->plan_rows;
 
-		/*
-		 * Note: create_or_index_paths depends on create_index_paths to
-		 * have marked OR restriction clauses with relevant indices; this
-		 * is why it doesn't need to be given the list of indices.
-		 */
-		create_or_index_paths(root, rel, rel->baserestrictinfo);
+			/* Mark rel with estimated output rows, width, etc */
+			set_baserel_size_estimates(root, rel);
+
+			/* Generate appropriate path */
+			add_path(rel, create_subqueryscan_path(rel));
+		}
+		else
+		{
+			/* Plain relation */
+			List	   *indices = find_secondary_indexes(rte->relid);
+
+			/* Mark rel with estimated output rows, width, etc */
+			set_baserel_size_estimates(root, rel);
+
+			/*
+			 * Generate paths and add them to the rel's pathlist.
+			 *
+			 * Note: add_path() will discard any paths that are dominated by
+			 * another available path, keeping only those paths that are
+			 * superior along at least one dimension of cost or sortedness.
+			 */
+
+			/* Consider sequential scan */
+			add_path(rel, create_seqscan_path(rel));
+
+			/* Consider TID scans */
+			create_tidscan_paths(root, rel);
+
+			/* Consider index paths for both simple and OR index clauses */
+			create_index_paths(root, rel, indices,
+							   rel->baserestrictinfo,
+							   rel->joininfo);
+
+			/*
+			 * Note: create_or_index_paths depends on create_index_paths to
+			 * have marked OR restriction clauses with relevant indices; this
+			 * is why it doesn't need to be given the list of indices.
+			 */
+			create_or_index_paths(root, rel, rel->baserestrictinfo);
+		}
 
 		/* Now find the cheapest of the paths for this rel */
 		set_cheapest(rel);
@@ -139,26 +150,57 @@ set_base_rel_pathlist(Query *root)
 }
 
 /*
- * build_jointree_rels
- *	  Construct a RelOptInfo for each item in the query's jointree.
- *
- * At present, we handle explicit joins in the FROM clause exactly as
- * specified, with no search for other join orders.  Only the cross-product
- * joins at the top level are involved in the dynamic-programming search.
+ * make_fromexpr_rel
+ *	  Build access paths for a FromExpr jointree node.
  */
-static List *
-build_jointree_rels(Query *root)
+RelOptInfo *
+make_fromexpr_rel(Query *root, FromExpr *from)
 {
-	List	   *rels = NIL;
+	int			levels_needed;
+	List	   *initial_rels = NIL;
 	List	   *jt;
 
-	foreach(jt, root->jointree)
+	/*
+	 * Count the number of child jointree nodes.  This is the depth
+	 * of the dynamic-programming algorithm we must employ to consider
+	 * all ways of joining the child nodes.
+	 */
+	levels_needed = length(from->fromlist);
+
+	if (levels_needed <= 0)
+		return NULL;			/* nothing to do? */
+
+	/*
+	 * Construct a list of rels corresponding to the child jointree nodes.
+	 * This may contain both base rels and rels constructed according to
+	 * explicit JOIN directives.
+	 */
+	foreach(jt, from->fromlist)
 	{
 		Node	   *jtnode = (Node *) lfirst(jt);
 
-		rels = lappend(rels, make_rel_from_jointree(root, jtnode));
+		initial_rels = lappend(initial_rels,
+							   make_jointree_rel(root, jtnode));
 	}
-	return rels;
+
+	if (levels_needed == 1)
+	{
+		/*
+		 * Single jointree node, so we're done.
+		 */
+		return (RelOptInfo *) lfirst(initial_rels);
+	}
+	else
+	{
+		/*
+		 * Consider the different orders in which we could join the rels,
+		 * using either GEQO or regular optimizer.
+		 */
+		if (enable_geqo && levels_needed >= geqo_rels)
+			return geqo(root, levels_needed, initial_rels);
+		else
+			return make_one_rel_by_joins(root, levels_needed, initial_rels);
+	}
 }
 
 /*
@@ -181,14 +223,6 @@ make_one_rel_by_joins(Query *root, int levels_needed, List *initial_rels)
 	List	  **joinitems;
 	int			lev;
 	RelOptInfo *rel;
-
-	/*******************************************
-	 * genetic query optimizer entry point	   *
-	 *	  <utesch@aut.tu-freiberg.de>		   *
-	 * rest will be skipped in case of GEQO    *
-	 *******************************************/
-	if (enable_geqo && levels_needed >= geqo_rels)
-		return geqo(root, levels_needed, initial_rels);
 
 	/*
 	 * We employ a simple "dynamic programming" algorithm: we first find
@@ -243,12 +277,11 @@ make_one_rel_by_joins(Query *root, int levels_needed, List *initial_rels)
 	}
 
 	/*
-	 * We should have a single rel at the final level,
-	 * representing the join of all the base rels.
+	 * We should have a single rel at the final level.
 	 */
 	Assert(length(joinitems[levels_needed]) == 1);
+
 	rel = (RelOptInfo *) lfirst(joinitems[levels_needed]);
-	Assert(length(rel->relids) == length(root->base_rel_list));
 
 	return rel;
 }

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteDefine.c,v 1.52 2000/09/12 20:38:09 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteDefine.c,v 1.53 2000/09/29 18:21:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,16 +16,21 @@
 #include "postgres.h"
 
 #include "access/heapam.h"
-#include "utils/builtins.h"
 #include "catalog/catname.h"
 #include "catalog/indexing.h"
 #include "catalog/pg_rewrite.h"
+#include "commands/view.h"
+#include "miscadmin.h"
+#include "optimizer/clauses.h"
 #include "parser/parse_relation.h"
 #include "rewrite/rewriteDefine.h"
 #include "rewrite/rewriteSupport.h"
-#include "utils/syscache.h"
 #include "storage/smgr.h"
-#include "commands/view.h"
+#include "utils/builtins.h"
+
+
+static void setRuleCheckAsUser(Query *qry, Oid userid);
+static bool setRuleCheckAsUser_walker(Node *node, Oid *context);
 
 
 /*
@@ -52,7 +57,7 @@ InsertRule(char *rulname,
 	Oid			rewriteObjectId;
 
 	if (IsDefinedRewriteRule(rulname))
-		elog(ERROR, "Attempt to insert rule '%s' failed: already exists",
+		elog(ERROR, "Attempt to insert rule \"%s\" failed: already exists",
 			 rulname);
 
 	/* ----------------
@@ -217,10 +222,7 @@ DefineQueryRewrite(RuleStmt *stmt)
 	 */
 	if (event_type == CMD_SELECT)
 	{
-		TargetEntry *tle;
-		Resdom	   *resdom;
-		Form_pg_attribute attr;
-		char	   *attname;
+		List	   *tllist;
 		int			i;
 		char		*expected_name;
 
@@ -245,6 +247,10 @@ DefineQueryRewrite(RuleStmt *stmt)
 		query = (Query *) lfirst(action);
 		if (!is_instead || query->commandType != CMD_SELECT)
 			elog(ERROR, "only instead-select rules currently supported on select");
+
+		/*
+		 * ... there can be no rule qual, ...
+		 */
 		if (event_qual != NULL)
 			elog(ERROR, "event qualifications not supported for rules on select");
 
@@ -252,25 +258,35 @@ DefineQueryRewrite(RuleStmt *stmt)
 		 * ... the targetlist of the SELECT action must exactly match the
 		 * event relation, ...
 		 */
-		if (event_relation->rd_att->natts != length(query->targetList))
-			elog(ERROR, "select rules target list must match event relations structure");
-
-		for (i = 1; i <= event_relation->rd_att->natts; i++)
+		i = 0;
+		foreach(tllist, query->targetList)
 		{
-			tle = (TargetEntry *) nth(i - 1, query->targetList);
-			resdom = tle->resdom;
+			TargetEntry *tle = (TargetEntry *) lfirst(tllist);
+			Resdom	   *resdom = tle->resdom;
+			Form_pg_attribute attr;
+			char	   *attname;
+
+			if (resdom->resjunk)
+				continue;
+			i++;
+			if (i > event_relation->rd_att->natts)
+				elog(ERROR, "select rule's target list has too many entries");
+
 			attr = event_relation->rd_att->attrs[i - 1];
 			attname = NameStr(attr->attname);
 
 			if (strcmp(resdom->resname, attname) != 0)
-				elog(ERROR, "select rules target entry %d has different column name from %s", i, attname);
+				elog(ERROR, "select rule's target entry %d has different column name from %s", i, attname);
 
 			if (attr->atttypid != resdom->restype)
-				elog(ERROR, "select rules target entry %d has different type from attribute %s", i, attname);
+				elog(ERROR, "select rule's target entry %d has different type from attribute %s", i, attname);
 
 			if (attr->atttypmod != resdom->restypmod)
-				elog(ERROR, "select rules target entry %d has different size from attribute %s", i, attname);
+				elog(ERROR, "select rule's target entry %d has different size from attribute %s", i, attname);
 		}
+
+		if (i != event_relation->rd_att->natts)
+			elog(ERROR, "select rule's target list has too few entries");
 
 		/*
 		 * ... there must not be another ON SELECT rule already ...
@@ -283,7 +299,7 @@ DefineQueryRewrite(RuleStmt *stmt)
 
 				rule = event_relation->rd_rules->rules[i];
 				if (rule->event == CMD_SELECT)
-					elog(ERROR, "%s is already a view",
+					elog(ERROR, "\"%s\" is already a view",
 						 RelationGetRelationName(event_relation));
 			}
 		}
@@ -295,24 +311,12 @@ DefineQueryRewrite(RuleStmt *stmt)
 			elog(ERROR, "LIMIT clause not supported in views");
 
 		/*
-		 * DISTINCT on view is not supported
-		 */
-		if (query->distinctClause != NIL)
-			elog(ERROR, "DISTINCT not supported in views");
-
-		/*
-		 * ORDER BY in view is not supported
-		 */
-		if (query->sortClause != NIL)
-			elog(ERROR, "ORDER BY not supported in views");
-
-		/*
 		 * ... and finally the rule must be named _RETviewname.
 		 */
 		expected_name = MakeRetrieveViewRuleName(event_obj->relname);
 		if (strcmp(expected_name, stmt->rulename) != 0)
 		{
-			elog(ERROR, "view rule for %s must be named %s",
+			elog(ERROR, "view rule for \"%s\" must be named \"%s\"",
 				 event_obj->relname, expected_name);
 		}
 		pfree(expected_name);
@@ -342,7 +346,7 @@ DefineQueryRewrite(RuleStmt *stmt)
 	}
 
 	/*
-	 * This rule is allowed - install it.
+	 * This rule is allowed - prepare to install it.
 	 */
 	if (eslot_string == NULL)
 	{
@@ -360,13 +364,21 @@ DefineQueryRewrite(RuleStmt *stmt)
 				 eslot_string, event_qual, &action,
 				 is_instead, event_attype);
 
+	/*
+	 * We want the rule's table references to be checked as though by
+	 * the rule owner, not the user referencing the rule.  Therefore,
+	 * scan through the rule's rtables and set the checkAsUser field
+	 * on all rtable entries (except *OLD* and *NEW*).
+	 */
+	foreach(l, action)
+	{
+		query = (Query *) lfirst(l);
+		setRuleCheckAsUser(query, GetUserId());
+	}
+
 	/* discard rule if it's null action and not INSTEAD; it's a no-op */
 	if (action != NIL || is_instead)
 	{
-		Relation	relationRelation;
-		HeapTuple	tuple;
-		Relation	idescs[Num_pg_class_indices];
-
 		event_qualP = nodeToString(event_qual);
 		actionP = nodeToString(action);
 
@@ -386,34 +398,8 @@ DefineQueryRewrite(RuleStmt *stmt)
 		 * Important side effect: an SI notice is broadcast to force all
 		 * backends (including me!) to update relcache entries with the new
 		 * rule.
-		 *
-		 * NOTE : Used to call setRelhasrulesInRelation. The code
-		 * was inlined so that two updates were not needed. mhh 31-aug-2000
 		 */
-
-		/*
-		 * Find the tuple to update in pg_class, using syscache for the lookup.
-		 */
-		relationRelation = heap_openr(RelationRelationName, RowExclusiveLock);
-		tuple = SearchSysCacheTupleCopy(RELOID,
-										ObjectIdGetDatum(ev_relid),
-										0, 0, 0);
-		Assert(HeapTupleIsValid(tuple));
-
-		/* Do the update */
-		((Form_pg_class) GETSTRUCT(tuple))->relhasrules = true;
-		if (RelisBecomingView)
-			((Form_pg_class) GETSTRUCT(tuple))->relkind = RELKIND_VIEW;
-
-		heap_update(relationRelation, &tuple->t_self, tuple, NULL);
-
-		/* Keep the catalog indices up to date */
-		CatalogOpenIndices(Num_pg_class_indices, Name_pg_class_indices, idescs);
-		CatalogIndexInsert(idescs, Num_pg_class_indices, relationRelation, tuple);
-		CatalogCloseIndices(Num_pg_class_indices, idescs);
-
-		heap_freetuple(tuple);
-		heap_close(relationRelation, RowExclusiveLock);
+		SetRelationRuleStatus(ev_relid, true, RelisBecomingView);
 	}
 
 	/*
@@ -426,4 +412,61 @@ DefineQueryRewrite(RuleStmt *stmt)
 
 	/* Close rel, but keep lock till commit... */
 	heap_close(event_relation, NoLock);
+}
+
+/*
+ * setRuleCheckAsUser
+ *		Recursively scan a query and set the checkAsUser field to the
+ *		given userid in all rtable entries except *OLD* and *NEW*.
+ */
+static void
+setRuleCheckAsUser(Query *qry, Oid userid)
+{
+	List	   *l;
+
+	/* Set all the RTEs in this query node, except OLD and NEW */
+	foreach(l, qry->rtable)
+	{
+		RangeTblEntry *rte = (RangeTblEntry *) lfirst(l);
+
+		if (strcmp(rte->eref->relname, "*NEW*") == 0)
+			continue;
+		if (strcmp(rte->eref->relname, "*OLD*") == 0)
+			continue;
+
+		if (rte->subquery)
+		{
+			/*
+			 * Recurse into subquery in FROM
+			 */
+			setRuleCheckAsUser(rte->subquery, userid);
+		}
+		else
+		{
+			rte->checkAsUser = userid;
+		}
+	}
+
+	/* If there are sublinks, search for them and process their RTEs */
+	if (qry->hasSubLinks)
+		query_tree_walker(qry, setRuleCheckAsUser_walker, (void *) &userid);
+}
+
+/*
+ * Expression-tree walker to find sublink queries
+ */
+static bool
+setRuleCheckAsUser_walker(Node *node, Oid *context)
+{
+	if (node == NULL)
+		return false;
+	if (IsA(node, Query))
+	{
+		Query	   *qry = (Query *) node;
+
+		setRuleCheckAsUser(qry, *context);
+		return false;
+	}
+	return expression_tree_walker(node, setRuleCheckAsUser_walker,
+								  (void *) context);
 }

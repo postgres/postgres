@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/pathnode.c,v 1.65 2000/09/12 21:06:58 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/pathnode.c,v 1.66 2000/09/29 18:21:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,6 +16,7 @@
 
 #include "postgres.h"
 
+#include "nodes/plannodes.h"
 #include "optimizer/cost.h"
 #include "optimizer/pathnode.h"
 #include "optimizer/paths.h"
@@ -272,7 +273,6 @@ add_path(RelOptInfo *parent_rel, Path *new_path)
  * create_seqscan_path
  *	  Creates a path corresponding to a sequential scan, returning the
  *	  pathnode.
- *
  */
 Path *
 create_seqscan_path(RelOptInfo *rel)
@@ -343,8 +343,8 @@ create_index_path(Query *root,
 	 * We are making a pathnode for a single-scan indexscan; therefore,
 	 * both indexid and indexqual should be single-element lists.
 	 */
-	pathnode->indexid = lconsi(index->indexoid, NIL);
-	pathnode->indexqual = lcons(indexquals, NIL);
+	pathnode->indexid = makeListi1(index->indexoid);
+	pathnode->indexqual = makeList1(indexquals);
 
 	pathnode->indexscandir = indexscandir;
 
@@ -386,6 +386,27 @@ create_tidscan_path(RelOptInfo *rel, List *tideval)
 	 * divide selectivity for each clause to get an equal selectivity as
 	 * IndexScan does OK ?
 	 */
+
+	return pathnode;
+}
+
+/*
+ * create_subqueryscan_path
+ *	  Creates a path corresponding to a sequential scan of a subquery,
+ *	  returning the pathnode.
+ */
+Path *
+create_subqueryscan_path(RelOptInfo *rel)
+{
+	Path	   *pathnode = makeNode(Path);
+
+	pathnode->pathtype = T_SubqueryScan;
+	pathnode->parent = rel;
+	pathnode->pathkeys = NIL;	/* for now, assume unordered result */
+
+	/* just copy the subplan's cost estimates */
+	pathnode->startup_cost = rel->subplan->startup_cost;
+	pathnode->total_cost = rel->subplan->total_cost;
 
 	return pathnode;
 }

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinpath.c,v 1.56 2000/09/12 21:06:53 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinpath.c,v 1.57 2000/09/29 18:21:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -643,10 +643,10 @@ hash_inner_and_outer(Query *root,
 			continue;			/* not hashjoinable */
 
 		/*
-		 * If processing an outer join, only use explicit join clauses for
+		 * If processing an outer join, only use its own join clauses for
 		 * hashing.  For inner joins we need not be so picky.
 		 */
-		if (isouterjoin && !restrictinfo->isjoinqual)
+		if (isouterjoin && restrictinfo->ispusheddown)
 			continue;
 
 		clause = restrictinfo->clause;
@@ -665,7 +665,7 @@ hash_inner_and_outer(Query *root,
 			continue;			/* no good for these input relations */
 
 		/* always a one-element list of hash clauses */
-		hashclauses = lcons(restrictinfo, NIL);
+		hashclauses = makeList1(restrictinfo);
 
 		/* estimate disbursion of inner var for costing purposes */
 		innerdisbursion = estimate_disbursion(root, inner);
@@ -820,7 +820,7 @@ select_mergejoin_clauses(RelOptInfo *joinrel,
 				   *right;
 
 		/*
-		 * If processing an outer join, only use explicit join clauses in the
+		 * If processing an outer join, only use its own join clauses in the
 		 * merge.  For inner joins we need not be so picky.
 		 *
 		 * Furthermore, if it is a right/full join then *all* the explicit
@@ -832,7 +832,7 @@ select_mergejoin_clauses(RelOptInfo *joinrel,
 		 */
 		if (isouterjoin)
 		{
-			if (!restrictinfo->isjoinqual)
+			if (restrictinfo->ispusheddown)
 				continue;
 			switch (jointype)
 			{

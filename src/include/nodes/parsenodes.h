@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsenodes.h,v 1.113 2000/09/12 21:07:10 tgl Exp $
+ * $Id: parsenodes.h,v 1.114 2000/09/29 18:21:38 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -50,11 +50,12 @@ typedef struct Query
 	bool		hasSubLinks;	/* has subquery SubLink */
 
 	List	   *rtable;			/* list of range table entries */
-	List	   *jointree;		/* table join tree (from the FROM clause) */
+	FromExpr   *jointree;		/* table join tree (FROM and WHERE clauses) */
 
 	List	   *targetList;		/* target list (of TargetEntry) */
-	Node	   *qual;			/* qualifications applied to tuples */
-	List	   *rowMark;		/* list of RowMark entries */
+
+	List	   *rowMarks;		/* integer list of RT indexes of relations
+								 * that are selected FOR UPDATE */
 
 	List	   *distinctClause; /* a list of SortClause's */
 
@@ -1087,7 +1088,7 @@ typedef struct RangeSubselect
 {
 	NodeTag		type;
 	Node	   *subquery;		/* the untransformed sub-select clause */
-	Attr	   *name;			/* optional table alias & column aliases */
+	Attr	   *name;			/* table alias & optional column aliases */
 } RangeSubselect;
 
 /*
@@ -1141,15 +1142,22 @@ typedef struct TargetEntry
  * RangeTblEntry -
  *	  A range table is a List of RangeTblEntry nodes.
  *
- *	  Some of the following are only used in one of
- *	  the parsing, optimizing, execution stages.
+ *	  Currently we use the same node type for both plain relation references
+ *	  and sub-selects in the FROM clause.  It might be cleaner to abstract
+ *	  the common fields into a "superclass" nodetype.
  *
  *	  alias is an Attr node representing the AS alias-clause attached to the
  *	  FROM expression, or NULL if no clause.
  *
  *	  eref is the table reference name and column reference names (either
- *	  real or aliases).  This is filled in during parse analysis.  Note that
- *	  system columns (OID etc) are not included in the column list.
+ *	  real or aliases).  Note that system columns (OID etc) are not included
+ *	  in the column list.
+ *	  eref->relname is required to be present, and should generally be used
+ *	  to identify the RTE for error messages etc.
+ *
+ *	  inh is TRUE for relation references that should be expanded to include
+ *	  inheritance children, if the rel has any.  This *must* be FALSE for
+ *	  subquery RTEs.
  *
  *	  inFromCl marks those range variables that are listed in the FROM clause.
  *	  In SQL, the query can only refer to range variables listed in the
@@ -1160,18 +1168,37 @@ typedef struct TargetEntry
  *	  implicitly-added RTE shouldn't change the namespace for unqualified
  *	  column names processed later, and it also shouldn't affect the
  *	  expansion of '*'.
+ *
+ *	  checkForRead, checkForWrite, and checkAsUser control run-time access
+ *	  permissions checks.  A rel will be checked for read or write access
+ *	  (or both, or neither) per checkForRead and checkForWrite.  If
+ *	  checkAsUser is not InvalidOid, then do the permissions checks using
+ *	  the access rights of that user, not the current effective user ID.
+ *	  (This allows rules to act as setuid gateways.)
  *--------------------
  */
 typedef struct RangeTblEntry
 {
 	NodeTag		type;
+	/*
+	 * Fields valid for a plain relation RTE (else NULL/zero):
+	 */
 	char	   *relname;		/* real name of the relation */
 	Oid			relid;			/* OID of the relation */
+	/*
+	 * Fields valid for a subquery RTE (else NULL):
+	 */
+	Query	   *subquery;		/* the sub-query */
+	/*
+	 * Fields valid in all RTEs:
+	 */
 	Attr	   *alias;			/* user-written alias clause, if any */
 	Attr	   *eref;			/* expanded reference names */
 	bool		inh;			/* inheritance requested? */
 	bool		inFromCl;		/* present in FROM clause */
-	bool		skipAcl;		/* skip ACL check in executor */
+	bool		checkForRead;	/* check rel for read access */
+	bool		checkForWrite;	/* check rel for write access */
+	Oid			checkAsUser;	/* if not zero, check access as this user */
 } RangeTblEntry;
 
 /*
@@ -1205,15 +1232,5 @@ typedef struct SortClause
  * nodetags...).  We have routines that operate interchangeably on both.
  */
 typedef SortClause GroupClause;
-
-#define ROW_MARK_FOR_UPDATE		(1 << 0)
-#define ROW_ACL_FOR_UPDATE		(1 << 1)
-
-typedef struct RowMark
-{
-	NodeTag		type;
-	Index		rti;			/* index in Query->rtable */
-	bits8		info;			/* as above */
-} RowMark;
 
 #endif	 /* PARSENODES_H */

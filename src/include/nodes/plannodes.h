@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: plannodes.h,v 1.42 2000/09/12 21:07:10 tgl Exp $
+ * $Id: plannodes.h,v 1.43 2000/09/29 18:21:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,6 +31,7 @@
  *
  *		Scan ***				CommonScanState			scanstate;
  *		IndexScan				IndexScanState			indxstate;
+ *		SubqueryScan			SubqueryScanState		subquerystate;
  *
  *		  (*** nodes which inherit Scan also inherit scanstate)
  *
@@ -201,6 +202,26 @@ typedef struct TidScan
 	List	   *tideval;
 	TidScanState *tidstate;
 } TidScan;
+
+/* ----------------
+ *		subquery scan node
+ *
+ * SubqueryScan is for scanning the output of a sub-query in the range table.
+ * We need a special plan node above the sub-query's plan as a place to switch
+ * execution contexts.  Although we are not scanning a physical relation,
+ * we make this a descendant of Scan anyway for code-sharing purposes.
+ *
+ * Note: we store the sub-plan in the type-specific subplan field, not in
+ * the generic lefttree field as you might expect.  This is because we do
+ * not want plan-tree-traversal routines to recurse into the subplan without
+ * knowing that they are changing Query contexts.
+ * ----------------
+ */
+typedef struct SubqueryScan
+{
+	Scan		scan;
+	Plan	   *subplan;
+} SubqueryScan;
 
 /*
  * ==========

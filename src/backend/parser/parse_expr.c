@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.83 2000/09/12 21:07:02 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.84 2000/09/29 18:21:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -175,7 +175,7 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 
 							result = ParseFuncOrColumn(pstate,
 													   "nullvalue",
-													   lcons(lexpr, NIL),
+													   makeList1(lexpr),
 													   false, false,
 													   precedence);
 						}
@@ -188,7 +188,7 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 
 							result = ParseFuncOrColumn(pstate,
 													   "nonnullvalue",
-													   lcons(lexpr, NIL),
+													   makeList1(lexpr),
 													   false, false,
 													   precedence);
 						}
@@ -213,7 +213,7 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 
 							expr->typeOid = BOOLOID;
 							expr->opType = AND_EXPR;
-							expr->args = makeList(lexpr, rexpr, -1);
+							expr->args = makeList2(lexpr, rexpr);
 							result = (Node *) expr;
 						}
 						break;
@@ -235,7 +235,7 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 									 typeidTypeName(exprType(rexpr)), typeidTypeName(BOOLOID));
 							expr->typeOid = BOOLOID;
 							expr->opType = OR_EXPR;
-							expr->args = makeList(lexpr, rexpr, -1);
+							expr->args = makeList2(lexpr, rexpr);
 							result = (Node *) expr;
 						}
 						break;
@@ -251,7 +251,7 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 									 typeidTypeName(exprType(rexpr)), typeidTypeName(BOOLOID));
 							expr->typeOid = BOOLOID;
 							expr->opType = NOT_EXPR;
-							expr->args = makeList(rexpr, -1);
+							expr->args = makeList1(rexpr);
 							result = (Node *) expr;
 						}
 						break;
@@ -294,7 +294,8 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 					break;
 				}
 				pstate->p_hasSubLinks = true;
-				qtrees = parse_analyze(lcons(sublink->subselect, NIL), pstate);
+				qtrees = parse_analyze(makeList1(sublink->subselect),
+									   pstate);
 				if (length(qtrees) != 1)
 					elog(ERROR, "Bad query in subselect");
 				qtree = (Query *) lfirst(qtrees);

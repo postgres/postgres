@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.144 2000/09/12 21:06:46 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.145 2000/09/29 18:21:25 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1543,8 +1543,7 @@ StoreAttrDefault(Relation rel, AttrNumber attnum, char *adbin,
 	rte->eref->relname = RelationGetRelationName(rel);
 	rte->inh = false;
 	rte->inFromCl = true;
-	rte->skipAcl = false;
-	adsrc = deparse_expression(expr, lcons(lcons(rte, NIL), NIL), false);
+	adsrc = deparse_expression(expr, makeList1(makeList1(rte)), false);
 
 	values[Anum_pg_attrdef_adrelid - 1] = RelationGetRelid(rel);
 	values[Anum_pg_attrdef_adnum - 1] = attnum;
@@ -1626,8 +1625,7 @@ StoreRelCheck(Relation rel, char *ccname, char *ccbin)
 	rte->eref->relname = RelationGetRelationName(rel);
 	rte->inh = false;
 	rte->inFromCl = true;
-	rte->skipAcl = false;
-	ccsrc = deparse_expression(expr, lcons(lcons(rte, NIL), NIL), false);
+	ccsrc = deparse_expression(expr, makeList1(makeList1(rte)), false);
 
 	values[Anum_pg_relcheck_rcrelid - 1] = RelationGetRelid(rel);
 	values[Anum_pg_relcheck_rcname - 1] = DirectFunctionCall1(namein,
@@ -1750,7 +1748,7 @@ AddRelationRawConstraints(Relation rel,
 	pstate = make_parsestate(NULL);
 	makeRangeTable(pstate, NULL);
 	rte = addRangeTableEntry(pstate, relname, NULL, false, true);
-	addRTEtoJoinTree(pstate, rte);
+	addRTEtoJoinList(pstate, rte);
 
 	/*
 	 * Process column default expressions.
@@ -1773,6 +1771,14 @@ AddRelationRawConstraints(Relation rel,
 		 */
 		if (contain_var_clause(expr))
 			elog(ERROR, "Cannot use attribute(s) in DEFAULT clause");
+
+		/*
+		 * No subplans or aggregates, either...
+		 */
+		if (contain_subplans(expr))
+			elog(ERROR, "Cannot use subselect in DEFAULT clause");
+		if (contain_agg_clause(expr))
+			elog(ERROR, "Cannot use aggregate in DEFAULT clause");
 
 		/*
 		 * Check that it will be possible to coerce the expression to the
@@ -1884,8 +1890,16 @@ AddRelationRawConstraints(Relation rel,
 		 * Make sure no outside relations are referred to.
 		 */
 		if (length(pstate->p_rtable) != 1)
-			elog(ERROR, "Only relation '%s' can be referenced in CHECK",
+			elog(ERROR, "Only relation \"%s\" can be referenced in CHECK",
 				 relname);
+
+		/*
+		 * No subplans or aggregates, either...
+		 */
+		if (contain_subplans(expr))
+			elog(ERROR, "Cannot use subselect in CHECK clause");
+		if (contain_agg_clause(expr))
+			elog(ERROR, "Cannot use aggregate in CHECK clause");
 
 		/*
 		 * Might as well try to reduce any constant expressions.

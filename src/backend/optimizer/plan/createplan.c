@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.96 2000/09/12 21:06:53 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.97 2000/09/29 18:21:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -41,6 +41,8 @@ static IndexScan *create_indexscan_node(Query *root, IndexPath *best_path,
 					  List *tlist, List *scan_clauses);
 static TidScan *create_tidscan_node(TidPath *best_path, List *tlist,
 					List *scan_clauses);
+static SubqueryScan *create_subqueryscan_node(Path *best_path,
+					  List *tlist, List *scan_clauses);
 static NestLoop *create_nestloop_node(NestPath *best_path, List *tlist,
 									  List *joinclauses, List *otherclauses,
 									  Plan *outer_node, List *outer_tlist,
@@ -66,6 +68,8 @@ static IndexScan *make_indexscan(List *qptlist, List *qpqual, Index scanrelid,
 			   ScanDirection indexscandir);
 static TidScan *make_tidscan(List *qptlist, List *qpqual, Index scanrelid,
 			 List *tideval);
+static SubqueryScan *make_subqueryscan(List *qptlist, List *qpqual,
+									   Index scanrelid, Plan *subplan);
 static NestLoop *make_nestloop(List *tlist,
 							   List *joinclauses, List *otherclauses,
 							   Plan *lefttree, Plan *righttree,
@@ -110,6 +114,7 @@ create_plan(Query *root, Path *best_path)
 		case T_IndexScan:
 		case T_SeqScan:
 		case T_TidScan:
+		case T_SubqueryScan:
 			plan_node = (Plan *) create_scan_node(root, best_path, tlist);
 			break;
 		case T_HashJoin:
@@ -164,7 +169,9 @@ create_scan_node(Query *root, Path *best_path, List *tlist)
 	switch (best_path->pathtype)
 	{
 		case T_SeqScan:
-			node = (Scan *) create_seqscan_node(best_path, tlist, scan_clauses);
+			node = (Scan *) create_seqscan_node(best_path,
+												tlist,
+												scan_clauses);
 			break;
 
 		case T_IndexScan:
@@ -178,6 +185,12 @@ create_scan_node(Query *root, Path *best_path, List *tlist)
 			node = (Scan *) create_tidscan_node((TidPath *) best_path,
 												tlist,
 												scan_clauses);
+			break;
+
+		case T_SubqueryScan:
+			node = (Scan *) create_subqueryscan_node(best_path,
+													 tlist,
+													 scan_clauses);
 			break;
 
 		default:
@@ -301,6 +314,7 @@ create_seqscan_node(Path *best_path, List *tlist, List *scan_clauses)
 
 	/* there should be exactly one base rel involved... */
 	Assert(length(best_path->parent->relids) == 1);
+	Assert(! best_path->parent->issubquery);
 
 	scan_relid = (Index) lfirsti(best_path->parent->relids);
 
@@ -342,6 +356,8 @@ create_indexscan_node(Query *root,
 
 	/* there should be exactly one base rel involved... */
 	Assert(length(best_path->path.parent->relids) == 1);
+	Assert(! best_path->path.parent->issubquery);
+
 	baserelid = lfirsti(best_path->path.parent->relids);
 
 	/* check to see if any of the indices are lossy */
@@ -391,8 +407,7 @@ create_indexscan_node(Query *root,
 								make_ands_explicit(lfirst(orclause)));
 		indxqual_expr = make_orclause(orclauses);
 
-		qpqual = set_difference(scan_clauses,
-								lcons(indxqual_expr, NIL));
+		qpqual = set_difference(scan_clauses, makeList1(indxqual_expr));
 
 		if (lossy)
 			qpqual = lappend(qpqual, copyObject(indxqual_expr));
@@ -449,6 +464,7 @@ create_tidscan_node(TidPath *best_path, List *tlist, List *scan_clauses)
 
 	/* there should be exactly one base rel involved... */
 	Assert(length(best_path->path.parent->relids) == 1);
+	Assert(! best_path->path.parent->issubquery);
 
 	scan_relid = (Index) lfirsti(best_path->path.parent->relids);
 
@@ -461,6 +477,34 @@ create_tidscan_node(TidPath *best_path, List *tlist, List *scan_clauses)
 		scan_node->needRescan = true;
 
 	copy_path_costsize(&scan_node->scan.plan, &best_path->path);
+
+	return scan_node;
+}
+
+/*
+ * create_subqueryscan_node
+ *	 Returns a subqueryscan node for the base relation scanned by 'best_path'
+ *	 with restriction clauses 'scan_clauses' and targetlist 'tlist'.
+ */
+static SubqueryScan *
+create_subqueryscan_node(Path *best_path, List *tlist, List *scan_clauses)
+{
+	SubqueryScan *scan_node;
+	Index		scan_relid;
+
+	/* there should be exactly one base rel involved... */
+	Assert(length(best_path->parent->relids) == 1);
+	/* and it must be a subquery */
+	Assert(best_path->parent->issubquery);
+
+	scan_relid = (Index) lfirsti(best_path->parent->relids);
+
+	scan_node = make_subqueryscan(tlist,
+								  scan_clauses,
+								  scan_relid,
+								  best_path->parent->subplan);
+
+	copy_path_costsize(&scan_node->scan.plan, best_path);
 
 	return scan_node;
 }
@@ -1162,6 +1206,28 @@ make_tidscan(List *qptlist,
 	return node;
 }
 
+static SubqueryScan *
+make_subqueryscan(List *qptlist,
+				  List *qpqual,
+				  Index scanrelid,
+				  Plan *subplan)
+{
+	SubqueryScan *node = makeNode(SubqueryScan);
+	Plan	   *plan = &node->scan.plan;
+
+	/* cost should be inserted by caller */
+	plan->state = (EState *) NULL;
+	plan->targetlist = qptlist;
+	plan->qual = qpqual;
+	plan->lefttree = NULL;
+	plan->righttree = NULL;
+	node->scan.scanrelid = scanrelid;
+	node->subplan = subplan;
+	node->scan.scanstate = (CommonScanState *) NULL;
+
+	return node;
+}
+
 
 static NestLoop *
 make_nestloop(List *tlist,
@@ -1405,7 +1471,11 @@ make_agg(List *tlist, List *qual, Plan *lefttree)
 	 * mode, so it didn't reduce its row count already.)
 	 */
 	if (IsA(lefttree, Group))
+	{
 		plan->plan_rows *= 0.1;
+		if (plan->plan_rows < 1)
+			plan->plan_rows = 1;
+	}
 	else
 	{
 		plan->plan_rows = 1;
@@ -1447,7 +1517,11 @@ make_group(List *tlist,
 	 * --- bogus, but how to do better?
 	 */
 	if (!tuplePerGroup)
+	{
 		plan->plan_rows *= 0.1;
+		if (plan->plan_rows < 1)
+			plan->plan_rows = 1;
+	}
 
 	plan->state = (EState *) NULL;
 	plan->qual = NULL;
@@ -1489,6 +1563,8 @@ make_unique(List *tlist, Plan *lefttree, List *distinctList)
 	 * 10% as many tuples out as in.
 	 */
 	plan->plan_rows *= 0.1;
+	if (plan->plan_rows < 1)
+		plan->plan_rows = 1;
 
 	plan->state = (EState *) NULL;
 	plan->targetlist = tlist;

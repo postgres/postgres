@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parse_agg.h,v 1.15 2000/04/12 17:16:45 momjian Exp $
+ * $Id: parse_agg.h,v 1.16 2000/09/29 18:21:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,7 +17,7 @@
 #include "parser/parse_node.h"
 
 extern void AddAggToParseState(ParseState *pstate, Aggref *aggref);
-extern void parseCheckAggregates(ParseState *pstate, Query *qry);
+extern void parseCheckAggregates(ParseState *pstate, Query *qry, Node *qual);
 extern Aggref *ParseAgg(ParseState *pstate, char *aggname, Oid basetype,
 		 List *args, bool agg_star, bool agg_distinct,
 		 int precedence);

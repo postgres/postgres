@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.96 2000/09/15 18:45:25 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.97 2000/09/29 18:21:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -464,7 +464,7 @@ extract_or_indexqual_conditions(RelOptInfo *rel,
 	else
 	{
 		/* we assume the caller passed a valid indexable qual */
-		quals = lcons(orsubclause, NIL);
+		quals = makeList1(orsubclause);
 	}
 
 	return expand_indexqual_conditions(quals);
@@ -1504,7 +1504,7 @@ index_innerjoin(Query *root, RelOptInfo *rel, IndexOptInfo *index,
 			RestrictInfo *clause = (RestrictInfo *) lfirst(temp);
 
 			indexquals = lappend(indexquals, clause->clause);
-			if (! clause->isjoinqual)
+			if (clause->ispusheddown)
 				alljoinquals = false;
 		}
 
@@ -1516,8 +1516,8 @@ index_innerjoin(Query *root, RelOptInfo *rel, IndexOptInfo *index,
 		 * therefore, both indexid and indexqual should be single-element
 		 * lists.
 		 */
-		pathnode->indexid = lconsi(index->indexoid, NIL);
-		pathnode->indexqual = lcons(indexquals, NIL);
+		pathnode->indexid = makeListi1(index->indexoid);
+		pathnode->indexqual = makeList1(indexquals);
 
 		/* We don't actually care what order the index scans in ... */
 		pathnode->indexscandir = NoMovementScanDirection;
@@ -1541,7 +1541,7 @@ index_innerjoin(Query *root, RelOptInfo *rel, IndexOptInfo *index,
 		 */
 		pathnode->rows = rel->tuples *
 			restrictlist_selectivity(root,
-									 LispUnion(rel->baserestrictinfo,
+									 set_union(rel->baserestrictinfo,
 											   clausegroup),
 									 lfirsti(rel->relids));
 		/* Like costsize.c, force estimate to be at least one row */
@@ -2034,7 +2034,7 @@ prefix_quals(Var *leftop, Oid expr_op,
 		con = string_to_const(prefix, datatype);
 		op = makeOper(oproid, InvalidOid, BOOLOID);
 		expr = make_opclause(op, leftop, (Var *) con);
-		result = lcons(expr, NIL);
+		result = makeList1(expr);
 		return result;
 	}
 
@@ -2049,7 +2049,7 @@ prefix_quals(Var *leftop, Oid expr_op,
 	con = string_to_const(prefix, datatype);
 	op = makeOper(oproid, InvalidOid, BOOLOID);
 	expr = make_opclause(op, leftop, (Var *) con);
-	result = lcons(expr, NIL);
+	result = makeList1(expr);
 
 	/*
 	 * If we can create a string larger than the prefix, say "x <

@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planmain.c,v 1.59 2000/09/12 21:06:54 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planmain.c,v 1.60 2000/09/29 18:21:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,8 +32,8 @@
 #include "utils/memutils.h"
 
 
-static Plan *subplanner(Query *root, List *flat_tlist, List *qual,
-		   double tuple_fraction);
+static Plan *subplanner(Query *root, List *flat_tlist,
+						double tuple_fraction);
 
 
 /*--------------------
@@ -75,46 +75,36 @@ query_planner(Query *root,
 			  List *tlist,
 			  double tuple_fraction)
 {
-	List	   *normal_qual;
-	List	   *noncachable_qual;
-	List	   *constant_qual;
+	List	   *constant_quals;
 	List	   *var_only_tlist;
 	Plan	   *subplan;
 
 	/*
-	 * If the query contains no relation references at all, it must be
-	 * something like "SELECT 2+2;".  Build a trivial "Result" plan.
+	 * If the query has an empty join tree, then it's something easy like
+	 * "SELECT 2+2;" or "INSERT ... VALUES()".  Fall through quickly.
 	 */
-	if (root->rtable == NIL)
+	if (root->jointree->fromlist == NIL)
 	{
-		/* If it's not a select, it should have had a target relation... */
-		if (root->commandType != CMD_SELECT)
-			elog(ERROR, "Empty range table for non-SELECT query");
-
 		root->query_pathkeys = NIL;		/* signal unordered result */
 
 		/* Make childless Result node to evaluate given tlist. */
-		return (Plan *) make_result(tlist, root->qual, (Plan *) NULL);
+		return (Plan *) make_result(tlist, root->jointree->quals,
+									(Plan *) NULL);
 	}
 
 	/*
-	 * Pull out any non-variable qual clauses so these can be put in a
+	 * Pull out any non-variable WHERE clauses so these can be put in a
 	 * toplevel "Result" node, where they will gate execution of the whole
 	 * plan (the Result will not invoke its descendant plan unless the
 	 * quals are true).  Note that any *really* non-variable quals will
 	 * have been optimized away by eval_const_expressions().  What we're
 	 * mostly interested in here is quals that depend only on outer-level
 	 * vars, although if the qual reduces to "WHERE FALSE" this path will
-	 * also be taken.  We also need a special case for quals that contain
-	 * noncachable functions but no vars, such as "WHERE random() < 0.5".
-	 * These cannot be treated as normal restriction or join quals, but
-	 * they're not constants either.  Instead, attach them to the qpqual
-	 * of the top plan, so that they get evaluated once per potential
-	 * output tuple.
+	 * also be taken.
 	 */
-	normal_qual = pull_constant_clauses((List *) root->qual,
-										&noncachable_qual,
-										&constant_qual);
+	root->jointree->quals = (Node *)
+		pull_constant_clauses((List *) root->jointree->quals,
+							  &constant_quals);
 
 	/*
 	 * Create a target list that consists solely of (resdom var) target
@@ -132,18 +122,12 @@ query_planner(Query *root,
 	/*
 	 * Choose the best access path and build a plan for it.
 	 */
-	subplan = subplanner(root, var_only_tlist, normal_qual, tuple_fraction);
-
-	/*
-	 * Handle the noncachable quals.
-	 */
-	if (noncachable_qual)
-		subplan->qual = nconc(subplan->qual, noncachable_qual);
+	subplan = subplanner(root, var_only_tlist, tuple_fraction);
 
 	/*
 	 * Build a result node to control the plan if we have constant quals.
 	 */
-	if (constant_qual)
+	if (constant_quals)
 	{
 
 		/*
@@ -151,7 +135,7 @@ query_planner(Query *root,
 		 * originally requested tlist.
 		 */
 		subplan = (Plan *) make_result(tlist,
-									   (Node *) constant_qual,
+									   (Node *) constant_quals,
 									   subplan);
 	}
 	else
@@ -175,7 +159,6 @@ query_planner(Query *root,
  *	 for processing a single level of attributes.
  *
  * flat_tlist is the flattened target list
- * qual is the qualification to be satisfied (restrict and join quals only)
  * tuple_fraction is the fraction of tuples we expect will be retrieved
  *
  * See query_planner() comments about the interpretation of tuple_fraction.
@@ -185,7 +168,6 @@ query_planner(Query *root,
 static Plan *
 subplanner(Query *root,
 		   List *flat_tlist,
-		   List *qual,
 		   double tuple_fraction)
 {
 	List	   *joined_rels;
@@ -210,9 +192,8 @@ subplanner(Query *root,
 	root->equi_key_list = NIL;
 
 	build_base_rel_tlists(root, flat_tlist);
-	(void) add_join_quals_to_rels(root, (Node *) root->jointree);
-	/* this must happen after add_join_quals_to_rels: */
-	add_restrict_and_join_to_rels(root, qual);
+
+	(void) distribute_quals_to_rels(root, (Node *) root->jointree);
 
 	/*
 	 * Make sure we have RelOptInfo nodes for all relations to be joined.
@@ -270,26 +251,7 @@ subplanner(Query *root,
 	final_rel = make_one_rel(root);
 
 	if (!final_rel)
-	{
-
-		/*
-		 * We expect to end up here for a trivial INSERT ... VALUES query
-		 * (which will have a target relation, so it gets past
-		 * query_planner's check for empty range table; but the target rel
-		 * is not in the join tree, so we find there is nothing to join).
-		 *
-		 * It's also possible to get here if the query was rewritten by the
-		 * rule processor (creating dummy rangetable entries that are not in
-		 * the join tree) but the rules either did nothing or were simplified
-		 * to nothing by constant-expression folding.  So, don't complain.
-		 */
-		root->query_pathkeys = NIL;		/* signal unordered result */
-
-		/* Make childless Result node to evaluate given tlist. */
-		resultplan = (Plan *) make_result(flat_tlist, (Node *) qual,
-										  (Plan *) NULL);
-		goto plan_built;
-	}
+		elog(ERROR, "subplanner: failed to construct a relation");
 
 #ifdef NOT_USED					/* fix xfunc */
 
@@ -395,13 +357,18 @@ plan_built:
 
 	/*
 	 * Must copy the completed plan tree and its pathkeys out of temporary
-	 * context.
+	 * context.  We also have to copy the rtable in case it contains any
+	 * subqueries.  (If it does, they'll have been modified during the
+	 * recursive invocation of planner.c, and hence will contain substructure
+	 * allocated in my temporary context...)
 	 */
 	MemoryContextSwitchTo(oldcxt);
 
 	resultplan = copyObject(resultplan);
 
 	root->query_pathkeys = copyObject(root->query_pathkeys);
+
+	root->rtable = copyObject(root->rtable);
 
 	/*
 	 * Now we can release the Path storage.

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.67 2000/09/17 22:21:27 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.68 2000/09/29 18:21:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -64,7 +64,7 @@ static bool exprIsInSortList(Node *expr, List *sortList, List *targetList);
  * POSTQUEL, we allow references to relations not specified in the
  * from-clause.  PostgreSQL keeps this extension to standard SQL.)
  *
- * Note: we assume that pstate's p_rtable and p_jointree lists were
+ * Note: we assume that pstate's p_rtable and p_joinlist lists were
  * initialized to NIL when the pstate was created.  We will add onto
  * any entries already present --- this is needed for rule processing!
  */
@@ -75,7 +75,7 @@ makeRangeTable(ParseState *pstate, List *frmList)
 
 	/*
 	 * The grammar will have produced a list of RangeVars, RangeSubselects,
-	 * and/or JoinExprs. Transform each one, and then add it to the join tree.
+	 * and/or JoinExprs. Transform each one, and then add it to the joinlist.
 	 */
 	foreach(fl, frmList)
 	{
@@ -83,7 +83,7 @@ makeRangeTable(ParseState *pstate, List *frmList)
 		List	   *containedRels;
 
 		n = transformFromClauseItem(pstate, n, &containedRels);
-		pstate->p_jointree = lappend(pstate->p_jointree, n);
+		pstate->p_joinlist = lappend(pstate->p_joinlist, n);
 	}
 }
 
@@ -92,7 +92,7 @@ makeRangeTable(ParseState *pstate, List *frmList)
  *	  Add the target relation of INSERT/UPDATE/DELETE to the range table,
  *	  and make the special links to it in the ParseState.
  *
- *	  inJoinSet says whether to add the target to the join tree.
+ *	  inJoinSet says whether to add the target to the join list.
  *	  For INSERT, we don't want the target to be joined to; it's a
  *	  destination of tuples, not a source.	For UPDATE/DELETE, we do
  *	  need to scan or join the target.
@@ -106,15 +106,32 @@ setTargetTable(ParseState *pstate, char *relname, bool inh, bool inJoinSet)
 	if (refnameRangeTablePosn(pstate, relname, NULL) == 0)
 	{
 		rte = addRangeTableEntry(pstate, relname, NULL, inh, false);
+		/*
+		 * Since the rel wasn't in the rangetable already, it's not being
+		 * read; override addRangeTableEntry's default checkForRead.
+		 *
+		 * If we find an explicit reference to the rel later during
+		 * parse analysis, scanRTEForColumn will change checkForRead
+		 * to 'true' again.  That can't happen for INSERT but it is
+		 * possible for UPDATE and DELETE.
+		 */
+		rte->checkForRead = false;
 	}
 	else
 	{
 		rte = refnameRangeTableEntry(pstate, relname);
+		/*
+		 * Since the rel was in the rangetable already, it's being read
+		 * as well as written.  Therefore, leave checkForRead true.
+		 */
 		/* XXX what if pre-existing entry has wrong inh setting? */
 	}
 
+	/* Mark target table as requiring write access. */
+	rte->checkForWrite = true;
+
 	if (inJoinSet)
-		addRTEtoJoinTree(pstate, rte);
+		addRTEtoJoinList(pstate, rte);
 
 	/* This could only happen for multi-action rules */
 	if (pstate->p_target_relation != NULL)
@@ -242,22 +259,22 @@ transformJoinOnClause(ParseState *pstate, JoinExpr *j,
 					  List *containedRels)
 {
 	Node	   *result;
-	List	   *sv_jointree;
+	List	   *sv_joinlist;
 	List	   *clause_varnos,
 			   *l;
 
 	/*
 	 * This is a tad tricky, for two reasons.  First, at the point where
 	 * we're called, the two subtrees of the JOIN node aren't yet part of
-	 * the pstate's jointree, which means that transformExpr() won't resolve
+	 * the pstate's joinlist, which means that transformExpr() won't resolve
 	 * unqualified references to their columns correctly.  We fix this in a
-	 * slightly klugy way: temporarily make the pstate's jointree consist of
+	 * slightly klugy way: temporarily make the pstate's joinlist consist of
 	 * just those two subtrees (which creates exactly the namespace the ON
 	 * clause should see).  This is OK only because the ON clause can't
-	 * legally alter the jointree by causing relation refs to be added.
+	 * legally alter the joinlist by causing relation refs to be added.
 	 */
-	sv_jointree = pstate->p_jointree;
-	pstate->p_jointree = lcons(j->larg, lcons(j->rarg, NIL));
+	sv_joinlist = pstate->p_joinlist;
+	pstate->p_joinlist = makeList2(j->larg, j->rarg);
 
 	/* This part is just like transformWhereClause() */
 	result = transformExpr(pstate, j->quals, EXPR_COLUMN_FIRST);
@@ -267,12 +284,12 @@ transformJoinOnClause(ParseState *pstate, JoinExpr *j,
 			 typeidTypeName(exprType(result)));
 	}
 
-	pstate->p_jointree = sv_jointree;
+	pstate->p_joinlist = sv_joinlist;
 
 	/*
 	 * Second, we need to check that the ON condition doesn't refer to any
 	 * rels outside the input subtrees of the JOIN.  It could do that despite
-	 * our hack on the jointree if it uses fully-qualified names.  So, grovel
+	 * our hack on the joinlist if it uses fully-qualified names.  So, grovel
 	 * through the transformed clause and make sure there are no bogus
 	 * references.
 	 */
@@ -312,7 +329,7 @@ transformTableEntry(ParseState *pstate, RangeVar *r)
 	rte = addRangeTableEntry(pstate, relname, r->name, r->inh, true);
 
 	/*
-	 * We create a RangeTblRef, but we do not add it to the jointree here.
+	 * We create a RangeTblRef, but we do not add it to the joinlist here.
 	 * makeRangeTable will do so, if we are at top level of the FROM clause.
 	 */
 	rtr = makeNode(RangeTblRef);
@@ -333,6 +350,16 @@ transformRangeSubselect(ParseState *pstate, RangeSubselect *r)
 	SelectStmt *subquery = (SelectStmt *) r->subquery;
 	List	   *parsetrees;
 	Query	   *query;
+	RangeTblEntry *rte;
+	RangeTblRef *rtr;
+
+	/*
+	 * We require user to supply an alias for a subselect, per SQL92.
+	 * To relax this, we'd have to be prepared to gin up a unique alias
+	 * for an unlabeled subselect.
+	 */
+	if (r->name == NULL)
+		elog(ERROR, "sub-select in FROM must have an alias");
 
 	/*
 	 * subquery node might not be SelectStmt if user wrote something like
@@ -347,7 +374,7 @@ transformRangeSubselect(ParseState *pstate, RangeSubselect *r)
 	 * Analyze and transform the subquery as if it were an independent
 	 * statement (we do NOT want it to see the outer query as a parent).
 	 */
-	parsetrees = parse_analyze(lcons(subquery, NIL), NULL);
+	parsetrees = parse_analyze(makeList1(subquery), NULL);
 
 	/*
 	 * Check that we got something reasonable.  Some of these conditions
@@ -362,13 +389,24 @@ transformRangeSubselect(ParseState *pstate, RangeSubselect *r)
 
 	if (query->commandType != CMD_SELECT)
 		elog(ERROR, "Expected SELECT query from subselect in FROM");
-	if (query->resultRelation != 0 || query->into != NULL)
+	if (query->resultRelation != 0 || query->into != NULL || query->isPortal)
 		elog(ERROR, "Subselect in FROM may not have SELECT INTO");
 
+	/*
+	 * OK, build an RTE for the subquery.
+	 */
+	rte = addRangeTableEntryForSubquery(pstate, query, r->name, true);
 
-	elog(ERROR, "Subselect in FROM not done yet");
+	/*
+	 * We create a RangeTblRef, but we do not add it to the joinlist here.
+	 * makeRangeTable will do so, if we are at top level of the FROM clause.
+	 */
+	rtr = makeNode(RangeTblRef);
+	/* assume new rte is at end */
+	rtr->rtindex = length(pstate->p_rtable);
+	Assert(rte == rt_fetch(rtr->rtindex, pstate->p_rtable));
 
-	return NULL;
+	return rtr;
 }
 
 
@@ -376,12 +414,12 @@ transformRangeSubselect(ParseState *pstate, RangeSubselect *r)
  * transformFromClauseItem -
  *	  Transform a FROM-clause item, adding any required entries to the
  *	  range table list being built in the ParseState, and return the
- *	  transformed item ready to include in the jointree list.
+ *	  transformed item ready to include in the joinlist.
  *	  This routine can recurse to handle SQL92 JOIN expressions.
  *
- *	  Aside from the primary return value (the transformed jointree item)
+ *	  Aside from the primary return value (the transformed joinlist item)
  *	  this routine also returns an integer list of the rangetable indexes
- *	  of all the base relations represented in the jointree item.  This
+ *	  of all the base relations represented in the joinlist item.  This
  *	  list is needed for checking JOIN/ON conditions in higher levels.
  */
 static Node *
@@ -393,7 +431,7 @@ transformFromClauseItem(ParseState *pstate, Node *n, List **containedRels)
 		RangeTblRef *rtr;
 
 		rtr = transformTableEntry(pstate, (RangeVar *) n);
-		*containedRels = lconsi(rtr->rtindex, NIL);
+		*containedRels = makeListi1(rtr->rtindex);
 		return (Node *) rtr;
 	}
 	else if (IsA(n, RangeSubselect))
@@ -402,7 +440,7 @@ transformFromClauseItem(ParseState *pstate, Node *n, List **containedRels)
 		RangeTblRef *rtr;
 
 		rtr = transformRangeSubselect(pstate, (RangeSubselect *) n);
-		*containedRels = lconsi(rtr->rtindex, NIL);
+		*containedRels = makeListi1(rtr->rtindex);
 		return (Node *) rtr;
 	}
 	else if (IsA(n, JoinExpr))
@@ -599,7 +637,7 @@ transformFromClauseItem(ParseState *pstate, Node *n, List **containedRels)
 						a->lexpr = l_colvar;
 						w->expr = (Node *) a;
 						w->result = l_colvar;
-						c->args = lcons(w, NIL);
+						c->args = makeList1(w);
 						c->defresult = r_colvar;
 						colvar = transformExpr(pstate, (Node *) c,
 											   EXPR_COLUMN_FIRST);
@@ -641,17 +679,17 @@ transformFromClauseItem(ParseState *pstate, Node *n, List **containedRels)
 		 * The given table alias must be unique in the current nesting level,
 		 * ie it cannot match any RTE refname or jointable alias.  This is
 		 * a bit painful to check because my own child joins are not yet in
-		 * the pstate's jointree, so they have to be scanned separately.
+		 * the pstate's joinlist, so they have to be scanned separately.
 		 */
 		if (j->alias)
 		{
-			/* Check against previously created RTEs and jointree entries */
+			/* Check against previously created RTEs and joinlist entries */
 			if (refnameRangeOrJoinEntry(pstate, j->alias->relname, NULL))
 				elog(ERROR, "Table name \"%s\" specified more than once",
 					 j->alias->relname);
 			/* Check children */
-			if (scanJoinTreeForRefname(j->larg, j->alias->relname) ||
-				scanJoinTreeForRefname(j->rarg, j->alias->relname))
+			if (scanJoinListForRefname(j->larg, j->alias->relname) ||
+				scanJoinListForRefname(j->rarg, j->alias->relname))
 				elog(ERROR, "Table name \"%s\" specified more than once",
 					 j->alias->relname);
 			/*

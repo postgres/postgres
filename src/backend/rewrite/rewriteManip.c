@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteManip.c,v 1.48 2000/09/12 21:07:04 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteManip.c,v 1.49 2000/09/29 18:21:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -473,8 +473,7 @@ attribute_used(Node *node, int rt_index, int attno, int sublevels_up)
 void
 AddQual(Query *parsetree, Node *qual)
 {
-	Node	   *copy,
-			   *old;
+	Node	   *copy;
 
 	if (qual == NULL)
 		return;
@@ -482,11 +481,8 @@ AddQual(Query *parsetree, Node *qual)
 	/* INTERSECT want's the original, but we need to copy - Jan */
 	copy = copyObject(qual);
 
-	old = parsetree->qual;
-	if (old == NULL)
-		parsetree->qual = copy;
-	else
-		parsetree->qual = (Node *) make_andclause(makeList(old, copy, -1));
+	parsetree->jointree->quals = make_and_qual(parsetree->jointree->quals,
+											   copy);
 
 	/*
 	 * Make sure query is marked correctly if added qual has sublinks or
@@ -504,8 +500,7 @@ AddQual(Query *parsetree, Node *qual)
 void
 AddHavingQual(Query *parsetree, Node *havingQual)
 {
-	Node	   *copy,
-			   *old;
+	Node	   *copy;
 
 	if (havingQual == NULL)
 		return;
@@ -513,11 +508,8 @@ AddHavingQual(Query *parsetree, Node *havingQual)
 	/* INTERSECT want's the original, but we need to copy - Jan */
 	copy = copyObject(havingQual);
 
-	old = parsetree->havingQual;
-	if (old == NULL)
-		parsetree->havingQual = copy;
-	else
-		parsetree->havingQual = (Node *) make_andclause(makeList(old, copy, -1));
+	parsetree->havingQual = make_and_qual(parsetree->havingQual,
+										  copy);
 
 	/*
 	 * Make sure query is marked correctly if added qual has sublinks or
@@ -560,45 +552,7 @@ AddNotQual(Query *parsetree, Node *qual)
 }
 
 
-/*
- * Add all expressions used by the given GroupClause list to the
- * parsetree's targetlist and groupclause list.
- *
- * tlist is the old targetlist associated with the input groupclauses.
- *
- * XXX shouldn't we be checking to see if there are already matching
- * entries in parsetree->targetlist?
- */
-void
-AddGroupClause(Query *parsetree, List *group_by, List *tlist)
-{
-	List	   *l;
-
-	foreach(l, group_by)
-	{
-		GroupClause *groupclause = (GroupClause *) copyObject(lfirst(l));
-		TargetEntry *tle = get_sortgroupclause_tle(groupclause, tlist);
-
-		/* copy the groupclause's TLE from the old tlist */
-		tle = (TargetEntry *) copyObject(tle);
-
-		/*
-		 * The ressortgroupref number in the old tlist might be already
-		 * taken in the new tlist, so force assignment of a new number.
-		 */
-		tle->resdom->ressortgroupref = 0;
-		groupclause->tleSortGroupRef =
-			assignSortGroupRef(tle, parsetree->targetList);
-
-		/* Also need to set the resno and mark it resjunk. */
-		tle->resdom->resno = length(parsetree->targetList) + 1;
-		tle->resdom->resjunk = true;
-
-		parsetree->targetList = lappend(parsetree->targetList, tle);
-		parsetree->groupClause = lappend(parsetree->groupClause, groupclause);
-	}
-}
-
+/* Build a NULL constant expression of the given type */
 static Node *
 make_null(Oid type)
 {
@@ -611,28 +565,6 @@ make_null(Oid type)
 	c->constbyval = get_typbyval(type);
 	return (Node *) c;
 }
-
-#ifdef NOT_USED
-void
-FixResdomTypes(List *tlist)
-{
-	List	   *i;
-
-	foreach(i, tlist)
-	{
-		TargetEntry *tle = lfirst(i);
-
-		if (nodeTag(tle->expr) == T_Var)
-		{
-			Var		   *var = (Var *) tle->expr;
-
-			tle->resdom->restype = var->vartype;
-			tle->resdom->restypmod = var->vartypmod;
-		}
-	}
-}
-
-#endif
 
 /* Find a targetlist entry by resno */
 static Node *
@@ -650,6 +582,8 @@ FindMatchingNew(List *tlist, int attno)
 	return NULL;
 }
 
+#ifdef NOT_USED
+
 /* Find a targetlist entry by resname */
 static Node *
 FindMatchingTLEntry(List *tlist, char *e_attname)
@@ -662,25 +596,31 @@ FindMatchingTLEntry(List *tlist, char *e_attname)
 		char	   *resname;
 
 		resname = tle->resdom->resname;
-		if (!strcmp(e_attname, resname))
+		if (strcmp(e_attname, resname) == 0)
 			return tle->expr;
 	}
 	return NULL;
 }
 
+#endif
+
 
 /*
  * ResolveNew - replace Vars with corresponding items from a targetlist
  *
- * Vars matching info->new_varno and sublevels_up are replaced by the
+ * Vars matching target_varno and sublevels_up are replaced by the
  * entry with matching resno from targetlist, if there is one.
+ * If not, we either change the unmatched Var's varno to update_varno
+ * (when event == CMD_UPDATE) or replace it with a constant NULL.
  */
 
 typedef struct
 {
-	RewriteInfo *info;
-	List	   *targetlist;
+	int			target_varno;
 	int			sublevels_up;
+	List	   *targetlist;
+	int			event;
+	int			update_varno;
 } ResolveNew_context;
 
 static Node *
@@ -694,7 +634,7 @@ ResolveNew_mutator(Node *node, ResolveNew_context *context)
 		int			this_varno = (int) var->varno;
 		int			this_varlevelsup = (int) var->varlevelsup;
 
-		if (this_varno == context->info->new_varno &&
+		if (this_varno == context->target_varno &&
 			this_varlevelsup == context->sublevels_up)
 		{
 			Node	   *n = FindMatchingNew(context->targetlist,
@@ -702,13 +642,13 @@ ResolveNew_mutator(Node *node, ResolveNew_context *context)
 
 			if (n == NULL)
 			{
-				if (context->info->event == CMD_UPDATE)
+				if (context->event == CMD_UPDATE)
 				{
 					/* For update, just change unmatched var's varno */
-					n = copyObject(node);
-					((Var *) n)->varno = context->info->current_varno;
-					((Var *) n)->varnoold = context->info->current_varno;
-					return n;
+					var = (Var *) copyObject(node);
+					var->varno = context->update_varno;
+					var->varnoold = context->update_varno;
+					return (Node *) var;
 				}
 				else
 				{
@@ -755,11 +695,9 @@ ResolveNew_mutator(Node *node, ResolveNew_context *context)
 		FLATCOPY(newnode, query, Query);
 		MUTATE(newnode->targetList, query->targetList, List *,
 			   ResolveNew_mutator, context);
-		MUTATE(newnode->qual, query->qual, Node *,
+		MUTATE(newnode->jointree, query->jointree, FromExpr *,
 			   ResolveNew_mutator, context);
 		MUTATE(newnode->havingQual, query->havingQual, Node *,
-			   ResolveNew_mutator, context);
-		MUTATE(newnode->jointree, query->jointree, List *,
 			   ResolveNew_mutator, context);
 		return (Node *) newnode;
 	}
@@ -767,33 +705,51 @@ ResolveNew_mutator(Node *node, ResolveNew_context *context)
 								   (void *) context);
 }
 
-static Node *
-ResolveNew(Node *node, RewriteInfo *info, List *targetlist,
-		   int sublevels_up)
+Node *
+ResolveNew(Node *node, int target_varno, int sublevels_up,
+		   List *targetlist, int event, int update_varno)
 {
 	ResolveNew_context context;
 
-	context.info = info;
-	context.targetlist = targetlist;
+	context.target_varno = target_varno;
 	context.sublevels_up = sublevels_up;
+	context.targetlist = targetlist;
+	context.event = event;
+	context.update_varno = update_varno;
 
+	/*
+	 * Note: if an entire Query is passed, the right things will happen,
+	 * because ResolveNew_mutator increments sublevels_up when it sees
+	 * a SubLink, not a Query.
+	 */
 	return ResolveNew_mutator(node, &context);
 }
 
+/*
+ * Alternate interface to ResolveNew: substitute Vars in info->rule_action
+ * with targetlist items from the parsetree's targetlist.
+ */
 void
 FixNew(RewriteInfo *info, Query *parsetree)
 {
+	ResolveNew_context context;
+
+	context.target_varno = info->new_varno;
+	context.sublevels_up = 0;
+	context.targetlist = parsetree->targetList;
+	context.event = info->event;
+	context.update_varno = info->current_varno;
+
 	info->rule_action->targetList = (List *)
-		ResolveNew((Node *) info->rule_action->targetList,
-				   info, parsetree->targetList, 0);
-	info->rule_action->qual = ResolveNew(info->rule_action->qual,
-										 info, parsetree->targetList, 0);
-	info->rule_action->havingQual = ResolveNew(info->rule_action->havingQual,
-											   info, parsetree->targetList, 0);
-	info->rule_action->jointree = (List *)
-		ResolveNew((Node *) info->rule_action->jointree,
-				   info, parsetree->targetList, 0);
+		ResolveNew_mutator((Node *) info->rule_action->targetList, &context);
+	info->rule_action->jointree = (FromExpr *)
+		ResolveNew_mutator((Node *) info->rule_action->jointree, &context);
+	info->rule_action->havingQual =
+		ResolveNew_mutator(info->rule_action->havingQual, &context);
 }
+
+
+#ifdef NOT_USED
 
 /*
  * HandleRIRAttributeRule
@@ -801,8 +757,6 @@ FixNew(RewriteInfo *info, Query *parsetree)
  *
  * Handles 'on retrieve to relation.attribute
  *			do instead retrieve (attribute = expression) w/qual'
- *
- * XXX Why is this not unified with apply_RIR_view()?
  */
 
 typedef struct
@@ -897,12 +851,12 @@ HandleRIRAttributeRule_mutator(Node *node,
 		FLATCOPY(newnode, query, Query);
 		MUTATE(newnode->targetList, query->targetList, List *,
 			   HandleRIRAttributeRule_mutator, context);
-		MUTATE(newnode->qual, query->qual, Node *,
+		MUTATE(newnode->jointree, query->jointree, FromExpr *,
 			   HandleRIRAttributeRule_mutator, context);
 		MUTATE(newnode->havingQual, query->havingQual, Node *,
 			   HandleRIRAttributeRule_mutator, context);
-		MUTATE(newnode->jointree, query->jointree, List *,
-			   HandleRIRAttributeRule_mutator, context);
+
+
 		return (Node *) newnode;
 	}
 	return expression_tree_mutator(node, HandleRIRAttributeRule_mutator,
@@ -931,13 +885,12 @@ HandleRIRAttributeRule(Query *parsetree,
 	parsetree->targetList = (List *)
 		HandleRIRAttributeRule_mutator((Node *) parsetree->targetList,
 									   &context);
-	parsetree->qual =
-		HandleRIRAttributeRule_mutator(parsetree->qual,
+	parsetree->jointree = (FromExpr *)
+		HandleRIRAttributeRule_mutator((Node *) parsetree->jointree,
 									   &context);
 	parsetree->havingQual =
 		HandleRIRAttributeRule_mutator(parsetree->havingQual,
 									   &context);
-	parsetree->jointree = (List *)
-		HandleRIRAttributeRule_mutator((Node *) parsetree->jointree,
-									   &context);
 }
+
+#endif /* NOT_USED */

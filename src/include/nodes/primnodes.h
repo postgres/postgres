@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: primnodes.h,v 1.48 2000/09/12 21:07:10 tgl Exp $
+ * $Id: primnodes.h,v 1.49 2000/09/29 18:21:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -495,24 +495,32 @@ typedef struct RelabelType
  *
  * The leaves of a join tree structure are RangeTblRef nodes.  Above
  * these, JoinExpr nodes can appear to denote a specific kind of join
- * or qualified join.  A join tree can also contain List nodes --- a list
- * implies an unqualified cross-product join of its members.  The planner
- * is allowed to combine the elements of a list using whatever join order
- * seems good to it.  At present, JoinExpr nodes are always joined in
- * exactly the order implied by the tree structure (except the planner
- * may choose to swap inner and outer members of a join pair).
+ * or qualified join.  Also, FromExpr nodes can appear to denote an
+ * ordinary cross-product join ("FROM foo, bar, baz WHERE ...").
+ * FromExpr is like a JoinExpr of jointype JOIN_INNER, except that it
+ * may have any number of child nodes, not just two.  Also, there is an
+ * implementation-defined difference: the planner is allowed to join the
+ * children of a FromExpr using whatever join order seems good to it.
+ * At present, JoinExpr nodes are always joined in exactly the order
+ * implied by the jointree structure (except the planner may choose to
+ * swap inner and outer members of a join pair).
  *
- * NOTE: currently, the planner only supports a List at the top level of
- * a join tree.  Should generalize this to allow Lists at lower levels.
+ * NOTE: the top level of a Query's jointree is always a FromExpr.
+ * Even if the jointree contains no rels, there will be a FromExpr.
  *
  * NOTE: the qualification expressions present in JoinExpr nodes are
- * *in addition to* the query's main WHERE clause.  For outer joins there
- * is a real semantic difference between a join qual and a WHERE clause,
- * though if all joins are inner joins they are interchangeable.
+ * *in addition to* the query's main WHERE clause, which appears as the
+ * qual of the top-level FromExpr.  The reason for associating quals with
+ * specific nodes in the jointree is that the position of a qual is critical
+ * when outer joins are present.  (If we enforce a qual too soon or too late,
+ * that may cause the outer join to produce the wrong set of NULL-extended
+ * rows.)  If all joins are inner joins then all the qual positions are
+ * semantically interchangeable.
  *
  * NOTE: in the raw output of gram.y, a join tree contains RangeVar and
  * RangeSubselect nodes, which are both replaced by RangeTblRef nodes
- * during the parse analysis phase.
+ * during the parse analysis phase.  Also, the top-level FromExpr is added
+ * during parse analysis; the grammar regards FROM and WHERE as separate.
  * ----------------------------------------------------------------
  */
 
@@ -560,5 +568,21 @@ typedef struct JoinExpr
 	List	   *colnames;		/* output column names (list of String) */
 	List	   *colvars;		/* output column nodes (list of expressions) */
 } JoinExpr;
+
+/*----------
+ * FromExpr - represents a FROM ... WHERE ... construct
+ *
+ * This is both more flexible than a JoinExpr (it can have any number of
+ * children, including zero) and less so --- we don't need to deal with
+ * aliases and so on.  The output column set is implicitly just the union
+ * of the outputs of the children.
+ *----------
+ */
+typedef struct FromExpr
+{
+	NodeTag		type;
+	List	   *fromlist;		/* List of join subtrees */
+	Node	   *quals;			/* qualifiers on join, if any */
+} FromExpr;
 
 #endif	 /* PRIMNODES_H */

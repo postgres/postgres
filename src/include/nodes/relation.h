@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: relation.h,v 1.48 2000/09/12 21:07:10 tgl Exp $
+ * $Id: relation.h,v 1.49 2000/09/29 18:21:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,9 +35,19 @@ typedef enum CostSelector
 	STARTUP_COST, TOTAL_COST
 } CostSelector;
 
-/*
+/*----------
  * RelOptInfo
  *		Per-relation information for planning/optimization
+ *
+ *		For planning purposes, a "base rel" is either a plain relation (a
+ *		table) or the output of a sub-SELECT that appears in the range table.
+ *		In either case it is uniquely identified by an RT index.  A "joinrel"
+ *		is the joining of two or more base rels.  A joinrel is identified by
+ *		the set of RT indexes for its component baserels.
+ *
+ *		Note that there is only one joinrel for any given set of component
+ *		baserels, no matter what order we assemble them in; so an unordered
+ *		set is the right datatype to identify it with.
  *
  *		Parts of this data structure are specific to various scan and join
  *		mechanisms.  It didn't seem worth creating new node types for them.
@@ -61,9 +71,16 @@ typedef enum CostSelector
  *
  *	 * If the relation is a base relation it will have these fields set:
  *
- *		indexed - true if the relation has secondary indices
- *		pages - number of disk pages in relation
+ *		issubquery - true if baserel is a subquery RTE rather than a table
+ *		indexed - true if the relation has secondary indices (always false
+ *				  if it's a subquery)
+ *		pages - number of disk pages in relation (zero if a subquery)
  *		tuples - number of tuples in relation (not considering restrictions)
+ *		subplan - plan for subquery (NULL if it's a plain table)
+ *
+ *		Note: for a subquery, tuples and subplan are not set immediately
+ *		upon creation of the RelOptInfo object; they are filled in when
+ *		set_base_rel_pathlist processes the object.
  *
  *	 * The presence of the remaining fields depends on the restrictions
  *		and joins that the relation participates in:
@@ -101,6 +118,7 @@ typedef enum CostSelector
  * outerjoinset is used to ensure correct placement of WHERE clauses that
  * apply to outer-joined relations; we must not apply such WHERE clauses
  * until after the outer join is performed.
+ *----------
  */
 
 typedef struct RelOptInfo
@@ -122,10 +140,12 @@ typedef struct RelOptInfo
 	struct Path *cheapest_total_path;
 	bool		pruneable;
 
-	/* statistics from pg_class (only valid if it's a base rel!) */
+	/* information about a base rel (not set for join rels!) */
+	bool		issubquery;
 	bool		indexed;
 	long		pages;
 	double		tuples;
+	struct Plan *subplan;
 
 	/* used by various scans and joins: */
 	List	   *baserestrictinfo;		/* RestrictInfo structures (if
@@ -272,7 +292,8 @@ typedef struct Path
  * included in the outer joinrel in order to make a usable join.
  *
  * 'alljoinquals' is also used only for inner paths of nestloop joins.
- * This flag is TRUE iff all the indexquals came from JOIN/ON conditions.
+ * This flag is TRUE iff all the indexquals came from non-pushed-down
+ * JOIN/ON conditions, which means the path is safe to use for an outer join.
  *
  * 'rows' is the estimated result tuple count for the indexscan.  This
  * is the same as path.parent->rows for a simple indexscan, but it is
@@ -375,10 +396,10 @@ typedef struct HashPath
  * Restriction clause info.
  *
  * We create one of these for each AND sub-clause of a restriction condition
- * (WHERE clause).	Since the restriction clauses are logically ANDed, we
- * can use any one of them or any subset of them to filter out tuples,
- * without having to evaluate the rest.  The RestrictInfo node itself stores
- * data used by the optimizer while choosing the best query plan.
+ * (WHERE or JOIN/ON clause).  Since the restriction clauses are logically
+ * ANDed, we can use any one of them or any subset of them to filter out
+ * tuples, without having to evaluate the rest.  The RestrictInfo node itself
+ * stores data used by the optimizer while choosing the best query plan.
  *
  * If a restriction clause references a single base relation, it will appear
  * in the baserestrictinfo list of the RelOptInfo for that base rel.
@@ -405,6 +426,31 @@ typedef struct HashPath
  * sequence we use.  So, these clauses cannot be associated directly with
  * the join RelOptInfo, but must be kept track of on a per-join-path basis.
  *
+ * When dealing with outer joins we have to be very careful about pushing qual
+ * clauses up and down the tree.  An outer join's own JOIN/ON conditions must
+ * be evaluated exactly at that join node, and any quals appearing in WHERE or
+ * in a JOIN above the outer join cannot be pushed down below the outer join.
+ * Otherwise the outer join will produce wrong results because it will see the
+ * wrong sets of input rows.  All quals are stored as RestrictInfo nodes
+ * during planning, but there's a flag to indicate whether a qual has been
+ * pushed down to a lower level than its original syntactic placement in the
+ * join tree would suggest.  If an outer join prevents us from pushing a qual
+ * down to its "natural" semantic level (the level associated with just the
+ * base rels used in the qual) then the qual will appear in JoinInfo lists
+ * that reference more than just the base rels it actually uses.  By
+ * pretending that the qual references all the rels appearing in the outer
+ * join, we prevent it from being evaluated below the outer join's joinrel.
+ * When we do form the outer join's joinrel, we still need to distinguish
+ * those quals that are actually in that join's JOIN/ON condition from those
+ * that appeared higher in the tree and were pushed down to the join rel
+ * because they used no other rels.  That's what the ispusheddown flag is for;
+ * it tells us that a qual came from a point above the join of the specific
+ * set of base rels that it uses (or that the JoinInfo structures claim it
+ * uses).  A clause that originally came from WHERE will *always* have its
+ * ispusheddown flag set; a clause that came from an INNER JOIN condition,
+ * but doesn't use all the rels being joined, will also have ispusheddown set
+ * because it will get attached to some lower joinrel.
+ *
  * In general, the referenced clause might be arbitrarily complex.	The
  * kinds of clauses we can handle as indexscan quals, mergejoin clauses,
  * or hashjoin clauses are fairly limited --- the code for each kind of
@@ -415,16 +461,6 @@ typedef struct HashPath
  * qual-expression-evaluation code.  (But we are still entitled to count
  * their selectivity when estimating the result tuple count, if we
  * can guess what it is...)
- *
- * When dealing with outer joins we must distinguish between qual clauses
- * that came from WHERE and those that came from JOIN/ON or JOIN/USING.
- * (For inner joins there's no semantic difference and we can treat the
- * clauses interchangeably.)  Both kinds of quals are stored as RestrictInfo
- * nodes during planning, but there's a flag to indicate where they came from.
- * Note also that when outer joins are present, a qual clause may be treated
- * as referencing more rels than it really does.  This trick ensures that the
- * qual will be evaluated at the right level of the join tree --- we don't
- * want quals from WHERE to be evaluated until after the outer join is done.
  */
 
 typedef struct RestrictInfo
@@ -433,7 +469,7 @@ typedef struct RestrictInfo
 
 	Expr	   *clause;			/* the represented clause of WHERE or JOIN */
 
-	bool		isjoinqual;		/* TRUE if clause came from JOIN/ON */
+	bool		ispusheddown;	/* TRUE if clause was pushed down in level */
 
 	/* only used if clause is an OR clause: */
 	List	   *subclauseindices;		/* indexes matching subclauses */

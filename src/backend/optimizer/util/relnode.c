@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/relnode.c,v 1.28 2000/09/12 21:06:58 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/relnode.c,v 1.29 2000/09/29 18:21:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,6 +19,7 @@
 #include "optimizer/pathnode.h"
 #include "optimizer/plancat.h"
 #include "optimizer/tlist.h"
+#include "parser/parsetree.h"
 
 
 static List *new_join_tlist(List *tlist, int first_resdomno);
@@ -44,6 +45,7 @@ get_base_rel(Query *root, int relid)
 {
 	List	   *baserels;
 	RelOptInfo *rel;
+	Oid			relationObjectId;
 
 	foreach(baserels, root->base_rel_list)
 	{
@@ -59,7 +61,7 @@ get_base_rel(Query *root, int relid)
 
 	/* No existing RelOptInfo for this base rel, so make a new one */
 	rel = makeNode(RelOptInfo);
-	rel->relids = lconsi(relid, NIL);
+	rel->relids = makeListi1(relid);
 	rel->rows = 0;
 	rel->width = 0;
 	rel->targetlist = NIL;
@@ -67,18 +69,31 @@ get_base_rel(Query *root, int relid)
 	rel->cheapest_startup_path = NULL;
 	rel->cheapest_total_path = NULL;
 	rel->pruneable = true;
+	rel->issubquery = false;
 	rel->indexed = false;
 	rel->pages = 0;
 	rel->tuples = 0;
+	rel->subplan = NULL;
 	rel->baserestrictinfo = NIL;
 	rel->baserestrictcost = 0;
 	rel->outerjoinset = NIL;
 	rel->joininfo = NIL;
 	rel->innerjoin = NIL;
 
-	/* Retrieve relation statistics from the system catalogs. */
-	relation_info(root, relid,
-				  &rel->indexed, &rel->pages, &rel->tuples);
+	/* Check rtable to see if it's a plain relation or a subquery */
+	relationObjectId = getrelid(relid, root->rtable);
+
+	if (relationObjectId != InvalidOid)
+	{
+		/* Plain relation --- retrieve statistics from the system catalogs */
+		relation_info(relationObjectId,
+					  &rel->indexed, &rel->pages, &rel->tuples);
+	}
+	else
+	{
+		/* subquery --- mark it as such for later processing */
+		rel->issubquery = true;
+	}
 
 	root->base_rel_list = lcons(rel, root->base_rel_list);
 
@@ -174,9 +189,11 @@ get_join_rel(Query *root,
 	joinrel->cheapest_startup_path = NULL;
 	joinrel->cheapest_total_path = NULL;
 	joinrel->pruneable = true;
+	joinrel->issubquery = false;
 	joinrel->indexed = false;
 	joinrel->pages = 0;
 	joinrel->tuples = 0;
+	joinrel->subplan = NULL;
 	joinrel->baserestrictinfo = NIL;
 	joinrel->baserestrictcost = 0;
 	joinrel->outerjoinset = NIL;
@@ -310,7 +327,7 @@ build_joinrel_restrictlist(RelOptInfo *joinrel,
 	 * We must eliminate duplicates, since we will see the same clauses
 	 * arriving from both input relations...
 	 */
-	return LispUnion(subbuild_joinrel_restrictlist(joinrel,
+	return set_union(subbuild_joinrel_restrictlist(joinrel,
 												   outer_rel->joininfo),
 					 subbuild_joinrel_restrictlist(joinrel,
 												   inner_rel->joininfo));
@@ -396,7 +413,7 @@ subbuild_joinrel_joinlist(RelOptInfo *joinrel,
 
 			new_joininfo = find_joininfo_node(joinrel, new_unjoined_relids);
 			new_joininfo->jinfo_restrictinfo =
-				LispUnion(new_joininfo->jinfo_restrictinfo,
+				set_union(new_joininfo->jinfo_restrictinfo,
 						  joininfo->jinfo_restrictinfo);
 		}
 	}

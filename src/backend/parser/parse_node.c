@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_node.c,v 1.46 2000/09/12 21:07:02 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_node.c,v 1.47 2000/09/29 18:21:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -152,11 +152,11 @@ make_op(char *opname, Node *ltree, Node *rtree)
 	result->oper = (Node *) newop;
 
 	if (!left)
-		result->args = lcons(right, NIL);
+		result->args = makeList1(right);
 	else if (!right)
-		result->args = lcons(left, NIL);
+		result->args = makeList1(left);
 	else
-		result->args = lcons(left, lcons(right, NIL));
+		result->args = makeList2(left, right);
 
 	return result;
 }	/* make_op() */
@@ -171,8 +171,8 @@ make_var(ParseState *pstate, RangeTblEntry *rte, int attrno)
 {
 	int			vnum,
 				sublevels_up;
-	Oid			vartypeid;
-	int32		type_mod;
+	Oid			vartypeid = 0;
+	int32		type_mod = 0;
 
 	vnum = RTERangeTablePosn(pstate, rte, &sublevels_up);
 
@@ -197,8 +197,22 @@ make_var(ParseState *pstate, RangeTblEntry *rte, int attrno)
 	else
 	{
 		/* Subselect RTE --- get type info from subselect's tlist */
-		elog(ERROR, "make_var: subselect in FROM not implemented yet");
-		vartypeid = type_mod = 0;
+		List	   *tlistitem;
+
+		foreach(tlistitem, rte->subquery->targetList)
+		{
+			TargetEntry *te = (TargetEntry *) lfirst(tlistitem);
+
+			if (te->resdom->resjunk || te->resdom->resno != attrno)
+				continue;
+			vartypeid = te->resdom->restype;
+			type_mod = te->resdom->restypmod;
+			break;
+		}
+		/* falling off end of list shouldn't happen... */
+		if (tlistitem == NIL)
+			elog(ERROR, "Subquery %s does not have attribute %d",
+				 rte->eref->relname, attrno);
 	}
 
 	return makeVar(vnum, attrno, vartypeid, type_mod, sublevels_up);

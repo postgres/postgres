@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execTuples.c,v 1.39 2000/09/12 21:06:48 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execTuples.c,v 1.40 2000/09/29 18:21:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -698,6 +698,22 @@ NodeGetResultTupleSlot(Plan *node)
 			}
 			break;
 
+		case T_TidScan:
+			{
+				CommonScanState *scanstate = ((TidScan *) node)->scan.scanstate;
+
+				slot = scanstate->cstate.cs_ResultTupleSlot;
+			}
+			break;
+
+		case T_SubqueryScan:
+			{
+				CommonScanState *scanstate = ((SubqueryScan *) node)->scan.scanstate;
+
+				slot = scanstate->cstate.cs_ResultTupleSlot;
+			}
+			break;
+
 		case T_Material:
 			{
 				MaterialState *matstate = ((Material *) node)->matstate;
@@ -759,14 +775,6 @@ NodeGetResultTupleSlot(Plan *node)
 				HashJoinState *hashjoinstate = ((HashJoin *) node)->hashjoinstate;
 
 				slot = hashjoinstate->jstate.cs_ResultTupleSlot;
-			}
-			break;
-
-		case T_TidScan:
-			{
-				CommonScanState *scanstate = ((IndexScan *) node)->scan.scanstate;
-
-				slot = scanstate->cstate.cs_ResultTupleSlot;
 			}
 			break;
 

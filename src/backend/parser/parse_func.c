@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.90 2000/09/12 21:07:02 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.91 2000/09/29 18:21:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -76,7 +76,7 @@ ParseNestedFuncOrColumn(ParseState *pstate, Attr *attr, int precedence)
 													EXPR_RELATION_FIRST);
 
 		retval = ParseFuncOrColumn(pstate, strVal(lfirst(attr->attrs)),
-								   lcons(param, NIL),
+								   makeList1(param),
 								   false, false,
 								   precedence);
 	}
@@ -87,7 +87,7 @@ ParseNestedFuncOrColumn(ParseState *pstate, Attr *attr, int precedence)
 		ident->name = attr->relname;
 		ident->isRel = TRUE;
 		retval = ParseFuncOrColumn(pstate, strVal(lfirst(attr->attrs)),
-								   lcons(ident, NIL),
+								   makeList1(ident),
 								   false, false,
 								   precedence);
 	}
@@ -96,7 +96,7 @@ ParseNestedFuncOrColumn(ParseState *pstate, Attr *attr, int precedence)
 	foreach(mutator_iter, lnext(attr->attrs))
 	{
 		retval = ParseFuncOrColumn(pstate, strVal(lfirst(mutator_iter)),
-								   lcons(retval, NIL),
+								   makeList1(retval),
 								   false, false,
 								   precedence);
 	}
@@ -447,6 +447,9 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 			 * but has varattno == 0 to signal that the whole tuple is the
 			 * argument.
 			 */
+			if (rte->relname == NULL)
+				elog(ERROR,
+					 "function applied to tuple is not supported for subSELECTs");
 			toid = typeTypeId(typenameType(rte->relname));
 
 			/* replace it in the arg list */

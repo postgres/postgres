@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/pathkeys.c,v 1.25 2000/09/12 21:06:53 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/pathkeys.c,v 1.26 2000/09/29 18:21:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -122,7 +122,7 @@ add_equijoined_keys(Query *root, RestrictInfo *restrictinfo)
 				newset = lcons(item1, lcons(item2, NIL));
 
 			/* Found a set to merge into our new set */
-			newset = LispUnion(newset, curset);
+			newset = set_union(newset, curset);
 
 			/*
 			 * Remove old set from equi_key_list.  NOTE this does not

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.96 2000/09/12 21:06:49 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.97 2000/09/29 18:21:29 tgl Exp $
  *
  * NOTES
  *	  Most of the read functions for plan nodes are tested. (In fact, they
@@ -70,13 +70,16 @@ _readQuery()
 	local_node->commandType = atoi(token);
 
 	token = lsptok(NULL, &length);		/* skip :utility */
-	/* we can't get create or index here, can we? */
-
-	token = lsptok(NULL, &length);		/* get the notify name if any */
+	token = lsptok(NULL, &length);
 	if (length == 0)
 		local_node->utilityStmt = NULL;
 	else
 	{
+		/*
+		 * Hack to make up for lack of readfuncs for utility-stmt nodes
+		 *
+		 * we can't get create or index here, can we?
+		 */
 		NotifyStmt *n = makeNode(NotifyStmt);
 
 		n->relname = debackslash(token, length);
@@ -110,11 +113,13 @@ _readQuery()
 	token = lsptok(NULL, &length);		/* get unionall */
 	local_node->unionall = (token[0] == 't') ? true : false;
 
-	token = lsptok(NULL, &length);		/* skip :distinctClause */
-	local_node->distinctClause = nodeRead(true);
+	token = lsptok(NULL, &length);		/* skip the :hasAggs */
+	token = lsptok(NULL, &length);		/* get hasAggs */
+	local_node->hasAggs = (token[0] == 't') ? true : false;
 
-	token = lsptok(NULL, &length);		/* skip :sortClause */
-	local_node->sortClause = nodeRead(true);
+	token = lsptok(NULL, &length);		/* skip the :hasSubLinks */
+	token = lsptok(NULL, &length);		/* get hasSubLinks */
+	local_node->hasSubLinks = (token[0] == 't') ? true : false;
 
 	token = lsptok(NULL, &length);		/* skip :rtable */
 	local_node->rtable = nodeRead(true);
@@ -125,8 +130,14 @@ _readQuery()
 	token = lsptok(NULL, &length);		/* skip :targetlist */
 	local_node->targetList = nodeRead(true);
 
-	token = lsptok(NULL, &length);		/* skip :qual */
-	local_node->qual = nodeRead(true);
+	token = lsptok(NULL, &length);		/* skip :rowMarks */
+	local_node->rowMarks = toIntList(nodeRead(true));
+
+	token = lsptok(NULL, &length);		/* skip :distinctClause */
+	local_node->distinctClause = nodeRead(true);
+
+	token = lsptok(NULL, &length);		/* skip :sortClause */
+	local_node->sortClause = nodeRead(true);
 
 	token = lsptok(NULL, &length);		/* skip :groupClause */
 	local_node->groupClause = nodeRead(true);
@@ -134,29 +145,17 @@ _readQuery()
 	token = lsptok(NULL, &length);		/* skip :havingQual */
 	local_node->havingQual = nodeRead(true);
 
-	token = lsptok(NULL, &length);		/* skip the :hasAggs */
-	token = lsptok(NULL, &length);		/* get hasAggs */
-	local_node->hasAggs = (token[0] == 't') ? true : false;
-
-	token = lsptok(NULL, &length);		/* skip the :hasSubLinks */
-	token = lsptok(NULL, &length);		/* get hasSubLinks */
-	local_node->hasSubLinks = (token[0] == 't') ? true : false;
-
-	token = lsptok(NULL, &length);		/* skip :unionClause */
-	local_node->unionClause = nodeRead(true);
-
 	token = lsptok(NULL, &length);		/* skip :intersectClause */
 	local_node->intersectClause = nodeRead(true);
 
+	token = lsptok(NULL, &length);		/* skip :unionClause */
+	local_node->unionClause = nodeRead(true);
 
 	token = lsptok(NULL, &length);		/* skip :limitOffset */
 	local_node->limitOffset = nodeRead(true);
 
 	token = lsptok(NULL, &length);		/* skip :limitCount */
 	local_node->limitCount = nodeRead(true);
-
-	token = lsptok(NULL, &length);		/* skip :rowMark */
-	local_node->rowMark = nodeRead(true);
 
 	return local_node;
 }
@@ -557,6 +556,29 @@ _readTidScan()
 
 	token = lsptok(NULL, &length);		/* eat :tideval */
 	local_node->tideval = nodeRead(true);		/* now read it */
+
+	return local_node;
+}
+
+/* ----------------
+ *		_readSubqueryScan
+ *
+ *	SubqueryScan is a subclass of Scan
+ * ----------------
+ */
+static SubqueryScan *
+_readSubqueryScan()
+{
+	SubqueryScan  *local_node;
+	char	   *token;
+	int			length;
+
+	local_node = makeNode(SubqueryScan);
+
+	_getScan((Scan *) local_node);
+
+	token = lsptok(NULL, &length);			/* eat :subplan */
+	local_node->subplan = nodeRead(true);	/* now read it */
 
 	return local_node;
 }
@@ -1182,6 +1204,30 @@ _readRangeTblRef()
 }
 
 /* ----------------
+ *		_readFromExpr
+ *
+ *	FromExpr is a subclass of Node
+ * ----------------
+ */
+static FromExpr *
+_readFromExpr()
+{
+	FromExpr   *local_node;
+	char	   *token;
+	int			length;
+
+	local_node = makeNode(FromExpr);
+
+	token = lsptok(NULL, &length);		/* eat :fromlist */
+	local_node->fromlist = nodeRead(true);	/* now read it */
+
+	token = lsptok(NULL, &length);		/* eat :quals */
+	local_node->quals = nodeRead(true);	/* now read it */
+
+	return local_node;
+}
+
+/* ----------------
  *		_readJoinExpr
  *
  *	JoinExpr is a subclass of Node
@@ -1293,22 +1339,6 @@ _readRelOptInfo()
 	token = lsptok(NULL, &length);		/* now read it */
 	local_node->width = atoi(token);
 
-	token = lsptok(NULL, &length);		/* get :indexed */
-	token = lsptok(NULL, &length);		/* now read it */
-
-	if (!strncmp(token, "true", 4))
-		local_node->indexed = true;
-	else
-		local_node->indexed = false;
-
-	token = lsptok(NULL, &length);		/* get :pages */
-	token = lsptok(NULL, &length);		/* now read it */
-	local_node->pages = atol(token);
-
-	token = lsptok(NULL, &length);		/* get :tuples */
-	token = lsptok(NULL, &length);		/* now read it */
-	local_node->tuples = atof(token);
-
 	token = lsptok(NULL, &length);		/* get :targetlist */
 	local_node->targetlist = nodeRead(true);	/* now read it */
 
@@ -1324,6 +1354,25 @@ _readRelOptInfo()
 	token = lsptok(NULL, &length);		/* eat :pruneable */
 	token = lsptok(NULL, &length);		/* get :pruneable */
 	local_node->pruneable = (token[0] == 't') ? true : false;
+
+	token = lsptok(NULL, &length);		/* get :issubquery */
+	token = lsptok(NULL, &length);		/* now read it */
+	local_node->issubquery = (token[0] == 't') ? true : false;
+
+	token = lsptok(NULL, &length);		/* get :indexed */
+	token = lsptok(NULL, &length);		/* now read it */
+	local_node->indexed = (token[0] == 't') ? true : false;
+
+	token = lsptok(NULL, &length);		/* get :pages */
+	token = lsptok(NULL, &length);		/* now read it */
+	local_node->pages = atol(token);
+
+	token = lsptok(NULL, &length);		/* get :tuples */
+	token = lsptok(NULL, &length);		/* now read it */
+	local_node->tuples = atof(token);
+
+	token = lsptok(NULL, &length);		/* get :subplan */
+	local_node->subplan = nodeRead(true); /* now read it */
 
 	token = lsptok(NULL, &length);		/* get :baserestrictinfo */
 	local_node->baserestrictinfo = nodeRead(true); /* now read it */
@@ -1409,6 +1458,9 @@ _readRangeTblEntry()
 	token = lsptok(NULL, &length);		/* get :relid */
 	local_node->relid = strtoul(token, NULL, 10);
 
+	token = lsptok(NULL, &length);		/* eat :subquery */
+	local_node->subquery = nodeRead(true);	/* now read it */
+
 	token = lsptok(NULL, &length);		/* eat :alias */
 	local_node->alias = nodeRead(true);	/* now read it */
 
@@ -1423,27 +1475,17 @@ _readRangeTblEntry()
 	token = lsptok(NULL, &length);		/* get :inFromCl */
 	local_node->inFromCl = (token[0] == 't') ? true : false;
 
-	token = lsptok(NULL, &length);		/* eat :skipAcl */
-	token = lsptok(NULL, &length);		/* get :skipAcl */
-	local_node->skipAcl = (token[0] == 't') ? true : false;
+	token = lsptok(NULL, &length);		/* eat :checkForRead */
+	token = lsptok(NULL, &length);		/* get :checkForRead */
+	local_node->checkForRead = (token[0] == 't') ? true : false;
 
-	return local_node;
-}
+	token = lsptok(NULL, &length);		/* eat :checkForWrite */
+	token = lsptok(NULL, &length);		/* get :checkForWrite */
+	local_node->checkForWrite = (token[0] == 't') ? true : false;
 
-static RowMark *
-_readRowMark()
-{
-	RowMark    *local_node = makeNode(RowMark);
-	char	   *token;
-	int			length;
-
-	token = lsptok(NULL, &length);		/* eat :rti */
-	token = lsptok(NULL, &length);		/* get :rti */
-	local_node->rti = strtoul(token, NULL, 10);
-
-	token = lsptok(NULL, &length);		/* eat :info */
-	token = lsptok(NULL, &length);		/* get :info */
-	local_node->info = strtoul(token, NULL, 10);
+	token = lsptok(NULL, &length);		/* eat :checkAsUser */
+	token = lsptok(NULL, &length);		/* get :checkAsUser */
+	local_node->checkAsUser = strtoul(token, NULL, 10);
 
 	return local_node;
 }
@@ -1768,9 +1810,9 @@ _readRestrictInfo()
 	token = lsptok(NULL, &length);		/* get :clause */
 	local_node->clause = nodeRead(true);		/* now read it */
 
-	token = lsptok(NULL, &length);		/* get :isjoinqual */
+	token = lsptok(NULL, &length);		/* get :ispusheddown */
 	token = lsptok(NULL, &length);		/* now read it */
-	local_node->isjoinqual = (token[0] == 't') ? true : false;
+	local_node->ispusheddown = (token[0] == 't') ? true : false;
 
 	token = lsptok(NULL, &length);		/* get :subclauseindices */
 	local_node->subclauseindices = nodeRead(true);		/* now read it */
@@ -1879,6 +1921,8 @@ parsePlanString(void)
 		return_value = _readIndexScan();
 	else if (length == 7 && strncmp(token, "TIDSCAN", length) == 0)
 		return_value = _readTidScan();
+	else if (length == 12 && strncmp(token, "SUBQUERYSCAN", length) == 0)
+		return_value = _readSubqueryScan();
 	else if (length == 4 && strncmp(token, "SORT", length) == 0)
 		return_value = _readSort();
 	else if (length == 6 && strncmp(token, "AGGREG", length) == 0)
@@ -1891,6 +1935,8 @@ parsePlanString(void)
 		return_value = _readRelabelType();
 	else if (length == 11 && strncmp(token, "RANGETBLREF", length) == 0)
 		return_value = _readRangeTblRef();
+	else if (length == 8 && strncmp(token, "FROMEXPR", length) == 0)
+		return_value = _readFromExpr();
 	else if (length == 8 && strncmp(token, "JOINEXPR", length) == 0)
 		return_value = _readJoinExpr();
 	else if (length == 3 && strncmp(token, "AGG", length) == 0)
@@ -1953,10 +1999,8 @@ parsePlanString(void)
 		return_value = _readCaseExpr();
 	else if (length == 4 && strncmp(token, "WHEN", length) == 0)
 		return_value = _readCaseWhen();
-	else if (length == 7 && strncmp(token, "ROWMARK", length) == 0)
-		return_value = _readRowMark();
 	else
-		elog(ERROR, "badly formatted planstring \"%.10s\"...\n", token);
+		elog(ERROR, "badly formatted planstring \"%.10s\"...", token);
 
 	return (Node *) return_value;
 }

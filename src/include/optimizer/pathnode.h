@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
  * pathnode.h
- *	  prototypes for pathnode.c, indexnode.c, relnode.c.
+ *	  prototypes for pathnode.c, relnode.c.
  *
  *
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pathnode.h,v 1.28 2000/09/12 21:07:11 tgl Exp $
+ * $Id: pathnode.h,v 1.29 2000/09/29 18:21:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,6 +32,7 @@ extern IndexPath *create_index_path(Query *root, RelOptInfo *rel,
 				  List *restriction_clauses,
 				  ScanDirection indexscandir);
 extern TidPath *create_tidscan_path(RelOptInfo *rel, List *tideval);
+extern Path *create_subqueryscan_path(RelOptInfo *rel);
 
 extern NestPath *create_nestloop_path(RelOptInfo *joinrel,
 									  JoinType jointype,
@@ -65,10 +66,5 @@ extern RelOptInfo *get_base_rel(Query *root, int relid);
 extern RelOptInfo *get_join_rel(Query *root, RelOptInfo *outer_rel,
 			 RelOptInfo *inner_rel,
 			 List **restrictlist_ptr);
-
-/*
- * prototypes for indexnode.h
- */
-extern List *find_relation_indices(Query *root, RelOptInfo *rel);
 
 #endif	 /* PATHNODE_H */

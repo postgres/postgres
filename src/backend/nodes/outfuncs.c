@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.126 2000/09/12 21:06:49 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.127 2000/09/29 18:21:29 tgl Exp $
  *
  * NOTES
  *	  Every (plan) node in POSTGRES has an associated "out" routine which
@@ -220,6 +220,9 @@ _outQuery(StringInfo str, Query *node)
 
 	if (node->utilityStmt)
 	{
+		/*
+		 * Hack to make up for lack of outfuncs for utility-stmt nodes
+		 */
 		switch (nodeTag(node->utilityStmt))
 		{
 			case T_CreateStmt:
@@ -239,7 +242,7 @@ _outQuery(StringInfo str, Query *node)
 				break;
 
 			case T_NotifyStmt:
-				appendStringInfo(str, " :utility ");
+				appendStringInfo(str, " :notify ");
 				_outToken(str, ((NotifyStmt *) (node->utilityStmt))->relname);
 				break;
 
@@ -250,32 +253,34 @@ _outQuery(StringInfo str, Query *node)
 	else
 		appendStringInfo(str, " :utility <>");
 
-	appendStringInfo(str, " :resultRelation %u :into ",
+	appendStringInfo(str, " :resultRelation %d :into ",
 					 node->resultRelation);
 	_outToken(str, node->into);
 
-	appendStringInfo(str,
-	" :isPortal %s :isBinary %s :isTemp %s :unionall %s :distinctClause ",
+	appendStringInfo(str, " :isPortal %s :isBinary %s :isTemp %s"
+					 " :unionall %s :hasAggs %s :hasSubLinks %s :rtable ",
 					 node->isPortal ? "true" : "false",
 					 node->isBinary ? "true" : "false",
 					 node->isTemp ? "true" : "false",
-					 node->unionall ? "true" : "false");
-	_outNode(str, node->distinctClause);
-
-	appendStringInfo(str, " :sortClause ");
-	_outNode(str, node->sortClause);
-
-	appendStringInfo(str, " :rtable ");
+					 node->unionall ? "true" : "false",
+					 node->hasAggs ? "true" : "false",
+					 node->hasSubLinks ? "true" : "false");
 	_outNode(str, node->rtable);
 
 	appendStringInfo(str, " :jointree ");
 	_outNode(str, node->jointree);
 
-	appendStringInfo(str, " :targetlist ");
+	appendStringInfo(str, " :targetList ");
 	_outNode(str, node->targetList);
 
-	appendStringInfo(str, " :qual ");
-	_outNode(str, node->qual);
+	appendStringInfo(str, " :rowMarks ");
+	_outIntList(str, node->rowMarks);
+
+	appendStringInfo(str, " :distinctClause ");
+	_outNode(str, node->distinctClause);
+
+	appendStringInfo(str, " :sortClause ");
+	_outNode(str, node->sortClause);
 
 	appendStringInfo(str, " :groupClause ");
 	_outNode(str, node->groupClause);
@@ -283,23 +288,17 @@ _outQuery(StringInfo str, Query *node)
 	appendStringInfo(str, " :havingQual ");
 	_outNode(str, node->havingQual);
 
-	appendStringInfo(str, " :hasAggs %s :hasSubLinks %s :unionClause ",
-					 node->hasAggs ? "true" : "false",
-					 node->hasSubLinks ? "true" : "false");
-	_outNode(str, node->unionClause);
-
 	appendStringInfo(str, " :intersectClause ");
 	_outNode(str, node->intersectClause);
+
+	appendStringInfo(str, " :unionClause ");
+	_outNode(str, node->unionClause);
 
 	appendStringInfo(str, " :limitOffset ");
 	_outNode(str, node->limitOffset);
 
 	appendStringInfo(str, " :limitCount ");
 	_outNode(str, node->limitCount);
-
-	appendStringInfo(str, " :rowMark ");
-	_outNode(str, node->rowMark);
-
 }
 
 static void
@@ -533,6 +532,19 @@ _outTidScan(StringInfo str, TidScan *node)
 	appendStringInfo(str, " :tideval ");
 	_outNode(str, node->tideval);
 
+}
+
+/*
+ *	SubqueryScan is a subclass of Scan
+ */
+static void
+_outSubqueryScan(StringInfo str, SubqueryScan *node)
+{
+	appendStringInfo(str, " SUBQUERYSCAN ");
+	_outPlanInfo(str, (Plan *) node);
+
+	appendStringInfo(str, " :scanrelid %u :subplan ", node->scan.scanrelid);
+	_outNode(str, node->subplan);
 }
 
 /*
@@ -864,6 +876,18 @@ _outRangeTblRef(StringInfo str, RangeTblRef *node)
 }
 
 /*
+ *	FromExpr
+ */
+static void
+_outFromExpr(StringInfo str, FromExpr *node)
+{
+	appendStringInfo(str, " FROMEXPR :fromlist ");
+	_outNode(str, node->fromlist);
+	appendStringInfo(str, " :quals ");
+	_outNode(str, node->quals);
+}
+
+/*
  *	JoinExpr
  */
 static void
@@ -916,36 +940,33 @@ _outRelOptInfo(StringInfo str, RelOptInfo *node)
 	appendStringInfo(str, " RELOPTINFO :relids ");
 	_outIntList(str, node->relids);
 
-	appendStringInfo(str,
-					 " :rows %.0f :width %d :indexed %s :pages %ld :tuples %.0f :targetlist ",
+	appendStringInfo(str, " :rows %.0f :width %d :targetlist ",
 					 node->rows,
-					 node->width,
-					 node->indexed ? "true" : "false",
-					 node->pages,
-					 node->tuples);
+					 node->width);
 	_outNode(str, node->targetlist);
 
 	appendStringInfo(str, " :pathlist ");
 	_outNode(str, node->pathlist);
-
 	appendStringInfo(str, " :cheapest_startup_path ");
 	_outNode(str, node->cheapest_startup_path);
 	appendStringInfo(str, " :cheapest_total_path ");
 	_outNode(str, node->cheapest_total_path);
 
-	appendStringInfo(str,
-					 " :pruneable %s :baserestrictinfo ",
-					 node->pruneable ? "true" : "false");
-	_outNode(str, node->baserestrictinfo);
+	appendStringInfo(str, " :pruneable %s :issubquery %s :indexed %s :pages %ld :tuples %.0f :subplan ",
+					 node->pruneable ? "true" : "false",
+					 node->issubquery ? "true" : "false",
+					 node->indexed ? "true" : "false",
+					 node->pages,
+					 node->tuples);
+	_outNode(str, node->subplan);
 
-	appendStringInfo(str,
-					 " :baserestrictcost %.2f :outerjoinset ",
+	appendStringInfo(str, " :baserestrictinfo ");
+	_outNode(str, node->baserestrictinfo);
+	appendStringInfo(str, " :baserestrictcost %.2f :outerjoinset ",
 					 node->baserestrictcost);
 	_outIntList(str, node->outerjoinset);
-
 	appendStringInfo(str, " :joininfo ");
 	_outNode(str, node->joininfo);
-
 	appendStringInfo(str, " :innerjoin ");
 	_outNode(str, node->innerjoin);
 }
@@ -977,21 +998,21 @@ _outRangeTblEntry(StringInfo str, RangeTblEntry *node)
 {
 	appendStringInfo(str, " RTE :relname ");
 	_outToken(str, node->relname);
-	appendStringInfo(str, " :relid %u :alias ",
+	appendStringInfo(str, " :relid %u ",
 					 node->relid);
+	appendStringInfo(str, " :subquery ");
+	_outNode(str, node->subquery);
+	appendStringInfo(str, " :alias ");
 	_outNode(str, node->alias);
 	appendStringInfo(str, " :eref ");
 	_outNode(str, node->eref);
-	appendStringInfo(str, " :inh %s :inFromCl %s :skipAcl %s",
+	appendStringInfo(str, " :inh %s :inFromCl %s :checkForRead %s"
+					 " :checkForWrite %s :checkAsUser %u",
 					 node->inh ? "true" : "false",
 					 node->inFromCl ? "true" : "false",
-					 node->skipAcl ? "true" : "false");
-}
-
-static void
-_outRowMark(StringInfo str, RowMark *node)
-{
-	appendStringInfo(str, " ROWMARK :rti %u :info %u", node->rti, node->info);
+					 node->checkForRead ? "true" : "false",
+					 node->checkForWrite ? "true" : "false",
+					 node->checkAsUser);
 }
 
 /*
@@ -1151,8 +1172,8 @@ _outRestrictInfo(StringInfo str, RestrictInfo *node)
 	appendStringInfo(str, " RESTRICTINFO :clause ");
 	_outNode(str, node->clause);
 
-	appendStringInfo(str, " :isjoinqual %s :subclauseindices ",
-					 node->isjoinqual ? "true" : "false");
+	appendStringInfo(str, " :ispusheddown %s :subclauseindices ",
+					 node->ispusheddown ? "true" : "false");
 	_outNode(str, node->subclauseindices);
 
 	appendStringInfo(str, " :mergejoinoperator %u ", node->mergejoinoperator);
@@ -1492,6 +1513,9 @@ _outNode(StringInfo str, void *obj)
 			case T_TidScan:
 				_outTidScan(str, obj);
 				break;
+			case T_SubqueryScan:
+				_outSubqueryScan(str, obj);
+				break;
 			case T_Material:
 				_outMaterial(str, obj);
 				break;
@@ -1555,6 +1579,9 @@ _outNode(StringInfo str, void *obj)
 			case T_RangeTblRef:
 				_outRangeTblRef(str, obj);
 				break;
+			case T_FromExpr:
+				_outFromExpr(str, obj);
+				break;
 			case T_JoinExpr:
 				_outJoinExpr(str, obj);
 				break;
@@ -1572,9 +1599,6 @@ _outNode(StringInfo str, void *obj)
 				break;
 			case T_RangeTblEntry:
 				_outRangeTblEntry(str, obj);
-				break;
-			case T_RowMark:
-				_outRowMark(str, obj);
 				break;
 			case T_Path:
 				_outPath(str, obj);

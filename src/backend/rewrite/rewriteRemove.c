@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteRemove.c,v 1.39 2000/09/12 04:49:09 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteRemove.c,v 1.40 2000/09/29 18:21:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,14 +40,14 @@ RewriteGetRuleEventRel(char *rulename)
 							   PointerGetDatum(rulename),
 							   0, 0, 0);
 	if (!HeapTupleIsValid(htup))
-		elog(ERROR, "Rule or view '%s' not found",
-		  ((!strncmp(rulename, "_RET", 4)) ? (rulename + 4) : rulename));
+		elog(ERROR, "Rule or view \"%s\" not found",
+		  ((strncmp(rulename, "_RET", 4) == 0) ? (rulename + 4) : rulename));
 	eventrel = ((Form_pg_rewrite) GETSTRUCT(htup))->ev_class;
 	htup = SearchSysCacheTuple(RELOID,
 							   PointerGetDatum(eventrel),
 							   0, 0, 0);
 	if (!HeapTupleIsValid(htup))
-		elog(ERROR, "Class '%u' not found", eventrel);
+		elog(ERROR, "Relation %u not found", eventrel);
 
 	return NameStr(((Form_pg_class) GETSTRUCT(htup))->relname);
 }
@@ -85,7 +85,7 @@ RemoveRewriteRule(char *ruleName)
 	if (!HeapTupleIsValid(tuple))
 	{
 		heap_close(RewriteRelation, RowExclusiveLock);
-		elog(ERROR, "Rule '%s' not found\n", ruleName);
+		elog(ERROR, "Rule \"%s\" not found", ruleName);
 	}
 
 	/*
@@ -105,7 +105,7 @@ RemoveRewriteRule(char *ruleName)
 
 	/* do not allow the removal of a view's SELECT rule */
 	if (event_relation->rd_rel->relkind == RELKIND_VIEW &&
-			((Form_pg_rewrite) GETSTRUCT(tuple))->ev_type == '1' )
+		((Form_pg_rewrite) GETSTRUCT(tuple))->ev_type == '1' )
 		elog(ERROR, "Cannot remove a view's SELECT rule");
 
 	hasMoreRules = event_relation->rd_rules != NULL &&
@@ -133,7 +133,7 @@ RemoveRewriteRule(char *ruleName)
 	 * new rule set.  Therefore, must do this even if relhasrules is
 	 * still true!
 	 */
-	setRelhasrulesInRelation(eventRelationOid, hasMoreRules);
+	SetRelationRuleStatus(eventRelationOid, hasMoreRules, false);
 
 	/* Close rel, but keep lock till commit... */
 	heap_close(event_relation, NoLock);

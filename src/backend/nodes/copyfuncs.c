@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.122 2000/09/20 15:28:01 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.123 2000/09/29 18:21:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -296,6 +296,31 @@ _copyTidScan(TidScan *from)
 	 */
 	newnode->needRescan = from->needRescan;
 	Node_Copy(from, newnode, tideval);
+
+	return newnode;
+}
+
+/* ----------------
+ *		_copySubqueryScan
+ * ----------------
+ */
+static SubqueryScan *
+_copySubqueryScan(SubqueryScan *from)
+{
+	SubqueryScan  *newnode = makeNode(SubqueryScan);
+
+	/* ----------------
+	 *	copy node superclass fields
+	 * ----------------
+	 */
+	CopyPlanFields((Plan *) from, (Plan *) newnode);
+	CopyScanFields((Scan *) from, (Scan *) newnode);
+
+	/* ----------------
+	 *	copy remainder of node
+	 * ----------------
+	 */
+	Node_Copy(from, newnode, subplan);
 
 	return newnode;
 }
@@ -913,6 +938,17 @@ _copyRangeTblRef(RangeTblRef *from)
 	return newnode;
 }
 
+static FromExpr *
+_copyFromExpr(FromExpr *from)
+{
+	FromExpr *newnode = makeNode(FromExpr);
+
+	Node_Copy(from, newnode, fromlist);
+	Node_Copy(from, newnode, quals);
+
+	return newnode;
+}
+
 static JoinExpr *
 _copyJoinExpr(JoinExpr *from)
 {
@@ -1025,9 +1061,11 @@ _copyRelOptInfo(RelOptInfo *from)
 	Node_Copy(from, newnode, cheapest_total_path);
 	newnode->pruneable = from->pruneable;
 
+	newnode->issubquery = from->issubquery;
 	newnode->indexed = from->indexed;
 	newnode->pages = from->pages;
 	newnode->tuples = from->tuples;
+	Node_Copy(from, newnode, subplan);
 
 	Node_Copy(from, newnode, baserestrictinfo);
 	newnode->baserestrictcost = from->baserestrictcost;
@@ -1306,7 +1344,7 @@ _copyRestrictInfo(RestrictInfo *from)
 	 * ----------------
 	 */
 	Node_Copy(from, newnode, clause);
-	newnode->isjoinqual = from->isjoinqual;
+	newnode->ispusheddown = from->ispusheddown;
 	Node_Copy(from, newnode, subclauseindices);
 	newnode->mergejoinoperator = from->mergejoinoperator;
 	newnode->left_sortop = from->left_sortop;
@@ -1392,22 +1430,14 @@ _copyRangeTblEntry(RangeTblEntry *from)
 	if (from->relname)
 		newnode->relname = pstrdup(from->relname);
 	newnode->relid = from->relid;
+	Node_Copy(from, newnode, subquery);
 	Node_Copy(from, newnode, alias);
 	Node_Copy(from, newnode, eref);
 	newnode->inh = from->inh;
 	newnode->inFromCl = from->inFromCl;
-	newnode->skipAcl = from->skipAcl;
-
-	return newnode;
-}
-
-static RowMark *
-_copyRowMark(RowMark *from)
-{
-	RowMark    *newnode = makeNode(RowMark);
-
-	newnode->rti = from->rti;
-	newnode->info = from->info;
+	newnode->checkForRead = from->checkForRead;
+	newnode->checkForWrite = from->checkForWrite;
+	newnode->checkAsUser = from->checkAsUser;
 
 	return newnode;
 }
@@ -1674,8 +1704,8 @@ _copyQuery(Query *from)
 	Node_Copy(from, newnode, jointree);
 
 	Node_Copy(from, newnode, targetList);
-	Node_Copy(from, newnode, qual);
-	Node_Copy(from, newnode, rowMark);
+
+	newnode->rowMarks = listCopy(from->rowMarks);
 
 	Node_Copy(from, newnode, distinctClause);
 	Node_Copy(from, newnode, sortClause);
@@ -2493,6 +2523,9 @@ copyObject(void *from)
 		case T_TidScan:
 			retval = _copyTidScan(from);
 			break;
+		case T_SubqueryScan:
+			retval = _copySubqueryScan(from);
+			break;
 		case T_Join:
 			retval = _copyJoin(from);
 			break;
@@ -2574,6 +2607,9 @@ copyObject(void *from)
 			break;
 		case T_RangeTblRef:
 			retval = _copyRangeTblRef(from);
+			break;
+		case T_FromExpr:
+			retval = _copyFromExpr(from);
 			break;
 		case T_JoinExpr:
 			retval = _copyJoinExpr(from);
@@ -2880,9 +2916,6 @@ copyObject(void *from)
 			break;
 		case T_CaseWhen:
 			retval = _copyCaseWhen(from);
-			break;
-		case T_RowMark:
-			retval = _copyRowMark(from);
 			break;
 		case T_FkConstraint:
 			retval = _copyFkConstraint(from);

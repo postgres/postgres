@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: rewriteManip.h,v 1.22 2000/09/12 21:07:15 tgl Exp $
+ * $Id: rewriteManip.h,v 1.23 2000/09/29 18:21:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,15 +31,12 @@ extern bool attribute_used(Node *node, int rt_index, int attno,
 extern void AddQual(Query *parsetree, Node *qual);
 extern void AddHavingQual(Query *parsetree, Node *havingQual);
 extern void AddNotQual(Query *parsetree, Node *qual);
-extern void AddGroupClause(Query *parsetree, List *group_by, List *tlist);
 
 extern bool checkExprHasAggs(Node *node);
 extern bool checkExprHasSubLink(Node *node);
 
+extern Node *ResolveNew(Node *node, int target_varno, int sublevels_up,
+						List *targetlist, int event, int update_varno);
 extern void FixNew(RewriteInfo *info, Query *parsetree);
-
-extern void HandleRIRAttributeRule(Query *parsetree, List *rtable,
-					   List *targetlist, int rt_index,
-					   int attr_num, int *modified, int *badsql);
 
 #endif	 /* REWRITEMANIP_H */

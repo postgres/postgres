@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteSupport.c,v 1.43 2000/06/30 07:04:23 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteSupport.c,v 1.44 2000/09/29 18:21:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,10 +34,11 @@ IsDefinedRewriteRule(char *ruleName)
 }
 
 /*
- * setRelhasrulesInRelation
- *		Set the value of the relation's relhasrules field in pg_class.
+ * SetRelationRuleStatus
+ *		Set the value of the relation's relhasrules field in pg_class;
+ *		if the relation is becoming a view, also adjust its relkind.
  *
- * NOTE: caller should be holding an appropriate lock on the relation.
+ * NOTE: caller must be holding an appropriate lock on the relation.
  *
  * NOTE: an important side-effect of this operation is that an SI invalidation
  * message is sent out to all backends --- including me --- causing relcache
@@ -47,7 +48,8 @@ IsDefinedRewriteRule(char *ruleName)
  * an SI message in that case.
  */
 void
-setRelhasrulesInRelation(Oid relationId, bool relhasrules)
+SetRelationRuleStatus(Oid relationId, bool relHasRules,
+					  bool relIsBecomingView)
 {
 	Relation	relationRelation;
 	HeapTuple	tuple;
@@ -63,7 +65,10 @@ setRelhasrulesInRelation(Oid relationId, bool relhasrules)
 	Assert(HeapTupleIsValid(tuple));
 
 	/* Do the update */
-	((Form_pg_class) GETSTRUCT(tuple))->relhasrules = relhasrules;
+	((Form_pg_class) GETSTRUCT(tuple))->relhasrules = relHasRules;
+	if (relIsBecomingView)
+		((Form_pg_class) GETSTRUCT(tuple))->relkind = RELKIND_VIEW;
+
 	heap_update(relationRelation, &tuple->t_self, tuple, NULL);
 
 	/* Keep the catalog indices up to date */

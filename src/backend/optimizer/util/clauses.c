@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.75 2000/09/25 18:14:55 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.76 2000/09/29 18:21:23 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -119,9 +119,9 @@ make_opclause(Oper *op, Var *leftop, Var *rightop)
 	expr->opType = OP_EXPR;
 	expr->oper = (Node *) op;
 	if (rightop)
-		expr->args = lcons(leftop, lcons(rightop, NIL));
+		expr->args = makeList2(leftop, rightop);
 	else
-		expr->args = lcons(leftop, NIL);
+		expr->args = makeList1(leftop);
 	return expr;
 }
 
@@ -264,7 +264,7 @@ make_notclause(Expr *notclause)
 	expr->typeOid = BOOLOID;
 	expr->opType = NOT_EXPR;
 	expr->oper = NULL;
-	expr->args = lcons(notclause, NIL);
+	expr->args = makeList1(notclause);
 	return expr;
 }
 
@@ -303,7 +303,6 @@ and_clause(Node *clause)
  * make_andclause
  *
  * Create an 'and' clause given its arguments in a list.
- *
  */
 Expr *
 make_andclause(List *andclauses)
@@ -315,6 +314,23 @@ make_andclause(List *andclauses)
 	expr->oper = NULL;
 	expr->args = andclauses;
 	return expr;
+}
+
+/*
+ * make_and_qual
+ *
+ * Variant of make_andclause for ANDing two qual conditions together.
+ * Qual conditions have the property that a NULL nodetree is interpreted
+ * as 'true'.
+ */
+Node *
+make_and_qual(Node *qual1, Node *qual2)
+{
+	if (qual1 == NULL)
+		return qual2;
+	if (qual2 == NULL)
+		return qual1;
+	return (Node *) make_andclause(makeList2(qual1, qual2));
 }
 
 /*
@@ -356,7 +372,7 @@ make_ands_implicit(Expr *clause)
 			 DatumGetBool(((Const *) clause)->constvalue))
 		return NIL;				/* constant TRUE input -> NIL list */
 	else
-		return lcons(clause, NIL);
+		return makeList1(clause);
 }
 
 
@@ -676,49 +692,32 @@ is_pseudo_constant_clause(Node *clause)
 	return false;
 }
 
-/*----------
+/*
  * pull_constant_clauses
  *		Scan through a list of qualifications and separate "constant" quals
  *		from those that are not.
  *
- * The input qual list is divided into three parts:
- *	* The function's return value is a list of all those quals that contain
- *	  variable(s) of the current query level.  (These quals will become
- *	  restrict and join quals.)
- *	* *noncachableQual receives a list of quals that have no Vars, yet
- *	  cannot be treated as constants because they contain noncachable
- *	  function calls.  (Example: WHERE random() < 0.5)
- *	* *constantQual receives a list of the remaining quals, which can be
- *	  treated as constants for any one scan of the current query level.
- *	  (They are really only pseudo-constant, since they may contain
- *	  Params or outer-level Vars.)
- *----------
+ * Returns a list of the pseudo-constant clauses in constantQual and the
+ * remaining quals as the return value.
  */
 List *
-pull_constant_clauses(List *quals,
-					  List **noncachableQual,
-					  List **constantQual)
+pull_constant_clauses(List *quals, List **constantQual)
 {
-	List	   *q;
-	List	   *normqual = NIL;
-	List	   *noncachequal = NIL;
 	List	   *constqual = NIL;
+	List	   *restqual = NIL;
+	List	   *q;
 
 	foreach(q, quals)
 	{
-		Node	   *qual = (Node *) lfirst(q);
+		Node   *qual = (Node *) lfirst(q);
 
-		if (contain_var_clause(qual))
-			normqual = lappend(normqual, qual);
-		else if (contain_noncachable_functions(qual))
-			noncachequal = lappend(noncachequal, qual);
-		else
+		if (is_pseudo_constant_clause(qual))
 			constqual = lappend(constqual, qual);
+		else
+			restqual = lappend(restqual, qual);
 	}
-
-	*noncachableQual = noncachequal;
 	*constantQual = constqual;
-	return normqual;
+	return restqual;
 }
 
 
@@ -1636,9 +1635,9 @@ simplify_op_or_func(Expr *expr, List *args)
  * will have List structure at the top level, and it handles TargetEntry nodes
  * so that a scan of a target list can be handled without additional code.
  * (But only the "expr" part of a TargetEntry is examined, unless the walker
- * chooses to process TargetEntry nodes specially.)  Also, RangeTblRef and
- * JoinExpr nodes are handled, so that qual expressions in a jointree can be
- * processed without additional code.
+ * chooses to process TargetEntry nodes specially.)  Also, RangeTblRef,
+ * FromExpr, and JoinExpr nodes are handled, so that qual expressions in a
+ * jointree can be processed without additional code.
  *
  * expression_tree_walker will handle SubLink and SubPlan nodes by recursing
  * normally into the "lefthand" arguments (which belong to the outer plan).
@@ -1801,6 +1800,16 @@ expression_tree_walker(Node *node,
 			break;
 		case T_TargetEntry:
 			return walker(((TargetEntry *) node)->expr, context);
+		case T_FromExpr:
+			{
+				FromExpr    *from = (FromExpr *) node;
+
+				if (walker(from->fromlist, context))
+					return true;
+				if (walker(from->quals, context))
+					return true;
+			}
+			break;
 		case T_JoinExpr:
 			{
 				JoinExpr    *join = (JoinExpr *) node;
@@ -1844,14 +1853,12 @@ query_tree_walker(Query *query,
 
 	if (walker((Node *) query->targetList, context))
 		return true;
-	if (walker(query->qual, context))
+	if (walker((Node *) query->jointree, context))
 		return true;
 	if (walker(query->havingQual, context))
 		return true;
-	if (walker((Node *) query->jointree, context))
-		return true;
 	/*
-	 * XXX for subselect-in-FROM, may need to examine rtable as well
+	 * XXX for subselect-in-FROM, may need to examine rtable as well?
 	 */
 	return false;
 }
@@ -2123,6 +2130,17 @@ expression_tree_mutator(Node *node,
 
 				FLATCOPY(newnode, targetentry, TargetEntry);
 				MUTATE(newnode->expr, targetentry->expr, Node *);
+				return (Node *) newnode;
+			}
+			break;
+		case T_FromExpr:
+			{
+				FromExpr *from = (FromExpr *) node;
+				FromExpr *newnode;
+
+				FLATCOPY(newnode, from, FromExpr);
+				MUTATE(newnode->fromlist, from->fromlist, List *);
+				MUTATE(newnode->quals, from->quals, Node *);
 				return (Node *) newnode;
 			}
 			break;

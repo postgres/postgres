@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.192 2000/09/25 18:38:39 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.193 2000/09/29 18:21:36 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -403,7 +403,7 @@ stmtmulti:  stmtmulti ';' stmt
 				}
 		| stmt
 				{ if ($1 != (Node *)NULL)
-					$$ = lcons($1,NIL);
+					$$ = makeList1($1);
 				  else
 					$$ = NIL;
 				}
@@ -575,11 +575,11 @@ user_createuser_clause:  CREATEUSER				{ $$ = +1; }
 
 user_list:  user_list ',' UserId
 				{
-					$$ = lcons((void*)makeString($3), $1);
+					$$ = lappend($1, makeString($3));
 				}
 			| UserId
 				{
-					$$ = lcons((void*)makeString($1), NIL);
+					$$ = makeList1(makeString($1));
 				}
 		;
 
@@ -721,7 +721,7 @@ SessionList:  SessionList ',' SessionClause
 				}
 		| SessionClause
 				{
-					$$ = lcons($1, NIL);
+					$$ = makeList1($1);
 				}
 		;
 
@@ -937,7 +937,7 @@ constraints_set_list:	ALL
 
 constraints_set_namelist:	IDENT
 				{
-					$$ = lappend(NIL, $1);
+					$$ = makeList1($1);
 				}
 		| constraints_set_namelist ',' IDENT
 				{
@@ -1193,11 +1193,11 @@ OptTableElementList:  OptTableElementList ',' OptTableElement
 			| OptTableElement
 				{
 					if ($1 != NULL)
-						$$ = lcons($1, NIL);
+						$$ = makeList1($1);
 					else
-						$$ = NULL;
+						$$ = NIL;
 				}
-			| /*EMPTY*/							{ $$ = NULL; }
+			| /*EMPTY*/							{ $$ = NIL; }
 		;
 
 OptTableElement:  columnDef						{ $$ = $1; }
@@ -1551,7 +1551,7 @@ OptCreateAs:  '(' CreateAsList ')'				{ $$ = $2; }
 		;
 
 CreateAsList:  CreateAsList ',' CreateAsElement	{ $$ = lappend($1, $3); }
-			| CreateAsElement					{ $$ = lcons($1, NIL); }
+			| CreateAsElement					{ $$ = makeList1($1); }
 		;
 
 CreateAsElement:  ColId
@@ -1783,7 +1783,7 @@ TriggerForType:  ROW						{ $$ = TRUE; }
 		;
 
 TriggerFuncArgs:  TriggerFuncArg
-				{ $$ = lcons($1, NIL); }
+				{ $$ = makeList1($1); }
 			| TriggerFuncArgs ',' TriggerFuncArg
 				{ $$ = lappend($1, $3); }
 			| /*EMPTY*/
@@ -1899,7 +1899,7 @@ def_name:  PROCEDURE						{ $$ = "procedure"; }
 definition:  '(' def_list ')'				{ $$ = $2; }
 		;
 
-def_list:  def_elem							{ $$ = lcons($1, NIL); }
+def_list:  def_elem							{ $$ = makeList1($1); }
 		| def_list ',' def_elem				{ $$ = lappend($1, $3); }
 		;
 
@@ -2361,11 +2361,11 @@ access_method_clause:  USING access_method		{ $$ = $2; }
 		;
 
 index_params:  index_list						{ $$ = $1; }
-		| func_index							{ $$ = lcons($1,NIL); }
+		| func_index							{ $$ = makeList1($1); }
 		;
 
 index_list:  index_list ',' index_elem			{ $$ = lappend($1, $3); }
-		| index_elem							{ $$ = lcons($1, NIL); }
+		| index_elem							{ $$ = makeList1($1); }
 		;
 
 func_index:  func_name '(' name_list ')' opt_class
@@ -2486,9 +2486,9 @@ func_args:  '(' func_args_list ')'				{ $$ = $2; }
 		;
 
 func_args_list:  func_arg
-				{	$$ = lcons(makeString($1->name),NIL); }
+				{	$$ = makeList1(makeString($1->name)); }
 		| func_args_list ',' func_arg
-				{	$$ = lappend($1,makeString($3->name)); }
+				{	$$ = lappend($1, makeString($3->name)); }
 		;
 
 /* Would be nice to use the full Typename production for these fields,
@@ -2539,9 +2539,9 @@ opt_arg:  IN
 		;
 
 func_as: Sconst
-				{   $$ = lcons(makeString($1),NIL); }
+				{   $$ = makeList1(makeString($1)); }
 		| Sconst ',' Sconst
-				{ 	$$ = lappend(lcons(makeString($1),NIL), makeString($3)); }
+				{ 	$$ = makeList2(makeString($1), makeString($3)); }
 		;
 
 func_return:  SimpleTypename
@@ -2631,11 +2631,11 @@ oper_argtypes:	name
 				   elog(ERROR,"parser: argument type missing (use NONE for unary operators)");
 				}
 		| name ',' name
-				{ $$ = makeList(makeString($1), makeString($3), -1); }
+				{ $$ = makeList2(makeString($1), makeString($3)); }
 		| NONE ',' name			/* left unary */
-				{ $$ = makeList(NULL, makeString($3), -1); }
+				{ $$ = makeList2(NULL, makeString($3)); }
 		| name ',' NONE			/* right unary */
-				{ $$ = makeList(makeString($1), NULL, -1); }
+				{ $$ = makeList2(makeString($1), NULL); }
 		;
 
 
@@ -2724,22 +2724,22 @@ RuleStmt:  CREATE RULE name AS
 		;
 
 RuleActionList:  NOTHING				{ $$ = NIL; }
-		| SelectStmt					{ $$ = lcons($1, NIL); }
-		| RuleActionStmt				{ $$ = lcons($1, NIL); }
+		| SelectStmt					{ $$ = makeList1($1); }
+		| RuleActionStmt				{ $$ = makeList1($1); }
 		| '[' RuleActionMulti ']'		{ $$ = $2; }
 		| '(' RuleActionMulti ')'		{ $$ = $2; } 
 		;
 
 /* the thrashing around here is to discard "empty" statements... */
 RuleActionMulti:  RuleActionMulti ';' RuleActionStmtOrEmpty
-				{ if ($3 != (Node *)NULL)
+				{ if ($3 != (Node *) NULL)
 					$$ = lappend($1, $3);
 				  else
 					$$ = $1;
 				}
 		| RuleActionStmtOrEmpty
-				{ if ($1 != (Node *)NULL)
-					$$ = lcons($1,NIL);
+				{ if ($1 != (Node *) NULL)
+					$$ = makeList1($1);
 				  else
 					$$ = NIL;
 				}
@@ -2761,7 +2761,7 @@ event_object:  relation_name '.' attr_name
 					$$ = makeNode(Attr);
 					$$->relname = $1;
 					$$->paramNo = NULL;
-					$$->attrs = lcons(makeString($3), NIL);
+					$$->attrs = makeList1(makeString($3));
 					$$->indirection = NIL;
 				}
 		| relation_name
@@ -2910,10 +2910,8 @@ ViewStmt:  CREATE VIEW name opt_column_list AS SelectStmt
 					n->viewname = $3;
 					n->aliases = $4;
 					n->query = (Query *)$6;
-					if (((SelectStmt *)n->query)->sortClause != NULL)
-						elog(ERROR,"ORDER BY and DISTINCT on views are not implemented");
 					if (((SelectStmt *)n->query)->unionClause != NULL)
-						elog(ERROR,"UNION on views is not implemented");
+						elog(ERROR,"UNION in views is not implemented");
 					if (((SelectStmt *)n->query)->forUpdate != NULL)
 						elog(ERROR, "SELECT FOR UPDATE is not allowed in CREATE VIEW");
 					$$ = (Node *)n;
@@ -3092,9 +3090,9 @@ opt_va_list:  '(' va_list ')'					{ $$ = $2; }
 		;
 
 va_list:  name
-				{ $$=lcons($1,NIL); }
+				{ $$ = makeList1($1); }
 		| va_list ',' name
-				{ $$=lappend($1,$3); }
+				{ $$ = lappend($1, $3); }
 		;
 
 
@@ -3240,7 +3238,7 @@ opt_column_list:  '(' columnList ')'			{ $$ = $2; }
 columnList:  columnList ',' columnElem
 				{ $$ = lappend($1, $3); }
 		| columnElem
-				{ $$ = lcons($1, NIL); }
+				{ $$ = makeList1($1); }
 		;
 
 columnElem:  ColId opt_indirection
@@ -3364,7 +3362,7 @@ opt_cursor:  BINARY						{ $$ = TRUE; }
  *****************************************************************************/
 
 /* A complete SELECT statement looks like this.  Note sort, for_update,
- * and limit clauses can only appear once, not in each subselect.
+ * and limit clauses can only appear once, not in each set operation.
  * 
  * The rule returns a SelectStmt Node having the set operations attached to 
  * unionClause and intersectClause (NIL if no set operations were present)
@@ -3584,7 +3582,7 @@ opt_all:  ALL									{ $$ = TRUE; }
 /* We use (NIL) as a placeholder to indicate that all target expressions
  * should be placed in the DISTINCT list during parsetree analysis.
  */
-opt_distinct:  DISTINCT							{ $$ = lcons(NIL,NIL); }
+opt_distinct:  DISTINCT							{ $$ = makeList1(NIL); }
 		| DISTINCT ON '(' expr_list ')'			{ $$ = $4; }
 		| ALL									{ $$ = NIL; }
 		| /*EMPTY*/								{ $$ = NIL; }
@@ -3594,7 +3592,7 @@ sort_clause:  ORDER BY sortby_list				{ $$ = $3; }
 		| /*EMPTY*/								{ $$ = NIL; }
 		;
 
-sortby_list:  sortby							{ $$ = lcons($1, NIL); }
+sortby_list:  sortby							{ $$ = makeList1($1); }
 		| sortby_list ',' sortby				{ $$ = lappend($1, $3); }
 		;
 
@@ -3614,17 +3612,17 @@ OptUseOp:  USING all_Op							{ $$ = $2; }
 
 
 opt_select_limit:	LIMIT select_limit_value ',' select_offset_value
-			{ $$ = lappend(lappend(NIL, $4), $2); }
+			{ $$ = makeList2($4, $2); }
 		| LIMIT select_limit_value OFFSET select_offset_value
-			{ $$ = lappend(lappend(NIL, $4), $2); }
+			{ $$ = makeList2($4, $2); }
 		| LIMIT select_limit_value
-			{ $$ = lappend(lappend(NIL, NULL), $2); }
+			{ $$ = makeList2(NULL, $2); }
 		| OFFSET select_offset_value LIMIT select_limit_value
-			{ $$ = lappend(lappend(NIL, $2), $4); }
+			{ $$ = makeList2($2, $4); }
 		| OFFSET select_offset_value
-			{ $$ = lappend(lappend(NIL, $2), NULL); }
+			{ $$ = makeList2($2, NULL); }
 		| /* EMPTY */
-			{ $$ = lappend(lappend(NIL, NULL), NULL); }
+			{ $$ = makeList2(NULL, NULL); }
 		;
 
 select_limit_value:  Iconst
@@ -3704,9 +3702,9 @@ opt_inh_star:  '*'								{ $$ = TRUE; }
 relation_name_list:  name_list;
 
 name_list:  name
-				{	$$ = lcons(makeString($1),NIL); }
+				{	$$ = makeList1(makeString($1)); }
 		| name_list ',' name
-				{	$$ = lappend($1,makeString($3)); }
+				{	$$ = lappend($1, makeString($3)); }
 		;
 
 group_clause:  GROUP BY expr_list				{ $$ = $3; }
@@ -3726,7 +3724,7 @@ for_update_clause:  FOR UPDATE update_list		{ $$ = $3; }
 		;
 
 update_list:  OF va_list						{ $$ = $2; }
-		| /* EMPTY */							{ $$ = lcons(NULL, NULL); }
+		| /* EMPTY */							{ $$ = makeList1(NULL); }
 		;
 
 /*****************************************************************************
@@ -3742,7 +3740,7 @@ from_clause:  FROM from_list					{ $$ = $2; }
 		;
 
 from_list:  from_list ',' table_ref				{ $$ = lappend($1, $3); }
-		| table_ref								{ $$ = lcons($1, NIL); }
+		| table_ref								{ $$ = makeList1($1); }
 		;
 
 /*
@@ -4001,10 +3999,10 @@ Typename:  SimpleTypename opt_array_bounds
 				}
 		;
 
-opt_array_bounds:	'[' ']' opt_array_bounds
-				{  $$ = lcons(makeInteger(-1), $3); }
-		| '[' Iconst ']' opt_array_bounds
-				{  $$ = lcons(makeInteger($2), $4); }
+opt_array_bounds:	opt_array_bounds '[' ']'
+				{  $$ = lappend($1, makeInteger(-1)); }
+		| opt_array_bounds '[' Iconst ']'
+				{  $$ = lappend($1, makeInteger($3)); }
 		| /*EMPTY*/
 				{  $$ = NIL; }
 		;
@@ -4296,7 +4294,7 @@ opt_timezone:  WITH TIME ZONE					{ $$ = TRUE; }
 		| /*EMPTY*/								{ $$ = FALSE; }
 		;
 
-opt_interval:  datetime							{ $$ = lcons($1, NIL); }
+opt_interval:  datetime							{ $$ = makeList1($1); }
 		| YEAR_P TO MONTH_P						{ $$ = NIL; }
 		| DAY_P TO HOUR_P						{ $$ = NIL; }
 		| DAY_P TO MINUTE_P						{ $$ = NIL; }
@@ -4403,7 +4401,7 @@ row_list:  row_list ',' a_expr
 				}
 		| a_expr
 				{
-					$$ = lcons($1, NIL);
+					$$ = makeList1($1);
 				}
 		;
 
@@ -4524,7 +4522,7 @@ a_expr:  c_expr
 				{
 					FuncCall *n = makeNode(FuncCall);
 					n->funcname = "like_escape";
-					n->args = makeList($3, $5, -1);
+					n->args = makeList2($3, $5);
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
 					$$ = makeA_Expr(OP, "~~", $1, (Node *) n);
@@ -4535,7 +4533,7 @@ a_expr:  c_expr
 				{
 					FuncCall *n = makeNode(FuncCall);
 					n->funcname = "like_escape";
-					n->args = makeList($4, $6, -1);
+					n->args = makeList2($4, $6);
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
 					$$ = makeA_Expr(OP, "!~~", $1, (Node *) n);
@@ -4546,7 +4544,7 @@ a_expr:  c_expr
 				{
 					FuncCall *n = makeNode(FuncCall);
 					n->funcname = "like_escape";
-					n->args = makeList($3, $5, -1);
+					n->args = makeList2($3, $5);
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
 					$$ = makeA_Expr(OP, "~~*", $1, (Node *) n);
@@ -4557,7 +4555,7 @@ a_expr:  c_expr
 				{
 					FuncCall *n = makeNode(FuncCall);
 					n->funcname = "like_escape";
-					n->args = makeList($4, $6, -1);
+					n->args = makeList2($4, $6);
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
 					$$ = makeA_Expr(OP, "!~~*", $1, (Node *) n);
@@ -4634,7 +4632,7 @@ a_expr:  c_expr
 					if (IsA($4, SubLink))
 					{
 							SubLink *n = (SubLink *)$4;
-							n->lefthand = lcons($1, NIL);
+							n->lefthand = makeList1($1);
 							n->oper = (List *) makeA_Expr(OP, "=", NULL, NULL);
 							n->useor = FALSE;
 							n->subLinkType = ANY_SUBLINK;
@@ -4661,7 +4659,7 @@ a_expr:  c_expr
 					if (IsA($5, SubLink))
 					{
 						SubLink *n = (SubLink *)$5;
-						n->lefthand = lcons($1, NIL);
+						n->lefthand = makeList1($1);
 						n->oper = (List *) makeA_Expr(OP, "<>", NULL, NULL);
 						n->useor = FALSE;
 						n->subLinkType = ALL_SUBLINK;
@@ -4685,7 +4683,7 @@ a_expr:  c_expr
 		| a_expr all_Op sub_type '(' SubSelect ')'
 				{
 					SubLink *n = makeNode(SubLink);
-					n->lefthand = lcons($1, NIL);
+					n->lefthand = makeList1($1);
 					n->oper = (List *) makeA_Expr(OP, $2, NULL, NULL);
 					n->useor = FALSE; /* doesn't matter since only one col */
 					n->subLinkType = $3;
@@ -4840,7 +4838,7 @@ c_expr:  attr
 					star->val.type = T_Integer;
 					star->val.val.ival = 1;
 					n->funcname = $1;
-					n->args = lcons(star, NIL);
+					n->args = makeList1(star);
 					n->agg_star = TRUE;
 					n->agg_distinct = FALSE;
 					$$ = (Node *)n;
@@ -4873,7 +4871,7 @@ c_expr:  attr
 					t->typmod = -1;
 
 					n->funcname = xlateSqlType("date");
-					n->args = lcons(s, NIL);
+					n->args = makeList1(s);
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
 
@@ -4898,7 +4896,7 @@ c_expr:  attr
 					t->typmod = -1;
 
 					n->funcname = xlateSqlType("time");
-					n->args = lcons(s, NIL);
+					n->args = makeList1(s);
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
 
@@ -4923,7 +4921,7 @@ c_expr:  attr
 					t->typmod = -1;
 
 					n->funcname = xlateSqlType("time");
-					n->args = lcons(s, NIL);
+					n->args = makeList1(s);
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
 
@@ -4952,7 +4950,7 @@ c_expr:  attr
 					t->typmod = -1;
 
 					n->funcname = xlateSqlType("timestamp");
-					n->args = lcons(s, NIL);
+					n->args = makeList1(s);
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
 
@@ -4977,7 +4975,7 @@ c_expr:  attr
 					t->typmod = -1;
 
 					n->funcname = xlateSqlType("timestamp");
-					n->args = lcons(s, NIL);
+					n->args = makeList1(s);
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
 
@@ -5104,26 +5102,26 @@ c_expr:  attr
  * Supporting nonterminals for expressions.
  */
 
-opt_indirection:  '[' a_expr ']' opt_indirection
+opt_indirection:	opt_indirection '[' a_expr ']'
 				{
 					A_Indices *ai = makeNode(A_Indices);
 					ai->lidx = NULL;
-					ai->uidx = $2;
-					$$ = lcons(ai, $4);
+					ai->uidx = $3;
+					$$ = lappend($1, ai);
 				}
-		| '[' a_expr ':' a_expr ']' opt_indirection
+		| opt_indirection '[' a_expr ':' a_expr ']'
 				{
 					A_Indices *ai = makeNode(A_Indices);
-					ai->lidx = $2;
-					ai->uidx = $4;
-					$$ = lcons(ai, $6);
+					ai->lidx = $3;
+					ai->uidx = $5;
+					$$ = lappend($1, ai);
 				}
 		| /*EMPTY*/
 				{	$$ = NIL; }
 		;
 
 expr_list:  a_expr
-				{ $$ = lcons($1, NIL); }
+				{ $$ = makeList1($1); }
 		| expr_list ',' a_expr
 				{ $$ = lappend($1, $3); }
 		| expr_list USING a_expr
@@ -5135,7 +5133,7 @@ extract_list:  extract_arg FROM a_expr
 					A_Const *n = makeNode(A_Const);
 					n->val.type = T_String;
 					n->val.val.str = $1;
-					$$ = makeList((Node *)n, $3, -1);
+					$$ = makeList2((Node *) n, $3);
 				}
 		| /*EMPTY*/
 				{	$$ = NIL; }
@@ -5149,7 +5147,7 @@ extract_arg:  datetime						{ $$ = $1; }
 /* position_list uses b_expr not a_expr to avoid conflict with general IN */
 
 position_list:  b_expr IN b_expr
-				{	$$ = makeList($3, $1, -1); }
+				{	$$ = makeList2($3, $1); }
 		| /*EMPTY*/
 				{	$$ = NIL; }
 		;
@@ -5169,7 +5167,7 @@ substr_from:  FROM expr_list
 					A_Const *n = makeNode(A_Const);
 					n->val.type = T_Integer;
 					n->val.val.ival = 1;
-					$$ = lcons((Node *)n,NIL);
+					$$ = makeList1((Node *)n);
 				}
 		;
 
@@ -5198,7 +5196,7 @@ in_expr:  SubSelect
 		;
 
 in_expr_nodes:  a_expr
-				{	$$ = lcons($1, NIL); }
+				{	$$ = makeList1($1); }
 		| in_expr_nodes ',' a_expr
 				{	$$ = lappend($1, $3); }
 		;
@@ -5236,7 +5234,7 @@ case_expr:  CASE case_arg when_clause_list case_default END_TRANS
 					w->result = (Node *)n;
 */
 					w->expr = makeA_Expr(OP, "=", $3, $5);
-					c->args = lcons(w, NIL);
+					c->args = makeList1(w);
 					c->defresult = $3;
 					$$ = (Node *)c;
 				}
@@ -5259,7 +5257,7 @@ case_expr:  CASE case_arg when_clause_list case_default END_TRANS
 when_clause_list:  when_clause_list when_clause
 				{ $$ = lappend($1, $2); }
 		| when_clause
-				{ $$ = lcons($1, NIL); }
+				{ $$ = makeList1($1); }
 		;
 
 when_clause:  WHEN a_expr THEN a_expr
@@ -5300,7 +5298,7 @@ attr:  relation_name '.' attrs opt_indirection
 		;
 
 attrs:	  attr_name
-				{ $$ = lcons(makeString($1), NIL); }
+				{ $$ = makeList1(makeString($1)); }
 		| attrs '.' attr_name
 				{ $$ = lappend($1, makeString($3)); }
 		| attrs '.' '*'
@@ -5319,7 +5317,7 @@ attrs:	  attr_name
 target_list:  target_list ',' target_el
 				{	$$ = lappend($1, $3);  }
 		| target_el
-				{	$$ = lcons($1, NIL);  }
+				{	$$ = makeList1($1);  }
 		;
 
 /* AS is not optional because shift/red conflict with unary ops */
@@ -5342,7 +5340,7 @@ target_el:  a_expr AS ColLabel
 					Attr *att = makeNode(Attr);
 					att->relname = $1;
 					att->paramNo = NULL;
-					att->attrs = lcons(makeString("*"), NIL);
+					att->attrs = makeList1(makeString("*"));
 					att->indirection = NIL;
 					$$ = makeNode(ResTarget);
 					$$->name = NULL;
@@ -5368,7 +5366,7 @@ target_el:  a_expr AS ColLabel
 update_target_list:  update_target_list ',' update_target_el
 				{	$$ = lappend($1,$3);  }
 		| update_target_el
-				{	$$ = lcons($1, NIL);  }
+				{	$$ = makeList1($1);  }
 		;
 
 update_target_el:  ColId opt_indirection '=' a_expr

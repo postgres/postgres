@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: view.c,v 1.48 2000/09/12 21:06:47 tgl Exp $
+ *	$Id: view.c,v 1.49 2000/09/29 18:21:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,70 +39,60 @@
 static void
 DefineVirtualRelation(char *relname, List *tlist)
 {
-	CreateStmt	createStmt;
+	CreateStmt *createStmt = makeNode(CreateStmt);
 	List	   *attrList,
 			   *t;
-	TargetEntry *entry;
-	Resdom	   *res;
-	char	   *resname;
-	char	   *restypename;
 
 	/*
-	 * create a list with one entry per attribute of this relation. Each
-	 * entry is a two element list. The first element is the name of the
-	 * attribute (a string) and the second the name of the type (NOTE: a
-	 * string, not a type id!).
+	 * create a list of ColumnDef nodes based on the names and types of
+	 * the (non-junk) targetlist items from the view's SELECT list.
 	 */
 	attrList = NIL;
-	if (tlist != NIL)
+	foreach(t, tlist)
 	{
-		foreach(t, tlist)
+		TargetEntry *entry = lfirst(t);
+		Resdom	   *res = entry->resdom;
+
+		if (! res->resjunk)
 		{
+			char	   *resname = res->resname;
+			char	   *restypename = typeidTypeName(res->restype);
 			ColumnDef  *def = makeNode(ColumnDef);
-			TypeName   *typename;
-
-			/*
-			 * find the names of the attribute & its type
-			 */
-			entry = lfirst(t);
-			res = entry->resdom;
-			resname = res->resname;
-			restypename = typeidTypeName(res->restype);
-
-			typename = makeNode(TypeName);
-
-			typename->name = pstrdup(restypename);
-			typename->typmod = res->restypmod;
+			TypeName   *typename = makeNode(TypeName);
 
 			def->colname = pstrdup(resname);
 
+			typename->name = pstrdup(restypename);
+			typename->typmod = res->restypmod;
 			def->typename = typename;
 
 			def->is_not_null = false;
+			def->is_sequence = false;
 			def->raw_default = NULL;
 			def->cooked_default = NULL;
+			def->constraints = NIL;
 
 			attrList = lappend(attrList, def);
 		}
 	}
-	else
+
+	if (attrList == NIL)
 		elog(ERROR, "attempted to define virtual relation with no attrs");
 
 	/*
-	 * now create the parametesr for keys/inheritance etc. All of them are
+	 * now create the parameters for keys/inheritance etc. All of them are
 	 * nil...
 	 */
-	createStmt.relname = relname;
-	createStmt.istemp = false;
-	createStmt.tableElts = attrList;
-/*	  createStmt.tableType = NULL;*/
-	createStmt.inhRelnames = NIL;
-	createStmt.constraints = NIL;
+	createStmt->relname = relname;
+	createStmt->istemp = false;
+	createStmt->tableElts = attrList;
+	createStmt->inhRelnames = NIL;
+	createStmt->constraints = NIL;
 
 	/*
 	 * finally create the relation...
 	 */
-	DefineRelation(&createStmt, RELKIND_VIEW);
+	DefineRelation(createStmt, RELKIND_VIEW);
 }
 
 /*------------------------------------------------------------------
@@ -149,13 +139,12 @@ FormViewRetrieveRule(char *viewName, Query *viewParse)
 
 	attr = makeNode(Attr);
 	attr->relname = pstrdup(viewName);
-/*	  attr->refname = pstrdup(viewName);*/
 	rule->rulename = pstrdup(rname);
 	rule->whereClause = NULL;
 	rule->event = CMD_SELECT;
 	rule->object = attr;
 	rule->instead = true;
-	rule->actions = lcons(viewParse, NIL);
+	rule->actions = makeList1(viewParse);
 
 	return rule;
 }
@@ -231,6 +220,10 @@ UpdateRangeTableOfViewParse(char *viewName, Query *viewParse)
 	rt_entry2 = addRangeTableEntry(NULL, viewName,
 								   makeAttr("*NEW*", NULL),
 								   false, false);
+	/* Must override addRangeTableEntry's default access-check flags */
+	rt_entry1->checkForRead = false;
+	rt_entry2->checkForRead = false;
+
 	new_rt = lcons(rt_entry1, lcons(rt_entry2, viewParse->rtable));
 
 	/*

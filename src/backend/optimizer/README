@@ -9,23 +9,63 @@ stuff.  /geqo is the separate "genetic optimization" planner --- it does
 a semi-random search through the join tree space, rather than exhaustively
 considering all possible join trees.  (But each join considered by /geqo
 is given to /path to create paths for, so we consider all possible
-implementation paths for each specific join even in GEQO mode.)
+implementation paths for each specific join pair even in GEQO mode.)
+
+
+Paths and Join Pairs
+--------------------
+
+During the planning/optimizing process, we build "Path" trees representing
+the different ways of doing a query.  We select the cheapest Path that
+generates the desired relation and turn it into a Plan to pass to the
+executor.  (There is pretty much a one-to-one correspondence between the
+Path and Plan trees, but Path nodes omit info that won't be needed during
+planning, and include info needed for planning that won't be needed by the
+executor.)
+
+The optimizer builds a RelOptInfo structure for each base relation used in
+the query.  Base rels are either primitive tables, or subquery subselects
+that are planned via a separate recursive invocation of the planner.  A
+RelOptInfo is also built for each join relation that is considered during
+planning.  A join rel is simply a combination of base rels.  There is only
+one join RelOptInfo for any given set of baserels --- for example, the join
+{A B C} is represented by the same RelOptInfo no matter whether we build it
+by joining A and B first and then adding C, or joining B and C first and
+then adding A, etc.  These different means of building the joinrel are
+represented as Paths.  For each RelOptInfo we build a list of Paths that
+represent plausible ways to implement the scan or join of that relation.
+Once we've considered all the plausible Paths for a rel, we select the one
+that is cheapest according to the planner's cost estimates.  The final plan
+is derived from the cheapest Path for the RelOptInfo that includes all the
+base rels of the query.
+
+Possible Paths for a primitive table relation include plain old sequential
+scan, plus index scans for any indexes that exist on the table.  A subquery
+base relation just has one Path, a "SubqueryScan" path (which links to the
+subplan that was built by a recursive invocation of the planner).
+
+Joins always occur using two RelOptInfos.  One is outer, the other inner.
+Outers drive lookups of values in the inner.  In a nested loop, lookups of
+values in the inner occur by scanning the inner path once per outer tuple
+to find each matching inner row.  In a mergejoin, inner and outer rows are
+ordered, and are accessed in order, so only one scan is required to perform
+the entire join: both inner and outer paths are scanned in-sync.  (There's
+not a lot of difference between inner and outer in a mergejoin...)  In a
+hashjoin, the inner is scanned first and all its rows are entered in a
+hashtable, then the outer is scanned and for each row we lookup the join
+key in the hashtable.
+
+A Path for a join relation is actually a tree structure, with the top
+Path node representing the join method.  It has left and right subpaths
+that represent the scan or join methods used for the two input relations.
 
 
 Join Tree Construction
 ----------------------
 
 The optimizer generates optimal query plans by doing a more-or-less
-exhaustive search through the ways of executing the query.  During
-the planning/optimizing process, we build "Path" trees representing
-the different ways of doing a query.  We select the cheapest Path
-that generates the desired relation and turn it into a Plan to pass
-to the executor.  (There is pretty much a one-to-one correspondence
-between the Path and Plan trees, but Path nodes omit info that won't
-be needed during planning, and include info needed for planning that
-won't be needed by the executor.)
-
-The best Path tree is found by a recursive process:
+exhaustive search through the ways of executing the query.  The best Path
+tree is found by a recursive process:
 
 1) Take each base relation in the query, and make a RelOptInfo structure
 for it.  Find each potentially useful way of accessing the relation,
@@ -44,46 +84,40 @@ If we have only a single base relation in the query, we are done now.
 Otherwise we have to figure out how to join the base relations into a
 single join relation.
 
-2) Consider joining each RelOptInfo to each other RelOptInfo specified in
-its RelOptInfo.joininfo, and generate a Path for each possible join method.
-(If we have a RelOptInfo with no join clauses, we have no choice but to
-generate a clauseless Cartesian-product join; so we consider joining that
-rel to each other available rel.  But in the presence of join clauses we
-will only consider joins that use available join clauses.)
+2) If the query's FROM clause contains explicit JOIN clauses, we join
+those pairs of relations in exactly the tree structure indicated by the
+JOIN clauses.  (This is absolutely necessary when dealing with outer JOINs.
+For inner JOINs we have more flexibility in theory, but don't currently
+exploit it in practice.)  For each such join pair, we generate a Path
+for each feasible join method, and select the cheapest Path.  Note that
+the JOIN clause structure determines the join Path structure, but it
+doesn't constrain the join implementation method at each join (nestloop,
+merge, hash), nor does it say which rel is considered outer or inner at
+each join.  We consider all these possibilities in building Paths.
 
-At this stage each input RelOptInfo is a single relation, so we are joining
-every relation to the other relations as joined in the WHERE clause.  We
-generate a new "join" RelOptInfo for each possible combination of two
-"base" RelOptInfos, and put all the plausible paths for that combination
-into the join RelOptInfo's pathlist.  (As before, we keep only the cheapest
-alternative that generates any one sort ordering of the result.)
+3) At the top level of the FROM clause we will have a list of relations
+that are either base rels or joinrels constructed per JOIN directives.
+We can join these rels together in any order the planner sees fit.
+The standard (non-GEQO) planner does this as follows:
 
-Joins always occur using two RelOptInfos.  One is outer, the other inner.
-Outers drive lookups of values in the inner.  In a nested loop, lookups of
-values in the inner occur by scanning the inner path once per outer tuple
-to find each matching inner row.  In a mergejoin, inner and outer rows are
-ordered, and are accessed in order, so only one scan is required to perform
-the entire join: both inner and outer paths are scanned in-sync.  (There's
-not a lot of difference between inner and outer in a mergejoin...)  In a
-hashjoin, the inner is scanned first and all its rows are entered in a
-hashtable, then the outer is scanned and for each row we lookup the join
-key in the hashtable.
+Consider joining each RelOptInfo to each other RelOptInfo specified in its
+RelOptInfo.joininfo, and generate a Path for each possible join method for
+each such pair.  (If we have a RelOptInfo with no join clauses, we have no
+choice but to generate a clauseless Cartesian-product join; so we consider
+joining that rel to each other available rel.  But in the presence of join
+clauses we will only consider joins that use available join clauses.)
 
-A Path for a join relation is actually a tree structure, with the top
-Path node representing the join method.  It has left and right subpaths
-that represent the scan methods used for the two input relations.
-
-3) If we only had two base relations, we are done: we just pick the
-cheapest path for the join RelOptInfo.  If we had more than two, we now
+If we only had two relations in the FROM list, we are done: we just pick
+the cheapest path for the join RelOptInfo.  If we had more than two, we now
 need to consider ways of joining join RelOptInfos to each other to make
-join RelOptInfos that represent more than two base relations.
+join RelOptInfos that represent more than two FROM items.
 
 The join tree is constructed using a "dynamic programming" algorithm:
 in the first pass (already described) we consider ways to create join rels
-representing exactly two base relations.  The second pass considers ways
-to make join rels that represent exactly three base relations; the next pass,
-four relations, etc.  The last pass considers how to make the final join
-relation that includes all base rels --- obviously there can be only one
+representing exactly two FROM items.  The second pass considers ways
+to make join rels that represent exactly three FROM items; the next pass,
+four items, etc.  The last pass considers how to make the final join
+relation that includes all FROM items --- obviously there can be only one
 join rel at this top level, whereas there can be more than one join rel
 at lower levels.  At each level we use joins that follow available join
 clauses, if possible, just as described for the first level.
@@ -114,32 +148,45 @@ For example:
     {1 2 3 4}
 
 We consider left-handed plans (the outer rel of an upper join is a joinrel,
-but the inner is always a base rel); right-handed plans (outer rel is always
-a base rel); and bushy plans (both inner and outer can be joins themselves).
-For example, when building {1 2 3 4} we consider joining {1 2 3} to {4}
-(left-handed), {4} to {1 2 3} (right-handed), and {1 2} to {3 4} (bushy),
-among other choices.  Although the jointree scanning code produces these
-potential join combinations one at a time, all the ways to produce the
-same set of joined base rels will share the same RelOptInfo, so the paths
-produced from different join combinations that produce equivalent joinrels
-will compete in add_path.
+but the inner is always a single FROM item); right-handed plans (outer rel
+is always a single item); and bushy plans (both inner and outer can be
+joins themselves).  For example, when building {1 2 3 4} we consider
+joining {1 2 3} to {4} (left-handed), {4} to {1 2 3} (right-handed), and
+{1 2} to {3 4} (bushy), among other choices.  Although the jointree
+scanning code produces these potential join combinations one at a time,
+all the ways to produce the same set of joined base rels will share the
+same RelOptInfo, so the paths produced from different join combinations
+that produce equivalent joinrels will compete in add_path.
 
 Once we have built the final join rel, we use either the cheapest path
 for it or the cheapest path with the desired ordering (if that's cheaper
 than applying a sort to the cheapest other path).
 
-The above dynamic-programming search is only conducted for simple cross
-joins (ie, SELECT FROM tab1, tab2, ...).  When the FROM clause contains
-explicit JOIN clauses, we join rels in exactly the order implied by the
-join tree.  Searching for the best possible join order is done only at
-the top implicit-cross-join level.  For example, in
-	SELECT FROM tab1, tab2, (tab3 NATURAL JOIN tab4)
-we will always join tab3 to tab4 and then consider all ways to join that
-result to tab1 and tab2.  Note that the JOIN syntax only constrains the
-order of joining --- we will still consider all available Paths and
-join methods for each JOIN operator.  We also consider both sides of
-the JOIN operator as inner or outer (so that we can transform RIGHT JOIN
-into LEFT JOIN).
+
+Pulling up subqueries
+---------------------
+
+As we described above, a subquery appearing in the range table is planned
+independently and treated as a "black box" during planning of the outer
+query.  This is necessary when the subquery uses features such as
+aggregates, GROUP, or DISTINCT.  But if the subquery is just a simple
+scan or join, treating the subquery as a black box may produce a poor plan
+compared to considering it as part of the entire plan search space.
+Therefore, at the start of the planning process the planner looks for
+simple subqueries and pulls them up into the main query's jointree.
+
+Pulling up a subquery may result in FROM-list joins appearing below the top
+of the join tree.  Each FROM-list is planned using the dynamic-programming
+search method described above.
+
+If pulling up a subquery produces a FROM-list as a direct child of another
+FROM-list (with no explicit JOIN directives between), then we can merge the
+two FROM-lists together.  Once that's done, the subquery is an absolutely
+integral part of the outer query and will not constrain the join tree
+search space at all.  However, that could result in unpleasant growth of
+planning time, since the dynamic-programming search has runtime exponential
+in the number of FROM-items considered.  Therefore, we don't merge
+FROM-lists if the result would have too many FROM-items in one list.
 
 
 Optimizer Functions
@@ -151,6 +198,7 @@ planner()
  set up for recursive handling of subqueries
  do final cleanup after planning.
 -subquery_planner()
+ pull up subqueries from rangetable, if possible
  simplify constant expressions
  canonicalize qual
      Attempt to reduce WHERE clause to either CNF or DNF canonical form.
@@ -167,13 +215,14 @@ planner()
   preprocess target list
   handle GROUP BY, HAVING, aggregates, ORDER BY, DISTINCT
 --query_planner()
-   pull out constants from target list
-   get a target list that only contains column names, no expressions
-   if none, then return
+   pull out constant quals, which can be used to gate execution of the
+	whole plan (if any are found, we make a top-level Result node
+	to do the gating)
+   make a simplified target list that only contains Vars, no expressions
 ---subplanner()
     make list of base relations used in query
     split up the qual into restrictions (a=1) and joins (b=c)
-    find relation clauses that can do merge sort and hash joins
+    find qual clauses that enable merge and hash joins
 ----make_one_rel()
      set_base_rel_pathlist()
       find scan and all index paths for each base relation
@@ -188,10 +237,11 @@ planner()
       Back at make_one_rel_by_joins(), apply set_cheapest() to extract the
       cheapest path for each newly constructed joinrel.
       Loop back if this wasn't the top join level.
-   do group(GROUP)
-   do aggregate
-   put back constants
-   re-flatten target list
+   Back at query_planner:
+   put back constant quals and non-simplified target list
+ Back at union_planner:
+ do grouping(GROUP)
+ do aggregates
  make unique(DISTINCT)
  make sort(ORDER BY)
 

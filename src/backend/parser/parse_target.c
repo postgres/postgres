@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_target.c,v 1.62 2000/09/12 21:07:02 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_target.c,v 1.63 2000/09/29 18:21:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -386,7 +386,7 @@ checkInsertTargets(ParseState *pstate, List *cols, List **attrnos)
  * Turns '*' (in the target list) into a list of targetlist entries.
  *
  * tlist entries are generated for each relation appearing in the FROM list,
- * which by now has been expanded into a join tree.
+ * which by now has been transformed into a joinlist.
  */
 static List *
 ExpandAllTables(ParseState *pstate)
@@ -395,10 +395,10 @@ ExpandAllTables(ParseState *pstate)
 	List	   *jt;
 
 	/* SELECT *; */
-	if (pstate->p_jointree == NIL)
+	if (pstate->p_joinlist == NIL)
 		elog(ERROR, "Wildcard with no tables specified not allowed");
 
-	foreach(jt, pstate->p_jointree)
+	foreach(jt, pstate->p_joinlist)
 	{
 		Node	   *n = (Node *) lfirst(jt);
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_agg.c,v 1.41 2000/09/25 18:14:54 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_agg.c,v 1.42 2000/09/29 18:21:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -129,10 +129,13 @@ check_ungrouped_columns_walker(Node *node,
  *	Ideally this should be done earlier, but it's difficult to distinguish
  *	aggregates from plain functions at the grammar level.  So instead we
  *	check here.  This function should be called after the target list and
- *	qualifications are finalized.
+ *	qualifications are finalized.  BUT: in some cases we want to call this
+ *	routine before we've assembled the joinlist and qual into a FromExpr.
+ *	So, rather than looking at qry->jointree, look at pstate->p_joinlist
+ *	and the explicitly-passed qual.
  */
 void
-parseCheckAggregates(ParseState *pstate, Query *qry)
+parseCheckAggregates(ParseState *pstate, Query *qry, Node *qual)
 {
 	List	   *groupClauses = NIL;
 	List	   *tl;
@@ -141,18 +144,16 @@ parseCheckAggregates(ParseState *pstate, Query *qry)
 	Assert(pstate->p_hasAggs || qry->groupClause || qry->havingQual);
 
 	/*
-	 * Aggregates must never appear in WHERE clauses. (Note this check
-	 * should appear first to deliver an appropriate error message;
-	 * otherwise we are likely to complain about some innocent variable in
-	 * the target list, which is outright misleading if the problem is in
-	 * WHERE.)
+	 * Aggregates must never appear in WHERE or JOIN/ON clauses.
+	 *
+	 * (Note this check should appear first to deliver an appropriate error
+	 * message; otherwise we are likely to complain about some innocent
+	 * variable in the target list, which is outright misleading if the
+	 * problem is in WHERE.)
 	 */
-	if (contain_agg_clause(qry->qual))
+	if (contain_agg_clause(qual))
 		elog(ERROR, "Aggregates not allowed in WHERE clause");
-	/*
-	 * ON-conditions in JOIN expressions are like WHERE clauses.
-	 */
-	if (contain_agg_clause((Node *) qry->jointree))
+	if (contain_agg_clause((Node *) pstate->p_joinlist))
 		elog(ERROR, "Aggregates not allowed in JOIN conditions");
 
 	/*

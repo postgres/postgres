@@ -27,7 +27,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.127 2000/09/12 21:06:48 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.128 2000/09/29 18:21:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -69,13 +69,11 @@ static void ExecReplace(TupleTableSlot *slot, ItemPointer tupleid,
 static TupleTableSlot *EvalPlanQualNext(EState *estate);
 static void EndEvalPlanQual(EState *estate);
 static void ExecCheckQueryPerms(CmdType operation, Query *parseTree,
-					Plan *plan);
-static void ExecCheckPlanPerms(Plan *plan, CmdType operation,
-				   int resultRelation, bool resultIsScanned);
-static void ExecCheckRTPerms(List *rangeTable, CmdType operation,
-				 int resultRelation, bool resultIsScanned);
-static void ExecCheckRTEPerms(RangeTblEntry *rte, CmdType operation,
-				  bool isResultRelation, bool resultIsScanned);
+								Plan *plan);
+static void ExecCheckPlanPerms(Plan *plan, List *rangeTable,
+							   CmdType operation);
+static void ExecCheckRTPerms(List *rangeTable, CmdType operation);
+static void ExecCheckRTEPerms(RangeTblEntry *rte, CmdType operation);
 
 /* end of local decls */
 
@@ -390,51 +388,15 @@ ExecutorEnd(QueryDesc *queryDesc, EState *estate)
 static void
 ExecCheckQueryPerms(CmdType operation, Query *parseTree, Plan *plan)
 {
-	List	   *rangeTable = parseTree->rtable;
-	int			resultRelation = parseTree->resultRelation;
-	bool		resultIsScanned = false;
-	List	   *lp;
-
-	/*
-	 * If we have a result relation, determine whether the result rel is
-	 * scanned or merely written.  If scanned, we will insist on read
-	 * permission as well as modify permission.
-	 *
-	 * Note: it might look faster to apply rangeTableEntry_used(), but
-	 * that's not correct since it will trigger on jointree references
-	 * to the RTE.  We only want to know about actual Var nodes.
-	 */
-	if (resultRelation > 0)
-	{
-		List	   *qvars = pull_varnos((Node *) parseTree);
-
-		resultIsScanned = intMember(resultRelation, qvars);
-		freeList(qvars);
-	}
-
 	/*
 	 * Check RTEs in the query's primary rangetable.
 	 */
-	ExecCheckRTPerms(rangeTable, operation, resultRelation, resultIsScanned);
-
-	/*
-	 * Check SELECT FOR UPDATE access rights.
-	 */
-	foreach(lp, parseTree->rowMark)
-	{
-		RowMark    *rm = lfirst(lp);
-
-		if (!(rm->info & ROW_ACL_FOR_UPDATE))
-			continue;
-
-		ExecCheckRTEPerms(rt_fetch(rm->rti, rangeTable),
-						  CMD_UPDATE, true, false);
-	}
+	ExecCheckRTPerms(parseTree->rtable, operation);
 
 	/*
 	 * Search for subplans and APPEND nodes to check their rangetables.
 	 */
-	ExecCheckPlanPerms(plan, operation, resultRelation, resultIsScanned);
+	ExecCheckPlanPerms(plan, parseTree->rtable, operation);
 }
 
 /*
@@ -447,8 +409,7 @@ ExecCheckQueryPerms(CmdType operation, Query *parseTree, Plan *plan)
  * in the query's main rangetable.  But at the moment, they're not.
  */
 static void
-ExecCheckPlanPerms(Plan *plan, CmdType operation,
-				   int resultRelation, bool resultIsScanned)
+ExecCheckPlanPerms(Plan *plan, List *rangeTable, CmdType operation)
 {
 	List	   *subp;
 
@@ -461,28 +422,37 @@ ExecCheckPlanPerms(Plan *plan, CmdType operation,
 	{
 		SubPlan    *subplan = (SubPlan *) lfirst(subp);
 
-		ExecCheckRTPerms(subplan->rtable, CMD_SELECT, 0, false);
-		ExecCheckPlanPerms(subplan->plan, CMD_SELECT, 0, false);
+		ExecCheckRTPerms(subplan->rtable, CMD_SELECT);
+		ExecCheckPlanPerms(subplan->plan, subplan->rtable, CMD_SELECT);
 	}
 	foreach(subp, plan->subPlan)
 	{
 		SubPlan    *subplan = (SubPlan *) lfirst(subp);
 
-		ExecCheckRTPerms(subplan->rtable, CMD_SELECT, 0, false);
-		ExecCheckPlanPerms(subplan->plan, CMD_SELECT, 0, false);
+		ExecCheckRTPerms(subplan->rtable, CMD_SELECT);
+		ExecCheckPlanPerms(subplan->plan, subplan->rtable, CMD_SELECT);
 	}
 
 	/* Check lower plan nodes */
 
-	ExecCheckPlanPerms(plan->lefttree, operation,
-					   resultRelation, resultIsScanned);
-	ExecCheckPlanPerms(plan->righttree, operation,
-					   resultRelation, resultIsScanned);
+	ExecCheckPlanPerms(plan->lefttree, rangeTable, operation);
+	ExecCheckPlanPerms(plan->righttree, rangeTable, operation);
 
 	/* Do node-type-specific checks */
 
 	switch (nodeTag(plan))
 	{
+		case T_SubqueryScan:
+			{
+				SubqueryScan   *scan = (SubqueryScan *) plan;
+				RangeTblEntry *rte;
+
+				/* Recursively check the subquery */
+				rte = rt_fetch(scan->scan.scanrelid, rangeTable);
+				Assert(rte->subquery != NULL);
+				ExecCheckQueryPerms(operation, rte->subquery, scan->subplan);
+				break;
+			}
 		case T_Append:
 			{
 				Append	   *app = (Append *) plan;
@@ -490,42 +460,30 @@ ExecCheckPlanPerms(Plan *plan, CmdType operation,
 
 				if (app->inheritrelid > 0)
 				{
+					/* Append implements expansion of inheritance */
+					ExecCheckRTPerms(app->inheritrtable, operation);
 
-					/*
-					 * Append implements expansion of inheritance; all
-					 * members of inheritrtable list will be plugged into
-					 * same RTE slot. Therefore, they are either all
-					 * result relations or none.
-					 */
-					List	   *rtable;
-
-					foreach(rtable, app->inheritrtable)
+					/* Check appended plans w/outer rangetable */
+					foreach(appendplans, app->appendplans)
 					{
-						ExecCheckRTEPerms((RangeTblEntry *) lfirst(rtable),
-										  operation,
-								   (app->inheritrelid == resultRelation),
-										  resultIsScanned);
+						ExecCheckPlanPerms((Plan *) lfirst(appendplans),
+										   rangeTable,
+										   operation);
 					}
 				}
 				else
 				{
 					/* Append implements UNION, which must be a SELECT */
-					List	   *rtables;
+					List	   *rtables = app->unionrtables;
 
-					foreach(rtables, app->unionrtables)
+					/* Check appended plans with their rangetables */
+					foreach(appendplans, app->appendplans)
 					{
-						ExecCheckRTPerms((List *) lfirst(rtables),
-										 CMD_SELECT, 0, false);
+						ExecCheckPlanPerms((Plan *) lfirst(appendplans),
+										   (List *) lfirst(rtables),
+										   CMD_SELECT);
+						rtables = lnext(rtables);
 					}
-				}
-
-				/* Check appended plans */
-				foreach(appendplans, app->appendplans)
-				{
-					ExecCheckPlanPerms((Plan *) lfirst(appendplans),
-									   operation,
-									   resultRelation,
-									   resultIsScanned);
 				}
 				break;
 			}
@@ -538,28 +496,17 @@ ExecCheckPlanPerms(Plan *plan, CmdType operation,
 /*
  * ExecCheckRTPerms
  *		Check access permissions for all relations listed in a range table.
- *
- * If resultRelation is not 0, it is the RT index of the relation to be
- * treated as the result relation.	All other relations are assumed to be
- * read-only for the query.
  */
 static void
-ExecCheckRTPerms(List *rangeTable, CmdType operation,
-				 int resultRelation, bool resultIsScanned)
+ExecCheckRTPerms(List *rangeTable, CmdType operation)
 {
-	int			rtindex = 0;
 	List	   *lp;
 
 	foreach(lp, rangeTable)
 	{
 		RangeTblEntry *rte = lfirst(lp);
 
-		++rtindex;
-
-		ExecCheckRTEPerms(rte,
-						  operation,
-						  (rtindex == resultRelation),
-						  resultIsScanned);
+		ExecCheckRTEPerms(rte, operation);
 	}
 }
 
@@ -568,45 +515,48 @@ ExecCheckRTPerms(List *rangeTable, CmdType operation,
  *		Check access permissions for a single RTE.
  */
 static void
-ExecCheckRTEPerms(RangeTblEntry *rte, CmdType operation,
-				  bool isResultRelation, bool resultIsScanned)
+ExecCheckRTEPerms(RangeTblEntry *rte, CmdType operation)
 {
 	char	   *relName;
 	Oid			userid;
 	int32		aclcheck_result;
 
-	if (rte->skipAcl)
-	{
-
-		/*
-		 * This happens if the access to this table is due to a view query
-		 * rewriting - the rewrite handler already checked the permissions
-		 * against the view owner, so we just skip this entry.
-		 */
+	/*
+	 * If it's a subquery RTE, ignore it --- it will be checked when
+	 * ExecCheckPlanPerms finds the SubqueryScan node for it.
+	 */
+	if (rte->subquery)
 		return;
-	}
 
 	relName = rte->relname;
 
 	/*
+	 * userid to check as: current user unless we have a setuid indication.
+	 *
 	 * Note: GetUserId() is presently fast enough that there's no harm
 	 * in calling it separately for each RTE.  If that stops being true,
 	 * we could call it once in ExecCheckQueryPerms and pass the userid
 	 * down from there.  But for now, no need for the extra clutter.
 	 */
-	userid = GetUserId();
+	userid = rte->checkAsUser ? rte->checkAsUser : GetUserId();
 
 #define CHECK(MODE)		pg_aclcheck(relName, userid, MODE)
 
-	if (isResultRelation)
+	if (rte->checkForRead)
 	{
-		if (resultIsScanned)
-		{
-			aclcheck_result = CHECK(ACL_RD);
-			if (aclcheck_result != ACLCHECK_OK)
-				elog(ERROR, "%s: %s",
-					 relName, aclcheck_error_strings[aclcheck_result]);
-		}
+		aclcheck_result = CHECK(ACL_RD);
+		if (aclcheck_result != ACLCHECK_OK)
+			elog(ERROR, "%s: %s",
+				 relName, aclcheck_error_strings[aclcheck_result]);
+	}
+
+	if (rte->checkForWrite)
+	{
+		/*
+		 * Note: write access in a SELECT context means SELECT FOR UPDATE.
+		 * Right now we don't distinguish that from true update as far as
+		 * permissions checks are concerned.
+		 */
 		switch (operation)
 		{
 			case CMD_INSERT:
@@ -615,6 +565,7 @@ ExecCheckRTEPerms(RangeTblEntry *rte, CmdType operation,
 				if (aclcheck_result != ACLCHECK_OK)
 					aclcheck_result = CHECK(ACL_WR);
 				break;
+			case CMD_SELECT:
 			case CMD_DELETE:
 			case CMD_UPDATE:
 				aclcheck_result = CHECK(ACL_WR);
@@ -625,13 +576,10 @@ ExecCheckRTEPerms(RangeTblEntry *rte, CmdType operation,
 				aclcheck_result = ACLCHECK_OK;	/* keep compiler quiet */
 				break;
 		}
+		if (aclcheck_result != ACLCHECK_OK)
+			elog(ERROR, "%s: %s",
+				 relName, aclcheck_error_strings[aclcheck_result]);
 	}
-	else
-		aclcheck_result = CHECK(ACL_RD);
-
-	if (aclcheck_result != ACLCHECK_OK)
-		elog(ERROR, "%s: %s",
-			 relName, aclcheck_error_strings[aclcheck_result]);
 }
 
 
@@ -755,26 +703,23 @@ InitPlan(CmdType operation, Query *parseTree, Plan *plan, EState *estate)
 	/*
 	 * Have to lock relations selected for update
 	 */
-	estate->es_rowMark = NULL;
-	if (parseTree->rowMark != NULL)
+	estate->es_rowMark = NIL;
+	if (parseTree->rowMarks != NIL)
 	{
 		List	   *l;
 
-		foreach(l, parseTree->rowMark)
+		foreach(l, parseTree->rowMarks)
 		{
-			RowMark    *rm = lfirst(l);
-			Oid			relid;
+			Index		rti = lfirsti(l);
+			Oid			relid = getrelid(rti, rangeTable);
 			Relation	relation;
 			execRowMark *erm;
 
-			if (!(rm->info & ROW_MARK_FOR_UPDATE))
-				continue;
-			relid = getrelid(rm->rti, rangeTable);
 			relation = heap_open(relid, RowShareLock);
 			erm = (execRowMark *) palloc(sizeof(execRowMark));
 			erm->relation = relation;
-			erm->rti = rm->rti;
-			sprintf(erm->resname, "ctid%u", rm->rti);
+			erm->rti = rti;
+			sprintf(erm->resname, "ctid%u", rti);
 			estate->es_rowMark = lappend(estate->es_rowMark, erm);
 		}
 	}
@@ -1097,7 +1042,7 @@ lnext:	;
 										 * ctid!! */
 				tupleid = &tuple_ctid;
 			}
-			else if (estate->es_rowMark != NULL)
+			else if (estate->es_rowMark != NIL)
 			{
 				List	   *l;
 
@@ -1115,10 +1060,12 @@ lnext:	;
 											  erm->resname,
 											  &datum,
 											  &isNull))
-						elog(ERROR, "ExecutePlan: NO (junk) `%s' was found!", erm->resname);
+						elog(ERROR, "ExecutePlan: NO (junk) `%s' was found!",
+							 erm->resname);
 
 					if (isNull)
-						elog(ERROR, "ExecutePlan: (junk) `%s' is NULL!", erm->resname);
+						elog(ERROR, "ExecutePlan: (junk) `%s' is NULL!",
+							 erm->resname);
 
 					tuple.t_self = *((ItemPointer) DatumGetPointer(datum));
 					test = heap_mark4update(erm->relation, &tuple, &buffer);
@@ -1625,10 +1572,10 @@ ExecRelCheck(Relation rel, TupleTableSlot *slot, EState *estate)
 		rte->relid = RelationGetRelid(rel);
 		rte->eref = makeNode(Attr);
 		rte->eref->relname = rte->relname;
-		/* inh, inFromCl, skipAcl won't be used, leave them zero */
+		/* other fields won't be used, leave them zero */
 
 		/* Set up single-entry range table */
-		econtext->ecxt_range_table = lcons(rte, NIL);
+		econtext->ecxt_range_table = makeList1(rte);
 
 		estate->es_result_relation_constraints =
 			(List **) palloc(ncheck * sizeof(List *));

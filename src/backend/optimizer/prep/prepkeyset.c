@@ -85,19 +85,14 @@ transformKeySetQuery(Query *origNode)
 	/*************************/
 	/* Qualify where clause */
 	/*************************/
-	if (!inspectOrNode((Expr *) origNode->qual) || TotalExpr < 9)
+	if (!inspectOrNode((Expr *) origNode->jointree->quals) || TotalExpr < 9)
 		return;
 
 	/* Copy essential elements into a union node */
-	while (((Expr *) origNode->qual)->opType == OR_EXPR)
+	while (((Expr *) origNode->jointree->quals)->opType == OR_EXPR)
 	{
 		Query	   *unionNode = makeNode(Query);
-
-		/* Pull up Expr =  */
-		unionNode->qual = lsecond(((Expr *) origNode->qual)->args);
-
-		/* Pull up balance of tree	*/
-		origNode->qual = lfirst(((Expr *) origNode->qual)->args);
+		List	   *qualargs = ((Expr *) origNode->jointree->quals)->args;
 
 		unionNode->commandType = origNode->commandType;
 		unionNode->resultRelation = origNode->resultRelation;
@@ -107,8 +102,15 @@ transformKeySetQuery(Query *origNode)
 		Node_Copy(origNode, unionNode, distinctClause);
 		Node_Copy(origNode, unionNode, sortClause);
 		Node_Copy(origNode, unionNode, rtable);
+		origNode->jointree->quals = NULL; /* avoid unnecessary copying */
 		Node_Copy(origNode, unionNode, jointree);
 		Node_Copy(origNode, unionNode, targetList);
+
+		/* Pull up Expr =  */
+		unionNode->jointree->quals = lsecond(qualargs);
+
+		/* Pull up balance of tree	*/
+		origNode->jointree->quals = lfirst(qualargs);
 
 		origNode->unionClause = lappend(origNode->unionClause, unionNode);
 	}

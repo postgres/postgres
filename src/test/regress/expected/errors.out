@@ -221,7 +221,7 @@ drop rule 314159;
 ERROR:  parser: parse error at or near "314159"
 -- no such rule 
 drop rule nonesuch;
-ERROR:  Rule or view 'nonesuch' not found
+ERROR:  Rule or view "nonesuch" not found
 -- bad keyword 
 drop tuple rule nonesuch;
 ERROR:  parser: parse error at or near "tuple"

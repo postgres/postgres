@@ -3,7 +3,7 @@
  *				back to source text
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.63 2000/09/25 18:14:54 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.64 2000/09/29 18:21:37 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -714,7 +714,7 @@ make_ruledef(StringInfo buf, HeapTuple ruletup, TupleDesc rulettc)
 		query = (Query *) lfirst(actions);
 
 		context.buf = buf;
-		context.rangetables = lcons(query->rtable, NIL);
+		context.rangetables = makeList1(query->rtable);
 		context.varprefix = (length(query->rtable) != 1);
 
 		get_rule_expr(qual, &context);
@@ -892,6 +892,9 @@ get_select_query_def(Query *query, deparse_context *context)
 		TargetEntry *tle = (TargetEntry *) lfirst(l);
 		bool		tell_as = false;
 
+		if (tle->resdom->resjunk)
+			continue;			/* ignore junk entries */
+
 		appendStringInfo(buf, sep);
 		sep = ", ";
 
@@ -922,10 +925,10 @@ get_select_query_def(Query *query, deparse_context *context)
 	get_from_clause(query, context);
 
 	/* Add the WHERE clause if given */
-	if (query->qual != NULL)
+	if (query->jointree->quals != NULL)
 	{
 		appendStringInfo(buf, " WHERE ");
-		get_rule_expr(query->qual, context);
+		get_rule_expr(query->jointree->quals, context);
 	}
 
 	/* Add the GROUP BY CLAUSE */
@@ -999,6 +1002,9 @@ get_insert_query_def(Query *query, deparse_context *context)
 	{
 		TargetEntry *tle = (TargetEntry *) lfirst(l);
 
+		if (tle->resdom->resjunk)
+			continue;			/* ignore junk entries */
+
 		appendStringInfo(buf, sep);
 		sep = ", ";
 		appendStringInfo(buf, "%s", quote_identifier(tle->resdom->resname));
@@ -1006,13 +1012,16 @@ get_insert_query_def(Query *query, deparse_context *context)
 	appendStringInfo(buf, ") ");
 
 	/* Add the VALUES or the SELECT */
-	if (rt_constonly && query->qual == NULL)
+	if (rt_constonly && query->jointree->quals == NULL)
 	{
 		appendStringInfo(buf, "VALUES (");
 		sep = "";
 		foreach(l, query->targetList)
 		{
 			TargetEntry *tle = (TargetEntry *) lfirst(l);
+
+			if (tle->resdom->resjunk)
+				continue;		/* ignore junk entries */
 
 			appendStringInfo(buf, sep);
 			sep = ", ";
@@ -1034,7 +1043,6 @@ get_update_query_def(Query *query, deparse_context *context)
 {
 	StringInfo	buf = context->buf;
 	char	   *sep;
-	TargetEntry *tle;
 	RangeTblEntry *rte;
 	List	   *l;
 
@@ -1051,7 +1059,10 @@ get_update_query_def(Query *query, deparse_context *context)
 	sep = "";
 	foreach(l, query->targetList)
 	{
-		tle = (TargetEntry *) lfirst(l);
+		TargetEntry *tle = (TargetEntry *) lfirst(l);
+
+		if (tle->resdom->resjunk)
+			continue;			/* ignore junk entries */
 
 		appendStringInfo(buf, sep);
 		sep = ", ";
@@ -1070,10 +1081,10 @@ get_update_query_def(Query *query, deparse_context *context)
 	get_from_clause(query, context);
 
 	/* Finally add a WHERE clause if given */
-	if (query->qual != NULL)
+	if (query->jointree->quals != NULL)
 	{
 		appendStringInfo(buf, " WHERE ");
-		get_rule_expr(query->qual, context);
+		get_rule_expr(query->jointree->quals, context);
 	}
 }
 
@@ -1098,10 +1109,10 @@ get_delete_query_def(Query *query, deparse_context *context)
 					 quote_identifier(rte->relname));
 
 	/* Add a WHERE clause if given */
-	if (query->qual != NULL)
+	if (query->jointree->quals != NULL)
 	{
 		appendStringInfo(buf, " WHERE ");
-		get_rule_expr(query->qual, context);
+		get_rule_expr(query->jointree->quals, context);
 	}
 }
 
@@ -1747,11 +1758,13 @@ get_from_clause(Query *query, deparse_context *context)
 	/*
 	 * We use the query's jointree as a guide to what to print.  However,
 	 * we must ignore auto-added RTEs that are marked not inFromCl.
+	 * (These can only appear at the top level of the jointree, so it's
+	 * sufficient to check here.)
 	 * Also ignore the rule pseudo-RTEs for NEW and OLD.
 	 */
 	sep = " FROM ";
 
-	foreach(l, query->jointree)
+	foreach(l, query->jointree->fromlist)
 	{
 		Node   *jtnode = (Node *) lfirst(l);
 
@@ -1784,9 +1797,21 @@ get_from_clause_item(Node *jtnode, Query *query, deparse_context *context)
 		int			varno = ((RangeTblRef *) jtnode)->rtindex;
 		RangeTblEntry *rte = rt_fetch(varno, query->rtable);
 
-		appendStringInfo(buf, "%s%s",
-						 only_marker(rte),
-						 quote_identifier(rte->relname));
+		if (rte->relname)
+		{
+			/* Normal relation RTE */
+			appendStringInfo(buf, "%s%s",
+							 only_marker(rte),
+							 quote_identifier(rte->relname));
+		}
+		else
+		{
+			/* Subquery RTE */
+			Assert(rte->subquery != NULL);
+			appendStringInfoChar(buf, '(');
+			get_query_def(rte->subquery, buf, NIL);
+			appendStringInfoChar(buf, ')');
+		}
 		if (rte->alias != NULL)
 		{
 			appendStringInfo(buf, " %s",

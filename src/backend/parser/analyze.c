@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: analyze.c,v 1.158 2000/09/25 12:58:46 momjian Exp $
+ *	$Id: analyze.c,v 1.159 2000/09/29 18:21:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -56,6 +56,7 @@ static void transformColumnType(ParseState *pstate, ColumnDef *column);
 static void transformFkeyCheckAttrs(FkConstraint *fkconstraint);
 
 static void release_pstate_resources(ParseState *pstate);
+static FromExpr *makeFromExpr(List *fromlist, Node *quals);
 
 /* kluge to return extra info from transformCreateStmt() */
 static List *extras_before;
@@ -289,6 +290,7 @@ static Query *
 transformDeleteStmt(ParseState *pstate, DeleteStmt *stmt)
 {
 	Query	   *qry = makeNode(Query);
+	Node	   *qual;
 
 	qry->commandType = CMD_DELETE;
 
@@ -299,17 +301,17 @@ transformDeleteStmt(ParseState *pstate, DeleteStmt *stmt)
 	qry->distinctClause = NIL;
 
 	/* fix where clause */
-	qry->qual = transformWhereClause(pstate, stmt->whereClause);
+	qual = transformWhereClause(pstate, stmt->whereClause);
 
-	/* done building the rtable */
+	/* done building the range table and jointree */
 	qry->rtable = pstate->p_rtable;
-	qry->jointree = pstate->p_jointree;
+	qry->jointree = makeFromExpr(pstate->p_joinlist, qual);
 	qry->resultRelation = refnameRangeTablePosn(pstate, stmt->relname, NULL);
 
 	qry->hasSubLinks = pstate->p_hasSubLinks;
 	qry->hasAggs = pstate->p_hasAggs;
 	if (pstate->p_hasAggs)
-		parseCheckAggregates(pstate, qry);
+		parseCheckAggregates(pstate, qry, qual);
 
 	return (Query *) qry;
 }
@@ -322,6 +324,7 @@ static Query *
 transformInsertStmt(ParseState *pstate, InsertStmt *stmt)
 {
 	Query	   *qry = makeNode(Query);
+	Node	   *qual;
 	List	   *icolumns;
 	List	   *attrnos;
 	List	   *attnos;
@@ -348,7 +351,7 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt)
 
 	qry->targetList = transformTargetList(pstate, stmt->targetList);
 
-	qry->qual = transformWhereClause(pstate, stmt->whereClause);
+	qual = transformWhereClause(pstate, stmt->whereClause);
 
 	/*
 	 * Initial processing of HAVING clause is just like WHERE clause.
@@ -371,7 +374,7 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt)
 	qry->hasSubLinks = pstate->p_hasSubLinks;
 	qry->hasAggs = pstate->p_hasAggs;
 	if (pstate->p_hasAggs || qry->groupClause || qry->havingQual)
-		parseCheckAggregates(pstate, qry);
+		parseCheckAggregates(pstate, qry, qual);
 
 	/*
 	 * The INSERT INTO ... SELECT ... could have a UNION in child, so
@@ -393,13 +396,13 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt)
 	 * In particular, it's time to add the INSERT target to the rangetable.
 	 * (We didn't want it there until now since it shouldn't be visible in
 	 * the SELECT part.)  Note that the INSERT target is NOT added to the
-	 * join tree, since we don't want to join over it.
+	 * joinlist, since we don't want to join over it.
 	 */
 	setTargetTable(pstate, stmt->relname, false, false);
 
-	/* now the range table will not change */
+	/* now the range table and jointree will not change */
 	qry->rtable = pstate->p_rtable;
-	qry->jointree = pstate->p_jointree;
+	qry->jointree = makeFromExpr(pstate->p_joinlist, qual);
 	qry->resultRelation = refnameRangeTablePosn(pstate, stmt->relname, NULL);
 
 	/* Prepare to assign non-conflicting resnos to resjunk attributes */
@@ -715,7 +718,7 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 					snamenode->val.val.str = qstring;
 					funccallnode = makeNode(FuncCall);
 					funccallnode->funcname = "nextval";
-					funccallnode->args = lcons(snamenode, NIL);
+					funccallnode->args = makeList1(snamenode);
 					funccallnode->agg_star = false;
 					funccallnode->agg_distinct = false;
 
@@ -748,7 +751,7 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 					elog(NOTICE, "CREATE TABLE will create implicit sequence '%s' for SERIAL column '%s.%s'",
 					  sequence->seqname, stmt->relname, column->colname);
 
-					blist = lcons(sequence, NIL);
+					blist = makeList1(sequence);
 				}
 
 				/* Process column constraints, if any... */
@@ -776,7 +779,7 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 						id->isRel = false;
 
 						fkconstraint = (FkConstraint *) constraint;
-						fkconstraint->fk_attrs = lappend(NIL, id);
+						fkconstraint->fk_attrs = makeList1(id);
 
 						fkconstraints = lappend(fkconstraints, constraint);
 						continue;
@@ -815,7 +818,7 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 							{
 								key = makeNode(Ident);
 								key->name = pstrdup(column->colname);
-								constraint->keys = lcons(key, NIL);
+								constraint->keys = makeList1(key);
 							}
 							dlist = lappend(dlist, constraint);
 							break;
@@ -827,7 +830,7 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 							{
 								key = makeNode(Ident);
 								key->name = pstrdup(column->colname);
-								constraint->keys = lcons(key, NIL);
+								constraint->keys = makeList1(key);
 							}
 							dlist = lappend(dlist, constraint);
 							break;
@@ -1453,8 +1456,11 @@ transformRuleStmt(ParseState *pstate, RuleStmt *stmt)
 	newrte = addRangeTableEntry(pstate, stmt->object->relname,
 								makeAttr("*NEW*", NULL),
 								false, true);
+	/* Must override addRangeTableEntry's default access-check flags */
+	oldrte->checkForRead = false;
+	newrte->checkForRead = false;
 	/*
-	 * They must be in the jointree too for lookup purposes, but only add
+	 * They must be in the joinlist too for lookup purposes, but only add
 	 * the one(s) that are relevant for the current kind of rule.  In an
 	 * UPDATE rule, quals must refer to OLD.field or NEW.field to be
 	 * unambiguous, but there's no need to be so picky for INSERT & DELETE.
@@ -1464,17 +1470,17 @@ transformRuleStmt(ParseState *pstate, RuleStmt *stmt)
 	switch (stmt->event)
 	{
 		case CMD_SELECT:
-			addRTEtoJoinTree(pstate, oldrte);
+			addRTEtoJoinList(pstate, oldrte);
 			break;
 		case CMD_UPDATE:
-			addRTEtoJoinTree(pstate, oldrte);
-			addRTEtoJoinTree(pstate, newrte);
+			addRTEtoJoinList(pstate, oldrte);
+			addRTEtoJoinList(pstate, newrte);
 			break;
 		case CMD_INSERT:
-			addRTEtoJoinTree(pstate, newrte);
+			addRTEtoJoinList(pstate, newrte);
 			break;
 		case CMD_DELETE:
-			addRTEtoJoinTree(pstate, oldrte);
+			addRTEtoJoinList(pstate, oldrte);
 			break;
 		default:
 			elog(ERROR, "transformRuleStmt: unexpected event type %d",
@@ -1504,9 +1510,9 @@ transformRuleStmt(ParseState *pstate, RuleStmt *stmt)
 
 		nothing_qry->commandType = CMD_NOTHING;
 		nothing_qry->rtable = pstate->p_rtable;
-		nothing_qry->jointree = NIL; /* no join actually wanted */
+		nothing_qry->jointree = makeFromExpr(NIL, NULL); /* no join wanted */
 
-		stmt->actions = lappend(NIL, nothing_qry);
+		stmt->actions = makeList1(nothing_qry);
 	}
 	else
 	{
@@ -1526,7 +1532,7 @@ transformRuleStmt(ParseState *pstate, RuleStmt *stmt)
 			 * Set up OLD/NEW in the rtable for this statement.  The entries
 			 * are marked not inFromCl because we don't want them to be
 			 * referred to by unqualified field names nor "*" in the rule
-			 * actions.  We don't need to add them to the jointree for
+			 * actions.  We don't need to add them to the joinlist for
 			 * qualified-name lookup, either (see qualifiedNameToVar()).
 			 */
 			oldrte = addRangeTableEntry(sub_pstate, stmt->object->relname,
@@ -1535,6 +1541,8 @@ transformRuleStmt(ParseState *pstate, RuleStmt *stmt)
 			newrte = addRangeTableEntry(sub_pstate, stmt->object->relname,
 										makeAttr("*NEW*", NULL),
 										false, false);
+			oldrte->checkForRead = false;
+			newrte->checkForRead = false;
 
 			/* Transform the rule action statement */
 			sub_qry = transformStmt(sub_pstate, lfirst(actions));
@@ -1581,8 +1589,8 @@ transformRuleStmt(ParseState *pstate, RuleStmt *stmt)
 			 */
 			if (has_old)
 			{
-				addRTEtoJoinTree(sub_pstate, oldrte);
-				sub_qry->jointree = sub_pstate->p_jointree;
+				addRTEtoJoinList(sub_pstate, oldrte);
+				sub_qry->jointree->fromlist = sub_pstate->p_joinlist;
 			}
 
 			lfirst(actions) = sub_qry;
@@ -1605,6 +1613,7 @@ static Query *
 transformSelectStmt(ParseState *pstate, SelectStmt *stmt)
 {
 	Query	   *qry = makeNode(Query);
+	Node	   *qual;
 
 	qry->commandType = CMD_SELECT;
 
@@ -1617,7 +1626,7 @@ transformSelectStmt(ParseState *pstate, SelectStmt *stmt)
 
 	qry->targetList = transformTargetList(pstate, stmt->targetList);
 
-	qry->qual = transformWhereClause(pstate, stmt->whereClause);
+	qual = transformWhereClause(pstate, stmt->whereClause);
 
 	/*
 	 * Initial processing of HAVING clause is just like WHERE clause.
@@ -1641,7 +1650,7 @@ transformSelectStmt(ParseState *pstate, SelectStmt *stmt)
 	qry->hasSubLinks = pstate->p_hasSubLinks;
 	qry->hasAggs = pstate->p_hasAggs;
 	if (pstate->p_hasAggs || qry->groupClause || qry->havingQual)
-		parseCheckAggregates(pstate, qry);
+		parseCheckAggregates(pstate, qry, qual);
 
 	/*
 	 * The INSERT INTO ... SELECT ... could have a UNION in child, so
@@ -1657,7 +1666,7 @@ transformSelectStmt(ParseState *pstate, SelectStmt *stmt)
 	qry->intersectClause = stmt->intersectClause;
 
 	qry->rtable = pstate->p_rtable;
-	qry->jointree = pstate->p_jointree;
+	qry->jointree = makeFromExpr(pstate->p_joinlist, qual);
 
 	if (stmt->forUpdate != NULL)
 		transformForUpdate(qry, stmt->forUpdate);
@@ -1674,6 +1683,7 @@ static Query *
 transformUpdateStmt(ParseState *pstate, UpdateStmt *stmt)
 {
 	Query	   *qry = makeNode(Query);
+	Node	   *qual;
 	List	   *origTargetList;
 	List	   *tl;
 
@@ -1683,22 +1693,27 @@ transformUpdateStmt(ParseState *pstate, UpdateStmt *stmt)
 	/*
 	 * the FROM clause is non-standard SQL syntax. We used to be able to
 	 * do this with REPLACE in POSTQUEL so we keep the feature.
+	 *
+	 * Note: it's critical here that we process FROM before adding the
+	 * target table to the rtable --- otherwise, if the target is also
+	 * used in FROM, we'd fail to notice that it should be marked
+	 * checkForRead as well as checkForWrite.  See setTargetTable().
 	 */
 	makeRangeTable(pstate, stmt->fromClause);
 	setTargetTable(pstate, stmt->relname, stmt->inh, true);
 
 	qry->targetList = transformTargetList(pstate, stmt->targetList);
 
-	qry->qual = transformWhereClause(pstate, stmt->whereClause);
+	qual = transformWhereClause(pstate, stmt->whereClause);
 
 	qry->rtable = pstate->p_rtable;
-	qry->jointree = pstate->p_jointree;
+	qry->jointree = makeFromExpr(pstate->p_joinlist, qual);
 	qry->resultRelation = refnameRangeTablePosn(pstate, stmt->relname, NULL);
 
 	qry->hasSubLinks = pstate->p_hasSubLinks;
 	qry->hasAggs = pstate->p_hasAggs;
 	if (pstate->p_hasAggs)
-		parseCheckAggregates(pstate, qry);
+		parseCheckAggregates(pstate, qry, qual);
 
 	/*
 	 * Now we are done with SELECT-like processing, and can get on with
@@ -2083,7 +2098,7 @@ A_Expr_to_Expr(Node *ptr, bool *intersect_present)
 
 							expr->typeOid = BOOLOID;
 							expr->opType = OR_EXPR;
-							expr->args = makeList(lexpr, rexpr, -1);
+							expr->args = makeList2(lexpr, rexpr);
 							result = (Node *) expr;
 							break;
 						}
@@ -2095,7 +2110,7 @@ A_Expr_to_Expr(Node *ptr, bool *intersect_present)
 
 							expr->typeOid = BOOLOID;
 							expr->opType = AND_EXPR;
-							expr->args = makeList(lexpr, rexpr, -1);
+							expr->args = makeList2(lexpr, rexpr);
 							result = (Node *) expr;
 							break;
 						}
@@ -2106,7 +2121,7 @@ A_Expr_to_Expr(Node *ptr, bool *intersect_present)
 
 							expr->typeOid = BOOLOID;
 							expr->opType = NOT_EXPR;
-							expr->args = makeList(rexpr, -1);
+							expr->args = makeList1(rexpr);
 							result = (Node *) expr;
 							break;
 						}
@@ -2122,7 +2137,7 @@ A_Expr_to_Expr(Node *ptr, bool *intersect_present)
 void
 CheckSelectForUpdate(Query *qry)
 {
-	if (qry->unionClause != NULL)
+	if (qry->unionClause || qry->intersectClause)
 		elog(ERROR, "SELECT FOR UPDATE is not allowed with UNION/INTERSECT/EXCEPT clause");
 	if (qry->distinctClause != NIL)
 		elog(ERROR, "SELECT FOR UPDATE is not allowed with DISTINCT clause");
@@ -2135,61 +2150,70 @@ CheckSelectForUpdate(Query *qry)
 static void
 transformForUpdate(Query *qry, List *forUpdate)
 {
-	List	   *rowMark = NULL;
-	RowMark    *newrm;
+	List	   *rowMarks = NIL;
 	List	   *l;
+	List	   *rt;
 	Index		i;
 
 	CheckSelectForUpdate(qry);
 
-	if (lfirst(forUpdate) == NULL)		/* all tables */
+	if (lfirst(forUpdate) == NULL)
 	{
-		i = 1;
-		foreach(l, qry->rtable)
+		/* all tables used in query */
+		i = 0;
+		foreach(rt, qry->rtable)
 		{
-			newrm = makeNode(RowMark);
-			newrm->rti = i++;
-			newrm->info = ROW_MARK_FOR_UPDATE | ROW_ACL_FOR_UPDATE;
-			rowMark = lappend(rowMark, newrm);
-		}
-		qry->rowMark = nconc(qry->rowMark, rowMark);
-		return;
-	}
+			RangeTblEntry *rte = (RangeTblEntry *) lfirst(rt);
 
-	foreach(l, forUpdate)
-	{
-		char	   *relname = lfirst(l);
-		List	   *l2;
-
-		i = 1;
-		foreach(l2, qry->rtable)
-		{
-			if (strcmp(((RangeTblEntry *) lfirst(l2))->eref->relname, relname) == 0)
+			++i;
+			if (rte->subquery)
 			{
-				List	   *l3;
-
-				foreach(l3, rowMark)
-				{
-					if (((RowMark *) lfirst(l3))->rti == i)		/* duplicate */
-						break;
-				}
-				if (l3 == NULL)
-				{
-					newrm = makeNode(RowMark);
-					newrm->rti = i;
-					newrm->info = ROW_MARK_FOR_UPDATE | ROW_ACL_FOR_UPDATE;
-					rowMark = lappend(rowMark, newrm);
-				}
-				break;
+				/* FOR UPDATE of subquery is propagated to subquery's rels */
+				transformForUpdate(rte->subquery, makeList1(NULL));
 			}
-			i++;
+			else
+			{
+				rowMarks = lappendi(rowMarks, i);
+				rte->checkForWrite = true;
+			}
 		}
-		if (l2 == NULL)
-			elog(ERROR, "FOR UPDATE: relation \"%s\" not found in FROM clause",
-				 relname);
+	}
+	else
+	{
+		/* just the named tables */
+		foreach(l, forUpdate)
+		{
+			char	   *relname = lfirst(l);
+
+			i = 0;
+			foreach(rt, qry->rtable)
+			{
+				RangeTblEntry *rte = (RangeTblEntry *) lfirst(rt);
+
+				++i;
+				if (strcmp(rte->eref->relname, relname) == 0)
+				{
+					if (rte->subquery)
+					{
+						/* propagate to subquery */
+						transformForUpdate(rte->subquery, makeList1(NULL));
+					}
+					else
+					{
+						if (!intMember(i, rowMarks)) /* avoid duplicates */
+							rowMarks = lappendi(rowMarks, i);
+						rte->checkForWrite = true;
+					}
+					break;
+				}
+			}
+			if (rt == NIL)
+				elog(ERROR, "FOR UPDATE: relation \"%s\" not found in FROM clause",
+					 relname);
+		}
 	}
 
-	qry->rowMark = rowMark;
+	qry->rowMarks = rowMarks;
 }
 
 
@@ -2450,6 +2474,17 @@ transformConstraintAttrs(List *constraintList)
 			}
 		}
 	}
+}
+
+/* Build a FromExpr node */
+static FromExpr *
+makeFromExpr(List *fromlist, Node *quals)
+{
+	FromExpr *f = makeNode(FromExpr);
+
+	f->fromlist = fromlist;
+	f->quals = quals;
+	return f;
 }
 
 /*

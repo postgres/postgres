@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geqo_main.c,v 1.24 2000/09/19 18:42:33 tgl Exp $
+ * $Id: geqo_main.c,v 1.25 2000/09/29 18:21:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -245,9 +245,9 @@ geqo(Query *root, int number_of_rels, List *initial_rels)
 	best_tour = (Gene *) pool->data[0].string;
 
 /* root->join_rel_list will be modified during this ! */
-	best_rel = (RelOptInfo *) gimme_tree(root, initial_rels,
-										 best_tour, pool->string_length,
-										 0, NULL);
+	best_rel = gimme_tree(root, initial_rels,
+						  best_tour, pool->string_length,
+						  0, NULL);
 
 /* DBG: show the query plan
 print_plan(best_plan, root);

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/initsplan.c,v 1.50 2000/09/12 21:06:54 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/initsplan.c,v 1.51 2000/09/29 18:21:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,9 +35,10 @@
 
 static void mark_baserels_for_outer_join(Query *root, Relids rels,
 										 Relids outerrels);
-static void add_restrict_and_join_to_rel(Query *root, Node *clause,
-										 bool isjoinqual,
-										 Relids outerjoinrelids);
+static void distribute_qual_to_rels(Query *root, Node *clause,
+									bool ispusheddown,
+									bool isouterjoin,
+									Relids qualscope);
 static void add_join_info_to_rels(Query *root, RestrictInfo *restrictinfo,
 					  Relids join_relids);
 static void add_vars_to_targetlist(Query *root, List *vars);
@@ -93,14 +94,12 @@ add_vars_to_targetlist(Query *root, List *vars)
  *	  If we have a relation listed in the join tree that does not appear
  *	  in the target list nor qualifications, we must add it to the base
  *	  relation list so that it can be processed.  For instance,
+ *			select count(*) from foo;
+ *	  would fail to scan foo if this routine were not called.  More subtly,
  *			select f.x from foo f, foo f2
  *	  is a join of f and f2.  Note that if we have
  *			select foo.x from foo f
  *	  this also gets turned into a join (between foo as foo and foo as f).
- *
- *	  To avoid putting useless entries into the per-relation targetlists,
- *	  this should only be called after all the variables in the targetlist
- *	  and quals have been processed by the routines above.
  *
  *	  Returns a list of all the base relations (RelOptInfo nodes) that appear
  *	  in the join tree.  This list can be used for cross-checking in the
@@ -115,34 +114,24 @@ add_missing_rels_to_query(Query *root, Node *jtnode)
 
 	if (jtnode == NULL)
 		return NIL;
-	if (IsA(jtnode, List))
+	if (IsA(jtnode, RangeTblRef))
 	{
+		int			varno = ((RangeTblRef *) jtnode)->rtindex;
+		/* This call to get_base_rel does the primary work... */
+		RelOptInfo *rel = get_base_rel(root, varno);
+
+		result = makeList1(rel);
+	}
+	else if (IsA(jtnode, FromExpr))
+	{
+		FromExpr   *f = (FromExpr *) jtnode;
 		List	   *l;
 
-		foreach(l, (List *) jtnode)
+		foreach(l, f->fromlist)
 		{
 			result = nconc(result,
 						   add_missing_rels_to_query(root, lfirst(l)));
 		}
-	}
-	else if (IsA(jtnode, RangeTblRef))
-	{
-		int			varno = ((RangeTblRef *) jtnode)->rtindex;
-		RelOptInfo *rel = get_base_rel(root, varno);
-
-		/*
-		 * If the rel isn't otherwise referenced, give it a dummy
-		 * targetlist consisting of its own OID.
-		 */
-		if (rel->targetlist == NIL)
-		{
-			Var		   *var = makeVar(varno, ObjectIdAttributeNumber,
-									  OIDOID, -1, 0);
-
-			add_var_to_tlist(rel, var);
-		}
-
-		result = lcons(rel, NIL);
 	}
 	else if (IsA(jtnode, JoinExpr))
 	{
@@ -167,58 +156,74 @@ add_missing_rels_to_query(Query *root, Node *jtnode)
 
 
 /*
- * add_join_quals_to_rels
- *	  Recursively scan the join tree for JOIN/ON (and JOIN/USING) qual
- *	  clauses, and add these to the appropriate JoinInfo lists.  Also,
- *	  mark base RelOptInfos with outerjoinset information, which will
- *	  be needed for proper placement of WHERE clauses during
- *	  add_restrict_and_join_to_rels().
+ * distribute_quals_to_rels
+ *	  Recursively scan the query's join tree for WHERE and JOIN/ON qual
+ *	  clauses, and add these to the appropriate RestrictInfo and JoinInfo
+ *	  lists belonging to base RelOptInfos.  New base rel entries are created
+ *	  as needed.  Also, base RelOptInfos are marked with outerjoinset
+ *	  information, to aid in proper positioning of qual clauses that appear
+ *	  above outer joins.
  *
  * NOTE: when dealing with inner joins, it is appropriate to let a qual clause
  * be evaluated at the lowest level where all the variables it mentions are
- * available.  However, we cannot do this within an outer join since the qual
- * might eliminate matching rows and cause a NULL row to be added improperly.
- * Therefore, rels appearing within (the nullable side of) an outer join
- * are marked with outerjoinset = list of Relids used at the outer join node.
- * This list will be added to the list of rels referenced by quals using
- * such a rel, thereby forcing them up the join tree to the right level.
+ * available.  However, we cannot push a qual down into the nullable side(s)
+ * of an outer join since the qual might eliminate matching rows and cause a
+ * NULL row to be incorrectly emitted by the join.  Therefore, rels appearing
+ * within the nullable side(s) of an outer join are marked with
+ * outerjoinset = list of Relids used at the outer join node.
+ * This list will be added to the list of rels referenced by quals using such
+ * a rel, thereby forcing them up the join tree to the right level.
  *
- * To ease the calculation of these values, add_join_quals_to_rels() returns
+ * To ease the calculation of these values, distribute_quals_to_rels() returns
  * the list of Relids involved in its own level of join.  This is just an
  * internal convenience; no outside callers pay attention to the result.
  */
 Relids
-add_join_quals_to_rels(Query *root, Node *jtnode)
+distribute_quals_to_rels(Query *root, Node *jtnode)
 {
 	Relids		result = NIL;
 
 	if (jtnode == NULL)
 		return result;
-	if (IsA(jtnode, List))
-	{
-		List	   *l;
-
-		/*
-		 * Note: we assume it's impossible to see same RT index from more
-		 * than one subtree, so nconc() is OK rather than LispUnioni().
-		 */
-		foreach(l, (List *) jtnode)
-			result = nconc(result,
-						   add_join_quals_to_rels(root, lfirst(l)));
-	}
-	else if (IsA(jtnode, RangeTblRef))
+	if (IsA(jtnode, RangeTblRef))
 	{
 		int			varno = ((RangeTblRef *) jtnode)->rtindex;
 
 		/* No quals to deal with, just return correct result */
-		result = lconsi(varno, NIL);
+		result = makeListi1(varno);
+	}
+	else if (IsA(jtnode, FromExpr))
+	{
+		FromExpr   *f = (FromExpr *) jtnode;
+		List	   *l;
+		List	   *qual;
+
+		/*
+		 * First, recurse to handle child joins.
+		 *
+		 * Note: we assume it's impossible to see same RT index from more
+		 * than one subtree, so nconc() is OK rather than set_unioni().
+		 */
+		foreach(l, f->fromlist)
+		{
+			result = nconc(result,
+						   distribute_quals_to_rels(root, lfirst(l)));
+		}
+
+		/*
+		 * Now process the top-level quals.  These are always marked as
+		 * "pushed down", since they clearly didn't come from a JOIN expr.
+		 */
+		foreach(qual, (List *) f->quals)
+			distribute_qual_to_rels(root, (Node *) lfirst(qual),
+									true, false, result);
 	}
 	else if (IsA(jtnode, JoinExpr))
 	{
 		JoinExpr   *j = (JoinExpr *) jtnode;
 		Relids		leftids,
-					rightids,
-					outerjoinids;
+					rightids;
+		bool		isouterjoin;
 		List	   *qual;
 
 		/*
@@ -228,15 +233,15 @@ add_join_quals_to_rels(Query *root, Node *jtnode)
 		 * Then, if we are an outer join, we mark baserels contained within
 		 * the nullable side(s) with our own rel list; this will restrict
 		 * placement of subsequent quals using those rels, including our own
-		 * quals, quals above us in the join tree, and WHERE quals.
+		 * quals and quals above us in the join tree.
 		 * Finally we place our own join quals.
 		 */
-		leftids = add_join_quals_to_rels(root, j->larg);
-		rightids = add_join_quals_to_rels(root, j->rarg);
+		leftids = distribute_quals_to_rels(root, j->larg);
+		rightids = distribute_quals_to_rels(root, j->rarg);
 
 		result = nconc(listCopy(leftids), rightids);
 
-		outerjoinids = NIL;
+		isouterjoin = false;
 		switch (j->jointype)
 		{
 			case JOIN_INNER:
@@ -244,15 +249,15 @@ add_join_quals_to_rels(Query *root, Node *jtnode)
 				break;
 			case JOIN_LEFT:
 				mark_baserels_for_outer_join(root, rightids, result);
-				outerjoinids = result;
+				isouterjoin = true;
 				break;
 			case JOIN_FULL:
 				mark_baserels_for_outer_join(root, result, result);
-				outerjoinids = result;
+				isouterjoin = true;
 				break;
 			case JOIN_RIGHT:
 				mark_baserels_for_outer_join(root, leftids, result);
-				outerjoinids = result;
+				isouterjoin = true;
 				break;
 			case JOIN_UNION:
 				/*
@@ -262,17 +267,18 @@ add_join_quals_to_rels(Query *root, Node *jtnode)
 				elog(ERROR, "UNION JOIN is not implemented yet");
 				break;
 			default:
-				elog(ERROR, "add_join_quals_to_rels: unsupported join type %d",
+				elog(ERROR,
+					 "distribute_quals_to_rels: unsupported join type %d",
 					 (int) j->jointype);
 				break;
 		}
 
 		foreach(qual, (List *) j->quals)
-			add_restrict_and_join_to_rel(root, (Node *) lfirst(qual),
-										 true, outerjoinids);
+			distribute_qual_to_rels(root, (Node *) lfirst(qual),
+									false, isouterjoin, result);
 	}
 	else
-		elog(ERROR, "add_join_quals_to_rels: unexpected node type %d",
+		elog(ERROR, "distribute_quals_to_rels: unexpected node type %d",
 			 nodeTag(jtnode));
 	return result;
 }
@@ -301,25 +307,7 @@ mark_baserels_for_outer_join(Query *root, Relids rels, Relids outerrels)
 }
 
 /*
- * add_restrict_and_join_to_rels
- *	  Fill RestrictInfo and JoinInfo lists of relation entries for all
- *	  relations appearing within clauses.  Creates new relation entries if
- *	  necessary, adding them to root->base_rel_list.
- *
- * 'clauses': the list of clauses in the cnfify'd query qualification.
- */
-void
-add_restrict_and_join_to_rels(Query *root, List *clauses)
-{
-	List	   *clause;
-
-	foreach(clause, clauses)
-		add_restrict_and_join_to_rel(root, (Node *) lfirst(clause),
-									 false, NIL);
-}
-
-/*
- * add_restrict_and_join_to_rel
+ * distribute_qual_to_rels
  *	  Add clause information to either the 'RestrictInfo' or 'JoinInfo' field
  *	  (depending on whether the clause is a join) of each base relation
  *	  mentioned in the clause.	A RestrictInfo node is created and added to
@@ -327,20 +315,21 @@ add_restrict_and_join_to_rels(Query *root, List *clauses)
  *	  mergejoinable operator and is not an outer-join qual, enter the left-
  *	  and right-side expressions into the query's lists of equijoined vars.
  *
- * isjoinqual is true if the clause came from JOIN/ON or JOIN/USING;
- * we have to mark the created RestrictInfo accordingly.  If the JOIN
- * is an OUTER join, the caller must set outerjoinrelids = all relids of join,
- * which will override the joinrel identifiers extracted from the clause
- * itself.  For inner join quals and WHERE clauses, set outerjoinrelids = NIL.
- * (Passing the whole list, and not just an "isouterjoin" boolean, is simply
- * a speed optimization: we could extract the same list from the base rels'
- * outerjoinsets, but since add_join_quals_to_rels() already knows what we
- * should use, might as well pass it in instead of recalculating it.)
+ * 'clause': the qual clause to be distributed
+ * 'ispusheddown': if TRUE, force the clause to be marked 'ispusheddown'
+ *		(this indicates the clause came from a FromExpr, not a JoinExpr)
+ * 'isouterjoin': TRUE if the qual came from an OUTER JOIN's ON-clause
+ * 'qualscope': list of baserels the qual's syntactic scope covers
+ *
+ * 'qualscope' identifies what level of JOIN the qual came from.  For a top
+ * level qual (WHERE qual), qualscope lists all baserel ids and in addition
+ * 'ispusheddown' will be TRUE.
  */
 static void
-add_restrict_and_join_to_rel(Query *root, Node *clause,
-							 bool isjoinqual,
-							 Relids outerjoinrelids)
+distribute_qual_to_rels(Query *root, Node *clause,
+						bool ispusheddown,
+						bool isouterjoin,
+						Relids qualscope)
 {
 	RestrictInfo *restrictinfo = makeNode(RestrictInfo);
 	Relids		relids;
@@ -348,7 +337,6 @@ add_restrict_and_join_to_rel(Query *root, Node *clause,
 	bool		can_be_equijoin;
 
 	restrictinfo->clause = (Expr *) clause;
-	restrictinfo->isjoinqual = isjoinqual;
 	restrictinfo->subclauseindices = NIL;
 	restrictinfo->mergejoinoperator = InvalidOid;
 	restrictinfo->left_sortop = InvalidOid;
@@ -361,17 +349,40 @@ add_restrict_and_join_to_rel(Query *root, Node *clause,
 	clause_get_relids_vars(clause, &relids, &vars);
 
 	/*
-	 * If caller has given us a join relid list, use it; otherwise, we must
-	 * scan the referenced base rels and add in any outer-join rel lists.
-	 * This prevents the clause from being applied at a lower level of joining
-	 * than any OUTER JOIN that should be evaluated before it.
+	 * Cross-check: clause should contain no relids not within its scope.
+	 * Otherwise the parser messed up.
 	 */
-	if (outerjoinrelids)
+	if (! is_subseti(relids, qualscope))
+		elog(ERROR, "JOIN qualification may not refer to other relations");
+
+	/*
+	 * If the clause is variable-free, we force it to be evaluated at its
+	 * original syntactic level.  Note that this should not happen for
+	 * top-level clauses, because query_planner() special-cases them.  But
+	 * it will happen for variable-free JOIN/ON clauses.  We don't have to
+	 * be real smart about such a case, we just have to be correct.
+	 */
+	if (relids == NIL)
+		relids = qualscope;
+
+	/*
+	 * For an outer-join qual, pretend that the clause references all rels
+	 * appearing within its syntactic scope, even if it really doesn't.
+	 * This ensures that the clause will be evaluated exactly at the level
+	 * of joining corresponding to the outer join.
+	 *
+	 * For a non-outer-join qual, we can evaluate the qual as soon as
+	 * (1) we have all the rels it mentions, and (2) we are at or above any
+	 * outer joins that can null any of these rels and are below the syntactic
+	 * location of the given qual.  To enforce the latter, scan the base rels
+	 * listed in relids, and merge their outer-join lists into the clause's
+	 * own reference list.  At the time we are called, the outerjoinset list
+	 * of each baserel will show exactly those outer joins that are below the
+	 * qual in the join tree.
+	 */
+	if (isouterjoin)
 	{
-		/* Safety check: parser should have enforced this to start with */
-		if (! is_subseti(relids, outerjoinrelids))
-			elog(ERROR, "JOIN qualification may not refer to other relations");
-		relids = outerjoinrelids;
+		relids = qualscope;
 		can_be_equijoin = false;
 	}
 	else
@@ -379,15 +390,16 @@ add_restrict_and_join_to_rel(Query *root, Node *clause,
 		Relids		newrelids = relids;
 		List	   *relid;
 
-		/* We rely on LispUnioni to be nondestructive of its input lists... */
+		/* We rely on set_unioni to be nondestructive of its input lists... */
 		can_be_equijoin = true;
 		foreach(relid, relids)
 		{
 			RelOptInfo *rel = get_base_rel(root, lfirsti(relid));
 
-			if (rel->outerjoinset)
+			if (rel->outerjoinset &&
+				! is_subseti(rel->outerjoinset, relids))
 			{
-				newrelids = LispUnioni(newrelids, rel->outerjoinset);
+				newrelids = set_unioni(newrelids, rel->outerjoinset);
 				/*
 				 * Because application of the qual will be delayed by outer
 				 * join, we mustn't assume its vars are equal everywhere.
@@ -396,7 +408,18 @@ add_restrict_and_join_to_rel(Query *root, Node *clause,
 			}
 		}
 		relids = newrelids;
+		/* Should still be a subset of current scope ... */
+		Assert(is_subseti(relids, qualscope));
 	}
+
+	/*
+	 * Mark the qual as "pushed down" if it can be applied at a level below
+	 * its original syntactic level.  This allows us to distinguish original
+	 * JOIN/ON quals from higher-level quals pushed down to the same joinrel.
+	 * A qual originating from WHERE is always considered "pushed down".
+	 */
+	restrictinfo->ispusheddown = ispusheddown || !sameseti(relids,
+														   qualscope);
 
 	if (length(relids) == 1)
 	{
@@ -454,10 +477,9 @@ add_restrict_and_join_to_rel(Query *root, Node *clause,
 	{
 		/*
 		 * 'clause' references no rels, and therefore we have no place to
-		 * attach it.  This means query_planner() screwed up --- it should
-		 * treat variable-less clauses separately.
+		 * attach it.  Shouldn't get here if callers are working properly.
 		 */
-		elog(ERROR, "add_restrict_and_join_to_rel: can't cope with variable-free clause");
+		elog(ERROR, "distribute_qual_to_rels: can't cope with variable-free clause");
 	}
 
 	/*
@@ -557,7 +579,7 @@ process_implied_equality(Query *root, Node *item1, Node *item2,
 	else
 	{
 		JoinInfo   *joininfo = find_joininfo_node(rel1,
-												  lconsi(irel2, NIL));
+												  makeListi1(irel2));
 
 		restrictlist = joininfo->jinfo_restrictinfo;
 	}
@@ -612,10 +634,20 @@ process_implied_equality(Query *root, Node *item1, Node *item2,
 	clause->oper = (Node *) makeOper(oprid(eq_operator), /* opno */
 									 InvalidOid, /* opid */
 									 BOOLOID); /* operator result type */
-	clause->args = lcons(item1, lcons(item2, NIL));
+	clause->args = makeList2(item1, item2);
 
-	add_restrict_and_join_to_rel(root, (Node *) clause,
-								 false, NIL);
+	/*
+	 * Note: we mark the qual "pushed down" to ensure that it can never be
+	 * taken for an original JOIN/ON clause.  We also claim it is an outer-
+	 * join clause, which it isn't, but that keeps distribute_qual_to_rels
+	 * from examining the outerjoinsets of the relevant rels (which are no
+	 * longer of interest, but could keep the qual from being pushed down
+	 * to where it should be).  It'll also save a useless call to
+	 * add_equijoined keys...
+	 */
+	distribute_qual_to_rels(root, (Node *) clause,
+							true, true,
+							pull_varnos((Node *) clause));
 }
 
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/print.c,v 1.41 2000/09/25 18:14:55 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/print.c,v 1.42 2000/09/29 18:21:29 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -39,7 +39,6 @@ print(void *obj)
 	s = nodeToString(obj);
 	printf("%s\n", s);
 	fflush(stdout);
-	return;
 }
 
 /*
@@ -132,10 +131,15 @@ print_rt(List *rtable)
 	{
 		RangeTblEntry *rte = lfirst(l);
 
-		printf("%d\t%s(%s)\t%u\t%d\t%s\n",
-			   i, rte->relname, rte->eref->relname, rte->relid,
-			   rte->inFromCl,
-			   (rte->inh ? "inh" : ""));
+		if (rte->relname)
+			printf("%d\t%s (%s)\t%u",
+				   i, rte->relname, rte->eref->relname, rte->relid);
+		else
+			printf("%d\t[subquery] (%s)\t",
+				   i, rte->eref->relname);
+		printf("\t%s\t%s\n",
+			   (rte->inh ? "inh" : ""),
+			   (rte->inFromCl ? "inFromCl" : ""));
 		i++;
 	}
 }
@@ -286,7 +290,7 @@ plannode_type(Plan *p)
 {
 	switch (nodeTag(p))
 	{
-			case T_Plan:
+		case T_Plan:
 			return "PLAN";
 			break;
 		case T_Result:
@@ -303,6 +307,12 @@ plannode_type(Plan *p)
 			break;
 		case T_IndexScan:
 			return "INDEXSCAN";
+			break;
+		case T_TidScan:
+			return "TIDSCAN";
+			break;
+		case T_SubqueryScan:
+			return "SUBQUERYSCAN";
 			break;
 		case T_Join:
 			return "JOIN";
@@ -333,9 +343,6 @@ plannode_type(Plan *p)
 			break;
 		case T_Group:
 			return "GROUP";
-			break;
-		case T_TidScan:
-			return "TIDSCAN";
 			break;
 		default:
 			return "UNKNOWN";
@@ -372,10 +379,10 @@ print_plan_recursive(Plan *p, Query *parsetree, int indentLevel, char *label)
 	}
 	else if (IsA(p, IndexScan))
 	{
-		StrNCpy(extraInfo,
-		   ((RangeTblEntry *) (nth(((IndexScan *) p)->scan.scanrelid - 1,
-								   parsetree->rtable)))->relname,
-				NAMEDATALEN);
+		RangeTblEntry *rte;
+
+		rte = rt_fetch(((IndexScan *) p)->scan.scanrelid, parsetree->rtable);
+		StrNCpy(extraInfo, rte->relname, NAMEDATALEN);
 	}
 	else
 		extraInfo[0] = '\0';
@@ -386,7 +393,7 @@ print_plan_recursive(Plan *p, Query *parsetree, int indentLevel, char *label)
 	print_plan_recursive(p->lefttree, parsetree, indentLevel + 3, "l: ");
 	print_plan_recursive(p->righttree, parsetree, indentLevel + 3, "r: ");
 
-	if (nodeTag(p) == T_Append)
+	if (IsA(p, Append))
 	{
 		List	   *lst;
 		int			whichplan = 0;

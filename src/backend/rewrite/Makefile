@@ -4,7 +4,7 @@
 #    Makefile for rewrite
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/rewrite/Makefile,v 1.13 2000/08/31 16:10:27 petere Exp $
+#    $Header: /cvsroot/pgsql/src/backend/rewrite/Makefile,v 1.14 2000/09/29 18:21:24 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -13,7 +13,7 @@ top_builddir = ../../..
 include $(top_builddir)/src/Makefile.global
 
 OBJS = rewriteRemove.o rewriteDefine.o \
-       rewriteHandler.o rewriteManip.o rewriteSupport.o locks.o
+       rewriteHandler.o rewriteManip.o rewriteSupport.o
 
 all: SUBSYS.o
 

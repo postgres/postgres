@@ -20,7 +20,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.73 2000/09/12 21:06:49 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.74 2000/09/29 18:21:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -312,6 +312,17 @@ _equalRangeTblRef(RangeTblRef *a, RangeTblRef *b)
 }
 
 static bool
+_equalFromExpr(FromExpr *a, FromExpr *b)
+{
+	if (!equal(a->fromlist, b->fromlist))
+		return false;
+	if (!equal(a->quals, b->quals))
+		return false;
+
+	return true;
+}
+
+static bool
 _equalJoinExpr(JoinExpr *a, JoinExpr *b)
 {
 	if (a->jointype != b->jointype)
@@ -346,7 +357,7 @@ _equalRelOptInfo(RelOptInfo *a, RelOptInfo *b)
 
 	/*
 	 * We treat RelOptInfos as equal if they refer to the same base rels
-	 * joined in the same order.  Is this sufficient?
+	 * joined in the same order.  Is this appropriate/sufficient?
 	 */
 	return equali(a->relids, b->relids);
 }
@@ -495,7 +506,7 @@ _equalRestrictInfo(RestrictInfo *a, RestrictInfo *b)
 {
 	if (!equal(a->clause, b->clause))
 		return false;
-	if (a->isjoinqual != b->isjoinqual)
+	if (a->ispusheddown != b->ispusheddown)
 		return false;
 	if (!equal(a->subclauseindices, b->subclauseindices))
 		return false;
@@ -601,9 +612,7 @@ _equalQuery(Query *a, Query *b)
 		return false;
 	if (!equal(a->targetList, b->targetList))
 		return false;
-	if (!equal(a->qual, b->qual))
-		return false;
-	if (!equal(a->rowMark, b->rowMark))
+	if (!equali(a->rowMarks, b->rowMarks))
 		return false;
 	if (!equal(a->distinctClause, b->distinctClause))
 		return false;
@@ -1651,6 +1660,8 @@ _equalRangeTblEntry(RangeTblEntry *a, RangeTblEntry *b)
 		return false;
 	if (a->relid != b->relid)
 		return false;
+	if (!equal(a->subquery, b->subquery))
+		return false;
 	if (!equal(a->alias, b->alias))
 		return false;
 	if (!equal(a->eref, b->eref))
@@ -1659,7 +1670,11 @@ _equalRangeTblEntry(RangeTblEntry *a, RangeTblEntry *b)
 		return false;
 	if (a->inFromCl != b->inFromCl)
 		return false;
-	if (a->skipAcl != b->skipAcl)
+	if (a->checkForRead != b->checkForRead)
+		return false;
+	if (a->checkForWrite != b->checkForWrite)
+		return false;
+	if (a->checkAsUser != b->checkAsUser)
 		return false;
 
 	return true;
@@ -1671,17 +1686,6 @@ _equalSortClause(SortClause *a, SortClause *b)
 	if (a->tleSortGroupRef != b->tleSortGroupRef)
 		return false;
 	if (a->sortop != b->sortop)
-		return false;
-
-	return true;
-}
-
-static bool
-_equalRowMark(RowMark *a, RowMark *b)
-{
-	if (a->rti != b->rti)
-		return false;
-	if (a->info != b->info)
 		return false;
 
 	return true;
@@ -1834,6 +1838,9 @@ equal(void *a, void *b)
 			break;
 		case T_RangeTblRef:
 			retval = _equalRangeTblRef(a, b);
+			break;
+		case T_FromExpr:
+			retval = _equalFromExpr(a, b);
 			break;
 		case T_JoinExpr:
 			retval = _equalJoinExpr(a, b);
@@ -2139,9 +2146,6 @@ equal(void *a, void *b)
 			break;
 		case T_CaseWhen:
 			retval = _equalCaseWhen(a, b);
-			break;
-		case T_RowMark:
-			retval = _equalRowMark(a, b);
 			break;
 		case T_FkConstraint:
 			retval = _equalFkConstraint(a, b);

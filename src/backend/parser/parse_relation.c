@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_relation.c,v 1.48 2000/09/25 18:14:54 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_relation.c,v 1.49 2000/09/29 18:21:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,7 +26,6 @@
 #include "parser/parse_relation.h"
 #include "parser/parse_type.h"
 #include "rewrite/rewriteManip.h"
-#include "utils/acl.h"
 #include "utils/builtins.h"
 #include "utils/lsyscache.h"
 
@@ -98,7 +97,7 @@ refnameRangeOrJoinEntry(ParseState *pstate,
 
 		/*
 		 * Check the rangetable for RTEs; if no match, recursively scan
-		 * the jointree for join tables.  We assume that no duplicate
+		 * the joinlist for join tables.  We assume that no duplicate
 		 * entries have been made in any one nesting level.
 		 */
 		foreach(temp, pstate->p_rtable)
@@ -109,7 +108,7 @@ refnameRangeOrJoinEntry(ParseState *pstate,
 				return (Node *) rte;
 		}
 
-		join = scanJoinTreeForRefname((Node *) pstate->p_jointree, refname);
+		join = scanJoinListForRefname((Node *) pstate->p_joinlist, refname);
 		if (join)
 			return (Node *) join;
 
@@ -122,9 +121,14 @@ refnameRangeOrJoinEntry(ParseState *pstate,
 	return NULL;
 }
 
-/* Recursively search a jointree for a joinexpr with given refname */
+/*
+ * Recursively search a joinlist for a joinexpr with given refname
+ *
+ * Note that during parse analysis, we don't expect to find a FromExpr node
+ * in p_joinlist; its top level is just a bare List.
+ */
 JoinExpr *
-scanJoinTreeForRefname(Node *jtnode, char *refname)
+scanJoinListForRefname(Node *jtnode, char *refname)
 {
 	JoinExpr   *result = NULL;
 
@@ -136,7 +140,7 @@ scanJoinTreeForRefname(Node *jtnode, char *refname)
 
 		foreach(l, (List *) jtnode)
 		{
-			result = scanJoinTreeForRefname(lfirst(l), refname);
+			result = scanJoinListForRefname(lfirst(l), refname);
 			if (result)
 				break;
 		}
@@ -151,12 +155,12 @@ scanJoinTreeForRefname(Node *jtnode, char *refname)
 
 		if (j->alias && strcmp(j->alias->relname, refname) == 0)
 			return j;
-		result = scanJoinTreeForRefname(j->larg, refname);
+		result = scanJoinListForRefname(j->larg, refname);
 		if (! result)
-			result = scanJoinTreeForRefname(j->rarg, refname);
+			result = scanJoinListForRefname(j->rarg, refname);
 	}
 	else
-		elog(ERROR, "scanJoinTreeForRefname: unexpected node type %d",
+		elog(ERROR, "scanJoinListForRefname: unexpected node type %d",
 			 nodeTag(jtnode));
 	return result;
 }
@@ -261,6 +265,9 @@ RTERangeTablePosn(ParseState *pstate, RangeTblEntry *rte, int *sublevels_up)
  *	  Search the column names of a single RTE for the given name.
  *	  If found, return an appropriate Var node, else return NULL.
  *	  If the name proves ambiguous within this RTE, raise error.
+ *
+ * Side effect: if we find a match, mark the RTE as requiring read access.
+ * See comments in setTargetTable().
  */
 static Node *
 scanRTEForColumn(ParseState *pstate, RangeTblEntry *rte, char *colname)
@@ -281,6 +288,7 @@ scanRTEForColumn(ParseState *pstate, RangeTblEntry *rte, char *colname)
 			if (result)
 				elog(ERROR, "Column reference \"%s\" is ambiguous", colname);
 			result = (Node *) make_var(pstate, rte, attnum);
+			rte->checkForRead = true;
 		}
 	}
 
@@ -299,7 +307,10 @@ scanRTEForColumn(ParseState *pstate, RangeTblEntry *rte, char *colname)
 	{
 		attnum = specialAttNum(colname);
 		if (attnum != InvalidAttrNumber)
+		{
 			result = (Node *) make_var(pstate, rte, attnum);
+			rte->checkForRead = true;
+		}
 	}
 
 	return result;
@@ -310,6 +321,11 @@ scanRTEForColumn(ParseState *pstate, RangeTblEntry *rte, char *colname)
  *	  Search the column names of a single join table for the given name.
  *	  If found, return an appropriate Var node or expression, else return NULL.
  *	  If the name proves ambiguous within this jointable, raise error.
+ *
+ * NOTE: unlike scanRTEForColumn, there's no need to worry about forcing
+ * checkForRead true for the referenced tables.  This is so because a join
+ * expression can only appear in a FROM clause, and any table named in
+ * FROM will be marked checkForRead from the beginning.
  */
 static Node *
 scanJoinForColumn(JoinExpr *join, char *colname, int sublevels_up)
@@ -359,7 +375,7 @@ colnameToVar(ParseState *pstate, char *colname)
 		 * those, ignore RTEs that are marked as not inFromCl and not
 		 * the query's target relation.
 		 */
-		foreach(jt, pstate->p_jointree)
+		foreach(jt, pstate->p_joinlist)
 		{
 			Node   *jtnode = (Node *) lfirst(jt);
 			Node   *newresult = NULL;
@@ -446,8 +462,9 @@ qualifiedNameToVar(ParseState *pstate, char *refname, char *colname,
 }
 
 /*
- * Add an entry to the pstate's range table (p_rtable), unless the
- * specified refname is already present, in which case raise error.
+ * Add an entry for a relation to the pstate's range table (p_rtable).
+ *
+ * If the specified refname is already present, raise error.
  *
  * If pstate is NULL, we just build an RTE and return it without worrying
  * about membership in an rtable list.
@@ -481,6 +498,7 @@ addRangeTableEntry(ParseState *pstate,
 
 	rte->relname = relname;
 	rte->alias = alias;
+	rte->subquery = NULL;
 
 	/*
 	 * Get the rel's OID.  This access also ensures that we have an
@@ -492,7 +510,7 @@ addRangeTableEntry(ParseState *pstate,
 	rte->relid = RelationGetRelid(rel);
 	maxattrs = RelationGetNumberOfAttributes(rel);
 
-	eref = alias ? copyObject(alias) : makeAttr(refname, NULL);
+	eref = alias ? (Attr *) copyObject(alias) : makeAttr(refname, NULL);
 	numaliases = length(eref->attrs);
 
 	if (maxattrs < numaliases)
@@ -515,12 +533,18 @@ addRangeTableEntry(ParseState *pstate,
 	 * Flags:
 	 * - this RTE should be expanded to include descendant tables,
 	 * - this RTE is in the FROM clause,
-	 * - this RTE should not be checked for access rights.
+	 * - this RTE should be checked for read/write access rights.
+	 *
+	 * The initial default on access checks is always check-for-READ-access,
+	 * which is the right thing for all except target tables.
 	 *----------
 	 */
 	rte->inh = inh;
 	rte->inFromCl = inFromCl;
-	rte->skipAcl = false;		/* always starts out false */
+	rte->checkForRead = true;
+	rte->checkForWrite = false;
+
+	rte->checkAsUser = InvalidOid; /* not set-uid by default, either */
 
 	/*
 	 * Add completed RTE to range table list.
@@ -532,17 +556,105 @@ addRangeTableEntry(ParseState *pstate,
 }
 
 /*
- * Add the given RTE as a top-level entry in the pstate's join tree,
+ * Add an entry for a subquery to the pstate's range table (p_rtable).
+ *
+ * This is just like addRangeTableEntry() except that it makes a subquery RTE.
+ * Note that an alias clause *must* be supplied.
+ */
+RangeTblEntry *
+addRangeTableEntryForSubquery(ParseState *pstate,
+							  Query *subquery,
+							  Attr *alias,
+							  bool inFromCl)
+{
+	char	   *refname = alias->relname;
+	RangeTblEntry *rte;
+	Attr	   *eref;
+	int			numaliases;
+	int			varattno;
+	List	   *tlistitem;
+
+	/* Check for conflicting RTE or jointable alias (at level 0 only) */
+	if (pstate != NULL)
+	{
+		Node   *rteorjoin = refnameRangeOrJoinEntry(pstate, refname, NULL);
+
+		if (rteorjoin)
+			elog(ERROR, "Table name \"%s\" specified more than once",
+				 refname);
+	}
+
+	rte = makeNode(RangeTblEntry);
+
+	rte->relname = NULL;
+	rte->relid = InvalidOid;
+	rte->subquery = subquery;
+	rte->alias = alias;
+
+	eref = copyObject(alias);
+	numaliases = length(eref->attrs);
+
+	/* fill in any unspecified alias columns */
+	varattno = 0;
+	foreach(tlistitem, subquery->targetList)
+	{
+		TargetEntry *te = (TargetEntry *) lfirst(tlistitem);
+
+		if (te->resdom->resjunk)
+			continue;
+		varattno++;
+		Assert(varattno == te->resdom->resno);
+		if (varattno > numaliases)
+		{
+			char	   *attrname;
+
+			attrname = pstrdup(te->resdom->resname);
+			eref->attrs = lappend(eref->attrs, makeString(attrname));
+		}
+	}
+	if (varattno < numaliases)
+		elog(ERROR, "Table \"%s\" has %d columns available but %d columns specified",
+			 refname, varattno, numaliases);
+
+	rte->eref = eref;
+
+	/*----------
+	 * Flags:
+	 * - this RTE should be expanded to include descendant tables,
+	 * - this RTE is in the FROM clause,
+	 * - this RTE should be checked for read/write access rights.
+	 *
+	 * Subqueries are never checked for access rights.
+	 *----------
+	 */
+	rte->inh = false;			/* never true for subqueries */
+	rte->inFromCl = inFromCl;
+	rte->checkForRead = false;
+	rte->checkForWrite = false;
+
+	rte->checkAsUser = InvalidOid;
+
+	/*
+	 * Add completed RTE to range table list.
+	 */
+	if (pstate != NULL)
+		pstate->p_rtable = lappend(pstate->p_rtable, rte);
+
+	return rte;
+}
+
+/*
+ * Add the given RTE as a top-level entry in the pstate's join list,
  * unless there already is an entry for it.
  */
 void
-addRTEtoJoinTree(ParseState *pstate, RangeTblEntry *rte)
+addRTEtoJoinList(ParseState *pstate, RangeTblEntry *rte)
 {
 	int			rtindex = RTERangeTablePosn(pstate, rte, NULL);
 	List	   *jt;
 	RangeTblRef *rtr;
 
-	foreach(jt, pstate->p_jointree)
+	foreach(jt, pstate->p_joinlist)
 	{
 		Node	   *n = (Node *) lfirst(jt);
 
@@ -556,7 +668,7 @@ addRTEtoJoinTree(ParseState *pstate, RangeTblEntry *rte)
 	/* Not present, so add it */
 	rtr = makeNode(RangeTblRef);
 	rtr->rtindex = rtindex;
-	pstate->p_jointree = lappend(pstate->p_jointree, rtr);
+	pstate->p_joinlist = lappend(pstate->p_joinlist, rtr);
 }
 
 /*
@@ -570,7 +682,7 @@ addImplicitRTE(ParseState *pstate, char *relname)
 	RangeTblEntry *rte;
 
 	rte = addRangeTableEntry(pstate, relname, NULL, false, false);
-	addRTEtoJoinTree(pstate, rte);
+	addRTEtoJoinList(pstate, rte);
 	warnAutoRange(pstate, relname);
 
 	return rte;
@@ -590,11 +702,9 @@ void
 expandRTE(ParseState *pstate, RangeTblEntry *rte,
 		  List **colnames, List **colvars)
 {
-	Relation	rel;
-	int			varattno,
-				maxattrs,
-				rtindex,
-				sublevels_up;
+	int			rtindex,
+				sublevels_up,
+				varattno;
 
 	if (colnames)
 		*colnames = NIL;
@@ -604,43 +714,88 @@ expandRTE(ParseState *pstate, RangeTblEntry *rte,
 	/* Need the RT index of the entry for creating Vars */
 	rtindex = RTERangeTablePosn(pstate, rte, &sublevels_up);
 
-	rel = heap_open(rte->relid, AccessShareLock);
-
-	maxattrs = RelationGetNumberOfAttributes(rel);
-
-	for (varattno = 0; varattno < maxattrs; varattno++)
+	if (rte->relname)
 	{
-		Form_pg_attribute attr = rel->rd_att->attrs[varattno];
+		/* Ordinary relation RTE */
+		Relation	rel;
+		int			maxattrs;
+
+		rel = heap_openr(rte->relname, AccessShareLock);
+
+		maxattrs = RelationGetNumberOfAttributes(rel);
+
+		for (varattno = 0; varattno < maxattrs; varattno++)
+		{
+			Form_pg_attribute attr = rel->rd_att->attrs[varattno];
 
 #ifdef	_DROP_COLUMN_HACK__
-		if (COLUMN_IS_DROPPED(attr))
-			continue;
+			if (COLUMN_IS_DROPPED(attr))
+				continue;
 #endif	 /* _DROP_COLUMN_HACK__ */
 
-		if (colnames)
-		{
-			char	   *label;
+			if (colnames)
+			{
+				char	   *label;
 
-			if (varattno < length(rte->eref->attrs))
-				label = strVal(nth(varattno, rte->eref->attrs));
-			else
-				label = NameStr(attr->attname);
-			*colnames = lappend(*colnames, makeString(pstrdup(label)));
+				if (varattno < length(rte->eref->attrs))
+					label = strVal(nth(varattno, rte->eref->attrs));
+				else
+					label = NameStr(attr->attname);
+				*colnames = lappend(*colnames, makeString(pstrdup(label)));
+			}
+
+			if (colvars)
+			{
+				Var		   *varnode;
+
+				varnode = makeVar(rtindex, attr->attnum,
+								  attr->atttypid, attr->atttypmod,
+								  sublevels_up);
+
+				*colvars = lappend(*colvars, varnode);
+			}
 		}
 
-		if (colvars)
+		heap_close(rel, AccessShareLock);
+	}
+	else
+	{
+		/* Subquery RTE */
+		List	   *aliasp = rte->eref->attrs;
+		List	   *tlistitem;
+
+		varattno = 0;
+		foreach(tlistitem, rte->subquery->targetList)
 		{
-			Var		   *varnode;
+			TargetEntry *te = (TargetEntry *) lfirst(tlistitem);
 
-			varnode = makeVar(rtindex, attr->attnum,
-							  attr->atttypid, attr->atttypmod,
-							  sublevels_up);
+			if (te->resdom->resjunk)
+				continue;
+			varattno++;
+			Assert(varattno == te->resdom->resno);
 
-			*colvars = lappend(*colvars, varnode);
+			if (colnames)
+			{
+				/* Assume there is one alias per target item */
+				char	   *label = strVal(lfirst(aliasp));
+
+				*colnames = lappend(*colnames, makeString(pstrdup(label)));
+				aliasp = lnext(aliasp);
+			}
+
+			if (colvars)
+			{
+				Var		   *varnode;
+
+				varnode = makeVar(rtindex, varattno,
+								  te->resdom->restype,
+								  te->resdom->restypmod,
+								  sublevels_up);
+
+				*colvars = lappend(*colvars, varnode);
+			}
 		}
 	}
-
-	heap_close(rel, AccessShareLock);
 }
 
 /*

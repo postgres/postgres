@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/plancat.c,v 1.60 2000/07/27 23:16:04 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/plancat.c,v 1.61 2000/09/29 18:21:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,7 +25,6 @@
 #include "catalog/pg_inherits.h"
 #include "catalog/pg_index.h"
 #include "optimizer/plancat.h"
-#include "parser/parsetree.h"
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
 #include "utils/relcache.h"
@@ -37,16 +36,15 @@
 /*
  * relation_info -
  *	  Retrieves catalog information for a given relation.
- *	  Given the rangetable index of the relation, return the following info:
+ *	  Given the Oid of the relation, return the following info:
  *				whether the relation has secondary indices
  *				number of pages
  *				number of tuples
  */
 void
-relation_info(Query *root, Index relid,
+relation_info(Oid relationObjectId,
 			  bool *hasindex, long *pages, double *tuples)
 {
-	Oid			relationObjectId = getrelid(relid, root->rtable);
 	HeapTuple	relationTuple;
 	Form_pg_class relation;
 
@@ -69,19 +67,18 @@ relation_info(Query *root, Index relid,
 /*
  * find_secondary_indexes
  *	  Creates a list of IndexOptInfo nodes containing information for each
- *	  secondary index defined on the given relation.
+ *	  secondary index defined on the specified relation.
  *
- * 'relid' is the RT index of the relation for which indices are being located
+ * 'relationObjectId' is the OID of the relation for which indices are wanted
  *
  * Returns a list of new IndexOptInfo nodes.
  */
 List *
-find_secondary_indexes(Query *root, Index relid)
+find_secondary_indexes(Oid relationObjectId)
 {
 	List	   *indexinfos = NIL;
 	List	   *indexoidlist,
 			   *indexoidscan;
-	Oid			indrelid = getrelid(relid, root->rtable);
 	Relation	relation;
 
 	/*
@@ -89,12 +86,12 @@ find_secondary_indexes(Query *root, Index relid)
 	 * a cached list of OID indexes for each relation.  So, get that list
 	 * and then use the syscache to obtain pg_index entries.
 	 */
-	relation = heap_open(indrelid, AccessShareLock);
+	relation = heap_open(relationObjectId, AccessShareLock);
 	indexoidlist = RelationGetIndexList(relation);
 
 	foreach(indexoidscan, indexoidlist)
 	{
-		Oid		indexoid = lfirsti(indexoidscan);
+		Oid			indexoid = lfirsti(indexoidscan);
 		HeapTuple	indexTuple;
 		Form_pg_index index;
 		IndexOptInfo *info;

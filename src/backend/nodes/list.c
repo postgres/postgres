@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/list.c,v 1.33 2000/09/12 21:06:49 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/list.c,v 1.34 2000/09/29 18:21:29 tgl Exp $
  *
  * NOTES
  *	  XXX a few of the following functions are duplicated to handle
@@ -23,40 +23,9 @@
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
+
 #include "nodes/parsenodes.h"
 
-/*
- *	makeList
- *
- *	Take varargs, terminated by -1, and make a List
- */
-List *
-makeList(void *elem,...)
-{
-	va_list		args;
-	List	   *retval = NIL;
-	List	   *temp = NIL;
-	List	   *tempcons = NIL;
-
-	va_start(args, elem);
-
-	temp = elem;
-	while (temp != (void *) -1)
-	{
-		temp = lcons(temp, NIL);
-		if (tempcons == NIL)
-			retval = temp;
-		else
-			lnext(tempcons) = temp;
-		tempcons = temp;
-
-		temp = va_arg(args, void *);
-	}
-
-	va_end(args);
-
-	return retval;
-}
 
 /*
  *	makeInteger
@@ -307,7 +276,7 @@ sameseti(List *list1, List *list2)
  * as were in the inputs.
  */
 List *
-LispUnion(List *l1, List *l2)
+set_union(List *l1, List *l2)
 {
 	List	   *retval = listCopy(l1);
 	List	   *i;
@@ -321,7 +290,7 @@ LispUnion(List *l1, List *l2)
 }
 
 List *
-LispUnioni(List *l1, List *l2)
+set_unioni(List *l1, List *l2)
 {
 	List	   *retval = listCopy(l1);
 	List	   *i;
@@ -385,7 +354,8 @@ intMember(int l1, List *l2)
 
 /*
  * lremove
- *	  Removes 'elem' from the the linked list.
+ *	  Removes 'elem' from the linked list (destructively changing the list!).
+ *
  *	  This version matches 'elem' using simple pointer comparison.
  *	  See also LispRemove.
  */
@@ -414,7 +384,8 @@ lremove(void *elem, List *list)
 
 /*
  *	LispRemove
- *	  Removes 'elem' from the the linked list.
+ *	  Removes 'elem' from the linked list (destructively changing the list!).
+ *
  *	  This version matches 'elem' using equal().
  *	  (If there is more than one equal list member, the first is removed.)
  *	  See also lremove.
@@ -442,10 +413,12 @@ LispRemove(void *elem, List *list)
 	return result;
 }
 
-#ifdef NOT_USED
-
+/*
+ *	lremovei
+ *		lremove() for integer lists.
+ */
 List *
-intLispRemove(int elem, List *list)
+lremovei(int elem, List *list)
 {
 	List	   *l;
 	List	   *prev = NIL;
@@ -466,8 +439,6 @@ intLispRemove(int elem, List *list)
 	}
 	return result;
 }
-
-#endif
 
 /*
  * ltruncate

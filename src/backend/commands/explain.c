@@ -5,7 +5,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994-5, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/commands/explain.c,v 1.58 2000/09/12 21:06:47 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/commands/explain.c,v 1.59 2000/09/29 18:21:26 tgl Exp $
  *
  */
 
@@ -176,6 +176,12 @@ explain_outNode(StringInfo str, Plan *plan, int indent, ExplainState *es)
 		case T_IndexScan:
 			pname = "Index Scan";
 			break;
+		case T_TidScan:
+			pname = "Tid Scan";
+			break;
+		case T_SubqueryScan:
+			pname = "Subquery Scan";
+			break;
 		case T_Material:
 			pname = "Materialize";
 			break;
@@ -193,9 +199,6 @@ explain_outNode(StringInfo str, Plan *plan, int indent, ExplainState *es)
 			break;
 		case T_Hash:
 			pname = "Hash";
-			break;
-		case T_TidScan:
-			pname = "Tid Scan";
 			break;
 		default:
 			pname = "???";
@@ -225,37 +228,27 @@ explain_outNode(StringInfo str, Plan *plan, int indent, ExplainState *es)
 		case T_TidScan:
 			if (((Scan *) plan)->scanrelid > 0)
 			{
-				RangeTblEntry *rte = nth(((Scan *) plan)->scanrelid - 1, es->rtable);
+				RangeTblEntry *rte = rt_fetch(((Scan *) plan)->scanrelid,
+											  es->rtable);
+
+				/* Assume it's on a real relation */
+				Assert(rte->relname);
 
 				appendStringInfo(str, " on %s",
 								 stringStringInfo(rte->relname));
-				if (rte->alias != NULL)
-				{
-					if ((strcmp(rte->alias->relname, rte->relname) != 0)
-						|| (length(rte->alias->attrs) > 0))
-					{
-						appendStringInfo(str, " %s",
-									stringStringInfo(rte->alias->relname));
+				if (strcmp(rte->eref->relname, rte->relname) != 0)
+					appendStringInfo(str, " %s",
+									 stringStringInfo(rte->eref->relname));
+			}
+			break;
+		case T_SubqueryScan:
+			if (((Scan *) plan)->scanrelid > 0)
+			{
+				RangeTblEntry *rte = rt_fetch(((Scan *) plan)->scanrelid,
+											  es->rtable);
 
-						if (length(rte->alias->attrs) > 0)
-						{
-							List	   *c;
-							int			firstEntry = true;
-
-							appendStringInfo(str, " (");
-							foreach(c, rte->alias->attrs)
-							{
-								if (!firstEntry)
-								{
-									appendStringInfo(str, ", ");
-									firstEntry = false;
-								}
-								appendStringInfo(str, "%s", strVal(lfirst(c)));
-							}
-							appendStringInfo(str, ")");
-						}
-					}
-				}
+				appendStringInfo(str, " %s",
+								 stringStringInfo(rte->eref->relname));
 			}
 			break;
 		default:
@@ -284,7 +277,8 @@ explain_outNode(StringInfo str, Plan *plan, int indent, ExplainState *es)
 			for (i = 0; i < indent; i++)
 				appendStringInfo(str, "  ");
 			appendStringInfo(str, "    ->  ");
-			explain_outNode(str, ((SubPlan *) lfirst(lst))->plan, indent + 2, es);
+			explain_outNode(str, ((SubPlan *) lfirst(lst))->plan,
+							indent + 4, es);
 		}
 		es->rtable = saved_rtable;
 	}
@@ -307,32 +301,12 @@ explain_outNode(StringInfo str, Plan *plan, int indent, ExplainState *es)
 		explain_outNode(str, innerPlan(plan), indent + 3, es);
 	}
 
-	/* subPlan-s */
-	if (plan->subPlan)
+	if (IsA(plan, Append))
 	{
-		List	   *saved_rtable = es->rtable;
-		List	   *lst;
-
-		for (i = 0; i < indent; i++)
-			appendStringInfo(str, "  ");
-		appendStringInfo(str, "  SubPlan\n");
-		foreach(lst, plan->subPlan)
-		{
-			es->rtable = ((SubPlan *) lfirst(lst))->rtable;
-			for (i = 0; i < indent; i++)
-				appendStringInfo(str, "  ");
-			appendStringInfo(str, "    ->  ");
-			explain_outNode(str, ((SubPlan *) lfirst(lst))->plan, indent + 4, es);
-		}
-		es->rtable = saved_rtable;
-	}
-
-	if (nodeTag(plan) == T_Append)
-	{
-		List	   *saved_rtable = es->rtable;
-		List	   *lst;
-		int			whichplan = 0;
 		Append	   *appendplan = (Append *) plan;
+		List	   *saved_rtable = es->rtable;
+		int			whichplan = 0;
+		List	   *lst;
 
 		foreach(lst, appendplan->appendplans)
 		{
@@ -351,11 +325,52 @@ explain_outNode(StringInfo str, Plan *plan, int indent, ExplainState *es)
 
 			for (i = 0; i < indent; i++)
 				appendStringInfo(str, "  ");
-			appendStringInfo(str, "    ->  ");
+			appendStringInfo(str, "  ->  ");
 
-			explain_outNode(str, subnode, indent + 4, es);
+			explain_outNode(str, subnode, indent + 3, es);
 
 			whichplan++;
+		}
+		es->rtable = saved_rtable;
+	}
+
+	if (IsA(plan, SubqueryScan))
+	{
+		SubqueryScan *subqueryscan = (SubqueryScan *) plan;
+		Plan	   *subnode = subqueryscan->subplan;
+		RangeTblEntry *rte = rt_fetch(subqueryscan->scan.scanrelid,
+									  es->rtable);
+		List	   *saved_rtable = es->rtable;
+
+		Assert(rte->subquery != NULL);
+		es->rtable = rte->subquery->rtable;
+
+		for (i = 0; i < indent; i++)
+			appendStringInfo(str, "  ");
+		appendStringInfo(str, "  ->  ");
+
+		explain_outNode(str, subnode, indent + 3, es);
+
+		es->rtable = saved_rtable;
+	}
+
+	/* subPlan-s */
+	if (plan->subPlan)
+	{
+		List	   *saved_rtable = es->rtable;
+		List	   *lst;
+
+		for (i = 0; i < indent; i++)
+			appendStringInfo(str, "  ");
+		appendStringInfo(str, "  SubPlan\n");
+		foreach(lst, plan->subPlan)
+		{
+			es->rtable = ((SubPlan *) lfirst(lst))->rtable;
+			for (i = 0; i < indent; i++)
+				appendStringInfo(str, "  ");
+			appendStringInfo(str, "    ->  ");
+			explain_outNode(str, ((SubPlan *) lfirst(lst))->plan,
+							indent + 4, es);
 		}
 		es->rtable = saved_rtable;
 	}

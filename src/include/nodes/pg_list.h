@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_list.h,v 1.19 2000/09/12 21:07:10 tgl Exp $
+ * $Id: pg_list.h,v 1.20 2000/09/29 18:21:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -92,6 +92,18 @@ typedef struct List
 #define foreach(_elt_,_list_)	\
 	for(_elt_=(_list_); _elt_!=NIL; _elt_=lnext(_elt_))
 
+/*
+ * Convenience macros for building fixed-length lists
+ */
+#define makeList1(x1)				lcons(x1, NIL)
+#define makeList2(x1,x2)			lcons(x1, makeList1(x2))
+#define makeList3(x1,x2,x3)			lcons(x1, makeList2(x2,x3))
+#define makeList4(x1,x2,x3,x4)		lcons(x1, makeList3(x2,x3,x4))
+
+#define makeListi1(x1)				lconsi(x1, NIL)
+#define makeListi2(x1,x2)			lconsi(x1, makeListi1(x2))
+#define makeListi3(x1,x2,x3)		lconsi(x1, makeListi2(x2,x3))
+#define makeListi4(x1,x2,x3,x4)		lconsi(x1, makeListi3(x2,x3,x4))
 
 /*
  * function prototypes in nodes/list.c
@@ -106,11 +118,11 @@ extern bool intMember(int datum, List *list);
 extern Value *makeInteger(long i);
 extern Value *makeFloat(char *numericStr);
 extern Value *makeString(char *str);
-extern List *makeList(void *elem,...);
 extern List *lappend(List *list, void *datum);
 extern List *lappendi(List *list, int datum);
 extern List *lremove(void *elem, List *list);
 extern List *LispRemove(void *elem, List *list);
+extern List *lremovei(int elem, List *list);
 extern List *ltruncate(int n, List *list);
 
 extern void *nth(int n, List *l);
@@ -120,8 +132,8 @@ extern void set_nth(List *l, int n, void *elem);
 extern List *set_difference(List *list1, List *list2);
 extern List *set_differencei(List *list1, List *list2);
 extern List *lreverse(List *l);
-extern List *LispUnion(List *list1, List *list2);
-extern List *LispUnioni(List *list1, List *list2);
+extern List *set_union(List *list1, List *list2);
+extern List *set_unioni(List *list1, List *list2);
 
 extern bool sameseti(List *list1, List *list2);
 extern bool nonoverlap_setsi(List *list1, List *list2);

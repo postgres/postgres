@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/subselect.c,v 1.41 2000/09/12 21:06:54 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/subselect.c,v 1.42 2000/09/29 18:21:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -453,19 +453,6 @@ make_subplan(SubLink *slink)
 	return result;
 }
 
-/* this oughta be merged with LispUnioni */
-
-static List *
-set_unioni(List *l1, List *l2)
-{
-	if (l1 == NULL)
-		return l2;
-	if (l2 == NULL)
-		return l1;
-
-	return nconc(l1, set_differencei(l2, l1));
-}
-
 /*
  * finalize_primnode: build lists of subplans and params appearing
  * in the given expression tree.  NOTE: items are added to lists passed in,
@@ -680,6 +667,7 @@ SS_finalize_plan(Plan *plan)
 
 		case T_Agg:
 		case T_SeqScan:
+		case T_SubqueryScan:
 		case T_Material:
 		case T_Sort:
 		case T_Unique:

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/restrictinfo.c,v 1.11 2000/09/12 21:06:58 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/restrictinfo.c,v 1.12 2000/09/29 18:21:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -59,7 +59,7 @@ get_actual_clauses(List *restrictinfo_list)
  * get_actual_join_clauses
  *
  * Extract clauses from 'restrictinfo_list', separating those that
- * came from JOIN/ON conditions from those that didn't.
+ * syntactically match the join level from those that were pushed down.
  */
 void
 get_actual_join_clauses(List *restrictinfo_list,
@@ -74,9 +74,9 @@ get_actual_join_clauses(List *restrictinfo_list,
 	{
 		RestrictInfo *clause = (RestrictInfo *) lfirst(temp);
 
-		if (clause->isjoinqual)
-			*joinquals = lappend(*joinquals, clause->clause);
-		else
+		if (clause->ispusheddown)
 			*otherquals = lappend(*otherquals, clause->clause);
+		else
+			*joinquals = lappend(*joinquals, clause->clause);
 	}
 }

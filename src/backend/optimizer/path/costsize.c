@@ -42,7 +42,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/costsize.c,v 1.62 2000/06/18 22:44:06 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/costsize.c,v 1.63 2000/09/29 18:21:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -115,6 +115,7 @@ cost_seqscan(Path *path, RelOptInfo *baserel)
 
 	/* Should only be applied to base relations */
 	Assert(length(baserel->relids) == 1);
+	Assert(!baserel->issubquery);
 
 	if (!enable_seqscan)
 		startup_cost += disable_cost;
@@ -223,6 +224,7 @@ cost_index(Path *path, Query *root,
 	/* Should only be applied to base relations */
 	Assert(IsA(baserel, RelOptInfo) &&IsA(index, IndexOptInfo));
 	Assert(length(baserel->relids) == 1);
+	Assert(!baserel->issubquery);
 
 	if (!enable_indexscan && !is_injoin)
 		startup_cost += disable_cost;

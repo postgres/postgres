@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinrels.c,v 1.47 2000/09/12 21:06:53 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinrels.c,v 1.48 2000/09/29 18:21:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -307,19 +307,26 @@ make_rels_by_clauseless_joins(Query *root,
 
 
 /*
- * make_rel_from_jointree
+ * make_jointree_rel
  *		Find or build a RelOptInfojoin rel representing a specific
  *		jointree item.  For JoinExprs, we only consider the construction
  *		path that corresponds exactly to what the user wrote.
  */
 RelOptInfo *
-make_rel_from_jointree(Query *root, Node *jtnode)
+make_jointree_rel(Query *root, Node *jtnode)
 {
 	if (IsA(jtnode, RangeTblRef))
 	{
 		int			varno = ((RangeTblRef *) jtnode)->rtindex;
 
 		return get_base_rel(root, varno);
+	}
+	else if (IsA(jtnode, FromExpr))
+	{
+		FromExpr   *f = (FromExpr *) jtnode;
+
+		/* Recurse back to multi-way-join planner */
+		return make_fromexpr_rel(root, f);
 	}
 	else if (IsA(jtnode, JoinExpr))
 	{
@@ -329,8 +336,8 @@ make_rel_from_jointree(Query *root, Node *jtnode)
 				   *rrel;
 
 		/* Recurse */
-		lrel = make_rel_from_jointree(root, j->larg);
-		rrel = make_rel_from_jointree(root, j->rarg);
+		lrel = make_jointree_rel(root, j->larg);
+		rrel = make_jointree_rel(root, j->rarg);
 
 		/* Make this join rel */
 		rel = make_join_rel(root, lrel, rrel, j->jointype);
@@ -346,7 +353,7 @@ make_rel_from_jointree(Query *root, Node *jtnode)
 		return rel;
 	}
 	else
-		elog(ERROR, "make_rel_from_jointree: unexpected node type %d",
+		elog(ERROR, "make_jointree_rel: unexpected node type %d",
 			 nodeTag(jtnode));
 	return NULL;				/* keep compiler quiet */
 }

@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parse_node.h,v 1.21 2000/09/12 21:07:12 tgl Exp $
+ * $Id: parse_node.h,v 1.22 2000/09/29 18:21:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,7 +23,8 @@ typedef struct ParseState
 {
 	struct ParseState *parentParseState; /* stack link */
 	List	   *p_rtable;		/* range table so far */
-	List	   *p_jointree;		/* join tree so far */
+	List	   *p_joinlist;		/* join items so far (will become
+								 * FromExpr node's fromlist) */
 	int			p_last_resno;	/* last targetlist resno assigned */
 	bool		p_hasAggs;
 	bool		p_hasSubLinks;
