@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.121 2002/05/17 01:19:16 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.122 2002/05/17 20:53:33 tgl Exp $
  *
  * NOTES
  *		Transaction aborts can now occur two ways:
@@ -164,6 +164,7 @@
 #include "access/xact.h"
 #include "catalog/heap.h"
 #include "catalog/index.h"
+#include "catalog/namespace.h"
 #include "commands/async.h"
 #include "commands/sequence.h"
 #include "commands/trigger.h"
@@ -1009,6 +1010,7 @@ CommitTransaction(void)
 	AtEOXact_hash();
 	AtEOXact_nbtree();
 	AtEOXact_rtree();
+	AtEOXact_Namespace(true);
 	AtCommit_Cache();
 	AtCommit_Locks();
 	AtEOXact_CatCache(true);
@@ -1112,6 +1114,7 @@ AbortTransaction(void)
 	AtEOXact_hash();
 	AtEOXact_nbtree();
 	AtEOXact_rtree();
+	AtEOXact_Namespace(false);
 	AtAbort_Cache();
 	AtEOXact_CatCache(false);
 	AtAbort_Memory();

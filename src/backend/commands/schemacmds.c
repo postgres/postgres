@@ -8,13 +8,14 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/schemacmds.c,v 1.2 2002/04/27 03:45:01 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/schemacmds.c,v 1.3 2002/05/17 20:53:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
 #include "catalog/catalog.h"
+#include "catalog/namespace.h"
 #include "catalog/pg_namespace.h"
 #include "commands/schemacmds.h"
 #include "miscadmin.h"
@@ -32,6 +33,7 @@ CreateSchemaCommand(CreateSchemaStmt *stmt)
 {
 	const char *schemaName = stmt->schemaname;
 	const char *authId = stmt->authid;
+	Oid			namespaceId;
 	List	   *parsetree_list;
 	List	   *parsetree_item;
 	const char *owner_name;
@@ -85,10 +87,17 @@ CreateSchemaCommand(CreateSchemaStmt *stmt)
 			 schemaName);
 
 	/* Create the schema's namespace */
-	NamespaceCreate(schemaName, owner_userid);
+	namespaceId = NamespaceCreate(schemaName, owner_userid);
 
-	/* Let commands in the schema-element-list know about the schema */
+	/* Advance cmd counter to make the namespace visible */
 	CommandCounterIncrement();
+
+	/*
+	 * Temporarily make the new namespace be the front of the search path,
+	 * as well as the default creation target namespace.  This will be undone
+	 * at the end of this routine, or upon error.
+	 */
+	PushSpecialNamespace(namespaceId);
 
 	/*
 	 * Examine the list of commands embedded in the CREATE SCHEMA command,
@@ -123,6 +132,9 @@ CreateSchemaCommand(CreateSchemaStmt *stmt)
 			CommandCounterIncrement();
 		}
 	}
+
+	/* Reset search path to normal state */
+	PopSpecialNamespace(namespaceId);
 
 	/* Reset current user */
 	SetUserId(saved_userid);
