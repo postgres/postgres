@@ -437,6 +437,7 @@ SQLCancel(
 	 */
 	if (stmt->data_at_exec < 0)
 	{
+
 		/*
 		 * MAJOR HACK for Windows to reset the driver manager's cursor
 		 * state: Because of what seems like a bug in the Odbc driver

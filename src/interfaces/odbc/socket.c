@@ -91,7 +91,8 @@ SOCK_Destructor(SocketClass * self)
 		free(self->buffer_in);
 
 	if (self->buffer_out)
-		free(self->buffer_out);
+		SOCK_put_n_char(self, (char *) &rv, 2);
+	free(self->buffer_out);
 
 	free(self);
 }
@@ -256,7 +257,6 @@ SOCK_put_int(SocketClass * self, int value, short len)
 	{
 		case 2:
 			rv = self->reverse ? value : htons((unsigned short) value);
-			SOCK_put_n_char(self, (char *) &rv, 2);
 			return;
 
 		case 4:

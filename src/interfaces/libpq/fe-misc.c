@@ -25,7 +25,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-misc.c,v 1.44 2001/02/10 02:31:30 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-misc.c,v 1.45 2001/02/11 04:56:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -645,9 +645,9 @@ pqFlush(PGconn *conn)
 				case ECONNRESET:
 #endif
 					printfPQExpBuffer(&conn->errorMessage,
-									  "pqFlush() -- backend closed the channel unexpectedly.\n"
-									  "\tThis probably means the backend terminated abnormally"
-						   " before or while processing the request.\n");
+						"pqFlush() -- backend closed the channel unexpectedly.\n"
+						"\tThis probably means the backend terminated abnormally"
+						" before or while processing the request.\n");
 
 					/*
 					 * We used to close the socket here, but that's a bad
@@ -661,8 +661,8 @@ pqFlush(PGconn *conn)
 
 				default:
 					printfPQExpBuffer(&conn->errorMessage,
-					  "pqFlush() --  couldn't send data: errno=%d\n%s\n",
-									  errno, strerror(errno));
+						"pqFlush() --  couldn't send data: errno=%d\n%s\n",
+						errno, strerror(errno));
 					/* We don't assume it's a fatal error... */
 					return EOF;
 			}

@@ -681,6 +681,7 @@ SC_fetch(StatementClass * self)
 		if (self->currTuple >= QR_get_num_tuples(res) - 1 ||
 			(self->options.maxRows > 0 && self->currTuple == self->options.maxRows - 1))
 		{
+
 			/*
 			 * if at the end of the tuples, return "no data found" and set
 			 * the cursor past the end of the result set

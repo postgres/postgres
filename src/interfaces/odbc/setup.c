@@ -264,6 +264,7 @@ ConfigDlgProc(HWND hdlg,
 
 			switch (GET_WM_COMMAND_ID(wParam, lParam))
 			{
+
 					/*
 					 * Ensure the OK button is enabled only when a data
 					 * source name

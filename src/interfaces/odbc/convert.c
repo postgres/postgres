@@ -233,6 +233,7 @@ copy_and_convert_field(StatementClass * stmt, Int4 field_type, void *value, Int2
 	*********************************************************************/
 	switch (field_type)
 	{
+
 			/*
 			 * $$$ need to add parsing for date/time/timestamp strings in
 			 * PG_TYPE_CHAR,VARCHAR $$$
@@ -462,6 +463,7 @@ copy_and_convert_field(StatementClass * stmt, Int4 field_type, void *value, Int2
 	}
 	else
 	{
+
 		/*
 		 * for SQL_C_CHAR, it's probably ok to leave currency symbols in.
 		 * But to convert to numeric types, it is necessary to get rid of
@@ -1228,6 +1230,7 @@ convert_escape(char *value)
 	}
 	else if (strcmp(key, "fn") == 0)
 	{
+
 		/*
 		 * Function invocation Separate off the func name, skipping
 		 * trailing whitespace.

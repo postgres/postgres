@@ -201,7 +201,7 @@ SQLGetInfo(
 
 			/*
 			 * The ODBC spec wants ##.##.#### ...whatever... so prepend
-			 * the driver version number to the dbms version string 
+			 * the driver version number to the dbms version string
 			 */
 			sprintf(tmp, "%s %s", POSTGRESDRIVERVERSION, conn->pg_version);
 			p = tmp;
@@ -1324,6 +1324,7 @@ SQLTables(
 	result = SQLFetch(htbl_stmt);
 	while ((result == SQL_SUCCESS) || (result == SQL_SUCCESS_WITH_INFO))
 	{
+
 		/*
 		 * Determine if this table name is a system table. If treating
 		 * system tables as regular tables, then no need to do this test.

@@ -307,6 +307,7 @@ SQLSetConnectOption(
 
 	switch (fOption)
 	{
+
 			/*
 			 * Statement Options (apply to all stmts on the connection and
 			 * become defaults for new stmts)

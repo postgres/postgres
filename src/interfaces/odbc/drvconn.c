@@ -215,6 +215,7 @@ dialog:
 
 	if (szConnStrOut)
 	{
+
 		/*
 		 * Return the completed string to the caller. The correct method
 		 * is to only construct the connect string if a dialog was put up,

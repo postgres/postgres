@@ -49,6 +49,7 @@ extern GLOBAL_VALUES globals;
 void
 SetDlgStuff(HWND hdlg, ConnInfo * ci)
 {
+
 	/*
 	 * If driver attribute NOT present, then set the datasource name and
 	 * description
@@ -773,6 +774,7 @@ getGlobalDefaults(char *section, char *filename, char override)
 	/* Dont allow override of an override! */
 	if (!override)
 	{
+
 		/*
 		 * ConnSettings is stored in the driver section and per datasource
 		 * for override

@@ -384,6 +384,7 @@ QR_next_tuple(QResultClass * self)
 	}
 	else
 	{
+
 		/*
 		 * See if we need to fetch another group of rows. We may be being
 		 * called from send_query(), and if so, don't send another fetch,
@@ -616,6 +617,7 @@ QR_read_tuple(QResultClass * self, char binary)
 		}
 		else
 		{
+
 			/*
 			 * NO, the field is not null. so get at first the length of
 			 * the field (four bytes)

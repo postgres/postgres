@@ -204,26 +204,20 @@ extern		"C"
 												 SWORD cbCursorMax,
 												 SWORD FAR * pcbCursor);
 
-	RETCODE SQL_API SQLNumResultCols(HSTMT hstmt,
-												 SWORD FAR * pccol);
+	RETCODE SQL_API SQLNumResultCols(HSTMT hstmt, SWORD FAR * pccol);
 
-	RETCODE SQL_API SQLPrepare(HSTMT hstmt,
-										   UCHAR FAR * szSqlStr,
+	RETCODE SQL_API SQLPrepare(HSTMT hstmt, UCHAR FAR * szSqlStr,
 										   SDWORD cbSqlStr);
 
-	RETCODE SQL_API SQLRowCount(HSTMT hstmt,
-											SDWORD FAR * pcrow);
+	RETCODE SQL_API SQLRowCount(HSTMT hstmt, SDWORD FAR * pcrow);
 
-	RETCODE SQL_API SQLSetCursorName(HSTMT hstmt,
-												 UCHAR FAR * szCursor,
+	RETCODE SQL_API SQLSetCursorName(HSTMT hstmt, UCHAR FAR * szCursor,
 												 SWORD cbCursor);
 
-	RETCODE SQL_API SQLTransact(HENV henv,
-											HDBC hdbc,
+	RETCODE SQL_API SQLTransact(HENV henv, HDBC hdbc,
 											UWORD fType);
 
-	RETCODE SQL_API SQLSetParam(HSTMT hstmt,
-											UWORD ipar,
+	RETCODE SQL_API SQLSetParam(HSTMT hstmt, UWORD ipar,
 											SWORD fCType,
 											SWORD fSqlType,
 											UDWORD cbColDef,
