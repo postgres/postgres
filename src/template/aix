@@ -1,6 +1,4 @@
-if test "$GCC" = yes ; then
-  CFLAGS="$CFLAGS -pipe"
-else
+if test "$GCC" != yes ; then
   case $host_os in
     aix3.2.5 | aix4.1*) ;;
     *) CFLAGS="$CFLAGS -O2 -qlonglong";;

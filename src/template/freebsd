@@ -1,5 +1,3 @@
-CFLAGS="$CFLAGS -pipe"
-
 case $host_cpu in
   alpha*)   CFLAGS="$CFLAGS -O";;  # alpha has problems with -O2
 esac
