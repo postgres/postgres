@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/tupdesc.c,v 1.94 2002/11/13 00:39:46 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/tupdesc.c,v 1.95 2003/06/15 17:59:10 tgl Exp $
  *
  * NOTES
  *	  some of the executor utility code such as "ExecTypeFromTL" should be
@@ -697,7 +697,10 @@ TypeGetTupleDesc(Oid typeoid, List *colaliases)
 	else if (functyptype == 'p' && typeoid == RECORDOID)
 		elog(ERROR, "Unable to determine tuple description for function returning \"record\"");
 	else
-		elog(ERROR, "Unknown kind of return type specified for function");
+	{
+		/* crummy error message, but parser should have caught this */
+		elog(ERROR, "function in FROM has unsupported return type");
+	}
 
 	return tupdesc;
 }

@@ -445,10 +445,8 @@ crosstab(PG_FUNCTION_ARGS)
 				tupdesc = make_crosstab_tupledesc(spi_tupdesc, num_categories);
 			}
 		}
-		else if (functyptype == 'b')
-			elog(ERROR, "Invalid kind of return type specified for function");
 		else
-			elog(ERROR, "Unknown kind of return type specified for function");
+			elog(ERROR, "crosstab: return type must be a row type");
 
 		/*
 		 * Check that return tupdesc is compatible with the one we got

@@ -327,10 +327,8 @@ dblink_fetch(PG_FUNCTION_ARGS)
 			tupdesc = TypeGetTupleDesc(functypeid, NIL);
 		else if (functyptype == 'p' && functypeid == RECORDOID)
 			tupdesc = pgresultGetTupleDesc(res);
-		else if (functyptype == 'b')
-			elog(ERROR, "dblink_fetch: invalid kind of return type specified for function");
 		else
-			elog(ERROR, "dblink_fetch: unknown kind of return type specified for function");
+			elog(ERROR, "dblink_fetch: return type must be a row type");
 
 		/* store needed metadata for subsequent calls */
 		slot = TupleDescGetSlot(tupdesc);
@@ -506,10 +504,8 @@ dblink_record(PG_FUNCTION_ARGS)
 				tupdesc = TypeGetTupleDesc(functypeid, NIL);
 			else if (functyptype == 'p' && functypeid == RECORDOID)
 				tupdesc = pgresultGetTupleDesc(res);
-			else if (functyptype == 'b')
-				elog(ERROR, "Invalid kind of return type specified for function");
 			else
-				elog(ERROR, "Unknown kind of return type specified for function");
+				elog(ERROR, "dblink: return type must be a row type");
 		}
 
 		/* store needed metadata for subsequent calls */

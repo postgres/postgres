@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeFunctionscan.c,v 1.17 2003/01/12 22:01:38 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeFunctionscan.c,v 1.18 2003/06/15 17:59:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -231,7 +231,10 @@ ExecInitFunctionScan(FunctionScan *node, EState *estate)
 		tupdesc = BuildDescForRelation(rte->coldeflist);
 	}
 	else
-		elog(ERROR, "Unknown kind of return type specified for function");
+	{
+		/* crummy error message, but parser should have caught this */
+		elog(ERROR, "function in FROM has unsupported return type");
+	}
 
 	scanstate->tupdesc = tupdesc;
 	ExecSetSlotDescriptor(scanstate->ss.ss_ScanTupleSlot,
