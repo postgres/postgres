@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.138 2002/10/19 21:23:20 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.139 2002/10/24 22:09:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -770,6 +770,11 @@ func_get_detail(List *funcname,
 		 * and ones that are coercing a previously-unknown-type literal
 		 * constant to a specific type.
 		 *
+		 * The reason we can restrict our check to binary-compatible
+		 * coercions here is that we expect non-binary-compatible coercions
+		 * to have an implementation function named after the target type.
+		 * That function will be found by normal lookup if appropriate.
+		 *
 		 * NB: it's important that this code stays in sync with what
 		 * coerce_type can do, because the caller will try to apply
 		 * coerce_type if we return FUNCDETAIL_COERCION.  If we return
@@ -791,7 +796,9 @@ func_get_detail(List *funcname,
 				Node	   *arg1 = lfirst(fargs);
 
 				if ((sourceType == UNKNOWNOID && IsA(arg1, Const)) ||
-					IsBinaryCoercible(sourceType, targetType))
+					(find_coercion_pathway(targetType, sourceType,
+										   COERCION_EXPLICIT, funcid) &&
+					 *funcid == InvalidOid))
 				{
 					/* Yup, it's a type coercion */
 					*funcid = InvalidOid;

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parse_coerce.h,v 1.47 2002/09/18 21:35:24 tgl Exp $
+ * $Id: parse_coerce.h,v 1.48 2002/10/24 22:09:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -54,6 +54,9 @@ extern Oid	select_common_type(List *typeids, const char *context);
 extern Node *coerce_to_common_type(Node *node, Oid targetTypeId,
 					  const char *context);
 
+extern bool find_coercion_pathway(Oid targetTypeId, Oid sourceTypeId,
+								  CoercionContext ccontext,
+								  Oid *funcid);
 extern Oid	find_typmod_coercion_function(Oid typeId, int *nargs);
 
 #endif   /* PARSE_COERCE_H */
