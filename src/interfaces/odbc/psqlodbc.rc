@@ -145,7 +145,7 @@ BEGIN
     CONTROL         "Show System &Tables",DS_SHOWSYSTEMTABLES,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,25,25,85,10
     GROUPBOX        "Protocol",IDC_STATIC,15,40,180,25
-    CONTROL         "6.4+",DS_PG64,"Button",BS_AUTORADIOBUTTON | WS_GROUP,25,
+    CONTROL         "7.X,6.4+",DS_PG64,"Button",BS_AUTORADIOBUTTON | WS_GROUP,25,
                     50,35,10
     CONTROL         "6.3",DS_PG63,"Button",BS_AUTORADIOBUTTON | WS_TABSTOP,
                     75,50,26,10
