@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.49 1998/07/19 03:46:29 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.50 1998/07/20 16:14:13 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -605,16 +605,6 @@ InitPlan(CmdType operation, Query *parseTree, Plan *plan, EState *estate)
 	}
 
 	estate->es_into_relation_descriptor = intoRelationDesc;
-
-	/* ----------------
-	 *	return the type information..
-	 * ----------------
-	 */
-/*
-	attinfo = (AttrInfo *)palloc(sizeof(AttrInfo));
-	attinfo->numAttr = len;
-	attinfo->attrs = tupType->attrs;
-*/
 
 	return tupType;
 }

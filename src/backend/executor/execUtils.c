@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execUtils.c,v 1.32 1998/06/15 19:28:20 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execUtils.c,v 1.33 1998/07/20 16:14:13 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -309,8 +309,7 @@ ExecFreeResultType(CommonState *commonstate)
 	slot = commonstate->cs_ResultTupleSlot;
 	tupType = slot->ttc_tupleDescriptor;
 
-/*	  ExecFreeTypeInfo(tupType); */
-	pfree(tupType);
+	ExecFreeTypeInfo(tupType);
 }
 
 #endif
@@ -407,8 +406,7 @@ ExecFreeScanType(CommonScanState *csstate)
 	slot = csstate->css_ScanTupleSlot;
 	tupType = slot->ttc_tupleDescriptor;
 
-/*	  ExecFreeTypeInfo(tupType); */
-	pfree(tupType);
+	ExecFreeTypeInfo(tupType);
 }
 
 #endif

@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/smgr.c,v 1.17 1998/06/27 04:53:40 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/smgr.c,v 1.18 1998/07/20 16:14:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -132,8 +132,7 @@ smgrcreate(int16 which, Relation reln)
 	int			fd;
 
 	if ((fd = (*(smgrsw[which].smgr_create)) (reln)) < 0)
-		elog(ERROR, "cannot create %s",
-			 &(reln->rd_rel->relname.data[0]));
+		elog(ERROR, "cannot create %s",	reln->rd_rel->relname.data);
 
 	return (fd);
 }
@@ -149,8 +148,7 @@ smgrunlink(int16 which, Relation reln)
 	int			status;
 
 	if ((status = (*(smgrsw[which].smgr_unlink)) (reln)) == SM_FAIL)
-		elog(ERROR, "cannot unlink %s",
-			 &(reln->rd_rel->relname.data[0]));
+		elog(ERROR, "cannot unlink %s", reln->rd_rel->relname.data);
 
 	return (status);
 }
@@ -169,8 +167,7 @@ smgrextend(int16 which, Relation reln, char *buffer)
 	status = (*(smgrsw[which].smgr_extend)) (reln, buffer);
 
 	if (status == SM_FAIL)
-		elog(ERROR, "%s: cannot extend",
-			 &(reln->rd_rel->relname.data[0]));
+		elog(ERROR, "%s: cannot extend", reln->rd_rel->relname.data);
 
 	return (status);
 }
@@ -187,8 +184,7 @@ smgropen(int16 which, Relation reln)
 	int			fd;
 
 	if ((fd = (*(smgrsw[which].smgr_open)) (reln)) < 0)
-		elog(ERROR, "cannot open %s",
-			 &(reln->rd_rel->relname.data[0]));
+		elog(ERROR, "cannot open %s", reln->rd_rel->relname.data);
 
 	return (fd);
 }
@@ -209,8 +205,7 @@ int
 smgrclose(int16 which, Relation reln)
 {
 	if ((*(smgrsw[which].smgr_close)) (reln) == SM_FAIL)
-		elog(ERROR, "cannot close %s",
-			 &(reln->rd_rel->relname.data[0]));
+		elog(ERROR, "cannot close %s", reln->rd_rel->relname.data);
 
 	return (SM_SUCCESS);
 }
@@ -234,7 +229,7 @@ smgrread(int16 which, Relation reln, BlockNumber blocknum, char *buffer)
 
 	if (status == SM_FAIL)
 		elog(ERROR, "cannot read block %d of %s",
-			 blocknum, &(reln->rd_rel->relname.data[0]));
+			 blocknum, reln->rd_rel->relname.data);
 
 	return (status);
 }
@@ -256,7 +251,7 @@ smgrwrite(int16 which, Relation reln, BlockNumber blocknum, char *buffer)
 
 	if (status == SM_FAIL)
 		elog(ERROR, "cannot write block %d of %s",
-			 blocknum, &(reln->rd_rel->relname.data[0]));
+			blocknum, reln->rd_rel->relname.data);
 
 	return (status);
 }
@@ -273,7 +268,7 @@ smgrflush(int16 which, Relation reln, BlockNumber blocknum, char *buffer)
 
 	if (status == SM_FAIL)
 		elog(ERROR, "cannot flush block %d of %s to stable store",
-			 blocknum, &(reln->rd_rel->relname.data[0]));
+			 blocknum, reln->rd_rel->relname.data);
 
 	return (status);
 }
@@ -332,8 +327,7 @@ smgrnblocks(int16 which, Relation reln)
 	int			nblocks;
 
 	if ((nblocks = (*(smgrsw[which].smgr_nblocks)) (reln)) < 0)
-		elog(ERROR, "cannot count blocks for %s",
-			 &(reln->rd_rel->relname.data[0]));
+		elog(ERROR, "cannot count blocks for %s", reln->rd_rel->relname.data);
 
 	return (nblocks);
 }
@@ -355,7 +349,7 @@ smgrtruncate(int16 which, Relation reln, int nblocks)
 	{
 		if ((newblks = (*(smgrsw[which].smgr_truncate)) (reln, nblocks)) < 0)
 			elog(ERROR, "cannot truncate %s to %d blocks",
-				 &(reln->rd_rel->relname.data[0]), nblocks);
+				reln->rd_rel->relname.data, nblocks);
 	}
 
 	return (newblks);
