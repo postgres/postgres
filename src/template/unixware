@@ -1,3 +1,5 @@
-CFLAGS='-O -K host,inline,loop_unroll,alloca -Dsvr4'
-SRCH_INC='/opt/include'
-SRCH_LIB='/opt/lib'
+if test "$GCC" = yes; then
+  CFLAGS=-O2
+else
+  CFLAGS='-O -K inline'
+fi

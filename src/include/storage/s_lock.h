@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/include/storage/s_lock.h,v 1.72 2000/10/08 04:38:21 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/include/storage/s_lock.h,v 1.73 2000/10/22 22:15:03 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -236,7 +236,7 @@ tas(volatile slock_t *lock)
 #define TAS(lock)	tas(lock)
 
 asm int
-tas(slock_t *s_lock)
+tas(volatile slock_t *s_lock)
 {
 /* UNIVEL wants %mem in column 1, so we don't pg_indent this file */
 %mem s_lock

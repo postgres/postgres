@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.140 2000/10/17 17:43:13 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.141 2000/10/22 22:15:04 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2101,10 +2101,11 @@ pqPacketSend(PGconn *conn, const char *buf, size_t len)
 # error "You must compile this file with SYSCONFDIR defined."
 #endif
 
+#define MAXBUFSIZE 256
+
 int parseServiceInfo(PQconninfoOption *options, PQExpBuffer errorMessage) {
   char *service = conninfo_getval(options, "service");
   char *serviceFile = SYSCONFDIR "/pg_service.conf";
-  int  MAXBUFSIZE = 256;
   int  group_found = 0;
   int  linenr=0, i;
 

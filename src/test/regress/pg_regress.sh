@@ -1,5 +1,5 @@
 #! /bin/sh
-# $Header: /cvsroot/pgsql/src/test/regress/Attic/pg_regress.sh,v 1.7 2000/10/07 20:23:03 petere Exp $
+# $Header: /cvsroot/pgsql/src/test/regress/Attic/pg_regress.sh,v 1.8 2000/10/22 22:15:09 petere Exp $
 
 me=`basename $0`
 : ${TMPDIR=/tmp}
@@ -85,7 +85,7 @@ export PGHOST
 export PGPORT
 
 dbname=regression
-hostname=`hostname` || hostname=localhost
+hostname=localhost
 
 : ${GMAKE='@GMAKE@'}
 
@@ -287,7 +287,9 @@ then
     fi
 
     message "creating temporary installation"
-    mkdir -p "$LOGDIR" || { (exit 2); exit; }
+    if [ ! -d "$LOGDIR" ]; then
+        mkdir -p "$LOGDIR" || { (exit 2); exit; }
+    fi
     $GMAKE -C "$top_builddir" DESTDIR="$temp_install" install >"$LOGDIR/install.log" 2>&1
 
     if [ $? -ne 0 ]
@@ -423,7 +425,9 @@ esac
 
 message "running regression test queries"
 
-mkdir -p "$outputdir/results" || { (exit 2); exit; }
+if [ ! -d "$outputdir/results" ]; then
+    mkdir -p "$outputdir/results" || { (exit 2); exit; }
+fi
 result_summary_file=$outputdir/regression.out
 diff_file=$outputdir/regression.diffs
 
@@ -469,9 +473,9 @@ do
     else
         # Start a parallel group
         $ECHO_N "parallel group ($# tests): " $ECHO_C
-        for name; do
+        for name do
             ( $PSQL -d $dbname <"$inputdir/sql/$name.sql" >"$outputdir/results/$name.out" 2>&1
-              $ECHO_N " $name $ECHO_C"
+              $ECHO_N " $name$ECHO_C"
             ) &
         done
         wait
@@ -485,7 +489,7 @@ do
     # subshells.)
     # ----------
 
-    for name; do
+    for name do
         if [ $# -ne 1 ]; then
             formatted=`echo "$name" | awk '{printf "%-20.20s", $1;}'`
             $ECHO_N "     $formatted ... $ECHO_C"

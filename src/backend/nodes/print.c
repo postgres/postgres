@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/print.c,v 1.43 2000/10/05 19:11:27 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/print.c,v 1.44 2000/10/22 22:14:54 petere Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -292,64 +292,44 @@ plannode_type(Plan *p)
 	{
 		case T_Plan:
 			return "PLAN";
-			break;
 		case T_Result:
 			return "RESULT";
-			break;
 		case T_Append:
 			return "APPEND";
-			break;
 		case T_Scan:
 			return "SCAN";
-			break;
 		case T_SeqScan:
 			return "SEQSCAN";
-			break;
 		case T_IndexScan:
 			return "INDEXSCAN";
-			break;
 		case T_TidScan:
 			return "TIDSCAN";
-			break;
 		case T_SubqueryScan:
 			return "SUBQUERYSCAN";
-			break;
 		case T_Join:
 			return "JOIN";
-			break;
 		case T_NestLoop:
 			return "NESTLOOP";
-			break;
 		case T_MergeJoin:
 			return "MERGEJOIN";
-			break;
 		case T_HashJoin:
 			return "HASHJOIN";
-			break;
 		case T_Material:
 			return "MATERIAL";
-			break;
 		case T_Sort:
 			return "SORT";
-			break;
 		case T_Agg:
 			return "AGG";
-			break;
 		case T_Unique:
 			return "UNIQUE";
-			break;
 		case T_SetOp:
 			return "SETOP";
-			break;
 		case T_Hash:
 			return "HASH";
-			break;
 		case T_Group:
 			return "GROUP";
-			break;
 		default:
 			return "UNKNOWN";
-			break;
 	}
 }
 

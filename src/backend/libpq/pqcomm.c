@@ -29,7 +29,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: pqcomm.c,v 1.106 2000/10/14 23:56:58 momjian Exp $
+ *	$Id: pqcomm.c,v 1.107 2000/10/22 22:14:54 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -331,6 +331,15 @@ StreamConnection(int server_fd, Port *port)
 		perror("postmaster: StreamConnection: accept");
 		return STATUS_ERROR;
 	}
+
+#ifdef PG_ON_UNIXWARE
+	/*
+	 * Only UnixWare 7+ are known to have this bug, but it shouldn't
+	 * hurt it catch if for all of them.
+	 */
+	if (port->raddr.sa.sa_family == 0)
+		port->raddr.sa.sa_family = AF_UNIX;
+#endif
 
 	/* fill in the server (local) address */
 	addrlen = sizeof(port->laddr);

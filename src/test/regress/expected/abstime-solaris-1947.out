@@ -126,3 +126,4 @@ SELECT '' AS four, f1 AS abstime,
       | Sun Jan 14 03:14:21 1973 PST | 1973 |     1 |  14 |    3 |     14 |     21
       | Mon May 01 00:30:30 1995 PDT | 1995 |     5 |   1 |    0 |     30 |     30
 (4 rows)
+

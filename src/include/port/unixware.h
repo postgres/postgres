@@ -1,9 +1,11 @@
 #define USE_POSIX_TIME
-#define NO_EMPTY_STMTS
 #define SYSV_DIRENT
 
 #define HAS_TEST_AND_SET
 #define NEED_I386_TAS_ASM
+
+/* see src/backend/libpq/pqcomm.c */
+#define PG_ON_UNIXWARE
 
 /***************************************
  * Define this if you are compiling with

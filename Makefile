@@ -11,7 +11,7 @@
 # GNUmakefile won't exist yet, so we catch that case as well.
 
 
-all install clean dep depend distclean maintainer-clean:
+all check install installdirs installcheck uninstall dep depend clean distclean maintainer-clean:
 	@if ! [ -f GNUmakefile ] ; then \
 	   echo "You need to run the \`configure' program first. See the file"; \
 	   echo "\`INSTALL' for installation instructions." ; \
@@ -20,7 +20,7 @@ all install clean dep depend distclean maintainer-clean:
 	@IFS=':' ; \
 	 for dir in $$PATH; do \
 	   for prog in gmake gnumake make; do \
-	     if [ -f $$dir/$$prog ] && ( $$dir/$$prog --version | grep GNU >/dev/null 2>&1 ) ; then \
+	     if [ -f $$dir/$$prog ] && ( $$dir/$$prog --version 2>/dev/null | grep GNU >/dev/null 2>&1 ) ; then \
 	       GMAKE=$$dir/$$prog; \
 	       break 2; \
 	     fi; \

@@ -52,8 +52,12 @@ RmgrData   RmgrTable[] = {
 {"Gist", gist_redo, gist_undo, gist_desc}
 };
 
-#else
+#else /* not XLOG */
 
-RmgrData   RmgrTable[] = {};
+/*
+ * This is a dummy, but don't write RmgrTable[] = {} here,
+ * that's not accepted by some compilers. -- petere
+ */
+RmgrData   RmgrTable[1];
 
-#endif
+#endif /* not XLOG */

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.98 2000/10/05 19:11:27 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.99 2000/10/22 22:14:54 petere Exp $
  *
  * NOTES
  *	  Most of the read functions for plan nodes are tested. (In fact, they
@@ -57,7 +57,7 @@ toIntList(List *list)
  * ----------------
  */
 static Query *
-_readQuery()
+_readQuery(void)
 {
 	Query	   *local_node;
 	char	   *token;
@@ -158,7 +158,7 @@ _readQuery()
  * ----------------
  */
 static SortClause *
-_readSortClause()
+_readSortClause(void)
 {
 	SortClause *local_node;
 	char	   *token;
@@ -182,7 +182,7 @@ _readSortClause()
  * ----------------
  */
 static GroupClause *
-_readGroupClause()
+_readGroupClause(void)
 {
 	GroupClause *local_node;
 	char	   *token;
@@ -206,7 +206,7 @@ _readGroupClause()
  * ----------------
  */
 static SetOperationStmt *
-_readSetOperationStmt()
+_readSetOperationStmt(void)
 {
 	SetOperationStmt *local_node;
 	char	   *token;
@@ -295,7 +295,7 @@ _getPlan(Plan *node)
  * ----------------
  */
 static Plan *
-_readPlan()
+_readPlan(void)
 {
 	Plan	   *local_node;
 
@@ -311,7 +311,7 @@ _readPlan()
  * ----------------
  */
 static Result *
-_readResult()
+_readResult(void)
 {
 	Result	   *local_node;
 	char	   *token;
@@ -335,7 +335,7 @@ _readResult()
  */
 
 static Append *
-_readAppend()
+_readAppend(void)
 {
 	Append	   *local_node;
 	char	   *token;
@@ -386,7 +386,7 @@ _getJoin(Join *node)
  * ----------------
  */
 static Join *
-_readJoin()
+_readJoin(void)
 {
 	Join	   *local_node;
 
@@ -405,7 +405,7 @@ _readJoin()
  */
 
 static NestLoop *
-_readNestLoop()
+_readNestLoop(void)
 {
 	NestLoop   *local_node;
 
@@ -423,7 +423,7 @@ _readNestLoop()
  * ----------------
  */
 static MergeJoin *
-_readMergeJoin()
+_readMergeJoin(void)
 {
 	MergeJoin  *local_node;
 	char	   *token;
@@ -446,7 +446,7 @@ _readMergeJoin()
  * ----------------
  */
 static HashJoin *
-_readHashJoin()
+_readHashJoin(void)
 {
 	HashJoin   *local_node;
 	char	   *token;
@@ -494,7 +494,7 @@ _getScan(Scan *node)
  * ----------------
  */
 static Scan *
-_readScan()
+_readScan(void)
 {
 	Scan	   *local_node;
 
@@ -512,7 +512,7 @@ _readScan()
  * ----------------
  */
 static SeqScan *
-_readSeqScan()
+_readSeqScan(void)
 {
 	SeqScan    *local_node;
 
@@ -530,7 +530,7 @@ _readSeqScan()
  * ----------------
  */
 static IndexScan *
-_readIndexScan()
+_readIndexScan(void)
 {
 	IndexScan  *local_node;
 	char	   *token;
@@ -563,7 +563,7 @@ _readIndexScan()
  * ----------------
  */
 static TidScan *
-_readTidScan()
+_readTidScan(void)
 {
 	TidScan    *local_node;
 	char	   *token;
@@ -590,7 +590,7 @@ _readTidScan()
  * ----------------
  */
 static SubqueryScan *
-_readSubqueryScan()
+_readSubqueryScan(void)
 {
 	SubqueryScan  *local_node;
 	char	   *token;
@@ -613,7 +613,7 @@ _readSubqueryScan()
  * ----------------
  */
 static Sort *
-_readSort()
+_readSort(void)
 {
 	Sort	   *local_node;
 	char	   *token;
@@ -631,7 +631,7 @@ _readSort()
 }
 
 static Agg *
-_readAgg()
+_readAgg(void)
 {
 	Agg		   *local_node;
 
@@ -648,7 +648,7 @@ _readAgg()
  * ----------------
  */
 static Hash *
-_readHash()
+_readHash(void)
 {
 	Hash	   *local_node;
 	char	   *token;
@@ -675,7 +675,7 @@ _readHash()
  * ----------------
  */
 static Resdom *
-_readResdom()
+_readResdom(void)
 {
 	Resdom	   *local_node;
 	char	   *token;
@@ -728,7 +728,7 @@ _readResdom()
  * ----------------
  */
 static Expr *
-_readExpr()
+_readExpr(void)
 {
 	Expr	   *local_node;
 	char	   *token;
@@ -773,7 +773,7 @@ _readExpr()
  * ----------------
  */
 static CaseExpr *
-_readCaseExpr()
+_readCaseExpr(void)
 {
 	CaseExpr   *local_node;
 	char	   *token;
@@ -804,7 +804,7 @@ _readCaseExpr()
  * ----------------
  */
 static CaseWhen *
-_readCaseWhen()
+_readCaseWhen(void)
 {
 	CaseWhen   *local_node;
 	char	   *token;
@@ -826,7 +826,7 @@ _readCaseWhen()
  * ----------------
  */
 static Var *
-_readVar()
+_readVar(void)
 {
 	Var		   *local_node;
 	char	   *token;
@@ -872,7 +872,7 @@ _readVar()
  * ----------------
  */
 static ArrayRef *
-_readArrayRef()
+_readArrayRef(void)
 {
 	ArrayRef   *local_node;
 	char	   *token;
@@ -918,7 +918,7 @@ _readArrayRef()
  * ----------------
  */
 static Const *
-_readConst()
+_readConst(void)
 {
 	Const	   *local_node;
 	char	   *token;
@@ -977,7 +977,7 @@ _readConst()
  * ----------------
  */
 static Func *
-_readFunc()
+_readFunc(void)
 {
 	Func	   *local_node;
 	char	   *token;
@@ -1005,7 +1005,7 @@ _readFunc()
  * ----------------
  */
 static Oper *
-_readOper()
+_readOper(void)
 {
 	Oper	   *local_node;
 	char	   *token;
@@ -1037,7 +1037,7 @@ _readOper()
  * ----------------
  */
 static Param *
-_readParam()
+_readParam(void)
 {
 	Param	   *local_node;
 	char	   *token;
@@ -1074,7 +1074,7 @@ _readParam()
  * ----------------
  */
 static Aggref *
-_readAggref()
+_readAggref(void)
 {
 	Aggref	   *local_node;
 	char	   *token;
@@ -1115,7 +1115,7 @@ _readAggref()
  * ----------------
  */
 static SubLink *
-_readSubLink()
+_readSubLink(void)
 {
 	SubLink    *local_node;
 	char	   *token;
@@ -1150,7 +1150,7 @@ _readSubLink()
  * ----------------
  */
 static FieldSelect *
-_readFieldSelect()
+_readFieldSelect(void)
 {
 	FieldSelect *local_node;
 	char	   *token;
@@ -1183,7 +1183,7 @@ _readFieldSelect()
  * ----------------
  */
 static RelabelType *
-_readRelabelType()
+_readRelabelType(void)
 {
 	RelabelType *local_node;
 	char	   *token;
@@ -1212,7 +1212,7 @@ _readRelabelType()
  * ----------------
  */
 static RangeTblRef *
-_readRangeTblRef()
+_readRangeTblRef(void)
 {
 	RangeTblRef *local_node;
 	char	   *token;
@@ -1233,7 +1233,7 @@ _readRangeTblRef()
  * ----------------
  */
 static FromExpr *
-_readFromExpr()
+_readFromExpr(void)
 {
 	FromExpr   *local_node;
 	char	   *token;
@@ -1257,7 +1257,7 @@ _readFromExpr()
  * ----------------
  */
 static JoinExpr *
-_readJoinExpr()
+_readJoinExpr(void)
 {
 	JoinExpr   *local_node;
 	char	   *token;
@@ -1308,7 +1308,7 @@ _readJoinExpr()
  * ----------------
  */
 static EState *
-_readEState()
+_readEState(void)
 {
 	EState	   *local_node;
 	char	   *token;
@@ -1343,7 +1343,7 @@ _readEState()
  * ----------------
  */
 static RelOptInfo *
-_readRelOptInfo()
+_readRelOptInfo(void)
 {
 	RelOptInfo *local_node;
 	char	   *token;
@@ -1421,7 +1421,7 @@ _readRelOptInfo()
  * ----------------
  */
 static TargetEntry *
-_readTargetEntry()
+_readTargetEntry(void)
 {
 	TargetEntry *local_node;
 	char	   *token;
@@ -1439,7 +1439,7 @@ _readTargetEntry()
 }
 
 static Attr *
-_readAttr()
+_readAttr(void)
 {
 	Attr	   *local_node;
 	char	   *token;
@@ -1462,7 +1462,7 @@ _readAttr()
  * ----------------
  */
 static RangeTblEntry *
-_readRangeTblEntry()
+_readRangeTblEntry(void)
 {
 	RangeTblEntry *local_node;
 	char	   *token;
@@ -1520,7 +1520,7 @@ _readRangeTblEntry()
  * ----------------
  */
 static Path *
-_readPath()
+_readPath(void)
 {
 	Path	   *local_node;
 	char	   *token;
@@ -1553,7 +1553,7 @@ _readPath()
  * ----------------
  */
 static IndexPath *
-_readIndexPath()
+_readIndexPath(void)
 {
 	IndexPath  *local_node;
 	char	   *token;
@@ -1607,7 +1607,7 @@ _readIndexPath()
  * ----------------
  */
 static TidPath *
-_readTidPath()
+_readTidPath(void)
 {
 	TidPath    *local_node;
 	char	   *token;
@@ -1646,7 +1646,7 @@ _readTidPath()
  * ----------------
  */
 static NestPath *
-_readNestPath()
+_readNestPath(void)
 {
 	NestPath   *local_node;
 	char	   *token;
@@ -1692,7 +1692,7 @@ _readNestPath()
  * ----------------
  */
 static MergePath *
-_readMergePath()
+_readMergePath(void)
 {
 	MergePath  *local_node;
 	char	   *token;
@@ -1747,7 +1747,7 @@ _readMergePath()
  * ----------------
  */
 static HashPath *
-_readHashPath()
+_readHashPath(void)
 {
 	HashPath   *local_node;
 	char	   *token;
@@ -1796,7 +1796,7 @@ _readHashPath()
  * ----------------
  */
 static PathKeyItem *
-_readPathKeyItem()
+_readPathKeyItem(void)
 {
 	PathKeyItem *local_node;
 	char	   *token;
@@ -1822,7 +1822,7 @@ _readPathKeyItem()
  * ----------------
  */
 static RestrictInfo *
-_readRestrictInfo()
+_readRestrictInfo(void)
 {
 	RestrictInfo *local_node;
 	char	   *token;
@@ -1866,7 +1866,7 @@ _readRestrictInfo()
  * ----------------
  */
 static JoinInfo *
-_readJoinInfo()
+_readJoinInfo(void)
 {
 	JoinInfo   *local_node;
 	char	   *token;
@@ -1889,7 +1889,7 @@ _readJoinInfo()
  * ----------------
  */
 static Iter *
-_readIter()
+_readIter(void)
 {
 	Iter	   *local_node;
 	char	   *token;

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/dest.c,v 1.39 2000/07/08 03:04:15 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/dest.c,v 1.40 2000/10/22 22:14:55 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -179,27 +179,22 @@ DestToFunction(CommandDest dest)
 {
 	switch (dest)
 	{
-			case Remote:
-			/* printtup wants a dynamically allocated DestReceiver */
+		case Remote:
+		/* printtup wants a dynamically allocated DestReceiver */
 			return printtup_create_DR();
-			break;
 
 		case RemoteInternal:
 			return &printtup_internalDR;
-			break;
 
 		case Debug:
 			return &debugtupDR;
-			break;
 
 		case SPI:
 			return &spi_printtupDR;
-			break;
 
 		case None:
 		default:
 			return &donothingDR;
-			break;
 	}
 
 	/*
