@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/error/Attic/exc.c,v 1.6 1996/11/10 03:03:31 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/error/Attic/exc.c,v 1.6.2.1 1996/12/14 05:54:36 vadim Exp $
  *
  * NOTE
  *    XXX this code needs improvement--check for state violations and
@@ -183,6 +183,10 @@ ExcRaise(Exception *excP,
 	
 	ExcCurFrameP = efp->link;
 	
+#if defined (JMP_BUF)
 	longjmp(efp->context, 1);
+#else
+	siglongjmp(efp->context, 1);
+#endif
     }
 }
