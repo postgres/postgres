@@ -54,6 +54,10 @@ so you can use it to access (or create or manipulate) databases.  This
 step does not include actually creating any database or configuring your 
 system to use it.
 
+Before you start, if you are using GNU flex, you should ensure that you
+are not using Version 2.5.3. If you have this version, you should either
+change to 2.5.2 or 2.5.4 or apply the patch in doc/README.flex
+
 To install PostgreSQL on UNIX platforms:
 
 1. Unpack the source distribution into a source directory.  We'll assume
