@@ -356,6 +356,12 @@
       </thead>
       <tbody>
        <row>
+	<entry>to_ascii(text [,name|int])</entry>
+	<entry>text</entry>
+	<entry>convert text from multibyte encoding to ASCII</entry>
+	<entry>to_ascii('Karel')</entry>
+       </row>
+       <row>
 	<entry>char(text)</entry>
 	<entry>char</entry>
 	<entry>convert text to char type</entry>
@@ -446,6 +452,9 @@
 
    <para>
     Most functions explicitly defined for text will work for char() and varchar() arguments.
+   </para>
+   <para>
+    The to_ascii() support conversion from LATIN1, LATIN2, WIN1250 (CP1250) only.
    </para>
   </sect1>
 
@@ -802,6 +811,10 @@
        <row>
 	<entry>WW</entry>
 	<entry>week number of year (1-53) where first week start on the first day of the year</entry>
+       </row>
+       <row>
+	<entry>IW</entry>
+	<entry>ISO week number of year</entry>
        </row>
        <row>
 	<entry>CC</entry>

@@ -2,7 +2,7 @@
 /* -----------------------------------------------------------------------
  * pg_locale.c
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/pg_locale.c,v 1.5 2000/06/29 01:19:36 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/pg_locale.c,v 1.6 2000/08/29 04:41:47 momjian Exp $
  *
  *
  *	 Portions Copyright (c) 1999-2000, PostgreSQL, Inc
@@ -25,6 +25,8 @@
 
 /* #define DEBUG_LOCALE_UTILS  */
 
+
+static struct lconv *CurrentLocaleConv = NULL;
 
 /*------
  * Return in PG_LocaleCategories current locale setting
@@ -119,7 +121,9 @@ struct lconv *
 PGLC_localeconv(void)
 {
 	PG_LocaleCategories lc;
-	struct lconv *lconv;
+	
+	if (CurrentLocaleConv)
+		return CurrentLocaleConv;
 
 	/* Save current locale setting to lc */
 	PGLC_current(&lc);
@@ -128,12 +132,12 @@ PGLC_localeconv(void)
 	setlocale(LC_ALL, "");
 
 	/* Get numeric formatting information */
-	lconv = localeconv();
+	CurrentLocaleConv = localeconv();
 
 	/* Set previous original locale */
 	PGLC_setlocale(&lc);
 
-	return lconv;
+	return CurrentLocaleConv;
 }
 
 

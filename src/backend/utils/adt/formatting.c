@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------
  * formatting.c
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/formatting.c,v 1.20 2000/07/29 03:26:41 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/formatting.c,v 1.21 2000/08/29 04:41:47 momjian Exp $
  *
  *
  *	 Portions Copyright (c) 1999-2000, PostgreSQL, Inc
@@ -344,24 +344,24 @@ static int	NUMCounter = 0;
  * ----------
  */
 typedef struct {
-	int	hh, am, pm, mi, ss, ssss, d, dd, ddd, mm, yyyy, bc, ww, w, cc, q, j;
+	int	hh, am, pm, mi, ss, ssss, d, dd, ddd, mm, yyyy, bc, iw, ww, w, cc, q, j;
 } TmFromChar;
 
 #define ZERO_tmfc( _X )	\
 	do { \
 		(_X)->hh= (_X)->am= (_X)->pm= (_X)->mi= (_X)->ss= (_X)->ssss= \
 		(_X)->d= (_X)->dd= (_X)->ddd= (_X)->mm= (_X)->yyyy= (_X)->bc= \
-		(_X)->ww= (_X)->w= (_X)->cc= (_X)->q= (_X)->j= 0; \
+		(_X)->iw= (_X)->ww= (_X)->w= (_X)->cc= (_X)->q= (_X)->j= 0; \
 	} while(0) 
 
 #ifdef DEBUG_TO_FROM_CHAR
 
 #define NOTICE_TMFC \
-		elog(DEBUG_elog_output, "TMFC:\nhh %d\nam %d\npm %d\nmi %d\nss %d\nssss %d\nd %d\ndd %d\nddd %d\nmm %d\nyyyy %d\nbc %d\nww %d\nw %d\ncc %d\nq %d\nj %d", \
+		elog(DEBUG_elog_output, "TMFC:\nhh %d\nam %d\npm %d\nmi %d\nss %d\nssss %d\nd %d\ndd %d\nddd %d\nmm %d\nyyyy %d\nbc %d\niw %d\nww %d\nw %d\ncc %d\nq %d\nj %d", \
 			tmfc->hh, tmfc->am, tmfc->pm, tmfc->mi, tmfc->ss, \
 			tmfc->ssss, tmfc->d, tmfc->dd, tmfc->ddd, tmfc->mm, \
-			tmfc->yyyy, tmfc->bc, tmfc->ww, tmfc->w, tmfc->cc, \
-			tmfc->q, tmfc->j);
+			tmfc->yyyy, tmfc->bc, tmfc->iw, tmfc->ww, tmfc->w, \
+			tmfc->cc, tmfc->q, tmfc->j);
 
 #define NOTICE_TM \
 		elog(DEBUG_elog_output, "TM:\nsec %d\nyear %d\nmin %d\nwday %d\nhour %d\nyday %d\nmday %d\nnisdst %d\nmon %d\n",\
@@ -487,6 +487,7 @@ typedef enum
 	DCH_HH24,
 	DCH_HH12,
 	DCH_HH,
+	DCH_IW,
 	DCH_J,
 	DCH_MI,
 	DCH_MM,
@@ -524,6 +525,7 @@ typedef enum
 	DCH_hh24,
 	DCH_hh12,
 	DCH_hh,
+	DCH_iw,
 	DCH_j,
 	DCH_mi,
 	DCH_mm,
@@ -596,14 +598,14 @@ typedef enum
  * ----------
  */
 static KeyWord DCH_keywords[] = {
-/*	keyword,	len, func.	type				 is in Index */
+/*	keyword,len,func.type			 is in Index */
 	{"A.D.", 4, dch_date, DCH_A_D},		/* A */
 	{"A.M.", 4, dch_time, DCH_A_M},
 	{"AD", 2, dch_date, DCH_AD},
 	{"AM", 2, dch_time, DCH_AM},
 	{"B.C.", 4, dch_date, DCH_B_C},		/* B */
 	{"BC", 2, dch_date, DCH_BC},
-	{"CC", 2, dch_date, DCH_CC},/* C */
+	{"CC", 2, dch_date, DCH_CC},		/* C */
 	{"DAY", 3, dch_date, DCH_DAY},		/* D */
 	{"DDD", 3, dch_date, DCH_DDD},
 	{"DD", 2, dch_date, DCH_DD},
@@ -615,7 +617,8 @@ static KeyWord DCH_keywords[] = {
 	{"HH24", 4, dch_time, DCH_HH24},	/* H */
 	{"HH12", 4, dch_time, DCH_HH12},
 	{"HH", 2, dch_time, DCH_HH},
-	{"J", 1, dch_date, DCH_J},	/* J */
+	{"IW", 2, dch_date, DCH_IW},		/* I */	
+	{"J", 1, dch_date, DCH_J},		/* J */
 	{"MI", 2, dch_time, DCH_MI},
 	{"MM", 2, dch_date, DCH_MM},
 	{"MONTH", 5, dch_date, DCH_MONTH},
@@ -624,12 +627,12 @@ static KeyWord DCH_keywords[] = {
 	{"Mon", 3, dch_date, DCH_Mon},
 	{"P.M.", 4, dch_time, DCH_P_M},		/* P */
 	{"PM", 2, dch_time, DCH_PM},
-	{"Q", 1, dch_date, DCH_Q},	/* Q */
-	{"RM", 2, dch_date, DCH_RM},/* R */
+	{"Q", 1, dch_date, DCH_Q},		/* Q */
+	{"RM", 2, dch_date, DCH_RM},		/* R */
 	{"SSSS", 4, dch_time, DCH_SSSS},	/* S */
 	{"SS", 2, dch_time, DCH_SS},
 	{"TZ", 2, dch_time, DCH_TZ},		/* T */
-	{"WW", 2, dch_date, DCH_WW},/* W */
+	{"WW", 2, dch_date, DCH_WW},		/* W */
 	{"W", 1, dch_date, DCH_W},
 	{"Y,YYY", 5, dch_date, DCH_Y_YYY},	/* Y */
 	{"YYYY", 4, dch_date, DCH_YYYY},
@@ -642,7 +645,7 @@ static KeyWord DCH_keywords[] = {
 	{"am", 2, dch_time, DCH_am},
 	{"b.c.", 4, dch_date, DCH_b_c},		/* b */
 	{"bc", 2, dch_date, DCH_bc},
-	{"cc", 2, dch_date, DCH_CC},/* c */
+	{"cc", 2, dch_date, DCH_CC},		/* c */
 	{"day", 3, dch_date, DCH_day},		/* d */
 	{"ddd", 3, dch_date, DCH_DDD},
 	{"dd", 2, dch_date, DCH_DD},
@@ -652,19 +655,20 @@ static KeyWord DCH_keywords[] = {
 	{"hh24", 4, dch_time, DCH_HH24},	/* h */
 	{"hh12", 4, dch_time, DCH_HH12},
 	{"hh", 2, dch_time, DCH_HH},
-	{"j", 1, dch_time, DCH_J},	/* j */
-	{"mi", 2, dch_time, DCH_MI},/* m */
+	{"iw", 2, dch_date, DCH_IW},		/* i */
+	{"j", 1, dch_time, DCH_J},		/* j */
+	{"mi", 2, dch_time, DCH_MI},		/* m */
 	{"mm", 2, dch_date, DCH_MM},
 	{"month", 5, dch_date, DCH_month},
 	{"mon", 3, dch_date, DCH_mon},
 	{"p.m.", 4, dch_time, DCH_p_m},		/* p */
 	{"pm", 2, dch_time, DCH_pm},
-	{"q", 1, dch_date, DCH_Q},	/* q */
-	{"rm", 2, dch_date, DCH_rm},/* r */
+	{"q", 1, dch_date, DCH_Q},		/* q */
+	{"rm", 2, dch_date, DCH_rm},		/* r */
 	{"ssss", 4, dch_time, DCH_SSSS},	/* s */
 	{"ss", 2, dch_time, DCH_SS},
 	{"tz", 2, dch_time, DCH_tz},		/* t */
-	{"ww", 2, dch_date, DCH_WW},/* w */
+	{"ww", 2, dch_date, DCH_WW},		/* w */
 	{"w", 1, dch_date, DCH_W},
 	{"y,yyy", 5, dch_date, DCH_Y_YYY},	/* y */
 	{"yyyy", 4, dch_date, DCH_YYYY},
@@ -735,10 +739,10 @@ static int	DCH_index[KeyWord_INDEX_SIZE] = {
 	-1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
 	-1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
 	-1, -1, -1, -1, -1, DCH_A_D, DCH_B_C, DCH_CC, DCH_DAY, -1,
-	DCH_FX, -1, DCH_HH24, -1, DCH_J, -1, -1, DCH_MI, -1, -1,
+	DCH_FX, -1, DCH_HH24, DCH_IW, DCH_J, -1, -1, DCH_MI, -1, -1,
 	DCH_P_M, DCH_Q, DCH_RM, DCH_SSSS, DCH_TZ, -1, -1, DCH_WW, -1, DCH_Y_YYY,
 	-1, -1, -1, -1, -1, -1, -1, DCH_a_d, DCH_b_c, DCH_cc,
-	DCH_day, -1, DCH_fx, -1, DCH_hh24, -1, DCH_j, -1, -1, DCH_mi,
+	DCH_day, -1, DCH_fx, -1, DCH_hh24, DCH_iw, DCH_j, -1, -1, DCH_mi,
 	-1, -1, DCH_p_m, DCH_q, DCH_rm, DCH_ssss, DCH_tz, -1, -1, DCH_ww,
 	-1, DCH_y_yyy, -1, -1, -1, -1
 
@@ -1526,8 +1530,8 @@ dch_global(int arg, char *inout, int suf, int flag, FormatNode *node)
 
 /* ----------
  * Master function of TIME for:
- *					  TO_CHAR	- write (inout) formated string
- *					  FROM_CHAR - scan (inout) string by course of FormatNode
+ *			  TO_CHAR	- write (inout) formated string
+ *			  FROM_CHAR - scan (inout) string by course of FormatNode
  * ----------
  */
 static int
@@ -1772,7 +1776,7 @@ do { \
 
 /* ----------
  * Master of DATE for:
- *		  TO_CHAR	- write (inout) formated string
+ *		  TO_CHAR - write (inout) formated string
  *		  FROM_CHAR - scan (inout) string by course of FormatNode
  * ----------
  */
@@ -2083,6 +2087,33 @@ dch_date(int arg, char *inout, int suf, int flag, FormatNode *node)
 				else
 				{
 					sscanf(inout, "%02d", &tmfc->ww);
+					return 1 + SKIP_THth(suf);
+				}
+			}
+			break;
+		case DCH_IW:
+			if (flag == TO_CHAR)
+			{
+				sprintf(inout, "%0*d", S_FM(suf) ? 0 : 2,
+					date2isoweek(tm->tm_year, tm->tm_mon, tm->tm_mday));
+				if (S_THth(suf))
+					str_numth(p_inout, inout, S_TH_TYPE(suf));
+				if (S_FM(suf) || S_THth(suf))
+					return strlen(p_inout) - 1;
+				else
+					return 1;
+
+			}
+			else if (flag == FROM_CHAR) 
+			{
+				if (S_FM(suf))
+				{
+					sscanf(inout, "%d", &tmfc->iw);
+					return int4len((int4) tmfc->iw) - 1 + SKIP_THth(suf);
+				}
+				else
+				{
+					sscanf(inout, "%02d", &tmfc->iw);
 					return 1 + SKIP_THth(suf);
 				}
 			}
@@ -2687,19 +2718,29 @@ to_timestamp(PG_FUNCTION_ARGS)
 		case 4:	tm->tm_mday = 1; tm->tm_mon = 10; break;
 	}
 	
-	if (tmfc->j)
-		j2date(tmfc->j, &tm->tm_year, &tm->tm_mon, &tm->tm_mday);
 	if (tmfc->yyyy)	
 		tm->tm_year = tmfc->yyyy;
+	
+	if (tmfc->j)
+		j2date(tmfc->j, &tm->tm_year, &tm->tm_mon, &tm->tm_mday);
+	
 	if (tmfc->bc && tm->tm_year > 0)
 		tm->tm_year = -(tm->tm_year);
+	
 	if (tm->tm_year < 0)
 		tm->tm_year = tm->tm_year + 1;
+	
+	if (tmfc->iw)
+		isoweek2date(tmfc->iw, &tm->tm_year, &tm->tm_mon, &tm->tm_mday);
+		
 	if (tmfc->d)	tm->tm_wday = tmfc->d;
 	if (tmfc->dd)	tm->tm_mday = tmfc->dd;	
 	if (tmfc->ddd)	tm->tm_yday = tmfc->ddd;
 	if (tmfc->mm)	tm->tm_mon  = tmfc->mm;	
 
+	/*
+	 * we not ignore DDD
+	 */
 	if (tmfc->ddd && (tm->tm_mon <=1 || tm->tm_mday <=1))
 	{
 		/* count mday and mon from yday */
@@ -2726,6 +2767,7 @@ to_timestamp(PG_FUNCTION_ARGS)
  			tm->tm_mday = i == 0 ?	tm->tm_yday :
  						tm->tm_yday - y[i-1];
 	}
+	
 	/* -------------------------------------------------------------- */
 
 #ifdef DEBUG_TO_FROM_CHAR

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/timestamp.c,v 1.34 2000/07/17 03:05:18 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/timestamp.c,v 1.35 2000/08/29 04:41:47 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1796,7 +1796,81 @@ interval_trunc(PG_FUNCTION_ARGS)
 	PG_RETURN_INTERVAL_P(result);
 }
 
+/* isoweek2date()
+ *
+ * 	Convert ISO week of year number to date. An year must be already set.  
+ *	karel 2000/08/07
+ */
+void
+isoweek2date( int woy, int *year, int *mon, int *mday)
+{
+	int     day0, day4, dayn;
+	
+	if (!*year)
+		elog(ERROR, "isoweek2date(): can't convert without year information");
 
+	/* fourth day of current year */
+	day4 = date2j(*year, 1, 4);
+	
+	/* day0 == offset to first day of week (Monday) */
+	day0 = (j2day(day4 - 1) % 7);
+
+	dayn = ((woy - 1) * 7) + (day4 - day0);
+	
+	j2date(dayn, year, mon, mday);
+}
+
+/* date2isoweek()
+ * 
+ *	Returns ISO week number of year.
+ */
+int
+date2isoweek(int year, int mon, int mday) 
+{
+	float8	result;
+	int	day0, day4, dayn;
+	
+	/* current day */	
+	dayn = date2j(year, mon, mday);
+	
+	/* fourth day of current year */
+	day4 = date2j(year, 1, 4);
+	
+	/* day0 == offset to first day of week (Monday) */
+	day0 = (j2day(day4 - 1) % 7);
+	
+	/* We need the first week containing a Thursday,
+	 * otherwise this day falls into the previous year
+	 * for purposes of counting weeks
+	 */
+	if (dayn < (day4 - day0))
+	{
+		day4 = date2j((year - 1), 1, 4);
+	
+		/* day0 == offset to first day of week (Monday) */
+		day0 = (j2day(day4 - 1) % 7);
+	}
+	
+	result = (((dayn - (day4 - day0)) / 7) + 1);
+	
+	/* Sometimes the last few days in a year will fall into
+	 * the first week of the next year, so check for this.
+	 */
+	if (result >= 53)
+	{
+		day4 = date2j((year + 1), 1, 4);
+	
+		/* day0 == offset to first day of week (Monday) */
+		day0 = (j2day(day4 - 1) % 7);
+		
+		if (dayn >= (day4 - day0))
+			result = (((dayn - (day4 - day0)) / 7) + 1);
+	}
+
+	return (int) result;
+} 
+ 
+ 
 /* timestamp_part()
  * Extract specified field from timestamp.
  */
@@ -1897,35 +1971,7 @@ timestamp_part(PG_FUNCTION_ARGS)
 					break;
 
 				case DTK_WEEK:
-					{
-						int day0, day4, dayn;
-						dayn = date2j(tm->tm_year, tm->tm_mon, tm->tm_mday);
-						day4 = date2j(tm->tm_year, 1, 4);
-						/* day0 == offset to first day of week (Monday) */
-						day0 = (j2day(day4 - 1) % 7);
-						/* We need the first week containing a Thursday,
-						 * otherwise this day falls into the previous year
-						 * for purposes of counting weeks
-						 */
-						if (dayn < (day4 - day0))
-						{
-							day4 = date2j((tm->tm_year - 1), 1, 4);
-							/* day0 == offset to first day of week (Monday) */
-							day0 = (j2day(day4 - 1) % 7);
-						}
-						result = (((dayn - (day4 - day0)) / 7) + 1);
-						/* Sometimes the last few days in a year will fall into
-						 * the first week of the next year, so check for this.
-						 */
-						if (result >= 53)
-						{
-							day4 = date2j((tm->tm_year + 1), 1, 4);
-							/* day0 == offset to first day of week (Monday) */
-							day0 = (j2day(day4 - 1) % 7);
-							if (dayn >= (day4 - day0))
-								result = (((dayn - (day4 - day0)) / 7) + 1);
-						}
-					}
+					result = (float8) date2isoweek(tm->tm_year, tm->tm_mon, tm->tm_mday);
 					break;
 
 				case DTK_YEAR:

@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: timestamp.h,v 1.9 2000/07/17 03:05:32 tgl Exp $
+ * $Id: timestamp.h,v 1.10 2000/08/29 04:41:48 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -189,5 +189,8 @@ extern int	timestamp2tm(Timestamp dt, int *tzp, struct tm * tm,
 						 double *fsec, char **tzn);
 
 extern Timestamp SetTimestamp(Timestamp timestamp);
+
+extern void	isoweek2date( int woy, int *year, int *mon, int *mday);
+extern int	date2isoweek(int year, int mon, int mday);
 
 #endif	 /* TIMESTAMP_H */
