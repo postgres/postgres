@@ -38,6 +38,8 @@
 
 # include "postgres.h"
 
+# include "regex/cdefs.h"
+
 # include <stdarg.h>
 # define VA_LOCAL_DECL  va_list args;
 # define VA_START(f)    va_start(args, f)
@@ -68,7 +70,7 @@
  * causing nast effects.
  **************************************************************/
 
-/*static char _id[] = "$Id: snprintf.c,v 1.5 1998/09/10 04:11:52 vadim Exp $";*/
+/*static char _id[] = "$Id: snprintf.c,v 1.6 1998/09/18 05:20:22 momjian Exp $";*/
 static char *end;
 static int	SnprfOverflow;
 
