@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_relation.c,v 1.97 2004/08/17 18:47:08 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_relation.c,v 1.98 2004/08/19 20:57:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,6 +42,10 @@ static Node *scanNameSpaceForRelid(ParseState *pstate, Node *nsnode,
 static void scanNameSpaceForConflict(ParseState *pstate, Node *nsnode,
 						 RangeTblEntry *rte1, const char *aliasname1);
 static bool isForUpdate(ParseState *pstate, char *refname);
+static void expandRelation(Oid relid, Alias *eref,
+						   int rtindex, int sublevels_up,
+						   bool include_dropped,
+						   List **colnames, List **colvars);
 static int	specialAttNum(const char *attname);
 static void warnAutoRange(ParseState *pstate, RangeVar *relation);
 
@@ -439,6 +443,27 @@ GetRTEByRangeTablePosn(ParseState *pstate,
 }
 
 /*
+ * GetLevelNRangeTable
+ *	  Get the rangetable list for the N'th query level up from current.
+ */
+List *
+GetLevelNRangeTable(ParseState *pstate, int sublevels_up)
+{
+	int			index = 0;
+
+	while (pstate != NULL)
+	{
+		if (index == sublevels_up)
+			return pstate->p_rtable;
+		index++;
+		pstate = pstate->parentParseState;
+	}
+
+	elog(ERROR, "rangetable not found (internal error)");
+	return NIL;					/* keep compiler quiet */
+}
+
+/*
  * scanRTEForColumn
  *	  Search the column names of a single RTE for the given name.
  *	  If found, return an appropriate Var node, else return NULL.
@@ -464,27 +489,20 @@ scanRTEForColumn(ParseState *pstate, RangeTblEntry *rte, char *colname)
 	 * Scan the user column names (or aliases) for a match. Complain if
 	 * multiple matches.
 	 *
-	 * Note: because eref->colnames may include names of dropped columns, we
-	 * need to check for non-droppedness before accepting a match. This
-	 * takes an extra cache lookup, but we can skip the lookup most of the
-	 * time by exploiting the knowledge that dropped columns are assigned
-	 * dummy names starting with '.', which is an unusual choice for
-	 * actual column names.
+	 * Note: eref->colnames may include entries for dropped columns,
+	 * but those will be empty strings that cannot match any legal SQL
+	 * identifier, so we don't bother to test for that case here.
 	 *
-	 * Should the user try to fool us by altering pg_attribute.attname for a
-	 * dropped column, we'll still catch it by virtue of the checks in
-	 * get_rte_attribute_type(), which is called by make_var().  That
-	 * routine has to do a cache lookup anyway, so the check there is
-	 * cheap.
+	 * Should this somehow go wrong and we try to access a dropped column,
+	 * we'll still catch it by virtue of the checks in
+	 * get_rte_attribute_type(), which is called by make_var().  That routine
+	 * has to do a cache lookup anyway, so the check there is cheap.
 	 */
 	foreach(c, rte->eref->colnames)
 	{
 		attnum++;
 		if (strcmp(strVal(lfirst(c)), colname) == 0)
 		{
-			if (colname[0] == '.' &&	/* see note above */
-				get_rte_attribute_is_dropped(rte, attnum))
-				continue;
 			if (result)
 				ereport(ERROR,
 						(errcode(ERRCODE_AMBIGUOUS_COLUMN),
@@ -634,6 +652,81 @@ qualifiedNameToVar(ParseState *pstate,
 }
 
 /*
+ * buildRelationAliases
+ *		Construct the eref column name list for a relation RTE.
+ *		This code is also used for the case of a function RTE returning
+ *		a named composite type.
+ *
+ * tupdesc: the physical column information
+ * alias: the user-supplied alias, or NULL if none
+ * eref: the eref Alias to store column names in
+ *
+ * eref->colnames is filled in.  Also, alias->colnames is rebuilt to insert
+ * empty strings for any dropped columns, so that it will be one-to-one with
+ * physical column numbers.
+ */
+static void
+buildRelationAliases(TupleDesc tupdesc, Alias *alias, Alias *eref)
+{
+	int			maxattrs = tupdesc->natts;
+	ListCell   *aliaslc;
+	int			numaliases;
+	int			varattno;
+	int			numdropped = 0;
+
+	Assert(eref->colnames == NIL);
+
+	if (alias)
+	{
+		aliaslc = list_head(alias->colnames);
+		numaliases = list_length(alias->colnames);
+		/* We'll rebuild the alias colname list */
+		alias->colnames = NIL;
+	}
+	else
+	{
+		aliaslc = NULL;
+		numaliases = 0;
+	}
+
+	for (varattno = 0; varattno < maxattrs; varattno++)
+	{
+		Form_pg_attribute attr = tupdesc->attrs[varattno];
+		Value	   *attrname;
+
+		if (attr->attisdropped)
+		{
+			/* Always insert an empty string for a dropped column */
+			attrname = makeString(pstrdup(""));
+			if (aliaslc)
+				alias->colnames = lappend(alias->colnames, attrname);
+			numdropped++;
+		}
+		else if (aliaslc)
+		{
+			/* Use the next user-supplied alias */
+			attrname = (Value *) lfirst(aliaslc);
+			aliaslc = lnext(aliaslc);
+			alias->colnames = lappend(alias->colnames, attrname);
+		}
+		else
+		{
+			attrname = makeString(pstrdup(NameStr(attr->attname)));
+			/* we're done with the alias if any */
+		}
+
+		eref->colnames = lappend(eref->colnames, attrname);
+	}
+
+	/* Too many user-supplied aliases? */
+	if (aliaslc)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
+				 errmsg("table \"%s\" has %d columns available but %d columns specified",
+						eref->aliasname, maxattrs - numdropped, numaliases)));
+}
+
+/*
  * Add an entry for a relation to the pstate's range table (p_rtable).
  *
  * If pstate is NULL, we just build an RTE and return it without adding it
@@ -653,10 +746,6 @@ addRangeTableEntry(ParseState *pstate,
 	char	   *refname = alias ? alias->aliasname : relation->relname;
 	LOCKMODE	lockmode;
 	Relation	rel;
-	Alias	   *eref;
-	int			maxattrs;
-	int			numaliases;
-	int			varattno;
 
 	rte->rtekind = RTE_RELATION;
 	rte->alias = alias;
@@ -671,29 +760,12 @@ addRangeTableEntry(ParseState *pstate,
 	rel = heap_openrv(relation, lockmode);
 	rte->relid = RelationGetRelid(rel);
 
-	eref = alias ? (Alias *) copyObject(alias) : makeAlias(refname, NIL);
-	numaliases = list_length(eref->colnames);
-
 	/*
-	 * Since the rel is open anyway, let's check that the number of column
-	 * aliases is reasonable. - Thomas 2000-02-04
+	 * Build the list of effective column names using user-supplied aliases
+	 * and/or actual column names.
 	 */
-	maxattrs = RelationGetNumberOfAttributes(rel);
-	if (maxattrs < numaliases)
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
-				 errmsg("table \"%s\" has %d columns available but %d columns specified",
-				   RelationGetRelationName(rel), maxattrs, numaliases)));
-
-	/* fill in any unspecified alias columns using actual column names */
-	for (varattno = numaliases; varattno < maxattrs; varattno++)
-	{
-		char	   *attrname;
-
-		attrname = pstrdup(NameStr(rel->rd_att->attrs[varattno]->attname));
-		eref->colnames = lappend(eref->colnames, makeString(attrname));
-	}
-	rte->eref = eref;
+	rte->eref = makeAlias(refname, NIL);
+	buildRelationAliases(rel->rd_att, alias, rte->eref);
 
 	/*
 	 * Drop the rel refcount, but keep the access lock till end of
@@ -747,10 +819,6 @@ addRangeTableEntryForRelation(ParseState *pstate,
 	char	   *refname = alias->aliasname;
 	LOCKMODE	lockmode;
 	Relation	rel;
-	Alias	   *eref;
-	int			maxattrs;
-	int			numaliases;
-	int			varattno;
 
 	rte->rtekind = RTE_RELATION;
 	rte->alias = alias;
@@ -765,29 +833,12 @@ addRangeTableEntryForRelation(ParseState *pstate,
 	rel = heap_open(relid, lockmode);
 	rte->relid = relid;
 
-	eref = (Alias *) copyObject(alias);
-	numaliases = list_length(eref->colnames);
-
 	/*
-	 * Since the rel is open anyway, let's check that the number of column
-	 * aliases is reasonable. - Thomas 2000-02-04
+	 * Build the list of effective column names using user-supplied aliases
+	 * and/or actual column names.
 	 */
-	maxattrs = RelationGetNumberOfAttributes(rel);
-	if (maxattrs < numaliases)
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
-				 errmsg("table \"%s\" has %d columns available but %d columns specified",
-				   RelationGetRelationName(rel), maxattrs, numaliases)));
-
-	/* fill in any unspecified alias columns using actual column names */
-	for (varattno = numaliases; varattno < maxattrs; varattno++)
-	{
-		char	   *attrname;
-
-		attrname = pstrdup(NameStr(rel->rd_att->attrs[varattno]->attname));
-		eref->colnames = lappend(eref->colnames, makeString(attrname));
-	}
-	rte->eref = eref;
+	rte->eref = makeAlias(refname, NIL);
+	buildRelationAliases(rel->rd_att, alias, rte->eref);
 
 	/*
 	 * Drop the rel refcount, but keep the access lock till end of
@@ -918,8 +969,6 @@ addRangeTableEntryForFunction(ParseState *pstate,
 	Alias	   *alias = rangefunc->alias;
 	List	   *coldeflist = rangefunc->coldeflist;
 	Alias	   *eref;
-	int			numaliases;
-	int			varattno;
 
 	rte->rtekind = RTE_FUNCTION;
 	rte->relid = InvalidOid;
@@ -928,10 +977,8 @@ addRangeTableEntryForFunction(ParseState *pstate,
 	rte->coldeflist = coldeflist;
 	rte->alias = alias;
 
-	eref = alias ? (Alias *) copyObject(alias) : makeAlias(funcname, NIL);
+	eref = makeAlias(alias ? alias->aliasname : funcname, NIL);
 	rte->eref = eref;
-
-	numaliases = list_length(eref->colnames);
 
 	/*
 	 * Now determine if the function returns a simple or composite type,
@@ -969,7 +1016,6 @@ addRangeTableEntryForFunction(ParseState *pstate,
 		 */
 		Oid			funcrelid = typeidTypeRelid(funcrettype);
 		Relation	rel;
-		int			maxattrs;
 
 		if (!OidIsValid(funcrelid))		/* shouldn't happen if typtype is
 										 * 'c' */
@@ -981,26 +1027,8 @@ addRangeTableEntryForFunction(ParseState *pstate,
 		 */
 		rel = relation_open(funcrelid, AccessShareLock);
 
-		/*
-		 * Since the rel is open anyway, let's check that the number of
-		 * column aliases is reasonable.
-		 */
-		maxattrs = RelationGetNumberOfAttributes(rel);
-		if (maxattrs < numaliases)
-			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
-					 errmsg("table \"%s\" has %d columns available but %d columns specified",
-							RelationGetRelationName(rel),
-							maxattrs, numaliases)));
-
-		/* fill in alias columns using actual column names */
-		for (varattno = numaliases; varattno < maxattrs; varattno++)
-		{
-			char	   *attrname;
-
-			attrname = pstrdup(NameStr(rel->rd_att->attrs[varattno]->attname));
-			eref->colnames = lappend(eref->colnames, makeString(attrname));
-		}
+		/* Build the column alias list */
+		buildRelationAliases(rel->rd_att, alias, eref);
 
 		/*
 		 * Drop the rel refcount, but keep the access lock till end of
@@ -1015,12 +1043,16 @@ addRangeTableEntryForFunction(ParseState *pstate,
 		 * Must be a base data type, i.e. scalar. Just add one alias
 		 * column named for the function.
 		 */
-		if (numaliases > 1)
-			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
-			  errmsg("too many column aliases specified for function %s",
-					 funcname)));
-		if (numaliases == 0)
+		if (alias && alias->colnames != NIL)
+		{
+			if (list_length(alias->colnames) != 1)
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
+						 errmsg("too many column aliases specified for function %s",
+								funcname)));
+			eref->colnames = copyObject(alias->colnames);
+		}
+		else
 			eref->colnames = list_make1(makeString(eref->aliasname));
 	}
 	else if (functyptype == 'p' && funcrettype == RECORDOID)
@@ -1028,7 +1060,6 @@ addRangeTableEntryForFunction(ParseState *pstate,
 		ListCell   *col;
 
 		/* Use the column definition list to form the alias list */
-		eref->colnames = NIL;
 		foreach(col, coldeflist)
 		{
 			ColumnDef  *n = lfirst(col);
@@ -1202,77 +1233,42 @@ addImplicitRTE(ParseState *pstate, RangeVar *relation)
 	return rte;
 }
 
-/* expandRTE()
+/*
+ * expandRTE -- expand the columns of a rangetable entry
  *
- * Given a rangetable entry, create lists of its column names (aliases if
- * provided, else real names) and Vars for each column.  Only user columns
- * are considered, since this is primarily used to expand '*' and determine
- * the contents of JOIN tables.
+ * This creates lists of an RTE's column names (aliases if provided, else
+ * real names) and Vars for each column.  Only user columns are considered.
+ * If include_dropped is FALSE then dropped columns are omitted from the
+ * results.  If include_dropped is TRUE then empty strings and NULL constants
+ * (not Vars!) are returned for dropped columns.
  *
+ * The target RTE is the rtindex'th entry of rtable.  (The whole rangetable
+ * must be passed since we need it to determine dropped-ness for JOIN columns.)
+ * sublevels_up is the varlevelsup value to use in the created Vars.
+ *
+ * The output lists go into *colnames and *colvars.
  * If only one of the two kinds of output list is needed, pass NULL for the
  * output pointer for the unwanted one.
  */
 void
-expandRTE(ParseState *pstate, RangeTblEntry *rte,
+expandRTE(List *rtable, int rtindex, int sublevels_up,
+		  bool include_dropped,
 		  List **colnames, List **colvars)
 {
-	int			rtindex,
-				sublevels_up,
-				varattno;
+	RangeTblEntry *rte = rt_fetch(rtindex, rtable);
+	int			varattno;
 
 	if (colnames)
 		*colnames = NIL;
 	if (colvars)
 		*colvars = NIL;
 
-	/* Need the RT index of the entry for creating Vars */
-	rtindex = RTERangeTablePosn(pstate, rte, &sublevels_up);
-
 	switch (rte->rtekind)
 	{
 		case RTE_RELATION:
-			{
-				/* Ordinary relation RTE */
-				Relation	rel;
-				int			maxattrs;
-				int			numaliases;
-
-				rel = heap_open(rte->relid, AccessShareLock);
-				maxattrs = RelationGetNumberOfAttributes(rel);
-				numaliases = list_length(rte->eref->colnames);
-
-				for (varattno = 0; varattno < maxattrs; varattno++)
-				{
-					Form_pg_attribute attr = rel->rd_att->attrs[varattno];
-
-					if (attr->attisdropped)
-						continue;
-
-					if (colnames)
-					{
-						char	   *label;
-
-						if (varattno < numaliases)
-							label = strVal(list_nth(rte->eref->colnames, varattno));
-						else
-							label = NameStr(attr->attname);
-						*colnames = lappend(*colnames, makeString(pstrdup(label)));
-					}
-
-					if (colvars)
-					{
-						Var		   *varnode;
-
-						varnode = makeVar(rtindex, attr->attnum,
-										  attr->atttypid, attr->atttypmod,
-										  sublevels_up);
-
-						*colvars = lappend(*colvars, varnode);
-					}
-				}
-
-				heap_close(rel, AccessShareLock);
-			}
+			/* Ordinary relation RTE */
+			expandRelation(rte->relid, rte->eref, rtindex, sublevels_up,
+						   include_dropped, colnames, colvars);
 			break;
 		case RTE_SUBQUERY:
 			{
@@ -1318,60 +1314,22 @@ expandRTE(ParseState *pstate, RangeTblEntry *rte,
 				/* Function RTE */
 				Oid			funcrettype = exprType(rte->funcexpr);
 				char		functyptype = get_typtype(funcrettype);
-				List	   *coldeflist = rte->coldeflist;
 
 				if (functyptype == 'c')
 				{
 					/*
-					 * Composite data type, i.e. a table's row type Same
-					 * as ordinary relation RTE
+					 * Composite data type, i.e. a table's row type
+					 *
+					 * Same as ordinary relation RTE
 					 */
 					Oid			funcrelid = typeidTypeRelid(funcrettype);
-					Relation	rel;
-					int			maxattrs;
-					int			numaliases;
 
 					if (!OidIsValid(funcrelid)) /* shouldn't happen */
 						elog(ERROR, "invalid typrelid for complex type %u",
 							 funcrettype);
 
-					rel = relation_open(funcrelid, AccessShareLock);
-					maxattrs = RelationGetNumberOfAttributes(rel);
-					numaliases = list_length(rte->eref->colnames);
-
-					for (varattno = 0; varattno < maxattrs; varattno++)
-					{
-						Form_pg_attribute attr = rel->rd_att->attrs[varattno];
-
-						if (attr->attisdropped)
-							continue;
-
-						if (colnames)
-						{
-							char	   *label;
-
-							if (varattno < numaliases)
-								label = strVal(list_nth(rte->eref->colnames, varattno));
-							else
-								label = NameStr(attr->attname);
-							*colnames = lappend(*colnames, makeString(pstrdup(label)));
-						}
-
-						if (colvars)
-						{
-							Var		   *varnode;
-
-							varnode = makeVar(rtindex,
-											  attr->attnum,
-											  attr->atttypid,
-											  attr->atttypmod,
-											  sublevels_up);
-
-							*colvars = lappend(*colvars, varnode);
-						}
-					}
-
-					relation_close(rel, AccessShareLock);
+					expandRelation(funcrelid, rte->eref, rtindex, sublevels_up,
+								   include_dropped, colnames, colvars);
 				}
 				else if (functyptype == 'b' || functyptype == 'd')
 				{
@@ -1395,6 +1353,7 @@ expandRTE(ParseState *pstate, RangeTblEntry *rte,
 				}
 				else if (functyptype == 'p' && funcrettype == RECORDOID)
 				{
+					List	   *coldeflist = rte->coldeflist;
 					ListCell   *col;
 					int			attnum = 0;
 
@@ -1447,11 +1406,41 @@ expandRTE(ParseState *pstate, RangeTblEntry *rte,
 				{
 					varattno++;
 
+					/*
+					 * During ordinary parsing, there will never be any
+					 * deleted columns in the join; but we have to check
+					 * since this routine is also used by the rewriter,
+					 * and joins found in stored rules might have join
+					 * columns for since-deleted columns.
+					 */
+					if (get_rte_attribute_is_dropped(rtable, rtindex,
+													 varattno))
+					{
+						if (include_dropped)
+						{
+							if (colnames)
+								*colnames = lappend(*colnames,
+													makeString(pstrdup("")));
+							if (colvars)
+							{
+								/*
+								 * can't use atttypid here, but it doesn't
+								 * really matter what type the Const claims to
+								 * be.
+								 */
+								*colvars = lappend(*colvars,
+												   makeNullConst(INT4OID));
+							}
+						}
+						continue;
+					}
+
 					if (colnames)
 					{
 						char	   *label = strVal(lfirst(colname));
 
-						*colnames = lappend(*colnames, makeString(pstrdup(label)));
+						*colnames = lappend(*colnames,
+											makeString(pstrdup(label)));
 					}
 
 					if (colvars)
@@ -1475,12 +1464,77 @@ expandRTE(ParseState *pstate, RangeTblEntry *rte,
 }
 
 /*
+ * expandRelation -- expandRTE subroutine
+ */
+static void
+expandRelation(Oid relid, Alias *eref, int rtindex, int sublevels_up,
+			   bool include_dropped,
+			   List **colnames, List **colvars)
+{
+	Relation	rel;
+	int			varattno;
+	int			maxattrs;
+	int			numaliases;
+
+	rel = relation_open(relid, AccessShareLock);
+	maxattrs = RelationGetNumberOfAttributes(rel);
+	numaliases = list_length(eref->colnames);
+
+	for (varattno = 0; varattno < maxattrs; varattno++)
+	{
+		Form_pg_attribute attr = rel->rd_att->attrs[varattno];
+
+		if (attr->attisdropped)
+		{
+			if (include_dropped)
+			{
+				if (colnames)
+					*colnames = lappend(*colnames, makeString(pstrdup("")));
+				if (colvars)
+				{
+					/*
+					 * can't use atttypid here, but it doesn't really matter
+					 * what type the Const claims to be.
+					 */
+					*colvars = lappend(*colvars, makeNullConst(INT4OID));
+				}
+			}
+			continue;
+		}
+
+		if (colnames)
+		{
+			char	   *label;
+
+			if (varattno < numaliases)
+				label = strVal(list_nth(eref->colnames, varattno));
+			else
+				label = NameStr(attr->attname);
+			*colnames = lappend(*colnames, makeString(pstrdup(label)));
+		}
+
+		if (colvars)
+		{
+			Var		   *varnode;
+
+			varnode = makeVar(rtindex, attr->attnum,
+							  attr->atttypid, attr->atttypmod,
+							  sublevels_up);
+
+			*colvars = lappend(*colvars, varnode);
+		}
+	}
+
+	relation_close(rel, AccessShareLock);
+}
+
+/*
  * expandRelAttrs -
  *	  Workhorse for "*" expansion: produce a list of targetentries
  *	  for the attributes of the rte
  */
 List *
-expandRelAttrs(ParseState *pstate, RangeTblEntry *rte)
+expandRelAttrs(ParseState *pstate, List *rtable, int rtindex, int sublevels_up)
 {
 	List	   *names,
 			   *vars;
@@ -1488,9 +1542,9 @@ expandRelAttrs(ParseState *pstate, RangeTblEntry *rte)
 			   *var;
 	List	   *te_list = NIL;
 
-	expandRTE(pstate, rte, &names, &vars);
+	expandRTE(rtable, rtindex, sublevels_up, false, &names, &vars);
 
-	forboth (name, names, var, vars)
+	forboth(name, names, var, vars)
 	{
 		char	   *label = strVal(lfirst(name));
 		Node	   *varnode = (Node *) lfirst(var);
@@ -1698,15 +1752,16 @@ get_rte_attribute_type(RangeTblEntry *rte, AttrNumber attnum,
  *		Check whether attempted attribute ref is to a dropped column
  */
 bool
-get_rte_attribute_is_dropped(RangeTblEntry *rte, AttrNumber attnum)
+get_rte_attribute_is_dropped(List *rtable, int rtindex, AttrNumber attnum)
 {
+	RangeTblEntry *rte = rt_fetch(rtindex, rtable);
 	bool		result;
 
 	switch (rte->rtekind)
 	{
 		case RTE_RELATION:
 			{
-				/* Plain relation RTE --- get the attribute's type info */
+				/* Plain relation RTE --- get the attribute's catalog entry */
 				HeapTuple	tp;
 				Form_pg_attribute att_tup;
 
@@ -1723,9 +1778,37 @@ get_rte_attribute_is_dropped(RangeTblEntry *rte, AttrNumber attnum)
 			}
 			break;
 		case RTE_SUBQUERY:
-		case RTE_JOIN:
-			/* Subselect and join RTEs never have dropped columns */
+			/* Subselect RTEs never have dropped columns */
 			result = false;
+			break;
+		case RTE_JOIN:
+			{
+				/*
+				 * A join RTE would not have dropped columns when constructed,
+				 * but one in a stored rule might contain columns that were
+				 * dropped from the underlying tables, if said columns are
+				 * nowhere explicitly referenced in the rule.  So we have to
+				 * recursively look at the referenced column.
+				 */
+				Var		*aliasvar;
+
+				if (attnum <= 0 ||
+					attnum > list_length(rte->joinaliasvars))
+					elog(ERROR, "invalid varattno %d", attnum);
+				aliasvar = (Var *) list_nth(rte->joinaliasvars, attnum - 1);
+				/*
+				 * If the list item isn't a simple Var, then it must
+				 * represent a merged column, ie a USING column, and so it
+				 * couldn't possibly be dropped (since it's referenced in
+				 * the join clause).
+				 */
+				if (!IsA(aliasvar, Var))
+					result = false;
+				else
+					result = get_rte_attribute_is_dropped(rtable,
+														  aliasvar->varno,
+														  aliasvar->varattno);
+			}
 			break;
 		case RTE_FUNCTION:
 			{
@@ -1736,8 +1819,9 @@ get_rte_attribute_is_dropped(RangeTblEntry *rte, AttrNumber attnum)
 				if (OidIsValid(funcrelid))
 				{
 					/*
-					 * Composite data type, i.e. a table's row type Same
-					 * as ordinary relation RTE
+					 * Composite data type, i.e. a table's row type
+					 *
+					 * Same as ordinary relation RTE
 					 */
 					HeapTuple	tp;
 					Form_pg_attribute att_tup;

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteManip.c,v 1.85 2004/08/17 18:47:09 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteManip.c,v 1.86 2004/08/19 20:57:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,7 +18,7 @@
 #include "optimizer/clauses.h"
 #include "optimizer/tlist.h"
 #include "parser/parsetree.h"
-#include "parser/parse_clause.h"
+#include "parser/parse_relation.h"
 #include "rewrite/rewriteManip.h"
 #include "utils/lsyscache.h"
 
@@ -853,9 +853,10 @@ AddInvertedQual(Query *parsetree, Node *qual)
  * If not, we either change the unmatched Var's varno to update_varno
  * (when event == CMD_UPDATE) or replace it with a constant NULL.
  *
- * The caller must also provide target_rte, the RTE describing the target
- * relation.  This is needed to handle whole-row Vars referencing the target.
- * We expand such Vars into RowExpr constructs.
+ * The caller must also provide target_rtable, the rangetable containing
+ * the target relation (which must be described by the target_varno'th
+ * RTE in that list).  This is needed to handle whole-row Vars referencing
+ * the target.  We expand such Vars into RowExpr constructs.
  *
  * Note: the business with inserted_sublink is needed to update hasSubLinks
  * in subqueries when the replacement adds a subquery inside a subquery.
@@ -868,7 +869,7 @@ typedef struct
 {
 	int			target_varno;
 	int			sublevels_up;
-	RangeTblEntry *target_rte;
+	List	   *target_rtable;
 	List	   *targetlist;
 	int			event;
 	int			update_varno;
@@ -931,40 +932,21 @@ ResolveNew_mutator(Node *node, ResolveNew_context *context)
 			if (var->varattno == InvalidAttrNumber)
 			{
 				/* Must expand whole-tuple reference into RowExpr */
-				RangeTblEntry *rte = context->target_rte;
 				RowExpr *rowexpr;
-				List	*fields = NIL;
-				AttrNumber nfields = list_length(rte->eref->colnames);
-				AttrNumber nf;
+				List	*fields;
 
-				for (nf = 1; nf <= nfields; nf++)
-				{
-					if (get_rte_attribute_is_dropped(rte, nf))
-					{
-						/*
-						 * can't determine att type here, but it doesn't
-						 * really matter what type the Const claims to be.
-						 */
-						fields = lappend(fields,
-										 makeNullConst(INT4OID));
-					}
-					else
-					{
-						Oid		vartype;
-						int32	vartypmod;
-						Var	   *newvar;
-
-						get_rte_attribute_type(rte, nf, &vartype, &vartypmod);
-						newvar = makeVar(this_varno,
-										 nf,
-										 vartype,
-										 vartypmod,
-										 this_varlevelsup);
-						fields = lappend(fields,
-										 resolve_one_var(newvar, context));
-					}
-				}
-
+				/*
+				 * If generating an expansion for a var of a named rowtype
+				 * (ie, this is a plain relation RTE), then we must include
+				 * dummy items for dropped columns.  If the var is RECORD
+				 * (ie, this is a JOIN), then omit dropped columns.
+				 */
+				expandRTE(context->target_rtable, this_varno, this_varlevelsup,
+						  (var->vartype != RECORDOID),
+						  NULL, &fields);
+				/* Adjust the generated per-field Vars... */
+				fields = (List *) ResolveNew_mutator((Node *) fields,
+													 context);
 				rowexpr = makeNode(RowExpr);
 				rowexpr->args = fields;
 				rowexpr->row_typeid = var->vartype;
@@ -1003,14 +985,14 @@ ResolveNew_mutator(Node *node, ResolveNew_context *context)
 
 Node *
 ResolveNew(Node *node, int target_varno, int sublevels_up,
-		   RangeTblEntry *target_rte,
+		   List *target_rtable,
 		   List *targetlist, int event, int update_varno)
 {
 	ResolveNew_context context;
 
 	context.target_varno = target_varno;
 	context.sublevels_up = sublevels_up;
-	context.target_rte = target_rte;
+	context.target_rtable = target_rtable;
 	context.targetlist = targetlist;
 	context.event = event;
 	context.update_varno = update_varno;

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/parser/parse_relation.h,v 1.44 2004/04/18 18:12:58 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/parser/parse_relation.h,v 1.45 2004/08/19 20:57:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,6 +30,7 @@ extern int RTERangeTablePosn(ParseState *pstate,
 extern RangeTblEntry *GetRTEByRangeTablePosn(ParseState *pstate,
 											 int varno,
 											 int sublevels_up);
+extern List *GetLevelNRangeTable(ParseState *pstate, int sublevels_up);
 extern Node *scanRTEForColumn(ParseState *pstate, RangeTblEntry *rte,
 							  char *colname);
 extern Node *colNameToVar(ParseState *pstate, char *colname, bool localonly);
@@ -66,9 +67,11 @@ extern RangeTblEntry *addRangeTableEntryForJoin(ParseState *pstate,
 extern void addRTEtoQuery(ParseState *pstate, RangeTblEntry *rte,
 			  bool addToJoinList, bool addToNameSpace);
 extern RangeTblEntry *addImplicitRTE(ParseState *pstate, RangeVar *relation);
-extern void expandRTE(ParseState *pstate, RangeTblEntry *rte,
-		  List **colnames, List **colvars);
-extern List *expandRelAttrs(ParseState *pstate, RangeTblEntry *rte);
+extern void expandRTE(List *rtable, int rtindex, int sublevels_up,
+					  bool include_dropped,
+					  List **colnames, List **colvars);
+extern List *expandRelAttrs(ParseState *pstate, List *rtable,
+							int rtindex, int sublevels_up);
 extern int	attnameAttNum(Relation rd, const char *attname, bool sysColOK);
 extern Name attnumAttName(Relation rd, int attid);
 extern Oid	attnumTypeId(Relation rd, int attid);

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_clause.c,v 1.133 2004/06/16 01:26:44 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_clause.c,v 1.134 2004/08/19 20:57:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -655,8 +655,8 @@ transformFromClauseItem(ParseState *pstate, Node *n, List **containedRels)
 			elog(ERROR, "unrecognized node type: %d", (int) nodeTag(j->larg));
 			leftrti = 0;		/* keep compiler quiet */
 		}
-		rte = rt_fetch(leftrti, pstate->p_rtable);
-		expandRTE(pstate, rte, &l_colnames, &l_colvars);
+		expandRTE(pstate->p_rtable, leftrti, 0, false,
+				  &l_colnames, &l_colvars);
 
 		if (IsA(j->rarg, RangeTblRef))
 			rightrti = ((RangeTblRef *) j->rarg)->rtindex;
@@ -667,8 +667,8 @@ transformFromClauseItem(ParseState *pstate, Node *n, List **containedRels)
 			elog(ERROR, "unrecognized node type: %d", (int) nodeTag(j->rarg));
 			rightrti = 0;		/* keep compiler quiet */
 		}
-		rte = rt_fetch(rightrti, pstate->p_rtable);
-		expandRTE(pstate, rte, &r_colnames, &r_colvars);
+		expandRTE(pstate->p_rtable, rightrti, 0, false,
+				  &r_colnames, &r_colvars);
 
 		/*
 		 * Natural join does not explicitly specify columns; must generate

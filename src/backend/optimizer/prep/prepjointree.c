@@ -16,7 +16,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepjointree.c,v 1.20 2004/05/30 23:40:29 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepjointree.c,v 1.21 2004/08/19 20:57:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,7 +46,7 @@ typedef struct reduce_outer_joins_state
 static bool is_simple_subquery(Query *subquery);
 static bool has_nullable_targetlist(Query *subquery);
 static void resolvenew_in_jointree(Node *jtnode, int varno,
-								   RangeTblEntry *rte, List *subtlist);
+								   List *rtable, List *subtlist);
 static reduce_outer_joins_state *reduce_outer_joins_pass1(Node *jtnode);
 static void reduce_outer_joins_pass2(Node *jtnode,
 						 reduce_outer_joins_state *state,
@@ -243,16 +243,19 @@ pull_up_subqueries(Query *parse, Node *jtnode, bool below_outer_join)
 			subtlist = subquery->targetList;
 			parse->targetList = (List *)
 				ResolveNew((Node *) parse->targetList,
-						   varno, 0, rte, subtlist, CMD_SELECT, 0);
+						   varno, 0, parse->rtable,
+						   subtlist, CMD_SELECT, 0);
 			resolvenew_in_jointree((Node *) parse->jointree, varno,
-								   rte, subtlist);
+								   parse->rtable, subtlist);
 			Assert(parse->setOperations == NULL);
 			parse->havingQual =
 				ResolveNew(parse->havingQual,
-						   varno, 0, rte, subtlist, CMD_SELECT, 0);
+						   varno, 0, parse->rtable,
+						   subtlist, CMD_SELECT, 0);
 			parse->in_info_list = (List *)
 				ResolveNew((Node *) parse->in_info_list,
-						   varno, 0, rte, subtlist, CMD_SELECT, 0);
+						   varno, 0, parse->rtable,
+						   subtlist, CMD_SELECT, 0);
 
 			foreach(rt, parse->rtable)
 			{
@@ -261,7 +264,8 @@ pull_up_subqueries(Query *parse, Node *jtnode, bool below_outer_join)
 				if (otherrte->rtekind == RTE_JOIN)
 					otherrte->joinaliasvars = (List *)
 						ResolveNew((Node *) otherrte->joinaliasvars,
-								   varno, 0, rte, subtlist, CMD_SELECT, 0);
+								   varno, 0, parse->rtable,
+								   subtlist, CMD_SELECT, 0);
 			}
 
 			/*
@@ -477,7 +481,7 @@ has_nullable_targetlist(Query *subquery)
  */
 static void
 resolvenew_in_jointree(Node *jtnode, int varno,
-					   RangeTblEntry *rte, List *subtlist)
+					   List *rtable, List *subtlist)
 {
 	if (jtnode == NULL)
 		return;
@@ -491,18 +495,20 @@ resolvenew_in_jointree(Node *jtnode, int varno,
 		ListCell   *l;
 
 		foreach(l, f->fromlist)
-			resolvenew_in_jointree(lfirst(l), varno, rte, subtlist);
+			resolvenew_in_jointree(lfirst(l), varno, rtable, subtlist);
 		f->quals = ResolveNew(f->quals,
-							  varno, 0, rte, subtlist, CMD_SELECT, 0);
+							  varno, 0, rtable,
+							  subtlist, CMD_SELECT, 0);
 	}
 	else if (IsA(jtnode, JoinExpr))
 	{
 		JoinExpr   *j = (JoinExpr *) jtnode;
 
-		resolvenew_in_jointree(j->larg, varno, rte, subtlist);
-		resolvenew_in_jointree(j->rarg, varno, rte, subtlist);
+		resolvenew_in_jointree(j->larg, varno, rtable, subtlist);
+		resolvenew_in_jointree(j->rarg, varno, rtable, subtlist);
 		j->quals = ResolveNew(j->quals,
-							  varno, 0, rte, subtlist, CMD_SELECT, 0);
+							  varno, 0, rtable,
+							  subtlist, CMD_SELECT, 0);
 
 		/*
 		 * We don't bother to update the colvars list, since it won't be

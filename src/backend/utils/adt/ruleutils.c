@@ -3,7 +3,7 @@
  *				back to source text
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.177 2004/08/17 18:47:09 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.178 2004/08/19 20:57:41 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -203,6 +203,8 @@ static void get_sublink_expr(SubLink *sublink, deparse_context *context);
 static void get_from_clause(Query *query, deparse_context *context);
 static void get_from_clause_item(Node *jtnode, Query *query,
 					 deparse_context *context);
+static void get_from_clause_alias(Alias *alias, int varno,
+								  Query *query, deparse_context *context);
 static void get_from_clause_coldeflist(List *coldeflist,
 						   deparse_context *context);
 static void get_opclass_name(Oid opclass, Oid actual_datatype,
@@ -3962,20 +3964,8 @@ get_from_clause_item(Node *jtnode, Query *query, deparse_context *context)
 			appendStringInfo(buf, " %s",
 							 quote_identifier(rte->alias->aliasname));
 			gavealias = true;
-			if (rte->alias->colnames != NIL && coldeflist == NIL)
-			{
-				ListCell   *col;
-
-				appendStringInfoChar(buf, '(');
-				foreach(col, rte->alias->colnames)
-				{
-					if (col != list_head(rte->alias->colnames))
-						appendStringInfo(buf, ", ");
-					appendStringInfoString(buf,
-										   quote_identifier(strVal(lfirst(col))));
-				}
-				appendStringInfoChar(buf, ')');
-			}
+			if (coldeflist == NIL)
+				get_from_clause_alias(rte->alias, varno, query, context);
 		}
 		else if (rte->rtekind == RTE_RELATION &&
 			 strcmp(rte->eref->aliasname, get_rel_name(rte->relid)) != 0)
@@ -4128,25 +4118,49 @@ get_from_clause_item(Node *jtnode, Query *query, deparse_context *context)
 		{
 			appendStringInfo(buf, " %s",
 							 quote_identifier(j->alias->aliasname));
-			if (j->alias->colnames != NIL)
-			{
-				ListCell   *col;
-
-				appendStringInfoChar(buf, '(');
-				foreach(col, j->alias->colnames)
-				{
-					if (col != list_head(j->alias->colnames))
-						appendStringInfo(buf, ", ");
-					appendStringInfoString(buf,
-								  quote_identifier(strVal(lfirst(col))));
-				}
-				appendStringInfoChar(buf, ')');
-			}
+			get_from_clause_alias(j->alias, j->rtindex, query, context);
 		}
 	}
 	else
 		elog(ERROR, "unrecognized node type: %d",
 			 (int) nodeTag(jtnode));
+}
+
+/*
+ * get_from_clause_alias - reproduce column alias list
+ *
+ * This is tricky because we must ignore dropped columns.
+ */
+static void
+get_from_clause_alias(Alias *alias, int varno,
+					  Query *query, deparse_context *context)
+{
+	StringInfo	buf = context->buf;
+	ListCell   *col;
+	AttrNumber attnum;
+	bool		first = true;
+
+	if (alias == NULL || alias->colnames == NIL)
+		return;					/* definitely nothing to do */
+
+	attnum = 0;
+	foreach(col, alias->colnames)
+	{
+		attnum++;
+		if (get_rte_attribute_is_dropped(query->rtable, varno, attnum))
+			continue;
+		if (first)
+		{
+			appendStringInfoChar(buf, '(');
+			first = false;
+		}
+		else
+			appendStringInfo(buf, ", ");
+		appendStringInfoString(buf,
+							   quote_identifier(strVal(lfirst(col))));
+	}
+	if (!first)
+		appendStringInfoChar(buf, ')');
 }
 
 /*

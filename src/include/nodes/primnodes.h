@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/primnodes.h,v 1.101 2004/08/17 18:47:09 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/primnodes.h,v 1.102 2004/08/19 20:57:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -98,9 +98,9 @@ typedef struct Resdom
  *	  specifies an alias for a range variable; the alias might also
  *	  specify renaming of columns within the table.
  *
- * Note: colnames is a list of Value nodes (always strings).  In an RTE's
- * eref Alias, the colnames list includes dropped columns, so that the
- * colname list position matches the physical attribute number.
+ * Note: colnames is a list of Value nodes (always strings).  In Alias structs
+ * associated with RTEs, there may be entries corresponding to dropped
+ * columns; these are normally empty strings ("").  See parsenodes.h for info.
  */
 typedef struct Alias
 {

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_target.c,v 1.122 2004/06/19 18:19:55 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_target.c,v 1.123 2004/08/19 20:57:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -699,6 +699,8 @@ ExpandColumnRefStar(ParseState *pstate, ColumnRef *cref)
 		char	   *relname;
 		RangeTblEntry *rte;
 		int			sublevels_up;
+		int			rtindex;
+		List	   *rtable;
 
 		switch (numnames)
 		{
@@ -743,7 +745,10 @@ ExpandColumnRefStar(ParseState *pstate, ColumnRef *cref)
 			rte = addImplicitRTE(pstate, makeRangeVar(schemaname,
 													  relname));
 
-		return expandRelAttrs(pstate, rte);
+		rtindex = RTERangeTablePosn(pstate, rte, &sublevels_up);
+		rtable = GetLevelNRangeTable(pstate, sublevels_up);
+
+		return expandRelAttrs(pstate, rtable, rtindex, sublevels_up);
 	}
 }
 
@@ -765,29 +770,31 @@ ExpandAllTables(ParseState *pstate)
 	foreach(ns, pstate->p_namespace)
 	{
 		Node	   *n = (Node *) lfirst(ns);
+		int			rtindex;
 		RangeTblEntry *rte;
 
 		if (IsA(n, RangeTblRef))
-			rte = rt_fetch(((RangeTblRef *) n)->rtindex,
-						   pstate->p_rtable);
+			rtindex = ((RangeTblRef *) n)->rtindex;
 		else if (IsA(n, JoinExpr))
-			rte = rt_fetch(((JoinExpr *) n)->rtindex,
-						   pstate->p_rtable);
+			rtindex = ((JoinExpr *) n)->rtindex;
 		else
 		{
 			elog(ERROR, "unrecognized node type: %d", (int) nodeTag(n));
-			rte = NULL;			/* keep compiler quiet */
+			rtindex = 0;			/* keep compiler quiet */
 		}
 
 		/*
 		 * Ignore added-on relations that were not listed in the FROM
 		 * clause.
 		 */
+		rte = rt_fetch(rtindex, pstate->p_rtable);
 		if (!rte->inFromCl)
 			continue;
 
 		found_table = true;
-		target = list_concat(target, expandRelAttrs(pstate, rte));
+		target = list_concat(target,
+							 expandRelAttrs(pstate, pstate->p_rtable,
+											rtindex, 0));
 	}
 
 	/* Check for SELECT *; */

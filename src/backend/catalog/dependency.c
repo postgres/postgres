@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/dependency.c,v 1.36 2004/05/26 04:41:06 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/dependency.c,v 1.37 2004/08/19 20:57:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -970,10 +970,15 @@ find_expr_references_walker(Node *node,
 		if (var->varno <= 0 || var->varno > list_length(rtable))
 			elog(ERROR, "invalid varno %d", var->varno);
 		rte = rt_fetch(var->varno, rtable);
+		/*
+		 * A whole-row Var references no specific columns, so adds no new
+		 * dependency.
+		 */
+		if (var->varattno == InvalidAttrNumber)
+			return false;
 		if (rte->rtekind == RTE_RELATION)
 		{
 			/* If it's a plain relation, reference this column */
-			/* NB: this code works for whole-row Var with attno 0, too */
 			add_object_address(OCLASS_CLASS, rte->relid, var->varattno,
 							   &context->addrs);
 		}
