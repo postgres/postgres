@@ -27,7 +27,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.178 2002/09/04 20:31:17 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.179 2002/09/23 22:57:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1032,6 +1032,9 @@ lnext:	;
 					switch (test)
 					{
 						case HeapTupleSelfUpdated:
+							/* treat it as deleted; do not process */
+							goto lnext;
+
 						case HeapTupleMayBeUpdated:
 							break;
 
@@ -1303,6 +1306,7 @@ ldelete:;
 	switch (result)
 	{
 		case HeapTupleSelfUpdated:
+			/* already deleted by self; nothing to do */
 			return;
 
 		case HeapTupleMayBeUpdated:
@@ -1437,6 +1441,7 @@ lreplace:;
 	switch (result)
 	{
 		case HeapTupleSelfUpdated:
+			/* already deleted by self; nothing to do */
 			return;
 
 		case HeapTupleMayBeUpdated:

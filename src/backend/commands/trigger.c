@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/trigger.c,v 1.132 2002/09/21 18:39:25 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/trigger.c,v 1.133 2002/09/23 22:57:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1209,6 +1209,7 @@ ltrmark:;
 		switch (test)
 		{
 			case HeapTupleSelfUpdated:
+				/* treat it as deleted; do not process */
 				ReleaseBuffer(buffer);
 				return (NULL);
 
