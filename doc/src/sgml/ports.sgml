@@ -214,7 +214,7 @@ At the time of publication, the following platforms have been tested:
     <ENTRY>v6.4</ENTRY>
     <ENTRY>1998-10-08</ENTRY>
     <ENTRY>Mostly working with the Cygwin library. No DLLs yet.
-           (<ulink url="mailto:horak@mmp.plzen-city.cz">Horak Daniel</ulink>) </ENTRY>
+           (<ulink url="mailto:Dan.Horak@email.cz">Horak Daniel</ulink>) </ENTRY>
   </ROW>
 </TBODY>
 </TGROUP>
