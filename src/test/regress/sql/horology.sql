@@ -60,10 +60,15 @@ SELECT time with time zone '02:30-08' + interval '36:01' AS "14:31:00-08";
 
 -- These two tests cannot be used because they default to current timezone,
 -- which may be either -08 or -07 depending on the time of year.
-
 -- SELECT time with time zone '01:30' + interval '02:01' AS "03:31:00-08";
-
 -- SELECT time with time zone '03:30' + interval '1 month 04:01' AS "07:31:00-08";
+-- Try the following two tests instead, as a poor substitute
+
+SELECT CAST(date 'today' + time with time zone '01:30'
+            + interval '02:01' AS time) AS "03:31:00";
+
+SELECT CAST(date 'today' + time with time zone '03:30'
+            + interval '1 month 04:01' AS time) AS "07:31:00";
 
 SELECT interval '04:30' - time with time zone '01:02' AS "+03:28";
 
