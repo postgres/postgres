@@ -1,0 +1,45 @@
+CREATE TABLE x (
+	a serial,
+	b int,
+	c text not null default 'stuff',
+	d text not null,
+	e text
+);
+NOTICE:  CREATE TABLE will create implicit sequence 'x_a_seq' for SERIAL column 'x.a'
+NOTICE:  CREATE TABLE / UNIQUE will create implicit index 'x_a_key' for table 'x'
+CREATE FUNCTION fn_x_before () RETURNS OPAQUE AS '
+  BEGIN
+		NEW.e := ''before trigger fired''::text;
+		return NEW;
+	END;
+' language 'plpgsql';
+CREATE FUNCTION fn_x_after () RETURNS OPAQUE AS '
+  BEGIN
+		UPDATE x set e=''after trigger fired'' where c=''stuff'';
+		return NULL;
+	END;
+' language 'plpgsql';
+CREATE TRIGGER trg_x_after AFTER INSERT ON x
+FOR EACH ROW EXECUTE PROCEDURE fn_x_after();
+CREATE TRIGGER trg_x_before BEFORE INSERT ON x
+FOR EACH ROW EXECUTE PROCEDURE fn_x_before();
+COPY x (a,b,c,d,e) from stdin;
+COPY x (b,d) from stdin;
+COPY x (b,d) from stdin;
+COPY x (a,b,c,d,e) from stdin;
+COPY x TO stdout;
+10000	21	31	41	before trigger fired
+10001	22	32	42	before trigger fired
+10002	23	33	43	before trigger fired
+10003	24	34	44	before trigger fired
+10004	25	35	45	before trigger fired
+10005	26	36	46	before trigger fired
+1	1	stuff	test_1	after trigger fired
+2	2	stuff	test_2	after trigger fired
+3	3	stuff	test_3	after trigger fired
+4	4	stuff	test_4	after trigger fired
+5	5	stuff	test_5	after trigger fired
+DROP TABLE x;
+DROP SEQUENCE x_a_seq;
+DROP FUNCTION fn_x_before();
+DROP FUNCTION fn_x_after();
