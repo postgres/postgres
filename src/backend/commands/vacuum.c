@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.86 1998/10/09 21:28:40 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.87 1998/10/09 21:31:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -102,8 +102,6 @@ static char *vc_find_eq(char *bot, int nelem, int size, char *elm, int (*compar)
 static int	vc_cmp_blk(char *left, char *right);
 static int	vc_cmp_offno(char *left, char *right);
 static bool vc_enough_space(VPageDescr vpd, Size len);
-
-void test(Oid relid);
 
 void
 vacuum(char *vacrel, bool verbose, bool analyze, List *va_spec)
@@ -331,9 +329,6 @@ vc_getrels(NameData *VacRelP)
 
 		cur->vrl_relid = tuple->t_oid;
 		cur->vrl_next = (VRelList) NULL;
-
-		test(tuple->t_oid);
-
 	}
 	if (found == false)
 		elog(NOTICE, "Vacuum: table not found");
@@ -2250,29 +2245,3 @@ vc_enough_space(VPageDescr vpd, Size len)
 	return false;
 
 }	/* vc_enough_space */
-
-
-void test(Oid relid)
-{
-	Relation	rd;
-	HeapTuple	rtup,
-				ctup;
-	Buffer		buffer;
-
-	/*
-	 * update number of tuples and number of pages in pg_class
-	 */
-	ctup = SearchSysCacheTupleCopy(RELOID,
-							   ObjectIdGetDatum(relid),
-							   0, 0, 0);
-	if (!HeapTupleIsValid(ctup))
-		elog(ERROR, "pg_class entry for relid %d vanished during vacuuming",
-			 relid);
-
-	rd = heap_openr(RelationRelationName);
-
-	/* get the buffer cache tuple */
-	rtup = heap_fetch(rd, SnapshotNow, &ctup->t_ctid, &buffer);
-	pfree(ctup);
-	heap_close(rd);
-}
