@@ -2,18 +2,16 @@
     configure.in and configure
     update version and perhaps majorversion in doc/src/sgml/version.sgml
     bump interface version numbers
-    update src/interfaces/libpq/libpq.rc
-    update src/interfaces/libpq++/libpq++dll.rc
-    update src/include/pg_config.h.win32
+      update src/interfaces/libpq/libpq.rc
+      update src/include/pg_config.h.win32
 
 * Release notes
-    update doc/src/sgml/release.sgml 
-    HISTORY
+    update HISTORY and later doc/src/sgml/release.sgml 
 
 * Documentation
     document all new features
-    help output from inside the programs
-    reference/man pages
+    update help output from inside the programs
+    /ref manual pages
 
 * Ports
     update ports list in doc/src/sgml/installation.sgml 
