@@ -42,7 +42,7 @@
 #  define NEED_UNION_SEMUN 
 #  define SB_PAD 40
 #  define HAS_TEST_AND_SET
-   include <sys/mman.h>  /* for msemaphore */
+#  include <sys/mman.h>  /* for msemaphore */
    typedef msemaphore slock_t;
 #endif
 
