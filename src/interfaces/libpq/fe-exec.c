@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.44 1997/12/05 01:13:24 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.45 1997/12/23 20:00:06 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -456,14 +456,11 @@ process_response_from_backend(FILE *pfin, FILE *pfout, FILE *pfdebug,
 		if (id == EOF)
 		{
 			/* hmm,  no response from the backend-end, that's bad */
-			(void) sprintf(reason,
-				  "PQexec() -- Request was sent to backend, but backend "
-						   "closed the channel before "
-						   "responding.  This probably means the backend "
-					  "terminated abnormally before or while processing "
-						   "the request.\n");
-			conn->status = CONNECTION_BAD;		/* No more connection to
-												 * backend */
+			(void) sprintf(reason, "PQexec() -- Request was sent to backend"
+				", but backend closed the channel before responding."
+				"\n\tThis probably means the backend terminated abnormally"
+				" before or while processing the request.\n");
+			conn->status = CONNECTION_BAD;	/* No more connection to backend */
 			*result_p = (PGresult *) NULL;
 			done = true;
 		}
