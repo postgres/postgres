@@ -27,7 +27,7 @@
 # Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.204 2003/10/13 21:06:44 tgl Exp $
+# $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.204.2.1 2004/01/14 03:47:12 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -1026,6 +1026,8 @@ CREATE RULE pg_settings_u AS \
 CREATE RULE pg_settings_n AS \
     ON UPDATE TO pg_settings \
     DO INSTEAD NOTHING;
+
+GRANT SELECT, UPDATE ON pg_settings TO PUBLIC;
 
 EOF
 if [ "$?" -ne 0 ]; then
