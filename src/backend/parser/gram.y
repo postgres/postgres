@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.96 1999/07/28 17:39:38 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.97 1999/08/18 13:04:45 ishii Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -563,7 +563,7 @@ VariableSetStmt:  SET ColId TO var_value
 				}
 		| SET NAMES encoding
 				{
-#ifdef MB
+#ifdef MULTIBYTE
 					VariableSetStmt *n = makeNode(VariableSetStmt);
 					n->name  = "client_encoding";
 					n->value = $3;
