@@ -1,5 +1,5 @@
-# $PostgreSQL: pgsql/src/bin/initdb/nls.mk,v 1.3 2003/11/29 19:52:04 pgsql Exp $
+# $PostgreSQL: pgsql/src/bin/initdb/nls.mk,v 1.4 2003/12/11 22:03:05 petere Exp $
 CATALOG_NAME	:= initdb
-AVAIL_LANGUAGES	:= de pt_BR
+AVAIL_LANGUAGES	:= de it pt_BR
 GETTEXT_FILES	:= initdb.c
 GETTEXT_TRIGGERS:= _ simple_prompt
