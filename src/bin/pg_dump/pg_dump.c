@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.336 2003/07/23 08:47:30 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.337 2003/07/25 19:37:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3304,13 +3304,13 @@ dumpOneDomain(Archive *fout, TypeInfo *tinfo)
 	 * Fetch and process CHECK constraints for the domain
 	 */
 	if (g_fout->remoteVersion >= 70400)
-		appendPQExpBuffer(chkquery, "SELECT conname,"
+		appendPQExpBuffer(chkquery, "SELECT conname, "
 						  "pg_catalog.pg_get_constraintdef(oid) AS consrc "
 						  "FROM pg_catalog.pg_constraint "
 						  "WHERE contypid = '%s'::pg_catalog.oid",
 						  tinfo->oid);
 	else
-		appendPQExpBuffer(chkquery, "SELECT conname, 'CHECK (' || consrc || ')'"
+		appendPQExpBuffer(chkquery, "SELECT conname, 'CHECK (' || consrc || ')' AS consrc "
 						  "FROM pg_catalog.pg_constraint "
 						  "WHERE contypid = '%s'::pg_catalog.oid",
 						  tinfo->oid);
@@ -5267,8 +5267,8 @@ dumpOneTable(Archive *fout, TableInfo *tbinfo, TableInfo *g_tblinfo)
 			if (g_fout->remoteVersion >= 70400)
 				appendPQExpBuffer(query, "SELECT conname, "
 								  " pg_catalog.pg_get_constraintdef(c1.oid) AS consrc "
-								  " from pg_catalog.pg_constraint c1"
-								" where conrelid = '%s'::pg_catalog.oid "
+								  " from pg_catalog.pg_constraint c1 "
+								  " where conrelid = '%s'::pg_catalog.oid "
 								  "   and contype = 'c' "
 								  "   and not exists "
 								  "  (select 1 from "
@@ -5286,7 +5286,7 @@ dumpOneTable(Archive *fout, TableInfo *tbinfo, TableInfo *g_tblinfo)
 								  tbinfo->oid);
 			else if (g_fout->remoteVersion >= 70300)
 				appendPQExpBuffer(query, "SELECT conname, "
-								  " 'CHECK (' || consrc || ')'"
+								  " 'CHECK (' || consrc || ')' AS consrc"
 								  " from pg_catalog.pg_constraint c1"
 								" where conrelid = '%s'::pg_catalog.oid "
 								  "   and contype = 'c' "
@@ -6063,7 +6063,7 @@ dumpConstraints(Archive *fout, TableInfo *tblinfo, int numTables)
 		resetPQExpBuffer(query);
 		appendPQExpBuffer(query,
 						  "SELECT oid, conname, "
-						"pg_catalog.pg_get_constraintdef(oid) as condef "
+						  "pg_catalog.pg_get_constraintdef(oid) as condef "
 						  "FROM pg_catalog.pg_constraint "
 						  "WHERE conrelid = '%s'::pg_catalog.oid "
 						  "AND contype = 'f'",
