@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/Attic/nbtscan.c,v 1.14 1998/06/15 19:27:57 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/Attic/nbtscan.c,v 1.15 1998/07/30 05:04:50 vadim Exp $
  *
  *
  * NOTES
@@ -30,6 +30,7 @@
 #include <postgres.h>
 
 #include <storage/bufpage.h>
+#include <storage/bufmgr.h>
 #include <access/nbtree.h>
 
 typedef struct BTScanListData
@@ -145,9 +146,16 @@ _bt_scandel(IndexScanDesc scan, int op, BlockNumber blkno, OffsetNumber offno)
 	{
 		switch (op)
 		{
+/*
+ * Problems occure when current scan page is splitted!
+ * We saw "Non-functional updates" (ie index tuples were read twice)
+ * and partial updates ("good" tuples were not read at all) - due to
+ * losing scan position here. Look @ nbtree.c:btgettuple()
+ * what we do now...		- vadim 07/29/98
 			case BT_INSERT:
 				_bt_step(scan, &buf, ForwardScanDirection);
 				break;
+ */
 			case BT_DELETE:
 				_bt_step(scan, &buf, BackwardScanDirection);
 				break;
@@ -156,6 +164,14 @@ _bt_scandel(IndexScanDesc scan, int op, BlockNumber blkno, OffsetNumber offno)
 				/* NOTREACHED */
 		}
 		so->btso_curbuf = buf;
+		if (ItemPointerIsValid(current))
+		{
+			Page	page = BufferGetPage(buf);
+			BTItem	btitem = (BTItem) PageGetItem(page, 
+					PageGetItemId(page, ItemPointerGetOffsetNumber(current)));
+			
+			so->curHeapIptr = btitem->bti_itup.t_tid;
+		}
 	}
 
 	current = &(scan->currentMarkData);
@@ -173,9 +189,12 @@ _bt_scandel(IndexScanDesc scan, int op, BlockNumber blkno, OffsetNumber offno)
 		buf = so->btso_curbuf;
 		switch (op)
 		{
+/*
+ * ...comments are above...
 			case BT_INSERT:
 				_bt_step(scan, &buf, ForwardScanDirection);
 				break;
+ */
 			case BT_DELETE:
 				_bt_step(scan, &buf, BackwardScanDirection);
 				break;
@@ -188,6 +207,14 @@ _bt_scandel(IndexScanDesc scan, int op, BlockNumber blkno, OffsetNumber offno)
 		tmp = *current;
 		*current = scan->currentItemData;
 		scan->currentItemData = tmp;
+		if (ItemPointerIsValid(current))
+		{
+			Page	page = BufferGetPage(buf);
+			BTItem	btitem = (BTItem) PageGetItem(page, 
+					PageGetItemId(page, ItemPointerGetOffsetNumber(current)));
+			
+			so->mrkHeapIptr = btitem->bti_itup.t_tid;
+		}
 	}
 }
 

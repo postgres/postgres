@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nbtree.h,v 1.20 1998/02/26 04:40:22 momjian Exp $
+ * $Id: nbtree.h,v 1.21 1998/07/30 05:05:05 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -62,18 +62,26 @@ typedef BTPageOpaqueData *BTPageOpaque;
  *	semop() calls, which are expensive.
  *
  *	And it's used to remember actual scankey info (we need in it
- *	if some scankeys evaled at runtime.
+ *	if some scankeys evaled at runtime).
+ *
+ *	curHeapIptr & mrkHeapIptr are heap iptr-s from current/marked
+ *	index tuples: we don't adjust scans on insertions (and, if LLL
+ *	is ON, don't hold locks on index pages between passes) - we
+ *	use these pointers to restore index scan positions...
+ *		- vadim 07/29/98
  */
 
 typedef struct BTScanOpaqueData
 {
-	Buffer		btso_curbuf;
-	Buffer		btso_mrkbuf;
-	uint16		qual_ok;		/* 0 for quals like key == 1 && key > 2 */
-	uint16		numberOfKeys;	/* number of keys */
-	uint16		numberOfFirstKeys;		/* number of keys for 1st
-										 * attribute */
-	ScanKey		keyData;		/* key descriptor */
+	Buffer			btso_curbuf;
+	Buffer			btso_mrkbuf;
+	ItemPointerData	curHeapIptr;
+	ItemPointerData	mrkHeapIptr;
+	uint16			qual_ok;		/* 0 for quals like key == 1 && key > 2 */
+	uint16			numberOfKeys;	/* number of keys */
+	uint16			numberOfFirstKeys;		/* number of keys for 1st
+											 * attribute */
+	ScanKey			keyData;		/* key descriptor */
 } BTScanOpaqueData;
 
 typedef BTScanOpaqueData *BTScanOpaque;
