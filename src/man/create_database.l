@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/create_database.l,v 1.2 1996/12/11 00:27:12 momjian Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/create_database.l,v 1.3 1997/05/19 14:23:08 momjian Exp $
 .TH "CREATE DATABASE" SQL 11/05/95 PostgreSQL PostgreSQL
 .SH NAME
 create database \(em create a new database
@@ -17,9 +17,3 @@ createdb(1),
 drop database(l),
 destroydb(1),
 initdb(1).
-.SH BUGS
-This command should 
-.BR NOT
-be executed interactively.  The 
-.IR createdb (1)
-script should be used instead.
