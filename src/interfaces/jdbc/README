@@ -31,18 +31,16 @@ http://jakarta.apache.org/ant/index.html and download the binary. Being pure
 java it will run on virtually all java platforms. If you have any problems
 please email the INTERFACES list.
 
-Once you have ANT, cd to the src directory and type "ant". This will compile
-the correct driver for your JVM, and build a .jar file (Java ARchive) called
-postgresql.jar
+Once you have ANT, run the configure script in the top-level directory with
+the --with-java option.  Then proceed with 'make' and 'make install' as
+usual.  This will compile the correct driver for your JVM, and build a .jar
+file (Java ARchive) called postgresql.jar.  The file will be installed in
+the directory PREFIX/share/java.
 
 That jar file will contain the driver for _your_ version of the JDK.
 
-Note: As of 7.1, you build from pgsql/src and not pgsql/src/interfaces/jdbc.
-Well you can, but building from the top will also build some extra utilities
-located under /contrib at the same time. Also later on (either 7.1.1 or 7.2)
-it's intended to have the main configure script to build the driver
-automatically if it finds both a JDK & ANT installed, so this is the first step
-towards that.
+Note: As of 7.1, you can build from the top-level directory or from
+src/interfaces/jdbc.
 
 REMEMBER: Once you have compiled the driver, it will work on ALL platforms
 that support that version of the API. You don't need to build it for each
@@ -52,8 +50,8 @@ That means you don't have to compile it on every platform. Believe me, I
 still hear from people who ask me "I've compiled it ok under Solaris, but it
 won't compile under Linux" - there's no difference.
 
-I advise you don't try running javac outside of ANT as it builds some classes
-on the fly.
+Don't try to run javac directly.  Don't try to run ant directly.  Neither
+will work.
 
 Possible problems
 
@@ -75,12 +73,11 @@ More details are in the Implementation file src/interfaces/jdbc/Implementation
 
 INSTALLING THE DRIVER
 
-To install the driver, the .class files have to be in the classpath. To do
-this, copy the postgres.jar file into a directory, and add it to the classpath.
+To install the driver, the .class files have to be in the classpath.
 
 ie: under LINUX/SOLARIS (the example here is my linux box):
 
-	export CLASSPATH=.:/usr/local/lib/postgresql.jar
+	export CLASSPATH=.:/usr/local/pgsql/share/java/postgresql.jar
 
 Please don't be tempted to extract the files from the .jar file. There are a
 lot of files in there, and you may break the Exception handling.
