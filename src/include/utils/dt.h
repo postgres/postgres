@@ -8,7 +8,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: dt.h,v 1.2 1997/03/18 16:36:50 scrappy Exp $
+ * $Id: dt.h,v 1.3 1997/03/25 08:11:18 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,19 +16,23 @@
 #define DT_H
 
 #include <time.h>
+#include <math.h>
 
 /*
  * DateTime represents absolute time.
- * TimeSpan represents delta time.
+ * TimeSpan represents delta time. Keep track of months (and years)
+ *  separately since the elapsed time spanned is unknown until instantiated
+ *  relative to an absolute time.
+ *
  * Note that Postgres uses "time interval" to mean a bounded interval,
- *  consisting of a beginning and ending time, not a time span.
+ *  consisting of a beginning and ending time, not a time span - tgl 97/03/20
  */
 
 typedef double DateTime;
 
 typedef struct {
     double      time;   /* all time units other than months and years */
-    int4        month;  /* months and years */
+    int4        month;  /* months and years, after time for alignment */
 } TimeSpan;
 
 
@@ -45,6 +49,7 @@ typedef struct {
  * Other alternate forms are hardcoded into token tables in dt.c.
  * ----------------------------------------------------------------
  */
+
 #define DAGO		"ago"
 #define DCURRENT	"current"
 #define EPOCH		"epoch"
@@ -65,12 +70,14 @@ typedef struct {
 #define DDAY		"day"
 #define DWEEK		"week"
 #define DMONTH		"month"
+#define DQUARTER	"quarter"
 #define DYEAR		"year"
 #define DDECADE		"decade"
 #define DCENTURY	"century"
 #define DMILLENIUM	"millenium"
 #define DA_D		"ad"
 #define DB_C		"bc"
+#define DTIMEZONE	"timezone"
 
 /*
  * Fundamental time field definitions for parsing.
@@ -78,6 +85,7 @@ typedef struct {
  *  Meridian:  am, pm, or 24-hour style.
  *  Millenium: ad, bc
  */
+
 #define AM	0
 #define PM	1
 #define HR24	2
@@ -90,6 +98,7 @@ typedef struct {
  * Can't have more of these than there are bits in an unsigned int
  *  since these are turned into bit masks during parsing and decoding.
  */
+
 #define RESERV	0
 #define MONTH	1
 #define YEAR	2
@@ -116,6 +125,7 @@ typedef struct {
  * These need to fit into the datetkn table type.
  * At the moment, that means keep them within [-127,127].
  */
+
 #define DTK_NUMBER	0
 #define DTK_STRING	1
 
@@ -143,17 +153,19 @@ typedef struct {
 #define DTK_DAY		36
 #define DTK_WEEK	37
 #define DTK_MONTH	38
-#define DTK_YEAR	39
-#define DTK_DECADE	40
-#define DTK_CENTURY	41
-#define DTK_MILLENIUM	42
-#define DTK_MILLISEC	43
-#define DTK_MICROSEC	44
-#define DTK_AGO		45
+#define DTK_QUARTER	39
+#define DTK_YEAR	40
+#define DTK_DECADE	41
+#define DTK_CENTURY	42
+#define DTK_MILLENIUM	43
+#define DTK_MILLISEC	44
+#define DTK_MICROSEC	45
+#define DTK_AGO		46
 
 /*
  * Bit mask definitions for time parsing.
  */
+
 #define DTK_M(t)	(0x01 << t)
 
 #define DTK_DATE_M	(DTK_M(YEAR) | DTK_M(MONTH) | DTK_M(DAY))
@@ -174,21 +186,95 @@ typedef struct {
     char value;		/* this may be unsigned, alas */
 } datetkn;
 
-extern void GetCurrentTime(struct tm *tm);
+#ifdef NAN
+#define DT_INVALID	(NAN)
+#else
+#define DT_INVALID	(DBL_MIN+DBL_MIN)
+#endif
+#ifdef HUGE_VAL
+#define DT_NOBEGIN	(-HUGE_VAL)
+#define DT_NOEND	(HUGE_VAL)
+#else
+#define DT_NOBEGIN	(-DBL_MAX)
+#define DT_NOEND	(DBL_MAX)
+#endif
+#define DT_CURRENT	(DBL_MIN)
+#define DT_EPOCH	(-DBL_MIN)
+
+#define DATETIME_INVALID(j)	{j = DT_INVALID;}
+#ifdef NAN
+#define DATETIME_IS_INVALID(j)	(isnan(j))
+#else
+#define DATETIME_IS_INVALID(j)	(j == DT_INVALID)
+#endif
+
+#define DATETIME_NOBEGIN(j)	{j = DT_NOBEGIN;}
+#define DATETIME_IS_NOBEGIN(j)	(j == DT_NOBEGIN)
+
+#define DATETIME_NOEND(j)	{j = DT_NOEND;}
+#define DATETIME_IS_NOEND(j)	(j == DT_NOEND)
+
+#define DATETIME_CURRENT(j)	{j = DT_CURRENT;}
+#define DATETIME_IS_CURRENT(j)	(j == DT_CURRENT)
+
+#define DATETIME_EPOCH(j)	{j = DT_EPOCH;}
+#define DATETIME_IS_EPOCH(j)	(j == DT_EPOCH)
+
+#define DATETIME_IS_RELATIVE(j)	(DATETIME_IS_CURRENT(j) || DATETIME_IS_EPOCH(j))
+#define DATETIME_NOT_FINITE(j)	(DATETIME_IS_INVALID(j) \
+				|| DATETIME_IS_NOBEGIN(j) || DATETIME_IS_NOEND(j))
+#define DATETIME_IS_RESERVED(j) (DATETIME_IS_RELATIVE(j) || DATETIME_NOT_FINITE(j))
+
+#define TIMESPAN_INVALID(j)	{j->time = DT_INVALID;}
+#ifdef NAN
+#define TIMESPAN_IS_INVALID(j)	(isnan((j).time))
+#else
+#define TIMESPAN_IS_INVALID(j)	((j).time == DT_INVALID)
+#endif
+
+#define TIME_PREC 1e-6
+#define JROUND(j) (rint(((double) j)/TIME_PREC)*TIME_PREC)
 
 /*
  * dt.c prototypes 
  */
+
 extern DateTime *datetime_in( char *str);
 extern char *datetime_out( DateTime *dt);
+extern bool datetime_eq(DateTime *dt1, DateTime *dt2);
+extern bool datetime_ne(DateTime *dt1, DateTime *dt2);
+extern bool datetime_lt(DateTime *dt1, DateTime *dt2);
+extern bool datetime_le(DateTime *dt1, DateTime *dt2);
+extern bool datetime_ge(DateTime *dt1, DateTime *dt2);
+extern bool datetime_gt(DateTime *dt1, DateTime *dt2);
+
 extern TimeSpan *timespan_in(char *str);
 extern char *timespan_out(TimeSpan *span);
+extern bool timespan_eq(TimeSpan *span1, TimeSpan *span2);
+extern bool timespan_ne(TimeSpan *span1, TimeSpan *span2);
+extern bool timespan_lt(TimeSpan *span1, TimeSpan *span2);
+extern bool timespan_le(TimeSpan *span1, TimeSpan *span2);
+extern bool timespan_ge(TimeSpan *span1, TimeSpan *span2);
+extern bool timespan_gt(TimeSpan *span1, TimeSpan *span2);
+
+float64 datetime_part(text *units, DateTime *datetime);
+float64 timespan_part(text *units, TimeSpan *timespan);
+
+extern TimeSpan *timespan_um(TimeSpan *span);
+extern TimeSpan *timespan_add(TimeSpan *span1, TimeSpan *span2);
+extern TimeSpan *timespan_sub(TimeSpan *span1, TimeSpan *span2);
 
 extern TimeSpan *datetime_sub(DateTime *dt1, DateTime *dt2);
 extern DateTime *datetime_add_span(DateTime *dt, TimeSpan *span);
 extern DateTime *datetime_sub_span(DateTime *dt, TimeSpan *span);
-extern TimeSpan *timespan_add(TimeSpan *span1, TimeSpan *span2);
-extern TimeSpan *timespan_sub(TimeSpan *span1, TimeSpan *span2);
+
+extern void GetCurrentTime(struct tm *tm);
+DateTime SetDateTime(DateTime datetime);
+DateTime tm2datetime(struct tm *tm, double fsec, int tzp);
+int datetime2tm( DateTime dt, struct tm *tm, double *fsec);
+
+int timespan2tm(TimeSpan span, struct tm *tm, float8 *fsec);
+int tm2timespan(struct tm *tm, double fsec, TimeSpan *span);
 
 extern DateTime dt2local( DateTime dt, int timezone);
 
@@ -199,12 +285,8 @@ extern int j2day( int jd);
 extern double time2t(const int hour, const int min, const double sec);
 extern void dt2time(DateTime dt, int *hour, int *min, double *sec);
 
-/*
-extern void GetCurrentTime(struct tm *tm);
-*/
 extern int ParseDateTime( char *timestr, char *lowstr,
   char *field[], int ftype[], int maxfields, int *numfields);
-
 extern int DecodeDateTime( char *field[], int ftype[],
  int nf, int *dtype, struct tm *tm, double *fsec, int *tzp);
 extern int DecodeDate(char *str, int fmask, int *tmask, struct tm *tm);
@@ -223,10 +305,9 @@ extern int DecodeDateDelta( char *field[], int ftype[],
  int nf, int *dtype, struct tm *tm, double *fsec);
 extern int DecodeUnits(int field, char *lowtoken, int *val);
 
-extern int EncodeSpecialDateTime(DateTime *dt, char *str);
+extern int EncodeSpecialDateTime(DateTime dt, char *str);
 extern int EncodePostgresDate(struct tm *tm, double fsec, char *str);
 extern int EncodePostgresSpan(struct tm *tm, double fsec, char *str);
-
 
 extern datetkn *datebsearch(char *key, datetkn *base, unsigned int nel);
 

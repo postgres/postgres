@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_type.h,v 1.8 1997/03/12 21:27:41 scrappy Exp $
+ * $Id: pg_type.h,v 1.9 1997/03/25 08:11:01 scrappy Exp $
  *
  * NOTES
  *    the genbki.sh script reads this file and generates .bki
@@ -32,7 +32,7 @@
  *	typedef struct FormData_pg_type
  *
  *      Some of the values in a pg_type instance are copied into 
- *      pg_attribute intances.  Some parts of Postgres use the pg_type copy,
+ *      pg_attribute instances.  Some parts of Postgres use the pg_type copy,
  *      while others use the pg_attribute copy, so they must match.
  *      See struct FormData_pg_attribute for details.
  * ----------------
@@ -57,6 +57,12 @@ CATALOG(pg_type) BOOTSTRAP {
          may be an oversimplification.  Also, there appear to be bugs in which
          Postgres doesn't ignore typbyval when it should, but I'm 
          afraid to change them until I see proof of damage. -BRYANH 96.08).
+
+         (Postgres crashes if typbyval is true, the declared length is 8,
+         and the I/O routines are written to expect pass by reference.
+         Note that float4 is written for pass by reference and has a declared length
+         of 4 bytes, so it looks like pass by reference must be consistant
+         with the declared length, and typbyval is used somewhere. - tgl 97/03/20)
          */
     char  	typtype;
     bool  	typisdefined;
@@ -66,6 +72,9 @@ CATALOG(pg_type) BOOTSTRAP {
       /* typelem is NULL if this is not an array type.  If this is an array
          type, typelem is the OID of the type of the elements of the array
          (it identifies another row in Table pg_type).
+
+         (Note that zero ("0") rather than _null_ is used
+         in the declarations. - tgl 97/03/20)
       */
     regproc  	typinput;
     regproc  	typoutput;
@@ -181,28 +190,28 @@ DATA(insert OID = 29 (  cid        PGUID  2   3 t b t \054 0   0 cidin cidout ci
 DATA(insert OID = 30 (  oid8       PGUID 32  89 f b t \054 0  26 oid8in oid8out oid8in oid8out i _null_ ));
 DATA(insert OID = 32 (  SET        PGUID -1  -1 f r t \054 0  -1 textin textout textin textout i _null_ ));
 
-DATA(insert OID = 71 ( pg_type PGUID 1 1 t b t \054 1247 0 foo bar foo bar c _null_));
-DATA(insert OID = 75 ( pg_attribute PGUID 1 1 t b t \054 1249 0 foo bar foo bar c _null_));
-DATA(insert OID = 76 ( pg_demon PGUID 1 1 t b t \054 1251 0 foo bar foo bar c _null_));
-DATA(insert OID = 80 ( pg_magic PGUID 1 1 t b t \054 1253 0 foo bar foo bar c _null_));
-DATA(insert OID = 81 ( pg_proc PGUID 1 1 t b t \054 1255 0 foo bar foo bar c _null_));
-DATA(insert OID = 82 ( pg_server PGUID 1 1 t b t \054 1257 0 foo bar foo bar c _null_));
-DATA(insert OID = 83 ( pg_class PGUID 1 1 t b t \054 1259 0 foo bar foo bar c _null_));
-DATA(insert OID = 86 ( pg_user PGUID 1 1 t b t \054 1260 0 foo bar foo bar c _null_));
-DATA(insert OID = 87 ( pg_group PGUID 1 1 t b t \054 1261 0 foo bar foo bar c _null_));
-DATA(insert OID = 88 ( pg_database PGUID 1 1 t b t \054 1262 0 foo bar foo bar c _null_));
-DATA(insert OID = 89 ( pg_defaults PGUID 1 1 t b t \054 1263 0 foo bar foo bar c _null_));
-DATA(insert OID = 90 ( pg_variable PGUID 1 1 t b t \054 1264 0 foo bar foo bar c _null_));
-DATA(insert OID = 99 ( pg_log PGUID 1 1 t b t \054 1269 0 foo bar foo bar c _null_));
+DATA(insert OID = 71 (  pg_type      PGUID 1 1 t b t \054 1247 0 foo bar foo bar c _null_));
+DATA(insert OID = 75 (  pg_attribute PGUID 1 1 t b t \054 1249 0 foo bar foo bar c _null_));
+DATA(insert OID = 76 (  pg_demon     PGUID 1 1 t b t \054 1251 0 foo bar foo bar c _null_));
+DATA(insert OID = 80 (  pg_magic     PGUID 1 1 t b t \054 1253 0 foo bar foo bar c _null_));
+DATA(insert OID = 81 (  pg_proc      PGUID 1 1 t b t \054 1255 0 foo bar foo bar c _null_));
+DATA(insert OID = 82 (  pg_server    PGUID 1 1 t b t \054 1257 0 foo bar foo bar c _null_));
+DATA(insert OID = 83 (  pg_class     PGUID 1 1 t b t \054 1259 0 foo bar foo bar c _null_));
+DATA(insert OID = 86 (  pg_user      PGUID 1 1 t b t \054 1260 0 foo bar foo bar c _null_));
+DATA(insert OID = 87 (  pg_group     PGUID 1 1 t b t \054 1261 0 foo bar foo bar c _null_));
+DATA(insert OID = 88 (  pg_database  PGUID 1 1 t b t \054 1262 0 foo bar foo bar c _null_));
+DATA(insert OID = 89 (  pg_defaults  PGUID 1 1 t b t \054 1263 0 foo bar foo bar c _null_));
+DATA(insert OID = 90 (  pg_variable  PGUID 1 1 t b t \054 1264 0 foo bar foo bar c _null_));
+DATA(insert OID = 99 (  pg_log       PGUID 1 1 t b t \054 1269 0 foo bar foo bar c _null_));
 
 /* OIDS 100 - 199 */
 
-DATA(insert OID = 100 ( pg_time PGUID 1 1 t b t \054 1271 0 foo bar foo bar c _null_));
-DATA(insert OID = 101 ( pg_hosts PGUID 1 1 t b t \054 1273 0 foo bar foo bar c _null_));
+DATA(insert OID = 100 (  pg_time   PGUID 1 1 t b t \054 1271 0 foo bar foo bar c _null_));
+DATA(insert OID = 101 (  pg_hosts  PGUID 1 1 t b t \054 1273 0 foo bar foo bar c _null_));
 
 /* OIDS 200 - 299 */
 
-DATA(insert OID = 210 (  smgr       PGUID 2  12 t b t \054 0  -1 smgrin smgrout smgrin smgrout s _null_ ));
+DATA(insert OID = 210 (  smgr      PGUID 2  12 t b t \054 0  -1 smgrin smgrout smgrin smgrout s _null_ ));
 
 /* OIDS 300 - 399 */
 
@@ -234,22 +243,22 @@ DATA(insert OID = 701 (  float8    PGUID  8  24 f b t \054 0   0 float8in float8
 DATA(insert OID = 702 (  abstime   PGUID  4  20 t b t \054 0   0 nabstimein nabstimeout nabstimein nabstimeout i _null_ ));
 DATA(insert OID = 703 (  reltime   PGUID  4  20 t b t \054 0   0 reltimein reltimeout reltimein reltimeout i _null_ ));
 DATA(insert OID = 704 (  tinterval PGUID 12  47 f b t \054 0   0 tintervalin tintervalout tintervalin tintervalout i _null_ ));
-DATA(insert OID = 705 (  unknown PGUID -1  -1 f b t \054 0   18 textin textout textin textout i _null_ ));
+DATA(insert OID = 705 (  unknown   PGUID -1  -1 f b t \054 0   18 textin textout textin textout i _null_ ));
 
 #define UNKNOWNOID	705
 
 /* OIDS 800 - 899 */
-DATA(insert OID = 810 (  oidint2    PGUID  6  20 f b t \054 0   0 oidint2in oidint2out oidint2in oidint2out i _null_ ));
+DATA(insert OID = 810 (  oidint2   PGUID  6  20 f b t \054 0   0 oidint2in oidint2out oidint2in oidint2out i _null_ ));
 
 /* OIDS 900 - 999 */
-DATA(insert OID = 910 (  oidint4    PGUID  8  20 f b t \054 0   0 oidint4in oidint4out oidint4in oidint4out i _null_ ));
-DATA(insert OID = 911 (  oidname  PGUID  OIDNAMELEN OIDNAMELEN f b t \054 0   0 oidnamein oidnameout oidnamein oidnameout i _null_ ));
+DATA(insert OID = 910 (  oidint4   PGUID  8  20 f b t \054 0   0 oidint4in oidint4out oidint4in oidint4out i _null_ ));
+DATA(insert OID = 911 (  oidname   PGUID  OIDNAMELEN OIDNAMELEN f b t \054 0   0 oidnamein oidnameout oidnamein oidnameout i _null_ ));
 
 /* OIDS 1000 - 1099 */
 DATA(insert OID = 1000 (  _bool      PGUID -1  -1 f b t \054 0  16 array_in array_out array_in array_out i _null_ ));
 DATA(insert OID = 1001 (  _bytea     PGUID -1  -1 f b t \054 0  17 array_in array_out array_in array_out i _null_ ));
 DATA(insert OID = 1002 (  _char      PGUID -1  -1 f b t \054 0  18 array_in array_out array_in array_out i _null_ ));
-DATA(insert OID = 1003 (  _name    PGUID -1  -1 f b t \054 0  19 array_in array_out array_in array_out i _null_ ));
+DATA(insert OID = 1003 (  _name      PGUID -1  -1 f b t \054 0  19 array_in array_out array_in array_out i _null_ ));
 DATA(insert OID = 1004 (  _char16    PGUID -1  -1 f b t \054 0  20 array_in array_out array_in array_out i _null_ ));
 DATA(insert OID = 1005 (  _int2      PGUID -1  -1 f b t \054 0  21 array_in array_out array_in array_out i _null_ ));
 DATA(insert OID = 1006 (  _int28     PGUID -1  -1 f b t \054 0  22 array_in array_out array_in array_out i _null_ )); 
@@ -273,26 +282,39 @@ DATA(insert OID = 1022 (  _float8    PGUID -1  -1 f b t \054 0 701 array_in arra
 DATA(insert OID = 1023 (  _abstime   PGUID -1  -1 f b t \054 0 702 array_in array_out array_in array_out i _null_ ));
 DATA(insert OID = 1024 (  _reltime   PGUID -1  -1 f b t \054 0 703 array_in array_out array_in array_out i _null_ ));
 DATA(insert OID = 1025 (  _tinterval PGUID -1  -1 f b t \054 0 704 array_in array_out array_in array_out i _null_ ));
-DATA(insert OID = 1026 (  _filename PGUID -1  -1 f b t \054 0 605 array_in array_out array_in array_out i _null_ ));
-DATA(insert OID = 1027 (  _polygon PGUID -1  -1 f b t \054 0 604 array_in array_out array_in array_out d _null_ ));
+DATA(insert OID = 1026 (  _filename  PGUID -1  -1 f b t \054 0 605 array_in array_out array_in array_out i _null_ ));
+DATA(insert OID = 1027 (  _polygon   PGUID -1  -1 f b t \054 0 604 array_in array_out array_in array_out d _null_ ));
 /* Note: the size of an aclitem needs to match sizeof(AclItem) in acl.h */
-DATA(insert OID = 1033 (  aclitem PGUID 8  -1 f b t \054 0 0 aclitemin aclitemout aclitemin aclitemout i _null_ ));
-DATA(insert OID = 1034 (  _aclitem PGUID -1  -1 f b t \054 0 1033 array_in array_out array_in array_out i _null_ ));
+DATA(insert OID = 1033 (  aclitem    PGUID 8   -1 f b t \054 0 0 aclitemin aclitemout aclitemin aclitemout i _null_ ));
+DATA(insert OID = 1034 (  _aclitem   PGUID -1  -1 f b t \054 0 1033 array_in array_out array_in array_out i _null_ ));
 
-DATA(insert OID = 1039 (  _char2    PGUID -1  -1 f b t \054 0  409 array_in array_out array_in array_out i _null_ ));
-DATA(insert OID = 1040 (  _char4    PGUID -1  -1 f b t \054 0  410 array_in array_out array_in array_out i _null_ ));
-DATA(insert OID = 1041 (  _char8    PGUID -1  -1 f b t \054 0  411 array_in array_out array_in array_out i _null_ ));
+DATA(insert OID = 1039 (  _char2     PGUID -1  -1 f b t \054 0  409 array_in array_out array_in array_out i _null_ ));
+DATA(insert OID = 1040 (  _char4     PGUID -1  -1 f b t \054 0  410 array_in array_out array_in array_out i _null_ ));
+DATA(insert OID = 1041 (  _char8     PGUID -1  -1 f b t \054 0  411 array_in array_out array_in array_out i _null_ ));
 
 #define	BPCHAROID	1042
-DATA(insert OID = 1042 ( bpchar  PGUID -1  -1 f b t \054 0  18 bpcharin bpcharout bpcharin bpcharout i _null_ ));
+DATA(insert OID = 1042 ( bpchar      PGUID -1  -1 f b t \054 0  18 bpcharin bpcharout bpcharin bpcharout i _null_ ));
 #define	VARCHAROID	1043
-DATA(insert OID = 1043 ( varchar PGUID -1  -1 f b t \054 0  18 varcharin varcharout varcharin varcharout i _null_ ));
+DATA(insert OID = 1043 ( varchar     PGUID -1  -1 f b t \054 0  18 varcharin varcharout varcharin varcharout i _null_ ));
 
-DATA(insert OID = 1082 ( date      PGUID  4  10 t b t \054 0  0 date_in date_out date_in date_out i _null_ ));
-DATA(insert OID = 1083 ( time      PGUID  8  16 f b t \054 0  0 time_in time_out time_in time_out i _null_ ));
-DATA(insert OID = 1182 ( _date     PGUID  -1 -1 f b t \054 0  1082 array_in array_out array_in array_out i _null_ ));
-DATA(insert OID = 1183 ( _time     PGUID  -1 -1 f b t \054 0  1083 array_in array_out array_in array_out d _null_ ));
-DATA(insert OID = 1296 ( timestamp PGUID  4  19 t b t \054 0  0 timestamp_in timestamp_out timestamp_in timestamp_out i _null_ ));
+DATA(insert OID = 1082 ( date        PGUID  4  10 t b t \054 0  0 date_in date_out date_in date_out i _null_ ));
+#define DATEOID		1082
+DATA(insert OID = 1083 ( time        PGUID  8  16 f b t \054 0  0 time_in time_out time_in time_out i _null_ ));
+#define TIMEOID		1083
+
+/* OIDS 1100 - 1199 */
+DATA(insert OID = 1182 ( _date       PGUID  -1 -1 f b t \054 0  1082 array_in array_out array_in array_out i _null_ ));
+DATA(insert OID = 1183 ( _time       PGUID  -1 -1 f b t \054 0  1083 array_in array_out array_in array_out d _null_ ));
+DATA(insert OID = 1184 ( datetime    PGUID  8  47 f b t \054 0  0 datetime_in datetime_out datetime_in datetime_out d _null_ ));
+#define DATETIMEOID	1184
+DATA(insert OID = 1185 ( _datetime   PGUID  -1 -1 f b t \054 0  1184 array_in array_out array_in array_out d _null_ ));
+DATA(insert OID = 1186 ( timespan    PGUID 12  47 f b t \054 0  0 timespan_in timespan_out timespan_in timespan_out d _null_ ));
+#define TIMESPANOID	1186
+DATA(insert OID = 1187 ( _timespan   PGUID  -1 -1 f b t \054 0  1186 array_in array_out array_in array_out d _null_ ));
+
+/* OIDS 1200 - 1299 */
+DATA(insert OID = 1296 ( timestamp   PGUID  4  19 t b t \054 0  0 timestamp_in timestamp_out timestamp_in timestamp_out i _null_ ));
+#define TIMESTAMPOID	1296
 
 /*
  * prototypes for functions in pg_type.c 

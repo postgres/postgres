@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/init/globals.c,v 1.7 1997/03/18 20:14:46 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/init/globals.c,v 1.8 1997/03/25 08:09:43 scrappy Exp $
  *
  * NOTES
  *    Globals used all over the place should be declared here and not
@@ -65,11 +65,12 @@ bool		IsPostmaster = false;
 
 short		DebugLvl = 0;
 
+int		DateStyle = USE_ISO_DATES;
 bool		EuroDates = false;
 bool		HasCTZSet = false;
 bool		CDayLight = false;
 int		CTimeZone = 0;
-char		CTZName[8] = "";
+char		CTZName[MAXTZLEN+1] = "";
 
 char DateFormat[20] 	= "%d-%m-%Y";	/* mjl: sizes! or better malloc? XXX */
 char FloatFormat[20] = "%f";

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/nabstime.c,v 1.16 1997/03/21 18:53:28 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/nabstime.c,v 1.17 1997/03/25 08:09:35 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -62,13 +62,13 @@ GetCurrentAbsoluteTime(void)
 	CTimeZone = - tmnow->tm_gmtoff;	/* tm_gmtoff is Sun/DEC-ism */
 	CDayLight = (tmnow->tm_isdst > 0);
 	/* XXX is there a better way to get local timezone string in V7? - tgl 97/03/18 */
-	strftime( CTZName, 8, "%Z", localtime(&now));
+	strftime( CTZName, MAXTZLEN, "%Z", localtime(&now));
 #endif
 #else /* ! USE_POSIX_TIME */
 	CTimeZone = tbnow.timezone * 60;
 	CDayLight = (tbnow.dstflag != 0);
 	/* XXX does this work to get the local timezone string in V7? - tgl 97/03/18 */
-	strftime( CTZName, 8, "%Z", localtime(&now));
+	strftime( CTZName, MAXTZLEN, "%Z", localtime(&now));
 #endif 
     };
 
@@ -102,15 +102,61 @@ GetCurrentTime(struct tm *tm)
 } /* GetCurrentTime() */
 
 
+AbsoluteTime tm2abstime( struct tm *tm, int tz);
+
+AbsoluteTime
+tm2abstime( struct tm *tm, int tz)
+{
+    int day, sec;
+
+    /* validate, before going out of range on some members */
+    if (tm->tm_year < 1901 || tm->tm_year > 2038
+      || tm->tm_mon < 1 || tm->tm_mon > 12
+      || tm->tm_mday < 1 || tm->tm_mday > 31
+      || tm->tm_hour < 0 || tm->tm_hour >= 24
+      || tm->tm_min < 0 || tm->tm_min > 59
+      || tm->tm_sec < 0 || tm->tm_sec > 59)
+	return INVALID_ABSTIME;
+
+    day = (date2j( tm->tm_year, tm->tm_mon, tm->tm_mday) - date2j( 1970, 1, 1));
+
+    /* check for time out of range */
+    if ((day < MIN_DAYNUM) || (day > MAX_DAYNUM))
+	return INVALID_ABSTIME;
+
+    /* convert to seconds */
+    sec = tm->tm_sec + tz + (tm->tm_min +(day*24 + tm->tm_hour)*60)*60;
+
+    /* check for overflow */
+    if ((day == MAX_DAYNUM && sec < 0) ||
+      (day == MIN_DAYNUM && sec > 0))
+	return INVALID_ABSTIME;
+
+    /* daylight correction */
+    if (tm->tm_isdst < 0) {		/* unknown; find out */
+	tm->tm_isdst = (CDayLight > 0);
+    };
+    if (tm->tm_isdst > 0)
+	sec -= 60*60;
+
+    /* check for reserved values (e.g. "current" on edge of usual range */
+    if (!AbsoluteTimeIsReal(sec))
+	return INVALID_ABSTIME;
+
+    return sec;
+} /* tm2abstime() */
+
+
 /* nabstimein()
  * Decode date/time string and return abstime.
  */
 AbsoluteTime
 nabstimein(char* str)
 {
-    int sec;
+    AbsoluteTime result;
+
     double fsec;
-    int day, tz = 0;
+    int tz = 0;
     struct tm date, *tm = &date;
 
     char *field[MAXDATEFIELDS];
@@ -134,65 +180,35 @@ printf( "nabstimein- %d fields are type %d (DTK_DATE=%d)\n", nf, dtype, DTK_DATE
 
     switch (dtype) {
     case DTK_DATE:
-#if FALSE
-	return(dateconv( &date, tz));
-#endif
-	/* validate, before going out of range on some members */
-	if (tm->tm_year < 1901 || tm->tm_year > 2038
-	 || tm->tm_mon < 1 || tm->tm_mon > 12
-	 || tm->tm_mday < 1 || tm->tm_mday > 31
-	 || tm->tm_hour < 0 || tm->tm_hour >= 24
-	 || tm->tm_min < 0 || tm->tm_min > 59
-	 || tm->tm_sec < 0 || tm->tm_sec > 59)
-	    return INVALID_ABSTIME;
-
-	day = (date2j( tm->tm_year, tm->tm_mon, tm->tm_mday) - date2j( 1970, 1, 1));
-
-	/* check for time out of range */
-	if ((day < MIN_DAYNUM) || (day > MAX_DAYNUM))
-	return INVALID_ABSTIME;
-
-	/* convert to seconds */
-	sec = tm->tm_sec + tz + (tm->tm_min +(day*24 + tm->tm_hour)*60)*60;
-
-	/* check for overflow */
-	if ((day == MAX_DAYNUM && sec < 0) ||
-	 (day == MIN_DAYNUM && sec > 0))
-	    return INVALID_ABSTIME;
-
-	/* daylight correction */
-	if (tm->tm_isdst < 0) {		/* unknown; find out */
-	    tm->tm_isdst = (CDayLight > 0);
-	};
-	if (tm->tm_isdst > 0)
-	    sec -= 60*60;
-
-	/* check for reserved values (e.g. "current" on edge of usual range */
-	if (!AbsoluteTimeIsReal(sec))
-	    return INVALID_ABSTIME;
-
-	return sec;
+	result = tm2abstime(tm, tz);
+	break;
 
     case DTK_EPOCH:
-	return EPOCH_ABSTIME;
+	result = EPOCH_ABSTIME;
+	break;
 
     case DTK_CURRENT:
-	return CURRENT_ABSTIME;
+	result = CURRENT_ABSTIME;
+	break;
 
     case DTK_LATE:
-	return NOEND_ABSTIME;
+	result = NOEND_ABSTIME;
+	break;
 
     case DTK_EARLY:
-	return NOSTART_ABSTIME;
+	result = NOSTART_ABSTIME;
+	break;
 
     case DTK_INVALID:
-	return INVALID_ABSTIME;
+	result = INVALID_ABSTIME;
+	break;
 
     default:
+	elog(WARN,"Bad abstime (internal coding error) '%s'",str);
+	result = INVALID_ABSTIME;
     };
 
-    elog(WARN,"Bad abstime (internal coding error) '%s'",str);
-    return INVALID_ABSTIME;
+    return result;
 } /* nabstimein() */
 
 
@@ -432,3 +448,42 @@ abstimege(AbsoluteTime t1, AbsoluteTime t2)
 
     return(t1 >= t2);
 }
+
+/* datetime_abstime()
+ * Convert datetime to abstime.
+ */
+AbsoluteTime
+datetime_abstime(DateTime *datetime)
+{
+    AbsoluteTime result;
+
+    double fsec;
+    struct tm tt, *tm = &tt;
+
+    if (!PointerIsValid(datetime)) {
+	result = INVALID_ABSTIME;
+
+    } else if (DATETIME_IS_INVALID(*datetime)) {
+	result = INVALID_ABSTIME;
+
+    } else if (DATETIME_IS_NOBEGIN(*datetime)) {
+	result = NOSTART_ABSTIME;
+
+    } else if (DATETIME_IS_NOEND(*datetime)) {
+	result = NOEND_ABSTIME;
+
+    } else {
+	if (DATETIME_IS_RELATIVE(*datetime)) {
+	    datetime2tm( SetDateTime(*datetime), tm, &fsec);
+	    result = tm2abstime( tm, 0);
+
+	} else if (datetime2tm( *datetime, tm, &fsec) == 0) {
+	    result = tm2abstime( tm, 0);
+
+	} else {
+	    result = INVALID_ABSTIME;
+	};
+    };
+
+    return(result);
+} /* datetime_abstime() */
