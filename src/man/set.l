@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/set.l,v 1.20 1999/06/03 20:44:28 momjian Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/set.l,v 1.21 1999/06/04 03:44:42 momjian Exp $
 .TH SET SQL 05/14/97 PostgreSQL PostgreSQL
 .SH NAME
 set - set run-time parameters for session
@@ -86,6 +86,14 @@ sets the current transaction's isolation level to
 .IR SERIALIZABLE
 or
 .IR READ COMMITTED .
+.IR SERIALIZABLE
+means that the current transaction will place a lock on every row read,
+so later reads in that transaction see the rows unmodified by
+other transactions.
+.IR READ COMMITTED
+means that the current transaction reads only committed rows.
+.IR READ COMMITTED
+is the default.
 .PP
 .IR CLIENT_ENCODING|NAMES
 sets the character set encoding of the client.  Only available if multi-byte

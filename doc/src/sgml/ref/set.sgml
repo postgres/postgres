@@ -545,6 +545,11 @@ SET TIME ZONE { '<REPLACEABLE CLASS="PARAMETER">timezone</REPLACEABLE>' | LOCAL 
 	   <para>
 		Sets the isolation level for the current transaction to
 		'SERIALIZABLE' or 'READ COMMITTED'.
+		SERIALIZABLE means that the current transaction will place a 
+		lock on every row read, so later reads in that transaction 
+		see the rows unmodified by other transactions.
+		READ COMMITTED means that the current transaction reads only 
+		committed rows.  READ COMMITTED is the default.
 	   </para>
 	  </listitem>
 	 </varlistentry>
@@ -557,7 +562,7 @@ SET TIME ZONE { '<REPLACEABLE CLASS="PARAMETER">timezone</REPLACEABLE>' | LOCAL 
 	  <listitem>
 	   <para>
 		Sets the isolation level for the current transaction to
-		'SERIALIZABLE' or 'READ COMMITTED'.
+		'READ COMMITTED'.
 	   </para>
 	  </listitem>
 	 </varlistentry>
