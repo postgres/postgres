@@ -24,6 +24,5 @@ __EOF__
   THREAD_CPPFLAGS="-K pthread"
 fi
 
-THREAD_SUPPORT=yes
-NEED_REENTRANT_FUNCS=no		# verified 7.1.3 2003-09-03
+# tools/thread/thread_test must be run
 THREAD_CPPFLAGS="$THREAD_CPPFLAGS -D_REENTRANT"

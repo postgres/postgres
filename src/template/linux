@@ -1,7 +1,6 @@
 # Force _GNU_SOURCE on; plperl is broken with Perl 5.8.0 otherwise
 CPPFLAGS="-D_GNU_SOURCE"
 
-THREAD_SUPPORT=yes
-NEED_REENTRANT_FUNCS=yes	# Debian kernel 2.2 2003-09-27
+# tools/thread/thread_test must be run
 THREAD_CPPFLAGS="-D_REENTRANT -D_THREAD_SAFE -D_POSIX_PTHREAD_SEMANTICS"
 THREAD_LIBS="-lpthread"

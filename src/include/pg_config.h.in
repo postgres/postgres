@@ -43,6 +43,12 @@
    (--enable-thread-safety) */
 #undef ENABLE_THREAD_SAFETY
 
+/* Define if gethostbyname is not thread safe */
+#undef GETHOSTBYNAME_THREADSAFE
+
+/* Define if getpwuid is not thread safe */
+#undef GETPWUID_THREADSAFE
+
 /* Define to 1 if gettimeofday() takes only 1 argument. */
 #undef GETTIMEOFDAY_1ARG
 
@@ -554,9 +560,6 @@
 /* Define as the maximum alignment requirement of any C data type. */
 #undef MAXIMUM_ALIGNOF
 
-/* Define if non *_r libc functions are not thread safe */
-#undef NEED_REENTRANT_FUNCS
-
 /* Define to the address where bug reports for this package should be sent. */
 #undef PACKAGE_BUGREPORT
 
@@ -587,6 +590,9 @@
 
 /* Define to 1 if you have the ANSI C header files. */
 #undef STDC_HEADERS
+
+/* Define if strerror is not thread safe */
+#undef STRERROR_THREADSAFE
 
 /* Define to 1 if your <sys/time.h> declares `struct tm'. */
 #undef TM_IN_SYS_TIME

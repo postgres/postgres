@@ -13198,8 +13198,8 @@ fi
 if test $ac_cv_header_pthread_h = yes; then
   :
 else
-  { { echo "$as_me:$LINENO: error: pthread.h not found, required for --enable-thread-safetys" >&5
-echo "$as_me: error: pthread.h not found, required for --enable-thread-safetys" >&2;}
+  { { echo "$as_me:$LINENO: error: pthread.h not found, required for --enable-thread-safety" >&5
+echo "$as_me: error: pthread.h not found, required for --enable-thread-safety" >&2;}
    { (exit 1); exit 1; }; }
 fi
 
@@ -13222,32 +13222,40 @@ See the comment at the top of src/port/thread.c for more information.
 " >&2;}
    { (exit 1); exit 1; }; }
 fi
-else
-# do not use values from template file
-THREAD_CPPFLAGS=
-THREAD_LIBS=
-fi
-
-
-
-
 
 #
 # Check for re-entrant versions of certain functions
 #
 # Include special flags if threads are enabled _and_ if required for
 # threading on this platform.  Some platforms have *_r functions but
-# their natively named funcs are threadsafe, and should be used instead.
+# their natively named funcs are thread-safe too.
 #
-# One trick here is that if we don't call AC_CHECK_FUNCS, the
+# One trick here is that if we don't call AC_CHECK_FUNCS; the
 # functions are marked "not found", which is perfect.
 #
-if test "$enable_thread_safety" = yes -a "$NEED_REENTRANT_FUNCS" = yes ; then
+if test "$enable_thread_safety" = yes -a "$STRERROR_THREADSAFE" = yes ; then
 
 cat >>confdefs.h <<\_ACEOF
-#define NEED_REENTRANT_FUNCS 1
+#define STRERROR_THREADSAFE 1
 _ACEOF
 
+fi
+if test "$enable_thread_safety" = yes -a "$GETPWUID_THREADSAFE" = yes ; then
+
+cat >>confdefs.h <<\_ACEOF
+#define GETPWUID_THREADSAFE 1
+_ACEOF
+
+fi
+if test "$enable_thread_safety" = yes -a "$GETHOSTBYNAME_THREADSAFE" = yes ; then
+
+cat >>confdefs.h <<\_ACEOF
+#define GETHOSTBYNAME_THREADSAFE 1
+_ACEOF
+
+fi
+
+# Check for *_r functions
 _CFLAGS="$CFLAGS"
 _LIBS="$LIBS"
 CFLAGS="$CFLAGS $THREAD_CPPFLAGS"
@@ -13332,7 +13340,16 @@ done
 
 CFLAGS="$_CFLAGS"
 LIBS="$_LIBS"
+
+else
+# do not use values from template file
+THREAD_CPPFLAGS=
+THREAD_LIBS=
 fi
+
+
+
+
 
 
 # This test makes sure that run tests work at all.  Sometimes a shared

@@ -9,8 +9,7 @@ case $host in
   i?86-*-solaris*)   need_tas=yes; tas_file=solaris_i386.s ;;
 esac
 
-THREAD_SUPPORT=yes
-NEED_REENTRANT_FUNCS=yes	# 5.6 2003-09-13
+# tools/thread/thread_test must be run
 if test "$GCC" = yes 
 then	THREAD_LIBS="-pthread"
 else	THREAD_CPPFLAGS="-mt"

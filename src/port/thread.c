@@ -7,7 +7,7 @@
  *
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/port/thread.c,v 1.14 2003/11/29 22:41:31 pgsql Exp $
+ * $PostgreSQL: pgsql/src/port/thread.c,v 1.15 2004/02/11 21:44:06 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,7 +31,7 @@
  *	strerror().  Other operating systems use pthread_setspecific()
  *	and pthread_getspecific() internally to allow standard library
  *	functions to return static data to threaded applications. And some
- *	operating systems have neither, meaning we have to do our own locking.
+ *	operating systems have neither.
  *
  *	Additional confusion exists because many operating systems that
  *	use pthread_setspecific/pthread_getspecific() also have *_r versions
@@ -50,18 +50,13 @@
  *
  *	The current setup is to try threading in this order:
  *
- *		use non-*_r function names if they are all thread-safe
- *			(NEED_REENTRANT_FUNCS=no)
- *		use *_r functions if they exist (configure test)
- *		do our own locking and copying of non-threadsafe functions
- *
- *	The disadvantage of the last option is not the thread overhead but
- *	the fact that all function calls are serialized, and with gethostbyname()
- *	requiring a DNS lookup, that could be slow.
+ *		use *_r function names if they exit
+ *			(*_THREADSAFE=ye)
+ *		use non-*_r functions if they are thread-safe
  *
  *	One thread-safe solution for gethostbyname() might be to use getaddrinfo().
  *
- *	See src/tools/thread to see if your operating system has thread-safe
+ *	Run src/tools/thread to see if your operating system has thread-safe
  *	non-*_r functions.
  */
  
@@ -73,7 +68,7 @@
 char *
 pqStrerror(int errnum, char *strerrbuf, size_t buflen)
 {
-#if defined(FRONTEND) && defined(ENABLE_THREAD_SAFETY) && defined(NEED_REENTRANT_FUNCS) && defined(HAVE_STRERROR_R)
+#if defined(FRONTEND) && defined(ENABLE_THREAD_SAFETY) && defined(HAVE_STRERROR_R)
 	/* reentrant strerror_r is available */
 	/* some early standards had strerror_r returning char * */
 	strerror_r(errnum, strerrbuf, buflen);
@@ -81,17 +76,12 @@ pqStrerror(int errnum, char *strerrbuf, size_t buflen)
 
 #else
 
-#if defined(FRONTEND) && defined(ENABLE_THREAD_SAFETY) && defined(NEED_REENTRANT_FUNCS) && !defined(HAVE_STRERROR_R)
-	static pthread_mutex_t strerror_lock = PTHREAD_MUTEX_INITIALIZER;
-	pthread_mutex_lock(&strerror_lock);
+#if defined(FRONTEND) && defined(ENABLE_THREAD_SAFETY) && !defined(STRERROR_THREADSAFE)
+#error This platform can not create a thread-safe version because strerror is not thread-safe and there is no reentrant version
 #endif
 
 	/* no strerror_r() available, just use strerror */
 	StrNCpy(strerrbuf, strerror(errnum), buflen);
-
-#if defined(FRONTEND) && defined(ENABLE_THREAD_SAFETY) && defined(NEED_REENTRANT_FUNCS) && !defined(HAVE_STRERROR_R)
-	pthread_mutex_unlock(&strerror_lock);
-#endif
 
 	return strerrbuf;
 #endif
@@ -106,7 +96,7 @@ int
 pqGetpwuid(uid_t uid, struct passwd *resultbuf, char *buffer,
 		   size_t buflen, struct passwd **result)
 {
-#if defined(FRONTEND) && defined(ENABLE_THREAD_SAFETY) && defined(NEED_REENTRANT_FUNCS) && defined(HAVE_GETPWUID_R)
+#if defined(FRONTEND) && defined(ENABLE_THREAD_SAFETY) && defined(HAVE_GETPWUID_R)
 	/*
 	 * Early POSIX draft of getpwuid_r() returns 'struct passwd *'.
 	 *    getpwuid_r(uid, resultbuf, buffer, buflen)
@@ -117,53 +107,14 @@ pqGetpwuid(uid_t uid, struct passwd *resultbuf, char *buffer,
 
 #else
 
-#if defined(FRONTEND) && defined(ENABLE_THREAD_SAFETY) && defined(NEED_REENTRANT_FUNCS) && !defined(HAVE_GETPWUID_R)
-	static pthread_mutex_t getpwuid_lock = PTHREAD_MUTEX_INITIALIZER;
-	pthread_mutex_lock(&getpwuid_lock);
+#if defined(FRONTEND) && defined(ENABLE_THREAD_SAFETY) && !defined(GETPWUID_THREADSAFE)
+#error This platform can not create a thread-safe version because getpwuid is not thread-safe and there is no reentrant version
 #endif
 
 	/* no getpwuid_r() available, just use getpwuid() */
 	*result = getpwuid(uid);
-
-#if defined(FRONTEND) && defined(ENABLE_THREAD_SAFETY) && defined(NEED_REENTRANT_FUNCS) && !defined(HAVE_GETPWUID_R)
-
-	/* Use 'buffer' memory for storage of strings used by struct passwd */
-	if (*result &&
-		strlen((*result)->pw_name) + 1 +
-		strlen((*result)->pw_passwd) + 1 +
-		strlen((*result)->pw_gecos) + 1 +
-		/* skip class if it exists */
-		strlen((*result)->pw_dir) + 1 +
-		strlen((*result)->pw_shell) + 1 <= buflen)
-	{
-		memcpy(resultbuf, *result, sizeof(struct passwd));
-		strcpy(buffer, (*result)->pw_name);
-		resultbuf->pw_name = buffer;
-		buffer += strlen(resultbuf->pw_name) + 1;
-		strcpy(buffer, (*result)->pw_passwd);
-		resultbuf->pw_passwd = buffer;
-		buffer += strlen(resultbuf->pw_passwd) + 1;
-		strcpy(buffer, (*result)->pw_gecos);
-		resultbuf->pw_gecos = buffer;
-		buffer += strlen(resultbuf->pw_gecos) + 1;
-		strcpy(buffer, (*result)->pw_dir);
-		resultbuf->pw_dir = buffer;
-		buffer += strlen(resultbuf->pw_dir) + 1;
-		strcpy(buffer, (*result)->pw_shell);
-		resultbuf->pw_shell = buffer;
-		buffer += strlen(resultbuf->pw_shell) + 1;
-
-		*result = resultbuf;
-	}
-	else
-	{
-		*result = NULL;
-		errno = ERANGE;
-	}
-
-	pthread_mutex_unlock(&getpwuid_lock);
 #endif
-#endif
+
 	return (*result == NULL) ? -1 : 0;
 }
 #endif
@@ -181,7 +132,7 @@ pqGethostbyname(const char *name,
 				struct hostent **result,
 				int *herrno)
 {
-#if defined(FRONTEND) && defined(ENABLE_THREAD_SAFETY) && defined(NEED_REENTRANT_FUNCS) && defined(HAVE_GETHOSTBYNAME_R)
+#if defined(FRONTEND) && defined(ENABLE_THREAD_SAFETY) && defined(HAVE_GETHOSTBYNAME_R)
 	/*
 	 * broken (well early POSIX draft) gethostbyname_r() which returns
 	 * 'struct hostent *'
@@ -191,87 +142,16 @@ pqGethostbyname(const char *name,
 
 #else
 
-#if defined(FRONTEND) && defined(ENABLE_THREAD_SAFETY) && defined(NEED_REENTRANT_FUNCS) && !defined(HAVE_GETHOSTBYNAME_R)
-	static pthread_mutex_t gethostbyname_lock = PTHREAD_MUTEX_INITIALIZER;
-	pthread_mutex_lock(&gethostbyname_lock);
+#if defined(FRONTEND) && defined(ENABLE_THREAD_SAFETY) && !defined(GETHOSTBYNAME_THREADSAFE)
+#error This platform can not create a thread-safe version because getaddrinfo is not thread-safe and there is no reentrant version
 #endif
 
 	/* no gethostbyname_r(), just use gethostbyname() */
 	*result = gethostbyname(name);
 
-#if defined(FRONTEND) && defined(ENABLE_THREAD_SAFETY) && defined(NEED_REENTRANT_FUNCS) && !defined(HAVE_GETHOSTBYNAME_R)
-
-	/*
-	 *	Use 'buffer' memory for storage of structures used by struct hostent.
-	 *	The layout is:
-	 *
-	 *		addr pointers
-	 *		alias pointers
-	 *		addr structures
-	 *		alias structures
-	 *		name
-	 */
-	if (*result)
-	{
-		int		i, pointers = 2 /* for nulls */, len = 0;
-		char	**pbuffer;
-
-		for (i = 0; (*result)->h_addr_list[i]; i++, pointers++)
-			len += (*result)->h_length;
-		for (i = 0; (*result)->h_aliases[i]; i++, pointers++)
-			len += (*result)->h_length;
-
-		if (pointers * sizeof(char *) + MAXALIGN(len) + strlen((*result)->h_name) + 1 <= buflen)
-		{
-			memcpy(resultbuf, *result, sizeof(struct hostent));
-
-    		pbuffer = (char **)buffer;
-    		resultbuf->h_addr_list = pbuffer;
-    		buffer += pointers * sizeof(char *);
-
-			for (i = 0; (*result)->h_addr_list[i]; i++, pbuffer++)
-			{
-				memcpy(buffer, (*result)->h_addr_list[i], (*result)->h_length);
-    			resultbuf->h_addr_list[i] = buffer;
-    			buffer += (*result)->h_length;
-    		}
-			resultbuf->h_addr_list[i] = NULL;
-			pbuffer++;
-			    
-    		resultbuf->h_aliases = pbuffer;
-
-			for (i = 0; (*result)->h_aliases[i]; i++, pbuffer++)
-			{
-				memcpy(buffer, (*result)->h_aliases[i], (*result)->h_length);
-    			resultbuf->h_aliases[i] = buffer;
-    			buffer += (*result)->h_length;
-    		}
-			resultbuf->h_aliases[i] = NULL;
-			pbuffer++;
-
-			/* Place at end for cleaner alignment */			
-			buffer = MAXALIGN(buffer);
-			strcpy(buffer, (*result)->h_name);
-			resultbuf->h_name = buffer;
-			buffer += strlen(resultbuf->h_name) + 1;
-
-			*result = resultbuf;
-		}
-		else
-		{
-			*result = NULL;
-			errno = ERANGE;
-		}
-	}
-#endif
-
 	if (*result != NULL)
 		*herrno = h_errno;
 		
-#if defined(FRONTEND) && defined(ENABLE_THREAD_SAFETY) && defined(NEED_REENTRANT_FUNCS) && !defined(HAVE_GETHOSTBYNAME_R)
-	pthread_mutex_unlock(&gethostbyname_lock);
-#endif
-
 	if (*result != NULL)
 		return 0;
 	else

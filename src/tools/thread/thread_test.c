@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$PostgreSQL: pgsql/src/tools/thread/thread_test.c,v 1.6 2003/12/19 23:29:15 momjian Exp $
+ *	$PostgreSQL: pgsql/src/tools/thread/thread_test.c,v 1.7 2004/02/11 21:44:06 momjian Exp $
  *
  *	This program tests to see if your standard libc functions use
  *	pthread_setspecific()/pthread_getspecific() to be thread-safe.
@@ -33,16 +33,14 @@
 void func_call_1(void);
 void func_call_2(void);
 
-#ifndef HAVE_GETADDRINFO
-struct hostent *hostent_p1;
-struct hostent *hostent_p2;
-#endif
+char *strerror_p1;
+char *strerror_p2;
 
 struct passwd *passwd_p1;
 struct passwd *passwd_p2;
 
-char *strerror_p1;
-char *strerror_p2;
+struct hostent *hostent_p1;
+struct hostent *hostent_p2;
 
 int main(int argc, char *argv[])
 {
@@ -64,48 +62,34 @@ defines to your template/$port file before compiling this program.\n\n"
 	pthread_join(thread1, NULL);
 	pthread_join(thread2, NULL);
 
-#ifndef HAVE_GETADDRINFO
-	if (hostent_p1 == hostent_p2)
-		printf("Your gethostbyname() is _not_ thread-safe\n");
-#endif
-	if (passwd_p1 == passwd_p2)
-		printf("Your getpwuid() is _not_ thread-safe\n");
-	if (strerror_p1 == strerror_p2)
-		printf("Your strerror() is _not_ thread-safe\n");
+	printf("Add this to your template/$port file:\n\n");
 
-	if (
-#ifndef HAVE_GETADDRINFO
-		hostent_p1 != hostent_p2 &&
-#endif
-		passwd_p1 != passwd_p2 &&
-		strerror_p1 != strerror_p2)
-	{
-		printf("All your non-*_r functions are thread-safe.\n");
-		printf("Add this to your template/$port file:\n\n");
-		printf("NEED_REENTRANT_FUNCS=no\n");
-	}
+	if (strerror_p1 != strerror_p2)
+		printf("STRERROR_THREADSAFE=yes\n");
 	else
-	{
-		printf("Not all non-*_r functions are thread-safe.\n");
-		printf("Add this to your template/$port file:\n\n");
-		printf("NEED_REENTRANT_FUNCS=yes\n");
-	}
+		printf("STRERROR_THREADSAFE=no\n");
 
+	if (passwd_p1 != passwd_p2)
+		printf("GETPWUID_THREADSAFE=yes\n");
+	else
+		printf("GETPWUID_THREADSAFE=no\n");
+
+	if (hostent_p1 != hostent_p2)
+		printf("GETHOSTBYNAME_THREADSAFE=yes\n");
+	else
+		printf("GETHOSTBYNAME_THREADSAFE=no\n");
+	
 	return 0;
 }
 
 void func_call_1(void) {
 	void *p;
 
-#ifndef HAVE_GETADDRINFO
-	hostent_p1 = gethostbyname("yahoo.com");
-	p = gethostbyname("slashdot.org");
-	if (hostent_p1 != p)
-	{
-		printf("Your gethostbyname() changes the static memory area between calls\n");
-		hostent_p1 = NULL;	/* force thread-safe failure report */
-	}
-#endif
+	strerror_p1 = strerror(EACCES);
+	/*
+	 *	If strerror() uses sys_errlist, the pointer might change for different
+	 *	errno values, so we don't check to see if it varies within the thread.
+	 */
 
 	passwd_p1 = getpwuid(0);
 	p = getpwuid(1);
@@ -115,26 +99,24 @@ void func_call_1(void) {
 		passwd_p1 = NULL;	/* force thread-safe failure report */
 	}
 
-	strerror_p1 = strerror(EACCES);
-	/*
-	 *	If strerror() uses sys_errlist, the pointer might change for different
-	 *	errno values, so we don't check to see if it varies within the thread.
-	 */
+	hostent_p1 = gethostbyname("yahoo.com");
+	p = gethostbyname("slashdot.org");
+	if (hostent_p1 != p)
+	{
+		printf("Your gethostbyname() changes the static memory area between calls\n");
+		hostent_p1 = NULL;	/* force thread-safe failure report */
+	}
 }
 
 
 void func_call_2(void) {
 	void *p;
 
-#ifndef HAVE_GETADDRINFO
-	hostent_p2 = gethostbyname("google.com");
-	p = gethostbyname("postgresql.org");
-	if (hostent_p2 != p)
-	{
-		printf("Your gethostbyname() changes the static memory area between calls\n");
-		hostent_p2 = NULL;	/* force thread-safe failure report */
-	}
-#endif
+	strerror_p2 = strerror(EINVAL);
+	/*
+	 *	If strerror() uses sys_errlist, the pointer might change for different
+	 *	errno values, so we don't check to see if it varies within the thread.
+	 */
 
 	passwd_p2 = getpwuid(2);
 	p = getpwuid(3);
@@ -144,9 +126,11 @@ void func_call_2(void) {
 		passwd_p2 = NULL;	/* force thread-safe failure report */
 	}
 
-	strerror_p2 = strerror(EINVAL);
-	/*
-	 *	If strerror() uses sys_errlist, the pointer might change for different
-	 *	errno values, so we don't check to see if it varies within the thread.
-	 */
+	hostent_p2 = gethostbyname("google.com");
+	p = gethostbyname("postgresql.org");
+	if (hostent_p2 != p)
+	{
+		printf("Your gethostbyname() changes the static memory area between calls\n");
+		hostent_p2 = NULL;	/* force thread-safe failure report */
+	}
 }

@@ -3,8 +3,7 @@ if test "$GCC" != yes ; then
   CFLAGS="-O -ieee"
 fi
 
-THREAD_SUPPORT=yes
-NEED_REENTRANT_FUNCS=no		# 4.0 2003-09-13
+# tools/thread/thread_test must be run
 if test "$GCC" = yes
 then	THREAD_LIBS="-pthread"
 else	THREAD_CPPFLAGS="-pthread"
