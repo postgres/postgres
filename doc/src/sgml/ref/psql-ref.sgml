@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.103 2004/01/20 19:49:34 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.104 2004/01/20 23:48:56 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -705,7 +705,7 @@ testdb=>
         <term><literal>\copy <replaceable class="parameter">table</replaceable>
 	[ ( <replaceable class="parameter">column_list</replaceable> ) ]
         { <literal>from</literal> | <literal>to</literal> }
-	<replaceable class="parameter">filename</replaceable> | stdin | stdout
+	{ <replaceable class="parameter">filename</replaceable> | stdin | stdout | - }
         [ <literal>with</literal> ] 
             [ <literal>oids</literal> ] 
             [ <literal>delimiter [as] </literal> '<replaceable class="parameter">character</replaceable>' ]
@@ -720,18 +720,33 @@ testdb=>
         reading or writing the specified file,
         <application>psql</application> reads or writes the file and
         routes the data between the server and the local file system.
-	This means that file accessibility and privileges are those
-	of the local user, not the server, and no SQL superuser
-	privileges are required.
+        This means that file accessibility and privileges are those of
+        the local user, not the server, and no SQL superuser
+        privileges are required.
 	</para>
 
 	<para>
 	The syntax of the command is similar to that of the
-	<acronym>SQL</acronym> <command>COPY</command> command.  (See its
-	description for the details.)  Note that, because of this,
+	<acronym>SQL</acronym> <xref linkend="sql-copy"
+	endterm="sql-copy-title"> command.  Note that, because of this,
 	special parsing rules apply to the <command>\copy</command>
 	command. In particular, the variable substitution rules and
 	backslash escapes do not apply.
+	</para>
+
+	<para>
+	For <literal>\copy <replaceable
+	class="parameter">table</replaceable> from <replaceable
+	class="parameter">filename</replaceable></literal> operations,
+	<application>psql</application> adds the option of using a
+	hyphen instead of <replaceable
+	class="parameter">filename</replaceable>.  This causes
+	<literal>\copy</literal> to read rows from the same source that
+	issued the command, continuing until <literal>\.</literal> is
+	read or the stream reaches <acronym>EOF</>.  This option is
+	useful for populating tables in-line within a SQL script file.
+	In contrast, <literal>\copy from stdin</> always reads from
+	<application>psql</application>'s standard input.
 	</para>
 
         <tip>
@@ -739,7 +754,7 @@ testdb=>
 	This operation is not as efficient as the <acronym>SQL</acronym>
 	<command>COPY</command> command because all data must pass
 	through the client/server connection. For large
-	amounts of data the other technique may be preferable.
+	amounts of data the <acronym>SQL</acronym> command may be preferable.
         </para>
         </tip>
 
@@ -747,11 +762,12 @@ testdb=>
         <para>
         Note the difference in interpretation of
         <literal>stdin</literal> and <literal>stdout</literal> between
-        client and server copies: in a client copy these always
+	<literal>\copy</literal> and <command>COPY</command>.
+	In <literal>\copy</literal> these always
         refer to <application>psql</application>'s input and output
-        stream. On a server copy <literal>stdin</literal> comes from
-        wherever the <command>COPY</command> itself came from (for
-        example, a script run with the <option>-f</option> option), and
+        streams. In <command>COPY</command>, <literal>stdin</literal> comes
+	from wherever the <command>COPY</command> itself came from (for
+        example, a script run with the <option>-f</option> option), while
         <literal>stdout</literal> refers to the query output stream (see
         <command>\o</command> meta-command below).
         </para>

@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2003, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/common.c,v 1.79 2004/01/09 21:12:20 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/common.c,v 1.80 2004/01/20 23:48:56 tgl Exp $
  */
 #include "postgres_fe.h"
 #include "common.h"
@@ -513,12 +513,7 @@ ProcessCopyResult(PGresult *results)
 			break;
 
 		case PGRES_COPY_IN:
-			if (pset.cur_cmd_interactive && !QUIET())
-				puts(gettext("Enter data to be copied followed by a newline.\n"
-							 "End with a backslash and a period on a line by itself."));
-
-			success = handleCopyIn(pset.db, pset.cur_cmd_source,
-			  pset.cur_cmd_interactive ? get_prompt(PROMPT_COPY) : NULL);
+			success = handleCopyIn(pset.db, pset.cur_cmd_source);
 			break;
 
 		default:

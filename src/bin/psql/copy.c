@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2003, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/copy.c,v 1.36 2004/01/09 21:12:20 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/copy.c,v 1.37 2004/01/20 23:48:56 tgl Exp $
  */
 #include "postgres_fe.h"
 #include "copy.h"
@@ -23,6 +23,7 @@
 
 #include "settings.h"
 #include "common.h"
+#include "prompt.h"
 #include "stringutils.h"
 
 #ifdef WIN32
@@ -53,6 +54,7 @@ struct copy_options
 	char	   *table;
 	char	   *column_list;
 	char	   *file;			/* NULL = stdin/stdout */
+	bool		in_dash;		/* true = use src stream not true stdin */
 	bool		from;
 	bool		binary;
 	bool		oids;
@@ -218,10 +220,25 @@ parse_slash_copy(const char *args)
 
 	if (strcasecmp(token, "stdin") == 0 ||
 		strcasecmp(token, "stdout") == 0)
+	{
+		result->in_dash = false;
 		result->file = NULL;
+	}
+	else if (strcmp(token, "-") == 0)
+	{
+		/* Can't do this on output */
+		if (!result->from)
+			goto error;
+
+		result->in_dash = true;
+		result->file = NULL;
+	}
 	else
+	{
+		result->in_dash = false;
 		result->file = xstrdup(token);
-	expand_tilde(&result->file);
+		expand_tilde(&result->file);
+	}
 
 	token = strtokx(NULL, whitespace, NULL, NULL,
 					0, false, pset.encoding);
@@ -362,8 +379,10 @@ do_copy(const char *args)
 	{
 		if (options->file)
 			copystream = fopen(options->file, "r");
+		else if (options->in_dash)
+ 			copystream = pset.cur_cmd_source;
 		else
-			copystream = stdin;
+ 			copystream = stdin;
 	}
 	else
 	{
@@ -401,7 +420,7 @@ do_copy(const char *args)
 			success = handleCopyOut(pset.db, copystream);
 			break;
 		case PGRES_COPY_IN:
-			success = handleCopyIn(pset.db, copystream, NULL);
+			success = handleCopyIn(pset.db, copystream);
 			break;
 		case PGRES_NONFATAL_ERROR:
 		case PGRES_FATAL_ERROR:
@@ -416,7 +435,7 @@ do_copy(const char *args)
 
 	PQclear(result);
 
-	if (copystream != stdout && copystream != stdin)
+ 	if (options->file != NULL)
 		fclose(copystream);
 	free_copy_options(options);
 	return success;
@@ -486,13 +505,12 @@ handleCopyOut(PGconn *conn, FILE *copystream)
  * conn should be a database connection that you just called COPY FROM on
  * (and which gave you PGRES_COPY_IN back);
  * copystream is the file stream you want the input to come from
- * prompt is something to display to request user input (only makes sense
- *	 if stdin is an interactive tty)
  */
 
 bool
-handleCopyIn(PGconn *conn, FILE *copystream, const char *prompt)
+handleCopyIn(PGconn *conn, FILE *copystream)
 {
+	const char *prompt;
 	bool		copydone = false;
 	bool		firstload;
 	bool		linedone;
@@ -503,10 +521,17 @@ handleCopyIn(PGconn *conn, FILE *copystream, const char *prompt)
 	int			ret;
 	unsigned int linecount = 0;
 
-	if (prompt)					/* disable prompt if not interactive */
+	/* Prompt if interactive input */
+	if (isatty(fileno(copystream)))
 	{
-		if (!isatty(fileno(copystream)))
-			prompt = NULL;
+		if (!QUIET())
+			puts(gettext("Enter data to be copied followed by a newline.\n"
+				"End with a backslash and a period on a line by itself."));
+		prompt = get_prompt(PROMPT_COPY);
+	}
+	else
+	{
+		prompt = NULL;
 	}
 
 	while (!copydone)
