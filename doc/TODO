@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Thu May 10 16:28:36 EDT 2001
+Last updated:		Thu May 10 18:36:37 EDT 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -122,13 +122,15 @@ INDEXES
 * Gather more accurate dispersion statistics using indexes
 * Add deleted bit to index tuples to reduce heap access
 * Prevent index uniqueness checks when UPDATE does not modifying column
-* System Tables
-	* Add unique indexes to pg_shadow.usename and pg_shadow.usesysid or
-	  switch to pg_shadow.oid as user id
-	* Add unique indexes on pg_database
-	* Check all system tables and add unique indexes as needed
-	* Remove pg_listener index
-	* Remove unused pg_variable, pg_inheritproc, pg_ipl tables
+
+SYSTEM TABLES
+
+* Add unique indexes to pg_shadow.usename and pg_shadow.usesysid or
+  switch to pg_shadow.oid as user id
+* Add unique indexes on pg_database
+* Check all system tables and add unique indexes as needed
+* Remove pg_listener index
+* Remove unused pg_variable, pg_inheritproc, pg_ipl tables
 
 COMMANDS
 
