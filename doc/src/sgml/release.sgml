@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.112 2002/01/09 00:52:37 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.113 2002/01/20 22:19:56 petere Exp $
 -->
 
 <appendix id="release">
@@ -182,7 +182,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.112 2002/01/09 00:52:37 pe
     <title>Server Operation</title>
 <literallayout>
 Create temporary files in a separate directory (Bruce)
-Delete orphanded temporary files on postmaster startup (Bruce)
+Delete orphaned temporary files on postmaster startup (Bruce)
 Added unique indexes to some system tables (Tom)
 System table operator reorganization (Oleg Bartunov, Teodor Sigaev, Tom)
 Renamed pg_log to pg_clog (Tom)
@@ -268,7 +268,7 @@ New IS UNKNOWN, IS NOT UNKNOWN Boolean tests (Tom)
 New SHARE UPDATE EXCLUSIVE lock mode (Tom)
 New EXPLAIN ANALYZE command that shows run times and row counts (Martijn van Oosterhout)
 Fix problem with LIMIT and subqueries (Tom)
-Fix for LIMIT, DISTINCT ON pushed into subqueryies (Tom)
+Fix for LIMIT, DISTINCT ON pushed into subqueries (Tom)
 Fix nested EXCEPT/INTERSECT (Tom)
 </literallayout>
    </sect3>
@@ -336,7 +336,7 @@ New TIMESTAMP WITHOUT TIMEZONE data type (Thomas)
 Add ISO date/time specification with "T", yyyy-mm-ddThh:mm:ss (Thomas)
 New xid/int comparison functions (Hiroshi)
 Add precision to TIME, TIMESTAMP, and INVERVAL data types (Thomas)
-Modify type coersion logic to attempt binary-compatible functions first (Tom)
+Modify type coercion logic to attempt binary-compatible functions first (Tom)
 New encode() function installed by default (Marko Kreen)
 Improved to_*() conversion functions (Karel Zak)
 Optimize LIKE/ILIKE when using single-byte encodings (Tatsuo)

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_group.sgml,v 1.6 2001/12/08 03:24:34 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_group.sgml,v 1.7 2002/01/20 22:19:56 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -110,7 +110,7 @@ where <replaceable class="PARAMETER">option</replaceable> can be:
   </title>
   <para>
    CREATE GROUP will create a new group in the database installation.
-   Refer to the adminstrator's guide for information about using groups
+   Refer to the <citetitle>Administrator's Guide</citetitle> for information about using groups
    for authentication.
    You must be a database superuser to use this command.
   </para>

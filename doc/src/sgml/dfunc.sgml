@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/dfunc.sgml,v 1.19 2002/01/09 00:52:37 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/dfunc.sgml,v 1.20 2002/01/20 22:19:55 petere Exp $
 -->
 
 <sect2 id="dfunc">
@@ -26,7 +26,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/dfunc.sgml,v 1.19 2002/01/09 00:52:37 peter
 
  <para>
   <indexterm><primary>PIC</></>
-  Creating shared libraries is generally analoguous to linking
+  Creating shared libraries is generally analogous to linking
   executables:  first the source files are compiled into object files,
   then the object files are linked together.  The object files need to
   be created as <firstterm>position-independent code</firstterm>

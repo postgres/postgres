@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_user.sgml,v 1.13 2001/12/08 03:24:36 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_user.sgml,v 1.14 2002/01/20 22:19:56 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -72,7 +72,7 @@ ERROR:  DROP USER: user "<replaceable class="parameter">name</replaceable>" does
        </computeroutput></term>
       <listitem>
        <para>
-	This message occurs if the username is not found.
+	This message occurs if the user name is not found.
        </para>
       </listitem>
      </varlistentry>

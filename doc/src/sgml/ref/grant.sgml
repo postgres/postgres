@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/grant.sgml,v 1.18 2002/01/18 01:04:53 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/grant.sgml,v 1.19 2002/01/20 22:19:57 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -216,7 +216,7 @@ GRANT INSERT ON films TO PUBLIC;
   </para>
 
   <para>
-   Grant all privileges to user manuel on view kinds:
+   Grant all privileges to user <literal>manuel</literal> on view <literal>kinds</literal>:
 
 <programlisting>
 GRANT ALL PRIVILEGES ON kinds TO manuel;

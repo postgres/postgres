@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/client-auth.sgml,v 1.31 2001/12/27 21:37:34 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/client-auth.sgml,v 1.32 2002/01/20 22:19:55 petere Exp $
 -->
 
 <chapter id="client-authentication">
@@ -457,10 +457,10 @@ local        all                                          md5  admins
    <para>
     <literal>trust</> authentication is appropriate and very convenient
     for local connections on a single-user workstation.  It is usually
-    <emphasis>not</> appropriate by itself on a multi-user machine.
-    However, you may be able to use <literal>trust</> even on a multi-user
+    <emphasis>not</> appropriate by itself on a multiuser machine.
+    However, you may be able to use <literal>trust</> even on a multiuser
     machine, if you restrict access to the postmaster's socket file using
-    filesystem permissions.  To do this, set the parameter
+    file-system permissions.  To do this, set the parameter
     <varname>unix_socket_permissions</varname> (and possibly
     <varname>unix_socket_group</varname>) in <filename>postgresql.conf</>,
     as described in <xref linkend="runtime-config-general">.  Or you could
@@ -469,7 +469,7 @@ local        all                                          md5  admins
    </para>
 
    <para>
-    Setting filesystem permissions only helps for Unix-socket connections.
+    Setting file-system permissions only helps for Unix-socket connections.
     Local TCP connections are not restricted by it; therefore, if you want
     to use permissions for local security, remove the <literal>host ...
     127.0.0.1 ...</> line from <filename>pg_hba.conf</>, or change it to a

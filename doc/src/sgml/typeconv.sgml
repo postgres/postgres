@@ -43,7 +43,7 @@ has an associated data type which determines its behavior and allowed usage.
 <productname>PostgreSQL</productname> has an extensible type system that is
 much more general and flexible than other <acronym>RDBMS</acronym> implementations.
 Hence, most type conversion behavior in <productname>PostgreSQL</productname>
-should be governed by general rules rather than by ad-hoc heuristics, to allow
+should be governed by general rules rather than by <foreignphrase>ad hoc</> heuristics, to allow
 mixed-type expressions to be meaningful even with user-defined types.
 </para>
 
@@ -178,7 +178,7 @@ Implicit conversions should never have surprising or unpredictable outcomes.
 
 <listitem>
 <para>
-User-defined types, of which the parser has no a-priori knowledge, should be
+User-defined types, of which the parser has no <foreignphrase>a priori</> knowledge, should be
 <quote>higher</quote> in the type hierarchy. In mixed-type expressions, native types shall always
 be converted to a user-defined type (of course, only if conversion is necessary).
 </para>
@@ -410,7 +410,7 @@ type to resolve the unknown literals to.
 <para>
 The <productname>PostgreSQL</productname> operator catalog has several
 entries for the prefix operator <literal>@</>, all of which implement
-absolute-value operations for various numeric datatypes.  One of these
+absolute-value operations for various numeric data types.  One of these
 entries is for type <type>float8</type>, which is the preferred type in
 the numeric category.  Therefore, <productname>PostgreSQL</productname>
 will use that entry when faced with a non-numeric input:
@@ -432,7 +432,7 @@ ERROR:  Input '-4.5e500' is out of range for float8
 
 <para>
 On the other hand, the postfix operator <literal>!</> (factorial)
-is defined only for integer datatypes, not for float8.  So, if we
+is defined only for integer data types, not for float8.  So, if we
 try a similar case with <literal>!</>, we get:
 <screen>
 tgl=> select text '44' ! as "factorial";
@@ -657,7 +657,7 @@ system catalog.
 
   <para>
    Values to be inserted into a table are coerced to the destination
-   column's datatype according to the
+   column's data type according to the
    following steps.
   </para>
 
@@ -712,7 +712,7 @@ What has really happened here is that the two unknown literals are resolved
 to <type>text</type> by default, allowing the <literal>||</literal> operator
 to be resolved as <type>text</type> concatenation.  Then the <type>text</type>
 result of the operator is coerced to <type>bpchar</type> (<quote>blank-padded
-char</>, the internal name of the character datatype) to match the target
+char</>, the internal name of the character data type) to match the target
 column type.  (Since the parser knows that <type>text</type> and
 <type>bpchar</type> are binary-compatible, this coercion is implicit and does
 not insert any real function call.)  Finally, the sizing function
@@ -734,7 +734,7 @@ to each output column of a union query.  The <literal>INTERSECT</> and
 <literal>EXCEPT</> constructs resolve dissimilar types in the same way as
 <literal>UNION</>.
 A <literal>CASE</> construct also uses the identical algorithm to match up its
-component expressions and select a result datatype.
+component expressions and select a result data type.
 </para>
 <procedure>
 <title><literal>UNION</> and <literal>CASE</> Type Resolution</title>

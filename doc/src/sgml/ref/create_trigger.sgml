@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_trigger.sgml,v 1.21 2001/12/08 03:24:35 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_trigger.sgml,v 1.22 2002/01/20 22:19:56 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -232,7 +232,7 @@ CREATE TABLE distributors (
        <listitem>
         <para>
          SQL99 allows you to define aliases for the <quote>old</quote>
-         and <quote>new</quote> rows or tables for use in the definiton
+         and <quote>new</quote> rows or tables for use in the definition
          of the triggered action (e.g., <literal>CREATE TRIGGER ... ON
          tablename REFERENCING OLD ROW AS somename NEW ROW AS
          othername ...</literal>).  Since

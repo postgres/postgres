@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/syntax.sgml,v 1.57 2002/01/09 23:38:06 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/syntax.sgml,v 1.58 2002/01/20 22:19:56 petere Exp $
 -->
 
 <chapter id="sql-syntax">
@@ -1019,7 +1019,7 @@ sqrt(2)
     </indexterm>
 
    <para>
-    A type cast specifies a conversion from one datatype to another.
+    A type cast specifies a conversion from one data type to another.
     <productname>PostgreSQL</productname> accepts two equivalent syntaxes
     for type casts:
 <synopsis>
@@ -1039,8 +1039,8 @@ CAST ( <replaceable>expression</replaceable> AS <replaceable>type</replaceable> 
     <xref linkend="sql-syntax-constants-generic">.  A cast applied to an
     unadorned string literal represents the initial assignment of a type
     to a literal constant value, and so it will succeed for any type
-    (if the string literal's contents are acceptable input syntax for the
-    datatype).
+    (if the contents of the string literal are acceptable input syntax for the
+    data type).
    </para>
 
    <para>

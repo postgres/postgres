@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/dropuser.sgml,v 1.15 2001/12/08 03:24:36 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/dropuser.sgml,v 1.16 2002/01/20 22:19:56 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -184,7 +184,7 @@ PostgreSQL documentation
   <informalexample>
    <para>
     To remove user <literal>joe</literal> using the postmaster on host
-    eden, port 5000, with verification and a peek at the underlying
+    <literal>eden</literal>, port 5000, with verification and a peek at the underlying
     query:
 <screen>
 <prompt>$ </prompt><userinput>dropuser -p 5000 -h eden -i -e joe</userinput>

@@ -1,9 +1,9 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/mvcc.sgml,v 2.21 2001/11/28 20:49:10 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/mvcc.sgml,v 2.22 2002/01/20 22:19:56 petere Exp $
 -->
 
  <chapter id="mvcc">
-  <title>Multi-Version Concurrency Control</title>
+  <title>Multiversion Concurrency Control</title>
 
   <indexterm>
    <primary>concurrency</primary>
@@ -11,10 +11,10 @@ $Header: /cvsroot/pgsql/doc/src/sgml/mvcc.sgml,v 2.21 2001/11/28 20:49:10 petere
 
   <abstract>
    <para>
-    Multi-Version Concurrency Control
+    Multiversion Concurrency Control
     (MVCC)
     is an advanced technique for improving database performance in a
-    multi-user environment. 
+    multiuser environment. 
     Vadim Mikheev (<email>vadim@krs.ru</email>) provided
     the implementation for <productname>PostgreSQL</productname>.
    </para>

@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/docguide.sgml,v 1.39 2002/01/08 15:16:16 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/docguide.sgml,v 1.40 2002/01/20 22:19:55 petere Exp $ -->
 
 <appendix id="docguide">
  <title>Documentation</title>
@@ -515,7 +515,7 @@ CATALOG "docbook-dsssl--1.<replaceable>xx</>/catalog
      will need to increase the size of
      <application>TeX</application>'s internal data structures.
      Details on this can be found in the <application>JadeTeX</application>
-     installation insructions.
+     installation instructions.
     </para>
 
     <para>
@@ -738,7 +738,7 @@ gmake man
       styles, in particular the default style. If the document
        contains <sgmltag>REFENTRY</sgmltag> sections, one must also
        replace formatting hints which tie a
-       <emphasis>preceeding</emphasis> paragraph to the current
+       <emphasis>preceding</emphasis> paragraph to the current
        paragraph, and instead tie the current paragraph to the
        following one. A utility, <application>fixrtf</application> is
        available in 
@@ -1124,7 +1124,7 @@ Later stylesheets seem to not need this adjustment - thomas 2001-11-29
      powerful mode for editing <acronym>SGML</acronym> documents.
      When properly configured, it will allow you to use
      <application>Emacs</application> to insert tags and check markup
-     consistancy.  You could use it for <acronym>HTML</acronym> as
+     consistency.  You could use it for <acronym>HTML</acronym> as
      well.  Check the <ulink
      url="http://www.lysator.liu.se/projects/about_psgml.html">PSGML
      web site</ulink> for downloads, installation instructions, and

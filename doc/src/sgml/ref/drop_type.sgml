@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_type.sgml,v 1.13 2001/12/08 03:24:36 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_type.sgml,v 1.14 2002/01/20 22:19:56 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -105,7 +105,7 @@ ERROR:  RemoveType: type '<replaceable class="parameter">typename</replaceable>'
     <para>
      It is the user's responsibility to remove any operators,
      functions, aggregates, access methods, subtypes, and tables that
-     use a deleted type.  However, the associated array datatype
+     use a deleted type.  However, the associated array data type
      (which was automatically created by <command>CREATE TYPE</command>)
      will be removed automatically.
     </para>

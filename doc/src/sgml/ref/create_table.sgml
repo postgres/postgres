@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_table.sgml,v 1.51 2002/01/03 06:26:22 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_table.sgml,v 1.52 2002/01/20 22:19:56 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -367,7 +367,7 @@ and <replaceable class="PARAMETER">table_constraint</replaceable> is:
       match type.  There are three match types: <literal>MATCH
       FULL</>, <literal>MATCH PARTIAL</>, and a default match type if
       none is specified. <literal>MATCH FULL</> will not allow one
-      column of a multi-column foreign key to be NULL unless all
+      column of a multicolumn foreign key to be NULL unless all
       foreign key columns are NULL. The default match type allows some
       foreign key columns to be NULL while other parts of the foreign
       key are not NULL. <literal>MATCH PARTIAL</> is not yet
@@ -583,7 +583,7 @@ and <replaceable class="PARAMETER">table_constraint</replaceable> is:
     <para>
      Unique constraints and primary keys are not inherited in the
      current implementation.  This makes the combination of
-     inheritance and unique constraints rather disfunctional.
+     inheritance and unique constraints rather dysfunctional.
     </para>
    </listitem>
   </itemizedlist>
@@ -800,7 +800,7 @@ CREATE { GLOBAL | LOCAL } TEMPORARY TABLE <replaceable class="parameter">table</
     The <literal>NULL</> <quote>constraint</quote> (actually a
     non-constraint) is a <productname>PostgreSQL</productname>
     extension to SQL92 that is included for compatibility with some
-    other RDBMSes (and for symmetry with the <literal>NOT
+    other RDBMS (and for symmetry with the <literal>NOT
     NULL</literal> constraint).  Since it is the default for any
     column, its presence is simply noise.
    </para>

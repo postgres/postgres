@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_sequence.sgml,v 1.23 2001/12/08 03:24:35 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_sequence.sgml,v 1.24 2002/01/20 22:19:56 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -265,9 +265,9 @@ SELECT * FROM <replaceable>seqname</replaceable>;
     will be lost when that session ends.  Furthermore, although multiple backends are guaranteed to
     allocate distinct sequence values, the values may be generated out of
     sequence when all the backends are considered.  (For example, with a <replaceable class="parameter">cache</replaceable>
-    setting of 10, backend A might reserve values 1..10 and return nextval=1, 
+    setting of 10, backend A might reserve values 1..10 and return <function>nextval</function>=1, 
     then
-    backend B might reserve values 11..20 and return nextval=11 before backend
+    backend B might reserve values 11..20 and return <function>nextval</function>=11 before backend
     A has generated nextval=2.)  Thus, with a <replaceable class="parameter">cache</replaceable> setting of one it is safe
     to assume that <function>nextval</> values are generated sequentially; with a <replaceable class="parameter">cache</replaceable>
     setting greater than one you should only assume that the <function>nextval</> values

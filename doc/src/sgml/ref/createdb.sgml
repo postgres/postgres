@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/createdb.sgml,v 1.23 2001/12/08 03:24:35 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/createdb.sgml,v 1.24 2002/01/20 22:19:56 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -238,7 +238,7 @@ PostgreSQL documentation
   <informalexample>
    <para>
     To create the database <literal>demo</literal> using the
-    server on host eden, port 5000, using the
+    server on host <literal>eden</>, port 5000, using the
     <literal>LATIN1</literal> encoding scheme with a look at the
     underlying query:
 <screen>

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/perform.sgml,v 1.15 2001/11/28 20:49:10 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/perform.sgml,v 1.16 2002/01/20 22:19:56 petere Exp $
 -->
 
  <chapter id="performance-tips">
@@ -403,7 +403,7 @@ regression=#
   </para>
 
   <table>
-   <title>pg_stats Columns</title>
+   <title><structname>pg_stats</structname> Columns</title>
 
    <tgroup cols=3>
     <thead>
@@ -416,31 +416,31 @@ regression=#
 
     <tbody>
      <row>
-      <entry>tablename</entry>
+      <entry><literal>tablename</literal></entry>
       <entry><type>name</type></entry>
       <entry>Name of table containing column</entry>
      </row>
 
      <row>
-      <entry>attname</entry>
+      <entry><literal>attname</literal></entry>
       <entry><type>name</type></entry>
       <entry>Column described by this row</entry>
      </row>
 
      <row>
-      <entry>null_frac</entry>
+      <entry><literal>null_frac</literal></entry>
       <entry><type>real</type></entry>
       <entry>Fraction of column's entries that are NULL</entry>
      </row>
 
      <row>
-      <entry>avg_width</entry>
+      <entry><literal>avg_width</literal></entry>
       <entry><type>integer</type></entry>
       <entry>Average width in bytes of column's entries</entry>
      </row>
 
      <row>
-      <entry>n_distinct</entry>
+      <entry><literal>n_distinct</literal></entry>
       <entry><type>real</type></entry>
       <entry>If greater than zero, the estimated number of distinct values
       in the column.  If less than zero, the negative of the number of
@@ -454,14 +454,14 @@ regression=#
      </row>
 
      <row>
-      <entry>most_common_vals</entry>
+      <entry><literal>most_common_vals</literal></entry>
       <entry><type>text[]</type></entry>
       <entry>A list of the most common values in the column. (Omitted if
       no values seem to be more common than any others.)</entry>
      </row>
 
      <row>
-      <entry>most_common_freqs</entry>
+      <entry><literal>most_common_freqs</literal></entry>
       <entry><type>real[]</type></entry>
       <entry>A list of the frequencies of the most common values,
       ie, number of occurrences of each divided by total number of rows.
@@ -474,7 +474,7 @@ regression=#
       <entry>A list of values that divide the column's values into
       groups of approximately equal population.  The 
       <structfield>most_common_vals</>, if present, are omitted from the
-      histogram calculation.  (Omitted if column datatype does not have a
+      histogram calculation.  (Omitted if column data type does not have a
       <literal>&lt;</> operator, or if the <structfield>most_common_vals</>
       list accounts for the entire population.)
       </entry>
@@ -485,9 +485,9 @@ regression=#
       <entry><type>real</type></entry>
       <entry>Statistical correlation between physical row ordering and
       logical ordering of the column values.  This ranges from -1 to +1.
-      When the value is near -1 or +1, an indexscan on the column will
+      When the value is near -1 or +1, an index scan on the column will
       be estimated to be cheaper than when it is near zero, due to reduction
-      of random access to the disk.  (Omitted if column datatype does
+      of random access to the disk.  (Omitted if column data type does
       not have a <literal>&lt;</> operator.)
       </entry>
      </row>

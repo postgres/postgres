@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.83 2002/01/07 02:29:11 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.84 2002/01/20 22:19:55 petere Exp $
 -->
 
  <chapter id="datatype">
@@ -978,7 +978,7 @@ SELECT b, char_length(b) FROM test2;
      </thead>
      <tbody>
       <row>
-       <entry>bytea</entry>
+       <entry><type>bytea</type></entry>
        <entry>4 bytes plus the actual binary string</entry>
        <entry>Variable (not specifically limited)
               length binary string</entry>

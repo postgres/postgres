@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/start.sgml,v 1.21 2001/11/28 20:49:10 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/start.sgml,v 1.22 2002/01/20 22:19:56 petere Exp $
 -->
 
  <chapter id="tutorial-start">
@@ -152,7 +152,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/start.sgml,v 1.21 2001/11/28 20:49:10 peter
 
    <para>
     To create a new database, in this example named
-    <quote>mydb</quote>, you use the following command:
+    <literal>mydb</literal>, you use the following command:
 <screen>
 <prompt>$</prompt> <userinput>createdb mydb</userinput>
 </screen>
@@ -244,7 +244,7 @@ createdb: database creation failed
    <para>
     If you don't want to use your database anymore you can remove it.
     For example, if you are the owner (creator) of the database
-    <quote>mydb</quote>, you can destroy it using the following
+    <literal>mydb</literal>, you can destroy it using the following
     command:
 <screen>
 <prompt>$</prompt> <userinput>dropdb mydb</userinput>
@@ -272,7 +272,7 @@ createdb: database creation failed
      <listitem>
       <para>
        Running the <productname>PostgreSQL</productname> interactive
-       terminal program, called <quote>psql</quote>, which allows you
+       terminal program, called <application><firstterm>psql</></application>, which allows you
        to interactively enter, edit, and execute
        <acronym>SQL</acronym> commands.
       </para>
@@ -300,7 +300,7 @@ createdb: database creation failed
 
     You probably want to start up <command>psql</command>, to try out
     the examples in this tutorial.  It can be activated for the
-    <quote>mydb</quote> database by typing the command:
+    <literal>mydb</literal> database by typing the command:
 <screen>
 <prompt>$</prompt> <userinput>psql mydb</userinput>
 </screen>
@@ -346,7 +346,7 @@ mydb=#
     The last line printed out by <command>psql</command> is the
     prompt, and it indicates that <command>psql</command> is listening
     to you and that you can type <acronym>SQL</acronym> queries into a
-    workspace maintained by <command>psql</command>.  Try out these
+    work space maintained by <command>psql</command>.  Try out these
     commands:
     <indexterm><primary>version</primary></indexterm>
 <screen>

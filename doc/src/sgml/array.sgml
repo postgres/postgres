@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/array.sgml,v 1.18 2001/11/29 21:02:41 tgl Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/array.sgml,v 1.19 2002/01/20 22:19:55 petere Exp $ -->
 
 <chapter id="arrays">
  <title>Arrays</title>
@@ -244,7 +244,7 @@ SELECT * FROM sal_emp WHERE pay_by_quarter **= 10000;
    A limitation of the present array implementation is that individual
    elements of an array cannot be SQL NULLs.  The entire array can be set
    to NULL, but you can't have an array with some elements NULL and some
-   not.  Fixing this is on the TODO list.
+   not.  Fixing this is on the to-do list.
   </para>
  </note>
 
@@ -272,9 +272,9 @@ INSERT ... VALUES ('{"\\\\","\\""}');
 </programlisting>
    The string-literal processor removes one level of backslashes, so that
    what arrives at the array-value parser looks like <literal>{"\\","\""}</>.
-   In turn, the strings fed to the <type>text</> datatype's input routine
+   In turn, the strings fed to the <type>text</> data type's input routine
    become <literal>\</> and <literal>"</> respectively.  (If we were working
-   with a datatype whose input routine also treated backslashes specially,
+   with a data type whose input routine also treated backslashes specially,
    <type>bytea</> for example, we might need as many as eight backslashes
    in the query to get one backslash into the stored array element.)
   </para>

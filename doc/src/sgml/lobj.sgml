@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/lobj.sgml,v 1.25 2002/01/07 02:29:12 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/lobj.sgml,v 1.26 2002/01/20 22:19:56 petere Exp $
 -->
 
  <chapter id="largeObjects">
@@ -175,7 +175,7 @@ Oid lo_import(PGconn *<replaceable class="parameter">conn</replaceable>, const c
 <synopsis>
 int lo_export(PGconn *<replaceable class="parameter">conn</replaceable>, Oid <replaceable class="parameter">lobjId</replaceable>, const char *<replaceable class="parameter">filename</replaceable>)
 </synopsis>
-     The <parameter>lobjId</parameter> argument specifies  the  Oid  of  the  large
+     The <parameter>lobjId</parameter> argument specifies  the  OID  of  the  large
      object  to  export  and the <parameter>filename</parameter> argument specifies
      the operating system name name of the file.
     </para>
@@ -189,7 +189,7 @@ int lo_export(PGconn *<replaceable class="parameter">conn</replaceable>, Oid <re
 <synopsis>
 int lo_open(PGconn *conn, Oid lobjId, int mode)
 </synopsis>
-     The <parameter>lobjId</parameter> argument specifies  the  Oid  of  the  large
+     The <parameter>lobjId</parameter> argument specifies  the  OID  of  the  large
      object  to  open.   The  <parameter>mode</parameter>  bits control whether the
      object is opened  for  reading  (<symbol>INV_READ</>),  writing (<symbol>INV_WRITE</symbol>),  or
      both.
@@ -269,7 +269,7 @@ int lo_close(PGconn *conn, int fd)
 <synopsis>
 Oid lo_unlink(PGconn *<replaceable class="parameter">conn</replaceable>, Oid lobjId)
 </synopsis>
-     The <parameter>lobjId</parameter> argument specifies  the  Oid  of  the  large
+     The <parameter>lobjId</parameter> argument specifies  the  OID  of  the  large
      object  to  remove.
     </para>
    </sect2>

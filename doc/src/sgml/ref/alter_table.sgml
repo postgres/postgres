@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_table.sgml,v 1.34 2001/12/08 03:24:33 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_table.sgml,v 1.35 2002/01/20 22:19:56 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -246,7 +246,7 @@ DROP TABLE temp;
    Usage
   </title>
   <para>
-   To add a column of type VARCHAR to a table:
+   To add a column of type <type>varchar</type> to a table:
    <programlisting>
 ALTER TABLE distributors ADD COLUMN address VARCHAR(30);
    </programlisting>
@@ -288,7 +288,7 @@ ALTER TABLE distributors ADD CONSTRAINT distfk FOREIGN KEY (address) REFERENCES 
   </para>
 
   <para> 
-   To add a (multi-column) unique constraint to a table:
+   To add a (multicolumn) unique constraint to a table:
    <programlisting>
 ALTER TABLE distributors ADD CONSTRAINT dist_id_zipcode_key UNIQUE (dist_id, zipcode);
    </programlisting>

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/xfunc.sgml,v 1.46 2002/01/07 02:29:14 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/xfunc.sgml,v 1.47 2002/01/20 22:19:56 petere Exp $
 -->
 
  <chapter id="xfunc">
@@ -215,7 +215,7 @@ SELECT one();
     <para>
      Notice that we defined a column alias within the function body for the result of the function
      (with  the  name <literal>RESULT</>),  but this column alias is not visible
-     outside the function.  Hence,  the  result  is labelled <literal>one</>
+     outside the function.  Hence,  the  result  is labeled <literal>one</>
      instead of <literal>RESULT</>.
     </para>
 

@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/rules.sgml,v 1.20 2002/01/07 02:29:13 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/rules.sgml,v 1.21 2002/01/20 22:19:56 petere Exp $ -->
 
 <Chapter Id="rules">
 <Title>The Rule System</Title>
@@ -282,15 +282,15 @@
     between a
 
 <ProgramListing>
-    CREATE VIEW myview AS SELECT * FROM mytab;
+CREATE VIEW myview AS SELECT * FROM mytab;
 </ProgramListing>
     
     compared against the two commands
 
 <ProgramListing>
-    CREATE TABLE myview (<Replaceable>same attribute list as for mytab</Replaceable>);
-    CREATE RULE "_RETmyview" AS ON SELECT TO myview DO INSTEAD
-        SELECT * FROM mytab;
+CREATE TABLE myview (<Replaceable>same attribute list as for mytab</Replaceable>);
+CREATE RULE "_RETmyview" AS ON SELECT TO myview DO INSTEAD
+    SELECT * FROM mytab;
 </ProgramListing>
     
     because this is exactly what the CREATE VIEW command does internally.
@@ -342,14 +342,14 @@
     integer values. We create that as
 
 <ProgramListing>
-    CREATE FUNCTION min(integer, integer) RETURNS integer AS
-        'BEGIN
-            IF $1 < $2 THEN
-                RETURN $1;
-            END IF;
-            RETURN $2;
-        END;'
-    LANGUAGE 'plpgsql';
+CREATE FUNCTION min(integer, integer) RETURNS integer AS '
+    BEGIN
+        IF $1 < $2 THEN
+            RETURN $1;
+        END IF;
+        RETURN $2;
+    END;
+' LANGUAGE plpgsql;
 </ProgramListing>
 </Para>
 
@@ -358,27 +358,27 @@
     are these:
 
 <ProgramListing>
-    CREATE TABLE shoe_data (
-        shoename   char(10),      -- primary key
-        sh_avail   integer,       -- available # of pairs
-        slcolor    char(10),      -- preferred shoelace color
-        slminlen   float,         -- miminum shoelace length
-        slmaxlen   float,         -- maximum shoelace length
-        slunit     char(8)        -- length unit
-    );
+CREATE TABLE shoe_data (
+    shoename   char(10),      -- primary key
+    sh_avail   integer,       -- available # of pairs
+    slcolor    char(10),      -- preferred shoelace color
+    slminlen   float,         -- miminum shoelace length
+    slmaxlen   float,         -- maximum shoelace length
+    slunit     char(8)        -- length unit
+);
 
-    CREATE TABLE shoelace_data (
-        sl_name    char(10),      -- primary key
-        sl_avail   integer,       -- available # of pairs
-        sl_color   char(10),      -- shoelace color
-        sl_len     float,         -- shoelace length
-        sl_unit    char(8)        -- length unit
-    );
+CREATE TABLE shoelace_data (
+    sl_name    char(10),      -- primary key
+    sl_avail   integer,       -- available # of pairs
+    sl_color   char(10),      -- shoelace color
+    sl_len     float,         -- shoelace length
+    sl_unit    char(8)        -- length unit
+);
 
-    CREATE TABLE unit (
-        un_name    char(8),       -- the primary key
-        un_fact    float          -- factor to transform to cm
-    );
+CREATE TABLE unit (
+    un_name    char(8),       -- the primary key
+    un_fact    float          -- factor to transform to cm
+);
 </ProgramListing>
 
     I think most of us wear shoes and can realize that this is
@@ -391,38 +391,38 @@
     The views are created as
 
 <ProgramListing>
-    CREATE VIEW shoe AS
-        SELECT sh.shoename,
-               sh.sh_avail,
-               sh.slcolor,
-               sh.slminlen,
-               sh.slminlen * un.un_fact AS slminlen_cm,
-               sh.slmaxlen,
-               sh.slmaxlen * un.un_fact AS slmaxlen_cm,
-               sh.slunit
-          FROM shoe_data sh, unit un
-         WHERE sh.slunit = un.un_name;
+CREATE VIEW shoe AS
+    SELECT sh.shoename,
+           sh.sh_avail,
+           sh.slcolor,
+           sh.slminlen,
+           sh.slminlen * un.un_fact AS slminlen_cm,
+           sh.slmaxlen,
+           sh.slmaxlen * un.un_fact AS slmaxlen_cm,
+           sh.slunit
+      FROM shoe_data sh, unit un
+     WHERE sh.slunit = un.un_name;
 
-    CREATE VIEW shoelace AS
-        SELECT s.sl_name,
-               s.sl_avail,
-               s.sl_color,
-               s.sl_len,
-               s.sl_unit,
-               s.sl_len * u.un_fact AS sl_len_cm
-          FROM shoelace_data s, unit u
-         WHERE s.sl_unit = u.un_name;
+CREATE VIEW shoelace AS
+    SELECT s.sl_name,
+           s.sl_avail,
+           s.sl_color,
+           s.sl_len,
+           s.sl_unit,
+           s.sl_len * u.un_fact AS sl_len_cm
+      FROM shoelace_data s, unit u
+     WHERE s.sl_unit = u.un_name;
 
-    CREATE VIEW shoe_ready AS
-        SELECT rsh.shoename,
-               rsh.sh_avail,
-               rsl.sl_name,
-               rsl.sl_avail,
-               min(rsh.sh_avail, rsl.sl_avail) AS total_avail
-          FROM shoe rsh, shoelace rsl
-         WHERE rsl.sl_color = rsh.slcolor
-           AND rsl.sl_len_cm >= rsh.slminlen_cm
-           AND rsl.sl_len_cm <= rsh.slmaxlen_cm;
+CREATE VIEW shoe_ready AS
+    SELECT rsh.shoename,
+           rsh.sh_avail,
+           rsl.sl_name,
+           rsl.sl_avail,
+           min(rsh.sh_avail, rsl.sl_avail) AS total_avail
+      FROM shoe rsh, shoelace rsl
+     WHERE rsl.sl_color = rsh.slcolor
+       AND rsl.sl_len_cm >= rsh.slminlen_cm
+       AND rsl.sl_len_cm <= rsh.slmaxlen_cm;
 </ProgramListing>
 
     The CREATE VIEW command for the <Filename>shoelace</Filename> 
@@ -457,60 +457,60 @@
     SELECT in his life:
 
 <ProgramListing>
-    al_bundy=> INSERT INTO unit VALUES ('cm', 1.0);
-    al_bundy=> INSERT INTO unit VALUES ('m', 100.0);
-    al_bundy=> INSERT INTO unit VALUES ('inch', 2.54);
-    al_bundy=> 
-    al_bundy=> INSERT INTO shoe_data VALUES 
-    al_bundy->     ('sh1', 2, 'black', 70.0, 90.0, 'cm');
-    al_bundy=> INSERT INTO shoe_data VALUES 
-    al_bundy->     ('sh2', 0, 'black', 30.0, 40.0, 'inch');
-    al_bundy=> INSERT INTO shoe_data VALUES 
-    al_bundy->     ('sh3', 4, 'brown', 50.0, 65.0, 'cm');
-    al_bundy=> INSERT INTO shoe_data VALUES 
-    al_bundy->     ('sh4', 3, 'brown', 40.0, 50.0, 'inch');
-    al_bundy=> 
-    al_bundy=> INSERT INTO shoelace_data VALUES 
-    al_bundy->     ('sl1', 5, 'black', 80.0, 'cm');
-    al_bundy=> INSERT INTO shoelace_data VALUES 
-    al_bundy->     ('sl2', 6, 'black', 100.0, 'cm');
-    al_bundy=> INSERT INTO shoelace_data VALUES 
-    al_bundy->     ('sl3', 0, 'black', 35.0 , 'inch');
-    al_bundy=> INSERT INTO shoelace_data VALUES 
-    al_bundy->     ('sl4', 8, 'black', 40.0 , 'inch');
-    al_bundy=> INSERT INTO shoelace_data VALUES 
-    al_bundy->     ('sl5', 4, 'brown', 1.0 , 'm');
-    al_bundy=> INSERT INTO shoelace_data VALUES 
-    al_bundy->     ('sl6', 0, 'brown', 0.9 , 'm');
-    al_bundy=> INSERT INTO shoelace_data VALUES 
-    al_bundy->     ('sl7', 7, 'brown', 60 , 'cm');
-    al_bundy=> INSERT INTO shoelace_data VALUES 
-    al_bundy->     ('sl8', 1, 'brown', 40 , 'inch');
-    al_bundy=> 
-    al_bundy=> SELECT * FROM shoelace;
-    sl_name   |sl_avail|sl_color  |sl_len|sl_unit |sl_len_cm
-    ----------+--------+----------+------+--------+---------
-    sl1       |       5|black     |    80|cm      |       80
-    sl2       |       6|black     |   100|cm      |      100
-    sl7       |       7|brown     |    60|cm      |       60
-    sl3       |       0|black     |    35|inch    |     88.9
-    sl4       |       8|black     |    40|inch    |    101.6
-    sl8       |       1|brown     |    40|inch    |    101.6
-    sl5       |       4|brown     |     1|m       |      100
-    sl6       |       0|brown     |   0.9|m       |       90
-    (8 rows)
+al_bundy=> INSERT INTO unit VALUES ('cm', 1.0);
+al_bundy=> INSERT INTO unit VALUES ('m', 100.0);
+al_bundy=> INSERT INTO unit VALUES ('inch', 2.54);
+al_bundy=> 
+al_bundy=> INSERT INTO shoe_data VALUES 
+al_bundy->     ('sh1', 2, 'black', 70.0, 90.0, 'cm');
+al_bundy=> INSERT INTO shoe_data VALUES 
+al_bundy->     ('sh2', 0, 'black', 30.0, 40.0, 'inch');
+al_bundy=> INSERT INTO shoe_data VALUES 
+al_bundy->     ('sh3', 4, 'brown', 50.0, 65.0, 'cm');
+al_bundy=> INSERT INTO shoe_data VALUES 
+al_bundy->     ('sh4', 3, 'brown', 40.0, 50.0, 'inch');
+al_bundy=> 
+al_bundy=> INSERT INTO shoelace_data VALUES 
+al_bundy->     ('sl1', 5, 'black', 80.0, 'cm');
+al_bundy=> INSERT INTO shoelace_data VALUES 
+al_bundy->     ('sl2', 6, 'black', 100.0, 'cm');
+al_bundy=> INSERT INTO shoelace_data VALUES 
+al_bundy->     ('sl3', 0, 'black', 35.0 , 'inch');
+al_bundy=> INSERT INTO shoelace_data VALUES 
+al_bundy->     ('sl4', 8, 'black', 40.0 , 'inch');
+al_bundy=> INSERT INTO shoelace_data VALUES 
+al_bundy->     ('sl5', 4, 'brown', 1.0 , 'm');
+al_bundy=> INSERT INTO shoelace_data VALUES 
+al_bundy->     ('sl6', 0, 'brown', 0.9 , 'm');
+al_bundy=> INSERT INTO shoelace_data VALUES 
+al_bundy->     ('sl7', 7, 'brown', 60 , 'cm');
+al_bundy=> INSERT INTO shoelace_data VALUES 
+al_bundy->     ('sl8', 1, 'brown', 40 , 'inch');
+al_bundy=> 
+al_bundy=> SELECT * FROM shoelace;
+sl_name   |sl_avail|sl_color  |sl_len|sl_unit |sl_len_cm
+----------+--------+----------+------+--------+---------
+sl1       |       5|black     |    80|cm      |       80
+sl2       |       6|black     |   100|cm      |      100
+sl7       |       7|brown     |    60|cm      |       60
+sl3       |       0|black     |    35|inch    |     88.9
+sl4       |       8|black     |    40|inch    |    101.6
+sl8       |       1|brown     |    40|inch    |    101.6
+sl5       |       4|brown     |     1|m       |      100
+sl6       |       0|brown     |   0.9|m       |       90
+(8 rows)
 </ProgramListing>
 
     It's the simplest SELECT Al can do on our views, so we take this
     to explain the basics of view rules.
     The <literal>SELECT * FROM shoelace</literal> was interpreted by the parser and
-    produced the parsetree
+    produced the parse tree
 
 <ProgramListing>
-    SELECT shoelace.sl_name, shoelace.sl_avail,
-           shoelace.sl_color, shoelace.sl_len,
-           shoelace.sl_unit, shoelace.sl_len_cm
-      FROM shoelace shoelace;
+SELECT shoelace.sl_name, shoelace.sl_avail,
+       shoelace.sl_color, shoelace.sl_len,
+       shoelace.sl_unit, shoelace.sl_len_cm
+  FROM shoelace shoelace;
 </ProgramListing>
 
     and this is given to the rule system. The rule system walks through the
@@ -520,12 +520,12 @@
     rule <literal>_RETshoelace</literal> with the parse tree
 
 <ProgramListing>
-    <FirstTerm>SELECT s.sl_name, s.sl_avail,
-           s.sl_color, s.sl_len, s.sl_unit,
-           float8mul(s.sl_len, u.un_fact) AS sl_len_cm
-      FROM shoelace *OLD*, shoelace *NEW*,
-           shoelace_data s, unit u
-     WHERE bpchareq(s.sl_unit, u.un_name);</FirstTerm>
+<emphasis>SELECT s.sl_name, s.sl_avail,
+       s.sl_color, s.sl_len, s.sl_unit,
+       float8mul(s.sl_len, u.un_fact) AS sl_len_cm
+  FROM shoelace *OLD*, shoelace *NEW*,
+       shoelace_data s, unit u
+ WHERE bpchareq(s.sl_unit, u.un_name);</emphasis>
 </ProgramListing>
 
     Note that the parser changed the calculation and qualification into
@@ -534,23 +534,23 @@
 </Para>
 
 <Para>
-    To expand the view, the rewriter simply creates a subselect rangetable
-    entry containing the rule's action parsetree, and substitutes this
+    To expand the view, the rewriter simply creates a subselect range-table
+    entry containing the rule's action parse tree, and substitutes this
     range table entry for the original one that referenced the view.  The 
     resulting rewritten parse tree is almost the same as if Al had typed
 
 <ProgramListing>
-    SELECT shoelace.sl_name, shoelace.sl_avail,
-           shoelace.sl_color, shoelace.sl_len,
-           shoelace.sl_unit, shoelace.sl_len_cm
-      FROM (SELECT s.sl_name,
-                   s.sl_avail,
-                   s.sl_color,
-                   s.sl_len,
-                   s.sl_unit,
-                   s.sl_len * u.un_fact AS sl_len_cm
-              FROM shoelace_data s, unit u
-             WHERE s.sl_unit = u.un_name) shoelace;
+SELECT shoelace.sl_name, shoelace.sl_avail,
+       shoelace.sl_color, shoelace.sl_len,
+       shoelace.sl_unit, shoelace.sl_len_cm
+  FROM (SELECT s.sl_name,
+               s.sl_avail,
+               s.sl_color,
+               s.sl_len,
+               s.sl_unit,
+               s.sl_len * u.un_fact AS sl_len_cm
+          FROM shoelace_data s, unit u
+         WHERE s.sl_unit = u.un_name) shoelace;
 </ProgramListing>
 
      There is one difference however: the sub-query's range table has two
@@ -558,7 +558,7 @@
      participate directly in the query, since they aren't referenced by
      the sub-query's join tree or target list.  The rewriter uses them
      to store the access permission check info that was originally present
-     in the rangetable entry that referenced the view.  In this way, the
+     in the range-table entry that referenced the view.  In this way, the
      executor will still check that the user has proper permissions to access
      the view, even though there's no direct use of the view in the rewritten
      query.
@@ -566,8 +566,8 @@
 
 <Para>
     That was the first rule applied.  The rule system will continue checking
-    the remaining rangetable entries in the top query (in this example there
-    are no more), and it will recursively check the rangetable entries in
+    the remaining range-table entries in the top query (in this example there
+    are no more), and it will recursively check the range-table entries in
     the added sub-query to see if any of them reference views.  (But it
     won't expand *OLD* or *NEW* --- otherwise we'd have infinite recursion!)
     In this example, there are no rewrite rules for shoelace_data or unit,
@@ -590,12 +590,12 @@
     We teach him what to do and he asks his database:
 
 <ProgramListing>
-    al_bundy=> SELECT * FROM shoe_ready WHERE total_avail >= 2;
-    shoename  |sh_avail|sl_name   |sl_avail|total_avail
-    ----------+--------+----------+--------+-----------
-    sh1       |       2|sl1       |       5|          2
-    sh3       |       4|sl7       |       7|          4
-    (2 rows)
+al_bundy=> SELECT * FROM shoe_ready WHERE total_avail >= 2;
+shoename  |sh_avail|sl_name   |sl_avail|total_avail
+----------+--------+----------+--------+-----------
+sh1       |       2|sl1       |       5|          2
+sh3       |       4|sl7       |       7|          4
+(2 rows)
 </ProgramListing>
 
     Al is a shoe guru and so he knows that only shoes of type sh1
@@ -607,11 +607,11 @@
     The output of the parser this time is the parse tree
 
 <ProgramListing>
-    SELECT shoe_ready.shoename, shoe_ready.sh_avail,
-           shoe_ready.sl_name, shoe_ready.sl_avail,
-           shoe_ready.total_avail
-      FROM shoe_ready shoe_ready
-     WHERE int4ge(shoe_ready.total_avail, 2);
+SELECT shoe_ready.shoename, shoe_ready.sh_avail,
+       shoe_ready.sl_name, shoe_ready.sl_avail,
+       shoe_ready.total_avail
+  FROM shoe_ready shoe_ready
+ WHERE int4ge(shoe_ready.total_avail, 2);
 </ProgramListing>
 
     The first rule applied will be the one for the 
@@ -619,19 +619,19 @@
     parse tree
 
 <ProgramListing>
-    SELECT shoe_ready.shoename, shoe_ready.sh_avail,
-           shoe_ready.sl_name, shoe_ready.sl_avail,
-           shoe_ready.total_avail
-      FROM (SELECT rsh.shoename,
-                   rsh.sh_avail,
-                   rsl.sl_name,
-                   rsl.sl_avail,
-                   min(rsh.sh_avail, rsl.sl_avail) AS total_avail
-              FROM shoe rsh, shoelace rsl
-             WHERE rsl.sl_color = rsh.slcolor
-               AND rsl.sl_len_cm >= rsh.slminlen_cm
-               AND rsl.sl_len_cm <= rsh.slmaxlen_cm) shoe_ready
-     WHERE int4ge(shoe_ready.total_avail, 2);
+SELECT shoe_ready.shoename, shoe_ready.sh_avail,
+       shoe_ready.sl_name, shoe_ready.sl_avail,
+       shoe_ready.total_avail
+  FROM (SELECT rsh.shoename,
+               rsh.sh_avail,
+               rsl.sl_name,
+               rsl.sl_avail,
+               min(rsh.sh_avail, rsl.sl_avail) AS total_avail
+          FROM shoe rsh, shoelace rsl
+         WHERE rsl.sl_color = rsh.slcolor
+           AND rsl.sl_len_cm >= rsh.slminlen_cm
+           AND rsl.sl_len_cm <= rsh.slmaxlen_cm) shoe_ready
+ WHERE int4ge(shoe_ready.total_avail, 2);
 </ProgramListing>
 
     Similarly, the rules for <Filename>shoe</Filename> and
@@ -639,36 +639,36 @@
     the sub-query, leading to a three-level final query tree:
 
 <ProgramListing>
-    SELECT shoe_ready.shoename, shoe_ready.sh_avail,
-           shoe_ready.sl_name, shoe_ready.sl_avail,
-           shoe_ready.total_avail
-      FROM (SELECT rsh.shoename,
-                   rsh.sh_avail,
-                   rsl.sl_name,
-                   rsl.sl_avail,
-                   min(rsh.sh_avail, rsl.sl_avail) AS total_avail
-              FROM (SELECT sh.shoename,
-                           sh.sh_avail,
-                           sh.slcolor,
-                           sh.slminlen,
-                           sh.slminlen * un.un_fact AS slminlen_cm,
-                           sh.slmaxlen,
-                           sh.slmaxlen * un.un_fact AS slmaxlen_cm,
-                           sh.slunit
-                      FROM shoe_data sh, unit un
-                     WHERE sh.slunit = un.un_name) rsh,
-                   (SELECT s.sl_name,
-                           s.sl_avail,
-                           s.sl_color,
-                           s.sl_len,
-                           s.sl_unit,
-                           s.sl_len * u.un_fact AS sl_len_cm
-                      FROM shoelace_data s, unit u
-                     WHERE s.sl_unit = u.un_name) rsl
-             WHERE rsl.sl_color = rsh.slcolor
-               AND rsl.sl_len_cm >= rsh.slminlen_cm
-               AND rsl.sl_len_cm <= rsh.slmaxlen_cm) shoe_ready
-     WHERE int4ge(shoe_ready.total_avail, 2);
+SELECT shoe_ready.shoename, shoe_ready.sh_avail,
+       shoe_ready.sl_name, shoe_ready.sl_avail,
+       shoe_ready.total_avail
+  FROM (SELECT rsh.shoename,
+               rsh.sh_avail,
+               rsl.sl_name,
+               rsl.sl_avail,
+               min(rsh.sh_avail, rsl.sl_avail) AS total_avail
+          FROM (SELECT sh.shoename,
+                       sh.sh_avail,
+                       sh.slcolor,
+                       sh.slminlen,
+                       sh.slminlen * un.un_fact AS slminlen_cm,
+                       sh.slmaxlen,
+                       sh.slmaxlen * un.un_fact AS slmaxlen_cm,
+                       sh.slunit
+                  FROM shoe_data sh, unit un
+                 WHERE sh.slunit = un.un_name) rsh,
+               (SELECT s.sl_name,
+                       s.sl_avail,
+                       s.sl_color,
+                       s.sl_len,
+                       s.sl_unit,
+                       s.sl_len * u.un_fact AS sl_len_cm
+                  FROM shoelace_data s, unit u
+                 WHERE s.sl_unit = u.un_name) rsl
+         WHERE rsl.sl_color = rsh.slcolor
+           AND rsl.sl_len_cm >= rsh.slminlen_cm
+           AND rsl.sl_len_cm <= rsh.slmaxlen_cm) shoe_ready
+ WHERE int4ge(shoe_ready.total_avail, 2);
 </ProgramListing>
 
     It turns out that the planner will collapse this tree into a two-level
@@ -718,9 +718,9 @@
     a and b, the parse trees for the two statements
 
 <ProgramListing>
-    SELECT t2.b FROM t1, t2 WHERE t1.a = t2.a;
+SELECT t2.b FROM t1, t2 WHERE t1.a = t2.a;
 
-    UPDATE t1 SET b = t2.b WHERE t1.a = t2.a;
+UPDATE t1 SET b = t2.b WHERE t1.a = t2.a;
 </ProgramListing>
 
     are nearly identical.
@@ -759,14 +759,14 @@
     and the final parse tree will read as
 
 <ProgramListing>
-    UPDATE t1 SET a = t1.a, b = t2.b WHERE t1.a = t2.a;
+UPDATE t1 SET a = t1.a, b = t2.b WHERE t1.a = t2.a;
 </ProgramListing>
 
     and thus the executor run over the join will produce exactly the
     same result set as a
 
 <ProgramListing>
-    SELECT t1.a, t2.b FROM t1, t2 WHERE t1.a = t2.a;
+SELECT t1.a, t2.b FROM t1, t2 WHERE t1.a = t2.a;
 </ProgramListing>
     
     will do. But there is a little problem in UPDATE. The executor does
@@ -781,21 +781,21 @@
 
 <Para>
     To resolve this problem, another entry is added to the target list
-    in UPDATE (and also in DELETE) statements: the current tuple ID (ctid).
+    in UPDATE (and also in DELETE) statements: the current tuple ID (CTID).
     This is a system attribute containing the file
     block number and position in the block for the row. Knowing the table,
-    the ctid can be used to retrieve the original t1 row to be updated.
-    After adding the ctid to the target list, the query actually looks like
+    the CTID can be used to retrieve the original t1 row to be updated.
+    After adding the CTID to the target list, the query actually looks like
 
 <ProgramListing>
-    SELECT t1.a, t2.b, t1.ctid FROM t1, t2 WHERE t1.a = t2.a;
+SELECT t1.a, t2.b, t1.ctid FROM t1, t2 WHERE t1.a = t2.a;
 </ProgramListing>
     
     Now another detail of <ProductName>PostgreSQL</ProductName> enters the
     stage. At this moment, table rows aren't overwritten and this is why
     ABORT TRANSACTION is fast. In an UPDATE, the new result row is inserted
-    into the table (after stripping ctid) and in the tuple header of the row 
-    that ctid pointed to the cmax and xmax entries are set to the current
+    into the table (after stripping CTID) and in the tuple header of the row 
+    that CTID pointed to the cmax and xmax entries are set to the current
     command counter and current transaction ID. Thus the old row is hidden
     and after the transaction committed the vacuum cleaner can really move
     it out.
@@ -915,9 +915,9 @@
     Keep the syntax
 
 <ProgramListing>
-    CREATE RULE rule_name AS ON event
-        TO object [WHERE rule_qualification]
-        DO [INSTEAD] [action | (actions) | NOTHING];
+CREATE RULE rule_name AS ON event
+    TO object [WHERE rule_qualification]
+    DO [INSTEAD] [action | (actions) | NOTHING];
 </ProgramListing>
 
     in mind.
@@ -1046,20 +1046,20 @@
 </Para>
 
 <Para>
-    The parsetrees found in the actions of the <Filename>pg_rewrite</Filename>
+    The parse trees found in the actions of the <Filename>pg_rewrite</Filename>
     system catalog are only templates. Since they can reference the
-    rangetable entries for NEW and OLD, some substitutions have to be made
-    before they can be used. For any reference to NEW, the targetlist of
+    range-table entries for NEW and OLD, some substitutions have to be made
+    before they can be used. For any reference to NEW, the target list of
     the original query is searched for a corresponding entry. If found,
     that entry's expression replaces the reference. Otherwise
     NEW means the same as OLD (for an UPDATE) or is replaced by NULL
     (for an INSERT). Any reference to OLD is replaced by a
-    reference to the rangetable entry which is the resultrelation.
+    reference to the range-table entry which is the result relation.
 </Para>
 
 <Para>
     After we are done applying update rules, we apply view rules to the
-    produced parsetree(s).  Views cannot insert new update actions so
+    produced parse tree(s).  Views cannot insert new update actions so
     there is no need to apply update rules to the output of view rewriting.
 </Para>
 
@@ -1073,21 +1073,21 @@
     an UPDATE is performed on <Filename>shoelace_data</Filename>.
 
 <ProgramListing>
-    CREATE TABLE shoelace_log (
-        sl_name    char(10),      -- shoelace changed
-        sl_avail   integer,       -- new available value
-        log_who    text,          -- who did it
-        log_when   timestamp      -- when
-    );
+CREATE TABLE shoelace_log (
+    sl_name    char(10),      -- shoelace changed
+    sl_avail   integer,       -- new available value
+    log_who    text,          -- who did it
+    log_when   timestamp      -- when
+);
 
-    CREATE RULE log_shoelace AS ON UPDATE TO shoelace_data
-        WHERE NEW.sl_avail != OLD.sl_avail
-        DO INSERT INTO shoelace_log VALUES (
-                                        NEW.sl_name,
-                                        NEW.sl_avail,
-                                        current_user,
-                                        current_timestamp
-                                    );
+CREATE RULE log_shoelace AS ON UPDATE TO shoelace_data
+    WHERE NEW.sl_avail != OLD.sl_avail
+    DO INSERT INTO shoelace_log VALUES (
+                                    NEW.sl_name,
+                                    NEW.sl_avail,
+                                    current_user,
+                                    current_timestamp
+                                );
 </ProgramListing>
 </Para>
 
@@ -1095,50 +1095,50 @@
     Now Al does
 
 <ProgramListing>
-    al_bundy=> UPDATE shoelace_data SET sl_avail = 6                       
-    al_bundy->     WHERE sl_name = 'sl7';
+al_bundy=> UPDATE shoelace_data SET sl_avail = 6                       
+al_bundy->     WHERE sl_name = 'sl7';
 </ProgramListing>
 
-    and we look at the logtable.
+    and we look at the log table.
 
 <ProgramListing>
-    al_bundy=> SELECT * FROM shoelace_log;
-    sl_name   |sl_avail|log_who|log_when                        
-    ----------+--------+-------+--------------------------------
-    sl7       |       6|Al     |Tue Oct 20 16:14:45 1998 MET DST
-    (1 row)
+al_bundy=> SELECT * FROM shoelace_log;
+sl_name   |sl_avail|log_who|log_when                        
+----------+--------+-------+--------------------------------
+sl7       |       6|Al     |Tue Oct 20 16:14:45 1998 MET DST
+(1 row)
 </ProgramListing>
 
     That's what we expected. What happened in the background is the following.
-    The parser created the parsetree (this time the parts of the original
-    parsetree are highlighted because the base of operations is the
+    The parser created the parse tree (this time the parts of the original
+    parse tree are highlighted because the base of operations is the
     rule action for update rules).
 
 <ProgramListing>
-    <FirstTerm>UPDATE shoelace_data SET sl_avail = 6
-      FROM shoelace_data shoelace_data
-     WHERE bpchareq(shoelace_data.sl_name, 'sl7');</FirstTerm>
+<emphasis>UPDATE shoelace_data SET sl_avail = 6
+  FROM shoelace_data shoelace_data
+ WHERE bpchareq(shoelace_data.sl_name, 'sl7');</emphasis>
 </ProgramListing>
 
     There is a rule <literal>log_shoelace</literal> that is ON UPDATE with the rule
     qualification expression
 
 <ProgramListing>
-    int4ne(NEW.sl_avail, OLD.sl_avail)
+int4ne(NEW.sl_avail, OLD.sl_avail)
 </ProgramListing>
 
     and one action
 
 <ProgramListing>
-    INSERT INTO shoelace_log VALUES(
-           *NEW*.sl_name, *NEW*.sl_avail,
-           current_user, current_timestamp
-      FROM shoelace_data *NEW*, shoelace_data *OLD*;
+INSERT INTO shoelace_log VALUES(
+       *NEW*.sl_name, *NEW*.sl_avail,
+       current_user, current_timestamp
+  FROM shoelace_data *NEW*, shoelace_data *OLD*;
 </ProgramListing>
 
     This is a little strange-looking since you can't normally write
     INSERT ... VALUES ... FROM.  The FROM clause here is just to indicate
-    that there are rangetable entries in the parsetree for *NEW* and *OLD*.
+    that there are range-table entries in the parse tree for *NEW* and *OLD*.
     These are needed so that they can be referenced by variables in the
     INSERT command's querytree.
 </Para>
@@ -1146,27 +1146,27 @@
 <Para>
     The rule is a qualified non-INSTEAD rule, so the rule system
     has to return two parse trees: the modified rule action and the original
-    parsetree. In the first step the range table of the original query is
+    parse tree. In the first step the range table of the original query is
     incorporated into the rule's action parse tree. This results in
 
 <ProgramListing>
-    INSERT INTO shoelace_log VALUES(
-           *NEW*.sl_name, *NEW*.sl_avail,
-           current_user, current_timestamp
-      FROM shoelace_data *NEW*, shoelace_data *OLD*,
-           <FirstTerm>shoelace_data shoelace_data</FirstTerm>;
+INSERT INTO shoelace_log VALUES(
+       *NEW*.sl_name, *NEW*.sl_avail,
+       current_user, current_timestamp
+  FROM shoelace_data *NEW*, shoelace_data *OLD*,
+       <emphasis>shoelace_data shoelace_data</emphasis>;
 </ProgramListing>
 
     In step 2 the rule qualification is added to it, so the result set
     is restricted to rows where sl_avail changes.
 
 <ProgramListing>
-    INSERT INTO shoelace_log VALUES(
-           *NEW*.sl_name, *NEW*.sl_avail,
-           current_user, current_timestamp
-      FROM shoelace_data *NEW*, shoelace_data *OLD*,
-           shoelace_data shoelace_data
-     <FirstTerm>WHERE int4ne(*NEW*.sl_avail, *OLD*.sl_avail)</FirstTerm>;
+INSERT INTO shoelace_log VALUES(
+       *NEW*.sl_name, *NEW*.sl_avail,
+       current_user, current_timestamp
+  FROM shoelace_data *NEW*, shoelace_data *OLD*,
+       shoelace_data shoelace_data
+ <emphasis>WHERE int4ne(*NEW*.sl_avail, *OLD*.sl_avail)</emphasis>;
 </ProgramListing>
 
     This is even stranger-looking, since INSERT ... VALUES doesn't have
@@ -1179,13 +1179,13 @@
     by the original parse tree.
 
 <ProgramListing>
-    INSERT INTO shoelace_log VALUES(
-           *NEW*.sl_name, *NEW*.sl_avail,
-           current_user, current_timestamp
-      FROM shoelace_data *NEW*, shoelace_data *OLD*,
-           shoelace_data shoelace_data
-     WHERE int4ne(*NEW*.sl_avail, *OLD*.sl_avail)
-       <FirstTerm>AND bpchareq(shoelace_data.sl_name, 'sl7')</FirstTerm>;
+INSERT INTO shoelace_log VALUES(
+       *NEW*.sl_name, *NEW*.sl_avail,
+       current_user, current_timestamp
+  FROM shoelace_data *NEW*, shoelace_data *OLD*,
+       shoelace_data shoelace_data
+ WHERE int4ne(*NEW*.sl_avail, *OLD*.sl_avail)
+   <emphasis>AND bpchareq(shoelace_data.sl_name, 'sl7')</emphasis>;
 </ProgramListing>
 
     Step 4 substitutes NEW references by the target list entries from the
@@ -1193,25 +1193,25 @@
     from the result relation.
 
 <ProgramListing>
-    INSERT INTO shoelace_log VALUES(
-           <FirstTerm>shoelace_data.sl_name</FirstTerm>, <FirstTerm>6</FirstTerm>,
-           current_user, current_timestamp
-      FROM shoelace_data *NEW*, shoelace_data *OLD*,
-           shoelace_data shoelace_data
-     WHERE int4ne(<FirstTerm>6</FirstTerm>, *OLD*.sl_avail)
-       AND bpchareq(shoelace_data.sl_name, 'sl7');
+INSERT INTO shoelace_log VALUES(
+       <emphasis>shoelace_data.sl_name</emphasis>, <emphasis>6</emphasis>,
+       current_user, current_timestamp
+  FROM shoelace_data *NEW*, shoelace_data *OLD*,
+       shoelace_data shoelace_data
+ WHERE int4ne(<emphasis>6</emphasis>, *OLD*.sl_avail)
+   AND bpchareq(shoelace_data.sl_name, 'sl7');
 </ProgramListing>
 
     Step 5 changes OLD references into result relation references.
 
 <ProgramListing>
-    INSERT INTO shoelace_log VALUES(
-           shoelace_data.sl_name, 6,
-           current_user, current_timestamp
-      FROM shoelace_data *NEW*, shoelace_data *OLD*,
-           shoelace_data shoelace_data
-     WHERE int4ne(6, <FirstTerm>shoelace_data.sl_avail</FirstTerm>)
-       AND bpchareq(shoelace_data.sl_name, 'sl7');
+INSERT INTO shoelace_log VALUES(
+       shoelace_data.sl_name, 6,
+       current_user, current_timestamp
+  FROM shoelace_data *NEW*, shoelace_data *OLD*,
+       shoelace_data shoelace_data
+ WHERE int4ne(6, <emphasis>shoelace_data.sl_avail</emphasis>)
+   AND bpchareq(shoelace_data.sl_name, 'sl7');
 </ProgramListing>
 
     That's it.  Since the rule is not INSTEAD, we also output the
@@ -1219,15 +1219,15 @@
     is a list of two parse trees that are the same as the statements:
 
 <ProgramListing>
-    INSERT INTO shoelace_log VALUES(
-           shoelace_data.sl_name, 6,
-           current_user, current_timestamp
-      FROM shoelace_data
-     WHERE 6 != shoelace_data.sl_avail
-       AND shoelace_data.sl_name = 'sl7';
+INSERT INTO shoelace_log VALUES(
+       shoelace_data.sl_name, 6,
+       current_user, current_timestamp
+  FROM shoelace_data
+ WHERE 6 != shoelace_data.sl_avail
+   AND shoelace_data.sl_name = 'sl7';
 
-    UPDATE shoelace_data SET sl_avail = 6
-     WHERE sl_name = 'sl7';
+UPDATE shoelace_data SET sl_avail = 6
+ WHERE sl_name = 'sl7';
 </ProgramListing>
 
     These are executed in this order and that is exactly what
@@ -1235,8 +1235,8 @@
     added ensure that if the original query would be, say,
 
 <ProgramListing>
-    UPDATE shoelace_data SET sl_color = 'green'
-     WHERE sl_name = 'sl7';
+UPDATE shoelace_data SET sl_color = 'green'
+ WHERE sl_name = 'sl7';
 </ProgramListing>
 
     no log entry would get written.  This
@@ -1245,12 +1245,12 @@
     shoelace_data.sl_avail resulting in the extra query
 
 <ProgramListing>
-    INSERT INTO shoelace_log VALUES(
-           shoelace_data.sl_name, <FirstTerm>shoelace_data.sl_avail</FirstTerm>,
-           current_user, current_timestamp)
-      FROM shoelace_data
-     WHERE <FirstTerm>shoelace_data.sl_avail</FirstTerm> != shoelace_data.sl_avail
-       AND shoelace_data.sl_name = 'sl7';
+INSERT INTO shoelace_log VALUES(
+       shoelace_data.sl_name, <emphasis>shoelace_data.sl_avail</emphasis>,
+       current_user, current_timestamp)
+  FROM shoelace_data
+ WHERE <emphasis>shoelace_data.sl_avail</emphasis> != shoelace_data.sl_avail
+   AND shoelace_data.sl_name = 'sl7';
 </ProgramListing>
 
     and that qualification will never be true. It will also
@@ -1258,8 +1258,8 @@
     would issue the command
 
 <ProgramListing>
-    UPDATE shoelace_data SET sl_avail = 0
-     WHERE sl_color = 'black';
+UPDATE shoelace_data SET sl_avail = 0
+ WHERE sl_color = 'black';
 </ProgramListing>
 
     four rows in fact get updated (sl1, sl2, sl3 and sl4).
@@ -1268,12 +1268,12 @@
     in the extra parse tree
 
 <ProgramListing>
-    INSERT INTO shoelace_log SELECT
-           shoelace_data.sl_name, 0,
-           current_user, current_timestamp
-      FROM shoelace_data
-     WHERE 0 != shoelace_data.sl_avail
-       AND <FirstTerm>shoelace_data.sl_color = 'black'</FirstTerm>;
+INSERT INTO shoelace_log SELECT
+       shoelace_data.sl_name, 0,
+       current_user, current_timestamp
+  FROM shoelace_data
+ WHERE 0 != shoelace_data.sl_avail
+   AND <emphasis>shoelace_data.sl_color = 'black'</emphasis>;
 </ProgramListing>
 
     This parse tree will surely insert three new log entries. And
@@ -1301,12 +1301,12 @@
     thrown away. We create the rules
 
 <ProgramListing>
-    CREATE RULE shoe_ins_protect AS ON INSERT TO shoe
-        DO INSTEAD NOTHING;
-    CREATE RULE shoe_upd_protect AS ON UPDATE TO shoe
-        DO INSTEAD NOTHING;
-    CREATE RULE shoe_del_protect AS ON DELETE TO shoe
-        DO INSTEAD NOTHING;
+CREATE RULE shoe_ins_protect AS ON INSERT TO shoe
+    DO INSTEAD NOTHING;
+CREATE RULE shoe_upd_protect AS ON UPDATE TO shoe
+    DO INSTEAD NOTHING;
+CREATE RULE shoe_del_protect AS ON DELETE TO shoe
+    DO INSTEAD NOTHING;
 </ProgramListing>
 
     If Al now tries to do any of these operations on the view
@@ -1338,29 +1338,29 @@
     the following rules:
 
 <ProgramListing>
-    CREATE RULE shoelace_ins AS ON INSERT TO shoelace
-        DO INSTEAD
-        INSERT INTO shoelace_data VALUES (
-               NEW.sl_name,
-               NEW.sl_avail,
-               NEW.sl_color,
-               NEW.sl_len,
-               NEW.sl_unit);
+CREATE RULE shoelace_ins AS ON INSERT TO shoelace
+    DO INSTEAD
+    INSERT INTO shoelace_data VALUES (
+           NEW.sl_name,
+           NEW.sl_avail,
+           NEW.sl_color,
+           NEW.sl_len,
+           NEW.sl_unit);
 
-    CREATE RULE shoelace_upd AS ON UPDATE TO shoelace
-        DO INSTEAD
-        UPDATE shoelace_data SET
-               sl_name = NEW.sl_name,
-               sl_avail = NEW.sl_avail,
-               sl_color = NEW.sl_color,
-               sl_len = NEW.sl_len,
-               sl_unit = NEW.sl_unit
-         WHERE sl_name = OLD.sl_name;
+CREATE RULE shoelace_upd AS ON UPDATE TO shoelace
+    DO INSTEAD
+    UPDATE shoelace_data SET
+           sl_name = NEW.sl_name,
+           sl_avail = NEW.sl_avail,
+           sl_color = NEW.sl_color,
+           sl_len = NEW.sl_len,
+           sl_unit = NEW.sl_unit
+     WHERE sl_name = OLD.sl_name;
 
-    CREATE RULE shoelace_del AS ON DELETE TO shoelace
-        DO INSTEAD
-        DELETE FROM shoelace_data
-         WHERE sl_name = OLD.sl_name;
+CREATE RULE shoelace_del AS ON DELETE TO shoelace
+    DO INSTEAD
+    DELETE FROM shoelace_data
+     WHERE sl_name = OLD.sl_name;
 </ProgramListing>
 
     Now there is a pack of shoelaces arriving in Al's shop and it has
@@ -1371,83 +1371,83 @@
     trick. The create commands for these are:
 
 <ProgramListing>
-    CREATE TABLE shoelace_arrive (
-        arr_name    char(10),
-        arr_quant   integer
-    );
+CREATE TABLE shoelace_arrive (
+    arr_name    char(10),
+    arr_quant   integer
+);
 
-    CREATE TABLE shoelace_ok (
-        ok_name     char(10),
-        ok_quant    integer
-    );
+CREATE TABLE shoelace_ok (
+    ok_name     char(10),
+    ok_quant    integer
+);
 
-    CREATE RULE shoelace_ok_ins AS ON INSERT TO shoelace_ok
-        DO INSTEAD
-        UPDATE shoelace SET
-               sl_avail = sl_avail + NEW.ok_quant
-         WHERE sl_name = NEW.ok_name;
+CREATE RULE shoelace_ok_ins AS ON INSERT TO shoelace_ok
+    DO INSTEAD
+    UPDATE shoelace SET
+           sl_avail = sl_avail + NEW.ok_quant
+     WHERE sl_name = NEW.ok_name;
 </ProgramListing>
 
     Now Al can sit down and do whatever until
 
 <ProgramListing>
-    al_bundy=> SELECT * FROM shoelace_arrive;
-    arr_name  |arr_quant
-    ----------+---------
-    sl3       |       10
-    sl6       |       20
-    sl8       |       20
-    (3 rows)
+al_bundy=> SELECT * FROM shoelace_arrive;
+arr_name  |arr_quant
+----------+---------
+sl3       |       10
+sl6       |       20
+sl8       |       20
+(3 rows)
 </ProgramListing>
 
     is exactly what's on the part list. We take a quick look
     at the current data,
     
 <ProgramListing>
-    al_bundy=> SELECT * FROM shoelace;
-    sl_name   |sl_avail|sl_color  |sl_len|sl_unit |sl_len_cm
-    ----------+--------+----------+------+--------+---------
-    sl1       |       5|black     |    80|cm      |       80
-    sl2       |       6|black     |   100|cm      |      100
-    sl7       |       6|brown     |    60|cm      |       60
-    sl3       |       0|black     |    35|inch    |     88.9
-    sl4       |       8|black     |    40|inch    |    101.6
-    sl8       |       1|brown     |    40|inch    |    101.6
-    sl5       |       4|brown     |     1|m       |      100
-    sl6       |       0|brown     |   0.9|m       |       90
-    (8 rows)
+al_bundy=> SELECT * FROM shoelace;
+sl_name   |sl_avail|sl_color  |sl_len|sl_unit |sl_len_cm
+----------+--------+----------+------+--------+---------
+sl1       |       5|black     |    80|cm      |       80
+sl2       |       6|black     |   100|cm      |      100
+sl7       |       6|brown     |    60|cm      |       60
+sl3       |       0|black     |    35|inch    |     88.9
+sl4       |       8|black     |    40|inch    |    101.6
+sl8       |       1|brown     |    40|inch    |    101.6
+sl5       |       4|brown     |     1|m       |      100
+sl6       |       0|brown     |   0.9|m       |       90
+(8 rows)
 </ProgramListing>
 
     move the arrived shoelaces in
 
 <ProgramListing>
-    al_bundy=> INSERT INTO shoelace_ok SELECT * FROM shoelace_arrive;
+al_bundy=> INSERT INTO shoelace_ok SELECT * FROM shoelace_arrive;
 </ProgramListing>
 
     and check the results
 
 <ProgramListing>
-    al_bundy=> SELECT * FROM shoelace ORDER BY sl_name;
-    sl_name   |sl_avail|sl_color  |sl_len|sl_unit |sl_len_cm
-    ----------+--------+----------+------+--------+---------
-    sl1       |       5|black     |    80|cm      |       80
-    sl2       |       6|black     |   100|cm      |      100
-    sl7       |       6|brown     |    60|cm      |       60
-    sl4       |       8|black     |    40|inch    |    101.6
-    sl3       |      10|black     |    35|inch    |     88.9
-    sl8       |      21|brown     |    40|inch    |    101.6
-    sl5       |       4|brown     |     1|m       |      100
-    sl6       |      20|brown     |   0.9|m       |       90
-    (8 rows)
+al_bundy=> SELECT * FROM shoelace ORDER BY sl_name;
+sl_name   |sl_avail|sl_color  |sl_len|sl_unit |sl_len_cm
+----------+--------+----------+------+--------+---------
+sl1       |       5|black     |    80|cm      |       80
+sl2       |       6|black     |   100|cm      |      100
+sl7       |       6|brown     |    60|cm      |       60
+sl4       |       8|black     |    40|inch    |    101.6
+sl3       |      10|black     |    35|inch    |     88.9
+sl8       |      21|brown     |    40|inch    |    101.6
+sl5       |       4|brown     |     1|m       |      100
+sl6       |      20|brown     |   0.9|m       |       90
+(8 rows)
 
-    al_bundy=> SELECT * FROM shoelace_log;
-    sl_name   |sl_avail|log_who|log_when                        
-    ----------+--------+-------+--------------------------------
-    sl7       |       6|Al     |Tue Oct 20 19:14:45 1998 MET DST
-    sl3       |      10|Al     |Tue Oct 20 19:25:16 1998 MET DST
-    sl6       |      20|Al     |Tue Oct 20 19:25:16 1998 MET DST
-    sl8       |      21|Al     |Tue Oct 20 19:25:16 1998 MET DST
-    (4 rows)
+al_bundy=> SELECT * FROM shoelace_log;
+sl_name   |sl_avail|log_who|log_when                        
+----------+--------+-------+--------------------------------
+sl7       |       6|Al     |Tue Oct 20 19:14:45 1998 MET DST
+sl3       |      10|Al     |Tue Oct 20 19:25:16 1998 MET DST
+sl6       |      20|Al     |Tue Oct 20 19:25:16 1998 MET DST
+sl8       |      21|Al     |Tue Oct 20 19:25:16 1998 MET DST
+(4 rows)
 </ProgramListing>
 
     It's a long way from the one INSERT ... SELECT to these
@@ -1455,21 +1455,21 @@
     document (but not the last example :-). First there was the parser's output
 
 <ProgramListing>
-    INSERT INTO shoelace_ok SELECT
-           shoelace_arrive.arr_name, shoelace_arrive.arr_quant
-      FROM shoelace_arrive shoelace_arrive, shoelace_ok shoelace_ok;
+INSERT INTO shoelace_ok SELECT
+       shoelace_arrive.arr_name, shoelace_arrive.arr_quant
+  FROM shoelace_arrive shoelace_arrive, shoelace_ok shoelace_ok;
 </ProgramListing>
 
     Now the first rule <literal>shoelace_ok_ins</literal> is applied and turns it
     into
 
 <ProgramListing>
-    UPDATE shoelace SET
-           sl_avail = int4pl(shoelace.sl_avail, shoelace_arrive.arr_quant)
-      FROM shoelace_arrive shoelace_arrive, shoelace_ok shoelace_ok,
-           shoelace_ok *OLD*, shoelace_ok *NEW*,
-           shoelace shoelace
-     WHERE bpchareq(shoelace.sl_name, showlace_arrive.arr_name);
+UPDATE shoelace SET
+       sl_avail = int4pl(shoelace.sl_avail, shoelace_arrive.arr_quant)
+  FROM shoelace_arrive shoelace_arrive, shoelace_ok shoelace_ok,
+       shoelace_ok *OLD*, shoelace_ok *NEW*,
+       shoelace shoelace
+ WHERE bpchareq(shoelace.sl_name, showlace_arrive.arr_name);
 </ProgramListing>
 
     and throws away the original INSERT on <Filename>shoelace_ok</Filename>.
@@ -1477,18 +1477,18 @@
     the second applied rule <literal>shoelace_upd</literal> produced
 
 <ProgramListing>
-    UPDATE shoelace_data SET
-           sl_name = shoelace.sl_name,
-           sl_avail = int4pl(shoelace.sl_avail, shoelace_arrive.arr_quant),
-           sl_color = shoelace.sl_color,
-           sl_len = shoelace.sl_len,
-           sl_unit = shoelace.sl_unit
-      FROM shoelace_arrive shoelace_arrive, shoelace_ok shoelace_ok,
-           shoelace_ok *OLD*, shoelace_ok *NEW*,
-           shoelace shoelace, shoelace *OLD*,
-           shoelace *NEW*, shoelace_data showlace_data
-     WHERE bpchareq(shoelace.sl_name, showlace_arrive.arr_name)
-       AND bpchareq(shoelace_data.sl_name, shoelace.sl_name);
+UPDATE shoelace_data SET
+       sl_name = shoelace.sl_name,
+       sl_avail = int4pl(shoelace.sl_avail, shoelace_arrive.arr_quant),
+       sl_color = shoelace.sl_color,
+       sl_len = shoelace.sl_len,
+       sl_unit = shoelace.sl_unit
+  FROM shoelace_arrive shoelace_arrive, shoelace_ok shoelace_ok,
+       shoelace_ok *OLD*, shoelace_ok *NEW*,
+       shoelace shoelace, shoelace *OLD*,
+       shoelace *NEW*, shoelace_data showlace_data
+ WHERE bpchareq(shoelace.sl_name, showlace_arrive.arr_name)
+   AND bpchareq(shoelace_data.sl_name, shoelace.sl_name);
 </ProgramListing>
 
     Again it's an INSTEAD rule and the previous parse tree is trashed.
@@ -1497,20 +1497,20 @@
     and applies the rule <literal>_RETshoelace</literal> on it and we get
 
 <ProgramListing>
-    UPDATE shoelace_data SET
-           sl_name = s.sl_name,
-           sl_avail = int4pl(s.sl_avail, shoelace_arrive.arr_quant),
-           sl_color = s.sl_color,
-           sl_len = s.sl_len,
-           sl_unit = s.sl_unit
-      FROM shoelace_arrive shoelace_arrive, shoelace_ok shoelace_ok,
-           shoelace_ok *OLD*, shoelace_ok *NEW*,
-           shoelace shoelace, shoelace *OLD*,
-           shoelace *NEW*, shoelace_data showlace_data,
-           shoelace *OLD*, shoelace *NEW*,
-           shoelace_data s, unit u
-     WHERE bpchareq(s.sl_name, showlace_arrive.arr_name)
-       AND bpchareq(shoelace_data.sl_name, s.sl_name);
+UPDATE shoelace_data SET
+       sl_name = s.sl_name,
+       sl_avail = int4pl(s.sl_avail, shoelace_arrive.arr_quant),
+       sl_color = s.sl_color,
+       sl_len = s.sl_len,
+       sl_unit = s.sl_unit
+  FROM shoelace_arrive shoelace_arrive, shoelace_ok shoelace_ok,
+       shoelace_ok *OLD*, shoelace_ok *NEW*,
+       shoelace shoelace, shoelace *OLD*,
+       shoelace *NEW*, shoelace_data showlace_data,
+       shoelace *OLD*, shoelace *NEW*,
+       shoelace_data s, unit u
+ WHERE bpchareq(s.sl_name, showlace_arrive.arr_name)
+   AND bpchareq(shoelace_data.sl_name, s.sl_name);
 </ProgramListing>
 
     Again an update rule has been applied and so the wheel
@@ -1519,23 +1519,22 @@
     parse tree
 
 <ProgramListing>
-    INSERT INTO shoelace_log SELECT
-           s.sl_name,
-           int4pl(s.sl_avail, shoelace_arrive.arr_quant),
-           current_user,
-           current_timestamp
-      FROM shoelace_arrive shoelace_arrive, shoelace_ok shoelace_ok,
-           shoelace_ok *OLD*, shoelace_ok *NEW*,
-           shoelace shoelace, shoelace *OLD*,
-           shoelace *NEW*, shoelace_data showlace_data,
-           shoelace *OLD*, shoelace *NEW*,
-           shoelace_data s, unit u,
-           shoelace_data *OLD*, shoelace_data *NEW*
-           shoelace_log shoelace_log
-     WHERE bpchareq(s.sl_name,  showlace_arrive.arr_name)
-       AND bpchareq(shoelace_data.sl_name, s.sl_name);
-       AND int4ne(int4pl(s.sl_avail, shoelace_arrive.arr_quant),
-                                                    s.sl_avail);
+INSERT INTO shoelace_log SELECT
+       s.sl_name,
+       int4pl(s.sl_avail, shoelace_arrive.arr_quant),
+       current_user,
+       current_timestamp
+  FROM shoelace_arrive shoelace_arrive, shoelace_ok shoelace_ok,
+       shoelace_ok *OLD*, shoelace_ok *NEW*,
+       shoelace shoelace, shoelace *OLD*,
+       shoelace *NEW*, shoelace_data showlace_data,
+       shoelace *OLD*, shoelace *NEW*,
+       shoelace_data s, unit u,
+       shoelace_data *OLD*, shoelace_data *NEW*
+       shoelace_log shoelace_log
+ WHERE bpchareq(s.sl_name,  showlace_arrive.arr_name)
+   AND bpchareq(shoelace_data.sl_name, s.sl_name);
+   AND int4ne(int4pl(s.sl_avail, shoelace_arrive.arr_quant), s.sl_avail);
 </ProgramListing>
     
     After that the rule system runs out of rules and returns the 
@@ -1544,24 +1543,24 @@
     <Acronym>SQL</Acronym> statements
 
 <ProgramListing>
-    INSERT INTO shoelace_log SELECT
-           s.sl_name,
-           s.sl_avail + shoelace_arrive.arr_quant,
-           current_user,
-           current_timestamp
-      FROM shoelace_arrive shoelace_arrive, shoelace_data shoelace_data,
-           shoelace_data s
-     WHERE s.sl_name = shoelace_arrive.arr_name
-       AND shoelace_data.sl_name = s.sl_name
-       AND s.sl_avail + shoelace_arrive.arr_quant != s.sl_avail;
+INSERT INTO shoelace_log SELECT
+       s.sl_name,
+       s.sl_avail + shoelace_arrive.arr_quant,
+       current_user,
+       current_timestamp
+  FROM shoelace_arrive shoelace_arrive, shoelace_data shoelace_data,
+       shoelace_data s
+ WHERE s.sl_name = shoelace_arrive.arr_name
+   AND shoelace_data.sl_name = s.sl_name
+   AND s.sl_avail + shoelace_arrive.arr_quant != s.sl_avail;
            
-    UPDATE shoelace_data SET
-           sl_avail = shoelace_data.sl_avail + shoelace_arrive.arr_quant
-     FROM shoelace_arrive shoelace_arrive,
-          shoelace_data shoelace_data,
-          shoelace_data s
-    WHERE s.sl_name = shoelace_arrive.sl_name
-      AND shoelace_data.sl_name = s.sl_name;
+UPDATE shoelace_data SET
+       sl_avail = shoelace_data.sl_avail + shoelace_arrive.arr_quant
+  FROM shoelace_arrive shoelace_arrive,
+       shoelace_data shoelace_data,
+       shoelace_data s
+ WHERE s.sl_name = shoelace_arrive.sl_name
+   AND shoelace_data.sl_name = s.sl_name;
 </ProgramListing>
 
     The result is that data coming from one relation inserted into another,
@@ -1621,10 +1620,10 @@ Merge Join
     his database for pink ones.
 
 <ProgramListing>
-    al_bundy=> INSERT INTO shoelace VALUES 
-    al_bundy->     ('sl9', 0, 'pink', 35.0, 'inch', 0.0);
-    al_bundy=> INSERT INTO shoelace VALUES 
-    al_bundy->     ('sl10', 1000, 'magenta', 40.0, 'inch', 0.0);
+al_bundy=> INSERT INTO shoelace VALUES 
+al_bundy->     ('sl9', 0, 'pink', 35.0, 'inch', 0.0);
+al_bundy=> INSERT INTO shoelace VALUES 
+al_bundy->     ('sl10', 1000, 'magenta', 40.0, 'inch', 0.0);
 </ProgramListing>
 
     Since this happens often, we must lookup for shoelace entries,
@@ -1633,19 +1632,19 @@ Merge Join
     for it. The view for this is
 
 <ProgramListing>
-    CREATE VIEW shoelace_obsolete AS
-        SELECT * FROM shoelace WHERE NOT EXISTS
-            (SELECT shoename FROM shoe WHERE slcolor = sl_color);
+CREATE VIEW shoelace_obsolete AS
+    SELECT * FROM shoelace WHERE NOT EXISTS
+        (SELECT shoename FROM shoe WHERE slcolor = sl_color);
 </ProgramListing>
 
     Its output is
 
 <ProgramListing>
-    al_bundy=> SELECT * FROM shoelace_obsolete;
-    sl_name   |sl_avail|sl_color  |sl_len|sl_unit |sl_len_cm
-    ----------+--------+----------+------+--------+---------
-    sl9       |       0|pink      |    35|inch    |     88.9
-    sl10      |    1000|magenta   |    40|inch    |    101.6
+al_bundy=> SELECT * FROM shoelace_obsolete;
+sl_name   |sl_avail|sl_color  |sl_len|sl_unit |sl_len_cm
+----------+--------+----------+------+--------+---------
+sl9       |       0|pink      |    35|inch    |     88.9
+sl10      |    1000|magenta   |    40|inch    |    101.6
 </ProgramListing>
 
     For the 1000 magenta shoelaces we must debt Al before we can
@@ -1654,34 +1653,34 @@ Merge Join
     we don't delete it directly. Instead we create one more view
 
 <ProgramListing>
-    CREATE VIEW shoelace_candelete AS
-        SELECT * FROM shoelace_obsolete WHERE sl_avail = 0;
+CREATE VIEW shoelace_candelete AS
+    SELECT * FROM shoelace_obsolete WHERE sl_avail = 0;
 </ProgramListing>
 
     and do it this way:
 
 <ProgramListing>
-    DELETE FROM shoelace WHERE EXISTS
-        (SELECT * FROM shoelace_candelete
-                 WHERE sl_name = shoelace.sl_name);
+DELETE FROM shoelace WHERE EXISTS
+    (SELECT * FROM shoelace_candelete
+             WHERE sl_name = shoelace.sl_name);
 </ProgramListing>
 
-    Voilà:
+    <foreignphrase>Voilà</foreignphrase>:
 
 <ProgramListing>
-    al_bundy=> SELECT * FROM shoelace;
-    sl_name   |sl_avail|sl_color  |sl_len|sl_unit |sl_len_cm
-    ----------+--------+----------+------+--------+---------
-    sl1       |       5|black     |    80|cm      |       80
-    sl2       |       6|black     |   100|cm      |      100
-    sl7       |       6|brown     |    60|cm      |       60
-    sl4       |       8|black     |    40|inch    |    101.6
-    sl3       |      10|black     |    35|inch    |     88.9
-    sl8       |      21|brown     |    40|inch    |    101.6
-    sl10      |    1000|magenta   |    40|inch    |    101.6
-    sl5       |       4|brown     |     1|m       |      100
-    sl6       |      20|brown     |   0.9|m       |       90
-    (9 rows)
+al_bundy=> SELECT * FROM shoelace;
+sl_name   |sl_avail|sl_color  |sl_len|sl_unit |sl_len_cm
+----------+--------+----------+------+--------+---------
+sl1       |       5|black     |    80|cm      |       80
+sl2       |       6|black     |   100|cm      |      100
+sl7       |       6|brown     |    60|cm      |       60
+sl4       |       8|black     |    40|inch    |    101.6
+sl3       |      10|black     |    35|inch    |     88.9
+sl8       |      21|brown     |    40|inch    |    101.6
+sl10      |    1000|magenta   |    40|inch    |    101.6
+sl5       |       4|brown     |     1|m       |      100
+sl6       |      20|brown     |   0.9|m       |       90
+(9 rows)
 </ProgramListing>
 
     A DELETE on a view, with a subselect qualification that
@@ -1738,10 +1737,10 @@ Merge Join
     He can construct the following:
 
 <ProgramListing>
-    CREATE TABLE phone_data (person text, phone text, private bool);
-    CREATE VIEW phone_number AS
-        SELECT person, phone FROM phone_data WHERE NOT private;
-    GRANT SELECT ON phone_number TO secretary;
+CREATE TABLE phone_data (person text, phone text, private bool);
+CREATE VIEW phone_number AS
+    SELECT person, phone FROM phone_data WHERE NOT private;
+GRANT SELECT ON phone_number TO secretary;
 </ProgramListing>
     
     Nobody except him (and the database superusers) can access the
@@ -1840,15 +1839,15 @@ Merge Join
     For example: There are two tables
 
 <ProgramListing>
-    CREATE TABLE computer (
-        hostname        text,    -- indexed
-	manufacturer    text     -- indexed
-    );
+CREATE TABLE computer (
+    hostname        text,    -- indexed
+    manufacturer    text     -- indexed
+);
 
-    CREATE TABLE software (
-        software        text,    -- indexed
-        hostname        text     -- indexed
-    );
+CREATE TABLE software (
+    software        text,    -- indexed
+    hostname        text     -- indexed
+);
 </ProgramListing>
 
     Both tables have many
@@ -1860,21 +1859,21 @@ Merge Join
     deleted from computer, it can use the statement
 
 <ProgramListing>
-    DELETE FROM software WHERE hostname = $1;
+DELETE FROM software WHERE hostname = $1;
 </ProgramListing>
 
     in a prepared and saved plan and pass the <structfield>hostname</> in
     the parameter. The rule would be written as
 
 <ProgramListing>
-    CREATE RULE computer_del AS ON DELETE TO computer
-        DO DELETE FROM software WHERE hostname = OLD.hostname;
+CREATE RULE computer_del AS ON DELETE TO computer
+    DO DELETE FROM software WHERE hostname = OLD.hostname;
 </ProgramListing>
 
     Now we look at different types of deletes. In the case of a 
     
 <ProgramListing>
-    DELETE FROM computer WHERE hostname = 'mypc.local.net';
+DELETE FROM computer WHERE hostname = 'mypc.local.net';
 </ProgramListing>
 
     the table computer is scanned by index (fast) and the
@@ -1882,17 +1881,17 @@ Merge Join
     The extra query from the rule would be a
 
 <ProgramListing>
-    DELETE FROM software WHERE computer.hostname = 'mypc.local.net'
-                           AND software.hostname = computer.hostname;
+DELETE FROM software WHERE computer.hostname = 'mypc.local.net'
+                       AND software.hostname = computer.hostname;
 </ProgramListing>
 
     Since there are appropriate indexes setup, the planner
     will create a plan of
 
 <ProgramListing>
-    Nestloop
-      ->  Index Scan using comp_hostidx on computer
-      ->  Index Scan using soft_hostidx on software
+Nestloop
+  ->  Index Scan using comp_hostidx on computer
+  ->  Index Scan using soft_hostidx on software
 </ProgramListing>
 
     So there would be not that much difference in speed between
@@ -1901,31 +1900,31 @@ Merge Join
     with 'old'. There are two possible queries to do that. One is
 
 <ProgramListing>
-    DELETE FROM computer WHERE hostname >= 'old'
-                           AND hostname <  'ole'
+DELETE FROM computer WHERE hostname >= 'old'
+                       AND hostname <  'ole'
 </ProgramListing>
 
     Where the plan for the rule query will be a 
 
 <ProgramListing>
-    Hash Join
-      ->  Seq Scan on software
-      ->  Hash
-	    ->  Index Scan using comp_hostidx on computer
+Hash Join
+  ->  Seq Scan on software
+  ->  Hash
+    ->  Index Scan using comp_hostidx on computer
 </ProgramListing>
 
     The other possible query is a
 
 <ProgramListing>
-    DELETE FROM computer WHERE hostname ~ '^old';
+DELETE FROM computer WHERE hostname ~ '^old';
 </ProgramListing>
 
     with the execution plan
 
 <ProgramListing>
-    Nestloop
-      ->  Index Scan using comp_hostidx on computer
-      ->  Index Scan using soft_hostidx on software
+Nestloop
+  ->  Index Scan using comp_hostidx on computer
+  ->  Index Scan using soft_hostidx on software
 </ProgramListing>
 
     This shows, that the planner does not realize that the
@@ -1948,7 +1947,7 @@ Merge Join
     The last query we look at is a
 
 <ProgramListing>
-    DELETE FROM computer WHERE manufacurer = 'bim';
+DELETE FROM computer WHERE manufacurer = 'bim';
 </ProgramListing>
 
     Again this could result in many rows to be deleted from
@@ -1957,16 +1956,16 @@ Merge Join
     two index scans. Only using another index on computer:
 
 <ProgramListing>
-    Nestloop
-      ->  Index Scan using comp_manufidx on computer
-      ->  Index Scan using soft_hostidx on software
+Nestloop
+  ->  Index Scan using comp_manufidx on computer
+  ->  Index Scan using soft_hostidx on software
 </ProgramListing>
 
     resulting from the rules query
 
 <ProgramListing>
-    DELETE FROM software WHERE computer.manufacurer = 'bim'
-                           AND software.hostname = computer.hostname;
+DELETE FROM software WHERE computer.manufacurer = 'bim'
+                       AND software.hostname = computer.hostname;
 </ProgramListing>
 
     In any of these cases, the extra queries from the rule system will be

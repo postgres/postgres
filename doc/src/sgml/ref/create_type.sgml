@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_type.sgml,v 1.25 2001/12/08 03:24:35 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_type.sgml,v 1.26 2002/01/20 22:19:56 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -238,7 +238,7 @@ CREATE
    declared as taking one argument of type <type>opaque</type>,
    or as taking two arguments of types
    <type>opaque</type>, <type>OID</type>.
-   (The first argument is actually of the datatype itself, but since the
+   (The first argument is actually of the data type itself, but since the
    output function must be declared first, it's easier to declare it as
    accepting type <type>opaque</type>.  The second argument is again
    the array element type for array types.)
@@ -282,7 +282,7 @@ CREATE
 
   <para>
    A default value may be specified, in case a user wants columns of the
-   datatype to default to something other than NULL.
+   data type to default to something other than NULL.
    Specify the default with the <option>DEFAULT</option> keyword.
    (Such a default may be overridden by an explicit <option>DEFAULT</option>
    clause attached to a particular column.)
@@ -311,7 +311,7 @@ CREATE
 
   <para>
    The <replaceable class="parameter">alignment</replaceable> keyword
-   specifies the storage alignment required for the datatype.  The
+   specifies the storage alignment required for the data type.  The
    allowed values equate to alignment on 1, 2, 4, or 8 byte boundaries.
    Note that variable-length types must have an alignment of at least
    4, since they necessarily contain an <type>int4</> as their first component.
@@ -339,7 +339,7 @@ CREATE
    <title>Array Types</title>
 
    <para>
-    Whenever a user-defined datatype is created, 
+    Whenever a user-defined data type is created, 
     <productname>PostgreSQL</productname> automatically creates an
     associated array type, whose name consists of the base type's
     name prepended with an underscore.  The parser understands this
@@ -358,7 +358,7 @@ CREATE
     identical things, and you want to allow the N things to be accessed
     directly by subscripting, in addition to whatever operations you plan
     to provide for the type as a whole.  For example, type <type>name</>
-    allows its constitutent <type>char</>s to be accessed this way.
+    allows its constituent <type>char</>s to be accessed this way.
     A 2-D <type>point</> type could allow its two component floats to be
     accessed like <literal>point[0]</> and <literal>point[1]</>.
     Note that

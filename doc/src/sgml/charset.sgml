@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/charset.sgml,v 2.20 2002/01/08 05:45:19 momjian Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/charset.sgml,v 2.21 2002/01/20 22:19:55 petere Exp $ -->
 
 <chapter id="charset">
  <title>Localization</>
@@ -834,7 +834,7 @@ RESET CLIENT_ENCODING;
     </para>
     <para>
     For 7.2, <option>--enable-unicode-conversion</option> is not necessary.
-    The unicode conversion functionality is automatically enabled
+    The Unicode conversion functionality is automatically enabled
     if <option>--enable-multibyte</option> is specified.
     </para>
    </sect2>
@@ -933,7 +933,7 @@ Mar 23, 1999
 	* Fix problem with MB and locale
 
 Jan 26, 1999
-	* Add support for Big5 for fronend encoding
+	* Add support for Big5 for frontend encoding
 	  (you need to create a database with EUC_TW to use Big5)
 	* Add regression test case for EUC_TW
 	  (contributed by Jonah Kuo <email>jonahkuo@mail.ttn.com.tw</email>)
@@ -959,7 +959,7 @@ Jun 5, 1998
 	  and the frontend
 	* new command SET CLIENT_ENCODING etc. added
 	* add support for LATIN1 character set
-	* enhance 8 bit cleaness
+	* enhance 8-bit cleanliness
 
 April 21, 1998 some enhancements/fixes
 	* character_length(), position(), substring() are now aware of 

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/geqo.sgml,v 1.22 2002/01/08 18:03:26 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/geqo.sgml,v 1.23 2002/01/20 22:19:56 petere Exp $
 Genetic Optimizer
 -->
 
@@ -93,7 +93,7 @@ Genetic Optimizer
     determined, randomized search. The set of possible solutions for the
     optimization problem is considered as a
     <firstterm>population</firstterm> of <firstterm>individuals</firstterm>.
-    The degree of adaption of an individual to its environment is specified
+    The degree of adaptation of an individual to its environment is specified
     by its <firstterm>fitness</firstterm>.
    </para>
 
@@ -147,7 +147,7 @@ Genetic Optimizer
 +=========================================+
 | INITIALIZE P(t)                         |
 +=========================================+
-| evalute FITNESS of P(t)                 |
+| evaluate FITNESS of P(t)                |
 +=========================================+
 | while not STOPPING CRITERION do         |
 |   +-------------------------------------+
@@ -157,7 +157,7 @@ Genetic Optimizer
 |   +-------------------------------------+
 |   | P(t+1) := SELECTION{P''(t) + P(t)}  |
 |   +-------------------------------------+
-|   | evalute FITNESS of P''(t)           |
+|   | evaluate FITNESS of P''(t)          |
 |   +-------------------------------------+
 |   | t := t + 1                          |
 +===+=====================================+
@@ -182,7 +182,7 @@ Genetic Optimizer
 </literallayout>
     is encoded by the integer string '4-1-3-2',
     which means, first join relation '4' and '1', then '3', and
-    then '2', where 1, 2, 3, 4 are relids within the
+    then '2', where 1, 2, 3, 4 are relation IDs within the
     <productname>PostgreSQL</productname> optimizer.
    </para>
 

@@ -1194,8 +1194,8 @@ The oid of the large object created.
 <TITLE>Usage
 </TITLE>
 <PARA>
-mode can be any OR'ing together of INV_READ and INV_WRITE. 
-The OR delimiter character is <literal>|</literal>.
+mode can be any or'ing together of <literal>INV_READ</> and <literal>INV_WRITE</>.
+The <quote>or</quote> operator is <literal>|</literal>.
 <ProgramListing>
 [pg_lo_creat $conn "INV_READ|INV_WRITE"]
 </ProgramListing>

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/select_into.sgml,v 1.15 2001/12/08 03:24:39 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/select_into.sgml,v 1.16 2002/01/20 22:19:57 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -123,7 +123,7 @@ where <replaceable class="PARAMETER">from_item</replaceable> can be:
    <command>SELECT INTO</command> creates a new table and fills it
    with data computed by a query.  The data is not returned to the
    client, as it is with a normal <command>SELECT</command>.  The new
-   table's columns have the names and datatypes associated with the
+   table's columns have the names and data types associated with the
    output columns of the <command>SELECT</command>.
 
    <note>
@@ -132,7 +132,7 @@ where <replaceable class="PARAMETER">from_item</replaceable> can be:
      is functionally equivalent to <command>SELECT INTO</command>.
      <command>CREATE TABLE AS</command> is the recommended syntax, since
      <command>SELECT INTO</command> is not standard.  In fact, this form of
-     <command>SELECT INTO</command> is not available in PL/pgSQL or ecpg,
+     <command>SELECT INTO</command> is not available in <application>PL/pgSQL</application> or <xref linkend="app-ecpg">,
      because they interpret the INTO clause differently.
     </para>
    </note>
@@ -147,7 +147,7 @@ where <replaceable class="PARAMETER">from_item</replaceable> can be:
    <para>
     SQL92 uses <command>SELECT ... INTO</command> to represent selecting
     values into scalar variables of a host program, rather than creating
-    a new table.  This indeed is the usage found in PL/pgSQL and ecpg.
+    a new table.  This indeed is the usage found in <application>PL/pgSQL</application> and <xref linkend="app-ecpg">.
     The <productname>PostgreSQL</productname> usage of <command>SELECT
     INTO</command> to represent table creation is historical.  It's best
     to use <command>CREATE TABLE AS</command> for this purpose in new code.

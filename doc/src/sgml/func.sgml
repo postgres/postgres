@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.90 2002/01/07 02:29:12 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.91 2002/01/20 22:19:55 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -3925,7 +3925,7 @@ SELECT TIMESTAMP 'now';
    just sequences) are special single-row tables created with
    <command>CREATE SEQUENCE</>.  A sequence object is usually used to
    generate unique identifiers for rows of a table.  The sequence functions
-   provide simple, multi-user-safe methods for obtaining successive
+   provide simple, multiuser-safe methods for obtaining successive
    sequence values from sequence objects.
   </para>
 
@@ -4367,7 +4367,7 @@ SELECT NULLIF(value, '(none)') ...
       <row>
        <entry><function>pg_get_userbyid</>(<parameter>userid</parameter>)</entry>
        <entry><type>name</></entry>
-       <entry>Get user name given sysid</>
+       <entry>Get user name given ID</>
       </row>
      </tbody>
     </tgroup>
@@ -4767,7 +4767,7 @@ OR
 
   <para>
    As usual, NULLs in the expressions or subquery rows are combined per
-   the normal rules of SQL boolean expressions.  Two rows are considered
+   the normal rules of SQL Boolean expressions.  Two rows are considered
    equal if all their corresponding members are non-null and equal; the rows
    are unequal if any corresponding members are non-null and unequal;
    otherwise the result of that row comparison is unknown (NULL).
@@ -4856,7 +4856,7 @@ AND
 
   <para>
    As usual, NULLs in the expressions or subquery rows are combined per
-   the normal rules of SQL boolean expressions.  Two rows are considered
+   the normal rules of SQL Boolean expressions.  Two rows are considered
    equal if all their corresponding members are non-null and equal; the rows
    are unequal if any corresponding members are non-null and unequal;
    otherwise the result of that row comparison is unknown (NULL).
@@ -4875,7 +4875,7 @@ AND
    The right-hand side of this form of <token>ANY</> is a parenthesized
    subquery, which must return exactly one column.  The left-hand expression
    is evaluated and compared to each row of the subquery result using the
-   given <replaceable>operator</replaceable>, which must yield a boolean
+   given <replaceable>operator</replaceable>, which must yield a Boolean
    result.
    The result of <token>ANY</> is TRUE if any true result is obtained.
    The result is FALSE if no true result is found (including the special
@@ -4921,7 +4921,7 @@ AND
 
   <para>
    As usual, NULLs in the expressions or subquery rows are combined per
-   the normal rules of SQL boolean expressions.  Two rows are considered
+   the normal rules of SQL Boolean expressions.  Two rows are considered
    equal if all their corresponding members are non-null and equal; the rows
    are unequal if any corresponding members are non-null and unequal;
    otherwise the result of that row comparison is unknown (NULL).
@@ -4939,7 +4939,7 @@ AND
    The right-hand side of this form of <token>ALL</> is a parenthesized
    subquery, which must return exactly one column.  The left-hand expression
    is evaluated and compared to each row of the subquery result using the
-   given <replaceable>operator</replaceable>, which must yield a boolean
+   given <replaceable>operator</replaceable>, which must yield a Boolean
    result.
    The result of <token>ALL</> is TRUE if all rows yield TRUE
    (including the special case where the subquery returns no rows).
@@ -4984,7 +4984,7 @@ AND
 
   <para>
    As usual, NULLs in the expressions or subquery rows are combined per
-   the normal rules of SQL boolean expressions.  Two rows are considered
+   the normal rules of SQL Boolean expressions.  Two rows are considered
    equal if all their corresponding members are non-null and equal; the rows
    are unequal if any corresponding members are non-null and unequal;
    otherwise the result of that row comparison is unknown (NULL).
@@ -5014,7 +5014,7 @@ AND
 
   <para>
    As usual, NULLs in the expressions or subquery rows are combined per
-   the normal rules of SQL boolean expressions.  Two rows are considered
+   the normal rules of SQL Boolean expressions.  Two rows are considered
    equal if all their corresponding members are non-null and equal; the rows
    are unequal if any corresponding members are non-null and unequal;
    otherwise the result of the row comparison is unknown (NULL).

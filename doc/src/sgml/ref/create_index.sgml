@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_index.sgml,v 1.25 2001/12/08 03:24:34 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_index.sgml,v 1.26 2002/01/20 22:19:56 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -77,7 +77,7 @@ CREATE [ UNIQUE ] INDEX <replaceable class="parameter">index_name</replaceable> 
       <listitem>
        <para>
 	The name of the access method to be used for
-	the index. The default access method is BTREE.
+	the index. The default access method is <literal>BTREE</literal>.
 	<application>PostgreSQL</application> provides four access methods for indexes:
 
 	<variablelist>
@@ -86,7 +86,7 @@ CREATE [ UNIQUE ] INDEX <replaceable class="parameter">index_name</replaceable> 
 	  <listitem>
 	   <para>
 	    an implementation of Lehman-Yao
-	    high-concurrency btrees.
+	    high-concurrency B-trees.
 	   </para>
 	  </listitem>
 	 </varlistentry>
@@ -94,7 +94,7 @@ CREATE [ UNIQUE ] INDEX <replaceable class="parameter">index_name</replaceable> 
 	 <varlistentry>
 	  <term>RTREE</term>
 	  <listitem>
-	   <para>implements standard rtrees using Guttman's
+	   <para>implements standard R-trees using Guttman's
 	    quadratic split algorithm.
 	   </para>
 	  </listitem>
@@ -221,7 +221,7 @@ ERROR: Cannot create index: 'index_name' already exists.
    In the first syntax shown above, the key field(s) for the
    index are specified as column names.
    Multiple fields can be specified if the index access method supports
-   multi-column indexes.
+   multicolumn indexes.
   </para>
 
   <para>
@@ -236,10 +236,10 @@ ERROR: Cannot create index: 'index_name' already exists.
   </para>
 
   <para>
-   <application>PostgreSQL</application> provides btree, rtree, hash, and GiST access methods for
-   indexes.  The btree access method is an implementation of
-   Lehman-Yao high-concurrency btrees.  The rtree access method
-   implements standard rtrees using Guttman's quadratic split algorithm.
+   <application>PostgreSQL</application> provides B-tree, R-tree, hash, and GiST access methods for
+   indexes.  The B-tree access method is an implementation of
+   Lehman-Yao high-concurrency B-trees.  The R-tree access method
+   implements standard R-trees using Guttman's quadratic split algorithm.
    The hash access method is an implementation of Litwin's linear
    hashing.  We mention the algorithms used solely to indicate that all
    of these access methods are fully dynamic and do not have to be
@@ -293,7 +293,7 @@ ERROR: Cannot create index: 'index_name' already exists.
 
    <para>
     The <productname>PostgreSQL</productname>
-    query optimizer will consider using a btree index whenever
+    query optimizer will consider using a B-tree index whenever
     an indexed attribute is involved in a comparison using one of:
 
     <simplelist type="inline">
@@ -307,7 +307,7 @@ ERROR: Cannot create index: 'index_name' already exists.
 
    <para>
     The <productname>PostgreSQL</productname>
-    query optimizer will consider using an rtree index whenever
+    query optimizer will consider using an R-tree index whenever
     an indexed attribute is involved in a comparison using one of:
 
     <simplelist type="inline">
@@ -329,17 +329,17 @@ ERROR: Cannot create index: 'index_name' already exists.
    </para>
 
    <para>
-    Currently, only the btree and gist access methods support multi-column
+    Currently, only the B-tree and gist access methods support multi-column
     indexes. Up to 16 keys may be specified by default (this limit
     can be altered when building
-    <application>PostgreSQL</application>).  Only btree currently supports
+    <application>PostgreSQL</application>).  Only B-tree currently supports
     unique indexes.
    </para>
 
   <para>
    An <firstterm>operator class</firstterm> can be specified for each
    column of an index.  The operator class identifies the operators to
-   be used by the index for that column.  For example, a btree index on
+   be used by the index for that column.  For example, a B-tree index on
    four-byte integers would use the <literal>int4_ops</literal> class;
    this operator class includes comparison functions for four-byte
    integers.  In practice the default operator class for the field's
@@ -355,7 +355,7 @@ ERROR: Cannot create index: 'index_name' already exists.
     <listitem>
      <para>
       The operator classes <literal>box_ops</literal> and
-      <literal>bigbox_ops</literal> both support rtree indexes on the
+      <literal>bigbox_ops</literal> both support R-tree indexes on the
       <literal>box</literal> data type.
       The difference between them is that <literal>bigbox_ops</literal>
       scales box coordinates down, to avoid floating-point exceptions from
@@ -389,7 +389,7 @@ SELECT am.amname AS acc_method,
   <title>
    Usage
   </title>
-  <para>To create a btree index on the field <literal>title</literal>
+  <para>To create a B-tree index on the field <literal>title</literal>
    in the table <literal>films</literal>:
   </para>
   <programlisting>
@@ -402,7 +402,7 @@ CREATE UNIQUE INDEX title_idx
 Is this example correct?
 </comment>
   <para>
-   To create a rtree index on a point attribute so that we
+   To create a R-tree index on a point attribute so that we
    can efficiently use box operators on the result of the
    conversion function:
   </para>

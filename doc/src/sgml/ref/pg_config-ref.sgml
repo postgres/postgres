@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_config-ref.sgml,v 1.8 2001/09/16 16:11:09 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_config-ref.sgml,v 1.9 2002/01/20 22:19:57 petere Exp $ -->
 
 <refentry id="app-pgconfig">
  <docinfo>
@@ -50,7 +50,7 @@
    To use <application>pg_config</>, supply one or more of the following options:
    <variablelist>
     <varlistentry>
-     <term>--bindir</>
+     <term><option>--bindir</option></>
      <listitem>
       <para>
        Print the location of user executables. Use this, for example, to find
@@ -61,7 +61,7 @@
     </varlistentry>
 
     <varlistentry>
-     <term>--includedir</>
+     <term><option>--includedir</option></>
      <listitem>
       <para>
        Print the location of C and C++ header files of the client interfaces.
@@ -70,7 +70,7 @@
     </varlistentry>
 
     <varlistentry>
-     <term>--includedir-server</>
+     <term><option>--includedir-server</option></>
      <listitem>
       <para>
        Print the location of C and C++ header files for server
@@ -80,7 +80,7 @@
     </varlistentry>
 
     <varlistentry>
-     <term>--libdir</>
+     <term><option>--libdir</option></>
      <listitem>
       <para>
        Print the location of object code libraries.
@@ -89,7 +89,7 @@
     </varlistentry>
 
     <varlistentry>
-     <term>--pkglibdir</>
+     <term><option>--pkglibdir</option></>
      <listitem>
       <para>
        Print the location of dynamically loadable modules, or where
@@ -101,7 +101,7 @@
     </varlistentry>
 
     <varlistentry>
-     <term>--configure</>
+     <term><option>--configure</option></>
      <listitem>
       <para>
        Print the options that were given to the <filename>configure</>
@@ -115,7 +115,7 @@
     </varlistentry>
 
     <varlistentry>
-     <term>--version</>
+     <term><option>--version</option></>
      <listitem>
       <para>
        Print the version of <productname>PostgreSQL</> and exit.

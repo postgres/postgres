@@ -13,7 +13,7 @@
   Database recovery is necessary in the event of hardware or software
   failure. There are several categories of failures; some of these
   require relatively minor adjustments to the database, while others
-  may depend on the existance of previously prepared database dumps
+  may depend on the existence of previously prepared database dumps
   and other recovery data sets. It should be emphasized that if your
   data is important and/or difficult to regenerate, then you should
   have considered and prepared for various failure scenarios.
@@ -44,7 +44,7 @@
    that the database be recovered from a previously prepared database
    dump. This dump must be prepared using
    <application>pg_dumpall</application>, and updates to the database
-   occuring after the database installation was dumped will be lost. 
+   occurring after the database installation was dumped will be lost. 
   </para>
  </sect1>
 

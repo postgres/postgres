@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/problems.sgml,v 2.12 2002/01/07 02:29:13 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/problems.sgml,v 2.13 2002/01/20 22:19:56 petere Exp $
 -->
 
 <sect1 id="bug-reporting">
@@ -265,7 +265,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/problems.sgml,v 2.12 2002/01/07 02:29:13 pe
    backend server process is quite different from crash of the parent
    <quote>postmaster</> process; please don't say <quote>the postmaster
    crashed</> when you mean a single backend went down, nor vice versa.
-   Also, client programs such as the interactive frontend <quote>psql</quote>
+   Also, client programs such as the interactive frontend <quote><application>psql</application></quote>
    are completely separate from the backend.  Please try to be specific
    about whether the problem is on the client or server side.
   </para>
@@ -305,7 +305,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/problems.sgml,v 2.12 2002/01/07 02:29:13 pe
    development of <productname>PostgreSQL</productname> and it would be nice
    if we could keep the bug reports separate. We might choose to take up a
    discussion
-   about your bug report on pgsql-hackers, if the problem needs more review.
+   about your bug report on <literal>pgsql-hackers</literal>, if the problem needs more review.
   </para>
 
   <para>

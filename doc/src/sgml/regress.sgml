@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/regress.sgml,v 1.24 2002/01/07 02:29:13 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/regress.sgml,v 1.25 2002/01/20 22:19:56 petere Exp $ -->
 
  <chapter id="regress">
   <title id="regress-title">Regression Tests</title>
@@ -86,7 +86,7 @@
   <tip>
    <para>
     The parallel regression test starts quite a few processes under your
-    userid.  Presently, the maximum concurrency is twenty parallel test
+    user ID.  Presently, the maximum concurrency is twenty parallel test
     scripts, which means sixty processes --- there's a backend, a psql,
     and usually a shell parent process for the psql for each test script.
     So if your system enforces a per-user limit on the number of processes,

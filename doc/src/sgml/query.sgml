@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/query.sgml,v 1.24 2002/01/07 02:29:13 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/query.sgml,v 1.25 2002/01/20 22:19:56 petere Exp $
 -->
 
  <chapter id="tutorial-sql">
@@ -21,7 +21,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/query.sgml,v 1.24 2002/01/07 02:29:13 peter
 
    <para>
     In the examples that follow, we assume that you have created a
-    database named <quote>mydb</quote>, as described in the previous
+    database named <literal>mydb</literal>, as described in the previous
     chapter, and have started <application>psql</application>.
    </para>
 
@@ -693,7 +693,7 @@ SELECT city, max(temp_lo)
 
    <para>
     It is important to understand the interaction between aggregates and
-    SQL's <literal>WHERE</literal> and <literal>HAVING</literal> clauses.
+    <acronym>SQL</acronym>'s <literal>WHERE</literal> and <literal>HAVING</literal> clauses.
     The fundamental difference between <literal>WHERE</literal> and
     <literal>HAVING</literal> is this: <literal>WHERE</literal> selects
     input rows before groups and aggregates are computed (thus, it controls

@@ -36,7 +36,7 @@
      databases  on  a  single  host.   Such  a collection of
      databases is called a cluster (of databases).   A frontend
      application  that  wishes  to  access  a  given database
-     within a cluster makes calls to an interface library (eg, libpq)
+     within a cluster makes calls to an interface library (e.g., <application>libpq</>)
      that is linked into the application.
      The library sends user requests over the network to the
      <Application>postmaster</Application>
@@ -81,7 +81,7 @@ From that  point  on,  the  frontend process and the backend
 
 <Para>
      You should also be aware that the <Application>postmaster</Application> and
-     postgres  servers  run  with  the  user-id  of the <ProductName>PostgreSQL</ProductName>
+     <application>postgres</>  servers  run  with  the  user ID  of the <ProductName>PostgreSQL</ProductName>
      <quote>superuser</>.
 Note that the <ProductName>PostgreSQL</ProductName> superuser does not
 have  to  be  any particular user (e.g., a user named 

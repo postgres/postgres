@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/maintenance.sgml,v 1.10 2001/11/28 20:49:10 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/maintenance.sgml,v 1.11 2002/01/20 22:19:56 petere Exp $
 -->
 
 <chapter id="maintenance">
@@ -377,16 +377,16 @@ VACUUM
    It's a good idea to save the database server's log output somewhere,
    rather than just routing it to <filename>/dev/null</>.  The log output
    is invaluable when it comes time to diagnose problems.  However, the
-   log output tends to be voluminuous (especially at higher debug levels)
+   log output tends to be voluminous (especially at higher debug levels)
    and you won't want to save it indefinitely.  You need to <quote>rotate</>
    the log files so that new log files are started and old ones thrown
    away every so often.
   </para>
 
   <para>
-   If you simply direct the postmaster's stderr into a file, the only way
+   If you simply direct the postmaster's <systemitem>stderr</> into a file, the only way
    to truncate the log file is to stop and restart the postmaster.  This
-   may be okay for development setups but you won't want to run a production
+   may be OK for development setups but you won't want to run a production
    server that way.
   </para>
 
@@ -406,9 +406,9 @@ VACUUM
    On many systems, however, syslog is not very reliable, particularly
    with large log messages; it may truncate or drop messages just when
    you need them the most.  You may find it more useful to pipe the
-   <application>postmaster</>'s stderr to some type of log rotation script.
+   <application>postmaster</>'s <systemitem>stderr</> to some type of log rotation script.
    If you start the postmaster with <application>pg_ctl</>, then the
-   postmaster's stderr is already redirected to stdout, so you just need a
+   postmaster's <systemitem>stderr</> is already redirected to <systemitem>stdout</>, so you just need a
    pipe command:
    
 <screen>

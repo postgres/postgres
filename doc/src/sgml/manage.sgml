@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/manage.sgml,v 1.20 2001/11/21 05:53:41 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/manage.sgml,v 1.21 2002/01/20 22:19:56 petere Exp $
 -->
 
  <Chapter Id="manage">
@@ -94,7 +94,7 @@ ERROR:  CREATE DATABASE: Permission denied.
      <listitem>
       <para>
        Running the <productname>PostgreSQL</productname> interactive
-       terminal program, called <quote>psql</quote>, which allows you
+       terminal program, called <application>psql</application>, which allows you
        to interactively enter, edit, and execute
        <acronym>SQL</acronym> commands.
       </para>
@@ -145,7 +145,7 @@ mydb=>
 <Para>
 This prompt indicates that <command>psql</command> is listening
   to you and that you can type <Acronym>SQL</Acronym> queries into a
-     workspace maintained by the terminal monitor.
+     work space maintained by the terminal monitor.
 The <Application>psql</Application> program itself responds to special
 commands  that  begin
      with  the  backslash  character, <literal>\</literal>.  For example, you
@@ -156,7 +156,7 @@ mydb=> \h
 </ProgramListing>
 
      Once  you  have finished entering your queries into the
-     workspace, you can pass the contents of  the  workspace
+     work space, you can pass the contents of  the  work space
      to the <ProductName>PostgreSQL</ProductName> server by typing:
 <ProgramListing>
 mydb=> \g

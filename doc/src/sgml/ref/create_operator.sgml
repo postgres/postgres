@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_operator.sgml,v 1.23 2002/01/07 02:29:15 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_operator.sgml,v 1.24 2002/01/20 22:19:56 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -175,7 +175,7 @@ CREATE
   </para>
   <para>
    The operator <replaceable class="parameter">name</replaceable>
-   is a sequence of up to NAMEDATALEN-1 (31 by default) characters
+   is a sequence of up to <symbol>NAMEDATALEN</>-1 (31 by default) characters
    from the following list:
    <literallayout>
 + - * / &lt; &gt; = ~ ! @ # % ^ &amp; | ` ? $
@@ -186,7 +186,7 @@ CREATE
     <listitem>
      <para>
      <literal>$</literal> cannot be defined as a single-character operator,
-     although it can be part of a multi-character operator name.
+     although it can be part of a multicharacter operator name.
      </para>
     </listitem>
     <listitem>
@@ -197,7 +197,7 @@ CREATE
     </listitem>
     <listitem>
      <para>
-     A multi-character operator name cannot end in <literal>+</literal> or
+     A multicharacter operator name cannot end in <literal>+</literal> or
      <literal>-</literal>,
      unless the name also contains at least one of these characters:
      <literallayout>
@@ -299,7 +299,7 @@ MYBOXES.description !== box '((0,0), (1,1))'
    query  optimizer in performing joins.  
    <productname>PostgreSQL</productname> can always
    evaluate a join (i.e., processing a clause with two  tuple
-   variables separated by an operator that returns a boolean)
+   variables separated by an operator that returns a <type>boolean</type>)
    by iterative substitution [WONG76].  
    In addition, <productname>PostgreSQL</productname>
    can use a hash-join algorithm along

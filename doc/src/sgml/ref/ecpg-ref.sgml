@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/ecpg-ref.sgml,v 1.17 2002/01/18 20:32:54 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/ecpg-ref.sgml,v 1.18 2002/01/20 22:19:56 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -84,7 +84,7 @@ PostgreSQL documentation
       <term>-o <replaceable>outfile</replaceable></term>
       <listitem>
        <para>
-	Specifies that <application>ecpg</application> should write all its output to outfile.
+	Specifies that <application>ecpg</application> should write all its output to <replaceable>outfile</replaceable>.
 	If no such option is given the output is written to
 	<filename><replaceable>name</replaceable>.c</filename>,
 	assuming the input file was 
@@ -255,7 +255,7 @@ EXEC SQL INCLUDE sqlca;
       The <literal>sqlca</literal> is in lowercase.
       While SQL convention may be 
       followed, i.e., using uppercase to separate embedded SQL 
-      from C statements, sqlca (which includes the <filename>sqlca.h</>
+      from C statements, <literal>sqlca</literal> (which includes the <filename>sqlca.h</>
       header file) <emphasis>must</> be lowercase.  This is because the
       EXEC SQL prefix indicates that this inclusion will be parsed by
       <application>ecpg</application>.
@@ -268,7 +268,7 @@ EXEC SQL INCLUDE sqlca;
     </note>
 
    <para>
-    The sqlprint command is used with the EXEC SQL WHENEVER
+    The <literal>sqlprint</literal> command is used with the <literal>EXEC SQL WHENEVER</literal>
     statement to turn on error handling throughout the 
     program:
 

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/copy.sgml,v 1.26 2001/12/08 03:24:34 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/copy.sgml,v 1.27 2002/01/20 22:19:56 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -74,7 +74,7 @@ COPY [ BINARY ] <replaceable class="parameter">table</replaceable> [ WITH OIDS ]
       <term><replaceable class="parameter">filename</replaceable></term>
       <listitem>
        <para>
-	The absolute Unix pathname of the input or output file.
+	The absolute Unix file name of the input or output file.
        </para>
       </listitem>
      </varlistentry>
@@ -181,7 +181,7 @@ ERROR: <replaceable>reason</replaceable>
   </para>
 
   <para>
-   <command>COPY</command> with a filename instructs
+   <command>COPY</command> with a file name instructs
    the <productname>PostgreSQL</productname> backend
    to directly read from or write to a file.
    The file must be accessible to the backend and the name must be specified
@@ -262,8 +262,8 @@ ERROR: <replaceable>reason</replaceable>
     directly by the backend, not by the client application.  Therefore,
     they must reside on or be accessible to the database server machine,
     not the client.  They must be accessible to and readable or writable
-    by the <application>PostgreSQL</application> user (the userid the
-    backend runs as), not the client.
+    by the <application>PostgreSQL</application> user (the user ID the
+    server runs as), not the client.
     <command>COPY</command> naming a file is only allowed to database
     superusers, since it allows writing on any file that the backend has
     privileges to write on.
@@ -483,7 +483,7 @@ The typlen field is interpreted thus:
       <term>&gt; 0</term>
       <listitem>
        <para>
-        Field is a fixed-length datatype.  Exactly N
+        Field is a fixed-length data type.  Exactly N
 	bytes of data follow the typlen word.
        </para>
       </listitem>
@@ -493,7 +493,7 @@ The typlen field is interpreted thus:
       <term>-1</term>
       <listitem>
        <para>
-	Field is a varlena datatype.  The next four
+	Field is a varlena data type.  The next four
 	bytes are the varlena header, which contains
 	the total value length including itself.
        </para>
@@ -519,7 +519,7 @@ but very useful check that the data is as expected.
 
     <para>
 There is no alignment padding or any other extra data between fields.
-Note also that the format does not distinguish whether a datatype is
+Note also that the format does not distinguish whether a data type is
 pass-by-reference or pass-by-value.  Both of these provisions are
 deliberate: they might help improve portability of the files (although
 of course endianness and floating-point-format issues can still keep

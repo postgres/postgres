@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/datetime.sgml,v 2.25 2002/01/04 17:02:25 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/datetime.sgml,v 2.26 2002/01/20 22:19:55 petere Exp $
 Date/time details
 -->
 
@@ -211,8 +211,8 @@ Date/time details
     The following table of time zones recognized by
     <productname>PostgreSQL</productname> is organized by time
     zone offset from UTC, rather than alphabetically; this is intended
-    to faciliate
-    matching local usage with recognized abreviations for cases where
+    to facilitate
+    matching local usage with recognized abbreviations for cases where
     these might differ.
 
     <table tocentry="1">
@@ -1078,8 +1078,8 @@ Date/time details
   <note>
    <para>
     SQL92 states that
-    <quote>Within the definition of a <sgmltag>datetime literal</sgmltag>,
-     the <sgmltag>datetime value</sgmltag>s are constrained by the
+    <quote>Within the definition of a <quote>datetime literal</quote>,
+     the <quote>datetime value</quote>s are constrained by the
      natural rules for dates and times
      according to the Gregorian calendar</quote>.
     Dates between 1752-09-03 and 1752-09-13, although eliminated in

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.102 2002/01/09 00:52:38 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.103 2002/01/20 22:19:56 petere Exp $
 -->
 
 <Chapter Id="runtime">
@@ -187,7 +187,7 @@ $ <userinput>postmaster -D /usr/local/pgsql/data</userinput>
 <screen>
 $ <userinput>postmaster -D /usr/local/pgsql/data &gt; logfile 2&gt;&amp;1 &amp;</userinput>
 </screen>
-   It is an extremely good idea to keep the server's stdout and stderr
+   It is an extremely good idea to keep the server's <systemitem>stdout</> and <systemitem>stderr</>
    output around somewhere, as suggested here. It will help both for auditing
    purposes and to diagnose problems.
    (See <xref linkend="logfile-maintenance"> for a more thorough discussion
@@ -1208,9 +1208,9 @@ dynamic_library_path = '/usr/local/lib/postgresql:/home/my_project/lib:$libdir'
 
        <para>
         It should be noted that the performance penalty from doing
-	fsyncs is considerably less in <productname>PostgreSQL</> version
+	<function>fsync</>s is considerably less in <productname>PostgreSQL</> version
 	7.1 than it was in prior releases.  If you previously suppressed
-	fsyncs because of performance problems, you may wish to reconsider
+	<function>fsync</>s because of performance problems, you may wish to reconsider
 	your choice.
        </para>
 
@@ -1263,9 +1263,9 @@ dynamic_library_path = '/usr/local/lib/postgresql:/home/my_project/lib:$libdir'
 	subprocess.  The default is 1000.  The limit actually used by the code
 	is the smaller of this setting and the result of
 	<literal>sysconf(_SC_OPEN_MAX)</literal>.
-	Therefore, on systems where sysconf returns a reasonable limit,
+	Therefore, on systems where <function>sysconf</> returns a reasonable limit,
 	you don't need to worry about this setting.  But on some platforms
-	(notably, most BSD systems), sysconf returns a value that is much
+	(notably, most BSD systems), <function>sysconf</> returns a value that is much
 	larger than the system can really support when a large number of
 	processes all try to open that many files.  If you find yourself
 	seeing <quote>Too many open files</> failures, try reducing this
@@ -1599,7 +1599,7 @@ dynamic_library_path = '/usr/local/lib/postgresql:/home/my_project/lib:$libdir'
        <para>
         Time delay between writing a commit record to the WAL buffer and
 	flushing the buffer out to disk, in microseconds.  A nonzero delay
-	allows multiple transactions to be committed with only one fsync,
+	allows multiple transactions to be committed with only one <function>fsync</function> system call,
 	if system load is high enough that additional transactions become
 	ready to commit within the given interval.  But the delay is just
 	wasted time if no other transactions become ready to commit.
@@ -1659,10 +1659,10 @@ dynamic_library_path = '/usr/local/lib/postgresql:/home/my_project/lib:$libdir'
        <para>
         Method used for forcing WAL updates out to disk.  Possible
 	values are
-	<literal>FSYNC</> (call fsync() at each commit),
-	<literal>FDATASYNC</> (call fdatasync() at each commit),
-	<literal>OPEN_SYNC</> (write WAL files with open() option O_SYNC), or
-	<literal>OPEN_DATASYNC</> (write WAL files with open() option O_DSYNC).
+	<literal>FSYNC</> (call <function>fsync()</> at each commit),
+	<literal>FDATASYNC</> (call <function>fdatasync()</> at each commit),
+	<literal>OPEN_SYNC</> (write WAL files with <function>open()</> option <symbol>O_SYNC</>), or
+	<literal>OPEN_DATASYNC</> (write WAL files with <function>open()</> option <symbol>O_DSYNC</>).
 	Not all of these choices are available on all platforms.
         This option can only be set at server start or in the
 	<filename>postgresql.conf</filename> file.

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/jdbc.sgml,v 1.34 2001/11/29 05:35:51 barry Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/jdbc.sgml,v 1.35 2002/01/20 22:19:56 petere Exp $
 -->
 
  <chapter id="jdbc">
@@ -592,7 +592,7 @@ st.close();
   <para>
     <application>PostgreSQL</application> provides two distinct ways to 
     store binary data.  Binary data can be stored in a table using 
-    <application>PostgreSQL's</application> binary datatype 
+    <application>PostgreSQL's</application> binary data type 
     <type>bytea</type>, or by using the <firstterm>Large Object</firstterm>
     feature which stores the binary data in a separate table in a special 
     format, and refers to that table by storing a value of type 
@@ -602,7 +602,7 @@ st.close();
   <para>
     In order to determine which method is appropriate you 
     need to understand the limitations of each method.  The 
-    <type>bytea</type> datatype is not well suited for storing very 
+    <type>bytea</type> data type is not well suited for storing very 
     large amounts of binary data.  While a column of type 
     <type>bytea</type> can hold upto 1Gig of binary data, it would 
     require a huge amount of memory (<acronym>RAM</acronym>) to 
@@ -619,14 +619,14 @@ st.close();
 
   <para>
     7.2 is the first release of the <acronym>JDBC</acronym> Driver 
-    that supports the <type>bytea</type> datatype.  The introduction of 
+    that supports the <type>bytea</type> data type.  The introduction of 
     this functionality in 7.2 has introduced a change in behavior 
     as compared to previous releases.  In 7.2 the methods 
     <function>getBytes()</function>, <function>setBytes()</function>, 
     <function>getBinaryStream()</function>, and 
     <function>setBinaryStream()</function> operate on 
-    the <type>bytea</type> datatype.  In 7.1 these methods operated 
-    on the <type>OID</type> datatype associated with Large Objects.  
+    the <type>bytea</type> data type.  In 7.1 these methods operated 
+    on the <type>OID</type> data type associated with Large Objects.  
     It is possible to revert the driver back to the old 7.1 behavior 
     by setting the <parameter>compatible</parameter> property on 
     the <classname>Connection</classname> to a value of 
@@ -634,7 +634,7 @@ st.close();
   </para>
 
   <para>
-    To use the <type>bytea</type> datatype you should simply use 
+    To use the <type>bytea</type> data type you should simply use 
     the <function>getBytes()</function>, <function>setBytes()</function>,
     <function>getBinaryStream()</function>, or 
     <function>setBinaryStream()</function> methods.
@@ -663,7 +663,7 @@ st.close();
       <acronym>JDBC</acronym> Driver, the <function>getBLOB()</function>
       and <function>setBLOB()</function> methods may no longer 
       interact with Large Objects and will instead work on 
-      <type>bytea</type> datatypes.  So it is recommended that you 
+      <type>bytea</type> data types.  So it is recommended that you 
       use the <classname>LargeObject</classname> <acronym>API</acronym> 
       if you intend to use Large Objects.
   </para></note>
@@ -728,7 +728,7 @@ ps.close();
    </para>
 
    <para>
-    Alternativly you could be storing a very large file and want to use
+    Alternatively you could be storing a very large file and want to use
     the <classname>LargeObject</classname> <acronym>API</acronym> to 
     store the file:
 <programlisting>
