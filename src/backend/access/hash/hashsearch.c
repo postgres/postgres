@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/hash/hashsearch.c,v 1.9 1997/04/30 06:31:16 vadim Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/hash/hashsearch.c,v 1.10 1997/06/28 05:45:40 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -227,7 +227,11 @@ _hash_first(IndexScanDesc scan, ScanDirection dir)
 	     * tuples from all buckets.	- vadim 04/29/97
 	     */
 	    if ( scan->numberOfKeys >= 1 )
+	    {
+	    	_hash_relbuf(rel, buf, HASH_READ);
+	    	_hash_relbuf(rel, metabuf, HASH_READ);
 	    	return ((RetrieveIndexResult) NULL);
+	    }
 	}
     }
     if (ScanDirectionIsBackward(dir)) {
