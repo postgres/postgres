@@ -9,7 +9,7 @@
  * Copyright (c) 2003, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/AbstractJdbc1ResultSet.java,v 1.22.2.4 2004/06/21 03:11:37 jurka Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/AbstractJdbc1ResultSet.java,v 1.22.2.5 2005/01/13 14:22:23 jurka Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1157,14 +1157,18 @@ public abstract class AbstractJdbc1ResultSet implements BaseResultSet
 			}
 			else
 			{
-				if (slen == 8 && s.equals("infinity"))
+				if (slen == 8 && s.equals("infinity")) {
 					//java doesn't have a concept of postgres's infinity
 					//so set to an arbitrary future date
-					s = "9999-01-01";
-				if (slen == 9 && s.equals("-infinity"))
+					l_sbuf.setLength(0);
+					l_sbuf.append("9999-01-01");
+				}
+				else if (slen == 9 && s.equals("-infinity")) {
 					//java doesn't have a concept of postgres's infinity
 					//so set to an arbitrary old date
-					s = "0001-01-01";
+					l_sbuf.setLength(0);
+					l_sbuf.append("0001-01-01");
+				}
 
 				// We must just have a date. This case is
 				// needed if this method is called on a date
