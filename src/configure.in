@@ -720,6 +720,16 @@ AC_CHECK_FUNC(vsnprintf,
 	      AC_DEFINE(HAVE_VSNPRINTF),
 	      SNPRINTF='snprintf.o')
 AC_SUBST(SNPRINTF)
+dnl Check whether <stdio.h> declares snprintf() and vsnprintf(); if not,
+dnl include/c.h will provide declarations.  Note this is a separate test
+dnl from whether the functions exist in the C library --- there are systems
+dnl that have the functions but don't bother to declare them :-(
+dnl Note: simple-minded pattern here will do wrong thing if stdio.h
+dnl declares vsnprintf() but not snprintf().  Hopefully there are no
+dnl systems that are *that* brain-damaged...
+AC_EGREP_HEADER(snprintf, stdio.h, AC_DEFINE(HAVE_SNPRINTF_DECL))
+AC_EGREP_HEADER(vsnprintf, stdio.h, AC_DEFINE(HAVE_VSNPRINTF_DECL))
+dnl
 dnl do this one the hard way in case isinf() is a macro
 AC_MSG_CHECKING(for isinf)
 AC_CACHE_VAL(ac_cv_func_or_macro_isinf,

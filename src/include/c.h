@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: c.h,v 1.61 1999/07/17 20:18:25 momjian Exp $
+ * $Id: c.h,v 1.62 1999/12/20 00:51:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -789,11 +789,11 @@ extern char *vararg_format(const char *fmt,...);
  * in config.h we haven't yet included anything that defines size_t...
  */
 
-#ifndef HAVE_SNPRINTF
+#ifndef HAVE_SNPRINTF_DECL
 extern int	snprintf(char *str, size_t count, const char *fmt,...);
 #endif
 
-#ifndef HAVE_VSNPRINTF
+#ifndef HAVE_VSNPRINTF_DECL
 extern int	vsnprintf(char *str, size_t count, const char *fmt, va_list args);
 #endif
 
