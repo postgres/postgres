@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Tue Aug 21 07:07:42 EDT 2001
+Last updated:		Thu Aug 23 10:41:58 EDT 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -50,7 +50,7 @@ ADMIN
 * -Remove unreferenced sort files during postmaster startup (Bruce)
 * Add table name mapping for numeric file names
 * -Better document pg_hba.conf host-based authentication (Bruce)
-* Encrpyt passwords in pg_shadow table using MD5 (Bruce, Vince)
+* -Encrpyt passwords in pg_shadow table using MD5 (Bruce, Vince)
 * Incremental backups
 * Make it easier to create a database owned by someone who can't createdb
 
@@ -309,7 +309,7 @@ MISCELLANEOUS
 * Make blind writes go through the file descriptor cache
 * Allow logging of query durations
 * Add hash for evaluating GROUP BY aggregates
-* Read pg_hba.conf only on postmaster startup or SIGHUP (Bruce)
+* -Read pg_hba.conf only on postmaster startup or SIGHUP (Bruce)
 * Improve spinlock code, perhaps with OS semaphores, sleeper queue, or
   spining to obtain lock on multi-cpu systems
 * Add queue of backends waiting for spinlock
