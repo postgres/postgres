@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/client-auth.sgml,v 1.71 2005/01/23 00:30:18 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/client-auth.sgml,v 1.72 2005/01/28 22:38:37 tgl Exp $
 -->
 
 <chapter id="client-authentication">
@@ -709,7 +709,7 @@ local   db1,db2,@demodbs  all                         md5
 
    <para>
     The ident authentication method works by obtaining the client's
-    operating system user name and determining the allowed database
+    operating system user name, then determining the allowed database
     user names using a map file that lists the permitted
     corresponding pairs of names.  The determination of the client's
     user name is the security-critical point, and it works differently
@@ -751,6 +751,15 @@ local   db1,db2,@demodbs  all                         md5
       or access control protocol.
      </para>
     </blockquote>
+   </para>
+
+   <para>
+    Some ident servers have a nonstandard option that causes the returned
+    user name to be encrypted, using a key that only the originating
+    machine's administrator knows.  This option <emphasis>must not</> be
+    used when using the ident server with <productname>PostgreSQL</>,
+    since <productname>PostgreSQL</> does not have any way to decrypt the
+    returned string to determine the actual user name.
    </para>
    </sect3>
 
