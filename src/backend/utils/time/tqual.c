@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/time/tqual.c,v 1.27 1999/04/05 10:55:49 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/time/tqual.c,v 1.28 1999/04/12 16:57:27 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -422,15 +422,19 @@ HeapTupleSatisfiesDirty(HeapTupleHeader tuple)
 				tuple->t_infomask |= HEAP_XMIN_INVALID;
 				return false;
 			}
+			tuple->t_infomask |= HEAP_XMIN_COMMITTED;
 		}
 		else if (tuple->t_infomask & HEAP_MOVED_IN)
 		{
-			if (TransactionIdIsCurrentTransactionId((TransactionId)tuple->t_cmin))
-				return true;
-			if (!TransactionIdDidCommit((TransactionId)tuple->t_cmin))
+			if (!TransactionIdIsCurrentTransactionId((TransactionId)tuple->t_cmin))
 			{
-				tuple->t_infomask |= HEAP_XMIN_INVALID;
-				return false;
+				if (TransactionIdDidCommit((TransactionId)tuple->t_cmin))
+					tuple->t_infomask |= HEAP_XMIN_COMMITTED;
+				else
+				{
+					tuple->t_infomask |= HEAP_XMIN_INVALID;
+					return false;
+				}
 			}
 		}
 		else if (TransactionIdIsCurrentTransactionId(tuple->t_xmin))
@@ -455,7 +459,8 @@ HeapTupleSatisfiesDirty(HeapTupleHeader tuple)
 			SnapshotDirty->xmin = tuple->t_xmin;
 			return true;						/* in insertion by other */
 		}
-		tuple->t_infomask |= HEAP_XMIN_COMMITTED;
+		else
+			tuple->t_infomask |= HEAP_XMIN_COMMITTED;
 	}
 
 	/* by here, the inserting transaction has committed */
