@@ -14,7 +14,7 @@
   alink="#0000ff">
     <H1>Frequently Asked Questions (FAQ) for PostgreSQL</H1>
 
-    <P>Last updated: Thu Apr 18 00:44:51 EDT 2002</P>
+    <P>Last updated: Fri Apr 26 23:03:46 EDT 2002</P>
 
     <P>Current maintainer: Bruce Momjian (<A href=
     "mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</A>)<BR>
@@ -827,11 +827,14 @@
     <P>We do not support <SMALL>ALTER TABLE DROP COLUMN,</SMALL> but do
     this:</P>
 <PRE>
+    BEGIN;
+    LOCK TABLE old_table;
     SELECT ...  -- select all columns but the one you want to remove
     INTO TABLE new_table
     FROM old_table;
     DROP TABLE old_table;
     ALTER TABLE new_table RENAME TO old_table;
+    COMMIT;
 </PRE>
 
     <H4><A name="4.5">4.5</A>) What is the maximum size for a row, a

@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Thu Apr 18 00:44:51 EDT 2002
+   Last updated: Fri Apr 26 23:03:46 EDT 2002
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -637,11 +637,14 @@
     4.4) How do you remove a column from a table?
     
    We do not support ALTER TABLE DROP COLUMN, but do this:
+    BEGIN;
+    LOCK TABLE old_table;
     SELECT ...  -- select all columns but the one you want to remove
     INTO TABLE new_table
     FROM old_table;
     DROP TABLE old_table;
     ALTER TABLE new_table RENAME TO old_table;
+    COMMIT;
 
     4.5) What is the maximum size for a row, a table, and a database?
     
