@@ -259,7 +259,7 @@ AC_SUBST(enable_rpath)
 #
 PGAC_ARG_BOOL(enable, debug, no,
               [  --enable-debug          build with debugging symbols (-g)])
-
+AC_SUBST(enable_debug)
 
 #
 # C compiler
