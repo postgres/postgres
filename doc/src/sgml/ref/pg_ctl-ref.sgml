@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_ctl-ref.sgml,v 1.12 2001/12/08 03:24:37 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_ctl-ref.sgml,v 1.13 2002/03/22 19:20:41 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -76,7 +76,7 @@ PostgreSQL documentation
    stopping, or restarting <xref linkend="app-postmaster">, the
    <productname>PostgreSQL</productname> backend server, or displaying
    the status of a running postmaster.  Although the postmaster can be
-   started manually, <application>pg_ctl</application> encapulates
+   started manually, <application>pg_ctl</application> encapsulates
    tasks such as redirecting log output, properly detaching from the
    terminal and process group, and it provides convenient options for
    controlled shutdown.
@@ -190,7 +190,7 @@ PostgreSQL documentation
        <para>
 	Specifies the location of the <filename>postmaster</filename>
 	executable.  By default the postmaster is taken from the same
-	directory as pg_ctl, or failing that, the hard-wired
+	directory as <command>pg_ctl</>, or failing that, the hard-wired
 	installation directory.  It is not necessary to use this
 	option unless you are doing something unusual and get errors
 	that the postmaster was not found.
@@ -291,7 +291,7 @@ PostgreSQL documentation
    <para>
     This is almost equivalent to stopping the
     <application>postmaster</application> and starting it again
-    except that pg_ctl saves and reuses the command line options that
+    except that <command>pg_ctl</command> saves and reuses the command line options that
     were passed to the previously running instance.  To restart
     the <application>postmaster</application> in the simplest form:
 <screen>
@@ -308,7 +308,7 @@ PostgreSQL documentation
    </para>
 
    <para>
-    To restart using port 5433 and disabling fsync after restarting:
+    To restart using port 5433 and disabling <function>fsync</> after restarting:
 <screen>
 <prompt>$</prompt> <userinput>pg_ctl -o "-F -p 5433" restart</userinput>
 </screen>

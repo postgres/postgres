@@ -1173,7 +1173,7 @@ pg_lo_creat <REPLACEABLE CLASS="PARAMETER">conn</REPLACEABLE> <REPLACEABLE CLASS
 </TERM>
 <LISTITEM>
 <PARA>
-The oid of the large object created.
+The OID of the large object created.
 </PARA>
 </LISTITEM>
 </VARLISTENTRY>
@@ -1247,7 +1247,7 @@ pg_lo_open <REPLACEABLE CLASS="PARAMETER">conn</REPLACEABLE> <REPLACEABLE CLASS=
   <REPLACEABLE CLASS="PARAMETER">objOid</REPLACEABLE>
 </TERM>
 <LISTITEM>
-<PARA>Specifies a valid large object oid.
+<PARA>Specifies a valid large object OID.
 </PARA>
 </LISTITEM>
 </VARLISTENTRY>

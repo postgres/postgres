@@ -1,9 +1,9 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.108 2002/03/11 05:03:51 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.109 2002/03/22 19:20:28 petere Exp $
 -->
 
 <Chapter Id="runtime">
- <Title>Server Runtime Environment</Title>
+ <Title>Server Run-time Environment</Title>
 
  <Para>
   This chapter discusses how to set up and run the database server
@@ -467,7 +467,7 @@ psql: could not connect to server: Connection refused
 
    <para>
     All parameter names are case-insensitive. Every parameter takes a
-    value of one of the four types: boolean, integer, floating point,
+    value of one of the four types: Boolean, integer, floating point,
     and string. Boolean values are <literal>ON</literal>,
     <literal>OFF</literal>, <literal>TRUE</literal>,
     <literal>FALSE</literal>, <literal>YES</literal>,

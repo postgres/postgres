@@ -175,7 +175,7 @@ CREATE TYPE complex (
    <primary>TOAST</primary>
    <secondary>and user-defined types</secondary>
   </indexterm>
-  If the values of your datatype might exceed a few hundred bytes in
+  If the values of your data type might exceed a few hundred bytes in
   size (in internal form), you should be careful to mark them
   TOAST-able.  To do this, the internal representation must follow the
   standard layout for variable-length data: the first four bytes must

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/select.sgml,v 1.51 2001/12/08 03:24:39 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/select.sgml,v 1.52 2002/03/22 19:20:45 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -91,7 +91,7 @@ where <replaceable class="PARAMETER">from_item</replaceable> can be:
       <term><replaceable class="PARAMETER">condition</replaceable></term>
       <listitem>
        <para>
-	A boolean expression giving a result of true or false.
+	A Boolean expression giving a result of true or false.
 	See the WHERE and HAVING clause descriptions below.
        </para>
       </listitem>
@@ -368,7 +368,7 @@ where <replaceable class="PARAMETER">from_item</replaceable> can be:
     <Productname>PostgreSQL</Productname> 7.1,
     this was the default result, and adding sub-tables was done
     by appending <command>*</command> to the table name.
-    This old behaviour is available via the command 
+    This old behavior is available via the command 
     <command>SET SQL_Inheritance TO OFF;</command>
    </para>
 
@@ -449,7 +449,7 @@ WHERE <replaceable class="PARAMETER">boolean_expr</replaceable>
     </synopsis>
     
     <replaceable class="PARAMETER">boolean_expr</replaceable>
-    can consist of any expression which evaluates to a boolean value.
+    can consist of any expression which evaluates to a Boolean value.
     In many cases, this expression will be:
 
     <synopsis>

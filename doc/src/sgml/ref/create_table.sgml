@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_table.sgml,v 1.52 2002/01/20 22:19:56 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_table.sgml,v 1.53 2002/03/22 19:20:40 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -520,7 +520,7 @@ and <replaceable class="PARAMETER">table_constraint</replaceable> is:
       accompanied by some descriptive text, such as:
       <computeroutput>ERROR: Relation '<replaceable
       class="parameter">table</replaceable>' already
-      exists</computeroutput>, which occurs at runtime if the table
+      exists</computeroutput>, which occurs at run time if the table
       specified already exists in the database.
      </para>
     </msgexplan>

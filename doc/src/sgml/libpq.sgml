@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/libpq.sgml,v 1.89 2002/03/11 05:03:51 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/libpq.sgml,v 1.90 2002/03/22 19:20:13 petere Exp $
 -->
 
  <chapter id="libpq">
@@ -2056,7 +2056,7 @@ used if Kerberos authentication is selected by the backend.
 </listitem>
 <listitem>
 <para>
-<envar>PGOPTIONS</envar> sets additional runtime  options  for  
+<envar>PGOPTIONS</envar> sets additional run-time  options  for  
 the <productname>PostgreSQL</productname> backend.
 </para>
 </listitem>

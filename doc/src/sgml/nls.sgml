@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/nls.sgml,v 1.3 2002/01/20 22:19:56 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/nls.sgml,v 1.4 2002/03/22 19:20:15 petere Exp $ -->
 
 <chapter id="nls">
  <docinfo>
@@ -141,7 +141,7 @@ msgstr "another translated"
    <title>Creating and maintaining message catalogs</title>
 
    <para>
-    Okay, so how does one create a <quote>blank</quote> message
+    OK, so how does one create a <quote>blank</quote> message
     catalog?  First, go into the directory that contains the program
     whose messages you want to translate.  If there is a file
     <filename>nls.mk</filename>, then this program has been prepared
@@ -312,7 +312,7 @@ msgstr "Die Datei %2$s hat %1$u Zeichen."
 
    <step>
     <para>
-     Insert this code into the startup sequence of the program:
+     Insert this code into the start-up sequence of the program:
 <programlisting>
 #ifdef ENABLE_NLS
 #include &lt;locale.h&gt;
@@ -473,7 +473,7 @@ printf("number of copied files: %d", n);
      <para>
       If you want to communicate something to the translator, such as
       about how a message is intended to line up with other output,
-      precede the occurrance of the string with a comment that starts
+      precede the occurrence of the string with a comment that starts
       with <literal>translator</literal>, e.g.,
 <programlisting>
 /* translator: This message is not what it seems to be. */

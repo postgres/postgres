@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_dump.sgml,v 1.42 2002/02/11 00:14:10 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_dump.sgml,v 1.43 2002/03/22 19:20:42 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -138,8 +138,8 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term>-a</term>
-      <term>--data-only</term>
+      <term><option>-a</></term>
+      <term><option>--data-only</></term>
       <listitem>
        <para>
 	Dump only the data, not the schema (data definitions).
@@ -154,8 +154,8 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term>-b</term>
-      <term>--blobs</term>
+      <term><option>-b</></term>
+      <term><option>--blobs</></term>
       <listitem>
        <para>
  	Include large objects in dump.
@@ -164,8 +164,8 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term>-c</term>
-      <term>--clean</term>
+      <term><option>-c</option></term>
+      <term><option>--clean</option></term>
       <listitem>
        <para>
         Output commands to clean (drop)
@@ -181,8 +181,8 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term>-C</term>
-      <term>--create</term>
+      <term><option>-C</></term>
+      <term><option>--create</></term>
       <listitem>
        <para>
 	Begin the output with a command to create the
@@ -200,8 +200,8 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term>-d</term>
-      <term>--inserts</term>
+      <term><option>-d</option></term>
+      <term><option>--inserts</option></term>
       <listitem>
        <para>
 	Dump data as <command>INSERT</command> commands (rather
@@ -213,9 +213,9 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term>-D</term>
-      <term>--column-inserts</term>
-      <term>--attribute-inserts</term>
+      <term><option>-D</option></term>
+      <term><option>--column-inserts</option></term>
+      <term><option>--attribute-inserts</option></term>
       <listitem>
        <para>
 	Dump data as <command>INSERT</command> commands with explicit
@@ -229,8 +229,8 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term>-f <replaceable class="parameter">file</replaceable></term>
-      <term>--file=<replaceable class="parameter">file</replaceable></term>
+      <term><option>-f <replaceable class="parameter">file</replaceable></option></term>
+      <term><option>--file=<replaceable class="parameter">file</replaceable></option></term>
       <listitem>
        <para>
 	Send output to the specified file.  If this is omitted, the
@@ -240,8 +240,8 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term>-F <replaceable class="parameter">format</replaceable></term>
-      <term>--format=<replaceable class="parameter">format</replaceable></term>
+      <term><option>-F <replaceable class="parameter">format</replaceable></option></term>
+      <term><option>--format=<replaceable class="parameter">format</replaceable></option></term>
       <listitem>
        <para>
         Selects the format of the output.
@@ -289,8 +289,8 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term>-i</term>
-      <term>--ignore-version</term>
+      <term><option>-i</></term>
+      <term><option>--ignore-version</></term>
       <listitem>
        <para>
         Ignore version mismatch between <command>pg_dump</command>
@@ -306,8 +306,8 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term>-n</term>
-      <term>--no-quotes</term>
+      <term><option>-n</></term>
+      <term><option>--no-quotes</></term>
       <listitem>
        <para>
 	Suppress double quotes around identifiers unless absolutely necessary.
@@ -320,8 +320,8 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term>-N</term>
-      <term>--quotes</term>
+      <term><option>-N</></term>
+      <term><option>--quotes</></term>
       <listitem>
        <para>
 	Include double quotes around identifiers.
@@ -331,8 +331,8 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term>-o</term>
-      <term>--oids</term>
+      <term><option>-o</></term>
+      <term><option>--oids</></term>
       <listitem>
        <para>
 	Dump object identifiers (<acronym>OID</acronym>s) for every
@@ -344,8 +344,8 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term>-O</term>
-      <term>--no-owner</term>
+      <term><option>-O</></term>
+      <term><option>--no-owner</option></term>
       <listitem>
        <para>
         Do not output commands to set the
@@ -369,8 +369,8 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term>-R</term>
-      <term>--no-reconnect</term>
+      <term><option>-R</option></term>
+      <term><option>--no-reconnect</option></term>
       <listitem>
        <para>
 	Prohibit <command>pg_dump</command>
@@ -399,8 +399,8 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term>-s</term>
-      <term>--schema-only</term>
+      <term><option>-s</option></term>
+      <term><option>--schema-only</option></term>
       <listitem>
        <para>
 	Dump only the schema (data definitions), no data.
@@ -409,8 +409,8 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term>-S <replaceable class="parameter">username</replaceable></term>
-      <term>--superuser=<replaceable class="parameter">username</replaceable></term>
+      <term><option>-S <replaceable class="parameter">username</replaceable></option></term>
+      <term><option>--superuser=<replaceable class="parameter">username</replaceable></option></term>
       <listitem>
        <para>
         The scripts or archives created by <command>pg_dump</command>
@@ -422,8 +422,8 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term>-t <replaceable class="parameter">table</replaceable></term>
-      <term>--table=<replaceable class="parameter">table</replaceable></term>
+      <term><option>-t <replaceable class="parameter">table</replaceable></option></term>
+      <term><option>--table=<replaceable class="parameter">table</replaceable></option></term>
       <listitem>
        <para>
 	Dump data for <replaceable class="parameter">table</replaceable> only.
@@ -432,8 +432,8 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term>-v</term>
-      <term>--verbose</term>
+      <term><option>-v</></term>
+      <term><option>--verbose</></term>
       <listitem>
        <para>
 	Specifies verbose mode.
@@ -442,9 +442,9 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term>-x</term>
-      <term>--no-privileges</term>
-      <term>--no-acl</term>
+      <term><option>-x</></term>
+      <term><option>--no-privileges</></term>
+      <term><option>--no-acl</></term>
       <listitem>
        <para>
 	Prevent dumping of access privileges (grant/revoke commands).
@@ -453,8 +453,8 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term>-X use-set-session-authorization</term>
-      <term>--use-set-session-authorization</term>
+      <term><option>-X use-set-session-authorization</></term>
+      <term><option>--use-set-session-authorization</></term>
       <listitem>
        <para>
         Normally, if a (plain-text mode) script generated by
@@ -488,8 +488,8 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term>-Z <replaceable class="parameter">0..9</replaceable></term>
-      <term>--compress=<replaceable class="parameter">0..9</replaceable></term>
+      <term><option>-Z <replaceable class="parameter">0..9</replaceable></option></term>
+      <term><option>--compress=<replaceable class="parameter">0..9</replaceable></option></term>
       <listitem>
        <para>
 	Specify the compression level to use in archive formats that support 
@@ -507,8 +507,8 @@ PostgreSQL documentation
 
     <variablelist>
      <varlistentry>
-      <term>-h <replaceable class="parameter">host</replaceable></term>
-      <term>--host=<replaceable class="parameter">host</replaceable></term>
+      <term><option>-h <replaceable class="parameter">host</replaceable></option></term>
+      <term><option>--host=<replaceable class="parameter">host</replaceable></option></term>
       <listitem>
        <para>
 	Specifies the host name of the machine on which the 
@@ -520,8 +520,8 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term>-p <replaceable class="parameter">port</replaceable></term>
-      <term>--port=<replaceable class="parameter">port</replaceable></term>
+      <term><option>-p <replaceable class="parameter">port</replaceable></option></term>
+      <term><option>--port=<replaceable class="parameter">port</replaceable></option></term>
       <listitem>
        <para>
 	Specifies the Internet TCP/IP port or local Unix domain socket file 
@@ -534,7 +534,7 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term>-U <replaceable>username</replaceable></term>
+      <term><option>-U <replaceable>username</replaceable></option></term>
       <listitem>
        <para>
         Connect as the given user.
@@ -543,7 +543,7 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term>-W</term>
+      <term><option>-W</option></term>
       <listitem>
        <para>
         Force a password prompt.  This should happen automatically if

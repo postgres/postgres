@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/jdbc.sgml,v 1.35 2002/01/20 22:19:56 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/jdbc.sgml,v 1.36 2002/03/22 19:20:11 petere Exp $
 -->
 
  <chapter id="jdbc">
@@ -1210,7 +1210,7 @@ public void addFunctions(ResultSet rs) throws SQLException
         </para>
 
         <para>
-         Do not think that manually converting them to the oid's will
+         Do not think that manually converting them to the OIDs will
          work. OK, they will for now, but they can change during
          development (there was some discussion about this for V7.0),
          so this is implemented to prevent any unwarranted headaches
@@ -2505,7 +2505,7 @@ public void unlink(int oid) throws SQLException
 
 
  <sect1 id="jdbc-thread">
-  <title>Using the driver in a multi-threaded or a servlet environment</title>
+  <title>Using the driver in a multithreaded or a servlet environment</title>
 
   <para>
    A problem with many <acronym>JDBC</acronym> drivers is that only

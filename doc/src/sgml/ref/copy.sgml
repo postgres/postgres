@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/copy.sgml,v 1.28 2002/02/12 21:25:34 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/copy.sgml,v 1.29 2002/03/22 19:20:37 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -279,7 +279,7 @@ ERROR: <replaceable>reason</replaceable>
    </para>
 
    <para>
-    It is recommended that the filename used in <command>COPY</command>
+    It is recommended that the file name used in <command>COPY</command>
     always be specified as an absolute path.  This is enforced by the backend
     in the case of <command>COPY TO</command>, but for <command>COPY
     FROM</command> you do have the option of reading from a file specified

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/libpq++.sgml,v 1.40 2002/01/07 02:29:12 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/libpq++.sgml,v 1.41 2002/03/22 19:20:12 petere Exp $
 -->
 
  <chapter id="libpqplusplus">
@@ -139,7 +139,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/libpq++.sgml,v 1.40 2002/01/07 02:29:
       </listitem>
       <listitem>
        <para>
-	<envar>PGOPTIONS</envar> sets additional runtime  options  for  
+	<envar>PGOPTIONS</envar> sets additional run-time  options  for  
 	the <productname>PostgreSQL</productname> backend.
        </para>
       </listitem>

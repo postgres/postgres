@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/explain.sgml,v 1.15 2002/03/06 06:48:04 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/explain.sgml,v 1.16 2002/03/22 19:20:40 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -41,7 +41,7 @@ EXPLAIN [ ANALYZE ] [ VERBOSE ] <replaceable class="PARAMETER">query</replaceabl
       <term>ANALYZE</term>
       <listitem>
        <para>
-	Flag to carry out the query and show actual runtimes.
+	Flag to carry out the query and show actual run times.
        </para>
       </listitem>
      </varlistentry>

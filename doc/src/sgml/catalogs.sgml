@@ -1,6 +1,6 @@
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
- $Header: /cvsroot/pgsql/doc/src/sgml/catalogs.sgml,v 2.35 2002/03/20 19:43:24 tgl Exp $
+ $Header: /cvsroot/pgsql/doc/src/sgml/catalogs.sgml,v 2.36 2002/03/22 19:20:03 petere Exp $
  -->
 
 <chapter id="catalogs">
@@ -222,7 +222,7 @@
       <entry>aggbasetype</entry>
       <entry><type>oid</type></entry>
       <entry>pg_type.oid</entry>
-      <entry>The input datatype for this aggregate function</entry>
+      <entry>The input data type for this aggregate function</entry>
      </row>
      <row>
       <entry>aggtranstype</entry>
@@ -386,8 +386,8 @@
        of statistics accumulated for this column by
        <command>ANALYZE</command>.
        A zero value indicates that no statistics should be collected.
-       The exact meaning of positive values is datatype-dependent.
-       For scalar datatypes, <structfield>attstattarget</structfield>
+       The exact meaning of positive values is data type-dependent.
+       For scalar data types, <structfield>attstattarget</structfield>
        is both the target number of <quote>most common values</quote>
        to collect, and the target number of histogram bins to create.
       </entry>
@@ -533,7 +533,7 @@
   <title>pg_class</title>
 
   <para>
-   <structname>pg_class</structname> catalogues tables and mostly
+   <structname>pg_class</structname> catalogs tables and mostly
    everything else that has columns or is otherwise similar to a
    table.  This includes indexes (but see also
    <structname>pg_index</structname>), sequences, views, and some
@@ -584,7 +584,7 @@
       <entry>relam</entry>
       <entry><type>oid</type></entry>
       <entry>pg_am.oid</entry>
-      <entry>If this is an index, the access method used (btree, hash, etc.)</entry>
+      <entry>If this is an index, the access method used (B-tree, hash, etc.)</entry>
      </row>
 
      <row>
@@ -624,7 +624,7 @@
       <entry><type>oid</type></entry>
       <entry>pg_class.oid</entry>
       <entry>
-       Oid of the TOAST table associated with this table, 0 if none.
+       OID of the TOAST table associated with this table, 0 if none.
        The TOAST table stores large attributes <quote>out of
        line</quote> in a secondary table.
       </entry>
@@ -909,7 +909,7 @@
    The pg_description table can store an optional description or
    comment for each database object.  Descriptions can be manipulated
    with the <command>COMMENT</command> command.  Client applications
-   can view the descriptions by joining with this table.  Many builtin
+   can view the descriptions by joining with this table.  Many built-in
    system objects have comments associated with them that are shown by
    <application>psql</application>'s <literal>\d</literal> commands.
   </para>
@@ -1648,7 +1648,7 @@
       <entry><type>bool</type></entry>
       <entry></entry>
       <entry>Function returns a set (ie, multiple values of the specified
-      datatype)</entry>
+      data type)</entry>
      </row>
 
      <row>
@@ -2128,7 +2128,7 @@
       <entry></entry>
       <entry>Column data values of the appropriate kind for the Nth
       <quote>slot</quote>, or NULL if the slot kind does not store any data values.
-      For datatype independence, all column data values are converted
+      For data-type independence, all column data values are converted
       to external textual form and stored as TEXT datums.
       </entry>
      </row>
@@ -2271,7 +2271,7 @@
   <title>pg_type</title>
 
   <para>
-   This catalog stores information about datatypes.  Scalar types
+   This catalog stores information about data types.  Scalar types
    (<quote>base types</>) are created with <command>CREATE TYPE</command>.
    A complex type is also created for each table in the database, to
    represent the row structure of the table.  It is also possible to create
@@ -2369,7 +2369,7 @@
       <entry></entry>
       <entry>Character that separates two values of this type when parsing
       array input.  Note that the delimiter is associated with the array
-      element datatype, not the array datatype.</entry>
+      element data type, not the array data type.</entry>
      </row>
 
      <row>
@@ -2402,7 +2402,7 @@
        <type>name</type> and <type>oidvector</type>.
        If a fixed-length type has a <structfield>typelem</structfield> then
        its internal representation must be N values of the
-       <structfield>typelem</structfield> datatype with no other data.
+       <structfield>typelem</structfield> data type with no other data.
        Variable-length array types have a header defined by the array
        subroutines.
       </entry>

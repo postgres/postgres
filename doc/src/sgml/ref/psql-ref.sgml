@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.65 2002/03/20 19:43:30 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.66 2002/03/22 19:20:44 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -66,7 +66,7 @@ PostgreSQL documentation
     <para>
     <application>psql</application> is a regular <productname>PostgreSQL</productname>
     client application. In order to connect to a database you need to know the
-    name of your target database, the hostname and port number of the server
+    name of your target database, the host name and port number of the server
     and what user name you want to connect as. <application>psql</application> can be
     told about those parameters via command line options, namely <option>-d</option>,
     <option>-h</option>, <option>-p</option>, and <option>-U</option> respectively.
@@ -77,9 +77,9 @@ PostgreSQL documentation
     to a server on the
     local host. The default port number is compile-time determined. Since the database
     server uses the same default, you will not have to specify the port in most
-    cases. The default user name is your Unix username, as is the default
+    cases. The default user name is your Unix user name, as is the default
     database name.
-    Note that you can't just connect to any database under any username. Your database
+    Note that you can't just connect to any database under any user name. Your database
     administrator should have informed you about your access rights. To save you some typing
     you can also set the environment variables <envar>PGDATABASE</envar>,
     <envar>PGHOST</envar>, <envar>PGPORT</envar> and <envar>PGUSER</envar>
@@ -270,7 +270,7 @@ testdb=>
 	</para>
 
 	<para>
-	If the connection attempt failed (wrong username, access denied, etc.), the
+	If the connection attempt failed (wrong user name, access denied, etc.), the
 	previous connection will be kept if and only if <application>psql</application> is
 	in interactive mode. When executing a non-interactive script, processing
 	will immediately stop with an error. This distinction was chosen as a user
@@ -1701,7 +1701,7 @@ bar
     <application>psql</application>'s internal variable names can consist of
     letters, numbers, and underscores in any order and any number of them.
     A number of regular variables are treated specially by <application>psql</application>.
-    They indicate certain option settings that can be changed at runtime
+    They indicate certain option settings that can be changed at run time
     by altering the value of the variable or represent some state of the application.
     Although you can use these
     variables for any other purpose, this is not recommended, as the
@@ -2037,7 +2037,7 @@ testdb=> <userinput>\set content '\'' `sed -e "s/'/\\\\\\'/g" < my_file.txt` '\'
         <term><literal>%M</literal></term>
 	<listitem>
          <para>
-          The full hostname (with domain name) of the database server,
+          The full host name (with domain name) of the database server,
           or <literal>[local]</literal> if the connection is over a
           Unix domain socket, or
           <literal>[local:<replaceable>/dir/name</replaceable>]</literal>,
@@ -2051,7 +2051,7 @@ testdb=> <userinput>\set content '\'' `sed -e "s/'/\\\\\\'/g" < my_file.txt` '\'
         <term><literal>%m</literal></term>
 	<listitem>
          <para>
-          The hostname of the database server, truncated after the
+          The host name of the database server, truncated after the
           first dot, or <literal>[local]</literal> if the connection
           is over a Unix domain socket.
          </para>
@@ -2065,7 +2065,7 @@ testdb=> <userinput>\set content '\'' `sed -e "s/'/\\\\\\'/g" < my_file.txt` '\'
 
       <varlistentry>
         <term><literal>%n</literal></term>
-	<listitem><para>The username you are connected as (not your local system
+	<listitem><para>The user name you are connected as (not your local system
          user name).</para></listitem>
       </varlistentry>
 

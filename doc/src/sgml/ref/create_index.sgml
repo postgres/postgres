@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_index.sgml,v 1.26 2002/01/20 22:19:56 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_index.sgml,v 1.27 2002/03/22 19:20:38 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -82,7 +82,7 @@ CREATE [ UNIQUE ] INDEX <replaceable class="parameter">index_name</replaceable> 
 
 	<variablelist>
 	 <varlistentry>
-	  <term>BTREE</term>
+	  <term><literal>BTREE</></term>
 	  <listitem>
 	   <para>
 	    an implementation of Lehman-Yao
@@ -92,7 +92,7 @@ CREATE [ UNIQUE ] INDEX <replaceable class="parameter">index_name</replaceable> 
 	 </varlistentry>
 
 	 <varlistentry>
-	  <term>RTREE</term>
+	  <term><literal>RTREE</></term>
 	  <listitem>
 	   <para>implements standard R-trees using Guttman's
 	    quadratic split algorithm.
@@ -101,7 +101,7 @@ CREATE [ UNIQUE ] INDEX <replaceable class="parameter">index_name</replaceable> 
 	 </varlistentry>
 
 	 <varlistentry>
-	  <term>HASH</term>
+	  <term><literal>HASH</></term>
 	  <listitem>
 	   <para>
 	    an implementation of Litwin's linear hashing.
@@ -110,7 +110,7 @@ CREATE [ UNIQUE ] INDEX <replaceable class="parameter">index_name</replaceable> 
 	 </varlistentry>
 
 	 <varlistentry>
-	  <term>GIST</term>
+	  <term><literal>GIST</></term>
 	  <listitem>
 	   <para>
 	    Generalized Index Search Trees.
@@ -270,11 +270,11 @@ ERROR: Cannot create index: 'index_name' already exists.
 
   <para>
    All functions and operators used in an index definition must be
-   <firstterm>cachable</>, that is, their results must depend only on
+   <firstterm>cacheable</>, that is, their results must depend only on
    their input arguments and never on any outside influence (such as
    the contents of another table or the current time).  This restriction
    ensures that the behavior of the index is well-defined.  To use a
-   user-defined function in an index, remember to mark the function cachable
+   user-defined function in an index, remember to mark the function cacheable
    when you create it.
   </para>
 
@@ -329,7 +329,7 @@ ERROR: Cannot create index: 'index_name' already exists.
    </para>
 
    <para>
-    Currently, only the B-tree and gist access methods support multi-column
+    Currently, only the B-tree and gist access methods support multicolumn
     indexes. Up to 16 keys may be specified by default (this limit
     can be altered when building
     <application>PostgreSQL</application>).  Only B-tree currently supports

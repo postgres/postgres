@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/perform.sgml,v 1.17 2002/03/06 06:44:31 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/perform.sgml,v 1.18 2002/03/22 19:20:17 petere Exp $
 -->
 
  <chapter id="performance-tips">
@@ -252,7 +252,7 @@ Hash Join  (cost=181.22..564.83 rows=49 width=296)
    <para>
     It is possible to check on the accuracy of the planner's estimated costs
     by using EXPLAIN ANALYZE.  This command actually executes the query,
-    and then displays the true runtime accumulated within each plan node
+    and then displays the true run time accumulated within each plan node
     along with the same estimated costs that a plain EXPLAIN shows.
     For example, we might get a result like this:
 
@@ -289,12 +289,12 @@ Total runtime: 30.67 msec
    </para>
 
    <para>
-    The <quote>total runtime</quote> shown by EXPLAIN ANALYZE includes
-    executor startup and shutdown time, as well as time spent processing
+    The <literal>Total runtime</literal> shown by <command>EXPLAIN ANALYZE</command> includes
+    executor start-up and shutdown time, as well as time spent processing
     the result tuples.  It does not include parsing, rewriting, or planning
-    time.  For a SELECT query, the total runtime will normally be just a
+    time.  For a SELECT query, the total run time will normally be just a
     little larger than the total time reported for the top-level plan node.
-    For INSERT, UPDATE, and DELETE queries, the total runtime may be
+    For INSERT, UPDATE, and DELETE queries, the total run time may be
     considerably larger, because it includes the time spent processing the
     output tuples.  In these queries, the time for the top plan node
     essentially is the time spent computing the new tuples and/or locating

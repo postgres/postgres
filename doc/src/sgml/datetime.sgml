@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/datetime.sgml,v 2.26 2002/01/20 22:19:55 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/datetime.sgml,v 2.27 2002/03/22 19:20:07 petere Exp $
 Date/time details
 -->
 
@@ -150,31 +150,31 @@ Date/time details
       </thead>
       <tbody>
        <row>
-	<entry>ABSTIME</entry>
+	<entry><literal>ABSTIME</literal></entry>
 	<entry>Keyword ignored</entry>
        </row>
        <row>
-	<entry>AM</entry>
+	<entry><literal>AM</literal></entry>
 	<entry>Time is before 12:00</entry>
        </row>
        <row>
-	<entry>AT</entry>
+	<entry><literal>AT</literal></entry>
 	<entry>Keyword ignored</entry>
        </row>
        <row>
-	<entry>JULIAN, JD, J</entry>
+	<entry><literal>JULIAN</>, <literal>JD</>, <literal>J</></entry>
 	<entry>Next field is Julian Day</entry>
        </row>
        <row>
-	<entry>ON</entry>
+	<entry><literal>ON</literal></entry>
 	<entry>Keyword ignored</entry>
        </row>
        <row>
-	<entry>PM</entry>
+	<entry><literal>PM</literal></entry>
 	<entry>Time is on or after after 12:00</entry>
        </row>
        <row>
-	<entry>T</entry>
+	<entry><literal>T</literal></entry>
 	<entry>Next field is time</entry>
        </row>
       </tbody>
@@ -186,7 +186,7 @@ Date/time details
     The keyword <literal>ABSTIME</literal> is ignored for historical
     reasons; in very old releases of
     <productname>PostgreSQL</productname> invalid <type>ABSTIME</type>
-    fields were emitted as <quote>Invalid Abstime</quote>. This is no
+    fields were emitted as <literal>Invalid Abstime</literal>. This is no
     longer the case however and this keyword will likely be dropped in
     a future release.
    </para>
@@ -753,7 +753,7 @@ Date/time details
    </para>
 
    <para>
-    If the runtime option <literal>AUSTRALIAN_TIMEZONES</literal> is set 
+    If the run-time option <literal>AUSTRALIAN_TIMEZONES</literal> is set 
     then <literal>CST</literal>, <literal>EST</literal>, and
     <literal>SAT</literal> will be
     interpreted as Australian timezone names.  Without this option,

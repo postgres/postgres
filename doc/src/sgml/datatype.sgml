@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.85 2002/03/05 06:14:45 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.86 2002/03/22 19:20:07 petere Exp $
 -->
 
  <chapter id="datatype">
@@ -1522,31 +1522,31 @@ SELECT b, char_length(b) FROM test2;
 	</thead>
 	<tbody>
 	 <row>
-	  <entry>04:05:06.789</entry>
+	  <entry><literal>04:05:06.789</literal></entry>
 	  <entry>ISO 8601</entry>
 	 </row>
 	 <row>
-	  <entry>04:05:06</entry>
+	  <entry><literal>04:05:06</literal></entry>
 	  <entry>ISO 8601</entry>
 	 </row>
 	 <row>
-	  <entry>04:05</entry>
+	  <entry><literal>04:05</literal></entry>
 	  <entry>ISO 8601</entry>
 	 </row>
 	 <row>
-	  <entry>040506</entry>
+	  <entry><literal>040506</literal></entry>
 	  <entry>ISO 8601</entry>
 	 </row>
 	 <row>
-	  <entry>04:05 AM</entry>
+	  <entry><literal>04:05 AM</literal></entry>
 	  <entry>Same as 04:05; AM does not affect value</entry>
 	 </row>
 	 <row>
-	  <entry>04:05 PM</entry>
+	  <entry><literal>04:05 PM</literal></entry>
 	  <entry>Same as 16:05; input hour must be <= 12</entry>
 	 </row>
 	 <row>
-	  <entry>allballs</entry>
+	  <entry><literal>allballs</literal></entry>
 	  <entry>Same as 00:00:00</entry>
 	 </row>
 	</tbody>
@@ -1811,39 +1811,39 @@ January 8 04:05:06 1999 PST
 	</thead>
 	<tbody>
 	 <row>
-	  <entry>epoch</entry>
+	  <entry><literal>epoch</literal></entry>
 	  <entry>1970-01-01 00:00:00+00 (Unix system time zero)</entry>
 	 </row>
 	 <row>
-	  <entry>infinity</entry>
+	  <entry><literal>infinity</literal></entry>
 	  <entry>Later than other valid times</entry>
 	 </row>
 	 <row>
-	  <entry>-infinity</entry>
+	  <entry><literal>-infinity</literal></entry>
 	  <entry>Earlier than other valid times</entry>
 	 </row>
 	 <row>
-	  <entry>invalid</entry>
+	  <entry><literal>invalid</literal></entry>
 	  <entry>Illegal entry</entry>
 	 </row>
 	 <row>
-	  <entry>now</entry>
+	  <entry><literal>now</literal></entry>
 	  <entry>Current transaction time</entry>
 	 </row>
 	 <row>
-	  <entry>today</entry>
+	  <entry><literal>today</literal></entry>
 	  <entry>Midnight today</entry>
 	 </row>
 	 <row>
-	  <entry>tomorrow</entry>
+	  <entry><literal>tomorrow</literal></entry>
 	  <entry>Midnight tomorrow</entry>
 	 </row>
 	 <row>
-	  <entry>yesterday</entry>
+	  <entry><literal>yesterday</literal></entry>
 	  <entry>Midnight yesterday</entry>
 	 </row>
 	 <row>
-	  <entry>zulu, allballs, z</entry>
+	  <entry><literal>zulu</>, <literal>allballs</>, <literal>z</></entry>
 	  <entry>00:00:00.00 GMT</entry>
 	 </row>
 	</tbody>
@@ -2083,7 +2083,7 @@ January 8 04:05:06 1999 PST
       </listitem>
       <listitem>
        <para>
-	The <envar>PGTZ</envar> environment variable, if set at the client, is used by libpq 
+	The <envar>PGTZ</envar> environment variable, if set at the client, is used by <application>libpq</application>
 	to send a <command>SET TIME ZONE</command> command to the backend upon
 	connection.
        </para>
@@ -2117,7 +2117,7 @@ January 8 04:05:06 1999 PST
 
      <note>
       <para>
-       If the runtime option <literal>AUSTRALIAN_TIMEZONES</literal> is set 
+       If the run-time option <literal>AUSTRALIAN_TIMEZONES</literal> is set 
        then <literal>CST</literal> and <literal>EST</literal> refer to
        Australian time zones, not American ones.
       </para>

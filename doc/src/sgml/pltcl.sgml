@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/pltcl.sgml,v 2.19 2002/03/06 19:05:58 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/pltcl.sgml,v 2.20 2002/03/22 19:20:21 petere Exp $
 -->
 
  <chapter id="pltcl">
@@ -120,7 +120,7 @@ CREATE FUNCTION tcl_max (integer, integer) RETURNS integer AS '
      if the actual value of an argument is NULL, the corresponding
      <literal>$n</literal> variable will be set to an empty string.
      To detect whether a particular argument is NULL, use the function
-     <literal>argisnull</>.  For example, suppose that we wanted tcl_max
+     <literal>argisnull</>.  For example, suppose that we wanted <function>tcl_max</function>
      with one null and one non-null argument to return the non-null
      argument, rather than NULL:
 

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/xfunc.sgml,v 1.50 2002/03/21 16:00:28 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/xfunc.sgml,v 1.51 2002/03/22 19:20:33 petere Exp $
 -->
 
  <chapter id="xfunc">
@@ -86,7 +86,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/xfunc.sgml,v 1.50 2002/03/21 16:00:28 tgl E
     <literal>SELECT</>.
     In the simple (non-set)
     case, the first row of the last query's result will be returned.
-    (Bear in mind that <quote>the first row</quote> of a multi-row
+    (Bear in mind that <quote>the first row</quote> of a multirow
     result is not well-defined unless you use <literal>ORDER BY</>.)
     If the last query happens
     to return no rows at all, NULL will be returned.
@@ -367,7 +367,6 @@ SELECT name(new_emp());
 ------
  None
 </screen>
-    </para>
 
 <programlisting>
 --
@@ -622,7 +621,7 @@ CREATE FUNCTION square_root(double precision) RETURNS double precision
      The user ID the <application>PostgreSQL</application> server runs
      as must be able to traverse the path to the file you intend to
      load.  Making the file or a higher-level directory not readable
-     and/or not executable by the <quote>postgres</quote> user is a
+     and/or not executable by the <systemitem>postgres</systemitem> user is a
      common mistake.
     </para>
    </note>
@@ -1169,7 +1168,7 @@ PG_FUNCTION_INFO_V1(funcname);
     <para>
      In a version-1 function, each actual argument is fetched using a
      <function>PG_GETARG_<replaceable>xxx</replaceable>()</function>
-     macro that corresponds to the argument's datatype, and the result
+     macro that corresponds to the argument's data type, and the result
      is returned using a
      <function>PG_RETURN_<replaceable>xxx</replaceable>()</function>
      macro for the return type.

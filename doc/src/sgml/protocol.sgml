@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/protocol.sgml,v 1.23 2001/11/22 01:22:10 tgl Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/protocol.sgml,v 1.24 2002/03/22 19:20:21 petere Exp $ -->
 
 <chapter id="protocol">
  <title>Frontend/Backend Protocol</title>
@@ -67,7 +67,7 @@
   <para>
    Packets are sent as a data stream.  The first byte determines what
    should be expected in the rest of the packet.  The exceptions are
-   packets sent as part of the startup and authentication exchange,
+   packets sent as part of the start-up and authentication exchange,
    which comprise a packet length followed by the packet itself.  The
    difference is historical.
   </para>

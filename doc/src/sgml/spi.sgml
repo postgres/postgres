@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/spi.sgml,v 1.21 2002/03/06 06:44:33 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/spi.sgml,v 1.22 2002/03/22 19:20:30 petere Exp $
 -->
 
 <Chapter id="spi">
@@ -536,10 +536,10 @@ You may pass multiple queries in one string or query string may be
 </Para>
 
 <Para>
-   vals is an array of pointers to tuples (the number of useful entries
-   is given by SPI_processed). TupleDesc tupdesc is
+   <structfield>vals</> is an array of pointers to tuples (the number of useful entries
+   is given by SPI_processed). <structfield>tupdesc</> is
    a tuple descriptor which you may pass to SPI functions dealing with
-   tuples.  tuptabcxt, alloced, and free are internal fields not intended
+   tuples.  <structfield>tuptabcxt</>, <structfield>alloced</>, and <structfield>free</> are internal fields not intended
    for use by SPI callers.
 </Para>
 
@@ -686,7 +686,7 @@ Pointer to an execution plan (parser+planner+optimizer)
 </para>
 </note>
 <PARA>
-   If the query uses parameters, their number and datatypes must be
+   If the query uses parameters, their number and data types must be
    specified in the call to <FUNCTION>SPI_prepare</FUNCTION>.
 </para>
 <Para>
@@ -2177,7 +2177,7 @@ Attribute numbers are 1 based.
 </TITLE>
 <PARA>
 Does not allocate new space for the datum.  In the case of a pass-by-
-reference datatype, the Datum will be a pointer into the given tuple.
+reference data type, the Datum will be a pointer into the given tuple.
 </PARA>
 </REFSECT1>
 <!--
@@ -2576,7 +2576,7 @@ exit, avoiding memory leakage.
 </Para>
 <Para>
 However, if your procedure needs to return an allocated memory object
-(such as a value of a pass-by-reference datatype), you can't allocate
+(such as a value of a pass-by-reference data type), you can't allocate
 the return object using <Function>palloc</Function>, at least not while
 you are connected to SPI.  If you try, the object will be deallocated
 during <Function>SPI_finish</Function>, and your procedure will not

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/client-auth.sgml,v 1.32 2002/01/20 22:19:55 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/client-auth.sgml,v 1.33 2002/03/22 19:20:06 petere Exp $
 -->
 
 <chapter id="client-authentication">
@@ -366,7 +366,7 @@ hostssl <replaceable>database</replaceable> <replaceable>IP-address</replaceable
     <indexterm>
      <primary>SIGHUP</primary>
     </indexterm>
-   The <filename>pg_hba.conf</filename> file is read on startup
+   The <filename>pg_hba.conf</filename> file is read on start-up
    and when the <application>postmaster</> receives a
    <systemitem>SIGHUP</systemitem> signal. If you edit the file on an
    active system, you will need to signal the <application>postmaster</>
@@ -750,7 +750,7 @@ local        all                                          md5  admins
     <indexterm>
      <primary>SIGHUP</primary>
     </indexterm>
-   The <filename>pg_ident.conf</filename> file is read on startup
+   The <filename>pg_ident.conf</filename> file is read on start-up
    and when the <application>postmaster</> receives a
    <systemitem>SIGHUP</systemitem> signal. If you edit the file on an
    active system, you will need to signal the <application>postmaster</>

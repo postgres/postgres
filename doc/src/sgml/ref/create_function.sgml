@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_function.sgml,v 1.33 2002/03/01 20:38:12 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_function.sgml,v 1.34 2002/03/22 19:20:37 petere Exp $
 -->
 
 <refentry id="SQL-CREATEFUNCTION">
@@ -332,7 +332,7 @@ CREATE TABLE product (
    user-defined type complex, and the internal type point.  The
    function is implemented by a dynamically loaded object that was
    compiled from C source (we illustrate the now-deprecated alternative
-   of specifying the exact pathname to the shared object file).
+   of specifying the absolute file name to the shared object file).
    For <productname>PostgreSQL</productname> to
    find a type conversion function automatically, the SQL function has
    to have the same name as the return type, and so overloading is

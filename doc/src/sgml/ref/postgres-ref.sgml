@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/postgres-ref.sgml,v 1.24 2002/03/02 21:39:16 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/postgres-ref.sgml,v 1.25 2002/03/22 19:20:43 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -79,7 +79,7 @@ PostgreSQL documentation
    The <filename>postgres</filename> executable is the actual
    <productname>PostgreSQL</productname> server process that processes
    queries.  It is normally not called directly; instead a <xref
-   linkend="app-postmaster"> multi-user server is started.
+   linkend="app-postmaster"> multiuser server is started.
   </para>
 
   <para>
@@ -130,7 +130,7 @@ PostgreSQL documentation
     Guide</citetitle> for details.  Some (safe) options can also be
     set from the connecting client in an application-dependent way.
     For example, if the environment variable <envar>PGOPTIONS</envar>
-    is set, then libpq-based clients will pass that string to the
+    is set, then <application>libpq</>-based clients will pass that string to the
     server, which will interpret it as
     <application>postgres</application> command-line options.
    </para>
@@ -144,12 +144,12 @@ PostgreSQL documentation
      <option>-F</option>, and <option>--name</> have the same meanings
      as the <xref linkend="app-postmaster"> except that
      <option>-d</option> <literal>0</> prevents the debugging level of
-     the postmaster from being propogated to the backend.
+     the postmaster from being propagated to the backend.
     </para>
 
     <variablelist>
      <varlistentry>
-      <term>-e</term>
+      <term><option>-e</option></term>
       <listitem>
        <para>
         Sets the default date style to <quote>European</quote>, which
@@ -163,21 +163,21 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term>-o <replaceable class="parameter">filename</replaceable></term>
+      <term><option>-o</option> <replaceable class="parameter">filename</replaceable></term>
       <listitem>
        <para>
 	Sends all debugging and error output to 
 	<replaceable class="parameter">filename</replaceable>.
 	If the backend is running under the
 	<application>postmaster</application>, this option is ignored,
-	and the stderr inherited from the
+	and the <systemitem>stderr</> inherited from the
 	<application>postmaster</application> is used.
        </para>
       </listitem>
      </varlistentry>
 
      <varlistentry>
-      <term>-P</term>
+      <term><option>-P</option></term>
       <listitem>
        <para>
 	Ignore system indexes while scanning/updating system tuples. The
@@ -188,7 +188,7 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term>-s</term>
+      <term><option>-s</option></term>
       <listitem>
        <para>
 	Print time information and other statistics at the end of each query.
@@ -199,7 +199,7 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term>-S <replaceable class="parameter">sort-mem</replaceable></term>
+      <term><option>-S</option> <replaceable class="parameter">sort-mem</replaceable></term>
       <listitem>
        <para>
 	Specifies the amount of memory to be used by internal sorts and hashes
@@ -231,7 +231,7 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term>-E</term>
+      <term><option>-E</option></term>
       <listitem>
        <para>
 	Echo all queries.
@@ -240,7 +240,7 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term>-N</term>
+      <term><option>-N</option></term>
       <listitem>
        <para>
 	Disables use of newline as a query delimiter.
@@ -264,7 +264,7 @@ PostgreSQL documentation
     <variablelist>
 
      <varlistentry>
-      <term>-f { s | i | m | n | h }</term>
+      <term><option>-f</option> <literal>{ s | i | m | n | h }</literal></term>
       <listitem>
        <para>
 	Forbids the use of particular scan and join methods:
@@ -286,7 +286,7 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term>-i</term>
+      <term><option>-i</option></term>
       <listitem>
        <para>
 	Prevents query execution, but shows the plan tree.
@@ -295,7 +295,7 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term>-O</term>
+      <term><option>-O</option></term>
       <listitem>
        <para>
 	Allows the structure of system tables to be modified.  This is
@@ -305,7 +305,7 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term>-p <replaceable class="parameter">database</replaceable></term>
+      <term><option>-p</option> <replaceable class="parameter">database</replaceable></term>
       <listitem>
        <para>
 	Indicates that this server has been started by a
@@ -317,7 +317,7 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term>-t pa[rser] | pl[anner] | e[xecutor]</term>
+      <term><option>-t</option> <literal>pa[rser] | pl[anner] | e[xecutor]</literal></term>
       <listitem>
        <para>
 	Print timing statistics for each query relating to each of the
@@ -328,7 +328,7 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term>-v <replaceable class="parameter">protocol</replaceable></term>
+      <term><option>-v</option> <replaceable class="parameter">protocol</replaceable></term>
       <listitem>
        <para>
 	Specifies the version number of the frontend/backend protocol
@@ -338,7 +338,7 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term>-W <replaceable class="parameter">seconds</replaceable></term>
+      <term><option>-W</option> <replaceable class="parameter">seconds</replaceable></term>
       <listitem>
        <para>
 	As soon as this option is encountered, the process sleeps for
@@ -377,16 +377,16 @@ PostgreSQL documentation
    <para>
     But if you use the <option>-N</> command line switch, then newline does
     not terminate command entry.  The backend will read the standard input
-    until the end-of-file (EOF) marker, then
+    until the end-of-file (<acronym>EOF</>) marker, then
     process the input as a single query string.  Backslash-newline is not
     treated specially in this case.
    </para>
 
    <para>
-    To quit the session, type EOF
+    To quit the session, type <acronym>EOF</acronym>
     (<keycombo action="simul"><keycap>Control</><keycap>D</></>, usually).
     If you've
-    used <option>-N</>, two consecutive EOFs are needed to exit.
+    used <option>-N</>, two consecutive <acronym>EOF</>s are needed to exit.
    </para>
 
    <para>

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/xoper.sgml,v 1.17 2002/01/07 02:29:14 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/xoper.sgml,v 1.18 2002/03/22 19:20:34 petere Exp $
 -->
 
  <Chapter Id="xoper">
@@ -389,7 +389,7 @@ table1.column1 OP table2.column2
     </para>
 
     <para>
-     Merge join is based on the idea of sorting the left and righthand tables
+     Merge join is based on the idea of sorting the left- and right-hand tables
      into order and then scanning them in parallel.  So, both data types must
      be capable of being fully ordered, and the join operator must be one
      that can only succeed for pairs of values that fall at the <quote>same place</>

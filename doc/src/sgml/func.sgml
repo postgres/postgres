@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.93 2002/01/30 21:55:33 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.94 2002/03/22 19:20:09 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -3592,13 +3592,13 @@ SELECT TIMESTAMP 'now';
        <row>
 	<entry><function>lseg</function>(<type>box</type>)</entry>
 	<entry><type>lseg</type></entry>
-	<entry>box diagonal to lseg</entry>
+	<entry>box diagonal to <type>lseg</type></entry>
 	<entry><literal>lseg(box '((-1,0),(1,0))')</literal></entry>
        </row>
        <row>
 	<entry><function>lseg</function>(<type>point</type>, <type>point</type>)</entry>
 	<entry><type>lseg</type></entry>
-	<entry>points to lseg</entry>
+	<entry>points to <type>lseg</type></entry>
 	<entry><literal>lseg(point '(-1,0)', point '(1,0)')</literal></entry>
        </row>
        <row>
@@ -3773,7 +3773,7 @@ SELECT TIMESTAMP 'now';
        <row>
 	<entry><function>set_masklen</function>(<type>inet</type>,<type>integer</type>)</entry>
 	<entry><type>inet</type></entry>
-	<entry>set netmask length for inet value</entry>
+	<entry>set netmask length for <type>inet</type> value</entry>
 	<entry><literal>set_masklen('192.168.1.5/24',16)</literal></entry>
 	<entry><literal>192.168.1.5/16</literal></entry>
        </row>

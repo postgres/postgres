@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_sequence.sgml,v 1.24 2002/01/20 22:19:56 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_sequence.sgml,v 1.25 2002/03/22 19:20:40 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -268,7 +268,7 @@ SELECT * FROM <replaceable>seqname</replaceable>;
     setting of 10, backend A might reserve values 1..10 and return <function>nextval</function>=1, 
     then
     backend B might reserve values 11..20 and return <function>nextval</function>=11 before backend
-    A has generated nextval=2.)  Thus, with a <replaceable class="parameter">cache</replaceable> setting of one it is safe
+    A has generated <literal>nextval</literal>=2.)  Thus, with a <replaceable class="parameter">cache</replaceable> setting of one it is safe
     to assume that <function>nextval</> values are generated sequentially; with a <replaceable class="parameter">cache</replaceable>
     setting greater than one you should only assume that the <function>nextval</> values
     are all distinct, not that they are generated purely sequentially.

@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/rules.sgml,v 1.21 2002/01/20 22:19:56 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/rules.sgml,v 1.22 2002/03/22 19:20:26 petere Exp $ -->
 
 <Chapter Id="rules">
 <Title>The Rule System</Title>
@@ -1140,7 +1140,7 @@ INSERT INTO shoelace_log VALUES(
     INSERT ... VALUES ... FROM.  The FROM clause here is just to indicate
     that there are range-table entries in the parse tree for *NEW* and *OLD*.
     These are needed so that they can be referenced by variables in the
-    INSERT command's querytree.
+    INSERT command's query tree.
 </Para>
 
 <Para>

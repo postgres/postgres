@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/odbc.sgml,v 1.29 2002/01/07 02:29:12 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/odbc.sgml,v 1.30 2002/03/22 19:20:16 petere Exp $
 -->
 
  <chapter id="odbc">
@@ -328,14 +328,14 @@ InstallDir = /opt/applix/axdata/axshlib
    <title><application>ApplixWare</application></title>
 
    <indexterm zone="odbc-applixware">
-    <primary>ApplixWare</primary>
+    <primary>Applixware</primary>
    </indexterm>
 
    <para>
-    <productname>ApplixWare</productname> has an 
+    <productname>Applixware</productname> has an 
     <acronym>ODBC</acronym> database interface
     supported on at least some platforms. 
-    <productname>ApplixWare</productname> 4.4.2 has been
+    <productname>Applixware</productname> 4.4.2 has been
     demonstrated under Linux with <productname>PostgreSQL</productname> 7.0 
     using the <productname>psqlODBC</productname>
     driver contained in the <productname>PostgreSQL</productname> distribution.
@@ -345,18 +345,18 @@ InstallDir = /opt/applix/axdata/axshlib
     <title>Configuration</title>
 
     <para>
-     <productname>ApplixWare</productname> must be configured correctly
+     <productname>Applixware</productname> must be configured correctly
      in order for it to
      be able to access the <productname>PostgreSQL</productname>
      <acronym>ODBC</acronym> software drivers.
     </para>
 
     <procedure>
-     <title>Enabling <application>ApplixWare</application> Database Access</title>
+     <title>Enabling <application>Applixware</application> Database Access</title>
 
      <para>
       These instructions are for the 4.4.2 release of
-      <productname>ApplixWare</productname> on <productname>Linux</productname>.
+      <productname>Applixware</productname> on <productname>Linux</productname>.
       Refer to the <citetitle>Linux Sys Admin</citetitle> on-line book
       for more detailed information.
      </para>
@@ -367,7 +367,7 @@ InstallDir = /opt/applix/axdata/axshlib
        <filename>elfodbc</filename> can
        find <filename>libodbc.so</filename>
        (the <acronym>ODBC</acronym> driver manager) shared library.
-       This library is included with the <application>ApplixWare</application> distribution,
+       This library is included with the <application>Applixware</application> distribution,
        but <filename>axnet.cnf</filename> needs to be modified to point to the 
        correct location.
       </para>
@@ -425,7 +425,7 @@ TextAsLongVarchar=0
     </procedure>
 
     <procedure>
-     <title>Testing <application>ApplixWare</application> ODBC Connections</title>
+     <title>Testing <application>Applixware</application> ODBC Connections</title>
 
      <step performance="required">
       <para>
@@ -550,7 +550,7 @@ TextAsLongVarchar=0
 
        <listitem>
 	<para>
-	 The September release of <application>ApplixWare</application> 4.4.1 (the first release with official
+	 The September release of <application>Applixware</application> 4.4.1 (the first release with official
 	 <acronym>ODBC</acronym> support under Linux) shows problems when user names
 	 exceed eight (8) characters in length.
 	 Problem description contributed by Steve Campbell
@@ -583,7 +583,7 @@ TextAsLongVarchar=0
    </sect2>
 
    <sect2>
-    <title>Debugging <application>ApplixWare</application> ODBC Connections</title>
+    <title>Debugging <application>Applixware</application> ODBC Connections</title>
 
     <para>
      One good tool for debugging connection problems uses the Unix system
@@ -594,7 +594,7 @@ TextAsLongVarchar=0
 
      <step performance="required">
       <para>
-       Start <application>ApplixWare</application>.
+       Start <application>Applixware</application>.
       </para>
      </step>
      <step performance="required">
@@ -631,7 +631,7 @@ cary   27883  0.9 31.0 12692  4596  ?  S   10:24  0:04 axmain
        <title>Note from Cary</title>
 
        <para>
-	Many of the error messages from <productname>ApplixWare</productname>
+	Many of the error messages from <productname>Applixware</productname>
 	go to <filename>stderr</filename>, 
 	but I'm not sure where <filename>stderr</filename>
 	is sent, so <command>strace</command> is the way to find out.
@@ -656,13 +656,13 @@ cary   27883  0.9 31.0 12692  4596  ?  S   10:24  0:04 axmain
    </sect2>
 
    <sect2>
-    <title>Running the <application>ApplixWare</application> Demo</title>
+    <title>Running the <application>Applixware</application> Demo</title>
 
     <comment>I think the condition this refers to is gone. -- petere 2002-01-07</comment>
 
     <para>
      In order to go through the 
-     <citetitle>ApplixWare Data Tutorial</citetitle>, you need to create
+     <citetitle>Applixware Data Tutorial</citetitle>, you need to create
      the sample tables that the Tutorial refers to.  The ELF Macro used to
      create the tables tries to use a NULL condition 
      on many of the database columns,
@@ -674,7 +674,7 @@ cary   27883  0.9 31.0 12692  4596  ?  S   10:24  0:04 axmain
     </para>
 
     <procedure>
-     <title>Modifying the <application>ApplixWare</application> Demo</title>
+     <title>Modifying the <application>Applixware</application> Demo</title>
 
      <step performance="required">
       <para>

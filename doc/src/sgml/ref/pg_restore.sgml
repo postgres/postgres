@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_restore.sgml,v 1.22 2002/02/11 00:14:10 tgl Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_restore.sgml,v 1.23 2002/03/22 19:20:42 petere Exp $ -->
 
 <refentry id="APP-PGRESTORE">
  <docinfo>
@@ -117,8 +117,8 @@
      </varlistentry>
 
      <varlistentry>
-      <term>-a</term>
-      <term>--data-only</term>
+      <term><option>-a</option></term>
+      <term><option>--data-only</option></term>
       <listitem>
        <para>
 	Restore only the data, no schema (definitions).
@@ -127,8 +127,8 @@
      </varlistentry>
 
      <varlistentry>
-      <term>-c</term>
-      <term>--clean</term>
+      <term><option>-c</option></term>
+      <term><option>--clean</option></term>
       <listitem>
        <para>
 	Clean (drop) database objects before recreating them.
@@ -137,8 +137,8 @@
      </varlistentry>
 
      <varlistentry>
-      <term>-C</term>
-      <term>--create</term>
+      <term><option>-C</option></term>
+      <term><option>--create</option></term>
       <listitem>
        <para>
         Create the database before restoring into it.
@@ -151,8 +151,8 @@
      </varlistentry>
 
      <varlistentry>
-      <term>-d <replaceable class="parameter">dbname</replaceable></term>
-      <term>--dbname=<replaceable class="parameter">dbname</replaceable></term>
+      <term><option>-d <replaceable class="parameter">dbname</replaceable></option></term>
+      <term><option>--dbname=<replaceable class="parameter">dbname</replaceable></option></term>
       <listitem>
        <para>
         Connect to database <replaceable class="parameter">dbname</replaceable> and restore
@@ -162,8 +162,8 @@
      </varlistentry>
 
      <varlistentry>
-      <term>-f <replaceable>filename</replaceable></term>
-      <term>--file=<replaceable>filename</replaceable></term>
+      <term><option>-f <replaceable>filename</replaceable></option></term>
+      <term><option>--file=<replaceable>filename</replaceable></option></term>
       <listitem>
        <para>
         Specify output file for generated script, or for the listing
@@ -173,8 +173,8 @@
      </varlistentry>
 
      <varlistentry>
-      <term>-F <replaceable class="parameter">format</replaceable></term>
-      <term>--format=<replaceable class="parameter">format</replaceable></term>
+      <term><option>-F <replaceable class="parameter">format</replaceable></option></term>
+      <term><option>--format=<replaceable class="parameter">format</replaceable></option></term>
       <listitem>
        <para>
 	  Specify format of the archive.
@@ -212,8 +212,8 @@
      </varlistentry>
 
      <varlistentry>
-      <term>-i <replaceable class="parameter">index</replaceable></term>
-      <term>--index=<replaceable class="parameter">index</replaceable></term>
+      <term><option>-i <replaceable class="parameter">index</replaceable></option></term>
+      <term><option>--index=<replaceable class="parameter">index</replaceable></option></term>
       <listitem>
        <para>
 	Restore definition for named <replaceable class="parameter">index</replaceable> only.
@@ -222,8 +222,8 @@
      </varlistentry>
 
      <varlistentry>
-      <term>-l</term>
-      <term>--list</term>
+      <term><option>-l</option></term>
+      <term><option>--list</option></term>
       <listitem>
        <para>
         List the contents of the archive. The output of this command can be used with the <option>-L</option> option
@@ -233,8 +233,8 @@
      </varlistentry>
 
      <varlistentry>
-      <term>-L <replaceable class="parameter">list-file</replaceable></term>
-      <term>--use-list=<replaceable class="parameter">list-file</replaceable></term>
+      <term><option>-L <replaceable class="parameter">list-file</replaceable></option></term>
+      <term><option>--use-list=<replaceable class="parameter">list-file</replaceable></option></term>
       <listitem>
        <para>
 	  Restore elements in <REPLACEABLE CLASS="PARAMETER">list-file</REPLACEABLE> only, and in the
@@ -245,8 +245,8 @@
      </varlistentry>
 
      <varlistentry>
-      <term>-N</term>
-      <term>--orig-order</term>
+      <term><option>-N</option></term>
+      <term><option>--orig-order</option></term>
       <listitem>
        <para>
         Restore items in the original dump order. By default <command>pg_dump</command> will dump items in an order convenient
@@ -256,8 +256,8 @@
      </varlistentry>
 
      <varlistentry>
-      <term>-o</term>
-      <term>--oid-order</term>
+      <term><option>-o</option></term>
+      <term><option>--oid-order</option></term>
       <listitem>
        <para>
         Restore items in the OID order. By default <command>pg_dump</command> will dump items in an order convenient
@@ -267,8 +267,8 @@
      </varlistentry>
 
      <varlistentry>
-      <term>-O</term>
-      <term>--no-owner</term>
+      <term><option>-O</option></term>
+      <term><option>--no-owner</option></term>
       <listitem>
        <para>
         Prevent any attempt to restore original object ownership. Objects will be owned by the user name used
@@ -278,8 +278,8 @@
      </varlistentry>
 
      <varlistentry>
-      <term>-P <replaceable class="parameter">function-name</replaceable></term>
-      <term>--function=<replaceable class="parameter">function-name</replaceable></term>
+      <term><option>-P <replaceable class="parameter">function-name</replaceable></option></term>
+      <term><option>--function=<replaceable class="parameter">function-name</replaceable></option></term>
       <listitem>
        <para>
         Specify a procedure or function to be restored.
@@ -288,8 +288,8 @@
      </varlistentry>
 
      <varlistentry>
-      <term>-r</term>
-      <term>--rearrange</term>
+      <term><option>-r</option></term>
+      <term><option>--rearrange</option></term>
       <listitem>
        <para>
         Restore items in modified OID order. By default <command>pg_dump</command> will dump items in an order convenient
@@ -301,8 +301,8 @@
      </varlistentry>
 
      <varlistentry>
-      <term>-R</term>
-      <term>--no-reconnect</term>
+      <term><option>-R</option></term>
+      <term><option>--no-reconnect</option></term>
       <listitem>
        <para>
         While restoring an archive, <command>pg_restore</command>
@@ -324,8 +324,8 @@
      </varlistentry>
 
      <varlistentry>
-      <term>-s</term>
-      <term>--schema-only</term>
+      <term><option>-s</option></term>
+      <term><option>--schema-only</option></term>
       <listitem>
        <para>
 	Restore the schema (definitions), no data. Sequence values will be reset.
@@ -334,8 +334,8 @@
      </varlistentry>
 
      <varlistentry>
-      <term>-S <replaceable class="parameter">username</replaceable></term>
-      <term>--superuser=<replaceable class="parameter">username</replaceable></term>
+      <term><option>-S <replaceable class="parameter">username</replaceable></option></term>
+      <term><option>--superuser=<replaceable class="parameter">username</replaceable></option></term>
       <listitem>
        <para>
         Specify the superuser user name to use when disabling triggers and/or setting ownership of schema elements.
@@ -345,8 +345,8 @@
      </varlistentry>
 
      <varlistentry>
-      <term>-t <replaceable class="parameter">table</replaceable></term>
-      <term>--table=<replaceable class="parameter">table</replaceable></term>
+      <term><option>-t <replaceable class="parameter">table</replaceable></option></term>
+      <term><option>--table=<replaceable class="parameter">table</replaceable></option></term>
       <listitem>
        <para>
 	Restore schema/data for <REPLACEABLE CLASS="PARAMETER">table</REPLACEABLE> only.
@@ -355,8 +355,8 @@
      </varlistentry>
 
      <varlistentry>
-      <term>-T <replaceable class="parameter">trigger</replaceable></term>
-      <term>--trigger=<replaceable class="parameter">trigger</replaceable></term>
+      <term><option>-T <replaceable class="parameter">trigger</replaceable></option></term>
+      <term><option>--trigger=<replaceable class="parameter">trigger</replaceable></option></term>
       <listitem>
        <para>
 	  Restore definition of <REPLACEABLE CLASS="PARAMETER">trigger</REPLACEABLE> only.
@@ -365,8 +365,8 @@
      </varlistentry>
 
      <varlistentry>
-      <term>-v</term>
-      <term>--verbose</term>
+      <term><option>-v</option></term>
+      <term><option>--verbose</option></term>
       <listitem>
        <para>
 	Specifies verbose mode.
@@ -375,9 +375,9 @@
      </varlistentry>
 
      <varlistentry>
-      <term>-x</term>
-      <term>--no-privileges</term>
-      <term>--no-acl</term>
+      <term><option>-x</option></term>
+      <term><option>--no-privileges</option></term>
+      <term><option>--no-acl</option></term>
       <listitem>
        <para>
 	Prevent restoration of access privileges (grant/revoke commands).
@@ -386,8 +386,8 @@
      </varlistentry>
 
      <varlistentry>
-      <term>-X use-set-session-authorization</term>
-      <term>--use-set-session-authorization</term>
+      <term><option>-X use-set-session-authorization</option></term>
+      <term><option>--use-set-session-authorization</option></term>
       <listitem>
        <para>
         Normally, if restoring an archive requires altering the
@@ -413,8 +413,8 @@
 
     <variablelist>
      <varlistentry>
-      <term>-h <replaceable class="parameter">host</replaceable></term>
-      <term>--host=<replaceable class="parameter">host</replaceable></term>
+      <term><option>-h <replaceable class="parameter">host</replaceable></option></term>
+      <term><option>--host=<replaceable class="parameter">host</replaceable></option></term>
       <listitem>
        <para>
 	Specifies the host name of the machine on which the
@@ -426,8 +426,8 @@
      </varlistentry>
 
      <varlistentry>
-      <term>-p <replaceable class="parameter">port</replaceable></term>
-      <term>--port=<replaceable class="parameter">port</replaceable></term>
+      <term><option>-p <replaceable class="parameter">port</replaceable></option></term>
+      <term><option>--port=<replaceable class="parameter">port</replaceable></option></term>
       <listitem>
        <para>
 	Specifies the Internet TCP/IP port or local Unix domain socket file
@@ -440,7 +440,7 @@
      </varlistentry>
 
      <varlistentry>
-      <term>-U <replaceable>username</replaceable></term>
+      <term><option>-U <replaceable>username</replaceable></option></term>
       <listitem>
        <para>
         Connect as the given user.
@@ -449,7 +449,7 @@
      </varlistentry>
 
      <varlistentry>
-      <term>-W</term>
+      <term><option>-W</option></term>
       <listitem>
        <para>
         Force a password prompt.  This should happen automatically if

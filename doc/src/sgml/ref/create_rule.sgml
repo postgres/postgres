@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_rule.sgml,v 1.32 2002/03/10 06:00:13 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_rule.sgml,v 1.33 2002/03/22 19:20:39 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -78,7 +78,7 @@ NOTHING
       <term><replaceable class="parameter">condition</replaceable></term>
       <listitem>
        <para>
-	Any SQL boolean-condition expression.  The condition expression may not
+	Any SQL conditional expression (returning <type>boolean</type>).  The condition expression may not
 	refer to any tables except <literal>new</literal> and
 	<literal>old</literal>.
        </para>
@@ -269,7 +269,7 @@ CREATE RULE "_RETtoyemp" AS
 	SELECT * FROM emp;
 </programlisting>
 
-      This attempt to select from EMP will cause
+      This attempt to select from <literal>EMP</literal> will cause
       <productname>PostgreSQL</productname> to issue an error
       because the queries cycled too many times:
 

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/syntax.sgml,v 1.58 2002/01/20 22:19:56 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/syntax.sgml,v 1.59 2002/03/22 19:20:31 petere Exp $
 -->
 
 <chapter id="sql-syntax">
@@ -391,7 +391,7 @@ CAST ( '<replaceable>string</replaceable>' AS <replaceable>type</replaceable> )
 
     <para>
      The <literal>::</literal>, <literal>CAST()</literal>, and
-     function-call syntaxes can also be used to specify runtime type
+     function-call syntaxes can also be used to specify run-time type
      conversions of arbitrary expressions, as discussed in <xref
      linkend="sql-syntax-type-casts">.  But the form
      <replaceable>type</replaceable> '<replaceable>string</replaceable>'

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/monitoring.sgml,v 1.6 2001/11/29 20:43:43 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/monitoring.sgml,v 1.7 2002/03/22 19:20:14 petere Exp $
 -->
 
 <chapter id="monitoring">
@@ -132,7 +132,7 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
    The variables <varname>STATS_COMMAND_STRING</varname>,
    <varname>STATS_BLOCK_LEVEL</varname>,
    and <varname>STATS_ROW_LEVEL</varname> control how much information is
-   actually sent to the collector, and thus determine how much runtime
+   actually sent to the collector, and thus determine how much run-time
    overhead occurs.  These respectively determine whether a server process
    sends its current command string, disk-block-level access statistics, and
    row-level access statistics to the collector.  Normally these variables are

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/trigger.sgml,v 1.20 2002/03/06 06:44:33 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/trigger.sgml,v 1.21 2002/03/22 19:20:32 petere Exp $
 -->
 
  <chapter id="triggers">
@@ -7,9 +7,9 @@ $Header: /cvsroot/pgsql/doc/src/sgml/trigger.sgml,v 1.20 2002/03/06 06:44:33 mom
 
   <para>
    <productname>PostgreSQL</productname> has various server-side function
-   interfaces. Server-side functions can be written in SQL, PLPGSQL,
-   TCL, or C. Trigger functions can be written in any of these
-   languages except SQL. Note that STATEMENT-level trigger events are not
+   interfaces. Server-side functions can be written in SQL, PL/pgSQL,
+   Tcl, or C. Trigger functions can be written in any of these
+   languages except SQL. Note that statement-level trigger events are not
    supported in the current version. You can currently specify BEFORE or
    AFTER on INSERT, DELETE or UPDATE of a tuple as a trigger event.
   </para>
@@ -216,9 +216,10 @@ CREATE TRIGGER <replaceable>trigger</replaceable> [ BEFORE | AFTER ] [ INSERT | 
    </para>
 
    <para>
-    struct TriggerData is defined in src/include/commands/trigger.h:
+    <structname>struct TriggerData</structname> is defined in
+    <filename>commands/trigger.h</filename>:
 
-    <programlisting>
+<programlisting>
 typedef struct TriggerData
 {
     NodeTag       type;
@@ -228,7 +229,7 @@ typedef struct TriggerData
     HeapTuple     tg_newtuple;
     Trigger      *tg_trigger;
 } TriggerData;
-    </programlisting>
+</programlisting>
 
     where the members are defined as follows:
 

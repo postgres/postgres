@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/bki.sgml,v 1.9 2001/11/21 22:57:01 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/bki.sgml,v 1.10 2002/03/22 19:20:02 petere Exp $
  -->
 
 <chapter id="bki">
@@ -23,7 +23,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/bki.sgml,v 1.9 2001/11/21 22:57:01 tgl Exp 
   part of building and installing <productname>PostgreSQL</productname>
   by a program named <filename>genbki.sh</filename> from some
   specially formatted C header files in the source tree.  The created
-  BKI file is called <filename>postgres.bki</filename> and is
+  <acronym>BKI</acronym> file is called <filename>postgres.bki</filename> and is
   normally installed in the
   <filename>share</filename> subdirectory of the installation tree.
  </para>
@@ -46,7 +46,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/bki.sgml,v 1.9 2001/11/21 22:57:01 tgl Exp 
   </para>
 
   <para>
-   BKI input consists of a sequence of commands.  Commands are made up
+   <acronym>BKI</acronym> input consists of a sequence of commands.  Commands are made up
    of a number of tokens, depending on the syntax of the command.
    Tokens are usually separated by whitespace, but need not be if
    there is no ambiguity.  There is no special command separator; the
@@ -64,7 +64,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/bki.sgml,v 1.9 2001/11/21 22:57:01 tgl Exp 
  </sect1>
 
  <sect1 id="bki-commands">
-  <title>BKI Commands</title>
+  <title><acronym>BKI</acronym> Commands</title>
 
   <variablelist>
    <varlistentry>

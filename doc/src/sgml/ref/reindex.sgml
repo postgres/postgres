@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/reindex.sgml,v 1.8 2001/12/08 03:24:38 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/reindex.sgml,v 1.9 2002/03/22 19:20:45 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -145,7 +145,7 @@ REINDEX
    index on a system table.  In this case it's important for the backend
    doing the recovery to not have used any of the suspect indexes itself.
    (Indeed, in this sort of scenario you may find that backends are
-   crashing immediately at startup, due to reliance on the corrupted
+   crashing immediately at start-up, due to reliance on the corrupted
    indexes.)  To recover safely, the postmaster must be shut down and a
    stand-alone <productname>PostgreSQL</productname> backend must be
    started instead, giving it

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_user.sgml,v 1.20 2002/03/01 22:45:07 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_user.sgml,v 1.21 2002/03/22 19:20:36 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -189,7 +189,7 @@ ALTER USER <replaceable class="PARAMETER">username</replaceable> RESET <replacea
   <para>
    Use <xref linkend="SQL-CREATEUSER" endterm="SQL-CREATEUSER-title">
    to add new users, and <xref linkend="SQL-DROPUSER"
-   endterm="SQL-DROPUSER-title"> to remoe a user.
+   endterm="SQL-DROPUSER-title"> to remove a user.
   </para>
 
   <para>
