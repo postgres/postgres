@@ -23,6 +23,3 @@ __EOF__
 
   PTHREAD_CFLAGS="-Kpthread"
 fi
-
-# Disabled because flags are required for all apps using libpq.
-# Waiting to see if other platforms need this too.  2004-03-22
