@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/miscinit.c,v 1.57 2000/11/16 22:30:39 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/miscinit.c,v 1.58 2000/11/17 01:24:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -640,7 +640,7 @@ ValidatePgVersion(const char *path)
 	FreeFile(file);
 
 	if (my_major != file_major || my_minor != file_minor)
-		elog(FATAL, "The data directory was initalized by PostgreSQL version %ld.%ld, "
-			 "which is not compatible with this verion %s.",
+		elog(FATAL, "The data directory was initialized by PostgreSQL version %ld.%ld, "
+			 "which is not compatible with this version %s.",
 			 file_major, file_minor, version_string);
 }
