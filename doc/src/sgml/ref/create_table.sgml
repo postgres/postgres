@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_table.sgml,v 1.50 2001/12/08 03:24:35 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_table.sgml,v 1.51 2002/01/03 06:26:22 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -437,6 +437,13 @@ and <replaceable class="PARAMETER">table_constraint</replaceable> is:
        </varlistentry>
       </variablelist>
      </para>
+     <para>
+      If primary key column is updated frequently, it may be wise to
+      add an index to the <literal>REFERENCES</literal> column so that
+      <literal>NO ACTION</literal> and <literal>CASCADE</literal>
+      actions associated with the <literal>REFERENCES</literal>
+      column can be more efficiently performed.
+     </para>
 
     </listitem>
    </varlistentry>
@@ -472,6 +479,8 @@ and <replaceable class="PARAMETER">table_constraint</replaceable> is:
     </listitem>
    </varlistentry>
   </variablelist>
+
+
  </refsect1>    
 
 
