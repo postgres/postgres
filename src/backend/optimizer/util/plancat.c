@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/plancat.c,v 1.42 2000/01/11 03:33:13 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/plancat.c,v 1.43 2000/01/12 00:53:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -120,8 +120,10 @@ find_secondary_indexes(Query *root, Index relid)
 
 		for (i = 0; i < INDEX_MAX_KEYS; i++)
 			info->indexkeys[i] = index->indkey[i];
+		info->indexkeys[INDEX_MAX_KEYS] = 0;
 		for (i = 0; i < INDEX_MAX_KEYS; i++)
 			info->classlist[i] = index->indclass[i];
+		info->classlist[INDEX_MAX_KEYS] = (Oid) 0;
 
 		/* Extract info from the relation descriptor for the index */
 		indexRelation = index_open(index->indexrelid);
