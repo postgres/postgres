@@ -9871,6 +9871,127 @@ _ACEOF
 
 fi
 
+echo "$as_me:$LINENO: checking for struct sockaddr_storage.ss_family" >&5
+echo $ECHO_N "checking for struct sockaddr_storage.ss_family... $ECHO_C" >&6
+if test "${ac_cv_member_struct_sockaddr_storage_ss_family+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  cat >conftest.$ac_ext <<_ACEOF
+#line $LINENO "configure"
+#include "confdefs.h"
+#include <sys/types.h>
+#ifdef HAVE_SYS_SOCKET_H
+#include <sys/socket.h>
+#endif
+
+
+#ifdef F77_DUMMY_MAIN
+#  ifdef __cplusplus
+     extern "C"
+#  endif
+   int F77_DUMMY_MAIN() { return 1; }
+#endif
+int
+main ()
+{
+static struct sockaddr_storage ac_aggr;
+if (ac_aggr.ss_family)
+return 0;
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext
+if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
+  (eval $ac_compile) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+         { ac_try='test -s conftest.$ac_objext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_member_struct_sockaddr_storage_ss_family=yes
+else
+  echo "$as_me: failed program was:" >&5
+cat conftest.$ac_ext >&5
+ac_cv_member_struct_sockaddr_storage_ss_family=no
+fi
+rm -f conftest.$ac_objext conftest.$ac_ext
+fi
+echo "$as_me:$LINENO: result: $ac_cv_member_struct_sockaddr_storage_ss_family" >&5
+echo "${ECHO_T}$ac_cv_member_struct_sockaddr_storage_ss_family" >&6
+if test $ac_cv_member_struct_sockaddr_storage_ss_family = yes; then
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_STRUCT_SOCKADDR_STORAGE_SS_FAMILY 1
+_ACEOF
+
+
+fi
+echo "$as_me:$LINENO: checking for struct sockaddr_storage.__ss_family" >&5
+echo $ECHO_N "checking for struct sockaddr_storage.__ss_family... $ECHO_C" >&6
+if test "${ac_cv_member_struct_sockaddr_storage___ss_family+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  cat >conftest.$ac_ext <<_ACEOF
+#line $LINENO "configure"
+#include "confdefs.h"
+#include <sys/types.h>
+#ifdef HAVE_SYS_SOCKET_H
+#include <sys/socket.h>
+#endif
+
+
+#ifdef F77_DUMMY_MAIN
+#  ifdef __cplusplus
+     extern "C"
+#  endif
+   int F77_DUMMY_MAIN() { return 1; }
+#endif
+int
+main ()
+{
+static struct sockaddr_storage ac_aggr;
+if (ac_aggr.__ss_family)
+return 0;
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext
+if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
+  (eval $ac_compile) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+         { ac_try='test -s conftest.$ac_objext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_member_struct_sockaddr_storage___ss_family=yes
+else
+  echo "$as_me: failed program was:" >&5
+cat conftest.$ac_ext >&5
+ac_cv_member_struct_sockaddr_storage___ss_family=no
+fi
+rm -f conftest.$ac_objext conftest.$ac_ext
+fi
+echo "$as_me:$LINENO: result: $ac_cv_member_struct_sockaddr_storage___ss_family" >&5
+echo "${ECHO_T}$ac_cv_member_struct_sockaddr_storage___ss_family" >&6
+if test $ac_cv_member_struct_sockaddr_storage___ss_family = yes; then
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_STRUCT_SOCKADDR_STORAGE___SS_FAMILY 1
+_ACEOF
+
+
+fi
+
 echo "$as_me:$LINENO: checking for struct addrinfo" >&5
 echo $ECHO_N "checking for struct addrinfo... $ECHO_C" >&6
 if test "${ac_cv_type_struct_addrinfo+set}" = set; then

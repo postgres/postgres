@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/port/getaddrinfo.c,v 1.8 2003/06/14 18:20:33 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/port/getaddrinfo.c,v 1.9 2003/06/23 23:52:00 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -220,7 +220,6 @@ getnameinfo(const struct sockaddr *sa, int salen,
 		char *node, int nodelen,
 		char *service, int servicelen, int flags)
 {
-	sa_family_t	family;
 	int		ret = -1;
 
 	/* Invalid arguments. */
@@ -236,9 +235,8 @@ getnameinfo(const struct sockaddr *sa, int salen,
 		return EAI_FAIL;
 	}
 
-	family = sa->sa_family;
 #ifdef	HAVE_IPV6
-	if (family == AF_INET6)
+	if (sa->sa_family == AF_INET6)
 	{
 		return	EAI_FAMILY;
 	}
@@ -246,13 +244,13 @@ getnameinfo(const struct sockaddr *sa, int salen,
 
 	if (service)
 	{
-		if (family == AF_INET)
+		if (sa->sa_family == AF_INET)
 		{
 			ret = snprintf(service, servicelen, "%d",
 				ntohs(((struct sockaddr_in *)sa)->sin_port));
 		}
 #ifdef	HAVE_UNIX_SOCKETS
-		else if (family == AF_UNIX)
+		else if (sa->sa_family == AF_UNIX)
 		{
 			ret = snprintf(service, servicelen, "%s",
 				((struct sockaddr_un *)sa)->sun_path);
@@ -266,14 +264,14 @@ getnameinfo(const struct sockaddr *sa, int salen,
 
 	if (node)
 	{
-		if (family == AF_INET)
+		if (sa->sa_family == AF_INET)
 		{
 			char	*p;
 			p = inet_ntoa(((struct sockaddr_in *)sa)->sin_addr);
 			ret = snprintf(node, nodelen, "%s", p);
 		}
 #ifdef	HAVE_UNIX_SOCKETS
-		else if (family == AF_UNIX)
+		else if (sa->sa_family == AF_UNIX)
 		{
 			ret = snprintf(node, nodelen, "%s", "localhost");
 		}

@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pqcomm.h,v 1.86 2003/06/12 07:36:51 momjian Exp $
+ * $Id: pqcomm.h,v 1.87 2003/06/23 23:51:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -65,6 +65,12 @@ struct sockaddr_storage {
 		 * _SS_MAXSIZE value minus size of ss_family
 		 * __ss_pad1, __ss_align fields is 112 */
 };
+#elif !defined(HAVE_STRUCT_SOCKADDR_STORAGE_SS_FAMILY)
+# ifdef HAVE_STRUCT_SOCKADDR_STORAGE___SS_FAMILY
+#  define ss_family __ss_family
+# else
+#  error struct sockaddr_storage does not provide an ss_family member
+# endif
 #endif
 
 typedef struct {

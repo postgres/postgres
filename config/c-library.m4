@@ -1,5 +1,5 @@
 # Macros that test various C library quirks
-# $Header: /cvsroot/pgsql/config/c-library.m4,v 1.21 2003/06/12 16:05:10 tgl Exp $
+# $Header: /cvsroot/pgsql/config/c-library.m4,v 1.22 2003/06/23 23:51:59 momjian Exp $
 
 
 # PGAC_VAR_INT_TIMEZONE
@@ -109,6 +109,19 @@ AC_DEFUN([PGAC_STRUCT_SOCKADDR_STORAGE],
 #include <sys/socket.h>
 #endif
 ])])# PGAC_STRUCT_SOCKADDR_STORAGE
+
+# PGAC_STRUCT_SOCKADDR_STORAGE_SS_FAMILY
+# --------------------------------------
+# This checks if the struct sockaddr has a proper ss_family and not an
+# __ss_family as rfc2553 defined.
+AC_DEFUN([PGAC_STRUCT_SOCKADDR_STORAGE_SS_FAMILY],
+[AC_CHECK_MEMBERS([struct sockaddr_storage.ss_family,
+	struct sockaddr_storage.__ss_family], [], [],
+[#include <sys/types.h>
+#ifdef HAVE_SYS_SOCKET_H
+#include <sys/socket.h>
+#endif
+])])# PGAC_STRUCT_SOCKADDR_STORAGE_SS_FAMILY
 
 
 # PGAC_STRUCT_ADDRINFO

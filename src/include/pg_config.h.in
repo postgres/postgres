@@ -423,6 +423,12 @@
 /* Define to 1 if the system has the type `struct sockaddr_storage'. */
 #undef HAVE_STRUCT_SOCKADDR_STORAGE
 
+/* Define to 1 if `ss_family' is member of `struct sockaddr_storage'. */
+#undef HAVE_STRUCT_SOCKADDR_STORAGE_SS_FAMILY
+
+/* Define to 1 if `__ss_family' is member of `struct sockaddr_storage'. */
+#undef HAVE_STRUCT_SOCKADDR_STORAGE___SS_FAMILY
+
 /* Define to 1 if the system has the type `struct sockaddr_un'. */
 #undef HAVE_STRUCT_SOCKADDR_UN
 
