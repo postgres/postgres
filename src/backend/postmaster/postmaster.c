@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.353 2003/12/25 03:52:51 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.354 2004/01/06 23:15:22 momjian Exp $
  *
  * NOTES
  *
@@ -273,8 +273,8 @@ static void dummy_handler(SIGNAL_ARGS);
 static void CleanupProc(int pid, int exitstatus);
 static void LogChildExit(int lev, const char *procname,
 			 int pid, int exitstatus);
-NON_EXEC_STATIC bool BackendInit(Port *port);
-static int	BackendFork(Port *port);
+static void BackendInit(Port *port);
+static int  BackendRun(Port *port);
 static void ExitPostmaster(int status);
 static void usage(const char *);
 static int	ServerLoop(void);
@@ -297,8 +297,11 @@ postmaster_error(const char *fmt,...)
 __attribute__((format(printf, 1, 2)));
 
 #ifdef EXEC_BACKEND
-void read_backend_variables(pid_t pid, Port *port);
-static void write_backend_variables(pid_t pid, Port *port);
+static pid_t Backend_forkexec(Port *port);
+
+static unsigned long tmpBackendFileNum = 0;
+void read_backend_variables(unsigned long id, Port *port);
+static bool write_backend_variables(Port *port);
 #endif
 
 #define StartupDataBase()		SSDataBase(BS_XLOG_STARTUP)
@@ -916,7 +919,7 @@ pmdaemonize(int argc, char *argv[])
 #endif
 
 #ifdef LINUX_PROFILE
-	/* see comments in BackendStartup */
+	/* see comments in BackendRun */
 	getitimer(ITIMER_PROF, &prof_itimer);
 #endif
 
@@ -1310,7 +1313,7 @@ ProcessStartupPacket(Port *port, bool SSLdone)
 	 * Now fetch parameters out of startup packet and save them into the
 	 * Port structure.	All data structures attached to the Port struct
 	 * must be allocated in TopMemoryContext so that they won't disappear
-	 * when we pass them to PostgresMain (see BackendFork).  We need not
+	 * when we pass them to PostgresMain (see BackendRun).  We need not
 	 * worry about leaking this storage on failure, since we aren't in the
 	 * postmaster process anymore.
 	 */
@@ -2235,12 +2238,14 @@ BackendStartup(Port *port)
 	beos_before_backend_startup();
 #endif
 
+	port->canAcceptConnections = canAcceptConnections();
+#ifdef EXEC_BACKEND
+	pid = Backend_forkexec(port);
+#else
 	pid = fork();
 
 	if (pid == 0)				/* child */
 	{
-		int			status;
-
 #ifdef LINUX_PROFILE
 		setitimer(ITIMER_PROF, &prof_itimer, NULL);
 #endif
@@ -2251,13 +2256,9 @@ BackendStartup(Port *port)
 #endif
 		free(bn);
 
-		status = BackendFork(port);
-
-		if (status != 0)
-			ereport(LOG,
-					(errmsg("connection startup failed")));
-		proc_exit(status);
+		proc_exit(BackendRun(port));
 	}
+#endif
 
 	/* in parent, error */
 	if (pid < 0)
@@ -2349,15 +2350,15 @@ split_opts(char **argv, int *argcp, char *s)
 
 
 /*
- * BackendInit/Fork -- perform authentication [BackendInit], and if successful,
- *              set up the backend's argument list [BackendFork] and invoke
- *              backend main() [or exec in EXEC_BACKEND case]
+ * BackendInit/Run -- perform authentication [BackendInit], and if successful,
+ *              set up the backend's argument list [BackendRun] and invoke
+ *              backend main()
  *
  * returns:
  *		Shouldn't return at all.
  *		If PostgresMain() fails, return status.
  */
-NON_EXEC_STATIC bool
+static void
 BackendInit(Port *port)
 {
 	int			status;
@@ -2447,7 +2448,11 @@ BackendInit(Port *port)
 	status = ProcessStartupPacket(port, false);
 
 	if (status != STATUS_OK)
-		return false;				/* cancel request processed, or error */
+	{
+		ereport(LOG,
+				(errmsg("connection startup failed")));
+		proc_exit(status);
+	}
 
 	/*
 	 * Now that we have the user and database name, we can set the process
@@ -2483,27 +2488,18 @@ BackendInit(Port *port)
 	random_seed = 0;
 	gettimeofday(&now, &tz);
 	srandom((unsigned int) now.tv_usec);
-
-#ifdef EXEC_BACKEND
-	ClientAuthInProgress = false;		/* client_min_messages is active
-										 * now */
-#endif
-	return true;
 }
 
 
 static int
-BackendFork(Port *port)
+BackendRun(Port *port)
 {
 	char	  **av;
 	int			maxac;
 	int			ac;
 	char		debugbuf[32];
-#ifndef EXEC_BACKEND
 	char		protobuf[32];
-#endif
 	int			i;
-	char tmpExtraOptions[MAXPGPATH];
 
 	/*
 	 * Let's clean up ourselves as the postmaster child, and
@@ -2521,12 +2517,9 @@ BackendFork(Port *port)
 	if (PreAuthDelay > 0)
 		sleep(PreAuthDelay);
 
-	port->canAcceptConnections = canAcceptConnections();
+	/* Will exit on failure */
+	BackendInit(port);
 
-#ifndef EXEC_BACKEND
-	if (!BackendInit(port))
-		return -1;
-#endif
 
 	/* ----------------
 	 * Now, build the argv vector that will be given to PostgresMain.
@@ -2563,47 +2556,29 @@ BackendFork(Port *port)
 	/*
 	 * Pass any backend switches specified with -o in the postmaster's own
 	 * command line.  We assume these are secure.
-	 * [Note: now makes a copy to protect against future fork/exec changes]
 	 */
-	strcpy(tmpExtraOptions,ExtraOptions);
-	split_opts(av, &ac, tmpExtraOptions);
+	split_opts(av, &ac, ExtraOptions);
 
-#ifndef EXEC_BACKEND
 	/* Tell the backend what protocol the frontend is using. */
 	snprintf(protobuf, sizeof(protobuf), "-v%u", port->proto);
 	av[ac++] = protobuf;
+
+#ifdef EXEC_BACKEND
+	/* pass data dir before end of secure switches (-p) */
+	av[ac++] = "-D";
+	av[ac++] = DataDir;
 #endif
 
 	/*
 	 * Tell the backend it is being called from the postmaster, and which
 	 * database to use.  -p marks the end of secure switches.
 	 */
-#ifdef EXEC_BACKEND
-	write_backend_variables(getpid(),port);
-
-	/* pass data dir before end of secure switches (-p) */
-	av[ac++] = "-D";
-	av[ac++] = DataDir;
-
-	/*
-	 * This is totally bogus. We need to pass an arg to -p, but we'll
-	 * actually get the dbname by ProcessStartupPacket in the exec'd
-	 * process
-	 */
-	av[ac++] = "-p";
-	av[ac++] = "FORK_EXEC";
-#else
 	av[ac++] = "-p";
 	av[ac++] = port->database_name;
-#endif
 
 	/*
 	 * Pass the (insecure) option switches from the connection request.
 	 * (It's OK to mangle port->cmdline_options now.)
-	 */
-	/* FIXME: [fork/exec] Hmmm.. we won't see these until after we BackendInit.
-	 * Should we add code to BackendInit to add these (somehow!) into
-	 * the PostgresMain argument list in the EXEC_BACKEND case?
 	 */
 	if (port->cmdline_options)
 		split_opts(av, &ac, port->cmdline_options);
@@ -2620,7 +2595,9 @@ BackendFork(Port *port)
 	 * username isn't lost either; see ProcessStartupPacket().
 	 */
 	MemoryContextSwitchTo(TopMemoryContext);
+#ifndef EXEC_BACKEND
 	MemoryContextDelete(PostmasterContext);
+#endif
 	PostmasterContext = NULL;
 
 	/*
@@ -2635,15 +2612,104 @@ BackendFork(Port *port)
 	ereport(DEBUG3,
 			(errmsg_internal(")")));
 
-#ifdef EXEC_BACKEND
-	return execv(pg_pathname,av);
-#else
 	ClientAuthInProgress = false;		/* client_min_messages is active
 										 * now */
 
 	return (PostgresMain(ac, av, port->user_name));
-#endif
 }
+
+
+#ifdef EXEC_BACKEND
+
+
+/*
+ * SubPostmasterMain -- prepare the fork/exec'd process to be in an equivalent
+ *			state (for calling BackendRun) as a forked process.
+ *
+ * returns:
+ *		Shouldn't return at all.
+ */
+void
+SubPostmasterMain(int argc, char* argv[])
+{
+	unsigned long	backendID;
+	Port			port;
+
+	memset((void*)&port, 0, sizeof(Port));
+	Assert(argc == 2);
+
+	/* Setup global context */
+	MemoryContextInit();
+	InitializeGUCOptions();
+
+	/* Parse passed-in context */
+	argc = 0;
+	backendID		= (unsigned long)atol(argv[argc++]);
+	DataDir			= strdup(argv[argc++]);
+
+	/* Read in file-based context */
+	read_nondefault_variables();
+	read_backend_variables(backendID,&port);
+
+	/* FIXME: [fork/exec] Ugh */
+	load_hba();
+	load_ident();
+	load_user();
+	load_group();
+
+	/* Run backend */
+	proc_exit(BackendRun(&port));
+}
+
+
+/*
+ * Backend_forkexec -- fork/exec off a backend process
+ *
+ * returns:
+ *		the pid of the fork/exec'd process
+ */
+static pid_t
+Backend_forkexec(Port *port)
+{
+	pid_t pid;
+	char *av[5];
+	int ac = 0, bufc = 0, i;
+	char buf[2][MAXPGPATH];
+
+	if (!write_backend_variables(port))
+		return -1; /* log made by write_backend_variables */
+
+	av[ac++] = "postgres";
+	av[ac++] = "-forkexec";
+
+	/* Format up context to pass to exec'd process */
+	snprintf(buf[bufc++],MAXPGPATH,"%lu",tmpBackendFileNum);
+	/* FIXME: [fork/exec] whitespaces in directories? */
+	snprintf(buf[bufc++],MAXPGPATH,"%s",DataDir);
+
+	/* Add to the arg list */
+	Assert(bufc <= lengthof(buf));
+	for (i = 0; i < bufc; i++)
+		av[ac++] = buf[i];
+
+	/* FIXME: [fork/exec] ExtraOptions? */
+
+  	av[ac++] = NULL;
+  	Assert(ac <= lengthof(av));
+
+	/* Fire off execv in child */
+	if ((pid = fork()) == 0 && (execv(pg_pathname,av) == -1))
+		/*
+		 * FIXME: [fork/exec] suggestions for what to do here?
+		 *  Probably OK to issue error (unlike pgstat case)
+		 */
+		abort();
+
+	return pid; /* Parent returns pid */
+}
+
+#endif
+
 
 /*
  * ExitPostmaster -- cleanup
@@ -2851,6 +2917,9 @@ CountChildren(void)
  *
  * Return value of SSDataBase is subprocess' PID, or 0 if failed to start subprocess
  * (0 is returned only for checkpoint case).
+ *
+ * note: in the EXEC_BACKEND case, we delay the fork until argument list has been
+ *	established
  */
 NON_EXEC_STATIC void
 SSDataBaseInit(int xlop)
@@ -2894,16 +2963,20 @@ SSDataBase(int xlop)
 {
 	pid_t		pid;
 	Backend    *bn;
-
+#ifndef EXEC_BACKEND
 #ifdef LINUX_PROFILE
 	struct itimerval prof_itimer;
+#endif
+#else
+	char		idbuf[32];
 #endif
 
 	fflush(stdout);
 	fflush(stderr);
 
+#ifndef EXEC_BACKEND
 #ifdef LINUX_PROFILE
-	/* see comments in BackendStartup */
+	/* see comments in BackendRun */
 	getitimer(ITIMER_PROF, &prof_itimer);
 #endif
 
@@ -2912,13 +2985,16 @@ SSDataBase(int xlop)
 	beos_before_backend_startup();
 #endif
 
+	/* Non EXEC_BACKEND case; fork here */
 	if ((pid = fork()) == 0)	/* child */
+#endif
 	{
 		char	   *av[10];
 		int			ac = 0;
 		char		nbbuf[32];
 		char		xlbuf[32];
 
+#ifndef EXEC_BACKEND
 #ifdef LINUX_PROFILE
 		setitimer(ITIMER_PROF, &prof_itimer, NULL);
 #endif
@@ -2931,8 +3007,10 @@ SSDataBase(int xlop)
 		/* Close the postmaster's sockets */
 		ClosePostmasterPorts(true);
 
-#ifndef EXEC_BACKEND
 		SSDataBaseInit(xlop);
+#else
+		if (!write_backend_variables(NULL))
+			return -1; /* log issued by write_backend_variables */
 #endif
 
 		/* Set up command-line arguments for subprocess */
@@ -2941,7 +3019,6 @@ SSDataBase(int xlop)
 #ifdef EXEC_BACKEND
 		av[ac++] = "-boot";
 #endif
-
 		snprintf(nbbuf, sizeof(nbbuf), "-B%d", NBuffers);
 		av[ac++] = nbbuf;
 
@@ -2949,22 +3026,30 @@ SSDataBase(int xlop)
 		av[ac++] = xlbuf;
 
 #ifdef EXEC_BACKEND
-		write_backend_variables(getpid(),NULL);
-
 		/* pass data dir before end of secure switches (-p) */
 		av[ac++] = "-D";
 		av[ac++] = DataDir;
-#endif
+
+		/* and the backend identifier + dbname */
+		snprintf(idbuf, sizeof(idbuf), "-p%lu,template1", tmpBackendFileNum);
+		av[ac++] = idbuf;
+#else
 		av[ac++] = "-p";
 		av[ac++] = "template1";
+#endif
 
 		av[ac] = (char *) NULL;
 
 		Assert(ac < lengthof(av));
 
 #ifdef EXEC_BACKEND
-		if (execv(pg_pathname,av) == -1)
-			elog(FATAL,"unable to execv in SSDataBase: %m");
+		/* EXEC_BACKEND case; fork/exec here */
+		if ((pid = fork()) == 0 && (execv(pg_pathname,av) == -1))
+		{
+			/* in child */
+			elog(ERROR,"unable to execv in SSDataBase: %m");
+			exit(0);
+		}
 #else
 		BootstrapMain(ac, av);
 		ExitPostmaster(0);
@@ -2974,11 +3059,12 @@ SSDataBase(int xlop)
 	/* in parent */
 	if (pid < 0)
 	{
+#ifndef EXEC_BACKEND
 #ifdef __BEOS__
 		/* Specific beos actions before backend startup */
 		beos_backend_startup_failed();
 #endif
-
+#endif
 		switch (xlop)
 		{
 			case BS_XLOG_STARTUP:
@@ -3111,6 +3197,7 @@ postmaster_error(const char *fmt,...)
  * The following need to be available to the read/write_backend_variables
  * functions
  */
+#include "storage/spin.h"
 extern XLogRecPtr RedoRecPtr;
 extern XLogwrtResult LogwrtResult;
 extern slock_t *ShmemLock;
@@ -3124,22 +3211,22 @@ extern int	pgStatSock;
 #define write_var(var,fp) fwrite((void*)&(var),sizeof(var),1,fp)
 #define read_var(var,fp)  fread((void*)&(var),sizeof(var),1,fp)
 #define get_tmp_backend_file_name(buf,id)	\
-do {								\
-	Assert(DataDir);				\
-	sprintf((buf),					\
-		"%s/%s/%s.backend_var.%d",	\
-		DataDir,					\
-		PG_TEMP_FILES_DIR,			\
-		PG_TEMP_FILE_PREFIX,		\
-		(id));						\
-} while (0)
+		do {								\
+			Assert(DataDir);				\
+			sprintf((buf),					\
+				"%s/%s/%s.backend_var.%lu",	\
+				DataDir,					\
+				PG_TEMP_FILES_DIR,			\
+				PG_TEMP_FILE_PREFIX,		\
+				(id));						\
+		} while (0)
 
-static void
-write_backend_variables(pid_t pid, Port *port)
+static bool
+write_backend_variables(Port *port)
 {
 	char	filename[MAXPGPATH];
 	FILE	*fp;
-	get_tmp_backend_file_name(filename,pid);
+	get_tmp_backend_file_name(filename,++tmpBackendFileNum);
 
 	/* Open file */
 	fp = AllocateFile(filename, PG_BINARY_W);
@@ -3156,7 +3243,7 @@ write_backend_variables(pid_t pid, Port *port)
 			ereport(ERROR,
 				(errcode_for_file_access(),
 				errmsg("could not write to file \"%s\": %m", filename)));
-			return;
+			return false;
 		}
 	}
 
@@ -3188,16 +3275,20 @@ write_backend_variables(pid_t pid, Port *port)
 	write_var(ProcStructLock,fp);
 	write_var(pgStatSock,fp);
 
+	write_var(PreAuthDelay,fp);
+	write_var(debug_flag,fp);
+
 	/* Release file */
 	FreeFile(fp);
+	return true;
 }
 
 void
-read_backend_variables(pid_t pid, Port *port)
+read_backend_variables(unsigned long id, Port *port)
 {
 	char	filename[MAXPGPATH];
 	FILE	*fp;
-	get_tmp_backend_file_name(filename,pid);
+	get_tmp_backend_file_name(filename,id);
 
 	/* Open file */
 	fp = AllocateFile(filename, PG_BINARY_R);
@@ -3236,6 +3327,9 @@ read_backend_variables(pid_t pid, Port *port)
 	read_var(LWLockArray,fp);
 	read_var(ProcStructLock,fp);
 	read_var(pgStatSock,fp);
+
+	read_var(PreAuthDelay,fp);
+	read_var(debug_flag,fp);
 
 	/* Release file */
 	FreeFile(fp);

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.382 2004/01/06 17:36:31 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.383 2004/01/06 23:15:22 momjian Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -67,11 +67,6 @@
 
 extern int	optind;
 extern char *optarg;
-
-#ifdef EXEC_BACKEND
-extern bool BackendInit(Port*);
-extern void read_backend_variables(pid_t, Port*);
-#endif
 
 /* ----------------
  *		global variables
@@ -2063,7 +2058,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 	 *
 	 * If we are running under the postmaster, this is done already.
 	 */
-	if (!IsUnderPostmaster || ExecBackend)
+	if (!IsUnderPostmaster)
 		MemoryContextInit();
 
 	set_ps_display("startup");
@@ -2268,11 +2263,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 				 */
 				if (secure)
 				{
-#ifdef EXEC_BACKEND
-					IsUnderPostmaster = true;
-#else
 					dbname = strdup(optarg);
-#endif
 
 					secure = false;		/* subsequent switches are NOT
 										 * secure */
@@ -2478,25 +2469,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 	if (IsUnderPostmaster)
 	{
 #ifdef EXEC_BACKEND
-		Port *port =(Port*)malloc(sizeof(Port));
-		if (port == NULL)
-			ereport(ERROR,
-				(errcode(ERRCODE_OUT_OF_MEMORY),
-				errmsg("insufficient memory to allocate port")));
-
 		read_nondefault_variables();
-		read_backend_variables(getpid(),port);
-
-		/* FIXME: [fork/exec] Ugh */
-		load_hba();
-		load_ident();
-		load_user();
-		load_group();
-
-		if (!BackendInit(port))
-			return -1;
-
-		dbname = port->database_name;
 #endif
 	} else
 		ProcessConfigFile(PGC_POSTMASTER);

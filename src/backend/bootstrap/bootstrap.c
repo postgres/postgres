@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/bootstrap/bootstrap.c,v 1.172 2003/12/25 03:52:50 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/bootstrap/bootstrap.c,v 1.173 2004/01/06 23:15:22 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -51,7 +51,7 @@
 #ifdef EXEC_BACKEND
 typedef struct Port Port;
 extern void SSDataBaseInit(int);
-extern void read_backend_variables(pid_t, Port*);
+extern void read_backend_variables(unsigned long, Port*);
 #endif
 
 extern int	Int_yyparse(void);
@@ -231,6 +231,9 @@ BootstrapMain(int argc, char *argv[])
 	int			flag;
 	int			xlogop = BS_XLOG_NOP;
 	char	   *potential_DataDir = NULL;
+#ifdef EXEC_BACKEND
+	unsigned long	backendID = 0;
+#endif
 
 	/*
 	 * initialize globals
@@ -291,10 +294,15 @@ BootstrapMain(int argc, char *argv[])
 				break;
 			case 'p':
 #ifdef EXEC_BACKEND
-				IsUnderPostmaster = true;
+				{
+					char buf[MAXPGPATH];
+					IsUnderPostmaster = true;
+					sscanf(optarg,"%lu,%s",&backendID,buf);
+					dbname = strdup(buf);
+				}
 #endif
 				dbname = strdup(optarg);
-					break;
+				break;
 			case 'B':
 				SetConfigOption("shared_buffers", optarg, PGC_POSTMASTER, PGC_S_ARGV);
 				break;
@@ -363,7 +371,7 @@ BootstrapMain(int argc, char *argv[])
 	{
 #ifdef EXEC_BACKEND
 		read_nondefault_variables();
-		read_backend_variables(getpid(),NULL);
+		read_backend_variables(backendID,NULL);
 
 		SSDataBaseInit(xlogop);
 #endif
@@ -431,11 +439,11 @@ BootstrapMain(int argc, char *argv[])
 		switch (xlogop)
 		{
 			case BS_XLOG_BGWRITER:
-				InitDummyProcess(DUMMY_PROC_BGWRITER);	
+				InitDummyProcess(DUMMY_PROC_BGWRITER);
 				break;
-		
+
 			default:
-				InitDummyProcess(DUMMY_PROC_DEFAULT);	
+				InitDummyProcess(DUMMY_PROC_DEFAULT);
 				break;
 		}
 	}

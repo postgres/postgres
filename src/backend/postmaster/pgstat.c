@@ -13,7 +13,7 @@
  *
  *	Copyright (c) 2001-2003, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.50 2003/12/25 03:52:51 momjian Exp $
+ *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.51 2004/01/06 23:15:22 momjian Exp $
  * ----------
  */
 #include "postgres.h"
@@ -107,7 +107,7 @@ static char pgStat_fname[MAXPGPATH];
  * ----------
  */
 #ifdef EXEC_BACKEND
-static void pgstat_exec(STATS_PROCESS_TYPE procType);
+static pid_t pgstat_forkexec(STATS_PROCESS_TYPE procType);
 static void pgstat_parseArgs(PGSTAT_FORK_ARGS);
 #endif
 NON_EXEC_STATIC void pgstat_main(PGSTAT_FORK_ARGS);
@@ -337,15 +337,16 @@ startup_failed:
 #ifdef EXEC_BACKEND
 
 /* ----------
- * pgstat_exec() -
+ * pgstat_forkexec() -
  *
- * Used to format up the arglist for, and exec, statistics
+ * Used to format up the arglist for, then fork and exec, statistics
  * (buffer and collector) processes
  *
  */
-static void
-pgstat_exec(STATS_PROCESS_TYPE procType)
+static pid_t
+pgstat_forkexec(STATS_PROCESS_TYPE procType)
 {
+	pid_t pid;
 	char *av[11];
 	int ac = 0, bufc = 0, i;
 	char pgstatBuf[8][MAXPGPATH];
@@ -387,9 +388,12 @@ pgstat_exec(STATS_PROCESS_TYPE procType)
 	av[ac++] = NULL;
 	Assert(ac <= lengthof(av));
 
-	if (execv(pg_pathname,av) == -1)
+	/* Fire off execv in child */
+	if ((pid = fork()) == 0 && (execv(pg_pathname,av) == -1))
 		/* FIXME: [fork/exec] suggestions for what to do here? Can't call elog... */
-		Assert(false);
+		abort();
+
+	return pid; /* Parent returns pid */
 }
 
 
@@ -479,7 +483,11 @@ pgstat_start(void)
 	beos_before_backend_startup();
 #endif
 
+#ifdef EXEC_BACKEND
+	switch ((pgStatSock = (int) pgstat_forkexec(STAT_PROC_BUFFER)))
+#else
 	switch ((pgStatPid = (int) fork()))
+#endif
 	{
 		case -1:
 #ifdef __BEOS__
@@ -490,32 +498,27 @@ pgstat_start(void)
 					(errmsg("could not fork statistics buffer: %m")));
 			return;
 
+#ifndef EXEC_BACKEND
 		case 0:
+			/* in postmaster child ... */
+#ifdef __BEOS__
+			/* Specific beos actions after backend startup */
+			beos_backend_startup();
+#endif
+			/* Close the postmaster's sockets, except for pgstat link */
+			ClosePostmasterPorts(false);
+
+			/* Drop our connection to postmaster's shared memory, as well */
+			PGSharedMemoryDetach();
+
+			pgstat_main();
 			break;
+#endif
 
 		default:
 			pgstat_is_running = true;
 			return;
 	}
-
-	/* in postmaster child ... */
-
-#ifdef __BEOS__
-	/* Specific beos actions after backend startup */
-	beos_backend_startup();
-#endif
-
-	/* Close the postmaster's sockets, except for pgstat link */
-	ClosePostmasterPorts(false);
-
-	/* Drop our connection to postmaster's shared memory, as well */
-	PGSharedMemoryDetach();
-
-#ifdef EXEC_BACKEND
-	pgstat_exec(STAT_PROC_BUFFER);
-#else
-	pgstat_main();
-#endif
 }
 
 
@@ -1385,28 +1388,31 @@ pgstat_main(PGSTAT_FORK_ARGS)
 		exit(1);
 	}
 
+#ifdef EXEC_BACKEND
+	/* child becomes collector process */
+	switch (pgstat_forkexec(STAT_PROC_COLLECTOR))
+#else
 	switch (fork())
+#endif
 	{
 		case -1:
 			ereport(LOG,
 					(errmsg("could not fork statistics collector: %m")));
 			exit(1);
 
+#ifndef EXEC_BACKEND
 		case 0:
 			/* child becomes collector process */
-#ifdef EXEC_BACKEND
-			pgstat_exec(STAT_PROC_COLLECTOR);
-#else
 			pgstat_mainChild();
+			break;
 #endif
-			exit(0);
 
 		default:
 			/* parent becomes buffer process */
 			closesocket(pgStatPipe[0]);
 			pgstat_recvbuffer();
-			exit(0);
 	}
+	exit(0);
 }
 
 

@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/main/main.c,v 1.69 2003/12/25 03:52:50 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/main/main.c,v 1.70 2004/01/06 23:15:22 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -203,9 +203,9 @@ main(int argc, char *argv[])
 
 	/*
 	 * Now dispatch to one of PostmasterMain, PostgresMain, GucInfoMain,
-	 * pgstat_main, pgstat_mainChild or BootstrapMain depending on the
-	 * program name (and possibly first argument) we were called with.
-	 * The lack of consistency here is historical.
+	 * SubPostmasterMain, pgstat_main, pgstat_mainChild or BootstrapMain
+	 * depending on the program name (and possibly first argument) we
+	 * were called with. The lack of consistency here is historical.
 	 */
 	len = strlen(new_argv[0]);
 
@@ -223,6 +223,16 @@ main(int argc, char *argv[])
 		exit(BootstrapMain(argc - 1, new_argv + 1));
 
 #ifdef EXEC_BACKEND
+	/*
+	 * If the first argument is "-forkexec", then invoke SubPostmasterMain. Note
+	 * we remove "-forkexec" from the arguments passed on to SubPostmasterMain.
+	 */
+	if (argc > 1 && strcmp(new_argv[1], "-forkexec") == 0)
+	{
+		SubPostmasterMain(argc - 2, new_argv + 2);
+		exit(0);
+	}
+
 	/*
 	 * If the first argument is "-statBuf", then invoke pgstat_main. Note
 	 * we remove "-statBuf" from the arguments passed on to pgstat_main.
