@@ -5,7 +5,7 @@
  * command, configuration file, and command line options.
  * See src/backend/utils/misc/README for more information.
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.70 2002/06/16 00:09:12 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.71 2002/07/13 01:02:14 momjian Exp $
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  * Written by Peter Eisentraut <peter_e@gmx.net>.
@@ -51,6 +51,7 @@
 extern bool Log_connections;
 extern int	PreAuthDelay;
 extern int	AuthenticationTimeout;
+extern int	StatementTimeout;
 extern int	CheckPointTimeout;
 extern int	CommitDelay;
 extern int	CommitSiblings;
@@ -573,6 +574,11 @@ static struct config_int
 	{
 		{ "max_expr_depth", PGC_USERSET }, &max_expr_depth,
 		DEFAULT_MAX_EXPR_DEPTH, 10, INT_MAX, NULL, NULL
+	},
+
+	{
+		{ "statement_timeout", PGC_USERSET }, &StatementTimeout,
+		0, 0, INT_MAX, NULL, NULL
 	},
 
 	{

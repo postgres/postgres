@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.120 2002/07/05 01:17:20 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.121 2002/07/13 01:02:14 momjian Exp $
 -->
 
 <Chapter Id="runtime">
@@ -1580,6 +1580,16 @@ dynamic_library_path = '/usr/local/lib/postgresql:/home/my_project/lib:$libdir'
        <para>
         The TCP port the server listens on; 5432 by default. This
         option can only be set at server start.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><varname>STATEMENT_TIMEOUT</varname> (<type>integer</type>)</term>
+      <listitem>
+       <para>
+        Aborts any statement that takes over the specified number of
+        microseconds.  A value of zero turns off the timer.
        </para>
       </listitem>
      </varlistentry>

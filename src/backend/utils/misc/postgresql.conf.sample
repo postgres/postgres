@@ -200,3 +200,4 @@
 #password_encryption = true
 #sql_inheritance = true
 #transform_null_equals = false
+#statement_timeout = 0				# 0 is disabled

@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.280 2002/06/20 20:29:33 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.281 2002/07/13 01:02:14 momjian Exp $
  *
  * NOTES
  *
@@ -2105,7 +2105,7 @@ DoBackend(Port *port)
 	 * after a time delay, so that a broken client can't hog a connection
 	 * indefinitely.  PreAuthDelay doesn't count against the time limit.
 	 */
-	if (!enable_sigalrm_interrupt(AuthenticationTimeout * 1000))
+	if (!enable_sig_alarm(AuthenticationTimeout * 1000, false))
 		elog(FATAL, "DoBackend: Unable to set timer for auth timeout");
 
 	/*
@@ -2134,7 +2134,7 @@ DoBackend(Port *port)
 	 * Done with authentication.  Disable timeout, and prevent
 	 * SIGTERM/SIGQUIT again until backend startup is complete.
 	 */
-	if (!disable_sigalrm_interrupt())
+	if (!disable_sig_alarm(false))
 		elog(FATAL, "DoBackend: Unable to disable timer for auth timeout");
 	PG_SETMASK(&BlockSig);
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.269 2002/07/11 07:39:26 ishii Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.270 2002/07/13 01:02:14 momjian Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -77,6 +77,8 @@ char	   *debug_query_string; /* used by pgmonitor */
 
 /* Note: whereToSendOutput is initialized for the bootstrap/standalone case */
 CommandDest whereToSendOutput = Debug;
+
+extern int StatementTimeout;
 
 static bool dontExecute = false;
 
@@ -717,6 +719,9 @@ pg_exec_query_string(StringInfo query_string,		/* string to execute */
 				xact_started = true;
 			}
 
+			if (StatementTimeout)
+				enable_sig_alarm(StatementTimeout, true);
+
 			/*
 			 * If we got a cancel signal in analysis or prior command,
 			 * quit
@@ -791,6 +796,8 @@ pg_exec_query_string(StringInfo query_string,		/* string to execute */
 					ShowUsage("EXECUTOR STATISTICS");
 			}
 
+			disable_sig_alarm(true);
+
 			/*
 			 * In a query block, we want to increment the command counter
 			 * between queries so that the effects of early queries are
@@ -821,9 +828,7 @@ pg_exec_query_string(StringInfo query_string,		/* string to execute */
 				finish_xact_command();
 				xact_started = false;
 			}
-
-		}						/* end loop over queries generated from a
-								 * parsetree */
+		} /* end loop over queries generated from a parsetree */
 
 		/*
 		 * If this is the last parsetree of the query string, close down
@@ -996,7 +1001,7 @@ authdie(SIGNAL_ARGS)
  * at soonest convenient time
  */
 static void
-QueryCancelHandler(SIGNAL_ARGS)
+StatementCancelHandler(SIGNAL_ARGS)
 {
 	int			save_errno = errno;
 
@@ -1551,10 +1556,10 @@ PostgresMain(int argc, char *argv[], const char *username)
 	 */
 
 	pqsignal(SIGHUP, SigHupHandler);	/* set flag to read config file */
-	pqsignal(SIGINT, QueryCancelHandler);		/* cancel current query */
+	pqsignal(SIGINT, StatementCancelHandler);		/* cancel current query */
 	pqsignal(SIGTERM, die);		/* cancel current query and exit */
 	pqsignal(SIGQUIT, quickdie);	/* hard crash time */
-	pqsignal(SIGALRM, HandleDeadLock);	/* check for deadlock after
+	pqsignal(SIGALRM, handle_sig_alarm);	/* check for deadlock after
 										 * timeout */
 
 	/*
@@ -1688,7 +1693,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.269 $ $Date: 2002/07/11 07:39:26 $\n");
+		puts("$Revision: 1.270 $ $Date: 2002/07/13 01:02:14 $\n");
 	}
 
 	/*
@@ -1819,6 +1824,9 @@ PostgresMain(int argc, char *argv[], const char *username)
 		 */
 		QueryCancelPending = false;		/* forget any earlier CANCEL
 										 * signal */
+
+		/* Stop any statement timer */
+		disable_sig_alarm(true);
 
 		EnableNotifyInterrupt();
 

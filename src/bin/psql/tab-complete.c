@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/tab-complete.c,v 1.50 2002/06/16 00:09:12 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/tab-complete.c,v 1.51 2002/07/13 01:02:14 momjian Exp $
  */
 
 /*----------------------------------------------------------------------
@@ -267,6 +267,7 @@ psql_completion(char *text, int start, int end)
 
 		"default_transaction_isolation",
 		"search_path",
+		"statement_timeout",
 
 		NULL
 	};
