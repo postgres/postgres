@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/timestamp.c,v 1.60 2001/11/21 18:29:48 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/timestamp.c,v 1.61 2001/12/29 18:31:31 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2461,6 +2461,11 @@ timestamp_part(PG_FUNCTION_ARGS)
 				result = (tm->tm_year / 1000);
 				break;
 
+			case DTK_JULIAN:
+				result = date2j(tm->tm_year, tm->tm_mon, tm->tm_mday);
+				result += (((((tm->tm_hour * 60) + tm->tm_min) * 60) + tm->tm_sec) / 86400e0);
+				break;
+
 			case DTK_TZ:
 			case DTK_TZ_MINUTE:
 			case DTK_TZ_HOUR:
@@ -2549,7 +2554,8 @@ timestamptz_part(PG_FUNCTION_ARGS)
 		PG_RETURN_FLOAT8(result);
 	}
 
-	if ((type == UNITS) && (timestamp2tm(timestamp, &tz, tm, &fsec, &tzn) == 0))
+	if ((type == UNITS)
+		&& (timestamp2tm(timestamp, &tz, tm, &fsec, &tzn) == 0))
 	{
 		switch (val)
 		{
@@ -2617,6 +2623,11 @@ timestamptz_part(PG_FUNCTION_ARGS)
 
 			case DTK_MILLENNIUM:
 				result = (tm->tm_year / 1000);
+				break;
+
+			case DTK_JULIAN:
+				result = date2j(tm->tm_year, tm->tm_mon, tm->tm_mday);
+				result += (((((tm->tm_hour * 60) + tm->tm_min) * 60) + tm->tm_sec) / 86400e0);
 				break;
 
 			default:
