@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.432 2003/09/09 23:22:20 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.433 2003/09/15 22:28:57 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -3244,7 +3244,8 @@ oper_argtypes:
 				{
 				   ereport(ERROR,
 						   (errcode(ERRCODE_SYNTAX_ERROR),
-							errmsg("argument type missing (use NONE for unary operators)")));
+							errmsg("missing argument"),
+							errhint("Use NONE to denote the missing argument of a unary operator.")));
 				}
 			| Typename ',' Typename
 					{ $$ = makeList2($1, $3); }
