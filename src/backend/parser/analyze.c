@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.45 1997/10/12 07:09:20 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.46 1997/10/16 06:58:38 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1816,8 +1816,22 @@ transformGroupClause(ParseState *pstate, List *grouplist, List *targetlist)
 			gl = glist = lcons(grpcl, NIL);
 		else
 		{
-			lnext(gl) = lcons(grpcl, NIL);
-			gl = lnext(gl);
+			List	   *i;
+			
+			foreach (i, glist)
+			{
+				GroupClause *gcl = (GroupClause *) lfirst (i);
+				
+				if ( gcl->entry == grpcl->entry )
+					break;
+			}
+			if ( i == NIL )			/* not in grouplist already */
+			{
+				lnext(gl) = lcons(grpcl, NIL);
+				gl = lnext(gl);
+			}
+			else
+				pfree (grpcl);		/* get rid of this */
 		}
 		grouplist = lnext(grouplist);
 	}
@@ -1836,8 +1850,7 @@ transformSortClause(ParseState *pstate,
 					char *uniqueFlag)
 {
 	List	   *sortlist = NIL;
-	List	   *s = NIL,
-			   *i;
+	List	   *s = NIL;
 
 	while (orderlist != NIL)
 	{
@@ -1860,14 +1873,30 @@ transformSortClause(ParseState *pstate,
 		}
 		else
 		{
-			lnext(s) = lcons(sortcl, NIL);
-			s = lnext(s);
+			List	   *i;
+			
+			foreach (i, sortlist)
+			{
+				SortClause *scl = (SortClause *) lfirst (i);
+				
+				if ( scl->resdom == sortcl->resdom )
+					break;
+			}
+			if ( i == NIL )			/* not in sortlist already */
+			{
+				lnext(s) = lcons(sortcl, NIL);
+				s = lnext(s);
+			}
+			else
+				pfree (sortcl);		/* get rid of this */
 		}
 		orderlist = lnext(orderlist);
 	}
 
 	if (uniqueFlag)
 	{
+		List	   *i;
+		
 		if (uniqueFlag[0] == '*')
 		{
 
