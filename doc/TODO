@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Fri Mar 23 12:09:01 EST 2001
+Last updated:		Sun Mar 25 16:41:44 EST 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -359,6 +359,7 @@ SOURCE CODE
 * Add version file format stamp to heap and other table types
 * Make elog(LOG) in WAL its own output type, distinct from DEBUG
 * Rename some /contrib modules from pg* to pg_*
+* Remove warnings created by -Wcast-align
 
 ---------------------------------------------------------------------------
 
