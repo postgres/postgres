@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.93 2002/10/29 02:38:37 momjian Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.94 2002/10/29 02:57:28 momjian Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -1530,9 +1530,10 @@ gunzip -c user.ps.gz \
 	<entry><systemitem class="osname">HP-UX</></entry>
 	<entry><systemitem>PA-RISC</></entry>
 	<entry>7.3</entry>
-        <entry>2002-10-26,
-	 Tom Lane (<email>tgl@sss.pgh.pa.us</email>)</entry>
-        <entry>10.20, gcc and cc; see also <filename>doc/FAQ_HPUX</filename></entry>
+        <entry>2002-10-28,
+	 10.20 Tom Lane (<email>tgl@sss.pgh.pa.us</email>)</entry>,
+	 11.00, 11.11, 32 &amp; 64 bit, Giles Lean (<email>giles.lean@hp.com</email>)</entry>
+        <entry>gcc and cc; see also <filename>doc/FAQ_HPUX</filename></entry>
        </row>
        <row>
 	<entry><systemitem class="osname">IRIX</></entry>
@@ -1709,7 +1710,7 @@ gunzip -c user.ps.gz \
 	<entry>7.2</entry>
 	<entry>2002-10-28,
 	 Andrew Sullivan (<email>andrew@libertyrms.info</email>)</entry>
-	<entry>Solaris 7 & 8; see also <filename>doc/FAQ_Solaris</filename></entry>
+	<entry>Solaris 7 &amp; 8; see also <filename>doc/FAQ_Solaris</filename></entry>
        </row>
        <row>
 	<entry><systemitem class="osname">Solaris</></entry>
