@@ -324,12 +324,11 @@ extern void srandom(int seed);
 
 /*
  * As soon as the backend blocks on a lock, it waits this number of seconds
- * before checking for a deadlock.  If not, it keeps checking every this
- * number of seconds.
+ * before checking for a deadlock.
  * We don't check for deadlocks just before sleeping because a deadlock is
  * a rare event, and checking is an expensive operation.
  */
-#define DEADLOCK_CHECK_TIMER 60
+#define DEADLOCK_CHECK_TIMER 1
 
 /*
  * This flag enables the use of idexes in plans generated for function
