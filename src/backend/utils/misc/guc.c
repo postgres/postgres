@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.202 2004/05/07 00:24:58 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.203 2004/05/07 01:34:08 momjian Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -103,6 +103,8 @@ static const char *assign_log_statement(const char *newval, bool doit,
 static const char *assign_log_stmtlvl(int *var, const char *newval,
 						   bool doit, GucSource source);
 static bool assign_phony_autocommit(bool newval, bool doit, GucSource source);
+static bool assign_stage_log_stats(bool newval, bool doit, GucSource source);
+static bool assign_log_stats(bool newval, bool doit, GucSource source);
 
 
 /*
@@ -577,7 +579,7 @@ static struct config_bool ConfigureNamesBool[] =
 			NULL
 		},
 		&log_parser_stats,
-		false, NULL, NULL
+		false, assign_stage_log_stats, NULL
 	},
 	{
 		{"log_planner_stats", PGC_USERLIMIT, STATS_MONITORING,
@@ -585,7 +587,7 @@ static struct config_bool ConfigureNamesBool[] =
 			NULL
 		},
 		&log_planner_stats,
-		false, NULL, NULL
+		false, assign_stage_log_stats, NULL
 	},
 	{
 		{"log_executor_stats", PGC_USERLIMIT, STATS_MONITORING,
@@ -593,7 +595,7 @@ static struct config_bool ConfigureNamesBool[] =
 			NULL
 		},
 		&log_executor_stats,
-		false, NULL, NULL
+		false, assign_stage_log_stats, NULL
 	},
 	{
 		{"log_statement_stats", PGC_USERLIMIT, STATS_MONITORING,
@@ -601,7 +603,7 @@ static struct config_bool ConfigureNamesBool[] =
 			NULL
 		},
 		&log_statement_stats,
-		false, NULL, NULL
+		false, assign_log_stats, NULL
 	},
 #ifdef BTREE_BUILD_STATS
 	{
@@ -4704,6 +4706,47 @@ assign_phony_autocommit(bool newval, bool doit, GucSource source)
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				errmsg("SET AUTOCOMMIT TO OFF is no longer supported")));
 		return false;
+	}
+	return true;
+}
+
+
+static bool
+assign_stage_log_stats(bool newval, bool doit, GucSource source)
+{
+	if (newval)
+	{
+		if (log_statement_stats)
+		{
+			if (doit)
+				ereport(ERROR,
+						(errcode(ERRCODE_ERROR_IN_ASSIGNMENT),
+					errmsg("Can not enable parameter when \"log_statement_stats\" is true.")));
+			else
+				return false;
+		}
+		return true;
+	}
+	return true;
+}
+
+
+static bool
+assign_log_stats(bool newval, bool doit, GucSource source)
+{
+	if (newval)
+	{
+		if (log_parser_stats || log_planner_stats || log_executor_stats)
+		{
+			if (doit)
+				ereport(ERROR,
+						(errcode(ERRCODE_ERROR_IN_ASSIGNMENT),
+					errmsg("Can not enable \"log_statement_stats\" when \"log_parser_stats\",\n"
+							"\"log_planner_stats\", or \"log_executor_stats\" is true.")));
+			else
+				return false;
+		}
+		return true;
 	}
 	return true;
 }
