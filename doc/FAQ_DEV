@@ -1,7 +1,7 @@
 
           Developer's Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Fri Mar 11 16:43:05 EST 2005
+   Last updated: Sun Mar 13 14:27:45 EST 2005
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -44,8 +44,8 @@ Technical Questions
    2.7) What is CommandCounterIncrement()?
      _________________________________________________________________
    
-                             General Questions
-                                      
+General Questions
+
   1.1) How do I get involved in PostgreSQL development?
   
    Download the code and have a look around. See 1.7.
