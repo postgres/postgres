@@ -1,0 +1,20 @@
+drop table ìÞÙ¸æñÕè;
+create table ìÞÙ¸æñÕè (ÈçäÆÉ± text, ÄüÆ³Íñó¤ varchar, ÇâÉß varchar(16));
+create index ìÞÙ¸æñÕèindex1 on ìÞÙ¸æñÕè using btree (ÈçäÆÉ±);
+create index ìÞÙ¸æñÕèindex2 on ìÞÙ¸æñÕè using hash (ÄüÆ³Íñó¤);
+insert into ìÞÙ¸æñÕè values ('çÙæªäÆ', 'ç®ç®ÒïÊÀ', 'Æ¡A01Äî');
+insert into ìÞÙ¸æñÕè values ('êûÝßäÆ', 'ØÂäãÈ´ÓîÄüÆ³', 'ÄãB10Äã');
+insert into ìÞÙ¸æñÕè values ('ó§ã£äÆ', 'Ó¡ÌÀÏ´Ç¹È´ÓîÄüÆ³', 'ØíZ01Ä¦');
+vacuum ìÞÙ¸æñÕè;
+select * from ìÞÙ¸æñÕè;
+select * from ìÞÙ¸æñÕè where ÇâÉß = 'ØíZ01Ä¦';
+select * from ìÞÙ¸æñÕè where ÇâÉß ~* 'Øíz01Ä¦';
+select * from ìÞÙ¸æñÕè where ÇâÉß like '_Z01_';
+select * from ìÞÙ¸æñÕè where ÇâÉß like '_Z%';
+select * from ìÞÙ¸æñÕè where ÄüÆ³Íñó¤ ~ 'ç®ç®Òï[ÙìØ´ÊÀ]';
+select * from ìÞÙ¸æñÕè where ÄüÆ³Íñó¤ ~* 'ç®ç®Òï[ÙìØ´ÊÀ]';
+
+select *, character_length(ÈçäÆÉ±) from ìÞÙ¸æñÕè;
+select *, octet_length(ÈçäÆÉ±) from ìÞÙ¸æñÕè;
+select *, position('È´Óî' in ÄüÆ³Íñó¤) from ìÞÙ¸æñÕè;
+select *, substring(ÄüÆ³Íñó¤ from 3 for 6 ) from ìÞÙ¸æñÕè;
