@@ -54,10 +54,10 @@ cd ../../..
 
 # Generate plpgsql's yacc and lex files
 
-cd pl/plpgsql
-rm -rf pl_scan.c pl.tab.h pl_gram.c
+cd pl/plpgsql/src
+rm -f pl_scan.c pl.tab.h pl_gram.c
 $MAKE pl_scan.c pl.tab.h pl_gram.c
-cd ../..
+cd ../../..
 
 # Generate psql's help on SQL command from the SGML docs
 
