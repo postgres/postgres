@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_handler.c,v 1.17 2003/08/04 00:43:33 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_handler.c,v 1.18 2003/09/28 23:37:45 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -46,7 +46,6 @@
 
 static int	plpgsql_firstcall = 1;
 
-void		plpgsql_init(void);
 static void plpgsql_init_all(void);
 
 
@@ -63,6 +62,8 @@ plpgsql_init(void)
 		return;
 
 	plpgsql_HashTableInit();
+
+	RegisterEOXactCallback(plpgsql_eoxact, NULL);
 
 	plpgsql_firstcall = 0;
 }

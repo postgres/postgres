@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/plpgsql.h,v 1.41 2003/09/25 23:02:12 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/plpgsql.h,v 1.42 2003/09/28 23:37:45 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -166,18 +166,22 @@ typedef struct
 }	PLpgSQL_datum;
 
 
-typedef struct
+typedef struct PLpgSQL_expr
 {								/* SQL Query to plan and execute	*/
 	int			dtype;
 	int			exprno;
 	char	   *query;
 	void	   *plan;
-	ExprState  *plan_simple_expr;
-	EState	   *plan_simple_estate;
-	Oid			plan_simple_type;
 	Oid		   *plan_argtypes;
+	/* fields for "simple expression" fast-path execution: */
+	Expr	   *expr_simple_expr;	/* NULL means not a simple expr */
+	Oid			expr_simple_type;
+	/* if expr is simple AND in use in current xact, these fields are set: */
+	ExprState  *expr_simple_state;
+	struct PLpgSQL_expr *expr_simple_next;
+	/* params to pass to expr */
 	int			nparams;
-	int			params[1];
+	int			params[1];		/* VARIABLE SIZE ARRAY ... must be last */
 }	PLpgSQL_expr;
 
 
@@ -636,6 +640,7 @@ extern void plpgsql_HashTableInit(void);
  * Functions in pl_handler.c
  * ----------
  */
+extern void plpgsql_init(void);
 extern Datum plpgsql_call_handler(PG_FUNCTION_ARGS);
 
 /* ----------
@@ -646,7 +651,7 @@ extern Datum plpgsql_exec_function(PLpgSQL_function * func,
 					  FunctionCallInfo fcinfo);
 extern HeapTuple plpgsql_exec_trigger(PLpgSQL_function * func,
 					 TriggerData *trigdata);
-
+extern void plpgsql_eoxact(bool isCommit, void *arg);
 
 /* ----------
  * Functions for the dynamic string handling in pl_funcs.c

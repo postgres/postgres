@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.91 2003/09/25 23:02:12 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.92 2003/09/28 23:37:45 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -56,6 +56,19 @@
 
 
 static const char *const raise_skip_msg = "RAISE";
+
+/*
+ * All plpgsql function executions within a single transaction share
+ * the same executor EState for evaluating "simple" expressions.  Each
+ * function call creates its own "eval_econtext" ExprContext within this
+ * estate.  We destroy the estate at transaction shutdown to ensure there
+ * is no permanent leakage of memory (especially for xact abort case).
+ *
+ * If a simple PLpgSQL_expr has been used in the current xact, it is
+ * linked into the active_simple_exprs list.
+ */
+static EState *simple_eval_estate = NULL;
+static PLpgSQL_expr *active_simple_exprs = NULL;
 
 /************************************************************
  * Local function forward declarations
@@ -135,7 +148,7 @@ static void exec_eval_datum(PLpgSQL_execstate * estate,
 				Oid *typeid,
 				Datum *value,
 				bool *isnull);
-static int exec_eval_subscript(PLpgSQL_execstate * estate,
+static int exec_eval_integer(PLpgSQL_execstate * estate,
 					PLpgSQL_expr * expr,
 					bool *isNull);
 static Datum exec_eval_expr(PLpgSQL_execstate * estate,
@@ -381,6 +394,9 @@ plpgsql_exec_function(PLpgSQL_function * func, FunctionCallInfo fcinfo)
 	}
 
 	/* Clean up any leftover temporary memory */
+	if (estate.eval_econtext != NULL)
+		FreeExprContext(estate.eval_econtext);
+	estate.eval_econtext = NULL;
 	exec_eval_cleanup(&estate);
 
 	/*
@@ -653,6 +669,9 @@ plpgsql_exec_trigger(PLpgSQL_function * func,
 	}
 
 	/* Clean up any leftover temporary memory */
+	if (estate.eval_econtext != NULL)
+		FreeExprContext(estate.eval_econtext);
+	estate.eval_econtext = NULL;
 	exec_eval_cleanup(&estate);
 
 	/*
@@ -1915,10 +1934,9 @@ exec_eval_cleanup(PLpgSQL_execstate * estate)
 		SPI_freetuptable(estate->eval_tuptable);
 	estate->eval_tuptable = NULL;
 
-	/* Clear result of exec_eval_simple_expr */
+	/* Clear result of exec_eval_simple_expr (but keep the econtext) */
 	if (estate->eval_econtext != NULL)
-		FreeExprContext(estate->eval_econtext);
-	estate->eval_econtext = NULL;
+		ResetExprContext(estate->eval_econtext);
 }
 
 
@@ -1962,7 +1980,7 @@ exec_prepare_plan(PLpgSQL_execstate * estate,
 	expr->plan = SPI_saveplan(plan);
 	spi_plan = (_SPI_plan *) expr->plan;
 	expr->plan_argtypes = spi_plan->argtypes;
-	expr->plan_simple_expr = NULL;
+	expr->expr_simple_expr = NULL;
 	exec_simple_check_plan(expr);
 
 	SPI_freeplan(plan);
@@ -2931,9 +2949,9 @@ exec_assign_value(PLpgSQL_execstate * estate,
 				bool		subisnull;
 
 				subscriptvals[i] =
-					exec_eval_subscript(estate,
-										subscripts[nsubscripts - 1 - i],
-										&subisnull);
+					exec_eval_integer(estate,
+									  subscripts[nsubscripts - 1 - i],
+									  &subisnull);
 				havenullsubscript |= subisnull;
 			}
 
@@ -3065,7 +3083,7 @@ exec_eval_datum(PLpgSQL_execstate * estate,
 		case PLPGSQL_DTYPE_TRIGARG:
 			trigarg = (PLpgSQL_trigarg *) datum;
 			*typeid = TEXTOID;
-			tgargno = exec_eval_subscript(estate, trigarg->argnum, isnull);
+			tgargno = exec_eval_integer(estate, trigarg->argnum, isnull);
 			if (*isnull || tgargno < 0 || tgargno >= estate->trig_nargs)
 			{
 				*value = (Datum) 0;
@@ -3089,33 +3107,28 @@ exec_eval_datum(PLpgSQL_execstate * estate,
 }
 
 /* ----------
- * exec_eval_subscript		Hack to allow subscripting of result variables.
+ * exec_eval_integer		Evaluate an expression, coerce result to int4
  *
- * The caller may already have an open eval_econtext, which we have to
- * save and restore around the call of exec_eval_expr.
+ * Note we do not do exec_eval_cleanup here; the caller must do it at
+ * some later point.  (We do this because the caller may be holding the
+ * results of other, pass-by-reference, expression evaluations, such as
+ * an array value to be subscripted.  Also see notes in exec_eval_simple_expr
+ * about allocation of the parameter array.)
  * ----------
  */
 static int
-exec_eval_subscript(PLpgSQL_execstate * estate,
-					PLpgSQL_expr * expr,
-					bool *isNull)
+exec_eval_integer(PLpgSQL_execstate * estate,
+				  PLpgSQL_expr * expr,
+				  bool *isNull)
 {
-	ExprContext *save_econtext;
-	Datum		subscriptdatum;
-	Oid			subscripttypeid;
-	int			result;
+	Datum		exprdatum;
+	Oid			exprtypeid;
 
-	save_econtext = estate->eval_econtext;
-	estate->eval_econtext = NULL;
-	subscriptdatum = exec_eval_expr(estate, expr, isNull, &subscripttypeid);
-	subscriptdatum = exec_simple_cast_value(subscriptdatum,
-											subscripttypeid,
-											INT4OID, -1,
-											isNull);
-	result = DatumGetInt32(subscriptdatum);
-	exec_eval_cleanup(estate);
-	estate->eval_econtext = save_econtext;
-	return result;
+	exprdatum = exec_eval_expr(estate, expr, isNull, &exprtypeid);
+	exprdatum = exec_simple_cast_value(exprdatum, exprtypeid,
+									   INT4OID, -1,
+									   isNull);
+	return DatumGetInt32(exprdatum);
 }
 
 /* ----------
@@ -3143,7 +3156,7 @@ exec_eval_expr(PLpgSQL_execstate * estate,
 	 * If this is a simple expression, bypass SPI and use the executor
 	 * directly
 	 */
-	if (expr->plan_simple_expr != NULL)
+	if (expr->expr_simple_expr != NULL)
 		return exec_eval_simple_expr(estate, expr, isNull, rettype);
 
 	rc = exec_run_select(estate, expr, 2, NULL);
@@ -3262,6 +3275,10 @@ exec_run_select(PLpgSQL_execstate * estate,
 /* ----------
  * exec_eval_simple_expr -		Evaluate a simple expression returning
  *								a Datum by directly calling ExecEvalExpr().
+ *
+ * Note: if pass-by-reference, the result is in the eval_econtext's
+ * temporary memory context.  It will be freed when exec_eval_cleanup
+ * is done.
  * ----------
  */
 static Datum
@@ -3271,63 +3288,96 @@ exec_eval_simple_expr(PLpgSQL_execstate * estate,
 					  Oid *rettype)
 {
 	Datum		retval;
-	int			i;
 	ExprContext *econtext;
 	ParamListInfo paramLI;
+	int			i;
 
 	/*
-	 * Create an expression context to hold the arguments and the result
-	 * of this expression evaluation.  This must be a child of the EState
-	 * we created in the SPI plan's context.
+	 * Pass back previously-determined result type.
 	 */
-	econtext = CreateExprContext(expr->plan_simple_estate);
+	*rettype = expr->expr_simple_type;
+
+	/*
+	 * Create an EState for evaluation of simple expressions, if there's
+	 * not one already in the current transaction.  The EState is made a
+	 * child of TopTransactionContext so it will have the right lifespan.
+	 */
+	if (simple_eval_estate == NULL)
+	{
+		MemoryContext oldcontext;
+
+		oldcontext = MemoryContextSwitchTo(TopTransactionContext);
+		simple_eval_estate = CreateExecutorState();
+		MemoryContextSwitchTo(oldcontext);
+	}
+
+	/*
+	 * Prepare the expression for execution, if it's not been done already
+	 * in the current transaction.
+	 */
+	if (expr->expr_simple_state == NULL)
+	{
+		expr->expr_simple_state = ExecPrepareExpr(expr->expr_simple_expr,
+												  simple_eval_estate);
+		/* Add it to list for cleanup */
+		expr->expr_simple_next = active_simple_exprs;
+		active_simple_exprs = expr;
+	}
+
+	/*
+	 * Create an expression context for simple expressions, if there's
+	 * not one already in the current function call.  This must be a
+	 * child of simple_eval_estate.
+	 */
+	econtext = estate->eval_econtext;
+	if (econtext == NULL)
+	{
+		econtext = CreateExprContext(simple_eval_estate);
+		estate->eval_econtext = econtext;
+	}
 
 	/*
 	 * Param list can live in econtext's temporary memory context.
+	 *
+	 * XXX think about avoiding repeated palloc's for param lists?
+	 * Beware however that this routine is re-entrant: exec_eval_datum()
+	 * can call it back for subscript evaluation, and so there can be a
+	 * need to have more than one active param list.
 	 */
 	paramLI = (ParamListInfo)
 		MemoryContextAlloc(econtext->ecxt_per_tuple_memory,
 						(expr->nparams + 1) * sizeof(ParamListInfoData));
-	econtext->ecxt_param_list_info = paramLI;
 
 	/*
-	 * Put the parameter values into the parameter list info of the
-	 * expression context.
+	 * Put the parameter values into the parameter list entries.
 	 */
-	for (i = 0; i < expr->nparams; i++, paramLI++)
+	for (i = 0; i < expr->nparams; i++)
 	{
 		PLpgSQL_datum *datum = estate->datums[expr->params[i]];
 		Oid			paramtypeid;
 
-		paramLI->kind = PARAM_NUM;
-		paramLI->id = i + 1;
+		paramLI[i].kind = PARAM_NUM;
+		paramLI[i].id = i + 1;
 		exec_eval_datum(estate, datum, expr->plan_argtypes[i],
-						&paramtypeid, &paramLI->value, &paramLI->isnull);
+						&paramtypeid,
+						&paramLI[i].value, &paramLI[i].isnull);
 	}
-	paramLI->kind = PARAM_INVALID;
+	paramLI[i].kind = PARAM_INVALID;
 
 	/*
-	 * Initialize things
+	 * Now we can safely make the econtext point to the param list.
 	 */
-	*rettype = expr->plan_simple_type;
+	econtext->ecxt_param_list_info = paramLI;
 
 	/*
 	 * Now call the executor to evaluate the expression
 	 */
 	SPI_push();
-	retval = ExecEvalExprSwitchContext(expr->plan_simple_expr,
+	retval = ExecEvalExprSwitchContext(expr->expr_simple_state,
 									   econtext,
 									   isNull,
 									   NULL);
 	SPI_pop();
-
-	/*
-	 * Note: if pass-by-reference, the result is in the econtext's
-	 * temporary memory context.  It will be freed when exec_eval_cleanup
-	 * is done.
-	 */
-	Assert(estate->eval_econtext == NULL);
-	estate->eval_econtext = econtext;
 
 	/*
 	 * That's it.
@@ -3795,9 +3845,8 @@ exec_simple_check_plan(PLpgSQL_expr * expr)
 	_SPI_plan  *spi_plan = (_SPI_plan *) expr->plan;
 	Plan	   *plan;
 	TargetEntry *tle;
-	MemoryContext oldcontext;
 
-	expr->plan_simple_expr = NULL;
+	expr->expr_simple_expr = NULL;
 
 	/*
 	 * 1. We can only evaluate queries that resulted in one single
@@ -3842,21 +3891,14 @@ exec_simple_check_plan(PLpgSQL_expr * expr)
 		return;
 
 	/*
-	 * Yes - this is a simple expression.  Prepare to execute it. We need
-	 * an EState and an expression state tree, which we'll put into the
-	 * plan context so they will have appropriate lifespan.
+	 * Yes - this is a simple expression.  Mark it as such, and initialize
+	 * state to "not executing".
 	 */
-	oldcontext = MemoryContextSwitchTo(spi_plan->plancxt);
-
-	expr->plan_simple_estate = CreateExecutorState();
-
-	expr->plan_simple_expr = ExecPrepareExpr(tle->expr,
-											 expr->plan_simple_estate);
-
-	MemoryContextSwitchTo(oldcontext);
-
+	expr->expr_simple_expr = tle->expr;
+	expr->expr_simple_state = NULL;
+	expr->expr_simple_next = NULL;
 	/* Also stash away the expression result type */
-	expr->plan_simple_type = exprType((Node *) tle->expr);
+	expr->expr_simple_type = exprType((Node *) tle->expr);
 }
 
 /*
@@ -3892,4 +3934,36 @@ exec_set_found(PLpgSQL_execstate * estate, bool state)
 	var = (PLpgSQL_var *) (estate->datums[estate->found_varno]);
 	var->value = (Datum) state;
 	var->isnull = false;
+}
+
+/*
+ * plpgsql_eoxact --- post-transaction-commit-or-abort cleanup
+ *
+ * If a simple_eval_estate was created in the current transaction,
+ * it has to be cleaned up, and we have to mark all active PLpgSQL_expr
+ * structs that are using it as no longer active.
+ */
+void
+plpgsql_eoxact(bool isCommit, void *arg)
+{
+	PLpgSQL_expr *expr;
+	PLpgSQL_expr *enext;
+
+	/* Mark all active exprs as inactive */
+	for (expr = active_simple_exprs; expr; expr = enext)
+	{
+		enext = expr->expr_simple_next;
+		expr->expr_simple_state = NULL;
+		expr->expr_simple_next = NULL;
+	}
+	active_simple_exprs = NULL;
+	/*
+	 * If we are doing a clean transaction shutdown, free the EState
+	 * (so that any remaining resources will be released correctly).
+	 * In an abort, we expect the regular abort recovery procedures to
+	 * release everything of interest.
+	 */
+	if (isCommit && simple_eval_estate)
+		FreeExecutorState(simple_eval_estate);
+	simple_eval_estate = NULL;
 }
