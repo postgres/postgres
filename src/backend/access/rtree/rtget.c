@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtget.c,v 1.3 1996/10/23 07:39:20 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtget.c,v 1.4 1996/10/31 08:52:51 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,6 +19,7 @@
  
 #include "catalog/pg_attribute.h"
 #include "access/attnum.h"
+#include "nodes/nodes.h"
 #include "nodes/pg_list.h"
 #include "access/tupdesc.h"
 #include "storage/fd.h"
@@ -41,11 +42,17 @@
 #include "utils/palloc.h"
 #include "storage/buf.h"
 #include "access/relscan.h"
+#include "storage/block.h"
+#include "access/itup.h"
 #include "access/iqual.h"
  
 #include "storage/itemid.h"
 #include "storage/item.h"
+#include "storage/page.h"
 #include "storage/bufpage.h"
+#include <stdio.h>
+#include <sys/types.h>
+#include "storage/ipc.h"
 #include "storage/bufmgr.h"
  
 #include "access/itup.h"

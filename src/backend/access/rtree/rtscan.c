@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtscan.c,v 1.5 1996/10/23 07:39:26 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtscan.c,v 1.6 1996/10/31 08:52:53 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,6 +19,7 @@
  
 #include "catalog/pg_attribute.h"
 #include "access/attnum.h"
+#include "nodes/nodes.h"
 #include "nodes/pg_list.h"
 #include "access/tupdesc.h"
 #include "storage/fd.h"
@@ -38,7 +39,18 @@
 #include "access/htup.h"
 #include "utils/tqual.h"
 #include "storage/buf.h"
+#include <sys/types.h>
+#include "storage/ipc.h"
+#include "storage/spin.h"
+#include "utils/hsearch.h" 
+#include "storage/shmem.h"
+#include "storage/lock.h"
 #include "storage/lmgr.h"
+#include "storage/itemid.h"
+#include "storage/item.h"
+#include "storage/page.h"
+#include "storage/bufpage.h"
+#include <stdio.h>
 #include "storage/bufmgr.h"
 #include "access/relscan.h"
 

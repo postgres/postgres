@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtree.c,v 1.5 1996/10/23 07:39:24 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtree.c,v 1.6 1996/10/31 08:52:52 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,13 +19,12 @@
  
 #include "catalog/pg_attribute.h"
 #include "access/attnum.h"
+#include "nodes/nodes.h"
 #include "nodes/pg_list.h"
 #include "access/tupdesc.h"
 #include "storage/fd.h"
 #include "catalog/pg_am.h"
 #include "catalog/pg_class.h"
-#include "catalog/index.h"
-#include "nodes/nodes.h"
 #include "rewrite/prs2lock.h"
 #include "access/skey.h"
 #include "access/strat.h" 
@@ -44,10 +43,12 @@
 #include "storage/buf.h"
 #include "access/relscan.h"  
 #include "access/rtscan.h"
- 
-#include "storage/itemid.h"
-#include "storage/item.h" 
-#include "storage/bufpage.h"
+
+#include "storage/ipc.h"
+#include "storage/spin.h"
+#include "utils/hsearch.h"
+#include "storage/shmem.h"  
+#include "storage/lock.h"
 #include "storage/lmgr.h"
 
 #include "access/rtree.h"
@@ -56,7 +57,10 @@
 #include "nodes/params.h"
 #include "access/sdir.h"
 #include "executor/hashjoin.h"
+#include "utils/fcache.h"
 #include "nodes/primnodes.h"
+#include "lib/fstack.h"
+#include "utils/memutils.h"
 #include "nodes/memnodes.h"
 #include "executor/tuptable.h"
 #include "nodes/execnodes.h"
@@ -74,6 +78,12 @@
 #include "executor/executor.h"
 
 #include "access/heapam.h"
+
+#include "storage/itemid.h"
+#include "storage/item.h"
+#include "storage/buf.h"
+#include "storage/page.h"
+#include "storage/bufpage.h"
 
 typedef struct SPLITVEC {
     OffsetNumber	*spl_left;

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtstrat.c,v 1.2 1996/10/20 09:27:12 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtstrat.c,v 1.3 1996/10/31 08:52:54 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,6 +16,7 @@
  
 #include "catalog/pg_attribute.h"
 #include "access/attnum.h"
+#include "nodes/nodes.h"
 #include "nodes/pg_list.h" 
 #include "access/tupdesc.h"
 #include "storage/fd.h"
