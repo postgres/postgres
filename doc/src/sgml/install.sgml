@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/install.sgml,v 1.41.2.4 2000/06/05 17:02:27 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/install.sgml,v 1.41.2.5 2000/11/03 03:42:55 momjian Exp $
 -->
 
  <chapter id="install">
@@ -8,7 +8,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/install.sgml,v 1.41.2.4 2000/06/05 17
   <abstract>
    <para>
     Installation instructions for 
-    <productname>PostgreSQL</productname> 7.0.2.
+    <productname>PostgreSQL</productname> 7.0.3.
    </para>
   </abstract>
 
@@ -18,9 +18,9 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/install.sgml,v 1.41.2.4 2000/06/05 17
    then unpack it:
 
    <programlisting>
-&gt; gunzip postgresql-7.0.2.tar.gz
-&gt; tar -xf postgresql-7.0.2.tar
-&gt; mv postgresql-7.0.2 /usr/src
+&gt; gunzip postgresql-7.0.3.tar.gz
+&gt; tar -xf postgresql-7.0.3.tar
+&gt; mv postgresql-7.0.3 /usr/src
    </programlisting>
   </para>
 
@@ -264,7 +264,7 @@ All of PostgreSQL is successfully made. Ready to install.
      <para>
       Make sure to use the <application>pg_dumpall</application>
       command from the version you are currently running.
-      7.0.2's <application>pg_dumpall</application> should not
+      7.0.3's <application>pg_dumpall</application> should not
       be used on older databases.
      </para>
 
@@ -484,7 +484,7 @@ libpq.so.2.1: cannot open shared object file: No such file or directory
       You probably want to install the <application>man</application> and
       <acronym>HTML</acronym> documentation. Type
       <programlisting>
-&gt; cd /usr/src/pgsql/postgresql-7.0.2/doc
+&gt; cd /usr/src/pgsql/postgresql-7.0.3/doc
 &gt; gmake install
       </programlisting>
       This will install files under <filename>/usr/local/pgsql/doc</filename>
