@@ -29,14 +29,11 @@
 CATALOG(pg_trigger) BOOTSTRAP {
     Oid		tgrelid;	/* triggered relation */
     NameData	tgname;		/* trigger' name */
-    NameData	tgfunc;		/* name of function to be called */
-    Oid		tglang;		/* Language. Only ClanguageId currently */
+    Oid		tgfoid;		/* OID of function to be called */
     int2	tgtype;		/* BEFORE/AFTER UPDATE/DELETE/INSERT ROW/STATEMENT */
     int2	tgnargs;	/* # of extra arguments in tgargs */
     int28	tgattr;		/* UPDATE of attr1, attr2 ... (NI) */
-    bytea	tgtext;		/* currently, where to find .so */
     bytea	tgargs;		/* first\000second\000tgnargs\000 */
-    text	tgwhen;		/* when (a > 10 or b = 3) fire trigger (NI) */
 } FormData_pg_trigger;
 
 /* ----------------
@@ -50,17 +47,14 @@ typedef FormData_pg_trigger	*Form_pg_trigger;
  *	compiler constants for pg_trigger
  * ----------------
  */
-#define Natts_pg_trigger		10
+#define Natts_pg_trigger		7
 #define Anum_pg_trigger_tgrelid		1
 #define Anum_pg_trigger_tgname		2
-#define Anum_pg_trigger_tgfunc		3
-#define Anum_pg_trigger_tglang		4
-#define Anum_pg_trigger_tgtype		5
-#define Anum_pg_trigger_tgnargs		6
-#define Anum_pg_trigger_tgattr		7
-#define Anum_pg_trigger_tgtext		8
-#define Anum_pg_trigger_tgargs		9
-#define Anum_pg_trigger_tgwhen		10
+#define Anum_pg_trigger_tgfoid		3
+#define Anum_pg_trigger_tgtype		4
+#define Anum_pg_trigger_tgnargs		5
+#define Anum_pg_trigger_tgattr		6
+#define Anum_pg_trigger_tgargs		7
 
 #define TRIGGER_TYPE_ROW		(1 << 0)
 #define TRIGGER_TYPE_BEFORE		(1 << 1)
