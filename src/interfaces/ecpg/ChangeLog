@@ -1492,6 +1492,10 @@ Sun Jun 15 11:18:58 CEST 2003
 
 	- Applied multi-threading patch by Lee Kindess <lkindness@csl.co.uk>
 	- Changed order of types in enum to make working with these easier.
+	
+Tue Jun 17 08:45:14 CEST 2003
+
+	- Fixed several parsing bugs.
 	- Set ecpg version to 3.0.0
 	- Set ecpg library to 4.0.0
 	- Set pgtypes library to 1.0.0

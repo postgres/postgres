@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/pgc.l,v 1.115 2003/06/16 16:58:10 meskes Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/pgc.l,v 1.116 2003/06/17 07:28:22 meskes Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -231,7 +231,7 @@ ccomment		"//".*\n
 
 space			[ \t\n\r\f]
 horiz_space		[ \t\f]
-newline					[\n\r]
+newline			[\n\r]
 non_newline		[^\n\r]
 
 comment			("--"{non_newline}*)
@@ -613,7 +613,7 @@ cppline			{space}*#(.*\\{space})+.*
 			  else
 			  	return S_ANYTHING;
 			 }
-<C>{ccomment}		 { /* ignore */ }
+<C>{ccomment}		 { ECHO; }
 <C>{xch}			{
 						char* endptr;
 

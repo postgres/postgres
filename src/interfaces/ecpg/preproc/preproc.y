@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/Attic/preproc.y,v 1.232 2003/06/16 16:58:11 meskes Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/Attic/preproc.y,v 1.233 2003/06/17 07:28:22 meskes Exp $ */
 
 /* Copyright comment */
 %{
@@ -4417,7 +4417,7 @@ single_vt_type: common_type
 			else if (strcmp($1, "numeric") == 0)
 			{
 				$$.type_enum = ECPGt_numeric;
-				$$.type_str = EMPTY;
+				$$.type_str = make_str("Numeric");
 				$$.type_dimension = make_str("-1");
 				$$.type_index = make_str("-1");
 				$$.type_sizeof = NULL;
@@ -4425,7 +4425,7 @@ single_vt_type: common_type
 			else if (strcmp($1, "decimal") == 0)
 			{
 				$$.type_enum = ECPGt_numeric;
-				$$.type_str = EMPTY;
+				$$.type_str = make_str("Numeric");
 				$$.type_dimension = make_str("-1");
 				$$.type_index = make_str("-1");
 				$$.type_sizeof = NULL;
@@ -4457,7 +4457,7 @@ single_vt_type: common_type
 			else if (strcmp($1, "interval") == 0)
 			{
 				$$.type_enum = ECPGt_interval;
-				$$.type_str = EMPTY;
+				$$.type_str = make_str("Interval");
 				$$.type_dimension = make_str("-1");
 				$$.type_index = make_str("-1");
 				$$.type_sizeof = NULL;
@@ -4727,7 +4727,7 @@ common_type: simple_type
 				mmerror(PARSE_ERROR, ET_ERROR, "Only numeric/decimal have precision/scale argument");
 			
 			$$.type_enum = ECPGt_numeric;
-			$$.type_str = EMPTY;
+			$$.type_str = make_str("Numeric");
 			$$.type_dimension = make_str("-1");
 			$$.type_index = make_str("-1");
 			$$.type_sizeof = NULL;
@@ -4771,7 +4771,7 @@ var_type:	common_type
 			else if (strcmp($1, "numeric") == 0)
 			{
 				$$.type_enum = ECPGt_numeric;
-				$$.type_str = EMPTY;
+				$$.type_str = make_str("Numeric");
 				$$.type_dimension = make_str("-1");
 				$$.type_index = make_str("-1");
 				$$.type_sizeof = NULL;
@@ -4779,7 +4779,7 @@ var_type:	common_type
 			else if (strcmp($1, "decimal") == 0)
 			{
 				$$.type_enum = ECPGt_numeric;
-				$$.type_str = EMPTY;
+				$$.type_str = make_str("Numeric");
 				$$.type_dimension = make_str("-1");
 				$$.type_index = make_str("-1");
 				$$.type_sizeof = NULL;
@@ -4803,7 +4803,7 @@ var_type:	common_type
 			else if (strcmp($1, "interval") == 0)
 			{
 				$$.type_enum = ECPGt_interval;
-				$$.type_str = EMPTY;
+				$$.type_str = make_str("Interval");
 				$$.type_dimension = make_str("-1");
 				$$.type_index = make_str("-1");
 				$$.type_sizeof = NULL;
@@ -5048,7 +5048,7 @@ variable: opt_pointer ECPGColLabelCommon opt_array_bounds opt_initializer
 					$$ = cat_str(4, $1, mm_strdup($2), $3.str, $4);
 					break;
 
-				case ECPGt_numeric:
+				/*case ECPGt_numeric:
 					if (atoi(dimension) < 0)
                                                 type = ECPGmake_simple_type(actual_type[struct_level].type_enum, length);
                                         else
@@ -5070,7 +5070,7 @@ variable: opt_pointer ECPGColLabelCommon opt_array_bounds opt_initializer
 						$$ = cat_str(4, mm_strdup(actual_storage[struct_level]), make_str("Interval"), mm_strdup($2), $4);
 					else
 						$$ = cat_str(5, mm_strdup(actual_storage[struct_level]), make_str("Interval"), mm_strdup($2), mm_strdup(dim), $4);
-					break;
+					break;*/
 					
 				default:
 					if (atoi(dimension) < 0)
