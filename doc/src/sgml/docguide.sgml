@@ -1,112 +1,280 @@
-<Appendix label="A">
-<DocInfo>
-<AuthorGroup>
-<Author>
-<FirstName>Thomas</FirstName>
-<Surname>Lockhart</Surname>
-</Author>
-</AuthorGroup>
-<Date>1998-02-26</Date>
-</DocInfo>
+<appendix label="A">
+<docinfo>
+<authorgroup>
+<author>
+<firstname>Thomas</firstname>
+<surname>Lockhart</surname>
+</author>
+<author>
+<firstname>Tom Ivar</firstname>
+<surname>Helbekkmo</surname>
+</author>
+</authorgroup>
+<date>1998-04-28</date>
+</docinfo>
 
-<Title>Documentation</Title>
+<title>Documentation</title>
 
-<Para>
-<ProductName>Postgres</ProductName> documentation is written using 
-the <FirstTerm>Standard Generalized Markup Language</FirstTerm>
-(<Acronym>SGML</Acronym>)
-<ULink url="http://www.ora.com/davenport/"><ProductName>DocBook</ProductName></ULink>
-<FirstTerm>Document Type Definition</FirstTerm> (<Acronym>DTD</Acronym>).
+<para>
+<productname>Postgres</productname> documentation is written using the
+<firstterm>Standard Generalized Markup Language</firstterm>
+(<acronym>SGML</acronym>) <ulink url="http://www.ora.com/davenport/">
+<productname>DocBook</productname></ulink> <firstterm>Document Type
+Definition</firstterm> (<acronym>DTD</acronym>).</para>
 
-<Para>
-Packaged documentation is available in both <FirstTerm>HTML</FirstTerm> and <FirstTerm>Postscript</FirstTerm>
-formats. These are available as part of the standard <ProductName>Postgres</ProductName> installation.
-We discuss here working with the documentation sources and generating documentation packages.
+<para>
+Packaged documentation is available in both
+<firstterm>HTML</firstterm> and <firstterm>Postscript</firstterm>
+formats. These are available as part of the standard
+<productname>Postgres</productname> installation. We discuss here
+working with the documentation sources and generating documentation
+packages.
 
-<Note>
-<Para>
-This is the first release of new <ProductName>Postgres</ProductName> documentation in three years.
-The content and environment are in flux and still evolving.
-</Para>
-</Note>
+<note>
+<para>
+This is the first release of new <productname>Postgres</productname>
+documentation in three years. The content and environment are in flux
+and still evolving.
+</para>
+</note></para>
 
-<Sect1>
-<Title>Introduction</Title>
+<sect1>
+<title>Introduction</title>
 
-<Para>
-The purpose of <Acronym>SGML</Acronym> is to allow an author to specify the structure and content of
-a document (e.g. using the <ProductName>DocBook</ProductName> <Acronym>DTD</Acronym>), 
-and to have the document style define
-how that content is rendered into a final form
-(e.g. using Norm Walsh's stylesheets).
+<para>
+The purpose of <acronym>SGML</acronym> is to allow an author to
+specify the structure and content of a document (e.g. using the
+<productname>DocBook</productname> <acronym>DTD</acronym>),  and to
+have the document style define how that content is rendered into a
+final form (e.g. using Norm Walsh's stylesheets).</para>
 
-<Para>
-See
-<ULink url="http://nis-www.lanl.gov/~rosalia/mydocs/docbook-intro.html">Introduction to DocBook</ULink>
-for a nice "quickstart" summary of DocBook features.
-<ULink url="http://www.ora.com/homepages/dtdparse/docbook/3.0/">DocBook Elements</ULink>
-provides a powerful cross-reference for features of <ProductName>DocBook</ProductName>.
+<para>
+See <ulink
+url="http://nis-www.lanl.gov/~rosalia/mydocs/docbook-intro.html">
+Introduction to DocBook</ulink> for a nice "quickstart" summary of
+DocBook features. <ulink
+url="http://www.ora.com/homepages/dtdparse/docbook/3.0/"> DocBook
+Elements</ulink> provides a powerful cross-reference for features of
+<productname>DocBook</productname>.</para>
 
-<Para>
-This documentation set is constructed using several tools,
-including James Clark's
-<ULink url="http://www.jclark.com/jade/"><ProductName>jade</ProductName></ULink>
-and Norm Walsh's 
-<ULink url="http://www.berkshire.net/~norm/docbook/dsssl">Modular DocBook Stylesheets</ULink>.
+<para>
+This documentation set is constructed using several tools, including
+James Clark's <ulink url="http://www.jclark.com/jade/">
+<productname>jade</productname></ulink> and Norm Walsh's  <ulink
+url="http://www.berkshire.net/~norm/docbook/dsssl">Modular DocBook
+Stylesheets</ulink>.</para>
 
-<Para>
-Currently, hardcopy is produced by importing <FirstTerm>Rich Text Format</FirstTerm> (<Acronym>RTF</Acronym>)
-output from <Application>jade</Application> to <ProductName>ApplixWare</ProductName>
-for minor formatting fixups then exporting as a Postscript file.
+<para>
+Currently, hardcopy is produced by importing <firstterm>Rich Text
+Format</firstterm> (<acronym>RTF</acronym>) output from
+<application>jade</application> to
+<productname>ApplixWare</productname> for minor formatting fixups then
+exporting as a Postscript file.</para>
 
-<Para>
-<ULink url="http://sunsite.unc.edu/pub/packages/TeX/systems/unix/"><ProductName>TeX</ProductName></ULink>
-is a supported format for <Application>jade</Application> output, but was not used at this time for
-several reasons, including the inability to make minor format fixes before committing to hardcopy and
-generally inadequate table support in the <ProductName>TeX</ProductName> stylesheets.
+<para>
+<ulink url="http://sunsite.unc.edu/pub/packages/TeX/systems/unix/">
+<productname>TeX</productname></ulink> is a supported format for
+<application>jade</application> output, but was not used at this time
+for several reasons, including the inability to make minor format
+fixes before committing to hardcopy and generally inadequate table
+support in the <productname>TeX</productname>
+stylesheets.</para></sect1>
 
-<Sect1>
-<Title>Styles and Conventions</Title>
+<sect1>
+<title>Styles and Conventions</title>
 
-<Para>
-<ProductName>DocBook</ProductName> has a rich set of tags and constructs, and a suprisingly large
-percentage are directly and obviously useful for well-formed documentation.
-The <ProductName>Postgres</ProductName> documentation set has only recently
-been adapted to <Acronym>SGML</Acronym>, and in the near future several sections of the set
-will be selected and maintained as prototypical examples of <ProductName>DocBook</ProductName>
-usage. Also, a short summary of <ProductName>DocBook</ProductName> tags will be included below.
+<para>
+<productname>DocBook</productname> has a rich set of tags and
+constructs, and a suprisingly large percentage are directly and
+obviously useful for well-formed documentation. The
+<productname>Postgres</productname> documentation set has only
+recently been adapted to <acronym>SGML</acronym>, and in the near
+future several sections of the set will be selected and maintained as
+prototypical examples of <productname>DocBook</productname> usage.
+Also, a short summary of <productname>DocBook</productname> tags will
+be included below.
+</para>
 
 <!--
-<Para>
-<TABLE TOCENTRY="1">
-<TITLE>SGML Constructs</TITLE>
-<TITLEABBREV>SGML Constructs</TITLEABBREV>
-<TGROUP COLS="2">
-<THEAD>
-  <ROW>
-    <ENTRY>SGML Tag</ENTRY>
-    <ENTRY>Usage</ENTRY>
-  </ROW>
-</THEAD>
-<TBODY>
-  <ROW>
-  </ROW>
-</TBODY>
-</TGROUP>
-</TABLE>
-</Para>
-
+<para>
+<table tocentry="1">
+<title>SGML Constructs</title>
+<titleabbrev>SGML Constructs</titleabbrev>
+<tgroup cols="2">
+<thead>
+  <row>
+    <entry>SGML Tag</entry>
+    <entry>Usage</entry>
+  </row>
+</thead>
+<tbody>
+  <row>
+    <entry>Book</entry>
+    <entry>Delimits a Book element</entry>
+  </row>
+  <row>
+    <entry>Chapter</entry>
+    <entry>Delimits a Chapter element</entry>
+  </row>
+  <row>
+    <entry>Appendix</entry>
+    <entry>Delimits a Appendix element</entry>
+  </row>
+</tbody>
+</tgroup>
+</table>
+</para>
 -->
 
-</Sect1>
+</sect1>
 
-<Sect1>
-<Title>Building Documentation</Title>
+<sect1>
+<title>Document Writing</title>
 
-<Para>
-HTML documentation packages can be generated from the SGML source by typing
+<sect2>
+<title>Document Structure</title>
 
-<ProgramListing>
+<para>
+There are currently five separate documents written in DocBook. Each document
+has a container source document which defines the DocBook environment and other
+document source files. These primary source files are located in 
+<filename>doc/src/sgml/</filename>, along with many of the other source files
+used for the documentation. The primary source files are:
+
+<variablelist>
+<varlistentry>
+<term>postgres.sgml</term>
+<listitem>
+<para>
+This is the integrated document, including all other documents.
+</para>
+</listitem>
+</varlistentry>
+
+<varlistentry>
+<term>tutorial.sgml</term>
+<listitem>
+<para>
+The introductory tutorial, with examples. Does not include programming topics,
+and is intended to help get someone unfamiliar with <acronym>SQL</acronym> started.
+</para>
+</listitem>
+</varlistentry>
+
+<varlistentry>
+<term>user.sgml</term>
+<listitem>
+<para>
+The User's Guide. Includes information on data types and user-level interfaces.
+This is the place to put information on "why".
+</para>
+</listitem>
+</varlistentry>
+
+<varlistentry>
+<term>reference.sgml</term>
+<listitem>
+<para>
+The Reference Manual. Includes <productname>Postgres</productname> <acronym>SQL</acronym> syntax.
+</para>
+</listitem>
+</varlistentry>
+
+<varlistentry>
+<term>programming.sgml</term>
+<listitem>
+<para>
+The Programmer's Guide. Includes information on <productname>Postgres</productname>
+extensibility and on the programming interfaces.
+</para>
+</listitem>
+</varlistentry>
+
+<varlistentry>
+<term>admin.sgml</term>
+<listitem>
+<para>
+The Administrator's Guide. Include installation and release notes.
+</para>
+</listitem>
+</varlistentry>
+</variablelist>
+
+<sect2>
+<title>Authoring Tools</title>
+
+<para>
+The current <acronym>Postgres</acronym> documentation set is written using
+a plain text editor (or emacs/psgml; see below) with the content marked up using 
+<acronym>SGML</acronym>.
+
+<para>
+<acronym>SGML</acronym> and <productname>DocBook</productname> do not suffer
+from an oversupply of open-source authoring tools. The most common toolset is
+the emacs/xemacs editing package with the psgml feature extension.
+On some systems (e.g. RedHat Linux) these tools are provided in a typical full installation.
+
+<sect3>
+<title>emacs/psgml</title>
+
+<para>
+When using emacs/psgml, a comfortable way of working with
+these separate files of book parts is to insert a proper DOCTYPE
+declaration while you're editing them.  If you are working on this source, for instance,
+it's an appendix chapter, so you would specify the document as an "appendix" instance of
+a DocBook document by making the first line look like this:
+
+<programlisting>
+<sgmltag>!doctype appendix PUBLIC "-//Davenport//DTD DocBook V3.0//EN"</sgmltag>
+</programlisting>
+
+This means that anything and everything that reads <acronym>SGML</acronym> will get it
+right, and I can verify the document with "nsgmls -s docguide.sgml".
+
+</sect3>
+</sect2>
+</sect1>
+
+<sect1>
+<title>Building Documentation</title>
+
+<para>
+GNU <programname>make</programname> is used to build documentation from the DocBook sources.
+There are a few environment definitions which may need to be set or modified for your installation.
+The <filename>Makefile</filename> looks for 
+<filename>doc/../src/Makefile</filename>
+and (implicitly) for
+<filename>doc/../src/Makefile.custom</filename>
+to obtain environment information. On my system, the <filename>src/Makefile.custom</filename> looks like
+
+<programlisting>
+# Makefile.custom
+# Thomas Lockhart 1998-03-01
+
+POSTGRESDIR= /opt/postgres/current
+CFLAGS+= -m486
+YFLAGS+= -v
+
+# documentation
+
+HSTYLE= /home/tgl/SGML/db107.d/docbook/html
+PSTYLE= /home/tgl/SGML/db107.d/docbook/print
+</programlisting>
+
+where HSTYLE and PSTYLE determine the path to <filename>docbook.dsl</filename> for <acronym>HTML</acronym>
+and hardcopy (print) stylesheets, respectively. These stylesheet file names are for Norm Walsh's
+Modular Style Sheets; if other stylesheets are used then one can define HDSL and PDSL as the full path
+and file name for the stylesheet, as is done above for HSTYLE and PSTYLE.
+On many systems, these stylesheets will be found in packages installed in 
+<filename>/usr/lib/sgml/</filename>,
+<filename>/usr/share/lib/sgml/</filename>,
+or
+<filename>/usr/local/lib/sgml/</filename>.
+
+<para>
+<acronym>HTML</acronym> documentation packages can be generated from the <acronym>SGML</acronym> source by
+typing
+<programlisting>
 % cd doc/src
 % make tutorial.tar.gz
 % make user.tar.gz
@@ -114,234 +282,574 @@ HTML documentation packages can be generated from the SGML source by typing
 % make programmer.tar.gz
 % make postgres.tar.gz
 % make install
-</ProgramListing>
-</Para>
+</programlisting>
+</para>
 
-<Para>
-These packages can be installed from the main documentation directory by typing
-<ProgramListing>
+<para>
+These packages can be installed from the main documentation directory
+by typing
+<programlisting>
 % cd doc
 % make install
-</ProgramListing>
-</Para>
+</programlisting>
+</para></sect1>
 
-<Sect1>
-<Title>Toolsets</Title>
+<sect1>
+<title>Hardcopy Generation for v6.3</title>
 
-<Sect2>
-<Title><ProductName>jade</ProductName></Title>
+<para>
+The hardcopy Postscript documentation is generated by converting the
+<acronym>SGML</acronym> source code to <acronym>RTF</acronym>, then
+importing into Applixware. After a little cleanup (see the following
+section) the output is "printed" to a postscript file.</para>
 
-<Para>
-The current stable release of <ProductName>jade</ProductName> is version 1.0.1.
-</Para>
+<para>
+Some figures were redrawn to avoid having bitmap
+<acronym>GIF</acronym> files in the hardcopy documentation. One
+figure, of the system catalogs, was sufficiently complex that there
+was  not time to redraw it. It was converted to fit using the
+following commands:
 
-<Sect3>
-<Title>Installation for Linux</Title>
-
-<Para>
-Install <ULink url="ftp://ftp.cygnus.com/pub/home/rosalia/"><Acronym>RPMs</Acronym></ULink>
-for <ProductName>jade</ProductName> and related packages.
-</Para>
-</Sect3>
-
-<Sect3>
-<Title>Installation for non-Linux Platforms</Title>
-
-<Para>
-There are some other packaged distributions for jade. <ProductName>FreeBSD</ProductName> seems
-to have one available. Please report package status to the docs mailing list and we will
-include that information here.
-
-<Para>
-For other platforms, install <ULink url="ftp://ftp.cygnus.com/pub/eichin/docware/SOURCES/">sources</ULink>
-for <ProductName>jade</ProductName> and related packages and build from scratch.
-</Para>
-</Sect3>
-
-<Sect2>
-<Title><ProductName>Modular Style Sheets</ProductName></Title>
-
-<Para>
-The current stable release of the <ProductName>Modular Style Sheets</ProductName> is version 1.0.7.
-</Para>
-
-<Sect1>
-<Title>Hardcopy Generation for v6.3</Title>
-
-<Para>
-The hardcopy Postscript documentation is generated by converting the <Acronym>SGML</Acronym>
-source code to <Acronym>RTF</Acronym>, then importing into Applixware. After a little cleanup
-(see the following section) the output is "printed" to a postscript file.
-
-<Para>
-Some figures were redrawn to avoid having bitmap <Acronym>GIF</Acronym> files in the hardcopy
-documentation. One figure, of the system catalogs, was sufficiently complex that there was
-not time to redraw it. It was converted to fit using the following commands:
-
-<ProgramListing>
+<programlisting>
 % convert -v -geometry 400x400'>' figure03.gif con.gif
 % convert -v -crop 400x380 con.gif connections.gif
-</ProgramListing>
+</programlisting></para>
 
-<Sect2>
-<Title>RTF Cleanup Procedure</Title>
+<sect2>
+<title><acronym>RTF</acronym> Cleanup Procedure</title>
 
-<Para>
-Several items must be addressed in generating Postscript hardcopy:
+<para>
+Several items must be addressed in generating Postscript
+hardcopy:</para>
 
-<Procedure>
-<Title>Applixware RTF Cleanup</Title>
+<procedure>
+<title>Applixware <acronym>RTF</acronym> Cleanup</title>
 
-<Para>
-Applixware does not seem to do a complete job of importing RTF generated by jade/MSS. In particular,
-all text is given the <Quote>Header1</Quote> style attribute label, although the text formatting itself
-is acceptable. Also, the Table of Contents page numbers do not refer to the section listed in the
-table, but rather refer to the page of the ToC itself.
+<para>
+Applixware does not seem to do a complete job of importing <acronym>RTF</acronym>
+generated by jade/MSS. In particular, all text is given the
+<quote>Header1</quote> style attribute label, although the text
+formatting itself is acceptable. Also, the Table of Contents page
+numbers do not refer to the section listed in the table, but rather
+refer to the page of the ToC itself.</para>
 
-<Step Performance="required">
-<Para>
-Generate the <Acronym>RTF</Acronym> input by typing
-<ProgramListing>
+<step performance="required">
+<para>
+Generate the <acronym>RTF</acronym> input by typing
+<programlisting>
 % cd doc/src/sgml
 % make tutorial.rtf
-</ProgramListing>
-</Para>
-</Step>
+</programlisting>
+</para>
+</step>
 
-<Step Performance="required">
-<Para>
-Open a new document in <ProductName>Applix Words</ProductName> and then import the RTF file.
-</Para>
-</Step>
+<step performance="required">
+<para>
+Open a new document in <productname>Applix Words</productname> and
+then import the <acronym>RTF</acronym> file.
+</para>
+</step>
 
-<Step Performance="required">
-<Para>
-Print out the existing Table of Contents, to mark up in the following few steps.
-</Para>
-</Step>
+<step performance="required">
+<para>
+Print out the existing Table of Contents, to mark up in the following
+few steps.
+</para>
+</step>
 
-<Step Performance="required">
-<Para>
-Insert figures into the document. Center each figure on the page using the centering margins button.
+<step performance="required">
+<para>
+Insert figures into the document. Center each figure on the page using
+the centering margins button.</para>
 
-<Para>
-Not all documents have figures. You can grep the SGML source files for the string <Quote>Graphic</Quote>
-to identify those parts of the documentation which may have figures. A few figures are replicated in
+<para>
+Not all documents have figures. You can grep the <acronym>SGML</acronym> source files for
+the string <quote>Graphic</quote> to identify those parts of the
+documentation which may have figures. A few figures are replicated in
 various parts of the documentation.
-</Para>
-</Step>
+</para>
+</step>
 
-<Step Performance="required">
-<Para>
-Work through the document, adjusting page breaks and table column widths.
-</Para>
-</Step>
+<step performance="required">
+<para>
+Work through the document, adjusting page breaks and table column
+widths.
+</para>
+</step>
 
-<Step Performance="required">
-<Para>
-If a bibliography is present, Applix Words seems to mark all remaining text after the first title
-as having an underlined attribute. Select all remaining text, turn off underlining using the underlining button,
+<step performance="required">
+<para>
+If a bibliography is present, Applix Words seems to mark all remaining
+text after the first title as having an underlined attribute. Select
+all remaining text, turn off underlining using the underlining button,
 then explicitly underline each document and book title.
-</Para>
-</Step>
+</para>
+</step>
 
-<Step Performance="required">
-<Para>
-Work through the document, marking up the ToC hardcopy with the actual page number of each ToC entry.
-</Para>
-</Step>
+<step performance="required">
+<para>
+Work through the document, marking up the ToC hardcopy with the actual
+page number of each ToC entry.
+</para>
+</step>
 
-<Step Performance="required">
-<Para>
-Replace the right-justified incorrect page numbers in the ToC with correct values. This only takes a few
-minutes per document.
-</Para>
-</Step>
+<step performance="required">
+<para>
+Replace the right-justified incorrect page numbers in the ToC with
+correct values. This only takes a few minutes per document.
+</para>
+</step>
 
-<Step Performance="required">
-<Para>
-Save the document as native Applix Words format to allow easier last minute editing later.
-</Para>
-</Step>
+<step performance="required">
+<para>
+Save the document as native Applix Words format to allow easier last
+minute editing later.
+</para>
+</step>
 
-<Step Performance="required">
-<Para>
+<step performance="required">
+<para>
 Export the document to a file in Postscript format.
-</Para>
-</Step>
+</para>
+</step>
 
-<Step Performance="required">
-<Para>
-Compress the Postscript file using <Application>gzip</Application>. Place the compressed file into the
-<FileName>doc</FileName> directory.
-</Para>
-</Step>
-</Procedure>
+<step performance="required">
+<para>
+Compress the Postscript file using <application>gzip</application>.
+Place the compressed file into the <filename>doc</filename> directory.
+</para>
+</step>
+</procedure>
 
-</Sect2>
-</Sect1>
+</sect2>
+</sect1>
 
-<Sect1>
-<Title>Alternate Toolsets</Title>
+<sect1>
+<title>Toolsets</title>
 
-<Para>
-The current stable release of <ProductName>sgml-tools</ProductName> is version 1.0.4.
-The v1.0 release includes some restructuring of the directory tree
-to more easily support additional document styles, possibly including <ProductName>DocBook</ProductName>.
-The only version of <ProductName>sgml-tools</ProductName> evaluated for <ProductName>Postgres</ProductName> was v0.99.0. 
-</Para>
+<para>
+We have documented experience with two installation methods for the
+various tools that are needed to process the documentation.  One is
+installation from <acronym>RPM</acronym>s on
+<productname>Linux</productname>, the other is a general installation
+from original distributions of the individual tools.  Both will be
+described below.</para>
 
-<Sect2>
-<Title><ProductName>sgml-tools</ProductName></Title>
+<para>
+We understand that there are some other packaged distributions for
+these tools.  <productname>FreeBSD</productname> seems to have them
+available.  Please report package status to the docs mailing list and
+we will include that information here.</para>
 
-<Para>
+<sect2>
+<title><acronym>RPM</acronym> installation on
+<productname>Linux</productname></title>
+
+<para>
+Install <ulink url="ftp://ftp.cygnus.com/pub/home/rosalia/">
+<acronym>RPM</acronym>s</ulink> for <productname>Jade</productname>
+and related packages.
+</para>
+</sect2>
+
+<sect2>
+<title>Manual installation of tools</title>
+
+<para>This is a brief run-through of the process of obtaining and
+installing the software you'll need to edit DocBook source with Emacs
+and process it with Norman Walsh's DSSSL style sheets to create <acronym>HTML</acronym>
+and <acronym>RTF</acronym>.</para>
+
+<sect3><title>Prerequisites</title>
+
+<para>What you need:
+
+<itemizedlist>
+<listitem><para>A working installation of GCC 2.7.2</para></listitem>
+<listitem><para>A working installation of Emacs 19.19 or later</para></listitem>
+<listitem><para>An unzip program for UNIX to unpack things</para></listitem>
+</itemizedlist>
+
+</para>
+
+<para>What you must fetch:
+
+<itemizedlist>
+<listitem>
+<para><ulink url="ftp://ftp.jclark.com/pub/jade/jade1_1.zip">
+James Clark's <productname>Jade</productname> version 1.1</ulink>
+</para></listitem>
+<listitem>
+<para><ulink url="http://www.ora.com/davenport/docbook/current/docbk30.zip">
+<productname>DocBook</productname> version 3.0</ulink>
+</para></listitem>
+<listitem>
+<para><ulink url="http://nwalsh.com/docbook/dsssl/db107.zip">
+Norman Walsh's <productname>Modular Stylesheets</productname>
+version 1.07</ulink>
+</para></listitem>
+<listitem>
+<para><ulink url="ftp://ftp.lysator.liu.se/pub/sgml/psgml-1.0.1.tar.gz">
+Lennart Staflin's <productname>PSGML</productname> version 1.0.1</ulink>
+</para></listitem>
+</itemizedlist>
+
+</para>
+
+<para>Important URLs:
+
+<itemizedlist>
+<listitem><para><ulink url="http://www.jclark.com/jade/">
+The <productname>Jade</productname> web page</ulink></para></listitem>
+<listitem><para><ulink url="http://www.ora.com/davenport/">
+The <productname>DocBook</productname> web page</ulink></para></listitem>
+<listitem><para><ulink url="http://nwalsh.com/docbook/dsssl/">
+The <productname>Modular Stylesheets</productname> web page</ulink>
+</para></listitem>
+<listitem><para>
+<ulink url="http://www.lysator.liu.se/projects/about_psgml.html">
+The <productname>PSGML</productname> web page</ulink></para></listitem>
+<listitem><para><ulink url="http://www.infotek.no/sgmltool/guide.htm">
+Steve Pepper's Whirlwind Guide</ulink></para></listitem>
+<listitem><para><ulink url="http://www.sil.org/sgml/publicSW.html">
+Robin Cover's database of <acronym>SGML</acronym> software</ulink></para></listitem>
+</itemizedlist>
+
+</para>
+
+</sect3>
+
+<sect3><title>Installing Jade</title>
+
+<para>First, read the installation instructions at the above listed
+URL.</para>
+
+<para>Unzip the distribution kit in a suitable place.  The command to do
+this will be something like
+<programlisting>
+unzip -aU jade1_1.zip
+</programlisting>
+</para>
+
+<para><productname>Jade</productname> is not built using
+<productname>GNU Autoconf</productname>, so you'll need to edit a
+<filename>Makefile</filename> yourself.  Since James Clark has been
+good enough to prepare his kit for it, it is a good idea to make a
+build directory (named for your machine architecture, perhaps) under
+the main directory of the <productname>Jade</productname>
+distribution, copy the file <filename>Makefile</filename> from the
+main directory into it, edit it there, and then run
+<command>make</command> there.</para>
+
+<para>However, the <filename>Makefile</filename> does need to be
+edited.  There is a file called <filename>Makefile.jade</filename> in
+the main directory, which is intended to be used with <command>make -f
+Makefile.jade</command> when building <productname>Jade</productname>
+(as opposed to just <productname>SP</productname>, the <acronym>SGML</acronym> parser kit
+that <productname>Jade</productname> is built upon). We suggest that
+you don't do that, though, since there is more that you need to change
+than what is in <filename>Makefile.jade</filename>, so you'd have to
+edit one of them anyway.</para>
+
+<para>Go through the <filename>Makefile</filename>, reading James'
+instructions and editing as needed.  There are various variables that
+need to be set.  Here is a collected summary of the most important
+ones, with typical values:
+<programlisting>
+prefix = /usr/local
+XDEFINES = -DSGML_CATALOG_FILES_DEFAULT=\"/usr/local/share/sgml/catalog\"
+XLIBS = -lm
+RANLIB = ranlib
+srcdir = ..
+XLIBDIRS = grove spgrove style
+XPROGDIRS = jade
+</programlisting>
+Note the specification of where to find the default catalog of
+<acronym>SGML</acronym> support files -- you may want to change that
+to something more suitable for your own installation.  If your system
+doesn't need the above settings for the math library and the
+<command>ranlib</command> command, leave them as they are in the
+<filename>Makefile</filename>.
+</para>
+
+<para>Now type <command>make</command> to build Jade and the various
+<productname>SP</productname> tools.</para>
+
+<para>Once the software is built, <command>make install</command> will
+do the obvious.</para>
+
+</sect3>
+
+<sect3><title>Installing the <productname>DocBook</productname>
+<acronym>DTD</acronym> kit</title>
+
+<para>You'll want to place the files that make up the
+<productname>DocBook</productname> <acronym>DTD</acronym> kit in the
+directory you built <productname>Jade</productname> to expect them in,
+which, if you followed our suggestion above, is
+<filename>/usr/local/share/sgml/</filename>.  In addition to the
+actual <productname>DocBook</productname> files, you'll need to have a
+<filename>catalog</filename> file in place, for the mapping of
+document type specifications and external entity references to actual
+files in that directory.  You'll also want the <acronym>ISO</acronym>
+character set mappings, and probably one or more versions of
+<acronym>HTML</acronym>.</para>
+
+<para>One way to install the various <acronym>DTD</acronym> and
+support files and set up the <filename>catalog</filename> file, is to
+collect them all into the above mentioned directory, use a single file
+named <filename>CATALOG</filename> to describe them all, and then
+create the file <filename>catalog</filename> as a catalog pointer to
+the former, by giving it the single line of content:
+<programlisting>
+CATALOG /usr/local/share/sgml/CATALOG
+</programlisting>
+The <filename>CATALOG</filename> file should then contain three types
+of lines.  The first is the (optional) <acronym>SGML</acronym>
+declaration, thus:
+<programlisting>
+SGMLDECL docbook.dcl
+</programlisting>
+Next, the various references to <acronym>DTD</acronym> and entity
+files must be resolved.  For the <productname>DocBook</productname>
+files, these lines look like this:
+<programlisting>
+PUBLIC "-//Davenport//DTD DocBook V3.0//EN" docbook.dtd
+PUBLIC "-//USA-DOD//DTD Table Model 951010//EN" cals-tbl.dtd
+PUBLIC "-//Davenport//ELEMENTS DocBook Information Pool V3.0//EN" dbpool.mod
+PUBLIC "-//Davenport//ELEMENTS DocBook Document Hierarchy V3.0//EN" dbhier.mod
+PUBLIC "-//Davenport//ENTITIES DocBook Additional General Entities V3.0//EN" dbgenent.mod
+</programlisting>
+Of course, a file containing these comes with the
+<productname>DocBook</productname> kit.  Note that the last item on
+each of these lines is a file name, given here without a path.  You
+can put the files in subdirectories of your main
+<acronym>SGML</acronym> directory if you like, of course, and modify
+the reference in the <filename>CATALOG</filename> file.
+<productname>DocBook</productname> also references the
+<acronym>ISO</acronym> character set entities, so you need to fetch
+and install these (they are available from several sources, and are
+easily found by way of the URLs listed above), along with catalog
+entries for all of them, such as:
+<programlisting>
+PUBLIC "ISO 8879-1986//ENTITIES Added Latin 1//EN" ISO/ISOlat1
+</programlisting>
+Note how the file name here contains a directory name, showing that
+we've placed the <acronym>ISO</acronym> entity files in a subdirectory
+named <filename>ISO</filename>.  Again, proper catalog entries should
+accompany the entity kit you fetch.
+</para>
+
+</sect3>
+
+<sect3><title>Installing Norman Walsh's <acronym>DSSSL</acronym>
+style sheets</title>
+
+<para>First, read the installation instructions at the above listed
+URL.</para>
+
+<para>To install Norman's style sheets, simply unzip the distribution
+kit in a suitable place.  A good place to dot this would be
+<filename>/usr/local/share</filename>, which places the kit in a
+directory tree under <filename>/usr/local/share/docbook</filename>.
+The command will be something like
+<programlisting>
+unzip -aU db107.zip
+</programlisting>
+</para>
+
+<para>One way to test the installation is to build the
+<acronym>HTML</acronym> and <acronym>RTF</acronym> forms of the
+<productname>PostgreSQL</productname> manual.  Go to the <acronym>SGML</acronym> source
+directory, <filename>doc/src/sgml</filename>, and say
+<programlisting>
+jade -t sgml -d /usr/local/share/docbook/html/docbook.dsl -D ../graphics postgres.sgml
+</programlisting>
+to build the <acronym>HTML</acronym> files ("book1.htm" is the top level node), and
+<programlisting>
+jade -t rtf -d /usr/local/share/docbook/print/docbook.dsl -D ../graphics postgres.sgml
+</programlisting>
+to generate the <acronym>RTF</acronym> output, ready for importing
+into your favorite word processing system and printing.</para>
+
+</sect3>
+
+<sect3><title>Installing <productname>PSGML</productname></title>
+
+<para>First, read the installation instructions at the above listed
+URL.</para>
+
+<para>Unpack the distribution file, run configure, make and make
+install to put the byte-compiled files and info library in place.
+Then add the following lines to your
+<filename>/usr/local/share/emacs/site-lisp/site-start.el</filename>
+file to make <productname>Emacs</productname> properly load
+<productname>PSGML</productname> when needed:
+<programlisting>
+(setq load-path
+      (cons "/usr/local/share/emacs/site-lisp/psgml" load-path))
+(autoload 'sgml-mode "psgml" "Major mode to edit SGML files." t)
+</programlisting>
+If you want to use <productname>PSGML</productname> when editing
+<acronym>HTML</acronym> too, also add this:
+<programlisting>
+(setq auto-mode-alist
+      (cons '("\\.s?html?\\'" . sgml-mode) auto-mode-alist))
+</programlisting>
+</para>
+
+<para>There is one important thing to note with
+<productname>PSGML</productname>: its author assumed that your main
+<acronym>SGML</acronym> <acronym>DTD</acronym> directory would be
+<filename>/usr/local/lib/sgml</filename>.  If, as in the examples in
+this chapter, you use <filename>/usr/local/share/sgml</filename>, you
+have to compensate for this.  You can set the
+<filename>SGML_CATALOG_FILES</filename> environment variable, you can
+customize your <productname>PSGML</productname> installation (its
+manual tells you how), or you can even edit the source file
+<filename>psgml.el</filename> before compiling and installing
+<productname>PSGML</productname>, changing the hard-coded paths to
+match your own default.</para>
+
+</sect3>
+
+<sect3><title>Optional: installing <productname>JadeTeX</productname></title>
+
+<para>If you want to, you can also install
+<productname>JadeTeX</productname> to use
+<productname>TeX</productname> as a formatting backend for
+<productname>Jade</productname>.  Note that this is still quite
+unpolished software, and will generate printed output that is inferior
+to what you get from the <acronym>RTF</acronym> backend.  Still, it
+works all right, especially for simpler documents that don't use
+tables, and as both <productname>JadeTeX</productname> and the style
+sheets are under continuous improvement, it will certainly get better
+over time.</para>
+
+<para>To install and use <productname>JadeTeX</productname>, you will
+need a working installation of <productname>TeX</productname> and
+<productname>LaTeX2e</productname>, including the supported
+<productname>tools</productname> and
+<productname>graphics</productname> packages,
+<productname>Babel</productname>, <productname><acronym>AMS</acronym>
+fonts</productname> and <productname>AMS-LaTeX</productname>, the
+<productname><acronym>PSNFSS</acronym></productname> extension and
+companion kit of "the 35 fonts", the <productname>dvips</productname>
+program for generating <productname>PostScript</productname>, the
+macro packages <productname>fancyhdr</productname>,
+<productname>hyperref</productname>,
+<productname>minitoc</productname>, <productname>url</productname> and
+<productname>ot2enc</productname>, and of course
+<productname>JadeTeX</productname> itself.  All of these can be found
+on your friendly neighborhood <acronym>CTAN</acronym> site.</para>
+
+<para><productname>JadeTeX</productname> does not at the time of
+writing come with much of an installation guide, but there is a
+<filename>makefile</filename> which shows what is needed.  It also
+includes a directory <filename>cooked</filename>, wherein you'll find
+some of the macro packages it needs, but not all, and not complete --
+at least last we looked.</para>
+
+<para>Before building the <filename>jadetex.fmt</filename> format
+file, you'll probably want to edit the
+<filename>jadetex.ltx</filename> file, to change the configuration of
+<productname>Babel</productname> to suit your locality.  The line to
+change looks something like
+<programlisting>
+\RequirePackage[german,french,english]{babel}[1997/01/23]
+</programlisting>
+and you should obviously list only the languages you actually need,
+and have configured <productname>Babel</productname> for.</para>
+
+<para>With <productname>JadeTeX</productname> working, you should be
+able to generate and format <productname>TeX</productname> output for
+the <productname>PostgreSQL</productname> manuals by giving the
+commands (as above, in the <filename>doc/src/sgml</filename>
+directory)
+<programlisting>
+jade -t tex -d /usr/local/share/docbook/print/docbook.dsl -D ../graphics postgres.sgml
+jadetex postgres.tex
+jadetex postgres.tex
+dvips postgres.dvi
+</programlisting>
+Of course, when you do this, <productname>TeX</productname> will stop
+during the second run, and tell you that its capacity has been
+exceeded.  This is, as far as we can tell, because of the way
+<productname>JadeTeX</productname> generates cross referencing
+information.  <productname>TeX</productname> can, of course, be
+compiled with larger data structure sizes.  The details of this will
+vary according to your installation.
+</para>
+
+</sect3>
+
+</sect2>
+</sect1>
+
+<sect1>
+<title>Alternate Toolsets</title>
+
+<para>
+The current stable release of <productname>sgml-tools</productname> is
+version 1.0.4. The v1.0 release includes some restructuring of the
+directory tree to more easily support additional document styles,
+possibly including <productname>DocBook</productname>. The only
+version of <productname>sgml-tools</productname> evaluated for
+<productname>Postgres</productname> was v0.99.0. 
+</para>
+
+<sect2>
+<title><productname>sgml-tools</productname></title>
+
+<para>
 Install
-<ProductName>sgml-tools-0.99.0</ProductName>
-</Para>
+<productname>sgml-tools-0.99.0</productname>
+</para>
 
-<Para>
-Apply 
-<ULink url="http://alumni.caltech.edu/~lockhart/postgres/linuxdoc/sgml-tools-patches-0.99.0.tar.gz">
-<ProductName>sgml-tools-patches</ProductName>
-</ULink>
-to the linuxdoc styles. These patches fix small problems with
-table formatting and with figure file names on conversion to postscript or html.
-</Para>
+<para>
+Apply  <ulink
+url="http://alumni.caltech.edu/~lockhart/postgres/linuxdoc/sgml-tools-patches-0.99.0.tar.gz">
+<productname>sgml-tools-patches</productname> </ulink> to the linuxdoc
+styles. These patches fix small problems with table formatting and
+with figure file names on conversion to postscript or html.
+</para></sect2>
 
-<Sect2>
-<Title><ProductName>sgml2latex</ProductName></Title>
+<sect2>
+<title><productname>sgml2latex</productname></title>
 
-<Para>
-The current stable release of <ProductName>sgml2latex</ProductName> is version 1.4.
-I have misplaced the original reference
-for this package, so will temporarily post it with this example.
-</Para>
+<para>
+The current stable release of <productname>sgml2latex</productname> is
+version 1.4. I have misplaced the original reference for this package,
+so will temporarily post it with this example.
+</para>
 
-<Para>
-Install <ULink url="http://alumni.caltech.edu/~lockhart/postgres/linuxdoc/sgml2latex-format.1.4.tar.gz">
-<ProductName>sgml2latex</ProductName>
-</ULink>.
-</Para>
+<para>
+Install <ulink
+url="http://alumni.caltech.edu/~lockhart/postgres/linuxdoc/sgml2latex-format.1.4.tar.gz">
+<productname>sgml2latex</productname> </ulink>.
+</para></sect2>
 
-<Sect2>
-<Title><ProductName>latex</ProductName></Title>
+<sect2>
+<title><productname>latex</productname></title>
 
-<Para>
-Get and install <ProductName>texmf</ProductName>, <ProductName>teTeX</ProductName>,
- or another package providing full tex/latex functionality.
-</Para>
+<para>
+Get and install <productname>texmf</productname>,
+<productname>teTeX</productname>, or another package providing full
+tex/latex functionality.
+</para>
 
-<Para>
+<para>
 Add the 
-<ULink url="http://alumni.caltech.edu/~lockhart/postgres/linuxdoc/latex-styles-0.99.0.tar.gz">required styles</ULink>
- linuxdoc-sgml.sty, linuxdoc-sgml-a4.sty isolatin.sty, qwertz.sty, and null.sty
- to texmf/tex/latex/tools/ or the appropriate area.
-<ProgramListing>
+<ulink
+url="http://alumni.caltech.edu/~lockhart/postgres/linuxdoc/latex-styles-0.99.0.tar.gz">required styles</ulink>
+linuxdoc-sgml.sty, linuxdoc-sgml-a4.sty isolatin.sty, qwertz.sty, and
+null.sty to texmf/tex/latex/tools/ or the appropriate area.
+
+<programlisting>
 % cat latex-styles-0.99.0.tar.gz | (cd texmf/tex/latex/tools/; tar zxvf -)
-</ProgramListing>
+</programlisting>
 
-Run <ProductName>texhash</ProductName> to update the tex database.
-</Para>
+Run <productname>texhash</productname> to update the tex database.
+</para></sect2></sect1>
 
-
-</Appendix>
+</appendix>
