@@ -2,7 +2,7 @@
 #
 # Copyright 2001 by PostgreSQL Global Development Group
 #
-# $Id: UCS_to_SJIS.pl,v 1.1 2000/10/30 10:40:29 ishii Exp $
+# $Id: UCS_to_SJIS.pl,v 1.2 2001/02/23 08:44:33 ishii Exp $
 #
 # Generate UTF-8 <--> SJIS code conversion tables from
 # map files provided by Unicode organization.
@@ -21,29 +21,45 @@ require "ucs2utf.pl";
 
 # first generate UTF-8 --> SJIS table
 
-$in_file = "SHIFTJIS.TXT";
+$in_file = "CP932.TXT";
+$count = 0;
 
 open( FILE, $in_file ) || die( "cannot open $in_file" );
 
 while( <FILE> ){
-	chop;
-	if( /^#/ ){
-		next;
-	}
-	( $c, $u, $rest ) = split;
-	$ucs = hex($u);
-	$code = hex($c);
-	if( $code >= 0x80 && $ucs >= 0x100 ){
-		$utf = &ucs2utf($ucs);
-		if( $array{ $utf } ne "" ){
-			printf STDERR "Warning: duplicate unicode: %04x\n",$ucs;
-			next;
-		}
-		$count++;
-
-		$array{ $utf } = $code;
-	}
+  chop;
+  if( /^#/ ){
+      next;
+   }
+    ( $c, $u, $rest ) = split;
+  $ucs = hex($u);
+  $code = hex($c);
+  if( $code >= 0x80 && $ucs >= 0x100 ){
+    $utf = &ucs2utf($ucs);
+    if((( $code >= 0xed40 )
+	&& ( $code <= 0xeefc ))
+       || (( $code >= 0x8754 )
+	   &&( $code <= 0x875d ))
+       || ( $code == 0x878a )
+       || ( $code == 0x8782 )
+       || ( $code == 0x8784 )
+       || ( $code == 0xfa5b )
+       || ( $code == 0xfa54 )
+       || (( $code >= 0x8790 )
+	   && ( $code <= 0x8792 ))
+       || (( $code >= 0x8795 )
+	   && ( $code <= 0x8797 ))
+       || (( $code >= 0x879a )
+	   && ( $code <= 0x879c )))
+      {
+	printf STDERR "Warning: duplicate unicode : UCS=0x%04x  SJIS=0x%04x\n",$ucs,$code;
+	next;
+      }
+    $count++;
+    $array{ $utf } = $code;
+  }
 }
+
 close( FILE );
 
 #
@@ -57,7 +73,7 @@ print FILE "static pg_utf_to_local ULmapSJIS[ $count ] = {\n";
 for $index ( sort {$a <=> $b} keys( %array ) ){
 	$code = $array{ $index };
 	$count--;
-	if( $count == 0 ){
+     	if( $count == 0 ){
 		printf FILE "  {0x%04x, 0x%04x}\n", $index, $code;
 	} else {
 		printf FILE "  {0x%04x, 0x%04x},\n", $index, $code;
@@ -68,12 +84,13 @@ print FILE "};\n";
 close(FILE);
 
 #
-# then generate EUC_JP --> UTF8 table
+# then generate SJIS --> UTF8 table
 #
 
 open( FILE, $in_file ) || die( "cannot open $in_file" );
 
 reset 'array';
+$count = 0;
 
 while( <FILE> ){
 	chop;
@@ -85,10 +102,6 @@ while( <FILE> ){
 	$code = hex($c);
 	if( $code >= 0x80 && $ucs >= 0x100 ){
 		$utf = &ucs2utf($ucs);
-		if( $array{ $code } ne "" ){
-			printf STDERR "Warning: duplicate code: %04x\n",$ucs;
-			next;
-		}
 		$count++;
 
 		$array{ $code } = $utf;
