@@ -6,7 +6,7 @@
 # Copyright (c) 1998, Regents of the University of California
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Makefile.shlib,v 1.10 1999/05/19 18:04:51 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/Makefile.shlib,v 1.11 1999/06/30 23:54:18 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -190,9 +190,20 @@ endif
 
 ifneq ($(shlib),)
 ifneq ($(PORTNAME), win)
+
 $(shlib): $(OBJS)
 	$(LD) $(LDFLAGS_SL) -o $@ $(OBJS) $(SHLIB_LINK)
+	if [ "$(shlib)" != "lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION)" ]; then \
+		rm -f lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION); \
+		$(LN_S) $(shlib) lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION); \
+	fi
+	if [ "$(shlib)" != "lib$(NAME)$(DLSUFFIX)" ]; then \
+		rm -f lib$(NAME)$(DLSUFFIX); \
+		$(LN_S) $(shlib) lib$(NAME)$(DLSUFFIX); \
+	fi
+
 else
+
 $(shlib) lib$(NAME).a: $(OBJS) $(SRCDIR)/utils/dllinit.o
 	$(DLLTOOL) --export-all --output-def $(NAME).def $(OBJS)
 	$(DLLWRAP) -o $(shlib) --dllname $(shlib) --def $(NAME).def $(OBJS) $(SRCDIR)/utils/dllinit.o $(DLLINIT) $(SHLIB_LINK)
@@ -200,6 +211,7 @@ $(shlib) lib$(NAME).a: $(OBJS) $(SRCDIR)/utils/dllinit.o
 
 $(SRCDIR)/utils/dllinit.o: $(SRCDIR)/utils/dllinit.c
 	$(MAKE) -C $(SRCDIR)/utils dllinit.o
+
 endif
 endif
 
@@ -224,3 +236,10 @@ ifneq ($(PORTNAME), win)
 		$(LN_S) $(shlib) lib$(NAME)$(DLSUFFIX); \
 	fi
 endif
+
+# Rule to delete shared library during "make clean"
+
+.PHONY: clean-shlib
+
+clean-shlib:
+	rm -f $(shlib) lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION) lib$(NAME)$(DLSUFFIX)
