@@ -1,6 +1,6 @@
 PostgreSQL(ポストグレス・キュー・エル)についてよくある質問とその解答(FAQ)
 
-原文最終更新日: Mon May 30 22:24:56 EST 2003
+原文最終更新日: Tue Sep 9 18:42:51 EDT 2003
 
 現在の維持管理者: Bruce Momjian (pgman@candle.pha.pa.us)
 Maintainer of Japanese Translation: Jun Kuwamura (juk at PostgreSQL.jp)
@@ -24,7 +24,7 @@ Maintainer of Japanese Translation: Jun Kuwamura (juk at PostgreSQL.jp)
 
         この和訳についてお気づきの点は(juk at PostgreSQL.jp)までメールでお寄せ下さい。
 
-                                                2003年06月30日    桑村 潤
+                                                2003年09月20日    桑村 潤
 ]
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 
@@ -244,8 +244,8 @@ FAQ_MSWIN、あるいは、 http://www.PostgreSQL.org/docs/faqs/text/FAQ_MSWINにある
 MS Windows FAQ をご覧下さい。
 
 MS Win NT/2000/XP ネイティブ版への移植が現在進行中です。もっと詳しいWindows版
-PostgreSQLの近況は、http://techdocs.postgresql.org/guides/Windowsを見てください
-。
+PostgreSQLの近況は、http://techdocs.postgresql.org/guides/Windowsと http://
+momjian.postgresql.org/main/writings/pgsql/win32.html を見てください。
 
 
 [訳注：
@@ -337,8 +337,8 @@ EFNet と OpenProjects に #PostgreSQL という IRC チャンネルもあります。 UNIX コ
         で検索することもできます。
         ]
 
-商用サポート会社のリストはhttp://www.ca.PostgreSQL.org/users-lounge/
-commercial-support.htmlにあります。
+商用サポート会社のリストはhttp://techdocs.postgresql.org/companies.phpにありま
+す。
 
     [訳注:
          日本では、SRA Inc. オープンシステム事業部 にて商用サポートが行なわれています。
@@ -348,9 +348,9 @@ commercial-support.htmlにあります。
 
 1.7) 最新版はどれですか
 
-PostgreSQL の最新版はバージョン 7.3.2 です。
+PostgreSQL の最新版はバージョン 7.3.4 です。
 
-我々は、4カ月毎にメジャーリリースを行なうことを計画しています。
+我々は、6〜8カ月毎にメジャーリリースを行なうことを計画しています。
 
 1.8) どのような文書がありますか？
 
@@ -374,8 +374,8 @@ docs/awbook.html
     ]
 
 および、 http://www.commandprompt.com/ppbook/ です。購入可能な書籍の目録は、
-http://www.jp.PostgreSQL.org/books/ にあります。 PostgreSQL 技術情報記事も、
-http://techdocs.PostgreSQL.org/ にあります。
+http://techdocs.PostgreSQL.org/techdocs/bookreviews.php にあります。 PostgreSQL
+技術情報記事も、http://techdocs.PostgreSQL.org/ にあります。
 
 [訳注: 和訳文書は、日本ポストグレスユーザー会のhttp://www.postgresql.jp/
 document/ をごらん下さい。 ]
@@ -637,8 +637,8 @@ PgAccess と呼ばれる素晴らしいグラフィカル・ユーザ・インターフェイスがあり、この
 して使える共有メモリーの大きさを大きく設定する必要があります。具体的な大きさは
 、使っているアーキテクチャとpostmaster を走らせるときに設定するバッファの数とバ
 ックエンドプロセスに依存します。ほとんどのシステムでは、既定値のバッファサイズ
-のままで、少なくとも約1MBが必要です。 PostgreSQL Administrator's Gideに共有メモ
-リーとセマフォについての情報の詳細がありますのでご覧ください。
+のままで、少なくとも約1MBが必要です。 PostgreSQL Administrator's Gide に共有メ
+モリーとセマフォについての情報の詳細がありますのでご覧ください。
 
 3.4) postmasterを走らせようとすると、IpcSemaphoreCreate エラーが出ます。なぜで
 すか？
@@ -857,7 +857,7 @@ DROP COLUMN機能が、ALTER TABLE DROP COLUMN としてリリース7.3 に加えられました。
     BEGIN;
     ALTER TABLE tab ADD COLUMN new_col new_data_type;
     UPDATE tab SET new_col = CAST(old_col AS new_data_type);
-    ALTER TABLE DROP COLUMN old_col;
+    ALTER TABLE DROP tab COLUMN old_col;
     COMMIT;
 
 これを行なったときは、抹消された行が使っているディスク空間を回収するために
@@ -868,7 +868,7 @@ VACUUM FULL tabをしたほうが良いかもしれません。
 制限は以下のとおりです。
 
 データベースの最大サイズ?       制限無し (4 TB のデータベースも存在します)
-テーブルの最大サイズ?           16TB
+テーブルの最大サイズ?           32TB
 ロウの最大サイズ?               1.6TB
 フィールドの最大サイズ?         1GB
 テーブル内での最大ロウ数?       制限無し
@@ -879,12 +879,12 @@ VACUUM FULL tabをしたほうが良いかもしれません。
 スの大きさにより制限されます。性能はこれらの値がことのほか大きな時に煽りを受け
 ます。
 
-最大テーブルサイズの16TBはオペレーティングシステムによる巨大ファイルのサポート
+最大テーブルサイズの32TBはオペレーティングシステムによる巨大ファイルのサポート
 は必要としません。巨大なテーブルは複数の1GBのファイルに分けて保存されますので、
 ファイルシステムの制限は重要ではありません。
 
-デフォルトのブロックサイズを32kにすると最大テーブルサイズと最大カラム数とが増加
-します。
+デフォルトのブロックサイズを32kにすることで、最大テーブルサイズと最大カラム数と
+が４倍させることができます。
 
 4.6) 一般的なテキストファイルからデータを保存するには、データベースのディスク容
 量はどのくらい必要です？
@@ -1130,9 +1130,10 @@ currval() 関数を使って取り出すこともできます。たとえば、
         new_id = execute("SELECT currval('person_id_seq')");
 
 最後に、INSERT文から返るOIDを使って、既定値をみつけることもできますが、しかし、
-これは最も移植性の低いやり方でしょう。PerlのDBIで Edmund Mergl の作った DBD::Pg
-モジュールを使えば、$sth->execute() の後に $sth->{pg_oid_status} を経由してその
-OID 値を使えるようにすることはできます。
+oidの値は40億に達するともとに戻ってしまい、最も移植性の低いやり方となるでしょう
+。PerlのDBIで Edmund Mergl の作った DBD::Pg モジュールを使えば、$sth->execute()
+の後に $sth->{pg_oid_status} を経由してその OID 値を使えるようにすることはでき
+ます。
 
 4.15.3) 他のユーザとの競合状態を避けるためには、currval() と nextval() は使わな
 いほうがよいのでしょうか？
@@ -1330,13 +1331,16 @@ http://www.csra.co.jp/~mitani/jpug/pgreplicate/ ]
 
 4.28) どのような暗号化オプションを利用できますか?
 
- ・ contrib/pgcrypto SQL問い合わせの中で使うための沢山の暗号化を含みます。
- ・ クライアントからサーバーへの転送をを暗号化する唯一の方法はpg_hba.confの中で
-    hostsslを使うことによります。
+ ・ contrib/pgcryptoにはSQL問い合わせの中で使うための沢山の暗号化を含みます。
+ ・ クライアントとサーバとの間の伝送を暗号化するには、サーバではpostgresql.conf
+    のsslオプションをtrue に設定し、pg_hba.confには適用するhostあるいはhostssl
+    の行がなくてはなりません。そして、クライアントではsslmodeをdisableにしては
+    なりません。 (PostgreSQL純正のSSL接続のかわりに、stunnel や ssh サードパー
+    ティ製の暗号化転送を使うことも可能であることも記しておきます。)
  ・ バージョン7.3 ではデータベースユーザのパスワードは保存される時に自動的に暗
     号化されます。それより前のバージョンではpostgresql.conf中で
     PASSWORD_ENCRYPTIONを有効にする必要があります。
- ・ サーバーは暗号化ファイルシステムを使って走ることもできます。
+ ・ サーバーを走らせるのに暗号化ファイルシステムを使うこともできます。
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 
 
@@ -1373,7 +1377,7 @@ http://www.csra.co.jp/~mitani/jpug/pgreplicate/ ]
 [訳注：
   日本語版の製作については以下の通りです。
 
-  最終更新日:   2003年06月30日
+  最終更新日:   2003年09月20日
   翻訳者:       桑村 潤 (Jun Kuwamura <juk at PostgreSQL.jp>)
 
   このFAQの和訳の作成にあたり協力をしてくださった方々(敬称は略させていただきます):

@@ -8,7 +8,7 @@
 <H1>
 PostgreSQL(ポストグレス・キュー・エル)についてよくある質問とその解答(FAQ)</H1>
 <P>
-原文最終更新日:		Mon May 30 22:24:56 EST 2003</P>
+原文最終更新日:		Tue Sep  9 18:42:51 EDT 2003</P>
 <P>
 現在の維持管理者:	Bruce Momjian (<A
 HREF="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</A>)<BR>
@@ -42,7 +42,7 @@ http://www.PostgreSQL.org/docs/faqs/FAQ.html</A>
 
 	この和訳についてお気づきの点は(<A HREF="mailto:juk at PostgreSQL.jp">juk at PostgreSQL.jp</A>)までメールでお寄せ下さい。
 
-						2003年06月30日    桑村 潤
+						2003年09月20日    桑村 潤
 ]
 </PRE></SMALL>
 
@@ -234,7 +234,10 @@ MODIFICATIONS.</P>
 <P><STRONG>サーバ</STRONG></P>
 <P> 現在、Cygnus Unix/NT 移植ライブラリの Cygwin を使って、PostgreSQL データベースサーバは Windows NT と Win2k 上で稼働しています。配布に含まれる<I>pgsql/doc/FAQ_MSWIN</I>、あるいは、
 <A href="http://www.PostgreSQL.org/docs/faqs/text/FAQ_MSWIN">http://www.PostgreSQL.org/docs/faqs/text/FAQ_MSWIN</A>にある MS Windows FAQ をご覧下さい。</P>
-<P>MS Win NT/2000/XP ネイティブ版への移植が現在進行中です。もっと詳しいWindows版PostgreSQLの近況は、<a href="http://techdocs.postgresql.org/guides/Windows">http://techdocs.postgresql.org/guides/Windows</a>を見てください。
+<P>MS Win NT/2000/XP ネイティブ版への移植が現在進行中です。もっと詳しいWindows版PostgreSQLの近況は、<a href="http://techdocs.postgresql.org/guides/Windows">http://techdocs.postgresql.org/guides/Windows</a>と
+<a href="http://momjian.postgresql.org/main/writings/pgsql/win32.html">
+http://momjian.postgresql.org/main/writings/pgsql/win32.html</a>
+を見てください。
 </p>
 
 <BR>
@@ -343,7 +346,7 @@ UNIX コマンドで<tt>irc -c '#PostgreSQL' "$USER" <A HREF="http://irc.phoenix.net"
 </PRE></SMALL>
 
 
-<P>商用サポート会社のリストは<a href="http://www.ca.PostgreSQL.org/users-lounge/commercial-support.html">http://www.ca.PostgreSQL.org/users-lounge/commercial-support.html</a>にあります。</P>
+<P>商用サポート会社のリストは<a href="http://techdocs.postgresql.org/companies.php">http://techdocs.postgresql.org/companies.php</a>にあります。</P>
 <P>
 <SMALL><PRE>
     [訳注:
@@ -356,9 +359,9 @@ UNIX コマンドで<tt>irc -c '#PostgreSQL' "$USER" <A HREF="http://irc.phoenix.net"
 
 <H4><A NAME="1.7">1.7</A>)	最新版はどれですか</H4>
 <P>
-PostgreSQL の最新版はバージョン 7.3.2 です。</P>
+PostgreSQL の最新版はバージョン 7.3.4 です。</P>
 <P>
-我々は、4カ月毎にメジャーリリースを行なうことを計画しています。</P>
+我々は、6〜8カ月毎にメジャーリリースを行なうことを計画しています。</P>
 
 
 <H4><A NAME="1.8">1.8</A>)	どのような文書がありますか？</H4>
@@ -388,7 +391,7 @@ PostgreSQL の最新版はバージョン 7.3.2 です。</P>
 です。
   
     購入可能な書籍の目録は、<A href=
-    "http://www.jp.PostgreSQL.org/books/">http://www.jp.PostgreSQL.org/books/</A>
+    "http://techdocs.postgresql.org/techdocs/bookreviews.php">http://techdocs.PostgreSQL.org/techdocs/bookreviews.php</A>
     にあります。
 
     PostgreSQL 技術情報記事も、<A href=
@@ -549,6 +552,7 @@ href="https://store.pgsql.com/shopping/">https://store.pgsql.com/shopping/</A>か
 <HR>
 
 <P>さらに、もし、PostgreSQLでの成功例をお持ちであれば、ぜひ、われわれの事例サイト <a href="http://advocacy.postgresql.org">http://advocacy.postgresql.org</a>へお送りください。
+</P>
 
 <H2 align="center">ユーザー・クライアントの質問</H2>
 <P>
@@ -690,7 +694,9 @@ href="http://www.PostgreSQL.org/interfaces.html">http://www.PostgreSQL.org/inter
 </H4>
 
 <P> カーネルが共有メモリーを持つ設定になっていなかったか、でなければ、カーネルに対して使える共有メモリーの大きさを大きく設定する必要があります。具体的な大きさは、使っているアーキテクチャと<I>postmaster</I> を走らせるときに設定するバッファの数とバックエンドプロセスに依存します。ほとんどのシステムでは、既定値のバッファサイズのままで、少なくとも約1MBが必要です。
-<A ref=http://www.PostgreSQL.org/docs/view.php?version=current&idoc=1&file=kernel-resources.html">PostgreSQL Administrator's Gide</a>に共有メモリーとセマフォについての情報の詳細がありますのでご覧ください。</P>
+<A ref=
+	"http://www.PostgreSQL.org/docs/view.php?version=current&amp;idoc=1&amp;file=kernel-resources.html">PostgreSQL Administrator's Gide
+</A>に共有メモリーとセマフォについての情報の詳細がありますのでご覧ください。</P>
 
 
 <P>
@@ -868,7 +874,7 @@ PostgreSQLチームはマイナーリリースでは小さな変更しか行ないませんので、7.2 から 7
     BEGIN;
     ALTER TABLE tab ADD COLUMN new_col <i>new_data_type</i>;
     UPDATE tab SET new_col = CAST(old_col AS <i>new_data_type</i>);
-    ALTER TABLE DROP COLUMN old_col;
+    ALTER TABLE DROP tab COLUMN old_col;
     COMMIT;
 </PRE>
 
@@ -881,7 +887,7 @@ PostgreSQLチームはマイナーリリースでは小さな変更しか行ないませんので、7.2 から 7
 <P> 制限は以下のとおりです。
 <PRE>
 データベースの最大サイズ? 	制限無し (4 TB のデータベースも存在します)
-テーブルの最大サイズ?           16TB
+テーブルの最大サイズ?           32TB
 ロウの最大サイズ?               1.6TB
 フィールドの最大サイズ?         1GB
 テーブル内での最大ロウ数?       制限無し
@@ -891,9 +897,9 @@ PostgreSQLチームはマイナーリリースでは小さな変更しか行ないませんので、7.2 から 7
 
 <P> もちろん、これらは実際は無制限ではなく、ディスク容量とメモリーやスワップスペースの大きさにより制限されます。性能はこれらの値がことのほか大きな時に煽りを受けます。
 
-<P> 最大テーブルサイズの16TBはオペレーティングシステムによる巨大ファイルのサポートは必要としません。巨大なテーブルは複数の1GBのファイルに分けて保存されますので、ファイルシステムの制限は重要ではありません。
+<P> 最大テーブルサイズの32TBはオペレーティングシステムによる巨大ファイルのサポートは必要としません。巨大なテーブルは複数の1GBのファイルに分けて保存されますので、ファイルシステムの制限は重要ではありません。
 
-<P> デフォルトのブロックサイズを32kにすると最大テーブルサイズと最大カラム数とが増加します。
+<P> デフォルトのブロックサイズを32kにすることで、最大テーブルサイズと最大カラム数とが４倍させることができます。
 
 
 <P>
@@ -1152,7 +1158,7 @@ BYTEA           bytea           可変長のバイト配列(null-byte safe)
 	new_id = execute("SELECT currval('person_id_seq')");
 </PRE>
 
-最後に、<SMALL>INSERT</SMALL>文から返る<A HREF="#4.17"><SMALL>OID</SMALL></A>を使って、既定値をみつけることもできますが、しかし、これは最も移植性の低いやり方でしょう。PerlのDBIで Edmund Mergl の作った DBD::Pg モジュールを使えば、$sth->execute() の後に $sth-&gt{pg_oid_status} を経由してその OID 値を使えるようにすることはできます。
+最後に、<SMALL>INSERT</SMALL>文から返る<A HREF="#4.17"><SMALL>OID</SMALL></A>を使って、既定値をみつけることもできますが、しかし、oidの値は40億に達するともとに戻ってしまい、最も移植性の低いやり方となるでしょう。PerlのDBIで Edmund Mergl の作った DBD::Pg モジュールを使えば、$sth-&gt;execute() の後に $sth-&gt{pg_oid_status} を経由してその OID 値を使えるようにすることはできます。
 
 <P> 
 <H4><A NAME="4.15.3">4.15.3</A>)	他のユーザとの競合状態を避けるためには、<I>currval()</I> と <I>nextval()</I> は使わないほうがよいのでしょうか？
@@ -1357,15 +1363,15 @@ http://gborg.PostgreSQL.org/project/pgreplication/projdisplay.php</a>
 <H4><A name="4.28">4.28</A>) どのような暗号化オプションを利用できますか?
 </H4>
 <UL>
-<LI><I>contrib/pgcrypto</I>
-<SMALL>SQL</SMALL>問い合わせの中で使うための沢山の暗号化を含みます。
+<LI><I>contrib/pgcrypto</I>には<SMALL>SQL</SMALL>問い合わせの中で使うための沢山の暗号化を含みます。
 </LI>
-<LI>
-クライアントからサーバーへの転送をを暗号化する唯一の方法は<I>pg_hba.conf</I>の中で<I>hostssl</I>を使うことによります。 
+<LI>クライアントとサーバとの間の伝送を暗号化するには、サーバでは<I>postgresql.conf</I>の<I>ssl</I>オプションを<I>true</I> に設定し、<I>pg_hba.conf</I>には適用する<I>host</I>あるいは<I>hostssl</I>の行がなくてはなりません。そして、クライアントでは<I>sslmode</I>を<I>disable</I>にしてはなりません。
+(PostgreSQL純正のSSL接続のかわりに、stunnel や ssh サードパーティ製の暗号化転送を使うことも可能であることも記しておきます。)
 </LI>
 <LI>バージョン7.3 ではデータベースユーザのパスワードは保存される時に自動的に暗号化されます。 それより前のバージョンでは<I>postgresql.conf</I>中で<I>PASSWORD_ENCRYPTION</I>を有効にする必要があります。 
 </LI>
-<LI></LI>サーバーは暗号化ファイルシステムを使って走ることもできます。
+
+<LI>サーバーを走らせるのに暗号化ファイルシステムを使うこともできます。</LI>
 </UL>
 
 
@@ -1405,7 +1411,7 @@ http://gborg.PostgreSQL.org/project/pgreplication/projdisplay.php</a>
 [訳注：
   日本語版の製作については以下の通りです。
 
-  最終更新日:	2003年06月30日
+  最終更新日:	2003年09月20日
   翻訳者:	桑村 潤 (<A HREF="mailto:juk at PostgreSQL.jp">Jun Kuwamura &lt;juk at PostgreSQL.jp&gt;</A>)
 
   このFAQの和訳の作成にあたり協力をしてくださった方々(敬称は略させていただきます):
