@@ -115,6 +115,10 @@ To install PostgreSQL on UNIX platforms:
 
      --disable-locale	Disables USE_LOCALE
 			
+     --enable-cassert	Enables ASSERT_CHECKING (default)
+
+     --disable-cassert	Disables ASSERT_CHECKING
+			
      --with-template=TEMPLATE
 			Use template file TEMPLATE - the template files are
 			assumed to be in the directory src/template, so look
