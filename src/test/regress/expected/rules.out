@@ -340,69 +340,69 @@ QUERY: update rtest_emp set ename = 'wiecx' where ename = 'wiech';
 QUERY: update rtest_emp set ename = 'wieck', salary = '6000.00' where ename = 'wiecx';
 QUERY: update rtest_emp set salary = '7000.00' where ename = 'wieck';
 QUERY: delete from rtest_emp where ename = 'gates';
-QUERY: select ename, who = current_user as "matches user", action, newsal, oldsal from rtest_emplog;
+QUERY: select ename, who = current_user as "matches user", action, newsal, oldsal from rtest_emplog order by ename, action, newsal;
 ename               |matches user|action    |newsal    |oldsal    
 --------------------+------------+----------+----------+----------
-wiech               |t           |hired     |$5,000.00 |$0.00     
+gates               |t           |fired     |$0.00     |$80,000.00
 gates               |t           |hired     |$80,000.00|$0.00     
+wiech               |t           |hired     |$5,000.00 |$0.00     
 wieck               |t           |honored   |$6,000.00 |$5,000.00 
 wieck               |t           |honored   |$7,000.00 |$6,000.00 
-gates               |t           |fired     |$0.00     |$80,000.00
 (5 rows)
 
 QUERY: insert into rtest_empmass values ('meyer', '4000.00');
 QUERY: insert into rtest_empmass values ('maier', '5000.00');
 QUERY: insert into rtest_empmass values ('mayr', '6000.00');
 QUERY: insert into rtest_emp select * from rtest_empmass;
-QUERY: select ename, who = current_user as "matches user", action, newsal, oldsal from rtest_emplog;
+QUERY: select ename, who = current_user as "matches user", action, newsal, oldsal from rtest_emplog order by ename, action, newsal;
 ename               |matches user|action    |newsal    |oldsal    
 --------------------+------------+----------+----------+----------
-wiech               |t           |hired     |$5,000.00 |$0.00     
-gates               |t           |hired     |$80,000.00|$0.00     
-wieck               |t           |honored   |$6,000.00 |$5,000.00 
-wieck               |t           |honored   |$7,000.00 |$6,000.00 
 gates               |t           |fired     |$0.00     |$80,000.00
-meyer               |t           |hired     |$4,000.00 |$0.00     
+gates               |t           |hired     |$80,000.00|$0.00     
 maier               |t           |hired     |$5,000.00 |$0.00     
 mayr                |t           |hired     |$6,000.00 |$0.00     
+meyer               |t           |hired     |$4,000.00 |$0.00     
+wiech               |t           |hired     |$5,000.00 |$0.00     
+wieck               |t           |honored   |$6,000.00 |$5,000.00 
+wieck               |t           |honored   |$7,000.00 |$6,000.00 
 (8 rows)
 
 QUERY: update rtest_empmass set salary = salary + '1000.00';
 QUERY: update rtest_emp set salary = rtest_empmass.salary where ename = rtest_empmass.ename;
-QUERY: select ename, who = current_user as "matches user", action, newsal, oldsal from rtest_emplog;
+QUERY: select ename, who = current_user as "matches user", action, newsal, oldsal from rtest_emplog order by ename, action, newsal;
 ename               |matches user|action    |newsal    |oldsal    
 --------------------+------------+----------+----------+----------
-wiech               |t           |hired     |$5,000.00 |$0.00     
+gates               |t           |fired     |$0.00     |$80,000.00
 gates               |t           |hired     |$80,000.00|$0.00     
+maier               |t           |hired     |$5,000.00 |$0.00     
+maier               |t           |honored   |$6,000.00 |$5,000.00 
+mayr                |t           |hired     |$6,000.00 |$0.00     
+mayr                |t           |honored   |$7,000.00 |$6,000.00 
+meyer               |t           |hired     |$4,000.00 |$0.00     
+meyer               |t           |honored   |$5,000.00 |$4,000.00 
+wiech               |t           |hired     |$5,000.00 |$0.00     
 wieck               |t           |honored   |$6,000.00 |$5,000.00 
 wieck               |t           |honored   |$7,000.00 |$6,000.00 
-gates               |t           |fired     |$0.00     |$80,000.00
-meyer               |t           |hired     |$4,000.00 |$0.00     
-maier               |t           |hired     |$5,000.00 |$0.00     
-mayr                |t           |hired     |$6,000.00 |$0.00     
-maier               |t           |honored   |$6,000.00 |$5,000.00 
-mayr                |t           |honored   |$7,000.00 |$6,000.00 
-meyer               |t           |honored   |$5,000.00 |$4,000.00 
 (11 rows)
 
 QUERY: delete from rtest_emp where ename = rtest_empmass.ename;
-QUERY: select ename, who = current_user as "matches user", action, newsal, oldsal from rtest_emplog;
+QUERY: select ename, who = current_user as "matches user", action, newsal, oldsal from rtest_emplog order by ename, action, newsal;
 ename               |matches user|action    |newsal    |oldsal    
 --------------------+------------+----------+----------+----------
-wiech               |t           |hired     |$5,000.00 |$0.00     
+gates               |t           |fired     |$0.00     |$80,000.00
 gates               |t           |hired     |$80,000.00|$0.00     
+maier               |t           |fired     |$0.00     |$6,000.00 
+maier               |t           |hired     |$5,000.00 |$0.00     
+maier               |t           |honored   |$6,000.00 |$5,000.00 
+mayr                |t           |fired     |$0.00     |$7,000.00 
+mayr                |t           |hired     |$6,000.00 |$0.00     
+mayr                |t           |honored   |$7,000.00 |$6,000.00 
+meyer               |t           |fired     |$0.00     |$5,000.00 
+meyer               |t           |hired     |$4,000.00 |$0.00     
+meyer               |t           |honored   |$5,000.00 |$4,000.00 
+wiech               |t           |hired     |$5,000.00 |$0.00     
 wieck               |t           |honored   |$6,000.00 |$5,000.00 
 wieck               |t           |honored   |$7,000.00 |$6,000.00 
-gates               |t           |fired     |$0.00     |$80,000.00
-meyer               |t           |hired     |$4,000.00 |$0.00     
-maier               |t           |hired     |$5,000.00 |$0.00     
-mayr                |t           |hired     |$6,000.00 |$0.00     
-maier               |t           |honored   |$6,000.00 |$5,000.00 
-mayr                |t           |honored   |$7,000.00 |$6,000.00 
-meyer               |t           |honored   |$5,000.00 |$4,000.00 
-maier               |t           |fired     |$0.00     |$6,000.00 
-mayr                |t           |fired     |$0.00     |$7,000.00 
-meyer               |t           |fired     |$0.00     |$5,000.00 
 (14 rows)
 
 QUERY: insert into rtest_t4 values (1, 'Record should go to rtest_t4');
@@ -913,17 +913,17 @@ QUERY: INSERT INTO shoelace_data VALUES ('sl5', 4, 'brown', 1.0 , 'm');
 QUERY: INSERT INTO shoelace_data VALUES ('sl6', 0, 'brown', 0.9 , 'm');
 QUERY: INSERT INTO shoelace_data VALUES ('sl7', 7, 'brown', 60 , 'cm');
 QUERY: INSERT INTO shoelace_data VALUES ('sl8', 1, 'brown', 40 , 'inch');
-QUERY: SELECT * FROM shoelace;
+QUERY: SELECT * FROM shoelace ORDER BY sl_name;
 sl_name   |sl_avail|sl_color  |sl_len|sl_unit |sl_len_cm
 ----------+--------+----------+------+--------+---------
 sl1       |       5|black     |    80|cm      |       80
 sl2       |       6|black     |   100|cm      |      100
-sl7       |       7|brown     |    60|cm      |       60
 sl3       |       0|black     |    35|inch    |     88.9
 sl4       |       8|black     |    40|inch    |    101.6
-sl8       |       1|brown     |    40|inch    |    101.6
 sl5       |       4|brown     |     1|m       |      100
 sl6       |       0|brown     |   0.9|m       |       90
+sl7       |       7|brown     |    60|cm      |       60
+sl8       |       1|brown     |    40|inch    |    101.6
 (8 rows)
 
 QUERY: SELECT * FROM shoe_ready WHERE total_avail >= 2;
@@ -991,31 +991,31 @@ QUERY:     CREATE RULE shoelace_ok_ins AS ON INSERT TO shoelace_ok
 QUERY: INSERT INTO shoelace_arrive VALUES ('sl3', 10);
 QUERY: INSERT INTO shoelace_arrive VALUES ('sl6', 20);
 QUERY: INSERT INTO shoelace_arrive VALUES ('sl8', 20);
-QUERY: SELECT * FROM shoelace;
+QUERY: SELECT * FROM shoelace ORDER BY sl_name;
 sl_name   |sl_avail|sl_color  |sl_len|sl_unit |sl_len_cm
 ----------+--------+----------+------+--------+---------
 sl1       |       5|black     |    80|cm      |       80
 sl2       |       6|black     |   100|cm      |      100
-sl7       |       6|brown     |    60|cm      |       60
 sl3       |       0|black     |    35|inch    |     88.9
 sl4       |       8|black     |    40|inch    |    101.6
-sl8       |       1|brown     |    40|inch    |    101.6
 sl5       |       4|brown     |     1|m       |      100
 sl6       |       0|brown     |   0.9|m       |       90
+sl7       |       6|brown     |    60|cm      |       60
+sl8       |       1|brown     |    40|inch    |    101.6
 (8 rows)
 
 QUERY: insert into shoelace_ok select * from shoelace_arrive;
-QUERY: SELECT * FROM shoelace;
+QUERY: SELECT * FROM shoelace ORDER BY sl_name;
 sl_name   |sl_avail|sl_color  |sl_len|sl_unit |sl_len_cm
 ----------+--------+----------+------+--------+---------
 sl1       |       5|black     |    80|cm      |       80
 sl2       |       6|black     |   100|cm      |      100
-sl7       |       6|brown     |    60|cm      |       60
-sl4       |       8|black     |    40|inch    |    101.6
 sl3       |      10|black     |    35|inch    |     88.9
-sl8       |      21|brown     |    40|inch    |    101.6
+sl4       |       8|black     |    40|inch    |    101.6
 sl5       |       4|brown     |     1|m       |      100
 sl6       |      20|brown     |   0.9|m       |       90
+sl7       |       6|brown     |    60|cm      |       60
+sl8       |      21|brown     |    40|inch    |    101.6
 (8 rows)
 
 QUERY: SELECT * FROM shoelace_log;
@@ -1050,17 +1050,17 @@ sl9       |       0|pink      |    35|inch    |     88.9
 QUERY: DELETE FROM shoelace WHERE EXISTS
     (SELECT * FROM shoelace_candelete
              WHERE sl_name = shoelace.sl_name);
-QUERY: SELECT * FROM shoelace;
+QUERY: SELECT * FROM shoelace ORDER BY sl_name;
 sl_name   |sl_avail|sl_color  |sl_len|sl_unit |sl_len_cm
 ----------+--------+----------+------+--------+---------
 sl1       |       5|black     |    80|cm      |       80
-sl2       |       6|black     |   100|cm      |      100
-sl7       |       6|brown     |    60|cm      |       60
-sl4       |       8|black     |    40|inch    |    101.6
-sl3       |      10|black     |    35|inch    |     88.9
-sl8       |      21|brown     |    40|inch    |    101.6
 sl10      |    1000|magenta   |    40|inch    |    101.6
+sl2       |       6|black     |   100|cm      |      100
+sl3       |      10|black     |    35|inch    |     88.9
+sl4       |       8|black     |    40|inch    |    101.6
 sl5       |       4|brown     |     1|m       |      100
 sl6       |      20|brown     |   0.9|m       |       90
+sl7       |       6|brown     |    60|cm      |       60
+sl8       |      21|brown     |    40|inch    |    101.6
 (9 rows)
 

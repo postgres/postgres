@@ -272,17 +272,17 @@ update rtest_emp set ename = 'wieck', salary = '6000.00' where ename = 'wiecx';
 update rtest_emp set salary = '7000.00' where ename = 'wieck';
 delete from rtest_emp where ename = 'gates';
 
-select ename, who = current_user as "matches user", action, newsal, oldsal from rtest_emplog;
+select ename, who = current_user as "matches user", action, newsal, oldsal from rtest_emplog order by ename, action, newsal;
 insert into rtest_empmass values ('meyer', '4000.00');
 insert into rtest_empmass values ('maier', '5000.00');
 insert into rtest_empmass values ('mayr', '6000.00');
 insert into rtest_emp select * from rtest_empmass;
-select ename, who = current_user as "matches user", action, newsal, oldsal from rtest_emplog;
+select ename, who = current_user as "matches user", action, newsal, oldsal from rtest_emplog order by ename, action, newsal;
 update rtest_empmass set salary = salary + '1000.00';
 update rtest_emp set salary = rtest_empmass.salary where ename = rtest_empmass.ename;
-select ename, who = current_user as "matches user", action, newsal, oldsal from rtest_emplog;
+select ename, who = current_user as "matches user", action, newsal, oldsal from rtest_emplog order by ename, action, newsal;
 delete from rtest_emp where ename = rtest_empmass.ename;
-select ename, who = current_user as "matches user", action, newsal, oldsal from rtest_emplog;
+select ename, who = current_user as "matches user", action, newsal, oldsal from rtest_emplog order by ename, action, newsal;
 
 --
 -- Multiple cascaded qualified instead rule test
@@ -584,7 +584,7 @@ INSERT INTO shoelace_data VALUES ('sl7', 7, 'brown', 60 , 'cm');
 INSERT INTO shoelace_data VALUES ('sl8', 1, 'brown', 40 , 'inch');
 
 -- SELECTs in doc
-SELECT * FROM shoelace;
+SELECT * FROM shoelace ORDER BY sl_name;
 SELECT * FROM shoe_ready WHERE total_avail >= 2;
 
     CREATE TABLE shoelace_log (
@@ -655,11 +655,11 @@ INSERT INTO shoelace_arrive VALUES ('sl3', 10);
 INSERT INTO shoelace_arrive VALUES ('sl6', 20);
 INSERT INTO shoelace_arrive VALUES ('sl8', 20);
 
-SELECT * FROM shoelace;
+SELECT * FROM shoelace ORDER BY sl_name;
 
 insert into shoelace_ok select * from shoelace_arrive;
 
-SELECT * FROM shoelace;
+SELECT * FROM shoelace ORDER BY sl_name;
 
 SELECT * FROM shoelace_log;
 
@@ -680,4 +680,4 @@ DELETE FROM shoelace WHERE EXISTS
     (SELECT * FROM shoelace_candelete
              WHERE sl_name = shoelace.sl_name);
 
-SELECT * FROM shoelace;
+SELECT * FROM shoelace ORDER BY sl_name;
