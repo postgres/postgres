@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/set.sgml,v 1.57 2002/01/07 02:29:15 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/set.sgml,v 1.58 2002/02/26 15:59:08 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -393,7 +393,7 @@ SET DATESTYLE TO PostgreSQL,European;
    that the date/time format is ISO here):
 
 <screen> 
-SET TIME ZONE "PST8PDT";
+SET TIME ZONE 'PST8PDT';
 SELECT CURRENT_TIMESTAMP AS today;
    
          today
