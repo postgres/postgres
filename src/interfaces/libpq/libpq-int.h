@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq-int.h,v 1.28 2000/11/13 15:18:15 momjian Exp $
+ * $Id: libpq-int.h,v 1.29 2000/11/13 23:37:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -203,8 +203,8 @@ struct pg_conn
 								 * numbers-and-dots notation. Takes
 								 * precedence over above. */
 	char	   *pgport;			/* the server's communication port */
-	char	   *pgunixsocket;		/* the Unix-domain socket that the server is listening on;
-						 * if NULL, uses a default constructed from pgport */
+	char	   *pgunixsocket;	/* the Unix-domain socket that the server is listening on;
+						 		 * if NULL, uses a default constructed from pgport */
 	char	   *pgtty;			/* tty on which the backend messages is
 								 * displayed (NOT ACTUALLY USED???) */
 	char	   *pgoptions;		/* options to start the backend with */

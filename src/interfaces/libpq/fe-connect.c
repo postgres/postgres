@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.145 2000/11/13 15:18:15 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.146 2000/11/13 23:37:53 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -332,6 +332,25 @@ PQconnectStart(const char *conninfo)
 	PQconninfoFree(connOptions);
 
 	/* ----------
+	 * Allow unix socket specification in the host name
+	 * ----------
+	 */
+	if (conn->pghost && conn->pghost[0] == '/')
+	{
+		if (conn->pgunixsocket)
+			free(conn->pgunixsocket);
+		conn->pgunixsocket = conn->pghost;
+		conn->pghost = NULL;
+	}
+	if (conn->pghostaddr && conn->pghostaddr[0] == '/')
+	{
+		if (conn->pgunixsocket)
+			free(conn->pgunixsocket);
+		conn->pgunixsocket = conn->pghostaddr;
+		conn->pghostaddr = NULL;
+	}
+
+	/* ----------
 	 * Connect to the database
 	 * ----------
 	 */
@@ -443,13 +462,25 @@ PQsetdbLogin(const char *pghost, const char *pgport, const char *pgoptions,
 	else
 		conn->pgport = strdup(pgport);
 
-#if FIX_ME
-	/* we need to modify the function to accept a unix socket path */
-	if (pgunixsocket)
-		conn->pgunixsocket = strdup(pgunixsocket);
-	else if ((tmp = getenv("PGUNIXSOCKET")) != NULL)
-		conn->pgunixsocket = strdup(tmp);
-#endif
+	/* ----------
+	 * We don't allow unix socket path as a function parameter.
+	 * This allows unix socket specification in the host name.
+	 * ----------
+	 */
+	if (conn->pghost && conn->pghost[0] == '/')
+	{
+		if (conn->pgunixsocket)
+			free(conn->pgunixsocket);
+		conn->pgunixsocket = conn->pghost;
+		conn->pghost = NULL;
+	}
+	if (conn->pghostaddr && conn->pghostaddr[0] == '/')
+	{
+		if (conn->pgunixsocket)
+			free(conn->pgunixsocket);
+		conn->pgunixsocket = conn->pghostaddr;
+		conn->pghostaddr = NULL;
+	}
 
 	if (pgtty == NULL)
 	{
@@ -778,7 +809,7 @@ connectDBStart(PGconn *conn)
 		{
 			printfPQExpBuffer(&conn->errorMessage,
 							  "connectDBStart() -- "
-						 "invalid host address: %s\n", conn->pghostaddr);
+						 	  "invalid host address: %s\n", conn->pghostaddr);
 			goto connect_errReturn;
 		}
 

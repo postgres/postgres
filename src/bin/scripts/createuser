@@ -8,7 +8,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/createuser,v 1.13 2000/11/13 15:18:14 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/createuser,v 1.14 2000/11/13 23:37:53 momjian Exp $
 #
 # Note - this should NOT be setuid.
 #
@@ -62,15 +62,6 @@ do
                 ;;
         --port=*)
                 PSQLOPT="$PSQLOPT -p "`echo $1 | sed 's/^--port=//'`
-                ;;
-	--unixsocket|-k)
-		PSQLOPT="$PSQLOPT -k $2"
-		shift;;
-        -k*)
-                PSQLOPT="$PSQLOPT $1"
-                ;;
-        --unixsocket=*)
-                PSQLOPT="$PSQLOPT -k "`echo $1 | sed 's/^--unixsocket=//'`
                 ;;
 # Note: These two specify the user to connect as (like in psql),
 #       not the user you're creating.
@@ -144,7 +135,6 @@ if [ "$usage" ]; then
 	echo "  -P, --pwprompt                  Assign a password to new user"
 	echo "  -h, --host=HOSTNAME             Database server host"
 	echo "  -p, --port=PORT                 Database server port"
-	echo "  -k, --unixsocket=PATH           Database server Unix-domain socket name"
 	echo "  -U, --username=USERNAME         Username to connect as (not the one to create)"
 	echo "  -W, --password                  Prompt for password to connect"
 	echo "  -e, --echo                      Show the query being sent to the backend"

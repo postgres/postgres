@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/help.c,v 1.33 2000/11/13 15:18:14 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/help.c,v 1.34 2000/11/13 23:37:53 momjian Exp $
  */
 #include "postgres.h"
 #include "help.h"
@@ -103,16 +103,6 @@ usage(void)
 	puts(")");
 
 	puts("  -H              HTML table output mode (-P format=html)");
-
-	/* Display default Unix-domain socket */
-	env = getenv("PGUNIXSOCKET");
-	printf("  -k <path>       Specify Unix domain socket name (default: ");
-	if (env)
-		fputs(env, stdout);
-	else
-		fputs("computed from the port", stdout);
-	puts(")");
-
 	puts("  -l              List available databases, then exit");
 	puts("  -n              Disable readline");
 	puts("  -o <filename>   Send query output to filename (or |pipe)");

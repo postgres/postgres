@@ -131,9 +131,8 @@ void RestoreArchive(Archive* AHX, RestoreOptions *ropt)
 		if (AH->version < K_VERS_1_3)
 			die_horribly(AH, "Direct database connections are not supported in pre-1.3 archives");
 
-		ConnectDatabase(AHX, ropt->dbname, ropt->pghost, ropt->pgport,
-							ropt->pgunixsocket, ropt->requirePassword,
-							ropt->ignoreVersion);
+		ConnectDatabase(AHX, ropt->dbname, ropt->pghost, ropt->pgport, 
+							ropt->requirePassword, ropt->ignoreVersion);
 
 		/*
 		 * If no superuser was specified then see if the current user will do...

@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/command.c,v 1.37 2000/11/13 15:18:14 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/command.c,v 1.38 2000/11/13 23:37:53 momjian Exp $
  */
 #include "postgres.h"
 #include "command.h"
@@ -1202,7 +1202,6 @@ do_connect(const char *new_dbname, const char *new_user)
 	SetVariable(pset.vars, "USER", NULL);
 	SetVariable(pset.vars, "HOST", NULL);
 	SetVariable(pset.vars, "PORT", NULL);
-	SetVariable(pset.vars, "UNIXSOCKET", NULL);
 	SetVariable(pset.vars, "ENCODING", NULL);
 
 	/* If dbname is "" then use old name, else new one (even if NULL) */
@@ -1232,7 +1231,6 @@ do_connect(const char *new_dbname, const char *new_user)
 	do
 	{
 		need_pass = false;
-		/* FIXME use PQconnectdb to support passing the Unix socket */
 		pset.db = PQsetdbLogin(PQhost(oldconn), PQport(oldconn),
 							   NULL, NULL, dbparam, userparam, pwparam);
 
@@ -1309,7 +1307,6 @@ do_connect(const char *new_dbname, const char *new_user)
 	SetVariable(pset.vars, "USER", PQuser(pset.db));
 	SetVariable(pset.vars, "HOST", PQhost(pset.db));
 	SetVariable(pset.vars, "PORT", PQport(pset.db));
-	SetVariable(pset.vars, "UNIXSOCKET", PQunixsocket(pset.db));
 	SetVariable(pset.vars, "ENCODING", pg_encoding_to_char(pset.encoding));
 
 	pset.issuper = test_superuser(PQuser(pset.db));

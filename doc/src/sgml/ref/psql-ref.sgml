@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.41 2000/11/13 15:18:08 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.42 2000/11/13 23:37:51 momjian Exp $
 Postgres documentation
 -->
 
@@ -1324,19 +1324,6 @@ Access permissions for database "test"
       <application>postmaster</application> is running.
       Without this option, communication is performed using
       local Unix domain sockets.
-      </para>
-      </listitem>
-    </varlistentry>
-
-
-    <varlistentry>
-      <term>-k, --unixsocket <replaceable class="parameter">path</replaceable></term>
-      <listitem>
-      <para>
-      Specifies the Unix-domain socket on which the
-      <application>postmaster</application> is running.
-      Without this option, the socket is created in <filename>/tmp</filename>
-      based on the port number.
       </para>
       </listitem>
     </varlistentry>

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_dumpall.sgml,v 1.12 2000/11/13 15:18:08 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_dumpall.sgml,v 1.13 2000/11/13 23:37:51 momjian Exp $
 Postgres documentation
 -->
 
@@ -23,7 +23,7 @@ Postgres documentation
    <date>1999-07-20</date>
   </refsynopsisdivinfo>
   <synopsis>
-pg_dumpall [ -h <replaceable class="parameter">host</replaceable> ] [ -k <replaceable class="parameter">path</replaceable> ] [ -p <replaceable class="parameter">port</replaceable> ] [ -a ] [ -d ] [ -D ] [ -O ] [ -s ] [ -u ] [ -v ] [ -x ] [ --accounts-only ]
+pg_dumpall [ -h <replaceable class="parameter">host</replaceable> ] [ -p <replaceable class="parameter">port</replaceable> ] [ -a ] [ -d ] [ -D ] [ -O ] [ -s ] [ -u ] [ -v ] [ -x ] [ --accounts-only ]
   </synopsis>
 
   <refsect2 id="R2-APP-PG-DUMPALL-1">
@@ -145,21 +145,6 @@ pg_dumpall [ -h <replaceable class="parameter">host</replaceable> ] [ -k <replac
 	<application>postmaster</application>
 	is running.  Defaults to using a local Unix domain socket
 	rather than an IP connection..
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term>-k <replaceable class="parameter">path</replaceable></term>
-      <listitem>
-       <para>
-	Specifies the local Unix domain socket file path
-	on which the <application>postmaster</application>
-	is listening for connections.
-        Without this option, the socket path name defaults to
-        the value of the <envar>PGUNIXSOCKET</envar> environment
-	variable (if set), otherwise it is constructed
-        from the port number.
        </para>
       </listitem>
      </varlistentry>

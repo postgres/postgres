@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/startup.c,v 1.38 2000/11/13 15:18:14 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/startup.c,v 1.39 2000/11/13 23:37:53 momjian Exp $
  */
 #include "postgres.h"
 
@@ -65,7 +65,6 @@ struct adhoc_opts
 	char	   *dbname;
 	char	   *host;
 	char	   *port;
-	char	   *unixsocket;
 	char	   *username;
 	enum _actions action;
 	char	   *action_string;
@@ -162,7 +161,6 @@ main(int argc, char *argv[])
 	do
 	{
 		need_pass = false;
-		/* FIXME use PQconnectdb to allow setting the unix socket */
 		pset.db = PQsetdbLogin(options.host, options.port, NULL, NULL,
 			options.action == ACT_LIST_DB ? "template1" : options.dbname,
 							   username, password);
@@ -208,7 +206,6 @@ main(int argc, char *argv[])
 	SetVariable(pset.vars, "USER", PQuser(pset.db));
 	SetVariable(pset.vars, "HOST", PQhost(pset.db));
 	SetVariable(pset.vars, "PORT", PQport(pset.db));
-	SetVariable(pset.vars, "UNIXSOCKET", PQunixsocket(pset.db));
 	SetVariable(pset.vars, "ENCODING", pg_encoding_to_char(pset.encoding));
 
 #ifndef WIN32
@@ -323,7 +320,6 @@ parse_psql_options(int argc, char *argv[], struct adhoc_opts * options)
 		{"field-separator", required_argument, NULL, 'F'},
 		{"host", required_argument, NULL, 'h'},
 		{"html", no_argument, NULL, 'H'},
-		{"unixsocket", required_argument, NULL, 'k'},
 		{"list", no_argument, NULL, 'l'},
 		{"no-readline", no_argument, NULL, 'n'},
 		{"output", required_argument, NULL, 'o'},
@@ -357,14 +353,14 @@ parse_psql_options(int argc, char *argv[], struct adhoc_opts * options)
 	memset(options, 0, sizeof *options);
 
 #ifdef HAVE_GETOPT_LONG
-	while ((c = getopt_long(argc, argv, "aAc:d:eEf:F:lh:Hk:no:p:P:qRsStT:uU:v:VWxX?", long_options, &optindex)) != -1)
+	while ((c = getopt_long(argc, argv, "aAc:d:eEf:F:lh:Hno:p:P:qRsStT:uU:v:VWxX?", long_options, &optindex)) != -1)
 #else							/* not HAVE_GETOPT_LONG */
 
 	/*
 	 * Be sure to leave the '-' in here, so we can catch accidental long
 	 * options.
 	 */
-	while ((c = getopt(argc, argv, "aAc:d:eEf:F:lh:Hk:no:p:P:qRsStT:uU:v:VWxX?-")) != -1)
+	while ((c = getopt(argc, argv, "aAc:d:eEf:F:lh:Hno:p:P:qRsStT:uU:v:VWxX?-")) != -1)
 #endif	 /* not HAVE_GETOPT_LONG */
 	{
 		switch (c)
@@ -409,9 +405,6 @@ parse_psql_options(int argc, char *argv[], struct adhoc_opts * options)
 				break;
 			case 'l':
 				options->action = ACT_LIST_DB;
-				break;
-			case 'k':
-				options->unixsocket = optarg;
 				break;
 			case 'n':
 				options->no_readline = true;

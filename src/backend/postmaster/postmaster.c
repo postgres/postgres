@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.183 2000/11/13 15:18:11 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.184 2000/11/13 23:37:52 momjian Exp $
  *
  * NOTES
  *
@@ -1334,8 +1334,8 @@ get_host_port(void)
 		{
 			char msg[1024];
 			snprintf(msg, sizeof(msg),
-				 "FATAL: get_host_port: gethostbyname(%s) failed: %s\n",
-				 HostName, hstrerror(h_errno));
+				 "FATAL: get_host_port: gethostbyname(%s) failed\n",
+				 HostName);
 			fputs(msg, stderr);
 			pqdebug("%s", msg);
 			exit(1);

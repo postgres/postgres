@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/libpq.sgml,v 1.45 2000/11/13 15:18:07 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/libpq.sgml,v 1.46 2000/11/13 23:37:51 momjian Exp $
 -->
 
  <chapter id="libpq-chapter">
@@ -1844,9 +1844,9 @@ Without a host name, libpq will connect using a local Unix domain socket.
 </listitem>
 <listitem>
 <para>
-<envar>PGPORT</envar>  sets the default port or local Unix domain socket
-file extension for communicating with the <productname>Postgres</productname>
-backend.
+<envar>PGPORT</envar> and <envar>PGUNIXSOCKET</envar> set the default
+port or local Unix domain socket file extension for communicating with
+the <productname>Postgres</productname> backend.
 </para>
 </listitem>
 <listitem>

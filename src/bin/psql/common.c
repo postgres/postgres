@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/common.c,v 1.24 2000/11/13 15:18:14 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/common.c,v 1.25 2000/11/13 23:37:53 momjian Exp $
  */
 #include "postgres.h"
 #include "common.h"
@@ -329,7 +329,6 @@ PSQLexec(const char *query)
 			SetVariable(pset.vars, "DBNAME", NULL);
 			SetVariable(pset.vars, "HOST", NULL);
 			SetVariable(pset.vars, "PORT", NULL);
-			SetVariable(pset.vars, "UNIXSOCKET", NULL);
 			SetVariable(pset.vars, "USER", NULL);
 			SetVariable(pset.vars, "ENCODING", NULL);
 			return NULL;
@@ -509,7 +508,6 @@ SendQuery(const char *query)
 				SetVariable(pset.vars, "DBNAME", NULL);
 				SetVariable(pset.vars, "HOST", NULL);
 				SetVariable(pset.vars, "PORT", NULL);
-				SetVariable(pset.vars, "UNIXSOCKET", NULL);
 				SetVariable(pset.vars, "USER", NULL);
 				SetVariable(pset.vars, "ENCODING", NULL);
 				return false;
