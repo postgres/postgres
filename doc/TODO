@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Mon Mar  8 23:45:40 EST 2004
+Last updated:		Sat Mar 13 18:17:39 EST 2004
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -314,7 +314,7 @@ Referential Integrity
   function, not at the end of the function
 * Print table names with constraint names in error messages, or make constraint
   names unique within a schema
-* Issue NOTICE if foreign key data type doesn't match primary key
+* -Issue NOTICE if foreign key data requires costly test to match primary key
 * Remove CREATE CONSTRAINT TRIGGER
 
 
