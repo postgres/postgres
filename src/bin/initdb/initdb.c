@@ -39,7 +39,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  * Portions taken from FreeBSD.
  *
- * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.68 2004/11/27 18:51:05 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.69 2004/11/29 01:14:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -216,8 +216,10 @@ do { \
 
 #ifndef WIN32
 #define QUOTE_PATH	""
+#define DIR_SEP "/"
 #else
 #define QUOTE_PATH	"\""
+#define DIR_SEP "\\"
 #endif
 
 /*
@@ -2079,6 +2081,8 @@ main(int argc, char *argv[])
 	char	   *short_version;
 	char	   *pgdenv;			/* PGDATA value gotten from and sent to
 								 * environment */
+	char		bin_dir[MAXPGPATH];
+	char		*pg_data_native;
 	static const char *subdirs[] = {
 		"global",
 		"pg_xlog",
@@ -2256,6 +2260,7 @@ main(int argc, char *argv[])
 		}
 	}
 
+	pg_data_native = pg_data;
 	canonicalize_path(pg_data);
 
 	/*
@@ -2567,12 +2572,18 @@ main(int argc, char *argv[])
 	if (authwarning != NULL)
 		fprintf(stderr, authwarning);
 
+	/* Get directory specification used to start this executable */
+	strcpy(bin_dir, argv[0]);
+	get_parent_directory(bin_dir);
+	
 	printf(_("\nSuccess. You can now start the database server using:\n\n"
-			 "    %s%s%s/postmaster -D %s%s%s\n"
+			 "    %s%s%s%spostmaster -D %s%s%s\n"
 			 "or\n"
-			 "    %s%s%s/pg_ctl -D %s%s%s -l logfile start\n\n"),
-	   QUOTE_PATH, bin_path, QUOTE_PATH, QUOTE_PATH, pg_data, QUOTE_PATH,
-	  QUOTE_PATH, bin_path, QUOTE_PATH, QUOTE_PATH, pg_data, QUOTE_PATH);
+			 "    %s%s%s%spg_ctl -D %s%s%s -l logfile start\n\n"),
+	  QUOTE_PATH, bin_dir, QUOTE_PATH, (strlen(bin_dir) > 0) ? DIR_SEP : "",
+	  QUOTE_PATH, pg_data_native, QUOTE_PATH,
+	  QUOTE_PATH, bin_dir, QUOTE_PATH, (strlen(bin_dir) > 0) ? DIR_SEP : "",
+	  QUOTE_PATH, pg_data_native, QUOTE_PATH);
 
 	return 0;
 }
