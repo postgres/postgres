@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Tue Feb  6 19:52:31 EST 2001
+Last updated:		Tue Feb  6 19:52:47 EST 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -314,7 +314,7 @@ MISC
 * Add SET PERFORMANCE_TIPS option to suggest INDEX, VACUUM, VACUUM
   ANALYZE, and CLUSTER
 * Delay fsync() when other backends are about to commit too [fsync]
-* Prevent pg_attribute from having duplicate oids for indexes
+* Prevent pg_attribute from having duplicate oids for indexes (Tom)
 
 SOURCE CODE
 -----------
