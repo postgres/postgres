@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.67 2000/04/12 17:14:45 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.68 2000/05/21 02:28:54 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -765,6 +765,9 @@ heap_endscan(HeapScanDesc scan)
 	 * ----------------
 	 */
 	RelationDecrementReferenceCount(scan->rs_rd);
+
+	if (scan->rs_key)
+		pfree(scan->rs_key);
 
 	pfree(scan);
 }

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.95 2000/04/12 17:15:54 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.96 2000/05/21 02:28:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -245,6 +245,9 @@ static bool criticalRelcacheBuild = false;
  *		this is used by RelationBuildDesc to find a pg_class
  *		tuple matching either a relation name or a relation id
  *		as specified in buildinfo.
+ *
+ *		NB: the returned tuple has been copied into palloc'd storage
+ *		and must eventually be freed with heap_freetuple.
  * --------------------------------
  */
 static HeapTuple
@@ -355,6 +358,8 @@ scan_pg_rel_ind(RelationBuildDescInfo buildinfo)
 	}
 
 	heap_close(pg_class_desc, AccessShareLock);
+
+	/* The xxxIndexScan routines will have returned a palloc'd tuple. */
 
 	return return_tuple;
 }
@@ -519,9 +524,9 @@ build_tupdesc_seq(RelationBuildDescInfo buildinfo,
 			relation->rd_att->attrs[attp->attnum - 1] =
 				(Form_pg_attribute) palloc(ATTRIBUTE_TUPLE_SIZE);
 
-			memmove((char *) (relation->rd_att->attrs[attp->attnum - 1]),
-					(char *) attp,
-					ATTRIBUTE_TUPLE_SIZE);
+			memcpy((char *) (relation->rd_att->attrs[attp->attnum - 1]),
+				   (char *) attp,
+				   ATTRIBUTE_TUPLE_SIZE);
 			need--;
 			/* Update if this attribute have a constraint */
 			if (attp->attnotnull)
@@ -571,11 +576,6 @@ build_tupdesc_ind(RelationBuildDescInfo buildinfo,
 	int			ndef = 0;
 	int			i;
 
-#ifdef	_DROP_COLUMN_HACK__
-	bool		columnDropped;
-
-#endif	 /* _DROP_COLUMN_HACK__ */
-
 	constr->has_not_null = false;
 
 	attrel = heap_openr(AttributeRelationName, AccessShareLock);
@@ -583,14 +583,15 @@ build_tupdesc_ind(RelationBuildDescInfo buildinfo,
 	for (i = 1; i <= relation->rd_rel->relnatts; i++)
 	{
 #ifdef	_DROP_COLUMN_HACK__
-		columnDropped = false;
+		bool		columnDropped = false;
 #endif	 /* _DROP_COLUMN_HACK__ */
+
 		atttup = (HeapTuple) AttributeRelidNumIndexScan(attrel,
 										  RelationGetRelid(relation), i);
 
 		if (!HeapTupleIsValid(atttup))
-#ifdef	_DROP_COLUMN_HACK__
 		{
+#ifdef	_DROP_COLUMN_HACK__
 			atttup = (HeapTuple) AttributeRelidNumIndexScan(attrel,
 					RelationGetRelid(relation), DROPPED_COLUMN_INDEX(i));
 			if (!HeapTupleIsValid(atttup))
@@ -599,21 +600,24 @@ build_tupdesc_ind(RelationBuildDescInfo buildinfo,
 					 RelationGetRelationName(relation));
 #ifdef	_DROP_COLUMN_HACK__
 			columnDropped = true;
-		}
 #endif	 /* _DROP_COLUMN_HACK__ */
-		attp = (Form_pg_attribute) GETSTRUCT(atttup);
+		}
 
-		relation->rd_att->attrs[i - 1] =
+		relation->rd_att->attrs[i - 1] = attp =
 			(Form_pg_attribute) palloc(ATTRIBUTE_TUPLE_SIZE);
 
-		memmove((char *) (relation->rd_att->attrs[i - 1]),
-				(char *) attp,
-				ATTRIBUTE_TUPLE_SIZE);
+		memcpy((char *) attp,
+			   (char *) (Form_pg_attribute) GETSTRUCT(atttup),
+			   ATTRIBUTE_TUPLE_SIZE);
+
+		/* don't forget to free the tuple returned from xxxIndexScan */
+		heap_freetuple(atttup);
 
 #ifdef	_DROP_COLUMN_HACK__
 		if (columnDropped)
 			continue;
 #endif	 /* _DROP_COLUMN_HACK__ */
+
 		/* Update if this attribute have a constraint */
 		if (attp->attnotnull)
 			constr->has_not_null = true;
@@ -1117,12 +1121,9 @@ formrdesc(char *relationName,
 	for (i = 0; i < natts; i++)
 	{
 		relation->rd_att->attrs[i] = (Form_pg_attribute) palloc(ATTRIBUTE_TUPLE_SIZE);
-
-		MemSet((char *) relation->rd_att->attrs[i], 0,
+		memcpy((char *) relation->rd_att->attrs[i],
+			   (char *) &att[i],
 			   ATTRIBUTE_TUPLE_SIZE);
-		memmove((char *) relation->rd_att->attrs[i],
-				(char *) &att[i],
-				ATTRIBUTE_TUPLE_SIZE);
 	}
 
 	/* ----------------
