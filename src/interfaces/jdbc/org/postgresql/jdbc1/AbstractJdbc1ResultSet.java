@@ -13,7 +13,7 @@ import org.postgresql.largeobject.*;
 import org.postgresql.util.PGbytea;
 import org.postgresql.util.PSQLException;
 
-/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/AbstractJdbc1ResultSet.java,v 1.7 2002/10/19 22:10:36 barry Exp $
+/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/AbstractJdbc1ResultSet.java,v 1.8 2003/01/14 09:13:51 barry Exp $
  * This class defines methods of the jdbc1 specification.  This class is
  * extended by org.postgresql.jdbc2.AbstractJdbc2ResultSet which adds the jdbc2
  * methods.  The real ResultSet class (for jdbc1) is org.postgresql.jdbc1.Jdbc1ResultSet
@@ -844,7 +844,14 @@ public abstract class AbstractJdbc1ResultSet
 	* Java also expects fractional seconds to 3 places where postgres
 	* will give, none, 2 or 6 depending on the time and postgres version.
 	* From version 7.2 postgres returns fractional seconds to 6 places.
-	* If available, we drop the last 3 digits.
+	*
+	* According to the Timestamp documentation, fractional digits are kept
+	* in the nanos field of Timestamp and not in the milliseconds of Date.
+	* Thus, parsing for fractional digits is entirely separated from the
+	* rest.
+	*
+	* The method assumes that there are no more than 9 fractional
+	* digits given. Undefined behavior if this is not the case.
 	*
 	* @param s		   The ISO formated date string to parse.
 	* @param resultSet The ResultSet this date is part of.
@@ -881,6 +888,13 @@ public abstract class AbstractJdbc1ResultSet
 			rs.sbuf.append(s);
 			int slen = s.length();
 
+			// For a Timestamp, the fractional seconds are stored in the
+			// nanos field. As a DateFormat is used for parsing which can
+			// only parse to millisecond precision and which returns a
+			// Date object, the fractional second parsing is completely
+			// separate.
+			int nanos = 0;
+
 			if (slen > 19)
 			{
 				// The len of the ISO string to the second value is 19 chars. If
@@ -894,25 +908,36 @@ public abstract class AbstractJdbc1ResultSet
 				char c = s.charAt(i++);
 				if (c == '.')
 				{
-					// Found a fractional value. Append up to 3 digits including
-					// the leading '.'
-					do
+					// Found a fractional value.
+					final int start = i;
+					while (true)
 					{
-						if (i < 24)
-							rs.sbuf.append(c);
 						c = s.charAt(i++);
+						if (!Character.isDigit(c))
+							break;
+						if (i == slen)
+							{
+								i++;
+								break;
+							}
 					}
-					while (i < slen && Character.isDigit(c));
 
-					// If there wasn't at least 3 digits we should add some zeros
-					// to make up the 3 digits we tell java to expect.
-					for (int j = i; j < 24; j++)
-						rs.sbuf.append('0');
-				}
-				else
-				{
-					// No fractional seconds, lets add some.
-					rs.sbuf.append(".000");
+					// The range [start, i - 1) contains all fractional digits.
+					final int end = i - 1;
+					try
+						{
+							nanos = Integer.parseInt(s.substring(start, end));
+						}
+					catch (NumberFormatException e)
+						{
+							throw new PSQLException("postgresql.unusual", e);
+						}
+
+					// The nanos field stores nanoseconds. Adjust the parsed
+					// value to the correct magnitude.
+					for (int digitsToNano = 9 - (end - start);
+						 digitsToNano > 0; --digitsToNano)
+						nanos *= 10;
 				}
 
 				if (i < slen)
@@ -929,7 +954,7 @@ public abstract class AbstractJdbc1ResultSet
 						rs.sbuf.append(":00");
 
 					// we'll use this dateformat string to parse the result.
-					df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS z");
+					df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss z");
 				}
 				else
 				{
@@ -938,11 +963,11 @@ public abstract class AbstractJdbc1ResultSet
 					if (pgDataType.equals("timestamptz"))
 					{
 						rs.sbuf.append(" GMT");
-						df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS z");
+						df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss z");
 					}
 					else
 					{
-						df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
+						df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 					}
 				}
 			}
@@ -981,9 +1006,13 @@ public abstract class AbstractJdbc1ResultSet
 			{
 				// All that's left is to parse the string and return the ts.
 				if ( org.postgresql.Driver.logDebug )
-					org.postgresql.Driver.debug( "" + df.parse(rs.sbuf.toString()).getTime() );
+					org.postgresql.Driver.debug("the data after parsing is " 
+                     + rs.sbuf.toString() + " with " + nanos + " nanos");
 
-				return new Timestamp(df.parse(rs.sbuf.toString()).getTime());
+				Timestamp result = 
+					new Timestamp(df.parse(rs.sbuf.toString()).getTime());
+				result.setNanos(nanos);
+				return result;
 			}
 			catch (ParseException e)
 			{
