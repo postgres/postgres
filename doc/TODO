@@ -6,7 +6,7 @@ TODO list for PostgreSQL
 Bracketed items "[]" have more detail.
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Mon Nov  8 09:53:53 EST 2004
+Last updated:		Mon Nov  8 10:17:53 EST 2004
 
 The most recent version of this document can be viewed at the PostgreSQL web
 site, http://www.PostgreSQL.org.
@@ -284,7 +284,8 @@ Commands
 
 * Add BETWEEN ASYMMETRIC/SYMMETRIC
 * Change LIMIT/OFFSET to use int8
-* CREATE TABLE AS can not determine column lengths from expressions [atttypmod]
+* Allow CREATE TABLE AS to determine column lengths for complex
+  expressions like SELECT col1 || col2
 * Allow UPDATE to handle complex aggregates [update] (?)
 * Allow backslash handling in quoted strings to be disabled for portability
 
