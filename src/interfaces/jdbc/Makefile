@@ -4,7 +4,7 @@
 #    Makefile for Java JDBC interface
 #
 # IDENTIFICATION
-#    $Id: Makefile,v 1.21 2000/05/05 07:35:29 peter Exp $
+#    $Id: Makefile,v 1.22 2000/05/15 21:32:51 peter Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -57,11 +57,11 @@ msg:
 	@echo "place (under unix this could be /usr/local/lib) and add it"
 	@echo to the class path.
 	@echo
-	@echo Then either add -Djdbc.drivers=postgresql.Driver to the
+	@echo Then either add -Djdbc.drivers=org.postgresql.Driver to the
 	@echo commandline when running your application, or edit the
 	@echo "properties file for your application (~/.hotjava/properties"
 	@echo "under unix for HotJava), and add a line containing"
-	@echo jdbc.drivers=postgresql.Driver
+	@echo jdbc.drivers=org.postgresql.Driver
 	@echo
 	@echo More details are in the README file and in the main postgresql
 	@echo documentation.
