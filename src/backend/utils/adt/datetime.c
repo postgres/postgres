@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.69 2001/10/04 17:10:11 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.70 2001/10/05 06:38:59 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -98,6 +98,7 @@ static datetkn datetktbl[] = {
 	{"cat", TZ, NEG(60)},		/* Central Alaska Time */
 	{"cct", TZ, 48},			/* China Coast */
 	{"cdt", DTZ, NEG(30)},		/* Central Daylight Time */
+	{"cest", DTZ, 12},			/* Central European Dayl.Time */
 	{"cet", TZ, 6},				/* Central European Time */
 	{"cetdst", DTZ, 12},		/* Central European Dayl.Time */
 	{"cst", TZ, NEG(36)},		/* Central Standard Time */
@@ -772,11 +773,7 @@ DecodeDateTime(char **field, int *ftype, int nf,
 							case DTK_NOW:
 								tmask = (DTK_DATE_M | DTK_TIME_M | DTK_M(TZ));
 								*dtype = DTK_DATE;
-#if NOT_USED
-								GetCurrentTime(tm);
-#else
 								GetCurrentTimeUsec(tm, fsec);
-#endif
 								if (tzp != NULL)
 									*tzp = CTimeZone;
 								break;
@@ -1151,11 +1148,7 @@ DecodeTimeOnly(char **field, int *ftype, int nf,
 							case DTK_NOW:
 								tmask = DTK_TIME_M;
 								*dtype = DTK_TIME;
-#if NOT_USED
-								GetCurrentTime(tm);
-#else
 								GetCurrentTimeUsec(tm, fsec);
-#endif
 								break;
 
 							case DTK_ZULU:

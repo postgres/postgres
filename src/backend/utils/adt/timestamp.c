@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/timestamp.c,v 1.54 2001/10/04 14:49:57 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/timestamp.c,v 1.55 2001/10/05 06:38:59 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1400,8 +1400,8 @@ interval_accum(PG_FUNCTION_ARGS)
 	memcpy(&N, DatumGetIntervalP(transdatums[1]), sizeof(Interval));
 
 	newsum = DatumGetIntervalP(DirectFunctionCall2(interval_pl,
-												IntervalPGetDatum(&sumX),
-											 IntervalPGetDatum(newval)));
+												   IntervalPGetDatum(&sumX),
+												   IntervalPGetDatum(newval)));
 	N.time += 1;
 
 	transdatums[0] = IntervalPGetDatum(newsum);
@@ -1856,7 +1856,7 @@ timestamp_trunc(PG_FUNCTION_ARGS)
 	if (VARSIZE(units) - VARHDRSZ > MAXDATELEN)
 		elog(ERROR, "Interval units '%s' not recognized",
 			 DatumGetCString(DirectFunctionCall1(textout,
-											   PointerGetDatum(units))));
+												 PointerGetDatum(units))));
 	up = VARDATA(units);
 	lp = lowunits;
 	for (i = 0; i < (VARSIZE(units) - VARHDRSZ); i++)
@@ -1943,7 +1943,7 @@ timestamptz_trunc(PG_FUNCTION_ARGS)
 	if (VARSIZE(units) - VARHDRSZ > MAXDATELEN)
 		elog(ERROR, "Interval units '%s' not recognized",
 			 DatumGetCString(DirectFunctionCall1(textout,
-											   PointerGetDatum(units))));
+												 PointerGetDatum(units))));
 	up = VARDATA(units);
 	lp = lowunits;
 	for (i = 0; i < (VARSIZE(units) - VARHDRSZ); i++)
@@ -2032,7 +2032,7 @@ interval_trunc(PG_FUNCTION_ARGS)
 	if (VARSIZE(units) - VARHDRSZ > MAXDATELEN)
 		elog(ERROR, "Interval units '%s' not recognized",
 			 DatumGetCString(DirectFunctionCall1(textout,
-											   PointerGetDatum(units))));
+												 PointerGetDatum(units))));
 	up = VARDATA(units);
 	lp = lowunits;
 	for (i = 0; i < (VARSIZE(units) - VARHDRSZ); i++)
@@ -2569,7 +2569,7 @@ interval_part(PG_FUNCTION_ARGS)
 				default:
 					elog(ERROR, "Interval units '%s' not supported",
 						 DatumGetCString(DirectFunctionCall1(textout,
-											   PointerGetDatum(units))));
+															 PointerGetDatum(units))));
 					result = 0;
 			}
 
@@ -2594,7 +2594,7 @@ interval_part(PG_FUNCTION_ARGS)
 	{
 		elog(ERROR, "Interval units '%s' not recognized",
 			 DatumGetCString(DirectFunctionCall1(textout,
-											   PointerGetDatum(units))));
+												 PointerGetDatum(units))));
 		result = 0;
 	}
 
