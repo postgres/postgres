@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.32 2003/11/30 05:45:22 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.33 2004/01/22 19:50:21 neilc Exp $
 -->
 
 <chapter id="plpgsql"> 
@@ -729,7 +729,7 @@ RENAME <replaceable>oldname</replaceable> TO <replaceable>newname</replaceable>;
    <para>
     Using the <literal>RENAME</literal> declaration you can change the
     name of a variable, record or row. This is primarily useful if
-    <literal>NEW</literal> or <literal>OLD</literal> should be
+    <varname>NEW</varname> or <varname>OLD</varname> should be
     referenced by another name inside a trigger procedure.  See also
     <literal>ALIAS</literal>.
    </para>
@@ -2176,7 +2176,7 @@ RAISE EXCEPTION ''Inexistent ID --> %'', user_id;
       <para>
        Data type <type>RECORD</type>; variable holding the new
        database row for <command>INSERT</>/<command>UPDATE</> operations in row-level
-       triggers. This variable is null in statement-level triggers.
+       triggers. This variable is <symbol>NULL</symbol> in statement-level triggers.
       </para>
      </listitem>
     </varlistentry>
@@ -2187,7 +2187,7 @@ RAISE EXCEPTION ''Inexistent ID --> %'', user_id;
       <para>
        Data type <type>RECORD</type>; variable holding the old
        database row for <command>UPDATE</>/<command>DELETE</> operations in row-level
-       triggers. This variable is null in statement-level triggers.
+       triggers. This variable is <symbol>NULL</symbol> in statement-level triggers.
       </para>
      </listitem>
     </varlistentry>
@@ -2207,7 +2207,7 @@ RAISE EXCEPTION ''Inexistent ID --> %'', user_id;
      <listitem>
       <para>
        Data type <type>text</type>; a string of either 
-              <literal>BEFORE</literal> or <literal>AFTER</literal> 
+              <literal>BEFORE</literal> or <literal>AFTER</literal>
               depending on the trigger's definition.
       </para>
      </listitem>
@@ -2281,9 +2281,9 @@ RAISE EXCEPTION ''Inexistent ID --> %'', user_id;
   </para>
 
    <para>
-    A trigger function must return either null or a record/row value
-    having exactly the structure of the table the trigger was fired
-    for.
+    A trigger function must return either <symbol>NULL</symbol> or a
+    record/row value having exactly the structure of the table the
+    trigger was fired for.
    </para>
 
    <para>

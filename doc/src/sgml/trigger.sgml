@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/trigger.sgml,v 1.33 2003/11/29 19:51:38 pgsql Exp $
+$PostgreSQL: pgsql/doc/src/sgml/trigger.sgml,v 1.34 2004/01/22 19:50:21 neilc Exp $
 -->
 
  <chapter id="triggers">
@@ -45,50 +45,69 @@ $PostgreSQL: pgsql/doc/src/sgml/trigger.sgml,v 1.33 2003/11/29 19:51:38 pgsql Ex
    </para>
 
    <para>
-    Trigger functions return a table row (a value of type
-    <structname>HeapTuple</>) to the calling executor.
-    A trigger fired before an operation has the following choices:
+    There are two types of triggers: per-row triggers and
+    per-statement triggers. In a per-row trigger, the trigger function
+    is invoked once for every row that is affected by the statement
+    that fired the trigger. In contrast, a per-statement trigger is
+    invoked only once when an appropriate statement is executed,
+    regardless of the number of rows affected by that statement. In
+    particular, a statement that affects zero rows will still result
+    in the execution of any applicable per-statement triggers. These
+    two types of triggers are sometimes called <quote>row-level
+    triggers</quote> and <quote>statement-level triggers</quote>,
+    respectively.
+   </para>
+
+   <para>
+    Trigger functions invoked by per-statement triggers should always
+    return <symbol>NULL</symbol>. Trigger functions invoked by per-row
+    triggers can return a table row (a value of
+    type <structname>HeapTuple</structname>) to the calling executor,
+    if they choose.  A row-level trigger fired before an operation has
+    the following choices:
 
     <itemizedlist>
      <listitem>
       <para>
-       It can return a <symbol>NULL</> pointer to skip the operation
-       for the current row (and so the row will not be
-       inserted/updated/deleted).
+       It can return <symbol>NULL</> to skip the operation for the
+       current row. This instructs the executor to not perform the
+       row-level operation that invoked the trigger (the insertion or
+       modification of a particular table row).
       </para>
      </listitem>
 
      <listitem>
       <para>
-       For <command>INSERT</command> and <command>UPDATE</command>
-       triggers only, the returned row becomes the row that will
-       be inserted or will replace the row being updated.  This
-       allows the trigger function to modify the row being inserted or
-       updated.
+       For row-level <command>INSERT</command>
+       and <command>UPDATE</command> triggers only, the returned row
+       becomes the row that will be inserted or will replace the row
+       being updated.  This allows the trigger function to modify the
+       row being inserted or updated.
       </para>
      </listitem>
     </itemizedlist>
 
-    A before trigger that does not intend to cause either of these
-    behaviors must be careful to return as its result the same row that was
-    passed in (that is, the NEW row for <command>INSERT</command> and
-    <command>UPDATE</command> triggers, the OLD row for
+    A row-level before trigger that does not intend to cause either of
+    these behaviors must be careful to return as its result the same
+    row that was passed in (that is, the <varname>NEW</varname> row
+    for <command>INSERT</command> and <command>UPDATE</command>
+    triggers, the <varname>OLD</varname> row for
     <command>DELETE</command> triggers).
    </para>
 
    <para>
-    The return
-    value is ignored for triggers fired after an operation, and so
-    they may as well return <symbol>NULL</>.
+    The return value is ignored for row-level triggers fired after an
+    operation, and so they may as well return <symbol>NULL</>.
    </para>
 
    <para>
     If more than one trigger is defined for the same event on the same
-    relation, the triggers will be fired in alphabetical order by trigger
-    name.  In the case of before triggers, the possibly-modified row
-    returned by each trigger becomes the input to the next trigger.
-    If any before trigger returns a <symbol>NULL</> pointer, the
-    operation is abandoned and subsequent triggers are not fired.
+    relation, the triggers will be fired in alphabetical order by
+    trigger name.  In the case of before triggers, the
+    possibly-modified row returned by each trigger becomes the input
+    to the next trigger.  If any before trigger returns
+    <symbol>NULL</>, the operation is abandoned and subsequent
+    triggers are not fired.
    </para>
 
    <para>
@@ -134,30 +153,41 @@ $PostgreSQL: pgsql/doc/src/sgml/trigger.sgml,v 1.33 2003/11/29 19:51:38 pgsql Ex
     is fired for.  Briefly:
 
     <itemizedlist>
+
      <listitem>
       <para>
-       The data change (insertion, update, or deletion) causing the trigger
-       to fire is naturally
-       <emphasis>not</emphasis> visible to SQL commands executed in a
-       before trigger, because it hasn't happened yet.
+       Statement-level triggers follow simple visibility rules: none of
+       the changes made by a statement are visible to statement-level
+       triggers that are invoked before the statement, whereas all
+       modifications are visible to statement-level after triggers.
       </para>
      </listitem>
 
      <listitem>
       <para>
-       However, SQL commands executed in a before trigger
-       <emphasis>will</emphasis> see the effects of data changes
-       for rows previously processed in the same outer command.  This
-       requires caution, since the ordering of these change events
-       is not in general predictable; a SQL command that affects
-       multiple rows may visit the rows in any order.
+       The data change (insertion, update, or deletion) causing the
+       trigger to fire is naturally <emphasis>not</emphasis> visible
+       to SQL commands executed in a row-level before trigger, because
+       it hasn't happened yet.
       </para>
      </listitem>
 
      <listitem>
       <para>
-       When an after trigger is fired, all data changes made by the outer
-       command are already complete, and are visible to executed SQL commands.
+       However, SQL commands executed in a row-level before
+       trigger <emphasis>will</emphasis> see the effects of data
+       changes for rows previously processed in the same outer
+       command.  This requires caution, since the ordering of these
+       change events is not in general predictable; a SQL command that
+       affects multiple rows may visit the rows in any order.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       When a row-level after trigger is fired, all data changes made
+       by the outer command are already complete, and are visible to
+       the invoked trigger function.
       </para>
      </listitem>
     </itemizedlist>
