@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.175 1999/04/15 02:24:41 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.176 1999/04/25 23:10:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1120,9 +1120,8 @@ static char *
 gets_fromFile(char *prompt, FILE *source)
 {
 	char	   *line;
-	int			len;
 
-	line = malloc(MAX_QUERY_BUFFER + 1);
+	line = malloc(MAX_QUERY_BUFFER);
 
 	/* read up to MAX_QUERY_BUFFER characters */
 	if (fgets(line, MAX_QUERY_BUFFER, source) == NULL)
@@ -1131,12 +1130,11 @@ gets_fromFile(char *prompt, FILE *source)
 		return NULL;
 	}
 
-	line[MAX_QUERY_BUFFER - 1] = '\0';
-	len = strlen(line);
-	if (len == MAX_QUERY_BUFFER)
+	line[MAX_QUERY_BUFFER - 1] = '\0'; /* this is unnecessary, I think */
+	if (strlen(line) == MAX_QUERY_BUFFER-1)
 	{
 		fprintf(stderr, "line read exceeds maximum length.  Truncating at %d\n",
-				MAX_QUERY_BUFFER);
+				MAX_QUERY_BUFFER-1);
 	}
 	return line;
 }
@@ -2585,18 +2583,22 @@ MainLoop(PsqlSettings *pset, char *query, FILE *source)
 		else
 		{
 			int			i;
-
+			/*
+			 * The current character is at line[i], the prior character
+			 * at line[i - prevlen], the next character at line[i + thislen].
+			 */
 #ifdef MULTIBYTE
-			int			mblen = 1;
-
+			int			prevlen = 0;
+			int			thislen = (len > 0) ? PQmblen(line) : 0;
+#define ADVANCE_I  (prevlen = thislen, i += thislen, thislen = PQmblen(line+i))
+#else
+#define prevlen 1
+#define thislen 1
+#define ADVANCE_I  (i++)
 #endif
 
 			was_bslash = false;
-#ifdef MULTIBYTE
-			for (i = 0; i < len; mblen = PQmblen(line + i), i += mblen)
-#else
-			for (i = 0; i < len; i++)
-#endif
+			for (i = 0; i < len; ADVANCE_I)
 			{
 				if (line[i] == '\\' && !in_quote)
 				{
@@ -2616,8 +2618,6 @@ MainLoop(PsqlSettings *pset, char *query, FILE *source)
 					line[i] = hold_char;
 					query_start = line + i;
 					break;		/* handle command */
-
-					/* start an extended comment? */
 				}
 
 				if (querySent &&
@@ -2630,55 +2630,30 @@ MainLoop(PsqlSettings *pset, char *query, FILE *source)
 
 				if (was_bslash)
 					was_bslash = false;
-#ifdef MULTIBYTE
-				else if (i > 0 && line[i - mblen] == '\\')
-#else
-				else if (i > 0 && line[i - 1] == '\\')
-#endif
+				else if (i > 0 && line[i - prevlen] == '\\')
 					was_bslash = true;
 
 				/* inside a quote? */
 				if (in_quote && (line[i] != in_quote || was_bslash))
 					 /* do nothing */ ;
-				else if (xcomment != NULL)		/* inside an extended
-												 * comment? */
+				/* inside an extended comment? */
+				else if (xcomment != NULL)
 				{
-#ifdef MULTIBYTE
-					if (line[i] == '*' && line[i + mblen] == '/')
-#else
-					if (line[i] == '*' && line[i + 1] == '/')
-#endif
+					if (line[i] == '*' && line[i + thislen] == '/')
 					{
 						xcomment = NULL;
-#ifdef MULTIBYTE
-						i += mblen;
-#else
-						i++;
-#endif
+						ADVANCE_I;
 					}
 				}
-				/* possible backslash command? */
-#ifdef MULTIBYTE
-				else if (line[i] == '/' && line[i + mblen] == '*')
-#else
-				else if (line[i] == '/' && line[i + 1] == '*')
-#endif
+				/* start of extended comment? */
+				else if (line[i] == '/' && line[i + thislen] == '*')
 				{
 					xcomment = line + i;
-#ifdef MULTIBYTE
-					i += mblen;
-#else
-					i++;
-#endif
+					ADVANCE_I;
 				}
 				/* single-line comment? truncate line */
-#ifdef MULTIBYTE
-				else if ((line[i] == '-' && line[i + mblen] == '-') ||
-						 (line[i] == '/' && line[i + mblen] == '/'))
-#else
-				else if ((line[i] == '-' && line[i + 1] == '-') ||
-						 (line[i] == '/' && line[i + 1] == '/'))
-#endif
+				else if ((line[i] == '-' && line[i + thislen] == '-') ||
+						 (line[i] == '/' && line[i + thislen] == '/'))
 				{
 					/* print comment at top of query */
 					if (pset->singleStep)
@@ -2693,9 +2668,9 @@ MainLoop(PsqlSettings *pset, char *query, FILE *source)
 				/* semi-colon? then send query now */
 				else if (!paren_level && line[i] == ';')
 				{
-					char		hold_char = line[i + 1];
+					char		hold_char = line[i + thislen];
 
-					line[i + 1] = '\0';
+					line[i + thislen] = '\0';
 					if (query_start[0] != '\0')
 					{
 						if (query[0] != '\0')
@@ -2708,11 +2683,10 @@ MainLoop(PsqlSettings *pset, char *query, FILE *source)
 					}
 					success = SendQuery(pset, query, NULL, NULL);
 					successResult &= success;
-					line[i + 1] = hold_char;
-					query_start = line + i + 1;
+					line[i + thislen] = hold_char;
+					query_start = line + i + thislen;
 					/* sometimes, people do ';\g', don't execute twice */
-					if (*query_start && /* keeps us from going off the end */
-						*query_start == '\\' &&
+					if (*query_start == '\\' &&
 						*(query_start + 1) == 'g')
 						query_start += 2;
 					querySent = true;
