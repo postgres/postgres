@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.127 2001/01/03 20:04:10 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.128 2001/01/06 03:33:17 ishii Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -74,8 +74,8 @@ static bool fe_eof;
 static StringInfoData attribute_buf;
 
 #ifdef MULTIBYTE
-static int	encoding;
-
+static int	client_encoding;
+static int	server_encoding;
 #endif
 
 
@@ -297,7 +297,8 @@ DoCopy(char *relname, bool binary, bool oids, bool from, bool pipe,
 	 */
 	initStringInfo(&attribute_buf);
 #ifdef MULTIBYTE
-	encoding = pg_get_client_encoding();
+	client_encoding = pg_get_client_encoding();
+	server_encoding = GetDatabaseEncoding();
 #endif
 
 	if (from)
@@ -1114,29 +1115,35 @@ CopyReadAttribute(FILE *fp, bool *isnull, char *delim, int *newline, char *null_
 		}
 		appendStringInfoCharMacro(&attribute_buf, c);
 #ifdef MULTIBYTE
-		/* get additional bytes of the char, if any */
-		s[0] = c;
-		mblen = pg_encoding_mblen(encoding, s);
-		for (j = 1; j < mblen; j++)
+		if (client_encoding != server_encoding)
 		{
-			c = CopyGetChar(fp);
-			if (c == EOF)
-				goto endOfFile;
-			appendStringInfoCharMacro(&attribute_buf, c);
+			/* get additional bytes of the char, if any */
+			s[0] = c;
+			mblen = pg_encoding_mblen(client_encoding, s);
+			for (j = 1; j < mblen; j++)
+			{
+				c = CopyGetChar(fp);
+				if (c == EOF)
+					goto endOfFile;
+				appendStringInfoCharMacro(&attribute_buf, c);
+			}
 		}
 #endif
 	}
 
 #ifdef MULTIBYTE
-	cvt = (char *) pg_client_to_server((unsigned char *) attribute_buf.data,
-									   attribute_buf.len);
-	if (cvt != attribute_buf.data)
+	if (client_encoding != server_encoding)
 	{
-		/* transfer converted data back to attribute_buf */
-		attribute_buf.len = 0;
-		attribute_buf.data[0] = '\0';
-		appendBinaryStringInfo(&attribute_buf, cvt, strlen(cvt));
-		pfree(cvt);
+		cvt = (char *) pg_client_to_server((unsigned char *) attribute_buf.data,
+										   attribute_buf.len);
+		if (cvt != attribute_buf.data)
+		{
+			/* transfer converted data back to attribute_buf */
+			attribute_buf.len = 0;
+			attribute_buf.data[0] = '\0';
+			appendBinaryStringInfo(&attribute_buf, cvt, strlen(cvt));
+			pfree(cvt);
+		}
 	}
 #endif
 
@@ -1163,15 +1170,22 @@ CopyAttributeOut(FILE *fp, char *server_string, char *delim)
 #endif
 
 #ifdef MULTIBYTE
-	string = (char *) pg_server_to_client((unsigned char *) server_string,
-										  strlen(server_string));
-	string_start = string;
+	if (client_encoding != server_encoding)
+	{
+		string = (char *) pg_server_to_client((unsigned char *) server_string,
+											  strlen(server_string));
+		string_start = string;
+	}
+	else
+	{
+		string = server_string;
+	}
 #else
 	string = server_string;
 #endif
 
 #ifdef MULTIBYTE
-	for (; (mblen = pg_encoding_mblen(encoding, string)) &&
+	for (; (mblen = (server_encoding == client_encoding? 1 : pg_encoding_mblen(client_encoding, string))) &&
 		 ((c = *string) != '\0'); string += mblen)
 #else
 	for (; (c = *string) != '\0'; string++)
@@ -1188,7 +1202,7 @@ CopyAttributeOut(FILE *fp, char *server_string, char *delim)
 	}
 
 #ifdef MULTIBYTE
-	if (string_start != server_string)
+	if (client_encoding != server_encoding)	
 		pfree(string_start);	/* pfree pg_server_to_client result */
 #endif
 }
