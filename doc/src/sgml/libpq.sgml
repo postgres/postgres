@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/libpq.sgml,v 1.77 2001/11/19 03:58:23 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/libpq.sgml,v 1.78 2001/11/20 20:28:31 momjian Exp $
 -->
 
  <chapter id="libpq">
@@ -902,6 +902,56 @@ Behavior is undefined when the <parameter>to</> and <parameter>from</>
 strings overlap.
 </para>
 </sect2>
+
+
+ <sect2 id="libpq-exec-escape-bytea">
+  <title>Escaping binary strings for inclusion in SQL queries</title>
+  <indexterm zone="libpq-exec-escape-bytea">
+   <primary>escaping binary strings</primary>
+  </indexterm>
+  <para>
+   <function>PQescapeBytea</function>
+   Escapes a binary string (bytea type) for use within an SQL query.
+   <synopsis>
+    unsigned char *PQescapeBytea(unsigned char *from,
+                                         size_t from_length,
+                                         size_t *to_length);
+   </synopsis>
+
+   Certain <acronym>ASCII</acronym> characters MUST be escaped (but all
+   characters MAY be escaped) when used as part of a <type>BYTEA</type>
+   string literal in an <acronym>SQL</acronym> statement. In general, to
+   escape a character, it is converted into the three digit octal number
+   equal to the decimal <acronym>ASCII</acronym> value, and preceeded by
+   two backslashes. The single quote (') and backslash (\) characters have
+   special alternate escape sequences. See the Binary String data type
+   in the User's Guide for more information. <function>PQescapeBytea
+   </function> performs this operation, escaping only the minimally
+   required characters.
+  </para>
+
+  <para>
+   The <parameter>from</parameter> parameter points to the first
+   character of the string that is to be escaped, and the
+   <parameter>from_length</parameter> parameter reflects the number of
+   characters in this binary string (a terminating NUL character is
+   neither necessary nor counted).  The <parameter>to_length</parameter>
+   parameter shall point to a buffer suitable to hold the resultant
+   escaped string length. The result string length does not
+   include the terminating NUL character of the result.
+  </para>
+
+  <para>
+   <function>PQescapeBytea</> returns an escaped version of the
+   <parameter>from</parameter> parameter binary string, to a caller
+   provided buffer. The return string has all special characters replaced
+   so that they can be properly processed by the PostgreSQL string literal
+   parser, and the <type>bytea</type> input function. A terminating NUL
+   character is also added.  The single quotes that must surround
+   PostgreSQL string literals are not part of the result string.
+  </para>
+ </sect2>
+
 
 <sect2 id="libpq-exec-select-info">
   <title>Retrieving SELECT Result Information</title>
