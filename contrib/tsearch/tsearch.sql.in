@@ -15,7 +15,8 @@ LANGUAGE 'c' with (isstrict);
 CREATE TYPE txtidx (
 internallength = -1,
 input = txtidx_in,
-output = txtidx_out
+output = txtidx_out,
+storage = extended
 );
 
 CREATE FUNCTION txt2txtidx(text)
