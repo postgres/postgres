@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.108 1999/06/10 14:17:07 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.109 1999/06/11 09:35:08 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1353,8 +1353,33 @@ vc_rpfheap(VRelStats *vacrelstats, Relation onerel,
 						Ptp.t_data = (HeapTupleHeader) PageGetItem(Ppage, Pitemid);
 						Assert(ItemPointerEquals(&(vtld.new_tid),
 												&(Ptp.t_data->t_ctid)));
-						Assert(Ptp.t_data->t_xmax == tp.t_data->t_xmin);
-
+						/*
+						 * Read above about cases when !ItemIdIsUsed(Citemid)
+						 * (child item is removed)... Due to the fact that
+						 * at the moment we don't remove unuseful part of 
+						 * update-chain, it's possible to get too old
+						 * parent row here. Like as in the case which 
+						 * caused this problem, we stop shrinking here.
+						 * I could try to find real parent row but want
+						 * not to do it because of real solution will
+						 * be implemented anyway, latter, and we are too
+						 * close to 6.5 release.		- vadim 06/11/99
+						 */
+						if (Ptp.t_data->t_xmax != tp.t_data->t_xmin)
+						{
+							if (freeCbuf)
+								ReleaseBuffer(Cbuf);
+							freeCbuf = false;
+							ReleaseBuffer(Pbuf);
+							for (i = 0; i < num_vtmove; i++)
+							{
+								Assert(vtmove[i].vpd->vpd_offsets_used > 0);
+								(vtmove[i].vpd->vpd_offsets_used)--;
+							}
+							num_vtmove = 0;
+							elog(NOTICE, "Too old parent tuple found - can't continue vc_rpfheap");
+							break;
+						}
 #ifdef NOT_USED			/* I'm not sure that this will wotk properly... */
 						/*
 						 * If this tuple is updated version of row and it
@@ -1382,6 +1407,8 @@ vc_rpfheap(VRelStats *vacrelstats, Relation onerel,
 						freeCbuf = true;
 						break;
 					}
+					if (num_vtmove == 0)
+						break;
 				}
 				if (freeCbuf)
 					ReleaseBuffer(Cbuf);
