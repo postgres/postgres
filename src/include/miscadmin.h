@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: miscadmin.h,v 1.122 2003/05/28 17:25:02 tgl Exp $
+ * $Id: miscadmin.h,v 1.123 2003/05/28 18:19:09 tgl Exp $
  *
  * NOTES
  *	  some of the information in this file should be moved to
@@ -104,8 +104,6 @@ extern void ProcessInterrupts(void);
 /*
  * from postmaster/postmaster.c
  */
-extern bool IsPostmasterEnvironment;
-extern bool IsUnderPostmaster;
 extern bool ClientAuthInProgress;
 extern const bool ExecBackend;
 
@@ -115,6 +113,11 @@ extern void ClosePostmasterPorts(bool pgstat_too);
 /*
  * from utils/init/globals.c
  */
+extern bool IsPostmasterEnvironment;
+extern bool IsUnderPostmaster;
+
+extern bool ExitOnAnyError;
+
 extern bool Noversion;
 extern char *DataDir;
 

@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.159 2003/05/28 16:03:55 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.160 2003/05/28 18:19:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -838,7 +838,7 @@ BootstrapAlreadySeen(Oid id)
  * ----------------
  */
 static void
-cleanup()
+cleanup(void)
 {
 	static int	beenhere = 0;
 
@@ -846,13 +846,13 @@ cleanup()
 		beenhere = 1;
 	else
 	{
-		elog(FATAL, "Memory manager fault: cleanup called twice.\n");
+		elog(FATAL, "Memory manager fault: cleanup called twice");
 		proc_exit(1);
 	}
 	if (boot_reldesc != NULL)
 		closerel(NULL);
 	CommitTransactionCommand();
-	proc_exit(Warnings);
+	proc_exit(Warnings ? 1 : 0);
 }
 
 /* ----------------

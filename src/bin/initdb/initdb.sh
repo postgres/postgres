@@ -27,7 +27,7 @@
 # Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.190 2003/05/28 17:25:02 tgl Exp $
+# $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.191 2003/05/28 18:19:09 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -612,7 +612,7 @@ echo "ok"
 # To break an SQL command across lines in this script, backslash-escape all
 # internal newlines in the command.
 
-PGSQL_OPT="$PGSQL_OPT -O -c search_path=pg_catalog"
+PGSQL_OPT="$PGSQL_OPT -O -c search_path=pg_catalog -c exit_on_error=true"
 
 $ECHO_N "initializing pg_shadow... "$ECHO_C
 

@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.110 2003/05/28 17:25:02 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.111 2003/05/28 18:19:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -410,18 +410,28 @@ errfinish(int dummy, ...)
 		/*
 		 * For a FATAL error, we let proc_exit clean up and exit.
 		 *
-		 * If we have not yet entered the main backend loop (ie, we are in
-		 * the postmaster or in backend startup), we also go directly to
-		 * proc_exit.  The same is true if anyone tries to report an error
-		 * after proc_exit has begun to run.  (It's proc_exit's
-		 * responsibility to see that this doesn't turn into infinite
-		 * recursion!)	But in the latter case, we exit with nonzero exit
-		 * code to indicate that something's pretty wrong.  We also want
-		 * to exit with nonzero exit code if not running under the
-		 * postmaster (for example, if we are being run from the initdb
-		 * script, we'd better return an error status).
+		 * There are several other cases in which we treat ERROR as FATAL
+		 * and go directly to proc_exit:
+		 *
+		 * 1. ExitOnAnyError mode switch is set (initdb uses this).
+		 * 
+		 * 2. we have not yet entered the main backend loop (ie, we are in
+		 * the postmaster or in backend startup); we have noplace to recover.
+		 *
+		 * 3. the error occurred after proc_exit has begun to run.  (It's
+		 * proc_exit's responsibility to see that this doesn't turn into
+		 * infinite recursion!)
+		 *
+		 * In the last case, we exit with nonzero exit code to indicate that
+		 * something's pretty wrong.  We also want to exit with nonzero exit
+		 * code if not running under the postmaster (for example, if we are
+		 * being run from the initdb script, we'd better return an error
+		 * status).
 		 */
-		if (elevel == FATAL || !Warn_restart_ready || proc_exit_inprogress)
+		if (elevel == FATAL ||
+			ExitOnAnyError ||
+			!Warn_restart_ready ||
+			proc_exit_inprogress)
 		{
 			/*
 			 * fflush here is just to improve the odds that we get to see

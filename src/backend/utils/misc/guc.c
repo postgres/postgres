@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.126 2003/05/27 17:55:50 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.127 2003/05/28 18:19:09 tgl Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -398,6 +398,12 @@ static struct config_bool
 		true, NULL, NULL
 	},
 #endif
+
+	{
+		/* currently undocumented, so don't show in SHOW ALL */
+		{"exit_on_error", PGC_USERSET, GUC_NO_SHOW_ALL}, &ExitOnAnyError,
+		false, NULL, NULL
+	},
 
 	{
 		{"log_statement", PGC_SUSET}, &log_statement,
