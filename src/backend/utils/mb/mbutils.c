@@ -3,7 +3,7 @@
  * client encoding and server internal encoding.
  * (currently mule internal code (mic) is used)
  * Tatsuo Ishii
- * $Id: mbutils.c,v 1.26 2001/11/19 06:48:39 ishii Exp $
+ * $Id: mbutils.c,v 1.27 2001/11/20 01:32:29 ishii Exp $
  */
 #include "postgres.h"
 
@@ -212,54 +212,19 @@ pg_do_encoding_conversion(unsigned char *src, int len,
 Datum
 pg_convert(PG_FUNCTION_ARGS)
 {
-	text	   *string = PG_GETARG_TEXT_P(0);
-	Name		s = PG_GETARG_NAME(1);
-	int			encoding = pg_char_to_encoding(NameStr(*s));
-	int			db_encoding = DatabaseEncoding->encoding;
-	to_mic_converter src;
-	from_mic_converter dest;
-	unsigned char *result;
-	text	   *retval;
-	unsigned char *str;
-	int len;
+	Datum	string = PG_GETARG_DATUM(0);
+	Datum	dest_encoding_name = PG_GETARG_DATUM(1);
+	Datum	src_encoding_name = DirectFunctionCall1(
+	    namein, CStringGetDatum(DatabaseEncoding->name));
+	Datum	result;
 
-	if (encoding < 0)
-		elog(ERROR, "Invalid encoding name %s", NameStr(*s));
+	result = DirectFunctionCall3(
+	    pg_convert2, string, src_encoding_name, dest_encoding_name);
 
-	if (pg_find_encoding_converters(db_encoding, encoding, &src, &dest) < 0)
-	{
-		char	   *encoding_name = (char *) pg_encoding_to_char(db_encoding);
+	/* free memory allocated by namein */
+	pfree((void *)dest_encoding_name);
 
-		elog(ERROR, "Conversion from %s to %s is not possible", NameStr(*s), encoding_name);
-	}
-
-	/* make sure that source string is null terminated */
-	len = VARSIZE(string) - VARHDRSZ;
-	str = palloc(len + 1);
-	memcpy(str, VARDATA(string), len);
-	*(str + len) = '\0';
-
-	result = pg_do_encoding_conversion(str, len, src, dest);
-	if (result == NULL)
-		elog(ERROR, "Encoding conversion failed");
-
-	/* build text data type structre. we cannot use textin() here,
-	   since textin assumes that input string encoding is same as
-	   database encoding.  */
-	len = strlen(result) + VARHDRSZ;
-	retval = palloc(len);
-	VARATT_SIZEP(retval) = len;
-	memcpy(VARDATA(retval), result, len - VARHDRSZ);
-	
-	/* free memory allocated by pg_do_encoding_conversion */
-	if (result != str)
-		pfree(result);
-        pfree(str);
-
-	/* free memory if allocated by the toaster */
-	PG_FREE_IF_COPY(string, 0);
-
-	PG_RETURN_TEXT_P(retval);
+	PG_RETURN_TEXT_P(result);
 }
 
 /*
