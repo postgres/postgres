@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-connect.c,v 1.297 2005/01/06 18:29:10 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-connect.c,v 1.298 2005/01/06 20:06:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1452,30 +1452,36 @@ keep_going:						/* We will come back to here until there
 
 				/*
 				 * On first time through, get the postmaster's response to
-				 * our SSL negotiation packet.	Be careful to read only
-				 * one byte (if there's more, it could be SSL data).
+				 * our SSL negotiation packet.
 				 */
 				if (conn->ssl == NULL)
 				{
+					/*
+					 * We use pqReadData here since it has the logic to
+					 * distinguish no-data-yet from connection closure.
+					 * Since conn->ssl isn't set, a plain recv() will occur.
+					 */
 					char		SSLok;
-					int			nread;
+					int			rdresult;
 
-			retry_ssl_read:
-					nread = recv(conn->sock, &SSLok, 1, 0);
-					if (nread < 0)
+					rdresult = pqReadData(conn);
+					if (rdresult < 0)
 					{
-						if (SOCK_ERRNO == EINTR)
-							/* Interrupted system call - just try again */
-							goto retry_ssl_read;
-
-						printfPQExpBuffer(&conn->errorMessage,
-										  libpq_gettext("could not receive server response to SSL negotiation packet: %s\n"),
-						SOCK_STRERROR(SOCK_ERRNO, sebuf, sizeof(sebuf)));
+						/* errorMessage is already filled in */
 						goto error_return;
 					}
-					if (nread == 0)
+					if (rdresult == 0)
+					{
 						/* caller failed to wait for data */
 						return PGRES_POLLING_READING;
+					}
+					if (pqGetc(&SSLok, conn) < 0)
+					{
+						/* should not happen really */
+						return PGRES_POLLING_READING;
+					}
+					/* mark byte consumed */
+					conn->inStart = conn->inCursor;
 					if (SSLok == 'S')
 					{
 						/* Do one-time setup; this creates conn->ssl */
