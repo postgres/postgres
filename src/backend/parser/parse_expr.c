@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.100 2001/09/20 14:20:27 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.101 2001/09/20 23:31:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -163,8 +163,10 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 							 * compatibility with standards-broken products
 							 * (like Microsoft's).  Turn these into IS NULL exprs.
 							 */
-							if (Transform_null_equals && strcmp(a->opname, "=")==0
-								&& (exprIsNullConstant(a->lexpr) || exprIsNullConstant(a->rexpr)))
+							if (Transform_null_equals &&
+								strcmp(a->opname, "=") == 0 &&
+								(exprIsNullConstant(a->lexpr) ||
+								 exprIsNullConstant(a->rexpr)))
 							{
 								NullTest *n = makeNode(NullTest);
 								n->nulltesttype = IS_NULL;
@@ -174,7 +176,9 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 								else
 									n->arg = a->lexpr;
 
-								result = transformExpr(pstate, n, precedence);
+								result = transformExpr(pstate,
+													   (Node *) n,
+													   precedence);
 							}
 							else
 							{
@@ -185,7 +189,9 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 																  a->rexpr,
 																  precedence);
 
-								result = (Node *) make_op(a->opname, lexpr, rexpr);
+								result = (Node *) make_op(a->opname,
+														  lexpr,
+														  rexpr);
 							}
 						}
 						break;
