@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.245 2002/01/10 01:11:45 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.246 2002/02/19 19:54:43 tgl Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -1478,9 +1478,10 @@ PostgresMain(int argc, char *argv[], const char *username)
 	 *
 	 * Also note: it's best not to use any signals that are SIG_IGNored in
 	 * the postmaster.	If such a signal arrives before we are able to
-	 * change the handler to non-SIG_IGN, it'll get dropped.  If
-	 * necessary, make a dummy handler in the postmaster to reserve the
-	 * signal.
+	 * change the handler to non-SIG_IGN, it'll get dropped.  Instead,
+	 * make a dummy handler in the postmaster to reserve the signal.
+	 * (Of course, this isn't an issue for signals that are locally generated,
+	 * such as SIGALRM and SIGPIPE.)
 	 */
 
 	pqsignal(SIGHUP, SigHupHandler);	/* set flag to read config file */
@@ -1508,10 +1509,6 @@ PostgresMain(int argc, char *argv[], const char *username)
 	 */
 	pqsignal(SIGCHLD, SIG_DFL); /* system() requires this on some
 								 * platforms */
-	pqsignal(SIGTTIN, SIG_DFL);
-	pqsignal(SIGTTOU, SIG_DFL);
-	pqsignal(SIGCONT, SIG_DFL);
-	pqsignal(SIGWINCH, SIG_DFL);
 
 	pqinitmask();
 
@@ -1626,7 +1623,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.245 $ $Date: 2002/01/10 01:11:45 $\n");
+		puts("$Revision: 1.246 $ $Date: 2002/02/19 19:54:43 $\n");
 	}
 
 	/*
