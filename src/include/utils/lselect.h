@@ -6,15 +6,15 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: lselect.h,v 1.3 1996/11/04 11:51:19 scrappy Exp $
- *
+ * $Id: lselect.h,v 1.4 1997/08/06 03:42:07 momjian Exp $
+ * 
  *-------------------------------------------------------------------------
  */
 #ifndef	LSELECT_H
 #define	LSELECT_H
 
 #include <stdio.h>
-#include <access/htup.h>
+#include "access/htup.h"
 
 struct	leftist {
     short	lt_dist; 	/* distance to leaf/empty node */
@@ -24,17 +24,26 @@ struct	leftist {
     struct	leftist	*lt_right;
 };
 
-extern	struct	leftist	*Tuples;
+/* replaces global variables in lselect.c to make it reentrant */
+typedef struct {
+    TupleDesc tupDesc;
+    int nKeys;
+    ScanKey scanKeys;
+    int sortMem; /* needed for psort */
+} LeftistContextData;
+typedef LeftistContextData *LeftistContext;
 
-extern struct leftist *lmerge(struct leftist *pt, struct leftist *qt);
-extern HeapTuple gettuple(struct leftist **treep, short *devnum);
-extern int puttuple(struct leftist **treep, HeapTuple newtuple, int devnum);
-extern void dumptuples(FILE *file);
-extern int tuplecmp(HeapTuple ltup, HeapTuple rtup);
+extern struct leftist *lmerge(struct leftist *pt, struct leftist *qt,
+    LeftistContext context);
+extern HeapTuple gettuple(struct leftist **treep, short *devnum,
+    LeftistContext context);
+extern void puttuple(struct leftist **treep, HeapTuple newtuple, short devnum,
+    LeftistContext context);
+extern int tuplecmp(HeapTuple ltup, HeapTuple rtup, LeftistContext context);
 
 #ifdef EBUG
-extern void checktree(struct leftist *tree);
-extern int checktreer(struct leftist *tree, int level);
+extern void checktree(struct leftist *tree, LeftistContext context);
+extern int checktreer(struct leftist *tree, int level, LeftistContext context);
 #endif /* EBUG */
 
 #endif 	/* LSELECT_H */

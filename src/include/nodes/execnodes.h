@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: execnodes.h,v 1.6 1996/11/04 08:52:54 scrappy Exp $
+ * $Id: execnodes.h,v 1.7 1997/08/06 03:42:02 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -605,7 +605,7 @@ typedef struct SortState {
     CommonScanState	csstate;	/* its first field is NodeTag */
     bool      		sort_Flag;
     ScanKey   		sort_Keys;
-    Relation  		sort_TempRelation;
+    bool		cleaned;
 } SortState;
 
 /* ----------------

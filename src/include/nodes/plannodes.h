@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: plannodes.h,v 1.5 1996/11/05 08:18:44 scrappy Exp $
+ * $Id: plannodes.h,v 1.6 1997/08/06 03:42:04 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -265,6 +265,8 @@ typedef struct Sort {
     Oid			tempid;
     int			keycount;
     SortState		*sortstate;
+    void		*psortstate;
+    bool		cleaned;
 } Sort;
 
 /* ----------------

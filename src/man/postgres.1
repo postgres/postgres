@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/postgres.1,v 1.5 1997/01/26 15:32:20 scrappy Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/postgres.1,v 1.6 1997/08/06 03:42:18 momjian Exp $
 .TH POSTGRES95 UNIX 12/08/96 Postgres95 Postgres95
 .SH NAME
 postgres \(em the Postgres backend server
@@ -79,7 +79,10 @@ is the number of shared-memory buffers that the
 .IR "postmaster"
 has allocated for the backend server processes that it starts.  If the
 backend is running standalone, this specifies the number of buffers to
-allocate.  This value defaults to 64.
+allocate.  This value defaults to 64, and each buffer is 8k bytes.
+.TP
+.BR "-E"
+Echo all queries.
 .TP
 .BR "-F"
 Disable automatic fsync() call after each transaction.
@@ -89,15 +92,17 @@ while a transaction is in progress will probably cause data loss.
 .BR "-P" " filedes"
 .IR "filedes"
 specifies the file descriptor that corresponds to the socket (port) on
-which to communicate to the frontend process.  This option is 
+which to communicate to the frontend process.  This option is
 .BR not
 useful for interactive use.
 .TP
 .BR "-Q"
 Specifies \*(lqquiet\*(rq mode.
 .TP
-.BR "-E"
-Echo all queries.
+.BR "-S"
+Specifies the amount of memory to be used by internal sorts before using
+disk files for sorting.  This value is specified in 1k bytes, and
+defaults to 512.
 .TP
 .BR "-e"
 The
@@ -153,15 +158,6 @@ Turns off the locking system.
 .TP
 .BR "-N"
 Disables use of newline as a query delimiter.
-.TP
-.BR "-S"
-Indicates that the transaction system can run with the assumption of
-stable main memory, thereby avoiding the necessary flushing of data
-and log pages to disk at the end of each transaction system.  This is
-only used for performance comparisons for stable vs. non-stable
-storage.  Do not use this in other cases, as recovery after a system
-crash may be impossible when this option is specified in the absence
-of stable main memory.
 .TP
 .BR "-b"
 Enables generation of bushy query plan trees (as opposed to left-deep

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.36 1997/07/29 16:14:40 thomas Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.37 1997/08/06 03:41:41 momjian Exp $
  *
  * NOTES
  *    this is the "main" module of the postgres backend and
@@ -108,6 +108,7 @@ extern int      lockingOff;
 extern int      NBuffers;
 
 int     fsyncOff = 0;
+int	SortMem = 512;
 
 int     dontExecute = 0;
 static int      ShowStats;
@@ -1038,7 +1039,16 @@ PostgresMain(int argc, char *argv[])
              */
             flagQ = 1;
             break;
-            
+
+        case 'S':
+            /* ----------------
+             *  S - amount of sort memory to use in 1k bytes
+             * ----------------
+             */
+            SortMem = atoi(optarg);
+            break;
+
+#ifdef NOT_USED
         case 'S':
             /* ----------------
              *  S - assume stable main memory
@@ -1048,6 +1058,7 @@ PostgresMain(int argc, char *argv[])
             flagS = 1;
             SetTransactionFlushEnabled(false);
             break;
+#endif
             
         case 's':
             /* ----------------
@@ -1173,6 +1184,7 @@ PostgresMain(int argc, char *argv[])
         printf("\ttimings   =    %c\n", ShowStats ? 't' : 'f');
         printf("\tdates     =    %s\n", EuroDates ? "European" : "Normal");
         printf("\tbufsize   =    %d\n", NBuffers);
+        printf("\tsortmem   =    %d\n", SortMem);
         
         printf("\tquery echo =   %c\n", EchoQuery ? 't' : 'f');
         printf("\tmultiplexed backend? =  %c\n", multiplexedBackend ? 't' : 'f');
@@ -1280,7 +1292,7 @@ PostgresMain(int argc, char *argv[])
      */
     if (IsUnderPostmaster == false) {
         puts("\nPOSTGRES backend interactive interface");
-        puts("$Revision: 1.36 $ $Date: 1997/07/29 16:14:40 $");
+        puts("$Revision: 1.37 $ $Date: 1997/08/06 03:41:41 $");
     }
     
     /* ----------------

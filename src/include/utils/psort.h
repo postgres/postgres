@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: psort.h,v 1.3 1997/05/20 11:37:33 vadim Exp $
+ * $Id: psort.h,v 1.4 1997/08/06 03:42:13 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -14,11 +14,13 @@
 #define	PSORT_H
 
 #include <stdio.h>
-#include <access/relscan.h>
+#include "access/relscan.h"
+#include "utils/lselect.h"
+#include "nodes/plannodes.h"
 
 #define	SORTMEM		(1 << 18)		/* 1/4 M - any static memory */
 #define	MAXTAPES	7			/* 7--See Fig. 70, p273 */
-#define	TAPEEXT		"pg_psort.XXXXXX"	/* TEMPDIR/TAPEEXT */
+#define	TAPEEXTLEN	strlen("pg_psort.xxxxx.xxx")	/* TEMPDIR/TAPEEXT */
 #define	FREE(x)		pfree((char *) x)
 
 struct	tape {
@@ -35,13 +37,38 @@ struct	cmplist {
     struct	cmplist		*cp_next; /* next in chain */
 };
 
-extern	int		Nkeys;
-extern	ScanKey		key;
-extern	int		SortMemory;	/* free memory */
-extern	Relation	SortRdesc;
-extern	struct leftist	*Tuples;
+/* This structure preserves the state of psort between calls from different
+ * nodes to its interface functions. Basically, it includes all of the global
+ * variables in psort. In case you were wondering, pointers to these structures
+ * are included in Sort node structures.			-Rex 2.6.1995
+ */
+typedef struct Psortstate {
+    LeftistContextData treeContext;
+
+    int TapeRange;
+    int Level;
+    int TotalDummy;
+    struct tape Tape[MAXTAPES];
+
+    int BytesRead;
+    int BytesWritten;
+    int tupcount;
+
+    struct leftist *Tuples;
+
+    FILE *psort_grab_file;
+    long psort_current;	/* could be file offset, or array index */
+    long psort_saved;	/* could be file offset, or array index */
+    bool using_tape_files;
+
+    HeapTuple *memtuples;
+} Psortstate;
 
 #ifdef	EBUG
+#include <stdio.h>
+#include "utils/elog.h"
+#include "storage/buf.h"
+#include "storage/bufmgr.h"
 
 #define	PDEBUG(PROC, S1)\
 elog(DEBUG, "%s:%d>> PROC: %s.", __FILE__, __LINE__, S1)
@@ -69,15 +96,21 @@ if (1) CODE; else
 #endif
 
 /* psort.c */
-extern void psort(Relation oldrel, Relation newrel, int nkeys, ScanKey key);
-extern void initpsort(void);
+extern bool psort_begin(Sort *node, int nkeys, ScanKey key);
+extern void inittapes(Sort *node);
 extern void resetpsort(void);
-extern void initialrun(Relation rdesc);
-extern bool createrun(HeapScanDesc sdesc, FILE *file);
-extern HeapTuple tuplecopy(HeapTuple tup, Relation rdesc, Buffer b);
-extern FILE *mergeruns(void);
-extern void merge(struct tape *dest);
-extern void endpsort(Relation rdesc, FILE *file);
+extern void initialrun(Sort *node, bool *empty);
+extern bool createrun(Sort *node, FILE *file, bool *empty);
+extern HeapTuple tuplecopy(HeapTuple tup);
+extern FILE *mergeruns(Sort *node);
+extern void merge(Sort *node, struct tape *dest);
+
+extern void dumptuples(Sort *node);
+extern HeapTuple psort_grabtuple(Sort *node);
+extern void psort_markpos(Sort *node);
+extern void psort_restorepos(Sort *node);
+extern void psort_end(Sort *node);
+
 extern FILE *gettape(void);
 extern void resettape(FILE *file);
 extern void destroytape(FILE *file);
