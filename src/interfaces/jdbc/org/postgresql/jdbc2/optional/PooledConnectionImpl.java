@@ -13,7 +13,8 @@ import org.postgresql.PGConnection;
  * @see ConnectionPool
  *
  * @author Aaron Mulder (ammulder@chariotsolutions.com)
- * @version $Revision: 1.6 $
+ * @author Csaba Nagy (ncsaba@yahoo.com)
+ * @version $Revision: 1.7 $
  */
 public class PooledConnectionImpl implements PooledConnection
 {
@@ -95,33 +96,47 @@ public class PooledConnectionImpl implements PooledConnection
 	{
 		if (con == null)
 		{
-			throw new SQLException("This PooledConnection has already been closed!");
+			// Before throwing the exception, let's notify the registered listeners about the error
+			final SQLException sqlException = new SQLException("This PooledConnection has already been closed!");
+			fireConnectionFatalError(sqlException);
+			throw sqlException;
 		}
-		// Only one connection can be open at a time from this PooledConnection.  See JDBC 2.0 Optional Package spec section 6.2.3
-		if (last != null)
+		// If any error occures while opening a new connection, the listeners
+		// have to be notified. This gives a chance to connection pools to
+		// elliminate bad pooled connections.
+		try
 		{
-			last.close();
-			if (!con.getAutoCommit())
+			// Only one connection can be open at a time from this PooledConnection.  See JDBC 2.0 Optional Package spec section 6.2.3
+			if (last != null)
 			{
-				try
+				last.close();
+				if (!con.getAutoCommit())
 				{
-					con.rollback();
+					try
+					{
+						con.rollback();
+					}
+					catch (SQLException e)
+					{}
 				}
-				catch (SQLException e)
-				{}
+				con.clearWarnings();
 			}
-			con.clearWarnings();
+			con.setAutoCommit(autoCommit);
 		}
-		con.setAutoCommit(autoCommit);
+		catch (SQLException sqlException)
+		{
+			fireConnectionFatalError(sqlException);
+			throw (SQLException)sqlException.fillInStackTrace();
+		}
 		ConnectionHandler handler = new ConnectionHandler(con);
 		last = handler;
 		Connection con = (Connection)Proxy.newProxyInstance(getClass().getClassLoader(), new Class[]{Connection.class, PGConnection.class}, handler);
-        last.setProxy(con);
-        return con;
+		last.setProxy(con);
+		return con;
 	}
 
 	/**
-	 * Used to fire a connection event to all listeners.
+	 * Used to fire a connection closed event to all listeners.
 	 */
 	void fireConnectionClosed()
 	{
@@ -140,7 +155,7 @@ public class PooledConnectionImpl implements PooledConnection
 	}
 
 	/**
-	 * Used to fire a connection event to all listeners.
+	 * Used to fire a connection error event to all listeners.
 	 */
 	void fireConnectionFatalError(SQLException e)
 	{
@@ -363,7 +378,7 @@ public class PooledConnectionImpl implements PooledConnection
             }
             else
             {
-                try 
+                try
                 {
                     return method.invoke(st, args);
                 }
