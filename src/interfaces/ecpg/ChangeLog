@@ -1339,11 +1339,20 @@ Fri Feb 14 14:14:25 CET 2003
 	- Synced parser and keyword file.
 	- More work on Informix compatibility. 
 
+Mon Feb 17 15:07:41 CET 2003
+
+	- Added Informix "database" command.
 
 Wed Feb 19 13:39:29 CET 2003
 
 	- Added DATABASE command as alias to CONNECT TO.
 	- Fixed struct parsing bug.
+
+Tue Feb 25 16:46:27 CET 2003
+
+	- Allow SET CONNECTION to be followed by connection object without
+	  leading "TO" or "=".
+	- Allow whenever statement to list function without parameters.
 	- Set ecpg version to 2.12.0.
 	- Set library to 3.4.2.
 

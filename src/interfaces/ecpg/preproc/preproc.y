@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/Attic/preproc.y,v 1.210 2003/02/19 12:36:39 meskes Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/Attic/preproc.y,v 1.211 2003/02/25 15:58:03 meskes Exp $ */
 
 /* Copyright comment */
 %{
@@ -4858,6 +4858,7 @@ on_off: ON				{ $$ = make_str("on"); }
  */
 ECPGSetConnection:	SET SQL_CONNECTION TO connection_object { $$ = $4; }
 		| SET SQL_CONNECTION '=' connection_object { $$ = $4; }
+		| SET SQL_CONNECTION  connection_object { $$ = $3; }
 		;
 
 /*
@@ -5104,6 +5105,12 @@ action : SQL_CONTINUE
 		{
 			$<action>$.code = W_DO;
 			$<action>$.command = cat_str(4, $2, make_str("("), $4, make_str(")"));
+			$<action>$.str = cat2_str(make_str("call"), mm_strdup($<action>$.command));
+		}
+		| SQL_CALL name 
+		{
+			$<action>$.code = W_DO;
+			$<action>$.command = cat_str(3, $2, make_str("("), make_str(")"));
 			$<action>$.str = cat2_str(make_str("call"), mm_strdup($<action>$.command));
 		}
 		;
