@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execAmi.c,v 1.10 1997/11/21 18:21:17 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execAmi.c,v 1.11 1997/11/27 02:23:01 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -411,7 +411,7 @@ ExecRestrPos(Plan *node)
  *		  accessMtd -- access methods used to access the created relation.
  *		  relation	-- optional. Either an index to the range table or
  *					   negative number indicating a temporary relation.
- *					   A temporary relation is assume is this field is absent.
+ *					   A temporary relation is assume if this field is absent.
  * ----------------------------------------------------------------
  */
 

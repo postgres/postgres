@@ -7,7 +7,7 @@ scan.l		break query into tokens
 scansup.c	handle escapes in input
 keywords.c	turn keywords into specific tokens
 gram.y		parse the tokens and fill query-type-specific structures
-analyze.c	one function for every complex query type like SELECT, INSERT...
+analyze.c	handle post-parse processing for each query type
 parse_clause.c	handle clauses like WHERE, ORDER BY, GROUP BY, ...
 parse_expr.c	handle expressions like col, col + 3, x = 3 or x = 4
 parse_oper.c	handle operations in expressions
