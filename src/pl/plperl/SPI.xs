@@ -1,5 +1,4 @@
 /* this must be first: */
-#define PLPERL_HAVE_UID_GID
 #include "postgres.h"
 
 /* perl stuff */

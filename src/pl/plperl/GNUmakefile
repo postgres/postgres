@@ -1,5 +1,5 @@
 # Makefile for PL/Perl
-# $PostgreSQL: pgsql/src/pl/plperl/GNUmakefile,v 1.15 2004/07/16 19:18:24 momjian Exp $
+# $PostgreSQL: pgsql/src/pl/plperl/GNUmakefile,v 1.16 2004/10/07 19:01:09 momjian Exp $
 
 subdir = src/pl/plperl
 top_builddir = ../../..
@@ -25,6 +25,7 @@ ifeq ($(PORTNAME), win32)
 perl_archlibexp := $(subst \,/,$(perl_archlibexp))
 perl_privlibexp := $(subst \,/,$(perl_privlibexp))
 perl_embed_ldflags := -L $(perl_archlibexp)/CORE -lperl58
+override CPPFLAGS += -DPLPERL_HAVE_UID_GID
 endif
 
 override CPPFLAGS := -I$(srcdir) $(CPPFLAGS) -I$(perl_archlibexp)/CORE
