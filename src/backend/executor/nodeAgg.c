@@ -31,11 +31,6 @@
 #include "utils/syscache.h"
 #include "optimizer/clauses.h"
 
-#ifdef FREE_TUPLE_MEMORY
-#include <utils/portal.h>
-#include <utils/trace.h>
-#endif
-
 /*
  * AggFuncInfo -
  *	  keeps the transition functions information around
@@ -118,9 +113,7 @@ ExecAgg(Agg *node)
 				isNull1 = FALSE,
 				isNull2 = FALSE;
 	bool		qual_result;
-#ifdef FREE_TUPLE_MEMORY
-	bool		free_tuple_memory = pg_options[OPT_FREE_TUPLE_MEMORY];
-#endif
+
 
 	/* ---------------------
 	 *	get state info from node
@@ -248,10 +241,6 @@ ExecAgg(Agg *node)
 		for (;;)
 		{
 			TupleTableSlot *outerslot;
-#ifdef FREE_TUPLE_MEMORY
-			Oid				valueType;
-			bool			isByValue = 0;
-#endif
 
 			isNull = isNull1 = isNull2 = 0;
 			outerslot = ExecProcNode(outerPlan, (Plan *) node);
@@ -304,31 +293,6 @@ ExecAgg(Agg *node)
 					newVal = ExecEvalExpr(aggref->target, econtext,
 										  &isNull, &isDone);
 				}
-#ifdef FREE_TUPLE_MEMORY
-				if (free_tuple_memory) {
-					switch (nodeTag(aggref->target)) {
-					case T_Const:
-						isByValue = ((Const*) (aggref->target))->constbyval;
-						break;
-					case T_Var:
-						valueType = ((Var*) (aggref->target))->vartype;
-						isByValue = typeByVal(typeidType(valueType));
-						break;
-					case T_Array:
-						isByValue = ((Array*)(aggref->target))->arrayelembyval;
-						break;
-					case T_ArrayRef:
-						isByValue =((ArrayRef*)(aggref->target))->refelembyval;
-						break;
-					case T_Expr:
-						valueType = ((Expr*) (aggref->target))->typeOid;
-						isByValue = typeByVal(typeidType(valueType));
-						break;
-					default:
-						break;
-					}
-				}
-#endif
 
 				if (isNull && !aggref->usenulls)
 					continue;	/* ignore this tuple for this agg */
@@ -389,16 +353,6 @@ ExecAgg(Agg *node)
 										  (FmgrValues *) args, &isNull2);
 					Assert(!isNull2);
 				}
-
-#ifdef FREE_TUPLE_MEMORY
-				/* try to pfree newVal if not isByValue - dz */
-				if (free_tuple_memory && !isByValue && 
-					PortalHeapMemoryIsValid(CurrentMemoryContext,
-											(Pointer) newVal))
-				{
-					pfree(newVal);
-				}
-#endif
 			}
 
 			/*

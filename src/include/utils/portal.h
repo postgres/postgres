@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: portal.h,v 1.14 1999/06/12 14:05:40 momjian Exp $
+ * $Id: portal.h,v 1.15 1999/06/12 14:07:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -79,10 +79,6 @@ extern void StartPortalAllocMode(AllocMode mode, Size limit);
 extern void EndPortalAllocMode(void);
 extern PortalVariableMemory PortalGetVariableMemory(Portal portal);
 extern PortalHeapMemory PortalGetHeapMemory(Portal portal);
-
-#ifdef FREE_TUPLE_MEMORY
-bool   PortalHeapMemoryIsValid(MemoryContext context, Pointer pointer);
-#endif
 
 /* estimate of the maximum number of open portals a user would have,
  * used in initially sizing the PortalHashTable in	EnablePortalManager()

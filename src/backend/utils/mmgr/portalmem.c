@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/portalmem.c,v 1.20 1999/06/12 14:05:39 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/portalmem.c,v 1.21 1999/06/12 14:07:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -288,24 +288,6 @@ PortalHeapMemoryFree(PortalHeapMemory this,
 #endif	 /* ALLOCFREE_ERROR_ABORT */
 	}
 }
-
-#ifdef FREE_TUPLE_MEMORY
-/*
- * PortalHeapMemoryIsValid --
- *
- * Check if a pointer is allocated in a memory context.
- *
- */
-bool
-PortalHeapMemoryIsValid(MemoryContext context, Pointer pointer)
-{
-	HeapMemoryBlock block = HEAPMEMBLOCK((PortalHeapMemory) context);
-
-	AssertState(PointerIsValid(block));
-
-	return (AllocSetContains(&block->setData, pointer));
-}
-#endif
 
 /* ----------------
  *		PortalHeapMemoryRealloc
