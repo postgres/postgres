@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.164 1998/11/17 14:26:31 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.165 1998/12/14 04:59:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -82,6 +82,11 @@ extern int	optind,
 int			getopt(int, char *const[], const char *);
 char	   *__progname = "psql";
 
+#endif
+
+#ifdef MULTIBYTE
+/* flag to indicate if PGCLIENTENCODING has been set by a user */
+static	int	   has_client_encoding;
 #endif
 
 /* This prompt string is assumed to have at least 3 characters by code in MainLoop().
@@ -1485,6 +1490,18 @@ do_connect(const char *new_dbname,
 		/* FIXME: if changing user, ought to prompt for a new password? */
 		pwparam = PQpass(olddb);
 
+#ifdef MULTIBYTE
+		/* PGCLIENTENCODING may be set by the previous connection.
+		   if a user does not explicitly set PGCLIENTENCODING,
+		   we should discard PGCLIENTENCODING so that
+		   libpq could get the backend encoding as the default
+		   PGCLIENTENCODING value. -- 1998/12/12 Tatsuo Ishii */
+		   
+		if (!has_client_encoding) {
+			unsetenv("PGCLIENTENCODING");
+		}
+#endif
+
 		pset->db = PQsetdbLogin(PQhost(olddb), PQport(olddb),
 								NULL, NULL, dbparam, userparam, pwparam);
 
@@ -2752,6 +2769,10 @@ main(int argc, char **argv)
 	settings.getPassword = 1;
 #else
 	settings.getPassword = 0;
+#endif
+
+#ifdef MUTIBYTE
+	has_client_encoding = getenv("PGCLIENTENCODING");
 #endif
 
 	while ((c = getopt(argc, argv, "Aa:c:d:ef:F:lh:Hnso:p:qStT:ux")) != EOF)

@@ -2,7 +2,7 @@
  * conversion between client encoding and server internal encoding
  * (currently mule internal code (mic) is used)
  * Tatsuo Ishii
- * $Id: conv.c,v 1.3 1998/09/01 04:33:21 momjian Exp $
+ * $Id: conv.c,v 1.4 1998/12/14 04:59:58 momjian Exp $
  */
 #include <stdio.h>
 #include <string.h>
@@ -487,7 +487,7 @@ mic2ascii(unsigned char *mic, unsigned char *p, int len)
 {
 	int			c1;
 
-	while (len > 0 && (c1 = *mic))
+	while (len-- > 0 && (c1 = *mic))
 	{
 		if (c1 > 0x7f)
 			printBogusChar(&mic, &p);
@@ -495,6 +495,7 @@ mic2ascii(unsigned char *mic, unsigned char *p, int len)
 		{						/* should be ASCII */
 			*p++ = c1;
 		}
+		mic++;
 	}
 	*p = '\0';
 }
