@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.363 2002/08/28 20:46:23 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.364 2002/08/29 00:17:04 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -204,8 +204,8 @@ static void doNegateFloat(Value *v);
 
 %type <list>	stmtblock, stmtmulti,
 				OptTableElementList, TableElementList, OptInherit, definition,
-				opt_distinct, opt_definition, func_args, rowdefinition
-				func_args_list, func_as, createfunc_opt_list
+				opt_distinct, opt_definition, func_args,
+				func_args_list, func_as, createfunc_opt_list,
 				oper_argtypes, RuleActionList, RuleActionMulti,
 				opt_column_list, columnList, opt_name_list,
 				sort_clause, opt_sort_clause, sortby_list, index_params,
@@ -216,7 +216,7 @@ static void doNegateFloat(Value *v);
 				insert_target_list, def_list, opt_indirection,
 				group_clause, TriggerFuncArgs, select_limit,
 				opt_select_limit, opclass_item_list, trans_options,
-				TableFuncElementList, OptTableFuncElementList,
+				TableFuncElementList,
 				convert_args, prep_type_clause, prep_type_list,
 				execute_param_clause, execute_param_list
 
@@ -1424,13 +1424,13 @@ OptTableElementList:
 		;
 
 TableElementList:
-			TableElementList ',' TableElement
-				{
-					$$ = lappend($1, $3);
-				}
-			| TableElement
+			TableElement
 				{
 					$$ = makeList1($1);
+				}
+			| TableElementList ',' TableElement
+				{
+					$$ = lappend($1, $3);
 				}
 		;
 
@@ -2234,11 +2234,12 @@ DefineStmt:
 					n->definition = $4;
 					$$ = (Node *)n;
 				}
-			| CREATE TYPE_P any_name AS rowdefinition
+			| CREATE TYPE_P any_name AS '(' TableFuncElementList ')'
 				{
 					CompositeTypeStmt *n = makeNode(CompositeTypeStmt);
 					RangeVar *r = makeNode(RangeVar);
 
+					/* can't use qualified_name, sigh */
 					switch (length($3))
 					{
 						case 1:
@@ -2258,13 +2259,12 @@ DefineStmt:
 							break;
 						default:
 							elog(ERROR,
-							"Improper qualified name "
-							"(too many dotted names): %s",
+								 "Improper qualified name (too many dotted names): %s",
 								 NameListToString($3));
 							break;
 					}
 					n->typevar = r;
-					n->coldeflist = $5;
+					n->coldeflist = $6;
 					$$ = (Node *)n;
 				}
 			| CREATE CHARACTER SET opt_as any_name GET definition opt_collate
@@ -2275,9 +2275,6 @@ DefineStmt:
 					n->definition = $7;
 					$$ = (Node *)n;
 				}
-		;
-
-rowdefinition: '(' TableFuncElementList ')'			{ $$ = $2; }
 		;
 
 definition: '(' def_list ')'						{ $$ = $2; }
@@ -4539,14 +4536,22 @@ table_ref:	relation_expr
 					n->coldeflist = NIL;
 					$$ = (Node *) n;
 				}
-			| func_table AS '(' OptTableFuncElementList ')'
+			| func_table alias_clause
+				{
+					RangeFunction *n = makeNode(RangeFunction);
+					n->funccallnode = $1;
+					n->alias = $2;
+					n->coldeflist = NIL;
+					$$ = (Node *) n;
+				}
+			| func_table AS '(' TableFuncElementList ')'
 				{
 					RangeFunction *n = makeNode(RangeFunction);
 					n->funccallnode = $1;
 					n->coldeflist = $4;
 					$$ = (Node *) n;
 				}
-			| func_table AS ColId '(' OptTableFuncElementList ')'
+			| func_table AS ColId '(' TableFuncElementList ')'
 				{
 					RangeFunction *n = makeNode(RangeFunction);
 					Alias *a = makeNode(Alias);
@@ -4556,7 +4561,7 @@ table_ref:	relation_expr
 					n->coldeflist = $5;
 					$$ = (Node *) n;
 				}
-			| func_table ColId '(' OptTableFuncElementList ')'
+			| func_table ColId '(' TableFuncElementList ')'
 				{
 					RangeFunction *n = makeNode(RangeFunction);
 					Alias *a = makeNode(Alias);
@@ -4564,14 +4569,6 @@ table_ref:	relation_expr
 					a->aliasname = $2;
 					n->alias = a;
 					n->coldeflist = $4;
-					$$ = (Node *) n;
-				}
-			| func_table alias_clause
-				{
-					RangeFunction *n = makeNode(RangeFunction);
-					n->funccallnode = $1;
-					n->alias = $2;
-					n->coldeflist = NIL;
 					$$ = (Node *) n;
 				}
 			| select_with_parens
@@ -4815,24 +4812,18 @@ func_table: func_name '(' ')'
 
 where_clause:
 			WHERE a_expr							{ $$ = $2; }
-													/* no qualifiers */
 			| /*EMPTY*/								{ $$ = NULL; }
 		;
 
 
-OptTableFuncElementList:
-			TableFuncElementList				{ $$ = $1; }
-			| /*EMPTY*/							{ $$ = NIL; }
-		;
-
 TableFuncElementList:
-			TableFuncElementList ',' TableFuncElement
-				{
-					$$ = lappend($1, $3);
-				}
-			| TableFuncElement
+			TableFuncElement
 				{
 					$$ = makeList1($1);
+				}
+			| TableFuncElementList ',' TableFuncElement
+				{
+					$$ = lappend($1, $3);
 				}
 		;
 
@@ -4842,7 +4833,6 @@ TableFuncElement:	ColId Typename
 					n->colname = $1;
 					n->typename = $2;
 					n->constraints = NIL;
-
 					$$ = (Node *)n;
 				}
 		;

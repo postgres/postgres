@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: lsyscache.h,v 1.59 2002/08/26 17:54:02 tgl Exp $
+ * $Id: lsyscache.h,v 1.60 2002/08/29 00:17:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -54,6 +54,7 @@ extern void get_typlenbyvalalign(Oid typid, int16 *typlen, bool *typbyval,
 extern char get_typstorage(Oid typid);
 extern Node *get_typdefault(Oid typid);
 extern char get_typtype(Oid typid);
+extern void getTypeInputInfo(Oid type, Oid *typInput, Oid *typElem);
 extern bool getTypeOutputInfo(Oid type, Oid *typOutput, Oid *typElem,
 							  bool *typIsVarlena);
 extern Oid getBaseType(Oid typid);

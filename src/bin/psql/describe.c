@@ -3,7 +3,7 @@
  *
  * Copyright 2000-2002 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/describe.c,v 1.66 2002/08/27 20:16:48 petere Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/describe.c,v 1.67 2002/08/29 00:17:05 tgl Exp $
  */
 #include "postgres_fe.h"
 #include "describe.h"
@@ -196,8 +196,10 @@ describeTypes(const char *pattern, bool verbose)
 	if (verbose)
 		appendPQExpBuffer(&buf,
 				 "  t.typname AS \"%s\",\n"
-				 "  CASE WHEN t.typlen < 0\n"
-				 "    THEN CAST('var' AS pg_catalog.text)\n"
+				 "  CASE WHEN t.typrelid != 0\n"
+				 "      THEN CAST('tuple' AS pg_catalog.text)\n"
+				 "    WHEN t.typlen < 0\n"
+				 "      THEN CAST('var' AS pg_catalog.text)\n"
 				 "    ELSE CAST(t.typlen AS pg_catalog.text)\n"
 				 "  END AS \"%s\",\n",
 				 _("Internal name"), _("Size"));
@@ -209,12 +211,12 @@ describeTypes(const char *pattern, bool verbose)
 			 "     LEFT JOIN pg_catalog.pg_namespace n ON n.oid = t.typnamespace\n");
 
 	/*
-	 * do not include array types (start with underscore), do not include
-	 * user relations (typrelid!=0) unless they are type relations
+	 * do not include array types (start with underscore); do not include
+	 * complex types (typrelid!=0) unless they are standalone composite types
 	 */
 	appendPQExpBuffer(&buf, "WHERE (t.typrelid = 0 ");
-	appendPQExpBuffer(&buf, "OR (SELECT c.relkind = 'c' FROM pg_class c "
-							  "where c.oid = t.typrelid)) ");
+	appendPQExpBuffer(&buf, "OR (SELECT c.relkind = 'c' FROM pg_catalog.pg_class c "
+							  "WHERE c.oid = t.typrelid)) ");
 	appendPQExpBuffer(&buf, "AND t.typname !~ '^_'\n");
 
 	/* Match name pattern against either internal or external name */
@@ -799,6 +801,10 @@ describeOneTableDetails(const char *schemaname,
 			break;
 		case 't':
 			printfPQExpBuffer(&title, _("TOAST table \"%s.%s\""),
+							  schemaname, relationname);
+			break;
+		case 'c':
+			printfPQExpBuffer(&title, _("Composite type \"%s.%s\""),
 							  schemaname, relationname);
 			break;
 		default:

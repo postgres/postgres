@@ -7,7 +7,7 @@
  * Copyright (c) 1996-2001, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/comment.c,v 1.57 2002/08/22 00:01:41 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/comment.c,v 1.58 2002/08/29 00:17:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -362,7 +362,7 @@ CommentAttribute(List *qualname, char *comment)
 
 	/* Open the containing relation to ensure it won't go away meanwhile */
 	rel = makeRangeVarFromNameList(relname);
-	relation = heap_openrv(rel, AccessShareLock);
+	relation = relation_openrv(rel, AccessShareLock);
 
 	/* Check object security */
 
@@ -383,7 +383,7 @@ CommentAttribute(List *qualname, char *comment)
 
 	/* Done, but hold lock until commit */
 
-	heap_close(relation, NoLock);
+	relation_close(relation, NoLock);
 }
 
 /*

@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execTuples.c,v 1.56 2002/07/20 05:49:27 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execTuples.c,v 1.57 2002/08/29 00:17:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -109,8 +109,9 @@
 
 #include "funcapi.h"
 #include "access/heapam.h"
-#include "catalog/pg_type.h"
 #include "executor/executor.h"
+#include "utils/lsyscache.h"
+
 
 /* ----------------------------------------------------------------
  *				  tuple table create/delete functions
@@ -676,8 +677,7 @@ ExecTypeFromTL(List *targetList, hasoid_t withoid)
 }
 
 /*
- * TupleDescGetSlot - Initialize a slot based on the supplied
- * tupledesc
+ * TupleDescGetSlot - Initialize a slot based on the supplied tupledesc
  */
 TupleTableSlot *
 TupleDescGetSlot(TupleDesc tupdesc)
@@ -695,40 +695,36 @@ TupleDescGetSlot(TupleDesc tupdesc)
 }
 
 /*
- * TupleDescGetAttInMetadata - Get a pointer to AttInMetadata based on the
+ * TupleDescGetAttInMetadata - Build an AttInMetadata structure based on the
  * supplied TupleDesc. AttInMetadata can be used in conjunction with C strings
  * to produce a properly formed tuple.
  */
 AttInMetadata *
 TupleDescGetAttInMetadata(TupleDesc tupdesc)
 {
-	int				natts;
+	int				natts = tupdesc->natts;
 	int				i;
 	Oid				atttypeid;
 	Oid				attinfuncid;
-	Oid				attelem;
 	FmgrInfo	   *attinfuncinfo;
 	Oid			   *attelems;
-	int4		   *atttypmods;
+	int32		   *atttypmods;
 	AttInMetadata  *attinmeta;
 
 	attinmeta = (AttInMetadata *) palloc(sizeof(AttInMetadata));
-	natts = tupdesc->natts;
 
 	/*
 	 * Gather info needed later to call the "in" function for each attribute
 	 */
 	attinfuncinfo = (FmgrInfo *) palloc(natts * sizeof(FmgrInfo));
 	attelems = (Oid *) palloc(natts * sizeof(Oid));
-	atttypmods = (int4 *) palloc(natts * sizeof(int4));
+	atttypmods = (int32 *) palloc(natts * sizeof(int32));
 
 	for (i = 0; i < natts; i++)
 	{
 		atttypeid = tupdesc->attrs[i]->atttypid;
-		get_type_metadata(atttypeid, &attinfuncid, &attelem);
-
+		getTypeInputInfo(atttypeid, &attinfuncid, &attelems[i]);
 		fmgr_info(attinfuncid, &attinfuncinfo[i]);
-		attelems[i] = attelem;
 		atttypmods[i] = tupdesc->attrs[i]->atttypmod;
 	}
 	attinmeta->tupdesc = tupdesc;
@@ -746,39 +742,35 @@ TupleDescGetAttInMetadata(TupleDesc tupdesc)
 HeapTuple
 BuildTupleFromCStrings(AttInMetadata *attinmeta, char **values)
 {
-	TupleDesc			tupdesc;
-	int					natts;
-	HeapTuple			tuple;
+	TupleDesc			tupdesc = attinmeta->tupdesc;
+	int					natts = tupdesc->natts;
+	Datum			   *dvalues;
 	char			   *nulls;
 	int					i;
-	Datum			   *dvalues;
-	FmgrInfo			attinfuncinfo;
 	Oid					attelem;
-	int4				atttypmod;
-
-	tupdesc = attinmeta->tupdesc;
-	natts = tupdesc->natts;
+	int32				atttypmod;
+	HeapTuple			tuple;
 
 	dvalues = (Datum *) palloc(natts * sizeof(Datum));
 	nulls = (char *) palloc(natts * sizeof(char));
 
-	/* Call the "in" function for each attribute */
+	/* Call the "in" function for each non-null attribute */
 	for (i = 0; i < natts; i++)
 	{
 		if (values[i] != NULL)
 		{
-			attinfuncinfo = attinmeta->attinfuncs[i];
 			attelem = attinmeta->attelems[i];
 			atttypmod = attinmeta->atttypmods[i];
 
-			dvalues[i] = FunctionCall3(&attinfuncinfo, CStringGetDatum(values[i]),
-										ObjectIdGetDatum(attelem),
-										Int32GetDatum(atttypmod));
+			dvalues[i] = FunctionCall3(&attinmeta->attinfuncs[i],
+									   CStringGetDatum(values[i]),
+									   ObjectIdGetDatum(attelem),
+									   Int32GetDatum(atttypmod));
 			nulls[i] = ' ';
 		}
 		else
 		{
-			dvalues[i] = PointerGetDatum(NULL);
+			dvalues[i] = (Datum) 0;
 			nulls[i] = 'n';
 		}
 	}
@@ -787,6 +779,13 @@ BuildTupleFromCStrings(AttInMetadata *attinmeta, char **values)
 	 * Form a tuple
 	 */
 	tuple = heap_formtuple(tupdesc, dvalues, nulls);
+
+	/*
+	 * Release locally palloc'd space.  XXX would probably be good to
+	 * pfree values of pass-by-reference datums, as well.
+	 */
+	pfree(dvalues);
+	pfree(nulls);
 
 	return tuple;
 }
@@ -804,7 +803,7 @@ begin_tup_output_tupdesc(CommandDest dest, TupleDesc tupdesc)
 
 	tstate = (TupOutputState *) palloc(sizeof(TupOutputState));
 
-	tstate->tupdesc = tupdesc;
+	tstate->metadata = TupleDescGetAttInMetadata(tupdesc);
 	tstate->destfunc = DestToFunction(dest);
 
 	(*tstate->destfunc->setup) (tstate->destfunc, (int) CMD_SELECT,
@@ -823,20 +822,22 @@ void
 do_tup_output(TupOutputState *tstate, char **values)
 {
 	/* build a tuple from the input strings using the tupdesc */
-	AttInMetadata *attinmeta = TupleDescGetAttInMetadata(tstate->tupdesc);
-	HeapTuple	tuple = BuildTupleFromCStrings(attinmeta, values);
+	HeapTuple	tuple = BuildTupleFromCStrings(tstate->metadata, values);
 
 	/* send the tuple to the receiver */
 	(*tstate->destfunc->receiveTuple) (tuple,
-									   tstate->tupdesc,
+									   tstate->metadata->tupdesc,
 									   tstate->destfunc);
 	/* clean up */
 	heap_freetuple(tuple);
 }
 
-/* write a chunk of text, breaking at newline characters
+/*
+ * write a chunk of text, breaking at newline characters
+ *
  * NB: scribbles on its input!
- * Should only be used for a single TEXT attribute tupdesc.
+ *
+ * Should only be used with a single-TEXT-attribute tupdesc.
  */
 void
 do_text_output_multiline(TupOutputState *tstate, char *text)
@@ -859,5 +860,6 @@ void
 end_tup_output(TupOutputState *tstate)
 {
 	(*tstate->destfunc->cleanup) (tstate->destfunc);
+	/* XXX worth cleaning up the attinmetadata? */
 	pfree(tstate);
 }

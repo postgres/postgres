@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/xfunc.sgml,v 1.56 2002/08/23 16:41:37 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/xfunc.sgml,v 1.57 2002/08/29 00:17:02 tgl Exp $
 -->
 
  <chapter id="xfunc">
@@ -9,23 +9,6 @@ $Header: /cvsroot/pgsql/doc/src/sgml/xfunc.sgml,v 1.56 2002/08/23 16:41:37 tgl E
 
   <sect1 id="xfunc-intro">
    <title>Introduction</title>
-
-  <comment>
-   Historically, functions were perhaps considered a tool for creating
-   types.  Today, few people build their own types but many write
-   their own functions.  This introduction ought to be changed to
-   reflect this.
-  </comment>
-
-  <para>
-   As  it  turns  out,  part of defining a new type is the
-   definition of functions  that  describe  its  behavior.
-   Consequently,  while  it  is  possible  to define a new
-   function without defining a new type,  the  reverse  is
-   not  true.   We therefore describe how to add new functions 
-   to <productname>PostgreSQL</productname> before  describing  
-   how  to  add  new types.
-  </para>
 
   <para>
    <productname>PostgreSQL</productname> provides four kinds of
@@ -285,8 +268,6 @@ SELECT name, double_salary(EMP) AS dream
 
     <para>
      It is also possible to build a function that returns a composite type.
-     (However, as we'll see below, there are some
-     unfortunate restrictions on how the function may be used.)
      This is an example of a function 
      that returns a single <type>EMP</type> row:
 
@@ -330,12 +311,12 @@ ERROR:  function declared to return emp returns varchar instead of text at colum
     </para>     
 
     <para>
-     In the present release of <productname>PostgreSQL</productname>
-     there are some unpleasant restrictions on how functions returning
-     composite types can be used.  Briefly, when calling a function that
-     returns a row, we cannot retrieve the entire row.  We must either
+     A function that returns a row (composite type) can be used as a table
+     function, as described below.  It can also be called in the context
+     of an SQL expression, but only when you
      extract a single attribute out of the row or pass the entire row into
-     another function.  (Trying to display the entire row value will yield
+     another function that accepts the same composite type.  (Trying to
+     display the entire row value will yield 
      a meaningless number.)  For example,
 
 <programlisting>
@@ -357,8 +338,8 @@ ERROR:  parser: parse error at or near "."
     </para>
 
     <para>
-     Another approach is to use
-     functional notation for extracting attributes.  The  simple  way 
+     Another option is to use
+     functional notation for extracting an attribute.  The  simple  way 
      to explain this is that we can use the
      notations <literal>attribute(table)</>  and  <literal>table.attribute</>
      interchangeably:
@@ -412,26 +393,73 @@ SELECT getname(new_emp());
    </sect2>
 
    <sect2>
-    <title><acronym>SQL</acronym> Table Functions (Functions Returning Sets)</title>
+    <title><acronym>SQL</acronym> Table Functions</title>
 
     <para>
      A table function is one that may be used in the <command>FROM</command>
-     clause of a query. All SQL Language functions may be used in this manner.
+     clause of a query. All SQL language functions may be used in this manner,
+     but it is particularly useful for functions returning composite types.
      If the function is defined to return a base type, the table function
-     produces a one column result set. If the function is defined to
-     return <literal>SETOF <replaceable>sometype</></literal>, the table
-     function returns multiple rows. To illustrate a SQL table function,
-     consider the following, which returns <literal>SETOF</literal> a
-     composite type:
+     produces a one-column table.  If the function is defined to return
+     a composite type, the table function produces a column for each column
+     of the composite type.
+    </para>
+
+    <para>
+     Here is an example:
 
 <programlisting>
-CREATE TABLE foo (fooid int, foosubid int, fooname text, primary key(fooid,foosubid));
+CREATE TABLE foo (fooid int, foosubid int, fooname text);
 INSERT INTO foo VALUES(1,1,'Joe');
 INSERT INTO foo VALUES(1,2,'Ed');
 INSERT INTO foo VALUES(2,1,'Mary');
+
+CREATE FUNCTION getfoo(int) RETURNS foo AS '
+    SELECT * FROM foo WHERE fooid = $1;
+' LANGUAGE SQL;
+
+SELECT *, upper(fooname) FROM getfoo(1) AS t1;
+</programlisting>
+
+<screen>
+ fooid | foosubid | fooname | upper
+-------+----------+---------+-------
+     1 |        1 | Joe     | JOE
+(2 rows)
+</screen>
+
+     As the example shows, we can work with the columns of the function's
+     result just the same as if they were columns of a regular table.
+    </para>
+
+    <para>
+     Note that we only got one row out of the function.  This is because
+     we did not say <literal>SETOF</>.
+    </para>
+
+   </sect2>
+
+   <sect2>
+    <title><acronym>SQL</acronym> Functions Returning Sets</title>
+
+    <para>
+     When an SQL function is declared as returning <literal>SETOF</literal>
+     <replaceable>sometype</>, the function's final
+     <command>SELECT</> query is executed to completion, and each row it
+     outputs is returned as an element of the set.
+    </para>
+
+    <para>
+     This feature is normally used by calling the function as a table
+     function.  In this case each row returned by the function becomes
+     a row of the table seen by the query.  For example, assume that
+     table <literal>foo</> has the same contents as above, and we say:
+
+<programlisting>
 CREATE FUNCTION getfoo(int) RETURNS setof foo AS '
     SELECT * FROM foo WHERE fooid = $1;
 ' LANGUAGE SQL;
+
 SELECT * FROM getfoo(1) AS t1;
 </programlisting>
 
@@ -445,14 +473,7 @@ SELECT * FROM getfoo(1) AS t1;
     </para>
 
     <para>
-     When an SQL function is declared as returning <literal>SETOF
-     <replaceable>sometype</></literal>, the function's final
-     <command>SELECT</> query is executed to completion, and each row it
-     outputs is returned as an element of the set.
-    </para>
-
-    <para>
-     Functions returning sets may also currently be called in the target list
+     Currently, functions returning sets may also be called in the target list
      of a <command>SELECT</> query.  For each row that the <command>SELECT</>
      generates by itself, the function returning set is invoked, and an output
      row is generated for each element of the function's result set. Note,
@@ -1346,7 +1367,8 @@ concat_text(PG_FUNCTION_ARGS)
      <function>PG_GETARG_<replaceable>xxx</replaceable>_COPY()</function>
      guarantees to return a copy of the specified parameter which is
      safe for writing into. (The normal macros will sometimes return a
-     pointer to the value which must not be written to. Using the
+     pointer to a value that is physically stored in a table, and so
+     must not be written to. Using the
      <function>PG_GETARG_<replaceable>xxx</replaceable>_COPY()</function>
      macros guarantees a writable result.)
     </para>
@@ -1471,8 +1493,8 @@ LANGUAGE C;
     <title>Table Function API</title>
 
     <para>
-     The Table Function API assists in the creation of a user defined
-     C Language table functions (<xref linkend="xfunc-tablefunctions">).
+     The Table Function API assists in the creation of user-defined
+     C language table functions (<xref linkend="xfunc-tablefunctions">).
      Table functions are functions that produce a set of rows, made up of
      either base (scalar) data types, or composite (multi-column) data types.
      The API is split into two main components: support for returning
@@ -1482,105 +1504,124 @@ LANGUAGE C;
 
     <para>
      The Table Function API relies on macros and functions to suppress most
-     of the complexity of building composite data types and return multiple
-     results.  In addition to the version-1 conventions discussed elsewhere,
-     a table function always requires the following:
+     of the complexity of building composite data types and returning multiple
+     results.  A table function must follow the version-1 calling convention
+     described above.  In addition, the source file must include:
 <programlisting>
 #include "funcapi.h"
 </programlisting>
     </para>
 
+   <sect3>
+    <title>Returning Tuples (Composite Types)</title>
+
     <para>
      The Table Function API support for returning composite data types
      (or tuples) starts with the AttInMetadata struct. This struct holds
      arrays of individual attribute information needed to create a tuple from
-     raw C strings. It also requires a copy of the TupleDesc. The information
+     raw C strings. It also saves a pointer to the TupleDesc. The information
      carried here is derived from the TupleDesc, but it is stored here to
-     avoid redundant cpu cycles on each call to a Table Function.
+     avoid redundant CPU cycles on each call to a Table Function.  In the
+     case of a function returning a set, the AttInMetadata struct should be
+     computed once during the first call and saved for re-use in later calls.
 <programlisting>
-typedef struct
+typedef struct AttInMetadata
 {
-	/* full TupleDesc */
-	TupleDesc	   tupdesc;
+    /* full TupleDesc */
+    TupleDesc       tupdesc;
 
-	/* pointer to array of attribute "type"in finfo */
-	FmgrInfo	   *attinfuncs;
+    /* array of attribute type input function finfo */
+    FmgrInfo       *attinfuncs;
 
-	/* pointer to array of attribute type typelem */
-	Oid			   *attelems;
+    /* array of attribute type typelem */
+    Oid            *attelems;
 
-	/* pointer to array of attribute type typtypmod */
-	int4		   *atttypmods;
-
+    /* array of attribute typmod */
+    int32    	   *atttypmods;
 }	AttInMetadata;
 </programlisting>
      To assist you in populating this struct, several functions and a macro
      are available. Use
 <programlisting>
-TupleDesc RelationNameGetTupleDesc(char *relname)
+TupleDesc RelationNameGetTupleDesc(const char *relname)
 </programlisting>
-     to get a TupleDesc based on the function's return type relation, or
+     to get a TupleDesc based on a specified relation, or
 <programlisting>
 TupleDesc TypeGetTupleDesc(Oid typeoid, List *colaliases)
 </programlisting>
-     to get a TupleDesc based on the function's type oid. This can be used to
-     get a TupleDesc for a base (scalar), or composite (relation) type. Then
+     to get a TupleDesc based on a type OID. This can be used to
+     get a TupleDesc for a base (scalar) or composite (relation) type. Then
 <programlisting>
 AttInMetadata *TupleDescGetAttInMetadata(TupleDesc tupdesc)
 </programlisting>
      will return a pointer to an AttInMetadata struct, initialized based on
-     the function's TupleDesc. AttInMetadata is be used in conjunction with
+     the given TupleDesc. AttInMetadata can be used in conjunction with
      C strings to produce a properly formed tuple. The metadata is stored here
-     for use across calls to avoid redundant work.
+     to avoid redundant work across multiple calls.
     </para>
 
     <para>
-     In order to return a tuple you must create a tuple slot based on the
+     To return a tuple you must create a tuple slot based on the
      TupleDesc. You can use
 <programlisting>
 TupleTableSlot *TupleDescGetSlot(TupleDesc tupdesc)
 </programlisting>
      to initialize this tuple slot, or obtain one through other (user provided)
      means. The tuple slot is needed to create a Datum for return by the
-     function.
+     function.  The same slot can (and should) be re-used on each call.
     </para>
 
     <para>
-     If desired,
+     After constructing an AttInMetadata structure,
 <programlisting>
 HeapTuple BuildTupleFromCStrings(AttInMetadata *attinmeta, char **values)
 </programlisting>
      can be used to build a HeapTuple given user data in C string form.
      "values" is an array of C strings, one for each attribute of the return
-     tuple. The C strings should be in the form expected by the "in" function
-     of the attribute data type. For more information on this requirement,
-     see the individual data type "in" functions in the source code
-     (e.g. textin() for data type TEXT). In order to return a NULL value for
+     tuple. Each C string should be in the form expected by the input function
+     of the attribute data type. In order to return a NULL value for
      one of the attributes, the corresponding pointer in the "values" array
-     should be set to NULL.
+     should be set to NULL.  This function will need to be called again
+     for each tuple you return.
     </para>
 
     <para>
-     In order to get an attribute "in" function and typelem value given the
-     typeid, use
-<programlisting>
-void get_type_metadata(Oid typeid, Oid *attinfuncid, Oid *attelem)
-</programlisting>
+     Building a tuple via TupleDescGetAttInMetadata and BuildTupleFromCStrings
+     is only convenient if your function naturally computes the values to
+     be returned as text strings.  If your code naturally computes the
+     values as a set of Datums, you should instead use the underlying
+     heap_formtuple routine to convert the Datums directly into a tuple.
+     You will still need the TupleDesc and a TupleTableSlot, but not
+     AttInMetadata.
     </para>
 
     <para>
-     Finally, in order to return a tuple using the SRF portion of the API
-     (described below), the tuple must be converted into a Datum. Use
+     Once you have built a tuple to return from your function, the tuple must
+     be converted into a Datum. Use
 <programlisting>
 TupleGetDatum(TupleTableSlot *slot, HeapTuple tuple)
 </programlisting>
-     to get a Datum given a tuple and a slot.
+     to get a Datum given a tuple and a slot.  This Datum can be returned
+     directly if you intend to return just a single row, or it can be used
+     as the current return value in a set-returning function.
     </para>
 
     <para>
-     The Table Function API support for set returning functions starts with
-     the FuncCallContext struct. This struct holds function context for
-     SRFs using fcinfo->flinfo->fn_extra to hold a pointer to it across calls.
+     An example appears below.
+    </para>
+
+   </sect3>
+
+   <sect3>
+    <title>Returning Sets</title>
+
+    <para>
+     A set-returning function (SRF) is normally called once for each item it
+     returns.  The SRF must therefore save enough state to remember what it
+     was doing and return the next item on each call.  The Table Function API
+     provides the FuncCallContext struct to help control this process.
+     <literal>fcinfo-&gt;flinfo-&gt;fn_extra</> is used to
+     hold a pointer to FuncCallContext across calls.
 <programlisting>
 typedef struct
 {
@@ -1639,12 +1680,13 @@ typedef struct
 
 }	FuncCallContext;
 </programlisting>
-     To assist you in populating this struct, several functions and macros
-     are available. Use
+     An SRF uses several functions and macros that automatically manipulate
+     the FuncCallContext struct (and expect to find it via
+     <literal>fn_extra</>).  Use
 <programlisting>
 SRF_IS_FIRSTCALL()
 </programlisting>
-     to determine if your function has been called for the first or a
+     to determine if your function is being called for the first or a
      subsequent time. On the first call (only) use
 <programlisting>
 SRF_FIRSTCALL_INIT()
@@ -1663,8 +1705,9 @@ SRF_PERCALL_SETUP()
 <programlisting>
 SRF_RETURN_NEXT(funcctx, result)
 </programlisting>
-     to send it and prepare for the next call. Finally, when your function
-     is finished returning data, use
+     to return it to the caller.  (The <literal>result</>
+     must be a Datum, either a single value or a tuple prepared as described
+     earlier.)  Finally, when your function is finished returning data, use
 <programlisting>
 SRF_RETURN_DONE(funcctx)
 </programlisting>
@@ -1677,136 +1720,139 @@ SRF_RETURN_DONE(funcctx)
 Datum
 my_Set_Returning_Function(PG_FUNCTION_ARGS)
 {
-	FuncCallContext	   *funcctx;
-	Datum				result;
+    FuncCallContext     *funcctx;
+    Datum                result;
+    [user defined declarations]
 
-	[user defined declarations]
+    if (SRF_IS_FIRSTCALL())
+    {
+        /* one-time setup code appears here: */
+        [user defined code]
+        funcctx = SRF_FIRSTCALL_INIT();
+        [if returning composite]
+            [build TupleDesc, and perhaps AttInMetadata]
+            [obtain slot]
+            funcctx-&gt;slot = slot;
+        [endif returning composite]
+        [user defined code]
+    }
 
-	if(SRF_IS_FIRSTCALL())
-	{
-		[user defined code]
-		funcctx = SRF_FIRSTCALL_INIT();
-		[if returning composite]
-			[obtain slot]
-			funcctx->slot = slot;
-		[endif returning composite]
-		[user defined code]
-	}
-	[user defined code]
-	funcctx = SRF_PERCALL_SETUP();
-	[user defined code]
+    /* each-time setup code appears here: */
+    [user defined code]
+    funcctx = SRF_PERCALL_SETUP();
+    [user defined code]
 
-	if (funcctx->call_cntr < funcctx->max_calls)
-	{
-		[user defined code]
-		[obtain result Datum]
-		SRF_RETURN_NEXT(funcctx, result);
-	}
-	else
-	{
-		SRF_RETURN_DONE(funcctx);
-	}
+    /* this is just one way we might test whether we are done: */
+    if (funcctx-&gt;call_cntr &lt; funcctx-&gt;max_calls)
+    {
+        /* here we want to return another item: */
+        [user defined code]
+        [obtain result Datum]
+        SRF_RETURN_NEXT(funcctx, result);
+    }
+    else
+    {
+        /* here we are done returning items, and just need to clean up: */
+        [user defined code]
+        SRF_RETURN_DONE(funcctx);
+    }
 }
 </programlisting>
     </para>
 
     <para>
-     An example of a simple composite returning SRF looks like:
+     A complete example of a simple SRF returning a composite type looks like:
 <programlisting>
 PG_FUNCTION_INFO_V1(testpassbyval);
 Datum
 testpassbyval(PG_FUNCTION_ARGS)
 {
-	FuncCallContext	   *funcctx;
-	int					call_cntr;
-	int					max_calls;
-	TupleDesc			tupdesc;
-	TupleTableSlot	   *slot;
-	AttInMetadata	   *attinmeta;
+    FuncCallContext     *funcctx;
+    int                  call_cntr;
+    int                  max_calls;
+    TupleDesc            tupdesc;
+    TupleTableSlot       *slot;
+    AttInMetadata       *attinmeta;
 
-	/* stuff done only on the first call of the function */
- 	if(SRF_IS_FIRSTCALL())
- 	{
-		/* create a function context for cross-call persistence */
- 		funcctx = SRF_FIRSTCALL_INIT();
+     /* stuff done only on the first call of the function */
+     if (SRF_IS_FIRSTCALL())
+     {
+        /* create a function context for cross-call persistence */
+         funcctx = SRF_FIRSTCALL_INIT();
 
-		/* total number of tuples to be returned */
-		funcctx->max_calls = PG_GETARG_UINT32(0);
+        /* total number of tuples to be returned */
+        funcctx-&gt;max_calls = PG_GETARG_UINT32(0);
 
-		/*
-		 * Build a tuple description for a __testpassbyval tuple
-		 */
-		tupdesc = RelationNameGetTupleDesc("__testpassbyval");
+        /*
+         * Build a tuple description for a __testpassbyval tuple
+         */
+        tupdesc = RelationNameGetTupleDesc("__testpassbyval");
 
-		/* allocate a slot for a tuple with this tupdesc */
-		slot = TupleDescGetSlot(tupdesc);
+        /* allocate a slot for a tuple with this tupdesc */
+        slot = TupleDescGetSlot(tupdesc);
 
-		/* assign slot to function context */
-		funcctx->slot = slot;
+        /* assign slot to function context */
+        funcctx-&gt;slot = slot;
 
-		/*
-		 * Generate attribute metadata needed later to produce tuples from raw
-		 * C strings
-		 */
-		attinmeta = TupleDescGetAttInMetadata(tupdesc);
-		funcctx->attinmeta = attinmeta;
+        /*
+         * Generate attribute metadata needed later to produce tuples from raw
+         * C strings
+         */
+        attinmeta = TupleDescGetAttInMetadata(tupdesc);
+        funcctx-&gt;attinmeta = attinmeta;
     }
 
-	/* stuff done on every call of the function */
- 	funcctx = SRF_PERCALL_SETUP();
+    /* stuff done on every call of the function */
+    funcctx = SRF_PERCALL_SETUP();
 
-	call_cntr = funcctx->call_cntr;
-	max_calls = funcctx->max_calls;
-	slot = funcctx->slot;
-	attinmeta = funcctx->attinmeta;
+    call_cntr = funcctx-&gt;call_cntr;
+    max_calls = funcctx-&gt;max_calls;
+    slot = funcctx-&gt;slot;
+    attinmeta = funcctx-&gt;attinmeta;
  
- 	if (call_cntr < max_calls)	/* do when there is more left to send */
- 	{
-		char	   **values;
-		HeapTuple	tuple;
-		Datum		result;
+    if (call_cntr &lt; max_calls)    /* do when there is more left to send */
+    {
+        char       **values;
+        HeapTuple    tuple;
+        Datum        result;
 
-		/*
-		 * Prepare a values array for storage in our slot.
-		 * This should be an array of C strings which will
-		 * be processed later by the appropriate "in" functions.
-		 */
-		values = (char **) palloc(3 * sizeof(char *));
-		values[0] = (char *) palloc(16 * sizeof(char));
-		values[1] = (char *) palloc(16 * sizeof(char));
-		values[2] = (char *) palloc(16 * sizeof(char));
+        /*
+         * Prepare a values array for storage in our slot.
+         * This should be an array of C strings which will
+         * be processed later by the appropriate "in" functions.
+         */
+        values = (char **) palloc(3 * sizeof(char *));
+        values[0] = (char *) palloc(16 * sizeof(char));
+        values[1] = (char *) palloc(16 * sizeof(char));
+        values[2] = (char *) palloc(16 * sizeof(char));
 
-		snprintf(values[0], 16, "%d", 1 * PG_GETARG_INT32(1));
-		snprintf(values[1], 16, "%d", 2 * PG_GETARG_INT32(1));
-		snprintf(values[2], 16, "%d", 3 * PG_GETARG_INT32(1));
+        snprintf(values[0], 16, "%d", 1 * PG_GETARG_INT32(1));
+        snprintf(values[1], 16, "%d", 2 * PG_GETARG_INT32(1));
+        snprintf(values[2], 16, "%d", 3 * PG_GETARG_INT32(1));
 
-		/* build a tuple */
-		tuple = BuildTupleFromCStrings(attinmeta, values);
+        /* build a tuple */
+        tuple = BuildTupleFromCStrings(attinmeta, values);
 
-		/* make the tuple into a datum */
-		result = TupleGetDatum(slot, tuple);
+        /* make the tuple into a datum */
+        result = TupleGetDatum(slot, tuple);
 
-		/* Clean up */
-		pfree(values[0]);
-		pfree(values[1]);
-		pfree(values[2]);
-		pfree(values);
+        /* Clean up */
+        pfree(values[0]);
+        pfree(values[1]);
+        pfree(values[2]);
+        pfree(values);
 
- 		SRF_RETURN_NEXT(funcctx, result);
- 	}
- 	else	/* do when there is no more left */
- 	{
- 		SRF_RETURN_DONE(funcctx);
- 	}
+         SRF_RETURN_NEXT(funcctx, result);
+    }
+    else    /* do when there is no more left */
+    {
+         SRF_RETURN_DONE(funcctx);
+    }
 }
 </programlisting>
      with supporting SQL code of
 <programlisting>
-CREATE VIEW __testpassbyval AS
-  SELECT
-    0::INT4 AS f1,
-    0::INT4 AS f2,
-    0::INT4 AS f3;
+CREATE TYPE __testpassbyval AS (f1 int4, f2 int4, f3 int4);
 
 CREATE OR REPLACE FUNCTION testpassbyval(int4, int4) RETURNS setof __testpassbyval
   AS 'MODULE_PATHNAME','testpassbyval' LANGUAGE 'c' IMMUTABLE STRICT;
@@ -1816,6 +1862,9 @@ CREATE OR REPLACE FUNCTION testpassbyval(int4, int4) RETURNS setof __testpassbyv
     <para>
      See contrib/tablefunc for more examples of Table Functions.
     </para>
+
+   </sect3>
+
    </sect2>
 
    <sect2>
@@ -2031,23 +2080,23 @@ CREATE FUNCTION test(int, int) RETURNS int
     Table functions work wherever tables do in <literal>SELECT</> statements.
     For example
 <programlisting>
-CREATE TABLE foo (fooid int, foosubid int, fooname text, primary key(fooid,foosubid));
-CREATE FUNCTION getfoo(int) RETURNS foo AS 'SELECT * FROM foo WHERE fooid = $1;' LANGUAGE SQL;
+CREATE TABLE foo (fooid int, foosubid int, fooname text);
+
+CREATE FUNCTION getfoo(int) RETURNS setof foo AS '
+    SELECT * FROM foo WHERE fooid = $1;
+' LANGUAGE SQL;
+
 SELECT * FROM getfoo(1) AS t1;
-SELECT * FROM foo where foosubid in (select foosubid from getfoo(foo.fooid) z where z.fooid = foo.fooid);
+
+SELECT * FROM foo
+WHERE foosubid in (select foosubid from getfoo(foo.fooid) z
+                   where z.fooid = foo.fooid);
+
 CREATE VIEW vw_getfoo AS SELECT * FROM getfoo(1);
 SELECT * FROM vw_getfoo;
 </programlisting>
     are all valid statements.
    </para>
-
-   <para>
-    Currently, table functions are supported as SQL language functions
-    (<xref linkend="xfunc-sql">) and C language functions
-    (<xref linkend="xfunc-c">). See these individual sections for more
-    details.
-   </para>
-
   </sect1>
 
   <sect1 id="xfunc-plhandler">

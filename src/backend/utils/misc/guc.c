@@ -5,7 +5,7 @@
  * command, configuration file, and command line options.
  * See src/backend/utils/misc/README for more information.
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.84 2002/08/26 17:53:59 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.85 2002/08/29 00:17:05 tgl Exp $
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  * Written by Peter Eisentraut <peter_e@gmx.net>.
@@ -2284,7 +2284,7 @@ ShowGUCConfigOption(const char *name)
 	tstate = begin_tup_output_tupdesc(dest, tupdesc);
 
 	/* Send it */
-	PROJECT_LINE_OF_TEXT(tstate, value);
+	do_text_output_oneline(tstate, value);
 
 	end_tup_output(tstate);
 }
@@ -2462,7 +2462,7 @@ show_all_settings(PG_FUNCTION_ARGS)
 
  	if (call_cntr < max_calls)	/* do when there is more left to send */
  	{
-		char	   **values;
+		char	   *values[2];
 		char	   *varname;
 		char	   *varval;
 		bool		noshow;
@@ -2474,7 +2474,9 @@ show_all_settings(PG_FUNCTION_ARGS)
 		 */
 		do
 		{
-			varval = GetConfigOptionByNum(call_cntr, (const char **) &varname, &noshow);
+			varval = GetConfigOptionByNum(call_cntr,
+										  (const char **) &varname,
+										  &noshow);
 			if (noshow)
 			{
 				/* varval is a palloc'd copy, so free it */
@@ -2495,9 +2497,8 @@ show_all_settings(PG_FUNCTION_ARGS)
 		 * This should be an array of C strings which will
 		 * be processed later by the appropriate "in" functions.
 		 */
-		values = (char **) palloc(2 * sizeof(char *));
-		values[0] = pstrdup(varname);
-		values[1] = varval;	/* varval is already a palloc'd copy */
+		values[0] = varname;
+		values[1] = varval;
 
 		/* build a tuple */
 		tuple = BuildTupleFromCStrings(attinmeta, values);
@@ -2506,10 +2507,8 @@ show_all_settings(PG_FUNCTION_ARGS)
 		result = TupleGetDatum(slot, tuple);
 
 		/* Clean up */
-		pfree(values[0]);
 		if (varval != NULL)
-			pfree(values[1]);
-		pfree(values);
+			pfree(varval);
 
  		SRF_RETURN_NEXT(funcctx, result);
  	}

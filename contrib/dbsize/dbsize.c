@@ -112,7 +112,7 @@ relation_size(PG_FUNCTION_ARGS)
 
 	relrv = makeRangeVarFromNameList(textToQualifiedNameList(relname,
 															 "relation_size"));
-	relation = relation_openrv(relrv, AccessShareLock);
+	relation = heap_openrv(relrv, AccessShareLock);
 
 	relnode = relation->rd_rel->relfilenode;
 
@@ -140,7 +140,7 @@ relation_size(PG_FUNCTION_ARGS)
 		segcount++;
 	}
 
-	relation_close(relation, AccessShareLock);
+	heap_close(relation, AccessShareLock);
 
 	PG_RETURN_INT64(totalsize);
 }

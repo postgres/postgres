@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_type.h,v 1.130 2002/08/26 17:54:01 tgl Exp $
+ * $Id: pg_type.h,v 1.131 2002/08/29 00:17:06 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -542,6 +542,7 @@ extern Oid TypeCreate(const char *typeName,
 		   Oid typeNamespace,
 		   Oid assignedTypeOid,
 		   Oid relationOid,
+		   char relationKind,
 		   int16 internalSize,
 		   char typeType,
 		   char typDelim,

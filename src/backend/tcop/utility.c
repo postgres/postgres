@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.173 2002/08/27 04:55:11 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.174 2002/08/29 00:17:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -583,14 +583,9 @@ ProcessUtility(Node *parsetree,
 
 		case T_CompositeTypeStmt:		/* CREATE TYPE (composite) */
 			{
-				Oid	relid;
 				CompositeTypeStmt   *stmt = (CompositeTypeStmt *) parsetree;
 
-				/*
-				 * DefineCompositeType returns relid for use when creating
-				 * an implicit composite type during function creation
-				 */
-				relid = DefineCompositeType(stmt->typevar, stmt->coldeflist);
+				DefineCompositeType(stmt->typevar, stmt->coldeflist);
 			}
 			break;
 

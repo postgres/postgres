@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/lsyscache.c,v 1.80 2002/08/26 17:53:59 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/lsyscache.c,v 1.81 2002/08/29 00:17:05 tgl Exp $
  *
  * NOTES
  *	  Eventually, the index information should go through here, too.
@@ -1188,6 +1188,33 @@ get_typtype(Oid typid)
 	}
 	else
 		return '\0';
+}
+
+/*
+ * getTypeInputInfo
+ *
+ *		Get info needed for converting values of a type to internal form
+ */
+void
+getTypeInputInfo(Oid type, Oid *typInput, Oid *typElem)
+{
+	HeapTuple	typeTuple;
+	Form_pg_type pt;
+
+	typeTuple = SearchSysCache(TYPEOID,
+							   ObjectIdGetDatum(type),
+							   0, 0, 0);
+	if (!HeapTupleIsValid(typeTuple))
+		elog(ERROR, "getTypeInputInfo: Cache lookup of type %u failed", type);
+	pt = (Form_pg_type) GETSTRUCT(typeTuple);
+
+	if (!pt->typisdefined)
+		elog(ERROR, "Type \"%s\" is only a shell", NameStr(pt->typname));
+
+	*typInput = pt->typinput;
+	*typElem = pt->typelem;
+
+	ReleaseSysCache(typeTuple);
 }
 
 /*

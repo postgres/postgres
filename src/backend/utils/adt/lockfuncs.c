@@ -5,21 +5,21 @@
  * Copyright (c) 2002, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *		$Header: /cvsroot/pgsql/src/backend/utils/adt/lockfuncs.c,v 1.2 2002/08/27 04:00:28 momjian Exp $
+ *		$Header: /cvsroot/pgsql/src/backend/utils/adt/lockfuncs.c,v 1.3 2002/08/29 00:17:05 tgl Exp $
  */
-
 #include "postgres.h"
-#include "fmgr.h"
+
 #include "funcapi.h"
 #include "catalog/pg_type.h"
 #include "storage/lmgr.h"
 #include "storage/lock.h"
 #include "storage/lwlock.h"
 #include "storage/proc.h"
+#include "utils/builtins.h"
 
-Datum pg_lock_status(PG_FUNCTION_ARGS);
 
 static int next_lock(int locks[]);
+
 
 Datum
 pg_lock_status(PG_FUNCTION_ARGS)

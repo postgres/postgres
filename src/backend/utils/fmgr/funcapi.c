@@ -6,12 +6,17 @@
  *
  * Copyright (c) 2002, PostgreSQL Global Development Group
  *
+ * IDENTIFICATION
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/funcapi.c,v 1.3 2002/08/29 00:17:05 tgl Exp $
+ *
  *-------------------------------------------------------------------------
  */
+#include "postgres.h"
 
 #include "funcapi.h"
 #include "catalog/pg_type.h"
 #include "utils/syscache.h"
+
 
 /*
  * init_MultiFuncCall
@@ -99,8 +104,6 @@ per_MultiFuncCall(PG_FUNCTION_ARGS)
 void
 end_MultiFuncCall(PG_FUNCTION_ARGS, FuncCallContext *funcctx)
 {
-	MemoryContext oldcontext;
-
 	/* unbind from fcinfo */
 	fcinfo->flinfo->fn_extra = NULL;
 
@@ -108,32 +111,8 @@ end_MultiFuncCall(PG_FUNCTION_ARGS, FuncCallContext *funcctx)
 	 * Caller is responsible to free up memory for individual
 	 * struct elements other than att_in_funcinfo and elements.
 	 */
-	oldcontext = MemoryContextSwitchTo(funcctx->fmctx);
-
 	if (funcctx->attinmeta != NULL)
 		pfree(funcctx->attinmeta);
 
 	pfree(funcctx);
-
-	MemoryContextSwitchTo(oldcontext);
-}
-
-void
-get_type_metadata(Oid typeid, Oid *attinfuncid, Oid *attelem)
-{
-	HeapTuple		typeTuple;
-	Form_pg_type	typtup;
-
-	typeTuple = SearchSysCache(TYPEOID,
-							   ObjectIdGetDatum(typeid),
-							   0, 0, 0);
-	if (!HeapTupleIsValid(typeTuple))
-		elog(ERROR, "get_type_metadata: Cache lookup of type %u failed", typeid);
-
-	typtup = (Form_pg_type) GETSTRUCT(typeTuple);
-
-	*attinfuncid = typtup->typinput;
-	*attelem = typtup->typelem;
-
-	ReleaseSysCache(typeTuple);
 }

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/typecmds.c,v 1.11 2002/08/23 16:41:37 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/typecmds.c,v 1.12 2002/08/29 00:17:03 tgl Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -233,6 +233,7 @@ DefineType(List *names, List *parameters)
 				   typeNamespace,	/* namespace */
 				   InvalidOid,		/* preassigned type oid (not done here) */
 				   InvalidOid,		/* relation oid (n/a here) */
+				   0,				/* relation kind (ditto) */
 				   internalLength,	/* internal size */
 				   'b',				/* type-type (base type) */
 				   delimiter,		/* array element delimiter */
@@ -262,6 +263,7 @@ DefineType(List *names, List *parameters)
 			   typeNamespace,	/* namespace */
 			   InvalidOid,		/* preassigned type oid (not done here) */
 			   InvalidOid,		/* relation oid (n/a here) */
+			   0,				/* relation kind (ditto) */
 			   -1,				/* internal size */
 			   'b',				/* type-type (base type) */
 			   DEFAULT_TYPDELIM,	/* array element delimiter */
@@ -562,6 +564,7 @@ DefineDomain(CreateDomainStmt *stmt)
 				   domainNamespace,		/* namespace */
 				   InvalidOid,			/* preassigned type oid (none here) */
 				   InvalidOid,			/* relation oid (n/a here) */
+				   0,					/* relation kind (ditto) */
 				   internalLength,		/* internal size */
 				   'd',					/* type-type (domain type) */
 				   delimiter,			/* array element delimiter */

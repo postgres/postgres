@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeFunctionscan.c,v 1.5 2002/08/05 02:30:50 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeFunctionscan.c,v 1.6 2002/08/29 00:17:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -130,10 +130,10 @@ FunctionNext(FunctionScan *node)
 /* ----------------------------------------------------------------
  *		ExecFunctionScan(node)
  *
- *		Scans the Function sequentially and returns the next qualifying
+ *		Scans the function sequentially and returns the next qualifying
  *		tuple.
  *		It calls the ExecScan() routine and passes it the access method
- *		which retrieve tuples sequentially.
+ *		which retrieves tuples sequentially.
  *
  */
 
@@ -156,7 +156,6 @@ ExecInitFunctionScan(FunctionScan *node, EState *estate, Plan *parent)
 	FunctionScanState  *scanstate;
 	RangeTblEntry	   *rte;
 	Oid					funcrettype;
-	Oid					funcrelid;
 	char				functyptype;
 	TupleDesc			tupdesc = NULL;
 
@@ -201,31 +200,26 @@ ExecInitFunctionScan(FunctionScan *node, EState *estate, Plan *parent)
 
 	/*
 	 * Now determine if the function returns a simple or composite type,
-	 * and check/add column aliases.
+	 * and build an appropriate tupdesc.
 	 */
 	functyptype = get_typtype(funcrettype);
 
-	/*
-	 * Build a suitable tupledesc representing the output rows
-	 */
 	if (functyptype == 'c')
 	{
-		funcrelid = typeidTypeRelid(funcrettype);
-		if (OidIsValid(funcrelid))
-		{
-			/*
-			 * Composite data type, i.e. a table's row type
-			 * Same as ordinary relation RTE
-			 */
-			Relation	rel;
+		/*
+		 * Composite data type, i.e. a table's row type
+		 */
+		Oid			funcrelid;
+		Relation	rel;
 
-			rel = relation_open(funcrelid, AccessShareLock);
-			tupdesc = CreateTupleDescCopy(RelationGetDescr(rel));
-			relation_close(rel, AccessShareLock);
-			scanstate->returnsTuple = true;
-		}
-		else
-			elog(ERROR, "Invalid return relation specified for function");
+		funcrelid = typeidTypeRelid(funcrettype);
+		if (!OidIsValid(funcrelid))
+			elog(ERROR, "Invalid typrelid for complex type %u",
+				 funcrettype);
+		rel = relation_open(funcrelid, AccessShareLock);
+		tupdesc = CreateTupleDescCopy(RelationGetDescr(rel));
+		relation_close(rel, AccessShareLock);
+		scanstate->returnsTuple = true;
 	}
 	else if (functyptype == 'b' || functyptype == 'd')
 	{
@@ -461,8 +455,7 @@ function_getonetuple(FunctionScanState *scanstate,
 			 */
 			if (fn_typtype == 'p' && fn_typeid == RECORDOID)
 				if (tupledesc_mismatch(tupdesc, slot->ttc_tupleDescriptor))
-					elog(ERROR, "Query-specified return tuple and actual"
-									" function return tuple do not match");
+					elog(ERROR, "Query-specified return tuple and actual function return tuple do not match");
 		}
 		else
 		{
@@ -480,7 +473,7 @@ function_getonetuple(FunctionScanState *scanstate,
 								  slot,				/* slot to store in */
 								  InvalidBuffer,	/* buffer associated with
 													 * this tuple */
-								  true);			/* pfree this pointer */
+								  true);			/* pfree this tuple */
 		}
 	}
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.145 2002/08/13 20:11:03 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.146 2002/08/29 00:17:02 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -607,6 +607,9 @@ heap_open(Oid relationId, LOCKMODE lockmode)
 	else if (r->rd_rel->relkind == RELKIND_SPECIAL)
 		elog(ERROR, "%s is a special relation",
 			 RelationGetRelationName(r));
+	else if (r->rd_rel->relkind == RELKIND_COMPOSITE_TYPE)
+		elog(ERROR, "%s is a composite type",
+			 RelationGetRelationName(r));
 
 	pgstat_initstats(&r->pgstat_info, r);
 
@@ -633,6 +636,9 @@ heap_openrv(const RangeVar *relation, LOCKMODE lockmode)
 	else if (r->rd_rel->relkind == RELKIND_SPECIAL)
 		elog(ERROR, "%s is a special relation",
 			 RelationGetRelationName(r));
+	else if (r->rd_rel->relkind == RELKIND_COMPOSITE_TYPE)
+		elog(ERROR, "%s is a composite type",
+			 RelationGetRelationName(r));
 
 	pgstat_initstats(&r->pgstat_info, r);
 
@@ -658,6 +664,9 @@ heap_openr(const char *sysRelationName, LOCKMODE lockmode)
 			 RelationGetRelationName(r));
 	else if (r->rd_rel->relkind == RELKIND_SPECIAL)
 		elog(ERROR, "%s is a special relation",
+			 RelationGetRelationName(r));
+	else if (r->rd_rel->relkind == RELKIND_COMPOSITE_TYPE)
+		elog(ERROR, "%s is a composite type",
 			 RelationGetRelationName(r));
 
 	pgstat_initstats(&r->pgstat_info, r);

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/functions.c,v 1.55 2002/08/23 16:41:37 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/functions.c,v 1.56 2002/08/29 00:17:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -193,9 +193,10 @@ init_sql_fcache(FmgrInfo *finfo)
 	 */
 	fcache->typlen = typeStruct->typlen;
 
-	if (typeStruct->typtype != 'c')
+	if (typeStruct->typtype != 'c' &&
+		procedureStruct->prorettype != RECORDOID)
 	{
-		/* The return type is not a relation, so just use byval */
+		/* The return type is not a composite type, so just use byval */
 		fcache->typbyval = typeStruct->typbyval;
 		fcache->returnsTuple = false;
 	}

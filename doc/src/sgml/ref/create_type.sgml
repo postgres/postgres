@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_type.sgml,v 1.33 2002/08/23 00:33:24 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_type.sgml,v 1.34 2002/08/29 00:17:01 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -32,11 +32,7 @@ CREATE TYPE <replaceable class="parameter">typename</replaceable> ( INPUT = <rep
 )
 
 CREATE TYPE <replaceable class="parameter">typename</replaceable> AS
-      ( <replaceable class="PARAMETER">column_definition_list</replaceable> )
-
-where <replaceable class="PARAMETER">column_definition_list</replaceable> can be:
-
-( <replaceable class="PARAMETER">column_name</replaceable> <replaceable class="PARAMETER">data_type</replaceable> [, ... ] )
+    ( <replaceable class="PARAMETER">column_name</replaceable> <replaceable class="PARAMETER">data_type</replaceable> [, ... ] )
   </synopsis>
   
   <refsect2 id="R2-SQL-CREATETYPE-1">
@@ -216,8 +212,12 @@ CREATE TYPE
    type names also must not conflict with table names in the same schema.)
   </para>
 
+  <refsect2>
+   <title>Base Types</title>
+
   <para>
-   The first form of <command>CREATE TYPE</command>  requires  the  
+   The first form of <command>CREATE TYPE</command> creates a new base type
+   (scalar type).  It  requires  the
    registration of two functions (using CREATE FUNCTION) before defining the
    type. The representation of a new base type is determined by
    <replaceable class="parameter">input_function</replaceable>, which
@@ -338,20 +338,27 @@ CREATE TYPE
    a row fit, but they will be kept in the main table preferentially over
    <literal>extended</literal> and <literal>external</literal> items.)
   </para>
+  </refsect2>
+
+  <refsect2>
+   <title>Composite Types</title>
 
   <para>
-   The second form of <command>CREATE TYPE</command> requires a column
-   definition list in the form ( <replaceable class="PARAMETER">column_name</replaceable> 
-   <replaceable class="PARAMETER">data_type</replaceable> [, ... ] ). This
-   creates a composite type, similar to that of a TABLE or VIEW relation.
-   A stand-alone composite type is useful as the return type of FUNCTION.
+   The second form of <command>CREATE TYPE</command>
+   creates a composite type.
+   The composite type is specified by a list of column names and datatypes.
+   This is essentially the same as the row type
+   of a table, but using <command>CREATE TYPE</command> avoids the need to
+   create an actual table when all that is wanted is to define a type.
+   A stand-alone composite type is useful as the return type of a function.
   </para>
+  </refsect2>
 
   <refsect2>
    <title>Array Types</title>
 
    <para>
-    Whenever a user-defined data type is created, 
+    Whenever a user-defined base data type is created, 
     <productname>PostgreSQL</productname> automatically creates an
     associated array type, whose name consists of the base type's
     name prepended with an underscore.  The parser understands this
@@ -436,8 +443,8 @@ CREATE TABLE big_objs (id int4, obj bigobj);
    This example creates a composite type and uses it in
    a table function definition:
 <programlisting>
-CREATE TYPE compfoo AS (f1 int, f2 int);
-CREATE FUNCTION getfoo() RETURNS SETOF compfoo AS 'SELECT fooid, foorefid FROM foo' LANGUAGE SQL;
+CREATE TYPE compfoo AS (f1 int, f2 text);
+CREATE FUNCTION getfoo() RETURNS SETOF compfoo AS 'SELECT fooid, fooname FROM foo' LANGUAGE SQL;
 </programlisting>
   </para>
  </refsect1>

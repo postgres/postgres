@@ -27,7 +27,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.175 2002/08/28 20:46:22 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.176 2002/08/29 00:17:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -784,10 +784,6 @@ initResultRelInfo(ResultRelInfo *resultRelInfo,
 			break;
 		case RELKIND_VIEW:
 			elog(ERROR, "You can't change view relation %s",
-				 RelationGetRelationName(resultRelationDesc));
-			break;
-		case RELKIND_COMPOSITE_TYPE:
-			elog(ERROR, "You can't change type relation %s",
 				 RelationGetRelationName(resultRelationDesc));
 			break;
 	}

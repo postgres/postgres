@@ -5,7 +5,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994-5, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/commands/explain.c,v 1.84 2002/07/20 15:12:55 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/commands/explain.c,v 1.85 2002/08/29 00:17:03 tgl Exp $
  *
  */
 
@@ -79,7 +79,7 @@ ExplainQuery(ExplainStmt *stmt, CommandDest dest)
 	if (query->commandType == CMD_UTILITY)
 	{
 		/* rewriter will not cope with utility statements */
-		PROJECT_LINE_OF_TEXT(tstate, "Utility statements have no plan structure");
+		do_text_output_oneline(tstate, "Utility statements have no plan structure");
 	}
 	else
 	{
@@ -89,7 +89,7 @@ ExplainQuery(ExplainStmt *stmt, CommandDest dest)
 		if (rewritten == NIL)
 		{
 			/* In the case of an INSTEAD NOTHING, tell at least that */
-			PROJECT_LINE_OF_TEXT(tstate, "Query rewrites to nothing");
+			do_text_output_oneline(tstate, "Query rewrites to nothing");
 		}
 		else
 		{
@@ -99,7 +99,7 @@ ExplainQuery(ExplainStmt *stmt, CommandDest dest)
 				ExplainOneQuery(lfirst(l), stmt, tstate);
 				/* put a blank line between plans */
 				if (lnext(l) != NIL)
-					PROJECT_LINE_OF_TEXT(tstate, "");
+					do_text_output_oneline(tstate, "");
 			}
 		}
 	}
@@ -122,9 +122,9 @@ ExplainOneQuery(Query *query, ExplainStmt *stmt, TupOutputState *tstate)
 	if (query->commandType == CMD_UTILITY)
 	{
 		if (query->utilityStmt && IsA(query->utilityStmt, NotifyStmt))
-			PROJECT_LINE_OF_TEXT(tstate, "NOTIFY");
+			do_text_output_oneline(tstate, "NOTIFY");
 		else
-			PROJECT_LINE_OF_TEXT(tstate, "UTILITY");
+			do_text_output_oneline(tstate, "UTILITY");
 		return;
 	}
 
@@ -189,7 +189,7 @@ ExplainOneQuery(Query *query, ExplainStmt *stmt, TupOutputState *tstate)
 			do_text_output_multiline(tstate, f);
 			pfree(f);
 			if (es->printCost)
-				PROJECT_LINE_OF_TEXT(tstate, "");	/* separator line */
+				do_text_output_oneline(tstate, "");	/* separator line */
 		}
 	}
 

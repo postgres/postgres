@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/tablecmds.c,v 1.35 2002/08/28 20:18:29 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/tablecmds.c,v 1.36 2002/08/29 00:17:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -228,7 +228,7 @@ DefineRelation(CreateStmt *stmt, char relkind)
 	 * see the new rel anyway until we commit), but it keeps the lock
 	 * manager from complaining about deadlock risks.
 	 */
-	rel = heap_open(relationId, AccessExclusiveLock);
+	rel = relation_open(relationId, AccessExclusiveLock);
 
 	/*
 	 * Now add any newly specified column default values and CHECK
@@ -293,7 +293,7 @@ DefineRelation(CreateStmt *stmt, char relkind)
 	 * Clean up.  We keep lock on new relation (although it shouldn't be
 	 * visible to anyone else anyway, until commit).
 	 */
-	heap_close(rel, NoLock);
+	relation_close(rel, NoLock);
 
 	return relationId;
 }
@@ -1064,7 +1064,7 @@ renameatt(Oid relid,
 	 * Grab an exclusive lock on the target table, which we will NOT
 	 * release until end of transaction.
 	 */
-	targetrelation = heap_open(relid, AccessExclusiveLock);
+	targetrelation = relation_open(relid, AccessExclusiveLock);
 
 	/*
 	 * permissions checking.  this would normally be done in utility.c,
@@ -1210,7 +1210,7 @@ renameatt(Oid relid,
 							   true, false);
 	}
 
-	heap_close(targetrelation, NoLock); /* close rel but keep lock! */
+	relation_close(targetrelation, NoLock); /* close rel but keep lock! */
 }
 
 /*
@@ -3247,13 +3247,12 @@ CheckTupleType(Form_pg_class tuple_class)
 		case RELKIND_RELATION:
 		case RELKIND_INDEX:
 		case RELKIND_VIEW:
-		case RELKIND_COMPOSITE_TYPE:
 		case RELKIND_SEQUENCE:
 		case RELKIND_TOASTVALUE:
 			/* ok to change owner */
 			break;
 		default:
-			elog(ERROR, "ALTER TABLE: relation \"%s\" is not a table, TOAST table, index, view, type, or sequence",
+			elog(ERROR, "ALTER TABLE: relation \"%s\" is not a table, TOAST table, index, view, or sequence",
 				 NameStr(tuple_class->relname));
 	}
 }

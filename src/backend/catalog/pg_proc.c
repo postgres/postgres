@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_proc.c,v 1.90 2002/08/23 16:41:37 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_proc.c,v 1.91 2002/08/29 00:17:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -400,7 +400,7 @@ checkretval(Oid rettype, char fn_typtype, List *queryTreeList)
 		 * attributes to ensure that they match the datatypes of the
 		 * non-resjunk columns.
 		 */
-		reln = heap_open(typerelid, AccessShareLock);
+		reln = relation_open(typerelid, AccessShareLock);
 		relnatts = reln->rd_rel->relnatts;
 		rellogcols = 0;				/* we'll count nondeleted cols as we go */
 		colindex = 0;
@@ -447,7 +447,7 @@ checkretval(Oid rettype, char fn_typtype, List *queryTreeList)
 			elog(ERROR, "function declared to return %s does not SELECT the right number of columns (%d)",
 				 format_type_be(rettype), rellogcols);
 
-		heap_close(reln, AccessShareLock);
+		relation_close(reln, AccessShareLock);
 	}
 	else if (fn_typtype == 'p' && rettype == RECORDOID)
 	{

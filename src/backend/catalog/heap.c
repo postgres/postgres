@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.221 2002/08/15 16:36:00 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.222 2002/08/29 00:17:02 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -69,6 +69,7 @@ static void AddNewRelationTuple(Relation pg_class_desc,
 static void AddNewRelationType(const char *typeName,
 							   Oid typeNamespace,
 							   Oid new_rel_oid,
+							   char new_rel_kind,
 							   Oid new_type_oid);
 static void RelationRemoveInheritance(Relation relation);
 static void StoreAttrDefault(Relation rel, AttrNumber attnum, char *adbin);
@@ -357,7 +358,7 @@ CheckAttributeNames(TupleDesc tupdesc, bool relhasoids, char relkind)
 	/*
 	 * first check for collision with system attribute names
 	 *
-	 * Skip this for a view and type relation, since it doesn't have system
+	 * Skip this for a view or type relation, since those don't have system
 	 * attributes.
 	 */
 	if (relkind != RELKIND_VIEW && relkind != RELKIND_COMPOSITE_TYPE)
@@ -618,6 +619,7 @@ static void
 AddNewRelationType(const char *typeName,
 				   Oid typeNamespace,
 				   Oid new_rel_oid,
+				   char new_rel_kind,
 				   Oid new_type_oid)
 {
 	/*
@@ -633,6 +635,7 @@ AddNewRelationType(const char *typeName,
 			   typeNamespace,	/* type namespace */
 			   new_type_oid,	/* preassigned oid for type */
 			   new_rel_oid,		/* relation oid */
+			   new_rel_kind,	/* relation kind */
 			   sizeof(Oid),		/* internal size */
 			   'c',				/* type-type (complex) */
 			   ',',				/* default array delimiter */
@@ -728,7 +731,11 @@ heap_create_with_catalog(const char *relname,
 	 * NOTE: we could get a unique-index failure here, in case the same name
 	 * has already been used for a type.
 	 */
-	AddNewRelationType(relname, relnamespace, new_rel_oid, new_type_oid);
+	AddNewRelationType(relname,
+					   relnamespace,
+					   new_rel_oid,
+					   relkind,
+					   new_type_oid);
 
 	/*
 	 * now add tuples to pg_attribute for the attributes in our new
@@ -904,7 +911,7 @@ RemoveAttributeById(Oid relid, AttrNumber attnum)
 	 * did this ... but when cascading from a drop of some other object,
 	 * we may not have any lock.)
 	 */
-	rel = heap_open(relid, AccessExclusiveLock);
+	rel = relation_open(relid, AccessExclusiveLock);
 
 	attr_rel = heap_openr(AttributeRelationName, RowExclusiveLock);
 
@@ -943,7 +950,7 @@ RemoveAttributeById(Oid relid, AttrNumber attnum)
 
 	heap_close(attr_rel, RowExclusiveLock);
 
-	heap_close(rel, NoLock);
+	relation_close(rel, NoLock);
 }
 
 /*
@@ -1036,7 +1043,7 @@ RemoveAttrDefaultById(Oid attrdefId)
 	myattnum = ((Form_pg_attrdef) GETSTRUCT(tuple))->adnum;
 
 	/* Get an exclusive lock on the relation owning the attribute */
-	myrel = heap_open(myrelid, AccessExclusiveLock);
+	myrel = relation_open(myrelid, AccessExclusiveLock);
 
 	/* Now we can delete the pg_attrdef row */
 	simple_heap_delete(attrdef_rel, &tuple->t_self);
@@ -1069,7 +1076,7 @@ RemoveAttrDefaultById(Oid attrdefId)
 	heap_close(attr_rel, RowExclusiveLock);
 
 	/* Keep lock on attribute's rel until end of xact */
-	heap_close(myrel, NoLock);
+	relation_close(myrel, NoLock);
 }
 
 /* ----------------------------------------------------------------
@@ -1099,7 +1106,7 @@ heap_drop_with_catalog(Oid rid)
 	/*
 	 * Open and lock the relation.
 	 */
-	rel = heap_open(rid, AccessExclusiveLock);
+	rel = relation_open(rid, AccessExclusiveLock);
 
 	/*
 	 * Release all buffers that belong to this relation, after writing any
@@ -1134,7 +1141,7 @@ heap_drop_with_catalog(Oid rid)
 	 * unlink the relation's physical file and finish up.
 	 */
 	if (rel->rd_rel->relkind != RELKIND_VIEW &&
-			rel->rd_rel->relkind != RELKIND_COMPOSITE_TYPE)
+		rel->rd_rel->relkind != RELKIND_COMPOSITE_TYPE)
 		smgrunlink(DEFAULT_SMGR, rel);
 
 	/*
@@ -1142,7 +1149,7 @@ heap_drop_with_catalog(Oid rid)
 	 * relation until transaction commit.  This ensures no one else will
 	 * try to do something with the doomed relation.
 	 */
-	heap_close(rel, NoLock);
+	relation_close(rel, NoLock);
 
 	/*
 	 * flush the relation from the relcache

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/select.sgml,v 1.57 2002/08/28 14:35:37 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/select.sgml,v 1.58 2002/08/29 00:17:01 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -40,10 +40,10 @@ where <replaceable class="PARAMETER">from_item</replaceable> can be:
 ( <replaceable class="PARAMETER">select</replaceable> )
     [ AS ] <replaceable class="PARAMETER">alias</replaceable> [ ( <replaceable class="PARAMETER">column_alias_list</replaceable> ) ]
 |
-<replaceable class="PARAMETER">table_function_name</replaceable> ( [ <replaceable class="parameter">argtype</replaceable> [, ...] ] )
+<replaceable class="PARAMETER">table_function_name</replaceable> ( [ <replaceable class="parameter">argument</replaceable> [, ...] ] )
     [ AS ] <replaceable class="PARAMETER">alias</replaceable> [ ( <replaceable class="PARAMETER">column_alias_list</replaceable> | <replaceable class="PARAMETER">column_definition_list</replaceable> ) ]
 |
-<replaceable class="PARAMETER">table_function_name</replaceable> ( [ <replaceable class="parameter">argtype</replaceable> [, ...] ] )
+<replaceable class="PARAMETER">table_function_name</replaceable> ( [ <replaceable class="parameter">argument</replaceable> [, ...] ] )
     AS ( <replaceable class="PARAMETER">column_definition_list</replaceable> )
 |
 <replaceable class="PARAMETER">from_item</replaceable> [ NATURAL ] <replaceable class="PARAMETER">join_type</replaceable> <replaceable class="PARAMETER">from_item</replaceable>
@@ -142,10 +142,14 @@ where <replaceable class="PARAMETER">from_item</replaceable> can be:
       <term><replaceable class="PARAMETER">alias</replaceable></term>
       <listitem>
        <para>
-	A substitute name for the preceding
-	<replaceable class="PARAMETER">table_name</replaceable>.
+	A substitute name for the FROM item containing the alias.
 	An alias is used for brevity or to eliminate ambiguity for self-joins
-	(where the same table is scanned multiple times).  If an alias is
+	(where the same table is scanned multiple times).  When an alias
+	is provided, it completely hides the actual name of the table or
+	table function; for example given <literal>FROM foo AS f</>, the
+	remainder of the SELECT must refer to this FROM item as <literal>f</>
+	not <literal>foo</>.
+	If an alias is
 	written, a column alias list can also be written to provide
 	substitute names for one or more columns of the table.
        </para>
@@ -172,12 +176,15 @@ where <replaceable class="PARAMETER">from_item</replaceable> can be:
 	A table function can appear in the FROM clause.  This acts as though
 	its output were created as a temporary table for the duration of
 	this single SELECT command. An alias may also be used. If an alias is
-	written, a column alias list can also be written to provide	substitute names
-	for one or more columns of the table function. If the table function has been
-	defined as returning the RECORD data type, an alias, or the keyword AS, must
-    also be present, followed by a column definition list in the form
-	( <replaceable class="PARAMETER">column_name</replaceable> <replaceable class="PARAMETER">data_type</replaceable> [, ... ] ).
-	The column definition list must match the actual number and types returned by the function.
+	written, a column alias list can also be written to provide substitute
+	names for one or more columns of the table function. If the table
+	function has been defined as returning the <type>record</> data type,
+	an alias, or the keyword <literal>AS</>, must be present, followed by
+	a column definition list in the form ( <replaceable
+	class="PARAMETER">column_name</replaceable> <replaceable
+	class="PARAMETER">data_type</replaceable> [, ... ] ).
+	The column definition list must match the actual number and types
+	of columns returned by the function.
        </para>
       </listitem>
      </varlistentry>
@@ -395,7 +402,7 @@ where <replaceable class="PARAMETER">from_item</replaceable> can be:
     this was the default result, and adding sub-tables was done
     by appending <command>*</command> to the table name.
     This old behavior is available via the command 
-    <command>SET SQL_Inheritance TO OFF;</command>
+    <command>SET SQL_Inheritance TO OFF</command>.
    </para>
 
    <para>
@@ -406,16 +413,22 @@ where <replaceable class="PARAMETER">from_item</replaceable> can be:
    </para>
 
    <para>
-    A FROM item can be a table function (i.e. a function that returns
-    multiple rows and columns).  When a table function is created, it may
-	be defined to return a named scalar or composite data type (an existing
-	scalar data type, or a table or view name), or it may be defined to return
-	a RECORD data type. When a table function is defined to return RECORD, it
-	must be followed in the FROM clause by an alias, or the keyword AS alone,
-	and then by a parenthesized list of column names and types. This provides
-	a query-time composite type definition. The FROM clause composite type
-	must match the actual composite type returned from the function or an
-	ERROR will be generated.
+    A FROM item can be a table function (typically, a function that returns
+    multiple rows and/or columns, though actually any function can be used).
+    The function is invoked with the given argument value(s), and then its
+    output is scanned as though it were a table.
+   </para>
+
+   <para>
+    In some cases it is useful to define table functions that can return
+    different column sets depending on how they are invoked.  To support this,
+    the table function can be declared as returning the pseudo-type
+    <type>record</>.  When such a function is used in FROM, it must be
+    followed by an alias, or the keyword <literal>AS</> alone,
+    and then by a parenthesized list of column names and types. This provides
+    a query-time composite type definition. The composite type definition
+    must match the actual composite type returned from the function, or an
+    error will be reported at run-time.
    </para>
 
    <para>
@@ -827,6 +840,38 @@ SELECT name FROM distributors ORDER BY code;
     unless ORDER BY is used to constrain the order.
    </para>
   </refsect2>
+
+  <refsect2 id="SQL-FOR-UPDATE">
+   <refsect2info>
+    <date>2002-08-28</date>
+   </refsect2info>
+   <title id="sql-for-update-title">
+    FOR UPDATE Clause
+   </title>
+   <para>
+    <synopsis>
+    FOR UPDATE [ OF <replaceable class="PARAMETER">tablename</replaceable> [, ...] ]
+    </synopsis>
+   </para>
+
+   <para>
+    FOR UPDATE causes the rows retrieved by the query to be locked as though
+    for update.  This prevents them from being modified or deleted by other
+    transactions until the current transaction ends.
+   </para>
+
+   <para>
+    If specific tables are named in FOR UPDATE, then only rows coming from
+    those tables are locked.
+   </para>
+
+   <para>
+    FOR UPDATE cannot be used in contexts where returned rows can't be clearly
+    identified with individual table rows; for example it can't be used with
+    aggregation.
+   </para>
+  </refsect2>
+
  </refsect1>
 
  <refsect1 id="R1-SQL-SELECT-2">
@@ -1019,8 +1064,7 @@ SELECT * FROM distributors_2(111) AS (f1 int, f2 text);
 <productname>PostgreSQL</productname> allows one to omit 
 the <command>FROM</command> clause from a query. This feature
 was retained from the original PostQuel query language.  It has
-a straightforward use to compute the results of simple constant
-expressions:
+a straightforward use to compute the results of simple expressions:
 
   <programlisting>
 SELECT 2+2;
@@ -1061,6 +1105,11 @@ that he will actually get.  To help detect this sort of mistake,
 and later will warn if the implicit-FROM feature is used in a query that also
 contains an explicit FROM clause.
 
+   </para>
+
+   <para>
+    The table-function feature is a <productname>PostgreSQL</productname>
+    extension.
    </para>
   </refsect2>
 
