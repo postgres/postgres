@@ -67,7 +67,7 @@ next_dlsym(void *handle, char *symbol)
 	char		symbuf[1024];
 	unsigned long symref = 0;
 
-	sprintf(symbuf, "_%s", symbol);
+	snprintf(symbuf, sizeof(symbuf), "_%s", symbol);
 	if (!rld_lookup(errorStream, symbuf, &symref))
 		TransferError(errorStream);
 	CloseError(errorStream);
