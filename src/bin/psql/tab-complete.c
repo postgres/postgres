@@ -3,7 +3,7 @@
  *
  * Copyright 2000-2002 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/tab-complete.c,v 1.74 2003/03/27 16:45:01 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/tab-complete.c,v 1.75 2003/03/28 16:34:50 momjian Exp $
  */
 
 /*----------------------------------------------------------------------
@@ -411,7 +411,7 @@ typedef struct
 
 pgsql_thing_t words_after_create[] = {
 	{"AGGREGATE", WITH_SCHEMA, Query_for_list_of_aggregates},
-	{"CAST", NULL, NULL},				/* Casts have complex structures for namees, so skip it */
+	{"CAST", NO_SCHEMA, NULL},				/* Casts have complex structures for namees, so skip it */
 	{"CONVERSION", NO_SCHEMA, "SELECT conname FROM pg_catalog.pg_conversion WHERE substr(conname,1,%d)='%s'"},
 	{"DATABASE", NO_SCHEMA, Query_for_list_of_databases},
 	{"DOMAIN", WITH_SCHEMA, Query_for_list_of_domains},
@@ -419,19 +419,19 @@ pgsql_thing_t words_after_create[] = {
 	{"GROUP", NO_SCHEMA, "SELECT groname FROM pg_catalog.pg_group WHERE substr(groname,1,%d)='%s'"},
 	{"LANGUAGE", NO_SCHEMA, Query_for_list_of_languages},
 	{"INDEX", WITH_SCHEMA,  Query_for_list_of_indexes},
-	{"OPERATOR", NULL, NULL},			/* Querying for this is probably not such
+	{"OPERATOR", NO_SCHEMA, NULL},			/* Querying for this is probably not such
 								 * a good idea. */
 	{"RULE", NO_SCHEMA, "SELECT rulename FROM pg_catalog.pg_rules WHERE substr(rulename,1,%d)='%s'"},
 	{"SCHEMA", NO_SCHEMA, Query_for_list_of_schemas},
 	{"SEQUENCE", WITH_SCHEMA, Query_for_list_of_sequences},
 	{"TABLE", WITH_SCHEMA, Query_for_list_of_tables},
-	{"TEMP", NULL, NULL},				/* for CREATE TEMP TABLE ... */
+	{"TEMP", NO_SCHEMA, NULL},				/* for CREATE TEMP TABLE ... */
 	{"TRIGGER", NO_SCHEMA, "SELECT tgname FROM pg_catalog.pg_trigger WHERE substr(tgname,1,%d)='%s'"},
 	{"TYPE", WITH_SCHEMA, Query_for_list_of_datatypes },
-	{"UNIQUE", NULL, NULL},			/* for CREATE UNIQUE INDEX ... */
+	{"UNIQUE", NO_SCHEMA, NULL},			/* for CREATE UNIQUE INDEX ... */
 	{"USER", NO_SCHEMA,  Query_for_list_of_users},
 	{"VIEW", WITH_SCHEMA, Query_for_list_of_views},
-	{NULL, NULL}				/* end of list */
+	{NULL, NO_SCHEMA, NULL}				/* end of list */
 };
 
 
