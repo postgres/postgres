@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/date.c,v 1.73.2.3 2003/01/29 01:09:03 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/date.c,v 1.73.2.4 2003/02/13 17:04:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1348,23 +1348,22 @@ timetz_out(PG_FUNCTION_ARGS)
 
 /* timetz2tm()
  * Convert TIME WITH TIME ZONE data type to POSIX time structure.
- * For dates within the system-supported time_t range, convert to the
- *	local time zone. If out of this range, leave as GMT. - tgl 97/05/27
  */
 static int
 timetz2tm(TimeTzADT *time, struct tm * tm, fsec_t *fsec, int *tzp)
 {
 #ifdef HAVE_INT64_TIMESTAMP
-	tm->tm_hour = (time->time / INT64CONST(3600000000));
-	time->time -= (tm->tm_hour * INT64CONST(3600000000));
-	tm->tm_min = (time->time / INT64CONST(60000000));
-	time->time -= (tm->tm_min * INT64CONST(60000000));
-	tm->tm_sec = (time->time / INT64CONST(1000000));
-	*fsec = (time->time - (tm->tm_sec * INT64CONST(1000000)));
-#else
-	double		trem;
+	int64		trem = time->time;
 
-	trem = time->time;
+	tm->tm_hour = (trem / INT64CONST(3600000000));
+	trem -= (tm->tm_hour * INT64CONST(3600000000));
+	tm->tm_min = (trem / INT64CONST(60000000));
+	trem -= (tm->tm_min * INT64CONST(60000000));
+	tm->tm_sec = (trem / INT64CONST(1000000));
+	*fsec = (trem - (tm->tm_sec * INT64CONST(1000000)));
+#else
+	double		trem = time->time;
+
 	TMODULO(trem, tm->tm_hour, 3600e0);
 	TMODULO(trem, tm->tm_min, 60e0);
 	TMODULO(trem, tm->tm_sec, 1e0);
