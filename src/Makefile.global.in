@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.39 1998/04/12 01:18:35 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.40 1998/04/27 14:54:05 scrappy Exp $
 #
 # NOTES
 #    Essentially all Postgres make files include this file and use the 
@@ -159,6 +159,7 @@ RANLIB= @RANLIB@
 INSTLOPTS= @INSTLOPTS@
 INSTL_EXE_OPTS= @INSTL_EXE_OPTS@
 INSTL_LIB_OPTS= @INSTL_LIB_OPTS@
+INSTL_SHLIB_OPTS= @INSTL_SHLIB_OPTS@
 
 ##############################################################################
 #

@@ -332,18 +332,27 @@ fi
 INSTLOPTS="-m 444"
 INSTL_EXE_OPTS="-m 555"
 INSTL_LIB_OPTS="-m 644"
+INSTL_SHLIB_OPTS="-m 644"
+
+dnl HPUX wants shared libs to be mode 555.
+case "$host_os" in
+ hpux*)
+	INSTL_SHLIB_OPTS="-m 555" ;;
+esac
 
 case "`basename $INSTALL`" in
  install|installbsd|scoinst)
 	INSTLOPTS="-c $INSTLOPTS"
 	INSTL_EXE_OPTS="-c $INSTL_EXE_OPTS"
-	INSTL_LIB_OPTS="-c $INSTL_LIB_OPTS";;
+	INSTL_LIB_OPTS="-c $INSTL_LIB_OPTS"
+	INSTL_SHLIB_OPTS="-c $INSTL_SHLIB_OPTS";;
 esac
 
 echo "- Using $INSTALL"
 AC_SUBST(INSTALL)
 AC_SUBST(INSTLOPTS)
 AC_SUBST(INSTL_LIB_OPTS)
+AC_SUBST(INSTL_SHLIB_OPTS)
 AC_SUBST(INSTL_EXE_OPTS)
 
 dnl Check the option to echo to inhibit newlines.
