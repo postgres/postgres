@@ -5,12 +5,14 @@
 
 
 #include <pthread.h>
+#include <stdlib.h>
 
 void		ins1(void);
 void		ins2(void);
 
 EXEC SQL BEGIN DECLARE SECTION;
 char	   *dbname;
+int	    iterations = 10;
 EXEC SQL END DECLARE SECTION;
 
 int
@@ -22,12 +24,20 @@ EXEC SQL BEGIN DECLARE SECTION;
 	int		rows;
 EXEC SQL END DECLARE SECTION;
 
-	if (argc != 2)
+	if (argc < 2 || argc > 3)
 	{
-		fprintf(stderr, "Usage: %s dbname\n", argv[0]);
+		fprintf(stderr, "Usage: %s dbname [iterations]\n", argv[0]);
 		return 1;
 	}
 	dbname = argv[1];
+
+	if (argc == 3)
+		iterations = atoi(argv[2]);
+	if (iterations % 2 != 0)
+	{
+		fprintf(stderr, "iterations must be an even number\n");
+		return 1;
+	}
 
 	EXEC SQL CONNECT TO:dbname AS test0;
 
@@ -47,7 +57,7 @@ EXEC SQL END DECLARE SECTION;
 	EXEC SQL AT test3 COMMIT WORK;
 	EXEC SQL DISCONNECT test3;
 
-	if (rows == 10)
+	if (rows == iterations)
 		printf("Success.\n");
 	else
 		printf("Failure.\n");
@@ -61,7 +71,7 @@ ins1(void)
 	EXEC SQL WHENEVER sqlerror sqlprint;
 	EXEC SQL CONNECT TO:dbname AS test1;
 
-	for (i = 0; i < 5; i++)
+	for (i = 0; i < iterations / 2; i++)
 	{
 		printf("thread 1 : inserting\n");
 		EXEC SQL AT test1 INSERT INTO test_thread VALUES('thread1');
@@ -82,7 +92,7 @@ ins2(void)
 	EXEC SQL WHENEVER sqlerror sqlprint;
 	EXEC SQL CONNECT TO:dbname AS test2;
 
-	for (i = 0; i < 5; i++)
+	for (i = 0; i < iterations / 2; i++)
 	{
 		printf("thread  2: inserting\n");
 		EXEC SQL AT test2 INSERT INTO test_thread VALUES('thread2');
