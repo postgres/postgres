@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.55 1997/01/26 17:27:32 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.56 1997/02/11 03:11:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -147,7 +147,7 @@ slashUsage(PsqlSettings * ps)
     fprintf(stderr, " \\a           -- toggle field-alignment (currenty %s)\n", on(ps->opt.align));
     fprintf(stderr, " \\C [<captn>] -- set html3 caption (currently '%s')\n", ps->opt.caption ? ps->opt.caption : "");
     fprintf(stderr, " \\connect <dbname>  -- connect to new database (currently '%s')\n", PQdb(ps->db));
-    fprintf(stderr, " \\copy {<table> to <file> | <file> from <table>}\n");
+    fprintf(stderr, " \\copy table {from | to} <fname>\n");
     fprintf(stderr, " \\d [<table>] -- list tables in database or columns in <table>, * for all\n");
     fprintf(stderr, " \\e [<fname>] -- edit the current query buffer or <fname>, \\E execute too\n");
     fprintf(stderr, " \\f [<sep>]   -- change field separater (currently '%s')\n", ps->opt.fieldSep);
