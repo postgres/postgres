@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/monitoring.sgml,v 1.9 2002/07/31 02:27:29 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/monitoring.sgml,v 1.10 2002/08/04 19:51:30 momjian Exp $
 -->
 
 <chapter id="monitoring">
@@ -477,6 +477,14 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
       <entry>
        Set of currently active backend IDs (from 1 to N where N is the
        number of active backends).  See usage example below.
+      </entry>
+     </row>
+
+     <row>
+      <entry><function>pg_backend_pid</function>()</entry>
+      <entry><type>integer</type></entry>
+      <entry>
+       Process ID of the attached backend
       </entry>
      </row>
 
