@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/sql.sgml,v 1.16 2001/01/09 15:48:18 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/sql.sgml,v 1.17 2001/01/09 16:05:21 momjian Exp $
 -->
 
  <chapter id="sql">
@@ -1058,10 +1058,20 @@ select sname, pname from supplier
 	 item that occurs in a FROM clause and before any WHERE, GROUP BY,
 	 or HAVING clause.  Other table references, including table names or
 	 other JOIN clauses, may be included in the FROM clause if separated
-	 by commas.  A JOIN of two tables is logically like any other
-	 table listed in the FROM clause.  A JOINed table can only be JOINed
-	 to additional tables in a Qualified JOIN as indicated by the
-	 elipses below.
+	 by commas.  JOINed tables are logically like any other
+	 table listed in the FROM clause.
+	 </para>
+
+	 <para>
+	 JOINs of all types can be chained together or nested where either or both of
+	 <replaceable class="parameter">T1</replaceable> and
+	 <replaceable class="parameter">T2</replaceable> may be JOINed tables.
+	 A Qualified JOIN may be JOINed to another table (or JOINed table)
+	 following its join specification, which consists of either an
+	 ON <replaceable>search condition</replaceable> or
+	 USING ( <replaceable>join column list</replaceable> ) clause.
+	 Parenthesis can be used around JOIN clauses to control the order
+	 of JOINs which are otherwise processed left to right.
 	 </para>
 
     <variablelist>
@@ -1081,37 +1091,35 @@ select sname, pname from supplier
 			respectively, and returns a joined table containing a cross
 			product, NxM, of joined rows. For each row R1 of T1, each row
 			R2 of T2 is joined with R1 to yield a joined table row JR
-			consisting of all fields in R1 and R2.
+			consisting of all fields in R1 and R2. A CROSS JOIN is
+			essentially an INNER JOIN ON TRUE.
 			</para>
 			</listitem>
 		</varlistentry>
 
 		<varlistentry>
-		    <term>Qualified JOINs</term>			
+		    <term>Qualified JOINs</term>
 		    <listitem>
+
 			<cmdsynopsis>
 				<arg choice="req"> <replaceable class="parameter">T1</replaceable> </arg>
-				<arg>
-					<group>
-					<arg choice="plain"> INNER </arg>
+				<group choice="opt">
+					<arg choice="opt"> INNER </arg>
 					<arg>
-						<group>
-						<arg> LEFT </arg>
-						<arg> RIGHT </arg>
-						<arg> FULL </arg>
+						<group choice="req">
+							<arg choice="plain"> LEFT </arg>
+							<arg choice="plain"> RIGHT </arg>
+							<arg choice="plain"> FULL </arg>
 						</group>
-						<arg> OUTER </arg>
+						<arg choice="opt"> OUTER </arg>
       				</arg>
-					</group>
-     			</arg>
+     			</group>
 				<command> JOIN </command>
 				<arg choice="req"> <replaceable class="parameter">T2</replaceable> </arg>
-				<arg choice="req">
-					<group>
+				<group choice="req">
 					<arg> ON <replaceable>search condition</replaceable></arg>
 					<arg> USING ( <replaceable>join column list</replaceable> ) </arg>
-					</group>
-				</arg>
+				</group>
 				<arg choice="plain"> ... </arg>
 			</cmdsynopsis>
 
@@ -1122,9 +1130,6 @@ select sname, pname from supplier
 			column names, which the joined tables must have in common, and joins
 			the tables on those columns, resulting in a joined table having one
 			column for each common column and all of the other columns from both tables.
-			Like all SELECT queries, the <replaceable>select list</replaceable> of the
-			SELECT query, before the FROM clause, decides which columns from the joined
-			table are in the result	table returned.
 			</para>
 
 			<!-- begin join semantics -->
@@ -1226,23 +1231,22 @@ select sname, pname from supplier
 		<varlistentry>
 		    <term>NATURAL JOINs</term>
     		<listitem>
+
 			<cmdsynopsis>
 				<arg choice="req"> <replaceable class="parameter">T1</replaceable> </arg>
-				<arg>
-					<arg choice="plain"> NATURAL </arg>
-					<group>
-					<arg choice="plain"> INNER </arg>
+				<arg choice="plain"> NATURAL </arg>
+				<group choice="opt">
+					<arg choice="opt"> INNER </arg>
 					<arg>
-						<group>
-						<arg> LEFT </arg>
-						<arg> RIGHT </arg>
-						<arg> FULL </arg>
+						<group choice="req">
+							<arg choice="plain"> LEFT </arg>
+							<arg choice="plain"> RIGHT </arg>
+							<arg choice="plain"> FULL </arg>
 						</group>
-						<arg> OUTER </arg>
+						<arg choice="opt"> OUTER </arg>
       				</arg>
-					</group>
-     			</arg>
-				<command> JOIN </command>
+     			</group>
+				<command> JOIN </command>				
 				<arg choice="req"> <replaceable class="parameter">T2</replaceable> </arg>
 			</cmdsynopsis>
 
@@ -1250,17 +1254,13 @@ select sname, pname from supplier
 			A natural join creates a joined table where every pair of matching
 			column names between the two tables are merged into one column. The
 			join specification is effectively a USING clause containing all the
-            common column names and is otherwise like a Qualified JOIN except
-			additional JOINs to the JOINed table are not permitted.
+            common column names and is otherwise like a Qualified JOIN.
 			</para>
 			</listitem>
 		</varlistentry>
 
-		<varlistentry>
-		    <term>UNION JOIN</term>
-		    <listitem><para>Deprecated.</para></listitem>
-		</varlistentry>
 	 </variablelist>
+
 
     </sect3>
 
