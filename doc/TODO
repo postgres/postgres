@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Sun Oct 31 08:07:18 EST 1999
+Last updated:		Sun Oct 31 08:18:42 EST 1999
 
 Current maintainer:	Bruce Momjian (maillist@candle.pha.pa.us)
 
@@ -72,7 +72,7 @@ MISC
 * pg_dump should preserve primary key information
 * plpgsql regression tests fail on BSD/OS
 * database names with spaces fail
-* fail of insert of 0.0 into DECIMAL(4,4) field
+* insert of 0.0 into DECIMAL(4,4) field fails
 
 ENHANCEMENTS
 ------------
