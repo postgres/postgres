@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.135 2002/12/14 00:17:55 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.136 2002/12/19 23:25:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -264,25 +264,38 @@ subquery_planner(Query *parse, double tuple_fraction)
 
 	/*
 	 * If any subplans were generated, or if we're inside a subplan, build
-	 * subPlan, extParam and locParam lists for plan nodes.
+	 * initPlan, extParam and locParam lists for plan nodes.
 	 */
 	if (PlannerPlanId != saved_planid || PlannerQueryLevel > 1)
 	{
+		Cost	initplan_cost = 0;
+
+		/* Prepare extParam/locParam data for all nodes in tree */
 		(void) SS_finalize_plan(plan, parse->rtable);
 
 		/*
-		 * At the moment, SS_finalize_plan doesn't handle initPlans and so
-		 * we assign them to the topmost plan node.
+		 * SS_finalize_plan doesn't handle initPlans, so we have to manually
+		 * attach them to the topmost plan node, and add their extParams to
+		 * the topmost node's, too.
+		 *
+		 * We also add the total_cost of each initPlan to the startup cost
+		 * of the top node.  This is a conservative overestimate, since in
+		 * fact each initPlan might be executed later than plan startup, or
+		 * even not at all.
 		 */
 		plan->initPlan = PlannerInitPlan;
-		/* Must add the initPlans' extParams to the topmost node's, too */
+
 		foreach(lst, plan->initPlan)
 		{
-			SubPlan	   *subplan = (SubPlan *) lfirst(lst);
+			SubPlan	   *initplan = (SubPlan *) lfirst(lst);
 
 			plan->extParam = set_unioni(plan->extParam,
-										subplan->plan->extParam);
+										initplan->plan->extParam);
+			initplan_cost += initplan->plan->total_cost;
 		}
+
+		plan->startup_cost += initplan_cost;
+		plan->total_cost += initplan_cost;
 	}
 
 	/* Return to outer subquery context */
