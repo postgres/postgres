@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/manage-ag.sgml,v 2.23 2002/11/11 20:14:03 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/manage-ag.sgml,v 2.24 2002/11/15 03:11:17 momjian Exp $
 -->
 
 <chapter id="managing-databases">
@@ -8,25 +8,26 @@ $Header: /cvsroot/pgsql/doc/src/sgml/manage-ag.sgml,v 2.23 2002/11/11 20:14:03 p
  <indexterm zone="managing-databases"><primary>database</></>
 
  <para>
-  Every instance of a running PostgreSQL server manages one or more
-  databases.  Databases are therefore the topmost hierarchical level
-  for organizing SQL objects (<quote>database objects</quote>).  This
-  chapter describes the properties of databases, and how to create,
-  manage, and destroy them.
+  Every instance of a running <productname>PostgreSQL</productname>
+  server manages one or more databases.  Databases are therefore the
+  topmost hierarchical level for organizing <acronym>SQL</acronym>
+  objects (<quote>database objects</quote>).  This chapter describes
+  the properties of databases, and how to create, manage, and destroy
+  them.
  </para>
 
  <sect1>
   <title>Overview</title>
 
   <para>
-   A database is a named collection of SQL objects (<quote>database
-   objects</quote>).  Generally, every database object (tables,
-   functions, etc.) belongs to one and only one database.  (But there
-   are a few system catalogs, for example <literal>pg_database</>,
-   that belong to a whole installation and are accessible from each
-   database within the installation.)  More accurately, a database is
-   a collection of schemas and the schemas contain the tables,
-   functions, etc.  So the full hierarchy is:
+   A database is a named collection of <acronym>SQL</acronym> objects
+   (<quote>database objects</quote>).  Generally, every database
+   object (tables, functions, etc.) belongs to one and only one
+   database.  (But there are a few system catalogs, for example
+   <literal>pg_database</>, that belong to a whole installation and
+   are accessible from each database within the installation.)  More
+   accurately, a database is a collection of schemas and the schemas
+   contain the tables, functions, etc.  So the full hierarchy is:
    server, database, schema, table (or something else instead of a
    table).
   </para>
@@ -41,13 +42,14 @@ $Header: /cvsroot/pgsql/doc/src/sgml/manage-ag.sgml,v 2.23 2002/11/11 20:14:03 p
    connection.  Schemas are a purely logical structure and who can
    access what is managed by the privilege system.  Databases are
    physically separated and access control is managed at the
-   connection level.  If one PostgreSQL server instance is to house
-   projects or users that should be separate and for the most part
-   unaware of each other, it is therefore recommendable to put them
-   into separate databases.  If the projects or users are interrelated
-   and should be able to use each other's resources they should be put
-   in the same databases but possibly into separate schemas.  More
-   information about managing schemas is in the &cite-user;.
+   connection level.  If one <productname>PostgreSQL</> server
+   instance is to house projects or users that should be separate and
+   for the most part unaware of each other, it is therefore
+   recommendable to put them into separate databases.  If the projects
+   or users are interrelated and should be able to use each other's
+   resources they should be put in the same databases but possibly
+   into separate schemas.  More information about managing schemas is
+   in the &cite-user;.
   </para>
 
   <note>
@@ -73,11 +75,11 @@ $Header: /cvsroot/pgsql/doc/src/sgml/manage-ag.sgml,v 2.23 2002/11/11 20:14:03 p
 <synopsis>
 CREATE DATABASE <replaceable>name</>
 </synopsis>
-   where <replaceable>name</> follows the usual rules for SQL identifiers.
-   The current user automatically becomes
-   the owner of the new database. It is the privilege of the owner of
-   a database to remove it later on (which also removes all the
-   objects in it, even if they have a different owner).
+   where <replaceable>name</> follows the usual rules for
+   <acronym>SQL</acronym> identifiers.  The current user automatically
+   becomes the owner of the new database. It is the privilege of the
+   owner of a database to remove it later on (which also removes all
+   the objects in it, even if they have a different owner).
   </para>
 
   <para>
@@ -262,10 +264,10 @@ createdb -T template0 <replaceable>dbname</>
   <title>Database Configuration</title>
 
   <para>
-   Recall from <xref linkend="runtime-config"> that the PostgreSQL
-   server provides a large number of run-time configuration variables.
-   You can set database-specific default values for many of these
-   settings.
+   Recall from <xref linkend="runtime-config"> that the
+   <productname>PostgreSQL</> server provides a large number of
+   run-time configuration variables.  You can set database-specific
+   default values for many of these settings.
   </para>
 
   <para>

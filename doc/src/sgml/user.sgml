@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/user.sgml,v 1.34 2002/11/11 20:14:04 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/user.sgml,v 1.35 2002/11/15 03:11:17 momjian Exp $
 -->
 
 <book id="user">
@@ -23,13 +23,15 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/user.sgml,v 1.34 2002/11/11 20:14:04 
    <title>What's In This Book</title>
 
    <para>
-    This book describes the use of the SQL language in PostgreSQL.  We
-    start with describing the general syntax of SQL, then explain how
-    to create the structures to hold data, how to populate the
-    database, and how to query it.  The middle part lists the
-    available data types and functions for use in SQL data commands.
-    The rest of the book treats several aspects that are important for
-    tuning a database for optimal performance.
+    This book describes the use of the <acronym>SQL</acronym> language
+    in <productname>PostgreSQL</productname>.  We start with
+    describing the general syntax of <acronym>SQL</acronym>, then
+    explain how to create the structures to hold data, how to populate
+    the database, and how to query it.  The middle part lists the
+    available data types and functions for use in
+    <acronym>SQL</acronym> data commands.  The rest of the book treats
+    several aspects that are important for tuning a database for
+    optimal performance.
    </para>
 
    <para>
@@ -44,10 +46,10 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/user.sgml,v 1.34 2002/11/11 20:14:04 
    </para>
 
    <para>
-    Readers of this book should know how to connect to a PostgreSQL
-    database and issue SQL commands.  Readers that are unfamiliar with
-    these issues are encouraged to read the &cite-tutorial; first.  SQL
-    commands are typically entered using the PostgreSQL interactive
+    Readers of this book should know how to connect to a <productname>PostgreSQL</>
+    database and issue <acronym>SQL</acronym> commands.  Readers that are unfamiliar with
+    these issues are encouraged to read the &cite-tutorial; first.  <acronym>SQL</acronym>
+    commands are typically entered using the <productname>PostgreSQL</> interactive
     terminal <application>psql</application>, but other programs that
     have similar functionality can be used as well.
    </para>

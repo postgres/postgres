@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_database.sgml,v 1.29 2002/09/21 18:32:54 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_database.sgml,v 1.30 2002/11/15 03:11:17 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -217,7 +217,7 @@ CREATE DATABASE <replaceable class="PARAMETER">name</replaceable>
    <replaceable class="parameter">name</replaceable>.  In particular,
    by writing <literal>TEMPLATE = template0</>, you can create a virgin
    database containing only the standard objects predefined by your
-   version of <application>PostgreSQL</application>.  This is useful
+   version of <productname>PostgreSQL</productname>.  This is useful
    if you wish to avoid copying
    any installation-local objects that may have been added to
    <literal>template1</>. 

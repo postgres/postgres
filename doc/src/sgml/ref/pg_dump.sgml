@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_dump.sgml,v 1.52 2002/10/11 23:03:48 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_dump.sgml,v 1.53 2002/11/15 03:11:18 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -274,11 +274,11 @@ PostgreSQL documentation
 
        <para>
         <application>pg_dump</application> can handle databases from
-        previous releases of PostgreSQL, but very old versions are not
-        supported anymore (currently prior to 7.0).  Use this option
-        if you need to override the version check (and if
-        <application>pg_dump</application> then fails, don't say you
-        weren't warned).
+        previous releases of <productname>PostgreSQL</>, but very old
+        versions are not supported anymore (currently prior to 7.0).
+        Use this option if you need to override the version check (and
+        if <application>pg_dump</application> then fails, don't say
+        you weren't warned).
        </para>
       </listitem>
      </varlistentry>
@@ -289,7 +289,7 @@ PostgreSQL documentation
       <listitem>
        <para>
 	Dump object identifiers (<acronym>OID</acronym>s) for every
-	table.  Use this option if your application references the OID
+	table.  Use this option if your application references the <acronym>OID</>
 	columns in some way (e.g., in a foreign key constraint).
 	Otherwise, this option should not be used.
        </para>

@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_config-ref.sgml,v 1.11 2002/10/11 23:03:48 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_config-ref.sgml,v 1.12 2002/11/15 03:11:18 momjian Exp $ -->
 
 <refentry id="app-pgconfig">
  <refmeta>
@@ -131,7 +131,7 @@
 
   <para>
    The option <option>--includedir-server</option> is new in
-   PostgreSQL 7.2.  In prior releases, the server include files were
+   <productname>PostgreSQL</> 7.2.  In prior releases, the server include files were
    installed in the same location as the client headers, which could
    be queried with the <option>--includedir</option>.  To make your
    package handle both cases, try the newer option first and test the
@@ -139,7 +139,7 @@
   </para>
 
   <para>
-   In releases prior to PostgreSQL 7.1, before the
+   In releases prior to <productname>PostgreSQL</> 7.1, before the
    <command>pg_config</command> came to be, a method for finding the
    equivalent configuration information did not exist.
   </para>
@@ -150,7 +150,8 @@
   <title>History</title>
 
   <para>
-   The <command>pg_config</command> utility first appeared in PostgreSQL 7.1.
+   The <command>pg_config</command> utility first appeared in
+   <productname>PostgreSQL</> 7.1.
   </para>
  </refsect1>
 

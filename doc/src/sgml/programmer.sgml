@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/programmer.sgml,v 1.43 2002/10/24 17:48:54 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/programmer.sgml,v 1.44 2002/11/15 03:11:17 momjian Exp $
 
 PostgreSQL Programmer's Guide.
 -->
@@ -24,18 +24,20 @@ PostgreSQL Programmer's Guide.
    <title>What's In This Book</title>
 
    <para>
-    This book is for PostgreSQL application programmers.  It is divided into three parts.
+    This book is for <productname>PostgreSQL</> application
+    programmers.  It is divided into three parts.
    </para>
 
    <para>
     The first part of this book describes the client programming
-    interfaces distributed with PostgreSQL.  Each of these chapters
-    can be read independently.  Note that there are many other
-    programming interfaces for client programs that are distributed
-    separately and contain their own documentation.  Readers of the
-    first part should be familiar with using SQL commands to
-    manipulate and query the database (see the &cite-user;) and of
-    course with the programming language that the interface uses.
+    interfaces distributed with <productname>PostgreSQL</>.  Each of
+    these chapters can be read independently.  Note that there are
+    many other programming interfaces for client programs that are
+    distributed separately and contain their own documentation.
+    Readers of the first part should be familiar with using
+    <acronym>SQL</acronym> commands to manipulate and query the
+    database (see the &cite-user;) and of course with the programming
+    language that the interface uses.
    </para>
 
    <para>
@@ -43,7 +45,7 @@ PostgreSQL Programmer's Guide.
     functionality with user-defined functions, data types, triggers,
     etc.  These are advanced topics which should probably be
     approached only after all the other user documentation about
-    PostgreSQL has been understood.
+    <productname>PostgreSQL</> has been understood.
    </para>
 
    <para>

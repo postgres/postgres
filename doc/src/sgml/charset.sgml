@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/charset.sgml,v 2.29 2002/09/21 18:32:52 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/charset.sgml,v 2.30 2002/11/15 03:11:15 momjian Exp $ -->
 
 <chapter id="charset">
  <title>Localization</>
@@ -351,7 +351,8 @@ perl: warning: Falling back to the standard locale ("C").
    </para>
 
     <para>
-    Multibyte support is enabled by default since PostgreSQL version 7.3.
+    Multibyte support is enabled by default since
+    <productname>PostgreSQL</> version 7.3.
     </para>
 
    <sect2>
@@ -574,7 +575,7 @@ $ <userinput>psql -l</userinput>
      encoding conversion between server and client for some
      encodings. The conversion info is stored in <literal>pg_conversion</> system
      catalog. You can create a new conversion by using <command>CREATE
-     CONVERSION</command>. PostgreSQL comes with some predefined
+     CONVERSION</command>. <productname>PostgreSQL</> comes with some predefined
      conversions. They are listed in <xref
      linkend="multibyte-translation-table">.
     </para>

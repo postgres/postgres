@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ecpg.sgml,v 1.39 2002/10/24 17:48:54 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ecpg.sgml,v 1.40 2002/11/15 03:11:16 momjian Exp $
 -->
 
 <chapter id="ecpg">
@@ -38,26 +38,29 @@ $Header: /cvsroot/pgsql/doc/src/sgml/ecpg.sgml,v 1.39 2002/10/24 17:48:54 petere
    for handling <acronym>SQL</acronym> commands from C code. First, it
    takes care of the tedious passing of information to and from
    variables in your <acronym>C</acronym> program.  Secondly, embedded
-   SQL in C is defined in the SQL standard and supported by many other
-   SQL databases.  The PostgreSQL implementation is designed to match
-   this standard as much as possible, and it is usually possible to
-   port embedded <acronym>SQL</acronym> programs written for other
+   <acronym>SQL</acronym> in C is defined in the
+   <acronym>SQL</acronym> standard and supported by many other
+   <acronym>SQL</acronym> databases.  The <productname>PostgreSQL</>
+   implementation is designed to match this standard as much as
+   possible, and it is usually possible to port embedded
+   <acronym>SQL</acronym> programs written for other
    <acronym>RDBMS</acronym> to <productname>PostgreSQL</productname>
    with relative ease.
   </para>
 
   <para>
-   As indicated, programs written for the embedded SQL interface are
-   normal C programs with special code inserted to perform
-   database-related actions.  This special code always has the form
+   As indicated, programs written for the embedded
+   <acronym>SQL</acronym> interface are normal C programs with special
+   code inserted to perform database-related actions.  This special
+   code always has the form
 <programlisting>
 EXEC SQL ...;
 </programlisting>
    These statements syntactically take the place of a C statement.
    Depending on the particular statement, they may appear in the
-   global context or within a function.  Embedded SQL statements
-   follow the case-sensitivity rules of normal SQL code, and not those
-   of C.
+   global context or within a function.  Embedded
+   <acronym>SQL</acronym> statements follow the case-sensitivity rules
+   of normal <acronym>SQL</acronym> code, and not those of C.
   </para>
 
   <para>
@@ -748,8 +751,8 @@ EXEC SQL INCLUDE <replaceable>filename</replaceable>;
 
   <para>
    The preprocessor program is called <filename>ecpg</filename> and is
-   included in a normal PostgreSQL installation.  Embedded SQL
-   programs are typically named with an extension
+   included in a normal <productname>PostgreSQL</> installation.
+   Embedded SQL programs are typically named with an extension
    <filename>.pgc</filename>.  If you have a program file called
    <filename>prog1.pgc</filename>, you can preprocess it by simply
    calling
@@ -768,10 +771,11 @@ ecpg prog1.pgc
 cc -c prog1.c
 </programlisting>
    The generated C source files include headers files from the
-   PostgreSQL installation, so if you installed PostgreSQL in a
-   location that is not searched by default, you have to add an option
-   such as <literal>-I/usr/local/pgsql/include</literal> to the
-   compilation command line.
+   <productname>PostgreSQL</> installation, so if you installed
+   <productname>PostgreSQL</> in a location that is not searched by
+   default, you have to add an option such as
+   <literal>-I/usr/local/pgsql/include</literal> to the compilation
+   command line.
   </para>
 
   <para>

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/libpq.sgml,v 1.101 2002/11/11 20:14:03 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/libpq.sgml,v 1.102 2002/11/15 03:11:17 momjian Exp $
 -->
 
  <chapter id="libpq">
@@ -957,12 +957,14 @@ strings overlap.
 
   <para>
    <function>PQescapeBytea</> returns an escaped version of the
-   <parameter>from</parameter> parameter binary string, to a caller-provided
-    buffer. The return string has all special characters replaced
-   so that they can be properly processed by the PostgreSQL string literal
-   parser, and the <type>bytea</type> input function. A terminating zero
-   byte is also added.  The single quotes that must surround
-   PostgreSQL string literals are not part of the result string.
+   <parameter>from</parameter> parameter binary string, to a
+   caller-provided buffer. The return string has all special
+   characters replaced so that they can be properly processed by the
+   <productname>PostgreSQL</> string literal parser, and the
+   <type>bytea</type> input function. A terminating zero byte is also
+   added.  The single quotes that must surround
+   <productname>PostgreSQL</> string literals are not part of the
+   result string.
   </para>
 
   <para>

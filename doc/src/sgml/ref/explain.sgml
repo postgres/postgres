@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/explain.sgml,v 1.20 2002/04/21 19:02:39 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/explain.sgml,v 1.21 2002/11/15 03:11:18 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -87,7 +87,7 @@ EXPLAIN [ ANALYZE ] [ VERBOSE ] <replaceable class="PARAMETER">query</replaceabl
 
    <note>
     <para>
-     Prior to <application>PostgreSQL</application> 7.3, the query plan
+     Prior to <productname>PostgreSQL</productname> 7.3, the query plan
      was emitted in the form of a NOTICE message.  Now it appears as a
      query result (formatted like a table with a single text column).
     </para>
@@ -105,12 +105,12 @@ EXPLAIN [ ANALYZE ] [ VERBOSE ] <replaceable class="PARAMETER">query</replaceabl
 
   <para>
    This command displays the execution plan that the
-   <application>PostgreSQL</application> planner
-   generates for the supplied query.  The execution plan shows how
-   the table(s) referenced by the query will be scanned---by plain
-   sequential scan, index scan, etc.---and if multiple tables are
-   referenced, what join algorithms will be used to bring together
-   the required tuples from each input table.
+   <productname>PostgreSQL</productname> planner generates for the
+   supplied query.  The execution plan shows how the table(s)
+   referenced by the query will be scanned---by plain sequential scan,
+   index scan, etc.---and if multiple tables are referenced, what join
+   algorithms will be used to bring together the required tuples from
+   each input table.
   </para>
 
   <para>
@@ -156,7 +156,7 @@ ROLLBACK;
    The VERBOSE option emits the full internal representation of the plan tree,
    rather than just a summary.
    Usually this option is only useful for debugging
-   <application>PostgreSQL</application>.   The VERBOSE dump is either
+   <productname>PostgreSQL</productname>.   The VERBOSE dump is either
    pretty-printed or not, depending on the setting of the
    <option>EXPLAIN_PRETTY_PRINT</option> configuration parameter.
   </para>
@@ -232,7 +232,7 @@ EXPLAIN SELECT sum(i) FROM foo WHERE i &lt; 10;
 
   <para>
    Note that the specific numbers shown, and even the selected query
-   strategy, may vary between <application>PostgreSQL</application>
+   strategy, may vary between <productname>PostgreSQL</productname>
    releases due to planner improvements.
   </para>
  </refsect1>

@@ -1112,7 +1112,8 @@ The number of tuples affected or returned by the query.
 <TITLE>Description
 </TITLE>
 <PARA>
-<FUNCTION>pg_execute</FUNCTION> submits a query to the PostgreSQL backend.
+<FUNCTION>pg_execute</FUNCTION> submits a query to the
+<PRODUCTNAME>PostgreSQL</> backend.
 </PARA>
 <PARA>
 If the query is not a SELECT statement, the query is executed and the

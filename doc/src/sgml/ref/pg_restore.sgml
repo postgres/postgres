@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_restore.sgml,v 1.31 2002/10/11 23:03:48 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_restore.sgml,v 1.32 2002/11/15 03:11:18 momjian Exp $ -->
 
 <refentry id="APP-PGRESTORE">
  <docinfo>
@@ -417,11 +417,12 @@
        </para>
 
        <para>
-        Presently, the commands emitted for <option>--disable-triggers</>
-	must be done as superuser.  So, you should also specify
-	a superuser name with <option>-S</>, or preferably specify
-	<option>--use-set-session-authorization</> and run
-	<application>pg_restore</application> as a PostgreSQL superuser.
+        Presently, the commands emitted for
+	<option>--disable-triggers</> must be done as superuser.  So, you
+	should also specify a superuser name with <option>-S</>, or
+	preferably specify <option>--use-set-session-authorization</> and
+	run <application>pg_restore</application> as a
+	<productname>PostgreSQL</> superuser.
        </para>
       </listitem>
      </varlistentry>
@@ -522,12 +523,12 @@ connectDBStart() -- connect() failed: No such file or directory
     <msgexplan>
        <para>
 	<application>pg_restore</application> could not attach to the
-        PostgreSQL server
-	process on the specified host and port.  If you see this message,
-	ensure that the server
-	is running on the proper host and that you have specified the proper
-	port.  If your site uses an authentication system, ensure that you
-	have obtained the required authentication credentials.
+        <productname>PostgreSQL</> server process on the specified
+        host and port.  If you see this message, ensure that the
+        server is running on the proper host and that you have
+        specified the proper port.  If your site uses an
+        authentication system, ensure that you have obtained the
+        required authentication credentials.
        </para>
     </msgexplan>
    </msgentry>
@@ -537,7 +538,7 @@ connectDBStart() -- connect() failed: No such file or directory
     <para>
      When a direct database connection is specified using the -d
      option, <application>pg_restore</application> internally executes
-     SQL statements. If you have problems running
+     <acronym>SQL</acronym> statements. If you have problems running
      <application>pg_restore</application>, make sure you are able to select
      information from the database using, for example,
      <application>psql</application>.

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.107 2002/11/11 20:14:02 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.108 2002/11/15 03:11:15 momjian Exp $
 -->
 
  <chapter id="datatype">
@@ -245,14 +245,15 @@ $Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.107 2002/11/11 20:14:02 p
   <note>
    <title>Compatibility</title>
    <para>
-    The following types (or spellings thereof) are specified by SQL:
-    <type>bit</type>, <type>bit varying</type>, <type>boolean</type>,
-    <type>char</type>, <type>character</type>, <type>character
-    varying</type>, <type>varchar</type>, <type>date</type>,
-    <type>double precision</type>, <type>integer</type>,
-    <type>interval</type>, <type>numeric</type>, <type>decimal</type>,
-    <type>real</type>, <type>smallint</type>, <type>time</type>,
-    <type>timestamp</type> (both with or without time zone).
+    The following types (or spellings thereof) are specified by
+    <acronym>SQL</acronym>: <type>bit</type>, <type>bit
+    varying</type>, <type>boolean</type>, <type>char</type>,
+    <type>character</type>, <type>character varying</type>,
+    <type>varchar</type>, <type>date</type>, <type>double
+    precision</type>, <type>integer</type>, <type>interval</type>,
+    <type>numeric</type>, <type>decimal</type>, <type>real</type>,
+    <type>smallint</type>, <type>time</type>, <type>timestamp</type>
+    (both with or without time zone).
    </para>
   </note>
 
@@ -464,11 +465,12 @@ $Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.107 2002/11/11 20:14:02 p
     </para>
 
     <para>
-     SQL only specifies the integer types <type>integer</type> (or
-     <type>int</type>) and <type>smallint</type>.  The type
-     <type>bigint</type>, and the type names <type>int2</type>,
-     <type>int4</type>, and <type>int8</type> are extensions, which
-     are shared with various other SQL database systems.
+     <acronym>SQL</acronym> only specifies the integer types
+     <type>integer</type> (or <type>int</type>) and
+     <type>smallint</type>.  The type <type>bigint</type>, and the
+     type names <type>int2</type>, <type>int4</type>, and
+     <type>int8</type> are extensions, which are shared with various
+     other <acronym>SQL</acronym> database systems.
     </para>
 
     <note>
@@ -536,13 +538,15 @@ NUMERIC(<replaceable>precision</replaceable>)
 NUMERIC
 </programlisting>
      without any precision or scale creates a column in which numeric
-     values of any precision and scale can be stored, up to the implementation
-     limit on precision.  A column of this kind will not coerce input
-     values to any particular scale, whereas <type>numeric</type> columns
-     with a declared scale will coerce input values to that scale.
-     (The SQL standard requires a default scale of 0, i.e., coercion to
-     integer precision.  We find this a bit useless.  If you're concerned about
-     portability, always specify the precision and scale explicitly.)
+     values of any precision and scale can be stored, up to the
+     implementation limit on precision.  A column of this kind will
+     not coerce input values to any particular scale, whereas
+     <type>numeric</type> columns with a declared scale will coerce
+     input values to that scale.  (The <acronym>SQL</acronym> standard
+     requires a default scale of 0, i.e., coercion to integer
+     precision.  We find this a bit useless.  If you're concerned
+     about portability, always specify the precision and scale
+     explicitly.)
     </para>
 
     <para>
@@ -554,7 +558,8 @@ NUMERIC
 
     <para>
      The types <type>decimal</type> and <type>numeric</type> are
-     equivalent.  Both types are part of the SQL standard.
+     equivalent.  Both types are part of the <acronym>SQL</acronym>
+     standard.
     </para>
    </sect2>
 
@@ -806,7 +811,8 @@ CREATE TABLE <replaceable class="parameter">tablename</replaceable> (
 
    <para>
     <xref linkend="datatype-character-table"> shows the
-    general-purpose character types available in PostgreSQL.
+    general-purpose character types available in
+    <productname>PostgreSQL</productname>.
    </para>
 
    <para>
@@ -818,11 +824,12 @@ CREATE TABLE <replaceable class="parameter">tablename</replaceable> (
     longer string into a column of these types will result in an
     error, unless the excess characters are all spaces, in which case
     the string will be truncated to the maximum length.  (This
-    somewhat bizarre exception is required by the SQL standard.)  If
-    the string to be stored is shorter than the declared length,
-    values of type <type>character</type> will be space-padded; values
-    of type <type>character varying</type> will simply store the
-    shorter string.
+    somewhat bizarre exception is required by the
+    <acronym>SQL</acronym> standard.)  If the string to be stored is
+    shorter than the declared length, values of type
+    <type>character</type> will be space-padded; values of type
+    <type>character varying</type> will simply store the shorter
+    string.
    </para>
 
    <note>
@@ -831,7 +838,8 @@ CREATE TABLE <replaceable class="parameter">tablename</replaceable> (
      <type>character(<replaceable>n</>)</type> or <type>character
      varying(<replaceable>n</>)</type>, then an overlength value will
      be truncated to <replaceable>n</> characters without raising an
-     error.  (This too is required by the SQL standard.)
+     error.  (This too is required by the <acronym>SQL</acronym>
+     standard.)
     </para>
    </note>
 
@@ -859,8 +867,9 @@ CREATE TABLE <replaceable class="parameter">tablename</replaceable> (
     more general <type>text</type> type, which stores strings of any
     length.  Unlike <type>character varying</type>, <type>text</type>
     does not require an explicit declared upper limit on the size of
-    the string.  Although the type <type>text</type> is not in the SQL
-    standard, many other RDBMS packages have it as well.
+    the string.  Although the type <type>text</type> is not in the
+    <acronym>SQL</acronym> standard, many other RDBMS packages have it
+    as well.
    </para>
 
    <para>
@@ -1125,12 +1134,12 @@ SELECT b, char_length(b) FROM test2;
 
    <para>
     To use the <type>bytea</type> escaped octet notation, string
-    literals (input strings) must contain two backslashes due because
-    they must pass through two parsers in the PostgreSQL server. The
-    first backslash is interpreted as an escape character by the
-    string-literal parser, and therefore is consumed, leaving the
-    characters that follow.  The remaining backslash is recognized by
-    the <type>bytea</type> input function as the prefix of a three
+    literals (input strings) must contain two backslashes because they
+    must pass through two parsers in the <productname>PostgreSQL</>
+    server. The first backslash is interpreted as an escape character
+    by the string-literal parser, and therefore is consumed, leaving
+    the characters that follow.  The remaining backslash is recognized
+    by the <type>bytea</type> input function as the prefix of a three
     digit octal value. For example, a string literal passed to the
     backend as <literal>'\\001'</literal> becomes
     <literal>'\001'</literal> after passing through the string-literal
@@ -1170,21 +1179,22 @@ SELECT b, char_length(b) FROM test2;
    </para>
 
    <para>
-    Depending on the front end to PostgreSQL you use, you may have
-    additional work to do in terms of escaping and unescaping
-    <type>bytea</type> strings. For example, you may also have to escape
-    line feeds and carriage returns if your interface automatically
-    translates these. Or you may have to double up on backslashes if
-    the parser for your language or choice also treats them as an
-    escape character.
+    Depending on the front end to <productname>PostgreSQL</> you use,
+    you may have additional work to do in terms of escaping and
+    unescaping <type>bytea</type> strings. For example, you may also
+    have to escape line feeds and carriage returns if your interface
+    automatically translates these. Or you may have to double up on
+    backslashes if the parser for your language or choice also treats
+    them as an escape character.
    </para>
 
-  <para>
-   The SQL standard defines a different binary string type, called
-   <type>BLOB</type> or <type>BINARY LARGE OBJECT</type>.  The input
-   format is different compared to <type>bytea</type>, but the
-   provided functions and operators are mostly the same.
-  </para>
+   <para>
+	The <acronym>SQL</acronym> standard defines a different binary
+	string type, called <type>BLOB</type> or <type>BINARY LARGE
+	 OBJECT</type>.  The input format is different compared to
+	<type>bytea</type>, but the provided functions and operators are
+	mostly the same.
+   </para>
  </sect1>
 
 
@@ -1781,11 +1791,12 @@ January 8 04:05:06 1999 PST
      Output formats can be set to one of the four styles ISO 8601,
      <acronym>SQL</acronym> (Ingres), traditional PostgreSQL, and
      German, using the <command>SET DateStyle</command>.  The default
-     is the <acronym>ISO</acronym> format.  (The SQL standard requires
-     the use of the ISO 8601 format.  The name of the
-     <quote>SQL</quote> output format is a historical accident.)
-     <xref linkend="datatype-datetime-output-table"> shows examples of
-     each output style.  The output of the <type>date</type> and
+     is the <acronym>ISO</acronym> format.  (The
+     <acronym>SQL</acronym> standard requires the use of the ISO 8601
+     format.  The name of the <quote>SQL</quote> output format is a
+     historical accident.)  <xref
+     linkend="datatype-datetime-output-table"> shows examples of each
+     output style.  The output of the <type>date</type> and
      <type>time</type> types is of course only the date or time part
      in accordance with the given examples.
     </para>
@@ -1920,34 +1931,34 @@ January 8 04:05:06 1999 PST
     </para>
 
     <para>
-     To address these difficulties, we recommend using date/time
-     types that contain both date and time when using time zones. We
-     recommend <emphasis>not</emphasis> using the type <type>time
-     with time zone</type> (though it is supported by
+     To address these difficulties, we recommend using date/time types
+     that contain both date and time when using time zones. We
+     recommend <emphasis>not</emphasis> using the type <type>time with
+     time zone</type> (though it is supported by
      <productname>PostgreSQL</productname> for legacy applications and
-     for compatibility with other SQL implementations).
-     <productname>PostgreSQL</productname> 
-     assumes your local time zone for any type containing only
-     date or time. Further, time zone support is derived from 
-     the underlying operating system
-     time-zone capabilities, and hence can handle daylight-saving time 
-     and other expected behavior.
+     for compatibility with other <acronym>SQL</acronym>
+     implementations).  <productname>PostgreSQL</productname> assumes
+     your local time zone for any type containing only date or
+     time. Further, time zone support is derived from the underlying
+     operating system time-zone capabilities, and hence can handle
+     daylight-saving time and other expected behavior.
     </para>
 
     <para>
-     <productname>PostgreSQL</productname> obtains time-zone support 
+     <productname>PostgreSQL</productname> obtains time-zone support
      from the underlying operating system for dates between 1902 and
      2038 (near the typical date limits for Unix-style
      systems). Outside of this range, all dates are assumed to be
-     specified and used in Universal Coordinated Time (UTC).
+     specified and used in Universal Coordinated Time
+     (<acronym>UTC</acronym>).
     </para>
 
     <para>
-     All dates and times are stored internally in UTC,
-     traditionally known as Greenwich Mean Time (GMT). 
-     Times are converted to local time on the database server before being
-     sent to the client frontend, hence by default are in the server
-     time zone.
+     All dates and times are stored internally in
+     <acronym>UTC</acronym>, traditionally known as Greenwich Mean
+     Time (<acronym>GMT</acronym>).  Times are converted to local time
+     on the database server before being sent to the client frontend,
+     hence by default are in the server time zone.
     </para>
 
     <para>
@@ -1993,8 +2004,8 @@ January 8 04:05:06 1999 PST
 
      <note>
       <para>
-       If an invalid time zone is specified,
-       the time zone becomes GMT (on most systems anyway).
+       If an invalid time zone is specified, the time zone becomes
+       <acronym>UTC</acronym> (on most systems anyway).
       </para>
      </note>
 
@@ -2124,8 +2135,9 @@ SELECT * FROM test1 WHERE a;
    <para>
     Geometric data types represent two-dimensional spatial
     objects. <xref linkend="datatype-geo-table"> shows the geometric
-    types available in PostgreSQL.  The most fundamental type, the
-    point, forms the basis for all of the other types.
+    types available in <productname>PostgreSQL</productname>.  The
+    most fundamental type, the point, forms the basis for all of the
+    other types.
    </para>
 
     <table id="datatype-geo-table">
@@ -2746,9 +2758,10 @@ SELECT * FROM test1 WHERE a;
 
    <note>
     <para>
-     Prior to <productname>PostgreSQL</> 7.2, <type>BIT</type> data was
-     always silently truncated or zero-padded on the right, with or without an
-     explicit cast. This was changed to comply with the SQL standard.
+     Prior to <productname>PostgreSQL</> 7.2, <type>BIT</type> data
+     was always silently truncated or zero-padded on the right, with
+     or without an explicit cast. This was changed to comply with the
+     <acronym>SQL</acronym> standard.
     </para>
    </note>
 
@@ -2978,14 +2991,14 @@ SELECT * FROM test;
    </para>
 
    <para>
-    A third identifier type used by the system is <type>cid</>, or command
-    identifier.  This is the data type of the system columns
-    <structfield>cmin</> and <structfield>cmax</>.
-    Command identifiers are also 32-bit quantities.  This creates a hard
-    limit of 2<superscript>32</> (4 billion) SQL commands within a single
-    transaction.
-    In practice this limit is not a problem --- note that the limit is on
-    number of SQL commands, not number of tuples processed.
+    A third identifier type used by the system is <type>cid</>, or
+    command identifier.  This is the data type of the system columns
+    <structfield>cmin</> and <structfield>cmax</>.  Command
+    identifiers are also 32-bit quantities.  This creates a hard limit
+    of 2<superscript>32</> (4 billion) <acronym>SQL</acronym> commands
+    within a single transaction.  In practice this limit is not a
+    problem --- note that the limit is on number of
+    <acronym>SQL</acronym> commands, not number of tuples processed.
    </para>
 
    <para>
@@ -3044,9 +3057,10 @@ SELECT * FROM test;
     column data type, but it can be used to declare a function's
     argument or result type.  Each of the available pseudo-types is
     useful in situations where a function's behavior does not
-    correspond to simply taking or returning a value of a specific SQL
-    data type.  <xref linkend="datatype-pseudotypes-table"> lists the
-    existing pseudo-types.
+    correspond to simply taking or returning a value of a specific
+    <acronym>SQL</acronym> data type.  <xref
+    linkend="datatype-pseudotypes-table"> lists the existing
+    pseudo-types.
    </para>
 
     <table id="datatype-pseudotypes-table">
@@ -3126,14 +3140,15 @@ SELECT * FROM test;
    </para>
 
    <para>
-    The <type>internal</> pseudo-type is used to declare functions that are
-    meant only to be called internally by the database system, and not by
-    direct invocation in a SQL query.  If a function has at least one
-    <type>internal</>-type argument then it cannot be called from SQL.
-    To preserve the type safety of this restriction it is important to
-    follow this coding rule: do not create any function that is declared
-    to return <type>internal</> unless it has at least one <type>internal</>
-    argument.
+    The <type>internal</> pseudo-type is used to declare functions
+    that are meant only to be called internally by the database
+    system, and not by direct invocation in a <acronym>SQL</acronym>
+    query.  If a function has at least one <type>internal</>-type
+    argument then it cannot be called from <acronym>SQL</acronym>.  To
+    preserve the type safety of this restriction it is important to
+    follow this coding rule: do not create any function that is
+    declared to return <type>internal</> unless it has at least one
+    <type>internal</> argument.
    </para>
 
   </sect1>

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/admin.sgml,v 1.40 2002/10/24 17:48:54 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/admin.sgml,v 1.41 2002/11/15 03:11:15 momjian Exp $
 -->
 
 <book id="admin">
@@ -25,13 +25,13 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/admin.sgml,v 1.40 2002/10/24 17:48:54
    <title>What's In This Book</title>
 
    <para>
-    This book covers topics that are of interest to a PostgreSQL
-    database administrator.  This includes installation of the
-    software, set up and configuration of the server, management of
-    users and databases, and maintenance tasks.  Anyone who runs a
-    PostgreSQL server, either for personal use, but especially in
-    production, should be familiar with the topics covered in this
-    book.
+    This book covers topics that are of interest to a
+    <productname>PostgreSQL</> database administrator.  This includes
+    installation of the software, set up and configuration of the
+    server, management of users and databases, and maintenance tasks.
+    Anyone who runs a <productname>PostgreSQL</> server, either for
+    personal use, but especially in production, should be familiar
+    with the topics covered in this book.
    </para>
 
    <para>
@@ -49,9 +49,9 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/admin.sgml,v 1.40 2002/10/24 17:48:54
     up their own server can begin their exploration with this book.
     The rest of this book which is about tuning and management
     presupposes that the reader is familiar with the general use of
-    the PostgreSQL database system.  Readers are encouraged to look at
-    the &cite-tutorial; and the &cite-user; for additional
-    information.
+    the <productname>PostgreSQL</> database system.  Readers are
+    encouraged to look at the &cite-tutorial; and the &cite-user; for
+    additional information.
    </para>
 
    <para>

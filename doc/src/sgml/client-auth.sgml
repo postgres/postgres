@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/client-auth.sgml,v 1.40 2002/11/11 20:14:02 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/client-auth.sgml,v 1.41 2002/11/15 03:11:15 momjian Exp $
 -->
 
 <chapter id="client-authentication">
@@ -160,9 +160,9 @@ hostssl  <replaceable>database</replaceable>  <replaceable>user</replaceable>  <
      <term><replaceable>user</replaceable></term>
      <listitem>
       <para>
-       Specifies which PostgreSQL users this record matches. The value
-       <literal>all</literal> specifies that it matches all users.
-       Otherwise, this is the name of a specific
+       Specifies which <productname>PostgreSQL</> users this record
+       matches. The value <literal>all</literal> specifies that it
+       matches all users.  Otherwise, this is the name of a specific
        <productname>PostgreSQL</productname> user. Multiple user names
        can be supplied by separating them with commas. Group names can
        be specified by preceding the group name with <literal>+</>. A

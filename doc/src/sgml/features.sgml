@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/features.sgml,v 2.7 2002/09/21 18:32:53 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/features.sgml,v 2.8 2002/11/15 03:11:16 momjian Exp $
 -->
 
  <appendix id="features">
@@ -15,11 +15,12 @@ $Header: /cvsroot/pgsql/doc/src/sgml/features.sgml,v 2.7 2002/09/21 18:32:53 pet
   </para>
 
   <para>
-   <acronym>SQL99</acronym> defines a large set of individual
-   features rather than the ineffectively broad three levels found in
+   <acronym>SQL99</acronym> defines a large set of individual features
+   rather than the ineffectively broad three levels found in
    <acronym>SQL92</acronym>. We provide a list of supported features,
-   followed by a list of the features defined in SQL99 which are not
-   yet supported in PostgreSQL.
+   followed by a list of the features defined in
+   <acronym>SQL99</acronym> which are not yet supported in
+   <productname>PostgreSQL</>.
   </para>
 
   <sect1 id="features-sql99">

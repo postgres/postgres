@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ref/create_cast.sgml,v 1.6 2002/10/04 22:08:44 tgl Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ref/create_cast.sgml,v 1.7 2002/11/15 03:11:17 momjian Exp $ -->
 
 <refentry id="SQL-CREATECAST">
  <refmeta>
@@ -196,14 +196,14 @@ SELECT 'The time is ' || CAST(now() AS text);
   </para>
 
   <para>
-   Prior to PostgreSQL 7.3, every function that had the same name as a
-   data type, returned that data type, and took one argument of a
-   different type was automatically a cast function.  This convention has
-   been abandoned in face of the introduction of schemas and to be
-   able to represent binary compatible casts in the catalogs.  (The built-in
-   cast functions
-   still follow this naming scheme, but they have to be shown as
-   casts in <literal>pg_cast</> now.)
+   Prior to <productname>PostgreSQL</> 7.3, every function that had
+   the same name as a data type, returned that data type, and took one
+   argument of a different type was automatically a cast function.
+   This convention has been abandoned in face of the introduction of
+   schemas and to be able to represent binary compatible casts in the
+   catalogs.  (The built-in cast functions still follow this naming
+   scheme, but they have to be shown as casts in <literal>pg_cast</>
+   now.)
   </para>
  </refsect1>
 

@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ddl.sgml,v 1.9 2002/11/11 20:14:02 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ddl.sgml,v 1.10 2002/11/15 03:11:15 momjian Exp $ -->
 
 <chapter id="ddl">
  <title>Data Definition</title>
@@ -1103,9 +1103,9 @@ ALTER TABLE products ALTER COLUMN price SET DEFAULT 7.77;
 ALTER TABLE products ALTER COLUMN price DROP DEFAULT;
 </programlisting>
     This is equivalent to setting the default to null, at least in
-    PostgreSQL.  As a consequence, it is not an error to drop a
-    default where one hadn't been defined, because the default is
-    implicitly the null value.
+    <productname>PostgreSQL</>.  As a consequence, it is not an error
+    to drop a default where one hadn't been defined, because the
+    default is implicitly the null value.
    </para>
   </sect2>
 
@@ -1609,8 +1609,8 @@ REVOKE CREATE ON public FROM PUBLIC;
     standard.  Therefore, many users consider qualified names to
     really consist of
     <literal><replaceable>username</>.<replaceable>tablename</></literal>.
-    This is how PostgreSQL will effectively behave if you create a per-user
-    schema for every user.
+    This is how <productname>PostgreSQL</productname> will effectively
+    behave if you create a per-user schema for every user.
    </para>
 
    <para>

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/xfunc.sgml,v 1.61 2002/09/21 18:32:54 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/xfunc.sgml,v 1.62 2002/11/15 03:11:17 momjian Exp $
 -->
 
  <chapter id="xfunc">
@@ -674,7 +674,7 @@ CREATE FUNCTION square_root(double precision) RETURNS double precision
 
    <note>
     <para>
-     The user ID the <application>PostgreSQL</application> server runs
+     The user ID the <productname>PostgreSQL</productname> server runs
      as must be able to traverse the path to the file you intend to
      load.  Making the file or a higher-level directory not readable
      and/or not executable by the <systemitem>postgres</systemitem> user is a
@@ -691,7 +691,7 @@ CREATE FUNCTION square_root(double precision) RETURNS double precision
 
    <note>
     <para>
-     <application>PostgreSQL</application> will not compile a C function
+     <productname>PostgreSQL</productname> will not compile a C function
      automatically.  The object file must be compiled before it is referenced
      in a <command>CREATE
      FUNCTION</> command.  See <xref linkend="dfunc"> for additional
@@ -721,7 +721,7 @@ CREATE FUNCTION square_root(double precision) RETURNS double precision
 
    <note>
     <para>
-     Before <application>PostgreSQL</application> release 7.2, only exact
+     Before <productname>PostgreSQL</productname> release 7.2, only exact
      absolute paths to object files could be specified in <command>CREATE
      FUNCTION</>.  This approach is now deprecated since it makes the
      function definition unnecessarily unportable.  It's best to specify

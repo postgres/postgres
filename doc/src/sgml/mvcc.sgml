@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/mvcc.sgml,v 2.29 2002/11/11 20:14:03 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/mvcc.sgml,v 2.30 2002/11/15 03:11:17 momjian Exp $
 -->
 
  <chapter id="mvcc">
@@ -10,12 +10,13 @@ $Header: /cvsroot/pgsql/doc/src/sgml/mvcc.sgml,v 2.29 2002/11/11 20:14:03 petere
   </indexterm>
 
   <para>
-   This chapter describes the behavior of the PostgreSQL database
-   system when two or more sessions try to access the same data at the
-   same time.  The goals in that situation are to allow efficient
-   access for all sessions while maintaining strict data integrity.
-   Every developer of database applications should be familiar with
-   the topics covered in this chapter.
+   This chapter describes the behavior of the
+   <productname>PostgreSQL</productname> database system when two or
+   more sessions try to access the same data at the same time.  The
+   goals in that situation are to allow efficient access for all
+   sessions while maintaining strict data integrity.  Every developer
+   of database applications should be familiar with the topics covered
+   in this chapter.
   </para>
 
   <sect1 id="mvcc-intro">
@@ -38,16 +39,17 @@ $Header: /cvsroot/pgsql/doc/src/sgml/mvcc.sgml,v 2.29 2002/11/11 20:14:03 petere
 
    <para>
     The main difference between multiversion and lock models is that
-    in MVCC locks acquired for querying (reading) data don't conflict
-    with locks acquired for writing data, and so reading never blocks
-    writing and writing never blocks reading.
+    in <acronym>MVCC</acronym> locks acquired for querying (reading)
+    data don't conflict with locks acquired for writing data, and so
+    reading never blocks writing and writing never blocks reading.
    </para>
 
    <para>
     Table- and row-level locking facilities are also available in
     <productname>PostgreSQL</productname> for applications that cannot
-    adapt easily to MVCC behavior.  However, proper use of MVCC will
-    generally provide better performance than locks.
+    adapt easily to <acronym>MVCC</acronym> behavior.  However, proper
+    use of <acronym>MVCC</acronym> will generally provide better
+    performance than locks.
    </para>
   </sect1>
 
@@ -380,14 +382,14 @@ ERROR:  Can't serialize access due to concurrent update
 
    <para>
     <productname>PostgreSQL</productname> provides various lock modes
-    to control concurrent access to data in tables.  These modes can be
-    used for application-controlled locking in situations where MVCC
-    does not give the desired behavior.  Also, most
-    <productname>PostgreSQL</productname> commands automatically
-    acquire locks of appropriate modes to ensure that referenced tables
-    are not dropped or modified in incompatible ways while the command
-    executes.  (For example, <command>ALTER TABLE</> cannot be executed
-    concurrently with other operations on the same table.)
+    to control concurrent access to data in tables.  These modes can
+    be used for application-controlled locking in situations where
+    <acronym>MVCC</acronym> does not give the desired behavior.  Also,
+    most <productname>PostgreSQL</productname> commands automatically
+    acquire locks of appropriate modes to ensure that referenced
+    tables are not dropped or modified in incompatible ways while the
+    command executes.  (For example, <command>ALTER TABLE</> cannot be
+    executed concurrently with other operations on the same table.)
    </para>
 
   <sect2 id="locking-tables">
@@ -725,7 +727,7 @@ ERROR:  Can't serialize access due to concurrent update
    </para>
 
    <para>
-    Global validity checks require extra thought under MVCC.  For
+    Global validity checks require extra thought under <acronym>MVCC</acronym>.  For
     example, a banking application might wish to check that the sum of
     all credits in one table equals the sum of debits in another table,
     when both tables are being actively updated.  Comparing the results of two

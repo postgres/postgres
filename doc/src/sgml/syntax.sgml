@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/syntax.sgml,v 1.73 2002/11/11 20:14:04 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/syntax.sgml,v 1.74 2002/11/15 03:11:17 momjian Exp $
 -->
 
 <chapter id="sql-syntax">
@@ -120,8 +120,8 @@ INSERT INTO MY_TABLE VALUES (3, 'hi there');
     The system uses no more than <symbol>NAMEDATALEN</symbol>-1
     characters of an identifier; longer names can be written in
     commands, but they will be truncated.  By default,
-    <symbol>NAMEDATALEN</symbol> is 64 so the maximum identifier length
-    is 63 (but at the time PostgreSQL is built,
+    <symbol>NAMEDATALEN</symbol> is 64 so the maximum identifier
+    length is 63 (but at the time <productname>PostgreSQL</> is built,
     <symbol>NAMEDATALEN</symbol> can be changed in
     <filename>src/include/postgres_ext.h</filename>).
    </para>
@@ -652,15 +652,15 @@ CAST ( '<replaceable>string</replaceable>' AS <replaceable>type</replaceable> )
 
    <para>
     <xref linkend="sql-precedence-table"> shows the precedence and
-    associativity of the operators in PostgreSQL.  Most operators have
-    the same precedence and are left-associative.  The precedence and
-    associativity of the operators is hard-wired into the parser.
-    This may lead to non-intuitive behavior; for example the Boolean
-    operators <literal>&lt;</> and <literal>&gt;</> have a different
-    precedence than the Boolean operators <literal>&lt;=</> and
-    <literal>&gt;=</>.  Also, you will sometimes need to add
-    parentheses when using combinations of binary and unary operators.
-    For instance
+    associativity of the operators in <productname>PostgreSQL</>.
+    Most operators have the same precedence and are left-associative.
+    The precedence and associativity of the operators is hard-wired
+    into the parser.  This may lead to non-intuitive behavior; for
+    example the Boolean operators <literal>&lt;</> and
+    <literal>&gt;</> have a different precedence than the Boolean
+    operators <literal>&lt;=</> and <literal>&gt;=</>.  Also, you will
+    sometimes need to add parentheses when using combinations of
+    binary and unary operators.  For instance
 <programlisting>
 SELECT 5 ! - 6;
 </programlisting>

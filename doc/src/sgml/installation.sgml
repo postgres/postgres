@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.118 2002/11/14 18:39:43 momjian Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.119 2002/11/15 03:11:16 momjian Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -68,9 +68,10 @@ su - postgres
       <application>make</> programs will <emphasis>not</> work.
       <acronym>GNU</> <application>make</> is often installed under
       the name <filename>gmake</filename>; this document will always
-      refer to it by that name. (On some systems GNU make is the
-      default tool with the name <filename>make</>.) To test for
-      <acronym>GNU</acronym> <application>make</application> enter
+      refer to it by that name. (On some systems
+      <acronym>GNU</acronym> make is the default tool with the name
+      <filename>make</>.) To test for <acronym>GNU</acronym>
+      <application>make</application> enter
 <screen>
 <userinput>gmake --version</userinput>
 </screen>
@@ -137,9 +138,10 @@ su - postgres
     <listitem>
      <para>
       To build the server programming language PL/Perl you need a full
-      Perl installation, including the <filename>libperl</filename>
-      library and the header files.  Since PL/Perl will be a shared
-      library, the <indexterm><primary>libperl</primary></indexterm>
+      <productname>Perl</productname> installation, including the
+      <filename>libperl</filename> library and the header files.
+      Since PL/Perl will be a shared library, the
+      <indexterm><primary>libperl</primary></indexterm>
       <filename>libperl</filename> library must be a shared library
       also on most platforms.  This appears to be the default in
       recent Perl versions, but it was not in earlier versions, and in
@@ -198,8 +200,8 @@ su - postgres
       url="http://www.python.org/doc/FAQ.html#3.30">Python FAQ
       3.30</ulink>.  On some operating systems you don't really have
       to build a shared library, but then you will have to convince
-      the PostgreSQL build system of this.  Consult the
-      <filename>Makefile</filename> in the
+      the <productname>PostgreSQL</> build system of this.  Consult
+      the <filename>Makefile</filename> in the
       <filename>src/pl/plpython</filename> directory for details.
      </para>
     </listitem>
@@ -250,18 +252,18 @@ JAVACMD=$JAVA_HOME/bin/java
      <para>
       To enable Native Language Support (<acronym>NLS</acronym>), that
       is, the ability to display a program's messages in a language
-      other than English, you need an implementation of the <application>Gettext</>
-      <acronym>API</acronym>.  Some operating systems have this
-      built-in (e.g., <systemitem class="osname">Linux</>, <systemitem
-      class="osname">NetBSD</>, <systemitem
-      class="osname">Solaris</>), for other systems you can download
-      an add-on package from here: <ulink
+      other than English, you need an implementation of the
+      <application>Gettext</> <acronym>API</acronym>.  Some operating
+      systems have this built-in (e.g., <systemitem
+      class="osname">Linux</>, <systemitem class="osname">NetBSD</>,
+      <systemitem class="osname">Solaris</>), for other systems you
+      can download an add-on package from here: <ulink
       url="http://www.postgresql.org/~petere/gettext.html" ></ulink>.
       If you are using the <application>gettext</> implementation in
-      the GNU C library then you will additionally need the
-      <productname>GNU Gettext</productname> package for some utility
-      programs.  For any of the other implementations you will not
-      need it.
+      the <acronym>GNU</acronym> C library then you will additionally
+      need the <productname>GNU Gettext</productname> package for some
+      utility programs.  For any of the other implementations you will
+      not need it.
      </para>
     </listitem>
 
@@ -276,9 +278,9 @@ JAVACMD=$JAVA_HOME/bin/java
   </para>
 
   <para>
-   If you are build from a CVS tree instead of using a released source
-   package, or if you want to do development, you also need the
-   following packages:
+   If you are build from a <acronym>CVS</acronym> tree instead of
+   using a released source package, or if you want to do development,
+   you also need the following packages:
 
    <itemizedlist>
     <listitem>
@@ -1257,8 +1259,8 @@ libpq.so.2.1: cannot open shared object file: No such file or directory
     add <filename>/usr/local/pgsql/bin</> (or whatever you set
     <option><literal>--bindir</></> to in <xref linkend="configure">)
     into your <envar>PATH</>.  Strictly speaking, this is not
-    necessary, but it will make the use of PostgreSQL much more
-    convenient.
+    necessary, but it will make the use of <productname>PostgreSQL</>
+    much more convenient.
    </para>
 
    <para>

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/tutorial.sgml,v 1.17 2002/10/24 17:48:54 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/tutorial.sgml,v 1.18 2002/11/15 03:11:17 momjian Exp $
 -->
 
 <book id="tutorial">
@@ -30,9 +30,9 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/tutorial.sgml,v 1.17 2002/10/24 17:48
     these aspects.  We only assume some general knowledge about how to
     use computers.  No particular Unix or programming experience is
     required.  This book is mainly intended to give you a hands-on
-    experience with important aspects of the PostgreSQL system.  It
-    makes no attempt to be a complete or thorough treatment of the
-    topics it covers.
+    experience with important aspects of the
+    <productname>PostgreSQL</productname> system.  It makes no attempt
+    to be a complete or thorough treatment of the topics it covers.
    </para>
 
    <para>

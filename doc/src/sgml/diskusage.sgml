@@ -1,16 +1,17 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/diskusage.sgml,v 1.7 2002/11/11 20:14:02 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/diskusage.sgml,v 1.8 2002/11/15 03:11:16 momjian Exp $
 -->
 
 <chapter id="diskusage">
  <title>Monitoring Disk Usage</title>
 
  <para>
-  This chapter discusses how to monitor the disk usage of a PostgreSQL
-  database system.  In the current release, the database administrator
-  does not have much control over the on-disk storage layout, so this
-  chapter is mostly informative and can give you some ideas how to
-  manage the disk usage with operating system tools.
+  This chapter discusses how to monitor the disk usage of a
+  <productname>PostgreSQL</> database system.  In the current
+  release, the database administrator does not have much control over
+  the on-disk storage layout, so this chapter is mostly informative
+  and can give you some ideas how to manage the disk usage with
+  operating system tools.
  </para>
 
  <sect1 id="disk-usage">
