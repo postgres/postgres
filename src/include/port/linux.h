@@ -8,7 +8,7 @@
 #define USE_POSIX_TIME
 #define HAS_TEST_AND_SET
 
-#if if defined(__i386__)
+#if defined(__i386__)
 typedef unsigned char slock_t;
 
 #elif defined(__powerpc__)
