@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/Makefile,v 1.16 2002/03/11 12:55:55 meskes Exp $
+# $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/Makefile,v 1.16.4.1 2002/12/11 04:08:04 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -14,7 +14,7 @@ include $(top_builddir)/src/Makefile.global
 
 NAME= ecpg
 SO_MAJOR_VERSION= 3
-SO_MINOR_VERSION= 4.0
+SO_MINOR_VERSION= 4.1
 
 override CPPFLAGS := -I$(top_srcdir)/src/interfaces/ecpg/include -I$(libpq_srcdir) $(CPPFLAGS)
 
