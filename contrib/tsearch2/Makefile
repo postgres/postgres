@@ -1,4 +1,4 @@
-# $Header: /cvsroot/pgsql/contrib/tsearch2/Makefile,v 1.4 2003/08/23 04:25:28 petere Exp $
+# $Header: /cvsroot/pgsql/contrib/tsearch2/Makefile,v 1.5 2003/08/26 10:01:02 teodor Exp $
 
 subdir = contrib/tsearch2
 top_builddir = ../..
@@ -29,12 +29,10 @@ DATA_built = tsearch2.sql untsearch2.sql
 DOCS = README.tsearch2
 REGRESS = tsearch2
 
-EXTRA_CLEAN = tsearch2.sql.in
-
 SHLIB_LINK := -lm
 
 tsearch2.sql: tsearch.sql.in
-	sed -e 's,MODULE_PATHNAME,$$libdir/$*,g' \
+	sed -e 's,MODULE_PATHNAME,$$libdir/$(MODULE_big),g' \
 	    -e 's,DATA_PATH,$(datadir)/contrib,g' $< >$@
 
 untsearch2.sql: untsearch.sql.in
