@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/hba.c,v 1.79 2002/01/09 19:13:40 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/hba.c,v 1.79.2.1 2003/04/12 22:28:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -57,8 +57,13 @@ static List *ident_lines = NIL; /* pre-parsed contents of ident file */
 
 /*
  * Some standard C libraries, including GNU, have an isblank() function.
- * Others, including Solaris, do not.  So we have our own.
+ * Others, including Solaris, do not.  So we have our own.  Watch out for
+ * macro-ized versions, too.
  */
+#ifdef isblank
+#undef isblank
+#endif
+
 static bool
 isblank(const char c)
 {
