@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/scan.l,v 1.63 2000/01/26 05:56:43 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/scan.l,v 1.64 2000/02/19 04:17:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -41,15 +41,19 @@ static char *parseCh;
 
 /* set up my input handler --- need one flavor for flex, one for lex */
 #if defined(FLEX_SCANNER)
+
 #define YY_NO_UNPUT
 static int myinput(char* buf, int max);
 #undef YY_INPUT
 #define YY_INPUT(buf,result,max) {result = myinput(buf,max);}
-#else
+
+#else /* !FLEX_SCANNER */
+
 #undef input
 int input();
 #undef unput
 void unput(char);
+
 #endif /* FLEX_SCANNER */
 
 extern YYSTYPE yylval;
@@ -68,27 +72,22 @@ static int		literalalloc;	/* current allocated buffer size */
 static void addlit(char *ytext, int yleng);
 
 %}
-/* OK, here is a short description of lex/flex rules behavior.
+/*
+ * OK, here is a short description of lex/flex rules behavior.
  * The longest pattern which matches an input string is always chosen.
  * For equal-length patterns, the first occurring in the rules list is chosen.
- * INITIAL is the starting condition, to which all non-conditional rules apply.
- * When in an exclusive condition, only those rules defined for that condition apply.
+ * INITIAL is the starting state, to which all non-conditional rules apply.
+ * Exclusive states change parsing rules while the state is active.  When in
+ * an exclusive state, only those rules defined for that state apply.
  *
- * Exclusive states change parsing rules while the state is active.
- * There are exclusive states for quoted strings, extended comments,
- *  and to eliminate parsing troubles for numeric strings.
+ * We use exclusive states for quoted strings, extended comments,
+ * and to eliminate parsing troubles for numeric strings.
  * Exclusive states:
  *  <xb> binary numeric string - thomas 1997-11-16
  *  <xc> extended C-style comments - tgl 1997-07-12
  *  <xd> delimited identifiers (double-quoted identifiers) - tgl 1997-10-27
  *  <xh> hexadecimal numeric string - thomas 1997-11-16
  *  <xq> quoted strings - tgl 1997-07-30
- *
- * The "extended comment" syntax closely resembles allowable operator syntax.
- * So, when in condition <xc>, only strings which would terminate the
- *  "extended comment" trigger any action other than "ignore".
- * Be sure to match _any_ candidate comment, including those with appended
- *	operator-like symbols. - thomas 1997-07-14
  */
 
 %x xb
@@ -101,29 +100,29 @@ static void addlit(char *ytext, int yleng);
  */
 xbstart			[bB]{quote}
 xbstop			{quote}
-xbinside		[^']*
-xbcat			{quote}{space}*\n{space}*{quote}
+xbinside		[^']+
+xbcat			{quote}{whitespace_with_newline}{quote}
 
 /* Hexadecimal number
  */
 xhstart			[xX]{quote}
 xhstop			{quote}
-xhinside		[^']*
-xhcat			{quote}{space}*\n{space}*{quote}
+xhinside		[^']+
+xhcat			{quote}{whitespace_with_newline}{quote}
 
 /* Extended quote
  * xqdouble implements SQL92 embedded quote
  * xqcat allows strings to cross input lines
  * Note: reduction of '' and \ sequences to output text is done in scanstr(),
- * not by rules here.
+ * not by rules here.  But we do get rid of xqcat sequences here.
  */
 quote			'
 xqstart			{quote}
 xqstop			{quote}
 xqdouble		{quote}{quote}
-xqinside		[^\\']*
+xqinside		[^\\']+
 xqliteral		[\\](.|\n)
-xqcat			{quote}{space}*\n{space}*{quote}
+xqcat			{quote}{whitespace_with_newline}{quote}
 
 /* Delimited quote
  * Allows embedded spaces and other special characters into identifiers.
@@ -131,16 +130,28 @@ xqcat			{quote}{space}*\n{space}*{quote}
 dquote			\"
 xdstart			{dquote}
 xdstop			{dquote}
-xdinside		[^"]*
+xdinside		[^"]+
 
-/* Comments
+/* C-style comments
  * Ignored by the scanner and parser.
+ *
+ * The "extended comment" syntax closely resembles allowable operator syntax.
+ * The tricky part here is to get lex to recognize a string starting with
+ * slash-star as a comment, when interpreting it as an operator would produce
+ * a longer match --- remember lex will prefer a longer match!  So, we have
+ * to provide a special rule for xcline (a complete comment that could
+ * otherwise look like an operator), as well as append {op_and_self}* to
+ * xcstart so that it matches at least as much as {operator} would.
+ * Then the tie-breaker (first matching rule of same length) wins.
+ * There is still a problem if someone writes, eg, slash-star-star-slash-plus.
+ * It'll be taken as an xcstart, rather than xcline and an operator as one
+ * could wish.  I don't see any way around that given lex's behavior;
+ * that someone will just have to write a space after the comment.
  */
-xcline			[\/][\*].*[\*][\/]{space}*\n*
-xcstart			[\/][\*]{op_and_self}*
-xcstop			{op_and_self}*[\*][\/]({space}*|\n)
-xcinside		[^*]*
-xcstar			[^/]
+xcline			\/\*{op_and_self}*\*\/
+xcstart			\/\*{op_and_self}*
+xcstop			\*+\/
+xcinside		([^*]+)|(\*+[^/])
 
 digit			[0-9]
 letter			[\200-\377_A-Za-z]
@@ -161,13 +172,44 @@ operator		{op_and_self}+
 
 integer			{digit}+
 decimal			(({digit}*\.{digit}+)|({digit}+\.{digit}*))
-real				((({digit}*\.{digit}+)|({digit}+\.{digit}*)|({digit}+))([Ee][-+]?{digit}+))
+real			((({digit}*\.{digit}+)|({digit}+\.{digit}*)|({digit}+))([Ee][-+]?{digit}+))
 
 param			\${integer}
 
-comment			("--"|"//").*
+/*
+ * In order to make the world safe for Windows and Mac clients as well as
+ * Unix ones, we accept either \n or \r as a newline.  A DOS-style \r\n
+ * sequence will be seen as two successive newlines, but that doesn't cause
+ * any problems.  SQL92-style comments, which start with -- and extend to the
+ * next newline, are treated as equivalent to a single whitespace character.
+ *
+ * NOTE a fine point: if there is no newline following --, we will absorb
+ * everything to the end of the input as a comment.  This is correct.  Older
+ * versions of Postgres failed to recognize -- as a comment if the input
+ * did not end with a newline.
+ *
+ * XXX perhaps \f (formfeed) should be treated as a newline as well?
+ */
 
 space			[ \t\n\r\f]
+horiz_space		[ \t\f]
+newline			[\n\r]
+non_newline		[^\n\r]
+
+comment			(("--"|"//"){non_newline}*)
+
+whitespace		({space}|{comment})
+
+/*
+ * SQL92 requires at least one newline in the whitespace separating
+ * string literals that are to be concatenated.  Silly, but who are we
+ * to argue?  Note that {whitespace_with_newline} should not have * after
+ * it, whereas {whitespace} should generally have a * after it...
+ */
+
+horiz_whitespace	({horiz_space}|{comment})
+whitespace_with_newline	({horiz_whitespace}*{newline}{whitespace}*)
+
 other			.
 
 /* DO NOT PUT ANY COMMENTS IN THE FOLLOWING SECTION.
@@ -181,14 +223,16 @@ other			.
  *  of escaped-quote "\'".
  * Other embedded escaped characters are matched explicitly and the leading
  *  backslash is dropped from the string. - thomas 1997-09-24
+ * Note that xcline must appear before xcstart, which must appear before
+ *  operator, as explained above!  Also whitespace (comment) must appear
+ *  before operator.
  */
 
 %%
-{comment}		{ /* ignore */ }
+{whitespace}	{ /* ignore */ }
 
 {xcline}		{ /* ignore */ }
 
-<xc>{xcstar}	|
 {xcstart}		{ BEGIN(xc); }
 
 <xc>{xcstop}	{ BEGIN(INITIAL); }
@@ -216,6 +260,7 @@ other			.
 				}
 <xh>{xhcat}		|
 <xb>{xbcat}		{
+					/* ignore */
 				}
 
 {xhstart}		{
@@ -249,6 +294,7 @@ other			.
 					addlit(yytext, yyleng);
 				}
 <xq>{xqcat}		{
+					/* ignore */
 				}
 
 
@@ -270,17 +316,17 @@ other			.
 {self}			{ return yytext[0]; }
 
 {operator}		{
-					if (strcmp((char*)yytext,"!=") == 0)
-						yylval.str = pstrdup("<>"); /* compatability */
+					if (strcmp((char*)yytext, "!=") == 0)
+						yylval.str = pstrdup("<>"); /* compatibility */
 					else
 						yylval.str = pstrdup((char*)yytext);
 					return Op;
 				}
+
 {param}			{
 					yylval.ival = atoi((char*)&yytext[1]);
 					return PARAM;
 				}
-
 
 {integer}		{
 					char* endptr;
@@ -354,7 +400,6 @@ other			.
 						return IDENT;
 					}
 				}
-{space}			{ /* ignore */ }
 
 {other}			{ return yytext[0]; }
 
