@@ -16,7 +16,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/pseudotypes.c,v 1.5 2003/04/08 23:20:02 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/pseudotypes.c,v 1.6 2003/05/08 22:19:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,6 +42,28 @@ record_in(PG_FUNCTION_ARGS)
  */
 Datum
 record_out(PG_FUNCTION_ARGS)
+{
+	elog(ERROR, "Cannot display a value of type %s", "RECORD");
+
+	PG_RETURN_VOID();			/* keep compiler quiet */
+}
+
+/*
+ * record_recv		- binary input routine for pseudo-type RECORD.
+ */
+Datum
+record_recv(PG_FUNCTION_ARGS)
+{
+	elog(ERROR, "Cannot accept a constant of type %s", "RECORD");
+
+	PG_RETURN_VOID();			/* keep compiler quiet */
+}
+
+/*
+ * record_send		- binary output routine for pseudo-type RECORD.
+ */
+Datum
+record_send(PG_FUNCTION_ARGS)
 {
 	elog(ERROR, "Cannot display a value of type %s", "RECORD");
 

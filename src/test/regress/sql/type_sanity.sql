@@ -109,6 +109,40 @@ FROM pg_type AS p1, pg_proc AS p2
 WHERE p1.typoutput = p2.oid AND p1.typtype in ('b', 'p') AND NOT
     (p2.prorettype = 'cstring'::regtype AND NOT p2.proretset);
 
+-- Check for bogus typreceive routines
+
+SELECT p1.oid, p1.typname, p2.oid, p2.proname
+FROM pg_type AS p1, pg_proc AS p2
+WHERE p1.typreceive = p2.oid AND p1.typtype in ('b', 'p') AND NOT
+    (p2.pronargs = 1 AND p2.proargtypes[0] = 'internal'::regtype);
+
+SELECT p1.oid, p1.typname, p2.oid, p2.proname
+FROM pg_type AS p1, pg_proc AS p2
+WHERE p1.typreceive = p2.oid AND p1.typtype in ('b', 'p') AND NOT
+    (p1.typelem != 0 AND p1.typlen < 0) AND NOT
+    (p2.prorettype = p1.oid AND NOT p2.proretset);
+
+-- Varlena array types will point to array_recv
+SELECT p1.oid, p1.typname, p2.oid, p2.proname
+FROM pg_type AS p1, pg_proc AS p2
+WHERE p1.typreceive = p2.oid AND p1.typtype in ('b', 'p') AND
+    (p1.typelem != 0 AND p1.typlen < 0) AND NOT
+    (p2.oid = 'array_recv'::regproc);
+
+-- Check for bogus typsend routines
+
+SELECT p1.oid, p1.typname, p2.oid, p2.proname
+FROM pg_type AS p1, pg_proc AS p2
+WHERE p1.typsend = p2.oid AND p1.typtype in ('b', 'p') AND NOT
+    ((p2.pronargs = 1 AND p2.proargtypes[0] = p1.oid) OR
+     (p2.oid = 'array_send'::regproc AND
+      p1.typelem != 0 AND p1.typlen = -1));
+
+SELECT p1.oid, p1.typname, p2.oid, p2.proname
+FROM pg_type AS p1, pg_proc AS p2
+WHERE p1.typsend = p2.oid AND p1.typtype in ('b', 'p') AND NOT
+    (p2.prorettype = 'bytea'::regtype AND NOT p2.proretset);
+
 -- **************** pg_class ****************
 
 -- Look for illegal values in pg_class fields

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.293 2003/04/17 04:50:20 tgl Exp $
+ * $Id: pg_proc.h,v 1.294 2003/05/08 22:19:57 tgl Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -993,9 +993,9 @@ DESCR("session user name");
 DATA(insert OID = 747 (  array_dims		   PGNSP PGUID 12 f f t f i 1 25 "2277" array_dims - _null_ ));
 DESCR("array dimensions");
 DATA(insert OID = 750 (  array_in		   PGNSP PGUID 12 f f t f s 3 2277 "2275 26 23"  array_in - _null_ ));
-DESCR("array");
+DESCR("I/O");
 DATA(insert OID = 751 (  array_out		   PGNSP PGUID 12 f f t f s 1 2275 "2277"  array_out - _null_ ));
-DESCR("array");
+DESCR("I/O");
 DATA(insert OID = 2091 (  array_lower	   PGNSP PGUID 12 f f t f i 2 23 "2277 23" array_lower - _null_ ));
 DESCR("array lower dimension");
 DATA(insert OID = 2092 (  array_upper	   PGNSP PGUID 12 f f t f i 2 23 "2277 23" array_upper - _null_ ));
@@ -3151,6 +3151,16 @@ DESCR("(internal)");
 /* cryptographic */
 DATA(insert OID =  2311 (  md5	   PGNSP PGUID 12 f f t f i 1 25 "25"  md5_text - _null_ ));
 DESCR("calculates md5 hash");
+
+
+DATA(insert OID = 2400 (  array_recv		   PGNSP PGUID 12 f f t f s 1 2277 "2281"  array_recv - _null_ ));
+DESCR("I/O");
+DATA(insert OID = 2401 (  array_send		   PGNSP PGUID 12 f f t f s 1 17 "2277"  array_send - _null_ ));
+DESCR("I/O");
+DATA(insert OID = 2402 (  record_recv		   PGNSP PGUID 12 f f t f i 1 2249 "2281"  record_recv - _null_ ));
+DESCR("I/O");
+DATA(insert OID = 2403 (  record_send		   PGNSP PGUID 12 f f t f i 1 17 "2249"  record_send - _null_ ));
+DESCR("I/O");
 
 
 /*

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/typecmds.c,v 1.34 2003/04/29 22:13:08 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/typecmds.c,v 1.35 2003/05/08 22:19:56 tgl Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -20,7 +20,7 @@
  * NOTES
  *	  These things must be defined and committed in the following order:
  *		"create function":
- *				input/output functions
+ *				input/output, recv/send functions
  *		"create type":
  *				type
  *		"create operator":
@@ -73,7 +73,10 @@ typedef struct
 } RelToCheck;
 
 
-static Oid	findTypeIOFunction(List *procname, Oid typeOid, bool isOutput);
+static Oid	findTypeInputFunction(List *procname, Oid typeOid);
+static Oid	findTypeOutputFunction(List *procname, Oid typeOid);
+static Oid	findTypeReceiveFunction(List *procname, Oid typeOid);
+static Oid	findTypeSendFunction(List *procname, Oid typeOid);
 static List *get_rels_with_domain(Oid domainOid, LOCKMODE lockmode);
 static void domainOwnerCheck(HeapTuple tup, TypeName *typename);
 static char *domainAddConstraint(Oid domainOid, Oid domainNamespace,
@@ -92,17 +95,21 @@ DefineType(List *names, List *parameters)
 	char	   *typeName;
 	Oid			typeNamespace;
 	AclResult	aclresult;
-	int16		internalLength = -1;	/* int2 */
+	int16		internalLength = -1;	/* default: variable-length */
 	Oid			elemType = InvalidOid;
 	List	   *inputName = NIL;
 	List	   *outputName = NIL;
+	List	   *receiveName = NIL;
+	List	   *sendName = NIL;
 	char	   *defaultValue = NULL;
 	bool		byValue = false;
 	char		delimiter = DEFAULT_TYPDELIM;
 	char		alignment = 'i';	/* default alignment */
-	char		storage = 'p';	/* default TOAST storage method */
+	char		storage = 'p';		/* default TOAST storage method */
 	Oid			inputOid;
 	Oid			outputOid;
+	Oid			receiveOid = InvalidOid;
+	Oid			sendOid = InvalidOid;
 	char	   *shadow_type;
 	List	   *pl;
 	Oid			typoid;
@@ -137,10 +144,10 @@ DefineType(List *names, List *parameters)
 			inputName = defGetQualifiedName(defel);
 		else if (strcasecmp(defel->defname, "output") == 0)
 			outputName = defGetQualifiedName(defel);
-		else if (strcasecmp(defel->defname, "send") == 0)
-			;					/* ignored -- remove after 7.3 */
 		else if (strcasecmp(defel->defname, "receive") == 0)
-			;					/* ignored -- remove after 7.3 */
+			receiveName = defGetQualifiedName(defel);
+		else if (strcasecmp(defel->defname, "send") == 0)
+			sendName = defGetQualifiedName(defel);
 		else if (strcasecmp(defel->defname, "delimiter") == 0)
 		{
 			char	   *p = defGetString(defel);
@@ -236,8 +243,12 @@ DefineType(List *names, List *parameters)
 	/*
 	 * Convert I/O proc names to OIDs
 	 */
-	inputOid = findTypeIOFunction(inputName, typoid, false);
-	outputOid = findTypeIOFunction(outputName, typoid, true);
+	inputOid = findTypeInputFunction(inputName, typoid);
+	outputOid = findTypeOutputFunction(outputName, typoid);
+	if (receiveName)
+		receiveOid = findTypeReceiveFunction(receiveName, typoid);
+	if (sendName)
+		sendOid = findTypeSendFunction(sendName, typoid);
 
 	/*
 	 * Verify that I/O procs return the expected thing.  If we see OPAQUE,
@@ -269,6 +280,20 @@ DefineType(List *names, List *parameters)
 			elog(ERROR, "Type output function %s must return cstring",
 				 NameListToString(outputName));
 	}
+	if (receiveOid)
+	{
+		resulttype = get_func_rettype(receiveOid);
+		if (resulttype != typoid)
+			elog(ERROR, "Type receive function %s must return %s",
+				 NameListToString(receiveName), typeName);
+	}
+	if (sendOid)
+	{
+		resulttype = get_func_rettype(sendOid);
+		if (resulttype != BYTEAOID)
+			elog(ERROR, "Type send function %s must return bytea",
+				 NameListToString(sendName));
+	}
 
 	/*
 	 * now have TypeCreate do all the real work.
@@ -284,6 +309,8 @@ DefineType(List *names, List *parameters)
 				   delimiter,	/* array element delimiter */
 				   inputOid,	/* input procedure */
 				   outputOid,	/* output procedure */
+				   receiveOid,	/* receive procedure */
+				   sendOid,		/* send procedure */
 				   elemType,	/* element type ID */
 				   InvalidOid,	/* base type ID (only for domains) */
 				   defaultValue,	/* default type value */
@@ -314,6 +341,8 @@ DefineType(List *names, List *parameters)
 			   DEFAULT_TYPDELIM,	/* array element delimiter */
 			   F_ARRAY_IN,		/* input procedure */
 			   F_ARRAY_OUT,		/* output procedure */
+			   F_ARRAY_RECV,	/* receive procedure */
+			   F_ARRAY_SEND,	/* send procedure */
 			   typoid,			/* element type ID */
 			   InvalidOid,		/* base type ID */
 			   NULL,			/* never a default type value */
@@ -418,6 +447,8 @@ DefineDomain(CreateDomainStmt *stmt)
 	int16		internalLength;
 	Oid			inputProcedure;
 	Oid			outputProcedure;
+	Oid			receiveProcedure;
+	Oid			sendProcedure;
 	bool		byValue;
 	char		delimiter;
 	char		alignment;
@@ -495,6 +526,8 @@ DefineDomain(CreateDomainStmt *stmt)
 	/* I/O Functions */
 	inputProcedure = baseType->typinput;
 	outputProcedure = baseType->typoutput;
+	receiveProcedure = baseType->typreceive;
+	sendProcedure = baseType->typsend;
 
 	/* Inherited default value */
 	datum = SysCacheGetAttr(TYPEOID, typeTup,
@@ -628,6 +661,8 @@ DefineDomain(CreateDomainStmt *stmt)
 				   delimiter,	/* array element delimiter */
 				   inputProcedure,		/* input procedure */
 				   outputProcedure,		/* output procedure */
+				   receiveProcedure,	/* receive procedure */
+				   sendProcedure,		/* send procedure */
 				   basetypelem, /* element type ID */
 				   basetypeoid, /* base type ID */
 				   defaultValue,	/* default type value (text) */
@@ -731,135 +766,184 @@ RemoveDomain(List *names, DropBehavior behavior)
 
 
 /*
- * Find a suitable I/O function for a type.
+ * Find suitable I/O functions for a type.
  *
  * typeOid is the type's OID (which will already exist, if only as a shell
  * type).
  */
+
 static Oid
-findTypeIOFunction(List *procname, Oid typeOid, bool isOutput)
+findTypeInputFunction(List *procname, Oid typeOid)
 {
 	Oid			argList[FUNC_MAX_ARGS];
 	Oid			procOid;
 
-	if (isOutput)
+	/*
+	 * Input functions can take a single argument of type CSTRING, or
+	 * three arguments (string, element OID, typmod).
+	 *
+	 * For backwards compatibility we allow OPAQUE in place of CSTRING;
+	 * if we see this, we issue a NOTICE and fix up the pg_proc entry.
+	 */
+	MemSet(argList, 0, FUNC_MAX_ARGS * sizeof(Oid));
+
+	argList[0] = CSTRINGOID;
+
+	procOid = LookupFuncName(procname, 1, argList);
+	if (OidIsValid(procOid))
+		return procOid;
+
+	argList[1] = OIDOID;
+	argList[2] = INT4OID;
+
+	procOid = LookupFuncName(procname, 3, argList);
+	if (OidIsValid(procOid))
+		return procOid;
+
+	/* No luck, try it with OPAQUE */
+	MemSet(argList, 0, FUNC_MAX_ARGS * sizeof(Oid));
+
+	argList[0] = OPAQUEOID;
+
+	procOid = LookupFuncName(procname, 1, argList);
+
+	if (!OidIsValid(procOid))
 	{
-		/*
-		 * Output functions can take a single argument of the type, or two
-		 * arguments (data value, element OID).
-		 *
-		 * For backwards compatibility we allow OPAQUE in place of the actual
-		 * type name; if we see this, we issue a NOTICE and fix up the
-		 * pg_proc entry.
-		 */
-		MemSet(argList, 0, FUNC_MAX_ARGS * sizeof(Oid));
-
-		argList[0] = typeOid;
-
-		procOid = LookupFuncName(procname, 1, argList);
-		if (OidIsValid(procOid))
-			return procOid;
-
-		argList[1] = OIDOID;
-
-		procOid = LookupFuncName(procname, 2, argList);
-		if (OidIsValid(procOid))
-			return procOid;
-
-		/* No luck, try it with OPAQUE */
-		MemSet(argList, 0, FUNC_MAX_ARGS * sizeof(Oid));
-
-		argList[0] = OPAQUEOID;
-
-		procOid = LookupFuncName(procname, 1, argList);
-
-		if (!OidIsValid(procOid))
-		{
-			argList[1] = OIDOID;
-
-			procOid = LookupFuncName(procname, 2, argList);
-		}
-
-		if (OidIsValid(procOid))
-		{
-			/* Found, but must complain and fix the pg_proc entry */
-			elog(NOTICE, "TypeCreate: changing argument type of function %s from OPAQUE to %s",
-				 NameListToString(procname), format_type_be(typeOid));
-			SetFunctionArgType(procOid, 0, typeOid);
-			/*
-			 * Need CommandCounterIncrement since DefineType will likely
-			 * try to alter the pg_proc tuple again.
-			 */
-			CommandCounterIncrement();
-
-			return procOid;
-		}
-
-		/* Use type name, not OPAQUE, in the failure message. */
-		argList[0] = typeOid;
-
-		func_error("TypeCreate", procname, 1, argList, NULL);
-	}
-	else
-	{
-		/*
-		 * Input functions can take a single argument of type CSTRING, or
-		 * three arguments (string, element OID, typmod).
-		 *
-		 * For backwards compatibility we allow OPAQUE in place of CSTRING;
-		 * if we see this, we issue a NOTICE and fix up the pg_proc entry.
-		 */
-		MemSet(argList, 0, FUNC_MAX_ARGS * sizeof(Oid));
-
-		argList[0] = CSTRINGOID;
-
-		procOid = LookupFuncName(procname, 1, argList);
-		if (OidIsValid(procOid))
-			return procOid;
-
 		argList[1] = OIDOID;
 		argList[2] = INT4OID;
 
 		procOid = LookupFuncName(procname, 3, argList);
-		if (OidIsValid(procOid))
-			return procOid;
-
-		/* No luck, try it with OPAQUE */
-		MemSet(argList, 0, FUNC_MAX_ARGS * sizeof(Oid));
-
-		argList[0] = OPAQUEOID;
-
-		procOid = LookupFuncName(procname, 1, argList);
-
-		if (!OidIsValid(procOid))
-		{
-			argList[1] = OIDOID;
-			argList[2] = INT4OID;
-
-			procOid = LookupFuncName(procname, 3, argList);
-		}
-
-		if (OidIsValid(procOid))
-		{
-			/* Found, but must complain and fix the pg_proc entry */
-			elog(NOTICE, "TypeCreate: changing argument type of function %s "
-				 "from OPAQUE to CSTRING",
-				 NameListToString(procname));
-			SetFunctionArgType(procOid, 0, CSTRINGOID);
-			/*
-			 * Need CommandCounterIncrement since DefineType will likely
-			 * try to alter the pg_proc tuple again.
-			 */
-			CommandCounterIncrement();
-
-			return procOid;
-		}
-
-		/* Use CSTRING (preferred) in the error message */
-		argList[0] = CSTRINGOID;
-
-		func_error("TypeCreate", procname, 1, argList, NULL);
 	}
+
+	if (OidIsValid(procOid))
+	{
+		/* Found, but must complain and fix the pg_proc entry */
+		elog(NOTICE, "TypeCreate: changing argument type of function %s "
+			 "from OPAQUE to CSTRING",
+			 NameListToString(procname));
+		SetFunctionArgType(procOid, 0, CSTRINGOID);
+		/*
+		 * Need CommandCounterIncrement since DefineType will likely
+		 * try to alter the pg_proc tuple again.
+		 */
+		CommandCounterIncrement();
+
+		return procOid;
+	}
+
+	/* Use CSTRING (preferred) in the error message */
+	argList[0] = CSTRINGOID;
+
+	func_error("TypeCreate", procname, 1, argList, NULL);
+
+	return InvalidOid;			/* keep compiler quiet */
+}
+
+static Oid
+findTypeOutputFunction(List *procname, Oid typeOid)
+{
+	Oid			argList[FUNC_MAX_ARGS];
+	Oid			procOid;
+
+	/*
+	 * Output functions can take a single argument of the type, or two
+	 * arguments (data value, element OID).
+	 *
+	 * For backwards compatibility we allow OPAQUE in place of the actual
+	 * type name; if we see this, we issue a NOTICE and fix up the
+	 * pg_proc entry.
+	 */
+	MemSet(argList, 0, FUNC_MAX_ARGS * sizeof(Oid));
+
+	argList[0] = typeOid;
+
+	procOid = LookupFuncName(procname, 1, argList);
+	if (OidIsValid(procOid))
+		return procOid;
+
+	argList[1] = OIDOID;
+
+	procOid = LookupFuncName(procname, 2, argList);
+	if (OidIsValid(procOid))
+		return procOid;
+
+	/* No luck, try it with OPAQUE */
+	MemSet(argList, 0, FUNC_MAX_ARGS * sizeof(Oid));
+
+	argList[0] = OPAQUEOID;
+
+	procOid = LookupFuncName(procname, 1, argList);
+
+	if (!OidIsValid(procOid))
+	{
+		argList[1] = OIDOID;
+
+		procOid = LookupFuncName(procname, 2, argList);
+	}
+
+	if (OidIsValid(procOid))
+	{
+		/* Found, but must complain and fix the pg_proc entry */
+		elog(NOTICE, "TypeCreate: changing argument type of function %s from OPAQUE to %s",
+			 NameListToString(procname), format_type_be(typeOid));
+		SetFunctionArgType(procOid, 0, typeOid);
+		/*
+		 * Need CommandCounterIncrement since DefineType will likely
+		 * try to alter the pg_proc tuple again.
+		 */
+		CommandCounterIncrement();
+
+		return procOid;
+	}
+
+	/* Use type name, not OPAQUE, in the failure message. */
+	argList[0] = typeOid;
+
+	func_error("TypeCreate", procname, 1, argList, NULL);
+
+	return InvalidOid;			/* keep compiler quiet */
+}
+
+static Oid
+findTypeReceiveFunction(List *procname, Oid typeOid)
+{
+	Oid			argList[FUNC_MAX_ARGS];
+	Oid			procOid;
+
+	/*
+	 * Receive functions take a single argument of type INTERNAL.
+	 */
+	MemSet(argList, 0, FUNC_MAX_ARGS * sizeof(Oid));
+
+	argList[0] = INTERNALOID;
+
+	procOid = LookupFuncName(procname, 1, argList);
+	if (OidIsValid(procOid))
+		return procOid;
+
+	func_error("TypeCreate", procname, 1, argList, NULL);
+
+	return InvalidOid;			/* keep compiler quiet */
+}
+
+static Oid
+findTypeSendFunction(List *procname, Oid typeOid)
+{
+	Oid			argList[FUNC_MAX_ARGS];
+	Oid			procOid;
+
+	/*
+	 * Send functions take a single argument of the type.
+	 */
+	MemSet(argList, 0, FUNC_MAX_ARGS * sizeof(Oid));
+
+	argList[0] = typeOid;
+
+	procOid = LookupFuncName(procname, 1, argList);
+	if (OidIsValid(procOid))
+		return procOid;
+
+	func_error("TypeCreate", procname, 1, argList, NULL);
 
 	return InvalidOid;			/* keep compiler quiet */
 }
@@ -1017,6 +1101,8 @@ AlterDomainDefault(List *names, Node *defaultRaw)
 							 0,	/* relation kind is n/a */
 							 typTup->typinput,
 							 typTup->typoutput,
+							 typTup->typreceive,
+							 typTup->typsend,
 							 typTup->typelem,
 							 typTup->typbasetype,
 							 defaultExpr,

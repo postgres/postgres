@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.328 2003/05/03 22:18:59 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.329 2003/05/08 22:19:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3016,8 +3016,12 @@ dumpOneBaseType(Archive *fout, TypeInfo *tinfo,
 	char	   *typlen;
 	char	   *typinput;
 	char	   *typoutput;
+	char	   *typreceive;
+	char	   *typsend;
 	char	   *typinputoid;
 	char	   *typoutputoid;
+	char	   *typreceiveoid;
+	char	   *typsendoid;
 	char	   *typdelim;
 	char	   *typdefault;
 	char	   *typbyval;
@@ -3032,12 +3036,28 @@ dumpOneBaseType(Archive *fout, TypeInfo *tinfo,
 	selectSourceSchema(tinfo->typnamespace->nspname);
 
 	/* Fetch type-specific details */
-	if (fout->remoteVersion >= 70300)
+	if (fout->remoteVersion >= 70400)
+	{
+		appendPQExpBuffer(query, "SELECT typlen, "
+						  "typinput, typoutput, typreceive, typsend, "
+						  "typinput::pg_catalog.oid as typinputoid, "
+						  "typoutput::pg_catalog.oid as typoutputoid, "
+						  "typreceive::pg_catalog.oid as typreceiveoid, "
+						  "typsend::pg_catalog.oid as typsendoid, "
+						  "typdelim, typdefault, typbyval, typalign, "
+						  "typstorage "
+						  "FROM pg_catalog.pg_type "
+						  "WHERE oid = '%s'::pg_catalog.oid",
+						  tinfo->oid);
+	}
+	else if (fout->remoteVersion >= 70300)
 	{
 		appendPQExpBuffer(query, "SELECT typlen, "
 						  "typinput, typoutput, "
+						  "'-' as typreceive, '-' as typsend, "
 						  "typinput::pg_catalog.oid as typinputoid, "
 						  "typoutput::pg_catalog.oid as typoutputoid, "
+						  "0 as typreceiveoid, 0 as typsendoid, "
 						  "typdelim, typdefault, typbyval, typalign, "
 						  "typstorage "
 						  "FROM pg_catalog.pg_type "
@@ -3046,10 +3066,16 @@ dumpOneBaseType(Archive *fout, TypeInfo *tinfo,
 	}
 	else if (fout->remoteVersion >= 70100)
 	{
+		/*
+		 * Note: although pre-7.3 catalogs contain typreceive and typsend,
+		 * ignore them because they are not right.
+		 */
 		appendPQExpBuffer(query, "SELECT typlen, "
 						  "typinput, typoutput, "
+						  "'-' as typreceive, '-' as typsend, "
 						  "typinput::oid as typinputoid, "
 						  "typoutput::oid as typoutputoid, "
+						  "0 as typreceiveoid, 0 as typsendoid, "
 						  "typdelim, typdefault, typbyval, typalign, "
 						  "typstorage "
 						  "FROM pg_type "
@@ -3060,8 +3086,10 @@ dumpOneBaseType(Archive *fout, TypeInfo *tinfo,
 	{
 		appendPQExpBuffer(query, "SELECT typlen, "
 						  "typinput, typoutput, "
+						  "'-' as typreceive, '-' as typsend, "
 						  "typinput::oid as typinputoid, "
 						  "typoutput::oid as typoutputoid, "
+						  "0 as typreceiveoid, 0 as typsendoid, "
 						  "typdelim, typdefault, typbyval, typalign, "
 						  "'p'::char as typstorage "
 						  "FROM pg_type "
@@ -3090,8 +3118,12 @@ dumpOneBaseType(Archive *fout, TypeInfo *tinfo,
 	typlen = PQgetvalue(res, 0, PQfnumber(res, "typlen"));
 	typinput = PQgetvalue(res, 0, PQfnumber(res, "typinput"));
 	typoutput = PQgetvalue(res, 0, PQfnumber(res, "typoutput"));
+	typreceive = PQgetvalue(res, 0, PQfnumber(res, "typreceive"));
+	typsend = PQgetvalue(res, 0, PQfnumber(res, "typsend"));
 	typinputoid = PQgetvalue(res, 0, PQfnumber(res, "typinputoid"));
 	typoutputoid = PQgetvalue(res, 0, PQfnumber(res, "typoutputoid"));
+	typreceiveoid = PQgetvalue(res, 0, PQfnumber(res, "typreceiveoid"));
+	typsendoid = PQgetvalue(res, 0, PQfnumber(res, "typsendoid"));
 	typdelim = PQgetvalue(res, 0, PQfnumber(res, "typdelim"));
 	if (PQgetisnull(res, 0, PQfnumber(res, "typdefault")))
 		typdefault = NULL;
@@ -3115,6 +3147,20 @@ dumpOneBaseType(Archive *fout, TypeInfo *tinfo,
 	if (funcInd >= 0 && g_finfo[funcInd].pronamespace->dump)
 		(*deps)[depIdx++] = strdup(typoutputoid);
 
+	if (strcmp(typreceiveoid, "0") != 0)
+	{
+		funcInd = findFuncByOid(g_finfo, numFuncs, typreceiveoid);
+		if (funcInd >= 0 && g_finfo[funcInd].pronamespace->dump)
+			(*deps)[depIdx++] = strdup(typreceiveoid);
+	}
+
+	if (strcmp(typsendoid, "0") != 0)
+	{
+		funcInd = findFuncByOid(g_finfo, numFuncs, typsendoid);
+		if (funcInd >= 0 && g_finfo[funcInd].pronamespace->dump)
+			(*deps)[depIdx++] = strdup(typsendoid);
+	}
+
 	/*
 	 * DROP must be fully qualified in case same name appears in
 	 * pg_catalog
@@ -3126,24 +3172,27 @@ dumpOneBaseType(Archive *fout, TypeInfo *tinfo,
 
 	appendPQExpBuffer(q,
 					  "CREATE TYPE %s (\n"
-					  "    INTERNALLENGTH = %s,\n",
+					  "    INTERNALLENGTH = %s",
 					  fmtId(tinfo->typname),
 					  (strcmp(typlen, "-1") == 0) ? "variable" : typlen);
 
 	if (fout->remoteVersion >= 70300)
 	{
 		/* regproc result is correctly quoted in 7.3 */
-		appendPQExpBuffer(q, "    INPUT = %s,\n    OUTPUT = %s",
-						  typinput, typoutput);
+		appendPQExpBuffer(q, ",\n    INPUT = %s", typinput);
+		appendPQExpBuffer(q, ",\n    OUTPUT = %s", typoutput);
+		if (strcmp(typreceiveoid, "0") != 0)
+			appendPQExpBuffer(q, ",\n    RECEIVE = %s", typreceive);
+		if (strcmp(typsendoid, "0") != 0)
+			appendPQExpBuffer(q, ",\n    SEND = %s", typsend);
 	}
 	else
 	{
 		/* regproc delivers an unquoted name before 7.3 */
 		/* cannot combine these because fmtId uses static result area */
-		appendPQExpBuffer(q, "    INPUT = %s,\n",
-						  fmtId(typinput));
-		appendPQExpBuffer(q, "    OUTPUT = %s",
-						  fmtId(typoutput));
+		appendPQExpBuffer(q, ",\n    INPUT = %s", fmtId(typinput));
+		appendPQExpBuffer(q, ",\n    OUTPUT = %s", fmtId(typoutput));
+		/* no chance that receive/send need be printed */
 	}
 
 	if (typdefault != NULL)
@@ -3159,11 +3208,16 @@ dumpOneBaseType(Archive *fout, TypeInfo *tinfo,
 		/* reselect schema in case changed by function dump */
 		selectSourceSchema(tinfo->typnamespace->nspname);
 		elemType = getFormattedTypeName(tinfo->typelem, zeroAsOpaque);
-		appendPQExpBuffer(q, ",\n    ELEMENT = %s,\n    DELIMITER = ", elemType);
-		appendStringLiteral(q, typdelim, true);
+		appendPQExpBuffer(q, ",\n    ELEMENT = %s", elemType);
 		free(elemType);
 
 		(*deps)[depIdx++] = strdup(tinfo->typelem);
+	}
+
+	if (typdelim && strcmp(typdelim, ",") != 0)
+	{
+		appendPQExpBuffer(q, ",\n    DELIMITER = ");
+		appendStringLiteral(q, typdelim, true);
 	}
 
 	if (strcmp(typalign, "c") == 0)

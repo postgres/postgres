@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_type.sgml,v 1.41 2003/04/22 10:08:08 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_type.sgml,v 1.42 2003/05/08 22:19:56 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -16,18 +16,22 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
+CREATE TYPE <replaceable class="parameter">typename</replaceable> AS
+    ( <replaceable class="PARAMETER">attribute_name</replaceable> <replaceable class="PARAMETER">data_type</replaceable> [, ... ] )
+
 CREATE TYPE <replaceable class="parameter">typename</replaceable> (
-    INPUT = <replaceable class="parameter">input_function</replaceable>, OUTPUT = <replaceable class="parameter">output_function</replaceable>
-      , INTERNALLENGTH = { <replaceable class="parameter">internallength</replaceable> | VARIABLE }
-    [ , DEFAULT = <replaceable class="parameter">default</replaceable> ]
-    [ , ELEMENT = <replaceable class="parameter">element</replaceable> ] [ , DELIMITER = <replaceable class="parameter">delimiter</replaceable> ]
+    INPUT = <replaceable class="parameter">input_function</replaceable>,
+    OUTPUT = <replaceable class="parameter">output_function</replaceable>
+    [ , RECEIVE = <replaceable class="parameter">receive_function</replaceable> ]
+    [ , SEND = <replaceable class="parameter">send_function</replaceable> ]
+    [ , INTERNALLENGTH = { <replaceable class="parameter">internallength</replaceable> | VARIABLE } ]
     [ , PASSEDBYVALUE ]
     [ , ALIGNMENT = <replaceable class="parameter">alignment</replaceable> ]
     [ , STORAGE = <replaceable class="parameter">storage</replaceable> ]
+    [ , DEFAULT = <replaceable class="parameter">default</replaceable> ]
+    [ , ELEMENT = <replaceable class="parameter">element</replaceable> ]
+    [ , DELIMITER = <replaceable class="parameter">delimiter</replaceable> ]
 )
-
-CREATE TYPE <replaceable class="parameter">typename</replaceable> AS
-    ( <replaceable class="PARAMETER">attribute_name</replaceable> <replaceable class="PARAMETER">data_type</replaceable> [, ... ] )
 </synopsis>
  </refsynopsisdiv>
 
@@ -50,17 +54,41 @@ CREATE TYPE <replaceable class="parameter">typename</replaceable> AS
   </para>
 
   <refsect2>
+   <title>Composite Types</title>
+
+  <para>
+   The first form of <command>CREATE TYPE</command>
+   creates a composite type.
+   The composite type is specified by a list of attribute names and data types.
+   This is essentially the same as the row type
+   of a table, but using <command>CREATE TYPE</command> avoids the need to
+   create an actual table when all that is wanted is to define a type.
+   A stand-alone composite type is useful as the return type of a function.
+  </para>
+  </refsect2>
+
+  <refsect2>
    <title>Base Types</title>
 
   <para>
-   The first form of <command>CREATE TYPE</command> creates a new base type
-   (scalar type).  It  requires  the
-   registration of two functions (using <command>CREATE
-   FUNCTION</command>) before defining the
-   type. The internal representation of the new base type is determined by
-   <replaceable class="parameter">input_function</replaceable>, which
-   converts the type's external  representation to an internal
-   representation  usable by the
+   The second form of <command>CREATE TYPE</command> creates a new base type
+   (scalar type).  The parameters may appear in any order, not only that
+   illustrated above, and most are optional.  You must register
+   two or more functions (using <command>CREATE FUNCTION</command>) before
+   defining the type.  The support functions 
+   <replaceable class="parameter">input_function</replaceable> and
+   <replaceable class="parameter">output_function</replaceable>
+   are required, while the functions
+   <replaceable class="parameter">receive_function</replaceable> and
+   <replaceable class="parameter">send_function</replaceable>
+   are optional.  Generally these functions have to be coded in C
+   or another low-level language.
+  </para>
+
+  <para>
+   The <replaceable class="parameter">input_function</replaceable>
+   converts the type's external textual representation to the internal
+   representation  used by the
    operators and functions defined for the type.
    <replaceable class="parameter">output_function</replaceable>
    performs the reverse transformation.  The input function may be
@@ -70,7 +98,7 @@ CREATE TYPE <replaceable class="parameter">typename</replaceable> AS
    The first argument is the input text as a C string, the second
    argument is the element type in case this is an array type,
    and the third is the <literal>typmod</> of the destination column, if known.
-   It should return a value of the data type itself.
+   The input function should return a value of the data type itself.
    The output function may be
    declared as taking one argument of the new data type,  or as taking
    two arguments of which the second is type <type>oid</type>.
@@ -79,21 +107,49 @@ CREATE TYPE <replaceable class="parameter">typename</replaceable> AS
   </para>
 
   <para>
+   The optional <replaceable class="parameter">receive_function</replaceable>
+   converts the type's external binary representation to the internal
+   representation.  If this function is not supplied, the type cannot
+   participate in binary input.  The binary representation should be
+   chosen to be cheap to convert to internal form, while being reasonably
+   portable.  (For example, the standard integer datatypes use network
+   byte order as the external binary representation, while the internal
+   representation is in the machine's native byte order.)  The receive
+   function should perform adequate checking to ensure that the value is
+   valid.
+   The receive function should be declared as taking one argument of type
+   <type>internal</type> and returning a value of the data type itself.
+   (The argument actually supplied is a pointer to a StringInfo buffer
+   holding the received byte string.)  Similarly, the optional
+   <replaceable class="parameter">send_function</replaceable> converts
+   from the internal representation to the external binary representation.
+   If this function is not supplied, the type cannot participate in binary
+   output.  The send function should be declared as taking one argument of the
+   new data type and returning type <type>bytea</type>.
+  </para>
+
+  <para>
    You should at this point be wondering how the input and output functions
    can be declared to have results or arguments of the new type, when they have
    to be created before the new type can be created.  The answer is that the
-   input function must be created first, then the output function, then the
-   data type.
+   input function must be created first, then the output function (and
+   the binary I/O functions if wanted), and finally the data type.
    <productname>PostgreSQL</productname> will first see the name of the new
    data type as the return type of the input function.  It will create a
    <quote>shell</> type, which is simply a placeholder entry in
    the system catalog, and link the input function definition to the shell
-   type.  Similarly the output function will be linked to the (now already
+   type.  Similarly the other functions will be linked to the (now already
    existing) shell type.  Finally, <command>CREATE TYPE</> replaces the
    shell entry with a complete type definition, and the new type can be used.
   </para>
 
   <para>
+   While the details of the new type's internal representation are only
+   known to the I/O functions and other functions you create to work with
+   the type, there are several properties of the internal representation
+   that must be declared to <productname>PostgreSQL</productname>.
+   Foremost of these is
+   <replaceable class="parameter">internallength</replaceable>.
    Base data types can be fixed-length, in which case
    <replaceable class="parameter">internallength</replaceable> is a
    positive integer, or variable  length, indicated by setting
@@ -105,33 +161,8 @@ CREATE TYPE <replaceable class="parameter">typename</replaceable> AS
   </para>
 
   <para>
-   To indicate that a type is an array, specify the type of the array
-   elements using the <literal>ELEMENT</> key word.  For example, to
-   define an array of 4-byte integers (<type>int4</type>), specify
-   <literal>ELEMENT = int4</literal> More details about array types
-   appear below.
-  </para>
-
-  <para>
-   To indicate the delimiter to be used between values in the external
-   representation of arrays of this type, <replaceable
-   class="parameter">delimiter</replaceable> can be
-   set to a specific character.  The default delimiter is the comma
-   (<literal>,</literal>).  Note that the delimiter is associated
-   with the array element type, not the array type itself.
-  </para>
-
-  <para>
-   A default value may be specified, in case a user wants columns of the
-   data type to default to something other than the null value.
-   Specify the default with the <literal>DEFAULT</literal> key word.
-   (Such a default may be overridden by an explicit <literal>DEFAULT</literal>
-   clause attached to a particular column.)
-  </para>
-
-  <para>
    The optional flag <literal>PASSEDBYVALUE</literal> indicates that
-   values of this data type are passed by value rather than by
+   values of this data type are passed by value, rather than by
    reference.  You may not pass by value types whose internal
    representation is larger than the size of the <type>Datum</> type
    (4 bytes on most machines, 8 bytes on a few).
@@ -163,20 +194,32 @@ CREATE TYPE <replaceable class="parameter">typename</replaceable> AS
    table preferentially over <literal>extended</literal> and
    <literal>external</literal> items.)
   </para>
-  </refsect2>
-
-  <refsect2>
-   <title>Composite Types</title>
 
   <para>
-   The second form of <command>CREATE TYPE</command>
-   creates a composite type.
-   The composite type is specified by a list of attribute names and data types.
-   This is essentially the same as the row type
-   of a table, but using <command>CREATE TYPE</command> avoids the need to
-   create an actual table when all that is wanted is to define a type.
-   A stand-alone composite type is useful as the return type of a function.
+   A default value may be specified, in case a user wants columns of the
+   data type to default to something other than the null value.
+   Specify the default with the <literal>DEFAULT</literal> key word.
+   (Such a default may be overridden by an explicit <literal>DEFAULT</literal>
+   clause attached to a particular column.)
   </para>
+
+  <para>
+   To indicate that a type is an array, specify the type of the array
+   elements using the <literal>ELEMENT</> key word.  For example, to
+   define an array of 4-byte integers (<type>int4</type>), specify
+   <literal>ELEMENT = int4</literal>. More details about array types
+   appear below.
+  </para>
+
+  <para>
+   To indicate the delimiter to be used between values in the external
+   representation of arrays of this type, <replaceable
+   class="parameter">delimiter</replaceable> can be
+   set to a specific character.  The default delimiter is the comma
+   (<literal>,</literal>).  Note that the delimiter is associated
+   with the array element type, not the array type itself.
+  </para>
+
   </refsect2>
 
   <refsect2>
@@ -218,7 +261,7 @@ CREATE TYPE <replaceable class="parameter">typename</replaceable> AS
  </refsect1>
   
  <refsect1>
-  <title>Parameter</title>
+  <title>Parameters</title>
 
   <variablelist>
    <varlistentry>
@@ -231,11 +274,20 @@ CREATE TYPE <replaceable class="parameter">typename</replaceable> AS
    </varlistentry>
 
    <varlistentry>
-    <term><replaceable class="parameter">internallength</replaceable></term>
+    <term><replaceable class="parameter">attribute_name</replaceable></term>
     <listitem>
      <para>
-      A numeric constant that specifies the internal length of the new
-      type.
+      The name of an attribute (column) for the composite type.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">data_type</replaceable></term>
+    <listitem>
+     <para>
+      The name of an existing data type to become a column of the
+      composite type.
      </para>
     </listitem>
    </varlistentry>
@@ -245,7 +297,7 @@ CREATE TYPE <replaceable class="parameter">typename</replaceable> AS
     <listitem>
      <para>
       The name of a function that converts data from the type's
-      external form to the its internal form.
+      external textual form to its internal form.
      </para>
     </listitem>
    </varlistentry>
@@ -255,37 +307,38 @@ CREATE TYPE <replaceable class="parameter">typename</replaceable> AS
     <listitem>
      <para>
       The name of a function that converts data from the type's
-      internal form to a form suitable for display.
+      internal form to its external textual form.
      </para>
     </listitem>
    </varlistentry>
 
    <varlistentry>
-    <term><replaceable class="parameter">element</replaceable></term>
+    <term><replaceable class="parameter">receive_function</replaceable></term>
     <listitem>
      <para>
-      The type being created is an array; this specifies the type of
-      the array elements.
+      The name of a function that converts data from the type's
+      external binary form to its internal form.
      </para>
     </listitem>
    </varlistentry>
 
    <varlistentry>
-    <term><replaceable class="parameter">delimiter</replaceable></term>
+    <term><replaceable class="parameter">send_function</replaceable></term>
     <listitem>
      <para>
-      The delimiter character to be used between values in arrays made
-      of this type.
+      The name of a function that converts data from the type's
+      internal form to its external binary form.
      </para>
     </listitem>
    </varlistentry>
 
    <varlistentry>
-    <term><replaceable class="parameter">default</replaceable></term>
+    <term><replaceable class="parameter">internallength</replaceable></term>
     <listitem>
      <para>
-      The default value for the data type.  If this is omitted, the
-      default is null.
+      A numeric constant that specifies the length in bytes of the new
+      type's internal representation.  The default assumption is that
+      it is variable-length.
      </para>
     </listitem>
    </varlistentry>
@@ -306,7 +359,7 @@ CREATE TYPE <replaceable class="parameter">typename</replaceable> AS
     <term><replaceable class="parameter">storage</replaceable></term>
     <listitem>
      <para>
-      The storage strateg for the data type.  If specified, must be
+      The storage strategy for the data type.  If specified, must be
       <literal>plain</literal>, <literal>external</literal>,
       <literal>extended</literal>, or <literal>main</literal>; the
       default is <literal>plain</literal>.
@@ -315,19 +368,31 @@ CREATE TYPE <replaceable class="parameter">typename</replaceable> AS
    </varlistentry>
 
    <varlistentry>
-    <term><replaceable class="parameter">attribute_name</replaceable></term>
+    <term><replaceable class="parameter">default</replaceable></term>
     <listitem>
      <para>
-      The name of an attribute of the composite type.
+      The default value for the data type.  If this is omitted, the
+      default is null.
      </para>
     </listitem>
    </varlistentry>
 
    <varlistentry>
-    <term><replaceable class="parameter">data_type</replaceable></term>
+    <term><replaceable class="parameter">element</replaceable></term>
     <listitem>
      <para>
-      The name of an existing data type.
+      The type being created is an array; this specifies the type of
+      the array elements.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">delimiter</replaceable></term>
+    <listitem>
+     <para>
+      The delimiter character to be used between values in arrays made
+      of this type.
      </para>
     </listitem>
    </varlistentry>
@@ -378,7 +443,17 @@ CREATE TYPE <replaceable class="parameter">typename</replaceable> AS
   <title>Examples</title>
 
   <para>
-   This example creates the data type <type>box</type> and then uses the
+   This example creates a composite type and uses it in
+   a function definition:
+<programlisting>
+CREATE TYPE compfoo AS (f1 int, f2 text);
+CREATE FUNCTION getfoo() RETURNS SETOF compfoo AS
+  'SELECT fooid, fooname FROM foo' LANGUAGE SQL;
+</programlisting>
+  </para>
+
+  <para>
+   This example creates the base data type <type>box</type> and then uses the
    type in a table definition:
 <programlisting>
 CREATE TYPE box (
@@ -421,15 +496,6 @@ CREATE TABLE big_objs (
     id integer,
     obj bigobj
 );
-</programlisting>
-  </para>
-
-  <para>
-   This example creates a composite type and uses it in
-   a function definition:
-<programlisting>
-CREATE TYPE compfoo AS (f1 int, f2 text);
-CREATE FUNCTION getfoo() RETURNS SETOF compfoo AS 'SELECT fooid, fooname FROM foo' LANGUAGE SQL;
 </programlisting>
   </para>
 

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: builtins.h,v 1.211 2003/04/08 23:20:04 tgl Exp $
+ * $Id: builtins.h,v 1.212 2003/05/08 22:19:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -346,6 +346,8 @@ extern Datum oidvectorgt(PG_FUNCTION_ARGS);
 /* pseudotypes.c */
 extern Datum record_in(PG_FUNCTION_ARGS);
 extern Datum record_out(PG_FUNCTION_ARGS);
+extern Datum record_recv(PG_FUNCTION_ARGS);
+extern Datum record_send(PG_FUNCTION_ARGS);
 extern Datum cstring_in(PG_FUNCTION_ARGS);
 extern Datum cstring_out(PG_FUNCTION_ARGS);
 extern Datum any_in(PG_FUNCTION_ARGS);
