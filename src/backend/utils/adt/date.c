@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/date.c,v 1.51 2000/10/29 13:17:33 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/date.c,v 1.52 2000/11/11 19:55:19 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -339,6 +339,61 @@ abstime_date(PG_FUNCTION_ARGS)
 }
 
 
+/* date_text()
+ * Convert date to text data type.
+ */
+Datum
+date_text(PG_FUNCTION_ARGS)
+{
+	/* Input is a Date, but may as well leave it in Datum form */
+	Datum		date = PG_GETARG_DATUM(0);
+	text	   *result;
+	char	   *str;
+	int			len;
+
+	str = DatumGetCString(DirectFunctionCall1(date_out, date));
+
+	len = (strlen(str) + VARHDRSZ);
+
+	result = palloc(len);
+
+	VARATT_SIZEP(result) = len;
+	memmove(VARDATA(result), str, (len - VARHDRSZ));
+
+	pfree(str);
+
+	PG_RETURN_TEXT_P(result);
+}
+
+
+/* text_date()
+ * Convert text string to date.
+ * Text type is not null terminated, so use temporary string
+ *	then call the standard input routine.
+ */
+Datum
+text_date(PG_FUNCTION_ARGS)
+{
+	text	   *str = PG_GETARG_TEXT_P(0);
+	int			i;
+	char	   *sp,
+			   *dp,
+				dstr[MAXDATELEN + 1];
+
+	if (VARSIZE(str) - VARHDRSZ > MAXDATELEN)
+		elog(ERROR, "Bad date external representation (too long)");
+
+	sp = VARDATA(str);
+	dp = dstr;
+	for (i = 0; i < (VARSIZE(str) - VARHDRSZ); i++)
+		*dp++ = *sp++;
+	*dp = '\0';
+
+	return DirectFunctionCall1(date_in,
+							   CStringGetDatum(dstr));
+}
+
+
 /*****************************************************************************
  *	 Time ADT
  *****************************************************************************/
@@ -573,6 +628,61 @@ time_interval(PG_FUNCTION_ARGS)
 	result->month = 0;
 
 	PG_RETURN_INTERVAL_P(result);
+}
+
+
+/* time_text()
+ * Convert time to text data type.
+ */
+Datum
+time_text(PG_FUNCTION_ARGS)
+{
+	/* Input is a Time, but may as well leave it in Datum form */
+	Datum		time = PG_GETARG_DATUM(0);
+	text	   *result;
+	char	   *str;
+	int			len;
+
+	str = DatumGetCString(DirectFunctionCall1(time_out, time));
+
+	len = (strlen(str) + VARHDRSZ);
+
+	result = palloc(len);
+
+	VARATT_SIZEP(result) = len;
+	memmove(VARDATA(result), str, (len - VARHDRSZ));
+
+	pfree(str);
+
+	PG_RETURN_TEXT_P(result);
+}
+
+
+/* text_time()
+ * Convert text string to time.
+ * Text type is not null terminated, so use temporary string
+ *	then call the standard input routine.
+ */
+Datum
+text_time(PG_FUNCTION_ARGS)
+{
+	text	   *str = PG_GETARG_TEXT_P(0);
+	int			i;
+	char	   *sp,
+			   *dp,
+				dstr[MAXDATELEN + 1];
+
+	if (VARSIZE(str) - VARHDRSZ > MAXDATELEN)
+		elog(ERROR, "Bad time external representation (too long)");
+
+	sp = VARDATA(str);
+	dp = dstr;
+	for (i = 0; i < (VARSIZE(str) - VARHDRSZ); i++)
+		*dp++ = *sp++;
+	*dp = '\0';
+
+	return DirectFunctionCall1(time_in,
+							   CStringGetDatum(dstr));
 }
 
 
@@ -850,4 +960,59 @@ datetimetz_timestamp(PG_FUNCTION_ARGS)
 	result = date*86400.0 + time->time + time->zone;
 
 	PG_RETURN_TIMESTAMP(result);
+}
+
+
+/* timetz_text()
+ * Convert timetz to text data type.
+ */
+Datum
+timetz_text(PG_FUNCTION_ARGS)
+{
+	/* Input is a Timetz, but may as well leave it in Datum form */
+	Datum		timetz = PG_GETARG_DATUM(0);
+	text	   *result;
+	char	   *str;
+	int			len;
+
+	str = DatumGetCString(DirectFunctionCall1(timetz_out, timetz));
+
+	len = (strlen(str) + VARHDRSZ);
+
+	result = palloc(len);
+
+	VARATT_SIZEP(result) = len;
+	memmove(VARDATA(result), str, (len - VARHDRSZ));
+
+	pfree(str);
+
+	PG_RETURN_TEXT_P(result);
+}
+
+
+/* text_timetz()
+ * Convert text string to timetz.
+ * Text type is not null terminated, so use temporary string
+ *	then call the standard input routine.
+ */
+Datum
+text_timetz(PG_FUNCTION_ARGS)
+{
+	text	   *str = PG_GETARG_TEXT_P(0);
+	int			i;
+	char	   *sp,
+			   *dp,
+				dstr[MAXDATELEN + 1];
+
+	if (VARSIZE(str) - VARHDRSZ > MAXDATELEN)
+		elog(ERROR, "Bad timetz external representation (too long)");
+
+	sp = VARDATA(str);
+	dp = dstr;
+	for (i = 0; i < (VARSIZE(str) - VARHDRSZ); i++)
+		*dp++ = *sp++;
+	*dp = '\0';
+
+	return DirectFunctionCall1(timetz_in,
+							   CStringGetDatum(dstr));
 }

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.55 2000/11/06 15:57:00 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.56 2000/11/11 19:55:19 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -494,7 +494,7 @@ ParseDateTime(char *timestr, char *lowstr,
 			{
 				ftype[nf] = DTK_TZ;
 				*lp++ = *cp++;
-				while (isdigit((int) *cp) || (*cp == ':'))
+				while (isdigit((int) *cp) || (*cp == ':') || (*cp == '.'))
 					*lp++ = *cp++;
 
 				/* special? */
@@ -1657,7 +1657,7 @@ DecodeDateDelta(char **field, int *ftype, int nf, int *dtype, struct tm * tm, do
 
 	*dtype = DTK_DELTA;
 
-	type = DTK_SECOND;
+	type = IGNORE;
 	tm->tm_year = 0;
 	tm->tm_mon = 0;
 	tm->tm_mday = 0;
@@ -1687,7 +1687,7 @@ DecodeDateDelta(char **field, int *ftype, int nf, int *dtype, struct tm * tm, do
 				 * So, work this out to drop through to DTK_NUMBER, which *can* tolerate this.
 				 */
 				cp = field[i]+1;
-				while ((*cp != '\0') && (*cp != ':'))
+				while ((*cp != '\0') && (*cp != ':') && (*cp != '.'))
 					cp++;
 				if ((*cp == ':')
 					&& (DecodeTime((field[i]+1), fmask, &tmask, tm, fsec) == 0)) {
@@ -1705,6 +1705,14 @@ DecodeDateDelta(char **field, int *ftype, int nf, int *dtype, struct tm * tm, do
 					type = DTK_DAY;
 					tmask = DTK_M(TZ);
 					break;
+				} else if (type == IGNORE) {
+					if (*cp == '.') {
+						/* Got a decimal point? Then assume some sort of seconds specification */
+						type = DTK_SECOND;
+					} else if (*cp == '\0') {
+						/* Only a signed integer? Then must assume a timezone-like usage */
+						type = DTK_HOUR;
+					}
 				}
 				/* DROP THROUGH */
 
@@ -1714,6 +1722,8 @@ DecodeDateDelta(char **field, int *ftype, int nf, int *dtype, struct tm * tm, do
 
 				if (*cp == '.')
 				{
+					if (type == IGNORE)
+						type = DTK_SECOND;
 					fval = strtod(cp, &cp);
 					if (*cp != '\0')
 						return -1;
