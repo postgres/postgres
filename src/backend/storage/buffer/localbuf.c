@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/storage/buffer/localbuf.c,v 1.6 1997/04/18 02:53:37 vadim Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/storage/buffer/localbuf.c,v 1.7 1997/05/20 11:30:32 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -273,6 +273,7 @@ LocalBufferSync(void)
     }
 
     memset(LocalRefCount, 0, sizeof(long) * NLocBuffer);
+    nextFreeLocalBuf = 0;
 }
 
 void
@@ -280,15 +281,15 @@ ResetLocalBufferPool(void)
 {
     int i;
 
-    memset(LocalBufferDescriptors, 0, sizeof(BufferDesc) * NLocBuffer);
-    nextFreeLocalBuf = 0;
-
-    for (i = 0; i < NLocBuffer; i++) {
+    for (i = 0; i < NLocBuffer; i++)
+    {
 	BufferDesc *buf = &LocalBufferDescriptors[i];
 
-	/* just like InitLocalBuffer() */
+	buf->tag.relId.relId = InvalidOid;
+	buf->flags &= ~BM_DIRTY;
 	buf->buf_id = - i - 2;	
     }
 
     memset(LocalRefCount, 0, sizeof(long) * NLocBuffer);
+    nextFreeLocalBuf = 0;
 }
