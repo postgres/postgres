@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/libpq.sgml,v 1.113 2003/03/20 06:23:30 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/libpq.sgml,v 1.114 2003/03/22 03:29:05 momjian Exp $
 -->
 
  <chapter id="libpq">
@@ -1148,6 +1148,25 @@ unsigned char *PQunescapeBytea(const unsigned char *from, size_t *to_length);
    this string representation into its binary representation.
    It returns a pointer to a buffer allocated with <function>malloc()</function>, or null on error, and puts the size
    of the buffer in <parameter>to_length</parameter>.
+  </para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><function>PQfreemem</function></term>
+  <listitem>
+  <para>
+   Frees memory allocated by <application>libpq</>
+<synopsis>
+void PQfreemem(void *ptr);
+</synopsis>
+</para>
+
+<para>
+   Frees memory allocated by <application>libpq</>, particularly
+   <function>PQescapeBytea</function> and <function>PQunescapeBytea</function>.
+   It is needed by Win32, which can not free memory across
+   DLL's, unless multithreaded DLL's (/MD in VC6) are used.
   </para>
   </listitem>
   </varlistentry>

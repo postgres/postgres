@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq-fe.h,v 1.89 2003/03/20 06:23:30 momjian Exp $
+ * $Id: libpq-fe.h,v 1.90 2003/03/22 03:29:06 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -254,6 +254,7 @@ extern unsigned char *PQescapeBytea(const unsigned char *bintext, size_t binlen,
 			  size_t *bytealen);
 extern unsigned char *PQunescapeBytea(const unsigned char *strtext,
 				size_t *retbuflen);
+extern void PQfreemem(void *ptr);
 
 
 /* Simple synchronous query */

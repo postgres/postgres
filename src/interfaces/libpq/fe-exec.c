@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.126 2003/03/10 22:28:21 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.127 2003/03/22 03:29:06 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -283,6 +283,19 @@ PQunescapeBytea(const unsigned char *strtext, size_t *retbuflen)
 	*retbuflen = buflen;
 	return buffer;
 }
+
+
+/*
+ *		PQfreemem - safely frees memory allocated
+ *
+ * Needed mostly by Win32, unless multithreaded DLL (/MD in VC6)
+ * Used for freeing memory from PQescapeByte()a/PQunescapeBytea()
+ */
+void PQfreemem(void *ptr)
+{
+	free(ptr);
+}
+
 
 /* ----------------
  * Space management for PGresult.
