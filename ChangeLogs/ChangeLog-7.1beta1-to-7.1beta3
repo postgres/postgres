@@ -1,3 +1,4 @@
+
 2001-01-10 13:07  petere
 
 	* configure, config/c-library.m4: Make checks for global variables
