@@ -3,7 +3,7 @@
 # pg_upgrade: update a database without needing a full dump/reload cycle.
 # CAUTION: Read the manual page before trying to use this!
 
-# $Header: /cvsroot/pgsql/src/bin/pg_dump/Attic/pg_upgrade,v 1.33 2002/01/13 05:36:42 momjian Exp $
+# $Header: /cvsroot/pgsql/src/bin/pg_dump/Attic/pg_upgrade,v 1.34 2002/01/13 17:52:00 momjian Exp $
 #
 # NOTE: we must be sure to update the version-checking code a few dozen lines
 # below for each new PostgreSQL release.
@@ -70,8 +70,10 @@ make_dbobjoidmap()
 				WHERE 	relkind = 'r' OR
 					relkind = 'i' OR
 					relkind = 't'\"`"
-		# Don't move over 7.1 sequences;  use setval() file
-		if [ "$SRC_VERSION" != "7.1" ]
+		# Don't move over 7.1 int4 sequences;  use setval() file.
+		# Sequence XIDs changed from 7.2beta4 to beta5;  don't copy them.
+		if [ "$SRC_VERSION" != "7.1" -a \
+		     "$SRC_VERSION" != "7.2" ]
 		then	QUERY="$QUERY OR relkind = 'S';";
 			QUERY="$QUERY;"
 		fi
@@ -213,8 +215,9 @@ $0 aborted." 1>&2
 	make_dbobjoidmap > "$INFODIR"/dbobjoidmap
 
 	# Generate setval() script for 7.1 because it has int4 sequences
-
-	if [ "$SRC_VERSION" = "7.1" ]
+	# Sequence XIDs changed from 7.2beta4 to beta5;  we have to recreate them.
+	if [ "$SRC_VERSION" = "7.1" -o \
+	     "$SRC_VERSION" = "7.2" ]
 	then
 		psql -d template1 -At -c "SELECT datname FROM pg_database" |
 		grep -v '^template0$' |
@@ -511,8 +514,9 @@ fi
 
 # Set sequence values for 7.1-version sequences, which were int4.
 
-if [ "$SRC_VERSION" = "7.1" ]
-then	echo "Set int8 sequence values from 7.1..."
+if [ "$SRC_VERSION" = "7.1" -o \
+     "$SRC_VERSION" = "7.2" ]
+then	echo "Set sequence values..."
 	psql -d template1 -At < "$INFODIR"/setval
 	if [ $? -ne 0 ]
 	then	echo "There were errors during int4 sequence restore.
