@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: execnodes.h,v 1.58 2001/05/07 00:43:25 tgl Exp $
+ * $Id: execnodes.h,v 1.59 2001/05/15 00:33:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -353,6 +353,8 @@ typedef struct ResultState
  *	 AppendState information
  *
  *		whichplan		which plan is being executed (0 .. n-1)
+ *		firstplan		first plan to execute (usually 0)
+ *		lastplan		last plan to execute (usually n-1)
  *		nplans			how many plans are in the list
  *		initialized		array of ExecInitNode() results
  * ----------------
@@ -361,6 +363,8 @@ typedef struct AppendState
 {
 	CommonState cstate;			/* its first field is NodeTag */
 	int			as_whichplan;
+	int			as_firstplan;
+	int			as_lastplan;
 	int			as_nplans;
 	bool	   *as_initialized;
 } AppendState;

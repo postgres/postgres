@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeAppend.c,v 1.41 2001/05/08 19:47:02 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeAppend.c,v 1.42 2001/05/15 00:33:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -64,6 +64,7 @@
 
 static bool exec_append_initialize_next(Append *node);
 
+
 /* ----------------------------------------------------------------
  *		exec_append_initialize_next
  *
@@ -79,7 +80,6 @@ exec_append_initialize_next(Append *node)
 	EState	   *estate;
 	AppendState *appendstate;
 	int			whichplan;
-	int			nplans;
 
 	/*
 	 * get information from the append node
@@ -87,9 +87,8 @@ exec_append_initialize_next(Append *node)
 	estate = node->plan.state;
 	appendstate = node->appendstate;
 	whichplan = appendstate->as_whichplan;
-	nplans = appendstate->as_nplans;
 
-	if (whichplan < 0)
+	if (whichplan < appendstate->as_firstplan)
 	{
 
 		/*
@@ -98,17 +97,17 @@ exec_append_initialize_next(Append *node)
 		 * ExecProcAppend that we are at the end of the line by returning
 		 * FALSE
 		 */
-		appendstate->as_whichplan = 0;
+		appendstate->as_whichplan = appendstate->as_firstplan;
 		return FALSE;
 	}
-	else if (whichplan >= nplans)
+	else if (whichplan > appendstate->as_lastplan)
 	{
 
 		/*
 		 * as above, end the scan if we go beyond the last scan in our
 		 * list..
 		 */
-		appendstate->as_whichplan = nplans - 1;
+		appendstate->as_whichplan = appendstate->as_lastplan;
 		return FALSE;
 	}
 	else
@@ -145,7 +144,9 @@ exec_append_initialize_next(Append *node)
  *		structures get allocated in the executor's top level memory
  *		block instead of that of the call to ExecProcAppend.)
  *
- *		Returns the scan result of the first scan.
+ *		Special case: during an EvalPlanQual recheck query of an inherited
+ *		target relation, we only want to initialize and scan the single
+ *		subplan that corresponds to the target relation being checked.
  * ----------------------------------------------------------------
  */
 bool
@@ -175,11 +176,31 @@ ExecInitAppend(Append *node, EState *estate, Plan *parent)
 	 * create new AppendState for our append node
 	 */
 	appendstate = makeNode(AppendState);
-	appendstate->as_whichplan = 0;
 	appendstate->as_nplans = nplans;
 	appendstate->as_initialized = initialized;
 
 	node->appendstate = appendstate;
+
+	/*
+	 * Do we want to scan just one subplan?  (Special case for EvalPlanQual)
+	 * XXX pretty dirty way of determining that this case applies ...
+	 */
+	if (node->isTarget && estate->es_evTuple != NULL)
+	{
+		int		tplan;
+
+		tplan = estate->es_result_relation_info - estate->es_result_relations;
+		Assert(tplan >= 0 && tplan < nplans);
+
+		appendstate->as_firstplan = tplan;
+		appendstate->as_lastplan = tplan;
+	}
+	else
+	{
+		/* normal case, scan all subplans */
+		appendstate->as_firstplan = 0;
+		appendstate->as_lastplan = nplans - 1;
+	}
 
 	/*
 	 * Miscellaneous initialization
@@ -197,10 +218,10 @@ ExecInitAppend(Append *node, EState *estate, Plan *parent)
 	ExecInitResultTupleSlot(estate, &appendstate->cstate);
 
 	/*
-	 * call ExecInitNode on each of the plans in our list and save the
+	 * call ExecInitNode on each of the plans to be executed and save the
 	 * results into the array "initialized"
 	 */
-	for (i = 0; i < nplans; i++)
+	for (i = appendstate->as_firstplan; i <= appendstate->as_lastplan; i++)
 	{
 		appendstate->as_whichplan = i;
 		exec_append_initialize_next(node);
@@ -218,7 +239,7 @@ ExecInitAppend(Append *node, EState *estate, Plan *parent)
 	/*
 	 * return the result from the first subplan's initialization
 	 */
-	appendstate->as_whichplan = 0;
+	appendstate->as_whichplan = appendstate->as_firstplan;
 	exec_append_initialize_next(node);
 
 	return TRUE;
@@ -357,10 +378,9 @@ void
 ExecReScanAppend(Append *node, ExprContext *exprCtxt, Plan *parent)
 {
 	AppendState *appendstate = node->appendstate;
-	int			nplans = length(node->appendplans);
 	int			i;
 
-	for (i = 0; i < nplans; i++)
+	for (i = appendstate->as_firstplan; i <= appendstate->as_lastplan; i++)
 	{
 		Plan	   *subnode;
 
@@ -383,6 +403,6 @@ ExecReScanAppend(Append *node, ExprContext *exprCtxt, Plan *parent)
 			ExecReScan(subnode, exprCtxt, (Plan *) node);
 		}
 	}
-	appendstate->as_whichplan = 0;
+	appendstate->as_whichplan = appendstate->as_firstplan;
 	exec_append_initialize_next(node);
 }
