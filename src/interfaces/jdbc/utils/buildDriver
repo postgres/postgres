@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $Id: buildDriver,v 1.1 2000/10/12 08:55:28 peter Exp $
+# $Id: buildDriver,v 1.2 2000/12/20 16:22:49 peter Exp $
 #
 # This script generates the org/postgresql/Driver.java file from the template
 # org/postgresql/Driver.java.in
@@ -38,10 +38,10 @@ MINORVERSION=`echo $VERSION | cut -f2 -d'.' | cut -c1`
 #---------------------------------------------------------------------------
 # Now finally build the driver
 sed \
-	-e "s/%JDBCCONNECTCLASS%/$CLASS/g" \
-	-e "s/%VERSION%/$VERSION $EDITION/g" \
-	-e "s/%MAJORVERSION%/$MAJORVERSION/g" \
-	-e "s/%MINORVERSION%/$MINORVERSION/g" \
+	-e "s/@JDBCCONNECTCLASS@/$CLASS/g" \
+	-e "s/@VERSION@/$VERSION $EDITION/g" \
+	-e "s/@MAJORVERSION@/$MAJORVERSION/g" \
+	-e "s/@MINORVERSION@/$MINORVERSION/g" \
 	<${SOURCE}.in \
 	>$SOURCE
 #---------------------------------------------------------------------------

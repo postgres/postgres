@@ -1,3 +1,7 @@
+Wed Dec 20 16:19:00 GMT 2000 peter@retep.org.uk
+	- Finished build.xml and updated Driver.java.in and buildDriver to
+	  match how Makefile and ANT operate.
+
 Tue Dec 19 17:30:00 GMT 2000 peter@retep.org.uk
 	- Finally created ant build.xml file
 

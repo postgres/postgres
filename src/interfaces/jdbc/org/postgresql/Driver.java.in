@@ -114,7 +114,7 @@ public class Driver implements java.sql.Driver
       return null;
     
     try {
-	org.postgresql.Connection con = (org.postgresql.Connection)(Class.forName("%JDBCCONNECTCLASS%").newInstance());
+	org.postgresql.Connection con = (org.postgresql.Connection)(Class.forName("@JDBCCONNECTCLASS@").newInstance());
 	con.openConnection (host(), port(), props, database(), url, this);
 	return (java.sql.Connection)con;
     } catch(ClassNotFoundException ex) {
@@ -192,7 +192,7 @@ public class Driver implements java.sql.Driver
    */
   public int getMajorVersion()
   {
-    return %MAJORVERSION%;
+    return @MAJORVERSION@;
   }
   
   /**
@@ -202,7 +202,7 @@ public class Driver implements java.sql.Driver
    */
   public int getMinorVersion()
   {
-    return %MINORVERSION%;
+    return @MINORVERSION@;
   }
   
     /**
@@ -210,7 +210,7 @@ public class Driver implements java.sql.Driver
      */
     public static String getVersion()
     {
-	return "%VERSION%";
+	return "@VERSION@";
     }
     
   /**
