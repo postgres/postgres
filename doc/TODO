@@ -2,7 +2,7 @@
 TODO list for PostgreSQL
 ========================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Tue Mar 22 21:41:32 EST 2005
+Last updated:		Tue Mar 22 21:49:46 EST 2005
 
 The most recent version of this document can be viewed at the PostgreSQL web
 site, http://www.PostgreSQL.org.
@@ -80,6 +80,8 @@ Administration
   It could start with a random tablespace from a supplied list and cycle
   through the list.
 
+* Allow WAL replay of CREATE TABLESPACE to work when the directory
+  structure on the recovery computer is different from the original
 * Add "include file" functionality in postgresql.conf
 * Add session start time and last statement time to pg_stat_activity
 * Allow server logs to be remotely read using SQL commands
