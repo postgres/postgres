@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.5 1996/08/06 16:37:58 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.6 1996/10/13 04:25:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -95,10 +95,11 @@ makeParseState() {
     pstate = malloc(sizeof(ParseState));
     pstate->p_last_resno = 1;
     pstate->p_target_resnos = NIL;
+    pstate->p_current_rel = NULL;
     pstate->p_rtable = NIL;
     pstate->p_query_is_rule = 0;
     pstate->p_numAgg = 0;
-    pstate->p_aggs = NULL;
+    pstate->p_aggs = NIL;
 
     return (pstate);
 }
@@ -126,6 +127,8 @@ parse_analyze(List *pl)
 	pstate = makeParseState();
 	result->qtrees[i++] = transformStmt(pstate, lfirst(pl));
 	pl = lnext(pl);
+	if (pstate->p_current_rel != NULL)
+	    heap_close(pstate->p_current_rel);
 	free(pstate);
     }
 
@@ -828,8 +831,8 @@ makeRangeTable(ParseState *pstate, char *relname, List *frmList)
 	pstate->p_rtable = lappend(pstate->p_rtable, ent);
     }
     x = RangeTablePosn(pstate->p_rtable, relname);
-    pstate->parser_current_rel = heap_openr(VarnoGetRelname(pstate,x));
-    if (pstate->parser_current_rel == NULL)
+    pstate->p_current_rel = heap_openr(VarnoGetRelname(pstate,x));
+    if (pstate->p_current_rel == NULL)
 	elog(WARN,"invalid relation name");
 }
 
@@ -1036,7 +1039,7 @@ makeTargetList(ParseState *pstate, List *cols, List *exprs)
 		exprs = lnext(exprs);
 	    }
 	} else {
-	    Relation insertRel = pstate->parser_current_rel;
+	    Relation insertRel = pstate->p_current_rel;
 	    int numcol;
 	    int i;
 	    AttributeTupleForm *attr = insertRel->rd_att->attrs;
@@ -1155,7 +1158,7 @@ transformTargetList(ParseState *pstate,
 		    i++;
 		}
 		sprintf(str, "=%s", val);
-		rd = pstate->parser_current_rel;
+		rd = pstate->p_current_rel;
 		Assert(rd != NULL);
 		resdomno = varattno(rd, res->name);
 		ndims = att_attnelems(rd, resdomno);
@@ -1334,7 +1337,7 @@ make_targetlist_expr(ParseState *pstate,
 	   * append, replace work only on one relation,
 	   * so multiple occurence of same resdomno is bogus
 	   */
-	  rd = pstate->parser_current_rel;
+	  rd = pstate->p_current_rel;
 	  Assert(rd != NULL);
 	  resdomno = varattno(rd,name);
 	  attrisset = varisset(rd,name);

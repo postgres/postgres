@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Attic/Makefile.global,v 1.37 1996/10/11 02:38:16 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/Attic/Makefile.global,v 1.38 1996/10/13 04:25:23 momjian Exp $
 #
 # NOTES
 #    This is seen by any Makefiles that include mk/postgres.mk. To
@@ -214,7 +214,10 @@ X11_INCDIR = /usr/include
 X11_LIBDIR = /usr/lib
 X11_LIB = -lX11 -lsocket -lnsl
 
-#
+#  These must match include/config.h 
+NAMEDATALEN=	32
+OIDNAMELEN=	36
+
 # include port specific rules and variables. For instance:
 #
 # signal(2) handling - this is here because it affects some of 
