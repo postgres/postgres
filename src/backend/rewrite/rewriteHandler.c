@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.48 1999/07/11 17:54:30 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.48.2.1 1999/10/19 04:38:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2859,6 +2859,8 @@ Except_Intersect_Rewrite(Query *parsetree)
 	bool		isBinary,
 				isPortal,
 				isTemp;
+	Node	   *limitOffset,
+			   *limitCount;
 	CmdType		commandType = CMD_SELECT;
 	List	   *rtable_insert = NIL;
 
@@ -2909,6 +2911,8 @@ Except_Intersect_Rewrite(Query *parsetree)
 	isBinary = parsetree->isBinary;
 	isPortal = parsetree->isPortal;
 	isTemp = parsetree->isTemp;
+	limitOffset = parsetree->limitOffset;
+	limitCount = parsetree->limitCount;
 
 	/*
 	 * The operator tree attached to parsetree->intersectClause is still
@@ -3094,6 +3098,8 @@ Except_Intersect_Rewrite(Query *parsetree)
 	result->isPortal = isPortal;
 	result->isBinary = isBinary;
 	result->isTemp = isTemp;
+	result->limitOffset = limitOffset;
+	result->limitCount = limitCount;
 
 	/*
 	 * The relation to insert into is attached to the range table of the

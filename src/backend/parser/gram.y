@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.88.2.3 1999/09/24 15:08:59 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.88.2.4 1999/10/19 04:38:07 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -2768,6 +2768,8 @@ SelectStmt:	  select_clause sort_clause for_update_clause opt_select_limit
 				  /* finally attach the sort clause */
 				  first_select->sortClause = $2;
 				  first_select->forUpdate = $3;
+				  first_select->limitOffset = nth(0, $4);
+				  first_select->limitCount = nth(1, $4);
 				  $$ = (Node *)first_select;
 				}		
 				if (((SelectStmt *)$$)->forUpdate != NULL && QueryIsRule)
