@@ -34,7 +34,7 @@
  *
  *
  * IDENTIFICATION
- *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_restore.c,v 1.30 2001/11/19 06:06:21 tgl Exp $
+ *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_restore.c,v 1.31 2001/11/26 23:10:36 tgl Exp $
  *
  * Modifications - 28-Jun-2000 - pjw@rhyme.com.au
  *
@@ -389,16 +389,16 @@ usage(const char *progname)
 		  "  -a, --data-only          restore only the data, no schema\n"
 	   "  -c, --clean              clean (drop) schema prior to create\n"
 	 "  -C, --create             issue commands to create the database\n"
-				 "  -d, --dbname=NAME        specify database name\n"
-			 "  -f, --file=FILENAME      TOC output file name (see -l)\n"
+				 "  -d, --dbname=NAME        output database name\n"
+				 "  -f, --file=FILENAME      output file name\n"
 				 "  -F, --format={c|t}       specify backup file format\n"
 				 "  -h, --host=HOSTNAME      server host name\n"
 				 "  -i, --index=NAME         restore named index\n"
-	"  -l, --list               dump summarized TOC for of the archive\n"
+	"  -l, --list               print summarized TOC of the archive\n"
 				 "  -L, --use-list=FILENAME  use specified table of contents for ordering\n"
 				 "                           output from this file\n"
 			"  -N, --orig-order         restore in original dump order\n"
-				 "  -o, --oid-order          restore in oid order\n"
+				 "  -o, --oid-order          restore in OID order\n"
 	 "  -O, --no-owner           do not reconnect to database to match\n"
 				 "                           object owner\n"
 				 "  -p, --port=PORT          server port number\n"
@@ -425,17 +425,17 @@ usage(const char *progname)
 		  "  -a                       restore only the data, no schema\n"
 	   "  -c                       clean (drop) schema prior to create\n"
 	 "  -C                       issue commands to create the database\n"
-				 "  -d NAME                  specify database name\n"
-			 "  -f FILENAME              TOC output file name (see -l)\n"
+				 "  -d NAME                  output database name\n"
+				 "  -f FILENAME              output file name\n"
 				 "  -F {c|t}                 specify backup file format\n"
 				 "  -h HOSTNAME              server host name\n"
 				 "  -i NAME                  restore named index\n"
-		 "  -l                       dump summarized TOC for this file\n"
+				 "  -l                       print summarized TOC of the archive\n"
 				 "  -L FILENAME              use specified table of contents for ordering\n"
 				 "                           output from this file\n"
 			"  -N                       restore in original dump order\n"
-				 "  -o                       restore in oid order\n"
-				 "  -O                       do not output reconnect to database to match\n"
+				 "  -o                       restore in OID order\n"
+				 "  -O                       do not reconnect to database to match\n"
 				 "                           object owner\n"
 				 "  -p PORT                  server port number\n"
 				 "  -P NAME                  restore named function\n"
