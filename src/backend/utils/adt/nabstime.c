@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/nabstime.c,v 1.69 2000/06/09 01:11:08 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/nabstime.c,v 1.70 2000/06/27 18:08:49 momjian Exp $
  *
  * NOTES
  *
@@ -215,8 +215,9 @@ GetCurrentTime(struct tm * tm)
 
 
 void
-abstime2tm(AbsoluteTime time, int *tzp, struct tm * tm, char *tzn)
+abstime2tm(AbsoluteTime _time, int *tzp, struct tm * tm, char *tzn)
 {
+	time_t time = (time_t) _time;
 #ifdef USE_POSIX_TIME
 	struct tm  *tx;
 
