@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: transam.h,v 1.5 1996/11/10 03:04:41 momjian Exp $
+ * $Id: transam.h,v 1.6 1996/11/27 07:30:28 vadim Exp $
  *
  *   NOTES
  *	Transaction System Version 101 now support proper oid
@@ -150,7 +150,6 @@ extern void TransRecover(Relation logRelation);
 extern void InitializeTransactionLog(void);
 extern bool TransactionIdDidCommit(TransactionId transactionId);
 extern bool TransactionIdDidAbort(TransactionId transactionId);
-extern bool TransactionIdIsInProgress(TransactionId transactionId);
 extern void TransactionIdCommit(TransactionId transactionId);
 extern void TransactionIdAbort(TransactionId transactionId);
 extern void TransactionIdSetInProgress(TransactionId transactionId);

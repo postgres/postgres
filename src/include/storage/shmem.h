@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: shmem.h,v 1.3 1996/11/10 03:05:56 momjian Exp $
+ * $Id: shmem.h,v 1.4 1996/11/27 07:32:10 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -68,6 +68,7 @@ extern bool ShmemPIDLookup(int pid, SHMEM_OFFSET* locationPtr);
 extern SHMEM_OFFSET ShmemPIDDestroy(int pid);
 extern long *ShmemInitStruct(char *name, unsigned long size,
 			     bool *foundPtr);
+extern bool TransactionIdIsInProgress (TransactionId xid);
 
 
 typedef int TableID;
