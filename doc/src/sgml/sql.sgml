@@ -1,0 +1,1126 @@
+ <chapter id="sql">
+  <title>SQL</title>
+
+  <abstract>
+   <para>
+    This chapter originally appeared as a part of 
+    Stefan Simkovics' Master's Thesis.
+
+<!-- Move this info to the bibliography
+\title{{\Large Master's Thesis}\\
+\vspace{1cm}
+Enhancement of the ANSI SQL Implementation of PostgreSQL\\[1em]
+{\normalsize written by\\[1em]}
+{\large Stefan Simkovics\\
+Paul Petersgasse 36\\
+2384 Breitenfurt\\ 
+AUSTRIA \\
+ssimkovi@ag.or.at\\[1em]}
+{\normalsize at \\[1em]}
+{\large Department of Information Systems\\
+Vienna University of Technology\\[1em]}
+{\normalsize with support by\\[1em]}
+{\large O.Univ.Prof.Dr. Georg Gottlob\\} 
+{\normalsize and\\}
+{\large Univ.Ass. Mag. Katrin Seyr\\}}
+-->
+    </para>
+  </abstract>
+
+  <para>
+   SQL has become one of the most popular relational query languages all
+   over the world. 
+   The name "<literal>SQL</literal>" is an abbreviation for
+   <firstterm>Structured Query Language</firstterm>. 
+   In 1974 Donald Chamberlin and others defined the
+   language SEQUEL (<firstterm>Structured English Query Language</firstterm>) at IBM
+   Research. This language was first implemented in an IBM
+   prototype called SEQUEL-XRM in 1974-75. In 1976-77 a revised version
+   of SEQUEL called SEQUEL/2 was defined and the name was changed to SQL
+   subsequently.
+  </para>
+
+  <para>
+A new prototype called System R was developed by IBM in 1977. System R
+implemented a large subset of SEQUEL/2 (now SQL) and a number of
+changes were made to SQL during the project. System R was installed in
+a number of user sites, both internal IBM sites and also some selected
+customer sites. Thanks to the success and acceptance of System R at
+those user sites IBM started to develop commercial products that
+implemented the SQL language based on the System R technology.
+  </para>
+
+  <para>
+Over the next years IBM and also a number of other vendors announced
+SQL products such as SQL/DS (IBM), DB2 (IBM) ORACLE (Oracle Corp.)
+DG/SQL (Data General Corp.)  SYBASE (Sybase Inc.).
+  </para>
+
+  <para>
+SQL is also an official standard now. In 1982 the American National
+Standards Institute (ANSI) chartered its Database Committee X3H2 to
+develop a proposal for a standard relational language. This proposal
+was ratified in 1986 and consisted essentially of the IBM dialect of
+SQL. In 1987 this ANSI standard was also accepted as an international
+standard by the International Organization for Standardization
+(ISO). This original standard version of SQL is often referred to,
+informally, as "SQL/86". In 1989 the original standard was extended
+and this new standard is often, again informally, referred to as
+"SQL/89". Also in 1989, a related standard called {\it Database
+Language Embedded SQL} was developed.
+  </para>
+
+  <para>
+   The ISO and ANSI committees have been working for many years on the
+   definition of a greatly expanded version of the original standard,
+   referred to informally as "SQL2" or "SQL/92". This version became a
+   ratified standard - "International Standard \mbox{ISO/IEC 9075:1992}, {\it
+   Database Language SQL}" - in late 1992. "SQL/92" is the version
+   normally meant when people refer to "the SQL standard". A detailed
+   description of "SQL/92" is given in \cite{date}. At the time of
+   writing this document a new standard informally referred to as "SQL3"
+   is under development. It is planned to make SQL a turing-complete
+   language, i.e.\ all computable queries (e.g. recursive queries) will be
+   possible. This is a very complex task and therefore the completion of
+   the new standard can not be expected before 1999.
+  </para>
+
+  <sect1 id="rel-model">
+   <title>The Relational Data Model}</title>
+
+  <para>
+    As mentioned before, SQL is a relational language. That means it is
+    based on the "relational data model" first published by E.F. Codd in
+    1970. We will give a formal description of the relational model in
+    section <xref id="formal-notion">
+    <!--{\it Formal Notion of the Relational Data Model}-->
+    but first we want to have a look at it from a more intuitive
+    point of view.
+  </para>
+
+  <para>
+    A {\it relational database} is a database that is perceived by its
+    users as a {\it collection of tables} (and nothing else but tables).
+    A table consists of rows and columns where each row represents a
+    record and each column represents an attribute of the records
+    contained in the table. Figure \ref{supplier} shows an example of a
+    database consisting of three tables:
+\begin{itemize}
+\item SUPPLIER is a table storing the number
+(SNO), the name (SNAME) and the city (CITY) of a supplier.
+\item PART is a table storing the number (PNO) the name (PNAME) and
+the price (PRICE) of a part.
+\item SELLS stores information about which part (PNO) is sold by which
+supplier (SNO). It serves in a sense to connect the other two tables
+together.
+\end{itemize}
+%
+\begin{figure}[h]
+\begin{verbatim}
+   SUPPLIER   SNO |  SNAME  |  CITY      SELLS   SNO | PNO
+             -----+---------+--------           -----+-----
+               1  |  Smith  | London              1  |  1
+               2  |  Jones  | Paris               1  |  2
+               3  |  Adams  | Vienna              2  |  4
+               4  |  Blake  | Rome                3  |  1
+                                                  3  |  3
+                                                  4  |  2
+   PART       PNO |  PNAME  |  PRICE              4  |  3 
+             -----+---------+---------            4  |  4
+               1  |  Screw  |   10
+               2  |  Nut    |    8
+               3  |  Bolt   |   15
+               4  |  Cam    |   25
+\end{verbatim}
+\caption{The suppliers and parts database}
+\label{supplier}
+\end{figure}
+%
+The tables PART and SUPPLIER may be regarded as {\it entities} and
+SELLS may be regarded as a {\it relationship} between a particular
+part and a particular supplier. 
+
+As we will see later, SQL operates on tables like the ones just
+defined but before that we will study the theory of the relational
+model.
+
+\subsection{Formal Notion of the Relational Data Model}
+\label{formal_notion}
+The mathematical concept underlying the relational model is the
+set-theoretic {\it relation} which is a subset of the Cartesian
+product of a list of domains. This set-theoretic {\it relation} gives
+the model its name (do not confuse it with the relationship from the {\it
+Entity-Relationship model}). Formally a domain is simply a set of
+values. For example the set of integers is a domain. Also the set of
+character strings of length 20 and the real numbers are examples of
+domains.
+\begin{definition}
+The {\it Cartesian} product of domains $D_{1}, D_{2},\ldots, D_{k}$ written
+\mbox{$D_{1} \times D_{2} \times \ldots \times D_{k}$} is the set of
+all $k$-tuples $(v_{1},v_{2},\ldots,v_{k})$ such that \mbox{$v_{1} \in
+D_{1}, v_{2} \in D_{2}, \ldots, v_{k} \in D_{k}$}.  
+\end{definition}
+For example, when we have $k=2$, $D_{1}=\{0,1\}$ and
+$D_{2}=\{a,b,c\}$, then $D_{1} \times D_{2}$ is
+$\{(0,a),(0,b),(0,c),(1,a),(1,b),(1,c)\}$.
+%
+\begin{definition}
+A Relation is any subset of the Cartesian product of one or more
+domains: $R \subseteq$ \mbox{$D_{1} \times D_{2} \times \ldots \times D_{k}$}
+\end{definition}
+%
+For example $\{(0,a),(0,b),(1,a)\}$ is a relation, it is in fact a
+subset of $D_{1} \times D_{2}$ mentioned above.
+The members of a relation are called tuples. Each relation of some
+Cartesian product \mbox{$D_{1} \times D_{2} \times \ldots \times
+D_{k}$} is said to have arity $k$ and is therefore a set of $k$-tuples.
+
+A relation can be viewed as a table (as we already did, remember
+figure \ref{supplier} {\it The suppliers and parts database}) where
+every tuple is represented by a row and every column corresponds to
+one component of a tuple. Giving names (called attributes) to the
+columns leads to the definition of a {\it relation scheme}.
+%
+\begin{definition}
+A {\it relation scheme} $R$ is a finite set of attributes
+\mbox{$\{A_{1},A_{2},\ldots,A_{k}\}$}. There is a domain $D_{i}$ for
+each attribute $A_{i}, 1 \le i \le k$ where the values of the
+attributes are taken from. We often write a relation scheme as
+\mbox{$R(A_{1},A_{2},\ldots,A_{k})$}.
+\end{definition}
+{\bf Note:} A {\it relation scheme} is just a kind of template
+whereas a {\it relation} is an instance of a {\it relation
+scheme}. The {\it relation} consists of tuples (and can therefore be
+viewed as a table) not so the {\it relation scheme}.
+
+\subsubsection{Domains vs. Data Types}
+\label{domains}
+We often talked about {\it domains} in the last section. Recall that a
+domain is, formally, just a set of values (e.g., the set of integers or
+the real numbers). In terms of database systems we often talk of {\it
+data types} instead of domains. When we define a table we have to make
+a decision about which attributes to include. Additionally we
+have to decide which kind of data is going to be stored as
+attribute values. For example the values of SNAME from the table
+SUPPLIER will be character strings, whereas SNO will store
+integers. We define this by assigning a {\it data type} to each
+attribute. The type of SNAME will be VARCHAR(20) (this is the SQL type
+for character strings of length $\le$ 20), the type of SNO will be
+INTEGER. With the assignment of a {\it data type} we also have selected
+a domain for an attribute. The domain of SNAME is the set of all
+character strings of length $\le$ 20, the domain of SNO is the set of
+all integer numbers.
+
+\section{Operations in the Relational Data Model}
+\label{operations}
+In section \ref{formal_notion} we defined the mathematical notion of
+the relational model. Now we know how the data can be stored using a
+relational data model but we do not know what to do with all these
+tables to retrieve something from the database yet. For example somebody
+could ask for the names of all suppliers that sell the part
+'Screw'. Therefore two rather different kinds of notations for
+expressing operations on relations have been defined:
+%
+\begin{itemize}
+\item The {\it Relational Algebra} which is an algebraic notation,
+where queries are expressed by applying specialized operators to the
+relations.
+\item The {\it Relational Calculus} which is a logical notation,
+where queries are expressed by formulating some logical restrictions
+that the tuples in the answer must satisfy.
+\end{itemize}
+%
+\subsection{Relational Algebra}
+\label{rel_alg}
+The {\it Relational Algebra} was introduced by E.~F.~Codd in 1972. It
+consists of a set of operations on relations:
+\begin{itemize}
+\item SELECT ($\sigma$): extracts {\it tuples} from a relation that
+satisfy a given restriction. Let $R$ be a table that contains an attribute
+$A$. $\sigma_{A=a}(R) = \{t \in R \mid t(A) = a\}$ where $t$ denotes a
+tuple of $R$ and $t(A)$ denotes the value of attribute $A$ of tuple $t$.
+\item PROJECT ($\pi$): extracts specified {\it attributes} (columns) from a
+relation. Let $R$ be a relation that contains an attribute $X$. $\pi_{X}(R) =
+\{t(X) \mid t \in R\}$, where $t(X)$ denotes the value of attribute $X$ of
+tuple $t$.
+\item PRODUCT ($\times$): builds the Cartesian product of two
+relations. Let $R$ be a table with arity $k_{1}$ and let $S$ be a table with
+arity $k_{2}$. $R\times S$ is the set of all $(k_{1}+k_{2})$-tuples
+whose first $k_{1}$ components form a tuple in $R$ and whose last
+$k_{2}$ components form a tuple in $S$.
+\item UNION ($\cup$): builds the set-theoretic union of two
+tables. Given the tables $R$ and $S$ (both must have the same arity),
+the union $R \cup S$ is the set of tuples that are in $R$ or $S$ or
+both.
+\item INTERSECT ($\cap$): builds the set-theoretic intersection of two
+tables. Given the tables $R$ and $S$, $R \cup S$ is the set of tuples
+that are in $R$ and in $S$. We again require that $R$ and $S$ have the
+same arity.
+\item DIFFERENCE ($-$ or $\setminus$): builds the set difference of
+two tables. Let $R$ and $S$ again be two tables with the same
+arity. $R-S$ is the set of tuples in $R$ but not in $S$.
+\item JOIN ($\Join$): connects two tables by their common
+attributes. Let $R$ be a table with the attributes $A,B$ and $C$ and
+let $S$ a table with the attributes $C,D$ and $E$. There is one
+attribute common to both relations, the attribute $C$. $R \Join S =
+\pi_{R.A,R.B,R.C,S.D,S.E}(\sigma_{R.C=S.C}(R \times S))$. What are we
+doing here? We first calculate the Cartesian product $R \times
+S$. Then we select those tuples whose values for the common
+attribute $C$ are equal ($\sigma_{R.C = S.C}$). Now we got a table
+that contains the attribute $C$ two times and we correct this by
+projecting out the duplicate column.
+\begin{example} 
+\label{join_example}
+Let's have a look at the tables that are produced by evaluating the steps
+necessary for a join. \\
+Let the following two tables be given:
+\begin{verbatim}
+         R   A | B | C      S   C | D | E       
+            ---+---+---        ---+---+---
+             1 | 2 | 3          3 | a | b       
+             4 | 5 | 6          6 | c | d              
+             7 | 8 | 9                                       
+\end{verbatim}
+First we calculate the Cartesian product $R \times S$ and get:
+\begin{verbatim}
+       R x S   A | B | R.C | S.C | D | E
+              ---+---+-----+-----+---+---
+               1 | 2 |  3  |  3  | a | b
+               1 | 2 |  3  |  6  | c | d
+               4 | 5 |  6  |  3  | a | b
+               4 | 5 |  6  |  6  | c | d
+               7 | 8 |  9  |  3  | a | b
+               7 | 8 |  9  |  6  | c | d
+\end{verbatim}
+\pagebreak
+After the selection $\sigma_{R.C=S.C}(R \times S)$ we get:
+\begin{verbatim}
+               A | B | R.C | S.C | D | E
+              ---+---+-----+-----+---+---
+               1 | 2 |  3  |  3  | a | b
+               4 | 5 |  6  |  6  | c | d
+\end{verbatim}
+To remove the duplicate column $S.C$ we project it out by the
+following operation: $\pi_{R.A,R.B,R.C,S.D,S.E}(\sigma_{R.C=S.C}(R
+\times S))$ and get:
+\begin{verbatim}
+                   A | B | C | D | E
+                  ---+---+---+---+---
+                   1 | 2 | 3 | a | b
+                   4 | 5 | 6 | c | d
+\end{verbatim}
+\end{example}
+\item DIVIDE ($\div$): Let $R$ be a table with the attributes $A,B,C$
+and $D$ and let $S$ be a table with the attributes $C$ and $D$. Then
+we define the division as: $R \div S = \{t \mid \forall t_{s} \in S~
+\exists t_{r} \in R$ such that
+$t_{r}(A,B)=t~\wedge~t_{r}(C,D)=t_{s}\}$ where $t_{r}(x,y)$ denotes a
+tuple of table $R$ that consists only of the components $x$ and
+$y$. Note that the tuple $t$ only consists of the components $A$ and
+$B$ of relation $R$.
+\begin{example}
+Given the following tables
+\begin{verbatim}
+          R   A | B | C | D        S   C | D
+             ---+---+---+---          ---+---
+              a | b | c | d            c | d
+              a | b | e | f            e | f
+              b | c | e | f
+              e | d | c | d
+              e | d | e | f
+              a | b | d | e
+\end{verbatim}
+$R \div S$ is derived as
+\begin{verbatim}
+                         A | B
+                        ---+---
+                         a | b
+                         e | d
+\end{verbatim}
+\end{example}
+\end{itemize}
+%
+For a more detailed description and definition of the relational
+algebra refer to \cite{ullman} or \cite{date86}.
+
+\begin{example}
+\label{suppl_rel_alg}
+Recall that we formulated all those relational operators to be able to
+retrieve data from the database. Let's return to our example of
+section \ref{operations} where someone wanted to know the names of all
+suppliers that sell the part 'Screw'. This question can be answered
+using relational algebra by the following operation:
+\begin{displaymath}
+\pi_{SUPPLIER.SNAME}(\sigma_{PART.PNAME='Screw'}(SUPPLIER \Join SELLS
+\Join PART))
+\end{displaymath}
+We call such an operation a query. If we evaluate the above query
+against the tables form figure \ref{supplier} {\it The suppliers and
+parts database} we will obtain the following result:
+\begin{verbatim}
+                             SNAME
+                            -------
+                             Smith
+                             Adams
+\end{verbatim}
+\end{example}
+\subsection{Relational Calculus}
+\label{rel_calc}
+The relational calculus is based on the {first order logic}. There are
+two variants of the relational calculus:
+%
+\begin{itemize} 
+\item The {\it Domain Relational Calculus} (DRC), where variables
+stand for components (attributes) of the tuples.
+\item The {\it Tuple Relational Calculus} (TRC), where variables stand
+for tuples.
+\end{itemize}
+%
+We want to discuss the tuple relational calculus only because it is
+the one underlying the most relational languages. For a detailed
+discussion on DRC (and also TRC) see \cite{date86} or \cite{ullman}.
+
+\subsubsection{Tuple Relational Calculus}
+The queries used in TRC are of the following form:
+\begin{displaymath}
+\{x(A) \mid F(x)\}
+\end{displaymath}
+where $x$ is a tuple variable $A$ is a set of attributes and $F$ is a
+formula. The resulting relation consists of all tuples $t(A)$ that satisfy
+$F(t)$.
+\begin{example}
+If we want to answer the question from example \ref{suppl_rel_alg}
+using TRC we formulate the following query:
+\begin{displaymath}
+\begin{array}{lcll}
+\{x(SNAME) & \mid & x \in SUPPLIER~\wedge & \nonumber\\ 
+&  & \exists y \in SELLS\ \exists z \in PART & (y(SNO)=x(SNO)~\wedge \nonumber\\
+&  &  &~ z(PNO)=y(PNO)~\wedge \nonumber\\
+&  &  &~ z(PNAME)='Screw')\} \nonumber
+\end{array}
+\end{displaymath}
+Evaluating the query against the tables from figure \ref{supplier}
+{\it The suppliers and parts database} again leads to the same result
+as in example \ref{suppl_rel_alg}.
+\end{example}
+
+\subsection{Relational Algebra vs. Relational Calculus}
+\label{alg_vs_calc}
+The relational algebra and the relational calculus have the same {\it
+expressive power} i.e.\ all queries that can be formulated using
+relational algebra can also be formulated using the relational
+calculus and vice versa. This was first proved by E.~F.~Codd in
+1972. This proof is based on an algorithm -"Codd's reduction
+algorithm"- by which an arbitrary expression of the relational
+calculus can be reduced to a semantically equivalent expression of
+relational algebra. For a more detailed discussion on that refer to
+\cite{date86} and
+\cite{ullman}. 
+
+It is sometimes said that languages based on the relational calculus
+are "higher level" or "more declarative" than languages based on
+relational algebra because the algebra (partially) specifies the order
+of operations while the calculus leaves it to a compiler or
+interpreter to determine the most efficient order of evaluation.
+
+
+\section{The SQL Language}
+\label{sqllanguage}
+%
+As most modern relational languages SQL is based on the tuple
+relational calculus. As a result every query that can be formulated
+using the tuple relational calculus (or equivalently, relational
+algebra) can also be formulated using SQL. There are, however,
+capabilities beyond the scope of relational algebra or calculus. Here
+is a list of some additional features provided by SQL that are not
+part of relational algebra or calculus:
+\pagebreak
+%
+\begin{itemize}
+\item Commands for insertion, deletion or modification of data.
+\item Arithmetic capability: In SQL it is possible to involve
+arithmetic operations as well as comparisons, e.g. $A < B + 3$. Note
+that $+$ or other arithmetic operators appear neither in relational
+algebra nor in relational calculus.
+\item Assignment and Print Commands: It is possible to print a
+relation constructed by a query and to assign a computed relation to a
+relation name.
+\item Aggregate Functions: Operations such as {\it average}, {\it
+sum}, {\it max}, \ldots can be applied to columns of a relation to
+obtain a single quantity.
+\end{itemize}
+%
+\subsection{Select}
+\label{select}
+The most often used command in SQL is the SELECT statement that is
+used to retrieve data. The syntax is:
+\begin{verbatim}
+   SELECT [ALL|DISTINCT] 
+          { * | <expr_1> [AS <c_alias_1>] [, ... 
+                [, <expr_k> [AS <c_alias_k>]]]}
+   FROM <table_name_1> [t_alias_1] 
+        [, ... [, <table_name_n> [t_alias_n]]]
+   [WHERE condition]
+   [GROUP BY <name_of_attr_i> 
+             [,... [, <name_of_attr_j>]] [HAVING condition]]
+   [{UNION | INTERSECT | EXCEPT} SELECT ...]
+   [ORDER BY <name_of_attr_i> [ASC|DESC] 
+             [, ... [, <name_of_attr_j> [ASC|DESC]]]];
+\end{verbatim}
+Now we will illustrate the complex syntax of the SELECT statement
+with various examples. The tables used for the examples are defined in
+figure \ref{supplier} {\it The suppliers and parts database}.
+%
+\subsubsection{Simple Selects}
+\begin{example}
+Here are some simple examples using a SELECT statement: \\
+\\
+To retrieve all tuples from table PART where the attribute PRICE is
+greater than 10 we formulate the following query
+\begin{verbatim}
+   SELECT * 
+   FROM PART
+   WHERE PRICE > 10;
+\end{verbatim}
+and get the table:
+\begin{verbatim}
+                   PNO |  PNAME  |  PRICE
+                  -----+---------+--------
+                    3  |  Bolt   |   15
+                    4  |  Cam    |   25
+\end{verbatim}
+%
+Using "$*$" in the SELECT statement will deliver all attributes from
+the table. If we want to retrieve only the attributes PNAME and PRICE
+from table PART we use the statement:
+\begin{verbatim}
+   SELECT PNAME, PRICE 
+   FROM PART
+   WHERE PRICE > 10;
+\end{verbatim}
+\pagebreak
+\noindent In this case the result is:
+\begin{verbatim}
+                      PNAME  |  PRICE
+                     --------+--------
+                      Bolt   |   15
+                      Cam    |   25
+\end{verbatim}
+Note that the SQL SELECT corresponds to the "projection" in relational
+algebra not to the "selection" (see section \ref{rel_alg} {\it
+Relational Algebra}).
+\\ \\
+The qualifications in the WHERE clause can also be logically connected
+using the keywords OR, AND and NOT:
+\begin{verbatim}
+   SELECT PNAME, PRICE 
+   FROM PART
+   WHERE PNAME = 'Bolt' AND
+         (PRICE = 0 OR PRICE < 15);
+\end{verbatim}
+will lead to the result:
+\begin{verbatim}
+                      PNAME  |  PRICE
+                     --------+--------
+                      Bolt   |   15
+\end{verbatim}
+Arithmetic operations may be used in the {\it selectlist} and in the WHERE
+clause. For example if we want to know how much it would cost if we
+take two pieces of a part we could use the following query:
+\begin{verbatim}
+   SELECT PNAME, PRICE * 2 AS DOUBLE
+   FROM PART
+   WHERE PRICE * 2 < 50;
+\end{verbatim}
+and we get:
+\begin{verbatim}
+                      PNAME  |  DOUBLE
+                     --------+---------
+                      Screw  |    20
+                      Nut    |    16
+                      Bolt   |    30
+\end{verbatim}
+Note that the word DOUBLE after the keyword AS is the new title of the
+second column. This technique can be used for every element of the
+{\it selectlist} to assign a new title to the resulting column. This new title
+is often referred to as alias. The alias cannot be used throughout the
+rest of the query. 
+\end{example}
+
+\subsubsection{Joins}
+\begin{example} The following example shows how {\it joins} are
+realized in SQL: \\ \\
+To join the three tables SUPPLIER, PART and SELLS over their common
+attributes we formulate the following statement:
+\begin{verbatim}
+   SELECT S.SNAME, P.PNAME
+   FROM SUPPLIER S, PART P, SELLS SE
+   WHERE S.SNO = SE.SNO AND
+         P.PNO = SE.PNO;
+\end{verbatim}
+\pagebreak
+\noindent and get the following table as a result:
+\begin{verbatim}
+                       SNAME | PNAME
+                      -------+-------
+                       Smith | Screw
+                       Smith | Nut
+                       Jones | Cam
+                       Adams | Screw
+                       Adams | Bolt
+                       Blake | Nut
+                       Blake | Bolt
+                       Blake | Cam
+\end{verbatim}
+In the FROM clause we introduced an alias name for every relation
+because there are common named attributes (SNO and PNO) among the
+relations. Now we can distinguish between the common named attributes
+by simply prefixing the attribute name with the alias name followed by
+a dot. The join is calculated in the same way as shown in example
+\ref{join_example}. First the Cartesian product $SUPPLIER\times PART
+\times SELLS$ is derived. Now only those tuples satisfying the
+conditions given in the WHERE clause are selected (i.e.\ the common
+named attributes have to be equal). Finally we project out all
+columns but S.SNAME and P.PNAME. 
+\end{example}
+%
+\subsubsection{Aggregate Operators}
+SQL provides aggregate operators (e.g. AVG, COUNT, SUM, MIN, MAX) that
+take the name of an attribute as an argument. The value of the
+aggregate operator is calculated over all values of the specified
+attribute (column) of the whole table. If groups are specified in the
+query the calculation is done only over the values of a group (see next
+section).
+
+\begin{example}
+If we want to know the average cost of all parts in table PART we use
+the following query:
+\begin{verbatim}
+   SELECT AVG(PRICE) AS AVG_PRICE
+   FROM PART;
+\end{verbatim}
+The result is:
+\begin{verbatim}
+                         AVG_PRICE
+                        -----------
+                           14.5
+\end{verbatim}
+If we want to know how many parts are stored in table PART we use
+the statement:
+\begin{verbatim}
+   SELECT COUNT(PNO)
+   FROM PART;
+\end{verbatim}
+and get:
+\begin{verbatim}
+                           COUNT
+                          -------
+                             4
+\end{verbatim}
+\end{example}
+
+\subsubsection{Aggregation by Groups}
+SQL allows to partition the tuples of a table into groups. Then the
+aggregate operators described above can be applied to the groups
+(i.e. the value of the aggregate operator is no longer calculated over
+all the values of the specified column but over all values of a
+group. Thus the aggregate operator is evaluated individually for every
+group.) 
+\\ \\
+The partitioning of the tuples into groups is done by using the
+keywords \mbox{GROUP BY} followed by a list of attributes that define the
+groups. If we have {\tt GROUP BY $A_{1}, \ldots, A_{k}$} we partition
+the relation into groups, such that two tuples are in the same group
+if and only if they agree on all the attributes $A_{1}, \ldots,
+A_{k}$.
+\begin{example}
+If we want to know how many parts are sold by every supplier we
+formulate the query:
+\begin{verbatim}
+   SELECT S.SNO, S.SNAME, COUNT(SE.PNO)
+   FROM SUPPLIER S, SELLS SE
+   WHERE S.SNO = SE.SNO
+   GROUP BY S.SNO, S.SNAME;
+\end{verbatim}
+and get:
+\begin{verbatim}
+                     SNO | SNAME | COUNT
+                    -----+-------+-------
+                      1  | Smith |   2
+                      2  | Jones |   1
+                      3  | Adams |   2
+                      4  | Blake |   3
+\end{verbatim}
+Now let's have a look of what is happening here: \\
+First the join of the
+tables SUPPLIER and SELLS is derived:
+\begin{verbatim}
+                  S.SNO | S.SNAME | SE.PNO
+                 -------+---------+--------
+                    1   |  Smith  |   1
+                    1   |  Smith  |   2
+                    2   |  Jones  |   4
+                    3   |  Adams  |   1
+                    3   |  Adams  |   3
+                    4   |  Blake  |   2
+                    4   |  Blake  |   3
+                    4   |  Blake  |   4
+\end{verbatim}
+Next we partition the tuples into groups by putting all tuples
+together that agree on both attributes S.SNO and S.SNAME:
+\begin{verbatim}
+                  S.SNO | S.SNAME | SE.PNO
+                 -------+---------+--------
+                    1   |  Smith  |   1
+                                  |   2
+                 --------------------------
+                    2   |  Jones  |   4
+                 --------------------------
+                    3   |  Adams  |   1
+                                  |   3
+                 --------------------------
+                    4   |  Blake  |   2
+                                  |   3
+                                  |   4
+\end{verbatim}
+In our example we got four groups and now we can apply the aggregate
+operator COUNT to every group leading to the total result of the query
+given above.
+\end{example}
+%
+ Note that for the result of a query using GROUP BY and aggregate
+operators to make sense the attributes grouped by must also appear in
+the {\it selectlist}. All further attributes not appearing in the GROUP
+BY clause can only be selected by using an aggregate function. On
+the other hand you can not use aggregate functions on attributes
+appearing in the GROUP BY clause.
+
+\subsubsection{Having}
+
+The HAVING clause works much like the WHERE clause and is used to
+consider only those groups satisfying the qualification given in the
+HAVING clause. The expressions allowed in the HAVING clause must
+involve aggregate functions. Every expression using only  plain
+attributes belongs to the WHERE clause. On the other hand every
+expression involving an aggregate function must be put to the HAVING
+clause. 
+\begin{example}
+If we want only those suppliers selling more than one part we use the
+query:
+\begin{verbatim}
+   SELECT S.SNO, S.SNAME, COUNT(SE.PNO)
+   FROM SUPPLIER S, SELLS SE
+   WHERE S.SNO = SE.SNO
+   GROUP BY S.SNO, S.SNAME
+   HAVING COUNT(SE.PNO) > 1;
+\end{verbatim}
+and get:
+\begin{verbatim}
+                     SNO | SNAME | COUNT
+                    -----+-------+-------
+                      1  | Smith |   2
+                      3  | Adams |   2
+                      4  | Blake |   3
+\end{verbatim}
+\end{example}
+
+\subsubsection{Subqueries}
+In the WHERE and HAVING clauses the use of subqueries (subselects) is
+allowed in every place where a value is expected. In this case the
+value must be derived by evaluating the subquery first. The usage of
+subqueries extends the expressive power of SQL.
+\begin{example}
+If we want to know all parts having a greater price than the part
+named 'Screw' we use the query:
+\begin{verbatim}
+   SELECT * 
+   FROM PART 
+   WHERE PRICE > (SELECT PRICE FROM PART
+                  WHERE PNAME='Screw');
+\end{verbatim}
+The result is:
+\begin{verbatim}
+                   PNO |  PNAME  |  PRICE
+                  -----+---------+--------
+                    3  |  Bolt   |   15
+                    4  |  Cam    |   25
+\end{verbatim}
+When we look at the above query we can see
+the keyword SELECT two times. The first one at the beginning of the
+query - we will refer to it as outer SELECT - and the one in the WHERE
+clause which begins a nested query - we will refer to it as inner
+SELECT. For every tuple of the outer SELECT the inner SELECT has to be
+evaluated. After every evaluation we know the price of the tuple named
+'Screw' and we can check if the price of the actual tuple is
+greater. 
+\\ \\
+\noindent If we want to know all suppliers that do not sell any part 
+(e.g. to be able to remove these suppliers from the database) we use:
+\begin{verbatim}
+   SELECT * 
+   FROM SUPPLIER S
+   WHERE NOT EXISTS
+             (SELECT * FROM SELLS SE
+              WHERE SE.SNO = S.SNO);
+\end{verbatim}
+In our example the result will be empty because every supplier sells
+at least one part. Note that we use S.SNO from the outer SELECT within
+the WHERE clause of the inner SELECT. As described above the subquery
+is evaluated for every tuple from the outer query i.e. the value for
+S.SNO is always taken from the actual tuple of the outer SELECT. 
+\end{example}
+
+\subsubsection{Union, Intersect, Except}
+
+These operations calculate the union, intersect and set theoretic
+difference of the tuples derived by two subqueries:
+\begin{example}
+The following query is an example for UNION:
+\begin{verbatim}
+   SELECT S.SNO, S.SNAME, S.CITY
+   FROM SUPPLIER S
+   WHERE S.SNAME = 'Jones'
+   UNION
+   SELECT S.SNO, S.SNAME, S.CITY
+   FROM SUPPLIER S
+   WHERE S.SNAME = 'Adams';    
+\end{verbatim}
+gives the result:
+\begin{verbatim}
+                     SNO | SNAME |  CITY
+                    -----+-------+--------
+                      2  | Jones | Paris
+                      3  | Adams | Vienna
+\end{verbatim}
+Here an example for INTERSECT:
+\begin{verbatim}
+   SELECT S.SNO, S.SNAME, S.CITY
+   FROM SUPPLIER S
+   WHERE S.SNO > 1
+   INTERSECT
+   SELECT S.SNO, S.SNAME, S.CITY
+   FROM SUPPLIER S
+   WHERE S.SNO > 2;
+\end{verbatim}
+gives the result:
+\begin{verbatim}
+                     SNO | SNAME |  CITY
+                    -----+-------+--------
+                      2  | Jones | Paris
+\end{verbatim}
+The only tuple returned by both parts of the query is the one having $SNO=2$.
+\pagebreak
+
+\noindent Finally an example for EXCEPT:
+\begin{verbatim}
+   SELECT S.SNO, S.SNAME, S.CITY
+   FROM SUPPLIER S
+   WHERE S.SNO > 1
+   EXCEPT
+   SELECT S.SNO, S.SNAME, S.CITY
+   FROM SUPPLIER S
+   WHERE S.SNO > 3;
+\end{verbatim}
+gives the result:
+\begin{verbatim}
+                     SNO | SNAME |  CITY
+                    -----+-------+--------
+                      2  | Jones | Paris
+                      3  | Adams | Vienna
+\end{verbatim}
+\end{example}
+%
+\subsection{Data Definition}
+\label{datadef}
+%
+There is a set of commands used for data definition included in the
+SQL language. 
+
+\subsubsection{Create Table}
+\label{create}
+The most fundamental command for data definition is the
+one that creates a new relation (a new table). The syntax of the
+CREATE TABLE command is:
+%
+\begin{verbatim}
+   CREATE TABLE <table_name>
+                (<name_of_attr_1> <type_of_attr_1>
+                 [, <name_of_attr_2> <type_of_attr_2> 
+                 [, ...]]);
+\end{verbatim}
+%
+\begin{example}
+To create the tables defined in figure \ref{supplier} the
+following SQL statements are used:
+\begin{verbatim}
+   CREATE TABLE SUPPLIER
+                (SNO   INTEGER,
+                 SNAME VARCHAR(20),
+                 CITY  VARCHAR(20));
+   
+   CREATE TABLE PART
+                (PNO   INTEGER,
+                 PNAME VARCHAR(20),
+                 PRICE DECIMAL(4 , 2));
+\end{verbatim}
+\begin{verbatim}
+   CREATE TABLE SELLS
+                (SNO INTEGER,
+                 PNO INTEGER);
+\end{verbatim}
+\end{example}
+
+%
+\subsubsection{Data Types in SQL}
+The following is a list of some data types that are supported by SQL:
+\begin{itemize}
+\item INTEGER: signed fullword binary integer (31 bits precision).
+\item SMALLINT: signed halfword binary integer (15 bits precision).
+\item DECIMAL ($p \lbrack,q\rbrack $): signed packed decimal number of $p$
+digits precision with assumed $q$ of them right to the decimal
+point. $(15\ge p \ge q \ge 0)$. If $q$ is omitted it is assumed to be 0.
+\item FLOAT: signed doubleword floating point number.
+\item CHAR($n$): fixed length character string of length $n$.
+\item VARCHAR($n$): varying length character string of maximum length
+$n$.
+\end{itemize}
+
+\subsubsection{Create Index}
+Indices are used to speed up access to a relation. If a relation $R$
+has an index on attribute $A$ then we can retrieve all tuples $t$
+having $t(A) = a$ in time roughly proportional to the number of such
+tuples $t$ rather than in time proportional to the size of $R$.
+
+To create an index in SQL the CREATE INDEX command is used. The syntax
+is:
+\begin{verbatim}
+   CREATE INDEX <index_name> 
+   ON <table_name> ( <name_of_attribute> );
+\end{verbatim}
+%
+\begin{example}
+To create an index named I on attribute SNAME of relation SUPPLIER
+we use the following statement:
+\begin{verbatim}
+   CREATE INDEX I
+   ON SUPPLIER (SNAME);
+\end{verbatim}
+\end{example}
+%
+The created index is maintained automatically, i.e.\ whenever a new tuple
+is inserted into the relation SUPPLIER the index I is adapted. Note
+that the only changes a user can percept when an index is present
+are an increased speed.
+
+\subsubsection{Create View}
+A view may be regarded as a {\it virtual table}, i.e.\ a table that
+does not {\it physically} exist in the database but looks to the user
+as if it did. By contrast, when we talk of a {\it base table} there is
+really a physically stored counterpart of each row of the table
+somewhere in the physical storage.
+
+Views do not have their own, physically separate, distinguishable
+stored data. Instead, the system stores the {\it definition} of the
+view (i.e.\ the rules about how to access physically stored {\it base
+tables} in order to materialize the view) somewhere in the {\it system
+catalogs} (see section \ref{catalogs} {\it System Catalogs}). For a
+discussion on different techniques to implement views refer to section
+\ref{view_impl} {\it Techniques To Implement Views}.
+
+In SQL the CREATE VIEW command is used to define a view. The syntax
+is:
+\begin{verbatim}
+   CREATE VIEW <view_name>
+   AS <select_stmt>
+\end{verbatim}
+where {\tt $<$select\_stmt$>$ } is a valid select statement as defined
+in section \ref{select}. Note that the {\tt $<$select\_stmt$>$ } is
+not executed when the view is created. It is just stored in the {\it
+system catalogs} and is executed whenever a query against the view is
+made.
+\begin{example} Let the following view definition be given (we use
+the tables from figure \ref{supplier} {\it The suppliers and parts
+database} again):
+\begin{verbatim}
+   CREATE VIEW London_Suppliers
+      AS SELECT S.SNAME, P.PNAME
+         FROM SUPPLIER S, PART P, SELLS SE
+         WHERE S.SNO = SE.SNO AND
+               P.PNO = SE.PNO AND
+               S.CITY = 'London';
+\end{verbatim}
+Now we can use this {\it virtual relation} {\tt London\_Suppliers} as
+if it were another base table:
+\begin{verbatim}
+   SELECT *
+   FROM London_Suppliers
+   WHERE P.PNAME = 'Screw';
+\end{verbatim}
+will return the following table:
+\begin{verbatim}
+                       SNAME | PNAME
+                      -------+-------
+                       Smith | Screw                 
+\end{verbatim}
+To calculate this result the database system has to do a {\it hidden}
+access to the base tables SUPPLIER, SELLS and PART first. It
+does so by executing the query given in the view definition against
+those base tables. After that the additional qualifications (given in the
+query against the view) can be applied to obtain the resulting table.
+\end{example}
+
+\subsubsection{Drop Table, Drop Index, Drop View}
+To destroy a table (including all tuples stored in that table) the
+DROP TABLE command is used:
+\begin{verbatim}
+   DROP TABLE <table_name>;
+\end{verbatim}
+%
+\begin{example}
+To destroy the SUPPLIER table use the following statement:
+\begin{verbatim}
+   DROP TABLE SUPPLIER;
+\end{verbatim}
+\end{example}
+%
+The DROP INDEX command is used to destroy an index:
+\begin{verbatim}
+   DROP INDEX <index_name>;
+\end{verbatim}
+%
+Finally to destroy a given view use the command DROP VIEW:
+\begin{verbatim}
+   DROP VIEW <view_name>;
+\end{verbatim}
+
+\subsection{Data Manipulation}
+%
+\subsubsection{Insert Into}
+Once a table is created (see section \ref{create}), it can be filled
+with tuples using the command INSERT INTO. The syntax is:
+\begin{verbatim}
+   INSERT INTO <table_name> (<name_of_attr_1> 
+                             [, <name_of_attr_2> [,...]])
+   VALUES (<val_attr_1> 
+           [, <val_attr_2> [, ...]]);
+\end{verbatim}
+%
+\begin{example}
+To insert the first tuple into the relation SUPPLIER of figure
+\ref{supplier} {\it The suppliers and parts database} we use the
+following statement:
+\begin{verbatim}
+   INSERT INTO SUPPLIER (SNO, SNAME, CITY)
+   VALUES (1, 'Smith', 'London');
+\end{verbatim}
+%
+To insert the first tuple into the relation SELLS we use:
+\begin{verbatim}
+   INSERT INTO SELLS (SNO, PNO)
+   VALUES (1, 1);
+\end{verbatim}
+\end{example}
+
+\subsubsection{Update}
+To change one or more attribute values of tuples in a relation the
+UPDATE command is used. The syntax is:
+\begin{verbatim}
+   UPDATE <table_name>
+   SET <name_of_attr_1> = <value_1> 
+       [, ... [, <name_of_attr_k> = <value_k>]]
+   WHERE <condition>;
+\end{verbatim}
+%
+\begin{example}
+To change the value of attribute PRICE of the part 'Screw' in the
+relation PART we use:
+\begin{verbatim}
+   UPDATE PART
+   SET PRICE = 15
+   WHERE PNAME = 'Screw';
+\end{verbatim}
+The new value of attribute PRICE of the tuple whose name is 'Screw' is
+now 15.
+\end{example}
+
+\subsubsection{Delete}
+To delete a tuple from a particular table use the command DELETE
+FROM. The syntax is:
+\begin{verbatim}
+   DELETE FROM <table_name>
+   WHERE <condition>;
+\end{verbatim}
+\begin{example}
+To delete the supplier called 'Smith' of the table SUPPLIER the
+following statement is used:
+\begin{verbatim}
+   DELETE FROM SUPPLIER
+   WHERE SNAME = 'Smith';
+\end{verbatim}
+\end{example}
+%
+\subsection{System Catalogs}
+\label{catalogs}
+In every SQL database system {\it system catalogs} are used to keep
+track of which tables, views indexes etc. are defined in the
+database. These system catalogs can be queried as if they were normal
+relations. For example there is one catalog used for the definition of
+views. This catalog stores the query from the view definition. Whenever
+a query against a view is made, the system first gets the {\it
+view-definition-query} out of the catalog and materializes the view
+before proceeding with the user query (see section \ref{view_impl}
+{\it Techniques To Implement Views} for a more detailed
+description). For more information about {\it system catalogs} refer to
+\cite{date}.
+
+\subsection{Embedded SQL}
+
+In this section we will sketch how SQL can be embedded into a host
+language (e.g.\ C). There are two main reasons why we want to use SQL
+from a host language:
+%
+\begin{itemize}
+\item There are queries that cannot be formulated using pure SQL
+(i.e. recursive queries). To be able to perform such queries we need a
+host language with a greater expressive power than SQL.
+\item We simply want to access a database from some application that
+is written in the host language (e.g.\ a ticket reservation system
+with a graphical user interface is written in C and the information
+about which tickets are still left is stored in a database that can be
+accessed using embedded SQL).
+\end{itemize}
+%
+A program using embedded SQL in a host language consists of statements
+of the host language and of embedded SQL (ESQL) statements. Every ESQL
+statement begins with the keywords EXEC SQL. The ESQL statements are
+transformed to statements of the host language by a {\it precompiler}
+(mostly calls to library routines that perform the various SQL
+commands). 
+
+When we look at the examples throughout section \ref{select} we
+realize that the result of the queries is very often a set of
+tuples. Most host languages are not designed to operate on sets so we
+need a mechanism to access every single tuple of the set of tuples
+returned by a SELECT statement. This mechanism can be provided by
+declaring a {\it cursor}. After that we can use the FETCH command to
+retrieve a tuple and set the cursor to the next tuple.
+\\ \\
+For a detailed discussion on embedded SQL refer to \cite{date},
+\cite{date86} or \cite{ullman}.
+
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-omittag:f
+sgml-shorttag:t
+sgml-minimize-attributes:nil
+sgml-always-quote-attributes:t
+sgml-indent-step:1
+sgml-indent-data:t
+sgml-parent-document:nil
+sgml-default-dtd-file:"./reference.ced"
+sgml-exposed-tags:nil
+sgml-local-catalogs:"/usr/lib/sgml/catalog"
+sgml-local-ecat-files:nil
+End:
+-->
