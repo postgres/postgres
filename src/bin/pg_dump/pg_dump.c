@@ -21,7 +21,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.91 1998/10/06 22:14:19 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.92 1998/10/12 02:05:42 momjian Exp $
  *
  * Modifications - 6/10/96 - dave@bensoft.com - version 1.13.dhb
  *
@@ -2649,10 +2649,14 @@ dumpTables(FILE *fout, TableInfo *tblinfo, int numTables,
 								(actual_atts > 0) ? ", " : "",
 								fmtId(tblinfo[i].attnames[j]),
 								tblinfo[i].typnames[j]);
-
-						sprintf(q, "%s(%d)",
+						if(tblinfo[i].atttypmod[j] != -1) {
+						        sprintf(q, "%s(%d)",
 								q,
 								tblinfo[i].atttypmod[j] - VARHDRSZ);
+						}
+						else {
+						        sprintf(q, "%s", q);
+						}
 						actual_atts++;
 					}
 					else
