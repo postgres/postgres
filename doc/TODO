@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Fri Jul 20 16:51:22 EDT 2001
+Last updated:		Sat Jul 21 00:40:01 EDT 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -197,7 +197,7 @@ CLIENTS
 * Allow psql \d to show foreign keys
 * Allow psql \d to show temporary table structure
 * Add XML interface:  psql, pg_dump, COPY, separate server (?)
-* Fix libpq to properly handle socket failures under native MS Win32 [libpq]
+* -Fix libpq to properly handle socket failures under native MS Win32 [libpq]
 * JDBC
 	o Comprehensive test suite. This may be available already.
 	o Updateable resultSet (must be done in backend code)
