@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/ecpg.c,v 1.68 2003/05/02 14:43:25 meskes Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/ecpg.c,v 1.69 2003/05/13 11:29:14 meskes Exp $ */
 
 /* New main for ecpg, the PostgreSQL embedded SQL precompiler. */
 /* (C) Michael Meskes <meskes@postgresql.org> Feb 5th, 1998 */
@@ -61,12 +61,19 @@ help(const char *progname)
 static void
 add_include_path(char *path)
 {
-	struct _include_path *ip = include_paths;
+	struct _include_path *ip = include_paths, *new;
 
-	include_paths = mm_alloc(sizeof(struct _include_path));
-	include_paths->path = path;
-	include_paths->next = ip;
+	new = mm_alloc(sizeof(struct _include_path));
+	new->path = path;
+	new->next = NULL;
 
+	if (ip == NULL)
+		include_paths = new;
+	else
+	{
+		for (;ip->next != NULL; ip=ip->next);
+		ip->next = new;
+	}
 }
 
 static void
@@ -125,11 +132,6 @@ main(int argc, char *const argv[])
 		}
 	}
 
-	add_include_path("/usr/include");
-	add_include_path(INCLUDE_PATH);
-	add_include_path("/usr/local/include");
-	add_include_path(".");
-
 	while ((c = getopt(argc, argv, "vcio:I:tD:dC:")) != -1)
 	{
 		switch (c)
@@ -186,6 +188,11 @@ main(int argc, char *const argv[])
 				return ILLEGAL_OPTION;
 		}
 	}
+
+	add_include_path(".");
+	add_include_path("/usr/local/include");
+	add_include_path(INCLUDE_PATH);
+	add_include_path("/usr/include");
 
 	if (verbose)
 	{
