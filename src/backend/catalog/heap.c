@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.20 1997/08/21 03:01:21 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.21 1997/08/22 02:58:51 vadim Exp $
  *
  * INTERFACE ROUTINES
  *	heap_creatr()		- Create an uncataloged heap relation
@@ -39,10 +39,13 @@
 #include <catalog/pg_proc.h>
 #include <catalog/pg_index.h>
 #include <catalog/pg_type.h>
+#include <catalog/pg_attrdef.h>
+#include <catalog/pg_relcheck.h>
 #include <storage/bufmgr.h>
 #include <storage/lmgr.h>
 #include <storage/smgr.h>
 #include <parser/catalog_utils.h>
+#include <parser/parse_query.h>
 #include <rewrite/rewriteRemove.h>
 #include <utils/builtins.h>
 #include <utils/mcxt.h>
@@ -64,6 +67,9 @@ static void RelationRemoveIndexes(Relation relation);
 static void RelationRemoveInheritance(Relation relation);
 static void RemoveFromTempRelList(Relation r);
 static void addNewRelationType(char *typeName, Oid new_rel_oid);
+static void StoreConstraints (Relation rel);
+static void StoreAttrDefault (Relation rel, AttrDefault *attrdef);
+static void StoreRelCheck (Relation rel, ConstrCheck *check);
 
 
 /* ----------------------------------------------------------------
@@ -272,7 +278,7 @@ heap_creatr(char *name,
     /* ----------
        create a new tuple descriptor from the one passed in
     */
-    rdesc->rd_att = CreateTupleDescCopy(tupDesc);
+    rdesc->rd_att = CreateTupleDescCopyConstr(tupDesc);
     
     /* ----------------
      *	initialize the fields of our new relation descriptor
@@ -298,6 +304,8 @@ heap_creatr(char *name,
     rdesc->rd_rel->relkind = RELKIND_UNCATALOGED;
     rdesc->rd_rel->relnatts = natts;
     rdesc->rd_rel->relsmgr = smgr;
+    if ( tupDesc->constr )
+    	rdesc->rd_rel->relchecks = tupDesc->constr->num_check;
     
     for (i = 0; i < natts; i++) {
 	rdesc->rd_att->attrs[i]->attrelid = relid;
@@ -813,6 +821,8 @@ heap_create(char relname[],
 		       new_rel_oid,
 		       arch,
 		       natts);
+    
+    StoreConstraints (new_rel_desc);
     
     /* ----------------
      *	ok, the relation has been cataloged, so close our relations
@@ -1458,3 +1468,108 @@ DestroyTempRels(void)
     tempRels = NULL;
 }
 
+static void 
+StoreConstraints (Relation rel)
+{
+    TupleConstr *constr = rel->rd_att->constr;
+    int i;
+    
+    if ( !constr )
+    	return;
+    
+    if ( constr->num_defval > 0 )
+    {
+    	for (i = 0; i < constr->num_defval; i++)
+    	    StoreAttrDefault (rel, &(constr->defval[i]));
+    }
+    
+    if ( constr->num_check > 0 )
+    {
+    	for (i = 0; i < constr->num_check; i++)
+    	    StoreRelCheck (rel, &(constr->check[i]));
+    }
+    
+    return;
+}
+
+extern List *flatten_tlist(List *tlist);
+extern List *pg_plan(char *query_string, Oid *typev, int nargs,                
+                     QueryTreeList **queryListP, CommandDest dest);            
+
+static void 
+StoreAttrDefault (Relation rel, AttrDefault *attrdef)
+{
+    char str[MAX_PARSE_BUFFER];
+    char cast[2*NAMEDATALEN] = {0};
+    AttributeTupleForm atp = rel->rd_att->attrs[attrdef->adnum - 1];
+    QueryTreeList *queryTree_list;
+    Query *query;
+    List *planTree_list;
+    TargetEntry *te;
+    Resdom *resdom;
+    Node *expr;
+    char *adbin;
+    MemoryContext oldcxt;
+    Relation adrel;
+    Relation idescs[Num_pg_attrdef_indices];
+    HeapTuple tuple;
+    Datum values[4];
+    char nulls[4] = {' ', ' ', ' ', ' '};
+    extern GlobalMemory	CacheCxt;
+    
+start:;
+    sprintf (str, "select %s%s from %.*s", attrdef->adsrc, cast,
+    		NAMEDATALEN, rel->rd_rel->relname.data);
+    planTree_list = (List*) pg_plan (str, NULL, 0, &queryTree_list, None);
+    query = (Query*) (queryTree_list->qtrees[0]);
+    
+    if ( length (query->rtable) > 1 || 
+    		flatten_tlist (query->targetList) != NIL )
+    	elog (WARN, "AttributeDefault: cannot use attribute(s)");
+    te = (TargetEntry *) lfirst (query->targetList);
+    resdom = te->resdom;
+    expr = te->expr;
+    
+    if ( IsA (expr, Const) )
+    {
+    	if ( ((Const*)expr)->consttype != atp->atttypid )
+    	{
+    	    if ( *cast != 0 )
+    	    	elog (WARN, "AttributeDefault: casting failed - const type mismatched");
+    	    sprintf (cast, ":: %s", get_id_typname (atp->atttypid));
+    	    goto start;
+    	}
+    }
+    else if ( exprType (expr) != atp->atttypid )
+    	elog (WARN, "AttributeDefault: type mismatched");
+    
+    adbin = nodeToString (expr);
+    oldcxt = MemoryContextSwitchTo ((MemoryContext) CacheCxt);
+    attrdef->adbin = (char*) palloc (strlen (adbin) + 1);
+    strcpy (attrdef->adbin, adbin);
+    (void) MemoryContextSwitchTo (oldcxt);
+    pfree (adbin);
+    
+    values[Anum_pg_attrdef_adrelid - 1] = rel->rd_id;
+    values[Anum_pg_attrdef_adnum - 1] = attrdef->adnum;
+    values[Anum_pg_attrdef_adbin - 1] = PointerGetDatum (textin (attrdef->adbin));
+    values[Anum_pg_attrdef_adsrc - 1] = PointerGetDatum (textin (attrdef->adsrc));
+    adrel = heap_openr (AttrDefaultRelationName);
+    tuple = heap_formtuple (adrel->rd_att, values, nulls);
+    CatalogOpenIndices (Num_pg_attrdef_indices, Name_pg_attrdef_indices, idescs);
+    heap_insert (adrel, tuple);
+    CatalogIndexInsert (idescs, Num_pg_attrdef_indices, adrel, tuple);
+    CatalogCloseIndices (Num_pg_attrdef_indices, idescs);
+    
+    pfree (DatumGetPointer(values[Anum_pg_attrdef_adbin - 1]));
+    pfree (DatumGetPointer(values[Anum_pg_attrdef_adsrc - 1]));
+    pfree (tuple);
+
+}
+
+static void 
+StoreRelCheck (Relation rel, ConstrCheck *check)
+{
+
+    return;
+}
