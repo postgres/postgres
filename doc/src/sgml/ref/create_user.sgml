@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_user.sgml,v 1.19 2001/09/03 12:57:49 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_user.sgml,v 1.20 2001/09/14 08:24:29 ishii Exp $
 Postgres documentation
 -->
 
@@ -207,7 +207,7 @@ CREATE USER jonathan
   <para>
    Create a user with a password:
 <programlisting>
-CREATE USER davide WITH PASSWORD 'jw8s0F4'
+CREATE USER davide WITH PASSWORD 'jw8s0F4';
 </programlisting>
   </para>
 
@@ -217,14 +217,14 @@ CREATE USER davide WITH PASSWORD 'jw8s0F4'
    valid:
 
 <programlisting>
-CREATE USER miriam WITH PASSWORD 'jw8s0F4' VALID UNTIL 'Jan 1 2002'
+CREATE USER miriam WITH PASSWORD 'jw8s0F4' VALID UNTIL 'Jan 1 2002';
 </programlisting>
   </para>
 
   <para> 
    Create an account where the user can create databases:
 <programlisting>
-CREATE USER manuel WITH PASSWORD 'jw8s0F4' CREATEDB
+CREATE USER manuel WITH PASSWORD 'jw8s0F4' CREATEDB;
 </programlisting>
   </para>
  </refsect1>
