@@ -1138,5 +1138,9 @@ Thu Oct 18 12:57:04 CEST 2001
 Fri Oct 19 16:32:06 CEST 2001
 
 	- Removed "not yet fully implemented" warnig for nullif.
+
+Sun Oct 21 14:19:42 CEST 2001
+
+	- Synced preproc.y with gram.y.
 	- Set ecpg version to 2.9.0.
         - Set library version to 3.3.0.

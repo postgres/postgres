@@ -833,7 +833,21 @@ opt_boolean:  TRUE_P 		{ $$ = make_str("true"); }
 		| OFF		{ $$ = make_str("off"); }
 		;
 
-zone_value:  StringConst			{ $$ = $1; }
+/* Timezone values can be:
+* - a string such as 'pst8pdt'
+* - an integer or floating point number
+* - a time interval per SQL99
+*/
+zone_value:  StringConst		{ $$ = $1; }
+		| ConstInterval StringConst opt_interval
+					{
+					  $$ = cat_str(3, $1, $2, $3); 
+					}
+		| ConstInterval '(' PosIntConst ')' StringConst opt_interval
+					{
+					  $$ = cat_str(6, $1, make_str("("), $3, make_str(")"), $5, $6);
+					}
+		| NumConst		{ $$ = $1; }
 		| DEFAULT		{ $$ = make_str("default"); }
 		| LOCAL			{ $$ = make_str("local"); }
 		;
@@ -844,7 +858,7 @@ opt_encoding:	StringConst	 	{ $$ = $1; }
 		;
 
 ColId_or_Sconst: ColId		{ $$ = $1; }
-		| SCONST	{ $$ = $1; }
+		| StringConst	{ $$ = $1; }
 		;
 
 VariableShowStmt:  SHOW ColId
@@ -2950,8 +2964,9 @@ Iresult:	PosIntConst		{ $$ = atol($1); }
 	|	Iresult '%' Iresult	{ $$ = $1 % $3; }
 	;
 
-SimpleTypename:  ConstTypename	{ $$ = $1; }
-               | ConstInterval	{ $$ = $1; }
+SimpleTypename:  ConstTypename					{ $$ = $1; }
+               | ConstInterval opt_interval			{ $$ = cat2_str($1, $2); }
+	       | ConstInterval '(' PosIntConst ')' opt_interval	{ $$ = cat_str(5, $1, make_str("("), $3, make_str(")"), $5); }
                ;  
 
 ConstTypename:  Generic	{ $$ = $1; }
@@ -3120,9 +3135,9 @@ ConstDatetime:  datetime
 				}
 		;
 
-ConstInterval:	INTERVAL opt_interval
+ConstInterval:	INTERVAL
 				{
-					$$ = cat2_str(make_str("interval"), $2);
+					$$ = make_str("interval");
 				}
 		;
 
@@ -3139,15 +3154,20 @@ opt_timezone:  WITH TIME ZONE				{ $$ = make_str("with time zone"); }
 		| /*EMPTY*/					{ $$ = EMPTY; }
 		;
 
-opt_interval:  datetime					{ $$ = $1; }
-		| YEAR_P TO MONTH_P			{ $$ = make_str("year to #month"); }
-		| DAY_P TO HOUR_P			{ $$ = make_str("day to hour"); }
-		| DAY_P TO MINUTE_P			{ $$ = make_str("day to minute"); }
-		| DAY_P TO SECOND_P			{ $$ = make_str("day to second"); }
-		| HOUR_P TO MINUTE_P			{ $$ = make_str("hour to minute"); }
-		| MINUTE_P TO SECOND_P			{ $$ = make_str("minute to second"); }
-		| HOUR_P TO SECOND_P			{ $$ = make_str("hour to second"); }
-		| /*EMPTY*/					{ $$ = EMPTY; }
+opt_interval:  YEAR_P				{ $$ = make_str("year"); }
+		| MONTH_P			{ $$ = make_str("month"); }
+		| DAY_P				{ $$ = make_str("day"); }
+		| HOUR_P			{ $$ = make_str("hour"); }
+		| MINUTE_P			{ $$ = make_str("minute"); }
+		| SECOND_P			{ $$ = make_str("second"); }
+		| YEAR_P TO MONTH_P		{ $$ = make_str("year to month"); }
+		| DAY_P TO HOUR_P		{ $$ = make_str("day to hour"); }
+		| DAY_P TO MINUTE_P		{ $$ = make_str("day to minute"); }
+		| DAY_P TO SECOND_P		{ $$ = make_str("day to second"); }
+		| HOUR_P TO MINUTE_P		{ $$ = make_str("hour to minute"); }
+		| MINUTE_P TO SECOND_P		{ $$ = make_str("minute to second"); }
+		| HOUR_P TO SECOND_P		{ $$ = make_str("hour to second"); }
+		| /*EMPTY*/			{ $$ = EMPTY; }
 		;
 
 
@@ -3523,7 +3543,7 @@ extract_list:  extract_arg FROM a_expr
  */
 
 extract_arg:  datetime		{ $$ = $1; }
-	| SCONST				{ $$ = $1; }
+	| StringConst				{ $$ = $1; }
 	| IDENT					{ $$ = $1; }
 		;
 
@@ -3760,6 +3780,10 @@ AexprConst:  PosAllConst
 		| ConstInterval StringConst opt_interval 
 				{
 					$$ = cat_str(3, $1, $2, $3);
+				}
+		| ConstInterval  '(' PosIntConst ')' StringConst opt_interval
+				{
+					$$ = cat_str(6, $1, make_str("("), $3, make_str(")"), $5, $6);
 				}
 		| ParamNo
 				{	$$ = $1;  }
@@ -5081,7 +5105,6 @@ ECPGColId: ident			{ $$ = $1; }
 	| TYPE_P			{ $$ = make_str("type"); }
 	| datetime			{ $$ = $1; }
 	| TokenId			{ $$ = $1; }
-	| INTERVAL			{ $$ = make_str("interval"); }
 	| NATIONAL			{ $$ = make_str("national"); }
 	| NONE				{ $$ = make_str("none"); }
 	| PATH_P			{ $$ = make_str("path_p"); }
@@ -5140,11 +5163,13 @@ ECPGColLabel:  ECPGColId	{ $$ = $1; }
 		| GROUP		{ $$ = make_str("group"); }
 		| HAVING	{ $$ = make_str("having"); }
 		| ILIKE		{ $$ = make_str("ilike"); }
+		| IN		{ $$ = make_str("in"); }
 		| INITIALLY	{ $$ = make_str("initially"); }
 		| INNER_P	{ $$ = make_str("inner"); }
+		| INOUT         { $$ = make_str("inout"); }
 		| INTERSECT	{ $$ = make_str("intersect"); }
+		| INTERVAL	{ $$ = make_str("interval"); }
 		| INTO		{ $$ = make_str("into"); }
-		| INOUT		{ $$ = make_str("inout"); }
 		| JOIN		{ $$ = make_str("join"); }
 		| LEADING	{ $$ = make_str("leading"); }
 		| LEFT		{ $$ = make_str("left"); }
