@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/copy.c,v 1.19 2001/06/02 18:25:18 petere Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/copy.c,v 1.20 2002/02/23 21:46:03 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "copy.h"
@@ -11,6 +11,7 @@
 #include <errno.h>
 #include <assert.h>
 #include <signal.h>
+#include <sys/stat.h>
 #ifndef WIN32
 #include <unistd.h>				/* for isatty */
 #else
@@ -233,6 +234,7 @@ do_copy(const char *args)
 	struct copy_options *options;
 	PGresult   *result;
 	bool		success;
+  struct stat st;
 
 	/* parse options */
 	options = parse_slash_copy(args);
@@ -292,7 +294,16 @@ do_copy(const char *args)
 		free_copy_options(options);
 		return false;
 	}
-
+  /* make sure the specified file is not a directory */
+  fstat(fileno(copystream),&st);
+  if( S_ISDIR(st.st_mode) ){
+    fclose(copystream);
+		psql_error("%s: cannot COPY TO/FROM a directory\n",
+				   options->file);
+		free_copy_options(options);
+		return false;
+  }
+  
 	result = PSQLexec(query);
 
 	switch (PQresultStatus(result))
