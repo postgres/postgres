@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Fri Jun 28 15:28:15 EDT 2002
+Last updated:		Wed Jul  3 12:55:27 EDT 2002
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -275,7 +275,7 @@ Clients
 	o Fix LargeObject API to handle OIDs as unsigned ints
 	o -Implement cancel() method on Statement
 	o Use cursors implicitly to avoid large results (see setCursorName())
-        o Add support for CallableStatements
+        o -Add support for CallableStatements
 	o Add LISTEN/NOTIFY support to the JDBC driver (Barry)
 	o Compile under jdk 1.4
 
