@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.112 2001/03/22 06:16:07 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.113 2001/03/25 23:23:58 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -2126,10 +2126,19 @@ static XLogRecPtr
 log_heap_update(Relation reln, Buffer oldbuf, ItemPointerData from,
 				Buffer newbuf, HeapTuple newtup, bool move)
 {
-	char		tbuf[MAXALIGN(sizeof(xl_heap_header)) + 2 * sizeof(TransactionId)];
-	xl_heap_update xlrec;
-	xl_heap_header *xlhdr = (xl_heap_header *) tbuf;
+	/*
+	 * Note: xlhdr is declared to have adequate size and correct alignment
+	 * for an xl_heap_header.  However the two tids, if present at all,
+	 * will be packed in with no wasted space after the xl_heap_header;
+	 * they aren't necessarily aligned as implied by this struct declaration.
+	 */
+	struct {
+		xl_heap_header	hdr;
+		TransactionId	tid1;
+		TransactionId	tid2;
+	}			xlhdr;
 	int			hsize = SizeOfHeapHeader;
+	xl_heap_update xlrec;
 	XLogRecPtr	recptr;
 	XLogRecData rdata[4];
 	Page		page = BufferGetPage(newbuf);
@@ -2148,10 +2157,10 @@ log_heap_update(Relation reln, Buffer oldbuf, ItemPointerData from,
 	rdata[1].len = 0;
 	rdata[1].next = &(rdata[2]);
 
-	xlhdr->t_oid = newtup->t_data->t_oid;
-	xlhdr->t_natts = newtup->t_data->t_natts;
-	xlhdr->t_hoff = newtup->t_data->t_hoff;
-	xlhdr->mask = newtup->t_data->t_infomask;
+	xlhdr.hdr.t_oid = newtup->t_data->t_oid;
+	xlhdr.hdr.t_natts = newtup->t_data->t_natts;
+	xlhdr.hdr.t_hoff = newtup->t_data->t_hoff;
+	xlhdr.hdr.mask = newtup->t_data->t_infomask;
 	if (move)					/* remember xmin & xmax */
 	{
 		TransactionId xmax;
@@ -2161,13 +2170,13 @@ log_heap_update(Relation reln, Buffer oldbuf, ItemPointerData from,
 			xmax = InvalidTransactionId;
 		else
 			xmax = newtup->t_data->t_xmax;
-		memcpy(tbuf + hsize, &xmax, sizeof(TransactionId));
-		memcpy(tbuf + hsize + sizeof(TransactionId),
+		memcpy((char *) &xlhdr + hsize, &xmax, sizeof(TransactionId));
+		memcpy((char *) &xlhdr + hsize + sizeof(TransactionId),
 			   &(newtup->t_data->t_xmin), sizeof(TransactionId));
-		hsize += (2 * sizeof(TransactionId));
+		hsize += 2 * sizeof(TransactionId);
 	}
 	rdata[2].buffer = newbuf;
-	rdata[2].data = (char *) xlhdr;
+	rdata[2].data = (char *) &xlhdr;
 	rdata[2].len = hsize;
 	rdata[2].next = &(rdata[3]);
 
@@ -2228,13 +2237,16 @@ heap_xlog_clean(bool redo, XLogRecPtr lsn, XLogRecord *record)
 
 	if (record->xl_len > SizeOfHeapClean)
 	{
-		char		unbuf[BLCKSZ];
-		OffsetNumber *unused = (OffsetNumber *) unbuf;
+		OffsetNumber unbuf[BLCKSZ/sizeof(OffsetNumber)];
+		OffsetNumber *unused = unbuf;
 		char	   *unend;
 		ItemId		lp;
 
-		memcpy(unbuf, (char *) xlrec + SizeOfHeapClean, record->xl_len - SizeOfHeapClean);
-		unend = unbuf + (record->xl_len - SizeOfHeapClean);
+		Assert((record->xl_len - SizeOfHeapClean) <= BLCKSZ);
+		memcpy((char *) unbuf,
+			   (char *) xlrec + SizeOfHeapClean,
+			   record->xl_len - SizeOfHeapClean);
+		unend = (char *) unbuf + (record->xl_len - SizeOfHeapClean);
 
 		while ((char *) unused < unend)
 		{
@@ -2318,7 +2330,6 @@ heap_xlog_insert(bool redo, XLogRecPtr lsn, XLogRecord *record)
 	Buffer		buffer;
 	Page		page;
 	OffsetNumber offnum;
-	HeapTupleHeader htup;
 
 	if (redo && (record->xl_info & XLR_BKP_BLOCK_1))
 		return;
@@ -2338,7 +2349,11 @@ heap_xlog_insert(bool redo, XLogRecPtr lsn, XLogRecord *record)
 
 	if (redo)
 	{
-		char		tbuf[MaxTupleSize];
+		struct {
+			HeapTupleHeaderData hdr;
+			char				data[MaxTupleSize];
+		}			tbuf;
+		HeapTupleHeader htup;
 		xl_heap_header xlhdr;
 		uint32		newlen;
 
@@ -2359,11 +2374,15 @@ heap_xlog_insert(bool redo, XLogRecPtr lsn, XLogRecord *record)
 			elog(STOP, "heap_insert_redo: invalid max offset number");
 
 		newlen = record->xl_len - SizeOfHeapInsert - SizeOfHeapHeader;
-		memcpy((char *) &xlhdr, (char *) xlrec + SizeOfHeapInsert, SizeOfHeapHeader);
-		memcpy(tbuf + offsetof(HeapTupleHeaderData, t_bits),
-		   (char *) xlrec + SizeOfHeapInsert + SizeOfHeapHeader, newlen);
+		Assert(newlen <= MaxTupleSize);
+		memcpy((char *) &xlhdr,
+			   (char *) xlrec + SizeOfHeapInsert,
+			   SizeOfHeapHeader);
+		memcpy((char *) &tbuf + offsetof(HeapTupleHeaderData, t_bits),
+			   (char *) xlrec + SizeOfHeapInsert + SizeOfHeapHeader,
+			   newlen);
 		newlen += offsetof(HeapTupleHeaderData, t_bits);
-		htup = (HeapTupleHeader) tbuf;
+		htup = &tbuf.hdr;
 		htup->t_oid = xlhdr.t_oid;
 		htup->t_natts = xlhdr.t_natts;
 		htup->t_hoff = xlhdr.t_hoff;
@@ -2496,7 +2515,10 @@ newsame:;
 
 	if (redo)
 	{
-		char		tbuf[MaxTupleSize];
+		struct {
+			HeapTupleHeaderData hdr;
+			char				data[MaxTupleSize];
+		}			tbuf;
 		xl_heap_header xlhdr;
 		int			hsize;
 		uint32		newlen;
@@ -2522,20 +2544,27 @@ newsame:;
 			hsize += (2 * sizeof(TransactionId));
 
 		newlen = record->xl_len - hsize;
-		memcpy((char *) &xlhdr, (char *) xlrec + SizeOfHeapUpdate, SizeOfHeapHeader);
-		memcpy(tbuf + offsetof(HeapTupleHeaderData, t_bits),
-			   (char *) xlrec + hsize, newlen);
+		Assert(newlen <= MaxTupleSize);
+		memcpy((char *) &xlhdr,
+			   (char *) xlrec + SizeOfHeapUpdate,
+			   SizeOfHeapHeader);
+		memcpy((char *) &tbuf + offsetof(HeapTupleHeaderData, t_bits),
+			   (char *) xlrec + hsize,
+			   newlen);
 		newlen += offsetof(HeapTupleHeaderData, t_bits);
-		htup = (HeapTupleHeader) tbuf;
+		htup = &tbuf.hdr;
 		htup->t_oid = xlhdr.t_oid;
 		htup->t_natts = xlhdr.t_natts;
 		htup->t_hoff = xlhdr.t_hoff;
 		if (move)
 		{
 			hsize = SizeOfHeapUpdate + SizeOfHeapHeader;
-			memcpy(&(htup->t_xmax), (char *) xlrec + hsize, sizeof(TransactionId));
+			memcpy(&(htup->t_xmax),
+				   (char *) xlrec + hsize,
+				   sizeof(TransactionId));
 			memcpy(&(htup->t_xmin),
-				   (char *) xlrec + hsize + sizeof(TransactionId), sizeof(TransactionId));
+				   (char *) xlrec + hsize + sizeof(TransactionId),
+				   sizeof(TransactionId));
 			TransactionIdStore(record->xl_xid, (TransactionId *) &(htup->t_cmin));
 			htup->t_infomask = xlhdr.mask;
 			htup->t_infomask &= ~(HEAP_XMIN_COMMITTED |

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.188 2001/03/22 03:59:24 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.189 2001/03/25 23:23:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -303,10 +303,9 @@ getrels(NameData *VacRelP)
 		found = true;
 
 		d = heap_getattr(tuple, Anum_pg_class_relname, tupdesc, &n);
-		rname = (char *) d;
+		rname = (char *) DatumGetPointer(d);
 
 		d = heap_getattr(tuple, Anum_pg_class_relkind, tupdesc, &n);
-
 		rkind = DatumGetChar(d);
 
 		if (rkind != RELKIND_RELATION)
@@ -997,8 +996,8 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 				blkno;
 	Page		page,
 				ToPage = NULL;
-	OffsetNumber offnum = 0,
-				maxoff = 0,
+	OffsetNumber offnum,
+				maxoff,
 				newoff,
 				max_offset;
 	ItemId		itemid,
@@ -1913,14 +1912,15 @@ failed to add item with len = %lu to page %u (free space %lu, nusd %u, noff %u)"
 		if (vacpage->blkno == (BlockNumber) (blkno - 1) &&
 			vacpage->offsets_free > 0)
 		{
-			char		unbuf[BLCKSZ];
-			OffsetNumber *unused = (OffsetNumber *) unbuf;
+			OffsetNumber unbuf[BLCKSZ/sizeof(OffsetNumber)];
+			OffsetNumber *unused = unbuf;
 			int			uncnt;
 
 			buf = ReadBuffer(onerel, vacpage->blkno);
 			LockBuffer(buf, BUFFER_LOCK_EXCLUSIVE);
 			page = BufferGetPage(buf);
 			num_tuples = 0;
+			maxoff = PageGetMaxOffsetNumber(page);
 			for (offnum = FirstOffsetNumber;
 				 offnum <= maxoff;
 				 offnum = OffsetNumberNext(offnum))
@@ -2061,8 +2061,8 @@ vacuum_heap(VRelStats *vacrelstats, Relation onerel, VacPageList vacuum_pages)
 static void
 vacuum_page(Relation onerel, Buffer buffer, VacPage vacpage)
 {
-	char		unbuf[BLCKSZ];
-	OffsetNumber *unused = (OffsetNumber *) unbuf;
+	OffsetNumber unbuf[BLCKSZ/sizeof(OffsetNumber)];
+	OffsetNumber *unused = unbuf;
 	int			uncnt;
 	Page		page = BufferGetPage(buffer);
 	ItemId		itemid;

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/large_object/inv_api.c,v 1.86 2001/03/22 03:59:45 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/large_object/inv_api.c,v 1.87 2001/03/25 23:23:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -416,8 +416,11 @@ inv_write(LargeObjectDesc *obj_desc, char *buf, int nbytes)
 	bool		neednextpage;
 	bytea	   *datafield;
 	bool		pfreeit;
-	char		workbuf[LOBLKSIZE + VARHDRSZ];
-	char	   *workb = VARATT_DATA(workbuf);
+	struct {
+		struct varlena	hdr;
+		char			data[LOBLKSIZE];
+	}			workbuf;
+	char	   *workb = VARATT_DATA(&workbuf.hdr);
 	HeapTuple	newtup;
 	Datum		values[Natts_pg_largeobject];
 	char		nulls[Natts_pg_largeobject];
@@ -526,7 +529,7 @@ inv_write(LargeObjectDesc *obj_desc, char *buf, int nbytes)
 			off += n;
 			/* compute valid length of new page */
 			len = (len >= off) ? len : off;
-			VARATT_SIZEP(workbuf) = len + VARHDRSZ;
+			VARATT_SIZEP(&workbuf.hdr) = len + VARHDRSZ;
 
 			/*
 			 * Form and insert updated tuple
@@ -534,7 +537,7 @@ inv_write(LargeObjectDesc *obj_desc, char *buf, int nbytes)
 			memset(values, 0, sizeof(values));
 			memset(nulls, ' ', sizeof(nulls));
 			memset(replace, ' ', sizeof(replace));
-			values[Anum_pg_largeobject_data - 1] = PointerGetDatum(workbuf);
+			values[Anum_pg_largeobject_data - 1] = PointerGetDatum(&workbuf);
 			replace[Anum_pg_largeobject_data - 1] = 'r';
 			newtup = heap_modifytuple(&oldtuple, obj_desc->heap_r,
 									  values, nulls, replace);
@@ -575,7 +578,7 @@ inv_write(LargeObjectDesc *obj_desc, char *buf, int nbytes)
 			obj_desc->offset += n;
 			/* compute valid length of new page */
 			len = off + n;
-			VARATT_SIZEP(workbuf) = len + VARHDRSZ;
+			VARATT_SIZEP(&workbuf.hdr) = len + VARHDRSZ;
 
 			/*
 			 * Form and insert updated tuple
@@ -584,7 +587,7 @@ inv_write(LargeObjectDesc *obj_desc, char *buf, int nbytes)
 			memset(nulls, ' ', sizeof(nulls));
 			values[Anum_pg_largeobject_loid - 1] = ObjectIdGetDatum(obj_desc->id);
 			values[Anum_pg_largeobject_pageno - 1] = Int32GetDatum(pageno);
-			values[Anum_pg_largeobject_data - 1] = PointerGetDatum(workbuf);
+			values[Anum_pg_largeobject_data - 1] = PointerGetDatum(&workbuf);
 			newtup = heap_formtuple(obj_desc->heap_r->rd_att, values, nulls);
 			heap_insert(obj_desc->heap_r, newtup);
 			if (write_indices)

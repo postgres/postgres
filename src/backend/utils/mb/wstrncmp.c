@@ -43,14 +43,12 @@ register const pg_wchar *s1,
 		   *s2;
 register size_t n;
 {
-
 	if (n == 0)
 		return 0;
 	do
 	{
 		if (*s1 != *s2++)
-			return (*(const pg_wchar *) s1 -
-					*(const pg_wchar *) (s2 - 1));
+			return (*s1 - *(s2 - 1));
 		if (*s1++ == 0)
 			break;
 	} while (--n != 0);
@@ -63,14 +61,12 @@ register const char *s1;
 register const pg_wchar *s2;
 register size_t n;
 {
-
 	if (n == 0)
 		return 0;
 	do
 	{
-		if ((pg_wchar) * s1 != *s2++)
-			return (*(const pg_wchar *) s1 -
-					*(const pg_wchar *) (s2 - 1));
+		if ((pg_wchar) ((unsigned char) *s1) != *s2++)
+			return ((pg_wchar) ((unsigned char) *s1) - *(s2 - 1));
 		if (*s1++ == 0)
 			break;
 	} while (--n != 0);
@@ -83,6 +79,7 @@ const pg_wchar *str;
 {
 	register const pg_wchar *s;
 
-	for (s = str; *s; ++s);
+	for (s = str; *s; ++s)
+		;
 	return (s - str);
 }
