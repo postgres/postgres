@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/regproc.c,v 1.57 2000/07/03 23:09:52 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/regproc.c,v 1.58 2000/07/09 21:30:12 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -238,53 +238,6 @@ regprocout(PG_FUNCTION_ARGS)
 	PG_RETURN_CSTRING(result);
 }
 
-/*
- * oidvectortypes			- converts a vector of type OIDs to "typname" list
- *
- * The interface for this function is wrong: it should be told how many
- * OIDs are significant in the input vector, so that trailing InvalidOid
- * argument types can be recognized.
- */
-Datum
-oidvectortypes(PG_FUNCTION_ARGS)
-{
-	Oid		   *oidArray = (Oid *) PG_GETARG_POINTER(0);
-	HeapTuple	typetup;
-	text	   *result;
-	int			numargs,
-				num;
-
-	/* Try to guess how many args there are :-( */
-	numargs = 0;
-	for (num = 0; num < FUNC_MAX_ARGS; num++)
-	{
-		if (oidArray[num] != InvalidOid)
-			numargs = num + 1;
-	}
-
-	result = (text *) palloc((NAMEDATALEN + 1) * numargs + VARHDRSZ + 1);
-	*VARDATA(result) = '\0';
-
-	for (num = 0; num < numargs; num++)
-	{
-		typetup = SearchSysCacheTuple(TYPEOID,
-									  ObjectIdGetDatum(oidArray[num]),
-									  0, 0, 0);
-		if (HeapTupleIsValid(typetup))
-		{
-			char	   *s;
-
-			s = NameStr(((Form_pg_type) GETSTRUCT(typetup))->typname);
-			StrNCpy(VARDATA(result) + strlen(VARDATA(result)), s,
-					NAMEDATALEN);
-			strcat(VARDATA(result), " ");
-		}
-		else
-			strcat(VARDATA(result), "- ");
-	}
-	VARATT_SIZEP(result) = strlen(VARDATA(result)) + VARHDRSZ;
-	PG_RETURN_TEXT_P(result);
-}
 
 
 /*****************************************************************************

@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.176 2000/07/07 19:24:35 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.177 2000/07/09 21:30:10 petere Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -3944,7 +3944,7 @@ Numeric:  FLOAT opt_float
 		;
 
 numeric:  FLOAT							{ $$ = xlateSqlType("float"); }
-		| DOUBLE PRECISION				{ $$ = xlateSqlType("float"); }
+		| DOUBLE PRECISION				{ $$ = xlateSqlType("float8"); }
 		| DECIMAL 						{ $$ = xlateSqlType("decimal"); }
 		| DEC							{ $$ = xlateSqlType("decimal"); }
 		| NUMERIC 						{ $$ = xlateSqlType("numeric"); }
@@ -5781,8 +5781,9 @@ xlateSqlType(char *name)
 		return "int2";
 	else if (strcmp(name, "bigint") == 0)
 		return "int8";
-	else if ((strcmp(name, "real") == 0)
-			 || (strcmp(name, "float") == 0))
+	else if (strcmp(name, "real") == 0)
+		return "float4";
+	else if (strcmp(name, "float") == 0)
 		return "float8";
 	else if (strcmp(name, "decimal") == 0)
 		return "numeric";

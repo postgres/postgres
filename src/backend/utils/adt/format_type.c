@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/backend/utils/adt/format_type.c,v 1.1 2000/07/07 19:24:37 petere Exp $ */
+/* $Header: /cvsroot/pgsql/src/backend/utils/adt/format_type.c,v 1.2 2000/07/09 21:30:12 petere Exp $ */
 
 #include "postgres.h"
 
@@ -12,6 +12,7 @@
 
 #define streq(a, b) (strcmp((a), (b))==0)
 #define MAX_INT32_LEN 11
+#define _textin(str) DirectFunctionCall1(textin, CStringGetDatum(str))
 
 
 static char *
@@ -30,7 +31,9 @@ psnprintf(size_t len, const char * fmt, ...)
 }
 
 
-#define _textin(str) DirectFunctionCall1(textin, CStringGetDatum(str))
+static char *
+format_type_internal(Oid type_oid, int32 typemod, bool with_typemod);
+
 
 
 /*
@@ -51,15 +54,10 @@ psnprintf(size_t len, const char * fmt, ...)
 Datum
 format_type(PG_FUNCTION_ARGS)
 {
-	Oid type_oid;
-	bool with_typemod;
-	int32 typemod = 0;
-	char * buf;
-	char * name;
-	Oid array_base_type;
-	int16 typlen;
-	bool is_array;
-	HeapTuple tuple;
+	Oid			type_oid;
+	bool		with_typemod;
+	int32		typemod = 0;
+	char	   *result;
 
 	if (PG_ARGISNULL(0))
 		PG_RETURN_NULL();
@@ -70,11 +68,31 @@ format_type(PG_FUNCTION_ARGS)
 	if (with_typemod)
 		typemod = PG_GETARG_INT32(1);
 
+	result = format_type_internal(type_oid, typemod, with_typemod);
+
+	PG_RETURN_TEXT_P(_textin(result));
+}
+
+
+
+static char *
+format_type_internal(Oid type_oid, int32 typemod, bool with_typemod)
+{
+	HeapTuple	tuple;
+	Oid			array_base_type;
+	int16		typlen;
+	bool		is_array;
+	char	   *name;
+	char	   *buf;
+
+	if (type_oid == InvalidOid)
+		return "-";
+
 	tuple = SearchSysCacheTuple(TYPEOID, ObjectIdGetDatum(type_oid),
 								0, 0, 0);
 
 	if (!HeapTupleIsValid(tuple))
-		PG_RETURN_TEXT_P(_textin("???"));
+		return "???";
 
 	array_base_type = ((Form_pg_type) GETSTRUCT(tuple))->typelem;
 	typlen = ((Form_pg_type) GETSTRUCT(tuple))->typlen;
@@ -84,14 +102,14 @@ format_type(PG_FUNCTION_ARGS)
 									ObjectIdGetDatum(array_base_type),
 									0, 0, 0);
 		if (!HeapTupleIsValid(tuple))
-			PG_RETURN_TEXT_P(_textin("???[]"));
+			return "???[]";
 		is_array = true;
 	}
 	else
 		is_array = false;
 	
-
 	name =  NameStr(((Form_pg_type) GETSTRUCT(tuple))->typname);
+
 
 	if (streq(name, "bit"))
 	{
@@ -116,14 +134,13 @@ format_type(PG_FUNCTION_ARGS)
 	 * double-quote it to get at it in the parser. */
 	else if (streq(name, "char"))
 		buf = pstrdup("\"char\"");
-#if 0
-	/* The parser has these backwards, so leave as is for now. */
+
 	else if (streq(name, "float4"))
 		buf = pstrdup("real");
 
 	else if (streq(name, "float8"))
 		buf = pstrdup("double precision");
-#endif
+
 	else if (streq(name, "int2"))
 		buf = pstrdup("smallint");
 
@@ -177,5 +194,60 @@ format_type(PG_FUNCTION_ARGS)
 		buf = buf2;
 	}
 
-	PG_RETURN_TEXT_P(_textin(buf));
+	return buf;
+}
+
+
+
+/*
+ * oidvectortypes			- converts a vector of type OIDs to "typname" list
+ *
+ * The interface for this function is wrong: it should be told how many
+ * OIDs are significant in the input vector, so that trailing InvalidOid
+ * argument types can be recognized.
+ */
+Datum
+oidvectortypes(PG_FUNCTION_ARGS)
+{
+	int			numargs;
+	int			num;
+	Oid		   *oidArray = (Oid *) PG_GETARG_POINTER(0);
+	char	   *result;
+	size_t		total;
+	size_t		left;
+
+	/* Try to guess how many args there are :-( */
+	numargs = 0;
+	for (num = 0; num < FUNC_MAX_ARGS; num++)
+	{
+		if (oidArray[num] != InvalidOid)
+			numargs = num + 1;
+	}
+
+	total = 20 * numargs + 1;
+	result = palloc(total);
+	result[0] = '\0';
+	left = total - 1;
+					
+	for (num = 0; num < numargs; num++)
+	{
+		char * typename = format_type_internal(oidArray[num], 0, false);
+
+		if (left < strlen(typename) + 2)
+		{
+			total += strlen(typename) + 2;
+			result = repalloc(result, total);
+			left += strlen(typename) + 2;
+		}
+
+		if (num > 0)
+		{
+			strcat(result, ", ");
+			left -= 2;
+		}
+		strcat(result, typename);
+		left -= strlen(typename);
+	}
+
+	PG_RETURN_TEXT_P(_textin(result));
 }

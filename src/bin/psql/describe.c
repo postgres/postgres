@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/describe.c,v 1.22 2000/07/07 19:24:38 petere Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/describe.c,v 1.23 2000/07/09 21:30:19 petere Exp $
  */
 #include "postgres.h"
 #include "describe.h"
@@ -103,7 +103,7 @@ describeFunctions(const char *name, bool verbose)
 	 * arguments, but have no types defined for those arguments
 	 */
 	strcpy(buf,
-		   "SELECT t.typname as \"Result\", p.proname as \"Function\",\n"
+		   "SELECT format_type(p.prorettype, NULL) as \"Result\", p.proname as \"Function\",\n"
 		   "       oidvectortypes(p.proargtypes) as \"Arguments\"");
 	if (verbose)
 		strcat(buf, ",\n       u.usename as \"Owner\", l.lanname as \"Language\", p.prosrc as \"Source\",\n"
@@ -111,13 +111,13 @@ describeFunctions(const char *name, bool verbose)
 
 	if (!verbose)
 		strcat(buf,
-			   "\nFROM pg_proc p, pg_type t\n"
-			   "WHERE p.prorettype = t.oid and (pronargs = 0 or oidvectortypes(p.proargtypes) != '')\n");
+			   "\nFROM pg_proc p\n"
+			   "WHERE p.prorettype <> 0 and (pronargs = 0 or oidvectortypes(p.proargtypes) <> '')\n");
 	else
 		strcat(buf,
-			   "\nFROM pg_proc p, pg_type t, pg_language l, pg_user u\n"
-			   "WHERE p.prorettype = t.oid AND p.prolang = l.oid AND p.proowner = u.usesysid\n"
-		"  AND (pronargs = 0 or oidvectortypes(p.proargtypes) != '')\n");
+			   "\nFROM pg_proc p,  pg_language l, pg_user u\n"
+			   "WHERE p.prolang = l.oid AND p.proowner = u.usesysid\n"
+		"  AND p.prorettype <> 0 and (pronargs = 0 or oidvectortypes(p.proargtypes) <> '')\n");
 
 	if (name)
 	{
@@ -380,7 +380,7 @@ objectDescription(const char *object)
 	descbuf[0] = '\0';
 
 	/* Aggregate descriptions */
-	strcat(descbuf, "SELECT DISTINCT a.aggname as \"Name\", 'aggregate'::text as \"Object\", d.description as \"Description\"\n"
+	strcat(descbuf, "SELECT DISTINCT a.aggname::text as \"Name\", 'aggregate'::text as \"Object\", d.description as \"Description\"\n"
 		   "FROM pg_aggregate a, pg_description d\n"
 		   "WHERE a.oid = d.objoid\n");
 	if (object)
@@ -392,7 +392,7 @@ objectDescription(const char *object)
 
 	/* Function descriptions (except in/outs for datatypes) */
 	strcat(descbuf, "\nUNION ALL\n\n");
-	strcat(descbuf, "SELECT DISTINCT p.proname as \"Name\", 'function'::text as \"Object\", d.description as \"Description\"\n"
+	strcat(descbuf, "SELECT DISTINCT p.proname::text as \"Name\", 'function'::text as \"Object\", d.description as \"Description\"\n"
 		   "FROM pg_proc p, pg_description d\n"
 		   "WHERE p.oid = d.objoid AND (p.pronargs = 0 or oidvectortypes(p.proargtypes) != '')\n");
 	if (object)
@@ -404,7 +404,7 @@ objectDescription(const char *object)
 
 	/* Operator descriptions */
 	strcat(descbuf, "\nUNION ALL\n\n");
-	strcat(descbuf, "SELECT DISTINCT o.oprname as \"Name\", 'operator'::text as \"Object\", d.description as \"Description\"\n"
+	strcat(descbuf, "SELECT DISTINCT o.oprname::text as \"Name\", 'operator'::text as \"Object\", d.description as \"Description\"\n"
 		   "FROM pg_operator o, pg_description d\n"
 	/* must get comment via associated function */
 		   "WHERE RegprocToOid(o.oprcode) = d.objoid\n");
@@ -429,7 +429,7 @@ objectDescription(const char *object)
 
 	/* Relation (tables, views, indices, sequences) descriptions */
 	strcat(descbuf, "\nUNION ALL\n\n");
-	strcat(descbuf, "SELECT DISTINCT c.relname as \"Name\", 'relation'::text||'('||c.relkind||')' as \"Object\", d.description as \"Description\"\n"
+	strcat(descbuf, "SELECT DISTINCT c.relname::text as \"Name\", 'relation'::text||'('||c.relkind||')' as \"Object\", d.description as \"Description\"\n"
 		   "FROM pg_class c, pg_description d\n"
 		   "WHERE c.oid = d.objoid\n");
 	if (object)
@@ -441,7 +441,7 @@ objectDescription(const char *object)
 
 	/* Rule description (ignore rules for views) */
 	strcat(descbuf, "\nUNION ALL\n\n");
-	strcat(descbuf, "SELECT DISTINCT r.rulename as \"Name\", 'rule'::text as \"Object\", d.description as \"Description\"\n"
+	strcat(descbuf, "SELECT DISTINCT r.rulename::text as \"Name\", 'rule'::text as \"Object\", d.description as \"Description\"\n"
 		   "FROM pg_rewrite r, pg_description d\n"
 		   "WHERE r.oid = d.objoid AND r.rulename !~ '^_RET'\n");
 	if (object)
@@ -453,7 +453,7 @@ objectDescription(const char *object)
 
 	/* Trigger description */
 	strcat(descbuf, "\nUNION ALL\n\n");
-	strcat(descbuf, "SELECT DISTINCT t.tgname as \"Name\", 'trigger'::text as \"Object\", d.description as \"Description\"\n"
+	strcat(descbuf, "SELECT DISTINCT t.tgname::text as \"Name\", 'trigger'::text as \"Object\", d.description as \"Description\"\n"
 		   "FROM pg_trigger t, pg_description d\n"
 		   "WHERE t.oid = d.objoid\n");
 	if (object)
