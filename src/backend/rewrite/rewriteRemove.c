@@ -8,12 +8,10 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteRemove.c,v 1.45 2001/08/10 18:57:37 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteRemove.c,v 1.46 2002/03/21 23:27:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
-
-
 #include "postgres.h"
 
 #include "utils/builtins.h"
@@ -21,41 +19,13 @@
 #include "catalog/catname.h"
 #include "catalog/pg_rewrite.h"
 #include "commands/comment.h"
+#include "miscadmin.h"
 #include "rewrite/rewriteRemove.h"
 #include "rewrite/rewriteSupport.h"
+#include "utils/acl.h"
 #include "utils/fmgroids.h"
 #include "utils/syscache.h"
 
-/*-----------------------------------------------------------------------
- * RewriteGetRuleEventRel
- *-----------------------------------------------------------------------
- */
-char *
-RewriteGetRuleEventRel(char *rulename)
-{
-	HeapTuple	htup;
-	Oid			eventrel;
-	char	   *result;
-
-	htup = SearchSysCache(RULENAME,
-						  PointerGetDatum(rulename),
-						  0, 0, 0);
-	if (!HeapTupleIsValid(htup))
-		elog(ERROR, "Rule or view \"%s\" not found",
-			 ((strncmp(rulename, "_RET", 4) == 0) ? (rulename + 4) : rulename));
-	eventrel = ((Form_pg_rewrite) GETSTRUCT(htup))->ev_class;
-	ReleaseSysCache(htup);
-
-	htup = SearchSysCache(RELOID,
-						  PointerGetDatum(eventrel),
-						  0, 0, 0);
-	if (!HeapTupleIsValid(htup))
-		elog(ERROR, "Relation %u not found", eventrel);
-
-	result = pstrdup(NameStr(((Form_pg_class) GETSTRUCT(htup))->relname));
-	ReleaseSysCache(htup);
-	return result;
-}
 
 /*
  * RemoveRewriteRule
@@ -71,6 +41,7 @@ RemoveRewriteRule(char *ruleName)
 	Oid			ruleId;
 	Oid			eventRelationOid;
 	bool		hasMoreRules;
+	int32		aclcheck_result;
 
 	/*
 	 * Open the pg_rewrite relation.
@@ -88,10 +59,7 @@ RemoveRewriteRule(char *ruleName)
 	 * complain if no rule with such name existed
 	 */
 	if (!HeapTupleIsValid(tuple))
-	{
-		heap_close(RewriteRelation, RowExclusiveLock);
 		elog(ERROR, "Rule \"%s\" not found", ruleName);
-	}
 
 	/*
 	 * Save the OID of the rule (i.e. the tuple's OID) and the event
@@ -107,6 +75,16 @@ RemoveRewriteRule(char *ruleName)
 	 * changing the ruleset while queries are executing on the rel.
 	 */
 	event_relation = heap_open(eventRelationOid, AccessExclusiveLock);
+
+	/*
+	 * Verify user has appropriate permissions.
+	 */
+	aclcheck_result = pg_class_aclcheck(eventRelationOid, GetUserId(),
+										ACL_RULE);
+	if (aclcheck_result != ACLCHECK_OK)
+		elog(ERROR, "%s: %s",
+			 RelationGetRelationName(event_relation),
+			 aclcheck_error_strings[aclcheck_result]);
 
 	/* do not allow the removal of a view's SELECT rule */
 	if (event_relation->rd_rel->relkind == RELKIND_VIEW &&

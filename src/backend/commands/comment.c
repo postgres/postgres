@@ -7,7 +7,7 @@
  * Copyright (c) 1999-2001, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/comment.c,v 1.35 2001/11/02 16:30:29 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/comment.c,v 1.36 2002/03/21 23:27:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,6 +21,7 @@
 #include "catalog/pg_database.h"
 #include "catalog/pg_description.h"
 #include "catalog/pg_operator.h"
+#include "catalog/pg_rewrite.h"
 #include "catalog/pg_trigger.h"
 #include "catalog/pg_type.h"
 #include "commands/comment.h"
@@ -326,11 +327,6 @@ CommentRelation(int reltype, char *relname, char *comment)
 {
 	Relation	relation;
 
-	/* First, check object security */
-
-	if (!pg_ownercheck(GetUserId(), relname, RELNAME))
-		elog(ERROR, "you are not permitted to comment on class '%s'", relname);
-
 	/*
 	 * Open the relation.  We do this mainly to acquire a lock that
 	 * ensures no one else drops the relation before we commit.  (If they
@@ -338,6 +334,10 @@ CommentRelation(int reltype, char *relname, char *comment)
 	 * pg_description.)
 	 */
 	relation = relation_openr(relname, AccessShareLock);
+
+	/* Check object security */
+	if (!pg_class_ownercheck(RelationGetRelid(relation), GetUserId()))
+		elog(ERROR, "you are not permitted to comment on class '%s'", relname);
 
 	/* Next, verify that the relation type matches the intent */
 
@@ -387,14 +387,14 @@ CommentAttribute(char *relname, char *attrname, char *comment)
 	Relation	relation;
 	AttrNumber	attnum;
 
-	/* First, check object security */
-
-	if (!pg_ownercheck(GetUserId(), relname, RELNAME))
-		elog(ERROR, "you are not permitted to comment on class '%s'", relname);
-
 	/* Open the containing relation to ensure it won't go away meanwhile */
 
 	relation = heap_openr(relname, AccessShareLock);
+
+	/* Check object security */
+
+	if (!pg_class_ownercheck(RelationGetRelid(relation), GetUserId()))
+		elog(ERROR, "you are not permitted to comment on class '%s'", relname);
 
 	/* Now, fetch the attribute number from the system cache */
 
@@ -476,26 +476,31 @@ CommentDatabase(char *database, char *comment)
 static void
 CommentRewrite(char *rule, char *comment)
 {
-	Oid			oid;
+	HeapTuple	tuple;
+	Oid			reloid;
+	Oid			ruleoid;
 	Oid			classoid;
-	char	   *relation;
-	int			aclcheck;
+	int32		aclcheck;
 
-	/* First, validate user */
+	/* Find the rule's pg_rewrite tuple, get its OID and its table's OID */
 
-	relation = RewriteGetRuleEventRel(rule);
-	aclcheck = pg_aclcheck(relation, GetUserId(), ACL_RULE);
+	tuple = SearchSysCache(RULENAME,
+						   PointerGetDatum(rule),
+						   0, 0, 0);
+	if (!HeapTupleIsValid(tuple))
+		elog(ERROR, "rule '%s' does not exist", rule);
+
+	reloid = ((Form_pg_rewrite) GETSTRUCT(tuple))->ev_class;
+	ruleoid = tuple->t_data->t_oid;
+
+	ReleaseSysCache(tuple);
+
+	/* Check object security */
+
+	aclcheck = pg_class_aclcheck(reloid, GetUserId(), ACL_RULE);
 	if (aclcheck != ACLCHECK_OK)
 		elog(ERROR, "you are not permitted to comment on rule '%s'",
 			 rule);
-
-	/* Next, find the rule's oid */
-
-	oid = GetSysCacheOid(RULENAME,
-						 PointerGetDatum(rule),
-						 0, 0, 0);
-	if (!OidIsValid(oid))
-		elog(ERROR, "rule '%s' does not exist", rule);
 
 	/* pg_rewrite doesn't have a hard-coded OID, so must look it up */
 
@@ -506,7 +511,7 @@ CommentRewrite(char *rule, char *comment)
 
 	/* Call CreateComments() to create/drop the comments */
 
-	CreateComments(oid, classoid, 0, comment);
+	CreateComments(ruleoid, classoid, 0, comment);
 }
 
 /*------------------------------------------------------------------
@@ -525,19 +530,19 @@ CommentType(char *type, char *comment)
 {
 	Oid			oid;
 
-	/* First, validate user */
-
-	if (!pg_ownercheck(GetUserId(), type, TYPENAME))
-		elog(ERROR, "you are not permitted to comment on type '%s'",
-			 type);
-
-	/* Next, find the type's oid */
+	/* Find the type's oid */
 
 	oid = GetSysCacheOid(TYPENAME,
 						 PointerGetDatum(type),
 						 0, 0, 0);
 	if (!OidIsValid(oid))
 		elog(ERROR, "type '%s' does not exist", type);
+
+	/* Check object security */
+
+	if (!pg_type_ownercheck(oid, GetUserId()))
+		elog(ERROR, "you are not permitted to comment on type '%s'",
+			 type);
 
 	/* Call CreateComments() to create/drop the comments */
 
@@ -576,18 +581,6 @@ CommentAggregate(char *aggregate, List *arguments, char *comment)
 	else
 		baseoid = InvalidOid;
 
-	/* Next, validate the user's attempt to comment */
-
-	if (!pg_aggr_ownercheck(GetUserId(), aggregate, baseoid))
-	{
-		if (baseoid == InvalidOid)
-			elog(ERROR, "you are not permitted to comment on aggregate '%s' for all types",
-				 aggregate);
-		else
-			elog(ERROR, "you are not permitted to comment on aggregate '%s' for type %s",
-				 aggregate, format_type_be(baseoid));
-	}
-
 	/* Now, attempt to find the actual tuple in pg_aggregate */
 
 	oid = GetSysCacheOid(AGGNAME,
@@ -596,6 +589,18 @@ CommentAggregate(char *aggregate, List *arguments, char *comment)
 						 0, 0);
 	if (!OidIsValid(oid))
 		agg_error("CommentAggregate", aggregate, baseoid);
+
+	/* Next, validate the user's attempt to comment */
+
+	if (!pg_aggr_ownercheck(oid, GetUserId()))
+	{
+		if (baseoid == InvalidOid)
+			elog(ERROR, "you are not permitted to comment on aggregate '%s' for all types",
+				 aggregate);
+		else
+			elog(ERROR, "you are not permitted to comment on aggregate '%s' for type %s",
+				 aggregate, format_type_be(baseoid));
+	}
 
 	/* pg_aggregate doesn't have a hard-coded OID, so must look it up */
 
@@ -654,12 +659,6 @@ CommentProc(char *function, List *arguments, char *comment)
 		}
 	}
 
-	/* Now, validate the user's ability to comment on this function */
-
-	if (!pg_func_ownercheck(GetUserId(), function, argcount, argoids))
-		elog(ERROR, "you are not permitted to comment on function '%s'",
-			 function);
-
 	/* Now, find the corresponding oid for this procedure */
 
 	oid = GetSysCacheOid(PROCNAME,
@@ -669,6 +668,12 @@ CommentProc(char *function, List *arguments, char *comment)
 						 0);
 	if (!OidIsValid(oid))
 		func_error("CommentProc", function, argcount, argoids, NULL);
+
+	/* Now, validate the user's ability to comment on this function */
+
+	if (!pg_proc_ownercheck(oid, GetUserId()))
+		elog(ERROR, "you are not permitted to comment on function '%s'",
+			 function);
 
 	/* Call CreateComments() to create/drop the comments */
 
@@ -757,7 +762,7 @@ CommentOperator(char *opername, List *arguments, char *comment)
 
 	/* Valid user's ability to comment on this operator */
 
-	if (!pg_oper_ownercheck(GetUserId(), oid))
+	if (!pg_oper_ownercheck(oid, GetUserId()))
 		elog(ERROR, "you are not permitted to comment on operator '%s'",
 			 opername);
 
@@ -798,13 +803,14 @@ CommentTrigger(char *trigger, char *relname, char *comment)
 
 	/* First, validate the user's action */
 
-	if (!pg_ownercheck(GetUserId(), relname, RELNAME))
+	relation = heap_openr(relname, AccessShareLock);
+
+	if (!pg_class_ownercheck(RelationGetRelid(relation), GetUserId()))
 		elog(ERROR, "you are not permitted to comment on trigger '%s' %s '%s'",
 			 trigger, "defined for relation", relname);
 
-	/* Now, fetch the trigger oid from pg_trigger  */
+	/* Fetch the trigger oid from pg_trigger  */
 
-	relation = heap_openr(relname, AccessShareLock);
 	pg_trigger = heap_openr(TriggerRelationName, AccessShareLock);
 	ScanKeyEntryInitialize(&entry[0], 0x0, Anum_pg_trigger_tgrelid,
 						   F_OIDEQ,

@@ -8,11 +8,10 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteDefine.c,v 1.64 2002/03/21 16:01:16 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteDefine.c,v 1.65 2002/03/21 23:27:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
-
 #include "postgres.h"
 
 #include "access/heapam.h"
@@ -27,6 +26,7 @@
 #include "rewrite/rewriteManip.h"
 #include "rewrite/rewriteSupport.h"
 #include "storage/smgr.h"
+#include "utils/acl.h"
 #include "utils/builtins.h"
 #include "utils/syscache.h"
 
@@ -127,6 +127,7 @@ DefineQueryRewrite(RuleStmt *stmt)
 			   *event_qualP;
 	List	   *l;
 	Query	   *query;
+	int32		aclcheck_result;
 	bool		RelisBecomingView = false;
 
 	/*
@@ -139,6 +140,15 @@ DefineQueryRewrite(RuleStmt *stmt)
 	 */
 	event_relation = heap_openr(event_obj->relname, AccessExclusiveLock);
 	ev_relid = RelationGetRelid(event_relation);
+
+	/*
+	 * Check user has permission to apply rules to this relation.
+	 */
+	aclcheck_result = pg_class_aclcheck(ev_relid, GetUserId(), ACL_RULE);
+	if (aclcheck_result != ACLCHECK_OK)
+		elog(ERROR, "%s: %s",
+			 RelationGetRelationName(event_relation),
+			 aclcheck_error_strings[aclcheck_result]);
 
 	/*
 	 * No rule actions that modify OLD or NEW

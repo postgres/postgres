@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: acl.h,v 1.40 2002/02/18 23:11:45 petere Exp $
+ * $Id: acl.h,v 1.41 2002/03/21 23:27:25 tgl Exp $
  *
  * NOTES
  *	  For backward-compatibility purposes we have to allow there
@@ -24,11 +24,11 @@
 
 #include "nodes/parsenodes.h"
 #include "utils/array.h"
-#include "utils/memutils.h"
+
 
 /*
  * AclId		system identifier for the user, group, etc.
- *				XXX currently UNIX uid for users...
+ *				XXX Perhaps replace this type by OID?
  */
 typedef uint32 AclId;
 
@@ -159,14 +159,14 @@ typedef ArrayType IdList;
 #define ACL_MODE_REFERENCES_CHR 'x'
 #define ACL_MODE_TRIGGER_CHR	't'
 
-/* result codes for pg_aclcheck */
+/* result codes for pg_*_aclcheck */
 #define ACLCHECK_OK				  0
 #define ACLCHECK_NO_PRIV		  1
 #define ACLCHECK_NO_CLASS		  2
 #define ACLCHECK_NOT_OWNER		  3
 
-/* error messages (index by ACL_CHECK_* result code).  set in aclchk.c. */
-extern char *aclcheck_error_strings[];
+/* error messages (index by ACLCHECK_* result code).  set in aclchk.c. */
+extern const char * const aclcheck_error_strings[];
 
 /*
  * routines used internally
@@ -199,16 +199,16 @@ extern void ExecuteGrantStmt(GrantStmt *stmt);
 extern AclId get_grosysid(char *groname);
 extern char *get_groname(AclId grosysid);
 
-extern int32 pg_aclcheck(char *relname, Oid userid, AclMode mode);
-
-extern bool pg_ownercheck(Oid userid, const char *name, int cacheid);
-extern bool pg_oper_ownercheck(Oid userid, Oid oprid);
-extern bool pg_func_ownercheck(Oid userid, char *funcname,
-				   int nargs, Oid *arglist);
-extern bool pg_aggr_ownercheck(Oid userid, char *aggname,
-				   Oid basetypeID);
-
+/* these return ACLCHECK_* result codes */
+extern int32 pg_class_aclcheck(Oid table_oid, Oid userid, AclMode mode);
 extern int32 pg_proc_aclcheck(Oid proc_oid, Oid userid);
 extern int32 pg_language_aclcheck(Oid lang_oid, Oid userid);
+
+/* ownercheck routines just return true (owner) or false (not) */
+extern bool pg_class_ownercheck(Oid class_oid, Oid userid);
+extern bool pg_type_ownercheck(Oid type_oid, Oid userid);
+extern bool pg_oper_ownercheck(Oid oper_oid, Oid userid);
+extern bool pg_proc_ownercheck(Oid proc_oid, Oid userid);
+extern bool pg_aggr_ownercheck(Oid aggr_oid, Oid userid);
 
 #endif   /* ACL_H */

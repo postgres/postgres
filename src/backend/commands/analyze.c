@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/analyze.c,v 1.28 2002/03/06 06:09:28 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/analyze.c,v 1.29 2002/03/21 23:27:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -200,8 +200,7 @@ analyze_rel(Oid relid, VacuumStmt *vacstmt)
 	 */
 	onerel = heap_open(relid, AccessShareLock);
 
-	if (!(pg_ownercheck(GetUserId(), RelationGetRelationName(onerel),
-						RELNAME) ||
+	if (!(pg_class_ownercheck(RelationGetRelid(onerel), GetUserId()) ||
 		  (is_dbadmin(MyDatabaseId) && !onerel->rd_rel->relisshared)))
 	{
 		/* No need for a WARNING if we already complained during VACUUM */

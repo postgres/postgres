@@ -27,7 +27,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.153 2002/03/21 16:00:37 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.154 2002/03/21 23:27:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -43,6 +43,7 @@
 #include "optimizer/var.h"
 #include "parser/parsetree.h"
 #include "utils/acl.h"
+#include "utils/lsyscache.h"
 
 
 /* decls for local routines only used within this module */
@@ -355,7 +356,7 @@ ExecCheckRTPerms(List *rangeTable, CmdType operation)
 static void
 ExecCheckRTEPerms(RangeTblEntry *rte, CmdType operation)
 {
-	char	   *relName;
+	Oid			relOid;
 	Oid			userid;
 	int32		aclcheck_result;
 
@@ -363,10 +364,10 @@ ExecCheckRTEPerms(RangeTblEntry *rte, CmdType operation)
 	 * If it's a subquery RTE, ignore it --- it will be checked when
 	 * ExecCheckPlanPerms finds the SubqueryScan node for it.
 	 */
-	if (rte->subquery)
+	if (rte->rtekind != RTE_RELATION)
 		return;
 
-	relName = rte->relname;
+	relOid = rte->relid;
 
 	/*
 	 * userid to check as: current user unless we have a setuid
@@ -379,14 +380,15 @@ ExecCheckRTEPerms(RangeTblEntry *rte, CmdType operation)
 	 */
 	userid = rte->checkAsUser ? rte->checkAsUser : GetUserId();
 
-#define CHECK(MODE)		pg_aclcheck(relName, userid, MODE)
+#define CHECK(MODE)		pg_class_aclcheck(relOid, userid, MODE)
 
 	if (rte->checkForRead)
 	{
 		aclcheck_result = CHECK(ACL_SELECT);
 		if (aclcheck_result != ACLCHECK_OK)
 			elog(ERROR, "%s: %s",
-				 relName, aclcheck_error_strings[aclcheck_result]);
+				 get_rel_name(relOid),
+				 aclcheck_error_strings[aclcheck_result]);
 	}
 
 	if (rte->checkForWrite)
@@ -416,7 +418,8 @@ ExecCheckRTEPerms(RangeTblEntry *rte, CmdType operation)
 		}
 		if (aclcheck_result != ACLCHECK_OK)
 			elog(ERROR, "%s: %s",
-				 relName, aclcheck_error_strings[aclcheck_result]);
+				 get_rel_name(relOid),
+				 aclcheck_error_strings[aclcheck_result]);
 	}
 }
 

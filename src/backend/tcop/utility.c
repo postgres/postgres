@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.136 2002/03/21 16:01:30 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.137 2002/03/21 23:27:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -116,7 +116,7 @@ CheckDropPermissions(char *name, char rightkind)
 	if (classform->relkind != rightkind)
 		DropErrorMsg(name, classform->relkind, rightkind);
 
-	if (!pg_ownercheck(GetUserId(), name, RELNAME))
+	if (!pg_class_ownercheck(tuple->t_data->t_oid, GetUserId()))
 		elog(ERROR, "you do not own %s \"%s\"",
 			 rentry->name, name);
 
@@ -124,6 +124,31 @@ CheckDropPermissions(char *name, char rightkind)
 		!is_temp_relname(name))
 		elog(ERROR, "%s \"%s\" is a system %s",
 			 rentry->name, name, rentry->name);
+
+	ReleaseSysCache(tuple);
+}
+
+static void
+CheckOwnership(char *relname, bool noCatalogs)
+{
+	HeapTuple	tuple;
+
+	tuple = SearchSysCache(RELNAME,
+						   PointerGetDatum(relname),
+						   0, 0, 0);
+	if (!HeapTupleIsValid(tuple))
+		elog(ERROR, "Relation \"%s\" does not exist", relname);
+
+	if (!pg_class_ownercheck(tuple->t_data->t_oid, GetUserId()))
+		elog(ERROR, "%s: %s", relname,
+			 aclcheck_error_strings[ACLCHECK_NOT_OWNER]);
+
+	if (noCatalogs)
+	{
+		if (!allowSystemTableMods && IsSystemRelationName(relname))
+			elog(ERROR, "relation \"%s\" is a system catalog",
+				 relname);
+	}
 
 	ReleaseSysCache(tuple);
 }
@@ -149,7 +174,6 @@ ProcessUtility(Node *parsetree,
 			   char *completionTag)
 {
 	char	   *relname;
-	char	   *relationName;
 
 	if (completionTag)
 		completionTag[0] = '\0';
@@ -271,17 +295,8 @@ ProcessUtility(Node *parsetree,
 							break;
 
 						case DROP_RULE:
-							{
-								char	   *rulename = relname;
-								int			aclcheck_result;
-
-								relationName = RewriteGetRuleEventRel(rulename);
-								aclcheck_result = pg_aclcheck(relationName, GetUserId(), ACL_RULE);
-								if (aclcheck_result != ACLCHECK_OK)
-									elog(ERROR, "%s: %s", relationName,
-										 aclcheck_error_strings[aclcheck_result]);
-								RemoveRewriteRule(rulename);
-							}
+							/* RemoveRewriteRule checks permissions */
+							RemoveRewriteRule(relname);
 							break;
 
 						case DROP_TYPE:
@@ -355,11 +370,7 @@ ProcessUtility(Node *parsetree,
 				RenameStmt *stmt = (RenameStmt *) parsetree;
 
 				relname = stmt->relation->relname;
-				if (!allowSystemTableMods && IsSystemRelationName(relname))
-					elog(ERROR, "ALTER TABLE: relation \"%s\" is a system catalog",
-						 relname);
-				if (!pg_ownercheck(GetUserId(), relname, RELNAME))
-					elog(ERROR, "permission denied");
+				CheckOwnership(relname, true);
 
 				/* ----------------
 				 *	XXX using len == 3 to tell the difference
@@ -509,11 +520,7 @@ ProcessUtility(Node *parsetree,
 				IndexStmt  *stmt = (IndexStmt *) parsetree;
 
 				relname = stmt->relation->relname;
-				if (!allowSystemTableMods && IsSystemRelationName(relname))
-					elog(ERROR, "CREATE INDEX: relation \"%s\" is a system catalog",
-						 relname);
-				if (!pg_ownercheck(GetUserId(), relname, RELNAME))
-					elog(ERROR, "permission denied");
+				CheckOwnership(relname, true);
 
 				DefineIndex(stmt->relation->relname,	/* relation */
 							stmt->idxname,				/* index name */
@@ -527,17 +534,7 @@ ProcessUtility(Node *parsetree,
 			break;
 
 		case T_RuleStmt:		/* CREATE RULE */
-			{
-				RuleStmt   *stmt = (RuleStmt *) parsetree;
-				int			aclcheck_result;
-
-				relname = stmt->relation->relname;
-				aclcheck_result = pg_aclcheck(relname, GetUserId(), ACL_RULE);
-				if (aclcheck_result != ACLCHECK_OK)
-					elog(ERROR, "%s: %s", relname, aclcheck_error_strings[aclcheck_result]);
-
-				DefineQueryRewrite(stmt);
-			}
+			DefineQueryRewrite((RuleStmt *) parsetree);
 			break;
 
 		case T_CreateSeqStmt:
@@ -646,11 +643,7 @@ ProcessUtility(Node *parsetree,
 				ClusterStmt *stmt = (ClusterStmt *) parsetree;
 
 				relname = stmt->relation->relname;
-				if (IsSystemRelationName(relname))
-					elog(ERROR, "CLUSTER: relation \"%s\" is a system catalog",
-						 relname);
-				if (!pg_ownercheck(GetUserId(), relname, RELNAME))
-					elog(ERROR, "permission denied");
+				CheckOwnership(relname, true);
 
 				cluster(relname, stmt->indexname);
 			}
@@ -790,14 +783,12 @@ ProcessUtility(Node *parsetree,
 								elog(ERROR, "\"%s\" is a system index. call REINDEX under standalone postgres with -P -O options",
 									 relname);
 						}
-						if (!pg_ownercheck(GetUserId(), relname, RELNAME))
-							elog(ERROR, "%s: %s", relname, aclcheck_error_strings[ACLCHECK_NOT_OWNER]);
+						CheckOwnership(relname, false);
 						ReindexIndex(relname, stmt->force);
 						break;
 					case TABLE:
 						relname = (char *) stmt->relation->relname;
-						if (!pg_ownercheck(GetUserId(), relname, RELNAME))
-							elog(ERROR, "%s: %s", relname, aclcheck_error_strings[ACLCHECK_NOT_OWNER]);
+						CheckOwnership(relname, false);
 						ReindexTable(relname, stmt->force);
 						break;
 					case DATABASE:

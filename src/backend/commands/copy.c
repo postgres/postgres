@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.150 2002/03/06 06:09:30 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.151 2002/03/21 23:27:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -266,16 +266,20 @@ DoCopy(char *relname, bool binary, bool oids, bool from, bool pipe,
 	FILE	   *fp;
 	Relation	rel;
 	const AclMode required_access = (from ? ACL_INSERT : ACL_SELECT);
-	int			result;
+	int32		aclresult;
 
 	/*
 	 * Open and lock the relation, using the appropriate lock type.
 	 */
 	rel = heap_openr(relname, (from ? RowExclusiveLock : AccessShareLock));
 
-	result = pg_aclcheck(relname, GetUserId(), required_access);
-	if (result != ACLCHECK_OK)
-		elog(ERROR, "%s: %s", relname, aclcheck_error_strings[result]);
+	/* Check permissions. */
+	aclresult = pg_class_aclcheck(RelationGetRelid(rel), GetUserId(),
+								  required_access);
+	if (aclresult != ACLCHECK_OK)
+		elog(ERROR, "%s: %s",
+			 RelationGetRelationName(rel),
+			 aclcheck_error_strings[aclresult]);
 	if (!pipe && !superuser())
 		elog(ERROR, "You must have Postgres superuser privilege to do a COPY "
 			 "directly to or from a file.  Anyone can COPY to stdout or "

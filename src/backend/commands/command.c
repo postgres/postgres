@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.162 2002/03/21 16:00:31 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.163 2002/03/21 23:27:20 tgl Exp $
  *
  * NOTES
  *	  The PerformAddAttribute() code, like most of the relation
@@ -328,6 +328,17 @@ AlterTableAddColumn(const char *relationName,
 	int			attndims;
 
 	/*
+	 * Grab an exclusive lock on the target table, which we will NOT
+	 * release until end of transaction.
+	 */
+	rel = heap_openr(relationName, AccessExclusiveLock);
+	myrelid = RelationGetRelid(rel);
+
+	if (rel->rd_rel->relkind != RELKIND_RELATION)
+		elog(ERROR, "ALTER TABLE: relation \"%s\" is not a table",
+			 relationName);
+
+	/*
 	 * permissions checking.  this would normally be done in utility.c,
 	 * but this particular routine is recursive.
 	 *
@@ -336,20 +347,9 @@ AlterTableAddColumn(const char *relationName,
 	if (!allowSystemTableMods && IsSystemRelationName(relationName))
 		elog(ERROR, "ALTER TABLE: relation \"%s\" is a system catalog",
 			 relationName);
-	if (!pg_ownercheck(GetUserId(), relationName, RELNAME))
+	if (!pg_class_ownercheck(myrelid, GetUserId()))
 		elog(ERROR, "ALTER TABLE: permission denied");
 
-	/*
-	 * Grab an exclusive lock on the target table, which we will NOT
-	 * release until end of transaction.
-	 */
-	rel = heap_openr(relationName, AccessExclusiveLock);
-
-	if (rel->rd_rel->relkind != RELKIND_RELATION)
-		elog(ERROR, "ALTER TABLE: relation \"%s\" is not a table",
-			 relationName);
-
-	myrelid = RelationGetRelid(rel);
 	heap_close(rel, NoLock);	/* close rel but keep lock! */
 
 	/*
@@ -556,21 +556,19 @@ AlterTableAlterColumnDefault(const char *relationName,
 	int16		attnum;
 	Oid			myrelid;
 
-	if (!allowSystemTableMods && IsSystemRelationName(relationName))
-		elog(ERROR, "ALTER TABLE: relation \"%s\" is a system catalog",
-			 relationName);
-#ifndef NO_SECURITY
-	if (!pg_ownercheck(GetUserId(), relationName, RELNAME))
-		elog(ERROR, "ALTER TABLE: permission denied");
-#endif
-
 	rel = heap_openr(relationName, AccessExclusiveLock);
+	myrelid = RelationGetRelid(rel);
 
 	if (rel->rd_rel->relkind != RELKIND_RELATION)
 		elog(ERROR, "ALTER TABLE: relation \"%s\" is not a table",
 			 relationName);
 
-	myrelid = RelationGetRelid(rel);
+	if (!allowSystemTableMods && IsSystemRelationName(relationName))
+		elog(ERROR, "ALTER TABLE: relation \"%s\" is a system catalog",
+			 relationName);
+	if (!pg_class_ownercheck(myrelid, GetUserId()))
+		elog(ERROR, "ALTER TABLE: permission denied");
+
 	heap_close(rel, NoLock);
 
 	/*
@@ -730,24 +728,21 @@ AlterTableAlterColumnFlags(const char *relationName,
 	Relation	attrelation;
 	HeapTuple	tuple;
 
-	/* we allow statistics case for system tables */
-
-	if (*flagType =='M' && !allowSystemTableMods && IsSystemRelationName(relationName))
-		elog(ERROR, "ALTER TABLE: relation \"%s\" is a system catalog",
-			 relationName);
-
-#ifndef NO_SECURITY
-	if (!pg_ownercheck(GetUserId(), relationName, RELNAME))
-		elog(ERROR, "ALTER TABLE: permission denied");
-#endif
-
 	rel = heap_openr(relationName, AccessExclusiveLock);
+	myrelid = RelationGetRelid(rel);
 
 	if (rel->rd_rel->relkind != RELKIND_RELATION)
 		elog(ERROR, "ALTER TABLE: relation \"%s\" is not a table",
 			 relationName);
 
-	myrelid = RelationGetRelid(rel);
+	/* we allow statistics case for system tables */
+	if (*flagType == 'M' &&
+		!allowSystemTableMods && IsSystemRelationName(relationName))
+		elog(ERROR, "ALTER TABLE: relation \"%s\" is a system catalog",
+			 relationName);
+	if (!pg_class_ownercheck(myrelid, GetUserId()))
+		elog(ERROR, "ALTER TABLE: permission denied");
+
 	heap_close(rel, NoLock);	/* close rel, but keep lock! */
 
 
@@ -1035,6 +1030,17 @@ AlterTableDropColumn(const char *relationName,
 		elog(ERROR, "ALTER TABLE / DROP COLUMN with inherit option is not supported yet");
 
 	/*
+	 * Grab an exclusive lock on the target table, which we will NOT
+	 * release until end of transaction.
+	 */
+	rel = heap_openr(relationName, AccessExclusiveLock);
+	myrelid = RelationGetRelid(rel);
+
+	if (rel->rd_rel->relkind != RELKIND_RELATION)
+		elog(ERROR, "ALTER TABLE: relation \"%s\" is not a table",
+			 relationName);
+
+	/*
 	 * permissions checking.  this would normally be done in utility.c,
 	 * but this particular routine is recursive.
 	 *
@@ -1043,22 +1049,9 @@ AlterTableDropColumn(const char *relationName,
 	if (!allowSystemTableMods && IsSystemRelationName(relationName))
 		elog(ERROR, "ALTER TABLE: relation \"%s\" is a system catalog",
 			 relationName);
-#ifndef NO_SECURITY
-	if (!pg_ownercheck(GetUserId(), relationName, RELNAME))
+	if (!pg_class_ownercheck(myrelid, GetUserId()))
 		elog(ERROR, "ALTER TABLE: permission denied");
-#endif
 
-	/*
-	 * Grab an exclusive lock on the target table, which we will NOT
-	 * release until end of transaction.
-	 */
-	rel = heap_openr(relationName, AccessExclusiveLock);
-
-	if (rel->rd_rel->relkind != RELKIND_RELATION)
-		elog(ERROR, "ALTER TABLE: relation \"%s\" is not a table",
-			 relationName);
-
-	myrelid = RelationGetRelid(rel);
 	heap_close(rel, NoLock);	/* close rel but keep lock! */
 
 	/*
@@ -1180,25 +1173,22 @@ AlterTableAddConstraint(char *relationName,
 	Oid			myrelid;
 	List	   *listptr;
 
-	if (!allowSystemTableMods && IsSystemRelationName(relationName))
-		elog(ERROR, "ALTER TABLE: relation \"%s\" is a system catalog",
-			 relationName);
-#ifndef NO_SECURITY
-	if (!pg_ownercheck(GetUserId(), relationName, RELNAME))
-		elog(ERROR, "ALTER TABLE: permission denied");
-#endif
-
 	/*
 	 * Grab an exclusive lock on the target table, which we will NOT
 	 * release until end of transaction.
 	 */
 	rel = heap_openr(relationName, AccessExclusiveLock);
+	myrelid = RelationGetRelid(rel);
 
 	if (rel->rd_rel->relkind != RELKIND_RELATION)
 		elog(ERROR, "ALTER TABLE: relation \"%s\" is not a table",
 			 relationName);
 
-	myrelid = RelationGetRelid(rel);
+	if (!allowSystemTableMods && IsSystemRelationName(relationName))
+		elog(ERROR, "ALTER TABLE: relation \"%s\" is a system catalog",
+			 relationName);
+	if (!pg_class_ownercheck(myrelid, GetUserId()))
+		elog(ERROR, "ALTER TABLE: permission denied");
 
 	if (inh)
 	{
@@ -1496,15 +1486,8 @@ AlterTableDropConstraint(const char *relationName,
 						 int behavior)
 {
 	Relation	rel;
+	Oid			myrelid;
 	int			deleted;
-
-	if (!allowSystemTableMods && IsSystemRelationName(relationName))
-		elog(ERROR, "ALTER TABLE: relation \"%s\" is a system catalog",
-			 relationName);
-#ifndef NO_SECURITY
-	if (!pg_ownercheck(GetUserId(), relationName, RELNAME))
-		elog(ERROR, "ALTER TABLE: permission denied");
-#endif
 
 	/*
 	 * We don't support CASCADE yet  - in fact, RESTRICT doesn't work to
@@ -1517,13 +1500,19 @@ AlterTableDropConstraint(const char *relationName,
 	 * Acquire an exclusive lock on the target relation for the duration
 	 * of the operation.
 	 */
-
 	rel = heap_openr(relationName, AccessExclusiveLock);
+	myrelid = RelationGetRelid(rel);
 
 	/* Disallow DROP CONSTRAINT on views, indexes, sequences, etc */
 	if (rel->rd_rel->relkind != RELKIND_RELATION)
 		elog(ERROR, "ALTER TABLE: relation \"%s\" is not a table",
 			 relationName);
+
+	if (!allowSystemTableMods && IsSystemRelationName(relationName))
+		elog(ERROR, "ALTER TABLE: relation \"%s\" is a system catalog",
+			 relationName);
+	if (!pg_class_ownercheck(myrelid, GetUserId()))
+		elog(ERROR, "ALTER TABLE: permission denied");
 
 	/*
 	 * Since all we have is the name of the constraint, we have to look
@@ -1693,24 +1682,18 @@ AlterTableCreateToastTable(const char *relationName, bool silent)
 	Oid			classObjectId[2];
 
 	/*
-	 * permissions checking.  XXX exactly what is appropriate here?
-	 */
-#ifndef NO_SECURITY
-	if (!pg_ownercheck(GetUserId(), relationName, RELNAME))
-		elog(ERROR, "ALTER TABLE: permission denied");
-#endif
-
-	/*
 	 * Grab an exclusive lock on the target table, which we will NOT
 	 * release until end of transaction.
 	 */
 	rel = heap_openr(relationName, AccessExclusiveLock);
+	myrelid = RelationGetRelid(rel);
 
 	if (rel->rd_rel->relkind != RELKIND_RELATION)
 		elog(ERROR, "ALTER TABLE: relation \"%s\" is not a table",
 			 relationName);
 
-	myrelid = RelationGetRelid(rel);
+	if (!pg_class_ownercheck(myrelid, GetUserId()))
+		elog(ERROR, "ALTER TABLE: permission denied");
 
 	/*
 	 * lock the pg_class tuple for update (is that really needed?)
@@ -1940,20 +1923,32 @@ LockTableCommand(LockStmt *lockstmt)
 	{
 		RangeVar   *relation = lfirst(p);
 		char	   *relname = relation->relname;
+		Oid			reloid;
 		int			aclresult;
 		Relation	rel;
 
+		/*
+		 * We don't want to open the relation until we've checked privilege.
+		 * So, manually get the relation OID.
+		 */
+		reloid = GetSysCacheOid(RELNAME,
+								PointerGetDatum(relname),
+								0, 0, 0);
+		if (!OidIsValid(reloid))
+			elog(ERROR, "LOCK TABLE: relation \"%s\" does not exist",
+				 relname);
+
 		if (lockstmt->mode == AccessShareLock)
-			aclresult = pg_aclcheck(relname, GetUserId(),
-									ACL_SELECT);
+			aclresult = pg_class_aclcheck(reloid, GetUserId(),
+										  ACL_SELECT);
 		else
-			aclresult = pg_aclcheck(relname, GetUserId(),
-									ACL_UPDATE | ACL_DELETE);
+			aclresult = pg_class_aclcheck(reloid, GetUserId(),
+										  ACL_UPDATE | ACL_DELETE);
 
 		if (aclresult != ACLCHECK_OK)
 			elog(ERROR, "LOCK TABLE: permission denied");
 
-		rel = relation_openr(relname, lockstmt->mode);
+		rel = relation_open(reloid, lockstmt->mode);
 
 		/* Currently, we only allow plain tables to be locked */
 		if (rel->rd_rel->relkind != RELKIND_RELATION)

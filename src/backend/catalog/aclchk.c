@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/aclchk.c,v 1.57 2002/03/21 16:00:29 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/aclchk.c,v 1.58 2002/03/21 23:27:19 tgl Exp $
  *
  * NOTES
  *	  See acl.h.
@@ -50,8 +50,8 @@ static const char *privilege_token_string(int token);
 static int32 aclcheck(Acl *acl, AclId id, AclIdType idtype, AclMode mode);
 
 /* warning messages, now more explicit. */
-/* MUST correspond to the order of the ACLCHK_* result codes in acl.h. */
-char	   *aclcheck_error_strings[] = {
+/* MUST correspond to the order of the ACLCHECK_* result codes in acl.h. */
+const char * const aclcheck_error_strings[] = {
 	"No error.",
 	"Permission denied.",
 	"Table does not exist.",
@@ -66,11 +66,11 @@ dumpacl(Acl *acl)
 	int			i;
 	AclItem    *aip;
 
-	elog(LOG, "acl size = %d, # acls = %d",
+	elog(DEBUG1, "acl size = %d, # acls = %d",
 		 ACL_SIZE(acl), ACL_NUM(acl));
 	aip = ACL_DAT(acl);
 	for (i = 0; i < ACL_NUM(acl); ++i)
-		elog(LOG, "	acl[%d]: %s", i,
+		elog(DEBUG1, "	acl[%d]: %s", i,
 			 DatumGetCString(DirectFunctionCall1(aclitemout,
 											 PointerGetDatum(aip + i))));
 }
@@ -214,22 +214,19 @@ ExecuteGrantStmt_Table(GrantStmt *stmt)
 		char		nulls[Natts_pg_class];
 		char		replaces[Natts_pg_class];
 
-
-		if (!pg_ownercheck(GetUserId(), relname, RELNAME))
-			elog(ERROR, "permission denied");
-
 		/* open pg_class */
 		relation = heap_openr(RelationRelationName, RowExclusiveLock);
 		tuple = SearchSysCache(RELNAME,
 							   PointerGetDatum(relname),
 							   0, 0, 0);
 		if (!HeapTupleIsValid(tuple))
-		{
-			heap_close(relation, RowExclusiveLock);
 			elog(ERROR, "relation \"%s\" not found",
 				 relname);
-		}
 		pg_class_tuple = (Form_pg_class) GETSTRUCT(tuple);
+
+		if (!pg_class_ownercheck(tuple->t_data->t_oid, GetUserId()))
+			elog(ERROR, "%s: permission denied",
+				 relname);
 
 		if (pg_class_tuple->relkind == RELKIND_INDEX)
 			elog(ERROR, "\"%s\" is an index",
@@ -658,7 +655,7 @@ aclcheck(Acl *acl, AclId id, AclIdType idtype, AclMode mode)
 	 */
 	if (!acl)
 	{
-		elog(LOG, "aclcheck: null ACL, returning OK");
+		elog(DEBUG1, "aclcheck: null ACL, returning OK");
 		return ACLCHECK_OK;
 	}
 
@@ -673,7 +670,7 @@ aclcheck(Acl *acl, AclId id, AclIdType idtype, AclMode mode)
 	 */
 	if (num < 1)
 	{
-		elog(LOG, "aclcheck: zero-length ACL, returning OK");
+		elog(DEBUG1, "aclcheck: zero-length ACL, returning OK");
 		return ACLCHECK_OK;
 	}
 
@@ -686,7 +683,7 @@ aclcheck(Acl *acl, AclId id, AclIdType idtype, AclMode mode)
 	if (aidat->ai_mode & mode)
 	{
 #ifdef ACLDEBUG
-		elog(LOG, "aclcheck: using world=%d", aidat->ai_mode);
+		elog(DEBUG1, "aclcheck: using world=%d", aidat->ai_mode);
 #endif
 		return ACLCHECK_OK;
 	}
@@ -702,7 +699,7 @@ aclcheck(Acl *acl, AclId id, AclIdType idtype, AclMode mode)
 				if (aip->ai_id == id)
 				{
 #ifdef ACLDEBUG
-					elog(LOG, "aclcheck: found user %u/%d",
+					elog(DEBUG1, "aclcheck: found user %u/%d",
 						 aip->ai_id, aip->ai_mode);
 #endif
 					if (aip->ai_mode & mode)
@@ -719,7 +716,7 @@ aclcheck(Acl *acl, AclId id, AclIdType idtype, AclMode mode)
 					if (in_group(id, aip->ai_id))
 					{
 #ifdef ACLDEBUG
-						elog(LOG, "aclcheck: found group %u/%d",
+						elog(DEBUG1, "aclcheck: found group %u/%d",
 							 aip->ai_id, aip->ai_mode);
 #endif
 						return ACLCHECK_OK;
@@ -740,7 +737,7 @@ aclcheck(Acl *acl, AclId id, AclIdType idtype, AclMode mode)
 				if (aip->ai_id == id)
 				{
 #ifdef ACLDEBUG
-					elog(LOG, "aclcheck: found group %u/%d",
+					elog(DEBUG1, "aclcheck: found group %u/%d",
 						 aip->ai_id, aip->ai_mode);
 #endif
 					if (aip->ai_mode & mode)
@@ -760,46 +757,63 @@ aclcheck(Acl *acl, AclId id, AclIdType idtype, AclMode mode)
 	return ACLCHECK_NO_PRIV;
 }
 
+
 /*
  * Exported routine for checking a user's access privileges to a table
  *
  * Returns an ACLCHECK_* result code.
  */
 int32
-pg_aclcheck(char *relname, Oid userid, AclMode mode)
+pg_class_aclcheck(Oid table_oid, Oid userid, AclMode mode)
 {
 	int32		result;
+	bool		usesuper,
+				usecatupd;
+	char	   *relname;
 	HeapTuple	tuple;
-	char	   *usename;
 	Datum		aclDatum;
 	bool		isNull;
 	Acl		   *acl;
 
 	/*
 	 * Validate userid, find out if he is superuser
+	 *
+	 * We do not use superuser_arg() here because we also need to check
+	 * usecatupd.
 	 */
 	tuple = SearchSysCache(SHADOWSYSID,
 						   ObjectIdGetDatum(userid),
 						   0, 0, 0);
 	if (!HeapTupleIsValid(tuple))
-		elog(ERROR, "pg_aclcheck: invalid user id %u",
-			 (unsigned) userid);
+		elog(ERROR, "pg_class_aclcheck: invalid user id %u", userid);
 
-	usename = NameStr(((Form_pg_shadow) GETSTRUCT(tuple))->usename);
+	usesuper = ((Form_pg_shadow) GETSTRUCT(tuple))->usesuper;
+	usecatupd = ((Form_pg_shadow) GETSTRUCT(tuple))->usecatupd;
+
+	ReleaseSysCache(tuple);
+
+	/*
+	 * Now get the relation's tuple from pg_class
+	 */
+	tuple = SearchSysCache(RELOID,
+						   ObjectIdGetDatum(table_oid),
+						   0, 0, 0);
+	if (!HeapTupleIsValid(tuple))
+		elog(ERROR, "pg_class_aclcheck: relation %u not found", table_oid);
 
 	/*
 	 * Deny anyone permission to update a system catalog unless
 	 * pg_shadow.usecatupd is set.	(This is to let superusers protect
 	 * themselves from themselves.)
 	 */
+	relname = NameStr(((Form_pg_class) GETSTRUCT(tuple))->relname);
 	if ((mode & (ACL_INSERT | ACL_UPDATE | ACL_DELETE)) &&
 		!allowSystemTableMods && IsSystemRelationName(relname) &&
 		!is_temp_relname(relname) &&
-		!((Form_pg_shadow) GETSTRUCT(tuple))->usecatupd)
+		!usecatupd)
 	{
 #ifdef ACLDEBUG
-		elog(LOG, "pg_aclcheck: catalog update to \"%s\": permission denied",
-			 relname);
+		elog(DEBUG1, "pg_class_aclcheck: catalog update: permission denied");
 #endif
 		ReleaseSysCache(tuple);
 		return ACLCHECK_NO_PRIV;
@@ -808,29 +822,19 @@ pg_aclcheck(char *relname, Oid userid, AclMode mode)
 	/*
 	 * Otherwise, superusers bypass all permission-checking.
 	 */
-	if (((Form_pg_shadow) GETSTRUCT(tuple))->usesuper)
+	if (usesuper)
 	{
 #ifdef ACLDEBUG
-		elog(LOG, "pg_aclcheck: \"%s\" is superuser",
-			 usename);
+		elog(DEBUG1, "pg_class_aclcheck: %u is superuser", userid);
 #endif
 		ReleaseSysCache(tuple);
 		return ACLCHECK_OK;
 	}
 
-	ReleaseSysCache(tuple);
-	/* caution: usename is inaccessible beyond this point... */
-
 	/*
 	 * Normal case: get the relation's ACL from pg_class
 	 */
-	tuple = SearchSysCache(RELNAME,
-						   PointerGetDatum(relname),
-						   0, 0, 0);
-	if (!HeapTupleIsValid(tuple))
-		elog(ERROR, "pg_aclcheck: class \"%s\" not found", relname);
-
-	aclDatum = SysCacheGetAttr(RELNAME, tuple, Anum_pg_class_relacl,
+	aclDatum = SysCacheGetAttr(RELOID, tuple, Anum_pg_class_relacl,
 							   &isNull);
 	if (isNull)
 	{
@@ -859,227 +863,6 @@ pg_aclcheck(char *relname, Oid userid, AclMode mode)
 }
 
 /*
- * Check ownership of an object identified by name (which will be looked
- * up in the system cache identified by cacheid).
- *
- * Returns true if userid owns the item, or should be allowed to modify
- * the item as if he owned it.
- */
-bool
-pg_ownercheck(Oid userid,
-			  const char *name,
-			  int cacheid)
-{
-	HeapTuple	tuple;
-	AclId		owner_id;
-	char	   *usename;
-
-	tuple = SearchSysCache(SHADOWSYSID,
-						   ObjectIdGetDatum(userid),
-						   0, 0, 0);
-	if (!HeapTupleIsValid(tuple))
-		elog(ERROR, "pg_ownercheck: invalid user id %u",
-			 (unsigned) userid);
-	usename = NameStr(((Form_pg_shadow) GETSTRUCT(tuple))->usename);
-
-	/*
-	 * Superusers bypass all permission-checking.
-	 */
-	if (((Form_pg_shadow) GETSTRUCT(tuple))->usesuper)
-	{
-#ifdef ACLDEBUG
-		elog(LOG, "pg_ownercheck: user \"%s\" is superuser",
-			 usename);
-#endif
-		ReleaseSysCache(tuple);
-		return true;
-	}
-
-	ReleaseSysCache(tuple);
-	/* caution: usename is inaccessible beyond this point... */
-
-	tuple = SearchSysCache(cacheid,
-						   PointerGetDatum(name),
-						   0, 0, 0);
-	switch (cacheid)
-	{
-		case RELNAME:
-			if (!HeapTupleIsValid(tuple))
-				elog(ERROR, "pg_ownercheck: class \"%s\" not found",
-					 name);
-			owner_id = ((Form_pg_class) GETSTRUCT(tuple))->relowner;
-			break;
-		case TYPENAME:
-			if (!HeapTupleIsValid(tuple))
-				elog(ERROR, "pg_ownercheck: type \"%s\" not found",
-					 name);
-			owner_id = ((Form_pg_type) GETSTRUCT(tuple))->typowner;
-			break;
-		default:
-			elog(ERROR, "pg_ownercheck: invalid cache id: %d", cacheid);
-			owner_id = 0;		/* keep compiler quiet */
-			break;
-	}
-
-	ReleaseSysCache(tuple);
-
-	return userid == owner_id;
-}
-
-/*
- * Ownership check for an operator (specified by OID).
- */
-bool
-pg_oper_ownercheck(Oid userid, Oid oprid)
-{
-	HeapTuple	tuple;
-	AclId		owner_id;
-	char	   *usename;
-
-	tuple = SearchSysCache(SHADOWSYSID,
-						   ObjectIdGetDatum(userid),
-						   0, 0, 0);
-	if (!HeapTupleIsValid(tuple))
-		elog(ERROR, "pg_oper_ownercheck: invalid user id %u",
-			 (unsigned) userid);
-	usename = NameStr(((Form_pg_shadow) GETSTRUCT(tuple))->usename);
-
-	/*
-	 * Superusers bypass all permission-checking.
-	 */
-	if (((Form_pg_shadow) GETSTRUCT(tuple))->usesuper)
-	{
-#ifdef ACLDEBUG
-		elog(LOG, "pg_ownercheck: user \"%s\" is superuser",
-			 usename);
-#endif
-		ReleaseSysCache(tuple);
-		return true;
-	}
-
-	ReleaseSysCache(tuple);
-	/* caution: usename is inaccessible beyond this point... */
-
-	tuple = SearchSysCache(OPEROID,
-						   ObjectIdGetDatum(oprid),
-						   0, 0, 0);
-	if (!HeapTupleIsValid(tuple))
-		elog(ERROR, "pg_ownercheck: operator %u not found",
-			 oprid);
-
-	owner_id = ((Form_pg_operator) GETSTRUCT(tuple))->oprowner;
-
-	ReleaseSysCache(tuple);
-
-	return userid == owner_id;
-}
-
-/*
- * Ownership check for a function (specified by name and argument types).
- */
-bool
-pg_func_ownercheck(Oid userid,
-				   char *funcname,
-				   int nargs,
-				   Oid *arglist)
-{
-	HeapTuple	tuple;
-	AclId		owner_id;
-	char	   *usename;
-
-	tuple = SearchSysCache(SHADOWSYSID,
-						   ObjectIdGetDatum(userid),
-						   0, 0, 0);
-	if (!HeapTupleIsValid(tuple))
-		elog(ERROR, "pg_func_ownercheck: invalid user id %u",
-			 (unsigned) userid);
-	usename = NameStr(((Form_pg_shadow) GETSTRUCT(tuple))->usename);
-
-	/*
-	 * Superusers bypass all permission-checking.
-	 */
-	if (((Form_pg_shadow) GETSTRUCT(tuple))->usesuper)
-	{
-#ifdef ACLDEBUG
-		elog(LOG, "pg_ownercheck: user \"%s\" is superuser",
-			 usename);
-#endif
-		ReleaseSysCache(tuple);
-		return true;
-	}
-
-	ReleaseSysCache(tuple);
-	/* caution: usename is inaccessible beyond this point... */
-
-	tuple = SearchSysCache(PROCNAME,
-						   PointerGetDatum(funcname),
-						   Int32GetDatum(nargs),
-						   PointerGetDatum(arglist),
-						   0);
-	if (!HeapTupleIsValid(tuple))
-		func_error("pg_func_ownercheck", funcname, nargs, arglist, NULL);
-
-	owner_id = ((Form_pg_proc) GETSTRUCT(tuple))->proowner;
-
-	ReleaseSysCache(tuple);
-
-	return userid == owner_id;
-}
-
-/*
- * Ownership check for an aggregate function (specified by name and
- * argument type).
- */
-bool
-pg_aggr_ownercheck(Oid userid,
-				   char *aggname,
-				   Oid basetypeID)
-{
-	HeapTuple	tuple;
-	AclId		owner_id;
-	char	   *usename;
-
-	tuple = SearchSysCache(SHADOWSYSID,
-						   PointerGetDatum(userid),
-						   0, 0, 0);
-	if (!HeapTupleIsValid(tuple))
-		elog(ERROR, "pg_aggr_ownercheck: invalid user id %u",
-			 (unsigned) userid);
-	usename = NameStr(((Form_pg_shadow) GETSTRUCT(tuple))->usename);
-
-	/*
-	 * Superusers bypass all permission-checking.
-	 */
-	if (((Form_pg_shadow) GETSTRUCT(tuple))->usesuper)
-	{
-#ifdef ACLDEBUG
-		elog(LOG, "pg_aggr_ownercheck: user \"%s\" is superuser",
-			 usename);
-#endif
-		ReleaseSysCache(tuple);
-		return true;
-	}
-
-	ReleaseSysCache(tuple);
-	/* caution: usename is inaccessible beyond this point... */
-
-	tuple = SearchSysCache(AGGNAME,
-						   PointerGetDatum(aggname),
-						   ObjectIdGetDatum(basetypeID),
-						   0, 0);
-	if (!HeapTupleIsValid(tuple))
-		agg_error("pg_aggr_ownercheck", aggname, basetypeID);
-
-	owner_id = ((Form_pg_aggregate) GETSTRUCT(tuple))->aggowner;
-
-	ReleaseSysCache(tuple);
-
-	return userid == owner_id;
-}
-
-
-
-/*
  * Exported routine for checking a user's access privileges to a function
  *
  * Returns an ACLCHECK_* result code.
@@ -1093,22 +876,12 @@ pg_proc_aclcheck(Oid proc_oid, Oid userid)
 	bool		isNull;
 	Acl		   *acl;
 
+	/* Superusers bypass all permission checking. */
 	if (superuser_arg(userid))
 		return ACLCHECK_OK;
 
 	/*
-	 * Validate userid
-	 */
-	tuple = SearchSysCache(SHADOWSYSID,
-						   ObjectIdGetDatum(userid),
-						   0, 0, 0);
-	if (!HeapTupleIsValid(tuple))
-		elog(ERROR, "pg_proc_aclcheck: invalid user id %u",
-			 (unsigned) userid);
-	ReleaseSysCache(tuple);
-
-	/*
-	 * Normal case: get the function's ACL from pg_proc
+	 * Get the function's ACL from pg_proc
 	 */
 	tuple = SearchSysCache(PROCOID,
 						   ObjectIdGetDatum(proc_oid),
@@ -1148,8 +921,6 @@ pg_proc_aclcheck(Oid proc_oid, Oid userid)
 	return result;
 }
 
-
-
 /*
  * Exported routine for checking a user's access privileges to a language
  *
@@ -1164,22 +935,12 @@ pg_language_aclcheck(Oid lang_oid, Oid userid)
 	bool		isNull;
 	Acl		   *acl;
 
+	/* Superusers bypass all permission checking. */
 	if (superuser_arg(userid))
 		return ACLCHECK_OK;
 
 	/*
-	 * Validate userid
-	 */
-	tuple = SearchSysCache(SHADOWSYSID,
-						   ObjectIdGetDatum(userid),
-						   0, 0, 0);
-	if (!HeapTupleIsValid(tuple))
-		elog(ERROR, "pg_language_aclcheck: invalid user id %u",
-			 (unsigned) userid);
-	ReleaseSysCache(tuple);
-
-	/*
-	 * Normal case: get the function's ACL from pg_language
+	 * Get the function's ACL from pg_language
 	 */
 	tuple = SearchSysCache(LANGOID,
 						   ObjectIdGetDatum(lang_oid),
@@ -1214,4 +975,135 @@ pg_language_aclcheck(Oid lang_oid, Oid userid)
 	ReleaseSysCache(tuple);
 
 	return result;
+}
+
+
+/*
+ * Ownership check for a relation (specified by OID).
+ */
+bool
+pg_class_ownercheck(Oid class_oid, Oid userid)
+{
+	HeapTuple	tuple;
+	AclId		owner_id;
+
+	/* Superusers bypass all permission checking. */
+	if (superuser_arg(userid))
+		return true;
+
+	tuple = SearchSysCache(RELOID,
+						   ObjectIdGetDatum(class_oid),
+						   0, 0, 0);
+	if (!HeapTupleIsValid(tuple))
+		elog(ERROR, "pg_class_ownercheck: relation %u not found", class_oid);
+
+	owner_id = ((Form_pg_class) GETSTRUCT(tuple))->relowner;
+
+	ReleaseSysCache(tuple);
+
+	return userid == owner_id;
+}
+
+/*
+ * Ownership check for a type (specified by OID).
+ */
+bool
+pg_type_ownercheck(Oid type_oid, Oid userid)
+{
+	HeapTuple	tuple;
+	AclId		owner_id;
+
+	/* Superusers bypass all permission checking. */
+	if (superuser_arg(userid))
+		return true;
+
+	tuple = SearchSysCache(TYPEOID,
+						   ObjectIdGetDatum(type_oid),
+						   0, 0, 0);
+	if (!HeapTupleIsValid(tuple))
+		elog(ERROR, "pg_type_ownercheck: type %u not found", type_oid);
+
+	owner_id = ((Form_pg_type) GETSTRUCT(tuple))->typowner;
+
+	ReleaseSysCache(tuple);
+
+	return userid == owner_id;
+}
+
+/*
+ * Ownership check for an operator (specified by OID).
+ */
+bool
+pg_oper_ownercheck(Oid oper_oid, Oid userid)
+{
+	HeapTuple	tuple;
+	AclId		owner_id;
+
+	/* Superusers bypass all permission checking. */
+	if (superuser_arg(userid))
+		return true;
+
+	tuple = SearchSysCache(OPEROID,
+						   ObjectIdGetDatum(oper_oid),
+						   0, 0, 0);
+	if (!HeapTupleIsValid(tuple))
+		elog(ERROR, "pg_oper_ownercheck: operator %u not found", oper_oid);
+
+	owner_id = ((Form_pg_operator) GETSTRUCT(tuple))->oprowner;
+
+	ReleaseSysCache(tuple);
+
+	return userid == owner_id;
+}
+
+/*
+ * Ownership check for a function (specified by OID).
+ */
+bool
+pg_proc_ownercheck(Oid proc_oid, Oid userid)
+{
+	HeapTuple	tuple;
+	AclId		owner_id;
+
+	/* Superusers bypass all permission checking. */
+	if (superuser_arg(userid))
+		return true;
+
+	tuple = SearchSysCache(PROCOID,
+						   ObjectIdGetDatum(proc_oid),
+						   0, 0, 0);
+	if (!HeapTupleIsValid(tuple))
+		elog(ERROR, "pg_proc_ownercheck: function %u not found", proc_oid);
+
+	owner_id = ((Form_pg_proc) GETSTRUCT(tuple))->proowner;
+
+	ReleaseSysCache(tuple);
+
+	return userid == owner_id;
+}
+
+/*
+ * Ownership check for an aggregate function (specified by OID).
+ */
+bool
+pg_aggr_ownercheck(Oid aggr_oid, Oid userid)
+{
+	HeapTuple	tuple;
+	AclId		owner_id;
+
+	/* Superusers bypass all permission checking. */
+	if (superuser_arg(userid))
+		return true;
+
+	tuple = SearchSysCache(AGGOID,
+						   ObjectIdGetDatum(aggr_oid),
+						   0, 0, 0);
+	if (!HeapTupleIsValid(tuple))
+		elog(ERROR, "pg_aggr_ownercheck: aggregate %u not found", aggr_oid);
+
+	owner_id = ((Form_pg_aggregate) GETSTRUCT(tuple))->aggowner;
+
+	ReleaseSysCache(tuple);
+
+	return userid == owner_id;
 }

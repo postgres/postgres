@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/sequence.c,v 1.72 2002/03/21 16:00:33 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/sequence.c,v 1.73 2002/03/21 23:27:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -299,12 +299,12 @@ nextval(PG_FUNCTION_ARGS)
 				rescnt = 0;
 	bool		logit = false;
 
-	if (pg_aclcheck(seqname, GetUserId(), ACL_UPDATE) != ACLCHECK_OK)
-		elog(ERROR, "%s.nextval: you don't have permissions to set sequence %s",
-			 seqname, seqname);
-
 	/* open and AccessShareLock sequence */
 	elm = init_sequence("nextval", seqname);
+
+	if (pg_class_aclcheck(elm->relid, GetUserId(), ACL_UPDATE) != ACLCHECK_OK)
+		elog(ERROR, "%s.nextval: you don't have permissions to set sequence %s",
+			 seqname, seqname);
 
 	pfree(seqname);
 
@@ -466,12 +466,12 @@ currval(PG_FUNCTION_ARGS)
 	SeqTable	elm;
 	int64		result;
 
-	if (pg_aclcheck(seqname, GetUserId(), ACL_SELECT) != ACLCHECK_OK)
-		elog(ERROR, "%s.currval: you don't have permissions to read sequence %s",
-			 seqname, seqname);
-
 	/* open and AccessShareLock sequence */
 	elm = init_sequence("currval", seqname);
+
+	if (pg_class_aclcheck(elm->relid, GetUserId(), ACL_SELECT) != ACLCHECK_OK)
+		elog(ERROR, "%s.currval: you don't have permissions to read sequence %s",
+			 seqname, seqname);
 
 	if (elm->increment == 0)	/* nextval/read_info were not called */
 		elog(ERROR, "%s.currval is not yet defined in this session",
@@ -504,14 +504,15 @@ do_setval(char *seqname, int64 next, bool iscalled)
 	Buffer		buf;
 	Form_pg_sequence seq;
 
-	if (pg_aclcheck(seqname, GetUserId(), ACL_UPDATE) != ACLCHECK_OK)
+	/* open and AccessShareLock sequence */
+	elm = init_sequence("setval", seqname);
+
+	if (pg_class_aclcheck(elm->relid, GetUserId(), ACL_UPDATE) != ACLCHECK_OK)
 		elog(ERROR, "%s.setval: you don't have permissions to set sequence %s",
 			 seqname, seqname);
 
-	/* open and AccessShareLock sequence */
-	elm = init_sequence("setval", seqname);
-	seq = read_info("setval", elm, &buf);		/* lock page' buffer and
-												 * read tuple */
+	/* lock page' buffer and read tuple */
+	seq = read_info("setval", elm, &buf);
 
 	if ((next < seq->min_value) || (next > seq->max_value))
 		elog(ERROR, "%s.setval: value " INT64_FORMAT " is out of bounds (" INT64_FORMAT "," INT64_FORMAT ")",

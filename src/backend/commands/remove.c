@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/remove.c,v 1.70 2002/03/20 19:43:49 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/remove.c,v 1.71 2002/03/21 23:27:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -84,7 +84,7 @@ RemoveOperator(char *operatorName,		/* operator name */
 
 	if (HeapTupleIsValid(tup))
 	{
-		if (!pg_oper_ownercheck(GetUserId(), tup->t_data->t_oid))
+		if (!pg_oper_ownercheck(tup->t_data->t_oid, GetUserId()))
 			elog(ERROR, "RemoveOperator: operator '%s': permission denied",
 				 operatorName);
 
@@ -92,7 +92,6 @@ RemoveOperator(char *operatorName,		/* operator name */
 		DeleteComments(tup->t_data->t_oid, RelationGetRelid(relation));
 
 		simple_heap_delete(relation, &tup->t_self);
-
 	}
 	else
 	{
@@ -242,10 +241,6 @@ RemoveType(char *typeName)		/* type name to be removed */
 	HeapTuple	tup;
 	char	   *shadow_type;
 
-	if (!pg_ownercheck(GetUserId(), typeName, TYPENAME))
-		elog(ERROR, "RemoveType: type '%s': permission denied",
-			 typeName);
-
 	relation = heap_openr(TypeRelationName, RowExclusiveLock);
 
 	tup = SearchSysCache(TYPENAME,
@@ -253,6 +248,10 @@ RemoveType(char *typeName)		/* type name to be removed */
 						 0, 0, 0);
 	if (!HeapTupleIsValid(tup))
 		elog(ERROR, "RemoveType: type '%s' does not exist", typeName);
+
+	if (!pg_type_ownercheck(tup->t_data->t_oid, GetUserId()))
+		elog(ERROR, "RemoveType: type '%s': permission denied",
+			 typeName);
 
 	/* Delete any comments associated with this type */
 	DeleteComments(tup->t_data->t_oid, RelationGetRelid(relation));
@@ -288,10 +287,9 @@ RemoveDomain(char *domainName, int behavior)
 	HeapTuple	tup;
 	char		typtype;
 
-	/* Domains are stored as types.  Check for permissions on the type */
-	if (!pg_ownercheck(GetUserId(), domainName, TYPENAME))
-		elog(ERROR, "RemoveDomain: type '%s': permission denied",
-			 domainName);
+	/* CASCADE unsupported */
+	if (behavior == CASCADE)
+		elog(ERROR, "DROP DOMAIN does not support the CASCADE keyword");
 
 	relation = heap_openr(TypeRelationName, RowExclusiveLock);
 
@@ -301,16 +299,15 @@ RemoveDomain(char *domainName, int behavior)
 	if (!HeapTupleIsValid(tup))
 		elog(ERROR, "RemoveType: type '%s' does not exist", domainName);
 
+	if (!pg_type_ownercheck(tup->t_data->t_oid, GetUserId()))
+		elog(ERROR, "RemoveDomain: type '%s': permission denied",
+			 domainName);
+
 	/* Check that this is actually a domain */
 	typtype = ((Form_pg_type) GETSTRUCT(tup))->typtype;
 
 	if (typtype != 'd')
 		elog(ERROR, "%s is not a domain", domainName);
-
-	/* CASCADE unsupported */
-	if (behavior == CASCADE) {
-		elog(ERROR, "DROP DOMAIN does not support the CASCADE keyword");
-	}
 
 	/* Delete any comments associated with this type */
 	DeleteComments(tup->t_data->t_oid, RelationGetRelid(relation));
@@ -364,12 +361,6 @@ RemoveFunction(char *functionName,		/* function name to be removed */
 		}
 	}
 
-	if (!pg_func_ownercheck(GetUserId(), functionName, nargs, argList))
-	{
-		elog(ERROR, "RemoveFunction: function '%s': permission denied",
-			 functionName);
-	}
-
 	relation = heap_openr(ProcedureRelationName, RowExclusiveLock);
 
 	tup = SearchSysCache(PROCNAME,
@@ -380,6 +371,10 @@ RemoveFunction(char *functionName,		/* function name to be removed */
 
 	if (!HeapTupleIsValid(tup))
 		func_error("RemoveFunction", functionName, nargs, argList, NULL);
+
+	if (!pg_proc_ownercheck(tup->t_data->t_oid, GetUserId()))
+		elog(ERROR, "RemoveFunction: function '%s': permission denied",
+			 functionName);
 
 	if (((Form_pg_proc) GETSTRUCT(tup))->prolang == INTERNALlanguageId)
 	{
@@ -423,16 +418,6 @@ RemoveAggregate(char *aggName, char *aggType)
 	else
 		basetypeID = InvalidOid;
 
-	if (!pg_aggr_ownercheck(GetUserId(), aggName, basetypeID))
-	{
-		if (basetypeID == InvalidOid)
-			elog(ERROR, "RemoveAggregate: aggregate '%s' for all types: permission denied",
-				 aggName);
-		else
-			elog(ERROR, "RemoveAggregate: aggregate '%s' for type %s: permission denied",
-				 aggName, format_type_be(basetypeID));
-	}
-
 	relation = heap_openr(AggregateRelationName, RowExclusiveLock);
 
 	tup = SearchSysCache(AGGNAME,
@@ -442,6 +427,16 @@ RemoveAggregate(char *aggName, char *aggType)
 
 	if (!HeapTupleIsValid(tup))
 		agg_error("RemoveAggregate", aggName, basetypeID);
+
+	if (!pg_aggr_ownercheck(tup->t_data->t_oid, GetUserId()))
+	{
+		if (basetypeID == InvalidOid)
+			elog(ERROR, "RemoveAggregate: aggregate '%s' for all types: permission denied",
+				 aggName);
+		else
+			elog(ERROR, "RemoveAggregate: aggregate '%s' for type %s: permission denied",
+				 aggName, format_type_be(basetypeID));
+	}
 
 	/* Remove any comments related to this aggregate */
 	DeleteComments(tup->t_data->t_oid, RelationGetRelid(relation));

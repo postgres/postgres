@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/acl.c,v 1.68 2002/03/02 21:39:32 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/acl.c,v 1.69 2002/03/21 23:27:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -817,7 +817,6 @@ has_table_privilege_id(PG_FUNCTION_ARGS)
 {
 	Oid			reloid = PG_GETARG_OID(0);
 	text	   *priv_type_text = PG_GETARG_TEXT_P(1);
-	char	   *relname;
 	int32		usesysid;
 	AclMode		mode;
 	int32		result;
@@ -825,22 +824,14 @@ has_table_privilege_id(PG_FUNCTION_ARGS)
 	usesysid = GetUserId();
 
 	/*
-	 * Lookup relname based on rel oid
-	 */
-	relname = get_rel_name(reloid);
-	if (relname == NULL)
-		elog(ERROR, "has_table_privilege: invalid relation oid %u",
-			 reloid);
-
-	/*
 	 * Convert priv_type_text to an AclMode
 	 */
 	mode = convert_priv_string(priv_type_text);
 
 	/*
-	 * Finally, check for the privilege
+	 * Check for the privilege
 	 */
-	result = pg_aclcheck(relname, usesysid, mode);
+	result = pg_class_aclcheck(reloid, usesysid, mode);
 
 	if (result == ACLCHECK_OK)
 		PG_RETURN_BOOL(true);
@@ -891,17 +882,8 @@ has_table_privilege_id_id(PG_FUNCTION_ARGS)
 	int32		usesysid = PG_GETARG_INT32(0);
 	Oid			reloid = PG_GETARG_OID(1);
 	text	   *priv_type_text = PG_GETARG_TEXT_P(2);
-	char	   *relname;
 	AclMode		mode;
 	int32		result;
-
-	/*
-	 * Lookup relname based on rel oid
-	 */
-	relname = get_rel_name(reloid);
-	if (relname == NULL)
-		elog(ERROR, "has_table_privilege: invalid relation oid %u",
-			 reloid);
 
 	/*
 	 * Convert priv_type_text to an AclMode
@@ -909,9 +891,9 @@ has_table_privilege_id_id(PG_FUNCTION_ARGS)
 	mode = convert_priv_string(priv_type_text);
 
 	/*
-	 * Finally, check for the privilege
+	 * Check for the privilege
 	 */
-	result = pg_aclcheck(relname, usesysid, mode);
+	result = pg_class_aclcheck(reloid, usesysid, mode);
 
 	if (result == ACLCHECK_OK)
 		PG_RETURN_BOOL(true);
@@ -1050,22 +1032,19 @@ static bool
 has_table_privilege_id_cname(int32 usesysid, char *relname,
 							 text *priv_type_text)
 {
-	HeapTuple	tuple;
+	Oid			reloid;
 	AclMode		mode;
 	int32		result;
 
 	/*
-	 * Check relname is valid. This is needed to deal with the case when
-	 * usename is a superuser in which case pg_aclcheck simply returns
-	 * ACLCHECK_OK without validating relname
+	 * Convert relname to rel OID.
 	 */
-	tuple = SearchSysCache(RELNAME,
-						   PointerGetDatum(relname),
-						   0, 0, 0);
-	if (!HeapTupleIsValid(tuple))
+	reloid = GetSysCacheOid(RELNAME,
+							PointerGetDatum(relname),
+							0, 0, 0);
+	if (!OidIsValid(reloid))
 		elog(ERROR, "has_table_privilege: relation \"%s\" does not exist",
 			 relname);
-	ReleaseSysCache(tuple);
 
 	/*
 	 * Convert priv_type_text to an AclMode
@@ -1075,7 +1054,7 @@ has_table_privilege_id_cname(int32 usesysid, char *relname,
 	/*
 	 * Finally, check for the privilege
 	 */
-	result = pg_aclcheck(relname, usesysid, mode);
+	result = pg_class_aclcheck(reloid, usesysid, mode);
 
 	if (result == ACLCHECK_OK)
 		return true;

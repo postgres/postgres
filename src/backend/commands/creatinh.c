@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/creatinh.c,v 1.89 2002/03/21 16:00:31 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/creatinh.c,v 1.90 2002/03/21 23:27:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -247,13 +247,6 @@ TruncateRelation(const char *relname)
 
 	AssertArg(relname);
 
-	if (!allowSystemTableMods && IsSystemRelationName(relname))
-		elog(ERROR, "TRUNCATE cannot be used on system tables. '%s' is a system table",
-			 relname);
-
-	if (!pg_ownercheck(GetUserId(), relname, RELNAME))
-		elog(ERROR, "you do not own relation \"%s\"", relname);
-
 	/* Grab exclusive lock in preparation for truncate */
 	rel = heap_openr(relname, AccessExclusiveLock);
 
@@ -264,6 +257,13 @@ TruncateRelation(const char *relname)
 	if (rel->rd_rel->relkind == RELKIND_VIEW)
 		elog(ERROR, "TRUNCATE cannot be used on views. '%s' is a view",
 			 relname);
+
+	if (!allowSystemTableMods && IsSystemRelationName(relname))
+		elog(ERROR, "TRUNCATE cannot be used on system tables. '%s' is a system table",
+			 relname);
+
+	if (!pg_class_ownercheck(RelationGetRelid(rel), GetUserId()))
+		elog(ERROR, "you do not own relation \"%s\"", relname);
 
 	/* Keep the lock until transaction commit */
 	heap_close(rel, NoLock);
@@ -458,7 +458,7 @@ MergeAttributes(List *schema, List *supers, bool istemp,
 		 * We should have an UNDER permission flag for this, but for now,
 		 * demand that creator of a child table own the parent.
 		 */
-		if (!pg_ownercheck(GetUserId(), name, RELNAME))
+		if (!pg_class_ownercheck(RelationGetRelid(relation), GetUserId()))
 			elog(ERROR, "you do not own table \"%s\"", name);
 
 		parentOids = lappendi(parentOids, relation->rd_id);

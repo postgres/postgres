@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/trigger.c,v 1.106 2002/03/21 16:00:34 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/trigger.c,v 1.107 2002/03/21 23:27:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -71,12 +71,18 @@ CreateTrigger(CreateTrigStmt *stmt)
 	char	   *constrname = "";
 	Oid			constrrelid = InvalidOid;
 
+	rel = heap_openr(stmt->relation->relname, AccessExclusiveLock);
+
+	if (rel->rd_rel->relkind != RELKIND_RELATION)
+		elog(ERROR, "CreateTrigger: relation \"%s\" is not a table",
+			 stmt->relation->relname);
+
 	if (!allowSystemTableMods && IsSystemRelationName(stmt->relation->relname))
 		elog(ERROR, "CreateTrigger: can't create trigger for system relation %s",
 			stmt->relation->relname);
 
-	if (pg_aclcheck(stmt->relation->relname, GetUserId(),
-					stmt->isconstraint ? ACL_REFERENCES : ACL_TRIGGER)
+	if (pg_class_aclcheck(RelationGetRelid(rel), GetUserId(),
+						  stmt->isconstraint ? ACL_REFERENCES : ACL_TRIGGER)
 		!= ACLCHECK_OK)
 		elog(ERROR, "permission denied");
 
@@ -98,17 +104,13 @@ CreateTrigger(CreateTrigStmt *stmt)
 			 * NoLock is probably sufficient here, since we're only
 			 * interested in getting the relation's OID...
 			 */
-			rel = heap_openr(stmt->constrrel->relname, NoLock);
-			constrrelid = rel->rd_id;
-			heap_close(rel, NoLock);
+			Relation	conrel;
+
+			conrel = heap_openr(stmt->constrrel->relname, NoLock);
+			constrrelid = conrel->rd_id;
+			heap_close(conrel, NoLock);
 		}
 	}
-
-	rel = heap_openr(stmt->relation->relname, AccessExclusiveLock);
-
-	if (rel->rd_rel->relkind != RELKIND_RELATION)
-		elog(ERROR, "CreateTrigger: relation \"%s\" is not a table",
-			 stmt->relation->relname);
 
 	TRIGGER_CLEAR_TYPE(tgtype);
 	if (stmt->before)
@@ -321,19 +323,19 @@ DropTrigger(DropTrigStmt *stmt)
 	int			found = 0;
 	int			tgfound = 0;
 
-	if (!allowSystemTableMods && IsSystemRelationName(stmt->relation->relname))
-		elog(ERROR, "DropTrigger: can't drop trigger for system relation %s",
-			 stmt->relation->relname);
-
-	if (!pg_ownercheck(GetUserId(), stmt->relation->relname, RELNAME))
-		elog(ERROR, "%s: %s", stmt->relation->relname,
-			 aclcheck_error_strings[ACLCHECK_NOT_OWNER]);
-
 	rel = heap_openr(stmt->relation->relname, AccessExclusiveLock);
 
 	if (rel->rd_rel->relkind != RELKIND_RELATION)
 		elog(ERROR, "DropTrigger: relation \"%s\" is not a table",
 			 stmt->relation->relname);
+
+	if (!allowSystemTableMods && IsSystemRelationName(stmt->relation->relname))
+		elog(ERROR, "DropTrigger: can't drop trigger for system relation %s",
+			 stmt->relation->relname);
+
+	if (!pg_class_ownercheck(RelationGetRelid(rel), GetUserId()))
+		elog(ERROR, "%s: %s", stmt->relation->relname,
+			 aclcheck_error_strings[ACLCHECK_NOT_OWNER]);
 
 	/*
 	 * Search pg_trigger, delete target trigger, count remaining triggers

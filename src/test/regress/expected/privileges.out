@@ -90,7 +90,7 @@ ERROR:  LOCK TABLE: permission denied
 COPY atest2 FROM stdin; -- fail
 ERROR:  atest2: Permission denied.
 GRANT ALL ON atest1 TO PUBLIC; -- fail
-ERROR:  permission denied
+ERROR:  atest1: permission denied
 -- checks in subquery, both ok
 SELECT * FROM atest1 WHERE ( b IN ( SELECT col1 FROM atest2 ) );
  a | b 
@@ -246,9 +246,9 @@ ERROR:  user "nosuchuser" does not exist
 select has_table_privilege('pg_shadow','sel');
 ERROR:  has_table_privilege: invalid privilege type sel
 select has_table_privilege(-999999,'pg_shadow','update');
-ERROR:  pg_aclcheck: invalid user id 4293967297
+ERROR:  pg_class_aclcheck: invalid user id 4293967297
 select has_table_privilege(1,'rule');
-ERROR:  has_table_privilege: invalid relation oid 1
+ERROR:  pg_class_aclcheck: relation 1 not found
 -- superuser
 \c -
 select has_table_privilege(current_user,'pg_shadow','select');
