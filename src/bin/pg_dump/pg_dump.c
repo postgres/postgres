@@ -22,7 +22,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.306 2002/11/08 17:37:52 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.307 2002/11/15 02:52:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3157,8 +3157,10 @@ dumpOneDomain(Archive *fout, TypeInfo *tinfo)
 	PQExpBuffer q = createPQExpBuffer();
 	PQExpBuffer delq = createPQExpBuffer();
 	PQExpBuffer query = createPQExpBuffer();
+	PQExpBuffer chkquery = createPQExpBuffer();
 	PGresult   *res;
 	int			ntups;
+	int			i;
 	char	   *typnotnull;
 	char	   *typdefn;
 	char	   *typdefault;
@@ -3228,6 +3230,34 @@ dumpOneDomain(Archive *fout, TypeInfo *tinfo)
 	if (typdefault)
 		appendPQExpBuffer(q, " DEFAULT %s", typdefault);
 
+	/* Fetch and process CHECK Constraints */
+	appendPQExpBuffer(chkquery, "SELECT conname, consrc "
+					  "FROM pg_catalog.pg_constraint "
+					  "WHERE contypid = '%s'::pg_catalog.oid",
+					  tinfo->oid);
+
+	res = PQexec(g_conn, chkquery->data);
+	if (!res ||
+		PQresultStatus(res) != PGRES_TUPLES_OK)
+	{
+		write_msg(NULL, "query to obtain domain constraint information failed: %s",
+				  PQerrorMessage(g_conn));
+		exit_nicely();
+	}
+
+	/* Expecting a single result only */
+	ntups = PQntuples(res);
+	for (i = 0; i < ntups; i++)
+	{
+		char	   *conname;
+		char	   *consrc;
+
+		conname = PQgetvalue(res, i, PQfnumber(res, "conname"));
+		consrc = PQgetvalue(res, i, PQfnumber(res, "consrc"));
+
+		appendPQExpBuffer(q, " CONSTRAINT %s CHECK %s", fmtId(conname), consrc);
+	}
+	
 	appendPQExpBuffer(q, ";\n");
 
 	(*deps)[depIdx++] = NULL;	/* End of List */
