@@ -24,11 +24,10 @@ performance.
 workaround for outer joins is no longer required.  We use the SQL92
 outer join syntax.
 
-	Function Manager - The previous C function manager did not
-handle NULLs properly, nor did it support 64-bit CPU's.  The new
-function manager does.  You can continue using your old custom
-functions, but you may want to rewrite them in the future to use the new
-function manager call interface.
+	Function Manager - The previous C function manager did not handle NULLs properly,
+nor did it support 64-bit CPU's (Alpha).  The new function manager does.  You can continue
+using your old custom functions, but you may want to rewrite them in the future to use the
+new function manager call interface.
 
 	Complex Queries - A large number of complex queries that were
 unsupported in previous releases now work.  Many combinations of views,
