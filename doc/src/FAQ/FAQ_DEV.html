@@ -12,7 +12,7 @@
     <H1>Developer's Frequently Asked Questions (FAQ) for
     PostgreSQL</H1>
 
-    <P>Last updated: Mon Jun  2 00:34:39 EDT 2003</P>
+    <P>Last updated: Wed Oct 29 21:40:18 EST 2003</P>
 
     <P>Current maintainer: Bruce Momjian (<A href=
     "mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</A>)<BR>
@@ -61,7 +61,7 @@
     should I do?<BR>
      <A href="#2.5">2.5</A>) Why do we use <I>palloc</I>() and
     <I>pfree</I>() to allocate memory?<BR>
-     <A href="#2.6">2.6</A>) What is elog()?<BR>
+     <A href="#2.6">2.6</A>) What is ereport()?<BR>
      <A href="#2.7">2.7</A>) What is CommandCounterIncrement()?<BR>
      <BR>
      
@@ -833,11 +833,11 @@
     memory can be allocated in. These affect when the allocated memory
     is freed by the backend.</P>
 
-    <H3><A name="2.6">2.6</A>) What is elog()?</H3>
+    <H3><A name="2.6">2.6</A>) What is ereport()?</H3>
 
-    <P><I>elog()</I> is used to send messages to the front-end, and
+    <P><I>ereport()</I> is used to send messages to the front-end, and
     optionally terminate the current query being processed. The first
-    parameter is an elog level of <I>DEBUG</I> (levels 1-5), <I>LOG,</I>
+    parameter is an ereport level of <I>DEBUG</I> (levels 1-5), <I>LOG,</I>
     <I>INFO,</I> <I>NOTICE,</I> <I>ERROR,</I> <I>FATAL,</I> or
     <I>PANIC.</I> <I>NOTICE</I> prints on the user's terminal and the
     postmaster logs. <I>INFO</I> prints only to the user's terminal and
@@ -845,10 +845,10 @@
     from <I>postgresql.conf.</I>) <I>ERROR</I> prints in both places,
     and terminates the current query, never returning from the call.
     <I>FATAL</I> terminates the backend process. The remaining
-    parameters of <I>elog</I> are a <I>printf</I>-style set of
+    parameters of <I>ereport</I> are a <I>printf</I>-style set of
     parameters to print.</P>
 
-    <P><I>elog(ERROR)</I> frees most memory and open file descriptors so
+    <P><I>ereport(ERROR)</I> frees most memory and open file descriptors so
     you don't need to clean these up before the call.</P>
 
     <H3><A name="2.7">2.7</A>) What is CommandCounterIncrement()?</H3>

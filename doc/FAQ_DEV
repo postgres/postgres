@@ -1,7 +1,7 @@
 
           Developer's Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Mon Jun 2 00:34:39 EDT 2003
+   Last updated: Wed Oct 29 21:40:18 EST 2003
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -34,7 +34,7 @@
    2.3) Why do we use Node and List to make data structures?
    2.4) I just added a field to a structure. What else should I do?
    2.5) Why do we use palloc() and pfree() to allocate memory?
-   2.6) What is elog()?
+   2.6) What is ereport()?
    2.7) What is CommandCounterIncrement()?
      _________________________________________________________________
    
@@ -687,20 +687,21 @@ List *i, *list;
    are special non-query contexts that memory can be allocated in. These
    affect when the allocated memory is freed by the backend.
    
-  2.6) What is elog()?
+  2.6) What is ereport()?
   
-   elog() is used to send messages to the front-end, and optionally
+   ereport() is used to send messages to the front-end, and optionally
    terminate the current query being processed. The first parameter is an
-   elog level of DEBUG (levels 1-5), LOG, INFO, NOTICE, ERROR, FATAL, or
-   PANIC. NOTICE prints on the user's terminal and the postmaster logs.
-   INFO prints only to the user's terminal and LOG prints only to the
-   server logs. (These can be changed from postgresql.conf.) ERROR prints
-   in both places, and terminates the current query, never returning from
-   the call. FATAL terminates the backend process. The remaining
-   parameters of elog are a printf-style set of parameters to print.
+   ereport level of DEBUG (levels 1-5), LOG, INFO, NOTICE, ERROR, FATAL,
+   or PANIC. NOTICE prints on the user's terminal and the postmaster
+   logs. INFO prints only to the user's terminal and LOG prints only to
+   the server logs. (These can be changed from postgresql.conf.) ERROR
+   prints in both places, and terminates the current query, never
+   returning from the call. FATAL terminates the backend process. The
+   remaining parameters of ereport are a printf-style set of parameters
+   to print.
    
-   elog(ERROR) frees most memory and open file descriptors so you don't
-   need to clean these up before the call.
+   ereport(ERROR) frees most memory and open file descriptors so you
+   don't need to clean these up before the call.
    
   2.7) What is CommandCounterIncrement()?
   
