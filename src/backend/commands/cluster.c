@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/cluster.c,v 1.97 2002/11/23 18:26:45 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/cluster.c,v 1.98 2002/12/04 05:18:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -804,11 +804,11 @@ check_cluster_ownership(Oid relOid)
 
 /* Get a list of tables that the current user owns and
  * have indisclustered set.  Return the list in a List * of rvsToCluster
- * with the tableOid and the indexOid on which the table is already 
+ * with the tableOid and the indexOid on which the table is already
  * clustered.
  */
 List *
-get_tables_to_cluster(Oid owner)
+get_tables_to_cluster(AclId owner)
 {
 	Relation		indRelation;
 	HeapScanDesc	scan;

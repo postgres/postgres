@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/namespace.c,v 1.40 2002/11/11 22:19:21 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/namespace.c,v 1.41 2002/12/04 05:18:31 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1365,7 +1365,7 @@ FindDefaultConversionProc(int4 for_encoding, int4 to_encoding)
 static void
 recomputeNamespacePath(void)
 {
-	Oid			userId = GetUserId();
+	AclId		userId = GetUserId();
 	char	   *rawname;
 	List	   *namelist;
 	List	   *oidlist;

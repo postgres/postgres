@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_conversion.h,v 1.7 2002/11/02 02:33:03 tgl Exp $
+ * $Id: pg_conversion.h,v 1.8 2002/12/04 05:18:35 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -18,6 +18,8 @@
  */
 #ifndef PG_CONVERSION_H
 #define PG_CONVERSION_H
+
+#include "miscadmin.h"
 
 /* ----------------
  *		postgres.h contains the system type definitions and the
@@ -84,7 +86,7 @@ typedef FormData_pg_conversion *Form_pg_conversion;
 #include "nodes/parsenodes.h"
 
 extern Oid ConversionCreate(const char *conname, Oid connamespace,
-				 int32 conowner,
+				 AclId conowner,
 				 int32 conforencoding, int32 contoencoding,
 				 Oid conproc, bool def);
 extern void ConversionDrop(Oid conversionOid, DropBehavior behavior);

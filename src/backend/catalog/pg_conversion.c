@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_conversion.c,v 1.8 2002/11/02 18:41:21 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_conversion.c,v 1.9 2002/12/04 05:18:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,7 +37,7 @@
  */
 Oid
 ConversionCreate(const char *conname, Oid connamespace,
-				 int32 conowner,
+				 AclId conowner,
 				 int32 conforencoding, int32 contoencoding,
 				 Oid conproc, bool def)
 {

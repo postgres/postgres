@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/aclchk.c,v 1.78 2002/09/24 23:14:25 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/aclchk.c,v 1.79 2002/12/04 05:18:31 momjian Exp $
  *
  * NOTES
  *	  See acl.h.
@@ -893,7 +893,7 @@ aclcheck_error(AclResult errcode, const char *objectname)
  * Exported routine for checking a user's access privileges to a table
  */
 AclResult
-pg_class_aclcheck(Oid table_oid, Oid userid, AclMode mode)
+pg_class_aclcheck(Oid table_oid, AclId userid, AclMode mode)
 {
 	AclResult	result;
 	bool		usesuper,
@@ -991,7 +991,7 @@ pg_class_aclcheck(Oid table_oid, Oid userid, AclMode mode)
  * Exported routine for checking a user's access privileges to a database
  */
 AclResult
-pg_database_aclcheck(Oid db_oid, Oid userid, AclMode mode)
+pg_database_aclcheck(Oid db_oid, AclId userid, AclMode mode)
 {
 	AclResult	result;
 	Relation	pg_database;
@@ -1054,7 +1054,7 @@ pg_database_aclcheck(Oid db_oid, Oid userid, AclMode mode)
  * Exported routine for checking a user's access privileges to a function
  */
 AclResult
-pg_proc_aclcheck(Oid proc_oid, Oid userid, AclMode mode)
+pg_proc_aclcheck(Oid proc_oid, AclId userid, AclMode mode)
 {
 	AclResult	result;
 	HeapTuple	tuple;
@@ -1107,7 +1107,7 @@ pg_proc_aclcheck(Oid proc_oid, Oid userid, AclMode mode)
  * Exported routine for checking a user's access privileges to a language
  */
 AclResult
-pg_language_aclcheck(Oid lang_oid, Oid userid, AclMode mode)
+pg_language_aclcheck(Oid lang_oid, AclId userid, AclMode mode)
 {
 	AclResult	result;
 	HeapTuple	tuple;
@@ -1157,7 +1157,7 @@ pg_language_aclcheck(Oid lang_oid, Oid userid, AclMode mode)
  * Exported routine for checking a user's access privileges to a namespace
  */
 AclResult
-pg_namespace_aclcheck(Oid nsp_oid, Oid userid, AclMode mode)
+pg_namespace_aclcheck(Oid nsp_oid, AclId userid, AclMode mode)
 {
 	AclResult	result;
 	HeapTuple	tuple;
@@ -1218,7 +1218,7 @@ pg_namespace_aclcheck(Oid nsp_oid, Oid userid, AclMode mode)
  * Ownership check for a relation (specified by OID).
  */
 bool
-pg_class_ownercheck(Oid class_oid, Oid userid)
+pg_class_ownercheck(Oid class_oid, AclId userid)
 {
 	HeapTuple	tuple;
 	AclId		owner_id;
@@ -1244,7 +1244,7 @@ pg_class_ownercheck(Oid class_oid, Oid userid)
  * Ownership check for a type (specified by OID).
  */
 bool
-pg_type_ownercheck(Oid type_oid, Oid userid)
+pg_type_ownercheck(Oid type_oid, AclId userid)
 {
 	HeapTuple	tuple;
 	AclId		owner_id;
@@ -1270,7 +1270,7 @@ pg_type_ownercheck(Oid type_oid, Oid userid)
  * Ownership check for an operator (specified by OID).
  */
 bool
-pg_oper_ownercheck(Oid oper_oid, Oid userid)
+pg_oper_ownercheck(Oid oper_oid, AclId userid)
 {
 	HeapTuple	tuple;
 	AclId		owner_id;
@@ -1296,7 +1296,7 @@ pg_oper_ownercheck(Oid oper_oid, Oid userid)
  * Ownership check for a function (specified by OID).
  */
 bool
-pg_proc_ownercheck(Oid proc_oid, Oid userid)
+pg_proc_ownercheck(Oid proc_oid, AclId userid)
 {
 	HeapTuple	tuple;
 	AclId		owner_id;
@@ -1322,7 +1322,7 @@ pg_proc_ownercheck(Oid proc_oid, Oid userid)
  * Ownership check for a namespace (specified by OID).
  */
 bool
-pg_namespace_ownercheck(Oid nsp_oid, Oid userid)
+pg_namespace_ownercheck(Oid nsp_oid, AclId userid)
 {
 	HeapTuple	tuple;
 	AclId		owner_id;
@@ -1349,7 +1349,7 @@ pg_namespace_ownercheck(Oid nsp_oid, Oid userid)
  * Ownership check for an operator class (specified by OID).
  */
 bool
-pg_opclass_ownercheck(Oid opc_oid, Oid userid)
+pg_opclass_ownercheck(Oid opc_oid, AclId userid)
 {
 	HeapTuple	tuple;
 	AclId		owner_id;

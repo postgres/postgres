@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: miscadmin.h,v 1.111 2002/10/03 17:07:53 momjian Exp $
+ * $Id: miscadmin.h,v 1.112 2002/12/04 05:18:34 momjian Exp $
  *
  * NOTES
  *	  some of the information in this file should be moved to
@@ -202,7 +202,13 @@ extern void SetDatabasePath(const char *path);
 
 extern char *GetUserNameFromId(Oid userid);
 
-extern Oid	GetUserId(void);
+/*
+ * AclId		system identifier for the user, group, etc.
+ *				XXX Perhaps replace this type by OID?
+ */
+typedef uint32 AclId;
+
+extern AclId GetUserId(void);
 extern void SetUserId(Oid userid);
 extern Oid	GetSessionUserId(void);
 extern void SetSessionUserId(Oid userid);

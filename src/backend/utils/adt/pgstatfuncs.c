@@ -272,7 +272,7 @@ pg_stat_get_backend_userid(PG_FUNCTION_ARGS)
 	if ((beentry = pgstat_fetch_stat_beentry(beid)) == NULL)
 		PG_RETURN_NULL();
 
-	PG_RETURN_OID(beentry->userid);
+	PG_RETURN_INT32(beentry->userid);
 }
 
 
