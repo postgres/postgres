@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.207 2003/09/24 18:54:01 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.208 2003/10/02 06:34:04 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1555,7 +1555,7 @@ CreateCommandTag(Node *parsetree)
 			break;
 
 		default:
-			elog(NOTICE, "unrecognized node type: %d",
+			elog(WARNING, "unrecognized node type: %d",
 				 (int) nodeTag(parsetree));
 			tag = "???";
 			break;

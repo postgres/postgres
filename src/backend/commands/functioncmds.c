@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/functioncmds.c,v 1.37 2003/09/29 00:05:24 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/functioncmds.c,v 1.38 2003/10/02 06:34:03 petere Exp $
  *
  * DESCRIPTION
  *	  These routines take the parse tree and pick out the
@@ -718,7 +718,7 @@ RenameFunction(List *name, List *argtypes, const char *newname)
  *
  * This is presently only used for adjusting legacy functions that return
  * OPAQUE to return whatever we find their correct definition should be.
- * The caller should emit a suitable NOTICE explaining what we did.
+ * The caller should emit a suitable warning explaining what we did.
  */
 void
 SetFunctionReturnType(Oid funcOid, Oid newRetType)

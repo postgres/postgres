@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.113 2003/09/29 16:37:29 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.114 2003/10/02 06:34:03 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -654,7 +654,7 @@ ReindexTable(RangeVar *relation, bool force /* currently unused */ )
 	ReleaseSysCache(tuple);
 
 	if (!reindex_relation(heapOid))
-		ereport(WARNING,
+		ereport(NOTICE,
 				(errmsg("table \"%s\" has no indexes",
 						relation->relname)));
 }

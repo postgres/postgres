@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.368 2003/09/29 18:50:58 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.369 2003/10/02 06:34:04 petere Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -559,8 +559,7 @@ pg_rewrite_queries(List *querytree_list)
 	new_list = (List *) copyObject(querytree_list);
 	/* This checks both copyObject() and the equal() routines... */
 	if (!equal(new_list, querytree_list))
-		ereport(WARNING,
-		   (errmsg("copyObject() failed to produce an equal parse tree")));
+		elog(WARNING, "copyObject() failed to produce an equal parse tree");
 	else
 		querytree_list = new_list;
 #endif
@@ -604,8 +603,7 @@ pg_plan_query(Query *querytree)
 #ifdef NOT_USED
 		/* This checks both copyObject() and the equal() routines... */
 		if (!equal(new_plan, plan))
-			ereport(WARNING,
-			(errmsg("copyObject() failed to produce an equal plan tree")));
+			elog(WARNING, "copyObject() failed to produce an equal plan tree");
 		else
 #endif
 			plan = new_plan;
@@ -2654,7 +2652,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.368 $ $Date: 2003/09/29 18:50:58 $\n");
+		puts("$Revision: 1.369 $ $Date: 2003/10/02 06:34:04 $\n");
 	}
 
 	/*

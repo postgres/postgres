@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/typecmds.c,v 1.47 2003/09/29 00:05:25 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/typecmds.c,v 1.48 2003/10/02 06:34:03 petere Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -271,7 +271,7 @@ DefineType(List *names, List *parameters)
 		if (resulttype == OPAQUEOID)
 		{
 			/* backwards-compatibility hack */
-			ereport(NOTICE,
+			ereport(WARNING,
 					(errmsg("changing return type of function %s from \"opaque\" to %s",
 							NameListToString(inputName), typeName)));
 			SetFunctionReturnType(inputOid, typoid);
@@ -288,7 +288,7 @@ DefineType(List *names, List *parameters)
 		if (resulttype == OPAQUEOID)
 		{
 			/* backwards-compatibility hack */
-			ereport(NOTICE,
+			ereport(WARNING,
 					(errmsg("changing return type of function %s from \"opaque\" to \"cstring\"",
 							NameListToString(outputName))));
 			SetFunctionReturnType(outputOid, CSTRINGOID);
@@ -839,7 +839,7 @@ findTypeInputFunction(List *procname, Oid typeOid)
 	 * three arguments (string, element OID, typmod).
 	 *
 	 * For backwards compatibility we allow OPAQUE in place of CSTRING; if we
-	 * see this, we issue a NOTICE and fix up the pg_proc entry.
+	 * see this, we issue a warning and fix up the pg_proc entry.
 	 */
 	MemSet(argList, 0, FUNC_MAX_ARGS * sizeof(Oid));
 
@@ -874,7 +874,7 @@ findTypeInputFunction(List *procname, Oid typeOid)
 	if (OidIsValid(procOid))
 	{
 		/* Found, but must complain and fix the pg_proc entry */
-		ereport(NOTICE,
+		ereport(WARNING,
 				(errmsg("changing argument type of function %s from \"opaque\" to \"cstring\"",
 						NameListToString(procname))));
 		SetFunctionArgType(procOid, 0, CSTRINGOID);
@@ -910,7 +910,7 @@ findTypeOutputFunction(List *procname, Oid typeOid)
 	 * arguments (data value, element OID).
 	 *
 	 * For backwards compatibility we allow OPAQUE in place of the actual
-	 * type name; if we see this, we issue a NOTICE and fix up the pg_proc
+	 * type name; if we see this, we issue a warning and fix up the pg_proc
 	 * entry.
 	 */
 	MemSet(argList, 0, FUNC_MAX_ARGS * sizeof(Oid));
@@ -944,7 +944,7 @@ findTypeOutputFunction(List *procname, Oid typeOid)
 	if (OidIsValid(procOid))
 	{
 		/* Found, but must complain and fix the pg_proc entry */
-		ereport(NOTICE,
+		ereport(WARNING,
 		(errmsg("changing argument type of function %s from \"opaque\" to %s",
 				NameListToString(procname), format_type_be(typeOid))));
 		SetFunctionArgType(procOid, 0, typeOid);

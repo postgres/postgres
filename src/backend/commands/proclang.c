@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/proclang.c,v 1.50 2003/09/25 06:57:58 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/proclang.c,v 1.51 2003/10/02 06:34:03 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -91,7 +91,7 @@ CreateProceduralLanguage(CreatePLangStmt *stmt)
 		 */
 		if (funcrettype == OPAQUEOID)
 		{
-			ereport(NOTICE,
+			ereport(WARNING,
 					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 					 errmsg("changing return type of function %s from \"opaque\" to \"language_handler\"",
 							NameListToString(stmt->plhandler))));

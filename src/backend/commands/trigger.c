@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/trigger.c,v 1.158 2003/09/25 18:58:35 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/trigger.c,v 1.159 2003/10/02 06:34:03 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -286,7 +286,7 @@ CreateTrigger(CreateTrigStmt *stmt, bool forConstraint)
 		 */
 		if (funcrettype == OPAQUEOID)
 		{
-			ereport(NOTICE,
+			ereport(WARNING,
 					(errmsg("changing return type of function %s from \"opaque\" to \"trigger\"",
 							NameListToString(stmt->funcname))));
 			SetFunctionReturnType(funcoid, TRIGGEROID);
