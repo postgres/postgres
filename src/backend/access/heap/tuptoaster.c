@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/heap/tuptoaster.c,v 1.16 2001/02/09 17:30:03 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/heap/tuptoaster.c,v 1.17 2001/02/15 20:57:01 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -45,7 +45,6 @@ static void			toast_delete(Relation rel, HeapTuple oldtup);
 static void			toast_delete_datum(Relation rel, Datum value);
 static void			toast_insert_or_update(Relation rel, HeapTuple newtup,
 								HeapTuple oldtup);
-static Datum		toast_compress_datum(Datum value);
 static Datum		toast_save_datum(Relation rel, Oid mainoid, int16 attno, Datum value);
 static varattrib   *toast_fetch_datum(varattrib *attr);
 
@@ -721,7 +720,7 @@ toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup)
  *	the tuple!
  * ----------
  */
-static Datum
+Datum
 toast_compress_datum(Datum value)
 {
 	varattrib	   *tmp;

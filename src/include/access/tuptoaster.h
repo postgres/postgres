@@ -6,7 +6,7 @@
  *
  * Copyright (c) 2000, PostgreSQL Development Team
  *
- * $Id: tuptoaster.h,v 1.8 2000/08/04 04:16:10 tgl Exp $
+ * $Id: tuptoaster.h,v 1.9 2001/02/15 20:57:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,6 +40,12 @@
 
 #define TOAST_TUPLE_TARGET		(MaxTupleSize / 4)
 
+/*
+ * If an index value is larger than TOAST_INDEX_TARGET, we will try to
+ * compress it (we can't move it out-of-line, however).  Note that this
+ * number is per-datum, not per-tuple, for simplicity in index_formtuple().
+ */
+#define TOAST_INDEX_TARGET		(MaxTupleSize / 16)
 
 /*
  * When we store an oversize datum externally, we divide it into chunks
@@ -94,6 +100,14 @@ extern varattrib *heap_tuple_fetch_attr(varattrib * attr);
  * ----------
  */
 extern varattrib *heap_tuple_untoast_attr(varattrib * attr);
+
+/* ----------
+ * toast_compress_datum -
+ *
+ *	Create a compressed version of a varlena datum, if possible
+ * ----------
+ */
+extern Datum toast_compress_datum(Datum value);
 
 #endif	 /* TUPLE_TOASTER_ACTIVE */
 

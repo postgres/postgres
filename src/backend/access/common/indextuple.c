@@ -2,14 +2,14 @@
  *
  * indextuple.c
  *	   This file contains index tuple accessor and mutator routines,
- *	   as well as a few various tuple utilities.
+ *	   as well as various tuple utilities.
  *
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/indextuple.c,v 1.50 2001/01/24 19:42:47 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/indextuple.c,v 1.51 2001/02/15 20:57:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -57,24 +57,44 @@ index_formtuple(TupleDesc tupleDescriptor,
 #ifdef TOAST_INDEX_HACK
 	for (i = 0; i < numberOfAttributes; i++)
 	{
-		if (null[i] != ' ' || tupleDescriptor->attrs[i]->attlen >= 0)
+		Form_pg_attribute  att = tupleDescriptor->attrs[i];
+
+		untoasted_value[i] = value[i];
+		untoasted_free[i] = false;
+
+		/* Do nothing if value is NULL or not of varlena type */
+		if (null[i] != ' ' || att->attlen >= 0)
+			continue;
+
+		/*
+		 * If value is stored EXTERNAL, must fetch it so we are not
+		 * depending on outside storage.  This should be improved someday.
+		 */
+		if (VARATT_IS_EXTERNAL(value[i]))
 		{
-			untoasted_value[i] = value[i];
-			untoasted_free[i] = false;
+			untoasted_value[i] = PointerGetDatum(
+				heap_tuple_fetch_attr(
+					(varattrib *) DatumGetPointer(value[i])));
+			untoasted_free[i] = true;
 		}
-		else
+
+		/*
+		 * If value is above size target, and is of a compressible datatype,
+		 * try to compress it in-line.
+		 */
+		if (VARATT_SIZE(untoasted_value[i]) > TOAST_INDEX_TARGET &&
+			!VARATT_IS_EXTENDED(untoasted_value[i]) &&
+			(att->attstorage == 'x' || att->attstorage == 'm'))
 		{
-			if (VARATT_IS_EXTERNAL(value[i]))
+			Datum	cvalue = toast_compress_datum(untoasted_value[i]);
+
+			if (DatumGetPointer(cvalue) != NULL)
 			{
-				untoasted_value[i] = PointerGetDatum(
-						heap_tuple_fetch_attr(
-						(varattrib *)DatumGetPointer(value[i])));
+				/* successful compression */
+				if (untoasted_free[i])
+					pfree(DatumGetPointer(untoasted_value[i]));
+				untoasted_value[i] = cvalue;
 				untoasted_free[i] = true;
-			}
-			else
-			{
-				untoasted_value[i] = value[i];
-				untoasted_free[i] = false;
 			}
 		}
 	}
@@ -137,10 +157,9 @@ index_formtuple(TupleDesc tupleDescriptor,
 	 * Here we make sure that the size will fit in the field reserved for
 	 * it in t_info.
 	 */
-
 	if ((size & INDEX_SIZE_MASK) != size)
-		elog(ERROR, "index_formtuple: data takes %lu bytes: too big",
-			(unsigned long)size);
+		elog(ERROR, "index_formtuple: data takes %lu bytes, max is %d",
+			 (unsigned long) size, INDEX_SIZE_MASK);
 
 	infomask |= size;
 
