@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-lobj.c,v 1.11 1997/09/18 20:22:49 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-lobj.c,v 1.12 1998/05/12 21:44:03 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -449,7 +449,7 @@ lo_export(PGconn *conn, Oid lobjId, char *filename)
 	/*
 	 * open the file to be written to
 	 */
-	fd = open(filename, O_CREAT | O_WRONLY, 0666);
+	fd = open(filename, O_CREAT | O_WRONLY | O_TRUNC, 0666);
 	if (fd < 0)
 	{							/* error */
 		sprintf(conn->errorMessage,

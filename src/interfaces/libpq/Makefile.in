@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/interfaces/libpq/Attic/Makefile.in,v 1.17 1998/05/06 23:51:06 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/interfaces/libpq/Attic/Makefile.in,v 1.18 1998/05/12 21:44:02 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -51,6 +51,12 @@ ifeq ($(PORTNAME), i386_solaris)
   install-shlib-dep := install-shlib
   shlib := libpq.so.$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
   LDFLAGS_SL = -G -z text
+  CFLAGS += $(CFLAGS_SL)
+endif
+ifeq ($(PORTNAME), sparc_solaris)
+  install-shlib-dep := install-shlib
+  shlib := libpq.so.$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
+  LDFLAGS_SL = -G
   CFLAGS += $(CFLAGS_SL)
 endif
 ifeq ($(PORTNAME), univel)

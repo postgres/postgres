@@ -119,7 +119,7 @@ PostgreSQL:
 
       To check for disk space, use command "df -k".
 
-  4) Ftp file ftp://ftp.postgresql.org/pub/postgresql-v6.3.2.tar.gz from the
+  4) Ftp file ftp://ftp.postgresql.org/pub/postgresql-6.3.2.tar.gz from the
      Internet.  Store it in your home directory.
 
   5) Some platforms use flex.  If your system uses flex then make sure
@@ -161,7 +161,7 @@ PostgreSQL:
      step.  Type (with the gunzip line and the following line typed as one
      line):
         cd
-        gunzip -c postgresql-v6.3.2.tar.gz |
+        gunzip -c postgresql-6.3.2.tar.gz |
             tar xvf - src/bin/pg_dump/pg_dumpall
         chmod a+x src/bin/pg_dump/pg_dumpall
         src/bin/pg_dump/pg_dumpall > db.out
@@ -227,7 +227,7 @@ PostgreSQL:
 
  10) Unzip and untar the new source file.  Type
         cd /usr/src/pgsql
-        gunzip -c ~/postgresql-v6.3.2.tar.gz | tar xvf -
+        gunzip -c ~/postgresql-6.3.2.tar.gz | tar xvf -
 
  11) Configure the source code for your system.  It is this step at which
      you can specify your actual source path and installation paths for
@@ -487,7 +487,7 @@ PostgreSQL:
           root:bin.
              #!/bin/sh
              [ -x /usr/local/pgsql/bin/postmaster ] && {
-               su -l pgsql -c 'exec /usr/local/pgsql/bin/postmaster
+               su -l postgres -c 'exec /usr/local/pgsql/bin/postmaster
                        -D/usr/local/pgsql/data
                        -S -o -F > /usr/local/pgsql/errlog' &
                echo -n ' pgsql'
@@ -552,7 +552,7 @@ PostgreSQL:
         rm -rf /usr/local/pgsql_6_0
         # Also delete old database directory tree if it is not in
         #  /usr/local/pgsql_6_0/data
-        rm ~/postgresql-v6.3.2.tar.gz
+        rm ~/postgresql-6.3.2.tar.gz
 
  26) You will probably want to print out the documentation.  Here is how
      you might do it if you have Ghostscript on your system and are
@@ -579,7 +579,7 @@ PostgreSQL:
      supported platforms.  We therefore ask you to let us know if you did
      or did not get PostgreSQL to work on you system.  Please send a
      mail message to pgsql-ports@postgresql.org telling us the following:
-       - The version of PostgreSQL (v6.3.2, 6.2.1, beta 970703, etc.).
+       - The version of PostgreSQL (6.3.2, 6.2.1, beta 970703, etc.).
        - Your operating system (i.e. RedHat v4.0 Linux v2.0.26).
        - Your hardware (SPARC, i486, etc.).
        - Did you compile, install and run the regression tests cleanly?

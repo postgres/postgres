@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/test/examples/testlo.c,v 1.7 1997/09/25 16:35:50 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/test/examples/testlo.c,v 1.8 1998/05/12 21:44:07 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -168,7 +168,7 @@ exportFile(PGconn *conn, Oid lobjId, char *filename)
 	/*
 	 * open the file to be written to
 	 */
-	fd = open(filename, O_CREAT | O_WRONLY, 0666);
+	fd = open(filename, O_CREAT | O_WRONLY | O_TRUNC, 0666);
 	if (fd < 0)
 	{							/* error */
 		fprintf(stderr, "can't open unix file\"%s\"",

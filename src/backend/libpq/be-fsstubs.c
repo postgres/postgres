@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/be-fsstubs.c,v 1.19 1998/01/07 21:03:12 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/be-fsstubs.c,v 1.20 1998/05/12 21:43:58 momjian Exp $
  *
  * NOTES
  *	  This should be moved to a more appropriate place.  It is here
@@ -344,7 +344,7 @@ lo_export(Oid lobjId, text *filename)
 	 */
 	oumask = umask((mode_t) 0);
 	StrNCpy(fnamebuf, VARDATA(filename), VARSIZE(filename) - VARHDRSZ + 1);
-	fd = open(fnamebuf, O_CREAT | O_WRONLY, 0666);
+	fd = open(fnamebuf, O_CREAT | O_WRONLY | O_TRUNC, 0666);
 	umask(oumask);
 	if (fd < 0)
 	{							/* error */
