@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/Attic/database.c,v 1.35 2000/01/26 05:57:28 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/Attic/database.c,v 1.36 2000/03/08 01:46:47 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -83,22 +83,27 @@ ExpandDatabasePath(const char *dbpath)
 				 DataDir, SEP_CHAR, SEP_CHAR, dbpath);
 	}
 
-    /* check for illegal characters in dbpath */
+    /* check for illegal characters in dbpath 
+     * these should really throw an error, shouldn't they? or else all callers 
+     * need to test for NULL */
     for(cp = buf; *cp; cp++)
     {
         /* The following characters will not be allowed anywhere in the database
-           path. (Do not include the slash here.) */
+           path. (Do not include the slash  or '.' here.) */
         char illegal_dbpath_chars[] =
             "\001\002\003\004\005\006\007\010"
             "\011\012\013\014\015\016\017\020"
             "\021\022\023\024\025\026\027\030"
             "\031\032\033\034\035\036\037"
-            "'.";
+            "'`";
 
         const char *cx;
         for (cx = illegal_dbpath_chars; *cx; cx++)
             if (*cp == *cx)
                 return NULL;
+       /* don't allow access to parent dirs */
+       if (strncmp(cp, "/../", 4) == 0 )
+               return NULL ; 
     }
 
 	return pstrdup(buf);
