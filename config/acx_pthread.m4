@@ -140,7 +140,7 @@ main ()
 }
 _ACEOF
             rm -f conftest.$ac_objext conftest$ac_exeext
-            if test "`(eval $ac_link 2>&1 >/dev/null)`" = ""; then
+            if test "`(eval $ac_link 2>&1 1>&5)`" = ""; then
                 # we continue with more flags because Linux needs -lpthread
                 # for libpq builds on PostgreSQL.  The test above only
                 # tests for building binaries, not shared libraries.
