@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.15 1998/01/06 23:19:49 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.16 1998/01/07 08:08:02 momjian Exp $
  *
  * NOTES
  *	  Most of the read functions for plan nodes are tested. (In fact, they
@@ -187,7 +187,6 @@ _readSortClause()
 	local_node = makeNode(SortClause);
 
 	token = lsptok(NULL, &length);		/* skip the :resdom */
-	token = lsptok(NULL, &length);		/* get resdom */
 	local_node->resdom = nodeRead(true);
 
 	token = lsptok(NULL, &length);		/* skip :opoid */
@@ -211,7 +210,6 @@ _readGroupClause()
 	local_node = makeNode(GroupClause);
 
 	token = lsptok(NULL, &length);		/* skip the :entry */
-	token = lsptok(NULL, &length);		/* get entry */
 	local_node->entry = nodeRead(true);
 
 	token = lsptok(NULL, &length);		/* skip :grpOpoid */

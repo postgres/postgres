@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteDefine.c,v 1.10 1998/01/05 03:32:44 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteDefine.c,v 1.11 1998/01/07 08:08:08 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -115,7 +115,7 @@ InsertRule(char *rulname,
 		is_instead = "t";
 
 	if (evqual == NULL)
-		evqual = "nil";
+		evqual = "\"\"";
 
 	if (IsDefinedRewriteRule(rulname))
 		elog(ABORT, "Attempt to insert rule '%s' failed: already exists",
@@ -245,7 +245,7 @@ DefineQueryRewrite(RuleStmt *stmt)
 							eslot_string,
 							event_qualP,
 							true,
-							"nil");
+							"\"\"");
 		prs2_addToRelation(ev_relid, ruleId, event_type, event_attno, TRUE,
 						   event_qual, NIL);
 
