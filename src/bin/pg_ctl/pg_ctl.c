@@ -4,7 +4,7 @@
  *
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/pg_ctl/pg_ctl.c,v 1.9 2004/06/10 16:35:17 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_ctl/pg_ctl.c,v 1.10 2004/06/10 17:26:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -222,9 +222,13 @@ start_postmaster(void)
 	 */
 	char		cmd[MAXPGPATH];
 
-	/* Does '&' work on Win32? */
 	if (log_file != NULL)
+		/* Win32 needs START rather than "&" */
+#ifndef WIN32
 		snprintf(cmd, MAXPGPATH, "%s\"%s\" %s < %s >> \"%s\" 2>&1 &%s",
+#else
+		snprintf(cmd, MAXPGPATH, "START %s\"%s\" %s < %s >> \"%s\" 2>&1%s",
+#endif
 				 SYSTEMQUOTE, postgres_path, post_opts, DEVNULL, log_file,
 				 SYSTEMQUOTE);
 	else
