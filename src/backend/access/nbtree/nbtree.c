@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtree.c,v 1.73 2000/12/28 13:00:07 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtree.c,v 1.74 2000/12/29 08:08:59 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1020,6 +1020,9 @@ btree_xlog_newroot(bool redo, XLogRecPtr lsn, XLogRecord *record)
 	md.btm_root = BlockIdGetBlockNumber(&(xlrec->rootblk));
 	md.btm_level = xlrec->level;
 	memcpy((char *) BTPageGetMeta(metapg), (char *) &md, sizeof(md));
+
+	pageop = (BTPageOpaque) PageGetSpecialPointer(metapg);
+	pageop->btpo_flags = BTP_META;
 
 	PageSetLSN(metapg, lsn);
 	PageSetSUI(metapg, ThisStartUpID);
