@@ -2,7 +2,7 @@
 #
 # Copyright 2002 by Bill Huang
 #
-# $Id: UCS_to_GB18030.pl,v 1.1 2002/06/13 08:28:55 ishii Exp $
+# $Id: UCS_to_GB18030.pl,v 1.2 2002/11/12 11:33:40 ishii Exp $
 #
 # Generate UTF-8 <--> GB18030 code conversion tables from
 # map files provided by Unicode organization.
@@ -30,10 +30,18 @@ while( <FILE> ){
 		next;
 	}
 	( $u, $c, $rest ) = split;
-	$utf = hex($u);
+	$ucs = hex($u);
 	$code = hex($c);
-	$count++;
-	$array{ $utf } = ($code);
+	if( $code >= 0x80 && $ucs >= 0x0080 ){
+		$utf = &ucs2utf($ucs);
+		if( $array{ $utf } ne "" ){
+			printf STDERR "Warning: duplicate unicode: %04x\n",$ucs;
+			next;
+		}
+		$count++;
+
+		$array{ $utf } = $code;
+	}
 }
 close( FILE );
 
@@ -70,11 +78,19 @@ while( <FILE> ){
 	if( /^#/ ){
 		next;
 	}
-	( $u, $c, $rest ) = split;
-	$utf = hex($u);
+	( $c, $u, $rest ) = split;
+	$ucs = hex($u);
 	$code = hex($c);
-	$count++;
-	$array{ $code } = $utf;
+	if( $code >= 0x80 && $ucs >= 0x0080 ){
+		$utf = &ucs2utf($ucs);
+		if( $array{ $code } ne "" ){
+			printf STDERR "Warning: duplicate code: %04x\n",$ucs;
+			next;
+		}
+		$count++;
+
+		$array{ $code } = $utf;
+	}
 }
 close( FILE );
 
