@@ -21,7 +21,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.75 1998/06/19 02:55:14 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.76 1998/06/20 02:49:38 momjian Exp $
  *
  * Modifications - 6/10/96 - dave@bensoft.com - version 1.13.dhb
  *
@@ -110,7 +110,6 @@ int			dumpData;			/* dump data using proper insert strings */
 int			attrNames;			/* put attr names into insert strings */
 int			schemaOnly;
 int			dataOnly;
-int                     compatConstraint;
 
 char		g_opaque_type[10];	/* name for the opaque type */
 
@@ -126,8 +125,6 @@ usage(const char *progname)
 			"usage:  %s [options] dbname\n", progname);
 	fprintf(stderr,
 			"\t -a          \t\t dump out only the data, no schema\n");
-	fprintf(stderr,
-		        "\t -c          \t\t generate pgsql-compatible CONSTRAINT syntax\n");
 	fprintf(stderr,
 			"\t -d          \t\t dump data as proper insert strings\n");
 	fprintf(stderr,
@@ -553,20 +550,16 @@ main(int argc, char **argv)
 	g_comment_end[0] = '\0';
 	strcpy(g_opaque_type, "opaque");
 
-	compatConstraint = dataOnly = schemaOnly = dumpData = attrNames = 0;
+	dataOnly = schemaOnly = dumpData = attrNames = 0;
 
 	progname = *argv;
 
-	while ((c = getopt(argc, argv, "acdDf:h:op:st:vzu")) != EOF)
+	while ((c = getopt(argc, argv, "adDf:h:op:st:vzu")) != EOF)
 	{
 		switch (c)
 		{
 			case 'a':			/* Dump data only */
 				dataOnly = 1;
-				break;
-		        case 'c':                       /* generate constraint syntax that
-							    can be read back into postgreSQL */
-			        compatConstraint = 1;
 				break;
 			case 'd':			/* dump data as proper insert strings */
 				dumpData = 1;
@@ -1499,12 +1492,7 @@ getTables(int *numTables, FuncInfo *finfo, int numFuncs)
 				query[0] = 0;
 				if (name[0] != '$')
 					sprintf(query, "CONSTRAINT %s ", name);
-				if( compatConstraint ) {
-				  sprintf(query, "%sCHECK (%s)", query, expr);
-				}
-				else {
-				  sprintf(query, "%sCHECK %s", query, expr);
-				}
+				sprintf(query, "%sCHECK (%s)", query, expr);
 				tblinfo[i].check_expr[i2] = strdup(query);
 			}
 			PQclear(res2);
@@ -2522,15 +2510,13 @@ dumpTables(FILE *fout, TableInfo *tblinfo, int numTables,
 				}
 			}
 
-			if( compatConstraint ) {
-				/* put the CONSTRAINTS inside the table def */
-				for (k = 0; k < tblinfo[i].ncheck; k++)
-				{
-					sprintf(q, "%s%s %s",
-						q,
-						(actual_atts + k > 0) ? ", " : "",
-						tblinfo[i].check_expr[k]);
-				}
+			/* put the CONSTRAINTS inside the table def */
+			for (k = 0; k < tblinfo[i].ncheck; k++)
+			{
+				sprintf(q, "%s%s %s",
+					q,
+					(actual_atts + k > 0) ? ", " : "",
+					tblinfo[i].check_expr[k]);
 			}
 
 			strcat(q, ")");
@@ -2546,18 +2532,6 @@ dumpTables(FILE *fout, TableInfo *tblinfo, int numTables,
 							parentRels[k]);
 				}
 				strcat(q, ")");
-			}
-
-			if( !compatConstraint )
-			{
-				/* put the CONSTRAINT defs outside the table def */
-				for (k = 0; k < tblinfo[i].ncheck; k++)
-				{
-					sprintf(q, "%s%s %s",
-							q,
-							(k > 0) ? ", " : "",
-							tblinfo[i].check_expr[k]);
-				}
 			}
 
 			strcat(q, ";\n");
