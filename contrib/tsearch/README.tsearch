@@ -6,6 +6,8 @@ All work was done by Teodor Sigaev (teodor@stack.net) and Oleg Bartunov
 
 CHANGES:
 
+August 29, 2002
+        Space usage and using CLUSTER command documented
 August 22, 2002
 	Fix works with 'bad' queries
 August 13, 2002
@@ -286,8 +288,8 @@ is strongly depends on many factors (query, collection, dictionaries
 and hardware).
 
 Collection is available for download from
-http://www.sai.msu.su/~megera/postgres/gist/tsearch/ 
-as mw_titles.gz (about 3Mb).
+http://www.sai.msu.su/~megera/postgres/gist/tsearch/mw_titles.gz 
+(377905 titles from postgresql mailing lists, about 3Mb).
 
 0. install contrib/tsearch module
 1. createdb test
@@ -353,3 +355,61 @@ using gist indices (morph)
 
 There are no visible difference between these 2 cases but your
 mileage may vary.
+
+
+NOTES:
+
+1. The size of txtidx column should be lesser than size of corresponding column.
+   Below some real numbers from test database (link above).
+
+   a) After loading data
+   
+-rw-------    1 postgres users    23191552 Aug 29 14:08 53016937
+-rw-------    1 postgres users    81059840 Aug 29 14:08 52639027
+
+Table titles (52639027) occupies 80Mb, index on txtidx column (53016937)
+occupies 22Mb. Use contrib/oid2name to get mappings from oid to names.
+After doing
+
+test=# select title  into titles_tmp from titles;
+SELECT
+
+I got size of table 'titles' without txtidx field
+
+-rw-------    1 postgres users    30105600 Aug 29 14:14 53016938
+
+So, txtidx column itself occupies about 50Mb. 
+
+     b) after running 'vacuum full analyze' I got:
+
+-rw-------    1 postgres users    30105600 Aug 29 14:26 53016938
+-rw-------    1 postgres users    36880384 Aug 29 14:26 53016937
+-rw-------    1 postgres users    51494912 Aug 29 14:26 52639027
+
+53016938 = titles_tmp
+
+So, actual size of 'txtidx' field is 20 Mb !  "quod erat demonstrandum"
+
+2. CLUSTER command is highly recommended if you need fast searching.
+   For example:
+
+  test=# cluster t_idx on titles;
+
+  BUT ! In 7.2 CLUSTER command forgets about other indices and permissions,
+  so you need be carefull and rebuild these indices and restore permissions
+  after clustering. Also, clustering isn't dynamic, so you'd need to 
+  use CLUSTER from time to time. In 7.3 CLUSTER command should works
+  fine.
+
+  after clustering:
+
+-rw-------    1 postgres users    23404544 Aug 29 14:59 53394850
+-rw-------    1 postgres users    30105600 Aug 29 14:26 53016938
+-rw-------    1 postgres users    50995200 Aug 29 14:45 53394845
+pg@zen:/usr/local/pgsql/data/base/52638986$ oid2name -d test                 
+All tables from database "test":
+---------------------------------
+53394850 = t_idx
+53394845 = titles
+53016938 = titles_tmp
+
