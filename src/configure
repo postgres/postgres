@@ -5562,24 +5562,32 @@ fi
 
 if test "$USE_TCL" = "true"
 then
+ice_save_LIBS="$LIBS"
+ice_save_CFLAGS="$CFLAGS"
+ice_save_CPPFLAGS="$CPPFLAGS"
+ice_save_LDFLAGS="$LDFLAGS"
+LIBS="$LIBS $X_EXTRA_LIBS"
+CFLAGS="$CFLAGS $X_CFLAGS"
+CPPFLAGS="$CPPFLAGS $X_CFLAGS"
+LDFLAGS="$LDFLAGS $X_LIBS"
 TK_LIB=
 echo $ac_n "checking for main in -ltk""... $ac_c" 1>&6
-echo "configure:5568: checking for main in -ltk" >&5
+echo "configure:5576: checking for main in -ltk" >&5
 ac_lib_var=`echo tk'_'main | sed 'y%./+-%__p_%'`
 if eval "test \"`echo '$''{'ac_cv_lib_$ac_lib_var'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
 else
   ac_save_LIBS="$LIBS"
-LIBS="-ltk  $LIBS"
+LIBS="-ltk $X11_LIBS $TCL_LIB $LIBS"
 cat > conftest.$ac_ext <<EOF
-#line 5576 "configure"
+#line 5584 "configure"
 #include "confdefs.h"
 
 int main() {
 main()
 ; return 0; }
 EOF
-if { (eval echo configure:5583: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest; then
+if { (eval echo configure:5591: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest; then
   rm -rf conftest*
   eval "ac_cv_lib_$ac_lib_var=yes"
 else
@@ -5606,6 +5614,10 @@ else
 TK_LIB=-l$TK_LIB
 fi
 
+LIBS="$ice_save_LIBS"
+CFLAGS="$ice_save_CFLAGS"
+CPPFLAGS="$ice_save_CPPFLAGS"
+LDFLAGS="$ice_save_LDFLAGS"
 fi
 
 trap '' 1 2 15

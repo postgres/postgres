@@ -620,8 +620,16 @@ fi
 dnl Check for Tk archive
 if test "$USE_TCL" = "true"
 then
+ice_save_LIBS="$LIBS"
+ice_save_CFLAGS="$CFLAGS"
+ice_save_CPPFLAGS="$CPPFLAGS"
+ice_save_LDFLAGS="$LDFLAGS"
+LIBS="$LIBS $X_EXTRA_LIBS"
+CFLAGS="$CFLAGS $X_CFLAGS"
+CPPFLAGS="$CPPFLAGS $X_CFLAGS"
+LDFLAGS="$LDFLAGS $X_LIBS"
 TK_LIB=
-AC_CHECK_LIB(tk, main, TK_LIB=tk)
+AC_CHECK_LIB(tk, main, TK_LIB=tk,,$X11_LIBS $TCL_LIB)
 if test -z "$TK_LIB"; then
 AC_MSG_WARN(tcl support disabled; Tk library missing)
 USE_TCL=
@@ -629,6 +637,10 @@ else
 TK_LIB=-l$TK_LIB
 fi
 AC_SUBST(TK_LIB)
+LIBS="$ice_save_LIBS"
+CFLAGS="$ice_save_CFLAGS"
+CPPFLAGS="$ice_save_CPPFLAGS"
+LDFLAGS="$ice_save_LDFLAGS"
 fi
 
 AC_OUTPUT(GNUmakefile Makefile.global backend/port/Makefile bin/pg_version/Makefile bin/psql/Makefile bin/pg_dump/Makefile backend/utils/Gen_fmgrtab.sh interfaces/libpq/Makefile interfaces/libpgtcl/Makefile interfaces/ecpg/lib/Makefile ) 
