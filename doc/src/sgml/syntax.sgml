@@ -572,7 +572,7 @@ CAST '<replaceable>string</replaceable>' AS <replaceable>type</replaceable>
    <para>
     Any built-in system, or user-defined operator may be used in SQL.
     For the list of built-in and system operators consult
-    <xref linkend="operators" endterm="operators">.
+    <xref linkend="operators" endterm="operators-title">.
     For a list of user-defined operators consult your system administrator
     or run a query on the <literal>pg_operator</literal> class.
     Parentheses may be used for arbitrary grouping of operators in expressions.
@@ -585,9 +585,9 @@ CAST '<replaceable>string</replaceable>' AS <replaceable>type</replaceable>
    <para>
     <acronym>SQL92</acronym> allows <firstterm>expressions</firstterm>
     to transform data in tables. Expressions may contain operators
-    (see <xref linkend="operators-title" endterm="operators-title">
+    (see <xref linkend="operators" endterm="operators-title">
     for more details) and functions
-    (<xref linkend="functions-title" endterm="functions-title"> has
+    (<xref linkend="functions" endterm="functions-title"> has
     more information).
    </para>
 
