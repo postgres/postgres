@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/setrefs.c,v 1.77 2002/05/18 00:42:55 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/setrefs.c,v 1.78 2002/05/18 02:25:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,7 +28,7 @@
 
 typedef struct
 {
-	Query	   *root;
+	List	   *rtable;
 	List	   *outer_tlist;
 	List	   *inner_tlist;
 	Index		acceptable_rel;
@@ -42,7 +42,7 @@ typedef struct
 } replace_vars_with_subplan_refs_context;
 
 static void fix_expr_references(Plan *plan, Node *node);
-static void set_join_references(Query *root, Join *join);
+static void set_join_references(Join *join, List *rtable);
 static void set_uppernode_references(Plan *plan, Index subvarno);
 static Node *join_references_mutator(Node *node,
 						join_references_context *context);
@@ -75,7 +75,7 @@ static bool fix_opids_walker(Node *node, void *context);
  * Returns nothing of interest, but modifies internal fields of nodes.
  */
 void
-set_plan_references(Query *root, Plan *plan)
+set_plan_references(Plan *plan, List *rtable)
 {
 	List	   *pl;
 
@@ -110,16 +110,24 @@ set_plan_references(Query *root, Plan *plan)
 			fix_expr_references(plan, (Node *) plan->qual);
 			break;
 		case T_SubqueryScan:
+			{
+				RangeTblEntry *rte;
 
-			/*
-			 * We do not do set_uppernode_references() here, because a
-			 * SubqueryScan will always have been created with correct
-			 * references to its subplan's outputs to begin with.
-			 */
-			fix_expr_references(plan, (Node *) plan->targetlist);
-			fix_expr_references(plan, (Node *) plan->qual);
-			/* Recurse into subplan too */
-			set_plan_references(root, ((SubqueryScan *) plan)->subplan);
+				/*
+				 * We do not do set_uppernode_references() here, because a
+				 * SubqueryScan will always have been created with correct
+				 * references to its subplan's outputs to begin with.
+				 */
+				fix_expr_references(plan, (Node *) plan->targetlist);
+				fix_expr_references(plan, (Node *) plan->qual);
+
+				/* Recurse into subplan too */
+				rte = rt_fetch(((SubqueryScan *) plan)->scan.scanrelid,
+							   rtable);
+				Assert(rte->rtekind == RTE_SUBQUERY);
+				set_plan_references(((SubqueryScan *) plan)->subplan,
+									rte->subquery->rtable);
+			}
 			break;
 		case T_FunctionScan:
 			{
@@ -128,19 +136,19 @@ set_plan_references(Query *root, Plan *plan)
 				fix_expr_references(plan, (Node *) plan->targetlist);
 				fix_expr_references(plan, (Node *) plan->qual);
 				rte = rt_fetch(((FunctionScan *) plan)->scan.scanrelid,
-							   root->rtable);
+							   rtable);
 				Assert(rte->rtekind == RTE_FUNCTION);
 				fix_expr_references(plan, rte->funcexpr);
 			}
 			break;
 		case T_NestLoop:
-			set_join_references(root, (Join *) plan);
+			set_join_references((Join *) plan, rtable);
 			fix_expr_references(plan, (Node *) plan->targetlist);
 			fix_expr_references(plan, (Node *) plan->qual);
 			fix_expr_references(plan, (Node *) ((Join *) plan)->joinqual);
 			break;
 		case T_MergeJoin:
-			set_join_references(root, (Join *) plan);
+			set_join_references((Join *) plan, rtable);
 			fix_expr_references(plan, (Node *) plan->targetlist);
 			fix_expr_references(plan, (Node *) plan->qual);
 			fix_expr_references(plan, (Node *) ((Join *) plan)->joinqual);
@@ -148,7 +156,7 @@ set_plan_references(Query *root, Plan *plan)
 							(Node *) ((MergeJoin *) plan)->mergeclauses);
 			break;
 		case T_HashJoin:
-			set_join_references(root, (Join *) plan);
+			set_join_references((Join *) plan, rtable);
 			fix_expr_references(plan, (Node *) plan->targetlist);
 			fix_expr_references(plan, (Node *) plan->qual);
 			fix_expr_references(plan, (Node *) ((Join *) plan)->joinqual);
@@ -202,7 +210,7 @@ set_plan_references(Query *root, Plan *plan)
 			 * recurse into subplans.
 			 */
 			foreach(pl, ((Append *) plan)->appendplans)
-				set_plan_references(root, (Plan *) lfirst(pl));
+				set_plan_references((Plan *) lfirst(pl), rtable);
 			break;
 		default:
 			elog(ERROR, "set_plan_references: unknown plan type %d",
@@ -219,21 +227,21 @@ set_plan_references(Query *root, Plan *plan)
 	 * plan's var nodes against the already-modified nodes of the
 	 * subplans.
 	 */
-	set_plan_references(root, plan->lefttree);
-	set_plan_references(root, plan->righttree);
+	set_plan_references(plan->lefttree, rtable);
+	set_plan_references(plan->righttree, rtable);
 	foreach(pl, plan->initPlan)
 	{
 		SubPlan    *sp = (SubPlan *) lfirst(pl);
 
 		Assert(IsA(sp, SubPlan));
-		set_plan_references(root, sp->plan);
+		set_plan_references(sp->plan, sp->rtable);
 	}
 	foreach(pl, plan->subPlan)
 	{
 		SubPlan    *sp = (SubPlan *) lfirst(pl);
 
 		Assert(IsA(sp, SubPlan));
-		set_plan_references(root, sp->plan);
+		set_plan_references(sp->plan, sp->rtable);
 	}
 }
 
@@ -269,10 +277,11 @@ fix_expr_references(Plan *plan, Node *node)
  * creation of a plan node by createplan.c and its fixing by this module.
  * Fortunately, there doesn't seem to be any need to do that.
  *
- * 'join' is a join plan node
+ *	'join' is a join plan node
+ *	'rtable' is the associated range table
  */
 static void
-set_join_references(Query *root, Join *join)
+set_join_references(Join *join, List *rtable)
 {
 	Plan	   *outer = join->plan.lefttree;
 	Plan	   *inner = join->plan.righttree;
@@ -280,7 +289,7 @@ set_join_references(Query *root, Join *join)
 	List	   *inner_tlist = ((inner == NULL) ? NIL : inner->targetlist);
 
 	join->plan.targetlist = join_references(join->plan.targetlist,
-											root,
+											rtable,
 											outer_tlist,
 											inner_tlist,
 											(Index) 0);
@@ -374,6 +383,7 @@ set_uppernode_references(Plan *plan, Index subvarno)
  * pass inner_tlist = NIL and acceptable_rel = the ID of the inner relation.
  *
  * 'clauses' is the targetlist or list of join clauses
+ * 'rtable' is the current range table
  * 'outer_tlist' is the target list of the outer join relation
  * 'inner_tlist' is the target list of the inner join relation, or NIL
  * 'acceptable_rel' is either zero or the rangetable index of a relation
@@ -384,14 +394,14 @@ set_uppernode_references(Plan *plan, Index subvarno)
  */
 List *
 join_references(List *clauses,
-				Query *root,
+				List *rtable,
 				List *outer_tlist,
 				List *inner_tlist,
 				Index acceptable_rel)
 {
 	join_references_context context;
 
-	context.root = root;
+	context.rtable = rtable;
 	context.outer_tlist = outer_tlist;
 	context.inner_tlist = inner_tlist;
 	context.acceptable_rel = acceptable_rel;
@@ -432,7 +442,7 @@ join_references_mutator(Node *node,
 
 		/* Perhaps it's a join alias that can be resolved to input vars? */
 		newnode = flatten_join_alias_vars((Node *) var,
-										  context->root,
+										  context->rtable,
 										  true);
 		if (!equal(newnode, (Node *) var))
 		{

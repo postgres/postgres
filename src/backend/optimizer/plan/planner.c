@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.117 2002/05/12 23:43:03 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.118 2002/05/18 02:25:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -101,7 +101,7 @@ planner(Query *parse)
 	result_plan->nParamExec = length(PlannerParamVar);
 
 	/* final cleanup of the plan */
-	set_plan_references(parse, result_plan);
+	set_plan_references(result_plan, parse->rtable);
 
 	/* restore state for outer planner, if any */
 	PlannerQueryLevel = save_PlannerQueryLevel;
@@ -174,6 +174,17 @@ subquery_planner(Query *parse, double tuple_fraction)
 
 	parse->havingQual = preprocess_expression(parse, parse->havingQual,
 											  EXPRKIND_HAVING);
+
+	/* Also need to preprocess expressions for function RTEs */
+	foreach(lst, parse->rtable)
+	{
+		RangeTblEntry *rte = (RangeTblEntry *) lfirst(lst);
+
+		if (rte->rtekind == RTE_FUNCTION)
+			rte->funcexpr = preprocess_expression(parse, rte->funcexpr,
+												  EXPRKIND_TARGET);
+		/* These are not targetlist items, but close enough... */
+	}
 
 	/*
 	 * Check for ungrouped variables passed to subplans in targetlist and
@@ -737,7 +748,7 @@ preprocess_expression(Query *parse, Node *expr, int kind)
 		}
 	}
 	if (has_join_rtes)
-		expr = flatten_join_alias_vars(expr, parse, false);
+		expr = flatten_join_alias_vars(expr, parse->rtable, false);
 
 	return expr;
 }

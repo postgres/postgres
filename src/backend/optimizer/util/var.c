@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/var.c,v 1.36 2002/04/28 19:54:28 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/var.c,v 1.37 2002/05/18 02:25:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -41,7 +41,7 @@ typedef struct
 
 typedef struct
 {
-	Query	   *root;
+	List	   *rtable;
 	bool		force;
 } flatten_join_alias_vars_context;
 
@@ -328,11 +328,11 @@ pull_var_clause_walker(Node *node, pull_var_clause_context *context)
  * of sublinks to subplans!
  */
 Node *
-flatten_join_alias_vars(Node *node, Query *root, bool force)
+flatten_join_alias_vars(Node *node, List *rtable, bool force)
 {
 	flatten_join_alias_vars_context context;
 
-	context.root = root;
+	context.rtable = rtable;
 	context.force = force;
 
 	return flatten_join_alias_vars_mutator(node, &context);
@@ -352,7 +352,7 @@ flatten_join_alias_vars_mutator(Node *node,
 
 		if (var->varlevelsup != 0)
 			return node;		/* no need to copy, really */
-		rte = rt_fetch(var->varno, context->root->rtable);
+		rte = rt_fetch(var->varno, context->rtable);
 		if (rte->rtekind != RTE_JOIN)
 			return node;
 		Assert(var->varattno > 0);

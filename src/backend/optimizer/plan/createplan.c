@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.114 2002/05/12 20:10:03 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.115 2002/05/18 02:25:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -671,19 +671,19 @@ create_nestloop_plan(Query *root,
 
 			/* only refs to outer vars get changed in the inner indexqual */
 			innerscan->indxqualorig = join_references(indxqualorig,
-													  root,
+													  root->rtable,
 													  outer_tlist,
 													  NIL,
 													  innerrel);
 			innerscan->indxqual = join_references(innerscan->indxqual,
-												  root,
+												  root->rtable,
 												  outer_tlist,
 												  NIL,
 												  innerrel);
 			/* fix the inner qpqual too, if it has join clauses */
 			if (NumRelids((Node *) inner_plan->qual) > 1)
 				inner_plan->qual = join_references(inner_plan->qual,
-												   root,
+												   root->rtable,
 												   outer_tlist,
 												   NIL,
 												   innerrel);
@@ -694,7 +694,7 @@ create_nestloop_plan(Query *root,
 		TidScan    *innerscan = (TidScan *) inner_plan;
 
 		innerscan->tideval = join_references(innerscan->tideval,
-											 root,
+											 root->rtable,
 											 outer_tlist,
 											 inner_tlist,
 											 innerscan->scan.scanrelid);
@@ -716,12 +716,12 @@ create_nestloop_plan(Query *root,
 	 * Set quals to contain INNER/OUTER var references.
 	 */
 	joinclauses = join_references(joinclauses,
-								  root,
+								  root->rtable,
 								  outer_tlist,
 								  inner_tlist,
 								  (Index) 0);
 	otherclauses = join_references(otherclauses,
-								   root,
+								   root->rtable,
 								   outer_tlist,
 								   inner_tlist,
 								   (Index) 0);
@@ -760,7 +760,7 @@ create_mergejoin_plan(Query *root,
 	 * clauses to contain INNER/OUTER var references.
 	 */
 	joinclauses = join_references(set_difference(joinclauses, mergeclauses),
-								  root,
+								  root->rtable,
 								  outer_tlist,
 								  inner_tlist,
 								  (Index) 0);
@@ -769,7 +769,7 @@ create_mergejoin_plan(Query *root,
 	 * Fix the additional qpquals too.
 	 */
 	otherclauses = join_references(otherclauses,
-								   root,
+								   root->rtable,
 								   outer_tlist,
 								   inner_tlist,
 								   (Index) 0);
@@ -779,7 +779,7 @@ create_mergejoin_plan(Query *root,
 	 * that the outer variable is always on the left.
 	 */
 	mergeclauses = switch_outer(join_references(mergeclauses,
-												root,
+												root->rtable,
 												outer_tlist,
 												inner_tlist,
 												(Index) 0));
@@ -886,7 +886,7 @@ create_hashjoin_plan(Query *root,
 	 * clauses to contain INNER/OUTER var references.
 	 */
 	joinclauses = join_references(set_difference(joinclauses, hashclauses),
-								  root,
+								  root->rtable,
 								  outer_tlist,
 								  inner_tlist,
 								  (Index) 0);
@@ -895,7 +895,7 @@ create_hashjoin_plan(Query *root,
 	 * Fix the additional qpquals too.
 	 */
 	otherclauses = join_references(otherclauses,
-								   root,
+								   root->rtable,
 								   outer_tlist,
 								   inner_tlist,
 								   (Index) 0);
@@ -905,7 +905,7 @@ create_hashjoin_plan(Query *root,
 	 * that the outer variable is always on the left.
 	 */
 	hashclauses = switch_outer(join_references(hashclauses,
-											   root,
+											   root->rtable,
 											   outer_tlist,
 											   inner_tlist,
 											   (Index) 0));

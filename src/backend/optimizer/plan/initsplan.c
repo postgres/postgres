@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/initsplan.c,v 1.71 2002/05/17 22:35:12 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/initsplan.c,v 1.72 2002/05/18 02:25:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -177,7 +177,7 @@ add_vars_to_targetlist(Query *root, List *vars)
 			List   *varsused;
 
 			expansion = flatten_join_alias_vars((Node *) var,
-												root, true);
+												root->rtable, true);
 			varsused = pull_var_clause(expansion, false);
 			add_vars_to_targetlist(root, varsused);
 			freeList(varsused);
