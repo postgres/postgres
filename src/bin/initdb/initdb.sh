@@ -24,7 +24,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.117 2000/11/25 19:05:43 petere Exp $
+# $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.118 2000/12/31 22:24:14 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -403,7 +403,7 @@ then
     if [ "$template_only" != yes ]
     then
       (
-        echo "$CMDNAME: The directory $PGDATA is exists but is not empty."
+        echo "$CMDNAME: The directory $PGDATA exists but is not empty."
         echo "If you want to create a new database system, either remove or empty"
         echo "the directory $PGDATA or run initdb with an argument"
         echo "other than $PGDATA."
