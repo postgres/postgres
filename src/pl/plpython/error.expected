@@ -1,15 +1,15 @@
 SELECT invalid_type_uncaught('rick');
 WARNING:  plpython: in function invalid_type_uncaught:
-plpy.SPIError: Unknown error in PLy_spi_prepare.
-ERROR:  Type "test" does not exist
+DETAIL:  plpy.SPIError: Unknown error in PLy_spi_prepare
+ERROR:  type "test" does not exist
 SELECT invalid_type_caught('rick');
 WARNING:  plpython: in function invalid_type_caught:
-plpy.SPIError: Unknown error in PLy_spi_prepare.
-ERROR:  Type "test" does not exist
+DETAIL:  plpy.SPIError: Unknown error in PLy_spi_prepare
+ERROR:  type "test" does not exist
 SELECT invalid_type_reraised('rick');
 WARNING:  plpython: in function invalid_type_reraised:
-plpy.SPIError: Unknown error in PLy_spi_prepare.
-ERROR:  Type "test" does not exist
+DETAIL:  plpy.SPIError: Unknown error in PLy_spi_prepare
+ERROR:  type "test" does not exist
 SELECT valid_type('rick');
  valid_type 
 ------------
