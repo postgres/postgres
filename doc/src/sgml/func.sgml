@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.48 2001/01/20 20:59:28 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.49 2001/01/21 22:02:01 petere Exp $ -->
 
 <chapter id="functions">
  <title>Functions and Operators</title>
@@ -23,6 +23,102 @@
   <productname>Postgres</productname> have in fact been inspired by
   other implementations.
  </para>
+
+
+ <sect1 id="functions-logical">
+  <title>Logical Operators</title>
+
+  <para>
+   The usual logical operators are available:
+
+   <simplelist>
+    <member>AND</member>
+    <member>OR</member>
+    <member>NOT</member>
+   </simplelist>
+
+   SQL uses a three-valued boolean logic where NULL represents
+   <quote>unknown</quote>.  Observe the following truth tables:
+
+   <informaltable>
+    <tgroup cols="4">
+     <thead>
+      <row>
+       <entry><replaceable>a</replaceable></entry>
+       <entry><replaceable>b</replaceable></entry>
+       <entry><replaceable>a</replaceable> AND <replaceable>b</replaceable></entry>
+       <entry><replaceable>a</replaceable> OR <replaceable>b</replaceable></entry>
+      </row>
+     </thead>
+
+     <tbody>
+      <row>
+       <entry>TRUE</entry>
+       <entry>TRUE</entry>
+       <entry>TRUE</entry>
+       <entry>TRUE</entry>
+      </row>
+
+      <row>
+       <entry>TRUE</entry>
+       <entry>FALSE</entry>
+       <entry>FALSE</entry>
+       <entry>TRUE</entry>
+      </row>
+
+      <row>
+       <entry>TRUE</entry>
+       <entry>NULL</entry>
+       <entry>NULL</entry>
+       <entry>TRUE</entry>
+      </row>
+
+      <row>
+       <entry>FALSE</entry>
+       <entry>FALSE</entry>
+       <entry>FALSE</entry>
+       <entry>FALSE</entry>
+      </row>
+
+      <row>
+       <entry>FALSE</entry>
+       <entry>NULL</entry>
+       <entry>FALSE</entry>
+       <entry>NULL</entry>
+      </row>
+     </tbody>
+    </tgroup>
+   </informaltable>
+
+   <informaltable>
+    <tgroup cols="2">
+     <thead>
+      <row>
+       <entry><replaceable>a</replaceable></entry>
+       <entry>NOT <replaceable>a</replaceable></entry>
+      </row>
+     </thead>
+
+     <tbody>
+      <row>
+       <entry>TRUE</entry>
+       <entry>FALSE</entry>
+      </row>
+
+      <row>
+       <entry>FALSE</entry>
+       <entry>TRUE</entry>
+      </row>
+
+      <row>
+       <entry>NULL</entry>
+       <entry>NULL</entry>
+      </row>
+     </tbody>
+    </tgroup>
+   </informaltable>
+  </para>
+ </sect1>
 
  <sect1 id="functions-comparison">
   <title>Comparison Operators</title>
@@ -87,6 +183,23 @@
    3</literal> are not valid (because there is no
    <literal>&lt;</literal> operator to compare a boolean with
    <literal>3</literal>).
+  </para>
+
+  <para>
+   To check whether a value is or is not NULL, use the constructs
+<synopsis>
+<replaceable>expression</replaceable> IS NULL
+<replaceable>expression</replaceable> IS NOT NULL
+</synopsis>
+   Do <emphasis>not</emphasis> use
+   <literal><replaceable>expression</replaceable> = NULL</literal>
+   because NULL is not <quote>equal to</quote> NULL.  (NULL represents
+   an unknown value, so it is not known whether two unknown values are
+   equal.)  <productname>Postgres</productname> implicitly converts
+   <literal>= NULL</literal> clauses to <literal>IS NULL</literal> to
+   allow some broken client applications (such as
+   <productname>Microsoft Access</productname>) to work, but this may
+   be discontinued in a future release.
   </para>
  </sect1>
 
