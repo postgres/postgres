@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/cvs.sgml,v 1.13 2000/12/22 21:51:57 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/cvs.sgml,v 1.14 2001/01/20 04:16:55 momjian Exp $
 CVS code repository
 Thomas Lockhart
 -->
@@ -36,123 +36,6 @@ Thomas Lockhart
   are available to pull the <productname>CVS</productname> code tree from the 
   <productname>Postgres</productname> server to your local machine.
  </para>
-
- <sect1 id="cvs-tree">
-  <title><productname>CVS</productname> Tree Organization</title>
-
-  <para>
-   <note>
-    <title>Author</title>
-    <para>
-     Written by Marc G. Fournier (<email>scrappy@hub.org</email>) on 1998-11-05
-    </para>
-   </note>
-  </para>
-
-  <para>
-   The command <command>cvs checkout</command> has a flag, <option>-r</option>,
-   that lets you check out a
-   certain revision of a module.  This flag makes it easy to, for example,
-   retrieve the
-   sources that make up release 1.0 of the module `tc' at any time in the
-   future:
-
-   <programlisting>
-$ cvs checkout -r REL6_4 tc
-   </programlisting>
-
-   This is useful, for instance, if someone claims that there is a bug in
-   that release, but you cannot find the bug in the current working copy.
-
-   <tip>
-    <para>
-     You can also check out a module as it was at any given date using the
-     <option>-D</option> option.
-    </para>
-   </tip>
-  </para>
-
-  <para>
-   When you tag more than one file with the same tag you can think
-   about the tag as "a curve drawn through a matrix of filename vs.
-   revision number".  Say we have 5 files with the following revisions:
-   
-   <programlisting>
-             file1   file2   file3   file4   file5
-     
-             1.1     1.1     1.1     1.1  /--1.1*      <-*-  TAG
-             1.2*-   1.2     1.2    -1.2*-
-             1.3  \- 1.3*-   1.3   / 1.3
-             1.4          \  1.4  /  1.4
-                           \-1.5*-   1.5
-                             1.6
-   </programlisting>
-
-   then the tag "<literal>TAG</literal>" will reference
-   file1-1.2, file2-1.3, etc.
-
-   <note>
-    <para>
-     For creating a release branch, other then a
-     -b option added to the command, it's the same thing.</para>
-   </note>
-  </para>
-
-  <para>
-   So, to create the 6.4 release
-   I did the following:
-
-   <programlisting>
-$ cd pgsql
-$ cvs tag -b REL6_4
-   </programlisting>
-
-   which will create the tag and the branch for the RELEASE tree.
-  </para>
-
-  <para>
-   Now, for those with <productname>CVS</productname> access, it's too simple.
-   First, create two subdirectories, RELEASE and CURRENT, so that you don't
-   mix up the two.  Then do:
-
-   <programlisting>
-cd RELEASE
-cvs checkout -P -r REL6_4 pgsql
-cd ../CURRENT
-cvs checkout -P pgsql
-   </programlisting>
-
-   which results in two directory trees, <filename>RELEASE/pgsql</filename> and
-   <filename>CURRENT/pgsql</filename>. From that point on,
-   <productname>CVS</productname>
-   will keep track of which repository branch is in which directory tree, and will
-   allow independent updates of either tree.
-  </para>
-
-  <para>
-   If you are <emphasis>only</emphasis> working on the <literal>CURRENT</literal>
-   source tree, you just do
-   everything as before we started tagging release branches.
-  </para>
-
-  <para>
-   After you've done the initial checkout on a branch
-
-   <programlisting>
-$ cvs checkout -r REL6_4
-   </programlisting>
-
-   anything you do within that directory structure is restricted to that
-   branch.  If you apply a patch to that directory structure and do a
-
-   <programlisting>
-cvs commit
-   </programlisting>
-
-   while inside of it, the patch is applied to the branch and
-   <emphasis>only</emphasis> the branch.
-  </para>
- </sect1>
 
  <sect1 id="anoncvs">
   <title>Getting The Source Via Anonymous <productname>CVS</productname></title>
@@ -283,6 +166,124 @@ $ chmod -R go-w pgsql
    <productname>CVS</productname>, or see the online
    documentation at
    <ulink url="http://www.cyclic.com/">http://www.cyclic.com/</ulink>.
+  </para>
+ </sect1>
+
+ <sect1 id="cvs-tree">
+  <title><productname>CVS</productname> Tree Organization</title>
+
+  <para>
+   <note>
+    <title>Author</title>
+    <para>
+     Written by Marc G. Fournier (<email>scrappy@hub.org</email>) on 1998-11-05
+    </para>
+   </note>
+  </para>
+
+  <para>
+   The command <command>cvs checkout</command> has a flag, <option>-r</option>,
+   that lets you check out a
+   certain revision of a module.  This flag makes it easy to, for example,
+   retrieve the
+   sources that make up release 6_4 of the module `tc' at any time in the
+   future:
+
+   <programlisting>
+$ cvs checkout -r REL6_4 tc
+   </programlisting>
+
+   This is useful, for instance, if someone claims that there is a bug in
+   that release, but you cannot find the bug in the current working copy.
+
+   <tip>
+    <para>
+     You can also check out a module as it was at any given date using the
+     <option>-D</option> option.
+    </para>
+   </tip>
+  </para>
+
+  <para>
+   When you tag more than one file with the same tag you can think
+   about the tag as "a curve drawn through a matrix of filename vs.
+   revision number".  Say we have 5 files with the following revisions:
+   
+   <programlisting>
+             file1   file2   file3   file4   file5
+     
+             1.1     1.1     1.1     1.1  /--1.1*      <-*-  TAG
+             1.2*-   1.2     1.2    -1.2*-
+             1.3  \- 1.3*-   1.3   / 1.3
+             1.4          \  1.4  /  1.4
+                           \-1.5*-   1.5
+                             1.6
+   </programlisting>
+
+   then the tag "<literal>TAG</literal>" will reference
+   file1-1.2, file2-1.3, etc.
+
+   <note>
+    <para>
+     For creating a release branch, other then a
+     -b option added to the command, it's the same thing.</para>
+   </note>
+  </para>
+
+  <para>
+   So, to create the 6.4 release
+   I did the following:
+
+   <programlisting>
+$ cd pgsql
+$ cvs tag -b REL6_4
+   </programlisting>
+
+   which will create the tag and the branch for the RELEASE tree.
+  </para>
+
+  <para>
+   For those with <productname>CVS</productname> access, it's simple to
+   create directories for different versions.
+   First, create two subdirectories, RELEASE and CURRENT, so that you don't
+   mix up the two.  Then do:
+
+   <programlisting>
+cd RELEASE
+cvs checkout -P -r REL6_4 pgsql
+cd ../CURRENT
+cvs checkout -P pgsql
+   </programlisting>
+
+   which results in two directory trees, <filename>RELEASE/pgsql</filename> and
+   <filename>CURRENT/pgsql</filename>. From that point on,
+   <productname>CVS</productname>
+   will keep track of which repository branch is in which directory tree, and will
+   allow independent updates of either tree.
+  </para>
+
+  <para>
+   If you are <emphasis>only</emphasis> working on the <literal>CURRENT</literal>
+   source tree, you just do
+   everything as before we started tagging release branches.
+  </para>
+
+  <para>
+   After you've done the initial checkout on a branch
+
+   <programlisting>
+$ cvs checkout -r REL6_4
+   </programlisting>
+
+   anything you do within that directory structure is restricted to that
+   branch.  If you apply a patch to that directory structure and do a
+
+   <programlisting>
+cvs commit
+   </programlisting>
+
+   while inside of it, the patch is applied to the branch and
+   <emphasis>only</emphasis> the branch.
   </para>
  </sect1>
 
