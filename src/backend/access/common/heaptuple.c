@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/heaptuple.c,v 1.87 2003/09/25 06:57:56 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/heaptuple.c,v 1.87.2.1 2005/02/06 20:15:32 tgl Exp $
  *
  * NOTES
  *	  The old interface functions have been converted to macros
@@ -512,41 +512,6 @@ heap_copytuple_with_tuple(HeapTuple src, HeapTuple dest)
 	memcpy((char *) dest->t_data, (char *) src->t_data, src->t_len);
 }
 
-#ifdef NOT_USED
-/* ----------------
- *		heap_deformtuple
- *
- *		the inverse of heap_formtuple (see below)
- * ----------------
- */
-void
-heap_deformtuple(HeapTuple tuple,
-				 TupleDesc tdesc,
-				 Datum *values,
-				 char *nulls)
-{
-	int			i;
-	int			natts;
-
-	Assert(HeapTupleIsValid(tuple));
-
-	natts = tuple->t_natts;
-	for (i = 0; i < natts; i++)
-	{
-		bool		isnull;
-
-		values[i] = heap_getattr(tuple,
-								 i + 1,
-								 tdesc,
-								 &isnull);
-		if (isnull)
-			nulls[i] = 'n';
-		else
-			nulls[i] = ' ';
-	}
-}
-#endif
-
 /* ----------------
  *		heap_formtuple
  *
@@ -712,6 +677,93 @@ heap_modifytuple(HeapTuple tuple,
 	return newTuple;
 }
 
+/* ----------------
+ *		heap_deformtuple
+ *
+ *		Given a tuple, extract data into values/nulls arrays; this is
+ *		the inverse of heap_formtuple.
+ *
+ *		Storage for the values/nulls arrays is provided by the caller;
+ *		it should be sized according to tupleDesc->natts not tuple->t_natts.
+ *
+ *		Note that for pass-by-reference datatypes, the pointer placed
+ *		in the Datum will point into the given tuple.
+ *
+ *		When all or most of a tuple's fields need to be extracted,
+ *		this routine will be significantly quicker than a loop around
+ *		heap_getattr; the loop will become O(N^2) as soon as any
+ *		noncacheable attribute offsets are involved.
+ * ----------------
+ */
+void
+heap_deformtuple(HeapTuple tuple,
+				 TupleDesc tupleDesc,
+				 Datum *values,
+				 char *nulls)
+{
+	HeapTupleHeader tup = tuple->t_data;
+	Form_pg_attribute *att = tupleDesc->attrs;
+	int			tdesc_natts = tupleDesc->natts;
+	int			natts;			/* number of atts to extract */
+	int			attnum;
+	char	   *tp;				/* ptr to tuple data */
+	long		off;			/* offset in tuple data */
+	bits8	   *bp = tup->t_bits;		/* ptr to null bitmask in tuple */
+	bool		slow = false;	/* can we use/set attcacheoff? */
+
+	natts = tup->t_natts;
+
+	/*
+	 * In inheritance situations, it is possible that the given tuple
+	 * actually has more fields than the caller is expecting.  Don't run
+	 * off the end of the caller's arrays.
+	 */
+	natts = Min(natts, tdesc_natts);
+
+	tp = (char *) tup + tup->t_hoff;
+
+	off = 0;
+
+	for (attnum = 0; attnum < natts; attnum++)
+	{
+		if (!HeapTupleNoNulls(tuple) && att_isnull(attnum, bp))
+		{
+			values[attnum] = (Datum) 0;
+			nulls[attnum] = 'n';
+			slow = true;		/* can't use attcacheoff anymore */
+			continue;
+		}
+
+		nulls[attnum] = ' ';
+
+		if (!slow && att[attnum]->attcacheoff >= 0)
+			off = att[attnum]->attcacheoff;
+		else
+		{
+			off = att_align(off, att[attnum]->attalign);
+
+			if (!slow)
+				att[attnum]->attcacheoff = off;
+		}
+
+		values[attnum] = fetchatt(att[attnum], tp + off);
+
+		off = att_addlength(off, att[attnum]->attlen, tp + off);
+
+		if (att[attnum]->attlen <= 0)
+			slow = true;		/* can't use attcacheoff anymore */
+	}
+
+	/*
+	 * If tuple doesn't have all the atts indicated by tupleDesc, read the
+	 * rest as null
+	 */
+	for (; attnum < tdesc_natts; attnum++)
+	{
+		values[attnum] = (Datum) 0;
+		nulls[attnum] = 'n';
+	}
+}
 
 /* ----------------
  *		heap_freetuple
