@@ -1,0 +1,97 @@
+From tgl@sss.pgh.pa.us Mon Jun 14 20:50:41 1999
+Received: from sss.sss.pgh.pa.us (sss.pgh.pa.us [206.210.65.6])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id UAA19110
+	for <maillist@candle.pha.pa.us>; Mon, 14 Jun 1999 20:50:39 -0400 (EDT)
+Received: from sss.sss.pgh.pa.us (localhost [127.0.0.1])
+	by sss.sss.pgh.pa.us (8.9.1/8.9.1) with ESMTP id UAA21506;
+	Mon, 14 Jun 1999 20:51:07 -0400 (EDT)
+To: Bruce Momjian <maillist@candle.pha.pa.us>
+cc: Roman.Hodek@informatik.uni-erlangen.de, olly@lfix.co.uk,
+        PostgreSQL-development <pgsql-hackers@postgreSQL.org>
+Subject: Cleaning up function interface (was Re: Patch for m68k architecture)
+In-reply-to: Your message of Mon, 14 Jun 1999 17:53:25 -0400 (EDT) 
+             <199906142153.RAA16276@candle.pha.pa.us> 
+Date: Mon, 14 Jun 1999 20:51:06 -0400
+Message-ID: <21504.929407866@sss.pgh.pa.us>
+From: Tom Lane <tgl@sss.pgh.pa.us>
+Status: RO
+
+Bruce Momjian <maillist@candle.pha.pa.us> writes:
+>> ANSI C says results are undefined if you call a function via pointer
+>> and the pointer is declared to return another type than the function
+>> actually returns. So m68k compilers conform to the standard here.
+
+> Yes, we admit that we break the standard with fmgr_ptr, because we
+> return a variety of values depending on what function they call.  It
+> appears the egcs optimization on the powerpc or alpha cause a problem
+> when optimization is -O2, but not -O.  We may see more platforms with
+> problems as optimizers get smarter.
+
+Seeing as how we also know that the function-call interface ought to be
+redesigned to handle NULLs better, maybe we should just bite the bullet
+and fix all of these problems at once by adopting a new standard
+interface for everything that can be called via fmgr.  It'd uglify the
+code, no doubt, but I think we are starting to see an accumulation of
+problems that justify doing something.
+
+Here is a straw-man proposal:
+
+        Datum function (bool  *resultnull,
+                        Datum *args,
+                        bool  *argnull,
+                        int    nargs)
+
+args[i] is the i'th parameter, or undefined (perhaps always 0?)
+when argnull[i] is true.  The function is responsible for setting
+*resultnull, and returns a Datum value if *resultnull is false.
+Most standard functions could ignore nargs since they'd know what it
+should be, but we ought to pass it for flexibility.
+
+A useful addition to this scheme would be for fmgr to preset *resultnull
+to the OR of the input argnull[] array just before calling the function.
+In the typical case where the function is "strict" (ie, result is NULL
+if any input is NULL), this would save the function from having to look
+at argnull[] at all; it'd just check *resultnull and immediately return
+if true.
+
+As an example, int4 addition goes from
+
+int32
+int4pl(int32 arg1, int32 arg2)
+{
+    return arg1 + arg2;
+}
+
+to
+
+Datum
+int4pl (bool *resultnull, Datum *args, bool *argnull, int nargs)
+{
+    if (*resultnull)
+        return (Datum) 0;        /* value doesn't really matter ... */
+    /* we can ignore argnull and nargs */
+
+    return Int32GetDatum(DatumGetInt32(args[0]) + DatumGetInt32(args[1]));
+}
+
+This is, of course, much uglier than the existing code, but we might be
+able to improve matters with some well-chosen macros for the boilerplate
+parts.  What we actually end up writing might look something like
+
+Datum
+int4pl (PG_FUNCTION_ARGS)
+{
+    PG_STRICT_FUNCTION(			/* encapsulates null check */
+        PG_ARG0_INT32;
+        PG_ARG1_INT32;
+
+	PG_RESULT_INT32( arg0 + arg1 );
+    );
+}
+
+where the macros expand to things like "int32 arg0 = DatumGetInt32(args[0])"
+and "return Int32GetDatum( x )".  It'd be worth a little thought to
+try to set up a group of macros like that, I think.
+
+			regards, tom lane
+

@@ -1,0 +1,56 @@
+From tgl@sss.pgh.pa.us Sun May 23 12:32:34 1999
+Received: from sss.sss.pgh.pa.us (sss.pgh.pa.us [206.210.65.6])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id MAA23977
+	for <maillist@candle.pha.pa.us>; Sun, 23 May 1999 12:32:33 -0400 (EDT)
+Received: from sss.sss.pgh.pa.us (localhost [127.0.0.1])
+	by sss.sss.pgh.pa.us (8.9.1/8.9.1) with ESMTP id MAA19926;
+	Sun, 23 May 1999 12:32:01 -0400 (EDT)
+To: Bruce Momjian <maillist@candle.pha.pa.us>
+cc: PostgreSQL-development <pgsql-hackers@postgreSQL.org>
+Subject: Re: [HACKERS] DEFAULT fixed 
+In-reply-to: Your message of Sat, 22 May 1999 21:12:19 -0400 (EDT) 
+             <199905230112.VAA13489@candle.pha.pa.us> 
+Date: Sun, 23 May 1999 12:32:01 -0400
+Message-ID: <19923.927477121@sss.pgh.pa.us>
+From: Tom Lane <tgl@sss.pgh.pa.us>
+Status: ROr
+
+Bruce Momjian <maillist@candle.pha.pa.us> writes:
+>> It might be best to just bite the bullet and make the parser carry
+>> around both the type's OID and typmod at all times.
+
+> I will try to add it, but I must not that there are some cases where I
+> don't have access to the atttypmod of the result, so it may not be
+> possible to do it in every case.  Perhaps I should just leave this for
+> post 6.5, because we don't have any other bug reports on it.
+
+After further thought, I think this may be a more difficult and subtle
+issue than we've realized.  In the current state of the system, there
+are many places where you have a value that you can only know the type
+OID for, not atttypmod --- specifically, any intermediate expression
+result.  Barring reworking the entire function-call mechanism to pass
+atttypmod around, that's not going to be possible to change.
+
+The only context where you really know atttypmod is where you have
+just fetched a value out of a table column or are about to store a
+value into a table column.  When storing, you need to be prepared to
+coerce the given value to the right type if *either* type OID or
+atttypmod is different --- but, in general, you don't know atttypmod
+for the given value.  (In the cases I know of, you can deduce it by
+examining the value itself, but this requires type-specific knowledge.)
+
+So on the whole I think this is something that has to be dealt with
+at the point of storing data into a tuple.  Maybe we need a new
+fundamental operation for types that pay attention to atttypmod:
+"make this value match the typmod of the target column, which is
+thus-and-so".  Trying to attack the problem from the source side by
+propagating typmod all around the parser is probably doomed to failure,
+because there will be many contexts where there's no way to know it.
+
+Since you have a fix for the only symptom reported to date, I'm
+inclined to agree that we should leave well enough alone for now;
+there are other, bigger, problems that we need to address for 6.5.
+But I think we'll have to come back to this issue later.
+
+			regards, tom lane
+

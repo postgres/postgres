@@ -1,0 +1,66 @@
+From owner-pgsql-hackers@hub.org Tue Jun  1 22:31:18 1999
+Received: from renoir.op.net (root@renoir.op.net [209.152.193.4])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id WAA09988
+	for <maillist@candle.pha.pa.us>; Tue, 1 Jun 1999 22:31:17 -0400 (EDT)
+Received: from hub.org (hub.org [209.167.229.1]) by renoir.op.net (o1/$Revision: 1.1 $) with ESMTP id WAA18944 for <maillist@candle.pha.pa.us>; Tue, 1 Jun 1999 22:08:09 -0400 (EDT)
+Received: from hub.org (hub.org [209.167.229.1])
+	by hub.org (8.9.3/8.9.3) with ESMTP id WAA75604;
+	Tue, 1 Jun 1999 22:01:31 -0400 (EDT)
+	(envelope-from owner-pgsql-hackers@hub.org)
+Received: by hub.org (TLB v0.10a (1.23 tibbs 1997/01/09 00:29:32)); Tue, 01 Jun 1999 22:01:11 +0000 (EDT)
+Received: (from majordom@localhost)
+	by hub.org (8.9.3/8.9.3) id WAA75519
+	for pgsql-hackers-outgoing; Tue, 1 Jun 1999 22:01:09 -0400 (EDT)
+	(envelope-from owner-pgsql-hackers@postgreSQL.org)
+X-Authentication-Warning: hub.org: majordom set sender to owner-pgsql-hackers@postgreSQL.org using -f
+Received: from localhost.localdomain (h246.ozemail2.ozemail.com.au [203.108.14.246])
+	by hub.org (8.9.3/8.9.3) with ESMTP id WAA75452
+	for <pgsql-hackers@hub.org>; Tue, 1 Jun 1999 22:00:50 -0400 (EDT)
+	(envelope-from chris.bitmead@bigfoot.com)
+Received: from bigfoot.com (localhost [127.0.0.1])
+	by localhost.localdomain (8.8.7/8.8.7) with ESMTP id KAA04059
+	for <pgsql-hackers@hub.org>; Wed, 2 Jun 1999 10:50:11 +1000
+Message-ID: <37547FC3.40106A5E@bigfoot.com>
+Date: Wed, 02 Jun 1999 10:50:11 +1000
+From: Chris Bitmead <chris.bitmead@bigfoot.com>
+X-Mailer: Mozilla 4.6 [en] (X11; I; Linux 2.2.6 i686)
+X-Accept-Language: en
+MIME-Version: 1.0
+To: pgsql-hackers@hub.org
+Subject: Re: [HACKERS] ALTER TABLE ADD COLUMN
+References: <199906011436.KAA23479@candle.pha.pa.us>
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Sender: owner-pgsql-hackers@postgreSQL.org
+Precedence: bulk
+Status: RO
+
+Bruce Momjian wrote:
+
+> Our TODO now has:
+> 
+>         * ALTER TABLE ADD COLUMN to inherited table put column in wrong place
+> 
+> I don't think any of us understand the issues on this one.
+
+Let me guess at the problem. When you add a column, it doesn't change
+all the records, therefore the column must be added at the end. This
+means that the columns will not be in the same order as if you had
+created them from scratch.
+
+There seem to be three solutions:
+a) Go to a much more sophisticated schema system, with versions and
+version numbers (fairly hard but desirable to fix other schema change
+problems). Then insert the column in the position it is supposed to be
+in.
+
+b) Fix the copy command to input and output the columns, not in the
+order they are in, but in the order they would be in on re-creation.
+
+c) make the copy command take arguments specifying the field names, like
+INSERT can do.
+
+I think it would be good if Postgres had all 3 features. Probably (b) is
+the least work.
+
+

@@ -2,7 +2,7 @@ From owner-pgsql-hackers@hub.org Mon May 11 11:31:09 1998
 Received: from renoir.op.net (root@renoir.op.net [209.152.193.4])
 	by candle.pha.pa.us (8.8.5/8.8.5) with ESMTP id LAA03006
 	for <maillist@candle.pha.pa.us>; Mon, 11 May 1998 11:31:07 -0400 (EDT)
-Received: from hub.org (hub.org [209.47.148.200]) by renoir.op.net (o1/$Revision: 1.3 $) with ESMTP id LAA01663 for <maillist@candle.pha.pa.us>; Mon, 11 May 1998 11:24:42 -0400 (EDT)
+Received: from hub.org (hub.org [209.47.148.200]) by renoir.op.net (o1/$Revision: 1.4 $) with ESMTP id LAA01663 for <maillist@candle.pha.pa.us>; Mon, 11 May 1998 11:24:42 -0400 (EDT)
 Received: from localhost (majordom@localhost) by hub.org (8.8.8/8.7.5) with SMTP id LAA21841; Mon, 11 May 1998 11:15:25 -0400 (EDT)
 Received: by hub.org (TLB v0.10a (1.23 tibbs 1997/01/09 00:29:32)); Mon, 11 May 1998 11:15:12 +0000 (EDT)
 Received: (from majordom@localhost) by hub.org (8.8.8/8.7.5) id LAA21683 for pgsql-hackers-outgoing; Mon, 11 May 1998 11:15:09 -0400 (EDT)

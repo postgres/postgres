@@ -2,7 +2,7 @@ From owner-pgsql-hackers@hub.org Fri Sep  4 00:47:06 1998
 Received: from renoir.op.net (root@renoir.op.net [209.152.193.4])
 	by candle.pha.pa.us (8.8.5/8.8.5) with ESMTP id AAA01047
 	for <maillist@candle.pha.pa.us>; Fri, 4 Sep 1998 00:47:05 -0400 (EDT)
-Received: from hub.org (hub.org [209.47.148.200]) by renoir.op.net (o1/$Revision: 1.3 $) with ESMTP id XAA02044 for <maillist@candle.pha.pa.us>; Thu, 3 Sep 1998 23:11:07 -0400 (EDT)
+Received: from hub.org (hub.org [209.47.148.200]) by renoir.op.net (o1/$Revision: 1.4 $) with ESMTP id XAA02044 for <maillist@candle.pha.pa.us>; Thu, 3 Sep 1998 23:11:07 -0400 (EDT)
 Received: from localhost (majordom@localhost) by hub.org (8.8.8/8.7.5) with SMTP id XAA27418; Thu, 3 Sep 1998 23:06:16 -0400 (EDT)
 Received: by hub.org (TLB v0.10a (1.23 tibbs 1997/01/09 00:29:32)); Thu, 03 Sep 1998 23:04:11 +0000 (EDT)
 Received: (from majordom@localhost) by hub.org (8.8.8/8.7.5) id XAA27185 for pgsql-hackers-outgoing; Thu, 3 Sep 1998 23:04:09 -0400 (EDT)
@@ -84,7 +84,7 @@ From owner-pgsql-hackers@hub.org Sat Sep  5 02:01:13 1998
 Received: from renoir.op.net (root@renoir.op.net [209.152.193.4])
 	by candle.pha.pa.us (8.8.5/8.8.5) with ESMTP id CAA14437
 	for <maillist@candle.pha.pa.us>; Sat, 5 Sep 1998 02:01:11 -0400 (EDT)
-Received: from hub.org (hub.org [209.47.148.200]) by renoir.op.net (o1/$Revision: 1.3 $) with ESMTP id BAA09928 for <maillist@candle.pha.pa.us>; Sat, 5 Sep 1998 01:48:32 -0400 (EDT)
+Received: from hub.org (hub.org [209.47.148.200]) by renoir.op.net (o1/$Revision: 1.4 $) with ESMTP id BAA09928 for <maillist@candle.pha.pa.us>; Sat, 5 Sep 1998 01:48:32 -0400 (EDT)
 Received: from localhost (majordom@localhost) by hub.org (8.8.8/8.7.5) with SMTP id BAA18282; Sat, 5 Sep 1998 01:43:16 -0400 (EDT)
 Received: by hub.org (TLB v0.10a (1.23 tibbs 1997/01/09 00:29:32)); Sat, 05 Sep 1998 01:41:40 +0000 (EDT)
 Received: (from majordom@localhost) by hub.org (8.8.8/8.7.5) id BAA18241 for pgsql-hackers-outgoing; Sat, 5 Sep 1998 01:41:38 -0400 (EDT)
@@ -155,5 +155,553 @@ Without outer join you have to query pg_attribute for each
 valid attnum from pg_index->indkey -:(
 
 Vadim
+
+
+From owner-pgsql-hackers@hub.org Tue Sep 21 05:31:11 1999
+Received: from renoir.op.net (root@renoir.op.net [209.152.193.4])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id FAA07543
+	for <maillist@candle.pha.pa.us>; Tue, 21 Sep 1999 05:31:09 -0400 (EDT)
+Received: from hub.org (hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.4 $) with ESMTP id FAA19587 for <maillist@candle.pha.pa.us>; Tue, 21 Sep 1999 05:12:03 -0400 (EDT)
+Received: from hub.org (hub.org [216.126.84.1])
+	by hub.org (8.9.3/8.9.3) with ESMTP id EAA55119;
+	Tue, 21 Sep 1999 04:48:48 -0400 (EDT)
+	(envelope-from owner-pgsql-hackers@hub.org)
+Received: by hub.org (TLB v0.10a (1.23 tibbs 1997/01/09 00:29:32)); Tue, 21 Sep 1999 04:45:33 +0000 (EDT)
+Received: (from majordom@localhost)
+	by hub.org (8.9.3/8.9.3) id EAA54532
+	for pgsql-hackers-outgoing; Tue, 21 Sep 1999 04:44:35 -0400 (EDT)
+	(envelope-from owner-pgsql-hackers@postgreSQL.org)
+Received: from orion.SAPserv.Hamburg.dsh.de (Tpolaris2.sapham.debis.de [53.2.131.8])
+	by hub.org (8.9.3/8.9.3) with SMTP id EAA54496
+	for <pgsql-hackers@postgreSQL.org>; Tue, 21 Sep 1999 04:44:13 -0400 (EDT)
+	(envelope-from wieck@debis.com)
+Received: by orion.SAPserv.Hamburg.dsh.de 
+	for pgsql-hackers@postgreSQL.org 
+	id m11TLQP-0003kLC; Tue, 21 Sep 99 10:37 MET DST
+Message-Id: <m11TLQP-0003kLC@orion.SAPserv.Hamburg.dsh.de>
+From: wieck@debis.com (Jan Wieck)
+Subject: [HACKERS] Re: Referential Integrity In  PostgreSQL
+To: pgsql-hackers@postgreSQL.org (PostgreSQL HACKERS)
+Date: Tue, 21 Sep 1999 10:37:21 +0200 (MET DST)
+Reply-To: wieck@debis.com (Jan Wieck)
+X-Mailer: ELM [version 2.4 PL25]
+Content-Type: text
+Sender: owner-pgsql-hackers@postgreSQL.org
+Precedence: bulk
+Status: RO
+
+>
+> Hi , Jan
+>
+> my name is Max .
+
+Hi Max,
+
+>
+> I have contributed to SPI interface ,
+> that with external Trigger try to make
+> a referential integrity.
+>
+> If I can Help , in something ,
+> I'm here .
+>
+
+    You're welcome.
+
+    I've  CC'd  the  hackers list because we might get some ideas
+    from there too (and to  surface  once  in  a  while  -  Bruce
+    already missed me).
+
+    Currently  I'm  very  busy  for  serious work so I don't find
+    enough  spare  time  to  start  on  such  a  big  change   to
+    PostgreSQL.   But  I'd like to give you an overview of what I
+    have in mind so far so you can decide if you're able to help.
+
+    Referential integrity (RI) is based on constraints defined in
+    the schema of a database. There are some different  types  of
+    constraints:
+
+    1.  Uniqueness constraints.
+
+    2.  Foreign key constraints that ensure that a key value used
+        in  an  attribute  exists  in   another   relation.   One
+        constraint  must ensure you're unable to INSERT/UPDATE to
+        a value that doesn't  exist,  another  one  must  prevent
+        DELETE  on  a  referenced  key item or that it is changed
+        during UPDATE.
+
+    3.  Cascading deletes that let rows referring to a key follow
+        on DELETE silently.
+
+    Even  if  not  defined in the standard (AFAIK) there could be
+    others like letting references automatically follow on UPDATE
+    to a key value.
+
+    All constraints can be enabled and/or default to be deferred.
+    That means, that the RI checks aren't performed when they are
+    triggerd.  Instead,  they're checked at transaction end or if
+    explicitly invoked by some special statement.  This is really
+    important  because  someone  must  be able to setup cyclic RI
+    checks that could never be satisfied if the checks  would  be
+    performed  immediately.  The  major  problem  on  this is the
+    amount of data affected until the checks must  be  performed.
+    The number of statements executed, that trigger such deferred
+    constraints,   shouldn't   be   limited.   And   one   single
+    INSERT/UPDATE/DELETE could affect thousands of rows.
+
+    Due  to these problems I thought, it might not be such a good
+    idea to remember CTID's or the like to get back OLD/NEW  rows
+    at the time the constraints are checked. Instead I planned to
+    misuse the rule system for it. Unfortunately, the rule system
+    has  damned  tricky problems itself when it comes to having-,
+    distinct and other clauses and extremely  on  aggregates  and
+    subselects. These problems would have to get fixed first.  So
+    it's a solution that cannot be implemented right now.
+
+    Fallback to CTID remembering though. There are  problems  too
+    :-(.   Let's  enhance  the  trigger mechanism with a deferred
+    feature. First this requires two additional  bool  attributes
+    in  the  pg_trigger  relation  that  tell  if this trigger is
+    deferrable and if it is deferred by default.  While at it  we
+    should  add another bool that tells if the trigger is enabled
+    (ALTER TRIGGER {ENABLE|DISABLE} trigger).
+
+    Second we  need  an  internal  list  of  triggers,  that  are
+    currently DEFINED AS DEFERRED. Either because they default to
+    it, or the user explicitly asked to deferr it.
+
+    Third we need an internal  list  of  triggers  that  must  be
+    invoked later because at the time an event occured where they
+    should have been triggered, they appeared in the  other  list
+    and  their  execution  is  delayed  until  transaction end or
+    explicit execution. This list must remember the  OID  of  the
+    trigger   to  invoke  (to  identify  the  procedure  and  the
+    arguments), the relation that  caused  the  trigger  and  the
+    CTID's of the OLD and NEW row.
+
+    That  last  list  could  grow  extremely!  Think of a trigger
+    that's executing commands over SPI  which  in  turn  activate
+    deferred  triggers.  Since  the order of trigger execution is
+    very  important  for  RI,  I  can't   see   any   chance   to
+    simplify/condense  this  information.  Thus it is 16 bytes at
+    least per deferred trigger call (2 OID's plus  2  CTID's).  I
+    think one or more temp files would fit best for this.
+
+    A last tricky point is if one of a bunch of deferred triggers
+    is explicitly called for execution. At this time, the entries
+    for  it  in  the  temp  file(s) must get processed and marked
+    executed (maybe by overwriting  the  triggers  OID  with  the
+    invalid  OID)  while  other  trigger events still have to get
+    recorded.
+
+    Needless to say that reading thousands of those entries  just
+    to find a few isn't good on performance. But better have this
+    special case slow that dealing with hundreds of temp files or
+    other overhead slowing down the usual case where ALL deferred
+    triggers get called at transaction end.
+
+    Trigger invocation is simple now - fetch the OLD and NEW rows
+    by  CTID  and  execute  the  trigger  as  done by the trigger
+    manager. Oh - well - vacuum shouldn't touch  relations  where
+    deferred   triggers  are  outstanding.   Might  require  some
+    special lock entry - Vadim?
+
+    Did I miss something?
+
+
+Jan
+
+--
+
+#======================================================================#
+# It's easier to get forgiveness for being wrong than for being right. #
+# Let's break this rule - forgive me.                                  #
+#========================================= wieck@debis.com (Jan Wieck) #
+
+************
+
+
+From owner-pgsql-hackers@hub.org Tue Sep 21 08:31:03 1999
+Received: from renoir.op.net (root@renoir.op.net [209.152.193.4])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id IAA09071
+	for <maillist@candle.pha.pa.us>; Tue, 21 Sep 1999 08:31:02 -0400 (EDT)
+Received: from hub.org (hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.4 $) with ESMTP id IAA25991 for <maillist@candle.pha.pa.us>; Tue, 21 Sep 1999 08:04:59 -0400 (EDT)
+Received: from hub.org (hub.org [216.126.84.1])
+	by hub.org (8.9.3/8.9.3) with ESMTP id HAA82019;
+	Tue, 21 Sep 1999 07:48:14 -0400 (EDT)
+	(envelope-from owner-pgsql-hackers@hub.org)
+Received: by hub.org (TLB v0.10a (1.23 tibbs 1997/01/09 00:29:32)); Tue, 21 Sep 1999 07:47:30 +0000 (EDT)
+Received: (from majordom@localhost)
+	by hub.org (8.9.3/8.9.3) id HAA81906
+	for pgsql-hackers-outgoing; Tue, 21 Sep 1999 07:46:38 -0400 (EDT)
+	(envelope-from owner-pgsql-hackers@postgreSQL.org)
+Received: from orion.SAPserv.Hamburg.dsh.de (Tpolaris2.sapham.debis.de [53.2.131.8])
+	by hub.org (8.9.3/8.9.3) with SMTP id HAA81888
+	for <hackers@postgreSQL.org>; Tue, 21 Sep 1999 07:46:26 -0400 (EDT)
+	(envelope-from wieck@debis.com)
+Received: by orion.SAPserv.Hamburg.dsh.de 
+	for hackers@postgreSQL.org 
+	id m11TOGd-0003kwC; Tue, 21 Sep 99 13:39 MET DST
+Message-Id: <m11TOGd-0003kwC@orion.SAPserv.Hamburg.dsh.de>
+From: wieck@debis.com (Jan Wieck)
+Subject: Re: [HACKERS] Re: Referential Integrity In  PostgreSQL
+To: andreas.zeugswetter@telecom.at (Andreas Zeugswetter)
+Date: Tue, 21 Sep 1999 13:39:27 +0200 (MET DST)
+Cc: hackers@postgresql.org
+Reply-To: wieck@debis.com (Jan Wieck)
+In-Reply-To: <37E74EB9.44F9766E@telecom.at> from "Andreas Zeugswetter" at Sep 21, 99 11:24:09 am
+X-Mailer: ELM [version 2.4 PL25]
+Content-Type: text
+Sender: owner-pgsql-hackers@postgresql.org
+Precedence: bulk
+Status: RO
+
+>
+> > Oh - well - vacuum shouldn't touch  relations  where
+> > deferred   triggers  are  outstanding.   Might  require  some
+> > special lock entry - Vadim?
+>
+> All modified data will be in this same still open transaction.
+> Therefore no relevant data can be removed by vacuum anyway.
+
+    I expect this, but I really need to be sure that not even the
+    location of the tuple in the heap will change. I need to find
+    the tuples at the time the deferred triggers must be executed
+    via heap_fetch() by their CTID!
+
+>
+> It is my understanding, that the RI check is performed on the newest
+> available (committed) data (+ modified data from my own tx).
+> E.g. a primary key that has been removed by another transaction after
+> my begin work will lead to an RI violation if referenced as foreign key.
+
+    Absolutely right. The function that will  fire  the  deferred
+    triggers  must  switch to READ COMMITTED isolevel while doing
+    so.
+
+    What I'm not sure about is which snapshot to use to  get  the
+    OLD  tuples  (outdated  in  this  transaction  by  a previous
+    command). Vadim?
+
+
+Jan
+
+--
+
+#======================================================================#
+# It's easier to get forgiveness for being wrong than for being right. #
+# Let's break this rule - forgive me.                                  #
+#========================================= wieck@debis.com (Jan Wieck) #
+
+
+
+************
+
+
+From owner-pgsql-hackers@hub.org Tue Sep 21 10:45:40 1999
+Received: from hub.org (hub.org [216.126.84.1])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id KAA10993
+	for <maillist@candle.pha.pa.us>; Tue, 21 Sep 1999 10:45:39 -0400 (EDT)
+Received: from hub.org (hub.org [216.126.84.1])
+	by hub.org (8.9.3/8.9.3) with ESMTP id KAA22590;
+	Tue, 21 Sep 1999 10:36:16 -0400 (EDT)
+	(envelope-from owner-pgsql-hackers@hub.org)
+Received: by hub.org (TLB v0.10a (1.23 tibbs 1997/01/09 00:29:32)); Tue, 21 Sep 1999 10:35:37 +0000 (EDT)
+Received: (from majordom@localhost)
+	by hub.org (8.9.3/8.9.3) id KAA22200
+	for pgsql-hackers-outgoing; Tue, 21 Sep 1999 10:34:47 -0400 (EDT)
+	(envelope-from owner-pgsql-hackers@postgreSQL.org)
+Received: from sunpine.krs.ru (SunPine.krs.ru [195.161.16.37])
+	by hub.org (8.9.3/8.9.3) with ESMTP id KAA22048
+	for <hackers@postgreSQL.org>; Tue, 21 Sep 1999 10:33:38 -0400 (EDT)
+	(envelope-from vadim@krs.ru)
+Received: from krs.ru (dune.krs.ru [195.161.16.38])
+	by sunpine.krs.ru (8.8.8/8.8.8) with ESMTP id WAA27122;
+	Tue, 21 Sep 1999 22:33:22 +0800 (KRSS)
+Message-ID: <37E79730.CC415030@krs.ru>
+Date: Tue, 21 Sep 1999 22:33:20 +0800
+From: Vadim Mikheev <vadim@krs.ru>
+Organization: OJSC Rostelecom (Krasnoyarsk)
+X-Mailer: Mozilla 4.5 [en] (X11; I; FreeBSD 3.0-RELEASE i386)
+X-Accept-Language: ru, en
+MIME-Version: 1.0
+To: Jan Wieck <wieck@debis.com>
+CC: Andreas Zeugswetter <andreas.zeugswetter@telecom.at>,
+        hackers@postgreSQL.org
+Subject: Re: [HACKERS] Re: Referential Integrity In  PostgreSQL
+References: <m11TOGd-0003kwC@orion.SAPserv.Hamburg.dsh.de>
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Sender: owner-pgsql-hackers@postgreSQL.org
+Precedence: bulk
+Status: RO
+
+Jan Wieck wrote:
+> 
+> > It is my understanding, that the RI check is performed on the newest
+> > available (committed) data (+ modified data from my own tx).
+> > E.g. a primary key that has been removed by another transaction after
+> > my begin work will lead to an RI violation if referenced as foreign key.
+> 
+>     Absolutely right. The function that will  fire  the  deferred
+>     triggers  must  switch to READ COMMITTED isolevel while doing
+                                ^^^^^^^^^^^^^^
+>     so.
+
+NO!
+What if one transaction deleted PK, another one inserted FK
+and now both performe RI check? Both transactions _must_
+use DIRTY READs to notice that RI violated by another
+in-progress transaction and wait for concurrent transaction...
+
+BTW, using triggers to check _each_ modified tuple
+(i.e. run Executor for each modified tuple) is bad for
+performance. We could implement direct support for
+standard RI constraints.
+
+Using rules (statement level triggers) for INSERT...SELECT,
+UPDATE and DELETE queries would be nice! Actually, RI constraint
+checks need in very simple queries (i.e. without distinct etc)
+and the only we would have to do is
+
+>     What I'm not sure about is which snapshot to use to  get  the
+>     OLD  tuples  (outdated  in  this  transaction  by  a previous
+>     command). Vadim?
+
+1. Add CommandId to Snapshot.
+2. Use Snapshot->CommandId instead of global CurrentScanCommandId.
+3. Use Snapshots with different CommandId-s to get OLD/NEW
+   versions.
+
+But I agreed that the size of parsetrees may be big and for
+COPY...FROM/INSERTs we should remember IDs of modified
+tuples. Well. Please remember that I implement WAL right
+now, already have 1000 lines of code and hope to run first
+tests after writing additional ~200 lines -:)
+We could read modified tuple IDs from WAL...
+
+Vadim
+
+************
+
+
+From owner-pgsql-hackers@hub.org Tue Sep 21 11:18:19 1999
+Received: from hub.org (hub.org [216.126.84.1])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id LAA11537
+	for <maillist@candle.pha.pa.us>; Tue, 21 Sep 1999 11:18:18 -0400 (EDT)
+Received: from hub.org (hub.org [216.126.84.1])
+	by hub.org (8.9.3/8.9.3) with ESMTP id LAA27395;
+	Tue, 21 Sep 1999 11:04:42 -0400 (EDT)
+	(envelope-from owner-pgsql-hackers@hub.org)
+Received: by hub.org (TLB v0.10a (1.23 tibbs 1997/01/09 00:29:32)); Tue, 21 Sep 1999 11:03:56 +0000 (EDT)
+Received: (from majordom@localhost)
+	by hub.org (8.9.3/8.9.3) id LAA27106
+	for pgsql-hackers-outgoing; Tue, 21 Sep 1999 11:02:50 -0400 (EDT)
+	(envelope-from owner-pgsql-hackers@postgreSQL.org)
+Received: from orion.SAPserv.Hamburg.dsh.de (Tpolaris2.sapham.debis.de [53.2.131.8])
+	by hub.org (8.9.3/8.9.3) with SMTP id LAA27041
+	for <hackers@postgreSQL.org>; Tue, 21 Sep 1999 11:02:34 -0400 (EDT)
+	(envelope-from wieck@debis.com)
+Received: by orion.SAPserv.Hamburg.dsh.de 
+	for hackers@postgreSQL.org 
+	id m11TRKP-0003kLC; Tue, 21 Sep 99 16:55 MET DST
+Message-Id: <m11TRKP-0003kLC@orion.SAPserv.Hamburg.dsh.de>
+From: wieck@debis.com (Jan Wieck)
+Subject: Re: [HACKERS] Re: Referential Integrity In  PostgreSQL
+To: vadim@krs.ru (Vadim Mikheev)
+Date: Tue, 21 Sep 1999 16:55:33 +0200 (MET DST)
+Cc: wieck@debis.com, andreas.zeugswetter@telecom.at, hackers@postgreSQL.org
+Reply-To: wieck@debis.com (Jan Wieck)
+In-Reply-To: <37E79730.CC415030@krs.ru> from "Vadim Mikheev" at Sep 21, 99 10:33:20 pm
+X-Mailer: ELM [version 2.4 PL25]
+Content-Type: text
+Sender: owner-pgsql-hackers@postgreSQL.org
+Precedence: bulk
+Status: RO
+
+>
+> Jan Wieck wrote:
+> >
+> > > It is my understanding, that the RI check is performed on the newest
+> > > available (committed) data (+ modified data from my own tx).
+> > > E.g. a primary key that has been removed by another transaction after
+> > > my begin work will lead to an RI violation if referenced as foreign key.
+> >
+> >     Absolutely right. The function that will  fire  the  deferred
+> >     triggers  must  switch to READ COMMITTED isolevel while doing
+>                                 ^^^^^^^^^^^^^^
+> >     so.
+>
+> NO!
+> What if one transaction deleted PK, another one inserted FK
+> and now both performe RI check? Both transactions _must_
+> use DIRTY READs to notice that RI violated by another
+> in-progress transaction and wait for concurrent transaction...
+
+    Oh - I see - yes.
+
+>
+> BTW, using triggers to check _each_ modified tuple
+> (i.e. run Executor for each modified tuple) is bad for
+> performance. We could implement direct support for
+> standard RI constraints.
+
+    As I want to implement it, there would be not much difference
+    between a regular trigger invocation and a deferred one.   If
+    that causes a performance problem, I think we should speed up
+    the trigger call mechanism in general instead  of  not  using
+    triggers.
+
+>
+> Using rules (statement level triggers) for INSERT...SELECT,
+> UPDATE and DELETE queries would be nice! Actually, RI constraint
+> checks need in very simple queries (i.e. without distinct etc)
+> and the only we would have to do is
+>
+> >     What I'm not sure about is which snapshot to use to  get  the
+> >     OLD  tuples  (outdated  in  this  transaction  by  a previous
+> >     command). Vadim?
+>
+> 1. Add CommandId to Snapshot.
+> 2. Use Snapshot->CommandId instead of global CurrentScanCommandId.
+> 3. Use Snapshots with different CommandId-s to get OLD/NEW
+>    versions.
+>
+> But I agreed that the size of parsetrees may be big and for
+> COPY...FROM/INSERTs we should remember IDs of modified
+> tuples. Well. Please remember that I implement WAL right
+> now, already have 1000 lines of code and hope to run first
+> tests after writing additional ~200 lines -:)
+> We could read modified tuple IDs from WAL...
+
+    Not  only on COPY. One regular INSERT/UPDATE/DELETE statement
+    can actually fire thousands of trigger calls right now. These
+    triggers  normally  use  SPI to execute their own queries. If
+    such a trigger now  uses  a  query  that  in  turn  causes  a
+    deferred  constraint,  we  might  have  to  save thousands of
+    deferred querytrees - impossible mission.
+
+    That's  IMHO  a  clear  drawback  against  using  rules   for
+    deferrable RI.
+
+    What  I'm  currently  doing  is  clearly encapsulated in some
+    functions in commands/trigger.c (except for  some  additional
+    attributes in pg_trigger).  If it later turns out that we can
+    combine the information required into WAL, I  think  we  have
+    time  enough  to  do  so  and  shouldn't  really care if v6.6
+    doesn't have it already combined.
+
+
+Jan
+
+--
+
+#======================================================================#
+# It's easier to get forgiveness for being wrong than for being right. #
+# Let's break this rule - forgive me.                                  #
+#========================================= wieck@debis.com (Jan Wieck) #
+
+
+
+************
+
+
+From owner-pgsql-hackers@hub.org Tue Sep 21 15:30:29 1999
+Received: from renoir.op.net (root@renoir.op.net [209.152.193.4])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id PAA14590
+	for <maillist@candle.pha.pa.us>; Tue, 21 Sep 1999 15:30:28 -0400 (EDT)
+Received: from hub.org (hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.4 $) with ESMTP id PAA09192 for <maillist@candle.pha.pa.us>; Tue, 21 Sep 1999 15:06:09 -0400 (EDT)
+Received: from hub.org (hub.org [216.126.84.1])
+	by hub.org (8.9.3/8.9.3) with ESMTP id OAA73126;
+	Tue, 21 Sep 1999 14:56:15 -0400 (EDT)
+	(envelope-from owner-pgsql-hackers@hub.org)
+Received: by hub.org (TLB v0.10a (1.23 tibbs 1997/01/09 00:29:32)); Tue, 21 Sep 1999 14:54:47 +0000 (EDT)
+Received: (from majordom@localhost)
+	by hub.org (8.9.3/8.9.3) id OAA72607
+	for pgsql-hackers-outgoing; Tue, 21 Sep 1999 14:53:51 -0400 (EDT)
+	(envelope-from owner-pgsql-hackers@postgreSQL.org)
+Received: from orion.SAPserv.Hamburg.dsh.de (Tpolaris2.sapham.debis.de [53.2.131.8])
+	by hub.org (8.9.3/8.9.3) with SMTP id OAA72516
+	for <pgsql-hackers@postgreSQL.org>; Tue, 21 Sep 1999 14:52:56 -0400 (EDT)
+	(envelope-from wieck@debis.com)
+Received: by orion.SAPserv.Hamburg.dsh.de 
+	for pgsql-hackers@postgreSQL.org 
+	id m11TUvX-0003kLC; Tue, 21 Sep 99 20:46 MET DST
+Message-Id: <m11TUvX-0003kLC@orion.SAPserv.Hamburg.dsh.de>
+From: wieck@debis.com (Jan Wieck)
+Subject: [HACKERS] RI question
+To: pgsql-hackers@postgreSQL.org (PostgreSQL HACKERS)
+Date: Tue, 21 Sep 1999 20:46:06 +0200 (MET DST)
+Reply-To: wieck@debis.com (Jan Wieck)
+X-Mailer: ELM [version 2.4 PL25]
+Content-Type: text
+Sender: owner-pgsql-hackers@postgreSQL.org
+Precedence: bulk
+Status: RO
+
+Uh oh,
+
+    I  think  deferred  RI constraints must only fire the actions
+    that remain after all commands during the entire  transaction
+    are  condensed  to  the  total  minimum  required to get that
+    state, because deferred  RI  must  only  check  what  VISIBLY
+    happened during the transaction.
+
+    Thinking    on    the    tuple    level,    a   sequence   of
+    INSERT,UPDATE,UPDATE must fire only one INSERT  trigger,  but
+    with the values of the last UPDATE. An UPDATE,DELETE sequence
+    is  in  fact  a  DELETE  of  the  original   tuple   and   an
+    INSERT,UPDATE,DELETE sequence is nothing.
+
+    That  means that the recording mechnism of the trigger events
+    must be very smart on UPDATE and DELETE  events,  looking  at
+    the  x_min of the old tuple if that resulted from the current
+    transaction. If  so,  follow  the  events  backward,  disable
+    previous  ones  and  change the new event into what it really
+    has to be.
+
+    But some problems remain unsolvable by this:
+
+    - PK has an ON DELETE CASCADE for FK
+    - BEGIN
+    - DELETE PK
+    - INSERT same PK
+    - COMMIT.
+
+    This really shouldn't invoke the cascading delete, because at
+    COMMIT  the  PK  still  is there.  Same for a constraint that
+    forbids deletion of a PK while referenced  by  FK.  Therefore
+    the deferred event recorder must check on INSERT any previous
+    DELETES for the same relation if the key does match and  drop
+    both  deferred  triggers  if  so.  Therefore it needs to know
+    which   attributes   build   the   PK   of   that    relation
+    (<relname>_pkey guaranteed?).
+
+    Well,  I think that's finally the death of RI over rules. The
+    code managing those rules  during  CREATE/ALTER  TABLE  would
+    become  totally  unmaintainable.  And  (sorry Vadim) it's the
+    death of SLT for this too because this event tracking must be
+    done on the tuple level.
+
+    It  complicated  the  trigger  approach too, but IMHO not too
+    bad. Anyway,  some  co-developer(s)  doing  the  parser-  and
+    utility-statement  stuff  (SET CONSTRAINTS ... etc.) would be
+    great.
+
+    Volunteers?
+
+
+Jan
+
+--
+
+#======================================================================#
+# It's easier to get forgiveness for being wrong than for being right. #
+# Let's break this rule - forgive me.                                  #
+#========================================= wieck@debis.com (Jan Wieck) #
+
+
+
+************
 
 

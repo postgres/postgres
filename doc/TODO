@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Sat Sep 18 16:37:37 EDT 1999
+Last updated:		Tue Sep 21 15:54:14 EDT 1999
 
 Current maintainer:	Bruce Momjian (maillist@candle.pha.pa.us)
 
@@ -39,6 +39,8 @@ PARSER
   INSERT INTO inherit_table (unique_index_col) VALUES (dup) should fail
 * CREATE TABLE x AS SELECT 1 UNION SELECT 2 fails
 * CREATE TABLE test(col char(2) DEFAULT user) fails in length restriction
+* mismatched types in CREATE TABLE ... DEFAULT causes problems
+	(see TODO.detail/default)
 * SELECT ... UNION ... ORDER BY fails when sort expr not in result list
 * Be smarter about promoting types when UNION merges different data types
 * SELECT ... UNION ... GROUP BY fails if column types disagree
@@ -128,6 +130,7 @@ INDEXES
 COMMANDS
 
 * ALTER TABLE ADD COLUMN to inherited table put column in wrong place
+	(see TODO.detail/inherit)
 * Add ALTER TABLE DROP/ALTER COLUMN feature
 * Allow CLUSTER on all tables at once, and improve CLUSTER
 * Generate error on CREATE OPERATOR of ~~, ~ and and ~*
@@ -135,9 +138,9 @@ COMMANDS
 * Auto-destroy sequence on DROP of table with SERIAL(Ryan)
 * Allow LOCK TABLE tab1, tab2, tab3 so all tables locked in unison
 * Allow INSERT/UPDATE of system-generated oid value for a row
-* Allow ESCAPE '\' at the end of LIKE for ANSI compliance
+* Allow ESCAPE '\' at the end of LIKE for ANSI compliance(see TODO.detail/like)
 * Rewrite the LIKE handling by rewriting the user string with the 
-  supplied ESCAPE
+  supplied ESCAPE(see TODO.detail/like)
 * Move LIKE index optimization handling to the optimizer
 * Allow RULE recompilation
 * Support UNION/INTERSECT/EXCEPT in sub-selects
@@ -181,7 +184,8 @@ MISC
 * Put sort files, large objects in their own directory
 * Do autocommit so always in a transaction block(?)
 * Show location of syntax error in query (see TODO.detail/yacc)
-* Redesign the function call interface to handle NULLs better(Jan)
+* Redesign the function call interface to handle NULLs better
+	(see TODO.detail/function)
 * Document/trigger/rule so changes to pg_shadow recreate pg_pwd
 	(see TODO.detail/pg_shadow)
 * Missing optimizer selectivities for date, r-tree, etc.
@@ -253,7 +257,7 @@ MISC
   allocation(see TODO.detail/memory)
 * fix memory leak in cache code when non-existant table is referenced
 * In WHERE tab1.x=3 AND tab1.x=tab2.y, add tab2.y=3
-* pass atttypmod through parser in more cases(Bruce)
+* pass atttypmod through parser in more cases(see TODO.detail/atttypmod)
 * remove duplicate type in/out functions for disk and net
 * change VACUUM ANALYZE to use btree comparison functions, not <,=,> calls
 * Allow persistent backends(see TODO.detail/persistent)
