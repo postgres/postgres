@@ -52,6 +52,7 @@ exec sql endif;
 	char command[128];
 	char *connection="pm";
 	int how_many;
+	char *user="postgres";
 exec sql end declare section;
 	exec sql var name is string[AMOUNT];
 	char msg[128];
@@ -65,7 +66,7 @@ exec sql end declare section;
 	exec sql connect to mm as main;
 
 	strcpy(msg, "connect");
-        exec sql connect to pm;
+        exec sql connect to pm user :user;
 
 	strcpy(msg, "create");
 	exec sql at main create table "Test" (name char(NAMELEN), amount int, letter char(1));

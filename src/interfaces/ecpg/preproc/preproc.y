@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/Attic/preproc.y,v 1.252 2003/08/25 13:44:00 meskes Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/Attic/preproc.y,v 1.253 2003/08/26 16:09:01 meskes Exp $ */
 
 /* Copyright comment */
 %{
@@ -4265,7 +4265,7 @@ user_name: UserId
 		{
 			if ($1[0] == '\"')
 				$$ = $1;
-			else if (strcmp($1, "?") == 0) /* variable */
+			else if (strcmp($1, " ?") == 0) /* variable */
 			{
 				enum ECPGttype type = argsinsert->variable->type->type;
 

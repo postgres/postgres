@@ -1604,6 +1604,10 @@ Fri Aug  1 08:54:02 CEST 2003
 Mon Aug 25 13:24:27 CEST 2003
 
 	- Synced parser.
+	
+Tue Aug 26 18:06:45 CEST 2003
+
+	- Fixed processing of connect statement with username as variable.
 	- Set ecpg version to 3.0.0
 	- Set ecpg library to 4.0.0
 	- Set pgtypes library to 1.0.0
