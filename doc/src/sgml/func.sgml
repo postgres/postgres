@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.67 2001/08/31 07:30:05 ishii Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.68 2001/08/31 07:45:09 ishii Exp $ -->
 
 <chapter id="functions">
  <title>Functions and Operators</title>
@@ -347,14 +347,14 @@
       <entry> <literal>^</literal> </entry>
       <entry>Exponentiation</entry>
       <entry>2.0 ^ 3.0</entry>
-      <entry>8.0</entry>
+      <entry>8</entry>
      </row>
 
      <row>
       <entry> <literal>|/</literal> </entry>
       <entry>Square root</entry>
       <entry>|/ 25.0</entry>
-      <entry>5.0</entry>
+      <entry>5</entry>
      </row>
 
      <row>
@@ -382,7 +382,7 @@
       <entry> <literal>@</literal> </entry>
       <entry>Absolute value</entry>
       <entry>@ -5.0</entry>
-      <entry>5.0</entry>
+      <entry>5</entry>
      </row>
 
      <row>
