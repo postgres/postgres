@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/plsql.sgml,v 2.35 2001/05/28 19:33:24 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/plsql.sgml,v 2.36 2001/09/10 06:30:43 ishii Exp $
 -->
 
 <chapter id="plpgsql"> 
@@ -307,6 +307,8 @@ BEGIN
    END;
 
    RAISE NOTICE ''Quantity here is %'',quantity;  -- Quantity here is 50
+
+   RETURN quantity;
 END;
 ' LANGUAGE 'plpgsql';
 </programlisting>
