@@ -1,11 +1,13 @@
 /*-------------------------------------------------------------------------
  *
  * gistscan.h
- *	  routines defined in access/gisr/gistscan.c
+ *	  routines defined in access/gist/gistscan.c
  *
  *
+ * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
- * rtscan.h,v 1.2 1995/06/14 00:06:58 jolly Exp
+ * $Id: gistscan.h,v 1.15 2001/05/30 19:53:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */

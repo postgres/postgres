@@ -9,11 +9,10 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/index/Attic/istrat.c,v 1.49 2001/03/22 03:59:13 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/index/Attic/istrat.c,v 1.50 2001/05/30 19:53:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
-
 #include "postgres.h"
 
 #include "access/heapam.h"
@@ -37,7 +36,6 @@ static bool StrategyOperatorIsValid(StrategyOperator operator,
 						StrategyNumber maxStrategy);
 static bool StrategyTermIsValid(StrategyTerm term,
 					StrategyNumber maxStrategy);
-
 #endif
 
 
@@ -188,19 +186,13 @@ StrategyEvaluationIsValid(StrategyEvaluation evaluation)
 		!StrategyTransformMapIsValid(evaluation->negateTransform) ||
 		!StrategyTransformMapIsValid(evaluation->commuteTransform) ||
 		!StrategyTransformMapIsValid(evaluation->negateCommuteTransform))
-	{
-
 		return false;
-	}
 
 	for (index = 0; index < evaluation->maxStrategy; index += 1)
 	{
 		if (!StrategyExpressionIsValid(evaluation->expression[index],
 									   evaluation->maxStrategy))
-		{
-
 			return false;
-		}
 	}
 	return true;
 }
@@ -268,6 +260,8 @@ StrategyTermEvaluate(StrategyTerm term,
 
 /* ----------------
  *		RelationGetStrategy
+ *
+ * Identify strategy number that describes given procedure, if there is one.
  * ----------------
  */
 StrategyNumber
@@ -286,8 +280,7 @@ RelationGetStrategy(Relation relation,
 	numattrs = RelationGetNumberOfAttributes(relation);
 
 	Assert(relation->rd_rel->relkind == RELKIND_INDEX); /* XXX use accessor */
-	Assert(AttributeNumberIsValid(attributeNumber));
-	Assert((attributeNumber >= 1) && (attributeNumber < 1 + numattrs));
+	Assert((attributeNumber >= 1) && (attributeNumber <= numattrs));
 
 	Assert(StrategyEvaluationIsValid(evaluation));
 	Assert(RegProcedureIsValid(procedure));
@@ -331,7 +324,6 @@ RelationGetStrategy(Relation relation,
 		default:
 			elog(FATAL, "RelationGetStrategy: impossible case %d", entry->sk_flags);
 	}
-
 
 	if (!StrategyNumberIsInBounds(strategy, evaluation->maxStrategy))
 	{
@@ -391,7 +383,6 @@ RelationInvokeStrategy(Relation relation,
 	newStrategy = evaluation->negateTransform->strategy[strategy - 1];
 	if (newStrategy != strategy && StrategyNumberIsValid(newStrategy))
 	{
-
 		entry = StrategyMapGetScanKeyEntry(strategyMap, newStrategy);
 
 		if (RegProcedureIsValid(entry->sk_procedure))
@@ -406,7 +397,6 @@ RelationInvokeStrategy(Relation relation,
 	newStrategy = evaluation->commuteTransform->strategy[strategy - 1];
 	if (newStrategy != strategy && StrategyNumberIsValid(newStrategy))
 	{
-
 		entry = StrategyMapGetScanKeyEntry(strategyMap, newStrategy);
 
 		if (RegProcedureIsValid(entry->sk_procedure))
@@ -421,7 +411,6 @@ RelationInvokeStrategy(Relation relation,
 	newStrategy = evaluation->negateCommuteTransform->strategy[strategy - 1];
 	if (newStrategy != strategy && StrategyNumberIsValid(newStrategy))
 	{
-
 		entry = StrategyMapGetScanKeyEntry(strategyMap, newStrategy);
 
 		if (RegProcedureIsValid(entry->sk_procedure))
@@ -463,8 +452,6 @@ RelationInvokeStrategy(Relation relation,
 
 	/* not reached, just to make compiler happy */
 	return FALSE;
-
-
 }
 
 #endif
@@ -614,16 +601,16 @@ IndexSupportInitialize(IndexStrategy indexStrategy,
 							   ObjectIdGetDatum(accessMethodObjectId));
 
 		ScanKeyEntryInitialize(&entry[1], 0, Anum_pg_amproc_amopclaid,
-							   F_OIDEQ, 0);
+							   F_OIDEQ,
+							   InvalidOid);	/* will set below */
 
 		relation = heap_openr(AccessMethodProcedureRelationName,
 							  AccessShareLock);
 
 		for (attNumber = 1; attNumber <= maxAttributeNumber; attNumber++)
 		{
-			int16		support;
-			Form_pg_amproc aform;
 			RegProcedure *loc;
+			StrategyNumber support;
 
 			loc = &indexSupport[((attNumber - 1) * maxSupportNumber)];
 
@@ -637,8 +624,12 @@ IndexSupportInitialize(IndexStrategy indexStrategy,
 
 			while (HeapTupleIsValid(tuple = heap_getnext(scan, 0)))
 			{
+				Form_pg_amproc aform;
+
 				aform = (Form_pg_amproc) GETSTRUCT(tuple);
-				loc[(aform->amprocnum - 1)] = aform->amproc;
+				support = aform->amprocnum;
+				Assert(support > 0 && support <= maxSupportNumber);
+				loc[support - 1] = aform->amproc;
 			}
 
 			heap_endscan(scan);
@@ -708,7 +699,6 @@ IndexStrategyDisplay(IndexStrategy indexStrategy,
 	for (attributeNumber = 1; attributeNumber <= numberOfAttributes;
 		 attributeNumber += 1)
 	{
-
 		strategyMap = IndexStrategyGetStrategyMap(indexStrategy,
 												  numberOfStrategies,
 												  attributeNumber);
@@ -717,7 +707,6 @@ IndexStrategyDisplay(IndexStrategy indexStrategy,
 			 strategyNumber <= AMStrategies(numberOfStrategies);
 			 strategyNumber += 1)
 		{
-
 			printf(":att %d\t:str %d\t:opr 0x%x(%d)\n",
 				   attributeNumber, strategyNumber,
 				   strategyMap->entry[strategyNumber - 1].sk_procedure,

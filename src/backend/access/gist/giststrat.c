@@ -3,20 +3,20 @@
  * giststrat.c
  *	  strategy map data for GiSTs.
  *
+ *
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *
  * IDENTIFICATION
- *	  /usr/local/devel/pglite/cvs/src/backend/access/gist/giststrat.c,v 1.4 1995/06/14 00:10:05 jolly Exp
+ *	  $Header: /cvsroot/pgsql/src/backend/access/gist/Attic/giststrat.c,v 1.17 2001/05/30 19:53:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
-
 #include "postgres.h"
 
 #include "access/gist.h"
 #include "access/istrat.h"
+
 
 /*
  *	Note:  negate, commute, and negatecommute all assume that operators are
@@ -71,6 +71,12 @@ static StrategyNumber GISTNegateCommute[GISTNStrategies] = {
  * TermData) -- such logic must be encoded in the user's Consistent function.
  */
 
+static StrategyExpression GISTEvaluationExpressions[GISTNStrategies] = {
+	NULL,
+	NULL,
+	NULL
+};
+
 /*
  *	If you were sufficiently attentive to detail, you would go through
  *	the ExpressionData pain above for every one of the strategies
@@ -92,8 +98,9 @@ static StrategyEvaluationData GISTEvaluationData = {
 	(StrategyTransformMap) GISTNegate,	/* how to do (not qual) */
 	(StrategyTransformMap) GISTCommute, /* how to swap operands */
 	(StrategyTransformMap) GISTNegateCommute,	/* how to do both */
-	{NULL}
+	GISTEvaluationExpressions
 };
+
 
 StrategyNumber
 RelationGetGISTStrategy(Relation r,

@@ -4,18 +4,18 @@
  *	  fetch tuples from a GiST scan.
  *
  *
+ * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  /usr/local/devel/pglite/cvs/src/backend/access/gisr/gistget.c,v 1.9.1 1996/11/21 01:00:00 vadim Exp
+ *	  $Header: /cvsroot/pgsql/src/backend/access/gist/gistget.c,v 1.27 2001/05/30 19:53:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
-
 #include "postgres.h"
 
 #include "access/gist.h"
 #include "executor/execdebug.h"
-
 
 
 static OffsetNumber gistfindnext(IndexScanDesc s, Page p, OffsetNumber n,

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtstrat.c,v 1.16 2001/01/24 19:42:50 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtstrat.c,v 1.17 2001/05/30 19:53:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -96,7 +96,7 @@ static StrategyNumber RTNegateCommute[RTNStrategies] = {
  *	Early in the development of the POSTGRES access methods, it was believed
  *	that writing functions was harder than writing arrays.	This is wrong;
  *	TermData is hard to understand and hard to get right.  In general, when
- *	someone populates a new operator class, the populate it completely.  If
+ *	someone populates a new operator class, they populate it completely.  If
  *	Mike Hirohama had forced Cimarron Taylor to populate the strategy map
  *	for btree int2_ops completely in 1988, you wouldn't have to deal with
  *	all this now.  Too bad for you.
@@ -157,24 +157,23 @@ static StrategyTerm RTEqualExpressionData[] = {
  *	in the access methods just isn't worth the trouble, though.
  */
 
+static StrategyExpression RTEvaluationExpressions[RTNStrategies] = {
+	NULL,						/* express left */
+	NULL,						/* express overleft */
+	NULL,						/* express overlap */
+	NULL,						/* express overright */
+	NULL,						/* express right */
+	(StrategyExpression) RTEqualExpressionData,	/* express same */
+	NULL,						/* express contains */
+	NULL						/* express contained-by */
+};
+
 static StrategyEvaluationData RTEvaluationData = {
 	RTNStrategies,				/* # of strategies */
 	(StrategyTransformMap) RTNegate,	/* how to do (not qual) */
 	(StrategyTransformMap) RTCommute,	/* how to swap operands */
 	(StrategyTransformMap) RTNegateCommute,		/* how to do both */
-	{
-		NULL,					/* express left */
-		NULL,					/* express overleft */
-		NULL,					/* express over */
-		NULL,					/* express overright */
-		NULL,					/* express right */
-		(StrategyExpression) RTEqualExpressionData,		/* express same */
-		NULL,					/* express contains */
-		NULL,					/* express contained-by */
-		NULL,
-		NULL,
-		NULL
-	}
+	RTEvaluationExpressions
 };
 
 /*

@@ -4,8 +4,10 @@
  *	  common declarations for the GiST access method code.
  *
  *
+ * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
- *
+ * $Id: gist.h,v 1.27 2001/05/30 19:53:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,22 +20,15 @@
 #include "access/xlog.h"
 
 /*
-** You can have as many strategies as you please in GiSTs, as
-** long as your consistent method can handle them
-**
-** But strat.h->StrategyEvaluationData->StrategyExpression	expression[12]
-** - so 12 is real max # of strategies, or StrategyEvaluationIsValid
-** crashes backend...			- vadim 05/21/97
-
+ * You can have as many strategies as you please in GiSTs,
+ * as long as your consistent method can handle them.
+ * The system doesn't really care what they are.
+ */
 #define GISTNStrategies					100
 
-*/
-#define GISTNStrategies					12
-
 /*
-** Helper routines
-*/
-#define GISTNProcs						8
+ * amproc indexes for GiST indexes.
+ */
 #define GIST_CONSISTENT_PROC			1
 #define GIST_UNION_PROC					2
 #define GIST_COMPRESS_PROC				3
@@ -41,8 +36,12 @@
 #define GIST_PENALTY_PROC				5
 #define GIST_PICKSPLIT_PROC				6
 #define GIST_EQUAL_PROC					7
-#define GIST_INFO_PROC					8
+#define GISTNProcs						7
 
+
+/*
+ * Page opaque data in a GiST index page.
+ */
 #define F_LEAF			(1 << 0)
 
 typedef struct GISTPageOpaqueData
@@ -57,7 +56,6 @@ typedef GISTPageOpaqueData *GISTPageOpaque;
 /*
  *	When we descend a tree, we keep a stack of parent pointers.
  */
-
 typedef struct GISTSTACK
 {
 	struct GISTSTACK *gs_parent;
@@ -80,10 +78,9 @@ typedef struct GISTSTATE
 
 
 /*
-**	When we're doing a scan, we need to keep track of the parent stack
-**	for the marked and current items.
-*/
-
+ *	When we're doing a scan, we need to keep track of the parent stack
+ *	for the marked and current items.
+ */
 typedef struct GISTScanOpaqueData
 {
 	struct GISTSTACK *s_stack;
@@ -95,12 +92,11 @@ typedef struct GISTScanOpaqueData
 typedef GISTScanOpaqueData *GISTScanOpaque;
 
 /*
-**	When we're doing a scan and updating a tree at the same time, the
-**	updates may affect the scan.  We use the flags entry of the scan's
-**	opaque space to record our actual position in response to updates
-**	that we can't handle simply by adjusting pointers.
-*/
-
+ *	When we're doing a scan and updating a tree at the same time, the
+ *	updates may affect the scan.  We use the flags entry of the scan's
+ *	opaque space to record our actual position in response to updates
+ *	that we can't handle simply by adjusting pointers.
+ */
 #define GS_CURBEFORE	((uint16) (1 << 0))
 #define GS_MRKBEFORE	((uint16) (1 << 1))
 
@@ -108,20 +104,19 @@ typedef GISTScanOpaqueData *GISTScanOpaque;
 #define GISTP_ROOT				0
 
 /*
-**	When we update a relation on which we're doing a scan, we need to
-**	check the scan and fix it if the update affected any of the pages it
-**	touches.  Otherwise, we can miss records that we should see.  The only
-**	times we need to do this are for deletions and splits.	See the code in
-**	gistscan.c for how the scan is fixed. These two constants tell us what sort
-**	of operation changed the index.
-*/
-
+ *	When we update a relation on which we're doing a scan, we need to
+ *	check the scan and fix it if the update affected any of the pages it
+ *	touches.  Otherwise, we can miss records that we should see.  The only
+ *	times we need to do this are for deletions and splits.	See the code in
+ *	gistscan.c for how the scan is fixed. These two constants tell us what sort
+ *	of operation changed the index.
+ */
 #define GISTOP_DEL		0
 #define GISTOP_SPLIT	1
 
 /*
-** This is the Split Vector to be returned by the PickSplit method.
-*/
+ * This is the Split Vector to be returned by the PickSplit method.
+ */
 typedef struct GIST_SPLITVEC
 {
 	OffsetNumber *spl_left;		/* array of entries that go left */
@@ -133,11 +128,11 @@ typedef struct GIST_SPLITVEC
 } GIST_SPLITVEC;
 
 /*
-** An entry on a GiST node.  Contains the key (pred), as well as
-** its own location (rel,page,offset) which can supply the matching
-** pointer.  The size of the pred is in bytes, and leafkey is a flag to
-** tell us if the entry is in a leaf node.
-*/
+ * An entry on a GiST node.  Contains the key (pred), as well as
+ * its own location (rel,page,offset) which can supply the matching
+ * pointer.  The size of the pred is in bytes, and leafkey is a flag to
+ * tell us if the entry is in a leaf node.
+ */
 typedef struct GISTENTRY
 {
 	char	   *pred;
@@ -149,10 +144,10 @@ typedef struct GISTENTRY
 } GISTENTRY;
 
 /*
-** macro to initialize a GISTENTRY
-*/
+ * macro to initialize a GISTENTRY
+ */
 #define gistentryinit(e, pr, r, pg, o, b, l)\
-   do {(e).pred = pr; (e).rel = r; (e).page = pg; (e).offset = o; (e).bytes = b; (e).leafkey = l;} while (0)
+   do {(e).pred = (pr); (e).rel = (r); (e).page = (pg); (e).offset = (o); (e).bytes = (b); (e).leafkey = (l);} while (0)
 
 /* defined in gist.c */
 #define TRLOWER(tr) (((tr)->bytes))
@@ -160,12 +155,11 @@ typedef struct GISTENTRY
 
 typedef struct txtrange
 {
-
+	int32		vl_len;
 	/*
 	 * flag: NINF means that lower is negative infinity; PINF means that *
 	 * upper is positive infinity.	0 means that both are numbers.
 	 */
-	int32		vl_len;
 	int32		flag;
 	char		bytes[2];
 } TXTRANGE;
@@ -174,7 +168,6 @@ typedef struct intrange
 {
 	int			lower;
 	int			upper;
-
 	/*
 	 * flag: NINF means that lower is negative infinity; PINF means that *
 	 * upper is positive infinity.	0 means that both are numbers.
@@ -190,7 +183,8 @@ extern void gistfreestack(GISTSTACK *s);
 extern void initGISTstate(GISTSTATE *giststate, Relation index);
 extern void gistdentryinit(GISTSTATE *giststate, GISTENTRY *e, char *pr,
 			   Relation r, Page pg, OffsetNumber o, int b, bool l);
-extern StrategyNumber RelationGetGISTStrategy(Relation, AttrNumber, RegProcedure);
+extern StrategyNumber RelationGetGISTStrategy(Relation, AttrNumber,
+											  RegProcedure);
 
 extern void gist_redo(XLogRecPtr lsn, XLogRecord *record);
 extern void gist_undo(XLogRecPtr lsn, XLogRecord *record);

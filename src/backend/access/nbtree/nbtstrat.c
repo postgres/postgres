@@ -1,14 +1,14 @@
 /*-------------------------------------------------------------------------
  *
- * btstrat.c
- *	  Srategy map entries for the btree indexed access method
+ * nbtstrat.c
+ *	  Strategy map entries for the btree indexed access method
  *
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/Attic/nbtstrat.c,v 1.13 2001/01/24 19:42:49 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/Attic/nbtstrat.c,v 1.14 2001/05/30 19:53:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,7 +23,7 @@
  *		StrategyNegate, StrategyCommute, and StrategyNegateCommute
  *		assume <, <=, ==, >=, > ordering.
  */
-static StrategyNumber BTNegate[5] = {
+static StrategyNumber BTNegate[BTMaxStrategyNumber] = {
 	BTGreaterEqualStrategyNumber,
 	BTGreaterStrategyNumber,
 	InvalidStrategy,
@@ -31,7 +31,7 @@ static StrategyNumber BTNegate[5] = {
 	BTLessEqualStrategyNumber
 };
 
-static StrategyNumber BTCommute[5] = {
+static StrategyNumber BTCommute[BTMaxStrategyNumber] = {
 	BTGreaterStrategyNumber,
 	BTGreaterEqualStrategyNumber,
 	InvalidStrategy,
@@ -39,7 +39,7 @@ static StrategyNumber BTCommute[5] = {
 	BTLessStrategyNumber
 };
 
-static StrategyNumber BTNegateCommute[5] = {
+static StrategyNumber BTNegateCommute[BTMaxStrategyNumber] = {
 	BTLessEqualStrategyNumber,
 	BTLessStrategyNumber,
 	InvalidStrategy,
@@ -87,16 +87,20 @@ static StrategyTerm BTEqualExpressionData[] = {
 	NULL
 };
 
+static StrategyExpression BTEvaluationExpressions[BTMaxStrategyNumber] = {
+	NULL,
+	NULL,
+	(StrategyExpression) BTEqualExpressionData,
+	NULL,
+	NULL
+};
+
 static StrategyEvaluationData BTEvaluationData = {
-	/* XXX static for simplicity */
-
 	BTMaxStrategyNumber,
-	(StrategyTransformMap) BTNegate,	/* XXX */
-	(StrategyTransformMap) BTCommute,	/* XXX */
-	(StrategyTransformMap) BTNegateCommute,		/* XXX */
-
-	{NULL, NULL, (StrategyExpression) BTEqualExpressionData, NULL, NULL,
-	NULL, NULL, NULL, NULL, NULL, NULL, NULL}
+	(StrategyTransformMap) BTNegate,
+	(StrategyTransformMap) BTCommute,
+	(StrategyTransformMap) BTNegateCommute,
+	BTEvaluationExpressions
 };
 
 /* ----------------------------------------------------------------

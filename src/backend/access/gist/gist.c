@@ -4,13 +4,14 @@
  *	  interface routines for the postgres GiST index access method.
  *
  *
+ * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/gist/gist.c,v 1.76 2001/05/15 14:14:49 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/gist/gist.c,v 1.77 2001/05/30 19:53:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
-
 #include "postgres.h"
 
 #include "access/genam.h"
@@ -22,8 +23,8 @@
 #include "executor/executor.h"
 #include "miscadmin.h"
 #include "utils/syscache.h"
-
 #include "access/xlogutils.h"
+
 
 /* result's status */
 #define INSERTED	0x01
@@ -78,9 +79,9 @@ static void gistcentryinit(GISTSTATE *giststate,
 			   OffsetNumber o, int b, bool l);
 
 #undef GISTDEBUG
+
 #ifdef GISTDEBUG
 static void gist_dumptree(Relation r, int level, BlockNumber blk, OffsetNumber coff);
-
 #endif
 
 /*
