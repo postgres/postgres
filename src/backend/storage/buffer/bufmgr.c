@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.119 2001/11/05 17:46:27 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.120 2001/11/10 23:51:14 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,6 +46,7 @@
 #include <math.h>
 #include <signal.h>
 
+#include "lib/stringinfo.h"
 #include "miscadmin.h"
 #include "storage/buf_internals.h"
 #include "storage/bufmgr.h"
@@ -869,13 +870,20 @@ WaitIO(BufferDesc *buf)
 
 long		NDirectFileRead;	/* some I/O's are direct file access.
 								 * bypass bufmgr */
-long		NDirectFileWrite;	/* e.g., I/O in psort and hashjoin.					*/
+long		NDirectFileWrite;	/* e.g., I/O in psort and hashjoin. */
 
-void
-PrintBufferUsage(FILE *statfp)
+
+/*
+ * Return a palloc'd string containing buffer usage statistics.
+ */
+char *
+ShowBufferUsage(void)
 {
+	StringInfoData str;
 	float		hitrate;
 	float		localhitrate;
+
+	initStringInfo(&str);
 
 	if (ReadBufferCount == 0)
 		hitrate = 0.0;
@@ -887,16 +895,21 @@ PrintBufferUsage(FILE *statfp)
 	else
 		localhitrate = (float) LocalBufferHitCount *100.0 / ReadLocalBufferCount;
 
-	fprintf(statfp, "!\tShared blocks: %10ld read, %10ld written, buffer hit rate = %.2f%%\n",
+	appendStringInfo(&str,
+			"!\tShared blocks: %10ld read, %10ld written, buffer hit rate = %.2f%%\n",
 			ReadBufferCount - BufferHitCount, BufferFlushCount, hitrate);
-	fprintf(statfp, "!\tLocal  blocks: %10ld read, %10ld written, buffer hit rate = %.2f%%\n",
+	appendStringInfo(&str,
+			"!\tLocal  blocks: %10ld read, %10ld written, buffer hit rate = %.2f%%\n",
 			ReadLocalBufferCount - LocalBufferHitCount, LocalBufferFlushCount, localhitrate);
-	fprintf(statfp, "!\tDirect blocks: %10ld read, %10ld written\n",
+	appendStringInfo(&str,
+			"!\tDirect blocks: %10ld read, %10ld written\n",
 			NDirectFileRead, NDirectFileWrite);
+
+	return str.data;
 }
 
 void
-ResetBufferUsage()
+ResetBufferUsage(void)
 {
 	BufferHitCount = 0;
 	ReadBufferCount = 0;

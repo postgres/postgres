@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: tcopprot.h,v 1.46 2001/11/05 17:46:36 momjian Exp $
+ * $Id: tcopprot.h,v 1.47 2001/11/10 23:51:14 tgl Exp $
  *
  * OLD COMMENTS
  *	  This file was created so that other c files could get the two
@@ -20,14 +20,15 @@
 #define TCOPPROT_H
 
 #include <setjmp.h>
+
 #include "executor/execdesc.h"
 #include "tcop/dest.h"
+
 
 extern DLLIMPORT sigjmp_buf Warn_restart;
 extern bool Warn_restart_ready;
 extern bool InError;
 extern CommandDest whereToSendOutput;
-
 extern bool HostnameLookup;
 extern bool ShowPortNumber;
 
@@ -46,7 +47,6 @@ extern void quickdie(SIGNAL_ARGS);
 extern void authdie(SIGNAL_ARGS);
 extern int	PostgresMain(int argc, char *argv[], const char *username);
 extern void ResetUsage(void);
-extern void ShowUsage(void);
-extern FILE *StatFp;
+extern void ShowUsage(const char *title);
 
 #endif   /* TCOPPROT_H */

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.241 2001/11/05 17:46:28 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.242 2001/11/10 23:51:14 tgl Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -86,7 +86,6 @@ bool		Warn_restart_ready = false;
 bool		InError = false;
 
 static bool EchoQuery = false;	/* default don't echo */
-FILE	   *StatFp = NULL;
 
 /* ----------------
  *		people who want to use EOF should #define DONTUSENEWLINE in
@@ -378,10 +377,7 @@ pg_parse_query(char *query_string, Oid *typev, int nargs)
 	raw_parsetree_list = parser(query_string, typev, nargs);
 
 	if (Show_parser_stats)
-	{
-		fprintf(StatFp, "PARSER STATISTICS\n");
-		ShowUsage();
-	}
+		ShowUsage("PARSER STATISTICS");
 
 	return raw_parsetree_list;
 }
@@ -413,8 +409,7 @@ pg_analyze_and_rewrite(Node *parsetree)
 
 	if (Show_parser_stats)
 	{
-		fprintf(StatFp, "PARSE ANALYSIS STATISTICS\n");
-		ShowUsage();
+		ShowUsage("PARSE ANALYSIS STATISTICS");
 		ResetUsage();
 	}
 
@@ -457,10 +452,7 @@ pg_analyze_and_rewrite(Node *parsetree)
 	querytree_list = new_list;
 
 	if (Show_parser_stats)
-	{
-		fprintf(StatFp, "REWRITER STATISTICS\n");
-		ShowUsage();
-	}
+		ShowUsage("REWRITER STATISTICS");
 
 #ifdef COPY_PARSE_PLAN_TREES
 
@@ -520,10 +512,7 @@ pg_plan_query(Query *querytree)
 	plan = planner(querytree);
 
 	if (Show_planner_stats)
-	{
-		fprintf(StatFp, "PLANNER STATISTICS\n");
-		ShowUsage();
-	}
+		ShowUsage("PLANNER STATISTICS");
 
 #ifdef COPY_PARSE_PLAN_TREES
 	/* Optional debugging check: pass plan output through copyObject() */
@@ -794,10 +783,7 @@ pg_exec_query_string(char *query_string,		/* string to execute */
 				}
 
 				if (Show_executor_stats)
-				{
-					fprintf(StatFp, "EXECUTOR STATISTICS\n");
-					ShowUsage();
-				}
+					ShowUsage("EXECUTOR STATISTICS");
 			}
 
 			/*
@@ -1155,7 +1141,6 @@ PostgresMain(int argc, char *argv[], const char *username)
 		ResetAllOptions(true);
 		potential_DataDir = getenv("PGDATA");
 	}
-	StatFp = stderr;
 
 	/* Check for PGDATESTYLE environment variable */
 	set_default_datestyle();
@@ -1642,7 +1627,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.241 $ $Date: 2001/11/05 17:46:28 $\n");
+		puts("$Revision: 1.242 $ $Date: 2001/11/10 23:51:14 $\n");
 	}
 
 	/*
@@ -1867,10 +1852,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 										 QueryContext);
 
 					if (Show_query_stats)
-					{
-						fprintf(StatFp, "QUERY STATISTICS\n");
-						ShowUsage();
-					}
+						ShowUsage("QUERY STATISTICS");
 				}
 				break;
 
@@ -1933,18 +1915,20 @@ ResetUsage(void)
 }
 
 void
-ShowUsage(void)
+ShowUsage(const char *title)
 {
+	StringInfoData str;
 	struct timeval user,
 				sys;
 	struct timeval elapse_t;
 	struct timezone tz;
 	struct rusage r;
+	char *bufusage;
 
 	getrusage(RUSAGE_SELF, &r);
 	gettimeofday(&elapse_t, &tz);
-	memmove((char *) &user, (char *) &r.ru_utime, sizeof(user));
-	memmove((char *) &sys, (char *) &r.ru_stime, sizeof(sys));
+	memcpy((char *) &user, (char *) &r.ru_utime, sizeof(user));
+	memcpy((char *) &sys, (char *) &r.ru_stime, sizeof(sys));
 	if (elapse_t.tv_usec < Save_t.tv_usec)
 	{
 		elapse_t.tv_sec--;
@@ -1962,12 +1946,6 @@ ShowUsage(void)
 	}
 
 	/*
-	 * Set output destination if not otherwise set
-	 */
-	if (StatFp == NULL)
-		StatFp = stderr;
-
-	/*
 	 * the only stats we don't show here are for memory usage -- i can't
 	 * figure out how to interpret the relevant fields in the rusage
 	 * struct, and they change names across o/s platforms, anyway. if you
@@ -1975,9 +1953,10 @@ ShowUsage(void)
 	 * resident set size, shared text size, and unshared data and stack
 	 * sizes.
 	 */
+	initStringInfo(&str);
 
-	fprintf(StatFp, "! system usage stats:\n");
-	fprintf(StatFp,
+	appendStringInfo(&str, "! system usage stats:\n");
+	appendStringInfo(&str,
 			"!\t%ld.%06ld elapsed %ld.%06ld user %ld.%06ld system sec\n",
 			(long int) elapse_t.tv_sec - Save_t.tv_sec,
 			(long int) elapse_t.tv_usec - Save_t.tv_usec,
@@ -1985,7 +1964,7 @@ ShowUsage(void)
 			(long int) r.ru_utime.tv_usec - Save_r.ru_utime.tv_usec,
 			(long int) r.ru_stime.tv_sec - Save_r.ru_stime.tv_sec,
 			(long int) r.ru_stime.tv_usec - Save_r.ru_stime.tv_usec);
-	fprintf(StatFp,
+	appendStringInfo(&str,
 			"!\t[%ld.%06ld user %ld.%06ld sys total]\n",
 			(long int) user.tv_sec,
 			(long int) user.tv_usec,
@@ -1993,35 +1972,44 @@ ShowUsage(void)
 			(long int) sys.tv_usec);
 /* BeOS has rusage but only has some fields, and not these... */
 #if defined(HAVE_GETRUSAGE)
-	fprintf(StatFp,
+	appendStringInfo(&str,
 			"!\t%ld/%ld [%ld/%ld] filesystem blocks in/out\n",
 			r.ru_inblock - Save_r.ru_inblock,
 	/* they only drink coffee at dec */
 			r.ru_oublock - Save_r.ru_oublock,
 			r.ru_inblock, r.ru_oublock);
-	fprintf(StatFp,
+	appendStringInfo(&str,
 		  "!\t%ld/%ld [%ld/%ld] page faults/reclaims, %ld [%ld] swaps\n",
 			r.ru_majflt - Save_r.ru_majflt,
 			r.ru_minflt - Save_r.ru_minflt,
 			r.ru_majflt, r.ru_minflt,
 			r.ru_nswap - Save_r.ru_nswap,
 			r.ru_nswap);
-	fprintf(StatFp,
+	appendStringInfo(&str,
 	 "!\t%ld [%ld] signals rcvd, %ld/%ld [%ld/%ld] messages rcvd/sent\n",
 			r.ru_nsignals - Save_r.ru_nsignals,
 			r.ru_nsignals,
 			r.ru_msgrcv - Save_r.ru_msgrcv,
 			r.ru_msgsnd - Save_r.ru_msgsnd,
 			r.ru_msgrcv, r.ru_msgsnd);
-	fprintf(StatFp,
+	appendStringInfo(&str,
 		 "!\t%ld/%ld [%ld/%ld] voluntary/involuntary context switches\n",
 			r.ru_nvcsw - Save_r.ru_nvcsw,
 			r.ru_nivcsw - Save_r.ru_nivcsw,
 			r.ru_nvcsw, r.ru_nivcsw);
 #endif   /* HAVE_GETRUSAGE */
-	fprintf(StatFp, "! postgres usage stats:\n");
-	PrintBufferUsage(StatFp);
-/*	   DisplayTupleCount(StatFp); */
+
+	bufusage = ShowBufferUsage();
+	appendStringInfo(&str, "! postgres usage stats:\n%s", bufusage);
+	pfree(bufusage);
+
+	/* remove trailing newline */
+	if (str.data[str.len-1] == '\n')
+		str.data[--str.len] = '\0';
+
+	elog(DEBUG, "%s\n%s", title, str.data);
+
+	pfree(str.data);
 }
 
 #ifdef NOT_USED

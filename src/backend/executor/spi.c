@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/spi.c,v 1.61 2001/11/05 19:41:56 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/spi.c,v 1.62 2001/11/10 23:51:14 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,6 +18,7 @@
 #include "catalog/heap.h"
 #include "commands/command.h"
 #include "executor/spi_priv.h"
+#include "tcop/tcopprot.h"
 
 
 uint32		SPI_processed = 0;
@@ -47,11 +48,6 @@ static MemoryContext _SPI_execmem(void);
 static MemoryContext _SPI_procmem(void);
 static bool _SPI_checktuples(void);
 
-#ifdef SPI_EXECUTOR_STATS
-extern int	ShowExecutorStats;
-extern void ResetUsage(void);
-extern void ShowUsage(void);
-#endif
 
 /* =================== interface functions =================== */
 
@@ -1180,10 +1176,7 @@ _SPI_pquery(QueryDesc *queryDesc, EState *state, int tcount)
 
 #ifdef SPI_EXECUTOR_STATS
 	if (ShowExecutorStats)
-	{
-		fprintf(stderr, "! Executor Stats:\n");
-		ShowUsage();
-	}
+		ShowUsage("SPI EXECUTOR STATS");
 #endif
 
 	if (dest == SPI)
