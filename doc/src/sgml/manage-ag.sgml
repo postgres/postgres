@@ -1,79 +1,221 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/manage-ag.sgml,v 2.8 2000/05/02 20:01:52 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/manage-ag.sgml,v 2.9 2000/06/30 16:14:21 petere Exp $
 -->
 
- <chapter id="manage-ag">
-  <title>Managing a Database</title>
+<chapter id="managing-databases">
+ <title>Managing Databases</title>
+
+ <para>
+  A database is a named collection of SQL objects (<quote>database
+  objects</quote>); every database object (tables, function, etc.)
+  belongs to one and only one database. An application that connects
+  to the database server specifies with its connection request the
+  name of the database it wants to connect to. It is not possible to
+  access more than once database per connection. (But an application
+  is not restricted in the number of connections it opens to the same
+  or other databases.)
+ </para>
+
+ <note>
+  <para>
+   <acronym>SQL</> calls databases <quote>catalogs</>, but there is no
+   difference in practice.
+  </para>
+ </note>
+
+ <para>
+  In order to create or drop databases, the <productname>Postgres</>
+  <application>postmaster</> must be up and running (see <xref
+  linkend="postmaster-start">).
+ </para>
+
+ <sect1>
+  <title>Creating a Database</title>
 
   <para>
-   If the <productname>Postgres</productname>
-   <application>postmaster</application> is up and running we can create
-   some databases  to  experiment  with.  Here, we describe the
-   basic commands for managing a database.
+   Databases are created with the query language command
+   <command>CREATE DATABASE</command>:
+<synopsis>
+CREATE DATABASE <replaceable>name</>
+</synopsis>
+   where <replaceable>name</> can be chosen freely. (Depending on the
+   current implementation, certain characters that are special to the
+   underlying operating system might be prohibited. There will be
+   run-time checks for that.) The current user automatically becomes
+   the owner of the new database. It is the privilege of the owner of
+   a database to remove it later on (which also removes all the
+   objects in it, even if they have a different owner).
   </para>
 
-  <sect1>
-   <title>Creating a Database</title>
+  <para>
+   The creation of databases is a restricted operation. See <xref
+   linkend="user-attributes"> how to grant permission.
+  </para>
 
+  <formalpara>
+   <title>Bootstrapping</title>
    <para>
-    Let's say you want to create  a  database  named  mydb.
-    You can do this with the following command:
-
-    <programlisting>
-% createdb <replaceable class="parameter">dbname</replaceable>
-    </programlisting>
-
-    <productname>Postgres</productname>  allows  you to create 
-    any number of databases
-    at a  given  site  and  you  automatically  become  the
-    database  administrator  of  the database you just created.  
-    Database names must  have  an  alphabetic  first
-    character and are limited to 31 characters in length.
-    Not  every  user has authorization to become a database
-    administrator.  If <productname>Postgres</productname> 
-    refuses to create databases
-    for you, then the site administrator needs to grant you
-    permission to  create  databases.   Consult  your  site
-    administrator if this occurs.
+    Since you need to be connected to the database server in order to
+    execute the <command>CREATE DATABASE</command> command, the
+    question remains how the <emphasis>first</> database at any given
+    site can be created. The first database is always created by the
+    <command>initdb</> command when the data storage area is
+    initialized. (See <xref linkend="creating-cluster">.) This
+    database is called <literal>template1</> and cannot be deleted. So
+    to create the first <quote>real</> database you can connect to
+    <literal>template1</>.
    </para>
-  </sect1>
+  </formalpara>
 
-  <sect1>
-   <title>Accessing a Database</title>
+  <para>
+   The name <quote>template1</quote> is no accident: When a new
+   database is created, the template database is essentially cloned.
+   This means that any changes you make in <literal>template1</> are
+   propagated to all subsequently created databases. This implies that
+   you should not use the template database for real work, but when
+   used judiciously this feature can be convenient.
+  </para>
+
+  <para>
+   As an extra convenience, there is also a program that you can
+   execute from the shell to create new databases,
+   <filename>createdb</>.
+
+<synopsis>
+createdb <replaceable class="parameter">dbname</replaceable>
+</synopsis>
+
+   <filename>createdb</> does no magic. It connects to the template1
+   database and executes the <command>CREATE DATABASE</> command,
+   exactly as described above. It uses <application>psql</> program
+   internally. The reference page on createdb contains the invocation
+   details. In particular, createdb without any arguments will create
+   a database with the current user name, which may or may not be what
+   you want.
+  </para>
+
+  <sect2>
+   <title>Alternative Locations</title>
 
    <para>
-    Once you have constructed a database, you can access it
-    by:
+    It is possible to create a database in a location other than the
+    default. Remember that all database access occurs through the
+    database server backend, so that any location specified must be
+    accessible by the backend.
+   </para>
 
-    <itemizedlist spacing="compact" mark="bullet">
-     <listitem>
-      <para>
-       running the <productname>Postgres</productname>  terminal  monitor  program 
-       (<application>psql</application>) which allows you to interactively
-       enter, edit, and execute <acronym>SQL</acronym> commands.
-      </para>
-     </listitem>
+   <para>
+    Alternative database locations are referenced by an environment
+    variable which gives the absolute path to the intended storage
+    location. This environment variable must have been defined before
+    the backend was started. Any valid environment variable name may
+    be used to reference an alternative location, although using
+    variable names with a prefix of <literal>PGDATA</> is recommended
+    to avoid confusion and conflict with other variables.
+   </para>
 
-     <listitem>
-      <para>
-       writing a  C  program  using  the  <literal>libpq</literal>  subroutine
-       library.   This  allows  you  to submit <acronym>SQL</acronym> commands
-       from C and get answers and status messages  back  to
-       your  program.   This interface is discussed further
-       in the <citetitle>PostgreSQL Programmer's Guide</citetitle>.
-      </para>
-     </listitem>
-    </itemizedlist>
+   <para>
+    To create the variable in the environment of the server process
+    you must first shut down the server, define the variable,
+    initialize the data area, and finally restart the server. (See
+    <xref linkend="postmaster-shutdown"> and <xref
+    linkend="postmaster-start">.) To set an environment variable, type
+    <informalexample>
+<programlisting>
+PGDATA2=/home/postgres/data
+</programlisting>
+    </informalexample>
+    in Bourne shells, or
+    <informalexample>
+<programlisting>
+setenv PGDATA2 /home/postgres/data
+</programlisting>
+    </informalexample>
+    in csh or tcsh. You have to make sure that this environment
+    variable is always defined in the server environment, otherwise
+    you won't be able to access that database. Therefore you probably
+    want to set it in some sort of shell startup file or server
+    startup script.
+   </para>
 
-    You might want to start up <application>psql</application>, 
-    to try out  the  examples  in  this manual. It can be activated for the
-    <replaceable class="parameter">dbname</replaceable> database by typing the command:
+   <para>
+    To create a data storage area in <envar>PGDATA2</>, ensure that
+    <filename>/home/postgres</filename> already exists and is writable
+    by the user account that runs the server (see <xref
+    linkend="postgres-user">). Then from the command line, type
+    <informalexample>
+<programlisting>
+initlocation PGDATA2
+</programlisting>
+    </informalexample>
+    The you can restart the server.
+   </para>
+
+   <para>
+    To create a database at the new location, use the command
+<synopsis>
+CREATE DATABASE <replaceable>name</> WITH LOCATION = '<replaceable>location</>'
+</synopsis>
+    where <replaceable>location</> is the environment variable you
+    used, <envar>PGDATA2</> in this example. The <command>createdb</>
+    command has the option <option>-D</> for this purpose.
+   </para>
+
+   <para>
+    Database created at alternative locations using this method can be
+    accessed and dropped like any other database.
+   </para>
+
+   <note>
+    <para>
+     It can also be possible to specify absolute paths directly to the
+     <command>CREATE DATABASE</> command without defining environment
+     variables. This is disallowed by default because it is a security
+     risk. To allow it, you must compile <productname>Postgres</> with
+     the C preprocessor macro <literal>ALLOW_ABSOLUTE_DBPATHS</>
+     defined. One way to do this is to run the compilation step like
+     this: <userinput>gmake COPT=-DALLOW_ABSOLUTE_DBPATHS all</>.
+    </para>
+   </note>
+
+  </sect2>
+ </sect1>
+
+ <sect1>
+  <title>Accessing a Database</title>
+
+  <para>
+   Once you have constructed a database, you can access it by:
+
+   <itemizedlist spacing="compact" mark="bullet">
+    <listitem>
+     <para>
+      running the <productname>Postgres</productname>  terminal  monitor  program 
+      (<application>psql</application>) which allows you to interactively
+      enter, edit, and execute <acronym>SQL</acronym> commands.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      writing a  C  program  using  the  <literal>libpq</literal>  subroutine
+      library.   This  allows  you  to submit <acronym>SQL</acronym> commands
+      from C and get answers and status messages  back  to
+      your  program.   This interface is discussed further
+      in the <citetitle>PostgreSQL Programmer's Guide</citetitle>.
+     </para>
+    </listitem>
+   </itemizedlist>
+
+   You might want to start up <application>psql</application>, 
+   to try out  the  examples  in  this manual. It can be activated for the
+   <replaceable class="parameter">dbname</replaceable> database by typing the command:
 
 <programlisting>
 psql <replaceable class="parameter">dbname</replaceable>
 </programlisting>
 
-    You will be greeted with the following message:
+   You will be greeted with the following message:
 
 <programlisting>
 Welcome to psql, the PostgreSQL interactive terminal.
@@ -138,151 +280,39 @@ Type:  \copyright for distribution terms
     are denoted by "<literal>/* ... */</literal>", a convention borrowed
     from <productname>Ingres</productname>.
    </para>
-  </sect1>
+ </sect1>
      
-  <sect1>
-   <title>Destroying a Database</title>
+ <sect1>
+  <title>Destroying a Database</title>
 
-   <para>
-    If you are the database administrator for the  database
-    mydb,  you can destroy it using the following Unix command:
+  <para>
+   Databases are destroyed with the command <command>DROP DATABASE</command>:
+<synopsis>
+DROP DATABASE <replaceable>name</>
+</synopsis>
+   Only the owner of the database (i.e., the user that created it) can
+   drop databases. Dropping a databases removes all objects that were
+   contained within the database. The destruction of a database cannot
+   be undone.
+  </para>
 
-    <programlisting>
-% dropdb <replaceable class="parameter">dbname</replaceable>
-    </programlisting>
+  <para>
+   You cannot execute the <command>DROP DATABASE</command> command
+   while connected to the victim database. You can, however, be
+   connected to any other database, including the template1 database,
+   which would be the only option for dropping the last database of a
+   given cluster.
+  </para>
 
-    This action physically removes all of  the  Unix  files
-    associated  with  the database and cannot be undone, so
-    this should only be done with a  great  deal  of  forethought.
-   </para>
-
-   <para>
-    It is also possible to destroy a database from within an
-    <acronym>SQL</acronym> session by using
-
-    <programlisting>
-&gt; drop database <replaceable class="parameter">dbname</replaceable>
-    </programlisting>
-   </para>
-  </sect1>
-
-  <sect1>
-   <title>Backup and Restore</title>
-
-   <caution>
-    <para>
-     Every database should be backed up on a regular basis. Since
-     <productname>Postgres</productname> manages it's own files in the
-     file system, it is <emphasis>not advisable</emphasis> to rely on
-     system backups of your file system for your database backups;
-     there is no guarantee that the files will be in a usable,
-     consistant state after restoration.
-    </para>
-   </caution>
-
-   <para>
-    <productname>Postgres</productname> provides two utilities to
-    backup your system: <application>pg_dump</application> to backup
-    individual databases and
-    <application>pg_dumpall</application> to backup your installation
-    in one step.
-   </para>
-
-   <para>
-    An individual database can be backed up using the following
-    command:
-
-    <programlisting>
-% pg_dump <replaceable class="parameter">dbname</replaceable> &gt; <replaceable class="parameter">dbname</replaceable>.pgdump
-    </programlisting>
-
-    and can be restored using
-
-    <programlisting>
-cat <replaceable class="parameter">dbname</replaceable>.pgdump | psql <replaceable class="parameter">dbname</replaceable>
-    </programlisting>
-   </para>
-
-   <para>
-    This technique can be used to move databases to new
-    locations, and to rename existing databases.
-   </para>
-
-   <sect2>
-    <title>Large Databases</title>
-
-    <note>
-     <title>Author</title>
-     <para>
-      Written by <ulink url="hannu@trust.ee">Hannu Krosing</ulink> on
-      1999-06-19.
-     </para>
-    </note>
-
-    <para>
-     Since <productname>Postgres</productname> allows tables larger
-     than the maximum file size on your system, it can be problematic
-     to dump the table to a file, since the resulting file will likely 
-     be larger than the maximum size allowed by your system.</para>
-
-    <para>
-     As <application>pg_dump</application> writes to stdout,
-     you can just use standard *nix tools 
-     to work around this possible problem:
-
-     <itemizedlist>
-      <listitem>
-       <para>
-	Use compressed dumps:
-
-	<programlisting>
-% pg_dump <replaceable class="parameter">dbname</replaceable> | gzip > <replaceable class="parameter">filename</replaceable>.dump.gz
-	</programlisting>
-
-	reload with
-
-	<programlisting>
-% createdb <replaceable class="parameter">dbname</replaceable>
-% gunzip -c <replaceable class="parameter">filename</replaceable>.dump.gz | psql <replaceable class="parameter">dbname</replaceable>
-	</programlisting>
-
-or
-
-	<programlisting>
-% cat <replaceable class="parameter">filename</replaceable>.dump.gz | gunzip | psql <replaceable class="parameter">dbname</replaceable>
-	</programlisting>
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-	Use split:
-
-	<programlisting>
-% pg_dump <replaceable class="parameter">dbname</replaceable> | split -b 1m - <replaceable class="parameter">filename</replaceable>.dump.
-	</programlisting>
-
-reload with
-
-	<programlisting>
-% createdb <replaceable class="parameter">dbname</replaceable>
-% cat <replaceable class="parameter">filename</replaceable>.dump.* | pgsql <replaceable class="parameter">dbname</replaceable>
-	</programlisting>
-       </para>
-      </listitem>
-     </itemizedlist>
-    </para>
-
-    <para>
-     Of course, the name of the file
-     (<replaceable class="parameter">filename</replaceable>) and the
-     content of the <application>pg_dump</application> output need not 
-     match the name of the database. Also, the restored database can
-     have an arbitrary new name, so this mechanism is also suitable
-     for renaming databases.
-    </para>
-   </sect2>
-  </sect1>
+  <para>
+   For convenience, there is also a shell program to drop databases:
+<synopsis>
+dropdb <replaceable class="parameter">dbname</replaceable>
+</synopsis>
+   (Unlike <command>createdb</>, it is not the default action to drop
+   the database with the current user name.)
+  </para>
+ </sect1>
 </chapter>
 
 <!-- Keep this comment at the end of the file

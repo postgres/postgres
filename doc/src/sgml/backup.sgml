@@ -1,0 +1,414 @@
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/backup.sgml,v 2.1 2000/06/30 16:14:21 petere Exp $ -->
+<chapter id="backup">
+ <title>Backup and Restore</title>
+
+ <para>
+  As everything that contains valuable data, <productname>Postgres</>
+  databases should be backed up regularly. While the procedure is
+  essentially simple, it is important to have a basic understanding of
+  the underlying techniques and assumptions.
+ </para>
+
+ <para>
+  There are two fundamentally different approaches to backing up
+  <productname>Postgres</> data:
+  <itemizedlist>
+   <listitem><para><acronym>SQL</> dump</para></listitem>
+   <listitem><para>File system level backup</para></listitem>
+  </itemizedlist>
+ </para>
+
+ <sect1>
+  <title><acronym>SQL</> Dump</title>
+
+  <para>
+   The idea behind this method is to generate a text file with SQL
+   commands that, when fed back to the server, will recreate the
+   database in the same state as it was at the time of the dump.
+   <productname>Postgres</> provides the utility program
+   <application>pg_dump</> for this purpose. The basic usage of this
+   command is:
+<synopsis>
+pg_dump <replaceable class="parameter">dbname</replaceable> &gt; <replaceable class="parameter">outfile</replaceable>
+</synopsis>
+   As you see, <application>pg_dump</> writes its results to the
+   standard output. We will see below how this can be useful.
+  </para>
+
+  <para>
+   <application>pg_dump</> is a regular <productname>Postgres</>
+   client application (albeit a particularly clever one). This means
+   that you can do this backup procedure from any remote host that has
+   access to the database. But remember that <application>pg_dump</>
+   does not operate with special permissions. In particular, you must
+   have read access to all tables that you want to back up, so in
+   practice you almost always have to be a database superuser.
+  </para>
+
+  <para>
+   To specify which databaser server <application>pg_dump</> should
+   contact, use the command line options <option>-h
+   <replaceable>host</></> and <option>-p <replaceable>port</></>. The
+   default host is the local host or whatever your
+   <envar>PGHOST</envar> environment variable specifies. Similarly,
+   the default port is indicated by the <envar>PGPORT</envar>
+   environment variable or, failing that, by the compiled-in default.
+   (Conveniently, the server will normally have the same compiled-in
+   default.)
+  </para>
+
+  <para>
+   As any other <productname>Postgres</> client application,
+   <application>pg_dump</> will by default connect with the database
+   user name that is equal to the current Unix user name. To override
+   this, either specify the <option>-u</option> option to force a prompt for
+   the user name, or set the environment variable
+   <envar>PGUSER</envar>. Remember that <application>pg_dump</>
+   connections are subject to the normal client authentication
+   mechanisms (which are described in <xref
+   linkend="client-authentication">).
+  </para>
+
+  <para>
+   Dumps created by <application>pg_dump</> are internally consistent,
+   that is, updates to the database while <application>pg_dump</> is
+   running will not be in the dump. <application>pg_dump</> does not
+   block other operations on the database while it is working.
+   (Exceptions are those operations that need to operate with an
+   exclusive lock, such as <command>VACUUM</command>.)
+  </para>
+
+  <important>
+   <para>
+    When your database schema relies on OIDs (for instances as foreign
+    keys) you must instruct <application>pg_dump</> to dump the OIDs
+    as well. To do this, use the <option>-o</option> command line
+    option.
+   </para>
+  </important>
+
+  <sect2>
+   <title>Restoring the dump</title>
+
+   <para>
+    The text files created by <application>pg_dump</> are intended to
+    be read in by the <application>psql</application> program. The
+    general command form to restore a dump is
+<synopsis>
+psql <replaceable class="parameter">dbname</replaceable> &lt; <replaceable class="parameter">infile</replaceable>
+</synopsis>
+    where <replaceable class="parameter">infile</replaceable> is what
+    you used as <replaceable class="parameter">outfile</replaceable>
+    for the pg_dump command. The database <replaceable
+    class="parameter">dbname</replaceable> will not be created by this
+    command, you must do that yourself before executing
+    <application>psql</> (e.g., with <userinput>createdb <replaceable
+    class="parameter">dbname</></userinput>). <application>psql</>
+    supports similar options to <application>pg_dump</> for
+    controlling the database server location and the user names. See
+    its reference page for more information.
+   </para>
+
+   <para>
+    If the objects in the original database were owned by different
+    users, then the dump will instruct <application>psql</> to connect
+    as each affected user in turn and then create the relevant
+    objects. This way the original ownership is preserved. This also
+    means, however, that all these user must already exist, and
+    furthermore that you must be allowed to connect as each of them.
+    It might therefore be necessary to temporarily relax the client
+    authentication settings.
+   </para>
+
+   <para>
+    The ability of <application>pg_dump</> and <application>psql</> to
+    write or read from pipes also make it possible to dump a database
+    directory from one server to another, for example
+    <informalexample>
+<programlisting>
+pg_dump -h <replaceable>host1</> <replaceable>dbname</> | psql -h <replaceable>host2</> <replaceable>dbname</>
+</programlisting>
+    </informalexample>
+   </para>
+  </sect2>
+
+  <sect2>
+   <title>Using <command>pg_dumpall</></title>
+
+   <para>
+    The above mechanism is cumbersome and inappropriate when backing
+    up an entire database cluster. For this reason the
+    <application>pg_dumpall</> program is provided.
+    <application>pg_dumpall</> backs up each database in a given
+    cluster and also makes sure that the state of global data such as
+    users and groups is preserved. The call sequence for
+    <application>pg_dumpall</> is simply
+<synopsis>
+pg_dumpall &gt; <replaceable>outfile</>
+</synopsis>
+    The resulting dumps can be restored with <application>psql</> as
+    described above. But in this case it is definitely necessary that
+    you have database superuser access, as that is required to restore
+    the user and group information.
+   </para>
+
+   <para>
+    <application>pg_dumpall</application> has one little flaw: It is
+    not prepared for interactively authenticating to each database it
+    dumps. If you are using password authentication then you need to
+    set it the environment variable <envar>PGPASSWORD</envar> to
+    communicate the password the the underlying calls to
+    <application>pg_dump</>. More severely, if you have different
+    passwords set up for each database, then
+    <application>pg_dumpall</> will fail. You can either choose a
+    different authentication mechanism for the purposes of backup or
+    adjust the <filename>pg_dumpall</filename> shell script to your
+    needs.
+   </para>
+  </sect2>
+
+  <sect2>
+   <title>Large Databases</title>
+
+   <note>
+    <title>Acknowledgement</title>
+    <para>
+     Originally written by Hannu Krosing
+     (<email>hannu@trust.ee</email>) on 1999-06-19
+    </para>
+   </note>
+
+   <para>
+    Since <productname>Postgres</productname> allows tables larger
+    than the maximum file size on your system, it can be problematic
+    to dump the table to a file, since the resulting file will likely
+    be larger than the maximum size allowed by your system. As
+    <application>pg_dump</> writes to the standard output, you can
+    just use standard *nix tools to work around this possible problem.
+   </para>
+
+   <formalpara>
+    <title>Use compressed dumps.</title>
+    <para>
+     Use your favorite compression program, for example
+     <application>gzip</application>.
+
+<programlisting>
+pg_dump <replaceable class="parameter">dbname</replaceable> | gzip &gt; <replaceable class="parameter">filename</replaceable>.gz
+</programlisting>
+
+     Reload with
+
+<programlisting>
+createdb <replaceable class="parameter">dbname</replaceable>
+gunzip -c <replaceable class="parameter">filename</replaceable>.gz | psql <replaceable class="parameter">dbname</replaceable>
+</programlisting>
+
+     or
+
+<programlisting>
+cat <replaceable class="parameter">filename</replaceable>.gz | gunzip | psql <replaceable class="parameter">dbname</replaceable>
+</programlisting>
+    </para>
+   </formalpara>
+
+   <formalpara>
+    <title>Use <application>split</>.</title>
+    <para>
+     This allows you to split the output into pieces that are
+     acceptable in size to the underlying file system. For example, to
+     make chunks of 1 megabyte:
+
+     <informalexample>
+<programlisting>
+pg_dump <replaceable class="parameter">dbname</replaceable> | split -b 1m - <replaceable class="parameter">filename</replaceable>
+</programlisting>
+     </informalexample>
+
+     Reload with
+
+     <informalexample>
+<programlisting>
+createdb <replaceable class="parameter">dbname</replaceable>
+cat <replaceable class="parameter">filename</replaceable>.* | psql <replaceable class="parameter">dbname</replaceable>
+</programlisting>
+     </informalexample>
+    </para>
+   </formalpara>
+
+  </sect2>
+
+  <sect2>
+   <title>Caveats</title>
+
+   <para>
+    <application>pg_dump</> (and by implication
+    <application>pg_dumpall</>) has a few limitations which stem from
+    the difficulty to reconstruct certain information from the system
+    catalogs.
+   </para>
+
+   <para>
+    Specifically, the order in which <application>pg_dump</> writes
+    the objects is not very sophisticated. This can lead to problems
+    for example when functions are used as column default values. The
+    only answer is to manually reorder the dump. If you created
+    circular dependencies in your schema then you will have more work
+    to do.
+   </para>
+
+   <para>
+    Large objects are not handled by <application>pg_dump</>. The
+    directory <filename>contrib/pg_dumplo</> of the
+    <productname>Postgres</> source tree contains a program that can
+    do that.
+   </para>
+
+   <para>
+    Please familiarize yourself with the
+    <citerefentry><refentrytitle>pg_dump</></> reference page.
+   </para>
+  </sect2>
+ </sect1>
+
+ <sect1>
+  <title>File system level backup</title>
+
+  <para>
+   An alternative backup strategy is to directly copy the files that
+   <productname>Postgres</> uses to store the data in the database. In
+   <xref linkend="creating-cluster"> it is explained where these files
+   are located, but you have probably found them already if you are
+   interested in this method. You can use whatever method you prefer
+   for doing usual file system backups, for example
+   <informalexample>
+<programlisting>
+tar -cf backup.tar /usr/local/pgsql/data
+</programlisting>
+   </informalexample>
+  </para>
+
+  <para>
+   There are two restrictions, however, which make this method
+   impractical, or at least inferior to the <application>pg_dump</>
+   method:
+
+   <orderedlist>
+    <listitem>
+     <para>
+      The database server <emphasis>must</> be shut down in order to
+      get a usable backup. Half-way measures such as disallowing all
+      connections will not work as there is always some buffering
+      going on. For this reason it is also not advisable to trust file
+      systems that claim to support <quote>consistent
+      snapshots</quote>. Information about stopping the server can be
+      found in <xref linkend="postmaster-shutdown">.
+     </para>
+
+     <para>
+      Needless to say that you also need to shut down the server
+      before restoring the data.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      If you have dug into the details of the file system layout you
+      may be tempted to try to back up or restore only certain
+      individual tables or databases from their respective files or
+      directories. This will <emphasis>not</> work because the
+      information contained in these files contains only half the
+      truth. The other half is in the file
+      <filename>pg_log</filename>, which contains the commit status of
+      all transactions. A table file is only usable with this
+      information. Of course it is also impossible to restore only a
+      table and the associated <filename>pg_log</filename> file
+      because that will render all other tables in the database
+      cluster useless.
+     </para>
+    </listitem>
+   </orderedlist>
+  </para>
+
+  <para>
+   Also note that the file system backup will not necessarily be
+   smaller than an SQL dump. On the contrary, it will most likely be
+   larger. (<application>pg_dump</application> does not need to dump
+   the contents of indices for example, just the commands to recreate
+   them.)
+  </para>
+
+ </sect1>
+
+ <sect1>
+  <title>Migration between releases</title>
+
+  <para>
+   As a general rule, the internal data storage format is subject to
+   change between releases of <productname>Postgres</>. This does not
+   apply to different <quote>patch levels</quote>, these always have
+   compatible storage formats. For example, releases 6.5.3, 7.0.1, and
+   7.1 are not compatible, whereas 7.0.2 and 7.0.1 are. When you
+   update between compatible versions, then you can simply reuse the
+   data area in disk by the new executables. Otherwise you need to
+   <quote>back up</> your data and <quote>restore</> it on the new
+   server, using <application>pg_dump</>. (There are checks in place
+   that prevent you from doing the wrong thing, so no harm can be done
+   by confusing these things.) The precise installation procedure is
+   not subject of this section, the <citetitle>Installation
+   Instructions</citetitle> carry these details.
+  </para>
+
+  <para>
+   The least downtime can be achieved by installing the new server in
+   a different directory and running both the old and the new servers
+   in parallel, on different ports. Then you can use something like
+<informalexample>
+<programlisting>
+pg_dumpall -p 5432 | psql -d template1 -p 6543
+</programlisting>
+</informalexample>
+   to transfer your data, or use an intermediate file if you want.
+   Then you can shut down the old server and start the new server at
+   the port the old one was running at. You should make sure that the
+   database is not updated after you run <application>pg_dumpall</>,
+   otherwise you will obviously lose that data. See <xref
+   linkend="client-authentication"> for information on how to prohibit
+   access. In practice you probably want to test your client
+   applications on the new setup before switching over.
+  </para>
+
+  <para>
+   If you cannot or do not want to run two servers in parallel you can
+   do the back up step before installing the new version, bring down
+   the server, move the old version out of the way, install the new
+   version, start the new server, restore the data. For example:
+<informalexample>
+<programlisting>
+pg_dumpall > backup
+kill -INT `cat /usr/local/pgsql/postmaster.pid`
+mv /usr/local/pgsql /usr/local/pgsql.old
+cd /usr/src/postgresql-7.1
+gmake install
+initdb -D /usr/local/pgsql/data
+postmaster -D /usr/local/pgsql/data
+psql < backup
+</programlisting>
+</informalexample>
+   See <xref linkend="runtime"> about ways to start and stop the
+   server and other details. The installation instructions will advise
+   you of strategic places to perform these steps.
+  </para>
+
+  <note>
+   <para>
+    When you <quote>move the old installation out of the way</quote>
+    it is no longer perfectly usable. Some parts of the installation
+    contain information about where the other parts are located. This
+    is usually not a big problem but if you plan on using two
+    installations in parallel for a while you should assign them
+    different installation directories at build time.
+   </para>
+  </note>
+ </sect1>
+</chapter>

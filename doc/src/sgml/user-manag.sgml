@@ -56,7 +56,7 @@ CREATE USER <replaceable>name</replaceable>
    constrained in its login name by her real name.)
   </para>
 
-  <sect2>
+  <sect2 id="user-attributes">
    <title>User attributes</title>
 
    <para>

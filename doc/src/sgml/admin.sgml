@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/admin.sgml,v 1.23 2000/06/18 21:24:51 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/admin.sgml,v 1.24 2000/06/30 16:14:21 petere Exp $
 
 Postgres Administrator's Guide.
 Derived from postgres.sgml.
@@ -21,16 +21,15 @@ Derived from postgres.sgml.
 <!entity install   SYSTEM "install.sgml">
 <!entity installw  SYSTEM "install-win32.sgml">
 <!entity layout    SYSTEM "layout.sgml">
-<!entity manage-ag SYSTEM "manage-ag.sgml">
 <!entity ports     SYSTEM "ports.sgml">
-<!entity recovery  SYSTEM "recovery.sgml">
-<!entity regress   SYSTEM "regress.sgml">
 <!entity release   SYSTEM "release.sgml">
 <!entity runtime   SYSTEM "runtime.sgml">
 <!entity client-auth SYSTEM "client-auth.sgml">
+<!entity manage-ag SYSTEM "manage-ag.sgml">
 <!entity user-manag SYSTEM "user-manag.sgml">
-<!entity start-ag  SYSTEM "start-ag.sgml">
-<!entity trouble   SYSTEM "trouble.sgml">
+<!entity backup    SYSTEM "backup.sgml">
+<!entity recovery  SYSTEM "recovery.sgml">
+<!entity regress   SYSTEM "regress.sgml">
 
 <!entity biblio    SYSTEM "biblio.sgml">
 ]>
@@ -113,9 +112,9 @@ Your name here...
   &installw;
   &runtime;
   &client-auth;
-  &user-manag;
-  &start-ag;
   &manage-ag;
+  &user-manag;
+  &backup;
   &recovery;
   &regress;
   &release;
