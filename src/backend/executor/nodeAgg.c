@@ -61,7 +61,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeAgg.c,v 1.129 2005/03/12 20:25:06 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeAgg.c,v 1.130 2005/03/16 21:38:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -748,7 +748,7 @@ agg_retrieve_direct(AggState *aggstate)
 				 * Make a copy of the first input tuple; we will use this
 				 * for comparisons (in group mode) and for projection.
 				 */
-				aggstate->grp_firstTuple = heap_copytuple(outerslot->val);
+				aggstate->grp_firstTuple = ExecCopySlotTuple(outerslot);
 			}
 			else
 			{
@@ -813,9 +813,8 @@ agg_retrieve_direct(AggState *aggstate)
 				 */
 				if (node->aggstrategy == AGG_SORTED)
 				{
-					if (!execTuplesMatch(firstSlot->val,
-										 outerslot->val,
-										 firstSlot->ttc_tupleDescriptor,
+					if (!execTuplesMatch(firstSlot,
+										 outerslot,
 										 node->numCols, node->grpColIdx,
 										 aggstate->eqfunctions,
 									  tmpcontext->ecxt_per_tuple_memory))
@@ -823,7 +822,7 @@ agg_retrieve_direct(AggState *aggstate)
 						/*
 						 * Save the first input tuple of the next group.
 						 */
-						aggstate->grp_firstTuple = heap_copytuple(outerslot->val);
+						aggstate->grp_firstTuple = ExecCopySlotTuple(outerslot);
 						break;
 					}
 				}
@@ -863,31 +862,11 @@ agg_retrieve_direct(AggState *aggstate)
 		 */
 		if (TupIsNull(firstSlot))
 		{
-			TupleDesc	tupType;
-
 			/* Should only happen in non-grouped mode */
 			Assert(node->aggstrategy == AGG_PLAIN);
 			Assert(aggstate->agg_done);
 
-			tupType = firstSlot->ttc_tupleDescriptor;
-			/* watch out for zero-column input tuples, though... */
-			if (tupType && tupType->natts > 0)
-			{
-				HeapTuple	nullsTuple;
-				Datum	   *dvalues;
-				char	   *dnulls;
-
-				dvalues = (Datum *) palloc0(sizeof(Datum) * tupType->natts);
-				dnulls = (char *) palloc(sizeof(char) * tupType->natts);
-				MemSet(dnulls, 'n', sizeof(char) * tupType->natts);
-				nullsTuple = heap_formtuple(tupType, dvalues, dnulls);
-				ExecStoreTuple(nullsTuple,
-							   firstSlot,
-							   InvalidBuffer,
-							   true);
-				pfree(dvalues);
-				pfree(dnulls);
-			}
+			ExecStoreAllNullTuple(firstSlot);
 		}
 
 		/*

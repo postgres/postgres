@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execScan.c,v 1.34 2004/12/31 21:59:45 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execScan.c,v 1.35 2005/03/16 21:38:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -106,10 +106,7 @@ ExecScan(ScanState *node,
 		if (TupIsNull(slot))
 		{
 			if (projInfo)
-				return ExecStoreTuple(NULL,
-									  projInfo->pi_slot,
-									  InvalidBuffer,
-									  true);
+				return ExecClearTuple(projInfo->pi_slot);
 			else
 				return slot;
 		}
@@ -183,7 +180,7 @@ ExecAssignScanProjectionInfo(ScanState *node)
 	if (tlist_matches_tupdesc(&node->ps,
 							  scan->plan.targetlist,
 							  scan->scanrelid,
-							node->ss_ScanTupleSlot->ttc_tupleDescriptor))
+							  node->ss_ScanTupleSlot->tts_tupleDescriptor))
 		node->ps.ps_ProjInfo = NULL;
 	else
 		ExecAssignProjectionInfo(&node->ps);

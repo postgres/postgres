@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeSort.c,v 1.49 2004/12/31 21:59:45 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeSort.c,v 1.50 2005/03/16 21:38:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -104,7 +104,8 @@ ExecSort(SortState *node)
 			if (TupIsNull(slot))
 				break;
 
-			tuplesort_puttuple(tuplesortstate, (void *) slot->val);
+			tuplesort_puttuple(tuplesortstate,
+							   (void *) ExecFetchSlotTuple(slot));
 		}
 
 		/*
@@ -136,7 +137,10 @@ ExecSort(SortState *node)
 									   &should_free);
 
 	slot = node->ss.ps.ps_ResultTupleSlot;
-	return ExecStoreTuple(heapTuple, slot, InvalidBuffer, should_free);
+	if (heapTuple)
+		return ExecStoreTuple(heapTuple, slot, InvalidBuffer, should_free);
+	else
+		return ExecClearTuple(slot);
 }
 
 /* ----------------------------------------------------------------

@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.303 2005/03/04 20:21:06 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.304 2005/03/16 21:38:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -114,7 +114,6 @@ typedef struct ExecContextData
 {
 	ResultRelInfo *resultRelInfo;
 	EState	   *estate;
-	TupleTable	tupleTable;
 	TupleTableSlot *slot;
 } ExecContextData;
 typedef ExecContextData *ExecContext;
@@ -141,16 +140,14 @@ ExecContext_Init(ExecContext ec, Relation rel)
 	ec->estate->es_num_result_relations = 1;
 	ec->estate->es_result_relation_info = ec->resultRelInfo;
 
-	/* Set up a dummy tuple table too */
-	ec->tupleTable = ExecCreateTupleTable(1);
-	ec->slot = ExecAllocTableSlot(ec->tupleTable);
-	ExecSetSlotDescriptor(ec->slot, tupdesc, false);
+	/* Set up a tuple slot too */
+	ec->slot = MakeSingleTupleTableSlot(tupdesc);
 }
 
 static void
 ExecContext_Finish(ExecContext ec)
 {
-	ExecDropTupleTable(ec->tupleTable, true);
+	ExecDropSingleTupleTableSlot(ec->slot);
 	ExecCloseIndices(ec->resultRelInfo);
 	FreeExecutorState(ec->estate);
 }

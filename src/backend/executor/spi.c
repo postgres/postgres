@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/spi.c,v 1.134 2005/02/10 20:36:27 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/spi.c,v 1.135 2005/03/16 21:38:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1191,7 +1191,7 @@ spi_dest_startup(DestReceiver *self, int operation, TupleDesc typeinfo)
  *		of current SPI procedure
  */
 void
-spi_printtup(HeapTuple tuple, TupleDesc tupdesc, DestReceiver *self)
+spi_printtup(TupleTableSlot *slot, DestReceiver *self)
 {
 	SPITupleTable *tuptable;
 	MemoryContext oldcxt;
@@ -1219,7 +1219,8 @@ spi_printtup(HeapTuple tuple, TupleDesc tupdesc, DestReceiver *self)
 								  tuptable->alloced * sizeof(HeapTuple));
 	}
 
-	tuptable->vals[tuptable->alloced - tuptable->free] = heap_copytuple(tuple);
+	tuptable->vals[tuptable->alloced - tuptable->free] =
+		ExecCopySlotTuple(slot);
 	(tuptable->free)--;
 
 	MemoryContextSwitchTo(oldcxt);

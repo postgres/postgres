@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execUtils.c,v 1.117 2004/12/31 21:59:45 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execUtils.c,v 1.118 2005/03/16 21:38:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -485,7 +485,7 @@ ExecGetResultType(PlanState *planstate)
 {
 	TupleTableSlot *slot = planstate->ps_ResultTupleSlot;
 
-	return slot->ttc_tupleDescriptor;
+	return slot->tts_tupleDescriptor;
 }
 
 /* ----------------
@@ -504,17 +504,99 @@ ExecBuildProjectionInfo(List *targetList,
 {
 	ProjectionInfo *projInfo = makeNode(ProjectionInfo);
 	int			len;
+	bool		isVarList;
+	ListCell   *tl;
 
 	len = ExecTargetListLength(targetList);
 
 	projInfo->pi_targetlist = targetList;
 	projInfo->pi_exprContext = econtext;
 	projInfo->pi_slot = slot;
-	if (len > 0)
+
+	/*
+	 * Determine whether the target list consists entirely of simple Var
+	 * references (ie, references to non-system attributes).  If so,
+	 * we can use the simpler ExecVariableList instead of ExecTargetList.
+	 */
+	isVarList = true;
+	foreach(tl, targetList)
 	{
-		projInfo->pi_tupValues = (Datum *) palloc(len * sizeof(Datum));
-		projInfo->pi_tupNulls = (char *) palloc(len * sizeof(char));
-		projInfo->pi_itemIsDone = (ExprDoneCond *) palloc(len * sizeof(ExprDoneCond));
+		GenericExprState *gstate = (GenericExprState *) lfirst(tl);
+		Var		   *variable = (Var *) gstate->arg->expr;
+
+		if (variable == NULL ||
+			!IsA(variable, Var) ||
+			variable->varattno <= 0)
+		{
+			isVarList = false;
+			break;
+		}
+	}
+	projInfo->pi_isVarList = isVarList;
+
+	if (isVarList)
+	{
+		int		   *varSlotOffsets;
+		int		   *varNumbers;
+		AttrNumber	lastInnerVar = 0;
+		AttrNumber	lastOuterVar = 0;
+		AttrNumber	lastScanVar = 0;
+
+		projInfo->pi_itemIsDone = NULL;	/* not needed */
+		projInfo->pi_varSlotOffsets = varSlotOffsets = (int *)
+			palloc0(len * sizeof(int));
+		projInfo->pi_varNumbers = varNumbers = (int *)
+			palloc0(len * sizeof(int));
+
+		/*
+		 * Set up the data needed by ExecVariableList.  The slots in which
+		 * the variables can be found at runtime are denoted by the offsets
+		 * of their slot pointers within the econtext.  This rather grotty
+		 * representation is needed because the caller may not have given
+		 * us the real econtext yet (see hacks in nodeSubplan.c).
+		 */
+		foreach(tl, targetList)
+		{
+			GenericExprState *gstate = (GenericExprState *) lfirst(tl);
+			Var		   *variable = (Var *) gstate->arg->expr;
+			AttrNumber	attnum = variable->varattno;
+			TargetEntry *tle = (TargetEntry *) gstate->xprstate.expr;
+			AttrNumber	resind = tle->resdom->resno - 1;
+
+			Assert(resind >= 0 && resind < len);
+			varNumbers[resind] = attnum;
+
+			switch (variable->varno)
+			{
+				case INNER:
+					varSlotOffsets[resind] = offsetof(ExprContext,
+													  ecxt_innertuple);
+					lastInnerVar = Max(lastInnerVar, attnum);
+					break;
+
+				case OUTER:
+					varSlotOffsets[resind] = offsetof(ExprContext,
+													  ecxt_outertuple);
+					lastOuterVar = Max(lastOuterVar, attnum);
+					break;
+
+				default:
+					varSlotOffsets[resind] = offsetof(ExprContext,
+													  ecxt_scantuple);
+					lastScanVar = Max(lastScanVar, attnum);
+					break;
+			}
+		}
+		projInfo->pi_lastInnerVar = lastInnerVar;
+		projInfo->pi_lastOuterVar = lastOuterVar;
+		projInfo->pi_lastScanVar = lastScanVar;
+	}
+	else
+	{
+		projInfo->pi_itemIsDone = (ExprDoneCond *)
+			palloc(len * sizeof(ExprDoneCond));
+		projInfo->pi_varSlotOffsets = NULL;
+		projInfo->pi_varNumbers = NULL;
 	}
 
 	return projInfo;
@@ -582,7 +664,7 @@ ExecGetScanType(ScanState *scanstate)
 {
 	TupleTableSlot *slot = scanstate->ss_ScanTupleSlot;
 
-	return slot->ttc_tupleDescriptor;
+	return slot->tts_tupleDescriptor;
 }
 
 /* ----------------
@@ -772,19 +854,15 @@ ExecInsertIndexTuples(TupleTableSlot *slot,
 					  EState *estate,
 					  bool is_vacuum)
 {
-	HeapTuple	heapTuple;
 	ResultRelInfo *resultRelInfo;
 	int			i;
 	int			numIndices;
 	RelationPtr relationDescs;
 	Relation	heapRelation;
-	TupleDesc	heapDescriptor;
 	IndexInfo **indexInfoArray;
 	ExprContext *econtext;
 	Datum		datum[INDEX_MAX_KEYS];
 	char		nullv[INDEX_MAX_KEYS];
-
-	heapTuple = slot->val;
 
 	/*
 	 * Get information from the result relation info structure.
@@ -794,7 +872,6 @@ ExecInsertIndexTuples(TupleTableSlot *slot,
 	relationDescs = resultRelInfo->ri_IndexRelationDescs;
 	indexInfoArray = resultRelInfo->ri_IndexRelationInfo;
 	heapRelation = resultRelInfo->ri_RelationDesc;
-	heapDescriptor = RelationGetDescr(heapRelation);
 
 	/*
 	 * We will use the EState's per-tuple context for evaluating
@@ -844,12 +921,11 @@ ExecInsertIndexTuples(TupleTableSlot *slot,
 
 		/*
 		 * FormIndexDatum fills in its datum and null parameters with
-		 * attribute information taken from the given heap tuple. It also
+		 * attribute information taken from the given tuple. It also
 		 * computes any expressions needed.
 		 */
 		FormIndexDatum(indexInfo,
-					   heapTuple,
-					   heapDescriptor,
+					   slot,
 					   estate,
 					   datum,
 					   nullv);
@@ -860,9 +936,9 @@ ExecInsertIndexTuples(TupleTableSlot *slot,
 		 * need to move dead tuples that have the same keys as live ones.
 		 */
 		result = index_insert(relationDescs[i], /* index relation */
-							  datum,	/* array of heaptuple Datums */
+							  datum,	/* array of index Datums */
 							  nullv,	/* info on nulls */
-							  &(heapTuple->t_self),		/* tid of heap tuple */
+							  tupleid,	/* tid of heap tuple */
 							  heapRelation,
 				  relationDescs[i]->rd_index->indisunique && !is_vacuum);
 

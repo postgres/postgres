@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/functions.c,v 1.91 2004/12/31 21:59:45 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/functions.c,v 1.92 2005/03/16 21:38:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -456,8 +456,6 @@ postquel_execute(execution_state *es,
 				 SQLFunctionCachePtr fcache)
 {
 	TupleTableSlot *slot;
-	HeapTuple	tup;
-	TupleDesc	tupDesc;
 	Datum		value;
 
 	if (es->status == F_EXEC_START)
@@ -512,7 +510,7 @@ postquel_execute(execution_state *es,
 
 		/*
 		 * Compress out the HeapTuple header data.  We assume that
-		 * heap_formtuple made the tuple with header and body in one
+		 * heap_form_tuple made the tuple with header and body in one
 		 * palloc'd chunk.  We want to return a pointer to the chunk
 		 * start so that it will work if someone tries to free it.
 		 */
@@ -534,7 +532,8 @@ postquel_execute(execution_state *es,
 		else
 		{
 			/* function is declared to return RECORD */
-			tupDesc = fcache->junkFilter->jf_cleanTupType;
+			TupleDesc	tupDesc = fcache->junkFilter->jf_cleanTupType;
+
 			if (tupDesc->tdtypeid == RECORDOID &&
 				tupDesc->tdtypmod < 0)
 				assign_record_type_typmod(tupDesc);
@@ -556,10 +555,7 @@ postquel_execute(execution_state *es,
 		 * column of the SELECT result, and then copy into current
 		 * execution context if needed.
 		 */
-		tup = slot->val;
-		tupDesc = slot->ttc_tupleDescriptor;
-
-		value = heap_getattr(tup, 1, tupDesc, &(fcinfo->isnull));
+		value = slot_getattr(slot, 1, &(fcinfo->isnull));
 
 		if (!fcinfo->isnull)
 			value = datumCopy(value, fcache->typbyval, fcache->typlen);

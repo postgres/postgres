@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/analyze.c,v 1.82 2005/02/11 00:41:12 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/analyze.c,v 1.83 2005/03/16 21:38:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -448,13 +448,10 @@ compute_index_stats(Relation onerel, double totalrows,
 {
 	MemoryContext ind_context,
 				old_context;
-	TupleDesc	heapDescriptor;
 	Datum		attdata[INDEX_MAX_KEYS];
 	char		nulls[INDEX_MAX_KEYS];
 	int			ind,
 				i;
-
-	heapDescriptor = RelationGetDescr(onerel);
 
 	ind_context = AllocSetContextCreate(anl_context,
 										"Analyze Index",
@@ -468,7 +465,6 @@ compute_index_stats(Relation onerel, double totalrows,
 		AnlIndexData *thisdata = &indexdata[ind];
 		IndexInfo  *indexInfo = thisdata->indexInfo;
 		int			attr_cnt = thisdata->attr_cnt;
-		TupleTable	tupleTable;
 		TupleTableSlot *slot;
 		EState	   *estate;
 		ExprContext *econtext;
@@ -492,9 +488,7 @@ compute_index_stats(Relation onerel, double totalrows,
 		estate = CreateExecutorState();
 		econtext = GetPerTupleExprContext(estate);
 		/* Need a slot to hold the current heap tuple, too */
-		tupleTable = ExecCreateTupleTable(1);
-		slot = ExecAllocTableSlot(tupleTable);
-		ExecSetSlotDescriptor(slot, heapDescriptor, false);
+		slot = MakeSingleTupleTableSlot(RelationGetDescr(onerel));
 
 		/* Arrange for econtext's scan tuple to be the tuple under test */
 		econtext->ecxt_scantuple = slot;
@@ -532,8 +526,7 @@ compute_index_stats(Relation onerel, double totalrows,
 				 * convenient.
 				 */
 				FormIndexDatum(indexInfo,
-							   heapTuple,
-							   heapDescriptor,
+							   slot,
 							   estate,
 							   attdata,
 							   nulls);
@@ -585,7 +578,7 @@ compute_index_stats(Relation onerel, double totalrows,
 		/* And clean up */
 		MemoryContextSwitchTo(ind_context);
 
-		ExecDropTupleTable(tupleTable, true);
+		ExecDropSingleTupleTableSlot(slot);
 		FreeExecutorState(estate);
 		MemoryContextResetAndDeleteChildren(ind_context);
 	}

@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execMain.c,v 1.241 2005/01/14 17:53:33 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execMain.c,v 1.242 2005/03/16 21:38:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1082,7 +1082,6 @@ lnext:	;
 		if ((junkfilter = estate->es_junkFilter) != NULL)
 		{
 			Datum		datum;
-			HeapTuple	newTuple;
 			bool		isNull;
 
 			/*
@@ -1180,13 +1179,7 @@ lnext:	;
 			 * Finally create a new "clean" tuple with all junk attributes
 			 * removed
 			 */
-			newTuple = ExecRemoveJunk(junkfilter, slot);
-
-			slot = ExecStoreTuple(newTuple,		/* tuple to store */
-								  junkfilter->jf_resultSlot,	/* dest slot */
-								  InvalidBuffer,		/* this tuple has no
-														 * buffer */
-								  true);		/* tuple should be pfreed */
+			slot = ExecFilterJunk(junkfilter, slot);
 		}
 
 		/*
@@ -1276,15 +1269,6 @@ ExecSelect(TupleTableSlot *slot,
 		   DestReceiver *dest,
 		   EState *estate)
 {
-	HeapTuple	tuple;
-	TupleDesc	attrtype;
-
-	/*
-	 * get the heap tuple out of the tuple table slot
-	 */
-	tuple = slot->val;
-	attrtype = slot->ttc_tupleDescriptor;
-
 	/*
 	 * insert the tuple into the "into relation"
 	 *
@@ -1292,15 +1276,20 @@ ExecSelect(TupleTableSlot *slot,
 	 */
 	if (estate->es_into_relation_descriptor != NULL)
 	{
+		HeapTuple	tuple;
+
+		tuple = ExecCopySlotTuple(slot);
 		heap_insert(estate->es_into_relation_descriptor, tuple,
 					estate->es_snapshot->curcid);
+		/* we know there are no indexes to update */
+		heap_freetuple(tuple);
 		IncrAppended();
 	}
 
 	/*
 	 * send the tuple to the destination
 	 */
-	(*dest->receiveTuple) (tuple, attrtype, dest);
+	(*dest->receiveSlot) (slot, dest);
 	IncrRetrieved();
 	(estate->es_processed)++;
 }
@@ -1325,9 +1314,10 @@ ExecInsert(TupleTableSlot *slot,
 	Oid			newId;
 
 	/*
-	 * get the heap tuple out of the tuple table slot
+	 * get the heap tuple out of the tuple table slot, making sure
+	 * we have a writable copy
 	 */
-	tuple = slot->val;
+	tuple = ExecMaterializeSlot(slot);
 
 	/*
 	 * get information on the (current) result relation
@@ -1520,9 +1510,10 @@ ExecUpdate(TupleTableSlot *slot,
 		elog(ERROR, "cannot UPDATE during bootstrap");
 
 	/*
-	 * get the heap tuple out of the tuple table slot
+	 * get the heap tuple out of the tuple table slot, making sure
+	 * we have a writable copy
 	 */
-	tuple = slot->val;
+	tuple = ExecMaterializeSlot(slot);
 
 	/*
 	 * get information on the (current) result relation
@@ -1604,10 +1595,8 @@ lreplace:;
 				if (!TupIsNull(epqslot))
 				{
 					*tupleid = ctid;
-					tuple = ExecRemoveJunk(estate->es_junkFilter, epqslot);
-					slot = ExecStoreTuple(tuple,
-									estate->es_junkFilter->jf_resultSlot,
-										  InvalidBuffer, true);
+					slot = ExecFilterJunk(estate->es_junkFilter, epqslot);
+					tuple = ExecMaterializeSlot(slot);
 					goto lreplace;
 				}
 			}
@@ -1712,7 +1701,6 @@ ExecConstraints(ResultRelInfo *resultRelInfo,
 				TupleTableSlot *slot, EState *estate)
 {
 	Relation	rel = resultRelInfo->ri_RelationDesc;
-	HeapTuple	tuple = slot->val;
 	TupleConstr *constr = rel->rd_att->constr;
 
 	Assert(constr);
@@ -1725,7 +1713,7 @@ ExecConstraints(ResultRelInfo *resultRelInfo,
 		for (attrChk = 1; attrChk <= natts; attrChk++)
 		{
 			if (rel->rd_att->attrs[attrChk - 1]->attnotnull &&
-				heap_attisnull(tuple, attrChk))
+				slot_attisnull(slot, attrChk))
 				ereport(ERROR,
 						(errcode(ERRCODE_NOT_NULL_VIOLATION),
 						 errmsg("null value in column \"%s\" violates not-null constraint",

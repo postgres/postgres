@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/indexing.c,v 1.107 2004/12/31 21:59:38 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/indexing.c,v 1.108 2005/03/16 21:38:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -73,19 +73,24 @@ CatalogIndexInsert(CatalogIndexState indstate, HeapTuple heapTuple)
 	int			numIndexes;
 	RelationPtr relationDescs;
 	Relation	heapRelation;
-	TupleDesc	heapDescriptor;
+	TupleTableSlot *slot;
 	IndexInfo **indexInfoArray;
 	Datum		datum[INDEX_MAX_KEYS];
 	char		nullv[INDEX_MAX_KEYS];
 
 	/*
-	 * Get information from the state structure.
+	 * Get information from the state structure.  Fall out if nothing to do.
 	 */
 	numIndexes = indstate->ri_NumIndices;
+	if (numIndexes == 0)
+		return;
 	relationDescs = indstate->ri_IndexRelationDescs;
 	indexInfoArray = indstate->ri_IndexRelationInfo;
 	heapRelation = indstate->ri_RelationDesc;
-	heapDescriptor = RelationGetDescr(heapRelation);
+
+	/* Need a slot to hold the tuple being examined */
+	slot = MakeSingleTupleTableSlot(RelationGetDescr(heapRelation));
+	ExecStoreTuple(heapTuple, slot, InvalidBuffer, false);
 
 	/*
 	 * for each index, form and insert the index tuple
@@ -106,11 +111,10 @@ CatalogIndexInsert(CatalogIndexState indstate, HeapTuple heapTuple)
 
 		/*
 		 * FormIndexDatum fills in its datum and null parameters with
-		 * attribute information taken from the given heap tuple.
+		 * attribute information taken from the given tuple.
 		 */
 		FormIndexDatum(indexInfo,
-					   heapTuple,
-					   heapDescriptor,
+					   slot,
 					   NULL,	/* no expression eval to do */
 					   datum,
 					   nullv);
@@ -128,6 +132,8 @@ CatalogIndexInsert(CatalogIndexState indstate, HeapTuple heapTuple)
 		if (result)
 			pfree(result);
 	}
+
+	ExecDropSingleTupleTableSlot(slot);
 }
 
 /*

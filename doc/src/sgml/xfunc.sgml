@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/xfunc.sgml,v 1.100 2005/03/12 20:25:06 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/xfunc.sgml,v 1.101 2005/03/16 21:38:04 tgl Exp $
 -->
 
  <sect1 id="xfunc">
@@ -2219,7 +2219,7 @@ CREATE FUNCTION c_overpaid(emp, integer) RETURNS boolean
      case, you first need to obtain or construct a <structname>TupleDesc</>
      descriptor for the tuple structure.  When working with Datums, you
      pass the <structname>TupleDesc</> to <function>BlessTupleDesc</>,
-     and then call <function>heap_formtuple</> for each row.  When working
+     and then call <function>heap_form_tuple</> for each row.  When working
      with C strings, you pass the <structname>TupleDesc</> to
      <function>TupleDescGetAttInMetadata</>, and then call
      <function>BuildTupleFromCStrings</> for each row.  In the case of a
@@ -2264,7 +2264,7 @@ AttInMetadata *TupleDescGetAttInMetadata(TupleDesc tupdesc)
     <para>
      When working with Datums, use
 <programlisting>
-HeapTuple heap_formtuple(TupleDesc tupdesc, Datum *values, char *nulls)
+HeapTuple heap_form_tuple(TupleDesc tupdesc, Datum *values, bool *isnull)
 </programlisting>
      to build a <structname>HeapTuple</> given user data in Datum form.
     </para>
@@ -2383,7 +2383,7 @@ typedef struct
      *
      * tuple_desc is for use when returning tuples (i.e. composite data types)
      * and is only needed if you are going to build the tuples with
-     * heap_formtuple() rather than with BuildTupleFromCStrings().  Note that
+     * heap_form_tuple() rather than with BuildTupleFromCStrings().  Note that
      * the TupleDesc pointer stored here should usually have been run through
      * BlessTupleDesc() first.
      */

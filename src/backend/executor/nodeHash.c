@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeHash.c,v 1.90 2005/03/13 19:59:40 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeHash.c,v 1.91 2005/03/16 21:38:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -75,7 +75,7 @@ ExecHash(HashState *node)
 		/* We have to compute the hash value */
 		econtext->ecxt_innertuple = slot;
 		hashvalue = ExecHashGetHashValue(hashtable, econtext, hashkeys);
-		ExecHashTableInsert(hashtable, slot->val, hashvalue);
+		ExecHashTableInsert(hashtable, ExecFetchSlotTuple(slot), hashvalue);
 	}
 
 	/*

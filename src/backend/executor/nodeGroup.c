@@ -15,7 +15,7 @@
  *	  locate group boundaries.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeGroup.c,v 1.60 2005/03/10 23:21:21 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeGroup.c,v 1.61 2005/03/16 21:38:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,11 +36,9 @@ TupleTableSlot *
 ExecGroup(GroupState *node)
 {
 	ExprContext *econtext;
-	TupleDesc	tupdesc;
 	int			numCols;
 	AttrNumber *grpColIdx;
-	HeapTuple	outerTuple;
-	HeapTuple	firsttuple;
+	TupleTableSlot *firsttupleslot;
 	TupleTableSlot *outerslot;
 
 	/*
@@ -49,9 +47,13 @@ ExecGroup(GroupState *node)
 	if (node->grp_done)
 		return NULL;
 	econtext = node->ss.ps.ps_ExprContext;
-	tupdesc = ExecGetScanType(&node->ss);
 	numCols = ((Group *) node->ss.ps.plan)->numCols;
 	grpColIdx = ((Group *) node->ss.ps.plan)->grpColIdx;
+
+	/*
+	 * The ScanTupleSlot holds the (copied) first tuple of each group.
+	 */
+	firsttupleslot = node->ss.ss_ScanTupleSlot;
 
 	/*
 	 * We need not call ResetExprContext here because execTuplesMatch will
@@ -62,8 +64,7 @@ ExecGroup(GroupState *node)
 	 * If first time through, acquire first input tuple and determine
 	 * whether to return it or not.
 	 */
-	firsttuple = node->grp_firstTuple;
-	if (firsttuple == NULL)
+	if (TupIsNull(firsttupleslot))
 	{
 		outerslot = ExecProcNode(outerPlanState(node));
 		if (TupIsNull(outerslot))
@@ -72,13 +73,9 @@ ExecGroup(GroupState *node)
 			node->grp_done = TRUE;
 			return NULL;
 		}
-		node->grp_firstTuple = firsttuple = heap_copytuple(outerslot->val);
-		/* Set up tuple as input for qual test and projection */
-		ExecStoreTuple(firsttuple,
-					   node->ss.ss_ScanTupleSlot,
-					   InvalidBuffer,
-					   false);
-		econtext->ecxt_scantuple = node->ss.ss_ScanTupleSlot;
+		/* Copy tuple, set up as input for qual test and projection */
+		ExecCopySlot(firsttupleslot, outerslot);
+		econtext->ecxt_scantuple = firsttupleslot;
 		/*
 		 * Check the qual (HAVING clause); if the group does not match,
 		 * ignore it and fall into scan loop.
@@ -112,14 +109,12 @@ ExecGroup(GroupState *node)
 				node->grp_done = TRUE;
 				return NULL;
 			}
-			outerTuple = outerslot->val;
 
 			/*
 			 * Compare with first tuple and see if this tuple is of the same
 			 * group.  If so, ignore it and keep scanning.
 			 */
-			if (!execTuplesMatch(firsttuple, outerTuple,
-								 tupdesc,
+			if (!execTuplesMatch(firsttupleslot, outerslot,
 								 numCols, grpColIdx,
 								 node->eqfunctions,
 								 econtext->ecxt_per_tuple_memory))
@@ -129,14 +124,9 @@ ExecGroup(GroupState *node)
 		 * We have the first tuple of the next input group.  See if we
 		 * want to return it.
 		 */
-		heap_freetuple(firsttuple);
-		node->grp_firstTuple = firsttuple = heap_copytuple(outerTuple);
-		/* Set up tuple as input for qual test and projection */
-		ExecStoreTuple(firsttuple,
-					   node->ss.ss_ScanTupleSlot,
-					   InvalidBuffer,
-					   false);
-		econtext->ecxt_scantuple = node->ss.ss_ScanTupleSlot;
+		/* Copy tuple, set up as input for qual test and projection */
+		ExecCopySlot(firsttupleslot, outerslot);
+		econtext->ecxt_scantuple = firsttupleslot;
 		/*
 		 * Check the qual (HAVING clause); if the group does not match,
 		 * ignore it and loop back to scan the rest of the group.
@@ -173,7 +163,6 @@ ExecInitGroup(Group *node, EState *estate)
 	grpstate = makeNode(GroupState);
 	grpstate->ss.ps.plan = (Plan *) node;
 	grpstate->ss.ps.state = estate;
-	grpstate->grp_firstTuple = NULL;
 	grpstate->grp_done = FALSE;
 
 	/*
@@ -255,11 +244,8 @@ void
 ExecReScanGroup(GroupState *node, ExprContext *exprCtxt)
 {
 	node->grp_done = FALSE;
-	if (node->grp_firstTuple != NULL)
-	{
-		heap_freetuple(node->grp_firstTuple);
-		node->grp_firstTuple = NULL;
-	}
+	/* must clear first tuple */
+	ExecClearTuple(node->ss.ss_ScanTupleSlot);
 
 	if (((PlanState *) node)->lefttree &&
 		((PlanState *) node)->lefttree->chgParam == NULL)

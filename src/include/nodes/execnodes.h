@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/execnodes.h,v 1.123 2005/03/06 22:15:05 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/execnodes.h,v 1.124 2005/03/16 21:38:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -175,20 +175,28 @@ typedef struct ReturnSetInfo
  *		This is all the information needed to perform projections ---
  *		that is, form new tuples by evaluation of targetlist expressions.
  *		Nodes which need to do projections create one of these.
- *		In theory, when a node wants to perform a projection
- *		it should just update this information as necessary and then
- *		call ExecProject().  -cim 6/3/91
  *
  *		ExecProject() evaluates the tlist, forms a tuple, and stores it
- *		in the given slot.	As a side-effect, the actual datum values and
- *		null indicators are placed in the work arrays tupValues/tupNulls.
+ *		in the given slot.	Note that the result will be a "virtual" tuple
+ *		unless ExecMaterializeSlot() is then called to force it to be
+ *		converted to a physical tuple.  The slot must have a tupledesc
+ *		that matches the output of the tlist!
+ *
+ *		The planner very often produces tlists that consist entirely of
+ *		simple Var references (lower levels of a plan tree almost always
+ *		look like that).  So we have an optimization to handle that case
+ *		with minimum overhead.
  *
  *		targetlist		target list for projection
  *		exprContext		expression context in which to evaluate targetlist
  *		slot			slot to place projection result in
- *		tupValues		array of computed values
- *		tupNull			array of null indicators
  *		itemIsDone		workspace for ExecProject
+ *		isVarList		TRUE if simple-Var-list optimization applies
+ *		varSlotOffsets	array indicating which slot each simple Var is from
+ *		varNumbers		array indicating attr numbers of simple Vars
+ *		lastInnerVar	highest attnum from inner tuple slot (0 if none)
+ *		lastOuterVar	highest attnum from outer tuple slot (0 if none)
+ *		lastScanVar		highest attnum from scan tuple slot (0 if none)
  * ----------------
  */
 typedef struct ProjectionInfo
@@ -197,9 +205,13 @@ typedef struct ProjectionInfo
 	List	   *pi_targetlist;
 	ExprContext *pi_exprContext;
 	TupleTableSlot *pi_slot;
-	Datum	   *pi_tupValues;
-	char	   *pi_tupNulls;
 	ExprDoneCond *pi_itemIsDone;
+	bool		pi_isVarList;
+	int		   *pi_varSlotOffsets;
+	int		   *pi_varNumbers;
+	int			pi_lastInnerVar;
+	int			pi_lastOuterVar;
+	int			pi_lastScanVar;
 } ProjectionInfo;
 
 /* ----------------
@@ -222,7 +234,7 @@ typedef struct ProjectionInfo
  *	  cleanMap:			A map with the correspondence between the non-junk
  *						attribute numbers of the "original" tuple and the
  *						attribute numbers of the "clean" tuple.
- *	  resultSlot:		tuple slot that can be used to hold cleaned tuple.
+ *	  resultSlot:		tuple slot used to hold cleaned tuple.
  * ----------------
  */
 typedef struct JunkFilter
@@ -354,7 +366,8 @@ typedef struct TupleHashTableData
 	MemoryContext tablecxt;		/* memory context containing table */
 	MemoryContext tempcxt;		/* context for function evaluations */
 	Size		entrysize;		/* actual size to make each hash entry */
-	TupleDesc	tupdesc;		/* tuple descriptor */
+	TupleTableSlot *tableslot;	/* slot for referencing table entries */
+	TupleTableSlot *inputslot;	/* current input tuple's slot */
 } TupleHashTableData;
 
 typedef HASH_SEQ_STATUS TupleHashIterator;
@@ -589,9 +602,9 @@ typedef struct ConvertRowtypeExprState
 	TupleDesc	outdesc;		/* tupdesc for result rowtype */
 	AttrNumber *attrMap;		/* indexes of input fields, or 0 for null */
 	Datum	   *invalues;		/* workspace for deconstructing source */
-	char	   *innulls;
+	bool	   *inisnull;
 	Datum	   *outvalues;		/* workspace for constructing result */
-	char	   *outnulls;
+	bool	   *outisnull;
 } ConvertRowtypeExprState;
 
 /* ----------------
@@ -1065,7 +1078,6 @@ typedef struct GroupState
 {
 	ScanState	ss;				/* its first field is NodeTag */
 	FmgrInfo   *eqfunctions;	/* per-field lookup data for equality fns */
-	HeapTuple	grp_firstTuple; /* copy of first tuple of current group */
 	bool		grp_done;		/* indicates completion of Group scan */
 } GroupState;
 
@@ -1111,7 +1123,7 @@ typedef struct AggState
  *		Unique nodes are used "on top of" sort nodes to discard
  *		duplicate tuples returned from the sort phase.	Basically
  *		all it does is compare the current tuple from the subplan
- *		with the previously fetched tuple stored in priorTuple.
+ *		with the previously fetched tuple (stored in its result slot).
  *		If the two are identical in all interesting fields, then
  *		we just fetch another tuple from the sort and try again.
  * ----------------
@@ -1120,7 +1132,6 @@ typedef struct UniqueState
 {
 	PlanState	ps;				/* its first field is NodeTag */
 	FmgrInfo   *eqfunctions;	/* per-field lookup data for equality fns */
-	HeapTuple	priorTuple;		/* most recently returned tuple, or NULL */
 	MemoryContext tempContext;	/* short-term context for comparisons */
 } UniqueState;
 

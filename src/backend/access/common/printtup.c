@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/common/printtup.c,v 1.86 2004/12/31 21:59:07 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/common/printtup.c,v 1.87 2005/03/16 21:38:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,12 +25,9 @@
 
 static void printtup_startup(DestReceiver *self, int operation,
 				 TupleDesc typeinfo);
-static void printtup(HeapTuple tuple, TupleDesc typeinfo,
-		 DestReceiver *self);
-static void printtup_20(HeapTuple tuple, TupleDesc typeinfo,
-			DestReceiver *self);
-static void printtup_internal_20(HeapTuple tuple, TupleDesc typeinfo,
-					 DestReceiver *self);
+static void printtup(TupleTableSlot *slot, DestReceiver *self);
+static void printtup_20(TupleTableSlot *slot, DestReceiver *self);
+static void printtup_internal_20(TupleTableSlot *slot, DestReceiver *self);
 static void printtup_shutdown(DestReceiver *self);
 static void printtup_destroy(DestReceiver *self);
 
@@ -65,8 +62,6 @@ typedef struct
 	TupleDesc	attrinfo;		/* The attr info we are set up for */
 	int			nattrs;
 	PrinttupAttrInfo *myinfo;	/* Cached info about each attr */
-	Datum	   *values;			/* preallocated space for deformtuple */
-	char	   *nulls;
 } DR_printtup;
 
 /* ----------------
@@ -79,7 +74,7 @@ printtup_create_DR(CommandDest dest, Portal portal)
 	DR_printtup *self = (DR_printtup *) palloc(sizeof(DR_printtup));
 
 	if (PG_PROTOCOL_MAJOR(FrontendProtocol) >= 3)
-		self->pub.receiveTuple = printtup;
+		self->pub.receiveSlot = printtup;
 	else
 	{
 		/*
@@ -88,9 +83,9 @@ printtup_create_DR(CommandDest dest, Portal portal)
 		 * sufficient to look at the first one.
 		 */
 		if (portal->formats && portal->formats[0] != 0)
-			self->pub.receiveTuple = printtup_internal_20;
+			self->pub.receiveSlot = printtup_internal_20;
 		else
-			self->pub.receiveTuple = printtup_20;
+			self->pub.receiveSlot = printtup_20;
 	}
 	self->pub.rStartup = printtup_startup;
 	self->pub.rShutdown = printtup_shutdown;
@@ -105,8 +100,6 @@ printtup_create_DR(CommandDest dest, Portal portal)
 	self->attrinfo = NULL;
 	self->nattrs = 0;
 	self->myinfo = NULL;
-	self->values = NULL;
-	self->nulls = NULL;
 
 	return (DestReceiver *) self;
 }
@@ -251,12 +244,6 @@ printtup_prepare_info(DR_printtup *myState, TupleDesc typeinfo, int numAttrs)
 	if (myState->myinfo)
 		pfree(myState->myinfo);
 	myState->myinfo = NULL;
-	if (myState->values)
-		pfree(myState->values);
-	myState->values = NULL;
-	if (myState->nulls)
-		pfree(myState->nulls);
-	myState->nulls = NULL;
 
 	myState->attrinfo = typeinfo;
 	myState->nattrs = numAttrs;
@@ -265,8 +252,6 @@ printtup_prepare_info(DR_printtup *myState, TupleDesc typeinfo, int numAttrs)
 
 	myState->myinfo = (PrinttupAttrInfo *)
 		palloc0(numAttrs * sizeof(PrinttupAttrInfo));
-	myState->values = (Datum *) palloc(numAttrs * sizeof(Datum));
-	myState->nulls = (char *) palloc(numAttrs * sizeof(char));
 
 	for (i = 0; i < numAttrs; i++)
 	{
@@ -302,8 +287,9 @@ printtup_prepare_info(DR_printtup *myState, TupleDesc typeinfo, int numAttrs)
  * ----------------
  */
 static void
-printtup(HeapTuple tuple, TupleDesc typeinfo, DestReceiver *self)
+printtup(TupleTableSlot *slot, DestReceiver *self)
 {
+	TupleDesc typeinfo = slot->tts_tupleDescriptor;
 	DR_printtup *myState = (DR_printtup *) self;
 	StringInfoData buf;
 	int			natts = typeinfo->natts;
@@ -313,10 +299,8 @@ printtup(HeapTuple tuple, TupleDesc typeinfo, DestReceiver *self)
 	if (myState->attrinfo != typeinfo || myState->nattrs != natts)
 		printtup_prepare_info(myState, typeinfo, natts);
 
-	/*
-	 * deconstruct the tuple (faster than a heap_getattr loop)
-	 */
-	heap_deformtuple(tuple, typeinfo, myState->values, myState->nulls);
+	/* Make sure the tuple is fully deconstructed */
+	slot_getallattrs(slot);
 
 	/*
 	 * Prepare a DataRow message
@@ -331,10 +315,10 @@ printtup(HeapTuple tuple, TupleDesc typeinfo, DestReceiver *self)
 	for (i = 0; i < natts; ++i)
 	{
 		PrinttupAttrInfo *thisState = myState->myinfo + i;
-		Datum		origattr = myState->values[i],
+		Datum		origattr = slot->tts_values[i],
 					attr;
 
-		if (myState->nulls[i] == 'n')
+		if (slot->tts_isnull[i])
 		{
 			pq_sendint(&buf, -1, 4);
 			continue;
@@ -389,8 +373,9 @@ printtup(HeapTuple tuple, TupleDesc typeinfo, DestReceiver *self)
  * ----------------
  */
 static void
-printtup_20(HeapTuple tuple, TupleDesc typeinfo, DestReceiver *self)
+printtup_20(TupleTableSlot *slot, DestReceiver *self)
 {
+	TupleDesc typeinfo = slot->tts_tupleDescriptor;
 	DR_printtup *myState = (DR_printtup *) self;
 	StringInfoData buf;
 	int			natts = typeinfo->natts;
@@ -402,10 +387,8 @@ printtup_20(HeapTuple tuple, TupleDesc typeinfo, DestReceiver *self)
 	if (myState->attrinfo != typeinfo || myState->nattrs != natts)
 		printtup_prepare_info(myState, typeinfo, natts);
 
-	/*
-	 * deconstruct the tuple (faster than a heap_getattr loop)
-	 */
-	heap_deformtuple(tuple, typeinfo, myState->values, myState->nulls);
+	/* Make sure the tuple is fully deconstructed */
+	slot_getallattrs(slot);
 
 	/*
 	 * tell the frontend to expect new tuple data (in ASCII style)
@@ -419,7 +402,7 @@ printtup_20(HeapTuple tuple, TupleDesc typeinfo, DestReceiver *self)
 	k = 1 << 7;
 	for (i = 0; i < natts; ++i)
 	{
-		if (myState->nulls[i] != 'n')
+		if (slot->tts_isnull[i])
 			j |= k;				/* set bit if not null */
 		k >>= 1;
 		if (k == 0)				/* end of byte? */
@@ -438,11 +421,11 @@ printtup_20(HeapTuple tuple, TupleDesc typeinfo, DestReceiver *self)
 	for (i = 0; i < natts; ++i)
 	{
 		PrinttupAttrInfo *thisState = myState->myinfo + i;
-		Datum		origattr = myState->values[i],
+		Datum		origattr = slot->tts_values[i],
 					attr;
 		char	   *outputstr;
 
-		if (myState->nulls[i] == 'n')
+		if (slot->tts_isnull[i])
 			continue;
 
 		Assert(thisState->format == 0);
@@ -483,12 +466,6 @@ printtup_shutdown(DestReceiver *self)
 	if (myState->myinfo)
 		pfree(myState->myinfo);
 	myState->myinfo = NULL;
-	if (myState->values)
-		pfree(myState->values);
-	myState->values = NULL;
-	if (myState->nulls)
-		pfree(myState->nulls);
-	myState->nulls = NULL;
 
 	myState->attrinfo = NULL;
 }
@@ -548,8 +525,9 @@ debugStartup(DestReceiver *self, int operation, TupleDesc typeinfo)
  * ----------------
  */
 void
-debugtup(HeapTuple tuple, TupleDesc typeinfo, DestReceiver *self)
+debugtup(TupleTableSlot *slot, DestReceiver *self)
 {
+	TupleDesc	typeinfo = slot->tts_tupleDescriptor;
 	int			natts = typeinfo->natts;
 	int			i;
 	Datum		origattr,
@@ -562,7 +540,7 @@ debugtup(HeapTuple tuple, TupleDesc typeinfo, DestReceiver *self)
 
 	for (i = 0; i < natts; ++i)
 	{
-		origattr = heap_getattr(tuple, i + 1, typeinfo, &isnull);
+		origattr = slot_getattr(slot, i + 1, &isnull);
 		if (isnull)
 			continue;
 		getTypeOutputInfo(typeinfo->attrs[i]->atttypid,
@@ -603,8 +581,9 @@ debugtup(HeapTuple tuple, TupleDesc typeinfo, DestReceiver *self)
  * ----------------
  */
 static void
-printtup_internal_20(HeapTuple tuple, TupleDesc typeinfo, DestReceiver *self)
+printtup_internal_20(TupleTableSlot *slot, DestReceiver *self)
 {
+	TupleDesc typeinfo = slot->tts_tupleDescriptor;
 	DR_printtup *myState = (DR_printtup *) self;
 	StringInfoData buf;
 	int			natts = typeinfo->natts;
@@ -616,10 +595,8 @@ printtup_internal_20(HeapTuple tuple, TupleDesc typeinfo, DestReceiver *self)
 	if (myState->attrinfo != typeinfo || myState->nattrs != natts)
 		printtup_prepare_info(myState, typeinfo, natts);
 
-	/*
-	 * deconstruct the tuple (faster than a heap_getattr loop)
-	 */
-	heap_deformtuple(tuple, typeinfo, myState->values, myState->nulls);
+	/* Make sure the tuple is fully deconstructed */
+	slot_getallattrs(slot);
 
 	/*
 	 * tell the frontend to expect new tuple data (in binary style)
@@ -633,7 +610,7 @@ printtup_internal_20(HeapTuple tuple, TupleDesc typeinfo, DestReceiver *self)
 	k = 1 << 7;
 	for (i = 0; i < natts; ++i)
 	{
-		if (myState->nulls[i] != 'n')
+		if (slot->tts_isnull[i])
 			j |= k;				/* set bit if not null */
 		k >>= 1;
 		if (k == 0)				/* end of byte? */
@@ -652,11 +629,11 @@ printtup_internal_20(HeapTuple tuple, TupleDesc typeinfo, DestReceiver *self)
 	for (i = 0; i < natts; ++i)
 	{
 		PrinttupAttrInfo *thisState = myState->myinfo + i;
-		Datum		origattr = myState->values[i],
+		Datum		origattr = slot->tts_values[i],
 					attr;
 		bytea	   *outputbytes;
 
-		if (myState->nulls[i] == 'n')
+		if (slot->tts_isnull[i])
 			continue;
 
 		Assert(thisState->format == 1);

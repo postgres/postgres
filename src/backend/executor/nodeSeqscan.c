@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeSeqscan.c,v 1.51 2004/12/31 21:59:45 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeSeqscan.c,v 1.52 2005/03/16 21:38:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -110,12 +110,12 @@ SeqNext(SeqScanState *node)
 	 * refcount of the buffer; the refcount will not be dropped until the
 	 * tuple table slot is cleared.
 	 */
-
-	slot = ExecStoreTuple(tuple,	/* tuple to store */
-						  slot, /* slot to store in */
-						  scandesc->rs_cbuf,	/* buffer associated with
+	if (tuple)
+		ExecStoreTuple(tuple,					/* tuple to store */
+					   slot,					/* slot to store in */
+					   scandesc->rs_cbuf,		/* buffer associated with
 												 * this tuple */
-						  false);		/* don't pfree this pointer */
+					   false);		/* don't pfree this pointer */
 
 	return slot;
 }

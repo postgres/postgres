@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeUnique.c,v 1.45 2004/12/31 21:59:45 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeUnique.c,v 1.46 2005/03/16 21:38:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,14 +44,12 @@ ExecUnique(UniqueState *node)
 	TupleTableSlot *resultTupleSlot;
 	TupleTableSlot *slot;
 	PlanState  *outerPlan;
-	TupleDesc	tupDesc;
 
 	/*
 	 * get information from the node
 	 */
 	outerPlan = outerPlanState(node);
 	resultTupleSlot = node->ps.ps_ResultTupleSlot;
-	tupDesc = ExecGetResultType(&node->ps);
 
 	/*
 	 * now loop, returning only non-duplicate tuples. We assume that the
@@ -59,7 +57,7 @@ ExecUnique(UniqueState *node)
 	 *
 	 * We return the first tuple from each group of duplicates (or the last
 	 * tuple of each group, when moving backwards).  At either end of the
-	 * subplan, clear priorTuple so that we correctly return the
+	 * subplan, clear the result slot so that we correctly return the
 	 * first/last tuple when reversing direction.
 	 */
 	for (;;)
@@ -71,16 +69,14 @@ ExecUnique(UniqueState *node)
 		if (TupIsNull(slot))
 		{
 			/* end of subplan; reset in case we change direction */
-			if (node->priorTuple != NULL)
-				heap_freetuple(node->priorTuple);
-			node->priorTuple = NULL;
+			ExecClearTuple(resultTupleSlot);
 			return NULL;
 		}
 
 		/*
 		 * Always return the first/last tuple from the subplan.
 		 */
-		if (node->priorTuple == NULL)
+		if (TupIsNull(resultTupleSlot))
 			break;
 
 		/*
@@ -88,8 +84,7 @@ ExecUnique(UniqueState *node)
 		 * match.  If so then we loop back and fetch another new tuple
 		 * from the subplan.
 		 */
-		if (!execTuplesMatch(slot->val, node->priorTuple,
-							 tupDesc,
+		if (!execTuplesMatch(slot, resultTupleSlot,
 							 plannode->numCols, plannode->uniqColIdx,
 							 node->eqfunctions,
 							 node->tempContext))
@@ -101,28 +96,8 @@ ExecUnique(UniqueState *node)
 	 * any). Save it and return it.  We must copy it because the source
 	 * subplan won't guarantee that this source tuple is still accessible
 	 * after fetching the next source tuple.
-	 *
-	 * Note that we manage the copy ourselves.	We can't rely on the result
-	 * tuple slot to maintain the tuple reference because our caller may
-	 * replace the slot contents with a different tuple.  We assume that
-	 * the caller will no longer be interested in the current tuple after
-	 * he next calls us.
-	 *
-	 * tgl 3/2004: the above concern is no longer valid; junkfilters used to
-	 * modify their input's return slot but don't anymore, and I don't
-	 * think anyplace else does either.  Not worth changing this code
-	 * though.
 	 */
-	if (node->priorTuple != NULL)
-		heap_freetuple(node->priorTuple);
-	node->priorTuple = heap_copytuple(slot->val);
-
-	ExecStoreTuple(node->priorTuple,
-				   resultTupleSlot,
-				   InvalidBuffer,
-				   false);		/* tuple does not belong to slot */
-
-	return resultTupleSlot;
+	return ExecCopySlot(resultTupleSlot, slot);
 }
 
 /* ----------------------------------------------------------------
@@ -143,8 +118,6 @@ ExecInitUnique(Unique *node, EState *estate)
 	uniquestate = makeNode(UniqueState);
 	uniquestate->ps.plan = (Plan *) node;
 	uniquestate->ps.state = estate;
-
-	uniquestate->priorTuple = NULL;
 
 	/*
 	 * Miscellaneous initialization
@@ -220,12 +193,8 @@ ExecEndUnique(UniqueState *node)
 void
 ExecReScanUnique(UniqueState *node, ExprContext *exprCtxt)
 {
+	/* must clear result tuple so first input tuple is returned */
 	ExecClearTuple(node->ps.ps_ResultTupleSlot);
-	if (node->priorTuple != NULL)
-	{
-		heap_freetuple(node->priorTuple);
-		node->priorTuple = NULL;
-	}
 
 	/*
 	 * if chgParam of subnode is not null then plan will be re-scanned by

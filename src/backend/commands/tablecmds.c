@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.146 2005/02/09 23:17:26 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.147 2005/03/16 21:38:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2455,7 +2455,7 @@ ATRewriteTable(AlteredTableInfo *tab, Oid OIDNewHeap)
 	{
 		ExprContext *econtext;
 		Datum	   *values;
-		char	   *nulls;
+		bool	   *isnull;
 		TupleTableSlot *oldslot;
 		TupleTableSlot *newslot;
 		HeapScanDesc scan;
@@ -2471,17 +2471,15 @@ ATRewriteTable(AlteredTableInfo *tab, Oid OIDNewHeap)
 		 * the tuples are the same, the tupDescs might not be (consider
 		 * ADD COLUMN without a default).
 		 */
-		oldslot = MakeTupleTableSlot();
-		ExecSetSlotDescriptor(oldslot, oldTupDesc, false);
-		newslot = MakeTupleTableSlot();
-		ExecSetSlotDescriptor(newslot, newTupDesc, false);
+		oldslot = MakeSingleTupleTableSlot(oldTupDesc);
+		newslot = MakeSingleTupleTableSlot(newTupDesc);
 
-		/* Preallocate values/nulls arrays */
+		/* Preallocate values/isnull arrays */
 		i = Max(newTupDesc->natts, oldTupDesc->natts);
 		values = (Datum *) palloc(i * sizeof(Datum));
-		nulls = (char *) palloc(i * sizeof(char));
+		isnull = (bool *) palloc(i * sizeof(bool));
 		memset(values, 0, i * sizeof(Datum));
-		memset(nulls, 'n', i * sizeof(char));
+		memset(isnull, true, i * sizeof(bool));
 
 		/*
 		 * Any attributes that are dropped according to the new tuple
@@ -2512,11 +2510,11 @@ ATRewriteTable(AlteredTableInfo *tab, Oid OIDNewHeap)
 			if (newrel)
 			{
 				/* Extract data from old tuple */
-				heap_deformtuple(tuple, oldTupDesc, values, nulls);
+				heap_deform_tuple(tuple, oldTupDesc, values, isnull);
 
 				/* Set dropped attributes to null in new tuple */
 				foreach (lc, dropped_attrs)
-					nulls[lfirst_int(lc)] = 'n';
+					isnull[lfirst_int(lc)] = true;
 
 				/*
 				 * Process supplied expressions to replace selected
@@ -2528,16 +2526,11 @@ ATRewriteTable(AlteredTableInfo *tab, Oid OIDNewHeap)
 				foreach(l, tab->newvals)
 				{
 					NewColumnValue *ex = lfirst(l);
-					bool		isNull;
 
 					values[ex->attnum - 1] = ExecEvalExpr(ex->exprstate,
 														  econtext,
-														  &isNull,
+														  &isnull[ex->attnum - 1],
 														  NULL);
-					if (isNull)
-						nulls[ex->attnum - 1] = 'n';
-					else
-						nulls[ex->attnum - 1] = ' ';
 				}
 
 				/*
@@ -2545,7 +2538,7 @@ ATRewriteTable(AlteredTableInfo *tab, Oid OIDNewHeap)
 				 * pfree it, since the per-tuple memory context will
 				 * be reset shortly.
 				 */
-				tuple = heap_formtuple(newTupDesc, values, nulls);
+				tuple = heap_form_tuple(newTupDesc, values, isnull);
 			}
 
 			/* Now check any constraints on the possibly-changed tuple */

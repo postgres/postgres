@@ -21,7 +21,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeSetOp.c,v 1.15 2004/12/31 21:59:45 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeSetOp.c,v 1.16 2005/03/16 21:38:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -49,14 +49,12 @@ ExecSetOp(SetOpState *node)
 	SetOp	   *plannode = (SetOp *) node->ps.plan;
 	TupleTableSlot *resultTupleSlot;
 	PlanState  *outerPlan;
-	TupleDesc	tupDesc;
 
 	/*
 	 * get information from the node
 	 */
 	outerPlan = outerPlanState(node);
 	resultTupleSlot = node->ps.ps_ResultTupleSlot;
-	tupDesc = ExecGetResultType(&node->ps);
 
 	/*
 	 * If the previously-returned tuple needs to be returned more than
@@ -105,11 +103,7 @@ ExecSetOp(SetOpState *node)
 			 */
 			if (node->subplan_done)
 				return NULL;	/* no more tuples */
-			ExecStoreTuple(heap_copytuple(inputTupleSlot->val),
-						   resultTupleSlot,
-						   InvalidBuffer,
-						   true);		/* free copied tuple at
-										 * ExecClearTuple */
+			ExecCopySlot(resultTupleSlot, inputTupleSlot);
 			node->numLeft = 0;
 			node->numRight = 0;
 			endOfGroup = false;
@@ -127,9 +121,8 @@ ExecSetOp(SetOpState *node)
 			 * Else test if the new tuple and the previously saved tuple
 			 * match.
 			 */
-			if (execTuplesMatch(inputTupleSlot->val,
-								resultTupleSlot->val,
-								tupDesc,
+			if (execTuplesMatch(inputTupleSlot,
+								resultTupleSlot,
 								plannode->numCols, plannode->dupColIdx,
 								node->eqfunctions,
 								node->tempContext))
@@ -189,9 +182,8 @@ ExecSetOp(SetOpState *node)
 			int			flag;
 			bool		isNull;
 
-			flag = DatumGetInt32(heap_getattr(inputTupleSlot->val,
+			flag = DatumGetInt32(slot_getattr(inputTupleSlot,
 											  plannode->flagColIdx,
-											  tupDesc,
 											  &isNull));
 			Assert(!isNull);
 			if (flag)

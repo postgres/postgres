@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execTuples.c,v 1.84 2005/03/14 04:41:12 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execTuples.c,v 1.85 2005/03/16 21:38:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,12 +30,13 @@
  *		ExecAllocTableSlot		- find an available slot in the table
  *
  *	 SLOT ACCESSORS
- *		ExecStoreTuple			- store a tuple in the table
- *		ExecClearTuple			- clear contents of a table slot
  *		ExecSetSlotDescriptor	- set a slot's tuple descriptor
- *
- *	 SLOT STATUS PREDICATES
- *		TupIsNull				- true when slot contains no tuple (macro)
+ *		ExecStoreTuple			- store a physical tuple in the slot
+ *		ExecClearTuple			- clear contents of a slot
+ *		ExecStoreVirtualTuple	- mark slot as containing a virtual tuple
+ *		ExecCopySlotTuple		- build a physical tuple from a slot
+ *		ExecMaterializeSlot		- convert virtual to physical storage
+ *		ExecCopySlot			- copy one slot's contents to another
  *
  *	 CONVENIENCE INITIALIZATION ROUTINES
  *		ExecInitResultTupleSlot    \	convenience routines to initialize
@@ -81,10 +82,8 @@
  *		to the slots containing tuples are passed instead of the tuples
  *		themselves.  This facilitates the communication of related information
  *		(such as whether or not a tuple should be pfreed, what buffer contains
- *		this tuple, the tuple's tuple descriptor, etc).   Note that much of
- *		this information is also kept in the ExprContext of each node.
- *		Soon the executor will be redesigned and ExprContext's will contain
- *		only slot pointers.  -cim 3/14/91
+ *		this tuple, the tuple's tuple descriptor, etc).  It also allows us
+ *		to avoid physically constructing projection tuples in many cases.
  */
 #include "postgres.h"
 
@@ -142,14 +141,16 @@ ExecCreateTupleTable(int tableSize)
 		TupleTableSlot *slot = &(newtable->array[i]);
 
 		slot->type = T_TupleTableSlot;
-		slot->val = NULL;
-		slot->ttc_tupleDescriptor = NULL;
-		slot->ttc_shouldFree = false;
-		slot->ttc_shouldFreeDesc = false;
-		slot->ttc_buffer = InvalidBuffer;
-		slot->ttc_mcxt = CurrentMemoryContext;
-		slot->cache_values = NULL;
-		slot->cache_natts = 0;	/* mark slot_getattr state invalid */
+		slot->tts_isempty = true;
+		slot->tts_shouldFree = false;
+		slot->tts_shouldFreeDesc = false;
+		slot->tts_tuple = NULL;
+		slot->tts_tupleDescriptor = NULL;
+		slot->tts_mcxt = CurrentMemoryContext;
+		slot->tts_buffer = InvalidBuffer;
+		slot->tts_nvalid = 0;
+		slot->tts_values = NULL;
+		slot->tts_isnull = NULL;
 	}
 
 	return newtable;
@@ -189,10 +190,12 @@ ExecDropTupleTable(TupleTable table,	/* tuple table */
 			TupleTableSlot *slot = &(table->array[i]);
 
 			ExecClearTuple(slot);
-			if (slot->ttc_shouldFreeDesc)
-				FreeTupleDesc(slot->ttc_tupleDescriptor);
-			if (slot->cache_values)
-				pfree(slot->cache_values);
+			if (slot->tts_shouldFreeDesc)
+				FreeTupleDesc(slot->tts_tupleDescriptor);
+			if (slot->tts_values)
+				pfree(slot->tts_values);
+			if (slot->tts_isnull)
+				pfree(slot->tts_isnull);
 		}
 	}
 
@@ -203,30 +206,59 @@ ExecDropTupleTable(TupleTable table,	/* tuple table */
 }
 
 /* --------------------------------
- *		MakeTupleTableSlot
+ *		MakeSingleTupleTableSlot
  *
- *		This routine makes an empty standalone TupleTableSlot.
- *		It really shouldn't exist, but there are a few places
- *		that do this, so we may as well centralize the knowledge
- *		of what's in one ...
+ *		This is a convenience routine for operations that need a
+ *		standalone TupleTableSlot not gotten from the main executor
+ *		tuple table.  It makes a single slot and initializes it as
+ *		though by ExecSetSlotDescriptor(slot, tupdesc, false).
  * --------------------------------
  */
 TupleTableSlot *
-MakeTupleTableSlot(void)
+MakeSingleTupleTableSlot(TupleDesc tupdesc)
 {
 	TupleTableSlot *slot = makeNode(TupleTableSlot);
 
 	/* This should match ExecCreateTupleTable() */
-	slot->val = NULL;
-	slot->ttc_tupleDescriptor = NULL;
-	slot->ttc_shouldFree = false;
-	slot->ttc_shouldFreeDesc = false;
-	slot->ttc_buffer = InvalidBuffer;
-	slot->ttc_mcxt = CurrentMemoryContext;
-	slot->cache_values = NULL;
-	slot->cache_natts = 0;	/* mark slot_getattr state invalid */
+	slot->tts_isempty = true;
+	slot->tts_shouldFree = false;
+	slot->tts_shouldFreeDesc = false;
+	slot->tts_tuple = NULL;
+	slot->tts_tupleDescriptor = NULL;
+	slot->tts_mcxt = CurrentMemoryContext;
+	slot->tts_buffer = InvalidBuffer;
+	slot->tts_nvalid = 0;
+	slot->tts_values = NULL;
+	slot->tts_isnull = NULL;
+
+	ExecSetSlotDescriptor(slot, tupdesc, false);
 
 	return slot;
+}
+
+/* --------------------------------
+ *		ExecDropSingleTupleTableSlot
+ *
+ *		Release a TupleTableSlot made with MakeSingleTupleTableSlot.
+ * --------------------------------
+ */
+void
+ExecDropSingleTupleTableSlot(TupleTableSlot *slot)
+{
+	/*
+	 * sanity checks
+	 */
+	Assert(slot != NULL);
+
+	ExecClearTuple(slot);
+	if (slot->tts_shouldFreeDesc)
+		FreeTupleDesc(slot->tts_tupleDescriptor);
+	if (slot->tts_values)
+		pfree(slot->tts_values);
+	if (slot->tts_isnull)
+		pfree(slot->tts_isnull);
+
+	pfree(slot);
 }
 
 
@@ -275,9 +307,53 @@ ExecAllocTableSlot(TupleTable table)
  */
 
 /* --------------------------------
+ *		ExecSetSlotDescriptor
+ *
+ *		This function is used to set the tuple descriptor associated
+ *		with the slot's tuple.
+ * --------------------------------
+ */
+void
+ExecSetSlotDescriptor(TupleTableSlot *slot,		/* slot to change */
+					  TupleDesc tupdesc,		/* new tuple descriptor */
+					  bool shouldFree)	/* is desc owned by slot? */
+{
+	/* For safety, make sure slot is empty before changing it */
+	ExecClearTuple(slot);
+
+	/*
+	 * Release any old descriptor.  Also release old Datum/isnull arrays
+	 * if present (we don't bother to check if they could be re-used).
+	 */
+	if (slot->tts_shouldFreeDesc)
+		FreeTupleDesc(slot->tts_tupleDescriptor);
+
+	if (slot->tts_values)
+		pfree(slot->tts_values);
+	if (slot->tts_isnull)
+		pfree(slot->tts_isnull);
+
+	/*
+	 * Set up the new descriptor
+	 */
+	slot->tts_tupleDescriptor = tupdesc;
+	slot->tts_shouldFreeDesc = shouldFree;
+
+	/*
+	 * Allocate Datum/isnull arrays of the appropriate size.  These must
+	 * have the same lifetime as the slot, so allocate in the slot's own
+	 * context.
+	 */
+	slot->tts_values = (Datum *)
+		MemoryContextAlloc(slot->tts_mcxt, tupdesc->natts * sizeof(Datum));
+	slot->tts_isnull = (bool *)
+		MemoryContextAlloc(slot->tts_mcxt, tupdesc->natts * sizeof(bool));
+}
+
+/* --------------------------------
  *		ExecStoreTuple
  *
- *		This function is used to store a tuple into a specified
+ *		This function is used to store a physical tuple into a specified
  *		slot in the tuple table.
  *
  *		tuple:	tuple to store
@@ -304,6 +380,12 @@ ExecAllocTableSlot(TupleTable table)
  * slot assume ownership of the copy!
  *
  * Return value is just the passed-in slot pointer.
+ *
+ * NOTE: before PostgreSQL 8.1, this function would accept a NULL tuple
+ * pointer and effectively behave like ExecClearTuple (though you could
+ * still specify a buffer to pin, which would be an odd combination).
+ * This saved a couple lines of code in a few places, but seemed more likely
+ * to mask logic errors than to be really useful, so it's now disallowed.
  * --------------------------------
  */
 TupleTableSlot *
@@ -315,28 +397,35 @@ ExecStoreTuple(HeapTuple tuple,
 	/*
 	 * sanity checks
 	 */
+	Assert(tuple != NULL);
 	Assert(slot != NULL);
+	Assert(slot->tts_tupleDescriptor != NULL);
 	/* passing shouldFree=true for a tuple on a disk page is not sane */
 	Assert(BufferIsValid(buffer) ? (!shouldFree) : true);
 
 	/*
 	 * clear out any old contents of the slot
 	 */
-	ExecClearTuple(slot);
+	if (!slot->tts_isempty)
+		ExecClearTuple(slot);
 
 	/*
 	 * store the new tuple into the specified slot.
 	 */
-	slot->val = tuple;
-	slot->ttc_shouldFree = shouldFree;
+	slot->tts_isempty = false;
+	slot->tts_shouldFree = shouldFree;
+	slot->tts_tuple = tuple;
 
 	/*
 	 * If tuple is on a disk page, keep the page pinned as long as we hold
 	 * a pointer into it.  We assume the caller already has such a pin.
 	 */
-	slot->ttc_buffer = buffer;
+	slot->tts_buffer = buffer;
 	if (BufferIsValid(buffer))
 		IncrBufferRefCount(buffer);
+
+	/* Mark extracted state invalid */
+	slot->tts_nvalid = 0;
 
 	return slot;
 }
@@ -358,63 +447,231 @@ ExecClearTuple(TupleTableSlot *slot)	/* slot in which to store tuple */
 	Assert(slot != NULL);
 
 	/*
-	 * Free the old contents of the specified slot if necessary.  (Note:
-	 * we allow slot->val to be null even when shouldFree is true, because
-	 * there are a few callers of ExecStoreTuple that are too lazy to
-	 * distinguish whether they are passing a NULL tuple, and always pass
-	 * shouldFree = true.)
+	 * Free the old physical tuple if necessary.
 	 */
-	if (slot->ttc_shouldFree && slot->val != NULL)
-		heap_freetuple(slot->val);
+	if (slot->tts_shouldFree)
+		heap_freetuple(slot->tts_tuple);
 
-	slot->val = NULL;
-	slot->ttc_shouldFree = false;
+	slot->tts_tuple = NULL;
+	slot->tts_shouldFree = false;
 
 	/*
 	 * Drop the pin on the referenced buffer, if there is one.
 	 */
-	if (BufferIsValid(slot->ttc_buffer))
-		ReleaseBuffer(slot->ttc_buffer);
+	if (BufferIsValid(slot->tts_buffer))
+		ReleaseBuffer(slot->tts_buffer);
 
-	slot->ttc_buffer = InvalidBuffer;
+	slot->tts_buffer = InvalidBuffer;
 
 	/*
-	 * mark slot_getattr state invalid
+	 * Mark it empty.
 	 */
-	slot->cache_natts = 0;
+	slot->tts_isempty = true;
+	slot->tts_nvalid = 0;
 
 	return slot;
 }
 
 /* --------------------------------
- *		ExecSetSlotDescriptor
+ *		ExecStoreVirtualTuple
+ *			Mark a slot as containing a virtual tuple.
  *
- *		This function is used to set the tuple descriptor associated
- *		with the slot's tuple.
+ * The protocol for loading a slot with virtual tuple data is:
+ *		* Call ExecClearTuple to mark the slot empty.
+ *		* Store data into the Datum/isnull arrays.
+ *		* Call ExecStoreVirtualTuple to mark the slot valid.
+ * This is a bit unclean but it avoids one round of data copying.
  * --------------------------------
  */
-void
-ExecSetSlotDescriptor(TupleTableSlot *slot,		/* slot to change */
-					  TupleDesc tupdesc,		/* new tuple descriptor */
-					  bool shouldFree)	/* is desc owned by slot? */
+TupleTableSlot *
+ExecStoreVirtualTuple(TupleTableSlot *slot)
 {
-	if (slot->ttc_shouldFreeDesc)
-		FreeTupleDesc(slot->ttc_tupleDescriptor);
+	/*
+	 * sanity checks
+	 */
+	Assert(slot != NULL);
+	Assert(slot->tts_tupleDescriptor != NULL);
+	Assert(slot->tts_isempty);
 
-	slot->ttc_tupleDescriptor = tupdesc;
-	slot->ttc_shouldFreeDesc = shouldFree;
+	slot->tts_isempty = false;
+	slot->tts_nvalid = slot->tts_tupleDescriptor->natts;
+
+	return slot;
+}
+
+/* --------------------------------
+ *		ExecStoreAllNullTuple
+ *			Set up the slot to contain a null in every column.
+ *
+ * At first glance this might sound just like ExecClearTuple, but it's
+ * entirely different: the slot ends up full, not empty.
+ * --------------------------------
+ */
+TupleTableSlot *
+ExecStoreAllNullTuple(TupleTableSlot *slot)
+{
+	/*
+	 * sanity checks
+	 */
+	Assert(slot != NULL);
+	Assert(slot->tts_tupleDescriptor != NULL);
+
+	/* Clear any old contents */
+	ExecClearTuple(slot);
 
 	/*
-	 * mark slot_getattr state invalid
+	 * Fill all the columns of the virtual tuple with nulls
 	 */
-	slot->cache_natts = 0;
+	MemSet(slot->tts_values, 0,
+		   slot->tts_tupleDescriptor->natts * sizeof(Datum));
+	memset(slot->tts_isnull, true,
+		   slot->tts_tupleDescriptor->natts * sizeof(bool));
+
+	return ExecStoreVirtualTuple(slot);
+}
+
+/* --------------------------------
+ *		ExecCopySlotTuple
+ *			Obtain a copy of a slot's physical tuple.  The copy is
+ *			palloc'd in the current memory context.
+ *
+ *		This works even if the slot contains a virtual tuple;
+ *		however the "system columns" of the result will not be meaningful.
+ * --------------------------------
+ */
+HeapTuple
+ExecCopySlotTuple(TupleTableSlot *slot)
+{
+	/*
+	 * sanity checks
+	 */
+	Assert(slot != NULL);
+	Assert(!slot->tts_isempty);
 
 	/*
-	 * release any old cache array since tupledesc's natts may have changed
+	 * If we have a physical tuple then just copy it.
 	 */
-	if (slot->cache_values)
-		pfree(slot->cache_values);
-	slot->cache_values = NULL;
+	if (slot->tts_tuple)
+		return heap_copytuple(slot->tts_tuple);
+
+	/*
+	 * Otherwise we need to build a tuple from the Datum array.
+	 */
+	return heap_form_tuple(slot->tts_tupleDescriptor,
+						   slot->tts_values,
+						   slot->tts_isnull);
+}
+
+/* --------------------------------
+ *		ExecFetchSlotTuple
+ *			Fetch the slot's physical tuple.
+ *
+ *		If the slot contains a virtual tuple, we convert it to physical
+ *		form.  The slot retains ownership of the physical tuple.
+ *
+ * The difference between this and ExecMaterializeSlot() is that this
+ * does not guarantee that the contained tuple is local storage.
+ * Hence, the result must be treated as read-only.
+ * --------------------------------
+ */
+HeapTuple
+ExecFetchSlotTuple(TupleTableSlot *slot)
+{
+	/*
+	 * sanity checks
+	 */
+	Assert(slot != NULL);
+	Assert(!slot->tts_isempty);
+
+	/*
+	 * If we have a physical tuple then just return it.
+	 */
+	if (slot->tts_tuple)
+		return slot->tts_tuple;
+
+	/*
+	 * Otherwise materialize the slot...
+	 */
+	return ExecMaterializeSlot(slot);
+}
+
+/* --------------------------------
+ *		ExecMaterializeSlot
+ *			Force a slot into the "materialized" state.
+ *
+ *		This causes the slot's tuple to be a local copy not dependent on
+ *		any external storage.  A pointer to the contained tuple is returned.
+ *
+ *		A typical use for this operation is to prepare a computed tuple
+ *		for being stored on disk.  The original data may or may not be
+ *		virtual, but in any case we need a private copy for heap_insert
+ *		to scribble on.
+ * --------------------------------
+ */
+HeapTuple
+ExecMaterializeSlot(TupleTableSlot *slot)
+{
+	HeapTuple	newTuple;
+	MemoryContext oldContext;
+
+	/*
+	 * sanity checks
+	 */
+	Assert(slot != NULL);
+	Assert(!slot->tts_isempty);
+
+	/*
+	 * If we have a physical tuple, and it's locally palloc'd, we have
+	 * nothing to do.
+	 */
+	if (slot->tts_tuple && slot->tts_shouldFree)
+		return slot->tts_tuple;
+
+	/*
+	 * Otherwise, copy or build a tuple, and then store it as the new slot
+	 * value.  (Note: tts_nvalid will be reset to zero here.  There are
+	 * cases in which this could be optimized but it's probably not worth
+	 * worrying about.)
+	 *
+	 * We may be called in a context that is shorter-lived than the
+	 * tuple slot, but we have to ensure that the materialized tuple
+	 * will survive anyway.
+	 */
+	oldContext = MemoryContextSwitchTo(slot->tts_mcxt);
+	newTuple = ExecCopySlotTuple(slot);
+	MemoryContextSwitchTo(oldContext);
+
+	ExecStoreTuple(newTuple, slot, InvalidBuffer, true);
+
+	return slot->tts_tuple;
+}
+
+/* --------------------------------
+ *		ExecCopySlot
+ *			Copy the source slot's contents into the destination slot.
+ *
+ *		The destination acquires a private copy that will not go away
+ *		if the source is cleared.
+ *
+ *		The caller must ensure the slots have compatible tupdescs.
+ * --------------------------------
+ */
+TupleTableSlot *
+ExecCopySlot(TupleTableSlot *dstslot, TupleTableSlot *srcslot)
+{
+	HeapTuple	newTuple;
+	MemoryContext oldContext;
+
+	/*
+	 * There might be ways to optimize this when the source is virtual,
+	 * but for now just always build a physical copy.  Make sure it is
+	 * in the right context.
+	 */
+	oldContext = MemoryContextSwitchTo(dstslot->tts_mcxt);
+	newTuple = ExecCopySlotTuple(srcslot);
+	MemoryContextSwitchTo(oldContext);
+
+	return ExecStoreTuple(newTuple, dstslot, InvalidBuffer, true);
 }
 
 
@@ -474,25 +731,10 @@ TupleTableSlot *
 ExecInitNullTupleSlot(EState *estate, TupleDesc tupType)
 {
 	TupleTableSlot *slot = ExecInitExtraTupleSlot(estate);
-	struct tupleDesc nullTupleDesc;
-	HeapTuple	nullTuple;
-	Datum		values[1];
-	char		nulls[1];
-
-	/*
-	 * Since heap_getattr() will treat attributes beyond a tuple's t_natts
-	 * as being NULL, we can make an all-nulls tuple just by making it be
-	 * of zero length.	However, the slot descriptor must match the real
-	 * tupType.
-	 */
-	nullTupleDesc = *tupType;
-	nullTupleDesc.natts = 0;
-
-	nullTuple = heap_formtuple(&nullTupleDesc, values, nulls);
 
 	ExecSetSlotDescriptor(slot, tupType, false);
 
-	return ExecStoreTuple(nullTuple, slot, InvalidBuffer, true);
+	return ExecStoreAllNullTuple(slot);
 }
 
 /* ----------------------------------------------------------------
@@ -623,10 +865,7 @@ TupleDescGetSlot(TupleDesc tupdesc)
 	BlessTupleDesc(tupdesc);
 
 	/* Make a standalone slot */
-	slot = MakeTupleTableSlot();
-
-	/* Bind the tuple description to the slot */
-	ExecSetSlotDescriptor(slot, tupdesc, true);
+	slot = MakeSingleTupleTableSlot(tupdesc);
 
 	/* Return the slot */
 	return slot;
@@ -759,6 +998,7 @@ begin_tup_output_tupdesc(DestReceiver *dest, TupleDesc tupdesc)
 	tstate = (TupOutputState *) palloc(sizeof(TupOutputState));
 
 	tstate->metadata = TupleDescGetAttInMetadata(tupdesc);
+	tstate->slot = MakeSingleTupleTableSlot(tupdesc);
 	tstate->dest = dest;
 
 	(*tstate->dest->rStartup) (tstate->dest, (int) CMD_SELECT, tupdesc);
@@ -771,6 +1011,9 @@ begin_tup_output_tupdesc(DestReceiver *dest, TupleDesc tupdesc)
  *
  * values is a list of the external C string representations of the values
  * to be projected.
+ *
+ * XXX This could be made more efficient, since in reality we probably only
+ * need a virtual tuple.
  */
 void
 do_tup_output(TupOutputState *tstate, char **values)
@@ -778,12 +1021,14 @@ do_tup_output(TupOutputState *tstate, char **values)
 	/* build a tuple from the input strings using the tupdesc */
 	HeapTuple	tuple = BuildTupleFromCStrings(tstate->metadata, values);
 
+	/* put it in a slot */
+	ExecStoreTuple(tuple, tstate->slot, InvalidBuffer, true);
+
 	/* send the tuple to the receiver */
-	(*tstate->dest->receiveTuple) (tuple,
-								   tstate->metadata->tupdesc,
-								   tstate->dest);
+	(*tstate->dest->receiveSlot) (tstate->slot, tstate->dest);
+
 	/* clean up */
-	heap_freetuple(tuple);
+	ExecClearTuple(tstate->slot);
 }
 
 /*
@@ -816,6 +1061,7 @@ end_tup_output(TupOutputState *tstate)
 {
 	(*tstate->dest->rShutdown) (tstate->dest);
 	/* note that destroying the dest is not ours to do */
+	ExecDropSingleTupleTableSlot(tstate->slot);
 	/* XXX worth cleaning up the attinmetadata? */
 	pfree(tstate);
 }

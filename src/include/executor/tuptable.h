@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/executor/tuptable.h,v 1.27 2005/03/14 04:41:13 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/executor/tuptable.h,v 1.28 2005/03/16 21:38:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,43 +17,86 @@
 #include "access/htup.h"
 
 
-/*
- * The executor stores pointers to tuples in a "tuple table"
- * which is composed of TupleTableSlots.  Sometimes the tuples
- * are pointers to buffer pages, while others are pointers to
- * palloc'ed memory; the shouldFree variable tells us whether
- * we may call pfree() on a tuple.  When shouldFree is true,
- * the tuple is "owned" by the TupleTableSlot and should be
- * freed when the slot's reference to the tuple is dropped.
+/*----------
+ * The executor stores tuples in a "tuple table" which is composed of
+ * independent TupleTableSlots.  There are several cases we need to handle:
+ *		1. physical tuple in a disk buffer page
+ *		2. physical tuple constructed in palloc'ed memory
+ *		3. "virtual" tuple consisting of Datum/isnull arrays
  *
- * shouldFreeDesc is similar to shouldFree: if it's true, then the
+ * The first two cases are similar in that they both deal with "materialized"
+ * tuples, but resource management is different.  For a tuple in a disk page
+ * we need to hold a pin on the buffer until the TupleTableSlot's reference
+ * to the tuple is dropped; while for a palloc'd tuple we usually want the
+ * tuple pfree'd when the TupleTableSlot's reference is dropped.
+ *
+ * A "virtual" tuple is an optimization used to minimize physical data
+ * copying in a nest of plan nodes.  Any pass-by-reference Datums in the
+ * tuple point to storage that is not directly associated with the
+ * TupleTableSlot; generally they will point to part of a tuple stored in
+ * a lower plan node's output TupleTableSlot, or to a function result
+ * constructed in a plan node's per-tuple econtext.  It is the responsibility
+ * of the generating plan node to be sure these resources are not released
+ * for as long as the virtual tuple needs to be valid.  We only use virtual
+ * tuples in the result slots of plan nodes --- tuples to be copied anywhere
+ * else need to be "materialized" into physical tuples.  Note also that a
+ * virtual tuple does not have any "system columns".
+ *
+ * The Datum/isnull arrays of a TupleTableSlot serve double duty.  When the
+ * slot contains a virtual tuple, they are the authoritative data.  When the
+ * slot contains a physical tuple, the arrays contain data extracted from
+ * the tuple.  (In this state, any pass-by-reference Datums point into
+ * the physical tuple.)  The extracted information is built "lazily",
+ * ie, only as needed.  This serves to avoid repeated extraction of data
+ * from the physical tuple.
+ *
+ * A TupleTableSlot can also be "empty", holding no valid data.  This is
+ * the only valid state for a freshly-created slot that has not yet had a
+ * tuple descriptor assigned to it.  In this state, tts_isempty must be
+ * TRUE, tts_shouldFree FALSE, tts_tuple NULL, tts_buffer InvalidBuffer,
+ * and tts_nvalid zero.
+ *
+ * When tts_shouldFree is true, the physical tuple is "owned" by the slot
+ * and should be freed when the slot's reference to the tuple is dropped.
+ *
+ * tts_shouldFreeDesc is similar to tts_shouldFree: if it's true, then the
  * tupleDescriptor is "owned" by the TupleTableSlot and should be
  * freed when the slot's reference to the descriptor is dropped.
  *
- * If buffer is not InvalidBuffer, then the slot is holding a pin
+ * If tts_buffer is not InvalidBuffer, then the slot is holding a pin
  * on the indicated buffer page; drop the pin when we release the
- * slot's reference to that buffer.  (shouldFree should always be
- * false in such a case, since presumably val is pointing at the
+ * slot's reference to that buffer.  (tts_shouldFree should always be
+ * false in such a case, since presumably tts_tuple is pointing at the
  * buffer page.)
  *
- * The slot_getattr() routine allows extraction of attribute values from
- * a TupleTableSlot's current tuple.  It is equivalent to heap_getattr()
- * except that it can optimize fetching of multiple values more efficiently.
- * The cache_xxx fields of TupleTableSlot are support for slot_getattr().
+ * tts_nvalid indicates the number of valid columns in the tts_values/isnull
+ * arrays.  When the slot is holding a "virtual" tuple this must be equal
+ * to the descriptor's natts.  When the slot is holding a physical tuple
+ * this is equal to the number of columns we have extracted (we always
+ * extract columns from left to right, so there are no holes).
+ *
+ * tts_values/tts_isnull are allocated when a descriptor is assigned to the
+ * slot; they are of length equal to the descriptor's natts.
+ *
+ * tts_slow/tts_off are saved state for slot_deform_tuple, and should not
+ * be touched by any other code.
+ *----------
  */
 typedef struct TupleTableSlot
 {
 	NodeTag		type;			/* vestigial ... allows IsA tests */
-	HeapTuple	val;			/* current tuple, or NULL if none */
-	TupleDesc	ttc_tupleDescriptor;	/* tuple's descriptor */
-	bool		ttc_shouldFree;			/* should pfree tuple? */
-	bool		ttc_shouldFreeDesc;		/* should pfree descriptor? */
-	Buffer		ttc_buffer;		/* tuple's buffer, or InvalidBuffer */
-	MemoryContext ttc_mcxt;		/* slot itself is in this context */
-	Datum	   *cache_values;	/* currently extracted values */
-	int			cache_natts;	/* # of valid values in cache_values */
-	bool		cache_slow;		/* saved state for slot_getattr */
-	long		cache_off;		/* saved state for slot_getattr */
+	bool		tts_isempty;			/* true = slot is empty */
+	bool		tts_shouldFree;			/* should pfree tuple? */
+	bool		tts_shouldFreeDesc;		/* should pfree descriptor? */
+	bool		tts_slow;		/* saved state for slot_deform_tuple */
+	HeapTuple	tts_tuple;		/* physical tuple, or NULL if none */
+	TupleDesc	tts_tupleDescriptor;	/* slot's tuple descriptor */
+	MemoryContext tts_mcxt;		/* slot itself is in this context */
+	Buffer		tts_buffer;		/* tuple's buffer, or InvalidBuffer */
+	int			tts_nvalid;		/* # of valid values in tts_values */
+	Datum	   *tts_values;		/* current per-attribute values */
+	bool	   *tts_isnull;		/* current per-attribute isnull flags */
+	long		tts_off;		/* saved state for slot_deform_tuple */
 } TupleTableSlot;
 
 /*
@@ -69,7 +112,36 @@ typedef struct TupleTableData
 typedef TupleTableData *TupleTable;
 
 
+/*
+ * TupIsNull -- is a TupleTableSlot empty?
+ */
+#define TupIsNull(slot) \
+	((slot) == NULL || (slot)->tts_isempty)
+
+/* in executor/execTuples.c */
+extern TupleTable ExecCreateTupleTable(int tableSize);
+extern void ExecDropTupleTable(TupleTable table, bool shouldFree);
+extern TupleTableSlot *MakeSingleTupleTableSlot(TupleDesc tupdesc);
+extern void ExecDropSingleTupleTableSlot(TupleTableSlot *slot);
+extern TupleTableSlot *ExecAllocTableSlot(TupleTable table);
+extern void ExecSetSlotDescriptor(TupleTableSlot *slot,
+					  TupleDesc tupdesc, bool shouldFree);
+extern TupleTableSlot *ExecStoreTuple(HeapTuple tuple,
+			   TupleTableSlot *slot,
+			   Buffer buffer,
+			   bool shouldFree);
+extern TupleTableSlot *ExecClearTuple(TupleTableSlot *slot);
+extern TupleTableSlot *ExecStoreVirtualTuple(TupleTableSlot *slot);
+extern TupleTableSlot *ExecStoreAllNullTuple(TupleTableSlot *slot);
+extern HeapTuple ExecCopySlotTuple(TupleTableSlot *slot);
+extern HeapTuple ExecFetchSlotTuple(TupleTableSlot *slot);
+extern HeapTuple ExecMaterializeSlot(TupleTableSlot *slot);
+extern TupleTableSlot *ExecCopySlot(TupleTableSlot *dstslot,
+									TupleTableSlot *srcslot);
 /* in access/common/heaptuple.c */
 extern Datum slot_getattr(TupleTableSlot *slot, int attnum, bool *isnull);
+extern void slot_getallattrs(TupleTableSlot *slot);
+extern void slot_getsomeattrs(TupleTableSlot *slot, int attnum);
+extern bool slot_attisnull(TupleTableSlot *slot, int attnum);
 
 #endif   /* TUPTABLE_H */

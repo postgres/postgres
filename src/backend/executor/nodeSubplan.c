@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeSubplan.c,v 1.66 2004/12/31 21:59:45 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeSubplan.c,v 1.67 2005/03/16 21:38:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,7 +37,8 @@ static Datum ExecScanSubPlan(SubPlanState *node,
 				bool *isNull);
 static void buildSubPlanHash(SubPlanState *node);
 static bool findPartialMatch(TupleHashTable hashtable, TupleTableSlot *slot);
-static bool tupleAllNulls(HeapTuple tuple);
+static bool slotAllNulls(TupleTableSlot *slot);
+static bool slotNoNulls(TupleTableSlot *slot);
 
 
 /* ----------------------------------------------------------------
@@ -78,7 +79,6 @@ ExecHashSubPlan(SubPlanState *node,
 	PlanState  *planstate = node->planstate;
 	ExprContext *innerecontext = node->innerecontext;
 	TupleTableSlot *slot;
-	HeapTuple	tup;
 
 	/* Shouldn't have any direct correlation Vars */
 	if (subplan->parParam != NIL || node->args != NIL)
@@ -105,7 +105,6 @@ ExecHashSubPlan(SubPlanState *node,
 	 */
 	node->projLeft->pi_exprContext = econtext;
 	slot = ExecProject(node->projLeft, NULL);
-	tup = slot->val;
 
 	/*
 	 * Note: because we are typically called in a per-tuple context, we
@@ -137,7 +136,7 @@ ExecHashSubPlan(SubPlanState *node,
 	 * comparison we will not even make, unless there's a chance match of
 	 * hash keys.
 	 */
-	if (HeapTupleNoNulls(tup))
+	if (slotNoNulls(slot))
 	{
 		if (node->havehashrows &&
 			LookupTupleHashEntry(node->hashtable, slot, NULL) != NULL)
@@ -171,7 +170,7 @@ ExecHashSubPlan(SubPlanState *node,
 		ExecClearTuple(slot);
 		return BoolGetDatum(false);
 	}
-	if (tupleAllNulls(tup))
+	if (slotAllNulls(slot))
 	{
 		ExecClearTuple(slot);
 		*isNull = true;
@@ -271,8 +270,7 @@ ExecScanSubPlan(SubPlanState *node,
 		 !TupIsNull(slot);
 		 slot = ExecProcNode(planstate))
 	{
-		HeapTuple	tup = slot->val;
-		TupleDesc	tdesc = slot->ttc_tupleDescriptor;
+		TupleDesc	tdesc = slot->tts_tupleDescriptor;
 		Datum		rowresult = BoolGetDatum(!useOr);
 		bool		rownull = false;
 		int			col = 1;
@@ -303,13 +301,12 @@ ExecScanSubPlan(SubPlanState *node,
 			 * copied tuple for eventual freeing.
 			 */
 			MemoryContextSwitchTo(econtext->ecxt_per_query_memory);
-			tup = heap_copytuple(tup);
 			if (node->curTuple)
 				heap_freetuple(node->curTuple);
-			node->curTuple = tup;
+			node->curTuple = ExecCopySlotTuple(slot);
 			MemoryContextSwitchTo(node->sub_estate->es_query_cxt);
 
-			result = heap_getattr(tup, col, tdesc, isNull);
+			result = heap_getattr(node->curTuple, col, tdesc, isNull);
 			/* keep scanning subplan to make sure there's only one tuple */
 			continue;
 		}
@@ -321,7 +318,7 @@ ExecScanSubPlan(SubPlanState *node,
 
 			found = true;
 			/* stash away current value */
-			dvalue = heap_getattr(tup, 1, tdesc, &disnull);
+			dvalue = slot_getattr(slot, 1, &disnull);
 			astate = accumArrayResult(astate, dvalue, disnull,
 									  tdesc->attrs[0]->atttypid,
 									  oldcontext);
@@ -357,7 +354,7 @@ ExecScanSubPlan(SubPlanState *node,
 			 */
 			prmdata = &(econtext->ecxt_param_exec_vals[paramid]);
 			Assert(prmdata->execPlan == NULL);
-			prmdata->value = heap_getattr(tup, col, tdesc,
+			prmdata->value = slot_getattr(slot, col,
 										  &(prmdata->isnull));
 
 			/*
@@ -554,8 +551,6 @@ buildSubPlanHash(SubPlanState *node)
 		 !TupIsNull(slot);
 		 slot = ExecProcNode(planstate))
 	{
-		HeapTuple	tup = slot->val;
-		TupleDesc	tdesc = slot->ttc_tupleDescriptor;
 		int			col = 1;
 		ListCell   *plst;
 		bool		isnew;
@@ -571,20 +566,16 @@ buildSubPlanHash(SubPlanState *node)
 
 			prmdata = &(innerecontext->ecxt_param_exec_vals[paramid]);
 			Assert(prmdata->execPlan == NULL);
-			prmdata->value = heap_getattr(tup, col, tdesc,
+			prmdata->value = slot_getattr(slot, col,
 										  &(prmdata->isnull));
 			col++;
 		}
 		slot = ExecProject(node->projRight, NULL);
-		tup = slot->val;
 
 		/*
 		 * If result contains any nulls, store separately or not at all.
-		 * (Since we know the projection tuple has no junk columns, we can
-		 * just look at the overall hasnull info bit, instead of groveling
-		 * through the columns.)
 		 */
-		if (HeapTupleNoNulls(tup))
+		if (slotNoNulls(slot))
 		{
 			(void) LookupTupleHashEntry(node->hashtable, slot, &isnew);
 			node->havehashrows = true;
@@ -606,7 +597,8 @@ buildSubPlanHash(SubPlanState *node)
 	 * Since the projected tuples are in the sub-query's context and not
 	 * the main context, we'd better clear the tuple slot before there's
 	 * any chance of a reset of the sub-query's context.  Else we will
-	 * have the potential for a double free attempt.
+	 * have the potential for a double free attempt.  (XXX possibly
+	 * no longer needed, but can't hurt.)
 	 */
 	ExecClearTuple(node->projRight->pi_slot);
 
@@ -626,17 +618,15 @@ findPartialMatch(TupleHashTable hashtable, TupleTableSlot *slot)
 {
 	int			numCols = hashtable->numCols;
 	AttrNumber *keyColIdx = hashtable->keyColIdx;
-	HeapTuple	tuple = slot->val;
-	TupleDesc	tupdesc = slot->ttc_tupleDescriptor;
 	TupleHashIterator hashiter;
 	TupleHashEntry entry;
 
 	ResetTupleHashIterator(hashtable, &hashiter);
 	while ((entry = ScanTupleHashTable(&hashiter)) != NULL)
 	{
-		if (!execTuplesUnequal(entry->firstTuple,
-							   tuple,
-							   tupdesc,
+		ExecStoreTuple(entry->firstTuple, hashtable->tableslot,
+					   InvalidBuffer, false);
+		if (!execTuplesUnequal(hashtable->tableslot, slot,
 							   numCols, keyColIdx,
 							   hashtable->eqfunctions,
 							   hashtable->tempcxt))
@@ -646,17 +636,40 @@ findPartialMatch(TupleHashTable hashtable, TupleTableSlot *slot)
 }
 
 /*
- * tupleAllNulls: is the tuple completely NULL?
+ * slotAllNulls: is the slot completely NULL?
+ *
+ * This does not test for dropped columns, which is OK because we only
+ * use it on projected tuples.
  */
 static bool
-tupleAllNulls(HeapTuple tuple)
+slotAllNulls(TupleTableSlot *slot)
 {
-	int			ncols = tuple->t_data->t_natts;
+	int			ncols = slot->tts_tupleDescriptor->natts;
 	int			i;
 
 	for (i = 1; i <= ncols; i++)
 	{
-		if (!heap_attisnull(tuple, i))
+		if (!slot_attisnull(slot, i))
+			return false;
+	}
+	return true;
+}
+
+/*
+ * slotNoNulls: is the slot entirely not NULL?
+ *
+ * This does not test for dropped columns, which is OK because we only
+ * use it on projected tuples.
+ */
+static bool
+slotNoNulls(TupleTableSlot *slot)
+{
+	int			ncols = slot->tts_tupleDescriptor->natts;
+	int			i;
+
+	for (i = 1; i <= ncols; i++)
+	{
+		if (slot_attisnull(slot, i))
 			return false;
 	}
 	return true;
@@ -932,8 +945,7 @@ ExecSetParamPlan(SubPlanState *node, ExprContext *econtext)
 		 !TupIsNull(slot);
 		 slot = ExecProcNode(planstate))
 	{
-		HeapTuple	tup = slot->val;
-		TupleDesc	tdesc = slot->ttc_tupleDescriptor;
+		TupleDesc	tdesc = slot->tts_tupleDescriptor;
 		int			i = 1;
 
 		if (subLinkType == EXISTS_SUBLINK)
@@ -956,7 +968,7 @@ ExecSetParamPlan(SubPlanState *node, ExprContext *econtext)
 
 			found = true;
 			/* stash away current value */
-			dvalue = heap_getattr(tup, 1, tdesc, &disnull);
+			dvalue = slot_getattr(slot, 1, &disnull);
 			astate = accumArrayResult(astate, dvalue, disnull,
 									  tdesc->attrs[0]->atttypid,
 									  oldcontext);
@@ -981,10 +993,9 @@ ExecSetParamPlan(SubPlanState *node, ExprContext *econtext)
 		 * freeing.
 		 */
 		MemoryContextSwitchTo(econtext->ecxt_per_query_memory);
-		tup = heap_copytuple(tup);
 		if (node->curTuple)
 			heap_freetuple(node->curTuple);
-		node->curTuple = tup;
+		node->curTuple = ExecCopySlotTuple(slot);
 		MemoryContextSwitchTo(node->sub_estate->es_query_cxt);
 
 		/*
@@ -996,7 +1007,8 @@ ExecSetParamPlan(SubPlanState *node, ExprContext *econtext)
 			ParamExecData *prm = &(econtext->ecxt_param_exec_vals[paramid]);
 
 			prm->execPlan = NULL;
-			prm->value = heap_getattr(tup, i, tdesc, &(prm->isnull));
+			prm->value = heap_getattr(node->curTuple, i, tdesc,
+									  &(prm->isnull));
 			i++;
 		}
 	}

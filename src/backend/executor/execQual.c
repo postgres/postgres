@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execQual.c,v 1.172 2005/03/14 04:41:12 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execQual.c,v 1.173 2005/03/16 21:38:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -479,7 +479,7 @@ ExecEvalVar(ExprState *exprstate, ExprContext *econtext,
 	 */
 	if (attnum > 0)
 	{
-		TupleDesc	tuple_type = slot->ttc_tupleDescriptor;
+		TupleDesc	tuple_type = slot->tts_tupleDescriptor;
 
 		/*
 		 * This assert checks that the attnum is valid.
@@ -1333,10 +1333,7 @@ ExecMakeTableFunctionResult(ExprState *funcexpr,
 			}
 			else
 			{
-				char		nullflag;
-
-				nullflag = fcinfo.isnull ? 'n' : ' ';
-				tuple = heap_formtuple(tupdesc, &result, &nullflag);
+				tuple = heap_form_tuple(tupdesc, &result, &fcinfo.isnull);
 			}
 
 			oldcontext = MemoryContextSwitchTo(econtext->ecxt_per_query_memory);
@@ -1384,14 +1381,14 @@ no_function_result:
 		{
 			int			natts = expectedDesc->natts;
 			Datum	   *nulldatums;
-			char	   *nullflags;
+			bool	   *nullflags;
 			HeapTuple	tuple;
 
 			MemoryContextSwitchTo(econtext->ecxt_per_tuple_memory);
 			nulldatums = (Datum *) palloc0(natts * sizeof(Datum));
-			nullflags = (char *) palloc(natts * sizeof(char));
-			memset(nullflags, 'n', natts * sizeof(char));
-			tuple = heap_formtuple(expectedDesc, nulldatums, nullflags);
+			nullflags = (bool *) palloc(natts * sizeof(bool));
+			memset(nullflags, true, natts * sizeof(bool));
+			tuple = heap_form_tuple(expectedDesc, nulldatums, nullflags);
 			MemoryContextSwitchTo(econtext->ecxt_per_query_memory);
 			tuplestore_puttuple(tupstore, tuple);
 		}
@@ -1843,9 +1840,9 @@ ExecEvalConvertRowtype(ConvertRowtypeExprState *cstate,
 	HeapTupleData tmptup;
 	AttrNumber *attrMap = cstate->attrMap;
 	Datum	   *invalues = cstate->invalues;
-	char	   *innulls = cstate->innulls;
+	bool	   *inisnull = cstate->inisnull;
 	Datum	   *outvalues = cstate->outvalues;
-	char	   *outnulls = cstate->outnulls;
+	bool	   *outisnull = cstate->outisnull;
 	int			i;
 	int			outnatts = cstate->outdesc->natts;
 
@@ -1861,7 +1858,7 @@ ExecEvalConvertRowtype(ConvertRowtypeExprState *cstate,
 	Assert(HeapTupleHeaderGetTypMod(tuple) == cstate->indesc->tdtypmod);
 
 	/*
-	 * heap_deformtuple needs a HeapTuple not a bare HeapTupleHeader.
+	 * heap_deform_tuple needs a HeapTuple not a bare HeapTupleHeader.
 	 */
 	tmptup.t_len = HeapTupleHeaderGetDatumLength(tuple);
 	tmptup.t_data = tuple;
@@ -1872,9 +1869,9 @@ ExecEvalConvertRowtype(ConvertRowtypeExprState *cstate,
 	 * source attribute; this exactly matches the numbering convention
 	 * in attrMap.
 	 */
-	heap_deformtuple(&tmptup, cstate->indesc, invalues + 1, innulls + 1);
+	heap_deform_tuple(&tmptup, cstate->indesc, invalues + 1, inisnull + 1);
 	invalues[0] = (Datum) 0;
-	innulls[0] = 'n';
+	inisnull[0] = true;
 
 	/*
 	 * Transpose into proper fields of the new tuple.
@@ -1884,13 +1881,13 @@ ExecEvalConvertRowtype(ConvertRowtypeExprState *cstate,
 		int			j = attrMap[i];
 
 		outvalues[i] = invalues[j];
-		outnulls[i] = innulls[j];
+		outisnull[i] = inisnull[j];
 	}
 
 	/*
 	 * Now form the new tuple.
 	 */
-	result = heap_formtuple(cstate->outdesc, outvalues, outnulls);
+	result = heap_form_tuple(cstate->outdesc, outvalues, outisnull);
 
 	return HeapTupleGetDatum(result);
 }
@@ -2187,7 +2184,7 @@ ExecEvalRow(RowExprState *rstate,
 {
 	HeapTuple	tuple;
 	Datum	   *values;
-	char	   *nulls;
+	bool	   *isnull;
 	int			natts;
 	ListCell   *arg;
 	int			i;
@@ -2200,27 +2197,25 @@ ExecEvalRow(RowExprState *rstate,
 	/* Allocate workspace */
 	natts = rstate->tupdesc->natts;
 	values = (Datum *) palloc0(natts * sizeof(Datum));
-	nulls = (char *) palloc(natts * sizeof(char));
+	isnull = (bool *) palloc(natts * sizeof(bool));
 
 	/* preset to nulls in case rowtype has some later-added columns */
-	memset(nulls, 'n', natts * sizeof(char));
+	memset(isnull, true, natts * sizeof(bool));
 
 	/* Evaluate field values */
 	i = 0;
 	foreach(arg, rstate->args)
 	{
 		ExprState  *e = (ExprState *) lfirst(arg);
-		bool		eisnull;
 
-		values[i] = ExecEvalExpr(e, econtext, &eisnull, NULL);
-		nulls[i] = eisnull ? 'n' : ' ';
+		values[i] = ExecEvalExpr(e, econtext, &isnull[i], NULL);
 		i++;
 	}
 
-	tuple = heap_formtuple(rstate->tupdesc, values, nulls);
+	tuple = heap_form_tuple(rstate->tupdesc, values, isnull);
 
 	pfree(values);
-	pfree(nulls);
+	pfree(isnull);
 
 	return HeapTupleGetDatum(tuple);
 }
@@ -2628,7 +2623,7 @@ ExecEvalFieldStore(FieldStoreState *fstate,
 	Datum		tupDatum;
 	TupleDesc	tupDesc;
 	Datum	   *values;
-	char	   *nulls;
+	bool	   *isnull;
 	Datum		save_datum;
 	bool		save_isNull;
 	ListCell   *l1,
@@ -2658,12 +2653,12 @@ ExecEvalFieldStore(FieldStoreState *fstate,
 
 	/* Allocate workspace */
 	values = (Datum *) palloc(tupDesc->natts * sizeof(Datum));
-	nulls = (char *) palloc(tupDesc->natts * sizeof(char));
+	isnull = (bool *) palloc(tupDesc->natts * sizeof(bool));
 
 	if (!*isNull)
 	{
 		/*
-		 * heap_deformtuple needs a HeapTuple not a bare HeapTupleHeader.
+		 * heap_deform_tuple needs a HeapTuple not a bare HeapTupleHeader.
 		 * We set all the fields in the struct just in case.
 		 */
 		HeapTupleHeader tuphdr;
@@ -2675,12 +2670,12 @@ ExecEvalFieldStore(FieldStoreState *fstate,
 		tmptup.t_tableOid = InvalidOid;
 		tmptup.t_data = tuphdr;
 
-		heap_deformtuple(&tmptup, tupDesc, values, nulls);
+		heap_deform_tuple(&tmptup, tupDesc, values, isnull);
 	}
 	else
 	{
 		/* Convert null input tuple into an all-nulls row */
-		memset(nulls, 'n', tupDesc->natts * sizeof(char));
+		memset(isnull, true, tupDesc->natts * sizeof(bool));
 	}
 
 	/* Result is never null */
@@ -2693,7 +2688,6 @@ ExecEvalFieldStore(FieldStoreState *fstate,
 	{
 		ExprState  *newval = (ExprState *) lfirst(l1);
 		AttrNumber	fieldnum = lfirst_int(l2);
-		bool		eisnull;
 
 		Assert(fieldnum > 0 && fieldnum <= tupDesc->natts);
 
@@ -2705,22 +2699,21 @@ ExecEvalFieldStore(FieldStoreState *fstate,
 		 * the value would be needed.
 		 */
 		econtext->caseValue_datum = values[fieldnum - 1];
-		econtext->caseValue_isNull = (nulls[fieldnum - 1] == 'n');
+		econtext->caseValue_isNull = isnull[fieldnum - 1];
 
 		values[fieldnum - 1] = ExecEvalExpr(newval,
 											econtext,
-											&eisnull,
+											&isnull[fieldnum - 1],
 											NULL);
-		nulls[fieldnum - 1] = eisnull ? 'n' : ' ';
 	}
 
 	econtext->caseValue_datum = save_datum;
 	econtext->caseValue_isNull = save_isNull;
 
-	tuple = heap_formtuple(tupDesc, values, nulls);
+	tuple = heap_form_tuple(tupDesc, values, isnull);
 
 	pfree(values);
-	pfree(nulls);
+	pfree(isnull);
 
 	return HeapTupleGetDatum(tuple);
 }
@@ -3074,10 +3067,10 @@ ExecInitExpr(Expr *node, PlanState *parent)
 				/* preallocate workspace for Datum arrays */
 				n = cstate->indesc->natts + 1;	/* +1 for NULL */
 				cstate->invalues = (Datum *) palloc(n * sizeof(Datum));
-				cstate->innulls = (char *) palloc(n * sizeof(char));
+				cstate->inisnull = (bool *) palloc(n * sizeof(bool));
 				n = cstate->outdesc->natts;
 				cstate->outvalues = (Datum *) palloc(n * sizeof(Datum));
-				cstate->outnulls = (char *) palloc(n * sizeof(char));
+				cstate->outisnull = (bool *) palloc(n * sizeof(bool));
 				state = (ExprState *) cstate;
 			}
 			break;
@@ -3479,54 +3472,36 @@ ExecCleanTargetListLength(List *targetlist)
 	return len;
 }
 
-/* ----------------------------------------------------------------
- *		ExecTargetList
- *
+/*
+ * ExecTargetList
  *		Evaluates a targetlist with respect to the given
- *		expression context and returns a tuple.
+ *		expression context.  Returns TRUE if we were able to create
+ *		a result, FALSE if we have exhausted a set-valued expression.
  *
- * The caller must pass workspace for the values and nulls arrays
- * as well as the itemIsDone array.  This convention saves palloc'ing
- * workspace on each call, and some callers may find it useful to examine
- * the values array directly.
+ * Results are stored into the passed values and isnull arrays.
+ * The caller must provide an itemIsDone array that persists across calls.
  *
  * As with ExecEvalExpr, the caller should pass isDone = NULL if not
  * prepared to deal with sets of result tuples.  Otherwise, a return
  * of *isDone = ExprMultipleResult signifies a set element, and a return
  * of *isDone = ExprEndResult signifies end of the set of tuple.
- * ----------------------------------------------------------------
  */
-static HeapTuple
+static bool
 ExecTargetList(List *targetlist,
-			   TupleDesc targettype,
 			   ExprContext *econtext,
 			   Datum *values,
-			   char *nulls,
+			   bool *isnull,
 			   ExprDoneCond *itemIsDone,
 			   ExprDoneCond *isDone)
 {
 	MemoryContext oldContext;
 	ListCell   *tl;
-	bool		isNull;
 	bool		haveDoneSets;
-
-	/*
-	 * debugging stuff
-	 */
-	EV_printf("ExecTargetList: tl is ");
-	EV_nodeDisplay(targetlist);
-	EV_printf("\n");
 
 	/*
 	 * Run in short-lived per-tuple context while computing expressions.
 	 */
 	oldContext = MemoryContextSwitchTo(econtext->ecxt_per_tuple_memory);
-
-	/*
-	 * There used to be some klugy and demonstrably broken code here that
-	 * special-cased the situation where targetlist == NIL.  Now we just
-	 * fall through and return an empty-but-valid tuple.
-	 */
 
 	/*
 	 * evaluate all the expressions in the target list
@@ -3544,9 +3519,8 @@ ExecTargetList(List *targetlist,
 
 		values[resind] = ExecEvalExpr(gstate->arg,
 									  econtext,
-									  &isNull,
+									  &isnull[resind],
 									  &itemIsDone[resind]);
-		nulls[resind] = isNull ? 'n' : ' ';
 
 		if (itemIsDone[resind] != ExprSingleResult)
 		{
@@ -3581,7 +3555,7 @@ ExecTargetList(List *targetlist,
 			 */
 			*isDone = ExprEndResult;
 			MemoryContextSwitchTo(oldContext);
-			return NULL;
+			return false;
 		}
 		else
 		{
@@ -3599,9 +3573,8 @@ ExecTargetList(List *targetlist,
 				{
 					values[resind] = ExecEvalExpr(gstate->arg,
 												  econtext,
-												  &isNull,
+												  &isnull[resind],
 												  &itemIsDone[resind]);
-					nulls[resind] = isNull ? 'n' : ' ';
 
 					if (itemIsDone[resind] == ExprEndResult)
 					{
@@ -3632,75 +3605,129 @@ ExecTargetList(List *targetlist,
 
 					while (itemIsDone[resind] == ExprMultipleResult)
 					{
-						(void) ExecEvalExpr(gstate->arg,
-											econtext,
-											&isNull,
-											&itemIsDone[resind]);
+						values[resind] = ExecEvalExpr(gstate->arg,
+													  econtext,
+													  &isnull[resind],
+													  &itemIsDone[resind]);
 					}
 				}
 
 				MemoryContextSwitchTo(oldContext);
-				return NULL;
+				return false;
 			}
 		}
 	}
 
-	/*
-	 * form the new result tuple (in the caller's memory context!)
-	 */
+	/* Report success */
 	MemoryContextSwitchTo(oldContext);
 
-	return heap_formtuple(targettype, values, nulls);
+	return true;
 }
 
-/* ----------------------------------------------------------------
- *		ExecProject
+/*
+ * ExecVariableList
+ *		Evaluates a simple-Variable-list projection.
+ *
+ * Results are stored into the passed values and isnull arrays.
+ */
+static void
+ExecVariableList(ProjectionInfo *projInfo,
+				 Datum *values,
+				 bool *isnull)
+{
+	ExprContext *econtext = projInfo->pi_exprContext;
+	int		   *varSlotOffsets = projInfo->pi_varSlotOffsets;
+	int		   *varNumbers = projInfo->pi_varNumbers;
+	int			i;
+
+	/*
+	 * Force extraction of all input values that we need.
+	 */
+	if (projInfo->pi_lastInnerVar > 0)
+		slot_getsomeattrs(econtext->ecxt_innertuple,
+						  projInfo->pi_lastInnerVar);
+	if (projInfo->pi_lastOuterVar > 0)
+		slot_getsomeattrs(econtext->ecxt_outertuple,
+						  projInfo->pi_lastOuterVar);
+	if (projInfo->pi_lastScanVar > 0)
+		slot_getsomeattrs(econtext->ecxt_scantuple,
+						  projInfo->pi_lastScanVar);
+
+	/*
+	 * Assign to result by direct extraction of fields from source
+	 * slots ... a mite ugly, but fast ...
+	 */
+	for (i = list_length(projInfo->pi_targetlist) - 1; i >= 0; i--)
+	{
+		char	   *slotptr = ((char *) econtext) + varSlotOffsets[i];
+		TupleTableSlot *varSlot = *((TupleTableSlot **) slotptr);
+		int			varNumber = varNumbers[i] - 1;
+
+		values[i] = varSlot->tts_values[varNumber];
+		isnull[i] = varSlot->tts_isnull[varNumber];
+	}
+}
+
+/*
+ * ExecProject
  *
  *		projects a tuple based on projection info and stores
- *		it in the specified tuple table slot.
+ *		it in the previously specified tuple table slot.
  *
- *		Note: someday soon the executor can be extended to eliminate
- *			  redundant projections by storing pointers to datums
- *			  in the tuple table and then passing these around when
- *			  possible.  this should make things much quicker.
- *			  -cim 6/3/91
- * ----------------------------------------------------------------
+ *		Note: the result is always a virtual tuple; therefore it
+ *		may reference the contents of the exprContext's scan tuples
+ *		and/or temporary results constructed in the exprContext.
+ *		If the caller wishes the result to be valid longer than that
+ *		data will be valid, he must call ExecMaterializeSlot on the
+ *		result slot.
  */
 TupleTableSlot *
 ExecProject(ProjectionInfo *projInfo, ExprDoneCond *isDone)
 {
 	TupleTableSlot *slot;
-	TupleDesc	tupType;
-	HeapTuple	newTuple;
 
 	/*
 	 * sanity checks
 	 */
-	if (projInfo == NULL)
-		return NULL;
+	Assert(projInfo != NULL);
 
 	/*
 	 * get the projection info we want
 	 */
 	slot = projInfo->pi_slot;
-	tupType = slot->ttc_tupleDescriptor;
 
 	/*
-	 * form a new result tuple (if possible --- result can be NULL)
+	 * Clear any former contents of the result slot.  This makes it
+	 * safe for us to use the slot's Datum/isnull arrays as workspace.
+	 * (Also, we can return the slot as-is if we decide no rows can
+	 * be projected.)
 	 */
-	newTuple = ExecTargetList(projInfo->pi_targetlist,
-							  tupType,
-							  projInfo->pi_exprContext,
-							  projInfo->pi_tupValues,
-							  projInfo->pi_tupNulls,
-							  projInfo->pi_itemIsDone,
-							  isDone);
+	ExecClearTuple(slot);
 
 	/*
-	 * store the tuple in the projection slot and return the slot.
+	 * form a new result tuple (if possible); if successful, mark the result
+	 * slot as containing a valid virtual tuple
 	 */
-	return ExecStoreTuple(newTuple,		/* tuple to store */
-						  slot, /* slot to store in */
-						  InvalidBuffer,		/* tuple has no buffer */
-						  true);
+	if (projInfo->pi_isVarList)
+	{
+		/* simple Var list: this always succeeds with one result row */
+		if (isDone)
+			*isDone = ExprSingleResult;
+		ExecVariableList(projInfo,
+						 slot->tts_values,
+						 slot->tts_isnull);
+		ExecStoreVirtualTuple(slot);
+	}
+	else
+	{
+		if (ExecTargetList(projInfo->pi_targetlist,
+						   projInfo->pi_exprContext,
+						   slot->tts_values,
+						   slot->tts_isnull,
+						   projInfo->pi_itemIsDone,
+						   isDone))
+			ExecStoreVirtualTuple(slot);
+	}
+
+	return slot;
 }

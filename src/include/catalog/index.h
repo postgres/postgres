@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/index.h,v 1.59 2004/12/31 22:03:24 pgsql Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/index.h,v 1.60 2005/03/16 21:38:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,8 +46,7 @@ extern void index_drop(Oid indexId);
 extern IndexInfo *BuildIndexInfo(Relation index);
 
 extern void FormIndexDatum(IndexInfo *indexInfo,
-			   HeapTuple heapTuple,
-			   TupleDesc heapDescriptor,
+			   TupleTableSlot *slot,
 			   EState *estate,
 			   Datum *datum,
 			   char *nullv);

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeLimit.c,v 1.20 2004/12/31 21:59:45 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeLimit.c,v 1.21 2005/03/16 21:38:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,7 +38,6 @@ TupleTableSlot *				/* return: a tuple or NULL */
 ExecLimit(LimitState *node)
 {
 	ScanDirection direction;
-	TupleTableSlot *resultTupleSlot;
 	TupleTableSlot *slot;
 	PlanState  *outerPlan;
 
@@ -47,7 +46,6 @@ ExecLimit(LimitState *node)
 	 */
 	direction = node->ps.state->es_direction;
 	outerPlan = outerPlanState(node);
-	resultTupleSlot = node->ps.ps_ResultTupleSlot;
 
 	/*
 	 * The main logic is a simple state machine.
@@ -219,12 +217,7 @@ ExecLimit(LimitState *node)
 	/* Return the current tuple */
 	Assert(!TupIsNull(slot));
 
-	ExecStoreTuple(slot->val,
-				   resultTupleSlot,
-				   InvalidBuffer,
-				   false);		/* tuple does not belong to slot */
-
-	return resultTupleSlot;
+	return slot;
 }
 
 /*
@@ -324,7 +317,7 @@ ExecInitLimit(Limit *node, EState *estate)
 #define LIMIT_NSLOTS 1
 
 	/*
-	 * Tuple table initialization
+	 * Tuple table initialization (XXX not actually used...)
 	 */
 	ExecInitResultTupleSlot(estate, &limitstate->ps);
 
@@ -363,10 +356,6 @@ void
 ExecEndLimit(LimitState *node)
 {
 	ExecFreeExprContext(&node->ps);
-
-	/* clean up tuple table */
-	ExecClearTuple(node->ps.ps_ResultTupleSlot);
-
 	ExecEndNode(outerPlanState(node));
 }
 
@@ -376,8 +365,6 @@ ExecReScanLimit(LimitState *node, ExprContext *exprCtxt)
 {
 	/* resetting lstate will force offset/limit recalculation */
 	node->lstate = LIMIT_INITIAL;
-
-	ExecClearTuple(node->ps.ps_ResultTupleSlot);
 
 	/*
 	 * if chgParam of subnode is not null then plan will be re-scanned by

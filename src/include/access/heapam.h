@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/heapam.h,v 1.95 2005/03/14 04:41:13 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/access/heapam.h,v 1.96 2005/03/16 21:38:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -178,27 +178,42 @@ extern XLogRecPtr log_heap_move(Relation reln, Buffer oldbuf,
 			  Buffer newbuf, HeapTuple newtup);
 
 /* in common/heaptuple.c */
+extern Size heap_compute_data_size(TupleDesc tupleDesc,
+								   Datum *values, bool *isnull);
 extern Size ComputeDataSize(TupleDesc tupleDesc, Datum *values, char *nulls);
+extern void heap_fill_tuple(TupleDesc tupleDesc,
+							Datum *values, bool *isnull,
+							char *data, uint16 *infomask, bits8 *bit);
 extern void DataFill(char *data, TupleDesc tupleDesc,
 		 Datum *values, char *nulls, uint16 *infomask,
 		 bits8 *bit);
-extern int	heap_attisnull(HeapTuple tup, int attnum);
+extern bool heap_attisnull(HeapTuple tup, int attnum);
 extern Datum nocachegetattr(HeapTuple tup, int attnum,
 			   TupleDesc att, bool *isnull);
 extern Datum heap_getsysattr(HeapTuple tup, int attnum, TupleDesc tupleDesc,
 				bool *isnull);
 extern HeapTuple heap_copytuple(HeapTuple tuple);
 extern void heap_copytuple_with_tuple(HeapTuple src, HeapTuple dest);
+extern HeapTuple heap_form_tuple(TupleDesc tupleDescriptor,
+			   Datum *values, bool *isnull);
 extern HeapTuple heap_formtuple(TupleDesc tupleDescriptor,
 			   Datum *values, char *nulls);
+extern HeapTuple heap_modify_tuple(HeapTuple tuple,
+				 TupleDesc tupleDesc,
+				 Datum *replValues,
+				 bool *replIsnull,
+				 bool *doReplace);
 extern HeapTuple heap_modifytuple(HeapTuple tuple,
 				 TupleDesc tupleDesc,
 				 Datum *replValues,
 				 char *replNulls,
 				 char *replActions);
+extern void heap_deform_tuple(HeapTuple tuple, TupleDesc tupleDesc,
+				 Datum *values, bool *isnull);
 extern void heap_deformtuple(HeapTuple tuple, TupleDesc tupleDesc,
 				 Datum *values, char *nulls);
 extern void heap_freetuple(HeapTuple tuple);
-extern HeapTuple heap_addheader(int natts, bool withoid, Size structlen, void *structure);
+extern HeapTuple heap_addheader(int natts, bool withoid,
+								Size structlen, void *structure);
 
 #endif   /* HEAPAM_H */

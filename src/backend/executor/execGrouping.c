@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execGrouping.c,v 1.13 2004/12/31 21:59:45 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execGrouping.c,v 1.14 2005/03/16 21:38:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -41,8 +41,7 @@ static int TupleHashTableMatch(const void *key1, const void *key2,
  * This actually implements SQL's notion of "not distinct".  Two nulls
  * match, a null and a not-null don't match.
  *
- * tuple1, tuple2: the tuples to compare
- * tupdesc: tuple descriptor applying to both tuples
+ * slot1, slot2: the tuples to compare (must have same columns!)
  * numCols: the number of attributes to be examined
  * matchColIdx: array of attribute column numbers
  * eqFunctions: array of fmgr lookup info for the equality functions to use
@@ -51,9 +50,8 @@ static int TupleHashTableMatch(const void *key1, const void *key2,
  * NB: evalContext is reset each time!
  */
 bool
-execTuplesMatch(HeapTuple tuple1,
-				HeapTuple tuple2,
-				TupleDesc tupdesc,
+execTuplesMatch(TupleTableSlot *slot1,
+				TupleTableSlot *slot2,
 				int numCols,
 				AttrNumber *matchColIdx,
 				FmgrInfo *eqfunctions,
@@ -84,15 +82,9 @@ execTuplesMatch(HeapTuple tuple1,
 		bool		isNull1,
 					isNull2;
 
-		attr1 = heap_getattr(tuple1,
-							 att,
-							 tupdesc,
-							 &isNull1);
+		attr1 = slot_getattr(slot1, att, &isNull1);
 
-		attr2 = heap_getattr(tuple2,
-							 att,
-							 tupdesc,
-							 &isNull2);
+		attr2 = slot_getattr(slot2, att, &isNull2);
 
 		if (isNull1 != isNull2)
 		{
@@ -129,9 +121,8 @@ execTuplesMatch(HeapTuple tuple1,
  * Parameters are identical to execTuplesMatch.
  */
 bool
-execTuplesUnequal(HeapTuple tuple1,
-				  HeapTuple tuple2,
-				  TupleDesc tupdesc,
+execTuplesUnequal(TupleTableSlot *slot1,
+				  TupleTableSlot *slot2,
 				  int numCols,
 				  AttrNumber *matchColIdx,
 				  FmgrInfo *eqfunctions,
@@ -162,18 +153,12 @@ execTuplesUnequal(HeapTuple tuple1,
 		bool		isNull1,
 					isNull2;
 
-		attr1 = heap_getattr(tuple1,
-							 att,
-							 tupdesc,
-							 &isNull1);
+		attr1 = slot_getattr(slot1, att, &isNull1);
 
 		if (isNull1)
 			continue;			/* can't prove anything here */
 
-		attr2 = heap_getattr(tuple2,
-							 att,
-							 tupdesc,
-							 &isNull2);
+		attr2 = slot_getattr(slot2, att, &isNull2);
 
 		if (isNull2)
 			continue;			/* can't prove anything here */
@@ -312,6 +297,8 @@ BuildTupleHashTable(int numCols, AttrNumber *keyColIdx,
 	hashtable->tablecxt = tablecxt;
 	hashtable->tempcxt = tempcxt;
 	hashtable->entrysize = entrysize;
+	hashtable->tableslot = NULL;		/* will be made on first lookup */
+	hashtable->inputslot = NULL;
 
 	MemSet(&hash_ctl, 0, sizeof(hash_ctl));
 	hash_ctl.keysize = sizeof(TupleHashEntryData);
@@ -342,12 +329,26 @@ TupleHashEntry
 LookupTupleHashEntry(TupleHashTable hashtable, TupleTableSlot *slot,
 					 bool *isnew)
 {
-	HeapTuple	tuple = slot->val;
-	TupleDesc	tupdesc = slot->ttc_tupleDescriptor;
 	TupleHashEntry entry;
 	MemoryContext oldContext;
 	TupleHashTable saveCurHT;
+	TupleHashEntryData dummy;
 	bool		found;
+
+	/* If first time through, clone the input slot to make table slot */
+	if (hashtable->tableslot == NULL)
+	{
+		TupleDesc	tupdesc;
+
+		oldContext = MemoryContextSwitchTo(hashtable->tablecxt);
+		/*
+		 * We copy the input tuple descriptor just for safety --- we assume
+		 * all input tuples will have equivalent descriptors.
+		 */
+		tupdesc = CreateTupleDescCopy(slot->tts_tupleDescriptor);
+		hashtable->tableslot = MakeSingleTupleTableSlot(tupdesc);
+		MemoryContextSwitchTo(oldContext);
+	}
 
 	/* Need to run the hash functions in short-lived context */
 	oldContext = MemoryContextSwitchTo(hashtable->tempcxt);
@@ -358,13 +359,14 @@ LookupTupleHashEntry(TupleHashTable hashtable, TupleTableSlot *slot,
 	 * We save and restore CurTupleHashTable just in case someone manages to
 	 * invoke this code re-entrantly.
 	 */
-	hashtable->tupdesc = tupdesc;
+	hashtable->inputslot = slot;
 	saveCurHT = CurTupleHashTable;
 	CurTupleHashTable = hashtable;
 
 	/* Search the hash table */
+	dummy.firstTuple = NULL;	/* flag to reference inputslot */
 	entry = (TupleHashEntry) hash_search(hashtable->hashtab,
-										 &tuple,
+										 &dummy,
 										 isnew ? HASH_ENTER : HASH_FIND,
 										 &found);
 
@@ -392,7 +394,7 @@ LookupTupleHashEntry(TupleHashTable hashtable, TupleTableSlot *slot,
 
 			/* Copy the first tuple into the table context */
 			MemoryContextSwitchTo(hashtable->tablecxt);
-			entry->firstTuple = heap_copytuple(tuple);
+			entry->firstTuple = ExecCopySlotTuple(slot);
 
 			*isnew = true;
 		}
@@ -408,9 +410,12 @@ LookupTupleHashEntry(TupleHashTable hashtable, TupleTableSlot *slot,
 /*
  * Compute the hash value for a tuple
  *
- * The passed-in key is a pointer to a HeapTuple pointer -- this is either
- * the firstTuple field of a TupleHashEntry struct, or the key value passed
- * to hash_search.	We ignore the keysize.
+ * The passed-in key is a pointer to TupleHashEntryData.  In an actual
+ * hash table entry, the firstTuple field therein points to a physical
+ * tuple.  LookupTupleHashEntry sets up a dummy TupleHashEntryData with
+ * a NULL firstTuple field --- that cues us to look at the inputslot instead.
+ * This convention avoids the need to materialize virtual input tuples
+ * unless they actually need to get copied into the table.
  *
  * CurTupleHashTable must be set before calling this, since dynahash.c
  * doesn't provide any API that would let us get at the hashtable otherwise.
@@ -421,13 +426,26 @@ LookupTupleHashEntry(TupleHashTable hashtable, TupleTableSlot *slot,
 static uint32
 TupleHashTableHash(const void *key, Size keysize)
 {
-	HeapTuple	tuple = *(const HeapTuple *) key;
+	HeapTuple	tuple = ((const TupleHashEntryData *) key)->firstTuple;
+	TupleTableSlot *slot;
 	TupleHashTable hashtable = CurTupleHashTable;
 	int			numCols = hashtable->numCols;
 	AttrNumber *keyColIdx = hashtable->keyColIdx;
-	TupleDesc	tupdesc = hashtable->tupdesc;
 	uint32		hashkey = 0;
 	int			i;
+
+	if (tuple == NULL)
+	{
+		/* Process the current input tuple for the table */
+		slot = hashtable->inputslot;
+	}
+	else
+	{
+		/* Process a tuple already stored in the table */
+		/* (this case never actually occurs in current dynahash.c code) */
+		slot = hashtable->tableslot;
+		ExecStoreTuple(tuple, slot, InvalidBuffer, false);
+	}
 
 	for (i = 0; i < numCols; i++)
 	{
@@ -438,7 +456,7 @@ TupleHashTableHash(const void *key, Size keysize)
 		/* rotate hashkey left 1 bit at each step */
 		hashkey = (hashkey << 1) | ((hashkey & 0x80000000) ? 1 : 0);
 
-		attr = heap_getattr(tuple, att, tupdesc, &isNull);
+		attr = slot_getattr(slot, att, &isNull);
 
 		if (!isNull)			/* treat nulls as having hash key 0 */
 		{
@@ -456,7 +474,7 @@ TupleHashTableHash(const void *key, Size keysize)
 /*
  * See whether two tuples (presumably of the same hash value) match
  *
- * As above, the passed pointers are pointers to HeapTuple pointers.
+ * As above, the passed pointers are pointers to TupleHashEntryData.
  *
  * CurTupleHashTable must be set before calling this, since dynahash.c
  * doesn't provide any API that would let us get at the hashtable otherwise.
@@ -467,13 +485,28 @@ TupleHashTableHash(const void *key, Size keysize)
 static int
 TupleHashTableMatch(const void *key1, const void *key2, Size keysize)
 {
-	HeapTuple	tuple1 = *(const HeapTuple *) key1;
-	HeapTuple	tuple2 = *(const HeapTuple *) key2;
+	HeapTuple	tuple1 = ((const TupleHashEntryData *) key1)->firstTuple;
+#ifdef USE_ASSERT_CHECKING
+	HeapTuple	tuple2 = ((const TupleHashEntryData *) key2)->firstTuple;
+#endif
+	TupleTableSlot *slot1;
+	TupleTableSlot *slot2;
 	TupleHashTable hashtable = CurTupleHashTable;
 
-	if (execTuplesMatch(tuple1,
-						tuple2,
-						hashtable->tupdesc,
+	/*
+	 * We assume that dynahash.c will only ever call us with the first
+	 * argument being an actual table entry, and the second argument being
+	 * LookupTupleHashEntry's dummy TupleHashEntryData.  The other direction
+	 * could be supported too, but is not currently used by dynahash.c.
+	 */
+	Assert(tuple1 != NULL);
+	slot1 = hashtable->tableslot;
+	ExecStoreTuple(tuple1, slot1, InvalidBuffer, false);
+	Assert(tuple2 == NULL);
+	slot2 = hashtable->inputslot;
+
+	if (execTuplesMatch(slot1,
+						slot2,
 						hashtable->numCols,
 						hashtable->keyColIdx,
 						hashtable->eqfunctions,

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/copy.c,v 1.237 2005/03/12 05:41:34 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/copy.c,v 1.238 2005/03/16 21:38:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1487,7 +1487,6 @@ CopyFrom(Relation rel, List *attnumlist, bool binary, bool oids,
 	bool		isnull;
 	ResultRelInfo *resultRelInfo;
 	EState	   *estate = CreateExecutorState(); /* for ExecConstraints() */
-	TupleTable	tupleTable;
 	TupleTableSlot *slot;
 	bool		file_has_oids;
 	int		   *defmap;
@@ -1518,10 +1517,8 @@ CopyFrom(Relation rel, List *attnumlist, bool binary, bool oids,
 	estate->es_num_result_relations = 1;
 	estate->es_result_relation_info = resultRelInfo;
 
-	/* Set up a dummy tuple table too */
-	tupleTable = ExecCreateTupleTable(1);
-	slot = ExecAllocTableSlot(tupleTable);
-	ExecSetSlotDescriptor(slot, tupDesc, false);
+	/* Set up a tuple slot too */
+	slot = MakeSingleTupleTableSlot(tupDesc);
 
 	econtext = GetPerTupleExprContext(estate);
 
@@ -1989,7 +1986,7 @@ CopyFrom(Relation rel, List *attnumlist, bool binary, bool oids,
 	pfree(constraintexprs);
 	pfree(force_notnull);
 
-	ExecDropTupleTable(tupleTable, true);
+	ExecDropSingleTupleTableSlot(slot);
 
 	ExecCloseIndices(resultRelInfo);
 

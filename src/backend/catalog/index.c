@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/index.c,v 1.246 2005/03/07 04:42:16 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/index.c,v 1.247 2005/03/16 21:38:04 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -894,8 +894,7 @@ BuildIndexInfo(Relation index)
  *			Construct Datum[] and nullv[] arrays for a new index tuple.
  *
  *	indexInfo		Info about the index
- *	heapTuple		Heap tuple for which we must prepare an index entry
- *	heapDescriptor	tupledesc for heap tuple
+ *	slot			Heap tuple for which we must prepare an index entry
  *	estate			executor state for evaluating any index expressions
  *	datum			Array of index Datums (output area)
  *	nullv			Array of is-null indicators (output area)
@@ -910,8 +909,7 @@ BuildIndexInfo(Relation index)
  */
 void
 FormIndexDatum(IndexInfo *indexInfo,
-			   HeapTuple heapTuple,
-			   TupleDesc heapDescriptor,
+			   TupleTableSlot *slot,
 			   EState *estate,
 			   Datum *datum,
 			   char *nullv)
@@ -927,7 +925,7 @@ FormIndexDatum(IndexInfo *indexInfo,
 			ExecPrepareExpr((Expr *) indexInfo->ii_Expressions,
 							estate);
 		/* Check caller has set up context correctly */
-		Assert(GetPerTupleExprContext(estate)->ecxt_scantuple->val == heapTuple);
+		Assert(GetPerTupleExprContext(estate)->ecxt_scantuple == slot);
 	}
 	indexpr_item = list_head(indexInfo->ii_ExpressionsState);
 
@@ -943,7 +941,7 @@ FormIndexDatum(IndexInfo *indexInfo,
 			 * Plain index column; get the value we need directly from the
 			 * heap tuple.
 			 */
-			iDatum = heap_getattr(heapTuple, keycol, heapDescriptor, &isNull);
+			iDatum = slot_getattr(slot, keycol, &isNull);
 		}
 		else
 		{
@@ -1336,12 +1334,10 @@ IndexBuildHeapScan(Relation heapRelation,
 {
 	HeapScanDesc scan;
 	HeapTuple	heapTuple;
-	TupleDesc	heapDescriptor;
 	Datum		attdata[INDEX_MAX_KEYS];
 	char		nulls[INDEX_MAX_KEYS];
 	double		reltuples;
 	List	   *predicate;
-	TupleTable	tupleTable;
 	TupleTableSlot *slot;
 	EState	   *estate;
 	ExprContext *econtext;
@@ -1353,41 +1349,21 @@ IndexBuildHeapScan(Relation heapRelation,
 	 */
 	Assert(OidIsValid(indexRelation->rd_rel->relam));
 
-	heapDescriptor = RelationGetDescr(heapRelation);
-
 	/*
 	 * Need an EState for evaluation of index expressions and
-	 * partial-index predicates.
+	 * partial-index predicates.  Also a slot to hold the current tuple.
 	 */
 	estate = CreateExecutorState();
 	econtext = GetPerTupleExprContext(estate);
+	slot = MakeSingleTupleTableSlot(RelationGetDescr(heapRelation));
 
-	/*
-	 * If this is a predicate (partial) index, we will need to evaluate
-	 * the predicate using ExecQual, which requires the current tuple to
-	 * be in a slot of a TupleTable.  Likewise if there are any
-	 * expressions.
-	 */
-	if (indexInfo->ii_Predicate != NIL || indexInfo->ii_Expressions != NIL)
-	{
-		tupleTable = ExecCreateTupleTable(1);
-		slot = ExecAllocTableSlot(tupleTable);
-		ExecSetSlotDescriptor(slot, heapDescriptor, false);
+	/* Arrange for econtext's scan tuple to be the tuple under test */
+	econtext->ecxt_scantuple = slot;
 
-		/* Arrange for econtext's scan tuple to be the tuple under test */
-		econtext->ecxt_scantuple = slot;
-
-		/* Set up execution state for predicate. */
-		predicate = (List *)
-			ExecPrepareExpr((Expr *) indexInfo->ii_Predicate,
-							estate);
-	}
-	else
-	{
-		tupleTable = NULL;
-		slot = NULL;
-		predicate = NIL;
-	}
+	/* Set up execution state for predicate, if any. */
+	predicate = (List *)
+		ExecPrepareExpr((Expr *) indexInfo->ii_Predicate,
+						estate);
 
 	/*
 	 * Ok, begin our scan of the base relation.  We use SnapshotAny
@@ -1511,8 +1487,7 @@ IndexBuildHeapScan(Relation heapRelation,
 		MemoryContextReset(econtext->ecxt_per_tuple_memory);
 
 		/* Set up for predicate or expression evaluation */
-		if (slot)
-			ExecStoreTuple(heapTuple, slot, InvalidBuffer, false);
+		ExecStoreTuple(heapTuple, slot, InvalidBuffer, false);
 
 		/*
 		 * In a partial index, discard tuples that don't satisfy the
@@ -1534,8 +1509,7 @@ IndexBuildHeapScan(Relation heapRelation,
 		 * evaluation of any expressions needed.
 		 */
 		FormIndexDatum(indexInfo,
-					   heapTuple,
-					   heapDescriptor,
+					   slot,
 					   estate,
 					   attdata,
 					   nulls);
@@ -1553,8 +1527,7 @@ IndexBuildHeapScan(Relation heapRelation,
 
 	heap_endscan(scan);
 
-	if (tupleTable)
-		ExecDropTupleTable(tupleTable, true);
+	ExecDropSingleTupleTableSlot(slot);
 
 	FreeExecutorState(estate);
 
