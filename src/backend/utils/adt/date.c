@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/date.c,v 1.11 1997/08/12 20:15:57 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/date.c,v 1.12 1997/08/12 22:54:26 momjian Exp $
  *
  * NOTES
  *   This code is actually (almost) unused.
@@ -214,10 +214,10 @@ reltime2tm(int32 time, struct tm *tm)
     if (quantity > 1 || quantity < -1)
 	unitnr++;		/* adjust index for PLURAL of unit */
     if (quantity >= 0)
-	(void) sprintf( timestring, "%c %lu %s", RELTIME_LABEL,
+	sprintf( timestring, "%c %lu %s", RELTIME_LABEL,
 		       quantity, unit_tab[unitnr]);
     else
-	(void) sprintf( timestring, "%c %lu %s %s", RELTIME_LABEL,
+	sprintf( timestring, "%c %lu %s %s", RELTIME_LABEL,
 		       (quantity * -1), unit_tab[unitnr], RELTIME_PAST);
     return(timestring);
 }

@@ -5,7 +5,7 @@
 *
 * Copyright (c) 1994, Regents of the University of California
 *
-* $Id: geqo_params.c,v 1.3 1997/07/24 20:12:15 momjian Exp $
+* $Id: geqo_params.c,v 1.4 1997/08/12 22:53:09 momjian Exp $
 *
 *-------------------------------------------------------------------------
 */
@@ -280,7 +280,7 @@ next_token(FILE *fp, char *buf, int bufsz)
     while (c == ' ' || c == '\t') c = getc(fp);
 
     /* Put back the char that was non-whitespace (putting back EOF is ok) */
-    (void) ungetc(c, fp);
+    ungetc(c, fp);
 
     /* If we ended with a newline, return that, otherwise return 0 */
     return (c == '\n' ? '\n' : 0);

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/sets.c,v 1.4 1997/01/10 20:19:49 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/sets.c,v 1.5 1997/08/12 22:54:38 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -129,7 +129,7 @@ SetDefine(char *querystr, char *typename)
 	    ItemPointerCopy(&tup->t_ctid, &ipdata);
 	    
 	    setheapoverride(true);
-	    (void) heap_replace(procrel, &ipdata, newtup);
+	    heap_replace(procrel, &ipdata, newtup);
 	    setheapoverride(false);
 	    
 	    setoid = newtup->t_oid;

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/sort/Attic/psort.c,v 1.12 1997/08/12 20:16:14 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/sort/Attic/psort.c,v 1.13 1997/08/12 22:55:02 momjian Exp $
  *
  * NOTES
  *      Sorts the first relation into the second relation.
@@ -35,6 +35,9 @@
  */
 #include <stdio.h>
 #include <math.h>
+#include <string.h>
+#include <sys/types.h>
+#include <unistd.h>
 
 #include "postgres.h"
 
@@ -342,9 +345,8 @@ bool
 createrun(Sort *node, FILE *file, bool *empty)
 {
     register HeapTuple	lasttuple;
-    register HeapTuple	btup, tup;
+    register HeapTuple	tup;
     struct	leftist	*nextrun;
-    Buffer	b;
     bool		foundeor;
     short		junk;
 
@@ -726,7 +728,6 @@ struct tapelst {
 };
 
 static struct	tapelst	*Tapes = NULL;
-static char	Tempfile[MAXPGPATH] = TEMPDIR;
 
 /*
  *	gettape		- returns an open stream for writing/reading

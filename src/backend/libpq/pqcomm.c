@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/libpq/pqcomm.c,v 1.18 1997/08/12 20:15:24 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/libpq/pqcomm.c,v 1.19 1997/08/12 22:52:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -243,7 +243,7 @@ int
 PQputline(char *s)
 {
     if (Pfout) {
-	(void) fputs(s, Pfout);
+	fputs(s, Pfout);
 	fflush(Pfout);
     }
     return(0);
@@ -314,7 +314,7 @@ pq_getint(int b)
     
     if(status)
     	{
-	(void) sprintf(PQerrormsg,
+	sprintf(PQerrormsg,
     	    "FATAL: pq_getint failed: errno=%d\n", errno);
     	fputs(PQerrormsg, stderr);
     	pqdebug("%s", PQerrormsg);
@@ -333,7 +333,7 @@ pq_putstr(char *s)
 {
 	if(pqPutString(s, Pfout))
 		{
-	    (void) sprintf(PQerrormsg,
+	    sprintf(PQerrormsg,
 			"FATAL: pq_putstr: fputs() failed: errno=%d\n", errno);
 	    fputs(PQerrormsg, stderr);
 	    pqdebug("%s", PQerrormsg);
@@ -349,7 +349,7 @@ pq_putnchar(char *s, int n)
 	{
 	if(pqPutNBytes(s, n, Pfout))
 		{	
-		(void) sprintf(PQerrormsg,
+		sprintf(PQerrormsg,
 			       "FATAL: pq_putnchar: fputc() failed: errno=%d\n",
 			       errno);
 		fputs(PQerrormsg, stderr);
@@ -389,7 +389,7 @@ pq_putint(int i, int b)
 
     if(status)
     	{
-		(void) sprintf(PQerrormsg,
+		sprintf(PQerrormsg,
     	    "FATAL: pq_putint failed: errno=%d\n", errno);
 		fputs(PQerrormsg, stderr);
 		pqdebug("%s", PQerrormsg);
@@ -444,7 +444,7 @@ pq_getinaddr(struct sockaddr_in *sin,
 		return(1);
 	    }
 	    if (hs->h_addrtype != AF_INET) {
-		(void) sprintf(PQerrormsg,
+		sprintf(PQerrormsg,
 			       "FATAL: pq_getinaddr: %s not on Internet\n",
 			       host);
 		fputs(PQerrormsg, stderr);
@@ -473,7 +473,7 @@ pq_getinserv(struct sockaddr_in *sin, char *host, char *serv)
     if (*serv >= '0' && *serv <= '9')
 	return(pq_getinaddr(sin, host, atoi(serv)));
     if (!(ss = getservbyname(serv, NULL))) {
-	(void) sprintf(PQerrormsg,
+	sprintf(PQerrormsg,
 		       "FATAL: pq_getinserv: unknown service: %s\n",
 		       serv);
 	fputs(PQerrormsg, stderr);
@@ -498,7 +498,7 @@ pq_regoob(void (*fptr)())
 #else
     fcntl(fd, F_SETOWN, getpid());
 #endif /* hpux */
-    (void) pqsignal(SIGURG,fptr);
+    pqsignal(SIGURG,fptr);
 }
 
 void
@@ -559,7 +559,7 @@ StreamServerPort(char *hostName, short portName, int *fdP)
     memset((char *)&sin, 0, sizeof sin);
     
     if ((fd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
-	(void) sprintf(PQerrormsg,
+	sprintf(PQerrormsg,
 		       "FATAL: StreamServerPort: socket() failed: errno=%d\n",
 		       errno);
 	fputs(PQerrormsg, stderr);
@@ -569,7 +569,7 @@ StreamServerPort(char *hostName, short portName, int *fdP)
 
     if((setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, (char *)&one,
                                                     sizeof(one))) == -1) {
-        (void) sprintf(PQerrormsg,
+        sprintf(PQerrormsg,
             "FATAL: StreamServerPort: setsockopt (SO_REUSEADDR) failed: errno=%d\n",
             errno);
 	fputs(PQerrormsg, stderr);
@@ -581,7 +581,7 @@ StreamServerPort(char *hostName, short portName, int *fdP)
     sin.sin_port = htons(portName);
     
     if (bind(fd, (struct sockaddr *)&sin, sizeof sin) < 0) {
-	(void) sprintf(PQerrormsg,
+	sprintf(PQerrormsg,
 		       "FATAL: StreamServerPort: bind() failed: errno=%d\n",
 		       errno);
 	pqdebug("%s", PQerrormsg);
@@ -597,8 +597,8 @@ StreamServerPort(char *hostName, short portName, int *fdP)
      * listening port non-blocking.  That is not necessary (and
      * may tickle kernel bugs).
      
-     (void) fcntl(fd, F_SETFD, 1);
-     (void) fcntl(fd, F_SETFL, FNDELAY);
+     fcntl(fd, F_SETFD, 1);
+     fcntl(fd, F_SETFL, FNDELAY);
      */
     
     *fdP = fd;
@@ -666,7 +666,7 @@ StreamConnection(int server_fd, Port *port)
 void
 StreamClose(int sock)
 {
-    (void) close(sock); 
+    close(sock); 
 }
 
 /* ---------------------------
@@ -692,7 +692,7 @@ StreamOpen(char *hostName, short portName, Port *port)
     
     /* set up the server (remote) address */
     if (!(hp = gethostbyname(hostName)) || hp->h_addrtype != AF_INET) {
-	(void) sprintf(PQerrormsg,
+	sprintf(PQerrormsg,
 		       "FATAL: StreamOpen: unknown hostname: %s\n",
 		       hostName);
 	fputs(PQerrormsg, stderr);
@@ -708,7 +708,7 @@ StreamOpen(char *hostName, short portName, Port *port)
     
     /* connect to the server */
     if ((port->sock = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
-	(void) sprintf(PQerrormsg,
+	sprintf(PQerrormsg,
 		       "FATAL: StreamOpen: socket() failed: errno=%d\n",
 		       errno);
 	fputs(PQerrormsg, stderr);
@@ -717,7 +717,7 @@ StreamOpen(char *hostName, short portName, Port *port)
     }
     if (connect(port->sock, (struct sockaddr *)&port->raddr,
 		sizeof(port->raddr)) < 0) {
-	(void) sprintf(PQerrormsg,
+	sprintf(PQerrormsg,
 		       "FATAL: StreamOpen: connect() failed: errno=%d\n",
 		       errno);
 	fputs(PQerrormsg, stderr);
@@ -728,7 +728,7 @@ StreamOpen(char *hostName, short portName, Port *port)
     /* fill in the client address */
     if (getsockname(port->sock, (struct sockaddr *) &port->laddr,
 		    &laddrlen) < 0) {
-	(void) sprintf(PQerrormsg,
+	sprintf(PQerrormsg,
 		       "FATAL: StreamOpen: getsockname() failed: errno=%d\n",
 		       errno);
 	fputs(PQerrormsg, stderr);

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/hash/hashpage.c,v 1.7 1996/11/05 09:40:21 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/hash/hashpage.c,v 1.8 1997/08/12 22:51:37 momjian Exp $
  *
  * NOTES
  *    Postgres hash pages look like ordinary relation pages.  The opaque
@@ -609,7 +609,7 @@ _hash_splitpage(Relation rel,
 	    }
 	    
 	    noffnum = OffsetNumberNext(PageGetMaxOffsetNumber(npage));
-	    (void) PageAddItem(npage, (Item) hitem, itemsz, noffnum, LP_USED);
+	    PageAddItem(npage, (Item) hitem, itemsz, noffnum, LP_USED);
 	    _hash_wrtnorelbuf(rel, nbuf);
 	    
 	    /*

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/nabstime.c,v 1.29 1997/08/12 20:16:00 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/nabstime.c,v 1.30 1997/08/12 22:54:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -53,7 +53,7 @@ GetCurrentAbsoluteTime(void)
 #else /* ! USE_POSIX_TIME */
     struct timeb tb;		/* the old V7-ism */
 
-    (void) ftime(&tb);
+    ftime(&tb);
     now = tb.time;
 #endif
 
@@ -111,7 +111,7 @@ abstime2tm(AbsoluteTime time, int *tzp, struct tm *tm, char *tzn)
 #else /* ! USE_POSIX_TIME */
     struct timeb tb;		/* the old V7-ism */
 
-    (void) ftime(&tb);
+    ftime(&tb);
 #endif
 
 #ifdef USE_POSIX_TIME

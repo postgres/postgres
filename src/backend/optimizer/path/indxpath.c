@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.7 1997/03/18 18:39:40 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.8 1997/08/12 22:53:12 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1020,7 +1020,7 @@ clause_pred_clause_test(Expr *predicate, Node *clause)
 			 BOOL_TYPEID, /* opresulttype */
 			 0,	/* opsize */
 			 NULL);	/* op_fcache */
-    (void) replace_opid(test_oper);
+    replace_opid(test_oper);
 
     test_expr = make_opclause(test_oper,
 			      copyObject(clause_const),

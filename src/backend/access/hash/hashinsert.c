@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/hash/hashinsert.c,v 1.7 1996/11/05 09:40:18 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/hash/hashinsert.c,v 1.8 1997/08/12 22:51:30 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -223,7 +223,7 @@ _hash_pgaddtup(Relation rel,
     _hash_checkpage(page, LH_BUCKET_PAGE|LH_OVERFLOW_PAGE);
 
     itup_off = OffsetNumberNext(PageGetMaxOffsetNumber(page));
-    (void) PageAddItem(page, (Item) hitem, itemsize, itup_off, LP_USED);
+    PageAddItem(page, (Item) hitem, itemsize, itup_off, LP_USED);
     
     /* write the buffer, but hold our lock */
     _hash_wrtnorelbuf(rel, buf);

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/commands/Attic/purge.c,v 1.5 1997/07/29 16:19:26 thomas Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/commands/Attic/purge.c,v 1.6 1997/08/12 22:52:25 momjian Exp $
  *
  * Note:
  *	XXX There are many instances of int32 instead of ...Time.  These
@@ -149,7 +149,7 @@ RelationPurge(char *relationName,
 				nulls, replace);
     
     /* XXX How do you detect an insertion error?? */
-    (void) heap_replace(relation, &newTuple->t_ctid, newTuple);
+    heap_replace(relation, &newTuple->t_ctid, newTuple);
     
     /* keep the system catalog indices current */
     CatalogOpenIndices(Num_pg_class_indices, Name_pg_class_indices, idescs);

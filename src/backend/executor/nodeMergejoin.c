@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/executor/nodeMergejoin.c,v 1.6 1997/08/06 03:41:29 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/executor/nodeMergejoin.c,v 1.7 1997/08/12 22:52:38 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -82,6 +82,7 @@
 #include "executor/nodeMergejoin.h"
 #include "executor/execdebug.h"
 #include "utils/lsyscache.h"
+#include "utils/psort.h"
 
 /* ----------------------------------------------------------------
  *	MarkInnerTuple and RestoreInnerTuple macros

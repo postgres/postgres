@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtsearch.c,v 1.21 1997/06/10 07:28:50 vadim Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtsearch.c,v 1.22 1997/08/12 22:51:50 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -915,7 +915,7 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 	    
 	    /* if this is true, the key we just looked at is gone */
 	    if (result > 0)
-		(void) _bt_twostep(scan, &buf, ForwardScanDirection);
+		_bt_twostep(scan, &buf, ForwardScanDirection);
 	}
 	break;
 	
@@ -931,7 +931,7 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 	    } while (result >= 0);
 	    
 	    if (result < 0)
-		(void) _bt_twostep(scan, &buf, BackwardScanDirection);
+		_bt_twostep(scan, &buf, BackwardScanDirection);
 	}
 	break;
 	
@@ -966,7 +966,7 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 		 * No key on this page, but offnum from _bt_binsrch() greater
 		 * maxoff - have to move right. - vadim 12/06/96
 		 */
-	    	(void) _bt_twostep(scan, &buf, ForwardScanDirection);
+	    	_bt_twostep(scan, &buf, ForwardScanDirection);
 	    }
 	}
 	else if (result < 0)
@@ -981,7 +981,7 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 	    } while (result < 0);
 	    
 	    if (result > 0)
-		(void) _bt_twostep(scan, &buf, ForwardScanDirection);
+		_bt_twostep(scan, &buf, ForwardScanDirection);
 	}
 	break;
 	

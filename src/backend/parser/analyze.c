@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.31 1997/08/12 20:15:31 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.32 1997/08/12 22:53:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1018,7 +1018,7 @@ makeTargetNames(ParseState *pstate, List *cols)
     else
         foreach(tl, cols)
 			/* elog on failure */
-    	 (void)varattno(pstate->p_target_relation,((Ident *)lfirst(tl))->name);
+    	 varattno(pstate->p_target_relation,((Ident *)lfirst(tl))->name);
 
     return cols;
 }

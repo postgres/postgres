@@ -7,7 +7,7 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.18 1997/06/25 21:12:19 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.19 1997/08/12 22:52:04 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1082,7 +1082,7 @@ index_register(char *heap,
     
     ILHead = newind;
     
-    (void) MemoryContextSwitchTo(oldcxt);
+    MemoryContextSwitchTo(oldcxt);
 }
 
 void

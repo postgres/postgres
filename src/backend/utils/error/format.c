@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/error/Attic/format.c,v 1.2 1997/05/17 16:23:06 mergl Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/error/Attic/format.c,v 1.3 1997/08/12 22:54:47 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,7 +32,7 @@ form(const char *fmt, ... )
 
     va_start(args, fmt);
     
-    (void) vsprintf(FormBuf, fmt, args);
+    vsprintf(FormBuf, fmt, args);
 
     va_end(args);
     

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/commands/Attic/creatinh.c,v 1.9 1997/08/12 20:15:10 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/commands/Attic/creatinh.c,v 1.10 1997/08/12 22:52:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -390,7 +390,7 @@ StoreCatalogInheritance(Oid relationId, List *supers)
 	
 	tuple = heap_formtuple(desc,datum, nullarr);
 	
-	(void) heap_insert(relation, tuple);
+	heap_insert(relation, tuple);
 	pfree(tuple);
 	
 	seqNumber += 1;
@@ -498,7 +498,7 @@ StoreCatalogInheritance(Oid relationId, List *supers)
 	
 	tuple = heap_formtuple( desc, datum, nullarr);
 	
-	(void) heap_insert(relation, tuple);
+	heap_insert(relation, tuple);
 	pfree(tuple);
 	
 	seqNumber += 1;

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.11 1997/08/03 02:37:32 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.12 1997/08/12 22:54:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1607,7 +1607,7 @@ init_irels(void)
 	return;
     }
     
-    (void) FileSeek(fd, 0L, SEEK_SET);
+    FileSeek(fd, 0L, SEEK_SET);
     
     for (relno = 0; relno < Num_indices_bootstrap; relno++) {
 	/* first read the relation descriptor length*/
@@ -1748,7 +1748,7 @@ write_irels(void)
     if (fd < 0)
 	elog(FATAL, "cannot create init file %s", INIT_FILENAME);
     
-    (void) FileSeek(fd, 0L, SEEK_SET);
+    FileSeek(fd, 0L, SEEK_SET);
     
     /*
      *  Build a relation descriptor for pg_attnumind without resort to the
@@ -1853,5 +1853,5 @@ write_irels(void)
 	ird->rd_rel = relform;
     }
     
-    (void) FileClose(fd);
+    FileClose(fd);
 }

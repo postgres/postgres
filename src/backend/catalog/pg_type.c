@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/catalog/pg_type.c,v 1.5 1996/11/30 18:06:06 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/catalog/pg_type.c,v 1.6 1997/08/12 22:52:13 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -477,7 +477,7 @@ TypeCreate(char *typeName,
 	ItemPointerCopy(&tup->t_ctid, &itemPointerData);
 	
 	setheapoverride(true);
-	(void) heap_replace(pg_type_desc, &itemPointerData, tup);
+	heap_replace(pg_type_desc, &itemPointerData, tup);
 	setheapoverride(false);
 	
 	typeObjectId = tup->t_oid;

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.9 1997/03/15 01:23:58 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.10 1997/08/12 22:54:07 momjian Exp $
  *
  * NOTES
  *    Outside modules can create a lock table and acquire/release
@@ -256,7 +256,7 @@ LockTabInit(char *tabName,
     if (! ltable)
 	{
 	    elog(NOTICE,"LockTabInit: couldn't malloc lock table %s\n",tabName);
-	    (void) pfree (shmemName);
+	    pfree (shmemName);
 	    return(INVALID_TABLEID);
 	}
     
@@ -349,7 +349,7 @@ LockTabInit(char *tabName,
     
     SpinRelease(LockMgrLock);
     
-    (void) pfree (shmemName);
+    pfree (shmemName);
     
     if (status)
 	return(ltable->ctl->tableId);
@@ -1057,7 +1057,7 @@ LockRelease(LockTableId tableId, LOCKTAG *lockName, LOCKT lockt)
 	     * himself.
 	     * --------------------------
 	     */
-	    (void) ProcLockWakeup(&(lock->waitProcs), (char *) ltable, (char *) lock);
+	    ProcLockWakeup(&(lock->waitProcs), (char *) ltable, (char *) lock);
 	}
     
     SpinRelease(masterLock);
@@ -1286,7 +1286,7 @@ LockReleaseAll(LockTableId tableId, SHM_QUEUE *lockQueue)
 		     * --------------------
 		     */
 		    waitQueue = &(lock->waitProcs);
-		    (void) ProcLockWakeup(waitQueue, (char *) ltable, (char *) lock);
+		    ProcLockWakeup(waitQueue, (char *) ltable, (char *) lock);
 		}
 	    
 #ifdef USER_LOCKS

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.15 1997/04/05 03:36:21 vadim Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.16 1997/08/12 22:52:09 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -654,8 +654,8 @@ AppendAttributeTuples(Relation indexRelation, int numatts)
      *	initialize null[], replace[] and value[]
      * ----------------
      */
-    (void) memset(nullv, ' ', Natts_pg_attribute);
-    (void) memset(replace, ' ', Natts_pg_attribute);
+    memset(nullv, ' ', Natts_pg_attribute);
+    memset(replace, ' ', Natts_pg_attribute);
     
     /* ----------------
      *  create the first attribute tuple.
@@ -935,7 +935,7 @@ UpdateIndexPredicate(Oid indexoid, Node *oldPred, Node *predicate)
     
     newtup = heap_modifytuple(tuple, buffer, pg_index, values, nulls, replace);
     
-    (void) heap_replace(pg_index, &(newtup->t_ctid), newtup);
+    heap_replace(pg_index, &(newtup->t_ctid), newtup);
     
     heap_close(pg_index);
     pfree(predText);
@@ -1429,7 +1429,7 @@ UpdateStats(Oid relid, long reltuples, bool hasindex)
 	
 	newtup = heap_modifytuple(htup, buffer, pg_class, values,
 				  nulls, replace);
-	(void) heap_replace(pg_class, &(newtup->t_ctid), newtup);
+	heap_replace(pg_class, &(newtup->t_ctid), newtup);
 	CatalogOpenIndices(Num_pg_class_indices, Name_pg_class_indices, idescs);
 	CatalogIndexInsert(idescs, Num_pg_class_indices, pg_class, newtup);
 	CatalogCloseIndices(Num_pg_class_indices, idescs);
@@ -1682,7 +1682,7 @@ index_build(Relation heapRelation,
      * ----------------
      */
     if (RegProcedureIsValid(procedure))
-	(void) fmgr(procedure,
+	fmgr(procedure,
 		    heapRelation,
 		    indexRelation,
 		    numberOfAttributes,

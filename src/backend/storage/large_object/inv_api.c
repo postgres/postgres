@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/storage/large_object/inv_api.c,v 1.11 1997/07/28 00:55:08 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/storage/large_object/inv_api.c,v 1.12 1997/08/12 22:54:04 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -127,11 +127,11 @@ inv_create(int flags)
 
     /* this is pretty painful...  want a tuple descriptor */
     tupdesc = CreateTemplateTupleDesc(2);
-    (void) TupleDescInitEntry(tupdesc, (AttrNumber) 1,
+    TupleDescInitEntry(tupdesc, (AttrNumber) 1,
 			      "olastbye",
 			      "int4",
 			      0, false);
-    (void) TupleDescInitEntry(tupdesc, (AttrNumber) 2,
+    TupleDescInitEntry(tupdesc, (AttrNumber) 2,
 			      "odata",
 			      "bytea",
 			      0, false);
@@ -140,7 +140,7 @@ inv_create(int flags)
      *  will be located on whatever storage manager the user requested.
      */
 
-    (void) heap_create(objname, 
+    heap_create(objname, 
 		       objname,
 		       (int) archchar, smgr,
 		       tupdesc);
@@ -1147,7 +1147,7 @@ _inv_getsize(Relation hreln, TupleDesc hdesc, Relation ireln)
 	 */
 
 	if (buf != InvalidBuffer)
-	    (void) ReleaseBuffer(buf);
+	    ReleaseBuffer(buf);
 
 	htup = heap_fetch(hreln, NowTimeQual, &(res->heap_iptr), &buf);
 

@@ -706,7 +706,7 @@ gistSplit(Relation r,
 	item = (IndexTuple) PageGetItem(p, itemid);
 	
 	if (i == *(v.spl_left)) {
-	    (void) gistPageAddItem(giststate, r, left, (Item) item, 
+	    gistPageAddItem(giststate, r, left, (Item) item, 
 				   IndexTupleSize(item),
 				   leftoff, LP_USED, &tmpdentry, &newtup);
 	    leftoff = OffsetNumberNext(leftoff);
@@ -718,7 +718,7 @@ gistSplit(Relation r,
 	      pfree(newtup);
 	} 
 	else {
-	    (void) gistPageAddItem(giststate, r, right, (Item) item, 
+	    gistPageAddItem(giststate, r, right, (Item) item, 
 				   IndexTupleSize(item),
 				   rightoff, LP_USED, &tmpdentry, &newtup);
 	    rightoff = OffsetNumberNext(rightoff);
@@ -736,7 +736,7 @@ gistSplit(Relation r,
     
     /* now insert the new index tuple */
     if (*(v.spl_left) != FirstOffsetNumber) {
-	(void) gistPageAddItem(giststate, r, left, (Item) itup, 
+	gistPageAddItem(giststate, r, left, (Item) itup, 
 			       IndexTupleSize(itup),
 			       leftoff, LP_USED, &tmpdentry, &newtup);
 	leftoff = OffsetNumberNext(leftoff);
@@ -747,7 +747,7 @@ gistSplit(Relation r,
 	if (itup != newtup) 
 	  pfree(newtup);
     } else {
-	(void) gistPageAddItem(giststate, r, right, (Item) itup, 
+	gistPageAddItem(giststate, r, right, (Item) itup, 
 			       IndexTupleSize(itup),
 			       rightoff, LP_USED, &tmpdentry, &newtup);
 	rightoff = OffsetNumberNext(rightoff);
@@ -852,7 +852,7 @@ gistentryinserttwo(Relation r, GISTSTACK *stk, IndexTuple ltup,
 	pfree(res);
 	gistdoinsert(r, rtup, giststate);
     } else {
-        (void) gistPageAddItem(giststate, r, p, (Item)ltup, 
+        gistPageAddItem(giststate, r, p, (Item)ltup, 
 			       IndexTupleSize(ltup), InvalidOffsetNumber, 
 			       LP_USED, &tmpentry, &newtup);
 	WriteBuffer(b);
@@ -863,7 +863,7 @@ gistentryinserttwo(Relation r, GISTSTACK *stk, IndexTuple ltup,
 	  pfree(tmpentry.pred);
 	if (ltup != newtup)
 	  pfree(newtup);
-	(void)gistentryinsert(r, stk, rtup, giststate);
+	gistentryinsert(r, stk, rtup, giststate);
     }
 }  
 
@@ -919,7 +919,7 @@ gistnewroot(GISTSTATE *giststate, Relation r, IndexTuple lt, IndexTuple rt)
     b = ReadBuffer(r, GISTP_ROOT);
     GISTInitBuffer(b, 0);
     p = BufferGetPage(b);
-    (void) gistPageAddItem(giststate, r, p, (Item) lt, IndexTupleSize(lt), 
+    gistPageAddItem(giststate, r, p, (Item) lt, IndexTupleSize(lt), 
 			   FirstOffsetNumber,
 			   LP_USED, &tmpentry, &newtup);
     /* be tidy */
@@ -927,7 +927,7 @@ gistnewroot(GISTSTATE *giststate, Relation r, IndexTuple lt, IndexTuple rt)
       pfree(tmpentry.pred);
     if (lt != newtup)
       pfree(newtup);
-    (void) gistPageAddItem(giststate, r, p, (Item) rt, IndexTupleSize(rt),
+    gistPageAddItem(giststate, r, p, (Item) rt, IndexTupleSize(rt),
 			   OffsetNumberNext(FirstOffsetNumber), LP_USED,
 			   &tmpentry, &newtup);
     /* be tidy */
@@ -1261,7 +1261,7 @@ char *text_range_out(TXTRANGE *r)
     memcpy(upper, VARDATA(TRUPPER(r)), VARSIZE(TRUPPER(r)) - VARHDRSZ);
     upper[VARSIZE(TRUPPER(r)) - VARHDRSZ] = '\0';
 
-    (void) sprintf(result, "[%s,%s): %d", lower, upper, r->flag);
+    sprintf(result, "[%s,%s): %d", lower, upper, r->flag);
     pfree(lower);
     pfree(upper);
     return(result);
@@ -1275,7 +1275,7 @@ int_range_out(INTRANGE *r)
     if (r == NULL)
 	return(NULL);
     result = (char *)palloc(80);
-    (void) sprintf(result, "[%d,%d): %d",r->lower, r->upper, r->flag);
+    sprintf(result, "[%d,%d): %d",r->lower, r->upper, r->flag);
 
     return(result);
 }

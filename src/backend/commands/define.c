@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/commands/define.c,v 1.12 1997/08/03 02:35:01 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/commands/define.c,v 1.13 1997/08/12 22:52:23 momjian Exp $
  *
  * DESCRIPTION
  *    The "DefineFoo" routines take the parse tree and pick out the
@@ -537,7 +537,7 @@ DefineType(char *typeName, List *parameters)
      *  now have TypeCreate do all the real work.
      * ----------------
      */
-    (void) TypeCreate(typeName, /* type name */
+    TypeCreate(typeName, /* type name */
                       InvalidOid,  /* relation oid (n/a here) */
                       internalLength,   /* internal size */
                       externalLength,   /* external size */
@@ -559,7 +559,7 @@ DefineType(char *typeName, List *parameters)
      */
     shadow_type = makeArrayTypeName(typeName);
 
-    (void) TypeCreate(shadow_type,      /* type name */
+    TypeCreate(shadow_type,      /* type name */
                       InvalidOid,  /* relation oid (n/a here) */
                       -1,               /* internal size */
                       -1,               /* external size */

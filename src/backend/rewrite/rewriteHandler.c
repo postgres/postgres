@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.2 1996/11/24 05:58:57 bryanh Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.3 1997/08/12 22:53:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -395,7 +395,7 @@ fireRules(Query *parsetree,
     
     /* choose rule to fire from list of rules */
     if (locks == NIL) {
-	(void) ProcessRetrieveQuery(parsetree,
+	ProcessRetrieveQuery(parsetree,
 				    parsetree->rtable,
 				    instead_flag, TRUE);
 	if (*instead_flag)
@@ -473,7 +473,7 @@ fireRules(Query *parsetree,
 	     *--------------------------------------------------
 	     */
 	    info->rule_action->rtable = info->rt;       	   
-	    (void) ProcessRetrieveQuery(info->rule_action, info->rt,
+	    ProcessRetrieveQuery(info->rule_action, info->rt,
 					&orig_instead_flag, TRUE);
 	    
 	    /*--------------------------------------------------  

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/storage/smgr/md.c,v 1.16 1997/08/12 20:15:48 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/storage/smgr/md.c,v 1.17 1997/08/12 22:54:13 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -90,7 +90,7 @@ mdinit()
 
     oldcxt = MemoryContextSwitchTo(MdCxt);
     Md_fdvec = (MdfdVec *) palloc(Nfds * sizeof(MdfdVec));
-    (void) MemoryContextSwitchTo(oldcxt);
+    MemoryContextSwitchTo(oldcxt);
 
     if (Md_fdvec == (MdfdVec *) NULL)
 	return (SM_FAIL);
@@ -193,7 +193,7 @@ mdunlink(Relation reln)
 	    pfree(ov);
     }
     Md_fdvec[fd].mdfd_chain = (MdfdVec *) NULL;
-    (void) MemoryContextSwitchTo(oldcxt);
+    MemoryContextSwitchTo(oldcxt);
 
     _fdvec_free (fd);
 
@@ -314,7 +314,7 @@ mdclose(Relation reln)
 	    pfree(ov);
     }
 
-    (void) MemoryContextSwitchTo(oldcxt);
+    MemoryContextSwitchTo(oldcxt);
     Md_fdvec[fd].mdfd_chain = (MdfdVec *) NULL;
     
     _fdvec_free (fd);
@@ -487,7 +487,7 @@ mdblindwrt(char *dbstr,
     /* seek to the right spot */
     seekpos = (long) (BLCKSZ * (blkno % RELSEG_SIZE));
     if (lseek(fd, seekpos, SEEK_SET) != seekpos) {
-	(void) close(fd);
+	close(fd);
 	return (SM_FAIL);
     }
 
@@ -668,7 +668,7 @@ int _fdvec_alloc ()
     memmove(nvec, (char *) Md_fdvec, CurFd * sizeof(MdfdVec)); 
     pfree(Md_fdvec);
 
-    (void) MemoryContextSwitchTo(oldcxt);
+    MemoryContextSwitchTo(oldcxt);
 
     Md_fdvec = nvec;
 
@@ -735,7 +735,7 @@ _mdfd_openseg(Relation reln, int segno, int oflags)
     /* allocate an mdfdvec entry for it */
     oldcxt = MemoryContextSwitchTo(MdCxt);
     v = (MdfdVec *) palloc(sizeof(MdfdVec));
-    (void) MemoryContextSwitchTo(oldcxt);
+    MemoryContextSwitchTo(oldcxt);
 
     /* fill the entry */
     v->mdfd_vfd = fd;

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.37 1997/07/28 00:53:40 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.38 1997/08/12 22:52:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -146,7 +146,7 @@ vacuum(char *vacrel, bool verbose, bool analyze, List *va_spec)
     	strcpy (dest, col);
     	va_cols = lappend (va_cols, dest);
     }
-    (void) MemoryContextSwitchTo(old);
+    MemoryContextSwitchTo(old);
     	
     /* initialize vacuum cleaner */
     vc_init();
@@ -222,7 +222,7 @@ void
 vc_abort()
 {
     /* on abort, remove the vacuum cleaner lock file */
-    (void) unlink("pg_vlock");
+    unlink("pg_vlock");
 
     VacuumRunning = false;
 }
@@ -354,7 +354,7 @@ vc_getrels(NameData *VacRelP)
 	    cur->vrl_next = (VRelList) palloc(sizeof(VRelListData));
 	    cur = cur->vrl_next;
 	}
-	(void) MemoryContextSwitchTo(old);
+	MemoryContextSwitchTo(old);
 
 	cur->vrl_relid = pgctup->t_oid;
 	cur->vrl_next = (VRelList) NULL;
@@ -1991,7 +1991,7 @@ vc_free(VRelList vrl)
 	pfree(p_vrl);
     }
 
-    (void) MemoryContextSwitchTo(old);
+    MemoryContextSwitchTo(old);
 }
 
 /*

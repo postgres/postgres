@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.13 1997/05/31 16:52:00 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.14 1997/08/12 22:52:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -963,7 +963,7 @@ ExecDelete(TupleTableSlot *slot,
      *	delete the tuple
      * ----------------
      */
-    (void) heap_delete(resultRelationDesc, /* relation desc */
+    heap_delete(resultRelationDesc, /* relation desc */
 			tupleid);	    /* item pointer to tuple */
 
     IncrDeleted();

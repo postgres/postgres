@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/storage/ipc/sinval.c,v 1.6 1997/01/08 08:32:04 bryanh Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/storage/ipc/sinval.c,v 1.7 1997/08/12 22:53:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -143,7 +143,7 @@ RegisterSharedInvalid(int cacheId, /* XXX */
     	}
 	
     	/* write again */
-    	(void) SISetDataEntry(shmInvalBuffer, &newInvalid);
+    	SISetDataEntry(shmInvalBuffer, &newInvalid);
     }
     SpinRelease(SInvalLock);
 }

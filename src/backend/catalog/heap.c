@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.14 1997/06/04 08:59:22 vadim Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.15 1997/08/12 22:52:07 momjian Exp $
  *
  * INTERFACE ROUTINES
  *	heap_creatr()		- Create an uncataloged heap relation
@@ -1312,7 +1312,7 @@ heap_destroy(char *relname)
      */
     if ( !(rdesc->rd_istemp) || !(rdesc->rd_tmpunlinked) )
     {
-    	(void) smgrunlink(rdesc->rd_rel->relsmgr, rdesc);
+    	smgrunlink(rdesc->rd_rel->relsmgr, rdesc);
     }
     rdesc->rd_tmpunlinked = TRUE;
 
@@ -1336,7 +1336,7 @@ heap_destroyr(Relation rdesc)
     ReleaseRelationBuffers(rdesc);
     if ( !(rdesc->rd_istemp) || !(rdesc->rd_tmpunlinked) )
     {
-	(void) smgrunlink(rdesc->rd_rel->relsmgr, rdesc);
+	smgrunlink(rdesc->rd_rel->relsmgr, rdesc);
     }
     rdesc->rd_tmpunlinked = TRUE;
     heap_close(rdesc);

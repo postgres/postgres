@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/mmgr/portalmem.c,v 1.3 1996/11/08 06:00:57 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/mmgr/portalmem.c,v 1.4 1997/08/12 22:54:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -817,7 +817,7 @@ PortalResetHeapMemory(Portal portal)
 	} while (PointerIsValid(context->block));
 	
 	/* restore context */
-	(void) MemoryContextSwitchTo(currentContext);
+	MemoryContextSwitchTo(currentContext);
     }
 }
 

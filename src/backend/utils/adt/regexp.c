@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/regexp.c,v 1.6 1997/08/12 20:16:04 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/regexp.c,v 1.7 1997/08/12 22:54:36 momjian Exp $
  *
  *      Alistair Crooks added the code for the regex caching
  *	agc - cached the regular expressions used - there's a good chance
@@ -119,7 +119,7 @@ RE_compile_and_execute(struct varlena *text_re, char *text, int cflags)
 		/* use malloc/free for the cre_s field because the storage
 		   has to persist across transactions */
 		rev[oldest].cre_s = (char *) malloc(n + 1);
-		(void) memmove(rev[oldest].cre_s, re, n);
+		memmove(rev[oldest].cre_s, re, n);
 		rev[oldest].cre_s[n] = 0;
 	        rev[oldest].cre_text = text_re;
 		rev[oldest].cre_lru = ++lru;

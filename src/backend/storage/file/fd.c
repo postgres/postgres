@@ -6,7 +6,7 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *    $Id: fd.c,v 1.19 1997/07/28 00:54:52 momjian Exp $
+ *    $Id: fd.c,v 1.20 1997/08/12 22:53:51 momjian Exp $
  *
  * NOTES:
  *
@@ -765,8 +765,8 @@ FileTruncate(File file, int offset)
     DO_DB(elog(DEBUG, "FileTruncate %d (%s)",
                  file, VfdCache[file].fileName));
     
-    (void) FileSync(file);
-    (void) FileAccess(file);
+    FileSync(file);
+    FileAccess(file);
     returnCode = ftruncate(VfdCache[file].fd, offset);
     return(returnCode);
 }

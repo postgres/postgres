@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/test/examples/Attic/testlo2.c,v 1.1.1.1 1996/07/09 06:22:23 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/test/examples/Attic/testlo2.c,v 1.2 1997/08/12 22:55:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -57,8 +57,8 @@ Oid importFile(PGconn *conn, char *filename)
 	}
     }
     
-    (void) close(fd);
-    (void) lo_close(conn, lobj_fd);
+    close(fd);
+    lo_close(conn, lobj_fd);
 
     return lobjId;
 }
@@ -162,8 +162,8 @@ void exportFile(PGconn *conn, Oid lobjId, char *filename)
 	}
     }
 
-    (void) lo_close(conn, lobj_fd);
-    (void) close(fd);
+    lo_close(conn, lobj_fd);
+    close(fd);
 
     return;
 }

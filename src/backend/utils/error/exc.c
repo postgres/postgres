@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/error/Attic/exc.c,v 1.13 1997/03/26 03:27:04 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/error/Attic/exc.c,v 1.14 1997/08/12 22:54:46 momjian Exp $
  *
  * NOTE
  *    XXX this code needs improvement--check for state violations and
@@ -99,34 +99,34 @@ ExcPrint(Exception *excP,
     data = data;
 #endif
     
-    (void) fflush(stdout);	/* In case stderr is buffered */
+    fflush(stdout);	/* In case stderr is buffered */
     
 #if	0
     if (ProgramName != NULL && *ProgramName != '\0')
-	(void) fprintf(stderr, "%s: ", ProgramName);
+	fprintf(stderr, "%s: ", ProgramName);
 #endif
     
     if (message != NULL)
-	(void) fprintf(stderr, "%s", message);
+	fprintf(stderr, "%s", message);
     else if (excP->message != NULL)
-	(void) fprintf(stderr, "%s", excP->message);
+	fprintf(stderr, "%s", excP->message);
     else
 #ifdef	lint
-	(void) fprintf(stderr, "UNNAMED EXCEPTION 0x%lx", excP);
+	fprintf(stderr, "UNNAMED EXCEPTION 0x%lx", excP);
 #else
-    (void) fprintf(stderr, "UNNAMED EXCEPTION 0x%lx", (long)excP);
+    fprintf(stderr, "UNNAMED EXCEPTION 0x%lx", (long)excP);
 #endif
     
-    (void) fprintf(stderr, " (%ld)", detail);
+    fprintf(stderr, " (%ld)", detail);
     
     if (errno > 0 && errno < sys_nerr) 
-	(void) fprintf(stderr, " [%s]", strerror(errno));
+	fprintf(stderr, " [%s]", strerror(errno));
     else if (errno != 0)
-	(void) fprintf(stderr, " [Error %d]", errno);
+	fprintf(stderr, " [Error %d]", errno);
     
-    (void) fprintf(stderr, "\n");
+    fprintf(stderr, "\n");
     
-    (void) fflush(stderr);
+    fflush(stderr);
 }
 
 ExcProc *

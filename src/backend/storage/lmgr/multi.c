@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/storage/lmgr/Attic/multi.c,v 1.2 1996/11/03 05:07:31 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/storage/lmgr/Attic/multi.c,v 1.3 1997/08/12 22:54:09 momjian Exp $
  *
  * NOTES:
  *   (1) The lock.c module assumes that the caller here is doing
@@ -275,7 +275,7 @@ MultiAcquire(LockTableId tableId,
 		 * the last level lock we successfully acquired
 		 */
 		retStatus = FALSE;
-		(void) MultiRelease(tableId, tag, lockt, i);
+		MultiRelease(tableId, tag, lockt, i);
 		/* now leave the loop.  Don't try for any more locks */
 		break;
 	    }

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/executor/functions.c,v 1.5 1997/01/22 05:26:37 vadim Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/executor/functions.c,v 1.6 1997/08/12 22:52:35 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -294,7 +294,7 @@ postquel_execute(execution_state  *es,
     
     if (es->status == F_EXEC_START)
 	{
-	    (void) postquel_start(es);
+	    postquel_start(es);
 	    es->status = F_EXEC_RUN;
 	}
 #ifndef INDEXSCAN_PATCH

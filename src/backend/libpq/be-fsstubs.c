@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/libpq/be-fsstubs.c,v 1.11 1997/08/12 20:15:18 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/libpq/be-fsstubs.c,v 1.12 1997/08/12 22:52:48 momjian Exp $
  *
  * NOTES
  *    This should be moved to a more appropriate place.  It is here
@@ -290,8 +290,8 @@ lo_import(text *filename)
 	}
     }
 
-    (void) close(fd);
-    (void) inv_close(lobj);
+    close(fd);
+    inv_close(lobj);
 
     return lobjOid;
 }
@@ -326,7 +326,7 @@ lo_export(Oid lobjId, text *filename)
     oumask = umask((mode_t) 0);
     strNcpy(fnamebuf, VARDATA(filename), VARSIZE(filename) - VARHDRSZ);
     fd = open(fnamebuf, O_CREAT|O_WRONLY, 0666);
-    (void) umask(oumask);
+    umask(oumask);
     if (fd < 0)  {   /* error */
 	elog(WARN, "lo_export: can't open unix file\"%s\"",
 	     fnamebuf);
@@ -343,8 +343,8 @@ lo_export(Oid lobjId, text *filename)
 	}
     }
 
-    (void) inv_close(lobj);
-    (void) close(fd);
+    inv_close(lobj);
+    close(fd);
 
     return 1;
 }

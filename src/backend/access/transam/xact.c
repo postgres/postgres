@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.10 1997/04/02 03:38:02 vadim Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.11 1997/08/12 22:52:01 momjian Exp $
  *	
  * NOTES
  *	Transaction aborts can now occur two ways:
@@ -506,7 +506,7 @@ AtStart_Memory()
      *	tell system to allocate in the blank portal context
      * ----------------
      */
-    (void) MemoryContextSwitchTo(portalContext);
+    MemoryContextSwitchTo(portalContext);
     StartPortalAllocMode(DefaultAllocMode, 0);
 }
 
@@ -612,7 +612,7 @@ AtCommit_Memory()
      * ----------------
      */
     EndPortalAllocMode();
-    (void) MemoryContextSwitchTo(TopMemoryContext);
+    MemoryContextSwitchTo(TopMemoryContext);
 }
 
 /* ----------------------------------------------------------------
@@ -691,7 +691,7 @@ AtAbort_Memory()
      *  portal memory context (until the next transaction).
      * ----------------
      */
-    (void) MemoryContextSwitchTo(TopMemoryContext);
+    MemoryContextSwitchTo(TopMemoryContext);
 }
 
 /* ----------------------------------------------------------------

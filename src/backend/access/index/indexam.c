@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/index/indexam.c,v 1.10 1997/01/10 09:46:25 vadim Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/index/indexam.c,v 1.11 1997/08/12 22:51:48 momjian Exp $
  *
  * INTERFACE ROUTINES
  *	index_open 	- open an index relation by relationId
@@ -153,7 +153,7 @@ index_openr(char *relationName)
 void
 index_close(Relation relation)
 {
-    (void) RelationClose(relation);
+    RelationClose(relation);
 }
 
 /* ----------------
@@ -212,7 +212,7 @@ index_delete(Relation relation, ItemPointer indexItem)
     RELATION_CHECKS;
     GET_REL_PROCEDURE(delete,amdelete);
     
-    (void) fmgr(procedure, relation, indexItem);    
+    fmgr(procedure, relation, indexItem);    
 }
 
 /* ----------------
@@ -251,7 +251,7 @@ index_rescan(IndexScanDesc scan, bool scanFromEnd, ScanKey key)
     SCAN_CHECKS;
     GET_SCAN_PROCEDURE(rescan,amrescan);
     
-    (void) fmgr(procedure, scan, scanFromEnd, key);
+    fmgr(procedure, scan, scanFromEnd, key);
 }
 
 /* ----------------
@@ -266,7 +266,7 @@ index_endscan(IndexScanDesc scan)
     SCAN_CHECKS;
     GET_SCAN_PROCEDURE(endscan,amendscan);
     
-    (void) fmgr(procedure, scan);
+    fmgr(procedure, scan);
     
     RelationUnsetRIntentLock(scan->relation);
 }
@@ -283,7 +283,7 @@ index_markpos(IndexScanDesc scan)
     SCAN_CHECKS;
     GET_SCAN_PROCEDURE(markpos,ammarkpos);
     
-    (void) fmgr(procedure, scan);
+    fmgr(procedure, scan);
 }
 
 /* ----------------
@@ -298,7 +298,7 @@ index_restrpos(IndexScanDesc scan)
     SCAN_CHECKS;
     GET_SCAN_PROCEDURE(restrpos,amrestrpos);
     
-    (void) fmgr(procedure, scan);
+    fmgr(procedure, scan);
 }
 
 /* ----------------

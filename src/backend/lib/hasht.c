@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/lib/Attic/hasht.c,v 1.3 1996/11/06 08:27:13 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/lib/Attic/hasht.c,v 1.4 1997/08/12 22:52:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,7 +33,7 @@ HashTableWalk(HTAB *hashtable, HashtFunc function, int arg)
     int keysize;
     
     keysize = hashtable->hctl->keysize;
-    (void)hash_seq((HTAB *)NULL);
+    hash_seq((HTAB *)NULL);
     while ((hashent = hash_seq(hashtable)) != (long *) TRUE) {
 	if (hashent == NULL)
 	    elog(FATAL, "error in HashTableWalk.");

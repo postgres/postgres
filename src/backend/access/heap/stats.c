@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/heap/Attic/stats.c,v 1.9 1996/11/10 02:58:11 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/heap/Attic/stats.c,v 1.10 1997/08/12 22:51:44 momjian Exp $
  *
  * NOTES
  *    initam should be moved someplace else.
@@ -116,7 +116,7 @@ InitHeapAccessStatistics()
      *  return to old memory context
      * ----------------
      */
-    (void) MemoryContextSwitchTo(oldContext);
+    MemoryContextSwitchTo(oldContext);
     
     heap_access_stats = stats;
 }

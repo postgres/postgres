@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/transam/varsup.c,v 1.7 1997/01/16 07:59:11 vadim Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/transam/varsup.c,v 1.8 1997/08/12 22:51:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -159,7 +159,7 @@ VariableRelationPutNextXid(TransactionId xid)
     
     flushmode = SetBufferWriteMode (BUFFER_FLUSH_WRITE);
     WriteBuffer(buf);
-    (void) SetBufferWriteMode (flushmode);
+    SetBufferWriteMode (flushmode);
 }
 
 /* --------------------------------

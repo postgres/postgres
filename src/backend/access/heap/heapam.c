@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.12 1997/08/06 02:08:39 vadim Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.13 1997/08/12 22:51:40 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -548,7 +548,7 @@ heap_close(Relation relation)
     IncrHeapAccessStat(local_close);
     IncrHeapAccessStat(global_close);
     
-    (void) RelationClose(relation);
+    RelationClose(relation);
 }
 
 

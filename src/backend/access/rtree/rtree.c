@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtree.c,v 1.12 1997/03/14 23:17:46 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtree.c,v 1.13 1997/08/12 22:51:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -501,12 +501,12 @@ dosplit(Relation r,
 	item = (IndexTuple) PageGetItem(p, itemid);
 	
 	if (i == *(v.spl_left)) {
-	    (void) PageAddItem(left, (Item) item, IndexTupleSize(item),
+	    PageAddItem(left, (Item) item, IndexTupleSize(item),
 			       leftoff, LP_USED);
 	    leftoff = OffsetNumberNext(leftoff);
 	    v.spl_left++;	/* advance in left split vector */
 	} else {
-	    (void) PageAddItem(right, (Item) item, IndexTupleSize(item),
+	    PageAddItem(right, (Item) item, IndexTupleSize(item),
 			       rightoff, LP_USED);
 	    rightoff = OffsetNumberNext(rightoff);
 	    v.spl_right++;	/* advance in right split vector */
@@ -518,12 +518,12 @@ dosplit(Relation r,
     
     /* now insert the new index tuple */
     if (*(v.spl_left) != FirstOffsetNumber) {
-	(void) PageAddItem(left, (Item) itup, IndexTupleSize(itup),
+	PageAddItem(left, (Item) itup, IndexTupleSize(itup),
 			   leftoff, LP_USED);
 	leftoff = OffsetNumberNext(leftoff);
 	ItemPointerSet(&(res->pointerData), lbknum, leftoff);
     } else {
-	(void) PageAddItem(right, (Item) itup, IndexTupleSize(itup),
+	PageAddItem(right, (Item) itup, IndexTupleSize(itup),
 			   rightoff, LP_USED);
 	rightoff = OffsetNumberNext(rightoff);
 	ItemPointerSet(&(res->pointerData), rbknum, rightoff);
@@ -617,7 +617,7 @@ rtintinsert(Relation r,
 	WriteBuffer(b);  /* don't forget to release buffer!  - 01/31/94 */
 	pfree(res);
     } else {
-	(void) PageAddItem(p, (Item) rtup, IndexTupleSize(rtup),
+	PageAddItem(p, (Item) rtup, IndexTupleSize(rtup),
 			   PageGetMaxOffsetNumber(p), LP_USED);
 	WriteBuffer(b);
 	ldatum = (((char *) ltup) + sizeof(IndexTupleData));
@@ -640,9 +640,9 @@ rtnewroot(Relation r, IndexTuple lt, IndexTuple rt)
     b = ReadBuffer(r, P_ROOT);
     RTInitBuffer(b, 0);
     p = BufferGetPage(b);
-    (void) PageAddItem(p, (Item) lt, IndexTupleSize(lt),
+    PageAddItem(p, (Item) lt, IndexTupleSize(lt),
 		       FirstOffsetNumber, LP_USED);
-    (void) PageAddItem(p, (Item) rt, IndexTupleSize(rt),
+    PageAddItem(p, (Item) rt, IndexTupleSize(rt),
 		       OffsetNumberNext(FirstOffsetNumber), LP_USED);
     WriteBuffer(b);
 }

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.16 1997/07/24 20:16:32 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.17 1997/08/12 22:54:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -197,7 +197,7 @@ DebugFileOpen(void)
 	    elog(FATAL, "DebugFileOpen: open of %s: %m",
 		 OutputFileName);
 	istty = isatty(fd);
-	(void) close(fd);
+	close(fd);
 	/* If the file is a tty and we're running under the
 	 * postmaster, try to send stdout there as well (if it
 	 * isn't a tty then stderr will block out stdout, so we

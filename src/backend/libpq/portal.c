@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/libpq/Attic/portal.c,v 1.5 1997/08/12 20:15:22 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/libpq/Attic/portal.c,v 1.6 1997/08/12 22:52:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -74,7 +74,7 @@ static int
 in_range(char *msg, int value, int min, int max)
 {
     if (value < min || value >= max) {
-	(void) sprintf(PQerrormsg, "FATAL: %s, %d is not in range [%d,%d)\n",
+	sprintf(PQerrormsg, "FATAL: %s, %d is not in range [%d,%d)\n",
 		       msg, value, min, max);
 	pqdebug("%s", PQerrormsg);
 	fputs(PQerrormsg, stderr);
@@ -87,7 +87,7 @@ static int
 valid_pointer(char *msg, void *ptr)
 {
     if (!ptr) {
-	(void) sprintf(PQerrormsg, "FATAL: %s\n", msg);
+	sprintf(PQerrormsg, "FATAL: %s\n", msg);
 	pqdebug("%s", PQerrormsg);
 	fputs(PQerrormsg, stderr);
 	return(0);

@@ -5,7 +5,7 @@
  *
  *
  * IDENTIFICATION
- *    $Id: nbtsort.c,v 1.17 1997/06/06 03:11:46 vadim Exp $
+ *    $Id: nbtsort.c,v 1.18 1997/08/12 22:51:52 momjian Exp $
  *
  * NOTES
  *
@@ -364,7 +364,7 @@ _bt_tapereset(BTTapeBlock *tape)
 static void
 _bt_taperewind(BTTapeBlock *tape)
 {
-    (void) FileSeek(tape->bttb_fd, 0, SEEK_SET);
+    FileSeek(tape->bttb_fd, 0, SEEK_SET);
 }
 
 /*
@@ -511,7 +511,7 @@ _bt_tapenext(BTTapeBlock *tape, char **pos)
 static void
 _bt_tapeadd(BTTapeBlock *tape, BTItem item, int itemsz)
 {
-    (void) memcpy(tape->bttb_data + tape->bttb_top, item, itemsz);
+    memcpy(tape->bttb_data + tape->bttb_top, item, itemsz);
     ++tape->bttb_ntup;
     tape->bttb_top += DOUBLEALIGN(itemsz);
 }
@@ -535,7 +535,7 @@ _bt_spoolinit(Relation index, int ntapes, bool isunique)
     if (btspool == (BTSpool *) NULL || fname == (char *) NULL) {
 	elog(WARN, "_bt_spoolinit: out of memory");
     }
-    (void) memset((char *) btspool, 0, sizeof(BTSpool));
+    memset((char *) btspool, 0, sizeof(BTSpool));
     btspool->bts_ntapes = ntapes;
     btspool->bts_tape = 0;
     btspool->isunique = isunique;
@@ -811,7 +811,7 @@ _bt_pagestate(Relation index, int flags, int level, bool doupper)
 {
     BTPageState *state = (BTPageState *) palloc(sizeof(BTPageState));
 
-    (void) memset((char *) state, 0, sizeof(BTPageState));
+    memset((char *) state, 0, sizeof(BTPageState));
     _bt_blnewpage(index, &(state->btps_buf), &(state->btps_page), flags);
     state->btps_firstoff = InvalidOffsetNumber;
     state->btps_lastoff = P_HIKEY;
@@ -1005,7 +1005,7 @@ _bt_buildadd(Relation index, void *pstate, BTItem bti, int flags)
 		    _bt_pagestate(index, 0, state->btps_level + 1, true);
 	    }
 	    nbti = _bt_minitem(opage, BufferGetBlockNumber(obuf), 0);
-	    (void) _bt_buildadd(index, state->btps_next, nbti, 0);
+	    _bt_buildadd(index, state->btps_next, nbti, 0);
 	    pfree((void *) nbti);
 	}
 
@@ -1081,7 +1081,7 @@ _bt_uppershutdown(Relation index, BTPageState *state)
 		_bt_metaproot(index, blkno, s->btps_level + 1);
 	    } else {
 		bti = _bt_minitem(s->btps_page, blkno, 0);
-		(void) _bt_buildadd(index, s->btps_next, bti, 0);
+		_bt_buildadd(index, s->btps_next, bti, 0);
 		pfree((void *) bti);
 	    }
 	}
@@ -1158,7 +1158,7 @@ _bt_merge(Relation index, BTSpool *btspool)
 	     * _bt_taperead will return 0 only if the tape is actually
 	     * at EOF.
 	     */
-	    (void) memset((char *) &q, 0, sizeof(BTPriQueue));
+	    memset((char *) &q, 0, sizeof(BTPriQueue));
 	    goodtapes = 0;
 	    for (t = 0; t < btspool->bts_ntapes; ++t) {
 		itape = btspool->bts_itape[t];
@@ -1207,7 +1207,7 @@ _bt_merge(Relation index, BTSpool *btspool)
 		    btisz = BTITEMSZ(bti);
 		    btisz = DOUBLEALIGN(btisz);
 		    if (doleaf) {
-			(void) _bt_buildadd(index, state, bti, BTP_LEAF);
+			_bt_buildadd(index, state, bti, BTP_LEAF);
 #if defined(FASTBUILD_DEBUG) && defined(FASTBUILD_MERGE)
 			{
 			    bool isnull;
@@ -1361,7 +1361,7 @@ _bt_upperbuild(Relation index)
 		       d, state->btps_level);
 	    }
 #endif /* FASTBUILD_DEBUG && FASTBUILD_MERGE */
-	    (void) _bt_buildadd(index, state, nbti, 0);
+	    _bt_buildadd(index, state, nbti, 0);
 	    pfree((void *) nbti);
 	}
 	blk = ropaque->btpo_next;

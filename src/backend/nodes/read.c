@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/nodes/read.c,v 1.2 1996/11/08 05:56:48 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/nodes/read.c,v 1.3 1997/08/12 22:53:04 momjian Exp $
  *
  * HISTORY
  *    AUTHOR		DATE		MAJOR EVENT
@@ -33,7 +33,7 @@ stringToNode(char *str)
 {
     void *retval;
 
-    (void) lsptok(str, NULL);	/* set the string used in lsptok */
+    lsptok(str, NULL);	/* set the string used in lsptok */
     retval = nodeRead(true);	/* start reading */
 
     return retval;

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/transam/Attic/xid.c,v 1.5 1996/11/10 02:59:19 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/transam/Attic/xid.c,v 1.6 1997/08/12 22:52:02 momjian Exp $
  *
  * OLD COMMENTS
  * XXX WARNING
@@ -59,7 +59,7 @@ xidout(TransactionId transactionId)
     /* maximum 32 bit unsigned integer representation takes 10 chars */
     representation = palloc(11);
     
-    (void)sprintf(representation, "%u", transactionId);
+    sprintf(representation, "%u", transactionId);
     
     return (representation);
 

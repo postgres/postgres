@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/transam/Attic/transsup.c,v 1.7 1996/12/14 05:20:39 vadim Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/transam/Attic/transsup.c,v 1.8 1997/08/12 22:51:57 momjian Exp $
  *
  * NOTES
  *    This file contains support functions for the high
@@ -641,7 +641,7 @@ TransGetLastRecordedTransaction(Relation relation,
     baseXid = blockNumber * TP_NumXidStatusPerBlock;
 
 /* XXX ???? xid won't get returned! - AY '94 */
-    (void) TransBlockGetLastTransactionIdStatus(block, baseXid, &xid);
+    TransBlockGetLastTransactionIdStatus(block, baseXid, &xid);
     
     ReleaseBuffer(buffer);
     

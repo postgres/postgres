@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/commands/Attic/rename.c,v 1.5 1997/08/12 20:15:12 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/commands/Attic/rename.c,v 1.6 1997/08/12 22:52:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -170,7 +170,7 @@ renameatt(char *relname,
     oldTID = oldatttup->t_ctid;
     
     /* insert "fixed" tuple */
-    (void) heap_replace(attrdesc, &oldTID, oldatttup);
+    heap_replace(attrdesc, &oldTID, oldatttup);
     
     /* keep system catalog indices current */
     CatalogOpenIndices(Num_pg_attr_indices, Name_pg_attr_indices, idescs);
@@ -246,7 +246,7 @@ renamerel(char oldrelname[], char newrelname[])
     oldTID = oldreltup->t_ctid;
     
     /* insert fixed rel tuple */
-    (void) heap_replace(relrdesc, &oldTID, oldreltup);
+    heap_replace(relrdesc, &oldTID, oldreltup);
     
     /* keep the system catalog indices current */
     CatalogOpenIndices(Num_pg_class_indices, Name_pg_class_indices, idescs);

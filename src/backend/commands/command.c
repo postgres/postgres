@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.7 1997/01/02 06:18:25 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.8 1997/08/12 22:52:18 momjian Exp $
  *
  * NOTES
  *    The PortalExecutorHeapMemory crap needs to be eliminated
@@ -82,7 +82,7 @@ PortalCleanup(Portal portal)
      *	switch back to previous context
      * ----------------
      */
-    (void) MemoryContextSwitchTo(context);
+    MemoryContextSwitchTo(context);
     PortalExecutorHeapMemory = (MemoryContext) NULL;
 }
 
@@ -174,7 +174,7 @@ PerformPortalFetch(char *name,
      * do what is possible across transaction boundries.
      * ----------------
      */
-    (void) MemoryContextSwitchTo(
+    MemoryContextSwitchTo(
 	(MemoryContext)PortalGetHeapMemory(GetPortalByName(NULL)));
 }
 
@@ -469,7 +469,7 @@ PerformAddAttribute(char *relationName,
     
     ((Form_pg_class) GETSTRUCT(reltup))->relnatts = maxatts;
     oldTID = reltup->t_ctid;
-    (void) heap_replace(relrdesc, &oldTID, reltup);
+    heap_replace(relrdesc, &oldTID, reltup);
     
     /* keep catalog indices current */
     CatalogOpenIndices(Num_pg_class_indices, Name_pg_class_indices, ridescs);

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/tcop/Attic/aclchk.c,v 1.10 1997/05/22 00:15:21 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/tcop/Attic/aclchk.c,v 1.11 1997/08/12 22:54:17 momjian Exp $
  *
  * NOTES
  *    See acl.h.
@@ -165,7 +165,7 @@ ChangeAcl(char *relname,
     ItemPointerCopy(&htp->t_ctid, &tmp_ipd);
     /* XXX handle index on pg_class? */
     setheapoverride(true);
-    (void) heap_replace(relation, &tmp_ipd, htp);
+    heap_replace(relation, &tmp_ipd, htp);
     setheapoverride(false);
     heap_endscan(hsdp);
 

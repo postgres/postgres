@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/storage/ipc/sinvaladt.c,v 1.4 1997/07/24 20:14:15 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/storage/ipc/sinvaladt.c,v 1.5 1997/08/12 22:54:01 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -667,8 +667,8 @@ SISegInit(SISeg *segP)
     SISetStartFreeSpace(segP, 0);
     SISetStartEntryChain(segP, InvalidOffset);
     SISetEndEntryChain(segP, InvalidOffset);
-    (void) SISetNumEntries(segP, 0);
-    (void) SISetMaxNumEntries(segP, MAXNUMMESSAGES);
+    SISetNumEntries(segP, 0);
+    SISetMaxNumEntries(segP, MAXNUMMESSAGES);
     for (i = 0; i < MaxBackendId; i++) {
     	segP->procState[i].limit = -1; 	    /* no backend active  !!*/
     	segP->procState[i].resetState = false;

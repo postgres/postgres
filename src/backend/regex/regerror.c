@@ -135,7 +135,7 @@ size_t errbuf_size;
 	
 		if (errcode&REG_ITOA) {
 			if (r->code != 0)
-				(void) strcpy(convbuf, r->name);
+				strcpy(convbuf, r->name);
 			else
 				sprintf(convbuf, "REG_0x%x", target);
 			assert(strlen(convbuf) < sizeof(convbuf));
@@ -147,9 +147,9 @@ size_t errbuf_size;
 	len = strlen(s) + 1;
 	if (errbuf_size > 0) {
 		if (errbuf_size > len)
-			(void) strcpy(errbuf, s);
+			strcpy(errbuf, s);
 		else {
-			(void) strncpy(errbuf, s, errbuf_size-1);
+			strncpy(errbuf, s, errbuf_size-1);
 			errbuf[errbuf_size-1] = '\0';
 		}
 	}

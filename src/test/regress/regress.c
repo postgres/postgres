@@ -1,5 +1,5 @@
 /*
- * $Header: /cvsroot/pgsql/src/test/regress/regress.c,v 1.7 1997/07/29 16:21:12 thomas Exp $
+ * $Header: /cvsroot/pgsql/src/test/regress/regress.c,v 1.8 1997/08/12 22:55:25 momjian Exp $
  */
 
 #include <float.h>		/* faked on sunos */
@@ -229,7 +229,7 @@ widget_out(widget)
 	return(NULL);
 
     result = (char *) palloc(60);
-    (void) sprintf(result, "(%g,%g,%g)",
+    sprintf(result, "(%g,%g,%g)",
 		   widget->center.x, widget->center.y, widget->radius);
     return(result);
 }

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/hash/hashovfl.c,v 1.8 1996/11/05 09:40:20 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/hash/hashovfl.c,v 1.9 1997/08/12 22:51:34 momjian Exp $
  *
  * NOTES
  *    Overflow pages look like ordinary relation pages.
@@ -315,7 +315,7 @@ _hash_freeovflpage(Relation rel, Buffer ovflbuf)
     nextblkno = ovflopaque->hasho_nextblkno;
     prevblkno = ovflopaque->hasho_prevblkno;
     bucket = ovflopaque->hasho_bucket;
-    (void) memset(ovflpage, 0, BufferGetPageSize(ovflbuf));
+    memset(ovflpage, 0, BufferGetPageSize(ovflbuf));
     _hash_wrtbuf(rel, ovflbuf);
     
     /* 
@@ -436,8 +436,8 @@ _hash_initbitmap(Relation rel,
     /* set all of the bits above 'nbits' to 1 */
     clearints = ((nbits - 1) >> INT_TO_BIT) + 1;
     clearbytes = clearints << INT_TO_BYTE;
-    (void) memset((char *) freep, 0, clearbytes);
-    (void) memset(((char *) freep) + clearbytes, 0xFF,
+    memset((char *) freep, 0, clearbytes);
+    memset(((char *) freep) + clearbytes, 0xFF,
 		  BMPGSZ_BYTE(metap) - clearbytes);
     freep[clearints - 1] = ALL_SET << (nbits & INT_MASK);
 
@@ -566,7 +566,7 @@ _hash_squeezebucket(Relation rel,
 	 * page.
 	 */
 	woffnum = OffsetNumberNext(PageGetMaxOffsetNumber(wpage));
-	(void) PageAddItem(wpage, (Item) hitem, itemsz, woffnum, LP_USED);
+	PageAddItem(wpage, (Item) hitem, itemsz, woffnum, LP_USED);
 	
 	/* 
 	 * delete the tuple from the "read" page.

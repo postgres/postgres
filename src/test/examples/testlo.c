@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/test/examples/testlo.c,v 1.2 1997/07/10 01:15:11 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/test/examples/testlo.c,v 1.3 1997/08/12 22:55:19 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -63,8 +63,8 @@ Oid importFile(PGconn *conn, char *filename)
 	}
     }
     
-    (void) close(fd);
-    (void) lo_close(conn, lobj_fd);
+    close(fd);
+    lo_close(conn, lobj_fd);
 
     return lobjId;
 }
@@ -168,8 +168,8 @@ void exportFile(PGconn *conn, Oid lobjId, char *filename)
 	}
     }
 
-    (void) lo_close(conn, lobj_fd);
-    (void) close(fd);
+    lo_close(conn, lobj_fd);
+    close(fd);
 
     return;
 }

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/libpq/hba.c,v 1.16 1997/03/12 21:17:53 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/libpq/hba.c,v 1.17 1997/08/12 22:52:52 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -64,7 +64,7 @@ next_token(FILE *fp, char *buf, const int bufsz) {
       c = getc(fp);
       /* Put back the char right after the token (putting back EOF is ok) */
     } 
-    (void) ungetc(c, fp);
+    ungetc(c, fp);
   }
   *buf = '\0';
 }

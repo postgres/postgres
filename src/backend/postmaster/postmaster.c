@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.50 1997/08/12 20:15:42 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.51 1997/08/12 22:53:31 momjian Exp $
  *
  * NOTES
  *
@@ -237,7 +237,7 @@ PostmasterMain(int argc, char *argv[])
     IsPostmaster = true;
     
     /* for security, no dir or file created can be group or other accessible */
-    (void) umask((mode_t) 0077);
+    umask((mode_t) 0077);
     
     if (!(hostName = getenv("PGHOST"))) {
         if (gethostname(hostbuf, MAXHOSTNAMELEN) < 0)
@@ -408,10 +408,10 @@ pmdaemonize(void)
     }
 #endif
     i = open(NULL_DEV, O_RDWR);
-    (void) dup2(i, 0);
-    (void) dup2(i, 1);
-    (void) dup2(i, 2);
-    (void) close(i);
+    dup2(i, 0);
+    dup2(i, 1);
+    dup2(i, 2);
+    close(i);
 }
 
 static void
@@ -899,7 +899,7 @@ CleanupProc(int pid,
                         (sig == SIGUSR1)
                         ? "SIGUSR1" : "SIGSTOP",
                         bp->pid);
-            (void) kill(bp->pid, sig);
+            kill(bp->pid, sig);
         }
         ProcRemove(bp->pid);
         
@@ -1101,7 +1101,7 @@ DoExec(StartupInfo *packet, int portFd)
      */
     
     if (DebugLvl > 1) {
-        (void) sprintf(debugbuf, "-d%d", DebugLvl);
+        sprintf(debugbuf, "-d%d", DebugLvl);
         av[ac++] = debugbuf;
     }
     else
@@ -1120,7 +1120,7 @@ DoExec(StartupInfo *packet, int portFd)
       av[ac++] = mbbuf;
     }
     /* Tell the backend the descriptor of the fe/be socket */
-    (void) sprintf(portbuf, "-P%d", portFd);
+    sprintf(portbuf, "-P%d", portFd);
     av[ac++] = portbuf;
     
     strNcpy(argbuf, packet->options, ARGV_SIZE);

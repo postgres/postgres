@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/libpq/Attic/pqpacket.c,v 1.4 1997/02/14 04:15:31 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/libpq/Attic/pqpacket.c,v 1.5 1997/08/12 22:53:00 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -214,7 +214,7 @@ PacketSend(Port *port,
 		 (struct sockaddr *)&(port->raddr), addrLen);
     
     if (len < totalLen) {
-	(void) sprintf(PQerrormsg,
+	sprintf(PQerrormsg,
 		       "FATAL: PacketSend: couldn't send complete packet: errno=%d\n",
 		       errno);
 	fputs(PQerrormsg, stderr);

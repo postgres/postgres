@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/sort/Attic/lselect.c,v 1.4 1997/08/06 03:41:47 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/sort/Attic/lselect.c,v 1.5 1997/08/12 22:55:00 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -183,8 +183,6 @@ tuplecmp(HeapTuple ltup, HeapTuple rtup, LeftistContext context)
 {
     register char	*lattr, *rattr;
     int		nkey = 0;
-    extern	int	Nkeys;
-    extern	ScanKey	Key;
     int		result = 0;
     bool		isnull;
     

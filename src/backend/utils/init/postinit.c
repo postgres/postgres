@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.9 1997/07/24 20:17:34 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.10 1997/08/12 22:54:54 momjian Exp $
  *
  * NOTES
  *      InitPostgres() is the function called from PostgresMain
@@ -217,7 +217,7 @@ InitMyDatabaseId()
     }
     
  done:
-    (void) close(dbfd);
+    close(dbfd);
     pfree(pg);
     
     if (!OidIsValid(MyDatabaseId))
@@ -463,7 +463,7 @@ InitCommunication()
 void
 InitStdio()
 {
-    (void) DebugFileOpen();
+    DebugFileOpen();
 }
 
 /* --------------------------------

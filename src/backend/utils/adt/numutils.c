@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/numutils.c,v 1.11 1997/08/12 20:16:02 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/numutils.c,v 1.12 1997/08/12 22:54:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -142,8 +142,8 @@ ftoa(double value, char *ascii, int width, int prec1, char format)
 	char	fmt[256];
 	int	ret;
 
-	(void) sprintf(fmt, "%%%d.%d%c", width, prec1, format);
-	(void) sprintf(out, fmt, value);
+	sprintf(fmt, "%%%d.%d%c", width, prec1, format);
+	sprintf(out, fmt, value);
 	if ((ret = strlen(out)) > width) {
 		memset(ascii, '*', width - 2);
 		ascii[width] = 0;

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/geo_ops.c,v 1.13 1997/07/29 16:08:18 thomas Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/geo_ops.c,v 1.14 1997/08/12 22:54:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -108,7 +108,7 @@ fprintf( stderr, "single_decode- (%x) try decoding %s to %g\n", (cp-str), str, *
 
 int single_encode(float8 x, char *str)
 {
-    (void) sprintf(str, "%.*g", digits8, x);
+    sprintf(str, "%.*g", digits8, x);
     return(TRUE);
 } /* single_encode() */
 
@@ -144,7 +144,7 @@ int pair_decode(char *str, float8 *x, float8 *y, char **s)
 
 int pair_encode(float8 x, float8 y, char *str)
 {
-    (void) sprintf(str, "%.*g,%.*g", digits8, x, digits8, y);
+    sprintf(str, "%.*g,%.*g", digits8, x, digits8, y);
     return(TRUE);
 }
 

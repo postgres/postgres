@@ -236,7 +236,7 @@ int cflags;
 	g->nsub = 0;
 	g->ncategories = 1;	/* category 0 is "everything else" */
 	g->categories = &g->catspace[-(CHAR_MIN)];
-	(void) memset((char *)g->catspace, 0, NC*sizeof(cat_t));
+	memset((char *)g->catspace, 0, NC*sizeof(cat_t));
 	g->backrefs = 0;
 
 	/* do it */
@@ -596,7 +596,7 @@ int starordinary;		/* is a leading * an ordinary character? */
 			assert(p->pbegin[i] != 0);
 			assert(OP(p->strip[p->pbegin[i]]) == OLPAREN);
 			assert(OP(p->strip[p->pend[i]]) == ORPAREN);
-			(void) dupl(p, p->pbegin[i]+1, p->pend[i]);
+			dupl(p, p->pbegin[i]+1, p->pend[i]);
 			EMIT(O_BACK, i);
 		} else
 			SETERROR(REG_ESUBREG);
@@ -1115,7 +1115,7 @@ register struct parse *p;
 				p->g->sets[i].ptr = p->g->setbits + css*(i/CHAR_BIT);
 		}
 		if (p->g->sets != NULL && p->g->setbits != NULL)
-			(void) memset((char *)p->g->setbits + (nbytes - css),
+			memset((char *)p->g->setbits + (nbytes - css),
 								0, css);
 		else {
 			no = 0;
@@ -1273,7 +1273,7 @@ register char *cp;
 	register size_t len = strlen(fp);
 
 	assert(fp != NULL);
-	(void) memmove(fp, fp + len + 1,
+	memmove(fp, fp + len + 1,
 				cs->smultis - (fp + len + 1 - cs->multis));
 	cs->smultis -= len;
 
@@ -1440,7 +1440,7 @@ sopno finish;			/* to this less one */
 		return(ret);
 	enlarge(p, p->ssize + len);	/* this many unexpected additions */
 	assert(p->ssize >= p->slen + len);
-	(void) memcpy((char *)(p->strip + p->slen),
+	memcpy((char *)(p->strip + p->slen),
 		(char *)(p->strip + start), (size_t)len*sizeof(sop));
 	p->slen += len;
 	return(ret);
