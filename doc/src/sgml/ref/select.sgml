@@ -1,6 +1,6 @@
 <refentry id="SQL-SELECT">
  <refmeta>
-  <refentrytitle>
+  <refentrytitle id="select-title">
    SELECT
   </refentrytitle>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
@@ -248,7 +248,7 @@ SELECT [ ALL | DISTINCT [ ON <replaceable class="PARAMETER">column</replaceable>
   </para>
    
   <para>
-   The LIMIT...OFFSET clause allows control over which rows are
+   The LIMIT clause allows control over which rows are
    returned by the query.
   </para>
 
