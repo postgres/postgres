@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeFunctionscan.c,v 1.29 2004/12/31 21:59:45 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeFunctionscan.c,v 1.30 2005/01/27 06:36:42 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,12 +31,13 @@
 #include "parser/parsetree.h"
 #include "parser/parse_expr.h"
 #include "parser/parse_type.h"
+#include "utils/builtins.h"
 #include "utils/lsyscache.h"
 #include "utils/typcache.h"
 
 
 static TupleTableSlot *FunctionNext(FunctionScanState *node);
-static bool tupledesc_match(TupleDesc dst_tupdesc, TupleDesc src_tupdesc);
+static void tupledesc_match(TupleDesc dst_tupdesc, TupleDesc src_tupdesc);
 
 /* ----------------------------------------------------------------
  *						Scan Support
@@ -87,10 +88,8 @@ FunctionNext(FunctionScanState *node)
 		 * need to do this for functions returning RECORD, but might as
 		 * well do it always.
 		 */
-		if (funcTupdesc && !tupledesc_match(node->tupdesc, funcTupdesc))
-			ereport(ERROR,
-					(errcode(ERRCODE_DATATYPE_MISMATCH),
-					 errmsg("query-specified return row and actual function return row do not match")));
+		if (funcTupdesc) 
+			tupledesc_match(node->tupdesc, funcTupdesc);
 	}
 
 	/*
@@ -349,21 +348,26 @@ ExecFunctionReScan(FunctionScanState *node, ExprContext *exprCtxt)
 }
 
 /*
- * Check that function result tuple type (src_tupdesc) matches or can be
- * considered to match what the query expects (dst_tupdesc).
+ * Check that function result tuple type (src_tupdesc) matches or can
+ * be considered to match what the query expects (dst_tupdesc). If
+ * they don't match, ereport.
  *
  * We really only care about number of attributes and data type.
  * Also, we can ignore type mismatch on columns that are dropped in the
  * destination type, so long as the physical storage matches.  This is
  * helpful in some cases involving out-of-date cached plans.
  */
-static bool
+static void
 tupledesc_match(TupleDesc dst_tupdesc, TupleDesc src_tupdesc)
 {
 	int			i;
 
 	if (dst_tupdesc->natts != src_tupdesc->natts)
-		return false;
+		ereport(ERROR,
+				(errcode(ERRCODE_DATATYPE_MISMATCH),
+				 errmsg("function return row and query-specified return row do not match"),
+				 errdetail("Returned row contains %d attributes, but query expects %d.",
+						   src_tupdesc->natts, dst_tupdesc->natts)));
 
 	for (i = 0; i < dst_tupdesc->natts; i++)
 	{
@@ -373,11 +377,20 @@ tupledesc_match(TupleDesc dst_tupdesc, TupleDesc src_tupdesc)
 		if (dattr->atttypid == sattr->atttypid)
 			continue;			/* no worries */
 		if (!dattr->attisdropped)
-			return false;
+			ereport(ERROR,
+					(errcode(ERRCODE_DATATYPE_MISMATCH),
+					 errmsg("function return row and query-specified return row do not match"),
+					 errdetail("Returned type %s at ordinal position %d, but query expects %s.", 
+							   format_type_be(sattr->atttypid),
+							   i + 1,
+							   format_type_be(dattr->atttypid))));
+
 		if (dattr->attlen != sattr->attlen ||
 			dattr->attalign != sattr->attalign)
-			return false;
+			ereport(ERROR,
+					(errcode(ERRCODE_DATATYPE_MISMATCH),
+					 errmsg("function return row and query-specified return row do not match"),
+					 errdetail("Physical storage mismatch on dropped attribute at ordinal position %d.",
+							   i + 1)));
 	}
-
-	return true;
 }
