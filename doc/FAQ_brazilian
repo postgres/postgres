@@ -171,7 +171,7 @@
    Portions Copyright (c) 1994-6 Regents of the University of California
    
    Permissão de uso, cópia, modificação e distribuição desse software e
-   sua documenta¸ão para qualquer propósito, sem taxa, e sem um acordo
+   sua documentação para qualquer propósito, sem taxa, e sem um acordo
    escrito está concedida por esse meio, contanto que a nota da licença
    acima, esse parágrafo e os dois parágrafos seguintes apareçam em todas
    as cópias.
@@ -212,7 +212,8 @@
     1.5) Onde eu posso conseguir o PostgreSQL?
     
    O servidor ftp principal do PostgreSQL é ftp://ftp.PostgreSQL.org/pub.
-   Para relação de servidores espelhos (mirrors), consulte nosso website.
+   Para obter a relação de servidores espelhos (mirrors), consulte nosso
+   website.
    
     1.6) Onde eu posso conseguir suporte?
     
