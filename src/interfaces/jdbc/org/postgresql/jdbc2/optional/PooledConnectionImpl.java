@@ -1,8 +1,7 @@
 package org.postgresql.jdbc2.optional;
 
 import javax.sql.*;
-import java.sql.SQLException;
-import java.sql.Connection;
+import java.sql.*;
 import java.util.*;
 import java.lang.reflect.*;
 
@@ -13,7 +12,7 @@ import java.lang.reflect.*;
  * @see ConnectionPool
  *
  * @author Aaron Mulder (ammulder@chariotsolutions.com)
- * @version $Revision: 1.3 $
+ * @version $Revision: 1.4 $
  */
 public class PooledConnectionImpl implements PooledConnection
 {
@@ -115,7 +114,9 @@ public class PooledConnectionImpl implements PooledConnection
 		con.setAutoCommit(autoCommit);
 		ConnectionHandler handler = new ConnectionHandler(con);
 		last = handler;
-		return (Connection)Proxy.newProxyInstance(getClass().getClassLoader(), new Class[]{Connection.class}, handler);
+		Connection con = (Connection)Proxy.newProxyInstance(getClass().getClassLoader(), new Class[]{Connection.class}, handler);
+        last.setProxy(con);
+        return con;
 	}
 
 	/**
@@ -166,6 +167,7 @@ public class PooledConnectionImpl implements PooledConnection
 	private class ConnectionHandler implements InvocationHandler
 	{
 		private Connection con;
+        private Connection proxy; // the Connection the client is currently using, which is a proxy
 		private boolean automatic = false;
 
 		public ConnectionHandler(Connection con)
@@ -229,6 +231,7 @@ public class PooledConnectionImpl implements PooledConnection
 				}
 				con.clearWarnings();
 				con = null;
+                proxy = null;
 				last = null;
 				fireConnectionClosed();
 				if (ex != null)
@@ -237,11 +240,34 @@ public class PooledConnectionImpl implements PooledConnection
 				}
 				return null;
 			}
+            else if(method.getName().equals("createStatement"))
+            {
+                Statement st = (Statement)method.invoke(con, args);
+                return Proxy.newProxyInstance(getClass().getClassLoader(), new Class[]{Statement.class}, new StatementHandler(this, st));
+            }
+            else if(method.getName().equals("prepareCall"))
+            {
+                Statement st = (Statement)method.invoke(con, args);
+                return Proxy.newProxyInstance(getClass().getClassLoader(), new Class[]{CallableStatement.class}, new StatementHandler(this, st));
+            }
+            else if(method.getName().equals("prepareStatement"))
+            {
+                Statement st = (Statement)method.invoke(con, args);
+                return Proxy.newProxyInstance(getClass().getClassLoader(), new Class[]{PreparedStatement.class}, new StatementHandler(this, st));
+            }
 			else
 			{
 				return method.invoke(con, args);
 			}
 		}
+
+        Connection getProxy() {
+            return proxy;
+        }
+
+        void setProxy(Connection proxy) {
+            this.proxy = proxy;
+        }
 
 		public void close()
 		{
@@ -250,7 +276,87 @@ public class PooledConnectionImpl implements PooledConnection
 				automatic = true;
 			}
 			con = null;
+            proxy = null;
 			// No close event fired here: see JDBC 2.0 Optional Package spec section 6.3
 		}
+
+        public boolean isClosed() {
+            return con == null;
+        }
 	}
+
+    /**
+     * Instead of declaring classes implementing Statement, PreparedStatement,
+     * and CallableStatement, which would have to be updated for every JDK rev,
+     * use a dynamic proxy to handle all calls through the Statement
+     * interfaces.	This is the part that requires JDK 1.3 or higher, though
+     * JDK 1.2 could be supported with a 3rd-party proxy package.
+     *
+     * The StatementHandler is required in order to return the proper
+     * Connection proxy for the getConnection method.
+     */
+    private static class StatementHandler implements InvocationHandler {
+        private ConnectionHandler con;
+        private Statement st;
+
+        public StatementHandler(ConnectionHandler con, Statement st) {
+            this.con = con;
+            this.st = st;
+        }
+        public Object invoke(Object proxy, Method method, Object[] args)
+        throws Throwable
+        {
+            // From Object
+            if (method.getDeclaringClass().getName().equals("java.lang.Object"))
+            {
+                if (method.getName().equals("toString"))
+                {
+                    return "Pooled statement wrapping physical statement " + st;
+                }
+                if (method.getName().equals("hashCode"))
+                {
+                    return new Integer(st.hashCode());
+                }
+                if (method.getName().equals("equals"))
+                {
+                    if (args[0] == null)
+                    {
+                        return Boolean.FALSE;
+                    }
+                    try
+                    {
+                        return Proxy.isProxyClass(args[0].getClass()) && ((StatementHandler) Proxy.getInvocationHandler(args[0])).st == st ? Boolean.TRUE : Boolean.FALSE;
+                    }
+                    catch (ClassCastException e)
+                    {
+                        return Boolean.FALSE;
+                    }
+                }
+                return method.invoke(st, args);
+            }
+            // All the rest is from the Statement interface
+            if (st == null || con.isClosed())
+            {
+                throw new SQLException("Statement has been closed");
+            }
+            if (method.getName().equals("close"))
+            {
+                try {
+                    st.close();
+                } finally {
+                    con = null;
+                    st = null;
+                    return null;
+                }
+            }
+            else if (method.getName().equals("getConnection"))
+            {
+                return con.getProxy(); // the proxied connection, not a physical connection
+            }
+            else
+            {
+                return method.invoke(st, args);
+            }
+        }
+    }
 }
