@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: analyze.c,v 1.155 2000/08/22 12:59:04 ishii Exp $
+ *	$Id: analyze.c,v 1.156 2000/08/29 04:20:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -52,6 +52,7 @@ static void transformForUpdate(Query *qry, List *forUpdate);
 static void transformFkeyGetPrimaryKey(FkConstraint *fkconstraint);
 static void transformConstraintAttrs(List *constraintList);
 static void transformColumnType(ParseState *pstate, ColumnDef *column);
+static void transformFkeyCheckAttrs(FkConstraint *fkconstraint);
 
 /* kluge to return extra info from transformCreateStmt() */
 static List *extras_before;
@@ -1062,6 +1063,33 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 			if (fkconstraint->constr_name == NULL)
 				fkconstraint->constr_name = "<unnamed>";
 
+			/* 
+			 * Check to see if the attributes mentioned by the constraint
+			 * actually exist on this table.
+			 */
+			if (fkconstraint->fk_attrs!=NIL) {
+				int found=0;
+				List *cols;
+				List *fkattrs;
+				Ident *fkattr;
+				ColumnDef *col;
+				foreach(fkattrs, fkconstraint->fk_attrs) {
+					found=0;
+					fkattr=lfirst(fkattrs);
+					foreach(cols, columns) {
+						col=lfirst(cols);
+						if (strcmp(col->colname, fkattr->name)==0) {
+							found=1;
+							break;
+						}
+					}
+					if (!found)
+						break;
+				}
+				if (!found)
+					elog(ERROR, "columns referenced in foreign key constraint not found.");
+			}
+
 			/*
 			 * If the attribute list for the referenced table was omitted,
 			 * lookup for the definition of the primary key. If the
@@ -1096,7 +1124,43 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 						 fkconstraint->pktable_name);
 				}
 			}
-
+			else {
+				if (strcmp(fkconstraint->pktable_name, stmt->relname)!=0)
+					transformFkeyCheckAttrs(fkconstraint);
+				else {
+					/* Get a unique/pk constraint from above */
+					List *index;
+					int found=0;
+					foreach(index, ilist)
+					{
+						IndexStmt *ind=lfirst(index);
+						IndexElem *indparm;
+						List *indparms;
+						List *pkattrs;
+						Ident *pkattr;
+						if (ind->unique) {
+							foreach(pkattrs, fkconstraint->pk_attrs) {
+								found=0;
+								pkattr=lfirst(pkattrs);
+								foreach(indparms, ind->indexParams) {
+									indparm=lfirst(indparms);
+									if (strcmp(indparm->name, pkattr->name)==0) {
+										found=1;
+										break;
+									}
+								}
+								if (!found)
+									break;
+							}
+						}
+						if (found)
+							break;
+					}
+					if (!found)
+						elog(ERROR, "UNIQUE constraint matching given keys for referenced table \"%s\" not found",
+							 fkconstraint->pktable_name);
+				}
+			}
 			/*
 			 * Build a CREATE CONSTRAINT TRIGGER statement for the CHECK
 			 * action.
@@ -2026,6 +2090,89 @@ transformForUpdate(Query *qry, List *forUpdate)
 	}
 
 	qry->rowMark = rowMark;
+}
+
+
+/*
+ * transformFkeyCheckAttrs -
+ *
+ *	Try to make sure that the attributes of a referenced table
+ *      belong to a unique (or primary key) constraint.
+ *
+ */
+static void 
+transformFkeyCheckAttrs(FkConstraint *fkconstraint)
+{
+	Relation	pkrel;
+	Form_pg_attribute *pkrel_attrs;
+	List	   *indexoidlist,
+			   *indexoidscan;
+	Form_pg_index indexStruct = NULL;
+	int			i;
+	int found=0;
+
+	/* ----------
+	 * Open the referenced table and get the attributes list
+	 * ----------
+	 */
+	pkrel = heap_openr(fkconstraint->pktable_name, AccessShareLock);
+	if (pkrel == NULL)
+		elog(ERROR, "referenced table \"%s\" not found",
+			 fkconstraint->pktable_name);
+	pkrel_attrs = pkrel->rd_att->attrs;
+
+	/* ----------
+	 * Get the list of index OIDs for the table from the relcache,
+	 * and look up each one in the pg_index syscache for each unique
+	 * one, and then compare the attributes we were given to those
+         * defined.
+	 * ----------
+	 */
+	indexoidlist = RelationGetIndexList(pkrel);
+
+	foreach(indexoidscan, indexoidlist)
+	{
+		Oid		indexoid = lfirsti(indexoidscan);
+		HeapTuple	indexTuple;
+		List *attrl;
+		indexTuple = SearchSysCacheTuple(INDEXRELID,
+										 ObjectIdGetDatum(indexoid),
+										 0, 0, 0);
+		if (!HeapTupleIsValid(indexTuple))
+			elog(ERROR, "transformFkeyGetPrimaryKey: index %u not found",
+				 indexoid);
+		indexStruct = (Form_pg_index) GETSTRUCT(indexTuple);
+
+		if (indexStruct->indisunique) {
+			/* go through the fkconstraint->pk_attrs list */
+			foreach(attrl, fkconstraint->pk_attrs) {
+				Ident *attr=lfirst(attrl);
+				found=0;
+				for (i = 0; i < INDEX_MAX_KEYS && indexStruct->indkey[i] != 0; i++)
+				{
+					int		pkattno = indexStruct->indkey[i];
+					if (pkattno>0) {
+						char *name = NameStr(pkrel_attrs[pkattno - 1]->attname);
+						if (strcmp(name, attr->name)==0) {
+							found=1;
+							break;
+						}
+					}
+				}
+				if (!found)
+					break;
+			}
+		}
+		if (found)
+			break;		
+		indexStruct = NULL;
+	}
+	if (!found)
+		elog(ERROR, "UNIQUE constraint matching given keys for referenced table \"%s\" not found",
+			 fkconstraint->pktable_name);
+
+	freeList(indexoidlist);
+	heap_close(pkrel, AccessShareLock);
 }
 
 

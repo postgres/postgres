@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.96 2000/08/25 18:05:54 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.97 2000/08/29 04:20:43 momjian Exp $
  *
  * NOTES
  *	  The PerformAddAttribute() code, like most of the relation
@@ -45,9 +45,10 @@
 #include "commands/view.h"
 #include "utils/temprel.h"
 #include "executor/spi_priv.h"
+#include "catalog/pg_index.h"
+#include "utils/relcache.h"
 
 #ifdef	_DROP_COLUMN_HACK__
-#include "catalog/pg_index.h"
 #include "parser/parse.h"
 #endif	 /* _DROP_COLUMN_HACK__ */
 #include "access/genam.h"
@@ -1241,12 +1242,18 @@ AlterTableAddConstraint(char *relationName,
 		case T_FkConstraint:
 			{
 				FkConstraint *fkconstraint = (FkConstraint *) newConstraint;
-				Relation	rel;
+				Relation	rel, pkrel;
 				HeapScanDesc scan;
 				HeapTuple	tuple;
 				Trigger		trig;
 				List	   *list;
 				int			count;
+			        List       *indexoidlist,
+		                           *indexoidscan;
+				Form_pg_index indexStruct = NULL;
+				Form_pg_attribute *rel_attrs = NULL;
+        			int                     i;
+			        int found=0;
 
 				if (get_temp_rel_by_username(fkconstraint->pktable_name)!=NULL &&
 				    get_temp_rel_by_username(relationName)==NULL) {
@@ -1273,8 +1280,10 @@ AlterTableAddConstraint(char *relationName,
 				 * doesn't delete rows out from under us.
 				 */
 
-				rel = heap_openr(fkconstraint->pktable_name, AccessExclusiveLock);
-				heap_close(rel, NoLock);
+				pkrel = heap_openr(fkconstraint->pktable_name, AccessExclusiveLock);
+			        if (pkrel == NULL)
+                			elog(ERROR, "referenced table \"%s\" not found",
+		                         fkconstraint->pktable_name);
 
 				/*
 				 * Grab an exclusive lock on the fk table, and then scan
@@ -1284,6 +1293,82 @@ AlterTableAddConstraint(char *relationName,
 				 * and that's that.
 				 */
 				rel = heap_openr(relationName, AccessExclusiveLock);
+				if (rel == NULL)
+					elog(ERROR, "table \"%s\" not found",
+						relationName);
+
+				/* First we check for limited correctness of the constraint */
+
+			        rel_attrs = pkrel->rd_att->attrs;
+			        indexoidlist = RelationGetIndexList(pkrel);
+
+			        foreach(indexoidscan, indexoidlist)
+			        {
+			                Oid             indexoid = lfirsti(indexoidscan);
+			                HeapTuple       indexTuple;
+			                List *attrl;
+			                indexTuple = SearchSysCacheTuple(INDEXRELID,
+                                                                                 ObjectIdGetDatum(indexoid),
+                                                                                 0, 0, 0);
+			                if (!HeapTupleIsValid(indexTuple))
+                        			elog(ERROR, "transformFkeyGetPrimaryKey: index %u not found",
+			                                 indexoid);
+			                indexStruct = (Form_pg_index) GETSTRUCT(indexTuple);
+
+			                if (indexStruct->indisunique) {
+                        			/* go through the fkconstraint->pk_attrs list */
+			                        foreach(attrl, fkconstraint->pk_attrs) {
+                        			        Ident *attr=lfirst(attrl);
+			                                found=0;
+                        			        for (i = 0; i < INDEX_MAX_KEYS && indexStruct->indkey[i] != 0; i++)
+			                                {
+                        			                int pkattno = indexStruct->indkey[i];
+								if (pkattno>0) {
+									char *name = NameStr(rel_attrs[pkattno-1]->attname);
+        	                			                if (strcmp(name, attr->name)==0) {
+                	                                			found=1;
+				                                                break;
+                        				                }
+								}
+			                                }
+                        			        if (!found)
+			                                        break;
+                        			}
+			                }
+			                if (found)
+                        			break;          
+			                indexStruct = NULL;
+			        }
+			        if (!found)
+			                elog(ERROR, "UNIQUE constraint matching given keys for referenced table \"%s\" not found",
+                        			 fkconstraint->pktable_name);
+
+			        freeList(indexoidlist);
+				heap_close(pkrel, NoLock);
+
+			        rel_attrs = rel->rd_att->attrs;
+				if (fkconstraint->fk_attrs!=NIL) {
+	                                int found=0;
+                	                List *fkattrs;
+                        	        Ident *fkattr;
+	                                foreach(fkattrs, fkconstraint->fk_attrs) {
+						int count=0;
+        	                                found=0;
+                	                        fkattr=lfirst(fkattrs);
+						for (; count < rel->rd_att->natts; count++) {
+							char *name = NameStr(rel->rd_att->attrs[count]->attname);
+							if (strcmp(name, fkattr->name)==0) {
+                                                	        found=1;
+                                                        	break;
+	                                                }
+        	                                }
+                	                        if (!found)
+                        	                        break;
+                                	}
+	                                if (!found)
+        	                                elog(ERROR, "columns referenced in foreign key constraint not found.");
+  	        	        }
+
 				trig.tgoid = 0;
 				if (fkconstraint->constr_name)
 					trig.tgname = fkconstraint->constr_name;

@@ -690,3 +690,16 @@ DROP TABLE FKTABLE;
 NOTICE:  DROP TABLE implicitly drops referential integrity trigger from table "pktable"
 NOTICE:  DROP TABLE implicitly drops referential integrity trigger from table "pktable"
 DROP TABLE PKTABLE;
+CREATE TABLE PKTABLE (ptest1 int PRIMARY KEY);
+NOTICE:  CREATE TABLE/PRIMARY KEY will create implicit index 'pktable_pkey' for table 'pktable'
+CREATE TABLE FKTABLE_FAIL1 ( ftest1 int, CONSTRAINT fkfail1 FOREIGN KEY (ftest2) REFERENCES PKTABLE);
+NOTICE:  CREATE TABLE will create implicit trigger(s) for FOREIGN KEY check(s)
+ERROR:  columns referenced in foreign key constraint not found.
+CREATE TABLE FKTABLE_FAIL2 ( ftest1 int, CONSTRAINT fkfail1 FOREIGN KEY (ftest1) REFERENCES PKTABLE(ptest2));
+NOTICE:  CREATE TABLE will create implicit trigger(s) for FOREIGN KEY check(s)
+ERROR:  UNIQUE constraint matching given keys for referenced table "pktable" not found
+DROP TABLE FKTABLE_FAIL1;
+ERROR:  Relation 'fktable_fail1' does not exist
+DROP TABLE FKTABLE_FAIL2;
+ERROR:  Relation 'fktable_fail2' does not exist
+DROP TABLE PKTABLE;

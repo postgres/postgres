@@ -180,6 +180,12 @@ INSERT INTO tmp3 values (1,10);
 INSERT INTO tmp3 values (1,20);
 INSERT INTO tmp3 values (5,50);
 
+-- Try (and fail) to add constraint due to invalid source columns
+ALTER TABLE tmp3 add constraint tmpconstr foreign key(c) references tmp2 match full;
+
+-- Try (and fail) to add constraint due to invalide destination columns explicitly given
+ALTER TABLE tmp3 add constraint tmpconstr foreign key(a) references tmp2(b) match full;
+
 -- Try (and fail) to add constraint due to invalid data
 ALTER TABLE tmp3 add constraint tmpconstr foreign key (a) references tmp2 match full;
 
