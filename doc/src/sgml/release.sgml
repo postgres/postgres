@@ -1,9 +1,92 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.246 2003/12/02 16:14:12 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.247 2003/12/15 22:24:59 momjian Exp $
 -->
 
 <appendix id="release">
  <title>Release Notes</title>
+
+  <sect1 id="release-7-4-1">
+   <title>Release 7.4.1</title>
+
+   <note>
+   <title>Release date</title>
+   <simpara>2003-12-15</simpara>
+   </note>
+
+   <para>
+    This has a variety of fixes from 7.4.
+   </para>
+
+
+   <sect2>
+    <title>Migration to version 7.4</title>
+
+    <para>
+     A dump/restore is <emphasis>not</emphasis> required for those
+     running 7.4.
+    </para>
+   </sect2>
+
+   <sect2>
+    <title>Changes</title>
+
+<para>Changes as of 2003-12-14</para>
+<itemizedlist>
+<listitem><para>Fixed bug in CREATE SCHEMA parsing (Michael)</para></listitem>
+<listitem><para>Fix --enable-thread-safety compile error when used with --with-perl (Peter)</para></listitem>
+<listitem><para>Fix for subqueries that used hash joins (Tom)</para>
+<para>
+    Certain subqueries that used hash joins would crash because of
+    improperly shared structures.
+</para></listitem>
+<listitem><para>Fix free space map compaction bug (Tom)</para>
+<para>
+    This fixes a bug where compaction of the free space map could lead
+    to a database server shutdown.
+</para>
+</listitem>
+<listitem><para>Fix for Borland compiler build of libpq (Bruce)</para></listitem>
+<listitem><para>Fix netmask() and hostmask() to return the maximum-length masklen (Tom)</para>
+<para>
+    Fix these functions to return values consistent with pre-7.4
+    releases.
+</para>
+</listitem>
+<listitem><para>Several /contrib/pg_autovacuum fixes</para>
+<para>
+    Fixes include improper variable initialization, missing vacuum after
+    TRUNCATE, and duration computation overflow for long vacuums.
+</para>
+</listitem>
+<listitem><para>Allow compile of /contrib/cube under Cygwin (Jason Tishler)</para></listitem>
+<listitem><para>Fix Solaris use of password file when no passwords are defined (Tom)</para>
+<para>
+    Fix crash on Solaris caused by use of any type of password
+    authentication when no passwords were defined.
+</para>
+</listitem>
+<listitem><para>JDBC fix for thread problems, other fixes</para></listitem>
+<listitem><para>Fix for index bytea lookups (Joe)</para></listitem>
+<listitem><para>Fix information schema for bit data types (Peter)</para>
+<para>
+    To enable this fix, an initdb is required.
+</para>
+</listitem>
+<listitem><para>Force zero_damaged_pages to be on during recovery from WAL</para></listitem>
+<listitem><para>Prevent some obscure cases of <quote>variable not in subplan target lists</para></listitem>
+<listitem><para>Make PQescapeBytea and byteaout consistent with each other (Joe)</para>
+<listitem><para>Escape bytea output for bytes > 0x7e(Joe)</para>
+<para>
+  If different client encodings are used for bytea output and input, it
+  is possible for bytea values to be corrupted by the differing
+  encodings.  This fix escapes all bytes that might be affected.
+</para>
+</listitem>
+<listitem><para>Added missing SPI_finish() calls to dblink's get_tuple_of_interest() (Joe)</para></listitem>
+</itemizedlist>
+
+  </sect2>
+ </sect1>
 
  <sect1 id="release-7-4">
   <title>Release 7.4</title>
@@ -1882,64 +1965,26 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.246 2003/12/02 16:14:12 tgl Exp
     <title>Changes</title>
 
 <itemizedlist>
-<listitem><para>
-Force zero_damaged_pages to be on during recovery from WAL
-</para></listitem>
-<listitem><para>
-Prevent some obscure cases of <quote>variable not in subplan target lists</>
-</para></listitem>
-<listitem><para>
-Force stats processes to detach from shared memory, ensuring cleaner shutdown
-</para></listitem>
-<listitem><para>
-Make PQescapeBytea and byteaout consistent with each other (Joe)
-</para></listitem>
-<listitem><para>
-Added missing SPI_finish() calls to get_tuple_of_interest() (Joe)
-</para></listitem>
-<listitem><para>
-Fix for possible foreign key violation when rule rewrites INSERT (Jan)
-</para></listitem>
-<listitem><para>
-Support qualified type names in PL/Tcl's spi_prepare command (Jan)
-</para></listitem>
-<listitem><para>
-Make pg_dump handle a procedural language handler located in pg_catalog
-</para></listitem>
-<listitem><para>
-Make pg_dump handle cases where a custom opclass is in another schema
-</para></listitem>
-<listitem><para>
-Make pg_dump dump binary-compatible casts correctly (Jan)
-</para></listitem>
-<listitem><para>
-Fix insertion of expressions containing subqueries into rule bodies
-</para></listitem>
-<listitem><para>
-Fix incorrect argument processing in clusterdb script (Anand Ranganathan)
-</para></listitem>
-<listitem><para>
-Fix problems with dropped columns in plpython triggers
-</para></listitem>
-<listitem><para>
-Repair problems with to_char() reading past end of its input string (Karel)
-</para></listitem>
-<listitem><para>
-Fix GB18030 mapping errors (Tatsuo)
-</para></listitem>
-<listitem><para>
-Fix several problems with SSL error handling and asynchronous SSL I/O
-</para></listitem>
-<listitem><para>
-Remove ability to bind a list of values to a single parameter in JDBC
-(prevents possible SQL-injection attacks)
-</para></listitem>
-<listitem><para>
-Fix some errors in HAVE_INT64_TIMESTAMP code paths
-</para></listitem>
-<listitem><para>
-Fix corner case for btree search in parallel with first root page split
-</para></listitem>
+<listitem><para>Force zero_damaged_pages to be on during recovery from WAL</para></listitem>
+<listitem><para>Prevent some obscure cases of <quote>variable not in subplan target lists</para></listitem>
+<listitem><para>Force stats processes to detach from shared memory, ensuring cleaner shutdown</para></listitem>
+<listitem><para>Make PQescapeBytea and byteaout consistent with each other (Joe)</para></listitem>
+<listitem><para>Added missing SPI_finish() calls to dblink's get_tuple_of_interest() (Joe)</para></listitem>
+<listitem><para>Fix for possible foreign key violation when rule rewrites INSERT (Jan)</para></listitem>
+<listitem><para>Support qualified type names in PL/Tcl's spi_prepare command (Jan)</para></listitem>
+<listitem><para>Make pg_dump handle a procedural language handler located in pg_catalog</para></listitem>
+<listitem><para>Make pg_dump handle cases where a custom opclass is in another schema</para></listitem>
+<listitem><para>Make pg_dump dump binary-compatible casts correctly (Jan)</para></listitem>
+<listitem><para>Fix insertion of expressions containing subqueries into rule bodies</para></listitem>
+<listitem><para>Fix incorrect argument processing in clusterdb script (Anand Ranganathan)</para></listitem>
+<listitem><para>Fix problems with dropped columns in plpython triggers</para></listitem>
+<listitem><para>Repair problems with to_char() reading past end of its input string (Karel)</para></listitem>
+<listitem><para>Fix GB18030 mapping errors (Tatsuo)</para></listitem>
+<listitem><para>Fix several problems with SSL error handling and asynchronous SSL I/O</para></listitem>
+<listitem><para>Remove ability to bind a list of values to a single parameter in JDBC
+(prevents possible SQL-injection attacks)</para></listitem>
+<listitem><para>Fix some errors in HAVE_INT64_TIMESTAMP code paths</para></listitem>
+<listitem><para>Fix corner case for btree search in parallel with first root page split</para></listitem>
 </itemizedlist>
 
   </sect2>
@@ -7351,3 +7396,4 @@ sgml-local-catalogs:("/usr/lib/sgml/catalog")
 sgml-local-ecat-files:nil
 End:
 -->
+
