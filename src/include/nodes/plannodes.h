@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: plannodes.h,v 1.55 2002/04/28 19:54:28 tgl Exp $
+ * $Id: plannodes.h,v 1.56 2002/05/12 20:10:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,6 +32,7 @@
  *		Scan ***				CommonScanState			scanstate;
  *		IndexScan				IndexScanState			indxstate;
  *		SubqueryScan			SubqueryScanState		subquerystate;
+ *		FunctionScan			FunctionScanState		functionstate;
  *
  *		  (*** nodes which inherit Scan also inherit scanstate)
  *
@@ -241,6 +242,17 @@ typedef struct SubqueryScan
 	Scan		scan;
 	Plan	   *subplan;
 } SubqueryScan;
+
+/* ----------------
+ *		FunctionScan node
+ * ----------------
+ */
+typedef struct FunctionScan
+{
+	Scan				scan;
+	/* no other fields needed at present */
+	/* scan.scanstate actually points at a FunctionScanState node */
+} FunctionScan;
 
 /*
  * ==========

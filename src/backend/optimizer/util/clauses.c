@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.97 2002/04/28 19:54:28 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.98 2002/05/12 20:10:03 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -1922,6 +1922,7 @@ query_tree_walker(Query *query,
 		{
 			case RTE_RELATION:
 			case RTE_SPECIAL:
+			case RTE_FUNCTION:
 				/* nothing to do */
 				break;
 			case RTE_SUBQUERY:
@@ -2309,6 +2310,7 @@ query_tree_mutator(Query *query,
 		{
 			case RTE_RELATION:
 			case RTE_SPECIAL:
+			case RTE_FUNCTION:
 				/* nothing to do, don't bother to make a copy */
 				break;
 			case RTE_SUBQUERY:

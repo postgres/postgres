@@ -5,7 +5,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994-5, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/commands/explain.c,v 1.76 2002/05/03 15:56:45 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/commands/explain.c,v 1.77 2002/05/12 20:10:02 tgl Exp $
  *
  */
 
@@ -262,6 +262,9 @@ explain_outNode(StringInfo str, Plan *plan, Plan *outer_plan,
 		case T_SubqueryScan:
 			pname = "Subquery Scan";
 			break;
+		case T_FunctionScan:
+			pname = "Function Scan";
+			break;
 		case T_Material:
 			pname = "Materialize";
 			break;
@@ -336,7 +339,7 @@ explain_outNode(StringInfo str, Plan *plan, Plan *outer_plan,
 				char   *relname;
 
 				/* Assume it's on a real relation */
-				Assert(rte->relid);
+				Assert(rte->rtekind == RTE_RELATION);
 
 				/* We only show the rel name, not schema name */
 				relname = get_rel_name(rte->relid);
@@ -356,6 +359,33 @@ explain_outNode(StringInfo str, Plan *plan, Plan *outer_plan,
 
 				appendStringInfo(str, " %s",
 								 quote_identifier(rte->eref->aliasname));
+			}
+			break;
+		case T_FunctionScan:
+			if (((Scan *) plan)->scanrelid > 0)
+			{
+				RangeTblEntry *rte = rt_fetch(((Scan *) plan)->scanrelid,
+											  es->rtable);
+				Expr   *expr;
+				Func   *funcnode;
+				Oid		funcid;
+				char   *proname;
+
+				/* Assert it's on a RangeFunction */
+				Assert(rte->rtekind == RTE_FUNCTION);
+
+				expr = (Expr *) rte->funcexpr;
+				funcnode = (Func *) expr->oper;
+				funcid = funcnode->funcid;
+
+				/* We only show the func name, not schema name */
+				proname = get_func_name(funcid);
+
+				appendStringInfo(str, " on %s",
+								 quote_identifier(proname));
+				if (strcmp(rte->eref->aliasname, proname) != 0)
+					appendStringInfo(str, " %s",
+									 quote_identifier(rte->eref->aliasname));
 			}
 			break;
 		default:
@@ -397,6 +427,7 @@ explain_outNode(StringInfo str, Plan *plan, Plan *outer_plan,
 			break;
 		case T_SeqScan:
 		case T_TidScan:
+		case T_FunctionScan:
 			show_scan_qual(plan->qual, false,
 						   "Filter",
 						   ((Scan *) plan)->scanrelid,
@@ -545,7 +576,7 @@ explain_outNode(StringInfo str, Plan *plan, Plan *outer_plan,
 									  es->rtable);
 		List	   *saved_rtable = es->rtable;
 
-		Assert(rte->subquery != NULL);
+		Assert(rte->rtekind == RTE_SUBQUERY);
 		es->rtable = rte->subquery->rtable;
 
 		for (i = 0; i < indent; i++)
@@ -623,11 +654,7 @@ show_scan_qual(List *qual, bool is_or_qual, const char *qlabel,
 	/* Generate deparse context */
 	Assert(scanrelid > 0 && scanrelid <= length(es->rtable));
 	rte = rt_fetch(scanrelid, es->rtable);
-
-	/* Assume it's on a real relation */
-	Assert(rte->relid);
-	scancontext = deparse_context_for_relation(rte->eref->aliasname,
-											   rte->relid);
+	scancontext = deparse_context_for_rte(rte);
 
 	/*
 	 * If we have an outer plan that is referenced by the qual, add it to

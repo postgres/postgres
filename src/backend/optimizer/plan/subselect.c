@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/subselect.c,v 1.51 2002/04/16 23:08:11 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/subselect.c,v 1.52 2002/05/12 20:10:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -352,13 +352,13 @@ make_subplan(SubLink *slink)
 					}
 					break;
 				case T_Material:
+				case T_FunctionScan:
 				case T_Sort:
 
 					/*
 					 * Don't add another Material node if there's one
-					 * already, nor if the top node is a Sort, since Sort
-					 * materializes its output anyway.	(I doubt either
-					 * case can happen in practice for a subplan, but...)
+					 * already, nor if the top node is any other type that
+					 * materializes its output anyway.
 					 */
 					use_material = false;
 					break;
@@ -686,6 +686,7 @@ SS_finalize_plan(Plan *plan)
 		case T_SetOp:
 		case T_Limit:
 		case T_Group:
+		case T_FunctionScan:
 			break;
 
 		default:

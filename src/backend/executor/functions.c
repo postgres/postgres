@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/functions.c,v 1.49 2002/02/27 19:34:51 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/functions.c,v 1.50 2002/05/12 20:10:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,7 +28,7 @@
 
 
 /*
- * We have an execution_state record for each query in the function.
+ * We have an execution_state record for each query in a function.
  */
 typedef enum
 {
@@ -56,6 +56,7 @@ typedef struct
 	int			typlen;			/* length of the return type */
 	bool		typbyval;		/* true if return type is pass by value */
 	bool		returnsTuple;	/* true if return type is a tuple */
+	bool		shutdown_reg;	/* true if registered shutdown callback */
 
 	TupleTableSlot *funcSlot;	/* if one result we need to copy it before
 								 * we end execution of the function and
@@ -79,6 +80,7 @@ static void postquel_sub_params(execution_state *es, FunctionCallInfo fcinfo);
 static Datum postquel_execute(execution_state *es,
 				 FunctionCallInfo fcinfo,
 				 SQLFunctionCachePtr fcache);
+static void ShutdownSQLFunction(Datum arg);
 
 
 static execution_state *
@@ -546,6 +548,15 @@ fmgr_sql(PG_FUNCTION_ARGS)
 				elog(ERROR, "Set-valued function called in context that cannot accept a set");
 			fcinfo->isnull = true;
 			result = (Datum) 0;
+
+			/* Deregister shutdown callback, if we made one */
+			if (fcache->shutdown_reg)
+			{
+				UnregisterExprContextCallback(rsi->econtext,
+											  ShutdownSQLFunction,
+											  PointerGetDatum(fcache));
+				fcache->shutdown_reg = false;
+			}
 		}
 
 		MemoryContextSwitchTo(oldcontext);
@@ -570,9 +581,45 @@ fmgr_sql(PG_FUNCTION_ARGS)
 			rsi->isDone = ExprMultipleResult;
 		else
 			elog(ERROR, "Set-valued function called in context that cannot accept a set");
+
+		/*
+		 * Ensure we will get shut down cleanly if the exprcontext is
+		 * not run to completion.
+		 */
+		if (!fcache->shutdown_reg)
+		{
+			RegisterExprContextCallback(rsi->econtext,
+										ShutdownSQLFunction,
+										PointerGetDatum(fcache));
+			fcache->shutdown_reg = true;
+		}
 	}
 
 	MemoryContextSwitchTo(oldcontext);
 
 	return result;
+}
+
+/*
+ * callback function in case a function-returning-set needs to be shut down
+ * before it has been run to completion
+ */
+static void
+ShutdownSQLFunction(Datum arg)
+{
+	SQLFunctionCachePtr fcache = (SQLFunctionCachePtr) DatumGetPointer(arg);
+	execution_state *es = fcache->func_state;
+
+	while (es != NULL)
+	{
+		/* Shut down anything still running */
+		if (es->status == F_EXEC_RUN)
+			postquel_end(es);
+		/* Reset states to START in case we're called again */
+		es->status = F_EXEC_START;
+		es = es->next;
+	}
+
+	/* execUtils will deregister the callback... */
+	fcache->shutdown_reg = false;
 }

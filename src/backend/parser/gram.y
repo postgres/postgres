@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.313 2002/05/06 19:47:30 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.314 2002/05/12 20:10:04 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -52,6 +52,7 @@
 
 #include "access/htup.h"
 #include "catalog/index.h"
+#include "catalog/namespace.h"
 #include "catalog/pg_type.h"
 #include "nodes/makefuncs.h"
 #include "nodes/params.h"
@@ -250,7 +251,7 @@ static void doNegateFloat(Value *v);
 %type <defelt>	def_elem
 %type <node>	def_arg, columnElem, where_clause, insert_column_item,
 				a_expr, b_expr, c_expr, AexprConst,
-				in_expr, having_clause
+				in_expr, having_clause, func_table
 %type <list>	row_descriptor, row_list, in_expr_nodes
 %type <node>	row_expr
 %type <node>	case_expr, case_arg, when_clause, case_default
@@ -4074,6 +4075,19 @@ table_ref:  relation_expr
 					$1->alias = $2;
 					$$ = (Node *) $1;
 				}
+		| func_table
+				{
+					RangeFunction *n = makeNode(RangeFunction);
+					n->funccallnode = $1;
+					$$ = (Node *) n;
+				}
+		| func_table alias_clause
+ 				{
+					RangeFunction *n = makeNode(RangeFunction);
+					n->funccallnode = $1;
+					n->alias = $2;
+					$$ = (Node *) n;
+				}
 		| select_with_parens
 				{
 					/*
@@ -4108,6 +4122,7 @@ table_ref:  relation_expr
 					$$ = (Node *) $2;
 				}
 		;
+
 
 /*
  * It may seem silly to separate joined_table from table_ref, but there is
@@ -4279,6 +4294,28 @@ relation_expr:	qualified_name
 					$$->alias = NULL;
                 }
 		;
+
+
+func_table:  func_name '(' ')'
+				{
+					FuncCall *n = makeNode(FuncCall);
+					n->funcname = $1;
+					n->args = NIL;
+					n->agg_star = FALSE;
+					n->agg_distinct = FALSE;
+					$$ = (Node *)n;
+				}
+		| func_name '(' expr_list ')'
+				{
+					FuncCall *n = makeNode(FuncCall);
+					n->funcname = $1;
+					n->args = $3;
+					n->agg_star = FALSE;
+					n->agg_distinct = FALSE;
+					$$ = (Node *)n;
+				}
+		;
+
 
 where_clause:  WHERE a_expr						{ $$ = $2; }
 		| /*EMPTY*/								{ $$ = NULL;  /* no qualifiers */ }
@@ -5845,26 +5882,33 @@ qualified_name_list:  qualified_name
 				{ $$ = lappend($1, $3); }
 		;
 
-qualified_name: ColId
+qualified_name: relation_name
 				{
 					$$ = makeNode(RangeVar);
 					$$->catalogname = NULL;
 					$$->schemaname = NULL;
 					$$->relname = $1;
 				}
-		| ColId '.' ColId
+		| dotted_name
 				{
 					$$ = makeNode(RangeVar);
-					$$->catalogname = NULL;
-					$$->schemaname = $1;
-					$$->relname = $3;
-				}
-		| ColId '.' ColId '.' ColId
-				{
-					$$ = makeNode(RangeVar);
-					$$->catalogname = $1;
-					$$->schemaname = $3;
-					$$->relname = $5;
+					switch (length($1))
+					{
+						case 2:
+							$$->catalogname = NULL;
+							$$->schemaname = strVal(lfirst($1));
+							$$->relname = strVal(lsecond($1));
+							break;
+						case 3:
+							$$->catalogname = strVal(lfirst($1));
+							$$->schemaname = strVal(lsecond($1));
+							$$->relname = strVal(lfirst(lnext(lnext($1))));
+							break;
+						default:
+							elog(ERROR, "Improper qualified name (too many dotted names): %s",
+								 NameListToString($1));
+							break;
+					}
 				}
 		;
 

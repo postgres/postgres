@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/print.c,v 1.54 2002/03/24 04:31:07 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/print.c,v 1.55 2002/05/12 20:10:03 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -254,12 +254,33 @@ print_rt(List *rtable)
 	{
 		RangeTblEntry *rte = lfirst(l);
 
-		if (rte->rtekind == RTE_RELATION)
-			printf("%d\t%s\t%u",
-				   i, rte->eref->aliasname, rte->relid);
-		else
-			printf("%d\t%s\t[subquery]",
-				   i, rte->eref->aliasname);
+		switch (rte->rtekind)
+		{
+			case RTE_RELATION:
+				printf("%d\t%s\t%u",
+					   i, rte->eref->aliasname, rte->relid);
+				break;
+			case RTE_SUBQUERY:
+				printf("%d\t%s\t[subquery]",
+					   i, rte->eref->aliasname);
+				break;
+			case RTE_FUNCTION:
+				printf("%d\t%s\t[rangefunction]",
+					   i, rte->eref->aliasname);
+				break;
+			case RTE_JOIN:
+				printf("%d\t%s\t[join]",
+					   i, rte->eref->aliasname);
+				break;
+			case RTE_SPECIAL:
+				printf("%d\t%s\t[special]",
+					   i, rte->eref->aliasname);
+				break;
+			default:
+				printf("%d\t%s\t[unknown rtekind]",
+					   i, rte->eref->aliasname);
+		}
+
 		printf("\t%s\t%s\n",
 			   (rte->inh ? "inh" : ""),
 			   (rte->inFromCl ? "inFromCl" : ""));
@@ -459,6 +480,8 @@ plannode_type(Plan *p)
 			return "TIDSCAN";
 		case T_SubqueryScan:
 			return "SUBQUERYSCAN";
+		case T_FunctionScan:
+			return "FUNCTIONSCAN";
 		case T_Join:
 			return "JOIN";
 		case T_NestLoop:
@@ -489,12 +512,8 @@ plannode_type(Plan *p)
 }
 
 /*
-   prints the ascii description of the plan nodes
-   does this recursively by doing a depth-first traversal of the
-   plan tree.  for SeqScan and IndexScan, the name of the table is also
-   printed out
-
-*/
+ * Recursively prints a simple text description of the plan tree
+ */
 void
 print_plan_recursive(Plan *p, Query *parsetree, int indentLevel, char *label)
 {
@@ -521,6 +540,13 @@ print_plan_recursive(Plan *p, Query *parsetree, int indentLevel, char *label)
 		RangeTblEntry *rte;
 
 		rte = rt_fetch(((IndexScan *) p)->scan.scanrelid, parsetree->rtable);
+		StrNCpy(extraInfo, rte->eref->aliasname, NAMEDATALEN);
+	}
+	else if (IsA(p, FunctionScan))
+	{
+		RangeTblEntry *rte;
+
+		rte = rt_fetch(((FunctionScan *) p)->scan.scanrelid, parsetree->rtable);
 		StrNCpy(extraInfo, rte->eref->aliasname, NAMEDATALEN);
 	}
 	else

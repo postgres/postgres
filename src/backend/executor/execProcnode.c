@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execProcnode.c,v 1.28 2001/10/25 05:49:27 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execProcnode.c,v 1.29 2002/05/12 20:10:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -96,6 +96,7 @@
 #include "executor/nodeSort.h"
 #include "executor/nodeSubplan.h"
 #include "executor/nodeSubqueryscan.h"
+#include "executor/nodeFunctionscan.h"
 #include "executor/nodeUnique.h"
 #include "miscadmin.h"
 #include "tcop/tcopprot.h"
@@ -165,6 +166,11 @@ ExecInitNode(Plan *node, EState *estate, Plan *parent)
 
 		case T_SubqueryScan:
 			result = ExecInitSubqueryScan((SubqueryScan *) node, estate,
+										  parent);
+			break;
+
+		case T_FunctionScan:
+			result = ExecInitFunctionScan((FunctionScan *) node, estate,
 										  parent);
 			break;
 
@@ -297,6 +303,10 @@ ExecProcNode(Plan *node, Plan *parent)
 			result = ExecSubqueryScan((SubqueryScan *) node);
 			break;
 
+		case T_FunctionScan:
+			result = ExecFunctionScan((FunctionScan *) node);
+			break;
+
 			/*
 			 * join nodes
 			 */
@@ -391,6 +401,9 @@ ExecCountSlotsNode(Plan *node)
 
 		case T_SubqueryScan:
 			return ExecCountSlotsSubqueryScan((SubqueryScan *) node);
+
+		case T_FunctionScan:
+			return ExecCountSlotsFunctionScan((FunctionScan *) node);
 
 			/*
 			 * join nodes
@@ -501,6 +514,10 @@ ExecEndNode(Plan *node, Plan *parent)
 
 		case T_SubqueryScan:
 			ExecEndSubqueryScan((SubqueryScan *) node);
+			break;
+
+		case T_FunctionScan:
+			ExecEndFunctionScan((FunctionScan *) node);
 			break;
 
 			/*
@@ -635,6 +652,14 @@ ExecGetTupType(Plan *node)
 		case T_SubqueryScan:
 			{
 				CommonScanState *scanstate = ((SubqueryScan *) node)->scan.scanstate;
+
+				slot = scanstate->cstate.cs_ResultTupleSlot;
+			}
+			break;
+
+		case T_FunctionScan:
+			{
+				CommonScanState *scanstate = ((FunctionScan *) node)->scan.scanstate;
 
 				slot = scanstate->cstate.cs_ResultTupleSlot;
 			}

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/clausesel.c,v 1.49 2002/03/06 06:09:50 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/clausesel.c,v 1.50 2002/05/12 20:10:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -381,7 +381,7 @@ clause_selectivity(Query *root,
 		{
 			RangeTblEntry *rte = rt_fetch(var->varno, root->rtable);
 
-			if (rte->subquery)
+			if (rte->rtekind == RTE_SUBQUERY)
 			{
 				/*
 				 * XXX not smart about subquery references... any way to

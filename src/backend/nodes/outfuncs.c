@@ -5,7 +5,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.157 2002/04/28 19:54:28 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.158 2002/05/12 20:10:03 tgl Exp $
  *
  * NOTES
  *	  Every (plan) node in POSTGRES has an associated "out" routine which
@@ -552,6 +552,18 @@ _outSubqueryScan(StringInfo str, SubqueryScan *node)
 }
 
 /*
+ *	FunctionScan is a subclass of Scan
+ */
+static void
+_outFunctionScan(StringInfo str, FunctionScan *node)
+{
+	appendStringInfo(str, " FUNCTIONSCAN ");
+	_outPlanInfo(str, (Plan *) node);
+
+	appendStringInfo(str, " :scanrelid %u ", node->scan.scanrelid);
+}
+
+/*
  *	Material is a subclass of Plan
  */
 static void
@@ -979,6 +991,10 @@ _outRangeTblEntry(StringInfo str, RangeTblEntry *node)
 		case RTE_SUBQUERY:
 			appendStringInfo(str, ":subquery ");
 			_outNode(str, node->subquery);
+			break;
+		case RTE_FUNCTION:
+			appendStringInfo(str, ":funcexpr ");
+			_outNode(str, node->funcexpr);
 			break;
 		case RTE_JOIN:
 			appendStringInfo(str, ":jointype %d :joinaliasvars ",
@@ -1597,6 +1613,9 @@ _outNode(StringInfo str, void *obj)
 				break;
 			case T_SubqueryScan:
 				_outSubqueryScan(str, obj);
+				break;
+			case T_FunctionScan:
+				_outFunctionScan(str, obj);
 				break;
 			case T_Material:
 				_outMaterial(str, obj);

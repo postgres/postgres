@@ -42,7 +42,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/costsize.c,v 1.83 2002/03/12 00:51:42 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/costsize.c,v 1.84 2002/05/12 20:10:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -111,7 +111,7 @@ cost_seqscan(Path *path, Query *root,
 
 	/* Should only be applied to base relations */
 	Assert(length(baserel->relids) == 1);
-	Assert(!baserel->issubquery);
+	Assert(baserel->rtekind == RTE_RELATION);
 
 	if (!enable_seqscan)
 		startup_cost += disable_cost;
@@ -224,9 +224,10 @@ cost_index(Path *path, Query *root,
 				b;
 
 	/* Should only be applied to base relations */
-	Assert(IsA(baserel, RelOptInfo) &&IsA(index, IndexOptInfo));
+	Assert(IsA(baserel, RelOptInfo) &&
+		   IsA(index, IndexOptInfo));
 	Assert(length(baserel->relids) == 1);
-	Assert(!baserel->issubquery);
+	Assert(baserel->rtekind == RTE_RELATION);
 
 	if (!enable_indexscan && !is_injoin)
 		startup_cost += disable_cost;
@@ -372,6 +373,10 @@ cost_tidscan(Path *path, Query *root,
 	Cost		cpu_per_tuple;
 	int			ntuples = length(tideval);
 
+	/* Should only be applied to base relations */
+	Assert(length(baserel->relids) == 1);
+	Assert(baserel->rtekind == RTE_RELATION);
+
 	if (!enable_tidscan)
 		startup_cost += disable_cost;
 
@@ -381,6 +386,36 @@ cost_tidscan(Path *path, Query *root,
 	/* CPU costs */
 	cpu_per_tuple = cpu_tuple_cost + baserel->baserestrictcost;
 	run_cost += cpu_per_tuple * ntuples;
+
+	path->startup_cost = startup_cost;
+	path->total_cost = startup_cost + run_cost;
+}
+
+/*
+ * cost_functionscan
+ *	  Determines and returns the cost of scanning a function RTE.
+ */
+void
+cost_functionscan(Path *path, Query *root, RelOptInfo *baserel)
+{
+	Cost		startup_cost = 0;
+	Cost		run_cost = 0;
+	Cost		cpu_per_tuple;
+
+	/* Should only be applied to base relations that are functions */
+	Assert(length(baserel->relids) == 1);
+	Assert(baserel->rtekind == RTE_FUNCTION);
+
+	/*
+	 * For now, estimate function's cost at one operator eval per function
+	 * call.  Someday we should revive the function cost estimate columns in
+	 * pg_proc...
+	 */
+	cpu_per_tuple = cpu_operator_cost;
+
+	/* Add scanning CPU costs */
+	cpu_per_tuple += cpu_tuple_cost + baserel->baserestrictcost;
+	run_cost += cpu_per_tuple * baserel->tuples;
 
 	path->startup_cost = startup_cost;
 	path->total_cost = startup_cost + run_cost;
@@ -1297,6 +1332,54 @@ set_joinrel_size_estimates(Query *root, RelOptInfo *rel,
 	 */
 	rel->width = outer_rel->width + inner_rel->width;
 }
+
+/*
+ * set_function_size_estimates
+ *		Set the size estimates for a base relation that is a function call.
+ *
+ * The rel's targetlist and restrictinfo list must have been constructed
+ * already.
+ *
+ * We set the following fields of the rel node:
+ *	rows: the estimated number of output tuples (after applying
+ *		  restriction clauses).
+ *	width: the estimated average output tuple width in bytes.
+ *	baserestrictcost: estimated cost of evaluating baserestrictinfo clauses.
+ */
+void
+set_function_size_estimates(Query *root, RelOptInfo *rel)
+{
+	/* Should only be applied to base relations that are functions */
+	Assert(length(rel->relids) == 1);
+	Assert(rel->rtekind == RTE_FUNCTION);
+
+	/*
+	 * Estimate number of rows the function itself will return.
+	 *
+	 * XXX no idea how to do this yet; but should at least check whether
+	 * function returns set or not...
+	 */
+	rel->tuples = 1000;
+
+	/* Now estimate number of output rows */
+	rel->rows = rel->tuples *
+		restrictlist_selectivity(root,
+								 rel->baserestrictinfo,
+								 lfirsti(rel->relids));
+
+	/*
+	 * Force estimate to be at least one row, to make explain output look
+	 * better and to avoid possible divide-by-zero when interpolating
+	 * cost.
+	 */
+	if (rel->rows < 1.0)
+		rel->rows = 1.0;
+
+	rel->baserestrictcost = cost_qual_eval(rel->baserestrictinfo);
+
+	set_rel_width(root, rel);
+}
+
 
 /*
  * set_rel_width

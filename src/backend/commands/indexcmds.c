@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.72 2002/04/27 03:45:01 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.73 2002/05/12 20:10:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -452,7 +452,8 @@ GetAttrOpClass(IndexElem *attribute, Oid attrType,
 				elog(ERROR, "Cross-database references are not implemented");
 			break;
 		default:
-			elog(ERROR, "Improper opclass name (too many dotted names)");
+			elog(ERROR, "Improper opclass name (too many dotted names): %s",
+				 NameListToString(attribute->opclass));
 			break;
 	}
 

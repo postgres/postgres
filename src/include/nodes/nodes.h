@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nodes.h,v 1.105 2002/04/18 20:01:11 tgl Exp $
+ * $Id: nodes.h,v 1.106 2002/05/12 20:10:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -49,6 +49,7 @@ typedef enum NodeTag
 	T_SubPlan,
 	T_TidScan,
 	T_SubqueryScan,
+	T_FunctionScan,
 
 	/*
 	 * TAGS FOR PRIMITIVE NODES (primnodes.h)
@@ -120,6 +121,7 @@ typedef enum NodeTag
 	T_SubqueryScanState,
 	T_SetOpState,
 	T_LimitState,
+	T_FunctionScanState,
 
 	/*
 	 * TAGS FOR MEMORY NODES (memnodes.h)
@@ -212,6 +214,7 @@ typedef enum NodeTag
 	T_Alias,
 	T_RangeVar,
 	T_RangeSubselect,
+	T_RangeFunction,
 	T_TypeName,
 	T_IndexElem,
 	T_ColumnDef,

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.90 2002/04/28 19:54:28 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.91 2002/05/12 20:10:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,6 +17,7 @@
 
 #include "access/heapam.h"
 #include "nodes/makefuncs.h"
+#include "optimizer/clauses.h"
 #include "optimizer/tlist.h"
 #include "optimizer/var.h"
 #include "parser/analyze.h"
@@ -49,6 +50,8 @@ static Node *transformJoinOnClause(ParseState *pstate, JoinExpr *j,
 static RangeTblRef *transformTableEntry(ParseState *pstate, RangeVar *r);
 static RangeTblRef *transformRangeSubselect(ParseState *pstate,
 						RangeSubselect *r);
+static RangeTblRef *transformRangeFunction(ParseState *pstate,
+										   RangeFunction *r);
 static Node *transformFromClauseItem(ParseState *pstate, Node *n,
 						List **containedRels);
 static Node *buildMergedJoinVar(JoinType jointype,
@@ -82,9 +85,9 @@ transformFromClause(ParseState *pstate, List *frmList)
 
 	/*
 	 * The grammar will have produced a list of RangeVars,
-	 * RangeSubselects, and/or JoinExprs. Transform each one (possibly
-	 * adding entries to the rtable), check for duplicate refnames, and
-	 * then add it to the joinlist and namespace.
+	 * RangeSubselects, RangeFunctions, and/or JoinExprs. Transform each one
+	 * (possibly adding entries to the rtable), check for duplicate refnames,
+	 * and then add it to the joinlist and namespace.
 	 */
 	foreach(fl, frmList)
 	{
@@ -454,6 +457,71 @@ transformRangeSubselect(ParseState *pstate, RangeSubselect *r)
 
 
 /*
+ * transformRangeFunction --- transform a function call appearing in FROM
+ */
+static RangeTblRef *
+transformRangeFunction(ParseState *pstate, RangeFunction *r)
+{
+	Node	   *funcexpr;
+	char	   *funcname;
+	RangeTblEntry *rte;
+	RangeTblRef *rtr;
+
+	/*
+	 * Transform the raw FuncCall node
+	 */
+	funcexpr = transformExpr(pstate, r->funccallnode);
+
+	Assert(IsA(r->funccallnode, FuncCall));
+	funcname = strVal(llast(((FuncCall *) r->funccallnode)->funcname));
+
+	/*
+	 * Disallow aggregate functions and subselects in the expression.
+	 * (Aggregates clearly make no sense; perhaps later we could support
+	 * subselects, though.)
+	 */
+	if (contain_agg_clause(funcexpr))
+		elog(ERROR, "cannot use aggregate function in FROM function expression");
+	if (contain_subplans(funcexpr))
+		elog(ERROR, "cannot use subselect in FROM function expression");
+
+	/*
+	 * Remove any Iter nodes added by parse_func.c.  We oughta get rid of
+	 * Iter completely ...
+	 */
+	while (funcexpr && IsA(funcexpr, Iter))
+		funcexpr = ((Iter *) funcexpr)->iterexpr;
+
+	/*
+	 * Insist we now have a bare function call (explain.c is the only place
+	 * that depends on this, I think).  If this fails, it's probably because
+	 * transformExpr interpreted the function notation as a type coercion.
+	 */
+	if (!funcexpr ||
+		!IsA(funcexpr, Expr) ||
+		((Expr *) funcexpr)->opType != FUNC_EXPR)
+		elog(ERROR, "Coercion function not allowed in FROM clause");
+
+	/*
+	 * OK, build an RTE for the function.
+	 */
+	rte = addRangeTableEntryForFunction(pstate, funcname, funcexpr,
+										r->alias, true);
+
+	/*
+	 * We create a RangeTblRef, but we do not add it to the joinlist or
+	 * namespace; our caller must do that if appropriate.
+	 */
+	rtr = makeNode(RangeTblRef);
+	/* assume new rte is at end */
+	rtr->rtindex = length(pstate->p_rtable);
+	Assert(rte == rt_fetch(rtr->rtindex, pstate->p_rtable));
+
+	return rtr;
+}
+
+
+/*
  * transformFromClauseItem -
  *	  Transform a FROM-clause item, adding any required entries to the
  *	  range table list being built in the ParseState, and return the
@@ -483,6 +551,15 @@ transformFromClauseItem(ParseState *pstate, Node *n, List **containedRels)
 		RangeTblRef *rtr;
 
 		rtr = transformRangeSubselect(pstate, (RangeSubselect *) n);
+		*containedRels = makeListi1(rtr->rtindex);
+		return (Node *) rtr;
+	}
+	else if (IsA(n, RangeFunction))
+	{
+		/* function is like a plain relation */
+		RangeTblRef *rtr;
+
+		rtr = transformRangeFunction(pstate, (RangeFunction *) n);
 		*containedRels = makeListi1(rtr->rtindex);
 		return (Node *) rtr;
 	}

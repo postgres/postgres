@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/setrefs.c,v 1.75 2002/04/28 19:54:28 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/setrefs.c,v 1.76 2002/05/12 20:10:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -119,6 +119,10 @@ set_plan_references(Query *root, Plan *plan)
 			fix_expr_references(plan, (Node *) plan->qual);
 			/* Recurse into subplan too */
 			set_plan_references(root, ((SubqueryScan *) plan)->subplan);
+			break;
+		case T_FunctionScan:
+			fix_expr_references(plan, (Node *) plan->targetlist);
+			fix_expr_references(plan, (Node *) plan->qual);
 			break;
 		case T_NestLoop:
 			set_join_references(root, (Join *) plan);

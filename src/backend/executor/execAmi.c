@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: execAmi.c,v 1.62 2002/03/02 21:39:24 momjian Exp $
+ *	$Id: execAmi.c,v 1.63 2002/05/12 20:10:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,6 +35,7 @@
 #include "executor/nodeSort.h"
 #include "executor/nodeSubplan.h"
 #include "executor/nodeSubqueryscan.h"
+#include "executor/nodeFunctionscan.h"
 #include "executor/nodeUnique.h"
 
 
@@ -98,6 +99,10 @@ ExecReScan(Plan *node, ExprContext *exprCtxt, Plan *parent)
 
 		case T_SubqueryScan:
 			ExecSubqueryReScan((SubqueryScan *) node, exprCtxt, parent);
+			break;
+
+		case T_FunctionScan:
+			ExecFunctionReScan((FunctionScan *) node, exprCtxt, parent);
 			break;
 
 		case T_Material:
@@ -187,6 +192,10 @@ ExecMarkPos(Plan *node)
 			ExecIndexMarkPos((IndexScan *) node);
 			break;
 
+		case T_FunctionScan:
+			ExecFunctionMarkPos((FunctionScan *) node);
+			break;
+
 		case T_Material:
 			ExecMaterialMarkPos((Material *) node);
 			break;
@@ -227,6 +236,10 @@ ExecRestrPos(Plan *node)
 
 		case T_IndexScan:
 			ExecIndexRestrPos((IndexScan *) node);
+			break;
+
+		case T_FunctionScan:
+			ExecFunctionRestrPos((FunctionScan *) node);
 			break;
 
 		case T_Material:

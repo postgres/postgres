@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.233 2002/04/28 19:54:28 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.234 2002/05/12 20:10:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2679,7 +2679,7 @@ transformForUpdate(Query *qry, List *forUpdate)
 			RangeTblEntry *rte = (RangeTblEntry *) lfirst(rt);
 
 			++i;
-			if (rte->subquery)
+			if (rte->rtekind == RTE_SUBQUERY)
 			{
 				/* FOR UPDATE of subquery is propagated to subquery's rels */
 				transformForUpdate(rte->subquery, makeList1(NULL));
@@ -2707,7 +2707,7 @@ transformForUpdate(Query *qry, List *forUpdate)
 				++i;
 				if (strcmp(rte->eref->aliasname, relname) == 0)
 				{
-					if (rte->subquery)
+					if (rte->rtekind == RTE_SUBQUERY)
 					{
 						/* propagate to subquery */
 						transformForUpdate(rte->subquery, makeList1(NULL));

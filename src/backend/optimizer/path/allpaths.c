@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/allpaths.c,v 1.83 2001/12/10 22:54:12 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/allpaths.c,v 1.84 2002/05/12 20:10:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,6 +42,8 @@ static void set_inherited_rel_pathlist(Query *root, RelOptInfo *rel,
 						   List *inheritlist);
 static void set_subquery_pathlist(Query *root, RelOptInfo *rel,
 					  Index rti, RangeTblEntry *rte);
+static void set_function_pathlist(Query *root, RelOptInfo *rel,
+						RangeTblEntry *rte);
 static RelOptInfo *make_one_rel_by_joins(Query *root, int levels_needed,
 					  List *initial_rels);
 
@@ -98,10 +100,15 @@ set_base_rel_pathlists(Query *root)
 		rti = lfirsti(rel->relids);
 		rte = rt_fetch(rti, root->rtable);
 
-		if (rel->issubquery)
+		if (rel->rtekind == RTE_SUBQUERY)
 		{
 			/* Subquery --- generate a separate plan for it */
 			set_subquery_pathlist(root, rel, rti, rte);
+		}
+		else if (rel->rtekind == RTE_FUNCTION)
+		{
+			/* RangeFunction --- generate a separate plan for it */
+			set_function_pathlist(root, rel, rte);
 		}
 		else if ((inheritlist = expand_inherted_rtentry(root, rti, true))
 				 != NIL)
@@ -380,6 +387,23 @@ set_subquery_pathlist(Query *root, RelOptInfo *rel,
 
 	/* Generate appropriate path */
 	add_path(rel, create_subqueryscan_path(rel));
+
+	/* Select cheapest path (pretty easy in this case...) */
+	set_cheapest(rel);
+}
+
+/*
+ * set_function_pathlist
+ *		Build the (single) access path for a function RTE
+ */
+static void
+set_function_pathlist(Query *root, RelOptInfo *rel, RangeTblEntry *rte)
+{
+	/* Mark rel with estimated output rows, width, etc */
+	set_function_size_estimates(root, rel);
+
+	/* Generate appropriate path */
+	add_path(rel, create_functionscan_path(root, rel));
 
 	/* Select cheapest path (pretty easy in this case...) */
 	set_cheapest(rel);

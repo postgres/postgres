@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execUtils.c,v 1.80 2002/04/12 20:38:26 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execUtils.c,v 1.81 2002/05/12 20:10:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,6 +19,9 @@
  *		ExecOpenIndices			\
  *		ExecCloseIndices		 | referenced by InitPlan, EndPlan,
  *		ExecInsertIndexTuples	/  ExecAppend, ExecReplace
+ *
+ *		RegisterExprContextCallback    Register function shutdown callback
+ *		UnregisterExprContextCallback  Deregister function shutdown callback
  *
  *	 NOTES
  *		This file has traditionally been the place to stick misc.
@@ -57,6 +60,9 @@ int			NIndexTupleInserted;
 extern int	NIndexTupleProcessed;		/* have to be defined in the
 										 * access method level so that the
 										 * cinterface.a will link ok. */
+
+
+static void ShutdownExprContext(ExprContext *econtext);
 
 /* ----------------------------------------------------------------
  *						statistic functions
@@ -120,8 +126,6 @@ DisplayTupleCount(FILE *statfp)
 
 /* ----------------------------------------------------------------
  *				 miscellaneous node-init support functions
- *
- *		ExecAssignExprContext	- assigns the node's expression context
  * ----------------------------------------------------------------
  */
 
@@ -160,6 +164,7 @@ ExecAssignExprContext(EState *estate, CommonState *commonstate)
 	econtext->ecxt_param_list_info = estate->es_param_list_info;
 	econtext->ecxt_aggvalues = NULL;
 	econtext->ecxt_aggnulls = NULL;
+	econtext->ecxt_callbacks = NULL;
 
 	commonstate->cs_ExprContext = econtext;
 }
@@ -204,6 +209,7 @@ MakeExprContext(TupleTableSlot *slot,
 	econtext->ecxt_param_list_info = NULL;
 	econtext->ecxt_aggvalues = NULL;
 	econtext->ecxt_aggnulls = NULL;
+	econtext->ecxt_callbacks = NULL;
 
 	return econtext;
 }
@@ -216,6 +222,9 @@ MakeExprContext(TupleTableSlot *slot,
 void
 FreeExprContext(ExprContext *econtext)
 {
+	/* Call any registered callbacks */
+	ShutdownExprContext(econtext);
+	/* And clean up the memory used */
 	MemoryContextDelete(econtext->ecxt_per_tuple_memory);
 	pfree(econtext);
 }
@@ -368,6 +377,11 @@ ExecFreeExprContext(CommonState *commonstate)
 	econtext = commonstate->cs_ExprContext;
 	if (econtext == NULL)
 		return;
+
+	/*
+	 * clean up any registered callbacks
+	 */
+	ShutdownExprContext(econtext);
 
 	/*
 	 * clean up memory used.
@@ -687,5 +701,87 @@ SetChangedParamList(Plan *node, List *newchg)
 			continue;
 		/* else - add this param to the list */
 		node->chgParam = lappendi(node->chgParam, paramId);
+	}
+}
+
+/*
+ * Register a shutdown callback in an ExprContext.
+ *
+ * Shutdown callbacks will be called (in reverse order of registration)
+ * when the ExprContext is deleted or rescanned.  This provides a hook
+ * for functions called in the context to do any cleanup needed --- it's
+ * particularly useful for functions returning sets.  Note that the
+ * callback will *not* be called in the event that execution is aborted
+ * by an error.
+ */
+void
+RegisterExprContextCallback(ExprContext *econtext,
+							ExprContextCallbackFunction function,
+							Datum arg)
+{
+	ExprContext_CB   *ecxt_callback;
+
+	/* Save the info in appropriate memory context */
+	ecxt_callback = (ExprContext_CB *)
+		MemoryContextAlloc(econtext->ecxt_per_query_memory,
+						   sizeof(ExprContext_CB));
+
+	ecxt_callback->function = function;
+	ecxt_callback->arg = arg;
+
+	/* link to front of list for appropriate execution order */
+	ecxt_callback->next = econtext->ecxt_callbacks;
+	econtext->ecxt_callbacks = ecxt_callback;
+}
+
+/*
+ * Deregister a shutdown callback in an ExprContext.
+ *
+ * Any list entries matching the function and arg will be removed.
+ * This can be used if it's no longer necessary to call the callback.
+ */
+void
+UnregisterExprContextCallback(ExprContext *econtext,
+							  ExprContextCallbackFunction function,
+							  Datum arg)
+{
+	ExprContext_CB   **prev_callback;
+	ExprContext_CB   *ecxt_callback;
+
+	prev_callback = &econtext->ecxt_callbacks;
+
+	while ((ecxt_callback = *prev_callback) != NULL)
+	{
+		if (ecxt_callback->function == function && ecxt_callback->arg == arg)
+		{
+			*prev_callback = ecxt_callback->next;
+			pfree(ecxt_callback);
+		}
+		else
+		{
+			prev_callback = &ecxt_callback->next;
+		}
+	}
+}
+
+/*
+ * Call all the shutdown callbacks registered in an ExprContext.
+ *
+ * The callback list is emptied (important in case this is only a rescan
+ * reset, and not deletion of the ExprContext).
+ */
+static void
+ShutdownExprContext(ExprContext *econtext)
+{
+	ExprContext_CB   *ecxt_callback;
+
+	/*
+	 * Call each callback function in reverse registration order.
+	 */
+	while ((ecxt_callback = econtext->ecxt_callbacks) != NULL)
+	{
+		econtext->ecxt_callbacks = ecxt_callback->next;
+		(*ecxt_callback->function) (ecxt_callback->arg);
+		pfree(ecxt_callback);
 	}
 }

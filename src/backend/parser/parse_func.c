@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.127 2002/05/03 20:15:02 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.128 2002/05/12 20:10:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -181,26 +181,31 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 			 * sizeof(Pointer) to signal that the runtime representation
 			 * will be a pointer not an Oid.
 			 */
-			if (rte->rtekind != RTE_RELATION)
+			switch (rte->rtekind)
 			{
-				/*
-				 * RTE is a join or subselect; must fail for lack of a
-				 * named tuple type
-				 */
-				if (is_column)
-					elog(ERROR, "No such attribute %s.%s",
-						 refname, strVal(lfirst(funcname)));
-				else
-				{
-					elog(ERROR, "Cannot pass result of sub-select or join %s to a function",
-						 refname);
-				}
+				case RTE_RELATION:
+					toid = get_rel_type_id(rte->relid);
+					if (!OidIsValid(toid))
+						elog(ERROR, "Cannot find type OID for relation %u",
+							 rte->relid);
+					break;
+				case RTE_FUNCTION:
+					toid = exprType(rte->funcexpr);
+					break;
+				default:
+					/*
+					 * RTE is a join or subselect; must fail for lack of a
+					 * named tuple type
+					 */
+					if (is_column)
+						elog(ERROR, "No such attribute %s.%s",
+							 refname, strVal(lfirst(funcname)));
+					else
+						elog(ERROR, "Cannot pass result of sub-select or join %s to a function",
+							 refname);
+					toid = InvalidOid; /* keep compiler quiet */
+					break;
 			}
-
-			toid = get_rel_type_id(rte->relid);
-			if (!OidIsValid(toid))
-				elog(ERROR, "Cannot find type OID for relation %u",
-					 rte->relid);
 
 			/* replace RangeVar in the arg list */
 			lfirst(i) = makeVar(vnum,

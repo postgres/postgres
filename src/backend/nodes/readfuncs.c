@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.120 2002/04/28 19:54:28 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.121 2002/05/12 20:10:03 tgl Exp $
  *
  * NOTES
  *	  Most of the read functions for plan nodes are tested. (In fact, they
@@ -647,6 +647,24 @@ _readSubqueryScan(void)
 
 	token = pg_strtok(&length); /* eat :subplan */
 	local_node->subplan = nodeRead(true);		/* now read it */
+
+	return local_node;
+}
+
+/* ----------------
+ *		_readFunctionScan
+ *
+ *	FunctionScan is a subclass of Scan
+ * ----------------
+ */
+static FunctionScan *
+_readFunctionScan(void)
+{
+	FunctionScan *local_node;
+
+	local_node = makeNode(FunctionScan);
+
+	_getScan((Scan *) local_node);
 
 	return local_node;
 }
@@ -1514,6 +1532,11 @@ _readRangeTblEntry(void)
 			local_node->subquery = nodeRead(true);		/* now read it */
 			break;
 
+		case RTE_FUNCTION:
+			token = pg_strtok(&length); /* eat :funcexpr */
+			local_node->funcexpr = nodeRead(true);		/* now read it */
+			break;
+
 		case RTE_JOIN:
 			token = pg_strtok(&length); /* eat :jointype */
 			token = pg_strtok(&length); /* get jointype */
@@ -2031,6 +2054,8 @@ parsePlanString(void)
 		return_value = _readTidScan();
 	else if (length == 12 && strncmp(token, "SUBQUERYSCAN", length) == 0)
 		return_value = _readSubqueryScan();
+	else if (length == 12 && strncmp(token, "FUNCTIONSCAN", length) == 0)
+		return_value = _readFunctionScan();
 	else if (length == 4 && strncmp(token, "SORT", length) == 0)
 		return_value = _readSort();
 	else if (length == 6 && strncmp(token, "AGGREG", length) == 0)

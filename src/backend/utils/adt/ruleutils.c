@@ -3,7 +3,7 @@
  *				back to source text
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.102 2002/05/03 20:15:02 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.103 2002/05/12 20:10:04 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -705,25 +705,16 @@ deparse_context_for_plan(int outer_varno, Node *outercontext,
 }
 
 /*
- * deparse_context_for_relation		- Build deparse context for 1 relation
+ * deparse_context_for_rte		- Build deparse context for 1 relation
  *
  * Helper routine to build one of the inputs for deparse_context_for_plan.
- * Pass the reference name (alias) and OID of a relation.
  *
- * The returned node is actually a RangeTblEntry, but we declare it as just
- * Node to discourage callers from assuming anything.
+ * The returned node is actually the given RangeTblEntry, but we declare it
+ * as just Node to discourage callers from assuming anything.
  */
 Node *
-deparse_context_for_relation(const char *aliasname, Oid relid)
+deparse_context_for_rte(RangeTblEntry *rte)
 {
-	RangeTblEntry *rte = makeNode(RangeTblEntry);
-
-	rte->rtekind = RTE_RELATION;
-	rte->relid = relid;
-	rte->eref = makeAlias(aliasname, NIL);
-	rte->inh = false;
-	rte->inFromCl = true;
-
 	return (Node *) rte;
 }
 
@@ -2397,6 +2388,10 @@ get_from_clause_item(Node *jtnode, Query *query, deparse_context *context)
 				appendStringInfoChar(buf, '(');
 				get_query_def(rte->subquery, buf, context->namespaces);
 				appendStringInfoChar(buf, ')');
+				break;
+			case RTE_FUNCTION:
+				/* Function RTE */
+				get_rule_expr(rte->funcexpr, context);
 				break;
 			default:
 				elog(ERROR, "unexpected rte kind %d", (int) rte->rtekind);

@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.182 2002/04/28 19:54:28 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.183 2002/05/12 20:10:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -310,6 +310,23 @@ _copySubqueryScan(SubqueryScan *from)
 	return newnode;
 }
 
+/* ----------------
+ *		_copyFunctionScan
+ * ----------------
+ */
+static FunctionScan *
+_copyFunctionScan(FunctionScan *from)
+{
+	FunctionScan *newnode = makeNode(FunctionScan);
+
+	/*
+	 * copy node superclass fields
+	 */
+	CopyPlanFields((Plan *) from, (Plan *) newnode);
+	CopyScanFields((Scan *) from, (Scan *) newnode);
+
+	return newnode;
+}
 
 /* ----------------
  *		CopyJoinFields
@@ -1083,7 +1100,7 @@ _copyRelOptInfo(RelOptInfo *from)
 	Node_Copy(from, newnode, cheapest_total_path);
 	newnode->pruneable = from->pruneable;
 
-	newnode->issubquery = from->issubquery;
+	newnode->rtekind = from->rtekind;
 	Node_Copy(from, newnode, indexlist);
 	newnode->pages = from->pages;
 	newnode->tuples = from->tuples;
@@ -1473,6 +1490,7 @@ _copyRangeTblEntry(RangeTblEntry *from)
 	newnode->rtekind = from->rtekind;
 	newnode->relid = from->relid;
 	Node_Copy(from, newnode, subquery);
+	Node_Copy(from, newnode, funcexpr);
 	newnode->jointype = from->jointype;
 	Node_Copy(from, newnode, joinaliasvars);
 	Node_Copy(from, newnode, alias);
@@ -1685,6 +1703,17 @@ _copyRangeSubselect(RangeSubselect *from)
 	RangeSubselect *newnode = makeNode(RangeSubselect);
 
 	Node_Copy(from, newnode, subquery);
+	Node_Copy(from, newnode, alias);
+
+	return newnode;
+}
+
+static RangeFunction *
+_copyRangeFunction(RangeFunction *from)
+{
+	RangeFunction   *newnode = makeNode(RangeFunction);
+
+	Node_Copy(from, newnode, funccallnode);
 	Node_Copy(from, newnode, alias);
 
 	return newnode;
@@ -2621,6 +2650,9 @@ copyObject(void *from)
 		case T_SubqueryScan:
 			retval = _copySubqueryScan(from);
 			break;
+		case T_FunctionScan:
+			retval = _copyFunctionScan(from);
+			break;
 		case T_Join:
 			retval = _copyJoin(from);
 			break;
@@ -3000,6 +3032,9 @@ copyObject(void *from)
 			break;
 		case T_RangeSubselect:
 			retval = _copyRangeSubselect(from);
+			break;
+		case T_RangeFunction:
+			retval = _copyRangeFunction(from);
 			break;
 		case T_TypeName:
 			retval = _copyTypeName(from);

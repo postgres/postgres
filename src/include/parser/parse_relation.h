@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parse_relation.h,v 1.32 2002/04/28 19:54:29 tgl Exp $
+ * $Id: parse_relation.h,v 1.33 2002/05/12 20:10:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -41,6 +41,11 @@ extern RangeTblEntry *addRangeTableEntryForSubquery(ParseState *pstate,
 							  Query *subquery,
 							  Alias *alias,
 							  bool inFromCl);
+extern RangeTblEntry *addRangeTableEntryForFunction(ParseState *pstate,
+													char *funcname,
+													Node *funcexpr,
+													Alias *alias,
+													bool inFromCl);
 extern RangeTblEntry *addRangeTableEntryForJoin(ParseState *pstate,
 						  List *colnames,
 						  JoinType jointype,

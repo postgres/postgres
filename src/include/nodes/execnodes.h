@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: execnodes.h,v 1.67 2001/11/21 22:57:01 tgl Exp $
+ * $Id: execnodes.h,v 1.68 2002/05/12 20:10:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -53,6 +53,21 @@ typedef struct IndexInfo
 } IndexInfo;
 
 /* ----------------
+ *	  ExprContext_CB
+ *
+ *		List of callbacks to be called at ExprContext shutdown.
+ * ----------------
+ */
+typedef void (*ExprContextCallbackFunction) (Datum arg);
+
+typedef struct ExprContext_CB
+{
+	struct ExprContext_CB *next;
+	ExprContextCallbackFunction function;
+	Datum		arg;
+} ExprContext_CB;
+
+/* ----------------
  *	  ExprContext
  *
  *		This class holds the "current context" information
@@ -77,20 +92,27 @@ typedef struct IndexInfo
  */
 typedef struct ExprContext
 {
-	NodeTag		type;
+	NodeTag			type;
+
 	/* Tuples that Var nodes in expression may refer to */
 	TupleTableSlot *ecxt_scantuple;
 	TupleTableSlot *ecxt_innertuple;
 	TupleTableSlot *ecxt_outertuple;
+
 	/* Memory contexts for expression evaluation --- see notes above */
-	MemoryContext ecxt_per_query_memory;
-	MemoryContext ecxt_per_tuple_memory;
+	MemoryContext	ecxt_per_query_memory;
+	MemoryContext	ecxt_per_tuple_memory;
+
 	/* Values to substitute for Param nodes in expression */
-	ParamExecData *ecxt_param_exec_vals;		/* for PARAM_EXEC params */
-	ParamListInfo ecxt_param_list_info; /* for other param types */
+	ParamExecData  *ecxt_param_exec_vals;	/* for PARAM_EXEC params */
+	ParamListInfo	ecxt_param_list_info;	/* for other param types */
+
 	/* Values to substitute for Aggref nodes in expression */
-	Datum	   *ecxt_aggvalues; /* precomputed values for Aggref nodes */
-	bool	   *ecxt_aggnulls;	/* null flags for Aggref nodes */
+	Datum		   *ecxt_aggvalues;	/* precomputed values for Aggref nodes */
+	bool		   *ecxt_aggnulls;	/* null flags for Aggref nodes */
+
+	/* Functions to call back when ExprContext is shut down */
+	ExprContext_CB *ecxt_callbacks;
 } ExprContext;
 
 /*
@@ -107,7 +129,8 @@ typedef enum
  * When calling a function that might return a set (multiple rows),
  * a node of this type is passed as fcinfo->resultinfo to allow
  * return status to be passed back.  A function returning set should
- * raise an error if no such resultinfo is provided.
+ * raise an error if no such resultinfo is provided.  The ExprContext
+ * in which the function is being called is also made available.
  *
  * XXX this mechanism is a quick hack and probably needs to be redesigned.
  */
@@ -115,8 +138,8 @@ typedef struct ReturnSetInfo
 {
 	NodeTag		type;
 	ExprDoneCond isDone;
+	ExprContext *econtext;
 } ReturnSetInfo;
-
 
 /* ----------------
  *		ProjectionInfo node information
@@ -480,6 +503,36 @@ typedef struct SubqueryScanState
 	CommonScanState csstate;	/* its first field is NodeTag */
 	EState	   *sss_SubEState;
 } SubqueryScanState;
+
+/* ----------------
+ *	 FunctionScanState information
+ *
+ *		Function nodes are used to scan the results of a
+ *		function appearing in FROM (typically a function returning set).
+ *
+ *		functionmode			function operating mode:
+ *							- repeated call
+ *							- materialize
+ *							- return query
+ *		tuplestorestate		private state of tuplestore.c
+ * ----------------
+ */
+typedef enum FunctionMode
+{
+	PM_REPEATEDCALL,
+	PM_MATERIALIZE,
+	PM_QUERY
+} FunctionMode;
+
+typedef struct FunctionScanState
+{
+	CommonScanState csstate;	/* its first field is NodeTag */
+	FunctionMode	functionmode;
+	TupleDesc		tupdesc;
+	void		   *tuplestorestate;
+	Node		   *funcexpr;	/* function expression being evaluated */
+	bool			returnsTuple; /* does function return tuples? */
+} FunctionScanState;
 
 /* ----------------------------------------------------------------
  *				 Join State Information

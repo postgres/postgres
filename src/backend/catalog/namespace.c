@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/namespace.c,v 1.18 2002/05/05 00:03:28 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/namespace.c,v 1.19 2002/05/12 20:10:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -492,7 +492,8 @@ FuncnameGetCandidates(List *names, int nargs)
 				elog(ERROR, "Cross-database references are not implemented");
 			break;
 		default:
-			elog(ERROR, "Improper qualified name (too many dotted names)");
+			elog(ERROR, "Improper qualified name (too many dotted names): %s",
+				 NameListToString(names));
 			break;
 	}
 
@@ -746,7 +747,8 @@ OpernameGetCandidates(List *names, char oprkind)
 				elog(ERROR, "Cross-database references are not implemented");
 			break;
 		default:
-			elog(ERROR, "Improper qualified name (too many dotted names)");
+			elog(ERROR, "Improper qualified name (too many dotted names): %s",
+				 NameListToString(names));
 			break;
 	}
 
@@ -1199,7 +1201,8 @@ QualifiedNameGetCreationNamespace(List *names, char **objname_p)
 				elog(ERROR, "Cross-database references are not implemented");
 			break;
 		default:
-			elog(ERROR, "Improper qualified name (too many dotted names)");
+			elog(ERROR, "Improper qualified name (too many dotted names): %s",
+				 NameListToString(names));
 			break;
 	}
 

@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: primnodes.h,v 1.61 2002/04/11 20:00:15 tgl Exp $
+ * $Id: primnodes.h,v 1.62 2002/05/12 20:10:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -514,10 +514,11 @@ typedef struct RelabelType
  * rows.)  If all joins are inner joins then all the qual positions are
  * semantically interchangeable.
  *
- * NOTE: in the raw output of gram.y, a join tree contains RangeVar and
- * RangeSubselect nodes, which are both replaced by RangeTblRef nodes
- * during the parse analysis phase.  Also, the top-level FromExpr is added
- * during parse analysis; the grammar regards FROM and WHERE as separate.
+ * NOTE: in the raw output of gram.y, a join tree contains RangeVar,
+ * RangeSubselect, and RangeFunction nodes, which are all replaced by
+ * RangeTblRef nodes during the parse analysis phase.  Also, the top-level
+ * FromExpr is added during parse analysis; the grammar regards FROM and
+ * WHERE as separate.
  * ----------------------------------------------------------------
  */
 

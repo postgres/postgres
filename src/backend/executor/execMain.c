@@ -27,7 +27,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.160 2002/04/27 21:24:34 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.161 2002/05/12 20:10:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -311,7 +311,7 @@ ExecCheckPlanPerms(Plan *plan, List *rangeTable, CmdType operation)
 
 				/* Recursively check the subquery */
 				rte = rt_fetch(scan->scan.scanrelid, rangeTable);
-				Assert(rte->subquery != NULL);
+				Assert(rte->rtekind == RTE_SUBQUERY);
 				ExecCheckQueryPerms(operation, rte->subquery, scan->subplan);
 				break;
 			}
@@ -362,10 +362,12 @@ ExecCheckRTEPerms(RangeTblEntry *rte, CmdType operation)
 	Oid			userid;
 	AclResult	aclcheck_result;
 
-	/*
-	 * If it's a subquery RTE, ignore it --- it will be checked when
-	 * ExecCheckPlanPerms finds the SubqueryScan node for it.
-	 */
+  	/*
+	 * Only plain-relation RTEs need to be checked here.  Subquery RTEs
+	 * will be checked when ExecCheckPlanPerms finds the SubqueryScan node,
+	 * and function RTEs are checked by init_fcache when the function is
+	 * prepared for execution.  Join and special RTEs need no checks.
+  	 */
 	if (rte->rtekind != RTE_RELATION)
 		return;
 

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: executor.h,v 1.63 2002/02/27 19:35:59 tgl Exp $
+ * $Id: executor.h,v 1.64 2002/05/12 20:10:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -171,5 +171,12 @@ extern void ExecOpenIndices(ResultRelInfo *resultRelInfo);
 extern void ExecCloseIndices(ResultRelInfo *resultRelInfo);
 extern void ExecInsertIndexTuples(TupleTableSlot *slot, ItemPointer tupleid,
 					  EState *estate, bool is_update);
+
+extern void RegisterExprContextCallback(ExprContext *econtext,
+										ExprContextCallbackFunction function,
+										Datum arg);
+extern void UnregisterExprContextCallback(ExprContext *econtext,
+										  ExprContextCallbackFunction function,
+										  Datum arg);
 
 #endif   /* EXECUTOR_H  */

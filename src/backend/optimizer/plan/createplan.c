@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.113 2002/04/28 19:54:28 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.114 2002/05/12 20:10:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,6 +42,8 @@ static IndexScan *create_indexscan_plan(Query *root, IndexPath *best_path,
 static TidScan *create_tidscan_plan(TidPath *best_path, List *tlist,
 					List *scan_clauses);
 static SubqueryScan *create_subqueryscan_plan(Path *best_path,
+						 List *tlist, List *scan_clauses);
+static FunctionScan *create_functionscan_plan(Path *best_path,
 						 List *tlist, List *scan_clauses);
 static NestLoop *create_nestloop_plan(Query *root,
 					 NestPath *best_path, List *tlist,
@@ -77,6 +79,8 @@ static IndexScan *make_indexscan(List *qptlist, List *qpqual, Index scanrelid,
 			   ScanDirection indexscandir);
 static TidScan *make_tidscan(List *qptlist, List *qpqual, Index scanrelid,
 			 List *tideval);
+static FunctionScan *make_functionscan(List *qptlist, List *qpqual,
+									   Index scanrelid);
 static NestLoop *make_nestloop(List *tlist,
 			  List *joinclauses, List *otherclauses,
 			  Plan *lefttree, Plan *righttree,
@@ -119,6 +123,7 @@ create_plan(Query *root, Path *best_path)
 		case T_SeqScan:
 		case T_TidScan:
 		case T_SubqueryScan:
+		case T_FunctionScan:
 			plan = (Plan *) create_scan_plan(root, best_path);
 			break;
 		case T_HashJoin:
@@ -198,6 +203,12 @@ create_scan_plan(Query *root, Path *best_path)
 			plan = (Scan *) create_subqueryscan_plan(best_path,
 													 tlist,
 													 scan_clauses);
+			break;
+
+		case T_FunctionScan:
+			plan = (Scan *) create_functionscan_plan(best_path,
+												tlist,
+												scan_clauses);
 			break;
 
 		default:
@@ -353,7 +364,7 @@ create_seqscan_plan(Path *best_path, List *tlist, List *scan_clauses)
 
 	/* there should be exactly one base rel involved... */
 	Assert(length(best_path->parent->relids) == 1);
-	Assert(!best_path->parent->issubquery);
+	Assert(best_path->parent->rtekind == RTE_RELATION);
 
 	scan_relid = (Index) lfirsti(best_path->parent->relids);
 
@@ -397,7 +408,7 @@ create_indexscan_plan(Query *root,
 
 	/* there should be exactly one base rel involved... */
 	Assert(length(best_path->path.parent->relids) == 1);
-	Assert(!best_path->path.parent->issubquery);
+	Assert(best_path->path.parent->rtekind == RTE_RELATION);
 
 	baserelid = lfirsti(best_path->path.parent->relids);
 
@@ -515,7 +526,7 @@ create_tidscan_plan(TidPath *best_path, List *tlist, List *scan_clauses)
 
 	/* there should be exactly one base rel involved... */
 	Assert(length(best_path->path.parent->relids) == 1);
-	Assert(!best_path->path.parent->issubquery);
+	Assert(best_path->path.parent->rtekind == RTE_RELATION);
 
 	scan_relid = (Index) lfirsti(best_path->path.parent->relids);
 
@@ -546,7 +557,7 @@ create_subqueryscan_plan(Path *best_path, List *tlist, List *scan_clauses)
 	/* there should be exactly one base rel involved... */
 	Assert(length(best_path->parent->relids) == 1);
 	/* and it must be a subquery */
-	Assert(best_path->parent->issubquery);
+	Assert(best_path->parent->rtekind == RTE_SUBQUERY);
 
 	scan_relid = (Index) lfirsti(best_path->parent->relids);
 
@@ -554,6 +565,31 @@ create_subqueryscan_plan(Path *best_path, List *tlist, List *scan_clauses)
 								  scan_clauses,
 								  scan_relid,
 								  best_path->parent->subplan);
+
+	return scan_plan;
+}
+
+/*
+ * create_functionscan_plan
+ *	 Returns a functionscan plan for the base relation scanned by 'best_path'
+ *	 with restriction clauses 'scan_clauses' and targetlist 'tlist'.
+ */
+static FunctionScan *
+create_functionscan_plan(Path *best_path, List *tlist, List *scan_clauses)
+{
+	FunctionScan *scan_plan;
+	Index		scan_relid;
+
+	/* there should be exactly one base rel involved... */
+	Assert(length(best_path->parent->relids) == 1);
+	/* and it must be a function */
+	Assert(best_path->parent->rtekind == RTE_FUNCTION);
+
+	scan_relid = (Index) lfirsti(best_path->parent->relids);
+
+	scan_plan = make_functionscan(tlist, scan_clauses, scan_relid);
+
+	copy_path_costsize(&scan_plan->scan.plan, best_path);
 
 	return scan_plan;
 }
@@ -791,6 +827,7 @@ create_mergejoin_plan(Query *root,
 	{
 		case T_SeqScan:
 		case T_IndexScan:
+		case T_FunctionScan:
 		case T_Material:
 		case T_Sort:
 			/* OK, these inner plans support mark/restore */
@@ -1300,6 +1337,26 @@ make_subqueryscan(List *qptlist,
 	plan->righttree = NULL;
 	node->scan.scanrelid = scanrelid;
 	node->subplan = subplan;
+	node->scan.scanstate = (CommonScanState *) NULL;
+
+	return node;
+}
+
+static FunctionScan *
+make_functionscan(List *qptlist,
+				  List *qpqual,
+				  Index scanrelid)
+{
+	FunctionScan   *node = makeNode(FunctionScan);
+	Plan		   *plan = &node->scan.plan;
+
+	/* cost should be inserted by caller */
+	plan->state = (EState *) NULL;
+	plan->targetlist = qptlist;
+	plan->qual = qpqual;
+	plan->lefttree = NULL;
+	plan->righttree = NULL;
+	node->scan.scanrelid = scanrelid;
 	node->scan.scanstate = (CommonScanState *) NULL;
 
 	return node;

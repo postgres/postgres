@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_relation.c,v 1.68 2002/04/28 19:54:28 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_relation.c,v 1.69 2002/05/12 20:10:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -673,6 +673,117 @@ addRangeTableEntryForSubquery(ParseState *pstate,
 }
 
 /*
+ * Add an entry for a function to the pstate's range table (p_rtable).
+ *
+ * This is just like addRangeTableEntry() except that it makes a function RTE.
+ */
+RangeTblEntry *
+addRangeTableEntryForFunction(ParseState *pstate,
+							  char *funcname,
+							  Node *funcexpr,
+							  Alias *alias,
+							  bool inFromCl)
+{
+	RangeTblEntry *rte = makeNode(RangeTblEntry);
+	Oid			funcrettype = exprType(funcexpr);
+	Oid			funcrelid;
+	Alias	   *eref;
+	int			numaliases;
+	int			varattno;
+
+	rte->rtekind = RTE_FUNCTION;
+	rte->relid = InvalidOid;
+	rte->subquery = NULL;
+	rte->funcexpr = funcexpr;
+	rte->alias = alias;
+
+	eref = alias ? (Alias *) copyObject(alias) : makeAlias(funcname, NIL);
+	rte->eref = eref;
+
+	numaliases = length(eref->colnames);
+
+	/*
+	 * Now determine if the function returns a simple or composite type,
+	 * and check/add column aliases.
+	 */
+	funcrelid = typeidTypeRelid(funcrettype);
+
+	if (OidIsValid(funcrelid))
+	{
+		/*
+		 * Composite data type, i.e. a table's row type
+		 *
+		 * Get the rel's relcache entry.  This access ensures that we have an
+		 * up-to-date relcache entry for the rel.
+		 */
+		Relation	rel;
+		int			maxattrs;
+
+		rel = heap_open(funcrelid, AccessShareLock);
+
+		/*
+		 * Since the rel is open anyway, let's check that the number of column
+		 * aliases is reasonable.
+		 */
+		maxattrs = RelationGetNumberOfAttributes(rel);
+		if (maxattrs < numaliases)
+			elog(ERROR, "Table \"%s\" has %d columns available but %d columns specified",
+				 RelationGetRelationName(rel), maxattrs, numaliases);
+
+		/* fill in alias columns using actual column names */
+		for (varattno = numaliases; varattno < maxattrs; varattno++)
+		{
+			char	   *attrname;
+
+			attrname = pstrdup(NameStr(rel->rd_att->attrs[varattno]->attname));
+			eref->colnames = lappend(eref->colnames, makeString(attrname));
+		}
+
+		/*
+		 * Drop the rel refcount, but keep the access lock till end of
+		 * transaction so that the table can't be deleted or have its schema
+		 * modified underneath us.
+		 */
+		heap_close(rel, NoLock);
+	}
+	else
+	{
+		/*
+		 * Must be a base data type, i.e. scalar.
+		 * Just add one alias column named for the function.
+		 */
+		if (numaliases > 1)
+			elog(ERROR, "Too many column aliases specified for function %s",
+				 funcname);
+		if (numaliases == 0)
+			eref->colnames = makeList1(makeString(funcname));
+	}
+
+	/*----------
+	 * Flags:
+	 * - this RTE should be expanded to include descendant tables,
+	 * - this RTE is in the FROM clause,
+	 * - this RTE should be checked for read/write access rights.
+	 *----------
+	 */
+	rte->inh = false;			/* never true for functions */
+	rte->inFromCl = inFromCl;
+	rte->checkForRead = true;
+	rte->checkForWrite = false;
+
+	rte->checkAsUser = InvalidOid;
+
+	/*
+	 * Add completed RTE to pstate's range table list, but not to join
+	 * list nor namespace --- caller must do that if appropriate.
+	 */
+	if (pstate != NULL)
+		pstate->p_rtable = lappend(pstate->p_rtable, rte);
+
+	return rte;
+}
+
+/*
  * Add an entry for a join to the pstate's range table (p_rtable).
  *
  * This is much like addRangeTableEntry() except that it makes a join RTE.
@@ -834,124 +945,201 @@ expandRTE(ParseState *pstate, RangeTblEntry *rte,
 	/* Need the RT index of the entry for creating Vars */
 	rtindex = RTERangeTablePosn(pstate, rte, &sublevels_up);
 
-	if (rte->rtekind == RTE_RELATION)
+	switch (rte->rtekind)
 	{
-		/* Ordinary relation RTE */
-		Relation	rel;
-		int			maxattrs;
-		int			numaliases;
-
-		rel = heap_open(rte->relid, AccessShareLock);
-		maxattrs = RelationGetNumberOfAttributes(rel);
-		numaliases = length(rte->eref->colnames);
-
-		for (varattno = 0; varattno < maxattrs; varattno++)
-		{
-			Form_pg_attribute attr = rel->rd_att->attrs[varattno];
-
-			if (colnames)
+		case RTE_RELATION:
 			{
-				char	   *label;
+				/* Ordinary relation RTE */
+				Relation	rel;
+				int			maxattrs;
+				int			numaliases;
 
-				if (varattno < numaliases)
-					label = strVal(nth(varattno, rte->eref->colnames));
+				rel = heap_open(rte->relid, AccessShareLock);
+				maxattrs = RelationGetNumberOfAttributes(rel);
+				numaliases = length(rte->eref->colnames);
+
+				for (varattno = 0; varattno < maxattrs; varattno++)
+				{
+					Form_pg_attribute attr = rel->rd_att->attrs[varattno];
+
+					if (colnames)
+					{
+						char	   *label;
+
+						if (varattno < numaliases)
+							label = strVal(nth(varattno, rte->eref->colnames));
+						else
+							label = NameStr(attr->attname);
+						*colnames = lappend(*colnames, makeString(pstrdup(label)));
+					}
+
+					if (colvars)
+					{
+						Var		   *varnode;
+
+						varnode = makeVar(rtindex, attr->attnum,
+										  attr->atttypid, attr->atttypmod,
+										  sublevels_up);
+
+						*colvars = lappend(*colvars, varnode);
+					}
+				}
+
+				heap_close(rel, AccessShareLock);
+			}
+			break;
+		case RTE_SUBQUERY:
+			{
+				/* Subquery RTE */
+				List	   *aliasp = rte->eref->colnames;
+				List	   *tlistitem;
+
+				varattno = 0;
+				foreach(tlistitem, rte->subquery->targetList)
+				{
+					TargetEntry *te = (TargetEntry *) lfirst(tlistitem);
+
+					if (te->resdom->resjunk)
+						continue;
+					varattno++;
+					Assert(varattno == te->resdom->resno);
+
+					if (colnames)
+					{
+						/* Assume there is one alias per target item */
+						char	   *label = strVal(lfirst(aliasp));
+
+						*colnames = lappend(*colnames, makeString(pstrdup(label)));
+						aliasp = lnext(aliasp);
+					}
+
+					if (colvars)
+					{
+						Var		   *varnode;
+
+						varnode = makeVar(rtindex, varattno,
+										  te->resdom->restype,
+										  te->resdom->restypmod,
+										  sublevels_up);
+
+						*colvars = lappend(*colvars, varnode);
+					}
+				}
+			}
+			break;
+		case RTE_FUNCTION:
+			{
+				/* Function RTE */
+				Oid			funcrettype = exprType(rte->funcexpr);
+				Oid			funcrelid = typeidTypeRelid(funcrettype);
+
+				if (OidIsValid(funcrelid))
+				{
+					/*
+					 * Composite data type, i.e. a table's row type
+					 * Same as ordinary relation RTE
+					 */
+					Relation	rel;
+					int			maxattrs;
+					int			numaliases;
+
+					rel = heap_open(funcrelid, AccessShareLock);
+					maxattrs = RelationGetNumberOfAttributes(rel);
+					numaliases = length(rte->eref->colnames);
+
+					for (varattno = 0; varattno < maxattrs; varattno++)
+					{
+						Form_pg_attribute attr = rel->rd_att->attrs[varattno];
+
+						if (colnames)
+						{
+							char	   *label;
+
+							if (varattno < numaliases)
+								label = strVal(nth(varattno, rte->eref->colnames));
+							else
+								label = NameStr(attr->attname);
+							*colnames = lappend(*colnames, makeString(pstrdup(label)));
+						}
+
+						if (colvars)
+						{
+							Var		   *varnode;
+
+							varnode = makeVar(rtindex, attr->attnum,
+											  attr->atttypid, attr->atttypmod,
+											  sublevels_up);
+
+							*colvars = lappend(*colvars, varnode);
+						}
+					}
+
+					heap_close(rel, AccessShareLock);
+				}
 				else
-					label = NameStr(attr->attname);
-				*colnames = lappend(*colnames, makeString(pstrdup(label)));
-			}
+				{
+					/*
+					 * Must be a base data type, i.e. scalar
+					 */
+					if (colnames)
+						*colnames = lappend(*colnames,
+											lfirst(rte->eref->colnames));
 
-			if (colvars)
+					if (colvars)
+					{
+						Var		   *varnode;
+
+						varnode = makeVar(rtindex, 1,
+										  funcrettype, -1,
+										  sublevels_up);
+
+						*colvars = lappend(*colvars, varnode);
+					}
+				}
+			}
+			break;
+		case RTE_JOIN:
 			{
-				Var		   *varnode;
+				/* Join RTE */
+				List	   *aliasp = rte->eref->colnames;
+				List	   *aliasvars = rte->joinaliasvars;
 
-				varnode = makeVar(rtindex, attr->attnum,
-								  attr->atttypid, attr->atttypmod,
-								  sublevels_up);
+				varattno = 0;
+				while (aliasp)
+				{
+					Assert(aliasvars);
+					varattno++;
 
-				*colvars = lappend(*colvars, varnode);
+					if (colnames)
+					{
+						char	   *label = strVal(lfirst(aliasp));
+
+						*colnames = lappend(*colnames, makeString(pstrdup(label)));
+					}
+
+					if (colvars)
+					{
+						Node	   *aliasvar = (Node *) lfirst(aliasvars);
+						Var		   *varnode;
+
+						varnode = makeVar(rtindex, varattno,
+										  exprType(aliasvar),
+										  exprTypmod(aliasvar),
+										  sublevels_up);
+
+						*colvars = lappend(*colvars, varnode);
+					}
+
+					aliasp = lnext(aliasp);
+					aliasvars = lnext(aliasvars);
+				}
+				Assert(aliasvars == NIL);
 			}
-		}
-
-		heap_close(rel, AccessShareLock);
+			break;
+		default:
+			elog(ERROR, "expandRTE: unsupported RTE kind %d",
+				 (int) rte->rtekind);
 	}
-	else if (rte->rtekind == RTE_SUBQUERY)
-	{
-		/* Subquery RTE */
-		List	   *aliasp = rte->eref->colnames;
-		List	   *tlistitem;
-
-		varattno = 0;
-		foreach(tlistitem, rte->subquery->targetList)
-		{
-			TargetEntry *te = (TargetEntry *) lfirst(tlistitem);
-
-			if (te->resdom->resjunk)
-				continue;
-			varattno++;
-			Assert(varattno == te->resdom->resno);
-
-			if (colnames)
-			{
-				/* Assume there is one alias per target item */
-				char	   *label = strVal(lfirst(aliasp));
-
-				*colnames = lappend(*colnames, makeString(pstrdup(label)));
-				aliasp = lnext(aliasp);
-			}
-
-			if (colvars)
-			{
-				Var		   *varnode;
-
-				varnode = makeVar(rtindex, varattno,
-								  te->resdom->restype,
-								  te->resdom->restypmod,
-								  sublevels_up);
-
-				*colvars = lappend(*colvars, varnode);
-			}
-		}
-	}
-	else if (rte->rtekind == RTE_JOIN)
-	{
-		/* Join RTE */
-		List	   *aliasp = rte->eref->colnames;
-		List	   *aliasvars = rte->joinaliasvars;
-
-		varattno = 0;
-		while (aliasp)
-		{
-			Assert(aliasvars);
-			varattno++;
-
-			if (colnames)
-			{
-				char	   *label = strVal(lfirst(aliasp));
-
-				*colnames = lappend(*colnames, makeString(pstrdup(label)));
-			}
-
-			if (colvars)
-			{
-				Node	   *aliasvar = (Node *) lfirst(aliasvars);
-				Var		   *varnode;
-
-				varnode = makeVar(rtindex, varattno,
-								  exprType(aliasvar),
-								  exprTypmod(aliasvar),
-								  sublevels_up);
-
-				*colvars = lappend(*colvars, varnode);
-			}
-
-			aliasp = lnext(aliasp);
-			aliasvars = lnext(aliasvars);
-		}
-		Assert(aliasvars == NIL);
-	}
-	else
-		elog(ERROR, "expandRTE: unsupported RTE kind %d",
-			 (int) rte->rtekind);
 }
 
 /*
@@ -1044,57 +1232,101 @@ void
 get_rte_attribute_type(RangeTblEntry *rte, AttrNumber attnum,
 					   Oid *vartype, int32 *vartypmod)
 {
-	if (rte->rtekind == RTE_RELATION)
+	switch (rte->rtekind)
 	{
-		/* Plain relation RTE --- get the attribute's type info */
-		HeapTuple	tp;
-		Form_pg_attribute att_tup;
+		case RTE_RELATION:
+			{
+				/* Plain relation RTE --- get the attribute's type info */
+				HeapTuple	tp;
+				Form_pg_attribute att_tup;
 
-		tp = SearchSysCache(ATTNUM,
-							ObjectIdGetDatum(rte->relid),
-							Int16GetDatum(attnum),
-							0, 0);
-		/* this shouldn't happen... */
-		if (!HeapTupleIsValid(tp))
-			elog(ERROR, "Relation %s does not have attribute %d",
-				 get_rel_name(rte->relid), attnum);
-		att_tup = (Form_pg_attribute) GETSTRUCT(tp);
-		*vartype = att_tup->atttypid;
-		*vartypmod = att_tup->atttypmod;
-		ReleaseSysCache(tp);
+				tp = SearchSysCache(ATTNUM,
+									ObjectIdGetDatum(rte->relid),
+									Int16GetDatum(attnum),
+									0, 0);
+				/* this shouldn't happen... */
+				if (!HeapTupleIsValid(tp))
+					elog(ERROR, "Relation %s does not have attribute %d",
+						 get_rel_name(rte->relid), attnum);
+				att_tup = (Form_pg_attribute) GETSTRUCT(tp);
+				*vartype = att_tup->atttypid;
+				*vartypmod = att_tup->atttypmod;
+				ReleaseSysCache(tp);
+			}
+			break;
+		case RTE_SUBQUERY:
+			{
+				/* Subselect RTE --- get type info from subselect's tlist */
+				List	   *tlistitem;
+
+				foreach(tlistitem, rte->subquery->targetList)
+				{
+					TargetEntry *te = (TargetEntry *) lfirst(tlistitem);
+
+					if (te->resdom->resjunk || te->resdom->resno != attnum)
+						continue;
+					*vartype = te->resdom->restype;
+					*vartypmod = te->resdom->restypmod;
+					return;
+				}
+				/* falling off end of list shouldn't happen... */
+				elog(ERROR, "Subquery %s does not have attribute %d",
+					 rte->eref->aliasname, attnum);
+			}
+			break;
+		case RTE_FUNCTION:
+			{
+				/* Function RTE */
+				Oid			funcrettype = exprType(rte->funcexpr);
+				Oid			funcrelid = typeidTypeRelid(funcrettype);
+
+				if (OidIsValid(funcrelid))
+				{
+					/*
+					 * Composite data type, i.e. a table's row type
+					 * Same as ordinary relation RTE
+					 */
+					HeapTuple			tp;
+					Form_pg_attribute	att_tup;
+
+					tp = SearchSysCache(ATTNUM,
+										ObjectIdGetDatum(funcrelid),
+										Int16GetDatum(attnum),
+										0, 0);
+					/* this shouldn't happen... */
+					if (!HeapTupleIsValid(tp))
+						elog(ERROR, "Relation %s does not have attribute %d",
+							 get_rel_name(funcrelid), attnum);
+					att_tup = (Form_pg_attribute) GETSTRUCT(tp);
+					*vartype = att_tup->atttypid;
+					*vartypmod = att_tup->atttypmod;
+					ReleaseSysCache(tp);
+				}
+				else
+				{
+					/*
+					 * Must be a base data type, i.e. scalar
+					 */
+					*vartype = funcrettype;
+					*vartypmod = -1;
+				}
+			}
+			break;
+		case RTE_JOIN:
+			{
+				/* Join RTE --- get type info from join RTE's alias variable */
+				Node   *aliasvar;
+
+				Assert(attnum > 0 && attnum <= length(rte->joinaliasvars));
+				aliasvar = (Node *) nth(attnum-1, rte->joinaliasvars);
+				*vartype = exprType(aliasvar);
+				*vartypmod = exprTypmod(aliasvar);
+			}
+			break;
+		default:
+			elog(ERROR, "get_rte_attribute_type: unsupported RTE kind %d",
+				 (int) rte->rtekind);
 	}
-	else if (rte->rtekind == RTE_SUBQUERY)
-	{
-		/* Subselect RTE --- get type info from subselect's tlist */
-		List	   *tlistitem;
-
-		foreach(tlistitem, rte->subquery->targetList)
-		{
-			TargetEntry *te = (TargetEntry *) lfirst(tlistitem);
-
-			if (te->resdom->resjunk || te->resdom->resno != attnum)
-				continue;
-			*vartype = te->resdom->restype;
-			*vartypmod = te->resdom->restypmod;
-			return;
-		}
-		/* falling off end of list shouldn't happen... */
-		elog(ERROR, "Subquery %s does not have attribute %d",
-			 rte->eref->aliasname, attnum);
-	}
-	else if (rte->rtekind == RTE_JOIN)
-	{
-		/* Join RTE --- get type info from join RTE's alias variable */
-		Node   *aliasvar;
-
-		Assert(attnum > 0 && attnum <= length(rte->joinaliasvars));
-		aliasvar = (Node *) nth(attnum-1, rte->joinaliasvars);
-		*vartype = exprType(aliasvar);
-		*vartypmod = exprTypmod(aliasvar);
-	}
-	else
-		elog(ERROR, "get_rte_attribute_type: unsupported RTE kind %d",
-			 (int) rte->rtekind);
 }
 
 /*

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: relation.h,v 1.63 2002/03/12 00:52:02 tgl Exp $
+ * $Id: relation.h,v 1.64 2002/05/12 20:10:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -92,12 +92,12 @@ typedef enum CostSelector
  *
  * If the relation is a base relation it will have these fields set:
  *
- *		issubquery - true if baserel is a subquery RTE rather than a table
+ *		rtekind - distinguishes plain relation, subquery, or function RTE
  *		indexlist - list of IndexOptInfo nodes for relation's indexes
- *					(always NIL if it's a subquery)
- *		pages - number of disk pages in relation (zero if a subquery)
+ *					(always NIL if it's not a table)
+ *		pages - number of disk pages in relation (zero if not a table)
  *		tuples - number of tuples in relation (not considering restrictions)
- *		subplan - plan for subquery (NULL if it's a plain table)
+ *		subplan - plan for subquery (NULL if it's not a subquery)
  *
  *		Note: for a subquery, tuples and subplan are not set immediately
  *		upon creation of the RelOptInfo object; they are filled in when
@@ -184,11 +184,11 @@ typedef struct RelOptInfo
 	bool		pruneable;
 
 	/* information about a base rel (not set for join rels!) */
-	bool		issubquery;
+	RTEKind		rtekind;		/* RELATION, SUBQUERY, or FUNCTION */
 	List	   *indexlist;
 	long		pages;
 	double		tuples;
-	struct Plan *subplan;
+	struct Plan *subplan;		/* if subquery */
 
 	/* information about a join rel (not set for base rels!) */
 	Index		joinrti;

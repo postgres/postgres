@@ -383,7 +383,7 @@ If a function is marked in pg_proc as returning a set, then it is called
 with fcinfo->resultinfo pointing to a node of type ReturnSetInfo.  A
 function that desires to return a set should raise an error "called in
 context that does not accept a set result" if resultinfo is NULL or does
-not point to a ReturnSetInfo node.  ReturnSetInfo contains a single field
+not point to a ReturnSetInfo node.  ReturnSetInfo contains a field
 "isDone", which should be set to one of these values:
 
     ExprSingleResult             /* expression does not return a set */
@@ -395,6 +395,11 @@ fcinfo->resultinfo->isDone to ExprMultipleResult for each element.
 After all elements have been returned, the next call should set
 isDone to ExprEndResult and return a null result.  (Note it is possible
 to return an empty set by doing this on the first call.)
+
+As of 7.3, the ReturnSetInfo node also contains a link to the ExprContext
+within which the function is being evaluated.  This is useful for functions
+that need to close down internal state when they are not run to completion:
+they can register a shutdown callback function in the ExprContext.
 
 
 Notes about function handlers

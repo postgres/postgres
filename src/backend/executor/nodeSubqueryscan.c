@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSubqueryscan.c,v 1.11 2001/10/25 05:49:29 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSubqueryscan.c,v 1.12 2002/05/12 20:10:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -146,7 +146,7 @@ ExecInitSubqueryScan(SubqueryScan *node, EState *estate, Plan *parent)
 	 * This should agree with ExecInitSubPlan
 	 */
 	rte = rt_fetch(node->scan.scanrelid, estate->es_range_table);
-	Assert(rte->subquery != NULL);
+	Assert(rte->rtekind == RTE_SUBQUERY);
 
 	sp_estate = CreateExecutorState();
 	subquerystate->sss_SubEState = sp_estate;

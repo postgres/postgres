@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.91 2002/04/27 03:45:03 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.92 2002/05/12 20:10:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -700,6 +700,7 @@ ExecMakeFunctionResult(FunctionCachePtr fcache,
 	{
 		fcinfo.resultinfo = (Node *) &rsinfo;
 		rsinfo.type = T_ReturnSetInfo;
+		rsinfo.econtext = econtext;
 	}
 
 	/*

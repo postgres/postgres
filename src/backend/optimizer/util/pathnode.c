@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/pathnode.c,v 1.76 2001/10/25 05:49:34 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/pathnode.c,v 1.77 2002/05/12 20:10:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -450,6 +450,25 @@ create_subqueryscan_path(RelOptInfo *rel)
 	/* just copy the subplan's cost estimates */
 	pathnode->startup_cost = rel->subplan->startup_cost;
 	pathnode->total_cost = rel->subplan->total_cost;
+
+	return pathnode;
+}
+
+/*
+ * create_functionscan_path
+ *	  Creates a path corresponding to a sequential scan of a function,
+ *	  returning the pathnode.
+ */
+Path *
+create_functionscan_path(Query *root, RelOptInfo *rel)
+{
+	Path	   *pathnode = makeNode(Path);
+
+	pathnode->pathtype = T_FunctionScan;
+	pathnode->parent = rel;
+	pathnode->pathkeys = NIL;	/* for now, assume unordered result */
+
+	cost_functionscan(pathnode, root, rel);
 
 	return pathnode;
 }

@@ -20,7 +20,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.130 2002/04/28 19:54:28 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.131 2002/05/12 20:10:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1574,6 +1574,17 @@ _equalRangeSubselect(RangeSubselect *a, RangeSubselect *b)
 }
 
 static bool
+_equalRangeFunction(RangeFunction *a, RangeFunction *b)
+{
+	if (!equal(a->funccallnode, b->funccallnode))
+		return false;
+	if (!equal(a->alias, b->alias))
+		return false;
+
+	return true;
+}
+
+static bool
 _equalTypeName(TypeName *a, TypeName *b)
 {
 	if (!equal(a->names, b->names))
@@ -1677,6 +1688,8 @@ _equalRangeTblEntry(RangeTblEntry *a, RangeTblEntry *b)
 	if (a->relid != b->relid)
 		return false;
 	if (!equal(a->subquery, b->subquery))
+		return false;
+	if (!equal(a->funcexpr, b->funcexpr))
 		return false;
 	if (a->jointype != b->jointype)
 		return false;
@@ -2165,6 +2178,9 @@ equal(void *a, void *b)
 			break;
 		case T_RangeSubselect:
 			retval = _equalRangeSubselect(a, b);
+			break;
+		case T_RangeFunction:
+			retval = _equalRangeFunction(a, b);
 			break;
 		case T_TypeName:
 			retval = _equalTypeName(a, b);
