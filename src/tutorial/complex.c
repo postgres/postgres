@@ -6,33 +6,44 @@
 
 #include "postgres.h"
 
+#include "fmgr.h"
+#include "libpq/pqformat.h"		/* needed for send/recv functions */
+
+
 typedef struct Complex
 {
 	double		x;
 	double		y;
 }	Complex;
 
-/* These prototypes declare the requirements that Postgres places on these
-   user written functions.
-*/
-Complex    *complex_in(char *str);
-char	   *complex_out(Complex * complex);
-Complex    *complex_add(Complex * a, Complex * b);
-bool		complex_abs_lt(Complex * a, Complex * b);
-bool		complex_abs_le(Complex * a, Complex * b);
-bool		complex_abs_eq(Complex * a, Complex * b);
-bool		complex_abs_ge(Complex * a, Complex * b);
-bool		complex_abs_gt(Complex * a, Complex * b);
-int4		complex_abs_cmp(Complex * a, Complex * b);
+/*
+ * Since we use V1 function calling convention, all these functions have
+ * the same signature as far as C is concerned.  We provide these prototypes
+ * just to forestall warnings when compiled with gcc -Wmissing-prototypes.
+ */
+Datum	complex_in(PG_FUNCTION_ARGS);
+Datum	complex_out(PG_FUNCTION_ARGS);
+Datum	complex_recv(PG_FUNCTION_ARGS);
+Datum	complex_send(PG_FUNCTION_ARGS);
+Datum	complex_add(PG_FUNCTION_ARGS);
+Datum	complex_abs_lt(PG_FUNCTION_ARGS);
+Datum	complex_abs_le(PG_FUNCTION_ARGS);
+Datum	complex_abs_eq(PG_FUNCTION_ARGS);
+Datum	complex_abs_ge(PG_FUNCTION_ARGS);
+Datum	complex_abs_gt(PG_FUNCTION_ARGS);
+Datum	complex_abs_cmp(PG_FUNCTION_ARGS);
 
 
 /*****************************************************************************
  * Input/Output functions
  *****************************************************************************/
 
-Complex *
-complex_in(char *str)
+PG_FUNCTION_INFO_V1(complex_in);
+
+Datum
+complex_in(PG_FUNCTION_ARGS)
 {
+	char	   *str = PG_GETARG_CSTRING(0);
 	double		x,
 				y;
 	Complex    *result;
@@ -40,133 +51,173 @@ complex_in(char *str)
 	if (sscanf(str, " ( %lf , %lf )", &x, &y) != 2)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-			   errmsg("invalid input syntax for complex: \"%s\"", str)));
+				 errmsg("invalid input syntax for complex: \"%s\"",
+						str)));
 
 	result = (Complex *) palloc(sizeof(Complex));
 	result->x = x;
 	result->y = y;
-	return result;
+	PG_RETURN_POINTER(result);
 }
 
-char *
-complex_out(Complex * complex)
-{
-	char	   *result;
+PG_FUNCTION_INFO_V1(complex_out);
 
-	if (complex == NULL)
-		return NULL;
+Datum
+complex_out(PG_FUNCTION_ARGS)
+{
+	Complex	   *complex = (Complex *) PG_GETARG_POINTER(0);
+	char	   *result;
 
 	result = (char *) palloc(100);
 	snprintf(result, 100, "(%g,%g)", complex->x, complex->y);
-	return result;
+	PG_RETURN_CSTRING(result);
+}
+
+/*****************************************************************************
+ * Binary Input/Output functions
+ *
+ * These are optional.
+ *****************************************************************************/
+
+PG_FUNCTION_INFO_V1(complex_recv);
+
+Datum
+complex_recv(PG_FUNCTION_ARGS)
+{
+	StringInfo	buf = (StringInfo) PG_GETARG_POINTER(0);
+	Complex    *result;
+
+	result = (Complex *) palloc(sizeof(Complex));
+	result->x = pq_getmsgfloat8(buf);
+	result->y = pq_getmsgfloat8(buf);
+	PG_RETURN_POINTER(result);
+}
+
+PG_FUNCTION_INFO_V1(complex_send);
+
+Datum
+complex_send(PG_FUNCTION_ARGS)
+{
+	Complex	   *complex = (Complex *) PG_GETARG_POINTER(0);
+	StringInfoData buf;
+
+	pq_begintypsend(&buf);
+	pq_sendfloat8(&buf, complex->x);
+	pq_sendfloat8(&buf, complex->y);
+	PG_RETURN_BYTEA_P(pq_endtypsend(&buf));
 }
 
 /*****************************************************************************
  * New Operators
+ *
+ * A practical Complex datatype would provide much more than this, of course.
  *****************************************************************************/
 
-Complex *
-complex_add(Complex * a, Complex * b)
+PG_FUNCTION_INFO_V1(complex_add);
+
+Datum
+complex_add(PG_FUNCTION_ARGS)
 {
+	Complex	   *a = (Complex *) PG_GETARG_POINTER(0);
+	Complex	   *b = (Complex *) PG_GETARG_POINTER(1);
 	Complex    *result;
 
 	result = (Complex *) palloc(sizeof(Complex));
 	result->x = a->x + b->x;
 	result->y = a->y + b->y;
-	return result;
+	PG_RETURN_POINTER(result);
 }
 
 
 /*****************************************************************************
  * Operator class for defining B-tree index
+ *
+ * It's essential that the comparison operators and support function for a
+ * B-tree index opclass always agree on the relative ordering of any two
+ * data values.  Experience has shown that it's depressingly easy to write
+ * unintentionally inconsistent functions.  One way to reduce the odds of
+ * making a mistake is to make all the functions simple wrappers around
+ * an internal three-way-comparison function, as we do here.
  *****************************************************************************/
 
 #define Mag(c)	((c)->x*(c)->x + (c)->y*(c)->y)
 
-bool
-complex_abs_lt(Complex * a, Complex * b)
-{
-	double		amag = Mag(a),
-				bmag = Mag(b);
-
-	return amag < bmag;
-}
-
-bool
-complex_abs_le(Complex * a, Complex * b)
-{
-	double		amag = Mag(a),
-				bmag = Mag(b);
-
-	return amag <= bmag;
-}
-
-bool
-complex_abs_eq(Complex * a, Complex * b)
-{
-	double		amag = Mag(a),
-				bmag = Mag(b);
-
-	return amag == bmag;
-}
-
-bool
-complex_abs_ge(Complex * a, Complex * b)
-{
-	double		amag = Mag(a),
-				bmag = Mag(b);
-
-	return amag >= bmag;
-}
-
-bool
-complex_abs_gt(Complex * a, Complex * b)
-{
-	double		amag = Mag(a),
-				bmag = Mag(b);
-
-	return amag > bmag;
-}
-
-int4
-complex_abs_cmp(Complex * a, Complex * b)
+static int
+complex_abs_cmp_internal(Complex *a, Complex *b)
 {
 	double		amag = Mag(a),
 				bmag = Mag(b);
 
 	if (amag < bmag)
 		return -1;
-	else if (amag > bmag)
+	if (amag > bmag)
 		return 1;
-	else
-		return 0;
+	return 0;
 }
 
-/*****************************************************************************
- * test code
- *****************************************************************************/
 
-/*
- * You should always test your code separately. Trust me, using POSTGRES to
- * debug your C function will be very painful and unproductive. In case of
- * POSTGRES crashing, it is impossible to tell whether the bug is in your
- * code or POSTGRES's.
- */
-void		test_main(void);
-void
-test_main()
+PG_FUNCTION_INFO_V1(complex_abs_lt);
+
+Datum
+complex_abs_lt(PG_FUNCTION_ARGS)
 {
-	Complex    *a;
-	Complex    *b;
+	Complex	   *a = (Complex *) PG_GETARG_POINTER(0);
+	Complex	   *b = (Complex *) PG_GETARG_POINTER(1);
 
-	a = complex_in("(4.01, 3.77 )");
-	printf("a = %s\n", complex_out(a));
-	b = complex_in("(1.0,2.0)");
-	printf("b = %s\n", complex_out(b));
-	printf("a +  b = %s\n", complex_out(complex_add(a, b)));
-	printf("a <  b = %d\n", complex_abs_lt(a, b));
-	printf("a <= b = %d\n", complex_abs_le(a, b));
-	printf("a =  b = %d\n", complex_abs_eq(a, b));
-	printf("a >= b = %d\n", complex_abs_ge(a, b));
-	printf("a >  b = %d\n", complex_abs_gt(a, b));
+	PG_RETURN_BOOL(complex_abs_cmp_internal(a, b) < 0);
+}
+
+PG_FUNCTION_INFO_V1(complex_abs_le);
+
+Datum
+complex_abs_le(PG_FUNCTION_ARGS)
+{
+	Complex	   *a = (Complex *) PG_GETARG_POINTER(0);
+	Complex	   *b = (Complex *) PG_GETARG_POINTER(1);
+
+	PG_RETURN_BOOL(complex_abs_cmp_internal(a, b) <= 0);
+}
+
+PG_FUNCTION_INFO_V1(complex_abs_eq);
+
+Datum
+complex_abs_eq(PG_FUNCTION_ARGS)
+{
+	Complex	   *a = (Complex *) PG_GETARG_POINTER(0);
+	Complex	   *b = (Complex *) PG_GETARG_POINTER(1);
+
+	PG_RETURN_BOOL(complex_abs_cmp_internal(a, b) == 0);
+}
+
+PG_FUNCTION_INFO_V1(complex_abs_ge);
+
+Datum
+complex_abs_ge(PG_FUNCTION_ARGS)
+{
+	Complex	   *a = (Complex *) PG_GETARG_POINTER(0);
+	Complex	   *b = (Complex *) PG_GETARG_POINTER(1);
+
+	PG_RETURN_BOOL(complex_abs_cmp_internal(a, b) >= 0);
+}
+
+PG_FUNCTION_INFO_V1(complex_abs_gt);
+
+Datum
+complex_abs_gt(PG_FUNCTION_ARGS)
+{
+	Complex	   *a = (Complex *) PG_GETARG_POINTER(0);
+	Complex	   *b = (Complex *) PG_GETARG_POINTER(1);
+
+	PG_RETURN_BOOL(complex_abs_cmp_internal(a, b) > 0);
+}
+
+PG_FUNCTION_INFO_V1(complex_abs_cmp);
+
+Datum
+complex_abs_cmp(PG_FUNCTION_ARGS)
+{
+	Complex	   *a = (Complex *) PG_GETARG_POINTER(0);
+	Complex	   *b = (Complex *) PG_GETARG_POINTER(1);
+
+	PG_RETURN_INT32(complex_abs_cmp_internal(a, b));
 }

@@ -8,20 +8,25 @@
 -- Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
 -- Portions Copyright (c) 1994, Regents of the University of California
 --
--- $Header: /cvsroot/pgsql/src/tutorial/complex.source,v 1.15 2003/08/04 23:59:41 tgl Exp $
+-- $Header: /cvsroot/pgsql/src/tutorial/complex.source,v 1.16 2003/10/21 22:51:14 tgl Exp $
 --
 ---------------------------------------------------------------------------
 
 -----------------------------
 -- Creating a new type:
---	a user-defined type must have an input and an output function. They
---	are user-defined C functions. We are going to create a new type 
---	called 'complex' which represents complex numbers.
+--	We are going to create a new type called 'complex' which represents
+--	complex numbers.
+--	A user-defined type must have an input and an output function, and
+--	optionally can have binary input and output functions.  All of these
+--	are usually user-defined C functions.
 -----------------------------
 
 -- Assume the user defined functions are in _OBJWD_/complex$DLSUFFIX
--- (we do not want to assume this is in the dynamic loader search path)
--- Look at $PWD/complex.c for the source.
+-- (we do not want to assume this is in the dynamic loader search path).
+-- Look at $PWD/complex.c for the source.  Note that we declare all of
+-- them as STRICT, so we do not need to cope with NULL inputs in the
+-- C code.  We also mark them IMMUTABLE, since they always return the
+-- same outputs given the same inputs.
 
 -- the input function 'complex_in' takes a null-terminated string (the 
 -- textual representation of the type) and turns it into the internal
@@ -31,7 +36,7 @@
 CREATE FUNCTION complex_in(cstring)
    RETURNS complex
    AS '_OBJWD_/complex'
-   LANGUAGE 'c';
+   LANGUAGE C IMMUTABLE STRICT;
 
 -- the output function 'complex_out' takes the internal representation and
 -- converts it into the textual representation.
@@ -39,7 +44,24 @@ CREATE FUNCTION complex_in(cstring)
 CREATE FUNCTION complex_out(complex)
    RETURNS cstring
    AS '_OBJWD_/complex'
-   LANGUAGE 'c';
+   LANGUAGE C IMMUTABLE STRICT;
+
+-- the binary input function 'complex_recv' takes a StringInfo buffer
+-- and turns its contents into the internal representation.
+
+CREATE FUNCTION complex_recv(internal)
+   RETURNS complex
+   AS '_OBJWD_/complex'
+   LANGUAGE C IMMUTABLE STRICT;
+
+-- the binary output function 'complex_send' takes the internal representation
+-- and converts it into a (hopefully) platform-independent bytea string.
+
+CREATE FUNCTION complex_send(complex)
+   RETURNS bytea
+   AS '_OBJWD_/complex'
+   LANGUAGE C IMMUTABLE STRICT;
+
 
 -- now, we can create the type. The internallength specifies the size of the
 -- memory block required to hold the type (we need two 8-byte doubles).
@@ -48,6 +70,8 @@ CREATE TYPE complex (
    internallength = 16, 
    input = complex_in,
    output = complex_out,
+   receive = complex_recv,
+   send = complex_send,
    alignment = double
 );
 
@@ -57,7 +81,7 @@ CREATE TYPE complex (
 --	user-defined types can be used like ordinary built-in types.
 -----------------------------
 
--- eg. we can use it in a schema
+-- eg. we can use it in a table
 
 CREATE TABLE test_complex (
 	a	complex,
@@ -84,7 +108,7 @@ SELECT * FROM test_complex;
 CREATE FUNCTION complex_add(complex, complex)
    RETURNS complex
    AS '_OBJWD_/complex'
-   LANGUAGE 'c';
+   LANGUAGE C IMMUTABLE STRICT;
 
 -- we can now define the operator. We show a binary operator here but you
 -- can also define unary operators by omitting either of leftarg or rightarg.
@@ -132,40 +156,47 @@ SELECT complex_sum(a) FROM test_complex;
 
 -- first, define the required operators
 CREATE FUNCTION complex_abs_lt(complex, complex) RETURNS bool
-   AS '_OBJWD_/complex' LANGUAGE 'c';
+   AS '_OBJWD_/complex' LANGUAGE C IMMUTABLE STRICT;
 CREATE FUNCTION complex_abs_le(complex, complex) RETURNS bool
-   AS '_OBJWD_/complex' LANGUAGE 'c';
+   AS '_OBJWD_/complex' LANGUAGE C IMMUTABLE STRICT;
 CREATE FUNCTION complex_abs_eq(complex, complex) RETURNS bool
-   AS '_OBJWD_/complex' LANGUAGE 'c';
+   AS '_OBJWD_/complex' LANGUAGE C IMMUTABLE STRICT;
 CREATE FUNCTION complex_abs_ge(complex, complex) RETURNS bool
-   AS '_OBJWD_/complex' LANGUAGE 'c';
+   AS '_OBJWD_/complex' LANGUAGE C IMMUTABLE STRICT;
 CREATE FUNCTION complex_abs_gt(complex, complex) RETURNS bool
-   AS '_OBJWD_/complex' LANGUAGE 'c';
+   AS '_OBJWD_/complex' LANGUAGE C IMMUTABLE STRICT;
 
 CREATE OPERATOR < (
    leftarg = complex, rightarg = complex, procedure = complex_abs_lt,
+   commutator = > , negator = >= ,
    restrict = scalarltsel, join = scalarltjoinsel
 );
 CREATE OPERATOR <= (
    leftarg = complex, rightarg = complex, procedure = complex_abs_le,
+   commutator = >= , negator = > ,
    restrict = scalarltsel, join = scalarltjoinsel
 );
 CREATE OPERATOR = (
    leftarg = complex, rightarg = complex, procedure = complex_abs_eq,
+   commutator = = ,
+   -- leave out negator since we didn't create <> operator
+   -- negator = <> ,
    restrict = eqsel, join = eqjoinsel
 );
 CREATE OPERATOR >= (
    leftarg = complex, rightarg = complex, procedure = complex_abs_ge,
+   commutator = <= , negator = < ,
    restrict = scalargtsel, join = scalargtjoinsel
 );
 CREATE OPERATOR > (
    leftarg = complex, rightarg = complex, procedure = complex_abs_gt,
+   commutator = < , negator = <= ,
    restrict = scalargtsel, join = scalargtjoinsel
 );
 
 -- create the support function too
 CREATE FUNCTION complex_abs_cmp(complex, complex) RETURNS int4
-   AS '_OBJWD_/complex' LANGUAGE 'c';
+   AS '_OBJWD_/complex' LANGUAGE C IMMUTABLE STRICT;
 
 -- now we can make the operator class
 CREATE OPERATOR CLASS complex_abs_ops

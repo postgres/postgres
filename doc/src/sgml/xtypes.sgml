@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/xtypes.sgml,v 1.20 2003/08/31 17:32:21 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/xtypes.sgml,v 1.21 2003/10/21 22:51:14 tgl Exp $
 -->
 
  <sect1 id="xtypes">
@@ -10,21 +10,21 @@ $Header: /cvsroot/pgsql/doc/src/sgml/xtypes.sgml,v 1.20 2003/08/31 17:32:21 pete
    <secondary>user-defined</secondary>
   </indexterm>
 
- <comment>
-  This section needs to be updated for the version-1 function manager
-  interface.
- </comment>
-
   <para>
-   As described above, there are two kinds of data types in
-   <productname>PostgreSQL</productname>: base types and composite
-   types. This section describes how to define new base types.
+   As described in <xref linkend="extend-type-system">,
+   <productname>PostgreSQL</productname> can be extended to support new
+   data types.  This section describes how to define new base types,
+   which are data types defined below the level of the <acronym>SQL</>
+   language.  Creating a new base type requires implementing functions
+   to operate on the type in a low-level language, usually C.
   </para>
 
   <para>
    The examples in this section can be found in
    <filename>complex.sql</filename> and <filename>complex.c</filename>
-   in the tutorial directory.
+   in the <filename>src/tutorial</> directory of the source distribution.
+   See the <filename>README</> file in that directory for instructions
+   about running the examples.
   </para>
 
  <para>
@@ -44,12 +44,14 @@ $Header: /cvsroot/pgsql/doc/src/sgml/xtypes.sgml,v 1.20 2003/08/31 17:32:21 pete
   as its argument and returns the internal (in memory) representation
   of the type.  The output function takes the internal representation
   of the type as argument and returns a null-terminated character
-  string.
+  string.  If we want to do anything more with the type than merely
+  store it, we must provide additional functions to implement whatever
+  operations we'd like to have for the type.
  </para>
 
  <para>
   Suppose we want to define a type <type>complex</> that represents
-  complex numbers. A natural way to to represent a complex number in
+  complex numbers. A natural way to represent a complex number in
   memory would be the following C structure:
 
 <programlisting>
@@ -59,6 +61,11 @@ typedef struct Complex {
 } Complex;
 </programlisting>
 
+  We will need to make this a pass-by-reference type, since it's too
+  large to fit into a single <type>Datum</> value.
+ </para>
+
+ <para>
   As the external string representation of the type, we choose a
   string of the form <literal>(x,y)</literal>.
  </para>
@@ -71,9 +78,12 @@ typedef struct Complex {
   input function.  For instance:
 
 <programlisting>
-Complex *
-complex_in(char *str)
+PG_FUNCTION_INFO_V1(complex_in);
+
+Datum
+complex_in(PG_FUNCTION_ARGS)
 {
+    char       *str = PG_GETARG_CSTRING(0);
     double      x,
                 y;
     Complex    *result;
@@ -81,34 +91,36 @@ complex_in(char *str)
     if (sscanf(str, " ( %lf , %lf )", &amp;x, &amp;y) != 2)
         ereport(ERROR,
                 (errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-                 errmsg("invalid input syntax for complex: \"%s\"", str)));
+                 errmsg("invalid input syntax for complex: \"%s\"",
+                        str)));
 
     result = (Complex *) palloc(sizeof(Complex));
     result-&gt;x = x;
     result-&gt;y = y;
-    return result;
+    PG_RETURN_POINTER(result);
 }
 </programlisting>
 
   The output function can simply be:
 
 <programlisting>
-char *
-complex_out(Complex *complex)
-{
-    char *result;
+PG_FUNCTION_INFO_V1(complex_out);
 
-    if (complex == NULL)
-        return(NULL);
-    result = (char *) palloc(60);
-    sprintf(result, "(%g,%g)", complex-&gt;x, complex-&gt;y);
-    return result;
+Datum
+complex_out(PG_FUNCTION_ARGS)
+{
+    Complex    *complex = (Complex *) PG_GETARG_POINTER(0);
+    char       *result;
+
+    result = (char *) palloc(100);
+    snprintf(result, 100, "(%g,%g)", complex-&gt;x, complex-&gt;y);
+    PG_RETURN_CSTRING(result);
 }
 </programlisting>
  </para>
 
  <para>
-  You should try to make the input and output functions inverses of
+  You should be careful to make the input and output functions inverses of
   each other.  If you do not, you will have severe problems when you
   need to dump your data into a file and then read it back in.  This
   is a particularly common problem when floating-point numbers are
@@ -116,34 +128,87 @@ complex_out(Complex *complex)
  </para>
 
  <para>
-  To define the <type>complex</type> type, we need to create the two
-  user-defined functions <function>complex_in</function> and
-  <function>complex_out</function> before creating the type:
+  Optionally, a user-defined type can provide binary input and output
+  routines.  Binary I/O is normally faster but less portable than textual
+  I/O.  As with textual I/O, it is up to you to define exactly what the
+  external binary representation is.  Most of the built-in datatypes
+  try to provide a machine-independent binary representation.  For
+  <type>complex</type>, we will piggy-back on the binary I/O converters
+  for type <type>float8</>:
+
+<programlisting>
+PG_FUNCTION_INFO_V1(complex_recv);
+
+Datum
+complex_recv(PG_FUNCTION_ARGS)
+{
+    StringInfo  buf = (StringInfo) PG_GETARG_POINTER(0);
+    Complex    *result;
+
+    result = (Complex *) palloc(sizeof(Complex));
+    result-&gt;x = pq_getmsgfloat8(buf);
+    result-&gt;y = pq_getmsgfloat8(buf);
+    PG_RETURN_POINTER(result);
+}
+
+PG_FUNCTION_INFO_V1(complex_send);
+
+Datum
+complex_send(PG_FUNCTION_ARGS)
+{
+    Complex    *complex = (Complex *) PG_GETARG_POINTER(0);
+    StringInfoData buf;
+
+    pq_begintypsend(&amp;buf);
+    pq_sendfloat8(&amp;buf, complex-&gt;x);
+    pq_sendfloat8(&amp;buf, complex-&gt;y);
+    PG_RETURN_BYTEA_P(pq_endtypsend(&amp;buf));
+}
+</programlisting>
+ </para>
+
+ <para>
+  To define the <type>complex</type> type, we need to create the
+  user-defined I/O functions before creating the type:
 
 <programlisting>
 CREATE FUNCTION complex_in(cstring)
     RETURNS complex
     AS '<replaceable>filename</replaceable>'
-    LANGUAGE C;
+    LANGUAGE C IMMUTABLE STRICT;
 
 CREATE FUNCTION complex_out(complex)
     RETURNS cstring
     AS '<replaceable>filename</replaceable>'
-    LANGUAGE C;
+    LANGUAGE C IMMUTABLE STRICT;
+
+CREATE FUNCTION complex_recv(internal)
+   RETURNS complex
+   AS '<replaceable>filename</replaceable>'
+   LANGUAGE C IMMUTABLE STRICT;
+
+CREATE FUNCTION complex_send(complex)
+   RETURNS bytea
+   AS '<replaceable>filename</replaceable>'
+   LANGUAGE C IMMUTABLE STRICT;
 </programlisting>
 
   Notice that the declarations of the input and output functions must
   reference the not-yet-defined type.  This is allowed, but will draw
-  warning messages that may be ignored.
+  warning messages that may be ignored.  The input function must
+  appear first.
  </para>
 
  <para>
   Finally, we can declare the data type:
 <programlisting>
 CREATE TYPE complex (
-    internallength = 16,
-    input = complex_in,
-    output = complex_out
+   internallength = 16, 
+   input = complex_in,
+   output = complex_out,
+   receive = complex_recv,
+   send = complex_send,
+   alignment = double
 );
 </programlisting>
  </para>
@@ -159,13 +224,24 @@ CREATE TYPE complex (
  </para>
 
  <para>
+  Once the data type exists, we can declare additional functions to
+  provide useful operations on the data type.  Operators can then be
+  defined atop the functions, and if needed, operator classes can be
+  created to support indexing of the data type.  These additional
+  layers are discussed in following sections.
+ </para>
+
+ <para>
   If the values of your data type might exceed a few hundred bytes in
-  size (in internal form), you should mark them
+  size (in internal form), you should make the data type
   TOAST-able.<indexterm><primary>TOAST</primary><secondary>and
   user-defined types</secondary></indexterm> To do this, the internal
   representation must follow the standard layout for variable-length
   data: the first four bytes must be an <type>int32</type> containing
-  the total length in bytes of the datum (including itself).  Also,
+  the total length in bytes of the datum (including itself).  The C
+  functions operating on the data type must be careful to unpack any
+  toasted values they are handed (this detail can normally be hidden in the
+  GETARG macros).  Then,
   when running the <command>CREATE TYPE</command> command, specify the
   internal length as <literal>variable</> and select the appropriate
   storage option.
