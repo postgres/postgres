@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/stylesheet.dsl,v 1.3 2001/02/14 19:35:14 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/stylesheet.dsl,v 1.4 2001/02/18 17:15:03 petere Exp $ -->
 <!DOCTYPE style-sheet PUBLIC "-//James Clark//DTD DSSSL Style Sheet//EN" [
 
 <!-- must turn on one of these with -i on the jade command line -->
@@ -23,6 +23,7 @@
 
 (define %refentry-xref-manvolnum% #f)
 
+(element lineannotation ($italic-seq$))
 (element structfield ($mono-seq$))
 (element structname ($mono-seq$))
 (element type ($mono-seq$))
@@ -52,8 +53,8 @@
 
 (define %default-quadding%      'justify)
 (define bop-footnotes           #t)
-(if tex-backend
-    (define %hyphenation%       #t))
+(define %hyphenation%
+  (if tex-backend #t #f))
 
 ]]> <!-- %output-print -->
 
