@@ -23,9 +23,11 @@ s
 (5 rows)
 
 QUERY: SELECT * FROM LSEG_TBL WHERE s <= '[(1,2),(3,4)]'::lseg;
-ERROR:  There is no operator '<=' for types 'lseg' and 'lseg'
-	You will either have to retype this query using an explicit cast,
-	or you will have to define the operator using CREATE OPERATOR
+s            
+-------------
+[(1,2),(3,4)]
+(1 row)
+
 QUERY: SELECT * FROM LSEG_TBL WHERE (s <-> '[(1,2),(3,4)]'::lseg) < 10;
 s                 
 ------------------
