@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/pg_dump.sgml,v 1.71 2004/06/07 20:35:57 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/pg_dump.sgml,v 1.72 2004/07/10 15:51:28 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -112,7 +112,7 @@ PostgreSQL documentation
       <term><option>--data-only</></term>
       <listitem>
        <para>
-	Dump only the data, not the schema (data definitions).
+	Dump only the data, not the object definitions (schema)
        </para>
 
        <para>
@@ -233,7 +233,7 @@ PostgreSQL documentation
           <para>
          Output a <command>tar</command> archive suitable for input into 
          <application>pg_restore</application>. Using this archive format 
-         allows reordering and/or exclusion of schema elements 
+         allows reordering and/or exclusion of database objects
          at the time the database is restored. It is also possible to limit 
          which data is reloaded at restore time.
           </para>
@@ -246,8 +246,8 @@ PostgreSQL documentation
           <para>
          Output a custom archive suitable for input into 
          <application>pg_restore</application>. This is the most flexible 
-         format in that it allows reordering of data load as well 
-         as schema elements. This format is also compressed by default.
+         format in that it allows reordering of loading data as well 
+         as object definitions. This format is also compressed by default.
           </para>
          </listitem>
         </varlistentry>
@@ -322,7 +322,7 @@ PostgreSQL documentation
 	ownership of objects to match the original database.
 	By default, <application>pg_dump</application> issues
 	<command>SET SESSION AUTHORIZATION</command>
-	statements to set ownership of created schema elements.
+	statements to set ownership of created database objects.
 	These statements
 	will fail when the script is run unless it is started by a superuser
 	(or the same user that owns all of the objects in the script).
@@ -354,7 +354,7 @@ PostgreSQL documentation
       <term><option>--schema-only</option></term>
       <listitem>
        <para>
-	Dump only the schema (data definitions), no data.
+	Dump only the object definitions (schema), not data.
        </para>
       </listitem>
      </varlistentry>
