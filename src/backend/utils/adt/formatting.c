@@ -1,16 +1,16 @@
 /* -----------------------------------------------------------------------
  * formatting.c
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/formatting.c,v 1.54 2002/09/04 20:31:27 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/formatting.c,v 1.55 2002/09/20 03:54:57 momjian Exp $
  *
  *
- *	 Portions Copyright (c) 1999-2000, PostgreSQL Global Development Group
+ *	 Portions Copyright (c) 1999-2002, PostgreSQL Global Development Group
  *
  *
  *	 TO_CHAR(); TO_TIMESTAMP(); TO_DATE(); TO_NUMBER();
  *
  *	 The PostgreSQL routines for a timestamp/int/float/numeric formatting,
- *	 inspire with Oracle TO_CHAR() / TO_DATE() / TO_NUMBER() routines.
+ *	 inspired by the Oracle TO_CHAR() / TO_DATE() / TO_NUMBER() routines.
  *
  *
  *	 Cache & Memory:
@@ -881,7 +881,7 @@ static int	dch_global(int arg, char *inout, int suf, int flag, FormatNode *node,
 static int	dch_time(int arg, char *inout, int suf, int flag, FormatNode *node, void *data);
 static int	dch_date(int arg, char *inout, int suf, int flag, FormatNode *node, void *data);
 static char *fill_str(char *str, int c, int max);
-static FormatNode *NUM_cache(int len, NUMDesc *Num, char *pars_str, int *flag);
+static FormatNode *NUM_cache(int len, NUMDesc *Num, char *pars_str, bool *shouldFree);
 static char *int_to_roman(int number);
 static void NUM_prepare_locale(NUMProc *Np);
 static char *get_last_relevant_decnum(char *num);
@@ -899,7 +899,7 @@ static void NUM_cache_remove(NUMCacheEntry *ent);
 
 /* ----------
  * Fast sequential search, use index for data selection which
- * go to seq. cycle (it is very fast for non-wanted strings)
+ * go to seq. cycle (it is very fast for unwanted strings)
  * (can't be used binary search in format parsing)
  * ----------
  */
@@ -957,7 +957,6 @@ NUMDesc_prepare(NUMDesc *num, FormatNode *n)
 
 	switch (n->key->id)
 	{
-
 		case NUM_9:
 			if (IS_BRACKET(num))
 			{
@@ -1408,13 +1407,16 @@ str_numth(char *dest, char *num, int type)
 }
 
 /* ----------
- * Convert string to upper-string
+ * Convert string to upper-string. Input string is modified in place.
  * ----------
  */
 static char *
 str_toupper(char *buff)
 {
 	char	   *p_buff = buff;
+
+	if (!buff)
+		return NULL;
 
 	while (*p_buff)
 	{
@@ -1425,13 +1427,16 @@ str_toupper(char *buff)
 }
 
 /* ----------
- * Convert string to lower-string
+ * Convert string to lower-string. Input string is modified in place.
  * ----------
  */
 static char *
 str_tolower(char *buff)
 {
 	char	   *p_buff = buff;
+
+	if (!buff)
+		return NULL;
 
 	while (*p_buff)
 	{
@@ -2422,7 +2427,7 @@ dch_date(int arg, char *inout, int suf, int flag, FormatNode *node, void *data)
 		case DCH_YYY:
 			if (flag == TO_CHAR)
 			{
-				sprintf(buff, "%03d", YEAR_ABS(tm->tm_year));
+				snprintf(buff, sizeof(buff), "%03d", YEAR_ABS(tm->tm_year));
 				i = strlen(buff);
 				strcpy(inout, buff + (i - 3));
 				if (S_THth(suf))
@@ -2452,7 +2457,7 @@ dch_date(int arg, char *inout, int suf, int flag, FormatNode *node, void *data)
 		case DCH_YY:
 			if (flag == TO_CHAR)
 			{
-				sprintf(buff, "%02d", YEAR_ABS(tm->tm_year));
+				snprintf(buff, sizeof(buff), "%02d", YEAR_ABS(tm->tm_year));
 				i = strlen(buff);
 				strcpy(inout, buff + (i - 2));
 				if (S_THth(suf))
@@ -2482,7 +2487,7 @@ dch_date(int arg, char *inout, int suf, int flag, FormatNode *node, void *data)
 		case DCH_Y:
 			if (flag == TO_CHAR)
 			{
-				sprintf(buff, "%1d", YEAR_ABS(tm->tm_year));
+				snprintf(buff, sizeof(buff), "%1d", YEAR_ABS(tm->tm_year));
 				i = strlen(buff);
 				strcpy(inout, buff + (i - 1));
 				if (S_THth(suf))
@@ -2587,7 +2592,7 @@ DCH_cache_getnew(char *str)
 {
 	DCHCacheEntry *ent = NULL;
 
-	/* counter overload check  - paranoa? */
+	/* counter overload check  - paranoia? */
 	if (DCHCounter + DCH_CACHE_FIELDS >= MAX_INT32)
 	{
 		DCHCounter = 0;
@@ -2615,7 +2620,7 @@ DCH_cache_getnew(char *str)
 #ifdef DEBUG_TO_FROM_CHAR
 		elog(DEBUG_elog_output, "OLD: '%s' AGE: %d", old->str, old->age);
 #endif
-		strcpy(old->str, str);	/* check str size before this func. */
+		StrNCpy(old->str, str, DCH_CACHE_SIZE + 1);
 		/* old->format fill parser */
 		old->age = (++DCHCounter);
 		return old;
@@ -2627,7 +2632,7 @@ DCH_cache_getnew(char *str)
 		elog(DEBUG_elog_output, "NEW (%d)", n_DCHCache);
 #endif
 		ent = DCHCache + n_DCHCache;
-		strcpy(ent->str, str);	/* check str size before this func. */
+		StrNCpy(ent->str, str, DCH_CACHE_SIZE + 1);
 		/* ent->format fill parser */
 		ent->age = (++DCHCounter);
 		++n_DCHCache;
@@ -2643,7 +2648,7 @@ DCH_cache_search(char *str)
 	int			i = 0;
 	DCHCacheEntry *ent;
 
-	/* counter overload check  - paranoa? */
+	/* counter overload check  - paranoia? */
 	if (DCHCounter + DCH_CACHE_FIELDS >= MAX_INT32)
 	{
 		DCHCounter = 0;
@@ -2706,7 +2711,7 @@ datetime_to_char_body(TmToChar *tmtc, text *fmt)
 		parse_format(format, str_fmt, DCH_keywords,
 					 DCH_suff, DCH_index, DCH_TYPE, NULL);
 
-		(format + len)->type = NODE_TYPE_END;	/* Paranoa? */
+		(format + len)->type = NODE_TYPE_END;	/* Paranoia? */
 
 	}
 	else
@@ -2730,7 +2735,7 @@ datetime_to_char_body(TmToChar *tmtc, text *fmt)
 			parse_format(ent->format, str_fmt, DCH_keywords,
 						 DCH_suff, DCH_index, DCH_TYPE, NULL);
 
-			(ent->format + len)->type = NODE_TYPE_END;	/* Paranoa? */
+			(ent->format + len)->type = NODE_TYPE_END;	/* Paranoia? */
 
 #ifdef DEBUG_TO_FROM_CHAR
 			/* dump_node(ent->format, len); */
@@ -2900,7 +2905,7 @@ to_timestamp(PG_FUNCTION_ARGS)
 			parse_format(format, str, DCH_keywords,
 						 DCH_suff, DCH_index, DCH_TYPE, NULL);
 
-			(format + len)->type = NODE_TYPE_END;		/* Paranoa? */
+			(format + len)->type = NODE_TYPE_END;		/* Paranoia? */
 		}
 		else
 		{
@@ -2923,7 +2928,7 @@ to_timestamp(PG_FUNCTION_ARGS)
 				parse_format(ent->format, str, DCH_keywords,
 							 DCH_suff, DCH_index, DCH_TYPE, NULL);
 
-				(ent->format + len)->type = NODE_TYPE_END;		/* Paranoa? */
+				(ent->format + len)->type = NODE_TYPE_END;		/* Paranoia? */
 #ifdef DEBUG_TO_FROM_CHAR
 				/* dump_node(ent->format, len); */
 				/* dump_index(DCH_keywords, DCH_index); */
@@ -3146,7 +3151,7 @@ NUM_cache_getnew(char *str)
 {
 	NUMCacheEntry *ent = NULL;
 
-	/* counter overload check  - paranoa? */
+	/* counter overload check  - paranoia? */
 	if (NUMCounter + NUM_CACHE_FIELDS >= MAX_INT32)
 	{
 		NUMCounter = 0;
@@ -3183,7 +3188,7 @@ NUM_cache_getnew(char *str)
 #ifdef DEBUG_TO_FROM_CHAR
 		elog(DEBUG_elog_output, "OLD: '%s' AGE: %d", old->str, old->age);
 #endif
-		strcpy(old->str, str);	/* check str size before this func. */
+		StrNCpy(old->str, str, NUM_CACHE_SIZE + 1);
 		/* old->format fill parser */
 		old->age = (++NUMCounter);
 
@@ -3196,7 +3201,7 @@ NUM_cache_getnew(char *str)
 		elog(DEBUG_elog_output, "NEW (%d)", n_NUMCache);
 #endif
 		ent = NUMCache + n_NUMCache;
-		strcpy(ent->str, str);	/* check str size before this func. */
+		StrNCpy(ent->str, str, NUM_CACHE_SIZE + 1);
 		/* ent->format fill parser */
 		ent->age = (++NUMCounter);
 		++n_NUMCache;
@@ -3214,7 +3219,7 @@ NUM_cache_search(char *str)
 	int			i = 0;
 	NUMCacheEntry *ent;
 
-	/* counter overload check  - paranoa? */
+	/* counter overload check - paranoia? */
 	if (NUMCounter + NUM_CACHE_FIELDS >= MAX_INT32)
 	{
 		NUMCounter = 0;
@@ -3254,7 +3259,7 @@ NUM_cache_remove(NUMCacheEntry *ent)
  * ----------
  */
 static FormatNode *
-NUM_cache(int len, NUMDesc *Num, char *pars_str, int *flag)
+NUM_cache(int len, NUMDesc *Num, char *pars_str, bool *shouldFree)
 {
 	FormatNode *format = NULL;
 	char	   *str;
@@ -3268,20 +3273,21 @@ NUM_cache(int len, NUMDesc *Num, char *pars_str, int *flag)
 
 	/*
 	 * Allocate new memory if format picture is bigger than static cache
-	 * and not use cache (call parser always) - flag=1 show this variant
+	 * and not use cache (call parser always). This branches sets
+	 * shouldFree to true, accordingly.
 	 */
 	if (len > NUM_CACHE_SIZE)
 	{
-
 		format = (FormatNode *) palloc((len + 1) * sizeof(FormatNode));
-		*flag = 1;
+
+		*shouldFree = true;
 
 		zeroize_NUM(Num);
 
 		parse_format(format, str, NUM_keywords,
 					 NULL, NUM_index, NUM_TYPE, Num);
 
-		(format + len)->type = NODE_TYPE_END;	/* Paranoa? */
+		(format + len)->type = NODE_TYPE_END;	/* Paranoia? */
 
 	}
 	else
@@ -3291,7 +3297,7 @@ NUM_cache(int len, NUMDesc *Num, char *pars_str, int *flag)
 		 */
 		NUMCacheEntry *ent;
 
-		flag = 0;
+		*shouldFree = false;
 
 		if ((ent = NUM_cache_search(str)) == NULL)
 		{
@@ -3305,7 +3311,7 @@ NUM_cache(int len, NUMDesc *Num, char *pars_str, int *flag)
 			parse_format(ent->format, str, NUM_keywords,
 						 NULL, NUM_index, NUM_TYPE, &ent->Num);
 
-			(ent->format + len)->type = NODE_TYPE_END;	/* Paranoa? */
+			(ent->format + len)->type = NODE_TYPE_END;	/* Paranoia? */
 
 		}
 
@@ -3782,21 +3788,19 @@ NUM_numpart_to_char(NUMProc *Np, int id)
 				if (Np->last_relevant && Np->number_p > Np->last_relevant &&
 					id != NUM_0)
 					;
-
 				/*
 				 * terrible Ora format: '0.1' -- 9.9 --> '  .1'
 				 */
 				else if (!IS_ZERO(Np->Num) && *Np->number == '0' &&
 						 Np->number == Np->number_p && Np->Num->post != 0)
 				{
-
 					if (!IS_FILLMODE(Np->Num))
 					{
 						*Np->inout_p = ' ';
 						++Np->inout_p;
 
 						/*
-						 * total terible Ora: '0' -- FM9.9 --> '0.'
+						 * total terrible Ora: '0' -- FM9.9 --> '0.'
 						 */
 					}
 					else if (Np->last_relevant && *Np->last_relevant == '.')
@@ -3804,12 +3808,12 @@ NUM_numpart_to_char(NUMProc *Np, int id)
 						*Np->inout_p = '0';
 						++Np->inout_p;
 					}
-
 				}
 				else
 				{
 #ifdef DEBUG_TO_FROM_CHAR
-					elog(DEBUG_elog_output, "Writing digit '%c' to position %d", *Np->number_p, Np->num_curr);
+					elog(DEBUG_elog_output, "Writing digit '%c' to position %d",
+						 *Np->number_p, Np->num_curr);
 #endif
 					*Np->inout_p = *Np->number_p;		/* Write DIGIT */
 					++Np->inout_p;
@@ -4260,7 +4264,7 @@ do { \
 	if (len <= 0)							\
 		return DirectFunctionCall1(textin, CStringGetDatum(""));	\
 	result	= (text *) palloc( (len * NUM_MAX_ITEM_SIZ) + 1 + VARHDRSZ); \
-	format	= NUM_cache(len, &Num, VARDATA(fmt), &flag);		\
+	format	= NUM_cache(len, &Num, VARDATA(fmt), &shouldFree);		\
 } while (0)
 
 /* ----------
@@ -4273,7 +4277,7 @@ do { \
 		numstr, plen, sign, TO_CHAR);				\
 	pfree(orgnum);							\
 									\
-	if (flag)							\
+	if (shouldFree)							\
 		pfree(format);						\
 									\
 	/*
@@ -4307,7 +4311,7 @@ numeric_to_number(PG_FUNCTION_ARGS)
 	Datum		result;
 	FormatNode *format;
 	char	   *numstr;
-	int			flag = 0;
+	bool		shouldFree;
 	int			len = 0;
 	int			scale,
 				precision;
@@ -4317,7 +4321,7 @@ numeric_to_number(PG_FUNCTION_ARGS)
 	if (len <= 0)
 		PG_RETURN_NULL();
 
-	format = NUM_cache(len, &Num, VARDATA(fmt), &flag);
+	format = NUM_cache(len, &Num, VARDATA(fmt), &shouldFree);
 
 	numstr = (char *) palloc((len * NUM_MAX_ITEM_SIZ) + 1);
 
@@ -4327,7 +4331,7 @@ numeric_to_number(PG_FUNCTION_ARGS)
 	scale = Num.post;
 	precision = Max(0, Num.pre) + scale;
 
-	if (flag)
+	if (shouldFree)
 		pfree(format);
 
 	result = DirectFunctionCall3(numeric_in,
@@ -4351,7 +4355,7 @@ numeric_to_char(PG_FUNCTION_ARGS)
 	FormatNode *format;
 	text	   *result,
 			   *result_tmp;
-	int			flag = 0;
+	bool		shouldFree;
 	int			len = 0,
 				plen = 0,
 				sign = 0;
@@ -4451,7 +4455,7 @@ int4_to_char(PG_FUNCTION_ARGS)
 	FormatNode *format;
 	text	   *result,
 			   *result_tmp;
-	int			flag = 0;
+	bool		shouldFree;
 	int			len = 0,
 				plen = 0,
 				sign = 0;
@@ -4532,7 +4536,7 @@ int8_to_char(PG_FUNCTION_ARGS)
 	FormatNode *format;
 	text	   *result,
 			   *result_tmp;
-	int			flag = 0;
+	bool		shouldFree;
 	int			len = 0,
 				plen = 0,
 				sign = 0;
@@ -4619,7 +4623,7 @@ float4_to_char(PG_FUNCTION_ARGS)
 	FormatNode *format;
 	text	   *result,
 			   *result_tmp;
-	int			flag = 0;
+	bool		shouldFree;
 	int			len = 0,
 				plen = 0,
 				sign = 0;
@@ -4647,7 +4651,7 @@ float4_to_char(PG_FUNCTION_ARGS)
 		}
 
 		orgnum = (char *) palloc(MAXFLOATWIDTH + 1);
-		sprintf(orgnum, "%.0f", fabs(val));
+		snprintf(orgnum, MAXFLOATWIDTH + 1, "%.0f", fabs(val));
 		len = strlen(orgnum);
 		if (Num.pre > len)
 			plen = Num.pre - len;
@@ -4655,7 +4659,7 @@ float4_to_char(PG_FUNCTION_ARGS)
 			Num.post = 0;
 		else if (Num.post + len > FLT_DIG)
 			Num.post = FLT_DIG - len;
-		sprintf(orgnum, "%.*f", Num.post, val);
+		snprintf(orgnum, MAXFLOATWIDTH + 1, "%.*f", Num.post, val);
 
 		if (*orgnum == '-')
 		{						/* < 0 */
@@ -4700,7 +4704,7 @@ float8_to_char(PG_FUNCTION_ARGS)
 	FormatNode *format;
 	text	   *result,
 			   *result_tmp;
-	int			flag = 0;
+	bool		shouldFree;
 	int			len = 0,
 				plen = 0,
 				sign = 0;
@@ -4727,14 +4731,14 @@ float8_to_char(PG_FUNCTION_ARGS)
 			Num.pre += Num.multi;
 		}
 		orgnum = (char *) palloc(MAXDOUBLEWIDTH + 1);
-		len = sprintf(orgnum, "%.0f", fabs(val));
+		len = snprintf(orgnum, MAXDOUBLEWIDTH + 1, "%.0f", fabs(val));
 		if (Num.pre > len)
 			plen = Num.pre - len;
 		if (len >= DBL_DIG)
 			Num.post = 0;
 		else if (Num.post + len > DBL_DIG)
 			Num.post = DBL_DIG - len;
-		sprintf(orgnum, "%.*f", Num.post, val);
+		snprintf(orgnum, MAXDOUBLEWIDTH + 1, "%.*f", Num.post, val);
 
 		if (*orgnum == '-')
 		{						/* < 0 */
