@@ -1,4 +1,10 @@
-#include <config.h>
+/*
+ * psql - the PostgreSQL interactive terminal
+ *
+ * Copyright 2000 by PostgreSQL Global Development Team
+ *
+ * $Header: /cvsroot/pgsql/src/bin/psql/help.c,v 1.11 2000/01/18 23:30:23 petere Exp $
+ */
 #include <c.h>
 #include "help.h"
 
@@ -68,23 +74,23 @@ usage(void)
 	puts(  "\nUsage:");
     puts(  "  psql [options] [dbname [username]]");
     puts(  "\nOptions:");
-	puts(  "  -A              Unaligned table output mode (-P format=unaligned");
-	puts(  "  -c query        Run only single query (or slash command) and exit");
+	puts(  "  -A              Unaligned table output mode (-P format=unaligned)");
+	puts(  "  -c <query>      Run only single query (or slash command) and exit");
 
 	/* Display default database */
 	env = getenv("PGDATABASE");
 	if (!env)
 		env = user;
-	printf("  -d dbname       Specify database name to connect to (default: %s)\n", env);
+	printf("  -d <dbname>     Specify database name to connect to (default: %s)\n", env);
 
 	puts(  "  -e              Echo all input in non-interactive mode");
 	puts(  "  -E              Display queries that internal commands generate");
-	puts(  "  -f filename     Execute queries from file, then exit");
-	puts(  "  -F sep          Set field separator (default: \"" DEFAULT_FIELD_SEP "\") (-P fieldsep=)");
+	puts(  "  -f <filename>   Execute queries from file, then exit");
+	puts(  "  -F <string>     Set field separator (default: \"" DEFAULT_FIELD_SEP "\") (-P fieldsep=)");
 
 	/* Display default host */
 	env = getenv("PGHOST");
-	printf("  -h host         Specify database server host (default: ");
+	printf("  -h <host>       Specify database server host (default: ");
 	if (env)
 		fputs(env, stdout);
 	else
@@ -94,11 +100,11 @@ usage(void)
 	puts(  "  -H              HTML table output mode (-P format=html)");
 	puts(  "  -l              List available databases, then exit");
 	puts(  "  -n              Do not use readline or history");
-	puts(  "  -o filename     Send query output to filename (or |pipe)");
+	puts(  "  -o <filename>   Send query output to filename (or |pipe)");
 
 	/* Display default port */
 	env = getenv("PGPORT");
-	printf("  -p port         Specify database server port (default: %s)\n",
+	printf("  -p <port>       Specify database server port (default: %s)\n",
            env ? env : "hardwired");
 
 	puts(  "  -P var[=arg]    Set printing option 'var' to 'arg' (see \\pset command)");
@@ -112,7 +118,7 @@ usage(void)
 	env = getenv("PGUSER");
 	if (!env)
 		env = user;
-	printf("  -U [username]   Specifiy username, \"?\"=prompt (default user: %s)\n", env);
+	printf("  -U <username>   Specifiy username, \"?\"=prompt (default user: %s)\n", env);
 
 	puts(  "  -x              Turn on expanded table output (-P expanded)");
 	puts(  "  -v name=val     Set psql variable 'name' to 'value'");
@@ -120,9 +126,9 @@ usage(void)
 	puts(  "  -W              Prompt for password (should happen automatically)");
 
     puts(  "\nFor more information, type \"\\?\" (for internal commands) or \"\\help\"");
-    puts(  "(for SQL commands) from within psql, or consult the psql section in the");
-    puts(  "PostgreSQL manual, which accompanies the distribution and is also available at");
-    puts(  "<http://www.postgresql.org>.");
+    puts(  "(for SQL commands) from within psql, or consult the psql section in");
+    puts(  "the PostgreSQL manual, which accompanies the distribution and is also");
+    puts(  "available at <http://www.postgresql.org>.");
     puts(  "Report bugs to <bugs@postgresql.org>.");
 
 #ifndef WIN32

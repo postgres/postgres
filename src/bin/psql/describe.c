@@ -1,4 +1,10 @@
-#include <config.h>
+/*
+ * psql - the PostgreSQL interactive terminal
+ *
+ * Copyright 2000 by PostgreSQL Global Development Team
+ *
+ * $Header: /cvsroot/pgsql/src/bin/psql/describe.c,v 1.13 2000/01/18 23:30:23 petere Exp $
+ */
 #include <c.h>
 #include "describe.h"
 
@@ -470,7 +476,6 @@ objectDescription(const char *object)
 	if (!res)
 		return false;
 
-	myopt.topt.tuples_only = false;
 	myopt.nullPrint = NULL;
 	myopt.title = "Object descriptions";
 
@@ -861,10 +866,8 @@ describeTableDetails(const char *name, bool desc)
 	PQclear(result4);
 	}
 
-    if (!error) {
-	myopt.tuples_only = false;
-	printTable(title, headers, (const char**)cells, (const char**)footers, "llll", &myopt, pset.queryFout);
-    }
+    if (!error)
+        printTable(title, headers, (const char**)cells, (const char**)footers, "llll", &myopt, pset.queryFout);
 
 	/* clean up */
 	free(title);
@@ -1106,7 +1109,6 @@ listTables(const char *infotype, const char *name, bool desc)
     }
 	else
 	{
-		myopt.topt.tuples_only = false;
 		myopt.nullPrint = NULL;
 		myopt.title = "List of relations";
 

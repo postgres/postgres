@@ -1,4 +1,13 @@
-/* This implements a sort of variable repository. One could also think of it
+/*
+ * psql - the PostgreSQL interactive terminal
+ *
+ * Copyright 2000 by PostgreSQL Global Development Team
+ *
+ * $Header: /cvsroot/pgsql/src/bin/psql/variables.h,v 1.4 2000/01/18 23:30:24 petere Exp $
+ */
+
+/*
+ * This implements a sort of variable repository. One could also think of it
  * as cheap version of an associative array. In each one of these
  * datastructures you can store name/value pairs.
  *

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.20 2000/01/14 22:18:01 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.21 2000/01/18 23:30:19 petere Exp $
 Postgres documentation
 -->
 
@@ -847,6 +847,16 @@ lo_import 152801
 	  programs might prefer. To set a tab as field separator, type
 	  <literal>\pset fieldsep "\t"</literal>. The default field separator is
 	  <quote><literal>|</literal></quote> (a <quote>pipe</quote> symbol).
+	  </para>
+	  </listitem>
+	  </varlistentry>
+
+	  <varlistentry>
+	  <term><literal>recordsep</literal></term>
+	  <listitem>
+	  <para>
+          Specifies the record (line) separator to use in unaligned output mode. The default
+          is a newline character.
 	  </para>
 	  </listitem>
 	  </varlistentry>
@@ -1900,12 +1910,14 @@ testdb=> <userinput>\set content `sed -e "s/'/\\\\\\'/g" < my_file.txt`</userinp
     <variablelist>
       <varlistentry>
         <term><literal>%M</literal></term>
-	<listitem><para>The hostname of the database server (or <quote>.</quote> if Unix domain socket).</para></listitem>
+	<listitem><para>The hostname of the database server (or <quote>.</quote>
+         if Unix domain socket).</para></listitem>
       </varlistentry>
 
       <varlistentry>
         <term><literal>%m</literal></term>
-	<listitem><para>The hostname of the database server truncated after the first dot.</para></listitem>
+	<listitem><para>The hostname of the database server truncated after the
+         first dot.</para></listitem>
       </varlistentry>
 
       <varlistentry>
@@ -1915,7 +1927,8 @@ testdb=> <userinput>\set content `sed -e "s/'/\\\\\\'/g" < my_file.txt`</userinp
 
       <varlistentry>
         <term><literal>%n</literal></term>
-	<listitem><para>The username you are connected as (not your local system user name).</para></listitem>
+	<listitem><para>The username you are connected as (not your local system
+         user name).</para></listitem>
       </varlistentry>
 
       <varlistentry>
@@ -1925,37 +1938,39 @@ testdb=> <userinput>\set content `sed -e "s/'/\\\\\\'/g" < my_file.txt`</userinp
 
       <varlistentry>
         <term><literal>%~</literal></term>
-	<listitem><para>Like <literal>%/</literal>, but the output is <quote>~</quote> (tilde) if the database
-	is your default database.</para></listitem>
+	<listitem><para>Like <literal>%/</literal>, but the output is <quote>~</quote>
+         (tilde) if the database is your default database.</para></listitem>
       </varlistentry>
 
       <varlistentry>
         <term><literal>%#</literal></term>
-	<listitem><para>If the username is <literal>postgres</literal>, a <quote>#</quote>, otherwise a <quote>&gt;</quote>.</para></listitem>
+	<listitem><para>If the username is <literal>postgres</literal>, a
+         <quote>#</quote>, otherwise a <quote>&gt;</quote>.</para></listitem>
       </varlistentry>
 
       <varlistentry>
         <term><literal>%R</literal></term>
 	<listitem><para>
-	In prompt 1 normally <quote>=</quote>, but <quote>^</quote> if in single-line mode, and
-	<quote>!</quote> if the session is disconnected from the database (which can only
-	happen if <command>\connect</command> fails).
-	In prompt 2 the sequence is replaced by <quote>-</quote>, <quote>*</quote>, a single quote,
-	or a double quote, depending on whether <application>psql</application> expects more input
-	because the query wasn't terminated yet, because you are inside a <literal>/* ... */</literal>
-	comment, or because you are inside a quote.
-	In prompt 3 the sequence doesn't resolve to anything.</para>
+	In prompt 1 normally <quote>=</quote>, but <quote>^</quote> if in single-line
+        mode, and <quote>!</quote> if the session is disconnected from the database
+        (which can happen if <command>\connect</command> fails). In prompt 2 the
+        sequence is replaced by <quote>-</quote>, <quote>*</quote>, a single quote,
+	or a double quote, depending on whether <application>psql</application>
+        expects more input because the query wasn't terminated yet, because you are
+        inside a <literal>/* ... */</literal> comment, or because you are inside
+        a quote. In prompt 3 the sequence doesn't resolve to anything.</para>
 	</listitem>
       </varlistentry>
 
       <varlistentry>
         <term><literal>%</literal><replaceable class="parameter">digits</replaceable></term>
 	<listitem><para>
-	If <replaceable class="parameter">digits</replaceable> starts with <literal>0x</literal>
-	the rest of the characters are interpreted at a hexadecimal digit and the
-	character with the corresponding code is subsituted. If the first digit is <literal>0</literal>
-	the characters are interpreted as on octal number and the corresponding character
-	is substituted. Otherwise a decimal number is assumed.</para>
+	If <replaceable class="parameter">digits</replaceable> starts with
+        <literal>0x</literal> the rest of the characters are interpreted at a
+        hexadecimal digit and the character with the corresponding code is
+        subsituted. If the first digit is <literal>0</literal> the characters are
+        interpreted as on octal number and the corresponding character is
+        substituted. Otherwise a decimal number is assumed.</para>
 	</listitem>
       </varlistentry>
 

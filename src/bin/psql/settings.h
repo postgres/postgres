@@ -1,6 +1,13 @@
+/*
+ * psql - the PostgreSQL interactive terminal
+ *
+ * Copyright 2000 by PostgreSQL Global Development Team
+ *
+ * $Header: /cvsroot/pgsql/src/bin/psql/settings.h,v 1.7 2000/01/18 23:30:24 petere Exp $
+ */
 #ifndef SETTINGS_H
 #define SETTINGS_H
-#include <config.h>
+
 #include <c.h>
 
 #include <stdio.h>
@@ -13,6 +20,7 @@
 #include "print.h"
 
 #define DEFAULT_FIELD_SEP "|"
+#define DEFAULT_RECORD_SEP "\n"
 #define DEFAULT_EDITOR	"vi"
 
 #define DEFAULT_PROMPT1 "%/%R%# "
@@ -23,6 +31,7 @@
 typedef struct _psqlSettings
 {
 	PGconn	   *db;				/* connection to backend */
+    int         encoding;
 	FILE	   *queryFout;		/* where to send the query results */
 	bool		queryFoutPipe;	/* queryFout is from a popen() */
 
@@ -41,9 +50,9 @@ typedef struct _psqlSettings
 								 * loop */
 	bool		cur_cmd_interactive;
 
-	bool		has_client_encoding;	/* was PGCLIENTENCODING set on
-										 * startup? */
     char       *progname;       /* in case you renamed psql */
+    char       *inputfile;      /* for error reporting */
+    unsigned    lineno;         /* also for error reporting */
 } PsqlSettings;
 
 extern PsqlSettings pset;

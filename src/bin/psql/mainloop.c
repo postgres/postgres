@@ -1,3 +1,10 @@
+/*
+ * psql - the PostgreSQL interactive terminal
+ *
+ * Copyright 2000 by PostgreSQL Global Development Team
+ *
+ * $Header: /cvsroot/pgsql/src/bin/psql/mainloop.c,v 1.15 2000/01/18 23:30:23 petere Exp $
+ */
 #include <c.h>
 #include "mainloop.h"
 
@@ -25,7 +32,7 @@
  * FIXME: rewrite this whole thing with flex
  */
 int
-MainLoop(FILE *source, int encoding)
+MainLoop(FILE *source)
 {
 	PQExpBuffer query_buf;		/* buffer for query being accumulated */
     PQExpBuffer previous_buf;   /* if there isn't anything in the new buffer
@@ -52,6 +59,7 @@ MainLoop(FILE *source, int encoding)
 	FILE	   *prev_cmd_source;
 	bool		prev_cmd_interactive;
 
+    unsigned int prev_lineno;
 	bool		die_on_error;
 
 
@@ -68,7 +76,7 @@ MainLoop(FILE *source, int encoding)
     previous_buf = createPQExpBuffer();
 	if (!query_buf || !previous_buf)
 	{
-		perror("createPQExpBuffer");
+        psql_error("out of memory");
 		exit(EXIT_FAILURE);
 	}
 
@@ -76,6 +84,8 @@ MainLoop(FILE *source, int encoding)
 	in_quote = 0;
 	paren_level = 0;
 	slashCmdStatus = CMD_UNKNOWN;		/* set default */
+    prev_lineno = pset.lineno;
+    pset.lineno = 0;
 
 
 	/* main loop to get queries and execute them */
@@ -163,7 +173,10 @@ MainLoop(FILE *source, int encoding)
 
                 if (getout)
                 {
-                    putc('\n', stdout); /* just newline */
+                    if (QUIET())
+                        putc('\n', stdout);
+                    else
+                        puts("\\q");
                     break;
                 }
                 else
@@ -178,6 +191,8 @@ MainLoop(FILE *source, int encoding)
 		}
         else
             count_eof = 0;
+
+        pset.lineno++;
 
 		/* strip trailing backslashes, they don't have a clear meaning */
 		while (1)
@@ -201,7 +216,7 @@ MainLoop(FILE *source, int encoding)
         var = GetVariable(pset.vars, "ECHO");
         if (var && strcmp(var, "full")==0)
             puts(line);
-	fflush(stdout);
+        fflush(stdout);
 
 		len = strlen(line);
 		query_start = 0;
@@ -212,10 +227,10 @@ MainLoop(FILE *source, int encoding)
 		 * The current character is at line[i], the prior character at line[i
 		 * - prevlen], the next character at line[i + thislen].
 		 */
-#define ADVANCE_1 (prevlen = thislen, i += thislen, thislen = PQmblen(line+i, encoding))
+#define ADVANCE_1 (prevlen = thislen, i += thislen, thislen = PQmblen(line+i, pset.encoding))
 
 		success = true;
-		for (i = 0, prevlen = 0, thislen = (len > 0) ? PQmblen(line, encoding) : 0;
+		for (i = 0, prevlen = 0, thislen = (len > 0) ? PQmblen(line, pset.encoding) : 0;
              i < len;
              ADVANCE_1)
 		{
@@ -293,7 +308,7 @@ MainLoop(FILE *source, int encoding)
                     new = malloc(len + out_length - (1 + in_length) + 1);
                     if (!new)
                     {
-                        perror("malloc");
+                        psql_error("out of memory");
                         exit(EXIT_FAILURE);
                     }
 
@@ -374,7 +389,7 @@ MainLoop(FILE *source, int encoding)
                 /* handle backslash command */
                 slashCmdStatus = HandleSlashCmds(&line[i], 
                                                  query_buf->len>0 ? query_buf : previous_buf,
-                                                 &end_of_cmd, encoding);
+                                                 &end_of_cmd);
 
 				success = slashCmdStatus != CMD_ERROR;
 
@@ -456,6 +471,7 @@ MainLoop(FILE *source, int encoding)
 
 	pset.cur_cmd_source = prev_cmd_source;
 	pset.cur_cmd_interactive = prev_cmd_interactive;
+    pset.lineno = prev_lineno;
 
 	return successResult;
 }	/* MainLoop() */

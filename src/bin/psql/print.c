@@ -1,4 +1,10 @@
-#include <config.h>
+/*
+ * psql - the PostgreSQL interactive terminal
+ *
+ * Copyright 2000 by PostgreSQL Global Development Team
+ *
+ * $Header: /cvsroot/pgsql/src/bin/psql/print.c,v 1.8 2000/01/18 23:30:24 petere Exp $
+ */
 #include <c.h>
 #include "print.h"
 
@@ -30,19 +36,22 @@
 static void
 print_unaligned_text(const char *title, const char * const * headers,
 		     const char * const * cells, const char * const * footers,
-		     const char *opt_fieldsep, bool opt_barebones,
+		     const char *opt_fieldsep, const char *opt_recordsep, bool opt_barebones,
 		     FILE *fout)
 {
 	unsigned int col_count = 0;
 	unsigned int i;
 	const char * const * ptr;
+    bool need_recordsep = false;
 
 	if (!opt_fieldsep)
 		opt_fieldsep = "";
+    if (!opt_recordsep)
+        opt_recordsep = "";
 
 	/* print title */
 	if (!opt_barebones && title)
-		fprintf(fout, "%s\n", title);
+		fprintf(fout, "%s%s", title, opt_recordsep);
 
 	/* print headers and count columns */
 	for (ptr = headers; *ptr; ptr++)
@@ -56,17 +65,22 @@ print_unaligned_text(const char *title, const char * const * headers,
 		}
 	}
 	if (!opt_barebones)
-		fputs("\n", fout);
+        need_recordsep = true;
 
 	/* print cells */
 	i = 0;
 	for (ptr = cells; *ptr; ptr++)
 	{
+        if (need_recordsep)
+        {
+			fputs(opt_recordsep, fout);
+            need_recordsep = false;
+        }
 		fputs(*ptr, fout);
 		if ((i + 1) % col_count)
 			fputs(opt_fieldsep, fout);
 		else
-			fputs("\n", fout);
+            need_recordsep = true;
 		i++;
 	}
 
@@ -74,8 +88,19 @@ print_unaligned_text(const char *title, const char * const * headers,
 
 	if (!opt_barebones && footers)
 		for (ptr = footers; *ptr; ptr++)
-			fprintf(fout, "%s\n", *ptr);
+        {
+            if (need_recordsep)
+            {
+                fputs(opt_recordsep, fout);
+                need_recordsep = false;
+            }
+			fputs(*ptr, fout);
+            need_recordsep = true;
+        }
 
+    /* the last record needs to be concluded with a newline */
+    if (need_recordsep)
+        fputc('\n', fout);
 }
 
 
@@ -83,20 +108,21 @@ print_unaligned_text(const char *title, const char * const * headers,
 static void
 print_unaligned_vertical(const char *title, const char * const * headers,
 			 const char * const * cells, const char * const * footers,
-			 const char *opt_fieldsep, bool opt_barebones,
+			 const char *opt_fieldsep, const char *opt_recordsep, bool opt_barebones,
 			 FILE *fout)
 {
 	unsigned int col_count = 0;
 	unsigned int i;
-	unsigned int record = 1;
 	const char * const * ptr;
 
 	if (!opt_fieldsep)
 		opt_fieldsep = "";
+    if (!opt_recordsep)
+        opt_recordsep = "";
 
 	/* print title */
 	if (!opt_barebones && title)
-		fprintf(fout, "%s\n", title);
+        fputs(title, fout);
 
 	/* count columns */
 	for (ptr = headers; *ptr; ptr++)
@@ -105,24 +131,30 @@ print_unaligned_vertical(const char *title, const char * const * headers,
 	/* print records */
 	for (i = 0, ptr = cells; *ptr; i++, ptr++)
 	{
-		if (i % col_count == 0)
-		{
-			if (!opt_barebones)
-				fprintf(fout, "-- RECORD %d\n", record++);
-			else
-				fputc('\n', fout);
-		}
-		fprintf(fout, "%s%s%s\n", headers[i % col_count], opt_fieldsep, *ptr);
+        if (i!=0 || (!opt_barebones && title))
+        {
+            fputs(opt_recordsep, fout);
+            if (i % col_count == 0)
+                fputs(opt_recordsep, fout); /* another one */
+        }
+
+        fputs(headers[i % col_count], fout);
+        fputs(opt_fieldsep, fout);
+        fputs(*ptr, fout);
 	}
 
 	/* print footers */
-
-	if (!opt_barebones && footers)
+	if (!opt_barebones && footers && *footers)
 	{
-		fputs("--- END ---\n", fout);
+        fputs(opt_recordsep, fout);
 		for (ptr = footers; *ptr; ptr++)
-			fprintf(fout, "%s\n", *ptr);
+        {
+            fputs(opt_recordsep, fout);
+            fputs(*ptr, fout);
+        }
 	}
+
+    fputc('\n', fout);
 }
 
 
@@ -679,9 +711,9 @@ print_latex_text(const char *title, const char * const * headers,
 	/* print title */
 	if (!opt_barebones && title)
 	{
-		fputs("\begin{center}\n", fout);
+		fputs("\\begin{center}\n", fout);
 		latex_escaped_print(title, fout);
-		fputs("\n\end{center}\n\n", fout);
+		fputs("\n\\end{center}\n\n", fout);
 	}
 
 	/* begin environment and set alignments and borders */
@@ -776,9 +808,9 @@ print_latex_vertical(const char *title, const char * const * headers,
 	/* print title */
 	if (!opt_barebones && title)
 	{
-		fputs("\begin{center}\n", fout);
+		fputs("\\begin{center}\n", fout);
 		latex_escaped_print(title, fout);
-		fputs("\n\end{center}\n\n", fout);
+		fputs("\n\\end{center}\n\n", fout);
 	}
 
 	/* begin environment and set alignments and borders */
@@ -936,9 +968,9 @@ printTable(const char *title,
 	{
 		case PRINT_UNALIGNED:
 			if (opt->expanded)
-				print_unaligned_vertical(title, headers, cells, footers, opt->fieldSep, opt->tuples_only, output);
+				print_unaligned_vertical(title, headers, cells, footers, opt->fieldSep, opt->recordSep, opt->tuples_only, output);
 			else
-				print_unaligned_text(title, headers, cells, footers, opt->fieldSep, opt->tuples_only, output);
+				print_unaligned_text(title, headers, cells, footers, opt->fieldSep, opt->recordSep, opt->tuples_only, output);
 			break;
 		case PRINT_ALIGNED:
 			if (opt->expanded)

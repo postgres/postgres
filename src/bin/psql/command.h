@@ -1,14 +1,19 @@
+/*
+ * psql - the PostgreSQL interactive terminal
+ *
+ * Copyright 2000 by PostgreSQL Global Development Team
+ *
+ * $Header: /cvsroot/pgsql/src/bin/psql/command.h,v 1.6 2000/01/18 23:30:23 petere Exp $
+ */
 #ifndef COMMAND_H
 #define COMMAND_H
 
-#include <config.h>
 #include <c.h>
 
 #include <pqexpbuffer.h>
 
 #include "settings.h"
 #include "print.h"
-
 
 
 typedef enum _backslashResult
@@ -23,14 +28,13 @@ typedef enum _backslashResult
 }			backslashResult;
 
 
-
 backslashResult
 HandleSlashCmds(const char *line,
 				PQExpBuffer query_buf,
-				const char **end_of_cmd, int encoding);
+				const char **end_of_cmd);
 
 bool
-process_file(const char *filename, int encoding);
+process_file(char *filename);
 
 bool
 do_pset(const char *param,
@@ -38,4 +42,4 @@ do_pset(const char *param,
 		printQueryOpt * popt,
 		bool quiet);
 
-#endif
+#endif /* COMMAND_H */

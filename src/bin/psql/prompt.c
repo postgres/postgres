@@ -1,3 +1,10 @@
+/*
+ * psql - the PostgreSQL interactive terminal
+ *
+ * Copyright 2000 by PostgreSQL Global Development Team
+ *
+ * $Header: /cvsroot/pgsql/src/bin/psql/prompt.c,v 1.6 2000/01/18 23:30:24 petere Exp $
+ */
 #include <c.h>
 #include "prompt.h"
 
@@ -22,7 +29,7 @@
  * get_prompt
  *
  * Returns a statically allocated prompt made by interpolating certain
- * tcsh style escape sequences into pset->vars "PROMPT1|2|3".
+ * tcsh style escape sequences into pset.vars "PROMPT1|2|3".
  * (might not be completely multibyte safe)
  *
  * Defined interpolations are:
@@ -48,7 +55,6 @@
  *					 newline stripped.
  * %$name$		   - The value of the psql variable 'name'
  * (those will not be rescanned for more escape sequences!)
- *
  *
  * If the application-wide prompts became NULL somehow, the returned string
  * will be empty (not NULL!).

@@ -1,4 +1,10 @@
-#include <config.h>
+/*
+ * psql - the PostgreSQL interactive terminal
+ *
+ * Copyright 2000 by PostgreSQL Global Development Team
+ *
+ * $Header: /cvsroot/pgsql/src/bin/psql/input.c,v 1.7 2000/01/18 23:30:23 petere Exp $
+ */
 #include <c.h>
 #include "input.h"
 
@@ -115,7 +121,7 @@ initializeInput(int flags)
 	{
 		useReadline = true;
 		rl_readline_name = "psql";
-        initialize_readline(&(pset.db));
+        initialize_readline();
 	}
 #endif
 

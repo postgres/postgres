@@ -1,3 +1,10 @@
+/*
+ * psql - the PostgreSQL interactive terminal
+ *
+ * Copyright 2000 by PostgreSQL Global Development Team
+ *
+ * $Header: /cvsroot/pgsql/src/bin/psql/print.h,v 1.5 2000/01/18 23:30:24 petere Exp $
+ */
 #ifndef PRINT_H
 #define PRINT_H
 
@@ -29,6 +36,7 @@ typedef struct _printTableOpt
 	unsigned short int border;	/* Print a border around the table.
 								 * 0=none, 1=dividing lines, 2=full */
 	char	   *fieldSep;		/* field separator for unaligned text mode */
+    char       *recordSep;      /* record separator for unaligned text mode */
 	char	   *tableAttr;		/* attributes for HTML <table ...> */
 }			printTableOpt;
 

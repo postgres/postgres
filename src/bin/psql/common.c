@@ -1,3 +1,10 @@
+/*
+ * psql - the PostgreSQL interactive terminal
+ *
+ * Copyright 2000 by PostgreSQL Global Development Team
+ *
+ * $Header: /cvsroot/pgsql/src/bin/psql/common.c,v 1.9 2000/01/18 23:30:23 petere Exp $
+ */
 #include <c.h>
 #include "common.h"
 
@@ -5,6 +12,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <stdarg.h>
 #ifdef HAVE_TERMIOS_H
 #include <termios.h>
 #endif
@@ -49,13 +57,13 @@ xstrdup(const char *string)
 
 	if (!string)
 	{
-		fprintf(stderr, "xstrdup: Cannot duplicate null pointer.\n");
+		fprintf(stderr, "%s: xstrdup: cannot duplicate null pointer\n", pset.progname);
 		exit(EXIT_FAILURE);
 	}
 	tmp = strdup(string);
 	if (!tmp)
 	{
-		perror("strdup");
+        psql_error("out of memory\n");
 		exit(EXIT_FAILURE);
 	}
 	return tmp;
@@ -104,7 +112,7 @@ setQFout(const char *fname)
 
 	if (!(pset.queryFout))
 	{
-		fprintf(stderr, "%s: %s: %s\n", pset.progname, fname, strerror(errno));
+		psql_error("%s: %s\n", fname, strerror(errno));
 		pset.queryFout = stdout;
 		pset.queryFoutPipe = false;
 		status = false;
@@ -119,6 +127,38 @@ setQFout(const char *fname)
 #endif
 
 	return status;
+}
+
+
+
+/*
+ * Error reporting for scripts. Errors should look like
+ *   filename:lineno: message
+ *
+ */
+void
+psql_error(const char *fmt, ...)
+{
+    va_list ap;
+
+    fflush(stdout);
+    if (pset.queryFout!=stdout)
+        fflush(pset.queryFout);
+
+    if (pset.inputfile)
+        fprintf(stderr, "%s:%u: ", pset.inputfile ? pset.inputfile : pset.progname, pset.lineno);
+    va_start(ap, fmt);
+    vfprintf(stderr, fmt, ap);
+    va_end(ap);
+}
+
+/* for backend NOTICES */
+
+void
+NoticeProcessor(void * arg, const char * message)
+{
+    (void)arg; /* not used */
+    psql_error("%s", message);
 }
 
 
@@ -239,7 +279,7 @@ PSQLexec(const char *query)
 
 	if (!pset.db)
 	{
-		fputs("You are currently not connected to a database.\n", stderr);
+        psql_error("You are currently not connected to a database.\n");
 		return NULL;
 	}
 
@@ -268,7 +308,7 @@ PSQLexec(const char *query)
 	{
         if (!pset.cur_cmd_interactive)
         {
-            fprintf(stderr, "%s: connection to server was lost", pset.progname);
+            psql_error("connection to server was lost");
             exit(EXIT_BADCONN);
         }
 		fputs("The connection to the server was lost. Attempting reset: ", stderr);
@@ -297,7 +337,7 @@ PSQLexec(const char *query)
 		return res;
 	else
 	{
-		fputs(PQerrorMessage(pset.db), stderr);
+        psql_error("%s", PQerrorMessage(pset.db));
 		PQclear(res);
 		return NULL;
 	}
@@ -326,7 +366,7 @@ SendQuery(const char *query)
 
 	if (!pset.db)
 	{
-		fputs("You are currently not connected to a database.\n", stderr);
+        psql_error("you are currently not connected to a database.\n");
 		return false;
 	}
 
@@ -436,7 +476,7 @@ SendQuery(const char *query)
 			case PGRES_FATAL_ERROR:
 			case PGRES_BAD_RESPONSE:
 				success = false;
-				fputs(PQerrorMessage(pset.db), stderr);
+                psql_error("%s", PQerrorMessage(pset.db));
 				break;
 		}
 
@@ -446,7 +486,7 @@ SendQuery(const char *query)
 		{
             if (!pset.cur_cmd_interactive)
             {
-                fprintf(stderr, "%s: connection to server was lost", pset.progname);
+                psql_error("connection to server was lost");
                 exit(EXIT_BADCONN);
             }
 			fputs("The connection to the server was lost. Attempting reset: ", stderr);

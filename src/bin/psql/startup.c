@@ -1,3 +1,10 @@
+/*
+ * psql - the PostgreSQL interactive terminal
+ *
+ * Copyright 2000 by PostgreSQL Global Development Team
+ *
+ * $Header: /cvsroot/pgsql/src/bin/psql/startup.c,v 1.16 2000/01/18 23:30:24 petere Exp $
+ */
 #include <c.h>
 
 #include <signal.h>
@@ -94,13 +101,15 @@ main(int argc, char **argv)
 
 	pset.cur_cmd_source = stdin;
 	pset.cur_cmd_interactive = false;
+    pset.encoding = PQenv2encoding();
 
 	pset.vars = CreateVariableSpace();
 	pset.popt.topt.format = PRINT_ALIGNED;
 	pset.queryFout = stdout;
-	pset.popt.topt.fieldSep = strdup(DEFAULT_FIELD_SEP);
+	pset.popt.topt.fieldSep = xstrdup(DEFAULT_FIELD_SEP);
+	pset.popt.topt.recordSep = xstrdup(DEFAULT_RECORD_SEP);
 	pset.popt.topt.border = 1;
-	pset.popt.topt.pager = 1;
+	pset.popt.topt.pager = true;
 
 	SetVariable(pset.vars, "PROMPT1", DEFAULT_PROMPT1);
 	SetVariable(pset.vars, "PROMPT2", DEFAULT_PROMPT2);
@@ -114,10 +123,6 @@ main(int argc, char **argv)
 	pset.getPassword = true;
 #else
 	pset.getPassword = false;
-#endif
-
-#ifdef MULTIBYTE
-	pset.has_client_encoding = (getenv("PGCLIENTENCODING") != NULL);
 #endif
 
 	parse_options(argc, argv, &options);
@@ -157,11 +162,18 @@ main(int argc, char **argv)
 
 	if (PQstatus(pset.db) == CONNECTION_BAD)
 	{
-		fprintf(stderr, "%s: connection to database '%s' failed.\n%s",
-				pset.progname, PQdb(pset.db), PQerrorMessage(pset.db));
+		fprintf(stderr, "%s: connection to database \"%s\" failed - %s",
+                pset.progname, PQdb(pset.db), PQerrorMessage(pset.db));
 		PQfinish(pset.db);
 		exit(EXIT_BADCONN);
 	}
+
+    PQsetNoticeProcessor(pset.db, NoticeProcessor, NULL);
+    /*
+     * We need to save the encoding because we want to have it
+     * available even if the database connection goes bad.
+     */
+    pset.encoding = PQclientencoding(pset.db);
 
 	if (options.action == ACT_LIST_DB)
 	{
@@ -190,10 +202,10 @@ main(int argc, char **argv)
 
 	/* process file given by -f */
 	if (options.action == ACT_FILE)
-		successResult = process_file(options.action_string, PQclientencoding(pset.db)) ? 0 : 1;
+		successResult = process_file(options.action_string) ? 0 : 1;
 	/* process slash command if one was given to -c */
 	else if (options.action == ACT_SINGLE_SLASH)
-		successResult = HandleSlashCmds(options.action_string, NULL, NULL, PQclientencoding(pset.db)) != CMD_ERROR ? 0 : 1;
+		successResult = HandleSlashCmds(options.action_string, NULL, NULL) != CMD_ERROR ? 0 : 1;
 	/* If the query given to -c was a normal one, send it */
 	else if (options.action == ACT_SINGLE_QUERY)
 		successResult = SendQuery( options.action_string) ? 0 : 1;
@@ -202,7 +214,7 @@ main(int argc, char **argv)
     {
         process_psqlrc();
         initializeInput(options.no_readline ? 0 : 1);
-		successResult = MainLoop(stdin, PQclientencoding(pset.db));
+		successResult = MainLoop(stdin);
         finishInput();
     }
 
@@ -234,7 +246,6 @@ parse_options(int argc, char *argv[], struct adhoc_opts * options)
 	static struct option long_options[] = {
 		{"no-align", no_argument, NULL, 'A'},
 		{"command", required_argument, NULL, 'c'},
-		{"database", required_argument, NULL, 'd'},
 		{"dbname", required_argument, NULL, 'd'},
 		{"echo", no_argument, NULL, 'e'},
 		{"echo-hidden", no_argument, NULL, 'E'},
@@ -417,8 +428,16 @@ parse_options(int argc, char *argv[], struct adhoc_opts * options)
 				pset.getPassword = true;
 				break;
 			case '?':
-				usage();
-				exit(EXIT_SUCCESS);
+                if (strcmp(argv[optind-1], "-?")==0)
+                {
+                    usage();
+                    exit(EXIT_SUCCESS);
+                }
+                else
+                {
+                    fputs("Try -? for help.\n", stderr);
+                    exit(EXIT_FAILURE);
+                }
 				break;
 #ifndef HAVE_GETOPT_LONG
 			case '-':
@@ -428,7 +447,7 @@ parse_options(int argc, char *argv[], struct adhoc_opts * options)
 				break;
 #endif
 			default:
-				usage();
+				fputs("Try -? for help.\n", stderr);
 				exit(EXIT_FAILURE);
 				break;
 		}
@@ -466,20 +485,16 @@ process_psqlrc(void)
 {
 	char	   *psqlrc;
 	char	   *home;
-	int	   encoding;
 
 #ifdef WIN32
 #define R_OK 0
 #endif
 
-	/* get client side encoding from envrionment variable if any */
-	encoding = PQenv2encoding();
-
 	/* System-wide startup file */
 	if (access("/etc/psqlrc-" PG_RELEASE "." PG_VERSION "." PG_SUBVERSION, R_OK) == 0)
-		process_file("/etc/psqlrc-" PG_RELEASE "." PG_VERSION "." PG_SUBVERSION, encoding);
+		process_file("/etc/psqlrc-" PG_RELEASE "." PG_VERSION "." PG_SUBVERSION);
 	else if (access("/etc/psqlrc", R_OK) == 0)
-		process_file("/etc/psqlrc", encoding);
+		process_file("/etc/psqlrc");
 
 	/* Look for one in the home dir */
 	home = getenv("HOME");
@@ -489,18 +504,18 @@ process_psqlrc(void)
 		psqlrc = (char *) malloc(strlen(home) + 20);
 		if (!psqlrc)
 		{
-			perror("malloc");
+            fprintf(stderr, "%s: out of memory\n", pset.progname);
 			exit(EXIT_FAILURE);
 		}
 
 		sprintf(psqlrc, "%s/.psqlrc-" PG_RELEASE "." PG_VERSION "." PG_SUBVERSION, home);
 		if (access(psqlrc, R_OK) == 0)
-			process_file(psqlrc, encoding);
+			process_file(psqlrc);
 		else
 		{
 			sprintf(psqlrc, "%s/.psqlrc", home);
 			if (access(psqlrc, R_OK) == 0)
-				process_file(psqlrc, encoding);
+				process_file(psqlrc);
 		}
 		free(psqlrc);
 	}

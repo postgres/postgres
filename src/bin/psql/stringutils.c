@@ -1,4 +1,10 @@
-#include <config.h>
+/*
+ * psql - the PostgreSQL interactive terminal
+ *
+ * Copyright 2000 by PostgreSQL Global Development Team
+ *
+ * $Header: /cvsroot/pgsql/src/bin/psql/stringutils.c,v 1.22 2000/01/18 23:30:24 petere Exp $
+ */
 #include <c.h>
 #include "stringutils.h"
 

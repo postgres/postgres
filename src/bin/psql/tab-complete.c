@@ -1,3 +1,11 @@
+/*
+ * psql - the PostgreSQL interactive terminal
+ *
+ * Copyright 2000 by PostgreSQL Global Development Team
+ *
+ * $Header: /cvsroot/pgsql/src/bin/psql/tab-complete.c,v 1.7 2000/01/18 23:30:24 petere Exp $
+ */
+
 /*-----------
   This file implements a somewhat more sophisticated readline "TAB completion"
   in psql. It is not intended to be AI, to replace learning SQL, or to relieve
@@ -24,7 +32,6 @@
     gracefully.
 -------------*/
 
-#include <config.h>
 #include <c.h>
 #include "tab-complete.h"
 
@@ -44,17 +51,11 @@
 #include <libpq-fe.h>
 
 #include "common.h"
-
+#include "settings.h"
 
 #define BUF_SIZE 2048
 #define ERROR_QUERY_TOO_LONG /* empty */
 
-/* This pointer saves the place where psql stores its own pointer to the
-   currently active database connection. This is probably a less than ideal way
-   of passing this around, but this way I only had to make minimal changes to
-   psql.c. */
-static PGconn ** database_connection;
- 
 
 /* Forward declaration of functions */
 static char ** psql_completion(char *text, int start, int end);
@@ -80,21 +81,10 @@ char * completion_info_charp; /* if you need to pass another string */
 static int completion_max_records;
 
 
-static void * xmalloc(size_t length)
-{
-    void *tmp = malloc(length);
-    if (!tmp) {
-        perror("malloc");
-        exit(EXIT_FAILURE);
-    }
-    return tmp;
-}
-
-
 /* Initialize the readline library for our purposes. */
-void initialize_readline(PGconn ** conn)
+void initialize_readline(void)
 {
-    rl_readline_name = "psql";
+    rl_readline_name = pset.progname;
     rl_attempted_completion_function = psql_completion;
 
     rl_special_prefixes = "()'";
@@ -103,8 +93,6 @@ void initialize_readline(PGconn ** conn)
     completion_max_records = 100;
     /* There is a variable rl_completion_query_items for this but apparently
        it's not defined everywhere. */
-
-    database_connection = conn;
 }
 
 
@@ -511,7 +499,8 @@ char ** psql_completion(char *text, int start, int end)
         COMPLETE_WITH_LIST(sql_commands);
     else if (strcmp(prev_wd, "\\pset")==0) {
         char * my_list[] = { "format", "border", "expanded", "null", "fieldsep",
-                             "tuples_only", "title", "tableattr", "pager", NULL };
+                             "tuples_only", "title", "tableattr", "pager",
+                             "recordsep", NULL };
         COMPLETE_WITH_LIST(my_list);
     }
     else if( strcmp(prev_wd, "\\e")==0 || strcmp(prev_wd, "\\edit")==0 ||
@@ -703,7 +692,7 @@ PGresult * exec_query(char * query)
     PGresult * result;
     char query_buffer[BUF_SIZE];
 
-    if (query == NULL || PQstatus(*database_connection) != CONNECTION_OK)
+    if (query == NULL || !pset.db || PQstatus(pset.db) != CONNECTION_OK)
         return NULL;
 #ifdef USE_ASSERT_CHECKING
     assert( query[strlen(query)-1] != ';' );
@@ -714,12 +703,12 @@ PGresult * exec_query(char * query)
         return NULL;
     }
 
-    result = PQexec(*database_connection, query);
+    result = PQexec(pset.db, query);
 
     if (result != NULL && PQresultStatus(result) != PGRES_TUPLES_OK) {
-#ifdef NOT_USED
-        fprintf(stderr, "\nThe completion query \"%s\" failed thus: %s\n",
-                query, PQresStatus(PQresultStatus(result)));
+#if 0
+        psql_error("tab completion: %s failed - %s", 
+                   query, PQresStatus(PQresultStatus(result)));
 #endif
         PQclear(result);
         result = NULL;
@@ -767,7 +756,16 @@ char * previous_word(int point, int skip) {
     }
 
     /* make a copy */
-    s = (char *)xmalloc(end-start+2);
+    s = (char *)malloc(end-start+2);
+    if (!s)
+    {
+        psql_error("out of memory\n");
+        if (!pset.cur_cmd_interactive)
+            exit(EXIT_FAILURE);
+        else
+            return NULL;
+    }
+
     strncpy(s, &rl_line_buffer[start], end-start+1);
     s[end-start+1] = '\0';
 
@@ -776,11 +774,13 @@ char * previous_word(int point, int skip) {
 
 
 
-#ifdef NOT_USED
+#if 0
 
-/* Surround a string with single quotes. This works for both SQL and
-   psql internal. Doesn't work so well yet.
-*/
+/*
+ * Surround a string with single quotes. This works for both SQL and
+ * psql internal. Currently disable because it is reported not to
+ * cooperate with certain versions of readline.
+ */
 char * quote_file_name(char *text, int match_type, char * quote_pointer)
 {
     char *s;
@@ -789,7 +789,7 @@ char * quote_file_name(char *text, int match_type, char * quote_pointer)
     (void)quote_pointer; /* not used */
 
     length = strlen(text) + ( match_type==SINGLE_MATCH ? 3 : 2 );
-    s = xmalloc(length);
+    s = malloc(length);
     s[0] = '\'';
     strcpy(s+1, text);
     if (match_type==SINGLE_MATCH)
@@ -809,13 +809,13 @@ static char * dequote_file_name(char *text, char quote_char)
         return xstrdup(text);
 
     length = strlen(text);
-    s = xmalloc(length-2+1);
+    s = malloc(length-2+1);
     strncpy(s, text+1, length-2);
     s[length] = '\0';
 
     return s;
 }
 
-#endif /* NOT_USED */
+#endif /* 0 */
 
 #endif /* USE_READLINE */

@@ -1,3 +1,10 @@
+/*
+ * psql - the PostgreSQL interactive terminal
+ *
+ * Copyright 2000 by PostgreSQL Global Development Team
+ *
+ * $Header: /cvsroot/pgsql/src/bin/psql/describe.h,v 1.6 2000/01/18 23:30:23 petere Exp $
+ */
 #ifndef DESCRIBE_H
 #define DESCRIBE_H
 

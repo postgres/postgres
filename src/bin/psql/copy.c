@@ -1,3 +1,10 @@
+/*
+ * psql - the PostgreSQL interactive terminal
+ *
+ * Copyright 2000 by PostgreSQL Global Development Team
+ *
+ * $Header: /cvsroot/pgsql/src/bin/psql/copy.c,v 1.6 2000/01/18 23:30:23 petere Exp $
+ */
 #include <c.h>
 #include "copy.h"
 
@@ -58,7 +65,7 @@ free_copy_options(struct copy_options * ptr)
 
 
 static struct copy_options *
-parse_slash_copy(const char *args, int encoding)
+parse_slash_copy(const char *args)
 {
 	struct copy_options *result;
 	char	   *line;
@@ -70,11 +77,11 @@ parse_slash_copy(const char *args, int encoding)
 
 	if (!(result = calloc(1, sizeof(struct copy_options))))
 	{
-		perror("calloc");
+		psql_error("out of memory\n");
 		exit(EXIT_FAILURE);
 	}
 
-	token = strtokx(line, " \t", "\"", '\\', &quote, NULL, encoding);
+	token = strtokx(line, " \t", "\"", '\\', &quote, NULL, pset.encoding);
 	if (!token)
 		error = true;
 	else
@@ -84,7 +91,7 @@ parse_slash_copy(const char *args, int encoding)
         if (!quote && strcasecmp(token, "binary") == 0)
 		{
 			result->binary = true;
-			token = strtokx(NULL, " \t", "\"", '\\', &quote, NULL, encoding);
+			token = strtokx(NULL, " \t", "\"", '\\', &quote, NULL, pset.encoding);
 			if (!token)
 				error = true;
 		}
@@ -99,14 +106,14 @@ parse_slash_copy(const char *args, int encoding)
 
 	if (!error)
 	{
-		token = strtokx(NULL, " \t", NULL, '\\', NULL, NULL, encoding);
+		token = strtokx(NULL, " \t", NULL, '\\', NULL, NULL, pset.encoding);
 		if (!token)
 			error = true;
 		else
 		{
 			if (strcasecmp(token, "with") == 0)
 			{
-				token = strtokx(NULL, " \t", NULL, '\\', NULL, NULL, encoding);
+				token = strtokx(NULL, " \t", NULL, '\\', NULL, NULL, pset.encoding);
 				if (!token || strcasecmp(token, "oids") != 0)
 					error = true;
 				else
@@ -114,7 +121,7 @@ parse_slash_copy(const char *args, int encoding)
 
 				if (!error)
 				{
-					token = strtokx(NULL, " \t", NULL, '\\', NULL, NULL, encoding);
+					token = strtokx(NULL, " \t", NULL, '\\', NULL, NULL, pset.encoding);
 					if (!token)
 						error = true;
 				}
@@ -131,7 +138,7 @@ parse_slash_copy(const char *args, int encoding)
 
 	if (!error)
 	{
-		token = strtokx(NULL, " \t", "'", '\\', &quote, NULL, encoding);
+		token = strtokx(NULL, " \t", "'", '\\', &quote, NULL, pset.encoding);
 		if (!token)
 			error = true;
 		else if (!quote && (strcasecmp(token, "stdin")==0 || strcasecmp(token, "stdout")==0))
@@ -142,21 +149,21 @@ parse_slash_copy(const char *args, int encoding)
 
 	if (!error)
 	{
-		token = strtokx(NULL, " \t", NULL, '\\', NULL, NULL, encoding);
+		token = strtokx(NULL, " \t", NULL, '\\', NULL, NULL, pset.encoding);
 		if (token)
 		{
 			if (strcasecmp(token, "using") == 0)
 			{
-				token = strtokx(NULL, " \t", NULL, '\\', NULL, NULL, encoding);
+				token = strtokx(NULL, " \t", NULL, '\\', NULL, NULL, pset.encoding);
 				if (!token || strcasecmp(token, "delimiters") != 0)
 					error = true;
 				else
 				{
-					token = strtokx(NULL, " \t", "'", '\\', NULL, NULL, encoding);
+					token = strtokx(NULL, " \t", "'", '\\', NULL, NULL, pset.encoding);
 					if (token)
                     {
 						result->delim = xstrdup(token);
-                        token = strtokx(NULL, " \t", NULL, '\\', NULL, NULL, encoding);
+                        token = strtokx(NULL, " \t", NULL, '\\', NULL, NULL, pset.encoding);
                     }
 					else
 						error = true;
@@ -167,17 +174,17 @@ parse_slash_copy(const char *args, int encoding)
             {
                 if (strcasecmp(token, "with") == 0)
                 {
-                    token = strtokx(NULL, " \t", NULL, '\\', NULL, NULL, encoding);
+                    token = strtokx(NULL, " \t", NULL, '\\', NULL, NULL, pset.encoding);
                     if (!token || strcasecmp(token, "null") != 0)
                         error = true;
                     else
                     {
-                        token = strtokx(NULL, " \t", NULL, '\\', NULL, NULL, encoding);
+                        token = strtokx(NULL, " \t", NULL, '\\', NULL, NULL, pset.encoding);
                         if (!token || strcasecmp(token, "as") != 0)
                             error = true;
                         else
                         {
-                            token = strtokx(NULL, " \t", "'", '\\', NULL, NULL, encoding);
+                            token = strtokx(NULL, " \t", "'", '\\', NULL, NULL, pset.encoding);
                             if (token)
                                 result->null = xstrdup(token);
                         }
@@ -191,15 +198,11 @@ parse_slash_copy(const char *args, int encoding)
 
 	if (error)
 	{
-        if (!pset.cur_cmd_interactive)
-            fprintf(stderr, "%s: ", pset.progname);
-        fputs("\\copy: parse error at ", stderr);
-		if (!token)
-			fputs("end of line", stderr);
-		else
-			fprintf(stderr, "'%s'", token);
-		fputs("\n", stderr);
-		free(result);
+        psql_error("\\copy: parse error at %s%s%s\n",
+                   token ? "'" : "",
+                   token ? token : "end of line",
+                   token ? "'" : "");
+		free_copy_options(result);
 		return NULL;
 	}
 	else
@@ -214,7 +217,7 @@ parse_slash_copy(const char *args, int encoding)
  * file or route its response into the file.
  */
 bool
-do_copy(const char *args, int encoding)
+do_copy(const char *args)
 {
 	char		query[128 + NAMEDATALEN];
 	FILE	   *copystream;
@@ -223,7 +226,7 @@ do_copy(const char *args, int encoding)
 	bool		success;
 
 	/* parse options */
-	options = parse_slash_copy(args, encoding);
+	options = parse_slash_copy(args);
 
 	if (!options)
 		return false;
@@ -275,11 +278,8 @@ do_copy(const char *args, int encoding)
 
 	if (!copystream)
 	{
-        if (!pset.cur_cmd_interactive)
-            fprintf(stderr, "%s: ", pset.progname);
-		fprintf(stderr,
-				"unable to open file %s: %s\n",
-				options->file, strerror(errno));
+        psql_error("%s: %s\n",
+                   options->file, strerror(errno));
 		free_copy_options(options);
 		return false;
 	}
@@ -298,23 +298,14 @@ do_copy(const char *args, int encoding)
 		case PGRES_FATAL_ERROR:
 		case PGRES_BAD_RESPONSE:
 			success = false;
-			fputs(PQerrorMessage(pset.db), stderr);
+            psql_error("\\copy: %s", PQerrorMessage(pset.db));
 			break;
 		default:
 			success = false;
-            if (!pset.cur_cmd_interactive)
-                fprintf(stderr, "%s: ", pset.progname);
-			fprintf(stderr, "\\copy: unexpected response (%d)\n", PQresultStatus(result));
+			psql_error("\\copy: unexpected response (%d)\n", PQresultStatus(result));
 	}
 
 	PQclear(result);
-
-	if (!success)
-	{
-        if (!pset.cur_cmd_interactive)
-            fprintf(stderr, "%s: ", pset.progname);
-        fprintf(stderr, "\\copy failed\n");
-	}
 
     if (copystream != stdout && copystream != stdin)
         fclose(copystream);

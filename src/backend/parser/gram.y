@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.130 2000/01/18 19:08:13 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.131 2000/01/18 23:30:20 petere Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -854,6 +854,7 @@ AlterTableStmt:
       | ALTER TABLE relation_name opt_inh_star DROP CONSTRAINT name drop_behavior
         {
                 AlterTableStmt *n = makeNode(AlterTableStmt);
+		n->subtype = 'X';
                 n->relname = $3;
                 n->inh = $4;
                 n->name = $7;
