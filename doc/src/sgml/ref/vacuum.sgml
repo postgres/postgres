@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/vacuum.sgml,v 1.20 2001/10/12 23:34:30 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/vacuum.sgml,v 1.21 2001/11/18 22:17:30 tgl Exp $
 Postgres documentation
 -->
 
@@ -207,8 +207,7 @@ NOTICE:  Index <replaceable class="PARAMETER">index</replaceable>: Pages 28;
    intended usage is in connection with preparation of user-defined template
    databases, or other databases that are completely read-only and will not
    receive routine maintenance <command>VACUUM</> operations.
-   See <xref linkend="sql-createdatabase" endterm="sql-createdatabase-title">
-   for details.
+   See the <citetitle>Administrator's Guide</> for details.
   </para>
 
   <refsect2 id="R2-SQL-VACUUM-3">
@@ -222,8 +221,7 @@ NOTICE:  Index <replaceable class="PARAMETER">index</replaceable>: Pages 28;
    <para>
     We recommend that active production databases be
     <command>VACUUM</command>-ed frequently (at least nightly), in order to
-    remove expired rows. After copying a large table into
-    <productname>Postgres</productname> or after deleting a large number
+    remove expired rows. After adding or deleting a large number
     of records, it may be a good idea to issue a <command>VACUUM
     ANALYZE</command> command for the affected table. This will update the
     system catalogs with
@@ -254,19 +252,19 @@ NOTICE:  Index <replaceable class="PARAMETER">index</replaceable>: Pages 28;
    <programlisting>
 regression=> VACUUM VERBOSE ANALYZE onek;
 NOTICE:  --Relation onek--
-NOTICE:  Pages 98: Changed 25, Reapped 74, Empty 0, New 0;
-         Tup 1000: Vac 3000, Crash 0, UnUsed 0, MinLen 188, MaxLen 188;
-         Re-using: Free/Avail. Space 586952/586952; EndEmpty/Avail. Pages 0/74.
-         Elapsed 0/0 sec.
-NOTICE:  Index onek_stringu1: Pages 28; Tuples 1000: Deleted 3000. Elapsed 0/0 sec.
-NOTICE:  Index onek_hundred: Pages 12; Tuples 1000: Deleted 3000. Elapsed 0/0 sec.
-NOTICE:  Index onek_unique2: Pages 19; Tuples 1000: Deleted 3000. Elapsed 0/0 sec.
-NOTICE:  Index onek_unique1: Pages 17; Tuples 1000: Deleted 3000. Elapsed 0/0 sec.
-NOTICE:  Rel onek: Pages: 98 --> 25; Tuple(s) moved: 1000. Elapsed 0/1 sec.
-NOTICE:  Index onek_stringu1: Pages 28; Tuples 1000: Deleted 1000. Elapsed 0/0 sec.
-NOTICE:  Index onek_hundred: Pages 12; Tuples 1000: Deleted 1000. Elapsed 0/0 sec.
-NOTICE:  Index onek_unique2: Pages 19; Tuples 1000: Deleted 1000. Elapsed 0/0 sec.
-NOTICE:  Index onek_unique1: Pages 17; Tuples 1000: Deleted 1000. Elapsed 0/0 sec.
+NOTICE:  Index onek_unique1: Pages 14; Tuples 1000: Deleted 3000.
+        CPU 0.00s/0.11u sec elapsed 0.12 sec.
+NOTICE:  Index onek_unique2: Pages 16; Tuples 1000: Deleted 3000.
+        CPU 0.00s/0.10u sec elapsed 0.10 sec.
+NOTICE:  Index onek_hundred: Pages 13; Tuples 1000: Deleted 3000.
+        CPU 0.00s/0.10u sec elapsed 0.10 sec.
+NOTICE:  Index onek_stringu1: Pages 31; Tuples 1000: Deleted 3000.
+        CPU 0.01s/0.09u sec elapsed 0.10 sec.
+NOTICE:  Removed 3000 tuples in 70 pages.
+        CPU 0.02s/0.04u sec elapsed 0.07 sec.
+NOTICE:  Pages 94: Changed 0, Empty 0; Tup 1000: Vac 3000, Keep 0, UnUsed 0.
+        Total CPU 0.05s/0.45u sec elapsed 0.59 sec.
+NOTICE:  Analyzing onek
 VACUUM
    </programlisting>
   </para>

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/maintenance.sgml,v 1.6 2001/11/12 19:19:39 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/maintenance.sgml,v 1.7 2001/11/18 22:17:30 tgl Exp $
 -->
 
 <chapter id="maintenance">
@@ -105,8 +105,8 @@ $Header: /cvsroot/pgsql/doc/src/sgml/maintenance.sgml,v 1.6 2001/11/12 19:19:39 
     In normal <productname>PostgreSQL</productname> operation, an UPDATE or
     DELETE of a row does not immediately remove the old <firstterm>tuple</>
     (version of the row).  This approach is necessary to gain the benefits
-    of multiversion concurrency control (see the User's Guide): the tuple
-    must not be deleted while 
+    of multiversion concurrency control (see the <citetitle>User's Guide</>):
+    the tuple must not be deleted while 
     it is still potentially visible to other transactions.  But eventually,
     an outdated or deleted tuple is no longer of interest to any transaction.
     The space it occupies must be reclaimed for reuse by new tuples, to avoid

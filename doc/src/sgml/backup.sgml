@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/backup.sgml,v 2.18 2001/11/12 19:19:39 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/backup.sgml,v 2.19 2001/11/18 22:17:30 tgl Exp $ -->
 <chapter id="backup">
  <title>Backup and Restore</title>
 
@@ -76,7 +76,7 @@ pg_dump <replaceable class="parameter">dbname</replaceable> &gt; <replaceable cl
    running will not be in the dump. <application>pg_dump</> does not
    block other operations on the database while it is working.
    (Exceptions are those operations that need to operate with an
-   exclusive lock, such as <command>VACUUM</command>.)
+   exclusive lock, such as <command>VACUUM FULL</command>.)
   </para>
 
   <important>
