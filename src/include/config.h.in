@@ -59,6 +59,9 @@
 /* Set to 1 if you have inet_aton() */
 #undef HAVE_INET_ATON
 
+/* Set to 1 if you have fcvt() */
+#undef HAVE_FCVT
+
 /* Set to 1 if you have strerror() */
 #undef HAVE_STRERROR
 
