@@ -179,33 +179,29 @@ Datum
 pg_stat_get_backend_idset(PG_FUNCTION_ARGS)
 {
 	FmgrInfo	   *fmgr_info = fcinfo->flinfo;
-	MemoryContext	oldcxt;
 	int32			result;
 
-	if (fcinfo->resultinfo == NULL)
-		elog(ERROR, "called in context that does not accept a set result (1)");
-	if (!IsA(fcinfo->resultinfo, ReturnSetInfo))
-		elog(ERROR, "called in context that does not accept a set result (2)");
+	if (fcinfo->resultinfo == NULL ||
+		!IsA(fcinfo->resultinfo, ReturnSetInfo))
+		elog(ERROR, "pg_stat_get_backend_idset: called in context that does not accept a set result");
 
 	if (fmgr_info->fn_extra == NULL)
 	{
 		if (fmgr_info->fn_mcxt == NULL)
 			elog(ERROR, "No function memory context in set-function");
-
-		oldcxt = MemoryContextSwitchTo(fmgr_info->fn_mcxt);
-		fmgr_info->fn_extra = palloc(sizeof(int32) * 2);
-		((int32 *)(fmgr_info->fn_extra))[0] = 0;
-		((int32 *)(fmgr_info->fn_extra))[1] = 
-						(int32)pgstat_fetch_stat_numbackends();
-		MemoryContextSwitchTo(oldcxt);
+		fmgr_info->fn_extra = MemoryContextAlloc(fmgr_info->fn_mcxt,
+												 2 * sizeof(int));
+		((int *)(fmgr_info->fn_extra))[0] = 0;
+		((int *)(fmgr_info->fn_extra))[1] = pgstat_fetch_stat_numbackends();
 	}
 
-	((int32 *)(fmgr_info->fn_extra))[0] += 1;
-	result = ((int32 *)(fmgr_info->fn_extra))[0];
+	((int *)(fmgr_info->fn_extra))[0] += 1;
+	result = ((int *)(fmgr_info->fn_extra))[0];
 
-
-	if (result > ((int32 *)(fmgr_info->fn_extra))[1])
+	if (result > ((int *)(fmgr_info->fn_extra))[1])
 	{
+		pfree(fmgr_info->fn_extra);
+		fmgr_info->fn_extra = NULL;
 		((ReturnSetInfo *)(fcinfo->resultinfo))->isDone = ExprEndResult;
 		PG_RETURN_NULL();
 	}
