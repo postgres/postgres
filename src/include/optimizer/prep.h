@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: prep.h,v 1.32 2002/06/20 20:29:51 momjian Exp $
+ * $Id: prep.h,v 1.33 2002/08/29 16:03:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,5 +42,7 @@ extern List *expand_inherted_rtentry(Query *parse, Index rti,
 extern Node *adjust_inherited_attrs(Node *node,
 					   Index old_rt_index, Oid old_relid,
 					   Index new_rt_index, Oid new_relid);
+
+extern bool tlist_same_datatypes(List *tlist, List *colTypes, bool junkOK);
 
 #endif   /* PREP_H */

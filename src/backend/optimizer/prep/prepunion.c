@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepunion.c,v 1.75 2002/08/02 18:15:06 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepunion.c,v 1.76 2002/08/29 16:03:48 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -66,7 +66,6 @@ static List *generate_setop_tlist(List *colTypes, int flag,
 static List *generate_append_tlist(List *colTypes, bool flag,
 					 List *input_plans,
 					 List *refnames_tlist);
-static bool tlist_same_datatypes(List *tlist, List *colTypes, bool junkOK);
 static Node *adjust_inherited_attrs_mutator(Node *node,
 							   adjust_inherited_attrs_context *context);
 
@@ -579,7 +578,7 @@ generate_append_tlist(List *colTypes, bool flag,
  * Resjunk columns are ignored if junkOK is true; otherwise presence of
  * a resjunk column will always cause a 'false' result.
  */
-static bool
+bool
 tlist_same_datatypes(List *tlist, List *colTypes, bool junkOK)
 {
 	List	   *i;

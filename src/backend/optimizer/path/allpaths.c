@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/allpaths.c,v 1.86 2002/06/20 20:29:29 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/allpaths.c,v 1.87 2002/08/29 16:03:48 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,6 +46,11 @@ static void set_function_pathlist(Query *root, RelOptInfo *rel,
 						RangeTblEntry *rte);
 static RelOptInfo *make_one_rel_by_joins(Query *root, int levels_needed,
 					  List *initial_rels);
+static bool subquery_is_pushdown_safe(Query *subquery, Query *topquery);
+static bool recurse_pushdown_safe(Node *setOp, Query *topquery);
+static void subquery_push_qual(Query *subquery, Index rti, Node *qual);
+static void recurse_push_qual(Node *setOp, Query *topquery,
+							  Index rti, Node *qual);
 
 
 /*
@@ -297,31 +302,11 @@ set_subquery_pathlist(Query *root, RelOptInfo *rel,
 	 * generate a better plan for the subquery than evaluating all the
 	 * subquery output rows and then filtering them.
 	 *
-	 * There are several cases where we cannot push down clauses:
-	 *
-	 * 1. If the subquery contains set ops (UNION/INTERSECT/EXCEPT) we do not
-	 * push down any qual clauses, since the planner doesn't support quals
-	 * at the top level of a setop.  (With suitable analysis we could try
-	 * to push the quals down into the component queries of the setop, but
-	 * getting it right seems nontrivial.  Work on this later.)
-	 *
-	 * 2. If the subquery has a LIMIT clause or a DISTINCT ON clause, we must
-	 * not push down any quals, since that could change the set of rows
-	 * returned.  (Actually, we could push down quals into a DISTINCT ON
-	 * subquery if they refer only to DISTINCT-ed output columns, but
-	 * checking that seems more work than it's worth.  In any case, a
-	 * plain DISTINCT is safe to push down past.)
-	 *
-	 * 3. If the subquery has any functions returning sets in its target list,
-	 * we do not push down any quals, since the quals
-	 * might refer to those tlist items, which would mean we'd introduce
-	 * functions-returning-sets into the subquery's WHERE/HAVING quals.
-	 * (It'd be sufficient to not push down quals that refer to those
-	 * particular tlist items, but that's much clumsier to check.)
-	 *
-	 * 4. We do not push down clauses that contain subselects, mainly because
-	 * I'm not sure it will work correctly (the subplan hasn't yet
-	 * transformed sublinks to subselects).
+	 * There are several cases where we cannot push down clauses.
+	 * Restrictions involving the subquery are checked by
+	 * subquery_is_pushdown_safe().  Also, we do not push down clauses that
+	 * contain subselects, mainly because I'm not sure it will work correctly
+	 * (the subplan hasn't yet transformed sublinks to subselects).
 	 *
 	 * Non-pushed-down clauses will get evaluated as qpquals of the
 	 * SubqueryScan node.
@@ -329,11 +314,8 @@ set_subquery_pathlist(Query *root, RelOptInfo *rel,
 	 * XXX Are there any cases where we want to make a policy decision not to
 	 * push down, because it'd result in a worse plan?
 	 */
-	if (subquery->setOperations == NULL &&
-		subquery->limitOffset == NULL &&
-		subquery->limitCount == NULL &&
-		!has_distinct_on_clause(subquery) &&
-		!expression_returns_set((Node *) subquery->targetList))
+	if (rel->baserestrictinfo != NIL &&
+		subquery_is_pushdown_safe(subquery, subquery))
 	{
 		/* OK to consider pushing down individual quals */
 		List	   *upperrestrictlist = NIL;
@@ -351,25 +333,8 @@ set_subquery_pathlist(Query *root, RelOptInfo *rel,
 			}
 			else
 			{
-				/*
-				 * We need to replace Vars in the clause (which must refer
-				 * to outputs of the subquery) with copies of the
-				 * subquery's targetlist expressions.  Note that at this
-				 * point, any uplevel Vars in the clause should have been
-				 * replaced with Params, so they need no work.
-				 */
-				clause = ResolveNew(clause, rti, 0,
-									subquery->targetList,
-									CMD_SELECT, 0);
-				subquery->havingQual = make_and_qual(subquery->havingQual,
-													 clause);
-
-				/*
-				 * We need not change the subquery's hasAggs or
-				 * hasSublinks flags, since we can't be pushing down any
-				 * aggregates that weren't there before, and we don't push
-				 * down subselects at all.
-				 */
+				/* Push it down */
+				subquery_push_qual(subquery, rti, clause);
 			}
 		}
 		rel->baserestrictinfo = upperrestrictlist;
@@ -547,7 +512,183 @@ make_one_rel_by_joins(Query *root, int levels_needed, List *initial_rels)
 }
 
 /*****************************************************************************
+ *			PUSHING QUALS DOWN INTO SUBQUERIES
+ *****************************************************************************/
+
+/*
+ * subquery_is_pushdown_safe - is a subquery safe for pushing down quals?
  *
+ * subquery is the particular component query being checked.  topquery
+ * is the top component of a set-operations tree (the same Query if no
+ * set-op is involved).
+ *
+ * Conditions checked here:
+ *
+ * 1. If the subquery has a LIMIT clause or a DISTINCT ON clause, we must
+ * not push down any quals, since that could change the set of rows
+ * returned.  (Actually, we could push down quals into a DISTINCT ON
+ * subquery if they refer only to DISTINCT-ed output columns, but
+ * checking that seems more work than it's worth.  In any case, a
+ * plain DISTINCT is safe to push down past.)
+ *
+ * 2. If the subquery has any functions returning sets in its target list,
+ * we do not push down any quals, since the quals
+ * might refer to those tlist items, which would mean we'd introduce
+ * functions-returning-sets into the subquery's WHERE/HAVING quals.
+ * (It'd be sufficient to not push down quals that refer to those
+ * particular tlist items, but that's much clumsier to check.)
+ *
+ * 3. If the subquery contains EXCEPT or EXCEPT ALL set ops we cannot push
+ * quals into it, because that would change the results.  For subqueries
+ * using UNION/UNION ALL/INTERSECT/INTERSECT ALL, we can push the quals
+ * into each component query, so long as all the component queries share
+ * identical output types.  (That restriction could probably be relaxed,
+ * but it would take much more code to include type coercion code into
+ * the quals, and I'm also concerned about possible semantic gotchas.)
+ */
+static bool
+subquery_is_pushdown_safe(Query *subquery, Query *topquery)
+{
+	SetOperationStmt *topop;
+
+	/* Check points 1 and 2 */
+	if (subquery->limitOffset != NULL ||
+		subquery->limitCount != NULL ||
+		has_distinct_on_clause(subquery) ||
+		expression_returns_set((Node *) subquery->targetList))
+		return false;
+
+	/* Are we at top level, or looking at a setop component? */
+	if (subquery == topquery)
+	{
+		/* Top level, so check any component queries */
+		if (subquery->setOperations != NULL)
+			if (!recurse_pushdown_safe(subquery->setOperations, topquery))
+				return false;
+	}
+	else
+	{
+		/* Setop component must not have more components (too weird) */
+		if (subquery->setOperations != NULL)
+			return false;
+		/* Setop component output types must match top level */
+		topop = (SetOperationStmt *) topquery->setOperations;
+		Assert(topop && IsA(topop, SetOperationStmt));
+		if (!tlist_same_datatypes(subquery->targetList,
+								  topop->colTypes,
+								  true))
+			return false;
+
+	}
+	return true;
+}
+
+/*
+ * Helper routine to recurse through setOperations tree
+ */
+static bool
+recurse_pushdown_safe(Node *setOp, Query *topquery)
+{
+	if (IsA(setOp, RangeTblRef))
+	{
+		RangeTblRef *rtr = (RangeTblRef *) setOp;
+		RangeTblEntry *rte = rt_fetch(rtr->rtindex, topquery->rtable);
+		Query	   *subquery = rte->subquery;
+
+		Assert(subquery != NULL);
+		return subquery_is_pushdown_safe(subquery, topquery);
+	}
+	else if (IsA(setOp, SetOperationStmt))
+	{
+		SetOperationStmt *op = (SetOperationStmt *) setOp;
+
+		/* EXCEPT is no good */
+		if (op->op == SETOP_EXCEPT)
+			return false;
+		/* Else recurse */
+		if (!recurse_pushdown_safe(op->larg, topquery))
+			return false;
+		if (!recurse_pushdown_safe(op->rarg, topquery))
+			return false;
+	}
+	else
+	{
+		elog(ERROR, "recurse_pushdown_safe: unexpected node %d",
+			 (int) nodeTag(setOp));
+	}
+	return true;
+}
+
+/*
+ * subquery_push_qual - push down a qual that we have determined is safe
+ */
+static void
+subquery_push_qual(Query *subquery, Index rti, Node *qual)
+{
+	if (subquery->setOperations != NULL)
+	{
+		/* Recurse to push it separately to each component query */
+		recurse_push_qual(subquery->setOperations, subquery, rti, qual);
+	}
+	else
+	{
+		/*
+		 * We need to replace Vars in the qual (which must refer
+		 * to outputs of the subquery) with copies of the
+		 * subquery's targetlist expressions.  Note that at this
+		 * point, any uplevel Vars in the qual should have been
+		 * replaced with Params, so they need no work.
+		 *
+		 * This step also ensures that when we are pushing into a setop
+		 * tree, each component query gets its own copy of the qual.
+		 */
+		qual = ResolveNew(qual, rti, 0,
+						  subquery->targetList,
+						  CMD_SELECT, 0);
+		subquery->havingQual = make_and_qual(subquery->havingQual,
+											 qual);
+
+		/*
+		 * We need not change the subquery's hasAggs or
+		 * hasSublinks flags, since we can't be pushing down any
+		 * aggregates that weren't there before, and we don't push
+		 * down subselects at all.
+		 */
+	}
+}
+
+/*
+ * Helper routine to recurse through setOperations tree
+ */
+static void
+recurse_push_qual(Node *setOp, Query *topquery,
+				  Index rti, Node *qual)
+{
+	if (IsA(setOp, RangeTblRef))
+	{
+		RangeTblRef *rtr = (RangeTblRef *) setOp;
+		RangeTblEntry *rte = rt_fetch(rtr->rtindex, topquery->rtable);
+		Query	   *subquery = rte->subquery;
+
+		Assert(subquery != NULL);
+		subquery_push_qual(subquery, rti, qual);
+	}
+	else if (IsA(setOp, SetOperationStmt))
+	{
+		SetOperationStmt *op = (SetOperationStmt *) setOp;
+
+		recurse_push_qual(op->larg, topquery, rti, qual);
+		recurse_push_qual(op->rarg, topquery, rti, qual);
+	}
+	else
+	{
+		elog(ERROR, "recurse_push_qual: unexpected node %d",
+			 (int) nodeTag(setOp));
+	}
+}
+
+/*****************************************************************************
+ *			DEBUG SUPPORT
  *****************************************************************************/
 
 #ifdef OPTIMIZER_DEBUG
