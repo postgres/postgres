@@ -26,7 +26,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.37 1998/02/25 13:09:02 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.38 1998/03/16 05:58:46 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -367,9 +367,16 @@ echo "CREATE TABLE xpg_user (		\
 	    valuntil	abstime);" |\
 	postgres -F -Q -D$PGDATA template1 2>&1 > /dev/null |\
 	grep -v "'DEBUG:"
+
+#move it into pg_user
 echo "UPDATE pg_class SET relname = 'pg_user' WHERE relname = 'xpg_user';" |\
 	postgres -F -Q -D$PGDATA template1 2>&1 > /dev/null |\
 	grep -v "'DEBUG:"
+echo "UPDATE pg_type SET typname = 'pg_user' WHERE typname = 'xpg_user';" |\
+	postgres -F -Q -D$PGDATA template1 2>&1 > /dev/null |\
+	grep -v "'DEBUG:"
+mv $PGDATA/base/template1/xpg_user $PGDATA/base/template1/pg_user
+
 echo "CREATE RULE _RETpg_user AS ON SELECT TO pg_user DO INSTEAD	\
 	    SELECT usename, usesysid, usecreatedb, usetrace,		\
 	           usesuper, usecatupd, '********'::text as passwd,	\
