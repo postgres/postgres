@@ -279,8 +279,6 @@
  * document them here
  */
 /* #define OMIT_PARTIAL_INDEX */
-/* #define PERFECT_MMGR       */
-/* #define PERFECT_MEM        */
 /* #define NO_BUFFERISVALID   */
 /* #define NO_SECURITY        */
 /* #define TIOGA              */
