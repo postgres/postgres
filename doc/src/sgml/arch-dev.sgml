@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/arch-dev.sgml,v 2.20 2003/06/22 05:48:26 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/arch-dev.sgml,v 2.21 2003/06/22 16:16:44 tgl Exp $
 -->
 
  <chapter id="overview">
@@ -437,7 +437,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/arch-dev.sgml,v 2.20 2003/06/22 05:48:26 tg
    <para>
     The <firstterm>executor</firstterm> takes the plan handed back by the
     planner/optimizer and recursively processes it to extract the required set
-    of rows.  This is essentially a demand-driven pipeline mechanism.
+    of rows.  This is essentially a demand-pull pipeline mechanism.
     Each time a plan node is called, it must deliver one more tuple, or
     report that it is done delivering tuples.
    </para>
