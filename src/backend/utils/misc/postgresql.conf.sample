@@ -121,7 +121,6 @@
 #geqo_generations = 0
 #geqo_pool_size = 0		# default based on tables in statement,
 				# range 128-1024
-#geqo_random_seed = -1		# -1 = use variable seed
 #geqo_selection_bias = 2.0	# range 1.5-2.0
 
 # - Other Planner Options -

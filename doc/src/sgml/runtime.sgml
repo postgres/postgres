@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.203 2003/09/05 16:13:38 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.204 2003/09/07 15:26:45 tgl Exp $
 -->
 
 <Chapter Id="runtime">
@@ -1438,7 +1438,6 @@ SET ENABLE_SEQSCAN TO OFF;
       <term><varname>GEQO_EFFORT</varname> (<type>integer</type>)</term>
       <term><varname>GEQO_GENERATIONS</varname> (<type>integer</type>)</term>
       <term><varname>GEQO_POOL_SIZE</varname> (<type>integer</type>)</term>
-      <term><varname>GEQO_RANDOM_SEED</varname> (<type>integer</type>)</term>
       <term><varname>GEQO_SELECTION_BIAS</varname> (<type>floating point</type>)</term>
       <listitem>
        <para>
@@ -1455,9 +1454,7 @@ SET ENABLE_SEQSCAN TO OFF;
         is roughly proportional to the sum of pool size and generations.
         The selection bias is the selective pressure within the
         population. Values can be from 1.50 to 2.00; the latter is the
-        default. The random seed can be set to get reproducible results
-        from the algorithm. If it is set to -1 then the algorithm
-        behaves non-deterministically.
+        default.
        </para>
       </listitem>
      </varlistentry>

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/optimizer/geqo/geqo_main.c,v 1.39 2003/08/12 18:23:20 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/optimizer/geqo/geqo_main.c,v 1.40 2003/09/07 15:26:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -41,7 +41,6 @@ int			Geqo_pool_size;
 int			Geqo_effort;
 int			Geqo_generations;
 double		Geqo_selection_bias;
-int			Geqo_random_seed;
 
 
 static int	gimme_pool_size(int nr_rel);
@@ -95,13 +94,6 @@ geqo(Query *root, int number_of_rels, List *initial_rels)
 	pool_size = gimme_pool_size(number_of_rels);
 	number_generations = gimme_number_generations(pool_size, Geqo_effort);
 	status_interval = 10;
-
-/* seed random number generator */
-/* XXX why is this done every time around? */
-	if (Geqo_random_seed >= 0)
-		srandom((unsigned int) Geqo_random_seed);
-	else
-		srandom((unsigned int) time(NULL));
 
 /* allocate genetic pool memory */
 	pool = alloc_pool(pool_size, number_of_rels);

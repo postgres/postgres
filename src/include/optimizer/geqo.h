@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geqo.h,v 1.31 2003/08/04 02:40:13 momjian Exp $
+ * $Id: geqo.h,v 1.32 2003/09/07 15:26:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -63,8 +63,6 @@ extern double Geqo_selection_bias;
 #define DEFAULT_GEQO_SELECTION_BIAS 2.0
 #define MIN_GEQO_SELECTION_BIAS 1.5
 #define MAX_GEQO_SELECTION_BIAS 2.0
-
-extern int	Geqo_random_seed;	/* or negative to use current time */
 
 
 /* routines in geqo_main.c */

@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2003, PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/tab-complete.c,v 1.84 2003/08/04 23:59:40 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/tab-complete.c,v 1.85 2003/09/07 15:26:54 tgl Exp $
  */
 
 /*----------------------------------------------------------------------
@@ -534,7 +534,6 @@ psql_completion(char *text, int start, int end)
 		"geqo_effort",
 		"geqo_generations",
 		"geqo_pool_size",
-		"geqo_random_seed",
 		"geqo_selection_bias",
 		"geqo_threshold",
 		"join_collapse_limit",
