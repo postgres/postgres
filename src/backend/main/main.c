@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/main/main.c,v 1.73 2004/02/02 00:11:31 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/main/main.c,v 1.74 2004/02/22 21:26:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -49,8 +49,6 @@
 int
 main(int argc, char *argv[])
 {
-	char	  **new_argv;
-	int			i;
 	int			len;
 	struct passwd *pw;
 	char	   *pw_name_persist;
@@ -116,30 +114,18 @@ main(int argc, char *argv[])
 	 */
 
 	/*
-	 * Remember the physical location of the initially given argv[] array,
-	 * since on some platforms that storage must be overwritten in order
-	 * to set the process title for ps.  Then make a copy of the argv[]
-	 * array for subsequent use, so that argument parsing doesn't get
-	 * affected if init_ps_display overwrites the original argv[].
+	 * Remember the physical location of the initially given argv[] array
+	 * for possible use by ps display.  On some platforms, the argv[]
+	 * storage must be overwritten in order to set the process title for ps.
+	 * In such cases save_ps_display_args makes and returns a new copy of
+	 * the argv[] array.
 	 *
-	 * (NB: do NOT think to remove the copying of argv[], even though
-	 * postmaster.c finishes looking at argv[] long before we ever
-	 * consider changing the ps display.  On some platforms, getopt()
-	 * keeps pointers into the argv array, and will get horribly confused
-	 * when it is re-called to analyze a subprocess' argument string if
-	 * the argv storage has been clobbered meanwhile.)
-	 *
-	 * On some platforms, save_ps_display_args moves the environment strings
-	 * to make extra room.	Therefore this should be done as early as
-	 * possible during startup, to avoid entanglements with code that
-	 * might save a getenv() result pointer.
+	 * save_ps_display_args may also move the environment strings to make
+	 * extra room. Therefore this should be done as early as possible during
+	 * startup, to avoid entanglements with code that might save a getenv()
+	 * result pointer.
 	 */
-	save_ps_display_args(argc, argv);
-
-	new_argv = (char **) malloc((argc + 1) * sizeof(char *));
-	for (i = 0; i < argc; i++)
-		new_argv[i] = strdup(argv[i]);
-	new_argv[argc] = NULL;
+	argv = save_ps_display_args(argc, argv);
 
 	/*
 	 * Set up locale information from environment.	Note that LC_CTYPE and
@@ -225,33 +211,33 @@ main(int argc, char *argv[])
 	 * depending on the program name (and possibly first argument) we
 	 * were called with. The lack of consistency here is historical.
 	 */
-	len = strlen(new_argv[0]);
+	len = strlen(argv[0]);
 
-	if ((len >= 10 && strcmp(new_argv[0] + len - 10, "postmaster") == 0)
+	if ((len >= 10 && strcmp(argv[0] + len - 10, "postmaster") == 0)
 #ifdef WIN32
-		|| (len >= 14 && strcmp(new_argv[0] + len - 14, "postmaster.exe") == 0)
+		|| (len >= 14 && strcmp(argv[0] + len - 14, "postmaster.exe") == 0)
 #endif
 		)
 	{
 		/* Called as "postmaster" */
-		exit(PostmasterMain(argc, new_argv));
+		exit(PostmasterMain(argc, argv));
 	}
 
 	/*
 	 * If the first argument is "-boot", then invoke bootstrap mode. Note
 	 * we remove "-boot" from the arguments passed on to BootstrapMain.
 	 */
-	if (argc > 1 && strcmp(new_argv[1], "-boot") == 0)
-		exit(BootstrapMain(argc - 1, new_argv + 1));
+	if (argc > 1 && strcmp(argv[1], "-boot") == 0)
+		exit(BootstrapMain(argc - 1, argv + 1));
 
 #ifdef EXEC_BACKEND
 	/*
 	 * If the first argument is "-forkexec", then invoke SubPostmasterMain. Note
 	 * we remove "-forkexec" from the arguments passed on to SubPostmasterMain.
 	 */
-	if (argc > 1 && strcmp(new_argv[1], "-forkexec") == 0)
+	if (argc > 1 && strcmp(argv[1], "-forkexec") == 0)
 	{
-		SubPostmasterMain(argc - 2, new_argv + 2);
+		SubPostmasterMain(argc - 2, argv + 2);
 		exit(0);
 	}
 
@@ -259,9 +245,9 @@ main(int argc, char *argv[])
 	 * If the first argument is "-statBuf", then invoke pgstat_main. Note
 	 * we remove "-statBuf" from the arguments passed on to pgstat_main.
 	 */
-	if (argc > 1 && strcmp(new_argv[1], "-statBuf") == 0)
+	if (argc > 1 && strcmp(argv[1], "-statBuf") == 0)
 	{
-		pgstat_main(argc - 2, new_argv + 2);
+		pgstat_main(argc - 2, argv + 2);
 		exit(0);
 	}
 
@@ -269,9 +255,9 @@ main(int argc, char *argv[])
 	 * If the first argument is "-statCol", then invoke pgstat_mainChild. Note
 	 * we remove "-statCol" from the arguments passed on to pgstat_mainChild.
 	 */
-	if (argc > 1 && strcmp(new_argv[1], "-statCol") == 0)
+	if (argc > 1 && strcmp(argv[1], "-statCol") == 0)
 	{
-		pgstat_mainChild(argc - 2, new_argv + 2);
+		pgstat_mainChild(argc - 2, argv + 2);
 		exit(0);
 	}
 #endif
@@ -280,7 +266,7 @@ main(int argc, char *argv[])
 	 * If the first argument is "--describe-config", then invoke runtime
 	 * configuration option display mode.
 	 */
-	if (argc > 1 && strcmp(new_argv[1], "--describe-config") == 0)
+	if (argc > 1 && strcmp(argv[1], "--describe-config") == 0)
 		exit(GucInfoMain());
 
 	/*
@@ -293,7 +279,7 @@ main(int argc, char *argv[])
 	if (pw == NULL)
 	{
 		fprintf(stderr, gettext("%s: invalid effective UID: %d\n"),
-				new_argv[0], (int) geteuid());
+				argv[0], (int) geteuid());
 		exit(1);
 	}
 	/* Allocate new memory because later getpwuid() calls can overwrite it */
@@ -306,11 +292,11 @@ main(int argc, char *argv[])
 		if (!GetUserName(pw_name_persist, &namesize))
 		{
 			fprintf(stderr, gettext("%s: could not determine user name (GetUserName failed)\n"),
-					new_argv[0]);
+					argv[0]);
 			exit(1);
 		}
 	}
 #endif
 
-	exit(PostgresMain(argc, new_argv, pw_name_persist));
+	exit(PostgresMain(argc, argv, pw_name_persist));
 }
