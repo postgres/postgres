@@ -4,11 +4,12 @@ AC_PREFIX_DEFAULT(/usr/local/pgsql)
 
 AC_CANONICAL_HOST
 
+tas_file=dummy.s
 case "$host_os" in
  solaris*)
         case "$host_cpu" in
-          sparc) os=sparc_solaris need_tas=yes ;;
-           i386) os=i386_solaris need_tas=yes ;;
+          sparc) os=sparc_solaris need_tas=yes tas_file=sparc_solaris.s ;;
+           i386) os=i386_solaris need_tas=yes tas_file=i386_solaris ;;
         esac ;;
    sunos*) os=sunos4 need_tas=no ;;
      aux*) os=aux need_tas=no ;;
@@ -20,7 +21,7 @@ case "$host_os" in
 nextstep*) os=nextstep need_tas=no ;;
   ultrix*) os=ultrix4 need_tas=no ;;
     irix*) os=irix5 need_tas=no ;;
-    hpux*) os=hpux need_tas=yes ;;
+    hpux*) os=hpux need_tas=yes tas_file=hpux.s ;;
      osf*) os=alpha need_tas=no ;;
      sco*) os=sco need_tas=no ;;
  machten*) os=machten need_tas=no ;;
@@ -45,7 +46,7 @@ esac
 
 if test "X$need_tas" = "Xyes"
 then
-	AC_LINK_FILES(backend/port/tas/${os}.s, backend/port/tas.s)
+	AC_LINK_FILES(backend/port/tas/${tas_file}, backend/port/tas.s)
 	TAS=tas.o
 	AC_SUBST(TAS) 
 fi
