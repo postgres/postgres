@@ -100,11 +100,15 @@ Tsearch2 Integration
 	The first step is to generate an auxiliary table containing all
 	the unique words in the Tsearch2 index:
 
-	CREATE TABLE words AS 
-		SELECT word FROM stat('SELECT vector FROM documents');
+	CREATE TABLE words AS SELECT word FROM
+		stat('SELECT to_tsvector(''simple'', bodytext) FROM documents');
 
-	Where 'documents' is the table that contains the Tsearch2 index
-	column 'vector', of type 'tsvector'.
+	Where 'documents' is a table that has a text field 'bodytext'
+	that TSearch2 is used to search.  The use of the 'simple' dictionary
+	with the to_tsvector function, instead of just using the already
+	existing vector is to avoid creating a list of already stemmed
+	words.  This way, only the original, unstemmed words are added
+	to the word list.
 
 	Next, create a trigram index on the word column:
 
