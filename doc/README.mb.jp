@@ -1,4 +1,4 @@
-postgresql 6.4 multi-byte (MB) support README	       1998/7/22 作成
+postgresql 6.4 multi-byte (MB) support README	       1998/12/16 作成
 
 							石井達夫
 						t-ishii@sra.co.jp
@@ -19,7 +19,7 @@ postgresql 6.4 multi-byte (MB) support README	       1998/7/22 作成
     6.マルチバイト文字の LIKE 検索が使用可能
     7.character_length(), position(), substring() でのマルチバイト
       サポート
-    8.環境変数 PGCLIENTENCODING により、クライアント側の文字コード
+    8.環境変数 PGCLIENTENCODING により、フロントエンド側のエンコーディング
       がバックエンド側と異る場合に、自動的にコード変換を行ないます。
 
 インストール：
@@ -27,20 +27,17 @@ postgresql 6.4 multi-byte (MB) support README	       1998/7/22 作成
   デフォルトでは PostgreSQL はマルチバイトをサポートしていません。
   マルチバイトサポートを有効にする方法を説明します。
 
-  src/Makefile.custom というファイルを作り、
-	
-	MB=EUC_JP
-
-  の 1 行を追加します。あるいは、configure 起動時に以下のように指定します。
+  configure 起動時に以下のように指定します。
 
   % configure --with-mb=EUC_JP
 
-  文字コードとしては EUC_JP を含め、以下のコードが initdb による
+  エンコーディングとしては EUC_JP を含め、以下のコードが initdb による
   データベース初期化時およびデータベース作成時
   (Unix コマンドの createdb もしくは SQL の create database)
-  に指定できます。Makefile.custom あるいは configure で指定した文字コー
-  ドは initdb の省略時の文字コードになります。
+  に指定できます。configure で指定したエンコーディングは initdb の省略時の
+  エンコーディングになります。
 
+	SQL_ASCII	ASCII
 	EUC_JP		日本語 EUC
 	EUC_CN		GB をベースにした中文EUC。code set 2 は
 			SS2+2バイトコード = 3バイト表現です。
@@ -72,42 +69,68 @@ postgresql 6.4 multi-byte (MB) support README	       1998/7/22 作成
   http://www.sra.co.jp/people/t-ishii/PostgreSQL/ でも簡単なインストー
   ル方法を紹介しています。
 
-initdb/createdb/create database における文字コードの指定について
+initdb/createdb/create database におけるエンコーディングの指定について
 
-  initdb では以下のオプションで文字コードが指定できます。
+  initdb では以下のオプションでエンコーディングが指定できます。
 
-	-e 文字コード
-	-pgencoding 文字コード
+	-e エンコーディング
+	-pgencoding エンコーディング
 
-  ここで指定した文字コードは、以後 createdb/create database で文字コードを
-  省略した場合に設定される文字コードになります。-e または -pgencoding
-  オプションを省略した場合は、Makefile.custom あるいは configure で指
-  定した文字コードが採用されます。
+  ここで指定したエンコーディングは、以後 createdb/create database でエ
+  ンコーディングを省略した場合に設定されるエンコーディングになります。
+  -e または -pgencoding オプションを省略した場合は、configure で指定し
+  たエンコーディングが採用されます。
 
-  createdb では以下のオプションで文字コードが指定できます。
+  createdb では以下のオプションでエンコーディングが指定できます。
 
-	-E 文字コード
+	-E エンコーディング
 
-  create database では以下のオプションで文字コードが指定できます。
+  create database では以下のオプションでエンコーディングが指定できます。
 
-	CREATE DATABASE dbanme WITH ENCODING = '文字コード';
+	CREATE DATABASE dbanme WITH ENCODING = 'エンコーディング';
 
   LOCATION を同時に指定する場合は以下のようになります。
 
-	CREATE DATABASE dbanme WITH LOCATION = 'path' ENCODING = '文字コード';
+	CREATE DATABASE dbanme WITH LOCATION = 'path' ENCODING = 'エンコーディング';
 
-  createdb/create database は、文字コード指定を省略した場合は、initdb 
-  で指定した文字コードが採用されます。
+  createdb/create database は、エンコーディング指定を省略した場合は、initdb 
+  で指定したエンコーディングが採用されます。
+
+  データベースのエンコーディングは、psql の \l や、SQL 文の
+  select * from pg_database で参照できます。
+
+	datname      |datdba|encoding|datpath      
+	-------------+------+--------+-------------
+	template1    |  1739|       1|template1    
+	postgres     |  1739|       0|postgres     
+	euc_jp       |  1739|       1|euc_jp       
+	euc_kr       |  1739|       3|euc_kr       
+	euc_cn       |  1739|       2|euc_cn       
+	unicode      |  1739|       5|unicode      
+	mule_internal|  1739|       6|mule_internal
+
+  encoding カラムの数値がそのデータベースのエンコーディングを表します
+  (エンコーディングID)。エンコーディング ID をエンコーディング名に変換
+  するには、pg_encoding コマンドを使用します。たとえば、
+
+	$ pg_encoding 1
+	EUC_JP
+
+   のようになります。なお、pg_encoding は数字以外が与えられるとエンコー
+   ディング名と見倣してエンコーディングIDを返します。
+
+	$ pg_encoding EUC_JP
+	1
 
 環境変数 PGCLIENTENCODING について：
 
   環境変数 PGCLIENTENCODING が設定されていない場合、libpq はセッション
-  開始時にサーバ側に文字コードを問い合わせ、その値を環境変数 
+  開始時にバックエンド側にエンコーディングを問い合わせ、その値を環境変数 
   PGCLIENTENCODING に設定します。
 
-  環境変数 PGCLIENTENCODING が設定されている場合はその値が優先され、サー
-  バ側と異なる文字コードが使用できます。設定可能な文字コードは、上記に
-  加え、SJIS (シフトJIS)が指定できます。
+  環境変数 PGCLIENTENCODING が設定されている場合はその値が優先され、バッ
+  クエンド側と異なるエンコーディングが使用できます。設定可能なエンコー
+  ディングは、上記に加え、SJIS (シフトJIS)が指定できます。
 
 	ちなみに、SJIS は JISX0201 の 1バイトカナ、いわゆる「半角カタ
 	カナ」もサポートしています(決して「半角カタカナ」の使用をお勧
@@ -115,47 +138,48 @@ initdb/createdb/create database における文字コードの指定について
 
   たとえば、MB=EUC_JP で PostgeSQL がインストールされている場合、
   postmaster を立ち上げるときに環境変数 PGCLIENTENCODING に SJIS を設
-  定すると、クライアントは SJIS コードで PostgreSQL にアクセスできるよ
+  定すると、フロントエンドは SJIS コードで PostgreSQL にアクセスできるよ
   うになります。ただし、データベースに格納されるデータ自体はあくまで 
   MB で指定した EUC_JP のままです。
 
-  クライアント側でセッション毎に文字コードを変えることもできます。
-  セッション開始時に環境変数 PGCLIENTENCODING がセットされていると、そ
-  れが優先されてクライアント側の文字コードに採用されます。この機能を利
+  フロントエンド側でセッション毎にエンコーディングを変えることもできま
+  す。セッション開始時に環境変数 PGCLIENTENCODING がセットされていると、
+  それがフロントエンド側のエンコーディングに採用されます。この機能を利
   用すると、あるユーザは EUC_JP で、別なユーザは SJIS で同じデータベー
   スにアクセスするというようなことができるようになります。
 
   MB=MULE_INTERNAL で PostgreSQL をインストールしておくと、普段は 
-  EUC_JP でクライアントを利用し、複数の文字集合を混在させるときだけク
+  EUC_JP でフロントエンドを利用し、複数の文字集合を混在させるときだけク
   ライアントを MULE_INTERNAL に設定するなどの使い分けができて便利です。
   ただ、一般に EUC_JP に比べ、MULE_INTERNAL によるデータ表現はややスペー
   スを喰うので、そのへんは考慮しておく必要があります。たとえば、2バイ
   トで表現できる漢字は MULE_INTERNAL では 3バイトを要します。
 
-  注意しておく必要があるのは、サーバ側の文字コードとクライアント側の文
-  字コードがいつも相互変換できるとは限らないことです。極端な話、サーバ
-  側が EUC_JP なのに、クライアント側が EUC_KR だったらどうなるでしょう。
+  注意しておく必要があるのは、バックエンド側のエンコーディングとフロン
+  トエンド側のエンコーディングがいつも相互変換できるとは限らないことで
+  す。極端な話、バックエンド側が EUC_JP なのに、フロントエンド側が
+  EUC_KR だったらどうなるでしょう。
   この場合 PostgreSQL は変換できないコードを 16進表現に変換してしまい
   ます。たとえば、"(bdae)" のように。なお、この 16進表現は mule
-  internalcode のコードであることに注意して下さい。これは、直接クライ
-  アント <--> サーバの文字コードを変換するのではなく、一度内部表現であ
-  る mule internal code を経由しているためです。
+  internalcode のコードであることに注意して下さい。これは、直接フロン
+  トエンド <--> バックエンドのエンコーディングを変換するのではなく、一
+  度内部表現である mule internal code を経由しているためです。
 
-  クライアント側の文字コードの設定は、"set client_encoding" コマンドで
-  も可能です。たとえば、
+  フロントエンド側のエンコーディングの設定は、"set client_encoding" コ
+  マンドでも可能です。たとえば、
 
 	set client_encoding to 'sjis';
 
-  で明示的にクライアント側の文字コードを SJIS に設定できます。実際、ク
-  ライアントがサーバに接続する際には libpq の中で "set
+  でフロントエンド側のエンコーディングを SJIS に設定できます。実際、ク
+  ライアントがバックエンドに接続する際には libpq の中で "set
   client_encoding" コマンドを発行しています。セッション中に 
-  set client_encoding" コマンドを発行すれば、動的に文字コードの切替え
-  ができますが、その際には環境変数 PGCLIENTENCODING を同時にクライアン
-  トアプリケーションの中で設定し直す必要があります。(psql には現在この
-  機能がないため、事実上動的にクライアント側の文字コードを設定すること
-  ができません。)
+  set client_encoding" コマンドを発行すれば、動的にエンコーディングの切替え
+  ができますが、その際には環境変数 PGCLIENTENCODING を同時にフロントエ
+  ンドアプリケーションの中で設定し直す必要があります。(psql には現在こ
+  の機能がないため、事実上動的にフロントエンド側のエンコーディングを設
+  定することができません。)
 
-  現在設定されているクライアント側の文字コードは
+  現在設定されているフロントエンド側のエンコーディングは
 
 	show client_encoding;
 
@@ -163,14 +187,14 @@ initdb/createdb/create database における文字コードの指定について
 
 	reset client_encoding;
 
-  は、デフォルトのクライアント文字コード設定に復帰させます。postmaster 
-  を立ち上げるときに環境変数 PGCLIENTENCODING が設定されているとその文
-  字コードに、そうでなければコンパイル時に指定したサーバ側の文字コード
-  と同じになります。
+  は、デフォルトのフロントエンドエンコーディング設定に復帰させます。
+  postmasterを立ち上げるときに環境変数 PGCLIENTENCODING が設定されてい
+  るとそのエンコーディングに、そうでなければコンパイル時に指定したバッ
+  クエンド側のエンコーディングと同じになります。
 
 制限事項：
 
-  SJIS を使用する場合、PostgreSQL のクライアントでまともに対応している
+  SJIS を使用する場合、PostgreSQL のフロントエンドでまともに対応している
   のは psql だけです。Tcl/Tk、そのほかは対応してません。
 
 謝辞：
@@ -182,10 +206,30 @@ initdb/createdb/create database における文字コードの指定について
 
 改定履歴：
 
+  1998/12/16 本ドキュメント修正。
+	* Makefile.custom で MB=EUC_JP などと設定する方法は 6.4 以降
+	  サポートされていないので削除した。
+	* 文字コード → エンコーディング、クライアント→フロントエンド
+	  サーバ→バックエンド にそれぞれ語句を修正。
+
+  1998/12/15 6.4 向けバグ修正パッチリリース。
+	* SQL_ASCII サポートのバグ修正
+
+  1998/11/21 6.4 向けバグ修正パッチリリース。
+	* BINARY CURSOR の問題を修正
+	* pg_dumpall のバグ修正
+
+  1998/11/5 6.4 リリース。
+	* pg_database の encoding カラムが MB が有効でないときにも
+	  追加されるようになった。そのため、MB が有効でないときには、
+	  ASCII のエンコーディングを表す SQL_ASCII を新しいエンコーディング
+	  として追加した。これにともない、エンコーディング名に対応する
+	  エンコーディングIDが SQL_ASCII を 0 とする番号に変更になった。
+
   1998/7/22 6.4 α向けにパッチをリリース。
-	* initdb/createdb/create database でサーバ側の文字コードを設定
-          できる機能実装。このため、システムカタログの pg_database に
-          新しいカラム encoding を追加(MBが有効な時だけ)
+	* initdb/createdb/create database でバックエンド側の
+	  エンコーディングを設定きる機能実装。このため、システムカタロ
+	  グの pg_database に新しいカラム encoding を追加(MBが有効な時だけ)
 	* copy が PGCLIENTENCODING に対応
 	* SQL92 の "SET NAMES" をサポート(MBが有効な時だけ)
 	* LATIN2-5 をサポート
@@ -199,9 +243,9 @@ initdb/createdb/create database における文字コードの指定について
 
   1998/5/18 機能追加／バグ修正(mb_b2.patch として pgsql-jp ML にリリース、
 	本家では 6.4 snapshot に取り込まれる予定)
-	* 環境変数 PGCLIENTENCODING のサポート。クライアント側の
-	  文字コードを指定する。現在、SJIS, EUC_*, MULE_INTERNAL, LATIN1
-	  が指定できる。また、
+	* 環境変数 PGCLIENTENCODING のサポート。フロントエンド側の
+	  エンコーディングを指定する。現在、SJIS, EUC_*, MULE_INTERNAL, 
+	  LATIN1 が指定できる。また、
 	  set client_encoding to 'sjis';
 	  でも可能
 	* 8bit 文字が渡ると問題が起きる箇所にできるだけ対応
