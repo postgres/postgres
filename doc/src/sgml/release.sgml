@@ -1,20 +1,20 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.211 2003/10/16 03:55:31 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.212 2003/10/16 04:11:53 momjian Exp $
 -->
 
 <appendix id="release">
  <title>Release Notes</title>
 
  <sect1 id="release-devel">
-  <title>7.4 Development Branch</title>
+  <title>Release 7.4</title>
 
+<!--
   <para>
    Below is a subset of the changes that have gone into the
    development branch of <productname>PostgreSQL</productname> since
    version 7.3.  For a complete list of changes, consult the CVS logs.
   </para>
 
-<!--
 Developers: When you add a feature, mention it here.  This avoids
 lossiness when digging out the information from the CVS logs, and
 furthermore it advertises your feature to external parties at the
@@ -38,8 +38,8 @@ data types</para></glossdef>
 
 <glossentry><glossterm> SSL</glossterm>
 
-<glosssdef><para> Major improvements in SSL performance and
-reliability</para></glosssdef>
+<glossdef><para> Major improvements in SSL performance and
+reliability</para></glossdef>
 </glossentry>
 
 <glossentry><glossterm> Index Growth Prevention</glossterm>
@@ -324,7 +324,7 @@ required for those wishing to migrate data from any previous release.</para>
 <listitem><para>Allow proper comparisons for arrays (Joe)</para></listitem>
 <listitem><para>Allow array concatenation with '||' (Joe)</para></listitem>
 <listitem><para>Allow indexes on array columns, and used in ORDER BY and DISTINCT (Joe)</para></listitem>
-<listitem><para>Allow WHERE qualification 'expr <oper> ANY/SOME/ALL (array-expr)' (Joe)
+<listitem><para>Allow WHERE qualification 'expr &gt;oper&lt; ANY/SOME/ALL (array-expr)' (Joe)
 <listitem><para>Allow polymorphic SQL functions (Joe)</para></listitem>
 <listitem><para>New array functions array_append(), array_cat(), array_lower(),
   array_prepend(), array_to_string(), array_upper(), string_to_array() (Joe)</para></listitem>
@@ -353,7 +353,7 @@ required for those wishing to migrate data from any previous release.</para>
 <listitem><para>Assume NaN value to be larger than any other value in MIN()/MAX() (Tom)</para></listitem>
 <listitem><para>Prevent interval from suppressing ':00' seconds display</para></listitem>
 <listitem><para>New pg_get_triggerdef(prettyprint) and pg_constraint_is_visible() functions</para></listitem>
-<listitem><para>Allow time to be specified as '040506' or '0405' (Tom)</para></listitem></oper></para></listitem>
+<listitem><para>Allow time to be specified as '040506' or '0405' (Tom)</para></listitem>
 </itemizedlist></sect3>
 
 <sect3><title>Server-side Languages</title>
@@ -622,7 +622,7 @@ thresholds.</para></listitem>
 <listitem><para>Fix <function>abstime-to-time</function> cast function (fix is
        not applied unless you <application>initdb</application>)</para></listitem>
 <listitem><para>Fix <application>pg_proc</application> entry for
-<type> <type>timestampt_izone</type> (fix is not applied unless you
+      <type>timestampt_izone</type> (fix is not applied unless you
 	<application>initdb</application>)</para></listitem>
 <listitem><para>Make <function>EXTRACT(EPOCH FROM timestamp without time zone)</function> treat input as local time</para></listitem>
 <listitem><para><command>'now'::timestamptz</command> gave wrong answer if timezone changed earlier in transaction</para></listitem>
