@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Sun Sep  1 18:35:52 EDT 2002
+Last updated:		Mon Sep  2 00:42:59 EDT 2002
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -515,7 +515,6 @@ Source Code
 * Add documentation for perl, including mention of DBI/DBD perl location
 * Add optional CRC checksum to heap and index pages
 * Change representation of whole-tuple parameters to functions
-* Evaluate AIX cs() spinlock macro for performance optimizations (Tatsuo)
 * Clarify use of 'application' and 'command' tags in SGML docs
 * Better document ability to build only certain interfaces (Marc)
 * Remove or relicense modules that are not under the BSD license, if possible
