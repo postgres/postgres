@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_rule.sgml,v 1.16 2000/05/20 11:38:25 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_rule.sgml,v 1.17 2000/07/21 04:22:54 momjian Exp $
 Postgres documentation
 -->
 
@@ -302,7 +302,7 @@ CREATE RULE example_3 AS
    </programlisting>
   </para>
   <para>
-   Create a view of the employees working in the toy department.
+   Create a view of the employees working in the toy department:
    <programlisting>
 CREATE toyemp(name = char16, salary = int4);
 
@@ -315,7 +315,7 @@ CREATE RULE example_4 AS
    </programlisting>
   </para>
   <para>
-   All new employees must make 5,000 or less
+   All new employees must make 5,000 or less:
    <programlisting>
 CREATE RULE example_5 AS
     ON INERT TO emp WHERE new.salary > 5000

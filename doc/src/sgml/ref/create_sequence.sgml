@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_sequence.sgml,v 1.12 2000/05/08 16:19:56 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_sequence.sgml,v 1.13 2000/07/21 04:25:05 momjian Exp $
 Postgres documentation
 -->
 
@@ -311,7 +311,7 @@ SELECT last_value FROM <replaceable>seqname</replaceable>;
 CREATE SEQUENCE serial START 101;
   </programlisting>
   <para>
-   Select the next number from this sequence
+   Select the next number from this sequence:
    <programlisting>
 SELECT NEXTVAL ('serial');
     
