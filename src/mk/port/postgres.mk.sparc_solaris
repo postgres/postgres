@@ -5,7 +5,7 @@
 #
 # Copyright (c) 1994-5, Regents of the University of California
 #
-#    $Id: postgres.mk.sparc_solaris,v 1.1.1.1 1996/07/09 06:22:20 scrappy Exp $
+#    $Id: postgres.mk.sparc_solaris,v 1.2 1996/07/23 03:24:47 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 ifndef MK_PORT
@@ -29,7 +29,7 @@ INSTALL=/usr/ucb/install
 # everything to compile.  :-/
 #
 # The extra -I flag is to scoop up extra BSD-emulating headers.
-CFLAGS_BE+= -DSYSV_DIRENT -I$(POSTGRESDIR)/src/backend/port/sparc_solaris
+CFLAGS_BE+= -DSYSV_DIRENT -I$(srcdir)/backend/port/sparc_solaris
 LDADD_BE+= -lsocket -lnsl
 
 LD_ADD+= $(LDADD_BE)

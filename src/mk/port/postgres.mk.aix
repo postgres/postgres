@@ -5,7 +5,7 @@
 #
 # Copyright (c) 1994-5, Regents of the University of California
 #
-#    $Id: postgres.mk.aix,v 1.1.1.1 1996/07/09 06:22:20 scrappy Exp $
+#    $Id: postgres.mk.aix,v 1.2 1996/07/23 03:24:47 scrappy Exp $
 #
 #   
 #-------------------------------------------------------------------------
@@ -43,8 +43,10 @@ CFLAGS_BE+= -qchars=signed -qmaxmem=4000 -DHAVE_ANSI_CPP
 EXPSUFF=	.exp
 SLSUFF=		.so
 
+MKLDEXPORT=$(srcdir)/backend/port/aix/mkldexport.sh
+
 %$(EXPSUFF):  %.o
-	mkldexport $(objdir)/$(<F) `pwd` > $(objdir)/$(@F)
+	$(MKLDEXPORT) $(objdir)/$(<F) `pwd` > $(objdir)/$(@F)
 
 %.so: %.o %$(EXPSUFF)
 	@echo The link stage here:
