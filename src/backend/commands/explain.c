@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/commands/explain.c,v 1.8 1997/01/16 14:55:58 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/commands/explain.c,v 1.9 1997/04/05 06:42:32 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -147,6 +147,9 @@ explain_outNode(StringInfo str, Plan *plan, int indent, ExplainState *es)
 	break;
     case T_Sort:
 	pname = "Sort";
+	break;
+    case T_Group:
+	pname = "Group";
 	break;
     case T_Agg:
 	pname = "Aggregate";
