@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.121 2000/02/21 12:26:19 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.122 2000/02/24 15:53:12 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -592,6 +592,7 @@ connectMakeNonblocking(PGconn *conn)
 #ifndef WIN32
 	if (fcntl(conn->sock, F_SETFL, O_NONBLOCK) < 0)
 #else
+	int on = 1;
 	if (ioctlsocket(conn->sock, FIONBIO, &on) != 0)
 #endif
 	{

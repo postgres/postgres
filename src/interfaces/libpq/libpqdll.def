@@ -72,7 +72,7 @@ EXPORTS
 	initPQExpBuffer		@ 69
 	resetPQExpBuffer	@ 70
 	PQoidValue		@ 71
-	PQclientencoding	@ 72
+	PQclientEncoding	@ 72
 	PQenv2encoding		@ 73
 	appendBinaryPQExpBuffer	@ 74
 	appendPQExpBufferStr	@ 75
