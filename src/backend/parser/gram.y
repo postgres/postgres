@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.35 1998/10/08 18:29:41 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.36 1998/10/09 07:06:17 thomas Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -2099,6 +2099,12 @@ UnlistenStmt:  UNLISTEN relation_name
 				{
 					UnlistenStmt *n = makeNode(UnlistenStmt);
 					n->relname = $2;
+					$$ = (Node *)n;
+				}
+		| UNLISTEN '*'
+				{
+					UnlistenStmt *n = makeNode(UnlistenStmt);
+					n->relname = "*";
 					$$ = (Node *)n;
 				}
 ;
