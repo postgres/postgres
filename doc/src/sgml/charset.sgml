@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/charset.sgml,v 2.55 2005/03/13 02:20:50 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/charset.sgml,v 2.56 2005/03/13 02:33:03 momjian Exp $ -->
 
 <chapter id="charset">
  <title>Localization</>
@@ -323,22 +323,27 @@ initdb --locale=sv_SE
         <row>
          <entry><literal>EUC_CN</literal></entry>
          <entry>Extended UNIX Code-CN (Chinese)</entry>
+         <entry></entry>
         </row>
         <row>
          <entry><literal>EUC_JP</literal></entry>
          <entry>Extended UNIX Code-JP (Japanese)</entry>
+         <entry></entry>
         </row>
         <row>
          <entry><literal>EUC_KR</literal></entry>
          <entry>Extended UNIX Code-KR (Korean)</entry>
+         <entry></entry>
         </row>
         <row>
          <entry><literal>EUC_TW</literal></entry>
          <entry>Extended UNIX Code-TW (Taiwanese)</entry>
+         <entry></entry>
         </row>
         <row>
          <entry><literal>GB18030</literal></entry>
          <entry>Chinese </entry>
+         <entry></entry>
         </row>
         <row>
          <entry><literal>GBK</literal></entry>
@@ -348,22 +353,27 @@ initdb --locale=sv_SE
         <row>
          <entry><literal>ISO_8859_5</literal></entry>
          <entry>ISO 8859-5/<acronym>ECMA</> 113 (Latin/Cyrillic)</entry>
+         <entry></entry>
         </row>
         <row>
          <entry><literal>ISO_8859_6</literal></entry>
          <entry>ISO 8859-6/<acronym>ECMA</> 114 (Latin/Arabic)</entry>
+         <entry></entry>
         </row>
         <row>
          <entry><literal>ISO_8859_7</literal></entry>
          <entry>ISO 8859-7/<acronym>ECMA</> 118 (Latin/Greek)</entry>
+         <entry></entry>
         </row>
         <row>
          <entry><literal>ISO_8859_8</literal></entry>
          <entry>ISO 8859-8/<acronym>ECMA</> 121 (Latin/Hebrew)</entry>
+         <entry></entry>
         </row>
         <row>
          <entry><literal>JOHAB</literal></entry>
          <entry>Korean <acronym>EUC</> (Hangle base)</entry>
+         <entry></entry>
         </row>
         <row>
          <entry><literal>KOI8</literal></entry>
@@ -423,6 +433,7 @@ initdb --locale=sv_SE
         <row>
          <entry><literal>MULE_INTERNAL</literal></entry>
          <entry>Mule internal code (Multi-lingual Emacs)</entry>
+         <entry></entry>
         </row>
         <row>
          <entry><literal>SJIS</literal></entry>
@@ -432,6 +443,7 @@ initdb --locale=sv_SE
         <row>
          <entry><literal>SQL_ASCII</literal></entry>
          <entry><acronym>ASCII</acronym></entry>
+         <entry></entry>
         </row>
         <row>
          <entry><literal>UHC</literal></entry>
@@ -451,10 +463,12 @@ initdb --locale=sv_SE
         <row>
          <entry><literal>WIN874</literal></entry>
          <entry>Windows CP874 (Thai)</entry>
+         <entry></entry>
         </row>
         <row>
          <entry><literal>WIN1250</literal></entry>
          <entry>Windows CP1250 (Central European)</entry>
+         <entry></entry>
         </row>
         <row>
          <entry><literal>WIN1251</literal></entry>
@@ -464,6 +478,7 @@ initdb --locale=sv_SE
         <row>
          <entry><literal>WIN1256</literal></entry>
          <entry>Windows CP1256 (Arabic)</entry>
+         <entry></entry>
         </row>
         <row>
          <entry><literal>WIN1258</literal></entry>
