@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Tue Sep  4 12:27:12 EDT 2001
+Last updated:		Wed Sep  5 20:04:07 EDT 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -178,7 +178,8 @@ COMMANDS
 	o Allow INSERT INTO tab (col1, ..) VALUES (val1, ..), (val2, ..)
 	o Allow INSERT INTO my_table VALUES (a, b, c, DEFAULT, x, y, z, ...)
 	o Disallow missing columns in INSERT ... VALUES, per ANSI
-	o Allow INSERT/UPDATE ... RETURNING new.col or old.col (Philip)
+	o Allow INSERT/UPDATE ... RETURNING new.col or old.col, handle
+	  RULE cases (Philip)
 * SHOW/SET
 	o Add SHOW command to display locks
 	o -Add SHOW command to show all settings
@@ -310,8 +311,11 @@ MISCELLANEOUS
 * Allow logging of query durations
 * Add hash for evaluating GROUP BY aggregates
 * -Read pg_hba.conf only on postmaster startup or SIGHUP (Bruce)
-* Improve spinlock code, perhaps with OS semaphores, sleeper queue, or
-  spining to obtain lock on multi-cpu systems
+* Improve spinlock code
+	o use SysV semaphores or queue of backends waiting on the lock
+	o wakeup sleeper or sleep for less than one clock tick
+	o spin for lock on multi-cpu machines, yield on single cpu machines
+	o read/write locks
 * Add queue of backends waiting for spinlock
 
 SOURCE CODE
