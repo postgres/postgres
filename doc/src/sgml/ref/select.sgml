@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/select.sgml,v 1.34 2000/12/08 20:11:11 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/select.sgml,v 1.35 2000/12/12 05:07:59 tgl Exp $
 Postgres documentation
 -->
 
@@ -19,25 +19,36 @@ Postgres documentation
   </refpurpose></refnamediv>
  <refsynopsisdiv>
   <refsynopsisdivinfo>
-   <date>1999-07-20</date>
+   <date>2000-12-11</date>
   </refsynopsisdivinfo>
   <synopsis>
 SELECT [ ALL | DISTINCT [ ON ( <replaceable class="PARAMETER">expression</replaceable> [, ...] ) ] ]
-    <replaceable class="PARAMETER">expression</replaceable> [ AS <replaceable class="PARAMETER">name</replaceable> ] [, ...]
+    * | <replaceable class="PARAMETER">expression</replaceable> [ AS <replaceable class="PARAMETER">output_name</replaceable> ] [, ...]
     [ INTO [ TEMPORARY | TEMP ] [ TABLE ] <replaceable class="PARAMETER">new_table</replaceable> ]
-    [ FROM [ ONLY ]<replaceable class="PARAMETER">table</replaceable> [ <replaceable class="PARAMETER">alias</replaceable> ] [, ...] ]
+    [ FROM <replaceable class="PARAMETER">from_item</replaceable> [, ...] ]
     [ WHERE <replaceable class="PARAMETER">condition</replaceable> ]
-    [ GROUP BY <replaceable class="PARAMETER">column</replaceable> [, ...] ]
+    [ GROUP BY <replaceable class="PARAMETER">expression</replaceable> [, ...] ]
     [ HAVING <replaceable class="PARAMETER">condition</replaceable> [, ...] ]
-    [ { UNION [ ALL ] | INTERSECT | EXCEPT } <replaceable class="PARAMETER">select</replaceable> ]
-    [ ORDER BY <replaceable class="PARAMETER">column</replaceable> [ ASC | DESC | USING <replaceable class="PARAMETER">operator</replaceable> ] [, ...] ]
+    [ { UNION | INTERSECT | EXCEPT [ ALL ] } <replaceable class="PARAMETER">select</replaceable> ]
+    [ ORDER BY <replaceable class="PARAMETER">expression</replaceable> [ ASC | DESC | USING <replaceable class="PARAMETER">operator</replaceable> ] [, ...] ]
     [ FOR UPDATE [ OF <replaceable class="PARAMETER">class_name</replaceable> [, ...] ] ]
     [ LIMIT { <replaceable class="PARAMETER">count</replaceable> | ALL } [ { OFFSET | , } <replaceable class="PARAMETER">start</replaceable> ]]
+
+where <replaceable class="PARAMETER">from_item</replaceable> can be:
+
+[ ONLY ] <replaceable class="PARAMETER">table_name</replaceable> [ * ]
+    [ [ AS ] <replaceable class="PARAMETER">alias</replaceable> [ ( <replaceable class="PARAMETER">column_alias_list</replaceable> ) ] ]
+|
+( <replaceable class="PARAMETER">select</replaceable> )
+    [ AS ] <replaceable class="PARAMETER">alias</replaceable> [ ( <replaceable class="PARAMETER">column_alias_list</replaceable> ) ]
+|
+<replaceable class="PARAMETER">from_item</replaceable> [ NATURAL ] <replaceable class="PARAMETER">join_type</replaceable> <replaceable class="PARAMETER">from_item</replaceable>
+    [ ON <replaceable class="PARAMETER">join_condition</replaceable> | USING ( <replaceable class="PARAMETER">join_column_list</replaceable> ) ]
   </synopsis>
   
   <refsect2 id="R2-SQL-SELECT-1">
    <refsect2info>
-    <date>2000-03-15</date>
+    <date>2000-12-11</date>
    </refsect2info>
    <title>
     Inputs
@@ -55,14 +66,14 @@ SELECT [ ALL | DISTINCT [ ON ( <replaceable class="PARAMETER">expression</replac
      </varlistentry>
      
      <varlistentry>
-      <term><replaceable class="PARAMETER">name</replaceable></term>
+      <term><replaceable class="PARAMETER">output_name</replaceable></term>
       <listitem>
        <para>
-	Specifies another name for a column or an expression using
+	Specifies another name for an output column using
 	the AS clause.  This name is primarily used to label the column
 	for display.  It can also be used to refer to the column's value in
 	ORDER BY and GROUP BY clauses.  But the
-	<replaceable class="PARAMETER">name</replaceable>
+	<replaceable class="PARAMETER">output_name</replaceable>
 	cannot be used in the WHERE or HAVING clauses; write out the
 	expression instead.
        </para>
@@ -75,7 +86,7 @@ SELECT [ ALL | DISTINCT [ ON ( <replaceable class="PARAMETER">expression</replac
      <listitem>
       <para>
 	If TEMPORARY or TEMP is specified,
-	the table is created unique to this session, and is
+	the output table is created unique to this session, and is
 	automatically dropped on session exit.
       </para>
      </listitem>
@@ -87,7 +98,7 @@ SELECT [ ALL | DISTINCT [ ON ( <replaceable class="PARAMETER">expression</replac
        <para>
 	If the INTO TABLE clause is specified, the result of the
 	query will be stored in a new table with the indicated
-	name.
+	name, rather than being returned to the client.
 	The target table (<replaceable class="PARAMETER">new_table</replaceable>) will
 	be created automatically and must not exist before this command.
         Refer to <command>SELECT INTO</command> for more information.
@@ -95,7 +106,7 @@ SELECT [ ALL | DISTINCT [ ON ( <replaceable class="PARAMETER">expression</replac
 	<note>
 	 <para>
 	  The <command>CREATE TABLE AS</command> statement will also
-	  create a new  table from a select query.
+	  create a new  table from a SELECT query.
 	 </para>
 	</note>
        </para>
@@ -103,22 +114,10 @@ SELECT [ ALL | DISTINCT [ ON ( <replaceable class="PARAMETER">expression</replac
      </varlistentry>
      
      <varlistentry>
-      <term><replaceable class="PARAMETER">table</replaceable></term>
+      <term><replaceable class="PARAMETER">from_item</replaceable></term>
       <listitem>
        <para>
-	The name of an existing table referenced by the FROM clause.
-       </para>
-      </listitem>
-     </varlistentry>
-     
-     <varlistentry>
-      <term><replaceable class="PARAMETER">alias</replaceable></term>
-      <listitem>
-       <para>
-	An alternate name for the preceding
-	<replaceable class="PARAMETER">table</replaceable>.
-	It is used for brevity or to eliminate ambiguity for joins
-	within a single table.
+        A table reference, sub-SELECT, or JOIN clause.  See below for details.
        </para>
       </listitem>
      </varlistentry>
@@ -128,16 +127,7 @@ SELECT [ ALL | DISTINCT [ ON ( <replaceable class="PARAMETER">expression</replac
       <listitem>
        <para>
 	A boolean expression giving a result of true or false.
-	See the WHERE clause.
-       </para>
-      </listitem>
-     </varlistentry>
-     
-     <varlistentry>
-      <term><replaceable class="PARAMETER">column</replaceable></term>
-      <listitem>
-       <para>
-	The name of a table's column.
+	See the WHERE and HAVING clause descriptions below.
        </para>
       </listitem>
      </varlistentry>
@@ -146,12 +136,100 @@ SELECT [ ALL | DISTINCT [ ON ( <replaceable class="PARAMETER">expression</replac
       <term><replaceable class="PARAMETER">select</replaceable></term>
       <listitem>
        <para>
-	A select statement with all features except the ORDER BY and
-	LIMIT clauses.
+	A select statement with all features except the ORDER BY, FOR UPDATE,
+	and LIMIT clauses (even those can be used when the select is
+	parenthesized).
        </para>
       </listitem>
      </varlistentry>
      
+    </variablelist>
+   </para>
+
+   <para>
+    FROM items can contain:
+    <variablelist>
+     
+     <varlistentry>
+      <term><replaceable class="PARAMETER">table_name</replaceable></term>
+      <listitem>
+       <para>
+	The name of an existing table or view.  If ONLY is specified, only that
+	table is scanned.  If ONLY is not specified, the table and all its
+	descendant tables (if any) are scanned.  * can be appended to the
+	table name to indicate that descendant tables are to be scanned,
+	but as of <Productname>Postgres</Productname> 7.1 this is the default
+	behavior.  (In releases before 7.1, ONLY was the default behavior.)
+       </para>
+      </listitem>
+     </varlistentry>
+     
+     <varlistentry>
+      <term><replaceable class="PARAMETER">alias</replaceable></term>
+      <listitem>
+       <para>
+	A substitute name for the preceding
+	<replaceable class="PARAMETER">table_name</replaceable>.
+	An alias is used for brevity or to eliminate ambiguity for self-joins
+	(where the same table is scanned multiple times).  If an alias is
+	written, a column alias list can also be written to provide
+	substitute names for one or more columns of the table.
+       </para>
+      </listitem>
+     </varlistentry>
+     
+     <varlistentry>
+      <term><replaceable class="PARAMETER">select</replaceable></term>
+      <listitem>
+       <para>
+	A sub-SELECT can appear in the FROM clause.  This acts as though
+	its output were created as a temporary table for the duration of
+	this single SELECT command.  Note that the sub-SELECT must be
+	surrounded by parentheses, and an alias <emphasis>must</emphasis>
+	be provided for it.
+       </para>
+      </listitem>
+     </varlistentry>
+     
+     <varlistentry>
+      <term><replaceable class="PARAMETER">join_type</replaceable></term>
+      <listitem>
+       <para>
+       One of
+       <command>[ INNER ] JOIN</command>,
+       <command>LEFT [ OUTER ] JOIN</command>,
+       <command>RIGHT [ OUTER ] JOIN</command>,
+       <command>FULL [ OUTER ] JOIN</command>, or
+       <command>CROSS JOIN</command>.
+       For INNER and OUTER join types, exactly one of NATURAL,
+       ON <replaceable class="PARAMETER">join_condition</replaceable>, or
+       USING ( <replaceable class="PARAMETER">join_column_list</replaceable> )
+       must appear.  For CROSS JOIN, none of these items may appear.
+       </para>
+      </listitem>
+     </varlistentry>
+     
+     <varlistentry>
+      <term><replaceable class="PARAMETER">join_condition</replaceable></term>
+      <listitem>
+       <para>
+       A qualification condition.  This is similar to the WHERE condition
+       except that it only applies to the two from_items being joined in
+       this JOIN clause.
+       </para>
+      </listitem>
+     </varlistentry>
+     
+     <varlistentry>
+      <term><replaceable class="PARAMETER">join_column_list</replaceable></term>
+      <listitem>
+       <para>
+       A USING column list ( a, b, ... ) is shorthand for the ON condition
+       left_table.a = right_table.a AND left_table.b = right_table.b ...
+       </para>
+      </listitem>
+     </varlistentry>
+
     </variablelist>
    </para>
   </refsect2>
@@ -192,7 +270,7 @@ SELECT [ ALL | DISTINCT [ ON ( <replaceable class="PARAMETER">expression</replac
 
  <refsect1 id="R1-SQL-SELECT-1">
   <refsect1info>
-   <date>2000-03-15</date>
+   <date>2000-12-11</date>
   </refsect1info>
   <title>
    Description
@@ -203,12 +281,15 @@ SELECT [ ALL | DISTINCT [ ON ( <replaceable class="PARAMETER">expression</replac
    if WHERE is omitted, all rows are candidates.
    (See <xref linkend="sql-where" endterm="sql-where-title">.)
   </para>
+
   <para>
-  <command>ONLY</command> will eliminate rows from subclasses of the table.
-  This was previously the default result, and getting subclasses was
-  obtained by appending <command>*</command> to the table name.
-  The old behaviour is available via the command 
-  <command>SET SQL_Inheritance TO OFF;</command>
+   Actually, the returned rows are not directly the rows produced by the
+   FROM/WHERE/GROUP BY/HAVING clauses; rather, the output rows are formed
+   by computing the SELECT output expressions for each selected row.
+   <command>*</command> can be written in the output list as a shorthand
+   for all the columns of the selected rows.  Also, one can write
+   <replaceable class="PARAMETER">table_name</replaceable><command>.*</command>
+   as a shorthand for the columns coming from just that table.
   </para>
 
   <para>
@@ -257,19 +338,28 @@ SELECT [ ALL | DISTINCT [ ON ( <replaceable class="PARAMETER">expression</replac
   </para>
    
   <para>
-   The UNION operator allows the result to be the collection of rows
+   SELECT queries can be combined using UNION, INTERSECT, and EXCEPT
+   operators.  Use parentheses if necessary to determine the ordering
+   of these operators.
+  </para>
+   
+  <para>
+   The UNION operator computes the collection of rows
    returned by the queries involved.
+   Duplicate rows are eliminated unless ALL is specified.
    (See <xref linkend="sql-union" endterm="sql-union-title">.)
   </para>
    
   <para>
-   The INTERSECT operator gives you the rows that are common to both queries.
+   The INTERSECT operator computes the rows that are common to both queries.
+   Duplicate rows are eliminated unless ALL is specified.
    (See <xref linkend="sql-intersect" endterm="sql-intersect-title">.)
   </para>
    
   <para>
-   The EXCEPT operator gives you the rows returned by the first query but
+   The EXCEPT operator computes the rows returned by the first query but
    not the second query.
+   Duplicate rows are eliminated unless ALL is specified.
    (See <xref linkend="sql-except" endterm="sql-except-title">.)
   </para>
    
@@ -288,6 +378,95 @@ SELECT [ ALL | DISTINCT [ ON ( <replaceable class="PARAMETER">expression</replac
    You must have SELECT privilege to a table to read its values
    (See the <command>GRANT</command>/<command>REVOKE</command> statements).
   </para>
+   
+  <refsect2 id="SQL-FROM">
+   <refsect2info>
+    <date>2000-12-11</date>
+   </refsect2info>
+   <title id="sql-from-title">
+    FROM Clause
+   </title>
+
+   <para>
+    The FROM clause specifies one or more source tables for the SELECT.
+    If multiple sources are specified, the result is conceptually the
+    Cartesian product of all the rows in all the sources --- but usually
+    qualification conditions are added to restrict the returned rows to
+    a small subset of the Cartesian product.
+   </para>
+
+   <para>
+    When a FROM item is a simple table name, it implicitly includes rows
+    from subclasses (inheritance children) of the table.
+    <command>ONLY</command> will
+    suppress rows from subclasses of the table.  Before
+    <Productname>Postgres</Productname> 7.1,
+    this was the default result, and adding subclasses was done
+    by appending <command>*</command> to the table name.
+    This old behaviour is available via the command 
+    <command>SET SQL_Inheritance TO OFF;</command>
+   </para>
+
+   <para>
+    A FROM item can also be a parenthesized sub-SELECT (note that an
+    alias clause is required for a sub-SELECT!).  This is an extremely
+    handy feature since it's the only way to get multiple levels of
+    grouping, aggregation, or sorting in a single query.
+   </para>
+
+   <para>
+    Finally, a FROM item can be a JOIN clause, which combines two simpler
+    FROM items.  (Use parentheses if necessary to determine the order
+    of nesting.)
+   </para>
+
+   <para>
+    A CROSS JOIN or INNER JOIN is a simple Cartesian product,
+    the same as you get from listing the two items at the top level of FROM.
+    CROSS JOIN is equivalent to INNER JOIN ON (TRUE), that is, no rows are
+    removed by qualification.  These join types are just a notational
+    convenience, since they do nothing you couldn't do with plain FROM and
+    WHERE.
+   </para>
+
+   <para>
+    LEFT OUTER JOIN returns all rows in the qualified Cartesian product
+    (ie, all combined rows that pass its ON condition), plus one copy of each
+    row in the left-hand table for which there was no right-hand row that
+    passed the ON condition.  This left-hand row is extended to the full
+    width of the joined table by inserting NULLs for the right-hand columns.
+    Note that only the JOIN's own ON or USING condition is considered while
+    deciding which rows have matches.  Outer ON or WHERE conditions are
+    applied afterwards.
+   </para>
+
+   <para>
+    Conversely, RIGHT OUTER JOIN returns all the joined rows, plus one row
+    for each unmatched right-hand row (extended with nulls on the left).
+    This is just a notational
+    convenience, since you could convert it to a LEFT OUTER JOIN by switching
+    the left and right inputs.
+   </para>
+
+   <para>
+    FULL OUTER JOIN returns all the joined rows, plus one row for each
+    unmatched left-hand row (extended with nulls on the right), plus one row
+    for each unmatched right-hand row (extended with nulls on the left).
+   </para>
+
+   <para>
+    For all the JOIN types except CROSS JOIN, you must write exactly one of
+    ON <replaceable class="PARAMETER">join_condition</replaceable>,
+    USING ( <replaceable class="PARAMETER">join_column_list</replaceable> ),
+    or NATURAL.  ON is the most general case: you can write any qualification
+    expression involving the two tables to be joined.
+    A USING column list ( a, b, ... ) is shorthand for the ON condition
+    left_table.a = right_table.a AND left_table.b = right_table.b ...
+    Also, USING implies that only one of each pair of equivalent columns will
+    be included in the JOIN output, not both.  NATURAL is shorthand for
+    a USING list that mentions all similarly-named columns in the tables.
+   </para>
+  </refsect2>
    
   <refsect2 id="SQL-WHERE">
    <refsect2info>
@@ -340,7 +519,7 @@ WHERE <replaceable class="PARAMETER">boolean_expr</replaceable>
     GROUP BY specifies a grouped table derived by the application
     of this clause:
     <synopsis>
-GROUP BY <replaceable class="PARAMETER">column</replaceable> [, ...]
+GROUP BY <replaceable class="PARAMETER">expression</replaceable> [, ...]
     </synopsis>
    </para>
 
@@ -357,9 +536,10 @@ GROUP BY <replaceable class="PARAMETER">column</replaceable> [, ...]
    </para>
 
    <para>
-    An item in GROUP BY can also be the name or ordinal number of an output
-    column (SELECT expression), or it can be an arbitrary expression formed
-    from input-column values.  In case of ambiguity, a GROUP BY name will
+    A GROUP BY item can be an input column name, or the name or ordinal
+    number of an output column (SELECT expression), or it can be an arbitrary
+    expression formed from input-column values.  In case of ambiguity, a GROUP
+    BY name will 
     be interpreted as an input-column name rather than an output column name.
    </para>
   </refsect2>
@@ -375,17 +555,17 @@ GROUP BY <replaceable class="PARAMETER">column</replaceable> [, ...]
     The optional HAVING condition has the general form:
     
     <synopsis>
-HAVING <replaceable class="PARAMETER">cond_expr</replaceable>
+HAVING <replaceable class="PARAMETER">boolean_expr</replaceable>
     </synopsis>
     
-    where <replaceable class="PARAMETER">cond_expr</replaceable> is the same
+    where <replaceable class="PARAMETER">boolean_expr</replaceable> is the same
     as specified for the WHERE clause.
    </para>
     
    <para>
     HAVING specifies a grouped table derived by the elimination
     of group rows that do not satisfy the
-    <replaceable class="PARAMETER">cond_expr</replaceable>.
+    <replaceable class="PARAMETER">boolean_expr</replaceable>.
     HAVING is different from WHERE:
     WHERE filters individual rows before application of GROUP BY,
     while HAVING filters group rows created by GROUP BY.
@@ -393,7 +573,7 @@ HAVING <replaceable class="PARAMETER">cond_expr</replaceable>
 
    <para>
     Each column referenced in 
-    <replaceable class="PARAMETER">cond_expr</replaceable> shall unambiguously
+    <replaceable class="PARAMETER">boolean_expr</replaceable> shall unambiguously
     reference a grouping column, unless the reference appears within an
     aggregate function.
    </para>
@@ -408,15 +588,17 @@ HAVING <replaceable class="PARAMETER">cond_expr</replaceable>
    </title>
    <para>
     <synopsis>
-ORDER BY <replaceable class="PARAMETER">column</replaceable> [ ASC | DESC ] [, ...]
+ORDER BY <replaceable class="PARAMETER">expression</replaceable> [ ASC | DESC | USING <replaceable class="PARAMETER">operator</replaceable> ] [, ...]
     </synopsis></para>
     
    <para>
-    <replaceable class="PARAMETER">column</replaceable> can be either a
-    result column name or an ordinal number.
+    An ORDER BY item can be the name or ordinal
+    number of an output column (SELECT expression), or it can be an arbitrary
+    expression formed from input-column values.  In case of ambiguity, an
+    ORDER BY name will be interpreted as an output-column name.
    </para>
    <para>
-    The ordinal numbers refers to the ordinal (left-to-right) position
+    The ordinal number refers to the ordinal (left-to-right) position
     of the result column. This feature makes it possible to define an ordering
     on the basis of a column that does not have a proper name.
     This is never absolutely necessary because it is always possible
@@ -447,13 +629,13 @@ SELECT name FROM distributors ORDER BY code;
     or ASC (ascending) after each column name in the ORDER BY clause.
     If not specified, ASC is assumed by default.  Alternatively, a
     specific ordering operator name may be specified.  ASC is equivalent
-    to USING '&lt;' and DESC is equivalent to USING '&gt;'.
+    to USING &lt; and DESC is equivalent to USING &gt;.
    </para>
   </refsect2>
   
   <refsect2 id="SQL-UNION">
    <refsect2info>
-    <date>1998-09-24</date>
+    <date>2000-12-11</date>
    </refsect2info>
    <title id="sql-union-title">
     UNION Clause
@@ -461,16 +643,21 @@ SELECT name FROM distributors ORDER BY code;
    <para>
     <synopsis>
 <replaceable class="PARAMETER">table_query</replaceable> UNION [ ALL ] <replaceable class="PARAMETER">table_query</replaceable>
-    [ ORDER BY <replaceable class="PARAMETER">column</replaceable> [ ASC | DESC ] [, ...] ]
+    [ ORDER BY <replaceable class="PARAMETER">expression</replaceable> [ ASC | DESC | USING <replaceable class="PARAMETER">operator</replaceable> ] [, ...] ]
+    [ LIMIT { <replaceable class="PARAMETER">count</replaceable> | ALL } [ { OFFSET | , } <replaceable class="PARAMETER">start</replaceable> ]]
     </synopsis>
 
     where
     <replaceable class="PARAMETER">table_query</replaceable>
-    specifies any select expression without an ORDER BY or LIMIT clause.
+    specifies any select expression without an ORDER BY, FOR UPDATE,
+    or LIMIT clause.  (ORDER BY and LIMIT can be attached to a sub-expression
+    if it is enclosed in parentheses.  Without parentheses, these clauses
+    will be taken to apply to the result of the UNION, not to its right-hand
+    input expression.)
    </para>
     
    <para>
-    The UNION operator allows the result to be the collection of rows
+    The UNION operator computes the collection (set union) of the rows
     returned by the queries involved.
     The two SELECTs that represent the direct operands of the UNION must
     produce the same number of columns, and corresponding columns must be
@@ -478,79 +665,98 @@ SELECT name FROM distributors ORDER BY code;
    </para>
     
    <para>
-    By default, the result of UNION does not contain any duplicate rows
-    unless the ALL clause is specified.
+    The result of UNION does not contain any duplicate rows
+    unless the ALL option is specified.  ALL prevents elimination of
+    duplicates.
    </para>
     
    <para>
     Multiple UNION operators in the same SELECT statement are
-    evaluated left to right.
-    Note that the ALL keyword is not global in nature, being 
-    applied only for the current pair of table results.
+    evaluated left to right, unless otherwise indicated by parentheses.
+   </para>
+    
+   <para>
+    Currently, FOR UPDATE may not be specified either for a UNION result
+    or for the inputs of a UNION.
    </para>
 
   </refsect2>
 
   <refsect2 id="SQL-INTERSECT">
    <refsect2info>
-    <date>1998-09-24</date>
+    <date>2000-12-11</date>
    </refsect2info>
    <title id="sql-intersect-title">
     INTERSECT Clause
    </title>
    <para>
     <synopsis>
-<replaceable class="PARAMETER">table_query</replaceable> INTERSECT <replaceable class="PARAMETER">table_query</replaceable>
-    [ ORDER BY <replaceable class="PARAMETER">column</replaceable> [ ASC | DESC ] [, ...] ]
+<replaceable class="PARAMETER">table_query</replaceable> INTERSECT [ ALL ] <replaceable class="PARAMETER">table_query</replaceable>
+    [ ORDER BY <replaceable class="PARAMETER">expression</replaceable> [ ASC | DESC | USING <replaceable class="PARAMETER">operator</replaceable> ] [, ...] ]
+    [ LIMIT { <replaceable class="PARAMETER">count</replaceable> | ALL } [ { OFFSET | , } <replaceable class="PARAMETER">start</replaceable> ]]
     </synopsis>
     
     where
     <replaceable class="PARAMETER">table_query</replaceable>
-    specifies any select expression without an ORDER BY or LIMIT clause.
+    specifies any select expression without an ORDER BY, FOR UPDATE,
+    or LIMIT clause.
    </para>
 
    <para>
-    The INTERSECT operator gives you the rows that are common to both queries.
-    The two SELECTs that represent the direct operands of the INTERSECT must
-    produce the same number of columns, and corresponding columns must be
-    of compatible data types.
+    INTERSECT is similar to UNION, except that it produces only rows that
+    appear in both query outputs, rather than rows that appear in either.
+   </para>
+    
+   <para>
+    The result of INTERSECT does not contain any duplicate rows
+    unless the ALL option is specified.  With ALL, a row that has
+    m duplicates in L and n duplicates in R will appear min(m,n) times.
    </para>
     
    <para>
     Multiple INTERSECT operators in the same SELECT statement are
     evaluated left to right, unless parentheses dictate otherwise.
+    INTERSECT binds more tightly than UNION --- that is,
+    A UNION B INTERSECT C will be read as 
+    A UNION (B INTERSECT C) unless otherwise specified by parentheses.
    </para>
   </refsect2>
 
   <refsect2 id="SQL-EXCEPT">
    <refsect2info>
-    <date>1998-09-24</date>
+    <date>2000-12-11</date>
    </refsect2info>
    <title id="sql-except-title">
     EXCEPT Clause
    </title>
    <para>
     <synopsis>
-<replaceable class="PARAMETER">table_query</replaceable> EXCEPT <replaceable class="PARAMETER">table_query</replaceable>
-     [ ORDER BY <replaceable class="PARAMETER">column</replaceable> [ ASC | DESC ] [, ...] ]
+<replaceable class="PARAMETER">table_query</replaceable> EXCEPT [ ALL ] <replaceable class="PARAMETER">table_query</replaceable>
+    [ ORDER BY <replaceable class="PARAMETER">expression</replaceable> [ ASC | DESC | USING <replaceable class="PARAMETER">operator</replaceable> ] [, ...] ]
+    [ LIMIT { <replaceable class="PARAMETER">count</replaceable> | ALL } [ { OFFSET | , } <replaceable class="PARAMETER">start</replaceable> ]]
     </synopsis>
     
     where
     <replaceable class="PARAMETER">table_query</replaceable>
-    specifies any select expression without an ORDER BY or LIMIT clause.
+    specifies any select expression without an ORDER BY, FOR UPDATE,
+    or LIMIT clause.
    </para>
 
    <para>
-    The EXCEPT operator gives you the rows returned by the first query but
-    not the second query.
-    The two SELECTs that represent the direct operands of the EXCEPT must
-    produce the same number of columns, and corresponding columns must be
-    of compatible data types.
+    EXCEPT is similar to UNION, except that it produces only rows that
+    appear in the left query's output but not in the right query's output.
    </para>
-
+    
+   <para>
+    The result of EXCEPT does not contain any duplicate rows
+    unless the ALL option is specified.  With ALL, a row that has
+    m duplicates in L and n duplicates in R will appear max(m-n,0) times.
+   </para>
+    
    <para>
     Multiple EXCEPT operators in the same SELECT statement are
     evaluated left to right, unless parentheses dictate otherwise.
+    EXCEPT binds at the same level as UNION.
    </para>
   </refsect2>
 
@@ -758,7 +964,22 @@ SELECT actors.name
    <para>
 <productname>Postgres</productname> allows one to omit 
 the <command>FROM</command> clause from a query. This feature
-was retained from the original PostQuel query language:
+was retained from the original PostQuel query language.  It has
+a straightforward use to compute the results of simple constant
+expressions:
+
+  <programlisting>
+SELECT 2+2;
+
+ ?column?
+----------
+        4
+  </programlisting>
+
+Some other DBMSes cannot do this except by introducing a dummy one-row
+table to do the select from.  A less obvious use is to abbreviate a
+normal select from one or more tables:
+
   <programlisting>
 SELECT distributors.* WHERE name = 'Westward';
 
@@ -766,6 +987,26 @@ SELECT distributors.* WHERE name = 'Westward';
 -----+----------
  108 | Westward
   </programlisting>
+
+This works because an implicit FROM item is added for each table that is
+referenced in the query but not mentioned in FROM.  While this is a convenient
+shorthand, it's easy to misuse.  For example, the query
+  <programlisting>
+SELECT distributors.* FROM distributors d;
+  </programlisting>
+is probably a mistake; most likely the user meant
+  <programlisting>
+SELECT d.* FROM distributors d;
+  </programlisting>
+rather than the unconstrained join
+  <programlisting>
+SELECT distributors.* FROM distributors d, distributors distributors;
+  </programlisting>
+that he will actually get.  To help detect this sort of mistake,
+<Productname>Postgres</Productname> 7.1
+and later will warn if the implicit-FROM feature is used in a query that also
+contains an explicit FROM clause.
+
    </para>
   </refsect2>
 
@@ -791,9 +1032,9 @@ SELECT distributors.* WHERE name = 'Westward';
      is just noise and can be 
      omitted without affecting the meaning.
      The <productname>Postgres</productname> parser requires this keyword when
-     renaming columns because the type extensibility features lead to
+     renaming output columns because the type extensibility features lead to
      parsing ambiguities
-     in this context.</para>
+     in this context.  "AS" is optional in FROM items, however.</para>
      
     <para>
      The DISTINCT ON phrase is not part of <acronym>SQL92</acronym>.
@@ -818,11 +1059,11 @@ SELECT distributors.* WHERE name = 'Westward';
      <date>1998-09-24</date>
     </refsect3info>
     <title>
-     UNION Clause
+     UNION/INTERSECT/EXCEPT Clause
     </title>
     <para>
-     The <acronym>SQL92</acronym> syntax for UNION allows an
-     additional CORRESPONDING BY clause:
+     The <acronym>SQL92</acronym> syntax for UNION/INTERSECT/EXCEPT allows an
+     additional CORRESPONDING BY option:
      <synopsis> 
 <replaceable class="PARAMETER">table_query</replaceable> UNION [ALL]
     [CORRESPONDING [BY (<replaceable class="PARAMETER">column</replaceable> [,...])]]

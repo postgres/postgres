@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/select_into.sgml,v 1.6 2000/07/21 18:51:24 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/select_into.sgml,v 1.7 2000/12/12 05:07:59 tgl Exp $
 Postgres documentation
 -->
 
@@ -19,20 +19,31 @@ Postgres documentation
   </refpurpose></refnamediv>
  <refsynopsisdiv>
   <refsynopsisdivinfo>
-   <date>1999-07-20</date>
+   <date>2000-12-11</date>
   </refsynopsisdivinfo>
   <synopsis>
 SELECT [ ALL | DISTINCT [ ON ( <replaceable class="PARAMETER">expression</replaceable> [, ...] ) ] ]
-    <replaceable class="PARAMETER">expression</replaceable> [ AS <replaceable class="PARAMETER">name</replaceable> ] [, ...]
-    [ INTO [ TEMPORARY | TEMP ] [ TABLE ] <replaceable class="PARAMETER">new_table</replaceable> ]
-    [ FROM <replaceable class="PARAMETER">table</replaceable> [ <replaceable class="PARAMETER">alias</replaceable> ] [, ...] ]
+    * | <replaceable class="PARAMETER">expression</replaceable> [ AS <replaceable class="PARAMETER">output_name</replaceable> ] [, ...]
+    INTO [ TEMPORARY | TEMP ] [ TABLE ] <replaceable class="PARAMETER">new_table</replaceable>
+    [ FROM <replaceable class="PARAMETER">from_item</replaceable> [, ...] ]
     [ WHERE <replaceable class="PARAMETER">condition</replaceable> ]
-    [ GROUP BY <replaceable class="PARAMETER">column</replaceable> [, ...] ]
+    [ GROUP BY <replaceable class="PARAMETER">expression</replaceable> [, ...] ]
     [ HAVING <replaceable class="PARAMETER">condition</replaceable> [, ...] ]
-    [ { UNION [ ALL ] | INTERSECT | EXCEPT } <replaceable class="PARAMETER">select</replaceable> ]
-    [ ORDER BY <replaceable class="PARAMETER">column</replaceable> [ ASC | DESC | USING <replaceable class="PARAMETER">operator</replaceable> ] [, ...] ]
+    [ { UNION | INTERSECT | EXCEPT [ ALL ] } <replaceable class="PARAMETER">select</replaceable> ]
+    [ ORDER BY <replaceable class="PARAMETER">expression</replaceable> [ ASC | DESC | USING <replaceable class="PARAMETER">operator</replaceable> ] [, ...] ]
     [ FOR UPDATE [ OF <replaceable class="PARAMETER">class_name</replaceable> [, ...] ] ]
-    [ LIMIT { <replaceable class="PARAMETER">count</replaceable> | ALL } [ { OFFSET | , } <replaceable class="PARAMETER">start</replaceable> ] ]
+    [ LIMIT { <replaceable class="PARAMETER">count</replaceable> | ALL } [ { OFFSET | , } <replaceable class="PARAMETER">start</replaceable> ]]
+
+where <replaceable class="PARAMETER">from_item</replaceable> can be:
+
+[ ONLY ] <replaceable class="PARAMETER">table_name</replaceable> [ * ]
+    [ [ AS ] <replaceable class="PARAMETER">alias</replaceable> [ ( <replaceable class="PARAMETER">column_alias_list</replaceable> ) ] ]
+|
+( <replaceable class="PARAMETER">select</replaceable> )
+    [ AS ] <replaceable class="PARAMETER">alias</replaceable> [ ( <replaceable class="PARAMETER">column_alias_list</replaceable> ) ]
+|
+<replaceable class="PARAMETER">from_item</replaceable> [ NATURAL ] <replaceable class="PARAMETER">join_type</replaceable> <replaceable class="PARAMETER">from_item</replaceable>
+    [ ON <replaceable class="PARAMETER">join_condition</replaceable> | USING ( <replaceable class="PARAMETER">join_column_list</replaceable> ) ]
   </synopsis>
   
   <refsect2 id="R2-SQL-SELECTINTO-1">

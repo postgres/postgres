@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/sql.sgml,v 1.14 2000/12/09 22:59:25 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/sql.sgml,v 1.15 2000/12/12 05:07:58 tgl Exp $
 -->
 
  <chapter id="sql">
@@ -854,17 +854,17 @@ A &lt; B + 3.
      used to retrieve data. The syntax is:
 
      <synopsis>
-SELECT [ALL|DISTINCT]
-    { * | <replaceable class="parameter">expr_1</replaceable> [AS <replaceable class="parameter">c_alias_1</replaceable>] [, ... 
-     [, <replaceable class="parameter">expr_k</replaceable> [AS <replaceable class="parameter">c_alias_k</replaceable>]]]}
-    FROM <replaceable class="parameter">table_name_1</replaceable> [<replaceable class="parameter">t_alias_1</replaceable>] 
-     [, ... [, <replaceable class="parameter">table_name_n</replaceable> [<replaceable class="parameter">t_alias_n</replaceable>]]]
-    [WHERE <replaceable class="parameter">condition</replaceable>]
-    [GROUP BY <replaceable class="parameter">name_of_attr_i</replaceable> 
-     [,... [, <replaceable class="parameter">name_of_attr_j</replaceable>]] [HAVING <replaceable class="parameter">condition</replaceable>]]
-    [{UNION [ALL] | INTERSECT | EXCEPT} SELECT ...]
-    [ORDER BY <replaceable class="parameter">name_of_attr_i</replaceable> [ASC|DESC] 
-     [, ... [, <replaceable class="parameter">name_of_attr_j</replaceable> [ASC|DESC]]]];
+SELECT [ ALL | DISTINCT [ ON ( <replaceable class="PARAMETER">expression</replaceable> [, ...] ) ] ]
+    * | <replaceable class="PARAMETER">expression</replaceable> [ AS <replaceable class="PARAMETER">output_name</replaceable> ] [, ...]
+    [ INTO [ TEMPORARY | TEMP ] [ TABLE ] <replaceable class="PARAMETER">new_table</replaceable> ]
+    [ FROM <replaceable class="PARAMETER">from_item</replaceable> [, ...] ]
+    [ WHERE <replaceable class="PARAMETER">condition</replaceable> ]
+    [ GROUP BY <replaceable class="PARAMETER">expression</replaceable> [, ...] ]
+    [ HAVING <replaceable class="PARAMETER">condition</replaceable> [, ...] ]
+    [ { UNION | INTERSECT | EXCEPT [ ALL ] } <replaceable class="PARAMETER">select</replaceable> ]
+    [ ORDER BY <replaceable class="PARAMETER">expression</replaceable> [ ASC | DESC | USING <replaceable class="PARAMETER">operator</replaceable> ] [, ...] ]
+    [ FOR UPDATE [ OF <replaceable class="PARAMETER">class_name</replaceable> [, ...] ] ]
+    [ LIMIT { <replaceable class="PARAMETER">count</replaceable> | ALL } [ { OFFSET | , } <replaceable class="PARAMETER">start</replaceable> ]]
      </synopsis>
     </para>
 
@@ -1037,11 +1037,13 @@ SELECT S.SNAME, P.PNAME
      <para>
       <acronym>SQL</acronym> provides aggregate operators
       (e.g. AVG, COUNT, SUM, MIN, MAX) that
-      take the name of an attribute as an argument. The value of the
-      aggregate operator is calculated over all values of the specified
-      attribute (column) of the whole table. If groups are specified in the
-      query the calculation is done only over the values of a group (see next
-      section).
+      take an expression as argument.  The expression is evaluated at
+      each row that satisfies the WHERE clause, and the aggregate operator
+      is calculated over this set of input values.  Normally, an aggregate
+      delivers a single result for a whole SELECT statement.  But if
+      grouping is specified in the query, then a separate calculation is done
+      over the rows of each group, and an aggregate result is delivered per
+      group (see next section).
 
       <example>
        <title id="aggregates-example">Aggregates</title>
@@ -1094,11 +1096,11 @@ SELECT COUNT(PNO)
      <para>
       <acronym>SQL</acronym> allows one to partition the tuples of a table
       into groups. Then the
-      aggregate operators described above can be applied to the groups
-      (i.e. the value of the aggregate operator is no longer calculated over
+      aggregate operators described above can be applied to the groups ---
+      i.e. the value of the aggregate operator is no longer calculated over
       all the values of the specified column but over all values of a
       group. Thus the aggregate operator is evaluated individually for every
-      group.) 
+      group.
      </para>
 
      <para>
@@ -1179,19 +1181,26 @@ SELECT S.SNO, S.SNAME, COUNT(SE.PNO)
 
        <para>
 	In our example we got four groups and now we can apply the aggregate
-	operator COUNT to every group leading to the total result of the query
+	operator COUNT to every group leading to the final result of the query
 	given above.
        </para>
       </example>
      </para>
 
      <para>
-      Note that for the result of a query using GROUP BY and aggregate
-      operators to make sense the attributes grouped by must also appear in
-      the target list. All further attributes not appearing in the GROUP
-      BY clause can only be selected by using an aggregate function. On
-      the other hand you can not use aggregate functions on attributes
-      appearing in the GROUP BY clause.
+      Note that for a query using GROUP BY and aggregate
+      operators to make sense the target list can only refer directly to
+      the attributes being grouped by.  Other attributes may only be used
+      inside the argument of an aggregate function.  Otherwise there would
+      not be a unique value to associate with the other attributes.
+     </para>
+
+     <para>
+      Also observe that it makes no sense to ask for an aggregate of an
+      aggregate, eg, AVG(MAX(sno)), because a SELECT only does one pass
+      of grouping and aggregation.  You can get a result of this kind by
+      using a temporary table or a sub-SELECT in the FROM clause to
+      do the first level of aggregation.
      </para>
     </sect3>
 
@@ -1201,11 +1210,14 @@ SELECT S.SNO, S.SNAME, COUNT(SE.PNO)
      <para>
       The HAVING clause works much like the WHERE clause and is used to
       consider only those groups satisfying the qualification given in the
-      HAVING clause. The expressions allowed in the HAVING clause must
-      involve aggregate functions. Every expression using only  plain
-      attributes belongs to the WHERE clause. On the other hand every
-      expression involving an aggregate function must be put to the HAVING
-      clause. 
+      HAVING clause.  Essentially, WHERE filters out unwanted input rows
+      before grouping and aggregation are done, whereas HAVING filters out
+      unwanted group rows post-GROUP.  Therefore, WHERE cannot refer to the
+      results of aggregate functions.  On the other hand, there's no point
+      in writing a HAVING condition that doesn't involve an aggregate
+      function!  If your condition doesn't involve aggregates, you might
+      as well write it in WHERE, and thereby avoid the computation of
+      aggregates for groups that you're just going to throw away anyway.
 
       <example>
        <title id="having-example">Having</title>
@@ -1280,7 +1292,9 @@ SELECT *
 	SELECT. For every tuple of the outer SELECT the inner SELECT has to be
 	evaluated. After every evaluation we know the price of the tuple named
 	'Screw' and we can check if the price of the actual tuple is
-	greater. 
+	greater.  (Actually, in this example the inner query need only be
+	evaluated once, since it does not depend on the state of the outer
+	query.)
        </para>
 
        <para>
@@ -1299,9 +1313,43 @@ SELECT *
        <para>
 	In our example the result will be empty because every supplier sells
 	at least one part. Note that we use S.SNO from the outer SELECT within
-	the WHERE clause of the inner SELECT. As described above the subquery
-	is evaluated for every tuple from the outer query i.e. the value for
-	S.SNO is always taken from the actual tuple of the outer SELECT. 
+	the WHERE clause of the inner SELECT. Here the subquery must be
+	evaluated for every tuple from the outer query, i.e. the value for
+	S.SNO is always taken from the current tuple of the outer SELECT. 
+       </para>
+      </example>
+     </para>
+    </sect3>
+
+    <sect3>
+     <title>Subqueries in FROM</title>
+
+     <para>
+      A somewhat different way of using subqueries is to put them in the
+      FROM clause.  This is a useful feature because a subquery of this
+      kind can output multiple columns and rows, whereas a subquery used
+      in an expression must deliver just a single result.  It also lets
+      us get more than one round of grouping/aggregation without resorting
+      to a temporary table.
+
+      <example>
+       <title id="subselect-in-from-example">Subselect in FROM</title>
+
+       <para>
+        If we want to know the highest average part price among all our
+	suppliers, we can't write MAX(AVG(PRICE)), but we can write:
+
+	<programlisting>
+SELECT MAX(subtable.avgprice)
+    FROM (SELECT AVG(P.PRICE) AS avgprice
+          FROM SUPPLIER S, PART P, SELLS SE
+          WHERE S.SNO = SE.SNO AND
+                P.PNO = SE.PNO
+          GROUP BY S.SNO) subtable;
+	</programlisting>
+
+	The subquery returns one row per supplier (because of its GROUP BY)
+	and then we aggregate over those rows in the outer query.
        </para>
       </example>
      </para>
@@ -1311,7 +1359,7 @@ SELECT *
      <title>Union, Intersect, Except</title>
 
      <para>
-      These operations calculate the union, intersect and set theoretic
+      These operations calculate the union, intersection and set theoretic
       difference of the tuples derived by two subqueries.
 
       <example>
@@ -1341,7 +1389,7 @@ gives the result:
        </para>
 
        <para>
-	Here an example for INTERSECT:
+	Here is an example for INTERSECT:
 
 	<programlisting>
 SELECT S.SNO, S.SNAME, S.CITY
@@ -1361,7 +1409,7 @@ SELECT S.SNO, S.SNAME, S.CITY
   2  | Jones | Paris
 	</programlisting>
 
-	The only tuple returned by both parts of the query is the one having $SNO=2$.
+	The only tuple returned by both parts of the query is the one having SNO=2.
        </para>
 
        <para>
@@ -1469,14 +1517,11 @@ CREATE TABLE SELLS
        <listitem>
 	<para>
 	 DECIMAL (<replaceable class="parameter">p</replaceable>[,<replaceable class="parameter">q</replaceable>]):
-	 signed packed decimal number of
+	 signed packed decimal number of up to
 	 <replaceable class="parameter">p</replaceable>
-	 digits precision with assumed
+	 digits, with
 	 <replaceable class="parameter">q</replaceable>
-	 of them right to the decimal point.
-
-(15 &ge; <replaceable class="parameter">p</replaceable> &ge; <replaceable class="parameter">q</replaceable> &ge; 0).
-
+	 digits to the right of the decimal point.
 	 If <replaceable class="parameter">q</replaceable>
 	 is omitted it is assumed to be 0.
 	</para>
@@ -1547,8 +1592,8 @@ CREATE INDEX I ON SUPPLIER (SNAME);
        <para>
 	The created index is maintained automatically, i.e. whenever a new tuple
 	is inserted into the relation SUPPLIER the index I is adapted. Note
-	that the only changes a user can percept when an index is present
-	are an increased speed.
+	that the only changes a user can perceive when an index is present
+	are increased speed for SELECT and decreases in speed of updates.
        </para>
       </example>
      </para>
