@@ -299,7 +299,7 @@ remove_variables(int brace_level)
 							prevvar->next = varptr->next;
 					}
 				}
-				for (varptr = ptr->argsresult; varptr != NULL; varptr = varptr->next)
+				for (varptr = prevvar = ptr->argsresult; varptr != NULL; varptr = varptr->next)
 				{
 					if (p == varptr->variable)
 					{
@@ -349,7 +349,7 @@ reset_variables(void)
  * Note: The list is dumped from the end,
  * so we have to add new entries at the beginning */
 void
-add_variable(struct arguments ** list, struct variable * var, struct variable * ind)
+add_variable_to_head(struct arguments ** list, struct variable * var, struct variable * ind)
 {
 	struct arguments *p = (struct arguments *) mm_alloc(sizeof(struct arguments));
 
@@ -361,7 +361,7 @@ add_variable(struct arguments ** list, struct variable * var, struct variable * 
 
 /* Append a new variable to our request list. */
 void
-append_variable(struct arguments ** list, struct variable * var, struct variable * ind)
+add_variable_to_tail(struct arguments ** list, struct variable * var, struct variable * ind)
 {
 	struct arguments *p,
 			   *new = (struct arguments *) mm_alloc(sizeof(struct arguments));

@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/ecpglib/execute.c,v 1.26.2.2 2003/11/12 08:42:57 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/execute.c,v 1.26.2.3 2003/12/17 15:31:51 meskes Exp $ */
 
 /*
  * The aim is to get a simpler inteface to the database routines.
@@ -314,16 +314,21 @@ ECPGis_type_an_array(int type, const struct statement * stmt, const struct varia
 	sprintf(array_query, "select typlen from pg_type where oid=%d and typelem<>0", type);
 	query = PQexec(stmt->connection->connection, array_query);
 	ECPGfree(array_query);
-	if (PQresultStatus(query) == PGRES_TUPLES_OK)
+	if (PQresultStatus(query) == PGRES_TUPLES_OK )
 	{
-		isarray = (atol((char *) PQgetvalue(query, 0, 0)) == -1) ? ECPG_ARRAY_ARRAY : ECPG_ARRAY_VECTOR;
-		if (ECPGDynamicType(type) == SQL3_CHARACTER ||
-			ECPGDynamicType(type) == SQL3_CHARACTER_VARYING)
-		{
-			/*
-			 * arrays of character strings are not yet implemented
-			 */
+		if ( PQntuples(query) == 0 )
 			isarray = ECPG_ARRAY_NONE;
+		else
+		{
+			isarray = (atol((char *) PQgetvalue(query, 0, 0)) == -1) ? ECPG_ARRAY_ARRAY : ECPG_ARRAY_VECTOR;
+			if (ECPGDynamicType(type) == SQL3_CHARACTER ||
+				ECPGDynamicType(type) == SQL3_CHARACTER_VARYING)
+			{
+				/*
+				 * arrays of character strings are not yet implemented
+				 */
+				isarray = ECPG_ARRAY_NONE;
+			}
 		}
 	}
 	PQclear(query);
@@ -353,7 +358,7 @@ ECPGstore_result(const PGresult *results, int act_field,
 		{
 			ECPGlog("ECPGexecute line %d: Incorrect number of matches: %d don't fit into array of %d\n",
 					stmt->lineno, ntuples, var->arrsize);
-			ECPGraise(stmt->lineno, ECPG_TOO_MANY_MATCHES, ECPG_SQLSTATE_CARDINALITY_VIOLATION, NULL);
+			ECPGraise(stmt->lineno, INFORMIX_MODE(stmt->compat)?ECPG_INFORMIX_SUBSELECT_NOT_ONE:ECPG_TOO_MANY_MATCHES, ECPG_SQLSTATE_CARDINALITY_VIOLATION, NULL);
 			return false;
 		}
 	}
