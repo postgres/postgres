@@ -141,7 +141,7 @@ will be used.
 -C	vacuum_cost_page_hit
 -m	vacuum_cost_page_miss
 -n	vacuum_cost_page_dirty
--N	vacuum_cost_limit
+-l	vacuum_cost_limit
 
 
 Numerous arguments have default values defined in pg_autovacuum.h.  At

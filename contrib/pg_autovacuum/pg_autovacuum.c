@@ -4,7 +4,7 @@
  * Revisions by Christopher B. Browne, Liberty RMS
  * Win32 Service code added by Dave Page
  *
- * $PostgreSQL: pgsql/contrib/pg_autovacuum/pg_autovacuum.c,v 1.24 2004/11/17 16:54:15 tgl Exp $
+ * $PostgreSQL: pgsql/contrib/pg_autovacuum/pg_autovacuum.c,v 1.25 2004/11/17 21:30:36 tgl Exp $
  */
 
 #include "postgres_fe.h"
@@ -1098,9 +1098,9 @@ get_cmd_args(int argc, char *argv[])
 	 * values etc
 	 */
 #ifndef WIN32
-	while ((c = getopt(argc, argv, "s:S:v:V:a:A:d:U:P:H:L:p:hD:c:C:m:n:N:")) != -1)
+	while ((c = getopt(argc, argv, "s:S:v:V:a:A:d:U:P:H:L:p:hD:c:C:m:n:l:")) != -1)
 #else
-	while ((c = getopt(argc, argv, "s:S:v:V:a:A:d:U:P:H:L:p:hIRN:W:c:C:m:n:N:")) != -1)
+	while ((c = getopt(argc, argv, "s:S:v:V:a:A:d:U:P:H:L:p:hIRN:W:c:C:m:n:l:")) != -1)
 #endif
 	{
 		switch (c)
@@ -1135,7 +1135,7 @@ get_cmd_args(int argc, char *argv[])
 			case 'n':
 				args->av_vacuum_cost_page_dirty = atoi(optarg);
 				break;
-			case 'N':
+			case 'l':
 				args->av_vacuum_cost_limit = atoi(optarg);
 				break;
 #ifndef WIN32
@@ -1240,7 +1240,7 @@ usage(void)
 	fprintf(stderr, "   [-C] vacuum_cost_page_hit (default=none)\n");
 	fprintf(stderr, "   [-m] vacuum_cost_page_miss (default=none)\n");
 	fprintf(stderr, "   [-n] vacuum_cost_page_dirty (default=none)\n");
-	fprintf(stderr, "   [-N] vacuum_cost_limit (default=none)\n");
+	fprintf(stderr, "   [-l] vacuum_cost_limit (default=none)\n");
 	
 	fprintf(stderr, "   [-U] username (libpq default)\n");
 	fprintf(stderr, "   [-P] password (libpq default)\n");
