@@ -2,4 +2,4 @@
 -- return to the super user
 --
 RESET SESSION AUTHORIZATION;
-DROP USER foo;
+DROP USER conversion_test_user;
