@@ -17974,6 +17974,25 @@ ac_config_files="$ac_config_files GNUmakefile src/Makefile.global"
 ac_config_links="$ac_config_links src/backend/port/dynloader.c:src/backend/port/dynloader/${template}.c src/backend/port/pg_sema.c:${SEMA_IMPLEMENTATION} src/backend/port/pg_shmem.c:${SHMEM_IMPLEMENTATION} src/include/dynloader.h:src/backend/port/dynloader/${template}.h src/include/pg_config_os.h:src/include/port/${template}.h src/Makefile.port:src/makefiles/Makefile.${template}"
 
 
+# Links sometimes fail undetected on Mingw -
+# so here we detect it and warn the user
+case $host_os in mingw*)
+ for linktarget in \
+	src/backend/port/tas.s \
+	src/backend/port/dynloader.c \
+	src/backend/port/pg_sema.c \
+	src/backend/port/pg_shmem.c \
+	src/include/dynloader.h \
+	src/include/pg_config_os.h \
+	src/Makefile.port
+ do
+	# test -e works for symlinks in the MinGW console
+	test -e $linktarget || { echo "$as_me:$LINENO: WARNING: *** link for $linktarget failed - please fix by hand" >&5
+echo "$as_me: WARNING: *** link for $linktarget failed - please fix by hand" >&2;}
+ done
+	;;
+esac
+
 ac_config_headers="$ac_config_headers src/include/pg_config.h"
 
 
