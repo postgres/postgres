@@ -7,7 +7,7 @@ import org.postgresql.core.Encoding;
 import org.postgresql.fastpath.Fastpath;
 import org.postgresql.largeobject.LargeObjectManager;
 
-/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/Attic/PGConnection.java,v 1.1 2002/07/23 03:59:55 barry Exp $
+/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/Attic/PGConnection.java,v 1.2 2002/09/02 03:07:36 barry Exp $
  * This interface defines PostgreSQL extentions to the java.sql.Connection interface.
  * Any java.sql.Connection object returned by the driver will also implement this 
  * interface
@@ -67,6 +67,15 @@ public interface PGConnection
      * @see org.postgresql.util.Serialize
      */
     public Object getObject(String type, String value) throws SQLException;
+
+
+    /*
+     * This method returns any notifications that have been received 
+     * since the last call to this method.
+     * Returns null if there have been no notifications.
+     */
+    public PGNotification[] getNotifications();
+
 
 }
 

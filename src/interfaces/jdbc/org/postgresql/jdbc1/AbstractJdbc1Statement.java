@@ -8,7 +8,7 @@ import java.util.Vector;
 import org.postgresql.largeobject.*;
 import org.postgresql.util.*;
 
-/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/AbstractJdbc1Statement.java,v 1.5 2002/08/23 20:45:49 barry Exp $
+/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/AbstractJdbc1Statement.java,v 1.6 2002/09/02 03:07:36 barry Exp $
  * This class defines methods of the jdbc1 specification.  This class is
  * extended by org.postgresql.jdbc2.AbstractJdbc2Statement which adds the jdbc2
  * methods.  The real Statement class (for jdbc1) is org.postgresql.jdbc1.Jdbc1Statement
@@ -44,7 +44,13 @@ public abstract class AbstractJdbc1Statement implements org.postgresql.PGStateme
 
         //Used by the preparedstatement style methods
 	protected String[] m_sqlFragments;
+	private String[] m_origSqlFragments;
+	private String[] m_executeSqlFragments;
 	protected Object[] m_binds = new Object[0];
+        private String[] m_bindTypes = new String[0];
+        private String m_statementName = null;
+        private boolean m_useServerPrepare = false;
+        private static int m_preparedCount = 1;
 
 	//Used by the callablestatement style methods
 	private static final String JDBC_SYNTAX = "{[? =] call <some_function> ([? [,?]*]) }";
@@ -102,11 +108,13 @@ public abstract class AbstractJdbc1Statement implements org.postgresql.PGStateme
 
 		m_sqlFragments = new String[v.size()];
 		m_binds = new String[v.size() - 1];
+                m_bindTypes = new String[v.size() - 1];
  //BJL why if binds is new???
 		clearParameters();
 
 		for (i = 0 ; i < m_sqlFragments.length; ++i)
 			m_sqlFragments[i] = (String)v.elementAt(i);
+
 	}
 
 
@@ -207,6 +215,7 @@ public abstract class AbstractJdbc1Statement implements org.postgresql.PGStateme
 			throw new PSQLException("postgresql.call.noreturntype");
 		if (isFunction) { // set entry 1 to dummy entry..
 			m_binds[0] = ""; // dummy entry which ensured that no one overrode
+			m_bindTypes[0] = PG_TEXT; 
 			// and calls to setXXX (2,..) really went to first arg in a function call..
 		}
 
@@ -220,6 +229,53 @@ public abstract class AbstractJdbc1Statement implements org.postgresql.PGStateme
 				rs.close();
 		}
 
+                //Use server prepared statements if directed
+                if (m_useServerPrepare) {
+		    if (m_statementName == null) {
+			m_statementName = "JDBC_STATEMENT_" + m_preparedCount++;
+                        m_origSqlFragments = new String[m_sqlFragments.length];
+                        m_executeSqlFragments = new String[m_sqlFragments.length];
+                        System.arraycopy(m_sqlFragments, 0, m_origSqlFragments, 0, m_sqlFragments.length);
+                        m_executeSqlFragments[0] = "EXECUTE " + m_statementName;
+                        if (m_sqlFragments.length > 1) {
+                            m_executeSqlFragments[0] = m_executeSqlFragments[0] + "(";
+	                    for(int i = 1; i < m_bindTypes.length; i++) {
+                               m_executeSqlFragments[i] = ", ";
+                            }
+	       		    m_executeSqlFragments[m_bindTypes.length] = ")";
+                        }
+			synchronized (sbuf) {
+			    sbuf.setLength(0);
+                            sbuf.append("PREPARE ");
+                            sbuf.append(m_statementName);
+                            if (m_origSqlFragments.length > 1) {
+                                sbuf.append("(");
+	  		        for(int i = 0; i < m_bindTypes.length - 1; i++) {
+                                    sbuf.append(m_bindTypes[i]);
+                                    sbuf.append(", ");
+                                }
+				sbuf.append(m_bindTypes[m_bindTypes.length - 1]);
+                                sbuf.append(")");
+                            }
+                            sbuf.append(" AS ");
+			    sbuf.append(m_origSqlFragments[0]);
+	  		    for(int i = 1; i < m_origSqlFragments.length; i++) {
+                                sbuf.append(" $");
+                                sbuf.append(i);
+                                sbuf.append(" ");
+                                sbuf.append(m_origSqlFragments[i]);
+                            }
+                            sbuf.append("; ");
+                           
+                            sbuf.append(m_executeSqlFragments[0]);
+                            m_sqlFragments[0] = sbuf.toString();
+                            System.arraycopy(m_executeSqlFragments, 1, m_sqlFragments, 1, m_sqlFragments.length - 1);
+			}
+
+		    } else {
+                        m_sqlFragments = m_executeSqlFragments;
+		    }
+		}
 
 		// New in 7.1, pass Statement so that ExecSQL can customise to it
 		result = ((AbstractJdbc1Connection)connection).ExecSQL(m_sqlFragments, m_binds, (java.sql.Statement)this);
@@ -618,7 +674,7 @@ public abstract class AbstractJdbc1Statement implements org.postgresql.PGStateme
 	 */
 	public void setNull(int parameterIndex, int sqlType) throws SQLException
 	{
-		set(parameterIndex, "null");
+		bind(parameterIndex, "null", PG_TEXT);
 	}
 
 	/*
@@ -631,7 +687,7 @@ public abstract class AbstractJdbc1Statement implements org.postgresql.PGStateme
 	 */
 	public void setBoolean(int parameterIndex, boolean x) throws SQLException
 	{
-		set(parameterIndex, x ? "'t'" : "'f'");
+		bind(parameterIndex, x ? "'t'" : "'f'", PG_BOOLEAN);
 	}
 
 	/*
@@ -644,7 +700,7 @@ public abstract class AbstractJdbc1Statement implements org.postgresql.PGStateme
 	 */
 	public void setByte(int parameterIndex, byte x) throws SQLException
 	{
-		set(parameterIndex, Integer.toString(x));
+		bind(parameterIndex, Integer.toString(x), PG_TEXT);
 	}
 
 	/*
@@ -657,7 +713,10 @@ public abstract class AbstractJdbc1Statement implements org.postgresql.PGStateme
 	 */
 	public void setShort(int parameterIndex, short x) throws SQLException
 	{
-		set(parameterIndex, Integer.toString(x));
+	        //Note this should be fixed
+                //as soon as the backend correctly supports int8 type
+                //comparisons
+		bind(parameterIndex,"'" + Integer.toString(x) +"'", PG_INT2);
 	}
 
 	/*
@@ -670,7 +729,7 @@ public abstract class AbstractJdbc1Statement implements org.postgresql.PGStateme
 	 */
 	public void setInt(int parameterIndex, int x) throws SQLException
 	{
-		set(parameterIndex, Integer.toString(x));
+		bind(parameterIndex, Integer.toString(x), PG_INTEGER);
 	}
 
 	/*
@@ -683,7 +742,10 @@ public abstract class AbstractJdbc1Statement implements org.postgresql.PGStateme
 	 */
 	public void setLong(int parameterIndex, long x) throws SQLException
 	{
-		set(parameterIndex, Long.toString(x));
+	        //Note this should be fixed
+                //as soon as the backend correctly supports int8 type
+                //comparisons
+		bind(parameterIndex, "'"+Long.toString(x)+"'", PG_INT8);
 	}
 
 	/*
@@ -696,7 +758,10 @@ public abstract class AbstractJdbc1Statement implements org.postgresql.PGStateme
 	 */
 	public void setFloat(int parameterIndex, float x) throws SQLException
 	{
-		set(parameterIndex, Float.toString(x));
+	        //Note this should be fixed
+                //as soon as the backend correctly supports int8 type
+                //comparisons
+		bind(parameterIndex, "'"+Float.toString(x)+"'", PG_FLOAT);
 	}
 
 	/*
@@ -709,7 +774,10 @@ public abstract class AbstractJdbc1Statement implements org.postgresql.PGStateme
 	 */
 	public void setDouble(int parameterIndex, double x) throws SQLException
 	{
-		set(parameterIndex, Double.toString(x));
+	        //Note this should be fixed
+                //as soon as the backend correctly supports int8 type
+                //comparisons
+		bind(parameterIndex, "'"+Double.toString(x)+"'", PG_DOUBLE);
 	}
 
 	/*
@@ -727,7 +795,10 @@ public abstract class AbstractJdbc1Statement implements org.postgresql.PGStateme
 			setNull(parameterIndex, Types.OTHER);
 		else
 		{
-		    set(parameterIndex, x.toString());
+  	            //Note this should be fixed
+                    //as soon as the backend correctly supports int8 type
+                    //comparisons
+		    bind(parameterIndex, "'"+x.toString()+"'", PG_NUMERIC);
 		}
 	}
 
@@ -742,6 +813,11 @@ public abstract class AbstractJdbc1Statement implements org.postgresql.PGStateme
 	 * @exception SQLException if a database access error occurs
 	 */
 	public void setString(int parameterIndex, String x) throws SQLException
+	{
+	    setString(parameterIndex, x, PG_TEXT);
+	}
+
+	public void setString(int parameterIndex, String x, String type) throws SQLException
 	{
 		// if the passed string is null, then set this column to null
 		if (x == null)
@@ -765,7 +841,7 @@ public abstract class AbstractJdbc1Statement implements org.postgresql.PGStateme
 					sbuf.append(c);
 				}
 				sbuf.append('\'');
-				set(parameterIndex, sbuf.toString());
+				bind(parameterIndex, sbuf.toString(), type);
 			}
 		}
 	}
@@ -795,7 +871,7 @@ public abstract class AbstractJdbc1Statement implements org.postgresql.PGStateme
 			}
 			else
 			{
-				setString(parameterIndex, PGbytea.toPGString(x));
+				setString(parameterIndex, PGbytea.toPGString(x), PG_TEXT);
 			}
 		}
 		else
@@ -826,7 +902,7 @@ public abstract class AbstractJdbc1Statement implements org.postgresql.PGStateme
 		}
 		else
 		{
-			set(parameterIndex, "'" + x.toString() + "'");
+			bind(parameterIndex, "'" + x.toString() + "'", PG_DATE);
 		}
 	}
 
@@ -846,7 +922,7 @@ public abstract class AbstractJdbc1Statement implements org.postgresql.PGStateme
 		}
 		else
 		{
-			set(parameterIndex, "'" + x.toString() + "'");
+			bind(parameterIndex, "'" + x.toString() + "'", PG_TIME);
 		}
 	}
 
@@ -932,7 +1008,7 @@ public abstract class AbstractJdbc1Statement implements org.postgresql.PGStateme
                                   sbuf.append(l_minos);
                                 }
 				sbuf.append("'");
-				set(parameterIndex, sbuf.toString());
+				bind(parameterIndex, sbuf.toString(), PG_TIMESTAMPTZ);
 			}
 
 		}
@@ -969,7 +1045,7 @@ public abstract class AbstractJdbc1Statement implements org.postgresql.PGStateme
 				InputStreamReader l_inStream = new InputStreamReader(x, "ASCII");
 				char[] l_chars = new char[length];
 				int l_charsRead = l_inStream.read(l_chars, 0, length);
-				setString(parameterIndex, new String(l_chars, 0, l_charsRead));
+				setString(parameterIndex, new String(l_chars, 0, l_charsRead), PG_TEXT);
 			}
 			catch (UnsupportedEncodingException l_uee)
 			{
@@ -1018,7 +1094,7 @@ public abstract class AbstractJdbc1Statement implements org.postgresql.PGStateme
 				InputStreamReader l_inStream = new InputStreamReader(x, "UTF-8");
 				char[] l_chars = new char[length];
 				int l_charsRead = l_inStream.read(l_chars, 0, length);
-				setString(parameterIndex, new String(l_chars, 0, l_charsRead));
+				setString(parameterIndex, new String(l_chars, 0, l_charsRead), PG_TEXT);
 			}
 			catch (UnsupportedEncodingException l_uee)
 			{
@@ -1130,8 +1206,10 @@ public abstract class AbstractJdbc1Statement implements org.postgresql.PGStateme
 	{
 		int i;
 
-		for (i = 0 ; i < m_binds.length ; i++)
+		for (i = 0 ; i < m_binds.length ; i++) {
 			m_binds[i] = null;
+                        m_bindTypes[i] = null;
+		}
 	}
 
 	/*
@@ -1162,9 +1240,11 @@ public abstract class AbstractJdbc1Statement implements org.postgresql.PGStateme
 		}
 		switch (targetSqlType)
 		{
+			case Types.INTEGER:
+       				bind(parameterIndex, x.toString(), PG_INTEGER);
+				break;
 			case Types.TINYINT:
 			case Types.SMALLINT:
-			case Types.INTEGER:
 			case Types.BIGINT:
 			case Types.REAL:
 			case Types.FLOAT:
@@ -1172,9 +1252,12 @@ public abstract class AbstractJdbc1Statement implements org.postgresql.PGStateme
 			case Types.DECIMAL:
 			case Types.NUMERIC:
 				if (x instanceof Boolean)
-					set(parameterIndex, ((Boolean)x).booleanValue() ? "1" : "0");
+					bind(parameterIndex, ((Boolean)x).booleanValue() ? "1" : "0", PG_BOOLEAN);
 				else
-					set(parameterIndex, x.toString());
+				        //Note this should be fixed
+				        //as soon as the backend correctly supports int8 type
+				        //comparisons
+					bind(parameterIndex, "'"+x.toString()+"'", PG_NUMERIC);
 				break;
 			case Types.CHAR:
 			case Types.VARCHAR:
@@ -1193,7 +1276,7 @@ public abstract class AbstractJdbc1Statement implements org.postgresql.PGStateme
 			case Types.BIT:
 				if (x instanceof Boolean)
 				{
-					set(parameterIndex, ((Boolean)x).booleanValue() ? "TRUE" : "FALSE");
+					bind(parameterIndex, ((Boolean)x).booleanValue() ? "TRUE" : "FALSE", PG_TEXT);
 				}
 				else
 				{
@@ -1205,7 +1288,7 @@ public abstract class AbstractJdbc1Statement implements org.postgresql.PGStateme
 				setObject(parameterIndex, x);
 				break;
 			case Types.OTHER:
-				setString(parameterIndex, ((PGobject)x).getValue());
+				setString(parameterIndex, ((PGobject)x).getValue(), PG_TEXT);
 				break;
 			default:
 				throw new PSQLException("postgresql.prep.type");
@@ -1255,7 +1338,7 @@ public abstract class AbstractJdbc1Statement implements org.postgresql.PGStateme
 		else if (x instanceof Boolean)
 			setBoolean(parameterIndex, ((Boolean)x).booleanValue());
 		else if (x instanceof PGobject)
-			setString(parameterIndex, ((PGobject)x).getValue());
+			setString(parameterIndex, ((PGobject)x).getValue(), PG_TEXT);
 		else
 			// Try to store java object in database
 			setSerialize(parameterIndex, connection.storeObject(x), x.getClass().getName() );
@@ -1579,13 +1662,14 @@ public abstract class AbstractJdbc1Statement implements org.postgresql.PGStateme
 	 * @param s a string to be stored
 	 * @exception SQLException if something goes wrong
 	 */
-	protected void set(int paramIndex, String s) throws SQLException
+	protected void bind(int paramIndex, Object s, String type) throws SQLException
 	{
 		if (paramIndex < 1 || paramIndex > m_binds.length)
 			throw new PSQLException("postgresql.prep.range");
 		if (paramIndex == 1 && isFunction) // need to registerOut instead
 			throw new PSQLException ("postgresql.call.funcover");             
 		m_binds[paramIndex - 1] = s;
+                m_bindTypes[paramIndex - 1] = type;
 	}
 
 	/*
@@ -1607,7 +1691,7 @@ public abstract class AbstractJdbc1Statement implements org.postgresql.PGStateme
 		// This cannot be just a plain OID because then there would be ambiguity
 		// between when you want the oid itself and when you want the object
 		// an oid references.
-		set(parameterIndex, Long.toString(x) + "::" + tablename );
+		bind(parameterIndex, Long.toString(x) + "::" + tablename, PG_TEXT );
 	}
 
 	/** 
@@ -1674,5 +1758,28 @@ public abstract class AbstractJdbc1Statement implements org.postgresql.PGStateme
 			throw new PSQLException("postgresql.call.noinout");
 	}
 		
+
+
+    public void setUseServerPrepare(boolean flag) {
+	m_useServerPrepare = flag;
+    }
+
+    public boolean isUseServerPrepare() {
+	return m_useServerPrepare;
+    }
+
+
+    private static final String PG_TEXT = "text";
+    private static final String PG_INTEGER = "integer";
+    private static final String PG_INT2 = "int2";
+    private static final String PG_INT8 = "int8";
+    private static final String PG_NUMERIC = "numeric";
+    private static final String PG_FLOAT = "float";
+    private static final String PG_DOUBLE = "double";
+    private static final String PG_BOOLEAN = "boolean";
+    private static final String PG_DATE = "date";
+    private static final String PG_TIME = "time";
+    private static final String PG_TIMESTAMPTZ = "timestamptz";
+
 
 }

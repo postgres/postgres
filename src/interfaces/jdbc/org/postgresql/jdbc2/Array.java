@@ -88,6 +88,9 @@ public class Array implements java.sql.Array
 			boolean insideString = false;
 			for ( int i = 0; i < chars.length; i++ )
 			{
+			        if ( chars[i] == '\\' )
+				        //escape character that we need to skip
+				        i++;
 				if ( chars[i] == '{' )
 				{
 					if ( foundOpen )  // Only supports 1-D arrays for now

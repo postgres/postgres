@@ -13,7 +13,7 @@ import org.postgresql.util.PSQLException;
  * <p>The lifetime of a QueryExecutor object is from sending the query
  * until the response has been received from the backend.
  *
- * $Id: QueryExecutor.java,v 1.14 2002/08/23 20:45:49 barry Exp $
+ * $Id: QueryExecutor.java,v 1.15 2002/09/02 03:07:36 barry Exp $
  */
 
 public class QueryExecutor
@@ -75,6 +75,7 @@ public class QueryExecutor
                                         case 'A':	// Asynchronous Notify
                                                 int pid = pg_stream.ReceiveInteger(4);
                                                 String msg = pg_stream.ReceiveString(connection.getEncoding());
+						connection.addNotification(new org.postgresql.core.Notification(msg, pid));
                                                 break;
                                         case 'B':	// Binary Data Transfer
                                                 receiveTuple(true);
