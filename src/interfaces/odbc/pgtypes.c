@@ -223,7 +223,7 @@ mylog("getCharPrecision: type=%d, col=%d, unknown = %d\n", type,col,handle_unkno
 	if (stmt->manual_result) {
 		flds = result->fields;
 		if (flds)
-			return flds->adtsize[col];
+			return flds->typlen[col];
 		else
 			return maxsize;
 	}

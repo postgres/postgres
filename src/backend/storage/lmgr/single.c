@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/Attic/single.c,v 1.7 1998/06/30 02:33:32 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/Attic/single.c,v 1.8 1998/07/13 16:34:52 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,7 +32,7 @@
  * Returns: TRUE if the lock can be set, FALSE otherwise.
  */
 bool
-SingleLockReln(LockInfo linfo, LOCKMODE lockmode, int action)
+SingleLockReln(LockInfo lockinfo, LOCKMODE lockmode, int action)
 {
 	LOCKTAG		tag;
 
@@ -41,8 +41,8 @@ SingleLockReln(LockInfo linfo, LOCKMODE lockmode, int action)
 	 * will return miss if the padding bytes aren't zero'd.
 	 */
 	MemSet(&tag, 0, sizeof(tag));
-	tag.relId = linfo->lRelId.relId;
-	tag.dbId = linfo->lRelId.dbId;
+	tag.relId = lockinfo->lockRelId.relId;
+	tag.dbId = lockinfo->lockRelId.dbId;
 	BlockIdSet(&(tag.tupleId.ip_blkid), InvalidBlockNumber);
 	tag.tupleId.ip_posid = InvalidOffsetNumber;
 
@@ -61,7 +61,7 @@ SingleLockReln(LockInfo linfo, LOCKMODE lockmode, int action)
  *
  */
 bool
-SingleLockPage(LockInfo linfo,
+SingleLockPage(LockInfo lockinfo,
 			   ItemPointer tidPtr,
 			   LOCKMODE lockmode,
 			   int action)
@@ -73,8 +73,8 @@ SingleLockPage(LockInfo linfo,
 	 * will return miss if the padding bytes aren't zero'd.
 	 */
 	MemSet(&tag, 0, sizeof(tag));
-	tag.relId = linfo->lRelId.relId;
-	tag.dbId = linfo->lRelId.dbId;
+	tag.relId = lockinfo->lockRelId.relId;
+	tag.dbId = lockinfo->lockRelId.dbId;
 	BlockIdCopy(&(tag.tupleId.ip_blkid), &(tidPtr->ip_blkid));
 	tag.tupleId.ip_posid = InvalidOffsetNumber;
 

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: lmgr.h,v 1.12 1998/06/30 02:33:32 momjian Exp $
+ * $Id: lmgr.h,v 1.13 1998/07/13 16:34:56 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,32 +15,57 @@
 
 #include <storage/lock.h>
 #include <utils/rel.h>
+#include <catalog/catname.h>
 
 /*
  * This was moved from pladt.h for the new lock manager.  Want to obsolete
  * all of the old code.
  */
-typedef struct LRelId
+typedef struct LockRelId
 {
 	Oid			relId;			/* a relation identifier */
 	Oid			dbId;			/* a database identifier */
-} LRelId;
+} LockRelId;
 
 typedef struct LockInfoData
 {
 	bool		initialized;
-	LRelId		lRelId;
+	LockRelId	lockRelId;
 	TransactionId transactionIdData;
 	uint16		flags;
 } LockInfoData;
 typedef LockInfoData *LockInfo;
 
-#define LockInfoIsValid(linfo) \
-		((PointerIsValid(linfo)) &&  ((LockInfo) linfo)->initialized)
+#define LockInfoIsValid(lockinfo) \
+		((PointerIsValid(lockinfo)) &&  ((LockInfo) lockinfo)->initialized)
+
+extern LockRelId VariableRelationLockRelId;
+		
+/*
+ * RelationGetLockRelId --
+ *		Returns "lock" relation identifier for a relation.
+ */
+/* ----------------
+ * final condition is a hack to prevent problems during
+ * VARIABLE relation initialization
+ * ----------------
+ */
+#define RelationGetLockRelId(relation) \
+( \
+	AssertMacro(RelationIsValid(relation)), \
+	(!LockInfoIsValid((LockInfo)(relation)->lockInfo)) ? \
+		RelationInitLockInfo(relation) \
+	: \
+		(void)NULL, \
+	(strcmp(RelationGetRelationName(relation)->data, \
+			VariableRelationName) == 0) ? \
+		VariableRelationLockRelId \
+	: \
+		((LockInfo)(relation)->lockInfo)->lockRelId \
+)
 
 
-extern LRelId RelationGetLRelId(Relation relation);
-extern Oid	LRelIdGetRelationId(LRelId lRelId);
+extern Oid	LockRelIdGetRelationId(LockRelId lockRelId);
 extern void RelationInitLockInfo(Relation relation);
 extern void RelationSetLockForDescriptorOpen(Relation relation);
 extern void RelationSetLockForRead(Relation relation);
@@ -72,9 +97,9 @@ extern void RelationSetWIntentLock(Relation relation);
 extern void RelationUnsetWIntentLock(Relation relation);
 
 /* single.c */
-extern bool SingleLockReln(LockInfo linfo, LOCKMODE lockmode, int action);
+extern bool SingleLockReln(LockInfo lockinfo, LOCKMODE lockmode, int action);
 extern bool
-SingleLockPage(LockInfo linfo, ItemPointer tidPtr,
+SingleLockPage(LockInfo lockinfo, ItemPointer tidPtr,
 			   LOCKMODE lockmode, int action);
 
 /* proc.c */

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq.h,v 1.17 1998/07/09 03:29:01 scrappy Exp $
+ * $Id: libpq.h,v 1.18 1998/07/13 16:34:53 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -49,8 +49,8 @@ typedef struct
 typedef struct TypeBlock
 {
 	char		name[NAMEDATALEN];		/* name of the attribute */
-	int			adtid;			/* adtid of the type */
-	int			adtsize;		/* adtsize of the type */
+	int			typid;			/* typid of the type */
+	int			typlen;		/* typlen of the type */
 } TypeBlock;
 
 /* ----------------

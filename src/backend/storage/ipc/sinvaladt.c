@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/sinvaladt.c,v 1.11 1998/06/27 04:53:36 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/sinvaladt.c,v 1.12 1998/07/13 16:34:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -85,7 +85,7 @@ SISetActiveProcess(SISeg *segInOutP, BackendId backendId)
 int
 SIBackendInit(SISeg *segInOutP)
 {
-	LRelId		LtCreateRelId();
+	LockRelId		LtCreateRelId();
 	TransactionId LMITransactionIdCopy();
 
 	Assert(MyBackendTag > 0);

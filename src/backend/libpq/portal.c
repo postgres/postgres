@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/Attic/portal.c,v 1.14 1998/06/15 19:28:27 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/Attic/portal.c,v 1.15 1998/07/13 16:34:48 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -327,7 +327,7 @@ PQftypeGroup(PortalBuffer *portal, int group_index, int field_number)
 
 	if ((gbp = pbuf_findGroup(portal, group_index)) &&
 		in_range("PQftypeGroup: field number", field_number, 0, gbp->no_fields))
-		return (gbp->types[field_number].adtid);
+		return (gbp->types[field_number].typid);
 	return (-1);
 }
 
@@ -348,7 +348,7 @@ PQfsizeGroup(PortalBuffer *portal, int group_index, int field_number)
 
 	if ((gbp = pbuf_findGroup(portal, group_index)) &&
 		in_range("PQfsizeGroup: field number", field_number, 0, gbp->no_fields))
-		return (gbp->types[field_number].adtsize);
+		return (gbp->types[field_number].typlen);
 	return (-1);
 }
 
@@ -481,8 +481,8 @@ PQftype(PortalBuffer *portal, int tuple_index, int field_number)
 		return (-1);
 
 	if ((gbp = PQgroup(portal, tuple_index)) &&
-	  in_range("PQftype: field number", field_number, 0, gbp->no_fields))
-		return (gbp->types[field_number].adtid);
+		in_range("PQftype: field number", field_number, 0, gbp->no_fields))
+		return (gbp->types[field_number].typid);
 	return (-1);
 }
 
@@ -502,7 +502,7 @@ PQfsize(PortalBuffer *portal, int tuple_index, int field_number)
 
 	if ((gbp = PQgroup(portal, tuple_index)) &&
 	  in_range("PQfsize: field number", field_number, 0, gbp->no_fields))
-		return (gbp->types[field_number].adtsize);
+		return (gbp->types[field_number].typlen);
 	return (-1);
 }
 

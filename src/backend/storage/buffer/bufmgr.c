@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.38 1998/06/15 19:29:09 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.39 1998/07/13 16:34:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -114,14 +114,14 @@ RelationGetBufferWithBuffer(Relation relation,
 							Buffer buffer)
 {
 	BufferDesc *bufHdr;
-	LRelId		lrelId;
+	LockRelId		lrelId;
 
 	if (BufferIsValid(buffer))
 	{
 		if (!BufferIsLocal(buffer))
 		{
 			bufHdr = &BufferDescriptors[buffer - 1];
-			lrelId = RelationGetLRelId(relation);
+			lrelId = RelationGetLockRelId(relation);
 			SpinAcquire(BufMgrLock);
 			if (bufHdr->tag.blockNum == blockNumber &&
 				bufHdr->tag.relId.relId == lrelId.relId &&
@@ -1282,7 +1282,7 @@ BufferGetRelation(Buffer buffer)
 	Assert(!BufferIsLocal(buffer));		/* not supported for local buffers */
 
 	/* XXX should be a critical section */
-	relid = LRelIdGetRelationId(BufferDescriptors[buffer - 1].tag.relId);
+	relid = LockRelIdGetRelationId(BufferDescriptors[buffer - 1].tag.relId);
 	relation = RelationIdGetRelation(relid);
 
 	RelationDecrementReferenceCount(relation);

@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/Attic/multi.c,v 1.19 1998/06/30 02:33:31 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/Attic/multi.c,v 1.20 1998/07/13 16:34:51 momjian Exp $
  *
  * NOTES:
  *	 (1) The lock.c module assumes that the caller here is doing
@@ -113,7 +113,7 @@ InitMultiLevelLocks()
  * Returns: TRUE if the lock can be set, FALSE otherwise.
  */
 bool
-MultiLockReln(LockInfo linfo, LOCKMODE lockmode)
+MultiLockReln(LockInfo lockinfo, LOCKMODE lockmode)
 {
 	LOCKTAG		tag;
 
@@ -122,8 +122,8 @@ MultiLockReln(LockInfo linfo, LOCKMODE lockmode)
 	 * will return miss if the padding bytes aren't zero'd.
 	 */
 	MemSet(&tag, 0, sizeof(tag));
-	tag.relId = linfo->lRelId.relId;
-	tag.dbId = linfo->lRelId.dbId;
+	tag.relId = lockinfo->lockRelId.relId;
+	tag.dbId = lockinfo->lockRelId.dbId;
 	return (MultiAcquire(MultiTableId, &tag, lockmode, RELN_LEVEL));
 }
 
@@ -136,7 +136,7 @@ MultiLockReln(LockInfo linfo, LOCKMODE lockmode)
  *		at the page and relation level.
  */
 bool
-MultiLockTuple(LockInfo linfo, ItemPointer tidPtr, LOCKMODE lockmode)
+MultiLockTuple(LockInfo lockinfo, ItemPointer tidPtr, LOCKMODE lockmode)
 {
 	LOCKTAG		tag;
 
@@ -146,8 +146,8 @@ MultiLockTuple(LockInfo linfo, ItemPointer tidPtr, LOCKMODE lockmode)
 	 */
 	MemSet(&tag, 0, sizeof(tag));
 
-	tag.relId = linfo->lRelId.relId;
-	tag.dbId = linfo->lRelId.dbId;
+	tag.relId = lockinfo->lockRelId.relId;
+	tag.dbId = lockinfo->lockRelId.dbId;
 
 	/* not locking any valid Tuple, just the page */
 	tag.tupleId = *tidPtr;
@@ -158,7 +158,7 @@ MultiLockTuple(LockInfo linfo, ItemPointer tidPtr, LOCKMODE lockmode)
  * same as above at page level
  */
 bool
-MultiLockPage(LockInfo linfo, ItemPointer tidPtr, LOCKMODE lockmode)
+MultiLockPage(LockInfo lockinfo, ItemPointer tidPtr, LOCKMODE lockmode)
 {
 	LOCKTAG		tag;
 
@@ -178,8 +178,8 @@ MultiLockPage(LockInfo linfo, ItemPointer tidPtr, LOCKMODE lockmode)
 	 * when we say lock the page we mean the 8k block. -Jeff 16 July 1991
 	 * ----------------------------
 	 */
-	tag.relId = linfo->lRelId.relId;
-	tag.dbId = linfo->lRelId.dbId;
+	tag.relId = lockinfo->lockRelId.relId;
+	tag.dbId = lockinfo->lockRelId.dbId;
 	BlockIdCopy(&(tag.tupleId.ip_blkid), &(tidPtr->ip_blkid));
 	return (MultiAcquire(MultiTableId, &tag, lockmode, PAGE_LEVEL));
 }
@@ -302,7 +302,7 @@ MultiAcquire(LOCKMETHOD lockmethod,
  */
 #ifdef NOT_USED
 bool
-MultiReleasePage(LockInfo linfo, ItemPointer tidPtr, LOCKMODE lockmode)
+MultiReleasePage(LockInfo lockinfo, ItemPointer tidPtr, LOCKMODE lockmode)
 {
 	LOCKTAG		tag;
 
@@ -314,8 +314,8 @@ MultiReleasePage(LockInfo linfo, ItemPointer tidPtr, LOCKMODE lockmode)
 	 */
 	MemSet(&tag, 0, sizeof(LOCKTAG));
 
-	tag.relId = linfo->lRelId.relId;
-	tag.dbId = linfo->lRelId.dbId;
+	tag.relId = lockinfo->lockRelId.relId;
+	tag.dbId = lockinfo->lockRelId.dbId;
 	BlockIdCopy(&(tag.tupleId.ip_blkid), &(tidPtr->ip_blkid));
 
 	return (MultiRelease(MultiTableId, &tag, lockmode, PAGE_LEVEL));
@@ -328,7 +328,7 @@ MultiReleasePage(LockInfo linfo, ItemPointer tidPtr, LOCKMODE lockmode)
  * ------------------
  */
 bool
-MultiReleaseReln(LockInfo linfo, LOCKMODE lockmode)
+MultiReleaseReln(LockInfo lockinfo, LOCKMODE lockmode)
 {
 	LOCKTAG		tag;
 
@@ -339,8 +339,8 @@ MultiReleaseReln(LockInfo linfo, LOCKMODE lockmode)
 	 * ------------------
 	 */
 	MemSet(&tag, 0, sizeof(LOCKTAG));
-	tag.relId = linfo->lRelId.relId;
-	tag.dbId = linfo->lRelId.dbId;
+	tag.relId = lockinfo->lockRelId.relId;
+	tag.dbId = lockinfo->lockRelId.dbId;
 
 	return (MultiRelease(MultiTableId, &tag, lockmode, RELN_LEVEL));
 }

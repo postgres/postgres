@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: buf_internals.h,v 1.22 1998/06/15 18:40:01 momjian Exp $
+ * $Id: buf_internals.h,v 1.23 1998/07/13 16:34:55 momjian Exp $
  *
  * NOTE
  *		If BUFFERPAGE0 is defined, then 0 will be used as a
@@ -51,7 +51,7 @@ typedef long **BufferBlock;
 
 struct buftag
 {
-	LRelId		relId;
+	LockRelId		relId;
 	BlockNumber blockNum;		/* blknum relative to begin of reln */
 };
 
@@ -65,14 +65,14 @@ struct buftag
 #define INIT_BUFFERTAG(a,xx_reln,xx_blockNum) \
 ( \
 	(a)->blockNum = xx_blockNum, \
-	(a)->relId = RelationGetLRelId(xx_reln) \
+	(a)->relId = RelationGetLockRelId(xx_reln) \
 )
 
 #ifdef NOT_USED
 #define COPY_BUFFERTAG(a,b) \
 ( \
 	(a)->blockNum = (b)->blockNum, \
-	LRelIdAssign(*(a),*(b)) \
+	LockRelIdAssign(*(a),*(b)) \
 )
 
 #define EQUAL_BUFFERTAG(a,b) \

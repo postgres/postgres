@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lmgr.c,v 1.12 1998/06/15 19:29:19 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lmgr.c,v 1.13 1998/07/13 16:34:50 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,7 +47,7 @@
 #include "storage/bufmgr.h"
 #include "access/transam.h"		/* for AmiTransactionId */
 
-static void LRelIdAssign(LRelId *lRelId, Oid dbId, Oid relId);
+static void LockRelIdAssign(LockRelId *lockRelId, Oid dbId, Oid relId);
 
 /* ----------------
  *
@@ -68,68 +68,17 @@ static void LRelIdAssign(LRelId *lRelId, Oid dbId, Oid relId);
 
 extern Oid	MyDatabaseId;
 
-static LRelId VariableRelationLRelId = {
+LockRelId VariableRelationLockRelId = {
 	RelOid_pg_variable,
 	InvalidOid
 };
 
-/* ----------------
- *		RelationGetLRelId
- * ----------------
- */
-#ifdef	LOCKDEBUG
-#define LOCKDEBUG_10 \
-elog(NOTICE, "RelationGetLRelId(%s) invalid lockInfo", \
-	 RelationGetRelationName(relation));
-#else
-#define LOCKDEBUG_10
-#endif							/* LOCKDEBUG */
-
 /*
- * RelationGetLRelId --
- *		Returns "lock" relation identifier for a relation.
- */
-LRelId
-RelationGetLRelId(Relation relation)
-{
-	LockInfo	linfo;
-
-	/* ----------------
-	 *	sanity checks
-	 * ----------------
-	 */
-	Assert(RelationIsValid(relation));
-	linfo = (LockInfo) relation->lockInfo;
-
-	/* ----------------
-	 *	initialize lock info if necessary
-	 * ----------------
-	 */
-	if (!LockInfoIsValid(linfo))
-	{
-		LOCKDEBUG_10;
-		RelationInitLockInfo(relation);
-		linfo = (LockInfo) relation->lockInfo;
-	}
-
-	/* ----------------
-	 * XXX hack to prevent problems during
-	 * VARIABLE relation initialization
-	 * ----------------
-	 */
-	if (strcmp(RelationGetRelationName(relation)->data,
-			   VariableRelationName) == 0)
-		return (VariableRelationLRelId);
-
-	return (linfo->lRelId);
-}
-
-/*
- * LRelIdGetDatabaseId --
+ * LockRelIdGetDatabaseId --
  *		Returns database identifier for a "lock" relation identifier.
  */
 /* ----------------
- *		LRelIdGetDatabaseId
+ *		LockRelIdGetDatabaseId
  *
  * Note: The argument may not be correct, if it is not used soon
  *		 after it is created.
@@ -137,21 +86,21 @@ RelationGetLRelId(Relation relation)
  */
 #ifdef NOT_USED
 Oid
-LRelIdGetDatabaseId(LRelId lRelId)
+LockRelIdGetDatabaseId(LockRelId lockRelId)
 {
-	return (lRelId.dbId);
+	return (lockRelId.dbId);
 }
 
 #endif
 
 /*
- * LRelIdGetRelationId --
+ * LockRelIdGetRelationId --
  *		Returns relation identifier for a "lock" relation identifier.
  */
 Oid
-LRelIdGetRelationId(LRelId lRelId)
+LockRelIdGetRelationId(LockRelId lockRelId)
 {
-	return (lRelId.relId);
+	return (lockRelId.relId);
 }
 
 /*
@@ -169,15 +118,15 @@ DatabaseIdIsMyDatabaseId(Oid databaseId)
 #endif
 
 /*
- * LRelIdContainsMyDatabaseId --
+ * LockRelIdContainsMyDatabaseId --
  *		True iff "lock" relation identifier is valid in my present database.
  */
 #ifdef NOT_USED
 bool
-LRelIdContainsMyDatabaseId(LRelId lRelId)
+LockRelIdContainsMyDatabaseId(LockRelId lockRelId)
 {
 	return (bool)
-	(!OidIsValid(lRelId.dbId) || lRelId.dbId == MyDatabaseId);
+	(!OidIsValid(lockRelId.dbId) || lockRelId.dbId == MyDatabaseId);
 }
 
 #endif
@@ -255,9 +204,9 @@ RelationInitLockInfo(Relation relation)
 	 * ----------------
 	 */
 	if (IsSharedSystemRelationName(relname))
-		LRelIdAssign(&info->lRelId, InvalidOid, relationid);
+		LockRelIdAssign(&info->lockRelId, InvalidOid, relationid);
 	else
-		LRelIdAssign(&info->lRelId, MyDatabaseId, relationid);
+		LockRelIdAssign(&info->lockRelId, MyDatabaseId, relationid);
 
 	/* ----------------
 	 *	store the transaction id in the lockInfo field
@@ -319,7 +268,7 @@ RelationDiscardLockInfo(Relation relation)
 #ifdef	LOCKDEBUGALL
 #define LOCKDEBUGALL_30 \
 elog(DEBUG, "RelationSetLockForDescriptorOpen(%s[%d,%d]) called", \
-	 RelationGetRelationName(relation), lRelId.dbId, lRelId.relId)
+	 RelationGetRelationName(relation), lockRelId.dbId, lockRelId.relId)
 #else
 #define LOCKDEBUGALL_30
 #endif							/* LOCKDEBUGALL */
@@ -351,7 +300,7 @@ RelationSetLockForDescriptorOpen(Relation relation)
 #ifdef	LOCKDEBUG
 #define LOCKDEBUG_40 \
 elog(DEBUG, "RelationSetLockForRead(%s[%d,%d]) called", \
-	 RelationGetRelationName(relation), lRelId.dbId, lRelId.relId)
+	 RelationGetRelationName(relation), lockRelId.dbId, lockRelId.relId)
 #else
 #define LOCKDEBUG_40
 #endif							/* LOCKDEBUG */
@@ -363,7 +312,7 @@ elog(DEBUG, "RelationSetLockForRead(%s[%d,%d]) called", \
 void
 RelationSetLockForRead(Relation relation)
 {
-	LockInfo	linfo;
+	LockInfo	lockinfo;
 
 	/* ----------------
 	 *	sanity checks
@@ -383,15 +332,15 @@ RelationSetLockForRead(Relation relation)
 	if (!LockInfoIsValid(relation->lockInfo))
 	{
 		RelationInitLockInfo(relation);
-		linfo = (LockInfo) relation->lockInfo;
-		linfo->flags |= ReadRelationLock;
-		MultiLockReln(linfo, READ_LOCK);
+		lockinfo = (LockInfo) relation->lockInfo;
+		lockinfo->flags |= ReadRelationLock;
+		MultiLockReln(lockinfo, READ_LOCK);
 		return;
 	}
 	else
-		linfo = (LockInfo) relation->lockInfo;
+		lockinfo = (LockInfo) relation->lockInfo;
 
-	MultiLockReln(linfo, READ_LOCK);
+	MultiLockReln(lockinfo, READ_LOCK);
 }
 
 /* ----------------
@@ -401,7 +350,7 @@ RelationSetLockForRead(Relation relation)
 #ifdef	LOCKDEBUG
 #define LOCKDEBUG_50 \
 elog(DEBUG, "RelationUnsetLockForRead(%s[%d,%d]) called", \
-	 RelationGetRelationName(relation), lRelId.dbId, lRelId.relId)
+	 RelationGetRelationName(relation), lockRelId.dbId, lockRelId.relId)
 #else
 #define LOCKDEBUG_50
 #endif							/* LOCKDEBUG */
@@ -413,7 +362,7 @@ elog(DEBUG, "RelationUnsetLockForRead(%s[%d,%d]) called", \
 void
 RelationUnsetLockForRead(Relation relation)
 {
-	LockInfo	linfo;
+	LockInfo	lockinfo;
 
 	/* ----------------
 	 *	sanity check
@@ -423,21 +372,21 @@ RelationUnsetLockForRead(Relation relation)
 	if (LockingDisabled())
 		return;
 
-	linfo = (LockInfo) relation->lockInfo;
+	lockinfo = (LockInfo) relation->lockInfo;
 
 	/* ----------------
 	 * If we don't have lock info on the reln just go ahead and
 	 * release it.
 	 * ----------------
 	 */
-	if (!LockInfoIsValid(linfo))
+	if (!LockInfoIsValid(lockinfo))
 	{
 		elog(ERROR,
 			 "Releasing a lock on %s with invalid lock information",
 			 RelationGetRelationName(relation));
 	}
 
-	MultiReleaseReln(linfo, READ_LOCK);
+	MultiReleaseReln(lockinfo, READ_LOCK);
 }
 
 /* ----------------
@@ -447,7 +396,7 @@ RelationUnsetLockForRead(Relation relation)
 #ifdef	LOCKDEBUG
 #define LOCKDEBUG_60 \
 elog(DEBUG, "RelationSetLockForWrite(%s[%d,%d]) called", \
-	 RelationGetRelationName(relation), lRelId.dbId, lRelId.relId)
+	 RelationGetRelationName(relation), lockRelId.dbId, lockRelId.relId)
 #else
 #define LOCKDEBUG_60
 #endif							/* LOCKDEBUG */
@@ -459,7 +408,7 @@ elog(DEBUG, "RelationSetLockForWrite(%s[%d,%d]) called", \
 void
 RelationSetLockForWrite(Relation relation)
 {
-	LockInfo	linfo;
+	LockInfo	lockinfo;
 
 	/* ----------------
 	 *	sanity checks
@@ -479,15 +428,15 @@ RelationSetLockForWrite(Relation relation)
 	if (!LockInfoIsValid(relation->lockInfo))
 	{
 		RelationInitLockInfo(relation);
-		linfo = (LockInfo) relation->lockInfo;
-		linfo->flags |= WriteRelationLock;
-		MultiLockReln(linfo, WRITE_LOCK);
+		lockinfo = (LockInfo) relation->lockInfo;
+		lockinfo->flags |= WriteRelationLock;
+		MultiLockReln(lockinfo, WRITE_LOCK);
 		return;
 	}
 	else
-		linfo = (LockInfo) relation->lockInfo;
+		lockinfo = (LockInfo) relation->lockInfo;
 
-	MultiLockReln(linfo, WRITE_LOCK);
+	MultiLockReln(lockinfo, WRITE_LOCK);
 }
 
 /* ----------------
@@ -497,7 +446,7 @@ RelationSetLockForWrite(Relation relation)
 #ifdef	LOCKDEBUG
 #define LOCKDEBUG_70 \
 elog(DEBUG, "RelationUnsetLockForWrite(%s[%d,%d]) called", \
-	 RelationGetRelationName(relation), lRelId.dbId, lRelId.relId);
+	 RelationGetRelationName(relation), lockRelId.dbId, lockRelId.relId)
 #else
 #define LOCKDEBUG_70
 #endif							/* LOCKDEBUG */
@@ -509,7 +458,7 @@ elog(DEBUG, "RelationUnsetLockForWrite(%s[%d,%d]) called", \
 void
 RelationUnsetLockForWrite(Relation relation)
 {
-	LockInfo	linfo;
+	LockInfo	lockinfo;
 
 	/* ----------------
 	 *	sanity checks
@@ -519,16 +468,16 @@ RelationUnsetLockForWrite(Relation relation)
 	if (LockingDisabled())
 		return;
 
-	linfo = (LockInfo) relation->lockInfo;
+	lockinfo = (LockInfo) relation->lockInfo;
 
-	if (!LockInfoIsValid(linfo))
+	if (!LockInfoIsValid(lockinfo))
 	{
 		elog(ERROR,
 			 "Releasing a lock on %s with invalid lock information",
 			 RelationGetRelationName(relation));
 	}
 
-	MultiReleaseReln(linfo, WRITE_LOCK);
+	MultiReleaseReln(lockinfo, WRITE_LOCK);
 }
 
 /* ----------------
@@ -538,10 +487,10 @@ RelationUnsetLockForWrite(Relation relation)
 #ifdef	LOCKDEBUG
 #define LOCKDEBUG_80 \
 elog(DEBUG, "RelationSetLockForTupleRead(%s[%d,%d], 0x%x) called", \
-	 RelationGetRelationName(relation), lRelId.dbId, lRelId.relId, \
+	 RelationGetRelationName(relation), lockRelId.dbId, lockRelId.relId, \
 	 itemPointer)
 #define LOCKDEBUG_81 \
-	 elog(DEBUG, "RelationSetLockForTupleRead() escalating");
+	 elog(DEBUG, "RelationSetLockForTupleRead() escalating")
 #else
 #define LOCKDEBUG_80
 #define LOCKDEBUG_81
@@ -555,7 +504,7 @@ elog(DEBUG, "RelationSetLockForTupleRead(%s[%d,%d], 0x%x) called", \
 void
 RelationSetLockForTupleRead(Relation relation, ItemPointer itemPointer)
 {
-	LockInfo	linfo;
+	LockInfo	lockinfo;
 	TransactionId curXact;
 
 	/* ----------------
@@ -576,71 +525,71 @@ RelationSetLockForTupleRead(Relation relation, ItemPointer itemPointer)
 	if (!LockInfoIsValid(relation->lockInfo))
 	{
 		RelationInitLockInfo(relation);
-		linfo = (LockInfo) relation->lockInfo;
-		linfo->flags |=
+		lockinfo = (LockInfo) relation->lockInfo;
+		lockinfo->flags |=
 			IntentReadRelationLock |
 			IntentReadPageLock |
 			ReadTupleLock;
-		MultiLockTuple(linfo, itemPointer, READ_LOCK);
+		MultiLockTuple(lockinfo, itemPointer, READ_LOCK);
 		return;
 	}
 	else
-		linfo = (LockInfo) relation->lockInfo;
+		lockinfo = (LockInfo) relation->lockInfo;
 
 	/* ----------------
 	 *	no need to set a lower granularity lock
 	 * ----------------
 	 */
 	curXact = GetCurrentTransactionId();
-	if ((linfo->flags & ReadRelationLock) &&
-		TransactionIdEquals(curXact, linfo->transactionIdData))
+	if ((lockinfo->flags & ReadRelationLock) &&
+		TransactionIdEquals(curXact, lockinfo->transactionIdData))
 		return;
 
 	/* ----------------
 	 * If we don't already have a tuple lock this transaction
 	 * ----------------
 	 */
-	if (!((linfo->flags & ReadTupleLock) &&
-		  TransactionIdEquals(curXact, linfo->transactionIdData)))
+	if (!((lockinfo->flags & ReadTupleLock) &&
+		  TransactionIdEquals(curXact, lockinfo->transactionIdData)))
 	{
 
-		linfo->flags |=
+		lockinfo->flags |=
 			IntentReadRelationLock |
 			IntentReadPageLock |
 			ReadTupleLock;
 
 		/* clear count */
-		linfo->flags &= ~TupleLevelLockCountMask;
+		lockinfo->flags &= ~TupleLevelLockCountMask;
 
 	}
 	else
 	{
 		if (TupleLevelLockLimit == (TupleLevelLockCountMask &
-									linfo->flags))
+									lockinfo->flags))
 		{
 			LOCKDEBUG_81;
 
 			/* escalate */
-			MultiLockReln(linfo, READ_LOCK);
+			MultiLockReln(lockinfo, READ_LOCK);
 
 			/* clear count */
-			linfo->flags &= ~TupleLevelLockCountMask;
+			lockinfo->flags &= ~TupleLevelLockCountMask;
 			return;
 		}
 
 		/* increment count */
-		linfo->flags =
-			(linfo->flags & ~TupleLevelLockCountMask) |
-			(1 + (TupleLevelLockCountMask & linfo->flags));
+		lockinfo->flags =
+			(lockinfo->flags & ~TupleLevelLockCountMask) |
+			(1 + (TupleLevelLockCountMask & lockinfo->flags));
 	}
 
-	TransactionIdStore(curXact, &linfo->transactionIdData);
+	TransactionIdStore(curXact, &lockinfo->transactionIdData);
 
 	/* ----------------
 	 * Lock the tuple.
 	 * ----------------
 	 */
-	MultiLockTuple(linfo, itemPointer, READ_LOCK);
+	MultiLockTuple(lockinfo, itemPointer, READ_LOCK);
 }
 
 #endif
@@ -652,7 +601,7 @@ RelationSetLockForTupleRead(Relation relation, ItemPointer itemPointer)
 #ifdef	LOCKDEBUG
 #define LOCKDEBUG_90 \
 elog(DEBUG, "RelationSetLockForReadPage(%s[%d,%d], @%d) called", \
-	 RelationGetRelationName(relation), lRelId.dbId, lRelId.relId, page);
+	 RelationGetRelationName(relation), lockRelId.dbId, lockRelId.relId, page)
 #else
 #define LOCKDEBUG_90
 #endif							/* LOCKDEBUG */
@@ -664,7 +613,7 @@ elog(DEBUG, "RelationSetLockForReadPage(%s[%d,%d], @%d) called", \
 #ifdef	LOCKDEBUG
 #define LOCKDEBUG_100 \
 elog(DEBUG, "RelationSetLockForWritePage(%s[%d,%d], @%d) called", \
-	 RelationGetRelationName(relation), lRelId.dbId, lRelId.relId, page);
+	 RelationGetRelationName(relation), lockRelId.dbId, lockRelId.relId, page)
 #else
 #define LOCKDEBUG_100
 #endif							/* LOCKDEBUG */
@@ -686,7 +635,7 @@ RelationSetLockForWritePage(Relation relation,
 		return;
 
 	/* ---------------
-	 * Make sure linfo is initialized
+	 * Make sure lockinfo is initialized
 	 * ---------------
 	 */
 	if (!LockInfoIsValid(relation->lockInfo))
@@ -706,7 +655,7 @@ RelationSetLockForWritePage(Relation relation,
 #ifdef	LOCKDEBUG
 #define LOCKDEBUG_110 \
 elog(DEBUG, "RelationUnsetLockForReadPage(%s[%d,%d], @%d) called", \
-	 RelationGetRelationName(relation), lRelId.dbId, lRelId.relId, page)
+	 RelationGetRelationName(relation), lockRelId.dbId, lockRelId.relId, page)
 #else
 #define LOCKDEBUG_110
 #endif							/* LOCKDEBUG */
@@ -718,7 +667,7 @@ elog(DEBUG, "RelationUnsetLockForReadPage(%s[%d,%d], @%d) called", \
 #ifdef	LOCKDEBUG
 #define LOCKDEBUG_120 \
 elog(DEBUG, "RelationUnsetLockForWritePage(%s[%d,%d], @%d) called", \
-	 RelationGetRelationName(relation), lRelId.dbId, lRelId.relId, page)
+	 RelationGetRelationName(relation), lockRelId.dbId, lockRelId.relId, page)
 #else
 #define LOCKDEBUG_120
 #endif							/* LOCKDEBUG */
@@ -950,11 +899,11 @@ RelationUnsetLockForExtend(Relation relation)
 #endif
 
 /*
- * Create an LRelid --- Why not just pass in a pointer to the storage?
+ * Create an LockRelid --- Why not just pass in a pointer to the storage?
  */
 static void
-LRelIdAssign(LRelId *lRelId, Oid dbId, Oid relId)
+LockRelIdAssign(LockRelId *lockRelId, Oid dbId, Oid relId)
 {
-	lRelId->dbId = dbId;
-	lRelId->relId = relId;
+	lockRelId->dbId = dbId;
+	lockRelId->relId = relId;
 }

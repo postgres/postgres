@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq-fe.h,v 1.33 1998/07/13 02:41:59 momjian Exp $
+ * $Id: libpq-fe.h,v 1.34 1998/07/13 16:35:02 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -76,8 +76,8 @@ extern		"C"
 	typedef struct pgresAttDesc
 	{
 		char	   *name;		/* type name */
-		Oid			adtid;		/* type id */
-		short		adtsize;	/* type size */
+		Oid			typid;		/* type id */
+		short		typlen;	/* type size */
 		int			atttypmod;	/* type-specific modifier info */
 	} PGresAttDesc;
 
