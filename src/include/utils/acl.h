@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: acl.h,v 1.19 1999/02/13 23:22:14 momjian Exp $
+ * $Id: acl.h,v 1.20 1999/07/09 03:28:53 momjian Exp $
  *
  * NOTES
  *	  For backward-compatability purposes we have to allow there
@@ -74,6 +74,11 @@ typedef struct AclItem
 	AclId		ai_id;
 	AclIdType	ai_idtype;
 	AclMode		ai_mode;
+	/*
+	 *	This is actually type 'aclitem', and we want a fixed size for
+	 *	for all platforms, so we pad this with dummies.
+	 */
+	char		dummy1, dummy2;
 } AclItem;
 
 /* Note: if the size of AclItem changes,

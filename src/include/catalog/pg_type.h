@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_type.h,v 1.62 1999/05/25 16:13:48 momjian Exp $
+ * $Id: pg_type.h,v 1.63 1999/07/09 03:28:52 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -341,7 +341,12 @@ DATA(insert OID = 1024 (  _reltime	 PGUID -1  -1 f b t \054 0 703 array_in array
 DATA(insert OID = 1025 (  _tinterval PGUID -1  -1 f b t \054 0 704 array_in array_out array_in array_out i _null_ ));
 DATA(insert OID = 1026 (  _filename  PGUID -1  -1 f b t \054 0 605 array_in array_out array_in array_out i _null_ ));
 DATA(insert OID = 1027 (  _polygon	 PGUID -1  -1 f b t \054 0 604 array_in array_out array_in array_out d _null_ ));
-/* Note: the size of an aclitem needs to match sizeof(AclItem) in acl.h */
+/*
+ *	Note: the size of aclitem needs to match sizeof(AclItem) in acl.h.
+ *	Thanks to some padding, this will be 8 on all platforms.
+ *	We also have an Assert to make sure.
+ */
+#define ACLITEMSIZE	8
 DATA(insert OID = 1033 (  aclitem	 PGUID 8   -1 f b t \054 0 0 aclitemin aclitemout aclitemin aclitemout i _null_ ));
 DESCR("access control list");
 DATA(insert OID = 1034 (  _aclitem	 PGUID -1 -1 f b t \054 0 1033 array_in array_out array_in array_out i _null_ ));

@@ -29,7 +29,7 @@ PARSER
 * Select a[1] FROM test fails, it needs test.a[1]
 * Array index references without table name cause problems
 * Update table SET table.value = 3 fails
-* Creating index of TIMESTAMP & RELTIME fails, rename to DATETIME(Thomas)
+* Creating index of TIMESTAMP & RELTIME fails, or rename to DATETIME(Thomas)
 * SELECT foo UNION SELECT foo is incorrectly simplified to SELECT foo
 * INSERT ... SELECT ... GROUP BY groups by target columns not source columns
 * CREATE TABLE test (a char(5) DEFAULT text '', b int4) fails on INSERT
@@ -50,18 +50,11 @@ ENHANCEMENTS
 
 URGENT
 
-* Add referential integrity
-* Add OUTER joins, left and right(Thomas)
+* Add referential integrity(Jan?)
+* Add OUTER joins, left and right(Thomas, Bruce)
 * Allow long tuples by chaining or auto-storing outside db (chaining,large objs)
 * Eliminate limits on query length
-* Fix memory leak for expressions?, aggregates?
-
-EXOTIC FEATURES
-
-* Add sql3 recursive unions
-* Add the concept of dataspaces
-* Add replication of distributed databases
-* Allow queries across multiple databases
+* Fix memory leak for expressions?, aggregates?(Tom?)
 
 ADMIN
 
@@ -85,6 +78,7 @@ TYPES
 	o Allow large text type to use large objects(Peter)
 	o Not to stuff everything as files in a single directory, hash dirs
 	o Allow large object vacuuming
+	o Tables that start with xinv confused to be large objects
 * Allow pg_descriptions when creating types, tables, columns, and functions
 * Add IPv6 capability to INET/CIDR types
 * Make a separate SERIAL type?
@@ -129,6 +123,7 @@ COMMANDS
 * Rewrite the LIKE handling by rewriting the user string with the 
   supplied ESCAPE
 * Move LIKE index optimization handling to the optimizer
+* Allow RULE recomplation
   
 CLIENTS
 
@@ -140,6 +135,13 @@ CLIENTS
 * Add a function to return the last inserted oid, for use in psql scripts
 * Allow psql to print nulls as distinct from ""(?)
 * PQrequestCancel() be able to terminate backend waiting for lock
+
+EXOTIC FEATURES
+
+* Add sql3 recursive unions
+* Add the concept of dataspaces
+* Add replication of distributed databases
+* Allow queries across multiple databases
 
 MISC
 
@@ -167,8 +169,8 @@ MISC
 * Missing optimizer selectivities for date, r-tree, etc.
 * Overhaul mdmgr/smgr to fix double unlinking and double opens, cleanup
 * Overhaul bufmgr/lockmgr/transaction manager
-* Tables that start with xinv confused to be large objects
 * Add PL/Perl(Mark Hollomon)
+* Make postgres user have a password by default
 
 
 PERFORMANCE
@@ -223,7 +225,7 @@ MISC
 * improve dynamic memory allocation by introducing tuple-context memory
   allocation
 * fix memory leak in cache code when non-existant table is referenced
-* In WHERE x=3 AND x=y, add y=3
+* In WHERE tab1.x=3 AND tab1.x=tab2.y, add tab2.y=3
 * pass atttypmod through parser in more cases(Bruce)
 * remove duplicate type in/out functions for disk and net
 
