@@ -978,7 +978,7 @@ main(int argc, char *argv[])
 	db_info    *dbs;
 	tbl_info   *tbl;
 	PGresult   *res = NULL;
-	long long	diff = 0;
+	double		diff;
 	struct timeval now,
 				then;
 
@@ -1151,14 +1151,14 @@ main(int argc, char *argv[])
 
 		/* Figure out how long to sleep etc ... */
 		gettimeofday(&now, 0);
-		diff = (now.tv_sec - then.tv_sec) * 1000000 + (now.tv_usec - then.tv_usec);
+		diff = (int) (now.tv_sec - then.tv_sec) * 1000000.0 + (int) (now.tv_usec - then.tv_usec);
 
-		sleep_secs = args->sleep_base_value + args->sleep_scaling_factor * diff / 1000000;
+		sleep_secs = args->sleep_base_value + args->sleep_scaling_factor * diff / 1000000.0;
 		loops++;
 		if (args->debug >= 2)
 		{
 			sprintf(logbuffer,
-			 "%i All DBs checked in: %lld usec, will sleep for %i secs.",
+			 "%i All DBs checked in: %.0f usec, will sleep for %i secs.",
 					loops, diff, sleep_secs);
 			log_entry(logbuffer);
 		}
