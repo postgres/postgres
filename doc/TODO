@@ -7,7 +7,7 @@ Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 The most recent version of this document can be viewed at
 the PostgreSQL web site, http://www.PostgreSQL.org.
 
-A dash(-) marks changes that will appear in the upcoming 7.0 release.
+A dash(-) marks changes that will appear in the upcoming 7.1 release.
 
 Names in brackets "[]" indicate more detailed information is available in
 the directory pgsql/doc/TODO.detail/ under that name.
@@ -244,11 +244,12 @@ MISC
 SOURCE CODE
 -----------
 * Add use of 'const' for variables in source tree
-* Fix C optimizer problem where fmgr_ptr calls return different types [alpha]
+* -Fix C optimizer problem where fmgr_ptr calls return different types (Tom)
+  [alpha]
 * Does Mariposa source contain any other bug fixes?
 * Remove SET KSQO option now that OR processing is improved(Tom)
 * -Use macros to define NT open() file parameters, remove NT-specific defines
-* Change CURRENT to OLD internally for rules
+* -Change CURRENT to OLD internally for rules (Bruce)
 
 ---------------------------------------------------------------------------
 
