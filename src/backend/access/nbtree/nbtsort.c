@@ -5,7 +5,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Id: nbtsort.c,v 1.40.2.1 1999/08/02 05:24:41 scrappy Exp $
+ *	  $Id: nbtsort.c,v 1.40.2.2 2000/01/08 21:47:31 tgl Exp $
  *
  * NOTES
  *
@@ -904,6 +904,23 @@ _bt_buildadd(Relation index, void *pstate, BTItem bti, int flags)
 	pgspc = PageGetFreeSpace(npage);
 	btisz = BTITEMSZ(bti);
 	btisz = MAXALIGN(btisz);
+
+	/*
+	 * Check whether the item can fit on a btree page at all.
+	 * (Eventually, we ought to try to apply TOAST methods if not.)
+	 * We actually need to be able to fit three items on every page,
+	 * so restrict any one item to 1/3 the per-page available space.
+	 * Note that at this point, btisz doesn't include the ItemId.
+	 *
+	 * NOTE: similar code appears in _bt_insertonpg() to defend against
+	 * oversize items being inserted into an already-existing index.
+	 * But during creation of an index, we don't go through there.
+	 */
+	if (btisz > (PageGetPageSize(npage)-sizeof(PageHeaderData)-MAXALIGN(sizeof(BTPageOpaqueData)))/3 - sizeof(ItemIdData))
+		elog(ERROR, "btree: index item size %d exceeds maximum %d",
+			 btisz,
+			 (PageGetPageSize(npage)-sizeof(PageHeaderData)-MAXALIGN(sizeof(BTPageOpaqueData)))/3 - sizeof(ItemIdData));
+
 	if (pgspc < btisz)
 	{
 		Buffer		obuf = nbuf;
