@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.61 2000/03/12 19:32:06 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.62 2000/03/19 18:20:38 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -52,6 +52,7 @@ static bool check_subplans_for_ungrouped_vars_walker(Node *node,
 					check_subplans_for_ungrouped_vars_context *context);
 static int is_single_func(Node *node);
 static Node *eval_const_expressions_mutator (Node *node, void *context);
+static Expr *simplify_op_or_func(Expr *expr, List *args);
 
 
 Expr *
@@ -918,108 +919,15 @@ eval_const_expressions_mutator (Node *node, void *context)
 		{
 			case OP_EXPR:
 			case FUNC_EXPR:
-			{
 				/*
-				 * For an operator or function, we cannot simplify
-				 * unless all the inputs are constants.  (XXX possible
-				 * future improvement: if the op/func is strict and
-				 * at least one input is NULL, we could simplify to NULL.
-				 * But we do not currently have any way to know if the
-				 * op/func is strict or not.  For now, a NULL input is
-				 * treated the same as any other constant node.)
+				 * Code for op/func case is pretty bulky, so split it out
+				 * as a separate function.
 				 */
-				bool		args_all_const = true;
-				List	   *arg;
-				Oid			funcid;
-				Oid			result_typeid;
-				HeapTuple	func_tuple;
-				Form_pg_proc funcform;
-				Type		resultType;
-				Datum		const_val;
-				bool		const_is_null;
-				bool		isDone;
-
-				foreach(arg, args)
-				{
-					if (! IsA(lfirst(arg), Const))
-					{
-						args_all_const = false;
-						break;
-					}
-				}
-				if (! args_all_const)
-					break;
-				/*
-				 * Get the function procedure's OID and look to see
-				 * whether it is marked proiscachable.
-				 */
-				if (expr->opType == OP_EXPR)
-				{
-					Oper   *oper = (Oper *) expr->oper;
-
-					replace_opid(oper);
-					funcid = oper->opid;
-					result_typeid = oper->opresulttype;
-				}
-				else
-				{
-					Func   *func = (Func *) expr->oper;
-
-					funcid = func->funcid;
-					result_typeid = func->functype;
-				}
-				/* Someday lsyscache.c might provide a function for this */
-				func_tuple = SearchSysCacheTuple(PROCOID,
-												 ObjectIdGetDatum(funcid),
-												 0, 0, 0);
-				if (!HeapTupleIsValid(func_tuple))
-					elog(ERROR, "Function OID %u does not exist", funcid);
-				funcform = (Form_pg_proc) GETSTRUCT(func_tuple);
-				if (! funcform->proiscachable)
-					break;
-				/*
-				 * Also check to make sure it doesn't return a set.
-				 *
-				 * XXX would it be better to take the result type from the
-				 * pg_proc tuple, rather than the Oper or Func node?
-				 */
-				if (funcform->proretset)
-					break;
-				/*
-				 * OK, looks like we can simplify this operator/function.
-				 * We use the executor's routine ExecEvalExpr() to avoid
-				 * duplication of code and ensure we get the same result
-				 * as the executor would get.
-				 *
-				 * Build a new Expr node containing the already-simplified
-				 * arguments.  The only other setup needed here is the
-				 * replace_opid() that we already did for the OP_EXPR case.
-				 */
-				newexpr = makeNode(Expr);
-				newexpr->typeOid = expr->typeOid;
-				newexpr->opType = expr->opType;
-				newexpr->oper = expr->oper;
-				newexpr->args = args;
-				/*
-				 * It is OK to pass econtext = NULL because none of the
-				 * ExecEvalExpr() code used in this situation will use
-				 * econtext.  That might seem fortuitous, but it's not
-				 * so unreasonable --- a constant expression does not
-				 * depend on context, by definition, n'est ce pas?
-				 */
-				const_val = ExecEvalExpr((Node *) newexpr, NULL,
-										 &const_is_null, &isDone);
-				Assert(isDone);	/* if this isn't set, we blew it... */
-				pfree(newexpr);
-				/*
-				 * Make the constant result node.
-				 */
-				resultType = typeidType(result_typeid);
-				return (Node *) makeConst(result_typeid, typeLen(resultType),
-										  const_val, const_is_null,
-										  typeByVal(resultType),
-										  false, false);
-			}
+				newexpr = simplify_op_or_func(expr, args);
+				if (newexpr)	/* successfully simplified it */
+					return (Node *) newexpr;
+				/* else fall out to build new Expr node with simplified args */
+				break;
 			case OR_EXPR:
 			{
 				/*
@@ -1163,10 +1071,7 @@ eval_const_expressions_mutator (Node *node, void *context)
 		/*
 		 * If we can simplify the input to a constant, then we don't need
 		 * the RelabelType node anymore: just change the type field of
-		 * the Const node.  Otherwise keep the RelabelType node.
-		 *
-		 * XXX if relabel has a nondefault resulttypmod, do we need to
-		 * keep it to show that?  At present I don't think so.
+		 * the Const node.  Otherwise, copy the RelabelType node.
 		 */
 		RelabelType *relabel = (RelabelType *) node;
 		Node	   *arg;
@@ -1177,6 +1082,11 @@ eval_const_expressions_mutator (Node *node, void *context)
 			Const  *con = (Const *) arg;
 
 			con->consttype = relabel->resulttype;
+			/*
+			 * relabel's resulttypmod is discarded, which is OK for now;
+			 * if the type actually needs a runtime length coercion then
+			 * there should be a function call to do it just above this node.
+			 */
 			return (Node *) con;
 		}
 		else
@@ -1295,6 +1205,120 @@ eval_const_expressions_mutator (Node *node, void *context)
 	return expression_tree_mutator(node, eval_const_expressions_mutator,
 								   (void *) context);
 }
+
+/*
+ * Subroutine for eval_const_expressions: try to evaluate an op or func
+ *
+ * Inputs are the op or func Expr node, and the pre-simplified argument list.
+ * Returns a simplified expression if successful, or NULL if cannot
+ * simplify the op/func.
+ *
+ * XXX Possible future improvement: if the func is SQL-language, and its
+ * definition is simply "SELECT expression", we could parse and substitute
+ * the expression here.  This would avoid much runtime overhead, and perhaps
+ * expose opportunities for constant-folding within the expression even if
+ * not all the func's input args are constants.  It'd be appropriate to do
+ * here, and not in the parser, since we wouldn't want it to happen until
+ * after rule substitution/rewriting.
+ */
+static Expr *
+simplify_op_or_func(Expr *expr, List *args)
+{
+	List	   *arg;
+	Oid			funcid;
+	Oid			result_typeid;
+	HeapTuple	func_tuple;
+	Form_pg_proc funcform;
+	Type		resultType;
+	Expr       *newexpr;
+	Datum		const_val;
+	bool		const_is_null;
+	bool		isDone;
+
+	/*
+	 * For an operator or function, we cannot simplify unless all the inputs
+	 * are constants.  (XXX possible future improvement: if the op/func is
+	 * strict and at least one input is NULL, we could simplify to NULL.
+	 * But we do not currently have any way to know if the op/func is strict
+	 * or not.  For now, a NULL input is treated the same as any other
+	 * constant node.)
+	 */
+	foreach(arg, args)
+	{
+		if (! IsA(lfirst(arg), Const))
+			return NULL;
+	}
+	/*
+	 * Get the function procedure's OID and look to see
+	 * whether it is marked proiscachable.
+	 */
+	if (expr->opType == OP_EXPR)
+	{
+		Oper   *oper = (Oper *) expr->oper;
+
+		replace_opid(oper);		/* OK to scribble on input to this extent */
+		funcid = oper->opid;
+		result_typeid = oper->opresulttype;
+	}
+	else
+	{
+		Func   *func = (Func *) expr->oper;
+
+		funcid = func->funcid;
+		result_typeid = func->functype;
+	}
+	/* Someday lsyscache.c might provide a function for this */
+	func_tuple = SearchSysCacheTuple(PROCOID,
+									 ObjectIdGetDatum(funcid),
+									 0, 0, 0);
+	if (!HeapTupleIsValid(func_tuple))
+		elog(ERROR, "Function OID %u does not exist", funcid);
+	funcform = (Form_pg_proc) GETSTRUCT(func_tuple);
+	if (! funcform->proiscachable)
+		return NULL;
+	/*
+	 * Also check to make sure it doesn't return a set.
+	 */
+	if (funcform->proretset)
+		return NULL;
+	/*
+	 * OK, looks like we can simplify this operator/function.
+	 *
+	 * We use the executor's routine ExecEvalExpr() to avoid duplication of
+	 * code and ensure we get the same result as the executor would get.
+	 *
+	 * Build a new Expr node containing the already-simplified arguments.
+	 * The only other setup needed here is the replace_opid() that we already
+	 * did for the OP_EXPR case.
+	 */
+	newexpr = makeNode(Expr);
+	newexpr->typeOid = expr->typeOid;
+	newexpr->opType = expr->opType;
+	newexpr->oper = expr->oper;
+	newexpr->args = args;
+	/*
+	 * It is OK to pass econtext = NULL because none of the ExecEvalExpr()
+	 * code used in this situation will use econtext.  That might seem
+	 * fortuitous, but it's not so unreasonable --- a constant expression does
+	 * not depend on context, by definition, n'est ce pas?
+	 */
+	const_val = ExecEvalExpr((Node *) newexpr, NULL,
+							 &const_is_null, &isDone);
+	Assert(isDone);				/* if this isn't set, we blew it... */
+	pfree(newexpr);
+	/*
+	 * Make the constant result node.
+	 *
+	 * XXX would it be better to take the result type from the
+	 * pg_proc tuple, rather than the Oper or Func node?
+	 */
+	resultType = typeidType(result_typeid);
+	return (Expr *) makeConst(result_typeid, typeLen(resultType),
+							  const_val, const_is_null,
+							  typeByVal(resultType),
+							  false, false);
+}
+
 
 /*
  * Standard expression-tree walking support
