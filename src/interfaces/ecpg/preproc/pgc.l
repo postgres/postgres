@@ -5,6 +5,12 @@
 #include <ctype.h>
 #include <sys/types.h>
 #include <limits.h>
+
+#ifndef PATH_MAX
+#include <sys/param.h>
+#define PATH_MAX MAXPATHLEN
+#endif
+
 #if defined(HAVE_STRING_H)
 #include <string.h>
 #else
