@@ -8,7 +8,7 @@
  * or in config.h afterwards.  Of course, if you edit config.h, then your
  * changes will be overwritten the next time you run configure.
  *
- * $Id: config.h.in,v 1.166 2001/06/11 22:12:48 momjian Exp $
+ * $Id: config.h.in,v 1.167 2001/07/11 19:03:07 tgl Exp $
  */
 
 #ifndef CONFIG_H
@@ -231,6 +231,16 @@
  * DEFAULT_MAX_EXPR_DEPTH: default value of max_expr_depth SET variable.
  */
 #define DEFAULT_MAX_EXPR_DEPTH	10000
+
+/*
+ * PG_SOMAXCONN: maximum accept-queue length limit passed to listen(2).
+ * You'd think we should use SOMAXCONN from <sys/socket.h>, but on many
+ * systems that symbol is much smaller than the kernel's actual limit.
+ * In any case, this symbol need be twiddled only if you have a kernel
+ * that refuses large limit values, rather than silently reducing the
+ * value to what it can handle (which is what most if not all Unixen do).
+ */
+#define PG_SOMAXCONN	10000
 
 /*
  * You can try changing this if you have a machine with bytes of another

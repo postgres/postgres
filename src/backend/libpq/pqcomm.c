@@ -29,7 +29,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: pqcomm.c,v 1.117 2001/03/22 03:59:30 momjian Exp $
+ *	$Id: pqcomm.c,v 1.118 2001/07/11 19:03:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -78,11 +78,6 @@
 
 #include "libpq/libpq.h"
 #include "miscadmin.h"
-
-
-#ifndef SOMAXCONN
-#define SOMAXCONN 5				/* from Linux listen(2) man page */
-#endif
 
 
 static void pq_close(void);
@@ -185,6 +180,7 @@ StreamServerPort(int family, char *hostName, unsigned short portNumber,
 	SockAddr	saddr;
 	int			fd,
 				err;
+	int			maxconn;
 	size_t		len = 0;
 	int			one = 1;
 
@@ -350,7 +346,25 @@ StreamServerPort(int family, char *hostName, unsigned short portNumber,
 	}
 #endif	 /* HAVE_UNIX_SOCKETS */
 
-	listen(fd, SOMAXCONN);
+	/*
+	 * Select appropriate accept-queue length limit.  PG_SOMAXCONN is
+	 * only intended to provide a clamp on the request on platforms where
+	 * an overly large request provokes a kernel error (are there any?).
+	 */
+	maxconn = MaxBackends * 2;
+	if (maxconn > PG_SOMAXCONN)
+		maxconn = PG_SOMAXCONN;
+
+	err = listen(fd, maxconn);
+	if (err < 0)
+	{
+		snprintf(PQerrormsg, PQERRORMSG_LENGTH,
+				 "FATAL: StreamServerPort: listen() failed: %s\n",
+				 strerror(errno));
+		fputs(PQerrormsg, stderr);
+		pqdebug("%s", PQerrormsg);
+		return STATUS_ERROR;
+	}
 
 	*fdP = fd;
 
