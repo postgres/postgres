@@ -126,7 +126,7 @@ exec sql end declare section;
 	    amount[i]+=1000;
 
 	    strcpy(msg, "insert");
-	    exec sql at pm insert into "Test" (name, amount, letter) values (:n, :a, :l);
+	    exec sql at pm insert into "Test" (name, amount, letter) values (:n, :amount[i], :l);
 	}
 
 	strcpy(msg, "commit");
@@ -164,9 +164,6 @@ exec sql end declare section;
         for (i=0, j=sqlca.sqlerrd[2]; i<j; i++)
             printf("name[%d]=%8.8s\tamount[%d]=%d\tletter[%d]=%c\n", i, name[i], i, amount[i],i, letter[i][0]);
 
-        strcpy(msg, "select");
-        exec sql at pm select name, amount, letter into :name_letter from "Test";
-
 	strcpy(msg, "commit");
 	exec sql commit;
 
@@ -176,6 +173,16 @@ exec sql end declare section;
 	printf("Database: pm\n");
         for (i=0, j=sqlca.sqlerrd[2]; i<j; i++)
             printf("name[%d]=%8.8s\tamount[%d]=%d\tletter[%d]=%c\n", i, name_letter[i].name, i, name_letter[i].amount,i, name_letter[i].letter);
+
+	name_letter[4].amount=1407;
+	strcpy(msg, "insert");
+	exec sql insert into "Test" (name, amount, letter) values (:name_letter[4]);
+	
+        strcpy(msg, "select");
+        exec sql select name, amount, letter into :name_letter[2] from "Test" where amount = 1407;
+
+	printf("Database: mm\n");
+        printf("name[2]=%8.8s\tamount[2]=%d\tletter[2]=%c\n", name_letter[2].name, name_letter[2].amount, name_letter[2].letter);
 
 	/* Start automatic transactioning for connection main. */
 	exec sql set autocommit to on;
