@@ -149,6 +149,10 @@ pgcrypto -
 	Cryptographic functions
 	by Marko Kreen <marko@l-t.ee>
 
+reindex - 
+	Reindexes a database
+	by Shaun Thomas <sthomas@townnews.com>
+
 pgstattuple -
 	A function returns the percentage of "dead" tuples in a table
 	by Tatsuo Ishii <t-ishii@sra.co.jp>
