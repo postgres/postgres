@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.117 2002/10/03 19:19:09 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.118 2002/11/21 06:36:08 tgl Exp $
  *
  *
  *-------------------------------------------------------------------------
@@ -378,6 +378,18 @@ InitPostgres(const char *dbname, const char *username)
 	RelationCacheInitializePhase3();
 
 	/*
+	 * Check a normal user hasn't connected to a superuser reserved slot.
+	 * We can't do this till after we've read the user information, and
+	 * we must do it inside a transaction since checking superuserness
+	 * may require database access.  The superuser check is probably the
+	 * most expensive part; don't do it until necessary.
+	 */
+	if (ReservedBackends > 0 &&
+		CountEmptyBackendSlots() < ReservedBackends &&
+		!superuser())
+		elog(FATAL, "Non-superuser connection limit exceeded");
+
+	/*
 	 * Initialize various default states that can't be set up until we've
 	 * selected the active user and done ReverifyMyDatabase.
 	 */
@@ -397,17 +409,6 @@ InitPostgres(const char *dbname, const char *username)
 	/* close the transaction we started above */
 	if (!bootstrap)
 		CommitTransactionCommand(true);
-
-	/*
-	 * Check a normal user hasn't connected to a superuser reserved slot.
-	 * Do this here since we need the user information and that only
-	 * happens after we've started bringing the shared memory online. So
-	 * we wait until we've registered exit handlers and potentially shut
-	 * an open transaction down for an as safety conscious rejection as
-	 * possible.
-	 */
-	if (CountEmptyBackendSlots() < ReservedBackends && !superuser())
-		elog(ERROR, "Non-superuser connection limit exceeded");
 }
 
 /*
