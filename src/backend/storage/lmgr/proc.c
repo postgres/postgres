@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.4 1996/07/31 02:19:09 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.5 1996/08/01 05:11:33 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,7 +46,7 @@
  *      This is so that we can support more backends. (system-wide semaphore
  *      sets run out pretty fast.)                -ay 4/95
  *
- * $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.4 1996/07/31 02:19:09 scrappy Exp $
+ * $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.5 1996/08/01 05:11:33 scrappy Exp $
  */
 #include <sys/time.h>
 #ifndef WIN32
@@ -95,11 +95,6 @@ PROC 	*MyProc = NULL;
 static void ProcKill(int exitStatus, int pid);
 static void ProcGetNewSemKeyAndNum(IPCKey *key, int *semNum);
 static void ProcFreeSem(IpcSemaphoreKey semKey, int semNum);
-#if defined(PORTNAME_linux)
-extern void HandleDeadLock(int);
-#else
-extern int HandleDeadLock(void);
-#endif
 /*
  * InitProcGlobal -
  *    initializes the global process table. We put it here so that
@@ -628,13 +623,8 @@ ProcAddLock(SHM_QUEUE *elem)
  * up my semaphore.
  * --------------------
  */
-#if defined(PORTNAME_linux)
-void 
-HandleDeadLock(int i)
-#else
-int 
-HandleDeadLock()
-#endif
+void
+HandleDeadLock(int sig)
 {
     LOCK *lock;
     int size;
@@ -654,7 +644,7 @@ HandleDeadLock()
     if (IpcSemaphoreGetCount(MyProc->sem.semId, MyProc->sem.semNum) == 
 	IpcSemaphoreDefaultStartValue) {
 	UnlockLockTable();
-	return 1;
+	return;
     }
     
     /*
@@ -671,7 +661,7 @@ HandleDeadLock()
     if (MyProc->links.prev == INVALID_OFFSET ||
 	MyProc->links.next == INVALID_OFFSET) {
 	UnlockLockTable();
-	return(1);
+	return;
     }
     
     lock = MyProc->waitLock;
@@ -708,7 +698,7 @@ HandleDeadLock()
     UnlockLockTable();
     
     elog(NOTICE, "Timeout -- possible deadlock");
-    return 0;
+    return;
 }
 
 void

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: proc.h,v 1.1.1.1 1996/07/09 06:21:53 scrappy Exp $
+ * $Id: proc.h,v 1.2 1996/08/01 05:10:16 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -116,11 +116,7 @@ extern PROC *ProcWakeup(PROC *proc, int errType);
 extern int ProcGetId(void);
 extern int ProcLockWakeup(PROC_QUEUE *queue, char * ltable, char * lock);
 extern void ProcAddLock(SHM_QUEUE *elem);
-#if defined(PORTNAME_linux)
-extern int HandleDeadLock(int);
-#else
-extern int HandleDeadLock(void);
-#endif
+extern void HandleDeadLock(int sig);
 extern void ProcReleaseSpins(PROC *proc);
 extern void ProcFreeAllSemaphores(void);
 
