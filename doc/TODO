@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Fri Apr 12 20:20:17 EDT 2002
+Last updated:		Fri Apr 12 21:37:38 EDT 2002
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -79,6 +79,7 @@ DATA TYPES
 * Functions returning sets do not totally work
 * Change factorial to return a numeric
 * Change NUMERIC data type to use base 10,000 internally
+* Change NUMERIC to enforce the maximum precision, and increase it
 * Add function to return compressed length of TOAST data values (Tom)
 * Add GUC parameter for DATESTYLE
 
