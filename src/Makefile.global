@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Attic/Makefile.global,v 1.19.2.2 1996/08/19 18:37:09 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/Attic/Makefile.global,v 1.19.2.3 1996/08/19 19:34:48 scrappy Exp $
 #
 # NOTES
 #    This is seen by any Makefiles that include mk/postgres.mk. To
@@ -159,8 +159,8 @@ USE_READLINE= true
 # directories for the readline and history libraries.
 READLINE_INCDIR=  /home/tools/include
 HISTORY_INCDIR=   /home/tools/include -I/home/tools/include/readline
-READLINE_LIBDIR=  /home/tools/lib
-HISTORY_LIBDIR=   /home/tools/lib
+READLINE_LIBDIR=  /home/tools/lib -lreadline
+#HISTORY_LIBDIR=   /home/tools/lib -lhistory
 
 # If you do not plan to use Host based authentication,
 # comment out the following line
