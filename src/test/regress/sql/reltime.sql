@@ -20,7 +20,7 @@ INSERT INTO RELTIME_TBL (f1) VALUES ('@ 30 eons ago');
 
 -- test reltime operators
 
-SELECT '' AS eight, RELTIME_TBL.*;
+SELECT '' AS six, RELTIME_TBL.*;
 
 SELECT '' AS five, RELTIME_TBL.*
    WHERE RELTIME_TBL.f1 <> '@ 10 days'::reltime;

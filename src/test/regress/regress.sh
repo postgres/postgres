@@ -1,14 +1,23 @@
 #!/bin/sh
-# $Header: /cvsroot/pgsql/src/test/regress/Attic/regress.sh,v 1.6 1997/04/06 08:53:34 scrappy Exp $
+# $Header: /cvsroot/pgsql/src/test/regress/Attic/regress.sh,v 1.7 1997/04/26 05:49:39 scrappy Exp $
 #
 if [ -d ./obj ]; then
 	cd ./obj
 fi
 
-TZ="PST8PDT"; export TZ
+TZ="PST8PDT7,M04.01.00,M10.05.03"; export TZ
 
 #FRONTEND=monitor
 FRONTEND="psql -n -e -q"
+
+echo =============== Notes... =================
+echo "You must be already running the postmaster"
+echo " for the regression tests to succeed."
+echo "The time zone might need to be set to PST/PDT"
+echo " for the date and time data types to pass the"
+echo " regression tests; to do this type"
+echo "  setenv TZ $TZ"
+echo " before starting the postmaster."
 
 echo =============== destroying old regression database... =================
 destroydb regression
