@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Sat Feb 2 16:46:36 EST 2002
+   Last updated: Tue Feb 12 12:14:52 EST 2002
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -80,6 +80,8 @@
    4.15.2) How do I get the value of a SERIAL insert?
    4.15.3) Don't currval() and nextval() lead to a race condition with
    other users?
+   4.15.4) Why aren't my sequence numbers reused on transaction abort?
+   Why are there gaps in the numbers of my sequence/SERIAL column?
    4.16) What is an OID? What is a TID?
    4.17) What is the meaning of some of the terms used in PostgreSQL?
    4.18) Why do I get the error "ERROR: Memory exhausted in
@@ -862,6 +864,13 @@ BYTEA           bytea           variable-length byte array (null-byte safe)
     
    No. Currval() returns the current value assigned by your backend, not
    by all users.
+   
+    4.15.4) Why aren't my sequence numbers reused on transaction abort? Why are
+    there gaps in the numbers of my sequence/SERIAL column?
+    
+   To improve concurrency, sequence values are given out to running
+   transactions as needed and are now locked until the transaction
+   completes. This causes gaps in numbering from aborted transactions.
    
     4.16) What is an OID? What is a TID?
     

@@ -14,7 +14,7 @@
   alink="#0000ff">
     <H1>Frequently Asked Questions (FAQ) for PostgreSQL</H1>
 
-    <P>Last updated: Sat Feb  2 16:46:36 EST 2002</P>
+    <P>Last updated: Tue Feb 12 12:14:52 EST 2002</P>
 
     <P>Current maintainer: Bruce Momjian (<A href=
     "mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</A>)<BR>
@@ -119,6 +119,9 @@
     <SMALL>SERIAL</SMALL> insert?<BR>
      <A href="#4.15.3">4.15.3</A>) Don't <I>currval()</I> and
     <I>nextval()</I> lead to a race condition with other users?<BR>
+     <A href="#4.15.4">4.15.4</A>) Why aren't my sequence numbers reused
+     on transaction abort? Why are there gaps in the numbers of my
+     sequence/SERIAL column?<BR>
      <A href="#4.16">4.16</A>) What is an <SMALL>OID</SMALL>? What is a
     <SMALL>TID</SMALL>?<BR>
      <A href="#4.17">4.17</A>) What is the meaning of some of the terms
@@ -1091,6 +1094,15 @@ BYTEA           bytea           variable-length byte array (null-byte safe)
 
     <P>No. Currval() returns the current value assigned by your
     backend, not by all users.</P>
+
+    <H4><A name="4.15.4">4.15.4</A>) Why aren't my sequence numbers reused
+    on transaction abort? Why are there gaps in the numbers of my
+    sequence/SERIAL column?</H4>
+
+    <P>To improve concurrency, sequence values are given out to running
+    transactions as needed and are now <i>locked</i> until the
+    transaction completes. This causes gaps in numbering from aborted
+    transactions.
 
     <H4><A name="4.16">4.16</A>) What is an <SMALL>OID</SMALL>? What is
     a <SMALL>TID</SMALL>?</H4>
