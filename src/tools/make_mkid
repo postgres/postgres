@@ -2,7 +2,7 @@
 find `pwd`/ \( -name _deadcode -a -prune \) -o \
 	-type f -name '*.[chyl]' -print|sed 's;//;/;g' | mkid -S.gen=C -
 
-find . -type d -print |while read DIR
+find . -name  'CVS' -prune -o -type d -print  |while read DIR
 do
 	[ "$DIR" != "." ] && ln -f -s `pwd`/ID $DIR/ID
 done
