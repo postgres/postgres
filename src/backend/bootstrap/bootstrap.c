@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.114 2001/08/10 18:57:33 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.115 2001/08/25 00:31:17 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -187,10 +187,11 @@ usage(void)
 {
 	fprintf(stderr,
 			gettext("Usage:\n"
-					"  postgres -boot [-d] [-D datadir] [-F] [-x num] dbname\n"
+					"  postgres -boot [-d] [-D datadir] [-F] [-o file] [-x num] dbname\n"
 					"  -d               debug mode\n"
 					"  -D datadir       data directory\n"
 					"  -F               turn off fsync\n"
+					"  -o file          send debug output to file\n"
 					"  -x num           internal use\n"));
 
 	proc_exit(1);
@@ -248,7 +249,7 @@ BootstrapMain(int argc, char *argv[])
 												 * variable */
 	}
 
-	while ((flag = getopt(argc, argv, "B:dD:Fpx:")) != EOF)
+	while ((flag = getopt(argc, argv, "B:dD:Fo:px:")) != EOF)
 	{
 		switch (flag)
 		{
@@ -261,6 +262,9 @@ BootstrapMain(int argc, char *argv[])
 				break;
 			case 'F':
 				SetConfigOption("fsync", "false", PGC_POSTMASTER, true);
+				break;
+			case 'o':
+				StrNCpy(OutputFileName, optarg, MAXPGPATH);
 				break;
 			case 'x':
 				xlogop = atoi(optarg);

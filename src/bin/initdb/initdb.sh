@@ -27,7 +27,7 @@
 # Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.132 2001/08/10 18:57:38 tgl Exp $
+# $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.133 2001/08/25 00:31:17 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -343,14 +343,16 @@ POSTGRESQL_CONF_SAMPLE="$datadir"/postgresql.conf.sample
 
 if [ "$show_setting" = yes ] || [ "$debug" = yes ]
 then
+  (
     echo
-    echo "Initdb variables:"
+    echo "initdb variables:"
     for var in PGDATA datadir PGPATH MULTIBYTE MULTIBYTEID \
         POSTGRES_SUPERUSERNAME POSTGRES_SUPERUSERID POSTGRES_BKI \
         POSTGRES_DESCR POSTGRESQL_CONF_SAMPLE \
 	PG_HBA_SAMPLE PG_IDENT_SAMPLE ; do
         eval "echo '  '$var=\$$var"
     done
+  ) 1>&2
 fi
 
 if [ "$show_setting" = yes ] ; then
@@ -386,7 +388,7 @@ done
 trap 'echo "Caught signal." ; exit_nicely' 1 2 3 15
 
 # Let's go
-echo "This database system will be initialized with username \"$POSTGRES_SUPERUSERNAME\"."
+echo "This database system will be initialized with user name \"$POSTGRES_SUPERUSERNAME\"."
 echo "This user will own all the data files and must also own the server process."
 echo
 
@@ -411,28 +413,32 @@ then
     exit 1
 else
     if [ ! -d "$PGDATA" ]; then
-        echo "Creating directory $PGDATA"
+        $ECHO_N "creating directory $PGDATA... "$ECHO_C
         mkdir -p "$PGDATA" >/dev/null 2>&1 || mkdir "$PGDATA" || exit_nicely
         made_new_pgdata=yes
     else
-        echo "Fixing permissions on existing directory $PGDATA"
+        $ECHO_N "Fixing permissions on existing directory $PGDATA... "$ECHO_C
 	chmod go-rwx "$PGDATA" || exit_nicely
     fi
+    echo "ok"
 
     if [ ! -d "$PGDATA"/base ]
 	then
-        echo "Creating directory $PGDATA/base"
+        $ECHO_N "creating directory $PGDATA/base... "$ECHO_C
         mkdir "$PGDATA"/base || exit_nicely
+	echo "ok"
     fi
     if [ ! -d "$PGDATA"/global ]
     then
-        echo "Creating directory $PGDATA/global"
+        $ECHO_N "creating directory $PGDATA/global... "$ECHO_C
         mkdir "$PGDATA"/global || exit_nicely
+	echo "ok"
     fi
     if [ ! -d "$PGDATA"/pg_xlog ]
     then
-        echo "Creating directory $PGDATA/pg_xlog"
+        $ECHO_N "creating directory $PGDATA/pg_xlog... "$ECHO_C
         mkdir "$PGDATA"/pg_xlog || exit_nicely
+	echo "ok"
     fi
 fi
 
@@ -441,31 +447,38 @@ fi
 #
 # RUN BKI SCRIPT IN BOOTSTRAP MODE TO CREATE TEMPLATE1
 
-rm -rf "$PGDATA"/base/1 || exit_nicely
-mkdir "$PGDATA"/base/1 || exit_nicely
+# common backend options
+PGSQL_OPT="-F -D$PGDATA"
 
 if [ "$debug" = yes ]
 then
     BACKEND_TALK_ARG="-d"
+else
+    PGSQL_OPT="$PGSQL_OPT -o /dev/null"
 fi
 
-FIRSTRUN="-boot -x1 -F -D$PGDATA $BACKEND_TALK_ARG"
 
-echo "Creating template1 database in $PGDATA/base/1"
-[ "$debug" = yes ] && echo "Running: $PGPATH/postgres $FIRSTRUN template1"
+$ECHO_N "creating template1 database in $PGDATA/base/1... "$ECHO_C
+
+rm -rf "$PGDATA"/base/1 || exit_nicely
+mkdir "$PGDATA"/base/1 || exit_nicely
 
 cat "$POSTGRES_BKI" \
 | sed -e "s/POSTGRES/$POSTGRES_SUPERUSERNAME/g" \
       -e "s/PGUID/$POSTGRES_SUPERUSERID/g" \
       -e "s/ENCODING/$MULTIBYTEID/g" \
-| "$PGPATH"/postgres $FIRSTRUN template1 \
+| "$PGPATH"/postgres -boot -x1 $PGSQL_OPT $BACKEND_TALK_ARG template1 \
 || exit_nicely
 
 echo $short_version > "$PGDATA"/base/1/PG_VERSION || exit_nicely
 
+echo "ok"
+
 ##########################################################################
 #
 # CREATE CONFIG FILES
+
+$ECHO_N "creating configuration files... "$ECHO_C
 
 echo $short_version > "$PGDATA/PG_VERSION" || exit_nicely
 
@@ -474,6 +487,8 @@ cp "$PG_IDENT_SAMPLE" "$PGDATA"/pg_ident.conf          || exit_nicely
 cp "$POSTGRESQL_CONF_SAMPLE" "$PGDATA"/postgresql.conf || exit_nicely
 chmod 0600 "$PGDATA"/pg_hba.conf "$PGDATA"/pg_ident.conf \
 	"$PGDATA"/postgresql.conf
+
+echo "ok"
 
 ##########################################################################
 #
@@ -484,14 +499,9 @@ chmod 0600 "$PGDATA"/pg_hba.conf "$PGDATA"/pg_ident.conf \
 # To break an SQL command across lines in this script, backslash-escape all
 # internal newlines in the command.
 
-if [ "$debug" = yes ]
-then
-    PGSQL_OPT="-O -F -D$PGDATA"
-else
-    PGSQL_OPT="-o /dev/null -O -F -D$PGDATA"
-fi
+PGSQL_OPT="$PGSQL_OPT -O"
 
-echo "Initializing pg_shadow."
+$ECHO_N "initializing pg_shadow... "$ECHO_C
 
 "$PGPATH"/postgres $PGSQL_OPT template1 >/dev/null <<EOF
 -- Create a trigger so that direct updates to pg_shadow will be written
@@ -505,6 +515,7 @@ EOF
 if [ "$?" -ne 0 ]; then
     exit_nicely
 fi
+echo "ok"
 
 # set up password
 if [ "$PwPrompt" ]; then
@@ -522,6 +533,7 @@ if [ "$PwPrompt" ]; then
         echo "Passwords didn't match." 1>&2
         exit_nicely
     fi
+    $ECHO_N "setting password... "$ECHO_C
     "$PGPATH"/postgres $PGSQL_OPT template1 >/dev/null <<EOF
 	ALTER USER "$POSTGRES_SUPERUSERNAME" WITH PASSWORD '$FirstPw';
 EOF
@@ -529,14 +541,15 @@ EOF
 	exit_nicely
     fi
     if [ ! -f $PGDATA/global/pg_pwd ]; then
+        echo
         echo "The password file wasn't generated. Please report this problem." 1>&2
         exit_nicely
     fi
-    echo "Setting password"
+    echo "ok"
 fi
 
 
-echo "Enabling unlimited row width for system tables."
+$ECHO_N "enabling unlimited row size for system tables... "$ECHO_C
 
 "$PGPATH"/postgres $PGSQL_OPT template1 >/dev/null <<EOF
 ALTER TABLE pg_attrdef CREATE TOAST TABLE;
@@ -549,9 +562,10 @@ EOF
 if [ "$?" -ne 0 ]; then
     exit_nicely
 fi
+echo "ok"
 
 
-echo "Creating system views."
+$ECHO_N "creating system views... "$ECHO_C
 
 "$PGPATH"/postgres $PGSQL_OPT template1 >/dev/null <<EOF
 
@@ -795,8 +809,9 @@ EOF
 if [ "$?" -ne 0 ]; then
     exit_nicely
 fi
+echo "ok"
 
-echo "Loading pg_description."
+$ECHO_N "loading pg_description... "$ECHO_C
 (
   cat <<EOF
     CREATE TEMP TABLE tmp_pg_description ( \
@@ -815,8 +830,9 @@ EOF
 EOF
 ) \
 	| "$PGPATH"/postgres $PGSQL_OPT template1 > /dev/null || exit_nicely
+echo "ok"
 
-echo "Vacuuming database."
+$ECHO_N "vacuuming database template1... "$ECHO_C
 
 "$PGPATH"/postgres $PGSQL_OPT template1 >/dev/null <<EOF
 VACUUM FULL ANALYZE;
@@ -824,8 +840,9 @@ EOF
 if [ "$?" -ne 0 ]; then
     exit_nicely
 fi
+echo "ok"
 
-echo "Copying template1 to template0."
+$ECHO_N "copying template1 to template0... "$ECHO_C
 
 "$PGPATH"/postgres $PGSQL_OPT template1 >/dev/null <<EOF
 CREATE DATABASE template0;
@@ -845,6 +862,7 @@ EOF
 if [ "$?" -ne 0 ]; then
     exit_nicely
 fi
+echo "ok"
 
 
 ##########################################################################
