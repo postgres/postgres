@@ -414,7 +414,10 @@ SPI_getvalue(HeapTuple tuple, TupleDesc tupdesc, int fnumber)
 
 	SPI_result = 0;
 	if (tuple->t_natts < fnumber || fnumber <= 0)
+	{
+		SPI_result = SPI_ERROR_NOATTRIBUTE;
 		return (NULL);
+	}
 
 	val = heap_getattr(tuple, InvalidBuffer, fnumber, tupdesc, &isnull);
 	if (isnull)
@@ -437,7 +440,10 @@ SPI_getbinval(HeapTuple tuple, TupleDesc tupdesc, int fnumber, bool * isnull)
 	*isnull = true;
 	SPI_result = 0;
 	if (tuple->t_natts < fnumber || fnumber <= 0)
+	{
+		SPI_result = SPI_ERROR_NOATTRIBUTE;
 		return ((Datum) NULL);
+	}
 
 	val = heap_getattr(tuple, InvalidBuffer, fnumber, tupdesc, isnull);
 
