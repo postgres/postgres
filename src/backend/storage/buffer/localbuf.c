@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/storage/buffer/localbuf.c,v 1.5 1997/01/16 08:13:14 vadim Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/storage/buffer/localbuf.c,v 1.6 1997/04/18 02:53:37 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,6 +46,8 @@
 #include "utils/relcache.h"
 #include "executor/execdebug.h"	/* for NDirectFileRead */
 #include "catalog/catalog.h"
+
+extern long int LocalBufferFlushCount;
 
 int NLocBuffer = 64;
 BufferDesc *LocalBufferDescriptors = NULL;
@@ -118,6 +120,7 @@ LocalBufferAlloc(Relation reln, BlockNumber blockNum, bool *foundPtr)
 	/* flush this page */
 	smgrwrite(bufrel->rd_rel->relsmgr, bufrel, bufHdr->tag.blockNum,
 		  (char *) MAKE_PTR(bufHdr->data));
+	LocalBufferFlushCount++;
     }
 
     /*
@@ -192,6 +195,7 @@ FlushLocalBuffer(Buffer buffer, bool release)
     Assert(bufrel != NULL);
     smgrflush(bufrel->rd_rel->relsmgr, bufrel, bufHdr->tag.blockNum,
 	      (char *) MAKE_PTR(bufHdr->data));
+    LocalBufferFlushCount++;
 
     Assert(LocalRefCount[bufid] > 0);
     if ( release )
@@ -261,6 +265,7 @@ LocalBufferSync(void)
 	    
 	    smgrwrite(bufrel->rd_rel->relsmgr, bufrel, buf->tag.blockNum,
 		      (char *) MAKE_PTR(buf->data));
+    	    LocalBufferFlushCount++;
 
 	    buf->tag.relId.relId = InvalidOid;
 	    buf->flags &= ~BM_DIRTY;

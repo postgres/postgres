@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.11 1997/03/28 07:05:03 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.12 1997/04/18 02:53:23 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -75,9 +75,12 @@
 #include "catalog/catalog.h"
 
 extern SPINLOCK BufMgrLock;
-extern int ReadBufferCount;
-extern int BufferHitCount;
-extern int BufferFlushCount;
+extern long int ReadBufferCount;
+extern long int ReadLocalBufferCount;
+extern long int BufferHitCount;
+extern long int LocalBufferHitCount;
+extern long int BufferFlushCount;
+extern long int LocalBufferFlushCount;
 
 static int WriteMode = BUFFER_LATE_WRITE;	/* Delayed write is default */
 
@@ -217,7 +220,9 @@ ReadBufferWithBufferLock(Relation reln,
     isLocalBuf = reln->rd_islocal;
 
     if (isLocalBuf) {
+	ReadLocalBufferCount++;
 	bufHdr = LocalBufferAlloc(reln, blockNum, &found);
+	if (found) LocalBufferHitCount++;
     } else {
 	ReadBufferCount++;
 
@@ -473,7 +478,6 @@ BufferAlloc(Relation reln,
 	    }
 	    else
 	    {
-		BufferFlushCount++;
 		/*
 		 * BM_JUST_DIRTIED cleared by BufferReplace and shouldn't
 		 * be setted by anyone.     - vadim 01/17/97
@@ -760,6 +764,7 @@ FlushBuffer(Buffer buffer, bool release)
 			bufHdr->tag.blockNum, bufHdr->sb_relname);
 	return (STATUS_ERROR);
     }
+    BufferFlushCount++;
     
     SpinAcquire(BufMgrLock); 
     /*
@@ -955,6 +960,7 @@ BufferSync()
 		    elog(WARN, "BufferSync: cannot write %u for %s",
 			 bufHdr->tag.blockNum, bufHdr->sb_relname);
 		}
+    		BufferFlushCount++;
 		/*
 		 * If this buffer was marked by someone as DIRTY while
 		 * we were flushing it out we must not clear DIRTY flag
@@ -1052,16 +1058,24 @@ void
 PrintBufferUsage(FILE *statfp)
 {
     float hitrate;
+    float localhitrate;
     
     if (ReadBufferCount==0)
 	hitrate = 0.0;
     else
 	hitrate = (float)BufferHitCount * 100.0/ReadBufferCount;
     
-    fprintf(statfp, "!\t%ld blocks read, %ld blocks written, buffer hit rate = %.2f%%\n", 
-	    ReadBufferCount - BufferHitCount + NDirectFileRead,
-	    BufferFlushCount + NDirectFileWrite,
-	    hitrate);
+    if (ReadLocalBufferCount==0)
+	localhitrate = 0.0;
+    else
+	localhitrate = (float)LocalBufferHitCount * 100.0/ReadLocalBufferCount;
+    
+    fprintf(statfp, "!\tShared blocks: %10ld read, %10ld written, buffer hit rate = %.2f%%\n", 
+	    ReadBufferCount - BufferHitCount, BufferFlushCount, hitrate);
+    fprintf(statfp, "!\tLocal  blocks: %10ld read, %10ld written, buffer hit rate = %.2f%%\n", 
+	    ReadLocalBufferCount - LocalBufferHitCount, LocalBufferFlushCount, localhitrate);
+    fprintf(statfp, "!\tDirect blocks: %10ld read, %10ld written\n", 
+	    NDirectFileRead, NDirectFileWrite);
 }
 
 void
@@ -1070,6 +1084,9 @@ ResetBufferUsage()
     BufferHitCount = 0;
     ReadBufferCount = 0;
     BufferFlushCount = 0;
+    LocalBufferHitCount = 0;
+    ReadLocalBufferCount = 0;
+    LocalBufferFlushCount = 0;
     NDirectFileRead = 0;
     NDirectFileWrite = 0;
 }
@@ -1264,6 +1281,8 @@ BufferReplace(BufferDesc *bufHdr, bool bufferLockHeld)
     if (status == SM_FAIL)
 	return (FALSE);
     
+    BufferFlushCount++;
+
     return (TRUE);
 }
 

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/storage/buffer/buf_init.c,v 1.8 1997/03/28 07:04:52 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/storage/buffer/buf_init.c,v 1.9 1997/04/18 02:53:15 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -120,9 +120,12 @@ long    *CommitInfoNeedsSave;  /* to write buffers where we have filled in */
 
 SPINLOCK BufMgrLock;
 
-int ReadBufferCount;
-int BufferHitCount;
-int BufferFlushCount;
+long int ReadBufferCount;
+long int ReadLocalBufferCount;
+long int BufferHitCount;
+long int LocalBufferHitCount;
+long int BufferFlushCount;
+long int LocalBufferFlushCount;
 
 
 /*
