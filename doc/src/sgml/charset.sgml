@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/charset.sgml,v 2.34 2003/03/25 16:15:35 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/charset.sgml,v 2.35 2003/04/15 13:26:54 petere Exp $ -->
 
 <chapter id="charset">
  <title>Localization</>
@@ -398,19 +398,19 @@ initdb --locale=sv_SE
 	 <entry>ISO 8859-16/<acronym>ASRO</> SR 14111 (Latin alphabet no.10)</entry>
 	</row>
 	<row>
-	 <entry><literal>ISO-8859-5</literal></entry>
+	 <entry><literal>ISO_8859_5</literal></entry>
 	 <entry>ISO 8859-5/<acronym>ECMA</> 113 (Latin/Cyrillic)</entry>
 	</row>
 	<row>
-	 <entry><literal>ISO-8859-6</literal></entry>
+	 <entry><literal>ISO_8859_6</literal></entry>
 	 <entry>ISO 8859-6/<acronym>ECMA</> 114 (Latin/Arabic)</entry>
 	</row>
 	<row>
-	 <entry><literal>ISO-8859-7</literal></entry>
+	 <entry><literal>ISO_8859_7</literal></entry>
 	 <entry>ISO 8859-7/<acronym>ECMA</> 118 (Latin/Greek)</entry>
 	</row>
 	<row>
-	 <entry><literal>ISO-8859-8</literal></entry>
+	 <entry><literal>ISO_8859_8</literal></entry>
 	 <entry>ISO 8859-8/<acronym>ECMA</> 121 (Latin/Hebrew)</entry>
 	</row>
 	<row>
