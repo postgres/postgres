@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/libpq/crypt.c,v 1.43 2002/03/02 21:39:26 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/libpq/crypt.c,v 1.44 2002/03/04 01:46:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -273,11 +273,8 @@ md5_crypt_verify(const Port *port, const char *user, const char *pgpass)
 	/* If they encrypt their password, force MD5 */
 	if (isMD5(passwd) && port->auth_method != uaMD5)
 	{
-		snprintf(PQerrormsg, PQERRORMSG_LENGTH,
-				 "Password is stored MD5 encrypted.  "
-				 "'password' and 'crypt' auth methods cannot be used.\n");
-		fputs(PQerrormsg, stderr);
-		pqdebug("%s", PQerrormsg);
+		elog(LOG, "Password is stored MD5 encrypted.  "
+			 "'password' and 'crypt' auth methods cannot be used.");
 		return STATUS_ERROR;
 	}
 

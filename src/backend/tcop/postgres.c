@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.252 2002/03/02 21:39:31 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.253 2002/03/04 01:46:03 tgl Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -1647,7 +1647,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 			DBName = argv[optind];
 		else if ((DBName = username) == NULL)
 		{
-			elog(NOTICE, "%s: user name undefined and no database specified\n",
+			elog(NOTICE, "%s: user name undefined and no database specified",
 				 argv[0]);
 			proc_exit(1);
 		}
@@ -1722,7 +1722,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.252 $ $Date: 2002/03/02 21:39:31 $\n");
+		puts("$Revision: 1.253 $ $Date: 2002/03/04 01:46:03 $\n");
 	}
 
 	/*
@@ -1906,6 +1906,13 @@ PostgresMain(int argc, char *argv[], const char *username)
 				if (HandleFunctionRequest() == EOF)
 				{
 					/* lost frontend connection during F message input */
+					/*
+					 * Reset whereToSendOutput to prevent elog from attempting
+					 * to send any more messages to client.
+					 */
+					if (whereToSendOutput == Remote)
+						whereToSendOutput = None;
+
 					proc_exit(0);
 				}
 
@@ -1949,14 +1956,19 @@ PostgresMain(int argc, char *argv[], const char *username)
 				}
 				break;
 
-				/* ----------------
+				/*
 				 *	'X' means that the frontend is closing down the socket.
 				 *	EOF means unexpected loss of frontend connection.
 				 *	Either way, perform normal shutdown.
-				 * ----------------
 				 */
 			case 'X':
 			case EOF:
+				/*
+				 * Reset whereToSendOutput to prevent elog from attempting
+				 * to send any more messages to client.
+				 */
+				if (whereToSendOutput == Remote)
+					whereToSendOutput = None;
 
 				/*
 				 * NOTE: if you are tempted to add more code here, DON'T!
@@ -2122,7 +2134,7 @@ assertTest(int val)
 	if (assert_enabled)
 	{
 		/* val != 0 should be trapped by previous Assert */
-		elog(INFO, "Assert test successfull (val = %d)", val);
+		elog(INFO, "Assert test successful (val = %d)", val);
 	}
 	else
 		elog(INFO, "Assert checking is disabled (val = %d)", val);

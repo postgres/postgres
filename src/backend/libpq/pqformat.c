@@ -16,7 +16,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: pqformat.c,v 1.19 2001/12/04 20:57:22 tgl Exp $
+ *	$Id: pqformat.c,v 1.20 2002/03/04 01:46:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -284,7 +284,7 @@ pq_getint(int *result, int b)
 			 * if we elog(ERROR) here, we will lose sync with the
 			 * frontend, so just complain to postmaster log instead...
 			 */
-			fprintf(stderr, "pq_getint: unsupported size %d\n", b);
+			elog(COMMERROR, "pq_getint: unsupported size %d", b);
 			status = EOF;
 			*result = 0;
 			break;

@@ -29,7 +29,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: pqcomm.c,v 1.127 2002/03/02 21:39:26 momjian Exp $
+ *	$Id: pqcomm.c,v 1.128 2002/03/04 01:46:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -189,11 +189,7 @@ StreamServerPort(int family, char *hostName, unsigned short portNumber,
 
 	if ((fd = socket(family, SOCK_STREAM, 0)) < 0)
 	{
-		snprintf(PQerrormsg, PQERRORMSG_LENGTH,
-				 "FATAL: StreamServerPort: socket() failed: %s\n",
-				 strerror(errno));
-		fputs(PQerrormsg, stderr);
-		pqdebug("%s", PQerrormsg);
+		elog(LOG, "StreamServerPort: socket() failed: %m");
 		return STATUS_ERROR;
 	}
 
@@ -202,11 +198,7 @@ StreamServerPort(int family, char *hostName, unsigned short portNumber,
 		if ((setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, (char *) &one,
 						sizeof(one))) == -1)
 		{
-			snprintf(PQerrormsg, PQERRORMSG_LENGTH,
-					 "FATAL: StreamServerPort: setsockopt(SO_REUSEADDR) failed: %s\n",
-					 strerror(errno));
-			fputs(PQerrormsg, stderr);
-			pqdebug("%s", PQerrormsg);
+			elog(LOG, "StreamServerPort: setsockopt(SO_REUSEADDR) failed: %m");
 			return STATUS_ERROR;
 		}
 	}
@@ -247,11 +239,8 @@ StreamServerPort(int family, char *hostName, unsigned short portNumber,
 			hp = gethostbyname(hostName);
 			if ((hp == NULL) || (hp->h_addrtype != AF_INET))
 			{
-				snprintf(PQerrormsg, PQERRORMSG_LENGTH,
-				   "FATAL: StreamServerPort: gethostbyname(%s) failed\n",
-						 hostName);
-				fputs(PQerrormsg, stderr);
-				pqdebug("%s", PQerrormsg);
+				elog(LOG, "StreamServerPort: gethostbyname(%s) failed",
+					 hostName);
 				return STATUS_ERROR;
 			}
 			memmove((char *) &(saddr.in.sin_addr), (char *) hp->h_addr,
@@ -265,21 +254,16 @@ StreamServerPort(int family, char *hostName, unsigned short portNumber,
 	err = bind(fd, (struct sockaddr *) & saddr.sa, len);
 	if (err < 0)
 	{
-		snprintf(PQerrormsg, PQERRORMSG_LENGTH,
-				 "FATAL: StreamServerPort: bind() failed: %s\n"
-				 "\tIs another postmaster already running on port %d?\n",
-				 strerror(errno), (int) portNumber);
 		if (family == AF_UNIX)
-			snprintf(PQerrormsg + strlen(PQerrormsg),
-					 PQERRORMSG_LENGTH - strlen(PQerrormsg),
-					 "\tIf not, remove socket node (%s) and retry.\n",
-					 sock_path);
+			elog(LOG, "StreamServerPort: bind() failed: %m\n"
+				 "\tIs another postmaster already running on port %d?\n"
+				 "\tIf not, remove socket node (%s) and retry.",
+				 (int) portNumber, sock_path);
 		else
-			snprintf(PQerrormsg + strlen(PQerrormsg),
-					 PQERRORMSG_LENGTH - strlen(PQerrormsg),
-					 "\tIf not, wait a few seconds and retry.\n");
-		fputs(PQerrormsg, stderr);
-		pqdebug("%s", PQerrormsg);
+			elog(LOG, "StreamServerPort: bind() failed: %m\n"
+				 "\tIs another postmaster already running on port %d?\n"
+				 "\tIf not, wait a few seconds and retry.",
+				 (int) portNumber);
 		return STATUS_ERROR;
 	}
 
@@ -315,33 +299,24 @@ StreamServerPort(int family, char *hostName, unsigned short portNumber,
 				gr = getgrnam(Unix_socket_group);
 				if (!gr)
 				{
-					snprintf(PQerrormsg, PQERRORMSG_LENGTH,
-							 "FATAL:  no such group '%s'\n",
-							 Unix_socket_group);
-					fputs(PQerrormsg, stderr);
-					pqdebug("%s", PQerrormsg);
+					elog(LOG, "No such group as '%s'",
+						 Unix_socket_group);
 					return STATUS_ERROR;
 				}
 				gid = gr->gr_gid;
 			}
 			if (chown(sock_path, -1, gid) == -1)
 			{
-				snprintf(PQerrormsg, PQERRORMSG_LENGTH,
-						 "FATAL:  could not set group of %s: %s\n",
-						 sock_path, strerror(errno));
-				fputs(PQerrormsg, stderr);
-				pqdebug("%s", PQerrormsg);
+				elog(LOG, "Could not set group of %s: %m",
+					 sock_path);
 				return STATUS_ERROR;
 			}
 		}
 
 		if (chmod(sock_path, Unix_socket_permissions) == -1)
 		{
-			snprintf(PQerrormsg, PQERRORMSG_LENGTH,
-					 "FATAL:  could not set permissions on %s: %s\n",
-					 sock_path, strerror(errno));
-			fputs(PQerrormsg, stderr);
-			pqdebug("%s", PQerrormsg);
+			elog(LOG, "Could not set permissions on %s: %m",
+				 sock_path);
 			return STATUS_ERROR;
 		}
 	}
@@ -359,11 +334,7 @@ StreamServerPort(int family, char *hostName, unsigned short portNumber,
 	err = listen(fd, maxconn);
 	if (err < 0)
 	{
-		snprintf(PQerrormsg, PQERRORMSG_LENGTH,
-				 "FATAL: StreamServerPort: listen() failed: %s\n",
-				 strerror(errno));
-		fputs(PQerrormsg, stderr);
-		pqdebug("%s", PQerrormsg);
+		elog(LOG, "StreamServerPort: listen() failed: %m");
 		return STATUS_ERROR;
 	}
 
@@ -379,10 +350,6 @@ StreamServerPort(int family, char *hostName, unsigned short portNumber,
  * ASSUME: that this doesn't need to be non-blocking because
  *		the Postmaster uses select() to tell when the server master
  *		socket is ready for accept().
- *
- * NB: this can NOT call elog() because it is invoked in the postmaster,
- * not in standard backend context.  If we get an error, the best we can do
- * is log it to stderr.
  *
  * RETURNS: STATUS_OK or STATUS_ERROR
  */
@@ -507,15 +474,15 @@ pq_recvbuf(void)
 			 * Careful: an elog() that tries to write to the client
 			 * would cause recursion to here, leading to stack overflow
 			 * and core dump!  This message must go *only* to the postmaster
-			 * log.  elog(LOG) is presently safe.
+			 * log.
 			 */
-			elog(LOG, "pq_recvbuf: recv() failed: %m");
+			elog(COMMERROR, "pq_recvbuf: recv() failed: %m");
 			return EOF;
 		}
 		if (r == 0)
 		{
 			/* as above, only write to postmaster log */
-			elog(LOG, "pq_recvbuf: unexpected EOF on client connection");
+			elog(COMMERROR, "pq_recvbuf: unexpected EOF on client connection");
 			return EOF;
 		}
 		/* r contains number of bytes read, so just incr length */
@@ -680,7 +647,7 @@ pq_flush(void)
 			 * Careful: an elog() that tries to write to the client
 			 * would cause recursion to here, leading to stack overflow
 			 * and core dump!  This message must go *only* to the postmaster
-			 * log.  elog(LOG) is presently safe.
+			 * log.
 			 *
 			 * If a client disconnects while we're in the midst of output,
 			 * we might write quite a bit of data before we get to a safe
@@ -689,7 +656,7 @@ pq_flush(void)
 			if (errno != last_reported_send_errno)
 			{
 				last_reported_send_errno = errno;
-				elog(LOG, "pq_flush: send() failed: %m");
+				elog(COMMERROR, "pq_flush: send() failed: %m");
 			}
 
 			/*
@@ -723,7 +690,7 @@ pq_eof(void)
 	if (res < 0)
 	{
 		/* can log to postmaster log only */
-		elog(LOG, "pq_eof: recv() failed: %m");
+		elog(COMMERROR, "pq_eof: recv() failed: %m");
 		return EOF;
 	}
 	if (res == 0)

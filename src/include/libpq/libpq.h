@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq.h,v 1.49 2001/12/04 19:40:17 tgl Exp $
+ * $Id: libpq.h,v 1.50 2002/03/04 01:46:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,17 +38,6 @@ typedef struct
 } PQArgBlock;
 
 /*
- * PQerrormsg[] is used only for error messages generated within backend
- * libpq, none of which are remarkably long.  Note that this length should
- * NOT be taken as any indication of the maximum error message length that
- * the backend can create!	elog() can in fact produce extremely long messages.
- */
-
-#define PQERRORMSG_LENGTH 1024
-
-extern char PQerrormsg[PQERRORMSG_LENGTH];		/* in libpq/util.c */
-
-/*
  * External functions.
  */
 
@@ -70,12 +59,5 @@ extern int	pq_eof(void);
 extern int	pq_putmessage(char msgtype, const char *s, size_t len);
 extern void pq_startcopyout(void);
 extern void pq_endcopyout(bool errorAbort);
-
-/*
- * prototypes for functions in util.c
- */
-extern void pqdebug(char *fmt, char *msg);
-extern void PQtrace(void);
-extern void PQuntrace(void);
 
 #endif   /* LIBPQ_H */

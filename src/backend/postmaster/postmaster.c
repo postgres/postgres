@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.269 2002/03/02 21:39:28 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.270 2002/03/04 01:46:03 tgl Exp $
  *
  * NOTES
  *
@@ -211,6 +211,8 @@ static int	Shutdown = NoShutdown;
 
 static bool FatalError = false; /* T if recovering from backend crash */
 
+bool ClientAuthInProgress = false;	/* T during new-client authentication */
+
 /*
  * State for assigning random salts and cancel keys.
  * Also, the global MyCancelKey passes the cancel key assigned to a given
@@ -240,7 +242,8 @@ static void reaper(SIGNAL_ARGS);
 static void sigusr1_handler(SIGNAL_ARGS);
 static void dummy_handler(SIGNAL_ARGS);
 static void CleanupProc(int pid, int exitstatus);
-static void LogChildExit(const char *procname, int pid, int exitstatus);
+static void LogChildExit(int lev, const char *procname,
+						 int pid, int exitstatus);
 static int	DoBackend(Port *port);
 static void ExitPostmaster(int status);
 static void usage(const char *);
@@ -715,7 +718,7 @@ PostmasterMain(int argc, char *argv[])
 
 	/*
 	 * Reset whereToSendOutput from Debug (its starting state) to None.
-	 * This prevents elog from sending messages to stderr unless the
+	 * This prevents elog from sending log messages to stderr unless the
 	 * syslog/stderr switch permits.  We don't do this until the
 	 * postmaster is fully launched, since startup failures may as well be
 	 * reported to stderr.
@@ -1105,8 +1108,7 @@ ProcessStartupPacket(Port *port, bool SSLdone)
 #endif
 		if (send(port->sock, &SSLok, 1, 0) != 1)
 		{
-			elog(LOG, "failed to send SSL negotiation response: %s",
-				 strerror(errno));
+			elog(LOG, "failed to send SSL negotiation response: %m");
 			return STATUS_ERROR;	/* close the connection */
 		}
 
@@ -1384,6 +1386,7 @@ SIGHUP_handler(SIGNAL_ARGS)
 
 	if (Shutdown <= SmartShutdown)
 	{
+		elog(LOG, "Received SIGHUP, reloading configuration files");
 		SignalChildren(SIGHUP);
 		ProcessConfigFile(PGC_SIGHUP);
 		load_hba_and_ident();
@@ -1527,7 +1530,7 @@ reaper(SIGNAL_ARGS)
 
 	PG_SETMASK(&BlockSig);
 
-	elog(DEBUG1, "reaping dead processes");
+	elog(DEBUG3, "reaping dead processes");
 #ifdef HAVE_WAITPID
 	while ((pid = waitpid(-1, &status, WNOHANG)) > 0)
 	{
@@ -1544,7 +1547,7 @@ reaper(SIGNAL_ARGS)
 		 */
 		if (pgstat_ispgstat(pid))
 		{
-			LogChildExit(gettext("statistics collector process"),
+			LogChildExit(LOG, gettext("statistics collector process"),
 						 pid, exitstatus);
 			pgstat_start();
 			continue;
@@ -1557,7 +1560,7 @@ reaper(SIGNAL_ARGS)
 		{
 			if (exitstatus != 0)
 			{
-				LogChildExit(gettext("shutdown process"),
+				LogChildExit(LOG, gettext("shutdown process"),
 							 pid, exitstatus);
 				ExitPostmaster(1);
 			}
@@ -1568,7 +1571,7 @@ reaper(SIGNAL_ARGS)
 		{
 			if (exitstatus != 0)
 			{
-				LogChildExit(gettext("startup process"),
+				LogChildExit(LOG, gettext("startup process"),
 							 pid, exitstatus);
 				elog(LOG, "aborting startup due to startup process failure");
 				ExitPostmaster(1);
@@ -1649,7 +1652,7 @@ CleanupProc(int pid,
 			   *next;
 	Backend    *bp;
 
-	LogChildExit(gettext("child process"), pid, exitstatus);
+	LogChildExit(DEBUG1, gettext("child process"), pid, exitstatus);
 
 	/*
 	 * If a backend dies in an ugly way (i.e. exit status not 0) then we
@@ -1694,7 +1697,7 @@ CleanupProc(int pid,
 	/* Make log entry unless we did so already */
 	if (!FatalError)
 	{
-		LogChildExit(gettext("server process"), pid, exitstatus);
+		LogChildExit(LOG, gettext("server process"), pid, exitstatus);
 		elog(LOG, "terminating any other active server processes");
 	}
 
@@ -1753,20 +1756,20 @@ CleanupProc(int pid,
  * Log the death of a child process.
  */
 static void
-LogChildExit(const char *procname, int pid, int exitstatus)
+LogChildExit(int lev, const char *procname, int pid, int exitstatus)
 {
 	/*
 	 * translator: the first %s in these messages is a noun phrase
 	 * describing a child process, such as "server process"
 	 */
 	if (WIFEXITED(exitstatus))
-		elog(LOG, "%s (pid %d) exited with exit code %d",
+		elog(lev, "%s (pid %d) exited with exit code %d",
 			 procname, pid, WEXITSTATUS(exitstatus));
 	else if (WIFSIGNALED(exitstatus))
-		elog(LOG, "%s (pid %d) was terminated by signal %d",
+		elog(lev, "%s (pid %d) was terminated by signal %d",
 			 procname, pid, WTERMSIG(exitstatus));
 	else
-		elog(LOG, "%s (pid %d) exited with unexpected status %d",
+		elog(lev, "%s (pid %d) exited with unexpected status %d",
 			 procname, pid, exitstatus);
 }
 
@@ -2008,6 +2011,8 @@ DoBackend(Port *port)
 
 	IsUnderPostmaster = true;	/* we are a postmaster subprocess now */
 
+	ClientAuthInProgress = true; /* limit visibility of log messages */
+
 	/* We don't want the postmaster's proc_exit() handlers */
 	on_exit_reset();
 
@@ -2218,8 +2223,10 @@ DoBackend(Port *port)
 	 */
 	elog(DEBUG2, "%s child[%d]: starting with (", progname, MyProcPid);
 	for (i = 0; i < ac; ++i)
-		elog(DEBUG2, "%s ", av[i]);
-	elog(DEBUG2, ")\n");
+		elog(DEBUG2, "\t%s", av[i]);
+	elog(DEBUG2, ")");
+
+	ClientAuthInProgress = false; /* client_min_messages is active now */
 
 	return (PostgresMain(ac, av, port->user));
 }
@@ -2580,17 +2587,15 @@ SSDataBase(int xlop)
 		switch (xlop)
 		{
 			case BS_XLOG_STARTUP:
-				elog(LOG, "could not launch startup process (fork failure): %s",
-					 strerror(errno));
+				elog(LOG, "could not launch startup process (fork failure): %m");
 				break;
 			case BS_XLOG_CHECKPOINT:
-				elog(LOG, "could not launch checkpoint process (fork failure): %s",
-					 strerror(errno));
+				elog(LOG, "could not launch checkpoint process (fork failure): %m");
 				break;
 			case BS_XLOG_SHUTDOWN:
+				elog(LOG, "could not launch shutdown process (fork failure): %m");
+				break;
 			default:
-				elog(LOG, "could not launch shutdown process (fork failure): %s",
-					 strerror(errno));
 				break;
 		}
 
@@ -2673,7 +2678,10 @@ CreateOptsFile(int argc, char *argv[])
 	return true;
 }
 
-
+/*
+ * This should be used only for reporting "interactive" errors (ie, errors
+ * during startup.  Once the postmaster is launched, use elog.
+ */
 static void
 postmaster_error(const char *fmt,...)
 {

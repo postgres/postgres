@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/auth.c,v 1.76 2002/03/02 21:39:25 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/auth.c,v 1.77 2002/03/04 01:46:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -105,45 +105,34 @@ pg_krb4_recvauth(Port *port)
 						  version);
 	if (status != KSUCCESS)
 	{
-		snprintf(PQerrormsg, PQERRORMSG_LENGTH,
-				 "pg_krb4_recvauth: kerberos error: %s\n",
-				 krb_err_txt[status]);
-		fputs(PQerrormsg, stderr);
-		pqdebug("%s", PQerrormsg);
+		elog(LOG, "pg_krb4_recvauth: kerberos error: %s",
+			 krb_err_txt[status]);
 		return STATUS_ERROR;
 	}
-	if (strncmp(version, PG_KRB4_VERSION, KRB_SENDAUTH_VLEN))
+	if (strncmp(version, PG_KRB4_VERSION, KRB_SENDAUTH_VLEN) != 0)
 	{
-		snprintf(PQerrormsg, PQERRORMSG_LENGTH,
-				 "pg_krb4_recvauth: protocol version != \"%s\"\n",
-				 PG_KRB4_VERSION);
-		fputs(PQerrormsg, stderr);
-		pqdebug("%s", PQerrormsg);
+		elog(LOG, "pg_krb4_recvauth: protocol version \"%s\" != \"%s\"",
+			 version, PG_KRB4_VERSION);
 		return STATUS_ERROR;
 	}
-	if (strncmp(port->user, auth_data.pname, SM_USER))
+	if (strncmp(port->user, auth_data.pname, SM_USER) != 0)
 	{
-		snprintf(PQerrormsg, PQERRORMSG_LENGTH,
-				 "pg_krb4_recvauth: name \"%s\" != \"%s\"\n",
-				 port->user, auth_data.pname);
-		fputs(PQerrormsg, stderr);
-		pqdebug("%s", PQerrormsg);
+		elog(LOG, "pg_krb4_recvauth: name \"%s\" != \"%s\"",
+			 port->user, auth_data.pname);
 		return STATUS_ERROR;
 	}
 	return STATUS_OK;
 }
 
 #else
+
 static int
 pg_krb4_recvauth(Port *port)
 {
-	snprintf(PQerrormsg, PQERRORMSG_LENGTH,
-		 "pg_krb4_recvauth: Kerberos not implemented on this server.\n");
-	fputs(PQerrormsg, stderr);
-	pqdebug("%s", PQerrormsg);
-
+	elog(LOG, "pg_krb4_recvauth: Kerberos not implemented on this server");
 	return STATUS_ERROR;
 }
+
 #endif   /* KRB4 */
 
 
@@ -201,9 +190,8 @@ pg_krb5_init(void)
 	retval = krb5_init_context(&pg_krb5_context);
 	if (retval)
 	{
-		snprintf(PQerrormsg, PQERRORMSG_LENGTH,
-				 "pg_krb5_init: krb5_init_context returned"
-				 " Kerberos error %d\n", retval);
+		elog(LOG, "pg_krb5_init: krb5_init_context returned Kerberos error %d",
+			 retval);
 		com_err("postgres", retval, "while initializing krb5");
 		return STATUS_ERROR;
 	}
@@ -211,9 +199,8 @@ pg_krb5_init(void)
 	retval = krb5_kt_resolve(pg_krb5_context, pg_krb_server_keyfile, &pg_krb5_keytab);
 	if (retval)
 	{
-		snprintf(PQerrormsg, PQERRORMSG_LENGTH,
-				 "pg_krb5_init: krb5_kt_resolve returned"
-				 " Kerberos error %d\n", retval);
+		elog(LOG, "pg_krb5_init: krb5_kt_resolve returned Kerberos error %d",
+			 retval);
 		com_err("postgres", retval, "while resolving keytab file %s",
 				pg_krb_server_keyfile);
 		krb5_free_context(pg_krb5_context);
@@ -224,9 +211,8 @@ pg_krb5_init(void)
 									 KRB5_NT_SRV_HST, &pg_krb5_server);
 	if (retval)
 	{
-		snprintf(PQerrormsg, PQERRORMSG_LENGTH,
-				 "pg_krb5_init: krb5_sname_to_principal returned"
-				 " Kerberos error %d\n", retval);
+		elog(LOG, "pg_krb5_init: krb5_sname_to_principal returned Kerberos error %d",
+			 retval);
 		com_err("postgres", retval,
 				"while getting server principal for service %s",
 				PG_KRB_SRVNAM);
@@ -269,9 +255,8 @@ pg_krb5_recvauth(Port *port)
 						   pg_krb5_server, 0, pg_krb5_keytab, &ticket);
 	if (retval)
 	{
-		snprintf(PQerrormsg, PQERRORMSG_LENGTH,
-				 "pg_krb5_recvauth: krb5_recvauth returned"
-				 " Kerberos error %d\n", retval);
+		elog(LOG, "pg_krb5_recvauth: krb5_recvauth returned Kerberos error %d",
+			 retval);
 		com_err("postgres", retval, "from krb5_recvauth");
 		return STATUS_ERROR;
 	}
@@ -294,9 +279,8 @@ pg_krb5_recvauth(Port *port)
 #endif
 	if (retval)
 	{
-		snprintf(PQerrormsg, PQERRORMSG_LENGTH,
-				 "pg_krb5_recvauth: krb5_unparse_name returned"
-				 " Kerberos error %d\n", retval);
+		elog(LOG, "pg_krb5_recvauth: krb5_unparse_name returned Kerberos error %d",
+			 retval);
 		com_err("postgres", retval, "while unparsing client name");
 		krb5_free_ticket(pg_krb5_context, ticket);
 		krb5_auth_con_free(pg_krb5_context, auth_context);
@@ -306,9 +290,8 @@ pg_krb5_recvauth(Port *port)
 	kusername = pg_an_to_ln(kusername);
 	if (strncmp(port->user, kusername, SM_USER))
 	{
-		snprintf(PQerrormsg, PQERRORMSG_LENGTH,
-			  "pg_krb5_recvauth: user name \"%s\" != krb5 name \"%s\"\n",
-				 port->user, kusername);
+		elog(LOG, "pg_krb5_recvauth: user name \"%s\" != krb5 name \"%s\"",
+			 port->user, kusername);
 		ret = STATUS_ERROR;
 	}
 	else
@@ -322,16 +305,14 @@ pg_krb5_recvauth(Port *port)
 }
 
 #else
+
 static int
 pg_krb5_recvauth(Port *port)
 {
-	snprintf(PQerrormsg, PQERRORMSG_LENGTH,
-		 "pg_krb5_recvauth: Kerberos not implemented on this server.\n");
-	fputs(PQerrormsg, stderr);
-	pqdebug("%s", PQerrormsg);
-
+	elog(LOG, "pg_krb5_recvauth: Kerberos not implemented on this server");
 	return STATUS_ERROR;
 }
+
 #endif   /* KRB5 */
 
 
@@ -388,10 +369,7 @@ recv_and_check_passwordv0(Port *port)
 
 	if (user == NULL || password == NULL)
 	{
-		snprintf(PQerrormsg, PQERRORMSG_LENGTH,
-				 "pg_password_recvauth: badly formed password packet.\n");
-		fputs(PQerrormsg, stderr);
-		pqdebug("%s", PQerrormsg);
+		elog(LOG, "pg_password_recvauth: badly formed password packet");
 		status = STATUS_ERROR;
 	}
 	else
@@ -530,7 +508,7 @@ ClientAuthentication(Port *port)
 				if (port->raddr.sa.sa_family == AF_INET)
 					hostinfo = inet_ntoa(port->raddr.in.sin_addr);
 				elog(FATAL,
-				"No pg_hba.conf entry for host %s, user %s, database %s",
+					 "No pg_hba.conf entry for host %s, user %s, database %s",
 					 hostinfo, port->user, port->database);
 				break;
 			}
@@ -563,8 +541,7 @@ ClientAuthentication(Port *port)
 				int			on = 1;
 
 				if (setsockopt(port->sock, 0, LOCAL_CREDS, &on, sizeof(on)) < 0)
-					elog(FATAL,
-						 "pg_local_sendauth: can't do setsockopt: %s\n", strerror(errno));
+					elog(FATAL, "pg_local_sendauth: can't do setsockopt: %m");
 			}
 #endif
 			if (port->raddr.sa.sa_family == AF_UNIX)
@@ -653,17 +630,12 @@ pam_passwd_conv_proc(int num_msg, const struct pam_message ** msg, struct pam_re
 		switch (msg[0]->msg_style)
 		{
 			case PAM_ERROR_MSG:
-				snprintf(PQerrormsg, PQERRORMSG_LENGTH,
-						 "pam_passwd_conv_proc: Error from underlying PAM layer: '%s'\n", msg[0]->msg);
-				fputs(PQerrormsg, stderr);
-				pqdebug("%s", PQerrormsg);
+				elog(LOG, "pam_passwd_conv_proc: Error from underlying PAM layer: '%s'",
+					 msg[0]->msg);
 				return PAM_CONV_ERR;
 			default:
-				snprintf(PQerrormsg, PQERRORMSG_LENGTH,
-						 "pam_passwd_conv_proc: Unexpected PAM conversation %d/'%s'\n",
-						 msg[0]->msg_style, msg[0]->msg);
-				fputs(PQerrormsg, stderr);
-				pqdebug("%s", PQerrormsg);
+				elog(LOG, "pam_passwd_conv_proc: Unexpected PAM conversation %d/'%s'",
+					 msg[0]->msg_style, msg[0]->msg);
 				return PAM_CONV_ERR;
 		}
 	}
@@ -691,12 +663,11 @@ pam_passwd_conv_proc(int num_msg, const struct pam_message ** msg, struct pam_re
 
 		initStringInfo(&buf);
 		pq_getstr(&buf);
-		elog(DEBUG5, "received PAM packet with len=%d, pw=%s\n", len, buf.data);
+		elog(DEBUG5, "received PAM packet with len=%d, pw=%s", len, buf.data);
 
 		if (strlen(buf.data) == 0)
 		{
-			snprintf(PQerrormsg, PQERRORMSG_LENGTH, "pam_passwd_conv_proc: no password\n");
-			fputs(PQerrormsg, stderr);
+			elog(LOG, "pam_passwd_conv_proc: no password");
 			return PAM_CONV_ERR;
 		}
 		appdata_ptr = buf.data;
@@ -709,9 +680,7 @@ pam_passwd_conv_proc(int num_msg, const struct pam_message ** msg, struct pam_re
 	*resp = calloc(num_msg, sizeof(struct pam_response));
 	if (!*resp)
 	{
-		snprintf(PQerrormsg, PQERRORMSG_LENGTH, "pam_passwd_conv_proc: Out of memory!\n");
-		fputs(PQerrormsg, stderr);
-		pqdebug("%s", PQerrormsg);
+		elog(LOG, "pam_passwd_conv_proc: Out of memory!");
 		if (buf.data)
 			pfree(buf.data);
 		return PAM_CONV_ERR;
@@ -755,11 +724,8 @@ CheckPAMAuth(Port *port, char *user, char *password)
 
 	if (retval != PAM_SUCCESS)
 	{
-		snprintf(PQerrormsg, PQERRORMSG_LENGTH,
-			  "CheckPAMAuth: Failed to create PAM authenticator: '%s'\n",
-				 pam_strerror(pamh, retval));
-		fputs(PQerrormsg, stderr);
-		pqdebug("%s", PQerrormsg);
+		elog(LOG, "CheckPAMAuth: Failed to create PAM authenticator: '%s'",
+			 pam_strerror(pamh, retval));
 		pam_passwd = NULL;		/* Unset pam_passwd */
 		return STATUS_ERROR;
 	}
@@ -768,11 +734,8 @@ CheckPAMAuth(Port *port, char *user, char *password)
 
 	if (retval != PAM_SUCCESS)
 	{
-		snprintf(PQerrormsg, PQERRORMSG_LENGTH,
-				 "CheckPAMAuth: pam_set_item(PAM_USER) failed: '%s'\n",
-				 pam_strerror(pamh, retval));
-		fputs(PQerrormsg, stderr);
-		pqdebug("%s", PQerrormsg);
+		elog(LOG, "CheckPAMAuth: pam_set_item(PAM_USER) failed: '%s'",
+			 pam_strerror(pamh, retval));
 		pam_passwd = NULL;		/* Unset pam_passwd */
 		return STATUS_ERROR;
 	}
@@ -781,11 +744,8 @@ CheckPAMAuth(Port *port, char *user, char *password)
 
 	if (retval != PAM_SUCCESS)
 	{
-		snprintf(PQerrormsg, PQERRORMSG_LENGTH,
-				 "CheckPAMAuth: pam_set_item(PAM_CONV) failed: '%s'\n",
-				 pam_strerror(pamh, retval));
-		fputs(PQerrormsg, stderr);
-		pqdebug("%s", PQerrormsg);
+		elog(LOG, "CheckPAMAuth: pam_set_item(PAM_CONV) failed: '%s'",
+			 pam_strerror(pamh, retval));
 		pam_passwd = NULL;		/* Unset pam_passwd */
 		return STATUS_ERROR;
 	}
@@ -794,11 +754,8 @@ CheckPAMAuth(Port *port, char *user, char *password)
 
 	if (retval != PAM_SUCCESS)
 	{
-		snprintf(PQerrormsg, PQERRORMSG_LENGTH,
-				 "CheckPAMAuth: pam_authenticate failed: '%s'\n",
-				 pam_strerror(pamh, retval));
-		fputs(PQerrormsg, stderr);
-		pqdebug("%s", PQerrormsg);
+		elog(LOG, "CheckPAMAuth: pam_authenticate failed: '%s'",
+			 pam_strerror(pamh, retval));
 		pam_passwd = NULL;		/* Unset pam_passwd */
 		return STATUS_ERROR;
 	}
@@ -807,11 +764,8 @@ CheckPAMAuth(Port *port, char *user, char *password)
 
 	if (retval != PAM_SUCCESS)
 	{
-		snprintf(PQerrormsg, PQERRORMSG_LENGTH,
-				 "CheckPAMAuth: pam_acct_mgmt failed: '%s'\n",
-				 pam_strerror(pamh, retval));
-		fputs(PQerrormsg, stderr);
-		pqdebug("%s", PQerrormsg);
+		elog(LOG, "CheckPAMAuth: pam_acct_mgmt failed: '%s'",
+			 pam_strerror(pamh, retval));
 		pam_passwd = NULL;		/* Unset pam_passwd */
 		return STATUS_ERROR;
 	}
@@ -820,11 +774,8 @@ CheckPAMAuth(Port *port, char *user, char *password)
 
 	if (retval != PAM_SUCCESS)
 	{
-		snprintf(PQerrormsg, PQERRORMSG_LENGTH,
-		 "CheckPAMAuth: Failed to release PAM authenticator: '%s'\n",
-				 pam_strerror(pamh, retval));
-		fputs(PQerrormsg, stderr);
-		pqdebug("%s", PQerrormsg);
+		elog(LOG, "CheckPAMAuth: Failed to release PAM authenticator: '%s'",
+			 pam_strerror(pamh, retval));
 	}
 
 	pam_passwd = NULL;		/* Unset pam_passwd */
@@ -854,8 +805,8 @@ recv_and_check_password_packet(Port *port)
 		return STATUS_EOF;
 	}
 
-	elog(DEBUG5, "received password packet with len=%d, pw=%s\n",
-		len, buf.data);
+	elog(DEBUG5, "received password packet with len=%d, pw=%s",
+		 len, buf.data);
 
 	result = checkPassword(port, port->user, buf.data);
 	pfree(buf.data);
@@ -907,7 +858,7 @@ old_be_recvauth(Port *port)
 			break;
 
 		default:
-			fprintf(stderr, "Invalid startup message type: %u\n", msgtype);
+			elog(LOG, "Invalid startup message type: %u", msgtype);
 
 			return STATUS_ERROR;
 	}

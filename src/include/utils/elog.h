@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: elog.h,v 1.31 2002/03/02 21:39:35 momjian Exp $
+ * $Id: elog.h,v 1.32 2002/03/04 01:46:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,25 +15,29 @@
 #define ELOG_H
 
 /* Error level codes */
-#define DEBUG5	10				/* sent only to server logs, label DEBUG */
-#define DEBUG4	11				/* logs in decreasing detail */
+#define DEBUG5	10				/* Debugging messages, in categories
+								 * of decreasing detail. */
+#define DEBUG4	11
 #define DEBUG3	12				
 #define DEBUG2	13				
 #define DEBUG1	14				
-#define LOG		15				/* sent only to server logs by default, 
-								 * label LOG. */
-#define INFO	16				/* sent only to client by default, for
-								 * informative messages that are part of
-								 * normal query operation. */
-#define NOTICE	17				/* sent to client and server by default,
-								 * important messages, for unusual cases that
+#define LOG		15				/* Server operational history messages;
+								 * sent only to server log by default. */
+#define COMMERROR 16			/* Client communication problems; same as
+								 * LOG for server reporting, but never ever
+								 * try to send to client. */
+#define INFO	17				/* Informative messages that are part of
+								 * normal query operation; sent only to
+								 * client by default. */
+#define NOTICE	18				/* Important messages, for unusual cases that
 								 * should be reported but are not serious 
-								 * enough to abort the query. */
-#define ERROR	18				/* user error - return to known state */
-#define FATAL	19				/* fatal error - abort process */
-#define PANIC	20				/* take down the other backends with me */
+								 * enough to abort the query.  Sent to client
+								 * and server log by default. */
+#define ERROR	19				/* user error - return to known state */
+#define FATAL	20				/* fatal error - abort process */
+#define PANIC	21				/* take down the other backends with me */
 
-/*#define DEBUG	DEBUG5*/		/* Backward compatibility with pre-7.3 */
+/*#define DEBUG	DEBUG1*/		/* Backward compatibility with pre-7.3 */
 
 /* Configurable parameters */
 #ifdef ENABLE_SYSLOG

@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/hba.c,v 1.79 2002/01/09 19:13:40 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/hba.c,v 1.80 2002/03/04 01:46:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -269,7 +269,7 @@ parse_hba_auth(List *line, UserAuth *userauth_p, char *auth_arg,
  *	to a database named port->database.  If so, return *found_p true
  *	and fill in the auth arguments into the appropriate port fields.
  *	If not, leave *found_p as it was.  If the record has a syntax error,
- *	return *error_p true, after issuing a message to stderr.  If no error,
+ *	return *error_p true, after issuing a message to the log.  If no error,
  *	leave *error_p as it was.
  */
 static void
@@ -391,12 +391,9 @@ parse_hba(List *line, hbaPort *port, bool *found_p, bool *error_p)
 	return;
 
 hba_syntax:
-	snprintf(PQerrormsg, PQERRORMSG_LENGTH,
-			 "parse_hba: invalid syntax in pg_hba.conf file at line %d, token \"%s\"\n",
-			 line_number,
-			 line ? (const char *) lfirst(line) : "(end of line)");
-	fputs(PQerrormsg, stderr);
-	pqdebug("%s", PQerrormsg);
+	elog(LOG, "parse_hba: invalid syntax in pg_hba.conf file at line %d, token \"%s\"",
+		 line_number,
+		 line ? (const char *) lfirst(line) : "(end of line)");
 
 	*error_p = true;
 	return;
@@ -464,13 +461,10 @@ load_hba(void)
 	{
 		/* Old config file exists.	Tell this guy he needs to upgrade. */
 		close(fd);
-		snprintf(PQerrormsg, PQERRORMSG_LENGTH,
-		  "A file exists by the name used for host-based authentication "
-		   "in prior releases of Postgres (%s).  The name and format of "
-		   "the configuration file have changed, so this file should be "
-				 "converted.\n", old_conf_file);
-		fputs(PQerrormsg, stderr);
-		pqdebug("%s", PQerrormsg);
+		elog(LOG, "A file exists by the name used for host-based authentication "
+			 "in prior releases of Postgres (%s).  The name and format of "
+			 "the configuration file have changed, so this file should be "
+			 "converted.", old_conf_file);
 	}
 	else
 	{
@@ -486,11 +480,8 @@ load_hba(void)
 		if (file == NULL)
 		{
 			/* The open of the config file failed.	*/
-			snprintf(PQerrormsg, PQERRORMSG_LENGTH,
-					 "load_hba: Unable to open authentication config file \"%s\": %s\n",
-					 conf_file, strerror(errno));
-			fputs(PQerrormsg, stderr);
-			pqdebug("%s", PQerrormsg);
+			elog(LOG, "load_hba: Unable to open authentication config file \"%s\": %m",
+				 conf_file);
 		}
 		else
 		{
@@ -553,12 +544,9 @@ parse_ident_usermap(List *line, const char *usermap_name, const char *pg_user,
 	return;
 
 ident_syntax:
-	snprintf(PQerrormsg, PQERRORMSG_LENGTH,
-			 "parse_ident_usermap: invalid syntax in pg_ident.conf file at line %d, token \"%s\"\n",
-			 line_number,
-			 line ? (const char *) lfirst(line) : "(end of line)");
-	fputs(PQerrormsg, stderr);
-	pqdebug("%s", PQerrormsg);
+	elog(LOG, "parse_ident_usermap: invalid syntax in pg_ident.conf file at line %d, token \"%s\"",
+		 line_number,
+		 line ? (const char *) lfirst(line) : "(end of line)");
 
 	*error_p = true;
 	return;
@@ -588,13 +576,10 @@ check_ident_usermap(const char *usermap_name,
 
 	if (usermap_name[0] == '\0')
 	{
-		snprintf(PQerrormsg, PQERRORMSG_LENGTH,
-				 "check_ident_usermap: hba configuration file does not "
-		   "have the usermap field filled in in the entry that pertains "
-		  "to this connection.  That field is essential for Ident-based "
-				 "authentication.\n");
-		fputs(PQerrormsg, stderr);
-		pqdebug("%s", PQerrormsg);
+		elog(LOG, "check_ident_usermap: hba configuration file does not "
+			 "have the usermap field filled in in the entry that pertains "
+			 "to this connection.  That field is essential for Ident-based "
+			 "authentication.");
 		found_entry = false;
 	}
 	else if (strcmp(usermap_name, "sameuser") == 0)
@@ -641,11 +626,8 @@ load_ident(void)
 	if (file == NULL)
 	{
 		/* The open of the map file failed.  */
-		snprintf(PQerrormsg, PQERRORMSG_LENGTH,
-				 "load_ident: Unable to open usermap file \"%s\": %s\n",
-				 map_file, strerror(errno));
-		fputs(PQerrormsg, stderr);
-		pqdebug("%s", PQerrormsg);
+		elog(LOG, "load_ident: Unable to open usermap file \"%s\": %m",
+			 map_file);
 	}
 	else
 	{
@@ -766,11 +748,7 @@ ident_inet(const struct in_addr remote_ip_addr,
 	sock_fd = socket(AF_INET, SOCK_STREAM, IPPROTO_IP);
 	if (sock_fd == -1)
 	{
-		snprintf(PQerrormsg, PQERRORMSG_LENGTH,
-			 "Failed to create socket on which to talk to Ident server. "
-		  "socket() returned errno = %s (%d)\n", strerror(errno), errno);
-		fputs(PQerrormsg, stderr);
-		pqdebug("%s", PQerrormsg);
+		elog(LOG, "Failed to create socket on which to talk to Ident server: %m");
 		ident_return = false;
 	}
 	else
@@ -803,14 +781,14 @@ ident_inet(const struct in_addr remote_ip_addr,
 		}
 		if (rc != 0)
 		{
-			snprintf(PQerrormsg, PQERRORMSG_LENGTH,
-				"Unable to connect to Ident server on the host which is "
-					 "trying to connect to Postgres "
-					 "(IP address %s, Port %d). "
-					 "errno = %s (%d)\n",
-					 inet_ntoa(remote_ip_addr), IDENT_PORT, strerror(errno), errno);
-			fputs(PQerrormsg, stderr);
-			pqdebug("%s", PQerrormsg);
+			/* save_errno is in case inet_ntoa changes errno */
+			int		save_errno = errno;
+
+			elog(LOG, "Unable to connect to Ident server on the host which is "
+				 "trying to connect to Postgres "
+				 "(IP address %s, Port %d): %s",
+				 inet_ntoa(remote_ip_addr), IDENT_PORT,
+				 strerror(save_errno));
 			ident_return = false;
 		}
 		else
@@ -826,15 +804,13 @@ ident_inet(const struct in_addr remote_ip_addr,
 			} while (rc < 0 && errno == EINTR);
 			if (rc < 0)
 			{
-				snprintf(PQerrormsg, PQERRORMSG_LENGTH,
-						 "Unable to send query to Ident server on the host which is "
-					  "trying to connect to Postgres (Host %s, Port %d),"
-						 "even though we successfully connected to it.  "
-						 "errno = %s (%d)\n",
-						 inet_ntoa(remote_ip_addr), IDENT_PORT,
-						 strerror(errno), errno);
-				fputs(PQerrormsg, stderr);
-				pqdebug("%s", PQerrormsg);
+				int		save_errno = errno;
+
+				elog(LOG, "Unable to send query to Ident server on the host which is "
+					 "trying to connect to Postgres (Host %s, Port %d), "
+					 "even though we successfully connected to it: %s",
+					 inet_ntoa(remote_ip_addr), IDENT_PORT,
+					 strerror(save_errno));
 				ident_return = false;
 			}
 			else
@@ -845,16 +821,14 @@ ident_inet(const struct in_addr remote_ip_addr,
 						  sizeof(ident_response) - 1, 0);
 				if (rc < 0)
 				{
-					snprintf(PQerrormsg, PQERRORMSG_LENGTH,
-						  "Unable to receive response from Ident server "
-							 "on the host which is "
-					  "trying to connect to Postgres (Host %s, Port %d),"
-					"even though we successfully sent our query to it.  "
-							 "errno = %s (%d)\n",
-							 inet_ntoa(remote_ip_addr), IDENT_PORT,
-							 strerror(errno), errno);
-					fputs(PQerrormsg, stderr);
-					pqdebug("%s", PQerrormsg);
+					int		save_errno = errno;
+
+					elog(LOG, "Unable to receive response from Ident server "
+						 "on the host which is "
+						 "trying to connect to Postgres (Host %s, Port %d), "
+						 "even though we successfully sent our query to it: %s",
+						 inet_ntoa(remote_ip_addr), IDENT_PORT,
+						 strerror(save_errno));
 					ident_return = false;
 				}
 				else
@@ -891,11 +865,7 @@ ident_unix(int sock, char *ident_user)
 		so_len != sizeof(peercred))
 	{
 		/* We didn't get a valid credentials struct. */
-		snprintf(PQerrormsg, PQERRORMSG_LENGTH,
-				 "ident_unix: error receiving credentials: %s\n",
-				 strerror(errno));
-		fputs(PQerrormsg, stderr);
-		pqdebug("%s", PQerrormsg);
+		elog(LOG, "ident_unix: error receiving credentials: %m");
 		return false;
 	}
 
@@ -903,10 +873,8 @@ ident_unix(int sock, char *ident_user)
 
 	if (pass == NULL)
 	{
-		snprintf(PQerrormsg, PQERRORMSG_LENGTH,
-		   "ident_unix: unknown local user with uid %d\n", peercred.uid);
-		fputs(PQerrormsg, stderr);
-		pqdebug("%s", PQerrormsg);
+		elog(LOG, "ident_unix: unknown local user with uid %d",
+			 (int) peercred.uid);
 		return false;
 	}
 
@@ -962,11 +930,7 @@ ident_unix(int sock, char *ident_user)
 		cmsg->cmsg_len < sizeof(cmsgmem) ||
 		cmsg->cmsg_type != SCM_CREDS)
 	{
-		snprintf(PQerrormsg, PQERRORMSG_LENGTH,
-				 "ident_unix: error receiving credentials: %s\n",
-				 strerror(errno));
-		fputs(PQerrormsg, stderr);
-		pqdebug("%s", PQerrormsg);
+		elog(LOG, "ident_unix: error receiving credentials: %m");
 		return false;
 	}
 
@@ -975,11 +939,8 @@ ident_unix(int sock, char *ident_user)
 	pw = getpwuid(cred->cruid);
 	if (pw == NULL)
 	{
-		snprintf(PQerrormsg, PQERRORMSG_LENGTH,
-				 "ident_unix: unknown local user with uid %d\n",
-				 cred->cruid);
-		fputs(PQerrormsg, stderr);
-		pqdebug("%s", PQerrormsg);
+		elog(LOG, "ident_unix: unknown local user with uid %d",
+			 (int) cred->cruid);
 		return false;
 	}
 
@@ -988,10 +949,7 @@ ident_unix(int sock, char *ident_user)
 	return true;
 
 #else
-	snprintf(PQerrormsg, PQERRORMSG_LENGTH,
-			 "'ident' auth is not supported on local connections on this platform\n");
-	fputs(PQerrormsg, stderr);
-	pqdebug("%s", PQerrormsg);
+	elog(LOG, "'ident' auth is not supported on local connections on this platform");
 
 	return false;
 #endif

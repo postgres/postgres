@@ -2,7 +2,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: password.c,v 1.40 2001/10/25 05:49:30 momjian Exp $
+ * $Id: password.c,v 1.41 2002/03/04 01:46:03 tgl Exp $
  *
  */
 
@@ -36,11 +36,8 @@ verify_password(const Port *port, const char *user, const char *password)
 	pw_file = AllocateFile(pw_file_fullname, PG_BINARY_R);
 	if (!pw_file)
 	{
-		snprintf(PQerrormsg, PQERRORMSG_LENGTH,
-			"verify_password: Unable to open password file \"%s\": %s\n",
-				 pw_file_fullname, strerror(errno));
-		fputs(PQerrormsg, stderr);
-		pqdebug("%s", PQerrormsg);
+		elog(LOG, "verify_password: Unable to open password file \"%s\": %m",
+			 pw_file_fullname);
 
 		pfree(pw_file_fullname);
 
@@ -96,11 +93,8 @@ verify_password(const Port *port, const char *user, const char *password)
 				return STATUS_OK;
 			}
 
-			snprintf(PQerrormsg, PQERRORMSG_LENGTH,
-					 "verify_password: password mismatch for '%s'.\n",
-					 user);
-			fputs(PQerrormsg, stderr);
-			pqdebug("%s", PQerrormsg);
+			elog(LOG, "verify_password: password mismatch for '%s'",
+				 user);
 
 			return STATUS_ERROR;
 		}
@@ -108,11 +102,8 @@ verify_password(const Port *port, const char *user, const char *password)
 
 	FreeFile(pw_file);
 
-	snprintf(PQerrormsg, PQERRORMSG_LENGTH,
-			 "verify_password: user '%s' not found in password file.\n",
-			 user);
-	fputs(PQerrormsg, stderr);
-	pqdebug("%s", PQerrormsg);
+	elog(LOG, "verify_password: user '%s' not found in password file",
+		 user);
 
 	return STATUS_ERROR;
 }
