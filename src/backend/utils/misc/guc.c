@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.149.2.1 2003/09/07 04:36:59 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.149.2.2 2003/09/07 21:44:30 momjian Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -897,15 +897,6 @@ static struct config_int ConfigureNamesInt[] =
 		},
 		&Geqo_generations,
 		0, 0, INT_MAX, NULL, NULL
-	},
-	{
-		{"geqo_random_seed", PGC_USERSET, QUERY_TUNING_GEQO,
-			gettext_noop("Can be set to get reproducible results from the algorithm"),
-			gettext_noop("If it is set to -1 then the algorithm behaves "
-						 "non-deterministically")
-		},
-		&Geqo_random_seed,
-		-1, INT_MIN, INT_MAX, NULL, NULL
 	},
 
 	{
