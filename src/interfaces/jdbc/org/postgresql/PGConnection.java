@@ -9,7 +9,7 @@
  * Copyright (c) 2003, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/Attic/PGConnection.java,v 1.4 2003/03/07 18:39:41 barry Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/Attic/PGConnection.java,v 1.5 2003/04/14 10:39:51 davec Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -43,6 +43,28 @@ public interface PGConnection
 	 * @since 7.3
 	 */
 	public Fastpath getFastpathAPI() throws SQLException;
+
+        /*
+         * This allows client code to add a handler for one of org.postgresql's
+         * more unique data types.
+         *
+         * <p><b>NOTE:</b> This is not part of JDBC, but an extension.
+         *
+         * <p>The best way to use this is as follows:
+         *
+         * <p><pre>
+         * ...
+         * ((org.postgresql.PGConnection)myconn).addDataType("mytype","my.class.name");
+         * ...
+         * </pre>
+         *
+         * <p>where myconn is an open Connection to org.postgresql.
+         *
+         * <p>The handling class must extend org.postgresql.util.PGobject
+         *
+         * @see org.postgresql.util.PGobject
+         */
+        public void addDataType(String type, String name);
 
 
 	/** @deprecated */
