@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $Header: /cvsroot/pgsql/src/bin/ipcclean/Attic/ipcclean.sh,v 1.6 2000/11/11 22:59:47 petere Exp $
+# $Header: /cvsroot/pgsql/src/bin/ipcclean/Attic/ipcclean.sh,v 1.7 2001/01/25 16:32:25 petere Exp $
 #
 
 CMDNAME=`basename $0`
@@ -43,7 +43,7 @@ if [ `uname` = 'Linux' ]; then
     ipcs_lpid=
     did_anything=
 
-    if ps x | grep -s 'postmaster' >/dev/null 2>&1 ; then
+    if ps x | grep -s '[p]ostmaster' >/dev/null 2>&1 ; then
         echo "$CMDNAME: You still have a postmaster running." 1>&2
         exit 1
     fi
