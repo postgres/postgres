@@ -9,7 +9,7 @@
  *
  * Copyright (c) 2002, PostgreSQL Global Development Group
  *
- * $Id: funcapi.h,v 1.5 2002/08/29 00:17:06 tgl Exp $
+ * $Id: funcapi.h,v 1.6 2002/08/29 17:14:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -101,13 +101,14 @@ typedef struct FuncCallContext
 	AttInMetadata	   *attinmeta;
 
 	/*
-	 * memory context used to initialize structure
+	 * memory context used for structures which must live for multiple calls
 	 *
-	 * fmctx is set by SRF_FIRSTCALL_INIT() for you, and used by
-	 * SRF_RETURN_DONE() for cleanup. It is primarily for internal use
-	 * by the API.
+	 * multi_call_memory_ctx is set by SRF_FIRSTCALL_INIT() for you, and used
+	 * by SRF_RETURN_DONE() for cleanup. It is the most appropriate memory
+	 * context for any memory that is to be re-used across multiple calls
+	 * of the SRF.
 	 */
-	MemoryContext	fmctx;
+	MemoryContext	multi_call_memory_ctx;
 
 }	FuncCallContext;
 
@@ -160,17 +161,22 @@ extern HeapTuple BuildTupleFromCStrings(AttInMetadata *attinmeta, char **values)
  * {
  * 	FuncCallContext	   *funcctx;
  * 	Datum				result;
+ *  MemoryContext		oldcontext;
  * 	<user defined declarations>
  * 
- * 	if(SRF_IS_FIRSTCALL())
+ * 	if (SRF_IS_FIRSTCALL())
  * 	{
- * 		<user defined code>
  * 		funcctx = SRF_FIRSTCALL_INIT();
+ *		// switch context when allocating stuff to be used in later calls
+ *		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
+ * 		<user defined code>
  * 		<if returning composite>
  * 			<obtain slot>
  * 			funcctx->slot = slot;
  * 		<endif returning composite>
  * 		<user defined code>
+ *		// return to original context when allocating transient memory
+ *		MemoryContextSwitchTo(oldcontext);
  *  }
  * 	<user defined code>
  * 	funcctx = SRF_PERCALL_SETUP();

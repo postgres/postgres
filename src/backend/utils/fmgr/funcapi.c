@@ -7,7 +7,7 @@
  * Copyright (c) 2002, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/funcapi.c,v 1.3 2002/08/29 00:17:05 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/funcapi.c,v 1.4 2002/08/29 17:14:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,16 +39,12 @@ init_MultiFuncCall(PG_FUNCTION_ARGS)
 	{
 		/*
 		 * First call
+		 *
+		 * Allocate suitably long-lived space and zero it
 		 */
-		MemoryContext oldcontext;
-
-		/* switch to the appropriate memory context */
-		oldcontext = MemoryContextSwitchTo(fcinfo->flinfo->fn_mcxt);
-
-		/*
-		 * allocate space and zero it
-		 */
-		retval = (FuncCallContext *) palloc(sizeof(FuncCallContext));
+		retval = (FuncCallContext *)
+			MemoryContextAlloc(fcinfo->flinfo->fn_mcxt,
+							   sizeof(FuncCallContext));
 		MemSet(retval, 0, sizeof(FuncCallContext));
 
 		/*
@@ -59,15 +55,12 @@ init_MultiFuncCall(PG_FUNCTION_ARGS)
 		retval->slot = NULL;
 		retval->user_fctx = NULL;
 		retval->attinmeta = NULL;
-		retval->fmctx = fcinfo->flinfo->fn_mcxt;
+		retval->multi_call_memory_ctx = fcinfo->flinfo->fn_mcxt;
 
 		/*
 		 * save the pointer for cross-call use
 		 */
 		fcinfo->flinfo->fn_extra = retval;
-
-		/* back to the original memory context */
-		MemoryContextSwitchTo(oldcontext);
 	}
 	else	/* second and subsequent calls */
 	{

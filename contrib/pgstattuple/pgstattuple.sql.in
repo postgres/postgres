@@ -1,16 +1,16 @@
-DROP VIEW pgstattuple_view CASCADE;
-CREATE VIEW pgstattuple_view AS
-  SELECT
-    0::BIGINT AS table_len,		-- physical table length in bytes
-    0::BIGINT AS tuple_count,		-- number of live tuples
-    0::BIGINT AS tuple_len,		-- total tuples length in bytes
-    0.0::FLOAT AS tuple_percent,	-- live tuples in %
-    0::BIGINT AS dead_tuple_count,	-- number of dead tuples
-    0::BIGINT AS dead_tuple_len,	-- total dead tuples length in bytes
-    0.0::FLOAT AS dead_tuple_percent,	-- dead tuples in %
-    0::BIGINT AS free_space,		-- free space in bytes
-    0.0::FLOAT AS free_percent;		-- free space in %
+DROP TYPE pgstattuple_type CASCADE;
+CREATE TYPE pgstattuple_type AS (
+    table_len BIGINT,		-- physical table length in bytes
+    tuple_count BIGINT,		-- number of live tuples
+    tuple_len BIGINT,		-- total tuples length in bytes
+    tuple_percent FLOAT,	-- live tuples in %
+    dead_tuple_count BIGINT,	-- number of dead tuples
+    dead_tuple_len BIGINT,	-- total dead tuples length in bytes
+    dead_tuple_percent FLOAT,	-- dead tuples in %
+    free_space BIGINT,		-- free space in bytes
+    free_percent FLOAT		-- free space in %
+);
 
-CREATE OR REPLACE FUNCTION pgstattuple(text) RETURNS SETOF pgstattuple_view
+CREATE OR REPLACE FUNCTION pgstattuple(text) RETURNS pgstattuple_type
   AS 'MODULE_PATHNAME', 'pgstattuple'
   LANGUAGE 'c' WITH (isstrict);

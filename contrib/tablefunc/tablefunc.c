@@ -87,12 +87,16 @@ normal_rand(PG_FUNCTION_ARGS)
 	float8				stddev;
 	float8				carry_val;
 	bool				use_carry;
+	MemoryContext		oldcontext;
 
 	/* stuff done only on the first call of the function */
  	if(SRF_IS_FIRSTCALL())
  	{
 		/* create a function context for cross-call persistence */
  		funcctx = SRF_FIRSTCALL_INIT();
+
+		/* switch to memory context appropriate for multiple function calls */
+		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
 
 		/* total number of tuples to be returned */
 		funcctx->max_calls = PG_GETARG_UINT32(0);
@@ -119,6 +123,8 @@ normal_rand(PG_FUNCTION_ARGS)
 		 * purpose it doesn't matter, just cast it as an unsigned value
 		 */
 		srandom(PG_GETARG_UINT32(3));
+
+		MemoryContextSwitchTo(oldcontext);
     }
 
 	/* stuff done on every call of the function */
@@ -260,10 +266,11 @@ crosstab(PG_FUNCTION_ARGS)
 	AttInMetadata	   *attinmeta;
 	SPITupleTable	   *spi_tuptable = NULL;
 	TupleDesc			spi_tupdesc;
-	char			   *lastrowid;
+	char			   *lastrowid = NULL;
 	crosstab_fctx	   *fctx;
 	int					i;
 	int					num_categories;
+	MemoryContext		oldcontext;
 
 	/* stuff done only on the first call of the function */
  	if(SRF_IS_FIRSTCALL())
@@ -275,13 +282,12 @@ crosstab(PG_FUNCTION_ARGS)
 		TupleDesc		tupdesc = NULL;
 		int				ret;
 		int				proc;
-		MemoryContext	oldcontext;
 
 		/* create a function context for cross-call persistence */
  		funcctx = SRF_FIRSTCALL_INIT();
 
-		/* SPI switches context on us, so save it first */
-		oldcontext = CurrentMemoryContext;
+		/* switch to memory context appropriate for multiple function calls */
+		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
 
 		/* Connect to SPI manager */
 		if ((ret = SPI_connect()) < 0)
@@ -317,8 +323,8 @@ crosstab(PG_FUNCTION_ARGS)
 	 		SRF_RETURN_DONE(funcctx);
 		}
 
-		/* back to the original memory context */
-		MemoryContextSwitchTo(oldcontext);
+		/* SPI switches context on us, so reset it */
+		MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
 
 		/* get the typeid that represents our return type */
 		functypeid = get_func_rettype(funcid);
@@ -381,6 +387,8 @@ crosstab(PG_FUNCTION_ARGS)
 
 		/* total number of tuples to be returned */
 		funcctx->max_calls = proc;
+
+		MemoryContextSwitchTo(oldcontext);
     }
 
 	/* stuff done on every call of the function */
@@ -432,7 +440,7 @@ crosstab(PG_FUNCTION_ARGS)
 			for (i = 0; i < num_categories; i++)
 			{
 				HeapTuple	spi_tuple;
-				char	   *rowid;
+				char	   *rowid = NULL;
 
 				/* see if we've gone too far already */
 				if (call_cntr >= max_calls)
@@ -496,7 +504,13 @@ crosstab(PG_FUNCTION_ARGS)
 			xpfree(fctx->lastrowid);
 
 			if (values[0] != NULL)
+			{
+				/* switch to memory context appropriate for multiple function calls */
+				oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
+
 				lastrowid = fctx->lastrowid = pstrdup(values[0]);
+				MemoryContextSwitchTo(oldcontext);
+			}
 
 			if (!allnulls)
 			{

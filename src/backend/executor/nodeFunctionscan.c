@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeFunctionscan.c,v 1.6 2002/08/29 00:17:04 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeFunctionscan.c,v 1.7 2002/08/29 17:14:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -427,6 +427,12 @@ function_getonetuple(FunctionScanState *scanstate,
 	char			fn_typtype = scanstate->fn_typtype;
 	ExprContext	   *econtext = scanstate->csstate.cstate.cs_ExprContext;
 	TupleTableSlot *slot = scanstate->csstate.css_ScanTupleSlot;
+
+	/*
+	 * reset per-tuple memory context before each call of the function.
+	 * This cleans up any local memory the function may leak when called.
+	 */
+	ResetExprContext(econtext);
 
 	/*
 	 * get the next Datum from the function

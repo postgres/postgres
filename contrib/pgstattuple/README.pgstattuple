@@ -1,4 +1,4 @@
-pgstattuple README			2002/08/22 Tatsuo Ishii
+pgstattuple README			2002/08/29 Tatsuo Ishii
 
 1. What is pgstattuple?
 
@@ -40,15 +40,15 @@ free_percent		-- free space in %
 
 3. Using pgstattuple
 
-   pgstattuple may be called as a SRF (set returning function) and is
+   pgstattuple may be called as a table function and is
    defined as follows:
 
-   CREATE OR REPLACE FUNCTION pgstattuple(text) RETURNS SETOF pgstattuple_view
+   CREATE OR REPLACE FUNCTION pgstattuple(text) RETURNS pgstattuple_type
      AS 'MODULE_PATHNAME', 'pgstattuple'
      LANGUAGE 'c' WITH (isstrict);
 
-   The argument is the table name.  Note that pgstattuple never
-   returns more than 1 tuple.
+   The argument is the table name.  Note that pgstattuple only returns
+   one row.
 
 4. Notes
 

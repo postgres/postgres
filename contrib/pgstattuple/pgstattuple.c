@@ -1,5 +1,5 @@
 /*
- * $Header: /cvsroot/pgsql/contrib/pgstattuple/pgstattuple.c,v 1.7 2002/08/23 08:19:49 ishii Exp $
+ * $Header: /cvsroot/pgsql/contrib/pgstattuple/pgstattuple.c,v 1.8 2002/08/29 17:14:31 tgl Exp $
  *
  * Copyright (c) 2001,2002  Tatsuo Ishii
  *
@@ -25,10 +25,10 @@
 #include "postgres.h"
 
 #include "fmgr.h"
+#include "funcapi.h"
 #include "access/heapam.h"
 #include "access/transam.h"
 #include "catalog/namespace.h"
-#include "funcapi.h"
 #include "utils/builtins.h"
 
 
@@ -41,19 +41,19 @@ extern Datum pgstattuple(PG_FUNCTION_ARGS);
  * returns live/dead tuples info
  *
  * C FUNCTION definition
- * pgstattuple(TEXT) returns setof pgstattuple_view
- * see pgstattuple.sql for pgstattuple_view
+ * pgstattuple(text) returns pgstattuple_type
+ * see pgstattuple.sql for pgstattuple_type
  * ----------
  */
 
-#define DUMMY_TUPLE "pgstattuple_view"
+#define DUMMY_TUPLE "pgstattuple_type"
 #define NCOLUMNS 9
 #define NCHARS 32
 
 Datum
 pgstattuple(PG_FUNCTION_ARGS)
 {
-	text	   *relname;
+	text	   *relname = PG_GETARG_TEXT_P(0);
 	RangeVar   *relrv;
 	Relation	rel;
 	HeapScanDesc scan;
@@ -71,62 +71,30 @@ pgstattuple(PG_FUNCTION_ARGS)
 	double		dead_tuple_percent;
 	uint64		free_space = 0; /* free/reusable space in bytes */
 	double		free_percent;	/* free/reusable space in % */
-
-	FuncCallContext	   *funcctx;
-	int					call_cntr;
-	int					max_calls;
 	TupleDesc			tupdesc;
 	TupleTableSlot	   *slot;
 	AttInMetadata	   *attinmeta;
+	char			  **values;
+	int					i;
+	Datum				result;
 
-	char **values;
-	int i;
-	Datum		result;
+	/*
+	 * Build a tuple description for a pgstattupe_type tuple
+	 */
+	tupdesc = RelationNameGetTupleDesc(DUMMY_TUPLE);
 
-	/* stuff done only on the first call of the function */
-	if(SRF_IS_FIRSTCALL())
-	{
-		/* create a function context for cross-call persistence */
-		funcctx = SRF_FIRSTCALL_INIT();
-    
-		/* total number of tuples to be returned */
-		funcctx->max_calls = 1;
-    
-		/*
-		 * Build a tuple description for a pgstattupe_view tuple
-		 */
-		tupdesc = RelationNameGetTupleDesc(DUMMY_TUPLE);
-    
-		/* allocate a slot for a tuple with this tupdesc */
-		slot = TupleDescGetSlot(tupdesc);
-    
-		/* assign slot to function context */
-		funcctx->slot = slot;
-    
-		/*
-		 * Generate attribute metadata needed later to produce tuples from raw
-		 * C strings
-		 */
-		attinmeta = TupleDescGetAttInMetadata(tupdesc);
-		funcctx->attinmeta = attinmeta;
-	}
+	/* allocate a slot for a tuple with this tupdesc */
+	slot = TupleDescGetSlot(tupdesc);
 
-	/* stuff done on every call of the function */
-	funcctx = SRF_PERCALL_SETUP();
-	call_cntr = funcctx->call_cntr;
-	max_calls = funcctx->max_calls;
-	slot = funcctx->slot;
-	attinmeta = funcctx->attinmeta;
-
-	/* Are we done? */
-	if (call_cntr >= max_calls)
-	{
-		SRF_RETURN_DONE(funcctx);
-	}
+	/*
+	 * Generate attribute metadata needed later to produce tuples from raw
+	 * C strings
+	 */
+	attinmeta = TupleDescGetAttInMetadata(tupdesc);
 
 	/* open relation */
-	relname = PG_GETARG_TEXT_P(0);
-	relrv = makeRangeVarFromNameList(textToQualifiedNameList(relname,"pgstattuple"));
+	relrv = makeRangeVarFromNameList(textToQualifiedNameList(relname,
+															 "pgstattuple"));
 	rel = heap_openrv(relrv, AccessShareLock);
 
 	nblocks = RelationGetNumberOfBlocks(rel);
@@ -223,5 +191,5 @@ pgstattuple(PG_FUNCTION_ARGS)
 	}
 	pfree(values);
     
-	SRF_RETURN_NEXT(funcctx, result);
+	PG_RETURN_DATUM(result);
 }

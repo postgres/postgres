@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/xfunc.sgml,v 1.57 2002/08/29 00:17:02 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/xfunc.sgml,v 1.58 2002/08/29 17:14:32 tgl Exp $
 -->
 
  <chapter id="xfunc">
@@ -1670,13 +1670,14 @@ typedef struct
 	AttInMetadata	   *attinmeta;
 
 	/*
-	 * memory context used to initialize structure
+	 * memory context used for structures which must live for multiple calls
 	 *
-	 * fmctx is set by SRF_FIRSTCALL_INIT() for you, and used by
-	 * SRF_RETURN_DONE() for cleanup. It is primarily for internal use
-	 * by the API.
+	 * multi_call_memory_ctx is set by SRF_FIRSTCALL_INIT() for you, and used
+	 * by SRF_RETURN_DONE() for cleanup. It is the most appropriate memory
+	 * context for any memory that is to be re-used across multiple calls
+	 * of the SRF.
 	 */
-	MemoryContext	fmctx;
+	MemoryContext	multi_call_memory_ctx;
 
 }	FuncCallContext;
 </programlisting>
@@ -1715,26 +1716,42 @@ SRF_RETURN_DONE(funcctx)
     </para>
 
     <para>
+     The palloc memory context that is current when the SRF is called is
+     a transient context that will be cleared between calls.  This means
+     that you do not need to be careful about pfree'ing everything
+     you palloc; it will go away anyway.  However, if you want to allocate
+     any data structures to live across calls, you need to put them somewhere
+     else.  The memory context referenced by
+     <structfield>multi_call_memory_ctx</> is a suitable location for any
+     data that needs to survive until the SRF is finished running.  In most
+     cases, this means that you should switch into
+     <structfield>multi_call_memory_ctx</> while doing the first-call setup.
+    </para>
+
+    <para>
      A complete pseudo-code example looks like the following:
 <programlisting>
 Datum
 my_Set_Returning_Function(PG_FUNCTION_ARGS)
 {
-    FuncCallContext     *funcctx;
-    Datum                result;
+    FuncCallContext  *funcctx;
+    Datum             result;
+    MemoryContext     oldcontext;
     [user defined declarations]
 
     if (SRF_IS_FIRSTCALL())
     {
+        funcctx = SRF_FIRSTCALL_INIT();
+        oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
         /* one-time setup code appears here: */
         [user defined code]
-        funcctx = SRF_FIRSTCALL_INIT();
         [if returning composite]
             [build TupleDesc, and perhaps AttInMetadata]
             [obtain slot]
             funcctx-&gt;slot = slot;
         [endif returning composite]
         [user defined code]
+        MemoryContextSwitchTo(oldcontext);
     }
 
     /* each-time setup code appears here: */
@@ -1777,8 +1794,13 @@ testpassbyval(PG_FUNCTION_ARGS)
      /* stuff done only on the first call of the function */
      if (SRF_IS_FIRSTCALL())
      {
+        MemoryContext	oldcontext;
+
         /* create a function context for cross-call persistence */
-         funcctx = SRF_FIRSTCALL_INIT();
+        funcctx = SRF_FIRSTCALL_INIT();
+
+        /* switch to memory context appropriate for multiple function calls */
+        oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
 
         /* total number of tuples to be returned */
         funcctx-&gt;max_calls = PG_GETARG_UINT32(0);
@@ -1800,6 +1822,8 @@ testpassbyval(PG_FUNCTION_ARGS)
          */
         attinmeta = TupleDescGetAttInMetadata(tupdesc);
         funcctx-&gt;attinmeta = attinmeta;
+
+        MemoryContextSwitchTo(oldcontext);
     }
 
     /* stuff done on every call of the function */
@@ -1836,7 +1860,7 @@ testpassbyval(PG_FUNCTION_ARGS)
         /* make the tuple into a datum */
         result = TupleGetDatum(slot, tuple);
 
-        /* Clean up */
+        /* Clean up (this is not actually necessary) */
         pfree(values[0]);
         pfree(values[1]);
         pfree(values[2]);

@@ -5,7 +5,7 @@
  * Copyright (c) 2002, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *		$Header: /cvsroot/pgsql/src/backend/utils/adt/lockfuncs.c,v 1.3 2002/08/29 00:17:05 tgl Exp $
+ *		$Header: /cvsroot/pgsql/src/backend/utils/adt/lockfuncs.c,v 1.4 2002/08/29 17:14:33 tgl Exp $
  */
 #include "postgres.h"
 
@@ -24,15 +24,20 @@ static int next_lock(int locks[]);
 Datum
 pg_lock_status(PG_FUNCTION_ARGS)
 {
-	FuncCallContext		*funccxt;
-	LockData			*lockData;
+	FuncCallContext	   *funcctx;
+	LockData		   *lockData;
+	MemoryContext		oldcontext;
 
 	if (SRF_IS_FIRSTCALL())
 	{
-		MemoryContext	oldcxt;
 		TupleDesc		tupdesc;
 
-		funccxt = SRF_FIRSTCALL_INIT();
+		/* create a function context for cross-call persistence */
+		funcctx = SRF_FIRSTCALL_INIT();
+
+		/* switch to memory context appropriate for multiple function calls */
+		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
+
 		tupdesc = CreateTemplateTupleDesc(5, WITHOUTOID);
 		TupleDescInitEntry(tupdesc, (AttrNumber) 1, "relation",
 						   OIDOID, -1, 0, false);
@@ -45,10 +50,8 @@ pg_lock_status(PG_FUNCTION_ARGS)
 		TupleDescInitEntry(tupdesc, (AttrNumber) 5, "isgranted",
 						   BOOLOID, -1, 0, false);
 
-		funccxt->slot = TupleDescGetSlot(tupdesc);
-		funccxt->attinmeta = TupleDescGetAttInMetadata(tupdesc);
-
-		oldcxt = MemoryContextSwitchTo(funccxt->fmctx);
+		funcctx->slot = TupleDescGetSlot(tupdesc);
+		funcctx->attinmeta = TupleDescGetAttInMetadata(tupdesc);
 
 		/*
 		 * Preload all the locking information that we will eventually format
@@ -56,15 +59,15 @@ pg_lock_status(PG_FUNCTION_ARGS)
 		 * MemoryContext is reset when the SRF finishes, we don't need to
 		 * free it ourselves.
 		 */
-		funccxt->user_fctx = (LockData *) palloc(sizeof(LockData));
+		funcctx->user_fctx = (LockData *) palloc(sizeof(LockData));
 
-		GetLockStatusData(funccxt->user_fctx);
+		GetLockStatusData(funcctx->user_fctx);
 
-		MemoryContextSwitchTo(oldcxt);
+		MemoryContextSwitchTo(oldcontext);
 	}
 
-	funccxt	= SRF_PERCALL_SETUP();
-	lockData = (LockData *) funccxt->user_fctx;
+	funcctx	= SRF_PERCALL_SETUP();
+	lockData = (LockData *) funcctx->user_fctx;
 
 	while (lockData->currIdx < lockData->nelements)
 	{
@@ -82,7 +85,7 @@ pg_lock_status(PG_FUNCTION_ARGS)
 		holder		= &(lockData->holders[currIdx]);
 		lock		= &(lockData->locks[currIdx]);
 		proc		= &(lockData->procs[currIdx]);
-		num_attrs	= funccxt->attinmeta->tupdesc->natts;
+		num_attrs	= funcctx->attinmeta->tupdesc->natts;
 
 		values = (char **) palloc(sizeof(*values) * num_attrs);
 
@@ -133,12 +136,12 @@ pg_lock_status(PG_FUNCTION_ARGS)
 
 		strncpy(values[3], GetLockmodeName(mode), 32);
 
-		tuple = BuildTupleFromCStrings(funccxt->attinmeta, values);
-		result = TupleGetDatum(funccxt->slot, tuple);
-		SRF_RETURN_NEXT(funccxt, result);
+		tuple = BuildTupleFromCStrings(funcctx->attinmeta, values);
+		result = TupleGetDatum(funcctx->slot, tuple);
+		SRF_RETURN_NEXT(funcctx, result);
 	}
 
-	SRF_RETURN_DONE(funccxt);
+	SRF_RETURN_DONE(funcctx);
 }
 
 static LOCKMODE
