@@ -2,7 +2,7 @@
  * Routines for handling of 'SET var TO',
  *	'SHOW var' and 'RESET var' statements.
  *
- * $Id: variable.c,v 1.25 1999/07/17 20:16:54 momjian Exp $
+ * $Id: variable.c,v 1.26 1999/09/27 20:27:03 momjian Exp $
  *
  */
 
@@ -11,11 +11,13 @@
 
 #include "postgres.h"
 #include "access/xact.h"
+#include "catalog/pg_shadow.h"
 #include "commands/variable.h"
 #include "miscadmin.h"
 #include "optimizer/internal.h"
 #include "utils/builtins.h"
 #include "utils/tqual.h"
+#include "utils/trace.h"
 
 #ifdef MULTIBYTE
 #include "mb/pg_wchar.h"
@@ -528,6 +530,36 @@ reset_timezone()
 	return TRUE;
 }	/* reset_timezone() */
 
+/*
+ * Pg_options
+ */
+static bool
+parse_pg_options(const char *value)
+{
+	if (!superuser()) {
+		elog(ERROR, "Only users with superuser privilege can set pg_options");
+	}
+	parse_options((char *) value, TRUE);
+	return (TRUE);
+}
+
+static bool
+show_pg_options(void)
+{
+	show_options();
+	return (TRUE);
+}
+
+static bool
+reset_pg_options(void)
+{
+	if (!superuser()) {
+		elog(ERROR, "Only users with superuser privilege can set pg_options");
+	}
+	read_pg_options(0);
+	return (TRUE);
+}
+
 /*-----------------------------------------------------------------------*/
 
 struct VariableParsers
@@ -567,6 +599,9 @@ struct VariableParsers
 	},
 	{
 		"XactIsoLevel", parse_XactIsoLevel, show_XactIsoLevel, reset_XactIsoLevel
+	},
+	{
+		"pg_options", parse_pg_options, show_pg_options, reset_pg_options
 	},
 	{
 		NULL, NULL, NULL, NULL

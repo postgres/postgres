@@ -7,7 +7,7 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.67 1999/09/18 19:06:27 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.68 1999/09/27 20:26:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -134,7 +134,6 @@ static char *relname;			/* current relation name */
 Form_pg_attribute attrtypes[MAXATTR];	/* points to attribute info */
 static char *values[MAXATTR];	/* cooresponding attribute values */
 int			numattr;			/* number of attributes for cur. rel */
-extern bool disableFsync;		/* do not fsync the database */
 
 int			DebugMode;
 static GlobalMemory nogc = (GlobalMemory) NULL; /* special no-gc mem

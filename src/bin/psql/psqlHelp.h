@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: psqlHelp.h,v 1.74 1999/09/23 17:11:16 momjian Exp $
+ * $Id: psqlHelp.h,v 1.75 1999/09/27 20:27:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -296,7 +296,7 @@ static struct _helpStruct QL_HELP[] = {
 	{"reset",
 		"set run-time environment back to default",
 	"\
-\tRESET DATESTYLE|COST_HEAP|COST_INDEX|GEQO|KSQO|\n\
+\tRESET DATESTYLE|COST_HEAP|COST_INDEX|GEQO|KSQO|PG_OPTIONS|\n\
 TIMEZONE|XACTISOLEVEL|CLIENT_ENCODING|SERVER_ENCODING"},
 	{"revoke",
 		"revoke access control from a user or group",
@@ -329,6 +329,7 @@ TIMEZONE|XACTISOLEVEL|CLIENT_ENCODING|SERVER_ENCODING"},
 \tSET COST_INDEX TO #\n\
 \tSET GEQO TO 'ON[=#]'|'OFF'\n\
 \tSET KSQO TO 'ON'|'OFF'\n\
+\tSET PG_OPTIONS TO 'value'\n\
 \tSET TIMEZONE TO 'value'\n\
 \tSET TRANSACTION ISOLATION LEVEL 'SERIALIZABLE'|'READ COMMITTED'\n\
 \tSET CLIENT_ENCODING|NAMES TO 'EUC_JP'|'SJIS'|'EUC_CN'|'EUC_KR'|'EUC_TW'|\n\
@@ -340,7 +341,7 @@ TIMEZONE|XACTISOLEVEL|CLIENT_ENCODING|SERVER_ENCODING"},
 	{"show",
 		"show current run-time environment",
 	"\
-\tSHOW DATESTYLE|COST_HEAP|COST_INDEX|GEQO|KSQO|\n\
+\tSHOW DATESTYLE|COST_HEAP|COST_INDEX|GEQO|KSQO|PG_OPTIONS|\n\
 TIMEZONE|XACTISOLEVEL|CLIENT_ENCODING|SERVER_ENCODING"},
 	{"unlisten",
 		"stop listening for notification on a condition name",

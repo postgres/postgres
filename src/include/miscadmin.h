@@ -11,7 +11,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: miscadmin.h,v 1.41 1999/09/24 00:25:16 tgl Exp $
+ * $Id: miscadmin.h,v 1.42 1999/09/27 20:27:26 momjian Exp $
  *
  * NOTES
  *	  some of the information in this file will be moved to
@@ -21,6 +21,8 @@
  */
 #ifndef MISCADMIN_H
 #define MISCADMIN_H
+
+#include "utils/trace.h"
 
 /*****************************************************************************
  *	  globals.h --															 *
@@ -93,7 +95,7 @@ extern char CTZName[];
 extern char FloatFormat[];
 extern char DateFormat[];
 
-extern bool disableFsync;
+#define disableFsync	pg_options[OPT_NOFSYNC]
 extern bool allowSystemTableMods;
 extern int	SortMem;
 

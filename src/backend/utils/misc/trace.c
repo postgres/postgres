@@ -73,6 +73,7 @@ static char *opt_names[] = {
 	"lock_debug_relid",
 	"lock_read_priority",		/* lock priority, see lock.c */
 	"deadlock_timeout",			/* deadlock timeout, see proc.c */
+	"nofsync",					/* turn fsync off */
 	"syslog",					/* use syslog for error messages */
 	"hostlookup",				/* enable hostname lookup in ps_status */
 	"showportnumber",			/* show port number in ps_status */
@@ -405,6 +406,16 @@ read_pg_options(SIGNAL_ARGS)
 	close(fd);
 }
 
+void
+show_options(void)
+{
+	int		i;
+
+	for (i=0; i<NUM_PG_OPTIONS; i++) {
+		elog(NOTICE, "%s=%d", opt_names[i], pg_options[i]);
+	}
+}
+  
 /*
  * Local variables:
  *	tab-width: 4
