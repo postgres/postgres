@@ -522,7 +522,83 @@ AC_TRY_RUN([#include <stdlib.h>
 #endif
 main() { double d = DBL_MIN; if (d != DBL_MIN) exit(-1); else exit(0); }],
 	AC_MSG_RESULT(yes),
-	[AC_MSG_RESULT(no) AC_DEFINE(HAVE_DBL_MIN_PROBLEM)])
+	[AC_MSG_RESULT(no) AC_DEFINE(HAVE_DBL_MIN_PROBLEM)],
+	AC_MSG_RESULT(assuming ok on target machine))
+
+dnl Check to see if we have a working 64-bit integer type.
+AC_MSG_CHECKING(whether 'long int' is 64 bits)
+AC_TRY_RUN([#include <stdio.h>
+typedef long int int64;
+#define INT64_FORMAT "%ld"
+
+int64 a = 20000001;
+int64 b = 40000005;
+
+int does_int64_work()
+{
+  int64 c,d,e;
+  char buf[100];
+
+  if (sizeof(int64) != 8)
+    return 0;			/* doesn't look like the right size */
+
+  /* we do perfunctory checks on multiply, divide, sprintf, sscanf */
+  c = a * b;
+  sprintf(buf, INT64_FORMAT, c);
+  if (strcmp(buf, "800000140000005") != 0)
+    return 0;			/* either multiply or sprintf is busted */
+  if (sscanf(buf, INT64_FORMAT, &d) != 1)
+    return 0;
+  if (d != c)
+    return 0;
+  e = d / b;
+  if (e != a)
+    return 0;
+  return 1;
+}
+main() {
+  exit(! does_int64_work());
+}],
+	[AC_MSG_RESULT(yes) AC_DEFINE(HAVE_LONG_INT_64)],
+	AC_MSG_RESULT(no),
+	AC_MSG_RESULT(assuming not on target machine))
+
+AC_MSG_CHECKING(whether 'long long int' is 64 bits)
+AC_TRY_RUN([#include <stdio.h>
+typedef long long int int64;
+#define INT64_FORMAT "%Ld"
+
+int64 a = 20000001;
+int64 b = 40000005;
+
+int does_int64_work()
+{
+  int64 c,d,e;
+  char buf[100];
+
+  if (sizeof(int64) != 8)
+    return 0;			/* doesn't look like the right size */
+
+  /* we do perfunctory checks on multiply, divide, sprintf, sscanf */
+  c = a * b;
+  sprintf(buf, INT64_FORMAT, c);
+  if (strcmp(buf, "800000140000005") != 0)
+    return 0;			/* either multiply or sprintf is busted */
+  if (sscanf(buf, INT64_FORMAT, &d) != 1)
+    return 0;
+  if (d != c)
+    return 0;
+  e = d / b;
+  if (e != a)
+    return 0;
+  return 1;
+}
+main() {
+  exit(! does_int64_work());
+}],
+	[AC_MSG_RESULT(yes) AC_DEFINE(HAVE_LONG_LONG_INT_64)],
+	AC_MSG_RESULT(no),
+	AC_MSG_RESULT(assuming not on target machine))
 
 dnl Checks for library functions.
 AC_PROG_GCC_TRADITIONAL
