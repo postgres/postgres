@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2003, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/startup.c,v 1.86 2004/03/21 22:29:11 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/startup.c,v 1.87 2004/03/24 03:10:29 momjian Exp $
  */
 #include "postgres_fe.h"
 
@@ -152,6 +152,11 @@ main(int argc, char *argv[])
 	pset.getPassword = true;
 #else
 	pset.getPassword = false;
+#endif
+
+#ifndef HAVE_UNIX_SOCKETS
+	/* default to localhost on platforms without unix sockets */
+	options.host = "localhost";
 #endif
 
 	parse_psql_options(argc, argv, &options);
