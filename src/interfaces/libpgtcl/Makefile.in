@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/Makefile.in,v 1.15 1998/05/24 03:48:58 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/Makefile.in,v 1.16 1998/06/12 18:36:40 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -34,13 +34,10 @@ shlib             :=
 LIBPQ			= -L$(SRCDIR)/interfaces/libpq -lpq
 
 ifeq ($(PORTNAME), linux)
-  LINUX_ELF=@LINUX_ELF@
-  ifdef LINUX_ELF
-    install-shlib-dep	:= install-shlib
-    shlib		:= libpgtcl.so.1
-    CFLAGS		+= $(CFLAGS_SL)
-    LDFLAGS_SL		= -shared
-  endif
+  install-shlib-dep	:= install-shlib
+  shlib		:= libpgtcl.so.1
+  CFLAGS		+= $(CFLAGS_SL)
+  LDFLAGS_SL		= -shared
 endif
 
 ifeq ($(PORTNAME), bsd)
