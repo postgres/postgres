@@ -1,0 +1,27 @@
+DROP TABLE mdt;
+
+CREATE TABLE mdt (
+	id		int4,
+	idesc		text,
+	moddate datetime DEFAULT datetime(CURRENT_TIMESTAMP) NOT NULL
+);
+
+CREATE TRIGGER mdt_moddatetime
+	BEFORE UPDATE ON mdt
+	FOR EACH ROW 
+	EXECUTE PROCEDURE moddatetime (moddate);
+
+INSERT INTO mdt VALUES (1, 'first');
+INSERT INTO mdt VALUES (2, 'second');
+INSERT INTO mdt VALUES (3, 'third');
+
+SELECT * FROM mdt;
+
+UPDATE mdt SET id = 4
+	WHERE id = 1;
+UPDATE mdt SET id = 5
+	WHERE id = 2;
+UPDATE mdt SET id = 6
+	WHERE id = 3;
+
+SELECT * FROM mdt;

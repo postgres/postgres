@@ -12,7 +12,7 @@ CFLAGS+= -DREFINT_VERBOSE
 endif
 
 TARGETS= refint$(DLSUFFIX) refint.sql timetravel$(DLSUFFIX) timetravel.sql \
-		autoinc$(DLSUFFIX) autoinc.sql \
+		autoinc$(DLSUFFIX) autoinc.sql moddatetime$(DLSUFFIX) moddatetime.sql \
 		insert_username$(DLSUFFIX) insert_username.sql
 
 CLEANFILES+= $(TARGETS)
