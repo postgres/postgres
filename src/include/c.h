@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: c.h,v 1.102 2001/10/03 21:58:28 tgl Exp $
+ * $Id: c.h,v 1.103 2001/10/18 22:40:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -573,12 +573,7 @@ typedef NameData *Name;
 
 #define STATUS_OK				(0)
 #define STATUS_ERROR			(-1)
-#define STATUS_NOT_FOUND		(-2)
-#define STATUS_INVALID			(-3)
-#define STATUS_UNCATALOGUED		(-4)
-#define STATUS_REPLACED			(-5)
-#define STATUS_NOT_DONE			(-6)
-#define STATUS_BAD_PACKET		(-7)
+#define STATUS_EOF				(-2)
 #define STATUS_FOUND			(1)
 
 
