@@ -1,7 +1,7 @@
 /*
  *	PostgreSQL type definitions for MAC addresses.
  *
- *	$Header: /cvsroot/pgsql/src/backend/utils/adt/mac.c,v 1.20 2001/03/22 03:59:51 momjian Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/utils/adt/mac.c,v 1.21 2001/08/21 21:23:21 tgl Exp $
  */
 
 #include "postgres.h"
@@ -28,40 +28,32 @@ Datum
 macaddr_in(PG_FUNCTION_ARGS)
 {
 	char	   *str = PG_GETARG_CSTRING(0);
+	macaddr    *result;
 	int			a,
 				b,
 				c,
 				d,
 				e,
 				f;
-	macaddr    *result;
 	int			count;
 
-	if (strlen(str) > 0)
-	{
-		count = sscanf(str, "%x:%x:%x:%x:%x:%x", &a, &b, &c, &d, &e, &f);
-		if (count != 6)
-			count = sscanf(str, "%x-%x-%x-%x-%x-%x", &a, &b, &c, &d, &e, &f);
-		if (count != 6)
-			count = sscanf(str, "%2x%2x%2x:%2x%2x%2x", &a, &b, &c, &d, &e, &f);
-		if (count != 6)
-			count = sscanf(str, "%2x%2x%2x-%2x%2x%2x", &a, &b, &c, &d, &e, &f);
-		if (count != 6)
-			count = sscanf(str, "%2x%2x.%2x%2x.%2x%2x", &a, &b, &c, &d, &e, &f);
+	count = sscanf(str, "%x:%x:%x:%x:%x:%x", &a, &b, &c, &d, &e, &f);
+	if (count != 6)
+		count = sscanf(str, "%x-%x-%x-%x-%x-%x", &a, &b, &c, &d, &e, &f);
+	if (count != 6)
+		count = sscanf(str, "%2x%2x%2x:%2x%2x%2x", &a, &b, &c, &d, &e, &f);
+	if (count != 6)
+		count = sscanf(str, "%2x%2x%2x-%2x%2x%2x", &a, &b, &c, &d, &e, &f);
+	if (count != 6)
+		count = sscanf(str, "%2x%2x.%2x%2x.%2x%2x", &a, &b, &c, &d, &e, &f);
 
-		if (count != 6)
-			elog(ERROR, "macaddr_in: error in parsing \"%s\"", str);
+	if (count != 6)
+		elog(ERROR, "macaddr_in: error in parsing \"%s\"", str);
 
-		if ((a < 0) || (a > 255) || (b < 0) || (b > 255) ||
-			(c < 0) || (c > 255) || (d < 0) || (d > 255) ||
-			(e < 0) || (e > 255) || (f < 0) || (f > 255))
-			elog(ERROR, "macaddr_in: illegal address \"%s\"", str);
-	}
-	else
-	{
-		a = b = c = d = e = f = 0;		/* special case for missing
-										 * address */
-	}
+	if ((a < 0) || (a > 255) || (b < 0) || (b > 255) ||
+		(c < 0) || (c > 255) || (d < 0) || (d > 255) ||
+		(e < 0) || (e > 255) || (f < 0) || (f > 255))
+		elog(ERROR, "macaddr_in: illegal address \"%s\"", str);
 
 	result = (macaddr *) palloc(sizeof(macaddr));
 
@@ -87,20 +79,13 @@ macaddr_out(PG_FUNCTION_ARGS)
 
 	result = (char *) palloc(32);
 
-	if ((hibits(addr) > 0) || (lobits(addr) > 0))
-	{
-		sprintf(result, "%02x:%02x:%02x:%02x:%02x:%02x",
-				addr->a, addr->b, addr->c, addr->d, addr->e, addr->f);
-	}
-	else
-	{
-		result[0] = '\0';		/* special case for missing address */
-	}
+	sprintf(result, "%02x:%02x:%02x:%02x:%02x:%02x",
+			addr->a, addr->b, addr->c, addr->d, addr->e, addr->f);
 
 	PG_RETURN_CSTRING(result);
 }
 
-/* macaddr_text()
+/*
  * Convert macaddr to text data type.
  */
 
@@ -127,15 +112,15 @@ macaddr_text(PG_FUNCTION_ARGS)
 	PG_RETURN_TEXT_P(result);
 }
 
-/* text_macaddr()
+/*
  * Convert text to macaddr data type.
  */
 
 Datum
 text_macaddr(PG_FUNCTION_ARGS)
 {
-	Datum		result;
 	text	   *addr = PG_GETARG_TEXT_P(0);
+	Datum		result;
 	char		str[18];
 	int			len;
 
@@ -143,7 +128,7 @@ text_macaddr(PG_FUNCTION_ARGS)
 	if (len >= 18)
 		elog(ERROR, "Text is too long to convert to MAC address");
 
-	memmove(str, VARDATA(addr), len);
+	memcpy(str, VARDATA(addr), len);
 	*(str + len) = '\0';
 
 	result = DirectFunctionCall1(macaddr_in, CStringGetDatum(str));
@@ -255,8 +240,8 @@ hashmacaddr(PG_FUNCTION_ARGS)
 Datum
 macaddr_trunc(PG_FUNCTION_ARGS)
 {
-	macaddr    *result;
 	macaddr    *addr = PG_GETARG_MACADDR_P(0);
+	macaddr    *result;
 
 	result = (macaddr *) palloc(sizeof(macaddr));
 
