@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Id: hio.c,v 1.41 2001/06/29 21:08:23 tgl Exp $
+ *	  $Id: hio.c,v 1.42 2001/07/13 22:52:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,8 +25,7 @@
  *
  * !!! ELOG(ERROR) IS DISALLOWED HERE !!!
  *
- * Note - we assume that caller hold BUFFER_LOCK_EXCLUSIVE on the buffer.
- *
+ * Note - caller must hold BUFFER_LOCK_EXCLUSIVE on the buffer.
  */
 void
 RelationPutHeapTuple(Relation relation,
@@ -35,7 +34,6 @@ RelationPutHeapTuple(Relation relation,
 {
 	Page		pageHeader;
 	OffsetNumber offnum;
-	Size		len;
 	ItemId		itemId;
 	Item		item;
 
@@ -45,24 +43,22 @@ RelationPutHeapTuple(Relation relation,
 	IncrHeapAccessStat(local_RelationPutHeapTuple);
 	IncrHeapAccessStat(global_RelationPutHeapTuple);
 
-	pageHeader = (Page) BufferGetPage(buffer);
-	len = MAXALIGN(tuple->t_len);		/* be conservative */
-	Assert(len <= PageGetFreeSpace(pageHeader));
+	/* Add the tuple to the page */
+	pageHeader = BufferGetPage(buffer);
 
-	offnum = PageAddItem((Page) pageHeader, (Item) tuple->t_data,
+	offnum = PageAddItem(pageHeader, (Item) tuple->t_data,
 						 tuple->t_len, InvalidOffsetNumber, LP_USED);
 
 	if (offnum == InvalidOffsetNumber)
 		elog(STOP, "RelationPutHeapTuple: failed to add tuple");
 
-	itemId = PageGetItemId((Page) pageHeader, offnum);
-	item = PageGetItem((Page) pageHeader, itemId);
+	/* Update tuple->t_self to the actual position where it was stored */
+	ItemPointerSet(&(tuple->t_self), BufferGetBlockNumber(buffer), offnum);
 
-	ItemPointerSet(&((HeapTupleHeader) item)->t_ctid,
-				   BufferGetBlockNumber(buffer), offnum);
-
-	/* return an accurate tuple */
-	ItemPointerSet(&tuple->t_self, BufferGetBlockNumber(buffer), offnum);
+	/* Insert the correct position into CTID of the stored tuple, too */
+	itemId = PageGetItemId(pageHeader, offnum);
+	item = PageGetItem(pageHeader, itemId);
+	((HeapTupleHeader) item)->t_ctid = tuple->t_self;
 }
 
 /*
