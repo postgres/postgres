@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/sinval.c,v 1.21 2000/04/12 17:15:37 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/sinval.c,v 1.22 2000/11/05 22:50:20 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -368,4 +368,41 @@ GetSnapshotData(bool serializable)
 
 	snapshot->xcnt = count;
 	return snapshot;
+}
+
+/*
+ * GetUndoRecPtr -- returns oldest PROC->logRec.
+ */
+XLogRecPtr	GetUndoRecPtr(void);
+
+XLogRecPtr
+GetUndoRecPtr(void)
+{
+	SISeg	   *segP = shmInvalBuffer;
+	ProcState  *stateP = segP->procState;
+	XLogRecPtr	urec = {0, 0};
+	XLogRecPtr	tempr;
+	int			index;
+
+	SpinAcquire(SInvalLock);
+
+	for (index = 0; index < segP->maxBackends; index++)
+	{
+		SHMEM_OFFSET pOffset = stateP[index].procStruct;
+
+		if (pOffset != INVALID_OFFSET)
+		{
+			PROC	   *proc = (PROC *) MAKE_PTR(pOffset);
+			tempr = proc->logRec;
+			if (tempr.xrecoff == 0)
+				continue;
+			if (urec.xrecoff != 0 && XLByteLT(urec, tempr))
+				continue;
+			urec = tempr;
+		}
+	}
+
+	SpinRelease(SInvalLock);
+
+	return(urec);
 }

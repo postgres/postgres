@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsenodes.h,v 1.118 2000/11/05 00:15:53 tgl Exp $
+ * $Id: parsenodes.h,v 1.119 2000/11/05 22:50:21 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -694,6 +694,11 @@ typedef struct SetSessionStmt
 	NodeTag		type;
 	List	   *args;
 } SetSessionStmt;
+
+typedef struct CheckPointStmt
+{
+	NodeTag		type;
+} CheckPointStmt;
 
 /* ----------------------
  * Set Statement

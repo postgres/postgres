@@ -97,4 +97,6 @@ extern XLogRecPtr XLogInsert(RmgrId rmid, uint8 info,
 			char *buf, uint32 buflen);
 extern void XLogFlush(XLogRecPtr RecPtr);
 
+extern void CreateCheckPoint(bool shutdown);
+
 #endif	 /* XLOG_H */

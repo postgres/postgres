@@ -20,7 +20,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.79 2000/11/05 00:15:52 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.80 2000/11/05 22:50:19 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2048,6 +2048,9 @@ equal(void *a, void *b)
 			break;
 		case T_SetSessionStmt:
 			retval = _equalSetSessionStmt(a, b);
+			break;
+		case T_CheckPointStmt:
+			retval = true;
 			break;
 
 		case T_A_Expr:

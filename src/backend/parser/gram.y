@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.204 2000/11/05 00:15:54 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.205 2000/11/05 22:50:20 vadim Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -136,7 +136,7 @@ static void doNegateFloat(Value *v);
 		RenameStmt, RevokeStmt, RuleActionStmt, RuleActionStmtOrEmpty,
 		RuleStmt, SelectStmt, SetSessionStmt, TransactionStmt, TruncateStmt,
 		UnlistenStmt, UpdateStmt, VacuumStmt, VariableResetStmt,
-		VariableSetStmt, VariableShowStmt, ViewStmt
+		VariableSetStmt, VariableShowStmt, ViewStmt, CheckPointStmt
 
 %type <node>	select_no_parens, select_clause, simple_select
 
@@ -291,7 +291,7 @@ static void doNegateFloat(Value *v);
 /* Keywords (in SQL92 reserved words) */
 %token	ABSOLUTE, ACTION, ADD, ALL, ALTER, AND, ANY, AS, ASC,
 		BEGIN_TRANS, BETWEEN, BOTH, BY,
-		CASCADE, CASE, CAST, CHAR, CHARACTER, CHECK, CLOSE,
+		CASCADE, CASE, CAST, CHAR, CHARACTER, CHECK, CLOSE, 
 		COALESCE, COLLATE, COLUMN, COMMIT,
 		CONSTRAINT, CONSTRAINTS, CREATE, CROSS, CURRENT_DATE,
 		CURRENT_TIME, CURRENT_TIMESTAMP, CURRENT_USER, CURSOR,
@@ -336,7 +336,7 @@ static void doNegateFloat(Value *v);
  */
 %token	ABORT_TRANS, ACCESS, AFTER, AGGREGATE, ANALYZE,
 		BACKWARD, BEFORE, BINARY, BIT,
-		CACHE, CLUSTER, COMMENT, COPY, CREATEDB, CREATEUSER, CYCLE,
+		CACHE, CHECKPOINT, CLUSTER, COMMENT, COPY, CREATEDB, CREATEUSER, CYCLE,
 		DATABASE, DELIMITERS, DO,
 		EACH, ENCODING, EXCLUSIVE, EXPLAIN, EXTEND,
 		FORCE, FORWARD, FUNCTION, HANDLER,
@@ -470,6 +470,7 @@ stmt :	AlterSchemaStmt
 		| VariableShowStmt
 		| VariableResetStmt
 		| ConstraintsSetStmt
+		| CheckPointStmt
 		| /*EMPTY*/
 			{ $$ = (Node *)NULL; }
 		;
@@ -956,6 +957,16 @@ constraints_set_mode:	DEFERRED
 				}
 		;
 
+
+/*
+ * Checkpoint statement
+ */
+CheckPointStmt: CHECKPOINT
+				{
+					CheckPointStmt *n = makeNode(CheckPointStmt);
+					$$ = (Node *)n;
+				}
+			;
 
 /*****************************************************************************
  *
@@ -5389,6 +5400,7 @@ TokenId:  ABSOLUTE						{ $$ = "absolute"; }
 		| CACHE							{ $$ = "cache"; }
 		| CASCADE						{ $$ = "cascade"; }
 		| CHAIN							{ $$ = "chain"; }
+		| CHECKPOINT					{ $$ = "checkpoint"; }
 		| CLOSE							{ $$ = "close"; }
 		| COMMENT						{ $$ = "comment"; }
 		| COMMIT						{ $$ = "commit"; }

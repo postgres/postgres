@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/access/transam/xlog.c,v 1.23 2000/11/03 11:39:35 vadim Exp $
+ * $Header: /cvsroot/pgsql/src/backend/access/transam/xlog.c,v 1.24 2000/11/05 22:50:19 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,6 +16,8 @@
 #include <errno.h>
 #include <sys/stat.h>
 #include <sys/time.h>
+#include <sys/types.h>
+#include <dirent.h>
 
 #include "postgres.h"
 
@@ -48,7 +50,10 @@ StartUpID	ThisStartUpID = 0;
 
 int			XLOG_DEBUG = 1;
 
+/* To read/update control file and create new log file */
 SPINLOCK	ControlFileLockId;
+
+/* To generate new xid */
 SPINLOCK	XidGenLockId;
 
 extern VariableCache ShmemVariableCache;
@@ -91,19 +96,20 @@ typedef struct XLogCtlWrite
 
 typedef struct XLogCtlData
 {
-	XLogCtlInsert Insert;
-	XLgwrRqst	LgwrRqst;
-	XLgwrResult LgwrResult;
-	XLogCtlWrite Write;
-	char	   *pages;
-	XLogRecPtr *xlblocks;		/* 1st byte ptr-s + BLCKSZ */
-	uint32		XLogCacheByte;
-	uint32		XLogCacheBlck;
-	StartUpID	ThisStartUpID;
+	XLogCtlInsert	Insert;
+	XLgwrRqst		LgwrRqst;
+	XLgwrResult		LgwrResult;
+	XLogCtlWrite	Write;
+	char		   *pages;
+	XLogRecPtr	   *xlblocks;		/* 1st byte ptr-s + BLCKSZ */
+	uint32			XLogCacheByte;
+	uint32			XLogCacheBlck;
+	StartUpID		ThisStartUpID;
 #ifdef HAS_TEST_AND_SET
-	slock_t		insert_lck;
-	slock_t		info_lck;
-	slock_t		lgwr_lck;
+	slock_t			insert_lck;
+	slock_t			info_lck;
+	slock_t			lgwr_lck;
+	slock_t			chkp_lck;		/* checkpoint lock */
 #endif
 } XLogCtlData;
 
@@ -133,6 +139,7 @@ typedef struct ControlFileData
 	uint32		blcksz;			/* block size for this DB */
 	uint32		relseg_size;	/* blocks per segment of large relation */
 	uint32		catalog_version_no;		/* internal version number */
+	char		archdir[MAXPGPATH];		/* where to move offline log files */
 
 	/*
 	 * MORE DATA FOLLOWS AT THE END OF THIS STRUCTURE - locations of data
@@ -170,6 +177,10 @@ typedef struct CheckPoint
 			snprintf(path, MAXPGPATH, "%s%c%08X%08X",	\
 					 XLogDir, SEP_CHAR, log, seg)
 
+#define XLogTempFileName(path, log, seg)	\
+			snprintf(path, MAXPGPATH, "%s%cT%08X%08X",	\
+					 XLogDir, SEP_CHAR, log, seg)
+
 #define PrevBufIdx(curridx)		\
 		((curridx == 0) ? XLogCtl->XLogCacheBlck : (curridx - 1))
 
@@ -198,7 +209,7 @@ typedef struct CheckPoint
 
 static void GetFreeXLBuffer(void);
 static void XLogWrite(char *buffer);
-static int	XLogFileInit(uint32 log, uint32 seg);
+static int	XLogFileInit(uint32 log, uint32 seg, bool *usexistent);
 static int	XLogFileOpen(uint32 log, uint32 seg, bool econt);
 static XLogRecord *ReadRecord(XLogRecPtr *RecPtr, char *buffer);
 static char *str_time(time_t tnow);
@@ -672,6 +683,7 @@ XLogWrite(char *buffer)
 	char	   *from;
 	uint32		wcnt = 0;
 	int			i = 0;
+	bool		usexistent;
 
 	for (; XLByteLT(LgwrResult.Write, LgwrRqst.Write);)
 	{
@@ -710,13 +722,18 @@ XLogWrite(char *buffer)
 			logId = LgwrResult.Write.xlogid;
 			logSeg = (LgwrResult.Write.xrecoff - 1) / XLogSegSize;
 			logOff = 0;
-			logFile = XLogFileInit(logId, logSeg);
 			SpinAcquire(ControlFileLockId);
+			/* create/use new log file */
+			usexistent = true;
+			logFile = XLogFileInit(logId, logSeg, &usexistent);
 			ControlFile->logId = logId;
 			ControlFile->logSeg = logSeg + 1;
 			ControlFile->time = time(NULL);
 			UpdateControlFile();
 			SpinRelease(ControlFileLockId);
+			if (!usexistent)	/* there was no file */
+				elog(LOG, "XLogWrite: had to create new log file - "
+					"you probably should do checkpoints more often");
 		}
 
 		if (logFile < 0)
@@ -780,17 +797,39 @@ XLogWrite(char *buffer)
 }
 
 static int
-XLogFileInit(uint32 log, uint32 seg)
+XLogFileInit(uint32 log, uint32 seg, bool *usexistent)
 {
 	char		path[MAXPGPATH];
+	char		tpath[MAXPGPATH];
 	int			fd;
 
 	XLogFileName(path, log, seg);
+
+	/*
+	 * Try to use existent file (checkpoint maker
+	 * creates it sometime).
+	 */
+	if (*usexistent)
+	{
+		fd = BasicOpenFile(path, O_RDWR | PG_BINARY, S_IRUSR | S_IWUSR);
+		if (fd < 0)
+		{
+			if (errno != ENOENT)
+				elog(STOP, "InitOpen(logfile %u seg %u) failed: %d",
+					logId, logSeg, errno);
+		}
+		else
+			return(fd);
+		*usexistent = false;
+	}
+
+	XLogTempFileName(tpath, log, seg);
+	unlink(tpath);
 	unlink(path);
 
-	fd = BasicOpenFile(path, O_RDWR | O_CREAT | O_EXCL | PG_BINARY, S_IRUSR | S_IWUSR);
+	fd = BasicOpenFile(tpath, O_RDWR | O_CREAT | O_EXCL | PG_BINARY, S_IRUSR | S_IWUSR);
 	if (fd < 0)
-		elog(STOP, "Init(logfile %u seg %u) failed: %d",
+		elog(STOP, "InitCreate(logfile %u seg %u) failed: %d",
 			 logId, logSeg, errno);
 
 	if (lseek(fd, XLogSegSize - 1, SEEK_SET) != (off_t) (XLogSegSize - 1))
@@ -808,6 +847,15 @@ XLogFileInit(uint32 log, uint32 seg)
 	if (lseek(fd, 0, SEEK_SET) < 0)
 		elog(STOP, "Lseek(logfile %u seg %u off %u) failed: %d",
 			 log, seg, 0, errno);
+
+	close(fd);
+	link(tpath, path);
+	unlink(tpath);
+
+	fd = BasicOpenFile(path, O_RDWR | PG_BINARY, S_IRUSR | S_IWUSR);
+	if (fd < 0)
+		elog(STOP, "InitReopen(logfile %u seg %u) failed: %d",
+			 logId, logSeg, errno);
 
 	return (fd);
 }
@@ -835,6 +883,49 @@ XLogFileOpen(uint32 log, uint32 seg, bool econt)
 	}
 
 	return (fd);
+}
+
+/*
+ * (Re)move offline log files older or equal to passwd one
+ */
+static void
+MoveOfflineLogs(char *archdir, uint32 _logId, uint32 _logSeg)
+{
+	DIR			   *xldir;
+	struct dirent  *xlde;
+	char			lastoff[32];
+	char			path[MAXPGPATH];
+
+	Assert(archdir[0] == 0);	/* ! implemented yet */
+
+	xldir = opendir(XLogDir);
+	if (xldir == NULL)
+		elog(STOP, "MoveOfflineLogs: cannot open xlog dir: %d", errno);
+
+	sprintf(lastoff, "%08X%08X", _logId, _logSeg);
+
+	errno = 0;
+	while ((xlde = readdir(xldir)) != NULL)
+	{
+		if (strlen(xlde->d_name) != 16 || 
+			strspn(xlde->d_name, "0123456789ABCDEF") != 16)
+			continue;
+		if (strcmp(xlde->d_name, lastoff) > 0)
+		{
+			elog(LOG, "MoveOfflineLogs: skip %s", xlde->d_name);
+			errno = 0;
+			continue;
+		}
+		elog(LOG, "MoveOfflineLogs: %s %s", (archdir[0]) ? 
+			"archive" : "remove", xlde->d_name);
+		sprintf(path, "%s%c%s",	XLogDir, SEP_CHAR, xlde->d_name);
+		if (archdir[0] != 0)
+			unlink(path);
+		errno = 0;
+	}
+	if (errno)
+		elog(STOP, "MoveOfflineLogs: cannot read xlog dir: %d", errno);
+	closedir(xldir);
 }
 
 static XLogRecord *
@@ -1183,6 +1274,7 @@ BootStrapXLOG()
 	int			fd;
 	char		buffer[BLCKSZ];
 	CheckPoint	checkPoint;
+	bool		usexistent = false;
 
 #ifdef XLOG
 	XLogPageHeader page = (XLogPageHeader) buffer;
@@ -1217,7 +1309,7 @@ BootStrapXLOG()
 	record->xl_rmid = RM_XLOG_ID;
 	memcpy((char *) record + SizeOfXLogRecord, &checkPoint, sizeof(checkPoint));
 
-	logFile = XLogFileInit(0, 0);
+	logFile = XLogFileInit(0, 0, &usexistent);
 
 	if (write(logFile, buffer, BLCKSZ) != BLCKSZ)
 		elog(STOP, "BootStrapXLOG failed to write logfile: %d", errno);
@@ -1297,6 +1389,7 @@ StartupXLOG()
 	S_INIT_LOCK(&(XLogCtl->insert_lck));
 	S_INIT_LOCK(&(XLogCtl->info_lck));
 	S_INIT_LOCK(&(XLogCtl->lgwr_lck));
+	S_INIT_LOCK(&(XLogCtl->chkp_lck));
 
 	/*
 	 * Open/read Control file
@@ -1556,6 +1649,8 @@ ShutdownXLOG()
 	elog(LOG, "Data Base System shut down at %s", str_time(time(NULL)));
 }
 
+extern XLogRecPtr	GetUndoRecPtr(void);
+
 void
 CreateCheckPoint(bool shutdown)
 {
@@ -1565,6 +1660,21 @@ CreateCheckPoint(bool shutdown)
 	XLogCtlInsert *Insert = &XLogCtl->Insert;
 	uint32		freespace;
 	uint16		curridx;
+	uint32		_logId;
+	uint32		_logSeg;
+	char		archdir[MAXPGPATH];
+
+	if (MyLastRecPtr.xrecoff != 0)
+		elog(ERROR, "CreateCheckPoint: cannot be called inside transaction block");
+ 
+	while (TAS(&(XLogCtl->chkp_lck)))
+	{
+		struct timeval delay = {2, 0};
+
+		if (shutdown)
+			elog(STOP, "Checkpoint lock is busy while data base is shutting down");
+		(void) select(0, NULL, NULL, NULL, &delay);
+	}
 
 	memset(&checkPoint, 0, sizeof(checkPoint));
 	if (shutdown)
@@ -1579,7 +1689,7 @@ CreateCheckPoint(bool shutdown)
 	/* Get REDO record ptr */
 	while (TAS(&(XLogCtl->insert_lck)))
 	{
-		struct timeval delay = {0, 5000};
+		struct timeval delay = {1, 0};
 
 		if (shutdown)
 			elog(STOP, "XLog insert lock is busy while data base is shutting down");
@@ -1615,7 +1725,7 @@ CreateCheckPoint(bool shutdown)
 	FlushBufferPool();
 
 	/* Get UNDO record ptr - should use oldest of PROC->logRec */
-	checkPoint.undo.xrecoff = 0;
+	checkPoint.undo = GetUndoRecPtr();
 
 	if (shutdown && checkPoint.undo.xrecoff != 0)
 		elog(STOP, "Active transaction while data base is shutting down");
@@ -1633,9 +1743,35 @@ CreateCheckPoint(bool shutdown)
 	SpinAcquire(ControlFileLockId);
 	if (shutdown)
 		ControlFile->state = DB_SHUTDOWNED;
-
 #ifdef XLOG
+	else	/* create new log file */
+	{
+		if (recptr.xrecoff % XLogSegSize >= 
+			(uint32) (0.75 * XLogSegSize))
+		{
+			int		lf;
+			bool	usexistent = true;
+
+			_logId = recptr.xlogid;
+			_logSeg = recptr.xrecoff / XLogSegSize;
+			if (_logSeg >= XLogLastSeg)
+			{
+				_logId++;
+				_logSeg = 0;
+			}
+			else
+				_logSeg++;
+			lf = XLogFileInit(_logId, _logSeg, &usexistent);
+			close(lf);
+		}
+	}
+
 	ControlFile->checkPoint = MyLastRecPtr;
+
+	_logId = ControlFile->logId;
+	_logSeg = ControlFile->logSeg - 1;
+	strcpy(archdir, ControlFile->archdir);
+
 #else
 	ControlFile->checkPoint.xlogid = 0;
 	ControlFile->checkPoint.xrecoff = SizeOfXLogPHD;
@@ -1644,6 +1780,33 @@ CreateCheckPoint(bool shutdown)
 	ControlFile->time = time(NULL);
 	UpdateControlFile();
 	SpinRelease(ControlFileLockId);
+
+#ifdef XLOG
+	/*
+	 * Delete offline log files. Get oldest online
+	 * log file from undo rec if it's valid.
+	 */
+	if (checkPoint.undo.xrecoff != 0)
+	{
+		_logId = checkPoint.undo.xlogid;
+		_logSeg = checkPoint.undo.xrecoff / XLogSegSize;
+	}
+	if (_logId || _logSeg)
+	{
+		if (_logSeg)
+			_logSeg--;
+		else
+		{
+			_logId--;
+			_logSeg = 0;
+		}
+		MoveOfflineLogs(archdir, _logId, _logSeg);
+	}
+
+	S_UNLOCK(&(XLogCtl->chkp_lck));
+
+	MyLastRecPtr.xrecoff = 0;	/* to avoid commit record */
+#endif
 
 	return;
 }

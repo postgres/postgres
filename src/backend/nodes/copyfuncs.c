@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.129 2000/11/05 00:15:52 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.130 2000/11/05 22:50:19 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2894,6 +2894,9 @@ copyObject(void *from)
 			break;
 		case T_SetSessionStmt:
 			retval = _copySetSessionStmt(from);
+			break;
+		case T_CheckPointStmt:
+			retval = (void*)makeNode(CheckPointStmt);
 			break;
 
 		case T_A_Expr:
