@@ -16,7 +16,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: pqformat.c,v 1.18 2001/10/25 05:49:30 momjian Exp $
+ *	$Id: pqformat.c,v 1.19 2001/12/04 20:57:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -102,7 +102,7 @@
 void
 pq_sendbyte(StringInfo buf, int byt)
 {
-	appendStringInfoChar(buf, byt);
+	appendStringInfoCharMacro(buf, byt);
 }
 
 /* --------------------------------
