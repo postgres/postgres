@@ -39,7 +39,7 @@ for f in char varchar text; do
    fi
    echo "Testing PgSQL: sort on $ftype type..."
 
-   destroydb testlocale >/dev/null 2>&1
+   dropdb testlocale >/dev/null 2>&1
    createdb testlocale || abort "createdb failed"
    psql -d testlocale -c "CREATE TABLE usastates (abbrev char(2), name_en char(20), name_ru $ftype);"  >/dev/null 2>&1 || abort "createtable failed"
    psql testlocale < test-koi8.sql.in > test-koi8-$f.sql.out 2>/dev/null || abort "test query failed"
@@ -48,5 +48,5 @@ done
 echo "Testing PgSQL: select on regexp..."
 psql testlocale < test-koi8-select.sql.in > test-koi8-select.sql.out 2>/dev/null || abort "select query failed"
 diff expected/test-koi8-select.sql.out test-koi8-select.sql.out
-destroydb testlocale || abort "destroydb failed"
+dropdb testlocale || abort "dropdb failed"
 echo "Finished."

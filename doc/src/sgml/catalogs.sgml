@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/doc/src/sgml/catalogs.sgml,v 2.3 2000/01/22 23:50:08 tgl Exp $
+.\" $Header: /cvsroot/pgsql/doc/src/sgml/catalogs.sgml,v 2.4 2000/02/06 05:09:31 momjian Exp $
 .TH "SYSTEM CATALOGS" INTRO 03/13/94 PostgreSQL PostgreSQL
 .SH "Section 7 - System Catalogs"
 .de LS
@@ -28,7 +28,7 @@ These catalogs form the core of the extensibility system:
 	pg_amproc	local	procedures used with specific access methods
 	pg_attribute	local	class attributes
 	pg_class	local	classes
-	pg_index	local	secondary indices
+	pg_index	local	indices
 	pg_inherits	local	class inheritance hierarchy
 	pg_language	local	procedure implementation languages
 	pg_opclass	local	operator classes

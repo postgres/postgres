@@ -1,55 +1,54 @@
-abbrev|name_en             |name_gr           
-------+--------------------+------------------
-AK    |Alaska              |Αλάσκα            
-AL    |Alabama             |Αλαμπάμα          
-AZ    |Arizona             |Αριζόνα           
-AR    |Arkansas            |Αρκανσας          
-ID    |Idaho               |Αϊνταχο           
-IA    |Iowa                |Αϊόβα             
-VT    |Vermont             |Βερμόντ           
-VA    |Virginia            |Βιρτζίνια         
-NC    |North Carolina      |Βόρεια Καρολίνα   
-ND    |North Dakota        |Βόρεια Ντακότα    
-UT    |Utah                |Γιούτα            
-WY    |Wyoming             |Γουαϊόμινγκ       
-WV    |West Virginia       |Γουεστ Βιρτζίνια  
-WI    |Wisconsin           |Γουισκόνσιν       
-WA    |Washington          |Γουόσινγκτον      
-DC    |Washington DC       |Γουόσινγτον Ντί Σι
-IL    |Illinois            |Ιλλινόις          
-IN    |Indiana             |Ιντιάνα           
-KA    |Kansas              |Κάνσας            
-CA    |California          |Καλιφόρνια        
-KY    |Kentucky            |Κεντάκι           
-CO    |Colorado            |Κολοράντο         
-CT    |Connecticut         |Κοννέκτικατ       
-LA    |Louisiana           |Λουϊζιάνα         
-ME    |Maine               |Μέιν              
-MI    |Michigan            |Μίτσιγκαν         
-MD    |Maryland            |Μαίρυλαντ         
-MA    |Massachusetts       |Μασσαχουσέτη      
-MN    |Minnesota           |Μινεσσότα         
-MS    |Mississippi         |Μισισσίπι         
-MO    |Missouri            |Μισσούρι          
-MT    |Montana             |Μοντάνα           
-NJ    |New Jersey          |Νέα Υερσέη        
-NY    |New York            |Νέα Υόρκη         
-NM    |New Mexico          |Νέο Μεξικό        
-NH    |New Hampshire       |Νέο Χάμπσαϊρ      
-NV    |Nevada              |Νεβάδα            
-NE    |Nebraska            |Νεμπράσκα         
-DE    |Delaware            |Ντέλαγουερ        
-SC    |South Carolina      |Νότια Καρολίνα    
-SD    |South Dakota        |Νότια Ντακότα     
-OK    |Oklahoma            |Οκλαχόμα          
-OR    |Oregon              |Ορεγκον           
-OH    |Ohio                |Οχάιο             
-PA    |Pennsylvania        |Πεννσυλβάνια      
-RI    |Rhode Island        |Ρόουντ Αϊλαντ     
-TX    |Texas               |Τέξας             
-TN    |Tennessee           |Τεννεσί           
-GA    |Georgia             |Τζόρτζια          
-FL    |Florida             |Φλόριντα          
+ abbrev |       name_en        |      name_gr       
+--------+----------------------+--------------------
+ ID     | Idaho                | Αϊνταχο
+ IA     | Iowa                 | Αϊόβα
+ AL     | Alabama              | Αλαμπάμα
+ AK     | Alaska               | Αλάσκα
+ AZ     | Arizona              | Αριζόνα
+ AR     | Arkansas             | Αρκανσας
+ VT     | Vermont              | Βερμόντ
+ VA     | Virginia             | Βιρτζίνια
+ NC     | North Carolina       | Βόρεια Καρολίνα
+ ND     | North Dakota         | Βόρεια Ντακότα
+ FL     | Florida              | Φλόριντα
+ IL     | Illinois             | Ιλλινόις
+ IN     | Indiana              | Ιντιάνα
+ CA     | California           | Καλιφόρνια
+ KY     | Kentucky             | Κεντάκι
+ CO     | Colorado             | Κολοράντο
+ CT     | Connecticut          | Κοννέκτικατ
+ KA     | Kansas               | Κάνσας
+ LA     | Louisiana            | Λουϊζιάνα
+ MA     | Massachusetts        | Μασσαχουσέτη
+ MD     | Maryland             | Μαίρυλαντ
+ MN     | Minnesota            | Μινεσσότα
+ MS     | Mississippi          | Μισισσίπι
+ MO     | Missouri             | Μισσούρι
+ MT     | Montana              | Μοντάνα
+ ME     | Maine                | Μέιν
+ MI     | Michigan             | Μίτσιγκαν
+ NV     | Nevada               | Νεβάδα
+ NE     | Nebraska             | Νεμπράσκα
+ DE     | Delaware             | Ντέλαγουερ
+ NJ     | New Jersey           | Νέα Υερσέη
+ NY     | New York             | Νέα Υόρκη
+ NH     | New Hampshire        | Νέο Χάμπσαϊρ
+ NM     | New Mexico           | Νέο Μεξικό
+ SC     | South Carolina       | Νότια Καρολίνα
+ SD     | South Dakota         | Νότια Ντακότα
+ OH     | Ohio                 | Οχάιο
+ OK     | Oklahoma             | Οκλαχόμα
+ OR     | Oregon               | Ορεγκον
+ PA     | Pennsylvania         | Πεννσυλβάνια
+ TN     | Tennessee            | Τεννεσί
+ GA     | Georgia              | Τζόρτζια
+ TX     | Texas                | Τέξας
+ UT     | Utah                 | Γιούτα
+ WY     | Wyoming              | Γουαϊόμινγκ
+ WV     | West Virginia        | Γουεστ Βιρτζίνια
+ WI     | Wisconsin            | Γουισκόνσιν
+ WA     | Washington           | Γουόσινγκτον
+ DC     | Washington DC        | Γουόσινγτον Ντί Σι
+ RI     | Rhode Island         | Ρόουντ Αϊλαντ
 (50 rows)
 
-EOF
