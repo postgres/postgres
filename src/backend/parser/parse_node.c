@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_node.c,v 1.31 1999/08/23 23:48:39 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_node.c,v 1.32 1999/11/01 05:06:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -176,11 +176,16 @@ make_op(char *opname, Node *ltree, Node *rtree)
 }	/* make_op() */
 
 
+/*
+ * make_var
+ *		Build a Var node for an attribute identified by name
+ */
 Var *
 make_var(ParseState *pstate, Oid relid, char *refname,
 		 char *attrname)
 {
-	Var		   *varnode;
+	HeapTuple	tp;
+	Form_pg_attribute att_tup;
 	int			vnum,
 				attid;
 	Oid			vartypeid;
@@ -189,16 +194,19 @@ make_var(ParseState *pstate, Oid relid, char *refname,
 
 	vnum = refnameRangeTablePosn(pstate, refname, &sublevels_up);
 
-	attid = get_attnum(relid, attrname);
-	if (attid == InvalidAttrNumber)
+	tp = SearchSysCacheTuple(ATTNAME,
+							 ObjectIdGetDatum(relid),
+							 PointerGetDatum(attrname),
+							 0, 0);
+	if (!HeapTupleIsValid(tp))
 		elog(ERROR, "Relation %s does not have attribute %s",
 			 refname, attrname);
-	vartypeid = get_atttype(relid, attid);
-	type_mod = get_atttypmod(relid, attid);
+	att_tup = (Form_pg_attribute) GETSTRUCT(tp);
+	attid = att_tup->attnum;
+	vartypeid = att_tup->atttypid;
+	type_mod = att_tup->atttypmod;
 
-	varnode = makeVar(vnum, attid, vartypeid, type_mod, sublevels_up);
-
-	return varnode;
+	return makeVar(vnum, attid, vartypeid, type_mod, sublevels_up);
 }
 
 /*
@@ -380,67 +388,73 @@ transformArraySubscripts(ParseState *pstate,
 }
 
 /*
- * make_const -
+ * make_const
  *
- * - takes a lispvalue, (as returned to the yacc routine by the lexer)
- *	 extracts the type, and makes the appropriate type constant
- *	 by invoking the (c-callable) lisp routine c-make-const
- *	 via the lisp_call() mechanism
- *
- * eventually, produces a "const" lisp-struct as per nodedefs.cl
+ *	Convert a Value node (as returned by the grammar) to a Const node
+ *	of the "natural" type for the constant.  For strings we produce
+ *	a constant of type UNKNOWN ---- representation is the same as text,
+ *	but this indicates to later type resolution that we're not sure that
+ *	it should be considered text.
  */
 Const *
 make_const(Value *value)
 {
-	Type		tp;
 	Datum		val;
+	Oid			typeid;
+	int			typelen;
+	bool		typebyval;
 	Const	   *con;
 
 	switch (nodeTag(value))
 	{
 		case T_Integer:
-			tp = typeidType(INT4OID);
 			val = Int32GetDatum(intVal(value));
+
+			typeid = INT4OID;
+			typelen = sizeof(int32);
+			typebyval = true;
 			break;
 
 		case T_Float:
 			{
 				float64		dummy;
 
-				tp = typeidType(FLOAT8OID);
-
 				dummy = (float64) palloc(sizeof(float64data));
 				*dummy = floatVal(value);
 
 				val = Float64GetDatum(dummy);
+
+				typeid = FLOAT8OID;
+				typelen = sizeof(float64data);
+				typebyval = false;
 			}
 			break;
 
 		case T_String:
-			tp = typeidType(UNKNOWNOID);		/* unknown for now, will
-												 * be type coerced */
 			val = PointerGetDatum(textin(strVal(value)));
+
+			typeid = UNKNOWNOID; /* will be coerced later */
+			typelen = -1;		/* variable len */
+			typebyval = false;
 			break;
 
 		case T_Null:
 		default:
-			{
-				if (nodeTag(value) != T_Null)
-					elog(NOTICE, "make_const: unknown type %d\n", nodeTag(value));
+			if (nodeTag(value) != T_Null)
+				elog(NOTICE, "make_const: unknown type %d\n", nodeTag(value));
 
-				/* null const */
-				con = makeConst(0, 0, (Datum) NULL, true, false, false, false);
-				return con;
-			}
+			/* return a null const */
+			con = makeConst(0, 0, (Datum) NULL, true, false, false, false);
+			return con;
 	}
 
-	con = makeConst(typeTypeId(tp),
-					typeLen(tp),
+	con = makeConst(typeid,
+					typelen,
 					val,
 					false,
-					typeByVal(tp),
+					typebyval,
 					false,		/* not a set */
-					false);
+					false);		/* not coerced */
 
 	return con;
 }

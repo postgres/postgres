@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_target.c,v 1.46 1999/07/19 00:26:20 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_target.c,v 1.47 1999/11/01 05:06:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -162,12 +162,14 @@ transformTargetList(ParseState *pstate, List *targetlist)
  * pstate		parse state
  * tle			target list entry to be modified
  * colname		target column name (ie, name of attribute to be assigned to)
+ * attrno		target attribute number
  * indirection	subscripts for target column, if any
  */
 void
 updateTargetListEntry(ParseState *pstate,
 					  TargetEntry *tle,
 					  char *colname,
+					  int attrno,
 					  List *indirection)
 {
 	Oid			type_id = exprType(tle->expr); /* type of value provided */
@@ -175,14 +177,12 @@ updateTargetListEntry(ParseState *pstate,
 	int32		attrtypmod;
 	Resdom	   *resnode = tle->resdom;
 	Relation	rd = pstate->p_target_relation;
-	int			resdomno;
 
 	Assert(rd != NULL);
-	resdomno = attnameAttNum(rd, colname);
-	if (resdomno <= 0)
+	if (attrno <= 0)
 		elog(ERROR, "Cannot assign to system attribute '%s'", colname);
-	attrtype = attnumTypeId(rd, resdomno);
-	attrtypmod = rd->rd_att->attrs[resdomno - 1]->atttypmod;
+	attrtype = attnumTypeId(rd, attrno);
+	attrtypmod = rd->rd_att->attrs[attrno - 1]->atttypmod;
 
 	/*
 	 * If there are subscripts on the target column, prepare an
@@ -260,7 +260,7 @@ updateTargetListEntry(ParseState *pstate,
 	resnode->restype = attrtype;
 	resnode->restypmod = attrtypmod;
 	resnode->resname = colname;
-	resnode->resno = (AttrNumber) resdomno;
+	resnode->resno = (AttrNumber) attrno;
 }
 
 
@@ -356,14 +356,17 @@ SizeTargetExpr(ParseState *pstate,
 
 
 /*
- * makeTargetNames -
+ * checkInsertTargets -
  *	  generate a list of column names if not supplied or
  *	  test supplied column names to make sure they are in target table.
+ *	  Also return an integer list of the columns' attribute numbers.
  *	  (used exclusively for inserts)
  */
 List *
-makeTargetNames(ParseState *pstate, List *cols)
+checkInsertTargets(ParseState *pstate, List *cols, List **attrnos)
 {
+	*attrnos = NIL;
+
 	if (cols == NIL)
 	{
 		/*
@@ -382,6 +385,7 @@ makeTargetNames(ParseState *pstate, List *cols)
 			id->indirection = NIL;
 			id->isRel = false;
 			cols = lappend(cols, id);
+			*attrnos = lappendi(*attrnos, i+1);
 		}
 	}
 	else
@@ -394,17 +398,14 @@ makeTargetNames(ParseState *pstate, List *cols)
 		foreach(tl, cols)
 		{
 			char	   *name = ((Ident *) lfirst(tl))->name;
-			List	   *nxt;
+			int			attrno;
 
 			/* Lookup column name, elog on failure */
-			attnameAttNum(pstate->p_target_relation, name);
+			attrno = attnameAttNum(pstate->p_target_relation, name);
 			/* Check for duplicates */
-			foreach(nxt, lnext(tl))
-			{
-				if (strcmp(name, ((Ident *) lfirst(nxt))->name) == 0)
-					elog(ERROR, "Attribute '%s' specified more than once",
-						 name);
-			}
+			if (intMember(attrno, *attrnos))
+				elog(ERROR, "Attribute '%s' specified more than once", name);
+			*attrnos = lappendi(*attrnos, attrno);
 		}
 	}
 

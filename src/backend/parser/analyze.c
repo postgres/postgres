@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: analyze.c,v 1.121 1999/10/07 04:23:11 tgl Exp $
+ *	$Id: analyze.c,v 1.122 1999/11/01 05:06:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -253,6 +253,9 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt)
 	Query	   *qry = makeNode(Query);
 	Node	   *fromQual;
 	List	   *icolumns;
+	List	   *attrnos;
+	List	   *attnos;
+	int			numuseratts;
 	List	   *tl;
 	TupleDesc	rd_att;
 
@@ -333,9 +336,11 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt)
 		pstate->p_last_resno = pstate->p_target_relation->rd_rel->relnatts + 1;
 
 	/* Validate stmt->cols list, or build default list if no list given */
-	icolumns = makeTargetNames(pstate, stmt->cols);
+	icolumns = checkInsertTargets(pstate, stmt->cols, &attrnos);
 
 	/* Prepare non-junk columns for assignment to target table */
+	numuseratts = 0;
+	attnos = attrnos;
 	foreach(tl, qry->targetList)
 	{
 		TargetEntry *tle = (TargetEntry *) lfirst(tl);
@@ -352,16 +357,30 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt)
 			resnode->resno = (AttrNumber) pstate->p_last_resno++;
 			continue;
 		}
-		if (icolumns == NIL)
+		if (icolumns == NIL || attnos == NIL)
 			elog(ERROR, "INSERT has more expressions than target columns");
 		id = (Ident *) lfirst(icolumns);
-		updateTargetListEntry(pstate, tle, id->name, id->indirection);
+		updateTargetListEntry(pstate, tle, id->name, lfirsti(attnos),
+							  id->indirection);
+		numuseratts++;
 		icolumns = lnext(icolumns);
+		attnos = lnext(attnos);
 	}
+
+	/*
+	 * It is possible that the targetlist has fewer entries than were in
+	 * the columns list.  We do not consider this an error (perhaps we
+	 * should, if the columns list was explictly given?).  We must truncate
+	 * the attrnos list to only include the attrs actually provided,
+	 * else we will fail to apply defaults for them below.
+	 */
+	if (icolumns != NIL)
+		attrnos = ltruncate(numuseratts, attrnos);
 
 	/*
 	 * Add targetlist items to assign DEFAULT values to any columns that
 	 * have defaults and were not assigned to by the user.
+	 *
 	 * XXX wouldn't it make more sense to do this further downstream,
 	 * after the rule rewriter?
 	 */
@@ -372,29 +391,20 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt)
 		AttrDefault *defval = rd_att->constr->defval;
 		int			ndef = rd_att->constr->num_defval;
 
-		while (ndef-- > 0)
+		while (--ndef >= 0)
 		{
-			Form_pg_attribute thisatt = att[defval[ndef].adnum - 1];
-			TargetEntry *te;
+			AttrNumber		attrno = defval[ndef].adnum;
+			Form_pg_attribute thisatt = att[attrno - 1];
+			TargetEntry	   *te;
 
-			foreach(tl, qry->targetList)
-			{
-				TargetEntry *tle = (TargetEntry *) lfirst(tl);
-				Resdom	   *resnode = tle->resdom;
-
-				if (resnode->resjunk)
-					continue;	/* ignore resjunk nodes */
-				if (namestrcmp(&(thisatt->attname), resnode->resname) == 0)
-					break;
-			}
-			if (tl != NIL)		/* found TLE for this attr */
-				continue;
+			if (intMember((int) attrno, attrnos))
+				continue;		/* there was a user-specified value */
 			/*
 			 * No user-supplied value, so add a targetentry with DEFAULT expr
 			 * and correct data for the target column.
 			 */
 			te = makeTargetEntry(
-				makeResdom(defval[ndef].adnum,
+				makeResdom(attrno,
 						   thisatt->atttypid,
 						   thisatt->atttypmod,
 						   pstrdup(nameout(&(thisatt->attname))),
@@ -405,7 +415,8 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt)
 			 * Make sure the value is coerced to the target column type
 			 * (might not be right type if it's not a constant!)
 			 */
-			updateTargetListEntry(pstate, te, te->resdom->resname, NIL);
+			updateTargetListEntry(pstate, te, te->resdom->resname, attrno,
+								  NIL);
 		}
 	}
 
@@ -1128,8 +1139,10 @@ transformUpdateStmt(ParseState *pstate, UpdateStmt *stmt)
 		if (origTargetList == NIL)
 			elog(ERROR, "UPDATE target count mismatch --- internal error");
 		origTarget = (ResTarget *) lfirst(origTargetList);
-		updateTargetListEntry(pstate, tle,
-							  origTarget->name, origTarget->indirection);
+		updateTargetListEntry(pstate, tle, origTarget->name,
+							  attnameAttNum(pstate->p_target_relation,
+											origTarget->name),
+							  origTarget->indirection);
 		origTargetList = lnext(origTargetList);
 	}
 	if (origTargetList != NIL)
