@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/Makefile,v 1.27 2002/07/30 17:47:58 tgl Exp $
+# $Header: /cvsroot/pgsql/src/Makefile,v 1.28 2002/09/04 15:45:50 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -16,6 +16,7 @@ include Makefile.global
 all install installdirs uninstall dep depend distprep:
 	$(MAKE) -C port $@
 	$(MAKE) -C backend $@
+	$(MAKE) -C backend/utils/mb/conversion_procs $@
 	$(MAKE) -C include $@
 	$(MAKE) -C interfaces $@
 	$(MAKE) -C bin $@

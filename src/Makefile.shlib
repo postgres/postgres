@@ -6,7 +6,7 @@
 # Copyright (c) 1998, Regents of the University of California
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Makefile.shlib,v 1.61 2002/09/03 17:17:24 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/Makefile.shlib,v 1.62 2002/09/04 15:45:50 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -276,8 +276,13 @@ endif # enable_shared
 ## BUILD
 ##
 
-.PHONY: all-lib
-all-lib: lib$(NAME).a $(shlib)
+.PHONY: all-lib all-static-lib all-shared-lib
+
+all-lib: all-static-lib all-shared-lib
+
+all-static-lib: lib$(NAME).a
+
+all-shared-lib: $(shlib)
 
 ifneq ($(PORTNAME), win)
 

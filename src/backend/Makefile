@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/backend/Makefile,v 1.85 2002/08/21 20:42:24 petere Exp $
+# $Header: /cvsroot/pgsql/src/backend/Makefile,v 1.86 2002/09/04 15:45:50 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -30,7 +30,6 @@ endif
 ##########################################################################
 
 all: submake-libpgport postgres $(POSTGRES_IMP)
-	$(MAKE) -C utils/mb/conversion_procs $@
 
 ifneq ($(PORTNAME), win)
 
@@ -122,8 +121,6 @@ endif
 	$(INSTALL_DATA) $(srcdir)/libpq/pg_hba.conf.sample $(DESTDIR)$(datadir)/pg_hba.conf.sample
 	$(INSTALL_DATA) $(srcdir)/libpq/pg_ident.conf.sample $(DESTDIR)$(datadir)/pg_ident.conf.sample
 	$(INSTALL_DATA) $(srcdir)/utils/misc/postgresql.conf.sample $(DESTDIR)$(datadir)/postgresql.conf.sample
-	$(MAKE) -C utils/mb $@
-	$(MAKE) -C utils/mb/conversion_procs $@
 
 install-bin: postgres $(POSTGRES_IMP) installdirs
 	$(INSTALL_PROGRAM) postgres$(X) $(DESTDIR)$(bindir)/postgres$(X)

@@ -4,7 +4,7 @@
 #    Makefile for utils/mb
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/utils/mb/Makefile,v 1.20 2002/08/08 07:47:43 ishii Exp $
+#    $Header: /cvsroot/pgsql/src/backend/utils/mb/Makefile,v 1.21 2002/09/04 15:45:50 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -15,7 +15,9 @@ include $(top_builddir)/src/Makefile.global
 OBJS = encnames.o conv.o mbutils.o wchar.o wstrcmp.o wstrncmp.o
 DIRS = conversion_procs
 
-all install installdirs uninstal distprep: SUBSYS.o
+all install installdirs: SUBSYS.o
+
+uninstall distprep:
 
 clean distclean maintainer-clean:
 	rm -f SUBSYS.o $(OBJS)
