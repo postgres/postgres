@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteManip.c,v 1.57 2001/04/18 20:42:55 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteManip.c,v 1.58 2001/09/07 20:52:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -592,15 +592,21 @@ AddQual(Query *parsetree, Node *qual)
 
 	if (parsetree->commandType == CMD_UTILITY)
 	{
-
 		/*
-		 * Noplace to put the qual on a utility statement.
+		 * There's noplace to put the qual on a utility statement.
 		 *
-		 * For now, we expect utility stmt to be a NOTIFY, so give a specific
-		 * error message for that case.
+		 * If it's a NOTIFY, silently ignore the qual; this means that the
+		 * NOTIFY will execute, whether or not there are any qualifying rows.
+		 * While clearly wrong, this is much more useful than refusing to
+		 * execute the rule at all, and extra NOTIFY events are harmless for
+		 * typical uses of NOTIFY.
+		 *
+		 * If it isn't a NOTIFY, error out, since unconditional execution
+		 * of other utility stmts is unlikely to be wanted.  (This case is
+		 * not currently allowed anyway, but keep the test for safety.)
 		 */
 		if (parsetree->utilityStmt && IsA(parsetree->utilityStmt, NotifyStmt))
-			elog(ERROR, "Conditional NOTIFY is not implemented");
+			return;
 		else
 			elog(ERROR, "Conditional utility statements are not implemented");
 	}
@@ -634,15 +640,13 @@ AddHavingQual(Query *parsetree, Node *havingQual)
 
 	if (parsetree->commandType == CMD_UTILITY)
 	{
-
 		/*
-		 * Noplace to put the qual on a utility statement.
+		 * There's noplace to put the qual on a utility statement.
 		 *
-		 * For now, we expect utility stmt to be a NOTIFY, so give a specific
-		 * error message for that case.
+		 * See comments in AddQual for motivation.
 		 */
 		if (parsetree->utilityStmt && IsA(parsetree->utilityStmt, NotifyStmt))
-			elog(ERROR, "Conditional NOTIFY is not implemented");
+			return;
 		else
 			elog(ERROR, "Conditional utility statements are not implemented");
 	}

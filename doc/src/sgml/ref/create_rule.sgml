@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_rule.sgml,v 1.25 2001/09/03 12:57:49 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_rule.sgml,v 1.26 2001/09/07 20:52:30 tgl Exp $
 Postgres documentation
 -->
 
@@ -248,6 +248,20 @@ CREATE RULE bad_rule_combination_2 AS
 SELECT * FROM emp;
       </programlisting></para>
     </example>
+   </para>
+
+   <para>
+    Presently, if a rule contains a NOTIFY query, the NOTIFY will be executed
+    unconditionally --- that is, the NOTIFY will be issued even if there are
+    not any rows that the rule should apply to.  For example, in
+      <programlisting>
+CREATE RULE notify_me AS ON UPDATE TO mytable DO NOTIFY mytable;
+
+UPDATE mytable SET name = 'foo' WHERE id = 42;
+      </programlisting>
+    one NOTIFY event will be sent during the UPDATE, whether or not there
+    are any rows with id = 42.  This is an implementation restriction that
+    may be fixed in future releases.
    </para>
   </refsect2>
  </refsect1>
