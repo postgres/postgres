@@ -66,12 +66,12 @@ parse_cfgdict(text *in, Map ** m)
 	{
 		if (state == CS_WAITKEY)
 		{
-			if (isalpha(*ptr))
+			if (isalpha((unsigned char) *ptr))
 			{
 				begin = ptr;
 				state = CS_INKEY;
 			}
-			else if (!isspace(*ptr))
+			else if (!isspace((unsigned char) *ptr))
 				ereport(ERROR,
 						(errcode(ERRCODE_SYNTAX_ERROR),
 						 errmsg("syntax error"),
@@ -80,7 +80,7 @@ parse_cfgdict(text *in, Map ** m)
 		}
 		else if (state == CS_INKEY)
 		{
-			if (isspace(*ptr))
+			if (isspace((unsigned char) *ptr))
 			{
 				mptr->key = nstrdup(begin, ptr - begin);
 				state = CS_WAITEQ;
@@ -90,7 +90,7 @@ parse_cfgdict(text *in, Map ** m)
 				mptr->key = nstrdup(begin, ptr - begin);
 				state = CS_WAITVALUE;
 			}
-			else if (!isalpha(*ptr))
+			else if (!isalpha((unsigned char) *ptr))
 				ereport(ERROR,
 						(errcode(ERRCODE_SYNTAX_ERROR),
 						 errmsg("syntax error"),
@@ -101,7 +101,7 @@ parse_cfgdict(text *in, Map ** m)
 		{
 			if (*ptr == '=')
 				state = CS_WAITVALUE;
-			else if (!isspace(*ptr))
+			else if (!isspace((unsigned char) *ptr))
 				ereport(ERROR,
 						(errcode(ERRCODE_SYNTAX_ERROR),
 						 errmsg("syntax error"),
@@ -115,7 +115,7 @@ parse_cfgdict(text *in, Map ** m)
 				begin = ptr + 1;
 				state = CS_INVALUE;
 			}
-			else if (!isspace(*ptr))
+			else if (!isspace((unsigned char) *ptr))
 			{
 				begin = ptr;
 				state = CS_IN2VALUE;
@@ -134,7 +134,7 @@ parse_cfgdict(text *in, Map ** m)
 		}
 		else if (state == CS_IN2VALUE)
 		{
-			if (isspace(*ptr) || *ptr == ',')
+			if (isspace((unsigned char) *ptr) || *ptr == ',')
 			{
 				mptr->value = nstrdup(begin, ptr - begin);
 				mptr++;
@@ -147,7 +147,7 @@ parse_cfgdict(text *in, Map ** m)
 		{
 			if (*ptr == ',')
 				state = CS_WAITKEY;
-			else if (!isspace(*ptr))
+			else if (!isspace((unsigned char) *ptr))
 				ereport(ERROR,
 						(errcode(ERRCODE_SYNTAX_ERROR),
 						 errmsg("syntax error"),

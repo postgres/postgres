@@ -37,14 +37,14 @@ findwrd(char *in, char **end)
 	char	   *start;
 
 	*end = NULL;
-	while (*in && isspace(*in))
+	while (*in && isspace((unsigned char) *in))
 		in++;
 
 	if (!in)
 		return NULL;
 	start = in;
 
-	while (*in && !isspace(*in))
+	while (*in && !isspace((unsigned char) *in))
 		in++;
 
 	*end = in;

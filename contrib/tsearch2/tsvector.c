@@ -310,7 +310,7 @@ gettoken_tsvector(TI_IN_STATE * state)
 		}
 		else if (state->state == INPOSINFO)
 		{
-			if (isdigit(*(state->prsbuf)))
+			if (isdigit((unsigned char) *(state->prsbuf)))
 			{
 				if (state->alen == 0)
 				{
@@ -373,9 +373,10 @@ gettoken_tsvector(TI_IN_STATE * state)
 							 errmsg("syntax error")));
 				state->pos[*(uint16 *) (state->pos)].weight = 0;
 			}
-			else if (isspace(*(state->prsbuf)) || *(state->prsbuf) == '\0')
+			else if (isspace((unsigned char) *(state->prsbuf)) ||
+					 *(state->prsbuf) == '\0')
 				return 1;
-			else if (!isdigit(*(state->prsbuf)))
+			else if (!isdigit((unsigned char) *(state->prsbuf)))
 				ereport(ERROR,
 						(errcode(ERRCODE_SYNTAX_ERROR),
 						 errmsg("syntax error")));
