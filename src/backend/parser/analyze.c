@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.36 1997/09/01 05:56:34 thomas Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.37 1997/09/05 18:10:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1353,7 +1353,7 @@ make_targetlist_expr(ParseState *pstate,
 	  } else
 	       if (attrtype != type_id) {
 		    if ((attrtype == INT2OID) && (type_id == INT4OID))
-			 lfirst(expr) = lispInteger (INT2OID); do CASHOID too
+			 lfirst(expr) = lispInteger (INT2OID); /* handle CASHOID too*/
                     else if ((attrtype == FLOAT4OID) && (type_id == FLOAT8OID))
 			 lfirst(expr) = lispInteger (FLOAT4OID);
                     else

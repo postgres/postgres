@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/date.c,v 1.13 1997/08/19 21:34:30 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/date.c,v 1.14 1997/09/05 18:11:05 momjian Exp $
  *
  * NOTES
  *   This code is actually (almost) unused.
@@ -144,7 +144,7 @@ printf( "reltimein- %d fields are type %d (DTK_DATE=%d)\n", nf, dtype, DTK_DATE)
 
     default:
 	return(INVALID_RELTIME);
-    };
+    }
 
     elog(WARN,"Bad reltime (internal coding error) '%s'",str);
     return(INVALID_RELTIME);
@@ -166,7 +166,7 @@ char *reltimeout(int32 time)
     } else {
 	reltime2tm(time, tm);
 	EncodeTimeSpan( tm, 0, DateStyle, buf);
-    };
+    }
 
     result = PALLOC(strlen(buf)+1);
     strcpy( result, buf);
@@ -305,7 +305,7 @@ timespan_reltime(TimeSpan *timespan)
 	} else {
 	    year = 0;
 	    month = timespan->month;
-	};
+	}
 
 	span = (((((double) 365*year)+((double) 30*month))*86400) + timespan->time);
 
@@ -315,7 +315,7 @@ printf( "timespan_reltime- convert m%d s%f to %f [%d %d]\n",
 #endif
 
 	time = (((span > INT_MIN) && (span < INT_MAX))? span: INVALID_RELTIME);
-    };
+    }
 
     return(time);
 } /* timespan_reltime() */
@@ -341,7 +341,7 @@ reltime_timespan(RelativeTime reltime)
 
 	result->time = reltime;
 	result->month = ((12*year)+month);
-    };
+    }
 
     return(result);
 } /* reltime_timespan() */
@@ -694,7 +694,7 @@ int isreltime(char *str)
     default:
 	return 0;
 	break;
-    };
+    }
 
     return 0;
 } /* isreltime() */

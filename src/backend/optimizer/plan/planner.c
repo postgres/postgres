@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.2 1996/10/31 10:59:15 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.3 1997/09/05 18:10:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -384,7 +384,6 @@ pg_checkretval(Oid rettype, QueryTreeList *queryTreeList)
 	    tletype = (Oid) ((Param*)thenode)->paramtype;
 	else if (IsA(thenode,Expr)) {
 	    tletype = Expr
-	}
 	} else if (IsA(thenode,LispList)) {
 	    thenode = lfirst(thenode);
 	    if (IsA(thenode,Oper))

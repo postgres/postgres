@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.23 1997/09/04 13:17:59 vadim Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.24 1997/09/05 18:13:45 momjian Exp $
  *
  * INTERFACE ROUTINES
  *	heap_creatr()		- Create an uncataloged heap relation
@@ -262,7 +262,7 @@ heap_creatr(char *name,
 	    sprintf(tempname, "temp_%d", relid);
 	    relname = tempname;
 	    isTemp = 1;
-	  };
+	  }
       }
 
     /* ----------------
@@ -1403,7 +1403,7 @@ InitTempRelList(void)
     if (tempRels) {
 	free(tempRels->rels);
 	free(tempRels);
-    };
+    }
 
     tempRels = (TempRelList*)malloc(sizeof(TempRelList));
     tempRels->size = TEMP_REL_LIST_SIZE;

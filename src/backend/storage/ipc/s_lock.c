@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/storage/ipc/Attic/s_lock.c,v 1.20 1997/08/24 23:07:28 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/storage/ipc/Attic/s_lock.c,v 1.21 1997/09/05 18:10:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -481,19 +481,19 @@ S_INIT_LOCK(slock_t *lock)
 
 static int tas_dummy()
 {
-	__asm__("
-tas:			/* r3 points to the location of p */
-	lwarx	5,0,3	/* r5 = *p */
-	cmpwi	5,0	/* r5 == 0 ? */
-	bne	fail	/* if not 0, jump to fail */
-	addi	5,5,1	/* set 1 to r5 */
-        stwcx.  5,0,3	/* try update p atomically */
-        beq	success	/* jump if scceed */
-fail:	li	3,1	/* set 1 to r3 */
-	blr
-success:
-	li 3,0		/* set 0 to r3 */
-        blr
+	__asm__("	\n\
+tas:			\n\
+	lwarx	5,0,3	\n\
+	cmpwi	5,0	\n\
+	bne	fail	\n\
+	addi	5,5,1	\n\
+        stwcx.  5,0,3	\n\
+        beq	success	\n\
+fail:	li	3,1	\n\
+	blr		\n\
+success:		\n\
+	li 3,0		\n\
+        blr		\n\
 	");
 }
  

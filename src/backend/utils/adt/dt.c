@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/dt.c,v 1.35 1997/09/04 18:43:21 thomas Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/dt.c,v 1.36 1997/09/05 18:11:12 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -54,13 +54,13 @@ static int tm2timespan(struct tm *tm, double fsec, TimeSpan *span);
 
 #define isleap(y) (((y % 4) == 0) && (((y % 100) != 0) || ((y % 400) == 0)))
 
-int mdays[] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31, 0};
+int mdays[] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31, 0}
 
 char *months[] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun",
- "Jul", "Aug", "Sep", "Oct", "Nov", "Dec", NULL};
+ "Jul", "Aug", "Sep", "Oct", "Nov", "Dec", NULL}
 
 char *days[] = {"Sunday", "Monday", "Tuesday", "Wednesday",
- "Thursday", "Friday", "Saturday", NULL};
+ "Thursday", "Friday", "Saturday", NULL}
 
 /* TMODULO()
  * Macro to replace modf(), which is broken on some platforms.
@@ -148,7 +148,7 @@ printf( "datetime_in- date is %f\n", *result);
 
     default:
 	elog(WARN,"Internal coding error, can't input datetime '%s'",str);
-    };
+    }
 
     return(result);
 } /* datetime_in() */
@@ -177,7 +177,7 @@ datetime_out(DateTime *dt)
 
     } else {
 	EncodeSpecialDateTime(DT_INVALID, buf);
-    };
+    }
 
     result = PALLOC(strlen(buf)+1);
 
@@ -230,12 +230,12 @@ timespan_in(char *str)
 	    TIMESPAN_INVALID(span);
 #endif
 	    elog(WARN,"Bad timespan external representation %s",str);
-	};
+	}
 	break;
 
     default:
 	elog(WARN,"Internal coding error, can't input timespan '%s'",str);
-    };
+    }
 
     return(span);
 } /* timespan_in() */
@@ -342,7 +342,7 @@ printf( "SetDateTime- current time is %f\n", dt);
 #ifdef DATEDEBUG
 printf( "SetDateTime- epoch time is %f\n", dt);
 #endif
-    };
+    }
 
     return(dt);
 } /* SetDateTime() */
@@ -496,7 +496,7 @@ datetime_cmp(DateTime *datetime1, DateTime *datetime2)
     } else {
 	if (DATETIME_IS_RELATIVE(dt1)) dt1 = SetDateTime(dt1);
 	if (DATETIME_IS_RELATIVE(dt2)) dt2 = SetDateTime(dt2);
-    };
+    }
 
     return( ((dt1 < dt2)? -1: ((dt1 > dt2)? 1: 0)));
 } /* datetime_cmp() */
@@ -622,7 +622,7 @@ timespan_cmp(TimeSpan *timespan1, TimeSpan *timespan2)
 
     } else if (TIMESPAN_IS_INVALID(*timespan2)) {
 	return( -1);
-    };
+    }
 
     span1 = timespan1->time;
     if (timespan1->month != 0) span1 += (timespan1->month * (30.0*86400));
@@ -665,7 +665,7 @@ datetime_smaller(DateTime *datetime1, DateTime *datetime2)
 	*result = dt1;
     } else {
 	*result = ((dt2 < dt1)? dt2: dt1);
-    };
+    }
 
     return(result);
 } /* datetime_smaller() */
@@ -694,7 +694,7 @@ datetime_larger(DateTime *datetime1, DateTime *datetime2)
 	*result = dt1;
     } else {
 	*result = ((dt2 > dt1)? dt2: dt1);
-    };
+    }
 
     return(result);
 } /* datetime_larger() */
@@ -728,7 +728,7 @@ printf( "datetime_mi- evaluate %f - %f\n", dt1, dt2);
 
     } else {
 	result->time = JROUND(dt1 - dt2);
-    };
+    }
     result->month = 0;
 
     return(result);
@@ -791,7 +791,7 @@ printf( "datetime_pl_span- date was %04d-%02d-%02d %02d:%02d:%02d\n",
 		} else if (tm->tm_mon < 1) {
 		    tm->tm_year += ((tm->tm_mon / 12) - 1);
 		    tm->tm_mon = ((tm->tm_mon % 12) + 12);
-		};
+		}
 
 		/* adjust for end of month boundary problems... */
 		if (tm->tm_mday > mdays[ tm->tm_mon-1]) {
@@ -799,8 +799,8 @@ printf( "datetime_pl_span- date was %04d-%02d-%02d %02d:%02d:%02d\n",
 			tm->tm_mday = (mdays[ tm->tm_mon-1]+1);
 		    } else {
 			tm->tm_mday = mdays[ tm->tm_mon-1];
-		    };
-		};
+		    }
+		}
 
 #ifdef DATEDEBUG
 printf( "datetime_pl_span- date becomes %04d-%02d-%02d %02d:%02d:%02d\n",
@@ -811,11 +811,11 @@ printf( "datetime_pl_span- date becomes %04d-%02d-%02d %02d:%02d:%02d\n",
 
 	    } else {
 		DATETIME_INVALID(dt);
-	    };
-	};
+	    }
+	}
 
 	*result = dt;
-    };
+    }
 
     return(result);
 } /* datetime_pl_span() */
@@ -893,8 +893,8 @@ printf( "timespan_smaller- months %d %d times %f %f spans %f %f\n",
 	} else {
 	    result->time = timespan1->time;
 	    result->month = timespan1->month;
-	};
-    };
+	}
+    }
 
     return(result);
 } /* timespan_smaller() */
@@ -937,8 +937,8 @@ printf( "timespan_larger- months %d %d times %f %f spans %f %f\n",
 	} else {
 	    result->time = timespan1->time;
 	    result->month = timespan1->month;
-	};
-    };
+	}
+    }
 
     return(result);
 } /* timespan_larger() */
@@ -1047,22 +1047,22 @@ datetime_age(DateTime *datetime1, DateTime *datetime2)
 	    tm->tm_mday = -tm->tm_mday;
 	    tm->tm_mon = -tm->tm_mon;
 	    tm->tm_year = -tm->tm_year;
-	};
+	}
 
 	if (tm->tm_sec < 0) {
 	    tm->tm_sec += 60;
 	    tm->tm_min--;
-	};
+	}
 
 	if (tm->tm_min < 0) {
 	    tm->tm_min += 60;
 	    tm->tm_hour--;
-	};
+	}
 
 	if (tm->tm_hour < 0) {
 	    tm->tm_hour += 24;
 	    tm->tm_mday--;
-	};
+	}
 
 	if (tm->tm_mday < 0) {
 	    if (dt1 < dt2) {
@@ -1073,13 +1073,13 @@ datetime_age(DateTime *datetime1, DateTime *datetime2)
 		tm->tm_mday += mdays[tm2->tm_mon-1];
 		if (isleap(tm2->tm_year) && (tm2->tm_mon == 2)) tm->tm_mday++;
 		tm->tm_mon--;
-	    };
-	};
+	    }
+	}
 
 	if (tm->tm_mon < 0) {
 	    tm->tm_mon += 12;
 	    tm->tm_year--;
-	};
+	}
 
 	/* recover sign if necessary... */
 	if (dt1 < dt2) {
@@ -1090,11 +1090,11 @@ datetime_age(DateTime *datetime1, DateTime *datetime2)
 	    tm->tm_mday = -tm->tm_mday;
 	    tm->tm_mon = -tm->tm_mon;
 	    tm->tm_year = -tm->tm_year;
-	};
+	}
 
 	if (tm2timespan(tm, fsec, result) != 0) {
 	    elog(WARN,"Unable to decode datetime",NULL);
-	};
+	}
 
 #if FALSE
 	result->time = (fsec2 - fsec1);
@@ -1109,7 +1109,7 @@ datetime_age(DateTime *datetime1, DateTime *datetime2)
 
     } else {
 	elog(WARN,"Unable to decode datetime",NULL);
-    };
+    }
 
     return(result);
 } /* datetime_age() */
@@ -1266,7 +1266,7 @@ datetime_trunc(text *units, DateTime *datetime)
 #if FALSE
     if (type == IGNORE) {
 	type = DecodeSpecial( 0, lowunits, &val);
-    };
+    }
 #endif
 
 #ifdef DATEDEBUG
@@ -1319,7 +1319,7 @@ printf( "datetime_trunc- units %s type=%d value=%d\n", lowunits, type, val);
 	    default:
 		elog(WARN,"Datetime units %s not supported",lowunits);
 		result = NULL;
-	    };
+	    }
 
 	    if (IS_VALID_UTIME( tm->tm_year, tm->tm_mon, tm->tm_mday)) {
 #ifdef USE_POSIX_TIME
@@ -1344,7 +1344,7 @@ printf( "datetime_trunc- units %s type=%d value=%d\n", lowunits, type, val);
 	    } else {
 		tm->tm_isdst = 0;
 		tz = 0;
-	    };
+	    }
 
 	    if (tm2datetime( tm, fsec, &tz, result) != 0)
 		elog(WARN,"Unable to truncate datetime to %s",lowunits);
@@ -1358,8 +1358,8 @@ printf( "datetime_trunc- units %s type=%d value=%d\n", lowunits, type, val);
 	} else {
 	    elog(WARN,"Datetime units %s not recognized",lowunits);
 	    result = NULL;
-	};
-    };
+	}
+    }
 
     return(result);
 } /* datetime_trunc() */
@@ -1392,7 +1392,7 @@ timespan_trunc(text *units, TimeSpan *timespan)
 #if FALSE
     if (type == IGNORE) {
 	type = DecodeSpecial( 0, lowunits, &val);
-    };
+    }
 #endif
 
 #ifdef DATEDEBUG
@@ -1443,7 +1443,7 @@ printf( "timespan_trunc- units %s type=%d value=%d\n", lowunits, type, val);
 	    default:
 		elog(WARN,"Timespan units %s not supported",lowunits);
 		result = NULL;
-	    };
+	    }
 
 	    if (tm2timespan(tm, fsec, result) != 0)
 		elog(WARN,"Unable to truncate timespan to %s",lowunits);
@@ -1451,7 +1451,7 @@ printf( "timespan_trunc- units %s type=%d value=%d\n", lowunits, type, val);
 	} else {
 	    elog(NOTICE,"Timespan out of range",NULL);
 	    result = NULL;
-	};
+	}
 
 #if FALSE
     } else if ((type == RESERV) && (val == DTK_EPOCH)) {
@@ -1459,13 +1459,13 @@ printf( "timespan_trunc- units %s type=%d value=%d\n", lowunits, type, val);
 	if (timespan->month != 0) {
 	    *result += ((365.25*86400)*(timespan->month / 12));
 	    *result += ((30*86400)*(timespan->month % 12));
-	};
+	}
 #endif
 
     } else {
 	elog(WARN,"Timespan units %s not recognized",units);
 	result = NULL;
-    };
+    }
 
     return(result);
 } /* timespan_trunc() */
@@ -1501,7 +1501,7 @@ datetime_part(text *units, DateTime *datetime)
     type = DecodeUnits( 0, lowunits, &val);
     if (type == IGNORE) {
 	type = DecodeSpecial( 0, lowunits, &val);
-    };
+    }
 
 #ifdef DATEDEBUG
 if (type == IGNORE) strcpy(lowunits, "(unknown)");
@@ -1575,7 +1575,7 @@ printf( "datetime_part- units %s type=%d value=%d\n", lowunits, type, val);
 	    default:
 		elog(WARN,"Datetime units %s not supported",lowunits);
 		*result = 0;
-	    };
+	    }
 
 	} else if (type == RESERV) {
 	    switch (val) {
@@ -1594,13 +1594,13 @@ printf( "datetime_part- units %s type=%d value=%d\n", lowunits, type, val);
 	    default:
 		elog(WARN,"Datetime units %s not supported",lowunits);
 		*result = 0;
-	    };
+	    }
 
 	} else {
 	    elog(WARN,"Datetime units %s not recognized",lowunits);
 	    *result = 0;
-	};
-    };
+	}
+    }
 
     return(result);
 } /* datetime_part() */
@@ -1633,7 +1633,7 @@ timespan_part(text *units, TimeSpan *timespan)
     type = DecodeUnits( 0, lowunits, &val);
     if (type == IGNORE) {
 	type = DecodeSpecial( 0, lowunits, &val);
-    };
+    }
 
 #ifdef DATEDEBUG
 if (type == IGNORE) strcpy(lowunits, "(unknown)");
@@ -1701,24 +1701,24 @@ printf( "timespan_part- units %s type=%d value=%d\n", lowunits, type, val);
 	    default:
 		elog(WARN,"Timespan units %s not yet supported",units);
 		result = NULL;
-	    };
+	    }
 
 	} else {
 	    elog(NOTICE,"Timespan out of range",NULL);
 	    *result = 0;
-	};
+	}
 
     } else if ((type == RESERV) && (val == DTK_EPOCH)) {
 	*result = timespan->time;
 	if (timespan->month != 0) {
 	    *result += ((365.25*86400)*(timespan->month / 12));
 	    *result += ((30*86400)*(timespan->month % 12));
-	};
+	}
 
     } else {
 	elog(WARN,"Timespan units %s not recognized",units);
 	*result = 0;
-    };
+    }
 
     return(result);
 } /* timespan_part() */
@@ -1791,7 +1791,7 @@ printf( "datetime_zone- zone %s type=%d value=%d\n", lowzone, type, val);
     } else {
 	elog(WARN,"Time zone %s not recognized",lowzone);
 	result = NULL;
-    };
+    }
 
     return(result);
 } /* datetime_zone() */
@@ -1961,7 +1961,7 @@ static datetkn datetktbl[] = {
 {	"zp6",		TZ,	NEG(36)},	/* GMT +6  hours. */
 {	"z",		RESERV,	DTK_ZULU},	/* 00:00:00 */
 {	ZULU,		RESERV,	DTK_ZULU},	/* 00:00:00 */
-};
+}
 
 static unsigned int szdatetktbl = sizeof datetktbl / sizeof datetktbl[0];
 
@@ -2031,14 +2031,14 @@ static datetkn deltatktbl[] = {
 {	"years",	UNITS,	DTK_YEAR},	/* "years" relative time units */
 {	"yr",		UNITS,	DTK_YEAR},	/* "year" relative time units */
 {	"yrs",		UNITS,	DTK_YEAR},	/* "years" relative time units */
-};
+}
 
 static unsigned int szdeltatktbl = sizeof deltatktbl / sizeof deltatktbl[0];
 
 #if USE_DATE_CACHE
-datetkn *datecache[MAXDATEFIELDS] = {NULL};
+datetkn *datecache[MAXDATEFIELDS] = {NULL}
 
-datetkn *deltacache[MAXDATEFIELDS] = {NULL};
+datetkn *deltacache[MAXDATEFIELDS] = {NULL}
 #endif
 
 
@@ -2143,7 +2143,7 @@ datetime2tm( DateTime dt, int *tzp, struct tm *tm, double *fsec, char **tzn)
     if (time < 0) {
 	    time += 86400;
 	    date -= 1;
-    };
+    }
 
     /* Julian day routine does not work for negative Julian days */
     if (date < -date0)
@@ -2230,14 +2230,14 @@ printf( "datetime2tm- (localtime) %d.%02d.%02d %02d:%02d:%02.0f %s dst=%d\n",
 	    *tzp = 0;
 	    tm->tm_isdst = 0;
 	    if (tzn != NULL) *tzn = NULL;
-	};
+	}
 
 	dt = dt2local( dt, *tzp);
 
     } else {
 	tm->tm_isdst = 0;
 	if (tzn != NULL) *tzn = NULL;
-    };
+    }
 
 #ifdef DATEDEBUG
 printf( "datetime2tm- date is %d.%02d.%02d\n", tm->tm_year, tm->tm_mon, tm->tm_mday);
@@ -2299,7 +2299,7 @@ timespan2tm(TimeSpan span, struct tm *tm, float8 *fsec)
     } else {
 	tm->tm_year = 0;
 	tm->tm_mon = 0;
-    };
+    }
 
 #ifdef ROUND_ALL
     time = JROUND(span.time);
@@ -2411,7 +2411,7 @@ printf( "ParseDateTime- input string is %s\n", timestr);
 	    /* otherwise, number only and will determine year, month, or day later */
 	    } else {
 		ftype[nf] = DTK_NUMBER;
-	    };
+	    }
 
 	/* text? then date string, month, day of week, special, or timezone */
 	} else if (isalpha(*cp)) {
@@ -2424,7 +2424,7 @@ printf( "ParseDateTime- input string is %s\n", timestr);
 		ftype[nf] = DTK_DATE;
 		while (isdigit(*cp) || (*cp == '-') || (*cp == '/') || (*cp == '.'))
 		    *lp++ = tolower(*cp++);
-	    };
+	    }
 
 	/* skip leading spaces */
 	} else if (isspace(*cp)) {
@@ -2451,7 +2451,7 @@ printf( "ParseDateTime- input string is %s\n", timestr);
 	    /* otherwise something wrong... */
 	    } else {
 		return -1;
-	    };
+	    }
 
 	/* ignore punctuation but use as delimiter */
 	} else if (ispunct(*cp)) {
@@ -2460,18 +2460,18 @@ printf( "ParseDateTime- input string is %s\n", timestr);
 
 	} else {
 	    return -1;
-	};
+	}
 
 	/* force in a delimiter */
 	*lp++ = '\0';
 	nf++;
 	if (nf > MAXDATEFIELDS) {
 	    return -1;
-	};
+	}
 #ifdef DATEDEBUG
 printf( "ParseDateTime- set field[%d] to %s type %d\n", (nf-1), field[nf-1], ftype[nf-1]);
 #endif
-    };
+    }
 
     *numfields = nf;
 
@@ -2547,7 +2547,7 @@ printf( "DecodeDateTime- field[%d] is %s (type %d)\n", i, field[i], ftype[i]);
 	    } else {
 		if (DecodeNumber( flen, field[i], fmask, &tmask, tm, fsec) != 0)
 		    return -1;
-	    };
+	    }
 	    break;
 
 	case DTK_STRING:
@@ -2614,7 +2614,7 @@ printf( "DecodeDateTime- RESERV field %s value is %d\n", field[i], val);
 
 		default:
 		    *dtype = val;
-		};
+		}
 
 		break;
 
@@ -2664,12 +2664,12 @@ printf( "DecodeDateTime- month field %s value is %d\n", field[i], val);
 
 	    default:
 		return -1;
-	    };
+	    }
 	    break;
 
 	default:
 	    return -1;
-	};
+	}
 
 #ifdef DATEDEBUG
 printf( "DecodeDateTime- field[%d] %s (%08x/%08x) value is %d\n",
@@ -2678,7 +2678,7 @@ printf( "DecodeDateTime- field[%d] %s (%08x/%08x) value is %d\n",
 
 	if (tmask & fmask) return -1;
 	fmask |= tmask;
-    };
+    }
 
     /* there is no year zero in AD/BC notation; i.e. "1 BC" == year 0 */
     if (bc) tm->tm_year = -(tm->tm_year-1);
@@ -2725,8 +2725,8 @@ printf( " %02d:%02d:%02d\n", tm->tm_hour, tm->tm_min, tm->tm_sec);
 	} else {
 	    tm->tm_isdst = 0;
 	    *tzp = 0;
-	};
-    };
+	}
+    }
 
     return 0;
 } /* DecodeDateTime() */
@@ -2799,7 +2799,7 @@ printf( "DecodeTimeOnly- RESERV field %s value is %d\n", field[i], val);
 
 		default:
 		    return -1;
-		};
+		}
 
 		break;
 
@@ -2812,12 +2812,12 @@ printf( "DecodeTimeOnly- RESERV field %s value is %d\n", field[i], val);
 
 	    default:
 		return -1;
-	    };
+	    }
 	    break;
 
 	default:
 	    return -1;
-	};
+	}
 
 	if (tmask & fmask) return -1;
 	fmask |= tmask;
@@ -2825,7 +2825,7 @@ printf( "DecodeTimeOnly- RESERV field %s value is %d\n", field[i], val);
 #ifdef DATEDEBUG
 printf( "DecodeTimeOnly- field[%d] %s value is %d\n", i, field[i], val); 
 #endif
-    };
+    }
 
 #ifdef DATEDEBUG
 printf( "DecodeTimeOnly- mask %08x (%08x)", fmask, DTK_TIME_M);
@@ -2867,11 +2867,11 @@ DecodeDate(char *str, int fmask, int *tmask, struct tm *tm)
 	    while (isdigit(*str)) str++;
 	} else if (isalpha(*str)) {
 	    while (isalpha(*str)) str++;
-	};
+	}
 
 	if (*str != '\0') *str++ = '\0';
 	nf++;
-    };
+    }
 
     /* don't allow too many fields */
     if (nf > 3) return -1;
@@ -2898,7 +2898,7 @@ printf( "DecodeDate- month field %s value is %d\n", field[i], val);
 printf( "DecodeDate- illegal field %s value is %d\n", field[i], val); 
 #endif
 		return -1;
-	    };
+	    }
 	    if (fmask & dmask) return -1;
 
 	    fmask |= dmask;
@@ -2906,8 +2906,8 @@ printf( "DecodeDate- illegal field %s value is %d\n", field[i], val);
 
 	    /* mark this field as being completed */
 	    field[i] = NULL;
-	};
-    };
+	}
+    }
 
     /* now pick up remaining numeric fields */
     for (i = 0; i < nf; i++) {
@@ -2923,7 +2923,7 @@ printf( "DecodeDate- illegal field %s value is %d\n", field[i], val);
 
 	fmask |= dmask;
 	*tmask |= dmask;
-    };
+    }
 
     return 0;
 } /* DecodeDate() */
@@ -2963,8 +2963,8 @@ DecodeTime(char *str, int fmask, int *tmask, struct tm *tm, double *fsec)
 	    if (cp == str) return -1;
 	} else {
 	    return -1;
-	};
-    };
+	}
+    }
 
     /* do a sanity check */
     if ((tm->tm_hour < 0)
@@ -2991,7 +2991,7 @@ DecodeNumber( int flen, char *str, int fmask, int *tmask, struct tm *tm, double 
     if (*cp == '.') {
 	*fsec = strtod( cp, &cp);
 	if (*cp != '\0') return -1;
-    };
+    }
 
 #ifdef DATEDEBUG
 printf( "DecodeNumber- %s is %d fmask=%08x tmask=%08x\n", str, val, fmask, *tmask);
@@ -3013,8 +3013,8 @@ printf( "DecodeNumber- misidentified year previously; swap with day %d\n", tm->t
 #endif
 		tm->tm_mday = tm->tm_year;
 		*tmask = DTK_M(DAY);
-	    };
-	};
+	    }
+	}
 
 	tm->tm_year = val;
 
@@ -3071,11 +3071,11 @@ printf( "DecodeNumber- (2) match %d (%s) as year\n", val, str);
 	    tm->tm_year += 2000;
 	} else if (tm->tm_year < 100) {
 	    tm->tm_year += 1900;
-	};
+	}
 
     } else {
 	return -1;
-    };
+    }
 
     return 0;
 } /* DecodeNumber() */
@@ -3129,7 +3129,7 @@ printf( "DecodeNumberField- %s is date field fmask=%08x tmask=%08x\n", str, fmas
 	    tm->tm_mon = atoi(str+2);
 	    *(str+2) = '\0';
 	    tm->tm_year = atoi(str+0);
-	};
+	}
 
     } else if (strchr(str,'.') != NULL) {
 #ifdef DATEDEBUG
@@ -3140,7 +3140,7 @@ printf( "DecodeNumberField- %s is time field fmask=%08x tmask=%08x\n", str, fmas
 	    if (cp == (str+4)) return -1;
 	    if (*cp == '.') {
 		*fsec = strtod( cp, NULL);
-	    };
+	    }
 	    *(str+4) = '\0';
 	    tm->tm_min = strtod( (str+2), &cp);
 	    *(str+2) = '\0';
@@ -3148,7 +3148,7 @@ printf( "DecodeNumberField- %s is time field fmask=%08x tmask=%08x\n", str, fmas
 
     } else {
 	return -1;
-    };
+    }
 
     return 0;
 } /* DecodeNumberField() */
@@ -3180,7 +3180,7 @@ DecodeTimezone( char *str, int *tzp)
 
     } else {
 	min = 0;
-    };
+    }
 
     tz = (hr*60+min)*60;
     if (*str == '-') tz = -tz;
@@ -3209,7 +3209,7 @@ DecodeSpecial(int field, char *lowtoken, int *val)
 #endif
 	tp = datebsearch(lowtoken, datetktbl, szdatetktbl);
 #if USE_DATE_CACHE
-    };
+    }
     datecache[field] = tp;
 #endif
     if (tp == NULL) {
@@ -3227,8 +3227,8 @@ DecodeSpecial(int field, char *lowtoken, int *val)
 	default:
 	    *val = tp->value;
 	    break;
-	};
-    };
+	}
+    }
 
     return(type);
 } /* DecodeSpecial() */
@@ -3278,8 +3278,8 @@ printf( "DecodeDateDelta- field[%d] is %s (type %d)\n", ii, field[ii], ftype[ii]
 
 	} else {
 	    break;
-	};
-    };
+	}
+    }
 
     /* read through remaining list backwards to pick up units before values */
     for (i = nf-1; i >= ii; i--) {
@@ -3308,7 +3308,7 @@ printf( "DecodeDateDelta- field[%d] is %s (type %d)\n", i, field[i], ftype[i]);
 	    if (*cp == '.') {
 		*fsec = strtod( cp, NULL);
 		if (val < 0) *fsec = - (*fsec);
-	    };
+	    }
 	    flen = strlen(field[i]);
 	    tmask = 0; /* DTK_M(type); */
 
@@ -3373,7 +3373,7 @@ printf( "DecodeDateDelta- field[%d] is %s (type %d)\n", i, field[i], ftype[i]);
 
 	    default:
 		return -1;
-	    };
+	    }
 	    break;
 
 	case DTK_STRING:
@@ -3405,12 +3405,12 @@ printf( "DecodeDateDelta- UNITS field %s value is %d\n", field[i], val);
 
 	    default:
 		return -1;
-	    };
+	    }
 	    break;
 
 	default:
 	    return -1;
-	};
+	}
 
 #ifdef DATEDEBUG
 printf( "DecodeDateDelta- (%08x/%08x) field[%d] %s value is %d\n",
@@ -3419,12 +3419,12 @@ printf( "DecodeDateDelta- (%08x/%08x) field[%d] %s value is %d\n",
 
 	if (tmask & fmask) return -1;
 	fmask |= tmask;
-    };
+    }
 
     if (*fsec != 0) {
 	TMODULO(*fsec,sec,1);
 	tm->tm_sec += sec;
-    };
+    }
 
     if (is_before) {
 	*fsec = -(*fsec);
@@ -3434,7 +3434,7 @@ printf( "DecodeDateDelta- (%08x/%08x) field[%d] %s value is %d\n",
 	tm->tm_mday = -(tm->tm_mday);
 	tm->tm_mon = -(tm->tm_mon);
 	tm->tm_year = -(tm->tm_year);
-    };
+    }
 
 #ifdef DATEDEBUG
 printf( "DecodeDateDelta- mask %08x (%08x)", fmask, DTK_DATE_M);
@@ -3465,7 +3465,7 @@ DecodeUnits(int field, char *lowtoken, int *val)
 #endif
 	tp = datebsearch(lowtoken, deltatktbl, szdeltatktbl);
 #if USE_DATE_CACHE
-    };
+    }
     deltacache[field] = tp;
 #endif
     if (tp == NULL) {
@@ -3477,8 +3477,8 @@ DecodeUnits(int field, char *lowtoken, int *val)
 	    *val = FROMVAL(tp);
 	} else {
 	    *val = tp->value;
-	};
-    };
+	}
+    }
 
     return(type);
 } /* DecodeUnits() */
@@ -3538,9 +3538,9 @@ EncodeSpecialDateTime(DateTime dt, char *str)
 printf( "EncodeSpecialDateTime- unrecognized date\n");
 #endif
 	    strcpy( str, INVALID);
-	};
+	}
 	return(TRUE);
-    };
+    }
 
     return(FALSE);
 } /* EncodeSpecialDateTime() */
@@ -3567,7 +3567,7 @@ int EncodeDateOnly(struct tm *tm, int style, char *str)
 	} else {
 	    sprintf( str, "%04d-%02d-%02d %s",
 	      -(tm->tm_year-1), tm->tm_mon, tm->tm_mday, "BC");
-	};
+	}
 
     /* compatible with Oracle/Ingres date formats */
     } else if (style == USE_SQL_DATES) {
@@ -3575,13 +3575,13 @@ int EncodeDateOnly(struct tm *tm, int style, char *str)
 	    sprintf( str, "%02d/%02d", tm->tm_mday, tm->tm_mon);
 	} else {
 	    sprintf( str, "%02d/%02d", tm->tm_mon, tm->tm_mday);
-	};
+	}
 	if (tm->tm_year > 0) {
 	    sprintf( (str+5), "/%04d", tm->tm_year);
 
 	} else {
 	    sprintf( (str+5), "/%04d %s", -(tm->tm_year-1), "BC");
-	};
+	}
 
     /* backward-compatible with traditional Postgres abstime dates */
     } else { /* if (style == USE_POSTGRES_DATES) */
@@ -3600,13 +3600,13 @@ printf( "EncodeDateOnly- day is %d\n", day);
 	    sprintf( (str+4), "%02d %3s", tm->tm_mday, months[tm->tm_mon-1]);
 	} else {
 	    sprintf( (str+4), "%3s %02d", months[tm->tm_mon-1], tm->tm_mday);
-	};
+	}
 	if (tm->tm_year > 0) {
 	    sprintf( (str+10), " %04d", tm->tm_year);
 
 	} else {
 	    sprintf( (str+10), " %04d %s", -(tm->tm_year-1), "BC");
-	};
+	}
 #endif
 
 	/* traditional date-only style for Postgres */
@@ -3614,14 +3614,14 @@ printf( "EncodeDateOnly- day is %d\n", day);
 	    sprintf( str, "%02d-%02d", tm->tm_mday, tm->tm_mon);
 	} else {
 	    sprintf( str, "%02d-%02d", tm->tm_mon, tm->tm_mday);
-	};
+	}
 	if (tm->tm_year > 0) {
 	    sprintf( (str+5), "-%04d", tm->tm_year);
 
 	} else {
 	    sprintf( (str+5), "-%04d %s", -(tm->tm_year-1), "BC");
-	};
-    };
+	}
+    }
 
 #ifdef DATEDEBUG
 printf( "EncodeDateOnly- date result is %s\n", str);
@@ -3696,9 +3696,9 @@ printf( "EncodeDateTime- timezone is %s (%s); offset is %d; daylight is %d\n",
 		} else {
 		    hour = 0;
 		    min = 0;
-		};
+		}
 		sprintf( (str+strlen(str)), ((min != 0)? "%+03d:%02d": "%+03d"), hour, min);
-	    };
+	    }
 
 	} else {
 	    if (tm->tm_hour || tm->tm_min) {
@@ -3707,8 +3707,8 @@ printf( "EncodeDateTime- timezone is %s (%s); offset is %d; daylight is %d\n",
 	    } else {
 		sprintf( str, "%04d-%02d-%02d %s",
 		  -(tm->tm_year-1), tm->tm_mon, tm->tm_mday, "BC");
-	    };
-	};
+	    }
+	}
 
     /* compatible with Oracle/Ingres date formats */
     } else if (style == USE_SQL_DATES) {
@@ -3716,7 +3716,7 @@ printf( "EncodeDateTime- timezone is %s (%s); offset is %d; daylight is %d\n",
 	    sprintf( str, "%02d/%02d", tm->tm_mday, tm->tm_mon);
 	} else {
 	    sprintf( str, "%02d/%02d", tm->tm_mon, tm->tm_mday);
-	};
+	}
 	if (tm->tm_year > 0) {
 	    sprintf( (str+5), "/%04d %02d:%02d:%05.2f",
 	      tm->tm_year, tm->tm_hour, tm->tm_min, sec);
@@ -3724,12 +3724,12 @@ printf( "EncodeDateTime- timezone is %s (%s); offset is %d; daylight is %d\n",
 	    if ((*tzn != NULL) && (tm->tm_isdst >= 0)) {
 		strcpy( (str+22), " ");
 		strcpy( (str+23), *tzn);
-	    };
+	    }
 
 	} else {
 	    sprintf( (str+5), "/%04d %02d:%02d %s",
 	      -(tm->tm_year-1), tm->tm_hour, tm->tm_min, "BC");
-	};
+	}
 
     /* backward-compatible with traditional Postgres abstime dates */
     } else { /* if (style == USE_POSTGRES_DATES) */
@@ -3746,7 +3746,7 @@ printf( "EncodeDateTime- day is %d\n", day);
 	    sprintf( (str+4), "%02d %3s", tm->tm_mday, months[tm->tm_mon-1]);
 	} else {
 	    sprintf( (str+4), "%3s %02d", months[tm->tm_mon-1], tm->tm_mday);
-	};
+	}
 	if (tm->tm_year > 0) {
 	    sprintf( (str+10), " %02d:%02d", tm->tm_hour, tm->tm_min);
 	    if (fsec != 0) {
@@ -3754,20 +3754,20 @@ printf( "EncodeDateTime- day is %d\n", day);
 		if ((*tzn != NULL) && (tm->tm_isdst >= 0)) {
 		    strcpy( (str+27), " ");
 		    strcpy( (str+28), *tzn);
-		};
+		}
 	    } else {
 		sprintf( (str+16), ":%02.0f %04d", sec, tm->tm_year);
 		if ((*tzn != NULL) && (tm->tm_isdst >= 0)) {
 		    strcpy( (str+24), " ");
 		    strcpy( (str+25), *tzn);
-		};
-	    };
+		}
+	    }
 
 	} else {
 	    sprintf( (str+10), " %02d:%02d %04d %s",
 	      tm->tm_hour, tm->tm_min, -(tm->tm_year-1), "BC");
-	};
-    };
+	}
+    }
 
 #ifdef DATEDEBUG
 printf( "EncodeDateTime- date result is %s\n", str);
@@ -3797,35 +3797,35 @@ int EncodeTimeSpan(struct tm *tm, double fsec, int style, char *str)
 	is_before |= (tm->tm_year < 0);
 	sprintf( cp, " %d year%s", abs(tm->tm_year), ((abs(tm->tm_year) != 1)? "s": ""));
 	cp += strlen(cp);
-    };
+    }
 
     if (tm->tm_mon != 0) {
 	is_nonzero = TRUE;
 	is_before |= (tm->tm_mon < 0);
 	sprintf( cp, " %d mon%s", abs(tm->tm_mon), ((abs(tm->tm_mon) != 1)? "s": ""));
 	cp += strlen(cp);
-    };
+    }
 
     if (tm->tm_mday != 0) {
 	is_nonzero = TRUE;
 	is_before |= (tm->tm_mday < 0);
 	sprintf( cp, " %d day%s", abs(tm->tm_mday), ((abs(tm->tm_mday) != 1)? "s": ""));
 	cp += strlen(cp);
-    };
+    }
 
     if (tm->tm_hour != 0) {
 	is_nonzero = TRUE;
 	is_before |= (tm->tm_hour < 0);
 	sprintf( cp, " %d hour%s", abs(tm->tm_hour), ((abs(tm->tm_hour) != 1)? "s": ""));
 	cp += strlen(cp);
-    };
+    }
 
     if (tm->tm_min != 0) {
 	is_nonzero = TRUE;
 	is_before |= (tm->tm_min < 0);
 	sprintf( cp, " %d min%s", abs(tm->tm_min), ((abs(tm->tm_min) != 1)? "s": ""));
 	cp += strlen(cp);
-    };
+    }
 
     /* fractional seconds? */
     if (fsec != 0) {
@@ -3841,18 +3841,18 @@ int EncodeTimeSpan(struct tm *tm, double fsec, int style, char *str)
 	is_before |= (tm->tm_sec < 0);
 	sprintf( cp, " %d sec%s", abs(tm->tm_sec), ((abs(tm->tm_sec) != 1)? "s": ""));
 	cp += strlen(cp);
-    };
+    }
 
     /* identically zero? then put in a unitless zero... */
     if (! is_nonzero) {
 	strcat( cp, " 0");
 	cp += strlen(cp);
-    };
+    }
 
     if (is_before) {
 	strcat( cp, " ago");
 	cp += strlen(cp);
-    };
+    }
 
 #ifdef DATEDEBUG
 printf( "EncodeTimeSpan- result is %s\n", str);

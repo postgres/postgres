@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.12 1997/08/28 05:06:29 vadim Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.13 1997/09/05 18:11:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -95,7 +95,7 @@ printf( "date_in- input string is %s\n", str);
 
     default:
 	elog(WARN,"Unrecognized date external representation %s",str);
-    };
+    }
 
     if (tm->tm_year < 0 || tm->tm_year > 32767)
 	elog(WARN, "date_in: year must be limited to values 0 through 32767 in '%s'", str);
@@ -186,7 +186,7 @@ date_cmp(DateADT dateVal1, DateADT dateVal2)
 	return -1;
     } else if (dateVal1 > dateVal2) {
 	return 1;
-    };
+    }
     return 0;
 } /* date_cmp() */
 
@@ -281,7 +281,7 @@ datetime_date(DateTime *datetime)
     } else {
 	if (datetime2tm( *datetime, &tz, tm, &fsec, &tzn) != 0)
 	    elog(WARN,"Unable to convert datetime to date",NULL);
-    };
+    }
 
     result = (date2j( tm->tm_year, tm->tm_mon, tm->tm_mday) - date2j( 2000, 1, 1));
 
@@ -319,7 +319,7 @@ abstime_date(AbsoluteTime abstime)
 	abstime2tm(abstime, &tz, tm, NULL);
 	result = date2j(tm->tm_year,tm->tm_mon,tm->tm_mday) - date2j(2000,1,1);
 	break;
-    };
+    }
 
     return(result);
 } /* abstime_date() */
@@ -404,7 +404,7 @@ printf( "date2tm- convert %d-%d-%d %d:%d%d to datetime\n",
 	*tzp = 0;
 	tm->tm_isdst = 0;
 	if (tzn != NULL) *tzn = NULL;
-    };
+    }
 
     return 0;
 } /* date2tm() */
@@ -482,8 +482,8 @@ time_out(TimeADT *time)
 	    sprintf(buf, "%02d:%02d:%02d", hour, min, sec);
 	} else {
 	    sprintf(buf, "%02d:%02d:%05.2f", hour, min, (sec+fsec));
-	};
-    };
+	}
+    }
 #endif
 
     result = PALLOC(strlen(buf)+1);
@@ -570,7 +570,7 @@ datetime_datetime(DateADT date, TimeADT *time)
     } else {
 	result = date_datetime(date);
 	*result += *time;
-    };
+    }
 
     return(result);
 } /* datetime_datetime() */

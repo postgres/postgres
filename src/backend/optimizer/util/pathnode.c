@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/optimizer/util/pathnode.c,v 1.2 1997/03/18 18:40:40 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/optimizer/util/pathnode.c,v 1.3 1997/09/05 18:10:36 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -218,7 +218,7 @@ create_seqscan_path(Rel *rel)
 #if 0
     if (XfuncMode != XFUNC_OFF) {
 	pathnode->path_cost +=
-	    xfunc_get_path_cost(pathnode));
+	    xfunc_get_path_cost(pathnode);
     }
 #endif
     return (pathnode);
