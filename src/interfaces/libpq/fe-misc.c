@@ -25,7 +25,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-misc.c,v 1.45 2001/02/11 04:56:57 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-misc.c,v 1.46 2001/02/17 03:37:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -320,11 +320,11 @@ pqReadReady(PGconn *conn)
 	if (!conn || conn->sock < 0)
 		return -1;
 
+retry:
 	FD_ZERO(&input_mask);
 	FD_SET(conn->sock, &input_mask);
 	timeout.tv_sec = 0;
 	timeout.tv_usec = 0;
-retry:
 	if (select(conn->sock + 1, &input_mask, (fd_set *) NULL, (fd_set *) NULL,
 			   &timeout) < 0)
 	{
@@ -354,11 +354,11 @@ pqWriteReady(PGconn *conn)
 	if (!conn || conn->sock < 0)
 		return -1;
 
+retry:
 	FD_ZERO(&input_mask);
 	FD_SET(conn->sock, &input_mask);
 	timeout.tv_sec = 0;
 	timeout.tv_usec = 0;
-retry:
 	if (select(conn->sock + 1, (fd_set *) NULL, &input_mask, (fd_set *) NULL,
 			   &timeout) < 0)
 	{
