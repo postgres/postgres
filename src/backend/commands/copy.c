@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.12 1996/11/03 23:57:22 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.13 1996/11/06 06:47:09 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,6 +26,8 @@
 #include <miscadmin.h>
 
 #include <utils/builtins.h>
+
+#include <utils/acl.h>
 
 #include <sys/stat.h>
 

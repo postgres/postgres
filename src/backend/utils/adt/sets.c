@@ -9,15 +9,12 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/sets.c,v 1.1.1.1 1996/07/09 06:22:05 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/sets.c,v 1.2 1996/11/06 06:50:01 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include <stdio.h>		/* for sprintf() */
 #include "postgres.h"
-#include "utils/elog.h"
-#include "nodes/pg_list.h"          /* for LispValue and List */
-#include "access/htup.h"            /* for HeapTuple */
 #include "access/heapam.h"
 #include "access/relscan.h"
 #include "access/xact.h"

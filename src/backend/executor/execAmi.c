@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/executor/execAmi.c,v 1.2 1996/10/31 10:11:21 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/executor/execAmi.c,v 1.3 1996/11/06 06:47:26 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,6 +32,7 @@
 
 #include "executor/executor.h"
 #include "storage/smgr.h"
+#include "utils/mcxt.h"
 #include "executor/nodeSeqscan.h"
 #include "executor/nodeIndexscan.h"
 #include "executor/nodeSort.h"
@@ -400,8 +401,8 @@ ExecCreatR(TupleDesc tupType,
 {
     Relation 	relDesc;
 
-    EU4_printf("ExecCreatR: %s numatts=%d type=%d oid=%d\n",
-	       "entering: ", numberAttributes, tupType, relationOid);
+    EU4_printf("ExecCreatR: %s type=%d oid=%d\n",
+	       "entering: ", tupType, relationOid);
     CXT1_printf("ExecCreatR: context is %d\n", CurrentMemoryContext);
     
     relDesc = NULL;

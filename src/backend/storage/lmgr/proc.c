@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.7 1996/11/03 05:07:32 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.8 1996/11/06 06:49:24 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,7 +46,7 @@
  *      This is so that we can support more backends. (system-wide semaphore
  *      sets run out pretty fast.)                -ay 4/95
  *
- * $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.7 1996/11/03 05:07:32 scrappy Exp $
+ * $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.8 1996/11/06 06:49:24 scrappy Exp $
  */
 #include <sys/time.h>
 #ifndef WIN32
@@ -55,7 +55,13 @@
 #include <string.h>
 #include <sys/types.h>
 
+#if defined(sparc_solaris)
+#include <sys/ipc.h>
+#include <sys/sem.h>
+#endif
+
 #include "postgres.h"
+#include "miscadmin.h"
 #include "libpq/pqsignal.h"	/* substitute for <signal.h> */
 
 #include "access/xact.h"

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/executor/nodeIndexscan.c,v 1.3 1996/10/31 10:12:05 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/executor/nodeIndexscan.c,v 1.4 1996/11/06 06:47:42 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,13 +31,17 @@
 #include "postgres.h"
 
 #include "executor/executor.h"
+#include "executor/execdebug.h"
 #include "executor/nodeIndexscan.h"
 
 #include "optimizer/clauses.h"	/* for get_op, get_leftop, get_rightop */
 #include "parser/parsetree.h"	/* for rt_fetch() */
 
 #include "access/skey.h"
+#include "access/heapam.h"
+#include "access/genam.h"
 #include "utils/palloc.h"
+#include "utils/mcxt.h"
 #include "catalog/index.h"
 #include "storage/bufmgr.h"
 #include "storage/lmgr.h"

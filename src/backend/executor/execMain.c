@@ -26,23 +26,32 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.7 1996/10/31 10:11:24 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.8 1996/11/06 06:47:32 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
+#include <string.h>
 #include "postgres.h"
+#include "miscadmin.h"
 
 #include "executor/executor.h"
+#include "executor/execdefs.h"
+#include "executor/execdebug.h"
 #include "executor/nodeIndexscan.h"
 #include "utils/builtins.h"
 #include "utils/palloc.h"
 #include "utils/acl.h"
+#include "utils/syscache.h"
 #include "parser/parsetree.h"		/* rt_fetch() */
 #include "storage/bufmgr.h"
 #include "storage/lmgr.h"
+#include "storage/smgr.h"
 #include "commands/async.h"
 /* #include "access/localam.h" */
 #include "optimizer/var.h"
+#include "access/heapam.h"
+#include "catalog/heap.h"
+
 
 
 /* decls for local routines only used within this module */

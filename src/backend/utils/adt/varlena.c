@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/varlena.c,v 1.6 1996/09/23 08:31:01 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/varlena.c,v 1.7 1996/11/06 06:50:07 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,7 +15,6 @@
 #include <string.h>
 
 #include "postgres.h"
-#include "utils/elog.h"
 #include "utils/palloc.h"
 #include "utils/builtins.h"	/* where function declarations go */
 

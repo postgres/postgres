@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/oidname.c,v 1.1.1.1 1996/07/09 06:22:05 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/oidname.c,v 1.2 1996/11/06 06:49:56 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,7 +18,6 @@
 #include "postgres.h"
 #include "utils/oidcompos.h"	/* where function declarations go */
 #include "utils/builtins.h"	/* for pg_atoi() */
-#include "utils/elog.h"
 #include "utils/palloc.h"
 
 OidName

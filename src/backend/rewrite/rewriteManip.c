@@ -6,10 +6,11 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteManip.c,v 1.2 1996/07/23 02:23:54 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteManip.c,v 1.3 1996/11/06 06:48:44 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
+#include <string.h>
 #include "postgres.h"
 #include "nodes/pg_list.h"
 #include "utils/elog.h"

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/date.c,v 1.1.1.1 1996/07/09 06:22:03 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/date.c,v 1.2 1996/11/06 06:49:44 scrappy Exp $
  *
  * NOTES
  *   This code is actually (almost) unused.
@@ -34,9 +34,7 @@
 #include "miscadmin.h"
 #include "access/xact.h"
 #include "utils/builtins.h"	/* where function declarations go */
-#include "utils/elog.h"
 #include "utils/palloc.h"
-#include "utils/nabstime.h"
 
 #define	TM_YEAR_BASE	1900		/* compatible to UNIX time */
 #define	EPOCH_YEAR	1970		/* compatible to UNIX time */

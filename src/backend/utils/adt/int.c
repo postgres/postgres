@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/int.c,v 1.1.1.1 1996/07/09 06:22:04 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/int.c,v 1.2 1996/11/06 06:49:49 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,7 +32,6 @@
 #include "postgres.h"
 #include "fmgr.h"
 #include "utils/builtins.h"	/* where the declarations go */
-#include "utils/elog.h"
 #include "utils/palloc.h"
 
 /***************************************************************************** 

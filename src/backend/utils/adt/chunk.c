@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/chunk.c,v 1.1.1.1 1996/07/09 06:22:03 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/chunk.c,v 1.2 1996/11/06 06:49:43 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,7 +21,6 @@
 
 #include "utils/palloc.h"
 #include "fmgr.h"
-#include "utils/elog.h"
 #include "utils/array.h"
 
 #include "optimizer/internal.h"

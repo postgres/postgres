@@ -8,10 +8,11 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/executor/functions.c,v 1.3 1996/10/26 04:13:20 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/executor/functions.c,v 1.4 1996/11/06 06:47:36 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
+#include <string.h>
 #include "postgres.h"
 
 #include "nodes/primnodes.h"
@@ -35,6 +36,7 @@
 #include "access/heapam.h"
 #include "access/xact.h"
 #include "executor/executor.h"
+#include "executor/execdefs.h"
 #include "executor/functions.h"
 
 #undef new

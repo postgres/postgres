@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/acl.c,v 1.3 1996/11/03 06:53:01 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/acl.c,v 1.4 1996/11/06 06:49:34 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,7 +15,6 @@
 #include <string.h>
 #include "postgres.h"
 #include "utils/acl.h"
-#include "access/htup.h"
 #include "catalog/pg_user.h"
 #include "utils/syscache.h"
 #include "utils/palloc.h"

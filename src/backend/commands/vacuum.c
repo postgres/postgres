@@ -7,12 +7,16 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.6 1996/11/03 23:57:40 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.7 1996/11/06 06:47:18 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include <sys/file.h>
 #include <string.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <unistd.h>
 
 #include "postgres.h"
 #include "utils/portal.h"

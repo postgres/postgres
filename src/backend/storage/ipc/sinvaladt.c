@@ -7,14 +7,16 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/storage/ipc/sinvaladt.c,v 1.2 1996/11/03 05:07:00 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/storage/ipc/sinvaladt.c,v 1.3 1996/11/06 06:49:10 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
+#include <stdio.h>
 
 #include "postgres.h"
 
 #include "storage/ipc.h"
+#include "storage/backendid.h"
 #include "storage/sinvaladt.h"
 #include "storage/lmgr.h"
 #include "utils/palloc.h"

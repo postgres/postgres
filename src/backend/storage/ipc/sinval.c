@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/storage/ipc/sinval.c,v 1.3 1996/11/03 05:06:59 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/storage/ipc/sinval.c,v 1.4 1996/11/06 06:49:09 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,6 +18,7 @@
 
 #include "postgres.h"
 
+#include "storage/backendid.h"
 #include "storage/sinval.h"
 #include "storage/sinvaladt.h"
 #include "storage/spin.h"

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.8 1996/10/31 10:11:28 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.9 1996/11/06 06:47:34 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,6 +30,7 @@
  *
  */
 #include "postgres.h"
+#include "fmgr.h"
 
 #include "nodes/primnodes.h"
 #include "nodes/relation.h"
@@ -38,7 +39,9 @@
 
 #include "nodes/memnodes.h"
 #include "catalog/pg_language.h"
+#include "catalog/pg_proc.h"
 #include "executor/executor.h"
+#include "executor/execdebug.h"
 #include "executor/execFlatten.h"
 #include "executor/functions.h"
 #include "access/heapam.h"
@@ -48,6 +51,7 @@
 #include "utils/fcache.h"
 #include "utils/fcache2.h"
 #include "utils/array.h"
+#include "utils/mcxt.h"
 
 /* ----------------
  *	externs and constants

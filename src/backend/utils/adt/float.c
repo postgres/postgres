@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/float.c,v 1.6 1996/10/31 10:23:17 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/float.c,v 1.7 1996/11/06 06:49:48 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -53,7 +53,6 @@
 #include "postgres.h"
 #include "fmgr.h"
 #include "utils/builtins.h"	/* for ftod() prototype */
-#include "utils/elog.h"
 #include "utils/palloc.h"
 
 

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/executor/nodeAppend.c,v 1.3 1996/10/31 10:11:54 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/executor/nodeAppend.c,v 1.4 1996/11/06 06:47:39 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -55,10 +55,13 @@
 #include "postgres.h"
 
 
+#include "access/heapam.h"
 #include "executor/executor.h"
+#include "executor/execdebug.h"
 #include "executor/nodeAppend.h"
 #include "executor/nodeIndexscan.h"
 #include "utils/palloc.h"
+#include "utils/mcxt.h"
 #include "parser/parsetree.h"		/* for rt_store() macro */
 
 /* ----------------------------------------------------------------

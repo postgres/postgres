@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/tid.c,v 1.1.1.1 1996/07/09 06:22:05 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/tid.c,v 1.2 1996/11/06 06:50:05 scrappy Exp $
  *
  * NOTES
  *    input routine largely stolen from boxin().
@@ -17,9 +17,6 @@
 #include <stdio.h>		/* for sprintf() */
 #include <string.h>
 #include "postgres.h"
-#include "storage/block.h"
-#include "storage/off.h"
-#include "storage/itemptr.h"
 #include "storage/bufpage.h"
 
 #include "utils/palloc.h"

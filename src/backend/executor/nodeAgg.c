@@ -15,7 +15,10 @@
  *
  *-------------------------------------------------------------------------
  */
+#include <string.h>
+
 #include "postgres.h"
+#include "fmgr.h"
 
 #include "access/heapam.h"
 #include "catalog/pg_aggregate.h"
@@ -24,6 +27,7 @@
 #include "executor/nodeAgg.h"
 #include "storage/bufmgr.h"
 #include "utils/palloc.h"
+#include "utils/syscache.h"
 #include "parser/catalog_utils.h"
 
 /*

@@ -7,11 +7,12 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/port/sparc_solaris/Attic/port.c,v 1.1.1.1 1996/07/09 06:21:45 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/port/sparc_solaris/Attic/port.c,v 1.2 1996/11/06 06:48:35 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include <math.h>		/* for pow() prototype */
+#include <stdlib.h>
 
 #include <errno.h>
 #include "rusagestub.h"

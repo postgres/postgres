@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipc.c,v 1.6 1996/11/03 05:06:54 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipc.c,v 1.7 1996/11/06 06:49:01 scrappy Exp $
  *
  * NOTES
  *
@@ -40,6 +40,11 @@
 #include "postgres.h"
 #include "storage/ipc.h"
 #include "utils/memutils.h"
+
+#if defined(sparc_solaris)
+#include <string.h>
+#include <sys/ipc.h>
+#endif
 
 #if defined(bsd44)
 int UsePrivateMemory = 1;

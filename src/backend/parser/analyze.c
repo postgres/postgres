@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.11 1996/11/04 04:35:39 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.12 1996/11/06 06:48:20 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,11 +22,13 @@
 #include "nodes/relation.h"
 #include "parse.h"		/* for AND, OR, etc. */
 #include "catalog/pg_type.h"	/* for INT4OID, etc. */
+#include "catalog/pg_proc.h"
 #include "utils/elog.h"
 #include "utils/builtins.h"	/* namecmp(), textout() */
 #include "utils/lsyscache.h"
 #include "utils/palloc.h"
 #include "utils/mcxt.h"
+#include "utils/syscache.h"
 #include "parser/parse_query.h"
 #include "parser/parse_state.h"
 #include "nodes/makefuncs.h"	/* for makeResdom(), etc. */

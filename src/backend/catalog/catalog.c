@@ -7,24 +7,18 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/catalog/catalog.c,v 1.3 1996/11/03 23:27:00 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/catalog/catalog.c,v 1.4 1996/11/06 06:47:01 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
-#include <string.h>	/* XXX */
+#include <postgres.h>
 
-#include "postgres.h"
-#include "miscadmin.h"  /* for DataDir */
-
-#include "utils/syscache.h"
-#include "storage/buf.h"
-#include "utils/palloc.h"
-
-#include "catalog/catname.h"	/* NameIs{,Shared}SystemRelationName */
-#include "catalog/pg_attribute.h"
-#include "catalog/pg_type.h"
-#include "catalog/catalog.h"
-#include "access/transam.h"
+#include <miscadmin.h>  /* for DataDir */
+#include <utils/syscache.h>
+#include <catalog/catname.h>	/* NameIs{,Shared}SystemRelationName */
+#include <catalog/pg_type.h>
+#include <catalog/catalog.h>
+#include <access/transam.h>
 
 /*
  * relpath		- path to the relation

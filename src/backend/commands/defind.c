@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/commands/Attic/defind.c,v 1.6 1996/11/03 23:57:27 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/commands/Attic/defind.c,v 1.7 1996/11/06 06:47:12 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,6 +37,7 @@
 #include "optimizer/prep.h"
 #include "optimizer/clauses.h"
 #include "storage/lmgr.h"
+#include "fmgr.h"
 
 #define IsFuncIndex(ATTR_LIST) (((IndexElem*)lfirst(ATTR_LIST))->args!=NULL)
 

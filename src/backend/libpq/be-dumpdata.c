@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/libpq/Attic/be-dumpdata.c,v 1.1.1.1 1996/07/09 06:21:30 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/libpq/Attic/be-dumpdata.c,v 1.2 1996/11/06 06:48:10 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,6 +29,7 @@
  *	puts portals on the stack and the PQ functions remove them.
  *
  */
+#include <string.h>
 #include "postgres.h"
 
 #include "lib/dllist.h"

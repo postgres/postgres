@@ -6,7 +6,7 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *    $Id: fd.c,v 1.7 1996/11/04 04:53:24 momjian Exp $
+ *    $Id: fd.c,v 1.8 1996/11/06 06:48:51 scrappy Exp $
  *
  * NOTES:
  *
@@ -44,6 +44,8 @@
 #include <sys/stat.h>
 #include <string.h>
 #include <unistd.h>
+#include <sys/types.h>
+#include <fcntl.h>
 
 #include "c.h"
 #include "miscadmin.h"	/* for DataDir */
@@ -197,6 +199,7 @@ static int FileAccess(File file);
 static File fileNameOpenFile(FileName fileName, int fileFlags, int fileMode);
 static char *filepath(char *filename);
 
+int
 pg_fsync(fd)
 {
     extern int fsyncOff;

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/libpq/auth.c,v 1.5 1996/10/31 10:37:48 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/libpq/auth.c,v 1.6 1996/11/06 06:48:06 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -63,6 +63,7 @@
 #include <arpa/inet.h>
 
 #include "postgres.h"
+#include "miscadmin.h"
 
 #include "libpq/auth.h"
 #include "libpq/libpq.h"

@@ -19,7 +19,6 @@
  */
 #include <string.h>
 #include "postgres.h"		/* postgres system include file */
-#include "utils/elog.h"		/* for logging postgres errors */
 #include "utils/palloc.h"
 #include "utils/builtins.h"	/* where the function declarations go */
 
@@ -143,7 +142,7 @@ bool textnlike(struct varlena *s, struct varlena *p)
 }
 
 
-/*  $Revision: 1.2 $
+/*  $Revision: 1.3 $
 **  "like.c" A first attempt at a LIKE operator for Postgres95.
 **
 **  Originally written by Rich $alz, mirror!rs, Wed Nov 26 19:03:17 EST 1986.

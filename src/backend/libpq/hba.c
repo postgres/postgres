@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/libpq/hba.c,v 1.8 1996/11/03 09:24:04 bryanh Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/libpq/hba.c,v 1.9 1996/11/06 06:48:12 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,7 +21,7 @@
 #include <arpa/inet.h>
 #include <unistd.h>
 #if defined(sparc_solaris)
-#include "port/inet_aton.h"
+#include "inet_aton.h" /* after I copied it into port/sparc_solaris */
 #endif
 
 #include "postgres.h"

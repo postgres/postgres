@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/storage/ipc/Attic/s_lock.c,v 1.6 1996/11/03 05:06:56 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/storage/ipc/Attic/s_lock.c,v 1.7 1996/11/06 06:49:04 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -316,7 +316,7 @@ tas_dummy()
  * SPARC (SunOS 4)
  */
 
-#if defined(sparc)
+#if defined(sparc) && !defined(sparc_solaris)
 
 /* if we're using -ansi w/ gcc, use __asm__ instead of asm */
 #if defined(__STRICT_ANSI__)

@@ -7,16 +7,23 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/executor/nodeHashjoin.c,v 1.2 1996/10/31 05:53:35 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/executor/nodeHashjoin.c,v 1.3 1996/11/06 06:47:41 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
+#include <string.h>
 #include <sys/file.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+
+
 
 #include "postgres.h"
 #include "storage/bufmgr.h"	/* for BLCKSZ */
 #include "storage/fd.h"		/* for SEEK_ */
 #include "executor/executor.h"
+#include "executor/execdebug.h"
 #include "executor/nodeHash.h"
 #include "executor/nodeHashjoin.h"
 

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/not_in.c,v 1.1.1.1 1996/07/09 06:22:05 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/not_in.c,v 1.2 1996/11/06 06:49:53 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,10 +26,7 @@
 #include <string.h>
 #include "postgres.h"
 #include "access/heapam.h"
-#include "access/htup.h"
 #include "access/relscan.h"
-#include "utils/rel.h"
-#include "utils/elog.h"
 #include "utils/builtins.h"	/* where function decls go */
 
 /* ----------------------------------------------------------------

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/executor/nodeMaterial.c,v 1.3 1996/10/31 10:12:09 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/executor/nodeMaterial.c,v 1.4 1996/11/06 06:47:44 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,7 +24,9 @@
 #include "executor/executor.h"
 #include "executor/nodeMaterial.h"
 #include "catalog/catalog.h"
+#include "catalog/heap.h"
 #include "optimizer/internal.h" /* for _TEMP_RELATION_ID_ */
+#include "access/heapam.h"
 
 /* ----------------------------------------------------------------
  *   	ExecMaterial

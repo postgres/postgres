@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/datum.c,v 1.1.1.1 1996/07/09 06:22:03 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/datum.c,v 1.2 1996/11/06 06:49:47 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,7 +31,6 @@
 #include "postgres.h"
 #include "utils/datum.h"
 #include "catalog/pg_type.h"
-#include "utils/elog.h"
 #include "utils/palloc.h"
 
 /*-------------------------------------------------------------------------

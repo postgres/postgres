@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/varchar.c,v 1.4 1996/11/04 04:53:37 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/varchar.c,v 1.5 1996/11/06 06:50:06 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,7 +15,6 @@
 #include <string.h>
 #include "postgres.h"
 #include "utils/palloc.h"
-#include "utils/elog.h"
 
 /*
  * CHAR() and VARCHAR() types are part of the ANSI SQL standard. CHAR()

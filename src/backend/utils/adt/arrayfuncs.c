@@ -7,12 +7,10 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.7 1996/11/04 04:19:49 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.8 1996/11/06 06:49:36 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
-
-#include "config.h"
 
 #include <ctype.h>
 #include <stdio.h>
@@ -27,7 +25,6 @@
 #include "utils/memutils.h"
 #include "storage/fd.h"		/* for SEEK_ */
 #include "fmgr.h"
-#include "utils/elog.h"
 #include "utils/array.h"
 
 #include "libpq/libpq-fs.h"

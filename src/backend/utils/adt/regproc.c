@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/regproc.c,v 1.1.1.1 1996/07/09 06:22:05 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/regproc.c,v 1.2 1996/11/06 06:49:59 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,10 +15,7 @@
 #include "postgres.h"
 #include "access/heapam.h"
 #include "access/relscan.h"
-#include "access/skey.h"
-#include "utils/tqual.h"	/* for NowTimeQual */
 #include "fmgr.h"
-#include "utils/elog.h"
 #include "utils/palloc.h"
 
 #include "catalog/catname.h"

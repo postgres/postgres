@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/executor/execUtils.c,v 1.3 1996/10/31 10:11:43 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/executor/execUtils.c,v 1.4 1996/11/06 06:47:35 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -41,13 +41,20 @@
  */
 
 #include "postgres.h"
+#include "fmgr.h"
 
 #include "executor/executor.h"
+#include "executor/execdebug.h"
 #include "access/itup.h"
+#include "access/heapam.h"
+#include "access/genam.h"
 #include "optimizer/clauses.h"
 #include "utils/palloc.h"
+#include "utils/mcxt.h"
 #include "commands/command.h"
 #include "catalog/index.h"
+#include "catalog/catname.h"
+#include "catalog/pg_proc.h"
 
 /* ----------------------------------------------------------------
  *      global counters for number of tuples processed, retrieved,

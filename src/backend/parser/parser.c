@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/parser/parser.c,v 1.4 1996/11/04 04:35:43 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/parser/parser.c,v 1.5 1996/11/06 06:48:26 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,6 +23,7 @@
 #include "utils/exc.h"
 #include "utils/excid.h"
 #include "utils/palloc.h"
+#include "utils/syscache.h"
 #include "catalog/pg_aggregate.h"
 #include "catalog/pg_type.h"
 #include "nodes/primnodes.h"
