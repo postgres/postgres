@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Thu Oct 26 07:41:27 EDT 2000
+Last updated:		Thu Oct 26 15:55:00 EDT 2000
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -68,6 +68,7 @@ ADMIN
 * Allow international error message support and add error codes
 * -Unify configuration into one configuration file (Peter E)
 * -use setproctitle() if it exists for 'ps' display of status
+* Prevent initdb from running wrong version of postmaster/postgres
 
 TYPES
 
