@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/heap/heapam.c,v 1.159 2003/12/14 00:34:47 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/heap/heapam.c,v 1.160 2004/01/05 20:36:04 neilc Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -146,7 +146,7 @@ heapgettup(Relation relation,
 	elog(DEBUG2, "heapgettup: relation(%c)=`%s', %p",
 		 relation->rd_rel->relkind, RelationGetRelationName(relation),
 		 snapshot);
-#endif   /* !defined(HEAPLOGALL) */
+#endif   /* HEAPDEBUGALL */
 
 	if (!ItemPointerIsValid(tid))
 	{
@@ -1491,7 +1491,7 @@ l2:
 	{
 		TransactionId xwait = HeapTupleHeaderGetXmax(oldtup.t_data);
 
-		/* sleep untill concurrent transaction ends */
+		/* sleep until concurrent transaction ends */
 		LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
 		XactLockTableWait(xwait);
 
@@ -1816,7 +1816,7 @@ l3:
 	{
 		TransactionId xwait = HeapTupleHeaderGetXmax(tuple->t_data);
 
-		/* sleep untill concurrent transaction ends */
+		/* sleep until concurrent transaction ends */
 		LockBuffer(*buffer, BUFFER_LOCK_UNLOCK);
 		XactLockTableWait(xwait);
 
