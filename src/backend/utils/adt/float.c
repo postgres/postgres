@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/float.c,v 1.37 1999/01/17 03:28:37 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/float.c,v 1.38 1999/01/21 16:08:51 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -63,6 +63,9 @@
 #include "utils/builtins.h"		/* for ftod() prototype */
 #include "utils/palloc.h"
 
+#ifndef NAN
+#define NAN		(0.0/0.0)
+#endif
 
 #ifndef SHRT_MAX
 #define SHRT_MAX 32767

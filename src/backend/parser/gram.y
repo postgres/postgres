@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.46 1999/01/20 19:48:13 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.47 1999/01/21 16:08:46 vadim Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -2496,6 +2496,7 @@ insert_rest:  VALUES '(' res_target_list2 ')'
 					$$->havingClause = n->havingClause;
 					$$->unionClause = n->unionClause;
 					$$->intersectClause = n->intersectClause;
+					$$->forUpdate = n->forUpdate;
 				}
 		| '(' columnList ')' VALUES '(' res_target_list2 ')'
 				{

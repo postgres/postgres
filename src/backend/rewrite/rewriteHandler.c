@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.28 1999/01/18 00:09:54 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.29 1999/01/21 16:08:48 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1799,7 +1799,8 @@ ApplyRetrieveRule(Query *parsetree,
 	Query	   *rule_action = NULL;
 	Node	   *rule_qual;
 	List	   *rtable,
-			   *rt;
+			   *rt,
+			   *l;
 	int			nothing,
 				rt_length;
 	int			badsql = FALSE;
@@ -1833,6 +1834,43 @@ ApplyRetrieveRule(Query *parsetree,
 
 	rtable = nconc(rtable, copyObject(rule_action->rtable));
 	parsetree->rtable = rtable;
+
+	/* FOR UPDATE of view... */
+	foreach (l, parsetree->rowMark)
+	{
+		if (((RowMark*)lfirst(l))->rti == rt_index)
+			break;
+	}
+	if (l != NULL)	/* oh, hell -:) */
+	{
+		RowMark	   *newrm;
+		Index		rti = 1;
+		List	   *l2;
+
+		/* 
+		 * We believe that rt_index is VIEW - nothing should be
+		 * marked for VIEW, but ACL check must be done.
+		 * As for real tables of VIEW - their rows must be marked, but
+		 * we have to skip ACL check for them.
+		 */
+		((RowMark*)lfirst(l))->info &= ~ROW_MARK_FOR_UPDATE;
+		foreach (l2, rule_action->rtable)
+		{
+			/*
+			 * RTable of VIEW has two entries of VIEW itself -
+			 * we use relid to skip them.
+			 */
+			if (relation->rd_id != ((RangeTblEntry*)lfirst(l2))->relid)
+			{
+				newrm = makeNode(RowMark);
+				newrm->rti = rti + rt_length;
+				newrm->info = ROW_MARK_FOR_UPDATE;
+				lnext(l) = lcons(newrm, lnext(l));
+				l = lnext(l);
+			}
+			rti++;
+		}
+	}
 
 	rule_action->rtable = rtable;
 	OffsetVarNodes((Node *) rule_qual,   rt_length, 0);

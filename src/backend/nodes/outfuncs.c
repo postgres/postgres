@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *  $Id: outfuncs.c,v 1.59 1999/01/18 00:09:45 momjian Exp $
+ *  $Id: outfuncs.c,v 1.60 1999/01/21 16:08:36 vadim Exp $
  *
  * NOTES
  *	  Every (plan) node in POSTGRES has an associated "out" routine which
@@ -162,6 +162,7 @@ _outIndexElem(StringInfo str, IndexElem *node)
 static void
 _outQuery(StringInfo str, Query *node)
 {
+
 	appendStringInfo(str, " QUERY :command %d ", node->commandType);
 
 	if (node->utilityStmt)
@@ -235,6 +236,10 @@ _outQuery(StringInfo str, Query *node)
 
 	appendStringInfo(str, " :limitCount ");
 	_outNode(str, node->limitCount);
+
+	appendStringInfo(str, " :rowMark ");
+	_outNode(str, node->rowMark);
+
 }
 
 static void
@@ -907,6 +912,12 @@ _outRangeTblEntry(StringInfo str, RangeTblEntry *node)
 			node->skipAcl ? "true" : "false");
 }
 
+static void
+_outRowMark(StringInfo str, RowMark *node)
+{
+	appendStringInfo(str, " ROWMARK :rti %u :info %u", node->rti, node->info);
+}
+
 /*
  *	Path is a subclass of Node.
  */
@@ -1527,6 +1538,9 @@ _outNode(StringInfo str, void *obj)
 				break;
 			case T_RangeTblEntry:
 				_outRangeTblEntry(str, obj);
+				break;
+			case T_RowMark:
+				_outRowMark(str, obj);
 				break;
 			case T_Path:
 				_outPath(str, obj);

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.41 1999/01/18 00:09:46 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.42 1999/01/21 16:08:37 vadim Exp $
  *
  * NOTES
  *	  Most of the read functions for plan nodes are tested. (In fact, they
@@ -173,6 +173,9 @@ _readQuery()
 
 	token = lsptok(NULL, &length);		/* skip :limitCount */
 	local_node->limitCount = nodeRead(true);
+
+	token = lsptok(NULL, &length);		/* skip :rowMark */
+	local_node->rowMark = nodeRead(true);
 
 	return local_node;
 }
@@ -1427,6 +1430,24 @@ _readRangeTblEntry()
 	return local_node;
 }
 
+static RowMark *
+_readRowMark()
+{
+	RowMark	   *local_node = makeNode(RowMark);
+	char	   *token;
+	int			length;
+
+	token = lsptok(NULL, &length);		/* eat :rti */
+	token = lsptok(NULL, &length);		/* get :rti */
+	local_node->rti = strtoul(token, NULL, 10);
+
+	token = lsptok(NULL, &length);		/* eat :info */
+	token = lsptok(NULL, &length);		/* get :info */
+	local_node->info = strtoul(token, NULL, 10);
+
+	return local_node;
+}
+
 /* ----------------
  *		_readPath
  *
@@ -2090,6 +2111,8 @@ parsePlanString(void)
 		return_value = _readCaseExpr();
 	else if (!strncmp(token, "WHEN", length))
 		return_value = _readCaseWhen();
+	else if (!strncmp(token, "ROWMARK", length))
+		return_value = _readRowMark();
 	else
 		elog(ERROR, "badly formatted planstring \"%.10s\"...\n", token);
 

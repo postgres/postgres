@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsenodes.h,v 1.66 1999/01/18 00:10:06 momjian Exp $
+ * $Id: parsenodes.h,v 1.67 1999/01/21 16:08:55 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -53,6 +53,7 @@ typedef struct Query
 	List	   *rtable;			/* list of range table entries */
 	List	   *targetList;		/* target list (of TargetEntry) */
 	Node	   *qual;			/* qualifications */
+	List	   *rowMark;		/* list of RowMark entries */
 
 	List	   *groupClause;	/* list of columns to specified in GROUP
 								 * BY */
@@ -608,9 +609,10 @@ typedef struct InsertStmt
 	List	   *groupClause;	/* group by clause */
 	Node	   *havingClause;	/* having conditional-expression */
 	List	   *unionClause;	/* union subselect parameters */
-	bool	   unionall;		/* union without unique sort */
-        /***S*I***/
-        List       *intersectClause;  
+	bool		unionall;		/* union without unique sort */
+	/***S*I***/
+	List	   *intersectClause;  
+	List	   *forUpdate;		/* FOR UPDATE clause */
 } InsertStmt;
 
 /* ----------------------
@@ -651,10 +653,10 @@ typedef struct SelectStmt
 	Node	   *whereClause;	/* qualifications */
 	List	   *groupClause;	/* group by clause */
 	Node	   *havingClause;	/* having conditional-expression */
-        /***S*I***/
-        List       *intersectClause;
-        List       *exceptClause;
-  
+	/***S*I***/
+	List	   *intersectClause;
+	List	   *exceptClause;
+
 	List	   *unionClause;	/* union subselect parameters */
 	List	   *sortClause;		/* sort clause (a list of SortGroupBy's) */
 	char	   *portalname;		/* the portal (cursor) to create */
@@ -957,5 +959,15 @@ typedef struct GroupClause
 	TargetEntry *entry;			/* attributes to group on */
 	Oid			grpOpoid;		/* the sort operator to use */
 } GroupClause;
+
+#define	ROW_MARK_FOR_UPDATE		(1 << 0)
+#define	ROW_ACL_FOR_UPDATE		(1 << 1)
+
+typedef struct RowMark
+{
+	NodeTag	type;
+	Index	rti;		/* index in Query->rtable */
+	bits8	info;		/* as above */
+} RowMark;
 
 #endif	 /* PARSENODES_H */

@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *  $Id: analyze.c,v 1.92 1999/01/18 00:09:49 momjian Exp $
+ *  $Id: analyze.c,v 1.93 1999/01/21 16:08:38 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,6 +44,8 @@ static Query *transformSelectStmt(ParseState *pstate, SelectStmt *stmt);
 static Query *transformUpdateStmt(ParseState *pstate, UpdateStmt *stmt);
 static Query *transformCursorStmt(ParseState *pstate, SelectStmt *stmt);
 static Query *transformCreateStmt(ParseState *pstate, CreateStmt *stmt);
+
+static void   transformForUpdate(Query *qry, List *forUpdate);
 
 List	   *extras_before = NIL;
 List	   *extras_after = NIL;
@@ -387,7 +389,7 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt)
 	/*
 	 * The INSERT INTO ... SELECT ... could have a UNION in child, so
 	 * unionClause may be false
-	 */
+,	 */
   	qry->unionall = stmt->unionall;	
 
  	/***S*I***/
@@ -407,6 +409,9 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt)
 		elog(ERROR, "SELECT/HAVING requires aggregates to be valid");
 		return (Query *) NIL;
 	}
+
+	if (stmt->forUpdate != NULL)
+		transformForUpdate(qry, stmt->forUpdate);
 
 	return (Query *) qry;
 }
@@ -971,6 +976,9 @@ transformSelectStmt(ParseState *pstate, SelectStmt *stmt)
 		return (Query *) NIL;
 	}
 
+	if (stmt->forUpdate != NULL)
+		transformForUpdate(qry, stmt->forUpdate);
+
 	return (Query *) qry;
 }
 
@@ -1120,4 +1128,60 @@ Node *A_Expr_to_Expr(Node *ptr, bool *intersect_present)
       }      
     }
   return result;  
+}
+
+static void
+transformForUpdate(Query *qry, List *forUpdate)
+{
+	List	   *rowMark = NULL;
+	RowMark	   *newrm;
+	List	   *l;
+	Index		i;
+
+	if (lfirst(forUpdate) == NULL)		/* all tables */
+	{
+		i = 1;
+		foreach (l, qry->rtable)
+		{
+			newrm = makeNode(RowMark);
+			newrm->rti = i++;
+			newrm->info = ROW_MARK_FOR_UPDATE|ROW_ACL_FOR_UPDATE;
+			rowMark = lappend(rowMark, newrm);
+		}
+		qry->rowMark = nconc(qry->rowMark, rowMark);
+		return;
+	}
+
+	foreach (l, forUpdate)
+	{
+		List   *l2;
+		List   *l3;
+
+		i = 1;
+		foreach (l2, qry->rtable)
+		{
+			if (strcmp(((RangeTblEntry*)lfirst(l2))->refname, lfirst(l)) == 0)
+			{
+				foreach (l3, rowMark)
+				{
+					if (((RowMark*)lfirst(l3))->rti == i)	/* duplicate */
+						break;
+				}
+				if (l3 == NULL)
+				{
+					newrm = makeNode(RowMark);
+					newrm->rti = i;
+					newrm->info = ROW_MARK_FOR_UPDATE|ROW_ACL_FOR_UPDATE;
+					rowMark = lappend(rowMark, newrm);
+				}
+				break;
+			}
+			i++;
+		}
+		if (l2 == NULL)
+			elog(ERROR, "FOR UPDATE: relation %s not found in FROM clause", lfirst(l));
+	}
+
+	qry->rowMark = rowMark;
+	return;
 }
