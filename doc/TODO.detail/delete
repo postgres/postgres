@@ -1,0 +1,847 @@
+From pgsql-sql-owner+M8069=candle.pha.pa.us=pgman@postgresql.org Mon Jun 10 07:42:52 2002
+Return-path: <pgsql-sql-owner+M8069=candle.pha.pa.us=pgman@postgresql.org>
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by candle.pha.pa.us (8.11.6/8.10.1) with ESMTP id g5ABgps29742
+	for <pgman@candle.pha.pa.us>; Mon, 10 Jun 2002 07:42:52 -0400 (EDT)
+Received: from localhost.localdomain (postgresql.org [64.49.215.8])
+	by localhost (Postfix) with ESMTP id E946447607D
+	for <pgman@candle.pha.pa.us>; Mon, 10 Jun 2002 07:42:47 -0400 (EDT)
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by postgresql.org (Postfix) with SMTP id 4AB30475F59
+	for <pgman@candle.pha.pa.us>; Mon, 10 Jun 2002 07:42:41 -0400 (EDT)
+Received: from localhost.localdomain (postgresql.org [64.49.215.8])
+	by localhost (Postfix) with ESMTP id 4BBB64758F7
+	for <pgsql-sql@postgresql.org>; Mon, 10 Jun 2002 07:42:30 -0400 (EDT)
+Received: from fzkmail2.fzk.de (fzkmail2.fzk.de [141.52.27.52])
+	by postgresql.org (Postfix) with SMTP id 39027475473
+	for <pgsql-sql@postgresql.org>; Mon, 10 Jun 2002 07:42:28 -0400 (EDT)
+Received: FROM resy5.fzk.de BY fzkmail2.fzk.de ; Mon Jun 10 13:42:29 2002 +0200
+Received: by rodos.fzk.de with ESMTP (8.8.6 (PHNE_17135)/8.7.1) id NAA01104 for <pgsql-sql@postgresql.org>; Mon, 10 Jun 2002 13:42:49 +0200 (METDST)
+From: Christoph Haller <ch@rodos.fzk.de>
+Message-ID: <200206101142.NAA16854@rodos>
+Subject: [SQL] Efficient DELETE Strategies 
+To: pgsql-sql@postgresql.org
+Date: Mon, 10 Jun 2002 13:42:10 METDST
+X-Mailer: Elm [revision: 212.4]
+Precedence: bulk
+Sender: pgsql-sql-owner@postgresql.org
+Status: OR
+
+Hi, 
+
+Based on an entry in the mailing list from 30 Oct 2001 
+about efficient deletes on subqueries, 
+I've found two ways to do so (PostgreSQL 7.2.1): 
+
+1.
+BEGIN ;
+EXPLAIN ANALYZE
+DELETE FROM onfvalue WHERE EXISTS(
+SELECT * FROM onfvalue j WHERE  
+j.sid= 5 AND
+onfvalue.lid = j.lid AND 
+onfvalue.mid = j.mid AND
+onfvalue.timepoint = j.timepoint AND 
+onfvalue.entrancetime < j.entrancetime
+) ;
+ROLLBACK ;
+QUERY PLAN:
+
+Seq Scan on onfvalue  
+(cost=0.00..805528.05 rows=66669 width=6) 
+(actual time=61.84..25361.82 rows=24 loops=1)
+  SubPlan
+    ->  Index Scan using advncd_onfvalue_idx_stlme on onfvalue j  
+    (cost=0.00..6.02 rows=1 width=36) 
+    (actual time=0.14..0.14 rows=0 loops=133338)
+Total runtime: 25364.76 msec
+
+2.
+BEGIN ;
+EXPLAIN ANALYZE
+INSERT INTO temprefentrancetime(timepoint,lid,mid,sid,entrancetime)
+SELECT o.timepoint,o.lid,o.mid,o.sid,o.entrancetime
+FROM onfvalue o join onfvalue j ON (
+o.lid = j.lid AND 
+o.mid = j.mid AND
+o.timepoint = j.timepoint AND 
+o.entrancetime < j.entrancetime
+) WHERE  o.sid= 5 ;
+EXPLAIN ANALYZE
+DELETE FROM onfvalue WHERE
+onfvalue.timepoint = temprefentrancetime.timepoint AND
+onfvalue.mid = temprefentrancetime.mid AND
+onfvalue.lid = temprefentrancetime.lid AND
+onfvalue.sid = temprefentrancetime.sid AND
+onfvalue.entrancetime = temprefentrancetime.entrancetime ;
+DELETE FROM temprefentrancetime;
+ROLLBACK ;
+QUERY PLAN:
+
+Merge Join  
+(cost=16083.12..16418.36 rows=4 width=52) 
+(actual time=17728.06..19325.02 rows=24 loops=1)
+  ->  Sort  
+  (cost=2152.53..2152.53 rows=667 width=28) 
+  (actual time=1937.70..2066.46 rows=16850 loops=1)
+        ->  Index Scan using advncd_onfvalue_idx_stlme on onfvalue o  
+	(cost=0.00..2121.26 rows=667 width=28) 
+	(actual time=0.57..709.89 rows=16850 loops=1)
+  ->  Sort  
+  (cost=13930.60..13930.60 rows=133338 width=24) 
+  (actual time=13986.07..14997.43 rows=133110 loops=1)
+        ->  Seq Scan on onfvalue j  
+	(cost=0.00..2580.38 rows=133338 width=24) 
+	(actual time=0.15..3301.06 rows=133338 loops=1)
+Total runtime: 19487.49 msec
+
+QUERY PLAN:
+
+Nested Loop  
+(cost=0.00..6064.40 rows=1 width=62) 
+(actual time=1.34..8.32 rows=24 loops=1)
+  ->  Seq Scan on temprefentrancetime  
+  (cost=0.00..20.00 rows=1000 width=28) 
+  (actual time=0.44..1.07 rows=24 loops=1)
+  ->  Index Scan using advncd_onfvalue_idx_stlme on onfvalue  
+  (cost=0.00..6.02 rows=1 width=34) 
+  (actual time=0.22..0.25 rows=1 loops=24)
+Total runtime: 10.15 msec
+
+The questions are: 
+Is there a way to put the second form (more complicated, but faster) 
+in one statement? 
+Or is there even a third way to delete, which I cannot see? 
+Regards, Christoph 
+
+---------------------------(end of broadcast)---------------------------
+TIP 3: if posting/reading through Usenet, please send an appropriate
+subscribe-nomail command to majordomo@postgresql.org so that your
+message can get through to the mailing list cleanly
+
+From pgsql-sql-owner+M8075=candle.pha.pa.us=pgman@postgresql.org Mon Jun 10 12:03:46 2002
+Return-path: <pgsql-sql-owner+M8075=candle.pha.pa.us=pgman@postgresql.org>
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by candle.pha.pa.us (8.11.6/8.10.1) with ESMTP id g5AG3js15254
+	for <pgman@candle.pha.pa.us>; Mon, 10 Jun 2002 12:03:45 -0400 (EDT)
+Received: from localhost.localdomain (postgresql.org [64.49.215.8])
+	by localhost (Postfix) with ESMTP id 28808476B25
+	for <pgman@candle.pha.pa.us>; Mon, 10 Jun 2002 12:00:33 -0400 (EDT)
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by postgresql.org (Postfix) with SMTP id 69ECC476DAA
+	for <pgman@candle.pha.pa.us>; Mon, 10 Jun 2002 11:21:32 -0400 (EDT)
+Received: from localhost.localdomain (postgresql.org [64.49.215.8])
+	by localhost (Postfix) with ESMTP
+	id 4A69E4760C0; Mon, 10 Jun 2002 11:21:22 -0400 (EDT)
+Received: from sss.pgh.pa.us (unknown [192.204.191.242])
+	by postgresql.org (Postfix) with ESMTP
+	id EBA4C475B88; Mon, 10 Jun 2002 09:56:50 -0400 (EDT)
+Received: from sss2.sss.pgh.pa.us (tgl@localhost [127.0.0.1])
+	by sss.pgh.pa.us (8.11.4/8.11.4) with ESMTP id g5ADuSb05622;
+	Mon, 10 Jun 2002 09:56:28 -0400 (EDT)
+To: Christoph Haller <ch@rodos.fzk.de>
+cc: pgsql-sql@postgresql.org, pgsql-hackers@postgresql.org
+Subject: Re: [SQL] Efficient DELETE Strategies 
+In-Reply-To: <200206101142.NAA16854@rodos> 
+References: <200206101142.NAA16854@rodos>
+Comments: In-reply-to Christoph Haller <ch@rodos.fzk.de>
+	message dated "Mon, 10 Jun 2002 13:42:10 +0700"
+Date: Mon, 10 Jun 2002 09:56:27 -0400
+Message-ID: <5619.1023717387@sss.pgh.pa.us>
+From: Tom Lane <tgl@sss.pgh.pa.us>
+Precedence: bulk
+Sender: pgsql-sql-owner@postgresql.org
+Status: ORr
+
+Christoph Haller <ch@rodos.fzk.de> writes:
+> Based on an entry in the mailing list from 30 Oct 2001 
+> about efficient deletes on subqueries, 
+> I've found two ways to do so (PostgreSQL 7.2.1): 
+> ...
+> Is there a way to put the second form (more complicated, but faster) 
+> in one statement? 
+> Or is there even a third way to delete, which I cannot see? 
+
+The clean way to do this would be to allow extra FROM-list relations
+in DELETE.  We already have a similar facility for UPDATE, so it's not
+clear to me why there's not one for DELETE.  Then you could do, say,
+
+DELETE FROM onfvalue , onfvalue j WHERE
+j.sid= 5 AND
+onfvalue.lid = j.lid AND 
+onfvalue.mid = j.mid AND
+onfvalue.timepoint = j.timepoint AND 
+onfvalue.entrancetime < j.entrancetime ;
+
+If you were using two separate tables you could force this to happen
+via an implicit FROM-clause entry, much as you've done in your second
+alternative --- but there's no way to set up a self-join in a DELETE
+because of the lack of any place to put an alias declaration.
+
+AFAIK this extension would be utterly trivial to implement, since all
+the machinery is there already --- for 99% of the backend, it doesn't
+matter whether a FROM-item is implicit or explicit.  We'd only need to
+argue out what the syntax should be.  I could imagine
+
+	DELETE FROM relation_expr [ , table_ref [ , ... ] ]
+	[ WHERE bool_expr ]
+
+or
+
+	DELETE FROM relation_expr [ FROM table_ref [ , ... ] ]
+	[ WHERE bool_expr ]
+
+The two FROMs in the second form look a little weird, but they help to
+make a clear separation between the deletion target table and the
+merely-referenced tables.  Also, the first one might look to people
+like they'd be allowed to write
+
+	DELETE FROM foo FULL JOIN bar ...
+
+which is not any part of my intention (it's very unclear what it'd
+mean for the target table to be on the nullable side of an outer join).
+OTOH there'd be no harm in outer joins in a separate from-clause, eg
+
+	DELETE FROM foo FROM (bar FULL JOIN baz ON ...) WHERE ...
+
+Actually, either syntax above would support that; I guess what's really
+bothering me about the first syntax is that a comma suggests a list of
+things that will all be treated similarly, while in reality the first
+item will be treated much differently from the rest.
+
+Does anyone know whether other systems that support the UPDATE extension
+for multiple tables also support a DELETE extension for multiple tables?
+If so, what's their syntax?
+
+A somewhat-related issue is that people keep expecting to be able to
+attach an alias to the target table name in UPDATE and DELETE; seems
+like we get that question every couple months.  While this is clearly
+disallowed by the SQL spec, it's apparently supported by some other
+implementations (else we'd not get the question so much).  Should we
+add that extension to our syntax?  Or should we continue to resist it?
+
+			regards, tom lane
+
+---------------------------(end of broadcast)---------------------------
+TIP 2: you can get off all lists at once with the unregister command
+    (send "unregister YourEmailAddressHere" to majordomo@postgresql.org)
+
+From pgsql-sql-owner+M8084=candle.pha.pa.us=pgman@postgresql.org Mon Jun 10 17:29:55 2002
+Return-path: <pgsql-sql-owner+M8084=candle.pha.pa.us=pgman@postgresql.org>
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by candle.pha.pa.us (8.11.6/8.10.1) with ESMTP id g5ALTss19669
+	for <pgman@candle.pha.pa.us>; Mon, 10 Jun 2002 17:29:55 -0400 (EDT)
+Received: from localhost.localdomain (postgresql.org [64.49.215.8])
+	by localhost (Postfix) with ESMTP id 2E791476662
+	for <pgman@candle.pha.pa.us>; Mon, 10 Jun 2002 17:08:54 -0400 (EDT)
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by postgresql.org (Postfix) with SMTP id 058BC47699E
+	for <pgman@candle.pha.pa.us>; Mon, 10 Jun 2002 16:54:17 -0400 (EDT)
+Received: from localhost.localdomain (postgresql.org [64.49.215.8])
+	by localhost (Postfix) with ESMTP id 166E8476126
+	for <pgsql-sql@postgresql.org>; Mon, 10 Jun 2002 16:54:07 -0400 (EDT)
+Received: from email03.aon.at (WARSL402PIP6.highway.telekom.at [195.3.96.93])
+	by postgresql.org (Postfix) with SMTP id 5220F475EE3
+	for <pgsql-sql@postgresql.org>; Mon, 10 Jun 2002 16:24:10 -0400 (EDT)
+Received: (qmail 384444 invoked from network); 10 Jun 2002 20:24:10 -0000
+Received: from m155p031.dipool.highway.telekom.at (HELO cantor) ([62.46.9.95]) (envelope-sender <mkoi-pg@aon.at>)
+          by qmail3rs.highway.telekom.at (qmail-ldap-1.03) with SMTP
+          for <tgl@sss.pgh.pa.us>; 10 Jun 2002 20:24:10 -0000
+From: Manfred Koizar <mkoi-pg@aon.at>
+To: Tom Lane <tgl@sss.pgh.pa.us>
+cc: Christoph Haller <ch@rodos.fzk.de>, pgsql-sql@postgresql.org,
+   pgsql-hackers@postgresql.org
+Subject: Re: [SQL] Efficient DELETE Strategies 
+Date: Mon, 10 Jun 2002 22:23:38 +0200
+Message-ID: <j8u9gukf7882nq3tsfhqr5bte9386p637l@4ax.com>
+References: <200206101142.NAA16854@rodos> <5619.1023717387@sss.pgh.pa.us>
+In-Reply-To: <5619.1023717387@sss.pgh.pa.us>
+X-Mailer: Forte Agent 1.8/32.548
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Precedence: bulk
+Sender: pgsql-sql-owner@postgresql.org
+Status: OR
+
+On Mon, 10 Jun 2002 09:56:27 -0400, Tom Lane <tgl@sss.pgh.pa.us>
+wrote:
+>Does anyone know whether other systems that support the UPDATE extension
+>for multiple tables also support a DELETE extension for multiple tables?
+>If so, what's their syntax?
+
+MSSQL seems to guess what the user wants.  All the following
+statements do the same:
+
+(0)  DELETE FROM t1 WHERE EXISTS (SELECT * FROM t2 WHERE t1.i=t2.i)
+(1)  DELETE t1 FROM t2 WHERE t1.i=t2.i
+(2a) DELETE t1 FROM t2, t1 WHERE t1.i=t2.i
+(2b) DELETE t1 FROM t2 INNER JOIN t1 ON t1.i=t2.i
+(3a) DELETE t1 FROM t2, t1 a WHERE a.i=t2.i
+(3b) DELETE t1 FROM t2 INNER JOIN t1 a ON a.i=t2.i
+(4a) DELETE a FROM t2, t1 a WHERE a.i=t2.i
+(4b) DELETE a FROM t2 INNER JOIN t1 a ON a.i=t2.i
+(5)  DELETE t1 FROM t1 a
+     WHERE EXISTS (SELECT * FROM t2 WHERE a.i=t2.i)
+(6)  DELETE a FROM t1 a WHERE EXISTS (SELECT * FROM t2 WHERE a.i=t2.i)
+
+(0) is standard SQL and should always work.  As an extension I'd like
+(1) or (2), but only one of them and forbid the other one.  I'd also
+forbid (3), don't know what to think of (4), and don't see a reason
+why we would want (5) or (6).  I'd rather have (7) or (8).
+
+These don't work:
+(7) DELETE t1 a FROM t2 WHERE a.i = t2.i
+"Incorrect syntax near 'a'."
+
+(8) DELETE FROM t1 a WHERE EXISTS (SELECT * FROM t2 WHERE a.i = t2.i)
+"Incorrect syntax near 'a'."
+
+Self joins:
+(2as) DELETE t1 FROM t1, t1 b WHERE 2*b.i=t1.i
+(4as) DELETE a FROM t1 a, t1 b WHERE 2*b.i=a.i
+(4bs) DELETE a FROM t1 a INNER JOIN t1 b on 2*b.i=a.i
+
+These don't work:
+DELETE t1 FROM t1 b WHERE 2 * b.i = t1.i
+"The column prefix 't1' does not match with a table name or alias name
+used in the query."
+
+DELETE t1 FROM t1 a, t1 b WHERE 2 * b.i = a.i
+"The table 't1' is ambiguous."
+
+And as if there aren't enough ways yet, I just discovered that (1) to
+(6) just as much work with "DELETE FROM" where I wrote "DELETE" ...
+
+Servus
+ Manfred
+
+---------------------------(end of broadcast)---------------------------
+TIP 2: you can get off all lists at once with the unregister command
+    (send "unregister YourEmailAddressHere" to majordomo@postgresql.org)
+
+From pgsql-sql-owner+M8087=candle.pha.pa.us=pgman@postgresql.org Mon Jun 10 18:21:01 2002
+Return-path: <pgsql-sql-owner+M8087=candle.pha.pa.us=pgman@postgresql.org>
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by candle.pha.pa.us (8.11.6/8.10.1) with ESMTP id g5AML1s23486
+	for <pgman@candle.pha.pa.us>; Mon, 10 Jun 2002 18:21:01 -0400 (EDT)
+Received: from localhost.localdomain (postgresql.org [64.49.215.8])
+	by localhost (Postfix) with ESMTP id E49B0475DF3
+	for <pgman@candle.pha.pa.us>; Mon, 10 Jun 2002 18:20:59 -0400 (EDT)
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by postgresql.org (Postfix) with SMTP id 44380476B3C
+	for <pgman@candle.pha.pa.us>; Mon, 10 Jun 2002 17:52:32 -0400 (EDT)
+Received: from localhost.localdomain (postgresql.org [64.49.215.8])
+	by localhost (Postfix) with ESMTP
+	id C8FAA476313; Mon, 10 Jun 2002 17:52:22 -0400 (EDT)
+Received: from sss.pgh.pa.us (unknown [192.204.191.242])
+	by postgresql.org (Postfix) with ESMTP
+	id 3AE9A4769C6; Mon, 10 Jun 2002 17:09:25 -0400 (EDT)
+Received: from sss2.sss.pgh.pa.us (tgl@localhost [127.0.0.1])
+	by sss.pgh.pa.us (8.11.4/8.11.4) with ESMTP id g5AL7ub08809;
+	Mon, 10 Jun 2002 17:07:56 -0400 (EDT)
+To: Manfred Koizar <mkoi-pg@aon.at>
+cc: Christoph Haller <ch@rodos.fzk.de>, pgsql-sql@postgresql.org,
+   pgsql-hackers@postgresql.org
+Subject: Re: [SQL] Efficient DELETE Strategies 
+In-Reply-To: <j8u9gukf7882nq3tsfhqr5bte9386p637l@4ax.com> 
+References: <200206101142.NAA16854@rodos> <5619.1023717387@sss.pgh.pa.us> <j8u9gukf7882nq3tsfhqr5bte9386p637l@4ax.com>
+Comments: In-reply-to Manfred Koizar <mkoi-pg@aon.at>
+	message dated "Mon, 10 Jun 2002 22:23:38 +0200"
+Date: Mon, 10 Jun 2002 17:07:56 -0400
+Message-ID: <8806.1023743276@sss.pgh.pa.us>
+From: Tom Lane <tgl@sss.pgh.pa.us>
+Precedence: bulk
+Sender: pgsql-sql-owner@postgresql.org
+Status: OR
+
+Manfred Koizar <mkoi-pg@aon.at> writes:
+>> If so, what's their syntax?
+
+> MSSQL seems to guess what the user wants.
+
+Gack.  Nothing like treating mindless syntax variations as a "feature"
+list...
+
+> All the following statements do the same:
+
+> (1)  DELETE t1 FROM t2 WHERE t1.i=t2.i
+> (2a) DELETE t1 FROM t2, t1 WHERE t1.i=t2.i
+> (5)  DELETE t1 FROM t1 a
+>      WHERE EXISTS (SELECT * FROM t2 WHERE a.i=t2.i)
+> (6)  DELETE a FROM t1 a WHERE EXISTS (SELECT * FROM t2 WHERE a.i=t2.i)
+
+So in other words, MSSQL has no idea whether the name following DELETE
+is a real table name or an alias, and it's also unclear whether the name
+appears in the separate FROM clause or generates a FROM-item all by
+itself.  This is why they have to punt on these cases:
+
+> These don't work:
+> DELETE t1 FROM t1 b WHERE 2 * b.i = t1.i
+> "The column prefix 't1' does not match with a table name or alias name
+> used in the query."
+
+> DELETE t1 FROM t1 a, t1 b WHERE 2 * b.i = a.i
+> "The table 't1' is ambiguous."
+
+The ambiguity is entirely self-inflicted...
+
+> And as if there aren't enough ways yet, I just discovered that (1) to
+> (6) just as much work with "DELETE FROM" where I wrote "DELETE" ...
+
+Hm.  So (1) with the DELETE FROM corresponds exactly to what I was
+suggesting:
+	DELETE FROM t1 FROM t2 WHERE t1.i=t2.i
+except that I'd also allow an alias in there:
+	DELETE FROM t1 a FROM t2 b WHERE a.i=b.i
+
+Given the plethora of mutually incompatible interpretations that MSSQL
+evidently supports, though, I fear we can't use it as precedent for
+making any choices :-(.
+
+Can anyone check out other systems?
+
+			regards, tom lane
+
+---------------------------(end of broadcast)---------------------------
+TIP 2: you can get off all lists at once with the unregister command
+    (send "unregister YourEmailAddressHere" to majordomo@postgresql.org)
+
+From pgsql-sql-owner+M8093=candle.pha.pa.us=pgman@postgresql.org Tue Jun 11 05:19:14 2002
+Return-path: <pgsql-sql-owner+M8093=candle.pha.pa.us=pgman@postgresql.org>
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by candle.pha.pa.us (8.11.6/8.10.1) with ESMTP id g5B9JDs10695
+	for <pgman@candle.pha.pa.us>; Tue, 11 Jun 2002 05:19:13 -0400 (EDT)
+Received: from localhost.localdomain (postgresql.org [64.49.215.8])
+	by localhost (Postfix) with ESMTP id CF0B2476367
+	for <pgman@candle.pha.pa.us>; Tue, 11 Jun 2002 05:19:10 -0400 (EDT)
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by postgresql.org (Postfix) with SMTP id 396594762B3
+	for <pgman@candle.pha.pa.us>; Tue, 11 Jun 2002 05:19:06 -0400 (EDT)
+Received: from localhost.localdomain (postgresql.org [64.49.215.8])
+	by localhost (Postfix) with ESMTP id 196DE475EFD
+	for <pgsql-sql@postgresql.org>; Tue, 11 Jun 2002 05:18:57 -0400 (EDT)
+Received: from fzkmail2.fzk.de (fzkmail2.fzk.de [141.52.27.52])
+	by postgresql.org (Postfix) with SMTP id 6A5EE475EA8
+	for <pgsql-sql@postgresql.org>; Tue, 11 Jun 2002 05:18:55 -0400 (EDT)
+Received: FROM resy5.fzk.de BY fzkmail2.fzk.de ; Tue Jun 11 11:18:56 2002 +0200
+Received: by rodos.fzk.de with ESMTP (8.8.6 (PHNE_17135)/8.7.1) id LAA02189 for <pgsql-sql@postgresql.org>; Tue, 11 Jun 2002 11:19:15 +0200 (METDST)
+From: Christoph Haller <ch@rodos.fzk.de>
+Message-ID: <200206110918.LAA20463@rodos>
+Subject: Re: [SQL] Efficient DELETE Strategies
+To: pgsql-sql@postgresql.org
+Date: Tue, 11 Jun 2002 11:18:34 METDST
+X-Mailer: Elm [revision: 212.4]
+Precedence: bulk
+Sender: pgsql-sql-owner@postgresql.org
+Status: OR
+
+Bruce Momjian wrote:
+> ...
+> Yes, another keyword is the only solution.  Having FROM after DELETE
+> mean something different from FROM after a tablename is just too weird.
+> I know UPDATE uses FROM, and it is logical to use it here, but it is
+> just too wierd when DELETE already has a FROM.  Should we allow FROM and
+> add WITH to UPDATE as well, and document WITH but support FROM too?  No
+> idea.  What if we support ADD FROM as the keywords for the new clause?
+
+Sounds like the best solution so far. 
+
+Christopher Kings-Lynne wrote:
+> DELETE [LOW_PRIORITY | QUICK] table_name[.*] [,table_name[.*] ...]
+>        FROM table-references
+>        [WHERE where_definition]
+>
+> or
+>
+> DELETE [LOW_PRIORITY | QUICK]
+>        FROM table_name[.*], [table_name[.*] ...]
+>        USING table-references
+>        [WHERE where_definition]
+>
+> ...
+> The idea is that only matching rows from the tables listed before the FROM
+> or before the USING clause are deleted. The effect is that you can delete
+> rows from many tables at the same time and also have additional tables that
+> are used for searching.
+
+Sounds tempting. It is much more what I was asking for. 
+Is there a collision with USING ( join_column_list ) ? 
+And it looks like very much work for the HACKERS. 
+
+Hannu Krosing wrote:
+> ...
+> Or then we can just stick with standard syntax and teach people to do
+>
+> DELETE FROM t1 where t1.id1 in
+>  (select id2 from t2 where t2.id2 = t1.id1)
+>
+> and perhaps even teach our optimizer to add the t2.id2 = t1.id1 part
+> itself to make it fast
+>
+> AFAIK this should be exactly the same as the proposed
+>
+> DELETE FROM t1 FROM t2
+> WHERE t2.id2 = t1.id1
+
+This is a fine idea. But it looks like very much work for the HACKERS, too. 
+
+Regards, Christoph 
+
+---------------------------(end of broadcast)---------------------------
+TIP 1: subscribe and unsubscribe commands go to majordomo@postgresql.org
+
+From pgsql-sql-owner+M8094=candle.pha.pa.us=pgman@postgresql.org Tue Jun 11 10:29:20 2002
+Return-path: <pgsql-sql-owner+M8094=candle.pha.pa.us=pgman@postgresql.org>
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by candle.pha.pa.us (8.11.6/8.10.1) with ESMTP id g5BETKs27634
+	for <pgman@candle.pha.pa.us>; Tue, 11 Jun 2002 10:29:20 -0400 (EDT)
+Received: from localhost.localdomain (postgresql.org [64.49.215.8])
+	by localhost (Postfix) with ESMTP id 7C77447648F
+	for <pgman@candle.pha.pa.us>; Tue, 11 Jun 2002 10:29:15 -0400 (EDT)
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by postgresql.org (Postfix) with SMTP id DFEDD476412
+	for <pgman@candle.pha.pa.us>; Tue, 11 Jun 2002 10:29:08 -0400 (EDT)
+Received: from localhost.localdomain (postgresql.org [64.49.215.8])
+	by localhost (Postfix) with ESMTP id 16FB8475905
+	for <pgsql-sql@postgresql.org>; Tue, 11 Jun 2002 10:28:59 -0400 (EDT)
+Received: from sss.pgh.pa.us (unknown [192.204.191.242])
+	by postgresql.org (Postfix) with ESMTP id 5B568475864
+	for <pgsql-sql@postgresql.org>; Tue, 11 Jun 2002 10:28:58 -0400 (EDT)
+Received: from sss2.sss.pgh.pa.us (tgl@localhost [127.0.0.1])
+	by sss.pgh.pa.us (8.11.4/8.11.4) with ESMTP id g5BESfb18949;
+	Tue, 11 Jun 2002 10:28:41 -0400 (EDT)
+To: Christoph Haller <ch@rodos.fzk.de>
+cc: pgsql-sql@postgresql.org
+Subject: Re: [SQL] Efficient DELETE Strategies 
+In-Reply-To: <200206110918.LAA20463@rodos> 
+References: <200206110918.LAA20463@rodos>
+Comments: In-reply-to Christoph Haller <ch@rodos.fzk.de>
+	message dated "Tue, 11 Jun 2002 11:18:34 +0700"
+Date: Tue, 11 Jun 2002 10:28:40 -0400
+Message-ID: <18946.1023805720@sss.pgh.pa.us>
+From: Tom Lane <tgl@sss.pgh.pa.us>
+Precedence: bulk
+Sender: pgsql-sql-owner@postgresql.org
+Status: OR
+
+Christoph Haller <ch@rodos.fzk.de> writes:
+> Christopher Kings-Lynne wrote:
+>> DELETE [LOW_PRIORITY | QUICK] table_name[.*] [,table_name[.*] ...]
+>> FROM table-references
+>> [WHERE where_definition]
+>> 
+>> or
+>> 
+>> DELETE [LOW_PRIORITY | QUICK]
+>> FROM table_name[.*], [table_name[.*] ...]
+>> USING table-references
+>> [WHERE where_definition]
+>> 
+>> The idea is that only matching rows from the tables listed before the FROM
+>> or before the USING clause are deleted. The effect is that you can delete
+>> rows from many tables at the same time and also have additional tables that
+>> are used for searching.
+
+> Sounds tempting. It is much more what I was asking for. 
+> Is there a collision with USING ( join_column_list ) ? 
+
+Good point --- that was a very poor choice of keyword by the MySQL guys.
+
+I have absolutely no intention of getting into this "delete from
+multiple tables" business --- I don't understand the semantics it should
+have, and it would probably not be easy to do inside Postgres anyway.
+
+It would seem that
+
+	DELETE [ FROM ] relation_expr [ alias_clause ]
+	[ FROM from_list ] where_clause
+
+is the syntax that would be most nearly compatible with MSSQL and MySQL.
+Does Oracle have anything comparable?
+
+			regards, tom lane
+
+---------------------------(end of broadcast)---------------------------
+TIP 3: if posting/reading through Usenet, please send an appropriate
+subscribe-nomail command to majordomo@postgresql.org so that your
+message can get through to the mailing list cleanly
+
+From pgsql-sql-owner+M8112=candle.pha.pa.us=pgman@postgresql.org Wed Jun 12 10:04:47 2002
+Return-path: <pgsql-sql-owner+M8112=candle.pha.pa.us=pgman@postgresql.org>
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by candle.pha.pa.us (8.11.6/8.10.1) with ESMTP id g5CE4ks22425
+	for <pgman@candle.pha.pa.us>; Wed, 12 Jun 2002 10:04:46 -0400 (EDT)
+Received: from localhost.localdomain (postgresql.org [64.49.215.8])
+	by localhost (Postfix) with ESMTP id 695DA4769F8
+	for <pgman@candle.pha.pa.us>; Wed, 12 Jun 2002 10:04:39 -0400 (EDT)
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by postgresql.org (Postfix) with SMTP id 3A9CD4768C1
+	for <pgman@candle.pha.pa.us>; Wed, 12 Jun 2002 10:04:31 -0400 (EDT)
+Received: from localhost.localdomain (postgresql.org [64.49.215.8])
+	by localhost (Postfix) with ESMTP id 433F447595A
+	for <pgsql-sql@postgresql.org>; Wed, 12 Jun 2002 10:04:20 -0400 (EDT)
+Received: from email01.aon.at (WARSL402PIP3.highway.telekom.at [195.3.96.97])
+	by postgresql.org (Postfix) with SMTP id D029747585D
+	for <pgsql-sql@postgresql.org>; Wed, 12 Jun 2002 10:04:18 -0400 (EDT)
+Received: (qmail 421750 invoked from network); 12 Jun 2002 14:04:17 -0000
+Received: from m156p012.dipool.highway.telekom.at (HELO cantor) ([62.46.9.108]) (envelope-sender <mkoi-pg@aon.at>)
+          by qmail1rs.highway.telekom.at (qmail-ldap-1.03) with SMTP
+          for <tgl@sss.pgh.pa.us>; 12 Jun 2002 14:04:17 -0000
+From: Manfred Koizar <mkoi-pg@aon.at>
+To: Tom Lane <tgl@sss.pgh.pa.us>
+cc: Christoph Haller <ch@rodos.fzk.de>, pgsql-sql@postgresql.org
+Subject: Re: [SQL] Efficient DELETE Strategies 
+Date: Wed, 12 Jun 2002 16:03:39 +0200
+Message-ID: <es9eguk7ov9644qo4qd341ess8ip8o51ok@4ax.com>
+References: <200206110918.LAA20463@rodos> <18946.1023805720@sss.pgh.pa.us>
+In-Reply-To: <18946.1023805720@sss.pgh.pa.us>
+X-Mailer: Forte Agent 1.8/32.548
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Precedence: bulk
+Sender: pgsql-sql-owner@postgresql.org
+Status: ORr
+
+On Tue, 11 Jun 2002 10:28:40 -0400, Tom Lane <tgl@sss.pgh.pa.us>
+wrote:
+>It would seem that
+>
+>	DELETE [ FROM ] relation_expr [ alias_clause ]
+>	[ FROM from_list ] where_clause
+>
+>is the syntax that would be most nearly compatible with MSSQL and MySQL.
+>Does Oracle have anything comparable?
+
+Oracle basically supports (with slight variations between releases
+7/8/9):
+	DELETE [FROM] { table
+	              | view
+	              | ( subquery )
+	              }
+	       [alias] [WHERE ...] [returning_clause]
+
+Informix (March 1997, 9.1?):
+	DELETE FROM { table
+	            | ONLY ( table )
+	            | view
+                    | synonym
+	            | collection_derived_table
+	            }
+	       WHERE condition
+
+According to the "SQL Quick Syntax Guide" the WHERE clause is not
+optional.  Does anybody know, if this is a documentation bug?
+"Guide to SQL, Syntax" (Feb 1998, v7.3, v8.2) says, the WHERE clause
+is optional, as we'd expect.
+
+Servus
+ Manfred
+
+---------------------------(end of broadcast)---------------------------
+TIP 3: if posting/reading through Usenet, please send an appropriate
+subscribe-nomail command to majordomo@postgresql.org so that your
+message can get through to the mailing list cleanly
+
+From pgsql-sql-owner+M8113=candle.pha.pa.us=pgman@postgresql.org Wed Jun 12 10:53:12 2002
+Return-path: <pgsql-sql-owner+M8113=candle.pha.pa.us=pgman@postgresql.org>
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by candle.pha.pa.us (8.11.6/8.10.1) with ESMTP id g5CErCs26287
+	for <pgman@candle.pha.pa.us>; Wed, 12 Jun 2002 10:53:12 -0400 (EDT)
+Received: from localhost.localdomain (postgresql.org [64.49.215.8])
+	by localhost (Postfix) with ESMTP id 58E1B476B2F
+	for <pgman@candle.pha.pa.us>; Wed, 12 Jun 2002 10:53:08 -0400 (EDT)
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by postgresql.org (Postfix) with SMTP id 3A802476A3D
+	for <pgman@candle.pha.pa.us>; Wed, 12 Jun 2002 10:52:39 -0400 (EDT)
+Received: from localhost.localdomain (postgresql.org [64.49.215.8])
+	by localhost (Postfix) with ESMTP id E86DF4765E1
+	for <pgsql-sql@postgresql.org>; Wed, 12 Jun 2002 10:52:30 -0400 (EDT)
+Received: from sss.pgh.pa.us (unknown [192.204.191.242])
+	by postgresql.org (Postfix) with ESMTP id A1582476891
+	for <pgsql-sql@postgresql.org>; Wed, 12 Jun 2002 10:50:07 -0400 (EDT)
+Received: from sss2.sss.pgh.pa.us (tgl@localhost [127.0.0.1])
+	by sss.pgh.pa.us (8.11.4/8.11.4) with ESMTP id g5CEnQb09666;
+	Wed, 12 Jun 2002 10:49:26 -0400 (EDT)
+To: Manfred Koizar <mkoi-pg@aon.at>
+cc: Christoph Haller <ch@rodos.fzk.de>, pgsql-sql@postgresql.org
+Subject: Re: [SQL] Efficient DELETE Strategies 
+In-Reply-To: <es9eguk7ov9644qo4qd341ess8ip8o51ok@4ax.com> 
+References: <200206110918.LAA20463@rodos> <18946.1023805720@sss.pgh.pa.us> <es9eguk7ov9644qo4qd341ess8ip8o51ok@4ax.com>
+Comments: In-reply-to Manfred Koizar <mkoi-pg@aon.at>
+	message dated "Wed, 12 Jun 2002 16:03:39 +0200"
+Date: Wed, 12 Jun 2002 10:49:26 -0400
+Message-ID: <9663.1023893366@sss.pgh.pa.us>
+From: Tom Lane <tgl@sss.pgh.pa.us>
+Precedence: bulk
+Sender: pgsql-sql-owner@postgresql.org
+Status: OR
+
+Manfred Koizar <mkoi-pg@aon.at> writes:
+> Oracle basically supports (with slight variations between releases
+> 7/8/9):
+> 	DELETE [FROM] { table
+> 	              | view
+> 	              | ( subquery )
+> 	              }
+> 	       [alias] [WHERE ...] [returning_clause]
+
+Bizarre.  How are you supposed to delete from a subquery?
+
+> According to the "SQL Quick Syntax Guide" the WHERE clause is not
+> optional.  Does anybody know, if this is a documentation bug?
+
+Probably.  SQL92 saith:
+
+         <delete statement: searched> ::=
+              DELETE FROM <table name>
+                [ WHERE <search condition> ]
+
+         <delete statement: positioned> ::=
+              DELETE FROM <table name>
+                WHERE CURRENT OF <cursor name>
+
+so I could see where a sloppy reader might get confused...
+
+			regards, tom lane
+
+---------------------------(end of broadcast)---------------------------
+TIP 2: you can get off all lists at once with the unregister command
+    (send "unregister YourEmailAddressHere" to majordomo@postgresql.org)
+
+From pgsql-sql-owner+M8118=candle.pha.pa.us=pgman@postgresql.org Wed Jun 12 14:26:01 2002
+Return-path: <pgsql-sql-owner+M8118=candle.pha.pa.us=pgman@postgresql.org>
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by candle.pha.pa.us (8.11.6/8.10.1) with ESMTP id g5CIQ0s15072
+	for <pgman@candle.pha.pa.us>; Wed, 12 Jun 2002 14:26:00 -0400 (EDT)
+Received: from localhost.localdomain (postgresql.org [64.49.215.8])
+	by localhost (Postfix) with ESMTP id E0386476C77
+	for <pgman@candle.pha.pa.us>; Wed, 12 Jun 2002 14:26:00 -0400 (EDT)
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by postgresql.org (Postfix) with SMTP id E24DB476BCA
+	for <pgman@candle.pha.pa.us>; Wed, 12 Jun 2002 14:16:52 -0400 (EDT)
+Received: from localhost.localdomain (postgresql.org [64.49.215.8])
+	by localhost (Postfix) with ESMTP id 003F047694A
+	for <pgsql-sql@postgresql.org>; Wed, 12 Jun 2002 14:16:32 -0400 (EDT)
+Received: from email04.aon.at (WARSL402PIP5.highway.telekom.at [195.3.96.79])
+	by postgresql.org (Postfix) with SMTP id BCEAE476026
+	for <pgsql-sql@postgresql.org>; Wed, 12 Jun 2002 14:06:51 -0400 (EDT)
+Received: (qmail 25330 invoked from network); 12 Jun 2002 18:06:47 -0000
+Received: from m157p003.dipool.highway.telekom.at (HELO cantor) ([62.46.9.131]) (envelope-sender <mkoi-pg@aon.at>)
+          by qmail5rs.highway.telekom.at (qmail-ldap-1.03) with SMTP
+          for <tgl@sss.pgh.pa.us>; 12 Jun 2002 18:06:47 -0000
+From: Manfred Koizar <mkoi-pg@aon.at>
+To: Tom Lane <tgl@sss.pgh.pa.us>
+cc: Christoph Haller <ch@rodos.fzk.de>, pgsql-sql@postgresql.org
+Subject: Re: [SQL] Efficient DELETE Strategies 
+Date: Wed, 12 Jun 2002 20:06:11 +0200
+Message-ID: <dgqeguc0kf8ord0g37vo3hm6maqk649jak@4ax.com>
+References: <200206110918.LAA20463@rodos> <18946.1023805720@sss.pgh.pa.us> <es9eguk7ov9644qo4qd341ess8ip8o51ok@4ax.com> <9663.1023893366@sss.pgh.pa.us>
+In-Reply-To: <9663.1023893366@sss.pgh.pa.us>
+X-Mailer: Forte Agent 1.8/32.548
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Precedence: bulk
+Sender: pgsql-sql-owner@postgresql.org
+Status: OR
+
+On Wed, 12 Jun 2002 10:49:26 -0400, Tom Lane <tgl@sss.pgh.pa.us>
+wrote:
+>Manfred Koizar <mkoi-pg@aon.at> writes:
+>> Oracle basically supports (with slight variations between releases
+>> 7/8/9):
+>> 	DELETE [FROM] { table
+>> 	              | view
+>> 	              | ( subquery )
+>> 	              }
+>> 	       [alias] [WHERE ...] [returning_clause]
+>
+>Bizarre.  How are you supposed to delete from a subquery?
+
+Hey, don't blame *me* :-)  The thought seems to be, if it is ok to
+delete from a view, and a view is just a name for a query, why not
+allow to delete from a query.  Here is an example out of the reference
+manual:
+	DELETE FROM (select * from emp)
+	WHERE JOB = 'SALESMAN'
+	AND COMM < 100;
+
+To be clear: I do *not* think, we need this in PostgreSQL.  Otherwise
+we'd also have to support delete from the result set of a function ;-)
+
+BTW, I did some more digging.  The results are somewhat confusing.
+
+O7: no subquery
+
+O8 v8.0: subquery allowed
+
+O8i v8.1.5:
+    DELETE [ FROM ] table_expression_clause [ where_clause ]
+
+table_expression_clause ::=
+    { schema . { table
+               | view
+               | snapshot
+               }
+    | ( subquery )
+    | table_collection_expression
+    } [ , ... ]
+
+Note, the syntax diagram in the "Oracle8i SQL Reference" claims, that
+table_expression_clause can contain more than one table, view, etc.
+but this feature(?) is not mentioned in the text.  Please, could
+someone try this?
+
+O9i: only one table, view, ...
+	DELETE [hint] [FROM] 
+	{ dml_table_expression_clause
+	| ONLY ( dml_table_expression_clause ) }
+	[t_alias] [where_clause] [returning_clause];
+
+dml_table_expression_clause ::=
+	{ [schema .]
+	  { table 
+	    [ { PARTITION ( partition )
+	      | SUBPARTITION ( subpartition ) }
+	    | @ dblink
+	    ]
+	  | { view | materialized view } [@ dblink]
+	  } 
+	| ( subquery [subquery_restriction_clause] )
+	| table_collection_expression
+	}
+
+One more thing I found:
+
+Informix XPS (Extended Parallel Server) v8.3 and later allows
+
+    DELETE FROM { table | view | synonym }
+           [ { USING | FROM }
+             { table | view | synonym | alias } [ , ... ] ]
+           [ WHERE condition ]
+
+which looks pretty much like your suggestion.  Though the semantics
+are a bit fuzzy.  They require the target table to be listed after the
+USING (or second FROM) keyword and give this example:
+
+	DELETE FROM lineitem
+	USING order o, lineitem l
+	WHERE o.qty < 1 AND o.order_num = l.order_num
+
+But what would they do on
+
+	DELETE FROM lineitem
+	USING lineitem l1, lineitem l2
+	WHERE l1.item_num < l2.item_num
+          AND l1.order_num = l2.order_num
+
+Servus
+ Manfred
+
+---------------------------(end of broadcast)---------------------------
+TIP 5: Have you checked our extensive FAQ?
+
+http://www.postgresql.org/users-lounge/docs/faq.html
+
