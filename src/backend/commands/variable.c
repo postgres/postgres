@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/variable.c,v 1.64 2002/04/22 14:34:27 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/variable.c,v 1.65 2002/04/22 15:13:53 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -287,7 +287,8 @@ parse_datestyle(List *args)
 				Value *s;
 				Assert(IsA(type->names, List));
 				s = (Value *) lfirst(type->names);
-				elog(ERROR, "SET DATESTYLE does not allow input of type %s", s->val.str);
+				elog(ERROR, "SET DATESTYLE does not allow input of type %s"
+					 "\n\tUse an untyped string instead", s->val.str);
 			}
 
 			value = v->val.str;
@@ -594,7 +595,7 @@ parse_XactIsoLevel(List *args)
 	Assert(IsA(lfirst(args), A_Const));
 	/* Should only get one argument from the parser */
 	if (lnext(args) != NIL)
-		elog(ERROR, "SET TRANSACTION ISOLATION LEVEL does not allow multiple arguments");
+		elog(ERROR, "SET TRANSACTION ISOLATION LEVEL takes only one argument");
 
 	Assert(((A_Const *) lfirst(args))->val.type = T_String);
 	value = ((A_Const *) lfirst(args))->val.val.str;
@@ -657,7 +658,7 @@ parse_random_seed(List *args)
 	Assert(IsA(args, List));
 	/* Should only get one argument from the parser */
 	if (lnext(args) != NIL)
-		elog(ERROR, "SET SEED does not allow multiple arguments");
+		elog(ERROR, "SET SEED takes only one argument");
 
 	p = lfirst(args);
 	Assert(IsA(p, A_Const));
@@ -720,7 +721,7 @@ parse_client_encoding(List *args)
 		return reset_client_encoding();
 
 	if (lnext(args) != NIL)
-		elog(ERROR, "SET CLIENT ENCODING does not allow multiple arguments");
+		elog(ERROR, "SET CLIENT ENCODING takes only one argument");
 
 	Assert(IsA(lfirst(args), A_Const));
 	if (((A_Const *) lfirst(args))->val.type != T_String)
@@ -852,15 +853,23 @@ SetPGVariable(const char *name, List *args)
 				elog(ERROR, "SET %s takes only one argument", name);
 
 			n = (A_Const *) lfirst(args);
-			/* If this is a T_Integer, then we should convert back to a string
-			 * but for now we just reject the parameter.
-			 */
-			if ((n->val.type != T_String)
-				&& (n->val.type != T_Float))
-				elog(ERROR, "SET requires a string argument for this parameter"
-					 "\n\tInternal coding error: report to thomas@fourpalms.org");
-
-			value = n->val.val.str;
+			if ((n->val.type == T_String)
+				|| (n->val.type == T_Float))
+			{
+				value = n->val.val.str;
+			}
+			else if (n->val.type == T_Integer)
+			{
+				/* We should convert back to a string. */
+				value = DatumGetCString(DirectFunctionCall1(int4out, Int32GetDatum(n->val.val.ival)));
+			}
+			else
+			{
+				elog(ERROR, "SET %s accepts a string argument for this parameter"
+					 "\n\tInternal coding error: report to thomas@fourpalms.org",
+					 name);
+				value = NULL;
+			}
 		}
 		else
 		{
