@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Thu Jan  4 03:15:12 EST 2001
+Last updated:		Thu Jan  4 03:24:53 EST 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -27,26 +27,26 @@ PARSER
   [inherit] 
 * -Be smarter about promoting types when UNION merges different data types
 * -redesign INSERT ... SELECT to have two levels of target list
-* have INTERSECT/EXCEPT prevent duplicates unless ALL is specified
-* SELECT col::DECIMAL(12,10); fails
+* -have INTERSECT/EXCEPT prevent duplicates unless ALL is specified (Tom)
+* -SELECT col::DECIMAL(12,10); fails
 
 VIEWS
 
 * -Views containing aggregates sometimes fail (Jan)
-* Creating view and inheriting the view causes view* to show
+* -Creating view and inheriting the view causes view* to show
   duplicates (inherit) 
 * -Disallow LOCK on view (Mark Hollomon)
 
 MISC
 
 * Plpgsql does not handle quoted mixed-case identifiers
-* Buffer reference counting bugfixes
-* Fix libpq bug that causes it to drop backend error message sent
+* -Buffer reference counting bugfixes (Tom)
+* -Fix libpq bug that causes it to drop backend error message sent
   just before connection closure (ie, any FATAL error message)
 * -SELECT ... UNION ... ORDER BY fails when sort expr not in result list
 * -SELECT ... UNION ... GROUP BY fails if column types disagree, no type
   promotion occurs
-* Modification  of  pg_class  can  happen while table in use by
+* -Modification  of  pg_class  can  happen while table in use by
   another backend.  Might  lead  to  MVCC  inside  of  syscache
 * Permission to DELETE table allows UPDATE also
 
@@ -57,7 +57,7 @@ URGENT
 
 * -Add OUTER joins, left and right[outer] (Tom, Thomas)
 * -Allow long tuples by chaining or auto-storing outside db (TOAST) (Jan)
-* Fix memory leak for expressions[memory] (Tom?) 
+* -Fix memory leak for expressions[memory] (Tom) 
 * Add replication of distributed databases [replication]
 	o automatic fallover
 	o load balancing
@@ -117,7 +117,7 @@ TYPES
 * Make functions more multi-byte aware, i.e. trim()
 * Make n of CHAR(n)/VARCHAR(n) the number of letters, not bytes
 * -Update macaddr manufacturer numbers, or remove the function macaddr_manuf()
-* Add btree index support for reltime, tinterval, regproc, bit, varbit
+* Add btree index support for reltime, tinterval, regproc
 * Add rtree index support for line, lseg, path, point
 * Make binary/file in/out interface for TOAST columns
 * SELECT cash_out(2) crashes because of opaque
@@ -127,10 +127,9 @@ VIEWS
 * -Allow DISTINCT on views
 * -Allow views of aggregate columns
 * -Allow views with subselects
-* Create insert, update and delete rules for simple one table views
+* Automatically create rules on views so they are updateable, per SQL92
 * -Change elog for complex view ins|upd|del to "cannot {ins|upd|del}
 * Add the functionality for "with check option" clause of create view
-* Automatically create rules on views so they are updateable, per SQL92
 
 INDEXES
 
@@ -168,7 +167,7 @@ COMMANDS
 * Allow BINARY option to SELECT, like we do with DECLARE
 * MOVE 0 should not move to end of cursor
 * Overhaul ACL (access control) code
-* Allow ORDER BY...LIMIT in INSERT INTO ... SELECT
+* -Allow ORDER BY...LIMIT in INSERT INTO ... SELECT (Tom)
 * Add SHOW command to display locks
 
 CLIENTS
@@ -193,8 +192,8 @@ REFERENTIAL INTEGRITY
 * Check that primary key exists at foreign key definition time
 * Prevent column dropping if column is used by foreign key
 * Propagate column or table renaming to foreign key constraints
-* Emit a warning at foreign key creation time if no UNIQUE index
-  exists on referenced primary key attributes
+* -Emit a warning at foreign key creation time if no UNIQUE index
+  exists on referenced primary key attributes (Tom)
 * Add deferred trigger queue file (Jan)
 * Allow oid to act as a foreign key
 * Implement dirty reads and use them in RI triggers
@@ -234,10 +233,10 @@ MISC
 * Overhaul bufmgr/lockmgr/transaction manager
 * -redesign UNION structures to have separarate target lists
 * -Allow multi-level query trees for INSERT INTO ... SELECT
-* Use IPC_EXCL when creating shared memory and semaphores
+* -Use IPC_EXCL when creating shared memory and semaphores (Tom)
 * have pg_upgrade use pg_ctl to stop/start postmaster
 * Encrpyt passwords in pg_shadow table using MD5 (Vince)
-* Use flock() to prevent multiple postmasters on the same port [flock]
+* -Use flock() to prevent multiple postmasters on the same port (Tom)
 * Allow Java server-side programming
 
 PERFORMANCE
@@ -255,9 +254,10 @@ INDEXES
   non-consecutive keys or OR clauses, so fewer heap accesses
 * Allow SELECT * FROM tab WHERE int2col = 4 use int2col index, int8,
   float4, numeric/decimal too [optimizer]
-* Include heap CTID in btree index keys, remove equal-key cruft from btree
+* -Include heap CTID in btree index keys, remove equal-key cruft from
+  btree (Tom)
 * Use indexes with CIDR '<<' (contains) operator
-* Fix LIKE indexing optimization for non-ASCII locales
+* Allow LIKE indexing optimization for non-ASCII locales
 
 CACHE
 
@@ -267,21 +267,19 @@ CACHE
 MISC
 
 * Allow compression of log and meta data
-* Allow char() not to use variable-sized header to reduce disk size
 * Do async I/O to do better read-ahead of data
 * Get faster regex() code from Henry Spencer <henry@zoo.utoronto.ca>
   when it is available
 * Use mmap() rather than SYSV shared memory(?)
-* Make oid use oidin/oidout not int4in/int4out in pg_type.h
+* -Make oid use oidin/oidout not int4in/int4out in pg_type.h (Tom)
 * Improve Subplan list handling
 * Allow Subplans to use efficient joins(hash, merge) with upper variable
   [subquery]
 * -use fmgr_info()/fmgr_faddr() instead of fmgr() calls in high-traffic
   places, like GROUP BY, UNIQUE, index processing, etc.
 * improve dynamic memory allocation by introducing tuple-context memory
-  allocation [memory]
+  allocation (Tom)
 * -In WHERE tab1.x=3 AND tab1.x=tab2.y, add tab2.y=3
-* prevent labels from being output for stored rules (Tom)
 * allow configuration of maximum number of open files
 * Remove pg_listener index
 * -Redesign ANALYZE in VACUUM so it can be run separately without locks
