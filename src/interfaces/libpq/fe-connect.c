@@ -7,22 +7,27 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.70 1998/07/03 04:24:12 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.71 1998/07/03 04:29:04 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 
 #include <stdlib.h>
 #include <sys/types.h>
+#ifdef WIN32
+#include "win32.h"
+#else
 #include <sys/socket.h>
-#include <fcntl.h>
 #include <unistd.h>
+#include <netdb.h>
+#include <sys/un.h>
+#include <netinet/in.h>
+#include <netinet/tcp.h>
+#endif
+#include <fcntl.h>
 #include <stdio.h>
 #include <ctype.h>
 #include <string.h>
-#include <netdb.h>
-#include <netinet/in.h>
-#include <netinet/tcp.h>
 #include <errno.h>
 #include <signal.h>
 #include <ctype.h>				/* for isspace() */
