@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.80 1998/08/18 00:48:54 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.81 1998/08/25 15:08:12 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -472,7 +472,7 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 	Constraint *constraint;
 	List	   *keys;
 	Ident	   *key;
-	List	   *ilist;
+	List	   *ilist = NIL;
 	IndexStmt  *index;
 	IndexElem  *iparam;
 
@@ -492,6 +492,46 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 			case T_ColumnDef:
 				column = (ColumnDef *) element;
 				columns = lappend(columns, column);
+
+				if (column->is_sequence)
+				{
+					char *cstring;
+					CreateSeqStmt *sequence;
+
+					constraint = makeNode(Constraint);
+					constraint->contype = CONSTR_DEFAULT;
+					constraint->name = makeTableName(stmt->relname, column->colname, "seq", NULL);
+					cstring = palloc(9+strlen(constraint->name)+2+1);
+					strcpy(cstring, "nextval('");
+					strcat(cstring, constraint->name);
+					strcat(cstring, "')");
+					constraint->def = cstring;
+					constraint->keys = NULL;
+
+					if (column->constraints != NIL)
+					{
+						column->constraints = lappend(column->constraints, constraint);
+					}
+					else
+					{
+						column->constraints = lcons(constraint, NIL);
+					}
+
+					sequence = makeNode(CreateSeqStmt);
+					sequence->seqname = constraint->name;
+					sequence->options = NIL;
+
+					elog(NOTICE, "CREATE TABLE will create implicit sequence %s for SERIAL column %s.%s",
+						 sequence->seqname, stmt->relname, column->colname);
+
+					ilist = lcons(sequence, NIL);
+
+					constraint = makeNode(Constraint);
+					constraint->contype = CONSTR_UNIQUE;
+
+					column->constraints = lappend(column->constraints, constraint);
+				}
+
 				if (column->constraints != NIL)
 				{
 					clist = column->constraints;
@@ -596,7 +636,6 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
  *	names for indices turn out to be redundant, or a user might have specified
  *	extra useless indices which might hurt performance. - thomas 1997-12-08
  */
-	ilist = NIL;
 	while (dlist != NIL)
 	{
 		constraint = lfirst(dlist);
