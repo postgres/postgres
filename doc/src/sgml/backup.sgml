@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.42 2004/08/04 17:37:09 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.43 2004/08/07 03:21:11 momjian Exp $
 -->
 <chapter id="backup">
  <title>Backup and Restore</title>
@@ -815,12 +815,16 @@ restore_command = 'cp /mnt/server/archivedir/%f %p'
     <literal>recovery.conf</>.  You can specify the stop point either by
     date/time or by transaction ID.  As of this writing only the date/time
     option is very usable, since there are no tools to help you identify
-    which transaction ID to use.  Note that the stop point must be after
-    the ending time of the backup (ie, the time of
-    <function>pg_stop_backup</>).  You cannot use a base backup to recover
-    to a time when that backup was still going on.  (To recover to such
-    a time, you must go back to your previous base backup and roll forward
-    from there.)
+    which transaction ID to use.  Keep in mind that while transaction
+    IDs are asigned sequentially at transaction start, transactions can
+    complete in a different numeric order.
+   </para
+   <para>
+    Note that the stop point must be after the ending time of the backup
+    (ie, the time of <function>pg_stop_backup</>).  You cannot use a base
+    backup to recover to a time when that backup was still going on.  (To
+    recover to such a time, you must go back to your previous base backup
+    and roll forward from there.)
    </para>
   </sect2>
 
