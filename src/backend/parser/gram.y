@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.370 2002/09/22 21:44:43 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.371 2002/10/31 02:31:00 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -657,19 +657,19 @@ OptUserElem:
 					$$ = makeDefElem("createdb", (Node *)makeInteger(FALSE));
 				}
 			| CREATEUSER
-				{ 
+				{
 					$$ = makeDefElem("createuser", (Node *)makeInteger(TRUE));
 				}
 			| NOCREATEUSER
-				{ 
+				{
 					$$ = makeDefElem("createuser", (Node *)makeInteger(FALSE));
 				}
 			| IN_P GROUP_P user_list
-				{ 
+				{
 					$$ = makeDefElem("groupElts", (Node *)$3);
 				}
 			| VALID UNTIL Sconst
-				{ 
+				{
 					$$ = makeDefElem("validUntil", (Node *)makeString($3));
 				}
 		;
@@ -707,7 +707,7 @@ OptGroupList:
 
 OptGroupElem:
 			USER user_list
-				{ 
+				{
 					$$ = makeDefElem("userElts", (Node *)$2);
 				}
 			| SYSID Iconst
@@ -1267,7 +1267,7 @@ opt_id: 	ColId									{ $$ = $1; }
  *
  *****************************************************************************/
 
-CopyStmt:	COPY opt_binary qualified_name opt_column_list opt_oids 
+CopyStmt:	COPY opt_binary qualified_name opt_column_list opt_oids
 			copy_from copy_file_name copy_delimiter opt_with copy_opt_list
 				{
 					CopyStmt *n = makeNode(CopyStmt);
@@ -3549,7 +3549,7 @@ opt_trans:	WORK									{}
  *
  *****************************************************************************/
 
-ViewStmt:	CREATE opt_or_replace VIEW qualified_name opt_column_list 
+ViewStmt:	CREATE opt_or_replace VIEW qualified_name opt_column_list
 				AS SelectStmt
 				{
 					ViewStmt *n = makeNode(ViewStmt);
@@ -6580,7 +6580,7 @@ convert_list:
 convert_args:	a_expr								{ $$ = makeList1($1); }
 			| convert_args ',' a_expr					{ $$ = lappend($1, $3); }
   		;
-  
+
 
 in_expr:	select_with_parens
 				{
@@ -7380,7 +7380,7 @@ makeTypeCast(Node *arg, TypeName *typename)
 	 *
 	 * Earlier we would determine whether an A_Const would
 	 * be acceptable, however Domains require coerce_type()
-	 * to process them -- applying constraints as required. 
+	 * to process them -- applying constraints as required.
 	 */
 	TypeCast *n = makeNode(TypeCast);
 	n->arg = arg;
