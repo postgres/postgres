@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/storage/ipc/shmem.c,v 1.6 1996/11/10 03:02:27 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/storage/ipc/shmem.c,v 1.7 1996/11/27 07:20:07 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -64,6 +64,7 @@
 #include "storage/ipc.h"
 #include "storage/shmem.h"
 #include "storage/spin.h"
+#include "storage/proc.h"
 #include "utils/dynahash.h"
 #include "utils/hsearch.h"
 
@@ -559,4 +560,43 @@ ShmemInitStruct(char *name, unsigned long size, bool *foundPtr)
 }
 
 
+/*
+ * TransactionIdIsInProgress -- is given transaction running by some backend
+ *
+ * Strange place for this func, but we have to lookup process data structures 
+ * for all running backends. - vadim 11/26/96
+ */
+bool
+TransactionIdIsInProgress (TransactionId xid)
+{
+    BindingEnt *result;
+    PROC *proc;
+        
+    Assert (BindingTable);
+    
+    SpinAcquire(BindingLock);
+
+    (void) hash_seq ((HTAB *)NULL);
+    while ( (result = (BindingEnt *) hash_seq (BindingTable)) != NULL )
+    {
+    	if ( result == (BindingEnt *) TRUE )
+    	{
+	    SpinRelease(BindingLock);
+	    return (false);
+	}
+	if ( result->location == INVALID_OFFSET ||
+		strncmp (result->key, "PID ", 4) != 0 )
+	    continue;
+    	proc = (PROC *) MAKE_PTR (result->location);
+    	if ( proc->xid == xid )
+    	{
+	    SpinRelease(BindingLock);
+	    return (true);
+	}
+    }
+	
+    SpinRelease(BindingLock);
+    elog (WARN,"TransactionIdIsInProgress: BindingTable corrupted");
+    return (false);
+}
 
