@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/postgres.sgml,v 1.37 2000/06/18 21:24:51 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/postgres.sgml,v 1.38 2000/07/01 15:05:47 petere Exp $
 -->
 
 <!doctype book PUBLIC "-//OASIS//DTD DocBook V3.1//EN" [
@@ -52,15 +52,15 @@ $Header: /cvsroot/pgsql/doc/src/sgml/postgres.sgml,v 1.37 2000/06/18 21:24:51 pe
 <!entity install     SYSTEM "install.sgml">
 <!entity installw    SYSTEM "install-win32.sgml">
 <!entity layout      SYSTEM "layout.sgml">
-<!entity manage-ag   SYSTEM "manage-ag.sgml">
 <!entity ports       SYSTEM "ports.sgml">
 <!entity recovery    SYSTEM "recovery.sgml">
 <!entity regress     SYSTEM "regress.sgml">
 <!entity release     SYSTEM "release.sgml">
 <!entity runtime     SYSTEM "runtime.sgml">
 <!entity client-auth SYSTEM "client-auth.sgml">
+<!entity manage-ag   SYSTEM "manage-ag.sgml">
 <!entity user-manag  SYSTEM "user-manag.sgml">
-<!entity start-ag    SYSTEM "start-ag.sgml">
+<!entity backup      SYSTEM "backup.sgml">
 
 <!-- programmer's guide -->
 <!entity arch-pg    SYSTEM "arch-pg.sgml">
@@ -224,9 +224,9 @@ Your name here...
    &installw;
    &runtime;
    &client-auth;
-   &user-manag;
-   &start-ag;
    &manage-ag;
+   &user-manag;
+   &backup;
    &recovery;
    &regress;
    &release;
