@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_operator.h,v 1.16 1997/09/20 16:29:36 thomas Exp $
+ * $Id: pg_operator.h,v 1.17 1997/10/25 05:31:55 thomas Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -418,6 +418,10 @@ DATA(insert OID = 841 (  "!~"	   PGUID 0 b t f  409  25  16 0 839  0 0 char2rege
 DATA(insert OID = 840 (  "~"	   PGUID 0 b t f  410  25  16 0 842  0 0 char4regexeq eqsel eqjoinsel ));
 DATA(insert OID = 842 (  "!~"	   PGUID 0 b t f  410  25  16 0 840  0 0 char4regexne neqsel neqjoinsel ));
 
+DATA(insert OID = 843 (  "*"	   PGUID 0 b t f  790  700	790 845   0   0   0 cash_mul_flt4 - - ));
+DATA(insert OID = 844 (  "/"	   PGUID 0 b t f  790  700	790   0   0   0   0 cash_div_flt4 - - ));
+DATA(insert OID = 845 (  "*"	   PGUID 0 b t f  700  790	790 843   0   0   0 flt4_mul_cash - - ));
+
 DATA(insert OID = 900 (  "="	   PGUID 0 b t t  790  790	16 900 901	902 902 cash_eq eqsel eqjoinsel ));
 DATA(insert OID = 901 (  "<>"	   PGUID 0 b t f  790  790	16 901 900	0 0 cash_ne neqsel neqjoinsel ));
 DATA(insert OID = 902 (  "<"	   PGUID 0 b t f  790  790	16 903 905	0 0 cash_lt intltsel intltjoinsel ));
@@ -435,10 +439,6 @@ DATA(insert OID = 915 (  "/"	   PGUID 0 b t f  790  21	790   0   0   0   0 cash_
 DATA(insert OID = 916 (  "*"	   PGUID 0 b t f  701  790	790 908   0   0   0 flt8_mul_cash - - ));
 DATA(insert OID = 917 (  "*"	   PGUID 0 b t f  23  790	790 912   0   0   0 int4_mul_cash - - ));
 DATA(insert OID = 918 (  "*"	   PGUID 0 b t f  21  790	790 914   0   0   0 int2_mul_cash - - ));
-
-DATA(insert OID = 950 (  "*"	   PGUID 0 b t f  790  700	790 988   0   0   0 cash_mul_flt4 - - ));
-DATA(insert OID = 951 (  "/"	   PGUID 0 b t f  790  700	790   0   0   0   0 cash_div_flt4 - - ));
-DATA(insert OID = 988 (  "*"	   PGUID 0 b t f  700  790	790 950   0   0   0 flt4_mul_cash - - ));
 
 DATA(insert OID = 930 (  "<"	   PGUID 0 b t f  910  910	16 934 933	0 0 oidint4lt intltsel intltjoinsel ));
 DATA(insert OID = 931 (  "<="	   PGUID 0 b t f  910  910	16 933 934	0 0 oidint4le intltsel intltjoinsel ));
