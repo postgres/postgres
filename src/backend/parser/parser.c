@@ -14,7 +14,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parser.c,v 1.57 2003/04/29 22:13:10 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parser.c,v 1.58 2003/05/05 01:59:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -55,7 +55,6 @@ raw_parser(const char *str)
 	yyresult = yyparse();
 
 	scanner_finish();
-	clearerr(stdin);
 
 	if (yyresult)				/* error */
 		return NIL;
