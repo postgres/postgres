@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: primnodes.h,v 1.1 1996/08/28 01:57:46 scrappy Exp $
+ * $Id: primnodes.h,v 1.2 1996/10/05 20:33:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -105,7 +105,7 @@ typedef struct Expr {
  * Var
  *	varno 		- index of this var's relation in the range table
  *			  (could be INNER or OUTER)
- *	varattno 	- attribute number of this var
+ *	varattno 	- attribute number of this var, or zero for all
  *	vartype 	- pg_type tuple oid for the type of this var
  *	varnoold	- keep varno around in case it got changed to INNER/
  *			  OUTER (see match_varid)
