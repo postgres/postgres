@@ -1,15 +1,15 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Tue Feb 18 00:07:35 EST 2003
+   Last updated: Tue Feb 18 11:37:22 EST 2003
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
    The most recent version of this document can be viewed at
-   http://www.ca.PostgreSQL.org/docs/faq-english.html.
+   http://www.PostgreSQL.org/docs/faqs/faq-english.html.
    
    Platform-specific questions are answered at
-   http://www.ca.PostgreSQL.org/users-lounge/docs/faq.html.
+   http://www.PostgreSQL.org/users-lounge/docs/index.html.
      _________________________________________________________________
    
                              General Questions
@@ -194,7 +194,7 @@
    The database server can run on Windows NT and Win2k using Cygwin, the
    Cygnus Unix/NT porting library. See pgsql/doc/FAQ_MSWIN in the
    distribution or the MS Windows FAQ at
-   http://www.ca.PostgreSQL.org/docs/faq-mswin.html.
+   http://www.PostgreSQL.org/docs/faqs/faq-mswin.html.
    
    A native port to MS Win NT/2000/XP is currently being worked on.
    
