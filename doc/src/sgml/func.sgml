@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.42 2000/12/16 18:33:13 tgl Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.43 2000/12/16 19:33:23 tgl Exp $ -->
 
 <chapter id="functions">
  <title>Functions and Operators</title>
@@ -805,12 +805,12 @@
 
    <para>
     If <replaceable>pattern</replaceable> does not contain percent
-    signs or underscore then the pattern only represents the string
+    signs or underscore, then the pattern only represents the string
     itself; in that case <function>LIKE</function> acts like the
     equals operator.  An underscore (<literal>_</literal>) in
     <replaceable>pattern</replaceable> stands for (matches) any single
-    character, a percent sign (<literal>%</literal>) matches zero or
-    more characters.
+    character; a percent sign (<literal>%</literal>) matches any string
+    of zero or more characters.
    </para>
 
    <informalexample>
@@ -827,33 +827,39 @@
 
    <para>
     <function>LIKE</function> pattern matches always cover the entire
-    string.  On order to match a pattern anywhere within a string, the
+    string.  To match a pattern anywhere within a string, the
     pattern must therefore start and end with a percent sign.
    </para>
 
    <para>
-    In order to match a literal underscore or percent sign, the
-    respective character in <replaceable>pattern</replaceable> must be
-    preceded by the active escape character.  The default escape
+    To match a literal underscore or percent sign without matching
+    other characters, the respective character in
+    <replaceable>pattern</replaceable> must be 
+    preceded by the escape character.  The default escape
     character is the backslash but a different one may be selected by
-    using the <literal>ESCAPE</literal> clause.  When using the
-    backslash as escape character in literal strings it must be
-    doubled, because the backslash already has a special meaning in
-    string literals.
+    using the <literal>ESCAPE</literal> clause.  To match the escape
+    character itself, write two escape characters.
+   </para>
+
+   <para>
+    Note that the backslash already has a special meaning in string
+    literals, so to write a pattern constant that contains a backslash
+    you must write two backslashes in the query.  You can avoid this by
+    selecting a different escape character with <literal>ESCAPE</literal>.
    </para>
 
    <para>
     The keyword <token>ILIKE</token> can be used instead of
     <token>LIKE</token> to make the match case insensitive according
-    to the active locale.  This is a
+    to the active locale.  This is not in the SQL standard but is a
     <productname>Postgres</productname> extension.
    </para>
 
    <para>
     The operator <literal>~~</literal> is equivalent to
-    <function>LIKE</function>, <literal>~~*</literal> corresponds to
-    <literal>ILIKE</literal>.  Finally, there are also
-    <literal>!~~</literal> and <literal>!~~*</literal> operators to
+    <function>LIKE</function>, and <literal>~~*</literal> corresponds to
+    <function>ILIKE</function>.  There are also
+    <literal>!~~</literal> and <literal>!~~*</literal> operators that
     represent <function>NOT LIKE</function> and <function>NOT
     ILIKE</function>.  All of these are also
     <productname>Postgres</productname>-specific.
@@ -863,25 +869,6 @@
 
   <sect2 id="functions-regexp">
    <title>POSIX Regular Expressions</title>
-
-   <para>
-    POSIX regular expressions provide a more powerful means for
-    pattern matching than the <function>LIKE</function> function.
-    Many Unix tools such as <command>egrep</command>,
-    <command>sed</command>, or <command>awk</command> use a pattern
-    matching language that is similar to the one described here.
-   </para>
-
-   <para>
-    A regular expression is a character sequence that is an
-    abbreviated definition of a set of strings (a <firstterm>regular
-    set</firstterm>).  A string is said to match a regular expression
-    if it is a member of the regular set described by the regular
-    expression.  Unlike the <function>LIKE</function> operator, a
-    regular expression also matches anywhere within a string, unless
-    the regular expression is explicitly anchored to the beginning or
-    end of the string.
-   </para>
 
    <table>
     <title>Regular Expression Match Operators</title>
@@ -920,6 +907,29 @@
     </tgroup>
    </table>
 
+   <para>
+    POSIX regular expressions provide a more powerful means for
+    pattern matching than the <function>LIKE</function> function.
+    Many Unix tools such as <command>egrep</command>,
+    <command>sed</command>, or <command>awk</command> use a pattern
+    matching language that is similar to the one described here.
+   </para>
+
+   <para>
+    A regular expression is a character sequence that is an
+    abbreviated definition of a set of strings (a <firstterm>regular
+    set</firstterm>).  A string is said to match a regular expression
+    if it is a member of the regular set described by the regular
+    expression.  As with <function>LIKE</function>, pattern characters
+    match string characters exactly unless they are special characters
+    in the regular expression language --- but regular expressions use
+    different special characters than <function>LIKE</function> does.
+    Unlike <function>LIKE</function> patterns, a
+    regular expression is allowed to match anywhere within a string, unless
+    the regular expression is explicitly anchored to the beginning or
+    end of the string.
+   </para>
+
 
 <!-- derived from the re_format.7 man page -->
    <para>
@@ -927,8 +937,8 @@
     1003.2, come in two forms: modern REs (roughly those of
     <command>egrep</command>; 1003.2 calls these
     <quote>extended</quote> REs) and obsolete REs (roughly those of
-    <command>ed</command>; 1003.2 <quote>basic</quote> REs).  Obsolete
-    REs are not available in <productname>Postgres</productname>.
+    <command>ed</command>; 1003.2 <quote>basic</quote> REs).
+    <productname>Postgres</productname> implements the modern form.
    </para>
 
    <para>
@@ -1002,6 +1012,13 @@
     character other than a digit is an ordinary character, not the
     beginning of a bound.  It is illegal to end an RE with
     <literal>\</literal>.
+   </para>
+
+   <para>
+    Note that the backslash (<literal>\</literal>) already has a special
+    meaning in string
+    literals, so to write a pattern constant that contains a backslash
+    you must write two backslashes in the query.
    </para>
 
    <para>
