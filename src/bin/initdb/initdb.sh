@@ -27,7 +27,7 @@
 # Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.157 2002/07/12 18:43:18 tgl Exp $
+# $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.158 2002/07/16 17:48:46 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -690,6 +690,33 @@ ALTER TABLE pg_proc CREATE TOAST TABLE;
 ALTER TABLE pg_rewrite CREATE TOAST TABLE;
 ALTER TABLE pg_shadow CREATE TOAST TABLE;
 ALTER TABLE pg_statistic CREATE TOAST TABLE;
+EOF
+if [ "$?" -ne 0 ]; then
+    exit_nicely
+fi
+echo "ok"
+
+
+$ECHO_N "initializing pg_depend... "$ECHO_C
+
+"$PGPATH"/postgres $PGSQL_OPT template1 >/dev/null <<EOF
+-- Make PIN entries in pg_depend for all objects made so far in the tables
+-- that the dependency code handles.  This is overkill (the system doesn't
+-- really depend on having every last weird datatype, for instance)
+-- but generating only the minimum required set of dependencies seems hard.
+-- Note that we deliberately do not pin the system views.
+-- First delete any already-made entries; PINs override all else, and must
+-- be the only entries for their objects.
+DELETE FROM pg_depend;
+INSERT INTO pg_depend SELECT 0,0,0, tableoid,oid,0, 'p' FROM pg_class;
+INSERT INTO pg_depend SELECT 0,0,0, tableoid,oid,0, 'p' FROM pg_proc;
+INSERT INTO pg_depend SELECT 0,0,0, tableoid,oid,0, 'p' FROM pg_type;
+INSERT INTO pg_depend SELECT 0,0,0, tableoid,oid,0, 'p' FROM pg_constraint;
+INSERT INTO pg_depend SELECT 0,0,0, tableoid,oid,0, 'p' FROM pg_attrdef;
+INSERT INTO pg_depend SELECT 0,0,0, tableoid,oid,0, 'p' FROM pg_language;
+INSERT INTO pg_depend SELECT 0,0,0, tableoid,oid,0, 'p' FROM pg_operator;
+INSERT INTO pg_depend SELECT 0,0,0, tableoid,oid,0, 'p' FROM pg_rewrite;
+INSERT INTO pg_depend SELECT 0,0,0, tableoid,oid,0, 'p' FROM pg_trigger;
 EOF
 if [ "$?" -ne 0 ]; then
     exit_nicely
