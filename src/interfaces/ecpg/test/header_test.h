@@ -1,5 +1,3 @@
-exec sql include sqlca;
-
 #include "stdlib.h"
 
 static void

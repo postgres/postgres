@@ -1211,5 +1211,9 @@ Sat Jan 12 22:04:02 CET 2002
 Fri Jan 18 16:49:02 CET 2002
 
 	- Accept subsequent commits.
+
+Wed Jan 23 17:35:23 CET 2002
+
+	- Added patch to temporarily disable locale for descriptors too (Christof).
 	- Set ecpg version to 2.9.0.
         - Set library version to 3.3.0.

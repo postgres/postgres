@@ -1,6 +1,6 @@
 /* dynamic SQL support routines
  *
- * $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/descriptor.c,v 1.21 2002/01/11 14:43:11 meskes Exp $
+ * $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/descriptor.c,v 1.22 2002/01/23 16:34:06 meskes Exp $
  */
 
 #include "postgres_fe.h"
@@ -330,11 +330,22 @@ ECPGget_desc(int lineno, char *desc_name, int index,...)
 	if (data_var.type!=ECPGt_EORT)
 	{
 		struct statement stmt;
+		char       *oldlocale;
+		
+		/* Make sure we do NOT honor the locale for numeric input */
+		/* since the database gives the standard decimal point */
+		oldlocale = strdup(setlocale(LC_NUMERIC, NULL));
+		setlocale(LC_NUMERIC, "C");
+		
 		memset (&stmt, 0, sizeof stmt);
 		stmt.lineno=lineno;
+		
 		/* desparate try to guess something sensible */
 		stmt.connection=ECPGget_connection(NULL);
 		ECPGstore_result(ECPGresult, index, &stmt, &data_var);
+		
+		setlocale(LC_NUMERIC, oldlocale);
+		ECPGfree(oldlocale);
 	}
 	else if (data_var.ind_type!=ECPGt_NO_INDICATOR)
 	{
