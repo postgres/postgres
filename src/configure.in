@@ -78,11 +78,7 @@ else
 	ECHO_C='\c'
 fi
 
-dnl this part selects the template from the one in the
-dnl template directory.
-
-dnl LOOK FOR EXACT MATCH FIRST,
-dnl then try an OS without a version
+dnl this part selects the template from the ones in the template directory.
 
 AC_MSG_CHECKING(setting template to)
 AC_ARG_WITH(template,
@@ -90,18 +86,37 @@ AC_ARG_WITH(template,
                           use operating system template file 
                               see template directory],
     [  TEMPLATE=$withval ],
-    [  
-       GUESS=`grep "^$host=" template/.similar | sed 's/.*=//' | tail -1`
-       if test "$GUESS"
-       then TEMPLATE="$GUESS"
-       else
-           host_no_ver=`echo "$host" | sed 's/[[0-9.]]*$//'`
-           GUESS=`grep "^$host_no_ver" template/.similar | sed 's/.*=//' | tail -1`
-           if test "$GUESS"
-           then	TEMPLATE="$GUESS"
-           else	TEMPLATE=`uname -s | tr A-Z a-z` 
-           fi
-       fi
+    [
+# First, try for a template exactly matching $host
+if test -f "template/$host"
+then TEMPLATE="$host"
+else
+    # Next try for an exact match to a .similar entry.
+    # There shouldn't be multiple matches, but take the last if there are.
+    GUESS=`grep "^$host=" template/.similar | sed 's/^.*=//' | tail -1`
+    if test "$GUESS"
+    then TEMPLATE="$GUESS"
+    else
+	# Next look for a .similar entry that is a prefix of $host.
+	# If there are multiple matches, take the last one.
+	exec 4<template/.similar
+	while read LINE <&4
+	do
+	    SIMHOST=`expr "$LINE" : '\(.*\)='`
+	    MATCH=`expr "$host" : "$SIMHOST"`
+	    if test "$MATCH" != 0
+	    then GUESS=`echo "$LINE" | sed 's/^.*=//'`
+	    fi
+	done
+	exec 4<&-
+	if test "$GUESS"
+	then TEMPLATE="$GUESS"
+	else
+	    # Last chance ... maybe uname -s will match an entry.
+	    TEMPLATE=`uname -s | tr A-Z a-z` 
+	fi
+    fi
+fi
     ])
 AC_MSG_RESULT($TEMPLATE)
 
