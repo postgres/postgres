@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashovfl.c,v 1.28 2001/01/24 19:42:47 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashovfl.c,v 1.29 2001/03/07 21:20:26 tgl Exp $
  *
  * NOTES
  *	  Overflow pages look like ordinary relation pages.
@@ -564,7 +564,10 @@ _hash_squeezebucket(Relation rel,
 		 * page.
 		 */
 		woffnum = OffsetNumberNext(PageGetMaxOffsetNumber(wpage));
-		PageAddItem(wpage, (Item) hitem, itemsz, woffnum, LP_USED);
+		if (PageAddItem(wpage, (Item) hitem, itemsz, woffnum, LP_USED)
+			== InvalidOffsetNumber)
+			elog(ERROR, "_hash_squeezebucket: failed to add index item to %s",
+				 RelationGetRelationName(rel));
 
 		/*
 		 * delete the tuple from the "read" page. PageIndexTupleDelete

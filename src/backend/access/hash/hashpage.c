@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashpage.c,v 1.29 2001/01/24 19:42:47 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashpage.c,v 1.30 2001/03/07 21:20:26 tgl Exp $
  *
  * NOTES
  *	  Postgres hash pages look like ordinary relation pages.  The opaque
@@ -619,7 +619,10 @@ _hash_splitpage(Relation rel,
 			}
 
 			noffnum = OffsetNumberNext(PageGetMaxOffsetNumber(npage));
-			PageAddItem(npage, (Item) hitem, itemsz, noffnum, LP_USED);
+			if (PageAddItem(npage, (Item) hitem, itemsz, noffnum, LP_USED)
+				== InvalidOffsetNumber)
+				elog(ERROR, "_hash_splitpage: failed to add index item to %s",
+					 RelationGetRelationName(rel));
 			_hash_wrtnorelbuf(rel, nbuf);
 
 			/*

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/sequence.c,v 1.50 2001/02/13 01:57:12 pjw Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/sequence.c,v 1.51 2001/03/07 21:20:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -785,7 +785,8 @@ void seq_redo(XLogRecPtr lsn, XLogRecord *record)
 	itemsz = record->xl_len - sizeof(xl_seq_rec);
 	itemsz = MAXALIGN(itemsz);
 	if (PageAddItem(page, (Item)item, itemsz, 
-			FirstOffsetNumber, LP_USED) == InvalidOffsetNumber)
+					FirstOffsetNumber, LP_USED) == InvalidOffsetNumber)
+		elog(STOP, "seq_redo: failed to add item to page");
 
 	PageSetLSN(page, lsn);
 	PageSetSUI(page, ThisStartUpID);

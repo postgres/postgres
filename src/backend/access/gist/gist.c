@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/gist/gist.c,v 1.70 2001/02/22 21:48:48 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/gist/gist.c,v 1.71 2001/03/07 21:20:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -395,6 +395,9 @@ gistPageAddItem(GISTSTATE *giststate,
 	*newtup = gist_tuple_replacekey(r, tmpcentry, itup);
 	retval = PageAddItem(page, (Item) *newtup, IndexTupleSize(*newtup),
 						offsetNumber, flags);
+	if (retval == InvalidOffsetNumber)
+		elog(ERROR, "gist: failed to add index item to %s",
+			 RelationGetRelationName(r));
 	/* be tidy */
 	if (tmpcentry.pred && tmpcentry.pred != dentry->pred
 		&& tmpcentry.pred != (((char *) itup) + sizeof(IndexTupleData)))

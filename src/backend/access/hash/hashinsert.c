@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashinsert.c,v 1.21 2001/01/24 19:42:47 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashinsert.c,v 1.22 2001/03/07 21:20:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -230,7 +230,10 @@ _hash_pgaddtup(Relation rel,
 	_hash_checkpage(page, LH_BUCKET_PAGE | LH_OVERFLOW_PAGE);
 
 	itup_off = OffsetNumberNext(PageGetMaxOffsetNumber(page));
-	PageAddItem(page, (Item) hitem, itemsize, itup_off, LP_USED);
+	if (PageAddItem(page, (Item) hitem, itemsize, itup_off, LP_USED)
+		== InvalidOffsetNumber)
+		elog(ERROR, "_hash_pgaddtup: failed to add index item to %s",
+			 RelationGetRelationName(rel));
 
 	/* write the buffer, but hold our lock */
 	_hash_wrtnorelbuf(rel, buf);
