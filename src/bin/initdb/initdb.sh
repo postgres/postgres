@@ -26,7 +26,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.66 1999/12/17 01:05:30 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.67 1999/12/17 01:16:03 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -152,39 +152,26 @@ do
 			exit 100
 		fi
                 ;;
-	--help)
-		usage=t
-		;;
-	-\?)
-		usage=t
-		;;
         *)
-                echo "Unrecognized option '$1'. Try -? for help."
-		exit 100
+                echo "Unrecognized option '$1'.  Syntax is:"
+		if [ -z "$MULTIBYTE" ];then
+                echo "initdb [-t | --template] [-d | --debug]" \
+                     "[-n | --noclean]" \
+                     "[-u SUPERUSER | --username=SUPERUSER]" \
+                     "[-r DATADIR | --pgdata=DATADIR]" \
+                     "[-l LIBDIR | --pglib=LIBDIR]"
+		else
+                echo "initdb [-t | --template] [-d | --debug]" \
+                     "[-n | --noclean]" \
+                     "[-u SUPERUSER | --username=SUPERUSER]" \
+                     "[-r DATADIR | --pgdata=DATADIR]" \
+                     "[-l LIBDIR | --pglib=LIBDIR]" \
+                     "[-e ENCODING | --pgencoding=ENCODING]"
+		fi
+                exit 100
         esac
         shift
 done
-
-if [ "$usage" ]; then
-	echo ""
-	echo "Usage: $CMDNAME [options]"
-	echo ""
-        echo "    -t,           --template           "
-        echo "    -d,           --debug              "
-        echo "    -n,           --noclean            "
-        echo "    -u SUPERUSER, --username=SUPERUSER " 
-        echo "    -r DATADIR,   --pgdata=DATADIR     "
-        echo "    -l LIBDIR,    --pglib=LIBDIR       "
-	
-	if [ -n "$MULTIBYTE" ]; then 
-		echo "    -e ENCODING,  --pgencoding=ENCODING"
-        fi
-	
-	echo "    -?,           --help               "           	
-	echo ""	
-
-	exit 100
-fi
 
 #-------------------------------------------------------------------------
 # Make sure he told us where to find the Postgres files.
@@ -281,6 +268,300 @@ echo "We are initializing the database system with username" \
   "$POSTGRES_SUPERUSERNAME (uid=$POSTGRES_SUPERUID)."   
 echo "This user will own all the files and must also own the server process."
 echo
+
+# -----------------------------------------------------------------------
+# Create the data directory if necessary
+- 26,318 ----
+#
+#
+# IDENTIFICATION
+#    $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.67 1999/12/17 01:16:03 momjian Exp $
+#
+#-------------------------------------------------------------------------
+
+function exit_nicely () {
+    echo
+    echo "$CMDNAME failed."
+    if [ $noclean -eq 0 ]; then
+        echo "Removing $PGDATA."
+        rm -rf $PGDATA || echo "Failed."
+    else
+        echo "Data directory $PGDATA will not be removed at user's request."
+    fi
+    exit 1
+}
+
+
+CMDNAME=`basename $0`
+if [ $EUID -eq 0 ]; then
+    echo "You cannot run $CMDNAME as root. Please log in (using, e.g., 'su')"
+    echo "as the (unprivileged) user that will own the server process."
+    exit 1
+fi
+
+EffectiveUser=`id -n -u 2> /dev/null` || EffectiveUser=`whoami 2> /dev/null`
+TEMPFILE="/tmp/initdb.$$"
+
+#
+# Find out where we're located
+#
+if echo "$0" | grep -s '/' >& /dev/null ; then
+        # explicit dir name given
+        PGPATH=`echo $0 | sed 's,/[^/]*$,,'`       # (dirname command is not portable)
+else
+        # look for it in PATH ('which' command is not portable)
+        for dir in `echo $PATH | sed 's/:/ /g'` ; do
+                # empty entry in path means current dir
+                [ -z "$dir" ] && dir='.'
+                if [ -f "$dir/$CMDNAME" ]; then
+                        PGPATH="$dir"
+                        break
+                fi
+        done
+fi
+
+# Check if needed programs actually exist in path
+for prog in postgres pg_version ; do
+        if [ ! -x "$PGPATH/$prog" ]; then
+                echo "The program $prog needed by $CMDNAME could not be found. It was"
+                echo "expected at:"
+                echo "    $PGPATH/$prog"
+                echo "If this is not the correct directory, please start $CMDNAME"
+                echo "with a full search path. Otherwise make sure that the program"
+                echo "was installed successfully."
+                exit 1
+        fi
+done
+
+# 0 is the default (non-)encoding
+MULTIBYTEID=0
+# This is placed here by configure --with-mb=XXX.
+MULTIBYTE=__MULTIBYTE__
+
+# Set defaults:
+debug=0
+noclean=0
+template_only=0
+
+
+# Note: There is a single compelling reason that the name of the database
+#       superuser be the same as the Unix user owning the server process:
+#       The single user postgres backend will only connect as the database
+#       user with the same name as the Unix user running it. That's
+#       a security measure. It might change in the future (why?), but for
+#       now the --username option is only a fallback if both id and whoami
+#       fail, and in that case the argument _must_ be the name of the effective
+#       user.
+POSTGRES_SUPERUSERNAME=$EffectiveUser
+
+# Note: The sysid can be freely selected. This will probably confuse matters,
+#       but if your Unix user postgres is uid 48327 you might chose to start
+#       at 0 (or 1) in the database.
+POSTGRES_SUPERUSERID=$EUID
+
+Password='_null_'
+
+while [ $# -gt 0 ]
+do
+    case "$1" in
+        --help|-\?)
+                usage=t
+                break
+                ;;
+        --debug|-d)
+                debug=1
+                echo "Running with debug mode on."
+                ;;
+        --noclean|-n)
+                noclean=1
+                echo "Running with noclean mode on. Mistakes will not be cleaned up."
+                ;;
+        --template|-t)
+                template_only=1
+                echo "Updating template1 database only."
+                ;;
+# The database superuser. See comments above.
+        --username|-u)
+                POSTGRES_SUPERUSERNAME="$2"
+                shift;;
+        --username=*)
+                POSTGRES_SUPERUSERNAME=`echo $1 | sed 's/^--username=//'`
+                ;;
+        -u*)
+                POSTGRES_SUPERUSERNAME=`echo $1 | sed 's/^-u//'`
+                ;;
+# The sysid of the database superuser. See comments above.
+        --sysid|-i)
+                POSTGRES_SUPERUSERID="$2"
+                shift;;
+        --sysid=*)
+                POSTGRES_SUPERUSERID=`echo $1 | sed 's/^--sysid=//'`
+                ;;
+        -i*)
+                POSTGRES_SUPERUSERID=`echo $1 | sed 's/^-i//'`
+                ;;
+# The default password of the database superuser.
+        --password|-W)
+                Password="$2"
+                shift;;
+        --password=*)
+                Password=`echo $1 | sed 's/^--password=//'`
+                ;;
+        -W*)
+                Password=`echo $1 | sed 's/^-W//'`
+                ;;
+# Directory where to install the data. No default, unless the environment
+# variable PGDATA is set.
+        --pgdata|-D)
+                PGDATA="$2"
+                shift;;
+        --pgdata=*)
+                PGDATA=`echo $1 | sed 's/^--pgdata=//'`
+                ;;
+        -D*)
+                PGDATA=`echo $1 | sed 's/^-D//'`
+                ;;
+# The directory where the database templates are stored (traditionally in
+# $prefix/lib). This is now autodetected for the most common layouts.
+        --pglib|-L)
+                PGLIB="$2"
+                shift;;
+        --pglib=*)
+                PGLIB=`echo $1 | sed 's/^--pglib=//'`
+                ;;
+        -L*)
+                PGLIB=`echo $1 | sed 's/^-L//'`
+                ;;
+# The encoding of the template1 database. Defaults to what you chose
+# at configure time. (see above)
+        --pgencoding|-e)
+                MULTIBYTE="$2"
+                shift;;
+        --pgencoding=*)
+                MULTIBYTE=`echo $1 | sed 's/^--pgencoding=//'`
+                ;;
+        -e*)
+                MULTIBYTE=`echo $1 | sed 's/^-e//'`
+                ;;
+        *)
+                echo "Unrecognized option '$1'. Try -? for help."
+                exit 1
+                ;;
+    esac
+    shift
+done
+
+
+if [ "$usage" ]; then
+        echo "$CMDNAME [-t|--template] [-d|--debug] [-n|--noclean] \\"
+        echo "  [-u|--username SUPERUSER] [-D|--pgdata DATADIR] \\"
+        echo "  [-L|--pglib=LIBDIR] [-e|--pgencoding=ENCODING]"
+        exit 0
+fi
+
+
+#-------------------------------------------------------------------------
+# Resolve the multibyte encoding name
+#-------------------------------------------------------------------------
+
+if [ "$MULTIBYTE" ]; then
+	MULTIBYTEID=`$PGPATH/pg_encoding $MULTIBYTE`
+        if [ $? -ne 0 ]; then
+                echo "The program pg_encoding failed. Perhaps you did not configure"
+                echo "PostgreSQL for multibyte support or the program was not success-"
+                echo "fully installed."
+                exit 1
+        fi
+	if [ -z "$MULTIBYTEID" ]; then
+		echo "$CMDNAME: $MULTIBYTE is not a valid encoding name."
+		exit 1
+	fi
+fi
+
+
+#-------------------------------------------------------------------------
+# Make sure he told us where to build the database system
+#-------------------------------------------------------------------------
+
+if [ -z "$PGDATA" ]; then
+    echo "$CMDNAME: You must identify where the the data for this database"
+    echo "system will reside.  Do this with either a --pgdata invocation"
+    echo "option or a PGDATA environment variable."
+    echo
+    exit 1
+fi
+
+# The data path must be absolute, because the backend doesn't like
+# '.' and '..' stuff. (Should perhaps be fixed there.)
+
+if ! echo $PGDATA | grep -s '^/' >& /dev/null ; then
+    echo "$CMDNAME: The data path must be specified as an absolute path."
+    exit 1
+fi
+
+#---------------------------------------------------------------------------
+# Figure out who the Postgres superuser for the new database system will be.
+#---------------------------------------------------------------------------
+
+# This means they have neither 'id' nor 'whoami'!
+if [ -z "$POSTGRES_SUPERUSERNAME" ]; then 
+    echo "$CMDNAME: Could not determine what the name of the database"
+    echo "superuser should be. Please use the --username option."
+    exit 1
+fi
+
+echo "This database system will be initialized with username \"$POSTGRES_SUPERUSERNAME\"."
+echo "This user will own all the data files and must also own the server process."
+echo
+
+
+#-------------------------------------------------------------------------
+# Find the input files
+#-------------------------------------------------------------------------
+
+if [ -z "$PGLIB" ]; then
+        for dir in "$PGPATH/../lib" "$PGPATH/../lib/pgsql"; do
+                if [ -f "$dir/global1.bki.source" ]; then
+                        PGLIB=$dir
+                        break
+                fi
+        done
+fi
+
+if [ -z "$PGLIB" ]; then
+        echo "$CMDNAME: Could not find the \"lib\" directory, that contains"
+        echo "the files needed by initdb. Please specify it with the"
+        echo "--pglib option."
+        exit 1
+fi
+
+
+TEMPLATE=$PGLIB/local1_template1.bki.source
+GLOBAL=$PGLIB/global1.bki.source
+PG_HBA_SAMPLE=$PGLIB/pg_hba.conf.sample
+
+TEMPLATE_DESCR=$PGLIB/local1_template1.description
+GLOBAL_DESCR=$PGLIB/global1.description
+PG_GEQO_SAMPLE=$PGLIB/pg_geqo.sample
+
+for PREREQ_FILE in $TEMPLATE $GLOBAL $PG_HBA_SAMPLE; do
+    if [ ! -f $PREREQ_FILE ]; then 
+        echo "$CMDNAME does not find the file '$PREREQ_FILE'."
+        echo "This means you have a corrupted installation or identified the"
+        echo "wrong directory with the --pglib invocation option."
+        exit 1
+    fi
+done
+
+[ "$debug" -ne 0 ] && echo "$CMDNAME: Using $TEMPLATE as input to create the template database."
+
+if [ $template_only -eq 0 ]; then
+    [ "$debug" -ne 0 ] && echo "$CMDNAME: Using $GLOBAL as input to create the global classes."
+    [ "$debug" -ne 0 ] && echo "$CMDNAME: Using $PG_HBA_SAMPLE as default authentication control file."
+fi  
+
+trap 'echo "Caught signal." ; exit_nicely' SIGINT SIGTERM
+
 
 # -----------------------------------------------------------------------
 # Create the data directory if necessary
