@@ -2,7 +2,7 @@
 TODO list for PostgreSQL
 ========================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Wed Dec  1 23:40:33 EST 2004
+Last updated:		Thu Dec  2 13:13:37 EST 2004
 
 The most recent version of this document can be viewed at the PostgreSQL web
 site, http://www.PostgreSQL.org.
@@ -518,6 +518,7 @@ Clients
   This would allow non-psql clients to pull the same information out of
   the database as psql.
 
+* Fix psql's display of schema information (Neil)
 * Consistently display privilege information for all objects in psql
 * pg_dump
 	o Have pg_dump use multi-statement transactions for INSERT dumps
