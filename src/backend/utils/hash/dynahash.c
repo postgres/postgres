@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/hash/dynahash.c,v 1.47 2003/08/04 02:40:06 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/hash/dynahash.c,v 1.48 2003/08/19 01:13:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,7 +44,6 @@
 
 #include "postgres.h"
 
-
 #include "utils/dynahash.h"
 #include "utils/hsearch.h"
 #include "utils/memutils.h"
@@ -63,7 +62,6 @@
  * Private function prototypes
  */
 static void *DynaHashAlloc(Size size);
-static uint32 call_hash(HTAB *hashp, void *k);
 static HASHSEGMENT seg_alloc(HTAB *hashp);
 static bool element_alloc(HTAB *hashp);
 static bool dir_realloc(HTAB *hashp);
@@ -133,6 +131,19 @@ hash_create(const char *tabname, long nelem, HASHCTL *info, int flags)
 	else
 		hashp->hash = string_hash;		/* default hash function */
 
+	/*
+	 * If you don't specify a match function, it defaults to strncmp() if
+	 * you used string_hash (either explicitly or by default) and to
+	 * memcmp() otherwise.  (Prior to PostgreSQL 7.4, memcmp() was always
+	 * used.)
+	 */
+	if (flags & HASH_COMPARE)
+		hashp->match = info->match;
+	else if (hashp->hash == string_hash)
+		hashp->match = (HashCompareFunc) strncmp;
+	else
+		hashp->match = memcmp;
+
 	if (flags & HASH_SHARED_MEM)
 	{
 		/*
@@ -155,7 +166,7 @@ hash_create(const char *tabname, long nelem, HASHCTL *info, int flags)
 		hashp->hctl = NULL;
 		hashp->dir = NULL;
 		hashp->alloc = MEM_ALLOC;
-		hashp->hcxt = DynaHashCxt;
+		hashp->hcxt = CurrentDynaHashCxt;
 		hashp->isshared = false;
 	}
 
@@ -207,26 +218,13 @@ hash_create(const char *tabname, long nelem, HASHCTL *info, int flags)
 		hashp->alloc = info->alloc;
 	else
 	{
-		if (flags & HASH_CONTEXT)
-		{
-			/* hash table structures live in child of given context */
-			CurrentDynaHashCxt = AllocSetContextCreate(info->hcxt,
-													   "DynaHashTable",
-												ALLOCSET_DEFAULT_MINSIZE,
-											   ALLOCSET_DEFAULT_INITSIZE,
-											   ALLOCSET_DEFAULT_MAXSIZE);
-			hashp->hcxt = CurrentDynaHashCxt;
-		}
-		else
-		{
-			/* hash table structures live in child of DynaHashCxt */
-			CurrentDynaHashCxt = AllocSetContextCreate(DynaHashCxt,
-													   "DynaHashTable",
-												ALLOCSET_DEFAULT_MINSIZE,
-											   ALLOCSET_DEFAULT_INITSIZE,
-											   ALLOCSET_DEFAULT_MAXSIZE);
-			hashp->hcxt = CurrentDynaHashCxt;
-		}
+		/* remaining hash table structures live in child of given context */
+		hashp->hcxt = AllocSetContextCreate(CurrentDynaHashCxt,
+											"DynaHashTable",
+											ALLOCSET_DEFAULT_MINSIZE,
+											ALLOCSET_DEFAULT_INITSIZE,
+											ALLOCSET_DEFAULT_MAXSIZE);
+		CurrentDynaHashCxt = hashp->hcxt;
 	}
 
 	if (!init_htab(hashp, nelem))
@@ -351,7 +349,7 @@ init_htab(HTAB *hashp, long nelem)
  * NB: assumes that all hash structure parameters have default values!
  */
 long
-hash_estimate_size(long num_entries, long entrysize)
+hash_estimate_size(long num_entries, Size entrysize)
 {
 	long		size = 0;
 	long		nBuckets,
@@ -447,7 +445,6 @@ void
 hash_stats(const char *where, HTAB *hashp)
 {
 #if HASH_STATISTICS
-
 	fprintf(stderr, "%s: this HTAB -- accesses %ld collisions %ld\n",
 			where, hashp->hctl->accesses, hashp->hctl->collisions);
 
@@ -459,19 +456,16 @@ hash_stats(const char *where, HTAB *hashp)
 	fprintf(stderr, "hash_stats: total expansions %ld\n",
 			hash_expansions);
 #endif
-
 }
 
 /*******************************SEARCH ROUTINES *****************************/
 
-static uint32
-call_hash(HTAB *hashp, void *k)
-{
-	HASHHDR    *hctl = hashp->hctl;
-	uint32		hash_val,
-				bucket;
 
-	hash_val = hashp->hash(k, (int) hctl->keysize);
+/* Convert a hash value to a bucket number */
+static inline uint32
+calc_bucket(HASHHDR *hctl, uint32 hash_val)
+{
+	uint32		bucket;
 
 	bucket = hash_val & hctl->high_mask;
 	if (bucket > hctl->max_bucket)
@@ -506,11 +500,12 @@ call_hash(HTAB *hashp, void *k)
  */
 void *
 hash_search(HTAB *hashp,
-			void *keyPtr,
+			const void *keyPtr,
 			HASHACTION action,
 			bool *foundPtr)
 {
 	HASHHDR    *hctl = hashp->hctl;
+	uint32		hashvalue = 0;
 	uint32		bucket;
 	long		segment_num;
 	long		segment_ndx;
@@ -545,7 +540,12 @@ hash_search(HTAB *hashp,
 	}
 	else
 	{
-		bucket = call_hash(hashp, keyPtr);
+		HashCompareFunc match;
+		Size		keysize = hctl->keysize;
+
+		hashvalue = hashp->hash(keyPtr, keysize);
+		bucket = calc_bucket(hctl, hashvalue);
+
 		segment_num = bucket >> hctl->sshift;
 		segment_ndx = MOD(bucket, hctl->ssize);
 
@@ -560,9 +560,11 @@ hash_search(HTAB *hashp,
 		/*
 		 * Follow collision chain looking for matching key
 		 */
+		match = hashp->match;	/* save one fetch in inner loop */
 		while (currBucket != NULL)
 		{
-			if (memcmp(ELEMENTKEY(currBucket), keyPtr, hctl->keysize) == 0)
+			if (currBucket->hashvalue == hashvalue &&
+				match(ELEMENTKEY(currBucket), keyPtr, keysize) == 0)
 				break;
 			prevBucketPtr = &(currBucket->link);
 			currBucket = *prevBucketPtr;
@@ -641,6 +643,7 @@ hash_search(HTAB *hashp,
 			currBucket->link = NULL;
 
 			/* copy key into record */
+			currBucket->hashvalue = hashvalue;
 			memcpy(ELEMENTKEY(currBucket), keyPtr, hctl->keysize);
 
 			/* caller is expected to fill the data field on return */
@@ -802,7 +805,7 @@ expand_table(HTAB *hashp)
 
 	/*
 	 * Relocate records to the new bucket.	NOTE: because of the way the
-	 * hash masking is done in call_hash, only one old bucket can need to
+	 * hash masking is done in calc_bucket, only one old bucket can need to
 	 * be split at this point.	With a different way of reducing the hash
 	 * value, that might not be true!
 	 */
@@ -820,8 +823,7 @@ expand_table(HTAB *hashp)
 		 currElement = nextElement)
 	{
 		nextElement = currElement->link;
-		if ((long) call_hash(hashp, (void *) ELEMENTKEY(currElement))
-			== old_bucket)
+		if ((long) calc_bucket(hctl, currElement->hashvalue) == old_bucket)
 		{
 			*oldlink = currElement;
 			oldlink = &currElement->link;

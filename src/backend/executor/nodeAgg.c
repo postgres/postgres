@@ -45,7 +45,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeAgg.c,v 1.115 2003/08/08 21:41:41 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeAgg.c,v 1.116 2003/08/19 01:13:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -905,7 +905,7 @@ agg_fill_hash_table(AggState *aggstate)
 
 	aggstate->table_filled = true;
 	/* Initialize to walk the hash table */
-	ResetTupleHashIterator(&aggstate->hashiter);
+	ResetTupleHashIterator(aggstate->hashtable, &aggstate->hashiter);
 }
 
 /*
@@ -920,7 +920,6 @@ agg_retrieve_hash_table(AggState *aggstate)
 	bool	   *aggnulls;
 	AggStatePerAgg peragg;
 	AggStatePerGroup pergroup;
-	TupleHashTable hashtable;
 	AggHashEntry entry;
 	TupleTableSlot *firstSlot;
 	TupleTableSlot *resultSlot;
@@ -935,7 +934,6 @@ agg_retrieve_hash_table(AggState *aggstate)
 	aggnulls = econtext->ecxt_aggnulls;
 	projInfo = aggstate->ss.ps.ps_ProjInfo;
 	peragg = aggstate->peragg;
-	hashtable = aggstate->hashtable;
 	firstSlot = aggstate->ss.ss_ScanTupleSlot;
 
 	/*
@@ -950,8 +948,7 @@ agg_retrieve_hash_table(AggState *aggstate)
 		/*
 		 * Find the next entry in the hash table
 		 */
-		entry = (AggHashEntry) ScanTupleHashTable(hashtable,
-												  &aggstate->hashiter);
+		entry = (AggHashEntry) ScanTupleHashTable(&aggstate->hashiter);
 		if (entry == NULL)
 		{
 			/* No more entries in hashtable, so done */
@@ -1440,7 +1437,7 @@ ExecReScanAgg(AggState *node, ExprContext *exprCtxt)
 		 */
 		if (((PlanState *) node)->lefttree->chgParam == NULL)
 		{
-			ResetTupleHashIterator(&node->hashiter);
+			ResetTupleHashIterator(node->hashtable, &node->hashiter);
 			return;
 		}
 	}

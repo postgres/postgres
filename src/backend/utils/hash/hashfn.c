@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/hash/hashfn.c,v 1.18 2003/08/04 02:40:06 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/hash/hashfn.c,v 1.19 2003/08/19 01:13:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,24 +22,21 @@
 /*
  * string_hash: hash function for keys that are null-terminated strings.
  *
- * NOTE: since dynahash.c backs this up with a fixed-length memcmp(),
- * the key must actually be zero-padded to the specified maximum length
- * to work correctly.  However, if it is known that nothing after the
- * first zero byte is interesting, this is the right hash function to use.
- *
  * NOTE: this is the default hash function if none is specified.
  */
 uint32
-string_hash(void *key, int keysize)
+string_hash(const void *key, Size keysize)
 {
-	return DatumGetUInt32(hash_any((unsigned char *) key, strlen((char *) key)));
+	return DatumGetUInt32(hash_any((const unsigned char *) key,
+								   (int) strlen((const char *) key)));
 }
 
 /*
  * tag_hash: hash function for fixed-size tag values
  */
 uint32
-tag_hash(void *key, int keysize)
+tag_hash(const void *key, Size keysize)
 {
-	return DatumGetUInt32(hash_any((unsigned char *) key, keysize));
+	return DatumGetUInt32(hash_any((const unsigned char *) key,
+								   (int) keysize));
 }

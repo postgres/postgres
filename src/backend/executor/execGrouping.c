@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execGrouping.c,v 1.7 2003/08/08 21:41:34 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execGrouping.c,v 1.8 2003/08/19 01:13:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,6 +21,13 @@
 #include "utils/memutils.h"
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
+
+
+static TupleHashTable CurTupleHashTable = NULL;
+
+static uint32 TupleHashTableHash(const void *key, Size keysize);
+static int	TupleHashTableMatch(const void *key1, const void *key2,
+								Size keysize);
 
 
 /*****************************************************************************
@@ -272,7 +279,7 @@ execTuplesHashPrepare(TupleDesc tupdesc,
  *	numCols, keyColIdx: identify the tuple fields to use as lookup key
  *	eqfunctions: equality comparison functions to use
  *	hashfunctions: datatype-specific hashing functions to use
- *	nbuckets: number of buckets to make
+ *	nbuckets: initial estimate of hashtable size
  *	entrysize: size of each entry (at least sizeof(TupleHashEntryData))
  *	tablecxt: memory context in which to store table and table entries
  *	tempcxt: short-lived context for evaluation hash and comparison functions
@@ -290,14 +297,13 @@ BuildTupleHashTable(int numCols, AttrNumber *keyColIdx,
 					MemoryContext tablecxt, MemoryContext tempcxt)
 {
 	TupleHashTable hashtable;
-	Size		tabsize;
+	HASHCTL		hash_ctl;
 
 	Assert(nbuckets > 0);
 	Assert(entrysize >= sizeof(TupleHashEntryData));
 
-	tabsize = sizeof(TupleHashTableData) +
-		(nbuckets - 1) *sizeof(TupleHashEntry);
-	hashtable = (TupleHashTable) MemoryContextAllocZero(tablecxt, tabsize);
+	hashtable = (TupleHashTable) MemoryContextAlloc(tablecxt,
+												sizeof(TupleHashTableData));
 
 	hashtable->numCols = numCols;
 	hashtable->keyColIdx = keyColIdx;
@@ -306,7 +312,20 @@ BuildTupleHashTable(int numCols, AttrNumber *keyColIdx,
 	hashtable->tablecxt = tablecxt;
 	hashtable->tempcxt = tempcxt;
 	hashtable->entrysize = entrysize;
-	hashtable->nbuckets = nbuckets;
+
+	MemSet(&hash_ctl, 0, sizeof(hash_ctl));
+	hash_ctl.keysize = sizeof(TupleHashEntryData);
+	hash_ctl.entrysize = entrysize;
+	hash_ctl.hash = TupleHashTableHash;
+	hash_ctl.match = TupleHashTableMatch;
+	hash_ctl.hcxt = tablecxt;
+	hashtable->hashtab = hash_create("TupleHashTable", (long) nbuckets,
+									 &hash_ctl,
+					HASH_ELEM | HASH_FUNCTION | HASH_COMPARE | HASH_CONTEXT);
+	if (hashtable->hashtab == NULL)
+		ereport(ERROR,
+				(errcode(ERRCODE_OUT_OF_MEMORY),
+				 errmsg("out of memory")));
 
 	return hashtable;
 }
@@ -327,18 +346,92 @@ TupleHashEntry
 LookupTupleHashEntry(TupleHashTable hashtable, TupleTableSlot *slot,
 					 bool *isnew)
 {
-	int			numCols = hashtable->numCols;
-	AttrNumber *keyColIdx = hashtable->keyColIdx;
 	HeapTuple	tuple = slot->val;
 	TupleDesc	tupdesc = slot->ttc_tupleDescriptor;
-	uint32		hashkey = 0;
-	int			i;
-	int			bucketno;
 	TupleHashEntry entry;
 	MemoryContext oldContext;
+	TupleHashTable saveCurHT;
+	bool		found;
 
-	/* Need to run the hash function in short-lived context */
+	/* Need to run the hash functions in short-lived context */
 	oldContext = MemoryContextSwitchTo(hashtable->tempcxt);
+
+	/*
+	 * Set up data needed by hash and match functions
+	 *
+	 * We save and restore CurTupleHashTable just in case someone manages
+	 * to invoke this code re-entrantly.
+	 */
+	hashtable->tupdesc = tupdesc;
+	saveCurHT = CurTupleHashTable;
+	CurTupleHashTable = hashtable;
+
+	/* Search the hash table */
+	entry = (TupleHashEntry) hash_search(hashtable->hashtab,
+										 &tuple,
+										 isnew ? HASH_ENTER : HASH_FIND,
+										 &found);
+
+	if (isnew)
+	{
+		if (found)
+		{
+			/* found pre-existing entry */
+			*isnew = false;
+		}
+		else
+		{
+			/* created new entry ... we hope */
+			if (entry == NULL)
+				ereport(ERROR,
+						(errcode(ERRCODE_OUT_OF_MEMORY),
+						 errmsg("out of memory")));
+
+			/*
+			 * Zero any caller-requested space in the entry.  (This zaps
+			 * the "key data" dynahash.c copied into the new entry, but
+			 * we don't care since we're about to overwrite it anyway.)
+			 */
+			MemSet(entry, 0, hashtable->entrysize);
+
+			/* Copy the first tuple into the table context */
+			MemoryContextSwitchTo(hashtable->tablecxt);
+			entry->firstTuple = heap_copytuple(tuple);
+
+			*isnew = true;
+		}
+	}
+
+	CurTupleHashTable = saveCurHT;
+
+	MemoryContextSwitchTo(oldContext);
+
+	return entry;
+}
+
+/*
+ * Compute the hash value for a tuple
+ *
+ * The passed-in key is a pointer to a HeapTuple pointer -- this is either
+ * the firstTuple field of a TupleHashEntry struct, or the key value passed
+ * to hash_search.  We ignore the keysize.
+ *
+ * CurTupleHashTable must be set before calling this, since dynahash.c
+ * doesn't provide any API that would let us get at the hashtable otherwise.
+ *
+ * Also, the caller must select an appropriate memory context for running
+ * the hash functions.  (dynahash.c doesn't change CurrentMemoryContext.)
+ */
+static uint32
+TupleHashTableHash(const void *key, Size keysize)
+{
+	HeapTuple	tuple = *(const HeapTuple *) key;
+	TupleHashTable hashtable = CurTupleHashTable;
+	int			numCols = hashtable->numCols;
+	AttrNumber *keyColIdx = hashtable->keyColIdx;
+	TupleDesc	tupdesc = hashtable->tupdesc;
+	uint32		hashkey = 0;
+	int			i;
 
 	for (i = 0; i < numCols; i++)
 	{
@@ -360,72 +453,36 @@ LookupTupleHashEntry(TupleHashTable hashtable, TupleTableSlot *slot,
 			hashkey ^= hkey;
 		}
 	}
-	bucketno = hashkey % (uint32) hashtable->nbuckets;
 
-	for (entry = hashtable->buckets[bucketno];
-		 entry != NULL;
-		 entry = entry->next)
-	{
-		/* Quick check using hashkey */
-		if (entry->hashkey != hashkey)
-			continue;
-		if (execTuplesMatch(entry->firstTuple,
-							tuple,
-							tupdesc,
-							numCols, keyColIdx,
-							hashtable->eqfunctions,
-							hashtable->tempcxt))
-		{
-			if (isnew)
-				*isnew = false;
-			MemoryContextSwitchTo(oldContext);
-			return entry;
-		}
-	}
-
-	/* Not there, so build a new one if requested */
-	if (isnew)
-	{
-		MemoryContextSwitchTo(hashtable->tablecxt);
-
-		entry = (TupleHashEntry) palloc0(hashtable->entrysize);
-
-		entry->hashkey = hashkey;
-		entry->firstTuple = heap_copytuple(tuple);
-
-		entry->next = hashtable->buckets[bucketno];
-		hashtable->buckets[bucketno] = entry;
-
-		*isnew = true;
-	}
-
-	MemoryContextSwitchTo(oldContext);
-
-	return entry;
+	return hashkey;
 }
 
 /*
- * Walk through all the entries of a hash table, in no special order.
- * Returns NULL when no more entries remain.
+ * See whether two tuples (presumably of the same hash value) match
  *
- * Iterator state must be initialized with ResetTupleHashIterator() macro.
+ * As above, the passed pointers are pointers to HeapTuple pointers.
+ *
+ * CurTupleHashTable must be set before calling this, since dynahash.c
+ * doesn't provide any API that would let us get at the hashtable otherwise.
+ *
+ * Also, the caller must select an appropriate memory context for running
+ * the compare functions.  (dynahash.c doesn't change CurrentMemoryContext.)
  */
-TupleHashEntry
-ScanTupleHashTable(TupleHashTable hashtable, TupleHashIterator *state)
+static int
+TupleHashTableMatch(const void *key1, const void *key2, Size keysize)
 {
-	TupleHashEntry entry;
+	HeapTuple	tuple1 = *(const HeapTuple *) key1;
+	HeapTuple	tuple2 = *(const HeapTuple *) key2;
+	TupleHashTable hashtable = CurTupleHashTable;
 
-	entry = state->next_entry;
-	while (entry == NULL)
-	{
-		if (state->next_bucket >= hashtable->nbuckets)
-		{
-			/* No more entries in hashtable, so done */
-			return NULL;
-		}
-		entry = hashtable->buckets[state->next_bucket++];
-	}
-	state->next_entry = entry->next;
-
-	return entry;
+	if (execTuplesMatch(tuple1,
+						tuple2,
+						hashtable->tupdesc,
+						hashtable->numCols,
+						hashtable->keyColIdx,
+						hashtable->eqfunctions,
+						hashtable->tempcxt))
+		return 0;
+	else
+		return 1;
 }

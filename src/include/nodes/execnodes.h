@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: execnodes.h,v 1.103 2003/08/08 21:42:47 momjian Exp $
+ * $Id: execnodes.h,v 1.104 2003/08/19 01:13:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,6 +21,7 @@
 #include "nodes/bitmapset.h"
 #include "nodes/params.h"
 #include "nodes/plannodes.h"
+#include "utils/hsearch.h"
 #include "utils/tuplestore.h"
 
 
@@ -344,14 +345,14 @@ typedef struct TupleHashTableData *TupleHashTable;
 
 typedef struct TupleHashEntryData
 {
-	TupleHashEntry next;		/* next entry in same hash bucket */
-	uint32		hashkey;		/* exact hash key of this entry */
+	/* firstTuple must be the first field in this struct! */
 	HeapTuple	firstTuple;		/* copy of first tuple in this group */
 	/* there may be additional data beyond the end of this struct */
 } TupleHashEntryData;			/* VARIABLE LENGTH STRUCT */
 
 typedef struct TupleHashTableData
 {
+	HTAB	   *hashtab;		/* underlying dynahash table */
 	int			numCols;		/* number of columns in lookup key */
 	AttrNumber *keyColIdx;		/* attr numbers of key columns */
 	FmgrInfo   *eqfunctions;	/* lookup data for comparison functions */
@@ -359,19 +360,15 @@ typedef struct TupleHashTableData
 	MemoryContext tablecxt;		/* memory context containing table */
 	MemoryContext tempcxt;		/* context for function evaluations */
 	Size		entrysize;		/* actual size to make each hash entry */
-	int			nbuckets;		/* number of buckets in hash table */
-	TupleHashEntry buckets[1];	/* VARIABLE LENGTH ARRAY */
-} TupleHashTableData;			/* VARIABLE LENGTH STRUCT */
+	TupleDesc	tupdesc;		/* tuple descriptor */
+} TupleHashTableData;
 
-typedef struct
-{
-	TupleHashEntry next_entry;	/* next entry in current chain */
-	int			next_bucket;	/* next chain */
-} TupleHashIterator;
+typedef HASH_SEQ_STATUS TupleHashIterator;
 
-#define ResetTupleHashIterator(iter) \
-	((iter)->next_entry = NULL, \
-	 (iter)->next_bucket = 0)
+#define ResetTupleHashIterator(htable, iter) \
+	hash_seq_init(iter, (htable)->hashtab)
+#define ScanTupleHashTable(iter) \
+	((TupleHashEntry) hash_seq_search(iter))
 
 
 /* ----------------------------------------------------------------
