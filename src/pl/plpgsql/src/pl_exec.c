@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.127 2005/01/13 23:07:34 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.128 2005/02/01 19:35:14 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -3069,11 +3069,13 @@ exec_assign_value(PLpgSQL_execstate *estate,
 							oldarrayisnull;
 				Oid			arraytypeid,
 							arrayelemtypeid;
-				int16		elemtyplen;
+				int16		arraytyplen,
+							elemtyplen;
 				bool		elemtypbyval;
 				char		elemtypalign;
-				Datum		oldarrayval,
+				Datum		oldarraydatum,
 							coerced_value;
+				ArrayType  *oldarrayval;
 				ArrayType  *newarrayval;
 
 				/*
@@ -3102,13 +3104,19 @@ exec_assign_value(PLpgSQL_execstate *estate,
 
 				/* Fetch current value of array datum */
 				exec_eval_datum(estate, target, InvalidOid,
-							&arraytypeid, &oldarrayval, &oldarrayisnull);
+								&arraytypeid, &oldarraydatum, &oldarrayisnull);
 
 				arrayelemtypeid = get_element_type(arraytypeid);
 				if (!OidIsValid(arrayelemtypeid))
 					ereport(ERROR,
 							(errcode(ERRCODE_DATATYPE_MISMATCH),
 						  errmsg("subscripted object is not an array")));
+
+				get_typlenbyvalalign(arrayelemtypeid,
+									 &elemtyplen,
+									 &elemtypbyval,
+									 &elemtypalign);
+				arraytyplen = get_typlen(arraytypeid);
 
 				/*
 				 * Evaluate the subscripts, switch into left-to-right
@@ -3127,13 +3135,35 @@ exec_assign_value(PLpgSQL_execstate *estate,
 				}
 
 				/*
-				 * Skip the assignment if we have any nulls, either in the
-				 * original array value, the subscripts, or the righthand
-				 * side. This is pretty bogus but it corresponds to the
-				 * current behavior of ExecEvalArrayRef().
+				 * Skip the assignment if we have any nulls in the subscripts
+				 * or the righthand side. This is pretty bogus but it
+				 * corresponds to the current behavior of ExecEvalArrayRef().
 				 */
-				if (oldarrayisnull || havenullsubscript || *isNull)
+				if (havenullsubscript || *isNull)
 					return;
+
+				/*
+				 * If the original array is null, cons up an empty array
+				 * so that the assignment can proceed; we'll end with a
+				 * one-element array containing just the assigned-to
+				 * subscript.  This only works for varlena arrays, though;
+				 * for fixed-length array types we skip the assignment.
+				 * Again, this corresponds to the current behavior of
+				 * ExecEvalArrayRef().
+				 */
+				if (oldarrayisnull)
+				{
+					if (arraytyplen > 0)		/* fixed-length array? */
+						return;
+
+					oldarrayval = construct_md_array(NULL, 0, NULL, NULL,
+													 arrayelemtypeid,
+													 elemtyplen,
+													 elemtypbyval,
+													 elemtypalign);
+				}
+				else
+					oldarrayval = (ArrayType *) DatumGetPointer(oldarraydatum);
 
 				/* Coerce source value to match array element type. */
 				coerced_value = exec_simple_cast_value(value,
@@ -3145,16 +3175,11 @@ exec_assign_value(PLpgSQL_execstate *estate,
 				/*
 				 * Build the modified array value.
 				 */
-				get_typlenbyvalalign(arrayelemtypeid,
-									 &elemtyplen,
-									 &elemtypbyval,
-									 &elemtypalign);
-
-				newarrayval = array_set((ArrayType *) DatumGetPointer(oldarrayval),
+				newarrayval = array_set(oldarrayval,
 										nsubscripts,
 										subscriptvals,
 										coerced_value,
-										get_typlen(arraytypeid),
+										arraytyplen,
 										elemtyplen,
 										elemtypbyval,
 										elemtypalign,
