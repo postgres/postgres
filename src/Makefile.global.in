@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.10 1997/02/08 20:39:24 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.11 1997/02/12 11:05:10 scrappy Exp $
 #
 # NOTES
 #    Essentially all Postgres make files include this file and use the 
@@ -75,7 +75,7 @@ LINUX_ELF= true
 
 LIBPQDIR:= $(SRCDIR)/libpq
 
-# For convenience, POSTGRESDIR is where DATADIR, BINDIR, and LIBDIR 
+# For convenience, POSTGRESDIR is where BINDIR, and LIBDIR 
 # and other target destinations are rooted.  Of course, each of these is 
 # changable separately.
 POSTGRESDIR= /usr/local/pgsql
