@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/proc.c,v 1.153 2004/08/29 05:06:48 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/proc.c,v 1.154 2004/09/29 15:15:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -90,6 +90,22 @@ static bool CheckStatementTimeout(void);
 
 
 /*
+ * Report shared-memory space needed by InitProcGlobal.
+ */
+int
+ProcGlobalShmemSize(int maxBackends)
+{
+	int			size = 0;
+
+	size += MAXALIGN(sizeof(PROC_HDR)); /* ProcGlobal */
+	size += MAXALIGN(NUM_DUMMY_PROCS * sizeof(PGPROC));	/* DummyProcs */
+	size += MAXALIGN(maxBackends * sizeof(PGPROC));		/* MyProcs */
+	size += MAXALIGN(sizeof(slock_t)); /* ProcStructLock */
+
+	return size;
+}
+
+/*
  * Report number of semaphores needed by InitProcGlobal.
  */
 int
@@ -134,7 +150,7 @@ InitProcGlobal(int maxBackends)
 	 * processes, too.	These do not get linked into the freeProcs list.
 	 */
 	DummyProcs = (PGPROC *)
-		ShmemInitStruct("DummyProcs", sizeof(PGPROC) * NUM_DUMMY_PROCS,
+		ShmemInitStruct("DummyProcs", NUM_DUMMY_PROCS * sizeof(PGPROC),
 						&foundDummy);
 
 	if (foundProcGlobal || foundDummy)
@@ -147,6 +163,7 @@ InitProcGlobal(int maxBackends)
 		/*
 		 * We're the first - initialize.
 		 */
+		PGPROC	   *procs;
 		int			i;
 
 		ProcGlobal->freeProcs = INVALID_OFFSET;
@@ -155,22 +172,20 @@ InitProcGlobal(int maxBackends)
 		 * Pre-create the PGPROC structures and create a semaphore for
 		 * each.
 		 */
+		procs = (PGPROC *) ShmemAlloc(maxBackends * sizeof(PGPROC));
+		if (!procs)
+			ereport(FATAL,
+					(errcode(ERRCODE_OUT_OF_MEMORY),
+					 errmsg("out of shared memory")));
+		MemSet(procs, 0, maxBackends * sizeof(PGPROC));
 		for (i = 0; i < maxBackends; i++)
 		{
-			PGPROC	   *proc;
-
-			proc = (PGPROC *) ShmemAlloc(sizeof(PGPROC));
-			if (!proc)
-				ereport(FATAL,
-						(errcode(ERRCODE_OUT_OF_MEMORY),
-						 errmsg("out of shared memory")));
-			MemSet(proc, 0, sizeof(PGPROC));
-			PGSemaphoreCreate(&proc->sem);
-			proc->links.next = ProcGlobal->freeProcs;
-			ProcGlobal->freeProcs = MAKE_OFFSET(proc);
+			PGSemaphoreCreate(&(procs[i].sem));
+			procs[i].links.next = ProcGlobal->freeProcs;
+			ProcGlobal->freeProcs = MAKE_OFFSET(&procs[i]);
 		}
 
-		MemSet(DummyProcs, 0, sizeof(PGPROC) * NUM_DUMMY_PROCS);
+		MemSet(DummyProcs, 0, NUM_DUMMY_PROCS * sizeof(PGPROC));
 		for (i = 0; i < NUM_DUMMY_PROCS; i++)
 		{
 			DummyProcs[i].pid = 0;		/* marks dummy proc as not in use */
