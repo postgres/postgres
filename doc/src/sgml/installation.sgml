@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.73 2002/01/09 00:52:37 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.74 2002/01/20 05:45:18 tgl Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -39,7 +39,7 @@ su - postgres
   <para>
    In general, a modern Unix-compatible platform should be able to run
    <productname>PostgreSQL</>.
-    The platforms that had received explicit testing at the
+    The platforms that had received specific testing at the
    time of release are listed in <xref linkend="supported-platforms">
    below. In the <filename>doc</> subdirectory of the distribution
    there are several platform-specific <acronym>FAQ</> documents you
@@ -79,7 +79,11 @@ su - postgres
     </listitem>
 
     <listitem>
-     <para><application>gzip</></para>
+     <para>
+      <application>gzip</> is needed to unpack the distribution in the
+      first place.  If you are reading this, you probably already got
+      past that hurdle.
+     </para>
     </listitem>
 
     <listitem>
@@ -88,10 +92,10 @@ su - postgres
        <primary>readline</primary>
       </indexterm>
 
-      The <acronym>GNU</> <productname>Readline</> library for comfortable
-      line editing and command history retrieval will automatically be used
+      The <acronym>GNU</> <productname>Readline</> library (for comfortable
+      line editing and command history retrieval) will automatically be used
       if found. You might wish to install it before proceeding, but it is not
-      required.  (On <productname>NetBSD</productname>, the
+      essential.  (On <productname>NetBSD</productname>, the
       <filename>libedit</filename> library is
       <productname>readline</productname>-compatible and is used if
       <filename>libreadline</filename> is not found.)
@@ -110,15 +114,17 @@ su - postgres
        <primary>yacc</primary>
       </indexterm>
 
-      <application>Flex</> and <application>Bison</> are
+      <acronym>GNU</> <application>Flex</> and <application>Bison</> are
+      needed to build from scratch, but they are
       <emphasis>not</> required when building from a released source
-      package because the output files are pre-generated. You will
-      need these programs only when building from a CVS tree or when
-      the actual scanner and parser definition files were changed. If
+      package because pre-generated output files are included in released
+      packages. You will
+      need these programs only when building from a CVS tree or if you
+      changed the actual scanner and parser definition files. If
       you need them, be sure to get <application>Flex</> 2.5.4 or
       later and <application>Bison</> 1.28 or later. Other <application>yacc</>
       programs can sometimes be used, but doing so requires extra
-      efforts and is not recommended. Other <application>lex</> programs will
+      effort and is not recommended. Other <application>lex</> programs will
       definitely not work.
      </para>
     </listitem>
@@ -220,9 +226,13 @@ su - postgres
 <screen>
 <userinput>pg_dumpall &gt; <replaceable>outputfile</></userinput>
 </screen>
-     If you need to preserve the OIDs (such as when using them as
+     If you need to preserve OIDs (such as when using them as
      foreign keys), then use the <option>-o</option> option when running
-     <command>pg_dumpall</>.  <command>pg_dumpall</command> does not
+     <command>pg_dumpall</>.
+    </para>
+
+    <para>
+     <command>pg_dumpall</command> does not
      save large objects.  Check
      <![%standalone-include[the <citetitle>Administrator's Guide</>]]>
      <![%standalone-ignore[<xref linkend="backup-dump-caveats">]]>
@@ -258,7 +268,7 @@ su - postgres
 <screen>
 <userinput>/etc/rc.d/init.d/postgresql stop</userinput>
 </screen>
-     works.
+     works.  Another possibility is <userinput>pg_ctl stop</>.
     </para>
    </step>
 
@@ -266,7 +276,8 @@ su - postgres
     <para>
      If you are installing in the same place as the old version then
      it is also a good idea to move the old installation out of the
-     way, in case you still need it later on. Use a command like this:
+     way, in case you have trouble and need to revert to it.
+     Use a command like this:
 <screen>
 <userinput>mv /usr/local/pgsql /usr/local/pgsql.old</>
 </screen>
@@ -323,13 +334,13 @@ su - postgres
 </screen>
     This script will run a number of tests to guess values for various
     system dependent variables and detect some quirks of your
-    operating system, and finally creates several files in the build
+    operating system, and finally will create several files in the build
     tree to record what it found.
    </para>
 
    <para>
     The default configuration will build the server and utilities, as
-    well as all client applications and interfaces that only require a
+    well as all client applications and interfaces that require only a
     C compiler. All files will be installed under
     <filename>/usr/local/pgsql</> by default.
    </para>
@@ -493,8 +504,9 @@ su - postgres
          <replaceable>DIRECTORIES</> is a colon-separated list of
          directories that will be added to the list the compiler
          searches for header files. If you have optional packages
-         (such as GNU <application>Readline</>) installed in a non-standard location
-         you have to use this option and probably the corresponding
+         (such as GNU <application>Readline</>) installed in a non-standard
+	 location,
+         you have to use this option and probably also the corresponding
          <option>--with-libraries</> option.
         </para>
         <para>
@@ -565,13 +577,13 @@ su - postgres
        <listitem>
         <para>
          Enables Native Language Support (<acronym>NLS</acronym>), that is, the ability
-         to display a program's message in a language other than
+         to display a program's messages in a language other than
          English.  <replaceable>LANGUAGES</replaceable> is a space
          separated list of codes of the languages that you want
          supported, for example <literal>--enable-nls='de fr'</>.
          (The intersection between your list and the set
          of actually provided translations will be computed
-         automatically.)  If you do not specify it, then all available
+         automatically.)  If you do not specify a list, then all available
          translations are installed.
         </para>
 
@@ -607,7 +619,9 @@ su - postgres
          server and clients. The default is 5432. The port can always
          be changed later on, but if you specify it here then both
          server and clients will have the same default compiled in,
-         which can be very convenient.
+         which can be very convenient.  Usually the only good reason
+	 to select a non-default value is if you intend to run multiple
+	 <productname>PostgreSQL</> servers on the same machine.
         </para>
        </listitem>
       </varlistentry>
@@ -682,12 +696,12 @@ su - postgres
        <listitem>
         <para>
          Tcl/Tk installs the files <filename>tclConfig.sh</filename> and
-         <filename>tkConfig.sh</filename> which contain certain
-         configuration information that is needed to build modules
+         <filename>tkConfig.sh</filename>, which contain
+         configuration information needed to build modules
          interfacing to Tcl or Tk. These files are normally found
-         automatically at their well-known location, but if you want to
+         automatically at their well-known locations, but if you want to
          use a different version of Tcl or Tk you can specify the
-         directory where to find them.
+         directory in which to find them.
         </para>
        </listitem>
       </varlistentry>
@@ -745,6 +759,21 @@ su - postgres
       </varlistentry>
 
       <varlistentry>
+       <term><option>--with-java</option></term>
+       <listitem>
+        <para>
+         Build the <acronym>JDBC</acronym> driver and associated Java
+         packages.  This option requires
+         <application>Ant</application> to be installed (as well as a
+         <acronym>JDK</acronym>, of course).  Refer to the
+         <acronym>JDBC</acronym> driver documentation in the
+         <citetitle>Programmer's Guide</citetitle> for more
+         information.
+        </para>
+       </listitem>
+      </varlistentry>
+
+      <varlistentry>
        <term><option>--with-krb4<optional>=<replaceable>DIRECTORY</></></option></term>
        <term><option>--with-krb5<optional>=<replaceable>DIRECTORY</></></option></term>
        <listitem>
@@ -754,7 +783,7 @@ su - postgres
          <replaceable>DIRECTORY</> argument specifies the root
          directory of the Kerberos installation;
          <filename>/usr/athena</> is assumed as default. If the
-         relevant headers files and libraries are not under a common
+         relevant header files and libraries are not under a common
          parent directory, then you must use the
          <option>--with-includes</> and <option>--with-libraries</>
          options in addition to this option. If, on the other hand,
@@ -807,16 +836,11 @@ su - postgres
       </varlistentry>
 
       <varlistentry>
-       <term><option>--with-java</option></term>
+       <term><option>--with-pam</option></term>
        <listitem>
         <para>
-         Build the <acronym>JDBC</acronym> driver and associated Java
-         packages.  This option requires
-         <application>Ant</application> to be installed (as well as a
-         <acronym>JDK</acronym>, of course).  Refer to the
-         <acronym>JDBC</acronym> driver documentation in the
-         <citetitle>Programmer's Guide</citetitle> for more
-         information.
+	 Build with <acronym>PAM</> (Pluggable Authentication Modules)
+	 support.
         </para>
        </listitem>
       </varlistentry>
@@ -828,7 +852,7 @@ su - postgres
          Enables the <productname>PostgreSQL</> server to use the
          <systemitem>syslog</> logging facility. (Using this option does not mean
          that you must log with <systemitem>syslog</> or even that it will be done
-         by default, it simply makes it possible to turn this option
+         by default, it simply makes it possible to turn that option
          on at run time.)
         </para>
        </listitem>
@@ -846,7 +870,7 @@ su - postgres
 	 having the symbols available is extremely helpful for dealing
 	 with any problems that may arise.  Currently, this option is
 	 recommended for production installations only if you use GCC.
-	 But you should have it on if you are doing development work
+	 But you should always have it on if you are doing development work
 	 or running a beta version.
         </para>
        </listitem>
@@ -869,18 +893,33 @@ su - postgres
         </para>
        </listitem>
       </varlistentry>
+
+      <varlistentry>
+       <term><option>--enable-depend</option></term>
+       <listitem>
+        <para>
+	 Enables automatic dependency tracking.  With this option, the
+	 makefiles are set up so that all affected object files will
+	 be rebuilt when any header file is changed.  This is useful
+	 if you are doing development work, but is just wasted overhead
+	 if you intend only to compile once and install.  At present,
+	 this option will work only if you use GCC.
+        </para>
+       </listitem>
+      </varlistentry>
+
      </variablelist>
    </para>
 
    <para>
     If you prefer a C or C++ compiler different from the one
     <filename>configure</filename> picks then you can set the
-    environment variables <envar>CC</> and <envar>CXX</envar>,
+    environment variables <envar>CC</> or <envar>CXX</envar>,
     respectively, to the program of your choice.  Similarly, you can
     override the default compiler flags with the <envar>CFLAGS</envar>
     and <envar>CXXFLAGS</envar> variables.  For example:
 <screen>
-<userinput>env CC=/opt/bin/gcc CFLAGS='-02 -pipe' ./configure</>
+<userinput>env CC=/opt/bin/gcc CFLAGS='-O2 -pipe' ./configure</>
 </screen>
    </para>
   </step>
@@ -894,8 +933,8 @@ su - postgres
 <userinput>gmake</userinput>
 </screen>
     (Remember to use <acronym>GNU</> <application>make</>.) The build
-    can take anywhere from 5 minutes to half an hour. The last line
-    displayed should be
+    may take anywhere from 5 minutes to half an hour depending on your
+    hardware. The last line displayed should be
 <screen>
 All of PostgreSQL is successfully made. Ready to install.
 </screen>
@@ -936,7 +975,7 @@ All of PostgreSQL is successfully made. Ready to install.
    <note>
     <para>
      If you are upgrading an existing system and are going to install
-     the new files over the old ones then you should have backed up
+     the new files over the old ones, then you should have backed up
      your data and shut down the old server by now, as explained in
      <xref linkend="install-upgrading"> above.
     </para>
@@ -971,7 +1010,7 @@ All of PostgreSQL is successfully made. Ready to install.
    </para>
 
    <para>
-    The standard installation contains only the header files needed for client
+    The standard installation provides only the header files needed for client
     application development.  If you plan to do any server-side program
     development (such as custom functions or data types written in C),
     then you may want to install the entire <productname>PostgreSQL</>
@@ -1001,7 +1040,7 @@ All of PostgreSQL is successfully made. Ready to install.
 
    <para>
     To undo the installation use the command <command>gmake
-    uninstall</>. However, this will not remove any directories.
+    uninstall</>. However, this will not remove any created directories.
    </para>
   </step>
   </procedure>
@@ -1009,12 +1048,21 @@ All of PostgreSQL is successfully made. Ready to install.
   <para>
    After the installation you can make room by removing the built
    files from the source tree with the <command>gmake clean</>
-   command. This will preserve the choices made by the configure
+   command. This will preserve the files made by the configure
    program, so that you can rebuild everything with <command>gmake</>
    later on. To reset the source tree to the state in which it was
    distributed, use <command>gmake distclean</>. If you are going to
    build for several platforms from the same source tree you must do
    this and re-configure for each build.
+  </para>
+
+  <para>
+   If you perform a build and then discover that your configure options
+   were wrong, or if you change anything that configure investigates
+   (for example, you install GNU <application>Readline</>), then it's
+   a good idea to do <command>gmake distclean</> before reconfiguring
+   and rebuilding.  Without this, your changes in configuration choices
+   may not propagate everywhere they need to.
   </para>
 
  </sect1>
@@ -1127,7 +1175,7 @@ libpq.so.2.1: cannot open shared object file: No such file or directory
    <para>
     If you installed into <filename>/usr/local/pgsql</> or some other
     location that is not searched for programs by default, you need to
-    add <filename>/usr/local/pgsql/bin</> (or what you set
+    add <filename>/usr/local/pgsql/bin</> (or whatever you set
     <option><literal>--bindir</></> to in <xref linkend="configure">)
     into your <envar>PATH</>. To do this, add the following to your
     shell start-up file, such as <filename>~/.bash_profile</> (or
@@ -1159,8 +1207,8 @@ MANPATH=/usr/local/pgsql/man:$MANPATH
     specify to client applications the host and port of the database
     server, overriding the compiled-in defaults. If you are going to
     run client applications remotely then it is convenient if every
-    user that plans to use the database sets <envar>PGHOST</>, but it
-    is not required and the settings can be communicated via command
+    user that plans to use the database sets <envar>PGHOST</>.  This
+    is not required, however: the settings can be communicated via command
     line options to most client programs.
    </para>
   </sect2>
