@@ -4,7 +4,7 @@
 #endif
 
 
-#if defined(__i386__)
+#if defined(__i386__) || defined(__x86_64__)
 typedef unsigned char slock_t;
 
 #define HAS_TEST_AND_SET
