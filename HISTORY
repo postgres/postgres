@@ -50,6 +50,7 @@ Fix to_char() to avoid coredump on NULL input (Tom)
 Buffer fix (Tom)
 Fix for inserting/copying longer multibyte strings into char() data
     types (Tatsuo)
+Fix for crash of backend, on abort (Tom)
 
 
   ------------------------------------------------------------------------
