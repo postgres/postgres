@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/syntax.sgml,v 1.49 2001/10/12 23:32:34 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/syntax.sgml,v 1.50 2001/11/08 23:34:33 petere Exp $
 -->
 
 <chapter id="sql-syntax">
@@ -757,7 +757,7 @@ CAST ( '<replaceable>string</replaceable>' AS <replaceable>type</replaceable> )
 
     <para>
      For further information on the system attributes consult
-     <xref linkend="STON87a" endterm="STON87a">.
+     <xref linkend="STON87a">.
     </para>
 
   </sect1>

@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/indices.sgml,v 1.24 2001/10/31 20:38:26 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/indices.sgml,v 1.25 2001/11/08 23:34:33 petere Exp $ -->
 
 <chapter id="indexes">
  <title id="indexes-title">Indexes</title>
@@ -756,9 +756,8 @@ SELECT * FROM orders WHERE order_nr = 3501;
 
   <para>
    More information about partial indexes can be found in <xref
-   endterm="STON89b" linkend="STON89b-full">, <xref endterm="OLSON93"
-   linkend="OLSON93-full">, and <xref endterm="SESHADRI95"
-   linkend="SESHADRI95-full">.
+   linkend="STON89b">, <xref linkend="OLSON93">, and <xref
+   linkend="SESHADRI95">.
   </para>
  </sect1>
 

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/arch-dev.sgml,v 2.14 2001/05/17 21:50:15 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/arch-dev.sgml,v 2.15 2001/11/08 23:34:33 petere Exp $
 -->
 
  <chapter id="overview">
@@ -9,7 +9,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/arch-dev.sgml,v 2.14 2001/05/17 21:50:15 pe
    <title>Author</title>
    <para>
     This chapter originally appeared as a part of
-    <xref linkend="SIM98" endterm="SIM98">, Stefan Simkovics'
+    <xref linkend="SIM98">, Stefan Simkovics'
     Master's Thesis prepared at Vienna University of Technology under the direction
     of O.Univ.Prof.Dr. Georg Gottlob and Univ.Ass. Mag. Katrin Seyr.
    </para>
@@ -266,7 +266,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/arch-dev.sgml,v 2.14 2001/05/17 21:50:15 pe
      XXX The above citetitle should really be an xref,
      but that part has not yet been converted from Stefan's original document.
      - thomas 1999-02-11
-    <xref linkend="supplier" endterm="supplier">
+    <xref linkend="supplier">
      -->
      have already been defined.
 
@@ -539,7 +539,7 @@ current context are performed.
       system whenever a user-query against <literal>test_view</literal> appears. (The
       following listing is a very informal description of the algorithm just
       intended for basic understanding. For a detailed description refer
-      to <xref linkend="STON89-full" endterm="STON89">).
+      to <xref linkend="STON89">).
      </para>
 
      <procedure>

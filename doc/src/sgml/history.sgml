@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/history.sgml,v 1.15 2001/09/13 15:55:22 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/history.sgml,v 1.16 2001/11/08 23:34:33 petere Exp $
 -->
 
 <sect1 id="history">
@@ -26,16 +26,16 @@ $Header: /cvsroot/pgsql/doc/src/sgml/history.sgml,v 1.15 2001/09/13 15:55:22 pet
    Implementation of the <productname>Postgres</productname> 
    <acronym>DBMS</acronym> began in 1986.  The
    initial  concepts  for  the  system  were  presented in
-   <xref endterm="STON86-full" linkend="STON86">
+   <xref linkend="STON86">
    and the definition of the initial  data  model
    appeared in 
-   <xref endterm="ROWE87-full" linkend="ROWE87">.
+   <xref linkend="ROWE87">.
    The design of the rule system at
    that time was described in  
-   <xref endterm="STON87a-full" linkend="STON87a">.
+   <xref linkend="STON87a">.
    The  rationale
    and  architecture  of the storage manager were detailed in 
-   <xref endterm="STON87b-full" linkend="STON87b">.
+   <xref linkend="STON87b">.
   </para>
 
   <para>
@@ -43,13 +43,13 @@ $Header: /cvsroot/pgsql/doc/src/sgml/history.sgml,v 1.15 2001/09/13 15:55:22 pet
    then.   The  first <quote>demoware</quote> system became operational
    in 1987 and was shown at the  1988  <acronym>ACM-SIGMOD</acronym>  
    Conference.   We  released Version 1, described in 
-   <xref endterm="STON90a-full" linkend="STON90a">,
+   <xref linkend="STON90a">,
    to a few external users in June 1989.  In response to a
    critique  of  the  first rule system 
-   (<xref endterm="STON89-full" linkend="STON89">), 
+   (<xref linkend="STON89">), 
    the rule
    system was  redesigned 
-   (<xref endterm="STON90b-full" linkend="STON90b">)
+   (<xref linkend="STON90b">)
    and  Version  2  was
    released  in  June 1990 with the new rule system.  
    Version 3 appeared in 1991 and added support for  multiple
