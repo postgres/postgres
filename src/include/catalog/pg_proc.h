@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.275 2002/11/02 18:41:22 tgl Exp $
+ * $Id: pg_proc.h,v 1.276 2002/11/08 17:27:03 momjian Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -1000,6 +1000,10 @@ DATA(insert OID = 750 (  array_in		   PGNSP PGUID 12 f f t f s 3 2277 "2275 26 2
 DESCR("array");
 DATA(insert OID = 751 (  array_out		   PGNSP PGUID 12 f f t f s 1 2275 "2277"  array_out - _null_ ));
 DESCR("array");
+DATA(insert OID = 2091 (  array_lower	   PGNSP PGUID 12 f f t f i 2 23 "2277 23" array_lower - _null_ ));
+DESCR("array lower dimension");
+DATA(insert OID = 2092 (  array_upper	   PGNSP PGUID 12 f f t f i 2 23 "2277 23" array_upper - _null_ ));
+DESCR("array upper dimension");
 
 DATA(insert OID = 760 (  smgrin			   PGNSP PGUID 12 f f t f s 1 210 "2275"  smgrin - _null_ ));
 DESCR("storage manager(internal)");

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.81 2002/09/18 21:35:22 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.82 2002/11/08 17:27:02 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -864,6 +864,65 @@ array_dims(PG_FUNCTION_ARGS)
 	VARATT_SIZEP(result) = strlen(VARDATA(result)) + VARHDRSZ;
 
 	PG_RETURN_TEXT_P(result);
+}
+
+/*-----------------------------------------------------------------------------
+ * array_lower :
+ *		returns the lower dimension, of the DIM requested, for
+ *		the array pointed to by "v", as an int4
+ *----------------------------------------------------------------------------
+ */
+Datum
+array_lower(PG_FUNCTION_ARGS)
+{
+	ArrayType  *v = PG_GETARG_ARRAYTYPE_P(0);
+	int			reqdim = PG_GETARG_INT32(1);
+	int		   *lb;
+	int			result;
+
+	/* Sanity check: does it look like an array at all? */
+	if (ARR_NDIM(v) <= 0 || ARR_NDIM(v) > MAXDIM)
+		PG_RETURN_NULL();
+
+	/* Sanity check: was the requested dim valid */
+	if (reqdim <= 0 || reqdim > ARR_NDIM(v))
+		PG_RETURN_NULL();
+
+	lb = ARR_LBOUND(v);
+	result = lb[reqdim - 1];
+
+	PG_RETURN_INT32(result);
+}
+
+/*-----------------------------------------------------------------------------
+ * array_upper :
+ *		returns the upper dimension, of the DIM requested, for
+ *		the array pointed to by "v", as an int4
+ *----------------------------------------------------------------------------
+ */
+Datum
+array_upper(PG_FUNCTION_ARGS)
+{
+	ArrayType  *v = PG_GETARG_ARRAYTYPE_P(0);
+	int			reqdim = PG_GETARG_INT32(1);
+	int		   *dimv,
+			   *lb;
+	int			result;
+
+	/* Sanity check: does it look like an array at all? */
+	if (ARR_NDIM(v) <= 0 || ARR_NDIM(v) > MAXDIM)
+		PG_RETURN_NULL();
+
+	/* Sanity check: was the requested dim valid */
+	if (reqdim <= 0 || reqdim > ARR_NDIM(v))
+		PG_RETURN_NULL();
+
+	lb = ARR_LBOUND(v);
+	dimv = ARR_DIMS(v);
+
+	result = dimv[reqdim - 1] + lb[reqdim - 1] - 1;
+
+	PG_RETURN_INT32(result);
 }
 
 /*---------------------------------------------------------------------------
