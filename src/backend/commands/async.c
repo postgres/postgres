@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/async.c,v 1.62 2000/05/31 00:28:15 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/async.c,v 1.63 2000/06/04 01:44:29 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -771,7 +771,7 @@ ProcessIncomingNotify(void)
 	if (Trace_notify)
 		elog(DEBUG, "ProcessIncomingNotify");
 
-	PS_SET_STATUS("async_notify");
+	set_ps_display("async_notify");
 
 	notifyInterruptOccurred = 0;
 
@@ -841,7 +841,7 @@ ProcessIncomingNotify(void)
 	 */
 	pq_flush();
 
-	PS_SET_STATUS("idle");
+	set_ps_display("idle");
 
 	if (Trace_notify)
 		elog(DEBUG, "ProcessIncomingNotify: done");

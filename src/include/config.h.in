@@ -8,7 +8,7 @@
  * or in config.h afterwards.  Of course, if you edit config.h, then your
  * changes will be overwritten the next time you run configure.
  *
- * $Id: config.h.in,v 1.114 2000/05/31 00:28:36 petere Exp $
+ * $Id: config.h.in,v 1.115 2000/06/04 01:44:36 petere Exp $
  */
 
 #ifndef CONFIG_H
@@ -276,6 +276,15 @@
 /* Set to 1 if  you have <values.h> */
 #undef HAVE_VALUES_H
 
+/* Set to 1 if you have <sys/exec.h> */
+#undef HAVE_SYS_EXEC_H
+
+/* Set to 1 if you have <sys/pstat.h> */
+#undef HAVE_SYS_PSTAT_H
+
+/* Set to 1 if you have <machine/vmparam.h> */
+#undef HAVE_MACHINE_VMPARAM_H
+
 /* Define if you have the ANSI C header files.  */
 #undef STDC_HEADERS
 
@@ -284,6 +293,12 @@
 
 /* Define if you have the setproctitle function.  */
 #undef HAVE_SETPROCTITLE
+
+/* Define if you have the pstat function. */
+#undef HAVE_PSTAT
+
+/* Define if the PS_STRINGS thing exists. */
+#undef HAVE_PS_STRINGS
 
 /* Define if you have the stricmp function.  */
 #undef HAVE_STRICMP

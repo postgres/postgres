@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.145 2000/06/02 15:57:22 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.146 2000/06/04 01:44:31 petere Exp $
  *
  * NOTES
  *
@@ -33,6 +33,8 @@
  *
  *-------------------------------------------------------------------------
  */
+#include "postgres.h"
+
 #include <unistd.h>
 #include <signal.h>
 #include <sys/wait.h>
@@ -46,14 +48,9 @@
 #include <time.h>
 #include <sys/param.h>
 
-#include "postgres.h"
  /* moved here to prevent double define */
 #ifdef HAVE_NETDB_H
 #include <netdb.h>
-#endif
-
-#ifndef MAXHOSTNAMELEN
-#define MAXHOSTNAMELEN 256
 #endif
 
 #ifdef HAVE_LIMITS_H
@@ -70,10 +67,6 @@
 
 #ifdef HAVE_GETOPT_H
 #include "getopt.h"
-#endif
-
-#ifndef HAVE_GETHOSTNAME
-#include "port-protos.h"
 #endif
 
 #include "commands/async.h"
@@ -191,8 +184,6 @@ static volatile bool got_SIGHUP = false;
 /*
  * Default Values
  */
-static char Execfile[MAXPGPATH];
-
 static int	ServerSock_INET = INVALID_SOCK;		/* stream socket server */
 
 #if !defined(__CYGWIN32__) && !defined(__QNX__)
@@ -278,7 +269,7 @@ static void SignalChildren(SIGNAL_ARGS);
 static int	CountChildren(void);
 static int
 SetOptsFile(char *progname, int port, char *datadir,
-			int assert, int nbuf, char *execfile,
+			int assert, int nbuf,
 			int debuglvl, int netserver,
 #ifdef USE_SSL
 			int securenetserver,
@@ -368,60 +359,16 @@ int
 PostmasterMain(int argc, char *argv[])
 {
 	int			opt;
-	char	   *hostName;
 	int			status;
 	int			silentflag = 0;
 	bool		DataDirOK;		/* We have a usable PGDATA value */
-	char		hostbuf[MAXHOSTNAMELEN];
-	int			nonblank_argc;
 	char		original_extraoptions[MAXPGPATH];
 
 	*original_extraoptions = '\0';
 
-#ifndef HAVE_SETPROCTITLE
-	/*
-	 * We need four params so we can display status.  If we don't get
-	 * them from the user, let's make them ourselves.
-	 */
-	if (argc < 5)
-	{
-		int			i;
-		char	   *new_argv[6];
-
-		for (i = 0; i < argc; i++)
-			new_argv[i] = argv[i];
-		for (; i < 5; i++)
-			new_argv[i] = "";
-		new_argv[5] = NULL;
-
-		if (!Execfile[0] && FindExec(Execfile, argv[0], "postmaster") < 0)
-		{
-			fprintf(stderr, "%s: could not find postmaster to execute...\n",
-					argv[0]);
-			exit(1);
-		}
-		new_argv[0] = Execfile;
-
-		execv(new_argv[0], new_argv);
-
-		/* How did we get here?  Error! */
-		perror(new_argv[0]);
-		fprintf(stderr, "PostmasterMain execv failed on %s\n", argv[0]);
-		exit(1);
-	}
-#endif
-
 	progname = argv[0];
 	real_argv = argv;
 	real_argc = argc;
-
-	/*
-	 * don't process any dummy args we placed at the end for status
-	 * display
-	 */
-	for (nonblank_argc = argc; nonblank_argc > 0; nonblank_argc--)
-		if (argv[nonblank_argc - 1] != NULL && argv[nonblank_argc - 1][0] != '\0')
-			break;
 
 	/*
 	 * for security, no dir or file created can be group or other
@@ -430,13 +377,6 @@ PostmasterMain(int argc, char *argv[])
 	umask((mode_t) 0077);
 
 	ResetAllOptions();
-
-	if (!(hostName = getenv("PGHOST")))
-	{
-		if (gethostname(hostbuf, MAXHOSTNAMELEN) < 0)
-			strcpy(hostbuf, "localhost");
-		hostName = hostbuf;
-	}
 
 	MyProcPid = getpid();
 	DataDir = getenv("PGDATA"); /* default value */
@@ -455,7 +395,7 @@ PostmasterMain(int argc, char *argv[])
 	 * will occur.
 	 */
 	opterr = 1;
-	while ((opt = getopt(nonblank_argc, argv, "A:a:B:b:D:d:Film:MN:no:p:Ss-:")) != EOF)
+	while ((opt = getopt(argc, argv, "A:a:B:b:D:d:Film:MN:no:p:Ss-:")) != EOF)
 	{
 		if (opt == 'D')
 			DataDir = optarg;
@@ -472,7 +412,7 @@ PostmasterMain(int argc, char *argv[])
 	ProcessConfigFile(PGC_POSTMASTER);
 
 	IgnoreSystemIndexes(false);
-	while ((opt = getopt(nonblank_argc, argv, "A:a:B:b:D:d:Film:MN:no:p:Ss-:")) != EOF)
+	while ((opt = getopt(argc, argv, "A:a:B:b:D:d:Film:MN:no:p:Ss-:")) != EOF)
 	{
 		switch (opt)
 		{
@@ -496,15 +436,7 @@ PostmasterMain(int argc, char *argv[])
 				NBuffers = atoi(optarg);
 				break;
 			case 'b':
-				/* Set the backend executable file to use. */
-				if (!ValidateBinary(optarg))
-					StrNCpy(Execfile, optarg, MAXPGPATH);
-				else
-				{
-					fprintf(stderr, "%s: invalid backend \"%s\"\n",
-							progname, optarg);
-					exit(2);
-				}
+				/* Can no longer set the backend executable file to use. */
 				break;
 			case 'D':
 				/* already done above */
@@ -630,13 +562,6 @@ PostmasterMain(int argc, char *argv[])
 		exit(1);
 	}
 
-	if (!Execfile[0] && FindExec(Execfile, argv[0], "postgres") < 0)
-	{
-		fprintf(stderr, "%s: could not find backend to execute...\n",
-				argv[0]);
-		exit(1);
-	}
-
 #ifdef USE_SSL
 	if (!NetServer && SecureNetServer)
 	{
@@ -649,7 +574,7 @@ PostmasterMain(int argc, char *argv[])
 
 	if (NetServer)
 	{
-		status = StreamServerPort(hostName, (unsigned short)PostPortName, &ServerSock_INET);
+		status = StreamServerPort(AF_INET, (unsigned short)PostPortName, &ServerSock_INET);
 		if (status != STATUS_OK)
 		{
 			fprintf(stderr, "%s: cannot create INET stream port\n",
@@ -659,7 +584,7 @@ PostmasterMain(int argc, char *argv[])
 	}
 
 #if !defined(__CYGWIN32__) && !defined(__QNX__)
-	status = StreamServerPort(NULL, (unsigned short)PostPortName, &ServerSock_UNIX);
+	status = StreamServerPort(AF_UNIX, (unsigned short)PostPortName, &ServerSock_UNIX);
 	if (status != STATUS_OK)
 	{
 		fprintf(stderr, "%s: cannot create UNIX stream port\n",
@@ -696,7 +621,6 @@ PostmasterMain(int argc, char *argv[])
 							assert_enabled,		/* whether -A is specified
 												 * or not */
 							NBuffers,	/* -B: number of shared buffers */
-							Execfile,	/* -b: postgres executable file */
 							DebugLvl,	/* -d: debug level */
 							NetServer,	/* -i: accept connection from INET */
 #ifdef USE_SSL
@@ -785,7 +709,6 @@ pmdaemonize(char *extraoptions)
 							assert_enabled,		/* whether -A is specified
 												 * or not */
 							NBuffers,	/* -B: number of shared buffers */
-							Execfile,	/* -b: postgres executable file */
 							DebugLvl,	/* -d: debug level */
 							NetServer,	/* -i: accept connection from INET */
 #ifdef USE_SSL
@@ -1905,7 +1828,6 @@ DoBackend(Port *port)
 {
 	char	   *av[ARGV_SIZE * 2];
 	int			ac = 0;
-	char		execbuf[MAXPGPATH];
 	char		debugbuf[ARGV_SIZE];
 	char		protobuf[ARGV_SIZE];
 	char		dbbuf[ARGV_SIZE];
@@ -1958,26 +1880,7 @@ DoBackend(Port *port)
 	 * ----------------
 	 */
 
-	StrNCpy(execbuf, Execfile, MAXPGPATH);
-	av[ac++] = execbuf;
-
-	/*
-	 * We need to set our argv[0] to an absolute path name because some
-	 * OS's use this for dynamic loading, like BSDI.  Without it, when we
-	 * change directories to the database dir, the dynamic loader can't
-	 * find the base executable and fails. Another advantage is that this
-	 * changes the 'ps' displayed process name on some platforms.  It does
-	 * on BSDI.  That's a big win.
-	 */
-
-#ifndef linux
-
-	/*
-	 * This doesn't work on linux and overwrites the only valid pointer to
-	 * the argv buffer.  See PS_INIT_STATUS macro.
-	 */
-	real_argv[0] = Execfile;
-#endif
+	av[ac++] = "postgres";
 
 	/*
 	 * Pass the requested debugging level along to the backend. Level one
@@ -2229,7 +2132,6 @@ SSDataBase(bool startup)
 	{
 		char	   *av[ARGV_SIZE * 2];
 		int			ac = 0;
-		char		execbuf[MAXPGPATH];
 		char		nbbuf[ARGV_SIZE];
 		char		dbbuf[ARGV_SIZE];
 
@@ -2244,8 +2146,7 @@ SSDataBase(bool startup)
 		ServerSock_UNIX = INVALID_SOCK;
 #endif
 
-		StrNCpy(execbuf, Execfile, MAXPGPATH);
-		av[ac++] = execbuf;
+		av[ac++] = "postgres";
 
 		av[ac++] = "-d";
 
@@ -2294,7 +2195,7 @@ SSDataBase(bool startup)
  */
 static int
 SetOptsFile(char *progname, int port, char *datadir,
-			int assert, int nbuf, char *execfile,
+			int assert, int nbuf,
 			int debuglvl, int netserver,
 #ifdef USE_SSL
 			int securenetserver,
@@ -2324,7 +2225,7 @@ SetOptsFile(char *progname, int port, char *datadir,
 		strcat(opts, buf);
 	}
 
-	snprintf(buf, sizeof(buf), "-B %d\n-b %s\n", nbuf, execfile);
+	snprintf(buf, sizeof(buf), "-B %d\n", nbuf);
 	strcat(opts, buf);
 
 	if (debuglvl)

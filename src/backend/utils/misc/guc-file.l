@@ -4,7 +4,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc-file.l,v 1.2 2000/06/01 16:46:50 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc-file.l,v 1.3 2000/06/04 01:44:34 petere Exp $
  */
 
 %{
@@ -21,6 +21,8 @@
 #include "storage/fd.h"
 #include "utils/elog.h"
 #include "utils/guc.h"
+
+#define CONFIG_FILENAME "postgresql.conf"
 
 static unsigned ConfigFileLineno;
 
@@ -40,6 +42,9 @@ enum {
 
 #define YY_USER_INIT (ConfigFileLineno = 1)
 #define YY_NO_UNPUT
+
+/* prototype, so compiler is happy with our high warnings setting */
+int GUC_yylex(void);
 
 %}
 
@@ -141,13 +146,13 @@ ProcessConfigFile(GucContext context)
 	/*
 	 * Open file
 	 */
-	filename = malloc(strlen(DataDir) + 16);
+	filename = malloc(strlen(DataDir) + strlen(CONFIG_FILENAME) + 2);
 	if (filename == NULL)
 	{
 		elog(elevel, "out of memory");
 		return;
 	}
-	sprintf(filename, "%s/configuration", DataDir);
+	sprintf(filename, "%s/" CONFIG_FILENAME, DataDir);
 
     fp = AllocateFile(filename, "r");
     if (!fp)
@@ -155,7 +160,7 @@ ProcessConfigFile(GucContext context)
 		free(filename);
         /* File not found is fine */
         if (errno != ENOENT)
-            elog(elevel, "could not read configuration: %s", strerror(errno));
+            elog(elevel, "could not read configuration file `" CONFIG_FILENAME "': %s", strerror(errno));
 		return;
     }
 
@@ -166,7 +171,7 @@ ProcessConfigFile(GucContext context)
 	{
 		FreeFile(fp);
 		free(filename);
-        elog(elevel, "could not stat configuration file: %s", strerror(errno));
+        elog(elevel, "could not stat configuration file `" CONFIG_FILENAME "': %s", strerror(errno));
 		return;
 	}
 
@@ -174,7 +179,7 @@ ProcessConfigFile(GucContext context)
 	{
 		FreeFile(fp);
 		free(filename);
-        elog(elevel, "configuration file has wrong permissions");
+        elog(elevel, "configuration file `" CONFIG_FILENAME "' has wrong permissions");
 		return;
 	}
 
@@ -261,8 +266,7 @@ ProcessConfigFile(GucContext context)
 	FreeFile(fp);
 	free(filename);
 	free_name_value_list(head);
-	elog(elevel, "%s:%u: syntax error (ps:%d, t:%d)", filename,
-		 ConfigFileLineno, parse_state, token);
+	elog(elevel, CONFIG_FILENAME ":%u: syntax error", ConfigFileLineno);
 	return;
 
  out_of_memory:

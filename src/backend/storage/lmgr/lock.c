@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.68 2000/05/31 00:28:30 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.69 2000/06/04 01:44:32 petere Exp $
  *
  * NOTES
  *	  Outside modules can create a lock table and acquire/release
@@ -895,8 +895,7 @@ WaitOnLock(LOCKMETHOD lockmethod, LOCK *lock, LOCKMODE lockmode)
 {
 	PROC_QUEUE *waitQueue = &(lock->waitProcs);
 	LOCKMETHODTABLE *lockMethodTable = LockMethodTable[lockmethod];
-	char		old_status[64],
-				new_status[64];
+	char		*new_status, *old_status;
 
 	Assert(lockmethod < NumLockMethods);
 
@@ -909,10 +908,13 @@ WaitOnLock(LOCKMETHOD lockmethod, LOCK *lock, LOCKMODE lockmode)
 	 * people can be deleted from the queue by a SIGINT or something.
 	 */
 	LOCK_PRINT("WaitOnLock: sleeping on lock", lock, lockmode);
-	strcpy(old_status, PS_STATUS);
-	strcpy(new_status, PS_STATUS);
+
+	old_status = pstrdup(get_ps_display());
+	new_status = palloc(strlen(get_ps_display()) + 10);
+	strcpy(new_status, get_ps_display());
 	strcat(new_status, " waiting");
-	PS_SET_STATUS(new_status);
+	set_ps_display(new_status);
+
 	if (ProcSleep(waitQueue,
 				  lockMethodTable->ctl,
 				  lockmode,
@@ -940,7 +942,11 @@ WaitOnLock(LOCKMETHOD lockmethod, LOCK *lock, LOCKMODE lockmode)
 
 	if (lock->activeHolders[lockmode] == lock->holders[lockmode])
 		lock->waitMask &= BITS_OFF[lockmode];
-	PS_SET_STATUS(old_status);
+
+	set_ps_display(old_status);
+	pfree(old_status);
+	pfree(new_status);
+
 	LOCK_PRINT("WaitOnLock: wakeup on lock", lock, lockmode);
 	return STATUS_OK;
 }

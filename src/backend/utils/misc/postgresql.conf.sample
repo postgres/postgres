@@ -1,0 +1,20 @@
+#
+# PostgreSQL configuration file
+# -----------------------------
+#
+# This file consists of lines of the form
+#
+#   name = value
+#
+# (The `=' is optional.) White space is collapsed, comments are
+# introduced by `#' anywhere on a line. The complete list of option
+# names and allowed values can be found in the PostgreSQL
+# documentation. Examples are:
+
+#log_connections = on
+#fsync = off
+#max_backends = 64
+
+# Any option can also be given as a command line switch to the
+# postmaster, e.g., `postmaster --log-connections=on'. Some options
+# can be set at run-time with the `SET' SQL command.

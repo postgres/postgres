@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/pquery.c,v 1.30 2000/01/26 05:57:07 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/pquery.c,v 1.31 2000/06/04 01:44:33 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -204,7 +204,7 @@ ProcessQueryDesc(QueryDesc *queryDesc, Node *limoffset, Node *limcount)
 	plan = queryDesc->plantree;
 
 	operation = queryDesc->operation;
-	PS_SET_STATUS(tag = CreateOperationTag(operation));
+	set_ps_display(tag = CreateOperationTag(operation));
 	dest = queryDesc->dest;
 
 	/* ----------------

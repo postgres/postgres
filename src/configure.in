@@ -373,19 +373,6 @@ AC_ARG_WITH(
 )
 export USE_ODBC
 
-AC_MSG_CHECKING(setproctitle)
-AC_ARG_WITH(
-   setproctitle,
-   [  --with-setproctitle     use setproctitle() (EXPERIMENTAL) ],
-   [
-        case "$withval" in
-        y | ye | yes)           USE_SETPROCTITLE=true; AC_MSG_RESULT(enabled) ;;
-        *)                      USE_SETPROCTITLE=false; AC_MSG_RESULT(disabled) ;;
-        esac
-   ],
-   [ USE_SETPROCTITLE=false; AC_MSG_RESULT(disabled) ]
-)
-export USE_SETPROCTITLE
 
 dnl Allow for overriding the default location of the odbcinst.ini
 dnl file which is normally ${prefix}/share or ${prefix} if this is
@@ -732,6 +719,7 @@ AC_CHECK_HEADERS(sys/select.h)
 AC_CHECK_HEADERS(termios.h)
 AC_CHECK_HEADERS(unistd.h)
 AC_CHECK_HEADERS(values.h)
+AC_CHECK_HEADERS(sys/exec.h sys/pstat.h machine/vmparam.h)
 dnl ODBC headers...
 AC_CHECK_HEADERS(sys/param.h pwd.h)
 dnl
@@ -805,11 +793,20 @@ AC_TYPE_SIGNAL
 AC_FUNC_VPRINTF
 AC_CHECK_FUNCS(memmove sysconf)
 AC_CHECK_FUNCS(sigprocmask waitpid setsid fcvt)
+AC_CHECK_FUNCS(setproctitle pstat)
 
-if test "X$USE_SETPROCTITLE" = "Xtrue"
-then
-AC_CHECK_FUNCS(setproctitle)
-fi
+AC_MSG_CHECKING(for PS_STRINGS)
+AC_TRY_LINK(
+[#ifdef HAVE_MACHINE_VMPARAM_H
+# include <machine/vmparam.h>
+#endif
+#ifdef HAVE_SYS_EXEC_H
+# include <sys/exec.h>
+#endif],
+[PS_STRINGS->ps_nargvstr = 1;
+PS_STRINGS->ps_argvstr = "foo";],
+[AC_MSG_RESULT(yes) AC_DEFINE(HAVE_PS_STRINGS)],
+AC_MSG_RESULT(no))
 
 AC_CHECK_FUNCS(fpclass fp_class fp_class_d class)
 dnl We use our snprintf.c emulation if either snprintf() or vsnprintf()

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.157 2000/05/31 00:28:31 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.158 2000/06/04 01:44:33 petere Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -79,10 +79,6 @@ bool Log_connections = false;
 
 CommandDest whereToSendOutput = Debug;
 
-/* Define status buffer needed by PS_SET_STATUS */
-#ifdef PS_DEFINE_BUFFER
-PS_DEFINE_BUFFER;
-#endif
 
 extern void BaseInit(void);
 extern void StartupXLOG(void);
@@ -815,10 +811,8 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 	StringInfo	parser_input;
 	char	   *userName;
 
-	/* Used if verbose is set, must be initialized */
-	char	   *remote_info = "interactive";
-	char	   *remote_host = "";
-	unsigned short remote_port = 0;
+	char	   *remote_host;
+	unsigned short remote_port;
 
 	extern int	optind;
 	extern char *optarg;
@@ -1174,6 +1168,12 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 	}
 
 	/*
+	 * Make a copy of DataDir because the arguments and environment
+	 * might be moved around later on.
+	 */
+	DataDir = strdup(DataDir);
+
+	/*
 	 * 1. Set BlockSig and UnBlockSig masks. 2. Set up signal handlers. 3.
 	 * Allow only SIGUSR1 signal (we never block it) during
 	 * initialization.
@@ -1281,55 +1281,56 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 #endif
 
 	/* On some systems our dynloader code needs the executable's pathname */
-	if (FindExec(pg_pathname, argv[0], "postgres") < 0)
+	if (FindExec(pg_pathname, real_argv[0], "postgres") < 0)
 		elog(FATAL, "%s: could not locate executable, bailing out...",
-			 argv[0]);
+			 real_argv[0]);
 
 	/*
 	 * Find remote host name or address.
 	 */
+	remote_host = NULL;
+
 	if (IsUnderPostmaster)
 	{
-		switch (MyProcPort->raddr.sa.sa_family)
+		if (MyProcPort->raddr.sa.sa_family == AF_INET)
 		{
-				struct hostent *host_ent;
+			struct hostent *host_ent;
+			char * host_addr;
 
-			case AF_INET:
-				remote_info = remote_host = malloc(48);
-				remote_port = ntohs(MyProcPort->raddr.in.sin_port);
-				strcpy(remote_host, inet_ntoa(MyProcPort->raddr.in.sin_addr));
-				if (HostnameLookup)
+			remote_port = ntohs(MyProcPort->raddr.in.sin_port);
+			host_addr = inet_ntoa(MyProcPort->raddr.in.sin_addr);
+
+			if (HostnameLookup)
+			{
+				host_ent = gethostbyaddr((char *) &MyProcPort->raddr.in.sin_addr, sizeof(MyProcPort->raddr.in.sin_addr), AF_INET);
+
+				if (host_ent)
 				{
-					host_ent = \
-						gethostbyaddr((char *) &MyProcPort->raddr.in.sin_addr,
-								   sizeof(MyProcPort->raddr.in.sin_addr),
-									  AF_INET);
-					if (host_ent)
-					{
-						strncpy(remote_host, host_ent->h_name, 48);
-						*(remote_host + 47) = '\0';
-					}
+					remote_host = palloc(strlen(host_addr) + strlen(host_ent->h_name) + 3);
+					sprintf(remote_host, "%s[%s]", host_ent->h_name, host_addr);
 				}
-				if (ShowPortNumber)
-				{
-					remote_info = malloc(strlen(remote_host) + 6);
-					sprintf(remote_info, "%s:%d", remote_host, remote_port);
-				}
-				break;
-			case AF_UNIX:
-				remote_info = remote_host = "localhost";
-				break;
-			default:
-				remote_info = remote_host = "unknown";
-				break;
+			}
+
+			if (remote_host == NULL)
+				remote_host = pstrdup(host_addr);
+
+			if (ShowPortNumber)
+			{
+				char * str = palloc(strlen(remote_host) + 7);
+				sprintf(str, "%s:%hu", remote_host, remote_port);
+				pfree(remote_host);
+				remote_host = str;
+			}
 		}
+		else /* not AF_INET */
+			remote_host = "[local]";
+
 
 		/*
 		 * Set process params for ps
 		 */
-		PS_INIT_STATUS(real_argc, real_argv, argv[0],
-					   remote_info, userName, DBName);
-		PS_SET_STATUS("startup");
+		init_ps_display(real_argc, real_argv, userName, DBName, remote_host);
+		set_ps_display("startup");
 	}
 
 	if (Log_connections)
@@ -1378,7 +1379,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.157 $ $Date: 2000/05/31 00:28:31 $\n");
+		puts("$Revision: 1.158 $ $Date: 2000/06/04 01:44:33 $\n");
 	}
 
 	/*
@@ -1422,7 +1423,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 
 	for (;;)
 	{
-		PS_SET_STATUS("idle");
+		set_ps_display("idle");
 
 		/* XXX this could be moved after ReadCommand below to get more
 		 * sensical behaviour */
@@ -1565,7 +1566,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 		{
 			if (DebugLvl >= 1)
 				elog(DEBUG, "CommitTransactionCommand");
-			PS_SET_STATUS("commit");
+			set_ps_display("commit");
 			CommitTransactionCommand();
 #ifdef SHOW_MEMORY_STATS
 			/* print global-context stats at each commit for leak tracking */

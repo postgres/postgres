@@ -4,14 +4,14 @@
 #    Makefile for utils/misc
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/utils/misc/Makefile,v 1.15 2000/06/01 14:52:25 tgl Exp $
+#    $Header: /cvsroot/pgsql/src/backend/utils/misc/Makefile,v 1.16 2000/06/04 01:44:34 petere Exp $
 #
 #-------------------------------------------------------------------------
 
 SRCDIR = ../../..
 include $(SRCDIR)/Makefile.global
 
-OBJS = database.o superuser.o guc.o guc-file.o
+OBJS = database.o superuser.o guc.o guc-file.o ps_status.o
 
 all: SUBSYS.o
 

@@ -26,7 +26,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.92 2000/05/31 00:28:35 petere Exp $
+#    $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.93 2000/06/04 01:44:35 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -318,10 +318,10 @@ fi
 TEMPLATE="$PGLIB"/local1_template1.bki.source
 GLOBAL="$PGLIB"/global1.bki.source
 PG_HBA_SAMPLE="$PGLIB"/pg_hba.conf.sample
+POSTGRESQL_CONF_SAMPLE="$PGLIB"/postgresql.conf.sample
 
 TEMPLATE_DESCR="$PGLIB"/local1_template1.description
 GLOBAL_DESCR="$PGLIB"/global1.description
-PG_POSTMASTER_OPTS_DEFAULT_SAMPLE="$PGLIB"/postmaster.opts.default.sample
 
 if [ "$show_setting" -eq 1 ]
 then
@@ -339,9 +339,9 @@ then
  	echo "  TEMPLATE:       $TEMPLATE"	 
 	echo "  GLOBAL:         $GLOBAL"
 	echo "  PG_HBA_SAMPLE:  $PG_HBA_SAMPLE"
+        echo "  POSTGRESQL_CONF_SAMPLE: $POSTGRESQL_CONF_SAMPLE"
 	echo "  TEMPLATE_DESCR: $TEMPLATE_DESCR"
 	echo "  GLOBAL_DESCR:   $GLOBAL_DESCR"
-	echo "  PG_POSTMASTER_OPTS_DEFAULT_SAMPLE: $PG_POSTMASTER_OPTS_DEFAULT_SAMPLE"
 	echo 
 	exit 0
 fi
@@ -459,7 +459,7 @@ then
     "$PGPATH"/pg_version "$PGDATA" || exit_nicely
 
     cp "$PG_HBA_SAMPLE" "$PGDATA"/pg_hba.conf     || exit_nicely
-    cp "$PG_POSTMASTER_OPTS_DEFAULT_SAMPLE" "$PGDATA"/postmaster.opts.default || exit_nicely
+    cp "$POSTGRESQL_CONF_SAMPLE" "$PGDATA"/postgresql.conf || exit_nicely
 
     echo "Adding template1 database to pg_database"
 

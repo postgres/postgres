@@ -29,7 +29,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: pqcomm.c,v 1.94 2000/06/02 15:57:21 momjian Exp $
+ *	$Id: pqcomm.c,v 1.95 2000/06/04 01:44:30 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -182,12 +182,11 @@ StreamDoUnlink()
  */
 
 int
-StreamServerPort(char *hostName, unsigned short portName, int *fdP)
+StreamServerPort(int family, unsigned short portName, int *fdP)
 {
 	SockAddr	saddr;
 	int			fd,
-				err,
-				family;
+				err;
 	size_t		len;
 	int			one = 1;
 
@@ -196,7 +195,7 @@ StreamServerPort(char *hostName, unsigned short portName, int *fdP)
 
 #endif
 
-	family = ((hostName != NULL) ? AF_INET : AF_UNIX);
+	Assert(family == AF_INET || family == AF_UNIX);
 
 	if ((fd = socket(family, SOCK_STREAM, 0)) < 0)
 	{
