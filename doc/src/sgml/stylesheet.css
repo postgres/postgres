@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/doc/src/sgml/stylesheet.css,v 1.5 2003/11/29 19:51:37 pgsql Exp $ */
+/* $PostgreSQL: pgsql/doc/src/sgml/stylesheet.css,v 1.6 2003/12/15 23:58:12 petere Exp $ */
 
 /* color scheme similar to www.postgresql.org */
 
@@ -61,3 +61,7 @@ DIV.EXAMPLE {
 
 .NAVHEADER TH	{ font-style: italic; }
 .COMMENT	{ color: red; }
+
+VAR		{ font-family: monospace; font-style: inherit; }
+/* Konqueror's standard style for ACRONYM is italic. */
+ACRONYM		{ font-style: inherit; }
