@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/common.c,v 1.36 1999/12/27 15:42:43 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/common.c,v 1.37 2000/01/16 03:54:58 tgl Exp $
  *
  * Modifications - 6/12/96 - dave@bensoft.com - version 1.13.dhb.2
  *
@@ -156,13 +156,12 @@ findParentsByOid(TableInfo *tblinfo, int numTables,
 }
 
 /*
- * parseArgTypes
- *	  parse a string of eight numbers delimited by spaces
- * into a character array
+ * parseNumericArray
+ *	  parse a string of numbers delimited by spaces into a character array
  */
 
 void
-parseArgTypes(char **argtypes, const char *str)
+parseNumericArray(const char *str, char **array, int arraysize)
 {
 	int			j,
 				argNum;
@@ -171,28 +170,37 @@ parseArgTypes(char **argtypes, const char *str)
 
 	argNum = 0;
 	j = 0;
-	while ((s = *str) != '\0')
+	for (;;)
 	{
-		if (s == ' ')
+		s = *str++;
+		if (s == ' ' || s == '\0')
 		{
-			temp[j] = '\0';
-			argtypes[argNum] = strdup(temp);
-			argNum++;
-			j = 0;
+			if (j > 0)
+			{
+				if (argNum >= arraysize)
+				{
+					fprintf(stderr, "parseNumericArray: too many numbers\n");
+					exit(2);
+				}
+				temp[j] = '\0';
+				array[argNum++] = strdup(temp);
+				j = 0;
+			}
+			if (s == '\0')
+				break;
 		}
 		else
 		{
-			temp[j] = s;
-			j++;
+			if (!isdigit(s) || j >= sizeof(temp)-1)
+			{
+				fprintf(stderr, "parseNumericArray: bogus number\n");
+				exit(2);
+			}
+			temp[j++] = s;
 		}
-		str++;
 	}
-	if (j != 0)
-	{
-		temp[j] = '\0';
-		argtypes[argNum] = strdup(temp);
-	}
-
+	while (argNum < arraysize)
+		array[argNum++] = strdup("0");
 }
 
 

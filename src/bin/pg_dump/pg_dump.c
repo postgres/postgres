@@ -21,7 +21,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.131 2000/01/10 17:14:40 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.132 2000/01/16 03:54:58 tgl Exp $
  *
  * Modifications - 6/10/96 - dave@bensoft.com - version 1.13.dhb
  *
@@ -1387,6 +1387,8 @@ getFuncs(int *numFuncs)
 
 	finfo = (FuncInfo *) malloc(ntups * sizeof(FuncInfo));
 
+	memset((char *) finfo, 0, ntups * sizeof(FuncInfo));
+
 	i_oid = PQfnumber(res, "oid");
 	i_proname = PQfnumber(res, "proname");
 	i_prolang = PQfnumber(res, "prolang");
@@ -1410,11 +1412,16 @@ getFuncs(int *numFuncs)
 		finfo[i].retset = (strcmp(PQgetvalue(res, i, i_proretset), "t") == 0);
 		finfo[i].nargs = atoi(PQgetvalue(res, i, i_pronargs));
 		finfo[i].lang = atoi(PQgetvalue(res, i, i_prolang));
-
 		finfo[i].usename = strdup(PQgetvalue(res, i, i_usename));
-
-		parseArgTypes(finfo[i].argtypes, PQgetvalue(res, i, i_proargtypes));
-
+		if (finfo[i].nargs < 0 || finfo[i].nargs > FUNC_MAX_ARGS)
+		{
+			fprintf(stderr, "failed sanity check: %s has %d args\n",
+					finfo[i].proname, finfo[i].nargs);
+			exit(2);
+		}
+		parseNumericArray(PQgetvalue(res, i, i_proargtypes),
+						  finfo[i].argtypes,
+						  finfo[i].nargs);
 		finfo[i].dumped = 0;
 	}
 
@@ -2045,6 +2052,8 @@ getIndices(int *numIndices)
 
 	indinfo = (IndInfo *) malloc(ntups * sizeof(IndInfo));
 
+	memset((char *) indinfo, 0, ntups * sizeof(IndInfo));
+
 	i_indexrelname = PQfnumber(res, "indexrelname");
 	i_indrelname = PQfnumber(res, "indrelname");
 	i_indamname = PQfnumber(res, "indamname");
@@ -2059,10 +2068,12 @@ getIndices(int *numIndices)
 		indinfo[i].indrelname = strdup(PQgetvalue(res, i, i_indrelname));
 		indinfo[i].indamname = strdup(PQgetvalue(res, i, i_indamname));
 		indinfo[i].indproc = strdup(PQgetvalue(res, i, i_indproc));
-		parseArgTypes((char **) indinfo[i].indkey,
-					  (const char *) PQgetvalue(res, i, i_indkey));
-		parseArgTypes((char **) indinfo[i].indclass,
-					  (const char *) PQgetvalue(res, i, i_indclass));
+		parseNumericArray(PQgetvalue(res, i, i_indkey),
+						  indinfo[i].indkey,
+						  INDEX_MAX_KEYS);
+		parseNumericArray(PQgetvalue(res, i, i_indclass),
+						  indinfo[i].indclass,
+						  INDEX_MAX_KEYS);
 		indinfo[i].indisunique = strdup(PQgetvalue(res, i, i_indisunique));
 	}
 	PQclear(res);

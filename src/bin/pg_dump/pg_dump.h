@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_dump.h,v 1.44 2000/01/10 17:14:40 momjian Exp $
+ * $Id: pg_dump.h,v 1.45 2000/01/16 03:54:58 tgl Exp $
  *
  * Modifications - 6/12/96 - dave@bensoft.com - version 1.13.dhb.2
  *
@@ -25,14 +25,7 @@
 #include "pqexpbuffer.h"
 #include "catalog/pg_index.h"
 
-/*
- * Very temporary hack --- remove this when all pg_dump's uses of it are gone!
- */
-#define MAX_QUERY_SIZE	(BLCKSZ*2)
-
-
-/* The *Info data structures run-time C structures used to store
-   system catalog information */
+/* The data structures used to store system catalog information */
 
 typedef struct _typeInfo
 {
@@ -61,11 +54,9 @@ typedef struct _funcInfo
 	char	   *proowner;
 	int			lang;
 	int			nargs;
-	char	   *argtypes[FUNC_MAX_ARGS];	/* should be derived from obj/fmgr.h
-								 * instead of hardwired */
+	char	   *argtypes[FUNC_MAX_ARGS];
 	char	   *prorettype;
-	int			retset;			/* 1 if the function returns a set, 0
-								 * otherwise */
+	int			retset;			/* 1 if the function returns a set, else 0 */
 	char	   *prosrc;
 	char	   *probin;
 	char	   *usename;
@@ -198,7 +189,7 @@ extern int	findFuncByName(FuncInfo *finfo, int numFuncs, const char *name);
 extern int	findTableByName(TableInfo *tbinfo, int numTables, const char *relname);
 
 extern void check_conn_and_db(void);
-extern void parseArgTypes(char **argtypes, const char *str);
+extern void parseNumericArray(const char *str, char **array, int arraysize);
 
 /*
  * version specific routines
