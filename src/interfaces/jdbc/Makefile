@@ -4,7 +4,7 @@
 #    Makefile for Java JDBC interface
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/interfaces/jdbc/Attic/Makefile,v 1.3 1998/01/11 21:14:29 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/interfaces/jdbc/Attic/Makefile,v 1.4 1998/01/13 02:19:10 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
