@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: lock.h,v 1.41 2001/01/16 06:11:34 tgl Exp $
+ * $Id: lock.h,v 1.42 2001/01/22 22:30:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,8 +22,8 @@
 /* originally in procq.h */
 typedef struct PROC_QUEUE
 {
-	SHM_QUEUE	links;
-	int			size;
+	SHM_QUEUE	links;			/* head of list of PROC objects */
+	int			size;			/* number of entries in list */
 } PROC_QUEUE;
 
 /* struct proc is declared in storage/proc.h, but must forward-reference it */
@@ -59,7 +59,7 @@ typedef int LOCKMASK;
 typedef int LOCKMODE;
 typedef int LOCKMETHOD;
 
-/* MAX_LOCKMODES cannot be larger than the bits in LOCKMASK */
+/* MAX_LOCKMODES cannot be larger than the # of bits in LOCKMASK */
 #define MAX_LOCKMODES	8
 
 /*
@@ -152,6 +152,7 @@ typedef struct LOCKTAG
  * tag -- uniquely identifies the object being locked
  * grantMask -- bitmask for all lock types currently granted on this object.
  * waitMask -- bitmask for all lock types currently awaited on this object.
+ * lockHolders -- list of HOLDER objects for this lock.
  * waitProcs -- queue of processes waiting for this lock.
  * requested -- count of each lock type currently requested on the lock
  *		(includes requests already granted!!).
@@ -167,6 +168,7 @@ typedef struct LOCK
 	/* data */
 	int			grantMask;		/* bitmask for lock types already granted */
 	int			waitMask;		/* bitmask for lock types awaited */
+	SHM_QUEUE	lockHolders;	/* list of HOLDER objects assoc. with lock */
 	PROC_QUEUE	waitProcs;		/* list of PROC objects waiting on lock */
 	int			requested[MAX_LOCKMODES]; /* counts of requested locks */
 	int			nRequested;		/* total of requested[] array */
@@ -189,8 +191,8 @@ typedef struct LOCK
  * holder hashtable.  A HOLDERTAG value uniquely identifies a lock holder.
  *
  * There are two possible kinds of holder tags: a transaction (identified
- * both by the PID of the backend running it, and the xact's own ID) and
- * a session (identified by backend PID, with xid = InvalidTransactionId).
+ * both by the PROC of the backend running it, and the xact's own ID) and
+ * a session (identified by backend PROC, with xid = InvalidTransactionId).
  *
  * Currently, session holders are used for user locks and for cross-xact
  * locks obtained for VACUUM.  We assume that a session lock never conflicts
@@ -201,11 +203,17 @@ typedef struct LOCK
  * zero holding[], for any lock that the process is currently waiting on.
  * Otherwise, holder objects whose counts have gone to zero are recycled
  * as soon as convenient.
+ *
+ * Each HOLDER object is linked into lists for both the associated LOCK object
+ * and the owning PROC object.  Note that the HOLDER is entered into these
+ * lists as soon as it is created, even if no lock has yet been granted.
+ * A PROC that is waiting for a lock to be granted will also be linked into
+ * the lock's waitProcs queue.
  */
 typedef struct HOLDERTAG
 {
 	SHMEM_OFFSET lock;			/* link to per-lockable-object information */
-	int			pid;			/* PID of backend */
+	SHMEM_OFFSET proc;			/* link to PROC of owning backend */
 	TransactionId xid;			/* xact ID, or InvalidTransactionId */
 } HOLDERTAG;
 
@@ -217,7 +225,8 @@ typedef struct HOLDER
 	/* data */
 	int			holding[MAX_LOCKMODES];	/* count of locks currently held */
 	int			nHolding;		/* total of holding[] array */
-	SHM_QUEUE	queue;			/* list link for process' list of holders */
+	SHM_QUEUE	lockLink;		/* list link for lock's list of holders */
+	SHM_QUEUE	procLink;		/* list link for process's list of holders */
 } HOLDER;
 
 #define SHMEM_HOLDERTAB_KEYSIZE  sizeof(HOLDERTAG)

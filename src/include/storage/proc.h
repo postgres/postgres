@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: proc.h,v 1.36 2001/01/16 20:59:34 tgl Exp $
+ * $Id: proc.h,v 1.37 2001/01/22 22:30:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,9 +27,8 @@ typedef struct
 } SEMA;
 
 /*
- * Each backend has a PROC struct in shared memory.  There is also a list
- * of currently-unused PROC structs that will be reallocated to new backends
- * (a fairly pointless optimization, but it's there anyway).
+ * Each backend has a PROC struct in shared memory.  There is also a list of
+ * currently-unused PROC structs that will be reallocated to new backends.
  *
  * links: list link for any list the PROC is in.  When waiting for a lock,
  * the PROC is linked into that lock's waitProcs queue.  A recycled PROC
@@ -37,7 +36,7 @@ typedef struct
  */
 struct proc
 {
-	/* proc->links MUST BE THE FIRST ELEMENT OF STRUCT (see ProcWakeup()) */
+	/* proc->links MUST BE FIRST IN STRUCT (see ProcSleep,ProcWakeup,etc) */
 
 	SHM_QUEUE	links;			/* list link if process is in a list */
 
@@ -53,7 +52,8 @@ struct proc
 
 	XLogRecPtr	logRec;
 
-	/* Info about lock the process is currently waiting for, if any */
+	/* Info about lock the process is currently waiting for, if any. */
+	/* waitLock and waitHolder are NULL if not currently waiting. */
 	LOCK	   *waitLock;		/* Lock object we're sleeping on ... */
 	HOLDER	   *waitHolder;		/* Per-holder info for awaited lock */
 	LOCKMODE	waitLockMode;	/* type of lock we're waiting for */
@@ -64,7 +64,7 @@ struct proc
 	Oid			databaseId;		/* OID of database this backend is using */
 
 	short		sLocks[MAX_SPINS];		/* Spin lock stats */
-	SHM_QUEUE	holderQueue;	/* list of HOLDER objects for locks held or
+	SHM_QUEUE	procHolders;	/* list of HOLDER objects for locks held or
 								 * awaited by this backend */
 };
 
@@ -138,7 +138,6 @@ extern int ProcSleep(LOCKMETHODCTL *lockctl, LOCKMODE lockmode,
 					 LOCK *lock, HOLDER *holder);
 extern PROC *ProcWakeup(PROC *proc, int errType);
 extern int ProcLockWakeup(LOCKMETHOD lockmethod, LOCK *lock);
-extern void ProcAddLock(SHM_QUEUE *elem);
 extern void ProcReleaseSpins(PROC *proc);
 extern bool LockWaitCancel(void);
 extern void HandleDeadLock(SIGNAL_ARGS);

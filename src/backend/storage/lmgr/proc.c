@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.94 2001/01/16 20:59:34 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.95 2001/01/22 22:30:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -48,7 +48,7 @@
  *		This is so that we can support more backends. (system-wide semaphore
  *		sets run out pretty fast.)				  -ay 4/95
  *
- * $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.94 2001/01/16 20:59:34 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.95 2001/01/22 22:30:06 tgl Exp $
  */
 #include "postgres.h"
 
@@ -228,9 +228,6 @@ InitProcess(void)
 			SpinRelease(ProcStructLock);
 			elog(FATAL, "cannot create new proc: out of memory");
 		}
-
-		/* this cannot be initialized until after the buffer pool */
-		SHMQueueInit(&(MyProc->holderQueue));
 	}
 
 	/*
@@ -259,10 +256,15 @@ InitProcess(void)
 		MyProc->sem.semNum = -1;
 	}
 
+	SHMQueueElemInit(&(MyProc->links));
+	MyProc->errType = NO_ERROR;
 	MyProc->pid = MyProcPid;
 	MyProc->databaseId = MyDatabaseId;
 	MyProc->xid = InvalidTransactionId;
 	MyProc->xmin = InvalidTransactionId;
+	MyProc->waitLock = NULL;
+	MyProc->waitHolder = NULL;
+	SHMQueueInit(&(MyProc->procHolders));
 
 	/* ----------------------
 	 * Release the lock.
@@ -281,9 +283,6 @@ InitProcess(void)
 	if ((!ShmemPIDLookup(MyProcPid, &location)) ||
 		(location != MAKE_OFFSET(MyProc)))
 		elog(STOP, "InitProcess: ShmemPID table broken");
-
-	MyProc->errType = NO_ERROR;
-	SHMQueueElemInit(&(MyProc->links));
 
 	on_shmem_exit(ProcKill, 0);
 }
@@ -342,7 +341,6 @@ RemoveFromWaitQueue(PROC *proc)
 		waitLock->waitMask &= ~(1 << lockmode);
 
 	/* Clean up the proc's own state */
-	SHMQueueElemInit(&(proc->links));
 	proc->waitLock = NULL;
 	proc->waitHolder = NULL;
 
@@ -451,6 +449,7 @@ ProcRemove(int pid)
 
 	ProcFreeSem(proc->sem.semId, proc->sem.semNum);
 
+	/* Add PROC struct to freelist so space can be recycled in future */
 	proc->links.next = ProcGlobal->freeProcs;
 	ProcGlobal->freeProcs = MAKE_OFFSET(proc);
 
@@ -565,12 +564,7 @@ ProcSleep(LOCKMETHODCTL *lockctl,
     bigtime_t time_interval;
 #endif
 
-	MyProc->waitLock = lock;
-	MyProc->waitHolder = holder;
-	MyProc->waitLockMode = lockmode;
-	/* We assume the caller set up MyProc->heldLocks */
-
-	proc = (PROC *) MAKE_PTR(waitQueue->links.prev);
+	proc = (PROC *) MAKE_PTR(waitQueue->links.next);
 
 	/* if we don't conflict with any waiter - be first in queue */
 	if (!(lockctl->conflictTab[lockmode] & waitMask))
@@ -593,7 +587,7 @@ ProcSleep(LOCKMETHODCTL *lockctl,
 			{
 				/* Yes, report deadlock failure */
 				MyProc->errType = STATUS_ERROR;
-				goto rt;
+				return STATUS_ERROR;
 			}
 			/* I must go after him in queue - so continue loop */
 		}
@@ -624,19 +618,24 @@ ProcSleep(LOCKMETHODCTL *lockctl,
 		(aheadGranted[procWaitMode])++;
 		if (aheadGranted[procWaitMode] == lock->requested[procWaitMode])
 			waitMask &= ~(1 << procWaitMode);
-		proc = (PROC *) MAKE_PTR(proc->links.prev);
+		proc = (PROC *) MAKE_PTR(proc->links.next);
 	}
 
 ins:;
 	/* -------------------
-	 * Insert self into queue, ahead of the given proc.
-	 * These operations are atomic (because of the spinlock).
+	 * Insert self into queue, ahead of the given proc (or at tail of queue).
 	 * -------------------
 	 */
-	SHMQueueInsertTL(&(proc->links), &(MyProc->links));
+	SHMQueueInsertBefore(&(proc->links), &(MyProc->links));
 	waitQueue->size++;
 
 	lock->waitMask |= myMask;
+
+	/* Set up wait information in PROC object, too */
+	MyProc->waitLock = lock;
+	MyProc->waitHolder = holder;
+	MyProc->waitLockMode = lockmode;
+	/* We assume the caller set up MyProc->heldLocks */
 
 	MyProc->errType = NO_ERROR;		/* initialize result for success */
 
@@ -723,11 +722,10 @@ ins:;
 	 */
 	SpinAcquire(spinlock);
 
-rt:;
-
-	MyProc->waitLock = NULL;
-	MyProc->waitHolder = NULL;
-
+	/*
+	 * We don't have to do anything else, because the awaker did all the
+	 * necessary update of the lock table and MyProc.
+	 */
 	return MyProc->errType;
 }
 
@@ -745,18 +743,24 @@ ProcWakeup(PROC *proc, int errType)
 
 	/* assume that spinlock has been acquired */
 
+	/* Proc should be sleeping ... */
 	if (proc->links.prev == INVALID_OFFSET ||
 		proc->links.next == INVALID_OFFSET)
 		return (PROC *) NULL;
 
-	retProc = (PROC *) MAKE_PTR(proc->links.prev);
+	/* Save next process before we zap the list link */
+	retProc = (PROC *) MAKE_PTR(proc->links.next);
 
+	/* Remove process from wait queue */
 	SHMQueueDelete(&(proc->links));
-	SHMQueueElemInit(&(proc->links));
 	(proc->waitLock->waitProcs.size)--;
 
+	/* Clean up process' state and pass it the ok/fail signal */
+	proc->waitLock = NULL;
+	proc->waitHolder = NULL;
 	proc->errType = errType;
 
+	/* And awaken it */
 	IpcSemaphoreUnlock(proc->sem.semId, proc->sem.semNum);
 
 	return retProc;
@@ -780,7 +784,7 @@ ProcLockWakeup(LOCKMETHOD lockmethod, LOCK *lock)
 	if (!queue_size)
 		return STATUS_NOT_FOUND;
 
-	proc = (PROC *) MAKE_PTR(queue->links.prev);
+	proc = (PROC *) MAKE_PTR(queue->links.next);
 
 	while (queue_size-- > 0)
 	{
@@ -820,12 +824,13 @@ ProcLockWakeup(LOCKMETHOD lockmethod, LOCK *lock)
 
 		/*
 		 * ProcWakeup removes proc from the lock's waiting process queue
-		 * and returns the next proc in chain; don't use prev link.
+		 * and returns the next proc in chain; don't use proc's next-link,
+		 * because it's been cleared.
 		 */
 		continue;
 
 nextProc:
-		proc = (PROC *) MAKE_PTR(proc->links.prev);
+		proc = (PROC *) MAKE_PTR(proc->links.next);
 	}
 
 	Assert(queue->size >= 0);
@@ -846,12 +851,6 @@ nextProc:
 #endif
 		return STATUS_NOT_FOUND;
 	}
-}
-
-void
-ProcAddLock(SHM_QUEUE *elem)
-{
-	SHMQueueInsertTL(&MyProc->holderQueue, elem);
 }
 
 /* --------------------

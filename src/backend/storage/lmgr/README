@@ -1,4 +1,4 @@
-$Header: /cvsroot/pgsql/src/backend/storage/lmgr/README,v 1.5 2001/01/16 06:11:34 tgl Exp $
+$Header: /cvsroot/pgsql/src/backend/storage/lmgr/README,v 1.6 2001/01/22 22:30:06 tgl Exp $
 
 There are two fundamental lock structures: the per-lockable-object LOCK
 struct, and the per-lock-holder HOLDER struct.  A LOCK object exists
@@ -15,7 +15,7 @@ details.
 
 ---------------------------------------------------------------------------
 
-The lock manager's LOCK:
+The lock manager's LOCK objects contain:
 
 tag -
     The key fields that are used for hashing locks in the shared memory
@@ -29,10 +29,10 @@ tag -
     
     tag.dbId -
 	Uniquely identifies the database in which the relation lives.  If
-	this is a shared system relation (e.g. pg_user) the dbId should be
-	set to 0.
+	this is a shared system relation (e.g. pg_database) the dbId must
+	be set to 0.
 
-    tag.tupleId -
+    tag.objId -
 	Uniquely identifies the block/page within the relation and the
 	tuple within the block.  If we are setting a table level lock
 	both the blockId and tupleId (in an item pointer this is called
@@ -55,6 +55,12 @@ grantMask -
 waitMask -
     This bitmask shows the types of locks being waited for.  Bit i of waitMask
     is 1 if and only if requested[i] > granted[i].
+
+lockHolders -
+    This is a shared memory queue of all the HOLDER structs associated with
+    the lock object.  Note that both granted and waiting HOLDERs are in this
+    list (indeed, the same HOLDER might have some already-granted locks and
+    be waiting for more!).
 
 waitProcs -
     This is a shared memory queue of all process structures corresponding to
@@ -93,7 +99,7 @@ zero, the lock object is no longer needed and can be freed.
 
 ---------------------------------------------------------------------------
 
-The lock manager's HOLDER:
+The lock manager's HOLDER objects contain:
 
 tag -
     The key fields that are used for hashing entries in the shared memory
@@ -103,8 +109,8 @@ tag -
     tag.lock
         SHMEM offset of the LOCK object this holder is for.
 
-    tag.pid
-        PID of backend process that owns this holder.
+    tag.proc
+        SHMEM offset of PROC of backend process that owns this holder.
 
     tag.xid
         XID of transaction this holder is for, or InvalidTransactionId
@@ -124,6 +130,250 @@ holding -
 nHolding -
     Sum of the holding[] array.
 
-queue -
+lockLink -
+    List link for shared memory queue of all the HOLDER objects for the
+    same LOCK.
+
+procLink -
     List link for shared memory queue of all the HOLDER objects for the
     same backend.
+
+---------------------------------------------------------------------------
+
+The deadlock detection algorithm:
+
+Since we allow user transactions to request locks in any order, deadlock
+is possible.  We use a deadlock detection/breaking algorithm that is
+fairly standard in essence, but there are many special considerations
+needed to deal with Postgres' generalized locking model.
+
+A key design consideration is that we want to make routine operations
+(lock grant and release) run quickly when there is no deadlock, and avoid
+the overhead of deadlock handling as much as possible.  We do this using
+an "optimistic waiting" approach: if a process cannot acquire the lock
+it wants immediately, it goes to sleep without any deadlock check.  But
+it also sets a delay timer, with a delay of DeadlockTimeout milliseconds
+(typically set to one second).  If the delay expires before the process is
+granted the lock it wants, it runs the deadlock detection/breaking code.
+Normally this code will determine that there is no deadlock condition,
+and then the process will go back to sleep and wait quietly until it is
+granted the lock.  But if a deadlock condition does exist, it will be
+resolved, usually by aborting the detecting process' transaction.  In this
+way, we avoid deadlock handling overhead whenever the wait time for a lock
+is less than DeadlockTimeout, while not imposing an unreasonable delay of
+detection when there is an error.
+
+Lock acquisition (routines LockAcquire and ProcSleep) follows these rules:
+
+1. A lock request is granted immediately if it does not conflict with any
+existing or waiting lock request, or if the process already holds an
+instance of the same lock type (eg, there's no penalty to acquire a read
+lock twice).  Note that a process never conflicts with itself, eg one can
+obtain read lock when one already holds exclusive lock.
+
+2. Otherwise the process joins the lock's wait queue.  Normally it will be
+added to the end of the queue, but there is an exception: if the process
+already holds locks on this same lockable object that conflict with the
+request of any pending waiter, then the process will be inserted in the
+wait queue just ahead of the first such waiter.  (If we did not make this
+check, the deadlock detection code would adjust the queue order to resolve
+the conflict, but it's relatively cheap to make the check in ProcSleep and
+avoid a deadlock timeout delay in this case.)  Note special case: if the
+process holds locks that conflict with the first waiter, so that it would
+go at the front of the queue, and its request does not conflict with the
+already-granted locks, then the process will be granted the lock without
+going to sleep at all.
+
+When a lock is released, the lock release routine (ProcLockWakeup) scans
+the lock object's wait queue.  Each waiter is awoken if (a) its request
+does not conflict with already-granted locks, and (b) its request does
+not conflict with the requests of prior un-wakable waiters.  Rule (b)
+ensures that conflicting requests are granted in order of arrival.
+There are cases where a later waiter must be allowed to go in front of
+conflicting earlier waiters to avoid deadlock, but it is not
+ProcLockWakeup's responsibility to recognize these cases; instead, the
+deadlock detection code re-orders the wait queue when necessary.
+
+To perform deadlock checking, we use the standard method of viewing the
+various processes as nodes in a directed graph (the waits-for graph or
+WFG).  There is a graph edge leading from process A to process B if A
+waits for B, ie, A is waiting for some lock and B holds a conflicting
+lock.  There is a deadlock condition if and only if the WFG contains
+a cycle.  We detect cycles by searching outward along waits-for edges
+to see if we return to our starting point.  There are three possible
+outcomes:
+
+1. All outgoing paths terminate at a running process (which has no
+outgoing edge).
+
+2. A deadlock is detected by looping back to the start point.  We resolve
+such a deadlock by canceling the start point's lock request and reporting
+an error in that transaction, which normally leads to transaction abort
+and release of that transaction's held locks.  Note that it's sufficient
+to cancel one request to remove the cycle; we don't need to kill all the
+transactions involved.
+
+3. Some path(s) loop back to a node other than the start point.  This
+indicates a deadlock, but one that does not involve our starting process.
+We ignore this condition on the grounds that resolving such a deadlock
+is the responsibility of the processes involved --- killing our start-
+point process would not resolve the deadlock.  So, cases 1 and 3 both
+report "no deadlock".
+
+Postgres' situation is a little more complex than the standard discussion
+of deadlock detection, for two reasons:
+
+1. A process can be waiting for more than one other process, since there
+might be multiple holders of (nonconflicting) lock types that all conflict
+with the waiter's request.  This creates no real difficulty however; we
+simply need to be prepared to trace more than one outgoing edge.
+
+2. If a process A is behind a process B in some lock's wait queue, and
+their requested locks conflict, then we must say that A waits for B, since
+ProcLockWakeup will never awaken A before B.  This creates additional
+edges in the WFG.  We call these "soft" edges, as opposed to the "hard"
+edges induced by locks already held.  Note that if B already holds any
+locks conflicting with A's request, then their relationship is a hard edge
+not a soft edge.
+
+A "soft" block, or wait-priority block, has the same potential for
+inducing deadlock as a hard block.  However, we may be able to resolve
+a soft block without aborting the transactions involved: we can instead
+rearrange the order of the wait queue.  This rearrangement reverses the
+direction of the soft edge between two processes with conflicting requests
+whose queue order is reversed.  If we can find a rearrangement that
+eliminates a cycle without creating new ones, then we can avoid an abort.
+Checking for such possible rearrangements is the trickiest part of the
+algorithm.
+
+The workhorse of the deadlock detector is a routine FindLockCycle() which
+is given a starting point process (which must be a waiting process).
+It recursively scans outwards across waits-for edges as discussed above.
+If it finds no cycle involving the start point, it returns "false".
+(As discussed above, we can ignore cycles not involving the start point.)
+When such a cycle is found, FindLockCycle() returns "true", and as it
+unwinds it also builds a list of any "soft" edges involved in the cycle.
+If the resulting list is empty then there is a hard deadlock and the
+configuration cannot succeed.  However, if the list is not empty, then
+reversing any one of the listed edges through wait-queue rearrangement
+will eliminate that cycle.  Since such a reversal might create cycles
+elsewhere, we may need to try every possibility.  Therefore, we need to
+be able to invoke FindLockCycle() on hypothetical configurations (wait
+orders) as well as the current real order.
+
+The easiest way to handle this seems to be to have a lookaside table that
+shows the proposed new queue order for each wait queue that we are
+considering rearranging.  This table is passed to FindLockCycle, and it
+believes the given queue order rather than the "real" order for each lock
+that has an entry in the lookaside table.
+
+We build a proposed new queue order by doing a "topological sort" of the
+existing entries.  Each soft edge that we are currently considering
+reversing is a property of the partial order that the topological sort
+has to enforce.  We must use a sort method that preserves the input
+ordering as much as possible, so as not to gratuituously break arrival
+order for processes not involved in a deadlock.  (This is not true of the
+tsort method shown in Knuth, for example, but it's easily done by a simple
+doubly-nested-loop method that emits the first legal candidate at each
+step.  Fortunately, we don't need a highly efficient sort algorithm, since
+the number of partial order constraints is not likely to be large.)  Note
+that failure of the topological sort tells us we have conflicting ordering
+constraints, and therefore that the last-added soft edge reversal
+conflicts with a prior edge reversal.  We need to detect this case to
+avoid an infinite loop in the case where no possible rearrangement will
+work: otherwise, we might try a reversal, find that it still leads to
+a cycle, then try to un-reverse the reversal while trying to get rid of
+that cycle, etc etc.  Topological sort failure tells us the un-reversal
+is not a legitimate move in this context.
+
+So, the basic step in our rearrangement method is to take a list of
+soft edges in a cycle (as returned by FindLockCycle()) and successively
+try the reversal of each one as a topological-sort constraint added to
+whatever constraints we are already considering.  We recursively search
+through all such sets of constraints to see if any one eliminates all
+the deadlock cycles at once.  Although this might seem impossibly
+inefficient, it shouldn't be a big problem in practice, because there
+will normally be very few, and not very large, deadlock cycles --- if
+any at all.  So the combinatorial inefficiency isn't going to hurt us.
+Besides, it's better to spend some time to guarantee that we've checked
+all possible escape routes than to abort a transaction when we didn't
+really have to.
+
+Each edge reversal constraint can be viewed as requesting that the waiting
+process A be moved to before the blocking process B in the wait queue they
+are both in.  This action will reverse the desired soft edge, as well as
+any other soft edges between A and other processes it is advanced over.
+No other edges will be affected (note this is actually a constraint on our
+topological sort method to not re-order the queue more than necessary.)
+Therefore, we can be sure we have not created any new deadlock cycles if
+neither FindLockCycle(A) nor FindLockCycle(B) discovers any cycle.  Given
+the above-defined behavior of FindLockCycle, each of these searches is
+necessary as well as sufficient, since FindLockCycle starting at the
+original start point will not complain about cycles that include A or B
+but not the original start point.
+
+In short then, a proposed rearrangement of the wait queue(s) is determined
+by one or more broken soft edges A->B, fully specified by the output of
+topological sorts of each wait queue involved, and then tested by invoking
+FindLockCycle() starting at the original start point as well as each of
+the mentioned processes (A's and B's).  If none of the tests detect a
+cycle, then we have a valid configuration and can implement it by
+reordering the wait queues per the sort outputs (and then applying
+ProcLockWakeup on each reordered queue, in case a waiter has become wakable).
+If any test detects a soft cycle, we can try to resolve it by adding each
+soft link in that cycle, in turn, to the proposed rearrangement list.
+This is repeated recursively until we either find a workable rearrangement
+or determine that none exists.  In the latter case, the outer level
+resolves the deadlock by aborting the original start-point transaction.
+
+The particular order in which rearrangements are tried depends on the
+order FindLockCycle() happens to scan in, so if there are multiple
+workable rearrangements of the wait queues, then it is unspecified which
+one will be chosen.  What's more important is that we guarantee to try
+every queue rearrangement that could lead to success.  (For example,
+if we have A before B before C and the needed order constraints are
+C before A and B before C, we would first discover that A before C
+doesn't work and try the rearrangement C before A before B.  This would
+eventually lead to the discovery of the additional constraint B before C.)
+
+Got that?
+
+Miscellaneous notes:
+
+1. It is easily proven that no deadlock will be missed due to our
+asynchronous invocation of deadlock checking.  A deadlock cycle in the WFG
+is formed when the last edge in the cycle is added; therefore the last
+process in the cycle to wait (the one from which that edge is outgoing) is
+certain to detect and resolve the cycle when it later runs HandleDeadLock.
+This holds even if that edge addition created multiple cycles; the process
+may indeed abort without ever noticing those additional cycles, but we
+don't particularly care.  The only other possible creation of deadlocks is
+during deadlock resolution's rearrangement of wait queues, and we already
+saw that that algorithm will prove that it creates no new deadlocks before
+it attempts to actually execute any rearrangement.
+
+2. It is not certain that a deadlock will be resolved by aborting the
+last-to-wait process.  If earlier waiters in the cycle have not yet run
+HandleDeadLock, then the first one to do so will be the victim.
+
+3. No live (wakable) process can be missed by ProcLockWakeup, since it
+examines every member of the wait queue (this was not true in the 7.0
+implementation, BTW).  Therefore, if ProcLockWakeup is always invoked
+after a lock is released or a wait queue is rearranged, there can be no
+failure to wake a wakable process.  One should also note that
+LockWaitCancel (abort a waiter due to outside factors) must run
+ProcLockWakeup, in case the cancelled waiter was soft-blocking other
+waiters.
+
+4. We can minimize excess rearrangement-trial work by being careful to scan
+the wait queue from the front when looking for soft edges.  For example,
+if we have queue order A,B,C and C has deadlock conflicts with both A and B,
+we want to generate the "C before A" constraint first, rather than wasting
+time with "C before B", which won't move C far enough up.  So we look for
+soft edges outgoing from C starting at the front of the wait queue.
+
+5. The working data structures needed by the deadlock detection code can
+be proven not to need more than MAXBACKENDS entries.  Therefore the
+working storage can be statically allocated instead of depending on
+palloc().  This is a good thing, since if the deadlock detector could
+fail for extraneous reasons, all the above safety proofs fall down.
