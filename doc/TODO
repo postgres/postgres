@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Tue Oct 26 00:11:29 EDT 1999
+Last updated:		Tue Oct 26 00:21:35 EDT 1999
 
 Current maintainer:	Bruce Momjian (maillist@candle.pha.pa.us)
 
@@ -108,7 +108,7 @@ TYPES
 	o Allow large object vacuuming
 	o Tables that start with xinv confused to be large objects
 * -Allow pg_descriptions when creating tables
-* Allow pg_descriptions when creating types, columns, and functions
+* -Allow pg_descriptions when creating types, columns, and functions
 * Add IPv6 capability to INET/CIDR types
 * Make a separate SERIAL type?
 * Store binary-compatible type information in the system
