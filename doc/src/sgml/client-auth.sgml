@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/client-auth.sgml,v 1.35 2002/04/09 00:38:24 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/client-auth.sgml,v 1.36 2002/08/16 04:48:16 momjian Exp $
 -->
 
 <chapter id="client-authentication">
@@ -29,8 +29,9 @@ $Header: /cvsroot/pgsql/doc/src/sgml/client-auth.sgml,v 1.35 2002/04/09 00:38:24
 
  <para>
   <productname>PostgreSQL</productname> offers a number of different
-  client authentication methods. The method to be used can be selected
-  on the basis of (client) host, database, and user.
+  client authentication methods. The method used to authenticate a
+  particular client connection can be selected on the basis of
+  (client) host address, database, and user.
  </para>
 
  <para>
@@ -56,8 +57,8 @@ $Header: /cvsroot/pgsql/doc/src/sgml/client-auth.sgml,v 1.35 2002/04/09 00:38:24
    <filename>pg_hba.conf</filename> in the data directory, e.g.,
    <filename>/usr/local/pgsql/data/pg_hba.conf</filename>.
    (<acronym>HBA</> stands for host-based authentication.) A default
-   <filename>pg_hba.conf</filename> file is installed when the data area
-   is initialized by <command>initdb</command>.
+   <filename>pg_hba.conf</filename> file is installed when the data
+   directory is initialized by <command>initdb</command>.
   </para>
 
   <para>
@@ -124,7 +125,7 @@ hostssl <replaceable>database</replaceable> <replaceable>user</replaceable> <rep
        enabled with the <option>-l</> option or equivalent configuration
        setting when the server is started.  (Note: <literal>host</literal>
        records will match either SSL or non-SSL connection attempts, but
-       <literal>hostssl</literal> records requires SSL connections.)
+       <literal>hostssl</literal> records require SSL connections.)
       </para>
      </listitem>
     </varlistentry>
@@ -199,9 +200,11 @@ hostssl <replaceable>database</replaceable> <replaceable>user</replaceable> <rep
          <term><literal>trust</></term>
          <listitem>
          <para>
-          The connection is allowed unconditionally. This method allows
-          any user that has login access to the client host to connect as
-          any <productname>PostgreSQL</productname> user whatsoever.
+          The connection is allowed unconditionally. This method
+          allows anyone that can connect to the
+          <productname>PostgreSQL</productname> database to login as
+          any <productname>PostgreSQL</productname> user they like,
+          without the need for a password.
          </para>
         </listitem>
        </varlistentry>
@@ -222,7 +225,7 @@ hostssl <replaceable>database</replaceable> <replaceable>user</replaceable> <rep
          <para>
           Requires the client to supply an MD5 encrypted password for
           authentication. This is the only method that allows encrypted
-          passwords to be stored in pg_shadow.
+          passwords to be stored in <structname>pg_shadow</structname>.
          </para>
         </listitem>
        </varlistentry>
@@ -273,15 +276,17 @@ hostssl <replaceable>database</replaceable> <replaceable>user</replaceable> <rep
         <listitem>
 	 <para>
           For TCP/IP connections, authentication is done by contacting
-          the <firstterm>ident</firstterm> server on the client host.
-          This is only as secure as the client machine. You must specify
-          the map name after the 'ident' keyword. It determines how to
-          map remote user names to PostgreSQL user names. If you use
+          the <firstterm>ident</firstterm> server on the client
+          host. This is only as secure as the client machine. You must
+          specify the map name after the 'ident' keyword. It
+          determines how to map remote user names to
+          <productname>PostgreSQL</productname> user names. If you use
           "sameuser", the user names are assumed to be identical. If
           not, the map name is looked up in the $PGDATA/pg_ident.conf
           file. The connection is accepted if that file contains an
-          entry for this map name with the ident-supplied user name and
-          the requested PostgreSQL user name.
+          entry for this map name with the ident-supplied user name
+          and the requested <productname>PostgreSQL</productname> user
+          name.
          </para>
          <para>
           On machines that support unix-domain socket credentials
@@ -317,8 +322,8 @@ hostssl <replaceable>database</replaceable> <replaceable>user</replaceable> <rep
           <literal>postgresql</literal>. You can optionally supply you
           own service name after the <literal>pam</> keyword in the
           file. For more information about PAM, please read the <ulink
-          url="http://www.kernel.org/pub/linux/libs/pam/"><productname>L
-          inux-PAM</productname> Page</ulink> and the <ulink
+          url="http://www.kernel.org/pub/linux/libs/pam/"><productname>Linux-PAM</>
+          Page</ulink> and the <ulink
           url="http://www.sun.com/software/solaris/pam/"><systemitem
           class="osname">Solaris</> PAM Page</ulink>.
          </para>
