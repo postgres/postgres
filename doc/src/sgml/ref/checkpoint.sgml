@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ref/checkpoint.sgml,v 1.2 2001/01/24 21:56:23 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ref/checkpoint.sgml,v 1.3 2001/01/27 10:19:52 petere Exp $ -->
 
 <refentry id="sql-checkpoint">
  <docinfo>
@@ -39,6 +39,11 @@ CHECKPOINT
    log.  All data files will be flushed to disk.  Refer to the
    <citetitle>PostgreSQL Administrator's Guide</citetitle> for more
    information about the WAL system.
+  </para>
+
+  <para>
+   Only superusers may call <command>CHECKPOINT</command>.  The command is
+   not intended for use during normal operation.
   </para>
  </refsect1>
 

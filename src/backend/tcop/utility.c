@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.106 2001/01/24 19:43:11 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.107 2001/01/27 10:19:52 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,6 +18,7 @@
 
 #include "access/heapam.h"
 #include "catalog/catalog.h"
+#include "catalog/pg_shadow.h"
 #include "commands/async.h"
 #include "commands/cluster.h"
 #include "commands/command.h"
@@ -851,6 +852,8 @@ ProcessUtility(Node *parsetree,
 			{
 				set_ps_display(commandTag = "CHECKPOINT");
 
+				if (!superuser())
+					elog(ERROR, "permission denied");
 				CreateCheckPoint(false);
 			}
 			break;
