@@ -58,6 +58,8 @@ VIEWS
 
 * Views containing aggregates sometimes fail(Jan)
 * Views with spaces in view name fail when referenced
+* Creating view and inheriting the view causes view* to show
+  duplicates(inherit) 
 
 MISC
 

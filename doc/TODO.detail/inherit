@@ -142,3 +142,128 @@ INSERT 54425 1
 
 
 
+From owner-pgsql-hackers@hub.org Tue Apr 20 10:34:34 1999
+Received: from hub.org (hub.org [209.47.145.100])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id KAA28480
+	for <maillist@candle.pha.pa.us>; Tue, 20 Apr 1999 10:34:31 -0400 (EDT)
+Received: from localhost (majordom@localhost)
+	by hub.org (8.9.3/8.9.1) with SMTP id KAA12281;
+	Tue, 20 Apr 1999 10:33:22 -0400 (EDT)
+	(envelope-from owner-pgsql-hackers@hub.org)
+Received: by hub.org (TLB v0.10a (1.23 tibbs 1997/01/09 00:29:32)); Tue, 20 Apr 1999 10:32:04 +0000 (EDT)
+Received: (from majordom@localhost)
+	by hub.org (8.9.3/8.9.1) id KAA11432
+	for pgsql-hackers-outgoing; Tue, 20 Apr 1999 10:32:01 -0400 (EDT)
+	(envelope-from owner-pgsql-hackers@postgreSQL.org)
+Received: from tech.com.au (IDENT:root@techpt.lnk.telstra.net [139.130.75.122])
+	by hub.org (8.9.3/8.9.1) with ESMTP id KAA11378
+	for <hackers@postgreSQL.org>; Tue, 20 Apr 1999 10:31:52 -0400 (EDT)
+	(envelope-from chris.bitmead@bigfoot.com)
+Received: from bigfoot.com (chris@localhost [127.0.0.1])
+	by tech.com.au (8.8.7/8.8.7) with ESMTP id AAA21255
+	for <hackers@postgreSQL.org>; Wed, 21 Apr 1999 00:31:32 +1000
+Message-ID: <371C8FC3.4804CF87@bigfoot.com>
+Date: Tue, 20 Apr 1999 14:31:31 +0000
+From: Chris Bitmead <chris.bitmead@bigfoot.com>
+X-Mailer: Mozilla 4.51 [en] (X11; I; Linux 2.0.36 i686)
+X-Accept-Language: en
+MIME-Version: 1.0
+To: hackers@postgreSQL.org
+Subject: Re: [HACKERS] Heads up: does RULES regress test still work for you?
+References: <199904151054.UAA07367@tech.com.au> <3715C69E.AE517ADB@bigfoot.com>
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Sender: owner-pgsql-hackers@postgreSQL.org
+Precedence: bulk
+Status: RO
+
+
+Does the following indicate a bug? It sure is wierd. Maybe some of these
+statements aren't supported by postgresql (??), but the outcome doesn't
+make sense to me.
+
+httpd=> CREATE TABLE x (y text);
+CREATE
+httpd=> CREATE VIEW z AS select * from x;
+CREATE
+httpd=> CREATE TABLE a (b text) INHERITS(z);
+CREATE
+httpd=> INSERT INTO x VALUES ('foo');
+INSERT 168602 1
+httpd=> select * from z*;
+y  
+---
+foo
+foo
+(2 rows)
+
+How did we suddenly get two rows??
+
+-- 
+Chris Bitmead
+http://www.bigfoot.com/~chris.bitmead
+mailto:chris.bitmead@bigfoot.com
+
+
+From owner-pgsql-hackers@hub.org Tue May 25 11:01:16 1999
+Received: from renoir.op.net (root@renoir.op.net [209.152.193.4])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id LAA15867
+	for <maillist@candle.pha.pa.us>; Tue, 25 May 1999 11:01:16 -0400 (EDT)
+Received: from hub.org (hub.org [209.167.229.1]) by renoir.op.net (o1/$ Revision: 1.18 $) with ESMTP id KAA10712 for <maillist@candle.pha.pa.us>; Tue, 25 May 1999 10:55:17 -0400 (EDT)
+Received: from hub.org (hub.org [209.167.229.1])
+	by hub.org (8.9.3/8.9.3) with ESMTP id KAA07206;
+	Tue, 25 May 1999 10:45:50 -0400 (EDT)
+	(envelope-from owner-pgsql-hackers@hub.org)
+Received: by hub.org (TLB v0.10a (1.23 tibbs 1997/01/09 00:29:32)); Tue, 25 May 1999 10:43:02 +0000 (EDT)
+Received: (from majordom@localhost)
+	by hub.org (8.9.3/8.9.3) id KAA06706
+	for pgsql-hackers-outgoing; Tue, 25 May 1999 10:43:01 -0400 (EDT)
+	(envelope-from owner-pgsql-hackers@postgreSQL.org)
+X-Authentication-Warning: hub.org: majordom set sender to owner-pgsql-hackers@postgreSQL.org using -f
+Received: from sss.sss.pgh.pa.us (sss.pgh.pa.us [206.210.65.6])
+	by hub.org (8.9.3/8.9.3) with ESMTP id KAA06690
+	for <pgsql-hackers@postgreSQL.org>; Tue, 25 May 1999 10:42:57 -0400 (EDT)
+	(envelope-from tgl@sss.pgh.pa.us)
+Received: from sss.sss.pgh.pa.us (localhost [127.0.0.1])
+	by sss.sss.pgh.pa.us (8.9.1/8.9.1) with ESMTP id KAA02984
+	for <pgsql-hackers@postgreSQL.org>; Tue, 25 May 1999 10:42:39 -0400 (EDT)
+To: pgsql-hackers@postgreSQL.org
+Subject: [HACKERS] INSERT INTO view means what exactly?
+Date: Tue, 25 May 1999 10:42:39 -0400
+Message-ID: <2981.927643359@sss.pgh.pa.us>
+From: Tom Lane <tgl@sss.pgh.pa.us>
+Sender: owner-pgsql-hackers@postgreSQL.org
+Precedence: bulk
+Status: ROr
+
+With current sources:
+
+regression=> CREATE TABLE x (y text);
+CREATE
+regression=> CREATE VIEW z AS select * from x;
+CREATE
+regression=> INSERT INTO x VALUES ('foo');
+INSERT 411635 1
+regression=> INSERT INTO z VALUES ('bar');
+INSERT 411636 1
+regression=> select * from x;
+y
+---
+foo
+(1 row)
+
+regression=> select * from z;
+y
+---
+foo
+(1 row)
+
+OK, where'd tuple 411636 go?  Seems to me that the insert should either
+have been rejected or caused an insert into x, depending on how
+transparent you think views are (I always thought they were
+read-only?).  Dropping the data into never-never land and giving a
+misleading success response code is not my idea of proper behavior.
+
+			regards, tom lane
+
+
