@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Tue Apr 20 00:26:26 EDT 2004
+Last updated:		Tue Apr 20 10:03:31 EDT 2004
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -322,6 +322,7 @@ Referential Integrity
   names unique within a schema
 * -Issue NOTICE if foreign key data requires costly test to match primary key
 * Remove CREATE CONSTRAINT TRIGGER
+* Allow AFTER triggers on system tables
 
 
 Dependency Checking
