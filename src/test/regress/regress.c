@@ -1,9 +1,11 @@
 /*
- * $Header: /cvsroot/pgsql/src/test/regress/regress.c,v 1.1.1.1 1996/07/09 06:22:24 scrappy Exp $
+ * $Header: /cvsroot/pgsql/src/test/regress/regress.c,v 1.2 1996/11/11 16:33:12 scrappy Exp $
  */
 
 #include <float.h>		/* faked on sunos */
 #include <stdio.h>
+
+#include <postgres.h>
 
 #include "utils/geo-decls.h"	/* includes <math.h> */
 #include "libpq-fe.h"
