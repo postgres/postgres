@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.108 2001/12/27 21:10:15 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.109 2001/12/28 05:00:32 momjian Exp $
 -->
 
 <appendix id="release">
@@ -482,8 +482,8 @@ Add more compatibility functions to odbc.sql (Peter E)
    <sect3>
     <title>ECPG</title>
 <literallayout>
-EXECUTE ... INTO implemented
-Multiple row descriptor support (e.g. CARDINALITY)
+EXECUTE ... INTO implemented (Christof Petig)
+Multiple row descriptor support (e.g. CARDINALITY) (Christof Petig)
 Fix for GRANT parameters (Lee Kindness)
 Fix INITIALLY DEFERRED bug
 Various bug fixes (Michael, Christof Petig)

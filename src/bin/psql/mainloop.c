@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/mainloop.c,v 1.43 2001/11/05 17:46:31 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/mainloop.c,v 1.44 2001/12/28 05:00:32 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "mainloop.h"
@@ -447,7 +447,6 @@ MainLoop(FILE *source)
 			{
 				const char *end_of_cmd = NULL;
 
-				paren_level = 0;
 				line[i - prevlen] = '\0';		/* overwrites backslash */
 
 				/* is there anything else on the line for the command? */
@@ -469,6 +468,9 @@ MainLoop(FILE *source)
 												 &end_of_cmd);
 
 				success = slashCmdStatus != CMD_ERROR;
+
+				if (query_buf->len == 0)
+					paren_level = 0;
 
 				if ((slashCmdStatus == CMD_SEND || slashCmdStatus == CMD_NEWEDIT) &&
 					query_buf->len == 0)
