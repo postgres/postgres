@@ -1,11 +1,5 @@
 #define JMP_BUF
 #define USE_POSIX_TIME
-/* HPUX 10 has full POSIX signal functionality.
- * On HPUX 9, we rely on BSD-compatible signal() in libBSD.
- */
-#ifdef HPUX_10
-#define USE_POSIX_SIGNALS
-#endif
 #define HAS_TEST_AND_SET
 typedef struct
 {

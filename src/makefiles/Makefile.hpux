@@ -1,46 +1,26 @@
-HPUX_MAJOR= $(shell uname -r|sed 's/^[^.]*\.\([^.]*\).*/\1/')
-# Distinguish HPUX 10 (and later) from HPUX 9
-ifneq ($(HPUX_MAJOR), 09)
-   CFLAGS+= -DHPUX_10
+# HP-UX 10 has a select() in libcurses, so we need to get the libc version,
+# which we do by linking -lc before -lcurses.  (Unfortunately we can't
+# just not use libcurses.)  This also ensures that we get the POSIX signal
+# routines in libc, not the BSD-like ones in libBSD.
+LDFLAGS:= -lc $(LDFLAGS)
+
+# On the other hand, if we don't have POSIX signals, we need to use the
+# libBSD signal routines.  (HPUX 9 and early HPUX 10 releases don't have
+# POSIX signals.)  Make sure libBSD comes before libc in that case.
+ifeq ($(HAVE_POSIX_SIGNALS),)
+   LDFLAGS:= -lBSD $(LDFLAGS)
 endif
 
-# HP-UX 10 has a select() in libcurses, so we need to get the libc version first
-# We also want to be sure we get the POSIX signal routines in libc,
-# not the BSD-like ones in libBSD.
-ifneq ($(HPUX_MAJOR), 09)
-   LDFLAGS:= -Wl,-E -lc $(LDFLAGS)
-endif
-
-# HP-UX 09 provides rint() only in PA1.1 version of libm, so add -L command
-# to get that version. (CAUTION: you need PHSS_4630 to have a working version
-# of rint()!)  Also, libPW exists on this platform but is not helpful, so
-# delete it from LDFLAGS.
-# NOTE: libBSD must be loaded before libc to get BSD signal() semantics.
-ifeq ($(HPUX_MAJOR), 09)
-   LDFLAGS:= -Wl,-E -L /lib/pa1.1 $(LDFLAGS:-lPW=)
+# On HPUX 9, rint() is provided only in the PA1.1 version of libm.
+# If configure found it necessary to link against /lib/pa1.1 to find rint,
+# add -L command to make that happen.
+# (CAUTION: you need PHSS_4630 to have a working version of rint() on 9!)
+ifneq ($(HPUXMATHLIB),)
+   LDFLAGS:= -L /lib/pa1.1 $(LDFLAGS)
 endif
 
 # On all HPUX versions, embed LIBDIR as the shared library search path
-# so that the executables don't need SHLIB_PATH to be set, and enable -z
-# to catch null pointer dereferences.
-LDFLAGS+= -Wl,+b -Wl,$(LIBDIR) -Wl,-z
-
-# Does anyone use this stuff?
-#ifdef ENFORCE_ALIGNMENT
-#   CFLAGS+= -DNOFIXADE
-#else
-#   ifeq ($(HPUX_MAJOR), 08)
-#      CFLAGS+= +u -DHP_S500_ALIGN
-#      LDFLAGS+= +u
-#   else
-#   ifeq ($(HPUX_MAJOR), 09)
-#      ifeq ($(CC), cc)
-#         CFLAGS+= +u4 
-#         LDFLAGS+= +u4
-#      endif
-#   endif
-#   endif
-#endif
-
-%.sl: %.o
-	$(LD) -b -o $@ $<
+# so that the executables don't need SHLIB_PATH to be set, specify -z
+# to catch null pointer dereferences, and specify -E to make all symbols
+# visible to dynamically linked shared libraries.
+LDFLAGS+= -Wl,+b -Wl,$(LIBDIR) -Wl,-z -Wl,-E

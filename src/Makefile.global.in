@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.53 1998/10/30 04:53:55 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.53.2.1 1998/12/05 23:08:56 tgl Exp $
 #
 # NOTES
 #    Essentially all Postgres make files include this file and use the 
@@ -209,13 +209,20 @@ CFLAGS_SL= @SHARED_LIB@
 LDFLAGS= @LDFLAGS@ @LIBS@
 DLSUFFIX= @DLSUFFIX@
 LN_S= @LN_S@
+TAR= @tar@
+GZCAT= @GZCAT@
 
 ##############################################################################
 #
 # Additional platform-specific settings
 #
 
+# Name of the target platform.
 PORTNAME= @PORTNAME@
+
+# Various grungy items needed to configure some platforms.
+HAVE_POSIX_SIGNALS= @HAVE_POSIX_SIGNALS@
+HPUXMATHLIB= @HPUXMATHLIB@
 
 include $(SRCDIR)/Makefile.port
 

@@ -416,8 +416,7 @@ AC_ARG_WITH(CXX,
     [   AC_PROG_CXX])
 AC_SUBST(HAVECXX)
 
-INSTALLPATH="`echo /usr/ucb:$PATH | sed 's/:/ /g'`"
-AC_PATH_PROGS(INSTALL, ginstall installbsd bsdinst scoinst install, NONE, $INSTALLPATH )
+AC_PATH_PROGS(INSTALL, ginstall installbsd bsdinst scoinst install, NONE, /usr/ucb:$PATH )
 if test "$INSTALL" = "NONE"
 then
 	# fall back on our own script
@@ -481,6 +480,7 @@ AC_PATH_PROG(xargs, xargs)
 AC_PATH_PROG(ipcs, ipcs)
 AC_PATH_PROG(ipcrm, ipcrm)
 AC_PATH_PROGS(TR, trbsd tr, NOT_FOUND)
+AC_PATH_PROGS(GZCAT, gzcat zcat, gzcat)
 
 dnl Check tr flags to convert from lower to upper case
 TRSTRINGS="`echo ABCdef | $TR '[[a-z]]' '[[A-Z]]' 2>/dev/null | grep ABCDEF`"
@@ -754,16 +754,39 @@ AC_SUBST(STRCASECMP)
 AC_CHECK_FUNC(cbrt,
 	      AC_DEFINE(HAVE_CBRT),
 	      AC_CHECK_LIB(m, cbrt, AC_DEFINE(HAVE_CBRT)))
+
+# On HPUX 9, rint() is not in regular libm.a but in /lib/pa1.1/libm.a;
+# this hackery with HPUXMATHLIB allows us to cope.
+HPUXMATHLIB=""
 AC_CHECK_FUNC(rint,
 	      AC_DEFINE(HAVE_RINT),
 [
-# On HPUX 9, rint() is not in regular libm.a but in /lib/pa1.1/libm.a
-SPECIALMATHLIB=""
 if [[ -r /lib/pa1.1/libm.a ]] ; then
-    SPECIALMATHLIB="-L /lib/pa1.1 -lm"
+    HPUXMATHLIB="-L /lib/pa1.1 -lm"
 fi
-	      AC_CHECK_LIB(m, rint, AC_DEFINE(HAVE_RINT), , $SPECIALMATHLIB)
+	      AC_CHECK_LIB(m, rint, AC_DEFINE(HAVE_RINT), , $HPUXMATHLIB)
 ])
+AC_SUBST(HPUXMATHLIB)
+
+dnl Check to see if platform has POSIX signal interface.
+dnl NOTE: if this test fails then POSIX signals definitely don't work.
+dnl It could be that the test compiles but the POSIX routines don't
+dnl really work ... in that case the platform-specific port files
+dnl can unset USE_POSIX_SIGNALS and HAVE_POSIX_SIGNALS.  (The former
+dnl goes into config.h, the latter into Makefile.global.)
+
+AC_MSG_CHECKING(for POSIX signal interface)
+AC_TRY_LINK([#include <signal.h>],
+[struct sigaction act, oact;
+sigemptyset(&act.sa_mask);
+act.sa_flags = SA_RESTART;
+sigaction(0, &act, &oact);],
+[AC_DEFINE(USE_POSIX_SIGNALS)
+HAVE_POSIX_SIGNALS="1"
+AC_MSG_RESULT(yes)],
+[HAVE_POSIX_SIGNALS=""
+AC_MSG_RESULT(no)])
+AC_SUBST(HAVE_POSIX_SIGNALS)
 
 dnl Check for Tcl configuration script tclConfig.sh
 
@@ -858,11 +881,13 @@ if test "$USE_X" = true; then
 	X11_LIBS=""
 	AC_CHECK_LIB(X11, XOpenDisplay, X11_LIBS="-lX11",,${X_PRE_LIBS})
 	if test "$X11_LIBS" = ""; then
-		dnl Not having X may be fatal.	Let the user fix this.
-		AC_MSG_WARN([The X11 library '-lX11' could not be found.
-			    Please use the configure options '--x-includes=DIR'
-			    and '--x-libraries=DIR' to specify the X location.
-			    See the file 'config.log' for further diagnostics.])
+		dnl Not having X is bad news for pgtksh. Let the user fix this.
+		AC_MSG_WARN([The X11 library '-lX11' could not be found,
+so TK support will be disabled.  To enable TK support,
+please use the configure options '--x-includes=DIR'
+and '--x-libraries=DIR' to specify the X location.
+See the file 'config.log' for further diagnostics.])
+		USE_TK=
 	fi
 	AC_SUBST(X_LIBS)
 	AC_SUBST(X11_LIBS)

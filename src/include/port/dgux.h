@@ -1,4 +1,3 @@
-#define USE_POSIX_SIGNALS
 #define USE_POSIX_TIME
 
 #ifndef			BIG_ENDIAN
