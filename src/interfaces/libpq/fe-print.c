@@ -10,7 +10,7 @@
  * didn't really belong there.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-print.c,v 1.33 2000/01/29 16:58:51 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-print.c,v 1.34 2000/02/05 12:33:22 ishii Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -347,7 +347,7 @@ do_field(const PQprintOpt *po, const PGresult *res,
 			char		ch = '0';
 
 #ifdef MULTIBYTE
-			for (p = pval; *p; p += PQmblen(p, PQclientencoding(res->conn)))
+			for (p = pval; *p; p += PQmblen(p, PQclientEncoding(res->conn)))
 #else
 			for (p = pval; *p; p++)
 #endif

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq-fe.h,v 1.58 2000/01/29 16:58:51 petere Exp $
+ * $Id: libpq-fe.h,v 1.59 2000/02/05 12:33:22 ishii Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -218,7 +218,8 @@ extern		"C"
 	extern const char *PQerrorMessage(const PGconn *conn);
 	extern int	PQsocket(const PGconn *conn);
 	extern int	PQbackendPID(const PGconn *conn);
-	extern int	PQclientencoding(const PGconn *conn);
+	extern int	PQclientEncoding(const PGconn *conn);
+	extern int	PQsetClientEncoding(PGconn *conn, const char *encoding);
 
 	/* Enable/disable tracing */
 	extern void PQtrace(PGconn *conn, FILE *debug_port);
