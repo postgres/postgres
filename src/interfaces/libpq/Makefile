@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/interfaces/libpq/Makefile,v 1.23 1997/01/05 23:52:21 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/interfaces/libpq/Makefile,v 1.24 1997/01/06 00:24:24 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -28,10 +28,6 @@ VPATH:= $(VPATH):../backend/lib
  
 OBJS= fe-auth.o fe-connect.o fe-exec.o fe-misc.o fe-lobj.o \
          ../backend/lib/dllist.o pqsignal.o 
-ifeq ($(PORTNAME), next)
-VPATH:=$(VPATH):../backend/port/$(PORTNAME)
-OBJS+= getcwd.o putenv.o
-endif
 
 shlib := 
 ifdef LINUX_ELF
