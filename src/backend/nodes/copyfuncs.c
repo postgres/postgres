@@ -8,15 +8,15 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.110 2000/03/22 22:08:32 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.111 2000/04/04 01:21:48 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 
 #include "postgres.h"
 
+#include "optimizer/clauses.h"
 #include "optimizer/planmain.h"
-#include "optimizer/subselect.h"
 
 
 /*
@@ -88,9 +88,10 @@ CopyPlanFields(Plan *from, Plan *newnode)
 	newnode->locParam = listCopy(from->locParam);
 	newnode->chgParam = listCopy(from->chgParam);
 	Node_Copy(from, newnode, initPlan);
+	/* subPlan list must point to subplans in the new subtree, not the old */
 	if (from->subPlan != NIL)
-		newnode->subPlan = nconc(SS_pull_subplan((Node *) newnode->targetlist),
-								 SS_pull_subplan((Node *) newnode->qual));
+		newnode->subPlan = nconc(pull_subplans((Node *) newnode->targetlist),
+								 pull_subplans((Node *) newnode->qual));
 	else
 		newnode->subPlan = NIL;
 	newnode->nParamExec = from->nParamExec;
@@ -142,7 +143,7 @@ _copyResult(Result *from)
 	 */
 	if (from->plan.subPlan != NIL)
 		newnode->plan.subPlan = nconc(newnode->plan.subPlan,
-									  SS_pull_subplan(newnode->resconstantqual));
+									  pull_subplans(newnode->resconstantqual));
 
 	return newnode;
 }
@@ -252,6 +253,17 @@ _copyIndexScan(IndexScan *from)
 	Node_Copy(from, newnode, indxqualorig);
 	newnode->indxorderdir = from->indxorderdir;
 
+	/*
+	 * We must add subplans in index quals to the new plan's subPlan list
+	 */
+	if (from->scan.plan.subPlan != NIL)
+	{
+		newnode->scan.plan.subPlan = nconc(newnode->scan.plan.subPlan,
+										   pull_subplans((Node *) newnode->indxqual));
+		newnode->scan.plan.subPlan = nconc(newnode->scan.plan.subPlan,
+										   pull_subplans((Node *) newnode->indxqualorig));
+	}
+
 	return newnode;
 }
 
@@ -358,6 +370,13 @@ _copyMergeJoin(MergeJoin *from)
 	 */
 	Node_Copy(from, newnode, mergeclauses);
 
+	/*
+	 * We must add subplans in mergeclauses to the new plan's subPlan list
+	 */
+	if (from->join.subPlan != NIL)
+		newnode->join.subPlan = nconc(newnode->join.subPlan,
+									  pull_subplans((Node *) newnode->mergeclauses));
+
 	return newnode;
 }
 
@@ -382,8 +401,14 @@ _copyHashJoin(HashJoin *from)
 	 * ----------------
 	 */
 	Node_Copy(from, newnode, hashclauses);
-
 	newnode->hashjoinop = from->hashjoinop;
+
+	/*
+	 * We must add subplans in hashclauses to the new plan's subPlan list
+	 */
+	if (from->join.subPlan != NIL)
+		newnode->join.subPlan = nconc(newnode->join.subPlan,
+									  pull_subplans((Node *) newnode->hashclauses));
 
 	return newnode;
 }

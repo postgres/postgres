@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/setrefs.c,v 1.60 2000/01/26 05:56:38 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/setrefs.c,v 1.61 2000/04/04 01:21:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -59,6 +59,8 @@ static bool fix_opids_walker(Node *node, void *context);
  *	  for the convenience of the executor.  We update Vars in upper plan nodes
  *	  to refer to the outputs of their subplans, and we compute regproc OIDs
  *	  for operators (ie, we look up the function that implements each op).
+ *	  We must also build lists of all the subplan nodes present in each
+ *	  plan node's expression trees.
  *
  *	  set_plan_references recursively traverses the whole plan tree.
  *
@@ -72,6 +74,11 @@ set_plan_references(Plan *plan)
 	if (plan == NULL)
 		return;
 
+	/* We must rebuild the plan's list of subplan nodes, since we are
+	 * copying/mutating its expression trees.
+	 */
+	plan->subPlan = NIL;
+
 	/*
 	 * Plan-type-specific fixes
 	 */
@@ -83,6 +90,12 @@ set_plan_references(Plan *plan)
 		case T_IndexScan:
 			fix_opids((Node *) ((IndexScan *) plan)->indxqual);
 			fix_opids((Node *) ((IndexScan *) plan)->indxqualorig);
+			plan->subPlan =
+				nconc(plan->subPlan,
+					  pull_subplans((Node *) ((IndexScan *) plan)->indxqual));
+			plan->subPlan =
+				nconc(plan->subPlan,
+					  pull_subplans((Node *) ((IndexScan *) plan)->indxqualorig));
 			break;
 		case T_NestLoop:
 			set_join_references((Join *) plan);
@@ -90,10 +103,16 @@ set_plan_references(Plan *plan)
 		case T_MergeJoin:
 			set_join_references((Join *) plan);
 			fix_opids((Node *) ((MergeJoin *) plan)->mergeclauses);
+			plan->subPlan =
+				nconc(plan->subPlan,
+					  pull_subplans((Node *) ((MergeJoin *) plan)->mergeclauses));
 			break;
 		case T_HashJoin:
 			set_join_references((Join *) plan);
 			fix_opids((Node *) ((HashJoin *) plan)->hashclauses);
+			plan->subPlan =
+				nconc(plan->subPlan,
+					  pull_subplans((Node *) ((HashJoin *) plan)->hashclauses));
 			break;
 		case T_Material:
 		case T_Sort:
@@ -119,6 +138,9 @@ set_plan_references(Plan *plan)
 			if (plan->lefttree != NULL)
 				set_uppernode_references(plan, (Index) OUTER);
 			fix_opids(((Result *) plan)->resconstantqual);
+			plan->subPlan =
+				nconc(plan->subPlan,
+					  pull_subplans(((Result *) plan)->resconstantqual));
 			break;
 		case T_Append:
 			foreach(pl, ((Append *) plan)->appendplans)
@@ -136,10 +158,17 @@ set_plan_references(Plan *plan)
 	}
 
 	/*
-	 * For all plan types, fix operators in targetlist and qual expressions
+	 * For all plan types, fix operators in targetlist and qual expressions,
+	 * and find subplans therein.
 	 */
 	fix_opids((Node *) plan->targetlist);
 	fix_opids((Node *) plan->qual);
+	plan->subPlan =
+		nconc(plan->subPlan,
+			  pull_subplans((Node *) plan->targetlist));
+	plan->subPlan =
+		nconc(plan->subPlan,
+			  pull_subplans((Node *) plan->qual));
 
 	/*
 	 * Now recurse into subplans, if any
@@ -302,31 +331,7 @@ join_references_mutator(Node *node,
 		 */
 		if (var->varno != context->acceptable_rel)
 			elog(ERROR, "join_references: variable not in subplan target lists");
-		return (Node *) newvar;	/* copy is probably not necessary here... */
-	}
-	/*
-	 * expression_tree_mutator will copy SubPlan nodes if given a chance.
-	 * We do not want to do that here, because subselect.c has already
-	 * constructed the initPlan and subPlan lists of the current plan node
-	 * and we mustn't leave those dangling (ie, pointing to different
-	 * copies of the nodes than what's in the targetlist & quals...)
-	 * Instead, alter the SubPlan in-place.  Grotty --- is there a better way?
-	 */
-	if (is_subplan(node))
-	{
-		Expr	   *expr = (Expr *) node;
-		SubLink	   *sublink = ((SubPlan *) expr->oper)->sublink;
-
-		/* transform args list (params to be passed to subplan) */
-		expr->args = (List *)
-			join_references_mutator((Node *) expr->args,
-									context);
-		/* transform sublink's oper list as well */
-		sublink->oper = (List *)
-			join_references_mutator((Node *) sublink->oper,
-									context);
-
-		return (Node *) expr;
+		return (Node *) newvar;
 	}
 	return expression_tree_mutator(node,
 								   join_references_mutator,
@@ -382,30 +387,6 @@ replace_vars_with_subplan_refs_mutator(Node *node,
 		newvar->varno = context->subvarno;
 		newvar->varattno = resdom->resno;
 		return (Node *) newvar;
-	}
-	/*
-	 * expression_tree_mutator will copy SubPlan nodes if given a chance.
-	 * We do not want to do that here, because subselect.c has already
-	 * constructed the initPlan and subPlan lists of the current plan node
-	 * and we mustn't leave those dangling (ie, pointing to different
-	 * copies of the nodes than what's in the targetlist & quals...)
-	 * Instead, alter the SubPlan in-place.  Grotty --- is there a better way?
-	 */
-	if (is_subplan(node))
-	{
-		Expr	   *expr = (Expr *) node;
-		SubLink	   *sublink = ((SubPlan *) expr->oper)->sublink;
-
-		/* transform args list (params to be passed to subplan) */
-		expr->args = (List *)
-			replace_vars_with_subplan_refs_mutator((Node *) expr->args,
-												   context);
-		/* transform sublink's oper list as well */
-		sublink->oper = (List *)
-			replace_vars_with_subplan_refs_mutator((Node *) sublink->oper,
-												   context);
-
-		return (Node *) expr;
 	}
 	return expression_tree_mutator(node,
 								   replace_vars_with_subplan_refs_mutator,

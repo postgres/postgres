@@ -17,6 +17,5 @@ extern int	PlannerPlanId;		/* to assign unique ID to subquery plans */
 extern List *SS_finalize_plan(Plan *plan);
 extern Node *SS_replace_correlation_vars(Node *expr);
 extern Node *SS_process_sublinks(Node *expr);
-extern List *SS_pull_subplan(Node *expr);
 
 #endif	 /* SUBSELECT_H */

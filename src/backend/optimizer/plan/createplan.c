@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.87 2000/03/22 22:08:34 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.88 2000/04/04 01:21:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -724,7 +724,9 @@ create_hashjoin_node(HashPath *best_path,
  * track of which index applies to each subgroup of index qual clauses...
  *
  * Returns a modified copy of the indexqual list --- the original is not
- * changed.
+ * changed.  Note also that the copy shares no substructure with the
+ * original; this is needed in case there is a subplan in it (we need
+ * two separate copies of the subplan tree, or things will go awry).
  */
 
 static List *
@@ -808,11 +810,13 @@ fix_indxqual_sublist(List *indexqual, int baserelid, Oid relam,
 		get_relattval((Node *) clause, baserelid,
 					  &relid, &attno, &constval, &flag);
 
-		/* Copy enough structure to allow commuting and replacing an operand
-		 * without changing original clause.
+		/* Make a copy that will become the fixed clause.
+		 *
+		 * We used to try to do a shallow copy here, but that fails if there
+		 * is a subplan in the arguments of the opclause.  So just do a
+		 * full copy.
 		 */
-		newclause = make_clause(clause->opType, clause->oper,
-								listCopy(clause->args));
+		newclause = (Expr *) copyObject((Node *) clause);
 
 		/* If the indexkey is on the right, commute the clause. */
 		if ((flag & SEL_RIGHT) == 0)
@@ -834,11 +838,7 @@ fix_indxqual_sublist(List *indexqual, int baserelid, Oid relam,
 		newopno = indexable_operator(newclause, opclass, relam, true);
 		if (newopno == InvalidOid)
 			elog(ERROR, "fix_indxqual_sublist: failed to find substitute op");
-		if (newopno != ((Oper *) newclause->oper)->opno)
-		{
-			newclause->oper = (Node *) copyObject(newclause->oper);
-			((Oper *) newclause->oper)->opno = newopno;
-		}
+		((Oper *) newclause->oper)->opno = newopno;
 
 		fixed_qual = lappend(fixed_qual, newclause);
 	}

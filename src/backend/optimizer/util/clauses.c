@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.63 2000/03/21 05:12:12 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.64 2000/04/04 01:21:46 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -43,6 +43,8 @@
 
 static bool contain_agg_clause_walker(Node *node, void *context);
 static bool pull_agg_clause_walker(Node *node, List **listptr);
+static bool contain_subplans_walker(Node *node, void *context);
+static bool pull_subplans_walker(Node *node, List **listptr);
 static bool check_subplans_for_ungrouped_vars_walker(Node *node,
 													 Query *context);
 static int is_single_func(Node *node);
@@ -358,38 +360,8 @@ make_ands_implicit(Expr *clause)
 
 
 /*****************************************************************************
- *																			 *
- *		General clause-manipulating routines								 *
- *																			 *
+ *		Aggregate-function clause manipulation
  *****************************************************************************/
-
-
-/*
- * pull_constant_clauses
- *	  Scans through a list of qualifications and find those that
- *	  contain no variables (of the current query level).
- *
- * Returns a list of the constant clauses in constantQual and the remaining
- * quals as the return value.
- *
- */
-List *
-pull_constant_clauses(List *quals, List **constantQual)
-{
-	List	   *q;
-	List	   *constqual = NIL;
-	List	   *restqual = NIL;
-
-	foreach(q, quals)
-	{
-		if (!contain_var_clause(lfirst(q)))
-			constqual = lcons(lfirst(q), constqual);
-		else
-			restqual = lcons(lfirst(q), restqual);
-	}
-	*constantQual = constqual;
-	return restqual;
-}
 
 /*
  * contain_agg_clause
@@ -451,6 +423,68 @@ pull_agg_clause_walker(Node *node, List **listptr)
 		return false;
 	}
 	return expression_tree_walker(node, pull_agg_clause_walker,
+								  (void *) listptr);
+}
+
+
+/*****************************************************************************
+ *		Subplan clause manipulation
+ *****************************************************************************/
+
+/*
+ * contain_subplans
+ *	  Recursively search for subplan nodes within a clause.
+ *
+ * If we see a SubLink node, we will return TRUE.  This is only possible if
+ * the expression tree hasn't yet been transformed by subselect.c.  We do not
+ * know whether the node will produce a true subplan or just an initplan,
+ * but we make the conservative assumption that it will be a subplan.
+ *
+ * Returns true if any subplan found.
+ */
+bool
+contain_subplans(Node *clause)
+{
+	return contain_subplans_walker(clause, NULL);
+}
+
+static bool
+contain_subplans_walker(Node *node, void *context)
+{
+	if (node == NULL)
+		return false;
+	if (is_subplan(node) || IsA(node, SubLink))
+		return true;			/* abort the tree traversal and return true */
+	return expression_tree_walker(node, contain_subplans_walker, context);
+}
+
+/*
+ * pull_subplans
+ *	  Recursively pulls all subplans from an expression tree.
+ *
+ *	  Returns list of subplan nodes found.  Note the nodes themselves are not
+ *	  copied, only referenced.
+ */
+List *
+pull_subplans(Node *clause)
+{
+	List	   *result = NIL;
+
+	pull_subplans_walker(clause, &result);
+	return result;
+}
+
+static bool
+pull_subplans_walker(Node *node, List **listptr)
+{
+	if (node == NULL)
+		return false;
+	if (is_subplan(node))
+	{
+		*listptr = lappend(*listptr, ((Expr *) node)->oper);
+		/* fall through to check args to subplan */
+	}
+	return expression_tree_walker(node, pull_subplans_walker,
 								  (void *) listptr);
 }
 
@@ -553,6 +587,41 @@ check_subplans_for_ungrouped_vars_walker(Node *node,
 	return expression_tree_walker(node,
 								  check_subplans_for_ungrouped_vars_walker,
 								  (void *) context);
+}
+
+
+/*****************************************************************************
+ *																			 *
+ *		General clause-manipulating routines								 *
+ *																			 *
+ *****************************************************************************/
+
+
+/*
+ * pull_constant_clauses
+ *	  Scans through a list of qualifications and find those that
+ *	  contain no variables (of the current query level).
+ *
+ * Returns a list of the constant clauses in constantQual and the remaining
+ * quals as the return value.
+ *
+ */
+List *
+pull_constant_clauses(List *quals, List **constantQual)
+{
+	List	   *q;
+	List	   *constqual = NIL;
+	List	   *restqual = NIL;
+
+	foreach(q, quals)
+	{
+		if (!contain_var_clause(lfirst(q)))
+			constqual = lcons(lfirst(q), constqual);
+		else
+			restqual = lcons(lfirst(q), restqual);
+	}
+	*constantQual = constqual;
+	return restqual;
 }
 
 
@@ -726,7 +795,8 @@ default_results:
  *   If the given expression is a function of a single relation,
  *   return the relation number; else return 0
  */
-static int is_single_func(Node *node)
+static int
+is_single_func(Node *node)
 {
 	if (is_funcclause(node))
 	{

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/subselect.c,v 1.33 2000/03/21 05:12:02 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/subselect.c,v 1.34 2000/04/04 01:21:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -442,6 +442,12 @@ set_unioni(List *l1, List *l2)
  * finalize_primnode: build lists of subplans and params appearing
  * in the given expression tree.  NOTE: items are added to lists passed in,
  * so caller must initialize lists to NIL before first call!
+ *
+ * Note: the subplan list that is constructed here and assigned to the
+ * plan's subPlan field will be replaced with an up-to-date list in
+ * set_plan_references().  We could almost dispense with building this
+ * subplan list at all; I believe the only place that uses it is the
+ * check in make_subplan to see whether a subselect has any subselects.
  */
 
 typedef struct finalize_primnode_results {
@@ -604,6 +610,10 @@ SS_finalize_plan(Plan *plan)
 		case T_IndexScan:
 			finalize_primnode((Node *) ((IndexScan *) plan)->indxqual,
 							  &results);
+			/* we need not look at indxqualorig, since it will have the
+			 * same param references as indxqual, and we aren't really
+			 * concerned yet about having a complete subplan list.
+			 */
 			break;
 
 		case T_MergeJoin:
@@ -669,33 +679,4 @@ SS_finalize_plan(Plan *plan)
 	plan->subPlan = results.subplans;
 
 	return results.paramids;
-}
-
-/*
- * Construct a list of all subplans found within the given node tree.
- */
-
-static bool SS_pull_subplan_walker(Node *node, List **listptr);
-
-List *
-SS_pull_subplan(Node *expr)
-{
-	List	   *result = NIL;
-
-	SS_pull_subplan_walker(expr, &result);
-	return result;
-}
-
-static bool
-SS_pull_subplan_walker(Node *node, List **listptr)
-{
-	if (node == NULL)
-		return false;
-	if (is_subplan(node))
-	{
-		*listptr = lappend(*listptr, ((Expr *) node)->oper);
-		/* fall through to check args to subplan */
-	}
-	return expression_tree_walker(node, SS_pull_subplan_walker,
-								  (void *) listptr);
 }
