@@ -22,7 +22,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.265 2002/05/28 22:26:56 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.266 2002/06/13 20:02:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1579,6 +1579,8 @@ getTypes(int *numTypes)
 	 * array elements by user-defined types
 	 *
 	 * we filter out the built-in types when we dump out the types
+	 *
+	 * same approach for undefined (shell) types
 	 */
 
 	/* Make sure we are in proper schema */
@@ -1633,10 +1635,6 @@ getTypes(int *numTypes)
 		tinfo[i].typrelid = strdup(PQgetvalue(res, i, i_typrelid));
 		tinfo[i].typtype = *PQgetvalue(res, i, i_typtype);
 
-		if (strlen(tinfo[i].usename) == 0)
-			write_msg(NULL, "WARNING: owner of data type %s appears to be invalid\n",
-					  tinfo[i].typname);
-
 		/*
 		 * check for user-defined array types, omit system generated ones
 		 */
@@ -1650,6 +1648,10 @@ getTypes(int *numTypes)
 			tinfo[i].isDefined = true;
 		else
 			tinfo[i].isDefined = false;
+
+		if (strlen(tinfo[i].usename) == 0 && tinfo[i].isDefined)
+			write_msg(NULL, "WARNING: owner of data type %s appears to be invalid\n",
+					  tinfo[i].typname);
 	}
 
 	*numTypes = ntups;
