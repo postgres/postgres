@@ -1,5 +1,5 @@
 # Makefile for PL/Perl
-# $PostgreSQL: pgsql/src/pl/plperl/GNUmakefile,v 1.13 2004/07/01 20:50:22 joe Exp $
+# $PostgreSQL: pgsql/src/pl/plperl/GNUmakefile,v 1.14 2004/07/05 23:24:12 tgl Exp $
 
 subdir = src/pl/plperl
 top_builddir = ../../..
@@ -27,11 +27,7 @@ SO_MINOR_VERSION = 0
 
 OBJS = plperl.o spi_internal.o SPI.o
 
-ifeq ($(enable_rpath), yes)
-SHLIB_LINK = $(perl_embed_ldflags) $(BE_DLLLIBS) -Wl,-rpath,$(perl_archlibexp)/CORE
-else
 SHLIB_LINK = $(perl_embed_ldflags) $(BE_DLLLIBS)
-endif
 
 include $(top_srcdir)/src/Makefile.shlib
 
