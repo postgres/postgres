@@ -2,7 +2,7 @@
 #
 # PostgreSQL documentation makefile
 #
-# $PostgreSQL: pgsql/doc/src/sgml/Makefile,v 1.74 2004/11/23 21:41:24 petere Exp $
+# $PostgreSQL: pgsql/doc/src/sgml/Makefile,v 1.75 2005/01/04 21:03:30 petere Exp $
 #
 #----------------------------------------------------------------------------
 
@@ -69,10 +69,13 @@ override SPFLAGS += -wall -wno-unused-param -wno-empty
 
 DEFAULTSECTION := $(sqlmansect_dummy)
 
+fix_man_xrefs = $(PERL) -npi -e 's{\[XRef to GUC-([A-Z0-9-]*)\]}{($$l = $$1) =~ tr/A-Z-/a-z_/, $$l}ge || s{\[XRef to [A-Z0-9-]*\]}{the documentation}g'
+
 man: postgres.sgml $(ALLSGML)
 	$(NSGMLS) $(NSGMLS_FLAGS) $< | $(SGMLSPL) $(D2MSCRIPT) --lowercase --section $(DEFAULTSECTION) --date "`date '+%Y-%m-%d'`"
 # One more time, to resolve cross-references
 	$(NSGMLS) $(NSGMLS_FLAGS) $< | $(SGMLSPL) $(D2MSCRIPT) --lowercase --section $(DEFAULTSECTION) --date "`date '+%Y-%m-%d'`"
+	$(fix_man_xrefs) *.1 *.$(DEFAULTSECTION)
 	$(mkinstalldirs) man1 man$(DEFAULTSECTION)
 	mv *.1 man1/
 	mv *.$(DEFAULTSECTION) man$(DEFAULTSECTION)/
