@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.65 2001/06/18 16:14:43 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.66 2001/07/10 01:41:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,6 +25,9 @@
 #include "utils/guc.h"
 #include "utils/datetime.h"
 
+
+#define ROUND_ALL 1
+
 static int DecodeNumber(int flen, char *field,
 			 int fmask, int *tmask,
 			 struct tm * tm, double *fsec, int *is2digits);
@@ -36,15 +39,12 @@ static int DecodeTime(char *str, int fmask, int *tmask,
 static int	DecodeTimezone(char *str, int *tzp);
 static datetkn *datebsearch(char *key, datetkn *base, unsigned int nel);
 static int	DecodeDate(char *str, int fmask, int *tmask, struct tm * tm);
-
-#define ROUND_ALL 0
-
 static int	DecodePosixTimezone(char *str, int *val);
+
 
 int			day_tab[2][13] = {
 	{31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31, 0},
-{31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31, 0}};
-
+	{31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31, 0}};
 
 char	   *months[] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun",
 "Jul", "Aug", "Sep", "Oct", "Nov", "Dec", NULL};
@@ -53,28 +53,13 @@ char	   *days[] = {"Sunday", "Monday", "Tuesday", "Wednesday",
 "Thursday", "Friday", "Saturday", NULL};
 
 
-#define UTIME_MINYEAR (1901)
-#define UTIME_MINMONTH (12)
-#define UTIME_MINDAY (14)
-#define UTIME_MAXYEAR (2038)
-#define UTIME_MAXMONTH (01)
-#define UTIME_MAXDAY (18)
-
-#define IS_VALID_UTIME(y,m,d) (((y > UTIME_MINYEAR) \
- || ((y == UTIME_MINYEAR) && ((m > UTIME_MINMONTH) \
-  || ((m == UTIME_MINMONTH) && (d >= UTIME_MINDAY))))) \
- && ((y < UTIME_MAXYEAR) \
- || ((y == UTIME_MAXYEAR) && ((m < UTIME_MAXMONTH) \
-  || ((m == UTIME_MAXMONTH) && (d <= UTIME_MAXDAY))))))
-
-
 /*****************************************************************************
  *	 PRIVATE ROUTINES														 *
  *****************************************************************************/
 
 /* definitions for squeezing values into "value" */
-#define ABS_SIGNBIT		(char) 0200
-#define VALMASK			(char) 0177
+#define ABS_SIGNBIT		((char) 0200)
+#define VALMASK			((char) 0177)
 #define NEG(n)			((n)|ABS_SIGNBIT)
 #define SIGNEDCHAR(c)	((c)&ABS_SIGNBIT? -((c)&VALMASK): (c))
 #define FROMVAL(tp)		(-SIGNEDCHAR((tp)->value) * 10) /* uncompress */
@@ -2112,7 +2097,7 @@ EncodeDateTime(struct tm * tm, double fsec, int *tzp, char **tzn, int style, cha
 			{
 				sprintf(str, "%04d-%02d-%02d %02d:%02d:",
 						tm->tm_year, tm->tm_mon, tm->tm_mday, tm->tm_hour, tm->tm_min);
-				sprintf((str + 17), ((fsec != 0) ? "%05.2f" : "%02.0f"), sec);
+				sprintf((str + strlen(str)), ((fsec != 0) ? "%05.2f" : "%02.0f"), sec);
 
 				if ((*tzn != NULL) && (tm->tm_isdst >= 0))
 				{
@@ -2154,11 +2139,7 @@ EncodeDateTime(struct tm * tm, double fsec, int *tzp, char **tzn, int style, cha
 						tm->tm_year, tm->tm_hour, tm->tm_min, sec);
 
 				if ((*tzn != NULL) && (tm->tm_isdst >= 0))
-				{
-					strcpy((str + 22), " ");
-					strcpy((str + 23), *tzn);
-				}
-
+					sprintf((str + strlen(str)), " %.*s", MAXTZLEN, *tzn);
 			}
 			else
 				sprintf((str + 5), "/%04d %02d:%02d %s",
@@ -2174,11 +2155,7 @@ EncodeDateTime(struct tm * tm, double fsec, int *tzp, char **tzn, int style, cha
 						tm->tm_year, tm->tm_hour, tm->tm_min, sec);
 
 				if ((*tzn != NULL) && (tm->tm_isdst >= 0))
-				{
-					strcpy((str + 22), " ");
-					strcpy((str + 23), *tzn);
-				}
-
+					sprintf((str + strlen(str)), " %.*s", MAXTZLEN, *tzn);
 			}
 			else
 				sprintf((str + 5), ".%04d %02d:%02d %s",
@@ -2206,21 +2183,14 @@ EncodeDateTime(struct tm * tm, double fsec, int *tzp, char **tzn, int style, cha
 				{
 					sprintf((str + 16), ":%05.2f %04d", sec, tm->tm_year);
 					if ((*tzn != NULL) && (tm->tm_isdst >= 0))
-					{
-						strcpy((str + 27), " ");
-						StrNCpy((str + 28), *tzn, MAXTZLEN + 1);
-					}
+						sprintf((str + strlen(str)), " %.*s", MAXTZLEN, *tzn);
 				}
 				else
 				{
 					sprintf((str + 16), ":%02.0f %04d", sec, tm->tm_year);
 					if ((*tzn != NULL) && (tm->tm_isdst >= 0))
-					{
-						strcpy((str + 24), " ");
-						StrNCpy((str + 25), *tzn, MAXTZLEN + 1);
-					}
+						sprintf((str + strlen(str)), " %.*s", MAXTZLEN, *tzn);
 				}
-
 			}
 			else
 			{
