@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-exec.c,v 1.157 2004/03/05 01:53:59 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-exec.c,v 1.158 2004/03/14 22:00:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1469,7 +1469,7 @@ PQputCopyEnd(PGconn *conn, const char *errormsg)
 		{
 			/* Send old-style end-of-data marker */
 			if (pqPutMsgStart(0, false, conn) < 0 ||
-				pqPuts("\\.\n", conn) < 0 ||
+				pqPutnchar("\\.\n", 3, conn) < 0 ||
 				pqPutMsgEnd(conn) < 0)
 				return -1;
 		}
