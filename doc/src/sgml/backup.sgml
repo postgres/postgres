@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.33 2004/01/11 05:46:58 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.34 2004/01/19 20:12:30 tgl Exp $
 -->
 <chapter id="backup">
  <title>Backup and Restore</title>
@@ -331,9 +331,7 @@ tar -cf backup.tar /usr/local/pgsql/data
       The database server <emphasis>must</> be shut down in order to
       get a usable backup. Half-way measures such as disallowing all
       connections will not work as there is always some buffering
-      going on. For this reason it is also not advisable to trust file
-      systems that claim to support <quote>consistent
-      snapshots</quote>. Information about stopping the server can be
+      going on. Information about stopping the server can be
       found in <xref linkend="postmaster-shutdown">.  Needless to say
       that you also need to shut down the server before restoring the
       data.
@@ -342,8 +340,8 @@ tar -cf backup.tar /usr/local/pgsql/data
 
     <listitem>
      <para>
-      If you have dug into the details of the file system layout of the data you
-      may be tempted to try to back up or restore only certain
+      If you have dug into the details of the file system layout of the
+      database, you may be tempted to try to back up or restore only certain
       individual tables or databases from their respective files or
       directories. This will <emphasis>not</> work because the
       information contained in these files contains only half the
@@ -362,16 +360,30 @@ tar -cf backup.tar /usr/local/pgsql/data
   <para>
    An alternative file-system backup approach is to make a
    <quote>consistent snapshot</quote> of the data directory, if the
-   file system supports that functionality.  Such a snapshot will save
+   file system supports that functionality (and you are willing to
+   trust that it is implemented correctly).  The typical procedure is
+   to make a <quote>frozen snapshot</> of the volume containing the
+   database, then copy the whole data directory (not just parts, see
+   above) from the snapshot to a backup device, then release the frozen
+   snapshot.  This will work even while the database server is running.
+   However, a backup created in this way saves
    the database files in a state where the database server was not
    properly shut down; therefore, when you start the database server
-   on this backed up directory, it will think the server had crashed
+   on the backed-up data, it will think the server had crashed
    and replay the WAL log.  This is not a problem, just be aware of
    it.
   </para>
 
   <para>
-   Note that the file system backup will not necessarily be
+   If your database is spread across multiple volumes (for example,
+   data files and WAL log on different disks) there may not be any way
+   to obtain exactly-simultaneous frozen snapshots of all the volumes.
+   Read your filesystem documentation very carefully before trusting
+   to the consistent-snapshot technique in such situations.
+  </para>
+
+  <para>
+   Note that a file system backup will not necessarily be
    smaller than an SQL dump. On the contrary, it will most likely be
    larger. (<application>pg_dump</application> does not need to dump
    the contents of indexes for example, just the commands to recreate
