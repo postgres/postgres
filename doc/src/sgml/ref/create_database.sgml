@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_database.sgml,v 1.41 2004/07/17 16:33:31 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_database.sgml,v 1.42 2004/10/22 14:12:41 neilc Exp $
 PostgreSQL documentation
 -->
 
@@ -173,7 +173,7 @@ CREATE DATABASE lusiadas;
   </para>
 
   <para>
-   To create a database <literal>sales</> owned by user <literal>salesapp</>>
+   To create a database <literal>sales</> owned by user <literal>salesapp</>
    with a default tablespace of <literal>salesspace</>:
 
 <programlisting>
