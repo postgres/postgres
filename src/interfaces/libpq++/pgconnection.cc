@@ -10,14 +10,16 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq++/Attic/pgconnection.cc,v 1.11 2001/05/09 17:29:10 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq++/Attic/pgconnection.cc,v 1.12 2001/09/30 22:30:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 
 #include "pgconnection.h"
 
+#ifdef HAVE_NAMESPACE_STD
 using namespace std;
+#endif
 
 
 // ****************************************************************

@@ -10,15 +10,16 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq++/Attic/pgcursordb.cc,v 1.5 2001/05/09 17:29:10 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq++/Attic/pgcursordb.cc,v 1.6 2001/09/30 22:30:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
  
 #include "pgcursordb.h"
  
-
+#ifdef HAVE_NAMESPACE_STD
 using namespace std;
+#endif
 
 
 // ****************************************************************

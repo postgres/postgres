@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
- *  $Id: pglobject.h,v 1.8 2001/07/11 22:12:43 momjian Exp $
+ *  $Id: pglobject.h,v 1.9 2001/09/30 22:30:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -68,9 +68,6 @@ private:
 };
 
 
-#ifdef HAVE_NAMESPACE_STD
 #undef PGSTD
-#endif
-
 
 #endif	// PGLOBJECT_H

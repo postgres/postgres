@@ -10,7 +10,7 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq++/Attic/pglobject.cc,v 1.7 2001/05/09 17:29:10 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq++/Attic/pglobject.cc,v 1.8 2001/09/30 22:30:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,8 +21,9 @@ extern "C" {
 #include "libpq/libpq-fs.h"
 }
 
-
+#ifdef HAVE_NAMESPACE_STD
 using namespace std;
+#endif
 
 
 // ****************************************************************

@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  * 
- * $Id: pgconnection.h,v 1.13 2001/08/24 14:07:49 petere Exp $
+ * $Id: pgconnection.h,v 1.14 2001/09/30 22:30:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -96,9 +96,6 @@ private:
 };
 
 
-#ifdef HAVE_NAMESPACE_STD
 #undef PGSTD
-#endif
-
 
 #endif	// PGCONNECTION_H

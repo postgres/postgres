@@ -10,15 +10,16 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq++/Attic/pgdatabase.cc,v 1.11 2001/05/09 17:46:11 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq++/Attic/pgdatabase.cc,v 1.12 2001/09/30 22:30:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
  
 #include "pgdatabase.h"
 
-
+#ifdef HAVE_NAMESPACE_STD
 using namespace std;
+#endif
 
 
 // OBSOLESCENT (uses PQprint(), which is no longer being maintained)
@@ -33,7 +34,7 @@ void PgDatabase::DisplayTuples(FILE *out,
 	po.header = printHeader;
 	po.align = fillAlign;
 	po.standard = po.html3 = po.expanded = po.pager = 0;
-	po.fieldSep = const_cast<char *>(fieldSep);
+	po.fieldSep = (char *) (fieldSep);
 	po.tableOpt = po.caption = 0;
 	po.fieldName = 0;
 
@@ -54,7 +55,7 @@ void PgDatabase::PrintTuples(FILE *out,
 	po.align = fillAlign;
 	po.standard = po.html3 = po.expanded = po.pager = 0;
 	po.tableOpt = po.caption = 0;
-	po.fieldSep = const_cast<char *>(terseOutput ? "" : "|");
+	po.fieldSep = (char *) (terseOutput ? "" : "|");
 	po.fieldName = 0;
 
 	PQprint(out,pgResult,&po);
