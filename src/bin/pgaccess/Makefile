@@ -6,7 +6,7 @@
 # Copyright (c) 1994, Regents of the University of California
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/pgaccess/Attic/Makefile,v 1.4 1999/10/30 16:39:48 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/bin/pgaccess/Attic/Makefile,v 1.5 1999/10/30 21:21:50 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -17,5 +17,5 @@ include $(SRCDIR)/Makefile.global
 all clean: 
 
 .PHONY: install
-install: pgaccess.tcl
-	$(INSTALL) $(INSTL_EXE_OPTS) pgaccess.tcl $(BINDIR)/pgaccess
+install:
+	$(INSTALL) $(INSTL_EXE_OPTS) pgaccess $(BINDIR)/pgaccess
