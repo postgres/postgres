@@ -22,7 +22,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.139 2000/01/26 05:57:38 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.140 2000/01/27 05:33:49 momjian Exp $
  *
  * Modifications - 6/10/96 - dave@bensoft.com - version 1.13.dhb
  *
@@ -176,8 +176,7 @@ static void
 version(void)
 {
     puts("pg_dump (PostgreSQL) " PG_RELEASE "." PG_VERSION "." PG_SUBVERSION);
-    puts("Copyright (C) 2000 PostgreSQL Global Development Team");
- * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+    puts("Portions Copyright (c) 1996-2000, PostgreSQL, Inc");
     puts("Portions Copyright (C) 1996 Regents of the University of California");
     puts("Read the file COPYING to see the usage and distribution terms.");
 }
