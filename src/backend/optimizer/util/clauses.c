@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.186 2004/12/31 22:00:23 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.187 2005/01/28 19:34:07 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -19,6 +19,7 @@
 
 #include "postgres.h"
 
+#include "catalog/pg_aggregate.h"
 #include "catalog/pg_language.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_type.h"
@@ -33,6 +34,7 @@
 #include "optimizer/var.h"
 #include "parser/analyze.h"
 #include "parser/parse_clause.h"
+#include "parser/parse_coerce.h"
 #include "parser/parse_expr.h"
 #include "tcop/tcopprot.h"
 #include "utils/acl.h"
@@ -58,8 +60,7 @@ typedef struct
 } substitute_actual_parameters_context;
 
 static bool contain_agg_clause_walker(Node *node, void *context);
-static bool contain_distinct_agg_clause_walker(Node *node, void *context);
-static bool count_agg_clause_walker(Node *node, int *count);
+static bool count_agg_clauses_walker(Node *node, AggClauseCounts *counts);
 static bool expression_returns_set_walker(Node *node, void *context);
 static bool contain_subplans_walker(Node *node, void *context);
 static bool contain_mutable_functions_walker(Node *node, void *context);
@@ -358,71 +359,108 @@ contain_agg_clause_walker(Node *node, void *context)
 }
 
 /*
- * contain_distinct_agg_clause
- *	  Recursively search for DISTINCT Aggref nodes within a clause.
- *
- *	  Returns true if any DISTINCT aggregate found.
- *
- * This does not descend into subqueries, and so should be used only after
- * reduction of sublinks to subplans, or in contexts where it's known there
- * are no subqueries.  There mustn't be outer-aggregate references either.
- */
-bool
-contain_distinct_agg_clause(Node *clause)
-{
-	return contain_distinct_agg_clause_walker(clause, NULL);
-}
-
-static bool
-contain_distinct_agg_clause_walker(Node *node, void *context)
-{
-	if (node == NULL)
-		return false;
-	if (IsA(node, Aggref))
-	{
-		Assert(((Aggref *) node)->agglevelsup == 0);
-		if (((Aggref *) node)->aggdistinct)
-			return true;		/* abort the tree traversal and return
-								 * true */
-	}
-	Assert(!IsA(node, SubLink));
-	return expression_tree_walker(node, contain_distinct_agg_clause_walker, context);
-}
-
-/*
- * count_agg_clause
+ * count_agg_clauses
  *	  Recursively count the Aggref nodes in an expression tree.
  *
  *	  Note: this also checks for nested aggregates, which are an error.
  *
+ * We not only count the nodes, but attempt to estimate the total space
+ * needed for their transition state values if all are evaluated in parallel
+ * (as would be done in a HashAgg plan).  See AggClauseCounts for the exact
+ * set of statistics returned.
+ *
+ * NOTE that the counts are ADDED to those already in *counts ... so the
+ * caller is responsible for zeroing the struct initially.
+ *
  * This does not descend into subqueries, and so should be used only after
  * reduction of sublinks to subplans, or in contexts where it's known there
  * are no subqueries.  There mustn't be outer-aggregate references either.
  */
-int
-count_agg_clause(Node *clause)
+void
+count_agg_clauses(Node *clause, AggClauseCounts *counts)
 {
-	int			result = 0;
-
-	count_agg_clause_walker(clause, &result);
-	return result;
+	/* no setup needed */
+	count_agg_clauses_walker(clause, counts);
 }
 
 static bool
-count_agg_clause_walker(Node *node, int *count)
+count_agg_clauses_walker(Node *node, AggClauseCounts *counts)
 {
 	if (node == NULL)
 		return false;
 	if (IsA(node, Aggref))
 	{
-		Assert(((Aggref *) node)->agglevelsup == 0);
-		(*count)++;
+		Aggref	   *aggref = (Aggref *) node;
+		Oid			inputType;
+		HeapTuple	aggTuple;
+		Form_pg_aggregate aggform;
+		Oid			aggtranstype;
+
+		Assert(aggref->agglevelsup == 0);
+		counts->numAggs++;
+		if (aggref->aggdistinct)
+			counts->numDistinctAggs++;
+
+		inputType = exprType((Node *) aggref->target);
+
+		/* fetch aggregate transition datatype from pg_aggregate */
+		aggTuple = SearchSysCache(AGGFNOID,
+								  ObjectIdGetDatum(aggref->aggfnoid),
+								  0, 0, 0);
+		if (!HeapTupleIsValid(aggTuple))
+			elog(ERROR, "cache lookup failed for aggregate %u",
+				 aggref->aggfnoid);
+		aggform = (Form_pg_aggregate) GETSTRUCT(aggTuple);
+		aggtranstype = aggform->aggtranstype;
+		ReleaseSysCache(aggTuple);
+
+		/* resolve actual type of transition state, if polymorphic */
+		if (aggtranstype == ANYARRAYOID || aggtranstype == ANYELEMENTOID)
+		{
+			/* have to fetch the agg's declared input type... */
+			Oid			agg_arg_types[FUNC_MAX_ARGS];
+			int			agg_nargs;
+
+			(void) get_func_signature(aggref->aggfnoid,
+									  agg_arg_types, &agg_nargs);
+			Assert(agg_nargs == 1);
+			aggtranstype = resolve_generic_type(aggtranstype,
+												inputType,
+												agg_arg_types[0]);
+		}
+
+		/*
+		 * If the transition type is pass-by-value then it doesn't add
+		 * anything to the required size of the hashtable.  If it is
+		 * pass-by-reference then we have to add the estimated size of
+		 * the value itself, plus palloc overhead.
+		 */
+		if (!get_typbyval(aggtranstype))
+		{
+			int32		aggtranstypmod;
+			int32		avgwidth;
+
+			/*
+			 * If transition state is of same type as input, assume it's the
+			 * same typmod (same width) as well.  This works for cases like
+			 * MAX/MIN and is probably somewhat reasonable otherwise.
+			 */
+			if (aggtranstype == inputType)
+				aggtranstypmod = exprTypmod((Node *) aggref->target);
+			else
+				aggtranstypmod = -1;
+
+			avgwidth = get_typavgwidth(aggtranstype, aggtranstypmod);
+			avgwidth = MAXALIGN(avgwidth);
+
+			counts->transitionSpace += avgwidth + 2 * sizeof(void *);
+		}
 
 		/*
 		 * Complain if the aggregate's argument contains any aggregates;
 		 * nested agg functions are semantically nonsensical.
 		 */
-		if (contain_agg_clause((Node *) ((Aggref *) node)->target))
+		if (contain_agg_clause((Node *) aggref->target))
 			ereport(ERROR,
 					(errcode(ERRCODE_GROUPING_ERROR),
 				  errmsg("aggregate function calls may not be nested")));
@@ -433,8 +471,8 @@ count_agg_clause_walker(Node *node, int *count)
 		return false;
 	}
 	Assert(!IsA(node, SubLink));
-	return expression_tree_walker(node, count_agg_clause_walker,
-								  (void *) count);
+	return expression_tree_walker(node, count_agg_clauses_walker,
+								  (void *) counts);
 }
 
 

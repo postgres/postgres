@@ -45,7 +45,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeAgg.c,v 1.127 2005/01/27 23:42:18 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeAgg.c,v 1.128 2005/01/28 19:33:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -602,6 +602,26 @@ build_hash_table(AggState *aggstate)
 											  entrysize,
 											  aggstate->aggcontext,
 											  tmpmem);
+}
+
+/*
+ * Estimate per-hash-table-entry overhead for the planner.
+ *
+ * Note that the estimate does not include space for pass-by-reference
+ * transition data values.
+ */
+Size
+hash_agg_entry_size(int numAggs)
+{
+	Size		entrysize;
+
+	/* This must match build_hash_table */
+	entrysize = sizeof(AggHashEntryData) +
+		(numAggs - 1) *sizeof(AggStatePerGroupData);
+	/* Account for hashtable overhead */
+	entrysize += 2 * sizeof(void *);
+	entrysize = MAXALIGN(entrysize);
+	return entrysize;
 }
 
 /*

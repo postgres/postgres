@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/executor/nodeAgg.h,v 1.23 2004/12/31 22:03:29 pgsql Exp $
+ * $PostgreSQL: pgsql/src/include/executor/nodeAgg.h,v 1.24 2005/01/28 19:34:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,6 +22,8 @@ extern AggState *ExecInitAgg(Agg *node, EState *estate);
 extern TupleTableSlot *ExecAgg(AggState *node);
 extern void ExecEndAgg(AggState *node);
 extern void ExecReScanAgg(AggState *node, ExprContext *exprCtxt);
+
+extern Size hash_agg_entry_size(int numAggs);
 
 extern Datum aggregate_dummy(PG_FUNCTION_ARGS);
 
