@@ -7,13 +7,14 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_coerce.c,v 2.23 1999/08/24 00:09:56 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_coerce.c,v 2.24 1999/10/02 23:29:12 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
 
+#include "optimizer/clauses.h"
 #include "parser/parse_coerce.h"
 #include "parser/parse_expr.h"
 #include "parser/parse_func.h"
@@ -49,7 +50,8 @@ coerce_type(ParseState *pstate, Node *node, Oid inputTypeId, Oid targetTypeId,
 	}
 	else if (inputTypeId == UNKNOWNOID && IsA(node, Const))
 	{
-		/* Input is a string constant with previously undetermined type.
+		/*
+		 * Input is a string constant with previously undetermined type.
 		 * Apply the target type's typinput function to it to produce
 		 * a constant of the target type.
 		 *
@@ -58,6 +60,11 @@ coerce_type(ParseState *pstate, Node *node, Oid inputTypeId, Oid targetTypeId,
 		 * necessarily behave the same as a type conversion function.
 		 * For example, int4's typinput function will reject "1.2",
 		 * whereas float-to-int type conversion will round to integer.
+		 *
+		 * XXX if the typinput function is not cachable, we really ought
+		 * to postpone evaluation of the function call until runtime.
+		 * But there is no way to represent a typinput function call as
+		 * an expression tree, because C-string values are not Datums.
 		 */
 		Const	   *con = (Const *) node;
 		Const	   *newcon = makeNode(Const);
@@ -97,38 +104,16 @@ coerce_type(ParseState *pstate, Node *node, Oid inputTypeId, Oid targetTypeId,
 
 		/*
 		 * If the input is a constant, apply the type conversion function
-		 * now instead of delaying to runtime.  (This could someday be
-		 * done in a downstream constant-expression-simplifier, but we
-		 * can save cycles in the rewriter if we do it here.)
+		 * now instead of delaying to runtime.  (We could, of course,
+		 * just leave this to be done during planning/optimization;
+		 * but it's a very frequent special case, and we save cycles
+		 * in the rewriter if we fold the expression now.)
 		 *
-		 * XXX there are cases where we probably shouldn't do this,
-		 * such as coercing text 'now' to datetime?  Need a way to
-		 * know whether type conversion function is cacheable...
+		 * Note that no folding will occur if the conversion function is
+		 * not marked 'iscachable'.
 		 */
-		if (IsA(node, Const) && ! ((Const *) node)->constisnull)
-		{
-			Const	   *con = (Const *) node;
-			Oid			convertFuncid;
-			Datum		val;
-
-			Assert(IsA(result, Expr) &&
-				   ((Expr *) result)->opType == FUNC_EXPR);
-
-			/* Convert the given constant */
-			convertFuncid = ((Func *) (((Expr *) result)->oper))->funcid;
-			val = (Datum) fmgr(convertFuncid, con->constvalue);
-
-			/* now make a new const node */
-			con = makeNode(Const);
-			con->consttype = targetTypeId;
-			con->constlen = typeLen(targetType);
-			con->constbyval = typeByVal(targetType);
-			con->constvalue = val;
-			con->constisnull = false;
-			con->constisset = false;
-
-			result = (Node *) con;
-		}
+		if (IsA(node, Const))
+			result = eval_const_expressions(result);
 	}
 
 	return result;
