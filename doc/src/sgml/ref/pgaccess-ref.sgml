@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/Attic/pgaccess-ref.sgml,v 1.9 2001/03/17 16:27:31 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/Attic/pgaccess-ref.sgml,v 1.10 2001/05/17 21:50:18 petere Exp $
 Postgres documentation
 -->
 
@@ -163,7 +163,7 @@ Postgres documentation
 
     <listitem>
      <para>
-      Retrieve information on tables, including owner, field information, indices.
+      Retrieve information on tables, including owner, field information, indexes.
      </para>
     </listitem>
    </itemizedlist>

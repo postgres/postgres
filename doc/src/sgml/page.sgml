@@ -23,7 +23,7 @@ refers to data that is stored in <productname>Postgres</productname> tables.
 
 <para>
 The following table shows how pages in both normal <productname>Postgres</productname> tables
- and <productname>Postgres</productname> indices
+ and <productname>Postgres</productname> indexes
 (e.g., a B-tree index) are structured.
 
 <table tocentry="1">

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/extend.sgml,v 1.9 2001/01/13 23:58:55 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/extend.sgml,v 1.10 2001/05/17 21:50:15 petere Exp $
 -->
 
  <chapter id="extend">
@@ -96,7 +96,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/extend.sgml,v 1.9 2001/01/13 23:58:55 peter
     file that stores all rows of a table)  but  the
     user can "look inside" at the attributes of these types
     from the query language and optimize their retrieval by
-    (for example) defining indices on the attributes.
+    (for example) defining indexes on the attributes.
     <productname>Postgres</productname>  base  types are further
     divided into built-in
     types and user-defined  types.   Built-in  types  (like
@@ -149,7 +149,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/extend.sgml,v 1.9 2001/01/13 23:58:55 peter
        </row>
        <row>
 	<entry>pg_index</entry>
-	<entry> secondary indices</entry>
+	<entry> secondary indexes</entry>
        </row>
        <row>
 	<entry>pg_proc</entry>
@@ -256,7 +256,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/extend.sgml,v 1.9 2001/01/13 23:58:55 peter
        pg_am,   pg_amop,   pg_amproc,  pg_operator  and
        pg_opclass are particularly hard  to  understand
        and  will  be described in depth (in the section
-       on interfacing types and operators  to  indices)
+       on interfacing types and operators  to  indexes)
        after we have discussed basic extensions.
       </para>
      </listitem>

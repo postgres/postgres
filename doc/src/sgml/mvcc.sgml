@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/mvcc.sgml,v 2.14 2001/05/12 22:51:35 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/mvcc.sgml,v 2.15 2001/05/17 21:50:16 petere Exp $
 -->
 
  <chapter id="mvcc">
@@ -554,8 +554,8 @@ ERROR:  Can't serialize access due to concurrent update
    </sect2>
   </sect1>
 
-  <sect1 id="locking-indices">
-   <title>Locking and Indices</title>
+  <sect1 id="locking-indexes">
+   <title>Locking and Indexes</title>
 
    <para>
     Though <productname>Postgres</productname>
@@ -571,7 +571,7 @@ ERROR:  Can't serialize access due to concurrent update
     <variablelist>
      <varlistentry>
       <term>
-       GiST and R-Tree indices
+       GiST and R-Tree indexes
       </term>
       <listitem>
        <para>
@@ -583,7 +583,7 @@ ERROR:  Can't serialize access due to concurrent update
 
      <varlistentry>
       <term>
-       Hash indices
+       Hash indexes
       </term>
       <listitem>
        <para>
@@ -600,7 +600,7 @@ ERROR:  Can't serialize access due to concurrent update
 
      <varlistentry>
       <term>
-       Btree indices
+       B-tree indexes
       </term>
       <listitem>
        <para>
@@ -610,7 +610,7 @@ ERROR:  Can't serialize access due to concurrent update
        </para>
 
        <para>
-	Btree indices provide the highest concurrency without deadlock
+	B-tree indexes provide the highest concurrency without deadlock
 	conditions.
        </para>
       </listitem>
@@ -619,7 +619,7 @@ ERROR:  Can't serialize access due to concurrent update
    </para>
 
    <para>
-    In short, btree indices are the recommended index type for concurrent
+    In short, B-tree indexes are the recommended index type for concurrent
     applications.
    </para>
   </sect1>

@@ -1,27 +1,22 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/indices.sgml,v 1.16 2001/05/12 22:51:34 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/indices.sgml,v 1.17 2001/05/17 21:50:16 petere Exp $ -->
 
-<chapter id="indices">
- <title id="indices-title">Indices</title>
+<chapter id="indexes">
+ <title id="indexes-title">Indices</title>
 
- <indexterm zone="indices">
-  <primary>indices</primary>
- </indexterm>
-
- <indexterm>
+ <indexterm zone="indexes">
   <primary>indexes</primary>
-  <see>indices</see>
  </indexterm>
 
  <para>
-  Indices are a common way to enhance database performance.  An index
+  Indexes are a common way to enhance database performance.  An index
   allows the database server to find and retrieve specific rows much
-  faster than it could do without an index.  But indices also add
+  faster than it could do without an index.  But indexes also add
   overhead to the database system as a whole, so they should be used
   sensibly.
  </para>
 
 
- <sect1 id="indices-intro">
+ <sect1 id="indexes-intro">
   <title>Introduction</title>
 
   <para>
@@ -73,7 +68,7 @@ CREATE INDEX test1_id_index ON test1 (id);
 
   <para>
    To remove an index, use the <command>DROP INDEX</command> command.
-   Indices can be added and removed from tables at any time.
+   Indexes can be added and removed from tables at any time.
   </para>
 
   <para>
@@ -88,10 +83,10 @@ CREATE INDEX test1_id_index ON test1 (id);
   </para>
 
   <para>
-   Indices can also benefit <command>UPDATE</command>s and
+   Indexes can also benefit <command>UPDATE</command>s and
    <command>DELETE</command>s with search conditions.  Note that a
    query or data manipulation commands can only use at most one index
-   per table.  Indices can also be used in table join methods.  Thus,
+   per table.  Indexes can also be used in table join methods.  Thus,
    an index defined on a column that is part of a join condition can
    significantly speed up queries with joins.
   </para>
@@ -99,13 +94,13 @@ CREATE INDEX test1_id_index ON test1 (id);
   <para>
    When an index is created, it has to be kept synchronized with the
    table.  This adds overhead to data manipulation operations.
-   Therefore indices that are non-essential or do not get used at all
+   Therefore indexes that are non-essential or do not get used at all
    should be removed.
   </para>
  </sect1>
 
 
- <sect1 id="indices-types">
+ <sect1 id="indexes-types">
   <title>Index Types</title>
 
   <para>
@@ -113,12 +108,12 @@ CREATE INDEX test1_id_index ON test1 (id);
    B-tree, R-tree, and Hash.  Each index type is more appropriate for
    a particular query type because of the algorithm it uses.
    <indexterm>
-    <primary>indices</primary>
+    <primary>indexes</primary>
     <secondary>B-tree</secondary>
    </indexterm>
    <indexterm>
     <primary>B-tree</primary>
-    <see>indices</see>
+    <see>indexes</see>
    </indexterm>
    By
    default, the <command>CREATE INDEX</command> command will create a
@@ -138,14 +133,14 @@ CREATE INDEX test1_id_index ON test1 (id);
 
   <para>
    <indexterm>
-    <primary>indices</primary>
+    <primary>indexes</primary>
     <secondary>R-tree</secondary>
    </indexterm>
    <indexterm>
     <primary>R-tree</primary>
-    <see>indices</see>
+    <see>indexes</see>
    </indexterm>
-   R-tree indices are especially suited for spacial data.  To create
+   R-tree indexes are especially suited for spacial data.  To create
    an R-tree index, use a command of the form
 <synopsis>
 CREATE INDEX <replaceable>name</replaceable> ON <replaceable>table</replaceable> USING RTREE (<replaceable>column</replaceable>);
@@ -169,12 +164,12 @@ CREATE INDEX <replaceable>name</replaceable> ON <replaceable>table</replaceable>
 
   <para>
    <indexterm>
-    <primary>indices</primary>
+    <primary>indexes</primary>
     <secondary>hash</secondary>
    </indexterm>
    <indexterm>
     <primary>hash</primary>
-    <see>indices</see>
+    <see>indexes</see>
    </indexterm>
    The query optimizer will consider using a hash index whenever an
    indexed column is involved in a comparison using the
@@ -185,12 +180,12 @@ CREATE INDEX <replaceable>name</replaceable> ON <replaceable>table</replaceable>
 </synopsis>
    <note>
     <para>
-     Because of the limited utility of hash indices, a B-tree index
+     Because of the limited utility of hash indexes, a B-tree index
      should generally be preferred over a hash index.  We do not have
-     sufficient evidence that hash indices are actually faster than
+     sufficient evidence that hash indexes are actually faster than
      B-trees even for <literal>=</literal> comparisons.  Moreover,
-     hash indices require coarser locks; see <xref
-     linkend="locking-indices">.
+     hash indexes require coarser locks; see <xref
+     linkend="locking-indexes">.
     </para>
    </note>  
   </para>
@@ -208,11 +203,11 @@ CREATE INDEX <replaceable>name</replaceable> ON <replaceable>table</replaceable>
  </sect1>
 
 
- <sect1 id="indices-multicolumn">
-  <title>Multi-Column Indices</title>
+ <sect1 id="indexes-multicolumn">
+  <title>Multi-Column Indexes</title>
 
-  <indexterm zone="indices-multicolumn">
-   <primary>indices</primary>
+  <indexterm zone="indexes-multicolumn">
+   <primary>indexes</primary>
    <secondary>multi-column</secondary>
   </indexterm>
 
@@ -241,7 +236,7 @@ CREATE INDEX test2_mm_idx ON test2 (major, minor);
 
   <para>
    Currently, only the B-tree implementation supports multi-column
-   indices.  Up to 16 columns may be specified.  (This limit can be
+   indexes.  Up to 16 columns may be specified.  (This limit can be
    altered when building <productname>Postgres</productname>; see the
    file <filename>config.h</filename>.)
   </para>
@@ -274,7 +269,7 @@ SELECT name FROM test2 WHERE major = <replaceable>constant</replaceable> OR mino
   </para>
 
   <para>
-   Multi-column indices should be used sparingly.  Most of the time,
+   Multi-column indexes should be used sparingly.  Most of the time,
    an index on a single column is sufficient and saves space and time.
    Indexes with more than three columns are almost certainly
    inappropriate.
@@ -282,11 +277,11 @@ SELECT name FROM test2 WHERE major = <replaceable>constant</replaceable> OR mino
  </sect1>
 
 
- <sect1 id="indices-unique">
-  <title>Unique Indices</title>
+ <sect1 id="indexes-unique">
+  <title>Unique Indexes</title>
 
-  <indexterm zone="indices-unique">
-   <primary>indices</primary>
+  <indexterm zone="indexes-unique">
+   <primary>indexes</primary>
    <secondary>unique</secondary>
   </indexterm>
 
@@ -296,7 +291,7 @@ SELECT name FROM test2 WHERE major = <replaceable>constant</replaceable> OR mino
 <synopsis>
 CREATE UNIQUE INDEX <replaceable>name</replaceable> ON <replaceable>table</replaceable> (<replaceable>column</replaceable> <optional>, ...</optional>);
 </synopsis>
-   Only B-tree indices can be declared unique.
+   Only B-tree indexes can be declared unique.
   </para>
 
   <para>
@@ -307,7 +302,7 @@ CREATE UNIQUE INDEX <replaceable>name</replaceable> ON <replaceable>table</repla
 
   <para>
    <productname>PostgreSQL</productname> automatically creates unique
-   indices when a table is declared with a unique constraint or a
+   indexes when a table is declared with a unique constraint or a
    primary key, on the columns that make up the primary key or unique
    columns (a multi-column index, if appropriate), to enforce that
    constraint.  A unique index can be added to a table at any later
@@ -317,18 +312,18 @@ CREATE UNIQUE INDEX <replaceable>name</replaceable> ON <replaceable>table</repla
  </sect1>
 
 
- <sect1 id="indices-functional">
-  <title>Functional Indices</title>
+ <sect1 id="indexes-functional">
+  <title>Functional Indexes</title>
 
-  <indexterm zone="indices-functional">
-   <primary>indices</primary>
+  <indexterm zone="indexes-functional">
+   <primary>indexes</primary>
    <secondary>on functions</secondary>
   </indexterm>
 
   <para>
    For a <firstterm>functional index</firstterm>, an index is defined
    on the result of a function applied to one or more columns of a
-   single table.  Functional indices can be used to obtain fast access
+   single table.  Functional indexes can be used to obtain fast access
    to data based on the result of function calls.
   </para>
 
@@ -349,9 +344,9 @@ CREATE INDEX test1_lower_col1_idx ON test1 (lower(col1));
   <para>
    The function in the index definition can take more than one
    argument, but they must be table columns, not constants.
-   Functional indices are always single-column (namely, the function
+   Functional indexes are always single-column (namely, the function
    result) even if the function uses more than one input field; there
-   cannot be multi-column indices that contain function calls.
+   cannot be multi-column indexes that contain function calls.
   </para>
 
   <tip>
@@ -364,7 +359,7 @@ CREATE INDEX test1_lower_col1_idx ON test1 (lower(col1));
  </sect1>
 
 
- <sect1 id="indices-opclass">
+ <sect1 id="indexes-opclass">
   <title>Operator Classes</title>
 
   <para>
@@ -390,7 +385,7 @@ CREATE INDEX <replaceable>name</replaceable> ON <replaceable>table</replaceable>
     <listitem>
      <para>
       The operator classes <literal>box_ops</literal> and
-      <literal>bigbox_ops</literal> both support R-tree indices on the
+      <literal>bigbox_ops</literal> both support R-tree indexes on the
       <literal>box</literal> data type.  The difference between them is
       that <literal>bigbox_ops</literal> scales box coordinates down,
       to avoid floating point exceptions from doing multiplication,
@@ -540,11 +535,11 @@ Subject: Re: [QUESTIONS] PRIMARY KEY | UNIQUE
    <para>
     As for why no non-unique keys are defined explicitly in standard
     <acronym>SQL</acronym> syntax? Well, you
-    must understand that indices are implementation-dependent.
+    must understand that indexes are implementation-dependent.
     <acronym>SQL</acronym> does not
     define the implementation, merely the relations between data in the
     database. <productname>Postgres</productname> does allow
-    non-unique indices, but indices
+    non-unique indexes, but indexes
     used to enforce <acronym>SQL</acronym> keys are always unique.
    </para>
 
@@ -579,7 +574,7 @@ CREATE MEMSTORE ON <replaceable>table</replaceable> COLUMNS <replaceable>cols</r
     <acronym>RDBMS</acronym> provider gives you
     - be it an index, my imaginary MEMSTORE command, or an intelligent
     <acronym>RDBMS</acronym>
-    that creates indices without your knowledge based on the fact that you have
+    that creates indexes without your knowledge based on the fact that you have
     sent it many queries based on a specific combination of keys... (It learns
     from experience).
    </para>
@@ -587,10 +582,10 @@ CREATE MEMSTORE ON <replaceable>table</replaceable> COLUMNS <replaceable>cols</r
 
 
   <sect1 id="partial-index">
-   <title id="partial-index-title">Partial Indices</title>
+   <title id="partial-index-title">Partial Indexes</title>
 
   <indexterm zone="partial-index">
-   <primary>indices</primary>
+   <primary>indexes</primary>
    <secondary>partial</secondary>
   </indexterm>
 
@@ -611,7 +606,7 @@ CREATE MEMSTORE ON <replaceable>table</replaceable> COLUMNS <replaceable>cols</r
    <note>
     <title>Note</title>
     <para>
-     Partial indices are not currently supported by
+     Partial indexes are not currently supported by
      <productname>PostgreSQL</productname>, but they were once supported
      by its predecessor <productname>Postgres</productname>, and much
      of the code is still there.  We hope to revive support for this
@@ -623,14 +618,14 @@ CREATE MEMSTORE ON <replaceable>table</replaceable> COLUMNS <replaceable>cols</r
     A <firstterm>partial index</firstterm>
     is an index built over a subset of a table; the subset is defined by
     a predicate.  <productname>Postgres</productname>
-    supported partial indices with arbitrary
+    supported partial indexes with arbitrary
     predicates.  I believe IBM's <productname>DB2</productname>
-    for AS/400 supports partial indices
+    for AS/400 supports partial indexes
     using single-clause predicates.
    </para>
 
    <para>
-    The main motivation for partial indices is this:
+    The main motivation for partial indexes is this:
     if all of the queries you ask that can
     profitably use an index fall into a certain range, why build an index
     over the whole table and suffer the associated space/time costs?
@@ -640,9 +635,9 @@ CREATE MEMSTORE ON <replaceable>table</replaceable> COLUMNS <replaceable>cols</r
    </para>
 
    <para>
-    The machinery to build, update and query partial indices isn't too
-    bad.  The hairy parts are index selection (which indices do I build?)
-    and query optimization (which indices do I use?); i.e., the parts
+    The machinery to build, update and query partial indexes isn't too
+    bad.  The hairy parts are index selection (which indexes do I build?)
+    and query optimization (which indexes do I use?); i.e., the parts
     that involve deciding what predicate(s) match the workload/query in
     some useful way.  For those who are into database theory, the problems
     are basically analogous to the corresponding materialized view

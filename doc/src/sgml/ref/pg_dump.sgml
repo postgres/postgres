@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_dump.sgml,v 1.32 2001/05/17 21:12:48 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_dump.sgml,v 1.33 2001/05/17 21:50:18 petere Exp $
 Postgres documentation
 -->
 
@@ -74,7 +74,7 @@ Postgres documentation
   <para>
    <command>pg_dump</command> 
    will produce the queries necessary to re-generate all
-   user-defined types, functions, tables, indices, aggregates, and
+   user-defined types, functions, tables, indexes, aggregates, and
    operators.  In addition, all the data is copied out in text format so
    that it can be readily copied in again, as well as imported into tools
    for editing.

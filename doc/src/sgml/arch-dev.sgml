@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/arch-dev.sgml,v 2.13 2000/12/26 00:10:37 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/arch-dev.sgml,v 2.14 2001/05/17 21:50:15 petere Exp $
 -->
 
  <chapter id="overview">
@@ -603,7 +603,7 @@ current context are performed.
 
     <para>
      The planner/optimizer decides which plans should be generated
-     based upon the types of indices defined on the relations appearing in
+     based upon the types of indexes defined on the relations appearing in
      a query. There is always the possibility of performing a
      sequential scan on a relation, so a plan using only
      sequential scans is always created. Assume an index is defined on a
@@ -612,7 +612,7 @@ current context are performed.
      <literal>relation.attribute OPR constant</literal>. If
      <literal>relation.attribute</literal> happens to match the key of the B-tree
      index and <literal>OPR</literal> is anything but '&lt;&gt;' another plan is created using
-     the B-tree index to scan the relation. If there are further indices
+     the B-tree index to scan the relation. If there are further indexes
      present and the restrictions in the query happen to match a key of an
      index further plans will be considered.
     </para>
@@ -889,7 +889,7 @@ The {\tt AGG} node is followed by a {\tt GRP} node. The implementation
 of the {\it grouping} logic needs a sorted table for its operation so
 the {\tt GRP} node is followed by a {\tt SORT} node. The {\tt SORT}
 operation gets its tuples from a kind of {\tt Scan} node (if no
-indices are present this will be a simple {\tt SeqScan} node). Any
+indexes are present this will be a simple {\tt SeqScan} node). Any
 qualifications present are attached to the {\tt Scan} node. Figure
 \ref{plan_having} shows the {\it plan} created for the query given in
 example \ref{having}.

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/plsql.sgml,v 2.31 2001/05/12 22:51:35 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/plsql.sgml,v 2.32 2001/05/17 21:50:16 petere Exp $
 -->
 
 <chapter id="plpgsql"> 
@@ -115,7 +115,7 @@ END;
     for user defined types, anything that can be defined in C language
     functions can also be done with PL/pgSQL. It is possible to
     create complex conditional computation functions and later use
-    them to define operators or use them in functional indices.
+    them to define operators or use them in functional indexes.
    </para>
   <sect2 id="plpgsql-advantages">
    <title>Advantages of Using PL/pgSQL</title>

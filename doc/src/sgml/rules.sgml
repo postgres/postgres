@@ -1869,7 +1869,7 @@ Merge Join
                            AND software.hostname = computer.hostname;
 </ProgramListing>
 
-    Since there are appropriate indices setup, the planner
+    Since there are appropriate indexes setup, the planner
     will create a plan of
 
 <ProgramListing>
@@ -1919,7 +1919,7 @@ Merge Join
     get invoked once for any of the 2000 old computers that
     have to be deleted and that will result in one index scan
     over computer and 2000 index scans for the software. The
-    rule implementation will do it with two queries over indices.
+    rule implementation will do it with two queries over indexes.
     And it depends on the overall size of the software table if
     the rule will still be faster in the seqscan situation. 2000
     query executions over the SPI manager take some time, even

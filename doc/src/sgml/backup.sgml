@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/backup.sgml,v 2.8 2001/05/17 21:12:48 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/backup.sgml,v 2.9 2001/05/17 21:50:15 petere Exp $ -->
 <chapter id="backup">
  <title>Backup and Restore</title>
 
@@ -355,7 +355,7 @@ tar -cf backup.tar /usr/local/pgsql/data
    Also note that the file system backup will not necessarily be
    smaller than an SQL dump. On the contrary, it will most likely be
    larger. (<application>pg_dump</application> does not need to dump
-   the contents of indices for example, just the commands to recreate
+   the contents of indexes for example, just the commands to recreate
    them.)
   </para>
 

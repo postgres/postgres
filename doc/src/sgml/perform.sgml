@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/perform.sgml,v 1.4 2001/05/09 00:35:09 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/perform.sgml,v 1.5 2001/05/17 21:50:16 petere Exp $
 -->
 
  <chapter id="performance-tips">
@@ -395,8 +395,8 @@ SELECT * FROM d LEFT JOIN
    </para>
   </sect2>
 
-  <sect2 id="populate-rm-indices">
-   <title>Remove Indices</title>
+  <sect2 id="populate-rm-indexes">
+   <title>Remove Indexes</title>
 
    <para>
     If you are loading a freshly created table, the fastest way is to

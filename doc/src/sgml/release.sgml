@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.92 2001/05/17 13:28:30 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.93 2001/05/17 21:50:16 petere Exp $
 -->
 
  <appendix id="release">
@@ -1196,7 +1196,7 @@ subselect+CASE fixes(Tom)
 Add SHLIB_LINK setting for solaris_i386 and solaris_sparc ports(Daren Sefcik)
 Fixes for CASE in WHERE join clauses(Tom)
 Fix BTScan abort(Tom)
-Repair the check for redundant UNIQUE and PRIMARY KEY indices(Thomas)
+Repair the check for redundant UNIQUE and PRIMARY KEY indexes(Thomas)
 Improve it so that it checks for multi-column constraints(Thomas)
 Fix for Win32 making problem with MB enabled(Hiroki Kataoka)
 Allow BSD yacc and bison to compile pl code(Bruce)
@@ -1595,7 +1595,7 @@ Enhancements
 ------------
 Add "vacuumdb" utility
 Speed up libpq by allocating memory better(Tom)
-EXPLAIN all indices used(Tom)
+EXPLAIN all indexes used(Tom)
 Implement CASE, COALESCE, NULLIF  expression(Thomas)
 New pg_dump table output format(Constantin)
 Add string min()/max() functions(Thomas)
@@ -2029,14 +2029,14 @@ Allow index use with OR clauses(Bruce)
 Allows "SELECT NULL ORDER BY 1;"
 Explain VERBOSE prints the plan, and now pretty-prints the plan to
 the postmaster log file(Bruce)
-Add Indices display to \d command(Bruce)
+Add indexes display to \d command(Bruce)
 Allow GROUP BY on functions(David)
 New pg_class.relkind for large objects(Bruce)
 New way to send libpq NOTICE messages to a different location(Tom)
 New \w write command to psql(Bruce)
 New /contrib/findoidjoins scans oid columns to find join relationships(Bruce)
-Allow binary-compatible indices to be considered when checking for valid
-indices for restriction clauses containing a constant(Thomas)
+Allow binary-compatible indexes to be considered when checking for valid
+Indexes for restriction clauses containing a constant(Thomas)
 New ISBN/ISSN code in /contrib/isbn_issn
 Allow NOT LIKE, IN, NOT IN, BETWEEN, and NOT BETWEEN constraint(Thomas)
 New rewrite system fixes many problems with rules and views(Jan)
@@ -2502,7 +2502,7 @@ Real deadlock detection, no more timeouts(Bruce)
 Add SQL92 "constants" CURRENT_DATE, CURRENT_TIME, CURRENT_TIMESTAMP, 
 	CURRENT_USER(Thomas)
 Modify constraint syntax to be SQL92-compliant(Thomas)
-Implement SQL92 PRIMARY KEY and UNIQUE clauses using indices(Thomas)
+Implement SQL92 PRIMARY KEY and UNIQUE clauses using indexes(Thomas)
 Recognize SQL92 syntax for FOREIGN KEY. Throw elog notice(Thomas)
 Allow NOT NULL UNIQUE constraint clause (each allowed separately before)(Thomas)
 Allow Postgres-style casting ("::") of non-constants(Thomas)
@@ -2514,14 +2514,14 @@ Implement SQL92 binary and hexadecimal string decoding (b'10' and x'1F')(Thomas)
 Support SQL92 syntax for type coercion of literal strings
 	(e.g. "DATETIME 'now'")(Thomas)
 Add conversions for int2, int4, and OID types to and from text(Thomas)
-Use shared lock when building indices(Vadim)
+Use shared lock when building indexes(Vadim)
 Free memory allocated for an user query inside transaction block after
 	this query is done, was turned off in <= 6.2.1(Vadim)
 New SQL statement CREATE PROCEDURAL LANGUAGE(Jan)
 New <productname>Postgres</productname> Procedural Language (PL) backend interface(Jan)
 Rename pg_dump -H option to -h(Bruce)
 Add Java support for passwords, European dates(Peter)
-Use indices for LIKE and ~, !~ operations(Bruce)
+Use indexes for LIKE and ~, !~ operations(Bruce)
 Add hash functions for datetime and timespan(Thomas)
 Time Travel removed(Vadim, Bruce)
 Add paging for \d and \z, and fix \i(Bruce)
@@ -2539,7 +2539,7 @@ Regression tests time zone automatically set with "setenv PGTZ PST8PDT"(Thomas)
 Add pg_description table for info on tables, columns, operators, types, and
 	aggregates(Bruce)
 Increase 16 char limit on system table/index names to 32 characters(Bruce)
-Rename system indices(Bruce)
+Rename system indexes(Bruce)
 Add 'GERMAN' option to SET DATESTYLE(Thomas)
 Define an "ISO-style" timespan output format with "hh:mm:ss" fields(Thomas)
 Allow fractional values for delta times (e.g. '2.5 days')(Thomas)
@@ -3041,7 +3041,7 @@ fix join clauses for multiple tables(Vadim)
 fix hash, hashjoin for arrays(Vadim)
 fix btree for abstime type(Vadim)
 large object fixes(Raymond)
-fix buffer leak in hash indices (Vadim)
+fix buffer leak in hash indexes (Vadim)
 fix rtree for use in inner scan (Vadim)
 fix gist for use in inner scan, cleanups (Vadim, Andrea)
 avoid unnecessary local buffers allocation (Vadim, Massimo)
@@ -3816,8 +3816,8 @@ Bug fixes:
  * allow the use of \; inside the monitor
  * the LISTEN/NOTIFY asynchronous notification mechanism now work
  * NOTIFY in rule action bodies now work
- * hash indices work, and access methods in general should perform better.
-   creation of large btree indices should be much faster.  (thanks to Paul
+ * hash indexes work, and access methods in general should perform better.
+   creation of large btree indexes should be much faster.  (thanks to Paul
    Aoki)
 
 Other changes and enhancements:

@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/wal.sgml,v 1.6 2001/05/15 13:57:37 momjian Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/wal.sgml,v 1.7 2001/05/17 21:50:16 petere Exp $ -->
 
 <chapter id="wal">
  <title>Write-Ahead Logging (<acronym>WAL</acronym>)</title>
@@ -18,7 +18,7 @@
    is a standard approach to transaction logging.  Its detailed
    description may be found in most (if not all) books about
    transaction processing. Briefly, <acronym>WAL</acronym>'s central
-   concept is that changes to data files (where tables and indices
+   concept is that changes to data files (where tables and indexes
    reside) must be written only after those changes have been logged -
    that is, when log records have been flushed to permanent
    storage. When we follow this procedure, we do not need to flush
@@ -67,7 +67,7 @@
      </listitem>
     </orderedlist>
 
-    Problems with indices (problems 1 and 2) could possibly have been
+    Problems with indexes (problems 1 and 2) could possibly have been
     fixed by additional <function>fsync()</function> calls, but it is
     not obvious how to handle the last case without
     <acronym>WAL</acronym>; <acronym>WAL</acronym> saves the entire

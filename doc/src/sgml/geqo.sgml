@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/geqo.sgml,v 1.16 2001/04/20 15:52:33 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/geqo.sgml,v 1.17 2001/05/17 21:50:15 petere Exp $
 Genetic Optimizer
 -->
 
@@ -51,8 +51,8 @@ Genetic Optimizer
     <firstterm>join methods</firstterm>
     (e.g., nested loop, hash join, merge join in <productname>Postgres</productname>) to
     process individual <command>join</command>s and a diversity of
-    <firstterm>indices</firstterm> (e.g., r-tree,
-    b-tree, hash in <productname>Postgres</productname>) as access paths for relations.
+    <firstterm>indexes</firstterm> (e.g., R-tree,
+    B-tree, hash in <productname>Postgres</productname>) as access paths for relations.
    </para>
 
    <para>
