@@ -11,6 +11,7 @@ CREATE TABLE TIMESTAMP_TBL ( d1 timestamp(2) without time zone);
 -- statements.
 INSERT INTO TIMESTAMP_TBL VALUES ('now');
 INSERT INTO TIMESTAMP_TBL VALUES ('current');
+ERROR:  Bad timestamp external representation 'current'
 INSERT INTO TIMESTAMP_TBL VALUES ('today');
 INSERT INTO TIMESTAMP_TBL VALUES ('yesterday');
 INSERT INTO TIMESTAMP_TBL VALUES ('tomorrow');

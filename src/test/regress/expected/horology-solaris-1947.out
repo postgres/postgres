@@ -2000,7 +2000,7 @@ SELECT '' AS three, ABSTIME_TBL.*
 --
 SELECT '' AS "16", f1 AS "timestamp", date(f1) AS date
   FROM TEMP_TIMESTAMP
-  WHERE f1 <> timestamp 'current'
+  WHERE f1 <> timestamp 'now'
   ORDER BY date, "timestamp";
  16 |          timestamp           |    date    
 ----+------------------------------+------------
@@ -2047,7 +2047,7 @@ SELECT '' AS "16", f1 AS "timestamp", abstime(f1) AS abstime
 
 SELECT '' AS four, f1 AS abstime, date(f1) AS date
   FROM ABSTIME_TBL
-  WHERE isfinite(f1) AND f1 <> abstime 'current'
+  WHERE isfinite(f1) AND f1 <> abstime 'now'
   ORDER BY date, abstime;
  four |           abstime            |    date    
 ------+------------------------------+------------

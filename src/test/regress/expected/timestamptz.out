@@ -6,6 +6,7 @@ SET australian_timezones = 'off';
 CREATE TABLE TIMESTAMPTZ_TBL ( d1 timestamp(2) with time zone);
 INSERT INTO TIMESTAMPTZ_TBL VALUES ('now');
 INSERT INTO TIMESTAMPTZ_TBL VALUES ('current');
+ERROR:  Bad timestamp external representation 'current'
 INSERT INTO TIMESTAMPTZ_TBL VALUES ('today');
 INSERT INTO TIMESTAMPTZ_TBL VALUES ('yesterday');
 INSERT INTO TIMESTAMPTZ_TBL VALUES ('tomorrow');

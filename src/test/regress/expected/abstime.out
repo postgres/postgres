@@ -10,7 +10,7 @@
 --
 CREATE TABLE ABSTIME_TBL (f1 abstime);
 BEGIN;
-INSERT INTO ABSTIME_TBL (f1) VALUES (abstime 'current');
+INSERT INTO ABSTIME_TBL (f1) VALUES (abstime 'now');
 INSERT INTO ABSTIME_TBL (f1) VALUES (abstime 'now');
 SELECT count(*) AS two FROM ABSTIME_TBL WHERE f1 = 'now' ;
  two 
