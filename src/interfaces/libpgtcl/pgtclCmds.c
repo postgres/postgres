@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtclCmds.c,v 1.66 2002/09/02 21:51:47 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtclCmds.c,v 1.67 2002/09/02 23:41:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -399,7 +399,6 @@ Pg_connect(ClientData cData, Tcl_Interp *interp, int argc, char *argv[])
 int
 Pg_disconnect(ClientData cData, Tcl_Interp *interp, int argc, char *argv[])
 {
-	Pg_ConnectionId *connid;
 	PGconn	   *conn;
 	Tcl_Channel conn_chan;
 
@@ -413,15 +412,14 @@ Pg_disconnect(ClientData cData, Tcl_Interp *interp, int argc, char *argv[])
 	if (conn_chan == NULL)
 	{
 		Tcl_ResetResult(interp);
-		Tcl_AppendResult(interp, argv[1], " is not a valid connection\n", 0);
+		Tcl_AppendResult(interp, argv[1], " is not a valid connection", 0);
 		return TCL_ERROR;
 	}
 
-#if TCL_MAJOR_VERSION >= 8
-	conn = PgGetConnectionId(interp, argv[1], &connid);
-	if (connid->notifier_channel != NULL)
-		Tcl_UnregisterChannel(interp, connid->notifier_channel);
-#endif
+	/* Check that it is a PG connection and not something else */
+	conn = PgGetConnectionId(interp, argv[1], (Pg_ConnectionId **) NULL);
+	if (conn == (PGconn *) NULL)
+		return TCL_ERROR;
 
 	return Tcl_UnregisterChannel(interp, conn_chan);
 }

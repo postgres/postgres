@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtclId.c,v 1.33 2002/09/02 21:51:47 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtclId.c,v 1.34 2002/09/02 23:41:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -144,6 +144,7 @@ static void
 PgWatchProc(ClientData instanceData, int mask)
 {
 }
+
 static int
 PgGetHandleProc(ClientData instanceData, int direction,
 				ClientData *handlePtr)
@@ -193,7 +194,7 @@ PgSetConnectionId(Tcl_Interp *interp, PGconn *conn)
 
 #if TCL_MAJOR_VERSION >= 8
 	connid->notifier_channel = Tcl_MakeTcpClientChannel((ClientData) PQsocket(conn));
-	Tcl_RegisterChannel(interp, connid->notifier_channel);
+	Tcl_RegisterChannel(NULL, connid->notifier_channel);
 #else
 	connid->notifier_socket = -1;
 #endif
@@ -227,6 +228,8 @@ PgGetConnectionId(Tcl_Interp *interp, char *id, Pg_ConnectionId ** connid_p)
 	{
 		Tcl_ResetResult(interp);
 		Tcl_AppendResult(interp, id, " is not a valid postgresql connection", 0);
+		if (connid_p)
+			*connid_p = NULL;
 		return (PGconn *) NULL;
 	}
 
@@ -284,6 +287,25 @@ PgDelConnectionId(DRIVER_DEL_PROTO)
 	/* Close the libpq connection too */
 	PQfinish(connid->conn);
 	connid->conn = NULL;
+
+	/*
+	 * Kill the notifier channel, too.  We must not do this until after
+	 * we've closed the libpq connection, because Tcl will try to close
+	 * the socket itself!
+	 *
+	 * XXX Unfortunately, while this works fine if we are closing due to
+	 * explicit pg_disconnect, Tcl versions through 8.3.3 dump core if we
+	 * try to do it during interpreter shutdown.  Not clear why, or if
+	 * there is a workaround.  For now, accept leakage of the (fairly
+	 * small) amount of memory taken for the channel state representation.
+	 * Note we are not leaking a socket, since libpq closed that already.
+	 */
+#ifdef NOT_USED
+#if TCL_MAJOR_VERSION >= 8
+	if (connid->notifier_channel != NULL)
+		Tcl_UnregisterChannel(NULL, connid->notifier_channel);
+#endif
+#endif
 
 	/*
 	 * We must use Tcl_EventuallyFree because we don't want the connid
@@ -782,8 +804,10 @@ PgStartNotifyEventSource(Pg_ConnectionId * connid)
 		if (pqsock >= 0)
 		{
 #if TCL_MAJOR_VERSION >= 8
-			Tcl_CreateChannelHandler(connid->notifier_channel, TCL_READABLE,
-							 Pg_Notify_FileHandler, (ClientData) connid);
+			Tcl_CreateChannelHandler(connid->notifier_channel,
+									 TCL_READABLE,
+									 Pg_Notify_FileHandler,
+									 (ClientData) connid);
 #else
 			/* In Tcl 7.5 and 7.6, we need to gin up a Tcl_File. */
 			Tcl_File	tclfile = Tcl_GetFile((ClientData) pqsock, TCL_UNIX_FD);
@@ -805,7 +829,8 @@ PgStopNotifyEventSource(Pg_ConnectionId * connid, bool allevents)
 	{
 #if TCL_MAJOR_VERSION >= 8
 		Tcl_DeleteChannelHandler(connid->notifier_channel,
-							 Pg_Notify_FileHandler, (ClientData) connid);
+								 Pg_Notify_FileHandler,
+								 (ClientData) connid);
 #else
 		/* In Tcl 7.5 and 7.6, we need to gin up a Tcl_File. */
 		Tcl_File	tclfile = Tcl_GetFile((ClientData) connid->notifier_socket,
