@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Wed Jan 24 00:05:20 EST 2001
+Last updated:		Wed Jan 24 08:38:34 EST 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -318,6 +318,7 @@ SOURCE CODE
 * -BSD/OS does not support locale because there is no LC_MESSAGES (Bruce)
 * Remove unused pg_variable, pg_inheritproc, pg_ipl tables
 * Experiment with multi-threaded backend [thread]
+* Fix problems with libpq non-blocking/async code [async]
 
 ---------------------------------------------------------------------------
 
