@@ -9,31 +9,146 @@
    postgreSQL Web site, http://www.PostgreSQL.org.
      _________________________________________________________________
    
-                                 Questions
+                             General Questions
                                       
-   1) What tools are available for developers?
-   2) What books are good for developers?
-   3) Why do we use palloc() and pfree() to allocate memory?
-   4) Why do we use Node and List to make data structures?
-   5) How do I add a feature or fix a bug?
-   6) How do I download/update the current source tree?
-   7) How do I test my changes?
-   7) I just added a field to a structure. What else should I do?
-   8) Why are table, column, type, function, view names sometimes
+   1.1) How do I get involved in PostgreSQL development?
+   1.2) How do I add a feature or fix a bug?
+   1.3) How do I download/update the current source tree?
+   1.4) How do I test my changes?
+   1.5) What tools are available for developers?
+   1.6) What books are good for developers?
+   1.7) What is configure all about?
+   1.8) How do I add a new port?
+   1.9) Why don't we use threads in the backend?
+   1.10) How are RPM's packaged?
+   1.11) How are CVS branches handled?
+   
+Technical Questions
+
+   2.1) How do I efficiently access information in tables from the
+   backend code?
+   2.2) Why are table, column, type, function, view names sometimes
    referenced as Name or NameData, and sometimes as char *?
-   9) How do I efficiently access information in tables from the backend
-   code?
-   10) What is elog()?
-   11) What is configure all about?
-   12) How do I add a new port?
-   13) What is CommandCounterIncrement()?
-   14) Why don't we use threads in the backend?
-   15) How are RPM's packaged?
-   16) How are CVS branches handled?
-   17) How do I get involved in PostgreSQL development?
+   2.3) Why do we use Node and List to make data structures?
+   2.4) I just added a field to a structure. What else should I do?
+   2.5) Why do we use palloc() and pfree() to allocate memory?
+   2.6) What is elog()?
+   2.7) What is CommandCounterIncrement()?
      _________________________________________________________________
    
-  1) What tools are available for developers?
+                             General Questions
+                                      
+  1.1) How go I get involved in PostgreSQL development?
+  
+   This was written by Lamar Owen:
+   
+   2001-06-22
+   What open source development process is used by the PostgreSQL team?
+   
+   Read HACKERS for six months (or a full release cycle, whichever is
+   longer). Really. HACKERS _is_the process. The process is not well
+   documented (AFAIK -- it may be somewhere that I am not aware of) --
+   and it changes continually.
+   What development environment (OS, system, compilers, etc) is required
+   to develop code?
+   
+   Developers Corner on the website has links to this information. The
+   distribution tarball itself includes all the extra tools and documents
+   that go beyond a good Unix-like development environment. In general, a
+   modern unix with a modern gcc, GNU make or equivalent, autoconf (of a
+   particular version), and good working knowledge of those tools are
+   required.
+   What areas need support?
+   
+   The TODO list.
+   
+   You've made the first step, by finding and subscribing to HACKERS.
+   Once you find an area to look at in the TODO, and have read the
+   documentation on the internals, etc, then you check out a current
+   CVS,write what you are going to write (keeping your CVS checkout up to
+   date in the process), and make up a patch (as a context diff only) and
+   send to the PATCHES list, prefereably.
+   
+   Discussion on the patch typically happens here. If the patch adds a
+   major feature, it would be a good idea to talk about it first on the
+   HACKERS list, in order to increase the chances of it being accepted,
+   as well as toavoid duplication of effort. Note that experienced
+   developers with a proven track record usually get the big jobs -- for
+   more than one reason. Also note that PostgreSQL is highly portable --
+   nonportable code will likely be dismissed out of hand.
+   
+   Once your contributions get accepted, things move from there.
+   Typically, you would be added as a developer on the list on the
+   website when one of the other developers recommends it. Membership on
+   the steering committee is by invitation only, by the other steering
+   committee members, from what I have gathered watching froma distance.
+   
+   I make these statements from having watched the process for over two
+   years.
+   
+   To see a good example of how one goes about this, search the archives
+   for the name 'Tom Lane' and see what his first post consisted of, and
+   where he took things. In particular, note that this hasn't been _that_
+   long ago -- and his bugfixing and general deep knowledge with this
+   codebase is legendary. Take a few days to read after him. And pay
+   special attention to both the sheer quantity as well as the
+   painstaking quality of his work. Both are in high demand.
+   
+  1.2) How do I add a feature or fix a bug?
+  
+   The source code is over 250,000 lines. Many problems/features are
+   isolated to one specific area of the code. Others require knowledge of
+   much of the source. If you are confused about where to start, ask the
+   hackers list, and they will be glad to assess the complexity and give
+   pointers on where to start.
+   
+   Another thing to keep in mind is that many fixes and features can be
+   added with surprisingly little code. I often start by adding code,
+   then looking at other areas in the code where similar things are done,
+   and by the time I am finished, the patch is quite small and compact.
+   
+   When adding code, keep in mind that it should use the existing
+   facilities in the source, for performance reasons and for simplicity.
+   Often a review of existing code doing similar things is helpful.
+   
+  1.3) How do I download/update the current source tree?
+  
+   There are several ways to obtain the source tree. Occasional
+   developers can just get the most recent source tree snapshot from
+   ftp.postgresql.org. For regular developers, you can use CVS. CVS
+   allows you to download the source tree, then occasionally update your
+   copy of the source tree with any new changes. Using CVS, you don't
+   have to download the entire source each time, only the changed files.
+   Anonymous CVS does not allows developers to update the remote source
+   tree, though privileged developers can do this. There is a CVS FAQ on
+   our web site that describes how to use remote CVS. You can also use
+   CVSup, which has similarly functionality, and is available from
+   ftp.postgresql.org.
+   
+   To update the source tree, there are two ways. You can generate a
+   patch against your current source tree, perhaps using the make_diff
+   tools mentioned above, and send them to the patches list. They will be
+   reviewed, and applied in a timely manner. If the patch is major, and
+   we are in beta testing, the developers may wait for the final release
+   before applying your patches.
+   
+   For hard-core developers, Marc(scrappy@postgresql.org) will give you a
+   Unix shell account on postgresql.org, so you can use CVS to update the
+   main source tree, or you can ftp your files into your account, patch,
+   and cvs install the changes directly into the source tree.
+   
+  1.4) How do I test my changes?
+  
+   First, use psql to make sure it is working as you expect. Then run
+   src/test/regress and get the output of src/test/regress/checkresults
+   with and without your changes, to see that your patch does not change
+   the regression test in unexpected ways. This practice has saved me
+   many times. The regression tests test the code in ways I would never
+   do, and has caught many bugs in my patches. By finding the problems
+   now, you save yourself a lot of debugging later when things are
+   broken, and you can't figure out when it happened.
+   
+  1.5) What tools are available for developers?
   
    Aside from the User documentation mentioned in the regular FAQ, there
    are several development tools available. First, all the files in the
@@ -141,7 +256,7 @@
    is also a script called unused_oids in pgsql/src/include/catalog that
    shows the unused oids.
    
-  2) What books are good for developers?
+  1.6) What books are good for developers?
   
    I have four good books, An Introduction to Database Systems, by C.J.
    Date, Addison, Wesley, A Guide to the SQL Standard, by C.J. Date, et.
@@ -151,239 +266,7 @@
    There is also a database performance site, with a handbook on-line
    written by Jim Gray at http://www.benchmarkresources.com.
    
-  3) Why do we use palloc() and pfree() to allocate memory?
-  
-   palloc() and pfree() are used in place of malloc() and free() because
-   we automatically free all memory allocated when a transaction
-   completes. This makes it easier to make sure we free memory that gets
-   allocated in one place, but only freed much later. There are several
-   contexts that memory can be allocated in, and this controls when the
-   allocated memory is automatically freed by the backend.
-   
-  4) Why do we use Node and List to make data structures?
-  
-   We do this because this allows a consistent way to pass data inside
-   the backend in a flexible way. Every node has a NodeTag which
-   specifies what type of data is inside the Node. Lists are groups of
-   Nodes chained together as a forward-linked list.
-   
-   Here are some of the List manipulation commands:
-   
-   lfirst(i)
-          return the data at list element i.
-          
-   lnext(i)
-          return the next list element after i.
-          
-   foreach(i, list)
-          loop through list, assigning each list element to i. It is
-          important to note that i is a List *, not the data in the List
-          element. You need to use lfirst(i) to get at the data. Here is
-          a typical code snipped that loops through a List containing Var
-          *'s and processes each one:
-          
-List *i, *list;
-
-    foreach(i, list)
-    {
-        Var *var = lfirst(i);
-
-        /* process var here */
-    }
-
-   lcons(node, list)
-          add node to the front of list, or create a new list with node
-          if list is NIL.
-          
-   lappend(list, node)
-          add node to the end of list. This is more expensive that lcons.
-          
-   nconc(list1, list2)
-          Concat list2 on to the end of list1.
-          
-   length(list)
-          return the length of the list.
-          
-   nth(i, list)
-          return the i'th element in list.
-          
-   lconsi, ...
-          There are integer versions of these: lconsi, lappendi, nthi.
-          List's containing integers instead of Node pointers are used to
-          hold list of relation object id's and other integer quantities.
-          
-   You can print nodes easily inside gdb. First, to disable output
-   truncation when you use the gdb print command:
-(gdb) set print elements 0
-
-   Instead of printing values in gdb format, you can use the next two
-   commands to print out List, Node, and structure contents in a verbose
-   format that is easier to understand. List's are unrolled into nodes,
-   and nodes are printed in detail. The first prints in a short format,
-   and the second in a long format:
-(gdb) call print(any_pointer)
-    (gdb) call pprint(any_pointer)
-
-   The output appears in the postmaster log file, or on your screen if
-   you are running a backend directly without a postmaster.
-   
-  5) How do I add a feature or fix a bug?
-  
-   The source code is over 250,000 lines. Many problems/features are
-   isolated to one specific area of the code. Others require knowledge of
-   much of the source. If you are confused about where to start, ask the
-   hackers list, and they will be glad to assess the complexity and give
-   pointers on where to start.
-   
-   Another thing to keep in mind is that many fixes and features can be
-   added with surprisingly little code. I often start by adding code,
-   then looking at other areas in the code where similar things are done,
-   and by the time I am finished, the patch is quite small and compact.
-   
-   When adding code, keep in mind that it should use the existing
-   facilities in the source, for performance reasons and for simplicity.
-   Often a review of existing code doing similar things is helpful.
-   
-  6) How do I download/update the current source tree?
-  
-   There are several ways to obtain the source tree. Occasional
-   developers can just get the most recent source tree snapshot from
-   ftp.postgresql.org. For regular developers, you can use CVS. CVS
-   allows you to download the source tree, then occasionally update your
-   copy of the source tree with any new changes. Using CVS, you don't
-   have to download the entire source each time, only the changed files.
-   Anonymous CVS does not allows developers to update the remote source
-   tree, though privileged developers can do this. There is a CVS FAQ on
-   our web site that describes how to use remote CVS. You can also use
-   CVSup, which has similarly functionality, and is available from
-   ftp.postgresql.org.
-   
-   To update the source tree, there are two ways. You can generate a
-   patch against your current source tree, perhaps using the make_diff
-   tools mentioned above, and send them to the patches list. They will be
-   reviewed, and applied in a timely manner. If the patch is major, and
-   we are in beta testing, the developers may wait for the final release
-   before applying your patches.
-   
-   For hard-core developers, Marc(scrappy@postgresql.org) will give you a
-   Unix shell account on postgresql.org, so you can use CVS to update the
-   main source tree, or you can ftp your files into your account, patch,
-   and cvs install the changes directly into the source tree.
-   
-  6) How do I test my changes?
-  
-   First, use psql to make sure it is working as you expect. Then run
-   src/test/regress and get the output of src/test/regress/checkresults
-   with and without your changes, to see that your patch does not change
-   the regression test in unexpected ways. This practice has saved me
-   many times. The regression tests test the code in ways I would never
-   do, and has caught many bugs in my patches. By finding the problems
-   now, you save yourself a lot of debugging later when things are
-   broken, and you can't figure out when it happened.
-   
-  7) I just added a field to a structure. What else should I do?
-  
-   The structures passing around from the parser, rewrite, optimizer, and
-   executor require quite a bit of support. Most structures have support
-   routines in src/backend/nodes used to create, copy, read, and output
-   those structures. Make sure you add support for your new field to
-   these files. Find any other places the structure may need code for
-   your new field. mkid is helpful with this (see above).
-   
-  8) Why are table, column, type, function, view names sometimes referenced as
-  Name or NameData, and sometimes as char *?
-  
-   Table, column, type, function, and view names are stored in system
-   tables in columns of type Name. Name is a fixed-length,
-   null-terminated type of NAMEDATALEN bytes. (The default value for
-   NAMEDATALEN is 32 bytes.)
-typedef struct nameData
-    {
-        char        data[NAMEDATALEN];
-    } NameData;
-    typedef NameData *Name;
-
-   Table, column, type, function, and view names that come into the
-   backend via user queries are stored as variable-length,
-   null-terminated character strings.
-   
-   Many functions are called with both types of names, ie. heap_open().
-   Because the Name type is null-terminated, it is safe to pass it to a
-   function expecting a char *. Because there are many cases where
-   on-disk names(Name) are compared to user-supplied names(char *), there
-   are many cases where Name and char * are used interchangeably.
-   
-  9) How do I efficiently access information in tables from the backend code?
-  
-   You first need to find the tuples(rows) you are interested in. There
-   are two ways. First, SearchSysCache() and related functions allow you
-   to query the system catalogs. This is the preferred way to access
-   system tables, because the first call to the cache loads the needed
-   rows, and future requests can return the results without accessing the
-   base table. The caches use system table indexes to look up tuples. A
-   list of available caches is located in
-   src/backend/utils/cache/syscache.c.
-   src/backend/utils/cache/lsyscache.c contains many column-specific
-   cache lookup functions.
-   
-   The rows returned are cache-owned versions of the heap rows.
-   Therefore, you must not modify or delete the tuple returned by
-   SearchSysCache(). What you should do is release it with
-   ReleaseSysCache() when you are done using it; this informs the cache
-   that it can discard that tuple if necessary. If you neglect to call
-   ReleaseSysCache(), then the cache entry will remain locked in the
-   cache until end of transaction, which is tolerable but not very
-   desirable.
-   
-   If you can't use the system cache, you will need to retrieve the data
-   directly from the heap table, using the buffer cache that is shared by
-   all backends. The backend automatically takes care of loading the rows
-   into the buffer cache.
-   
-   Open the table with heap_open(). You can then start a table scan with
-   heap_beginscan(), then use heap_getnext() and continue as long as
-   HeapTupleIsValid() returns true. Then do a heap_endscan(). Keys can be
-   assigned to the scan. No indexes are used, so all rows are going to be
-   compared to the keys, and only the valid rows returned.
-   
-   You can also use heap_fetch() to fetch rows by block number/offset.
-   While scans automatically lock/unlock rows from the buffer cache, with
-   heap_fetch(), you must pass a Buffer pointer, and ReleaseBuffer() it
-   when completed.
-   
-   Once you have the row, you can get data that is common to all tuples,
-   like t_self and t_oid, by merely accessing the HeapTuple structure
-   entries. If you need a table-specific column, you should take the
-   HeapTuple pointer, and use the GETSTRUCT() macro to access the
-   table-specific start of the tuple. You then cast the pointer as a
-   Form_pg_proc pointer if you are accessing the pg_proc table, or
-   Form_pg_type if you are accessing pg_type. You can then access the
-   columns by using a structure pointer:
-((Form_pg_class) GETSTRUCT(tuple))->relnatts
-
-   You must not directly change live tuples in this way. The best way is
-   to use heap_modifytuple() and pass it your original tuple, and the
-   values you want changed. It returns a palloc'ed tuple, which you pass
-   to heap_replace(). You can delete tuples by passing the tuple's t_self
-   to heap_destroy(). You use t_self for heap_update() too. Remember,
-   tuples can be either system cache copies, which may go away after you
-   call ReleaseSysCache(), or read directly from disk buffers, which go
-   away when you heap_getnext(), heap_endscan, or ReleaseBuffer(), in the
-   heap_fetch() case. Or it may be a palloc'ed tuple, that you must
-   pfree() when finished.
-   
-  10) What is elog()?
-  
-   elog() is used to send messages to the front-end, and optionally
-   terminate the current query being processed. The first parameter is an
-   elog level of NOTICE, DEBUG, ERROR, or FATAL. NOTICE prints on the
-   user's terminal and the postmaster logs. DEBUG prints only in the
-   postmaster logs. ERROR prints in both places, and terminates the
-   current query, never returning from the call. FATAL terminates the
-   backend process. The remaining parameters of elog are a printf-style
-   set of parameters to print.
-   
-  11) What is configure all about?
+  1.7) What is configure all about?
   
    The files configure and configure.in are part of the GNU autoconf
    package. Configure allows us to test for various capabilities of the
@@ -405,7 +288,7 @@ typedef struct nameData
    removed, so you see only the file contained in the source
    distribution.
    
-  12) How do I add a new port?
+  1.8) How do I add a new port?
   
    There are a variety of places that need to be modified to add a new
    port. First, start in the src/template directory. Add an appropriate
@@ -422,19 +305,7 @@ typedef struct nameData
    src/makefiles directory for port-specific Makefile handling. There is
    a backend/port directory if you need special files for your OS.
    
-  13) What is CommandCounterIncrement()?
-  
-   Normally, transactions can not see the rows they modify. This allows
-   UPDATE foo SET x = x + 1 to work correctly.
-   
-   However, there are cases where a transactions needs to see rows
-   affected in previous parts of the transaction. This is accomplished
-   using a Command Counter. Incrementing the counter allows transactions
-   to be broken into pieces so each piece can see rows modified by
-   previous pieces. CommandCounterIncrement() increments the Command
-   Counter, creating a new part of the transaction.
-   
-  14) Why don't we use threads in the backend?
+  1.9) Why don't we use threads in the backend?
   
    There are several reasons threads are not used:
      * Historically, threads were unsupported and buggy.
@@ -443,7 +314,7 @@ typedef struct nameData
        remaining backend startup time.
      * The backend code would be more complex.
        
-  15) How are RPM's packaged?
+  1.10) How are RPM's packaged?
   
    This was written by Lamar Owen:
    
@@ -538,7 +409,7 @@ typedef struct nameData
    Of course, there are many projects that DO include all the files
    necessary to build RPMs from their Official Tarball (TM).
    
-  16) How are CVS branches managed?
+  1.11) How are CVS branches managed?
   
    This was written by Tom Lane:
    
@@ -597,58 +468,194 @@ typedef struct nameData
    tree right away after a major release --- we wait for a dot-release or
    two, so that we won't have to double-patch the first wave of fixes.
    
-  17) How go I get involved in PostgreSQL development?
+                            Technical Questions
+                                      
+  2.1) How do I efficiently access information in tables from the backend code?
   
-   This was written by Lamar Owen:
+   You first need to find the tuples(rows) you are interested in. There
+   are two ways. First, SearchSysCache() and related functions allow you
+   to query the system catalogs. This is the preferred way to access
+   system tables, because the first call to the cache loads the needed
+   rows, and future requests can return the results without accessing the
+   base table. The caches use system table indexes to look up tuples. A
+   list of available caches is located in
+   src/backend/utils/cache/syscache.c.
+   src/backend/utils/cache/lsyscache.c contains many column-specific
+   cache lookup functions.
    
-   2001-06-22
-   What open source development process is used by the PostgreSQL team?
+   The rows returned are cache-owned versions of the heap rows.
+   Therefore, you must not modify or delete the tuple returned by
+   SearchSysCache(). What you should do is release it with
+   ReleaseSysCache() when you are done using it; this informs the cache
+   that it can discard that tuple if necessary. If you neglect to call
+   ReleaseSysCache(), then the cache entry will remain locked in the
+   cache until end of transaction, which is tolerable but not very
+   desirable.
    
-   Read HACKERS for six months (or a full release cycle, whichever is
-   longer). Really. HACKERS _is_the process. The process is not well
-   documented (AFAIK -- it may be somewhere that I am not aware of) --
-   and it changes continually.
-   What development environment (OS, system, compilers, etc) is required
-   to develop code?
+   If you can't use the system cache, you will need to retrieve the data
+   directly from the heap table, using the buffer cache that is shared by
+   all backends. The backend automatically takes care of loading the rows
+   into the buffer cache.
    
-   Developers Corner on the website has links to this information. The
-   distribution tarball itself includes all the extra tools and documents
-   that go beyond a good Unix-like development environment. In general, a
-   modern unix with a modern gcc, GNU make or equivalent, autoconf (of a
-   particular version), and good working knowledge of those tools are
-   required.
-   What areas need support?
+   Open the table with heap_open(). You can then start a table scan with
+   heap_beginscan(), then use heap_getnext() and continue as long as
+   HeapTupleIsValid() returns true. Then do a heap_endscan(). Keys can be
+   assigned to the scan. No indexes are used, so all rows are going to be
+   compared to the keys, and only the valid rows returned.
    
-   The TODO list.
+   You can also use heap_fetch() to fetch rows by block number/offset.
+   While scans automatically lock/unlock rows from the buffer cache, with
+   heap_fetch(), you must pass a Buffer pointer, and ReleaseBuffer() it
+   when completed.
    
-   You've made the first step, by finding and subscribing to HACKERS.
-   Once you find an area to look at in the TODO, and have read the
-   documentation on the internals, etc, then you check out a current
-   CVS,write what you are going to write (keeping your CVS checkout up to
-   date in the process), and make up a patch (as a context diff only) and
-   send to the PATCHES list, prefereably.
+   Once you have the row, you can get data that is common to all tuples,
+   like t_self and t_oid, by merely accessing the HeapTuple structure
+   entries. If you need a table-specific column, you should take the
+   HeapTuple pointer, and use the GETSTRUCT() macro to access the
+   table-specific start of the tuple. You then cast the pointer as a
+   Form_pg_proc pointer if you are accessing the pg_proc table, or
+   Form_pg_type if you are accessing pg_type. You can then access the
+   columns by using a structure pointer:
+((Form_pg_class) GETSTRUCT(tuple))->relnatts
+
+   You must not directly change live tuples in this way. The best way is
+   to use heap_modifytuple() and pass it your original tuple, and the
+   values you want changed. It returns a palloc'ed tuple, which you pass
+   to heap_replace(). You can delete tuples by passing the tuple's t_self
+   to heap_destroy(). You use t_self for heap_update() too. Remember,
+   tuples can be either system cache copies, which may go away after you
+   call ReleaseSysCache(), or read directly from disk buffers, which go
+   away when you heap_getnext(), heap_endscan, or ReleaseBuffer(), in the
+   heap_fetch() case. Or it may be a palloc'ed tuple, that you must
+   pfree() when finished.
    
-   Discussion on the patch typically happens here. If the patch adds a
-   major feature, it would be a good idea to talk about it first on the
-   HACKERS list, in order to increase the chances of it being accepted,
-   as well as toavoid duplication of effort. Note that experienced
-   developers with a proven track record usually get the big jobs -- for
-   more than one reason. Also note that PostgreSQL is highly portable --
-   nonportable code will likely be dismissed out of hand.
+  2.2) Why are table, column, type, function, view names sometimes referenced
+  as Name or NameData, and sometimes as char *?
+  
+   Table, column, type, function, and view names are stored in system
+   tables in columns of type Name. Name is a fixed-length,
+   null-terminated type of NAMEDATALEN bytes. (The default value for
+   NAMEDATALEN is 32 bytes.)
+typedef struct nameData
+    {
+        char        data[NAMEDATALEN];
+    } NameData;
+    typedef NameData *Name;
+
+   Table, column, type, function, and view names that come into the
+   backend via user queries are stored as variable-length,
+   null-terminated character strings.
    
-   Once your contributions get accepted, things move from there.
-   Typically, you would be added as a developer on the list on the
-   website when one of the other developers recommends it. Membership on
-   the steering committee is by invitation only, by the other steering
-   committee members, from what I have gathered watching froma distance.
+   Many functions are called with both types of names, ie. heap_open().
+   Because the Name type is null-terminated, it is safe to pass it to a
+   function expecting a char *. Because there are many cases where
+   on-disk names(Name) are compared to user-supplied names(char *), there
+   are many cases where Name and char * are used interchangeably.
    
-   I make these statements from having watched the process for over two
-   years.
+  2.3) Why do we use Node and List to make data structures?
+  
+   We do this because this allows a consistent way to pass data inside
+   the backend in a flexible way. Every node has a NodeTag which
+   specifies what type of data is inside the Node. Lists are groups of
+   Nodes chained together as a forward-linked list.
    
-   To see a good example of how one goes about this, search the archives
-   for the name 'Tom Lane' and see what his first post consisted of, and
-   where he took things. In particular, note that this hasn't been _that_
-   long ago -- and his bugfixing and general deep knowledge with this
-   codebase is legendary. Take a few days to read after him. And pay
-   special attention to both the sheer quantity as well as the
-   painstaking quality of his work. Both are in high demand.
+   Here are some of the List manipulation commands:
+   
+   lfirst(i)
+          return the data at list element i.
+          
+   lnext(i)
+          return the next list element after i.
+          
+   foreach(i, list)
+          loop through list, assigning each list element to i. It is
+          important to note that i is a List *, not the data in the List
+          element. You need to use lfirst(i) to get at the data. Here is
+          a typical code snipped that loops through a List containing Var
+          *'s and processes each one:
+          
+List *i, *list;
+
+    foreach(i, list)
+    {
+        Var *var = lfirst(i);
+
+        /* process var here */
+    }
+
+   lcons(node, list)
+          add node to the front of list, or create a new list with node
+          if list is NIL.
+          
+   lappend(list, node)
+          add node to the end of list. This is more expensive that lcons.
+          
+   nconc(list1, list2)
+          Concat list2 on to the end of list1.
+          
+   length(list)
+          return the length of the list.
+          
+   nth(i, list)
+          return the i'th element in list.
+          
+   lconsi, ...
+          There are integer versions of these: lconsi, lappendi, nthi.
+          List's containing integers instead of Node pointers are used to
+          hold list of relation object id's and other integer quantities.
+          
+   You can print nodes easily inside gdb. First, to disable output
+   truncation when you use the gdb print command:
+(gdb) set print elements 0
+
+   Instead of printing values in gdb format, you can use the next two
+   commands to print out List, Node, and structure contents in a verbose
+   format that is easier to understand. List's are unrolled into nodes,
+   and nodes are printed in detail. The first prints in a short format,
+   and the second in a long format:
+(gdb) call print(any_pointer)
+    (gdb) call pprint(any_pointer)
+
+   The output appears in the postmaster log file, or on your screen if
+   you are running a backend directly without a postmaster.
+   
+  2.4) I just added a field to a structure. What else should I do?
+  
+   The structures passing around from the parser, rewrite, optimizer, and
+   executor require quite a bit of support. Most structures have support
+   routines in src/backend/nodes used to create, copy, read, and output
+   those structures. Make sure you add support for your new field to
+   these files. Find any other places the structure may need code for
+   your new field. mkid is helpful with this (see above).
+   
+  2.5) Why do we use palloc() and pfree() to allocate memory?
+  
+   palloc() and pfree() are used in place of malloc() and free() because
+   we automatically free all memory allocated when a transaction
+   completes. This makes it easier to make sure we free memory that gets
+   allocated in one place, but only freed much later. There are several
+   contexts that memory can be allocated in, and this controls when the
+   allocated memory is automatically freed by the backend.
+   
+  2.6) What is elog()?
+  
+   elog() is used to send messages to the front-end, and optionally
+   terminate the current query being processed. The first parameter is an
+   elog level of NOTICE, DEBUG, ERROR, or FATAL. NOTICE prints on the
+   user's terminal and the postmaster logs. DEBUG prints only in the
+   postmaster logs. ERROR prints in both places, and terminates the
+   current query, never returning from the call. FATAL terminates the
+   backend process. The remaining parameters of elog are a printf-style
+   set of parameters to print.
+   
+  2.7) What is CommandCounterIncrement()?
+  
+   Normally, transactions can not see the rows they modify. This allows
+   UPDATE foo SET x = x + 1 to work correctly.
+   
+   However, there are cases where a transactions needs to see rows
+   affected in previous parts of the transaction. This is accomplished
+   using a Command Counter. Incrementing the counter allows transactions
+   to be broken into pieces so each piece can see rows modified by
+   previous pieces. CommandCounterIncrement() increments the Command
+   Counter, creating a new part of the transaction.
