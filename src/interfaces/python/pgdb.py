@@ -58,9 +58,12 @@ import _pg
 import string
 import exceptions
 import types
-import DateTime
 import time
 import types
+
+# Marc-Andre is changing where DateTime goes.  This handles it either way.
+try: from mx import DateTime
+except ImportError: import DateTime
 
 ### module constants
 
