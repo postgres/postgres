@@ -495,6 +495,7 @@ person
 point_tbl      
 polygon_tbl    
 ramp           
+random_tbl     
 real_city      
 reltime_tbl    
 road           
@@ -512,5 +513,5 @@ tinterval_tbl
 toyemp         
 varchar_tbl    
 xacttest       
-(70 rows)
+(71 rows)
 

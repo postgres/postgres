@@ -4,15 +4,20 @@ count
  1000
 (1 row)
 
-QUERY: SELECT count(*) FROM onek where oidrand(onek.oid, 10);
-count
------
-   92
-(1 row)
+QUERY: SELECT count(*) AS random INTO RANDOM_TBL
+  FROM onek WHERE oidrand(onek.oid, 10);
+QUERY: INSERT INTO RANDOM_TBL (random)
+  SELECT count(*)
+  FROM onek WHERE oidrand(onek.oid, 10);
+QUERY: SELECT random, count(random) FROM RANDOM_TBL
+  GROUP BY random HAVING count(random) > 1;
+random|count
+------+-----
+(0 rows)
 
-QUERY: SELECT count(*) FROM onek where oidrand(onek.oid, 10);
-count
------
-   98
-(1 row)
+QUERY: SELECT random FROM RANDOM_TBL
+  WHERE random NOT BETWEEN 80 AND 120;
+random
+------
+(0 rows)
 
