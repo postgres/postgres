@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.184 2003/11/24 16:56:00 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.185 2003/11/26 15:56:48 petere Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -1647,6 +1647,14 @@ kill `cat /usr/local/pgsql/data/postmaster.pid`
        </row>
        <row>
         <entry><systemitem class="osname">NetBSD</></entry>
+        <entry><systemitem>Sparc</></entry>
+        <entry>7.4.1</entry>
+        <entry>2003-11-26,
+         Peter Eisentraut (<email>peter_e@gmx.net</email>)</entry>
+        <entry>1.6.1, 32-bit</entry>
+       </row>
+       <row>
+        <entry><systemitem class="osname">NetBSD</></entry>
         <entry><systemitem>x86</></entry>
         <entry>7.4</entry>
         <entry>2003-10-24,
@@ -1800,14 +1808,6 @@ kill `cat /usr/local/pgsql/data/postmaster.pid`
       <entry>2001-11-28,
        Bill Studenmund (<email>wrstuden@netbsd.org</email>)</entry>
       <entry>1.5</entry>
-     </row>
-     <row>
-      <entry><systemitem class="osname">NetBSD</></entry>
-      <entry><systemitem>Sparc</></entry>
-      <entry>7.2</entry>
-      <entry>2001-12-03,
-       Matthew Green (<email>mrg@eterna.com.au</email>)</entry>
-      <entry>32- and 64-bit builds</entry>
      </row>
      <row>
       <entry><systemitem class="osname">NetBSD</></entry>
