@@ -186,7 +186,9 @@ reset_cfg(void)
 static int
 comparecfg(const void *a, const void *b)
 {
-	return ((TSCfgInfo *) a)->id - ((TSCfgInfo *) b)->id;
+	if ( ((TSCfgInfo *) a)->id == ((TSCfgInfo *) b)->id )
+		return 0;
+	return ( ((TSCfgInfo *) a)->id < ((TSCfgInfo *) b)->id ) ? -1 : 1;
 }
 
 TSCfgInfo *

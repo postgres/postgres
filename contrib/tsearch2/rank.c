@@ -386,7 +386,7 @@ static int
 compareDocR(const void *a, const void *b)
 {
 	if (((DocRepresentation *) a)->pos == ((DocRepresentation *) b)->pos)
-		return 1;
+		return 0;
 	return (((DocRepresentation *) a)->pos > ((DocRepresentation *) b)->pos) ? 1 : -1;
 }
 
@@ -654,7 +654,7 @@ static int
 compareDocWord(const void *a, const void *b)
 {
 	if (((DocWord *) a)->pos == ((DocWord *) b)->pos)
-		return 1;
+		return 0;
 	return (((DocWord *) a)->pos > ((DocWord *) b)->pos) ? 1 : -1;
 }
 
