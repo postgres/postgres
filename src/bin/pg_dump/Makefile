@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/pg_dump/Makefile,v 1.9 1996/11/26 03:19:36 bryanh Exp $
+#    $Header: /cvsroot/pgsql/src/bin/pg_dump/Makefile,v 1.10 1996/11/26 07:38:16 bryanh Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -15,14 +15,19 @@ SRCDIR= ../..
 include ../Makefile.global
 include ../../Makefile.global
 
-CFLAGS+= -I../../backend/port/${PORTNAME}
-
 OBJS= pg_dump.o common.o
+
+ifeq ($(PORTNAME), ultrix4)
+OBJS+= ../../utils/strdup.o
+endif
 
 all: submake pg_dump
 
 pg_dump: $(OBJS) $(LIBPQDIR)/libpq.a
 	$(CC) $(LDFLAGS) -o pg_dump -L$(LIBPQDIR) $(OBJS) -lpq $(LD_ADD)
+
+../../utils/strdup.o:
+	$(MAKE) -C ../../utils/strdup.o
 
 .PHONY: submake
 submake:

@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/interfaces/libpq/Makefile,v 1.20 1996/11/26 06:33:18 bryanh Exp $
+#    $Header: /cvsroot/pgsql/src/interfaces/libpq/Makefile,v 1.21 1996/11/26 07:38:46 bryanh Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -15,7 +15,7 @@ SRCDIR= ..
 include ../Makefile.global
 
 # We need the backend directory here for its fmgr.h
-INCLUDE_OPT= -I../include -I../backend -I../backend/port/$(PORTNAME)
+INCLUDE_OPT= -I../include -I../backend
 
 CFLAGS+= $(INCLUDE_OPT) 
 

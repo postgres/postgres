@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/Attic/Makefile.global,v 1.11 1996/11/14 09:24:39 bryanh Exp $
+#    $Header: /cvsroot/pgsql/src/bin/Attic/Makefile.global,v 1.12 1996/11/26 07:37:54 bryanh Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -27,8 +27,7 @@ endif
 
 INCLUDE_OPT := \
                -I$(LIBPQDIR) \
-               -I$(SRCDIR)/include \
-               -I$(SRCDIR)/src/backend/port/$(PORTNAME)
+               -I$(SRCDIR)/include 
 
 CFLAGS += $(INCLUDE_OPT) 
 

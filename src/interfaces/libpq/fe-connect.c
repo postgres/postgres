@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.20 1996/11/26 03:20:35 bryanh Exp $
+ *    $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.21 1996/11/26 07:38:55 bryanh Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,7 +30,9 @@
 #include "fe-auth.h"
 #include "libpq-fe.h"
 
-#include <port-protos.h>  /* for strdup() */
+#ifdef NEED_STRDUP
+#include "strdup.h"
+#endif
 
 #if defined(ultrix4) || defined(next)
   /* ultrix is lame and doesn't have strdup in libc for some reason */

@@ -41,6 +41,7 @@
 #  define NEED_ISINF 
 #  define USE_POSIX_TIME
 #  define NEED_UNION_SEMUN 
+#  define NEED_STRDUP
 #endif
 
 #if defined(linux)

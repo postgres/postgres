@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/psql/Makefile,v 1.14 1996/11/26 03:19:54 bryanh Exp $
+#    $Header: /cvsroot/pgsql/src/bin/psql/Makefile,v 1.15 1996/11/26 07:38:24 bryanh Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -16,8 +16,7 @@ include ../../Makefile.global
 
 INCLUDE_OPT:= \
                -I$(LIBPQDIR) \
-               -I../../include \
-               -I../../backend/port/$(PORTNAME)
+               -I../../include 
 
 CFLAGS+= $(INCLUDE_OPT)
 #
@@ -63,10 +62,17 @@ ifneq ($(USE_READLINE), true)
 OBJS+= rlstubs.o
 endif
 
+ifeq ($(PORTNAME), ultrix4)
+OBJS+= ../../utils/strdup.o
+endif
+
 all: submake psql
 
 psql: $(OBJS) $(LIBPQDIR)/libpq.a
 	$(CC) $(LDFLAGS) -o psql -L$(LIBPQDIR) $(OBJS) -lpq $(LD_ADD)
+
+../../utils/strdup.o:
+	$(MAKE) -C ../../utils strdup.o
 
 .PHONY: submake
 submake:
