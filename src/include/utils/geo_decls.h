@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geo_decls.h,v 1.14 1997/09/25 16:35:36 momjian Exp $
+ * $Id: geo_decls.h,v 1.15 1997/09/25 16:52:23 momjian Exp $
  *
  * NOTE
  *	  These routines do *not* use the float types from adt/.
@@ -20,7 +20,6 @@
 #define GEO_DECLS_H
 
 #include "access/attnum.h"
-#include "postgres.h"   /* float8 */
 
 /*#ifndef FmgrIncluded -- seems like always included. (it's FMgrIncluded) AY */
 
