@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.10 1996/10/13 04:49:57 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.11 1996/10/30 21:18:22 scrappy Exp $
  *
  * NOTES
  *    this is the "main" module of the postgres backend and
@@ -1265,7 +1265,7 @@ PostgresMain(int argc, char *argv[])
      */
     if (IsUnderPostmaster == false) {
 	puts("\nPOSTGRES backend interactive interface");
-	puts("$Revision: 1.10 $ $Date: 1996/10/13 04:49:57 $");
+	puts("$Revision: 1.11 $ $Date: 1996/10/30 21:18:22 $");
     }
     
     /* ----------------
@@ -1295,7 +1295,7 @@ PostgresMain(int argc, char *argv[])
 	if (FD_ISSET(serverSock, &rmask)) {
 	/* new connection pending on our well-known port's socket */
 	  newFE = (FrontEnd*) malloc (sizeof(FrontEnd));
-	  memset(newFE, sizeof(FrontEnd),0);
+	  memset(newFE, 0, sizeof(FrontEnd));
 	  newFE->fn_connected = false;
 	  newFE->fn_done = false;
 	  newPort = &(newFE->fn_port);
