@@ -1,0 +1,18 @@
+2001-04-08 13:28  petere
+
+	* GNUmakefile.in: Rearrange distribution split as discussed on
+	-hackers.
+
+2001-04-08 12:36  petere
+
+	* doc/FAQ_Solaris: Update to reflect OpenSSL 0.9.6a release.
+
+2001-04-06 22:30  momjian
+
+	* doc/TODO: Update TODO list.
+
+2001-04-06 13:05  scrappy
+
+	* ChangeLogs/ChangeLog-7.1RC2-to-7.1RC3: 
+	update the change log, but nothing else ...
+
