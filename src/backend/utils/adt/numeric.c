@@ -5,7 +5,7 @@
  *
  *	1998 Jan Wieck
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/numeric.c,v 1.12 1999/05/04 15:50:24 thomas Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/numeric.c,v 1.13 1999/05/10 18:17:44 wieck Exp $
  *
  * ----------
  */
@@ -2397,6 +2397,19 @@ apply_typmod(NumericVar *var, int32 typmod)
 	else
 	{
 		var->ndigits = MAX(0, MIN(i, var->ndigits));
+	}
+
+	/* ----------
+	 * Check for overflow again - rounding could have raised the
+	 * weight.
+	 * ----------
+	 */
+	if (var->weight >= maxweight)
+	{
+		free_allvars();
+		elog(ERROR, "overflow on numeric "
+        "ABS(value) >= 10^%d for field with precision %d scale %d",
+							var->weight, precision, scale);
 	}
 
 	var->rscale = scale;
