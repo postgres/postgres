@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/bgwriter.c,v 1.3 2004/06/03 02:08:03 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/bgwriter.c,v 1.4 2004/07/31 00:45:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -57,6 +57,7 @@
 #include "storage/smgr.h"
 #include "tcop/tcopprot.h"
 #include "utils/guc.h"
+#include "utils/memutils.h"
 
 
 /*----------
@@ -153,6 +154,8 @@ static void ReqShutdownHandler(SIGNAL_ARGS);
 void
 BackgroundWriterMain(void)
 {
+	sigjmp_buf	local_sigjmp_buf;
+
 	Assert(BgWriterShmem != NULL);
 	BgWriterShmem->bgwriter_pid = MyProcPid;
 	am_bg_writer = true;
@@ -201,19 +204,19 @@ BackgroundWriterMain(void)
 
 	/*
 	 * If an exception is encountered, processing resumes here.
+	 *
+	 * See notes in postgres.c about the design of this coding.
 	 */
-	if (sigsetjmp(Warn_restart, 1) != 0)
+	if (sigsetjmp(local_sigjmp_buf, 1) != 0)
 	{
-		/*
-		 * Make sure we're not interrupted while cleaning up.  Also forget
-		 * any pending QueryCancel request, since we're aborting anyway.
-		 * Force InterruptHoldoffCount to a known state in case we
-		 * ereport'd from inside a holdoff section.
-		 */
-		ImmediateInterruptOK = false;
-		QueryCancelPending = false;
-		InterruptHoldoffCount = 1;
-		CritSectionCount = 0;	/* should be unnecessary, but... */
+		/* Since not using PG_TRY, must reset error stack by hand */
+		error_context_stack = NULL;
+
+		/* Prevent interrupts while cleaning up */
+		HOLD_INTERRUPTS();
+
+		/* Report the error to the server log */
+		EmitErrorReport();
 
 		/*
 		 * These operations are really just a minimal subset of
@@ -223,12 +226,6 @@ BackgroundWriterMain(void)
 		LWLockReleaseAll();
 		AbortBufferIO();
 		UnlockBuffers();
-
-		/*
-		 * Clear flag to indicate that we got out of error recovery mode
-		 * successfully.  (Flag was set in elog.c before longjmp().)
-		 */
-		InError = false;
 
 		/* Warn any waiting backends that the checkpoint failed. */
 		if (ckpt_active)
@@ -242,8 +239,13 @@ BackgroundWriterMain(void)
 		}
 
 		/*
-		 * Exit interrupt holdoff section we implicitly established above.
+		 * Now return to normal top-level context and clear ErrorContext
+		 * for next time.
 		 */
+		MemoryContextSwitchTo(TopMemoryContext);
+		FlushErrorState();
+
+		/* Now we can allow interrupts again */
 		RESUME_INTERRUPTS();
 
 		/*
@@ -255,7 +257,8 @@ BackgroundWriterMain(void)
 		pg_usleep(1000000L);
 	}
 
-	Warn_restart_ready = true;	/* we can now handle ereport(ERROR) */
+	/* We can now handle ereport(ERROR) */
+	PG_exception_stack = &local_sigjmp_buf;
 
 	/*
 	 * Unblock signals (they were blocked when the postmaster forked us)

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/pquery.c,v 1.81 2004/07/17 03:29:00 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/pquery.c,v 1.82 2004/07/31 00:45:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -246,94 +246,110 @@ PortalStart(Portal portal, ParamListInfo params)
 	AssertState(portal->status == PORTAL_NEW);	/* else extra PortalStart */
 
 	/*
-	 * Set global portal context pointers.  (Should we set QueryContext?)
+	 * Set up global portal context pointers.  (Should we set QueryContext?)
 	 */
 	saveActivePortal = ActivePortal;
-	ActivePortal = portal;
 	saveResourceOwner = CurrentResourceOwner;
-	CurrentResourceOwner = portal->resowner;
 	savePortalContext = PortalContext;
-	PortalContext = PortalGetHeapMemory(portal);
-
-	oldContext = MemoryContextSwitchTo(PortalGetHeapMemory(portal));
-
-	/* Must remember portal param list, if any */
-	portal->portalParams = params;
-
-	/*
-	 * Determine the portal execution strategy
-	 */
-	portal->strategy = ChoosePortalStrategy(portal->parseTrees);
-
-	/*
-	 * Fire her up according to the strategy
-	 */
-	switch (portal->strategy)
+	PG_TRY();
 	{
-		case PORTAL_ONE_SELECT:
+		ActivePortal = portal;
+		CurrentResourceOwner = portal->resowner;
+		PortalContext = PortalGetHeapMemory(portal);
 
-			/*
-			 * Must set query snapshot before starting executor.
-			 */
-			SetQuerySnapshot();
+		oldContext = MemoryContextSwitchTo(PortalGetHeapMemory(portal));
 
-			/*
-			 * Create QueryDesc in portal's context; for the moment, set
-			 * the destination to None.
-			 */
-			queryDesc = CreateQueryDesc((Query *) linitial(portal->parseTrees),
-										(Plan *) linitial(portal->planTrees),
-										None_Receiver,
-										params,
-										false);
+		/* Must remember portal param list, if any */
+		portal->portalParams = params;
 
-			/*
-			 * Call ExecStart to prepare the plan for execution
-			 */
-			ExecutorStart(queryDesc, false, false);
+		/*
+		 * Determine the portal execution strategy
+		 */
+		portal->strategy = ChoosePortalStrategy(portal->parseTrees);
 
-			/*
-			 * This tells PortalCleanup to shut down the executor
-			 */
-			portal->queryDesc = queryDesc;
+		/*
+		 * Fire her up according to the strategy
+		 */
+		switch (portal->strategy)
+		{
+			case PORTAL_ONE_SELECT:
 
-			/*
-			 * Remember tuple descriptor (computed by ExecutorStart)
-			 */
-			portal->tupDesc = queryDesc->tupDesc;
+				/*
+				 * Must set query snapshot before starting executor.
+				 */
+				SetQuerySnapshot();
 
-			/*
-			 * Reset cursor position data to "start of query"
-			 */
-			portal->atStart = true;
-			portal->atEnd = false;		/* allow fetches */
-			portal->portalPos = 0;
-			portal->posOverflow = false;
-			break;
+				/*
+				 * Create QueryDesc in portal's context; for the moment, set
+				 * the destination to None.
+				 */
+				queryDesc = CreateQueryDesc((Query *) linitial(portal->parseTrees),
+											(Plan *) linitial(portal->planTrees),
+											None_Receiver,
+											params,
+											false);
 
-		case PORTAL_UTIL_SELECT:
+				/*
+				 * Call ExecStart to prepare the plan for execution
+				 */
+				ExecutorStart(queryDesc, false, false);
 
-			/*
-			 * We don't set query snapshot here, because PortalRunUtility
-			 * will take care of it.
-			 */
-			portal->tupDesc =
-				UtilityTupleDescriptor(((Query *) linitial(portal->parseTrees))->utilityStmt);
+				/*
+				 * This tells PortalCleanup to shut down the executor
+				 */
+				portal->queryDesc = queryDesc;
 
-			/*
-			 * Reset cursor position data to "start of query"
-			 */
-			portal->atStart = true;
-			portal->atEnd = false;		/* allow fetches */
-			portal->portalPos = 0;
-			portal->posOverflow = false;
-			break;
+				/*
+				 * Remember tuple descriptor (computed by ExecutorStart)
+				 */
+				portal->tupDesc = queryDesc->tupDesc;
 
-		case PORTAL_MULTI_QUERY:
-			/* Need do nothing now */
-			portal->tupDesc = NULL;
-			break;
+				/*
+				 * Reset cursor position data to "start of query"
+				 */
+				portal->atStart = true;
+				portal->atEnd = false;		/* allow fetches */
+				portal->portalPos = 0;
+				portal->posOverflow = false;
+				break;
+
+			case PORTAL_UTIL_SELECT:
+
+				/*
+				 * We don't set query snapshot here, because PortalRunUtility
+				 * will take care of it.
+				 */
+				portal->tupDesc =
+					UtilityTupleDescriptor(((Query *) linitial(portal->parseTrees))->utilityStmt);
+
+				/*
+				 * Reset cursor position data to "start of query"
+				 */
+				portal->atStart = true;
+				portal->atEnd = false;		/* allow fetches */
+				portal->portalPos = 0;
+				portal->posOverflow = false;
+				break;
+
+			case PORTAL_MULTI_QUERY:
+				/* Need do nothing now */
+				portal->tupDesc = NULL;
+				break;
+		}
 	}
+	PG_CATCH();
+	{
+		/* Uncaught error while executing portal: mark it dead */
+		portal->status = PORTAL_FAILED;
+
+		/* Restore global vars and propagate error */
+		ActivePortal = saveActivePortal;
+		CurrentResourceOwner = saveResourceOwner;
+		PortalContext = savePortalContext;
+
+		PG_RE_THROW();
+	}
+	PG_END_TRY();
 
 	MemoryContextSwitchTo(oldContext);
 
@@ -449,91 +465,108 @@ PortalRun(Portal portal, long count,
 	portal->status = PORTAL_ACTIVE;
 
 	/*
-	 * Set global portal context pointers.
+	 * Set up global portal context pointers.
 	 */
 	saveActivePortal = ActivePortal;
-	ActivePortal = portal;
 	saveResourceOwner = CurrentResourceOwner;
-	CurrentResourceOwner = portal->resowner;
 	savePortalContext = PortalContext;
-	PortalContext = PortalGetHeapMemory(portal);
 	saveQueryContext = QueryContext;
-	QueryContext = portal->queryContext;
-
-	oldContext = MemoryContextSwitchTo(PortalContext);
-
-	switch (portal->strategy)
+	PG_TRY();
 	{
-		case PORTAL_ONE_SELECT:
-			(void) PortalRunSelect(portal, true, count, dest);
-			/* we know the query is supposed to set the tag */
-			if (completionTag && portal->commandTag)
-				strcpy(completionTag, portal->commandTag);
+		ActivePortal = portal;
+		CurrentResourceOwner = portal->resowner;
+		PortalContext = PortalGetHeapMemory(portal);
+		QueryContext = portal->queryContext;
 
-			/* Mark portal not active */
-			portal->status = PORTAL_READY;
+		oldContext = MemoryContextSwitchTo(PortalContext);
 
-			/*
-			 * Since it's a forward fetch, say DONE iff atEnd is now true.
-			 */
-			result = portal->atEnd;
-			break;
+		switch (portal->strategy)
+		{
+			case PORTAL_ONE_SELECT:
+				(void) PortalRunSelect(portal, true, count, dest);
+				/* we know the query is supposed to set the tag */
+				if (completionTag && portal->commandTag)
+					strcpy(completionTag, portal->commandTag);
 
-		case PORTAL_UTIL_SELECT:
+				/* Mark portal not active */
+				portal->status = PORTAL_READY;
 
-			/*
-			 * If we have not yet run the utility statement, do so,
-			 * storing its results in the portal's tuplestore.
-			 */
-			if (!portal->portalUtilReady)
-			{
-				DestReceiver *treceiver;
+				/*
+				 * Since it's a forward fetch, say DONE iff atEnd is now true.
+				 */
+				result = portal->atEnd;
+				break;
 
-				PortalCreateHoldStore(portal);
-				treceiver = CreateDestReceiver(Tuplestore, portal);
-				PortalRunUtility(portal, linitial(portal->parseTrees),
-								 treceiver, NULL);
-				(*treceiver->rDestroy) (treceiver);
-				portal->portalUtilReady = true;
-			}
+			case PORTAL_UTIL_SELECT:
 
-			/*
-			 * Now fetch desired portion of results.
-			 */
-			(void) PortalRunSelect(portal, true, count, dest);
+				/*
+				 * If we have not yet run the utility statement, do so,
+				 * storing its results in the portal's tuplestore.
+				 */
+				if (!portal->portalUtilReady)
+				{
+					DestReceiver *treceiver;
 
-			/*
-			 * We know the query is supposed to set the tag; we assume
-			 * only the default tag is needed.
-			 */
-			if (completionTag && portal->commandTag)
-				strcpy(completionTag, portal->commandTag);
+					PortalCreateHoldStore(portal);
+					treceiver = CreateDestReceiver(Tuplestore, portal);
+					PortalRunUtility(portal, linitial(portal->parseTrees),
+									 treceiver, NULL);
+					(*treceiver->rDestroy) (treceiver);
+					portal->portalUtilReady = true;
+				}
 
-			/* Mark portal not active */
-			portal->status = PORTAL_READY;
+				/*
+				 * Now fetch desired portion of results.
+				 */
+				(void) PortalRunSelect(portal, true, count, dest);
 
-			/*
-			 * Since it's a forward fetch, say DONE iff atEnd is now true.
-			 */
-			result = portal->atEnd;
-			break;
+				/*
+				 * We know the query is supposed to set the tag; we assume
+				 * only the default tag is needed.
+				 */
+				if (completionTag && portal->commandTag)
+					strcpy(completionTag, portal->commandTag);
 
-		case PORTAL_MULTI_QUERY:
-			PortalRunMulti(portal, dest, altdest, completionTag);
+				/* Mark portal not active */
+				portal->status = PORTAL_READY;
 
-			/* Prevent portal's commands from being re-executed */
-			portal->status = PORTAL_DONE;
+				/*
+				 * Since it's a forward fetch, say DONE iff atEnd is now true.
+				 */
+				result = portal->atEnd;
+				break;
 
-			/* Always complete at end of RunMulti */
-			result = true;
-			break;
+			case PORTAL_MULTI_QUERY:
+				PortalRunMulti(portal, dest, altdest, completionTag);
 
-		default:
-			elog(ERROR, "unrecognized portal strategy: %d",
-				 (int) portal->strategy);
-			result = false;		/* keep compiler quiet */
-			break;
+				/* Prevent portal's commands from being re-executed */
+				portal->status = PORTAL_DONE;
+
+				/* Always complete at end of RunMulti */
+				result = true;
+				break;
+
+			default:
+				elog(ERROR, "unrecognized portal strategy: %d",
+					 (int) portal->strategy);
+				result = false;		/* keep compiler quiet */
+				break;
+		}
 	}
+	PG_CATCH();
+	{
+		/* Uncaught error while executing portal: mark it dead */
+		portal->status = PORTAL_FAILED;
+
+		/* Restore global vars and propagate error */
+		ActivePortal = saveActivePortal;
+		CurrentResourceOwner = saveResourceOwner;
+		PortalContext = savePortalContext;
+		QueryContext = saveQueryContext;
+
+		PG_RE_THROW();
+	}
+	PG_END_TRY();
 
 	MemoryContextSwitchTo(oldContext);
 
@@ -970,30 +1003,47 @@ PortalRunFetch(Portal portal,
 	portal->status = PORTAL_ACTIVE;
 
 	/*
-	 * Set global portal context pointers.
+	 * Set up global portal context pointers.
 	 */
 	saveActivePortal = ActivePortal;
-	ActivePortal = portal;
 	saveResourceOwner = CurrentResourceOwner;
-	CurrentResourceOwner = portal->resowner;
 	savePortalContext = PortalContext;
-	PortalContext = PortalGetHeapMemory(portal);
 	saveQueryContext = QueryContext;
-	QueryContext = portal->queryContext;
-
-	oldContext = MemoryContextSwitchTo(PortalContext);
-
-	switch (portal->strategy)
+	PG_TRY();
 	{
-		case PORTAL_ONE_SELECT:
-			result = DoPortalRunFetch(portal, fdirection, count, dest);
-			break;
+		ActivePortal = portal;
+		CurrentResourceOwner = portal->resowner;
+		PortalContext = PortalGetHeapMemory(portal);
+		QueryContext = portal->queryContext;
 
-		default:
-			elog(ERROR, "unsupported portal strategy");
-			result = 0;			/* keep compiler quiet */
-			break;
+		oldContext = MemoryContextSwitchTo(PortalContext);
+
+		switch (portal->strategy)
+		{
+			case PORTAL_ONE_SELECT:
+				result = DoPortalRunFetch(portal, fdirection, count, dest);
+				break;
+
+			default:
+				elog(ERROR, "unsupported portal strategy");
+				result = 0;			/* keep compiler quiet */
+				break;
+		}
 	}
+	PG_CATCH();
+	{
+		/* Uncaught error while executing portal: mark it dead */
+		portal->status = PORTAL_FAILED;
+
+		/* Restore global vars and propagate error */
+		ActivePortal = saveActivePortal;
+		CurrentResourceOwner = saveResourceOwner;
+		PortalContext = savePortalContext;
+		QueryContext = saveQueryContext;
+
+		PG_RE_THROW();
+	}
+	PG_END_TRY();
 
 	MemoryContextSwitchTo(oldContext);
 

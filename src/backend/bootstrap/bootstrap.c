@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/bootstrap/bootstrap.c,v 1.189 2004/07/21 20:34:45 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/bootstrap/bootstrap.c,v 1.190 2004/07/31 00:45:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,7 +16,6 @@
 
 #include <unistd.h>
 #include <signal.h>
-#include <setjmp.h>
 #ifdef HAVE_GETOPT_H
 #include <getopt.h>
 #endif
@@ -457,15 +456,6 @@ BootstrapMain(int argc, char *argv[])
 		strtable[i] = NULL;
 	for (i = 0; i < HASHTABLESIZE; ++i)
 		hashtable[i] = NULL;
-
-	/*
-	 * abort processing resumes here (this is probably dead code?)
-	 */
-	if (sigsetjmp(Warn_restart, 1) != 0)
-	{
-		Warnings++;
-		AbortCurrentTransaction();
-	}
 
 	/*
 	 * Process bootstrap input.

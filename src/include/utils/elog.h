@@ -7,12 +7,14 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/elog.h,v 1.70 2004/07/06 19:51:59 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/utils/elog.h,v 1.71 2004/07/31 00:45:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef ELOG_H
 #define ELOG_H
+
+#include <setjmp.h>
 
 /* Error level codes */
 #define DEBUG5		10			/* Debugging messages, in categories of
@@ -166,6 +168,93 @@ typedef struct ErrorContextCallback
 } ErrorContextCallback;
 
 extern DLLIMPORT ErrorContextCallback *error_context_stack;
+
+
+/*----------
+ * API for catching ereport(ERROR) exits.  Use these macros like so:
+ *
+ *		PG_TRY();
+ *		{
+ *			... code that might throw ereport(ERROR) ...
+ *		}
+ *		PG_CATCH();
+ *		{
+ *			... error recovery code ...
+ *		}
+ *		PG_END_TRY();
+ *
+ * (The braces are not actually necessary, but are recommended so that
+ * pg_indent will indent the construct nicely.)  The error recovery code
+ * can optionally do PG_RE_THROW() to propagate the same error outwards.
+ *
+ * Note: while the system will correctly propagate any new ereport(ERROR)
+ * occurring in the recovery section, there is a small limit on the number
+ * of levels this will work for.  It's best to keep the error recovery
+ * section simple enough that it can't generate any new errors, at least
+ * not before popping the error stack.
+ *----------
+ */
+#define PG_TRY()  \
+	do { \
+		sigjmp_buf *save_exception_stack = PG_exception_stack; \
+		ErrorContextCallback *save_context_stack = error_context_stack; \
+		sigjmp_buf local_sigjmp_buf; \
+		if (sigsetjmp(local_sigjmp_buf, 1) == 0) \
+		{ \
+			PG_exception_stack = &local_sigjmp_buf
+
+#define PG_CATCH()  \
+		} \
+		else \
+		{ \
+			PG_exception_stack = save_exception_stack; \
+			error_context_stack = save_context_stack
+
+#define PG_END_TRY()  \
+		} \
+		PG_exception_stack = save_exception_stack; \
+		error_context_stack = save_context_stack; \
+	} while (0)
+
+#define PG_RE_THROW()  \
+	siglongjmp(*PG_exception_stack, 1)
+
+extern DLLIMPORT sigjmp_buf *PG_exception_stack;
+
+
+/* Stuff that error handlers might want to use */
+
+/*
+ * ErrorData holds the data accumulated during any one ereport() cycle.
+ * Any non-NULL pointers must point to palloc'd data.
+ * (The const pointers are an exception; we assume they point at non-freeable
+ * constant strings.)
+ */
+typedef struct ErrorData
+{
+	int			elevel;			/* error level */
+	bool		output_to_server;		/* will report to server log? */
+	bool		output_to_client;		/* will report to client? */
+	bool		show_funcname;	/* true to force funcname inclusion */
+	const char *filename;		/* __FILE__ of ereport() call */
+	int			lineno;			/* __LINE__ of ereport() call */
+	const char *funcname;		/* __func__ of ereport() call */
+	int			sqlerrcode;		/* encoded ERRSTATE */
+	char	   *message;		/* primary error message */
+	char	   *detail;			/* detail error message */
+	char	   *hint;			/* hint message */
+	char	   *context;		/* context message */
+	int			cursorpos;		/* cursor index into query string */
+	int			internalpos;	/* cursor index into internalquery */
+	char	   *internalquery;	/* text of internally-generated query */
+	int			saved_errno;	/* errno at entry */
+} ErrorData;
+
+extern void EmitErrorReport(void);
+extern ErrorData *CopyErrorData(void);
+extern void FreeErrorData(ErrorData *edata);
+extern void FlushErrorState(void);
+extern void ReThrowError(ErrorData *edata);
 
 
 /* GUC-configurable parameters */

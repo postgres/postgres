@@ -1,4 +1,4 @@
-$PostgreSQL: pgsql/src/backend/utils/resowner/README,v 1.1 2004/07/17 03:30:10 tgl Exp $
+$PostgreSQL: pgsql/src/backend/utils/resowner/README,v 1.2 2004/07/31 00:45:40 tgl Exp $
 
 Notes about resource owners
 ---------------------------
@@ -72,3 +72,7 @@ CurrentResourceOwner must point to the same resource owner that was current
 when the buffer, lock, or cache reference was acquired.  It would be possible
 to relax this restriction given additional bookkeeping effort, but at present
 there seems no need.
+
+Code that transiently changes CurrentResourceOwner should generally use a
+PG_TRY construct to ensure that the previous value of CurrentResourceOwner
+is restored if control is lost during an error exit.

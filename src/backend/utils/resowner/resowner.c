@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/resowner/resowner.c,v 1.1 2004/07/17 03:30:10 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/resowner/resowner.c,v 1.2 2004/07/31 00:45:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -99,6 +99,13 @@ typedef struct ResourceReleaseCallbackItem
 static ResourceReleaseCallbackItem *ResourceRelease_callbacks = NULL;
 
 
+/* Internal routines */
+static void ResourceOwnerReleaseInternal(ResourceOwner owner,
+										 ResourceReleasePhase phase,
+										 bool isCommit,
+										 bool isTopLevel);
+
+
 /*****************************************************************************
  *	  EXPORTED ROUTINES														 *
  *****************************************************************************/
@@ -162,17 +169,41 @@ ResourceOwnerRelease(ResourceOwner owner,
 					 bool isCommit,
 					 bool isTopLevel)
 {
+	/* Rather than PG_TRY at every level of recursion, set it up once */
+	ResourceOwner save;
+
+	save = CurrentResourceOwner;
+	PG_TRY();
+	{
+		ResourceOwnerReleaseInternal(owner, phase, isCommit, isTopLevel);
+	}
+	PG_CATCH();
+	{
+		CurrentResourceOwner = save;
+		PG_RE_THROW();
+	}
+	PG_END_TRY();
+	CurrentResourceOwner = save;
+}
+
+static void
+ResourceOwnerReleaseInternal(ResourceOwner owner,
+							 ResourceReleasePhase phase,
+							 bool isCommit,
+							 bool isTopLevel)
+{
 	ResourceOwner child;
 	ResourceOwner save;
 	ResourceReleaseCallbackItem *item;
 
 	/* Recurse to handle descendants */
 	for (child = owner->firstchild; child != NULL; child = child->nextchild)
-		ResourceOwnerRelease(child, phase, isCommit, isTopLevel);
+		ResourceOwnerReleaseInternal(child, phase, isCommit, isTopLevel);
 
 	/*
 	 * Make CurrentResourceOwner point to me, so that ReleaseBuffer etc
-	 * don't get confused.
+	 * don't get confused.  We needn't PG_TRY here because the outermost
+	 * level will fix it on error abort.
 	 */
 	save = CurrentResourceOwner;
 	CurrentResourceOwner = owner;

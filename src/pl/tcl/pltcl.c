@@ -31,7 +31,7 @@
  *	  ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/tcl/pltcl.c,v 1.86 2004/06/06 00:41:28 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/tcl/pltcl.c,v 1.87 2004/07/31 00:45:57 tgl Exp $
  *
  **********************************************************************/
 
@@ -41,7 +41,6 @@
 
 #include <unistd.h>
 #include <fcntl.h>
-#include <setjmp.h>
 
 /* Hack to deal with Tcl 8.4 const-ification without losing compatibility */
 #ifndef CONST84
@@ -132,8 +131,6 @@ typedef struct pltcl_query_desc
  **********************************************************************/
 static bool pltcl_pm_init_done = false;
 static bool pltcl_be_init_done = false;
-static int	pltcl_call_level = 0;
-static int	pltcl_restart_in_progress = 0;
 static Tcl_Interp *pltcl_hold_interp = NULL;
 static Tcl_Interp *pltcl_norm_interp = NULL;
 static Tcl_Interp *pltcl_safe_interp = NULL;
@@ -141,6 +138,19 @@ static Tcl_HashTable *pltcl_proc_hash = NULL;
 static Tcl_HashTable *pltcl_norm_query_hash = NULL;
 static Tcl_HashTable *pltcl_safe_query_hash = NULL;
 static FunctionCallInfo pltcl_current_fcinfo = NULL;
+
+/*
+ * When a callback from Tcl into PG incurs an error, we temporarily store
+ * the error information here, and return TCL_ERROR to the Tcl interpreter.
+ * Any further callback attempts immediately fail, and when the Tcl interpreter
+ * returns to the calling function, we re-throw the error (even if Tcl
+ * thinks it trapped the error and doesn't return TCL_ERROR).  Eventually
+ * this ought to be improved to let Tcl code really truly trap the error,
+ * but that's more of a change from the pre-7.5 semantics than I have time
+ * for now --- it will only be possible if the callback query is executed
+ * inside a subtransaction.
+ */
+static ErrorData *pltcl_error_in_progress = NULL;
 
 /**********************************************************************
  * Forward declarations
@@ -397,19 +407,9 @@ pltcl_call_handler(PG_FUNCTION_ARGS)
 	FunctionCallInfo save_fcinfo;
 
 	/************************************************************
-	 * Initialize interpreters
+	 * Initialize interpreters if first time through
 	 ************************************************************/
 	pltcl_init_all();
-
-	/************************************************************
-	 * Connect to SPI manager
-	 ************************************************************/
-	if (SPI_connect() != SPI_OK_CONNECT)
-		elog(ERROR, "could not connect to SPI manager");
-	/************************************************************
-	 * Keep track about the nesting of Tcl-SPI-Tcl-... calls
-	 ************************************************************/
-	pltcl_call_level++;
 
 	/************************************************************
 	 * Determine if called as function or trigger and
@@ -429,8 +429,6 @@ pltcl_call_handler(PG_FUNCTION_ARGS)
 	}
 
 	pltcl_current_fcinfo = save_fcinfo;
-
-	pltcl_call_level--;
 
 	return retval;
 }
@@ -461,7 +459,10 @@ pltcl_func_handler(PG_FUNCTION_ARGS)
 	int			i;
 	int			tcl_rc;
 	Datum		retval;
-	sigjmp_buf	save_restart;
+
+	/* Connect to SPI manager */
+	if (SPI_connect() != SPI_OK_CONNECT)
+		elog(ERROR, "could not connect to SPI manager");
 
 	/* Find or compile the function */
 	prodesc = compile_pltcl_function(fcinfo->flinfo->fn_oid, InvalidOid);
@@ -480,23 +481,10 @@ pltcl_func_handler(PG_FUNCTION_ARGS)
 	Tcl_DStringAppendElement(&tcl_cmd, prodesc->proname);
 
 	/************************************************************
-	 * Catch elog(ERROR) during build of the Tcl command
-	 ************************************************************/
-	memcpy(&save_restart, &Warn_restart, sizeof(save_restart));
-	if (sigsetjmp(Warn_restart, 1) != 0)
-	{
-		memcpy(&Warn_restart, &save_restart, sizeof(Warn_restart));
-		Tcl_DStringFree(&tcl_cmd);
-		Tcl_DStringFree(&list_tmp);
-		pltcl_restart_in_progress = 1;
-		if (--pltcl_call_level == 0)
-			pltcl_restart_in_progress = 0;
-		siglongjmp(Warn_restart, 1);
-	}
-
-	/************************************************************
 	 * Add all call arguments to the command
 	 ************************************************************/
+	PG_TRY();
+	{
 	for (i = 0; i < prodesc->nargs; i++)
 	{
 		if (prodesc->arg_is_rowtype[i])
@@ -552,60 +540,53 @@ pltcl_func_handler(PG_FUNCTION_ARGS)
 			}
 		}
 	}
+	}
+	PG_CATCH();
+	{
+		Tcl_DStringFree(&tcl_cmd);
+		Tcl_DStringFree(&list_tmp);
+		PG_RE_THROW();
+	}
+	PG_END_TRY();
 	Tcl_DStringFree(&list_tmp);
-	memcpy(&Warn_restart, &save_restart, sizeof(Warn_restart));
 
 	/************************************************************
 	 * Call the Tcl function
+	 *
+	 * We assume no PG error can be thrown directly from this call.
 	 ************************************************************/
 	tcl_rc = Tcl_GlobalEval(interp, Tcl_DStringValue(&tcl_cmd));
 	Tcl_DStringFree(&tcl_cmd);
 
 	/************************************************************
-	 * Check the return code from Tcl and handle
-	 * our special restart mechanism to get rid
-	 * of all nested call levels on transaction
-	 * abort.
+	 * If there was an error in a PG callback, propagate that
+	 * no matter what Tcl claims about its success.
 	 ************************************************************/
-	if (tcl_rc != TCL_OK || pltcl_restart_in_progress)
+	if (pltcl_error_in_progress)
 	{
-		if (!pltcl_restart_in_progress)
-		{
-			pltcl_restart_in_progress = 1;
-			if (--pltcl_call_level == 0)
-				pltcl_restart_in_progress = 0;
-			UTF_BEGIN;
-			ereport(ERROR,
-					(errmsg("pltcl: %s", interp->result),
-					 errdetail("%s",
-							   UTF_U2E(Tcl_GetVar(interp, "errorInfo",
-												  TCL_GLOBAL_ONLY)))));
-			UTF_END;
-		}
-		if (--pltcl_call_level == 0)
-			pltcl_restart_in_progress = 0;
-		siglongjmp(Warn_restart, 1);
+		ErrorData *edata = pltcl_error_in_progress;
+
+		pltcl_error_in_progress = NULL;
+		ReThrowError(edata);
 	}
 
 	/************************************************************
-	 * Convert the result value from the Tcl interpreter
-	 * into its PostgreSQL data format and return it.
-	 * Again, the function call could fire an elog and we
-	 * have to count for the current interpreter level we are
-	 * on. The save_restart from above is still good.
+	 * Check for errors reported by Tcl itself.
 	 ************************************************************/
-	if (sigsetjmp(Warn_restart, 1) != 0)
+	if (tcl_rc != TCL_OK)
 	{
-		memcpy(&Warn_restart, &save_restart, sizeof(Warn_restart));
-		pltcl_restart_in_progress = 1;
-		if (--pltcl_call_level == 0)
-			pltcl_restart_in_progress = 0;
-		siglongjmp(Warn_restart, 1);
+		UTF_BEGIN;
+		ereport(ERROR,
+				(errmsg("pltcl: %s", interp->result),
+				 errdetail("%s",
+						   UTF_U2E(Tcl_GetVar(interp, "errorInfo",
+											  TCL_GLOBAL_ONLY)))));
+		UTF_END;
 	}
 
 	/************************************************************
 	 * Disconnect from SPI manager and then create the return
-	 * values datum (if the input function does a palloc for it
+	 * value datum (if the input function does a palloc for it
 	 * this must not be allocated in the SPI memory context
 	 * because SPI_finish would free it).  But don't try to call
 	 * the result_in_func if we've been told to return a NULL;
@@ -626,11 +607,6 @@ pltcl_func_handler(PG_FUNCTION_ARGS)
 							   Int32GetDatum(-1));
 		UTF_END;
 	}
-
-	/************************************************************
-	 * Finally we may restore normal error handling.
-	 ************************************************************/
-	memcpy(&Warn_restart, &save_restart, sizeof(Warn_restart));
 
 	return retval;
 }
@@ -653,15 +629,15 @@ pltcl_trigger_handler(PG_FUNCTION_ARGS)
 	Tcl_DString tcl_newtup;
 	int			tcl_rc;
 	int			i;
-
 	int		   *modattrs;
 	Datum	   *modvalues;
 	char	   *modnulls;
-
 	int			ret_numvals;
 	CONST84 char **ret_values;
 
-	sigjmp_buf	save_restart;
+	/* Connect to SPI manager */
+	if (SPI_connect() != SPI_OK_CONNECT)
+		elog(ERROR, "could not connect to SPI manager");
 
 	/* Find or compile the function */
 	prodesc = compile_pltcl_function(fcinfo->flinfo->fn_oid,
@@ -681,23 +657,8 @@ pltcl_trigger_handler(PG_FUNCTION_ARGS)
 	Tcl_DStringInit(&tcl_cmd);
 	Tcl_DStringInit(&tcl_trigtup);
 	Tcl_DStringInit(&tcl_newtup);
-
-	/************************************************************
-	 * We call external functions below - care for elog(ERROR)
-	 ************************************************************/
-	memcpy(&save_restart, &Warn_restart, sizeof(save_restart));
-	if (sigsetjmp(Warn_restart, 1) != 0)
+	PG_TRY();
 	{
-		memcpy(&Warn_restart, &save_restart, sizeof(Warn_restart));
-		Tcl_DStringFree(&tcl_cmd);
-		Tcl_DStringFree(&tcl_trigtup);
-		Tcl_DStringFree(&tcl_newtup);
-		pltcl_restart_in_progress = 1;
-		if (--pltcl_call_level == 0)
-			pltcl_restart_in_progress = 0;
-		siglongjmp(Warn_restart, 1);
-	}
-
 	/* The procedure name */
 	Tcl_DStringAppendElement(&tcl_cmd, prodesc->proname);
 
@@ -799,55 +760,54 @@ pltcl_trigger_handler(PG_FUNCTION_ARGS)
 	else
 		elog(ERROR, "unrecognized LEVEL tg_event: %u", trigdata->tg_event);
 
-	memcpy(&Warn_restart, &save_restart, sizeof(Warn_restart));
+	/* Finally append the arguments from CREATE TRIGGER */
+	for (i = 0; i < trigdata->tg_trigger->tgnargs; i++)
+		Tcl_DStringAppendElement(&tcl_cmd, trigdata->tg_trigger->tgargs[i]);
+
+	}
+	PG_CATCH();
+	{
+		Tcl_DStringFree(&tcl_cmd);
+		Tcl_DStringFree(&tcl_trigtup);
+		Tcl_DStringFree(&tcl_newtup);
+		PG_RE_THROW();
+	}
+	PG_END_TRY();
 	Tcl_DStringFree(&tcl_trigtup);
 	Tcl_DStringFree(&tcl_newtup);
 
 	/************************************************************
-	 * Finally append the arguments from CREATE TRIGGER
-	 ************************************************************/
-	for (i = 0; i < trigdata->tg_trigger->tgnargs; i++)
-		Tcl_DStringAppendElement(&tcl_cmd, trigdata->tg_trigger->tgargs[i]);
-
-	/************************************************************
 	 * Call the Tcl function
+	 *
+	 * We assume no PG error can be thrown directly from this call.
 	 ************************************************************/
 	tcl_rc = Tcl_GlobalEval(interp, Tcl_DStringValue(&tcl_cmd));
 	Tcl_DStringFree(&tcl_cmd);
 
 	/************************************************************
-	 * Check the return code from Tcl and handle
-	 * our special restart mechanism to get rid
-	 * of all nested call levels on transaction
-	 * abort.
+	 * If there was an error in a PG callback, propagate that
+	 * no matter what Tcl claims about its success.
 	 ************************************************************/
-	if (tcl_rc == TCL_ERROR || pltcl_restart_in_progress)
+	if (pltcl_error_in_progress)
 	{
-		if (!pltcl_restart_in_progress)
-		{
-			pltcl_restart_in_progress = 1;
-			if (--pltcl_call_level == 0)
-				pltcl_restart_in_progress = 0;
-			UTF_BEGIN;
-			ereport(ERROR,
-					(errmsg("pltcl: %s", interp->result),
-					 errdetail("%s",
-							   UTF_U2E(Tcl_GetVar(interp, "errorInfo",
-												  TCL_GLOBAL_ONLY)))));
-			UTF_END;
-		}
-		if (--pltcl_call_level == 0)
-			pltcl_restart_in_progress = 0;
-		siglongjmp(Warn_restart, 1);
+		ErrorData *edata = pltcl_error_in_progress;
+
+		pltcl_error_in_progress = NULL;
+		ReThrowError(edata);
 	}
 
-	switch (tcl_rc)
+	/************************************************************
+	 * Check for errors reported by Tcl itself.
+	 ************************************************************/
+	if (tcl_rc != TCL_OK)
 	{
-		case TCL_OK:
-			break;
-
-		default:
-			elog(ERROR, "unsupported TCL return code: %d", tcl_rc);
+		UTF_BEGIN;
+		ereport(ERROR,
+				(errmsg("pltcl: %s", interp->result),
+				 errdetail("%s",
+						   UTF_U2E(Tcl_GetVar(interp, "errorInfo",
+											  TCL_GLOBAL_ONLY)))));
+		UTF_END;
 	}
 
 	/************************************************************
@@ -871,11 +831,12 @@ pltcl_trigger_handler(PG_FUNCTION_ARGS)
 		elog(ERROR, "could not split return value from trigger: %s",
 			 interp->result);
 
-	if (ret_numvals % 2 != 0)
+	/* Use a TRY to ensure ret_values will get freed */
+	PG_TRY();
 	{
-		ckfree((char *) ret_values);
+
+	if (ret_numvals % 2 != 0)
 		elog(ERROR, "invalid return list from trigger - must have even # of elements");
-	}
 
 	modattrs = (int *) palloc(tupdesc->natts * sizeof(int));
 	modvalues = (Datum *) palloc(tupdesc->natts * sizeof(Datum));
@@ -887,19 +848,6 @@ pltcl_trigger_handler(PG_FUNCTION_ARGS)
 
 	modnulls = palloc(tupdesc->natts);
 	memset(modnulls, 'n', tupdesc->natts);
-
-	/************************************************************
-	 * Care for possible elog(ERROR)'s below
-	 ************************************************************/
-	if (sigsetjmp(Warn_restart, 1) != 0)
-	{
-		memcpy(&Warn_restart, &save_restart, sizeof(Warn_restart));
-		ckfree((char *) ret_values);
-		pltcl_restart_in_progress = 1;
-		if (--pltcl_call_level == 0)
-			pltcl_restart_in_progress = 0;
-		siglongjmp(Warn_restart, 1);
-	}
 
 	for (i = 0; i < ret_numvals; i += 2)
 	{
@@ -970,8 +918,14 @@ pltcl_trigger_handler(PG_FUNCTION_ARGS)
 	if (rettup == NULL)
 		elog(ERROR, "SPI_modifytuple() failed - RC = %d", SPI_result);
 
+	}
+	PG_CATCH();
+	{
+		ckfree((char *) ret_values);
+		PG_RE_THROW();
+	}
+	PG_END_TRY();
 	ckfree((char *) ret_values);
-	memcpy(&Warn_restart, &save_restart, sizeof(Warn_restart));
 
 	return rettup;
 }
@@ -1317,13 +1271,16 @@ pltcl_elog(ClientData cdata, Tcl_Interp *interp,
 		   int argc, CONST84 char *argv[])
 {
 	volatile int level;
-	sigjmp_buf	save_restart;
+	MemoryContext oldcontext;
 
 	/************************************************************
-	 * Suppress messages during the restart process
+	 * Suppress messages if an error is already declared
 	 ************************************************************/
-	if (pltcl_restart_in_progress)
+	if (pltcl_error_in_progress)
+	{
+		Tcl_SetResult(interp, "Transaction aborted", TCL_VOLATILE);
 		return TCL_ERROR;
+	}
 
 	if (argc != 3)
 	{
@@ -1354,26 +1311,25 @@ pltcl_elog(ClientData cdata, Tcl_Interp *interp,
 	}
 
 	/************************************************************
-	 * Catch the longjmp from elog() and begin a controlled
-	 * return though all interpreter levels if it happens
+	 * If elog() throws an error, catch and save it, then return
+	 * error indication to Tcl interpreter.
 	 ************************************************************/
-	memcpy(&save_restart, &Warn_restart, sizeof(save_restart));
-	if (sigsetjmp(Warn_restart, 1) != 0)
+	oldcontext = CurrentMemoryContext;
+	PG_TRY();
 	{
-		memcpy(&Warn_restart, &save_restart, sizeof(Warn_restart));
-		pltcl_restart_in_progress = 1;
+		UTF_BEGIN;
+		elog(level, "%s", UTF_U2E(argv[2]));
+		UTF_END;
+	}
+	PG_CATCH();
+	{
+		MemoryContextSwitchTo(oldcontext);
+		pltcl_error_in_progress = CopyErrorData();
+		FlushErrorState();
 		return TCL_ERROR;
 	}
+	PG_END_TRY();
 
-	/************************************************************
-	 * Call elog(), restore the original restart address
-	 * and return to the caller (if no longjmp)
-	 ************************************************************/
-	UTF_BEGIN;
-	elog(level, "%s", UTF_U2E(argv[2]));
-	UTF_END;
-
-	memcpy(&Warn_restart, &save_restart, sizeof(Warn_restart));
 	return TCL_OK;
 }
 
@@ -1535,6 +1491,7 @@ static int
 pltcl_SPI_exec(ClientData cdata, Tcl_Interp *interp,
 			   int argc, CONST84 char *argv[])
 {
+	volatile int my_rc;
 	int			spi_rc;
 	char		buf[64];
 	int			count = 0;
@@ -1546,17 +1503,20 @@ pltcl_SPI_exec(ClientData cdata, Tcl_Interp *interp,
 	HeapTuple  *volatile tuples;
 	volatile TupleDesc tupdesc = NULL;
 	SPITupleTable *tuptable;
-	sigjmp_buf	save_restart;
+	MemoryContext oldcontext;
 
 	char	   *usage = "syntax error - 'SPI_exec "
 	"?-count n? "
 	"?-array name? query ?loop body?";
 
 	/************************************************************
-	 * Don't do anything if we are already in restart mode
+	 * Don't do anything if we are already in error mode
 	 ************************************************************/
-	if (pltcl_restart_in_progress)
+	if (pltcl_error_in_progress)
+	{
+		Tcl_SetResult(interp, "Transaction aborted", TCL_VOLATILE);
 		return TCL_ERROR;
+	}
 
 	/************************************************************
 	 * Check the call syntax and get the count option
@@ -1604,25 +1564,24 @@ pltcl_SPI_exec(ClientData cdata, Tcl_Interp *interp,
 	}
 
 	/************************************************************
-	 * Prepare to start a controlled return through all
-	 * interpreter levels on transaction abort
-	 ************************************************************/
-	memcpy(&save_restart, &Warn_restart, sizeof(save_restart));
-	if (sigsetjmp(Warn_restart, 1) != 0)
-	{
-		memcpy(&Warn_restart, &save_restart, sizeof(Warn_restart));
-		pltcl_restart_in_progress = 1;
-		Tcl_SetResult(interp, "Transaction abort", TCL_VOLATILE);
-		return TCL_ERROR;
-	}
-
-	/************************************************************
 	 * Execute the query and handle return codes
 	 ************************************************************/
-	UTF_BEGIN;
-	spi_rc = SPI_exec(UTF_U2E(argv[query_idx]), count);
-	UTF_END;
-	memcpy(&Warn_restart, &save_restart, sizeof(Warn_restart));
+	oldcontext = CurrentMemoryContext;
+	PG_TRY();
+	{
+		UTF_BEGIN;
+		spi_rc = SPI_exec(UTF_U2E(argv[query_idx]), count);
+		UTF_END;
+	}
+	PG_CATCH();
+	{
+		MemoryContextSwitchTo(oldcontext);
+		pltcl_error_in_progress = CopyErrorData();
+		FlushErrorState();
+		Tcl_SetResult(interp, "Transaction aborted", TCL_VOLATILE);
+		return TCL_ERROR;
+	}
+	PG_END_TRY();
 
 	switch (spi_rc)
 	{
@@ -1687,83 +1646,80 @@ pltcl_SPI_exec(ClientData cdata, Tcl_Interp *interp,
 	}
 
 	/************************************************************
-	 * Only SELECT queries fall through to here - remember the
-	 * tuples we got
+	 * Only SELECT queries fall through to here - process the tuples we got
 	 ************************************************************/
-
 	ntuples = SPI_processed;
+	tuptable = SPI_tuptable;
 	if (ntuples > 0)
 	{
-		tuples = SPI_tuptable->vals;
-		tupdesc = SPI_tuptable->tupdesc;
+		tuples = tuptable->vals;
+		tupdesc = tuptable->tupdesc;
 	}
 
-	/************************************************************
-	 * Again prepare for elog(ERROR)
-	 ************************************************************/
-	if (sigsetjmp(Warn_restart, 1) != 0)
+	my_rc = TCL_OK;
+	PG_TRY();
 	{
-		memcpy(&Warn_restart, &save_restart, sizeof(Warn_restart));
-		pltcl_restart_in_progress = 1;
-		Tcl_SetResult(interp, "Transaction abort", TCL_VOLATILE);
-		return TCL_ERROR;
-	}
-
-	/************************************************************
-	 * If there is no loop body given, just set the variables
-	 * from the first tuple (if any) and return the number of
-	 * tuples selected
-	 ************************************************************/
-	if (argc == query_idx + 1)
-	{
-		if (ntuples > 0)
-			pltcl_set_tuple_values(interp, arrayname, 0, tuples[0], tupdesc);
-		snprintf(buf, sizeof(buf), "%d", ntuples);
-		Tcl_SetResult(interp, buf, TCL_VOLATILE);
-		SPI_freetuptable(SPI_tuptable);
-		memcpy(&Warn_restart, &save_restart, sizeof(Warn_restart));
-		return TCL_OK;
-	}
-
-	tuptable = SPI_tuptable;
-
-	/************************************************************
-	 * There is a loop body - process all tuples and evaluate
-	 * the body on each
-	 ************************************************************/
-	query_idx++;
-	for (i = 0; i < ntuples; i++)
-	{
-		pltcl_set_tuple_values(interp, arrayname, i, tuples[i], tupdesc);
-
-		loop_rc = Tcl_Eval(interp, argv[query_idx]);
-
-		if (loop_rc == TCL_OK)
-			continue;
-		if (loop_rc == TCL_CONTINUE)
-			continue;
-		if (loop_rc == TCL_RETURN)
+		if (argc == query_idx + 1)
 		{
-			SPI_freetuptable(tuptable);
-			memcpy(&Warn_restart, &save_restart, sizeof(Warn_restart));
-			return TCL_RETURN;
+			/************************************************************
+			 * If there is no loop body given, just set the variables
+			 * from the first tuple (if any)
+			 ************************************************************/
+			if (ntuples > 0)
+				pltcl_set_tuple_values(interp, arrayname, 0,
+									   tuples[0], tupdesc);
 		}
-		if (loop_rc == TCL_BREAK)
-			break;
+		else
+		{
+			/************************************************************
+			 * There is a loop body - process all tuples and evaluate
+			 * the body on each
+			 ************************************************************/
+			query_idx++;
+			for (i = 0; i < ntuples; i++)
+			{
+				pltcl_set_tuple_values(interp, arrayname, i,
+									   tuples[i], tupdesc);
+
+				loop_rc = Tcl_Eval(interp, argv[query_idx]);
+
+				if (loop_rc == TCL_OK)
+					continue;
+				if (loop_rc == TCL_CONTINUE)
+					continue;
+				if (loop_rc == TCL_RETURN)
+				{
+					my_rc = TCL_RETURN;
+					break;
+				}
+				if (loop_rc == TCL_BREAK)
+					break;
+				my_rc = TCL_ERROR;
+				break;
+			}
+		}
+
 		SPI_freetuptable(tuptable);
-		memcpy(&Warn_restart, &save_restart, sizeof(Warn_restart));
+	}
+	PG_CATCH();
+	{
+		MemoryContextSwitchTo(oldcontext);
+		pltcl_error_in_progress = CopyErrorData();
+		FlushErrorState();
+		Tcl_SetResult(interp, "Transaction aborted", TCL_VOLATILE);
 		return TCL_ERROR;
 	}
-
-	SPI_freetuptable(tuptable);
+	PG_END_TRY();
 
 	/************************************************************
 	 * Finally return the number of tuples
 	 ************************************************************/
-	memcpy(&Warn_restart, &save_restart, sizeof(Warn_restart));
-	snprintf(buf, sizeof(buf), "%d", ntuples);
-	Tcl_SetResult(interp, buf, TCL_VOLATILE);
-	return TCL_OK;
+	if (my_rc == TCL_OK)
+	{
+		snprintf(buf, sizeof(buf), "%d", ntuples);
+		Tcl_SetResult(interp, buf, TCL_VOLATILE);
+	}
+	return my_rc;
 }
 
 
@@ -1787,14 +1743,17 @@ pltcl_SPI_prepare(ClientData cdata, Tcl_Interp *interp,
 	HeapTuple	typeTup;
 	Tcl_HashEntry *hashent;
 	int			hashnew;
-	sigjmp_buf	save_restart;
 	Tcl_HashTable *query_hash;
+	MemoryContext oldcontext;
 
 	/************************************************************
-	 * Don't do anything if we are already in restart mode
+	 * Don't do anything if we are already in error mode
 	 ************************************************************/
-	if (pltcl_restart_in_progress)
+	if (pltcl_error_in_progress)
+	{
+		Tcl_SetResult(interp, "Transaction aborted", TCL_VOLATILE);
 		return TCL_ERROR;
+	}
 
 	/************************************************************
 	 * Check the call syntax
@@ -1822,23 +1781,9 @@ pltcl_SPI_prepare(ClientData cdata, Tcl_Interp *interp,
 	qdesc->arginfuncs = (FmgrInfo *) malloc(nargs * sizeof(FmgrInfo));
 	qdesc->argtypioparams = (Oid *) malloc(nargs * sizeof(Oid));
 
-	/************************************************************
-	 * Prepare to start a controlled return through all
-	 * interpreter levels on transaction abort
-	 ************************************************************/
-	memcpy(&save_restart, &Warn_restart, sizeof(save_restart));
-	if (sigsetjmp(Warn_restart, 1) != 0)
+	oldcontext = CurrentMemoryContext;
+	PG_TRY();
 	{
-		memcpy(&Warn_restart, &save_restart, sizeof(Warn_restart));
-		pltcl_restart_in_progress = 1;
-		free(qdesc->argtypes);
-		free(qdesc->arginfuncs);
-		free(qdesc->argtypioparams);
-		free(qdesc);
-		ckfree((char *) args);
-		return TCL_ERROR;
-	}
-
 	/************************************************************
 	 * Lookup the argument types by name in the system cache
 	 * and remember the required information for input conversion
@@ -1882,10 +1827,7 @@ pltcl_SPI_prepare(ClientData cdata, Tcl_Interp *interp,
 	UTF_END;
 
 	if (plan == NULL)
-	{
-		memcpy(&Warn_restart, &save_restart, sizeof(Warn_restart));
 		elog(ERROR, "SPI_prepare() failed");
-	}
 
 	/************************************************************
 	 * Save the plan into permanent memory (right now it's in the
@@ -1893,10 +1835,8 @@ pltcl_SPI_prepare(ClientData cdata, Tcl_Interp *interp,
 	 ************************************************************/
 	qdesc->plan = SPI_saveplan(plan);
 	if (qdesc->plan == NULL)
-	{
-		memcpy(&Warn_restart, &save_restart, sizeof(Warn_restart));
 		elog(ERROR, "SPI_saveplan() failed");
-	}
+
 	/* Release the procCxt copy to avoid within-function memory leak */
 	SPI_freeplan(plan);
 
@@ -1909,7 +1849,21 @@ pltcl_SPI_prepare(ClientData cdata, Tcl_Interp *interp,
 	else
 		query_hash = pltcl_safe_query_hash;
 
-	memcpy(&Warn_restart, &save_restart, sizeof(Warn_restart));
+	}
+	PG_CATCH();
+	{
+		MemoryContextSwitchTo(oldcontext);
+		pltcl_error_in_progress = CopyErrorData();
+		FlushErrorState();
+		free(qdesc->argtypes);
+		free(qdesc->arginfuncs);
+		free(qdesc->argtypioparams);
+		free(qdesc);
+		ckfree((char *) args);
+		Tcl_SetResult(interp, "Transaction aborted", TCL_VOLATILE);
+		return TCL_ERROR;
+	}
+	PG_END_TRY();
 
 	hashent = Tcl_CreateHashEntry(query_hash, qdesc->qname, &hashnew);
 	Tcl_SetHashValue(hashent, (ClientData) qdesc);
@@ -1928,6 +1882,7 @@ static int
 pltcl_SPI_execp(ClientData cdata, Tcl_Interp *interp,
 				int argc, CONST84 char *argv[])
 {
+	volatile int my_rc;
 	int			spi_rc;
 	char		buf[64];
 	volatile int i;
@@ -1940,13 +1895,13 @@ pltcl_SPI_execp(ClientData cdata, Tcl_Interp *interp,
 	CONST84 char *volatile arrayname = NULL;
 	int			count = 0;
 	int			callnargs;
-	static CONST84 char **callargs = NULL;
+	CONST84 char **callargs;
 	int			loop_rc;
 	int			ntuples;
 	HeapTuple  *volatile tuples = NULL;
 	volatile TupleDesc tupdesc = NULL;
 	SPITupleTable *tuptable;
-	sigjmp_buf	save_restart;
+	volatile MemoryContext oldcontext;
 	Tcl_HashTable *query_hash;
 
 	char	   *usage = "syntax error - 'SPI_execp "
@@ -1954,19 +1909,13 @@ pltcl_SPI_execp(ClientData cdata, Tcl_Interp *interp,
 	"?-array name? query ?args? ?loop body?";
 
 	/************************************************************
-	 * Tidy up from an earlier abort
+	 * Don't do anything if we are already in error mode
 	 ************************************************************/
-	if (callargs != NULL)
+	if (pltcl_error_in_progress)
 	{
-		ckfree((char *) callargs);
-		callargs = NULL;
-	}
-
-	/************************************************************
-	 * Don't do anything if we are already in restart mode
-	 ************************************************************/
-	if (pltcl_restart_in_progress)
+		Tcl_SetResult(interp, "Transaction aborted", TCL_VOLATILE);
 		return TCL_ERROR;
+	}
 
 	/************************************************************
 	 * Get the options and check syntax
@@ -2074,27 +2023,7 @@ pltcl_SPI_execp(ClientData cdata, Tcl_Interp *interp,
 			Tcl_SetResult(interp,
 			"argument list length doesn't match # of arguments for query",
 						  TCL_VOLATILE);
-			if (callargs != NULL)
-			{
-				ckfree((char *) callargs);
-				callargs = NULL;
-			}
-			return TCL_ERROR;
-		}
-
-		/************************************************************
-		 * Prepare to start a controlled return through all
-		 * interpreter levels on transaction abort during the
-		 * parse of the arguments
-		 ************************************************************/
-		memcpy(&save_restart, &Warn_restart, sizeof(save_restart));
-		if (sigsetjmp(Warn_restart, 1) != 0)
-		{
-			memcpy(&Warn_restart, &save_restart, sizeof(Warn_restart));
 			ckfree((char *) callargs);
-			callargs = NULL;
-			pltcl_restart_in_progress = 1;
-			Tcl_SetResult(interp, "Transaction abort", TCL_VOLATILE);
 			return TCL_ERROR;
 		}
 
@@ -2102,33 +2031,42 @@ pltcl_SPI_execp(ClientData cdata, Tcl_Interp *interp,
 		 * Setup the value array for the SPI_execp() using
 		 * the type specific input functions
 		 ************************************************************/
-		argvalues = (Datum *) palloc(callnargs * sizeof(Datum));
-
-		for (j = 0; j < callnargs; j++)
+		oldcontext = CurrentMemoryContext;
+		PG_TRY();
 		{
-			if (nulls && nulls[j] == 'n')
+			argvalues = (Datum *) palloc(callnargs * sizeof(Datum));
+
+			for (j = 0; j < callnargs; j++)
 			{
-				/* don't try to convert the input for a null */
-				argvalues[j] = (Datum) 0;
-			}
-			else
-			{
-				UTF_BEGIN;
-				argvalues[j] =
-					FunctionCall3(&qdesc->arginfuncs[j],
-								  CStringGetDatum(UTF_U2E(callargs[j])),
-								  ObjectIdGetDatum(qdesc->argtypioparams[j]),
-								  Int32GetDatum(-1));
-				UTF_END;
+				if (nulls && nulls[j] == 'n')
+				{
+					/* don't try to convert the input for a null */
+					argvalues[j] = (Datum) 0;
+				}
+				else
+				{
+					UTF_BEGIN;
+					argvalues[j] =
+						FunctionCall3(&qdesc->arginfuncs[j],
+									  CStringGetDatum(UTF_U2E(callargs[j])),
+									  ObjectIdGetDatum(qdesc->argtypioparams[j]),
+									  Int32GetDatum(-1));
+					UTF_END;
+				}
 			}
 		}
+		PG_CATCH();
+		{
+			ckfree((char *) callargs);
+			MemoryContextSwitchTo(oldcontext);
+			pltcl_error_in_progress = CopyErrorData();
+			FlushErrorState();
+			Tcl_SetResult(interp, "Transaction aborted", TCL_VOLATILE);
+			return TCL_ERROR;
+		}
+		PG_END_TRY();
 
-		/************************************************************
-		 * Free the splitted argument value list
-		 ************************************************************/
-		memcpy(&Warn_restart, &save_restart, sizeof(Warn_restart));
 		ckfree((char *) callargs);
-		callargs = NULL;
 	}
 	else
 		callnargs = 0;
@@ -2140,23 +2078,22 @@ pltcl_SPI_execp(ClientData cdata, Tcl_Interp *interp,
 	loop_body = i;
 
 	/************************************************************
-	 * Prepare to start a controlled return through all
-	 * interpreter levels on transaction abort
-	 ************************************************************/
-	memcpy(&save_restart, &Warn_restart, sizeof(save_restart));
-	if (sigsetjmp(Warn_restart, 1) != 0)
-	{
-		memcpy(&Warn_restart, &save_restart, sizeof(Warn_restart));
-		pltcl_restart_in_progress = 1;
-		Tcl_SetResult(interp, "Transaction abort", TCL_VOLATILE);
-		return TCL_ERROR;
-	}
-
-	/************************************************************
 	 * Execute the plan
 	 ************************************************************/
-	spi_rc = SPI_execp(qdesc->plan, argvalues, nulls, count);
-	memcpy(&Warn_restart, &save_restart, sizeof(Warn_restart));
+	oldcontext = CurrentMemoryContext;
+	PG_TRY();
+	{
+		spi_rc = SPI_execp(qdesc->plan, argvalues, nulls, count);
+	}
+	PG_CATCH();
+	{
+		MemoryContextSwitchTo(oldcontext);
+		pltcl_error_in_progress = CopyErrorData();
+		FlushErrorState();
+		Tcl_SetResult(interp, "Transaction aborted", TCL_VOLATILE);
+		return TCL_ERROR;
+	}
+	PG_END_TRY();
 
 	/************************************************************
 	 * Check the return code from SPI_execp()
@@ -2224,85 +2161,79 @@ pltcl_SPI_execp(ClientData cdata, Tcl_Interp *interp,
 	}
 
 	/************************************************************
-	 * Only SELECT queries fall through to here - remember the
-	 * tuples we got
+	 * Only SELECT queries fall through to here - process the tuples we got
 	 ************************************************************/
-
 	ntuples = SPI_processed;
+	tuptable = SPI_tuptable;
 	if (ntuples > 0)
 	{
-		tuples = SPI_tuptable->vals;
-		tupdesc = SPI_tuptable->tupdesc;
+		tuples = tuptable->vals;
+		tupdesc = tuptable->tupdesc;
 	}
 
-	/************************************************************
-	 * Prepare to start a controlled return through all
-	 * interpreter levels on transaction abort during
-	 * the ouput conversions of the results
-	 ************************************************************/
-	memcpy(&save_restart, &Warn_restart, sizeof(save_restart));
-	if (sigsetjmp(Warn_restart, 1) != 0)
+	my_rc = TCL_OK;
+	PG_TRY();
 	{
-		memcpy(&Warn_restart, &save_restart, sizeof(Warn_restart));
-		pltcl_restart_in_progress = 1;
-		Tcl_SetResult(interp, "Transaction abort", TCL_VOLATILE);
-		return TCL_ERROR;
-	}
-
-	/************************************************************
-	 * If there is no loop body given, just set the variables
-	 * from the first tuple (if any) and return the number of
-	 * tuples selected
-	 ************************************************************/
-	if (loop_body >= argc)
-	{
-		if (ntuples > 0)
-			pltcl_set_tuple_values(interp, arrayname, 0, tuples[0], tupdesc);
-		memcpy(&Warn_restart, &save_restart, sizeof(Warn_restart));
-		snprintf(buf, sizeof(buf), "%d", ntuples);
-		Tcl_SetResult(interp, buf, TCL_VOLATILE);
-		SPI_freetuptable(SPI_tuptable);
-		return TCL_OK;
-	}
-
-	tuptable = SPI_tuptable;
-
-	/************************************************************
-	 * There is a loop body - process all tuples and evaluate
-	 * the body on each
-	 ************************************************************/
-	for (i = 0; i < ntuples; i++)
-	{
-		pltcl_set_tuple_values(interp, arrayname, i, tuples[i], tupdesc);
-
-		loop_rc = Tcl_Eval(interp, argv[loop_body]);
-
-		if (loop_rc == TCL_OK)
-			continue;
-		if (loop_rc == TCL_CONTINUE)
-			continue;
-		if (loop_rc == TCL_RETURN)
+		if (loop_body >= argc)
 		{
-			SPI_freetuptable(tuptable);
-			memcpy(&Warn_restart, &save_restart, sizeof(Warn_restart));
-			return TCL_RETURN;
+			/************************************************************
+			 * If there is no loop body given, just set the variables
+			 * from the first tuple (if any)
+			 ************************************************************/
+			if (ntuples > 0)
+				pltcl_set_tuple_values(interp, arrayname, 0,
+									   tuples[0], tupdesc);
 		}
-		if (loop_rc == TCL_BREAK)
-			break;
+		else
+		{
+			/************************************************************
+			 * There is a loop body - process all tuples and evaluate
+			 * the body on each
+			 ************************************************************/
+			for (i = 0; i < ntuples; i++)
+			{
+				pltcl_set_tuple_values(interp, arrayname, i,
+									   tuples[i], tupdesc);
+
+				loop_rc = Tcl_Eval(interp, argv[loop_body]);
+
+				if (loop_rc == TCL_OK)
+					continue;
+				if (loop_rc == TCL_CONTINUE)
+					continue;
+				if (loop_rc == TCL_RETURN)
+				{
+					my_rc = TCL_RETURN;
+					break;
+				}
+				if (loop_rc == TCL_BREAK)
+					break;
+				my_rc = TCL_ERROR;
+				break;
+			}
+		}
+
 		SPI_freetuptable(tuptable);
-		memcpy(&Warn_restart, &save_restart, sizeof(Warn_restart));
+	}
+	PG_CATCH();
+	{
+		MemoryContextSwitchTo(oldcontext);
+		pltcl_error_in_progress = CopyErrorData();
+		FlushErrorState();
+		Tcl_SetResult(interp, "Transaction aborted", TCL_VOLATILE);
 		return TCL_ERROR;
 	}
-
-	SPI_freetuptable(tuptable);
+	PG_END_TRY();
 
 	/************************************************************
 	 * Finally return the number of tuples
 	 ************************************************************/
-	memcpy(&Warn_restart, &save_restart, sizeof(Warn_restart));
-	snprintf(buf, sizeof(buf), "%d", ntuples);
-	Tcl_SetResult(interp, buf, TCL_VOLATILE);
-	return TCL_OK;
+	if (my_rc == TCL_OK)
+	{
+		snprintf(buf, sizeof(buf), "%d", ntuples);
+		Tcl_SetResult(interp, buf, TCL_VOLATILE);
+	}
+	return my_rc;
 }
 
 

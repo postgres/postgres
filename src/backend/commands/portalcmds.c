@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/portalcmds.c,v 1.29 2004/07/17 03:28:47 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/portalcmds.c,v 1.30 2004/07/31 00:45:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -259,8 +259,18 @@ PortalCleanup(Portal portal)
 
 			/* We must make the portal's resource owner current */
 			saveResourceOwner = CurrentResourceOwner;
-			CurrentResourceOwner = portal->resowner;
-			ExecutorEnd(queryDesc);
+			PG_TRY();
+			{
+				CurrentResourceOwner = portal->resowner;
+				ExecutorEnd(queryDesc);
+			}
+			PG_CATCH();
+			{
+				/* Ensure CurrentResourceOwner is restored on error */
+				CurrentResourceOwner = saveResourceOwner;
+				PG_RE_THROW();
+			}
+			PG_END_TRY();
 			CurrentResourceOwner = saveResourceOwner;
 		}
 	}
@@ -317,85 +327,94 @@ PersistHoldablePortal(Portal portal)
 	portal->status = PORTAL_ACTIVE;
 
 	/*
-	 * Set global portal context pointers.
+	 * Set up global portal context pointers.
 	 */
 	saveActivePortal = ActivePortal;
-	ActivePortal = portal;
 	saveResourceOwner = CurrentResourceOwner;
-	CurrentResourceOwner = portal->resowner;
 	savePortalContext = PortalContext;
-	PortalContext = PortalGetHeapMemory(portal);
 	saveQueryContext = QueryContext;
-	QueryContext = portal->queryContext;
-
-	MemoryContextSwitchTo(PortalContext);
-
-	/*
-	 * Rewind the executor: we need to store the entire result set in the
-	 * tuplestore, so that subsequent backward FETCHs can be processed.
-	 */
-	ExecutorRewind(queryDesc);
-
-	/* Change the destination to output to the tuplestore */
-	queryDesc->dest = CreateDestReceiver(Tuplestore, portal);
-
-	/* Fetch the result set into the tuplestore */
-	ExecutorRun(queryDesc, ForwardScanDirection, 0L);
-
-	(*queryDesc->dest->rDestroy) (queryDesc->dest);
-	queryDesc->dest = NULL;
-
-	/*
-	 * Now shut down the inner executor.
-	 */
-	portal->queryDesc = NULL;	/* prevent double shutdown */
-	ExecutorEnd(queryDesc);
-
-	/*
-	 * Reset the position in the result set: ideally, this could be
-	 * implemented by just skipping straight to the tuple # that we need
-	 * to be at, but the tuplestore API doesn't support that. So we start
-	 * at the beginning of the tuplestore and iterate through it until we
-	 * reach where we need to be.  FIXME someday?
-	 */
-	MemoryContextSwitchTo(portal->holdContext);
-
-	if (!portal->atEnd)
+	PG_TRY();
 	{
-		long		store_pos;
+		ActivePortal = portal;
+		CurrentResourceOwner = portal->resowner;
+		PortalContext = PortalGetHeapMemory(portal);
+		QueryContext = portal->queryContext;
 
-		if (portal->posOverflow)	/* oops, cannot trust portalPos */
-			ereport(ERROR,
-					(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-					 errmsg("could not reposition held cursor")));
+		MemoryContextSwitchTo(PortalContext);
 
-		tuplestore_rescan(portal->holdStore);
+		/*
+		 * Rewind the executor: we need to store the entire result set in the
+		 * tuplestore, so that subsequent backward FETCHs can be processed.
+		 */
+		ExecutorRewind(queryDesc);
 
-		for (store_pos = 0; store_pos < portal->portalPos; store_pos++)
+		/* Change the destination to output to the tuplestore */
+		queryDesc->dest = CreateDestReceiver(Tuplestore, portal);
+
+		/* Fetch the result set into the tuplestore */
+		ExecutorRun(queryDesc, ForwardScanDirection, 0L);
+
+		(*queryDesc->dest->rDestroy) (queryDesc->dest);
+		queryDesc->dest = NULL;
+
+		/*
+		 * Now shut down the inner executor.
+		 */
+		portal->queryDesc = NULL;	/* prevent double shutdown */
+		ExecutorEnd(queryDesc);
+
+		/*
+		 * Reset the position in the result set: ideally, this could be
+		 * implemented by just skipping straight to the tuple # that we need
+		 * to be at, but the tuplestore API doesn't support that. So we start
+		 * at the beginning of the tuplestore and iterate through it until we
+		 * reach where we need to be.  FIXME someday?
+		 */
+		MemoryContextSwitchTo(portal->holdContext);
+
+		if (!portal->atEnd)
 		{
-			HeapTuple	tup;
-			bool		should_free;
+			long		store_pos;
 
-			tup = tuplestore_gettuple(portal->holdStore, true,
-									  &should_free);
+			if (portal->posOverflow)	/* oops, cannot trust portalPos */
+				ereport(ERROR,
+						(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+						 errmsg("could not reposition held cursor")));
 
-			if (tup == NULL)
-				elog(ERROR, "unexpected end of tuple stream");
+			tuplestore_rescan(portal->holdStore);
 
-			if (should_free)
-				pfree(tup);
+			for (store_pos = 0; store_pos < portal->portalPos; store_pos++)
+			{
+				HeapTuple	tup;
+				bool		should_free;
+
+				tup = tuplestore_gettuple(portal->holdStore, true,
+										  &should_free);
+
+				if (tup == NULL)
+					elog(ERROR, "unexpected end of tuple stream");
+
+				if (should_free)
+					pfree(tup);
+			}
 		}
 	}
+	PG_CATCH();
+	{
+		/* Uncaught error while executing portal: mark it dead */
+		portal->status = PORTAL_FAILED;
+
+		/* Restore global vars and propagate error */
+		ActivePortal = saveActivePortal;
+		CurrentResourceOwner = saveResourceOwner;
+		PortalContext = savePortalContext;
+		QueryContext = saveQueryContext;
+
+		PG_RE_THROW();
+	}
+	PG_END_TRY();
 
 	MemoryContextSwitchTo(oldcxt);
-
-	/*
-	 * We can now release any subsidiary memory of the portal's heap
-	 * context; we'll never use it again.  The executor already dropped
-	 * its context, but this will clean up anything that glommed onto the
-	 * portal's heap via PortalContext.
-	 */
-	MemoryContextDeleteChildren(PortalGetHeapMemory(portal));
 
 	/* Mark portal not active */
 	portal->status = PORTAL_READY;
@@ -404,4 +423,12 @@ PersistHoldablePortal(Portal portal)
 	CurrentResourceOwner = saveResourceOwner;
 	PortalContext = savePortalContext;
 	QueryContext = saveQueryContext;
+
+	/*
+	 * We can now release any subsidiary memory of the portal's heap
+	 * context; we'll never use it again.  The executor already dropped
+	 * its context, but this will clean up anything that glommed onto the
+	 * portal's heap via PortalContext.
+	 */
+	MemoryContextDeleteChildren(PortalGetHeapMemory(portal));
 }

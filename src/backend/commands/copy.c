@@ -8,13 +8,12 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/copy.c,v 1.227 2004/06/16 01:26:42 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/copy.c,v 1.228 2004/07/31 00:45:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
-#include <errno.h>
 #include <unistd.h>
 #include <sys/stat.h>
 #include <netinet/in.h>
@@ -130,6 +129,9 @@ static StringInfoData line_buf;
 static bool line_buf_converted;
 
 /* non-export function prototypes */
+static void DoCopyTo(Relation rel, List *attnumlist, bool binary, bool oids,
+		 char *delim, char *null_print, bool csv_mode, char *quote,
+		 char *escape, List *force_quote_atts, bool fe_copy);
 static void CopyTo(Relation rel, List *attnumlist, bool binary, bool oids,
 	   char *delim, char *null_print, bool csv_mode, char *quote, char *escape,
 	   List *force_quote_atts);
@@ -688,6 +690,7 @@ DoCopy(const CopyStmt *stmt)
 	ListCell   *option;
 	List	   *attnamelist = stmt->attlist;
 	List	   *attnumlist;
+	bool		fe_copy = false;
 	bool		binary = false;
 	bool		oids = false;
 	bool        csv_mode = false;
@@ -1062,7 +1065,7 @@ DoCopy(const CopyStmt *stmt)
 		if (pipe)
 		{
 			if (whereToSendOutput == Remote)
-				SendCopyBegin(binary, list_length(attnumlist));
+				fe_copy = true;
 			else
 				copy_file = stdout;
 		}
@@ -1099,8 +1102,9 @@ DoCopy(const CopyStmt *stmt)
 						 errmsg("\"%s\" is a directory", filename)));
 			}
 		}
-		CopyTo(rel, attnumlist, binary, oids, delim, null_print, csv_mode,
-				quote, escape, force_quote_atts);
+
+		DoCopyTo(rel, attnumlist, binary, oids, delim, null_print, csv_mode,
+				 quote, escape, force_quote_atts, fe_copy);
 	}
 
 	if (!pipe)
@@ -1112,8 +1116,6 @@ DoCopy(const CopyStmt *stmt)
 					 errmsg("could not write to file \"%s\": %m",
 							filename)));
 	}
-	else if (whereToSendOutput == Remote && !is_from)
-		SendCopyEnd(binary);
 	pfree(attribute_buf.data);
 	pfree(line_buf.data);
 
@@ -1126,6 +1128,39 @@ DoCopy(const CopyStmt *stmt)
 	heap_close(rel, (is_from ? NoLock : AccessShareLock));
 }
 
+
+/*
+ * This intermediate routine just exists to localize the effects of setjmp
+ * so we don't need to plaster a lot of variables with "volatile".
+ */
+static void
+DoCopyTo(Relation rel, List *attnumlist, bool binary, bool oids,
+		 char *delim, char *null_print, bool csv_mode, char *quote,
+		 char *escape, List *force_quote_atts, bool fe_copy)
+{
+	PG_TRY();
+	{
+		if (fe_copy)
+			SendCopyBegin(binary, list_length(attnumlist));
+
+		CopyTo(rel, attnumlist, binary, oids, delim, null_print, csv_mode,
+			   quote, escape, force_quote_atts);
+
+		if (fe_copy)
+			SendCopyEnd(binary);
+	}
+	PG_CATCH();
+	{
+		/*
+		 * Make sure we turn off old-style COPY OUT mode upon error.
+		 * It is okay to do this in all cases, since it does nothing
+		 * if the mode is not on.
+		 */
+		pq_endcopyout(true);
+		PG_RE_THROW();
+	}
+	PG_END_TRY();
+}
 
 /*
  * Copy from relation TO file.

@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.107 2004/06/09 19:08:19 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.108 2004/07/31 00:45:46 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -39,7 +39,6 @@
 #include "pl.tab.h"
 
 #include <ctype.h>
-#include <setjmp.h>
 
 #include "access/heapam.h"
 #include "catalog/pg_proc.h"

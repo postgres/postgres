@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.284 2004/07/21 22:31:21 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.285 2004/07/31 00:45:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -228,14 +228,13 @@ void
 vacuum(VacuumStmt *vacstmt)
 {
 	const char *stmttype = vacstmt->vacuum ? "VACUUM" : "ANALYZE";
-	MemoryContext anl_context = NULL;
 	TransactionId initialOldestXmin = InvalidTransactionId;
 	TransactionId initialFreezeLimit = InvalidTransactionId;
-	bool		all_rels,
+	volatile MemoryContext anl_context = NULL;
+	volatile bool all_rels,
 				in_outer_xact,
 				use_own_xacts;
 	List	   *relations;
-	ListCell   *cur;
 
 	if (vacstmt->verbose)
 		elevel = INFO;
@@ -266,10 +265,6 @@ vacuum(VacuumStmt *vacstmt)
 	{
 		in_outer_xact = IsInTransactionChain((void *) vacstmt);
 	}
-
-	/* Turn vacuum cost accounting on or off */
-	VacuumCostActive = (VacuumCostNaptime > 0);
-	VacuumCostBalance = 0;
 
 	/*
 	 * Send info about dead objects to the statistics collector
@@ -377,57 +372,76 @@ vacuum(VacuumStmt *vacstmt)
 		CommitTransactionCommand();
 	}
 
-	/*
-	 * Loop to process each selected relation.
-	 */
-	foreach(cur, relations)
+	/* Turn vacuum cost accounting on or off */
+	PG_TRY();
 	{
-		Oid			relid = lfirst_oid(cur);
+		ListCell   *cur;
 
-		if (vacstmt->vacuum)
-		{
-			if (!vacuum_rel(relid, vacstmt, RELKIND_RELATION))
-				all_rels = false;		/* forget about updating dbstats */
-		}
-		if (vacstmt->analyze)
-		{
-			MemoryContext old_context = NULL;
+		VacuumCostActive = (VacuumCostNaptime > 0);
+		VacuumCostBalance = 0;
 
-			/*
-			 * If using separate xacts, start one for analyze. Otherwise,
-			 * we can use the outer transaction, but we still need to call
-			 * analyze_rel in a memory context that will be cleaned up on
-			 * return (else we leak memory while processing multiple
-			 * tables).
-			 */
-			if (use_own_xacts)
+		/*
+		 * Loop to process each selected relation.
+		 */
+		foreach(cur, relations)
+		{
+			Oid			relid = lfirst_oid(cur);
+
+			if (vacstmt->vacuum)
 			{
-				StartTransactionCommand();
-				SetQuerySnapshot();		/* might be needed for functions
-										 * in indexes */
+				if (!vacuum_rel(relid, vacstmt, RELKIND_RELATION))
+					all_rels = false; /* forget about updating dbstats */
 			}
-			else
-				old_context = MemoryContextSwitchTo(anl_context);
-
-			/*
-			 * Tell the buffer replacement strategy that vacuum is
-			 * causing the IO
-			 */
-			StrategyHintVacuum(true);
-
-			analyze_rel(relid, vacstmt);
-
-			StrategyHintVacuum(false);
-
-			if (use_own_xacts)
-				CommitTransactionCommand();
-			else
+			if (vacstmt->analyze)
 			{
-				MemoryContextSwitchTo(old_context);
-				MemoryContextResetAndDeleteChildren(anl_context);
+				MemoryContext old_context = NULL;
+
+				/*
+				 * If using separate xacts, start one for analyze. Otherwise,
+				 * we can use the outer transaction, but we still need to call
+				 * analyze_rel in a memory context that will be cleaned up on
+				 * return (else we leak memory while processing multiple
+				 * tables).
+				 */
+				if (use_own_xacts)
+				{
+					StartTransactionCommand();
+					SetQuerySnapshot();		/* might be needed for functions
+											 * in indexes */
+				}
+				else
+					old_context = MemoryContextSwitchTo(anl_context);
+
+				/*
+				 * Tell the buffer replacement strategy that vacuum is
+				 * causing the IO
+				 */
+				StrategyHintVacuum(true);
+
+				analyze_rel(relid, vacstmt);
+
+				StrategyHintVacuum(false);
+
+				if (use_own_xacts)
+					CommitTransactionCommand();
+				else
+				{
+					MemoryContextSwitchTo(old_context);
+					MemoryContextResetAndDeleteChildren(anl_context);
+				}
 			}
 		}
 	}
+	PG_CATCH();
+	{
+		/* Make sure cost accounting is turned off after error */
+		VacuumCostActive = false;
+		PG_RE_THROW();
+	}
+	PG_END_TRY();
+
+	/* Turn off vacuum cost accounting */
+	VacuumCostActive = false;
 
 	/*
 	 * Finish up processing.
@@ -475,9 +489,6 @@ vacuum(VacuumStmt *vacstmt)
 
 	if (anl_context)
 		MemoryContextDelete(anl_context);
-
-	/* Turn off vacuum cost accounting */
-	VacuumCostActive = false;
 }
 
 /*

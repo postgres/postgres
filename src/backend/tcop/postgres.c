@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.426 2004/07/28 22:05:46 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.427 2004/07/31 00:45:36 tgl Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -23,7 +23,6 @@
 #include <signal.h>
 #include <fcntl.h>
 #include <sys/socket.h>
-#include <errno.h>
 #if HAVE_SYS_SELECT_H
 #include <sys/select.h>
 #endif
@@ -76,12 +75,6 @@ const char *debug_query_string; /* for pgmonitor and
 
 /* Note: whereToSendOutput is initialized for the bootstrap/standalone case */
 CommandDest whereToSendOutput = Debug;
-
-/* note: these declarations had better match tcopprot.h */
-sigjmp_buf	Warn_restart;
-
-bool		Warn_restart_ready = false;
-bool		InError = false;
 
 /* flag for logging end of session */
 bool        Log_disconnections = false;
@@ -1876,7 +1869,7 @@ quickdie(SIGNAL_ARGS)
 
 	/*
 	 * Ideally this should be ereport(FATAL), but then we'd not get
-	 * control back (perhaps could fix by doing local sigsetjmp?)
+	 * control back...
 	 */
 	ereport(WARNING,
 			(errcode(ERRCODE_CRASH_SHUTDOWN),
@@ -1962,10 +1955,9 @@ StatementCancelHandler(SIGNAL_ARGS)
 	int			save_errno = errno;
 
 	/*
-	 * Don't joggle the elbow of proc_exit, nor an already-in-progress
-	 * abort
+	 * Don't joggle the elbow of proc_exit
 	 */
-	if (!proc_exit_inprogress && !InError)
+	if (!proc_exit_inprogress)
 	{
 		InterruptPending = true;
 		QueryCancelPending = true;
@@ -2148,7 +2140,6 @@ usage(const char *progname)
 }
 
 
-
 /* ----------------------------------------------------------------
  * PostgresMain
  *	   postgres main loop -- all backends, interactive or otherwise start here
@@ -2175,6 +2166,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 	int			firstchar;
 	char		stack_base;
 	StringInfoData	input_message;
+	sigjmp_buf	local_sigjmp_buf;
 	volatile bool send_rfq = true;
 	
 	/*
@@ -2772,50 +2764,61 @@ PostgresMain(int argc, char *argv[], const char *username)
 	 *
 	 * If an exception is encountered, processing resumes here so we abort
 	 * the current transaction and start a new one.
+	 *
+	 * You might wonder why this isn't coded as an infinite loop around
+	 * a PG_TRY construct.  The reason is that this is the bottom of the
+	 * exception stack, and so with PG_TRY there would be no exception
+	 * handler in force at all during the CATCH part.  By leaving the
+	 * outermost setjmp always active, we have at least some chance of
+	 * recovering from an error during error recovery.  (If we get into
+	 * an infinite loop thereby, it will soon be stopped by overflow of
+	 * elog.c's internal state stack.)
 	 */
 
-	if (sigsetjmp(Warn_restart, 1) != 0)
+	if (sigsetjmp(local_sigjmp_buf, 1) != 0)
 	{
 		/*
 		 * NOTE: if you are tempted to add more code in this if-block,
-		 * consider the probability that it should be in
-		 * AbortTransaction() instead.
-		 *
-		 * Make sure we're not interrupted while cleaning up.  Also forget
-		 * any pending QueryCancel request, since we're aborting anyway.
-		 * Force InterruptHoldoffCount to a known state in case we
-		 * ereport'd from inside a holdoff section.
+		 * consider the high probability that it should be in
+		 * AbortTransaction() instead.  The only stuff done directly here
+		 * should be stuff that is guaranteed to apply *only* for outer-level
+		 * error recovery, such as adjusting the FE/BE protocol status.
 		 */
-		ImmediateInterruptOK = false;
+
+		/* Since not using PG_TRY, must reset error stack by hand */
+		error_context_stack = NULL;
+
+		/* Prevent interrupts while cleaning up */
+		HOLD_INTERRUPTS();
+
+		/*
+		 * Forget any pending QueryCancel request, since we're returning
+		 * to the idle loop anyway, and cancel the statement timer if running.
+		 */
 		QueryCancelPending = false;
-		InterruptHoldoffCount = 1;
-		CritSectionCount = 0;	/* should be unnecessary, but... */
 		disable_sig_alarm(true);
 		QueryCancelPending = false;		/* again in case timeout occurred */
+
+		/*
+		 * Turn off these interrupts too.  This is only needed here and not
+		 * in other exception-catching places since these interrupts are
+		 * only enabled while we wait for client input.
+		 */
 		DisableNotifyInterrupt();
 		DisableCatchupInterrupt();
+
+		/* Report the error to the client and/or server log */
+		EmitErrorReport();
+
+		/*
+		 * Make sure debug_query_string gets reset before we possibly clobber
+		 * the storage it points at.
+		 */
 		debug_query_string = NULL;
 
 		/*
-		 * If there's an active portal, mark it as failed
+		 * Abort the current transaction in order to recover.
 		 */
-		if (ActivePortal)
-			ActivePortal->status = PORTAL_FAILED;
-
-		/*
-		 * Make sure we are in a valid memory context during recovery.
-		 *
-		 * We use ErrorContext in hopes that it will have some free space
-		 * even if we're otherwise up against it...
-		 */
-		MemoryContextSwitchTo(ErrorContext);
-
-		/* Make sure we are using a sane ResourceOwner, too */
-		CurrentResourceOwner = CurTransactionResourceOwner;
-
-		/* Do the recovery */
-		ereport(DEBUG2,
-				(errmsg_internal("AbortCurrentTransaction")));
 		AbortCurrentTransaction();
 
 		/*
@@ -2823,22 +2826,8 @@ PostgresMain(int argc, char *argv[], const char *username)
 		 * for next time.
 		 */
 		MemoryContextSwitchTo(TopMemoryContext);
-		MemoryContextResetAndDeleteChildren(ErrorContext);
-		ActivePortal = NULL;
-		PortalContext = NULL;
+		FlushErrorState();
 		QueryContext = NULL;
-
-		/*
-		 * Clear flag to indicate that we got out of error recovery mode
-		 * successfully.  (Flag was set in elog.c before longjmp().)
-		 */
-		InError = false;
-		xact_started = false;
-
-		/*
-		 * Clear flag that causes accounting for cost based vacuum.
-		 */
-		VacuumCostActive = false;
 
 		/*
 		 * If we were handling an extended-query-protocol message,
@@ -2848,13 +2837,15 @@ PostgresMain(int argc, char *argv[], const char *username)
 		if (doing_extended_query_message)
 			ignore_till_sync = true;
 
-		/*
-		 * Exit interrupt holdoff section we implicitly established above.
-		 */
+		/* We don't have a transaction command open anymore */
+		xact_started = false;
+
+		/* Now we can allow interrupts again */
 		RESUME_INTERRUPTS();
 	}
 
-	Warn_restart_ready = true;	/* we can now handle ereport(ERROR) */
+	/* We can now handle ereport(ERROR) */
+	PG_exception_stack = &local_sigjmp_buf;
 
 	PG_SETMASK(&UnBlockSig);
 

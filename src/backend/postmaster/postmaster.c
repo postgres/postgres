@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.416 2004/07/27 01:46:03 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.417 2004/07/31 00:45:33 tgl Exp $
  *
  * NOTES
  *
@@ -73,7 +73,6 @@
 #include <ctype.h>
 #include <sys/stat.h>
 #include <sys/socket.h>
-#include <errno.h>
 #include <fcntl.h>
 #include <sys/param.h>
 #include <netinet/in.h>
@@ -3225,6 +3224,11 @@ StartChildProcess(int xlop)
 
 		/* Lose the postmaster's on-exit routines and port connections */
 		on_exit_reset();
+
+		/* Release postmaster's working memory context */
+		MemoryContextSwitchTo(TopMemoryContext);
+		MemoryContextDelete(PostmasterContext);
+		PostmasterContext = NULL;
 
 		BootstrapMain(ac, av);
 		ExitPostmaster(0);

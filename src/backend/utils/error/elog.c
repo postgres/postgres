@@ -37,14 +37,13 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/error/elog.c,v 1.143 2004/07/28 22:05:46 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/error/elog.c,v 1.144 2004/07/31 00:45:38 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
 #include <fcntl.h>
-#include <errno.h>
 #include <time.h>
 #include <unistd.h>
 #include <signal.h>
@@ -67,6 +66,8 @@
 /* Global variables */
 ErrorContextCallback *error_context_stack = NULL;
 
+sigjmp_buf *PG_exception_stack = NULL;
+
 /* GUC parameters */
 PGErrorVerbosity Log_error_verbosity = PGERROR_VERBOSE;
 char       *Log_line_prefix = NULL; /* format for extra log line info */
@@ -81,33 +82,6 @@ static void write_syslog(int level, const char *line);
 #ifdef WIN32
 static void write_eventlog(int level, const char *line);
 #endif
-
-/*
- * ErrorData holds the data accumulated during any one ereport() cycle.
- * Any non-NULL pointers must point to palloc'd data in ErrorContext.
- * (The const pointers are an exception; we assume they point at non-freeable
- * constant strings.)
- */
-
-typedef struct ErrorData
-{
-	int			elevel;			/* error level */
-	bool		output_to_server;		/* will report to server log? */
-	bool		output_to_client;		/* will report to client? */
-	bool		show_funcname;	/* true to force funcname inclusion */
-	const char *filename;		/* __FILE__ of ereport() call */
-	int			lineno;			/* __LINE__ of ereport() call */
-	const char *funcname;		/* __func__ of ereport() call */
-	int			sqlerrcode;		/* encoded ERRSTATE */
-	char	   *message;		/* primary error message */
-	char	   *detail;			/* detail error message */
-	char	   *hint;			/* hint message */
-	char	   *context;		/* context message */
-	int			cursorpos;		/* cursor index into query string */
-	int			internalpos;	/* cursor index into internalquery */
-	char	   *internalquery;	/* text of internally-generated query */
-	int			saved_errno;	/* errno at entry */
-} ErrorData;
 
 /* We provide a small stack of ErrorData records for re-entrant cases */
 #define ERRORDATA_STACK_SIZE  5
@@ -166,7 +140,7 @@ errstart(int elevel, const char *filename, int lineno,
 
 	/*
 	 * Convert initialization errors into fatal errors. This is probably
-	 * redundant, because Warn_restart_ready won't be set anyway.
+	 * redundant, because PG_exception_stack will still be null anyway.
 	 */
 	if (elevel == ERROR && IsInitProcessingMode())
 		elevel = FATAL;
@@ -257,20 +231,13 @@ errstart(int elevel, const char *filename, int lineno,
 	}
 	if (++errordata_stack_depth >= ERRORDATA_STACK_SIZE)
 	{
-		/* Wups, stack not big enough */
-		int			i;
-
-		elevel = Max(elevel, ERROR);
-
 		/*
-		 * Don't forget any FATAL/PANIC status on the stack (see comments
-		 * in errfinish)
+		 * Wups, stack not big enough.  We treat this as a PANIC condition
+		 * because it suggests an infinite loop of errors during error
+		 * recovery.
 		 */
-		for (i = 0; i < errordata_stack_depth; i++)
-			elevel = Max(elevel, errordata[i].elevel);
-		/* Clear the stack and try again */
-		errordata_stack_depth = -1;
-		ereport(elevel, (errmsg_internal("ERRORDATA_STACK_SIZE exceeded")));
+		errordata_stack_depth = -1;	/* make room on stack */
+		ereport(PANIC, (errmsg_internal("ERRORDATA_STACK_SIZE exceeded")));
 	}
 
 	/* Initialize data for this error frame */
@@ -331,41 +298,6 @@ errfinish(int dummy,...)
 		 econtext = econtext->previous)
 		(*econtext->callback) (econtext->arg);
 
-	/* Send to server log, if enabled */
-	if (edata->output_to_server)
-		send_message_to_server_log(edata);
-
-	/*
-	 * Abort any old-style COPY OUT in progress when an error is detected.
-	 * This hack is necessary because of poor design of old-style copy
-	 * protocol.  Note we must do this even if client is fool enough to
-	 * have set client_min_messages above ERROR, so don't look at
-	 * output_to_client.
-	 */
-	if (elevel >= ERROR && whereToSendOutput == Remote)
-		pq_endcopyout(true);
-
-	/* Send to client, if enabled */
-	if (edata->output_to_client)
-		send_message_to_frontend(edata);
-
-	/* Now free up subsidiary data attached to stack entry, and release it */
-	if (edata->message)
-		pfree(edata->message);
-	if (edata->detail)
-		pfree(edata->detail);
-	if (edata->hint)
-		pfree(edata->hint);
-	if (edata->context)
-		pfree(edata->context);
-	if (edata->internalquery)
-		pfree(edata->internalquery);
-
-	MemoryContextSwitchTo(oldcontext);
-
-	errordata_stack_depth--;
-	recursion_depth--;
-
 	/*
 	 * If the error level is ERROR or more, we are not going to return to
 	 * caller; therefore, if there is any stacked error already in
@@ -380,22 +312,103 @@ errfinish(int dummy,...)
 
 		for (i = 0; i <= errordata_stack_depth; i++)
 			elevel = Max(elevel, errordata[i].elevel);
-
-		/*
-		 * Also, be sure to reset the stack to empty.  We do not clear
-		 * ErrorContext here, though; PostgresMain does that later on.
-		 */
-		errordata_stack_depth = -1;
-		recursion_depth = 0;
-		error_context_stack = NULL;
 	}
+
+	/*
+	 * Check some other reasons for treating ERROR as FATAL:
+	 *
+	 * 1. we have no handler to pass the error to (implies we are in
+	 * the postmaster or in backend startup).
+	 *
+	 * 2. ExitOnAnyError mode switch is set (initdb uses this).
+	 *
+	 * 3. the error occurred after proc_exit has begun to run.	(It's
+	 * proc_exit's responsibility to see that this doesn't turn into
+	 * infinite recursion!)
+	 */
+	if (elevel == ERROR)
+	{
+		if (PG_exception_stack == NULL ||
+			ExitOnAnyError ||
+			proc_exit_inprogress)
+			elevel = FATAL;
+		else
+		{
+			/*
+			 * Otherwise we can pass the error off to the current handler.
+			 * Printing it and popping the stack is the responsibility of
+			 * the handler.
+			 *
+			 * We do some minimal cleanup before longjmp'ing so that handlers
+			 * can execute in a reasonably sane state.
+			 */
+
+			/* This is just in case the error came while waiting for input */
+			ImmediateInterruptOK = false;
+
+			/*
+			 * Reset InterruptHoldoffCount in case we ereport'd from inside an
+			 * interrupt holdoff section.  (We assume here that no handler
+			 * will itself be inside a holdoff section.  If necessary, such
+			 * a handler could save and restore InterruptHoldoffCount for
+			 * itself, but this should make life easier for most.)
+			 */
+			InterruptHoldoffCount = 0;
+
+			CritSectionCount = 0;	/* should be unnecessary, but... */
+
+			/*
+			 * Note that we leave CurrentMemoryContext set to ErrorContext.
+			 * The handler should reset it to something else soon.
+			 */
+
+			recursion_depth--;
+			PG_RE_THROW();
+		}
+	}
+
+	/*
+	 * If we are doing FATAL or PANIC, abort any old-style COPY OUT in
+	 * progress, so that we can report the message before dying.  (Without
+	 * this, pq_putmessage will refuse to send the message at all, which
+	 * is what we want for NOTICE messages, but not for fatal exits.)
+	 * This hack is necessary because of poor design of old-style copy
+	 * protocol.  Note we must do this even if client is fool enough to
+	 * have set client_min_messages above FATAL, so don't look at
+	 * output_to_client.
+	 */
+	if (elevel >= FATAL && whereToSendOutput == Remote)
+		pq_endcopyout(true);
+
+	/* Emit the message to the right places */
+	EmitErrorReport();
+
+	/* Now free up subsidiary data attached to stack entry, and release it */
+	if (edata->message)
+		pfree(edata->message);
+	if (edata->detail)
+		pfree(edata->detail);
+	if (edata->hint)
+		pfree(edata->hint);
+	if (edata->context)
+		pfree(edata->context);
+	if (edata->internalquery)
+		pfree(edata->internalquery);
+
+	errordata_stack_depth--;
+
+	/* Exit error-handling context */
+	MemoryContextSwitchTo(oldcontext);
+	recursion_depth--;
 
 	/*
 	 * Perform error recovery action as specified by elevel.
 	 */
-	if (elevel == ERROR || elevel == FATAL)
+	if (elevel == FATAL)
 	{
-		/* Prevent immediate interrupt while entering error recovery */
+		/*
+		 * For a FATAL error, we let proc_exit clean up and exit.
+		 */
 		ImmediateInterruptOK = false;
 
 		/*
@@ -403,59 +416,27 @@ errfinish(int dummy,...)
 		 * disconnect on receiving it, so don't send any more to the
 		 * client.
 		 */
-		if (!Warn_restart_ready && whereToSendOutput == Remote)
+		if (PG_exception_stack == NULL && whereToSendOutput == Remote)
 			whereToSendOutput = None;
 
 		/*
-		 * For a FATAL error, we let proc_exit clean up and exit.
-		 *
-		 * There are several other cases in which we treat ERROR as FATAL and
-		 * go directly to proc_exit:
-		 *
-		 * 1. ExitOnAnyError mode switch is set (initdb uses this).
-		 *
-		 * 2. we have not yet entered the main backend loop (ie, we are in
-		 * the postmaster or in backend startup); we have noplace to
-		 * recover.
-		 *
-		 * 3. the error occurred after proc_exit has begun to run.	(It's
-		 * proc_exit's responsibility to see that this doesn't turn into
-		 * infinite recursion!)
-		 *
-		 * In the last case, we exit with nonzero exit code to indicate that
-		 * something's pretty wrong.  We also want to exit with nonzero
-		 * exit code if not running under the postmaster (for example, if
-		 * we are being run from the initdb script, we'd better return an
+		 * fflush here is just to improve the odds that we get to see
+		 * the error message, in case things are so hosed that
+		 * proc_exit crashes.  Any other code you might be tempted to
+		 * add here should probably be in an on_proc_exit callback
+		 * instead.
+		 */
+		fflush(stdout);
+		fflush(stderr);
+
+		/*
+		 * If proc_exit is already running, we exit with nonzero exit code to
+		 * indicate that something's pretty wrong.  We also want to exit with
+		 * nonzero exit code if not running under the postmaster (for example,
+		 * if we are being run from the initdb script, we'd better return an
 		 * error status).
 		 */
-		if (elevel == FATAL ||
-			ExitOnAnyError ||
-			!Warn_restart_ready ||
-			proc_exit_inprogress)
-		{
-			/*
-			 * fflush here is just to improve the odds that we get to see
-			 * the error message, in case things are so hosed that
-			 * proc_exit crashes.  Any other code you might be tempted to
-			 * add here should probably be in an on_proc_exit callback
-			 * instead.
-			 */
-			fflush(stdout);
-			fflush(stderr);
-			proc_exit(proc_exit_inprogress || !IsUnderPostmaster);
-		}
-
-		/*
-		 * Guard against infinite loop from errors during error recovery.
-		 */
-		if (InError)
-			ereport(PANIC, (errmsg("error during error recovery, giving up")));
-		InError = true;
-
-		/*
-		 * Otherwise we can return to the main loop in postgres.c.
-		 */
-		siglongjmp(Warn_restart, 1);
+		proc_exit(proc_exit_inprogress || !IsUnderPostmaster);
 	}
 
 	if (elevel >= PANIC)
@@ -923,6 +904,168 @@ elog_finish(int elevel, const char *fmt,...)
 	errfinish(0);
 }
 
+/*
+ * Actual output of the top-of-stack error message
+ *
+ * In the ereport(ERROR) case this is called from PostgresMain (or not at all,
+ * if the error is caught by somebody).  For all other severity levels this
+ * is called by errfinish.
+ */
+void
+EmitErrorReport(void)
+{
+	ErrorData  *edata = &errordata[errordata_stack_depth];
+	MemoryContext oldcontext;
+
+	recursion_depth++;
+	CHECK_STACK_DEPTH();
+	oldcontext = MemoryContextSwitchTo(ErrorContext);
+
+	/* Send to server log, if enabled */
+	if (edata->output_to_server)
+		send_message_to_server_log(edata);
+
+	/* Send to client, if enabled */
+	if (edata->output_to_client)
+		send_message_to_frontend(edata);
+
+	MemoryContextSwitchTo(oldcontext);
+	recursion_depth--;
+}
+
+/*
+ * CopyErrorData --- obtain a copy of the topmost error stack entry
+ *
+ * This is only for use in error handler code.  The data is copied into the
+ * current memory context, so callers should always switch away from
+ * ErrorContext first; otherwise it will be lost when FlushErrorState is done.
+ */
+ErrorData *
+CopyErrorData(void)
+{
+	ErrorData  *edata = &errordata[errordata_stack_depth];
+	ErrorData  *newedata;
+
+	/*
+	 * we don't increment recursion_depth because out-of-memory here does
+	 * not indicate a problem within the error subsystem.
+	 */
+	CHECK_STACK_DEPTH();
+
+	Assert(CurrentMemoryContext != ErrorContext);
+
+	/* Copy the struct itself */
+	newedata = (ErrorData *) palloc(sizeof(ErrorData));
+	memcpy(newedata, edata, sizeof(ErrorData));
+
+	/* Make copies of separately-allocated fields */
+	if (newedata->message)
+		newedata->message = pstrdup(newedata->message);
+	if (newedata->detail)
+		newedata->detail = pstrdup(newedata->detail);
+	if (newedata->hint)
+		newedata->hint = pstrdup(newedata->hint);
+	if (newedata->context)
+		newedata->context = pstrdup(newedata->context);
+	if (newedata->internalquery)
+		newedata->internalquery = pstrdup(newedata->internalquery);
+
+	return newedata;
+}
+
+/*
+ * FreeErrorData --- free the structure returned by CopyErrorData.
+ *
+ * Error handlers should use this in preference to assuming they know all
+ * the separately-allocated fields.
+ */
+void
+FreeErrorData(ErrorData *edata)
+{
+	if (edata->message)
+		pfree(edata->message);
+	if (edata->detail)
+		pfree(edata->detail);
+	if (edata->hint)
+		pfree(edata->hint);
+	if (edata->context)
+		pfree(edata->context);
+	if (edata->internalquery)
+		pfree(edata->internalquery);
+	pfree(edata);
+}
+
+/*
+ * FlushErrorState --- flush the error state after error recovery
+ *
+ * This should be called by an error handler after it's done processing
+ * the error; or as soon as it's done CopyErrorData, if it intends to
+ * do stuff that is likely to provoke another error.  You are not "out" of
+ * the error subsystem until you have done this.
+ */
+void
+FlushErrorState(void)
+{
+	/*
+	 * Reset stack to empty.  The only case where it would be more than
+	 * one deep is if we serviced an error that interrupted construction
+	 * of another message.  We assume control escaped out of that
+	 * message construction and won't ever go back.
+	 */
+	errordata_stack_depth = -1;
+	recursion_depth = 0;
+	/* Delete all data in ErrorContext */
+	MemoryContextResetAndDeleteChildren(ErrorContext);
+}
+
+/*
+ * ReThrowError --- re-throw a previously copied error
+ *
+ * A handler can do CopyErrorData/FlushErrorState to get out of the error
+ * subsystem, then do some processing, and finally ReThrowError to re-throw
+ * the original error.  This is slower than just PG_RE_THROW() but should
+ * be used if the "some processing" is likely to incur another error.
+ */
+void
+ReThrowError(ErrorData *edata)
+{
+	ErrorData  *newedata;
+
+	Assert(edata->elevel == ERROR);
+
+	/* Push the data back into the error context */
+	recursion_depth++;
+	MemoryContextSwitchTo(ErrorContext);
+
+	if (++errordata_stack_depth >= ERRORDATA_STACK_SIZE)
+	{
+		/*
+		 * Wups, stack not big enough.  We treat this as a PANIC condition
+		 * because it suggests an infinite loop of errors during error
+		 * recovery.
+		 */
+		errordata_stack_depth = -1;	/* make room on stack */
+		ereport(PANIC, (errmsg_internal("ERRORDATA_STACK_SIZE exceeded")));
+	}
+
+	newedata = &errordata[errordata_stack_depth];
+	memcpy(newedata, edata, sizeof(ErrorData));
+
+	/* Make copies of separately-allocated fields */
+	if (newedata->message)
+		newedata->message = pstrdup(newedata->message);
+	if (newedata->detail)
+		newedata->detail = pstrdup(newedata->detail);
+	if (newedata->hint)
+		newedata->hint = pstrdup(newedata->hint);
+	if (newedata->context)
+		newedata->context = pstrdup(newedata->context);
+	if (newedata->internalquery)
+		newedata->internalquery = pstrdup(newedata->internalquery);
+
+	recursion_depth--;
+	PG_RE_THROW();
+}
 
 /*
  * Initialization of error output file

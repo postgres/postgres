@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/large_object/inv_api.c,v 1.103 2004/07/28 14:23:29 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/large_object/inv_api.c,v 1.104 2004/07/31 00:45:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -54,14 +54,23 @@ open_lo_relation(void)
 
 	/* Arrange for the top xact to own these relation references */
 	currentOwner = CurrentResourceOwner;
-	CurrentResourceOwner = TopTransactionResourceOwner;
+	PG_TRY();
+	{
+		CurrentResourceOwner = TopTransactionResourceOwner;
 
-	/* Use RowExclusiveLock since we might either read or write */
-	if (lo_heap_r == NULL)
-		lo_heap_r = heap_openr(LargeObjectRelationName, RowExclusiveLock);
-	if (lo_index_r == NULL)
-		lo_index_r = index_openr(LargeObjectLOidPNIndex);
-
+		/* Use RowExclusiveLock since we might either read or write */
+		if (lo_heap_r == NULL)
+			lo_heap_r = heap_openr(LargeObjectRelationName, RowExclusiveLock);
+		if (lo_index_r == NULL)
+			lo_index_r = index_openr(LargeObjectLOidPNIndex);
+	}
+	PG_CATCH();
+	{
+		/* Ensure CurrentResourceOwner is restored on error */
+		CurrentResourceOwner = currentOwner;
+		PG_RE_THROW();
+	}
+	PG_END_TRY();
 	CurrentResourceOwner = currentOwner;
 }
 
@@ -82,13 +91,22 @@ close_lo_relation(bool isCommit)
 			ResourceOwner currentOwner;
 
 			currentOwner = CurrentResourceOwner;
-			CurrentResourceOwner = TopTransactionResourceOwner;
+			PG_TRY();
+			{
+				CurrentResourceOwner = TopTransactionResourceOwner;
 
-			if (lo_index_r)
-				index_close(lo_index_r);
-			if (lo_heap_r)
-				heap_close(lo_heap_r, NoLock);
-
+				if (lo_index_r)
+					index_close(lo_index_r);
+				if (lo_heap_r)
+					heap_close(lo_heap_r, NoLock);
+			}
+			PG_CATCH();
+			{
+				/* Ensure CurrentResourceOwner is restored on error */
+				CurrentResourceOwner = currentOwner;
+				PG_RE_THROW();
+			}
+			PG_END_TRY();
 			CurrentResourceOwner = currentOwner;
 		}
 		lo_heap_r = NULL;

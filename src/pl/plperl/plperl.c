@@ -33,16 +33,15 @@
  *	  ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.47 2004/07/21 20:45:54 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.48 2004/07/31 00:45:44 tgl Exp $
  *
  **********************************************************************/
 
 #include "postgres.h"
 
 /* system stuff */
-#include <unistd.h>
 #include <fcntl.h>
-#include <setjmp.h>
+#include <unistd.h>
 
 /* postgreSQL stuff */
 #include "access/heapam.h"
