@@ -214,13 +214,13 @@ SELECT '' AS "xxx", t1.a, t2.e
   WHERE t1.a = t2.d;
  xxx | a | e  
 -----+---+----
+     | 0 |   
      | 1 | -1
      | 2 |  2
-     | 3 | -3
      | 2 |  4
+     | 3 | -3
      | 5 | -5
      | 5 | -5
-     | 0 |   
 (7 rows)
 
 --
@@ -1567,13 +1567,13 @@ SELECT '' AS "xxx", *
   FROM J1_TBL INNER JOIN J2_TBL USING (i);
  xxx | i | j |   t   | k  
 -----+---+---+-------+----
+     | 0 |   | zero  |   
      | 1 | 4 | one   | -1
-     | 2 | 3 | two   |  4
      | 2 | 3 | two   |  2
+     | 2 | 3 | two   |  4
      | 3 | 2 | three | -3
      | 5 | 0 | five  | -5
      | 5 | 0 | five  | -5
-     | 0 |   | zero  |   
 (7 rows)
 
 -- Same as above, slightly different syntax
@@ -1581,13 +1581,13 @@ SELECT '' AS "xxx", *
   FROM J1_TBL JOIN J2_TBL USING (i);
  xxx | i | j |   t   | k  
 -----+---+---+-------+----
+     | 0 |   | zero  |   
      | 1 | 4 | one   | -1
-     | 2 | 3 | two   |  4
      | 2 | 3 | two   |  2
+     | 2 | 3 | two   |  4
      | 3 | 2 | three | -3
      | 5 | 0 | five  | -5
      | 5 | 0 | five  | -5
-     | 0 |   | zero  |   
 (7 rows)
 
 SELECT '' AS "xxx", *
@@ -1623,35 +1623,35 @@ SELECT '' AS "xxx", *
   FROM J1_TBL NATURAL JOIN J2_TBL;
  xxx | i | j |   t   | k  
 -----+---+---+-------+----
+     | 0 |   | zero  |   
      | 1 | 4 | one   | -1
-     | 2 | 3 | two   |  4
      | 2 | 3 | two   |  2
+     | 2 | 3 | two   |  4
      | 3 | 2 | three | -3
      | 5 | 0 | five  | -5
      | 5 | 0 | five  | -5
-     | 0 |   | zero  |   
 (7 rows)
 
 SELECT '' AS "xxx", *
   FROM J1_TBL t1 (a, b, c) NATURAL JOIN J2_TBL t2 (a, d);
  xxx | a | b |   c   | d  
 -----+---+---+-------+----
+     | 0 |   | zero  |   
      | 1 | 4 | one   | -1
-     | 2 | 3 | two   |  4
      | 2 | 3 | two   |  2
+     | 2 | 3 | two   |  4
      | 3 | 2 | three | -3
      | 5 | 0 | five  | -5
      | 5 | 0 | five  | -5
-     | 0 |   | zero  |   
 (7 rows)
 
 SELECT '' AS "xxx", *
   FROM J1_TBL t1 (a, b, c) NATURAL JOIN J2_TBL t2 (d, a);
  xxx | a | b |  c   | d 
 -----+---+---+------+---
+     | 0 |   | zero |  
      | 2 | 3 | two  | 2
      | 4 | 1 | four | 2
-     | 0 |   | zero |  
 (3 rows)
 
 -- mismatch number of columns
@@ -1660,13 +1660,13 @@ SELECT '' AS "xxx", *
   FROM J1_TBL t1 (a, b) NATURAL JOIN J2_TBL t2 (a);
  xxx | a | b |   t   | k  
 -----+---+---+-------+----
+     | 0 |   | zero  |   
      | 1 | 4 | one   | -1
-     | 2 | 3 | two   |  4
      | 2 | 3 | two   |  2
+     | 2 | 3 | two   |  4
      | 3 | 2 | three | -3
      | 5 | 0 | five  | -5
      | 5 | 0 | five  | -5
-     | 0 |   | zero  |   
 (7 rows)
 
 --
@@ -1676,22 +1676,22 @@ SELECT '' AS "xxx", *
   FROM J1_TBL JOIN J2_TBL ON (J1_TBL.i = J2_TBL.i);
  xxx | i | j |   t   | i | k  
 -----+---+---+-------+---+----
+     | 0 |   | zero  | 0 |   
      | 1 | 4 | one   | 1 | -1
-     | 2 | 3 | two   | 2 |  4
      | 2 | 3 | two   | 2 |  2
+     | 2 | 3 | two   | 2 |  4
      | 3 | 2 | three | 3 | -3
      | 5 | 0 | five  | 5 | -5
      | 5 | 0 | five  | 5 | -5
-     | 0 |   | zero  | 0 |   
 (7 rows)
 
 SELECT '' AS "xxx", *
   FROM J1_TBL JOIN J2_TBL ON (J1_TBL.i = J2_TBL.k);
  xxx | i | j |  t   | i | k 
 -----+---+---+------+---+---
+     | 0 |   | zero |   | 0
      | 2 | 3 | two  | 2 | 2
      | 4 | 1 | four | 2 | 4
-     | 0 |   | zero |   | 0
 (3 rows)
 
 --
@@ -1760,13 +1760,13 @@ SELECT '' AS "xxx", *
   FROM J1_TBL RIGHT OUTER JOIN J2_TBL USING (i);
  xxx | i | j |   t   | k  
 -----+---+---+-------+----
+     | 0 |   | zero  |   
      | 1 | 4 | one   | -1
      | 2 | 3 | two   |  2
-     | 3 | 2 | three | -3
      | 2 | 3 | two   |  4
+     | 3 | 2 | three | -3
      | 5 | 0 | five  | -5
      | 5 | 0 | five  | -5
-     | 0 |   | zero  |   
      |   |   |       |   
      |   |   |       |  0
 (9 rows)
@@ -1775,13 +1775,13 @@ SELECT '' AS "xxx", *
   FROM J1_TBL RIGHT JOIN J2_TBL USING (i);
  xxx | i | j |   t   | k  
 -----+---+---+-------+----
+     | 0 |   | zero  |   
      | 1 | 4 | one   | -1
      | 2 | 3 | two   |  2
-     | 3 | 2 | three | -3
      | 2 | 3 | two   |  4
+     | 3 | 2 | three | -3
      | 5 | 0 | five  | -5
      | 5 | 0 | five  | -5
-     | 0 |   | zero  |   
      |   |   |       |   
      |   |   |       |  0
 (9 rows)

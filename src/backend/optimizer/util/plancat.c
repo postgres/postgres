@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/plancat.c,v 1.100 2004/12/31 22:00:23 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/plancat.c,v 1.101 2005/03/24 19:14:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -234,7 +234,32 @@ estimate_rel_size(Relation rel, int32 *attr_widths,
 		case RELKIND_INDEX:
 		case RELKIND_TOASTVALUE:
 			/* it has storage, ok to call the smgr */
-			*pages = curpages = RelationGetNumberOfBlocks(rel);
+			curpages = RelationGetNumberOfBlocks(rel);
+
+			/*
+			 * HACK: if the relation has never yet been vacuumed, use a
+			 * minimum estimate of 10 pages.  This emulates a desirable
+			 * aspect of pre-8.0 behavior, which is that we wouldn't assume
+			 * a newly created relation is really small, which saves us from
+			 * making really bad plans during initial data loading.  (The
+			 * plans are not wrong when they are made, but if they are cached
+			 * and used again after the table has grown a lot, they are bad.)
+			 * It would be better to force replanning if the table size has
+			 * changed a lot since the plan was made ... but we don't
+			 * currently have any infrastructure for redoing cached plans at
+			 * all, so we have to kluge things here instead.
+			 *
+			 * We approximate "never vacuumed" by "has relpages = 0", which
+			 * means this will also fire on genuinely empty relations.  Not
+			 * great, but fortunately that's a seldom-seen case in the real
+			 * world, and it shouldn't degrade the quality of the plan too
+			 * much anyway to err in this direction.
+			 */
+			if (curpages < 10 && rel->rd_rel->relpages == 0)
+				curpages = 10;
+
+			/* report estimated # pages */
+			*pages = curpages;
 			/* quick exit if rel is clearly empty */
 			if (curpages == 0)
 			{
