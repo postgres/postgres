@@ -148,6 +148,22 @@ ecpg_alloc(long size, int lineno)
 	return (new);
 }
 
+static char *
+ecpg_strdup(const char *string, int lineno)
+{
+	char	   *new = strdup(string);
+
+	if (!new)
+	{
+		ECPGfinish(actual_connection);
+		ECPGlog("out of memory\n");
+		register_error(ECPG_OUT_OF_MEMORY, "out of memory in line %d", lineno);
+		return NULL;
+	}
+
+	return (new);
+}
+
 /* This function returns a newly malloced string that has the ' and \
    in the argument quoted with \.
  */
@@ -246,7 +262,7 @@ ECPGexecute(struct statement * stmt)
 
 	memcpy((char *) &sqlca, (char *) &sqlca_init, sizeof(sqlca));
 
-	copiedquery = strdup(stmt->command);
+	copiedquery = ecpg_strdup(stmt->command, stmt->lineno);
 
 	/*
 	 * Now, if the type is one of the fill in types then we take the
@@ -914,9 +930,9 @@ ECPGconnect(int lineno, const char *dbname, const char *user, const char *passwd
 
 	/* add connection to our list */
 	if (connection_name != NULL)
-		this->name = strdup(connection_name);
+		this->name = ecpg_strdup(connection_name, lineno);
 	else
-		this->name = strdup(dbname);
+		this->name = ecpg_strdup(dbname, lineno);
 
 	if (all_connections == NULL)
 		this->next = NULL;

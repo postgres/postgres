@@ -52,7 +52,7 @@ exec sql declare cur cursor for
 
 	while (1) {
 		strcpy(msg, "fetch");
-		exec sql fetch cur into :personal:ind_personal, :married:ind_married;
+		exec sql fetch in cur into :personal:ind_personal, :married:ind_married;
                 printf ("%8.8s was born %d (age = %d) %s%s\n", personal.name.arr, personal.birth.born, personal.birth.age, ind_married ? "" : "and married ", ind_married ? "" : married);
 	}
 

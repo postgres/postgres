@@ -20,6 +20,21 @@ mm_alloc(size_t size)
 	return ptr;
 }
 
+/* strdup + error check */
+char *
+mm_strdup(const char *string)
+{
+	char	   *new = strdup(string);
+
+	if (new == NULL)
+	{
+		fprintf(stderr, "Out of memory\n");
+		exit(OUT_OF_MEMORY);
+	}
+
+	return new;
+}
+
 /* duplicate memberlist */
 static struct ECPGstruct_member *
 struct_member_dup(struct ECPGstruct_member * rm)

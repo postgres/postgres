@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/keywords.c,v 1.5 1998/09/21 05:52:53 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/keywords.c,v 1.6 1998/10/03 02:33:36 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,8 +29,9 @@
  *		 search is used to locate entries.
  */
 static ScanKeyword ScanKeywords[] = {
-	/* name					value			*/
+	/* name, value */
 	{"abort", ABORT_TRANS},
+	{"absolute", ABSOLUTE},
 	{"action", ACTION},
 	{"add", ADD},
 	{"after", AFTER},
@@ -40,7 +41,6 @@ static ScanKeyword ScanKeywords[] = {
 	{"analyze", ANALYZE},
 	{"and", AND},
 	{"any", ANY},
-	{"archive", ARCHIVE},
 	{"as", AS},
 	{"asc", ASC},
 	{"backward", BACKWARD},
@@ -67,7 +67,9 @@ static ScanKeyword ScanKeywords[] = {
 	{"createdb", CREATEDB},
 	{"createuser", CREATEUSER},
 	{"cross", CROSS},
-	{"current", CURRENT},
+	{"current", CURRENT},		/* 6.4 to 6.5 is migration time! CURRENT
+								 * will be removed in 6.5! Use OLD keyword
+								 * in rules. Jan */
 	{"current_date", CURRENT_DATE},
 	{"current_time", CURRENT_TIME},
 	{"current_timestamp", CURRENT_TIMESTAMP},
@@ -87,6 +89,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"double", DOUBLE},
 	{"drop", DROP},
 	{"each", EACH},
+	{"encoding", ENCODING},
 	{"end", END_TRANS},
 	{"execute", EXECUTE},
 	{"exists", EXISTS},
@@ -113,6 +116,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"inherits", INHERITS},
 	{"inner", INNER_P},
 	{"insert", INSERT},
+	{"insensitive", INSENSITIVE},
 	{"instead", INSTEAD},
 	{"interval", INTERVAL},
 	{"into", INTO},
@@ -136,10 +140,12 @@ static ScanKeyword ScanKeywords[] = {
 	{"minvalue", MINVALUE},
 	{"month", MONTH_P},
 	{"move", MOVE},
+	{"names", NAMES},
 	{"national", NATIONAL},
 	{"natural", NATURAL},
 	{"nchar", NCHAR},
 	{"new", NEW},
+	{"next", NEXT},
 	{"no", NO},
 	{"nocreatedb", NOCREATEDB},
 	{"nocreateuser", NOCREATEUSER},
@@ -152,7 +158,9 @@ static ScanKeyword ScanKeywords[] = {
 	{"numeric", NUMERIC},
 	{"of", OF},
 	{"oids", OIDS},
+	{"old", CURRENT},
 	{"on", ON},
+	{"only", ONLY},
 	{"operator", OPERATOR},
 	{"option", OPTION},
 	{"or", OR},
@@ -163,12 +171,15 @@ static ScanKeyword ScanKeywords[] = {
 	{"position", POSITION},
 	{"precision", PRECISION},
 	{"primary", PRIMARY},
+	{"prior", PRIOR},
 	{"privileges", PRIVILEGES},
 	{"procedural", PROCEDURAL},
 	{"procedure", PROCEDURE},
 	{"public", PUBLIC},
+	{"read", READ},
 	{"recipe", RECIPE},
 	{"references", REFERENCES},
+	{"relative", RELATIVE},
 	{"rename", RENAME},
 	{"reset", RESET},
 	{"returns", RETURNS},
@@ -177,9 +188,11 @@ static ScanKeyword ScanKeywords[] = {
 	{"rollback", ROLLBACK},
 	{"row", ROW},
 	{"rule", RULE},
+	{"scroll", SCROLL},
 	{"second", SECOND_P},
 	{"select", SELECT},
 	{"sequence", SEQUENCE},
+	{"serial", SERIAL},
 	{"set", SET},
 	{"setof", SETOF},
 	{"show", SHOW},
@@ -190,6 +203,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"substring", SUBSTRING},
 	{"table", TABLE},
 	{"time", TIME},
+	{"timestamp", TIMESTAMP},
 	{"timezone_hour", TIMEZONE_HOUR},
 	{"timezone_minute", TIMEZONE_MINUTE},
 	{"to", TO},

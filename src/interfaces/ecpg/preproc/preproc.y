@@ -100,7 +100,7 @@ new_variable(const char * name, struct ECPGtype * type)
 {
     struct variable * p = (struct variable*) mm_alloc(sizeof(struct variable));
 
-    p->name = strdup(name);
+    p->name = mm_strdup(name);
     p->type = type;
     p->brace_level = braces_open;
 
@@ -528,57 +528,52 @@ output_statement(char * stmt, int mode)
 %token		TYPECAST
 
 /* Keywords (in SQL92 reserved words) */
-%token  ABSOLUTE, ACTION, ADD, ALL, ALTER, AND, ANY AS, ASC,
+%token  ABSOLUTE, ACTION, ADD, ALL, ALTER, AND, ANY, AS, ASC,
                 BEGIN_TRANS, BETWEEN, BOTH, BY,
                 CASCADE, CAST, CHAR, CHARACTER, CHECK, CLOSE, COLLATE, COLUMN, COMMIT, 
                 CONSTRAINT, CREATE, CROSS, CURRENT, CURRENT_DATE, CURRENT_TIME, 
                 CURRENT_TIMESTAMP, CURRENT_USER, CURSOR,
                 DAY_P, DECIMAL, DECLARE, DEFAULT, DELETE, DESC, DISTINCT, DOUBLE, DROP,
                 END_TRANS, EXECUTE, EXISTS, EXTRACT,
-                FETCH, FLOAT, FOR, FOREIGN, FROM, FULL,
+                FALSE_P, FETCH, FLOAT, FOR, FOREIGN, FROM, FULL,
                 GRANT, GROUP, HAVING, HOUR_P,
                 IN, INNER_P, INSENSITIVE, INSERT, INTERVAL, INTO, IS,
                 JOIN, KEY, LANGUAGE, LEADING, LEFT, LIKE, LOCAL,
                 MATCH, MINUTE_P, MONTH_P, NAMES,
-                NATIONAL, NATURAL, NCHAR, NEXT, NO, NOT, NOTIFY, NULL_P, NUMERIC,
+                NATIONAL, NATURAL, NCHAR, NEXT, NO, NOT, NULL_P, NUMERIC,
                 OF, ON, ONLY, OPTION, OR, ORDER, OUTER_P,
                 PARTIAL, POSITION, PRECISION, PRIMARY, PRIOR, PRIVILEGES, PROCEDURE, PUBLIC,
                 READ, REFERENCES, RELATIVE, REVOKE, RIGHT, ROLLBACK,
                 SCROLL, SECOND_P, SELECT, SET, SUBSTRING,
                 TABLE, TIME, TIMESTAMP, TIMEZONE_HOUR, TIMEZONE_MINUTE,
-		TO, TRAILING, TRANSACTION, TRIM,
+		TO, TRAILING, TRANSACTION, TRIM, TRUE_P,
                 UNION, UNIQUE, UPDATE, USER, USING,
                 VALUES, VARCHAR, VARYING, VIEW,
                 WHERE, WITH, WORK, YEAR_P, ZONE
 
 /* Keywords (in SQL3 reserved words) */
-%token  FALSE_P, TRIGGER, TRUE_P
+%token  TRIGGER
 
 /* Keywords (in SQL92 non-reserved words) */
 %token  TYPE_P
 
-/* Keywords for Postgres support (not in SQL92 reserved words) */
-%token  ABORT_TRANS, AFTER, AGGREGATE, ANALYZE,
-                BACKWARD, BEFORE, BINARY, CACHE, CLUSTER, COPY, CYCLE,
-                DATABASE, DELIMITERS, DO, EACH, EXPLAIN, EXTEND,
+/* Keywords for Postgres support (not in SQL92 reserved words)
+ *
+ * The CREATEDB and CREATEUSER tokens should go away
+ * when some sort of pg_privileges relation is introduced.
+ * - Todd A. Brandys 1998-01-01?
+ */
+%token  ABORT_TRANS, AFTER, AGGREGATE, ANALYZE, BACKWARD, BEFORE, BINARY,
+		CACHE, CLUSTER, COPY, CREATEDB, CREATEUSER, CYCLE,
+                DATABASE, DELIMITERS, DO, EACH, ENCODING, EXPLAIN, EXTEND,
                 FORWARD, FUNCTION, HANDLER,
                 INCREMENT, INDEX, INHERITS, INSTEAD, ISNULL,
-                LANCOMPILER, LISTEN, UNLISTEN, LOAD, LOCK_P, LOCATION, MAXVALUE, MINVALUE, MOVE,
-                NEW, NONE, NOTHING, NOTNULL, OIDS, OPERATOR, PROCEDURAL,
+                LANCOMPILER, LISTEN, UNLISTEN, LOAD, LOCATION, LOCK_P, MAXVALUE, MINVALUE, MOVE,
+                NEW,  NOCREATEDB, NOCREATEUSER, NONE, NOTHING, NOTIFY, NOTNULL,
+		OIDS, OPERATOR, PASSWORD, PROCEDURAL,
                 RECIPE, RENAME, RESET, RETURNS, ROW, RULE,
                 SERIAL, SEQUENCE, SETOF, SHOW, START, STATEMENT, STDIN, STDOUT, TRUSTED,
-                VACUUM, VERBOSE, VERSION, ENCODING
-
-/* Keywords (obsolete; retain through next version for parser - thomas 1997-12-0 4) */
-%token  ARCHIVE
-
-/*
- * Tokens for pg_passwd support.  The CREATEDB and CREATEUSER tokens should go a way
- * when some sort of pg_privileges relation is introduced.
- *
- *                                    Todd A. Brandys
- */
-%token  PASSWORD, CREATEDB, NOCREATEDB, CREATEUSER, NOCREATEUSER, VALID, UNTIL
+                UNLISTEN, UNTIL, VACUUM, VALID, VERBOSE, VERSION
 
 /* Special keywords, not in the query language - see the "lex" file */
 %token <str>    IDENT SCONST Op CSTRING CVARIABLE CPP_LINE
@@ -615,7 +610,7 @@ output_statement(char * stmt, int mode)
 
 %type  <str>	Iconst Fconst Sconst TransactionStmt CreateStmt UserId
 %type  <str>	CreateAsElement OptCreateAs CreateAsList CreateAsStmt
-%type  <str>	OptArchiveType OptInherit key_reference key_action
+%type  <str>	OptInherit key_reference key_action
 %type  <str>    key_match constraint_expr ColLabel SpecialRuleRelation
 %type  <str> 	ColId default_expr ColQualifier columnDef ColQualList
 %type  <str>    ColConstraint ColConstraintElem default_list NumericOnly FloatOnly
@@ -1059,9 +1054,9 @@ copy_delimiter:  USING DELIMITERS Sconst		{ $$ = cat2_str(make1_str("using delim
  *****************************************************************************/
 
 CreateStmt:  CREATE TABLE relation_name '(' OptTableElementList ')'
-				OptInherit OptArchiveType
+				OptInherit
 				{
-					$$ = cat5_str(make1_str("create table"), $3,  make3_str(make1_str("("), $5, make1_str(")")), $7, $8);
+					$$ = cat4_str(make1_str("create table"), $3,  make3_str(make1_str("("), $5, make1_str(")")), $7);
 				}
 		;
 
@@ -1422,14 +1417,6 @@ key_reference:  NO ACTION	{ $$ = make1_str("no action"); }
 
 OptInherit:  INHERITS '(' relation_name_list ')' { $$ = make3_str(make1_str("inherits ("), $3, make1_str(")")); }
 		| /*EMPTY*/ { $$ = make1_str(""); }
-		;
-
-/*
- *	"ARCHIVE" keyword was removed in 6.3, but we keep it for now
- *  so people can upgrade with old pg_dump scripts. - momjian 1997-11-20(?)
- */
-OptArchiveType:  ARCHIVE '=' NONE { $$ = make1_str("archive = none"); }
-		| /*EMPTY*/	  { $$ = make1_str(""); }			
 		;
 
 CreateAsStmt:  CREATE TABLE relation_name OptCreateAs AS SubSelect
@@ -2481,14 +2468,14 @@ CursorStmt:  DECLARE name opt_cursor CURSOR FOR
 			        	/* initial definition */
 				        this->next = cur;
 				        this->name = $2;
-				        this->command = cat4_str(cat5_str(cat5_str(make1_str("declare"), strdup($2), $3, make1_str("cursor for select"), $7), $8, $9, $10, $11), $12, $13, $14);
+				        this->command = cat4_str(cat5_str(cat5_str(make1_str("declare"), mm_strdup($2), $3, make1_str("cursor for select"), $7), $8, $9, $10, $11), $12, $13, $14);
 					this->argsinsert = argsinsert;
 					this->argsresult = argsresult;
 					argsinsert = argsresult = NULL;
 											
 			        	cur = this;
 					
-					$$ = cat3_str(make1_str("/*"), strdup(this->command), make1_str("*/"));
+					$$ = cat3_str(make1_str("/*"), mm_strdup(this->command), make1_str("*/"));
 				}
 		;
 
@@ -3847,53 +3834,77 @@ TypeId:  ColId
  *  list due to shift/reduce conflicts in yacc. If so, move
  *  down to the ColLabel entity. - thomas 1997-11-06
  */
-ColId:  ident							{ $$ = $1; }
-		| datetime						{ $$ = $1; }
-		| ABSOLUTE						{ $$ = make1_str("absolute"); }
-		| ACTION						{ $$ = make1_str("action"); }
-		| CACHE							{ $$ = make1_str("cache"); }
-		| CYCLE							{ $$ = make1_str("cycle"); }
-		| DATABASE						{ $$ = make1_str("database"); }
-		| DELIMITERS					{ $$ = make1_str("delimiters"); }
-		| DOUBLE						{ $$ = make1_str("double"); }
-		| EACH							{ $$ = make1_str("each"); }
-		| ENCODING							{ $$ = make1_str("encoding"); }
-		| FUNCTION						{ $$ = make1_str("function"); }
-		| INCREMENT						{ $$ = make1_str("increment"); }
-		| INDEX							{ $$ = make1_str("index"); }
-		| INSENSITIVE						{ $$ = make1_str("insensitive"); }
-		| KEY							{ $$ = make1_str("key"); }
-		| LANGUAGE						{ $$ = make1_str("language"); }
-		| LOCATION						{ $$ = make1_str("location"); }
-		| MATCH							{ $$ = make1_str("match"); }
-		| MAXVALUE						{ $$ = make1_str("maxvalue"); }
-		| MINVALUE						{ $$ = make1_str("minvalue"); }
-		| NEXT							{ $$ = make1_str("next"); }
-		| OF							{ $$ = make1_str("of"); }
-		| ONLY							{ $$ = make1_str("only"); }
-		| OPERATOR						{ $$ = make1_str("operator"); }
-		| OPTION						{ $$ = make1_str("option"); }
-		| PASSWORD						{ $$ = make1_str("password"); }
-		| PRIOR							{ $$ = make1_str("prior"); }
-		| PRIVILEGES						{ $$ = make1_str("privileges"); }
-		| READ							{ $$ = make1_str("read"); }
-		| RECIPE						{ $$ = make1_str("recipe"); }
-		| RELATIVE						{ $$ = make1_str("relative"); }
-		| ROW							{ $$ = make1_str("row"); }
-		| SCROLL						{ $$ = make1_str("scroll"); }
-		| SERIAL						{ $$ = make1_str("serial"); }
-		| START							{ $$ = make1_str("start"); }
-		| STATEMENT						{ $$ = make1_str("statement"); }
-		| TIME							{ $$ = make1_str("time"); }
-		| TIMEZONE_HOUR                                 { $$ = make1_str("timezone_hour"); }
-                | TIMEZONE_MINUTE                               { $$ = make1_str("timezone_minute"); }
-		| TRIGGER						{ $$ = make1_str("trigger"); }
-		| TYPE_P						{ $$ = make1_str("type"); }
-		| VALID							{ $$ = make1_str("valid"); }
-		| VERSION						{ $$ = make1_str("version"); }
-		| ZONE							{ $$ = make1_str("zone"); }
+ColId:  ident					{ $$ = $1; }
+		| datetime			{ $$ = $1; }
+		| ABSOLUTE			{ $$ = make1_str("absolute"); }
+		| ACTION			{ $$ = make1_str("action"); }
+		| AFTER				{ $$ = make1_str("after"); }
+		| AGGREGATE			{ $$ = make1_str("aggregate"); }
+		| BACKWARD			{ $$ = make1_str("backward"); }
+		| BEFORE			{ $$ = make1_str("before"); }
+		| CACHE				{ $$ = make1_str("cache"); }
+		| CREATEDB			{ $$ = make1_str("createdb"); }
+		| CREATEUSER			{ $$ = make1_str("createuser"); }
+		| CYCLE				{ $$ = make1_str("cycle"); }
+		| DATABASE			{ $$ = make1_str("database"); }
+		| DELIMITERS			{ $$ = make1_str("delimiters"); }
+		| DOUBLE			{ $$ = make1_str("double"); }
+		| EACH				{ $$ = make1_str("each"); }
+		| ENCODING			{ $$ = make1_str("encoding"); }
+		| FORWARD			{ $$ = make1_str("forward"); }
+		| FUNCTION			{ $$ = make1_str("function"); }
+		| HANDLER			{ $$ = make1_str("handler"); }
+		| INCREMENT			{ $$ = make1_str("increment"); }
+		| INDEX				{ $$ = make1_str("index"); }
+		| INHERITS			{ $$ = make1_str("inherits"); }
+		| INSENSITIVE			{ $$ = make1_str("insensitive"); }
+		| INSTEAD			{ $$ = make1_str("instead"); }
+		| ISNULL			{ $$ = make1_str("isnull"); }
+		| KEY				{ $$ = make1_str("key"); }
+		| LANGUAGE			{ $$ = make1_str("language"); }
+		| LANCOMPILER			{ $$ = make1_str("lancompiler"); }
+		| LOCATION			{ $$ = make1_str("location"); }
+		| MATCH				{ $$ = make1_str("match"); }
+		| MAXVALUE			{ $$ = make1_str("maxvalue"); }
+		| MINVALUE			{ $$ = make1_str("minvalue"); }
+		| NEXT				{ $$ = make1_str("next"); }
+		| NOCREATEDB			{ $$ = make1_str("nocreatedb"); }
+		| NOCREATEUSER			{ $$ = make1_str("nocreateuser"); }
+		| NOTHING			{ $$ = make1_str("nothing"); }
+		| NOTNULL			{ $$ = make1_str("notnull"); }
+		| OF				{ $$ = make1_str("of"); }
+		| OIDS				{ $$ = make1_str("oids"); }
+		| ONLY				{ $$ = make1_str("only"); }
+		| OPERATOR			{ $$ = make1_str("operator"); }
+		| OPTION			{ $$ = make1_str("option"); }
+		| PASSWORD			{ $$ = make1_str("password"); }
+		| PRIOR				{ $$ = make1_str("prior"); }
+		| PRIVILEGES			{ $$ = make1_str("privileges"); }
+		| PROCEDURAL			{ $$ = make1_str("procedural"); }
+		| READ				{ $$ = make1_str("read"); }
+		| RECIPE			{ $$ = make1_str("recipe"); }
+		| RELATIVE			{ $$ = make1_str("relative"); }
+		| RENAME			{ $$ = make1_str("rename"); }
+		| RETURNS			{ $$ = make1_str("returns"); }
+		| ROW				{ $$ = make1_str("row"); }
+		| RULE				{ $$ = make1_str("rule"); }
+		| SCROLL			{ $$ = make1_str("scroll"); }
+		| SEQUENCE                      { $$ = make1_str("sequence"); }
+		| SERIAL			{ $$ = make1_str("serial"); }
+		| START				{ $$ = make1_str("start"); }
+		| STATEMENT			{ $$ = make1_str("statement"); }
+		| STDIN                         { $$ = make1_str("stdin"); }
+		| STDOUT                        { $$ = make1_str("stdout"); }
+		| TIME				{ $$ = make1_str("time"); }
+		| TIMEZONE_HOUR                 { $$ = make1_str("timezone_hour"); }
+                | TIMEZONE_MINUTE               { $$ = make1_str("timezone_minute"); }
+		| TRIGGER			{ $$ = make1_str("trigger"); }
+		| TRUSTED			{ $$ = make1_str("trusted"); }
+		| TYPE_P			{ $$ = make1_str("type"); }
+		| VALID				{ $$ = make1_str("valid"); }
+		| VERSION			{ $$ = make1_str("version"); }
+		| ZONE				{ $$ = make1_str("zone"); }
 		;
-
 /* Column label
  * Allowed labels in "AS" clauses.
  * Include TRUE/FALSE SQL3 reserved words for Postgres backward
@@ -3905,20 +3916,37 @@ ColId:  ident							{ $$ = $1; }
  *  when used as a full identifier. - thomas 1997-11-06
  */
 ColLabel:  ColId						{ $$ = $1; }
-		| ARCHIVE						{ $$ = make1_str("archive"); }
+		| ABORT_TRANS                                   { $$ = make1_str("abort"); }
+		| ANALYZE                                       { $$ = make1_str("analyze"); }
+		| BINARY                                        { $$ = make1_str("binary"); }
 		| CLUSTER						{ $$ = make1_str("cluster"); }
 		| CONSTRAINT					{ $$ = make1_str("constraint"); }
+		| COPY							{ $$ = make1_str("copy"); }
 		| CROSS							{ $$ = make1_str("cross"); }
+		| CURRENT							{ $$ = make1_str("current"); }
+		| DO							{ $$ = make1_str("do"); }
+		| EXPLAIN							{ $$ = make1_str("explain"); }
+		| EXTEND							{ $$ = make1_str("extend"); }
+		| FALSE_P							{ $$ = make1_str("false"); }
 		| FOREIGN						{ $$ = make1_str("foreign"); }
 		| GROUP							{ $$ = make1_str("group"); }
+		| LISTEN							{ $$ = make1_str("listen"); }
 		| LOAD							{ $$ = make1_str("load"); }
+		| LOCK_P							{ $$ = make1_str("lock"); }
+		| MOVE							{ $$ = make1_str("move"); }
+		| NEW							{ $$ = make1_str("new"); }
+		| NONE							{ $$ = make1_str("none"); }
 		| ORDER							{ $$ = make1_str("order"); }
 		| POSITION						{ $$ = make1_str("position"); }
 		| PRECISION						{ $$ = make1_str("precision"); }
+		| RESET							{ $$ = make1_str("reset"); }
+		| SETOF							{ $$ = make1_str("setof"); }
+		| SHOW							{ $$ = make1_str("show"); }
 		| TABLE							{ $$ = make1_str("table"); }
 		| TRANSACTION					{ $$ = make1_str("transaction"); }
 		| TRUE_P						{ $$ = make1_str("true"); }
-		| FALSE_P						{ $$ = make1_str("false"); }
+		| VACUUM					{ $$ = make1_str("vacuum"); }
+		| VERBOSE						{ $$ = make1_str("verbose"); }
 		;
 
 SpecialRuleRelation:  CURRENT
@@ -3980,7 +4008,7 @@ storage_clause : S_EXTERN	{ $$ = "extern"; }
 type: simple_type
 		{
 			$$.type_enum = $1;
-			$$.type_str = strdup(ECPGtype_name($1));
+			$$.type_str = mm_strdup(ECPGtype_name($1));
 		}
 	| struct_type
 		{
@@ -4215,7 +4243,7 @@ connection_target: database_name opt_server opt_port
 		}
 	| Sconst
 		{
-		  $$ = strdup($1);
+		  $$ = mm_strdup($1);
 		  $$[0] = '\"';
 		  $$[strlen($$) - 1] = '\"';
 		  free($1);
@@ -4431,7 +4459,7 @@ action : SQL_CONTINUE {
        | DO name '(' dotext ')' {
 	$<action>$.code = W_DO;
 	$<action>$.command = make4_str($2, make1_str("("), $4, make1_str(")"));
-	$<action>$.str = cat2_str(make1_str("do"), strdup($<action>$.command));
+	$<action>$.str = cat2_str(make1_str("do"), mm_strdup($<action>$.command));
 }
        | DO SQL_BREAK {
         $<action>$.code = W_BREAK;
@@ -4441,7 +4469,7 @@ action : SQL_CONTINUE {
        | SQL_CALL name '(' dotext ')' {
 	$<action>$.code = W_DO;
 	$<action>$.command = make4_str($2, make1_str("("), $4, make1_str(")"));
-	$<action>$.str = cat2_str(make1_str("call"), strdup($<action>$.command));
+	$<action>$.str = cat2_str(make1_str("call"), mm_strdup($<action>$.command));
 }
 
 /* some other stuff for ecpg */

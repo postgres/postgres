@@ -34,7 +34,6 @@
 #undef yywrap
 #endif /* yywrap */
 
-int debugging = 0;
 extern YYSTYPE yylval;
 int llen;
 char literal[MAX_PARSE_BUFFER];

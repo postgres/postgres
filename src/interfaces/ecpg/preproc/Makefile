@@ -3,7 +3,7 @@ include $(SRCDIR)/Makefile.global
 
 MAJOR_VERSION=2
 MINOR_VERSION=4
-PATCHLEVEL=2
+PATCHLEVEL=3
 
 CFLAGS+=-I../include -DMAJOR_VERSION=$(MAJOR_VERSION) \
 	-DMINOR_VERSION=$(MINOR_VERSION) -DPATCHLEVEL=$(PATCHLEVEL) \
@@ -26,6 +26,10 @@ uninstall:
 # Rule that really do something.
 ecpg: $(OBJ)
 	$(CC) -o ecpg $(OBJ) $(LEXLIB) $(LDFLAGS)
+
+pgc.c: pgc.l
+	$(LEX) $<
+	mv lex.yy.c pgc.c
 
 y.tab.h y.tab.c: preproc.y
 	$(YACC) $(YFLAGS) $<
