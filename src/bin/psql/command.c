@@ -3,7 +3,7 @@
  *
  * Copyright 2000-2002 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/command.c,v 1.92 2003/03/18 22:15:43 petere Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/command.c,v 1.93 2003/03/19 22:49:43 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "command.h"
@@ -882,6 +882,8 @@ exec_command(const char *cmd,
 	{
 		if (status != CMD_UNKNOWN)
 			psql_error("\\%s: extra argument '%s' ignored\n", cmd, val);
+		if (val)
+			free(val);
 	}
 
 	if (options_string && continue_parse)
