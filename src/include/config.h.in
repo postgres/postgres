@@ -3,12 +3,12 @@
  *
  * config.h.in is processed by configure to produce config.h.
  *
- * If you want to modify any of the tweakable settings in the first part
+ * If you want to modify any of the tweakable settings in Part 2
  * of this file, you can do it in config.h.in before running configure,
  * or in config.h afterwards.  Of course, if you edit config.h, then your
  * changes will be overwritten the next time you run configure.
  *
- * $Id: config.h.in,v 1.120 2000/06/19 16:58:37 petere Exp $
+ * $Id: config.h.in,v 1.121 2000/06/29 05:50:29 tgl Exp $
  */
 
 #ifndef CONFIG_H
@@ -16,11 +16,74 @@
 
 
 /*
- * Default runtime limit on number of backend server processes per postmaster;
+ *------------------------------------------------------------------------
+ * Part 1: feature symbols and limits that are set by configure based on
+ * user-supplied switches.  This is first so that stuff in Part 2 can
+ * depend on these values.
+ *
+ * Beware of "fixing" configure-time mistakes by editing these values,
+ * since configure may have inserted the settings in other files as well
+ * as here.  Best to rerun configure if you forgot --enable-multibyte
+ * or whatever.
+ *------------------------------------------------------------------------
+ */
+
+/* Set to 1 if you want LOCALE support (--enable-locale) */
+#undef USE_LOCALE
+
+/* Set to 1 if you want cyrillic recode (--enable-recode) */
+#undef CYR_RECODE
+
+/* Set to 1 if you want to use multibyte characters (--enable-multibyte) */
+#undef MULTIBYTE
+
+/* Set to 1 if you want ASSERT checking (--enable-cassert) */
+#undef USE_ASSERT_CHECKING
+
+/* Set to 1 to use syslog() to write postmaster log (--enable-syslog) */
+/* (CAUTION: large log entries confuse syslog on many platforms!) */
+#undef ENABLE_SYSLOG
+
+/* Define to build with Kerberos 4 support (--with-krb4[=DIR]) */
+#undef KRB4
+
+/* Define to build with Kerberos 5 support (--with-krb5[=DIR]) */
+#undef KRB5
+
+/* Kerberos name of the Postgres service principal (--with-krb-srvnam=NAME) */
+#undef PG_KRB_SRVNAM
+
+/* Location of the Kerberos server's keytab file (--with-krb-srvtab=FILE) */
+#undef PG_KRB_SRVTAB
+
+/* 
+ * DEF_PGPORT is the TCP port number on which the Postmaster listens and
+ * which clients will try to connect to.  This is just a default value;
+ * it can be overridden at postmaster or client startup.  It's awfully
+ * convenient if your clients have the right default compiled in, though.
+ * (--with-pgport=PORTNUM)
+ */ 
+#undef DEF_PGPORT
+/* ... and once more as a string constant instead */
+#undef DEF_PGPORT_STR
+
+/*
+ * Default soft limit on number of backend server processes per postmaster;
  * this is just the default setting for the postmaster's -N switch.
- * (Actual value is now set by configure script.)
+ * (--with-maxbackends=N)
  */
 #undef DEF_MAXBACKENDS
+
+
+/*
+ *------------------------------------------------------------------------
+ * Part 2: feature symbols and limits that are user-configurable, but
+ * only by editing this file ... there's no configure support for them.
+ *
+ * Editing this file and doing a full rebuild (and an initdb if noted)
+ * should be sufficient to change any of these.
+ *------------------------------------------------------------------------
+ */
 
 /*
  * Hard limit on number of backend server processes per postmaster.
@@ -40,8 +103,11 @@
 /*
  * Size of a disk block --- currently, this limits the size of a tuple.
  * You can set it bigger if you need bigger tuples.
+ *
+ * CAUTION: changing BLCKSZ requires an initdb.
+ *
+ * currently must be <= 32k bjm
  */
-/* currently must be <= 32k bjm */
 #define BLCKSZ	8192
 
 /*
@@ -57,8 +123,7 @@
  * best to err in the direction of a small limit.  (Besides, a power-of-2
  * value saves a few cycles in md.c.)
  *
- * CAUTION: you had best do an initdb if you change either BLCKSZ or
- * RELSEG_SIZE.
+ * CAUTION: changing RELSEG_SIZE requires an initdb.
  */
 #define RELSEG_SIZE	(0x40000000 / BLCKSZ)
 
@@ -66,27 +131,19 @@
  * Maximum number of columns in an index and maximum number of arguments
  * to a function. They must be the same value.
  *
- * The minimum value is 9 (btree index creation has a 9-argument function).
+ * The minimum value is 8 (index creation uses 8-argument functions).
+ * There is no specific upper limit, although large values will waste
+ * system-table space and processing time.
  *
- * There is no maximum value, though if you want to pass more than 32 
- * arguments to a function, you will have to modify 
- * pgsql/src/backend/utils/fmgr/fmgr.c and add additional entries 
- * to the 'case' statement for the additional arguments.
+ * CAUTION: changing these requires an initdb.
+ *
+ * BTW: if you need to call dynamically-loaded old-style C functions that
+ * have more than 16 arguments, you will also need to add cases to the
+ * switch statement in fmgr_oldstyle() in src/backend/utils/fmgr/fmgr.c.
+ * But consider converting such functions to new-style instead...
  */
 #define INDEX_MAX_KEYS		16
 #define FUNC_MAX_ARGS		INDEX_MAX_KEYS
-
-/*
- * Enables debugging print statements in the date/time support routines.
- * Particularly useful for porting to a new platform/OS combination.
- */
-/* #define DATEDEBUG */
-
-/*
- * defining unsafe floats's will make float4 and float8
- * ops faster at the cost of safety, of course!        
- */
-/* #define UNSAFE_FLOATS */
 
 /*
  * Define this to make libpgtcl's "pg_result -assign" command process C-style
@@ -135,29 +192,6 @@
 #define FASTBUILD /* access/nbtree/nbtsort.c */
 
 /*
- * TBL_FREE_CMD_MEMORY: free memory allocated for a user query inside
- * transaction block after this query is done. 
- */
-#define TBL_FREE_CMD_MEMORY
-
-
-#undef ENABLE_SYSLOG
-
-/* Debug #defines */
-/* #define IPORTAL_DEBUG  */
-/* #define HEAPDEBUGALL  */
-/* #define ISTRATDEBUG  */
-/* #define FASTBUILD_DEBUG */
-/* #define ACLDEBUG */
-/* #define RTDEBUG */
-/* #define GISTDEBUG */
-/* #define OMIT_PARTIAL_INDEX */
-/* #define NO_BUFFERISVALID   */
-/* #define NO_SECURITY        */
-/* #define OLD_REWRITE        */
-/* #define LOCK_DEBUG */
-
-/*
  * MAXPGPATH: standard size of a pathname buffer in Postgres (hence,
  * maximum usable pathname length is one less).
  *
@@ -174,33 +208,62 @@
  */
 #define DEFAULT_MAX_EXPR_DEPTH	10000
 
-
 /*
  *------------------------------------------------------------------------
- * Everything past here is set by the configure script.
+ * These hand-configurable symbols are for enabling debugging code,
+ * not for controlling user-visible features or resource limits.
  *------------------------------------------------------------------------
  */
 
-/* Set to 1 if you want to USE_LOCALE */
-#undef USE_LOCALE
+/* Define this to cause pfree()'d memory to be cleared immediately,
+ * to facilitate catching bugs that refer to already-freed values.
+ * XXX For 7.1 development, define this automatically if --enable-cassert.
+ * In the long term it probably doesn't need to be on by default.
+ */
+#ifdef USE_ASSERT_CHECKING
+#define CLOBBER_FREED_MEMORY
+#endif
 
-/* Set to 1 if you want CYR_RECODE (cyrillic recode) */
-#undef CYR_RECODE
+/* Define this to force all parse and plan trees to be passed through
+ * copyObject(), to facilitate catching errors and omissions in copyObject().
+ * XXX For 7.1 development, define this automatically if --enable-cassert.
+ * In the long term it probably doesn't need to be on by default.
+ */
+#ifdef USE_ASSERT_CHECKING
+#define COPY_PARSE_PLAN_TREES
+#endif
 
-/* Set to 1 if you want to use multibyte characters */
-#undef MULTIBYTE
+/* Enable debugging print statements in the date/time support routines. */
+/* #define DATEDEBUG */
 
-/* Set to 1 if you want to Enable ASSERT CHECKING */
-#undef USE_ASSERT_CHECKING
+/*
+ * Other debug #defines (documentation, anyone?)
+ */
+/* #define IPORTAL_DEBUG  */
+/* #define HEAPDEBUGALL  */
+/* #define ISTRATDEBUG  */
+/* #define FASTBUILD_DEBUG */
+/* #define ACLDEBUG */
+/* #define RTDEBUG */
+/* #define GISTDEBUG */
+/* #define OMIT_PARTIAL_INDEX */
+/* #define NO_SECURITY        */
+/* #define LOCK_DEBUG */
 
-/* 
- * DEF_PGPORT is the TCP port number on which the Postmaster listens by
- * default.  This can be overriden by command options, environment variables,
- * and the postconfig hook. (now set by configure script)
- */ 
-#undef DEF_PGPORT
-/* ... and once more as a string constant instead */
-#undef DEF_PGPORT_STR
+/*
+ * defining unsafe floats's will make float4 and float8
+ * ops faster at the cost of safety, of course!        
+ */
+/* #define UNSAFE_FLOATS */
+
+
+/*
+ *------------------------------------------------------------------------
+ * Part 3: system configuration information that is auto-detected by
+ * configure.  In theory you shouldn't have to touch any of this stuff
+ * by hand.  In the real world, configure might get it wrong...
+ *------------------------------------------------------------------------
+ */
 
 /* Define const as empty if your compiler doesn't grok const. */
 #undef const
@@ -298,22 +361,11 @@
 /* Set to 1 if you have libreadline and it includes history functions */
 #undef HAVE_HISTORY_IN_READLINE
 
-/*
- * Block of parameters for the ODBC code.
- */
-
 /* Set to 1 if you have <pwd.h> */
 #undef HAVE_PWD_H
 
 /* Define if you have the <sys/param.h> header file.  */
 #undef HAVE_SYS_PARAM_H
-
-/* Define if you have the dl library (-ldl).  */
-#undef HAVE_LIBDL
-
-/*
- * End parameters for ODBC code.
- */
 
 /* Set to 1 if you gettimeofday(a,b) vs gettimeofday(a) */
 #undef GETTIMEOFDAY_1ARG
@@ -336,8 +388,13 @@
 /* Set to 1 if you have strerror() */
 #undef HAVE_STRERROR
 
+/* Set to 1 if you have isinf() */
+#undef HAVE_ISINF
+#ifndef HAVE_ISINF
+extern int isinf(double x);
+#endif
+
 /*
- *	Set to 1 if you have isinf().
  *	These are all related to port/isinf.c 
  */
 #undef HAVE_FPCLASS
@@ -346,15 +403,10 @@
 #undef HAVE_FP_CLASS_D
 #undef HAVE_CLASS
 
-#undef HAVE_ISINF
-#ifndef HAVE_ISINF
-int isinf(double x);
-#endif
-
 /* Set to 1 if you have gethostname() */
 #undef HAVE_GETHOSTNAME
 #ifndef HAVE_GETHOSTNAME
-int  gethostname(char *name, int namelen);
+extern int gethostname(char *name, int namelen);
 #endif
 
 /* Set to 1 if struct tm has a tm_zone member */
@@ -380,7 +432,7 @@ int  gethostname(char *name, int namelen);
 #  endif
 #  include <arpa/inet.h>
 # endif
-extern int  inet_aton(const char *cp, struct in_addr * addr);
+extern int inet_aton(const char *cp, struct in_addr * addr);
 #endif
 
 /* Set to 1 if you have fcvt() */
@@ -427,7 +479,7 @@ extern int  inet_aton(const char *cp, struct in_addr * addr);
 /* Set to 1 if you have sigprocmask() */
 #undef HAVE_STRCASECMP
 #ifndef HAVE_STRCASECMP
-extern int  strcasecmp(char *s1, char *s2);
+extern int strcasecmp(char *s1, char *s2);
 #endif
 
 /* Set to 1 if you have strtol() */
@@ -472,13 +524,6 @@ extern void srandom(unsigned int seed);
 /* Set to 1 if you have getopt_long() (GNU long options) */
 #undef HAVE_GETOPT_LONG
 
-
-/*
- * On architectures for which we have not implemented spinlocks (or
- * cannot do so), we use System V semaphores.  We also use them for
- * long locks.  For some reason union semun is never defined in the
- * System V header files so we must do it ourselves.
- */
 /* Set to 1 if you have union semun */
 #undef HAVE_UNION_SEMUN
 
@@ -494,7 +539,8 @@ extern void srandom(unsigned int seed);
 /* Define this as the appropriate snprintf format for 64-bit ints, if any */
 #undef INT64_FORMAT
 
-/* These must be defined as the alignment requirement (NOT the size) of
+/*
+ * These must be defined as the alignment requirement (NOT the size) of
  * each of the basic C data types (except char, which we assume has align 1).
  * MAXIMUM_ALIGNOF is the largest alignment requirement for any C data type.
  * ALIGNOF_LONG_LONG_INT need only be defined if HAVE_LONG_LONG_INT_64 is.
@@ -506,7 +552,7 @@ extern void srandom(unsigned int seed);
 #undef ALIGNOF_DOUBLE
 #undef MAXIMUM_ALIGNOF
 
-/* Define as the type of the type of the 3rd argument to accept() */
+/* Define as the type of the 3rd argument to accept() */
 #undef ACCEPT_TYPE_ARG3
 
 /* Define if POSIX signal interface is available */
@@ -518,17 +564,15 @@ extern void srandom(unsigned int seed);
 /* Define if C++ compiler accepts "#include <string>" */
 #undef HAVE_CXX_STRING_HEADER
 
-/* Define if you are building with Kerberos 4 support */
-#undef KRB4
 
-/* Define if you are building with Kerberos 5 support */
-#undef KRB5
-
-/* The name of the Postgres service principal in Kerberos */
-#undef PG_KRB_SRVNAM
-
-/* The location of the Kerberos server's keytab file */
-#undef PG_KRB_SRVTAB
+/*
+ *------------------------------------------------------------------------
+ * Part 4: pull in system-specific declarations.
+ *
+ * This is still configure's responsibility, because it picks where
+ * the "os.h" symlink points...
+ *------------------------------------------------------------------------
+ */
 
 /*
  * Pull in OS-specific declarations (using link created by configure)
@@ -538,15 +582,15 @@ extern void srandom(unsigned int seed);
 
 /*
  * The following is used as the arg list for signal handlers.  Any ports
- * that take something other than an int argument should change this in
- * the port specific makefile.  Note that variable names are required
+ * that take something other than an int argument should override this in
+ * the port-specific os.h file.  Note that variable names are required
  * because it is used in both the prototypes as well as the definitions.
  * Note also the long name.  We expect that this won't collide with
  * other names causing compiler warnings.
  */ 
 
-#ifndef       SIGNAL_ARGS
-#  define SIGNAL_ARGS int postgres_signal_arg
+#ifndef SIGNAL_ARGS
+#define SIGNAL_ARGS  int postgres_signal_arg
 #endif
 
 
