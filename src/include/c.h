@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: c.h,v 1.123 2002/08/25 17:20:01 tgl Exp $
+ * $Id: c.h,v 1.124 2002/09/01 23:41:47 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -600,7 +600,7 @@ typedef NameData *Name;
 			memset((char *) _start, _val, _len); \
 	} while (0)
 
-#define MEMSET_LOOP_LIMIT  64
+#define MEMSET_LOOP_LIMIT  1024
 
 
 /* ----------------------------------------------------------------
