@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/libpq.sgml,v 1.98.2.4 2003/01/07 22:54:03 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/libpq.sgml,v 1.98.2.5 2003/01/30 19:50:07 tgl Exp $
 -->
 
  <chapter id="libpq">
@@ -202,9 +202,12 @@ PGconn *PQconnectdb(const char *conninfo)
      <term><literal>requiressl</literal></term>
      <listitem>
      <para>
-      Set to 1 to require SSL connection to the backend. <application>Libpq</>
-      will then refuse to connect if the server does not support
-      SSL. Set to 0 (default) to negotiate with server.
+      Set to 1 to require <acronym>SSL</acronym> connection to the server.
+      <application>Libpq</> will then refuse to connect if the server does not
+      accept an <acronym>SSL</acronym> connection.
+      Set to 0 (default) to negotiate with server.
+      This option is only available if
+      <productname>PostgreSQL</> is compiled with SSL support.
      </para>
      </listitem>
     </varlistentry>
@@ -1994,10 +1997,11 @@ routines like <function>PQgetvalue</function>.
 
 <para>
 The following environment variables can be used to select default
-connection parameter values, which will be used by <function>PQconnectdb</function> or
-<function>PQsetdbLogin</function> if no value is directly specified by the calling code.
-These are useful to avoid hard-coding database names into simple
-application programs.
+connection parameter values, which will be used by
+<function>PQconnectdb</>, <function>PQsetdbLogin</> and
+<function>PQsetdb</> if no value is directly specified by the calling
+code.  These are useful to avoid hard-coding database connection
+information into simple client applications.
 
 <itemizedlist>
 <listitem>
@@ -2075,6 +2079,25 @@ the <productname>PostgreSQL</productname> backend.
 messages from the backend server are displayed.
 </para>
 </listitem>
+<listitem>
+<para>
+<envar>PGREQUIRESSL</envar> sets whether or not the connection must be
+made over <acronym>SSL</acronym>. If set to
+<quote>1</quote>, <application>libpq</>
+will refuse to connect if the server does not accept
+an <acronym>SSL</acronym> connection.
+This option is only available if
+<productname>PostgreSQL</> is compiled with SSL support.
+</para>
+</listitem>
+<listitem>
+<para>
+<envar>PGCONNECT_TIMEOUT</envar> sets the maximum number of seconds
+that <application>libpq</application> will wait when attempting to
+connect to the <productname>PostgreSQL</productname> server. This
+option should be set to at least 2 seconds.
+</para>
+</listitem>
 </itemizedlist>
 </para>
 
@@ -2145,10 +2168,10 @@ password. This file should have the format:
 <synopsis>
 <replaceable>hostname</replaceable>:<replaceable>port</replaceable>:<replaceable>database</replaceable>:<replaceable>username</replaceable>:<replaceable>password</replaceable>
 </synopsis>
-Any of these may be a literal name, or <literal>*</literal>, which matches
-anything.  The first match will be used so put more specific entries first.
-Entries with <literal>:</literal> or <literal>\</literal> should be escaped
-with <literal>\</literal>.
+Any of these may be a literal name, or <literal>*</literal>, which
+matches anything.  The first matching entry will be used, so put more-specific
+entries first.  When an entry contains <literal>:</literal> or
+<literal>\</literal>, it must be escaped with <literal>\</literal>.
 </para>
 <para>
 The permissions on <filename>.pgpass</filename> must disallow any
