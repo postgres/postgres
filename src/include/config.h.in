@@ -315,4 +315,10 @@
  */
 #define BTREE_VERSION_1
 
+/*
+ * TBL_FREE_CMD_MEMORY: free memory allocated for an user query inside
+ * transaction block after this query is done. 
+ */
+#define TBL_FREE_CMD_MEMORY
+
 #endif /* CONFIG_H */
