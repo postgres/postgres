@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeIndexscan.c,v 1.75 2002/12/15 16:17:46 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeIndexscan.c,v 1.76 2002/12/18 00:14:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -470,10 +470,13 @@ ExecIndexMarkPos(IndexScanState *node)
 	int			indexPtr;
 
 	indexPtr = node->iss_MarkIndexPtr = node->iss_IndexPtr;
-	indexScanDescs = node->iss_ScanDescs;
-	scanDesc = indexScanDescs[indexPtr];
+	if (indexPtr >= 0 && indexPtr < node->iss_NumIndices)
+	{
+		indexScanDescs = node->iss_ScanDescs;
+		scanDesc = indexScanDescs[indexPtr];
 
-	index_markpos(scanDesc);
+		index_markpos(scanDesc);
+	}
 }
 
 /* ----------------------------------------------------------------
@@ -482,8 +485,6 @@ ExecIndexMarkPos(IndexScanState *node)
  * old comments
  *		Restores scan position by restoring the current index.
  *		Returns nothing.
- *
- *		XXX Assumes previously marked scan position belongs to current index
  * ----------------------------------------------------------------
  */
 void
@@ -494,10 +495,13 @@ ExecIndexRestrPos(IndexScanState *node)
 	int			indexPtr;
 
 	indexPtr = node->iss_IndexPtr = node->iss_MarkIndexPtr;
-	indexScanDescs = node->iss_ScanDescs;
-	scanDesc = indexScanDescs[indexPtr];
+	if (indexPtr >= 0 && indexPtr < node->iss_NumIndices)
+	{
+		indexScanDescs = node->iss_ScanDescs;
+		scanDesc = indexScanDescs[indexPtr];
 
-	index_restrpos(scanDesc);
+		index_restrpos(scanDesc);
+	}
 }
 
 /* ----------------------------------------------------------------
