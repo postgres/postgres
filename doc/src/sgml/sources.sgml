@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/sources.sgml,v 2.10 2003/07/22 19:00:07 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/sources.sgml,v 2.11 2003/07/27 18:37:52 tgl Exp $
 -->
 
  <chapter id="source">
@@ -115,7 +115,7 @@ less -x4
 </programlisting>
     This specifies error severity level <literal>ERROR</> (a run-of-the-mill
     error).  The <function>errcode</> call specifies the SQLSTATE error code
-    using a macro defined in <filename>src/include/utils/elog.h</>.  The
+    using a macro defined in <filename>src/include/utils/errcodes.h</>.  The
     <function>errmsg</> call provides the primary message text.  Notice the
     extra set of parentheses surrounding the auxiliary function calls ---
     these are annoying but syntactically necessary.
@@ -144,7 +144,7 @@ less -x4
      <function>errcode</>(sqlerrcode) specifies the SQLSTATE error identifier
      code for the condition.  If this routine is not called, the error
      identifier defaults to
-     <literal>ERRCODE_INTERNAL_ERROR</> when the error level is
+     <literal>ERRCODE_INTERNAL_ERROR</> when the error severity level is
      <literal>ERROR</> or higher, <literal>ERRCODE_WARNING</> when the
      error level is <literal>WARNING</>, otherwise (for <literal>NOTICE</>
      and below) <literal>ERRCODE_SUCCESSFUL_COMPLETION</>.
@@ -245,11 +245,23 @@ less -x4
    </para>
 
    <para>
-    You may also see uses of the older function <function>elog</>.  This
-    is equivalent to an <function>ereport</> call specifying only severity
-    level and primary message.  <function>elog</> should only be used if
-    the default errcode assignment is appropriate; this generally restricts
-    its use to internal errors and debug logging output.
+    There is an older function <function>elog</> that is still heavily used.
+    An <function>elog</> call
+<programlisting>
+    elog(level, "format string", ...);
+</programlisting>
+    is exactly equivalent to
+<programlisting>
+    ereport(level, (errmsg_internal("format string", ...)));
+</programlisting>
+    Notice that the SQLSTATE errcode is always defaulted, and the message
+    string is not included in the internationalization message dictionary.
+    Therefore, <function>elog</> should be used only for internal errors and
+    low-level debug logging.  Any message that is likely to be of interest to
+    ordinary users should go through <function>ereport</>.  Nonetheless,
+    there are enough internal <quote>can't happen</> error checks in the
+    system that <function>elog</> is still widely used; it is preferred for
+    those messages for its notational simplicity.
    </para>
 
    <para>
