@@ -1,9 +1,67 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.235.2.28 2004/10/22 00:26:22 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.235.2.29 2005/01/30 19:32:21 tgl Exp $
 -->
 
 <appendix id="release">
  <title>Release Notes</title>
+
+  <sect1 id="release-7-4-7">
+   <title>Release 7.4.7</title>
+
+   <note>
+   <title>Release date</title>
+   <simpara>2005-01-31</simpara>
+   </note>
+
+   <para>
+    This release contains a variety of fixes from 7.4.6, including several
+    security-related issues.
+   </para>
+
+   <sect2>
+    <title>Migration to version 7.4.7</title>
+
+    <para>
+     A dump/restore is not required for those running 7.4.X.
+    </para>
+   </sect2>
+
+   <sect2>
+    <title>Changes</title>
+
+<itemizedlist>
+<listitem><para>Disallow <command>LOAD</> to non-superusers</para>
+<para>
+On platforms that will automatically execute initialization functions of a
+shared library (this includes at least Windows and ELF-based Unixen),
+<command>LOAD</> can be used to make the server execute arbitrary code.
+Thanks to NGS Software for reporting this.</para></listitem>
+<listitem><para>Check that creator of an aggregate function has the right to
+execute the specified transition functions</para>
+<para>
+This oversight made it possible to bypass denial of EXECUTE
+permission on a function.</para></listitem>
+<listitem><para>Fix security and 64-bit issues in
+contrib/intagg</para></listitem>
+<listitem><para>Add needed STRICT marking to some contrib functions (Kris
+Jurka)</para></listitem>
+<listitem><para>Avoid buffer overrun when plpgsql cursor declaration has too
+many parameters (Neil)</para></listitem>
+<listitem><para>Fix planning error for FULL and RIGHT outer joins</para>
+<para>
+The result of the join was mistakenly supposed to be sorted the same as the
+left input.  This could not only deliver mis-sorted output to the user, but
+in case of nested merge joins could give outright wrong answers.
+</para></listitem>
+<listitem><para>Fix plperl for quote marks in tuple fields</para></listitem>
+<listitem><para>Fix display of negative intervals in SQL and GERMAN
+datestyles</para></listitem>
+<listitem><para>Make age(timestamptz) do calculation in local timezone not
+GMT</para></listitem>
+</itemizedlist>
+
+  </sect2>
+ </sect1>
 
   <sect1 id="release-7-4-6">
    <title>Release 7.4.6</title>
@@ -41,11 +99,11 @@ it as a potential-data-loss bug.
 Very large left joins using a hash join plan could fail to output unmatched
 left-side rows given just the right data distribution.
 </para></listitem>
-<listitem><para>Disallow running pg_ctl as root</para>
+<listitem><para>Disallow running <application>pg_ctl</> as root</para>
 <para>
 This is to guard against any possible security issues.
 </para></listitem>
-<listitem><para>Avoid using temp files in /tmp in make_oidjoins_check</para>
+<listitem><para>Avoid using temp files in <filename>/tmp</> in <command>make_oidjoins_check</command></para>
 <para>
 This has been reported as a security issue, though it's hardly worthy of
 concern since there is no reason for non-developers to use this script anyway.
@@ -56,7 +114,7 @@ result</para>
 In rare cases, a client might think that its last command had succeeded when
 it really had been aborted by forced database shutdown.
 </para></listitem>
-<listitem><para>Repair bug in pg_stat_get_backend_idset()</para>
+<listitem><para>Repair bug in <function>pg_stat_get_backend_idset</function></para>
 <para>
 This could lead to misbehavior in some of the system-statistics views.
 </para></listitem>
@@ -100,9 +158,9 @@ ECPG prepare statement</para></listitem>
     <title>Changes</title>
 
 <itemizedlist>
-<listitem><para>Repair possible crash during concurrent btree index insertions</para>
+<listitem><para>Repair possible crash during concurrent B-tree index insertions</para>
 <para>
-This patch fixes a rare case in which concurrent insertions into a btree index
+This patch fixes a rare case in which concurrent insertions into a B-tree index
 could result in a server panic.  No permanent damage would result, but it's
 still worth a re-release.  The bug does not exist in pre-7.4 releases.
 </para></listitem>
@@ -146,12 +204,12 @@ since <productname>PostgreSQL</productname> 7.1.
 </para></listitem>
 <listitem><para>Check HAVING restriction before evaluating result list of an
 aggregate plan</para></listitem>
-<listitem><para>Avoid crash when session's current userID is deleted</para></listitem>
+<listitem><para>Avoid crash when session's current user ID is deleted</para></listitem>
 <listitem><para>Fix hashed crosstab for zero-rows case (Joe)</para></listitem>
 <listitem><para>Force cache update after renaming a column in a foreign key</para></listitem>
 <listitem><para>Pretty-print UNION queries correctly</para></listitem>
 <listitem><para>Make psql handle <literal>\r\n</> newlines properly in COPY IN</para></listitem>
-<listitem><para>pg_dump handled ACLs with grant options incorrectly</para></listitem>
+<listitem><para><application>pg_dump</> handled ACLs with grant options incorrectly</para></listitem>
 <listitem><para>Fix thread support for OS X and Solaris</para></listitem>
 <listitem><para>Updated JDBC driver (build 215) with various fixes</para></listitem>
 <listitem><para>ECPG fixes</para></listitem>
@@ -439,7 +497,7 @@ DROP SCHEMA information_schema CASCADE;
 <listitem><para>Force zero_damaged_pages to be on during recovery from WAL</para></listitem>
 <listitem><para>Prevent some obscure cases of <quote>variable not in subplan target lists</quote></para></listitem>
 <listitem><para>Make <function>PQescapeBytea</function> and <function>byteaout</function> consistent with each other (Joe)</para></listitem>
-<listitem><para>Escape <type>bytea</type> output for bytes > 0x7e(Joe)</para>
+<listitem><para>Escape <type>bytea</type> output for bytes &gt; 0x7e(Joe)</para>
 <para>
   If different client encodings are used for <type>bytea</type> output and input, it
   is possible for <type>bytea</type> values to be corrupted by the differing
@@ -1417,7 +1475,7 @@ DROP SCHEMA information_schema CASCADE;
 
    <itemizedlist>
     <listitem>
-     <para>Make <command>CREATE SEQUENCE</command> grammar more conforming to SQL 2003 (Neil)</para>
+     <para>Make <command>CREATE SEQUENCE</command> grammar more conforming to SQL:2003 (Neil)</para>
     </listitem>
 
     <listitem>
@@ -1492,7 +1550,7 @@ DROP SCHEMA information_schema CASCADE;
     <listitem>
      <para>
       Allow copying table schema using <literal>LIKE
-      <replaceable>subtable</replaceable></literal>, also SQL 2003
+      <replaceable>subtable</replaceable></literal>, also SQL:2003
       feature <literal>INCLUDING DEFAULTS</literal> (Rod)
      </para>
     </listitem>
@@ -2272,7 +2330,7 @@ DROP SCHEMA information_schema CASCADE;
     <listitem><para>Allow libpq to compile with Borland C++ compiler (Lester Godwin, Karl Waclawek)</para></listitem>
     <listitem><para>Use our own version of <function>getopt_long()</function> if needed (Peter)</para></listitem>
     <listitem><para>Convert administration scripts to C (Peter)</para></listitem>
-    <listitem><para> Bison >= 1.85 is now required to build the <productname>PostgreSQL</> grammar, if building from CVS</para></listitem>
+    <listitem><para> Bison &gt;= 1.85 is now required to build the <productname>PostgreSQL</> grammar, if building from CVS</para></listitem>
     <listitem><para>Merge documentation into one book (Peter)</para></listitem>
     <listitem><para>Add Windows compatibility functions (Bruce)</para></listitem>
     <listitem><para>Allow client interfaces to compile under MinGW (Bruce)</para></listitem>
@@ -2325,6 +2383,62 @@ DROP SCHEMA information_schema CASCADE;
     <listitem><para>Remove array module because features now included by default (Joe)</para></listitem>
    </itemizedlist>
   </sect3>
+  </sect2>
+ </sect1>
+
+  <sect1 id="release-7-3-9">
+   <title>Release 7.3.9</title>
+
+   <note>
+   <title>Release date</title>
+   <simpara>2005-01-31</simpara>
+   </note>
+
+   <para>
+    This release contains a variety of fixes from 7.3.8, including several
+    security-related issues.
+   </para>
+
+   <sect2>
+    <title>Migration to version 7.3.9</title>
+
+    <para>
+     A dump/restore is not required for those running 7.3.X.
+    </para>
+   </sect2>
+
+   <sect2>
+    <title>Changes</title>
+
+<itemizedlist>
+<listitem><para>Disallow <command>LOAD</> to non-superusers</para>
+<para>
+On platforms that will automatically execute initialization functions of a
+shared library (this includes at least Windows and ELF-based Unixen),
+<command>LOAD</> can be used to make the server execute arbitrary code.
+Thanks to NGS Software for reporting this.</para></listitem>
+<listitem><para>Check that creator of an aggregate function has the right to
+execute the specified transition functions</para>
+<para>
+This oversight made it possible to bypass denial of EXECUTE
+permission on a function.</para></listitem>
+<listitem><para>Fix security and 64-bit issues in
+contrib/intagg</para></listitem>
+<listitem><para>Add needed STRICT marking to some contrib functions (Kris
+Jurka)</para></listitem>
+<listitem><para>Avoid buffer overrun when plpgsql cursor declaration has too
+many parameters (Neil)</para></listitem>
+<listitem><para>Fix planning error for FULL and RIGHT outer joins</para>
+<para>
+The result of the join was mistakenly supposed to be sorted the same as the
+left input.  This could not only deliver mis-sorted output to the user, but
+in case of nested merge joins could give outright wrong answers.
+</para></listitem>
+<listitem><para>Fix plperl for quote marks in tuple fields</para></listitem>
+<listitem><para>Fix display of negative intervals in SQL and GERMAN
+datestyles</para></listitem>
+</itemizedlist>
+
   </sect2>
  </sect1>
 
@@ -3113,7 +3227,7 @@ operations on bytea columns (Joe)</para></listitem>
 <listitem><para>Make cursors insensitive, meaning their contents do not change (Tom)</para></listitem>
 <listitem><para>Disable LIMIT #,# syntax; now only LIMIT # OFFSET # supported (Bruce)</para></listitem>
 <listitem><para>Increase identifier length to 63 (Neil, Bruce)</para></listitem>
-<listitem><para>UNION fixes for merging >= 3 columns of different lengths (Tom)</para></listitem>
+<listitem><para>UNION fixes for merging &gt;= 3 columns of different lengths (Tom)</para></listitem>
 <listitem><para>Add DEFAULT key word to INSERT, e.g., INSERT ... (..., DEFAULT, ...) (Rod)</para></listitem>
 <listitem><para>Allow views to have default values using ALTER COLUMN ... SET DEFAULT (Neil)</para></listitem>
 <listitem><para>Fail on INSERTs with column lists that don't supply all column values, e.g., INSERT INTO tab (col1, col2) VALUES ('val1');  (Rod)</para></listitem>
@@ -3196,7 +3310,7 @@ operations on bytea columns (Joe)</para></listitem>
 <listitem><para>New pg_settings table to view/modify GUC settings (Joe)</para></listitem>
 <listitem><para>Add smart quoting, portability improvements to <application>pg_dump</> output (Peter)</para></listitem>
 <listitem><para>Dump serial columns out as SERIAL (Tom)</para></listitem>
-<listitem><para>Enable large file support, >2G for <application>pg_dump</> (Peter, Philip Warner, Bruce)</para></listitem>
+<listitem><para>Enable large file support, &gt;2G for <application>pg_dump</> (Peter, Philip Warner, Bruce)</para></listitem>
 <listitem><para>Disallow TRUNCATE on tables that are involved in referential constraints (Rod)</para></listitem>
 <listitem><para>Have TRUNCATE also auto-truncate the toast table of the relation (Tom)</para></listitem>
 <listitem><para>Add clusterdb utility that will auto-cluster an entire database based on previous CLUSTER operations (Alvaro Herrera)</para></listitem>
@@ -3260,7 +3374,7 @@ operations on bytea columns (Joe)</para></listitem>
 <listitem><para>Add additional encodings: Korean (JOHAB), Thai (WIN874), Vietnamese (TCVN), Arabic (WIN1256), Simplified Chinese (GBK), Korean (UHC) (Eiji Tokuya)</para></listitem>
 <listitem><para>Enable locale support by default (Peter)</para></listitem>
 <listitem><para>Add locale variables (Peter)</para></listitem>
-<listitem><para>Escape byes >= 0x7f for multibyte in PQescapeBytea/PQunescapeBytea (Tatsuo)</para></listitem>
+<listitem><para>Escape byes &gt;= 0x7f for multibyte in PQescapeBytea/PQunescapeBytea (Tatsuo)</para></listitem>
 <listitem><para>Add locale awareness to regular expression character classes</para></listitem>
 <listitem><para>Enable multibyte support by default (Tatsuo)</para></listitem>
 <listitem><para>Add GB18030 multibyte support (Bill Huang)</para></listitem>
@@ -3305,7 +3419,7 @@ operations on bytea columns (Joe)</para></listitem>
    <sect3>
     <title>libpq</title>
 <itemizedlist>
-<listitem><para>Add $HOME/.pgpass to store host/user password combinations (Alvaro Herrera)</para></listitem>
+<listitem><para>Add ~/.pgpass to store host/user password combinations (Alvaro Herrera)</para></listitem>
 <listitem><para>Add PQunescapeBytea() function to libpq (Patrick Welche)</para></listitem>
 <listitem><para>Fix for sending large queries over non-blocking connections (Bernhard Herzog)</para></listitem>
 <listitem><para>Fix for libpq using timers on Win9X (David Ford)</para></listitem>
@@ -3429,6 +3543,54 @@ operations on bytea columns (Joe)</para></listitem>
 <listitem><para>Improve /contrib/fulltextindex (Christopher)</para></listitem>
 </itemizedlist>
    </sect3>
+
+  </sect2>
+ </sect1>
+
+  <sect1 id="release-7-2-7">
+   <title>Release 7.2.7</title>
+
+   <note>
+   <title>Release date</title>
+   <simpara>2005-01-31</simpara>
+   </note>
+
+   <para>
+    This release contains a variety of fixes from 7.2.6, including several
+    security-related issues.
+   </para>
+
+   <sect2>
+    <title>Migration to version 7.2.7</title>
+
+    <para>
+     A dump/restore is not required for those running 7.2.X.
+    </para>
+   </sect2>
+
+   <sect2>
+    <title>Changes</title>
+
+<itemizedlist>
+<listitem><para>Disallow <command>LOAD</> to non-superusers</para>
+<para>
+On platforms that will automatically execute initialization functions of a
+shared library (this includes at least Windows and ELF-based Unixen),
+<command>LOAD</> can be used to make the server execute arbitrary code.
+Thanks to NGS Software for reporting this.</para></listitem>
+<listitem><para>Add needed STRICT marking to some contrib functions (Kris
+Jurka)</para></listitem>
+<listitem><para>Avoid buffer overrun when plpgsql cursor declaration has too
+many parameters (Neil)</para></listitem>
+<listitem><para>Fix planning error for FULL and RIGHT outer joins</para>
+<para>
+The result of the join was mistakenly supposed to be sorted the same as the
+left input.  This could not only deliver mis-sorted output to the user, but
+in case of nested merge joins could give outright wrong answers.
+</para></listitem>
+<listitem><para>Fix display of negative intervals in SQL and GERMAN
+datestyles</para></listitem>
+</itemizedlist>
 
   </sect2>
  </sect1>
@@ -3630,7 +3792,7 @@ since <productname>PostgreSQL</productname> 7.1.
 <itemizedlist>
 <listitem><para>Allow EXECUTE of "CREATE TABLE AS ... SELECT" in PL/pgSQL (Tom)</para></listitem>
 <listitem><para>Fix for compressed transaction log id wraparound (Tom)</para></listitem>
-<listitem><para>Fix PQescapeBytea/PQunescapeBytea so that they handle bytes > 0x7f (Tatsuo)</para></listitem>
+<listitem><para>Fix PQescapeBytea/PQunescapeBytea so that they handle bytes &gt; 0x7f (Tatsuo)</para></listitem>
 <listitem><para>Fix for psql and <application>pg_dump</> crashing when invoked with non-existent long options (Tatsuo)</para></listitem>
 <listitem><para>Fix crash when invoking geometric operators (Tom)</para></listitem>
 <listitem><para>Allow OPEN cursor(args) (Tom)</para></listitem>
@@ -4801,7 +4963,7 @@ Added documentation to tarball.
      <programlisting>
 Fix many CLUSTER failures (Tom)
 Allow ALTER TABLE RENAME works on indexes (Tom)
-Fix plpgsql to handle datetime->timestamp and timespan->interval (Bruce)
+Fix plpgsql to handle datetime-&gt;timestamp and timespan-&gt;interval (Bruce)
 New configure --with-setproctitle switch to use setproctitle() (Marc, Bruce)
 Fix the off by one errors in ResultSet from 6.5.3, and more.
 jdbc ResultSet fixes (Joseph Shraibman)
@@ -5049,7 +5211,7 @@ Fix mismatched types in CREATE TABLE ... DEFAULT
 Fix SELECT * FROM pg_class where oid in (0,-1)
 Fix SELECT COUNT('asdf') FROM pg_class WHERE oid=12
 Prevent user who can create databases can modifying pg_database table (Peter E)
-Fix btree to give a useful elog when key > 1/2 (page - overhead) (Tom)
+Fix btree to give a useful elog when key &gt; 1/2 (page - overhead) (Tom)
 Fix INSERT of 0.0 into DECIMAL(4,4) field (Tom)
 
 Enhancements
@@ -5258,7 +5420,7 @@ Fewer fsync writes when fsync is not disabled (Tom)
 Improved LIKE optimizer estimates (Tom)
 Prevent fsync in SELECT-only queries (Vadim)
 Make index creation use psort code, because it is now faster (Tom)
-Allow creation of sort temp tables > 1 Gig
+Allow creation of sort temp tables &gt; 1 Gig
 
 Source Tree Changes
 -------------------
@@ -5680,7 +5842,7 @@ Add Win1250 (Czech) support (Pavel Behal)
      <programlisting>
 Bug Fixes
 ---------
-Fix text<->float8 and text<->float4 conversion functions(Thomas)
+Fix text&lt;-&gt;float8 and text&lt;-&gt;float4 conversion functions(Thomas)
 Fix for creating tables with mixed-case constraints(Billy)
 Change exp()/pow() behavior to generate error on underflow/overflow(Jan)
 Fix bug in pg_dump -z
@@ -6888,7 +7050,7 @@ Check explicitly for points and polygons contained within polygons
         using an axis-crossing algorithm(Thomas)
 Add routine to convert circle-box(Thomas)
 Merge conflicting operators for different geometric data types(Thomas)
-Replace distance operator "<===>" with "<->"(Thomas)
+Replace distance operator "&lt;===&gt;" with "&lt;-&gt;"(Thomas)
 Replace "above" operator "!^" with "&gt;^" and "below" operator "!|" with "&lt;^"(Thomas)
 Add routines for text trimming on both ends, substring, and string position(Thomas)
 Added conversion routines circle(box) and poly(circle)(Thomas)
@@ -7440,31 +7602,31 @@ New Ports
 </para>
 <!--
 Contributors (appologies to any missed)
- * Kurt J. Lidl <lidl@va.pubnix.com> 
+ * Kurt J. Lidl &lt;lidl@va.pubnix.com&gt; 
         (missed in first run, but no less important)
- * Erich Stamberger <eberger@gewi.kfunigraz.ac.at>
- * Jason Wright <jason@shiloh.vnet.net>
- * Cees de Groot <C.deGroot@inter.NL.net>
+ * Erich Stamberger &lt;eberger@gewi.kfunigraz.ac.at&gt;
+ * Jason Wright &lt;jason@shiloh.vnet.net&gt;
+ * Cees de Groot &lt;C.deGroot@inter.NL.net&gt;
  * ernst.molitor@uni-bonn.de
  * michael.siebenborn@ae3.Hypo.DE (Michael Siebenborn (6929))
- * Brian E. Gallew <geek+@cmu.edu>
- * Vadim B. Mikheev <vadim@sable.krasnoyarsk.su>
- * Adam Sussman <myddryn@vidya.com>
- * Chris Dunlop <chris@onthe.net.au>
- * Marc G. Fournier <scrappy@ki.net>
- * Dan McGuirk <mcguirk@indirect.com>
- * Dr_George_D_Detlefsen <drgeorge@ilt.com>
- * Erich Stamberger <eberger@gewi.kfunigraz.ac.at>
- * Massimo Dal Zotto <dz@cs.unitn.it>
- * Randy Kunkee <kunkee@Starbase.NeoSoft.COM>
- * Rick Weldon <rick@wisetech.com>
- * Thomas van Reimersdahl <reimersd@dali.techinfo.rwth-aachen.de>
- * david bennett <dave@bensoft.com>
+ * Brian E. Gallew &lt;geek+@cmu.edu&gt;
+ * Vadim B. Mikheev &lt;vadim@sable.krasnoyarsk.su&gt;
+ * Adam Sussman &lt;myddryn@vidya.com&gt;
+ * Chris Dunlop &lt;chris@onthe.net.au&gt;
+ * Marc G. Fournier &lt;scrappy@ki.net&gt;
+ * Dan McGuirk &lt;mcguirk@indirect.com&gt;
+ * Dr_George_D_Detlefsen &lt;drgeorge@ilt.com&gt;
+ * Erich Stamberger &lt;eberger@gewi.kfunigraz.ac.at&gt;
+ * Massimo Dal Zotto &lt;dz@cs.unitn.it&gt;
+ * Randy Kunkee &lt;kunkee@Starbase.NeoSoft.COM&gt;
+ * Rick Weldon &lt;rick@wisetech.com&gt;
+ * Thomas van Reimersdahl &lt;reimersd@dali.techinfo.rwth-aachen.de&gt;
+ * david bennett &lt;dave@bensoft.com&gt;
  * ernst.molitor@uni-bonn.de
- * Julian Assange <proff@suburbia.net>
- * Bruce Momjian <pgman@candle.pha.pa.us>
- * Paul "Shag" Walmsley <ccshag@cclabs.missouri.edu>
- * "Alistair G. Crooks" <azcb0@sde.uts.amdahl.com>
+ * Julian Assange &lt;proff@suburbia.net&gt;
+ * Bruce Momjian &lt;pgman@candle.pha.pa.us&gt;
+ * Paul "Shag" Walmsley &lt;ccshag@cclabs.missouri.edu&gt;
+ * "Alistair G. Crooks" &lt;azcb0@sde.uts.amdahl.com&gt;
 -->
 </sect2>
 </sect1>
@@ -7756,9 +7918,9 @@ more compliant to the SQL-92 standard):
    char(N), varchar(N), date and time.
 
    The following are aliases to existing postgres types:
-                smallint -> int2
-                integer, int -> int4
-                float, real  -> float4
+                smallint -&gt; int2
+                integer, int -&gt; int4
+                float, real  -&gt; float4
    char(N) and varchar(N) are implemented as truncated text types. In
    addition, char(N) does blank-padding. 
  * single-quote (') is used for quoting string literals; '' (in addition to
