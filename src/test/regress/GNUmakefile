@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $PostgreSQL: pgsql/src/test/regress/GNUmakefile,v 1.47 2004/06/18 06:14:25 tgl Exp $
+#    $PostgreSQL: pgsql/src/test/regress/GNUmakefile,v 1.48 2004/11/17 18:05:06 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -137,11 +137,17 @@ installcheck: all
 	mkdir ./testtablespace
 	$(SHELL) ./pg_regress --schedule=$(srcdir)/serial_schedule --multibyte=$(MULTIBYTE)
 
+installcheck-parallel: all
+	-rm -rf ./testtablespace
+	mkdir ./testtablespace
+	$(SHELL) ./pg_regress --schedule=$(srcdir)/parallel_schedule --multibyte=$(MULTIBYTE) $(MAXCONNOPT)
+
 
 # old interfaces follow...
 
 runcheck: check
 runtest: installcheck
+runtest-parallel: installcheck-parallel
 
 bigtest:
 	$(SHELL) ./pg_regress --schedule=$(srcdir)/serial_schedule --multibyte=$(MULTIBYTE) numeric_big
