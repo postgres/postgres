@@ -258,18 +258,25 @@ AC_SUBST(HAVECXX)
 
 dnl AC_PROG_INSTALL was broken on my machine (NAT), so here's an
 dnl alternative, built from the various portname options
-AC_PATH_PROG(INSTALL, install, /usr/bin:/usr/ucb:/home/tools/bin)
-AC_PATH_PROG(BSDINST, bsdinst, /usr/bin/X11:/usr/X11R6/bin:/sbin)
+AC_PATH_PROG(INSTALL, install, , /usr/bin:/usr/ucb:/home/tools/bin)
+AC_PATH_PROG(BSDINST, bsdinst, ,/usr/bin/X11:/usr/X11/bin:/sbin:/opt/X11/bin:/usr/X11R6/bin)
+AC_PATH_PROG(INSTALLBSD, installbsd, , /bin:/usr/bin:/usr/ucb)
   INSTLOPTS="-m 444"
   INSTL_EXE_OPTS="-m 555"
   INSTL_LIB_OPTS="-m 664"
-if test -n "$INSTALL"; then
+if test -f "$INSTALLBSD"; then
+  INSTALL=$INSTALLBSD
+elif test -f "$INSTALL"; then
   INSTLOPTS="-c $INSTLOPTS"
   INSTL_EXE_OPTS="-c $INSTL_EXE_OPTS"
   INSTL_LIB_OPTS="-c $INSTL_LIB_OPTS"
-else
+elif test -f "$BSDINST"; then
   INSTALL=$BSDINST
+else
+  echo "- No Install Script found - aborting."
+  exit 0;
 fi
+echo "- Using $INSTALL"
 AC_SUBST(INSTALL)
 AC_SUBST(INSTLOPTS)
 AC_SUBST(INSTL_LIB_OPTS)
