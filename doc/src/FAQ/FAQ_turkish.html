@@ -17,7 +17,7 @@
 <body bgcolor="#ffffff" text="#000000" link="#ff0000" vlink="#a00000" alink="#0000ff">
 
 <h1>PostgreSQL için Sýkça Sorulan Sorular (SSS)</h1>
-<p>Son güncelleme : 23 Þubat 2004  Pazartesi - 13:34:26</p>
+<p>Son güncelleme : 26 Temmuz 2004  Pazartesi - 16:05:26</p>
 <p>Current maintainer: Bruce Momjian
 (<a href="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</a>)<br></p>
 <p>Çevirenler : Devrim Gündüz (<a href="mailto:devrim@tdmsoft.com">devrim@tdmsoft.com</a>)<br>Nicholas Morris Tufar 
@@ -73,6 +73,7 @@ adreslerinde görülebilir.</p>
 	<a href="#3.9">3.9</a>) <code>pgsql_tmp</code>dizinin içindeki dosyalar nelerdir?<br>
 	<a href="#3.10">3.10</a>) PostgreSQL sürümlerini yükseltmek için neden bir
 	<code>dump/reload</code> iþlemi gerçekleþtirmek zorundayým?<br>
+	<a href="#3.11">3.11</a>) Nasýl bir donaným kullanmalýyým?br>
 	
 <h2 align="center">Ýþletimsel Sorular</h2>
 	<a href="#4.1">4.1</a>) <i>Binary cursor</i> ve <i>normal cursor</i> arasýndaki fark nedýr?<br>
@@ -121,7 +122,7 @@ adreslerinde görülebilir.</p>
 	<a href="#4.26">4.26</a>) Neden Pl/PgSQL fonksiyonlarý içinden güvenli
 	bir þekilde tablo yaratma/kaldýrma iþlemlerini yapamýyoruz?<br>
 	<a href="#4.27">4.27</a>) Hangi replikasyon seçenekleri bulunmaktadýr?<br>
-	<a href="#4.28">4.28"D</a>) Hangi þifreleme seçenekleri bulunmaktadýr?<br>
+	<a href="#4.28">4.28</a>) Hangi þifreleme seçenekleri bulunmaktadýr?<br>
 	
 
 <h2 align="center">PostgreSQL Özelliklerini Geniþletmek</h2>
@@ -194,7 +195,7 @@ adreslerinde görülebilir.</p>
 		<code>Win32 libpg</code> kütüphanesi ve psql yaratabilirsiniz. PostgreSQL ayný
 		zamanda <i>ODBC</i> istemcileri ile haberleþebilmektedir.</p>
 		<p><strong>Sunucu</strong></p>
-		<p>Veritabaný sunuucsu <code>Cygwin</code> kullanarak Windows NT, 2K ya da
+		<p>Veritabaný sunucusu <code>Cygwin</code> kullanarak Windows NT, 2K ya da
 		XP üzerinde çalýþtýrýlabilir. Dagýtým içindeki <code>pgsql/doc/FAQ_MSWIN</code>
 		dosyasýný ya da web sitemizdeki MS Windows FAQ'u inceleyebilirsiniz.</p>
 		<p>Doðal Windows NT/2000/XP portu için þu anda çalýþmalar devam etmektedir. Windows sürümü  
@@ -540,7 +541,14 @@ adreslerinde görülebilir.</p>
 		<p>Disk biçiminin deðiþmediði sürümlerde, <code>pg_upgrade</code> betiði güncellemenin
 		bir <i>dump/restore</i> gerektirmeden yapýlmasýný saðlayacaktýr. <i>pg_upgrade</i>
 		betiðinin o sürüm için bulunup bulunmadýðýný sürüm notlarý içinde bulabilirsiniz.</p>
-		
+
+		<h4><a name="3.11">3.11</a>) Nasýl bir donaným kullanmalýyým? </h4>
+		<p> PC donanýmý tamamen uyumlu olduðu için, insanlar tüm PC donanýmlarýnýn ayný kalitede olduðunu 
+		düþünürler. Oysa böyle deðildir. ECC RAM, SCSI ve kaliteli anakartlar daha ucuz donanýmlara göre daha 
+		çok güvenilirlerdir ve baþarýmlarý daha yüksektir. PostgreSQL hemen hemen tüm donanýmda 
+		çalýþabilmektedir, ancak güvenilirlik ve baþarým önemli ise donaným seçeneklerini çok iyi araþtýrmak 
+		gereklidir. E-posta listelerimi donanýmlarla ilgili sorular ve de ticaret için kullanýlabilir.</p>
+
 		<hr>
 		
 	<h2 align="center">Ýþletimsel Sorular</h2>
@@ -774,7 +782,7 @@ CREATE TABLE person (
 CREATE UNIQUE INDEX person_id_key ON person ( id );		
 		</pre>
 		<p><i>Sequenceler</i> hakkýnda daha fazla bilgi için <i>create_sequence</i>
-		yardým sayfasýna bakabilirsiniz. Her satýrýn <code>OID<code> alanýný tekil bir sayý
+		yardým sayfasýna bakabilirsiniz. Her satýrýn <code>OID</code> alanýný tekil bir sayý
 		olarak alabilirsiniz. Ancak, veritabanýnýzýn <i>dump</i>'ýný alýp yeniden yüklerseniz,
 		<code>OID</code> deðerlerini koruyabilmek için <code>pg_dump</code>'ýn <code>-o</code>
 		parametresini ya da "<code>COPY WITH OIDS</code>" seçeneðini kullanmanýz gerekecektir.</p>
@@ -884,6 +892,10 @@ limit datasize 256m
 		<p><i>Large object</i> iþlemlerinizin uçlarýna, yani <code>lo_open</code> ...
 		<code>lo_close</code> komutlarýnýn çevresine, <code>BEGIN WORK</code> ve
 		<code>COMMIT</code> koymanýz gerekmektedir;</p>
+		<p>Þu anda, PostgreSQL kurallarý large objectleri transaction commit edildiðinde kapatarak 
+	        uygulamaktadýr. Dolayýsýyla handle ile yapýlacak ilk þey <i>invalid large obj descriptor</i> hatasý 
+		ile sonuçlanacaktýr.Dolayýsýyla çalýþan kodunuz eðer transaction kullanmazsanýz hata mesajlarý 
+		üretecektir.</p>
 		<p>Eðer ODBC gibi bir istemci arabirimi kullanýyorsanýz, <i>auto-commit</i>'i
 		kapatmanýz gerekebilir.</p>
 		
