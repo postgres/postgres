@@ -16,7 +16,7 @@
  *
  *
  * IDENTIFICATION
- *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_tar.c,v 1.37 2003/08/04 00:43:27 momjian Exp $
+ *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_tar.c,v 1.38 2003/10/08 03:52:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -158,10 +158,11 @@ InitArchiveFmt_Tar(ArchiveHandle *AH)
 	/*
 	 * Set up some special context used in compressing data.
 	 */
-	ctx = (lclContext *) malloc(sizeof(lclContext));
+	ctx = (lclContext *) calloc(1, sizeof(lclContext));
 	AH->formatData = (void *) ctx;
 	ctx->filePos = 0;
-
+	ctx->isSpecialScript = 0;
+	
 	/* Initialize LO buffering */
 	AH->lo_buf_size = LOBBUFSIZE;
 	AH->lo_buf = (void *) malloc(LOBBUFSIZE);
@@ -253,7 +254,7 @@ _ArchiveEntry(ArchiveHandle *AH, TocEntry *te)
 	lclTocEntry *ctx;
 	char		fn[K_STD_BUF_SIZE];
 
-	ctx = (lclTocEntry *) malloc(sizeof(lclTocEntry));
+	ctx = (lclTocEntry *) calloc(1, sizeof(lclTocEntry));
 	if (te->dataDumper != NULL)
 	{
 #ifdef HAVE_LIBZ
@@ -292,7 +293,7 @@ _ReadExtraToc(ArchiveHandle *AH, TocEntry *te)
 
 	if (ctx == NULL)
 	{
-		ctx = (lclTocEntry *) malloc(sizeof(lclTocEntry));
+		ctx = (lclTocEntry *) calloc(1, sizeof(lclTocEntry));
 		te->formatData = (void *) ctx;
 	}
 

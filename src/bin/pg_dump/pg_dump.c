@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.352 2003/09/27 22:10:01 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.353 2003/10/08 03:52:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1078,7 +1078,7 @@ dumpClasses(const TableInfo *tblinfo, const int numTables, Archive *fout,
 				write_msg(NULL, "preparing to dump the contents of table %s\n",
 						  classname);
 
-			dumpCtx = (DumpContext *) malloc(sizeof(DumpContext));
+			dumpCtx = (DumpContext *) calloc(1, sizeof(DumpContext));
 			dumpCtx->tblinfo = (TableInfo *) tblinfo;
 			dumpCtx->tblidx = i;
 			dumpCtx->oids = oids;
@@ -1938,9 +1938,7 @@ getFuncs(int *numFuncs)
 
 	*numFuncs = ntups;
 
-	finfo = (FuncInfo *) malloc(ntups * sizeof(FuncInfo));
-
-	memset((char *) finfo, 0, ntups * sizeof(FuncInfo));
+	finfo = (FuncInfo *) calloc(ntups, sizeof(FuncInfo));
 
 	i_oid = PQfnumber(res, "oid");
 	i_proname = PQfnumber(res, "proname");
@@ -2144,8 +2142,7 @@ getTables(int *numTables)
 	 * dumping only one, because we don't yet know which tables might be
 	 * inheritance ancestors of the target table.
 	 */
-	tblinfo = (TableInfo *) malloc(ntups * sizeof(TableInfo));
-	memset(tblinfo, 0, ntups * sizeof(TableInfo));
+	tblinfo = (TableInfo *) calloc(ntups, sizeof(TableInfo));
 
 	i_reloid = PQfnumber(res, "oid");
 	i_relname = PQfnumber(res, "relname");

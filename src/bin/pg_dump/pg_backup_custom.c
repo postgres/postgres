@@ -19,7 +19,7 @@
  *
  *
  * IDENTIFICATION
- *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_custom.c,v 1.25 2003/08/04 00:43:27 momjian Exp $
+ *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_custom.c,v 1.26 2003/10/08 03:52:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -136,7 +136,7 @@ InitArchiveFmt_Custom(ArchiveHandle *AH)
 	/*
 	 * Set up some special context used in compressing data.
 	 */
-	ctx = (lclContext *) malloc(sizeof(lclContext));
+	ctx = (lclContext *) calloc(1, sizeof(lclContext));
 	if (ctx == NULL)
 		die_horribly(AH, modulename, "out of memory\n");
 	AH->formatData = (void *) ctx;
@@ -253,7 +253,7 @@ _ReadExtraToc(ArchiveHandle *AH, TocEntry *te)
 
 	if (ctx == NULL)
 	{
-		ctx = (lclTocEntry *) malloc(sizeof(lclTocEntry));
+		ctx = (lclTocEntry *) calloc(1, sizeof(lclTocEntry));
 		te->formatData = (void *) ctx;
 	}
 
