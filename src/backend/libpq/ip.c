@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/ip.c,v 1.9 2003/06/09 17:59:19 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/ip.c,v 1.10 2003/06/12 02:12:58 momjian Exp $
  *
  * This file and the IPV6 implementation were initially provided by
  * Nigel Kukard <nkukard@lbsd.net>, Linux Based Systems Design
@@ -251,6 +251,59 @@ SockAddr_pton(SockAddr *sa, const char *src)
 	}
 }
 
+/*
+ *  SockAddr_cidr_mask - make a network mask of the appropriate family
+ *    and required number of significant bits
+ */
+
+int
+SockAddr_cidr_mask(SockAddr *mask, char *numbits, int family)
+{
+	int i;
+	long bits;
+	char * endptr;
+
+	bits = strtol(numbits,&endptr,10);
+
+	if (*numbits == '\0' || *endptr != '\0')
+		return -1;
+
+
+	if ((bits < 0) || (family == AF_INET && bits > 32)
+#ifdef HAVE_IPV6
+		|| (family == AF_INET6 && bits > 128)
+#endif
+		)
+		return -1;
+
+	mask->sa.sa_family = family;
+
+	switch (family)
+	{
+		case AF_INET:
+			mask->in.sin_addr.s_addr = htonl((0xffffffffUL << (32 - bits)) & 0xffffffffUL);
+			break;
+#ifdef HAVE_IPV6
+		case AF_INET6:	
+			for (i = 0; i < 16; i++)
+			{
+				if (bits <= 0)
+					mask->in6.sin6_addr.s6_addr[i]=0;
+				else if (bits >= 8)
+					mask->in6.sin6_addr.s6_addr[i]=0xff;
+				else
+					mask->in6.sin6_addr.s6_addr[i]=(0xff << (8 - bits)) & 0xff;
+				bits -= 8;
+
+			}
+			break;
+#endif
+		default:
+			return -1;
+	}
+	return 0;
+
+}
 
 /*
  *	isAF_INETx - check to see if sa is AF_INET or AF_INET6
