@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.52 1997/12/04 23:07:18 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.53 1997/12/09 01:44:14 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -366,6 +366,57 @@ makeTableName(void *elem,...)
 	return (name);
 } /* makeTableName() */
 
+char *
+CreateIndexName(char *tname, char *cname, char *label, List *indices);
+
+char *
+CreateIndexName(char *tname, char *cname, char *label, List *indices)
+{
+	int			pass = 0;
+	char	   *iname = NULL;
+	List	   *ilist;
+	IndexStmt  *index;
+	char		name2[NAMEDATALEN+1];
+
+	/* use working storage, since we might be trying several possibilities */
+	strcpy(name2,cname);
+	while (iname == NULL)
+	{
+		iname = makeTableName(tname, name2, label, NULL);
+		/* unable to make a name at all? then quit */
+		if (iname == NULL)
+			break;
+
+#if PARSEDEBUG
+printf("CreateNameIndex- check %s against indices\n",iname);
+#endif
+
+		ilist = indices;
+		while (ilist != NIL)
+		{
+			index = lfirst(ilist);
+#if PARSEDEBUG
+printf("CreateNameIndex- compare %s with existing index %s\n",iname,index->idxname);
+#endif
+			if (strcasecmp(iname,index->idxname) == 0)
+				break;
+
+			ilist = lnext(ilist);
+		}
+		/* ran through entire list? then no name conflict found so done */
+		if (ilist == NIL)
+			break;
+
+		/* the last one conflicted, so try a new name component */
+		pfree(iname);
+		iname = NULL;
+		pass++;
+		sprintf(name2, "%s_%d", cname, (pass+1));
+	}
+
+	return (iname);
+} /* CreateIndexName() */
+
 /*
  * transformCreateStmt -
  *	  transforms the "create table" statement
@@ -379,6 +430,7 @@ static Query *
 transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 {
 	Query	   *q;
+	int			have_pkey = FALSE;
 	List	   *elements;
 	Node	   *element;
 	List	   *columns;
@@ -541,9 +593,9 @@ printf("transformCreateStmt- found CHECK clause\n");
  * For UNIQUE, create an index as for PRIMARY KEYS, but do not insist on NOT NULL.
  *
  * Note that this code does not currently look for all possible redundant cases
- *  and either ignore or stop with warning. The create will fail later when
- *  names for indices turn out to be redundant, or a user might just find
- *  extra useless indices which might kill performance. - thomas 1997-12-04
+ *  and either ignore or stop with warning. The create might fail later when
+ *  names for indices turn out to be redundant, or a user might have specified
+ *  extra useless indices which might hurt performance. - thomas 1997-12-08
  */
 	ilist = NIL;
 	while (dlist != NIL)
@@ -552,27 +604,38 @@ printf("transformCreateStmt- found CHECK clause\n");
 		if (nodeTag(constraint) != T_Constraint)
 			elog(WARN,"parser: internal error; unrecognized deferred node",NULL);
 
-		if ((constraint->contype != CONSTR_PRIMARY)
-		 && (constraint->contype != CONSTR_UNIQUE))
-			elog(WARN,"parser: internal error; illegal deferred constraint",NULL);
-
 #if PARSEDEBUG
 printf("transformCreateStmt- found deferred constraint %s\n",
  ((constraint->name != NULL)? constraint->name: "(unknown)"));
 #endif
 
+		if (constraint->contype == CONSTR_PRIMARY)
+			if (have_pkey)
+				elog(WARN,"CREATE TABLE/PRIMARY KEY multiple primary keys"
+					" for table %s are not legal", stmt->relname);
+			else 
+				have_pkey = TRUE;
+		else if (constraint->contype != CONSTR_UNIQUE)
+			elog(WARN,"parser: internal error; unrecognized deferred constraint",NULL);
+
 #if PARSEDEBUG
 printf("transformCreateStmt- found deferred %s clause\n",
  (constraint->contype == CONSTR_PRIMARY? "PRIMARY KEY": "UNIQUE"));
 #endif
+
 		index = makeNode(IndexStmt);
-		ilist = lappend(ilist, index);
 
 		index->unique = TRUE;
 		if (constraint->name != NULL)
 			index->idxname = constraint->name;
 		else if (constraint->contype == CONSTR_PRIMARY)
+		{
+			if (have_pkey)
+				elog(WARN,"CREATE TABLE/PRIMARY KEY multiple keys for table %s are not legal", stmt->relname);
+
+			have_pkey = TRUE;
 			index->idxname = makeTableName(stmt->relname, "pkey", NULL);
+		}
 		else
 			index->idxname = NULL;
 
@@ -619,7 +682,7 @@ printf("transformCreateStmt- mark column %s as NOT NULL\n", column->colname);
 			index->indexParams = lappend(index->indexParams, iparam);
 
 			if (index->idxname == NULL)
-				index->idxname = makeTableName(stmt->relname, iparam->name, "key", NULL);
+				index->idxname = CreateIndexName(stmt->relname, iparam->name, "key", ilist);
 
 			keys = lnext(keys);
 		}
@@ -627,7 +690,12 @@ printf("transformCreateStmt- mark column %s as NOT NULL\n", column->colname);
 		if (index->idxname == NULL)
 			elog(WARN,"parser: unable to construct implicit index for table %s"
 				"; name too long", stmt->relname);
+		else
+			elog(NOTICE,"CREATE TABLE/%s will create implicit index %s for table %s",
+				((constraint->contype == CONSTR_PRIMARY)? "PRIMARY KEY": "UNIQUE"),
+				index->idxname, stmt->relname);
 
+		ilist = lappend(ilist, index);
 		dlist = lnext(dlist);
 	}
 
