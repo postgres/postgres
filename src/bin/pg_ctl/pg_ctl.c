@@ -4,7 +4,7 @@
  *
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/pg_ctl/pg_ctl.c,v 1.18 2004/06/25 08:49:28 dennis Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_ctl/pg_ctl.c,v 1.19 2004/07/12 18:17:13 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1308,10 +1308,7 @@ main(int argc, char **argv)
 	/* Note we put any -D switch into the env var above */
 	pg_data = getenv("PGDATA");
 	if (pg_data)
-	{
-		/* XXX modifies environment var in-place ... ugly ... */
-		canonicalize_path(pg_data);
-	}
+		canonicalize_path(pg_data = xstrdup(pg_data));
 
 	if (pg_data == NULL &&
 		ctl_command != KILL_COMMAND && ctl_command != UNREGISTER_COMMAND)
