@@ -1,7 +1,7 @@
 #
 # Makefile for the storage manager subsystem
 #
-# $Header: /cvsroot/pgsql/src/backend/storage/Makefile,v 1.9 2001/06/27 23:31:39 tgl Exp $
+# $Header: /cvsroot/pgsql/src/backend/storage/Makefile,v 1.10 2002/08/10 17:59:28 petere Exp $
 #
 
 subdir = src/backend/storage
@@ -16,7 +16,7 @@ all: SUBSYS.o
 SUBSYS.o: $(SUBDIROBJS)
 	$(LD) $(LDREL) $(LDOUT) $@ $^
 
-$(SUBDIROBJS): $(SUBDIRS:%=%-recursive)
+$(SUBDIROBJS): $(SUBDIRS:%=%-recursive) ;
 
 .PHONY: $(SUBDIRS:%=%-recursive)
 $(SUBDIRS:%=%-recursive):

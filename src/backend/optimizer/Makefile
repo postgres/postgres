@@ -1,7 +1,7 @@
 #
 # Makefile for optimizer
 #
-# $Header: /cvsroot/pgsql/src/backend/optimizer/Makefile,v 1.9 2000/08/31 16:10:07 petere Exp $
+# $Header: /cvsroot/pgsql/src/backend/optimizer/Makefile,v 1.10 2002/08/10 17:59:28 petere Exp $
 #
 
 subdir = src/backend/optimizer
@@ -16,7 +16,7 @@ all: SUBSYS.o
 SUBSYS.o: $(SUBDIROBJS)
 	$(LD) $(LDREL) $(LDOUT) $@ $^
 
-$(SUBDIROBJS): $(SUBDIRS:%=%-recursive)
+$(SUBDIROBJS): $(SUBDIRS:%=%-recursive) ;
 
 .PHONY: $(SUBDIRS:%=%-recursive)
 $(SUBDIRS:%=%-recursive):

@@ -1,7 +1,7 @@
 #
 # Makefile for the access methods module
 #
-# $Header: /cvsroot/pgsql/src/backend/access/Makefile,v 1.7 2000/08/31 16:09:26 petere Exp $
+# $Header: /cvsroot/pgsql/src/backend/access/Makefile,v 1.8 2002/08/10 17:59:28 petere Exp $
 #
 
 subdir = src/backend/access
@@ -16,7 +16,7 @@ all: SUBSYS.o
 SUBSYS.o: $(SUBDIROBJS)
 	$(LD) $(LDREL) $(LDOUT) $@ $^
 
-$(SUBDIROBJS): $(SUBDIRS:%=%-recursive)
+$(SUBDIROBJS): $(SUBDIRS:%=%-recursive) ;
 
 .PHONY: $(SUBDIRS:%=%-recursive)
 $(SUBDIRS:%=%-recursive):

@@ -1,7 +1,7 @@
 #
 # Makefile for utils
 #
-# $Header: /cvsroot/pgsql/src/backend/utils/Makefile,v 1.18 2000/08/31 16:10:42 petere Exp $
+# $Header: /cvsroot/pgsql/src/backend/utils/Makefile,v 1.19 2002/08/10 17:59:28 petere Exp $
 #
 
 subdir = src/backend/utils/
@@ -20,7 +20,7 @@ all: SUBSYS.o fmgroids.h
 SUBSYS.o: fmgrtab.o $(SUBDIROBJS)
 	$(LD) $(LDREL) $(LDOUT) $@ $^
 
-$(SUBDIROBJS): $(SUBDIRS:%=%-recursive)
+$(SUBDIROBJS): $(SUBDIRS:%=%-recursive) ;
 
 .PHONY: $(SUBDIRS:%=%-recursive)
 $(SUBDIRS:%=%-recursive): fmgroids.h

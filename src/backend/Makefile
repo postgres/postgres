@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/backend/Makefile,v 1.83 2002/08/08 07:47:42 ishii Exp $
+# $Header: /cvsroot/pgsql/src/backend/Makefile,v 1.84 2002/08/10 17:59:28 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -53,7 +53,7 @@ endif # win
 
 
 # Parallel make trickery
-$(OBJS): $(DIRS:%=%-recursive)
+$(OBJS): $(DIRS:%=%-recursive) ;
 
 .PHONY: $(DIRS:%=%-recursive)
 # Update the commonly used headers before building the subdirectories
