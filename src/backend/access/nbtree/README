@@ -1,4 +1,4 @@
-$Header: /cvsroot/pgsql/src/backend/access/nbtree/README,v 1.3 2000/07/21 22:14:09 tgl Exp $
+$Header: /cvsroot/pgsql/src/backend/access/nbtree/README,v 1.4 2000/07/25 05:26:40 tgl Exp $
 
 This directory contains a correct implementation of Lehman and Yao's
 high-concurrency B-tree management algorithm (P. Lehman and S. Yao,
@@ -118,6 +118,17 @@ In addition, the following things are handy to know:
    that's true already in the Lehman and Yao algorithm.  nbtscan.c
    exists only to support VACUUM and allow it to delete items while
    it's scanning the index.
+
++  "ScanKey" data structures are used in two fundamentally different ways
+   in this code.  Searches for the initial position for a scan, as well as
+   insertions, use scankeys in which the comparison function is a 3-way
+   comparator (<0, =0, >0 result).  These scankeys are built within the
+   btree code (eg, by _bt_mkscankey()) and used by _bt_compare().  Once we
+   are positioned, sequential examination of tuples in a scan is done by
+   _bt_checkkeys() using scankeys in which the comparison functions return
+   booleans --- for example, int4lt might be used.  These scankeys are the
+   ones originally passed in from outside the btree code.  Same
+   representation, but different comparison functions!
 
 Notes about data representation:
 
