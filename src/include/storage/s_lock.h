@@ -63,7 +63,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	  $PostgreSQL: pgsql/src/include/storage/s_lock.h,v 1.119 2003/12/23 00:32:06 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/include/storage/s_lock.h,v 1.120 2003/12/23 03:31:30 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -73,12 +73,11 @@
 #include "storage/pg_sema.h"
 
 
-#if defined(HAS_TEST_AND_SET)
-
-
 #if defined(__GNUC__) || defined(__ICC)
 /*************************************************************************
  * All the gcc inlines
+ * Gcc consistently defines the CPU as __cpu__.
+ * Other compilers use __cpu or __cpu__ so we test for both in those cases.
  */
 
 /*
@@ -95,6 +94,9 @@
 
 
 #if defined(__i386__) || defined(__x86_64__) /* AMD Opteron */
+typedef unsigned char slock_t;
+#define HAS_TEST_AND_SET
+
 #define TAS(lock) tas(lock)
 
 static __inline__ int
@@ -114,7 +116,10 @@ tas(volatile slock_t *lock)
 
 
 /* Intel Itanium */
-#if defined(__ia64__) || defined(__ia64)
+#if defined(__ia64__) || defined(__ia64)  /* __ia64 is used by ICC the compiler? */
+typedef unsigned int slock_t;
+#define HAS_TEST_AND_SET
+
 #define TAS(lock) tas(lock)
 
 static __inline__ int
@@ -135,6 +140,9 @@ tas(volatile slock_t *lock)
 
 
 #if defined(__arm__) || defined(__arm)
+typedef unsigned char slock_t;
+#define HAS_TEST_AND_SET
+
 #define TAS(lock) tas(lock)
 
 static __inline__ int
@@ -153,9 +161,10 @@ tas(volatile slock_t *lock)
 
 
 #if defined(__s390__) && !defined(__s390x__)
-/*
- * S/390 Linux
- */
+typedef unsigned int slock_t;
+#define HAS_TEST_AND_SET
+
+/* S/390 Linux */
 #define TAS(lock)	   tas(lock)
 
 static __inline__ int
@@ -179,9 +188,9 @@ tas(volatile slock_t *lock)
 #endif	 /* __s390__ */
 
 #if defined(__s390x__)
-/*
- * S/390x Linux (64-bit zSeries)
- */
+typedef unsigned int slock_t;
+#define HAS_TEST_AND_SET
+/* S/390x Linux (64-bit zSeries) */
 #define TAS(lock)	   tas(lock)
 
 static __inline__ int
@@ -206,6 +215,8 @@ tas(volatile slock_t *lock)
 
 
 #if defined(__sparc__)
+typedef unsigned char slock_t;
+#define HAS_TEST_AND_SET
 #define TAS(lock) tas(lock)
 
 static __inline__ int
@@ -223,6 +234,14 @@ tas(volatile slock_t *lock)
 #endif	 /* __sparc__ */
 
 #if defined(__ppc__) || defined(__powerpc__) || defined(__powerpc64__)
+/* Is this correct? */
+#ifndef defined(__powerpc64__)
+typedef unsigned int slock_t;
+#else
+typedef unsigned long slock_t;
+#endif
+#define HAS_TEST_AND_SET
+
 #define TAS(lock) tas(lock)
 /*
  * NOTE: per the Enhanced PowerPC Architecture manual, v1.0 dated 7-May-2002,
@@ -255,10 +274,22 @@ tas(volatile slock_t *lock)
 	return _res;
 }
 
+/*
+ * PowerPC S_UNLOCK is almost standard but requires a "sync" instruction.
+ */
+#define S_UNLOCK(lock)	\
+do \
+{\
+	__asm__ __volatile__ ("	sync \n"); \
+	*((volatile slock_t *) (lock)) = 0; \
+} while (0)
+
 #endif /* powerpc */
 
 
 #if defined(__mc68000__) && defined(__linux__)
+typedef unsigned char slock_t;
+#define HAS_TEST_AND_SET
 #define TAS(lock) tas(lock)
 
 static __inline__ int
@@ -280,25 +311,13 @@ tas(volatile slock_t *lock)
 #endif	 /* defined(__mc68000__) && defined(__linux__) */
 
 
-#if defined(__ppc__) || defined(__powerpc__) || defined(__powerpc64__)
-/*
- * PowerPC S_UNLOCK is almost standard but requires a "sync" instruction.
- */
-#define S_UNLOCK(lock)	\
-do \
-{\
-	__asm__ __volatile__ ("	sync \n"); \
-	*((volatile slock_t *) (lock)) = 0; \
-} while (0)
-
-#endif /* powerpc */
-
-
-#if defined(NEED_VAX_TAS_ASM)
+#if defined(__vax__)
 /*
  * VAXen -- even multiprocessor ones
  * (thanks to Tom Ivar Helbekkmo)
  */
+typedef unsigned char slock_t;
+#define HAS_TEST_AND_SET
 #define TAS(lock) tas(lock)
 
 static __inline__ int
@@ -317,10 +336,12 @@ tas(volatile slock_t *lock)
 	return _res;
 }
 
-#endif	 /* NEED_VAX_TAS_ASM */
+#endif	 /* __vax__ */
 
 
-#if defined(NEED_NS32K_TAS_ASM)
+#if defined(__ns32k__)
+typedef unsigned char slock_t;
+#define HAS_TEST_AND_SET
 #define TAS(lock) tas(lock)
 
 static __inline__ int
@@ -335,54 +356,18 @@ tas(volatile slock_t *lock)
 	return _res;
 }
 
-#endif	 /* NEED_NS32K_TAS_ASM */
-
-
-
-#else							/* !__GNUC__ */
-
-/***************************************************************************
- * All non-gcc inlines
- */
-
-#if defined(USE_UNIVEL_CC)
-#define TAS(lock)	tas(lock)
-
-asm int
-tas(volatile slock_t *s_lock)
-{
-/* UNIVEL wants %mem in column 1, so we don't pg_indent this file */
-%mem s_lock
-	pushl %ebx
-	movl s_lock, %ebx
-	movl $255, %eax
-	lock
-	xchgb %al, (%ebx)
-	popl %ebx
-}
-
-#endif	 /* defined(USE_UNIVEL_CC) */
-
-#endif	 /* defined(__GNUC__) */
-
-
-
-/*************************************************************************
- * These are the platforms that have only one compiler, or do not use inline
- * assembler (and hence have common code for gcc and non-gcc compilers,
- * if both are available).
- */
+#endif	 /* __ns32k__ */
 
 
 #if defined(__alpha) || defined(__alpha__)
-
 /*
  * Correct multi-processor locking methods are explained in section 5.5.3
  * of the Alpha AXP Architecture Handbook, which at this writing can be
  * found at ftp://ftp.netbsd.org/pub/NetBSD/misc/dec-docs/index.html.
  * For gcc we implement the handbook's code directly with inline assembler.
  */
-#if defined(__GNUC__)
+typedef unsigned long slock_t;
+#define HAS_TEST_AND_SET
 
 #define TAS(lock)  tas(lock)
 #define S_UNLOCK(lock)	\
@@ -416,8 +401,69 @@ tas(volatile slock_t *lock)
 	return (int) _res;
 }
 
-#else							/* !defined(__GNUC__) */
+#endif /* __alpha || __alpha__ */
 
+
+/* These live in s_lock.c, but only for gcc */
+
+#if defined(__m68k__)
+typedef unsigned char slock_t;
+#define HAS_TEST_AND_SET
+#endif
+
+#ifdef sinix	/* This symbol is not protected with __, for SvR4 port */
+#include "abi_mutex.h"
+typedef abilock_t slock_t;
+#define HAS_TEST_AND_SET
+#endif
+
+
+/* These are in s_lock.c */
+
+#if defined(__m68k__)
+typedef unsigned char slock_t;
+#define HAS_TEST_AND_SET
+#endif
+
+#if defined(__mips__) && !defined(__sgi)
+typedef unsigned char slock_t;
+#define HAS_TEST_AND_SET
+#endif
+
+#endif	/* __GNUC__ */
+
+
+
+/***************************************************************************
+ * Uses non-gcc inline assembly:
+ */
+
+#if !defined(HAS_TEST_AND_SET)
+
+#if defined(USE_UNIVEL_CC)
+typedef unsigned char slock_t;
+#define HAS_TEST_AND_SET
+#define TAS(lock)	tas(lock)
+
+asm int
+tas(volatile slock_t *s_lock)
+{
+/* UNIVEL wants %mem in column 1, so we don't pg_indent this file */
+%mem s_lock
+	pushl %ebx
+	movl s_lock, %ebx
+	movl $255, %eax
+	lock
+	xchgb %al, (%ebx)
+	popl %ebx
+}
+
+#endif	 /* defined(USE_UNIVEL_CC) */
+
+
+#if defined(__alpha) || defined(__alpha__)
+typedef volatile long slock_t;
+#define HAS_TEST_AND_SET
 /*
  * The Tru64 compiler doesn't support gcc-style inline asm, but it does
  * have some builtin functions that accomplish much the same results.
@@ -428,17 +474,19 @@ tas(volatile slock_t *lock)
  */
 
 #include <alpha/builtins.h>
-
 #define S_INIT_LOCK(lock)  (*(lock) = 0)
 #define TAS(lock)		   (__LOCK_LONG_RETRY((lock), 1) == 0)
 #define S_UNLOCK(lock)	   __UNLOCK_LONG(lock)
-
-#endif	 /* defined(__GNUC__) */
 
 #endif	 /* __alpha || __alpha__ */
 
 
 #if defined(__hppa)
+typedef struct
+{
+	int			sema[4];
+} slock_t;
+#define HAS_TEST_AND_SET
 /*
  * HP's PA-RISC
  *
@@ -462,7 +510,10 @@ tas(volatile slock_t *lock)
 
 #endif	 /* __hppa */
 
+
 #if defined(__QNX__) && defined(__WATCOMC__)
+typedef unsigned char slock_t;
+#define HAS_TEST_AND_SET
 /*
  * QNX 4 using WATCOM C
  */
@@ -490,12 +541,15 @@ extern slock_t wc_tas(volatile slock_t *lock);
  * assembly from his NECEWS SVR4 port, but we probably ought to retain this
  * for the R3000 chips out there.
  */
+typedef unsigned long slock_t;
+#define HAS_TEST_AND_SET
 #include "mutex.h"
 #define TAS(lock)	(test_and_set(lock,1))
 #define S_UNLOCK(lock)	(test_then_and(lock,0))
 #define S_INIT_LOCK(lock)	(test_then_and(lock,0))
 #define S_LOCK_FREE(lock)	(test_then_add(lock,0) == 0)
 #endif	 /* __sgi */
+
 
 #if defined(sinix)
 /*
@@ -504,6 +558,7 @@ extern slock_t wc_tas(volatile slock_t *lock);
  * member. (Basically same as SGI)
  *
  */
+#define HAS_TEST_AND_SET
 #define TAS(lock)	(!acquire_lock(lock))
 #define S_UNLOCK(lock)	release_lock(lock)
 #define S_INIT_LOCK(lock)	init_lock(lock)
@@ -517,16 +572,15 @@ extern slock_t wc_tas(volatile slock_t *lock);
  *
  * Note that slock_t on POWER/POWER2/PowerPC is int instead of char
  */
+#define HAS_TEST_AND_SET
 #define TAS(lock)			_check_lock(lock, 0, 1)
 #define S_UNLOCK(lock)		_clear_lock(lock, 0)
 #endif	 /* _AIX */
 
 
 #if defined (nextstep)
-/*
- * NEXTSTEP (mach)
- * slock_t is defined as a struct mutex.
- */
+typedef struct mutex slock_t;
+#define HAS_TEST_AND_SET
 
 #define S_LOCK(lock)	mutex_lock(lock)
 #define S_UNLOCK(lock)	mutex_unlock(lock)
@@ -535,13 +589,28 @@ extern slock_t wc_tas(volatile slock_t *lock);
 #define S_LOCK_FREE(alock)	((alock)->lock == 0)
 #endif	 /* nextstep */
 
+/* These are in s_lock.c */
+
+#if defined(sun3)
+typedef unsigned char slock_t;
+#define HAS_TEST_AND_SET
+#endif
+
+#if defined(__sparc__) || defined(__sparc)
+#define HAS_TEST_AND_SET
+typedef unsigned char slock_t;
+#endif
 
 
-#else	 /* HAS_TEST_AND_SET */
+#endif	/* !defined(HAS_TEST_AND_SET */
 
+
+
+#ifndef HAS_TEST_AND_SET
 #ifdef HAVE_SPINLOCKS
 #error PostgreSQL does not have native spinlock support on this platform.  To continue the compilation, rerun configure using --disable-spinlocks.  However, performance will be poor.  Please report this to pgsql-bugs@postgresql.org.
-#endif
+
+#else
 
 /*
  * Fake spinlock implementation using semaphores --- slow and prone
@@ -560,7 +629,8 @@ extern int	tas_sema(volatile slock_t *lock);
 #define S_INIT_LOCK(lock)	s_init_lock_sema(lock)
 #define TAS(lock)	tas_sema(lock)
 
-#endif	 /* HAS_TEST_AND_SET */
+#endif	/* HAVE_SPINLOCKS */
+#endif	/* HAS_TEST_AND_SET */
 
 
 

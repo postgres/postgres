@@ -15,4 +15,3 @@ typedef int sigset_t;
 #endif
 
 #define NO_WAITPID
-typedef struct mutex slock_t;

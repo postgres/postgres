@@ -6,13 +6,6 @@
  ***************************************/
 #define USE_UNIVEL_CC
 
-#if defined(__ia64)
-typedef unsigned int slock_t;
-#else
-typedef unsigned char slock_t;
-#endif
-
-
 #ifndef			BIG_ENDIAN
 #define			BIG_ENDIAN		4321
 #endif

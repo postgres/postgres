@@ -5,8 +5,6 @@
 #include <unix.h>
 #include <sys/select.h>			/* for select */
 
-#define HAS_TEST_AND_SET
-
 #undef HAVE_GETRUSAGE
 
 #define strncasecmp strnicmp
@@ -21,8 +19,6 @@ extern unsigned char __nan[8];
 #endif   /* NAN */
 
 typedef u_short ushort;
-
-typedef unsigned char slock_t;
 
 extern int	isnan(double dsrc);
 

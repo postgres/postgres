@@ -1,6 +1,3 @@
-#define HAS_TEST_AND_SET
-typedef unsigned char slock_t;
-
 /* sprintf() returns char *, not int, on SunOS 4.1.x */
 #define SPRINTF_CHAR
 

@@ -2,10 +2,6 @@
 #include <kernel/image.h>
 #include <sys/ioctl.h>
 
-#define HAS_TEST_AND_SET
-
-typedef unsigned char slock_t;
-
 #define AF_UNIX		10			/* no domain sockets on BeOS */
 
 /* Beos doesn't have all the required getrusage fields */
