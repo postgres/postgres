@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: fd.h,v 1.29 2001/05/25 15:45:34 momjian Exp $
+ * $Id: fd.h,v 1.30 2001/06/11 04:12:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -70,6 +70,7 @@ extern int	BasicOpenFile(FileName fileName, int fileFlags, int fileMode);
 /* Miscellaneous support routines */
 extern void closeAllVfds(void);
 extern void AtEOXact_Files(void);
+extern void RemovePgTempFiles(void);
 extern int	pg_fsync(int fd);
 extern int	pg_fdatasync(int fd);
 

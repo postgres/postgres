@@ -28,7 +28,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.217 2001/06/07 04:50:57 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.218 2001/06/11 04:12:29 tgl Exp $
  *
  * NOTES
  *
@@ -243,9 +243,14 @@ static void RandomSalt(char *salt);
 static void SignalChildren(int signal);
 static int	CountChildren(void);
 static bool CreateOptsFile(int argc, char *argv[]);
-static void postmaster_error(const char *fmt, ...) __attribute__((format(printf, 1, 2)));
-
 static pid_t SSDataBase(int xlop);
+#ifdef __GNUC__
+/* This checks the format string for consistency. */
+static void postmaster_error(const char *fmt, ...)
+	__attribute__((format(printf, 1, 2)));
+#else
+static void postmaster_error(const char *fmt, ...);
+#endif
 
 #define StartupDataBase()		SSDataBase(BS_XLOG_STARTUP)
 #define CheckPointDataBase()	SSDataBase(BS_XLOG_CHECKPOINT)
@@ -253,7 +258,6 @@ static pid_t SSDataBase(int xlop);
 
 #ifdef USE_SSL
 static void InitSSL(void);
-
 #endif
 
 
@@ -597,6 +601,12 @@ PostmasterMain(int argc, char *argv[])
 		ExitPostmaster(1);
 
 	/*
+	 * Remove old temporary files.  At this point there can be no other
+	 * Postgres processes running in this directory, so this should be safe.
+	 */
+	RemovePgTempFiles();
+
+	/*
 	 * Establish input sockets.
 	 */
 #ifdef USE_SSL
@@ -613,7 +623,8 @@ PostmasterMain(int argc, char *argv[])
 	if (NetServer)
 	{
 		status = StreamServerPort(AF_INET, VirtualHost,
-						  (unsigned short) PostPortNumber, UnixSocketDir,
+								  (unsigned short) PostPortNumber,
+								  UnixSocketDir,
 								  &ServerSock_INET);
 		if (status != STATUS_OK)
 		{
@@ -624,7 +635,8 @@ PostmasterMain(int argc, char *argv[])
 
 #ifdef HAVE_UNIX_SOCKETS
 	status = StreamServerPort(AF_UNIX, VirtualHost,
-						  (unsigned short) PostPortNumber, UnixSocketDir,
+							  (unsigned short) PostPortNumber,
+							  UnixSocketDir,
 							  &ServerSock_UNIX);
 	if (status != STATUS_OK)
 	{

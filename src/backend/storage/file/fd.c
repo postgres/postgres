@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/file/fd.c,v 1.80 2001/06/06 17:07:46 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/file/fd.c,v 1.81 2001/06/11 04:12:29 tgl Exp $
  *
  * NOTES:
  *
@@ -44,12 +44,19 @@
 #include <sys/file.h>
 #include <sys/param.h>
 #include <sys/stat.h>
+#include <dirent.h>
 #include <errno.h>
 #include <unistd.h>
 #include <fcntl.h>
 
 #include "miscadmin.h"
 #include "storage/fd.h"
+
+
+/* Filename components for OpenTemporaryFile */
+#define PG_TEMP_FILES_DIR "pg_tempfiles"
+#define PG_TEMP_FILE_PREFIX "pg_temp"
+
 
 /*
  * Problem: Postgres does a system(ld...) to do dynamic loading.
@@ -189,7 +196,7 @@ static void FreeVfd(File file);
 
 static int	FileAccess(File file);
 static File fileNameOpenFile(FileName fileName, int fileFlags, int fileMode);
-static char *filepath(char *filename);
+static char *filepath(const char *filename);
 static long pg_nofile(void);
 
 /*
@@ -568,28 +575,27 @@ FreeVfd(File file)
 /* filepath()
  * Convert given pathname to absolute.
  *
+ * Result is a palloc'd string.
+ *
  * (Generally, this isn't actually necessary, considering that we
  * should be cd'd into the database directory.  Presently it is only
  * necessary to do it in "bootstrap" mode.	Maybe we should change
  * bootstrap mode to do the cd, and save a few cycles/bytes here.)
  */
 static char *
-filepath(char *filename)
+filepath(const char *filename)
 {
 	char	   *buf;
-	int			len;
 
 	/* Not an absolute path name? Then fill in with database path... */
 	if (*filename != '/')
 	{
-		len = strlen(DatabasePath) + strlen(filename) + 2;
-		buf = (char *) palloc(len);
+		buf = (char *) palloc(strlen(DatabasePath) + strlen(filename) + 2);
 		sprintf(buf, "%s/%s", DatabasePath, filename);
 	}
 	else
 	{
-		buf = (char *) palloc(strlen(filename) + 1);
-		strcpy(buf, filename);
+		buf = pstrdup(filename);
 	}
 
 #ifdef FILEDEBUG
@@ -742,21 +748,46 @@ PathNameOpenFile(FileName fileName, int fileFlags, int fileMode)
 File
 OpenTemporaryFile(void)
 {
-	char		tempfilename[64];
+	char		tempfilepath[128];
 	File		file;
 
 	/*
 	 * Generate a tempfile name that's unique within the current
-	 * transaction
+	 * transaction and database instance.
 	 */
-	snprintf(tempfilename, sizeof(tempfilename),
-			 "pg_sorttemp%d.%ld", MyProcPid, tempFileCounter++);
+	snprintf(tempfilepath, sizeof(tempfilepath),
+			 "%s/%s%d.%ld", PG_TEMP_FILES_DIR, PG_TEMP_FILE_PREFIX,
+			 MyProcPid, tempFileCounter++);
 
-	/* Open the file */
-	file = FileNameOpenFile(tempfilename,
-							O_RDWR | O_CREAT | O_TRUNC | PG_BINARY, 0600);
+	/*
+	 * Open the file.  Note: we don't use O_EXCL, in case there is an
+	 * orphaned temp file that can be reused.
+	 */
+	file = FileNameOpenFile(tempfilepath,
+							O_RDWR | O_CREAT | O_TRUNC | PG_BINARY,
+							0600);
 	if (file <= 0)
-		elog(ERROR, "Failed to create temporary file %s", tempfilename);
+	{
+		char   *dirpath;
+
+		/*
+		 * We might need to create the pg_tempfiles subdirectory, if
+		 * no one has yet done so.
+		 *
+		 * Don't check for error from mkdir; it could fail if someone else
+		 * just did the same thing.  If it doesn't work then we'll bomb out
+		 * on the second create attempt, instead.
+		 */
+		dirpath = filepath(PG_TEMP_FILES_DIR);
+		mkdir(dirpath, S_IRWXU);
+		pfree(dirpath);
+
+		file = FileNameOpenFile(tempfilepath,
+								O_RDWR | O_CREAT | O_TRUNC | PG_BINARY,
+								0600);
+		if (file <= 0)
+			elog(ERROR, "Failed to create temporary file %s", tempfilepath);
+	}
 
 	/* Mark it for deletion at close or EOXact */
 	VfdCache[file].fdstate |= FD_TEMPORARY;
@@ -1202,4 +1233,77 @@ AtEOXact_Files(void)
 	 * helps keep the names from growing unreasonably long.
 	 */
 	tempFileCounter = 0;
+}
+
+
+/*
+ * Remove old temporary files
+ *
+ * This should be called during postmaster startup.  It will forcibly
+ * remove any leftover files created by OpenTemporaryFile.
+ */
+void
+RemovePgTempFiles(void)
+{
+	char 		db_path[MAXPGPATH];
+	char 		temp_path[MAXPGPATH];
+	char 		rm_path[MAXPGPATH];
+	DIR		   *db_dir;
+	DIR		   *temp_dir;
+	struct dirent  *db_de;
+	struct dirent  *temp_de;
+
+	/*
+	 * Cycle through pg_tempfiles for all databases
+	 * and remove old temp files.
+	 */
+	snprintf(db_path, sizeof(db_path), "%s/base", DataDir);
+	if ((db_dir = opendir(db_path)) != NULL)
+	{
+		while ((db_de = readdir(db_dir)) != NULL)
+		{
+			if (strcmp(db_de->d_name, ".") == 0 ||
+				strcmp(db_de->d_name, "..") == 0)
+				continue;
+
+			snprintf(temp_path, sizeof(temp_path),
+					 "%s/%s/%s",
+					 db_path, db_de->d_name,
+					 PG_TEMP_FILES_DIR);
+			if ((temp_dir = opendir(temp_path)) != NULL)
+			{
+				while ((temp_de = readdir(temp_dir)) != NULL)
+				{
+					if (strcmp(temp_de->d_name, ".") == 0 ||
+						strcmp(temp_de->d_name, "..") == 0)
+						continue;
+
+					snprintf(rm_path, sizeof(temp_path),
+							 "%s/%s/%s/%s",
+							 db_path, db_de->d_name,
+							 PG_TEMP_FILES_DIR,
+							 temp_de->d_name);
+
+					if (strncmp(temp_de->d_name,
+								PG_TEMP_FILE_PREFIX,
+								strlen(PG_TEMP_FILE_PREFIX)) == 0)
+					{
+						unlink(rm_path);
+					}
+					else
+					{
+						/*
+						 * would prefer to use elog here, but it's not
+						 * up and running during postmaster startup...
+						 */
+						fprintf(stderr,
+								"Unexpected file found in temporary-files directory: %s\n",
+								rm_path);
+					}
+				}
+				closedir(temp_dir);
+			}
+		}
+		closedir(db_dir);
+	}
 }
