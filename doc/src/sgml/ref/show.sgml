@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/show.sgml,v 1.7 1999/07/22 15:09:15 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/show.sgml,v 1.8 2000/02/15 20:49:07 tgl Exp $
 Postgres documentation
 -->
 
@@ -106,14 +106,14 @@ SHOW VARIABLE
    Description
   </title>
   <para>
-   <command>SHOW</command> will display the current
-   configuration parameters for
-   variable during a session.
+   <command>SHOW</command> will display the current setting of a
+   run-time parameter during a session.
   </para>
   <para>
-   The session can be configured using <command>SET</command> statement,
-   and values
-   can be restored to the defaults using <command>RESET</command> statement.
+   These variables can be set using the <command>SET</command> statement,
+   and
+   can be restored to the default values using the <command>RESET</command>
+   statement.
    Parameters and values are case-insensitive.
   </para>
 
@@ -125,13 +125,12 @@ SHOW VARIABLE
     Notes
    </title>
    <para>
-    The <command>SHOW</command> is a <productname>Postgres</productname>
+    <command>SHOW</command> is a <productname>Postgres</productname>
     language extension.
    </para>
    <para>
     Refer to  <command>SET</command>/<command>RESET</command> 
     to set/reset variable values.
-    See also  <command>SET TIME ZONE</command>.
    </para>
   </refsect2>
  </refsect1>

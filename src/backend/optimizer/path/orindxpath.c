@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/orindxpath.c,v 1.36 2000/02/05 18:26:09 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/orindxpath.c,v 1.37 2000/02/15 20:49:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,6 +19,7 @@
 #include "optimizer/clauses.h"
 #include "optimizer/cost.h"
 #include "optimizer/internal.h"
+#include "optimizer/pathnode.h"
 #include "optimizer/paths.h"
 #include "optimizer/plancat.h"
 #include "optimizer/restrictinfo.h"
@@ -27,14 +28,13 @@
 
 static void best_or_subclause_indices(Query *root, RelOptInfo *rel,
 									  List *subclauses, List *indices,
-									  List **indexquals,
-									  List **indexids,
-									  Cost *cost);
+									  IndexPath *pathnode);
 static void best_or_subclause_index(Query *root, RelOptInfo *rel,
 									Expr *subclause, List *indices,
 									List **retIndexQual,
 									Oid *retIndexid,
-									Cost *retCost);
+									Cost *retStartupCost,
+									Cost *retTotalCost);
 
 
 /*
@@ -45,14 +45,13 @@ static void best_or_subclause_index(Query *root, RelOptInfo *rel,
  * 'rel' is the relation entry for which the paths are to be created
  * 'clauses' is the list of available restriction clause nodes
  *
- * Returns a list of index path nodes.
- *
+ * Returns nothing, but adds paths to rel->pathlist via add_path().
  */
-List *
+void
 create_or_index_paths(Query *root,
-					  RelOptInfo *rel, List *clauses)
+					  RelOptInfo *rel,
+					  List *clauses)
 {
-	List	   *path_list = NIL;
 	List	   *clist;
 
 	foreach(clist, clauses)
@@ -86,17 +85,6 @@ create_or_index_paths(Query *root,
 				 * best available index for each subclause.
 				 */
 				IndexPath  *pathnode = makeNode(IndexPath);
-				List	   *indexquals;
-				List	   *indexids;
-				Cost		cost;
-
-				best_or_subclause_indices(root,
-										  rel,
-										  clausenode->clause->args,
-										  clausenode->subclauseindices,
-										  &indexquals,
-										  &indexids,
-										  &cost);
 
 				pathnode->path.pathtype = T_IndexScan;
 				pathnode->path.parent = rel;
@@ -108,17 +96,21 @@ create_or_index_paths(Query *root,
 				 */
 				pathnode->path.pathkeys = NIL;
 
-				pathnode->indexid = indexids;
-				pathnode->indexqual = indexquals;
-				pathnode->joinrelids = NIL;	/* no join clauses here */
-				pathnode->path.path_cost = cost;
+				/* We don't actually care what order the index scans in ... */
+				pathnode->indexscandir = NoMovementScanDirection;
 
-				path_list = lappend(path_list, pathnode);
+				pathnode->joinrelids = NIL;	/* no join clauses here */
+
+				best_or_subclause_indices(root,
+										  rel,
+										  clausenode->clause->args,
+										  clausenode->subclauseindices,
+										  pathnode);
+
+				add_path(rel, (Path *) pathnode);
 			}
 		}
 	}
-
-	return path_list;
 }
 
 /*
@@ -128,53 +120,68 @@ create_or_index_paths(Query *root,
  *	  indices.	The cost is the sum of the individual index costs, since
  *	  the executor will perform a scan for each subclause of the 'or'.
  *
- * This routine also creates the indexquals and indexids lists that will
- * be needed by the executor.  The indexquals list has one entry for each
+ * This routine also creates the indexqual and indexid lists that will
+ * be needed by the executor.  The indexqual list has one entry for each
  * scan of the base rel, which is a sublist of indexqual conditions to
  * apply in that scan.  The implicit semantics are AND across each sublist
  * of quals, and OR across the toplevel list (note that the executor
- * takes care not to return any single tuple more than once).  The indexids
- * list gives the index to be used in each scan.
+ * takes care not to return any single tuple more than once).  The indexid
+ * list gives the OID of the index to be used in each scan.
  *
  * 'rel' is the node of the relation on which the indexes are defined
  * 'subclauses' are the subclauses of the 'or' clause
  * 'indices' is a list of sublists of the IndexOptInfo nodes that matched
  *		each subclause of the 'or' clause
- * '*indexquals' gets the constructed indexquals for the path (a list
+ * 'pathnode' is the IndexPath node being built.
+ *
+ * Results are returned by setting these fields of the passed pathnode:
+ * 'indexqual' gets the constructed indexquals for the path (a list
  *		of sublists of clauses, one sublist per scan of the base rel)
- * '*indexids' gets a list of the index OIDs for each scan of the rel
- * '*cost' gets the total cost of the path
+ * 'indexid' gets a list of the index OIDs for each scan of the rel
+ * 'startup_cost' and 'total_cost' get the complete path costs.
+ *
+ * 'startup_cost' is the startup cost for the first index scan only;
+ * startup costs for later scans will be paid later on, so they just
+ * get reflected in total_cost.
+ *
+ * NOTE: we choose each scan on the basis of its total cost, ignoring startup
+ * cost.  This is reasonable as long as all index types have zero or small
+ * startup cost, but we might have to work harder if any index types with
+ * nontrivial startup cost are ever invented.
  */
 static void
 best_or_subclause_indices(Query *root,
 						  RelOptInfo *rel,
 						  List *subclauses,
 						  List *indices,
-						  List **indexquals,	/* return value */
-						  List **indexids,		/* return value */
-						  Cost *cost)			/* return value */
+						  IndexPath *pathnode)
 {
 	List	   *slist;
 
-	*indexquals = NIL;
-	*indexids = NIL;
-	*cost = (Cost) 0.0;
+	pathnode->indexqual = NIL;
+	pathnode->indexid = NIL;
+	pathnode->path.startup_cost = 0;
+	pathnode->path.total_cost = 0;
 
 	foreach(slist, subclauses)
 	{
 		Expr	   *subclause = lfirst(slist);
 		List	   *best_indexqual;
 		Oid			best_indexid;
-		Cost		best_cost;
+		Cost		best_startup_cost;
+		Cost		best_total_cost;
 
 		best_or_subclause_index(root, rel, subclause, lfirst(indices),
-								&best_indexqual, &best_indexid, &best_cost);
+								&best_indexqual, &best_indexid,
+								&best_startup_cost, &best_total_cost);
 
 		Assert(best_indexid != InvalidOid);
 
-		*indexquals = lappend(*indexquals, best_indexqual);
-		*indexids = lappendi(*indexids, best_indexid);
-		*cost += best_cost;
+		pathnode->indexqual = lappend(pathnode->indexqual, best_indexqual);
+		pathnode->indexid = lappendi(pathnode->indexid, best_indexid);
+		if (slist == subclauses)		/* first scan? */
+			pathnode->path.startup_cost = best_startup_cost;
+		pathnode->path.total_cost += best_total_cost;
 
 		indices = lnext(indices);
 	}
@@ -182,16 +189,17 @@ best_or_subclause_indices(Query *root,
 
 /*
  * best_or_subclause_index
- *	  Determines which is the best index to be used with a subclause of
- *	  an 'or' clause by estimating the cost of using each index and selecting
- *	  the least expensive.
+ *	  Determines which is the best index to be used with a subclause of an
+ *	  'or' clause by estimating the cost of using each index and selecting
+ *	  the least expensive (considering total cost only, for now).
  *
  * 'rel' is the node of the relation on which the index is defined
  * 'subclause' is the OR subclause being considered
  * 'indices' is a list of IndexOptInfo nodes that match the subclause
  * '*retIndexQual' gets a list of the indexqual conditions for the best index
  * '*retIndexid' gets the OID of the best index
- * '*retCost' gets the cost of a scan with that index
+ * '*retStartupCost' gets the startup cost of a scan with that index
+ * '*retTotalCost' gets the total cost of a scan with that index
  */
 static void
 best_or_subclause_index(Query *root,
@@ -200,7 +208,8 @@ best_or_subclause_index(Query *root,
 						List *indices,
 						List **retIndexQual,	/* return value */
 						Oid *retIndexid,		/* return value */
-						Cost *retCost)			/* return value */
+						Cost *retStartupCost,	/* return value */
+						Cost *retTotalCost)		/* return value */
 {
 	bool		first_time = true;
 	List	   *ilist;
@@ -208,27 +217,28 @@ best_or_subclause_index(Query *root,
 	/* if we don't match anything, return zeros */
 	*retIndexQual = NIL;
 	*retIndexid = InvalidOid;
-	*retCost = 0.0;
+	*retStartupCost = 0;
+	*retTotalCost = 0;
 
 	foreach(ilist, indices)
 	{
 		IndexOptInfo *index = (IndexOptInfo *) lfirst(ilist);
 		List	   *indexqual;
-		Cost		subcost;
+		Path		subclause_path;
 
 		Assert(IsA(index, IndexOptInfo));
 
 		/* Convert this 'or' subclause to an indexqual list */
 		indexqual = extract_or_indexqual_conditions(rel, index, subclause);
 
-		subcost = cost_index(root, rel, index, indexqual,
-							 false);
+		cost_index(&subclause_path, root, rel, index, indexqual, false);
 
-		if (first_time || subcost < *retCost)
+		if (first_time || subclause_path.total_cost < *retTotalCost)
 		{
 			*retIndexQual = indexqual;
 			*retIndexid = index->indexoid;
-			*retCost = subcost;
+			*retStartupCost = subclause_path.startup_cost;
+			*retTotalCost = subclause_path.total_cost;
 			first_time = false;
 		}
 	}

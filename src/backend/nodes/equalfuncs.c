@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.60 2000/02/15 03:37:08 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.61 2000/02/15 20:49:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -100,10 +100,10 @@ _equalAttr(Attr *a, Attr *b)
 {
 	if (!strcmp(a->relname, b->relname))
 		return false;
-	if (length(a->attrs) != length(b->attrs))
+	if (!equal(a->attrs, b->attrs))
 		return false;
 
-	return equal(a->attrs, b->attrs);
+	return true;
 }
 
 static bool
@@ -342,8 +342,8 @@ _equalPath(Path *a, Path *b)
 		return false;
 	if (!equal(a->parent, b->parent))
 		return false;
-	/* do not check path_cost, since it may not be set yet, and being
-	 * a float there are roundoff error issues anyway...
+	/* do not check path costs, since they may not be set yet, and being
+	 * float values there are roundoff error issues anyway...
 	 */
 	if (!equal(a->pathkeys, b->pathkeys))
 		return false;
@@ -358,6 +358,8 @@ _equalIndexPath(IndexPath *a, IndexPath *b)
 	if (!equali(a->indexid, b->indexid))
 		return false;
 	if (!equal(a->indexqual, b->indexqual))
+		return false;
+	if (a->indexscandir != b->indexscandir)
 		return false;
 	if (!equali(a->joinrelids, b->joinrelids))
 		return false;
@@ -625,8 +627,9 @@ _equalQuery(Query *a, Query *b)
 
 	/*
 	 * We do not check the internal-to-the-planner fields: base_rel_list,
-	 * join_rel_list, query_pathkeys.  They might not be set yet, and
-	 * in any case they should be derivable from the other fields.
+	 * join_rel_list, equi_key_list, query_pathkeys.
+	 * They might not be set yet, and in any case they should be derivable
+	 * from the other fields.
 	 */
 	return true;
 }
@@ -644,16 +647,8 @@ _equalRangeTblEntry(RangeTblEntry *a, RangeTblEntry *b)
 		if (a->relname != b->relname)
 			return false;
 	}
-	if (a->ref && b->ref)
-	{
-		if (! equal(a->ref, b->ref))
-			return false;
-	}
-	else
-	{
-		if (a->ref != b->ref)
-			return false;
-	}
+	if (!equal(a->ref, b->ref))
+		return false;
 	if (a->relid != b->relid)
 		return false;
 	if (a->inh != b->inh)
@@ -784,6 +779,9 @@ equal(void *a, void *b)
 		case T_Stream:
 			retval = _equalStream(a, b);
 			break;
+		case T_Attr:
+			retval = _equalAttr(a, b);
+			break;
 		case T_Var:
 			retval = _equalVar(a, b);
 			break;
@@ -855,9 +853,6 @@ equal(void *a, void *b)
 			break;
 		case T_EState:
 			retval = _equalEState(a, b);
-			break;
-		case T_Attr:
-			retval = _equalAttr(a, b);
 			break;
 		case T_Integer:
 		case T_String:

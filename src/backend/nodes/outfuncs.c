@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.107 2000/02/15 03:37:09 thomas Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.108 2000/02/15 20:49:09 tgl Exp $
  *
  * NOTES
  *	  Every (plan) node in POSTGRES has an associated "out" routine which
@@ -321,8 +321,9 @@ static void
 _outPlanInfo(StringInfo str, Plan *node)
 {
 	appendStringInfo(str,
-				  ":cost %g :rows %.0f :width %d :state %s :qptargetlist ",
-					 node->cost,
+					 ":startup_cost %.2f :total_cost %.2f :rows %.0f :width %d :state %s :qptargetlist ",
+					 node->startup_cost,
+					 node->total_cost,
 					 node->plan_rows,
 					 node->plan_width,
 					 node->state ? "not-NULL" : "<>");
@@ -908,15 +909,13 @@ _outRelOptInfo(StringInfo str, RelOptInfo *node)
 	appendStringInfo(str, " :pathlist ");
 	_outNode(str, node->pathlist);
 
-	/*
-	 * Not sure if these are nodes or not.	They're declared as struct
-	 * Path *.	Since i don't know, i'll just print the addresses for now.
-	 * This can be changed later, if necessary.
-	 */
+	appendStringInfo(str, " :cheapest_startup_path ");
+	_outNode(str, node->cheapest_startup_path);
+	appendStringInfo(str, " :cheapest_total_path ");
+	_outNode(str, node->cheapest_total_path);
 
 	appendStringInfo(str,
-					 " :cheapestpath @ 0x%x :pruneable %s :baserestrictinfo ",
-					 (int) node->cheapestpath,
+					 " :pruneable %s :baserestrictinfo ",
 					 node->pruneable ? "true" : "false");
 	_outNode(str, node->baserestrictinfo);
 
@@ -977,9 +976,11 @@ _outRowMark(StringInfo str, RowMark *node)
 static void
 _outPath(StringInfo str, Path *node)
 {
-	appendStringInfo(str, " PATH :pathtype %d :cost %.2f :pathkeys ",
+	appendStringInfo(str,
+					 " PATH :pathtype %d :startup_cost %.2f :total_cost %.2f :pathkeys ",
 					 node->pathtype,
-					 node->path_cost);
+					 node->startup_cost,
+					 node->total_cost);
 	_outNode(str, node->pathkeys);
 }
 
@@ -990,9 +991,10 @@ static void
 _outIndexPath(StringInfo str, IndexPath *node)
 {
 	appendStringInfo(str,
-					 " INDEXPATH :pathtype %d :cost %.2f :pathkeys ",
+					 " INDEXPATH :pathtype %d :startup_cost %.2f :total_cost %.2f :pathkeys ",
 					 node->path.pathtype,
-					 node->path.path_cost);
+					 node->path.startup_cost,
+					 node->path.total_cost);
 	_outNode(str, node->path.pathkeys);
 
 	appendStringInfo(str, " :indexid ");
@@ -1001,7 +1003,8 @@ _outIndexPath(StringInfo str, IndexPath *node)
 	appendStringInfo(str, " :indexqual ");
 	_outNode(str, node->indexqual);
 
-	appendStringInfo(str, " :joinrelids ");
+	appendStringInfo(str, " :indexscandir %d :joinrelids ",
+					 (int) node->indexscandir);
 	_outIntList(str, node->joinrelids);
 }
 
@@ -1012,9 +1015,10 @@ static void
 _outTidPath(StringInfo str, TidPath *node)
 {
 	appendStringInfo(str,
-					 " TIDPATH :pathtype %d :cost %.2f :pathkeys ",
+					 " TIDPATH :pathtype %d :startup_cost %.2f :total_cost %.2f :pathkeys ",
 					 node->path.pathtype,
-					 node->path.path_cost);
+					 node->path.startup_cost,
+					 node->path.total_cost);
 	_outNode(str, node->path.pathkeys);
 
 	appendStringInfo(str, " :tideval ");
@@ -1031,9 +1035,10 @@ static void
 _outNestPath(StringInfo str, NestPath *node)
 {
 	appendStringInfo(str,
-					 " NESTPATH :pathtype %d :cost %.2f :pathkeys ",
+					 " NESTPATH :pathtype %d :startup_cost %.2f :total_cost %.2f :pathkeys ",
 					 node->path.pathtype,
-					 node->path.path_cost);
+					 node->path.startup_cost,
+					 node->path.total_cost);
 	_outNode(str, node->path.pathkeys);
 	appendStringInfo(str, " :outerjoinpath ");
 	_outNode(str, node->outerjoinpath);
@@ -1050,9 +1055,10 @@ static void
 _outMergePath(StringInfo str, MergePath *node)
 {
 	appendStringInfo(str,
-					 " MERGEPATH :pathtype %d :cost %.2f :pathkeys ",
+					 " MERGEPATH :pathtype %d :startup_cost %.2f :total_cost %.2f :pathkeys ",
 					 node->jpath.path.pathtype,
-					 node->jpath.path.path_cost);
+					 node->jpath.path.startup_cost,
+					 node->jpath.path.total_cost);
 	_outNode(str, node->jpath.path.pathkeys);
 	appendStringInfo(str, " :outerjoinpath ");
 	_outNode(str, node->jpath.outerjoinpath);
@@ -1078,9 +1084,10 @@ static void
 _outHashPath(StringInfo str, HashPath *node)
 {
 	appendStringInfo(str,
-					 " HASHPATH :pathtype %d :cost %.2f :pathkeys ",
+					 " HASHPATH :pathtype %d :startup_cost %.2f :total_cost %.2f :pathkeys ",
 					 node->jpath.path.pathtype,
-					 node->jpath.path.path_cost);
+					 node->jpath.path.startup_cost,
+					 node->jpath.path.total_cost);
 	_outNode(str, node->jpath.path.pathkeys);
 	appendStringInfo(str, " :outerjoinpath ");
 	_outNode(str, node->jpath.outerjoinpath);
@@ -1364,7 +1371,7 @@ _outNode(StringInfo str, void *obj)
 		return;
 	}
 
-	if (nodeTag(obj) == T_List)
+	if (IsA(obj, List))
 	{
 		List	   *l;
 
@@ -1376,6 +1383,11 @@ _outNode(StringInfo str, void *obj)
 				appendStringInfoChar(str, ' ');
 		}
 		appendStringInfoChar(str, ')');
+	}
+	else if (IsA_Value(obj))
+	{
+		/* nodeRead does not want to see { } around these! */
+		_outValue(str, obj);
 	}
 	else
 	{
@@ -1549,11 +1561,6 @@ _outNode(StringInfo str, void *obj)
 				break;
 			case T_Stream:
 				_outStream(str, obj);
-				break;
-			case T_Integer:
-			case T_String:
-			case T_Float:
-				_outValue(str, obj);
 				break;
 			case T_A_Expr:
 				_outAExpr(str, obj);

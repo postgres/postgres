@@ -5,7 +5,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994-5, Regents of the University of California
  *
- *	  $Id: explain.c,v 1.53 2000/02/15 03:36:39 thomas Exp $
+ * $Header: /cvsroot/pgsql/src/backend/commands/explain.c,v 1.54 2000/02/15 20:49:08 tgl Exp $
  *
  */
 
@@ -217,39 +217,24 @@ explain_outNode(StringInfo str, Plan *plan, int indent, ExplainState *es)
 			{
 				relation = RelationIdGetRelation(lfirsti(l));
 				Assert(relation);
-				if (++i > 1)
-					appendStringInfo(str, ", ");
-				appendStringInfo(str,
+				appendStringInfo(str, "%s%s",
+								 (++i > 1) ? ", " : "",
 								 stringStringInfo(RelationGetRelationName(relation)));
 				/* drop relcache refcount from RelationIdGetRelation */
 				RelationDecrementReferenceCount(relation);
 			}
+			/* FALL THRU */
 		case T_SeqScan:
+		case T_TidScan:
 			if (((Scan *) plan)->scanrelid > 0)
 			{
 				RangeTblEntry *rte = nth(((Scan *) plan)->scanrelid - 1, es->rtable);
 
-				appendStringInfo(str, " on ");
-				if (strcmp(rte->ref->relname, rte->relname) != 0)
-				{
-					appendStringInfo(str, "%s ",
-									 stringStringInfo(rte->relname));
-				}
-				appendStringInfo(str, stringStringInfo(rte->ref->relname));
-			}
-			break;
-		case T_TidScan:
-			if (((TidScan *) plan)->scan.scanrelid > 0)
-			{
-				RangeTblEntry *rte = nth(((TidScan *) plan)->scan.scanrelid - 1, es->rtable);
-
-				appendStringInfo(str, " on ");
-				if (strcmp(rte->ref->relname, rte->relname) != 0)
-				{
-					appendStringInfo(str, "%s ",
-									 stringStringInfo(rte->relname));
-				}
-				appendStringInfo(str, stringStringInfo(rte->ref->relname));
+				appendStringInfo(str, " on %s",
+								 stringStringInfo(rte->relname));
+				if (rte->ref && strcmp(rte->ref->relname, rte->relname) != 0)
+					appendStringInfo(str, " %s",
+									 stringStringInfo(rte->ref->relname));
 			}
 			break;
 		default:
@@ -257,8 +242,9 @@ explain_outNode(StringInfo str, Plan *plan, int indent, ExplainState *es)
 	}
 	if (es->printCost)
 	{
-		appendStringInfo(str, "  (cost=%.2f rows=%.0f width=%d)",
-						 plan->cost, plan->plan_rows, plan->plan_width);
+		appendStringInfo(str, "  (cost=%.2f..%.2f rows=%.0f width=%d)",
+						 plan->startup_cost, plan->total_cost,
+						 plan->plan_rows, plan->plan_width);
 	}
 	appendStringInfo(str, "\n");
 

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: planmain.h,v 1.37 2000/01/27 18:11:45 tgl Exp $
+ * $Id: planmain.h,v 1.38 2000/02/15 20:49:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,7 +20,8 @@
 /*
  * prototypes for plan/planmain.c
  */
-extern Plan *query_planner(Query *root, List *tlist, List *qual);
+extern Plan *query_planner(Query *root, List *tlist, List *qual,
+						   double tuple_fraction);
 
 /*
  * prototypes for plan/createplan.c
@@ -29,7 +30,7 @@ extern Plan *create_plan(Query *root, Path *best_path);
 extern SeqScan *make_seqscan(List *qptlist, List *qpqual, Index scanrelid);
 extern Sort *make_sort(List *tlist, Oid nonameid, Plan *lefttree,
 		  int keycount);
-extern Agg *make_agg(List *tlist, Plan *lefttree);
+extern Agg *make_agg(List *tlist, List *qual, Plan *lefttree);
 extern Group *make_group(List *tlist, bool tuplePerGroup, int ngrp,
 		   AttrNumber *grpColIdx, Plan *lefttree);
 extern Noname *make_noname(List *tlist, List *pathkeys, Plan *subplan);

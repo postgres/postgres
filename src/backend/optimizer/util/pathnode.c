@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/pathnode.c,v 1.59 2000/02/07 04:41:01 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/pathnode.c,v 1.60 2000/02/15 20:49:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,67 +29,122 @@
  *****************************************************************************/
 
 /*
- * path_is_cheaper
- *	  Returns t iff 'path1' is cheaper than 'path2'.
- *
+ * compare_path_costs
+ *	  Return -1, 0, or +1 according as path1 is cheaper, the same cost,
+ *	  or more expensive than path2 for the specified criterion.
  */
-bool
-path_is_cheaper(Path *path1, Path *path2)
+int
+compare_path_costs(Path *path1, Path *path2, CostSelector criterion)
 {
-	return (bool) (path1->path_cost < path2->path_cost);
+	if (criterion == STARTUP_COST)
+	{
+		if (path1->startup_cost < path2->startup_cost)
+			return -1;
+		if (path1->startup_cost > path2->startup_cost)
+			return +1;
+		/*
+		 * If paths have the same startup cost (not at all unlikely),
+		 * order them by total cost.
+		 */
+		if (path1->total_cost < path2->total_cost)
+			return -1;
+		if (path1->total_cost > path2->total_cost)
+			return +1;
+	}
+	else
+	{
+		if (path1->total_cost < path2->total_cost)
+			return -1;
+		if (path1->total_cost > path2->total_cost)
+			return +1;
+		/*
+		 * If paths have the same total cost, order them by startup cost.
+		 */
+		if (path1->startup_cost < path2->startup_cost)
+			return -1;
+		if (path1->startup_cost > path2->startup_cost)
+			return +1;
+	}
+	return 0;
+}
+
+/*
+ * compare_path_fractional_costs
+ *	  Return -1, 0, or +1 according as path1 is cheaper, the same cost,
+ *	  or more expensive than path2 for fetching the specified fraction
+ *	  of the total tuples.
+ *
+ * If fraction is <= 0 or > 1, we interpret it as 1, ie, we select the
+ * path with the cheaper total_cost.
+ */
+int
+compare_fractional_path_costs(Path *path1, Path *path2,
+							  double fraction)
+{
+	Cost		cost1,
+				cost2;
+
+	if (fraction <= 0.0 || fraction >= 1.0)
+		return compare_path_costs(path1, path2, TOTAL_COST);
+	cost1 = path1->startup_cost +
+		fraction * (path1->total_cost - path1->startup_cost);
+	cost2 = path2->startup_cost +
+		fraction * (path2->total_cost - path2->startup_cost);
+	if (cost1 < cost2)
+		return -1;
+	if (cost1 > cost2)
+		return +1;
+	return 0;
 }
 
 /*
  * set_cheapest
- *	  Finds the minimum cost path from among a relation's paths.
+ *	  Find the minimum-cost paths from among a relation's paths,
+ *	  and save them in the rel's cheapest-path fields.
  *
- * 'parent_rel' is the parent relation
- * 'pathlist' is a list of path nodes corresponding to 'parent_rel'
+ * This is normally called only after we've finished constructing the path
+ * list for the rel node.
  *
- * Returns and sets the relation entry field with the pathnode that
- * is minimum.
- *
+ * If we find two paths of identical costs, try to keep the better-sorted one.
+ * The paths might have unrelated sort orderings, in which case we can only
+ * guess which might be better to keep, but if one is superior then we
+ * definitely should keep it.
  */
-Path *
-set_cheapest(RelOptInfo *parent_rel, List *pathlist)
+void
+set_cheapest(RelOptInfo *parent_rel)
 {
+	List	   *pathlist = parent_rel->pathlist;
 	List	   *p;
-	Path	   *cheapest_so_far;
+	Path	   *cheapest_startup_path;
+	Path	   *cheapest_total_path;
 
 	Assert(IsA(parent_rel, RelOptInfo));
 	Assert(pathlist != NIL);
 
-	cheapest_so_far = (Path *) lfirst(pathlist);
+	cheapest_startup_path = cheapest_total_path = (Path *) lfirst(pathlist);
 
 	foreach(p, lnext(pathlist))
 	{
 		Path	   *path = (Path *) lfirst(p);
+		int			cmp;
 
-		if (path_is_cheaper(path, cheapest_so_far))
-			cheapest_so_far = path;
+		cmp = compare_path_costs(cheapest_startup_path, path, STARTUP_COST);
+		if (cmp > 0 ||
+			(cmp == 0 &&
+			 compare_pathkeys(cheapest_startup_path->pathkeys,
+							  path->pathkeys) == PATHKEYS_BETTER2))
+			cheapest_startup_path = path;
+
+		cmp = compare_path_costs(cheapest_total_path, path, TOTAL_COST);
+		if (cmp > 0 ||
+			(cmp == 0 &&
+			 compare_pathkeys(cheapest_total_path->pathkeys,
+							  path->pathkeys) == PATHKEYS_BETTER2))
+			cheapest_total_path = path;
 	}
 
-	parent_rel->cheapestpath = cheapest_so_far;
-
-	return cheapest_so_far;
-}
-
-/*
- * add_pathlist
- *	  Consider each path given in new_paths, and add it to the parent rel's
- *	  pathlist if it seems worthy.
- */
-void
-add_pathlist(RelOptInfo *parent_rel, List *new_paths)
-{
-	List	   *p1;
-
-	foreach(p1, new_paths)
-	{
-		Path	   *new_path = (Path *) lfirst(p1);
-
-		add_path(parent_rel, new_path);
-	}
+	parent_rel->cheapest_startup_path = cheapest_startup_path;
+	parent_rel->cheapest_total_path = cheapest_total_path;
 }
 
 /*
@@ -97,11 +152,17 @@ add_pathlist(RelOptInfo *parent_rel, List *new_paths)
  *	  Consider a potential implementation path for the specified parent rel,
  *	  and add it to the rel's pathlist if it is worthy of consideration.
  *	  A path is worthy if it has either a better sort order (better pathkeys)
- *	  or cheaper cost than any of the existing old paths.
+ *	  or cheaper cost (on either dimension) than any of the existing old paths.
  *
  *	  Unless parent_rel->pruneable is false, we also remove from the rel's
  *	  pathlist any old paths that are dominated by new_path --- that is,
  *	  new_path is both cheaper and at least as well ordered.
+ *
+ *	  NOTE: discarded Path objects are immediately pfree'd to reduce planner
+ *	  memory consumption.  We dare not try to free the substructure of a Path,
+ *	  since much of it may be shared with other Paths or the query tree itself;
+ *	  but just recycling discarded Path nodes is a very useful savings in
+ *	  a large join tree.
  *
  * 'parent_rel' is the relation entry to which the path corresponds.
  * 'new_path' is a potential path for parent_rel.
@@ -124,26 +185,40 @@ add_path(RelOptInfo *parent_rel, Path *new_path)
 	{
 		Path	   *old_path = (Path *) lfirst(p1);
 		bool		remove_old = false;	/* unless new proves superior */
+		int			costcmp;
 
-		switch (compare_pathkeys(new_path->pathkeys, old_path->pathkeys))
+		costcmp = compare_path_costs(new_path, old_path, TOTAL_COST);
+		/*
+		 * If the two paths compare differently for startup and total cost,
+		 * then we want to keep both, and we can skip the (much slower)
+		 * comparison of pathkeys.  If they compare the same, proceed with
+		 * the pathkeys comparison.  Note this test relies on the fact that
+		 * compare_path_costs will only return 0 if both costs are equal
+		 * (and, therefore, there's no need to call it twice in that case).
+		 */
+		if (costcmp == 0 ||
+			costcmp == compare_path_costs(new_path, old_path, STARTUP_COST))
 		{
-			case PATHKEYS_EQUAL:
-				if (new_path->path_cost < old_path->path_cost)
-					remove_old = true; /* new dominates old */
-				else
-					accept_new = false;	/* old equals or dominates new */
-				break;
-			case PATHKEYS_BETTER1:
-				if (new_path->path_cost <= old_path->path_cost)
-					remove_old = true; /* new dominates old */
-				break;
-			case PATHKEYS_BETTER2:
-				if (new_path->path_cost >= old_path->path_cost)
-					accept_new = false;	/* old dominates new */
-				break;
-			case PATHKEYS_DIFFERENT:
-				/* keep both paths, since they have different ordering */
-				break;
+			switch (compare_pathkeys(new_path->pathkeys, old_path->pathkeys))
+			{
+				case PATHKEYS_EQUAL:
+					if (costcmp < 0)
+						remove_old = true; /* new dominates old */
+					else
+						accept_new = false;	/* old equals or dominates new */
+					break;
+				case PATHKEYS_BETTER1:
+					if (costcmp <= 0)
+						remove_old = true; /* new dominates old */
+					break;
+				case PATHKEYS_BETTER2:
+					if (costcmp >= 0)
+						accept_new = false;	/* old dominates new */
+					break;
+				case PATHKEYS_DIFFERENT:
+					/* keep both paths, since they have different ordering */
+					break;
+			}
 		}
 
 		/*
@@ -156,6 +231,7 @@ add_path(RelOptInfo *parent_rel, Path *new_path)
 				lnext(p1_prev) = lnext(p1);
 			else
 				parent_rel->pathlist = lnext(p1);
+			pfree(old_path);
 		}
 		else
 			p1_prev = p1;
@@ -173,6 +249,11 @@ add_path(RelOptInfo *parent_rel, Path *new_path)
 	{
 		/* Accept the path */
 		parent_rel->pathlist = lcons(new_path, parent_rel->pathlist);
+	}
+	else
+	{
+		/* Reject and recycle the path */
+		pfree(new_path);
 	}
 }
 
@@ -195,7 +276,8 @@ create_seqscan_path(RelOptInfo *rel)
 	pathnode->pathtype = T_SeqScan;
 	pathnode->parent = rel;
 	pathnode->pathkeys = NIL;	/* seqscan has unordered result */
-	pathnode->path_cost = cost_seqscan(rel);
+
+	cost_seqscan(pathnode, rel);
 
 	return pathnode;
 }
@@ -208,6 +290,10 @@ create_seqscan_path(RelOptInfo *rel)
  * 'index' is an index on 'rel'
  * 'restriction_clauses' is a list of RestrictInfo nodes
  *			to be used as index qual conditions in the scan.
+ * 'indexscandir' is ForwardScanDirection or BackwardScanDirection
+ *			if the caller expects a specific scan direction,
+ *			or NoMovementScanDirection if the caller is willing to accept
+ *			an unordered index.
  *
  * Returns the new path node.
  */
@@ -215,14 +301,31 @@ IndexPath  *
 create_index_path(Query *root,
 				  RelOptInfo *rel,
 				  IndexOptInfo *index,
-				  List *restriction_clauses)
+				  List *restriction_clauses,
+				  ScanDirection indexscandir)
 {
 	IndexPath  *pathnode = makeNode(IndexPath);
 	List	   *indexquals;
 
 	pathnode->path.pathtype = T_IndexScan;
 	pathnode->path.parent = rel;
-	pathnode->path.pathkeys = build_index_pathkeys(root, rel, index);
+
+	pathnode->path.pathkeys = build_index_pathkeys(root, rel, index,
+												   indexscandir);
+	if (pathnode->path.pathkeys == NIL)
+	{
+		/* No ordering available from index, is that OK? */
+		if (! ScanDirectionIsNoMovement(indexscandir))
+			elog(ERROR, "create_index_path: failed to create ordered index scan");
+	}
+	else
+	{
+		/* The index is ordered, and build_index_pathkeys defaulted to
+		 * forward scan, so make sure we mark the pathnode properly.
+		 */
+		if (ScanDirectionIsNoMovement(indexscandir))
+			indexscandir = ForwardScanDirection;
+	}
 
 	indexquals = get_actual_clauses(restriction_clauses);
 	/* expand special operators to indexquals the executor can handle */
@@ -234,10 +337,10 @@ create_index_path(Query *root,
 	 */
 	pathnode->indexid = lconsi(index->indexoid, NIL);
 	pathnode->indexqual = lcons(indexquals, NIL);
+	pathnode->indexscandir = indexscandir;
 	pathnode->joinrelids = NIL;	/* no join clauses here */
 
-	pathnode->path.path_cost = cost_index(root, rel, index, indexquals,
-										  false);
+	cost_index(&pathnode->path, root, rel, index, indexquals, false);
 
 	return pathnode;
 }
@@ -256,12 +359,13 @@ create_tidscan_path(RelOptInfo *rel, List *tideval)
 	pathnode->path.pathtype = T_TidScan;
 	pathnode->path.parent = rel;
 	pathnode->path.pathkeys = NIL;
-	pathnode->path.path_cost = cost_tidscan(rel, tideval);
-	/* divide selectivity for each clause to get an equal selectivity
-	 * as IndexScan does OK ? 
-	*/
 	pathnode->tideval = copyObject(tideval); /* is copy really necessary? */
 	pathnode->unjoined_relids = NIL;
+
+	cost_tidscan(&pathnode->path, rel, tideval);
+	/* divide selectivity for each clause to get an equal selectivity
+	 * as IndexScan does OK ? 
+	 */
 
 	return pathnode;
 }
@@ -296,9 +400,8 @@ create_nestloop_path(RelOptInfo *joinrel,
 	pathnode->joinrestrictinfo = restrict_clauses;
 	pathnode->path.pathkeys = pathkeys;
 
-	pathnode->path.path_cost = cost_nestloop(outer_path,
-											 inner_path,
-											 IsA(inner_path, IndexPath));
+	cost_nestloop(&pathnode->path, outer_path, inner_path,
+				  restrict_clauses, IsA(inner_path, IndexPath));
 
 	return pathnode;
 }
@@ -350,10 +453,13 @@ create_mergejoin_path(RelOptInfo *joinrel,
 	pathnode->path_mergeclauses = mergeclauses;
 	pathnode->outersortkeys = outersortkeys;
 	pathnode->innersortkeys = innersortkeys;
-	pathnode->jpath.path.path_cost = cost_mergejoin(outer_path,
-													inner_path,
-													outersortkeys,
-													innersortkeys);
+
+	cost_mergejoin(&pathnode->jpath.path,
+				   outer_path,
+				   inner_path,
+				   restrict_clauses,
+				   outersortkeys,
+				   innersortkeys);
 
 	return pathnode;
 }
@@ -388,9 +494,12 @@ create_hashjoin_path(RelOptInfo *joinrel,
 	/* A hashjoin never has pathkeys, since its ordering is unpredictable */
 	pathnode->jpath.path.pathkeys = NIL;
 	pathnode->path_hashclauses = hashclauses;
-	pathnode->jpath.path.path_cost = cost_hashjoin(outer_path,
-												   inner_path,
-												   innerdisbursion);
+
+	cost_hashjoin(&pathnode->jpath.path,
+				  outer_path,
+				  inner_path,
+				  restrict_clauses,
+				  innerdisbursion);
 
 	return pathnode;
 }

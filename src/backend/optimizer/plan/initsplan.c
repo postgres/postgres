@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/initsplan.c,v 1.44 2000/02/07 04:41:00 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/initsplan.c,v 1.45 2000/02/15 20:49:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,6 +21,7 @@
 #include "optimizer/cost.h"
 #include "optimizer/joininfo.h"
 #include "optimizer/pathnode.h"
+#include "optimizer/paths.h"
 #include "optimizer/planmain.h"
 #include "optimizer/tlist.h"
 #include "optimizer/var.h"
@@ -31,7 +32,6 @@ static void add_restrict_and_join_to_rel(Query *root, Node *clause);
 static void add_join_info_to_rels(Query *root, RestrictInfo *restrictinfo,
 								  Relids join_relids);
 static void add_vars_to_targetlist(Query *root, List *vars);
-static void set_restrictinfo_joininfo(RestrictInfo *restrictinfo);
 static void check_mergejoinable(RestrictInfo *restrictinfo);
 static void check_hashjoinable(RestrictInfo *restrictinfo);
 
@@ -150,7 +150,9 @@ add_restrict_and_join_to_rels(Query *root, List *clauses)
  *	  Add clause information to either the 'RestrictInfo' or 'JoinInfo' field
  *	  (depending on whether the clause is a join) of each base relation
  *	  mentioned in the clause.  A RestrictInfo node is created and added to
- *	  the appropriate list for each rel.
+ *	  the appropriate list for each rel.  Also, if the clause uses a
+ *	  mergejoinable operator, enter the left- and right-side expressions
+ *	  into the query's lists of equijoined vars.
  */
 static void
 add_restrict_and_join_to_rel(Query *root, Node *clause)
@@ -181,14 +183,29 @@ add_restrict_and_join_to_rel(Query *root, Node *clause)
 
 		rel->baserestrictinfo = lcons(restrictinfo,
 									  rel->baserestrictinfo);
+		/*
+		 * Check for a "mergejoinable" clause even though it's not a join
+		 * clause.  This is so that we can recognize that "a.x = a.y" makes
+		 * x and y eligible to be considered equal, even when they belong
+		 * to the same rel.  Without this, we would not recognize that
+		 * "a.x = a.y AND a.x = b.z AND a.y = c.q" allows us to consider
+		 * z and q equal after their rels are joined.
+		 */
+		check_mergejoinable(restrictinfo);
 	}
 	else
 	{
 		/*
 		 * 'clause' is a join clause, since there is more than one atom in
 		 * the relid list.  Set additional RestrictInfo fields for joining.
+		 *
+		 * We need the merge info whether or not mergejoin is enabled (for
+		 * constructing equijoined-var lists), but we don't bother setting
+		 * hash info if hashjoin is disabled.
 		 */
-		set_restrictinfo_joininfo(restrictinfo);
+		check_mergejoinable(restrictinfo);
+		if (enable_hashjoin)
+			check_hashjoinable(restrictinfo);
 		/*
 		 * Add clause to the join lists of all the relevant
 		 * relations.  (If, perchance, 'clause' contains NO vars, then
@@ -202,6 +219,15 @@ add_restrict_and_join_to_rel(Query *root, Node *clause)
 		 */
 		add_vars_to_targetlist(root, vars);
 	}
+
+	/*
+	 * If the clause has a mergejoinable operator, then the two sides
+	 * represent equivalent PathKeyItems for path keys: any path that is
+	 * sorted by one side will also be sorted by the other (after joining,
+	 * that is).  Record the key equivalence for future use.
+	 */
+	if (restrictinfo->mergejoinoperator != InvalidOid)
+		add_equijoined_keys(root, restrictinfo);
 }
 
 /*
@@ -247,23 +273,9 @@ add_join_info_to_rels(Query *root, RestrictInfo *restrictinfo,
 
 /*****************************************************************************
  *
- *	 JOININFO
+ *	 CHECKS FOR MERGEJOINABLE AND HASHJOINABLE CLAUSES
  *
  *****************************************************************************/
-
-/*
- * set_restrictinfo_joininfo
- *	  Examine a RestrictInfo that has been determined to be a join clause,
- *	  and set the merge and hash info fields if it can be merge/hash joined.
- */
-static void
-set_restrictinfo_joininfo(RestrictInfo *restrictinfo)
-{
-	if (enable_mergejoin)
-		check_mergejoinable(restrictinfo);
-	if (enable_hashjoin)
-		check_hashjoinable(restrictinfo);
-}
 
 /*
  * check_mergejoinable
@@ -272,10 +284,7 @@ set_restrictinfo_joininfo(RestrictInfo *restrictinfo)
  *
  *	  Currently, we support mergejoin for binary opclauses where
  *	  both operands are simple Vars and the operator is a mergejoinable
- *	  operator.  (Note: since we are only examining clauses that were
- *	  classified as joins, it is certain that the two Vars belong to
- *	  different relations... if we accepted more general clause structures
- *	  we might need to check that the two sides refer to different rels...)
+ *	  operator.
  */
 static void
 check_mergejoinable(RestrictInfo *restrictinfo)
@@ -320,10 +329,7 @@ check_mergejoinable(RestrictInfo *restrictinfo)
  *
  *	  Currently, we support hashjoin for binary opclauses where
  *	  both operands are simple Vars and the operator is a hashjoinable
- *	  operator.  (Note: since we are only examining clauses that were
- *	  classified as joins, it is certain that the two Vars belong to
- *	  different relations... if we accepted more general clause structures
- *	  we might need to check that the two sides refer to different rels...)
+ *	  operator.
  */
 static void
 check_hashjoinable(RestrictInfo *restrictinfo)

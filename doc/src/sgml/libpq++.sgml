@@ -164,24 +164,6 @@
 	sets the default mode for the genetic optimizer.
        </para>
       </listitem>
-      <listitem>
-       <para>
-	<envar>PGRPLANS</envar>
-	sets the default mode to allow or disable right-sided plans in the optimizer.
-       </para>
-      </listitem>
-      <listitem>
-       <para>
-	<envar>PGCOSTHEAP</envar>
-	sets the default cost for heap searches for the optimizer.
-       </para>
-      </listitem>
-      <listitem>
-       <para>
-	<envar>PGCOSTINDEX</envar>
-	sets the default cost for indexed searches for the optimizer.
-       </para>
-      </listitem>
      </itemizedlist>
     </para>
 	

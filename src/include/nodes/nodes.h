@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nodes.h,v 1.63 2000/01/26 05:58:16 momjian Exp $
+ * $Id: nodes.h,v 1.64 2000/02/15 20:49:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -256,6 +256,9 @@ typedef struct Node
 #define IsA_Noname(t) \
 	(IsA(t, Noname) || IsA(t, Material) || IsA(t, Sort) || \
 	 IsA(t, Unique))
+
+#define IsA_Value(t) \
+	(IsA(t, Integer) || IsA(t, Float) || IsA(t, String))
 
 /* ----------------------------------------------------------------
  *					  extern declarations follow

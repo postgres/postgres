@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/print.c,v 1.36 2000/02/15 03:37:09 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/print.c,v 1.37 2000/02/15 20:49:12 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -175,9 +175,8 @@ print_expr(Node *expr, List *rtable)
 				{
 					rt = rt_fetch(var->varno, rtable);
 					relname = rt->relname;
-					if (rt->ref)
-						if (rt->ref->relname)
-						relname = rt->relname;	/* table renamed */
+					if (rt->ref && rt->ref->relname)
+						relname = rt->ref->relname;	/* table renamed */
 					attname = get_attname(rt->relid, var->varattno);
 				}
 				break;
@@ -366,8 +365,9 @@ print_plan_recursive(Plan *p, Query *parsetree, int indentLevel, char *label)
 		return;
 	for (i = 0; i < indentLevel; i++)
 		printf(" ");
-	printf("%s%s :c=%.4f :r=%.0f :w=%d ", label, plannode_type(p),
-		   p->cost, p->plan_rows, p->plan_width);
+	printf("%s%s :c=%.2f..%.2f :r=%.0f :w=%d ", label, plannode_type(p),
+		   p->startup_cost, p->total_cost,
+		   p->plan_rows, p->plan_width);
 	if (IsA(p, Scan) ||IsA(p, SeqScan))
 	{
 		RangeTblEntry *rte;

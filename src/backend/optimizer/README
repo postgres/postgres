@@ -122,7 +122,7 @@ among other choices.  Although the jointree scanning code produces these
 potential join combinations one at a time, all the ways to produce the
 same set of joined base rels will share the same RelOptInfo, so the paths
 produced from different join combinations that produce equivalent joinrels
-will compete in add_pathlist.
+will compete in add_path.
 
 Once we have built the final join rel, we use either the cheapest path
 for it or the cheapest path with the desired ordering (if that's cheaper

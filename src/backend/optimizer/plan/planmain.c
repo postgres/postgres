@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planmain.c,v 1.51 2000/02/07 04:41:00 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planmain.c,v 1.52 2000/02/15 20:49:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,6 +19,7 @@
 
 #include "optimizer/clauses.h"
 #include "optimizer/cost.h"
+#include "optimizer/pathnode.h"
 #include "optimizer/paths.h"
 #include "optimizer/planmain.h"
 #include "optimizer/prep.h"
@@ -27,10 +28,11 @@
 #include "utils/lsyscache.h"
 
 
-static Plan *subplanner(Query *root, List *flat_tlist, List *qual);
+static Plan *subplanner(Query *root, List *flat_tlist, List *qual,
+						double tuple_fraction);
 
 
-/*
+/*--------------------
  * query_planner
  *	  Routine to create a query plan.  It does so by first creating a
  *	  subplan for the topmost level of attributes in the query.  Then,
@@ -41,25 +43,41 @@ static Plan *subplanner(Query *root, List *flat_tlist, List *qual);
  *	  be placed where and any relation level qualifications to be
  *	  satisfied.
  *
- *	  tlist is the target list of the query (do NOT use root->targetList!)
- *	  qual is the qualification of the query (likewise!)
+ * tlist is the target list of the query (do NOT use root->targetList!)
+ * qual is the qualification of the query (likewise!)
+ * tuple_fraction is the fraction of tuples we expect will be retrieved
  *
- *	  Note: the Query node now also includes a query_pathkeys field, which
- *	  is both an input and an output of query_planner().  The input value
- *	  signals query_planner that the indicated sort order is wanted in the
- *	  final output plan.  The output value is the actual pathkeys of the
- *	  selected path.  This might not be the same as what the caller requested;
- *	  the caller must do pathkeys_contained_in() to decide whether an
- *	  explicit sort is still needed.  (The main reason query_pathkeys is a
- *	  Query field and not a passed parameter is that the low-level routines
- *	  in indxpath.c need to see it.)
+ * Note: the Query node now also includes a query_pathkeys field, which
+ * is both an input and an output of query_planner().  The input value
+ * signals query_planner that the indicated sort order is wanted in the
+ * final output plan.  The output value is the actual pathkeys of the
+ * selected path.  This might not be the same as what the caller requested;
+ * the caller must do pathkeys_contained_in() to decide whether an
+ * explicit sort is still needed.  (The main reason query_pathkeys is a
+ * Query field and not a passed parameter is that the low-level routines
+ * in indxpath.c need to see it.)  The pathkeys value passed to query_planner
+ * has not yet been "canonicalized", since the necessary info does not get
+ * computed until subplanner() scans the qual clauses.  We canonicalize it
+ * inside subplanner() as soon as that task is done.  The output value
+ * will be in canonical form as well.
  *
- *	  Returns a query plan.
+ * tuple_fraction is interpreted as follows:
+ *    0 (or less): expect all tuples to be retrieved (normal case)
+ *	  0 < tuple_fraction < 1: expect the given fraction of tuples available
+ *		from the plan to be retrieved
+ *	  tuple_fraction >= 1: tuple_fraction is the absolute number of tuples
+ *		expected to be retrieved (ie, a LIMIT specification)
+ * Note that while this routine and its subroutines treat a negative
+ * tuple_fraction the same as 0, union_planner has a different interpretation.
+ *
+ * Returns a query plan.
+ *--------------------
  */
 Plan *
 query_planner(Query *root,
 			  List *tlist,
-			  List *qual)
+			  List *qual,
+			  double tuple_fraction)
 {
 	List	   *constant_qual = NIL;
 	List	   *var_only_tlist;
@@ -149,7 +167,7 @@ query_planner(Query *root,
 	/*
 	 * Choose the best access path and build a plan for it.
 	 */
-	subplan = subplanner(root, var_only_tlist, qual);
+	subplan = subplanner(root, var_only_tlist, qual, tuple_fraction);
 
 	/*
 	 * Build a result node to control the plan if we have constant quals.
@@ -192,33 +210,50 @@ query_planner(Query *root,
  *	 Subplanner creates an entire plan consisting of joins and scans
  *	 for processing a single level of attributes.
  *
- *	 flat_tlist is the flattened target list
- *	 qual is the qualification to be satisfied
+ * flat_tlist is the flattened target list
+ * qual is the qualification to be satisfied
+ * tuple_fraction is the fraction of tuples we expect will be retrieved
  *
- *	 Returns a subplan.
+ * See query_planner() comments about the interpretation of tuple_fraction.
  *
+ * Returns a subplan.
  */
 static Plan *
 subplanner(Query *root,
 		   List *flat_tlist,
-		   List *qual)
+		   List *qual,
+		   double tuple_fraction)
 {
 	RelOptInfo *final_rel;
-	Cost		cheapest_cost;
-	Path	   *sortedpath;
+	Path	   *cheapestpath;
+	Path		sort_path;		/* dummy for result of cost_sort */
+	Path	   *presortedpath;
 
 	/*
 	 * Initialize the targetlist and qualification, adding entries to
 	 * base_rel_list as relation references are found (e.g., in the
-	 * qualification, the targetlist, etc.)
+	 * qualification, the targetlist, etc.).  Restrict and join clauses
+	 * are added to appropriate lists belonging to the mentioned relations,
+	 * and we also build lists of equijoined keys for pathkey construction.
 	 */
 	root->base_rel_list = NIL;
 	root->join_rel_list = NIL;
+	root->equi_key_list = NIL;
 
 	make_var_only_tlist(root, flat_tlist);
 	add_restrict_and_join_to_rels(root, qual);
 	add_missing_rels_to_query(root);
 
+	/*
+	 * We should now have all the pathkey equivalence sets built,
+	 * so it's now possible to convert the requested query_pathkeys
+	 * to canonical form.
+	 */
+	root->query_pathkeys = canonicalize_pathkeys(root, root->query_pathkeys);
+
+	/*
+	 * Ready to do the primary planning.
+	 */
 	final_rel = make_one_rel(root);
 
 	if (! final_rel)
@@ -258,96 +293,81 @@ subplanner(Query *root,
 		foreach(pathnode, final_rel->pathlist)
 		{
 			if (xfunc_do_predmig((Path *) lfirst(pathnode)))
-				set_cheapest(final_rel, final_rel->pathlist);
+				set_cheapest(final_rel);
 		}
 	}
 #endif
 
 	/*
-	 * Determine the cheapest path and create a subplan to execute it.
+	 * Now that we have an estimate of the final rel's size, we can convert
+	 * a tuple_fraction specified as an absolute count (ie, a LIMIT option)
+	 * into a fraction of the total tuples.
+	 */
+	if (tuple_fraction >= 1.0)
+		tuple_fraction /= final_rel->rows;
+
+	/*
+	 * Determine the cheapest path, independently of any ordering
+	 * considerations.  We do, however, take into account whether the
+	 * whole plan is expected to be evaluated or not.
+	 */
+	if (tuple_fraction <= 0.0 || tuple_fraction >= 1.0)
+		cheapestpath = final_rel->cheapest_total_path;
+	else
+		cheapestpath =
+			get_cheapest_fractional_path_for_pathkeys(final_rel->pathlist,
+													  NIL,
+													  tuple_fraction);
+
+	Assert(cheapestpath != NULL);
+
+	/*
+	 * Select the best path and create a subplan to execute it.
 	 *
 	 * If no special sort order is wanted, or if the cheapest path is
-	 * already appropriately ordered, just use the cheapest path.
+	 * already appropriately ordered, we use the cheapest path found above.
 	 */
 	if (root->query_pathkeys == NIL ||
 		pathkeys_contained_in(root->query_pathkeys,
-							  final_rel->cheapestpath->pathkeys))
+							  cheapestpath->pathkeys))
 	{
-		root->query_pathkeys = final_rel->cheapestpath->pathkeys;
-		return create_plan(root, final_rel->cheapestpath);
+		root->query_pathkeys = cheapestpath->pathkeys;
+		return create_plan(root, cheapestpath);
 	}
 
 	/*
 	 * Otherwise, look to see if we have an already-ordered path that is
-	 * cheaper than doing an explicit sort on cheapestpath.
+	 * cheaper than doing an explicit sort on the cheapest-total-cost path.
 	 */
-	cheapest_cost = final_rel->cheapestpath->path_cost +
-		cost_sort(root->query_pathkeys, final_rel->rows, final_rel->width);
+	cheapestpath = final_rel->cheapest_total_path;
+	cost_sort(&sort_path, root->query_pathkeys,
+			  final_rel->rows, final_rel->width);
+	sort_path.startup_cost += cheapestpath->total_cost;
+	sort_path.total_cost += cheapestpath->total_cost;
 
-	sortedpath = get_cheapest_path_for_pathkeys(final_rel->pathlist,
-												root->query_pathkeys,
-												false);
-	if (sortedpath)
+	presortedpath =
+		get_cheapest_fractional_path_for_pathkeys(final_rel->pathlist,
+												  root->query_pathkeys,
+												  tuple_fraction);
+	if (presortedpath)
 	{
-		if (sortedpath->path_cost <= cheapest_cost)
+		if (compare_fractional_path_costs(presortedpath, &sort_path,
+										  tuple_fraction) <= 0)
 		{
 			/* Found a better presorted path, use it */
-			root->query_pathkeys = sortedpath->pathkeys;
-			return create_plan(root, sortedpath);
+			root->query_pathkeys = presortedpath->pathkeys;
+			return create_plan(root, presortedpath);
 		}
 		/* otherwise, doing it the hard way is still cheaper */
 	}
-	else
-	{
-		/*
-		 * If we found no usable presorted path at all, it is possible
-		 * that the user asked for descending sort order.  Check to see
-		 * if we can satisfy the pathkeys by using a backwards indexscan.
-		 * To do this, we commute all the operators in the pathkeys and
-		 * then look for a matching path that is an IndexPath.
-		 */
-		List	   *commuted_pathkeys = copyObject(root->query_pathkeys);
-
-		if (commute_pathkeys(commuted_pathkeys))
-		{
-			/* pass 'true' to force only IndexPaths to be considered */
-			sortedpath = get_cheapest_path_for_pathkeys(final_rel->pathlist,
-														commuted_pathkeys,
-														true);
-			if (sortedpath && sortedpath->path_cost <= cheapest_cost)
-			{
-				/*
-				 * Kluge here: since IndexPath has no representation for
-				 * backwards scan, we have to convert to Plan format and
-				 * then poke the result.
-				 */
-				Plan	   *sortedplan = create_plan(root, sortedpath);
-				List	   *sortedpathkeys;
-
-				Assert(IsA(sortedplan, IndexScan));
-				((IndexScan *) sortedplan)->indxorderdir = BackwardScanDirection;
-				/*
-				 * Need to generate commuted keys representing the actual
-				 * sort order.  This should succeed, probably, but just in
-				 * case it does not, use the original root->query_pathkeys
-				 * as a conservative approximation.
-				 */
-				sortedpathkeys = copyObject(sortedpath->pathkeys);
-				if (commute_pathkeys(sortedpathkeys))
-					root->query_pathkeys = sortedpathkeys;
-
-				return sortedplan;
-			}
-		}
-	}
 
 	/*
-	 * Nothing for it but to sort the cheapestpath --- but we let the
-	 * caller do that.  union_planner has to be able to add a sort node
+	 * Nothing for it but to sort the cheapest-total-cost path --- but we let
+	 * the caller do that.  union_planner has to be able to add a sort node
 	 * anyway, so no need for extra code here.  (Furthermore, the given
-	 * pathkeys might involve something we can't compute here, such as
-	 * an aggregate function...)
+	 * pathkeys might involve something we can't compute here, such as an
+	 * aggregate function...)
 	 */
-	root->query_pathkeys = final_rel->cheapestpath->pathkeys;
-	return create_plan(root, final_rel->cheapestpath);
+	root->query_pathkeys = cheapestpath->pathkeys;
+	return create_plan(root, cheapestpath);
 }

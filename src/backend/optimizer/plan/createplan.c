@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.84 2000/02/07 04:41:00 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.85 2000/02/15 20:49:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -57,7 +57,9 @@ static Node *fix_indxqual_operand(Node *node, int baserelid,
 								  Form_pg_index index,
 								  Oid *opclass);
 static IndexScan *make_indexscan(List *qptlist, List *qpqual, Index scanrelid,
-			   List *indxid, List *indxqual, List *indxqualorig);
+								 List *indxid, List *indxqual,
+								 List *indxqualorig,
+								 ScanDirection indexscandir);
 static TidScan *make_tidscan(List *qptlist, List *qpqual, Index scanrelid,
                         List *tideval);
 static NestLoop *make_nestloop(List *qptlist, List *qpqual, Plan *lefttree,
@@ -427,9 +429,13 @@ create_indexscan_node(Query *root,
 							   baserelid,
 							   best_path->indexid,
 							   fixed_indxqual,
-							   indxqual);
+							   indxqual,
+							   best_path->indexscandir);
 
 	copy_path_costsize(&scan_node->scan.plan, &best_path->path);
+	/* set up rows estimate (just to make EXPLAIN output reasonable) */
+	if (plan_rows < 1.0)
+		plan_rows = 1.0;
 	scan_node->scan.plan.plan_rows = plan_rows;
 
 	return scan_node;
@@ -437,16 +443,14 @@ create_indexscan_node(Query *root,
 
 static TidScan *
 make_tidscan(List *qptlist,
-			List *qpqual,
-			Index scanrelid,	
-			List *tideval)
+			 List *qpqual,
+			 Index scanrelid,	
+			 List *tideval)
 {
 	TidScan	*node = makeNode(TidScan);
 	Plan	*plan = &node->scan.plan;
 
-	plan->cost = 0;
-	plan->plan_rows = 0;
-	plan->plan_width = 0;
+	/* cost should be inserted by caller */
 	plan->state = (EState *) NULL;
 	plan->targetlist = qptlist;
 	plan->qual = qpqual;
@@ -1038,13 +1042,15 @@ copy_path_costsize(Plan *dest, Path *src)
 {
 	if (src)
 	{
-		dest->cost = src->path_cost;
+		dest->startup_cost = src->startup_cost;
+		dest->total_cost = src->total_cost;
 		dest->plan_rows = src->parent->rows;
 		dest->plan_width = src->parent->width;
 	}
 	else
 	{
-		dest->cost = 0;
+		dest->startup_cost = 0;
+		dest->total_cost = 0;
 		dest->plan_rows = 0;
 		dest->plan_width = 0;
 	}
@@ -1061,13 +1067,15 @@ copy_plan_costsize(Plan *dest, Plan *src)
 {
 	if (src)
 	{
-		dest->cost = src->cost;
+		dest->startup_cost = src->startup_cost;
+		dest->total_cost = src->total_cost;
 		dest->plan_rows = src->plan_rows;
 		dest->plan_width = src->plan_width;
 	}
 	else
 	{
-		dest->cost = 0;
+		dest->startup_cost = 0;
+		dest->total_cost = 0;
 		dest->plan_rows = 0;
 		dest->plan_width = 0;
 	}
@@ -1130,7 +1138,7 @@ make_seqscan(List *qptlist,
 	SeqScan    *node = makeNode(SeqScan);
 	Plan	   *plan = &node->plan;
 
-	copy_plan_costsize(plan, NULL);
+	/* cost should be inserted by caller */
 	plan->state = (EState *) NULL;
 	plan->targetlist = qptlist;
 	plan->qual = qpqual;
@@ -1148,12 +1156,13 @@ make_indexscan(List *qptlist,
 			   Index scanrelid,
 			   List *indxid,
 			   List *indxqual,
-			   List *indxqualorig)
+			   List *indxqualorig,
+			   ScanDirection indexscandir)
 {
 	IndexScan  *node = makeNode(IndexScan);
 	Plan	   *plan = &node->scan.plan;
 
-	copy_plan_costsize(plan, NULL);
+	/* cost should be inserted by caller */
 	plan->state = (EState *) NULL;
 	plan->targetlist = qptlist;
 	plan->qual = qpqual;
@@ -1163,7 +1172,7 @@ make_indexscan(List *qptlist,
 	node->indxid = indxid;
 	node->indxqual = indxqual;
 	node->indxqualorig = indxqualorig;
-	node->indxorderdir = NoMovementScanDirection;
+	node->indxorderdir = indexscandir;
 	node->scan.scanstate = (CommonScanState *) NULL;
 
 	return node;
@@ -1219,6 +1228,10 @@ make_hash(List *tlist, Var *hashkey, Plan *lefttree)
 	Plan	   *plan = &node->plan;
 
 	copy_plan_costsize(plan, lefttree);
+	/* For plausibility, make startup & total costs equal total cost of
+	 * input plan; this only affects EXPLAIN display not decisions.
+	 */
+	plan->startup_cost = plan->total_cost;
 	plan->state = (EState *) NULL;
 	plan->targetlist = tlist;
 	plan->qual = NULL;
@@ -1255,9 +1268,12 @@ make_sort(List *tlist, Oid nonameid, Plan *lefttree, int keycount)
 {
 	Sort	   *node = makeNode(Sort);
 	Plan	   *plan = &node->plan;
+	Path		sort_path;		/* dummy for result of cost_sort */
 
-	copy_plan_costsize(plan, lefttree);
-	plan->cost += cost_sort(NIL, plan->plan_rows, plan->plan_width);
+	copy_plan_costsize(plan, lefttree);	/* only care about copying size */
+	cost_sort(&sort_path, NIL, lefttree->plan_rows, lefttree->plan_width);
+	plan->startup_cost = sort_path.startup_cost + lefttree->total_cost;
+	plan->total_cost = sort_path.total_cost + lefttree->total_cost;
 	plan->state = (EState *) NULL;
 	plan->targetlist = tlist;
 	plan->qual = NIL;
@@ -1279,7 +1295,11 @@ make_material(List *tlist,
 	Plan	   *plan = &node->plan;
 
 	copy_plan_costsize(plan, lefttree);
-	/* XXX shouldn't we charge some additional cost for materialization? */
+	/* For plausibility, make startup & total costs equal total cost of
+	 * input plan; this only affects EXPLAIN display not decisions.
+	 * XXX shouldn't we charge some additional cost for materialization?
+	 */
+	plan->startup_cost = plan->total_cost;
 	plan->state = (EState *) NULL;
 	plan->targetlist = tlist;
 	plan->qual = NIL;
@@ -1292,30 +1312,38 @@ make_material(List *tlist,
 }
 
 Agg *
-make_agg(List *tlist, Plan *lefttree)
+make_agg(List *tlist, List *qual, Plan *lefttree)
 {
 	Agg		   *node = makeNode(Agg);
+	Plan	   *plan = &node->plan;
 
-	copy_plan_costsize(&node->plan, lefttree);
+	copy_plan_costsize(plan, lefttree);
 	/*
-	 * The tuple width from the input node is OK, as is the cost (we are
-	 * ignoring the cost of computing the aggregate; is there any value
-	 * in accounting for it?).  But the tuple count is bogus.  We will
-	 * produce a single tuple if the input is not a Group, and a tuple
-	 * per group otherwise.  For now, estimate the number of groups as
-	 * 10% of the number of tuples --- bogus, but how to do better?
+	 * Charge one cpu_operator_cost per aggregate function per input tuple.
+	 */
+	plan->total_cost += cpu_operator_cost * plan->plan_rows *
+		(length(pull_agg_clause((Node *) tlist)) +
+		 length(pull_agg_clause((Node *) qual)));
+	/*
+	 * We will produce a single output tuple if the input is not a Group,
+	 * and a tuple per group otherwise.  For now, estimate the number of
+	 * groups as 10% of the number of tuples --- bogus, but how to do better?
 	 * (Note we assume the input Group node is in "tuplePerGroup" mode,
 	 * so it didn't reduce its row count already.)
 	 */
 	if (IsA(lefttree, Group))
-		node->plan.plan_rows *= 0.1;
+		plan->plan_rows *= 0.1;
 	else
-		node->plan.plan_rows = 1;
-	node->plan.state = (EState *) NULL;
-	node->plan.qual = NULL;
-	node->plan.targetlist = tlist;
-	node->plan.lefttree = lefttree;
-	node->plan.righttree = (Plan *) NULL;
+	{
+		plan->plan_rows = 1;
+		plan->startup_cost = plan->total_cost;
+	}
+
+	plan->state = (EState *) NULL;
+	plan->qual = qual;
+	plan->targetlist = tlist;
+	plan->lefttree = lefttree;
+	plan->righttree = (Plan *) NULL;
 
 	return node;
 }
@@ -1328,8 +1356,14 @@ make_group(List *tlist,
 		   Plan *lefttree)
 {
 	Group	   *node = makeNode(Group);
+	Plan	   *plan = &node->plan;
 
-	copy_plan_costsize(&node->plan, lefttree);
+	copy_plan_costsize(plan, lefttree);
+	/*
+	 * Charge one cpu_operator_cost per comparison per input tuple.
+	 * We assume all columns get compared at most of the tuples.
+	 */
+	plan->total_cost += cpu_operator_cost * plan->plan_rows * ngrp;
 	/*
 	 * If tuplePerGroup (which is named exactly backwards) is true,
 	 * we will return all the input tuples, so the input node's row count
@@ -1338,12 +1372,13 @@ make_group(List *tlist,
 	 * tuples --- bogus, but how to do better?
 	 */
 	if (! tuplePerGroup)
-		node->plan.plan_rows *= 0.1;
-	node->plan.state = (EState *) NULL;
-	node->plan.qual = NULL;
-	node->plan.targetlist = tlist;
-	node->plan.lefttree = lefttree;
-	node->plan.righttree = (Plan *) NULL;
+		plan->plan_rows *= 0.1;
+
+	plan->state = (EState *) NULL;
+	plan->qual = NULL;
+	plan->targetlist = tlist;
+	plan->lefttree = lefttree;
+	plan->righttree = (Plan *) NULL;
 	node->tuplePerGroup = tuplePerGroup;
 	node->numCols = ngrp;
 	node->grpColIdx = grpColIdx;
@@ -1368,10 +1403,16 @@ make_unique(List *tlist, Plan *lefttree, List *distinctList)
 
 	copy_plan_costsize(plan, lefttree);
 	/*
+	 * Charge one cpu_operator_cost per comparison per input tuple.
+	 * We assume all columns get compared at most of the tuples.
+	 */
+	plan->total_cost += cpu_operator_cost * plan->plan_rows * numCols;
+	/*
 	 * As for Group, we make the unsupported assumption that there will be
 	 * 10% as many tuples out as in.
 	 */
 	plan->plan_rows *= 0.1;
+
 	plan->state = (EState *) NULL;
 	plan->targetlist = tlist;
 	plan->qual = NIL;

@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geqo_misc.c,v 1.27 2000/02/07 04:40:58 tgl Exp $
+ * $Id: geqo_misc.c,v 1.28 2000/02/15 20:49:14 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -179,8 +179,9 @@ geqo_print_path(Query *root, Path *path, int indent)
 	if (join)
 	{
 		jp = (JoinPath *) path;
-		printf("%s rows=%.0f cost=%f\n",
-			   ptype, path->parent->rows, path->path_cost);
+		printf("%s rows=%.0f cost=%.2f..%.2f\n",
+			   ptype, path->parent->rows,
+			   path->startup_cost, path->total_cost);
 		switch (nodeTag(path))
 		{
 			case T_MergePath:
@@ -215,8 +216,9 @@ geqo_print_path(Query *root, Path *path, int indent)
 	{
 		int			relid = lfirsti(path->parent->relids);
 
-		printf("%s(%d) rows=%.0f cost=%f\n",
-			   ptype, relid, path->parent->rows, path->path_cost);
+		printf("%s(%d) rows=%.0f cost=%.2f..%.2f\n",
+			   ptype, relid, path->parent->rows,
+			   path->startup_cost, path->total_cost);
 
 		if (IsA(path, IndexPath))
 		{
@@ -241,6 +243,9 @@ geqo_print_rel(Query *root, RelOptInfo *rel)
 	foreach(l, rel->pathlist)
 		geqo_print_path(root, lfirst(l), 1);
 
-	printf("\tcheapest path:\n");
-	geqo_print_path(root, rel->cheapestpath, 1);
+	printf("\tcheapest startup path:\n");
+	geqo_print_path(root, rel->cheapest_startup_path, 1);
+
+	printf("\tcheapest total path:\n");
+	geqo_print_path(root, rel->cheapest_total_path, 1);
 }

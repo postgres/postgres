@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.105 2000/02/15 03:37:08 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.106 2000/02/15 20:49:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -75,7 +75,8 @@ listCopy(List *list)
 static void
 CopyPlanFields(Plan *from, Plan *newnode)
 {
-	newnode->cost = from->cost;
+	newnode->startup_cost = from->startup_cost;
+	newnode->total_cost = from->total_cost;
 	newnode->plan_rows = from->plan_rows;
 	newnode->plan_width = from->plan_width;
 	/* state is NOT copied */
@@ -981,8 +982,9 @@ _copyRelOptInfo(RelOptInfo *from)
 
 	Node_Copy(from, newnode, targetlist);
 	Node_Copy(from, newnode, pathlist);
-	/* XXX cheapestpath should point to a member of pathlist? */
-	Node_Copy(from, newnode, cheapestpath);
+	/* XXX cheapest-path fields should point to members of pathlist? */
+	Node_Copy(from, newnode, cheapest_startup_path);
+	Node_Copy(from, newnode, cheapest_total_path);
 	newnode->pruneable = from->pruneable;
 
 	newnode->indexed = from->indexed;
@@ -990,6 +992,7 @@ _copyRelOptInfo(RelOptInfo *from)
 	newnode->tuples = from->tuples;
 
 	Node_Copy(from, newnode, baserestrictinfo);
+	newnode->baserestrictcost = from->baserestrictcost;
 	Node_Copy(from, newnode, joininfo);
 	Node_Copy(from, newnode, innerjoin);
 
@@ -1045,6 +1048,7 @@ _copyIndexOptInfo(IndexOptInfo *from)
 	newnode->amcostestimate = from->amcostestimate;
 	newnode->indproc = from->indproc;
 	Node_Copy(from, newnode, indpred);
+	newnode->lossy = from->lossy;
 
 	return newnode;
 }
@@ -1066,7 +1070,8 @@ CopyPathFields(Path *from, Path *newnode)
 	 */
 	newnode->parent = from->parent;
 
-	newnode->path_cost = from->path_cost;
+	newnode->startup_cost = from->startup_cost;
+	newnode->total_cost = from->total_cost;
 
 	newnode->pathtype = from->pathtype;
 
@@ -1108,6 +1113,7 @@ _copyIndexPath(IndexPath *from)
 	 */
 	newnode->indexid = listCopy(from->indexid);
 	Node_Copy(from, newnode, indexqual);
+	newnode->indexscandir = from->indexscandir;
 	newnode->joinrelids = listCopy(from->joinrelids);
 
 	return newnode;
@@ -1339,8 +1345,7 @@ _copyRangeTblEntry(RangeTblEntry *from)
 
 	if (from->relname)
 		newnode->relname = pstrdup(from->relname);
-	if (from->ref)
-		Node_Copy(from, newnode, ref);
+	Node_Copy(from, newnode, ref);
 	newnode->relid = from->relid;
 	newnode->inh = from->inh;
 	newnode->inFromCl = from->inFromCl;
@@ -1449,8 +1454,10 @@ _copyQuery(Query *from)
 	Node_Copy(from, newnode, limitOffset);
 	Node_Copy(from, newnode, limitCount);
 
-	/* we do not copy the planner internal fields: base_rel_list,
-	 * join_rel_list, query_pathkeys.  Not entirely clear if this is right?
+	/*
+	 * We do not copy the planner internal fields: base_rel_list,
+	 * join_rel_list, equi_key_list, query_pathkeys.
+	 * Not entirely clear if this is right?
 	 */
 
 	return newnode;

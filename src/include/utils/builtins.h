@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: builtins.h,v 1.100 2000/02/10 19:51:52 momjian Exp $
+ * $Id: builtins.h,v 1.101 2000/02/15 20:49:27 tgl Exp $
  *
  * NOTES
  *	  This should normally only be included by fmgr.h.
@@ -403,19 +403,23 @@ extern bool convert_to_scalar(Datum value, Oid typid, double *scaleval);
 
 extern void btcostestimate(Query *root, RelOptInfo *rel,
 						   IndexOptInfo *index, List *indexQuals,
-						   Cost *indexAccessCost,
+						   Cost *indexStartupCost,
+						   Cost *indexTotalCost,
 						   Selectivity *indexSelectivity);
 extern void rtcostestimate(Query *root, RelOptInfo *rel,
 						   IndexOptInfo *index, List *indexQuals,
-						   Cost *indexAccessCost,
+						   Cost *indexStartupCost,
+						   Cost *indexTotalCost,
 						   Selectivity *indexSelectivity);
 extern void hashcostestimate(Query *root, RelOptInfo *rel,
 							 IndexOptInfo *index, List *indexQuals,
-							 Cost *indexAccessCost,
+							 Cost *indexStartupCost,
+							 Cost *indexTotalCost,
 							 Selectivity *indexSelectivity);
 extern void gistcostestimate(Query *root, RelOptInfo *rel,
 							 IndexOptInfo *index, List *indexQuals,
-							 Cost *indexAccessCost,
+							 Cost *indexStartupCost,
+							 Cost *indexTotalCost,
 							 Selectivity *indexSelectivity);
 
 /* tid.c */

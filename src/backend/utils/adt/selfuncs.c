@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.54 2000/01/26 05:57:14 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.55 2000/02/15 20:49:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -756,7 +756,9 @@ getattstatistics(Oid relid,
 static void
 genericcostestimate(Query *root, RelOptInfo *rel,
 					IndexOptInfo *index, List *indexQuals,
-					Cost *indexAccessCost, Selectivity *indexSelectivity)
+					Cost *indexStartupCost,
+					Cost *indexTotalCost,
+					Selectivity *indexSelectivity)
 {
 	double numIndexTuples;
 	double numIndexPages;
@@ -771,8 +773,17 @@ genericcostestimate(Query *root, RelOptInfo *rel,
 	/* Estimate the number of index pages that will be retrieved */
 	numIndexPages = *indexSelectivity * index->pages;
 
-	/* Compute the index access cost */
-    *indexAccessCost = numIndexPages + cpu_index_page_weight * numIndexTuples;
+	/*
+	 * Compute the index access cost.
+	 *
+	 * Our generic assumption is that the index pages will be read
+	 * sequentially, so they have cost 1.0 each, not random_page_cost.
+	 * Also, we charge for evaluation of the indexquals at each index tuple.
+     * All the costs are assumed to be paid incrementally during the scan.
+     */
+    *indexStartupCost = 0;
+    *indexTotalCost = numIndexPages +
+		(cpu_index_tuple_cost + cost_qual_eval(indexQuals)) * numIndexTuples;
 }
 
 /*
@@ -782,35 +793,43 @@ genericcostestimate(Query *root, RelOptInfo *rel,
 void
 btcostestimate(Query *root, RelOptInfo *rel,
 			   IndexOptInfo *index, List *indexQuals,
-			   Cost *indexAccessCost, Selectivity *indexSelectivity)
+			   Cost *indexStartupCost,
+			   Cost *indexTotalCost,
+			   Selectivity *indexSelectivity)
 {
 	genericcostestimate(root, rel, index, indexQuals,
-						indexAccessCost, indexSelectivity);
+						indexStartupCost, indexTotalCost, indexSelectivity);
 }
 
 void
 rtcostestimate(Query *root, RelOptInfo *rel,
 			   IndexOptInfo *index, List *indexQuals,
-			   Cost *indexAccessCost, Selectivity *indexSelectivity)
+			   Cost *indexStartupCost,
+			   Cost *indexTotalCost,
+			   Selectivity *indexSelectivity)
 {
 	genericcostestimate(root, rel, index, indexQuals,
-						indexAccessCost, indexSelectivity);
+						indexStartupCost, indexTotalCost, indexSelectivity);
 }
 
 void
 hashcostestimate(Query *root, RelOptInfo *rel,
 				 IndexOptInfo *index, List *indexQuals,
-				 Cost *indexAccessCost, Selectivity *indexSelectivity)
+				 Cost *indexStartupCost,
+				 Cost *indexTotalCost,
+				 Selectivity *indexSelectivity)
 {
 	genericcostestimate(root, rel, index, indexQuals,
-						indexAccessCost, indexSelectivity);
+						indexStartupCost, indexTotalCost, indexSelectivity);
 }
 
 void
 gistcostestimate(Query *root, RelOptInfo *rel,
 				 IndexOptInfo *index, List *indexQuals,
-				 Cost *indexAccessCost, Selectivity *indexSelectivity)
+				 Cost *indexStartupCost,
+				 Cost *indexTotalCost,
+				 Selectivity *indexSelectivity)
 {
 	genericcostestimate(root, rel, index, indexQuals,
-						indexAccessCost, indexSelectivity);
+						indexStartupCost, indexTotalCost, indexSelectivity);
 }

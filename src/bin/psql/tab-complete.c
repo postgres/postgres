@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/tab-complete.c,v 1.10 2000/02/07 23:10:07 petere Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/tab-complete.c,v 1.11 2000/02/15 20:49:22 tgl Exp $
  */
 
 /*-----------
@@ -172,8 +172,30 @@ char ** psql_completion(char *text, int start, int end)
     };
 
     static char * pgsql_variables[] = {
-        "Client_Encoding", "Names", "DateStyle", "Server_Encoding", "TimeZone",
-        "TRANSACTION", "Cost_Heap", "Cost_Index", "GEQO", "KSQO", "Query_Limit",
+		/* these SET arguments are known in gram.y */
+		"TRANSACTION ISOLATION LEVEL",
+		"NAMES",
+		/* rest should match table in src/backend/commands/variable.c */
+		"DateStyle",
+		"TimeZone",
+		"effective_cache_size",
+		"random_page_cost",
+		"cpu_tuple_cost",
+		"cpu_index_tuple_cost",
+		"cpu_operator_cost",
+		"enable_seqscan",
+		"enable_indexscan",
+		"enable_tidscan",
+		"enable_sort",
+		"enable_nestloop",
+		"enable_mergejoin",
+		"enable_hashjoin",
+		"GEQO",
+		"client_encoding",
+		"server_encoding",
+		"KSQO",
+		"XactIsoLevel",
+		"PG_Options",
         NULL
     };
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepunion.c,v 1.44 2000/02/15 03:37:26 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepunion.c,v 1.45 2000/02/15 20:49:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -122,28 +122,35 @@ plan_union_queries(Query *parse)
 	/* Is this a simple one */
 	if (!union_all_found ||
 		!union_found ||
-	/* A trailing UNION negates the affect of earlier UNION ALLs */
+		/* A trailing UNION negates the effect of earlier UNION ALLs */
 		!last_union_all_flag)
 	{
 		List	   *hold_unionClause = parse->unionClause;
+		double		tuple_fraction = -1.0; /* default processing */
 
-		/* we will do this later, so don't do it now */
+		/* we will do sorting later, so don't do it now */
 		if (!union_all_found ||
 			!last_union_all_flag)
 		{
 			parse->sortClause = NIL;
 			parse->distinctClause = NIL;
+			/*
+			 * force lower-level planning to assume that all tuples will
+			 * be retrieved, even if it sees a LIMIT in the query node.
+			 */
+			tuple_fraction = 0.0;
 		}
 
 		parse->unionClause = NIL;		/* prevent recursion */
-		union_plans = lcons(union_planner(parse), NIL);
+		union_plans = lcons(union_planner(parse, tuple_fraction), NIL);
 		union_rts = lcons(parse->rtable, NIL);
 
 		foreach(ulist, hold_unionClause)
 		{
 			Query	   *union_query = lfirst(ulist);
 
-			union_plans = lappend(union_plans, union_planner(union_query));
+			union_plans = lappend(union_plans,
+								  union_planner(union_query, tuple_fraction));
 			union_rts = lappend(union_rts, union_query->rtable);
 		}
 	}
@@ -165,9 +172,12 @@ plan_union_queries(Query *parse)
 
 		/*
 		 * Recursion, but UNION only. The last one is a UNION, so it will
-		 * not come here in recursion,
+		 * not come here in recursion.
+		 *
+		 * XXX is it OK to pass default -1 to union_planner in this path,
+		 * or should we force a tuple_fraction value?
 		 */
-		union_plans = lcons(union_planner(parse), NIL);
+		union_plans = lcons(union_planner(parse, -1.0), NIL);
 		union_rts = lcons(parse->rtable, NIL);
 
 		/* Append the remaining UNION ALLs */
@@ -175,7 +185,8 @@ plan_union_queries(Query *parse)
 		{
 			Query	   *union_all_query = lfirst(ulist);
 
-			union_plans = lappend(union_plans, union_planner(union_all_query));
+			union_plans = lappend(union_plans,
+								  union_planner(union_all_query, -1.0));
 			union_rts = lappend(union_rts, union_all_query->rtable);
 		}
 	}
@@ -295,6 +306,7 @@ plan_inherit_query(Relids relids,
 	List	   *union_plans = NIL;
 	List	   *union_rtentries = NIL;
 	List	   *save_tlist = root->targetList;
+	double tuple_fraction;
 	List	   *i;
 
 	/*
@@ -302,6 +314,17 @@ plan_inherit_query(Relids relids,
 	 * use anyway (we are going to make copies of the passed tlist, instead).
 	 */
 	root->targetList = NIL;
+
+	/*
+	 * If we are going to need sorting or grouping at the top level,
+	 * force lower-level planners to assume that all tuples will be
+	 * retrieved.
+	 */
+	if (root->distinctClause || root->sortClause ||
+		root->groupClause || root->hasAggs)
+		tuple_fraction = 0.0; /* will need all tuples from each subplan */
+	else
+		tuple_fraction = -1.0; /* default behavior is OK (I think) */
 
 	foreach(i, relids)
 	{
@@ -344,7 +367,8 @@ plan_inherit_query(Relids relids,
 							  relid,
 							  new_root);
 
-		union_plans = lappend(union_plans, union_planner(new_root));
+		union_plans = lappend(union_plans,
+							  union_planner(new_root, tuple_fraction));
 		union_rtentries = lappend(union_rtentries, new_rt_entry);
 	}
 
@@ -551,14 +575,17 @@ make_append(List *appendplans,
 	node->unionrtables = unionrtables;
 	node->inheritrelid = rt_index;
 	node->inheritrtable = inheritrtable;
-	node->plan.cost = 0;
+	node->plan.startup_cost = 0;
+	node->plan.total_cost = 0;
 	node->plan.plan_rows = 0;
 	node->plan.plan_width = 0;
 	foreach(subnode, appendplans)
 	{
 		Plan   *subplan = (Plan *) lfirst(subnode);
 
-		node->plan.cost += subplan->cost;
+		if (subnode == appendplans)	/* first node? */
+			node->plan.startup_cost = subplan->startup_cost;
+		node->plan.total_cost += subplan->total_cost;
 		node->plan.plan_rows += subplan->plan_rows;
 		if (node->plan.plan_width < subplan->plan_width)
 			node->plan.plan_width = subplan->plan_width;

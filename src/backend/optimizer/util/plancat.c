@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/plancat.c,v 1.46 2000/01/26 05:56:40 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/plancat.c,v 1.47 2000/02/15 20:49:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -118,6 +118,7 @@ find_secondary_indexes(Query *root, Index relid)
 		}
 		else
 			info->indpred = NIL;
+		info->lossy = index->indislossy;
 
 		for (i = 0; i < INDEX_MAX_KEYS; i++)
 			info->indexkeys[i] = index->indkey[i];

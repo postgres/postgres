@@ -1,15 +1,24 @@
-/*
- * Routines for handling of 'SET var TO',
- *	'SHOW var' and 'RESET var' statements.
+/*-------------------------------------------------------------------------
  *
- * $Id: variable.c,v 1.28 2000/01/22 23:50:10 tgl Exp $
+ * variable.c
+ *		Routines for handling of 'SET var TO',
+ *		'SHOW var' and 'RESET var' statements.
  *
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
+ *
+ *
+ * IDENTIFICATION
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/variable.c,v 1.29 2000/02/15 20:49:08 tgl Exp $
+ *
+ *-------------------------------------------------------------------------
  */
 
 #include <ctype.h>
 #include <time.h>
 
 #include "postgres.h"
+
 #include "access/xact.h"
 #include "catalog/pg_shadow.h"
 #include "commands/variable.h"
@@ -24,18 +33,53 @@
 #include "mb/pg_wchar.h"
 #endif
 
+
+/* XXX should be in a header file */
+extern bool _use_keyset_query_optimizer;
+
+
 static bool show_date(void);
 static bool reset_date(void);
 static bool parse_date(const char *);
 static bool show_timezone(void);
 static bool reset_timezone(void);
 static bool parse_timezone(const char *);
-static bool show_cost_heap(void);
-static bool reset_cost_heap(void);
-static bool parse_cost_heap(const char *);
-static bool show_cost_index(void);
-static bool reset_cost_index(void);
-static bool parse_cost_index(const char *);
+static bool show_effective_cache_size(void);
+static bool reset_effective_cache_size(void);
+static bool parse_effective_cache_size(const char *);
+static bool show_random_page_cost(void);
+static bool reset_random_page_cost(void);
+static bool parse_random_page_cost(const char *);
+static bool show_cpu_tuple_cost(void);
+static bool reset_cpu_tuple_cost(void);
+static bool parse_cpu_tuple_cost(const char *);
+static bool show_cpu_index_tuple_cost(void);
+static bool reset_cpu_index_tuple_cost(void);
+static bool parse_cpu_index_tuple_cost(const char *);
+static bool show_cpu_operator_cost(void);
+static bool reset_cpu_operator_cost(void);
+static bool parse_cpu_operator_cost(const char *);
+static bool reset_enable_seqscan(void);
+static bool show_enable_seqscan(void);
+static bool parse_enable_seqscan(const char *);
+static bool reset_enable_indexscan(void);
+static bool show_enable_indexscan(void);
+static bool parse_enable_indexscan(const char *);
+static bool reset_enable_tidscan(void);
+static bool show_enable_tidscan(void);
+static bool parse_enable_tidscan(const char *);
+static bool reset_enable_sort(void);
+static bool show_enable_sort(void);
+static bool parse_enable_sort(const char *);
+static bool reset_enable_nestloop(void);
+static bool show_enable_nestloop(void);
+static bool parse_enable_nestloop(const char *);
+static bool reset_enable_mergejoin(void);
+static bool show_enable_mergejoin(void);
+static bool parse_enable_mergejoin(const char *);
+static bool reset_enable_hashjoin(void);
+static bool show_enable_hashjoin(void);
+static bool parse_enable_hashjoin(const char *);
 static bool reset_geqo(void);
 static bool show_geqo(void);
 static bool parse_geqo(const char *);
@@ -45,8 +89,6 @@ static bool parse_ksqo(const char *);
 static bool show_XactIsoLevel(void);
 static bool reset_XactIsoLevel(void);
 static bool parse_XactIsoLevel(const char *);
-
-extern bool _use_keyset_query_optimizer;
 
 /*
  *
@@ -154,6 +196,204 @@ get_token(char **tok, char **val, const char *str)
 }
 
 /*
+ * Generic parse routine for boolean ON/OFF variables
+ */
+static bool
+parse_boolean_var(const char *value,
+				  bool *variable, const char *varname, bool defaultval)
+{
+	if (value == NULL)
+	{
+		*variable = defaultval;
+		return TRUE;
+	}
+
+	if (strcasecmp(value, "on") == 0)
+		*variable = true;
+	else if (strcasecmp(value, "off") == 0)
+		*variable = false;
+	else
+		elog(ERROR, "Bad value for %s (%s)", varname, value);
+
+	return TRUE;
+}
+
+/*
+ * ENABLE_SEQSCAN
+ */
+static bool
+parse_enable_seqscan(const char *value)
+{
+	return parse_boolean_var(value, &enable_seqscan,
+							 "ENABLE_SEQSCAN", true);
+}
+
+static bool
+show_enable_seqscan()
+{
+	elog(NOTICE, "ENABLE_SEQSCAN is %s",
+		 enable_seqscan ? "ON" : "OFF");
+	return TRUE;
+}
+
+static bool
+reset_enable_seqscan()
+{
+	enable_seqscan = true;
+	return TRUE;
+}
+
+/*
+ * ENABLE_INDEXSCAN
+ */
+static bool
+parse_enable_indexscan(const char *value)
+{
+	return parse_boolean_var(value, &enable_indexscan,
+							 "ENABLE_INDEXSCAN", true);
+}
+
+static bool
+show_enable_indexscan()
+{
+	elog(NOTICE, "ENABLE_INDEXSCAN is %s",
+		 enable_indexscan ? "ON" : "OFF");
+	return TRUE;
+}
+
+static bool
+reset_enable_indexscan()
+{
+	enable_indexscan = true;
+	return TRUE;
+}
+
+/*
+ * ENABLE_TIDSCAN
+ */
+static bool
+parse_enable_tidscan(const char *value)
+{
+	return parse_boolean_var(value, &enable_tidscan,
+							 "ENABLE_TIDSCAN", true);
+}
+
+static bool
+show_enable_tidscan()
+{
+	elog(NOTICE, "ENABLE_TIDSCAN is %s",
+		 enable_tidscan ? "ON" : "OFF");
+	return TRUE;
+}
+
+static bool
+reset_enable_tidscan()
+{
+	enable_tidscan = true;
+	return TRUE;
+}
+
+/*
+ * ENABLE_SORT
+ */
+static bool
+parse_enable_sort(const char *value)
+{
+	return parse_boolean_var(value, &enable_sort,
+							 "ENABLE_SORT", true);
+}
+
+static bool
+show_enable_sort()
+{
+	elog(NOTICE, "ENABLE_SORT is %s",
+		 enable_sort ? "ON" : "OFF");
+	return TRUE;
+}
+
+static bool
+reset_enable_sort()
+{
+	enable_sort = true;
+	return TRUE;
+}
+
+/*
+ * ENABLE_NESTLOOP
+ */
+static bool
+parse_enable_nestloop(const char *value)
+{
+	return parse_boolean_var(value, &enable_nestloop,
+							 "ENABLE_NESTLOOP", true);
+}
+
+static bool
+show_enable_nestloop()
+{
+	elog(NOTICE, "ENABLE_NESTLOOP is %s",
+		 enable_nestloop ? "ON" : "OFF");
+	return TRUE;
+}
+
+static bool
+reset_enable_nestloop()
+{
+	enable_nestloop = true;
+	return TRUE;
+}
+
+/*
+ * ENABLE_MERGEJOIN
+ */
+static bool
+parse_enable_mergejoin(const char *value)
+{
+	return parse_boolean_var(value, &enable_mergejoin,
+							 "ENABLE_MERGEJOIN", true);
+}
+
+static bool
+show_enable_mergejoin()
+{
+	elog(NOTICE, "ENABLE_MERGEJOIN is %s",
+		 enable_mergejoin ? "ON" : "OFF");
+	return TRUE;
+}
+
+static bool
+reset_enable_mergejoin()
+{
+	enable_mergejoin = true;
+	return TRUE;
+}
+
+/*
+ * ENABLE_HASHJOIN
+ */
+static bool
+parse_enable_hashjoin(const char *value)
+{
+	return parse_boolean_var(value, &enable_hashjoin,
+							 "ENABLE_HASHJOIN", true);
+}
+
+static bool
+show_enable_hashjoin()
+{
+	elog(NOTICE, "ENABLE_HASHJOIN is %s",
+		 enable_hashjoin ? "ON" : "OFF");
+	return TRUE;
+}
+
+static bool
+reset_enable_hashjoin()
+{
+	enable_hashjoin = true;
+	return TRUE;
+}
+
+/*
  *
  * GEQO
  *
@@ -208,7 +448,6 @@ parse_geqo(const char *value)
 static bool
 show_geqo()
 {
-
 	if (enable_geqo)
 		elog(NOTICE, "GEQO is ON beginning with %d relations", geqo_rels);
 	else
@@ -219,7 +458,6 @@ show_geqo()
 static bool
 reset_geqo(void)
 {
-
 #ifdef GEQO
 	enable_geqo = true;
 #else
@@ -230,76 +468,173 @@ reset_geqo(void)
 }
 
 /*
- *
- * COST_HEAP
- *
+ * EFFECTIVE_CACHE_SIZE
  */
 static bool
-parse_cost_heap(const char *value)
+parse_effective_cache_size(const char *value)
 {
 	float64		res;
 
 	if (value == NULL)
 	{
-		reset_cost_heap();
+		reset_effective_cache_size();
 		return TRUE;
 	}
 
 	res = float8in((char *) value);
-	cpu_page_weight = *res;
+	effective_cache_size = *res;
 
 	return TRUE;
 }
 
 static bool
-show_cost_heap()
+show_effective_cache_size()
 {
-
-	elog(NOTICE, "COST_HEAP is %f", cpu_page_weight);
+	elog(NOTICE, "EFFECTIVE_CACHE_SIZE is %g (%dK pages)",
+		 effective_cache_size, BLCKSZ/1024);
 	return TRUE;
 }
 
 static bool
-reset_cost_heap()
+reset_effective_cache_size()
 {
-	cpu_page_weight = CPU_PAGE_WEIGHT;
+	effective_cache_size = DEFAULT_EFFECTIVE_CACHE_SIZE;
 	return TRUE;
 }
 
 /*
- *
- * COST_INDEX
- *
+ * RANDOM_PAGE_COST
  */
 static bool
-parse_cost_index(const char *value)
+parse_random_page_cost(const char *value)
 {
 	float64		res;
 
 	if (value == NULL)
 	{
-		reset_cost_index();
+		reset_random_page_cost();
 		return TRUE;
 	}
 
 	res = float8in((char *) value);
-	cpu_index_page_weight = *res;
+	random_page_cost = *res;
 
 	return TRUE;
 }
 
 static bool
-show_cost_index()
+show_random_page_cost()
 {
-
-	elog(NOTICE, "COST_INDEX is %f", cpu_index_page_weight);
+	elog(NOTICE, "RANDOM_PAGE_COST is %g", random_page_cost);
 	return TRUE;
 }
 
 static bool
-reset_cost_index()
+reset_random_page_cost()
 {
-	cpu_index_page_weight = CPU_INDEX_PAGE_WEIGHT;
+	random_page_cost = DEFAULT_RANDOM_PAGE_COST;
+	return TRUE;
+}
+
+/*
+ * CPU_TUPLE_COST
+ */
+static bool
+parse_cpu_tuple_cost(const char *value)
+{
+	float64		res;
+
+	if (value == NULL)
+	{
+		reset_cpu_tuple_cost();
+		return TRUE;
+	}
+
+	res = float8in((char *) value);
+	cpu_tuple_cost = *res;
+
+	return TRUE;
+}
+
+static bool
+show_cpu_tuple_cost()
+{
+	elog(NOTICE, "CPU_TUPLE_COST is %g", cpu_tuple_cost);
+	return TRUE;
+}
+
+static bool
+reset_cpu_tuple_cost()
+{
+	cpu_tuple_cost = DEFAULT_CPU_TUPLE_COST;
+	return TRUE;
+}
+
+/*
+ * CPU_INDEX_TUPLE_COST
+ */
+static bool
+parse_cpu_index_tuple_cost(const char *value)
+{
+	float64		res;
+
+	if (value == NULL)
+	{
+		reset_cpu_index_tuple_cost();
+		return TRUE;
+	}
+
+	res = float8in((char *) value);
+	cpu_index_tuple_cost = *res;
+
+	return TRUE;
+}
+
+static bool
+show_cpu_index_tuple_cost()
+{
+	elog(NOTICE, "CPU_INDEX_TUPLE_COST is %g", cpu_index_tuple_cost);
+	return TRUE;
+}
+
+static bool
+reset_cpu_index_tuple_cost()
+{
+	cpu_index_tuple_cost = DEFAULT_CPU_INDEX_TUPLE_COST;
+	return TRUE;
+}
+
+/*
+ * CPU_OPERATOR_COST
+ */
+static bool
+parse_cpu_operator_cost(const char *value)
+{
+	float64		res;
+
+	if (value == NULL)
+	{
+		reset_cpu_operator_cost();
+		return TRUE;
+	}
+
+	res = float8in((char *) value);
+	cpu_operator_cost = *res;
+
+	return TRUE;
+}
+
+static bool
+show_cpu_operator_cost()
+{
+	elog(NOTICE, "CPU_OPERATOR_COST is %g", cpu_operator_cost);
+	return TRUE;
+}
+
+static bool
+reset_cpu_operator_cost()
+{
+	cpu_operator_cost = DEFAULT_CPU_OPERATOR_COST;
 	return TRUE;
 }
 
@@ -527,6 +862,89 @@ reset_timezone()
 	return TRUE;
 }	/* reset_timezone() */
 
+/*-----------------------------------------------------------------------
+KSQO code will one day be unnecessary when the optimizer makes use of
+indexes when multiple ORs are specified in the where clause.
+See optimizer/prep/prepkeyset.c for more on this.
+	daveh@insightdist.com	 6/16/98
+-----------------------------------------------------------------------*/
+static bool
+parse_ksqo(const char *value)
+{
+	return parse_boolean_var(value, &_use_keyset_query_optimizer,
+							 "KSQO", false);
+}
+
+static bool
+show_ksqo()
+{
+	elog(NOTICE, "KSQO is %s",
+		 _use_keyset_query_optimizer ? "ON" : "OFF");
+	return TRUE;
+}
+
+static bool
+reset_ksqo()
+{
+	_use_keyset_query_optimizer = false;
+	return TRUE;
+}
+
+/* SET TRANSACTION */
+
+static bool
+parse_XactIsoLevel(const char *value)
+{
+
+	if (value == NULL)
+	{
+		reset_XactIsoLevel();
+		return TRUE;
+	}
+
+	if (SerializableSnapshot != NULL)
+	{
+		elog(ERROR, "SET TRANSACTION ISOLATION LEVEL must be called before any query");
+		return TRUE;
+	}
+
+
+	if (strcasecmp(value, "SERIALIZABLE") == 0)
+		XactIsoLevel = XACT_SERIALIZABLE;
+	else if (strcasecmp(value, "COMMITTED") == 0)
+		XactIsoLevel = XACT_READ_COMMITTED;
+	else
+		elog(ERROR, "Bad TRANSACTION ISOLATION LEVEL (%s)", value);
+
+	return TRUE;
+}
+
+static bool
+show_XactIsoLevel()
+{
+
+	if (XactIsoLevel == XACT_SERIALIZABLE)
+		elog(NOTICE, "TRANSACTION ISOLATION LEVEL is SERIALIZABLE");
+	else
+		elog(NOTICE, "TRANSACTION ISOLATION LEVEL is READ COMMITTED");
+	return TRUE;
+}
+
+static bool
+reset_XactIsoLevel()
+{
+
+	if (SerializableSnapshot != NULL)
+	{
+		elog(ERROR, "SET TRANSACTION ISOLATION LEVEL must be called before any query");
+		return TRUE;
+	}
+
+	XactIsoLevel = DefaultXactIsoLevel;
+
+	return TRUE;
+}
+
 /*
  * Pg_options
  */
@@ -557,6 +975,7 @@ reset_pg_options(void)
 	return (TRUE);
 }
 
+
 /*-----------------------------------------------------------------------*/
 
 struct VariableParsers
@@ -575,10 +994,52 @@ struct VariableParsers
 		"timezone", parse_timezone, show_timezone, reset_timezone
 	},
 	{
-		"cost_heap", parse_cost_heap, show_cost_heap, reset_cost_heap
+		"effective_cache_size", parse_effective_cache_size,
+		show_effective_cache_size, reset_effective_cache_size
 	},
 	{
-		"cost_index", parse_cost_index, show_cost_index, reset_cost_index
+		"random_page_cost", parse_random_page_cost,
+		show_random_page_cost, reset_random_page_cost
+	},
+	{
+		"cpu_tuple_cost", parse_cpu_tuple_cost,
+		show_cpu_tuple_cost, reset_cpu_tuple_cost
+	},
+	{
+		"cpu_index_tuple_cost", parse_cpu_index_tuple_cost,
+		show_cpu_index_tuple_cost, reset_cpu_index_tuple_cost
+	},
+	{
+		"cpu_operator_cost", parse_cpu_operator_cost,
+		show_cpu_operator_cost, reset_cpu_operator_cost
+	},
+	{
+		"enable_seqscan", parse_enable_seqscan,
+		show_enable_seqscan, reset_enable_seqscan
+	},
+	{
+		"enable_indexscan", parse_enable_indexscan,
+		show_enable_indexscan, reset_enable_indexscan
+	},
+	{
+		"enable_tidscan", parse_enable_tidscan,
+		show_enable_tidscan, reset_enable_tidscan
+	},
+	{
+		"enable_sort", parse_enable_sort,
+		show_enable_sort, reset_enable_sort
+	},
+	{
+		"enable_nestloop", parse_enable_nestloop,
+		show_enable_nestloop, reset_enable_nestloop
+	},
+	{
+		"enable_mergejoin", parse_enable_mergejoin,
+		show_enable_mergejoin, reset_enable_mergejoin
+	},
+	{
+		"enable_hashjoin", parse_enable_hashjoin,
+		show_enable_hashjoin, reset_enable_hashjoin
 	},
 	{
 		"geqo", parse_geqo, show_geqo, reset_geqo
@@ -652,105 +1113,6 @@ ResetPGVariable(const char *name)
 	}
 
 	elog(NOTICE, "Unrecognized variable %s", name);
-
-	return TRUE;
-}
-
-
-/*-----------------------------------------------------------------------
-KSQO code will one day be unnecessary when the optimizer makes use of
-indexes when multiple ORs are specified in the where clause.
-See optimizer/prep/prepkeyset.c for more on this.
-	daveh@insightdist.com	 6/16/98
------------------------------------------------------------------------*/
-static bool
-parse_ksqo(const char *value)
-{
-	if (value == NULL)
-	{
-		reset_ksqo();
-		return TRUE;
-	}
-
-	if (strcasecmp(value, "on") == 0)
-		_use_keyset_query_optimizer = true;
-	else if (strcasecmp(value, "off") == 0)
-		_use_keyset_query_optimizer = false;
-	else
-		elog(ERROR, "Bad value for Key Set Query Optimizer (%s)", value);
-
-	return TRUE;
-}
-
-static bool
-show_ksqo()
-{
-
-	if (_use_keyset_query_optimizer)
-		elog(NOTICE, "Key Set Query Optimizer is ON");
-	else
-		elog(NOTICE, "Key Set Query Optimizer is OFF");
-	return TRUE;
-}
-
-static bool
-reset_ksqo()
-{
-	_use_keyset_query_optimizer = false;
-	return TRUE;
-}
-
-/* SET TRANSACTION */
-
-static bool
-parse_XactIsoLevel(const char *value)
-{
-
-	if (value == NULL)
-	{
-		reset_XactIsoLevel();
-		return TRUE;
-	}
-
-	if (SerializableSnapshot != NULL)
-	{
-		elog(ERROR, "SET TRANSACTION ISOLATION LEVEL must be called before any query");
-		return TRUE;
-	}
-
-
-	if (strcasecmp(value, "SERIALIZABLE") == 0)
-		XactIsoLevel = XACT_SERIALIZABLE;
-	else if (strcasecmp(value, "COMMITTED") == 0)
-		XactIsoLevel = XACT_READ_COMMITTED;
-	else
-		elog(ERROR, "Bad TRANSACTION ISOLATION LEVEL (%s)", value);
-
-	return TRUE;
-}
-
-static bool
-show_XactIsoLevel()
-{
-
-	if (XactIsoLevel == XACT_SERIALIZABLE)
-		elog(NOTICE, "TRANSACTION ISOLATION LEVEL is SERIALIZABLE");
-	else
-		elog(NOTICE, "TRANSACTION ISOLATION LEVEL is READ COMMITTED");
-	return TRUE;
-}
-
-static bool
-reset_XactIsoLevel()
-{
-
-	if (SerializableSnapshot != NULL)
-	{
-		elog(ERROR, "SET TRANSACTION ISOLATION LEVEL must be called before any query");
-		return TRUE;
-	}
-
-	XactIsoLevel = DefaultXactIsoLevel;
 
 	return TRUE;
 }

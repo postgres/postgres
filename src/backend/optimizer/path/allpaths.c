@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/allpaths.c,v 1.58 2000/02/07 04:40:59 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/allpaths.c,v 1.59 2000/02/15 20:49:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -100,7 +100,7 @@ set_base_rel_pathlist(Query *root)
 		/*
 		 * Generate paths and add them to the rel's pathlist.
 		 *
-		 * add_path/add_pathlist will discard any paths that are dominated
+		 * Note: add_path() will discard any paths that are dominated
 		 * by another available path, keeping only those paths that are
 		 * superior along at least one dimension of cost or sortedness.
 		 */
@@ -109,24 +109,21 @@ set_base_rel_pathlist(Query *root)
 		add_path(rel, create_seqscan_path(rel));
 
 		/* Consider TID scans */
-		add_pathlist(rel, create_tidscan_paths(root, rel));
+		create_tidscan_paths(root, rel);
 
 		/* Consider index paths for both simple and OR index clauses */
-		add_pathlist(rel, create_index_paths(root,
-											 rel,
-											 indices,
-											 rel->baserestrictinfo,
-											 rel->joininfo));
+		create_index_paths(root, rel, indices,
+						   rel->baserestrictinfo,
+						   rel->joininfo);
 
 		/* Note: create_or_index_paths depends on create_index_paths
 		 * to have marked OR restriction clauses with relevant indices;
-		 * this is why it doesn't need to be given the full list of indices.
+		 * this is why it doesn't need to be given the list of indices.
 		 */
-		add_pathlist(rel, create_or_index_paths(root, rel,
-												rel->baserestrictinfo));
+		create_or_index_paths(root, rel, rel->baserestrictinfo);
 
 		/* Now find the cheapest of the paths for this rel */
-		set_cheapest(rel, rel->pathlist);
+		set_cheapest(rel);
 	}
 }
 
@@ -196,8 +193,8 @@ make_one_rel_by_joins(Query *root, int levels_needed)
 				xfunc_trypullup(rel);
 #endif
 
-			/* Find and save the cheapest path for this rel */
-			set_cheapest(rel, rel->pathlist);
+			/* Find and save the cheapest paths for this rel */
+			set_cheapest(rel);
 
 #ifdef OPTIMIZER_DEBUG
 			debug_print_rel(root, rel);
@@ -279,15 +276,26 @@ print_path(Query *root, Path *path, int indent)
 	if (join)
 	{
 		jp = (JoinPath *) path;
-		printf("%s rows=%.0f cost=%f\n",
-			   ptype, path->parent->rows, path->path_cost);
+
+		printf("%s rows=%.0f cost=%.2f..%.2f\n",
+			   ptype, path->parent->rows,
+			   path->startup_cost, path->total_cost);
+
+		if (path->pathkeys)
+		{
+			for (i = 0; i < indent; i++)
+				printf("\t");
+			printf("  pathkeys=");
+			print_pathkeys(path->pathkeys, root->rtable);
+		}
+
 		switch (nodeTag(path))
 		{
 			case T_MergePath:
 			case T_HashPath:
-				for (i = 0; i < indent + 1; i++)
+				for (i = 0; i < indent; i++)
 					printf("\t");
-				printf("   clauses=(");
+				printf("  clauses=(");
 				print_joinclauses(root, jp->joinrestrictinfo);
 				printf(")\n");
 
@@ -297,9 +305,9 @@ print_path(Query *root, Path *path, int indent)
 
 					if (mp->outersortkeys || mp->innersortkeys)
 					{
-						for (i = 0; i < indent + 1; i++)
+						for (i = 0; i < indent; i++)
 							printf("\t");
-						printf("   sortouter=%d sortinner=%d\n",
+						printf("  sortouter=%d sortinner=%d\n",
 							   ((mp->outersortkeys) ? 1 : 0),
 							   ((mp->innersortkeys) ? 1 : 0));
 					}
@@ -315,11 +323,14 @@ print_path(Query *root, Path *path, int indent)
 	{
 		int			relid = lfirsti(path->parent->relids);
 
-		printf("%s(%d) rows=%.0f cost=%f\n",
-			   ptype, relid, path->parent->rows, path->path_cost);
+		printf("%s(%d) rows=%.0f cost=%.2f..%.2f\n",
+			   ptype, relid, path->parent->rows,
+			   path->startup_cost, path->total_cost);
 
-		if (IsA(path, IndexPath))
+		if (path->pathkeys)
 		{
+			for (i = 0; i < indent; i++)
+				printf("\t");
 			printf("  pathkeys=");
 			print_pathkeys(path->pathkeys, root->rtable);
 		}
@@ -339,8 +350,10 @@ debug_print_rel(Query *root, RelOptInfo *rel)
 	printf("\tpath list:\n");
 	foreach(l, rel->pathlist)
 		print_path(root, lfirst(l), 1);
-	printf("\tcheapest path:\n");
-	print_path(root, rel->cheapestpath, 1);
+	printf("\tcheapest startup path:\n");
+	print_path(root, rel->cheapest_startup_path, 1);
+	printf("\tcheapest total path:\n");
+	print_path(root, rel->cheapest_total_path, 1);
 }
 
 #endif	 /* OPTIMIZER_DEBUG */

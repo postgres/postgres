@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsenodes.h,v 1.98 2000/02/15 03:38:14 thomas Exp $
+ * $Id: parsenodes.h,v 1.99 2000/02/15 20:49:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -72,6 +72,7 @@ typedef struct Query
 	/* internal to planner */
 	List	   *base_rel_list;	/* list of base-relation RelOptInfos */
 	List	   *join_rel_list;	/* list of join-relation RelOptInfos */
+	List	   *equi_key_list;	/* list of lists of equijoined PathKeyItems */
 	List	   *query_pathkeys; /* pathkeys for query_planner()'s result */
 } Query;
 
@@ -1124,7 +1125,6 @@ typedef struct RangeTblEntry
 {
 	NodeTag		type;
 	char	   *relname;		/* real name of the relation */
-//	char	   *refname;		/* reference name (given in FROM clause) */
 #ifndef DISABLE_JOIN_SYNTAX
 	Attr	   *ref;			/* reference names (given in FROM clause) */
 #endif

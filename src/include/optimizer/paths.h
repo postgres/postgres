@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: paths.h,v 1.42 2000/02/07 04:41:04 tgl Exp $
+ * $Id: paths.h,v 1.43 2000/02/15 20:49:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,9 +33,9 @@ extern RelOptInfo *make_one_rel(Query *root);
  * indxpath.c
  *	  routines to generate index paths
  */
-extern List *create_index_paths(Query *root, RelOptInfo *rel, List *indices,
-								List *restrictinfo_list,
-								List *joininfo_list);
+extern void create_index_paths(Query *root, RelOptInfo *rel, List *indices,
+							   List *restrictinfo_list,
+							   List *joininfo_list);
 extern Oid indexable_operator(Expr *clause, Oid opclass, Oid relam,
 							  bool indexkey_on_left);
 extern List *extract_or_indexqual_conditions(RelOptInfo *rel,
@@ -47,14 +47,14 @@ extern List *expand_indexqual_conditions(List *indexquals);
  * orindxpath.c
  *	  additional routines for indexable OR clauses
  */
-extern List *create_or_index_paths(Query *root, RelOptInfo *rel,
-								   List *clauses);
+extern void create_or_index_paths(Query *root, RelOptInfo *rel,
+								  List *clauses);
 
 /*
  * tidpath.h
  *	  routines to generate tid paths
  */
-extern List *create_tidscan_paths(Query *root, RelOptInfo *rel);
+extern void create_tidscan_paths(Query *root, RelOptInfo *rel);
 
 /*
  * joinpath.c
@@ -89,20 +89,27 @@ typedef enum
 	PATHKEYS_DIFFERENT			/* neither pathkey includes the other */
 } PathKeysComparison;
 
+extern void add_equijoined_keys(Query *root, RestrictInfo *restrictinfo);
+extern List *canonicalize_pathkeys(Query *root, List *pathkeys);
 extern PathKeysComparison compare_pathkeys(List *keys1, List *keys2);
 extern bool pathkeys_contained_in(List *keys1, List *keys2);
 extern Path *get_cheapest_path_for_pathkeys(List *paths, List *pathkeys,
-											bool indexpaths_only);
+											CostSelector cost_criterion);
+extern Path *get_cheapest_fractional_path_for_pathkeys(List *paths,
+													   List *pathkeys,
+													   double fraction);
 extern List *build_index_pathkeys(Query *root, RelOptInfo *rel,
-								  IndexOptInfo *index);
+								  IndexOptInfo *index,
+								  ScanDirection scandir);
 extern List *build_join_pathkeys(List *outer_pathkeys,
-								 List *join_rel_tlist, List *joinclauses);
-extern bool commute_pathkeys(List *pathkeys);
+								 List *join_rel_tlist,
+								 List *equi_key_list);
 extern List *make_pathkeys_for_sortclauses(List *sortclauses,
 										   List *tlist);
 extern List *find_mergeclauses_for_pathkeys(List *pathkeys,
 											List *restrictinfos);
-extern List *make_pathkeys_for_mergeclauses(List *mergeclauses,
+extern List *make_pathkeys_for_mergeclauses(Query *root,
+											List *mergeclauses,
 											List *tlist);
 
 #endif	 /* PATHS_H */

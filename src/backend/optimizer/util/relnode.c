@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/relnode.c,v 1.23 2000/02/07 04:41:02 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/relnode.c,v 1.24 2000/02/15 20:49:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -62,12 +62,14 @@ get_base_rel(Query *root, int relid)
 	rel->width = 0;
 	rel->targetlist = NIL;
 	rel->pathlist = NIL;
-	rel->cheapestpath = (Path *) NULL;
+	rel->cheapest_startup_path = NULL;
+	rel->cheapest_total_path = NULL;
 	rel->pruneable = true;
 	rel->indexed = false;
 	rel->pages = 0;
 	rel->tuples = 0;
 	rel->baserestrictinfo = NIL;
+	rel->baserestrictcost = 0;
 	rel->joininfo = NIL;
 	rel->innerjoin = NIL;
 
@@ -180,12 +182,14 @@ get_join_rel(Query *root,
 	joinrel->width = 0;
 	joinrel->targetlist = NIL;
 	joinrel->pathlist = NIL;
-	joinrel->cheapestpath = (Path *) NULL;
+	joinrel->cheapest_startup_path = NULL;
+	joinrel->cheapest_total_path = NULL;
 	joinrel->pruneable = true;
 	joinrel->indexed = false;
 	joinrel->pages = 0;
 	joinrel->tuples = 0;
 	joinrel->baserestrictinfo = NIL;
+	joinrel->baserestrictcost = 0;
 	joinrel->joininfo = NIL;
 	joinrel->innerjoin = NIL;
 

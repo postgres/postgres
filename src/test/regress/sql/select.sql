@@ -5,7 +5,8 @@
 -- btree index
 -- awk '{if($1<10){print;}else{next;}}' onek.data | sort +0n -1
 --
-SELECT onek.* WHERE onek.unique1 < 10;
+SELECT onek.* WHERE onek.unique1 < 10
+   ORDER BY onek.unique1;
 
 --
 -- awk '{if($1<20){print $1,$14;}else{next;}}' onek.data | sort +0nr -1

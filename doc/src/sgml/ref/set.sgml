@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/set.sgml,v 1.28 1999/07/22 15:09:15 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/set.sgml,v 1.29 2000/02/15 20:49:07 tgl Exp $
 Postgres documentation
 -->
 
@@ -50,7 +50,8 @@ SET TRANSACTION ISOLATION LEVEL { READ COMMITTED | SERIALIZABLE }
       <term><replaceable class="PARAMETER">value</replaceable></term>
       <listitem>
        <para>
-	New value of parameter.
+	New value of parameter.  The word <term>DEFAULT</term> can be
+	written to specify resetting the parameter to its default value.
        </para>
       </listitem>
      </varlistentry>
@@ -78,20 +79,12 @@ SET TRANSACTION ISOLATION LEVEL { READ COMMITTED | SERIALIZABLE }
 	   </para>
 	  </listitem>
 	 </varlistentry>
-	 
-	 <varlistentry>
-	  <term>DEFAULT</term>
-	  <listitem>
-	   <para>
-	    Sets the multi-byte client encoding to the default value.
-	   </para>
-	  </listitem>
-	 </varlistentry>
 	</variablelist>
        </para>
 
        <para>
-	This is only enabled if multi-byte was specified to configure.
+	This option is only available if MULTIBYTE support was enabled
+	during the configure step of building Postgres.
        </para>
       </listitem>
      </varlistentry>
@@ -176,6 +169,9 @@ SET TRANSACTION ISOLATION LEVEL { READ COMMITTED | SERIALIZABLE }
 	<simplelist>
 	 <member>
 	  Setting the <envar>PGDATESTYLE</envar> environment variable.
+	  If PGDATESTYLE is set in the frontend environment of a client
+	  based on libpq, libpq will automatically set DATESTYLE to the
+	  value of PGDATESTYLE during connection startup.
 	 </member>
 	 <member>
 	  Running postmaster using the option <option>-o -e</option> to set
@@ -218,19 +214,12 @@ SET TRANSACTION ISOLATION LEVEL { READ COMMITTED | SERIALIZABLE }
 	   </para>
 	  </listitem>
 	 </varlistentry>
-	 
-	 <varlistentry>
-	  <term>DEFAULT</term>
-	  <listitem>
-	   <para>
-	    Sets the multi-byte server encoding.
-	   </para>
-	  </listitem>
-	 </varlistentry>
 	</variablelist>
        </para>
+
        <para>
-	This is only enabled if multi-byte was specified to configure.
+	This option is only available if MULTIBYTE support was enabled
+	during the configure step of building Postgres.
        </para>
       </listitem>
      </varlistentry>
@@ -287,14 +276,15 @@ SET TRANSACTION ISOLATION LEVEL { READ COMMITTED | SERIALIZABLE }
 	becomes GMT (on most systems anyway).
        </para>
        <para>
-	A frontend which uses libpq may be initialized by setting the PGTZ
-	environment variable.
-       </para>
-       <para>
 	The second syntax shown above, allows one to set the timezone
 	with a syntax similar to SQL92 <command>SET TIME ZONE</command>.
 	The LOCAL keyword is just an alternate form
 	of DEFAULT for SQL92 compatibility.
+       </para>
+       <para>
+        If the PGTZ environment variable is set in the frontend
+	environment of a client based on libpq, libpq will automatically
+	set TIMEZONE to the value of PGTZ during connection startup.
        </para>
       </listitem>
      </varlistentry>
@@ -349,68 +339,329 @@ SET TRANSACTION ISOLATION LEVEL { READ COMMITTED | SERIALIZABLE }
     
     <variablelist>
      <varlistentry>
-      <term>COST_HEAP</term>
+      <term>RANDOM_PAGE_COST</term>
       <listitem>
        <para>
-	Sets the default cost of a heap scan for use by the optimizer.
+        Sets the optimizer's estimate of the cost of a nonsequentially
+	fetched disk page.  This is measured as a multiple of the cost
+	of a sequential page fetch.
 	
 	<variablelist>
 	 <varlistentry>
-	  <term><replaceable class="parameter">float4</replaceable></term>
+	  <term><replaceable class="parameter">float8</replaceable></term>
 	  <listitem>
 	   <para>
-	    Set the cost of a heap scan to the specified floating point value.
-	   </para>
-	  </listitem>
-	 </varlistentry>
-	 
-	 <varlistentry>
-	  <term>DEFAULT</term>
-	  <listitem>
-	   <para>
-	    Sets the cost of a heap scan to the default value.
+	    Set the cost of a random page access
+	    to the specified floating-point value.
 	   </para>
 	  </listitem>
 	 </varlistentry>
 	</variablelist>
        </para>
+      </listitem>
+     </varlistentry>
+    
+     <varlistentry>
+      <term>CPU_TUPLE_COST</term>
+      <listitem>
        <para>
-	The frontend may be initialized by setting the PGCOSTHEAP
-	environment variable.
+        Sets the optimizer's estimate of the cost of processing each
+	tuple during a query.  This is measured as a fraction of the cost
+	of a sequential page fetch.
+	
+	<variablelist>
+	 <varlistentry>
+	  <term><replaceable class="parameter">float8</replaceable></term>
+	  <listitem>
+	   <para>
+	    Set the cost of per-tuple CPU processing
+	    to the specified floating-point value.
+	   </para>
+	  </listitem>
+	 </varlistentry>
+	</variablelist>
+       </para>
+      </listitem>
+     </varlistentry>
+    
+     <varlistentry>
+      <term>CPU_INDEX_TUPLE_COST</term>
+      <listitem>
+       <para>
+        Sets the optimizer's estimate of the cost of processing each
+	index tuple during an index scan.  This is measured as a fraction
+	of the cost of a sequential page fetch.
+	
+	<variablelist>
+	 <varlistentry>
+	  <term><replaceable class="parameter">float8</replaceable></term>
+	  <listitem>
+	   <para>
+	    Set the cost of per-index-tuple CPU processing
+	    to the specified floating-point value.
+	   </para>
+	  </listitem>
+	 </varlistentry>
+	</variablelist>
+       </para>
+      </listitem>
+     </varlistentry>
+    
+     <varlistentry>
+      <term>CPU_OPERATOR_COST</term>
+      <listitem>
+       <para>
+        Sets the optimizer's estimate of the cost of processing each
+	operator in a WHERE clause.  This is measured as a fraction
+	of the cost of a sequential page fetch.
+	
+	<variablelist>
+	 <varlistentry>
+	  <term><replaceable class="parameter">float8</replaceable></term>
+	  <listitem>
+	   <para>
+	    Set the cost of per-operator CPU processing
+	    to the specified floating-point value.
+	   </para>
+	  </listitem>
+	 </varlistentry>
+	</variablelist>
+       </para>
+      </listitem>
+     </varlistentry>
+    
+     <varlistentry>
+      <term>EFFECTIVE_CACHE_SIZE</term>
+      <listitem>
+       <para>
+        Sets the optimizer's assumption about the effective size of the
+	disk cache (that is, the portion of the kernel's disk cache that
+	will be used for Postgres data files).  This is measured in disk
+	pages, which are normally 8Kb apiece.
+	
+	<variablelist>
+	 <varlistentry>
+	  <term><replaceable class="parameter">float8</replaceable></term>
+	  <listitem>
+	   <para>
+	    Set the assumed cache size
+	    to the specified floating-point value.
+	   </para>
+	  </listitem>
+	 </varlistentry>
+	</variablelist>
        </para>
       </listitem>
      </varlistentry>
 
      <varlistentry>
-      <term>COST_INDEX</term>
+      <term>ENABLE_SEQSCAN</term>
       <listitem>
        <para>
-	Sets the default cost of an index scan for use by the optimizer.
+        Enables or disables the planner's use of sequential scan plan types.
+	(It's not possible to suppress sequential scans entirely, but turning
+	this variable OFF discourages the planner from using one if there is
+	any other method available.)
 
-	<variablelist>     
+	<variablelist>
 	 <varlistentry>
-	  <term><replaceable class="parameter">float4</replaceable></term>
+	  <term>ON</term>
 	  <listitem>
 	   <para>
-	    Set the cost of an index scan to the specified floating point value.
+	    enables use of sequential scans (default setting).
 	   </para>
 	  </listitem>
 	 </varlistentry>
-	 
+	
 	 <varlistentry>
-	  <term>DEFAULT</term>
+	  <term>OFF</term>
 	  <listitem>
 	   <para>
-	    Sets the cost of an index scan to the default value.
+	    disables use of sequential scans.
 	   </para>
 	  </listitem>
 	 </varlistentry>
 	</variablelist>
        </para>
+      </listitem>
+     </varlistentry>
 
+     <varlistentry>
+      <term>ENABLE_INDEXSCAN</term>
+      <listitem>
        <para>
-	The frontend may be initialized by setting the PGCOSTINDEX
-	environment variable.
+        Enables or disables the planner's use of index scan plan types.
+
+	<variablelist>
+	 <varlistentry>
+	  <term>ON</term>
+	  <listitem>
+	   <para>
+	    enables use of index scans (default setting).
+	   </para>
+	  </listitem>
+	 </varlistentry>
+	
+	 <varlistentry>
+	  <term>OFF</term>
+	  <listitem>
+	   <para>
+	    disables use of index scans.
+	   </para>
+	  </listitem>
+	 </varlistentry>
+	</variablelist>
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>ENABLE_TIDSCAN</term>
+      <listitem>
+       <para>
+        Enables or disables the planner's use of TID scan plan types.
+
+	<variablelist>
+	 <varlistentry>
+	  <term>ON</term>
+	  <listitem>
+	   <para>
+	    enables use of TID scans (default setting).
+	   </para>
+	  </listitem>
+	 </varlistentry>
+	
+	 <varlistentry>
+	  <term>OFF</term>
+	  <listitem>
+	   <para>
+	    disables use of TID scans.
+	   </para>
+	  </listitem>
+	 </varlistentry>
+	</variablelist>
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>ENABLE_SORT</term>
+      <listitem>
+       <para>
+        Enables or disables the planner's use of explicit sort steps.
+	(It's not possible to suppress explicit sorts entirely, but turning
+	this variable OFF discourages the planner from using one if there is
+	any other method available.)
+
+	<variablelist>
+	 <varlistentry>
+	  <term>ON</term>
+	  <listitem>
+	   <para>
+	    enables use of sorts (default setting).
+	   </para>
+	  </listitem>
+	 </varlistentry>
+	
+	 <varlistentry>
+	  <term>OFF</term>
+	  <listitem>
+	   <para>
+	    disables use of sorts.
+	   </para>
+	  </listitem>
+	 </varlistentry>
+	</variablelist>
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>ENABLE_NESTLOOP</term>
+      <listitem>
+       <para>
+        Enables or disables the planner's use of nested-loop join plans.
+	(It's not possible to suppress nested-loop joins entirely, but turning
+	this variable OFF discourages the planner from using one if there is
+	any other method available.)
+
+	<variablelist>
+	 <varlistentry>
+	  <term>ON</term>
+	  <listitem>
+	   <para>
+	    enables use of nested-loop joins (default setting).
+	   </para>
+	  </listitem>
+	 </varlistentry>
+	
+	 <varlistentry>
+	  <term>OFF</term>
+	  <listitem>
+	   <para>
+	    disables use of nested-loop joins.
+	   </para>
+	  </listitem>
+	 </varlistentry>
+	</variablelist>
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>ENABLE_MERGEJOIN</term>
+      <listitem>
+       <para>
+        Enables or disables the planner's use of mergejoin plans.
+
+	<variablelist>
+	 <varlistentry>
+	  <term>ON</term>
+	  <listitem>
+	   <para>
+	    enables use of merge joins (default setting).
+	   </para>
+	  </listitem>
+	 </varlistentry>
+	
+	 <varlistentry>
+	  <term>OFF</term>
+	  <listitem>
+	   <para>
+	    disables use of merge joins.
+	   </para>
+	  </listitem>
+	 </varlistentry>
+	</variablelist>
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>ENABLE_HASHJOIN</term>
+      <listitem>
+       <para>
+        Enables or disables the planner's use of hashjoin plans.
+
+	<variablelist>
+	 <varlistentry>
+	  <term>ON</term>
+	  <listitem>
+	   <para>
+	    enables use of hash joins (default setting).
+	   </para>
+	  </listitem>
+	 </varlistentry>
+	
+	 <varlistentry>
+	  <term>OFF</term>
+	  <listitem>
+	   <para>
+	    disables use of hash joins.
+	   </para>
+	  </listitem>
+	 </varlistentry>
+	</variablelist>
        </para>
       </listitem>
      </varlistentry>
@@ -427,7 +678,8 @@ SET TRANSACTION ISOLATION LEVEL { READ COMMITTED | SERIALIZABLE }
 	  <listitem>
 	   <para>
 	    enables the genetic optimizer algorithm
-	    for statements with 6 or more tables.
+	    for statements with 11 or more tables.
+	    (This is also the DEFAULT setting.)
 	   </para>
 	  </listitem>
 	 </varlistentry>
@@ -451,31 +703,17 @@ SET TRANSACTION ISOLATION LEVEL { READ COMMITTED | SERIALIZABLE }
 	   </para>
 	  </listitem>
 	 </varlistentry>
-	 <varlistentry>
-	  <term>DEFAULT</term>
-	  <listitem>
-	   <para>
-	    Equivalent to specifying <command>SET GEQO='ON'</command>
-	   </para>
-	  </listitem>
-	 </varlistentry>
 	</variablelist>
        </para>
 
        <para>
-	This algorithm is on by default, which used GEQO for
-	statements of eleven or more tables.
-	(See the chapter on GEQO in the Programmer's Guide
-	for more information).
+	See the chapter on GEQO in the Programmer's Guide
+	for more information about query optimization.
        </para>
        <para>
-	The frontend may be initialized by setting PGGEQO
-	environment variable.
-       </para>
-       <para>
-	It may be useful when joining big relations with
-	small ones. This algorithm is off by default.
-	It's not used by GEQO anyway.
+        If the PGGEQO environment variable is set in the frontend
+	environment of a client based on libpq, libpq will automatically
+	set GEQO to the value of PGGEQO during connection startup.
        </para>
       </listitem>
      </varlistentry>
@@ -484,10 +722,16 @@ SET TRANSACTION ISOLATION LEVEL { READ COMMITTED | SERIALIZABLE }
       <term>KSQO</term>
       <listitem>
        <para>
-	<firstterm>Key Set Query Optimizer</firstterm> forces the query optimizer
-	to optimize repetative OR clauses such as generated by
-	<productname>MicroSoft Access</productname>:
-       
+	<firstterm>Key Set Query Optimizer</firstterm> causes the query
+	planner to convert queries whose WHERE clause contains many
+	OR'ed AND clauses (such as "WHERE (a=1 AND b=2) OR (a=2 AND b=3) ...")
+	into a UNION query.  This method can be faster than the default
+	implementation, but it doesn't necessarily give exactly the same
+	results, since UNION implicitly adds a SELECT DISTINCT clause to
+	eliminate identical output rows.  KSQO is commonly used when
+	working with products like <productname>MicroSoft
+	Access</productname>, which tend to generate queries of this form.
+
 	<variablelist>
 	 <varlistentry>
 	  <term>ON</term>
@@ -502,7 +746,7 @@ SET TRANSACTION ISOLATION LEVEL { READ COMMITTED | SERIALIZABLE }
 	  <term>OFF</term>
 	  <listitem>
 	   <para>
-	    disables this optimization.
+	    disables this optimization (default setting).
 	   </para>
 	  </listitem>
 	 </varlistentry>
@@ -519,13 +763,9 @@ SET TRANSACTION ISOLATION LEVEL { READ COMMITTED | SERIALIZABLE }
        </para>
 
        <para>
-	It may be useful when joining big relations with
-	small ones. This algorithm is off by default.
-	It's not used by GEQO anyway.
-       </para>
-       <para>
-	The frontend may be initialized by setting the PGKSQO
-	environment variable.
+        The KSQO algorithm used to be absolutely essential for queries
+	with many OR'ed AND clauses, but in Postgres 7.0 and later
+	the standard planner handles these queries fairly successfully.
        </para>
       </listitem>
      </varlistentry>

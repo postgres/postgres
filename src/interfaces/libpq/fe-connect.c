@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.118 2000/02/07 23:10:09 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.119 2000/02/15 20:49:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -172,12 +172,6 @@ static struct EnvironmentOptions
 	},
 #endif
 	/* internal performance-related settings */
-	{
-		"PGCOSTHEAP", "cost_heap"
-	},
-	{
-		"PGCOSTINDEX", "cost_index"
-	},
 	{
 		"PGGEQO", "geqo"
 	},

@@ -141,8 +141,12 @@ DROP TABLE tmp;
 
 --
 -- rename -
---   should preserve indices
+--   should preserve indices, which we can check by seeing if a SELECT
+--   chooses an indexscan; however, in the absence of vacuum statistics
+--   it might not.  Therefore, vacuum first.
 --
+VACUUM ANALYZE tenk1;
+
 ALTER TABLE tenk1 RENAME TO ten_k;
 
 -- 20 values, sorted 

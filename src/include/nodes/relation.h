@@ -7,13 +7,14 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: relation.h,v 1.43 2000/02/07 04:41:02 tgl Exp $
+ * $Id: relation.h,v 1.44 2000/02/15 20:49:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef RELATION_H
 #define RELATION_H
 
+#include "access/sdir.h"
 #include "nodes/parsenodes.h"
 
 /*
@@ -24,6 +25,12 @@
  */
 
 typedef List *Relids;
+
+/*
+ * When looking for a "cheapest path", this enum specifies whether we want
+ * cheapest startup cost or cheapest total cost.
+ */
+typedef enum CostSelector { STARTUP_COST, TOTAL_COST } CostSelector;
 
 /*
  * RelOptInfo
@@ -38,10 +45,14 @@ typedef List *Relids;
  *			   clauses have been applied (ie, output rows of a plan for it)
  *		width - avg. number of bytes per tuple in the relation after the
  *				appropriate projections have been done (ie, output width)
- *		targetlist - List of TargetList nodes
+ *		targetlist - List of TargetEntry nodes for the attributes we need
+ *					 to output from this relation
  *		pathlist - List of Path nodes, one for each potentially useful
  *				   method of generating the relation
- *		cheapestpath -	least expensive Path (regardless of ordering)
+ *		cheapest_startup_path - the pathlist member with lowest startup cost
+ *								(regardless of its ordering)
+ *		cheapest_total_path - the pathlist member with lowest total cost
+ *							  (regardless of its ordering)
  *		pruneable - flag to let the planner know whether it can prune the
  *					pathlist of this RelOptInfo or not.
  *
@@ -57,6 +68,8 @@ typedef List *Relids;
  *		baserestrictinfo - List of RestrictInfo nodes, containing info about
  *					each qualification clause in which this relation
  *					participates (only used for base rels)
+ *		baserestrictcost - Estimated cost of evaluating the baserestrictinfo
+ *					clauses at a single tuple (only used for base rels)
  *		joininfo  - List of JoinInfo nodes, containing info about each join
  *					clause in which this relation participates
  *		innerjoin - List of Path nodes that represent indices that may be used
@@ -74,6 +87,10 @@ typedef List *Relids;
  * (field joinrestrictinfo), not in the parent relation.  But it's OK for
  * the RelOptInfo to store the joininfo lists, because those are the same
  * for a given rel no matter how we form it.
+ *
+ * We store baserestrictcost in the RelOptInfo (for base relations) because
+ * we know we will need it at least once (to price the sequential scan)
+ * and may need it multiple times to price index scans.
  */
 
 typedef struct RelOptInfo
@@ -90,7 +107,8 @@ typedef struct RelOptInfo
 	/* materialization information */
 	List	   *targetlist;
 	List	   *pathlist;		/* Path structures */
-	struct Path *cheapestpath;
+	struct Path *cheapest_startup_path;
+	struct Path *cheapest_total_path;
 	bool		pruneable;
 
 	/* statistics from pg_class (only valid if it's a base rel!) */
@@ -100,6 +118,7 @@ typedef struct RelOptInfo
 
 	/* used by various scans and joins: */
 	List	   *baserestrictinfo; /* RestrictInfo structures (if base rel) */
+	Cost		baserestrictcost; /* cost of evaluating the above */
 	List	   *joininfo;		/* JoinInfo structures */
 	List	   *innerjoin;		/* potential indexscans for nestloop joins */
 	/* innerjoin indexscans are not in the main pathlist because they are
@@ -126,6 +145,7 @@ typedef struct RelOptInfo
  *		amcostestimate - OID of the relam's cost estimator
  *		indproc	  - OID of the function if a functional index, else 0
  *		indpred	  - index predicate if a partial index, else NULL
+ *		lossy	  - true if index is lossy (may return non-matching tuples)
  *
  *		NB. the last element of the arrays classlist, indexkeys and ordering
  *			is always 0.
@@ -151,6 +171,7 @@ typedef struct IndexOptInfo
 
 	Oid			indproc;		/* if a functional index */
 	List	   *indpred;		/* if a partial index */
+	bool		lossy;			/* if a lossy index */
 } IndexOptInfo;
 
 /*
@@ -190,7 +211,9 @@ typedef struct Path
 
 	RelOptInfo *parent;			/* the relation this path can build */
 
-	Cost		path_cost;		/* estimated execution cost of path */
+	/* estimated execution costs for path (see costsize.c for more info) */
+	Cost		startup_cost;	/* cost expended before fetching any tuples */
+	Cost		total_cost;		/* total cost (assuming all tuples fetched) */
 
 	NodeTag		pathtype;		/* tag identifying scan/join method */
 	/* XXX why is pathtype separate from the NodeTag? */
@@ -207,27 +230,34 @@ typedef struct Path
  * the same tuple more than once, even if it is matched in multiple scans.)
  *
  * 'indexid' is a list of index relation OIDs, one per scan to be performed.
+ *
  * 'indexqual' is a list of index qualifications, also one per scan.
  * Each entry in 'indexqual' is a sublist of qualification expressions with
  * implicit AND semantics across the sublist items.  Only expressions that
  * are usable as indexquals (as determined by indxpath.c) may appear here.
- *
  * NOTE that the semantics of the top-level list in 'indexqual' is OR
  * combination, while the sublists are implicitly AND combinations!
+ *
+ * 'indexscandir' is one of:
+ *		ForwardScanDirection: forward scan of an ordered index
+ *		BackwardScanDirection: backward scan of an ordered index
+ *		NoMovementScanDirection: scan of an unordered index, or don't care
+ * (The executor doesn't care whether it gets ForwardScanDirection or
+ * NoMovementScanDirection for an indexscan, but the planner wants to
+ * distinguish ordered from unordered indexes for building pathkeys.)
+ *
+ * 'joinrelids' is only used in IndexPaths that are constructed for use
+ * as the inner path of a nestloop join.  These paths have indexquals
+ * that refer to values of other rels, so those other rels must be
+ * included in the outer joinrel in order to make a usable join.
  *----------
  */
-
 typedef struct IndexPath
 {
 	Path		path;
 	List	   *indexid;
 	List	   *indexqual;
-	/*
-	 * joinrelids is only used in IndexPaths that are constructed for use
-	 * as the inner path of a nestloop join.  These paths have indexquals
-	 * that refer to values of other rels, so those other rels must be
-	 * included in the outer joinrel in order to make a usable join.
-	 */
+	ScanDirection indexscandir;
 	Relids		joinrelids;			/* other rels mentioned in indexqual */
 } IndexPath;
 

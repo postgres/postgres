@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/Attic/freefuncs.c,v 1.35 2000/02/15 03:37:08 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/Attic/freefuncs.c,v 1.36 2000/02/15 20:49:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -730,10 +730,11 @@ _freeRelOptInfo(RelOptInfo *node)
 
 	freeObject(node->targetlist);
 	freeObject(node->pathlist);
-	/* XXX is this right? cheapestpath will typically be a pointer into
-	 * pathlist, won't it?
+	/* XXX is this right? cheapest-path fields will typically be pointers
+	 * into pathlist, not separate structs...
 	 */
-	freeObject(node->cheapestpath);
+	freeObject(node->cheapest_startup_path);
+	freeObject(node->cheapest_total_path);
 
 	freeObject(node->baserestrictinfo);
 	freeObject(node->joininfo);
@@ -1013,8 +1014,7 @@ _freeRangeTblEntry(RangeTblEntry *node)
 {
 	if (node->relname)
 		pfree(node->relname);
-	if (node->ref)
-		freeObject(node->ref);
+	freeObject(node->ref);
 
 	pfree(node);
 }
@@ -1024,8 +1024,7 @@ _freeAttr(Attr *node)
 {
 	if (node->relname)
 		pfree(node->relname);
-	if (node->attrs)
-		freeObject(node->attrs);
+	freeObject(node->attrs);
 
 	pfree(node);
 }
@@ -1346,10 +1345,3 @@ freeObject(void *node)
 			break;
 	}
 }
-
-
-
-
-
-
-

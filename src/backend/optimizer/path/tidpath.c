@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/tidpath.c,v 1.4 2000/02/07 04:40:59 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/tidpath.c,v 1.5 2000/02/15 20:49:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,7 +36,7 @@
 #include "parser/parsetree.h"
 #include "utils/lsyscache.h"
 
-static List	*create_tidscan_joinpaths(RelOptInfo *);
+static void create_tidscan_joinpaths(RelOptInfo *rel);
 static List	*TidqualFromRestrictinfo(List *relids, List *restrictinfo);
 static bool	isEvaluable(int varno, Node *node);
 static Node	*TidequalClause(int varno, Expr *node);
@@ -234,61 +234,54 @@ TidqualFromRestrictinfo(List *relids, List *restrictinfo)
 
 /*
  * create_tidscan_joinpaths
- *	  Creates a path corresponding to a tid_direct scan, returning the
- *	  pathnode.
+ *	  Create innerjoin paths if there are suitable joinclauses.
  *
+ * XXX does this actually work?
  */
-List *
+static void
 create_tidscan_joinpaths(RelOptInfo *rel)
 {
 	List		*rlst = NIL,
 				*lst;
-	TidPath		*pathnode = (TidPath *) NULL;
-	List		*restinfo,
-				*tideval;
 
 	foreach (lst, rel->joininfo)
 	{
-		JoinInfo   *joininfo = (JoinInfo *)lfirst(lst);
+		JoinInfo   *joininfo = (JoinInfo *) lfirst(lst);
+		List		*restinfo,
+					*tideval;
 
 		restinfo = joininfo->jinfo_restrictinfo;
 		tideval = TidqualFromRestrictinfo(rel->relids, restinfo);
 		if (length(tideval) == 1)
 		{
-			pathnode = makeNode(TidPath);
+			TidPath		*pathnode = makeNode(TidPath);
 
 			pathnode->path.pathtype = T_TidScan;
 			pathnode->path.parent = rel;
 			pathnode->path.pathkeys = NIL;
-			pathnode->path.path_cost = cost_tidscan(rel, tideval);
 			pathnode->tideval = tideval;
 			pathnode->unjoined_relids = joininfo->unjoined_relids;
+
+			cost_tidscan(&pathnode->path, rel, tideval);
+
 			rlst = lappend(rlst, pathnode);
 		}
 	}
 	rel->innerjoin = nconc(rel->innerjoin, rlst);
-	return rlst;
 }
 
 /*
  * create_tidscan_paths
- *	  Creates a path corresponding to a tid direct scan, returning the
- *	  pathnode List.
- *
+ *	  Creates paths corresponding to tid direct scans of the given rel.
+ *	  Candidate paths are added to the rel's pathlist (using add_path).
  */
-List *
+void
 create_tidscan_paths(Query *root, RelOptInfo *rel)
 {
-	List	*rlst = NIL;
-	TidPath	*pathnode = (TidPath *) NULL;
 	List	*tideval = TidqualFromRestrictinfo(rel->relids,
 											   rel->baserestrictinfo);
 	
 	if (tideval)
-		pathnode = create_tidscan_path(rel, tideval);
-	if (pathnode)
-		rlst = lcons(pathnode, rlst);
+		add_path(rel, (Path *) create_tidscan_path(rel, tideval));
 	create_tidscan_joinpaths(rel);
-
-	return rlst;
 }

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.79 2000/02/05 18:26:09 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.80 2000/02/15 20:49:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -83,7 +83,8 @@ static List *index_innerjoin(Query *root, RelOptInfo *rel, IndexOptInfo *index,
 static bool useful_for_mergejoin(RelOptInfo *rel, IndexOptInfo *index,
 								 List *joininfo_list);
 static bool useful_for_ordering(Query *root, RelOptInfo *rel,
-								IndexOptInfo *index);
+								IndexOptInfo *index,
+								ScanDirection scandir);
 static bool match_index_to_operand(int indexkey, Var *operand,
 								   RelOptInfo *rel, IndexOptInfo *index);
 static bool function_index_operand(Expr *funcOpnd, RelOptInfo *rel,
@@ -106,6 +107,8 @@ static bool string_lessthan(const char * str1, const char * str2,
 /*
  * create_index_paths()
  *	  Generate all interesting index paths for the given relation.
+ *	  Candidate paths are added to the rel's pathlist (using add_path).
+ *	  Additional IndexPath nodes may also be added to rel's innerjoin list.
  *
  * To be considered for an index scan, an index must match one or more
  * restriction clauses or join clauses from the query's qual condition,
@@ -120,29 +123,26 @@ static bool string_lessthan(const char * str1, const char * str2,
  * in its join clauses.  In that context, values for the other rels'
  * attributes are available and fixed during any one scan of the indexpath.
  *
- * This routine's return value is a list of plain IndexPaths for each
- * index the routine deems potentially interesting for the current query
+ * An IndexPath is generated and submitted to add_path() for each index
+ * this routine deems potentially interesting for the current query
  * (at most one IndexPath per index on the given relation).  An innerjoin
  * path is also generated for each interesting combination of outer join
- * relations.  The innerjoin paths are *not* in the return list, but are
- * appended to the "innerjoin" list of the relation itself.
+ * relations.  The innerjoin paths are *not* passed to add_path(), but are
+ * appended to the "innerjoin" list of the relation for later consideration
+ * in nested-loop joins.
  *
  * 'rel' is the relation for which we want to generate index paths
  * 'indices' is a list of available indexes for 'rel'
  * 'restrictinfo_list' is a list of restrictinfo nodes for 'rel'
  * 'joininfo_list' is a list of joininfo nodes for 'rel'
- *
- * Returns a list of IndexPath access path descriptors.  Additional
- * IndexPath nodes may also be added to the rel->innerjoin list.
  */
-List *
+void
 create_index_paths(Query *root,
 				   RelOptInfo *rel,
 				   List *indices,
 				   List *restrictinfo_list,
 				   List *joininfo_list)
 {
-	List	   *retval = NIL;
 	List	   *ilist;
 
 	foreach(ilist, indices)
@@ -189,9 +189,9 @@ create_index_paths(Query *root,
 													restrictinfo_list);
 
 		if (restrictclauses != NIL)
-			retval = lappend(retval,
-							 create_index_path(root, rel, index,
-											   restrictclauses));
+			add_path(rel, (Path *) create_index_path(root, rel, index,
+													 restrictclauses,
+													 NoMovementScanDirection));
 
 		/*
 		 * 3. If this index can be used for a mergejoin, then create an
@@ -205,10 +205,22 @@ create_index_paths(Query *root,
 		if (restrictclauses == NIL)
 		{
 			if (useful_for_mergejoin(rel, index, joininfo_list) ||
-				useful_for_ordering(root, rel, index))
-				retval = lappend(retval,
-								 create_index_path(root, rel, index, NIL));
+				useful_for_ordering(root, rel, index, ForwardScanDirection))
+				add_path(rel, (Path *)
+						 create_index_path(root, rel, index,
+										   NIL,
+										   ForwardScanDirection));
 		}
+		/*
+		 * Currently, backwards scan is never considered except for the case
+		 * of matching a query result ordering.  Possibly should consider
+		 * it in other places?
+		 */
+		if (useful_for_ordering(root, rel, index, BackwardScanDirection))
+			add_path(rel, (Path *)
+					 create_index_path(root, rel, index,
+									   NIL,
+									   BackwardScanDirection));
 
 		/*
 		 * 4. Create an innerjoin index path for each combination of
@@ -231,8 +243,6 @@ create_index_paths(Query *root,
 												   joinouterrelids));
 		}
 	}
-
-	return retval;
 }
 
 
@@ -892,39 +902,26 @@ useful_for_mergejoin(RelOptInfo *rel,
  *	  Determine whether the given index can produce an ordering matching
  *	  the order that is wanted for the query result.
  *
- * We check to see whether either forward or backward scan direction can
- * match the specified pathkeys.
- *
  * 'rel' is the relation for which 'index' is defined
+ * 'scandir' is the contemplated scan direction
  */
 static bool
 useful_for_ordering(Query *root,
 					RelOptInfo *rel,
-					IndexOptInfo *index)
+					IndexOptInfo *index,
+					ScanDirection scandir)
 {
 	List	   *index_pathkeys;
 
 	if (root->query_pathkeys == NIL)
 		return false;			/* no special ordering requested */
 
-	index_pathkeys = build_index_pathkeys(root, rel, index);
+	index_pathkeys = build_index_pathkeys(root, rel, index, scandir);
 
 	if (index_pathkeys == NIL)
 		return false;			/* unordered index */
 
-	if (pathkeys_contained_in(root->query_pathkeys, index_pathkeys))
-		return true;
-
-	/* caution: commute_pathkeys destructively modifies its argument;
-	 * safe because we just built the index_pathkeys for local use here.
-	 */
-	if (commute_pathkeys(index_pathkeys))
-	{
-		if (pathkeys_contained_in(root->query_pathkeys, index_pathkeys))
-			return true;		/* useful as a reverse-order path */
-	}
-
-	return false;
+	return pathkeys_contained_in(root->query_pathkeys, index_pathkeys);
 }
 
 /****************************************************************************
@@ -1433,7 +1430,12 @@ index_innerjoin(Query *root, RelOptInfo *rel, IndexOptInfo *index,
 
 		pathnode->path.pathtype = T_IndexScan;
 		pathnode->path.parent = rel;
-		pathnode->path.pathkeys = build_index_pathkeys(root, rel, index);
+		/*
+		 * There's no point in marking the path with any pathkeys, since
+		 * it will only ever be used as the inner path of a nestloop,
+		 * and so its ordering does not matter.
+		 */
+		pathnode->path.pathkeys = NIL;
 
 		indexquals = get_actual_clauses(clausegroup);
 		/* expand special operators to indexquals the executor can handle */
@@ -1446,11 +1448,13 @@ index_innerjoin(Query *root, RelOptInfo *rel, IndexOptInfo *index,
 		pathnode->indexid = lconsi(index->indexoid, NIL);
 		pathnode->indexqual = lcons(indexquals, NIL);
 
+		/* We don't actually care what order the index scans in ... */
+		pathnode->indexscandir = NoMovementScanDirection;
+
 		/* joinrelids saves the rels needed on the outer side of the join */
 		pathnode->joinrelids = lfirst(outerrelids_list);
 
-		pathnode->path.path_cost = cost_index(root, rel, index, indexquals,
-											  true);
+		cost_index(&pathnode->path, root, rel, index, indexquals, true);
 
 		path_list = lappend(path_list, pathnode);
 		outerrelids_list = lnext(outerrelids_list);

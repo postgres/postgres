@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/subselect.c,v 1.27 2000/01/26 05:56:38 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/subselect.c,v 1.28 2000/02/15 20:49:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -123,6 +123,7 @@ static Node *
 make_subplan(SubLink *slink)
 {
 	SubPlan    *node = makeNode(SubPlan);
+	double		tuple_fraction;
 	Plan	   *plan;
 	List	   *lst;
 	Node	   *result;
@@ -132,7 +133,26 @@ make_subplan(SubLink *slink)
 
 	PlannerQueryLevel++;		/* we becomes child */
 
-	node->plan = plan = union_planner((Query *) slink->subselect);
+	/*
+	 * For an EXISTS subplan, tell lower-level planner to expect that
+	 * only the first tuple will be retrieved.  For ALL, ANY, and MULTIEXPR
+	 * subplans, we will be able to stop evaluating if the test condition
+	 * fails, so very often not all the tuples will be retrieved; for lack
+	 * of a better idea, specify 50% retrieval.  For EXPR_SUBLINK use default
+	 * behavior.
+	 *
+	 * NOTE: if you change these numbers, also change cost_qual_eval_walker
+	 * in costsize.c.
+	 */
+	if (slink->subLinkType == EXISTS_SUBLINK)
+		tuple_fraction = 1.0;	/* just like a LIMIT 1 */
+	else if (slink->subLinkType == EXPR_SUBLINK)
+		tuple_fraction = -1.0;	/* default behavior */
+	else
+		tuple_fraction = 0.5;	/* 50% */
+
+	node->plan = plan = union_planner((Query *) slink->subselect,
+									  tuple_fraction);
 
 	/*
 	 * Assign subPlan, extParam and locParam to plan nodes. At the moment,

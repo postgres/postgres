@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.83 2000/02/15 03:37:09 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.84 2000/02/15 20:49:12 tgl Exp $
  *
  * NOTES
  *	  Most of the read functions for plan nodes are tested. (In fact, they
@@ -217,9 +217,13 @@ _getPlan(Plan *node)
 	char	   *token;
 	int			length;
 
-	token = lsptok(NULL, &length);		/* first token is :cost */
+	token = lsptok(NULL, &length);		/* first token is :startup_cost */
 	token = lsptok(NULL, &length);		/* next is the actual cost */
-	node->cost = (Cost) atof(token);
+	node->startup_cost = (Cost) atof(token);
+
+	token = lsptok(NULL, &length);		/* skip the :total_cost */
+	token = lsptok(NULL, &length);		/* next is the actual cost */
+	node->total_cost = (Cost) atof(token);
 
 	token = lsptok(NULL, &length);		/* skip the :rows */
 	token = lsptok(NULL, &length);		/* get the plan_rows */
@@ -520,7 +524,6 @@ _readIndexScan()
 
 	token = lsptok(NULL, &length);		/* eat :indxorderdir */
 	token = lsptok(NULL, &length);		/* get indxorderdir */
-
 	local_node->indxorderdir = atoi(token);
 
 	return local_node;
@@ -1275,18 +1278,15 @@ _readRelOptInfo()
 	token = lsptok(NULL, &length);		/* get :pathlist */
 	local_node->pathlist = nodeRead(true);		/* now read it */
 
-	/*
-	 * Not sure if these are nodes or not.	They're declared as struct
-	 * Path *.	Since i don't know, i'll just print the addresses for now.
-	 * This can be changed later, if necessary.
-	 */
+	token = lsptok(NULL, &length);		/* get :cheapest_startup_path */
+	local_node->cheapest_startup_path = nodeRead(true);		/* now read it */
 
-	token = lsptok(NULL, &length);		/* get :cheapestpath */
-	token = lsptok(NULL, &length);		/* get @ */
-	token = lsptok(NULL, &length);		/* now read it */
+	token = lsptok(NULL, &length);		/* get :cheapest_total_path */
+	local_node->cheapest_total_path = nodeRead(true);		/* now read it */
 
-	sscanf(token, "%x", (unsigned int *) &local_node->cheapestpath);
-
+	token = lsptok(NULL, &length);		/* eat :pruneable */
+	token = lsptok(NULL, &length);		/* get :pruneable */
+	local_node->pruneable = (token[0] == 't') ? true : false;
 
 	token = lsptok(NULL, &length);		/* get :baserestrictinfo */
 	local_node->baserestrictinfo = nodeRead(true);	/* now read it */
@@ -1322,29 +1322,6 @@ _readTargetEntry()
 	return local_node;
 }
 
-static List *
-_readList()
-{
-	List	   *local_node = NULL;
-	char	   *token;
-	int			length;
-
-	token = lsptok(NULL, &length);		/* eat "(" */
-	token = lsptok(NULL, &length);		/* get "{" */
-	while (strncmp(token, "{", length) == 0)
-	{
-		nconc(local_node, nodeRead(true));
-
-		token = lsptok(NULL, &length);		/* eat ")" */
-		if (strncmp(token, "}", length) != 0)
-			elog(ERROR, "badly formatted attribute list"
-				 " in planstring \"%.10s\"...\n", token);
-		token = lsptok(NULL, &length);		/* "{" or ")" */
-	}
-
-	return local_node;
-}
-
 static Attr *
 _readAttr()
 {
@@ -1356,13 +1333,10 @@ _readAttr()
 
 	token = lsptok(NULL, &length);		/* eat :relname */
 	token = lsptok(NULL, &length);		/* get relname */
-	if (length == 0)
-		local_node->relname = pstrdup("");
-	else
-		local_node->relname = debackslash(token, length);
+	local_node->relname = debackslash(token, length);
 
 	token = lsptok(NULL, &length);		/* eat :attrs */
-	local_node->attrs = _readList();
+	local_node->attrs = nodeRead(true);	/* now read it */
 
 	return local_node;
 }
@@ -1388,7 +1362,7 @@ _readRangeTblEntry()
 		local_node->relname = debackslash(token, length);
 
 	token = lsptok(NULL, &length);		/* eat :ref */
-	local_node->ref = nodeRead(true);
+	local_node->ref = nodeRead(true);	/* now read it */
 
 	token = lsptok(NULL, &length);		/* eat :relid */
 	token = lsptok(NULL, &length);		/* get :relid */
@@ -1450,9 +1424,13 @@ _readPath()
 	token = lsptok(NULL, &length);		/* now read it */
 	local_node->pathtype = atol(token);
 
-	token = lsptok(NULL, &length);		/* get :cost */
+	token = lsptok(NULL, &length);		/* get :startup_cost */
 	token = lsptok(NULL, &length);		/* now read it */
-	local_node->path_cost = (Cost) atof(token);
+	local_node->startup_cost = (Cost) atof(token);
+
+	token = lsptok(NULL, &length);		/* get :total_cost */
+	token = lsptok(NULL, &length);		/* now read it */
+	local_node->total_cost = (Cost) atof(token);
 
 	token = lsptok(NULL, &length);		/* get :pathkeys */
 	local_node->pathkeys = nodeRead(true);		/* now read it */
@@ -1479,9 +1457,13 @@ _readIndexPath()
 	token = lsptok(NULL, &length);		/* now read it */
 	local_node->path.pathtype = atol(token);
 
-	token = lsptok(NULL, &length);		/* get :cost */
+	token = lsptok(NULL, &length);		/* get :startup_cost */
 	token = lsptok(NULL, &length);		/* now read it */
-	local_node->path.path_cost = (Cost) atof(token);
+	local_node->path.startup_cost = (Cost) atof(token);
+
+	token = lsptok(NULL, &length);		/* get :total_cost */
+	token = lsptok(NULL, &length);		/* now read it */
+	local_node->path.total_cost = (Cost) atof(token);
 
 	token = lsptok(NULL, &length);		/* get :pathkeys */
 	local_node->path.pathkeys = nodeRead(true); /* now read it */
@@ -1491,6 +1473,10 @@ _readIndexPath()
 
 	token = lsptok(NULL, &length);		/* get :indexqual */
 	local_node->indexqual = nodeRead(true);		/* now read it */
+
+	token = lsptok(NULL, &length);		/* get :indexscandir */
+	token = lsptok(NULL, &length);		/* now read it */
+	local_node->indexscandir = (ScanDirection) atoi(token);
 
 	token = lsptok(NULL, &length);		/* get :joinrelids */
 	local_node->joinrelids = toIntList(nodeRead(true));
@@ -1517,9 +1503,13 @@ _readTidPath()
 	token = lsptok(NULL, &length);		/* now read it */
 	local_node->path.pathtype = atol(token);
 
-	token = lsptok(NULL, &length);		/* get :cost */
+	token = lsptok(NULL, &length);		/* get :startup_cost */
 	token = lsptok(NULL, &length);		/* now read it */
-	local_node->path.path_cost = (Cost) atof(token);
+	local_node->path.startup_cost = (Cost) atof(token);
+
+	token = lsptok(NULL, &length);		/* get :total_cost */
+	token = lsptok(NULL, &length);		/* now read it */
+	local_node->path.total_cost = (Cost) atof(token);
 
 	token = lsptok(NULL, &length);		/* get :pathkeys */
 	local_node->path.pathkeys = nodeRead(true); /* now read it */
@@ -1552,9 +1542,13 @@ _readNestPath()
 	token = lsptok(NULL, &length);		/* now read it */
 	local_node->path.pathtype = atol(token);
 
-	token = lsptok(NULL, &length);		/* get :cost */
+	token = lsptok(NULL, &length);		/* get :startup_cost */
 	token = lsptok(NULL, &length);		/* now read it */
-	local_node->path.path_cost = (Cost) atof(token);
+	local_node->path.startup_cost = (Cost) atof(token);
+
+	token = lsptok(NULL, &length);		/* get :total_cost */
+	token = lsptok(NULL, &length);		/* now read it */
+	local_node->path.total_cost = (Cost) atof(token);
 
 	token = lsptok(NULL, &length);		/* get :pathkeys */
 	local_node->path.pathkeys = nodeRead(true); /* now read it */
@@ -1588,13 +1582,15 @@ _readMergePath()
 
 	token = lsptok(NULL, &length);		/* get :pathtype */
 	token = lsptok(NULL, &length);		/* now read it */
-
 	local_node->jpath.path.pathtype = atol(token);
 
-	token = lsptok(NULL, &length);		/* get :cost */
+	token = lsptok(NULL, &length);		/* get :startup_cost */
 	token = lsptok(NULL, &length);		/* now read it */
+	local_node->jpath.path.startup_cost = (Cost) atof(token);
 
-	local_node->jpath.path.path_cost = (Cost) atof(token);
+	token = lsptok(NULL, &length);		/* get :total_cost */
+	token = lsptok(NULL, &length);		/* now read it */
+	local_node->jpath.path.total_cost = (Cost) atof(token);
 
 	token = lsptok(NULL, &length);		/* get :pathkeys */
 	local_node->jpath.path.pathkeys = nodeRead(true);	/* now read it */
@@ -1637,13 +1633,15 @@ _readHashPath()
 
 	token = lsptok(NULL, &length);		/* get :pathtype */
 	token = lsptok(NULL, &length);		/* now read it */
-
 	local_node->jpath.path.pathtype = atol(token);
 
-	token = lsptok(NULL, &length);		/* get :cost */
+	token = lsptok(NULL, &length);		/* get :startup_cost */
 	token = lsptok(NULL, &length);		/* now read it */
+	local_node->jpath.path.startup_cost = (Cost) atof(token);
 
-	local_node->jpath.path.path_cost = (Cost) atof(token);
+	token = lsptok(NULL, &length);		/* get :total_cost */
+	token = lsptok(NULL, &length);		/* now read it */
+	local_node->jpath.path.total_cost = (Cost) atof(token);
 
 	token = lsptok(NULL, &length);		/* get :pathkeys */
 	local_node->jpath.path.pathkeys = nodeRead(true);	/* now read it */
@@ -1886,14 +1884,6 @@ parsePlanString(void)
 		return_value = _readCaseWhen();
 	else if (length == 7 && strncmp(token, "ROWMARK", length) == 0)
 		return_value = _readRowMark();
-#if 0
-	else if (length == 1 && strncmp(token, "{", length) == 0)
-	{
-		/* raw list (of strings?) found in Attr structure - thomas 2000-02-09 */
-		return_value = nodeRead(true);
-		token = lsptok(NULL, &length);	/* eat trailing brace */
-	}
-#endif
 	else
 		elog(ERROR, "badly formatted planstring \"%.10s\"...\n", token);
 
