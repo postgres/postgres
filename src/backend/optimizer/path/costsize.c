@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/optimizer/path/costsize.c,v 1.5 1996/10/31 10:17:09 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/optimizer/path/costsize.c,v 1.6 1996/11/06 09:29:04 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,6 +29,7 @@
 
 #include "postgres.h"
 
+#include <utils/lsyscache.h>
 #include "nodes/relation.h"
 
 #include "optimizer/cost.h"

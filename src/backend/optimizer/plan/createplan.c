@@ -7,13 +7,16 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.4 1996/10/31 10:59:09 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.5 1996/11/06 09:29:10 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include <sys/types.h>
 
 #include "postgres.h"
+
+#include <utils/syscache.h>
+#include <catalog/pg_index.h>
 
 #include "nodes/execnodes.h"
 #include "nodes/plannodes.h"

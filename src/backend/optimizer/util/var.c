@@ -7,13 +7,15 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/optimizer/util/var.c,v 1.2 1996/10/31 10:59:42 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/optimizer/util/var.c,v 1.3 1996/11/06 09:29:26 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include <sys/types.h>
 
 #include "postgres.h"
+
+#include <nodes/relation.h>
 
 #include "nodes/primnodes.h"
 #include "nodes/nodeFuncs.h"

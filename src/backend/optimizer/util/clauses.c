@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.3 1996/09/10 06:48:41 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.4 1996/11/06 09:29:22 scrappy Exp $
  *
  * HISTORY
  *    AUTHOR		DATE		MAJOR EVENT
@@ -18,7 +18,7 @@
 
 #include "postgres.h"
 
-#include "nodes/pg_list.h"
+#include <catalog/pg_operator.h>
 #include "nodes/primnodes.h"
 #include "nodes/relation.h"
 #include "nodes/parsenodes.h"
@@ -27,7 +27,6 @@
 
 #include "catalog/pg_aggregate.h"
 
-#include "utils/elog.h"
 #include "utils/syscache.h"
 #include "utils/lsyscache.h"
 

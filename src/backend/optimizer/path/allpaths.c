@@ -7,11 +7,12 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/optimizer/path/allpaths.c,v 1.1.1.1 1996/07/09 06:21:35 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/optimizer/path/allpaths.c,v 1.2 1996/11/06 09:29:03 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include <string.h>
+#include <stdio.h>
 
 #include "postgres.h"
 
