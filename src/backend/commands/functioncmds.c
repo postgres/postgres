@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/functioncmds.c,v 1.54 2005/01/27 23:23:55 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/functioncmds.c,v 1.55 2005/03/13 05:19:26 neilc Exp $
  *
  * DESCRIPTION
  *	  These routines take the parse tree and pick out the
@@ -300,23 +300,17 @@ compute_attributes_sql_style(List *options,
 
 
 /*-------------
- *	 Interpret the parameters *parameters and return their contents as
- *	 *byte_pct_p, etc.
+ *	 Interpret the parameters *parameters and return their contents via
+ *	 out parameters *isStrict_p and *volatility_p.
  *
  *	These parameters supply optional information about a function.
- *	All have defaults if not specified.
- *
- *	Note: currently, only two of these parameters actually do anything:
+ *	All have defaults if not specified. Parameters:
  *
  *	 * isStrict means the function should not be called when any NULL
  *	   inputs are present; instead a NULL result value should be assumed.
  *
  *	 * volatility tells the optimizer whether the function's result can
  *	   be assumed to be repeatable over multiple evaluations.
- *
- *	The other four parameters are not used anywhere.	They used to be
- *	used in the "expensive functions" optimizer, but that's been dead code
- *	for a long time.
  *------------
  */
 static void
