@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/analyze.c,v 1.17 2001/05/07 00:43:17 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/analyze.c,v 1.18 2001/06/02 19:01:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1439,27 +1439,12 @@ compare_scalars(const void *a, const void *b)
 	int			ta = ((ScalarItem *) a)->tupno;
 	Datum		db = ((ScalarItem *) b)->value;
 	int			tb = ((ScalarItem *) b)->tupno;
+	int32		compare;
 
-	if (datumCmpFnKind == SORTFUNC_LT)
-	{
-		if (DatumGetBool(FunctionCall2(datumCmpFn, da, db)))
-			return -1;			/* a < b */
-		if (DatumGetBool(FunctionCall2(datumCmpFn, db, da)))
-			return 1;			/* a > b */
-	}
-	else
-	{
-		/* sort function is CMP or REVCMP */
-		int32	compare;
-
-		compare = DatumGetInt32(FunctionCall2(datumCmpFn, da, db));
-		if (compare != 0)
-		{
-			if (datumCmpFnKind == SORTFUNC_REVCMP)
-				compare = -compare;
-			return compare;
-		}
-	}
+	compare = ApplySortFunction(datumCmpFn, datumCmpFnKind,
+								da, false, db, false);
+	if (compare != 0)
+		return compare;
 
 	/*
 	 * The two datums are equal, so update datumCmpTupnoLink[].
