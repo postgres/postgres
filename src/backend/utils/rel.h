@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: rel.h,v 1.1.1.1 1996/07/09 06:22:02 scrappy Exp $
+ * $Id: rel.h,v 1.1.1.1.2.1 1996/10/24 07:38:08 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,6 +31,8 @@ typedef struct RelationData {
     uint16		rd_refcnt; 	/* reference count */
     bool		rd_islocal; 	/* uses the local buffer mgr */
     bool		rd_isnailed; 	/* rel is nailed in cache */
+    bool		rd_istemp;	/* rel is a temp rel */
+    bool		rd_tmpunlinked;	/* temp rel already unlinked */
     Form_pg_am 		rd_am; 		/* AM tuple */
     Form_pg_class	rd_rel;		/* RELATION tuple */
     Oid			rd_id;		/* relations's object id */
