@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994-5, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/explain.c,v 1.117 2003/10/17 01:14:26 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/explain.c,v 1.117.2.1 2004/12/13 00:17:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -73,6 +73,16 @@ ExplainQuery(ExplainStmt *stmt, DestReceiver *dest)
 	TupOutputState *tstate;
 	List	   *rewritten;
 	List	   *l;
+
+	/*
+	 * Because the planner is not cool about not scribbling on its input,
+	 * we make a preliminary copy of the source querytree.  This prevents
+	 * problems in the case that the EXPLAIN is in a portal or plpgsql
+	 * function and is executed repeatedly.  (See also the same hack in
+	 * DECLARE CURSOR and PREPARE.)  XXX the planner really shouldn't
+	 * modify its input ... FIXME someday.
+	 */
+	query = copyObject(query);
 
 	/* prepare for projection of tuples */
 	tstate = begin_tup_output_tupdesc(dest, ExplainResultDesc(stmt));
