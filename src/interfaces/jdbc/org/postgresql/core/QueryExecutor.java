@@ -6,7 +6,7 @@
  * Copyright (c) 2003, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/core/Attic/QueryExecutor.java,v 1.26 2003/09/13 04:02:13 barry Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/core/Attic/QueryExecutor.java,v 1.27 2003/09/17 08:21:36 barry Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -162,7 +162,7 @@ public class QueryExecutor
 						// keep processing
 						break;
 					case 'I':	// Empty Query
-						int t = pgStream.ReceiveChar();
+						int t = pgStream.ReceiveIntegerR(4);
 						break;
 					case 'N':	// Error Notification
 						int l_nlen = pgStream.ReceiveIntegerR(4);
@@ -264,7 +264,7 @@ public class QueryExecutor
 						// keep processing
 						break;
 					case 'I':	// Empty Query
-						int t = pgStream.ReceiveChar();
+						int t = pgStream.ReceiveIntegerR(4);
 						break;
 					case 'N':	// Error Notification
 						statement.addWarning(pgStream.ReceiveString(connection.getEncoding()));
