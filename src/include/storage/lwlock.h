@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: lwlock.h,v 1.8 2003/08/04 02:40:14 momjian Exp $
+ * $Id: lwlock.h,v 1.8.4.1 2004/08/11 04:08:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,6 +37,7 @@ typedef enum LWLockId
 	WALWriteLock,
 	ControlFileLock,
 	CheckpointLock,
+	CheckpointStartLock,
 	RelCacheInitLock,
 
 	NumFixedLWLocks,			/* must be last except for
