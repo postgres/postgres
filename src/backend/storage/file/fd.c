@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/file/fd.c,v 1.103 2003/11/29 19:51:56 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/file/fd.c,v 1.104 2003/12/12 18:45:09 petere Exp $
  *
  * NOTES:
  *
@@ -205,7 +205,7 @@ static int	FileAccess(File file);
 static File fileNameOpenFile(FileName fileName, int fileFlags, int fileMode);
 static char *filepath(const char *filename);
 static long pg_nofile(void);
-static void AtProcExit_Files(void);
+static void AtProcExit_Files(int code, Datum arg);
 static void CleanupTempFiles(bool isProcExit);
 
 
@@ -1141,7 +1141,7 @@ AtEOXact_Files(void)
  * Here, we want to clean up *all* temp files including interXact ones.
  */
 static void
-AtProcExit_Files(void)
+AtProcExit_Files(int code, Datum arg)
 {
 	CleanupTempFiles(true);
 }

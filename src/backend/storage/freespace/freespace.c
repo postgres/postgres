@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/freespace/freespace.c,v 1.26 2003/11/29 19:51:56 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/freespace/freespace.c,v 1.27 2003/12/12 18:45:09 petere Exp $
  *
  *
  * NOTES:
@@ -717,7 +717,7 @@ PrintFreeSpaceMapStatistics(int elevel)
  * forma --- if anyone else is still accessing FSM, there's a problem.
  */
 void
-DumpFreeSpaceMap(void)
+DumpFreeSpaceMap(int code, Datum arg)
 {
 	FILE	   *fp;
 	char		cachefilename[MAXPGPATH];

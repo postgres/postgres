@@ -30,7 +30,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$PostgreSQL: pgsql/src/backend/libpq/pqcomm.c,v 1.167 2003/11/29 19:51:49 pgsql Exp $
+ *	$PostgreSQL: pgsql/src/backend/libpq/pqcomm.c,v 1.168 2003/12/12 18:45:08 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -88,7 +88,7 @@
 #include "storage/ipc.h"
 
 
-static void pq_close(void);
+static void pq_close(int code, Datum arg);
 
 #ifdef HAVE_UNIX_SOCKETS
 static int	Lock_AF_UNIX(unsigned short portNumber, char *unixSocketName);
@@ -145,7 +145,7 @@ pq_init(void)
  * --------------------------------
  */
 static void
-pq_close(void)
+pq_close(int code, Datum arg)
 {
 	if (MyProcPort != NULL)
 	{
@@ -183,7 +183,7 @@ static char sock_path[MAXPGPATH];
  */
 #ifdef HAVE_UNIX_SOCKETS
 static void
-StreamDoUnlink(void)
+StreamDoUnlink(int code, Datum arg)
 {
 	Assert(sock_path[0]);
 	unlink(sock_path);

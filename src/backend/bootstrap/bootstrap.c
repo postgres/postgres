@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/bootstrap/bootstrap.c,v 1.169 2003/12/01 22:15:37 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/bootstrap/bootstrap.c,v 1.170 2003/12/12 18:45:08 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -478,8 +478,8 @@ BootstrapMain(int argc, char *argv[])
 			proc_exit(0);		/* done */
 
 		case BS_XLOG_SHUTDOWN:
-			ShutdownXLOG();
-			DumpFreeSpaceMap();
+			ShutdownXLOG(0, 0);
+			DumpFreeSpaceMap(0, 0);
 			proc_exit(0);		/* done */
 
 		default:

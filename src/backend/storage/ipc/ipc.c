@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/ipc/ipc.c,v 1.86 2003/11/29 19:51:56 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/ipc/ipc.c,v 1.87 2003/12/12 18:45:09 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -53,7 +53,7 @@ bool		proc_exit_inprogress = false;
 
 static struct ONEXIT
 {
-	void		(*function) ();
+	void		(*function) (int code, Datum arg);
 	Datum		arg;
 }	on_proc_exit_list[MAX_ON_EXITS], on_shmem_exit_list[MAX_ON_EXITS];
 
@@ -146,7 +146,7 @@ shmem_exit(int code)
  * ----------------------------------------------------------------
  */
 void
-			on_proc_exit(void (*function) (), Datum arg)
+on_proc_exit(void (*function) (int code, Datum arg), Datum arg)
 {
 	if (on_proc_exit_index >= MAX_ON_EXITS)
 		ereport(FATAL,
@@ -167,7 +167,7 @@ void
  * ----------------------------------------------------------------
  */
 void
-			on_shmem_exit(void (*function) (), Datum arg)
+on_shmem_exit(void (*function) (int code, Datum arg), Datum arg)
 {
 	if (on_shmem_exit_index >= MAX_ON_EXITS)
 		ereport(FATAL,

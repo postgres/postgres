@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/proc.c,v 1.139 2003/12/01 21:59:25 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/proc.c,v 1.140 2003/12/12 18:45:09 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -84,8 +84,8 @@ static volatile bool deadlock_timeout_active = false;
 static struct timeval statement_fin_time;
 
 
-static void ProcKill(void);
-static void DummyProcKill(void);
+static void ProcKill(int code, Datum arg);
+static void DummyProcKill(int code, Datum arg);
 static bool CheckStatementTimeout(void);
 
 
@@ -406,7 +406,7 @@ ProcReleaseLocks(bool isCommit)
  *		this process. Release any of its held LW locks.
  */
 static void
-ProcKill(void)
+ProcKill(int code, Datum arg)
 {
 	/* use volatile pointer to prevent code rearrangement */
 	volatile PROC_HDR *procglobal = ProcGlobal;
@@ -455,7 +455,7 @@ ProcKill(void)
  *		as not-in-use.
  */
 static void
-DummyProcKill(void)
+DummyProcKill(int code, Datum arg)
 {
 	PGPROC	*dummyproc;
 

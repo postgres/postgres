@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/smgr/smgr.c,v 1.66 2003/11/29 19:51:57 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/smgr/smgr.c,v 1.67 2003/12/12 18:45:09 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,7 +24,7 @@
 #include "utils/memutils.h"
 
 
-static void smgrshutdown(void);
+static void smgrshutdown(int code, Datum arg);
 
 typedef struct f_smgr
 {
@@ -142,7 +142,7 @@ smgrinit(void)
 }
 
 static void
-smgrshutdown(void)
+smgrshutdown(int code, Datum arg)
 {
 	int			i;
 
