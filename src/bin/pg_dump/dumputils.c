@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/pg_dump/dumputils.c,v 1.10 2003/11/29 19:52:05 pgsql Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_dump/dumputils.c,v 1.11 2004/01/07 00:44:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,7 +21,6 @@
 
 #define supports_grant_options(version) ((version) >= 70400)
 
-static bool parseAclArray(const char *acls, char ***itemarray, int *nitems);
 static bool parseAclItem(const char *item, const char *type, const char *name,
 			 int remoteVersion,
 			 PQExpBuffer grantee, PQExpBuffer grantor,
@@ -167,6 +166,91 @@ parse_version(const char *versionString)
 
 
 /*
+ * Deconstruct the text representation of a 1-dimensional Postgres array
+ * into individual items.
+ *
+ * On success, returns true and sets *itemarray and *nitems to describe
+ * an array of individual strings.	On parse failure, returns false;
+ * *itemarray may exist or be NULL.
+ *
+ * NOTE: free'ing itemarray is sufficient to deallocate the working storage.
+ */
+bool
+parsePGArray(const char *atext, char ***itemarray, int *nitems)
+{
+	int			inputlen;
+	char	  **items;
+	char	   *strings;
+	int			curitem;
+
+	/*
+	 * We expect input in the form of "{item,item,item}" where any item is
+	 * either raw data, or surrounded by double quotes (in which case
+	 * embedded characters including backslashes and quotes are
+	 * backslashed).
+	 *
+	 * We build the result as an array of pointers followed by the actual
+	 * string data, all in one malloc block for convenience of
+	 * deallocation. The worst-case storage need is not more than one
+	 * pointer and one character for each input character (consider
+	 * "{,,,,,,,,,,}").
+	 */
+	*itemarray = NULL;
+	*nitems = 0;
+	inputlen = strlen(atext);
+	if (inputlen < 2 || atext[0] != '{' || atext[inputlen - 1] != '}')
+		return false;			/* bad input */
+	items = (char **) malloc(inputlen * (sizeof(char *) + sizeof(char)));
+	if (items == NULL)
+		return false;			/* out of memory */
+	*itemarray = items;
+	strings = (char *) (items + inputlen);
+
+	atext++;					/* advance over initial '{' */
+	curitem = 0;
+	while (*atext != '}')
+	{
+		if (*atext == '\0')
+			return false;		/* premature end of string */
+		items[curitem] = strings;
+		while (*atext != '}' && *atext != ',')
+		{
+			if (*atext == '\0')
+				return false;	/* premature end of string */
+			if (*atext != '"')
+				*strings++ = *atext++;	/* copy unquoted data */
+			else
+			{
+				/* process quoted substring */
+				atext++;
+				while (*atext != '"')
+				{
+					if (*atext == '\0')
+						return false;	/* premature end of string */
+					if (*atext == '\\')
+					{
+						atext++;
+						if (*atext == '\0')
+							return false;		/* premature end of string */
+					}
+					*strings++ = *atext++;		/* copy quoted data */
+				}
+				atext++;
+			}
+		}
+		*strings++ = '\0';
+		if (*atext == ',')
+			atext++;
+		curitem++;
+	}
+	if (atext[1] != '\0')
+		return false;			/* bogus syntax (embedded '}') */
+	*nitems = curitem;
+	return true;
+}
+
+
+/*
  * Build GRANT/REVOKE command(s) for an object.
  *
  *	name: the object name, in the form to use in the commands (already quoted)
@@ -202,7 +286,7 @@ buildACLCommands(const char *name, const char *type,
 	if (strlen(acls) == 0)
 		return true;			/* object has default permissions */
 
-	if (!parseAclArray(acls, &aclitems, &naclitems))
+	if (!parsePGArray(acls, &aclitems, &naclitems))
 	{
 		if (aclitems)
 			free(aclitems);
@@ -338,90 +422,6 @@ buildACLCommands(const char *name, const char *type,
 
 	free(aclitems);
 
-	return true;
-}
-
-/*
- * Deconstruct an ACL array (or actually any 1-dimensional Postgres array)
- * into individual items.
- *
- * On success, returns true and sets *itemarray and *nitems to describe
- * an array of individual strings.	On parse failure, returns false;
- * *itemarray may exist or be NULL.
- *
- * NOTE: free'ing itemarray is sufficient to deallocate the working storage.
- */
-static bool
-parseAclArray(const char *acls, char ***itemarray, int *nitems)
-{
-	int			inputlen;
-	char	  **items;
-	char	   *strings;
-	int			curitem;
-
-	/*
-	 * We expect input in the form of "{item,item,item}" where any item is
-	 * either raw data, or surrounded by double quotes (in which case
-	 * embedded characters including backslashes and quotes are
-	 * backslashed).
-	 *
-	 * We build the result as an array of pointers followed by the actual
-	 * string data, all in one malloc block for convenience of
-	 * deallocation. The worst-case storage need is not more than one
-	 * pointer and one character for each input character (consider
-	 * "{,,,,,,,,,,}").
-	 */
-	*itemarray = NULL;
-	*nitems = 0;
-	inputlen = strlen(acls);
-	if (inputlen < 2 || acls[0] != '{' || acls[inputlen - 1] != '}')
-		return false;			/* bad input */
-	items = (char **) malloc(inputlen * (sizeof(char *) + sizeof(char)));
-	if (items == NULL)
-		return false;			/* out of memory */
-	*itemarray = items;
-	strings = (char *) (items + inputlen);
-
-	acls++;						/* advance over initial '{' */
-	curitem = 0;
-	while (*acls != '}')
-	{
-		if (*acls == '\0')
-			return false;		/* premature end of string */
-		items[curitem] = strings;
-		while (*acls != '}' && *acls != ',')
-		{
-			if (*acls == '\0')
-				return false;	/* premature end of string */
-			if (*acls != '"')
-				*strings++ = *acls++;	/* copy unquoted data */
-			else
-			{
-				/* process quoted substring */
-				acls++;
-				while (*acls != '"')
-				{
-					if (*acls == '\0')
-						return false;	/* premature end of string */
-					if (*acls == '\\')
-					{
-						acls++;
-						if (*acls == '\0')
-							return false;		/* premature end of string */
-					}
-					*strings++ = *acls++;		/* copy quoted data */
-				}
-				acls++;
-			}
-		}
-		*strings++ = '\0';
-		if (*acls == ',')
-			acls++;
-		curitem++;
-	}
-	if (acls[1] != '\0')
-		return false;			/* bogus syntax (embedded '}') */
-	*nitems = curitem;
 	return true;
 }
 

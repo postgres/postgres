@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/pg_dump/dumputils.h,v 1.9 2003/11/29 22:40:46 pgsql Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_dump/dumputils.h,v 1.10 2004/01/07 00:44:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,6 +22,7 @@ extern const char *fmtId(const char *identifier);
 extern void appendStringLiteral(PQExpBuffer buf, const char *str,
 					bool escapeAll);
 extern int	parse_version(const char *versionString);
+extern bool parsePGArray(const char *atext, char ***itemarray, int *nitems);
 extern bool buildACLCommands(const char *name, const char *type,
 				 const char *acls, const char *owner,
 				 int remoteVersion,

@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.361 2003/12/19 14:21:56 petere Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.362 2004/01/07 00:44:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -135,7 +135,8 @@ static void dumpACL(Archive *fout, CatalogId objCatId, DumpId objDumpId,
 static void getDependencies(void);
 static void getDomainConstraints(TypeInfo *tinfo);
 static void getTableData(TableInfo *tblinfo, int numTables, bool oids);
-static char *format_function_signature(FuncInfo *finfo, bool honor_quotes);
+static char *format_function_signature(FuncInfo *finfo, char **argnames,
+									   bool honor_quotes);
 static const char *convertRegProcReference(const char *proc);
 static const char *convertOperatorReference(const char *opr);
 static Oid	findLastBuiltinOid_V71(const char *);
@@ -4650,9 +4651,12 @@ dumpProcLang(Archive *fout, ProcLangInfo *plang)
  *
  * The argument type names are qualified if needed.  The function name
  * is never qualified.
+ *
+ * argnames may be NULL if no names are available.
  */
 static char *
-format_function_signature(FuncInfo *finfo, bool honor_quotes)
+format_function_signature(FuncInfo *finfo, char **argnames,
+						  bool honor_quotes)
 {
 	PQExpBufferData fn;
 	int			j;
@@ -4665,10 +4669,18 @@ format_function_signature(FuncInfo *finfo, bool honor_quotes)
 	for (j = 0; j < finfo->nargs; j++)
 	{
 		char	   *typname;
+		char	   *argname;
 
 		typname = getFormattedTypeName(finfo->argtypes[j], zeroAsOpaque);
-		appendPQExpBuffer(&fn, "%s%s",
+
+		argname = argnames ? argnames[j] : (char *) NULL;
+		if (argname && argname[0] == '\0')
+			argname = NULL;
+
+		appendPQExpBuffer(&fn, "%s%s%s%s",
 						  (j > 0) ? ", " : "",
+						  argname ? fmtId(argname) : "",
+						  argname ? " " : "",
 						  typname);
 		free(typname);
 	}
@@ -4695,11 +4707,13 @@ dumpFunc(Archive *fout, FuncInfo *finfo)
 	char	   *proretset;
 	char	   *prosrc;
 	char	   *probin;
+	char	   *proargnames;
 	char	   *provolatile;
 	char	   *proisstrict;
 	char	   *prosecdef;
 	char	   *lanname;
 	char	   *rettypename;
+	char	  **argnamearray = NULL;
 
 	/* Dump only funcs in dumpable namespaces */
 	if (!finfo->pronamespace->dump || dataOnly)
@@ -4714,10 +4728,22 @@ dumpFunc(Archive *fout, FuncInfo *finfo)
 	selectSourceSchema(finfo->pronamespace->nspname);
 
 	/* Fetch function-specific details */
-	if (g_fout->remoteVersion >= 70300)
+	if (g_fout->remoteVersion >= 70500)
 	{
 		appendPQExpBuffer(query,
 						  "SELECT proretset, prosrc, probin, "
+						  "proargnames, "
+						  "provolatile, proisstrict, prosecdef, "
+						  "(SELECT lanname FROM pg_catalog.pg_language WHERE oid = prolang) as lanname "
+						  "FROM pg_catalog.pg_proc "
+						  "WHERE oid = '%u'::pg_catalog.oid",
+						  finfo->dobj.catId.oid);
+	}
+	else if (g_fout->remoteVersion >= 70300)
+	{
+		appendPQExpBuffer(query,
+						  "SELECT proretset, prosrc, probin, "
+						  "null::text as proargnames, "
 						  "provolatile, proisstrict, prosecdef, "
 						  "(SELECT lanname FROM pg_catalog.pg_language WHERE oid = prolang) as lanname "
 						  "FROM pg_catalog.pg_proc "
@@ -4728,6 +4754,7 @@ dumpFunc(Archive *fout, FuncInfo *finfo)
 	{
 		appendPQExpBuffer(query,
 						  "SELECT proretset, prosrc, probin, "
+						  "null::text as proargnames, "
 		 "case when proiscachable then 'i' else 'v' end as provolatile, "
 						  "proisstrict, "
 						  "'f'::boolean as prosecdef, "
@@ -4740,6 +4767,7 @@ dumpFunc(Archive *fout, FuncInfo *finfo)
 	{
 		appendPQExpBuffer(query,
 						  "SELECT proretset, prosrc, probin, "
+						  "null::text as proargnames, "
 		 "case when proiscachable then 'i' else 'v' end as provolatile, "
 						  "'f'::boolean as proisstrict, "
 						  "'f'::boolean as prosecdef, "
@@ -4764,6 +4792,7 @@ dumpFunc(Archive *fout, FuncInfo *finfo)
 	proretset = PQgetvalue(res, 0, PQfnumber(res, "proretset"));
 	prosrc = PQgetvalue(res, 0, PQfnumber(res, "prosrc"));
 	probin = PQgetvalue(res, 0, PQfnumber(res, "probin"));
+	proargnames = PQgetvalue(res, 0, PQfnumber(res, "proargnames"));
 	provolatile = PQgetvalue(res, 0, PQfnumber(res, "provolatile"));
 	proisstrict = PQgetvalue(res, 0, PQfnumber(res, "proisstrict"));
 	prosecdef = PQgetvalue(res, 0, PQfnumber(res, "prosecdef"));
@@ -4792,8 +4821,22 @@ dumpFunc(Archive *fout, FuncInfo *finfo)
 		}
 	}
 
-	funcsig = format_function_signature(finfo, true);
-	funcsig_tag = format_function_signature(finfo, false);
+	if (proargnames && *proargnames)
+	{
+		int		nitems = 0;
+
+		if (!parsePGArray(proargnames, &argnamearray, &nitems) ||
+			nitems != finfo->nargs)
+		{
+			write_msg(NULL, "WARNING: could not parse proargnames array\n");
+			if (argnamearray)
+				free(argnamearray);
+			argnamearray = NULL;
+		}
+	}
+
+	funcsig = format_function_signature(finfo, argnamearray, true);
+	funcsig_tag = format_function_signature(finfo, NULL, false);
 
 	/*
 	 * DROP must be fully qualified in case same name appears in
@@ -4864,6 +4907,8 @@ dumpFunc(Archive *fout, FuncInfo *finfo)
 	destroyPQExpBuffer(asPart);
 	free(funcsig);
 	free(funcsig_tag);
+	if (argnamearray)
+		free(argnamearray);
 }
 
 
@@ -4953,7 +4998,7 @@ dumpCast(Archive *fout, CastInfo *cast)
 		appendPQExpBuffer(defqry, "WITHOUT FUNCTION");
 	else
 		appendPQExpBuffer(defqry, "WITH FUNCTION %s",
-						  format_function_signature(funcInfo, true));
+						  format_function_signature(funcInfo, NULL, true));
 
 	if (cast->castcontext == 'a')
 		appendPQExpBuffer(defqry, " AS ASSIGNMENT");
@@ -5892,8 +5937,8 @@ dumpAgg(Archive *fout, AggInfo *agginfo)
 	free(aggsig);
 	free(aggsig_tag);
 
-	aggsig = format_function_signature(&agginfo->aggfn, true);
-	aggsig_tag = format_function_signature(&agginfo->aggfn, false);
+	aggsig = format_function_signature(&agginfo->aggfn, NULL, true);
+	aggsig_tag = format_function_signature(&agginfo->aggfn, NULL, false);
 
 	dumpACL(fout, agginfo->aggfn.dobj.catId, agginfo->aggfn.dobj.dumpId,
 			"FUNCTION",
