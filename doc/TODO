@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Tue Feb 19 16:36:28 EST 2002
+Last updated:		Tue Feb 19 16:38:14 EST 2002
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -47,7 +47,8 @@ PERMISSIONS
 * Add PGPASSWORDFILE environment variable or ~/.pgpass to store
   user/host/password combinations
 * Remove PGPASSWORD because is insecure on some OS's
-* Make single-user local access permissions the default (Peter E)
+* Make single-user local access permissions the default by limiting
+  permissions on the socket file (Peter E)
 * Use thread-safe crypt() in libpq, if available
 
 
