@@ -4,3 +4,10 @@ CC="$CC -no-cpp-precomp"
 
 # Select appropriate semaphore support
 USE_NAMED_POSIX_SEMAPHORES=1
+
+THREAD_SUPPORT=yes
+THREAD_CPPFLAGS="-D_REENTRANT -D_THREAD_SAFE -D_POSIX_PTHREAD_SEMANTICS"
+THREAD_LIBS="-lpthread"
+
+NEED_REENTRANT_FUNCS=yes
+
