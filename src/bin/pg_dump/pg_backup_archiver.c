@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.88 2004/07/13 03:00:17 momjian Exp $
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.89 2004/07/19 21:02:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2389,6 +2389,17 @@ _printTocEntry(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt, bool isDat
 	}
 	else if (isData) {
 		_printTocHeader(AH, te, ropt, isData);
+	}
+
+	/*
+	 * If it's an ACL entry, it might contain SET SESSION AUTHORIZATION
+	 * commands, so we can no longer assume we know the current auth setting.
+	 */
+	if (strncmp(te->desc, "ACL", 3) == 0)
+	{
+		if (AH->currUser)
+			free(AH->currUser);
+		AH->currUser = NULL;
 	}
 
 	return 1;
