@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/hba.c,v 1.84 2002/06/20 20:29:28 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/hba.c,v 1.85 2002/06/26 14:52:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -74,7 +74,7 @@ static char *tokenize_inc_file(const char *inc_filename);
 static bool
 isblank(const char c)
 {
-	return c == ' ' || c == '\t';
+	return c == ' ' || c == '\t' || c == '\r';
 }
 
 
