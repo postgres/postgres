@@ -1,5 +1,5 @@
 dnl Process this file with autoconf to produce a configure script.
-dnl $PostgreSQL: pgsql/configure.in,v 1.348 2004/05/13 22:59:14 momjian Exp $
+dnl $PostgreSQL: pgsql/configure.in,v 1.349 2004/05/17 19:14:47 momjian Exp $
 dnl
 dnl Developers, please strive to achieve this order:
 dnl
@@ -1236,6 +1236,21 @@ AC_CONFIG_LINKS([
   src/Makefile.port:src/makefiles/Makefile.${template}
 ])
 
+case $host_os in mingw*)
+AC_OUTPUT_COMMANDS([
+# Links sometimes fail undetected on Mingw - 
+# so here we detect it and warn the user
+for FILE in "$CONFIG_LINKS"
+ do
+	# test -e works for symlinks in the MinGW console
+	# We can't call AC_MSG_WARN from here, so we expand it
+	test -e `expr "$FILE" : '\(^:*\)'` || { echo "$as_me:$LINENO: WARNING: *** link for $FILE - please fix by hand" >&5
+echo "$as_me: WARNING: *** link for $FILE - please fix by hand" >&2;}
+ done
+])
+	;;
+esac
+
 AC_CONFIG_HEADERS([src/include/pg_config.h],
 [
 # Update timestamp for pg_config.h (see Makefile.global)
@@ -1243,15 +1258,4 @@ echo >src/include/stamp-h
 ])
 
 AC_OUTPUT
-
-# Links sometimes fail undetected on Mingw - 
-# so here we detect it and warn the user
-case $host_os in mingw*)
-for FILE in "$CONFIG_LINKS"
- do
-	# test -e works for symlinks in the MinGW console
-	test -e `expr "$FILE" : '\([^:]*\)'` || AC_MSG_WARN([*** link for $FILE - please fix by hand])
- done
-	;;
-esac
 
