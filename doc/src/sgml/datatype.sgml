@@ -2005,7 +2005,7 @@ and boolean expressions
 always evaluate to a result compatible with this type.</para>
 
 <para>
-<type>bool</type> uses 4 bytes of storage.
+<type>bool</type> uses 1 byte of storage.
 </para>
 
 <para>
