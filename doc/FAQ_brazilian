@@ -1,18 +1,19 @@
 
                   Perguntas Frequentes (FAQ) sobre PostgreSQL
                                        
-   Última atualização: Sat Nov 20 17:28:23 EDT 2004
+   Última atualização: Dom Jan 9 14:44:04 EDT 2005
    
    Mantenedor atual: Bruce Momjian (pgman@candle.pha.pa.us)
    
    Traduzido por: Euler Taveira de Oliveira (eulerto@yahoo.com.br)
    
    A versão mais recente desse documento pode ser vista em
-   http://www.PostgreSQL.org/docs/faqs/FAQ.html (EN).
-   http://www.PostgreSQL.org/docs/faqs/FAQ_brazilian.html (pt_BR).
+   http://www.postgresql.org/files/documentation/faqs/FAQ.html (EN).
+   http://www.postgresql.org/files/documentation/faqs/FAQ_brazilian.html
+   (pt_BR).
    
    Perguntas sobre plataformas específicas são respondidas em
-   http://www.PostgreSQL.org/docs/index.html.
+   http://www.postgresql.org/docs/faq/.
      _________________________________________________________________
    
                               Perguntas Gerais
@@ -92,8 +93,8 @@
    4.14) Qual é a diferença entre os vários tipos de dados de caracteres?
    4.15.1) Como eu crio um campo serial/auto incremento?
    4.15.2) Como eu consigo o valor de um campo SERIAL?
-   4.15.3) currval() e nextval() não lidam com condição de corrida com
-   outros usuários?
+   4.15.3) currval() não lida com condição de corrida com outros
+   usuários?
    4.15.4) Por que os números da minha sequência não são reutilizados
    quando uma transação é abortada? Por que há intervalos nos números da
    minha sequência/coluna SERIAL?
@@ -128,9 +129,7 @@
                                       
     1.1) O que é PostgreSQL? Como ele é pronunciado?
     
-   PostgreSQL é pronunciado Post-Gres-Qui-El. Um arquivo de áudio está
-   disponível em http://www.postgresql.org/postgresql.mp3 para aqueles
-   que gostariam de ouvir a pronúncia.
+   PostgreSQL é pronunciado Post-Gres-Q-L.
    
    PostgreSQL é um melhoramento do sistema de gerência de banco de dados
    POSTGRES (e também é, às vezes, chamado simplesmente de "Postgres"),
@@ -147,7 +146,7 @@
    ao grupo). O grupo é responsável por todo o desenvolvimento do
    PostgreSQL. É um projeto da comunidade e não é controlado por nenhuma
    empresa. Para se juntar ao grupo, veja a FAQ do desenvolvedor em
-   http://www.PostgreSQL.org/docs/faqs/FAQ_DEV.html
+   http://www.postgresql.org/files/documentation/faqs/FAQ_DEV.html
    
    Os autores do PostgreSQL 1.01 foram Andrew Yu e Jolly Chen. Muitos
    outros contribuiram para portar, testar, depurar e melhorar o código.
@@ -166,7 +165,7 @@
    
    PostgreSQL Sistema de Gerência de Banco de Dados
    
-   Portions copyright (c) 1996-2004, PostgreSQL Global Development Group
+   Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
    Portions Copyright (c) 1994-6 Regents of the University of California
    
    Permissão de uso, cópia, modificação e distribuição desse software e
@@ -204,9 +203,14 @@
    Iniciando com a versão 8.0, o PostgreSQL agora pode ser executado
    nativamente nos sistemas operacionais Microsoft Windows baseados no NT
    tais como Win2000, WinXP e Win2003. Um instalador está disponível em
-   http://pgfoundry.org/projects/pginstaller.
+   http://pgfoundry.org/projects/pginstaller Versões do Windows baseados
+   no MSDOS (Win95, Win98, WinMe) podem executar o PostgreSQL utilizando
+   o Cygwin.
    
-   Há também um porte para Novell Netware 6 em http://forge.novell.com.
+   Há também um porte para Novell Netware 6 em http://forge.novell.com e
+   uma versão para OS/2 (eComStation) em
+   http://hobbes.nmsu.edu/cgi-bin/h-search?sh=1&button=Search&key=postgre
+   SQL&stype=all&sort=type&dir=%2F.
    
     1.5) Onde eu posso conseguir o PostgreSQL?
     
@@ -251,16 +255,19 @@
    
      http://www.PostgreSQL.org
      
-   Há também um canal de IRC na Freenode e EFNet, canal PostgreSQL. Você
-   pode utilizar o comando Unix irc -c '#PostgreSQL' "$USER"
-   irc.phoenix.net. ou irc -c '#PostgreSQL' "$USER" irc.freenode.net.
+   O principal canal de IRC é o #postgresql na Freenode
+   (irc.freenode.net). Para se conectar você pode utilizar o comando Unix
+   irc -c '#postgresql' "$USER" irc.freenode.net ou utilizar qualquer
+   outro cliente de IRC. Um canal hispânico (#postgresql-es) e um francês
+   (#postgresqlfr) também existem na mesma rede. Há também um canal
+   PostgreSQL na EFNet.
    
    Uma lista de empresas que prestam suporte comercial está disponível em
    http://techdocs.postgresql.org/companies.php.
    
     1.7) Qual é a última versão?
     
-   A última versão do PostgreSQL é a versão 7.4.5.
+   A última versão do PostgreSQL é a versão 7.4.6.
    
    Nós planejamos lançar versões novas a cada seis ou oito meses.
    
@@ -278,8 +285,9 @@
    coleção de artigos técnicos sobre PostgreSQL em
    http://techdocs.PostgreSQL.org/.
    
-   psql tem alguns comandos \d para mostrar informação sobre tipos,
-   operadores, funções, agregações, etc.
+   O programa cliente de linha de comando psql tem alguns comandos \d
+   para mostrar informação sobre tipos, operadores, funções, agregações,
+   etc. Use \? para mostrar os comandos disponíveis.
    
    Nosso web site contém ainda mais documentação.
    
@@ -327,9 +335,8 @@
    
     1.13) Como eu informo a existência de um bug?
     
-   Por favor visite a página da ferramenta que reporta bugs em
-   http://www.PostgreSQL.org/bugs/bugs.php, que irá lher dar as
-   instruções e direções de como submeter um bug.
+   Visite o formulário que reporta bugs do PostgreSQL em
+   http://www.postgresql.org/support/submitbug.
    
    Verifique também o nosso ftp ftp://ftp.PostgreSQL.org/pub para ver se
    há uma versão mais recente do PostgreSQL ou patches.
@@ -349,23 +356,17 @@
           travamentos (locks).
           
    Performance
-          PostgreSQL tem a performance similar a outros bancos de dados
-          comerciais e de código livre. Ele é mais rápido em algumas
-          coisas, mais lento em outras. Comparado ao MySQL ou sistemas de
-          bancos de dados "leves", nós somos mais rápidos com múltiplos
-          usuários, consultas complexas e carga de consultas de
+          A performance do PostgreSQL é comparável a outros bancos de
+          dados comerciais e de código livre. Ele é mais rápido em
+          algumas coisas, mais lento em outras. Comparado ao MySQL ou
+          sistemas de bancos de dados "leves", nós somos mais rápidos com
+          múltiplos usuários, consultas complexas e carga de consultas de
           leitura/escrita. MySQL é mais rápido para consultas simples com
           SELECT feitas por poucos usuários. É claro que o MySQL não tem
           muitas das características mencionadas na seção Características
           acima. Nós desenvolvemos buscando confiabilidade e
           características, e nós continuamos a melhorar a performance a
-          cada versão. Há uma página interessante comparando o PostgreSQL
-          com o MySQL em
-          http://openacs.org/philosophy/why-not-mysql.html. MySQL é uma
-          empresa que distribui seu produto via código livre, e requer
-          uma licença comercial para software de código fechado, e não
-          uma comunidade de desenvolvimento de código livre como o
-          PostgreSQL.
+          cada versão.
           
    Confiabilidade
           Nós sabemos que um SGBD deve ser confiável ou ele é inútil. Nós
@@ -413,10 +414,10 @@
    para apoiar o projeto PostgreSQL e não financia nenhuma empresa
    específica. Se você preferir, você pode enviar um cheque para o
    endereço de contato.
-     _________________________________________________________________
    
    Se você tiver uma história de sucesso sobre o PostgreSQL, envie-a para
-   nosso website em http://advocacy.postgresql.org.
+   nossa lista advocacy em pgsql-advocacy@postgresql.org.
+     _________________________________________________________________
    
                           Perguntas sobre Clientes
                                       
@@ -451,12 +452,12 @@
     2.3) O PostgreSQL tem interfaces gráficas para iteragir com o usuário?
     
    Sim, há várias interfaces gráficas para PostgreSQL disponíveis. Entre
-   elas o PgAccess http://www.pgaccess.org), PgAdmin III
-   (http://www.pgadmin.org, RHDB Admin (http://sources.redhat.com/rhdb/ )
-   e o Rekall ( http://www.thekompany.com/products/rekall/,
-   proprietária). Há também o PhpPgAdmin (
-   http://phppgadmin.sourceforge.net/ ), uma interface web para
-   PostgreSQL.
+   elas o PgAccess http://www.pgaccess.org), pgAdmin III
+   (http://www.pgadmin.org, RHDB Admin (http://sources.redhat.com/rhdb/
+   ), TORA (http://www.globecom.net/tora/, parcialmente comercial) e o
+   Rekall ( http://www.thekompany.com/products/rekall/, proprietária). Há
+   também o PhpPgAdmin ( http://phppgadmin.sourceforge.net/ ), uma
+   interface web para PostgreSQL.
    
    Veja http://techdocs.postgresql.org/guides/GUITools para uma lista
    mais detalhada.
@@ -500,9 +501,10 @@
    kernel. A quantidade exata que você precisa vai depender da
    arquitetura e de quantos buffers e processos do servidor você
    configurou para o postmaster. Muitos sistemas, com o número padrão de
-   buffers e processos, precisam de aproximadamente 1 MB. Veja o Guia do
-   Administrador do PostgreSQL para mais informação sobre memória
-   compartilhada e semáforos.
+   buffers e processos, precisam de aproximadamente 1 MB. Veja a seção
+   PostgreSQL Administrator's Guide/Server Run-time Environment/Managing
+   Kernel Resources para mais informação sobre memória compartilhada e
+   semáforos.
    
     3.4) Quando eu tento iniciar o postmaster, eu recebo erros
     IpcSemaphoreCreate. Por que?
@@ -546,21 +548,22 @@
    remover e criar índices novamente quando estiver fazendo muitas
    mudanças nos dados.
    
-   Há várias opções de ajuste. Você pode desabilitar o fsync() iniciando
-   o postmaster com a opção -o -F. Isso irá impedir que fsync()s enviem
-   os dados para disco após cada transação.
+   Há várias opções de ajuste em Administration Guide/Server Run-time
+   Environment/Run-time Configuration. Você pode desabilitar o fsync()
+   utilizando a opção fsync. Isso irá impedir que fsync()s enviem os
+   dados para disco após cada transação.
    
-   Você também pode utilizar a opção -B do postmaster para aumentar o
-   número de buffers de memória compartilhada utilizados pelos processos
-   do servidor. Se você definiu este parâmetro com um valor muito alto, o
+   Você pode utilizar a opção shared_buffers para aumentar o número de
+   buffers de memória compartilhada utilizados pelos processos do
+   servidor. Se você definiu este parâmetro com um valor muito alto, o
    postmaster pode não iniciar porque você excedeu o limite de espaço de
    memória compartilhada do kernel. Cada buffer é de 8K e o padrão é de
-   64 buffers.
+   1000 buffers.
    
-   Você também pode utilizar a opção -S do backend para aumentar a máxima
-   quantidade de memória utilizada pelo processo servidor para ordenações
-   temporárias. O valor de -S é medido em kilobytes e o padrão é de 512
-   (ou seja 512K).
+   Você também pode utilizar a opção sort_mem (no PostgreSQL 8.0:
+   work_mem) para aumentar a máxima quantidade de memória utilizada pelo
+   processo servidor para cada ordenação temporária. O valor padrão é
+   1024 (ou seja 1MB).
    
    Você também pode utilizar o comando CLUSTER para agrupar dados em
    tabelas para combinar um índice. Veja o manual sobre CLUSTER para mais
@@ -598,8 +601,24 @@
    ambiente idêntico e problemas de iteração com o núcleo/travamento não
    podem ser reproduzidos.
    
-   O programa postgres possue as opções -s, -A, e -t que podem ser muito
-   úteis para depuração e medidas de performance.
+   Se o postmaster está sendo executado, inicie o psql em uma janela, e
+   então encontre o PID do processo postgres utilizado pelo psql
+   utilizando
+SELECT pg_backend_pid()
+
+   . Utilize um depurador para anexar ao PID do postgres. Você pode
+   definir pontos de parada (breakpoints) no depurador e digitar
+   consultas no psql. Se você está depurando a inicialização do postgres,
+   você pode definir PGOPTIONS="-W n" e então iniciar o psql. Isto
+   retardará a inicialização por n segundos então você pode anexar o
+   depurador ao processo, definir quaisquer pontos de parada e continuar
+   pela sequência de inicialização.
+   
+   Há várias variáveis de configuração do servidor
+log_*
+
+   que habilitam a exibição de estatísticas que podem ser muito úteis
+   para depuração e medidas de performance.
    
    Você também pode compilar com perfil para ver que funções estão
    demandando tempo de execução. Os arquivo de perfil do núcleo (backend)
@@ -852,7 +871,13 @@ para cima)
      * Buscas que não diferenciam maiúsculas de minúsculas tais como
        ILIKE e ~* não utilizam índices. Ao invés, utilize índices
        funcionais, que são descritos na seção 4.12.
-     * A localidade padrão C deve ser utilizada durante o initdb.
+     * A localidade padrão C deve ser utilizada durante o initdb porque
+       não é possível saber o próximo/maior caracter em uma localidade
+       que não seja a C. Você pode criar um índice especial
+text_pattern_ops
+       para tais casos que funcionam somente para indexação utilizando
+LIKE
+       .
        
    Em versões anteriores a 8.0, índices frequentemente não podiam ser
    usados a menos que os tipos de dados correspodessem aos tipos da
@@ -999,11 +1024,10 @@ te safe)
    Finalmente, você poderia utilizar o OID retornado da sentença INSERT
    para obter o valor padrão, embora este seja a abordagem menos
    portável, pois o valor do oid não ultrapassa 4 bilhões. Em Perl,
-   utilizando DBI com o módulo DBD::Pg de Edmund Mergl, o valor do oid
-   está disponível via $sth->{pg_oid_status} depois de $sth->execute().
+   utilizando DBI com o módulo DBD::Pg, o valor do oid está disponível
+   via $sth->{pg_oid_status} depois de $sth->execute().
    
-    4.15.3) currval() e nextval() não lidam com condição de corrida com outros
-    usuários?
+    4.15.3) currval() não lida com condição de corrida com outros usuários?
     
    Não. currval() retorna o valor atual atribuido pelo seu núcleo
    (backend), e não por todos os usuários.

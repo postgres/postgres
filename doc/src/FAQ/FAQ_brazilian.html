@@ -10,7 +10,7 @@
   alink="#0000ff">
     <H1>Perguntas Frequentes (FAQ) sobre PostgreSQL</H1>
 
-    <P>&Uacute;ltima atualiza&ccedil;&atilde;o: Sat Nov 20 17:28:23 EDT 2004</P>
+    <P>&Uacute;ltima atualiza&ccedil;&atilde;o: Dom Jan 9 14:44:04 EDT 2005</P>
 
     <P>Mantenedor atual: Bruce Momjian (<A href=
     "mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</A>)<BR>
@@ -20,12 +20,13 @@
     "mailto:eulerto@yahoo.com.br">eulerto@yahoo.com.br</A>)<BR>
 
     <P>A vers&atilde;o mais recente desse documento pode ser vista em <A href=
-	    "http://www.PostgreSQL.org/docs/faqs/FAQ.html">http://www.PostgreSQL.org/docs/faqs/FAQ.html</A> (EN).<BR>
-    <A href="http://www.postgresql.org/docs/faqs/FAQ_brazilian.html">http://www.PostgreSQL.org/docs/faqs/FAQ_brazilian.html</A>
-     (pt_BR).</P>
+    "http://www.postgresql.org/files/documentation/faqs/FAQ.html">
+    http://www.postgresql.org/files/documentation/faqs/FAQ.html</A> (EN).<BR>
+    <A href="http://www.postgresql.org/files/documentation/faqs/FAQ_brazilian.html">
+    http://www.postgresql.org/files/documentation/faqs/FAQ_brazilian.html</A> (pt_BR).</P>
 
      <P>Perguntas sobre plataformas espec&iacute;ficas s&atilde;o respondidas em <A href=
-    "http://www.PostgreSQL.org/docs/index.html">http://www.PostgreSQL.org/docs/index.html</A>.</P>
+    "http://www.postgresql.org/docs/faq/">http://www.postgresql.org/docs/faq/</A>.</P>
     <HR>
 
     <H2 align="center">Perguntas Gerais</H2>
@@ -88,8 +89,7 @@
     <A href="#4.15.1">4.15.1</A>) Como eu crio um campo serial/auto incremento?<BR>
      <A href="#4.15.2">4.15.2</A>) Como eu consigo o valor de um campo
     <SMALL>SERIAL</SMALL>?<BR>
-     <A href="#4.15.3">4.15.3</A>) <I>currval()</I> e
-    <I>nextval()</I> n&atilde;o lidam com condi&ccedil;&atilde;o de corrida com outros usu&aacute;rios?<BR>
+    <A href="#4.15.3">4.15.3</A>) <I>currval()</I> n&atilde;o lida com condi&ccedil;&atilde;o de corrida com outros usu&aacute;rios?<BR>
     <A href="#4.15.4">4.15.4</A>) Por que os n&uacute;meros da minha sequ&ecirc;ncia n&atilde;o s&atilde;o reutilizados quando uma transa&ccedil;&atilde;o &eacute; abortada? Por que h&aacute; intervalos nos n&uacute;meros da minha sequ&ecirc;ncia/coluna SERIAL?<BR>
     <A href="#4.16">4.16</A>) O que &eacute; um <SMALL>OID</SMALL>? O que &eacute; um <SMALL>TID</SMALL>?<BR>
     <A href="#4.17">4.17</A>) Qual &eacute; o significado de alguns termos utilizados no PostgreSQL?<BR>
@@ -102,7 +102,7 @@
      <A href="#4.24">4.24</A>) Como eu fa&ccedil;o consultas utilizando m&uacute;ltiplos bancos de dados?<BR>
     <A href="#4.25">4.25</A>) Como eu retorno m&uacute;ltiplos registros ou colunas de uma fun&ccedil;&atilde;o?<BR>
     <A href="#4.26">4.26</A>) Por que eu n&atilde;o posso confiar na cria&ccedil;&atilde;o/remo&ccedil;&atilde;o de tabelas tempor&aacute;rias em fun&ccedil;&otilde;es PL/PgSQL?<BR>
-    <A href="#4.28">4.27</A>) Que op&ccedil;&otilde;es para encripta&ccedil;&atilde;o est&atilde;o dispon&iacute;veis?<BR>
+    <A href="#4.27">4.27</A>) Que op&ccedil;&otilde;es para encripta&ccedil;&atilde;o est&atilde;o dispon&iacute;veis?<BR>
      
 
     <H2 align="center">Extendendo o PostgreSQL</H2>
@@ -118,9 +118,7 @@
 
     <H4><A name="1.1">1.1</A>) O que &eacute; PostgreSQL? Como ele &eacute; pronunciado?</H4>
 
-    <P>PostgreSQL &eacute; pronunciado <I>Post-Gres-Qui-El</I>.  Um arquivo de &aacute;udio est&aacute;
-    dispon&iacute;vel em  http://www.postgresql.org/postgresql.mp3 para aqueles que gostariam
-    de ouvir a pron&uacute;ncia.</P>
+    <P>PostgreSQL &eacute; pronunciado <I>Post-Gres-Q-L</I>.</P>
 
     <P>PostgreSQL &eacute; um melhoramento do sistema de ger&ecirc;ncia 
     de banco de dados POSTGRES (e tamb&eacute;m &eacute;, &agrave;s vezes, chamado simplesmente de "Postgres"),
@@ -140,8 +138,8 @@
     por todo o desenvolvimento do PostgreSQL. &Eacute; um projeto da
     comunidade e n&atilde;o &eacute; controlado por nenhuma empresa.
     Para se juntar ao grupo, veja a FAQ do desenvolvedor em
-    <A href="http://www.PostgreSQL.org/docs/faqs/FAQ_DEV.html">
-    http://www.PostgreSQL.org/docs/faqs/FAQ_DEV.html</A></P>
+    <A href="http://www.postgresql.org/files/documentation/faqs/FAQ_DEV.html">
+    http://www.postgresql.org/files/documentation/faqs/FAQ_DEV.html</A></P>
 
     <P>Os autores do PostgreSQL 1.01 foram Andrew Yu e Jolly Chen.
     Muitos outros contribuiram para portar, testar, depurar e
@@ -204,10 +202,14 @@
     baseados no NT tais como Win2000, WinXP e Win2003. Um instalador
     est&aacute; dispon&iacute;vel em <a href=
 	    "http://pgfoundry.org/projects/pginstaller">
-	    http://pgfoundry.org/projects/pginstaller</a>.
+	    http://pgfoundry.org/projects/pginstaller</a> Versões do Windows
+    baseados no MSDOS (Win95, Win98, WinMe) podem executar o PostgreSQL utilizando o Cygwin.
 
     <P>H&aacute; tamb&eacute;m um porte para Novell Netware 6 em
-    <A href="http://forge.novell.com">http://forge.novell.com</A>.</P>
+    <A href="http://forge.novell.com">http://forge.novell.com</A>
+    e uma versão para OS/2 (eComStation) em <a href=
+    "http://hobbes.nmsu.edu/cgi-bin/h-search?sh=1&button=Search&key=postgreSQL&stype=all&sort=type&dir=%2F">
+    http://hobbes.nmsu.edu/cgi-bin/h-search?sh=1&button=Search&key=postgreSQL&stype=all&sort=type&dir=%2F</a>.</P>
 
     <H4><A name="1.5">1.5</A>) Onde eu posso conseguir o PostgreSQL?</H4>
 
@@ -254,14 +256,14 @@ H&aacute; tamb&eacute;m uma lista de discuss&atilde;o dos desenvolvedores dispon
       <A href="http://www.PostgreSQL.org">http://www.PostgreSQL.org</A>
     </BLOCKQUOTE>
 
-    <P>H&aacute; tamb&eacute;m um canal de IRC na Freenode e EFNet, canal <I>PostgreSQL</I>. Voc&ecirc; pode utilizar o comando Unix <code>irc -c '#PostgreSQL' "$USER" irc.phoenix.net.</code> ou <code>irc -c '#PostgreSQL' "$USER" irc.freenode.net.</code></P>
+    <P>O principal canal de IRC &eacute; o <I>#postgresql</I> na Freenode (<I>irc.freenode.net</I>). Para se conectar voc&ecirc; pode utilizar o comando Unix <code>irc -c '#postgresql' "$USER" irc.freenode.net</code> ou utilizar qualquer outro cliente de IRC. Um canal hisp&acirc;nico (<I>#postgresql-es</I>) e um franc&ecirc;s (<I>#postgresqlfr</I>) tamb&eacute;m existem na mesma rede. H&aacute; tamb&eacute;m um canal PostgreSQL na EFNet.</P>
 
     <P>Uma lista de empresas que prestam suporte comercial est&aacute; dispon&iacute;vel em <A href=
     "http://techdocs.postgresql.org/companies.php">http://techdocs.postgresql.org/companies.php</A>.</P>
 
     <H4><A name="1.7">1.7</A>) Qual &eacute; a &uacute;ltima vers&atilde;o?</H4>
 
-    <P>A &uacute;ltima vers&atilde;o do PostgreSQL &eacute; a vers&atilde;o 7.4.5.</P>
+    <P>A &uacute;ltima vers&atilde;o do PostgreSQL &eacute; a vers&atilde;o 7.4.6.</P>
 
     <P>N&oacute;s planejamos lan&ccedil;ar vers&otilde;es novas a cada seis ou oito meses.</P>
 
@@ -280,7 +282,7 @@ H&aacute; tamb&eacute;m uma lista de discuss&atilde;o dos desenvolvedores dispon
     href=
     "http://techdocs.PostgreSQL.org/">http://techdocs.PostgreSQL.org/</A>.</P>
 
-    <P><I>psql</I> tem alguns comandos \d para mostrar informa&ccedil;&atilde;o sobre tipos, operadores, fun&ccedil;&otilde;es, agrega&ccedil;&otilde;es, etc.</P>
+    <P>O programa cliente de linha de comando <I>psql</I> tem alguns comandos \d para mostrar informa&ccedil;&atilde;o sobre tipos, operadores, fun&ccedil;&otilde;es, agrega&ccedil;&otilde;es, etc. Use \? para mostrar os comandos dispon&iacute;veis.</P>
 
     <P>Nosso web site cont&eacute;m ainda mais documenta&ccedil;&atilde;o.</P>
 
@@ -324,9 +326,8 @@ H&aacute; tamb&eacute;m uma lista de discuss&atilde;o dos desenvolvedores dispon
 
     <H4><A name="1.13">1.13</A>) Como eu informo a exist&ecirc;ncia de um bug?</H4>
 
-    <P>Por favor visite a p&aacute;gina da ferramenta que reporta bugs em <A href=
-    "http://www.PostgreSQL.org/bugs/bugs.php">http://www.PostgreSQL.org/bugs/bugs.php</A>,
-    que ir&aacute; lher dar as instru&ccedil;&otilde;es e dire&ccedil;&otilde;es de como submeter um bug.</P>
+    <P>Visite o formul&aacute;rio que reporta bugs do PostgreSQL em <A href=
+    "http://www.postgresql.org/support/submitbug">http://www.postgresql.org/support/submitbug</A>.</P>
 
     <P>Verifique tamb&eacute;m o nosso ftp <A href=
     "ftp://ftp.PostgreSQL.org/pub">ftp://ftp.PostgreSQL.org/pub</A> para
@@ -345,7 +346,7 @@ H&aacute; tamb&eacute;m uma lista de discuss&atilde;o dos desenvolvedores dispon
 
       <DT><B>Performance</B></DT>
 
-      <DD>PostgreSQL tem a performance similar a outros bancos de dados comerciais e de c&oacute;digo livre. Ele &eacute; mais r&aacute;pido em algumas coisas, mais lento em outras. Comparado ao MySQL ou sistemas de bancos de dados "leves", n&oacute;s somos mais r&aacute;pidos com m&uacute;ltiplos usu&aacute;rios, consultas complexas e carga de consultas de leitura/escrita. MySQL &eacute; mais r&aacute;pido para consultas simples com SELECT feitas por poucos usu&aacute;rios. &Eacute; claro que o MySQL n&atilde;o tem muitas das caracter&iacute;sticas mencionadas na se&ccedil;&atilde;o <I>Caracter&iacute;sticas</I> acima. N&oacute;s desenvolvemos buscando confiabilidade e caracter&iacute;sticas, e n&oacute;s continuamos a melhorar a performance a cada vers&atilde;o. H&aacute; uma p&aacute;gina interessante comparando o PostgreSQL com o MySQL em <A href="http://openacs.org/philosophy/why-not-mysql.html">http://openacs.org/philosophy/why-not-mysql.html</A>. MySQL &eacute; uma empresa que distribui seu produto via c&oacute;digo livre, e requer uma licen&ccedil;a comercial para software de c&oacute;digo fechado, e n&atilde;o uma comunidade de desenvolvimento de c&oacute;digo livre como o PostgreSQL.<BR>
+      <DD>A performance do PostgreSQL &eacute; compar&aacute;vel a outros bancos de dados comerciais e de c&oacute;digo livre. Ele &eacute; mais r&aacute;pido em algumas coisas, mais lento em outras. Comparado ao MySQL ou sistemas de bancos de dados "leves", n&oacute;s somos mais r&aacute;pidos com m&uacute;ltiplos usu&aacute;rios, consultas complexas e carga de consultas de leitura/escrita. MySQL &eacute; mais r&aacute;pido para consultas simples com SELECT feitas por poucos usu&aacute;rios. &Eacute; claro que o MySQL n&atilde;o tem muitas das caracter&iacute;sticas mencionadas na se&ccedil;&atilde;o <I>Caracter&iacute;sticas</I> acima. N&oacute;s desenvolvemos buscando confiabilidade e caracter&iacute;sticas, e n&oacute;s continuamos a melhorar a performance a cada vers&atilde;o.<BR>
 
       <BR>
       </DD>
@@ -375,9 +376,10 @@ H&aacute; tamb&eacute;m uma lista de discuss&atilde;o dos desenvolvedores dispon
     <P>Infra-estrutura de qualidade &eacute; muito importante em um projeto de c&oacute;digo aberto. Ela previne descontinuidades que podem facilmente descontinuar o andamento do projeto.</P>
     <P>&Eacute; claro, que a infra-estrutura n&atilde;o &eacute; barata. H&aacute; v&aacute;rios custos iniciais e mensais que s&atilde;o necess&aacute;rios para mant&eacute;-la. Se voc&ecirc; ou sua empresa tem dinheiro que pode ser doado para ajudar a financiar esse esfor&ccedil;o, acesse <A href="http://store.pgsql.com/shopping/">http://store.pgsql.com/shopping/</A> e fa&ccedil;a uma doa&ccedil;&atilde;o.</P>
     <P>Embora a p&aacute;gina mencione PostgreSQL, Inc, a "contribui&ccedil;&atilde;o" &eacute; somente para apoiar o projeto PostgreSQL e n&atilde;o financia nenhuma empresa espec&iacute;fica. Se voc&ecirc; preferir, voc&ecirc; pode enviar um cheque para o endere&ccedil;o de contato.</P>
-    <HR>
 
-    <P>Se voc&ecirc; tiver uma hist&oacute;ria de sucesso sobre o PostgreSQL, envie-a para nosso website em <A href="http://advocacy.postgresql.org">http://advocacy.postgresql.org</A>.</P>
+    <P>Se voc&ecirc; tiver uma hist&oacute;ria de sucesso sobre o PostgreSQL, envie-a para nossa lista <i>advocacy</i> em <a href="mailto:pgsql-advocacy@postgresql.org">pgsql-advocacy@postgresql.org</a>.</P>
+
+    <HR>
 
     <H2 align="center">Perguntas sobre Clientes</H2>
 
@@ -403,10 +405,11 @@ H&aacute; tamb&eacute;m uma lista de discuss&atilde;o dos desenvolvedores dispon
 
     <P>Sim, h&aacute; v&aacute;rias interfaces gr&aacute;ficas para PostgreSQL dispon&iacute;veis.
     Entre elas o PgAccess <A href="http://www.pgaccess.org">
-    http://www.pgaccess.org</A>), PgAdmin III (<A
+    http://www.pgaccess.org</A>), pgAdmin III (<A
     href="http://www.pgadmin.org">http://www.pgadmin.org</A>, RHDB Admin (<A
     href="http://sources.redhat.com/rhdb/">http://sources.redhat.com/rhdb/
-    </A>) e o Rekall (<A href="http://www.thekompany.com/products/rekall/">
+    </A>), TORA (<a href="http://www.globecom.net/tora/">http://www.globecom.net/tora/</a>,
+    parcialmente comercial) e o Rekall (<A href="http://www.thekompany.com/products/rekall/">
     http://www.thekompany.com/products/rekall/</A>, propriet&aacute;ria). H&aacute;
     tamb&eacute;m o PhpPgAdmin (<A href="http://phppgadmin.sourceforge.net/">
     http://phppgadmin.sourceforge.net/ </A>), uma interface web para
@@ -451,7 +454,7 @@ H&aacute; tamb&eacute;m uma lista de discuss&atilde;o dos desenvolvedores dispon
 
     <H4><A name="3.3">3.3</A>) Quando eu tento iniciar o <I>postmaster</I>, eu recebo erros <I>IpcMemoryCreate</I>. Por que?</H4>
 
-    <P>Voc&ecirc; n&atilde;o configurou a mem&oacute;ria compartilhada corretamente no seu kernel ou voc&ecirc; precisa aumentar a mem&oacute;ria compartilhada dispon&iacute;vel no seu kernel. A quantidade exata que voc&ecirc; precisa vai depender da arquitetura e de quantos buffers e processos do servidor voc&ecirc; configurou para o <I>postmaster</I>. Muitos sistemas, com o n&uacute;mero padr&atilde;o de buffers e processos, precisam de aproximadamente 1 MB. Veja o <A href="http://www.PostgreSQL.org/docs/view.php?version=current&amp;idoc=1&amp;file=kernel-resources.html">Guia do Administrador do PostgreSQL</A> para mais informa&ccedil;&atilde;o sobre mem&oacute;ria compartilhada e sem&aacute;foros.</P>
+    <P>Voc&ecirc; n&atilde;o configurou a mem&oacute;ria compartilhada corretamente no seu kernel ou voc&ecirc; precisa aumentar a mem&oacute;ria compartilhada dispon&iacute;vel no seu kernel. A quantidade exata que voc&ecirc; precisa vai depender da arquitetura e de quantos buffers e processos do servidor voc&ecirc; configurou para o <I>postmaster</I>. Muitos sistemas, com o n&uacute;mero padr&atilde;o de buffers e processos, precisam de aproximadamente 1 MB. Veja a se&ccedil;&atilde;o <A href="http://www.postgresql.org/docs/current/static/kernel-resources.html">PostgreSQL Administrator's Guide/Server Run-time Environment/Managing Kernel Resources</A> para mais informa&ccedil;&atilde;o sobre mem&oacute;ria compartilhada e sem&aacute;foros.</P>
 
     <H4><A name="3.4">3.4</A>) Quando eu tento iniciar o <I>postmaster</I>, eu recebo erros <I>IpcSemaphoreCreate</I>. Por que?</H4>
 
@@ -471,11 +474,11 @@ H&aacute; tamb&eacute;m uma lista de discuss&atilde;o dos desenvolvedores dispon
 
     <P>Se voc&ecirc; est&aacute; fazendo muitos <SMALL>INSERTs</SMALL>, considere faz&ecirc;-los em lote utilizando o comando <SMALL>COPY</SMALL>. Isso &eacute; mais r&aacute;pido do que <SMALL>INSERTs</SMALL> individuais. Segundo, senten&ccedil;as que n&atilde;o est&atilde;o em um bloco de transa&ccedil;&atilde;o <SMALL>BEGIN WORK/COMMIT</SMALL> s&atilde;o consideradas com se estivessem em sua pr&oacute;pria transa&ccedil;&atilde;o. Considere executar v&aacute;rias senten&ccedil;as em um mesmo bloco de transa&ccedil;&atilde;o. Isso reduz a quantidade de transa&ccedil;&otilde;es. Tamb&eacute;m, considere remover e criar &iacute;ndices novamente quando estiver fazendo muitas mudan&ccedil;as nos dados.</P>
 
-    <P>H&aacute; v&aacute;rias op&ccedil;&otilde;es de ajuste. Voc&ecirc; pode desabilitar o <I>fsync()</I> iniciando o <I>postmaster</I> com a op&ccedil;&atilde;o <I>-o -F</I>. Isso ir&aacute; impedir que <I>fsync()</I>s enviem os dados para disco ap&oacute;s cada transa&ccedil;&atilde;o.</P>
+    <P>H&aacute; v&aacute;rias op&ccedil;&otilde;es de ajuste em <a href="http://www.postgresql.org/docs/current/static/runtime.html">Administration Guide/Server Run-time Environment/Run-time Configuration</a>. Voc&ecirc; pode desabilitar o <I>fsync()</I> utilizando a op&ccedil;&atilde;o <i>fsync</i>. Isso ir&aacute; impedir que <I>fsync()</I>s enviem os dados para disco ap&oacute;s cada transa&ccedil;&atilde;o.</P>
 
-    <P>Voc&ecirc; tamb&eacute;m pode utilizar a op&ccedil;&atilde;o <I>-B</I> do <I>postmaster</I> para aumentar o n&uacute;mero de buffers de mem&oacute;ria compartilhada utilizados pelos processos do servidor. Se voc&ecirc; definiu este par&acirc;metro com um valor muito alto, o <I>postmaster</I> pode n&atilde;o iniciar porque voc&ecirc; excedeu o limite de espa&ccedil;o de mem&oacute;ria compartilhada do kernel. Cada buffer &eacute; de 8K e o padr&atilde;o &eacute; de 64 buffers.</P>
+    <P>Voc&ecirc; pode utilizar a op&ccedil;&atilde;o <I>shared_buffers</I> para aumentar o n&uacute;mero de buffers de mem&oacute;ria compartilhada utilizados pelos processos do servidor. Se voc&ecirc; definiu este par&acirc;metro com um valor muito alto, o <I>postmaster</I> pode n&atilde;o iniciar porque voc&ecirc; excedeu o limite de espa&ccedil;o de mem&oacute;ria compartilhada do kernel. Cada buffer &eacute; de 8K e o padr&atilde;o &eacute; de 1000 buffers.</P>
 
-    <P>Voc&ecirc; tamb&eacute;m pode utilizar a op&ccedil;&atilde;o <I>-S</I> do backend para aumentar a m&aacute;xima quantidade de mem&oacute;ria utilizada pelo processo servidor para ordena&ccedil;&otilde;es tempor&aacute;rias. O valor de <I>-S</I> &eacute; medido em kilobytes e o padr&atilde;o &eacute; de 512 (ou seja 512K).</P>
+    <P>Voc&ecirc; tamb&eacute;m pode utilizar a op&ccedil;&atilde;o <I>sort_mem</I> (no PostgreSQL 8.0: <I>work_mem</I>) para aumentar a m&aacute;xima quantidade de mem&oacute;ria utilizada pelo processo servidor para cada ordena&ccedil;&atilde;o tempor&aacute;ria. O valor padr&atilde;o &eacute; 1024 (ou seja 1MB).</P>
 
     <P>Voc&ecirc; tamb&eacute;m pode utilizar o comando <SMALL>CLUSTER</SMALL> para agrupar dados em tabelas para combinar um &iacute;ndice. Veja o manual sobre <SMALL>CLUSTER</SMALL> para mais informa&ccedil;&atilde;o.</P>
 
@@ -496,7 +499,9 @@ H&aacute; tamb&eacute;m uma lista de discuss&atilde;o dos desenvolvedores dispon
 
 <P>Se o <I>postmaster</I> n&atilde;o est&aacute; sendo executado, voc&ecirc; pode executar o n&uacute;cleo do <I>postgres</I> a partir da linha de comando, e digitar a sua senten&ccedil;a <SMALL>SQL</SMALL> diretamente. Isso &eacute; recomendado <B>somente</B> para fins de depura&ccedil;&atilde;o. Note que uma nova linha termina a consulta, e n&atilde;o um ponto-e-v&iacute;rgula. Se voc&ecirc; compilou com s&iacute;mbolos de depura&ccedil;&atilde;o, voc&ecirc; pode utilizar um depurador para ver o que est&aacute; acontecendo. Como o n&uacute;cleo (backend) n&atilde;o foi iniciado a partir do <I>postmaster</I>, ele n&atilde;o est&aacute; executando em um ambiente id&ecirc;ntico e problemas de itera&ccedil;&atilde;o com o n&uacute;cleo/travamento n&atilde;o podem ser reproduzidos.</P>
 
-<P>O programa <I>postgres</I> possue as op&ccedil;&otilde;es <I>-s, -A</I>, e <I>-t</I> que podem ser muito &uacute;teis para depura&ccedil;&atilde;o e medidas de performance.</P>
+<P>Se o <i>postmaster</i> est&aacute; sendo executado, inicie o <i>psql</i> em uma janela, e ent&atilde;o encontre o <small>PID</small> do processo <i>postgres</i> utilizado pelo <i>psql</i> utilizando <pre>SELECT pg_backend_pid()</pre>. Utilize um depurador para anexar ao <small>PID</small> do <i>postgres</i>. Voc&ecirc; pode definir pontos de parada (<i>breakpoints</i>) no depurador e digitar consultas no <i>psql</i>. Se voc&ecirc; est&aacute; depurando a inicializa&ccedil;&atilde;o do <i>postgres</i>, voc&ecirc; pode definir PGOPTIONS="-W n" e ent&atilde;o iniciar o <i>psql</i>. Isto retardar&aacute; a inicializa&ccedil;&atilde;o por <i>n</i> segundos ent&atilde;o voc&ecirc; pode anexar o depurador ao processo, definir quaisquer pontos de parada e continuar pela sequ&ecirc;ncia de inicializa&ccedil;&atilde;o.</p>
+
+<P>H&aacute; v&aacute;rias vari&aacute;veis de configura&ccedil;&atilde;o do servidor <pre>log_*</pre> que habilitam a exibi&ccedil;&atilde;o de estat&iacute;sticas que podem ser muito &uacute;teis para depura&ccedil;&atilde;o e medidas de performance.</P>
 
 <P>Voc&ecirc; tamb&eacute;m pode compilar com perfil para ver que fun&ccedil;&otilde;es est&atilde;o demandando tempo de execu&ccedil;&atilde;o. Os arquivo de perfil do n&uacute;cleo (backend) ser&atilde;o colocados no diret&oacute;rio <I>pgsql/data/base/dbname</I>. O arquivo de perfil do cliente ser&aacute; colocado no diret&oacute;rio atual do cliente. O Linux requer uma compila&ccedil;&atilde;o com <I>-DLINUX_PROFILE</I> para cria&ccedil;&atilde;o dos perfis.</P>
 
@@ -629,7 +634,8 @@ N&uacute;mero m&aacute;ximo de &iacute;ndices em uma tabela?        ilimitado
     <P>Veja tamb&eacute;m o arquivo <I>pgsql/src/tutorial/syscat.source</I>. Ele ilustra muitos <SMALL>SELECT</SMALL>s necess&aacute;rios para obter informa&ccedil;&atilde;o das tabelas do sistema de banco de dados.</P>
 
     <H4><A name="4.8">4.8</A>) Minhas consultas est&atilde;o lentas ou n&atilde;o est&atilde;o utilizando &iacute;ndices. Por que?</H4>
-    &Iacute;ndices n&atilde;o s&atilde;o automaticamente utilizados por toda consulta. &Iacute;ndices s&oacute; s&atilde;o 
+
+    <p>&Iacute;ndices n&atilde;o s&atilde;o automaticamente utilizados por toda consulta. &Iacute;ndices s&oacute; s&atilde;o 
     utilizados se uma tabela &eacute; maior do que o tamanho m&iacute;nimo e uma consulta
     seleciona somente uma porcentagem pequena de registros de uma tabela. Isto porque
     o acesso rand&ocirc;mico ao disco causado por uma busca por &iacute;ndice pode ser
@@ -678,7 +684,11 @@ N&uacute;mero m&aacute;ximo de &iacute;ndices em uma tabela?        ilimitado
     <I>~*</I> n&atilde;o utilizam &iacute;ndices. Ao inv&eacute;s, utilize &iacute;ndices
     funcionais, que s&atilde;o descritos na se&ccedil;&atilde;o <A href="#4.12">4.12</A>.</LI>
     <LI>A localidade padr&atilde;o <I>C</I> deve ser utilizada durante o
-    <I>initdb</I>.</LI>
+    <i>initdb</i> porque n&atilde;o &eacute; poss&iacute;vel saber o pr&oacute;ximo/maior caracter
+    em uma localidade que n&atilde;o seja a C. Voc&ecirc; pode criar um &iacute;ndice
+    especial <PRE>text_pattern_ops</PRE> para tais casos que funcionam somente para
+    indexa&ccedil;&atilde;o utilizando <PRE>LIKE</PRE>.
+    </LI>
     </UL>
     <P>
 
@@ -797,15 +807,15 @@ Veja a p&aacute;gina sobre <I>create_sequence</I> no manual para mais informa&cc
     novo_id = execute("SELECT currval('pessoa_id_seq')");
 </PRE>
 
-    Finalmente, voc&ecirc; poderia utilizar o <A href="#4.16"><SMALL>OID</SMALL></A>
+    <p>Finalmente, voc&ecirc; poderia utilizar o <A href="#4.16"><SMALL>OID</SMALL></A>
     retornado da senten&ccedil;a <SMALL>INSERT</SMALL> para obter o valor padr&atilde;o,
     embora este seja a abordagem menos port&aacute;vel,
     pois o valor do oid n&atilde;o ultrapassa 4 bilh&otilde;es.
-    Em Perl, utilizando DBI com o m&oacute;dulo DBD::Pg de Edmund Mergl, o valor
+    Em Perl, utilizando DBI com o m&oacute;dulo DBD::Pg, o valor
     do oid est&aacute; dispon&iacute;vel via <I>$sth-&gt;{pg_oid_status}</I> depois de
-    <I>$sth-&gt;execute()</I>.
+    <I>$sth-&gt;execute()</I>.</p>
 
-    <H4><A name="4.15.3">4.15.3</A>) <I>currval()</I> e <I>nextval()</I> n&atilde;o lidam com condi&ccedil;&atilde;o de corrida com outros usu&aacute;rios?</H4>
+    <H4><A name="4.15.3">4.15.3</A>) <I>currval()</I> n&atilde;o lida com condi&ccedil;&atilde;o de corrida com outros usu&aacute;rios?</H4>
 
     <P>N&atilde;o. <I>currval()</I> retorna o valor atual atribuido pelo seu n&uacute;cleo (backend), e n&atilde;o por todos os usu&aacute;rios.</P>
 
