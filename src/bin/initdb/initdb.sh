@@ -27,7 +27,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.71 1999/12/18 02:48:53 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.72 1999/12/18 02:56:01 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -65,11 +65,12 @@ then
         PGPATH=`echo $0 | sed 's,/[^/]*$,,'`       # (dirname command is not portable)
 else
         # look for it in PATH ('which' command is not portable)
-        for dir in `echo "$PATH" | sed 's/:/ /g'` ; do
+        for dir in `echo "$PATH" | sed 's/:/ /g'`
+	do
                 # empty entry in path means current dir
                 [ -z "$dir" ] && dir='.'
                 if [ -f "$dir/$CMDNAME" ]
-				then
+		then
                         PGPATH="$dir"
                         break
                 fi
@@ -77,9 +78,10 @@ else
 fi
 
 # Check if needed programs actually exist in path
-for prog in postgres pg_version ; do
+for prog in postgres pg_version
+do
         if [ ! -x "$PGPATH/$prog" ]
-		then
+	then
                 echo "The program $prog needed by $CMDNAME could not be found. It was"
                 echo "expected at:"
                 echo "    $PGPATH/$prog"
@@ -110,11 +112,6 @@ template_only=0
 #       fail, and in that case the argument _must_ be the name of the effective
 #       user.
 POSTGRES_SUPERUSERNAME="$EffectiveUser"
-
-# Note: The sysid can be freely selected. This will probably confuse matters,
-#       but if your Unix user postgres is uid 48327 you might chose to start
-#       at 0 (or 1) in the database.
-POSTGRES_SUPERUSERID="$EUID"
 
 Password='_null_'
 
@@ -225,7 +222,7 @@ then
  	if [ -n "$MULTIBYTE" ]
 	then 
  		echo "    -e ENCODING,  --pgencoding=ENCODING"
-    fi
+	fi
  	echo "    -?,           --help               "           	
  	echo ""	 
  	exit 0
@@ -237,9 +234,9 @@ fi
 
 if [ "$MULTIBYTE" ]
 then
-		MULTIBYTEID=`$PGPATH/pg_encoding $MULTIBYTE`
+	MULTIBYTEID=`$PGPATH/pg_encoding $MULTIBYTE`
         if [ "$?" -ne 0 ]
-		then
+	then
                 echo "The program pg_encoding failed. Perhaps you did not configure"
                 echo "PostgreSQL for multibyte support or the program was not success-"
                 echo "fully installed."
@@ -298,9 +295,10 @@ echo
 
 if [ -z "$PGLIB" ]
 then
-        for dir in "$PGPATH/../lib" "$PGPATH/../lib/pgsql"; do
+        for dir in "$PGPATH/../lib" "$PGPATH/../lib/pgsql"
+	do
                 if [ -f "$dir/global1.bki.source" ]
-				then
+		then
                         PGLIB="$dir"
                         break
                 fi
@@ -355,7 +353,7 @@ umask 077
 if [ -f "$PGDATA"/PG_VERSION ]
 then
     if [ "$template_only" -eq 0 ]
-	then
+    then
         echo "$CMDNAME: The file $PGDATA/PG_VERSION already exists."
         echo "This probably means initdb has already been run and the"
         echo "database system already exists."
@@ -381,7 +379,7 @@ else
         mkdir "$PGDATA"/base || exit_nicely
     fi
     if [ ! -d "$PGDATA"/pg_xlog ]
-	then
+    then
         echo "Creating database XLOG directory $PGDATA/pg_xlog"
         mkdir "$PGDATA"/pg_xlog || exit_nicely
     fi
@@ -448,7 +446,7 @@ then
     # Gotta remove that temp file before exiting on error.
     retval="$?"
     if [ "$noclean" -eq 0 ]
-	then
+    then
             rm -f "$TEMPFILE" || exit_nicely
     fi
     [ "$retval" -ne 0 ] && exit_nicely
