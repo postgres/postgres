@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hash.c,v 1.35 2000/01/26 05:55:55 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hash.c,v 1.36 2000/03/01 05:39:22 inoue Exp $
  *
  * NOTES
  *	  This file contains only the public interface routines.
@@ -242,12 +242,13 @@ hashbuild(Relation heap,
 	{
 		Oid		hrelid = RelationGetRelid(heap);
 		Oid		irelid = RelationGetRelid(index);
+		bool		inplace = IsReindexProcessing();
 
 		heap_close(heap, NoLock);
 		index_close(index);
-		UpdateStats(hrelid, nhtups, true);
-		UpdateStats(irelid, nitups, false);
-		if (oldPred != NULL)
+		UpdateStats(hrelid, nhtups, inplace);
+		UpdateStats(irelid, nitups, inplace);
+		if (oldPred != NULL && !inplace)
 		{
 			if (nitups == nhtups)
 				pred = NULL;
