@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/syntax.sgml,v 1.44 2001/08/10 18:57:32 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/syntax.sgml,v 1.45 2001/08/26 21:17:12 tgl Exp $
 -->
 
 <chapter id="sql-syntax">
@@ -640,7 +640,7 @@ CAST ( '<replaceable>string</replaceable>' AS <replaceable>type</replaceable> )
 	 <indexterm>
 	  <primary>OID</primary>
 	 </indexterm>
-	 The unique identifier (object ID) of a row.  This is a serial number
+	 The object identifier (object ID) of a row.  This is a serial number
 	 that is automatically added by Postgres to all table rows (unless
 	 the table was created WITHOUT OIDS, in which case this column is
 	 not present).
@@ -688,7 +688,7 @@ CAST ( '<replaceable>string</replaceable>' AS <replaceable>type</replaceable> )
 	<para>
 	 The identity (transaction ID) of the deleting transaction,
 	 or zero for an undeleted tuple.  It is possible for this field
-	 to be nonzero in a visible tuple: that indicates that the
+	 to be nonzero in a visible tuple: that usually indicates that the
 	 deleting transaction hasn't committed yet, or that an attempted
 	 deletion was rolled back.
 	</para>
@@ -712,7 +712,8 @@ CAST ( '<replaceable>string</replaceable>' AS <replaceable>type</replaceable> )
 	 (block number, tuple index within block) that identifies the
 	 physical location of the tuple.  Note that although the ctid
 	 can be used to locate the tuple very quickly, a row's ctid
-	 will change each time it is updated or moved by VACUUM.
+	 will change each time it is updated or moved by <command>VACUUM
+	 FULL</>.
 	 Therefore ctid is useless as a long-term row identifier.
 	 The OID, or even better a user-defined serial number, should
 	 be used to identify logical rows.
@@ -737,7 +738,19 @@ CAST ( '<replaceable>string</replaceable>' AS <replaceable>type</replaceable> )
     </para>
 
     <para>
-     Transaction and command identifiers are 32-bit quantities.
+     Transaction identifiers are 32-bit quantities.  In a long-lived
+     database it is possible for transaction IDs to wrap around.  This
+     is not a fatal problem given appropriate maintenance procedures;
+     see the Administrator's Guide for details.  However, it is unwise
+     to depend on uniqueness of transaction IDs over the long term
+     (more than one billion transactions).
+    </para>
+
+    <para>
+     Command identifiers are also 32-bit quantities.  This creates a hard
+     limit of 2^32 (4 billion) SQL commands within a single transaction.
+     In practice this limit is not a problem --- note that the limit is on
+     number of SQL queries, not number of tuples processed.
     </para>
 
     <para>
