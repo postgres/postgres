@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.315 2003/01/23 23:39:01 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.316 2003/02/11 21:06:58 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -5047,7 +5047,7 @@ dumpACL(Archive *fout, const char *type, const char *name,
 	 */
 	if (!found_owner_privs && owner)
 	{
-		appendPQExpBuffer(sql, "REVOKE ALL ON %s %s FROM %s;\n",
+		printfPQExpBuffer(sql, "REVOKE ALL ON %s %s FROM %s;\n",
 						  type, name, fmtId(owner));
 		MKENTRY(owner, sql->data);
 	}
