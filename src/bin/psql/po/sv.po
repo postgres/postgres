@@ -2,7 +2,7 @@
 # Peter Eisentraut <peter_e@gmx.net>, 2001.
 # Dennis Björklund <db@zigo.dhs.org>, 2002, 2003, 2004.
 #
-# $PostgreSQL: pgsql/src/bin/psql/po/sv.po,v 1.15 2004/01/11 06:50:27 dennis Exp $
+# $PostgreSQL: pgsql/src/bin/psql/po/sv.po,v 1.16 2004/01/11 06:55:10 dennis Exp $
 #
 # Use these quotes: "%s"
 #
@@ -11,7 +11,7 @@ msgstr ""
 "Project-Id-Version: PostgreSQL 7.5\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2004-01-11 07:42+0100\n"
-"PO-Revision-Date: 2004-01-11 07:44+0100\n"
+"PO-Revision-Date: 2004-01-11 07:53+0100\n"
 "Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
 "Language-Team: Swedish <sv@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -639,9 +639,8 @@ msgid "  \\s [FILE]      display history or save it to file\n"
 msgstr "  \\s [FILNAMN]   visa kommandohistorien eller spara den i fil\n"
 
 #: help.c:198
-#, fuzzy
 msgid "  \\w FILE        write query buffer to file\n"
-msgstr "  \\w [FILNAMN]   skriv frågebuffert till fil\n"
+msgstr "  \\w FILNAMN     skriv frågebuffert till fil\n"
 
 #: help.c:201
 msgid "Input/Output\n"
@@ -1187,7 +1186,7 @@ msgstr "för tabell \"%s.%s\""
 #: describe.c:895
 #, c-format
 msgid ", predicate (%s)"
-msgstr ""
+msgstr ", predikat (%s)"
 
 #: describe.c:929
 #, c-format
@@ -1613,15 +1612,15 @@ msgid "start a transaction block"
 msgstr "starta ett transaktionsblock"
 
 #: sql_help.h:86
-#, fuzzy
 msgid ""
 "BEGIN [ WORK | TRANSACTION ]\n"
 "    [ ISOLATION LEVEL { READ UNCOMMITTED | READ COMMITTED | REPEATABLE READ "
 "| SERIALIZABLE } ]\n"
 "    [ READ WRITE | READ ONLY ]"
 msgstr ""
-"START TRANSACTION [ ISOLATION LEVEL { READ UNCOMMITTED | READ COMMITTED | "
-"REPEATABLE READ | SERIALIZABLE } ]\n"
+"BEGIN [ WORK | TRANSACTION ]\n"
+"    [ ISOLATION LEVEL { READ UNCOMMITTED | READ COMMITTED | REPEATABLE READ "
+"| SERIALIZABLE } ]\n"
 "    [ READ WRITE | READ ONLY ]"
 
 #: sql_help.h:89
@@ -2109,14 +2108,13 @@ msgid "create a new table from the results of a query"
 msgstr "skapa en ny tabell från resultatet av en fråga"
 
 #: sql_help.h:178
-#, fuzzy
 msgid ""
 "CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } ] TABLE table_name "
 "[ (column_name [, ...] ) ] [ [ WITH | WITHOUT ] OIDS ]\n"
 "    AS query"
 msgstr ""
 "CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } ] TABLE tabellnamn "
-"[ (kolumnnamn [, ...] ) ]\n"
+"[ (kolumnnamn [, ...] ) ] [ [ WITH | WITHOUT ] OIDS ]\n"
 "    AS fråga"
 
 #: sql_help.h:181
