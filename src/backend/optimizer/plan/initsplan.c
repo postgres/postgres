@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/initsplan.c,v 1.84 2003/02/08 20:20:54 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/initsplan.c,v 1.85 2003/03/02 23:46:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,10 +36,10 @@
 static void mark_baserels_for_outer_join(Query *root, Relids rels,
 							 Relids outerrels);
 static void distribute_qual_to_rels(Query *root, Node *clause,
-						bool ispusheddown,
-						bool isouterjoin,
-						bool isdeduced,
-						Relids qualscope);
+									bool ispusheddown,
+									bool isdeduced,
+									Relids outerjoin_nonnullable,
+									Relids qualscope);
 static void add_vars_to_targetlist(Query *root, List *vars);
 static bool qual_is_redundant(Query *root, RestrictInfo *restrictinfo,
 				  List *restrictlist);
@@ -209,48 +209,53 @@ distribute_quals_to_rels(Query *root, Node *jtnode)
 		 */
 		foreach(qual, (List *) f->quals)
 			distribute_qual_to_rels(root, (Node *) lfirst(qual),
-									true, false, false, result);
+									true, false, NULL, result);
 	}
 	else if (IsA(jtnode, JoinExpr))
 	{
 		JoinExpr   *j = (JoinExpr *) jtnode;
 		Relids		leftids,
-					rightids;
-		bool		isouterjoin;
+					rightids,
+					nonnullable_rels,
+					nullable_rels;
 		List	   *qual;
 
 		/*
 		 * Order of operations here is subtle and critical.  First we
 		 * recurse to handle sub-JOINs.  Their join quals will be placed
 		 * without regard for whether this level is an outer join, which
-		 * is correct. Then, if we are an outer join, we mark baserels
-		 * contained within the nullable side(s) with our own rel set;
-		 * this will restrict placement of subsequent quals using those
-		 * rels, including our own quals and quals above us in the join
-		 * tree. Finally we place our own join quals.
+		 * is correct.  Then we place our own join quals, which are restricted
+		 * by lower outer joins in any case, and are forced to this level if
+		 * this is an outer join and they mention the outer side.  Finally, if
+		 * this is an outer join, we mark baserels contained within the inner
+		 * side(s) with our own rel set; this will prevent quals above us in
+		 * the join tree that use those rels from being pushed down below this
+		 * level.  (It's okay for upper quals to be pushed down to the outer
+		 * side, however.)
 		 */
 		leftids = distribute_quals_to_rels(root, j->larg);
 		rightids = distribute_quals_to_rels(root, j->rarg);
 
 		result = bms_union(leftids, rightids);
 
-		isouterjoin = false;
+		nonnullable_rels = nullable_rels = NULL;
 		switch (j->jointype)
 		{
 			case JOIN_INNER:
 				/* Inner join adds no restrictions for quals */
 				break;
 			case JOIN_LEFT:
-				mark_baserels_for_outer_join(root, rightids, result);
-				isouterjoin = true;
+				nonnullable_rels = leftids;
+				nullable_rels = rightids;
 				break;
 			case JOIN_FULL:
-				mark_baserels_for_outer_join(root, result, result);
-				isouterjoin = true;
+				/* each side is both outer and inner */
+				nonnullable_rels = result;
+				nullable_rels = result;
 				break;
 			case JOIN_RIGHT:
-				mark_baserels_for_outer_join(root, leftids, result);
-				isouterjoin = true;
+				nonnullable_rels = rightids;
+				nullable_rels = leftids;
 				break;
 			case JOIN_UNION:
 
@@ -269,7 +274,11 @@ distribute_quals_to_rels(Query *root, Node *jtnode)
 
 		foreach(qual, (List *) j->quals)
 			distribute_qual_to_rels(root, (Node *) lfirst(qual),
-									false, isouterjoin, false, result);
+									false, false,
+									nonnullable_rels, result);
+
+		if (nullable_rels != NULL)
+			mark_baserels_for_outer_join(root, nullable_rels, result);
 	}
 	else
 		elog(ERROR, "distribute_quals_to_rels: unexpected node type %d",
@@ -324,14 +333,16 @@ mark_baserels_for_outer_join(Query *root, Relids rels, Relids outerrels)
  *	  (depending on whether the clause is a join) of each base relation
  *	  mentioned in the clause.	A RestrictInfo node is created and added to
  *	  the appropriate list for each rel.  Also, if the clause uses a
- *	  mergejoinable operator and is not an outer-join qual, enter the left-
- *	  and right-side expressions into the query's lists of equijoined vars.
+ *	  mergejoinable operator and is not delayed by outer-join rules, enter
+ *	  the left- and right-side expressions into the query's lists of
+ *	  equijoined vars.
  *
  * 'clause': the qual clause to be distributed
  * 'ispusheddown': if TRUE, force the clause to be marked 'ispusheddown'
  *		(this indicates the clause came from a FromExpr, not a JoinExpr)
- * 'isouterjoin': TRUE if the qual came from an OUTER JOIN's ON-clause
  * 'isdeduced': TRUE if the qual came from implied-equality deduction
+ * 'outerjoin_nonnullable': NULL if not an outer-join qual, else the set of
+ *		baserels appearing on the outer (nonnullable) side of the join
  * 'qualscope': set of baserels the qual's syntactic scope covers
  *
  * 'qualscope' identifies what level of JOIN the qual came from.  For a top
@@ -341,8 +352,8 @@ mark_baserels_for_outer_join(Query *root, Relids rels, Relids outerrels)
 static void
 distribute_qual_to_rels(Query *root, Node *clause,
 						bool ispusheddown,
-						bool isouterjoin,
 						bool isdeduced,
+						Relids outerjoin_nonnullable,
 						Relids qualscope)
 {
 	RestrictInfo *restrictinfo = makeNode(RestrictInfo);
@@ -392,63 +403,80 @@ distribute_qual_to_rels(Query *root, Node *clause,
 		relids = qualscope;
 
 	/*
-	 * For an outer-join qual, pretend that the clause references all rels
-	 * appearing within its syntactic scope, even if it really doesn't.
-	 * This ensures that the clause will be evaluated exactly at the level
-	 * of joining corresponding to the outer join.
-	 *
-	 * For a non-outer-join qual, we can evaluate the qual as soon as (1) we
-	 * have all the rels it mentions, and (2) we are at or above any outer
-	 * joins that can null any of these rels and are below the syntactic
-	 * location of the given qual.	To enforce the latter, scan the base
-	 * rels listed in relids, and merge their outer-join sets into the
-	 * clause's own reference list.  At the time we are called, the
-	 * outerjoinset of each baserel will show exactly those outer
-	 * joins that are below the qual in the join tree.
-	 *
-	 * If the qual came from implied-equality deduction, we can evaluate the
-	 * qual at its natural semantic level.
-	 *
+	 * Check to see if clause application must be delayed by outer-join
+	 * considerations.
 	 */
 	if (isdeduced)
 	{
+		/*
+		 * If the qual came from implied-equality deduction, we can evaluate
+		 * the qual at its natural semantic level.  It is not affected by
+		 * any outer-join rules (else we'd not have decided the vars were
+		 * equal).
+		 */
 		Assert(bms_equal(relids, qualscope));
 		can_be_equijoin = true;
 	}
-	else if (isouterjoin)
+	else if (bms_overlap(relids, outerjoin_nonnullable))
 	{
+		/*
+		 * The qual is attached to an outer join and mentions (some of the)
+		 * rels on the nonnullable side.  Force the qual to be evaluated
+		 * exactly at the level of joining corresponding to the outer join.
+		 * We cannot let it get pushed down into the nonnullable side, since
+		 * then we'd produce no output rows, rather than the intended single
+		 * null-extended row, for any nonnullable-side rows failing the qual.
+		 *
+		 * Note: an outer-join qual that mentions only nullable-side rels can
+		 * be pushed down into the nullable side without changing the join
+		 * result, so we treat it the same as an ordinary inner-join qual.
+		 */
 		relids = qualscope;
 		can_be_equijoin = false;
 	}
 	else
 	{
-		/* copy to ensure we don't change caller's qualscope set */
-		Relids		newrelids = bms_copy(relids);
+		/*
+		 * For a non-outer-join qual, we can evaluate the qual as soon as
+		 * (1) we have all the rels it mentions, and (2) we are at or above
+		 * any outer joins that can null any of these rels and are below the
+		 * syntactic location of the given qual. To enforce the latter, scan
+		 * the base rels listed in relids, and merge their outer-join sets
+		 * into the clause's own reference list.  At the time we are called,
+		 * the outerjoinset of each baserel will show exactly those outer
+		 * joins that are below the qual in the join tree.
+		 */
+		Relids		addrelids = NULL;
 		Relids		tmprelids;
 		int			relno;
 
-		can_be_equijoin = true;
 		tmprelids = bms_copy(relids);
 		while ((relno = bms_first_member(tmprelids)) >= 0)
 		{
 			RelOptInfo *rel = find_base_rel(root, relno);
 
-			if (!bms_is_subset(rel->outerjoinset, relids))
-			{
-				newrelids = bms_add_members(newrelids, rel->outerjoinset);
-
-				/*
-				 * Because application of the qual will be delayed by
-				 * outer join, we mustn't assume its vars are equal
-				 * everywhere.
-				 */
-				can_be_equijoin = false;
-			}
+			if (rel->outerjoinset != NULL)
+				addrelids = bms_add_members(addrelids, rel->outerjoinset);
 		}
 		bms_free(tmprelids);
-		relids = newrelids;
-		/* Should still be a subset of current scope ... */
-		Assert(bms_is_subset(relids, qualscope));
+
+		if (bms_is_subset(addrelids, relids))
+		{
+			/* Qual is not affected by any outer-join restriction */
+			can_be_equijoin = true;
+		}
+		else
+		{
+			relids = bms_union(relids, addrelids);
+			/* Should still be a subset of current scope ... */
+			Assert(bms_is_subset(relids, qualscope));
+			/*
+			 * Because application of the qual will be delayed by outer join,
+			 * we mustn't assume its vars are equal everywhere.
+			 */
+			can_be_equijoin = false;
+		}
+		bms_free(addrelids);
 	}
 
 	/*
@@ -725,8 +753,7 @@ process_implied_equality(Query *root,
 	 * taken for an original JOIN/ON clause.
 	 */
 	distribute_qual_to_rels(root, (Node *) clause,
-							true, false, true,
-							relids);
+							true, true, NULL, relids);
 }
 
 /*
