@@ -39,8 +39,8 @@ typedef UInt4 Oid;
 
 #define DRIVERNAME             "PostgreSQL ODBC"
 #define DBMS_NAME              "PostgreSQL"
-#define DBMS_VERSION           "06.40.0004 PostgreSQL 6.4"
-#define POSTGRESDRIVERVERSION  "06.40.0004"
+#define DBMS_VERSION           "06.40.0006 PostgreSQL 6.4"
+#define POSTGRESDRIVERVERSION  "06.40.0006"
 
 #ifdef WIN32
 #define DRIVER_FILE_NAME		"PSQLODBC.DLL"
@@ -154,7 +154,7 @@ typedef struct QueryInfo_ {
 #define OID_ATTNUM				-2		/* the attnum in pg_index of the oid */
 
 /* sizes */
-#define TEXT_FIELD_SIZE			4094	/* size of text fields (not including null term) */
+#define TEXT_FIELD_SIZE			8190	/* size of text fields (not including null term) */
 #define NAME_FIELD_SIZE			32		/* size of name fields */
 #define MAX_VARCHAR_SIZE		254		/* maximum size of a varchar (not including null term) */
 

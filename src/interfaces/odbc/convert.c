@@ -319,7 +319,7 @@ char tempBuf[TEXT_FIELD_SIZE+5];
 					len = stmt->bindings[stmt->current_col].data_left;
 				}
 				else
-					stmt->bindings[stmt->current_col].data_left = strlen(value);
+					stmt->bindings[stmt->current_col].data_left = strlen(ptr);
 			}
 
 			if (cbValueMax > 0) {
@@ -922,7 +922,7 @@ int lobj_fd, retval;
 			/*	the oid of the large object -- just put that in for the
 				parameter marker -- the data has already been sent to the large object
 			*/
-			sprintf(param_string, "%d", lobj_oid);
+			sprintf(param_string, "'%d'", lobj_oid);
 			strcpy(&new_statement[npos], param_string);
 			npos += strlen(param_string);
 
