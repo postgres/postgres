@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/plpgsql.sgml,v 1.6 2002/09/01 16:28:05 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/plpgsql.sgml,v 1.7 2002/09/14 20:11:16 tgl Exp $
 -->
 
 <chapter id="plpgsql"> 
@@ -70,18 +70,19 @@ $Header: /cvsroot/pgsql/doc/src/sgml/plpgsql.sgml,v 1.6 2002/09/01 16:28:05 tgl 
    </para>
    <para>
     As each expression and <acronym>SQL</acronym> query is first used
-    in the function, the <application>PL/pgSQL</> interpreter creates a
-    prepared execution plan (using the <acronym>SPI</acronym> manager's 
-    <function>SPI_prepare</function> and
-    <function>SPI_saveplan</function> functions).  Subsequent visits
-    to that expression or query re-use the prepared plan.  Thus, a function
-    with conditional code that contains many statements for which execution
-    plans might be required, will only prepare and save those plans
-    that are really used during the lifetime of the database
-    connection.  This can provide a considerable savings of parsing
-    activity.  A disadvantage is that errors in a specific expression
-    or query may not be detected until that part of the function is
-    reached in execution.
+	in the function, the <application>PL/pgSQL</> interpreter creates
+	a prepared execution plan (using the <acronym>SPI</acronym>
+	manager's <function>SPI_prepare</function> and
+	<function>SPI_saveplan</function> functions).  Subsequent visits
+	to that expression or query re-use the prepared plan.  Thus, a
+	function with conditional code that contains many statements for
+	which execution plans might be required will only prepare and save
+	those plans that are really used during the lifetime of the
+	database connection.  This can substantially reduce the total
+	amount of time required to parse, and generate query plans for the
+	statements in a procedural language function. A disadvantage is
+	that errors in a specific expression or query may not be detected
+	until that part of the function is reached in execution.
    </para>
   <para>
    Once <application>PL/pgSQL</> has made a query plan for a particular
@@ -110,14 +111,26 @@ END;
    </para>
 
    <para>
-    Because <application>PL/pgSQL</application> saves execution plans in this way, queries that appear
-    directly in a <application>PL/pgSQL</application> function must refer to the same tables and fields
-    on every execution; that is, you cannot use a parameter as the name of
-    a table or field in a query.  To get around
-    this restriction, you can construct dynamic queries using the <application>PL/pgSQL</application>
-    EXECUTE statement --- at the price of constructing a new query plan
-    on every execution.
+    Because <application>PL/pgSQL</application> saves execution plans
+	in this way, queries that appear directly in a
+	<application>PL/pgSQL</application> function must refer to the
+	same tables and fields on every execution; that is, you cannot use
+	a parameter as the name of a table or field in a query.  To get
+	around this restriction, you can construct dynamic queries using
+	the <application>PL/pgSQL</application> EXECUTE statement --- at
+	the price of constructing a new query plan on every execution.
    </para>
+
+   <note>
+	<para>
+	 The <application>PL/pgSQL</application> EXECUTE statement is not
+	 related to the EXECUTE statement supported by the
+	 <productname>PostgreSQL</productname> backend. The backend
+	 EXECUTE statement cannot be used within PL/PgSQL functions (and
+	 is not needed).
+	</para>
+   </note>
+
    <para>
     Except for input/output conversion and calculation functions
     for user defined types, anything that can be defined in C language
@@ -152,11 +165,11 @@ END;
     <title>Better Performance</title>
 
     <para>
-     <acronym>SQL</acronym> is the language <productname>PostgreSQL</> (and
-     most other Relational Databases) use as query
-     language. It's portable and easy to learn. But every
-     <acronym>SQL</acronym> statement must be executed
-     individually by the database server.
+	  <acronym>SQL</acronym> is the language
+	  <productname>PostgreSQL</> (and most other relational databases)
+	  use as query language. It's portable and easy to learn. But
+	  every <acronym>SQL</acronym> statement must be executed
+	  individually by the database server.
     </para>
 
     <para>
@@ -195,9 +208,10 @@ END;
     <title>Portability</title>
 
     <para>
-     Because <application>PL/pgSQL</application> functions run inside <productname>PostgreSQL</>, these
-     functions will run on any platform where <productname>PostgreSQL</>
-     runs. Thus you can reuse code and have less development costs.
+	  Because <application>PL/pgSQL</application> functions run inside
+	  <productname>PostgreSQL</>, these functions will run on any
+	  platform where <productname>PostgreSQL</> runs. Thus you can
+	  reuse code and reduce development costs.
     </para>
    </sect3>
   </sect2>
@@ -227,16 +241,17 @@ END;
    </para>
 
    <para>
-    One good way to develop in <application>PL/pgSQL</> is to simply use the text
-    editor of your choice to create your functions, and in another
-    console, use <command>psql</command> (PostgreSQL's interactive monitor) to load
-    those functions. If you are doing it this way, it is a good
-    idea to write the function using <command>CREATE OR REPLACE
-    FUNCTION</command>. That way you can reload the file to update
-    the function definition.  For example:
+	 One good way to develop in <application>PL/pgSQL</> is to simply
+	 use the text editor of your choice to create your functions, and
+	 in another window, use <command>psql</command>
+	 (<productname>PostgreSQL</>'s interactive monitor) to load those
+	 functions. If you are doing it this way, it is a good idea to
+	 write the function using <command>CREATE OR REPLACE
+	 FUNCTION</>. That way you can reload the file to update the
+	 function definition.  For example:
 <programlisting>
 CREATE OR REPLACE FUNCTION testfunc(INTEGER) RETURNS INTEGER AS '
-    ....
+	  ....
 end;
 ' LANGUAGE 'plpgsql';
 </programlisting>
@@ -645,9 +660,9 @@ RENAME this_var TO that_var;
 
     <note>
     <para>
-     RENAME appears to be broken as of PostgreSQL 7.2.  Fixing this is
-     of low priority, since ALIAS covers most of the practical uses of
-     RENAME.
+	  RENAME appears to be broken as of <productname>PostgreSQL</>
+	  7.3.  Fixing this is of low priority, since ALIAS covers most of
+	  the practical uses of RENAME.
     </para>
     </note>
 
@@ -898,7 +913,7 @@ END;
 PERFORM <replaceable>query</replaceable>;
 </synopsis>
 
-     This executes a <literal>SELECT</literal>
+     This executes a <command>SELECT</command>
      <replaceable>query</replaceable> and discards the
      result. <application>PL/pgSQL</application> variables are
      substituted in the query as usual.  Also, the special variable
@@ -1044,6 +1059,10 @@ END;
     <title>Obtaining result status</title>
 
     <para>
+	 There are several ways to determine the effect of a command. The
+	 first method is to use the <literal>GET DIAGNOSTICS</literal>,
+	 which has the form:
+
 <synopsis>
 GET DIAGNOSTICS <replaceable>variable</replaceable> = <replaceable>item</replaceable> <optional> , ... </optional> ;
 </synopsis>
@@ -1166,10 +1185,19 @@ RETURN <replaceable>expression</replaceable>;
     <para>
      When a <application>PL/pgSQL</> function is declared to return
      <literal>SETOF</literal> <replaceable>sometype</>, the procedure
-     to follow is slightly different.  The individual items to be returned
-     are specified in RETURN NEXT commands, and then a final RETURN with
-     no argument is given to indicate that the function is done generating
-     items.
+     to follow is slightly different.  In that case, the individual
+     items to return are specified in RETURN NEXT commands, and then a
+     final RETURN command with no arguments is used to indicate that
+     the function has finished executing.  RETURN NEXT can be used with
+     both scalar and composite data types; in the later case, an
+     entire "table" of results will be returned.  Functions that use
+     RETURN NEXT should be called in the following fashion:
+
+<programlisting>
+SELECT * FROM some_func();
+</programlisting>
+
+     That is, the function is used as a table source in a FROM clause.
 
 <synopsis>
 RETURN NEXT <replaceable>expression</replaceable>;
@@ -1184,6 +1212,24 @@ RETURN NEXT <replaceable>expression</replaceable>;
      RETURN, which need have no argument, causes control to exit
      the function.
     </para>
+
+	<note>
+	 <para>
+	  The current implementation of RETURN NEXT for PL/PgSQL stores
+	  the entire result set before returning from the function, as
+	  discussed above.  That means that if a PL/PgSQL function
+	  produces a very large result set, performance may be poor: data
+	  will be written to disk to avoid memory exhaustion, but the
+	  function itself will not return until the entire
+	  result set has been generated.  A future version of PL/PgSQL may
+	  allow users to allow users to define set-returning functions
+	  that do not have this limitation.  Currently, the point at which
+	  data begins being written to disk is controlled by the
+	  <option>SORT_MEM</> configuration variable.  Administrators who
+	  have sufficient memory to store larger result sets in memory
+	  should consider increasing this parameter.
+	  </para>
+	</note>
    </sect2>
     
    <sect2 id="plpgsql-conditionals">
@@ -1904,13 +1950,14 @@ RAISE EXCEPTION ''Inexistent ID --> %'',user_id;
   <title>Trigger Procedures</title>
 
   <para>
-   <application>PL/pgSQL</application> can be used to define trigger
-   procedures. A trigger procedure is created with the <command>CREATE
-   FUNCTION</command> command as a function with no arguments and a return
-   type of <type>TRIGGER</type>.  Note that the function must be declared
-   with no arguments even if it expects to receive arguments specified
-   in <command>CREATE TRIGGER</> --- trigger arguments are passed via
-   <varname>TG_ARGV</>, as described below.
+	<application>PL/pgSQL</application> can be used to define trigger
+	procedures. A trigger procedure is created with the
+	<command>CREATE FUNCTION</> command as a function with no
+	arguments and a return type of <type>TRIGGER</type>.  Note that
+	the function must be declared with no arguments even if it expects
+	to receive arguments specified in <command>CREATE TRIGGER</> ---
+	trigger arguments are passed via <varname>TG_ARGV</>, as described
+	below.
   </para>
 
   <para>
@@ -2106,14 +2153,15 @@ CREATE TRIGGER emp_stamp BEFORE INSERT OR UPDATE ON emp
    </para>
 
    <para>
-    One painful detail in writing functions in <application>PL/pgSQL</application> is the handling
-    of single quotes. The function's source text in <command>CREATE FUNCTION</command> must
-    be a literal string. Single quotes inside of literal strings must be
-    either doubled or quoted with a backslash. We are still looking for
-    an elegant alternative. In the meantime, doubling the single quotes
-    as in the examples below should be used. Any solution for this
-    in future versions of <productname>PostgreSQL</productname> will be
-    forward compatible.
+    One painful detail in writing functions in
+	<application>PL/pgSQL</application> is the handling of single
+	quotes. The function's source text in <command>CREATE FUNCTION</>
+	must be a literal string. Single quotes inside of literal strings
+	must be either doubled or quoted with a backslash. We are still
+	looking for an elegant alternative. In the meantime, doubling the
+	single quotes as in the examples below should be used. Any
+	solution for this in future versions of
+	<productname>PostgreSQL</productname> will be forward compatible.
    </para>
 
    <para>
@@ -2504,7 +2552,7 @@ END;
 
     <para>
      The following procedure grabs rows from a
-     <literal>SELECT</literal> statement and builds a large function
+     <command>SELECT</command> statement and builds a large function
      with the results in <literal>IF</literal> statements, for the
      sake of efficiency. Notice particularly the differences in
      cursors, <literal>FOR</literal> loops, and the need to escape
@@ -2735,7 +2783,7 @@ show errors
 
      <callout arearefs="co.plpgsql-porting-locktable">
       <para>
-       If you do a <literal>LOCK TABLE</literal> in <application>PL/pgSQL</>, the lock
+       If you do a <command>LOCK TABLE</command> in <application>PL/pgSQL</>, the lock
        will not be released until the calling transaction is finished.
       </para>
      </callout>
@@ -2746,7 +2794,7 @@ show errors
        entire function (and other functions called from therein) is
        executed in a transaction and <productname>PostgreSQL</> rolls back the results if
        something goes wrong. Therefore only one
-       <literal>BEGIN</literal> statement is allowed.
+       <command>BEGIN</command> statement is allowed.
       </para>
      </callout>
 
@@ -2895,7 +2943,7 @@ END;
     <title>EXECUTE</title>
 
     <para>
-     The <productname>PostgreSQL</> version of <literal>EXECUTE</literal> works
+     The <productname>PostgreSQL</> version of <command>EXECUTE</command> works
      nicely, but you have to remember to use
      <function>quote_literal(TEXT)</function> and
      <function>quote_string(TEXT)</function> as described in <xref
