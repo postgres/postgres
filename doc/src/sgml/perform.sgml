@@ -1,9 +1,13 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/perform.sgml,v 1.45 2004/04/22 17:38:14 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/perform.sgml,v 1.46 2004/05/27 01:00:40 neilc Exp $
 -->
 
  <chapter id="performance-tips">
   <title>Performance Tips</title>
+
+  <indexterm zone="performance-tips">
+   <primary>performance</primary>
+  </indexterm>
 
   <para>
    Query performance can be affected by many things. Some of these can 
