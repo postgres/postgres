@@ -9,7 +9,8 @@
 #define BLCKSZ	8192
 
 /* Define to enable readline/history support in psql */
-/* #undef HAVE_LIBREADLINE */
+/* #undef HAVE_LIBREADLINE  */
+/* #undef HAVE_LIBHISTORY   */
 
 /* These two defines are not used until HAVE_LIBREADLINE
  * are also defined
@@ -20,19 +21,8 @@
 
 /* Define one for either <history.h> or <readline/history.h> 
  */
-/* #undef HAVE_HISTORY_H */
-/* #undef HAVE_READLINE_HISTORY_H */
+/* #undef HAVE_HISTORY  */
 
-/* this is meant to handle the condition where the system has readline
- * capabilities, but no history.  Unfortunately, it isn't as simple as
- * testing for the existance of -lhistory, since newer -lreadline seems to
- * include the -lhistory library, but newer readline.h doesn't
- */
-#if defined(HAVE_LIBREADLINE)
-# if !defined(HAVE_HISTORY_H) || !defined(HAVE_READLINE_HISTORY_H)
-#   define NO_HISTORY_H
-# endif
-#endif
 
 #define HAVE_SYS_SELECT_H
 #define HAVE_TERMIOS_H

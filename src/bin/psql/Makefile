@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/psql/Makefile,v 1.17 1996/12/30 23:19:48 bryanh Exp $
+#    $Header: /cvsroot/pgsql/src/bin/psql/Makefile,v 1.18 1997/01/25 22:51:26 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -19,46 +19,40 @@ INCLUDE_OPT:= \
                -I../../include 
 
 CFLAGS+= $(INCLUDE_OPT)
-#
+
 #USE_READLINE is set in Makefile.global
 # 
-
 ifeq ($(USE_READLINE), true)
-   CFLAGS+= $(READLINE_INC) $(HISTORY_INC)
+   CFLAGS+= $(READLINE_INC) 
 
-   LD_ADD+= $(READLINE_LIB) $(HISTORY_LIB) $(CURSES_LIB)
+   LD_ADD+= $(READLINE_LIB) $(CURSES_LIB)
 
    ifeq ($(PORTNAME), ultrix4)
-   LD_ADD+= -ltermcap
+    LD_ADD+= -ltermcap
    else
-   ifeq ($(PORTNAME), sparc)
-   LD_ADD+= -ltermcap
-   else
-   ifeq ($(PORTNAME), linux)
-   LD_ADD+= -ltermcap
-   else
-   ifeq ($(PORTNAME), next)
-   LD_ADD+= -ltermcap
-   else
-   ifeq ($(PORTNAME), bsdi)
-   LD_ADD+= -ltermcap
-   else
-   ifeq ($(PORTNAME), BSD44_derived)
-   LD_ADD+= -ltermcap
+     ifeq ($(PORTNAME), sparc)
+       LD_ADD+= -ltermcap
+     else
+       ifeq ($(PORTNAME), linux)
+         LD_ADD+= -ltermcap
+       else
+         ifeq ($(PORTNAME), next)
+           LD_ADD+= -ltermcap
+         else
+           ifeq ($(PORTNAME), bsdi)
+             LD_ADD+= -ltermcap
+           else
+             ifeq ($(PORTNAME), BSD44_derived)
+               LD_ADD+= -ltermcap
+             endif
+           endif
+         endif
+       endif
+     endif
    endif
-   endif
-   endif
-   endif
-   endif
-   endif
+   OBJS= psql.o stringutils.o  
 else
-   CFLAGS+= -DNOREADLINE
-endif
-
-OBJS= psql.o stringutils.o 
-
-ifneq ($(USE_READLINE), true)
-OBJS+= rlstubs.o
+   OBJS= psql.o stringutils.o  rlstubs.o
 endif
 
 ifeq ($(PORTNAME), ultrix4)

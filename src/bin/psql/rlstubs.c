@@ -7,18 +7,13 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/bin/psql/Attic/rlstubs.c,v 1.5 1996/11/11 14:55:47 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/bin/psql/Attic/rlstubs.c,v 1.6 1997/01/25 22:52:08 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include <stdio.h>
 
 #include "rlstubs.h"
-
-extern char *readline(const char *);
-extern int write_history(const char *);
-extern int using_history(void);
-extern int add_history(const char *);
 
 char *
 readline(const char *prompt)
