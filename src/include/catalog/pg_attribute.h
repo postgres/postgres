@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_attribute.h,v 1.12 1997/08/22 04:04:18 vadim Exp $
+ * $Id: pg_attribute.h,v 1.13 1997/08/31 09:55:21 vadim Exp $
  *
  * NOTES
  *    the genbki.sh script reads this file and generates .bki
@@ -417,9 +417,10 @@ DATA(insert OID = 0 ( 1249 vtype            18 0  1 -11 0 -1 t f c f f));
 { 1259l, {"relarch"},      18,  0l,  1, 11, 0l, -1l, '\001', '\0', 'c', '\0', '\0' }, \
 { 1259l, {"relnatts"},     21,  0l,  2, 12, 0l, -1l, '\001', '\0', 's', '\0', '\0' }, \
 { 1259l, {"relsmgr"},      210l, 0l, 2, 13, 0l, -1l, '\001', '\0', 's', '\0', '\0' }, \
-{ 1259l, {"relchecks"},    21l, 0l, 2, 14, 0l, -1l, '\001', '\0', 's', '\0', '\0' }, \
-{ 1259l, {"relhasrules"},  16,  0l,  1, 15, 0l, -1l, '\001', '\0', 'c', '\0', '\0' }, \
-{ 1259l, {"relacl"},     1034l, 0l, -1, 16, 0l, -1l,   '\0', '\0', 'i', '\0', '\0' }
+{ 1259l, {"relchecks"},    21l, 0l,  2, 14, 0l, -1l, '\001', '\0', 's', '\0', '\0' }, \
+{ 1259l, {"reltriggers"},  21l, 0l,  2, 15, 0l, -1l, '\001', '\0', 's', '\0', '\0' }, \
+{ 1259l, {"relhasrules"},  16,  0l,  1, 16, 0l, -1l, '\001', '\0', 'c', '\0', '\0' }, \
+{ 1259l, {"relacl"},     1034l, 0l, -1, 17, 0l, -1l,   '\0', '\0', 'i', '\0', '\0' }
 
 DATA(insert OID = 0 ( 1259 relname          19 0 NAMEDATALEN   1 0 -1 f f i f f));
 DATA(insert OID = 0 ( 1259 reltype          26 0  4   2 0 -1 t f i f f));
@@ -436,8 +437,9 @@ DATA(insert OID = 0 ( 1259 relarch          18 0  1  11 0 -1 t f c f f));
 DATA(insert OID = 0 ( 1259 relnatts         21 0  2  12 0 -1 t f s f f));
 DATA(insert OID = 0 ( 1259 relsmgr         210 0  2  13 0 -1 t f s f f));
 DATA(insert OID = 0 ( 1259 relchecks        21 0  2  14 0 -1 t f s f f));
-DATA(insert OID = 0 ( 1259 relhasrules      16 0  1  15 0 -1 t f c f f));
-DATA(insert OID = 0 ( 1259 relacl         1034 0 -1  16 0 -1 f f i f f));
+DATA(insert OID = 0 ( 1259 reltriggers      21 0  2  15 0 -1 t f s f f));
+DATA(insert OID = 0 ( 1259 relhasrules      16 0  1  16 0 -1 t f c f f));
+DATA(insert OID = 0 ( 1259 relacl         1034 0 -1  17 0 -1 f f i f f));
 DATA(insert OID = 0 ( 1259 ctid             27 0  6  -1 0 -1 f f i f f));
 DATA(insert OID = 0 ( 1259 oid              26 0  4  -2 0 -1 t f i f f));
 DATA(insert OID = 0 ( 1259 xmin             28 0  4  -3 0 -1 f f i f f));
@@ -525,6 +527,32 @@ DATA(insert OID = 0 ( 1216 anchor           27 0  6  -8 0 -1 f f i f f));
 DATA(insert OID = 0 ( 1216 tmin            702 0  4  -9 0 -1 t f i f f));
 DATA(insert OID = 0 ( 1216 tmax            702 0  4 -10 0 -1 t f i f f));
 DATA(insert OID = 0 ( 1216 vtype            18 0  1 -11 0 -1 t f c f f));
+    
+/* ----------------
+ *	pg_trigger
+ * ----------------
+ */
+DATA(insert OID = 0 ( 1219 tgrelid          26 0  4   1 0 -1 t f i f f));
+DATA(insert OID = 0 ( 1219 tgname           19 0  NAMEDATALEN  2 0 -1 f f i f f));
+DATA(insert OID = 0 ( 1219 tgfunc           19 0  NAMEDATALEN  3 0 -1 f f i f f));
+DATA(insert OID = 0 ( 1219 tglang           26 0  4   4 0 -1 t f i f f));
+DATA(insert OID = 0 ( 1219 tgtype           21 0  2   5 0 -1 t f s f f));
+DATA(insert OID = 0 ( 1219 tgnargs          21 0  2   6 0 -1 t f s f f));
+DATA(insert OID = 0 ( 1219 tgattr           22 0 16   7 0 -1 f f i f f));
+DATA(insert OID = 0 ( 1219 tgtext           17 0 -1   8 0 -1 f f i f f));
+DATA(insert OID = 0 ( 1219 tgargs           17 0 -1   9 0 -1 f f i f f));
+DATA(insert OID = 0 ( 1219 tgwhen           25 0 -1  10 0 -1 f f i f f));
+DATA(insert OID = 0 ( 1219 ctid             27 0  6  -1 0 -1 f f i f f));
+DATA(insert OID = 0 ( 1219 oid              26 0  4  -2 0 -1 t f i f f));
+DATA(insert OID = 0 ( 1219 xmin             28 0  4  -3 0 -1 f f i f f));
+DATA(insert OID = 0 ( 1219 cmin             29 0  2  -4 0 -1 t f s f f));
+DATA(insert OID = 0 ( 1219 xmax             28 0  4  -5 0 -1 f f i f f));
+DATA(insert OID = 0 ( 1219 cmax             29 0  2  -6 0 -1 t f s f f));
+DATA(insert OID = 0 ( 1219 chain            27 0  6  -7 0 -1 f f i f f));
+DATA(insert OID = 0 ( 1219 anchor           27 0  6  -8 0 -1 f f i f f));
+DATA(insert OID = 0 ( 1219 tmin            702 0  4  -9 0 -1 t f i f f));
+DATA(insert OID = 0 ( 1219 tmax            702 0  4 -10 0 -1 t f i f f));
+DATA(insert OID = 0 ( 1219 vtype            18 0  1 -11 0 -1 t f c f f));
     
 /* ----------------
  *	pg_hosts - this relation is used to store host based authentication
