@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Tue Dec 4 02:12:01 EST 2001
+   Last updated: Wed Dec 5 00:33:46 EST 2001
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -28,7 +28,7 @@
    1.12) How do I join the development team?
    1.13) How do I submit a bug report?
    1.14) How does PostgreSQL compare to other DBMS's?
-   1.14) How can I financially assist PostgreSQL?
+   1.15) How can I financially assist PostgreSQL?
    
                            User Client Questions
                                       
@@ -360,7 +360,7 @@
           You can add our code to your product with no limitations,
           except those outlined in our BSD-style license stated above.
           
-    1.13) How can I financially assist PostgreSQL?
+    1.15) How can I financially assist PostgreSQL?
     
    PostgreSQL has had a first-class infrastructure since we started five
    years ago. This is all thanks to Marc Fournier, who has created and
