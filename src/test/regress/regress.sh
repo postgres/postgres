@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Header: /cvsroot/pgsql/src/test/regress/Attic/regress.sh,v 1.10 1997/05/11 15:46:19 thomas Exp $
+# $Header: /cvsroot/pgsql/src/test/regress/Attic/regress.sh,v 1.11 1997/06/03 14:19:28 thomas Exp $
 #
 if echo '\c' | grep -s c >/dev/null 2>&1
 then
@@ -14,7 +14,7 @@ if [ -d ./obj ]; then
 	cd ./obj
 fi
 
-TZ="PST8PDT7,M04.01.00,M10.05.03"; export TZ
+TZ="PST8PDT"; export TZ
 
 #FRONTEND=monitor
 FRONTEND="psql -n -e -q"
@@ -24,7 +24,7 @@ echo "postmaster must already be running for the regression tests to succeed."
 echo "The time zone must be set to PST/PDT for the date and time data types"
 echo " to pass the regression tests; to do this type"
 echo "   setenv TZ $TZ"
-echo " before starting postmaster."
+echo " before starting postmaster. regress/README has more information."
 echo ""
 
 echo "=============== destroying old regression database... ================="
