@@ -16,7 +16,8 @@ case "$host_os" in
      aux*) os=aux need_tas=no ;;
    linux*) os=linux need_tas=no ;;
     bsdi*) os=bsdi need_tas=no ;;
- freebsd*) os=freebsd need_tas=no ;;
+ freebsd3*) os=freebsd need_tas=no elf=yes ;;
+ freebsd1*) os=freebsd need_tas=no ;;
   netbsd*|openbsd*) os=bsd need_tas=no ;;
     dgux*) os=dgux need_tas=no ;;
      aix*) os=aix need_tas=no ;;
@@ -46,6 +47,13 @@ nextstep*) os=nextstep need_tas=no ;;
    echo ""
    exit;;
 esac
+
+if test "X$elf" = "Xyes"
+then
+	ELF_SYS=true
+else
+	ELF_SYS=false
+fi
 
 if test "X$need_tas" = "Xyes"
 then
@@ -358,6 +366,7 @@ echo "- setting CPPFLAGS=$CPPFLAGS"
 LDFLAGS="$LDFLAGS $PGSQL_LDFLAGS"
 echo "- setting LDFLAGS=$LDFLAGS"
 
+AC_SUBST(ELF_SYS)
 AC_SUBST(PORTNAME)
 AC_SUBST(SRCDIR)
 AC_SUBST(LDFLAGS)
@@ -533,6 +542,7 @@ AC_CHECK_HEADERS(readline/readline.h readline/history.h ieeefp.h fp_class.h)
 AC_CHECK_HEADERS(netinet/in.h string.h strings.h)
 dnl ODBC headers...
 AC_CHECK_HEADERS(sys/param.h pwd.h)
+dnl
 
 dnl Checks for typedefs, structures, and compiler characteristics.
 AC_C_CONST

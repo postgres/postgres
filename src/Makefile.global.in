@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.52 1998/10/19 00:00:40 tgl Exp $
+#    $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.53 1998/10/30 04:53:55 scrappy Exp $
 #
 # NOTES
 #    Essentially all Postgres make files include this file and use the 
@@ -48,6 +48,10 @@
 # are, and it's one that doesn't have shared libraries (NetBSD/vax is an
 # example of this), set BSD_SHLIB to null in Makefile.custom.
 BSD_SHLIB= true
+
+# This is mainly for use on FreeBSD, where we have both a.out and elf
+# systems now.  May be applicable to other systems to?
+ELF_SYSTEM= @ELF_SYS@
 
 LIBPQDIR:= $(SRCDIR)/interfaces/libpq
 
