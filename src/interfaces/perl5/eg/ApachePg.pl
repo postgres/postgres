@@ -1,44 +1,48 @@
 #!/usr/local/bin/perl
 
 # demo script, tested with:
-#  - PostgreSQL-6.2
-#  - apache_1.2.4
-#  - mod_perl-1.00
-#  - perl5.004_03
+#  - PostgreSQL-6.3
+#  - apache_1.3
+#  - mod_perl-1.08
+#  - perl5.004_04
 
 use CGI;
 use Pg;
+use strict;
 
-$query = new CGI;
+my $query = new CGI;
 
 print  $query->header,
        $query->start_html(-title=>'A Simple Example'),
        $query->startform,
        "<CENTER><H3>Testing Module Pg</H3></CENTER>",
-       "Enter database name: ",
-       $query->textfield(-name=>'dbname'),
-       "<P>",
-       "Enter select command: ",
-       $query->textfield(-name=>'cmd', -size=>40),
-       "<P>",
-       $query->submit(-value=>'Submit'),
+       "<P><CENTER><TABLE CELLPADDING=4 CELLSPACING=2 BORDER=1>",
+       "<TR><TD>Enter conninfo string: </TD>",
+           "<TD>", $query->textfield(-name=>'conninfo', -size=>40, -default=>'dbname=template1 host=localhost'), "</TD>",
+       "</TR>",
+       "<TR><TD>Enter select command: </TD>",
+           "<TD>", $query->textfield(-name=>'cmd', -size=>40), "</TD>",
+       "</TR>",
+       "</TABLE></CENTER><P>",
+       "<CENTER>", $query->submit(-value=>'Submit'), "</CENTER>",
        $query->endform;
 
 if ($query->param) {
 
-    $dbname = $query->param('dbname');
-    $conn = Pg::connectdb("dbname = $dbname");
-    $cmd = $query->param('cmd');
-    $result = $conn->exec($cmd);
-    print "<TABLE>";
-    for ($i = 0; $i < $result->ntuples; $i++) {
-        print "<TR>";
-        for ($j = 0; $j < $result->nfields; $j++) {
-            print "<TD>", $result->getvalue($i, $j), "</TD>";
+    my $conninfo = $query->param('conninfo');
+    my $conn = Pg::connectdb($conninfo);
+    if ($conn->status == PGRES_CONNECTION_OK) {
+        my $cmd = $query->param('cmd');
+        my $result = $conn->exec($cmd);
+        print "<P><CENTER><TABLE CELLPADDING=4 CELLSPACING=2 BORDER=1>\n";
+        my @row;
+        while (@row = $result->fetchrow) {
+            print "<TR><TD>", join("</TD><TD>", @row), "</TD></TR>\n";
         }
-        print "</TR>";
+        print "</TABLE></CENTER><P>\n";
+    } else {
+        print "<CENTER><H2>Connect to database failed</H2></CENTER>\n";
     }
-    print "</TABLE>";
 }
 
 print $query->end_html;

@@ -2,7 +2,7 @@
 
 #-------------------------------------------------------
 #
-# $Id: example.newstyle,v 1.2 1997/09/25 21:15:02 mergl Exp $
+# $Id: example.newstyle,v 1.3 1998/02/20 21:26:06 mergl Exp $
 #
 # Copyright (c) 1997  Edmund Mergl
 #
@@ -13,7 +13,7 @@
 
 ######################### We start with some black magic to print on failure.
 
-BEGIN { $| = 1; print "1..61\n"; }
+BEGIN { $| = 1; print "1..57\n"; }
 END {print "not ok 1\n" unless $loaded;}
 use Pg;
 $loaded = 1;
@@ -23,6 +23,7 @@ print "ok 1\n";
 
 $dbmain = 'template1';
 $dbname = 'pgperltest';
+$dbhost = 'localhost';
 $trace  = '/tmp/pgtrace.out';
 $cnt    = 2;
 $DEBUG  = 0; # set this to 1 for traces
@@ -88,7 +89,7 @@ $SIG{PIPE} = sub { print "broken pipe\n" };
 ######################### create and connect to test database
 # 2-4
 
-$conn = Pg::connectdb("dbname=$dbmain");
+$conn = Pg::connectdb("dbname=$dbmain host=$dbhost");
 cmp_eq(PGRES_CONNECTION_OK, $conn->status);
 
 # might fail if $dbname doesn't exist => don't check resultStatus
@@ -97,7 +98,7 @@ $result = $conn->exec("DROP DATABASE $dbname");
 $result = $conn->exec("CREATE DATABASE $dbname");
 cmp_eq(PGRES_COMMAND_OK, $result->resultStatus);
 
-$conn = Pg::connectdb("dbname=$dbname");
+$conn = Pg::connectdb("dbname=$dbname host=$dbhost");
 cmp_eq(PGRES_CONNECTION_OK, $conn->status);
 
 ######################### debug, PQtrace
@@ -200,17 +201,14 @@ for ($k = 0; $k < $result->nfields; $k++) {
     cmp_eq($k, $fnumber);
 }
 
-for ($k = 0; $k < $result->ntuples; $k++) {
-    $string = "";
-    for ($l = 0; $l < $result->nfields; $l++) {
-        $string .= $result->getvalue($k, $l) . " ";
-    }
-    $i = $k + 1;
-    cmp_eq("$i Edmund Mergl ", $string);
+$string = "";
+while (@row = $result->fetchrow) {
+    $string = join(" ", @row);
 }
+cmp_eq("5 Edmund Mergl", $string);
 
 ######################### PQnotifies
-# 49-51
+# 44-47
 
 if (! defined($pid = fork)) {
     die "can not fork: $!";
@@ -218,7 +216,7 @@ if (! defined($pid = fork)) {
     # i'm the child
     sleep 2;
     bless $conn;
-    $conn = Pg::connectdb("dbname=$dbname");
+    $conn = Pg::connectdb("dbname=$dbname host=$dbhost");
     $result = $conn->exec("NOTIFY person");
     exit;
 }
@@ -236,7 +234,7 @@ while (1) {
 cmp_eq("person", $table);
 
 ######################### PQprint
-# 52-53
+# 48-49
 
 $result = $conn->exec("SELECT name FROM person WHERE id = 2");
 cmp_eq(PGRES_TUPLES_OK, $result->resultStatus);
@@ -246,7 +244,7 @@ $result->print(PRINT, 0, 0, 0, 0, 1, 0, " ", "", "", "myName");
 close(PRINT) || die "bad PRINT: $!";
 
 ######################### PQlo_import, PQlo_export, PQlo_unlink
-# 54-59
+# 50-55
 
 $filename = 'ApachePg.pl';
 $cwd = `pwd`;
@@ -276,9 +274,9 @@ if ($DEBUG) {
 }
 
 ######################### disconnect and drop test database
-# 60-61
+# 56-57
 
-$conn = Pg::connectdb("dbname=$dbmain");
+$conn = Pg::connectdb("dbname=$dbmain host=$dbhost");
 cmp_eq(PGRES_CONNECTION_OK, $conn->status);
 
 $result = $conn->exec("DROP DATABASE $dbname");
