@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq-fe.h,v 1.80 2001/11/08 20:37:52 momjian Exp $
+ * $Id: libpq-fe.h,v 1.81 2002/03/04 23:59:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -252,6 +252,9 @@ extern PQnoticeProcessor PQsetNoticeProcessor(PGconn *conn,
 extern size_t PQescapeString(char *to, const char *from, size_t length);
 extern unsigned char *PQescapeBytea(unsigned char *bintext, size_t binlen,
 			  size_t *bytealen);
+extern unsigned char *PQunescapeBytea(unsigned char *strtext,
+			  size_t *retbuflen);
+
 
 /* Simple synchronous query */
 extern PGresult *PQexec(PGconn *conn, const char *query);

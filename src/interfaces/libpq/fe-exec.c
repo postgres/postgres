@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.113 2001/10/25 05:50:13 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.114 2002/03/04 23:59:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -178,6 +178,95 @@ PQescapeBytea(unsigned char *bintext, size_t binlen, size_t *bytealen)
 	*rp = '\0';
 
 	return result;
+}
+
+/*
+ *		PQunescapeBytea	- converts the null terminated string representation
+ *		of a bytea, strtext, into binary, filling a buffer. It returns a
+ *		pointer to the buffer which is NULL on error, and the size of the
+ *		buffer in retbuflen. The pointer may subsequently be used as an
+ *		argument to the function free(3). It is the reverse of PQescapeBytea.
+ *
+ *		The following transformations are reversed:
+ *		'\0' == ASCII  0 == \000
+ *		'\'' == ASCII 39 == \'
+ *		'\\' == ASCII 92 == \\
+ *
+ *		States:
+ *		0	normal		0->1->2->3->4
+ *		1	\			   1->5
+ *		2	\0			   1->6
+ *		3	\00
+ *		4	\000
+ *		5	\'
+ *		6	\\
+ */
+unsigned char *
+PQunescapeBytea(unsigned char *strtext, size_t *retbuflen) 
+{
+	size_t buflen;
+	unsigned char *buffer, *sp, *bp;
+	unsigned int state=0;
+
+    if(strtext == NULL)return NULL;
+	buflen = strlen(strtext); /* will shrink, also we discover if strtext */
+	buffer = (unsigned char *) malloc(buflen);   /* isn't NULL terminated */
+    if(buffer == NULL)return NULL;
+	for(bp = buffer, sp = strtext; *sp != '\0'; bp++, sp++)
+	{
+		switch(state)
+		{
+			case 0:
+				if(*sp == '\\')state=1;
+				*bp = *sp;
+				break;
+			case 1:
+				if(*sp == '\'') /* state=5 */
+				{ /* replace \' with 39 */
+					bp--;
+					*bp = 39;
+					buflen--;
+					state=0;
+				}
+				else if(*sp == '\\') /* state=6 */
+				{ /* replace \\ with 92 */
+					bp--;
+					*bp = 92;
+					buflen--;
+					state=0;
+				}
+				else
+				{
+					if(*sp == '0')state=2;
+					else state=0;
+					*bp = *sp;
+				}
+				break;
+			case 2:
+				if(*sp == '0')state=3;
+				else state=0;
+				*bp = *sp;
+				break;
+			case 3:
+				if(*sp == '0') /* state=4 */
+				{
+					bp -= 3;
+					*bp = 0;
+					buflen -= 3;
+					state=0;
+				}
+				else
+				{
+					*bp = *sp;
+					state=0;
+				}
+				break;
+		}
+	}
+	realloc(buffer,buflen);
+
+	*retbuflen=buflen;
+	return buffer;
 }
 
 /* ----------------
