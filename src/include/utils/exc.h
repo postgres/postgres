@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: exc.h,v 1.2 1996/10/31 09:51:13 scrappy Exp $
+ * $Id: exc.h,v 1.3 1996/11/04 04:00:47 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,9 +22,9 @@ extern Index ExcLineNumber;
  * ExcMessage and Exception are now defined in c.h
  */
 
-#if defined(PORTNAME_hpux) || \
-    defined(PORTNAME_linux) || \
-    defined(PORTNAME_next) || \
+#if defined(hpux) || \
+    defined(linux) || \
+    defined(next) || \
     defined(WIN32)
 typedef jmp_buf		ExcContext;
 #else

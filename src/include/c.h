@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: c.h,v 1.1 1996/10/31 07:10:12 scrappy Exp $
+ * $Id: c.h,v 1.2 1996/11/04 04:00:19 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -737,11 +737,11 @@ extern char *form(char *fmt, ...);
  * ----------------------------------------------------------------
  */
 
-#if defined(PORTNAME_hpux) 
+#if defined(hpux) 
 #include "port/hpux/fixade.h"		/* for 8.07 unaligned access fixup */
-#endif /* PORTNAME_hpux */
+#endif /* hpux */
 
-#if defined(PORTNAME_sparc)
+#if defined(sparc)
 #define	memmove(d, s, l)	bcopy(s, d, l)
 #endif
 

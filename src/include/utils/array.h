@@ -10,7 +10,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: array.h,v 1.1 1996/08/28 01:58:42 scrappy Exp $
+ * $Id: array.h,v 1.2 1996/11/04 04:00:36 momjian Exp $
  *
  * NOTES
  *    XXX the data array should be LONGALIGN'd -- notice that the array
@@ -97,11 +97,11 @@ typedef struct {
  *------------------------------------------------------------------------
  */
 
-/* #if defined(PORTNAME_irix5) */
+/* #if defined(irix5) */
 /* #define RETURN_NULL {*isNull = true; return(0); }*/
-/* #else*/ /* PORTNAME_irix5 */
+/* #else*/ /* irix5 */
 #define RETURN_NULL {*isNull = true; return(0); }
-/* #endif */ /* PORTNAME_irix5 */ 
+/* #endif */ /* irix5 */ 
 #define NAME_LEN    30
 #define MAX_BUFF_SIZE (1 << 13)
 

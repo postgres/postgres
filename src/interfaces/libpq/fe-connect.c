@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.13 1996/11/03 07:14:31 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.14 1996/11/04 04:00:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,7 +28,7 @@
 #include "fe-auth.h"
 #include "libpq-fe.h"
 
-#if defined(PORTNAME_ultrix4) || defined(PORTNAME_next)
+#if defined(ultrix4) || defined(next)
   /* ultrix is lame and doesn't have strdup in libc for some reason */
  /* [TRH] So doesn't NEXTSTEP.  But whaddaya expect for a non-ANSI  
 standard function? (My, my. Touchy today, are we?) */

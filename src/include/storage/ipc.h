@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: ipc.h,v 1.8 1996/11/01 09:31:12 scrappy Exp $
+ * $Id: ipc.h,v 1.9 1996/11/04 04:00:28 momjian Exp $
  *
  * NOTES
  *    This file is very architecture-specific.  This stuff should actually
@@ -31,27 +31,27 @@
  *     we may in fact have different architectures, thus make the tests
  *     based on portnames somewhat misleading.
  */
-#if defined(PORTNAME_aix) || \
-    defined(PORTNAME_alpha) || \
-    defined(PORTNAME_BSD44_derived) || \
-    defined(PORTNAME_bsdi) || \
-    defined(PORTNAME_hpux) || \
-    defined(PORTNAME_i386_solaris) || \
-    defined(PORTNAME_irix5) || \
-    defined(PORTNAME_linux) || \
-    defined(PORTNAME_next) || \
-    defined(PORTNAME_sparc) || \
-    defined(PORTNAME_sparc_solaris)
+#if defined(aix) || \
+    defined(alpha) || \
+    defined(BSD44_derived) || \
+    defined(bsdi) || \
+    defined(hpux) || \
+    defined(i386_solaris) || \
+    defined(irix5) || \
+    defined(linux) || \
+    defined(next) || \
+    defined(sparc) || \
+    defined(sparc_solaris)
 #define HAS_TEST_AND_SET
 #endif
 
-#if defined(PORTNAME_BSD44_derived) && defined(__mips__)
+#if defined(BSD44_derived) && defined(__mips__)
 #undef HAS_TEST_AND_SET
 #endif
 
 #if defined(HAS_TEST_AND_SET)
 
-#if defined(PORTNAME_aix)
+#if defined(aix)
 /*
  * The AIX C library has the cs(3) builtin for compare-and-set that 
  * operates on ints.
@@ -59,11 +59,11 @@
 typedef unsigned int	slock_t;
 #else /* aix */
 
-#if defined(PORTNAME_alpha)
+#if defined(alpha)
 typedef msemaphore	slock_t;
 #else /* alpha */
 
-#if defined(PORTNAME_hpux)
+#if defined(hpux)
 /*
  * The PA-RISC "semaphore" for the LDWCX instruction is 4 bytes aligned
  * to a 16-byte boundary.
@@ -71,11 +71,11 @@ typedef msemaphore	slock_t;
 typedef struct { int sem[4]; } slock_t;
 #else /* hpux */
 
-#if defined(PORTNAME_irix5)
+#if defined(irix5)
 typedef abilock_t	slock_t;
 #else /* irix5 */
 
-#if defined(PORTNAME_next)
+#if defined(next)
 /*
  * Use Mach mutex routines since these are, in effect, test-and-set
  * spinlocks.
@@ -99,10 +99,10 @@ extern void S_LOCK(slock_t *lock);
 extern void S_UNLOCK(slock_t *lock);
 extern void S_INIT_LOCK(slock_t *lock);
 
-#if defined(PORTNAME_alpha) || \
-    defined(PORTNAME_hpux) || \
-    defined(PORTNAME_irix5) || \
-    defined(PORTNAME_next)
+#if defined(alpha) || \
+    defined(hpux) || \
+    defined(irix5) || \
+    defined(next)
 extern int S_LOCK_FREE(slock_t *lock);
 #else
 #define S_LOCK_FREE(lock)	((*lock) == 0)

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: buf_internals.h,v 1.3 1996/11/01 03:36:13 momjian Exp $
+ * $Id: buf_internals.h,v 1.4 1996/11/04 04:00:24 momjian Exp $
  *
  * NOTE
  *	If BUFFERPAGE0 is defined, then 0 will be used as a
@@ -137,36 +137,36 @@ struct sbufdesc {
 
 /* NO spinlock */
 
-#if defined(PORTNAME_ultrix4)
+#if defined(ultrix4)
     char		sb_pad[60];	/* no slock_t */
 #endif /* mips */
 
 /* HAS_TEST_AND_SET -- platform dependent size */
 
-#if defined(PORTNAME_aix)
+#if defined(aix)
     char		sb_pad[44];	/* typedef unsigned int slock_t; */
 #endif /* aix */
-#if defined(PORTNAME_alpha)
+#if defined(alpha)
     char		sb_pad[40];	/* typedef msemaphore slock_t; */
 #endif /* alpha */
-#if defined(PORTNAME_hpux)
+#if defined(hpux)
     char		sb_pad[44];	/* typedef struct { int sem[4]; } slock_t; */
 #endif /* hpux */
-#if defined(PORTNAME_irix5)
+#if defined(irix5)
     char		sb_pad[44];	/* typedef abilock_t slock_t; */
 #endif /* irix5 */
-#if defined(PORTNAME_next)
+#if defined(next)
     char		sb_pad[56];	/* typedef struct mutex slock_t; */
 #endif /* next */
 
 /* HAS_TEST_AND_SET -- default 1 byte spinlock */
 
-#if defined(PORTNAME_BSD44_derived) || \
-    defined(PORTNAME_bsdi) || \
-    defined(PORTNAME_i386_solaris) || \
-    defined(PORTNAME_linux) || \
-    defined(PORTNAME_sparc) || \
-    defined(PORTNAME_sparc_solaris)
+#if defined(BSD44_derived) || \
+    defined(bsdi) || \
+    defined(i386_solaris) || \
+    defined(linux) || \
+    defined(sparc) || \
+    defined(sparc_solaris)
     char		sb_pad[56];	/* has slock_t */
 #endif /* 1 byte slock_t */
 };

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/bin/pg_dump/common.c,v 1.6 1996/10/07 03:30:31 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/bin/pg_dump/common.c,v 1.7 1996/11/04 03:59:53 momjian Exp $
  *
  * Modifications - 6/12/96 - dave@bensoft.com - version 1.13.dhb.2
  *
@@ -23,7 +23,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <sys/param.h>	/* for MAXHOSTNAMELEN on most */
-#ifdef PORTNAME_sparc_solaris
+#ifdef sparc_solaris
 #include <netdb.h>	/* for MAXHOSTNAMELEN on some */
 #endif
 

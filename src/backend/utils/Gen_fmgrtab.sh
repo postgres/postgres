@@ -8,7 +8,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/utils/Attic/Gen_fmgrtab.sh,v 1.4 1996/10/31 07:37:57 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/backend/utils/Attic/Gen_fmgrtab.sh,v 1.5 1996/11/04 03:59:18 momjian Exp $
 #
 # NOTES
 #    Passes any -D options on to cpp prior to generating the list
@@ -81,7 +81,7 @@ cat > $HFILE <<FuNkYfMgRsTuFf
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: Gen_fmgrtab.sh,v 1.4 1996/10/31 07:37:57 scrappy Exp $
+ * $Id: Gen_fmgrtab.sh,v 1.5 1996/11/04 03:59:18 momjian Exp $
  *
  * NOTES
  *	******************************
@@ -173,7 +173,7 @@ cat > $TABCFILE <<FuNkYfMgRtAbStUfF
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/Attic/Gen_fmgrtab.sh,v 1.4 1996/10/31 07:37:57 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/Attic/Gen_fmgrtab.sh,v 1.5 1996/11/04 03:59:18 momjian Exp $
  *
  * NOTES
  *
@@ -193,9 +193,9 @@ cat > $TABCFILE <<FuNkYfMgRtAbStUfF
 #ifdef WIN32
 #include <limits.h>
 #else
-# if defined(PORTNAME_BSD44_derived) || \
-     defined(PORTNAME_bsdi) || \
-     defined(PORTNAME_bsdi_2_1)
+# if defined(BSD44_derived) || \
+     defined(bsdi) || \
+     defined(bsdi_2_1)
 # include <machine/limits.h>
 # define MAXINT	INT_MAX
 # else

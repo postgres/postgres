@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Attic/Makefile.global,v 1.51 1996/11/03 06:54:10 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/Attic/Makefile.global,v 1.52 1996/11/04 03:59:09 momjian Exp $
 #
 # NOTES
 #    This is seen by any Makefiles that include mk/postgres.mk. To
@@ -888,7 +888,7 @@ ifdef PROFILE
 endif
 
 # Globally pass PORTNAME
-CFLAGS+= -DPORTNAME_$(PORTNAME) -D$(PORTNAME)
+CFLAGS+= -D$(PORTNAME)
 
 # include port-specific flags
 CFLAGS+= $(CFLAGS_BE)

@@ -15,7 +15,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: memutils.h,v 1.3 1996/11/03 12:13:35 scrappy Exp $
+ * $Id: memutils.h,v 1.4 1996/11/04 04:00:48 momjian Exp $
  *
  * NOTES
  *    some of the information in this file will be moved to
@@ -67,7 +67,7 @@ s...)
  */
 #if defined(sun) && ! defined(sparc)
 #define	LONGALIGN(LEN)	SHORTALIGN(LEN)
-#elif defined (PORTNAME_alpha)
+#elif defined (alpha)
 #define	LONGALIGN(LEN)\
 	(((long)(LEN) + (sizeof (int) - 1)) & ~(sizeof (int) -1))
 #else

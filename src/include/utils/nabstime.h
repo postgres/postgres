@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nabstime.h,v 1.2 1996/11/01 09:19:11 scrappy Exp $
+ * $Id: nabstime.h,v 1.3 1996/11/04 04:00:50 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,7 +36,7 @@ typedef TimeIntervalData *TimeInterval;
 #define NOEND_ABSTIME	((AbsoluteTime) 2147483645) /* 2^31 - 3 */
 
 
-#if defined(PORTNAME_aix)
+#if defined(aix)
 /*
  * AIX considers 2147483648 == -2147483648 (since they have the same bit
  * representation) but uses a different sign sense in a comparison to 
@@ -49,7 +49,7 @@ typedef TimeIntervalData *TimeInterval;
 #else
 /*#define NOSTART_ABSTIME ((AbsoluteTime) 2147483648)*/	/* - 2^31 */
 #define NOSTART_ABSTIME ((AbsoluteTime) -2147483647)	/* - 2^31 */
-#endif /* PORTNAME_aix */
+#endif /* aix */
 
 #define INVALID_RELTIME ((RelativeTime) 2147483647)	/* 2^31 - 1 */
 
@@ -126,11 +126,11 @@ typedef TimeIntervalData *TimeInterval;
 
 /* keep this struct small; it gets used a lot */
 typedef struct {
-#if defined(PORTNAME_aix)
+#if defined(aix)
     char *token;
 #else
     char token[TOKMAXLEN];
-#endif /* PORTNAME_aix */
+#endif /* aix */
     char type;
     char value;		/* this may be unsigned, alas */
 } datetkn;

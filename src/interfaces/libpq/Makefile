@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/interfaces/libpq/Makefile,v 1.10 1996/11/03 07:14:29 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/interfaces/libpq/Makefile,v 1.11 1996/11/04 04:00:53 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -71,8 +71,6 @@ c.h: ../include/c.h
 	rm -f c.h
 	echo "#undef PORTNAME" >  c.h
 	echo "#define PORTNAME $(PORTNAME)" >> c.h
-	echo "#undef PORTNAME_$(PORTNAME)" >>  c.h
-	echo "#define PORTNAME_$(PORTNAME)" >> c.h
 	cat ../include/c.h >> c.h
 
 .PHONY: beforeinstall-headers install-headers
