@@ -4,7 +4,7 @@
 	- Add table grant extraction based on group. Oracle ROLES are groups in PG
 
 2001 05 11 - Version 1.2
-	- Views extraction is now really done with the option type=>'VIEWS'
+	- Views extraction is now really done with the option type=>'VIEW'
 	- Add indexes extraction on tables.
 	- Changes name of constraints, default is now used.
 	- Add debug printing to see that the process is running :-)
@@ -14,4 +14,14 @@
 	- Fix print of NOT NULL field.
 	- Complete rewrite of the grant extraction
 	- Complete rewrite of most things
+
+2001 06 20 - Version 1.3
+	- Grant/privilege extraction are now done separatly with the option type=>'GRANT'
+	- Sequence extraction with the option type=>'SEQUENCE'
+	- Trigger extraction with the option type=>'TRIGGER'
+	- Function extraction with the option type=>'FUNCTION' and type=>'PROCEDURE'
+	- Complete rewrite of the foreign key extraction
+	- Fix incorrect type translation and many other bug fix
+	- Add schema only extraction by option schema => 'MYSCHEM'
+
 

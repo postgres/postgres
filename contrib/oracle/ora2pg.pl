@@ -30,11 +30,22 @@ my $schema = new Ora2Pg (
 	user => $dbuser,		# Database user
 	password => $dbpwd,		# Database password
 	debug => 1,			# Verbose mode
+	schema => 'APPS',		# Extract only APPS schema
+	type => 'TABLE',		# Extract table
 #	type => 'VIEW',			# Extract views
-#	tables => [('MY_TABLE1','MY_TABLE2')],	# Extract only these table
+#	type => 'GRANT',		# Extract privileges
+#	type => 'SEQUENCE',		# Extract sequences
+#	type => 'TRIGGER',		# Extract triggers
+#	type => 'FUNCTION',		# Extract functions
+#	type => 'PROCEDURE',		# Extract procedures
+#	tables => [('FND_USER_PREFERENCES')],	# unique index + users
+#	tables => [('CUSTOMER_DATA')],		# Unique and primary key
+#	tables => [('TX_DATA')],		# simple indexes
+#	tables => [('NDW_BROWSER_ATTRIBUTES')],	# view
+#	tables => [('TRIP_DATA')],	# Foreign key
 #	showtableid => 1,		# Display only table indice during extraction
-#	min => 1,			# Extract begin at indice 1
-#	max => 10			# Extract ended at indice 10
+#	min => 1,			# Extract begin at indice 3
+#	max => 10			# Extract ended at indice 5
 );
 
 # Create the POSTGRESQL representation of all objects in the database
