@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/pathnode.c,v 1.18 1999/02/04 19:20:12 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/pathnode.c,v 1.19 1999/02/06 17:29:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -165,8 +165,8 @@ better_path(Path *new_path, List *unique_paths, bool *noOther)
 		path = (Path *) lfirst(temp);
 
 		if (samekeys(path->keys, new_path->keys) &&
-			equal_path_path_ordering(&path->p_ordering,
-									 &new_path->p_ordering))
+			equal_path_ordering(&path->p_ordering,
+								&new_path->p_ordering))
 		{
 			old_path = path;
 			break;

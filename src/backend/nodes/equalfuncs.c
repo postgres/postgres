@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.23 1999/02/04 01:46:54 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.24 1999/02/06 17:29:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -344,7 +344,6 @@ _equalPath(Path *a, Path *b)
 		if (a->p_ordering.ord.sortop == NULL ||
 			b->p_ordering.ord.sortop == NULL)
 		{
-
 			if (a->p_ordering.ord.sortop != b->p_ordering.ord.sortop)
 				return false;
 		}

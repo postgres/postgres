@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/mergeutils.c,v 1.12 1999/02/04 03:19:09 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/mergeutils.c,v 1.13 1999/02/06 17:29:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -115,7 +115,7 @@ match_order_mergeinfo(PathOrder *ordering, List *mergeinfo_list)
 		xmergeorder = mergeinfo->m_ordering;
 
 		if ((ordering->ordtype == MERGE_ORDER &&
-		 equal_merge_merge_ordering(ordering->ord.merge, xmergeorder)) ||
+		 equal_merge_ordering(ordering->ord.merge, xmergeorder)) ||
 			(ordering->ordtype == SORTOP_ORDER &&
 		   equal_path_merge_ordering(ordering->ord.sortop, xmergeorder)))
 		{

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/Attic/ordering.c,v 1.10 1999/02/05 19:59:30 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/Attic/ordering.c,v 1.11 1999/02/06 17:29:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,13 +21,13 @@
 static bool equal_sortops_order(Oid *ordering1, Oid *ordering2);
 
 /*
- * equal-path-path-ordering--
+ * equal-path-ordering--
  *	  Returns t iff two path orderings are equal.
  *
  */
 bool
-equal_path_path_ordering(PathOrder *path_ordering1,
-						 PathOrder *path_ordering2)
+equal_path_ordering(PathOrder *path_ordering1,
+					PathOrder *path_ordering2)
 {
 	if (path_ordering1 == path_ordering2)
 		return true;
@@ -83,20 +83,22 @@ equal_path_merge_ordering(Oid *path_ordering,
 }
 
 /*
- * equal-merge-merge-ordering--
+ * equal-merge-ordering--
  *	  Returns t iff two merge orderings are equal.
  *
  */
 bool
-equal_merge_merge_ordering(MergeOrder *merge_ordering1,
+equal_merge_ordering(MergeOrder *merge_ordering1,
 						   MergeOrder *merge_ordering2)
 {
 	return equal(merge_ordering1, merge_ordering2);
 }
 
-/*****************************************************************************
+
+/*
+ *	sortops
  *
- *****************************************************************************/
+ */
 
 /*
  * equal_sort_ops_order -
