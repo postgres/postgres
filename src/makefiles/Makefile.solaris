@@ -1,4 +1,8 @@
-# $Header: /cvsroot/pgsql/src/makefiles/Makefile.solaris,v 1.1 2000/10/10 21:22:28 petere Exp $
+# $Header: /cvsroot/pgsql/src/makefiles/Makefile.solaris,v 1.2 2000/10/20 23:57:34 petere Exp $
+
+ifeq ($(with_gnu_ld), yes)
+export_dynamic = -Wl,-E
+endif
 
 %.so: %.o
 	$(LD) -G -Bdynamic -o $@ $<
