@@ -1,8 +1,9 @@
-PostgreSQL 6.4               Tue Sep  1 21:18:17 EDT 1998
+PostgreSQL 6.4               Sat Oct 24 00:41:35 EDT 1998
 =========================================================
 
 A dump/restore is required for those wishing to migrate data from
-previous releases of PostgreSQL.
+previous releases of PostgreSQL.  You may also use the new pg_upgrade
+utility to avoid a dump/reload.
 
 Bug Fixes
 ---------
@@ -21,12 +22,13 @@ Fix a bug in the oracle compatibility functions btrim() ltrim() and rtrim()
 Fix for usernames longer than eight characters(Tom)
 Fix for shared invalidation cache overflow(Massimo)
 Prevent file descriptor leaks in failed COPY's(Bruce)
+Fix problem with username/passwords over 8 characters(Tom)
 
 Enhancements
 ------------
-Upgrade ECPG to 2.0, see src/interfaces/ecpc/ChangeLog(Michael)
+Upgrade ecpg and ecpglib,see src/interfaces/ecpc/ChangeLog(Michael)
 Show the index used in an explain(Zeugswetter)
-Multi-byte awareness of many data data types and functions(Tatsuo)
+Multi-byte awareness of many data types and functions, via configure(Tatsuo)
 New configure --with-mb option(Tatsuo)
 New initdb --pgencoding option(Tatsuo)
 New createdb -E multibyte option(Tatsuo)
@@ -64,6 +66,7 @@ Pg_hba.conf now has a sameuser option in the database field
 Make lo_unlink take oid param, not int4
 New DISABLE_COMPLEX_MACRO for compilers that can't handle our macros(Bruce)
 Libpgtcl now gets async notifies from libpq(Tom)
+libpgtcl cleanups(Tom)
 New locale patch, see docs/README/locale(Oleg)
 Fix for pg_dump so CONSTRAINT and CHECK syntax is correct(ccb)
 New contrib/lo code for large object orphan removal(Peter)
@@ -74,8 +77,9 @@ Libpq can now be compiled on win32(Magnus)
 Add PQsetdbLogin() in libpq
 Two styles we agreed upon for database descriptors(Thomas)
 New 8-byte integer type, checked by configure for OS support(Thomas)
+Better support for quited table/column names(Thomas)
 Surround table and column names with double-quotes(Thomas) in generated 
-sql code to preserve case (SQL92 syntax)(Thomas)
+	sql code to preserve case (SQL92 syntax)(Thomas)
 New libpqrequestCancel(Tom)
 PQreset() now works with passwords(Tom)
 Handle case of GROUP BY target list column number out of range(David)
@@ -118,9 +122,13 @@ New rewrite system fixes many problems with rules and views(Jan)
 	* Rules and views inherit the permissions on the creator
 	* No rules at the column level
 	* No UPDATE NEW/OLD rules
-	* New pg_rule and pg_view system views
+	* New pg_tables, pg_indexes, pg_rules and pg_views system views
 	* Only a single action on SELECT rules
 	* Total rewrite overhaul, perhaps for 6.5
+	* handle subselects
+	* handle aggregates on views
+	* handle insert into select from view works
+	* 
 
 System indexes are now multi-key(Bruce)
 Oidint2, oidint4, and oidname types are removed(Bruce)
@@ -133,9 +141,27 @@ New setval() command to set sequence value(Massimo)
 Auto-remove unix socket file on startup if no postmaster running(Massimo)
 Conditional trace package(Massimo)
 New UNLISTEN command(Massimo)
-Psql now compiles under win32 using win32.mak(Magnus)
+Psql and libpq now compile under win32 using win32.mak(Magnus)
 Lo_read no longer stores trailing NULL(Bruce)
 Identifiers are now truncated to 31 characters internally(Bruce)
+Createuser options now availble on the command line
+PL/pgSQL backend programming language(Jan)
+Code for 64-bit integer supported added, configure tested, int8 type(Thomas)
+Prevent file descriptor leaf from failed COPY(Bruce)
+New pg_upgrade command(Bruce)
+Updated /contrib directories(Massimo)
+New CREATE TABLE DEFAULT VALUES statement available(Thomas)
+New INSERT INTO TABLE DEFAULT VALUES statement available(Thomas)
+New DECLARE and FETCH feature(Thomas)
+libpq's internal structures now not exported(Tom)
+Allow up to 8 key indexes(Bruce)
+Remove ARCHIVE keyword, that is no longer used(Thomas)
+pg_dump -n flag to supress quotes around indentifiers
+disable system columns for views(Jan)
+net INET and CIDR types for network addresses(TomH, Paul)
+no more double quotes in psql output
+pg_dump now dumps views(Terry)
+new SET QUERY_LIMIT(Tatsuo,Jan)
 
 Source Tree Changes
 -------------------
@@ -155,11 +181,18 @@ Update backend flowchart in tools/backend(Bruce)
 Change atttypmod from int16 to int32(Bruce, Tom)
 Getrusage() fix for platforms that do not have it(Tom)
 Add PGUSER to libpq man page
-Ns32k platform fixes(Phil Nelson)
+NS32K platform fixes(Phil Nelson, John Buller)
 Sco 7/UnixWare 2.x fixes(Billy,others)
 Sparc/Solaris 2.5 fixes(Ryan)
 Pgbuiltin.3 is obsolete, move to doc files(Thomas)
 Even more documention(Thomas)
+Nextstep support(Jacek)
+Aix support(David)
+pginterface manual page(Bruce)
+shared libraries all have version numbers
+merged all OS-specific shared library defines into one file
+smarter TCL/TK configuration checking(Billy)
+smarter perl configuration(Brook)
 
 
 
