@@ -74,8 +74,8 @@ Migration to version 7.2
      * The date/time value 'current' is no longer available. You will need to
        rewrite your applications.
 
-     * The timestamp() function is no longer available.  Use timestamp
-       'string' instead, or CAST.
+     * The timestamp(), time(), and inverval() functions are no longer 
+       available.  Instead of timestamp(), use timestamp 'string', or CAST.
 
    The SELECT ... LIMIT #,# syntax will be removed in the next release. You
    should change your queries to use separate LIMIT and OFFSET clauses, e.g.

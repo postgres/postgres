@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.119 2002/03/01 22:45:04 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.120 2002/03/11 16:41:44 momjian Exp $
 -->
 
 <appendix id="release">
@@ -183,9 +183,10 @@ Database and user-specific session defaults of run-time configurations variables
 
      <listitem>
       <para>
-       The <literal>timestamp()</literal> function is no longer
-       available.  Use <literal>timestamp 'string'</literal> instead, 
-       or <literal>CAST</literal>.
+       The <literal>timestamp()</literal>, <literal>time()</literal>,
+       and <literal>interval()</literal> functions are no longer
+       available.  Instead of <literal>timestamp()</literal>, use 
+       <literal>timestamp 'string'</literal> or <literal>CAST</literal>.
       </para>
      </listitem>
 
