@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Header: /cvsroot/pgsql/src/test/regress/Attic/regress.sh,v 1.25 1999/04/25 21:56:19 tgl Exp $
+# $Header: /cvsroot/pgsql/src/test/regress/Attic/regress.sh,v 1.26 1999/04/25 23:30:31 tgl Exp $
 #
 if [ $# -eq 0 ]
 then
@@ -47,7 +47,17 @@ echo "=============== destroying old regression database... ================="
 destroydb $HOST regression
 
 echo "=============== creating new regression database...   ================="
-createdb $HOST regression
+if [ -n "$MULTIBYTE" ];then
+	mbtests=`echo $MULTIBYTE | tr "[A-Z]" "[a-z]"`
+	PGCLIENTENCODING="$MULTIBYTE"
+	export PGCLIENTENCODING
+	ENCODINGOPT="-E $MULTIBYTE"
+else
+	mbtests=""
+	unset PGCLIENTENCODING
+	ENCODINGOPT=""
+fi
+createdb $ENCODINGOPT $HOST regression
 if [ $? -ne 0 ]; then
      echo createdb failed
      exit 1
@@ -55,14 +65,6 @@ fi
 
 echo "=============== running regression queries...         ================="
 echo "" > regression.diffs
-if [ -n "$MULTIBYTE" ];then
-	mbtests=`echo $MULTIBYTE | tr "[A-Z]" "[a-z]"`
-	PGCLIENTENCODING="$MULTIBYTE"
-	export PGCLIENTENCODING
-else
-	mbtests=""
-	unset PGCLIENTENCODING
-fi
 for i in `cat sql/tests` $mbtests
 do
 	$ECHO_N "${i} .. " $ECHO_C
