@@ -1,7 +1,7 @@
 
           Developer's Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Wed Apr 7 10:23:31 EDT 2004
+   Last updated: Wed Apr 7 18:01:59 EDT 2004
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -516,8 +516,7 @@
    ftp://sqlstandards.org/SC32/WG3/Progression_Documents/FCD
    
    A summary of these standards is at
-   http://dbs.uni-leipzig.de/en/lokal/standards.pdf and
-   http://db.konkuk.ac.kr/present/SQL3.pdf.
+   http://dbs.uni-leipzig.de/en/lokal/standards.pdf.
    
                             Technical Questions
                                       
