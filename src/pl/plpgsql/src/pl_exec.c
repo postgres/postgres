@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.114 2004/08/02 17:03:45 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.115 2004/08/13 18:47:56 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -2090,8 +2090,29 @@ exec_prepare_plan(PLpgSQL_execstate * estate,
 	 */
 	plan = SPI_prepare(expr->query, expr->nparams, argtypes);
 	if (plan == NULL)
-		elog(ERROR, "SPI_prepare failed for \"%s\": %s",
-			 expr->query, SPI_result_code_string(SPI_result));
+	{
+		/* Some SPI errors deserve specific error messages */
+		switch (SPI_result)
+		{
+			case SPI_ERROR_COPY:
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("cannot COPY to/from client in PL/pgSQL")));
+			case SPI_ERROR_CURSOR:
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("cannot manipulate cursors directly in PL/pgSQL"),
+						 errhint("Use PL/pgSQL's cursor features instead.")));
+			case SPI_ERROR_TRANSACTION:
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("cannot begin/end transactions in PL/pgSQL"),
+						 errhint("Use a BEGIN block with an EXCEPTION clause instead.")));
+			default:
+				elog(ERROR, "SPI_prepare failed for \"%s\": %s",
+					 expr->query, SPI_result_code_string(SPI_result));
+		}
+	}
 	expr->plan = SPI_saveplan(plan);
 	spi_plan = (_SPI_plan *) expr->plan;
 	expr->plan_argtypes = spi_plan->argtypes;
@@ -2271,6 +2292,22 @@ exec_stmt_dynexecute(PLpgSQL_execstate * estate,
 							 errmsg("EXECUTE of SELECT ... INTO is not implemented yet")));
 				break;
 			}
+
+		/* Some SPI errors deserve specific error messages */
+		case SPI_ERROR_COPY:
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("cannot COPY to/from client in PL/pgSQL")));
+		case SPI_ERROR_CURSOR:
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("cannot manipulate cursors directly in PL/pgSQL"),
+					 errhint("Use PL/pgSQL's cursor features instead.")));
+		case SPI_ERROR_TRANSACTION:
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("cannot begin/end transactions in PL/pgSQL"),
+					 errhint("Use a BEGIN block with an EXCEPTION clause instead.")));
 
 		default:
 			elog(ERROR, "SPI_exec failed executing query \"%s\": %s",
