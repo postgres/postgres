@@ -34,7 +34,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/Makefile,v 1.44 2000/03/08 01:58:16 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/backend/Makefile,v 1.45 2000/03/08 22:00:19 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -257,15 +257,24 @@ ifeq ($(PORTNAME), hpux)
           $(HEADERDIR)/port/hpux/fixade.h
 endif
 
-
 $(BINDIR):
 	mkdir $@
+
 $(LIBDIR):
 	mkdir $@
+
 $(HEADERDIR):
 	mkdir $@
+
+# TEMPLATEDIR is commonly the same as LIBDIR, but it might be different.
+# We don't want duplicate rules if they are the same.
+ifneq ($(TEMPLATEDIR),$(LIBDIR))
+
 $(TEMPLATEDIR):
 	mkdir $@
+
+endif
+
 
 #############################################################################
 #
