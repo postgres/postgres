@@ -900,6 +900,10 @@ BYTEA           bytea           variable-length array of bytes
         DELETE FROM new;
         COPY new WITH OIDS FROM '/tmp/pgtable';
 
+   OIDs are stored as 4-byte integers, and will overflow at 4 billion. No
+   one has reported this every happening, and we plan to have the limit
+   removed before anyone does.
+   
    TIDs are used to identify specific physical rows with block and offset
    values. Tids change after rows are modified or reloaded. They are used
    by index entries to point to physical rows.
