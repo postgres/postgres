@@ -104,7 +104,16 @@ INSERT INTO weather
 <Para>
      You can also use the <Command>copy</Command> command to perform load large
      amounts of data from flat (<Acronym>ASCII</Acronym>) files.
-</Para>
+This is usually faster because the data is read (or written) as a single atomic
+transaction directly to or from the target table. An example would be:
+
+<ProgramListing>
+COPY INTO weather FROM '/home/user/weather.txt'
+    USING DELIMITERS '|';
+</ProgramListing>
+
+where the path name for the source file must be available to the backend server
+machine, not just the client.
 
 <Sect1>
 <Title>Querying a Class</Title>
