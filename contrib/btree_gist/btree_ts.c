@@ -29,6 +29,8 @@ Datum		gbt_ts_penalty(PG_FUNCTION_ARGS);
 Datum		gbt_ts_same(PG_FUNCTION_ARGS);
 
 
+#define P_TimestampGetDatum(x)  PointerGetDatum( &(x) )
+
 static bool
 gbt_tsgt(const void *a, const void *b)
 {
@@ -231,8 +233,8 @@ gbt_ts_penalty(PG_FUNCTION_ARGS)
 
 	intr = DatumGetIntervalP(DirectFunctionCall2(
 												 timestamp_mi,
-									  TimestampGetDatum(newentry->upper),
-									  TimestampGetDatum(origentry->upper)
+									  P_TimestampGetDatum(newentry->upper),
+									  P_TimestampGetDatum(origentry->upper)
 												 ));
 
 	/* see interval_larger */
@@ -242,8 +244,8 @@ gbt_ts_penalty(PG_FUNCTION_ARGS)
 
 	intr = DatumGetIntervalP(DirectFunctionCall2(
 												 timestamp_mi,
-									 TimestampGetDatum(origentry->lower),
-									   TimestampGetDatum(newentry->lower)
+									 P_TimestampGetDatum(origentry->lower),
+									   P_TimestampGetDatum(newentry->lower)
 												 ));
 
 	/* see interval_larger */
@@ -256,8 +258,8 @@ gbt_ts_penalty(PG_FUNCTION_ARGS)
 	{
 		intr = DatumGetIntervalP(DirectFunctionCall2(
 													 timestamp_mi,
-									 TimestampGetDatum(origentry->upper),
-									  TimestampGetDatum(origentry->lower)
+									 P_TimestampGetDatum(origentry->upper),
+									  P_TimestampGetDatum(origentry->lower)
 													 ));
 		*result += FLT_MIN;
 		*result += (float) (res / ((double) (res + intr->time + intr->month * (30 * 86400))));
