@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/rename.c,v 1.45 2000/05/25 21:30:20 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/rename.c,v 1.46 2000/06/20 06:41:13 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,6 +29,7 @@
 #include "utils/acl.h"
 #include "utils/relcache.h"
 #include "utils/syscache.h"
+#include "utils/temprel.h"
 
 
 /*
@@ -198,6 +199,13 @@ renamerel(const char *oldrelname, const char *newrelname)
 	if (!allowSystemTableMods && IsSystemRelationName(newrelname))
 		elog(ERROR, "renamerel: Illegal class name: \"%s\" -- pg_ is reserved for system catalogs",
 			 newrelname);
+
+	/*
+	 * Check for renaming a temp table, which only requires altering
+	 * the temp-table mapping, not the physical table.
+	 */
+	if (rename_temp_relation(oldrelname, newrelname))
+		return;					/* all done... */
 
 	/*
 	 * Instead of using heap_openr(), do it the hard way, so that we
