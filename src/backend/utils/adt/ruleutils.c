@@ -3,7 +3,7 @@
  *				back to source text
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.88 2001/11/26 00:29:15 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.89 2001/11/26 21:15:14 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -1866,28 +1866,36 @@ get_rule_expr(Node *node, deparse_context *context)
 		case T_FieldSelect:
 			{
 				FieldSelect *fselect = (FieldSelect *) node;
+				Oid			argType = exprType(fselect->arg);
 				HeapTuple	typetup;
 				Form_pg_type typeStruct;
 				Oid			typrelid;
 				char	   *fieldname;
 
-				/* we do NOT parenthesize the arg expression, for now */
-				get_rule_expr(fselect->arg, context);
+				/* lookup arg type and get the field name */
 				typetup = SearchSysCache(TYPEOID,
-								ObjectIdGetDatum(exprType(fselect->arg)),
+										 ObjectIdGetDatum(argType),
 										 0, 0, 0);
 				if (!HeapTupleIsValid(typetup))
 					elog(ERROR, "cache lookup of type %u failed",
-						 exprType(fselect->arg));
+						 argType);
 				typeStruct = (Form_pg_type) GETSTRUCT(typetup);
 				typrelid = typeStruct->typrelid;
 				if (!OidIsValid(typrelid))
 					elog(ERROR, "Argument type %s of FieldSelect is not a tuple type",
-						 NameStr(typeStruct->typname));
+						 format_type_be(argType));
+				ReleaseSysCache(typetup);
 				fieldname = get_relid_attribute_name(typrelid,
 													 fselect->fieldnum);
-				appendStringInfo(buf, ".%s", quote_identifier(fieldname));
-				ReleaseSysCache(typetup);
+				/*
+				 * If the argument is simple enough, we could emit
+				 * arg.fieldname, but most cases where FieldSelect is used
+				 * are *not* simple.  For now, always use the projection-
+				 * function syntax.
+				 */
+				appendStringInfo(buf, "%s(", quote_identifier(fieldname));
+				get_rule_expr(fselect->arg, context);
+				appendStringInfoChar(buf, ')');
 			}
 			break;
 
