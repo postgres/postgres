@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$PostgreSQL: pgsql/src/tools/thread/thread_test.c,v 1.36 2004/12/31 22:04:02 pgsql Exp $
+ *	$PostgreSQL: pgsql/src/tools/thread/thread_test.c,v 1.37 2005/03/11 15:25:31 momjian Exp $
  *
  *	This program tests to see if your standard libc functions use
  *	pthread_setspecific()/pthread_getspecific() to be thread-safe.
@@ -66,43 +66,43 @@ main(int argc, char *argv[])
 /* This must be down here because this is the code that uses threads. */
 #include <pthread.h>
 
-void		func_call_1(void);
-void		func_call_2(void);
+static void		func_call_1(void);
+static void		func_call_2(void);
 
 #define		TEMP_FILENAME_1 "/tmp/thread_test.1.XXXXXX"
 #define		TEMP_FILENAME_2 "/tmp/thread_test.2.XXXXXX"
 
-char	   *temp_filename_1;
-char	   *temp_filename_2;
+static char	   *temp_filename_1;
+static char	   *temp_filename_2;
 
-pthread_mutex_t init_mutex = PTHREAD_MUTEX_INITIALIZER;
+static pthread_mutex_t init_mutex = PTHREAD_MUTEX_INITIALIZER;
 
-volatile int thread1_done = 0;
-volatile int thread2_done = 0;
+static volatile int thread1_done = 0;
+static volatile int thread2_done = 0;
 
-volatile int errno1_set = 0;
-volatile int errno2_set = 0;
+static volatile int errno1_set = 0;
+static volatile int errno2_set = 0;
 
 #ifndef HAVE_STRERROR_R
-char	   *strerror_p1;
-char	   *strerror_p2;
-bool		strerror_threadsafe = false;
+static char	   *strerror_p1;
+static char	   *strerror_p2;
+static bool		strerror_threadsafe = false;
 #endif
 
 #ifndef HAVE_GETPWUID_R
-struct passwd *passwd_p1;
-struct passwd *passwd_p2;
-bool		getpwuid_threadsafe = false;
+static struct passwd *passwd_p1;
+static struct passwd *passwd_p2;
+static bool		getpwuid_threadsafe = false;
 #endif
 
 #if !defined(HAVE_GETADDRINFO) && !defined(HAVE_GETHOSTBYNAME_R)
-struct hostent *hostent_p1;
-struct hostent *hostent_p2;
-char		myhostname[MAXHOSTNAMELEN];
-bool		gethostbyname_threadsafe = false;
+static struct hostent *hostent_p1;
+static struct hostent *hostent_p2;
+static char		myhostname[MAXHOSTNAMELEN];
+static bool		gethostbyname_threadsafe = false;
 #endif
 
-bool		platform_is_threadsafe = true;
+static bool		platform_is_threadsafe = true;
 
 int
 main(int argc, char *argv[])
@@ -230,7 +230,7 @@ main(int argc, char *argv[])
 	}
 }
 
-void
+static void
 func_call_1(void)
 {
 #if !defined(HAVE_GETPWUID_R) || \
@@ -301,7 +301,7 @@ func_call_1(void)
 }
 
 
-void
+static void
 func_call_2(void)
 {
 #if !defined(HAVE_GETPWUID_R) || \
