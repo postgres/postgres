@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/postmaster.sgml,v 1.12 2000/10/05 19:48:18 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/postmaster.sgml,v 1.13 2000/11/13 15:18:08 momjian Exp $
 Postgres documentation
 -->
 
@@ -24,7 +24,9 @@ Postgres documentation
   </refsynopsisdivinfo>
   <synopsis>
 postmaster [ -B <replaceable class="parameter">nBuffers</replaceable> ] [ -D <replaceable class="parameter">DataDir</replaceable> ] [ -N <replaceable class="parameter">maxBackends</replaceable> ] [ -S ]
-    [ -d <replaceable class="parameter">DebugLevel</replaceable> ] [ -i ] [ -l ]
+    [ -d <replaceable class="parameter">DebugLevel</replaceable> ]
+    [ -h <replaceable class="parameter">hostname</replaceable> ] [ -i ]
+    [ -k <replaceable class="parameter">path</replaceable> ] [ -l ]
     [ -o <replaceable class="parameter">BackendOptions</replaceable> ] [ -p <replaceable class="parameter">port</replaceable> ] [ -n | -s ]
   </synopsis>
 
@@ -124,12 +126,71 @@ postmaster [ -B <replaceable class="parameter">nBuffers</replaceable> ] [ -D <re
      </varlistentry>
 
      <varlistentry>
+      <term>-h <replaceable class="parameter">hostName</replaceable></term>
+      <listitem>
+       <para>
+	Specifies the TCP/IP hostname or address
+	on which the <application>postmaster</application>
+	is to listen for connections from frontend applications.  Defaults to
+	the value of the 
+	<envar>PGHOST</envar> 
+	environment variable, or if <envar>PGHOST</envar>
+	is not set, then defaults to "all", meaning listen on all configured addresses
+	(including localhost).
+       </para>
+       <para>
+	If you use a hostname or address other than "all", do not try to run
+	multiple instances of <application>postmaster</application> on the
+	same IP address but different ports.  Doing so will result in them
+	attempting (incorrectly) to use the same shared memory segments.
+	Also, if you use a hostname other than "all", all of the host's IP addresses
+	on which <application>postmaster</application> instances are
+	listening must be distinct in the two last octets.
+       </para>
+       <para>
+	If you do use "all" (the default), then each instance must listen on a
+	different port (via -p or <envar>PGPORT</envar>).  And, of course, do
+	not try to use both approaches on one host.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term>-i</term>
       <listitem>
        <para>
         Allows clients to connect via TCP/IP (Internet domain) connections.
 	Without this option, only local Unix domain socket connections are
 	accepted.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>-k <replaceable class="parameter">path</replaceable></term>
+      <listitem>
+       <para>
+	Specifies the local Unix domain socket path name
+	on which the <application>postmaster</application>
+	is to listen for connections from frontend applications.  Defaults to
+	the value of the 
+	<envar>PGUNIXSOCKET</envar> 
+	environment variable, or if <envar>PGUNIXSOCKET</envar>
+	is not set, then defaults to a file in <filename>/tmp</filename>
+	constructed from the port number.
+       </para>
+       <para>
+        You can use this option to put the Unix-domain socket in a
+        directory that is private to one or more users using Unix
+	directory permissions.  This is necessary for securely
+	creating databases automatically on shared machines.
+        In that situation, also disallow all TCP/IP connections
+	initially in <filename>pg_hba.conf</filename>.
+	If you specify a socket path other than the
+	default then all frontend applications (including
+	<application>psql</application>) must specify the same
+	socket path using either command-line options or
+	<envar>PGUNIXSOCKET</envar>.
        </para>
       </listitem>
      </varlistentry>

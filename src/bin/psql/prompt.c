@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/prompt.c,v 1.13 2000/08/20 10:55:34 petere Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/prompt.c,v 1.14 2000/11/13 15:18:14 momjian Exp $
  */
 #include "postgres.h"
 #include "prompt.h"
@@ -189,6 +189,11 @@ get_prompt(promptStatus_t status)
 				case '>':
 					if (pset.db && PQport(pset.db))
 						strncpy(buf, PQport(pset.db), MAX_PROMPT_SIZE);
+					break;
+					/* DB server Unix-domain socket */
+				case '<':
+					if (pset.db && PQunixsocket(pset.db))
+						strncpy(buf, PQunixsocket(pset.db), MAX_PROMPT_SIZE);
 					break;
 					/* DB server user name */
 				case 'n':

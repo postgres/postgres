@@ -1,7 +1,7 @@
 /*-------------------------------------------------------------------------
  *
  *
-*-------------------------------------------------------------------------
+ *-------------------------------------------------------------------------
  */
 
 #include <unistd.h>				/* for getopt() */
@@ -273,6 +273,7 @@ PGconn* ConnectDatabase(Archive *AHX,
 		const char* 	dbname,
 		const char* 	pghost,
 		const char* 	pgport,
+		const char* 	pgunixsocket,
 		const int		reqPwd,
 		const int		ignoreVersion)
 {
@@ -306,6 +307,15 @@ PGconn* ConnectDatabase(Archive *AHX,
 	}
 	else
 	    AH->pgport = NULL;
+
+	if (pgunixsocket != NULL)
+	{
+		AH->pgport = strdup(pgunixsocket);
+		sprintf(tmp_string, "unixsocket=%s ", AH->pgunixsocket);
+		strcat(connect_string, tmp_string);
+	}
+	else
+	    AH->pgunixsocket = NULL;
 
 	sprintf(tmp_string, "dbname=%s ", AH->dbname);
 	strcat(connect_string, tmp_string);

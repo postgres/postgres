@@ -101,6 +101,7 @@ struct option cmdopts[] = {
 				{ "ignore-version", 0, NULL, 'i'},
 				{ "index", 2, NULL, 'I'},
 				{ "list", 0, NULL, 'l'},
+				{ "unixsocket", 1, NULL, 'k' },
 				{ "no-acl", 0, NULL, 'x' },
 				{ "no-owner", 0, NULL, 'O'},
 				{ "no-reconnect", 0, NULL, 'R' },
@@ -132,9 +133,9 @@ int main(int argc, char **argv)
 	progname = *argv;
 
 #ifdef HAVE_GETOPT_LONG
-	while ((c = getopt_long(argc, argv, "acCd:f:F:h:i:lNoOp:P:rRsS:t:T:uU:vx", cmdopts, NULL)) != EOF)
+	while ((c = getopt_long(argc, argv, "acCd:f:F:h:i:k:lNoOp:P:rRsS:t:T:uU:vx", cmdopts, NULL)) != EOF)
 #else
-	while ((c = getopt(argc, argv, "acCd:f:F:h:i:lNoOp:P:rRsS:t:T:uU:vx")) != -1)
+	while ((c = getopt(argc, argv, "acCd:f:F:h:i:k:lNoOp:P:rRsS:t:T:uU:vx")) != -1)
 #endif
 	{
 		switch (c)
@@ -169,6 +170,10 @@ int main(int argc, char **argv)
 				break;
 			case 'i':
 				opts->ignoreVersion = 1;
+				break;
+			case 'k':
+				if (strlen(optarg) != 0)
+					opts->pgunixsocket = strdup(optarg);
 				break;
 			case 'N':
 				opts->origOrder = 1;

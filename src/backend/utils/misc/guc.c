@@ -4,7 +4,7 @@
  * Support for grand unified configuration scheme, including SET
  * command, configuration file, and command line options.
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.16 2000/11/09 11:25:59 vadim Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.17 2000/11/13 15:18:12 momjian Exp $
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  * Written by Peter Eisentraut <peter_e@gmx.net>.
@@ -302,6 +302,12 @@ ConfigureNamesString[] =
 	 PG_KRB_SRVTAB, NULL},
 
 	{"unix_socket_group",         PGC_POSTMASTER,       &Unix_socket_group,
+	 "", NULL},
+
+	{"unixsocket",         		  PGC_POSTMASTER,       &UnixSocketName,
+	 "", NULL},
+
+	{"hostname",         		  PGC_POSTMASTER,       &HostName,
 	 "", NULL},
 
 	{NULL, 0, NULL, NULL, NULL}

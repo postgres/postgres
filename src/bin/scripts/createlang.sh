@@ -8,7 +8,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/createlang.sh,v 1.17 2000/11/11 22:59:48 petere Exp $
+#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/createlang.sh,v 1.18 2000/11/13 15:18:14 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -64,6 +64,15 @@ do
                 ;;
         --port=*)
                 PSQLOPT="$PSQLOPT -p "`echo $1 | sed 's/^--port=//'`
+                ;;
+	--unixsocket|-k)
+		PSQLOPT="$PSQLOPT -k $2"
+		shift;;
+        -k*)
+                PSQLOPT="$PSQLOPT $1"
+                ;;
+        --unixsocket=*)
+                PSQLOPT="$PSQLOPT -k "`echo $1 | sed 's/^--unixsocket=//'`
                 ;;
 	--username|-U)
 		PSQLOPT="$PSQLOPT -U $2"
@@ -126,6 +135,7 @@ if [ "$usage" ]; then
 	echo "Options:"
 	echo "  -h, --host=HOSTNAME             Database server host"
 	echo "  -p, --port=PORT                 Database server port"
+	echo "  -k, --unixsocket=PATH           Database server Unix-domain socket name"
 	echo "  -U, --username=USERNAME         Username to connect as"
 	echo "  -W, --password                  Prompt for password"
 	echo "  -d, --dbname=DBNAME             Database to install language in"

@@ -47,16 +47,17 @@ $ export PATH
 </Para>
 
 <Para>
-If your site administrator has not set things up in the
-default  way,  you may have some more work to do.  For example, if the database
- server machine is a remote machine, you
-will need to set the <Acronym>PGHOST</Acronym> environment variable to the name
-of the database server machine.   The  environment  variable
-<Acronym>PGPORT</Acronym> may also have to be set.  The bottom line is this: if
-you try to start an application  program  and  it  complains
-that it cannot connect to the <Application>postmaster</Application>,
- you should immediately consult your site administrator to make sure that your
-environment is properly set up.
-</Para>
+
+If your site administrator has not set things up in the default  way, 
+you may have some more work to do.  For example, if the database server
+machine is a remote machine, you will need to set the
+<Acronym>PGHOST</Acronym> environment variable to the name of the
+database server machine.   The  environment  variable
+<Acronym>PGPORT</Acronym> or <envar>PGUNIXSOCKET</envar> may also have
+to be set.  The bottom line is this: if you try to start an application 
+program  and  it  complains that it cannot connect to the
+<Application>postmaster</Application>, you should immediately consult
+your site administrator to make sure that your environment is properly
+set up. </Para>
 
 </Chapter>

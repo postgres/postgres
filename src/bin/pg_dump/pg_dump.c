@@ -22,7 +22,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.177 2000/10/31 14:20:30 pjw Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.178 2000/11/13 15:18:13 momjian Exp $
  *
  * Modifications - 6/10/96 - dave@bensoft.com - version 1.13.dhb
  *
@@ -200,6 +200,7 @@ help(const char *progname)
 		"  -F, --format {c|f|p}     output file format (custom, files, plain text)\n"
 		"  -h, --host <hostname>    server host name\n"
 		"  -i, --ignore-version     proceed when database version != pg_dump version\n"
+		"  -k, --unixsocket <path>  server Unix-domain socket name\n"
 		"  -n, --no-quotes          suppress most quotes around identifiers\n"
 		"  -N, --quotes             enable most quotes around identifiers\n"
 		"  -o, --oids               dump object ids (oids)\n"
@@ -226,6 +227,7 @@ help(const char *progname)
 		"  -F {c|f|p}               output file format (custom, files, plain text)\n"
 		"  -h <hostname>            server host name\n"
 		"  -i                       proceed when database version != pg_dump version\n"
+		"  -k <path>                server Unix-domain socket name\n"
 		"  -n                       suppress most quotes around identifiers\n"
 		"  -N                       enable most quotes around identifiers\n"
 		"  -o                       dump object ids (oids)\n"
@@ -629,6 +631,7 @@ main(int argc, char **argv)
 	const char *dbname = NULL;
 	const char *pghost = NULL;
 	const char *pgport = NULL;
+	const char *pgunixsocket = NULL;
 	char	   *tablename = NULL;
 	bool		oids = false;
 	TableInfo  *tblinfo;
@@ -658,6 +661,7 @@ main(int argc, char **argv)
 		{"attribute-inserts", no_argument, NULL, 'D'},
 		{"host", required_argument, NULL, 'h'},
 		{"ignore-version", no_argument, NULL, 'i'},
+		{"unixsocket", required_argument, NULL, 'k'},
 		{"no-reconnect", no_argument, NULL, 'R'},
 		{"no-quotes", no_argument, NULL, 'n'},
 		{"quotes", no_argument, NULL, 'N'},
@@ -750,6 +754,10 @@ main(int argc, char **argv)
 
 			case 'i':			/* ignore database version mismatch */
 				ignore_version = true;
+				break;
+
+			case 'k':			/* server Unix-domain socket */
+				pgunixsocket = optarg;
 				break;
 
 			case 'n':			/* Do not force double-quotes on
@@ -948,7 +956,8 @@ main(int argc, char **argv)
 	dbname = argv[optind];
 
 	/* Open the database using the Archiver, so it knows about it. Errors mean death */
-	g_conn = ConnectDatabase(g_fout, dbname, pghost, pgport, use_password, ignore_version);
+	g_conn = ConnectDatabase(g_fout, dbname, pghost, pgport, pgunixsocket,
+							 use_password, ignore_version);
 
 	/*
 	 * Start serializable transaction to dump consistent data

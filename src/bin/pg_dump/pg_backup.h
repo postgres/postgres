@@ -99,8 +99,9 @@ typedef struct _restoreOptions {
 
 	int			useDB;
 	char		*dbname;
-	char		*pgport;
 	char		*pghost;
+	char		*pgport;
+	char		*pgunixsocket;
 	int			ignoreVersion;
 	int			requirePassword;
 
@@ -122,6 +123,7 @@ PGconn* ConnectDatabase(Archive *AH,
 		const char* 	dbname,
 		const char*	pghost,
 		const char*	pgport,
+		const char*	pgunixsocket,
 		const int	reqPwd,
 		const int	ignoreVersion);
 

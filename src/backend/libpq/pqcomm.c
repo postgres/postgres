@@ -29,7 +29,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: pqcomm.c,v 1.109 2000/11/01 21:14:01 petere Exp $
+ *	$Id: pqcomm.c,v 1.110 2000/11/13 15:18:09 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -169,13 +169,14 @@ StreamDoUnlink(void)
 /*
  * StreamServerPort -- open a sock stream "listening" port.
  *
- * This initializes the Postmaster's connection-accepting port.
+ * This initializes the Postmaster's connection-accepting port fdP.
  *
  * RETURNS: STATUS_OK or STATUS_ERROR
  */
 
 int
-StreamServerPort(int family, unsigned short portName, int *fdP)
+StreamServerPort(int family, char *hostName, unsigned short portName,
+				 char *unixSocketName, int *fdP)
 {
 	SockAddr	saddr;
 	int			fd,
@@ -218,7 +219,8 @@ StreamServerPort(int family, unsigned short portName, int *fdP)
 #ifdef HAVE_UNIX_SOCKETS
 	if (family == AF_UNIX)
 	{
-		len = UNIXSOCK_PATH(saddr.un, portName);
+		UNIXSOCK_PATH(saddr.un, portName, unixSocketName);
+		len = UNIXSOCK_LEN(saddr.un);
 		strcpy(sock_path, saddr.un.sun_path);
 		/*
 		 * If the socket exists but nobody has an advisory lock on it we
@@ -242,7 +244,27 @@ StreamServerPort(int family, unsigned short portName, int *fdP)
 
     if (family == AF_INET) 
     {
-		saddr.in.sin_addr.s_addr = htonl(INADDR_ANY);
+		/* TCP/IP socket */
+		if (hostName[0] == '\0')
+	 		saddr.in.sin_addr.s_addr = htonl(INADDR_ANY);
+		else
+	    {
+			struct hostent *hp;
+	
+			hp = gethostbyname(hostName);
+			if ((hp == NULL) || (hp->h_addrtype != AF_INET))
+			{
+				snprintf(PQerrormsg, PQERRORMSG_LENGTH,
+					   "FATAL: StreamServerPort: gethostbyname(%s) failed: %s\n",
+					   hostName, hstrerror(h_errno));
+					   fputs(PQerrormsg, stderr);
+					   pqdebug("%s", PQerrormsg);
+				return STATUS_ERROR;
+			}
+			memmove((char *) &(saddr.in.sin_addr), (char *) hp->h_addr,
+					hp->h_length);
+		}
+	
 		saddr.in.sin_port = htons(portName);
 		len = sizeof(struct sockaddr_in);
 	}

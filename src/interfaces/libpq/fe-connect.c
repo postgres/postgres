@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.144 2000/11/04 02:27:56 ishii Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.145 2000/11/13 15:18:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -129,6 +129,9 @@ static const PQconninfoOption PQconninfoOptions[] = {
 
 	{"port", "PGPORT", DEF_PGPORT_STR, NULL,
 	"Database-Port", "", 6},
+
+	{"unixsocket", "PGUNIXSOCKET", NULL, NULL,
+	"Unix-Socket", "", 80},
 
 	{"tty", "PGTTY", DefaultTty, NULL,
 	"Backend-Debug-TTY", "D", 40},
@@ -305,6 +308,8 @@ PQconnectStart(const char *conninfo)
 	conn->pghost = tmp ? strdup(tmp) : NULL;
 	tmp = conninfo_getval(connOptions, "port");
 	conn->pgport = tmp ? strdup(tmp) : NULL;
+	tmp = conninfo_getval(connOptions, "unixsocket");
+	conn->pgunixsocket = tmp ? strdup(tmp) : NULL;
 	tmp = conninfo_getval(connOptions, "tty");
 	conn->pgtty = tmp ? strdup(tmp) : NULL;
 	tmp = conninfo_getval(connOptions, "options");
@@ -385,6 +390,9 @@ PQconndefaults(void)
  *	  PGPORT	   identifies TCP port to which to connect if <pgport> argument
  *				   is NULL or a null string.
  *
+ *	  PGUNIXSOCKET	   identifies Unix-domain socket to which to connect; default
+ *				   is computed from the TCP port.
+ *
  *	  PGTTY		   identifies tty to which to send messages if <pgtty> argument
  *				   is NULL or a null string.
  *
@@ -434,6 +442,14 @@ PQsetdbLogin(const char *pghost, const char *pgport, const char *pgoptions,
 	}
 	else
 		conn->pgport = strdup(pgport);
+
+#if FIX_ME
+	/* we need to modify the function to accept a unix socket path */
+	if (pgunixsocket)
+		conn->pgunixsocket = strdup(pgunixsocket);
+	else if ((tmp = getenv("PGUNIXSOCKET")) != NULL)
+		conn->pgunixsocket = strdup(tmp);
+#endif
 
 	if (pgtty == NULL)
 	{
@@ -510,13 +526,13 @@ PQsetdbLogin(const char *pghost, const char *pgport, const char *pgoptions,
 
 /*
  * update_db_info -
- * get all additional infos out of dbName
+ * get all additional info out of dbName
  *
  */
 static int
 update_db_info(PGconn *conn)
 {
-	char	   *tmp,
+	char	   *tmp, *tmp2,
 			   *old = conn->dbName;
 
 	if (strchr(conn->dbName, '@') != NULL)
@@ -525,6 +541,8 @@ update_db_info(PGconn *conn)
 		tmp = strrchr(conn->dbName, ':');
 		if (tmp != NULL)		/* port number given */
 		{
+			if (conn->pgport)
+				free(conn->pgport);
 			conn->pgport = strdup(tmp + 1);
 			*tmp = '\0';
 		}
@@ -532,6 +550,8 @@ update_db_info(PGconn *conn)
 		tmp = strrchr(conn->dbName, '@');
 		if (tmp != NULL)		/* host name given */
 		{
+			if (conn->pghost)
+				free(conn->pghost);
 			conn->pghost = strdup(tmp + 1);
 			*tmp = '\0';
 		}
@@ -558,13 +578,15 @@ update_db_info(PGconn *conn)
 
 			/*
 			 * new style:
-			 * <tcp|unix>:postgresql://server[:port][/dbname][?options]
+			 * <tcp|unix>:postgresql://server[:port|:/unixsocket/path:][/dbname][?options]
 			 */
 			offset += strlen("postgresql://");
 
 			tmp = strrchr(conn->dbName + offset, '?');
 			if (tmp != NULL)	/* options given */
 			{
+				if (conn->pgoptions)
+					free(conn->pgoptions);
 				conn->pgoptions = strdup(tmp + 1);
 				*tmp = '\0';
 			}
@@ -572,26 +594,62 @@ update_db_info(PGconn *conn)
 			tmp = strrchr(conn->dbName + offset, '/');
 			if (tmp != NULL)	/* database name given */
 			{
+				if (conn->dbName)
+					free(conn->dbName);
 				conn->dbName = strdup(tmp + 1);
 				*tmp = '\0';
 			}
 			else
 			{
+				/* Why do we default only this value from the environment again?  */
 				if ((tmp = getenv("PGDATABASE")) != NULL)
+				{
+					if (conn->dbName)
+						free(conn->dbName);
 					conn->dbName = strdup(tmp);
+				}
 				else if (conn->pguser)
+				{
+					if (conn->dbName)
+						free(conn->dbName);
 					conn->dbName = strdup(conn->pguser);
+				}
 			}
 
 			tmp = strrchr(old + offset, ':');
-			if (tmp != NULL)	/* port number given */
+			if (tmp != NULL)	/* port number or Unix socket path given */
 			{
-				conn->pgport = strdup(tmp + 1);
 				*tmp = '\0';
+				if ((tmp2 = strchr(tmp + 1, ':')) != NULL)
+				{
+					if (strncmp(old, "unix:", 5) != 0)
+					{
+						printfPQExpBuffer(&conn->errorMessage,
+								  "connectDBStart() -- "
+								  "socket name can only be specified with "
+								  "non-TCP\n");
+						return 1; 
+					}
+					*tmp2 = '\0';
+					if (conn->pgunixsocket)
+						free(conn->pgunixsocket);
+					conn->pgunixsocket = strdup(tmp + 1);
+				}
+				else
+				{
+					if (conn->pgport)
+						free(conn->pgport);
+					conn->pgport = strdup(tmp + 1);
+					if (conn->pgunixsocket)
+						free(conn->pgunixsocket);
+					conn->pgunixsocket = NULL;
+				}
 			}
 
 			if (strncmp(old, "unix:", 5) == 0)
 			{
+				if (conn->pghost)
+					free(conn->pghost);
 				conn->pghost = NULL;
 				if (strcmp(old + offset, "localhost") != 0)
 				{
@@ -603,8 +661,11 @@ update_db_info(PGconn *conn)
 				}
 			}
 			else
+			{
+				if (conn->pghost)
+					free(conn->pghost);
 				conn->pghost = strdup(old + offset);
-
+			}
 			free(old);
 		}
 	}
@@ -763,7 +824,10 @@ connectDBStart(PGconn *conn)
 	}
 #ifdef HAVE_UNIX_SOCKETS
 	else
-		conn->raddr_len = UNIXSOCK_PATH(conn->raddr.un, portno);
+	{
+		UNIXSOCK_PATH(conn->raddr.un, portno, conn->pgunixsocket);
+		conn->raddr_len = UNIXSOCK_LEN(conn->raddr.un);
+	}
 #endif
 
 
@@ -842,7 +906,8 @@ connectDBStart(PGconn *conn)
 							  conn->pghost ? conn->pghost : "localhost",
 							  (family == AF_INET) ?
 							  "TCP/IP port" : "Unix socket",
-							  conn->pgport);
+							  (family == AF_UNIX && conn->pgunixsocket) ?
+							  conn->pgunixsocket : conn->pgport);
 			goto connect_errReturn;
 		}
 	}
@@ -1143,7 +1208,8 @@ keep_going:						/* We will come back to here until there
 							   conn->pghost ? conn->pghost : "localhost",
 								  (conn->raddr.sa.sa_family == AF_INET) ?
 									  "TCP/IP port" : "Unix socket",
-									  conn->pgport);
+							  (conn->raddr.sa.sa_family == AF_UNIX && conn->pgunixsocket) ?
+									  conn->pgunixsocket : conn->pgport);
 					goto error_return;
 				}
 
@@ -1819,6 +1885,8 @@ freePGconn(PGconn *conn)
 		free(conn->pghostaddr);
 	if (conn->pgport)
 		free(conn->pgport);
+	if (conn->pgunixsocket)
+		free(conn->pgunixsocket);
 	if (conn->pgtty)
 		free(conn->pgtty);
 	if (conn->pgoptions)
@@ -2526,6 +2594,14 @@ PQport(const PGconn *conn)
 	if (!conn)
 		return (char *) NULL;
 	return conn->pgport;
+}
+
+char *
+PQunixsocket(const PGconn *conn)
+{
+	if (!conn)
+		return (char *) NULL;
+	return conn->pgunixsocket;
 }
 
 char *

@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pqcomm.h,v 1.43 2000/11/01 21:14:03 petere Exp $
+ * $Id: pqcomm.h,v 1.44 2000/11/13 15:18:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -51,12 +51,15 @@ typedef union SockAddr
 /* Configure the UNIX socket address for the well known port. */
 
 #if defined(SUN_LEN)
-#define UNIXSOCK_PATH(sun,port) \
-	(sprintf((sun).sun_path, "/tmp/.s.PGSQL.%d", (port)), SUN_LEN(&(sun)))
+#define UNIXSOCK_PATH(sun,port,defpath) \
+        ((defpath && defpath[0] != '\0') ? (strncpy((sun).sun_path, defpath, sizeof((sun).sun_path)), (sun).sun_path[sizeof((sun).sun_path)-1] = '\0') : sprintf((sun).sun_path, "/tmp/.s.PGSQL.%d", (port)))
+#define UNIXSOCK_LEN(sun) \
+        (SUN_LEN(&(sun)))
 #else
-#define UNIXSOCK_PATH(sun,port) \
-	(sprintf((sun).sun_path, "/tmp/.s.PGSQL.%d", (port)), \
-	 strlen((sun).sun_path)+ offsetof(struct sockaddr_un, sun_path))
+#define UNIXSOCK_PATH(sun,port,defpath) \
+        ((defpath && defpath[0] != '\0') ? (strncpy((sun).sun_path, defpath, sizeof((sun).sun_path)), (sun).sun_path[sizeof((sun).sun_path)-1] = '\0') : sprintf((sun).sun_path, "/tmp/.s.PGSQL.%d", (port)))
+#define UNIXSOCK_LEN(sun) \
+        (strlen((sun).sun_path)+ offsetof(struct sockaddr_un, sun_path))
 #endif
 
 /*
@@ -176,5 +179,7 @@ typedef struct CancelRequestPacket
 extern int Unix_socket_permissions;
 
 extern char * Unix_socket_group;
+extern char * UnixSocketName;
+extern char * HostName;
 
 #endif	 /* PQCOMM_H */

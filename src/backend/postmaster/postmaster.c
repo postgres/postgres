@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.182 2000/11/12 20:51:51 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.183 2000/11/13 15:18:11 momjian Exp $
  *
  * NOTES
  *
@@ -114,6 +114,8 @@ static Dllist *PortList;
 
 /* The socket number we are listening for connections on */
 int PostPortName;
+char * UnixSocketName;
+char * HostName;
 
 /*
  * This is a sequence number that indicates how many times we've had to
@@ -224,7 +226,7 @@ extern void SetThisStartUpID(void);
 static void pmdaemonize(int argc, char *argv[]);
 static Port *ConnCreate(int serverFd);
 static void ConnFree(Port *port);
-static void reset_shared(int port);
+static void reset_shared(unsigned short port);
 static void SIGHUP_handler(SIGNAL_ARGS);
 static void pmdie(SIGNAL_ARGS);
 static void reaper(SIGNAL_ARGS);
@@ -366,7 +368,7 @@ PostmasterMain(int argc, char *argv[])
 	 * will occur.
 	 */
 	opterr = 1;
-	while ((opt = getopt(argc, argv, "A:a:B:b:c:D:d:Film:MN:no:p:SsV-:?")) != EOF)
+	while ((opt = getopt(argc, argv, "A:a:B:b:c:D:d:Fh:ik:lm:MN:no:p:SsV-:?")) != EOF)
 	{
 		switch(opt)
 		{
@@ -422,7 +424,7 @@ PostmasterMain(int argc, char *argv[])
 #ifdef HAVE_INT_OPTRESET
 	optreset = 1;
 #endif
-	while ((opt = getopt(argc, argv, "A:a:B:b:c:D:d:Film:MN:no:p:SsV-:?")) != EOF)
+	while ((opt = getopt(argc, argv, "A:a:B:b:c:D:d:Fh:ik:lm:MN:no:p:SsV-:?")) != EOF)
 	{
 		switch (opt)
 		{
@@ -456,8 +458,15 @@ PostmasterMain(int argc, char *argv[])
 			case 'F':
 				enableFsync = false;
 				break;
+			case 'h':
+				HostName = optarg;
+				break;
 			case 'i':
 				NetServer = true;
+				break;
+			case 'k':
+				/* Set PGUNIXSOCKET by hand. */
+				UnixSocketName = optarg;
 				break;
 #ifdef USE_SSL
 			case 'l':
@@ -606,8 +615,9 @@ PostmasterMain(int argc, char *argv[])
 
 	if (NetServer)
 	{
-		status = StreamServerPort(AF_INET, (unsigned short) PostPortName,
-								  &ServerSock_INET);
+		status = StreamServerPort(AF_INET, HostName,
+						(unsigned short) PostPortName, UnixSocketName,
+						&ServerSock_INET);
 		if (status != STATUS_OK)
 		{
 			fprintf(stderr, "%s: cannot create INET stream port\n",
@@ -617,8 +627,9 @@ PostmasterMain(int argc, char *argv[])
 	}
 
 #ifdef HAVE_UNIX_SOCKETS
-	status = StreamServerPort(AF_UNIX, (unsigned short) PostPortName,
-							  &ServerSock_UNIX);
+	status = StreamServerPort(AF_UNIX, HostName,
+						(unsigned short) PostPortName, UnixSocketName, 
+						&ServerSock_UNIX);
 	if (status != STATUS_OK)
 	{
 		fprintf(stderr, "%s: cannot create UNIX stream port\n",
@@ -789,7 +800,9 @@ usage(const char *progname)
 	printf("  -d 1-5          debugging level\n");
 	printf("  -D <directory>  database directory\n");
 	printf("  -F              turn fsync off\n");
+	printf("  -h hostname     specify hostname or IP address\n");
 	printf("  -i              enable TCP/IP connections\n");
+	printf("  -k path         specify Unix-domain socket name\n");
 #ifdef USE_SSL
 	printf("  -l              enable SSL connections\n");
 #endif
@@ -1303,11 +1316,75 @@ ConnFree(Port *conn)
 }
 
 /*
+ * get_host_port -- return a pseudo port number (16 bits)
+ * derived from the primary IP address of HostName.
+ */
+static unsigned short
+get_host_port(void)
+{
+	static unsigned short hostPort = 0;
+
+	if (hostPort == 0)
+	{
+		SockAddr	saddr;
+		struct hostent *hp;
+
+		hp = gethostbyname(HostName);
+		if ((hp == NULL) || (hp->h_addrtype != AF_INET))
+		{
+			char msg[1024];
+			snprintf(msg, sizeof(msg),
+				 "FATAL: get_host_port: gethostbyname(%s) failed: %s\n",
+				 HostName, hstrerror(h_errno));
+			fputs(msg, stderr);
+			pqdebug("%s", msg);
+			exit(1);
+		}
+		memmove((char *) &(saddr.in.sin_addr),
+			(char *) hp->h_addr,
+			hp->h_length);
+		hostPort = ntohl(saddr.in.sin_addr.s_addr) & 0xFFFF;
+	}
+
+	return hostPort;
+}
+
+/*
  * reset_shared -- reset shared memory and semaphores
  */
 static void
-reset_shared(int port)
+reset_shared(unsigned short port)
 {
+	/*
+	 * A typical ipc_key is 5432001, which is port 5432, sequence
+	 * number 0, and 01 as the index in IPCKeyGetBufferMemoryKey().
+	 * The 32-bit INT_MAX is 2147483 6 47.
+	 *
+	 * The default algorithm for calculating the IPC keys assumes that all
+	 * instances of postmaster on a given host are listening on different
+	 * ports.  In order to work (prevent shared memory collisions) if you
+	 * run multiple PostgreSQL instances on the same port and different IP
+	 * addresses on a host, we change the algorithm if you give postmaster
+	 * the -h option, or set PGHOST, to a value other than the internal
+	 * default.
+	 *
+	 * If HostName is set, then we generate the IPC keys using the
+	 * last two octets of the IP address instead of the port number.
+	 * This algorithm assumes that no one will run multiple PostgreSQL
+	 * instances on one host using two IP addresses that have the same two
+	 * last octets in different class C networks.  If anyone does, it
+	 * would be rare.
+	 *
+	 * So, if you use -h or PGHOST, don't try to run two instances of
+	 * PostgreSQL on the same IP address but different ports.  If you
+	 * don't use them, then you must use different ports (via -p or
+	 * PGPORT).  And, of course, don't try to use both approaches on one
+	 * host.
+	 */
+
+	if (HostName[0] != '\0')
+		port = get_host_port();
+
 	ipc_key = port * 1000 + shmem_seq * 100;
 	CreateSharedMemoryAndSemaphores(ipc_key, MaxBackends);
 	shmem_seq += 1;

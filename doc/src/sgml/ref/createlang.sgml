@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/createlang.sgml,v 1.10 2000/11/11 23:01:38 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/createlang.sgml,v 1.11 2000/11/13 15:18:08 momjian Exp $
 Postgres documentation
 -->
 
@@ -100,6 +100,18 @@ Postgres documentation
        </para>
       </listitem>
      </varlistentry>
+
+    <varlistentry>
+      <term>-k, --unixsocket <replaceable class="parameter">path</replaceable></term>
+      <listitem>
+      <para>
+      Specifies the Unix-domain socket on which the
+      <application>postmaster</application> is running.
+      Without this option, the socket is created in <filename>/tmp</filename>
+      based on the port number.
+      </para>
+      </listitem>
+    </varlistentry>
 
      <varlistentry>
       <term>-U, --username <replaceable class="parameter">username</replaceable></term>

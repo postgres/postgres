@@ -187,6 +187,7 @@ typedef struct _archiveHandle {
 	char				*archdbname;		/* DB name *read* from archive */
 	char				*pghost;
 	char				*pgport;
+	char				*pgunixsocket;
 	PGconn				*connection;
 	PGconn				*blobConnection;	/* Connection for BLOB xref */
 	int					txActive;			/* Flag set if TX active on connection */

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/libpq++.sgml,v 1.17 2000/09/29 20:21:34 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/libpq++.sgml,v 1.18 2000/11/13 15:18:07 momjian Exp $
 -->
 
  <chapter id="libpqplusplus">
@@ -88,6 +88,13 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/libpq++.sgml,v 1.17 2000/09/29 20:21:
        <para>
 	<envar>PGPORT</envar>  sets the default port or local Unix domain socket
 	file extension for communicating with the <productname>Postgres</productname>
+	backend.
+       </para>
+      </listitem>
+      <listitem>
+       <para>
+	<envar>PGUNIXSOCKET</envar>  sets the full Unix domain socket
+	file name for communicating with the <productname>Postgres</productname>
 	backend.
        </para>
       </listitem>
