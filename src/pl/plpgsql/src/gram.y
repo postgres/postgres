@@ -4,7 +4,7 @@
  *						  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/gram.y,v 1.41 2003/03/25 03:16:40 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/gram.y,v 1.42 2003/04/27 22:21:22 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -307,36 +307,64 @@ decl_stmt		: '<' '<' opt_lblname '>' '>'
 
 decl_statement	: decl_varname decl_const decl_datatype decl_notnull decl_defval
 					{
-						PLpgSQL_var		*new;
+						if (!OidIsValid($3->typrelid))
+						{
+							/* Ordinary scalar datatype */
+							PLpgSQL_var		*var;
 
-						new = malloc(sizeof(PLpgSQL_var));
-						memset(new, 0, sizeof(PLpgSQL_var));
+							var = malloc(sizeof(PLpgSQL_var));
+							memset(var, 0, sizeof(PLpgSQL_var));
 
-						new->dtype		= PLPGSQL_DTYPE_VAR;
-						new->refname	= $1.name;
-						new->lineno		= $1.lineno;
+							var->dtype		= PLPGSQL_DTYPE_VAR;
+							var->refname	= $1.name;
+							var->lineno		= $1.lineno;
 
-						new->datatype	= $3;
-						new->isconst	= $2;
-						new->notnull	= $4;
-						new->default_val = $5;
+							var->datatype	= $3;
+							var->isconst	= $2;
+							var->notnull	= $4;
+							var->default_val = $5;
 
-						plpgsql_adddatum((PLpgSQL_datum *)new);
-						plpgsql_ns_additem(PLPGSQL_NSTYPE_VAR, new->varno,
-												$1.name);
+							plpgsql_adddatum((PLpgSQL_datum *)var);
+							plpgsql_ns_additem(PLPGSQL_NSTYPE_VAR,
+											   var->varno,
+											   $1.name);
+						}
+						else
+						{
+							/* Composite type --- treat as rowtype */
+							PLpgSQL_row	   *row;
+
+							row = build_rowtype($3->typrelid);
+							row->dtype		= PLPGSQL_DTYPE_ROW;
+							row->refname	= $1.name;
+							row->lineno		= $1.lineno;
+
+							if ($2)
+								elog(ERROR, "Rowtype variable cannot be CONSTANT");
+							if ($4)
+								elog(ERROR, "Rowtype variable cannot be NOT NULL");
+							if ($5 != NULL)
+								elog(ERROR, "Default value for rowtype variable is not supported");
+
+							plpgsql_adddatum((PLpgSQL_datum *)row);
+							plpgsql_ns_additem(PLPGSQL_NSTYPE_ROW,
+											   row->rowno,
+											   $1.name);
+
+						}
 					}
 				| decl_varname K_RECORD ';'
 					{
-						PLpgSQL_rec		*new;
+						PLpgSQL_rec		*var;
 
-						new = malloc(sizeof(PLpgSQL_rec));
+						var = malloc(sizeof(PLpgSQL_rec));
 
-						new->dtype		= PLPGSQL_DTYPE_REC;
-						new->refname	= $1.name;
-						new->lineno		= $1.lineno;
+						var->dtype		= PLPGSQL_DTYPE_REC;
+						var->refname	= $1.name;
+						var->lineno		= $1.lineno;
 
-						plpgsql_adddatum((PLpgSQL_datum *)new);
-						plpgsql_ns_additem(PLPGSQL_NSTYPE_REC, new->recno,
+						plpgsql_adddatum((PLpgSQL_datum *)var);
+						plpgsql_ns_additem(PLPGSQL_NSTYPE_REC, var->recno,
 												$1.name);
 					}
 				| decl_varname decl_rowtype ';'

@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.56 2003/04/24 21:16:44 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.57 2003/04/27 22:21:22 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -81,7 +81,7 @@ PLpgSQL_function *plpgsql_curr_compile;
 
 
 static void plpgsql_compile_error_callback(void *arg);
-static PLpgSQL_row *build_rowtype(Oid classOid);
+static PLpgSQL_type *build_datatype(HeapTuple typeTup, int32 typmod);
 
 
 /*
@@ -275,19 +275,11 @@ plpgsql_compile(Oid fn_oid, int functype)
 					 */
 					var = malloc(sizeof(PLpgSQL_var));
 					memset(var, 0, sizeof(PLpgSQL_var));
-					var->datatype = malloc(sizeof(PLpgSQL_type));
-					memset(var->datatype, 0, sizeof(PLpgSQL_type));
 
 					var->dtype = PLPGSQL_DTYPE_VAR;
 					var->refname = strdup(buf);
 					var->lineno = 0;
-					var->datatype->typname = strdup(NameStr(typeStruct->typname));
-					var->datatype->typoid = procStruct->proargtypes[i];
-					perm_fmgr_info(typeStruct->typinput, &(var->datatype->typinput));
-					var->datatype->typelem = typeStruct->typelem;
-					var->datatype->typbyval = typeStruct->typbyval;
-					var->datatype->typlen = typeStruct->typlen;
-					var->datatype->atttypmod = -1;
+					var->datatype = build_datatype(typeTup, -1);
 					var->isconst = true;
 					var->notnull = false;
 					var->default_val = NULL;
@@ -908,7 +900,6 @@ plpgsql_parse_wordtype(char *word)
 		if (HeapTupleIsValid(typeTup))
 		{
 			Form_pg_type typeStruct = (Form_pg_type) GETSTRUCT(typeTup);
-			PLpgSQL_type *typ;
 
 			if (!typeStruct->typisdefined ||
 				typeStruct->typrelid != InvalidOid)
@@ -918,17 +909,7 @@ plpgsql_parse_wordtype(char *word)
 				return T_ERROR;
 			}
 
-			typ = (PLpgSQL_type *) malloc(sizeof(PLpgSQL_type));
-
-			typ->typname = strdup(NameStr(typeStruct->typname));
-			typ->typoid = typeOid;
-			perm_fmgr_info(typeStruct->typinput, &(typ->typinput));
-			typ->typelem = typeStruct->typelem;
-			typ->typbyval = typeStruct->typbyval;
-			typ->typlen = typeStruct->typlen;
-			typ->atttypmod = -1;
-
-			plpgsql_yylval.dtype = typ;
+			plpgsql_yylval.dtype = build_datatype(typeTup, -1);
 
 			ReleaseSysCache(typeTup);
 			pfree(cp[0]);
@@ -960,8 +941,6 @@ plpgsql_parse_dblwordtype(char *word)
 	HeapTuple	attrtup;
 	Form_pg_attribute attrStruct;
 	HeapTuple	typetup;
-	Form_pg_type typeStruct;
-	PLpgSQL_type *typ;
 	char	   *cp[3];
 	int			i;
 
@@ -1067,22 +1046,11 @@ plpgsql_parse_dblwordtype(char *word)
 	if (!HeapTupleIsValid(typetup))
 		elog(ERROR, "cache lookup for type %u of %s.%s failed",
 			 attrStruct->atttypid, cp[0], cp[1]);
-	typeStruct = (Form_pg_type) GETSTRUCT(typetup);
 
 	/*
 	 * Found that - build a compiler type struct and return it
 	 */
-	typ = (PLpgSQL_type *) malloc(sizeof(PLpgSQL_type));
-
-	typ->typname = strdup(NameStr(typeStruct->typname));
-	typ->typoid = attrStruct->atttypid;
-	perm_fmgr_info(typeStruct->typinput, &(typ->typinput));
-	typ->typelem = typeStruct->typelem;
-	typ->typbyval = typeStruct->typbyval;
-	typ->typlen = typeStruct->typlen;
-	typ->atttypmod = attrStruct->atttypmod;
-
-	plpgsql_yylval.dtype = typ;
+	plpgsql_yylval.dtype = build_datatype(typetup, attrStruct->atttypmod);
 
 	ReleaseSysCache(classtup);
 	ReleaseSysCache(attrtup);
@@ -1107,8 +1075,6 @@ plpgsql_parse_tripwordtype(char *word)
 	HeapTuple	attrtup;
 	Form_pg_attribute attrStruct;
 	HeapTuple	typetup;
-	Form_pg_type typeStruct;
-	PLpgSQL_type *typ;
 	char	   *cp[2];
 	char	   *colname[1];
 	int			qualified_att_len;
@@ -1192,22 +1158,11 @@ plpgsql_parse_tripwordtype(char *word)
 	if (!HeapTupleIsValid(typetup))
 		elog(ERROR, "cache lookup for type %u of %s.%s failed",
 			 attrStruct->atttypid, cp[0], cp[1]);
-	typeStruct = (Form_pg_type) GETSTRUCT(typetup);
 
 	/*
 	 * Found that - build a compiler type struct and return it
 	 */
-	typ = (PLpgSQL_type *) malloc(sizeof(PLpgSQL_type));
-
-	typ->typname = strdup(NameStr(typeStruct->typname));
-	typ->typoid = attrStruct->atttypid;
-	perm_fmgr_info(typeStruct->typinput, &(typ->typinput));
-	typ->typelem = typeStruct->typelem;
-	typ->typbyval = typeStruct->typbyval;
-	typ->typlen = typeStruct->typlen;
-	typ->atttypmod = attrStruct->atttypmod;
-
-	plpgsql_yylval.dtype = typ;
+	plpgsql_yylval.dtype = build_datatype(typetup, attrStruct->atttypmod);
 
 	ReleaseSysCache(classtup);
 	ReleaseSysCache(attrtup);
@@ -1296,7 +1251,7 @@ plpgsql_parse_dblwordrowtype(char *word)
 /*
  * Build a rowtype data structure given the pg_class OID.
  */
-static PLpgSQL_row *
+PLpgSQL_row *
 build_rowtype(Oid classOid)
 {
 	PLpgSQL_row *row;
@@ -1341,7 +1296,6 @@ build_rowtype(Oid classOid)
 		HeapTuple	attrtup;
 		Form_pg_attribute attrStruct;
 		HeapTuple	typetup;
-		Form_pg_type typeStruct;
 		const char *attname;
 		PLpgSQL_var *var;
 
@@ -1365,7 +1319,6 @@ build_rowtype(Oid classOid)
 		if (!HeapTupleIsValid(typetup))
 			elog(ERROR, "cache lookup for type %u of %s.%s failed",
 				 attrStruct->atttypid, relname, attname);
-		typeStruct = (Form_pg_type) GETSTRUCT(typetup);
 
 		/*
 		 * Create the internal variable
@@ -1384,14 +1337,7 @@ build_rowtype(Oid classOid)
 		strcpy(var->refname, relname);
 		strcat(var->refname, ".");
 		strcat(var->refname, attname);
-		var->datatype = malloc(sizeof(PLpgSQL_type));
-		var->datatype->typname = strdup(NameStr(typeStruct->typname));
-		var->datatype->typoid = attrStruct->atttypid;
-		perm_fmgr_info(typeStruct->typinput, &(var->datatype->typinput));
-		var->datatype->typelem = typeStruct->typelem;
-		var->datatype->typbyval = typeStruct->typbyval;
-		var->datatype->typlen = typeStruct->typlen;
-		var->datatype->atttypmod = attrStruct->atttypmod;
+		var->datatype = build_datatype(typetup, attrStruct->atttypmod);
 		var->isconst = false;
 		var->notnull = false;
 		var->default_val = NULL;
@@ -1428,7 +1374,6 @@ plpgsql_parse_datatype(char *string)
 	Oid			type_id;
 	int32		typmod;
 	HeapTuple	typeTup;
-	Form_pg_type typeStruct;
 	PLpgSQL_type *typ;
 
 	/* Let the main parser try to parse it under standard SQL rules */
@@ -1440,19 +1385,33 @@ plpgsql_parse_datatype(char *string)
 							 0, 0, 0);
 	if (!HeapTupleIsValid(typeTup))
 		elog(ERROR, "cache lookup failed for type %u", type_id);
-	typeStruct = (Form_pg_type) GETSTRUCT(typeTup);
+
+	typ = build_datatype(typeTup, typmod);
+
+	ReleaseSysCache(typeTup);
+
+	return typ;
+}
+
+/*
+ * Utility subroutine to make a PLpgSQL_type struct given a pg_type entry
+ */
+static PLpgSQL_type *
+build_datatype(HeapTuple typeTup, int32 typmod)
+{
+	Form_pg_type typeStruct = (Form_pg_type) GETSTRUCT(typeTup);
+	PLpgSQL_type *typ;
 
 	typ = (PLpgSQL_type *) malloc(sizeof(PLpgSQL_type));
 
 	typ->typname = strdup(NameStr(typeStruct->typname));
-	typ->typoid = type_id;
-	perm_fmgr_info(typeStruct->typinput, &(typ->typinput));
-	typ->typelem = typeStruct->typelem;
-	typ->typbyval = typeStruct->typbyval;
+	typ->typoid = HeapTupleGetOid(typeTup);
 	typ->typlen = typeStruct->typlen;
+	typ->typbyval = typeStruct->typbyval;
+	typ->typrelid = typeStruct->typrelid;
+	typ->typelem = typeStruct->typelem;
+	perm_fmgr_info(typeStruct->typinput, &(typ->typinput));
 	typ->atttypmod = typmod;
-
-	ReleaseSysCache(typeTup);
 
 	return typ;
 }

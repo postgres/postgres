@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/plpgsql.sgml,v 1.17 2003/04/07 01:29:25 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/plpgsql.sgml,v 1.18 2003/04/27 22:21:22 tgl Exp $
 -->
 
 <chapter id="plpgsql"> 
@@ -541,7 +541,8 @@ user_id users.user_id%TYPE;
      <title>Row Types</title>
 
 <synopsis>
-<replaceable>name</replaceable> <replaceable>tablename</replaceable><literal>%ROWTYPE</literal>;
+<replaceable>name</replaceable> <replaceable>table_name</replaceable><literal>%ROWTYPE</literal>;
+<replaceable>name</replaceable> <replaceable>composite_type_name</replaceable>;
 </synopsis>
 
    <para>
@@ -550,17 +551,20 @@ user_id users.user_id%TYPE;
     can hold a whole row of a <command>SELECT</> or <command>FOR</>
     query result, so long as that query's column set matches the
     declared type of the variable.
-    <replaceable>tablename</replaceable> must be an existing table or
-    view name in the database. The individual fields of the row value
+    The individual fields of the row value
     are accessed using the usual dot notation, for example
     <literal>rowvar.field</literal>.
    </para>
 
    <para>
-    Presently, a row variable can only be declared using the
-    <literal>%ROWTYPE</literal> notation; although one might expect a
-    bare table name to work as a type declaration, it won't be accepted
-    within <application>PL/pgSQL</application> functions.
+    A row variable can be declared to have the same type as the rows of
+    an existing table or view, by using the
+    <replaceable>table_name</replaceable><literal>%ROWTYPE</literal>
+    notation; or it can be declared by giving a composite type's name.
+    (Since every table has an associated datatype of the same name,
+    it actually does not matter in <productname>PostgreSQL</> whether you
+    write <literal>%ROWTYPE</literal> or not.  But the form with
+    <literal>%ROWTYPE</literal> is more portable.)
    </para>
 
    <para>
