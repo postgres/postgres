@@ -15,7 +15,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: memutils.h,v 1.15 1998/04/12 02:58:22 scrappy Exp $
+ * $Id: memutils.h,v 1.16 1998/04/27 14:46:17 scrappy Exp $
  *
  * NOTES
  *	  some of the information in this file will be moved to
@@ -67,7 +67,7 @@ s...)
  */
 #if defined(sun) && ! defined(sparc)
 #define LONGALIGN(LEN)	SHORTALIGN(LEN)
-#elif defined (alpha)
+#elif defined (__alpha)
 
  /*
   * even though "long alignment" should really be on 8-byte boundaries for

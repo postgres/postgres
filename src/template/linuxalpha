@@ -1,5 +1,5 @@
 AROPT:crs
-CFLAGS:-O2 -Dalpha -Dlinuxalpha
+CFLAGS:-O2
 SHARED_LIB:-fpic
 ALL:
 SRCH_INC:

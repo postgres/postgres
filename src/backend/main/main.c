@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/main/main.c,v 1.16 1998/04/11 21:14:47 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/main/main.c,v 1.17 1998/04/27 14:43:02 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,7 +15,7 @@
 #include <string.h>
 #include <unistd.h>
 
-#if defined(alpha) && !defined(linux)
+#if defined(__alpha) && !defined(linux)
 #include <sys/sysinfo.h>
 #include <machine/hal_sysinfo.h>
 #define ASSEMBLER
@@ -42,7 +42,7 @@ main(int argc, char *argv[])
 {
 	int			len;
 
-#if defined(alpha)
+#if defined(__alpha)
 #ifdef NOFIXADE
 	int			buffer[] = {SSIN_UACPROC, UAC_SIGBUS};
 
@@ -70,7 +70,7 @@ main(int argc, char *argv[])
 	syscall(SYS_sysmips, MIPS_FIXADE, 0, NULL, NULL, NULL);
 #endif
 
-#if defined(alpha)
+#if defined(__alpha)
 	if (setsysinfo(SSI_NVPAIRS, buffer, 1, (caddr_t) NULL,
 				   (unsigned long) NULL) < 0)
 	{

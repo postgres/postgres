@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/Attic/s_lock.c,v 1.3 1998/02/26 04:35:28 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/Attic/s_lock.c,v 1.4 1998/04/27 14:43:15 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,7 +37,7 @@
 #include "storage/ipc.h"
 #include "storage/s_lock.h"
 
-#if defined(__alpha__) && defined(linux)
+#if defined(__alpha) && defined(linux)
 void
 S_LOCK(slock_t *lock)
 {

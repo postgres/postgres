@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/float.c,v 1.30 1998/04/12 02:58:17 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/float.c,v 1.31 1998/04/27 14:43:38 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -132,7 +132,7 @@ extern int	isinf(double x);
  * until the distributions are updated.
  *								--djm 12/16/96
  */
-#if ( defined(linux) && defined(alpha) ) && !defined(UNSAFE_FLOATS)
+#if ( defined(linux) && defined(__alpha) ) && !defined(UNSAFE_FLOATS)
 #define UNSAFE_FLOATS
 #endif
 
