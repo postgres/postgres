@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Tue Aug 27 10:17:11 EDT 2002
+Last updated:		Tue Aug 27 12:19:45 EDT 2002
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -408,7 +408,7 @@ Vacuum
 * Reduce lock time by moving tuples with read lock, then write
   lock and truncate table [vacuum]
 * Provide automatic running of vacuum in the background (Tom)
-
+* Allow free space map to be auto-sized or warn when it is too small
 
 Locking
 =======
