@@ -4,7 +4,7 @@
  *						  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/gram.y,v 1.37 2002/09/01 16:28:06 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/gram.y,v 1.38 2002/09/22 21:56:47 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -98,40 +98,40 @@ static	void check_assignable(PLpgSQL_datum *datum);
 %type <declhdr> decl_sect
 %type <varname> decl_varname
 %type <str>		decl_renname
-%type <ival>	decl_const, decl_notnull
-%type <expr>	decl_defval, decl_cursor_query
+%type <ival>	decl_const decl_notnull
+%type <expr>	decl_defval decl_cursor_query
 %type <dtype>	decl_datatype
-%type <row>		decl_rowtype, decl_cursor_args, decl_cursor_arglist
+%type <row>		decl_rowtype decl_cursor_args decl_cursor_arglist
 %type <nsitem>	decl_aliasitem
-%type <str>		decl_stmts, decl_stmt
+%type <str>		decl_stmts decl_stmt
 
-%type <expr>	expr_until_semi, expr_until_then, expr_until_loop
+%type <expr>	expr_until_semi expr_until_then expr_until_loop
 %type <expr>	opt_exitcond
 
-%type <ival>	assign_var, cursor_variable
-%type <var>		fori_var, cursor_varptr, decl_cursor_arg
+%type <ival>	assign_var cursor_variable
+%type <var>		fori_var cursor_varptr decl_cursor_arg
 %type <varname> fori_varname
 %type <forilow> fori_lower
 %type <rec>		fors_target
 
-%type <str>		opt_lblname, opt_label
+%type <str>		opt_lblname opt_label
 %type <str>		opt_exitlabel
 %type <str>		execsql_start
 
-%type <stmts>	proc_sect, proc_stmts, stmt_else, loop_body
-%type <stmt>	proc_stmt, pl_block
-%type <stmt>	stmt_assign, stmt_if, stmt_loop, stmt_while, stmt_exit
-%type <stmt>	stmt_return, stmt_return_next, stmt_raise, stmt_execsql
-%type <stmt>	stmt_fori, stmt_fors, stmt_select, stmt_perform
-%type <stmt>	stmt_dynexecute, stmt_dynfors, stmt_getdiag
-%type <stmt>	stmt_open, stmt_fetch, stmt_close
+%type <stmts>	proc_sect proc_stmts stmt_else loop_body
+%type <stmt>	proc_stmt pl_block
+%type <stmt>	stmt_assign stmt_if stmt_loop stmt_while stmt_exit
+%type <stmt>	stmt_return stmt_return_next stmt_raise stmt_execsql
+%type <stmt>	stmt_fori stmt_fors stmt_select stmt_perform
+%type <stmt>	stmt_dynexecute stmt_dynfors stmt_getdiag
+%type <stmt>	stmt_open stmt_fetch stmt_close
 
 %type <intlist>	raise_params
-%type <ival>	raise_level, raise_param
+%type <ival>	raise_level raise_param
 %type <str>		raise_msg
 
 %type <dtlist>	getdiag_list
-%type <ival>	getdiag_item, getdiag_target
+%type <ival>	getdiag_item getdiag_target
 
 %type <ival>	lno
 
