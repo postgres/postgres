@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.197 2000/10/22 23:32:48 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.198 2000/10/25 18:56:16 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -55,6 +55,9 @@
 #ifdef MULTIBYTE
 #include "miscadmin.h"
 #include "mb/pg_wchar.h"
+#else
+#define GetTemplateEncoding()	0		/* SQL_ASCII */
+#define GetTemplateEncodingName()	"SQL_ASCII"
 #endif
 
 extern List *parsetree;			/* final parse result is delivered here */
@@ -677,11 +680,7 @@ CreateSchemaStmt:  CREATE SCHEMA UserId
 					CreatedbStmt *n = makeNode(CreatedbStmt);
 					n->dbname = $3;
 					n->dbpath = NULL;
-#ifdef MULTIBYTE
 					n->encoding = GetTemplateEncoding();
-#else
-					n->encoding = 0;
-#endif
 					$$ = (Node *)n;
 				}
 		;
@@ -788,14 +787,10 @@ VariableSetStmt:  SET ColId TO var_value
 				}
 		| SET NAMES opt_encoding
 				{
-#ifdef MULTIBYTE
 					VariableSetStmt *n = makeNode(VariableSetStmt);
 					n->name  = "client_encoding";
 					n->value = $3;
 					$$ = (Node *) n;
-#else
-					elog(ERROR, "SET NAMES is not supported");
-#endif
 				}
 		;
 
@@ -813,47 +808,47 @@ var_value:  opt_boolean						{ $$ = $1; }
 			}
 		| '-' ICONST
 			{
-			char	buf[64];
-			sprintf(buf, "%d", -($2));
-			$$ = pstrdup(buf);
-		}
+				char	buf[64];
+				sprintf(buf, "%d", -($2));
+				$$ = pstrdup(buf);
+			}
 		| FCONST							{ $$ = $1; }
 		| '-' FCONST
 			{
-			char * s = palloc(strlen($2)+2);
-			s[0] = '-';
-			strcpy(s + 1, $2);
-			$$ = s;
-		}
+				char * s = palloc(strlen($2)+2);
+				s[0] = '-';
+				strcpy(s + 1, $2);
+				$$ = s;
+			}
 		| name_list
 			{
-			List *n;
-			int slen = 0;
-			char *result;
+				List *n;
+				int slen = 0;
+				char *result;
 
-			/* List of words? Then concatenate together */
-			if ($1 == NIL)
-				elog(ERROR, "SET must have at least one argument");
+				/* List of words? Then concatenate together */
+				if ($1 == NIL)
+					elog(ERROR, "SET must have at least one argument");
 
-			foreach (n, $1)
-			{
-				Value *p = (Value *) lfirst(n);
-				Assert(IsA(p, String));
-				/* keep track of room for string and trailing comma */
-				slen += (strlen(p->val.str) + 1);
+				foreach (n, $1)
+				{
+					Value *p = (Value *) lfirst(n);
+					Assert(IsA(p, String));
+					/* keep track of room for string and trailing comma */
+					slen += (strlen(p->val.str) + 1);
+				}
+				result = palloc(slen + 1);
+				*result = '\0';
+				foreach (n, $1)
+				{
+					Value *p = (Value *) lfirst(n);
+					strcat(result, p->val.str);
+					strcat(result, ",");
+				}
+				/* remove the trailing comma from the last element */
+				*(result+strlen(result)-1) = '\0';
+				$$ = result;
 			}
-			result = palloc(slen + 1);
-			*result = '\0';
-			foreach (n, $1)
-			{
-				Value *p = (Value *) lfirst(n);
-				strcat(result, p->val.str);
-				strcat(result, ",");
-			}
-			/* remove the trailing comma from the last element */
-			*(result+strlen(result)-1) = '\0';
-			$$ = result;
-		}
 		| DEFAULT							{ $$ = NULL; }
 		;
 
@@ -2895,15 +2890,14 @@ LoadStmt:  LOAD file_name
 
 CreatedbStmt:  CREATE DATABASE database_name WITH createdb_opt_location createdb_opt_encoding
 				{
-					CreatedbStmt *n;
+					CreatedbStmt *n = makeNode(CreatedbStmt);
 
 					if ($5 == NULL && $6 == -1)
 						elog(ERROR, "CREATE DATABASE WITH requires at least one option");
 
-                    n = makeNode(CreatedbStmt);
 					n->dbname = $3;
 					n->dbpath = $5;
-					n->encoding = $6;
+					n->encoding = ($6 == -1) ? GetTemplateEncoding() : $6;
 					$$ = (Node *)n;
 				}
 		| CREATE DATABASE database_name
@@ -2911,11 +2905,7 @@ CreatedbStmt:  CREATE DATABASE database_name WITH createdb_opt_location createdb
 					CreatedbStmt *n = makeNode(CreatedbStmt);
 					n->dbname = $3;
 					n->dbpath = NULL;
-#ifdef MULTIBYTE
 					n->encoding = GetTemplateEncoding();
-#else
-					n->encoding = 0;
-#endif
 					$$ = (Node *)n;
 				}
 		;
@@ -2928,13 +2918,13 @@ createdb_opt_location:  LOCATION '=' Sconst		{ $$ = $3; }
 createdb_opt_encoding:  ENCODING '=' Sconst
 				{
 #ifdef MULTIBYTE
-					int i;
-					i = pg_char_to_encoding($3);
-					if (i == -1)
+					$$ = pg_char_to_encoding($3);
+					if ($$ == -1)
 						elog(ERROR, "%s is not a valid encoding name", $3);
-					$$ = i;
 #else
-					elog(ERROR, "Multi-byte support is not enabled");
+					if (strcasecmp($3, GetTemplateEncodingName()) != 0)
+						elog(ERROR, "Multi-byte support is not enabled");
+					$$ = GetTemplateEncoding();
 #endif
 				}
 		| ENCODING '=' Iconst
@@ -2942,26 +2932,19 @@ createdb_opt_encoding:  ENCODING '=' Sconst
 #ifdef MULTIBYTE
 					if (!pg_get_encent_by_encoding($3))
 						elog(ERROR, "%d is not a valid encoding code", $3);
-					$$ = $3;
 #else
-					elog(ERROR, "Multi-byte support is not enabled");
+					if ($3 != GetTemplateEncoding())
+						elog(ERROR, "Multi-byte support is not enabled");
 #endif
+					$$ = $3;
 				}
 		| ENCODING '=' DEFAULT
 				{
-#ifdef MULTIBYTE
 					$$ = GetTemplateEncoding();
-#else
-					$$ = 0;
-#endif
 				}
 		| /*EMPTY*/
 				{
-#ifdef MULTIBYTE
-					$$ = GetTemplateEncoding();
-#else
-					$$= 0;
-#endif
+					$$ = -1;
 				}
 		;
 
