@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.202 2003/03/11 19:40:22 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.203 2003/03/20 03:34:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -603,7 +603,7 @@ InitPlan(QueryDesc *queryDesc)
 			erm = (execRowMark *) palloc(sizeof(execRowMark));
 			erm->relation = relation;
 			erm->rti = rti;
-			snprintf(erm->resname, 32, "ctid%u", rti);
+			snprintf(erm->resname, sizeof(erm->resname), "ctid%u", rti);
 			estate->es_rowMark = lappend(estate->es_rowMark, erm);
 		}
 	}

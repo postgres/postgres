@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/sequence.c,v 1.91 2003/02/13 05:25:24 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/sequence.c,v 1.92 2003/03/20 03:34:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -406,7 +406,7 @@ nextval(PG_FUNCTION_ARGS)
 				{
 					char		buf[100];
 
-					snprintf(buf, 100, INT64_FORMAT, maxv);
+					snprintf(buf, sizeof(buf), INT64_FORMAT, maxv);
 					elog(ERROR, "%s.nextval: reached MAXVALUE (%s)",
 						 sequence->relname, buf);
 				}
@@ -427,7 +427,7 @@ nextval(PG_FUNCTION_ARGS)
 				{
 					char		buf[100];
 
-					snprintf(buf, 100, INT64_FORMAT, minv);
+					snprintf(buf, sizeof(buf), INT64_FORMAT, minv);
 					elog(ERROR, "%s.nextval: reached MINVALUE (%s)",
 						 sequence->relname, buf);
 				}
@@ -569,9 +569,9 @@ do_setval(RangeVar *sequence, int64 next, bool iscalled)
 					bufm[100],
 					bufx[100];
 
-		snprintf(bufv, 100, INT64_FORMAT, next);
-		snprintf(bufm, 100, INT64_FORMAT, seq->min_value);
-		snprintf(bufx, 100, INT64_FORMAT, seq->max_value);
+		snprintf(bufv, sizeof(bufv), INT64_FORMAT, next);
+		snprintf(bufm, sizeof(bufm), INT64_FORMAT, seq->min_value);
+		snprintf(bufx, sizeof(bufx), INT64_FORMAT, seq->max_value);
 		elog(ERROR, "%s.setval: value %s is out of bounds (%s,%s)",
 			 sequence->relname, bufv, bufm, bufx);
 	}
@@ -861,8 +861,8 @@ init_params(CreateSeqStmt *seq, Form_pg_sequence new)
 		char		bufm[100],
 					bufx[100];
 
-		snprintf(bufm, 100, INT64_FORMAT, new->min_value);
-		snprintf(bufx, 100, INT64_FORMAT, new->max_value);
+		snprintf(bufm, sizeof(bufm), INT64_FORMAT, new->min_value);
+		snprintf(bufx, sizeof(bufx), INT64_FORMAT, new->max_value);
 		elog(ERROR, "DefineSequence: MINVALUE (%s) must be less than MAXVALUE (%s)",
 			 bufm, bufx);
 	}
@@ -882,8 +882,8 @@ init_params(CreateSeqStmt *seq, Form_pg_sequence new)
 		char		bufs[100],
 					bufm[100];
 
-		snprintf(bufs, 100, INT64_FORMAT, new->last_value);
-		snprintf(bufm, 100, INT64_FORMAT, new->min_value);
+		snprintf(bufs, sizeof(bufs), INT64_FORMAT, new->last_value);
+		snprintf(bufm, sizeof(bufm), INT64_FORMAT, new->min_value);
 		elog(ERROR, "DefineSequence: START value (%s) can't be less than MINVALUE (%s)",
 			 bufs, bufm);
 	}
@@ -892,8 +892,8 @@ init_params(CreateSeqStmt *seq, Form_pg_sequence new)
 		char		bufs[100],
 					bufm[100];
 
-		snprintf(bufs, 100, INT64_FORMAT, new->last_value);
-		snprintf(bufm, 100, INT64_FORMAT, new->max_value);
+		snprintf(bufs, sizeof(bufs), INT64_FORMAT, new->last_value);
+		snprintf(bufm, sizeof(bufm), INT64_FORMAT, new->max_value);
 		elog(ERROR, "DefineSequence: START value (%s) can't be greater than MAXVALUE (%s)",
 			 bufs, bufm);
 	}
@@ -904,7 +904,7 @@ init_params(CreateSeqStmt *seq, Form_pg_sequence new)
 	{
 		char		buf[100];
 
-		snprintf(buf, 100, INT64_FORMAT, new->cache_value);
+		snprintf(buf, sizeof(buf), INT64_FORMAT, new->cache_value);
 		elog(ERROR, "DefineSequence: CACHE (%s) can't be <= 0",
 			 buf);
 	}

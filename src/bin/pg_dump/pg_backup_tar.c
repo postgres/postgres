@@ -16,7 +16,7 @@
  *
  *
  * IDENTIFICATION
- *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_tar.c,v 1.34 2003/02/01 19:29:16 tgl Exp $
+ *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_tar.c,v 1.35 2003/03/20 03:34:56 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1044,8 +1044,8 @@ _tarAddFile(ArchiveHandle *AH, TAR_MEMBER *th)
 		char		buf1[100],
 					buf2[100];
 
-		snprintf(buf1, 100, INT64_FORMAT, (int64) len);
-		snprintf(buf2, 100, INT64_FORMAT, (int64) th->pos);
+		snprintf(buf1, sizeof(buf1), INT64_FORMAT, (int64) len);
+		snprintf(buf2, sizeof(buf2), INT64_FORMAT, (int64) th->pos);
 		die_horribly(AH, modulename, "actual file length (%s) does not match expected (%s)\n",
 					 buf1, buf2);
 	}
@@ -1081,8 +1081,8 @@ _tarPositionTo(ArchiveHandle *AH, const char *filename)
 		char		buf1[100],
 					buf2[100];
 
-		snprintf(buf1, 100, INT64_FORMAT, (int64) ctx->tarFHpos);
-		snprintf(buf2, 100, INT64_FORMAT, (int64) ctx->tarNextMember);
+		snprintf(buf1, sizeof(buf1), INT64_FORMAT, (int64) ctx->tarFHpos);
+		snprintf(buf2, sizeof(buf2), INT64_FORMAT, (int64) ctx->tarNextMember);
 		ahlog(AH, 4, "moving from position %s to next member at file position %s\n",
 			  buf1, buf2);
 
@@ -1093,7 +1093,7 @@ _tarPositionTo(ArchiveHandle *AH, const char *filename)
 	{
 		char		buf[100];
 
-		snprintf(buf, 100, INT64_FORMAT, (int64) ctx->tarFHpos);
+		snprintf(buf, sizeof(buf), INT64_FORMAT, (int64) ctx->tarFHpos);
 		ahlog(AH, 4, "now at file position %s\n", buf);
 	}
 
@@ -1163,8 +1163,8 @@ _tarGetHeader(ArchiveHandle *AH, TAR_MEMBER *th)
 			char		buf1[100],
 						buf2[100];
 
-			snprintf(buf1, 100, INT64_FORMAT, (int64) ftello(ctx->tarFH));
-			snprintf(buf2, 100, INT64_FORMAT, (int64) ftello(ctx->tarFHpos));
+			snprintf(buf1, sizeof(buf1), INT64_FORMAT, (int64) ftello(ctx->tarFH));
+			snprintf(buf2, sizeof(buf2), INT64_FORMAT, (int64) ftello(ctx->tarFHpos));
 			die_horribly(AH, modulename,
 						 "mismatch in actual vs. predicted file position (%s vs. %s)\n",
 						 buf1, buf2);
@@ -1215,7 +1215,7 @@ _tarGetHeader(ArchiveHandle *AH, TAR_MEMBER *th)
 	{
 		char		buf[100];
 
-		snprintf(buf, 100, INT64_FORMAT, (int64) hPos);
+		snprintf(buf, sizeof(buf), INT64_FORMAT, (int64) hPos);
 		ahlog(AH, 3, "TOC Entry %s at %s (length %lu, checksum %d)\n",
 			  tag, buf, (unsigned long) len, sum);
 	}
@@ -1224,7 +1224,7 @@ _tarGetHeader(ArchiveHandle *AH, TAR_MEMBER *th)
 	{
 		char		buf[100];
 
-		snprintf(buf, 100, INT64_FORMAT, (int64) ftello(ctx->tarFH));
+		snprintf(buf, sizeof(buf), INT64_FORMAT, (int64) ftello(ctx->tarFH));
 		die_horribly(AH, modulename,
 					 "corrupt tar header found in %s "
 					 "(expected %d, computed %d) file position %s\n",

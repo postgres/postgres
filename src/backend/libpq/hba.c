@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/hba.c,v 1.94 2003/03/15 16:18:25 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/hba.c,v 1.95 2003/03/20 03:34:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1162,7 +1162,7 @@ ident_inet(const struct in_addr remote_ip_addr,
 			char		ident_query[80];
 
 			/* The query we send to the Ident server */
-			snprintf(ident_query, 80, "%d,%d\n",
+			snprintf(ident_query, sizeof(ident_query), "%d,%d\n",
 					 ntohs(remote_port), ntohs(local_port));
 			/* loop in case send is interrupted */
 			do

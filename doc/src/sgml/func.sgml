@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.143 2003/03/13 01:30:28 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.144 2003/03/20 03:34:55 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -5315,7 +5315,7 @@ SELECT LOCALTIMESTAMP;
 
    <para>
     There is also the function <function>timeofday()</function>, which for historical
-    reasons returns a text string rather than a <type>timestamp</type> value:
+    reasons returns a <type>text</type> string rather than a <type>timestamp</type> value:
 <screen>
 SELECT timeofday();
 <lineannotation>Result: </lineannotation><computeroutput>Sat Feb 17 19:07:32.000126 2001 EST</computeroutput>
@@ -5326,7 +5326,11 @@ SELECT timeofday();
     It is important to know that
     <function>CURRENT_TIMESTAMP</function> and related functions return
     the start time of the current transaction; their values do not
-    change during the transaction. <function>timeofday()</function>
+    change during the transaction. This is considered a feature:
+    the intent is to allow a single transaction to have a consistent
+    notion of the <quote>current</quote> time, so that multiple
+    modifications within the same transaction bear the same
+    timestamp. <function>timeofday()</function>
     returns the wall-clock time and does advance during transactions.
    </para>
 

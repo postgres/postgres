@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/namespace.c,v 1.48 2003/03/06 22:54:49 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/namespace.c,v 1.49 2003/03/20 03:34:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1598,7 +1598,7 @@ InitTempTableNamespace(void)
 		elog(ERROR, "%s: not authorized to create temp tables",
 			 DatabaseName);
 
-	snprintf(namespaceName, NAMEDATALEN, "pg_temp_%d", MyBackendId);
+	snprintf(namespaceName, sizeof(namespaceName), "pg_temp_%d", MyBackendId);
 
 	namespaceId = GetSysCacheOid(NAMESPACENAME,
 								 CStringGetDatum(namespaceName),

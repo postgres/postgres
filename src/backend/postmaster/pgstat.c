@@ -16,7 +16,7 @@
  *
  *	Copyright (c) 2001, PostgreSQL Global Development Group
  *
- *	$Header: /cvsroot/pgsql/src/backend/postmaster/pgstat.c,v 1.31 2002/10/24 23:19:13 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/postmaster/pgstat.c,v 1.32 2003/03/20 03:34:56 momjian Exp $
  * ----------
  */
 #include "postgres.h"
@@ -1757,6 +1757,8 @@ pgstat_add_backend(PgStat_MsgHdr *msg)
 	beentry->databaseid = msg->m_databaseid;
 	beentry->procpid = msg->m_procpid;
 	beentry->userid = msg->m_userid;
+	beentry->activity_start_sec = 0;
+	beentry->activity_start_usec = 0;
 	MemSet(beentry->activity, 0, PGSTAT_ACTIVITY_SIZE);
 
 	/*
@@ -2460,6 +2462,8 @@ pgstat_recv_beterm(PgStat_MsgBeterm *msg, int len)
 static void
 pgstat_recv_activity(PgStat_MsgActivity *msg, int len)
 {
+	PgStat_StatBeEntry *entry;
+
 	/*
 	 * Here we check explicitly for 0 return, since we don't want to
 	 * mangle the activity of an active backend by a delayed packed from a
@@ -2468,8 +2472,12 @@ pgstat_recv_activity(PgStat_MsgActivity *msg, int len)
 	if (pgstat_add_backend(&msg->m_hdr) != 0)
 		return;
 
-	strncpy(pgStatBeTable[msg->m_hdr.m_backendid - 1].activity,
-			msg->m_what, PGSTAT_ACTIVITY_SIZE);
+	entry = &(pgStatBeTable[msg->m_hdr.m_backendid - 1]);
+
+	strncpy(entry->activity, msg->m_what, PGSTAT_ACTIVITY_SIZE);
+
+	entry->activity_start_sec =
+		GetCurrentAbsoluteTimeUsec(&entry->activity_start_usec);
 }
 
 

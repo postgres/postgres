@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.287 2003/03/14 04:43:52 tgl Exp $
+ * $Id: pg_proc.h,v 1.288 2003/03/20 03:34:56 momjian Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -2741,6 +2741,8 @@ DATA(insert OID = 1939 (  pg_stat_get_backend_userid	PGNSP PGUID 12 f f t f s 1 
 DESCR("Statistics: User ID of backend");
 DATA(insert OID = 1940 (  pg_stat_get_backend_activity	PGNSP PGUID 12 f f t f s 1 25 "23"	pg_stat_get_backend_activity - _null_ ));
 DESCR("Statistics: Current query of backend");
+DATA(insert OID = 2094 (  pg_stat_get_backend_activity_start PGNSP PGUID 12 f f t f s 1 1114 "23"  pg_stat_get_backend_activity_start - _null_));
+DESCR("Statistics: Start time for current query of backend");
 DATA(insert OID = 1941 (  pg_stat_get_db_numbackends	PGNSP PGUID 12 f f t f s 1 23 "26"	pg_stat_get_db_numbackends - _null_ ));
 DESCR("Statistics: Number of backends in database");
 DATA(insert OID = 1942 (  pg_stat_get_db_xact_commit	PGNSP PGUID 12 f f t f s 1 20 "26"	pg_stat_get_db_xact_commit - _null_ ));
@@ -2750,7 +2752,7 @@ DESCR("Statistics: Transactions rolled back");
 DATA(insert OID = 1944 (  pg_stat_get_db_blocks_fetched PGNSP PGUID 12 f f t f s 1 20 "26"	pg_stat_get_db_blocks_fetched - _null_ ));
 DESCR("Statistics: Blocks fetched for database");
 DATA(insert OID = 1945 (  pg_stat_get_db_blocks_hit		PGNSP PGUID 12 f f t f s 1 20 "26"	pg_stat_get_db_blocks_hit - _null_ ));
-DESCR("Statistics: Block found in cache for database");
+DESCR("Statistics: Blocks found in cache for database");
 
 DATA(insert OID = 1946 (  encode						PGNSP PGUID 12 f f t f i 2 25 "17 25"  binary_encode - _null_ ));
 DESCR("Convert bytea value into some ascii-only text string");

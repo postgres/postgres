@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/nabstime.c,v 1.104 2003/02/22 05:57:45 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/nabstime.c,v 1.105 2003/03/20 03:34:56 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -82,10 +82,13 @@ static int istinterval(char *i_string,
 			AbsoluteTime *i_end);
 
 
-/* GetCurrentAbsoluteTime()
- * Get the current system time.
+/* 
+ * GetCurrentAbsoluteTime()
  *
- * Returns the number of seconds since epoch (January 1 1970 GMT).
+ * Get the current system time. Set timezone parameters if not specified
+ * elsewhere.  Define HasCTZSet to allow clients to specify the default
+ * timezone.
+ *
  */
 AbsoluteTime
 GetCurrentAbsoluteTime(void)
@@ -127,9 +130,14 @@ GetCurrentDateTime(struct tm * tm)
 	abstime2tm(GetCurrentTransactionStartTime(), &tz, tm, NULL);
 }
 
-/* GetCurrentTimeUsec()
- * Get the transaction start time ("now()") broken down as a struct tm,
- * plus fractional-second and timezone info.
+/* 
+ * GetCurrentAbsoluteTimeUsec()
+ *
+ * Get the current system time. Set timezone parameters if not specified
+ * elsewhere.  Define HasCTZSet to allow clients to specify the default
+ * timezone.
+ *
+ * Returns the number of seconds since epoch (January 1 1970 GMT)
  */
 void
 GetCurrentTimeUsec(struct tm * tm, fsec_t *fsec, int *tzp)

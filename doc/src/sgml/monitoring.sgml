@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/monitoring.sgml,v 1.15 2002/11/11 20:14:03 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/monitoring.sgml,v 1.16 2003/03/20 03:34:55 momjian Exp $
 -->
 
 <chapter id="monitoring">
@@ -146,12 +146,13 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
    <important>
     <para>
      Since the variables <varname>STATS_COMMAND_STRING</varname>,
-     <varname>STATS_BLOCK_LEVEL</varname>,
-     and <varname>STATS_ROW_LEVEL</varname>
-     default to <literal>false</>, no statistics are actually collected
-     in the default configuration.  You must turn one or more of them on
-     before you will get useful results from the statistical display
-     functions.
+     <varname>STATS_BLOCK_LEVEL</varname>, and
+     <varname>STATS_ROW_LEVEL</varname> default to <literal>false</>,
+     very few statistics are collected in the default
+     configuration. Enabling one or more of these configuration
+     variables will significantly enhance the amount of useful data
+     produced by the statistics collector, at the expense of
+     additional run-time overhead.
     </para>
    </important>
 
@@ -205,11 +206,15 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
     <tbody>
      <row>
       <entry><structname>pg_stat_activity</></entry>
-      <entry>One row per server process, showing process <acronym>ID</>, database,
-      user, and current query.  The current query column is only available
-      to superusers; for others it reads as null.  (Note that because of
-      the collector's reporting delay, current query will only be up-to-date
-      for long-running queries.)</entry>
+      <entry>One row per server process, showing process
+      <acronym>ID</>, database, user, current query, and the time at
+      which the current query began execution. The columns that report
+      data on the current query are only available if the
+      <varname>STATS_COMMAND_STRING</varname> configuration option has
+      been enabled. Furthermore, these columns can only be accessed by
+      superusers; to other users, they always appear NULL. (Note that
+      because of the collector's reporting delay, current query will
+      only be up-to-date for long-running queries.)</entry>
      </row>
 
      <row>
@@ -333,10 +338,20 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
   </para>
 
   <para>
-   The <structname>pg_statio_</> views are primarily useful to determine
-   the effectiveness of the buffer cache.  When the number of actual disk
-   reads is much smaller than the number of buffer hits, then the cache
-   is satisfying most read requests without invoking a kernel call.
+   The <structname>pg_statio_</> views are primarily useful to
+   determine the effectiveness of the buffer cache.  When the number
+   of actual disk reads is much smaller than the number of buffer
+   hits, then the cache is satisfying most read requests without
+   invoking a kernel call. However, these statistics do not give the
+   entire story: due to the way in which <productname>PostgreSQL</>
+   handles disk I/O, data that is not in the
+   <productname>PostgreSQL</> buffer cache may still reside in the
+   kernel's I/O cache, and may therefore still be fetched without
+   requiring a physical read. Users interested in obtaining more
+   detailed information on <productname>PostgreSQL</> I/O behavior are
+   advised to use the <productname>PostgreSQL</> statistics collector
+   in combination with operating system utilities that allow insight
+   into the kernel's handling of I/O.
   </para>
 
   <para>
@@ -401,7 +416,7 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
       <entry><function>pg_stat_get_db_blocks_hit</function>(<type>oid</type>)</entry>
       <entry><type>bigint</type></entry>
       <entry>
-       Number of disk block requests found in cache for database
+       Number of disk block fetch requests found in cache for database
       </entry>
      </row>
 
@@ -478,7 +493,7 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
       <entry><type>set of integer</type></entry>
       <entry>
        Set of currently active backend IDs (from 1 to N where N is the
-       number of active backends).  See usage example below.
+       number of active backends).  See usage example below
       </entry>
      </row>
 
@@ -518,15 +533,27 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
       <entry><function>pg_stat_get_backend_activity</function>(<type>integer</type>)</entry>
       <entry><type>text</type></entry>
       <entry>
-       Current query of backend process (NULL if caller is not superuser)
+       Current query of backend process (NULL if caller is not
+       superuser, or <varname>STATS_COMMAND_STRING</varname> is not enabled)
       </entry>
      </row>
+
+     <row>
+      <entry><function>pg_stat_get_backend_activity_start</function>(<type>integer</type>)</entry>
+      <entry><type>text</type></entry>
+      <entry>
+       The time at which the specified backend's currently executing query was
+       initiated (NULL if caller is not superuser, or
+       <varname>STATS_COMMAND_STRING</varname> is not enabled)
+      </entry>
+     </row>
+
 
      <row>
       <entry><function>pg_stat_reset</function>()</entry>
       <entry><type>boolean</type></entry>
       <entry>
-       Reset all currently collected statistics.
+       Reset all currently collected statistics
       </entry>
      </row>
     </tbody>
@@ -535,7 +562,8 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
 
    <note>
     <para>
-     Blocks_fetched minus blocks_hit gives the number of kernel
+     <literal>blocks_fetched</literal> minus
+     <literal>blocks_hit</literal> gives the number of kernel
      <function>read()</> calls issued for the table, index, or
      database; but the actual number of physical reads is usually
      lower due to kernel-level buffering.

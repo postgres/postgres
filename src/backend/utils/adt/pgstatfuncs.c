@@ -25,6 +25,7 @@ extern Datum pg_stat_get_backend_pid(PG_FUNCTION_ARGS);
 extern Datum pg_stat_get_backend_dbid(PG_FUNCTION_ARGS);
 extern Datum pg_stat_get_backend_userid(PG_FUNCTION_ARGS);
 extern Datum pg_stat_get_backend_activity(PG_FUNCTION_ARGS);
+extern Datum pg_stat_get_backend_activity_start(PG_FUNCTION_ARGS);
 
 extern Datum pg_stat_get_db_numbackends(PG_FUNCTION_ARGS);
 extern Datum pg_stat_get_db_xact_commit(PG_FUNCTION_ARGS);
@@ -221,7 +222,6 @@ pg_backend_pid(PG_FUNCTION_ARGS)
 
 /*
  * Built-in function for resetting the counters
- *
  */
 Datum
 pg_stat_reset(PG_FUNCTION_ARGS)
@@ -298,6 +298,50 @@ pg_stat_get_backend_activity(PG_FUNCTION_ARGS)
 	memcpy(VARDATA(result), beentry->activity, len);
 
 	PG_RETURN_TEXT_P(result);
+}
+
+
+Datum
+pg_stat_get_backend_activity_start(PG_FUNCTION_ARGS)
+{
+	PgStat_StatBeEntry	*beentry;
+	int32				 beid;
+	AbsoluteTime		 sec;
+	int					 usec;
+	Timestamp			 result;
+
+	beid = PG_GETARG_INT32(0);
+
+	if (!superuser())
+		PG_RETURN_NULL();
+
+	if ((beentry = pgstat_fetch_stat_beentry(beid)) == NULL)
+		PG_RETURN_NULL();
+
+	sec = beentry->activity_start_sec;
+	usec = beentry->activity_start_usec;
+
+	/*
+	 * No time recorded for start of current query -- this is the case
+	 * if the user hasn't enabled query-level stats collection.
+	 */
+	if (sec == 0 && usec == 0)
+		PG_RETURN_NULL();
+
+	/*
+	 * This method of converting "Unix time" (sec/usec since epoch) to a
+	 * PostgreSQL timestamp is an ugly hack -- if you fix it, be sure to
+	 * fix the similar hackery in timestamp.c
+	 */
+#ifdef HAVE_INT64_TIMESTAMP
+	result = (((sec - ((date2j(2000, 1, 1) - date2j(1970, 1, 1)) * 86400))
+			   * INT64CONST(1000000)) + usec);
+#else
+	result = (sec + (usec * 1.0e-6) - ((date2j(2000, 1, 1) -
+										date2j(1970, 1, 1)) * 86400));
+#endif
+
+	PG_RETURN_TIMESTAMP(result);
 }
 
 

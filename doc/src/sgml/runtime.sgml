@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.170 2003/03/04 21:51:19 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.171 2003/03/20 03:34:55 momjian Exp $
 -->
 
 <Chapter Id="runtime">
@@ -1182,16 +1182,31 @@ env PGOPTIONS='-c geqo=off' psql
 
      <varlistentry>
       <term><varname>STATS_COMMAND_STRING</varname> (<type>boolean</type>)</term>
+      <listitem>
+       <para>
+        Enables the collection of statistics on the currently
+        executing command of each backend, along with the time at
+        which that query began execution. This option is off by
+        default. Note that even when enabled, this information is only
+        visible to the superuser, so it should not represent a
+        security risk. This data can be accessed via the
+        <structname>pg_stat_activity</structname> system view; refer
+        to the &cite-admin; for more information.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term><varname>STATS_BLOCK_LEVEL</varname> (<type>boolean</type>)</term>
       <term><varname>STATS_ROW_LEVEL</varname> (<type>boolean</type>)</term>
       <listitem>
        <para>
-        Determines what information backends send to the statistics
-        collector process: current commands, block-level activity
-        statistics, or row-level activity statistics.  All default to
-        off.  Enabling statistics collection costs a small amount of
-        time per query, but is invaluable for debugging and
-        performance tuning.
+        Enables the collection of block-level and row-level statistics
+        on database activity, respectively. These options are off by
+        default. This data can be accessed via the
+        <structname>pg_stat</structname> and
+        <structname>pg_statio</structname> family of system views;
+        refer to the &cite-admin; for more information.
        </para>
       </listitem>
      </varlistentry>

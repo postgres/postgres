@@ -5,11 +5,13 @@
  *
  *	Copyright (c) 2001, PostgreSQL Global Development Group
  *
- *	$Id: pgstat.h,v 1.12 2003/01/09 18:00:24 tgl Exp $
+ *	$Id: pgstat.h,v 1.13 2003/03/20 03:34:56 momjian Exp $
  * ----------
  */
 #ifndef PGSTAT_H
 #define PGSTAT_H
+
+#include "utils/nabstime.h"
 
 /* ----------
  * Paths for the statistics files. The %s is replaced with the
@@ -111,6 +113,8 @@ typedef struct PgStat_StatBeEntry
 	Oid			userid;
 	int			procpid;
 	char		activity[PGSTAT_ACTIVITY_SIZE];
+	AbsoluteTime activity_start_sec;
+	int			activity_start_usec;
 } PgStat_StatBeEntry;
 
 
