@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Attic/Makefile.global,v 1.40 1996/10/19 06:33:55 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/Attic/Makefile.global,v 1.41 1996/10/21 06:56:57 bryanh Exp $
 #
 # NOTES
 #    This is seen by any Makefiles that include mk/postgres.mk. To
@@ -59,7 +59,7 @@
 #	until after this file is processed!
 #  make sure that you have no whitespaces after the PORTNAME setting
 #  or the makefiles can get confused
-PORTNAME=	BSD44_derived
+PORTNAME=	UNDEFINED
 
 # SRCDIR specifies where the source files are.
 SRCDIR=		/usr/local/postgres95/src
@@ -117,12 +117,13 @@ POSTPORT= 5432
 # 
 # NOTE also that databases with different NAMEDATALEN's cannot interoperate!
 #
+# THERE ARE REDUNDANT DEFINITIONS OF THESE VALUES IN config.h.
+# Don't change anything here without changing it there too.
+
 NAMEDATALEN = 32
 # OIDNAMELEN should be set to NAMEDATALEN + sizeof(Oid)
 OIDNAMELEN = 36
  
-CFLAGS+= -DNAMEDATALEN=$(NAMEDATALEN) -DOIDNAMELEN=$(OIDNAMELEN)
-
 ##############################################################################
 #
 # FEATURES 
