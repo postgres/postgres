@@ -2,7 +2,7 @@
 TODO list for PostgreSQL
 ========================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Sat Feb 12 19:09:18 EST 2005
+Last updated:		Sat Feb 12 19:10:04 EST 2005
 
 The most recent version of this document can be viewed at the PostgreSQL web
 site, http://www.PostgreSQL.org.
@@ -114,7 +114,7 @@ Administration
 
 * Allow the PITR process to be debugged and data examined
 * Allow a warm standby system to also allow read-only queries
-* Add IP address to pg_stat_activity
+* Add the client IP address to pg_stat_activity
 * Improve replication solutions
 	o Load balancing
 
