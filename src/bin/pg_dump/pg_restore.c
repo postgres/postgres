@@ -34,7 +34,7 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_restore.c,v 1.67 2004/11/27 18:51:06 tgl Exp $
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_restore.c,v 1.68 2004/12/03 18:48:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -376,7 +376,7 @@ usage(const char *progname)
 	printf(_("  -I, --index=NAME         restore named index\n"));
 	printf(_("  -L, --use-list=FILENAME  use specified table of contents for ordering\n"
 			 "                           output from this file\n"));
-	printf(_("  -O, --no-owner           do not issue commands to set object ownership\n"));
+	printf(_("  -O, --no-owner           skip restoration of object ownership\n"));
 	printf(_("  -P, --function=NAME(args)\n"
 			 "                           restore named function\n"));
 	printf(_("  -s, --schema-only        restore only the schema, no data\n"));

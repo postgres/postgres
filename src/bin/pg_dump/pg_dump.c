@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.393 2004/11/27 18:51:06 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.394 2004/12/03 18:48:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -682,7 +682,7 @@ help(const char *progname)
 	printf(_("  -D, --column-inserts     dump data as INSERT commands with column names\n"));
 	printf(_("  -n, --schema=SCHEMA      dump the named schema only\n"));
 	printf(_("  -o, --oids               include OIDs in dump\n"));
-	printf(_("  -O, --no-owner           do not output commands to set object ownership\n"
+	printf(_("  -O, --no-owner           skip restoration of object ownership\n"
 			 "                           in plain text format\n"));
 	printf(_("  -s, --schema-only        dump only the schema, no data\n"));
 	printf(_("  -S, --superuser=NAME     specify the superuser user name to use in\n"
