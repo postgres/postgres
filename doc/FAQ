@@ -154,7 +154,7 @@ Section 1: General Questions
    The authors have compiled and tested PostgreSQL on the following
    platforms(some of these compiles require gcc 2.7.0):
      * aix - IBM on AIX 3.2.5 or 4.x
-     * alpha - DEC Alpha AXP on Digital Unix 2.0 and 3.2
+     * alpha - DEC Alpha AXP on Digital Unix 2.0, 3.2, 4.0
      * BSD44_derived - OSs derived from 4.4-lite BSD (NetBSD, FreeBSD)
      * bsdi - BSD/OS 2.0, 2.01, 2.1, 3.0
      * dgux - DG/UX 5.4R4.11
