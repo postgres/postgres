@@ -1,0 +1,18 @@
+
+	pg_dumplo - PostgreSQL large object dumper
+        
+
+	Hmm... documentation is not available. For more information
+	see the help ( pg_dumplo -h ) and examples in this help.
+
+	Compilation:
+			- you need the PostgreSQL's devel. libs 
+			- and type: 'make'
+
+					
+				        Karel Zak <zakkr@zf.jcu.cz>		
+		
+				
+
+	
+

@@ -60,6 +60,9 @@ mSQL-interface -
 noupdate -
 	trigger to prevent updates on single columns
 
+pg_dumplo -
+	Dump large objects
+
 soundex -
 	Prototype for soundex function
 
