@@ -23,7 +23,7 @@
 #ifndef WIN32
 #include <string.h>
 #include "gpps.h"
-#ifdef HAVE_SQLGETPRIVATEPROFILESTRING
+#ifndef HAVE_SQLGETPRIVATEPROFILESTRING
 #define SQLGetPrivateProfileString(a,b,c,d,e,f) GetPrivateProfileString(a,b,c,d,e,f)
 #define SQLWritePrivateProfileString(a,b,c,d) WritePrivateProfileString(a,b,c,d)
 #endif
