@@ -1914,3 +1914,10 @@ Thu Feb 10 09:03:56 CET 2005
 	  pointing out all these problems.
 	- Set ecpg version to 3.2.1.
 
+Fri Mar 18 10:54:47 CET 2005
+	  
+	- Added patch by Christof Petig <christof@petig-baender.de> to work
+	  around gcc bug on powerpc and amd64.
+	- Set ecpg library version to 5.1.
+	- Set ecpg version to 4.1.1.
+

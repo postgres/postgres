@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/execute.c,v 1.38 2004/08/29 05:06:59 momjian Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/execute.c,v 1.39 2005/03/18 10:00:43 meskes Exp $ */
 
 /*
  * The aim is to get a simpler inteface to the database routines.
@@ -69,15 +69,21 @@ quote_postgres(char *arg, int lineno)
 	return res;
 }
 
+#if defined(__GNUC__) && (defined (__powerpc__) || defined(__AMD64__))
+#define APREF ap
+#else
+#define APREF *ap
+#endif
+
 void
-ECPGget_variable(va_list *ap, enum ECPGttype type, struct variable * var, bool indicator)
+ECPGget_variable(va_list APREF, enum ECPGttype type, struct variable * var, bool indicator)
 {
 	var->type = type;
-	var->pointer = va_arg(*ap, char *);
+	var->pointer = va_arg(APREF, char *);
 
-	var->varcharsize = va_arg(*ap, long);
-	var->arrsize = va_arg(*ap, long);
-	var->offset = va_arg(*ap, long);
+	var->varcharsize = va_arg(APREF, long);
+	var->arrsize = va_arg(APREF, long);
+	var->offset = va_arg(APREF, long);
 
 	if (var->arrsize == 0 || var->varcharsize == 0)
 		var->value = *((char **) (var->pointer));
@@ -97,11 +103,11 @@ ECPGget_variable(va_list *ap, enum ECPGttype type, struct variable * var, bool i
 
 	if (indicator)
 	{
-		var->ind_type = va_arg(*ap, enum ECPGttype);
-		var->ind_pointer = va_arg(*ap, char *);
-		var->ind_varcharsize = va_arg(*ap, long);
-		var->ind_arrsize = va_arg(*ap, long);
-		var->ind_offset = va_arg(*ap, long);
+		var->ind_type = va_arg(APREF, enum ECPGttype);
+		var->ind_pointer = va_arg(APREF, char *);
+		var->ind_varcharsize = va_arg(APREF, long);
+		var->ind_arrsize = va_arg(APREF, long);
+		var->ind_offset = va_arg(APREF, long);
 
 		if (var->ind_type != ECPGt_NO_INDICATOR
 			&& (var->ind_arrsize == 0 || var->ind_varcharsize == 0))
@@ -120,6 +126,7 @@ ECPGget_variable(va_list *ap, enum ECPGttype type, struct variable * var, bool i
 			var->ind_varcharsize = 0;
 	}
 }
+#undef APREF
 
 /*
  * create a list of variables
@@ -170,7 +177,11 @@ create_statement(int lineno, int compat, int force_indicator, struct connection 
 			if (!(var = (struct variable *) ECPGalloc(sizeof(struct variable), lineno)))
 				return false;
 
+#if defined(__GNUC__) && (defined (__powerpc__) || defined(__AMD64__))
+			ECPGget_variable(ap, type, var, true);
+#else
 			ECPGget_variable(&ap, type, var, true);
+#endif
 
 			/* if variable is NULL, the statement hasn't been prepared */
 			if (var->pointer == NULL)
