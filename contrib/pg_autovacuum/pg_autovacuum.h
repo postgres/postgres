@@ -34,7 +34,7 @@
 #define VACUUM_ANALYZE		0
 #define ANALYZE_ONLY		1
 
-#define TABLE_STATS_QUERY	"select a.oid,a.relname,a.relnamespace,a.relpages,a.relisshared,a.reltuples,b.schemaname,b.n_tup_ins,b.n_tup_upd,b.n_tup_del from pg_class a, pg_stat_all_tables b where a.oid=b.relid and a.relkind = 'r'"
+#define TABLE_STATS_QUERY	"select a.oid,a.relname,a.relnamespace,a.relpages,a.relisshared,a.reltuples,b.schemaname,b.n_tup_ins,b.n_tup_upd,b.n_tup_del from pg_class a, pg_stat_all_tables b where a.oid=b.relid and a.relkind = 'r' and schemaname not like 'pg_temp_%'"
 
 #define FRONTEND
 #define PAGES_QUERY "select oid,reltuples,relpages from pg_class where oid=%u"
