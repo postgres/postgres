@@ -1,0 +1,140 @@
+/*
+ *	Thread test program
+ *	by Lee Kindness.
+ */
+
+/* #define ECPGDEBUG */
+
+#include <pthread.h>
+#include <stdlib.h>
+
+void *test_thread(void *arg);
+
+EXEC SQL BEGIN DECLARE SECTION;
+char *l_dbname;
+EXEC SQL END DECLARE SECTION;
+int nthreads   =  2;
+int iterations = 10;
+
+int main(int argc, char *argv[])
+{
+#ifdef ECPGDEBUG
+  char debugfilename[] = "thread_test_implicit.log";
+  FILE *debugfile;
+#endif
+  pthread_t *threads;
+  int n;
+  EXEC SQL BEGIN DECLARE SECTION;
+  int l_rows;
+  EXEC SQL END DECLARE SECTION;
+
+  /* parse command line arguments */
+  if( (argc < 2) || (argc > 4) )
+    {
+      fprintf(stderr, "Usage: %s dbname [threads] [iterations_per_thread]\n", argv[0]);
+      return( 1 );
+    }
+  l_dbname = argv[1];
+  if( argc >= 3 )
+    nthreads = atoi(argv[2]);
+  if( argc == 4 )
+    iterations = atoi(argv[3]);
+
+  /* open ECPG debug log? */
+#ifdef ECPGDEBUG
+  debugfile = fopen(debugfilename, "w");
+  if( debugfile != NULL )
+    ECPGdebug(1, debugfile);
+  else
+    fprintf(stderr, "Cannot open ECPG debug log: %s\n", debugfilename);
+#endif
+
+  /* setup test_thread table */
+  EXEC SQL CONNECT TO:l_dbname;
+  EXEC SQL DROP TABLE test_thread; /* DROP might fail */
+  EXEC SQL COMMIT;
+  EXEC SQL CREATE TABLE
+    test_thread(tstamp    TIMESTAMP NOT NULL DEFAULT CAST(timeofday() AS TIMESTAMP),
+		thread    TEXT      NOT NULL,
+		iteration INTEGER   NOT NULL,
+		PRIMARY KEY(thread, iteration));
+  EXEC SQL COMMIT;
+  EXEC SQL DISCONNECT;
+
+  /* create, and start, threads */
+  threads = calloc(nthreads, sizeof(pthread_t));
+  if( threads == NULL )
+    {
+      fprintf(stderr, "Cannot alloc memory\n");
+      return( 1 );
+    }
+  for( n = 0; n < nthreads; n++ )
+    {
+      pthread_create(&threads[n], NULL, test_thread, (void *)n + 1);
+    }
+
+  /* wait for thread completion */
+  for( n = 0; n < nthreads; n++ )
+    {
+      pthread_join(threads[n], NULL);
+    }
+  free(threads);
+
+  /* and check results */
+  EXEC SQL CONNECT TO :l_dbname;
+  EXEC SQL SELECT COUNT(*) INTO :l_rows FROM test_thread;
+  EXEC SQL COMMIT;
+  EXEC SQL DISCONNECT;
+  if( l_rows == (nthreads * iterations) )
+    printf("\nSuccess.\n");
+  else
+    printf("\nERROR: Failure - expecting %d rows, got %d.\n", nthreads * iterations, l_rows);
+
+  /* close ECPG debug log? */
+#ifdef ECPGDEBUG
+  if( debugfile != NULL )
+    {
+      ECPGdebug(0, debugfile);
+      fclose(debugfile);
+    }
+#endif
+
+  return( 0 );
+}
+
+void *test_thread(void *arg)
+{
+  long threadnum = (long)arg;
+  EXEC SQL BEGIN DECLARE SECTION;
+  int  l_i;
+  char l_connection[128];
+  EXEC SQL END DECLARE SECTION;
+
+  /* build up connection name, and connect to database */
+  snprintf(l_connection, sizeof(l_connection), "thread_%03ld", threadnum);
+  EXEC SQL WHENEVER sqlerror sqlprint;
+  EXEC SQL CONNECT TO :l_dbname AS :l_connection;
+  if( sqlca.sqlcode != 0 )
+    {
+      printf("%s: ERROR: cannot connect to database!\n", l_connection);
+      return( NULL );
+    }
+  EXEC SQL BEGIN;
+
+  /* insert into test_thread table */
+  for( l_i = 1; l_i <= iterations; l_i++ )
+    {
+      printf("%s: inserting %d\n", l_connection, l_i);
+      EXEC SQL INSERT INTO test_thread(thread, iteration) VALUES(:l_connection, :l_i);
+      if( sqlca.sqlcode == 0 )
+	printf("%s: insert done\n", l_connection);
+      else
+	printf("%s: ERROR: insert failed!\n", l_connection);
+    }
+
+  /* all done */
+  EXEC SQL COMMIT;
+  EXEC SQL DISCONNECT :l_connection;
+  printf("%s: done!\n", l_connection);
+  return( NULL );
+}
