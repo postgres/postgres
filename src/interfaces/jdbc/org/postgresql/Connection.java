@@ -10,7 +10,7 @@ import org.postgresql.largeobject.*;
 import org.postgresql.util.*;
 
 /**
- * $Id: Connection.java,v 1.14 2001/01/31 08:26:01 peter Exp $
+ * $Id: Connection.java,v 1.15 2001/05/09 21:11:26 momjian Exp $
  *
  * This abstract class is used by org.postgresql.Driver to open either the JDBC1 or
  * JDBC2 versions of the Connection class.
@@ -307,7 +307,16 @@ public abstract class Connection
         } else if (dbEncoding.equals("EUC_TW")) {
           dbEncoding = "EUC_TW";
         } else if (dbEncoding.equals("KOI8")) {
-          dbEncoding = "KOI8_R";
+	  // try first if KOI8_U is present, it's a superset of KOI8_R
+	    try {
+        	dbEncoding = "KOI8_U";
+		"test".getBytes(dbEncoding);
+	    }
+	    catch(UnsupportedEncodingException uee) {
+	    // well, KOI8_U is still not in standard JDK, falling back to KOI8_R :(
+        	dbEncoding = "KOI8_R";
+	    }
+
         } else if (dbEncoding.equals("WIN")) {
           dbEncoding = "Cp1252";
         } else {
