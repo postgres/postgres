@@ -27,7 +27,7 @@
    11) What is configure all about?
    12) How do I add a new port?
    13) What is CommandCounterIncrement()?
-   13) Why don't we use threads in the backend?
+   14) Why don't we use threads in the backend?
      _________________________________________________________________
    
   1) What tools are available for developers?
