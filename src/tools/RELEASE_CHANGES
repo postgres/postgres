@@ -12,8 +12,10 @@
       o run spellchecker on result
       o check dashed items from TODO to see they are complete
       o group items into categories
-      o add SGML markup
+      o select major features
+      o select incompatibilities
       o add comments for items
+      o add SGML markup
 
 * Documentation
     document all new features
