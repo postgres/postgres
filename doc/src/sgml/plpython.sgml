@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/plpython.sgml,v 1.2 2001/09/10 21:58:47 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/plpython.sgml,v 1.3 2001/09/12 03:58:15 momjian Exp $ -->
 
 <chapter id="plpython">
  <title>PL/Python - Python Procedural Language</title>
@@ -58,13 +58,7 @@ def __plpython_procedure_myfunc_23456():
    The global dictionary SD is available to store data between
    function calls.  This variable is private static data.  The global
    dictionary GD is public data, available to all python functions
-   within a backend.  Use with care.  When the function is used in a
-   trigger, the triggers tuples are in <literal>TD["new"]</literal> and/or <literal>TD["old"]</literal>
-   depending on the trigger event.  Return 'None' or "OK" from the
-   python function to indicate the tuple is unmodified, "SKIP" to
-   abort the event, or "MODIFIED" to indicate you've modified the
-   tuple.  If the trigger was called with arguments they are available
-   in <literal>TD["args"][0] to TD["args"][(n -1)]</literal>.
+   within a backend.  Use with care.
   </para>
 
   <para>
@@ -73,6 +67,26 @@ def __plpython_procedure_myfunc_23456():
    <function>myfunc</function> are not available to
    <function>myfunc2</function>.  The exception is the data in the GD
    dictionary, as mentioned above.
+  </para>
+
+  </para>
+   When a function is used in a trigger, the dictionary TD contains
+   transaction related values.  The trigger tuples are in TD["new"]
+   and/or TD["old"] depending on the trigger event.  TD["event"]
+   contains the event as a string ("INSERT", "UPDATE", "DELETE", or
+   "UNKNOWN").  TD["when"] contains one of ("BEFORE", "AFTER", or
+   "UNKNOWN").  TD["level"] contains one of ("ROW", "STATEMENT", or
+   "UNKNOWN").  TD["name"] contains the trigger name, and TD["relid"]
+   contains the relation id of the table on which the trigger occurred.
+   If the trigger was called with arguments they are available
+   in TD["args"][0] to TD["args"][(n -1)]
+  </para>
+
+  <para>
+   If the trigger 'when' is "BEFORE", you may Return 'None' or "OK"
+   from the python function to indicate the tuple is unmodified,
+   "SKIP" to abort the event, or "MODIFIED" to indicate you've
+   modified the tuple.
   </para>
 
   <para>
