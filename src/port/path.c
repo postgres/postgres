@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/path.c,v 1.25 2004/07/12 19:27:31 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/port/path.c,v 1.26 2004/08/01 06:56:39 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -206,9 +206,41 @@ get_pkginclude_path(const char *my_exec_path, char *ret_path)
 
 
 /*
+ *	get_includeserver_path
+ */
+void
+get_includeserver_path(const char *my_exec_path, char *ret_path)
+{
+	const char *p;
+	
+	if ((p = relative_path(PGBINDIR, INCLUDEDIRSERVER)))
+		make_relative(my_exec_path, p, ret_path);
+	else
+		StrNCpy(ret_path, INCLUDEDIRSERVER, MAXPGPATH);
+	canonicalize_path(ret_path);
+}
+
+
+
+/*
+ *	get_lib_path
+ */
+void
+get_lib_path(const char *my_exec_path, char *ret_path)
+{
+	const char *p;
+	
+	if ((p = relative_path(PGBINDIR, LIBDIR)))
+		make_relative(my_exec_path, p, ret_path);
+	else
+		StrNCpy(ret_path, LIBDIR, MAXPGPATH);
+	canonicalize_path(ret_path);
+}
+
+
+
+/*
  *	get_pkglib_path
- *
- *	Return library path, either relative to /bin or hardcoded
  */
 void
 get_pkglib_path(const char *my_exec_path, char *ret_path)

@@ -7,7 +7,7 @@
 # with broken/missing library files.
 
 # IDENTIFICATION
-#    $PostgreSQL: pgsql/src/port/Makefile,v 1.15 2004/05/30 14:07:47 momjian Exp $
+#    $PostgreSQL: pgsql/src/port/Makefile,v 1.16 2004/08/01 06:56:39 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -35,6 +35,8 @@ pg_config_paths.h: $(top_builddir)/src/Makefile.global
 	echo "#define SYSCONFDIR \"$(sysconfdir)\"" >>$@
 	echo "#define INCLUDEDIR \"$(includedir)\"" >>$@
 	echo "#define PKGINCLUDEDIR \"$(pkgincludedir)\"" >>$@
+	echo "#define INCLUDEDIRSERVER \"$(includedir_server)\"" >>$@
+	echo "#define LIBDIR \"$(libdir)\"" >>$@
 	echo "#define PKGLIBDIR \"$(pkglibdir)\"" >>$@
 	echo "#define LOCALEDIR \"$(localedir)\"" >>$@
 
