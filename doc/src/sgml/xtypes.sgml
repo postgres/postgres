@@ -110,13 +110,13 @@ complex_out(Complex *complex)
      <programlisting>
 CREATE FUNCTION complex_in(opaque)
     RETURNS complex
-    AS 'PGROOT/tutorial/obj/complex.so'
-    LANGUAGE 'c';
+    AS '<replaceable>PGROOT</replaceable>/tutorial/complex'
+    LANGUAGE C;
 
 CREATE FUNCTION complex_out(opaque)
     RETURNS opaque
-    AS 'PGROOT/tutorial/obj/complex.so'
-    LANGUAGE 'c';
+    AS '<replaceable>PGROOT</replaceable>/tutorial/complex'
+    LANGUAGE C;
 
 CREATE TYPE complex (
     internallength = 16,

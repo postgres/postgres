@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/xindex.sgml,v 1.19 2001/09/13 15:55:23 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/xindex.sgml,v 1.20 2001/10/26 21:17:03 tgl Exp $
 Postgres documentation
 -->
 
@@ -313,7 +313,9 @@ SELECT oid, *
   <para>
    Suppose the code that implements these functions
    is stored in the file
-   <filename>PGROOT/src/tutorial/complex.c</filename>.
+   <replaceable>PGROOT</replaceable><filename>/tutorial/complex.c</filename>,
+   which we have compiled into
+   <replaceable>PGROOT</replaceable><filename>/tutorial/complex.so</filename>.
   </para>
 
   <para>
@@ -339,8 +341,8 @@ SELECT oid, *
    <programlisting>
 CREATE FUNCTION complex_abs_eq(complex, complex)
               RETURNS bool
-              AS 'PGROOT/tutorial/obj/complex.so'
-              LANGUAGE 'c';
+              AS '<replaceable>PGROOT</replaceable>/tutorial/complex'
+              LANGUAGE C;
    </programlisting>
   </para>
 
@@ -489,8 +491,8 @@ CREATE OPERATOR = (
    <programlisting>
     CREATE FUNCTION complex_abs_cmp(complex, complex)
      RETURNS int4
-     AS 'PGROOT/tutorial/obj/complex.so'
-     LANGUAGE 'c';
+     AS '<replaceable>PGROOT</replaceable>/tutorial/complex'
+     LANGUAGE C;
 
     SELECT oid, proname FROM pg_proc
      WHERE proname = 'complex_abs_cmp';

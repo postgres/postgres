@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/xoper.sgml,v 1.14 2001/09/13 15:55:23 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/xoper.sgml,v 1.15 2001/10/26 21:17:03 tgl Exp $
 -->
 
  <Chapter Id="xoper">
@@ -38,8 +38,8 @@ $Header: /cvsroot/pgsql/doc/src/sgml/xoper.sgml,v 1.14 2001/09/13 15:55:23 peter
    <ProgramListing>
 CREATE FUNCTION complex_add(complex, complex)
     RETURNS complex
-    AS '$PWD/obj/complex.so'
-    LANGUAGE 'c';
+    AS '<replaceable>PGROOT</replaceable>/tutorial/complex'
+    LANGUAGE C;
 
 CREATE OPERATOR + (
     leftarg = complex,

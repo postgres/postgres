@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_language.sgml,v 1.17 2001/09/06 10:28:39 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_language.sgml,v 1.18 2001/10/26 21:17:03 tgl Exp $
 Postgres documentation
 -->
 
@@ -171,7 +171,7 @@ ERROR:  PL handler function <replaceable class="parameter">funcname</replaceable
    This command normally should not be executed directly by users.
    For the procedural languages supplied in the
    <productname>PostgreSQL</productname> distribution, the <xref
-   linkend="app-createlang"> program should be used, which will also
+   linkend="app-createlang"> script should be used, which will also
    install the correct call handler.  (<command>createlang</command>
    will call <command>CREATE LANGUAGE</command> internally.)
   </para>
@@ -183,7 +183,7 @@ ERROR:  PL handler function <replaceable class="parameter">funcname</replaceable
 
   <para>
    Use <xref linkend="sql-droplanguage">, or better yet the <xref
-   linkend="app-droplang"> program, to drop procedural languages.
+   linkend="app-droplang"> script, to drop procedural languages.
   </para>
 
   <para>
@@ -210,7 +210,7 @@ ERROR:  PL handler function <replaceable class="parameter">funcname</replaceable
 
   <para>
    At present, the definition of a procedural language cannot be
-   changed once is has been created.
+   changed once it has been created.
   </para>
  </refsect1>
 
@@ -222,7 +222,7 @@ ERROR:  PL handler function <replaceable class="parameter">funcname</replaceable
    procedural language and the associated call handler.
 <programlisting>
 CREATE FUNCTION plsample_call_handler () RETURNS opaque
-    AS '/usr/local/pgsql/lib/plsample.so'
+    AS '$libdir/plsample'
     LANGUAGE C;
 CREATE LANGUAGE plsample
     HANDLER plsample_call_handler;

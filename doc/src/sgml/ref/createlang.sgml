@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/createlang.sgml,v 1.18 2001/10/22 23:48:11 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/createlang.sgml,v 1.19 2001/10/26 21:17:03 tgl Exp $
 Postgres documentation
 -->
 
@@ -44,7 +44,8 @@ Postgres documentation
       <term><replaceable class="parameter">langname</replaceable></term>
       <listitem>
        <para>
-	Specifies the name of the backend programming language to be defined.
+	Specifies the name of the procedural programming language to be
+	defined.
 	<application>createlang</application> will prompt for
 	<replaceable class="parameter">langname</replaceable>
 	if it is not specified on the command line.
@@ -56,7 +57,7 @@ Postgres documentation
       <term>-d, --dbname <replaceable class="parameter">dbname</replaceable></term>
       <listitem>
        <para>
-	Specifies which database the language should be added.
+	Specifies to which database the language should be added.
        </para>
       </listitem>
      </varlistentry>
@@ -85,7 +86,8 @@ Postgres documentation
       <listitem>
        <para>
 	Specifies the directory in which the language interpreter is
-        to be found.  This is normally found automatically.
+        to be found.  Use of this option is deprecated; the directory
+	is normally found automatically.
        </para>
       </listitem>
      </varlistentry>

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/xfunc.sgml,v 1.39 2001/10/26 19:58:12 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/xfunc.sgml,v 1.40 2001/10/26 21:17:03 tgl Exp $
 -->
 
  <chapter id="xfunc">
@@ -1054,25 +1054,25 @@ concat_text(text *arg1, text *arg2)
      
 <programlisting>
 CREATE FUNCTION add_one(int4) RETURNS int4
-     AS '<replaceable>PGROOT</replaceable>/tutorial/funcs' LANGUAGE 'c'
+     AS '<replaceable>PGROOT</replaceable>/tutorial/funcs' LANGUAGE C
      WITH (isStrict);
 
 -- note overloading of SQL function name add_one()
 CREATE FUNCTION add_one(float8) RETURNS float8
      AS '<replaceable>PGROOT</replaceable>/tutorial/funcs',
         'add_one_float8'
-     LANGUAGE 'c' WITH (isStrict);
+     LANGUAGE C WITH (isStrict);
 
 CREATE FUNCTION makepoint(point, point) RETURNS point
-     AS '<replaceable>PGROOT</replaceable>/tutorial/funcs' LANGUAGE 'c'
+     AS '<replaceable>PGROOT</replaceable>/tutorial/funcs' LANGUAGE C
      WITH (isStrict);
                          
 CREATE FUNCTION copytext(text) RETURNS text
-     AS '<replaceable>PGROOT</replaceable>/tutorial/funcs' LANGUAGE 'c'
+     AS '<replaceable>PGROOT</replaceable>/tutorial/funcs' LANGUAGE C
      WITH (isStrict);
 
 CREATE FUNCTION concat_text(text, text) RETURNS text
-     AS '<replaceable>PGROOT</replaceable>/tutorial/funcs' LANGUAGE 'c'
+     AS '<replaceable>PGROOT</replaceable>/tutorial/funcs' LANGUAGE C
      WITH (isStrict);
 </programlisting>
     </para>
@@ -1358,8 +1358,8 @@ c_overpaid(PG_FUNCTION_ARGS)
 <programlisting>
 CREATE FUNCTION c_overpaid(emp, int4) 
 RETURNS bool
-AS '<replaceable>PGROOT</replaceable>/tutorial/obj/funcs' 
-LANGUAGE 'c';
+AS '<replaceable>PGROOT</replaceable>/tutorial/funcs' 
+LANGUAGE C;
 </programlisting>
     </para>
 

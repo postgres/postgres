@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_function.sgml,v 1.27 2001/10/02 21:39:35 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_function.sgml,v 1.28 2001/10/26 21:17:03 tgl Exp $
 -->
 
 <refentry id="SQL-CREATEFUNCTION">
@@ -295,14 +295,16 @@ SELECT one() AS answer;
 
   <para>
    The next example creates a C function by calling a routine from a
-   user-created shared library.  This particular routine calculates a
-   check digit and returns TRUE if the check digit in the function
+   user-created shared library named <filename>funcs.so</> (the extension
+   may vary across platforms).  The shared library file is sought in the
+   server's dynamic library search path.  This particular routine calculates
+   a check digit and returns TRUE if the check digit in the function
    parameters is correct.  It is intended for use in a CHECK
    constraint.
 
 <programlisting>
 CREATE FUNCTION ean_checkdigit(char, char) RETURNS boolean
-    AS '/usr1/proj/bray/sql/funcs.so' LANGUAGE C;
+    AS 'funcs' LANGUAGE C;
     
 CREATE TABLE product (
     id        char(8) PRIMARY KEY,
@@ -318,7 +320,9 @@ CREATE TABLE product (
    This example creates a function that does type conversion between the
    user-defined type complex, and the internal type point.  The
    function is implemented by a dynamically loaded object that was
-   compiled from C source.  For <productname>PostgreSQL</productname> to
+   compiled from C source (we illustrate the now-deprecated alternative
+   of specifying the exact pathname to the shared object file).
+   For <productname>PostgreSQL</productname> to
    find a type conversion function automatically, the SQL function has
    to have the same name as the return type, and so overloading is
    unavoidable.  The function name is overloaded by using the second
