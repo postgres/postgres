@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/interfaces/libpq/Attic/Makefile.in,v 1.9 1998/03/20 04:07:02 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/interfaces/libpq/Attic/Makefile.in,v 1.10 1998/04/05 22:02:33 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -170,12 +170,12 @@ beforeinstall-headers:
 		then mkdir $(HEADERDIR)/commands; fi
 
 install-libpq: libpq.a
-	$(INSTALL) $(INSTL_LIB_OPTS) libpq.a $(DESTDIR)$(LIBDIR)/libpq.a
+	$(INSTALL) $(INSTL_LIB_OPTS) libpq.a $(LIBDIR)/libpq.a
 
 install-shlib: $(shlib)
-	$(INSTALL) $(INSTL_LIB_OPTS) $(shlib) $(DESTDIR)$(LIBDIR)/$(shlib)
-	rm -f $(DESTDIR)$(LIBDIR)/libpq.so
-	ln -s $(shlib) $(DESTDIR)$(LIBDIR)/libpq.so
+	$(INSTALL) $(INSTL_LIB_OPTS) $(shlib) $(LIBDIR)/$(shlib)
+	rm -f $(LIBDIR)/libpq.so
+	ln -s $(shlib) $(LIBDIR)/libpq.so
 
 depend dep:
 	$(CC) -MM *.c >depend

@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/destroyuser/Attic/Makefile,v 1.4 1996/12/10 03:39:53 bryanh Exp $
+#    $Header: /cvsroot/pgsql/src/bin/destroyuser/Attic/Makefile,v 1.5 1998/04/05 22:00:20 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -24,7 +24,7 @@ destroyuser: destroyuser.sh
 	sed $(SEDSCRIPT) <destroyuser.sh >destroyuser
 
 install: destroyuser
-	$(INSTALL) $(INSTL_EXE_OPTS) $< $(DESTDIR)$(BINDIR)/$<
+	$(INSTALL) $(INSTL_EXE_OPTS) $< $(BINDIR)/$<
 
 clean:
 	rm -f destroyuser

@@ -7,7 +7,7 @@ PATCHLEVEL=0
 
 CFLAGS+=-I../include -DMAJOR_VERSION=$(MAJOR_VERSION) \
 	-DMINOR_VERSION=$(MINOR_VERSION) -DPATCHLEVEL=$(PATCHLEVEL) \
-	-DINCLUDE_PATH=\"$(DESTDIR)$(HEADERDIR)\"
+	-DINCLUDE_PATH=\"$(HEADERDIR)\"
 
 all:: ecpg
 
@@ -15,10 +15,10 @@ clean:
 	rm -f *.o core a.out ecpg y.tab.h y.tab.c pgc.c *~
 
 install: all
-	$(INSTALL) $(INSTL_EXE_OPTS) ecpg $(DESTDIR)$(BINDIR)
+	$(INSTALL) $(INSTL_EXE_OPTS) ecpg $(BINDIR)
 
 uninstall:
-	rm -f $(DESTDIR)$(BINDIR)/ecpg
+	rm -f $(BINDIR)/ecpg
 
 # Rule that really do something.
 ecpg: y.tab.o pgc.o type.o ecpg.o ../lib/typename.o

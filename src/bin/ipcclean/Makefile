@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/ipcclean/Attic/Makefile,v 1.3 1996/12/10 03:40:23 bryanh Exp $
+#    $Header: /cvsroot/pgsql/src/bin/ipcclean/Attic/Makefile,v 1.4 1998/04/05 22:00:48 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -23,7 +23,7 @@ ipcclean:
 	sed $(SEDSCRIPT) <ipcclean.sh >ipcclean
 
 install: ipcclean
-	$(INSTALL) $(INSTL_EXE_OPTS) $< $(DESTDIR)$(BINDIR)/$<
+	$(INSTALL) $(INSTL_EXE_OPTS) $< $(BINDIR)/$<
 
 clean:
 	rm -f ipcclean

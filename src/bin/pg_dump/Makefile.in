@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/pg_dump/Attic/Makefile.in,v 1.5 1998/01/04 19:12:06 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/bin/pg_dump/Attic/Makefile.in,v 1.6 1998/04/05 22:00:58 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -39,8 +39,8 @@ submake:
 	$(MAKE) -C $(LIBPQDIR) libpq.a
 
 install: pg_dump
-	$(INSTALL) $(INSTL_EXE_OPTS) pg_dump $(DESTDIR)$(BINDIR)/pg_dump
-	$(INSTALL) $(INSTL_EXE_OPTS) pg_dumpall $(DESTDIR)$(BINDIR)/pg_dumpall
+	$(INSTALL) $(INSTL_EXE_OPTS) pg_dump $(BINDIR)/pg_dump
+	$(INSTALL) $(INSTL_EXE_OPTS) pg_dumpall $(BINDIR)/pg_dumpall
 
 depend dep:
 	$(CC) -MM $(INCLUDE_OPT) *.c >depend

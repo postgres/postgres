@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/pgtclsh/Attic/Makefile,v 1.13 1998/03/23 06:02:39 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/bin/pgtclsh/Attic/Makefile,v 1.14 1998/04/05 22:01:35 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -37,8 +37,8 @@ pgtksh: pgtkAppInit.o
 	  $(X11_LIBS) -lm $(LDFLAGS)
 
 install: pgtclsh pgtksh
-	$(INSTALL) $(INSTL_EXE_OPTS) pgtclsh $(DESTDIR)$(BINDIR)/pgtclsh
-	$(INSTALL) $(INSTL_EXE_OPTS) pgtksh $(DESTDIR)$(BINDIR)/pgtksh
+	$(INSTALL) $(INSTL_EXE_OPTS) pgtclsh $(BINDIR)/pgtclsh
+	$(INSTALL) $(INSTL_EXE_OPTS) pgtksh $(BINDIR)/pgtksh
 
 clean:
 	rm -f pgtclAppInit.o pgtkAppInit.o pgtclsh pgtksh

@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/cleardbdir/Attic/Makefile,v 1.4 1996/11/24 03:55:19 bryanh Exp $
+#    $Header: /cvsroot/pgsql/src/bin/cleardbdir/Attic/Makefile,v 1.5 1998/04/05 21:59:52 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -20,7 +20,7 @@ cleardbdir:
 	cp cleardbdir.sh cleardbdir
 
 install: cleardbdir
-	$(INSTALL) $(INSTL_EXE_OPTS) $< $(DESTDIR)$(BINDIR)/$<
+	$(INSTALL) $(INSTL_EXE_OPTS) $< $(BINDIR)/$<
 
 clean: 
 	rm -f cleardbdir

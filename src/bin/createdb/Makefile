@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/createdb/Attic/Makefile,v 1.4 1996/12/10 03:39:26 bryanh Exp $
+#    $Header: /cvsroot/pgsql/src/bin/createdb/Attic/Makefile,v 1.5 1998/04/05 21:59:55 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -20,7 +20,7 @@ createdb: createdb.sh
 	cp createdb.sh createdb
 
 install: createdb
-	$(INSTALL) $(INSTL_EXE_OPTS) $< $(DESTDIR)$(BINDIR)/$<
+	$(INSTALL) $(INSTL_EXE_OPTS) $< $(BINDIR)/$<
 
 clean:
 	rm -f createdb
