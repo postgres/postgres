@@ -1,319 +1,391 @@
-<BIBLIOGRAPHY Id="biblio">
-<Title><Acronym>SQL</Acronym> References</Title>
+ <bibliography id="biblio">
+  <title>Bibliography</title>
 
-<Para>
-Selected references and readings for <Acronym>SQL</Acronym> and <ProductName>Postgres</ProductName>.
-</Para>
+  <para>
+   Selected references and readings for <acronym>SQL</acronym> and <productname>Postgres</productname>.
+  </para>
 
-<BIBLIODIV>
-<TITLE><Acronym>SQL</Acronym> Reference Books</TITLE>
-<PARA>Reference texts for <Acronym>SQL</Acronym> features.</PARA>
+  <bibliodiv>
+   <title><acronym>SQL</acronym> Reference Books</title>
+   <para>Reference texts for <acronym>SQL</acronym> features.</para>
 
-<BIBLIOENTRY>
+   <biblioentry>
 <!--
 <BIBLIOMISC>&dash;</BIBLIOMISC>
 
 <BOOKBIBLIO ID="BOWMAN93">
 -->
-<TITLE ID="BOWMAN93-full">
-The Practical <Acronym>SQL</Acronym> Handbook
-</TITLE>
-<TITLEABBREV ID="BOWMAN93">
-Bowman et al, 1993
-</TITLEABBREV>
-<SUBTITLE>
-Using Structured Query Language
-</SUBTITLE>
-<EDITION>3</EDITION>
-<AUTHORGROUP>
-<AUTHOR>
-<FIRSTNAME>Judity</FIRSTNAME>
-<SURNAME>Bowman</SURNAME>
-</AUTHOR>
-<AUTHOR>
-<FIRSTNAME>Sandra</FIRSTNAME>
-<SURNAME>Emerson</SURNAME>
-</AUTHOR>
-<AUTHOR>
-<FIRSTNAME>Marcy</FIRSTNAME>
-<SURNAME>Damovsky</SURNAME>
-</AUTHOR>
-</AUTHORGROUP>
-<ISBN>0-201-44787-8</ISBN>
-<PUBDATE>1996</PUBDATE>
-<PUBLISHER>
-<PUBLISHERNAME>Addison-Wesley</PUBLISHERNAME>
-</PUBLISHER>
-<COPYRIGHT>
-<YEAR>1997</YEAR>
-<HOLDER>Addison-Wesley Longman, Inc.</HOLDER>
-</COPYRIGHT>
+    <title id="BOWMAN93-full">
+     The Practical <acronym>SQL</acronym> Handbook
+    </title>
+    <titleabbrev id="BOWMAN93">
+     Bowman et al, 1993
+    </titleabbrev>
+    <subtitle>
+     Using Structured Query Language
+    </subtitle>
+    <edition>3</edition>
+    <authorgroup>
+     <author>
+      <firstname>Judity</firstname>
+      <surname>Bowman</surname>
+     </author>
+     <author>
+      <firstname>Sandra</firstname>
+      <surname>Emerson</surname>
+     </author>
+     <author>
+      <firstname>Marcy</firstname>
+      <surname>Damovsky</surname>
+     </author>
+    </authorgroup>
+    <isbn>0-201-44787-8</isbn>
+    <pubdate>1996</pubdate>
+    <publisher>
+     <publishername>Addison-Wesley</publishername>
+    </publisher>
+    <copyright>
+     <year>1997</year>
+     <holder>Addison-Wesley Longman, Inc.</holder>
+    </copyright>
 <!--
 </BOOKBIBLIO>
 -->
-</BIBLIOENTRY>
+   </biblioentry>
 
-<BIBLIOENTRY>
+   <biblioentry>
 <!--
 <BIBLIOMISC>&dash;</BIBLIOMISC>
 
 <BOOKBIBLIO ID="DATE97">
 -->
-<TITLE id="DATE97-full">
-A Guide to the <Acronym>SQL</Acronym> Standard
-</TITLE>
-<TITLEABBREV id="DATE97">
-Date and Darwen, 1997
-</TITLEABBREV>
-<SUBTITLE>
-A user's guide to the standard database language <Acronym>SQL</Acronym>
-</SUBTITLE>
-<EDITION>4</EDITION>
-<AUTHORGROUP>
-<AUTHOR>
-<FIRSTNAME>C. J.</FIRSTNAME>
-<SURNAME>Date</SURNAME>
-</AUTHOR>
-<AUTHOR>
-<FIRSTNAME>Hugh</FIRSTNAME>
-<SURNAME>Darwen</SURNAME>
-</AUTHOR>
-</AUTHORGROUP>
-<ISBN>0-201-96426-0</ISBN>
-<PUBDATE>1997</PUBDATE>
-<PUBLISHER>
-<PUBLISHERNAME>Addison-Wesley</PUBLISHERNAME>
-</PUBLISHER>
-<COPYRIGHT>
-<YEAR>1997</YEAR>
-<HOLDER>Addison-Wesley Longman, Inc.</HOLDER>
-</COPYRIGHT>
+    <title id="DATE97-full">
+     A Guide to the <acronym>SQL</acronym> Standard
+    </title>
+    <titleabbrev id="DATE97">
+     Date and Darwen, 1997
+    </titleabbrev>
+    <subtitle>
+     A user's guide to the standard database language <acronym>SQL</acronym>
+    </subtitle>
+    <edition>4</edition>
+    <authorgroup>
+     <author>
+      <firstname>C. J.</firstname>
+      <surname>Date</surname>
+     </author>
+     <author>
+      <firstname>Hugh</firstname>
+      <surname>Darwen</surname>
+     </author>
+    </authorgroup>
+    <isbn>0-201-96426-0</isbn>
+    <pubdate>1997</pubdate>
+    <publisher>
+     <publishername>Addison-Wesley</publishername>
+    </publisher>
+    <copyright>
+     <year>1997</year>
+     <holder>Addison-Wesley Longman, Inc.</holder>
+    </copyright>
 <!--
 </BOOKBIBLIO>
 -->
-</BIBLIOENTRY>
+   </biblioentry>
 
-<BIBLIOENTRY>
+   <biblioentry>
 <!--
 <BIBLIOMISC>&dash;</BIBLIOMISC>
 
 <BOOKBIBLIO ID="MELT93">
 -->
-<TITLE ID="MELT93-full">
-Understanding the New <Acronym>SQL</Acronym>
-</TITLE>
-<TITLEABBREV ID="MELT93">
-Melton and Simon, 1993
-</TITLEABBREV>
-<SUBTITLE>A complete guide</SUBTITLE>
-<AUTHORGROUP>
-<AUTHOR>
-<FIRSTNAME>Jim</FIRSTNAME>
-<SURNAME>Melton</SURNAME>
-</AUTHOR>
-<AUTHOR>
-<FIRSTNAME>Alan R.</FIRSTNAME>
-<SURNAME>Simon</SURNAME>
-</AUTHOR>
-</AUTHORGROUP>
-<ISBN>1-55860-245-3</ISBN>
-<PUBDATE>1993</PUBDATE>
-<PUBLISHER>
-<PUBLISHERNAME>Morgan Kaufmann</PUBLISHERNAME>
-</PUBLISHER>
-<COPYRIGHT>
-<YEAR>1993</YEAR>
-<HOLDER>Morgan Kaufmann Publishers, Inc.</HOLDER>
-</COPYRIGHT>
-<ABSTRACT>
-<TITLE>Abstract</TITLE>
-<PARA>Accessible reference for <Acronym>SQL</Acronym> features.</PARA>
-</ABSTRACT>
+    <title id="MELT93-full">
+     Understanding the New <acronym>SQL</acronym>
+    </title>
+    <titleabbrev id="MELT93">
+     Melton and Simon, 1993
+    </titleabbrev>
+    <subtitle>A complete guide</subtitle>
+    <authorgroup>
+     <author>
+      <firstname>Jim</firstname>
+      <surname>Melton</surname>
+     </author>
+     <author>
+      <firstname>Alan R.</firstname>
+      <surname>Simon</surname>
+     </author>
+    </authorgroup>
+    <isbn>1-55860-245-3</isbn>
+    <pubdate>1993</pubdate>
+    <publisher>
+     <publishername>Morgan Kaufmann</publishername>
+    </publisher>
+    <copyright>
+     <year>1993</year>
+     <holder>Morgan Kaufmann Publishers, Inc.</holder>
+    </copyright>
+    <abstract>
+     <title>Abstract</title>
+     <para>Accessible reference for <acronym>SQL</acronym> features.</para>
+    </abstract>
 <!--
 </BOOKBIBLIO>
 -->
-</BIBLIOENTRY>
+   </biblioentry>
 
-</BIBLIODIV>
-<BIBLIODIV>
-<TITLE>PostgreSQL-Specific Documentation</TITLE>
-<PARA>This section is for related documentation.</PARA>
+  </bibliodiv>
 
-<BIBLIOENTRY>
+  <bibliodiv>
+   <title>PostgreSQL-Specific Documentation</title>
+   <para>This section is for related documentation.</para>
+
+   <biblioentry>
 <!--
 <BIBLIOMISC>&dash;</BIBLIOMISC>
 
 <BOOKBIBLIO ID="ADMINISTRATORS-GUIDE">
 -->
-<TITLE ID="admin-guide-full">
-The <ProductName>PostgreSQL</ProductName> Administrator's Guide
-</TITLE>
-<TITLEABBREV ID="admin-guide">
-The Administrator's Guide
-</TITLEABBREV>
-<Editor>
-<FIRSTNAME>Thomas</FIRSTNAME>
-<SURNAME>Lockhart</SURNAME>
-</Editor>
+    <title id="admin-guide-full">
+     The <productname>PostgreSQL</productname> Administrator's Guide
+    </title>
+    <titleabbrev id="admin-guide">
+     The Administrator's Guide
+    </titleabbrev>
+    <editor>
+     <firstname>Thomas</firstname>
+     <surname>Lockhart</surname>
+    </editor>
 
-<PUBDATE>1998-10-01</PUBDATE>
-<PUBLISHER>
-<PUBLISHERNAME>The PostgreSQL Global Development Group</PUBLISHERNAME>
-</PUBLISHER>
+    <pubdate>1998-10-01</pubdate>
+    <publisher>
+     <publishername>The PostgreSQL Global Development Group</publishername>
+    </publisher>
 <!--
 </BOOKBIBLIO>
 -->
-</BIBLIOENTRY>
+   </biblioentry>
 
-<BIBLIOENTRY>
+   <biblioentry>
 <!--
 <BIBLIOMISC>&dash;</BIBLIOMISC>
 
 <BOOKBIBLIO ID="POSTGRES-REFERENCE">
 -->
-<TITLE ID="dev-guide-full">
-The <ProductName>PostgreSQL</ProductName> Developer's Guide
-</TITLE>
-<TITLEABBREV ID="dev-guide">
-The Developer's Guide
-</TITLEABBREV>
-<Editor>
-<FIRSTNAME>Thomas</FIRSTNAME>
-<SURNAME>Lockhart</SURNAME>
-</Editor>
+    <title id="dev-guide-full">
+     The <productname>PostgreSQL</productname> Developer's Guide
+    </title>
+    <titleabbrev id="dev-guide">
+     The Developer's Guide
+    </titleabbrev>
+    <editor>
+     <firstname>Thomas</firstname>
+     <surname>Lockhart</surname>
+    </editor>
 
-<PUBDATE>1998-10-01</PUBDATE>
-<PUBLISHER>
-<PUBLISHERNAME>The PostgreSQL Global Development Group</PUBLISHERNAME>
-</PUBLISHER>
+    <pubdate>1998-10-01</pubdate>
+    <publisher>
+     <publishername>The PostgreSQL Global Development Group</publishername>
+    </publisher>
 <!--
 </BOOKBIBLIO>
 -->
-</BIBLIOENTRY>
+   </biblioentry>
 
-<BIBLIOENTRY>
+   <biblioentry>
 <!--
 <BIBLIOMISC>&dash;</BIBLIOMISC>
 
 <BOOKBIBLIO ID="PROGRAMMERS-GUIDE">
 -->
-<TITLE ID="pro-guide-full">
-The <ProductName>PostgreSQL</ProductName> Programmer's Guide
-</TITLE>
-<TITLEABBREV ID="pro-guide">
-The Programmer's Guide
-</TITLEABBREV>
-<Editor>
-<FIRSTNAME>Thomas</FIRSTNAME>
-<SURNAME>Lockhart</SURNAME>
-</Editor>
-
-<PUBDATE>1998-10-01</PUBDATE>
-<PUBLISHER>
-<PUBLISHERNAME>The PostgreSQL Global Development Group</PUBLISHERNAME>
-</PUBLISHER>
+    <title id="pro-guide-full">
+     The <productname>PostgreSQL</productname> Programmer's Guide
+    </title>
+    <titleabbrev id="pro-guide">
+     The Programmer's Guide
+    </titleabbrev>
+    <editor>
+     <firstname>Thomas</firstname>
+     <surname>Lockhart</surname>
+    </editor>
+    
+    <pubdate>1998-10-01</pubdate>
+    <publisher>
+     <publishername>The PostgreSQL Global Development Group</publishername>
+    </publisher>
 <!--
 </BOOKBIBLIO>
 -->
-</BIBLIOENTRY>
+   </biblioentry>
 
-<BIBLIOENTRY>
+   <biblioentry>
 <!--
 <BIBLIOMISC>&dash;</BIBLIOMISC>
 
 <BOOKBIBLIO ID="TUTORIAL">
 -->
-<TITLE ID="tutorial-guide-full">
-The <ProductName>PostgreSQL</ProductName> Tutorial Introduction
-</TITLE>
-<TITLEABBREV ID="tutorial-guide">
-The Tutorial
-</TITLEABBREV>
-<Editor>
-<FIRSTNAME>Thomas</FIRSTNAME>
-<SURNAME>Lockhart</SURNAME>
-</Editor>
+    <title id="tutorial-guide-full">
+     The <productname>PostgreSQL</productname> Tutorial Introduction
+    </title>
+    <titleabbrev id="tutorial-guide">
+     The Tutorial
+    </titleabbrev>
+    <editor>
+     <firstname>Thomas</firstname>
+     <surname>Lockhart</surname>
+    </editor>
 
-<PUBDATE>1998-10-01</PUBDATE>
-<PUBLISHER>
-<PUBLISHERNAME>The PostgreSQL Global Development Group</PUBLISHERNAME>
-</PUBLISHER>
+    <pubdate>1998-10-01</pubdate>
+    <publisher>
+     <publishername>The PostgreSQL Global Development Group</publishername>
+    </publisher>
 <!--
 </BOOKBIBLIO>
 -->
-</BIBLIOENTRY>
+   </biblioentry>
 
-<BIBLIOENTRY>
+   <biblioentry>
 <!--
 <BIBLIOMISC>&dash;</BIBLIOMISC>
 
 <BOOKBIBLIO ID="USERS-GUIDE">
 -->
-<TITLE ID="users-guide-full">
-The <ProductName>PostgreSQL</ProductName> User's Guide
-</TITLE>
-<TITLEABBREV ID="users-guide">
-The User's Guide
-</TITLEABBREV>
-<Editor>
-<FIRSTNAME>Thomas</FIRSTNAME>
-<SURNAME>Lockhart</SURNAME>
-</Editor>
+    <title id="users-guide-full">
+     The <productname>PostgreSQL</productname> User's Guide
+    </title>
+    <titleabbrev id="users-guide">
+     The User's Guide
+    </titleabbrev>
+    <editor>
+     <firstname>Thomas</firstname>
+     <surname>Lockhart</surname>
+    </editor>
 
-<PUBDATE>1998-10-01</PUBDATE>
-<PUBLISHER>
-<PUBLISHERNAME>The PostgreSQL Global Development Group</PUBLISHERNAME>
-</PUBLISHER>
+    <pubdate>1998-10-01</pubdate>
+    <publisher>
+     <publishername>The PostgreSQL Global Development Group</publishername>
+    </publisher>
 <!--
 </BOOKBIBLIO>
 -->
-</BIBLIOENTRY>
+   </biblioentry>
 
-<BIBLIOENTRY>
+   <biblioentry>
+<!--
+<BIBLIOMISC>&dash;</BIBLIOMISC>
+
+<BOOKBIBLIO ID="USERS-GUIDE">
+
+Master's Thesis
+Enhancement of the ANSI SQL Implementation of PostgreSQL
+written by
+Stefan Simkovics
+Paul Petersgasse 36
+2384 Breitenfurt
+AUSTRIA
+ssimkovi@ag.or.at
+at
+Department of Information Systems
+Vienna University of Technology
+with support by
+O.Univ.Prof.Dr. Georg Gottlob
+and
+Univ.Ass. Mag. Katrin Seyr
+
+-->
+    <title id="SIM98-full">
+     Enhancement of the ANSI SQL Implementation of PostgreSQL
+    </title>
+    <titleabbrev id="SIM98">
+     Simkovics, 1998
+    </titleabbrev>
+    <authorgroup>
+     <author>
+      <firstname>Stefan</firstname>
+      <surname>Simkovics</surname>
+     </author>
+    </authorgroup>
+
+    <othercredit>
+     <honorific>O.Univ.Prof.Dr.</honorific>
+     <firstname>Georg</firstname>
+     <surname>Gottlob</surname>
+     <honorific>Univ.Ass. Mag.</honorific>
+     <firstname>Katrin</firstname>
+     <surname>Seyr</surname>
+     <contrib>
+      with support by
+     </contrib>
+    </othercredit>
+    <abstract>
+     <para>
+      Discusses SQL history and syntax,
+      and describes the addition of INTERSECT and EXCEPT constructs into
+      <productname>Postgres</productname>.
+      Prepared as a Master's Thesis with the support of 
+      O.Univ.Prof.Dr. Georg Gottlob
+      and
+      Univ.Ass. Mag. Katrin Seyr
+      at
+      Vienna University of Technology.
+     </para>
+    </abstract>
+
+    <pubdate>November 29, 1998</pubdate>
+    <publisher>
+     <publishername>
+      Department of Information Systems,
+      Vienna University of Technology
+     </publishername>
+    </publisher>
+   </biblioentry>
+
+   <biblioentry>
 <!--
 <BIBLIOMISC>&dash;</BIBLIOMISC>
 
 <BOOKBIBLIO ID="YU95">
 -->
-<TITLE ID="YU95-full">
-The <ProductName>Postgres95</ProductName> User Manual
-</TITLE>
-<TITLEABBREV ID="YU95">
-Yu and Chen, 1995
-</TITLEABBREV>
-<AUTHORGROUP>
-<AUTHOR>
-<FIRSTNAME>A.</FIRSTNAME>
-<SURNAME>Yu</SURNAME>
-</AUTHOR>
-<AUTHOR>
-<FIRSTNAME>J.</FIRSTNAME>
-<SURNAME>Chen</SURNAME>
-</AUTHOR>
-</AUTHORGROUP>
-<AUTHORGROUP>
-<COLLAB>
-<COLLABNAME>
-The POSTGRES Group
-</COLLABNAME>
-</COLLAB>
-</AUTHORGROUP>
+    <title id="YU95-full">
+     The <productname>Postgres95</productname> User Manual
+    </title>
+    <titleabbrev id="YU95">
+     Yu and Chen, 1995
+    </titleabbrev>
+    <authorgroup>
+     <author>
+      <firstname>A.</firstname>
+      <surname>Yu</surname>
+     </author>
+     <author>
+      <firstname>J.</firstname>
+      <surname>Chen</surname>
+     </author>
+    </authorgroup>
+    <authorgroup>
+     <collab>
+      <collabname>
+       The POSTGRES Group
+      </collabname>
+     </collab>
+    </authorgroup>
 
-<PUBDATE>Sept. 5, 1995</PUBDATE>
-<PUBLISHER>
-<PUBLISHERNAME>University  of  California, Berkeley CA</PUBLISHERNAME>
-</PUBLISHER>
+    <pubdate>Sept. 5, 1995</pubdate>
+    <publisher>
+     <publishername>University  of  California, Berkeley CA</publishername>
+    </publisher>
 <!--
 </BOOKBIBLIO>
 -->
-</BIBLIOENTRY>
+   </biblioentry>
 
-</BIBLIODIV>
-<BIBLIODIV>
-<TITLE>Proceedings and Articles</TITLE>
-<PARA>This section is for articles and newsletters.</PARA>
+  </bibliodiv>
 
-<BIBLIOENTRY>
+  <bibliodiv>
+   <title>Proceedings and Articles</title>
+   <para>This section is for articles and newsletters.</para>
+   
+   <biblioentry>
 <!--
 <BIBLIOMISC>&dash;</BIBLIOMISC>
 
@@ -325,93 +397,93 @@ The POSTGRES Group
        UCB   Engin     T7.49.1993 O676
 
 -->
-<TITLE ID="OLSON93-full">
-Partial indexing in POSTGRES : research project
-</TITLE>
-<TITLEABBREV ID="OLSON93">
-Olson, 1993
-</TITLEABBREV>
-<AUTHORGROUP>
-<AUTHOR>
-<FIRSTNAME>Nels</FIRSTNAME>
-<SURNAME>Olson</SURNAME>
-</AUTHOR>
-</AUTHORGROUP>
-<PUBDATE>1993</PUBDATE>
-<ISSN>UCB Engin T7.49.1993 O676</ISSN>
-<PUBLISHER>
-<PUBLISHERNAME>University  of  California, Berkeley CA</PUBLISHERNAME>
-</PUBLISHER>
+    <title id="OLSON93-full">
+     Partial indexing in POSTGRES: research project
+    </title>
+    <titleabbrev id="OLSON93">
+     Olson, 1993
+    </titleabbrev>
+    <authorgroup>
+     <author>
+      <firstname>Nels</firstname>
+      <surname>Olson</surname>
+     </author>
+    </authorgroup>
+    <pubdate>1993</pubdate>
+    <issn>UCB Engin T7.49.1993 O676</issn>
+    <publisher>
+     <publishername>University  of  California, Berkeley CA</publishername>
+    </publisher>
 <!--
 </BOOKBIBLIO>
 -->
-</BIBLIOENTRY>
+   </biblioentry>
 
-<BIBLIOENTRY>
+   <biblioentry>
 <!--
 <BIBLIOMISC>&dash;</BIBLIOMISC>
 
 <BOOKBIBLIO ID="ONG90">
 -->
-<TITLE ID="ONG90-full">
-A Unified Framework for Version Modeling Using Production Rules in a Database System
-</TITLE>
-<TITLEABBREV ID="ONG90">
-Ong and Goh, 1990
-</TITLEABBREV>
-<AUTHORGROUP>
-<AUTHOR>
-<FIRSTNAME>L.</FIRSTNAME>
-<SURNAME>Ong</SURNAME>
-</AUTHOR>
-<AUTHOR>
-<FIRSTNAME>J.</FIRSTNAME>
-<SURNAME>Goh</SURNAME>
-</AUTHOR>
-</AUTHORGROUP>
-<PUBDATE>April, 1990</PUBDATE>
-<ISSN>ERL Technical Memorandum M90/33</ISSN>
-<PUBLISHER>
-<PUBLISHERNAME>University  of  California, Berkeley CA</PUBLISHERNAME>
-</PUBLISHER>
+    <title id="ONG90-full">
+     A Unified Framework for Version Modeling Using Production Rules in a Database System
+    </title>
+    <titleabbrev id="ONG90">
+     Ong and Goh, 1990
+    </titleabbrev>
+    <authorgroup>
+     <author>
+      <firstname>L.</firstname>
+      <surname>Ong</surname>
+     </author>
+     <author>
+      <firstname>J.</firstname>
+      <surname>Goh</surname>
+     </author>
+    </authorgroup>
+    <pubdate>April, 1990</pubdate>
+    <issn>ERL Technical Memorandum M90/33</issn>
+    <publisher>
+     <publishername>University  of  California, Berkeley CA</publishername>
+    </publisher>
 <!--
 </BOOKBIBLIO>
 -->
-</BIBLIOENTRY>
+   </biblioentry>
 
-<BIBLIOENTRY>
+   <biblioentry>
 <!--
 <BIBLIOMISC>&dash;</BIBLIOMISC>
 
 <BOOKBIBLIO ID="ROWE87">
 -->
-<TITLE ID="ROWE87-full">
-The <ProductName>Postgres</ProductName> Data Model
-</TITLE>
-<TITLEABBREV ID="ROWE87">
-Rowe and Stonebraker, 1987
-</TITLEABBREV>
-<AUTHORGROUP>
-<AUTHOR>
-<FIRSTNAME>L.</FIRSTNAME>
-<SURNAME>Rowe</SURNAME>
-</AUTHOR>
-<AUTHOR>
-<FIRSTNAME>M.</FIRSTNAME>
-<SURNAME>Stonebraker</SURNAME>
-</AUTHOR>
-</AUTHORGROUP>
-<CONFGROUP>
-<CONFDATES>Sept. 1987</CONFDATES>
-<CONFTITLE>VLDB  Conference, Brighton, England</CONFTITLE>
-<CONFNUM>1987</CONFNUM>
-</CONFGROUP>
+    <title id="ROWE87-full">
+     The <productname>Postgres</productname> Data Model
+    </title>
+    <titleabbrev id="ROWE87">
+     Rowe and Stonebraker, 1987
+    </titleabbrev>
+    <authorgroup>
+     <author>
+      <firstname>L.</firstname>
+      <surname>Rowe</surname>
+     </author>
+     <author>
+      <firstname>M.</firstname>
+      <surname>Stonebraker</surname>
+     </author>
+    </authorgroup>
+    <confgroup>
+     <confdates>Sept. 1987</confdates>
+     <conftitle>VLDB  Conference, Brighton, England</conftitle>
+     <confnum>1987</confnum>
+    </confgroup>
 <!--
 </BOOKBIBLIO>
 -->
-</BIBLIOENTRY>
+   </biblioentry>
 
-<BIBLIOENTRY>
+   <biblioentry>
 <!--
 <BIBLIOMISC>&dash;</BIBLIOMISC>
 
@@ -429,171 +501,171 @@ Rowe and Stonebraker, 1987
 http://simon.cs.cornell.edu/home/praveen/papers/partindex.de95.ps.Z
 
 -->
-<TITLE ID="SESHADRI95-full">
-<ulink url="http://simon.cs.cornell.edu/home/praveen/papers/partindex.de95.ps.Z">
-Generalized partial indexes
-</ulink>
-</TITLE>
-<TITLEABBREV ID="SESHADRI95">
-</TITLEABBREV>
-<AUTHORGROUP>
-<AUTHOR>
-<FIRSTNAME>P.</FIRSTNAME>
-<SURNAME>Seshadri</SURNAME>
-</AUTHOR>
-<AUTHOR>
-<FIRSTNAME>A.</FIRSTNAME>
-<SURNAME>Swami</SURNAME>
-</AUTHOR>
-</AUTHORGROUP>
-<CONFGROUP>
-<CONFDATES>March 1995</CONFDATES>
-<CONFTITLE>Eleventh International Conference on Data Engineering</CONFTITLE>
-</CONFGROUP>
-<PUBDATE>1995</PUBDATE>
-<ISSN>Cat. No.95CH35724</ISSN>
-<PUBLISHER>
-<PUBLISHERNAME>IEEE Computer Society Press</PUBLISHERNAME>
-</PUBLISHER>
+    <title id="SESHADRI95-full">
+     <ulink url="http://simon.cs.cornell.edu/home/praveen/papers/partindex.de95.ps.Z">
+      Generalized partial indexes
+     </ulink>
+    </title>
+    <titleabbrev id="SESHADRI95">
+    </titleabbrev>
+    <authorgroup>
+     <author>
+      <firstname>P.</firstname>
+      <surname>Seshadri</surname>
+     </author>
+     <author>
+      <firstname>A.</firstname>
+      <surname>Swami</surname>
+     </author>
+    </authorgroup>
+    <confgroup>
+     <confdates>March 1995</confdates>
+     <conftitle>Eleventh International Conference on Data Engineering</conftitle>
+    </confgroup>
+    <pubdate>1995</pubdate>
+    <issn>Cat. No.95CH35724</issn>
+    <publisher>
+     <publishername>IEEE Computer Society Press</publishername>
+    </publisher>
 <!--
 </BOOKBIBLIO>
 -->
-</BIBLIOENTRY>
+   </biblioentry>
 
-<BIBLIOENTRY>
+   <biblioentry>
 <!--
 <BIBLIOMISC>&dash;</BIBLIOMISC>
 
 <BOOKBIBLIO ID="STON86">
 -->
-<TITLE ID="STON86-full">
-The Design of <ProductName>Postgres</ProductName>
-</TITLE>
-<TITLEABBREV ID="STON86">
-Stonebraker and Rowe, 1986
-</TITLEABBREV>
-<AUTHORGROUP>
-<AUTHOR>
-<FIRSTNAME>M.</FIRSTNAME>
-<SURNAME>Stonebraker</SURNAME>
-</AUTHOR>
-<AUTHOR>
-<FIRSTNAME>L.</FIRSTNAME>
-<SURNAME>Rowe</SURNAME>
-</AUTHOR>
-</AUTHORGROUP>
-<CONFGROUP>
-<CONFDATES>May 1986</CONFDATES>
-<CONFTITLE>Conference on Management of Data, Washington DC</CONFTITLE>
-<CONFSPONSOR>ACM-SIGMOD</CONFSPONSOR>
-<CONFNUM>1986</CONFNUM>
-</CONFGROUP>
+    <title id="STON86-full">
+     The Design of <productname>Postgres</productname>
+    </title>
+    <titleabbrev id="STON86">
+     Stonebraker and Rowe, 1986
+    </titleabbrev>
+    <authorgroup>
+     <author>
+      <firstname>M.</firstname>
+      <surname>Stonebraker</surname>
+     </author>
+     <author>
+      <firstname>L.</firstname>
+      <surname>Rowe</surname>
+     </author>
+    </authorgroup>
+    <confgroup>
+     <confdates>May 1986</confdates>
+     <conftitle>Conference on Management of Data, Washington DC</conftitle>
+     <confsponsor>ACM-SIGMOD</confsponsor>
+     <confnum>1986</confnum>
+    </confgroup>
 <!--
 </BOOKBIBLIO>
 -->
-</BIBLIOENTRY>
+   </biblioentry>
 
-<BIBLIOENTRY>
+   <biblioentry>
 <!--
 <BIBLIOMISC>&dash;</BIBLIOMISC>
 
 <BOOKBIBLIO ID="STON87a">
 -->
-<TITLE ID="STON87a-full">
-The Design of the <ProductName>Postgres</ProductName> Rules System</TITLE>
-<TITLEABBREV ID="STON87a">
-Stonebraker, Hanson, Hong, 1987
-</TITLEABBREV>
-<AUTHORGROUP>
-<AUTHOR>
-<FIRSTNAME>M.</FIRSTNAME>
-<SURNAME>Stonebraker</SURNAME>
-</AUTHOR>
-<AUTHOR>
-<FIRSTNAME>E.</FIRSTNAME>
-<SURNAME>Hanson</SURNAME>
-</AUTHOR>
-<AUTHOR>
-<FIRSTNAME>C. H.</FIRSTNAME>
-<SURNAME>Hong</SURNAME>
-</AUTHOR>
-</AUTHORGROUP>
-<CONFGROUP>
-<CONFDATES>Feb. 1987</CONFDATES>
-<CONFTITLE>Conference on Data Engineering, Los Angeles, CA</CONFTITLE>
-<CONFSPONSOR>IEEE</CONFSPONSOR>
-<CONFNUM>1987</CONFNUM>
-</CONFGROUP>
+    <title id="STON87a-full">
+     The Design of the <productname>Postgres</productname> Rules System</title>
+    <titleabbrev id="STON87a">
+     Stonebraker, Hanson, Hong, 1987
+    </titleabbrev>
+    <authorgroup>
+     <author>
+      <firstname>M.</firstname>
+      <surname>Stonebraker</surname>
+     </author>
+     <author>
+      <firstname>E.</firstname>
+      <surname>Hanson</surname>
+     </author>
+     <author>
+      <firstname>C. H.</firstname>
+      <surname>Hong</surname>
+     </author>
+    </authorgroup>
+    <confgroup>
+     <confdates>Feb. 1987</confdates>
+     <conftitle>Conference on Data Engineering, Los Angeles, CA</conftitle>
+     <confsponsor>IEEE</confsponsor>
+     <confnum>1987</confnum>
+    </confgroup>
 <!--
 </BOOKBIBLIO>
 -->
-</BIBLIOENTRY>
+   </biblioentry>
 
-<BIBLIOENTRY>
+   <biblioentry>
 <!--
 <BIBLIOMISC>&dash;</BIBLIOMISC>
 
 <BOOKBIBLIO ID="STON87b">
 -->
-<TITLE ID="STON87b-full">
-The <ProductName>Postgres</ProductName> Storage System
-</TITLE>
-<TITLEABBREV ID="STON87b">
-Stonebraker, 1987
-</TITLEABBREV>
-<AUTHORGROUP>
-<AUTHOR>
-<FIRSTNAME>M.</FIRSTNAME>
-<SURNAME>Stonebraker</SURNAME>
-</AUTHOR>
-</AUTHORGROUP>
-<CONFGROUP>
-<CONFDATES>Sept. 1987</CONFDATES>
-<CONFTITLE>VLDB  Conference, Brighton, England</CONFTITLE>
-<CONFNUM>1987</CONFNUM>
-</CONFGROUP>
+    <title id="STON87b-full">
+     The <productname>Postgres</productname> Storage System
+    </title>
+    <titleabbrev id="STON87b">
+     Stonebraker, 1987
+    </titleabbrev>
+    <authorgroup>
+     <author>
+      <firstname>M.</firstname>
+      <surname>Stonebraker</surname>
+     </author>
+    </authorgroup>
+    <confgroup>
+     <confdates>Sept. 1987</confdates>
+     <conftitle>VLDB  Conference, Brighton, England</conftitle>
+     <confnum>1987</confnum>
+    </confgroup>
 <!--
 </BOOKBIBLIO>
 -->
-</BIBLIOENTRY>
+   </biblioentry>
 
-<BIBLIOENTRY>
+   <biblioentry>
 <!--
 <BIBLIOMISC>&dash;</BIBLIOMISC>
 
 <BOOKBIBLIO ID="STON89">
 -->
-<TITLE ID="STON89-full">
-A Commentary on the <ProductName>Postgres</ProductName> Rules System
-</TITLE>
-<TITLEABBREV ID="STON89">
-Stonebraker et al, 1989</TITLEABBREV>
-<AUTHORGROUP>
-<AUTHOR>
-<FIRSTNAME>M.</FIRSTNAME>
-<SURNAME>Stonebraker</SURNAME>
-</AUTHOR>
-<AUTHOR>
-<FIRSTNAME>M.</FIRSTNAME>
-<SURNAME>Hearst</SURNAME>
-</AUTHOR>
-<AUTHOR>
-<FIRSTNAME>S.</FIRSTNAME>
-<SURNAME>Potamianos</SURNAME>
-</AUTHOR>
-</AUTHORGROUP>
-<CONFGROUP>
-<CONFDATES>Sept. 1989</CONFDATES>
-<CONFTITLE>Record 18(3)</CONFTITLE>
-<CONFSPONSOR>SIGMOD</CONFSPONSOR>
-<CONFNUM>1989</CONFNUM>
-</CONFGROUP>
+    <title id="STON89-full">
+     A Commentary on the <productname>Postgres</productname> Rules System
+    </title>
+    <titleabbrev id="STON89">
+     Stonebraker et al, 1989</titleabbrev>
+    <authorgroup>
+     <author>
+      <firstname>M.</firstname>
+      <surname>Stonebraker</surname>
+     </author>
+     <author>
+      <firstname>M.</firstname>
+      <surname>Hearst</surname>
+     </author>
+     <author>
+      <firstname>S.</firstname>
+      <surname>Potamianos</surname>
+     </author>
+    </authorgroup>
+    <confgroup>
+     <confdates>Sept. 1989</confdates>
+     <conftitle>Record 18(3)</conftitle>
+     <confsponsor>SIGMOD</confsponsor>
+     <confnum>1989</confnum>
+    </confgroup>
 <!--
 </BOOKBIBLIO>
 -->
-</BIBLIOENTRY>
+   </biblioentry>
 
-<BIBLIOENTRY>
+   <biblioentry>
 <!--
 <BIBLIOMISC>&dash;</BIBLIOMISC>
 
@@ -605,96 +677,113 @@ Stonebraker et al, 1989</TITLEABBREV>
 http://s2k-ftp.CS.Berkeley.EDU:8000/postgres/papers/ERL-M89-17.pdf
 
 -->
-<TITLE ID="STON89b-full">
-<ulink url="http://s2k-ftp.CS.Berkeley.EDU:8000/postgres/papers/ERL-M89-17.pdf">
-The case for partial indexes (DBMS)
-</ulink>
-</TITLE>
-<TITLEABBREV ID="STON89b">
-Stonebraker, M, 1989b</TITLEABBREV>
-<AUTHORGROUP>
-<AUTHOR>
-<FIRSTNAME>M.</FIRSTNAME>
-<SURNAME>Stonebraker</SURNAME>
-</AUTHOR>
-</AUTHORGROUP>
-<CONFGROUP>
-<CONFDATES>Dec. 1989</CONFDATES>
-<CONFTITLE>Record 18(no.4):4-11</CONFTITLE>
-<CONFSPONSOR>SIGMOD</CONFSPONSOR>
-<CONFNUM>1989</CONFNUM>
-</CONFGROUP>
+    <title id="STON89b-full">
+     <ulink url="http://s2k-ftp.CS.Berkeley.EDU:8000/postgres/papers/ERL-M89-17.pdf">
+      The case for partial indexes (DBMS)
+     </ulink>
+    </title>
+    <titleabbrev id="STON89b">
+     Stonebraker, M, 1989b</titleabbrev>
+    <authorgroup>
+     <author>
+      <firstname>M.</firstname>
+      <surname>Stonebraker</surname>
+     </author>
+    </authorgroup>
+    <confgroup>
+     <confdates>Dec. 1989</confdates>
+     <conftitle>Record 18(no.4):4-11</conftitle>
+     <confsponsor>SIGMOD</confsponsor>
+     <confnum>1989</confnum>
+    </confgroup>
 <!--
 </BOOKBIBLIO>
 -->
-</BIBLIOENTRY>
+   </biblioentry>
 
-<BIBLIOENTRY>
+   <biblioentry>
 <!--
 <BIBLIOMISC>&dash;</BIBLIOMISC>
 
 <BOOKBIBLIO ID="STON90a">
 -->
-<TITLE ID="STON90a-full">
-The Implementation of <ProductName>Postgres</ProductName>
-</TITLE>
-<TITLEABBREV ID="STON90a">
-Stonebraker, Rowe, Hirohama, 1990
-</TITLEABBREV>
-<AUTHORGROUP>
-<AUTHOR>
-<FIRSTNAME>M.</FIRSTNAME>
-<SURNAME>Stonebraker</SURNAME>
-</AUTHOR>
-<AUTHOR>
-<FIRSTNAME>L. A.</FIRSTNAME>
-<SURNAME>Rowe</SURNAME>
-</AUTHOR>
-<AUTHOR>
-<FIRSTNAME>M.</FIRSTNAME>
-<SURNAME>Hirohama</SURNAME>
-</AUTHOR>
-</AUTHORGROUP>
-<CONFGROUP>
-<CONFDATES>March 1990</CONFDATES>
-<CONFTITLE>Transactions on Knowledge and Data Engineering 2(1)</CONFTITLE>
-<CONFSPONSOR>IEEE</CONFSPONSOR>
-</CONFGROUP>
+    <title id="STON90a-full">
+     The Implementation of <productname>Postgres</productname>
+    </title>
+    <titleabbrev id="STON90a">
+     Stonebraker, Rowe, Hirohama, 1990
+    </titleabbrev>
+    <authorgroup>
+     <author>
+      <firstname>M.</firstname>
+      <surname>Stonebraker</surname>
+     </author>
+     <author>
+      <firstname>L. A.</firstname>
+      <surname>Rowe</surname>
+     </author>
+     <author>
+      <firstname>M.</firstname>
+      <surname>Hirohama</surname>
+     </author>
+    </authorgroup>
+    <confgroup>
+     <confdates>March 1990</confdates>
+     <conftitle>Transactions on Knowledge and Data Engineering 2(1)</conftitle>
+     <confsponsor>IEEE</confsponsor>
+    </confgroup>
 <!--
 </BOOKBIBLIO>
 -->
-</BIBLIOENTRY>
+   </biblioentry>
 
-<BIBLIOENTRY>
+   <biblioentry>
 <!--
 <BIBLIOMISC>&dash;</BIBLIOMISC>
 
 <BOOKBIBLIO ID="STON90b">
 -->
-<TITLE ID="STON90b-full">
-On Rules, Procedures, Caching and Views in Database Systems
-</TITLE>
-<TITLEABBREV ID="STON90b">
-Stonebraker et al, ACM, 1990
-</TITLEABBREV>
-<AUTHORGROUP>
-<AUTHOR>
-<FIRSTNAME>M.</FIRSTNAME>
-<SURNAME>Stonebraker</SURNAME>
-</AUTHOR>
-<AUTHOR>
-<SURNAME>et al</SURNAME>
-</AUTHOR>
-</AUTHORGROUP>
-<CONFGROUP>
-<CONFDATES>June 1990</CONFDATES>
-<CONFTITLE>Conference on Management of Data</CONFTITLE>
-<CONFSPONSOR>ACM-SIGMOD</CONFSPONSOR>
-</CONFGROUP>
+    <title id="STON90b-full">
+     On Rules, Procedures, Caching and Views in Database Systems
+    </title>
+    <titleabbrev id="STON90b">
+     Stonebraker et al, ACM, 1990
+    </titleabbrev>
+    <authorgroup>
+     <author>
+      <firstname>M.</firstname>
+      <surname>Stonebraker</surname>
+     </author>
+     <author>
+      <surname>et al</surname>
+     </author>
+    </authorgroup>
+    <confgroup>
+     <confdates>June 1990</confdates>
+     <conftitle>Conference on Management of Data</conftitle>
+     <confsponsor>ACM-SIGMOD</confsponsor>
+    </confgroup>
 <!--
 </BOOKBIBLIO>
 -->
-</BIBLIOENTRY>
+   </biblioentry>
 
-</BIBLIODIV>
-</BIBLIOGRAPHY>
+  </bibliodiv>
+ </bibliography>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-omittag:nil
+sgml-shorttag:t
+sgml-minimize-attributes:nil
+sgml-always-quote-attributes:t
+sgml-indent-step:1
+sgml-indent-data:t
+sgml-parent-document:nil
+sgml-default-dtd-file:"./reference.ced"
+sgml-exposed-tags:nil
+sgml-local-catalogs:"/usr/lib/sgml/catalog"
+sgml-local-ecat-files:nil
+End:
+-->
