@@ -5,7 +5,6 @@
 #endif /* dtime_t */
 
 #ifndef intrvl_t
-#warning needs interval here
 #define intrvl_t Timestamp
 #endif /* intrvl_t */
 
