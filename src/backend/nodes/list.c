@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/list.c,v 1.19 1999/02/22 06:08:47 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/list.c,v 1.20 1999/02/22 17:29:57 momjian Exp $
  *
  * NOTES
  *	  XXX a few of the following functions are duplicated to handle
@@ -285,6 +285,7 @@ freeList(List *list)
 	}
 }
 
+#ifdef NOT_USED
 /*
  * below are for backwards compatibility
  */
@@ -306,6 +307,7 @@ append(List *l1, List *l2)
 	lnext(p) = newlist2;
 	return newlist;
 }
+#endif
 
 #ifdef NOT_USED
 /*
