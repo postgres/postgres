@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Thu Jan 24 21:33:26 EST 2002
+Last updated:		Sat Jan 26 18:08:43 EST 2002
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -187,7 +187,7 @@ COMMANDS
 
 * Add SIMILAR TO to allow character classes, 'pg_[a-c]%'
 * Add BETWEEN ASYMMETRIC/SYMMETRIC
-* -Allow LOCK TABLE tab1, tab2, tab3 so all tables locked in unison [lock]
+* -Allow LOCK TABLE tab1, tab2, tab3 so all tables locked in unison
 * Remove LIMIT #,# and force use LIMIT and OFFSET clauses in 7.3 (Bruce)
 * Allow LIMIT/OFFSET to use expressions
 * -Allow GRANT/REVOKE to handle multiple user/group names (Vince)
