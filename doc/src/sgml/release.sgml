@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.110 2001/12/28 05:03:10 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.111 2002/01/03 05:37:43 momjian Exp $
 -->
 
 <appendix id="release">
@@ -284,7 +284,7 @@ Make OIDs optional using WITHOUT OIDS (Tom)
 Add %TYPE syntax to CREATE TYPE (Ian Lance Taylor)
 Add ALTER TABLE / DROP CONSTRAINT for CHECK constraints (Christopher Kings-Lynne)
 New CREATE OR REPLACE FUNCTION to alter existing function (preserving the function OID) (Gavin Sherry)
-Add ALTER TABLE / ADD UNIQUE (Christopher Kings-Lynne)
+Add ALTER TABLE / ADD [ UNIQUE | PRIMARY ] (Christopher Kings-Lynne)
 Allow column renaming in views
 Make ALTER TABLE / RENAME COLUMN update column names of indexes (Brent Verner)
 Fix for ALTER TABLE / ADD CONSTRAINT ... CHECK with inherited tables (Stephan Szabo)
