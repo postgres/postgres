@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.40 1999/05/03 23:48:26 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.41 1999/05/05 21:38:37 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1336,10 +1336,16 @@ array_map(ArrayType *v,
 	system_cache_lookup(retType, false, &typlen, &typbyval,
 						&typdelim, &typelem, &proc, &typalign);
 
-	/* Allocate temporary array for new values */
 	ndim   = ARR_NDIM(v);
 	dim    = ARR_DIMS(v);
 	nitems = getNitems(ndim, dim);
+
+	/* Check for empty array */
+	if (nitems <= 0) {
+		return v;
+	}
+
+	/* Allocate temporary array for new values */
 	values = (char **) palloc(nitems * sizeof(char *));
 	MemSet(values, 0, nitems * sizeof(char *));
 
