@@ -945,7 +945,7 @@ copy_statement_with_parameters(StatementClass *stmt)
 	int			param_number;
 	Int2		param_ctype,
 				param_sqltype;
-	char	   *old_statement = stmt->statement;
+	char	   *old_statement = stmt->statement, oldchar;
 	char	   *new_statement = stmt->stmt_with_params;
 	unsigned int	new_stsize = 0;
 	SIMPLE_TIME st;
@@ -999,10 +999,11 @@ copy_statement_with_parameters(StatementClass *stmt)
 
 	for (opos = 0; opos < oldstmtlen; opos++)
 	{
+		oldchar = old_statement[opos];
 #ifdef MULTIBYTE
-		if (multibyte_char_check(old_statement[opos]) != 0)
+		if (multibyte_char_check(oldchar) != 0)
 		{
-			CVT_APPEND_CHAR(old_statement[opos]);
+			CVT_APPEND_CHAR(oldchar);
 			continue;
 		}
 		/*
@@ -1010,35 +1011,37 @@ copy_statement_with_parameters(StatementClass *stmt)
 		 *	1-byte character.
 		 */
 #endif
-		/* Squeeze carriage-return/linefeed pairs to linefeed only */
-		if (old_statement[opos] == '\r' && opos + 1 < oldstmtlen &&
-			old_statement[opos + 1] == '\n')
-			continue;
 
-		else if (in_escape) /* escape check */
+		if (in_escape) /* escape check */
 		{
 			in_escape = FALSE;
-			CVT_APPEND_CHAR(old_statement[opos]);
+			CVT_APPEND_CHAR(oldchar);
 			continue;
 		}	
 		else if (in_quote || in_dquote) /* quote/double quote check */
 		{
-			if (old_statement[opos] == '\'' && in_quote)
+			if (oldchar == '\\')
+				in_escape = TRUE;
+			else if (oldchar == '\'' && in_quote)
 				in_quote = FALSE;
-			else if (old_statement[opos] == '\"' && in_dquote)
+			else if (oldchar == '\"' && in_dquote)
 				in_dquote = FALSE;
-			CVT_APPEND_CHAR(old_statement[opos]);
+			CVT_APPEND_CHAR(oldchar);
 			continue;	
 		}
 		/*
 		 *	From here we are guranteed to be in neither
-		 *	an escape nor a quote nor a double quote.
+		 *	an escape, a quote nor a double quote.
 		 */
+		/* Squeeze carriage-return/linefeed pairs to linefeed only */
+		else if (oldchar == '\r' && opos + 1 < oldstmtlen &&
+			old_statement[opos + 1] == '\n')
+			continue;
 		/*
 		 * Handle literals (date, time, timestamp) and ODBC scalar
 		 * functions
 		 */
-		else if (old_statement[opos] == '{')
+		else if (oldchar == '{')
 		{
 			char	   *esc;
 			char	   *begin = &old_statement[opos + 1];
@@ -1064,7 +1067,7 @@ copy_statement_with_parameters(StatementClass *stmt)
 			else
 			{					/* it's not a valid literal so just copy */
 				*end = '}';
-				CVT_APPEND_CHAR(old_statement[opos]);
+				CVT_APPEND_CHAR(oldchar);
 				continue;
 			}
 
@@ -1078,15 +1081,15 @@ copy_statement_with_parameters(StatementClass *stmt)
 		 * so. All the queries I've seen expect the driver to put quotes
 		 * if needed.
 		 */
-		else if (old_statement[opos] == '?')
+		else if (oldchar == '?')
 			;					/* ok */
 		else
 		{
-			if (old_statement[opos] == '\'')
+			if (oldchar == '\'')
 				in_quote = TRUE;
-			else if (old_statement[opos] == '\\')
+			else if (oldchar == '\\')
 				in_escape = TRUE;
-			else if (old_statement[opos] == '\"')
+			else if (oldchar == '\"')
 				in_dquote = TRUE;
 			else if (check_select_into && /* select into check */
     				 opos > 0 &&
@@ -1097,7 +1100,7 @@ copy_statement_with_parameters(StatementClass *stmt)
 				memmove(new_statement, new_statement + declare_pos, npos - declare_pos);
 				npos -= declare_pos;
 			}
-			CVT_APPEND_CHAR(old_statement[opos]);
+			CVT_APPEND_CHAR(oldchar);
 			continue;
 		}
 
