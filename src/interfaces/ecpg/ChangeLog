@@ -9,3 +9,17 @@ Wed Feb 11 10:58:13 CET 1998
 Thu Feb 12 14:45:07 CET 1998
 
 	- Changed parser to correctly handle local variables.
+        - Allow static and extern variable definitions.
+        - free() variable structure completely.
+
+Fri Feb 13 12:35:58 CET 1998
+
+      - ecpg can use structs to store data, but only if the complete
+        definition of the struct lies inside the sql declare section
+        and only simple types used.
+
+Fre Feb 13 14:12:41 CET 1998
+
+      - Structure now work completely.
+
+

@@ -47,7 +47,7 @@ $(shlib): ecpglib.o typename.o
 clean:
 	rm -f *.o *.a core a.out *~ $(shlib) libecpg.so
 
-install: libecpg.a
+install: libecpg.a $(shlib)
 	install -m 644 libecpg.a $(DESTDIR)$(LIBDIR)
 	install -m 644 $(shlib) $(DESTDIR)$(LIBDIR)
 	ln -sf $(shlib) $(DESTDIR)$(LIBDIR)/libecpg.so

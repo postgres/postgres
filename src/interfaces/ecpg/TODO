@@ -16,10 +16,6 @@ just -1 for them all.
     
 Missing library functions to_date et al.
     
-Possibility to define records or structs in the declare section in a way
-that the record can be filled from one row in the database. This is a
-simpler way to handle an entire row at a time.
-    
 Oracle has array operations that enhances speed. When implementing it in
 ecpg it is done for compatibility reasons only. For them to improve speed
 would require a lot more insight in the postgres internal mechanisms than I
@@ -44,5 +40,6 @@ could be realised in a script.
 
 Now comes my list (MM):
 
-Variable definitions containing static/volatile have to be possible.
+What do we do with enum data types?
 
+'signed' isn't understood so far

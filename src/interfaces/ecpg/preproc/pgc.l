@@ -58,6 +58,14 @@ float			{ dbg(S_FLOAT); return S_FLOAT; }
 double			{ dbg(S_DOUBLE); return S_DOUBLE; }
 bool                    { dbg(S_BOOL); return S_BOOL; }
 
+static			{ dbg(S_STATIC); return S_STATIC; }
+extern			{ dbg(S_EXTERN); return S_EXTERN; }
+auto			{ dbg(S_AUTO); return S_AUTO; }
+const			{ dbg(S_CONST); return S_CONST; }
+register		{ dbg(S_REGISTER); return S_REGISTER; }
+
+struct			{ dbg(S_STRUCT); return S_STRUCT; }
+
 {string}		{ dbg(SQL_STRING); return SQL_STRING; }
 <SQL>{ws}		; 
 {symbol}		{ dbg(S_SYMBOL); return S_SYMBOL; }

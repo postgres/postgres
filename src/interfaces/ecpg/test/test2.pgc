@@ -18,8 +18,11 @@ int
 main ()
 {
 exec sql begin declare section;
-	varchar name[8];
-	long born;
+	struct personal_struct	{	varchar name[8];
+					struct birth_struct {	long born;
+								short age;
+							    } birth;
+				} personal;
 exec sql end declare section;
 	FILE *dbgs;
 
@@ -31,7 +34,7 @@ exec sql end declare section;
 		db_error ("connect");
 
 	exec sql declare cur cursor for 
-		select name, born from meskes;
+		select name, born, age from meskes;
 	if (SQLCODE) db_error ("declare");
 
 	exec sql open cur;
@@ -39,10 +42,10 @@ exec sql end declare section;
 		db_error ("open");
 
 	while (1) {
-		exec sql fetch in cur into :name, :born;
+		exec sql fetch in cur into :personal;
 		if (SQLCODE)
 			break;
-		printf ("%8.8s was born %d\n", name.arr, born);
+		printf ("%8.8s was born %d (age = %d)\n", personal.name.arr, personal.birth.born, personal.birth.age);
 	}
 
 	if (SQLCODE < 0)

@@ -51,12 +51,7 @@ main(int argc, char *const argv[])
 		{
 			char	   *filename, *ptr2ext;
 
-			filename = malloc(strlen(argv[fnr]) + 2);
-			if (filename == NULL)
-			{
-				perror("malloc");
-				continue;
-			}
+			filename = mm_alloc(strlen(argv[fnr]) + 2);
 
 			strcpy(filename, argv[fnr]);
 

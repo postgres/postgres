@@ -12,7 +12,11 @@ static void yyerror(char *);
 /*
  * Variables containing simple states.
  */
-int    debugging = 0;
+int	debugging = 0;
+static int	struct_level = 0;
+
+/* temporarily store record members while creating the data structure */
+struct ECPGrecord_member *record_member_list[128] = { NULL };
 
 /*
  * Handle the filename and line numbering.
@@ -86,7 +90,7 @@ remove_variables(int brace_level)
 {
     struct variable * p, *prev;
 
-    for (p = prev = allvariables; p; p = p->next)
+    for (p = prev = allvariables; p; p = p ? p->next : NULL)
     {
 	if (p->brace_level >= brace_level)
 	{
@@ -96,6 +100,8 @@ remove_variables(int brace_level)
 	    else
 		prev->next = p->next;
 
+	    ECPGfree_type(p->type);
+	    free(p->name);
 	    free(p);
 	    p = prev;
 	}
@@ -157,7 +163,7 @@ dump_variables(struct arguments * list)
     dump_variables(list->next);
 
     /* Then the current element. */
-    ECPGdump_a_type(yyout, list->variable->name, list->variable->type);
+    ECPGdump_a_type(yyout, list->variable->name, list->variable->type, NULL);
 
     /* Then release the list element. */
     free(list);
@@ -179,12 +185,12 @@ dump_variables(struct arguments * list)
 
 %token <tagname> S_SYMBOL S_LENGTH S_ANYTHING
 %token <tagname> S_VARCHAR S_VARCHAR2
-%token <tagname> S_EXTERN S_STATIC
+%token <tagname> S_EXTERN S_STATIC S_AUTO S_CONST S_REGISTER S_STRUCT
 %token <tagname> S_UNSIGNED S_SIGNED
 %token <tagname> S_LONG S_SHORT S_INT S_CHAR S_FLOAT S_DOUBLE S_BOOL
 %token <tagname> '[' ']' ';' ',' '{' '}'
 
-%type <type> type type_detailed varchar_type simple_type array_type
+%type <type> type type_detailed varchar_type simple_type array_type struct_type
 %type <symbolname> symbol
 %type <tagname> maybe_storage_clause varchar_tag
 %type <type_enum> simple_tag
@@ -227,8 +233,12 @@ variable_declarations : /* empty */
 
 /* Here is where we can enter support for typedef. */
 variable_declaration : type ';'	{ 
-    new_variable($<type>1.name, $<type>1.typ);
-    free($<type>1.name);
+    /* don't worry about our list when we're working on a struct */
+    if (struct_level == 0)
+    {
+	new_variable($<type>1.name, $<type>1.typ);
+	free($<type>1.name);
+    }
     fprintf(yyout, ";"); 
 }
 
@@ -244,12 +254,18 @@ symbol : S_SYMBOL {
 type : maybe_storage_clause type_detailed { $<type>$ = $<type>2; };
 type_detailed : varchar_type { $<type>$ = $<type>1; }
 	      | simple_type { $<type>$ = $<type>1; }
-	      | array_type {$<type>$ = $<type>1; };
+	      | array_type {$<type>$ = $<type>1; }
+	      | struct_type {$<type>$ = $<type>1; };
 
 varchar_type : varchar_tag symbol index {
     fprintf(yyout, "struct varchar_%s { int len; char arr[%d]; } %s", $<symbolname>2, $<indexsize>3, $<symbolname>2);
-    $<type>$.name = $<symbolname>2;
-    $<type>$.typ = ECPGmake_varchar_type(ECPGt_varchar, $<indexsize>3);
+    if (struct_level == 0)
+    {
+	$<type>$.name = $<symbolname>2;
+	$<type>$.typ = ECPGmake_varchar_type(ECPGt_varchar, $<indexsize>3);
+    }
+    else
+	ECPGmake_record_member($<symbolname>2, ECPGmake_varchar_type(ECPGt_varchar, $<indexsize>3), &(record_member_list[struct_level-1]));
 }
 
 varchar_tag : S_VARCHAR { $<tagname>$ = $<tagname>1; }
@@ -257,14 +273,42 @@ varchar_tag : S_VARCHAR { $<tagname>$ = $<tagname>1; }
 
 simple_type : simple_tag symbol {
     fprintf(yyout, "%s %s", ECPGtype_name($<type_enum>1), $<symbolname>2);
-    $<type>$.name = $<symbolname>2;
-    $<type>$.typ = ECPGmake_simple_type($<type_enum>1);
+    if (struct_level == 0)
+    {
+	$<type>$.name = $<symbolname>2;
+	$<type>$.typ = ECPGmake_simple_type($<type_enum>1);
+    }
+    else
+        ECPGmake_record_member($<symbolname>2, ECPGmake_simple_type($<type_enum>1), &(record_member_list[struct_level-1]));
 }
 
 array_type : simple_tag symbol index {
     fprintf(yyout, "%s %s [%d]", ECPGtype_name($<type_enum>1), $<symbolname>2, $<indexsize>3);
-    $<type>$.name = $<symbolname>2;
-    $<type>$.typ = ECPGmake_array_type(ECPGmake_simple_type($<type_enum>1), $<indexsize>3);
+    if (struct_level == 0)
+    {
+	$<type>$.name = $<symbolname>2;
+	$<type>$.typ = ECPGmake_array_type(ECPGmake_simple_type($<type_enum>1), $<indexsize>3);
+    }
+    else
+	ECPGmake_record_member($<symbolname>2, ECPGmake_array_type(ECPGmake_simple_type($<type_enum>1), $<indexsize>3), &(record_member_list[struct_level-1]));
+}
+
+s_struct : S_STRUCT symbol {
+    struct_level++;
+    fprintf(yyout, "struct %s {", $<symbolname>2);
+}
+
+struct_type : s_struct '{' variable_declarations '}' symbol {
+    struct_level--;
+    if (struct_level == 0)
+    {
+	$<type>$.name = $<symbolname>5;
+	$<type>$.typ = ECPGmake_record_type(record_member_list[struct_level]);
+    }
+    else
+	ECPGmake_record_member($<symbolname>5, ECPGmake_record_type(record_member_list[struct_level]), &(record_member_list[struct_level-1])); 
+    fprintf(yyout, "} %s", $<symbolname>5);
+    record_member_list[struct_level] = NULL;
 }
 
 simple_tag : S_CHAR { $<type_enum>$ = ECPGt_char; }
@@ -281,6 +325,9 @@ simple_tag : S_CHAR { $<type_enum>$ = ECPGt_char; }
 
 maybe_storage_clause : S_EXTERN { fwrite(yytext, yyleng, 1, yyout); }
 		       | S_STATIC { fwrite(yytext, yyleng, 1, yyout); }
+		       | S_CONST { fwrite(yytext, yyleng, 1, yyout); }
+		       | S_REGISTER { fwrite(yytext, yyleng, 1, yyout); }
+		       | S_AUTO { fwrite(yytext, yyleng, 1, yyout); }
                        | /* empty */ { };
   	 
 index : '[' length ']' {
@@ -369,13 +416,14 @@ canything : both_anything
 sqlanything : both_anything;
 
 both_anything : S_LENGTH | S_VARCHAR | S_VARCHAR2 
-	  | S_LONG | S_SHORT | S_INT | S_CHAR | S_FLOAT | S_DOUBLE
+	  | S_LONG | S_SHORT | S_INT | S_CHAR | S_FLOAT | S_DOUBLE | S_BOOL
 	  | SQL_OPEN | SQL_CONNECT
 	  | SQL_STRING
 	  | SQL_BEGIN | SQL_END 
 	  | SQL_DECLARE | SQL_SECTION 
 	  | SQL_INCLUDE 
 	  | S_SYMBOL
+	  | S_STATIC | S_EXTERN | S_AUTO | S_CONST | S_REGISTER | S_STRUCT
 	  | '[' | ']' | ','
 	  | S_ANYTHING;
 
