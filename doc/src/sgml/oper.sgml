@@ -1,0 +1,458 @@
+<Chapter>
+<Title>Operators</Title>
+
+<Abstract>
+<Para>
+Describes the built-in operators available in <ProductName>Postgres</ProductName>.
+</Para>
+</Abstract>
+
+<Para>
+<ProductName>Postgres</ProductName> provides a large number of built-in operators on system types.
+These operators are declared in the system catalog
+pg_operator.  Every entry in pg_operator includes
+the name of the procedure that implements the operator and the
+class <Acronym>OIDs</Acronym> of the input and output types.
+
+<Para>
+To view all variations of the <Quote>||</Quote> string concatenation operator, try
+<ProgramListing>
+    SELECT oprleft, oprright, oprresult, oprcode
+    FROM pg_operator WHERE oprname = '||';
+
+oprleft|oprright|oprresult|oprcode
+-------+--------+---------+-------
+     25|      25|       25|textcat
+   1042|    1042|     1042|textcat
+   1043|    1043|     1043|textcat
+(3 rows)
+</ProgramListing>
+</Para>
+
+<sect1>
+<title>General Operators</title>
+
+<para>
+The operators listed here are defined for a number of native data types, ranging
+from numeric types to data/time types.
+
+<Para>
+<TABLE TOCENTRY="1">
+<TITLE><ProductName>Postgres</ProductName> Operators</TITLE>
+<TITLEABBREV>Operators</TITLEABBREV>
+<TGROUP COLS="3">
+<THEAD>
+  <ROW>
+    <ENTRY>Operator</ENTRY>
+    <ENTRY>Description</ENTRY>
+    <ENTRY>Usage</ENTRY>
+  </ROW>
+</THEAD>
+<TBODY>
+  <ROW>
+    <ENTRY> &lt; </ENTRY>
+    <ENTRY>Less than?</ENTRY>
+    <ENTRY>1 &lt; 2</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY> &lt;= </ENTRY>
+    <ENTRY>Less than or equal to?</ENTRY>
+    <ENTRY>1 &lt;= 2</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY> &lt;&gt; </ENTRY>
+    <ENTRY>Not equal?</ENTRY>
+    <ENTRY>1 &lt;&gt; 2</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY> = </ENTRY>
+    <ENTRY>Equal?</ENTRY>
+    <ENTRY>1 = 1</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY> &gt; </ENTRY>
+    <ENTRY>Greater than?</ENTRY>
+    <ENTRY>2 &gt; 1</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY> &gt;= </ENTRY>
+    <ENTRY>Greater than or equal to?</ENTRY>
+    <ENTRY>2 &gt;= 1</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY> || </ENTRY>
+    <ENTRY>Concatenate strings</ENTRY>
+    <ENTRY>'Postgre' || 'SQL'</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY> !!= </ENTRY>
+    <ENTRY>NOT IN</ENTRY>
+    <ENTRY>3 !!= i</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY> ~~ </ENTRY>
+    <ENTRY>LIKE</ENTRY>
+    <ENTRY>'scrappy,marc,hermit' ~~ '%scrappy%'</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY> !~~ </ENTRY>
+    <ENTRY>NOT LIKE</ENTRY>
+    <ENTRY>'bruce' !~~ '%al%'</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY> ~ </ENTRY>
+    <ENTRY>Match (regex), case sensitive</ENTRY>
+    <ENTRY>'thomas' ~ '*.thomas*.'</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY> ~* </ENTRY>
+    <ENTRY>Match (regex), case insensitive</ENTRY>
+    <ENTRY>'thomas' ~* '*.Thomas*.'</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY> !~ </ENTRY>
+    <ENTRY>Does not match (regex), case sensitive</ENTRY>
+    <ENTRY>'thomas' !~ '*.Thomas*.'</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY> !~* </ENTRY>
+    <ENTRY>Does not match (regex), case insensitive</ENTRY>
+    <ENTRY>'thomas' !~ '*.vadim*.'</ENTRY>
+  </ROW>
+</TBODY>
+</TGROUP>
+</TABLE>
+</Para>
+
+<sect1>
+<title>Numerical Operators</title>
+
+<Para>
+<TABLE TOCENTRY="1">
+<TITLE><ProductName>Postgres</ProductName> Numerical Operators</TITLE>
+<TITLEABBREV>Operators</TITLEABBREV>
+<TGROUP COLS="3">
+<THEAD>
+  <ROW>
+    <ENTRY>Operator</ENTRY>
+    <ENTRY>Description</ENTRY>
+    <ENTRY>Usage</ENTRY>
+  </ROW>
+</THEAD>
+<TBODY>
+  <ROW>
+    <ENTRY> !  </ENTRY>
+    <ENTRY>Factorial</ENTRY>
+    <ENTRY>3 !</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY> !!  </ENTRY>
+    <ENTRY>Factorial (left operator)</ENTRY>
+    <ENTRY>!! 3</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY> % </ENTRY>
+    <ENTRY>Modulo</ENTRY>
+    <ENTRY>5 % 4</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY> % </ENTRY>
+    <ENTRY>Truncate</ENTRY>
+    <ENTRY>% 4.5</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY> * </ENTRY>
+    <ENTRY>Multiplication</ENTRY>
+    <ENTRY>2 * 3</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY> + </ENTRY>
+    <ENTRY>Addition</ENTRY>
+    <ENTRY>2 + 3</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY> - </ENTRY>
+    <ENTRY>Subtraction</ENTRY>
+    <ENTRY>2 - 3</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY> / </ENTRY>
+    <ENTRY>Division</ENTRY>
+    <ENTRY>4 / 2</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY> : </ENTRY>
+    <ENTRY>Natural Exponentiation</ENTRY>
+    <ENTRY>: 3.0</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY> ; </ENTRY>
+    <ENTRY>Natural Logarithm</ENTRY>
+    <ENTRY>(; 5.0)</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY> @ </ENTRY>
+    <ENTRY>Absolute value</ENTRY>
+    <ENTRY>@ -5.0</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY> ^ </ENTRY>
+    <ENTRY>Exponentiation</ENTRY>
+    <ENTRY>2.0 ^ 3.0</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY> |/ </ENTRY>
+    <ENTRY>Square root</ENTRY>
+    <ENTRY>|/ 25.0</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY> ||/ </ENTRY>
+    <ENTRY>Cube root</ENTRY>
+    <ENTRY>||/ 27.0</ENTRY>
+  </ROW>
+</TBODY>
+</TGROUP>
+</TABLE>
+</Para>
+
+<sect1>
+<title>Geometric Operators</title>
+
+<Para>
+<TABLE TOCENTRY="1">
+<TITLE><ProductName>Postgres</ProductName> Geometric Operators</TITLE>
+<TITLEABBREV>Operators</TITLEABBREV>
+<TGROUP COLS="3">
+<THEAD>
+  <ROW>
+    <ENTRY>Operator</ENTRY>
+    <ENTRY>Description</ENTRY>
+    <ENTRY>Usage</ENTRY>
+  </ROW>
+</THEAD>
+<TBODY>
+  <ROW>
+    <ENTRY> + </ENTRY>
+    <ENTRY>Translation</ENTRY>
+    <ENTRY>'((0,0),(1,1))'::box + '(2.0,0)'::point</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY> - </ENTRY>
+    <ENTRY>Translation</ENTRY>
+    <ENTRY>'((0,0),(1,1))'::box - '(2.0,0)'::point</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY> * </ENTRY>
+    <ENTRY>Scaling/rotation</ENTRY>
+    <ENTRY>'((0,0),(1,1))'::box * '(2.0,0)'::point</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY> / </ENTRY>
+    <ENTRY>Scaling/rotation</ENTRY>
+    <ENTRY>'((0,0),(2,2))'::box / '(2.0,0)'::point</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY> # </ENTRY>
+    <ENTRY>Intersection</ENTRY>
+    <ENTRY>'((1,-1),(-1,1))' # '((1,1),(-1,-1))'</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY> # </ENTRY>
+    <ENTRY>Number of points in polygon</ENTRY>
+    <ENTRY># '((1,0),(0,1),(-1,0))'</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY> ## </ENTRY>
+    <ENTRY>Point of closest proximity</ENTRY>
+    <ENTRY>'(0,0)'::point ## '((2,0),(0,2))'::lseg</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY> &amp;&amp; </ENTRY>
+    <ENTRY>Overlaps?</ENTRY>
+    <ENTRY>'((0,0),(1,1))'::box &amp;&amp; '((0,0),(2,2))'::box</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY> &amp;&lt; </ENTRY>
+    <ENTRY>Overlaps to left?</ENTRY>
+    <ENTRY>'((0,0),(1,1))'::box &amp;&lt; '((0,0),(2,2))'::box</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY> &amp;&gt; </ENTRY>
+    <ENTRY>Overlaps to right?</ENTRY>
+    <ENTRY>'((0,0),(3,3))'::box &amp;&gt; '((0,0),(2,2))'::box</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY> &lt;-&gt; </ENTRY>
+    <ENTRY>Distance between</ENTRY>
+    <ENTRY>'((0,0),1)'::circle &lt;-&gt; '((5,0),1)'::circle</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY> &lt;&lt; </ENTRY>
+    <ENTRY>Left of?</ENTRY>
+    <ENTRY>'((0,0),1)'::circle &lt;&lt; '((5,0),1)'::circle</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY> &lt;^ </ENTRY>
+    <ENTRY>Is below?</ENTRY>
+    <ENTRY>'((0,0),1)'::circle &lt;^ '((0,5),1)'::circle</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY> &gt;&gt; </ENTRY>
+    <ENTRY>Is right of?</ENTRY>
+    <ENTRY>'((5,0),1)'::circle &gt;&gt; '((0,0),1)'::circle</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY> &gt;^ </ENTRY>
+    <ENTRY>Is above?</ENTRY>
+    <ENTRY>'((0,5),1)'::circle >^ '((0,0),1)'::circle</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY> ?# </ENTRY>
+    <ENTRY>Intersects or overlaps</ENTRY>
+    <ENTRY>'((-1,0),(1,0))'::lseg ?# '((-2,-2),(2,2))'::box;</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY> ?- </ENTRY>
+    <ENTRY>Is horizontal?</ENTRY>
+    <ENTRY>'(1,0)'::point ?- '(0,0)'::point</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY> ?-| </ENTRY>
+    <ENTRY>Is perpendicular?</ENTRY>
+    <ENTRY>'((0,0),(0,1))'::lseg ?-| '((0,0),(1,0))'::lseg</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY> @-@  </ENTRY>
+    <ENTRY>Length or circumference</ENTRY>
+    <ENTRY>@-@ '((0,0),(1,0))'::path</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY> ?| </ENTRY>
+    <ENTRY>Is vertical?</ENTRY>
+    <ENTRY>'(0,1)'::point ?| '(0,0)'::point</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY> ?|| </ENTRY>
+    <ENTRY>Is parallel?</ENTRY>
+    <ENTRY>'((-1,0),(1,0))'::lseg ?|| '((-1,2),(1,2))'::lseg</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY> @ </ENTRY>
+    <ENTRY>Contained or on</ENTRY>
+    <ENTRY>'(1,1)'::point @ '((0,0),2)'::circle</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY> @@ </ENTRY>
+    <ENTRY>Center of</ENTRY>
+    <ENTRY>@@ '((0,0),10)'::circle</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY> ~= </ENTRY>
+    <ENTRY>Same as</ENTRY>
+    <ENTRY>'((0,0),(1,1))'::polygon ~= '((1,1),(0,0))'::polygon</ENTRY>
+  </ROW>
+</TBODY>
+</TGROUP>
+</TABLE>
+</Para>
+
+<sect1>
+<title>Time Interval Operators</title>
+
+<Para>
+The time interval data type <Type>tinterval</Type> is a legacy from the original
+date/time types and is not as well supported as the more modern types. There
+are several operators for this type.
+
+<TABLE TOCENTRY="1">
+<TITLE><ProductName>Postgres</ProductName> Time Interval Operators</TITLE>
+<TITLEABBREV>Operators</TITLEABBREV>
+<TGROUP COLS="3">
+<THEAD>
+  <ROW>
+    <ENTRY>Operator</ENTRY>
+    <ENTRY>Description</ENTRY>
+    <ENTRY>Usage</ENTRY>
+  </ROW>
+</THEAD>
+<TBODY>
+  <ROW>
+    <ENTRY> #&lt; </ENTRY>
+    <ENTRY>Interval less than?</ENTRY>
+    <ENTRY></ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY> #&lt;= </ENTRY>
+    <ENTRY>Interval less than or equal to?</ENTRY>
+    <ENTRY></ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY> #&lt;&gt; </ENTRY>
+    <ENTRY>Interval not equal?</ENTRY>
+    <ENTRY></ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY> #= </ENTRY>
+    <ENTRY>Interval equal?</ENTRY>
+    <ENTRY></ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY> #&gt; </ENTRY>
+    <ENTRY>Interval greater than?</ENTRY>
+    <ENTRY></ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY> #&gt;= </ENTRY>
+    <ENTRY>Interval greater than or equal to?</ENTRY>
+    <ENTRY></ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY> &lt;#&gt; </ENTRY>
+    <ENTRY>Convert to time interval</ENTRY>
+    <ENTRY></ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY> &lt;&lt; </ENTRY>
+    <ENTRY>Interval less than?</ENTRY>
+    <ENTRY></ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY> | </ENTRY>
+    <ENTRY>Start of interval</ENTRY>
+    <ENTRY></ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY> ~= </ENTRY>
+    <ENTRY>Same as</ENTRY>
+    <ENTRY></ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY> &lt;?&gt; </ENTRY>
+    <ENTRY>Time inside interval?</ENTRY>
+    <ENTRY></ENTRY>
+  </ROW>
+</TBODY>
+</TGROUP>
+</TABLE>
+</Para>
+
+
+<Para>
+Users may invoke operators using the operator name, as in:
+
+<ProgramListing>
+select * from emp where salary < 40000;
+</ProgramListing>
+
+Alternatively, users may call the functions that implement the
+operators directly.  In this case, the query above would be expressed
+as:
+<ProgramListing>
+select * from emp where int4lt(salary, 40000);
+</ProgramListing>
+
+<Para>
+<Application>psql</Application>
+has a command (<Command>\dd</Command>) to show these operators.
+</Chapter>
+

@@ -11,6 +11,9 @@
 <!entity environ  SYSTEM "environ.sgml">
 <!entity manage   SYSTEM "manage.sgml">
 <!entity datatype SYSTEM "datatype.sgml">
+<!entity oper     SYSTEM "oper.sgml">
+<!entity func     SYSTEM "func.sgml">
+<!entity typeconv SYSTEM "typeconv.sgml">
 <!entity array    SYSTEM "array.sgml">
 <!entity inherit  SYSTEM "inherit.sgml">
 <!entity query-ug SYSTEM "query-ug.sgml">
@@ -92,6 +95,9 @@ It provides SQL92/SQL3 language support,
 &environ;
 &manage;
 &datatype;
+&oper;
+&func;
+&typeconv;
 &array;
 &inherit;
 &query-ug;
