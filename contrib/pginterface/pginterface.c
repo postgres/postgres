@@ -13,6 +13,14 @@
 
 #define NUL '\0'
 
+#ifndef TRUE
+#define TRUE 1
+#endif
+
+#ifndef FALSE
+#define FALSE 0
+#endif
+
 /* GLOBAL VARIABLES */
 static PGconn *conn;
 static PGresult *res = NULL;
@@ -22,8 +30,8 @@ static PGresult *res = NULL;
 
 static int	on_error_state = ON_ERROR_STOP;
 
-static in_result_block = false;
-static was_get_unset_result = false;
+static in_result_block = FALSE;
+static was_get_unset_result = FALSE;
 
 /* LOCAL VARIABLES */
 static int	tuple;
@@ -67,10 +75,10 @@ disconnectdb()
 PGresult   *
 doquery(char *query)
 {
-	if (res != NULL && in_result_block == false && was_get_unset_result == false)
+	if (res != NULL && in_result_block == FALSE && was_get_unset_result == FALSE)
 		PQclear(res);
 
-	was_get_unset_result = false;
+	was_get_unset_result = FALSE;
 	res = PQexec(conn, query);
 
 	if (on_error_state == ON_ERROR_STOP &&
@@ -131,7 +139,7 @@ fetch(void *param,...)
 **
 **		fetchwithnulls - returns tuple number (starts at 0),
 **																						or the value END_OF_TUPLES
-**								Returns true or false into null indicator variables
+**								Returns TRUE or FALSE into null indicator variables
 **								NULL pointers are skipped
 */
 int
@@ -200,9 +208,14 @@ on_error_continue()
 */
 PGresult   *get_result()
 {
-	was_get_unset_result = true;
+	char *cmdstatus = PQcmdStatus(res);
+	
+	was_get_unset_result = TRUE;
+
 	/* we have to store the fetch location somewhere */
-	memcpy(&res->cmdStatus[CMDSTATUS_LEN-sizeof(tuple)],&tuple, sizeof(tuple));
+	cmdstatus[0] = NUL;
+	memcpy(&cmdstatus[1],&tuple, sizeof(tuple));
+
 	return res;
 }
 	
@@ -213,18 +226,27 @@ PGresult   *get_result()
 */
 void        set_result(PGresult *newres)
 {
+
+	char *cmdstatus = PQcmdStatus(res);
+
 	if (newres == NULL)
 		halt("set_result called with null result pointer\n");
 
-	if (res != NULL && was_get_unset_result == false)
-		if (in_result_block == false)
+	if (res != NULL && was_get_unset_result == FALSE)
+		if (in_result_block == FALSE)
 			PQclear(res);
 		else
-			memcpy(&res->cmdStatus[CMDSTATUS_LEN-sizeof(tuple)], &tuple, sizeof(tuple));
-		
-	in_result_block = true;
-	was_get_unset_result = false;
-	memcpy(&tuple, &newres->cmdStatus[CMDSTATUS_LEN-sizeof(tuple)], sizeof(tuple));
+		{
+			cmdstatus[0] = NUL;
+			memcpy(&cmdstatus[1], &tuple, sizeof(tuple));
+		}
+
+	in_result_block = TRUE;
+	was_get_unset_result = FALSE;
+
+	cmdstatus = PQcmdStatus(newres);
+	memcpy(&tuple, &cmdstatus[1], sizeof(tuple));
+
 	res = newres;
 }
 
@@ -236,15 +258,18 @@ void        set_result(PGresult *newres)
 */
 void       unset_result(PGresult *oldres)
 {
+	char *cmdstatus = PQcmdStatus(oldres);
+
 	if (oldres == NULL)
 		halt("unset_result called with null result pointer\n");
 
-	if (in_result_block == false)
+	if (in_result_block == FALSE)
 		halt("Unset of result without being set.\n");
 
-	was_get_unset_result = true;
-	memcpy(&oldres->cmdStatus[CMDSTATUS_LEN-sizeof(tuple)], &tuple, sizeof(tuple));
-	in_result_block = false;
+	was_get_unset_result = TRUE;
+	cmdstatus[0] = NUL;
+	memcpy(&cmdstatus[1], &tuple, sizeof(tuple));
+	in_result_block = FALSE;
 }
 
 /*

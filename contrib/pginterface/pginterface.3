@@ -1,0 +1,71 @@
+.\" This is -*-nroff-*-
+.\" XXX standard disclaimer belongs here....
+.\" $Header: /cvsroot/pgsql/contrib/pginterface/Attic/pginterface.3,v 1.1 1998/09/11 05:14:08 momjian Exp $
+.TH PGINTERFACE INTRO 08/08/98 PostgreSQL PostgreSQL
+.SH DESCRIPTION
+Pginterface allows you to cleanly interface to the libpq library,
+more like a 4gl SQL interface.
+.PP
+It consists of set of simplified C functions that encapsulate the
+functionality of libpq.
+The functions are:
+
+.nf
+PGresult   *doquery(char *query);
+PGconn     *connectdb();
+void        disconnectdb();
+
+int         fetch(void *param,...);
+int         fetchwithnulls(void *param,...);
+void        reset_fetch();
+
+void        on_error_continue();
+void        on_error_stop();
+
+PGresult   *get_result();
+void        set_result(PGresult *newres);
+void        unset_result(PGresult *oldres);
+.fi
+.PP
+Many functions return a structure or value, so you can do more work
+with the result if required.  
+.PP
+You basically connect to the database with
+.BR connectdb ,
+issue your query with
+.BR doquery ,
+fetch the results with
+.BR fetch ,
+and finish with
+.BR disconnectdb .
+.PP
+For
+.IR select
+queries,
+.BR fetch 
+allows you to pass pointers as parameters, and on return the variables
+are filled with data from the binary cursor you opened.  These binary
+cursors can not be used if you are running the
+.BR pginterface
+client on a system with a different architecture than the database
+server.  If you pass a NULL pointer parameter, the column is skipped.
+.BR fetchwithnulls
+allows you to retieve the
+.IR null
+status of the field by passing an
+.IR int*
+after each result pointer, which returns true or false if the field is null.
+You can always use libpq functions on the PGresult pointer returned by
+.BR doquery .
+.BR reset_fetch
+starts the fetch back at the beginning.
+.PP
+.BR get_result ,
+.BR set_result ,
+and
+.BR unset_result
+allow you to handle multiple result sets at the same time.
+.PP
+There are a variety of demonstration programs in the
+.BR pginterface
+source directory.
