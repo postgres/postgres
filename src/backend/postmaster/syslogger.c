@@ -18,7 +18,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/syslogger.c,v 1.8 2004/08/31 04:53:44 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/syslogger.c,v 1.9 2004/09/21 00:21:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -80,6 +80,8 @@ static bool redirection_done = false;
 static bool pipe_eof_seen = false;
 
 static FILE *syslogFile = NULL;
+
+static char *last_file_name = NULL;
 
 /* These must be exported for EXEC_BACKEND case ... annoying */
 #ifndef WIN32
@@ -761,7 +763,20 @@ logfile_rotate(bool time_based_rotation)
 	else
 		filename = logfile_getname(time(NULL));
 
-	if (Log_truncate_on_rotation && time_based_rotation)
+	/*
+	 * Decide whether to overwrite or append.  We can overwrite if (a)
+	 * Log_truncate_on_rotation is set, (b) the rotation was triggered by
+	 * elapsed time and not something else, and (c) the computed file name
+	 * is different from what we were previously logging into.
+	 *
+	 * Note: during the first rotation after forking off from the postmaster,
+	 * last_file_name will be NULL.  (We don't bother to set it in the
+	 * postmaster because it ain't gonna work in the EXEC_BACKEND case.)
+	 * So we will always append in that situation, even though truncating
+	 * would usually be safe.
+	 */
+	if (Log_truncate_on_rotation && time_based_rotation &&
+		last_file_name != NULL && strcmp(filename, last_file_name) != 0)
 		fh = fopen(filename, "w");
 	else
 		fh = fopen(filename, "a");
@@ -806,7 +821,10 @@ logfile_rotate(bool time_based_rotation)
 
 	set_next_rotation_time();
 
-	pfree(filename);
+	/* instead of pfree'ing filename, remember it for next time */
+	if (last_file_name != NULL)
+		pfree(last_file_name);
+	last_file_name = filename;
 }
 
 
@@ -854,6 +872,7 @@ static void
 set_next_rotation_time(void)
 {
 	pg_time_t	now;
+	struct pg_tm *tm;
 	int			rotinterval;
 
 	/* nothing to do if time-based rotation is disabled */
@@ -863,13 +882,16 @@ set_next_rotation_time(void)
 	/*
 	 * The requirements here are to choose the next time > now that is a
 	 * "multiple" of the log rotation interval.  "Multiple" can be interpreted
-	 * fairly loosely --- in particular, for intervals larger than an hour,
-	 * it might be interesting to align to local time instead of GMT.
+	 * fairly loosely.  In this version we align to local time rather than
+	 * GMT.
 	 */
 	rotinterval = Log_RotationAge * 60; /* convert to seconds */
 	now = time(NULL);
+	tm = pg_localtime(&now);
+	now += tm->tm_gmtoff;
 	now -= now % rotinterval;
 	now += rotinterval;
+	now -= tm->tm_gmtoff;
 	next_rotation_time = now;
 }
 
