@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/copy.sgml,v 1.24 2001/09/13 15:55:24 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/copy.sgml,v 1.25 2001/12/04 21:19:57 tgl Exp $
 Postgres documentation
 -->
 
@@ -227,9 +227,6 @@ ERROR: <replaceable>reason</replaceable>
     character with the keyword phrase USING DELIMITERS.  Characters
     in data fields which happen to match the delimiter character will
     be backslash quoted.
-    Note that the delimiter is always a single character.
-    If multiple characters are specified in the delimiter string,
-    only the first character is used.
    </para>
    
    <para>

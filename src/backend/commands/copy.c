@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.143 2001/12/04 19:40:16 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.144 2001/12/04 21:19:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -287,6 +287,12 @@ DoCopy(char *relname, bool binary, bool oids, bool from, bool pipe,
 	 */
 	if (pipe && binary)
 		elog(ERROR, "COPY BINARY is not supported to stdout or from stdin");
+
+	/*
+	 * Presently, only single-character delimiter strings are supported.
+	 */
+	if (strlen(delim) != 1)
+		elog(ERROR, "COPY delimiter must be a single character");
 
 	/*
 	 * Set up variables to avoid per-attribute overhead.
@@ -1009,7 +1015,7 @@ CopyReadNewline(FILE *fp, int *newline)
  * Note that the caller should not pfree the string!
  *
  * *isnull is set true if a null attribute, else false.
- * delim is the string of acceptable delimiter characters(s).
+ * delim is the column delimiter string (currently always 1 character).
  * *newline remembers whether we've seen a newline ending this tuple.
  * null_print says how NULL values are represented
  */
@@ -1018,6 +1024,7 @@ static char *
 CopyReadAttribute(FILE *fp, bool *isnull, char *delim, int *newline, char *null_print)
 {
 	int			c;
+	int			delimc = delim[0];
 
 #ifdef MULTIBYTE
 	int			mblen;
@@ -1051,7 +1058,7 @@ CopyReadAttribute(FILE *fp, bool *isnull, char *delim, int *newline, char *null_
 			*newline = 1;
 			break;
 		}
-		if (strchr(delim, c))
+		if (c == delimc)
 			break;
 		if (c == '\\')
 		{
