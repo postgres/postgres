@@ -1,4 +1,4 @@
-/* $Id: pg_wchar.h,v 1.17 2000/08/25 14:24:09 ishii Exp $ */
+/* $Id: pg_wchar.h,v 1.18 2000/10/12 06:08:28 ishii Exp $ */
 
 #ifndef PG_WCHAR_H
 #define PG_WCHAR_H
@@ -82,6 +82,8 @@ typedef struct
 								 * client only */
 	void		(*to_mic) ();	/* client encoding to MIC */
 	void		(*from_mic) (); /* MIC to client encoding */
+	void		(*to_unicode) ();	/* client encoding to UTF-8 */
+	void		(*from_unicode) (); /* UTF-8 to client encoding */
 }			pg_encoding_conv_tbl;
 
 extern pg_encoding_conv_tbl pg_conv_tbl[];
@@ -95,6 +97,19 @@ typedef struct
 
 extern pg_wchar_tbl pg_wchar_table[];
 
+typedef struct
+{
+	unsigned int utf;		/* UTF-8 */
+	unsigned int code;		/* local code */
+	unsigned char encoding;		/* encoding */
+} pg_utf_to_local;
+
+typedef struct
+{
+	unsigned int code;	/* local code */
+	unsigned int utf;		/* UTF-8 */
+} pg_local_to_utf;
+
 extern int pg_mb2wchar(const unsigned char *, pg_wchar *);
 extern int pg_mb2wchar_with_len(const unsigned char *, pg_wchar *, int);
 extern int	pg_char_and_wchar_strcmp(const char *, const pg_wchar *);
@@ -102,6 +117,7 @@ extern int	pg_wchar_strncmp(const pg_wchar *, const pg_wchar *, size_t);
 extern int	pg_char_and_wchar_strncmp(const char *, const pg_wchar *, size_t);
 extern size_t pg_wchar_strlen(const pg_wchar *);
 extern int	pg_mblen(const unsigned char *);
+extern int	pg_mblen_with_encoding(const unsigned char *, int);
 extern int	pg_encoding_mblen(int, const unsigned char *);
 extern int	pg_mule_mblen(const unsigned char *);
 extern int	pg_mic_mblen(const unsigned char *);
@@ -120,6 +136,8 @@ extern int	pg_get_client_encoding(void);
 extern unsigned char *pg_client_to_server(unsigned char *, int);
 extern unsigned char *pg_server_to_client(unsigned char *, int);
 extern int	pg_valid_client_encoding(const char *);
+extern pg_encoding_conv_tbl *pg_get_enc_ent(int);
+extern int pg_utf_mblen(const unsigned char *);
 
 /* internally-used versions of functions.  The PG_xxx forms of these
  * functions have fmgr-compatible interfaves.
