@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Wed May 19 23:27:13 EDT 2004
+Last updated:		Thu May 20 00:10:44 EDT 2004
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -448,6 +448,7 @@ Miscellaneous
 * Add a script to ask system configuration questions and tune postgresql.conf
 * Allow partitioning of table into multiple subtables
 * -Use background process to write dirty shared buffers to disk
+* Investigate SMP context switching issues
 
 
 Source Code
