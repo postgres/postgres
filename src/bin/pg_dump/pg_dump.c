@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.355.2.3 2004/02/24 03:35:45 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.355.2.4 2004/03/02 21:14:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -4083,8 +4083,16 @@ dumpCasts(Archive *fout,
 		if (strcmp(castfunc, "0") == 0)
 			appendPQExpBuffer(defqry, "WITHOUT FUNCTION");
 		else
-			appendPQExpBuffer(defqry, "WITH FUNCTION %s",
-						  format_function_signature(&finfo[fidx], true));
+		{
+			/*
+			 * Always qualify the function name, in case it is not in
+			 * pg_catalog schema (format_function_signature won't qualify it).
+			 */
+			appendPQExpBuffer(defqry, "WITH FUNCTION %s.",
+							  fmtId(finfo[fidx].pronamespace->nspname));
+			appendPQExpBuffer(defqry, "%s",
+							  format_function_signature(&finfo[fidx], true));
+		}
 
 		if (strcmp(castcontext, "a") == 0)
 			appendPQExpBuffer(defqry, " AS ASSIGNMENT");
