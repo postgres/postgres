@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/init/miscinit.c,v 1.4 1997/02/14 04:18:17 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/init/miscinit.c,v 1.5 1997/04/27 19:20:37 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -260,10 +260,14 @@ SetDatabaseName(char *name)
  *
  *	SetPgUserName must be called before InitPostgres, since the setuid()
  *	is done there.
+ *
+ *	Replace GetPgUserName() with a lower-case version
+ *	to allow use in new case-insensitive SQL (referenced
+ *	in pg_proc.h). Define GetPgUserName() as a macro - tgl 97/04/26
  * ----------------
  */
 char*
-GetPgUserName()
+getpgusername()
 {
     return UserName;
 }
