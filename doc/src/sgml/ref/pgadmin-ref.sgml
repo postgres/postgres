@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/Attic/pgadmin-ref.sgml,v 1.4 1999/08/06 13:50:31 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/Attic/pgadmin-ref.sgml,v 1.5 2000/02/02 16:19:54 thomas Exp $
 Postgres documentation
 -->
 
@@ -15,20 +15,21 @@ Postgres documentation
    <application>pgadmin</application>
   </refname>
   <refpurpose>
-   <productname>Postgres</productname> graphical interactive client
+   <productname>Postgres</productname>   
+   database management and design tool for Windows 95/98/NT
   </refpurpose>
  </refnamediv>
  <refsynopsisdiv>
   <refsynopsisdivinfo>
-   <date>1999-05-19</date>
+   <date>1999-12-24</date>
   </refsynopsisdivinfo>
   <synopsis>
-pgadmin [ <replaceable class="parameter">dbname</replaceable> ]
+pgadmin [ <replaceable class="parameter">datasourcename</replaceable> [ <replaceable class="parameter">username</replaceable> [ <replaceable class="parameter">password</replaceable> ] ] ]
   </synopsis>
 
   <refsect2 id="R2-APP-PGADMIN-1">
    <refsect2info>
-    <date>1999-05-19</date>
+    <date>1999-12-24</date>
    </refsect2info>
    <title>
     Inputs
@@ -37,10 +38,32 @@ pgadmin [ <replaceable class="parameter">dbname</replaceable> ]
 
     <variablelist>
      <varlistentry>
-      <term><replaceable class="PARAMETER">dbname</replaceable></term>
+      <term><replaceable class="PARAMETER">datasourcename</replaceable></term>
       <listitem>
        <para>
-	The name of an existing database to access.
+	The name of an existing PostgreSQL ODBC System or User Data
+	Source.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><replaceable class="PARAMETER">username</replaceable></term>
+      <listitem>
+       <para>
+	A valid username for the specified
+	<replaceable class="PARAMETER">datasourcename</replaceable>.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><replaceable class="PARAMETER">password</replaceable></term>
+      <listitem>
+       <para>
+	A valid password for the specified
+	<replaceable class="PARAMETER">datasourcename</replaceable> and
+	<replaceable class="PARAMETER">username</replaceable>. 
        </para>
       </listitem>
      </varlistentry>
@@ -50,7 +73,7 @@ pgadmin [ <replaceable class="parameter">dbname</replaceable> ]
 
   <refsect2 id="R2-APP-PGADMIN-2">
    <refsect2info>
-    <date>1999-05-19</date>
+    <date>1999-12-24</date>
    </refsect2info>
    <title>
     Outputs
@@ -62,18 +85,78 @@ pgadmin [ <replaceable class="parameter">dbname</replaceable> ]
 
  <refsect1 id="R1-APP-PGADMIN-1">
   <refsect1info>
-   <date>1999-05-19</date>
+   <date>1999-12-24</date>
   </refsect1info>
   <title>
    Description
   </title>
   <para>
-   <note>
-    <title>Editor's Note</title>
-    <para>
-     This should be transcribed from other pgadmin info. Volunteers?
-    </para>
-   </note>
+   <application>pgadmin</application> is a general purpose tool for
+   designing, maintaining, and administering
+   <productname>Postgres</productname> databases.
+   It runs under Windows 95/98 and NT.
+  </para>
+
+  <para>
+   Features include:
+
+   <itemizedlist>
+    <listitem>
+     <para>
+      Arbitrary SQL entry.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Info Browsers and 'Creators' for databases, tables, indexes, sequences,
+      views, triggers, functions and languages.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      User, Group and Privilege configuration dialogues.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Revision tracking with upgrade script generation.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Configuration of Microsoft MSysConf table.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Data Import and Export Wizards.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Database Migration Wizard.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Predefined reports on databases, tables, indexes, sequences, languages and
+      views.
+     </para>
+    </listitem>
+   </itemizedlist>
+  </para>
+
+  <para>
+   <application>pgadmin</application> is distributed separately from
+   <productname>Postgres</productname> and may be downloaded from
+   <ulink url="http://www.pgadmin.freeserve.co.uk">http://www.pgadmin.freeserve.co.uk</ulink>
   </para>
  </refsect1>
 </refentry>
