@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/common/heaptuple.c,v 1.10 1996/10/31 07:48:35 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/common/heaptuple.c,v 1.11 1996/11/01 09:12:18 scrappy Exp $
  *
  * NOTES
  *    The old interface functions have been converted to macros
@@ -17,43 +17,16 @@
  *-------------------------------------------------------------------------
  */
 
-#include <stdio.h>
-#include <time.h>
-
 #include "postgres.h"
-#include "access/attnum.h"
-#include "access/tupmacs.h"
-#include "catalog/pg_am.h"
-#include "catalog/pg_attribute.h"
-#include "catalog/pg_class.h"
-#include "nodes/nodes.h"
-#include "nodes/pg_list.h"
-#include "storage/block.h"
-#include "storage/buf.h"
-#include "storage/fd.h"
-#include "storage/ipc.h"
-#include "storage/item.h"
-#include "storage/itemid.h"
-#include "storage/off.h"
-#include "storage/page.h"
-#include "utils/memutils.h"
-#include "utils/nabstime.h"
+
 #include "utils/palloc.h"
-
-#include "access/skey.h"
-#include "access/tupdesc.h"
-#include "rewrite/prs2lock.h"
 #include "storage/bufpage.h"
-#include "storage/itemptr.h"
-
-#include "access/strat.h"
-
-#include "access/htup.h"
-#include "utils/rel.h"
-
-#include "storage/bufmgr.h"
-
 #include "access/transam.h"
+#include "storage/buf.h"
+#include "access/tupmacs.h"
+#include "access/tupdesc.h"
+#include "utils/memutils.h"
+#include "access/htup.h"
 
 #ifndef HAVE_MEMMOVE
 # include "regex/utils.h"
