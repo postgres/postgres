@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.104 2003/08/04 02:39:57 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.105 2003/09/02 22:10:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -189,27 +189,39 @@ _bt_check_unique(Relation rel, BTItem btitem, Relation heapRel,
 		BlockNumber nblkno;
 
 		/*
-		 * make sure the offset points to an actual key before trying to
-		 * compare it...
+		 * make sure the offset points to an actual item before trying to
+		 * examine it...
 		 */
 		if (offset <= maxoff)
 		{
-			/*
-			 * _bt_compare returns 0 for (1,NULL) and (1,NULL) - this's
-			 * how we handling NULLs - and so we must not use _bt_compare
-			 * in real comparison, but only for ordering/finding items on
-			 * pages. - vadim 03/24/97
-			 */
-			if (!_bt_isequal(itupdesc, page, offset, natts, itup_scankey))
-				break;			/* we're past all the equal tuples */
-
 			curitemid = PageGetItemId(page, offset);
 
 			/*
-			 * We can skip the heap fetch if the item is marked killed.
+			 * We can skip items that are marked killed.
+			 *
+			 * Formerly, we applied _bt_isequal() before checking the kill
+			 * flag, so as to fall out of the item loop as soon as possible.
+			 * However, in the presence of heavy update activity an index
+			 * may contain many killed items with the same key; running
+			 * _bt_isequal() on each killed item gets expensive.  Furthermore
+			 * it is likely that the non-killed version of each key appears
+			 * first, so that we didn't actually get to exit any sooner anyway.
+			 * So now we just advance over killed items as quickly as we can.
+			 * We only apply _bt_isequal() when we get to a non-killed item or
+			 * the end of the page.
 			 */
 			if (!ItemIdDeleted(curitemid))
 			{
+				/*
+				 * _bt_compare returns 0 for (1,NULL) and (1,NULL) - this's
+				 * how we handling NULLs - and so we must not use _bt_compare
+				 * in real comparison, but only for ordering/finding items on
+				 * pages. - vadim 03/24/97
+				 */
+				if (!_bt_isequal(itupdesc, page, offset, natts, itup_scankey))
+					break;			/* we're past all the equal tuples */
+
+				/* okay, we gotta fetch the heap tuple ... */
 				cbti = (BTItem) PageGetItem(page, curitemid);
 				htup.t_self = cbti->bti_itup.t_tid;
 				if (heap_fetch(heapRel, SnapshotDirty, &htup, &hbuffer,
@@ -1547,7 +1559,7 @@ _bt_pgaddtup(Relation rel,
  * _bt_isequal - used in _bt_doinsert in check for duplicates.
  *
  * This is very similar to _bt_compare, except for NULL handling.
- * Rule is simple: NOT_NULL not equal NULL, NULL not_equal NULL too.
+ * Rule is simple: NOT_NULL not equal NULL, NULL not equal NULL too.
  */
 static bool
 _bt_isequal(TupleDesc itupdesc, Page page, OffsetNumber offnum,
@@ -1576,7 +1588,7 @@ _bt_isequal(TupleDesc itupdesc, Page page, OffsetNumber offnum,
 		datum = index_getattr(itup, attno, itupdesc, &isNull);
 
 		/* NULLs are never equal to anything */
-		if (entry->sk_flags & SK_ISNULL || isNull)
+		if ((entry->sk_flags & SK_ISNULL) || isNull)
 			return false;
 
 		result = DatumGetInt32(FunctionCall2(&entry->sk_func,
