@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/interfaces/libpq/Makefile,v 1.31 1997/03/17 22:05:05 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/interfaces/libpq/Makefile,v 1.32 1997/03/25 09:08:05 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -58,10 +58,10 @@ fe-lobj.o: ../backend/fmgr.h
 # We need to compile this with special options for shared libs,
 # so we can't use the object in ../backend
 dllist.c:	../backend/lib/dllist.c
-	-ln -s ../backend/lib/dllist.c
+	-ln -s ../backend/lib/dllist.c .
 
 pqcomprim.c:	    ../backend/libpq/pqcomprim.c
-	-ln -s ../backend/libpq/pqcomprim.c
+	-ln -s ../backend/libpq/pqcomprim.c .
 
 # The following rules cause dependencies in the backend directory to 
 # get made if they don't exist, but don't cause them to get remade if they
