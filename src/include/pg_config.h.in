@@ -8,7 +8,7 @@
  * or in pg_config.h afterwards.  Of course, if you edit pg_config.h, then your
  * changes will be overwritten the next time you run configure.
  *
- * $Id: pg_config.h.in,v 1.10 2001/10/19 20:47:09 tgl Exp $
+ * $Id: pg_config.h.in,v 1.11 2001/10/20 17:57:39 tgl Exp $
  */
 
 #ifndef PG_CONFIG_H
@@ -666,9 +666,6 @@ extern int fdatasync(int fildes);
 
 /* Define if you have the optreset variable */
 #undef HAVE_INT_OPTRESET
-
-/* Define if you have the __getopt_initialized variable */
-#undef HAVE_INT___GETOPT_INITIALIZED
 
 /* Define if you have strtoll() */
 #undef HAVE_STRTOLL

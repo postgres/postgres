@@ -985,15 +985,6 @@ if test x"$pgac_cv_var_int_optreset" = x"yes"; then
   AC_DEFINE(HAVE_INT_OPTRESET, 1)
 fi
 
-AC_CACHE_CHECK([for __getopt_initialized], pgac_cv_var_int___getopt_initialized,
-[AC_TRY_LINK([#include <unistd.h>],
-  [extern int __getopt_initialized; __getopt_initialized = 1;],
-  [pgac_cv_var_int___getopt_initialized=yes],
-  [pgac_cv_var_int___getopt_initialized=no])])
-if test x"$pgac_cv_var_int___getopt_initialized" = x"yes"; then
-  AC_DEFINE(HAVE_INT___GETOPT_INITIALIZED, 1)
-fi
-
 
 # This test makes sure that run tests work at all.  Sometimes a shared
 # library is found by the linker, but the runtime linker can't find it.
