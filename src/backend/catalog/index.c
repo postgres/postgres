@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.190 2002/08/28 20:46:47 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.191 2002/08/29 15:56:19 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1245,7 +1245,8 @@ setNewRelfilenode(Relation relation)
 	Buffer		buffer;
 	RelationData workrel;
 
-	Assert(!IsSystemRelation(relation) || relation->rd_rel->relkind == RELKIND_INDEX);
+	Assert(!IsSystemRelation(relation) || IsToastRelation(relation) ||
+		   relation->rd_rel->relkind == RELKIND_INDEX);
 
 	pg_class = heap_openr(RelationRelationName, RowExclusiveLock);
 	/* Fetch and lock the classTuple associated with this relation */
@@ -1927,7 +1928,8 @@ reindex_relation(Oid relid, bool force)
 	 * ignore the indexes of the target system relation while processing
 	 * reindex.
 	 */
-	if (!IsIgnoringSystemIndexes() && IsSystemRelation(rel))
+	if (!IsIgnoringSystemIndexes() &&
+		IsSystemRelation(rel) && !IsToastRelation(rel))
 		deactivate_needed = true;
 #ifndef ENABLE_REINDEX_NAILED_RELATIONS
 

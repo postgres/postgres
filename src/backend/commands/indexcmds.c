@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.84 2002/08/16 20:55:09 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.85 2002/08/29 15:56:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -559,12 +559,8 @@ RemoveIndex(RangeVar *relation, DropBehavior behavior)
 }
 
 /*
- * Reindex
+ * ReindexIndex
  *		Recreate an index.
- *
- * Exceptions:
- *		"ERROR" if index nonexistent.
- *		...
  */
 void
 ReindexIndex(RangeVar *indexRelation, bool force /* currently unused */ )
@@ -593,7 +589,8 @@ ReindexIndex(RangeVar *indexRelation, bool force /* currently unused */ )
 			 indexRelation->relname,
 			 ((Form_pg_class) GETSTRUCT(tuple))->relkind);
 
-	if (IsSystemClass((Form_pg_class) GETSTRUCT(tuple)))
+	if (IsSystemClass((Form_pg_class) GETSTRUCT(tuple)) &&
+		!IsToastClass((Form_pg_class) GETSTRUCT(tuple)))
 	{
 		if (!allowSystemTableMods)
 			elog(ERROR, "\"%s\" is a system index. call REINDEX under standalone postgres with -O -P options",
@@ -614,16 +611,13 @@ ReindexIndex(RangeVar *indexRelation, bool force /* currently unused */ )
 /*
  * ReindexTable
  *		Recreate indexes of a table.
- *
- * Exceptions:
- *		"ERROR" if table nonexistent.
- *		...
  */
 void
 ReindexTable(RangeVar *relation, bool force)
 {
 	Oid			heapOid;
 	HeapTuple	tuple;
+	char		relkind;
 
 	/*
 	 * REINDEX within a transaction block is dangerous, because if the
@@ -639,11 +633,11 @@ ReindexTable(RangeVar *relation, bool force)
 						   0, 0, 0);
 	if (!HeapTupleIsValid(tuple))
 		elog(ERROR, "table \"%s\" does not exist", relation->relname);
+	relkind = ((Form_pg_class) GETSTRUCT(tuple))->relkind;
 
-	if (((Form_pg_class) GETSTRUCT(tuple))->relkind != RELKIND_RELATION)
+	if (relkind != RELKIND_RELATION && relkind != RELKIND_TOASTVALUE)
 		elog(ERROR, "relation \"%s\" is of type \"%c\"",
-			 relation->relname,
-			 ((Form_pg_class) GETSTRUCT(tuple))->relkind);
+			 relation->relname, relkind);
 
 	ReleaseSysCache(tuple);
 
@@ -710,12 +704,16 @@ ReindexDatabase(const char *dbname, bool force, bool all)
 	relcnt = relalc = 0;
 	while ((tuple = heap_getnext(scan, ForwardScanDirection)) != NULL)
 	{
+		char relkind;
+
 		if (!all)
 		{
-			if (!IsSystemClass((Form_pg_class) GETSTRUCT(tuple)))
+			if (!(IsSystemClass((Form_pg_class) GETSTRUCT(tuple)) &&
+				  !IsToastClass((Form_pg_class) GETSTRUCT(tuple))))
 				continue;
 		}
-		if (((Form_pg_class) GETSTRUCT(tuple))->relkind == RELKIND_RELATION)
+		relkind = ((Form_pg_class) GETSTRUCT(tuple))->relkind;
+		if (relkind == RELKIND_RELATION || relkind == RELKIND_TOASTVALUE)
 		{
 			old = MemoryContextSwitchTo(private_context);
 			if (relcnt == 0)
@@ -742,7 +740,7 @@ ReindexDatabase(const char *dbname, bool force, bool all)
 	{
 		StartTransactionCommand();
 		if (reindex_relation(relids[i], force))
-			elog(WARNING, "relation %u was reindexed", relids[i]);
+			elog(NOTICE, "relation %u was reindexed", relids[i]);
 		CommitTransactionCommand();
 	}
 	StartTransactionCommand();
