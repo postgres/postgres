@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.31 1999/01/25 12:01:14 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.32 1999/01/25 18:02:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -162,10 +162,10 @@ rangeTableEntry_used(Node *node, int rt_index, int sublevels_up)
 
 		case T_Aggref:
 			{
-				Aggref	*agg = (Aggref *)node;
+				Aggref	*aggref = (Aggref *)node;
 
 				return rangeTableEntry_used(
-						(Node *)(agg->target),
+						(Node *)(aggref->target),
 						rt_index,
 						sublevels_up);
 			}
@@ -398,10 +398,10 @@ attribute_used(Node *node, int rt_index, int attno, int sublevels_up)
 
 		case T_Aggref:
 			{
-				Aggref	*agg = (Aggref *)node;
+				Aggref	*aggref = (Aggref *)node;
 
 				return attribute_used(
-						(Node *)(agg->target),
+						(Node *)(aggref->target),
 						rt_index,
 						attno,
 						sublevels_up);
@@ -607,10 +607,10 @@ modifyAggrefUplevel(Node *node)
 
 		case T_Aggref:
 			{
-				Aggref	*agg = (Aggref *)node;
+				Aggref	*aggref = (Aggref *)node;
 
 				modifyAggrefUplevel(
-						(Node *)(agg->target));
+						(Node *)(aggref->target));
 			}
 			break;
 
@@ -743,10 +743,10 @@ modifyAggrefChangeVarnodes(Node **nodePtr, int rt_index, int new_index, int subl
 
 		case T_Aggref:
 			{
-				Aggref	*agg = (Aggref *)node;
+				Aggref	*aggref = (Aggref *)node;
 
 				modifyAggrefChangeVarnodes(
-						(Node **)(&(agg->target)),
+						(Node **)(&(aggref->target)),
 						rt_index,
 						new_index,
 						sublevels_up);
@@ -933,12 +933,12 @@ modifyAggrefDropQual(Node **nodePtr, Node *orignode, Expr *expr)
 
 		case T_Aggref:
 			{
-				Aggref	*agg = (Aggref *)node;
-				Aggref	*oagg = (Aggref *)orignode;
+				Aggref	*aggref = (Aggref *)node;
+				Aggref	*oaggref = (Aggref *)orignode;
 
 				modifyAggrefDropQual(
-						(Node **)(&(agg->target)),
-						(Node *)(oagg->target),
+						(Node **)(&(aggref->target)),
+						(Node *)(oaggref->target),
 						expr);
 			}
 			break;
@@ -1378,10 +1378,10 @@ apply_RIR_adjust_sublevel(Node *node, int sublevels_up)
 
 		case T_Aggref:
 			{
-				Aggref	*agg = (Aggref *)node;
+				Aggref	*aggref = (Aggref *)node;
 
 				apply_RIR_adjust_sublevel(
-						(Node *)(agg->target),
+						(Node *)(aggref->target),
 						sublevels_up);
 			}
 			break;
@@ -1527,10 +1527,10 @@ apply_RIR_view(Node **nodePtr, int rt_index, RangeTblEntry *rte, List *tlist, in
 
 		case T_Aggref:
 			{
-				Aggref	*agg = (Aggref *)node;
+				Aggref	*aggref = (Aggref *)node;
 
 				apply_RIR_view(
-						(Node **)(&(agg->target)),
+						(Node **)(&(aggref->target)),
 						rt_index,
 						rte,
 						tlist,
@@ -1928,10 +1928,10 @@ fireRIRonSubselect(Node *node)
 
 		case T_Aggref:
 			{
-				Aggref	*agg = (Aggref *)node;
+				Aggref	*aggref = (Aggref *)node;
 
 				fireRIRonSubselect(
-						(Node *)(agg->target));
+						(Node *)(aggref->target));
 			}
 			break;
 

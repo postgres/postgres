@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/Attic/locks.c,v 1.15 1999/01/24 00:28:30 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/Attic/locks.c,v 1.16 1999/01/25 18:02:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -68,9 +68,9 @@ nodeThisLockWasTriggered(Node *node, int varno, AttrNumber attnum,
 			break;
 		case T_Aggref:
 			{
-				Aggref	   *agg = (Aggref *) node;
+				Aggref	   *aggref = (Aggref *) node;
 
-				return nodeThisLockWasTriggered(agg->target, varno, attnum,
+				return nodeThisLockWasTriggered(aggref->target, varno, attnum,
 												sublevels_up);
 			}
 			break;

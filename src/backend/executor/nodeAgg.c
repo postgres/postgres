@@ -45,7 +45,7 @@ typedef struct AggFuncInfo
 	FmgrInfo	finalfn;
 } AggFuncInfo;
 
-static Datum aggGetAttr(TupleTableSlot *tuple, Aggref *agg, bool *isNull);
+static Datum aggGetAttr(TupleTableSlot *tuple, Aggref *aggref, bool *isNull);
 
 
 /* ---------------------------------------
@@ -90,9 +90,8 @@ ExecAgg(Agg *node)
 {
 	AggState   *aggstate;
 	EState	   *estate;
-	Aggref	  **aggregates;
 	Plan	   *outerPlan;
-	int			i,
+	int			aggno,
 				nagg;
 	Datum	   *value1,
 			   *value2;
@@ -123,7 +122,6 @@ ExecAgg(Agg *node)
 	 */
 	do
 	{
-
 		aggstate = node->aggstate;
 		if (aggstate->agg_done)
 			return NULL;
@@ -132,17 +130,6 @@ ExecAgg(Agg *node)
 		econtext = aggstate->csstate.cstate.cs_ExprContext;
 
 		nagg = length(node->aggs);
-
-		aggregates = (Aggref **) palloc(sizeof(Aggref *) * nagg);
-
-		/* take List* and make it an array that can be quickly indexed */
-		alist = node->aggs;
-		for (i = 0; i < nagg; i++)
-		{
-			aggregates[i] = lfirst(alist);
-			aggregates[i]->aggno = i;
-			alist = lnext(alist);
-		}
 
 		value1 = node->aggstate->csstate.cstate.cs_ExprContext->ecxt_values;
 		nulls = node->aggstate->csstate.cstate.cs_ExprContext->ecxt_nulls;
@@ -161,9 +148,10 @@ ExecAgg(Agg *node)
 
 		projInfo = aggstate->csstate.cstate.cs_ProjInfo;
 
-		for (i = 0; i < nagg; i++)
+		aggno = 0;
+		foreach(alist, node->aggs)
 		{
-			Aggref	   *agg;
+			Aggref	   *aggref = lfirst(alist);
 			char	   *aggname;
 			HeapTuple	aggTuple;
 			Form_pg_aggregate aggp;
@@ -171,22 +159,20 @@ ExecAgg(Agg *node)
 						xfn2_oid,
 						finalfn_oid;
 
-			agg = aggregates[i];
-
 			/* ---------------------
 			 *	find transfer functions of all the aggregates and initialize
 			 *	their initial values
 			 * ---------------------
 			 */
-			aggname = agg->aggname;
+			aggname = aggref->aggname;
 			aggTuple = SearchSysCacheTuple(AGGNAME,
 										   PointerGetDatum(aggname),
-										 ObjectIdGetDatum(agg->basetype),
+										   ObjectIdGetDatum(aggref->basetype),
 										   0, 0);
 			if (!HeapTupleIsValid(aggTuple))
 				elog(ERROR, "ExecAgg: cache lookup failed for aggregate \"%s\"(%s)",
 					 aggname,
-					 typeidTypeName(agg->basetype));
+					 typeidTypeName(aggref->basetype));
 			aggp = (Form_pg_aggregate) GETSTRUCT(aggTuple);
 
 			xfn1_oid = aggp->aggtransfn1;
@@ -195,15 +181,15 @@ ExecAgg(Agg *node)
 
 			if (OidIsValid(finalfn_oid))
 			{
-				fmgr_info(finalfn_oid, &aggFuncInfo[i].finalfn);
-				aggFuncInfo[i].finalfn_oid = finalfn_oid;
+				fmgr_info(finalfn_oid, &aggFuncInfo[aggno].finalfn);
+				aggFuncInfo[aggno].finalfn_oid = finalfn_oid;
 			}
 
 			if (OidIsValid(xfn2_oid))
 			{
-				fmgr_info(xfn2_oid, &aggFuncInfo[i].xfn2);
-				aggFuncInfo[i].xfn2_oid = xfn2_oid;
-				value2[i] = (Datum) AggNameGetInitVal((char *) aggname,
+				fmgr_info(xfn2_oid, &aggFuncInfo[aggno].xfn2);
+				aggFuncInfo[aggno].xfn2_oid = xfn2_oid;
+				value2[aggno] = (Datum) AggNameGetInitVal((char *) aggname,
 													  aggp->aggbasetype,
 													  2,
 													  &isNull2);
@@ -219,9 +205,9 @@ ExecAgg(Agg *node)
 
 			if (OidIsValid(xfn1_oid))
 			{
-				fmgr_info(xfn1_oid, &aggFuncInfo[i].xfn1);
-				aggFuncInfo[i].xfn1_oid = xfn1_oid;
-				value1[i] = (Datum) AggNameGetInitVal((char *) aggname,
+				fmgr_info(xfn1_oid, &aggFuncInfo[aggno].xfn1);
+				aggFuncInfo[aggno].xfn1_oid = xfn1_oid;
+				value1[aggno] = (Datum) AggNameGetInitVal((char *) aggname,
 													  aggp->aggbasetype,
 													  1,
 													  &isNull1);
@@ -236,10 +222,11 @@ ExecAgg(Agg *node)
 				 */
 				if (isNull1)
 				{
-					noInitValue[i] = 1;
-					nulls[i] = 1;
+					noInitValue[aggno] = 1;
+					nulls[aggno] = 1;
 				}
 			}
+			aggno++;
 		}
 
 		/* ----------------
@@ -271,53 +258,55 @@ ExecAgg(Agg *node)
 
 					/* initially, set all the values to NULL */
 					null_array = palloc(tupType->natts);
-					for (i = 0; i < tupType->natts; i++)
-						null_array[i] = 'n';
+					for (aggno = 0; aggno < tupType->natts; aggno++)
+						null_array[aggno] = 'n';
 					oneTuple = heap_formtuple(tupType, tupValue, null_array);
 					pfree(null_array);
 				}
 				break;
 			}
 
-			for (i = 0; i < nagg; i++)
+			aggno = 0;
+			foreach(alist, node->aggs)
 			{
+				Aggref	   *aggref = lfirst(alist);
 				AttrNumber	attnum;
 				int2		attlen = 0;
 				Datum		newVal = (Datum) NULL;
-				AggFuncInfo *aggfns = &aggFuncInfo[i];
+				AggFuncInfo *aggfns = &aggFuncInfo[aggno];
 				Datum		args[2];
 				Node	   *tagnode = NULL;
 
-				switch (nodeTag(aggregates[i]->target))
+				switch (nodeTag(aggref->target))
 				{
 					case T_Var:
 						tagnode = NULL;
 						newVal = aggGetAttr(outerslot,
-											aggregates[i],
+											aggref,
 											&isNull);
 						break;
 					case T_Expr:
-						tagnode = ((Expr *) aggregates[i]->target)->oper;
+						tagnode = ((Expr *) aggref->target)->oper;
 						econtext->ecxt_scantuple = outerslot;
-						newVal = ExecEvalExpr(aggregates[i]->target, econtext,
+						newVal = ExecEvalExpr(aggref->target, econtext,
 											  &isNull, &isDone);
 						break;
 					case T_Const:
 						tagnode = NULL;
 						econtext->ecxt_scantuple = outerslot;
-						newVal = ExecEvalExpr(aggregates[i]->target, econtext,
+						newVal = ExecEvalExpr(aggref->target, econtext,
 											  &isNull, &isDone);
 						break;
 					default:
-						elog(ERROR, "ExecAgg: Bad Agg->Target for Agg %d", i);
+						elog(ERROR, "ExecAgg: Bad Agg->Target for Agg %d", aggno);
 				}
 
-				if (isNull && !aggregates[i]->usenulls)
+				if (isNull && !aggref->usenulls)
 					continue;	/* ignore this tuple for this agg */
 
 				if (aggfns->xfn1.fn_addr != NULL)
 				{
-					if (noInitValue[i])
+					if (noInitValue[aggno])
 					{
 						int			byVal = 0;
 
@@ -333,10 +322,10 @@ ExecAgg(Agg *node)
 						 * came will be freed on the next iteration of the
 						 * scan
 						 */
-						switch (nodeTag(aggregates[i]->target))
+						switch (nodeTag(aggref->target))
 						{
 							case T_Var:
-								attnum = ((Var *) aggregates[i]->target)->varattno;
+								attnum = ((Var *) aggref->target)->varattno;
 								attlen = outerslot->ttc_tupleDescriptor->attrs[attnum - 1]->attlen;
 								byVal = outerslot->ttc_tupleDescriptor->attrs[attnum - 1]->attbyval;
 
@@ -355,35 +344,34 @@ ExecAgg(Agg *node)
 									break;
 								}
 							case T_Const:
-								attlen = ((Const *) aggregates[i]->target)->constlen;
-								byVal = ((Const *) aggregates[i]->target)->constbyval;
+								attlen = ((Const *) aggref->target)->constlen;
+								byVal = ((Const *) aggref->target)->constbyval;
 
 								break;
 							default:
-								elog(ERROR, "ExecAgg: Bad Agg->Target for Agg %d", i);
+								elog(ERROR, "ExecAgg: Bad Agg->Target for Agg %d", aggno);
 						}
 						if (attlen == -1)
 						{
 							/* variable length */
 							attlen = VARSIZE((struct varlena *) newVal);
 						}
-						value1[i] = (Datum) palloc(attlen);
+						value1[aggno] = (Datum) palloc(attlen);
 						if (byVal)
-							value1[i] = newVal;
+							value1[aggno] = newVal;
 						else
-							memmove((char *) (value1[i]), (char *) newVal, attlen);
-						noInitValue[i] = 0;
-						nulls[i] = 0;
+							memmove((char *) (value1[aggno]), (char *) newVal, attlen);
+						noInitValue[aggno] = 0;
+						nulls[aggno] = 0;
 					}
 					else
 					{
-
 						/*
 						 * apply the transition functions.
 						 */
-						args[0] = value1[i];
+						args[0] = value1[aggno];
 						args[1] = newVal;
-						value1[i] =
+						value1[aggno] =
 							(Datum) fmgr_c(&aggfns->xfn1,
 										   (FmgrValues *) args,
 										   &isNull1);
@@ -393,13 +381,14 @@ ExecAgg(Agg *node)
 
 				if (aggfns->xfn2.fn_addr != NULL)
 				{
-					Datum		xfn2_val = value2[i];
+					Datum		xfn2_val = value2[aggno];
 
-					value2[i] =
+					value2[aggno] =
 						(Datum) fmgr_c(&aggfns->xfn2,
 									 (FmgrValues *) &xfn2_val, &isNull2);
 					Assert(!isNull2);
 				}
+				aggno++;
 			}
 
 			/*
@@ -417,12 +406,14 @@ ExecAgg(Agg *node)
 		 * finalize the aggregate (if necessary), and get the resultant value
 		 * --------------
 		 */
-		for (i = 0; i < nagg; i++)
+
+		aggno = 0;
+		foreach(alist, node->aggs)
 		{
 			char	   *args[2];
-			AggFuncInfo *aggfns = &aggFuncInfo[i];
+			AggFuncInfo *aggfns = &aggFuncInfo[aggno];
 
-			if (noInitValue[i])
+			if (noInitValue[aggno])
 			{
 
 				/*
@@ -435,17 +426,17 @@ ExecAgg(Agg *node)
 			{
 				if (aggfns->finalfn.fn_nargs > 1)
 				{
-					args[0] = (char *) value1[i];
-					args[1] = (char *) value2[i];
+					args[0] = (char *) value1[aggno];
+					args[1] = (char *) value2[aggno];
 				}
 				else if (aggfns->xfn1.fn_addr != NULL)
-					args[0] = (char *) value1[i];
+					args[0] = (char *) value1[aggno];
 				else if (aggfns->xfn2.fn_addr != NULL)
-					args[0] = (char *) value2[i];
+					args[0] = (char *) value2[aggno];
 				else
 					elog(NOTICE, "ExecAgg: no valid transition functions??");
-				value1[i] = (Datum) fmgr_c(&aggfns->finalfn,
-									   (FmgrValues *) args, &(nulls[i]));
+				value1[aggno] = (Datum) fmgr_c(&aggfns->finalfn,
+									   (FmgrValues *) args, &(nulls[aggno]));
 			}
 			else if (aggfns->xfn1.fn_addr != NULL)
 			{
@@ -456,9 +447,10 @@ ExecAgg(Agg *node)
 				 */
 			}
 			else if (aggfns->xfn2.fn_addr != NULL)
-				value1[i] = value2[i];
+				value1[aggno] = value2[aggno];
 			else
 				elog(ERROR, "ExecAgg: no valid transition functions??");
+			aggno++;
 		}
 
 		/*
@@ -494,11 +486,12 @@ ExecAgg(Agg *node)
 		if(node->plan.qual != NULL){
 		  qual_result = ExecQual(fix_opids(node->plan.qual), econtext);
 		}
+		else qual_result = false;
 		
 		if (oneTuple)
 			pfree(oneTuple);
 	}
-	while ((node->plan.qual != NULL) && (qual_result != true));
+	while (node->plan.qual != NULL && qual_result != true);
 
 	return resultSlot;
 }
@@ -516,7 +509,7 @@ ExecInitAgg(Agg *node, EState *estate, Plan *parent)
 	AggState   *aggstate;
 	Plan	   *outerPlan;
 	ExprContext *econtext;
-
+	
 	/*
 	 * assign the node's execution state
 	 */
@@ -528,7 +521,7 @@ ExecInitAgg(Agg *node, EState *estate, Plan *parent)
 	aggstate = makeNode(AggState);
 	node->aggstate = aggstate;
 	aggstate->agg_done = FALSE;
-
+	
 	/*
 	 * assign node's base id and create expression context
 	 */
@@ -628,7 +621,7 @@ ExecEndAgg(Agg *node)
  */
 static Datum
 aggGetAttr(TupleTableSlot *slot,
-		   Aggref *agg,
+		   Aggref *aggref,
 		   bool *isNull)
 {
 	Datum		result;
@@ -645,7 +638,7 @@ aggGetAttr(TupleTableSlot *slot,
 	tuple_type = slot->ttc_tupleDescriptor;
 	buffer = slot->ttc_buffer;
 
-	attnum = ((Var *) agg->target)->varattno;
+	attnum = ((Var *) aggref->target)->varattno;
 
 	/*
 	 * If the attribute number is invalid, then we are supposed to return

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.40 1999/01/24 00:28:18 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.41 1999/01/25 18:02:13 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -67,7 +67,7 @@ bool		execConstByVal;
 int			execConstLen;
 
 /* static functions decls */
-static Datum ExecEvalAggref(Aggref *agg, ExprContext *econtext, bool *isNull);
+static Datum ExecEvalAggref(Aggref *aggref, ExprContext *econtext, bool *isNull);
 static Datum ExecEvalArrayRef(ArrayRef *arrayRef, ExprContext *econtext,
 				 bool *isNull, bool *isDone);
 static Datum ExecEvalAnd(Expr *andExpr, ExprContext *econtext, bool *isNull);
@@ -192,10 +192,10 @@ ExecEvalArrayRef(ArrayRef *arrayRef,
  * ----------------------------------------------------------------
  */
 static Datum
-ExecEvalAggref(Aggref *agg, ExprContext *econtext, bool *isNull)
+ExecEvalAggref(Aggref *aggref, ExprContext *econtext, bool *isNull)
 {
-	*isNull = econtext->ecxt_nulls[agg->aggno];
-	return econtext->ecxt_values[agg->aggno];
+	*isNull = econtext->ecxt_nulls[aggref->aggno];
+	return econtext->ecxt_values[aggref->aggno];
 }
 
 /* ----------------------------------------------------------------

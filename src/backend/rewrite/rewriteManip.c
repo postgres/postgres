@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteManip.c,v 1.25 1999/01/24 00:28:31 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteManip.c,v 1.26 1999/01/25 18:02:22 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -55,10 +55,10 @@ OffsetVarNodes(Node *node, int offset, int sublevels_up)
 
 		case T_Aggref:
 			{
-				Aggref	*agg = (Aggref *)node;
+				Aggref	*aggref = (Aggref *)node;
 
 				OffsetVarNodes(
-						(Node *)(agg->target),
+						(Node *)(aggref->target),
 						offset,
 						sublevels_up);
 			}
@@ -273,10 +273,10 @@ ChangeVarNodes(Node *node, int rt_index, int new_index, int sublevels_up)
 
 		case T_Aggref:
 			{
-				Aggref	*agg = (Aggref *)node;
+				Aggref	*aggref = (Aggref *)node;
 
 				ChangeVarNodes(
-						(Node *)(agg->target),
+						(Node *)(aggref->target),
 						rt_index,
 						new_index,
 						sublevels_up);
@@ -748,9 +748,9 @@ nodeHandleRIRAttributeRule(Node **nodePtr,
 			break;
 		case T_Aggref:
 			{
-				Aggref	   *agg = (Aggref *) node;
+				Aggref	   *aggref = (Aggref *) node;
 
-				nodeHandleRIRAttributeRule(&agg->target, rtable, targetlist,
+				nodeHandleRIRAttributeRule(&aggref->target, rtable, targetlist,
 									rt_index, attr_num, modified, badsql,
 										   sublevels_up);
 			}
@@ -913,9 +913,9 @@ nodeHandleViewRule(Node **nodePtr,
 			break;
 		case T_Aggref:
 			{
-				Aggref	   *agg = (Aggref *) node;
+				Aggref	   *aggref = (Aggref *) node;
 
-				nodeHandleViewRule(&(agg->target), rtable, targetlist,
+				nodeHandleViewRule(&(aggref->target), rtable, targetlist,
 								   rt_index, modified, sublevels_up);
 			}
 			break;

@@ -3,7 +3,7 @@
  *			  out of it's tuple
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.7 1999/01/24 00:28:32 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.8 1999/01/25 18:02:23 momjian Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -1247,13 +1247,13 @@ get_rule_expr(QryHier *qh, int rt_index, Node *node, bool varprefix)
 
 		case T_Aggref:
 			{
-				Aggref	   *agg = (Aggref *) node;
+				Aggref	   *aggref = (Aggref *) node;
 
 				strcat(buf, "\"");
-				strcat(buf, agg->aggname);
+				strcat(buf, aggref->aggname);
 				strcat(buf, "\"(");
 				strcat(buf, get_rule_expr(qh, rt_index,
-									 (Node *) (agg->target), varprefix));
+									 (Node *) (aggref->target), varprefix));
 				strcat(buf, ")");
 				return pstrdup(buf);
 			}
@@ -1729,10 +1729,10 @@ check_if_rte_used(int rt_index, Node *node, int sup)
 
 		case T_Aggref:
 			{
-				Aggref	   *agg = (Aggref *) node;
+				Aggref	   *aggref = (Aggref *) node;
 
 				return check_if_rte_used(rt_index,
-										 (Node *) (agg->target), sup);
+										 (Node *) (aggref->target), sup);
 			}
 			break;
 

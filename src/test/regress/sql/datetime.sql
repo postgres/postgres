@@ -10,6 +10,9 @@ SELECT ('tomorrow'::datetime = ('yesterday'::datetime + '2 days'::timespan)) as 
 SELECT ('current'::datetime = 'now'::datetime) as "True";
 SELECT ('now'::datetime - 'current'::datetime) AS "ZeroSecs";
 
+SET DateStyle = 'Postgres,noneuropean';
+SELECT datetime('1994-01-01', '11:00') AS "Jan_01_1994_11am";
+
 CREATE TABLE DATETIME_TBL( d1 datetime);
 
 INSERT INTO DATETIME_TBL VALUES ('current');

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/setrefs.c,v 1.32 1999/01/24 00:28:20 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/setrefs.c,v 1.33 1999/01/25 18:02:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -700,7 +700,7 @@ OperandIsInner(Node *opnd, int inner_relid)
 
 /*---------------------------------------------------------
  *
- * set_agg_tlist_references -
+ * get_agg_tlist_references -
  *	  changes the target list of an Agg node so that it points to
  *	  the tuples returned by its left tree subplan.
  *
@@ -708,7 +708,7 @@ OperandIsInner(Node *opnd, int inner_relid)
  *
  */
 List *
-set_agg_tlist_references(Agg *aggNode)
+get_agg_tlist_references(Agg *aggNode)
 {
 	List	   *aggTargetList;
 	List	   *subplanTargetList;
