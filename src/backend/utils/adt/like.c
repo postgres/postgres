@@ -11,15 +11,16 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	$Header: /cvsroot/pgsql/src/backend/utils/adt/like.c,v 1.35 2000/06/14 18:59:42 momjian Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/utils/adt/like.c,v 1.36 2000/07/06 05:48:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
+
 #include "mb/pg_wchar.h"
 #include "utils/builtins.h"
 
-static int	like(pg_wchar * text, pg_wchar * p);
+static bool like(pg_wchar * text, pg_wchar * p);
 
 /*
  *	interface routines called by the function manager
@@ -30,19 +31,16 @@ static int	like(pg_wchar * text, pg_wchar * p);
 
    a generic fixed length like routine
 		 s		- the string to match against  (not necessarily null-terminated)
-		 p		   - the pattern
+		 p		   - the pattern (as text*)
 		 charlen   - the length of the string
 */
 static bool
-fixedlen_like(char *s, struct varlena * p, int charlen)
+fixedlen_like(char *s, text *p, int charlen)
 {
 	pg_wchar   *sterm,
 			   *pterm;
-	int			result;
+	bool		result;
 	int			len;
-
-	if (!s || !p)
-		return FALSE;
 
 	/* be sure sterm is null-terminated */
 #ifdef MULTIBYTE
@@ -54,7 +52,7 @@ fixedlen_like(char *s, struct varlena * p, int charlen)
 #endif
 
 	/*
-	 * p is a text = varlena, not a string so we have to make a string
+	 * p is a text, not a string so we have to make a string
 	 * from the vl_data field of the struct.
 	 */
 
@@ -65,8 +63,8 @@ fixedlen_like(char *s, struct varlena * p, int charlen)
 	(void) pg_mb2wchar_with_len((unsigned char *) VARDATA(p), pterm, len);
 #else
 	pterm = (char *) palloc(len + 1);
-	memmove(pterm, VARDATA(p), len);
-	*(pterm + len) = (char) NULL;
+	memcpy(pterm, VARDATA(p), len);
+	*(pterm + len) = '\0';
 #endif
 
 	/* do the regexp matching */
@@ -75,35 +73,43 @@ fixedlen_like(char *s, struct varlena * p, int charlen)
 	pfree(sterm);
 	pfree(pterm);
 
-	return (bool) result;
+	return result;
 }
 
-bool
-namelike(NameData *n, struct varlena * p)
+Datum
+namelike(PG_FUNCTION_ARGS)
 {
-	if (!n)
-		return FALSE;
-	return fixedlen_like(NameStr(*n), p, NAMEDATALEN);
+	Name		n = PG_GETARG_NAME(0);
+	text	   *p = PG_GETARG_TEXT_P(1);
+
+	PG_RETURN_BOOL(fixedlen_like(NameStr(*n), p, strlen(NameStr(*n))));
 }
 
-bool
-namenlike(NameData *s, struct varlena * p)
+Datum
+namenlike(PG_FUNCTION_ARGS)
 {
-	return !namelike(s, p);
+	Name		n = PG_GETARG_NAME(0);
+	text	   *p = PG_GETARG_TEXT_P(1);
+
+	PG_RETURN_BOOL(! fixedlen_like(NameStr(*n), p, strlen(NameStr(*n))));
 }
 
-bool
-textlike(struct varlena * s, struct varlena * p)
+Datum
+textlike(PG_FUNCTION_ARGS)
 {
-	if (!s)
-		return FALSE;
-	return fixedlen_like(VARDATA(s), p, VARSIZE(s) - VARHDRSZ);
+	text	   *s = PG_GETARG_TEXT_P(0);
+	text	   *p = PG_GETARG_TEXT_P(1);
+
+	PG_RETURN_BOOL(fixedlen_like(VARDATA(s), p, VARSIZE(s) - VARHDRSZ));
 }
 
-bool
-textnlike(struct varlena * s, struct varlena * p)
+Datum
+textnlike(PG_FUNCTION_ARGS)
 {
-	return !textlike(s, p);
+	text	   *s = PG_GETARG_TEXT_P(0);
+	text	   *p = PG_GETARG_TEXT_P(1);
+
+	PG_RETURN_BOOL(! fixedlen_like(VARDATA(s), p, VARSIZE(s) - VARHDRSZ));
 }
 
 
@@ -221,11 +227,11 @@ DoMatch(pg_wchar * text, pg_wchar * p)
 /*
 **	User-level routine.  Returns TRUE or FALSE.
 */
-static int
+static bool
 like(pg_wchar * text, pg_wchar * p)
 {
 	/* Fast path for match-everything pattern */
 	if (p[0] == '%' && p[1] == '\0')
-		return TRUE;
+		return true;
 	return DoMatch(text, p) == LIKE_TRUE;
 }

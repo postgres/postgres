@@ -1,29 +1,28 @@
 /*-------------------------------------------------------------------------
  *
  * version.c
- *	 Returns the version string
+ *	 Returns the PostgreSQL version string
  *
  * IDENTIFICATION
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/version.c,v 1.11 2000/07/03 23:09:54 wieck Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/version.c,v 1.12 2000/07/06 05:48:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 
-
 #include "postgres.h"
 
+#include "utils/builtins.h"
 
-text	   *version(void);
 
-text *
-version(void)
+Datum
+pgsql_version(PG_FUNCTION_ARGS)
 {
-	int			n = strlen(PG_VERSION_STR) + VARHDRSZ;
-	text	   *ret = (text *) palloc(n);
+	int			n = strlen(PG_VERSION_STR);
+	text	   *ret = (text *) palloc(n + VARHDRSZ);
 
-	VARATT_SIZEP(ret) = n;
-	memcpy(VARDATA(ret), PG_VERSION_STR, strlen(PG_VERSION_STR));
+	VARATT_SIZEP(ret) = n + VARHDRSZ;
+	memcpy(VARDATA(ret), PG_VERSION_STR, n);
 
-	return ret;
+	PG_RETURN_TEXT_P(ret);
 }

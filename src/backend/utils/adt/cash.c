@@ -9,7 +9,7 @@
  * workings can be found in the book "Software Solutions in C" by
  * Dale Schumacher, Academic Press, ISBN: 0-12-632360-7.
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/cash.c,v 1.41 2000/07/03 23:09:50 wieck Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/cash.c,v 1.42 2000/07/06 05:48:11 tgl Exp $
  */
 
 #include <limits.h>
@@ -41,7 +41,7 @@ static struct lconv *lconvert = NULL;
  * Cash is a pass-by-ref SQL type, so we must pass and return pointers.
  * These macros and support routine hide the pass-by-refness.
  */
-#define PG_GETARG_CASH(n)  (* ((Cash *) DatumGetPointer(fcinfo->arg[n])))
+#define PG_GETARG_CASH(n)  (* ((Cash *) PG_GETARG_POINTER(n)))
 #define PG_RETURN_CASH(x)  return CashGetDatum(x)
 
 static Datum
@@ -677,10 +677,11 @@ cashsmaller(Cash *c1, Cash *c2)
  * This converts a int4 as well but to a representation using words
  * Obviously way North American centric - sorry
  */
-text *
-cash_words_out(Cash *value)
+Datum
+cash_words_out(PG_FUNCTION_ARGS)
 {
-	static char buf[128];
+	Cash		value = PG_GETARG_CASH(0);
+	char		buf[128];
 	char	   *p = buf;
 	Cash		m0;
 	Cash		m1;
@@ -689,19 +690,19 @@ cash_words_out(Cash *value)
 	text	   *result;
 
 	/* work with positive numbers */
-	if (*value < 0)
+	if (value < 0)
 	{
-		*value *= -1;
+		value = -value;
 		strcpy(buf, "minus ");
 		p += 6;
 	}
 	else
-		*buf = 0;
+		buf[0] = '\0';
 
-	m0 = *value % 100;			/* cents */
-	m1 = (*value / 100) % 1000; /* hundreds */
-	m2 = (*value / 100000) % 1000;		/* thousands */
-	m3 = *value / 100000000 % 1000;		/* millions */
+	m0 = value % 100;			/* cents */
+	m1 = (value / 100) % 1000; /* hundreds */
+	m2 = (value / 100000) % 1000;		/* thousands */
+	m3 = value / 100000000 % 1000;		/* millions */
 
 	if (m3)
 	{
@@ -721,20 +722,20 @@ cash_words_out(Cash *value)
 	if (!*p)
 		strcat(buf, "zero");
 
-	strcat(buf, (int) (*value / 100) == 1 ? " dollar and " : " dollars and ");
+	strcat(buf, (int) (value / 100) == 1 ? " dollar and " : " dollars and ");
 	strcat(buf, num_word(m0));
 	strcat(buf, m0 == 1 ? " cent" : " cents");
 
 	/* capitalize output */
-	*buf = toupper(*buf);
+	buf[0] = toupper(buf[0]);
 
 	/* make a text type for output */
 	result = (text *) palloc(strlen(buf) + VARHDRSZ);
 	VARATT_SIZEP(result) = strlen(buf) + VARHDRSZ;
 	memcpy(VARDATA(result), buf, strlen(buf));
 
-	return result;
-}	/* cash_words_out() */
+	PG_RETURN_TEXT_P(result);
+}
 
 
 /*************************************************************************

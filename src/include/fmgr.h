@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: fmgr.h,v 1.6 2000/06/14 05:24:50 tgl Exp $
+ * $Id: fmgr.h,v 1.7 2000/07/06 05:48:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -94,22 +94,30 @@ extern void fmgr_info(Oid functionId, FmgrInfo *finfo);
 /* Standard parameter list for fmgr-compatible functions */
 #define PG_FUNCTION_ARGS	FunctionCallInfo fcinfo
 
-/* If function is not marked "proisstrict" in pg_proc, it must check for
+/*
+ * If function is not marked "proisstrict" in pg_proc, it must check for
  * null arguments using this macro.  Do not try to GETARG a null argument!
  */
 #define PG_ARGISNULL(n)  (fcinfo->argnull[n])
 
-#if 1
-/* VERY TEMPORARY until some TOAST support is committed ... */
-#define PG_DETOAST_DATUM(datum)  \
-	 ((struct varlena *) DatumGetPointer(datum))
-#else
-/* Eventually it will look more like this... */
-#define PG_DETOAST_DATUM(datum)  \
-	(VARATT_IS_EXTENDED(DatumGetPointer(datum)) ?  \
-	 (struct varlena *) heap_tuple_untoast_attr((varattrib *) DatumGetPointer(datum)) :  \
-	 (struct varlena *) DatumGetPointer(datum))
-#endif
+/*
+ * Support for fetching detoasted copies of toastable datatypes (all of
+ * which are varlena types).  pg_detoast_datum() gives you either the input
+ * datum (if not toasted) or a detoasted copy allocated with palloc().
+ * pg_detoast_datum_copy() always gives you a palloc'd copy --- use it
+ * if you need a modifiable copy of the input.  Caller is expected to have
+ * checked for null inputs first, if necessary.
+ *
+ * Note: it'd be nice if these could be macros, but I see no way to do that
+ * without evaluating the arguments multiple times, which is NOT acceptable.
+ */
+extern struct varlena * pg_detoast_datum(struct varlena * datum);
+extern struct varlena * pg_detoast_datum_copy(struct varlena * datum);
+
+#define PG_DETOAST_DATUM(datum) \
+	pg_detoast_datum((struct varlena *) DatumGetPointer(datum))
+#define PG_DETOAST_DATUM_COPY(datum) \
+	pg_detoast_datum_copy((struct varlena *) DatumGetPointer(datum))
 
 /* Macros for fetching arguments of standard types */
 
@@ -133,15 +141,25 @@ extern void fmgr_info(Oid functionId, FmgrInfo *finfo);
 /* use this if you want the input datum de-toasted: */
 #define PG_GETARG_VARLENA_P(n) PG_DETOAST_DATUM(PG_GETARG_DATUM(n))
 /* DatumGetFoo macros for varlena types will typically look like this: */
-#define DatumGetByteaP(X)    ((bytea *) PG_DETOAST_DATUM(X))
-#define DatumGetTextP(X)     ((text *) PG_DETOAST_DATUM(X))
-#define DatumGetBpCharP(X)   ((BpChar *) PG_DETOAST_DATUM(X))
-#define DatumGetVarCharP(X)  ((VarChar *) PG_DETOAST_DATUM(X))
+#define DatumGetByteaP(X)           ((bytea *) PG_DETOAST_DATUM(X))
+#define DatumGetTextP(X)            ((text *) PG_DETOAST_DATUM(X))
+#define DatumGetBpCharP(X)          ((BpChar *) PG_DETOAST_DATUM(X))
+#define DatumGetVarCharP(X)         ((VarChar *) PG_DETOAST_DATUM(X))
+/* And we also offer variants that return an OK-to-write copy */
+#define DatumGetByteaPCopy(X)       ((bytea *) PG_DETOAST_DATUM_COPY(X))
+#define DatumGetTextPCopy(X)        ((text *) PG_DETOAST_DATUM_COPY(X))
+#define DatumGetBpCharPCopy(X)      ((BpChar *) PG_DETOAST_DATUM_COPY(X))
+#define DatumGetVarCharPCopy(X)     ((VarChar *) PG_DETOAST_DATUM_COPY(X))
 /* GETARG macros for varlena types will typically look like this: */
-#define PG_GETARG_BYTEA_P(n)   DatumGetByteaP(PG_GETARG_DATUM(n))
-#define PG_GETARG_TEXT_P(n)    DatumGetTextP(PG_GETARG_DATUM(n))
-#define PG_GETARG_BPCHAR_P(n)  DatumGetBpCharP(PG_GETARG_DATUM(n))
-#define PG_GETARG_VARCHAR_P(n) DatumGetVarCharP(PG_GETARG_DATUM(n))
+#define PG_GETARG_BYTEA_P(n)        DatumGetByteaP(PG_GETARG_DATUM(n))
+#define PG_GETARG_TEXT_P(n)         DatumGetTextP(PG_GETARG_DATUM(n))
+#define PG_GETARG_BPCHAR_P(n)       DatumGetBpCharP(PG_GETARG_DATUM(n))
+#define PG_GETARG_VARCHAR_P(n)      DatumGetVarCharP(PG_GETARG_DATUM(n))
+/* And we also offer variants that return an OK-to-write copy */
+#define PG_GETARG_BYTEA_P_COPY(n)   DatumGetByteaPCopy(PG_GETARG_DATUM(n))
+#define PG_GETARG_TEXT_P_COPY(n)    DatumGetTextPCopy(PG_GETARG_DATUM(n))
+#define PG_GETARG_BPCHAR_P_COPY(n)  DatumGetBpCharPCopy(PG_GETARG_DATUM(n))
+#define PG_GETARG_VARCHAR_P_COPY(n) DatumGetVarCharPCopy(PG_GETARG_DATUM(n))
 
 /* To return a NULL do this: */
 #define PG_RETURN_NULL()  \

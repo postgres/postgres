@@ -3,20 +3,28 @@
  *	is for IP V4 CIDR notation, but prepared for V6: just
  *	add the necessary bits where the comments indicate.
  *
- *	$Id: network.c,v 1.22 2000/07/03 23:09:52 wieck Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/utils/adt/network.c,v 1.23 2000/07/06 05:48:11 tgl Exp $
+ *
  *	Jon Postel RIP 16 Oct 1998
  */
 
-#include <sys/types.h>
-#include <sys/socket.h>
+#include "postgres.h"
 
 #include <errno.h>
-
+#include <sys/types.h>
+#include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
-#include "postgres.h"
 #include "utils/builtins.h"
+
+/*
+ * inet is a pass-by-reference datatype.  It's not toastable, and we
+ * don't try to hide the pass-by-refness, so these macros are simple.
+ */
+#define PG_GETARG_INET_P(n)  ((inet *) PG_GETARG_POINTER(n))
+#define PG_RETURN_INET_P(x)  return PointerGetDatum(x)
+
 
 static int	v4bitncmp(unsigned int a1, unsigned int a2, int bits);
 
@@ -315,16 +323,14 @@ network_cmp(inet *a1, inet *a2)
 	return 0;
 }
 
-text *
-network_host(inet *ip)
+Datum
+network_host(PG_FUNCTION_ARGS)
 {
+	inet	   *ip = PG_GETARG_INET_P(0);
 	text	   *ret;
 	int			len;
 	char	   *ptr,
 				tmp[sizeof("255.255.255.255/32")];
-
-	if (!PointerIsValid(ip))
-		return NULL;
 
 	if (ip_type(ip))
 		elog(ERROR, "CIDR type has no host part");
@@ -339,16 +345,16 @@ network_host(inet *ip)
 		/* Go for an IPV6 address here, before faulting out: */
 		elog(ERROR, "unknown address family (%d)", ip_family(ip));
 
+	/* Suppress /n if present */
 	if ((ptr = strchr(tmp, '/')) != NULL)
-		*ptr = 0;
-	len = VARHDRSZ + strlen(tmp) + 1;
-	ret = palloc(len);
-	if (ret == NULL)
-		elog(ERROR, "unable to allocate memory in network_host()");
+		*ptr = '\0';
 
-	VARATT_SIZEP(ret) = len;
-	strcpy(VARDATA(ret), tmp);
-	return (ret);
+	/* Return string as a text datum */
+	len = strlen(tmp);
+	ret = (text *) palloc(len + VARHDRSZ);
+	VARATT_SIZEP(ret) = len + VARHDRSZ;
+	memcpy(VARDATA(ret), tmp, len);
+	PG_RETURN_TEXT_P(ret);
 }
 
 int4
@@ -360,16 +366,14 @@ network_masklen(inet *ip)
 	return ip_bits(ip);
 }
 
-text *
-network_broadcast(inet *ip)
+Datum
+network_broadcast(PG_FUNCTION_ARGS)
 {
+	inet	   *ip = PG_GETARG_INET_P(0);
 	text	   *ret;
 	int			len;
 	char	   *ptr,
 				tmp[sizeof("255.255.255.255/32")];
-
-	if (!PointerIsValid(ip))
-		return NULL;
 
 	if (ip_family(ip) == AF_INET)
 	{
@@ -383,33 +387,30 @@ network_broadcast(inet *ip)
 
 		if (inet_net_ntop(AF_INET, &addr, 32, tmp, sizeof(tmp)) == NULL)
 			elog(ERROR, "unable to print address (%s)", strerror(errno));
-
 	}
 	else
 		/* Go for an IPV6 address here, before faulting out: */
 		elog(ERROR, "unknown address family (%d)", ip_family(ip));
 
+	/* Suppress /n if present */
 	if ((ptr = strchr(tmp, '/')) != NULL)
-		*ptr = 0;
-	len = VARHDRSZ + strlen(tmp) + 1;
-	ret = palloc(len);
-	if (ret == NULL)
-		elog(ERROR, "unable to allocate memory in network_broadcast()");
+		*ptr = '\0';
 
-	VARATT_SIZEP(ret) = len;
-	strcpy(VARDATA(ret), tmp);
-	return (ret);
+	/* Return string as a text datum */
+	len = strlen(tmp);
+	ret = (text *) palloc(len + VARHDRSZ);
+	VARATT_SIZEP(ret) = len + VARHDRSZ;
+	memcpy(VARDATA(ret), tmp, len);
+	PG_RETURN_TEXT_P(ret);
 }
 
-text *
-network_network(inet *ip)
+Datum
+network_network(PG_FUNCTION_ARGS)
 {
+	inet	   *ip = PG_GETARG_INET_P(0);
 	text	   *ret;
 	int			len;
 	char		tmp[sizeof("255.255.255.255/32")];
-
-	if (!PointerIsValid(ip))
-		return NULL;
 
 	if (ip_family(ip) == AF_INET)
 	{
@@ -418,32 +419,27 @@ network_network(inet *ip)
 
 		if (inet_cidr_ntop(AF_INET, &addr, ip_bits(ip), tmp, sizeof(tmp)) == NULL)
 			elog(ERROR, "unable to print network (%s)", strerror(errno));
-
 	}
 	else
 		/* Go for an IPV6 address here, before faulting out: */
 		elog(ERROR, "unknown address family (%d)", ip_family(ip));
 
-	len = VARHDRSZ + strlen(tmp) + 1;
-	ret = palloc(len);
-	if (ret == NULL)
-		elog(ERROR, "unable to allocate memory in network_network()");
-
-	VARATT_SIZEP(ret) = len;
-	strcpy(VARDATA(ret), tmp);
-	return (ret);
+	/* Return string as a text datum */
+	len = strlen(tmp);
+	ret = (text *) palloc(len + VARHDRSZ);
+	VARATT_SIZEP(ret) = len + VARHDRSZ;
+	memcpy(VARDATA(ret), tmp, len);
+	PG_RETURN_TEXT_P(ret);
 }
 
-text *
-network_netmask(inet *ip)
+Datum
+network_netmask(PG_FUNCTION_ARGS)
 {
+	inet	   *ip = PG_GETARG_INET_P(0);
 	text	   *ret;
 	int			len;
 	char	   *ptr,
 				tmp[sizeof("255.255.255.255/32")];
-
-	if (!PointerIsValid(ip))
-		return NULL;
 
 	if (ip_family(ip) == AF_INET)
 	{
@@ -453,22 +449,21 @@ network_netmask(inet *ip)
 
 		if (inet_net_ntop(AF_INET, &addr, 32, tmp, sizeof(tmp)) == NULL)
 			elog(ERROR, "unable to print netmask (%s)", strerror(errno));
-
 	}
 	else
 		/* Go for an IPV6 address here, before faulting out: */
 		elog(ERROR, "unknown address family (%d)", ip_family(ip));
 
+	/* Suppress /n if present */
 	if ((ptr = strchr(tmp, '/')) != NULL)
-		*ptr = 0;
-	len = VARHDRSZ + strlen(tmp) + 1;
-	ret = palloc(len);
-	if (ret == NULL)
-		elog(ERROR, "unable to allocate memory in network_netmask()");
+		*ptr = '\0';
 
-	VARATT_SIZEP(ret) = len;
-	strcpy(VARDATA(ret), tmp);
-	return (ret);
+	/* Return string as a text datum */
+	len = strlen(tmp);
+	ret = (text *) palloc(len + VARHDRSZ);
+	VARATT_SIZEP(ret) = len + VARHDRSZ;
+	memcpy(VARDATA(ret), tmp, len);
+	PG_RETURN_TEXT_P(ret);
 }
 
 /*

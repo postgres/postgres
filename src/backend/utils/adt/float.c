@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/float.c,v 1.62 2000/07/03 23:09:50 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/float.c,v 1.63 2000/07/06 05:48:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -941,91 +941,99 @@ i2tof(PG_FUNCTION_ARGS)
 /*
  *		float8_text		- converts a float8 number to a text string
  */
-text *
-float8_text(float64 num)
+Datum
+float8_text(PG_FUNCTION_ARGS)
 {
+	float8		num = PG_GETARG_FLOAT8(0);
 	text	   *result;
 	int			len;
 	char	   *str;
 
-	str = float8out(num);
-	len = (strlen(str) + VARHDRSZ);
+	str = float8out(&num);		/* XXX temporary hack */
+	len = strlen(str) + VARHDRSZ;
 
-	result = palloc(len);
+	result = (text *) palloc(len);
 
 	VARATT_SIZEP(result) = len;
-	memmove(VARDATA(result), str, (len - VARHDRSZ));
+	memcpy(VARDATA(result), str, (len - VARHDRSZ));
 
 	pfree(str);
-	return result;
-}	/* float8_text() */
+
+	PG_RETURN_TEXT_P(result);
+}
 
 
 /*
  *		text_float8		- converts a text string to a float8 number
  */
-float64
-text_float8(text *string)
+Datum
+text_float8(PG_FUNCTION_ARGS)
 {
+	text	   *string = PG_GETARG_TEXT_P(0);
 	float64		result;
 	int			len;
 	char	   *str;
 
 	len = (VARSIZE(string) - VARHDRSZ);
 	str = palloc(len + 1);
-	memmove(str, VARDATA(string), len);
+	memcpy(str, VARDATA(string), len);
 	*(str + len) = '\0';
 
 	result = float8in(str);
+
 	pfree(str);
 
-	return result;
-}	/* text_float8() */
+	return PointerGetDatum(result);
+}
 
 
 /*
  *		float4_text		- converts a float4 number to a text string
  */
-text *
-float4_text(float32 num)
+Datum
+float4_text(PG_FUNCTION_ARGS)
 {
+	float4		num = PG_GETARG_FLOAT4(0);
 	text	   *result;
 	int			len;
 	char	   *str;
 
-	str = float4out(num);
-	len = (strlen(str) + VARHDRSZ);
+	str = float4out(&num);		/* XXX temporary hack */
+	len = strlen(str) + VARHDRSZ;
 
-	result = palloc(len);
+	result = (text *) palloc(len);
 
 	VARATT_SIZEP(result) = len;
-	memmove(VARDATA(result), str, (len - VARHDRSZ));
+	memcpy(VARDATA(result), str, (len - VARHDRSZ));
 
 	pfree(str);
-	return result;
-}	/* float4_text() */
+
+	PG_RETURN_TEXT_P(result);
+}
 
 
 /*
  *		text_float4		- converts a text string to a float4 number
  */
-float32
-text_float4(text *string)
+Datum
+text_float4(PG_FUNCTION_ARGS)
 {
+	text	   *string = PG_GETARG_TEXT_P(0);
 	float32		result;
 	int			len;
 	char	   *str;
 
 	len = (VARSIZE(string) - VARHDRSZ);
 	str = palloc(len + 1);
-	memmove(str, VARDATA(string), len);
+	memcpy(str, VARDATA(string), len);
 	*(str + len) = '\0';
 
 	result = float4in(str);
+
 	pfree(str);
 
-	return result;
-}	/* text_float4() */
+	return PointerGetDatum(result);
+}
 
 
 /*

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/regexp.c,v 1.31 2000/07/05 23:11:35 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/regexp.c,v 1.32 2000/07/06 05:48:11 tgl Exp $
  *
  *		Alistair Crooks added the code for the regex caching
  *		agc - cached the regular expressions used - there's a good chance
@@ -25,11 +25,9 @@
  *		instead of `oldest' when compiling regular expressions - benign
  *		results mostly, although occasionally it bit you...
  *
- *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
-
 
 #include "regex/regex.h"
 #include "utils/builtins.h"
@@ -46,7 +44,6 @@
 /* this structure describes a cached regular expression */
 struct cached_re_str
 {
-	struct varlena *cre_text;	/* pattern as a text* */
 	char	   *cre_s;			/* pattern as null-terminated string */
 	int			cre_type;		/* compiled-type: extended,icase etc */
 	regex_t		cre_re;			/* the compiled regular expression */
@@ -59,37 +56,34 @@ static unsigned long lru;		/* system lru tag */
 
 /* attempt to compile `re' as an re, then match it against text */
 /* cflags - flag to regcomp indicates case sensitivity */
-static int
-RE_compile_and_execute(struct varlena * text_re, char *text, int cflags)
+static bool
+RE_compile_and_execute(text *text_re, char *text, int cflags)
 {
-	int			oldest;
-	int			n;
-	int			i;
 	char	   *re;
+	int			oldest;
+	int			i;
 	int			regcomp_result;
 
+	/* Convert 'text' pattern to null-terminated string */
 	re = DatumGetCString(DirectFunctionCall1(textout,
 											 PointerGetDatum(text_re)));
+
 	/* find a previously compiled regular expression */
 	for (i = 0; i < rec; i++)
 	{
 		if (rev[i].cre_s)
 		{
-			if (strcmp(rev[i].cre_s, re) == 0)
+			if (strcmp(rev[i].cre_s, re) == 0 &&
+				rev[i].cre_type == cflags)
 			{
-				if (rev[i].cre_type == cflags)
-				{
-					rev[i].cre_lru = ++lru;
-					pfree(re);
-					return (pg95_regexec(&rev[i].cre_re,
-										 text, 0,
-										 (regmatch_t *) NULL, 0) == 0);
-				}
+				rev[i].cre_lru = ++lru;
+				pfree(re);
+				return (pg95_regexec(&rev[i].cre_re,
+									 text, 0,
+									 (regmatch_t *) NULL, 0) == 0);
 			}
 		}
 	}
-
-
 
 	/* we didn't find it - make room in the cache for it */
 	if (rec == MAX_CACHED_RES)
@@ -120,22 +114,18 @@ RE_compile_and_execute(struct varlena * text_re, char *text, int cflags)
 		 * persist across transactions
 		 */
 		free(rev[oldest].cre_s);
+		rev[oldest].cre_s = (char *) NULL;
 	}
 
 	/* compile the re */
 	regcomp_result = pg95_regcomp(&rev[oldest].cre_re, re, cflags);
 	if (regcomp_result == 0)
 	{
-		n = strlen(re);
-
 		/*
 		 * use malloc/free for the cre_s field because the storage has to
 		 * persist across transactions
 		 */
-		rev[oldest].cre_s = (char *) malloc(n + 1);
-		memmove(rev[oldest].cre_s, re, n);
-		rev[oldest].cre_s[n] = 0;
-		rev[oldest].cre_text = text_re;
+		rev[oldest].cre_s = strdup(re);
 		rev[oldest].cre_lru = ++lru;
 		rev[oldest].cre_type = cflags;
 		pfree(re);
@@ -148,38 +138,29 @@ RE_compile_and_execute(struct varlena * text_re, char *text, int cflags)
 		char		errMsg[1000];
 
 		/* re didn't compile */
-		rev[oldest].cre_s = (char *) NULL;
 		pg95_regerror(regcomp_result, &rev[oldest].cre_re, errMsg,
 					  sizeof(errMsg));
 		elog(ERROR, "regcomp failed with error %s", errMsg);
 	}
 
 	/* not reached */
-	return 0;
+	return false;
 }
 
-
-
-/*
- *	interface routines called by the function manager
- */
 
 /*
    fixedlen_regexeq:
 
    a generic fixed length regexp routine
 		 s		- the string to match against (not necessarily null-terminated)
-		 p		- the pattern
+		 p		- the pattern (as a text*)
 		 charlen   - the length of the string
 */
 static bool
-fixedlen_regexeq(char *s, struct varlena * p, int charlen, int cflags)
+fixedlen_regexeq(char *s, text *p, int charlen, int cflags)
 {
 	char	   *sterm;
-	int			result;
-
-	if (!s || !p)
-		return FALSE;
+	bool		result;
 
 	/* be sure sterm is null-terminated */
 	sterm = (char *) palloc(charlen + 1);
@@ -189,73 +170,113 @@ fixedlen_regexeq(char *s, struct varlena * p, int charlen, int cflags)
 
 	pfree(sterm);
 
-	return (bool) result;
-
+	return result;
 }
 
 
 /*
- *	routines that use the regexp stuff
+ *	interface routines called by the function manager
  */
-bool
-nameregexeq(NameData *n, struct varlena * p)
+
+Datum
+nameregexeq(PG_FUNCTION_ARGS)
 {
-	if (!n)
-		return FALSE;
-	return fixedlen_regexeq(NameStr(*n), p, NAMEDATALEN, REG_EXTENDED);
+	Name		n = PG_GETARG_NAME(0);
+	text	   *p = PG_GETARG_TEXT_P(1);
+
+	PG_RETURN_BOOL(fixedlen_regexeq(NameStr(*n),
+									p,
+									strlen(NameStr(*n)),
+									REG_EXTENDED));
 }
 
-bool
-nameregexne(NameData *s, struct varlena * p)
+Datum
+nameregexne(PG_FUNCTION_ARGS)
 {
-	return !nameregexeq(s, p);
+	Name		n = PG_GETARG_NAME(0);
+	text	   *p = PG_GETARG_TEXT_P(1);
+
+	PG_RETURN_BOOL(! fixedlen_regexeq(NameStr(*n),
+									  p,
+									  strlen(NameStr(*n)),
+									  REG_EXTENDED));
 }
 
-bool
-textregexeq(struct varlena * s, struct varlena * p)
+Datum
+textregexeq(PG_FUNCTION_ARGS)
 {
-	if (!s)
-		return FALSE;
-	return fixedlen_regexeq(VARDATA(s), p, VARSIZE(s) - VARHDRSZ, REG_EXTENDED);
+	text	   *s = PG_GETARG_TEXT_P(0);
+	text	   *p = PG_GETARG_TEXT_P(1);
+
+	PG_RETURN_BOOL(fixedlen_regexeq(VARDATA(s),
+									p,
+									VARSIZE(s) - VARHDRSZ,
+									REG_EXTENDED));
 }
 
-bool
-textregexne(struct varlena * s, struct varlena * p)
+Datum
+textregexne(PG_FUNCTION_ARGS)
 {
-	return !textregexeq(s, p);
+	text	   *s = PG_GETARG_TEXT_P(0);
+	text	   *p = PG_GETARG_TEXT_P(1);
+
+	PG_RETURN_BOOL(! fixedlen_regexeq(VARDATA(s),
+									  p,
+									  VARSIZE(s) - VARHDRSZ,
+									  REG_EXTENDED));
 }
 
 
 /*
-*  routines that use the regexp stuff, but ignore the case.
+ *  routines that use the regexp stuff, but ignore the case.
  *	for this, we use the REG_ICASE flag to pg95_regcomp
  */
-bool
-texticregexeq(struct varlena * s, struct varlena * p)
+
+
+Datum
+texticregexeq(PG_FUNCTION_ARGS)
 {
-	if (!s)
-		return FALSE;
-	return (fixedlen_regexeq(VARDATA(s), p, VARSIZE(s) - VARHDRSZ,
-							 REG_ICASE | REG_EXTENDED));
+	text	   *s = PG_GETARG_TEXT_P(0);
+	text	   *p = PG_GETARG_TEXT_P(1);
+
+	PG_RETURN_BOOL(fixedlen_regexeq(VARDATA(s),
+									p,
+									VARSIZE(s) - VARHDRSZ,
+									REG_ICASE | REG_EXTENDED));
 }
 
-bool
-texticregexne(struct varlena * s, struct varlena * p)
+Datum
+texticregexne(PG_FUNCTION_ARGS)
 {
-	return !texticregexeq(s, p);
+	text	   *s = PG_GETARG_TEXT_P(0);
+	text	   *p = PG_GETARG_TEXT_P(1);
+
+	PG_RETURN_BOOL(! fixedlen_regexeq(VARDATA(s),
+									  p,
+									  VARSIZE(s) - VARHDRSZ,
+									  REG_ICASE | REG_EXTENDED));
 }
 
-bool
-nameicregexeq(NameData *n, struct varlena * p)
+Datum
+nameicregexeq(PG_FUNCTION_ARGS)
 {
-	if (!n)
-		return FALSE;
-	return (fixedlen_regexeq(NameStr(*n), p, NAMEDATALEN,
-							 REG_ICASE | REG_EXTENDED));
+	Name		n = PG_GETARG_NAME(0);
+	text	   *p = PG_GETARG_TEXT_P(1);
+
+	PG_RETURN_BOOL(fixedlen_regexeq(NameStr(*n),
+									p,
+									strlen(NameStr(*n)),
+									REG_ICASE | REG_EXTENDED));
 }
 
-bool
-nameicregexne(NameData *s, struct varlena * p)
+Datum
+nameicregexne(PG_FUNCTION_ARGS)
 {
-	return !nameicregexeq(s, p);
+	Name		n = PG_GETARG_NAME(0);
+	text	   *p = PG_GETARG_TEXT_P(1);
+
+	PG_RETURN_BOOL(! fixedlen_regexeq(NameStr(*n),
+									  p,
+									  strlen(NameStr(*n)),
+									  REG_ICASE | REG_EXTENDED));
 }

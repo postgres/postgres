@@ -1,13 +1,14 @@
 /*
  *	Edmund Mergl <E.Mergl@bawue.de>
  *
- *	$Id: oracle_compat.c,v 1.26 2000/07/03 23:09:52 wieck Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/utils/adt/oracle_compat.c,v 1.27 2000/07/06 05:48:11 tgl Exp $
  *
  */
 
-
 #include <ctype.h>
+
 #include "postgres.h"
+
 #include "utils/builtins.h"
 
 
@@ -17,7 +18,7 @@
  *
  * Syntax:
  *
- *	 text *lower(text *string)
+ *	 text lower(text string)
  *
  * Purpose:
  *
@@ -25,27 +26,24 @@
  *
  ********************************************************************/
 
-text *
-lower(text *string)
+Datum
+lower(PG_FUNCTION_ARGS)
 {
-	text	   *ret;
-	char	   *ptr,
-			   *ptr_ret;
+	text	   *string = PG_GETARG_TEXT_P_COPY(0);
+	char	   *ptr;
 	int			m;
 
-	if ((string == (text *) NULL) || ((m = VARSIZE(string) - VARHDRSZ) <= 0))
-		return string;
-
-	ret = (text *) palloc(VARSIZE(string));
-	VARATT_SIZEP(ret) = VARSIZE(string);
-
+	/* Since we copied the string, we can scribble directly on the value */
 	ptr = VARDATA(string);
-	ptr_ret = VARDATA(ret);
+	m = VARSIZE(string) - VARHDRSZ;
 
-	while (m--)
-		*ptr_ret++ = tolower((unsigned char) *ptr++);
+	while (m-- > 0)
+	{
+		*ptr = tolower((unsigned char) *ptr);
+		ptr++;
+	}
 
-	return ret;
+	PG_RETURN_TEXT_P(string);
 }
 
 
@@ -55,7 +53,7 @@ lower(text *string)
  *
  * Syntax:
  *
- *	 text *upper(text *string)
+ *	 text upper(text string)
  *
  * Purpose:
  *
@@ -63,27 +61,24 @@ lower(text *string)
  *
  ********************************************************************/
 
-text *
-upper(text *string)
+Datum
+upper(PG_FUNCTION_ARGS)
 {
-	text	   *ret;
-	char	   *ptr,
-			   *ptr_ret;
+	text	   *string = PG_GETARG_TEXT_P_COPY(0);
+	char	   *ptr;
 	int			m;
 
-	if ((string == (text *) NULL) || ((m = VARSIZE(string) - VARHDRSZ) <= 0))
-		return string;
-
-	ret = (text *) palloc(VARSIZE(string));
-	VARATT_SIZEP(ret) = VARSIZE(string);
-
+	/* Since we copied the string, we can scribble directly on the value */
 	ptr = VARDATA(string);
-	ptr_ret = VARDATA(ret);
+	m = VARSIZE(string) - VARHDRSZ;
 
-	while (m--)
-		*ptr_ret++ = toupper((unsigned char) *ptr++);
+	while (m-- > 0)
+	{
+		*ptr = toupper((unsigned char) *ptr);
+		ptr++;
+	}
 
-	return ret;
+	PG_RETURN_TEXT_P(string);
 }
 
 
@@ -93,7 +88,7 @@ upper(text *string)
  *
  * Syntax:
  *
- *	 text *initcap(text *string)
+ *	 text initcap(text string)
  *
  * Purpose:
  *
@@ -103,35 +98,34 @@ upper(text *string)
  *
  ********************************************************************/
 
-text *
-initcap(text *string)
+Datum
+initcap(PG_FUNCTION_ARGS)
 {
-	text	   *ret;
-	char	   *ptr,
-			   *ptr_ret;
+	text	   *string = PG_GETARG_TEXT_P_COPY(0);
+	char	   *ptr;
 	int			m;
 
-	if ((string == (text *) NULL) || ((m = VARSIZE(string) - VARHDRSZ) <= 0))
-		return string;
-
-	ret = (text *) palloc(VARSIZE(string));
-	VARATT_SIZEP(ret) = VARSIZE(string);
-
+	/* Since we copied the string, we can scribble directly on the value */
 	ptr = VARDATA(string);
-	ptr_ret = VARDATA(ret);
+	m = VARSIZE(string) - VARHDRSZ;
 
-	*ptr_ret++ = toupper((unsigned char) *ptr++);
-	--m;
-
-	while (m--)
+	if (m > 0)
 	{
-		if (*(ptr_ret - 1) == ' ' || *(ptr_ret - 1) == '	')
-			*ptr_ret++ = toupper((unsigned char) *ptr++);
-		else
-			*ptr_ret++ = tolower((unsigned char) *ptr++);
+		*ptr = toupper((unsigned char) *ptr);
+		ptr++;
+		m--;
 	}
 
-	return ret;
+	while (m-- > 0)
+	{
+		if (isspace(ptr[-1]))
+			*ptr = toupper((unsigned char) *ptr);
+		else
+			*ptr = tolower((unsigned char) *ptr);
+		ptr++;
+	}
+
+	PG_RETURN_TEXT_P(string);
 }
 
 
@@ -141,7 +135,7 @@ initcap(text *string)
  *
  * Syntax:
  *
- *	 text *lpad(text *string1, int4 len, text *string2)
+ *	 text lpad(text string1, int4 len, text string2)
  *
  * Purpose:
  *
@@ -196,7 +190,7 @@ lpad(PG_FUNCTION_ARGS)
  *
  * Syntax:
  *
- *	 text *rpad(text *string1, int4 len, text *string2)
+ *	 text rpad(text string1, int4 len, text string2)
  *
  * Purpose:
  *
@@ -251,7 +245,7 @@ rpad(PG_FUNCTION_ARGS)
  *
  * Syntax:
  *
- *	 text *btrim(text *string, text *set)
+ *	 text btrim(text string, text set)
  *
  * Purpose:
  *
@@ -260,9 +254,11 @@ rpad(PG_FUNCTION_ARGS)
  *
  ********************************************************************/
 
-text *
-btrim(text *string, text *set)
+Datum
+btrim(PG_FUNCTION_ARGS)
 {
+	text	   *string = PG_GETARG_TEXT_P(0);
+	text	   *set = PG_GETARG_TEXT_P(1);
 	text	   *ret;
 	char	   *ptr,
 			   *end,
@@ -270,18 +266,17 @@ btrim(text *string, text *set)
 			   *end2;
 	int			m;
 
-	if ((string == (text *) NULL) ||
-		((m = VARSIZE(string) - VARHDRSZ) <= 0) ||
-		(set == (text *) NULL) ||
-		((VARSIZE(set) - VARHDRSZ) <= 0))
-		return string;
+	if ((m = VARSIZE(string) - VARHDRSZ) <= 0 ||
+		(VARSIZE(set) - VARHDRSZ) <= 0)
+		PG_RETURN_TEXT_P(string);
 
 	ptr = VARDATA(string);
-	ptr2 = VARDATA(set);
+	end = VARDATA(string) + VARSIZE(string) - VARHDRSZ - 1;
 	end2 = VARDATA(set) + VARSIZE(set) - VARHDRSZ - 1;
 
-	while (m--)
+	while (m > 0)
 	{
+		ptr2 = VARDATA(set);
 		while (ptr2 <= end2)
 		{
 			if (*ptr == *ptr2)
@@ -291,16 +286,12 @@ btrim(text *string, text *set)
 		if (ptr2 > end2)
 			break;
 		ptr++;
-		ptr2 = VARDATA(set);
+		m--;
 	}
 
-	++m;
-
-	end = VARDATA(string) + VARSIZE(string) - VARHDRSZ - 1;
-	ptr2 = VARDATA(set);
-
-	while (m--)
+	while (m > 0)
 	{
+		ptr2 = VARDATA(set);
 		while (ptr2 <= end2)
 		{
 			if (*end == *ptr2)
@@ -309,18 +300,16 @@ btrim(text *string, text *set)
 		}
 		if (ptr2 > end2)
 			break;
-		--end;
-		ptr2 = VARDATA(set);
+		end--;
+		m--;
 	}
-
-	++m;
 
 	ret = (text *) palloc(VARHDRSZ + m);
 	VARATT_SIZEP(ret) = VARHDRSZ + m;
 	memcpy(VARDATA(ret), ptr, m);
 
-	return ret;
-}	/* btrim() */
+	PG_RETURN_TEXT_P(ret);
+}
 
 
 /********************************************************************
@@ -329,7 +318,7 @@ btrim(text *string, text *set)
  *
  * Syntax:
  *
- *	 text *ltrim(text *string, text *set)
+ *	 text ltrim(text string, text set)
  *
  * Purpose:
  *
@@ -338,27 +327,27 @@ btrim(text *string, text *set)
  *
  ********************************************************************/
 
-text *
-ltrim(text *string, text *set)
+Datum
+ltrim(PG_FUNCTION_ARGS)
 {
+	text	   *string = PG_GETARG_TEXT_P(0);
+	text	   *set = PG_GETARG_TEXT_P(1);
 	text	   *ret;
 	char	   *ptr,
 			   *ptr2,
 			   *end2;
 	int			m;
 
-	if ((string == (text *) NULL) ||
-		((m = VARSIZE(string) - VARHDRSZ) <= 0) ||
-		(set == (text *) NULL) ||
-		((VARSIZE(set) - VARHDRSZ) <= 0))
-		return string;
+	if ((m = VARSIZE(string) - VARHDRSZ) <= 0 ||
+		(VARSIZE(set) - VARHDRSZ) <= 0)
+		PG_RETURN_TEXT_P(string);
 
 	ptr = VARDATA(string);
-	ptr2 = VARDATA(set);
 	end2 = VARDATA(set) + VARSIZE(set) - VARHDRSZ - 1;
 
-	while (m--)
+	while (m > 0)
 	{
+		ptr2 = VARDATA(set);
 		while (ptr2 <= end2)
 		{
 			if (*ptr == *ptr2)
@@ -368,17 +357,14 @@ ltrim(text *string, text *set)
 		if (ptr2 > end2)
 			break;
 		ptr++;
-		ptr2 = VARDATA(set);
+		m--;
 	}
-
-	++m;
 
 	ret = (text *) palloc(VARHDRSZ + m);
 	VARATT_SIZEP(ret) = VARHDRSZ + m;
-
 	memcpy(VARDATA(ret), ptr, m);
 
-	return ret;
+	PG_RETURN_TEXT_P(ret);
 }
 
 
@@ -388,7 +374,7 @@ ltrim(text *string, text *set)
  *
  * Syntax:
  *
- *	 text *rtrim(text *string, text *set)
+ *	 text rtrim(text string, text set)
  *
  * Purpose:
  *
@@ -397,54 +383,46 @@ ltrim(text *string, text *set)
  *
  ********************************************************************/
 
-text *
-rtrim(text *string, text *set)
+Datum
+rtrim(PG_FUNCTION_ARGS)
 {
+	text	   *string = PG_GETARG_TEXT_P(0);
+	text	   *set = PG_GETARG_TEXT_P(1);
 	text	   *ret;
 	char	   *ptr,
+			   *end,
 			   *ptr2,
-			   *end2,
-			   *ptr_ret;
+			   *end2;
 	int			m;
 
-	if ((string == (text *) NULL) ||
-		((m = VARSIZE(string) - VARHDRSZ) <= 0) ||
-		(set == (text *) NULL) ||
-		((VARSIZE(set) - VARHDRSZ) <= 0))
-		return string;
+	if ((m = VARSIZE(string) - VARHDRSZ) <= 0 ||
+		(VARSIZE(set) - VARHDRSZ) <= 0)
+		PG_RETURN_TEXT_P(string);
 
-	ptr = VARDATA(string) + VARSIZE(string) - VARHDRSZ - 1;
-	ptr2 = VARDATA(set);
+	ptr = VARDATA(string);
+	end = VARDATA(string) + VARSIZE(string) - VARHDRSZ - 1;
 	end2 = VARDATA(set) + VARSIZE(set) - VARHDRSZ - 1;
 
-	while (m--)
+	while (m > 0)
 	{
+		ptr2 = VARDATA(set);
 		while (ptr2 <= end2)
 		{
-			if (*ptr == *ptr2)
+			if (*end == *ptr2)
 				break;
 			++ptr2;
 		}
 		if (ptr2 > end2)
 			break;
-		--ptr;
-		ptr2 = VARDATA(set);
+		end--;
+		m--;
 	}
-
-	++m;
 
 	ret = (text *) palloc(VARHDRSZ + m);
 	VARATT_SIZEP(ret) = VARHDRSZ + m;
-#ifdef NOT_USED
-	memcpy(VARDATA(ret), ptr - VARSIZE(ret) + m, m);
-#endif
+	memcpy(VARDATA(ret), ptr, m);
 
-	ptr_ret = VARDATA(ret) + m - 1;
-
-	while (m--)
-		*ptr_ret-- = *ptr--;
-
-	return ret;
+	PG_RETURN_TEXT_P(ret);
 }
 
 
@@ -454,7 +432,7 @@ rtrim(text *string, text *set)
  *
  * Syntax:
  *
- *	 text *translate(text *string, text *from, text *to)
+ *	 text translate(text string, text from, text to)
  *
  * Purpose:
  *
@@ -465,9 +443,12 @@ rtrim(text *string, text *set)
  *
  ********************************************************************/
 
-text *
-translate(text *string, text *from, text *to)
+Datum
+translate(PG_FUNCTION_ARGS)
 {
+	text	   *string = PG_GETARG_TEXT_P(0);
+	text	   *from = PG_GETARG_TEXT_P(1);
+	text	   *to = PG_GETARG_TEXT_P(2);
 	text	   *result;
 	char	   *from_ptr,
 			   *to_ptr;
@@ -479,13 +460,8 @@ translate(text *string, text *from, text *to)
 				retlen,
 				i;
 
-	if (string == (text *) NULL ||
-		from == (text *) NULL ||
-		to == (text *) NULL)
-		return (text *) NULL;
-
 	if ((m = VARSIZE(string) - VARHDRSZ) <= 0)
-		return string;
+		PG_RETURN_TEXT_P(string);
 
 	fromlen = VARSIZE(from) - VARHDRSZ;
 	from_ptr = VARDATA(from);
@@ -536,21 +512,20 @@ translate(text *string, text *from, text *to)
 	 * won't live long anyway.
 	 */
 
-	return result;
+	PG_RETURN_TEXT_P(result);
 }
 
 
-int4
-ascii(text *string)
+Datum
+ascii(PG_FUNCTION_ARGS)
 {
-	if (!PointerIsValid(string))
-		return 0;
+	text	   *string = PG_GETARG_TEXT_P(0);
 
 	if (VARSIZE(string) <= VARHDRSZ)
-		return 0;
+		PG_RETURN_INT32(0);
 
-	return ((int) *(VARDATA(string)));
-}	/* ascii() */
+	PG_RETURN_INT32((int32) *((unsigned char *) VARDATA(string)));
+}
 
 
 Datum

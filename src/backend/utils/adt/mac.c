@@ -1,14 +1,30 @@
 /*
  *	PostgreSQL type definitions for MAC addresses.
  *
- *	$Id: mac.c,v 1.15 2000/07/03 23:09:52 wieck Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/utils/adt/mac.c,v 1.16 2000/07/06 05:48:11 tgl Exp $
  */
 
-
 #include "postgres.h"
+
 #include "utils/builtins.h"
 
-manufacturer manufacturers[] = {
+
+/*
+ * macaddr is a pass-by-reference datatype.
+ */
+#define PG_GETARG_MACADDR_P(n)  ((macaddr *) PG_GETARG_POINTER(n))
+#define PG_RETURN_MACADDR_P(x)  return PointerGetDatum(x)
+
+
+typedef struct manufacturer
+{
+	unsigned char a;
+	unsigned char b;
+	unsigned char c;
+	char	   *name;
+} manufacturer;
+
+static manufacturer manufacturers[] = {
 	{0x00, 0x00, 0x0C, "Cisco"},
 	{0x00, 0x00, 0x0E, "Fujitsu"},
 	{0x00, 0x00, 0x0F, "NeXT"},
@@ -290,18 +306,16 @@ macaddr_cmp(macaddr *a1, macaddr *a2)
 }
 
 /*
- *	The special manufacturer fetching function.  See "mac.h".
+ *	The special manufacturer fetching function.
  */
 
-text *
-macaddr_manuf(macaddr *addr)
+Datum
+macaddr_manuf(PG_FUNCTION_ARGS)
 {
+	macaddr	   *addr = PG_GETARG_MACADDR_P(0);
 	manufacturer *manuf;
 	int			length;
 	text	   *result;
-
-	if (!PointerIsValid(addr))
-		return NULL;
 
 	for (manuf = manufacturers; manuf->name != NULL; manuf++)
 	{
@@ -312,17 +326,16 @@ macaddr_manuf(macaddr *addr)
 	}
 	if (manuf->name == NULL)
 	{
-		result = palloc(VARHDRSZ + 1);
-		memset(result, 0, VARHDRSZ + 1);
-		VARATT_SIZEP(result) = VARHDRSZ + 1;
+		/* Not known, so return empty string */
+		result = palloc(VARHDRSZ);
+		VARATT_SIZEP(result) = VARHDRSZ;
 	}
 	else
 	{
-		length = strlen(manuf->name) + 1;
+		length = strlen(manuf->name);
 		result = palloc(length + VARHDRSZ);
-		memset(result, 0, length + VARHDRSZ);
 		VARATT_SIZEP(result) = length + VARHDRSZ;
 		memcpy(VARDATA(result), manuf->name, length);
 	}
-	return result;
+	PG_RETURN_TEXT_P(result);
 }

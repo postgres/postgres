@@ -1,7 +1,7 @@
 /* ----------
  * lztext.c -
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/lztext.c,v 1.9 2000/07/05 10:09:53 wieck Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/lztext.c,v 1.10 2000/07/06 05:48:11 tgl Exp $
  *
  *	Text type with internal LZ compressed representation. Uses the
  *	standard PostgreSQL compression method.
@@ -174,18 +174,12 @@ lztextoctetlen(lztext *lz)
  *	Convert text to lztext
  * ----------
  */
-lztext *
-text_lztext(text *txt)
+Datum
+text_lztext(PG_FUNCTION_ARGS)
 {
+	text	   *txt = PG_GETARG_TEXT_P(0);
 	lztext	   *result;
 	int32		rawsize;
-
-	/* ----------
-	 * Handle NULL
-	 * ----------
-	 */
-	if (txt == NULL)
-		return NULL;
 
 	/* ----------
 	 * Copy the entire attribute
@@ -196,7 +190,7 @@ text_lztext(text *txt)
 	VARATT_SIZEP(result) = rawsize + VARHDRSZ;
 	memcpy(VARATT_DATA(result), VARATT_DATA(txt), rawsize);
 
-	return result;
+	PG_RETURN_POINTER(result);
 }
 
 

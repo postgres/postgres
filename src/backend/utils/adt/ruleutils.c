@@ -3,7 +3,7 @@
  *			  out of its tuple
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.55 2000/07/03 23:09:52 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.56 2000/07/06 05:48:11 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -123,9 +123,10 @@ static bool check_if_rte_used_walker(Node *node,
  *				  to recreate the rule
  * ----------
  */
-text *
-pg_get_ruledef(NameData *rname)
+Datum
+pg_get_ruledef(PG_FUNCTION_ARGS)
 {
+	Name		rname = PG_GETARG_NAME(0);
 	text	   *ruledef;
 	Datum		args[1];
 	char		nulls[2];
@@ -180,10 +181,10 @@ pg_get_ruledef(NameData *rname)
 	{
 		if (SPI_finish() != SPI_OK_FINISH)
 			elog(ERROR, "get_ruledef: SPI_finish() failed");
-		ruledef = SPI_palloc(VARHDRSZ + 1);
+		ruledef = palloc(VARHDRSZ + 1);
 		VARATT_SIZEP(ruledef) = VARHDRSZ + 1;
 		VARDATA(ruledef)[0] = '-';
-		return ruledef;
+		PG_RETURN_TEXT_P(ruledef);
 	}
 
 	ruletup = SPI_tuptable->vals[0];
@@ -212,7 +213,7 @@ pg_get_ruledef(NameData *rname)
 	 * Easy - isn't it?
 	 * ----------
 	 */
-	return ruledef;
+	PG_RETURN_TEXT_P(ruledef);
 }
 
 
@@ -221,9 +222,10 @@ pg_get_ruledef(NameData *rname)
  *				  only return the SELECT part of a view
  * ----------
  */
-text *
-pg_get_viewdef(NameData *rname)
+Datum
+pg_get_viewdef(PG_FUNCTION_ARGS)
 {
+	Name		rname = PG_GETARG_NAME(0);
 	text	   *ruledef;
 	Datum		args[2];
 	char		nulls[3];
@@ -311,7 +313,7 @@ pg_get_viewdef(NameData *rname)
 	 * Easy - isn't it?
 	 * ----------
 	 */
-	return ruledef;
+	PG_RETURN_TEXT_P(ruledef);
 }
 
 

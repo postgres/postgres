@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: builtins.h,v 1.119 2000/07/05 23:11:51 tgl Exp $
+ * $Id: builtins.h,v 1.120 2000/07/06 05:48:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -243,10 +243,10 @@ extern Datum i4tof(PG_FUNCTION_ARGS);
 extern Datum i2tof(PG_FUNCTION_ARGS);
 extern int32 ftoi4(float32 num);
 extern Datum ftoi2(PG_FUNCTION_ARGS);
-extern float64 text_float8(text *str);
-extern float32 text_float4(text *str);
-extern text *float8_text(float64 num);
-extern text *float4_text(float32 num);
+extern Datum text_float8(PG_FUNCTION_ARGS);
+extern Datum text_float4(PG_FUNCTION_ARGS);
+extern Datum float8_text(PG_FUNCTION_ARGS);
+extern Datum float4_text(PG_FUNCTION_ARGS);
 extern float64 dround(float64 arg1);
 extern float64 dtrunc(float64 arg1);
 extern float64 dsqrt(float64 arg1);
@@ -321,15 +321,14 @@ extern Datum oid_text(PG_FUNCTION_ARGS);
 extern Datum text_oid(PG_FUNCTION_ARGS);
 
 /* regexp.c */
-extern bool nameregexeq(NameData *n, struct varlena * p);
-extern bool nameregexne(NameData *s, struct varlena * p);
-extern bool textregexeq(struct varlena * s, struct varlena * p);
-extern bool textregexne(struct varlena * s, struct varlena * p);
-extern bool nameicregexeq(NameData *s, struct varlena * p);
-extern bool nameicregexne(NameData *s, struct varlena * p);
-extern bool texticregexeq(struct varlena * s, struct varlena * p);
-extern bool texticregexne(struct varlena * s, struct varlena * p);
-
+extern Datum nameregexeq(PG_FUNCTION_ARGS);
+extern Datum nameregexne(PG_FUNCTION_ARGS);
+extern Datum textregexeq(PG_FUNCTION_ARGS);
+extern Datum textregexne(PG_FUNCTION_ARGS);
+extern Datum nameicregexeq(PG_FUNCTION_ARGS);
+extern Datum nameicregexne(PG_FUNCTION_ARGS);
+extern Datum texticregexeq(PG_FUNCTION_ARGS);
+extern Datum texticregexne(PG_FUNCTION_ARGS);
 
 /* regproc.c */
 extern Datum regprocin(PG_FUNCTION_ARGS);
@@ -341,8 +340,8 @@ extern Datum regproctooid(PG_FUNCTION_ARGS);
 #define RegprocToOid(rp) ((Oid) (rp))
 
 /* ruleutils.c */
-extern text *pg_get_ruledef(NameData *rname);
-extern text *pg_get_viewdef(NameData *rname);
+extern Datum pg_get_ruledef(PG_FUNCTION_ARGS);
+extern Datum pg_get_viewdef(PG_FUNCTION_ARGS);
 extern Datum pg_get_indexdef(PG_FUNCTION_ARGS);
 extern Datum pg_get_userbyid(PG_FUNCTION_ARGS);
 extern char *deparse_expression(Node *expr, List *rangetables,
@@ -438,22 +437,22 @@ extern int32 varcharoctetlen(char *arg);
 /* varlena.c */
 extern Datum textin(PG_FUNCTION_ARGS);
 extern Datum textout(PG_FUNCTION_ARGS);
-extern text *textcat(text *arg1, text *arg2);
-extern bool texteq(text *arg1, text *arg2);
-extern bool textne(text *arg1, text *arg2);
-extern int	varstr_cmp(char *arg1, int len1, char *arg2, int len2);
-extern bool text_lt(text *arg1, text *arg2);
-extern bool text_le(text *arg1, text *arg2);
-extern bool text_gt(text *arg1, text *arg2);
-extern bool text_ge(text *arg1, text *arg2);
-extern text *text_larger(text *arg1, text *arg2);
-extern text *text_smaller(text *arg1, text *arg2);
-extern int32 textlen(text *arg);
-extern int32 textoctetlen(text *arg);
-extern int32 textpos(text *arg1, text *arg2);
+extern Datum textcat(PG_FUNCTION_ARGS);
+extern Datum texteq(PG_FUNCTION_ARGS);
+extern Datum textne(PG_FUNCTION_ARGS);
+extern Datum text_lt(PG_FUNCTION_ARGS);
+extern Datum text_le(PG_FUNCTION_ARGS);
+extern Datum text_gt(PG_FUNCTION_ARGS);
+extern Datum text_ge(PG_FUNCTION_ARGS);
+extern Datum text_larger(PG_FUNCTION_ARGS);
+extern Datum text_smaller(PG_FUNCTION_ARGS);
+extern Datum textlen(PG_FUNCTION_ARGS);
+extern Datum textoctetlen(PG_FUNCTION_ARGS);
+extern Datum textpos(PG_FUNCTION_ARGS);
 extern Datum text_substr(PG_FUNCTION_ARGS);
-extern text *name_text(NameData *s);
-extern NameData *text_name(text *s);
+extern Datum name_text(PG_FUNCTION_ARGS);
+extern Datum text_name(PG_FUNCTION_ARGS);
+extern int	varstr_cmp(char *arg1, int len1, char *arg2, int len2);
 
 extern bytea *byteain(char *inputText);
 extern char *byteaout(bytea *vlena);
@@ -463,26 +462,29 @@ extern Datum byteaGetBit(PG_FUNCTION_ARGS);
 extern Datum byteaSetByte(PG_FUNCTION_ARGS);
 extern Datum byteaSetBit(PG_FUNCTION_ARGS);
 
+/* version.c */
+extern Datum pgsql_version(PG_FUNCTION_ARGS);
+
 /* like.c */
-extern bool namelike(NameData *n, struct varlena * p);
-extern bool namenlike(NameData *s, struct varlena * p);
-extern bool textlike(struct varlena * s, struct varlena * p);
-extern bool textnlike(struct varlena * s, struct varlena * p);
+extern Datum namelike(PG_FUNCTION_ARGS);
+extern Datum namenlike(PG_FUNCTION_ARGS);
+extern Datum textlike(PG_FUNCTION_ARGS);
+extern Datum textnlike(PG_FUNCTION_ARGS);
 
 /* oracle_compat.c */
 
-extern text *lower(text *string);
-extern text *upper(text *string);
-extern text *initcap(text *string);
+extern Datum lower(PG_FUNCTION_ARGS);
+extern Datum upper(PG_FUNCTION_ARGS);
+extern Datum initcap(PG_FUNCTION_ARGS);
 extern Datum lpad(PG_FUNCTION_ARGS);
 extern Datum rpad(PG_FUNCTION_ARGS);
-extern text *btrim(text *string, text *set);
-extern text *ltrim(text *string, text *set);
-extern text *rtrim(text *string, text *set);
-extern text *translate(text *string, text *from, text *to);
+extern Datum btrim(PG_FUNCTION_ARGS);
+extern Datum ltrim(PG_FUNCTION_ARGS);
+extern Datum rtrim(PG_FUNCTION_ARGS);
+extern Datum translate(PG_FUNCTION_ARGS);
 extern Datum ichar(PG_FUNCTION_ARGS);
 extern Datum repeat(PG_FUNCTION_ARGS);
-extern int4 ascii(text *string);
+extern Datum ascii(PG_FUNCTION_ARGS);
 
 /* acl.c */
 
@@ -510,11 +512,11 @@ extern bool network_sup(inet *a1, inet *a2);
 extern bool network_supeq(inet *a1, inet *a2);
 extern int4 network_cmp(inet *a1, inet *a2);
 
-extern text *network_network(inet *addr);
-extern text *network_netmask(inet *addr);
+extern Datum network_network(PG_FUNCTION_ARGS);
+extern Datum network_netmask(PG_FUNCTION_ARGS);
 extern int4 network_masklen(inet *addr);
-extern text *network_broadcast(inet *addr);
-extern text *network_host(inet *addr);
+extern Datum network_broadcast(PG_FUNCTION_ARGS);
+extern Datum network_host(PG_FUNCTION_ARGS);
 
 /* mac.c */
 extern macaddr *macaddr_in(char *str);
@@ -526,7 +528,7 @@ extern bool macaddr_ge(macaddr *a1, macaddr *a2);
 extern bool macaddr_gt(macaddr *a1, macaddr *a2);
 extern bool macaddr_ne(macaddr *a1, macaddr *a2);
 extern int4 macaddr_cmp(macaddr *a1, macaddr *a2);
-extern text *macaddr_manuf(macaddr *addr);
+extern Datum macaddr_manuf(PG_FUNCTION_ARGS);
 
 /* numeric.c */
 extern Datum numeric_in(PG_FUNCTION_ARGS);
@@ -572,19 +574,19 @@ extern Numeric float8_numeric(float64 val);
 extern float64 numeric_float8(Numeric num);
 
 /* lztext.c */
-lztext	   *lztextin(char *str);
-char	   *lztextout(lztext *lz);
-text	   *lztext_text(lztext *lz);
-lztext	   *text_lztext(text *txt);
-int32		lztextlen(lztext *lz);
-int32		lztextoctetlen(lztext *lz);
-int32		lztext_cmp(lztext *lz1, lztext *lz2);
-bool		lztext_eq(lztext *lz1, lztext *lz2);
-bool		lztext_ne(lztext *lz1, lztext *lz2);
-bool		lztext_gt(lztext *lz1, lztext *lz2);
-bool		lztext_ge(lztext *lz1, lztext *lz2);
-bool		lztext_lt(lztext *lz1, lztext *lz2);
-bool		lztext_le(lztext *lz1, lztext *lz2);
+extern lztext  *lztextin(char *str);
+extern char	   *lztextout(lztext *lz);
+extern text	   *lztext_text(lztext *lz);
+extern Datum	text_lztext(PG_FUNCTION_ARGS);
+extern int32	lztextlen(lztext *lz);
+extern int32	lztextoctetlen(lztext *lz);
+extern int32	lztext_cmp(lztext *lz1, lztext *lz2);
+extern bool		lztext_eq(lztext *lz1, lztext *lz2);
+extern bool		lztext_ne(lztext *lz1, lztext *lz2);
+extern bool		lztext_gt(lztext *lz1, lztext *lz2);
+extern bool		lztext_ge(lztext *lz1, lztext *lz2);
+extern bool		lztext_lt(lztext *lz1, lztext *lz2);
+extern bool		lztext_le(lztext *lz1, lztext *lz2);
 
 /* ri_triggers.c */
 extern Datum RI_FKey_check_ins(PG_FUNCTION_ARGS);

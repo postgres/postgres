@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_type.h,v 1.90 2000/07/03 23:10:05 wieck Exp $
+ * $Id: pg_type.h,v 1.91 2000/07/06 05:48:27 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -200,7 +200,7 @@ DATA(insert OID = 24 (	regproc    PGUID  4  16 t b t \054 0   0 regprocin regpro
 DESCR("registered procedure");
 #define REGPROCOID		24
 
-DATA(insert OID = 25 (	text	   PGUID -1  -1 f b t \054 0  18 textin textout textin textout i p _null_ ));
+DATA(insert OID = 25 (	text	   PGUID -1  -1 f b t \054 0  18 textin textout textin textout i x _null_ ));
 DESCR("variable-length string, no limit specified");
 #define TEXTOID			25
 

@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.74 2000/07/05 23:11:35 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.75 2000/07/06 05:48:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1820,7 +1820,8 @@ string_lessthan(const char *str1, const char *str2, Oid datatype)
 	switch (datatype)
 	{
 		case TEXTOID:
-			result = text_lt((text *) datum1, (text *) datum2);
+			result = DatumGetBool(DirectFunctionCall2(text_lt,
+													  datum1, datum2));
 			break;
 
 		case BPCHAROID:

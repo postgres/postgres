@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varlena.c,v 1.62 2000/07/05 23:11:35 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varlena.c,v 1.63 2000/07/06 05:48:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -196,21 +196,16 @@ textout(PG_FUNCTION_ARGS)
  *	  returns the logical length of a text*
  *	   (which is less than the VARSIZE of the text*)
  */
-int32
-textlen(text *t)
+Datum
+textlen(PG_FUNCTION_ARGS)
 {
+	text	   *t = PG_GETARG_TEXT_P(0);
 #ifdef MULTIBYTE
 	unsigned char *s;
 	int			len,
 				l,
 				wl;
 
-#endif
-
-	if (!PointerIsValid(t))
-		return 0;
-
-#ifdef MULTIBYTE
 	len = 0;
 	s = VARDATA(t);
 	l = VARSIZE(t) - VARHDRSZ;
@@ -221,30 +216,35 @@ textlen(text *t)
 		s += wl;
 		len++;
 	}
-	return (len);
+	PG_RETURN_INT32(len);
 #else
-	return VARSIZE(t) - VARHDRSZ;
+	PG_RETURN_INT32(VARSIZE(t) - VARHDRSZ);
 #endif
-
-}	/* textlen() */
+}
 
 /*
  * textoctetlen -
  *	  returns the physical length of a text*
  *	   (which is less than the VARSIZE of the text*)
+ *
+ * XXX is it actually appropriate to return the compressed length
+ * when the value is compressed?  It's not at all clear to me that
+ * this is what SQL92 has in mind ...
  */
-int32
-textoctetlen(text *t)
+Datum
+textoctetlen(PG_FUNCTION_ARGS)
 {
-	if (!PointerIsValid(t))
-		return 0;
+	struct varattrib   *t = (struct varattrib *) PG_GETARG_RAW_VARLENA_P(0);
 
-	return VARSIZE(t) - VARHDRSZ;
-}	/* textoctetlen() */
+	if (!VARATT_IS_EXTERNAL(t))
+	    PG_RETURN_INT32(VARATT_SIZE(t) - VARHDRSZ);
+
+	PG_RETURN_INT32(t->va_content.va_external.va_extsize);
+}
 
 /*
  * textcat -
- *	  takes two text* and returns a text* that is the concatentation of
+ *	  takes two text* and returns a text* that is the concatenation of
  *	  the two.
  *
  * Rewritten by Sapa, sapa@hq.icb.chel.su. 8-Jul-96.
@@ -252,32 +252,27 @@ textoctetlen(text *t)
  * Allocate space for output in all cases.
  * XXX - thomas 1997-07-10
  */
-text *
-textcat(text *t1, text *t2)
+Datum
+textcat(PG_FUNCTION_ARGS)
 {
+	text	   *t1 = PG_GETARG_TEXT_P(0);
+	text	   *t2 = PG_GETARG_TEXT_P(1);
 	int			len1,
 				len2,
 				len;
-	char	   *ptr;
 	text	   *result;
-
-	if (!PointerIsValid(t1) || !PointerIsValid(t2))
-		return NULL;
+	char	   *ptr;
 
 	len1 = (VARSIZE(t1) - VARHDRSZ);
 	if (len1 < 0)
 		len1 = 0;
-	while (len1 > 0 && VARDATA(t1)[len1 - 1] == '\0')
-		len1--;
 
 	len2 = (VARSIZE(t2) - VARHDRSZ);
 	if (len2 < 0)
 		len2 = 0;
-	while (len2 > 0 && VARDATA(t2)[len2 - 1] == '\0')
-		len2--;
 
 	len = len1 + len2 + VARHDRSZ;
-	result = palloc(len);
+	result = (text *) palloc(len);
 
 	/* Set size of result string... */
 	VARATT_SIZEP(result) = len;
@@ -289,8 +284,8 @@ textcat(text *t1, text *t2)
 	if (len2 > 0)
 		memcpy(ptr + len1, VARDATA(t2), len2);
 
-	return result;
-}	/* textcat() */
+	PG_RETURN_TEXT_P(result);
+}
 
 /*
  * text_substr()
@@ -383,9 +378,11 @@ text_substr(PG_FUNCTION_ARGS)
  * Added multi-byte support.
  * - Tatsuo Ishii 1998-4-21
  */
-int32
-textpos(text *t1, text *t2)
+Datum
+textpos(PG_FUNCTION_ARGS)
 {
+	text	   *t1 = PG_GETARG_TEXT_P(0);
+	text	   *t2 = PG_GETARG_TEXT_P(1);
 	int			pos;
 	int			px,
 				p;
@@ -393,18 +390,13 @@ textpos(text *t1, text *t2)
 				len2;
 	pg_wchar   *p1,
 			   *p2;
-
 #ifdef MULTIBYTE
 	pg_wchar   *ps1,
 			   *ps2;
-
 #endif
 
-	if (!PointerIsValid(t1) || !PointerIsValid(t2))
-		return 0;
-
-	if (VARSIZE(t2) <= 0)
-		return 1;
+	if (VARSIZE(t2) <= VARHDRSZ)
+		PG_RETURN_INT32(1);		/* result for empty pattern */
 
 	len1 = (VARSIZE(t1) - VARHDRSZ);
 	len2 = (VARSIZE(t2) - VARHDRSZ);
@@ -438,43 +430,51 @@ textpos(text *t1, text *t2)
 	pfree(ps1);
 	pfree(ps2);
 #endif
-	return pos;
-}	/* textpos() */
+	PG_RETURN_INT32(pos);
+}
 
 /*
- *		texteq			- returns 1 iff arguments are equal
- *		textne			- returns 1 iff arguments are not equal
+ *		texteq			- returns true iff arguments are equal
+ *		textne			- returns true iff arguments are not equal
  */
-bool
-texteq(text *arg1, text *arg2)
+Datum
+texteq(PG_FUNCTION_ARGS)
 {
+	text	   *arg1 = PG_GETARG_TEXT_P(0);
+	text	   *arg2 = PG_GETARG_TEXT_P(1);
 	int			len;
 	char	   *a1p,
 			   *a2p;
 
-	if (arg1 == NULL || arg2 == NULL)
-		return (bool) NULL;
-	if ((len = arg1->vl_len) != arg2->vl_len)
-		return (bool) 0;
-	a1p = arg1->vl_dat;
-	a2p = arg2->vl_dat;
+	if (VARSIZE(arg1) != VARSIZE(arg2))
+		PG_RETURN_BOOL(false);
 
-	/*
-	 * Varlenas are stored as the total size (data + size variable)
-	 * followed by the data. Use VARHDRSZ instead of explicit sizeof() -
-	 * thomas 1997-07-10
-	 */
-	len -= VARHDRSZ;
-	while (len-- != 0)
-		if (*a1p++ != *a2p++)
-			return (bool) 0;
-	return (bool) 1;
-}	/* texteq() */
+	len = VARSIZE(arg1) - VARHDRSZ;
 
-bool
-textne(text *arg1, text *arg2)
+	a1p = VARDATA(arg1);
+	a2p = VARDATA(arg2);
+
+	PG_RETURN_BOOL(memcmp(a1p, a2p, len) == 0);
+}
+
+Datum
+textne(PG_FUNCTION_ARGS)
 {
-	return (bool) !texteq(arg1, arg2);
+	text	   *arg1 = PG_GETARG_TEXT_P(0);
+	text	   *arg2 = PG_GETARG_TEXT_P(1);
+	int			len;
+	char	   *a1p,
+			   *a2p;
+
+	if (VARSIZE(arg1) != VARSIZE(arg2))
+		PG_RETURN_BOOL(true);
+
+	len = VARSIZE(arg1) - VARHDRSZ;
+
+	a1p = VARDATA(arg1);
+	a2p = VARDATA(arg2);
+
+	PG_RETURN_BOOL(memcmp(a1p, a2p, len) != 0);
 }
 
 /* varstr_cmp()
@@ -515,7 +515,7 @@ varstr_cmp(char *arg1, int len1, char *arg2, int len2)
 #endif
 
 	return result;
-}	/* varstr_cmp() */
+}
 
 
 /* text_cmp()
@@ -534,9 +534,6 @@ text_cmp(text *arg1, text *arg2)
 	int			len1,
 				len2;
 
-	if (arg1 == NULL || arg2 == NULL)
-		return (bool) FALSE;
-
 	a1p = VARDATA(arg1);
 	a2p = VARDATA(arg2);
 
@@ -544,68 +541,82 @@ text_cmp(text *arg1, text *arg2)
 	len2 = VARSIZE(arg2) - VARHDRSZ;
 
 	return varstr_cmp(a1p, len1, a2p, len2);
-}	/* text_cmp() */
-
-/* text_lt()
- * Comparison function for text strings.
- */
-bool
-text_lt(text *arg1, text *arg2)
-{
-	return (bool) (text_cmp(arg1, arg2) < 0);
-}	/* text_lt() */
-
-/* text_le()
- * Comparison function for text strings.
- */
-bool
-text_le(text *arg1, text *arg2)
-{
-	return (bool) (text_cmp(arg1, arg2) <= 0);
-}	/* text_le() */
-
-bool
-text_gt(text *arg1, text *arg2)
-{
-	return (bool) !text_le(arg1, arg2);
 }
 
-bool
-text_ge(text *arg1, text *arg2)
+/*
+ * Comparison functions for text strings.
+ */
+
+Datum
+text_lt(PG_FUNCTION_ARGS)
 {
-	return (bool) !text_lt(arg1, arg2);
+	text	   *arg1 = PG_GETARG_TEXT_P(0);
+	text	   *arg2 = PG_GETARG_TEXT_P(1);
+
+	PG_RETURN_BOOL(text_cmp(arg1, arg2) < 0);
 }
 
-text *
-text_larger(text *arg1, text *arg2)
+Datum
+text_le(PG_FUNCTION_ARGS)
 {
+	text	   *arg1 = PG_GETARG_TEXT_P(0);
+	text	   *arg2 = PG_GETARG_TEXT_P(1);
+
+	PG_RETURN_BOOL(text_cmp(arg1, arg2) <= 0);
+}
+
+Datum
+text_gt(PG_FUNCTION_ARGS)
+{
+	text	   *arg1 = PG_GETARG_TEXT_P(0);
+	text	   *arg2 = PG_GETARG_TEXT_P(1);
+
+	PG_RETURN_BOOL(text_cmp(arg1, arg2) > 0);
+}
+
+Datum
+text_ge(PG_FUNCTION_ARGS)
+{
+	text	   *arg1 = PG_GETARG_TEXT_P(0);
+	text	   *arg2 = PG_GETARG_TEXT_P(1);
+
+	PG_RETURN_BOOL(text_cmp(arg1, arg2) >= 0);
+}
+
+Datum
+text_larger(PG_FUNCTION_ARGS)
+{
+	text	   *arg1 = PG_GETARG_TEXT_P(0);
+	text	   *arg2 = PG_GETARG_TEXT_P(1);
 	text	   *result;
 	text	   *temp;
 
-	temp = ((text_cmp(arg1, arg2) <= 0) ? arg2 : arg1);
+	temp = ((text_cmp(arg1, arg2) > 0) ? arg1 : arg2);
 
-	/* Make a copy */
+	/* Make a copy --- temporary hack until nodeAgg.c is smarter */
 
 	result = (text *) palloc(VARSIZE(temp));
-	memmove((char *) result, (char *) temp, VARSIZE(temp));
+	memcpy((char *) result, (char *) temp, VARSIZE(temp));
 
-	return (result);
+	PG_RETURN_TEXT_P(result);
 }
 
-text *
-text_smaller(text *arg1, text *arg2)
+Datum
+text_smaller(PG_FUNCTION_ARGS)
 {
+	text	   *arg1 = PG_GETARG_TEXT_P(0);
+	text	   *arg2 = PG_GETARG_TEXT_P(1);
 	text	   *result;
 	text	   *temp;
 
-	temp = ((text_cmp(arg1, arg2) > 0) ? arg2 : arg1);
+	temp = ((text_cmp(arg1, arg2) < 0) ? arg1 : arg2);
 
-	/* Make a copy */
+	/* Make a copy --- temporary hack until nodeAgg.c is smarter */
 
 	result = (text *) palloc(VARSIZE(temp));
-	memmove((char *) result, (char *) temp, VARSIZE(temp));
+	memcpy((char *) result, (char *) temp, VARSIZE(temp));
 
-	return (result);
+	PG_RETURN_TEXT_P(result);
 }
 
 /*-------------------------------------------------------------
@@ -780,28 +791,28 @@ byteaSetBit(PG_FUNCTION_ARGS)
 
 
 /* text_name()
- * Converts a text() type to a NameData type.
+ * Converts a text type to a Name type.
  */
-NameData   *
-text_name(text *s)
+Datum
+text_name(PG_FUNCTION_ARGS)
 {
-	NameData   *result;
+	text	   *s = PG_GETARG_TEXT_P(0);
+	Name		result;
 	int			len;
 
-	if (s == NULL)
-		return NULL;
-
 	len = VARSIZE(s) - VARHDRSZ;
-	if (len > NAMEDATALEN)
-		len = NAMEDATALEN;
+
+	/* Truncate oversize input */
+	if (len >= NAMEDATALEN)
+		len = NAMEDATALEN-1;
 
 #ifdef STRINGDEBUG
 	printf("text- convert string length %d (%d) ->%d\n",
 		   VARSIZE(s) - VARHDRSZ, VARSIZE(s), len);
 #endif
 
-	result = palloc(NAMEDATALEN);
-	StrNCpy(NameStr(*result), VARDATA(s), NAMEDATALEN);
+	result = (Name) palloc(NAMEDATALEN);
+	memcpy(NameStr(*result), VARDATA(s), len);
 
 	/* now null pad to full length... */
 	while (len < NAMEDATALEN)
@@ -810,20 +821,18 @@ text_name(text *s)
 		len++;
 	}
 
-	return result;
-}	/* text_name() */
+	PG_RETURN_NAME(result);
+}
 
 /* name_text()
- * Converts a NameData type to a text type.
+ * Converts a Name type to a text type.
  */
-text *
-name_text(NameData *s)
+Datum
+name_text(PG_FUNCTION_ARGS)
 {
+	Name		s = PG_GETARG_NAME(0);
 	text	   *result;
 	int			len;
-
-	if (s == NULL)
-		return NULL;
 
 	len = strlen(NameStr(*s));
 
@@ -833,8 +842,8 @@ name_text(NameData *s)
 #endif
 
 	result = palloc(VARHDRSZ + len);
-	strncpy(VARDATA(result), NameStr(*s), len);
-	VARATT_SIZEP(result) = len + VARHDRSZ;
+	VARATT_SIZEP(result) = VARHDRSZ + len;
+	memcpy(VARDATA(result), NameStr(*s), len);
 
-	return result;
-}	/* name_text() */
+	PG_RETURN_TEXT_P(result);
+}
