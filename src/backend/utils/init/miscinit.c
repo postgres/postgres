@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/miscinit.c,v 1.62 2001/03/13 01:17:06 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/miscinit.c,v 1.63 2001/03/18 18:22:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -540,11 +540,18 @@ CreateLockFile(const char *filename, bool amPostmaster,
 
 		/*
 		 * Check to see if the other process still exists
+		 *
+		 * Normally kill() will fail with ESRCH if the given PID doesn't
+		 * exist.  BeOS returns EINVAL for some silly reason, however.
 		 */
 		if (other_pid != my_pid)
 		{
 			if (kill(other_pid, 0) == 0 ||
-				errno != ESRCH)
+				(errno != ESRCH
+#ifdef __BEOS__
+				 && errno != EINVAL
+#endif
+				))
 			{
 				/* lockfile belongs to a live process */
 				fprintf(stderr, "Lock file \"%s\" already exists.\n",

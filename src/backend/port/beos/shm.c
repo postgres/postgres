@@ -3,7 +3,7 @@
  * shm.c
  *	  BeOS System V Shared Memory Emulation
  *
- * Copyright (c) 1999-2000, Cyril VELTER
+ * Copyright (c) 1999-2001, Cyril VELTER
  * 
  *-------------------------------------------------------------------------
  */
@@ -11,6 +11,7 @@
 #include "postgres.h"
 #include <stdio.h>
 #include <OS.h>
+#include <errno.h>
 
 /* Emulating SYS shared memory with beos areas. WARNING : fork clone
 areas in copy on write mode */
@@ -68,11 +69,30 @@ int shmctl(int shmid, int flag, struct shmid_ds* dummy)
 	}
 	if (flag == IPC_STAT)
 	{
-		/* Is there a way to check existence of an area given its ID?
-		 * For now, punt and assume it does not exist.
-		 */
-		errno = EINVAL;
-		return -1;
+		/* Find any SYSV area with the shmid in its name */
+
+		area_info inf;
+		team_info infteam;
+		int32 cookteam=0;
+		char name[50];
+		sprintf(name,"SYSV_IPC %d",shmid);	
+	
+		dummy->shm_nattch=0;
+		
+		while (get_next_team_info(&cookteam, &infteam) == B_OK)
+		{ 
+			int32 cook=0;
+			while (get_next_area_info(infteam.team, &cook, &inf) == B_OK)
+			{
+				if (strcmp(name,inf.name) == 0)
+				{
+					dummy->shm_nattch++;	
+				}
+			}
+		}
+			
+		errno = 0;
+		return 0;
 	}
 	errno = EINVAL;
 	return -1;

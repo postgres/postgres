@@ -3,7 +3,7 @@
  * support.c
  *	  BeOS Support functions
  *
- * Copyright (c) 1999-2000, Cyril VELTER
+ * Copyright (c) 1999-2001, Cyril VELTER
  * 
  *-------------------------------------------------------------------------
  */
@@ -279,6 +279,8 @@ void beos_backend_startup(void)
 			delete_area(inf.area);
 			/* Find the postmaster area */
 			area_postmaster=find_area(inf.name);
+			/* Compute new area name */
+			sprintf(nvnom,"SYSV_IPC %d",area_postmaster);
 			/* Clone it at the exact same address */
 			clone_area(nvnom,&area_address,B_CLONE_ADDRESS,B_READ_AREA|B_WRITE_AREA,area_postmaster);
 		}

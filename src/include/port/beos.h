@@ -20,6 +20,7 @@ typedef unsigned char slock_t;
 #define IPC_EXCL 1024
 #define IPC_PRIVATE 234564
 #define IPC_NOWAIT	2048
+#define IPC_STAT 4096
 
 #define EACCESS 2048
 #define EIDRM 4096
@@ -47,6 +48,7 @@ struct sembuf
 struct shmid_ds
 {
 	int			dummy;
+	int			shm_nattch;
 };
 	
 int semctl(int semId,int semNum,int flag,union semun);
