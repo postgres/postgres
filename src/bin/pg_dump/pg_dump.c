@@ -22,7 +22,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.293 2002/08/27 21:04:58 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.294 2002/08/28 20:57:22 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -65,6 +65,7 @@
 #include "pg_backup_archiver.h"
 #include "dumputils.h"
 
+#define _(x) gettext((x))
 
 typedef struct _dumpContext
 {
@@ -420,9 +421,9 @@ main(int argc, char **argv)
 				else
 				{
 					fprintf(stderr,
-							gettext("%s: invalid -X option -- %s\n"),
+							_("%s: invalid -X option -- %s\n"),
 							progname, optarg);
-					fprintf(stderr, gettext("Try '%s --help' for more information.\n"), progname);
+					fprintf(stderr, _("Try '%s --help' for more information.\n"), progname);
 					exit(1);
 				}
 				break;
@@ -433,7 +434,7 @@ main(int argc, char **argv)
 #ifndef HAVE_GETOPT_LONG
 			case '-':
 				fprintf(stderr,
-						gettext("%s was compiled without support for long options.\n"
+						_("%s was compiled without support for long options.\n"
 						 "Use --help for help on invocation options.\n"),
 						progname);
 				exit(1);
@@ -444,7 +445,7 @@ main(int argc, char **argv)
 				break;
 #endif
 			default:
-				fprintf(stderr, gettext("Try '%s --help' for more information.\n"), progname);
+				fprintf(stderr, _("Try '%s --help' for more information.\n"), progname);
 				exit(1);
 		}
 	}
@@ -452,7 +453,7 @@ main(int argc, char **argv)
 	if (optind < (argc - 1))
 	{
 		fprintf(stderr,
-			gettext("%s: too many command line options (first is '%s')\n"
+			_("%s: too many command line options (first is '%s')\n"
 					"Try '%s --help' for more information.\n"),
 				progname, argv[optind + 1], progname);
 		exit(1);
@@ -649,82 +650,80 @@ main(int argc, char **argv)
 static void
 help(const char *progname)
 {
-	printf(gettext("%s dumps a database as a text file or to other formats.\n\n"), progname);
-	puts(gettext("Usage:"));
-	printf(gettext("  %s [options] dbname\n\n"), progname);
-	puts(gettext("Options:"));
+	printf(_("%s dumps a database as a text file or to other formats.\n\n"), progname);
+	printf(_("Usage:\n"));
+	printf(_("  %s [OPTIONS] DBNAME\n\n"), progname);
+	printf(_("Options:\n"));
 
 #ifdef HAVE_GETOPT_LONG
-	puts(gettext(
-		"  -a, --data-only          dump only the data, not the schema\n"
-		"  -b, --blobs              include large objects in dump\n"
-		"  -c, --clean              clean (drop) schema prior to create\n"
-		"  -C, --create             include commands to create database in dump\n"
-		"  -d, --inserts            dump data as INSERT, rather than COPY, commands\n"
-		"  -D, --column-inserts     dump data as INSERT commands with column names\n"
-		"  -f, --file=FILENAME      output file name\n"
-		"  -F, --format {c|t|p}     output file format (custom, tar, plain text)\n"
-		"  -h, --host=HOSTNAME      database server host name\n"
-		"  -i, --ignore-version     proceed even when server version mismatches\n"
-		"                           pg_dump version\n"
-		"  -o, --oids               include OIDs in dump\n"
-		"  -O, --no-owner           do not output \\connect commands in plain\n"
-		"                           text format\n"
-		"  -p, --port=PORT          database server port number\n"
-		"  -R, --no-reconnect       disable ALL reconnections to the database in\n"
-		"                           plain text format\n"
-		"  -s, --schema-only        dump only the schema, no data\n"
-		"  -S, --superuser=NAME     specify the superuser user name to use in\n"
-		"                           plain text format\n"
-		"  -t, --table=TABLE        dump this table only (* for all)\n"
-		"  -U, --username=NAME      connect as specified database user\n"
-		"  -v, --verbose            verbose mode\n"
-		"  -W, --password           force password prompt (should happen automatically)\n"
-		"  -x, --no-privileges      do not dump privileges (grant/revoke)\n"
-		"  -X use-set-session-authorization, --use-set-session-authorization\n"
-		"                           output SET SESSION AUTHORIZATION commands rather\n"
-		"                           than \\connect commands\n"
-		"  -X disable-triggers, --disable-triggers\n"
-		"                           disable triggers during data-only restore\n"
-		"  -Z, --compress {0-9}     compression level for compressed formats\n"
-	));
-#else
-	puts(gettext(
-		"  -a                       dump only the data, not the schema\n"
-		"  -b                       include large objects in dump\n"
-		"  -c                       clean (drop) schema prior to create\n"
-		"  -C                       include commands to create database in dump\n"
-		"  -d                       dump data as INSERT, rather than COPY, commands\n"
-		"  -D                       dump data as INSERT commands with column names\n"
-		"  -f FILENAME              output file name\n"
-		"  -F {c|t|p}               output file format (custom, tar, plain text)\n"
-		"  -h HOSTNAME              database server host name\n"
-		"  -i                       proceed even when server version mismatches\n"
-		"                           pg_dump version\n"
-		"  -o                       include OIDs in dump\n"
-		"  -O                       do not output \\connect commands in plain\n"
-		"                           text format\n"
-		"  -p PORT                  database server port number\n"
-		"  -R                       disable ALL reconnections to the database in\n"
-		"                           plain text format\n"
-		"  -s                       dump only the schema, no data\n"
-		"  -S NAME                  specify the superuser user name to use in\n"
-		"                           plain text format\n"
-		"  -t TABLE                 dump this table only (* for all)\n"
-		"  -U NAME                  connect as specified database user\n"
-		"  -v                       verbose mode\n"
-		"  -W                       force password prompt (should happen automatically)\n"
-		"  -x                       do not dump privileges (grant/revoke)\n"
-		"  -X use-set-session-authorization\n"
-		"                           output SET SESSION AUTHORIZATION commands rather\n"
-		"                           than \\connect commands\n"
-		"  -X disable-triggers      disable triggers during data-only restore\n"
-		"  -Z {0-9}                 compression level for compressed formats\n"
-	));
+	printf(_(	"  -a, --data-only          dump only the data, not the schema\n"));
+	printf(_(	"  -b, --blobs              include large objects in dump\n"));
+	printf(_(	"  -c, --clean              clean (drop) schema prior to create\n"));
+	printf(_(	"  -C, --create             include commands to create database in dump\n"));
+	printf(_(	"  -d, --inserts            dump data as INSERT, rather than COPY, commands\n"));
+	printf(_(	"  -D, --column-inserts     dump data as INSERT commands with column names\n"));
+	printf(_(	"  -f, --file=FILENAME      output file name\n"));
+	printf(_(	"  -F, --format {c|t|p}     output file format (custom, tar, plain text)\n"));
+	printf(_(	"  -h, --host=HOSTNAME      database server host name\n"));
+	printf(_(	"  -i, --ignore-version     proceed even when server version mismatches\n"
+				"                           pg_dump version\n"));
+	printf(_(	"  -o, --oids               include OIDs in dump\n"));
+	printf(_(	"  -O, --no-owner           do not output \\connect commands in plain\n"
+				"                           text format\n"));
+	printf(_(	"  -p, --port=PORT          database server port number\n"));
+	printf(_(	"  -R, --no-reconnect       disable ALL reconnections to the database in\n"
+				"                           plain text format\n"));
+	printf(_(	"  -s, --schema-only        dump only the schema, no data\n"));
+	printf(_(	"  -S, --superuser=NAME     specify the superuser user name to use in\n"
+				"                           plain text format\n"));
+	printf(_(	"  -t, --table=TABLE        dump this table only (* for all)\n"));
+	printf(_(	"  -U, --username=NAME      connect as specified database user\n"));
+	printf(_(	"  -v, --verbose            verbose mode\n"));
+	printf(_(	"  -W, --password           force password prompt (should happen automatically)\n"));
+	printf(_(	"  -x, --no-privileges      do not dump privileges (grant/revoke)\n"));
+	printf(_(	"  -X use-set-session-authorization, --use-set-session-authorization\n"
+				"                           output SET SESSION AUTHORIZATION commands rather\n"
+				"                           than \\connect commands\n"));
+	printf(_(	"  -X disable-triggers, --disable-triggers\n"
+				"                           disable triggers during data-only restore\n"));
+	printf(_(	"  -Z, --compress {0-9}     compression level for compressed formats\n"));
+
+#else /* not HAVE_GETOPT_LONG */
+	printf(_(	"  -a                       dump only the data, not the schema\n"));
+	printf(_(	"  -b                       include large objects in dump\n"));
+	printf(_(	"  -c                       clean (drop) schema prior to create\n"));
+	printf(_(	"  -C                       include commands to create database in dump\n"));
+	printf(_(	"  -d                       dump data as INSERT, rather than COPY, commands\n"));
+	printf(_(	"  -D                       dump data as INSERT commands with column names\n"));
+	printf(_(	"  -f FILENAME              output file name\n"));
+	printf(_(	"  -F {c|t|p}               output file format (custom, tar, plain text)\n"));
+	printf(_(	"  -h HOSTNAME              database server host name\n"));
+	printf(_(	"  -i                       proceed even when server version mismatches\n"
+				"                           pg_dump version\n"));
+	printf(_(	"  -o                       include OIDs in dump\n"));
+	printf(_(	"  -O                       do not output \\connect commands in plain\n"
+				"                           text format\n"));
+	printf(_(	"  -p PORT                  database server port number\n"));
+	printf(_(	"  -R                       disable ALL reconnections to the database in\n"
+				"                           plain text format\n"));
+	printf(_(	"  -s                       dump only the schema, no data\n"));
+	printf(_(	"  -S NAME                  specify the superuser user name to use in\n"
+				"                           plain text format\n"));
+	printf(_(	"  -t TABLE                 dump this table only (* for all)\n"));
+	printf(_(	"  -U NAME                  connect as specified database user\n"));
+	printf(_(	"  -v                       verbose mode\n"));
+	printf(_(	"  -W                       force password prompt (should happen automatically)\n"));
+	printf(_(	"  -x                       do not dump privileges (grant/revoke)\n"));
+	printf(_(	"  -X use-set-session-authorization\n"
+				"                           output SET SESSION AUTHORIZATION commands rather\n"
+				"                           than \\connect commands\n"));
+	printf(_(	"  -X disable-triggers      disable triggers during data-only restore\n"));
+	printf(_(	"  -Z {0-9}                 compression level for compressed formats\n"));
 #endif
-	puts(gettext("If no database name is not supplied, then the PGDATABASE environment\n"
-				 "variable value is used.\n\n"
-				 "Report bugs to <pgsql-bugs@postgresql.org>."));
+
+	printf(_("\nIf no database name is not supplied, then the PGDATABASE environment\n"
+			 "variable value is used.\n\n"));
+	printf(_("Report bugs to <pgsql-bugs@postgresql.org>.\n"));
 }
 
 static int

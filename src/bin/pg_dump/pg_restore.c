@@ -34,7 +34,7 @@
  *
  *
  * IDENTIFICATION
- *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_restore.c,v 1.39 2002/08/27 18:57:26 petere Exp $
+ *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_restore.c,v 1.40 2002/08/28 20:57:22 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -62,6 +62,8 @@
 #ifdef ENABLE_NLS
 #include <locale.h>
 #endif
+
+#define _(x) gettext((x))
 
 /* Forward decls */
 static void usage(const char *progname);
@@ -276,9 +278,9 @@ main(int argc, char **argv)
 				else
 				{
 					fprintf(stderr,
-							gettext("%s: invalid -X option -- %s\n"),
+							_("%s: invalid -X option -- %s\n"),
 							progname, optarg);
-					fprintf(stderr, gettext("Try '%s --help' for more information.\n"), progname);
+					fprintf(stderr, _("Try '%s --help' for more information.\n"), progname);
 					exit(1);
 				}
 				break;
@@ -290,7 +292,7 @@ main(int argc, char **argv)
 #endif
 
 			default:
-				fprintf(stderr, gettext("Try '%s --help' for more information.\n"), progname);
+				fprintf(stderr, _("Try '%s --help' for more information.\n"), progname);
 				exit(1);
 		}
 	}
@@ -371,89 +373,85 @@ main(int argc, char **argv)
 static void
 usage(const char *progname)
 {
-	printf(gettext(
-				   "%s restores a PostgreSQL database from an archive created by pg_dump.\n\n"
-				   "Usage:\n  %s [options] [file]\n\n"
-				   "Options:\n"),
-		   progname, progname);
+	printf(_("%s restores a PostgreSQL database from an archive created by pg_dump.\n\n"), progname);
+	printf(_("Usage:\n"));
+	printf(_("  %s [OPTIONS] [FILE]\n\n"), progname);
+	printf(_("Options:\n"));
+
 #ifdef HAVE_GETOPT_LONG
-	puts(gettext(
-		"  -a, --data-only          restore only the data, no schema\n"
-		"  -c, --clean              clean (drop) schema prior to create\n"
-		"  -C, --create             issue commands to create the database\n"
-		"  -d, --dbname=NAME        output database name\n"
-		"  -f, --file=FILENAME      output file name\n"
-		"  -F, --format={c|t}       specify backup file format\n"
-		"  -h, --host=HOSTNAME      server host name\n"
-		"  -i, --ignore-version     proceed even when server version mismatches\n"
-		"  -I, --index=NAME         restore named index\n"
-		"  -l, --list               print summarized TOC of the archive\n"
-		"  -L, --use-list=FILENAME  use specified table of contents for ordering\n"
-		"                           output from this file\n"
-		"  -N, --orig-order         restore in original dump order\n"
-		"  -o, --oid-order          restore in OID order\n"
-		"  -O, --no-owner           do not reconnect to database to match\n"
-		"                           object owner\n"
-		"  -p, --port=PORT          server port number\n"
-		"  -P, --function=NAME(args)restore named function\n"
-		"  -r, --rearrange          rearrange output to put indexes etc. at end\n"
-		"  -R, --no-reconnect       disallow ALL reconnections to the database\n"
-		"  -s, --schema-only        restore only the schema, no data\n"
-		"  -S, --superuser=NAME     specify the superuser user name to use for\n"
-		"                           disabling triggers\n"
-		"  -t, --table=NAME         restore named table\n"
-		"  -T, --trigger=NAME       restore named trigger\n"
-		"  -U, --username=NAME      connect as specified database user\n"
-		"  -v, --verbose            verbose mode\n"
-		"  -W, --password           force password prompt (should happen automatically)\n"
-		"  -x, --no-privileges      skip restoration of access privileges (grant/revoke)\n"
-		"  -X use-set-session-authorization, --use-set-session-authorization\n"
-		"                           use SET SESSION AUTHORIZATION commands instead\n"
-		"                           of reconnecting, if possible\n"
-		"  -X disable-triggers, --disable-triggers\n"
-		"                           disable triggers during data-only restore\n"
-		));
+	printf(_(	"  -a, --data-only          restore only the data, no schema\n"));
+	printf(_(	"  -c, --clean              clean (drop) schema prior to create\n"));
+	printf(_(	"  -C, --create             issue commands to create the database\n"));
+	printf(_(	"  -d, --dbname=NAME        output database name\n"));
+	printf(_(	"  -f, --file=FILENAME      output file name\n"));
+	printf(_(	"  -F, --format={c|t}       specify backup file format\n"));
+	printf(_(	"  -h, --host=HOSTNAME      database server host name\n"));
+	printf(_(	"  -i, --ignore-version     proceed even when server version mismatches\n"));
+	printf(_(	"  -I, --index=NAME         restore named index\n"));
+	printf(_(	"  -l, --list               print summarized TOC of the archive\n"));
+	printf(_(	"  -L, --use-list=FILENAME  use specified table of contents for ordering\n"
+				"                           output from this file\n"));
+	printf(_(	"  -N, --orig-order         restore in original dump order\n"));
+	printf(_(	"  -o, --oid-order          restore in OID order\n"));
+	printf(_(	"  -O, --no-owner           do not reconnect to database to match\n"
+				"                           object owner\n"));
+	printf(_(	"  -p, --port=PORT          database server port number\n"));
+	printf(_(	"  -P, --function=NAME(args)restore named function\n"));
+	printf(_(	"  -r, --rearrange          rearrange output to put indexes etc. at end\n"));
+	printf(_(	"  -R, --no-reconnect       disallow ALL reconnections to the database\n"));
+	printf(_(	"  -s, --schema-only        restore only the schema, no data\n"));
+	printf(_(	"  -S, --superuser=NAME     specify the superuser user name to use for\n"
+				"                           disabling triggers\n"));
+	printf(_(	"  -t, --table=NAME         restore named table\n"));
+	printf(_(	"  -T, --trigger=NAME       restore named trigger\n"));
+	printf(_(	"  -U, --username=NAME      connect as specified database user\n"));
+	printf(_(	"  -v, --verbose            verbose mode\n"));
+	printf(_(	"  -W, --password           force password prompt (should happen automatically)\n"));
+	printf(_(	"  -x, --no-privileges      skip restoration of access privileges (grant/revoke)\n"));
+	printf(_(	"  -X use-set-session-authorization, --use-set-session-authorization\n"
+				"                           use SET SESSION AUTHORIZATION commands instead\n"
+				"                           of reconnecting, if possible\n"));
+	printf(_(	"  -X disable-triggers, --disable-triggers\n"
+				"                           disable triggers during data-only restore\n"));
 
 #else							/* not HAVE_GETOPT_LONG */
-
-	puts(gettext(
-		"  -a                       restore only the data, no schema\n"
-		"  -c                       clean (drop) schema prior to create\n"
-		"  -C                       issue commands to create the database\n"
-		"  -d NAME                  output database name\n"
-		"  -f FILENAME              output file name\n"
-		"  -F {c|t}                 specify backup file format\n"
-		"  -h HOSTNAME              server host name\n"
-		"  -i                       proceed even when server version mismatches\n"
-		"  -I NAME                  restore named index\n"
-		"  -l                       print summarized TOC of the archive\n"
-		"  -L FILENAME              use specified table of contents for ordering\n"
-		"                           output from this file\n"
-		"  -N                       restore in original dump order\n"
-		"  -o                       restore in OID order\n"
-		"  -O                       do not reconnect to database to match\n"
-		"                           object owner\n"
-		"  -p PORT                  server port number\n"
-		"  -P NAME(args)            restore named function\n"
-		"  -r                       rearrange output to put indexes etc. at end\n"
-		"  -R                       disallow ALL reconnections to the database\n"
-		"  -s                       restore only the schema, no data\n"
-		"  -S NAME                  specify the superuser user name to use for\n"
-		"                           disabling triggers\n"
-		"  -t NAME                  restore named table\n"
-		"  -T NAME                  restore named trigger\n"
-		"  -U NAME                  connect as specified database user\n"
-		"  -v                       verbose mode\n"
-		"  -W                       force password prompt (should happen automatically)\n"
-		"  -x                       skip restoration of access privileges (grant/revoke)\n"
-		"  -X use-set-session-authorization\n"
-		"                           use SET SESSION AUTHORIZATION commands instead\n"
-		"                           of reconnecting, if possible\n"
-		"  -X disable-triggers      disable triggers during data-only restore\n"
-		));
+	printf(_(	"  -a                       restore only the data, no schema\n"));
+	printf(_(	"  -c                       clean (drop) schema prior to create\n"));
+	printf(_(	"  -C                       issue commands to create the database\n"));
+	printf(_(	"  -d NAME                  output database name\n"));
+	printf(_(	"  -f FILENAME              output file name\n"));
+	printf(_(	"  -F {c|t}                 specify backup file format\n"));
+	printf(_(	"  -h HOSTNAME              database server host name\n"));
+	printf(_(	"  -i                       proceed even when server version mismatches\n"));
+	printf(_(	"  -I NAME                  restore named index\n"));
+	printf(_(	"  -l                       print summarized TOC of the archive\n"));
+	printf(_(	"  -L FILENAME              use specified table of contents for ordering\n"
+				"                           output from this file\n"));
+	printf(_(	"  -N                       restore in original dump order\n"));
+	printf(_(	"  -o                       restore in OID order\n"));
+	printf(_(	"  -O                       do not reconnect to database to match\n"
+				"                           object owner\n"));
+	printf(_(	"  -p PORT                  database server port number\n"));
+	printf(_(	"  -P NAME(args)            restore named function\n"));
+	printf(_(	"  -r                       rearrange output to put indexes etc. at end\n"));
+	printf(_(	"  -R                       disallow ALL reconnections to the database\n"));
+	printf(_(	"  -s                       restore only the schema, no data\n"));
+	printf(_(	"  -S NAME                  specify the superuser user name to use for\n"
+				"                           disabling triggers\n"));
+	printf(_(	"  -t NAME                  restore named table\n"));
+	printf(_(	"  -T NAME                  restore named trigger\n"));
+	printf(_(	"  -U NAME                  connect as specified database user\n"));
+	printf(_(	"  -v                       verbose mode\n"));
+	printf(_(	"  -W                       force password prompt (should happen automatically)\n"));
+	printf(_(	"  -x                       skip restoration of access privileges (grant/revoke)\n"));
+	printf(_(	"  -X use-set-session-authorization\n"
+				"                           use SET SESSION AUTHORIZATION commands instead\n"
+				"                           of reconnecting, if possible\n"));
+	printf(_(	"  -X disable-triggers      disable triggers during data-only restore\n"));
 #endif
-	puts(gettext("If no input file name is supplied, then standard input is used.\n"));
-	puts(gettext("Report bugs to <pgsql-bugs@postgresql.org>."));
+
+	printf(_("\nIf no input file name is supplied, then standard input is used.\n\n"));
+	printf(_("Report bugs to <pgsql-bugs@postgresql.org>.\n"));
 }
 
 

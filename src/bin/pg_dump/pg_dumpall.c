@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
- * $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.3 2002/08/28 18:25:05 petere Exp $
+ * $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.4 2002/08/28 20:57:22 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -237,7 +237,7 @@ help(void)
     printf(_("  -h HOSTNAME              database server host name\n"));
 	printf(_("  -i                       proceed even when server version mismatches\n"
 			 "                           pg_dumpall version\n"));
-	printf(_("  -o                       include oids in dump\n"));
+	printf(_("  -o                       include OIDs in dump\n"));
     printf(_("  -p PORT                  database server port number\n"));
     printf(_("  -U NAME                  connect as specified database user\n"));
 	printf(_("  -v                       verbose mode\n"));
