@@ -8,7 +8,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/doc/src/sgml/Makefile,v 1.27 2000/12/14 22:30:56 petere Exp $
+#    $Header: /cvsroot/pgsql/doc/src/sgml/Makefile,v 1.28 2001/01/06 16:54:16 petere Exp $
 #
 #----------------------------------------------------------------------------
 
@@ -17,6 +17,7 @@ top_builddir = ../../..
 include $(top_builddir)/src/Makefile.global
 
 .SECONDARY:
+.NOTPARALLEL:
 
 ifndef DOCBOOKSTYLE
 DOCBOOKSTYLE = /home/projects/pgsql/developers/thomas/db143.d/docbook
@@ -60,96 +61,24 @@ ALLBOOKS = admin developer programmer reference tutorial user
 
 ALLSGML := $(wildcard $(srcdir)/*.sgml $(srcdir)/ref/*.sgml)
 
-MANSOURCES= $(wildcard ref/*.sgml)
-
-APPLICATIONS= createdb.sgml createlang.sgml createuser.sgml \
-	dropdb.sgml droplang.sgml dropuser.sgml \
-	ecpg-ref.sgml \
-	initdb.sgml initlocation.sgml \
-	ipcclean.sgml \
-	pg_dump.sgml \
-	pg_dumpall.sgml \
-	pg_passwd.sgml \
-	pg_upgrade.sgml \
-	pgaccess-ref.sgml \
-	pgadmin-ref.sgml \
-	pg_config-ref.sgml \
-	pg_ctl-ref.sgml \
-	pgtclsh.sgml \
-	pgtksh.sgml \
-	postgres-ref.sgml \
-	postmaster.sgml \
-	psql-ref.sgml \
-	vacuumdb.sgml
-
-COMMANDS= abort.sgml alter_group.sgml alter_table.sgml alter_user.sgml \
-	begin.sgml \
-	close.sgml cluster.sgml comment.sgml commit.sgml copy.sgml \
-	create_aggregate.sgml create_constraint.sgml create_database.sgml \
-	create_function.sgml create_group.sgml \
-	create_index.sgml \
-	create_language.sgml create_operator.sgml create_rule.sgml create_sequence.sgml \
-	create_table.sgml create_table_as.sgml create_trigger.sgml create_type.sgml \
-	create_user.sgml create_view.sgml \
-	declare.sgml delete.sgml \
-	drop_aggregate.sgml drop_database.sgml drop_function.sgml drop_group.sgml \
-	drop_index.sgml \
-	drop_language.sgml drop_operator.sgml drop_rule.sgml drop_sequence.sgml \
-	drop_table.sgml drop_trigger.sgml drop_type.sgml drop_user.sgml drop_view.sgml \
-	end.sgml explain.sgml fetch.sgml grant.sgml \
-	insert.sgml listen.sgml load.sgml lock.sgml move.sgml \
-	notify.sgml \
-	reindex.sgml reset.sgml revoke.sgml rollback.sgml \
-	select.sgml select_into.sgml set.sgml set_constraints.sgml set_transaction.sgml show.sgml \
-	truncate.sgml unlisten.sgml update.sgml vacuum.sgml
-
-FUNCTIONS= current_date.sgml current_time.sgml current_timestamp.sgml current_user.sgml
-
-#APPSOURCES= $(addprefix ref/, $(APPLICATIONS))
-#SQLSOURCES= $(addprefix ref/, $(COMMANDS))
-APPSOURCES= $(APPLICATIONS)
-SQLSOURCES= $(COMMANDS)
-XAPPTARGETS= $(APPLICATIONS:.sgml=.1)
-APPTARGETS= $(XAPPTARGETS:-ref.1=.1)
-XSQLTARGETS= $(COMMANDS:.sgml=.l)
-SQLTARGETS= $(XSQLTARGETS:-ref.l=.l)
-
 
 ##
 ## Man pages
 ##
 
-.PHONY: man man1 manl
+.PHONY: man
 
-man:
-	$(MAKE) man1 manl
-	rm -r *.1 *.l man1 manl
-	$(MAKE) man1 manl
+DEFAULTSECTION := l
 
-manpage.refs:
-	$(MAKE) man
-
-man1: $(APPTARGETS) manpage.refs
-	rm -rf man1
-	if [ ! -d man1 ]; then mkdir man1; fi
-	cp *.1 man1/
-
-manl: $(SQLTARGETS) manpage.refs
-	rm -rf manl/*
-	if [ ! -d manl ]; then mkdir manl; fi
-	cp *.l manl/
-
-%.1: %-ref.sgml
-	$(NSGMLS) $(NSGMLS_FLAGS) refentry.sgml $< \
-	| $(SGMLSPL) $(D2MSCRIPT) --lowercase --section 1
-
-%.1: %.sgml
-	$(NSGMLS) $(NSGMLS_FLAGS) refentry.sgml $< \
-	| $(SGMLSPL) $(D2MSCRIPT) --lowercase --section 1
-
-%.l: %.sgml
-	$(NSGMLS) $(NSGMLS_FLAGS) refentry.sgml $< \
-	| $(SGMLSPL) $(D2MSCRIPT) --lowercase --section l
+man: $(ALLSGML)
+	$(NSGMLS) $(NSGMLS_FLAGS) $(srcdir)/book-decl.sgml $(srcdir)/reference.sgml \
+	  | $(SGMLSPL) $(D2MSCRIPT) --lowercase --section $(DEFAULTSECTION)
+# One more time, to resolve cross-references
+	$(NSGMLS) $(NSGMLS_FLAGS) $(srcdir)/book-decl.sgml $(srcdir)/reference.sgml \
+	  | $(SGMLSPL) $(D2MSCRIPT) --lowercase --section $(DEFAULTSECTION)
+	$(mkinstalldirs) man1 man$(DEFAULTSECTION)
+	mv *.1 man1/
+	mv *.$(DEFAULTSECTION) man$(DEFAULTSECTION)/
 
 
 ##
