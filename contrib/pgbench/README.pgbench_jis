@@ -31,15 +31,18 @@ o pgbench $B$O(B libpq $B$NHsF14|=hM}5!G=$r;H$C$F%^%k%A%f!<%64D6-$r%7%_%e%l!<
 
 $B"#(Bpgbench $B$N%$%s%9%H!<%k(B
 
-Makefile$B$N0lHV>e$K$"$k(B
+(1) PostgreSQL$B$r(Bconfigure$B!$%3%s%Q%$%k$7$^$9!%(Bpgbench$B$N%$%s%9%H!<%k$@$1(B
+    $B$,L\E*$G$"$l$P!$(BPostgreSQL$B$N$9$Y$F$r%3%s%Q%$%k$9$kI,MW$O$"$j$^$;$s!%(B
+	PostgreSQL$B%=!<%9$N%H%C%W%G%#%l%/%H%j$G(Bconfigure$B$r$7$?8e!$(B
+    src/interface/libpq $B$G(B "make all" $B$r<B9T$9$l$P=`Hw40N;$G$9!%(B
 
-	POSTGRESHOME = /usr/local/pgsql
-
-$B$rI,MW$K1~$8$F=$@5$7!"(Bconfigure;make $B$9$k$@$1$G$9!#(B
+(2) $B$3$N%G%#%l%/%H%j$G(B make $B$r<B9T$7$^$9!%$=$&$9$k$H!$(B"pgbench" $B$H$$$&(B
+    $B<B9T%W%m%0%i%`$,$G$-$^$9!%$=$N$^$^<B9T$7$F$b9=$$$^$;$s$7!$(B"make
+    install" $B$r<B9T$7$F(B PostgreSQL $B$NI8=`<B9T%W%m%0%i%`%G%#%l%/%H%j(B
+    ($B%G%U%)%k%H$G$O(B /usr/local/pgsql/bin) $B$K%$%s%9%H!<%k$9$k$3$H$b$G$-(B
+    $B$^$9!%(B
 
 $B"#(Bpgbench $B$N;H$$J}(B
-
-$B4pK\E*$J;H$$J}$O!"(B
 
 $ pgbench [$B%G!<%?%Y!<%9L>(B]
 
