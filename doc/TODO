@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Sat Jan 15 14:31:42 EST 2000
+Last updated:		Sat Jan 15 21:31:39 EST 2000
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -72,7 +72,7 @@ MISC
 * -pg_dump should preserve primary key information
 * plpgsql regression tests fails on BSD/OS
 * -database names with spaces fail
-* insert of 0.0 into DECIMAL(4,4) field fails
+* -insert of 0.0 into DECIMAL(4,4) field fails(Tom)
 * -* Interlock to prevent DROP DATABASE on a database with running backendsInterlock to prevent DROP DATABASE on a database with running backends
 * Buffer reference counting bugfixes
 * Fix libpq bug that causes it to drop backend error message sent
