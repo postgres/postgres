@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/common/tupdesc.c,v 1.109 2005/03/07 04:42:16 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/common/tupdesc.c,v 1.110 2005/03/31 22:46:04 tgl Exp $
  *
  * NOTES
  *	  some of the executor utility code such as "ExecTypeFromTL" should be
@@ -19,16 +19,11 @@
 
 #include "postgres.h"
 
-#include "funcapi.h"
 #include "access/heapam.h"
-#include "catalog/namespace.h"
 #include "catalog/pg_type.h"
-#include "nodes/parsenodes.h"
 #include "parser/parse_type.h"
 #include "utils/builtins.h"
-#include "utils/lsyscache.h"
 #include "utils/syscache.h"
-#include "utils/typcache.h"
 
 
 /*
@@ -547,123 +542,4 @@ BuildDescForRelation(List *schema)
 	}
 
 	return desc;
-}
-
-
-/*
- * RelationNameGetTupleDesc
- *
- * Given a (possibly qualified) relation name, build a TupleDesc.
- */
-TupleDesc
-RelationNameGetTupleDesc(const char *relname)
-{
-	RangeVar   *relvar;
-	Relation	rel;
-	TupleDesc	tupdesc;
-	List	   *relname_list;
-
-	/* Open relation and copy the tuple description */
-	relname_list = stringToQualifiedNameList(relname, "RelationNameGetTupleDesc");
-	relvar = makeRangeVarFromNameList(relname_list);
-	rel = relation_openrv(relvar, AccessShareLock);
-	tupdesc = CreateTupleDescCopy(RelationGetDescr(rel));
-	relation_close(rel, AccessShareLock);
-
-	return tupdesc;
-}
-
-/*
- * TypeGetTupleDesc
- *
- * Given a type Oid, build a TupleDesc.
- *
- * If the type is composite, *and* a colaliases List is provided, *and*
- * the List is of natts length, use the aliases instead of the relation
- * attnames.  (NB: this usage is deprecated since it may result in
- * creation of unnecessary transient record types.)
- *
- * If the type is a base type, a single item alias List is required.
- */
-TupleDesc
-TypeGetTupleDesc(Oid typeoid, List *colaliases)
-{
-	TypeFuncClass functypclass = get_type_func_class(typeoid);
-	TupleDesc	tupdesc = NULL;
-
-	/*
-	 * Build a suitable tupledesc representing the output rows
-	 */
-	if (functypclass == TYPEFUNC_COMPOSITE)
-	{
-		/* Composite data type, e.g. a table's row type */
-		tupdesc = CreateTupleDescCopy(lookup_rowtype_tupdesc(typeoid, -1));
-
-		if (colaliases != NIL)
-		{
-			int			natts = tupdesc->natts;
-			int			varattno;
-
-			/* does the list length match the number of attributes? */
-			if (list_length(colaliases) != natts)
-				ereport(ERROR,
-						(errcode(ERRCODE_DATATYPE_MISMATCH),
-						 errmsg("number of aliases does not match number of columns")));
-
-			/* OK, use the aliases instead */
-			for (varattno = 0; varattno < natts; varattno++)
-			{
-				char	   *label = strVal(list_nth(colaliases, varattno));
-
-				if (label != NULL)
-					namestrcpy(&(tupdesc->attrs[varattno]->attname), label);
-			}
-
-			/* The tuple type is now an anonymous record type */
-			tupdesc->tdtypeid = RECORDOID;
-			tupdesc->tdtypmod = -1;
-		}
-	}
-	else if (functypclass == TYPEFUNC_SCALAR)
-	{
-		/* Base data type, i.e. scalar */
-		char	   *attname;
-
-		/* the alias list is required for base types */
-		if (colaliases == NIL)
-			ereport(ERROR,
-					(errcode(ERRCODE_DATATYPE_MISMATCH),
-					 errmsg("no column alias was provided")));
-
-		/* the alias list length must be 1 */
-		if (list_length(colaliases) != 1)
-			ereport(ERROR,
-					(errcode(ERRCODE_DATATYPE_MISMATCH),
-					 errmsg("number of aliases does not match number of columns")));
-
-		/* OK, get the column alias */
-		attname = strVal(linitial(colaliases));
-
-		tupdesc = CreateTemplateTupleDesc(1, false);
-		TupleDescInitEntry(tupdesc,
-						   (AttrNumber) 1,
-						   attname,
-						   typeoid,
-						   -1,
-						   0);
-	}
-	else if (functypclass == TYPEFUNC_RECORD)
-	{
-		/* XXX can't support this because typmod wasn't passed in ... */
-		ereport(ERROR,
-				(errcode(ERRCODE_DATATYPE_MISMATCH),
-				 errmsg("could not determine row description for function returning record")));
-	}
-	else
-	{
-		/* crummy error message, but parser should have caught this */
-		elog(ERROR, "function in FROM has unsupported return type");
-	}
-
-	return tupdesc;
 }

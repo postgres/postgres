@@ -11,12 +11,15 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/fmgr.h,v 1.37 2005/03/22 20:13:09 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/fmgr.h,v 1.38 2005/03/31 22:46:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef FMGR_H
 #define FMGR_H
+
+/* We don't want to include primnodes.h here, so make a stub reference */
+struct Node;
 
 
 /*
@@ -402,6 +405,7 @@ extern void clear_external_function_hash(void *filehandle);
 extern Oid	fmgr_internal_function(const char *proname);
 extern Oid	get_fn_expr_rettype(FmgrInfo *flinfo);
 extern Oid	get_fn_expr_argtype(FmgrInfo *flinfo, int argnum);
+extern Oid	get_call_expr_argtype(struct Node *expr, int argnum);
 
 /*
  * Routines in dfmgr.c

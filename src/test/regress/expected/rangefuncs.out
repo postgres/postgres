@@ -396,3 +396,134 @@ DROP FUNCTION foorescan(int,int);
 DROP FUNCTION foorescan(int);
 DROP TABLE foorescan;
 DROP TABLE barrescan;
+--
+-- Test cases involving OUT parameters
+--
+CREATE FUNCTION foo(in f1 int, out f2 int)
+AS 'select $1+1' LANGUAGE sql;
+SELECT foo(42);
+ foo 
+-----
+  43
+(1 row)
+
+SELECT * FROM foo(42);
+ foo 
+-----
+  43
+(1 row)
+
+SELECT * FROM foo(42) AS p(x);
+ x  
+----
+ 43
+(1 row)
+
+-- explicit spec of return type is OK
+CREATE OR REPLACE FUNCTION foo(in f1 int, out f2 int) RETURNS int
+AS 'select $1+1' LANGUAGE sql;
+-- error, wrong result type
+CREATE OR REPLACE FUNCTION foo(in f1 int, out f2 int) RETURNS float
+AS 'select $1+1' LANGUAGE sql;
+ERROR:  function result type must be integer because of OUT parameters
+-- with multiple OUT params you must get a RECORD result
+CREATE OR REPLACE FUNCTION foo(in f1 int, out f2 int, out f3 text) RETURNS int
+AS 'select $1+1' LANGUAGE sql;
+ERROR:  function result type must be record because of OUT parameters
+CREATE OR REPLACE FUNCTION foo(in f1 int, out f2 int, out f3 text)
+RETURNS record
+AS 'select $1+1' LANGUAGE sql;
+ERROR:  cannot change return type of existing function
+HINT:  Use DROP FUNCTION first.
+CREATE OR REPLACE FUNCTION foor(in f1 int, out f2 int, out text)
+AS $$select $1-1, $1::text || 'z'$$ LANGUAGE sql;
+SELECT f1, foor(f1) FROM int4_tbl;
+     f1      |            foor            
+-------------+----------------------------
+           0 | (-1,0z)
+      123456 | (123455,123456z)
+     -123456 | (-123457,-123456z)
+  2147483647 | (2147483646,2147483647z)
+ -2147483647 | (-2147483648,-2147483647z)
+(5 rows)
+
+SELECT * FROM foor(42);
+ f2 | column2 
+----+---------
+ 41 | 42z
+(1 row)
+
+SELECT * FROM foor(42) AS p(a,b);
+ a  |  b  
+----+-----
+ 41 | 42z
+(1 row)
+
+CREATE OR REPLACE FUNCTION foob(in f1 int, inout f2 int, out text)
+AS $$select $2-1, $1::text || 'z'$$ LANGUAGE sql;
+SELECT f1, foob(f1, f1/2) FROM int4_tbl;
+     f1      |            foob            
+-------------+----------------------------
+           0 | (-1,0z)
+      123456 | (61727,123456z)
+     -123456 | (-61729,-123456z)
+  2147483647 | (1073741822,2147483647z)
+ -2147483647 | (-1073741824,-2147483647z)
+(5 rows)
+
+SELECT * FROM foob(42, 99);
+ f2 | column2 
+----+---------
+ 98 | 42z
+(1 row)
+
+SELECT * FROM foob(42, 99) AS p(a,b);
+ a  |  b  
+----+-----
+ 98 | 42z
+(1 row)
+
+-- Can reference function with or without OUT params for DROP, etc
+DROP FUNCTION foo(int);
+DROP FUNCTION foor(in f2 int, out f1 int, out text);
+DROP FUNCTION foob(in f1 int, inout f2 int);
+--
+-- For my next trick, polymorphic OUT parameters
+--
+CREATE FUNCTION dup (f1 anyelement, f2 out anyelement, f3 out anyarray)
+AS 'select $1, array[$1,$1]' LANGUAGE sql;
+SELECT dup(22);
+      dup       
+----------------
+ (22,"{22,22}")
+(1 row)
+
+SELECT dup('xyz');	-- fails
+ERROR:  could not determine anyarray/anyelement type because input has type "unknown"
+SELECT dup('xyz'::text);
+        dup        
+-------------------
+ (xyz,"{xyz,xyz}")
+(1 row)
+
+SELECT * FROM dup('xyz'::text);
+ f2  |    f3     
+-----+-----------
+ xyz | {xyz,xyz}
+(1 row)
+
+-- equivalent specification
+CREATE OR REPLACE FUNCTION dup (inout f2 anyelement, out f3 anyarray)
+AS 'select $1, array[$1,$1]' LANGUAGE sql;
+SELECT dup(22);
+      dup       
+----------------
+ (22,"{22,22}")
+(1 row)
+
+DROP FUNCTION dup(anyelement);
+-- fails, no way to deduce outputs
+CREATE FUNCTION bad (f1 int, out f2 anyelement, out f3 anyarray)
+AS 'select $1, array[$1,$1]' LANGUAGE sql;
+ERROR:  cannot determine result data type
+DETAIL:  A function returning "anyarray" or "anyelement" must have at least one argument of either type.

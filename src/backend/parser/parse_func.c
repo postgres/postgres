@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_func.c,v 1.176 2005/03/29 03:01:31 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_func.c,v 1.177 2005/03/31 22:46:13 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,6 +18,7 @@
 #include "catalog/catname.h"
 #include "catalog/pg_inherits.h"
 #include "catalog/pg_proc.h"
+#include "funcapi.h"
 #include "lib/stringinfo.h"
 #include "nodes/makefuncs.h"
 #include "parser/parse_agg.h"
@@ -1154,10 +1155,8 @@ make_fn_arguments(ParseState *pstate,
 static Node *
 ParseComplexProjection(ParseState *pstate, char *funcname, Node *first_arg)
 {
-	Oid			argtype;
-	Oid			argrelid;
-	AttrNumber	attnum;
-	FieldSelect *fselect;
+	TupleDesc	tupdesc;
+	int			i;
 
 	/*
 	 * Special case for whole-row Vars so that we can resolve (foo.*).bar
@@ -1180,27 +1179,31 @@ ParseComplexProjection(ParseState *pstate, char *funcname, Node *first_arg)
 
 	/*
 	 * Else do it the hard way.  Note that if the arg is of RECORD type,
-	 * we will never recognize a column name, and always assume the item
-	 * must be a function.
+	 * and isn't resolvable as a function with OUT params, we will never
+	 * be able to recognize a column name here.
 	 */
-	argtype = exprType(first_arg);
-	argrelid = typeidTypeRelid(argtype);
-	if (!argrelid)
-		return NULL;			/* can only happen if RECORD */
+	if (get_expr_result_type(first_arg, NULL, &tupdesc) != TYPEFUNC_COMPOSITE)
+		return NULL;			/* unresolvable RECORD type */
 
-	attnum = get_attnum(argrelid, funcname);
-	if (attnum == InvalidAttrNumber)
-		return NULL;			/* funcname does not match any column */
+	for (i = 0; i < tupdesc->natts; i++)
+	{
+		Form_pg_attribute att = tupdesc->attrs[i];
 
-	/* Success, so generate a FieldSelect expression */
-	fselect = makeNode(FieldSelect);
-	fselect->arg = (Expr *) first_arg;
-	fselect->fieldnum = attnum;
-	get_atttypetypmod(argrelid, attnum,
-					  &fselect->resulttype,
-					  &fselect->resulttypmod);
+		if (strcmp(funcname, NameStr(att->attname)) == 0 &&
+			!att->attisdropped)
+		{
+			/* Success, so generate a FieldSelect expression */
+			FieldSelect *fselect = makeNode(FieldSelect);
 
-	return (Node *) fselect;
+			fselect->arg = (Expr *) first_arg;
+			fselect->fieldnum = i + 1;
+			fselect->resulttype = att->atttypid;
+			fselect->resulttypmod = att->atttypmod;
+			return (Node *) fselect;
+		}
+	}
+
+	return NULL;				/* funcname does not match any column */
 }
 
 /*

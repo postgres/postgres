@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_function.sgml,v 1.64 2005/01/04 00:39:53 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_function.sgml,v 1.65 2005/03/31 22:45:59 tgl Exp $
 -->
 
 <refentry id="SQL-CREATEFUNCTION">
@@ -19,8 +19,9 @@ $PostgreSQL: pgsql/doc/src/sgml/ref/create_function.sgml,v 1.64 2005/01/04 00:39
 
  <refsynopsisdiv>
 <synopsis>
-CREATE [ OR REPLACE ] FUNCTION <replaceable class="parameter">name</replaceable> ( [ [ <replaceable class="parameter">argname</replaceable> ] <replaceable class="parameter">argtype</replaceable> [, ...] ] )
-    RETURNS <replaceable class="parameter">rettype</replaceable>
+CREATE [ OR REPLACE ] FUNCTION
+    <replaceable class="parameter">name</replaceable> ( [ [ <replaceable class="parameter">argmode</replaceable> ] [ <replaceable class="parameter">argname</replaceable> ] <replaceable class="parameter">argtype</replaceable> [, ...] ] )
+    [ RETURNS <replaceable class="parameter">rettype</replaceable> ]
   { LANGUAGE <replaceable class="parameter">langname</replaceable>
     | IMMUTABLE | STABLE | VOLATILE
     | CALLED ON NULL INPUT | RETURNS NULL ON NULL INPUT | STRICT
@@ -57,7 +58,9 @@ CREATE [ OR REPLACE ] FUNCTION <replaceable class="parameter">name</replaceable>
    tried, you would actually be creating a new, distinct function).
    Also, <command>CREATE OR REPLACE FUNCTION</command> will not let
    you change the return type of an existing function.  To do that,
-   you must drop and recreate the function.
+   you must drop and recreate the function.  (When using <literal>OUT</>
+   parameters, that means you can't change the names or types of any
+   <literal>OUT</> parameters except by dropping the function.)
   </para>
 
   <para>
@@ -89,13 +92,27 @@ CREATE [ OR REPLACE ] FUNCTION <replaceable class="parameter">name</replaceable>
     </varlistentry>
 
     <varlistentry>
+     <term><replaceable class="parameter">argmode</replaceable></term>
+
+     <listitem>
+      <para>
+       The mode of an argument: either <literal>IN</>, <literal>OUT</>,
+       or <literal>INOUT</>.  If omitted, the default is <literal>IN</>.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
      <term><replaceable class="parameter">argname</replaceable></term>
 
      <listitem>
       <para>
        The name of an argument. Some languages (currently only PL/pgSQL) let
        you use the name in the function body.  For other languages the
-       argument name is just extra documentation.
+       name of an input argument is just extra documentation.  But the name
+       of an output argument is significant, since it defines the column
+       name in the result row type.  (If you omit the name for an output
+       argument, the system will choose a default column name.)
       </para>
      </listitem>
     </varlistentry>
@@ -136,6 +153,13 @@ CREATE [ OR REPLACE ] FUNCTION <replaceable class="parameter">name</replaceable>
        or may reference the type of a table column.
        Depending on the implementation language it may also be allowed
        to specify <quote>pseudotypes</> such as <type>cstring</>.
+      </para>
+      <para>
+       When there are <literal>OUT</> or <literal>INOUT</> parameters,
+       the <literal>RETURNS</> clause may be omitted.  If present, it
+       must agree with the result type implied by the output parameters:
+       <literal>RECORD</> if there are multiple output parameters, or
+       the same type as the single output parameter.
       </para>
       <para>
        The <literal>SETOF</literal>
@@ -362,6 +386,16 @@ CREATE [ OR REPLACE ] FUNCTION <replaceable class="parameter">name</replaceable>
    </para>
 
    <para>
+    Two functions are considered the same if they have the same names and
+    <emphasis>input</> argument types, ignoring any <literal>OUT</>
+    parameters.  Thus for example these declarations conflict:
+<programlisting>
+CREATE FUNCTION foo(int) ...
+CREATE FUNCTION foo(int, out text) ...
+</programlisting>
+   </para>
+
+   <para>
     When repeated <command>CREATE FUNCTION</command> calls refer to
     the same object file, the file is only loaded once.  To unload and
     reload the file (perhaps during development), use the <xref
@@ -393,7 +427,7 @@ CREATE [ OR REPLACE ] FUNCTION <replaceable class="parameter">name</replaceable>
   <title>Examples</title>
 
   <para>
-   Here is a trivial example to help you get started.  For more
+   Here are some trivial examples to help you get started.  For more
    information and examples, see <xref linkend="xfunc">.
 <programlisting>
 CREATE FUNCTION add(integer, integer) RETURNS integer
@@ -407,13 +441,34 @@ CREATE FUNCTION add(integer, integer) RETURNS integer
   <para>
    Increment an integer, making use of an argument name, in
    <application>PL/pgSQL</application>:
-
 <programlisting>
 CREATE OR REPLACE FUNCTION increment(i integer) RETURNS integer AS $$
         BEGIN
                 RETURN i + 1;
         END;
 $$ LANGUAGE plpgsql;
+</programlisting>
+  </para>
+
+  <para>
+   Return a record containing multiple output parameters:
+<programlisting>
+CREATE FUNCTION dup(in int, out f1 int, out f2 text)
+    AS $$ SELECT $1, CAST($1 AS text) || ' is text' $$
+    LANGUAGE SQL;
+
+SELECT * FROM dup(42);
+</programlisting>
+   You can do the same thing more verbosely with an explicitly named
+   composite type:
+<programlisting>
+CREATE TYPE dup_result AS (f1 int, f2 text);
+
+CREATE FUNCTION dup(int) RETURNS dup_result
+    AS $$ SELECT $1, CAST($1 AS text) || ' is text' $$
+    LANGUAGE SQL;
+
+SELECT * FROM dup(42);
 </programlisting>
   </para>
  </refsect1>
@@ -427,6 +482,13 @@ $$ LANGUAGE plpgsql;
    The <productname>PostgreSQL</productname> version is similar but
    not fully compatible.  The attributes are not portable, neither are the
    different available languages.
+  </para>
+
+  <para>
+   For compatibility with some other database systems,
+   <replaceable class="parameter">argmode</replaceable> can be written
+   either before or after <replaceable class="parameter">argname</replaceable>.
+   But only the first way is standard-compliant.
   </para>
  </refsect1>
 

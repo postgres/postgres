@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.356 2005/03/29 19:44:23 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.357 2005/03/31 22:46:18 tgl Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -3668,9 +3668,10 @@ extern Oid ProcedureCreate(const char *procedureName,
 				bool security_definer,
 				bool isStrict,
 				char volatility,
-				int parameterCount,
-				const Oid *parameterTypes,
-				const char *parameterNames[]);
+				oidvector *parameterTypes,
+				Datum allParameterTypes,
+				Datum parameterModes,
+				Datum parameterNames);
 
 extern bool function_parse_error_transpose(const char *prosrc);
 

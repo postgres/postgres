@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/xfunc.sgml,v 1.101 2005/03/16 21:38:04 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/xfunc.sgml,v 1.102 2005/03/31 22:46:02 tgl Exp $
 -->
 
  <sect1 id="xfunc">
@@ -172,7 +172,7 @@ INSERT INTO $1 VALUES (42);
 </programlisting>
    </para>
 
-   <sect2>
+   <sect2 id="xfunc-sql-base-functions">
     <title><acronym>SQL</acronym> Functions on Base Types</title>
 
     <para>
@@ -484,7 +484,7 @@ SELECT emp.name, emp.double_salary FROM emp;
     </tip>
 
     <para>
-     Another way to use a function returning a row result is to pass the
+     Another way to use a function returning a composite type is to pass the
      result to another function that accepts the correct row type as input:
 
 <screen>
@@ -501,8 +501,89 @@ SELECT getname(new_emp());
     </para>     
 
     <para>
-     Another way to use a function that returns a composite type is to
-     call it as a table function, as described below.
+     Still another way to use a function that returns a composite type is to
+     call it as a table function, as described in <xref
+     linkend="xfunc-sql-table-functions">.
+    </para>
+   </sect2>
+
+   <sect2 id="xfunc-output-parameters">
+    <title>Functions with Output Parameters</title>
+
+   <indexterm>
+    <primary>function</primary>
+    <secondary>output parameter</secondary>
+   </indexterm>
+
+    <para>
+     An alternative way of describing a function's results is to define it
+     with <firstterm>output parameters</>, as in this example:
+
+<screen>
+CREATE FUNCTION add_em (IN x int, IN y int, OUT sum int)
+AS 'SELECT $1 + $2'
+LANGUAGE SQL;
+
+SELECT add_em(3,7);
+ add_em
+--------
+     10
+(1 row)
+</screen>
+
+     This is not essentially different from the version of <literal>add_em</>
+     shown in <xref linkend="xfunc-sql-base-functions">.  The real value of
+     output parameters is that they provide a convenient way of defining
+     functions that return several columns.  For example,
+
+<screen>
+CREATE FUNCTION sum_n_product (x int, y int, OUT sum int, OUT product int)
+AS 'SELECT $1 + $2, $1 * $2'
+LANGUAGE SQL;
+
+ SELECT * FROM sum_n_product(11,42);
+ sum | product
+-----+---------
+  53 |     462
+(1 row)
+</screen>
+
+     What has essentially happened here is that we have created an anonymous
+     composite type for the result of the function.  The above example has
+     the same end result as
+
+<screen>
+CREATE TYPE sum_prod AS (sum int, product int);
+
+CREATE FUNCTION sum_n_product (int, int) RETURNS sum_prod
+AS 'SELECT $1 + $2, $1 * $2'
+LANGUAGE SQL;
+</screen>
+
+     but not having to bother with the separate composite type definition
+     is often handy.
+    </para>
+
+    <para>
+     Notice that output parameters are not included in the calling argument
+     list when invoking such a function from SQL.  This is because
+     <productname>PostgreSQL</productname> considers only the input
+     parameters to define the function's calling signature.  That means
+     also that only the input parameters matter when referencing the function
+     for purposes such as dropping it.  We could drop the above function
+     with either of
+
+<screen>
+DROP FUNCTION sum_n_product (x int, y int, OUT sum int, OUT product int);
+DROP FUNCTION sum_n_product (int, int);
+</screen>
+    </para>
+
+    <para>
+     Parameters can be marked as <literal>IN</> (the default),
+     <literal>OUT</>, or <literal>INOUT</>.  An <literal>INOUT</>
+     parameter serves as both an input parameter (part of the calling
+     argument list) and an output parameter (part of the result record type).
     </para>
    </sect2>
 
@@ -692,6 +773,21 @@ CREATE FUNCTION invalid_func() RETURNS anyelement AS $$
 $$ LANGUAGE SQL;
 ERROR:  cannot determine result data type
 DETAIL:  A function returning "anyarray" or "anyelement" must have at least one argument of either type.
+</screen>
+    </para>
+
+    <para>
+     Polymorphism can be used with functions that have output arguments.
+     For example:
+<screen>
+CREATE FUNCTION dup (f1 anyelement, OUT f2 anyelement, OUT f3 anyarray)
+AS 'select $1, array[$1,$1]' LANGUAGE sql;
+
+SELECT * FROM dup(22);
+ f2 |   f3
+----+---------
+ 22 | {22,22}
+(1 row)
 </screen>
     </para>
    </sect2>
@@ -962,7 +1058,7 @@ CREATE FUNCTION square_root(double precision) RETURNS double precision
   <sect1 id="xfunc-c">
    <title>C-Language Functions</title>
 
-   <indexterm zone="xfunc-sql">
+   <indexterm zone="xfunc-c">
     <primary>function</primary>
     <secondary>user-defined</secondary>
     <tertiary>in C</tertiary>

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeFunctionscan.c,v 1.31 2005/03/16 21:38:07 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeFunctionscan.c,v 1.32 2005/03/31 22:46:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,18 +22,10 @@
  */
 #include "postgres.h"
 
-#include "access/heapam.h"
-#include "catalog/pg_type.h"
-#include "executor/execdebug.h"
-#include "executor/execdefs.h"
-#include "executor/execdesc.h"
 #include "executor/nodeFunctionscan.h"
+#include "funcapi.h"
 #include "parser/parsetree.h"
-#include "parser/parse_expr.h"
-#include "parser/parse_type.h"
 #include "utils/builtins.h"
-#include "utils/lsyscache.h"
-#include "utils/typcache.h"
 
 
 static TupleTableSlot *FunctionNext(FunctionScanState *node);
@@ -180,18 +172,21 @@ ExecInitFunctionScan(FunctionScan *node, EState *estate)
 	 */
 	rte = rt_fetch(node->scan.scanrelid, estate->es_range_table);
 	Assert(rte->rtekind == RTE_FUNCTION);
-	funcrettype = exprType(rte->funcexpr);
 
 	/*
 	 * Now determine if the function returns a simple or composite type,
 	 * and build an appropriate tupdesc.
 	 */
-	functypclass = get_type_func_class(funcrettype);
+	functypclass = get_expr_result_type(rte->funcexpr,
+										&funcrettype,
+										&tupdesc);
 
 	if (functypclass == TYPEFUNC_COMPOSITE)
 	{
 		/* Composite data type, e.g. a table's row type */
-		tupdesc = CreateTupleDescCopy(lookup_rowtype_tupdesc(funcrettype, -1));
+		Assert(tupdesc);
+		/* Must copy it out of typcache for safety */
+		tupdesc = CreateTupleDescCopy(tupdesc);
 	}
 	else if (functypclass == TYPEFUNC_SCALAR)
 	{
@@ -215,14 +210,6 @@ ExecInitFunctionScan(FunctionScan *node, EState *estate)
 		/* crummy error message, but parser should have caught this */
 		elog(ERROR, "function in FROM has unsupported return type");
 	}
-
-	/*
-	 * For RECORD results, make sure a typmod has been assigned.  (The
-	 * function should do this for itself, but let's cover things in case
-	 * it doesn't.)
-	 */
-	if (tupdesc->tdtypeid == RECORDOID && tupdesc->tdtypmod < 0)
-		assign_record_type_typmod(tupdesc);
 
 	scanstate->tupdesc = tupdesc;
 	ExecSetSlotDescriptor(scanstate->ss.ss_ScanTupleSlot,

@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/functioncmds.c,v 1.58 2005/03/29 17:58:49 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/functioncmds.c,v 1.59 2005/03/31 22:46:07 tgl Exp $
  *
  * DESCRIPTION
  *	  These routines take the parse tree and pick out the
@@ -55,7 +55,7 @@
 
 
 /*
- *	 Examine the "returns" clause returnType of the CREATE FUNCTION statement
+ *	 Examine the RETURNS clause of the CREATE FUNCTION statement
  *	 and return information about it as *prorettype_p and *returnsSet.
  *
  * This is more complex than the average typename lookup because we want to
@@ -131,37 +131,43 @@ compute_return_type(TypeName *returnType, Oid languageOid,
 
 /*
  * Interpret the parameter list of the CREATE FUNCTION statement.
+ *
+ * Results are stored into output parameters.  parameterTypes must always
+ * be created, but the other arrays are set to NULL if not needed.
+ * requiredResultType is set to InvalidOid if there are no OUT parameters,
+ * else it is set to the OID of the implied result type.
  */
-static int
-examine_parameter_list(List *parameter, Oid languageOid,
-					   Oid *parameterTypes, const char *parameterNames[])
+static void
+examine_parameter_list(List *parameters, Oid languageOid,
+					   oidvector **parameterTypes,
+					   ArrayType **allParameterTypes,
+					   ArrayType **parameterModes,
+					   ArrayType **parameterNames,
+					   Oid *requiredResultType)
 {
-	int			parameterCount = 0;
+	int			parameterCount = list_length(parameters);
+	Oid		   *inTypes;
+	int			inCount = 0;
+	Datum	   *allTypes;
+	Datum	   *paramModes;
+	Datum	   *paramNames;
+	int			outCount = 0;
+	bool		have_names = false;
 	ListCell   *x;
+	int			i;
 
-	MemSet(parameterTypes, 0, FUNC_MAX_ARGS * sizeof(Oid));
-	MemSet(parameterNames, 0, FUNC_MAX_ARGS * sizeof(char *));
+	inTypes = (Oid *) palloc(parameterCount * sizeof(Oid));
+	allTypes = (Datum *) palloc(parameterCount * sizeof(Datum));
+	paramModes = (Datum *) palloc(parameterCount * sizeof(Datum));
+	paramNames = (Datum *) palloc0(parameterCount * sizeof(Datum));
 
-	foreach(x, parameter)
+	/* Scan the list and extract data into work arrays */
+	i = 0;
+	foreach(x, parameters)
 	{
 		FunctionParameter *fp = (FunctionParameter *) lfirst(x);
 		TypeName   *t = fp->argType;
 		Oid			toid;
-
-		if (parameterCount >= FUNC_MAX_ARGS)
-			ereport(ERROR,
-					(errcode(ERRCODE_TOO_MANY_ARGUMENTS),
-				   errmsg("functions cannot have more than %d arguments",
-						  FUNC_MAX_ARGS)));
-
-		if (fp->mode == FUNC_PARAM_OUT)
-			ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("CREATE FUNCTION / OUT parameters are not implemented")));
-		if (fp->mode == FUNC_PARAM_INOUT)
-			ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("CREATE FUNCTION / INOUT parameters are not implemented")));
 
 		toid = LookupTypeName(t);
 		if (OidIsValid(toid))
@@ -194,15 +200,65 @@ examine_parameter_list(List *parameter, Oid languageOid,
 					(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
 					 errmsg("functions cannot accept set arguments")));
 
-		parameterTypes[parameterCount] = toid;
+		if (fp->mode != FUNC_PARAM_OUT)
+			inTypes[inCount++] = toid;
 
-		parameterNames[parameterCount] = fp->name;
+		if (fp->mode != FUNC_PARAM_IN)
+		{
+			if (outCount == 0)	/* save first OUT param's type */
+				*requiredResultType = toid;
+			outCount++;
+		}
 
-		parameterCount++;
+		allTypes[i] = ObjectIdGetDatum(toid);
+
+		paramModes[i] = CharGetDatum(fp->mode);
+
+		if (fp->name && fp->name[0])
+		{
+			paramNames[i] = DirectFunctionCall1(textin,
+												CStringGetDatum(fp->name));
+			have_names = true;
+		}
+
+		i++;
 	}
 
-	return parameterCount;
+	/* Now construct the proper outputs as needed */
+	*parameterTypes = buildoidvector(inTypes, inCount);
+
+	if (outCount > 0)
+	{
+		*allParameterTypes = construct_array(allTypes, parameterCount, OIDOID,
+											 sizeof(Oid), true, 'i');
+		*parameterModes = construct_array(paramModes, parameterCount, CHAROID,
+										  1, true, 'c');
+		if (outCount > 1)
+			*requiredResultType = RECORDOID;
+		/* otherwise we set requiredResultType correctly above */
+	}
+	else
+	{
+		*allParameterTypes = NULL;
+		*parameterModes = NULL;
+		*requiredResultType = InvalidOid;
+	}
+
+	if (have_names)
+	{
+		for (i = 0; i < parameterCount; i++)
+		{
+			if (paramNames[i] == PointerGetDatum(NULL))
+				paramNames[i] = DirectFunctionCall1(textin,
+													CStringGetDatum(""));
+		}
+		*parameterNames = construct_array(paramNames, parameterCount, TEXTOID,
+										  -1, false, 'i');
+	}
+	else
+		*parameterNames = NULL;
 }
+
 
 /*
  * Recognize one of the options that can be passed to both CREATE
@@ -321,6 +377,7 @@ compute_attributes_sql_style(List *options,
 				 defel->defname);
 	}
 
+	/* process required items */
 	if (as_item)
 		*as = (List *) as_item->arg;
 	else
@@ -335,6 +392,7 @@ compute_attributes_sql_style(List *options,
 				(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
 				 errmsg("no language specified")));
 
+	/* process optional items */
 	if (volatility_item)
 		*volatility_p = interpret_func_volatility(volatility_item);
 	if (strict_item)
@@ -445,9 +503,11 @@ CreateFunction(CreateFunctionStmt *stmt)
 	char	   *funcname;
 	Oid			namespaceId;
 	AclResult	aclresult;
-	int			parameterCount;
-	Oid			parameterTypes[FUNC_MAX_ARGS];
-	const char *parameterNames[FUNC_MAX_ARGS];
+	oidvector  *parameterTypes;
+	ArrayType  *allParameterTypes;
+	ArrayType  *parameterModes;
+	ArrayType  *parameterNames;
+	Oid			requiredResultType;
 	bool		isStrict,
 				security;
 	char		volatility;
@@ -465,7 +525,7 @@ CreateFunction(CreateFunctionStmt *stmt)
 		aclcheck_error(aclresult, ACL_KIND_NAMESPACE,
 					   get_namespace_name(namespaceId));
 
-	/* defaults attributes */
+	/* default attributes */
 	isStrict = false;
 	security = false;
 	volatility = PROVOLATILE_VOLATILE;
@@ -523,11 +583,39 @@ CreateFunction(CreateFunctionStmt *stmt)
 	 * Convert remaining parameters of CREATE to form wanted by
 	 * ProcedureCreate.
 	 */
-	compute_return_type(stmt->returnType, languageOid,
-						&prorettype, &returnsSet);
+	examine_parameter_list(stmt->parameters, languageOid,
+						   &parameterTypes,
+						   &allParameterTypes,
+						   &parameterModes,
+						   &parameterNames,
+						   &requiredResultType);
 
-	parameterCount = examine_parameter_list(stmt->parameters, languageOid,
-										 parameterTypes, parameterNames);
+	if (stmt->returnType)
+	{
+		/* explicit RETURNS clause */
+		compute_return_type(stmt->returnType, languageOid,
+							&prorettype, &returnsSet);
+		if (OidIsValid(requiredResultType) && prorettype != requiredResultType)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
+					 errmsg("function result type must be %s because of OUT parameters",
+							format_type_be(requiredResultType))));
+	}
+	else if (OidIsValid(requiredResultType))
+	{
+		/* default RETURNS clause from OUT parameters */
+		prorettype = requiredResultType;
+		returnsSet = false;
+	}
+	else
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
+				 errmsg("function result type must be specified")));
+		/* Alternative possibility: default to RETURNS VOID */
+		prorettype = VOIDOID;
+		returnsSet = false;
+	}
 
 	compute_attributes_with_style(stmt->withClause, &isStrict, &volatility);
 
@@ -572,9 +660,10 @@ CreateFunction(CreateFunctionStmt *stmt)
 					security,
 					isStrict,
 					volatility,
-					parameterCount,
 					parameterTypes,
-					parameterNames);
+					PointerGetDatum(allParameterTypes),
+					PointerGetDatum(parameterModes),
+					PointerGetDatum(parameterNames));
 }
 
 

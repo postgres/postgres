@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/lsyscache.c,v 1.121 2005/03/29 00:17:11 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/lsyscache.c,v 1.122 2005/03/31 22:46:14 tgl Exp $
  *
  * NOTES
  *	  Eventually, the index information should go through here, too.
@@ -1541,42 +1541,6 @@ get_typtype(Oid typid)
 	}
 	else
 		return '\0';
-}
-
-/*
- * get_type_func_class
- *
- *		Given the type OID, obtain its TYPEFUNC classification.
- *
- * This is intended to centralize a bunch of formerly ad-hoc code for
- * classifying types.  The categories used here are useful for deciding
- * how to handle functions returning the datatype.
- */
-TypeFuncClass
-get_type_func_class(Oid typid)
-{
-	switch (get_typtype(typid))
-	{
-		case 'c':
-			return TYPEFUNC_COMPOSITE;
-		case 'b':
-		case 'd':
-			return TYPEFUNC_SCALAR;
-		case 'p':
-			if (typid == RECORDOID)
-				return TYPEFUNC_RECORD;
-			/*
-			 * We treat VOID and CSTRING as legitimate scalar datatypes,
-			 * mostly for the convenience of the JDBC driver (which wants
-			 * to be able to do "SELECT * FROM foo()" for all legitimately
-			 * user-callable functions).
-			 */
-			if (typid == VOIDOID || typid == CSTRINGOID)
-				return TYPEFUNC_SCALAR;
-			return TYPEFUNC_OTHER;
-	}
-	/* shouldn't get here, probably */
-	return TYPEFUNC_OTHER;
 }
 
 /*

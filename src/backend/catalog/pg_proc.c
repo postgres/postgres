@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_proc.c,v 1.125 2005/03/29 19:44:23 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_proc.c,v 1.126 2005/03/31 22:46:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,6 +21,7 @@
 #include "catalog/pg_proc.h"
 #include "catalog/pg_type.h"
 #include "executor/functions.h"
+#include "funcapi.h"
 #include "miscadmin.h"
 #include "mb/pg_wchar.h"
 #include "parser/parse_type.h"
@@ -40,8 +41,6 @@ Datum		fmgr_internal_validator(PG_FUNCTION_ARGS);
 Datum		fmgr_c_validator(PG_FUNCTION_ARGS);
 Datum		fmgr_sql_validator(PG_FUNCTION_ARGS);
 
-static Datum create_parameternames_array(int parameterCount,
-							const char *parameterNames[]);
 static void sql_function_parse_error_callback(void *arg);
 static int match_prosrc_to_query(const char *prosrc, const char *queryText,
 					  int cursorpos);
@@ -51,6 +50,10 @@ static bool match_prosrc_to_literal(const char *prosrc, const char *literal,
 
 /* ----------------------------------------------------------------
  *		ProcedureCreate
+ *
+ * Note: allParameterTypes, parameterModes, parameterNames are either arrays
+ * of the proper types or NULL.  We declare them Datum, not "ArrayType *",
+ * to avoid importing array.h into pg_proc.h.
  * ----------------------------------------------------------------
  */
 Oid
@@ -67,26 +70,29 @@ ProcedureCreate(const char *procedureName,
 				bool security_definer,
 				bool isStrict,
 				char volatility,
-				int parameterCount,
-				const Oid *parameterTypes,
-				const char *parameterNames[])
+				oidvector *parameterTypes,
+				Datum allParameterTypes,
+				Datum parameterModes,
+				Datum parameterNames)
 {
-	int			i;
+	Oid			retval;
+	int			parameterCount;
+	int			allParamCount;
+	Oid		   *allParams;
+	bool		genericInParam = false;
 	Relation	rel;
 	HeapTuple	tup;
 	HeapTuple	oldtup;
 	char		nulls[Natts_pg_proc];
 	Datum		values[Natts_pg_proc];
 	char		replaces[Natts_pg_proc];
-	oidvector  *proargtypes;
-	Datum		namesarray;
 	Oid			relid;
 	NameData	procname;
 	TupleDesc	tupDesc;
-	Oid			retval;
 	bool		is_update;
 	ObjectAddress myself,
 				referenced;
+	int			i;
 
 	/*
 	 * sanity checks
@@ -94,55 +100,88 @@ ProcedureCreate(const char *procedureName,
 	Assert(PointerIsValid(prosrc));
 	Assert(PointerIsValid(probin));
 
+	parameterCount = parameterTypes->dim1;
 	if (parameterCount < 0 || parameterCount > FUNC_MAX_ARGS)
 		ereport(ERROR,
 				(errcode(ERRCODE_TOO_MANY_ARGUMENTS),
 				 errmsg("functions cannot have more than %d arguments",
 						FUNC_MAX_ARGS)));
+	/* note: the above is correct, we do NOT count output arguments */
+
+	if (allParameterTypes != PointerGetDatum(NULL))
+	{
+		/*
+		 * We expect the array to be a 1-D OID array; verify that. We
+		 * don't need to use deconstruct_array() since the array data is
+		 * just going to look like a C array of OID values.
+		 */
+		allParamCount = ARR_DIMS(DatumGetPointer(allParameterTypes))[0];
+		if (ARR_NDIM(DatumGetPointer(allParameterTypes)) != 1 ||
+			allParamCount <= 0 ||
+			ARR_ELEMTYPE(DatumGetPointer(allParameterTypes)) != OIDOID)
+			elog(ERROR, "allParameterTypes is not a 1-D Oid array");
+		allParams = (Oid *) ARR_DATA_PTR(DatumGetPointer(allParameterTypes));
+		Assert(allParamCount >= parameterCount);
+		/* we assume caller got the contents right */
+	}
+	else
+	{
+		allParamCount = parameterCount;
+		allParams = parameterTypes->values;
+	}
 
 	/*
 	 * Do not allow return type ANYARRAY or ANYELEMENT unless at least one
-	 * argument is also ANYARRAY or ANYELEMENT
+	 * input argument is also ANYARRAY or ANYELEMENT
 	 */
-	if (returnType == ANYARRAYOID || returnType == ANYELEMENTOID)
+	for (i = 0; i < parameterCount; i++)
 	{
-		bool		genericParam = false;
-
-		for (i = 0; i < parameterCount; i++)
+		if (parameterTypes->values[i] == ANYARRAYOID ||
+			parameterTypes->values[i] == ANYELEMENTOID)
 		{
-			if (parameterTypes[i] == ANYARRAYOID ||
-				parameterTypes[i] == ANYELEMENTOID)
+			genericInParam = true;
+			break;
+		}
+	}
+
+	if (!genericInParam)
+	{
+		bool	genericOutParam = false;
+
+		if (allParameterTypes != PointerGetDatum(NULL))
+		{
+			for (i = 0; i < allParamCount; i++)
 			{
-				genericParam = true;
-				break;
+				if (allParams[i] == ANYARRAYOID ||
+					allParams[i] == ANYELEMENTOID)
+				{
+					genericOutParam = true;
+					break;
+				}
 			}
 		}
 
-		if (!genericParam)
+		if (returnType == ANYARRAYOID || returnType == ANYELEMENTOID ||
+			genericOutParam)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
 					 errmsg("cannot determine result data type"),
 					 errdetail("A function returning \"anyarray\" or \"anyelement\" must have at least one argument of either type.")));
 	}
 
-	/* Convert param types to oidvector */
-	/* (Probably we should make caller pass it this way to start with) */
-	proargtypes = buildoidvector(parameterTypes, parameterCount);
-
-	/* Process param names, if given */
-	namesarray = create_parameternames_array(parameterCount, parameterNames);
-
 	/*
 	 * don't allow functions of complex types that have the same name as
 	 * existing attributes of the type
 	 */
-	if (parameterCount == 1 && OidIsValid(parameterTypes[0]) &&
-		(relid = typeidTypeRelid(parameterTypes[0])) != InvalidOid &&
+	if (parameterCount == 1 &&
+		OidIsValid(parameterTypes->values[0]) &&
+		(relid = typeidTypeRelid(parameterTypes->values[0])) != InvalidOid &&
 		get_attnum(relid, procedureName) != InvalidAttrNumber)
 		ereport(ERROR,
 				(errcode(ERRCODE_DUPLICATE_COLUMN),
 				 errmsg("\"%s\" is already an attribute of type %s",
-						procedureName, format_type_be(parameterTypes[0]))));
+						procedureName,
+						format_type_be(parameterTypes->values[0]))));
 
 	/*
 	 * All seems OK; prepare the data to be inserted into pg_proc.
@@ -167,12 +206,17 @@ ProcedureCreate(const char *procedureName,
 	values[Anum_pg_proc_provolatile - 1] = CharGetDatum(volatility);
 	values[Anum_pg_proc_pronargs - 1] = UInt16GetDatum(parameterCount);
 	values[Anum_pg_proc_prorettype - 1] = ObjectIdGetDatum(returnType);
-	values[Anum_pg_proc_proargtypes - 1] = PointerGetDatum(proargtypes);
-	/* XXX for now, just null out the new columns */
-	nulls[Anum_pg_proc_proallargtypes - 1] = 'n';
-	nulls[Anum_pg_proc_proargmodes - 1] = 'n';
-	if (namesarray != PointerGetDatum(NULL))
-		values[Anum_pg_proc_proargnames - 1] = namesarray;
+	values[Anum_pg_proc_proargtypes - 1] = PointerGetDatum(parameterTypes);
+	if (allParameterTypes != PointerGetDatum(NULL))
+		values[Anum_pg_proc_proallargtypes - 1] = allParameterTypes;
+	else
+		nulls[Anum_pg_proc_proallargtypes - 1] = 'n';
+	if (parameterModes != PointerGetDatum(NULL))
+		values[Anum_pg_proc_proargmodes - 1] = parameterModes;
+	else
+		nulls[Anum_pg_proc_proargmodes - 1] = 'n';
+	if (parameterNames != PointerGetDatum(NULL))
+		values[Anum_pg_proc_proargnames - 1] = parameterNames;
 	else
 		nulls[Anum_pg_proc_proargnames - 1] = 'n';
 	values[Anum_pg_proc_prosrc - 1] = DirectFunctionCall1(textin,
@@ -188,7 +232,7 @@ ProcedureCreate(const char *procedureName,
 	/* Check for pre-existing definition */
 	oldtup = SearchSysCache(PROCNAMEARGSNSP,
 							PointerGetDatum(procedureName),
-							PointerGetDatum(proargtypes),
+							PointerGetDatum(parameterTypes),
 							ObjectIdGetDatum(procNamespace),
 							0);
 
@@ -214,8 +258,32 @@ ProcedureCreate(const char *procedureName,
 			returnsSet != oldproc->proretset)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
-				errmsg("cannot change return type of existing function"),
+					 errmsg("cannot change return type of existing function"),
 					 errhint("Use DROP FUNCTION first.")));
+
+		/*
+		 * If it returns RECORD, check for possible change of record type
+		 * implied by OUT parameters
+		 */
+		if (returnType == RECORDOID)
+		{
+			TupleDesc	olddesc;
+			TupleDesc	newdesc;
+
+			olddesc = build_function_result_tupdesc_t(oldtup);
+			newdesc = build_function_result_tupdesc_d(allParameterTypes,
+													  parameterModes,
+													  parameterNames);
+			if (olddesc == NULL && newdesc == NULL)
+				/* ok, both are runtime-defined RECORDs */ ;
+			else if (olddesc == NULL || newdesc == NULL ||
+					 !equalTupleDescs(olddesc, newdesc))
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
+					 errmsg("cannot change return type of existing function"),
+					 errdetail("Row type defined by OUT parameters is different."),
+					 errhint("Use DROP FUNCTION first.")));
+		}
 
 		/* Can't change aggregate status, either */
 		if (oldproc->proisagg != isAgg)
@@ -285,11 +353,11 @@ ProcedureCreate(const char *procedureName,
 	referenced.objectSubId = 0;
 	recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
 
-	/* dependency on input types */
-	for (i = 0; i < parameterCount; i++)
+	/* dependency on parameter types */
+	for (i = 0; i < allParamCount; i++)
 	{
 		referenced.classId = RelOid_pg_type;
-		referenced.objectId = parameterTypes[i];
+		referenced.objectId = allParams[i];
 		referenced.objectSubId = 0;
 		recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
 	}
@@ -307,42 +375,6 @@ ProcedureCreate(const char *procedureName,
 	}
 
 	return retval;
-}
-
-
-/*
- * create_parameternames_array - build proargnames value from an array
- * of C strings.  Returns a NULL pointer if no names provided.
- */
-static Datum
-create_parameternames_array(int parameterCount, const char *parameterNames[])
-{
-	Datum		elems[FUNC_MAX_ARGS];
-	bool		found = false;
-	ArrayType  *names;
-	int			i;
-
-	if (!parameterNames)
-		return PointerGetDatum(NULL);
-
-	for (i = 0; i < parameterCount; i++)
-	{
-		const char *s = parameterNames[i];
-
-		if (s && *s)
-			found = true;
-		else
-			s = "";
-
-		elems[i] = DirectFunctionCall1(textin, CStringGetDatum(s));
-	}
-
-	if (!found)
-		return PointerGetDatum(NULL);
-
-	names = construct_array(elems, parameterCount, TEXTOID, -1, false, 'i');
-
-	return PointerGetDatum(names);
 }
 
 
@@ -461,7 +493,6 @@ fmgr_sql_validator(PG_FUNCTION_ARGS)
 	Datum		tmp;
 	char	   *prosrc;
 	ErrorContextCallback sqlerrcontext;
-	char		functyptype;
 	bool		haspolyarg;
 	int			i;
 
@@ -472,11 +503,9 @@ fmgr_sql_validator(PG_FUNCTION_ARGS)
 		elog(ERROR, "cache lookup failed for function %u", funcoid);
 	proc = (Form_pg_proc) GETSTRUCT(tuple);
 
-	functyptype = get_typtype(proc->prorettype);
-
 	/* Disallow pseudotype result */
 	/* except for RECORD, VOID, ANYARRAY, or ANYELEMENT */
-	if (functyptype == 'p' &&
+	if (get_typtype(proc->prorettype) == 'p' &&
 		proc->prorettype != RECORDOID &&
 		proc->prorettype != VOIDOID &&
 		proc->prorettype != ANYARRAYOID &&
@@ -535,7 +564,7 @@ fmgr_sql_validator(PG_FUNCTION_ARGS)
 			querytree_list = pg_parse_and_rewrite(prosrc,
 												  proc->proargtypes.values,
 												  proc->pronargs);
-			(void) check_sql_fn_retval(proc->prorettype, functyptype,
+			(void) check_sql_fn_retval(funcoid, proc->prorettype,
 									   querytree_list, NULL);
 		}
 		else

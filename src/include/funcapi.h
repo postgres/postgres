@@ -9,7 +9,7 @@
  *
  * Copyright (c) 2002-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/funcapi.h,v 1.15 2005/01/01 05:43:08 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/funcapi.h,v 1.16 2005/03/31 22:46:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -124,7 +124,57 @@ typedef struct FuncCallContext
 } FuncCallContext;
 
 /*----------
- *	Support to ease writing Functions returning composite types
+ *	Support to ease writing functions returning composite types
+ *
+ * External declarations:
+ * get_call_result_type:
+ *      Given a function's call info record, determine the kind of datatype
+ *      it is supposed to return.  If resultTypeId isn't NULL, *resultTypeId
+ *      receives the actual datatype OID (this is mainly useful for scalar
+ *      result types).  If resultTupleDesc isn't NULL, *resultTupleDesc
+ *      receives a pointer to a TupleDesc when the result is of a composite
+ *      type, or NULL when it's a scalar result or the rowtype could not be
+ *      determined.  NB: the tupledesc should be copied if it is to be
+ *      accessed over a long period.
+ * get_expr_result_type:
+ *      Given an expression node, return the same info as for
+ *      get_call_result_type.  Note: the cases in which rowtypes cannot be
+ *      determined are different from the cases for get_call_result_type.
+ * get_func_result_type:
+ *      Given only a function's OID, return the same info as for
+ *      get_call_result_type.  Note: the cases in which rowtypes cannot be
+ *      determined are different from the cases for get_call_result_type.
+ *      Do *not* use this if you can use one of the others.
+ *----------
+ */
+
+/* Type categories for get_call_result_type and siblings */
+typedef enum TypeFuncClass
+{
+	TYPEFUNC_SCALAR,			/* scalar result type */
+	TYPEFUNC_COMPOSITE,			/* determinable rowtype result */
+	TYPEFUNC_RECORD,			/* indeterminate rowtype result */
+	TYPEFUNC_OTHER				/* bogus type, eg pseudotype */
+} TypeFuncClass;
+
+extern TypeFuncClass get_call_result_type(FunctionCallInfo fcinfo,
+										  Oid *resultTypeId,
+										  TupleDesc *resultTupleDesc);
+extern TypeFuncClass get_expr_result_type(Node *expr,
+										  Oid *resultTypeId,
+										  TupleDesc *resultTupleDesc);
+extern TypeFuncClass get_func_result_type(Oid functionId,
+										  Oid *resultTypeId,
+										  TupleDesc *resultTupleDesc);
+
+extern TupleDesc build_function_result_tupdesc_d(Datum proallargtypes,
+												 Datum proargmodes,
+												 Datum proargnames);
+extern TupleDesc build_function_result_tupdesc_t(HeapTuple procTuple);
+
+
+/*----------
+ *	Support to ease writing functions returning composite types
  *
  * External declarations:
  * TupleDesc RelationNameGetTupleDesc(const char *relname) - Use to get a
@@ -160,7 +210,6 @@ typedef struct FuncCallContext
 /* obsolete version of above */
 #define TupleGetDatum(_slot, _tuple)	PointerGetDatum((_tuple)->t_data)
 
-/* from tupdesc.c */
 extern TupleDesc RelationNameGetTupleDesc(const char *relname);
 extern TupleDesc TypeGetTupleDesc(Oid typeoid, List *colaliases);
 

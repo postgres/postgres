@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/fmgr/fmgr.c,v 1.92 2005/03/29 03:01:31 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/fmgr/fmgr.c,v 1.93 2005/03/31 22:46:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -403,7 +403,7 @@ fmgr_info_other_lang(Oid functionId, FmgrInfo *finfo, HeapTuple procedureTuple)
  * We want to raise an error here only if the info function returns
  * something bogus.
  *
- * This function is broken out of fmgr_info_C_lang() so that ProcedureCreate()
+ * This function is broken out of fmgr_info_C_lang so that fmgr_c_validator
  * can validate the information record for a function not yet entered into
  * pg_proc.
  */
@@ -576,8 +576,8 @@ fmgr_info_copy(FmgrInfo *dstinfo, FmgrInfo *srcinfo,
 
 
 /*
- * Specialized lookup routine for ProcedureCreate(): given the alleged name
- * of an internal function, return the OID of the function.
+ * Specialized lookup routine for fmgr_internal_validator: given the alleged
+ * name of an internal function, return the OID of the function.
  * If the name is not recognized, return InvalidOid.
  */
 Oid
@@ -1869,10 +1869,6 @@ get_fn_expr_rettype(FmgrInfo *flinfo)
 Oid
 get_fn_expr_argtype(FmgrInfo *flinfo, int argnum)
 {
-	Node	   *expr;
-	List	   *args;
-	Oid			argtype;
-
 	/*
 	 * can't return anything useful if we have no FmgrInfo or if its
 	 * fn_expr node has not been initialized
@@ -1880,7 +1876,23 @@ get_fn_expr_argtype(FmgrInfo *flinfo, int argnum)
 	if (!flinfo || !flinfo->fn_expr)
 		return InvalidOid;
 
-	expr = flinfo->fn_expr;
+	return get_call_expr_argtype(flinfo->fn_expr, argnum);
+}
+
+/*
+ * Get the actual type OID of a specific function argument (counting from 0),
+ * but working from the calling expression tree instead of FmgrInfo
+ *
+ * Returns InvalidOid if information is not available
+ */
+Oid
+get_call_expr_argtype(Node *expr, int argnum)
+{
+	List	   *args;
+	Oid			argtype;
+
+	if (expr == NULL)
+		return InvalidOid;
 
 	if (IsA(expr, FuncExpr))
 		args = ((FuncExpr *) expr)->args;

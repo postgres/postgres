@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_relation.c,v 1.102 2004/12/31 22:00:27 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_relation.c,v 1.103 2005/03/31 22:46:13 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,20 +17,19 @@
 #include <ctype.h>
 
 #include "access/heapam.h"
-#include "access/htup.h"
 #include "catalog/heap.h"
 #include "catalog/namespace.h"
 #include "catalog/pg_type.h"
+#include "funcapi.h"
 #include "nodes/makefuncs.h"
 #include "parser/parsetree.h"
-#include "parser/parse_coerce.h"
 #include "parser/parse_expr.h"
 #include "parser/parse_relation.h"
 #include "parser/parse_type.h"
-#include "rewrite/rewriteManip.h"
 #include "utils/builtins.h"
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
+
 
 /* GUC parameter */
 bool		add_missing_from;
@@ -46,6 +45,10 @@ static void expandRelation(Oid relid, Alias *eref,
 			   int rtindex, int sublevels_up,
 			   bool include_dropped,
 			   List **colnames, List **colvars);
+static void expandTupleDesc(TupleDesc tupdesc, Alias *eref,
+							int rtindex, int sublevels_up,
+							bool include_dropped,
+							List **colnames, List **colvars);
 static int	specialAttNum(const char *attname);
 static void warnAutoRange(ParseState *pstate, RangeVar *relation);
 
@@ -965,8 +968,9 @@ addRangeTableEntryForFunction(ParseState *pstate,
 							  bool inFromCl)
 {
 	RangeTblEntry *rte = makeNode(RangeTblEntry);
-	Oid			funcrettype = exprType(funcexpr);
 	TypeFuncClass functypclass;
+	Oid			funcrettype;
+	TupleDesc	tupdesc;
 	Alias	   *alias = rangefunc->alias;
 	List	   *coldeflist = rangefunc->coldeflist;
 	Alias	   *eref;
@@ -982,58 +986,37 @@ addRangeTableEntryForFunction(ParseState *pstate,
 	rte->eref = eref;
 
 	/*
-	 * Now determine if the function returns a simple or composite type,
-	 * and check/add column aliases.
+	 * Now determine if the function returns a simple or composite type.
+	 */
+	functypclass = get_expr_result_type(funcexpr,
+										&funcrettype,
+										&tupdesc);
+
+	/*
+	 * A coldeflist is required if the function returns RECORD and hasn't
+	 * got a predetermined record type, and is prohibited otherwise.
 	 */
 	if (coldeflist != NIL)
 	{
-		/*
-		 * we *only* allow a coldeflist for functions returning a RECORD
-		 * pseudo-type
-		 */
-		if (funcrettype != RECORDOID)
+		if (functypclass != TYPEFUNC_RECORD)
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
 					 errmsg("a column definition list is only allowed for functions returning \"record\"")));
 	}
 	else
 	{
-		/*
-		 * ... and a coldeflist is *required* for functions returning a
-		 * RECORD pseudo-type
-		 */
-		if (funcrettype == RECORDOID)
+		if (functypclass == TYPEFUNC_RECORD)
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
 					 errmsg("a column definition list is required for functions returning \"record\"")));
 	}
 
-	functypclass = get_type_func_class(funcrettype);
-
 	if (functypclass == TYPEFUNC_COMPOSITE)
 	{
 		/* Composite data type, e.g. a table's row type */
-		Oid			funcrelid = typeidTypeRelid(funcrettype);
-		Relation	rel;
-
-		if (!OidIsValid(funcrelid))		/* shouldn't happen */
-			elog(ERROR, "invalid typrelid for complex type %u", funcrettype);
-
-		/*
-		 * Get the rel's relcache entry.  This access ensures that we have
-		 * an up-to-date relcache entry for the rel.
-		 */
-		rel = relation_open(funcrelid, AccessShareLock);
-
+		Assert(tupdesc);
 		/* Build the column alias list */
-		buildRelationAliases(rel->rd_att, alias, eref);
-
-		/*
-		 * Drop the rel refcount, but keep the access lock till end of
-		 * transaction so that the table can't be deleted or have its
-		 * schema modified underneath us.
-		 */
-		relation_close(rel, NoLock);
+		buildRelationAliases(tupdesc, alias, eref);
 	}
 	else if (functypclass == TYPEFUNC_SCALAR)
 	{
@@ -1308,24 +1291,19 @@ expandRTE(List *rtable, int rtindex, int sublevels_up,
 		case RTE_FUNCTION:
 			{
 				/* Function RTE */
-				Oid			funcrettype = exprType(rte->funcexpr);
-				TypeFuncClass functypclass = get_type_func_class(funcrettype);
+				TypeFuncClass functypclass;
+				Oid			funcrettype;
+				TupleDesc	tupdesc;
 
+				functypclass = get_expr_result_type(rte->funcexpr,
+													&funcrettype,
+													&tupdesc);
 				if (functypclass == TYPEFUNC_COMPOSITE)
 				{
-					/*
-					 * Composite data type, i.e. a table's row type
-					 *
-					 * Same as ordinary relation RTE
-					 */
-					Oid			funcrelid = typeidTypeRelid(funcrettype);
-
-					if (!OidIsValid(funcrelid)) /* shouldn't happen */
-						elog(ERROR, "invalid typrelid for complex type %u",
-							 funcrettype);
-
-					expandRelation(funcrelid, rte->eref, rtindex, sublevels_up,
-								   include_dropped, colnames, colvars);
+					/* Composite data type, e.g. a table's row type */
+					Assert(tupdesc);
+					expandTupleDesc(tupdesc, rte->eref, rtindex, sublevels_up,
+									include_dropped, colnames, colvars);
 				}
 				else if (functypclass == TYPEFUNC_SCALAR)
 				{
@@ -1467,17 +1445,30 @@ expandRelation(Oid relid, Alias *eref, int rtindex, int sublevels_up,
 			   List **colnames, List **colvars)
 {
 	Relation	rel;
-	int			varattno;
-	int			maxattrs;
-	int			numaliases;
 
+	/* Get the tupledesc and turn it over to expandTupleDesc */
 	rel = relation_open(relid, AccessShareLock);
-	maxattrs = RelationGetNumberOfAttributes(rel);
-	numaliases = list_length(eref->colnames);
+	expandTupleDesc(rel->rd_att, eref, rtindex, sublevels_up, include_dropped,
+					colnames, colvars);
+	relation_close(rel, AccessShareLock);
+}
+
+/*
+ * expandTupleDesc -- expandRTE subroutine
+ */
+static void
+expandTupleDesc(TupleDesc tupdesc, Alias *eref,
+				int rtindex, int sublevels_up,
+				bool include_dropped,
+				List **colnames, List **colvars)
+{
+	int			maxattrs = tupdesc->natts;
+	int			numaliases = list_length(eref->colnames);
+	int			varattno;
 
 	for (varattno = 0; varattno < maxattrs; varattno++)
 	{
-		Form_pg_attribute attr = rel->rd_att->attrs[varattno];
+		Form_pg_attribute attr = tupdesc->attrs[varattno];
 
 		if (attr->attisdropped)
 		{
@@ -1519,8 +1510,6 @@ expandRelation(Oid relid, Alias *eref, int rtindex, int sublevels_up,
 			*colvars = lappend(*colvars, varnode);
 		}
 	}
-
-	relation_close(rel, AccessShareLock);
 }
 
 /*
@@ -1662,33 +1651,29 @@ get_rte_attribute_type(RangeTblEntry *rte, AttrNumber attnum,
 		case RTE_FUNCTION:
 			{
 				/* Function RTE */
-				Oid			funcrettype = exprType(rte->funcexpr);
-				TypeFuncClass functypclass = get_type_func_class(funcrettype);
-				List	   *coldeflist = rte->coldeflist;
+				TypeFuncClass functypclass;
+				Oid			funcrettype;
+				TupleDesc	tupdesc;
+
+				functypclass = get_expr_result_type(rte->funcexpr,
+													&funcrettype,
+													&tupdesc);
 
 				if (functypclass == TYPEFUNC_COMPOSITE)
 				{
-					/*
-					 * Composite data type, i.e. a table's row type
-					 *
-					 * Same as ordinary relation RTE
-					 */
-					Oid			funcrelid = typeidTypeRelid(funcrettype);
-					HeapTuple	tp;
+					/* Composite data type, e.g. a table's row type */
 					Form_pg_attribute att_tup;
 
-					if (!OidIsValid(funcrelid)) /* shouldn't happen */
-						elog(ERROR, "invalid typrelid for complex type %u",
-							 funcrettype);
+					Assert(tupdesc);
+					/* this is probably a can't-happen case */
+					if (attnum < 1 || attnum > tupdesc->natts)
+						ereport(ERROR,
+								(errcode(ERRCODE_UNDEFINED_COLUMN),
+								 errmsg("column %d of relation \"%s\" does not exist",
+										attnum,
+										rte->eref->aliasname)));
 
-					tp = SearchSysCache(ATTNUM,
-										ObjectIdGetDatum(funcrelid),
-										Int16GetDatum(attnum),
-										0, 0);
-					if (!HeapTupleIsValid(tp))	/* shouldn't happen */
-						elog(ERROR, "cache lookup failed for attribute %d of relation %u",
-							 attnum, funcrelid);
-					att_tup = (Form_pg_attribute) GETSTRUCT(tp);
+					att_tup = tupdesc->attrs[attnum - 1];
 
 					/*
 					 * If dropped column, pretend it ain't there.  See
@@ -1699,10 +1684,9 @@ get_rte_attribute_type(RangeTblEntry *rte, AttrNumber attnum,
 								(errcode(ERRCODE_UNDEFINED_COLUMN),
 								 errmsg("column \"%s\" of relation \"%s\" does not exist",
 										NameStr(att_tup->attname),
-										get_rel_name(funcrelid))));
+										rte->eref->aliasname)));
 					*vartype = att_tup->atttypid;
 					*vartypmod = att_tup->atttypmod;
-					ReleaseSysCache(tp);
 				}
 				else if (functypclass == TYPEFUNC_SCALAR)
 				{
@@ -1712,7 +1696,7 @@ get_rte_attribute_type(RangeTblEntry *rte, AttrNumber attnum,
 				}
 				else if (functypclass == TYPEFUNC_RECORD)
 				{
-					ColumnDef  *colDef = list_nth(coldeflist, attnum - 1);
+					ColumnDef  *colDef = list_nth(rte->coldeflist, attnum - 1);
 
 					*vartype = typenameTypeId(colDef->typename);
 					*vartypmod = -1;

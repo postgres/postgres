@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.191 2005/03/29 00:17:02 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.192 2005/03/31 22:46:09 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -2319,8 +2319,7 @@ inline_function(Oid funcid, Oid result_type, List *args,
 	 * probably not important, but let's be careful.)
 	 */
 	if (polymorphic)
-		(void) check_sql_fn_retval(result_type, get_typtype(result_type),
-								   querytree_list, NULL);
+		(void) check_sql_fn_retval(funcid, result_type, querytree_list, NULL);
 
 	/*
 	 * Additional validity checks on the expression.  It mustn't return a

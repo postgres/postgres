@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/functions.c,v 1.94 2005/03/29 00:16:59 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/functions.c,v 1.95 2005/03/31 22:46:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,6 +20,7 @@
 #include "commands/trigger.h"
 #include "executor/executor.h"
 #include "executor/functions.h"
+#include "funcapi.h"
 #include "parser/parse_coerce.h"
 #include "parser/parse_expr.h"
 #include "parser/parse_type.h"
@@ -277,8 +278,8 @@ init_sql_fcache(FmgrInfo *finfo)
 	 * form.
 	 */
 	if (haspolyarg || fcache->returnsTuple)
-		fcache->returnsTuple = check_sql_fn_retval(rettype,
-												   get_typtype(rettype),
+		fcache->returnsTuple = check_sql_fn_retval(foid,
+												   rettype,
 												   queryTree_list,
 												   &fcache->junkFilter);
 
@@ -858,7 +859,7 @@ ShutdownSQLFunction(Datum arg)
  * tuple result), *junkFilter is set to NULL.
  */
 bool
-check_sql_fn_retval(Oid rettype, char fn_typtype, List *queryTreeList,
+check_sql_fn_retval(Oid func_id, Oid rettype, List *queryTreeList,
 					JunkFilter **junkFilter)
 {
 	Query	   *parse;
@@ -866,12 +867,8 @@ check_sql_fn_retval(Oid rettype, char fn_typtype, List *queryTreeList,
 	List	   *tlist;
 	ListCell   *tlistitem;
 	int			tlistlen;
-	Oid			typerelid;
+	char		fn_typtype;
 	Oid			restype;
-	Relation	reln;
-	int			relnatts;		/* physical number of columns in rel */
-	int			rellogcols;		/* # of nondeleted columns in rel */
-	int			colindex;		/* physical column index */
 
 	if (junkFilter)
 		*junkFilter = NULL;		/* default result */
@@ -922,13 +919,10 @@ check_sql_fn_retval(Oid rettype, char fn_typtype, List *queryTreeList,
 	 */
 	tlistlen = ExecCleanTargetListLength(tlist);
 
-	typerelid = typeidTypeRelid(rettype);
+	fn_typtype = get_typtype(rettype);
 
 	if (fn_typtype == 'b' || fn_typtype == 'd')
 	{
-		/* Shouldn't have a typerelid */
-		Assert(typerelid == InvalidOid);
-
 		/*
 		 * For base-type returns, the target list should have exactly one
 		 * entry, and its type should agree with what the user declared.
@@ -950,10 +944,13 @@ check_sql_fn_retval(Oid rettype, char fn_typtype, List *queryTreeList,
 					 errdetail("Actual return type is %s.",
 							   format_type_be(restype))));
 	}
-	else if (fn_typtype == 'c')
+	else if (fn_typtype == 'c' || rettype == RECORDOID)
 	{
-		/* Must have a typerelid */
-		Assert(typerelid != InvalidOid);
+		/* Returns a rowtype */
+		TupleDesc	tupdesc;
+		int			tupnatts;		/* physical number of columns in tuple */
+		int			tuplogcols;		/* # of nondeleted columns in tuple */
+		int			colindex;		/* physical column index */
 
 		/*
 		 * If the target list is of length 1, and the type of the varnode
@@ -969,16 +966,27 @@ check_sql_fn_retval(Oid rettype, char fn_typtype, List *queryTreeList,
 				return false;	/* NOT returning whole tuple */
 		}
 
+		/* Is the rowtype fixed, or determined only at runtime? */
+		if (get_func_result_type(func_id, NULL, &tupdesc) != TYPEFUNC_COMPOSITE)
+		{
+			/*
+			 * Assume we are returning the whole tuple.
+			 * Crosschecking against what the caller expects will happen at
+			 * runtime.
+			 */
+			if (junkFilter)
+				*junkFilter = ExecInitJunkFilter(tlist, false, NULL);
+			return true;
+		}
+		Assert(tupdesc);
+
 		/*
-		 * Otherwise verify that the targetlist matches the return tuple
-		 * type. This part of the typechecking is a hack. We look up the
-		 * relation that is the declared return type, and scan the
-		 * non-deleted attributes to ensure that they match the datatypes
-		 * of the non-resjunk columns.
+		 * Verify that the targetlist matches the return tuple type.
+		 * We scan the non-deleted attributes to ensure that they match the
+		 * datatypes of the non-resjunk columns.
 		 */
-		reln = relation_open(typerelid, AccessShareLock);
-		relnatts = reln->rd_rel->relnatts;
-		rellogcols = 0;			/* we'll count nondeleted cols as we go */
+		tupnatts = tupdesc->natts;
+		tuplogcols = 0;			/* we'll count nondeleted cols as we go */
 		colindex = 0;
 
 		foreach(tlistitem, tlist)
@@ -994,15 +1002,15 @@ check_sql_fn_retval(Oid rettype, char fn_typtype, List *queryTreeList,
 			do
 			{
 				colindex++;
-				if (colindex > relnatts)
+				if (colindex > tupnatts)
 					ereport(ERROR,
 							(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
 							 errmsg("return type mismatch in function declared to return %s",
 									format_type_be(rettype)),
 					errdetail("Final SELECT returns too many columns.")));
-				attr = reln->rd_att->attrs[colindex - 1];
+				attr = tupdesc->attrs[colindex - 1];
 			} while (attr->attisdropped);
-			rellogcols++;
+			tuplogcols++;
 
 			tletype = exprType((Node *) tle->expr);
 			atttype = attr->atttypid;
@@ -1014,19 +1022,19 @@ check_sql_fn_retval(Oid rettype, char fn_typtype, List *queryTreeList,
 						 errdetail("Final SELECT returns %s instead of %s at column %d.",
 								   format_type_be(tletype),
 								   format_type_be(atttype),
-								   rellogcols)));
+								   tuplogcols)));
 		}
 
 		for (;;)
 		{
 			colindex++;
-			if (colindex > relnatts)
+			if (colindex > tupnatts)
 				break;
-			if (!reln->rd_att->attrs[colindex - 1]->attisdropped)
-				rellogcols++;
+			if (!tupdesc->attrs[colindex - 1]->attisdropped)
+				tuplogcols++;
 		}
 
-		if (tlistlen != rellogcols)
+		if (tlistlen != tuplogcols)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
 					 errmsg("return type mismatch in function declared to return %s",
@@ -1036,38 +1044,10 @@ check_sql_fn_retval(Oid rettype, char fn_typtype, List *queryTreeList,
 		/* Set up junk filter if needed */
 		if (junkFilter)
 			*junkFilter = ExecInitJunkFilterConversion(tlist,
-											CreateTupleDescCopy(reln->rd_att),
+											CreateTupleDescCopy(tupdesc),
 											NULL);
 
-		relation_close(reln, AccessShareLock);
-
 		/* Report that we are returning entire tuple result */
-		return true;
-	}
-	else if (rettype == RECORDOID)
-	{
-		/*
-		 * If the target list is of length 1, and the type of the varnode
-		 * in the target list matches the declared return type, this is
-		 * okay. This can happen, for example, where the body of the
-		 * function is 'SELECT func2()', where func2 has the same return
-		 * type as the function that's calling it.
-		 */
-		if (tlistlen == 1)
-		{
-			restype = ((TargetEntry *) linitial(tlist))->resdom->restype;
-			if (IsBinaryCoercible(restype, rettype))
-				return false;	/* NOT returning whole tuple */
-		}
-
-		/*
-		 * Otherwise assume we are returning the whole tuple.
-		 * Crosschecking against what the caller expects will happen at
-		 * runtime.
-		 */
-		if (junkFilter)
-			*junkFilter = ExecInitJunkFilter(tlist, false, NULL);
-
 		return true;
 	}
 	else if (rettype == ANYARRAYOID || rettype == ANYELEMENTOID)

@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.485 2005/03/29 17:58:50 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.486 2005/03/31 22:46:11 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -2544,7 +2544,7 @@ def_elem:  ColLabel '=' def_arg
 		;
 
 /* Note: any simple identifier will be returned as a type name! */
-def_arg:	func_return						{ $$ = (Node *)$1; }
+def_arg:	func_type						{ $$ = (Node *)$1; }
 			| qual_all_Op					{ $$ = (Node *)$1; }
 			| NumericOnly					{ $$ = (Node *)$1; }
 			| Sconst						{ $$ = (Node *)makeString($1); }
@@ -3282,6 +3282,18 @@ CreateFunctionStmt:
 					n->withClause = $9;
 					$$ = (Node *)n;
 				}
+			| CREATE opt_or_replace FUNCTION func_name func_args
+			  createfunc_opt_list opt_definition
+				{
+					CreateFunctionStmt *n = makeNode(CreateFunctionStmt);
+					n->replace = $2;
+					n->funcname = $4;
+					n->parameters = $5;
+					n->returnType = NULL;
+					n->options = $6;
+					n->withClause = $7;
+					$$ = (Node *)n;
+				}
 		;
 
 opt_or_replace:
@@ -3367,7 +3379,7 @@ param_name:	function_name
 func_return:
 			func_type
 				{
-					/* We can catch over-specified arguments here if we want to,
+					/* We can catch over-specified results here if we want to,
 					 * but for now better to silently swallow typmod, etc.
 					 * - thomas 2000-03-22
 					 */
@@ -3424,7 +3436,6 @@ common_func_opt_item:
 				{
 					$$ = makeDefElem("volatility", (Node *)makeString("volatile"));
 				}
-
 			| EXTERNAL SECURITY DEFINER
 				{
 					$$ = makeDefElem("security", (Node *)makeInteger(TRUE));

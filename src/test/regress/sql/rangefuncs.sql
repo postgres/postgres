@@ -199,3 +199,65 @@ DROP FUNCTION foorescan(int,int);
 DROP FUNCTION foorescan(int);
 DROP TABLE foorescan;
 DROP TABLE barrescan;
+
+--
+-- Test cases involving OUT parameters
+--
+
+CREATE FUNCTION foo(in f1 int, out f2 int)
+AS 'select $1+1' LANGUAGE sql;
+SELECT foo(42);
+SELECT * FROM foo(42);
+SELECT * FROM foo(42) AS p(x);
+
+-- explicit spec of return type is OK
+CREATE OR REPLACE FUNCTION foo(in f1 int, out f2 int) RETURNS int
+AS 'select $1+1' LANGUAGE sql;
+-- error, wrong result type
+CREATE OR REPLACE FUNCTION foo(in f1 int, out f2 int) RETURNS float
+AS 'select $1+1' LANGUAGE sql;
+-- with multiple OUT params you must get a RECORD result
+CREATE OR REPLACE FUNCTION foo(in f1 int, out f2 int, out f3 text) RETURNS int
+AS 'select $1+1' LANGUAGE sql;
+CREATE OR REPLACE FUNCTION foo(in f1 int, out f2 int, out f3 text)
+RETURNS record
+AS 'select $1+1' LANGUAGE sql;
+
+CREATE OR REPLACE FUNCTION foor(in f1 int, out f2 int, out text)
+AS $$select $1-1, $1::text || 'z'$$ LANGUAGE sql;
+SELECT f1, foor(f1) FROM int4_tbl;
+SELECT * FROM foor(42);
+SELECT * FROM foor(42) AS p(a,b);
+
+CREATE OR REPLACE FUNCTION foob(in f1 int, inout f2 int, out text)
+AS $$select $2-1, $1::text || 'z'$$ LANGUAGE sql;
+SELECT f1, foob(f1, f1/2) FROM int4_tbl;
+SELECT * FROM foob(42, 99);
+SELECT * FROM foob(42, 99) AS p(a,b);
+
+-- Can reference function with or without OUT params for DROP, etc
+DROP FUNCTION foo(int);
+DROP FUNCTION foor(in f2 int, out f1 int, out text);
+DROP FUNCTION foob(in f1 int, inout f2 int);
+
+--
+-- For my next trick, polymorphic OUT parameters
+--
+
+CREATE FUNCTION dup (f1 anyelement, f2 out anyelement, f3 out anyarray)
+AS 'select $1, array[$1,$1]' LANGUAGE sql;
+SELECT dup(22);
+SELECT dup('xyz');	-- fails
+SELECT dup('xyz'::text);
+SELECT * FROM dup('xyz'::text);
+
+-- equivalent specification
+CREATE OR REPLACE FUNCTION dup (inout f2 anyelement, out f3 anyarray)
+AS 'select $1, array[$1,$1]' LANGUAGE sql;
+SELECT dup(22);
+
+DROP FUNCTION dup(anyelement);
+
+-- fails, no way to deduce outputs
+CREATE FUNCTION bad (f1 int, out f2 anyelement, out f3 anyarray)
+AS 'select $1, array[$1,$1]' LANGUAGE sql;
