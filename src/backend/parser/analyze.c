@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.22 1997/03/02 01:02:48 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.23 1997/03/12 20:51:33 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -52,7 +52,10 @@ static Query *transformUpdateStmt(ParseState *pstate, ReplaceStmt *stmt);
 static Query *transformCursorStmt(ParseState *pstate, CursorStmt *stmt);
 static Node *handleNestedDots(ParseState *pstate, Attr *attr, int *curr_resno);
 
-static Node *transformExpr(ParseState *pstate, Node *expr);
+#define EXPR_COLUMN_FIRST    1
+#define EXPR_RELATION_FIRST  2
+static Node *transformExpr(ParseState *pstate, Node *expr, int precedence);
+static Node *transformIdent(ParseState *pstate, Node *expr, int precedence);
 
 static void makeRangeTable(ParseState *pstate, char *relname, List *frmList);
 static List *expandAllTables(ParseState *pstate);
@@ -534,7 +537,7 @@ transformCursorStmt(ParseState *pstate, CursorStmt *stmt)
  *    here.
  */
 static Node *
-transformExpr(ParseState *pstate, Node *expr)
+transformExpr(ParseState *pstate, Node *expr, int precedence)
 {
     Node *result = NULL;
 
@@ -553,11 +556,11 @@ transformExpr(ParseState *pstate, Node *expr)
 	    while(idx!=NIL) {
 		A_Indices *ai = (A_Indices *)lfirst(idx);
 		Node *lexpr=NULL, *uexpr;
-		uexpr = transformExpr(pstate, ai->uidx);  /* must exists */
+		uexpr = transformExpr(pstate, ai->uidx, precedence);  /* must exists */
 		if (exprType(uexpr) != INT4OID)
 		    elog(WARN, "array index expressions must be int4's");
 		if (ai->lidx != NULL) {
-		    lexpr = transformExpr(pstate, ai->lidx);
+		    lexpr = transformExpr(pstate, ai->lidx, precedence);
 		    if (exprType(lexpr) != INT4OID)
 			elog(WARN, "array index expressions must be int4's");
 		}
@@ -615,14 +618,14 @@ transformExpr(ParseState *pstate, Node *expr)
 	switch(a->oper) {
 	case OP:
 	    {
-		Node *lexpr = transformExpr(pstate, a->lexpr);
-		Node *rexpr = transformExpr(pstate, a->rexpr);
+		Node *lexpr = transformExpr(pstate, a->lexpr, precedence);
+		Node *rexpr = transformExpr(pstate, a->rexpr, precedence);
 		result = (Node *)make_op(a->opname, lexpr, rexpr);
 	    }
 	    break;
 	case ISNULL:
 	    {
-		Node *lexpr = transformExpr(pstate, a->lexpr);
+		Node *lexpr = transformExpr(pstate, a->lexpr, precedence);
 		result = ParseFunc(pstate, 
 				   "NullValue", lcons(lexpr, NIL),
 				   &pstate->p_last_resno);
@@ -630,7 +633,7 @@ transformExpr(ParseState *pstate, Node *expr)
 	    break;
 	case NOTNULL:
 	    {
-		Node *lexpr = transformExpr(pstate, a->lexpr);
+		Node *lexpr = transformExpr(pstate, a->lexpr, precedence);
 		result = ParseFunc(pstate,
 				   "NonNullValue", lcons(lexpr, NIL),
 				   &pstate->p_last_resno);
@@ -639,8 +642,8 @@ transformExpr(ParseState *pstate, Node *expr)
 	case AND:
 	    {
 		Expr *expr = makeNode(Expr);
-		Node *lexpr = transformExpr(pstate, a->lexpr);
-		Node *rexpr = transformExpr(pstate, a->rexpr);
+		Node *lexpr = transformExpr(pstate, a->lexpr, precedence);
+		Node *rexpr = transformExpr(pstate, a->rexpr, precedence);
 		if (exprType(lexpr) != BOOLOID)
 		    elog(WARN,
 			 "left-hand side of AND is type '%s', not bool",
@@ -658,8 +661,8 @@ transformExpr(ParseState *pstate, Node *expr)
 	case OR:
 	    {
 		Expr *expr = makeNode(Expr);
-		Node *lexpr = transformExpr(pstate, a->lexpr);
-		Node *rexpr = transformExpr(pstate, a->rexpr);
+		Node *lexpr = transformExpr(pstate, a->lexpr, precedence);
+		Node *rexpr = transformExpr(pstate, a->rexpr, precedence);
 		if (exprType(lexpr) != BOOLOID)
 		    elog(WARN,
 			 "left-hand side of OR is type '%s', not bool",
@@ -677,7 +680,7 @@ transformExpr(ParseState *pstate, Node *expr)
 	case NOT:
 	    {
 		Expr *expr = makeNode(Expr);
-		Node *rexpr = transformExpr(pstate, a->rexpr);
+		Node *rexpr = transformExpr(pstate, a->rexpr, precedence);
 		if (exprType(rexpr) != BOOLOID)
 		    elog(WARN,
 			 "argument to NOT is type '%s', not bool",
@@ -692,24 +695,8 @@ transformExpr(ParseState *pstate, Node *expr)
 	break;
     }
     case T_Ident: {
-	Ident *ident = (Ident*)expr;
-    	RangeTblEntry *rte;
-
-		/* could be a column name or a relation_name */
-	if (refnameRangeTableEntry(pstate->p_rtable, ident->name) != NULL) {
-		ident->isRel = TRUE;
-		result = (Node*)ident;
-	}
-	else if ((rte = colnameRangeTableEntry(pstate, ident->name)) != NULL)
- 	{
-	    Attr *att = makeNode(Attr);
-
-	    att->relname = rte->refname;
-	    att->attrs = lcons(makeString(ident->name), NIL);
-	    result =
-		(Node*)handleNestedDots(pstate, att, &pstate->p_last_resno);
-	} else
-	    elog(WARN, "attribute \"%s\" not found", ident->name);
+	/* look for a column name or a relation name (the default behavior) */
+	result = transformIdent(pstate, expr, precedence);
 	break;
     }
     case T_FuncCall: {
@@ -718,7 +705,7 @@ transformExpr(ParseState *pstate, Node *expr)
 
 	/* transform the list of arguments */
 	foreach(args, fn->args)
-	    lfirst(args) = transformExpr(pstate, (Node*)lfirst(args));
+	    lfirst(args) = transformExpr(pstate, (Node*)lfirst(args), precedence);
 	result = ParseFunc(pstate,
 			   fn->funcname, fn->args, &pstate->p_last_resno);
 	break;
@@ -730,6 +717,49 @@ transformExpr(ParseState *pstate, Node *expr)
 	break;
     }
 
+    return result;
+}
+
+static Node *
+transformIdent(ParseState *pstate, Node *expr, int precedence)
+{
+    Ident *ident = (Ident*)expr;
+    RangeTblEntry *rte;
+    Node *column_result, *relation_result, *result;
+
+    column_result = relation_result = result = 0;
+    /* try to find the ident as a column */
+    if ((rte = colnameRangeTableEntry(pstate, ident->name)) != NULL) {
+	Attr *att = makeNode(Attr);
+	
+	att->relname = rte->refname;
+	att->attrs = lcons(makeString(ident->name), NIL);
+	column_result =
+	    (Node*)handleNestedDots(pstate, att, &pstate->p_last_resno);
+    }
+
+    /* try to find the ident as a relation */
+    if (refnameRangeTableEntry(pstate->p_rtable, ident->name) != NULL) {
+	ident->isRel = TRUE;
+	relation_result = (Node*)ident;
+    }
+
+    /* choose the right result based on the precedence */
+    if(precedence == EXPR_COLUMN_FIRST) {
+	if(column_result)
+	    result = column_result;
+	else
+	    result = relation_result;
+    } else {
+	if(relation_result)
+	    result = relation_result;
+	else
+	    result = column_result;
+    }
+
+    if(result == NULL) 
+	elog(WARN, "attribute \"%s\" not found", ident->name);
+   
     return result;
 }
 
@@ -1011,7 +1041,11 @@ transformTargetList(ParseState *pstate, List *targetlist)
 	    
 	    identname = ((Ident*)res->val)->name;
 	    handleTargetColname(pstate, &res->name, NULL, res->name);
-	    expr = transformExpr(pstate, (Node*)res->val);
+
+	    /* here we want to look for column names only, not relation */
+	    /* names (even though they can be stored in Ident nodes,    */
+	    /* too)                                                     */
+	    expr = transformIdent(pstate, (Node*)res->val, EXPR_COLUMN_FIRST);
 	    type_id = exprType(expr);
 	    type_len = tlen(get_id_type(type_id));
 	    resname = (res->name) ? res->name : identname;
@@ -1030,7 +1064,7 @@ transformTargetList(ParseState *pstate, List *targetlist)
 	case T_FuncCall:
 	case T_A_Const:    
 	case T_A_Expr: {
-	    Node *expr = transformExpr(pstate, (Node *)res->val);
+	    Node *expr = transformExpr(pstate, (Node *)res->val, EXPR_COLUMN_FIRST);
 
 	    handleTargetColname(pstate, &res->name, NULL, NULL);
 	    /* note indirection has not been transformed */
@@ -1054,13 +1088,13 @@ transformTargetList(ParseState *pstate, List *targetlist)
 		str = save_str = (char*)palloc(strlen(val) + MAXDIM * 25 + 2);
 		foreach(elt, res->indirection) {
 		    A_Indices *aind = (A_Indices *)lfirst(elt);
-		    aind->uidx = transformExpr(pstate, aind->uidx);
+		    aind->uidx = transformExpr(pstate, aind->uidx, EXPR_COLUMN_FIRST);
 		    if (!IsA(aind->uidx,Const)) 
 			elog(WARN,
 			     "Array Index for Append should be a constant");
 		    uindx[i] = ((Const *)aind->uidx)->constvalue;
 		    if (aind->lidx!=NULL) {
-			aind->lidx = transformExpr(pstate, aind->lidx);
+			aind->lidx = transformExpr(pstate, aind->lidx, EXPR_COLUMN_FIRST);
 			if (!IsA(aind->lidx,Const))
 			    elog(WARN,
 				"Array Index for Append should be a constant");
@@ -1101,8 +1135,8 @@ transformTargetList(ParseState *pstate, List *targetlist)
 		    List *ilist = res->indirection;
 		    while (ilist!=NIL) {
 			A_Indices *ind = lfirst(ilist);
-			ind->lidx = transformExpr(pstate, ind->lidx);
-			ind->uidx = transformExpr(pstate, ind->uidx);
+			ind->lidx = transformExpr(pstate, ind->lidx, EXPR_COLUMN_FIRST);
+			ind->uidx = transformExpr(pstate, ind->uidx, EXPR_COLUMN_FIRST);
 			ilist = lnext(ilist);
 		    }
 		}
@@ -1178,8 +1212,8 @@ transformTargetList(ParseState *pstate, List *targetlist)
 		List *ilist = att->indirection;
 		while (ilist!=NIL) {
 		    A_Indices *ind = lfirst(ilist);
-		    ind->lidx = transformExpr(pstate, ind->lidx);
-		    ind->uidx = transformExpr(pstate, ind->uidx);
+		    ind->lidx = transformExpr(pstate, ind->lidx, EXPR_COLUMN_FIRST);
+		    ind->uidx = transformExpr(pstate, ind->uidx, EXPR_COLUMN_FIRST);
 		    ilist = lnext(ilist);
 		}
 		result = (Node*)make_array_ref(result, att->indirection);
@@ -1390,7 +1424,7 @@ make_targetlist_expr(ParseState *pstate,
      tent->expr = expr;
 	 
      return  tent;
- }
+}
 
 
 /*****************************************************************************
@@ -1412,7 +1446,7 @@ transformWhereClause(ParseState *pstate, Node *a_expr)
     if (a_expr == NULL)
 	return (Node *)NULL;		/* no qualifiers */
 
-    qual = transformExpr(pstate, a_expr);
+    qual = transformExpr(pstate, a_expr, EXPR_COLUMN_FIRST);
     if (exprType(qual) != BOOLOID) {
 	elog(WARN,
 	     "where clause must return type bool, not %s",
@@ -1633,7 +1667,7 @@ handleNestedDots(ParseState *pstate, Attr *attr, int *curr_resno)
     Node *retval = NULL;
     
     if (attr->paramNo != NULL) {
-	Param *param = (Param *)transformExpr(pstate, (Node*)attr->paramNo);
+	Param *param = (Param *)transformExpr(pstate, (Node*)attr->paramNo, EXPR_RELATION_FIRST);
 
 	retval = 
 	    ParseFunc(pstate, strVal(lfirst(attr->attrs)),
