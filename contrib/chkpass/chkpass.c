@@ -4,7 +4,7 @@
  * darcy@druid.net
  * http://www.druid.net/darcy/
  *
- * $PostgreSQL: pgsql/contrib/chkpass/chkpass.c,v 1.12 2003/11/29 22:39:18 pgsql Exp $
+ * $PostgreSQL: pgsql/contrib/chkpass/chkpass.c,v 1.13 2005/01/29 22:35:01 tgl Exp $
  * best viewed with tabs set to 4
  */
 
@@ -82,13 +82,9 @@ chkpass_in(PG_FUNCTION_ARGS)
 	}
 
 	if (verify_pass(str) != 0)
-	{
 		ereport(ERROR,
 				(errcode(ERRCODE_DATA_EXCEPTION),
 				 errmsg("password \"%s\" is weak", str)));
-
-		PG_RETURN_POINTER(NULL);
-	}
 
 	result = (chkpass *) palloc(sizeof(chkpass));
 
@@ -112,9 +108,6 @@ chkpass_out(PG_FUNCTION_ARGS)
 	chkpass    *password = (chkpass *) PG_GETARG_POINTER(0);
 	char	   *result;
 
-	if (password == NULL)
-		PG_RETURN_POINTER(NULL);
-
 	if ((result = (char *) palloc(16)) != NULL)
 	{
 		result[0] = ':';
@@ -134,10 +127,7 @@ Datum
 chkpass_rout(PG_FUNCTION_ARGS)
 {
 	chkpass    *password = (chkpass *) PG_GETARG_POINTER(0);
-	text	   *result = NULL;
-
-	if (password == NULL)
-		PG_RETURN_POINTER(NULL);
+	text	   *result;
 
 	if ((result = (text *) palloc(VARHDRSZ + 16)) != NULL)
 	{
@@ -162,9 +152,6 @@ chkpass_eq(PG_FUNCTION_ARGS)
 	char		str[10];
 	int			sz = 8;
 
-	if (!a1 || !a2)
-		PG_RETURN_BOOL(0);
-
 	if (a2->vl_len < 12)
 		sz = a2->vl_len - 4;
 	strncpy(str, a2->vl_dat, sz);
@@ -181,8 +168,6 @@ chkpass_ne(PG_FUNCTION_ARGS)
 	char		str[10];
 	int			sz = 8;
 
-	if (!a1 || !a2)
-		PG_RETURN_BOOL(0);
 	if (a2->vl_len < 12)
 		sz = a2->vl_len - 4;
 	strncpy(str, a2->vl_dat, sz);

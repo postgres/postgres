@@ -4,7 +4,7 @@
 --  darcy@druid.net
 --  http://www.druid.net/darcy/
 -- 
---  $PostgreSQL: pgsql/contrib/chkpass/chkpass.sql.in,v 1.5 2003/11/29 19:51:19 pgsql Exp $
+--  $PostgreSQL: pgsql/contrib/chkpass/chkpass.sql.in,v 1.6 2005/01/29 22:35:01 tgl Exp $
 --
 --  best viewed with tabs set to 4
 --
@@ -19,12 +19,12 @@ SET search_path = public;
 CREATE FUNCTION chkpass_in(cstring)
 	RETURNS chkpass
 	AS 'MODULE_PATHNAME'
-	LANGUAGE 'c';
+	LANGUAGE C STRICT;
 
 CREATE FUNCTION chkpass_out(chkpass)
 	RETURNS cstring
 	AS 'MODULE_PATHNAME'
-	LANGUAGE 'c';
+	LANGUAGE C STRICT;
 
 CREATE TYPE chkpass (
 	internallength = 16,
@@ -36,7 +36,7 @@ CREATE TYPE chkpass (
 CREATE FUNCTION raw(chkpass)
 	RETURNS text
 	AS 'MODULE_PATHNAME', 'chkpass_rout'
-	LANGUAGE 'c';
+	LANGUAGE C STRICT;
 
 --
 --	The various boolean tests:
@@ -45,12 +45,12 @@ CREATE FUNCTION raw(chkpass)
 CREATE FUNCTION eq(chkpass, text)
 	RETURNS bool
 	AS 'MODULE_PATHNAME', 'chkpass_eq'
-	LANGUAGE 'c';
+	LANGUAGE C STRICT;
 
 CREATE FUNCTION ne(chkpass, text)
 	RETURNS bool
 	AS 'MODULE_PATHNAME', 'chkpass_ne'
-	LANGUAGE 'c';
+	LANGUAGE C STRICT;
 
 --
 --	Now the operators.  Note how some of the parameters to some

@@ -1,7 +1,7 @@
 --
 --	PostgreSQL code for ISSNs.
 --
---	$PostgreSQL: pgsql/contrib/isbn_issn/isbn_issn.sql.in,v 1.10 2003/11/29 22:39:20 pgsql Exp $
+--	$PostgreSQL: pgsql/contrib/isbn_issn/isbn_issn.sql.in,v 1.11 2005/01/29 22:35:02 tgl Exp $
 --
 
 -- Adjust this setting to control where the objects get created.
@@ -14,12 +14,12 @@ SET search_path = public;
 CREATE FUNCTION issn_in(cstring)
 RETURNS issn
 AS 'MODULE_PATHNAME'
-LANGUAGE 'C';
+LANGUAGE C STRICT;
 
 CREATE FUNCTION issn_out(issn)
 RETURNS cstring
 AS 'MODULE_PATHNAME'
-LANGUAGE 'C';
+LANGUAGE C STRICT;
 
 CREATE TYPE issn (
 	INTERNALLENGTH = 16,
@@ -39,32 +39,32 @@ COMMENT ON TYPE issn
 CREATE FUNCTION issn_lt(issn, issn)
 RETURNS bool
 AS 'MODULE_PATHNAME'
-LANGUAGE 'C';
+LANGUAGE C STRICT;
 
 CREATE FUNCTION issn_le(issn, issn)
 RETURNS bool
 AS 'MODULE_PATHNAME'
-LANGUAGE 'C';
+LANGUAGE C STRICT;
 
 CREATE FUNCTION issn_eq(issn, issn)
 RETURNS bool
 AS 'MODULE_PATHNAME'
-LANGUAGE 'C';
+LANGUAGE C STRICT;
 
 CREATE FUNCTION issn_ge(issn, issn)
 RETURNS bool
 AS 'MODULE_PATHNAME'
-LANGUAGE 'C';
+LANGUAGE C STRICT;
 
 CREATE FUNCTION issn_gt(issn, issn)
 RETURNS bool
 AS 'MODULE_PATHNAME'
-LANGUAGE 'C';
+LANGUAGE C STRICT;
 
 CREATE FUNCTION issn_ne(issn, issn)
 RETURNS bool
 AS 'MODULE_PATHNAME'
-LANGUAGE 'C';
+LANGUAGE C STRICT;
 
 --
 --	Now the operators.  Note how some of the parameters to some
@@ -120,7 +120,7 @@ CREATE OPERATOR <> (
 CREATE FUNCTION issn_cmp(issn, issn)
 RETURNS integer
 AS '$libdir/isbn_issn'
-LANGUAGE c;
+LANGUAGE c STRICT;
 
 -- Create default operator class for 'issn'    --
 -- Needed to create index or primary key       --
@@ -147,12 +147,12 @@ AS
 CREATE FUNCTION isbn_in(cstring)
 RETURNS isbn
 AS 'MODULE_PATHNAME'
-LANGUAGE 'C';
+LANGUAGE C STRICT;
 
 CREATE FUNCTION isbn_out(isbn)
 RETURNS cstring
 AS 'MODULE_PATHNAME'
-LANGUAGE 'C';
+LANGUAGE C STRICT;
 
 CREATE TYPE isbn (
 	INTERNALLENGTH = 16,
@@ -171,32 +171,32 @@ COMMENT ON TYPE isbn IS 'International Standard Book Number';
 CREATE FUNCTION isbn_lt(isbn, isbn)
 RETURNS bool
 AS 'MODULE_PATHNAME'
-LANGUAGE 'C';
+LANGUAGE C STRICT;
 
 CREATE FUNCTION isbn_le(isbn, isbn)
 RETURNS bool
 AS 'MODULE_PATHNAME'
-LANGUAGE 'C';
+LANGUAGE C STRICT;
 
 CREATE FUNCTION isbn_eq(isbn, isbn)
 RETURNS bool
 AS 'MODULE_PATHNAME'
-LANGUAGE 'C';
+LANGUAGE C STRICT;
 
 CREATE FUNCTION isbn_ge(isbn, isbn)
 RETURNS bool
 AS 'MODULE_PATHNAME'
-LANGUAGE 'C';
+LANGUAGE C STRICT;
 
 CREATE FUNCTION isbn_gt(isbn, isbn)
 RETURNS bool
 AS 'MODULE_PATHNAME'
-LANGUAGE 'C';
+LANGUAGE C STRICT;
 
 CREATE FUNCTION isbn_ne(isbn, isbn)
 RETURNS bool
 AS 'MODULE_PATHNAME'
-LANGUAGE 'C';
+LANGUAGE C STRICT;
 
 --
 --	Now the operators.  Note how some of the parameters to some
@@ -253,7 +253,7 @@ CREATE OPERATOR <> (
 CREATE FUNCTION isbn_cmp(isbn, isbn)
 RETURNS integer
 AS '$libdir/isbn_issn'
-LANGUAGE c;
+LANGUAGE c STRICT;
 
 -- Create default operator class for 'isbn'    --
 -- Needed to create index or primary key       --

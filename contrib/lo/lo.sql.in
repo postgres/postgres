@@ -1,7 +1,7 @@
 --
 --	PostgreSQL code for LargeObjects
 --
---	$PostgreSQL: pgsql/contrib/lo/lo.sql.in,v 1.11 2003/11/29 22:39:22 pgsql Exp $
+--	$PostgreSQL: pgsql/contrib/lo/lo.sql.in,v 1.12 2005/01/29 22:35:02 tgl Exp $
 --
 --
 --	Create the data type
@@ -15,13 +15,13 @@ SET search_path = public;
 CREATE FUNCTION lo_in(cstring)
 RETURNS lo
 AS 'MODULE_PATHNAME'
-LANGUAGE 'C' IMMUTABLE;
+LANGUAGE C IMMUTABLE STRICT;
 
 -- used by the lo type, it returns the oid of the object
 CREATE FUNCTION lo_out(lo)
 RETURNS cstring
 AS 'MODULE_PATHNAME'
-LANGUAGE 'C' IMMUTABLE;
+LANGUAGE C IMMUTABLE STRICT;
 
 -- finally the type itself
 CREATE TYPE lo (
@@ -35,7 +35,7 @@ CREATE TYPE lo (
 CREATE FUNCTION lo_oid(lo)
 RETURNS oid
 AS 'MODULE_PATHNAME'
-LANGUAGE 'C' IMMUTABLE;
+LANGUAGE C IMMUTABLE STRICT;
 
 -- same function, named to allow it to be used as a type coercion, eg:
 --    CREATE TABLE a (image lo);
@@ -44,7 +44,7 @@ LANGUAGE 'C' IMMUTABLE;
 CREATE FUNCTION oid(lo)
 RETURNS oid
 AS 'MODULE_PATHNAME', 'lo_oid'
-LANGUAGE 'C' IMMUTABLE;
+LANGUAGE C IMMUTABLE STRICT;
 CREATE CAST (lo as oid) WITH FUNCTION oid(lo) AS IMPLICIT;
 
 -- this allows us to convert an oid to a managed lo object
@@ -52,11 +52,11 @@ CREATE CAST (lo as oid) WITH FUNCTION oid(lo) AS IMPLICIT;
 CREATE FUNCTION lo(oid)
 RETURNS lo
 AS 'MODULE_PATHNAME'
-LANGUAGE 'C' IMMUTABLE;
+LANGUAGE C IMMUTABLE STRICT;
 CREATE CAST (oid as lo) WITH FUNCTION lo(oid) AS IMPLICIT;
 
 -- This is used in triggers
 CREATE FUNCTION lo_manage()
 RETURNS trigger
 AS 'MODULE_PATHNAME'
-LANGUAGE 'C';
+LANGUAGE C;
