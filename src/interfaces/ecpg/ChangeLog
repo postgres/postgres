@@ -1651,6 +1651,11 @@ Mon Sep 22 15:13:02 CEST 2003
 	- Fixed order mismatch in processing "using" arguments.
 	- Fixed some minor things in test cases.
 	- Use defines for Informix error codes.
+
+Tue Sep 23 14:50:45 CEST 2003
+
+	- Changed struct definition handling so "struct foo {}" always gets
+	  defined.
 	- Set ecpg version to 3.0.0
 	- Set ecpg library to 4.0.0
 	- Set pgtypes library to 1.0.0

@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/Attic/preproc.y,v 1.258 2003/09/22 13:19:39 meskes Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/Attic/preproc.y,v 1.259 2003/09/23 12:56:35 meskes Exp $ */
 
 /* Copyright comment */
 %{
@@ -540,7 +540,7 @@ add_additional_variables(char *name, bool insert)
 %type  <str>	col_name_keyword func_name_keyword precision opt_scale
 %type  <str>	ECPGTypeName using_list ECPGColLabelCommon UsingConst
 %type  <str>	inf_val_list inf_col_list using_descriptor into_descriptor 
-%type  <str>	ecpg_into_using prepared_name
+%type  <str>	ecpg_into_using prepared_name struct_union_type_with_symbol
 
 %type  <struct_union> s_struct_union_symbol
 
@@ -551,7 +551,6 @@ add_additional_variables(char *name, bool insert)
 %type  <dtype_enum> descriptor_item desc_header_item
 
 %type  <type>	var_type common_type single_vt_type 
-%type  <type>	struct_union_type_with_symbol
 
 %type  <action> action
 
@@ -4441,34 +4440,7 @@ single_var_declaration: storage_declaration
 		}
 		| struct_union_type_with_symbol ';'
 		{
-			/* this is essantially a typedef but needs the keyword struct/union as well */
-			struct typedefs *ptr, *this;
-			
-			for (ptr = types; ptr != NULL; ptr = ptr->next)
-                        {
-                                if (strcmp($1.type_str, ptr->name) == 0)
-                                {
-                                        /* re-definition is a bug */
-                                        snprintf(errortext, sizeof(errortext), "Type %s already defined", $1.type_str);
-                                        mmerror(PARSE_ERROR, ET_ERROR, errortext);
-                                }
-                        }
-
-                        this = (struct typedefs *) mm_alloc(sizeof(struct typedefs));
-
-                        /* initial definition */
-                        this->next = types;
-			this->name = $1.type_str;
-                        this->type = (struct this_type *) mm_alloc(sizeof(struct this_type));
-                        this->type->type_enum = $1.type_enum;
-                        this->type->type_str = mm_strdup($1.type_str);
-                        this->type->type_dimension = make_str("-1"); /* dimension of array */
-                        this->type->type_index = make_str("-1");    /* length of string */
-                        this->type->type_sizeof = ECPGstruct_sizeof;
-                        this->struct_member_list = struct_member_list[struct_level];
-
-			types = this;
-			$$ = cat2_str($1.type_sizeof, make_str(";"));
+			$$ = cat2_str($1, make_str(";"));
 		}
 		;
 
@@ -4658,6 +4630,7 @@ type_declaration: S_TYPEDEF
 		char * dimension = $6.index1;
 		char * length = $6.index2;
 
+printf("MM: %s\n", $5);
 		if (($3.type_enum == ECPGt_struct ||
 		     $3.type_enum == ECPGt_union) &&
 		    initializer == 1)
@@ -4735,34 +4708,7 @@ var_declaration: storage_declaration
 		}
 		| struct_union_type_with_symbol ';'
 		{
-			/* this is essantially a typedef but needs the keyword struct/union as well */
-			struct typedefs *ptr, *this;
-			
-			for (ptr = types; ptr != NULL; ptr = ptr->next)
-                        {
-                                if (strcmp($1.type_str, ptr->name) == 0)
-                                {
-                                        /* re-definition is a bug */
-                                        snprintf(errortext, sizeof(errortext), "Type %s already defined", $1.type_str);
-                                        mmerror(PARSE_ERROR, ET_ERROR, errortext);
-                                }
-                        }
-
-                        this = (struct typedefs *) mm_alloc(sizeof(struct typedefs));
-
-                        /* initial definition */
-                        this->next = types;
-			this->name = $1.type_str;
-                        this->type = (struct this_type *) mm_alloc(sizeof(struct this_type));
-                        this->type->type_enum = $1.type_enum;
-                        this->type->type_str = mm_strdup($1.type_str);
-                        this->type->type_dimension = make_str("-1"); /* dimension of array */
-                        this->type->type_index = make_str("-1");    /* length of string */
-                        this->type->type_sizeof = ECPGstruct_sizeof;
-                        this->struct_member_list = struct_member_list[struct_level];
-
-			types = this;
-			$$ = cat2_str($1.type_sizeof, make_str(";"));
+			$$ = cat2_str($1, make_str(";"));
 		}
 		;
 
@@ -4996,21 +4942,51 @@ struct_union_type_with_symbol: s_struct_union_symbol
 		} 
 		'{' variable_declarations '}'
 		{
+			struct typedefs *ptr, *this;
+			struct this_type su_type;
+			
 			ECPGfree_struct_member(struct_member_list[struct_level]);
 			struct_member_list[struct_level] = NULL;
 			free(actual_storage[struct_level--]);
 			if (strncmp($1.su, "struct", sizeof("struct")-1) == 0)
-				$$.type_enum = ECPGt_struct;
+				su_type.type_enum = ECPGt_struct;
 			else
-				$$.type_enum = ECPGt_union;
-			$$.type_str = cat2_str($1.su, $1.symbol);
-			$$.type_sizeof = cat_str(4, mm_strdup($$.type_str), make_str("{"), $4, make_str("}"));
+				su_type.type_enum = ECPGt_union;
+			su_type.type_str = cat2_str($1.su, $1.symbol);
 			free(forward_name);
 			forward_name = NULL;
+			
+			/* This is essantially a typedef but needs the keyword struct/union as well.
+			 * So we create the typedef for each struct definition with symbol */
+			for (ptr = types; ptr != NULL; ptr = ptr->next)
+                        {
+                                if (strcmp(su_type.type_str, ptr->name) == 0)
+                                {
+                                        /* re-definition is a bug */
+                                        snprintf(errortext, sizeof(errortext), "Type %s already defined", su_type.type_str);
+                                        mmerror(PARSE_ERROR, ET_ERROR, errortext);
+                                }
+                        }
+
+                        this = (struct typedefs *) mm_alloc(sizeof(struct typedefs));
+
+                        /* initial definition */
+                        this->next = types;
+			this->name = mm_strdup(su_type.type_str);
+                        this->type = (struct this_type *) mm_alloc(sizeof(struct this_type));
+                        this->type->type_enum = su_type.type_enum;
+                        this->type->type_str = mm_strdup(su_type.type_str);
+                        this->type->type_dimension = make_str("-1"); /* dimension of array */
+                        this->type->type_index = make_str("-1");    /* length of string */
+                        this->type->type_sizeof = ECPGstruct_sizeof;
+                        this->struct_member_list = struct_member_list[struct_level];
+
+			types = this;
+			$$ = cat_str(4, su_type.type_str, make_str("{"), $4, make_str("}"));
 		}
 		;
 
-struct_union_type: struct_union_type_with_symbol	{ $$ = $1.type_sizeof; }
+struct_union_type: struct_union_type_with_symbol	{ $$ = $1; }
 		| s_struct_union
 		{
 			struct_member_list[struct_level++] = NULL;
