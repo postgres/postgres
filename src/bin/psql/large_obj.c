@@ -3,7 +3,7 @@
  *
  * Copyright 2000-2002 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/large_obj.c,v 1.23 2002/10/15 02:24:16 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/large_obj.c,v 1.24 2003/03/20 06:43:35 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "large_obj.h"
@@ -40,15 +40,20 @@ _my_notice_handler(void *arg, const char *message)
 static bool
 handle_transaction(void)
 {
-	const char *var = GetVariable(pset.vars, "LO_TRANSACTION");
 	PGresult   *res;
-	bool		commit;
+	bool		commit = false;
 	PQnoticeProcessor old_notice_hook;
 
-	if (var && strcmp(var, "nothing") == 0)
+	switch (SwitchVariable(pset.vars, "LO_TRANSACTION", 
+									"nothing", 
+									"commit", 
+									NULL))
+	{
+	  case 1:
 		return true;
-
-	commit = (var && strcmp(var, "commit") == 0);
+	  case 2:
+		 commit = true;
+	}
 
 	notice[0] = '\0';
 	old_notice_hook = PQsetNoticeProcessor(pset.db, _my_notice_handler, NULL);
@@ -87,11 +92,9 @@ do_lo_export(const char *loid_arg, const char *filename_arg)
 {
 	PGresult   *res;
 	int			status;
-	bool		own_transaction = true;
-	const char *var = GetVariable(pset.vars, "LO_TRANSACTION");
+	bool		own_transaction;
 
-	if (var && strcmp(var, "nothing") == 0)
-		own_transaction = false;
+	own_transaction = VariableEquals(pset.vars, "LO_TRANSACTION", "nothing");
 
 	if (!pset.db)
 	{
@@ -154,11 +157,9 @@ do_lo_import(const char *filename_arg, const char *comment_arg)
 	Oid			loid;
 	char		oidbuf[32];
 	unsigned int i;
-	bool		own_transaction = true;
-	const char *var = GetVariable(pset.vars, "LO_TRANSACTION");
+	bool		own_transaction;
 
-	if (var && strcmp(var, "nothing") == 0)
-		own_transaction = false;
+	own_transaction = VariableEquals(pset.vars, "LO_TRANSACTION", "nothing");
 
 	if (!pset.db)
 	{
@@ -271,11 +272,10 @@ do_lo_unlink(const char *loid_arg)
 	int			status;
 	Oid			loid = atooid(loid_arg);
 	char		buf[256];
-	bool		own_transaction = true;
-	const char *var = GetVariable(pset.vars, "LO_TRANSACTION");
 
-	if (var && strcmp(var, "nothing") == 0)
-		own_transaction = false;
+	bool		own_transaction;
+
+	own_transaction = VariableEquals(pset.vars, "LO_TRANSACTION", "nothing");
 
 	if (!pset.db)
 	{

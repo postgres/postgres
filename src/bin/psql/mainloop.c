@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/mainloop.c,v 1.52 2003/03/20 06:00:12 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/mainloop.c,v 1.53 2003/03/20 06:43:35 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "mainloop.h"
@@ -40,16 +40,14 @@ MainLoop(FILE *source)
 	char	   *line;			/* current line of input */
 	int			len;			/* length of the line */
 	volatile int successResult = EXIT_SUCCESS;
-	volatile backslashResult slashCmdStatus;
+	volatile backslashResult slashCmdStatus = CMD_UNKNOWN;
 
 	bool		success;
-	volatile char in_quote;		/* == 0 for no in_quote */
-	volatile bool in_xcomment;	/* in extended comment */
-	volatile int xcdepth;
-	volatile int paren_level;
+	volatile char in_quote = 0;		/* == 0 for no in_quote */
+	volatile int in_xcomment = 0;	/* in extended comment */
+	volatile int paren_level = 0;
 	unsigned int query_start;
 	volatile int count_eof = 0;
-	const char *var;
 	volatile unsigned int bslash_count = 0;
 
 	int			i,
@@ -81,16 +79,12 @@ MainLoop(FILE *source)
 		exit(EXIT_FAILURE);
 	}
 
-	in_xcomment = false;
-	in_quote = 0;
-	paren_level = 0;
-	slashCmdStatus = CMD_UNKNOWN;		/* set default */
 	prev_lineno = pset.lineno;
 	pset.lineno = 0;
 
 
 	/* main loop to get queries and execute them */
-	while (1)
+	while (successResult == EXIT_SUCCESS)
 	{
 		/*
 		 * Welcome code for Control-C
@@ -109,6 +103,7 @@ MainLoop(FILE *source)
 			}
 
 			cancel_pressed = false;
+			fflush(stdout);
 		}
 
 #ifndef WIN32
@@ -118,15 +113,16 @@ MainLoop(FILE *source)
 
 			if (pset.cur_cmd_interactive)
 			{
-				fputc('\n', stdout);
+				putc('\n', stdout);
 				resetPQExpBuffer(query_buf);
 
 				/* reset parsing state */
-				in_xcomment = false;
+				in_xcomment = 0;
 				in_quote = 0;
 				paren_level = 0;
 				count_eof = 0;
 				slashCmdStatus = CMD_UNKNOWN;
+				fflush(stdout);
 			}
 			else
 			{
@@ -151,22 +147,20 @@ MainLoop(FILE *source)
 			line = xstrdup(query_buf->data);
 			resetPQExpBuffer(query_buf);
 			/* reset parsing state since we are rescanning whole line */
-			in_xcomment = false;
+			in_xcomment = 0;
 			in_quote = 0;
 			paren_level = 0;
 			slashCmdStatus = CMD_UNKNOWN;
 		}
-		else
-		{
-			fflush(stdout);
-
 			/*
 			 * otherwise, set interactive prompt if necessary and get
 			 * another line
 			 */
-			if (pset.cur_cmd_interactive)
+		else if (pset.cur_cmd_interactive)
 			{
 				int			prompt_status;
+
+			fflush(stdout);
 
 				if (in_quote && in_quote == '\'')
 					prompt_status = PROMPT_SINGLEQUOTE;
@@ -185,7 +179,6 @@ MainLoop(FILE *source)
 			}
 			else
 				line = gets_fromFile(source);
-		}
 
 
 		/* Setting this will not have effect until next line. */
@@ -203,50 +196,21 @@ MainLoop(FILE *source)
 		{
 			if (pset.cur_cmd_interactive)
 			{
-				bool		getout = true;
-
 				/* This tries to mimic bash's IGNOREEOF feature. */
-				const char *val = GetVariable(pset.vars, "IGNOREEOF");
+				count_eof++;
 
-				if (val)
-				{
-					long int	maxeof;
-					char	   *endptr;
-
-					if (*val == '\0')
-						maxeof = 10;
-					else
-					{
-						maxeof = strtol(val, &endptr, 0);
-						if (*endptr != '\0')	/* string not valid as a
-												 * number */
-							maxeof = 10;
-					}
-
-					if (count_eof++ != maxeof)
-						getout = false; /* not quite there yet */
-				}
-
-				if (getout)
-				{
-					if (QUIET())
-						putc('\n', stdout);
-					else
-						puts("\\q");
-					break;
-				}
-				else
+				if (count_eof < GetVariableNum(pset.vars,"IGNOREEOF",0,10,false))
 				{
 					if (!QUIET())
 						printf(gettext("Use \"\\q\" to leave %s.\n"), pset.progname);
 					continue;
 				}
+
+				puts(QUIET() ? "" : "\\q");
 			}
-			else
-/* not interactive */
 				break;
 		}
-		else
+
 			count_eof = 0;
 
 		pset.lineno++;
@@ -259,8 +223,7 @@ MainLoop(FILE *source)
 		}
 
 		/* echo back if flag is set */
-		var = GetVariable(pset.vars, "ECHO");
-		if (!pset.cur_cmd_interactive && var && strcmp(var, "all") == 0)
+		if (!pset.cur_cmd_interactive && VariableEquals(pset.vars, "ECHO", "all"))
 			puts(line);
 		fflush(stdout);
 
@@ -276,14 +239,13 @@ MainLoop(FILE *source)
 #define ADVANCE_1 (prevlen = thislen, i += thislen, thislen = PQmblen(line+i, pset.encoding))
 
 		success = true;
-		for (i = 0, prevlen = 0, thislen = (len > 0) ? PQmblen(line, pset.encoding) : 0;
-			 i < len;
-			 ADVANCE_1)
+		prevlen = 0;
+		thislen = ((len > 0) ? PQmblen(line, pset.encoding) : 0);
+
+		for (i = 0; (i < len) && (success || !die_on_error); ADVANCE_1)
 		{
 			/* was the previous character a backslash? */
-			bool		was_bslash = (i > 0 && line[i - prevlen] == '\\');
-
-			if (was_bslash)
+			if (i > 0 && line[i - prevlen] == '\\')
 				bslash_count++;
 			else
 				bslash_count = 0;
@@ -308,29 +270,23 @@ MainLoop(FILE *source)
 					in_quote = 0;
 			}
 
-			/* in extended comment? */
-			else if (in_xcomment)
-			{
-				if (line[i] == '*' && line[i + thislen] == '/')
-				{
-					if (xcdepth > 0)
-						xcdepth--;
-					else
-					{
-						in_xcomment = false;
-						ADVANCE_1;
-					}
-				}
-				else if (line[i] == '/' && line[i + thislen] == '*')
-					xcdepth++;
-			}
-
 			/* start of extended comment? */
 			else if (line[i] == '/' && line[i + thislen] == '*')
+					{
+				in_xcomment++;
+				if (in_xcomment == 1) 
+						ADVANCE_1;
+					}
+
+			/* end of extended comment? */
+			else if (line[i] == '*' && line[i + thislen] == '/')
 			{
-				xcdepth = 0;
-				in_xcomment = true;
+				in_xcomment--;
+				if (in_xcomment <= 0)
+				{
+					in_xcomment = 0;
 				ADVANCE_1;
+			}
 			}
 
 			/* start of quote? */
@@ -353,7 +309,7 @@ MainLoop(FILE *source)
 
 			/* colon -> substitute variable */
 			/* we need to be on the watch for the '::' operator */
-			else if (line[i] == ':' && !was_bslash
+			else if (line[i] == ':' && !bslash_count
 				  && strspn(line + i + thislen, VALID_VARIABLE_CHARS) > 0
 					 && !(prevlen > 0 && line[i - prevlen] == ':')
 				)
@@ -411,7 +367,7 @@ MainLoop(FILE *source)
 			}
 
 			/* semicolon? then send query */
-			else if (line[i] == ';' && !was_bslash && !paren_level)
+			else if (line[i] == ';' && !bslash_count && !paren_level)
 			{
 				line[i] = '\0';
 				/* is there anything else on the line? */
@@ -442,7 +398,7 @@ MainLoop(FILE *source)
 			 * if you have a burning need to send a semicolon or colon to
 			 * the backend ...
 			 */
-			else if (was_bslash && (line[i] == ';' || line[i] == ':'))
+			else if (bslash_count && (line[i] == ';' || line[i] == ':'))
 			{
 				/* remove the backslash */
 				memmove(line + i - prevlen, line + i, len - i + 1);
@@ -451,7 +407,7 @@ MainLoop(FILE *source)
 			}
 
 			/* backslash command */
-			else if (was_bslash)
+			else if (bslash_count)
 			{
 				const char *end_of_cmd = NULL;
 
@@ -499,15 +455,9 @@ MainLoop(FILE *source)
 					paren_level = 0;
 
 				/* process anything left after the backslash command */
-				i += end_of_cmd - &line[i];
+				i = end_of_cmd - line;
 				query_start = i;
 			}
-
-
-			/* stop the script after error */
-			if (!success && die_on_error)
-				break;
-
 		}						/* for (line) */
 
 
@@ -533,25 +483,19 @@ MainLoop(FILE *source)
 		if (query_buf->data[0] != '\0' && GetVariableBool(pset.vars, "SINGLELINE"))
 		{
 			success = SendQuery(query_buf->data);
-			slashCmdStatus = success ? CMD_SEND : CMD_ERROR;
+			slashCmdStatus = (success ? CMD_SEND : CMD_ERROR);
 			resetPQExpBuffer(previous_buf);
 			appendPQExpBufferStr(previous_buf, query_buf->data);
 			resetPQExpBuffer(query_buf);
 		}
 
-
-		if (!success && die_on_error && !pset.cur_cmd_interactive)
+		if (!pset.cur_cmd_interactive)
 		{
+			if (!success && die_on_error)
 			successResult = EXIT_USER;
-			break;
-		}
-
-
 		/* Have we lost the db connection? */
-		if (pset.db == NULL && !pset.cur_cmd_interactive)
-		{
+			else if (!pset.db)
 			successResult = EXIT_BADCONN;
-			break;
 		}
 	}							/* while !endoffile/session */
 

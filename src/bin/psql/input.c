@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/input.c,v 1.22 2003/03/20 06:00:12 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/input.c,v 1.23 2003/03/20 06:43:35 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "input.h"
@@ -233,10 +233,12 @@ finishInput(int exitstatus, void *arg)
 									strlen(PSQLHISTORY) + 1);
 			if (psql_history)
 			{
-				const char *var = GetVariable(pset.vars, "HISTSIZE");
+				int hist_size;
+				hist_size = GetVariableNum(pset.vars,"HISTSIZE",-1,-1,true);
 
-				if (var)
-					stifle_history(atoi(var));
+				if (hist_size >= 0)
+					stifle_history(hist_size);
+
 				sprintf(psql_history, "%s/%s", home, PSQLHISTORY);
 				write_history(psql_history);
 				free(psql_history);

@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/startup.c,v 1.71 2003/03/18 22:15:44 petere Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/startup.c,v 1.72 2003/03/20 06:43:35 momjian Exp $
  */
 #include "postgres_fe.h"
 
@@ -253,10 +253,9 @@ main(int argc, char *argv[])
 	 */
 	else if (options.action == ACT_SINGLE_SLASH)
 	{
-		const char *value;
-
-		if ((value = GetVariable(pset.vars, "ECHO")) && strcmp(value, "all") == 0)
+		if (VariableEquals(pset.vars, "ECHO", "all"))
 			puts(options.action_string);
+
 		successResult = HandleSlashCmds(options.action_string, NULL, NULL, NULL) != CMD_ERROR
 			? EXIT_SUCCESS : EXIT_FAILURE;
 	}
@@ -266,10 +265,9 @@ main(int argc, char *argv[])
 	 */
 	else if (options.action == ACT_SINGLE_QUERY)
 	{
-		const char *value;
-
-		if ((value = GetVariable(pset.vars, "ECHO")) && strcmp(value, "all") == 0)
+		if (VariableEquals(pset.vars, "ECHO", "all"))
 			puts(options.action_string);
+
 		successResult = SendQuery(options.action_string)
 			? EXIT_SUCCESS : EXIT_FAILURE;
 	}

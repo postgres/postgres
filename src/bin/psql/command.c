@@ -3,7 +3,7 @@
  *
  * Copyright 2000-2002 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/command.c,v 1.93 2003/03/19 22:49:43 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/command.c,v 1.94 2003/03/20 06:43:35 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "command.h"
@@ -669,15 +669,7 @@ exec_command(const char *cmd,
 		if (!opt0)
 		{
 			/* list all variables */
-
-			/*
-			 * XXX This is in utter violation of the GetVariable
-			 * abstraction, but I have not bothered to do it better.
-			 */
-			struct _variable *ptr;
-
-			for (ptr = pset.vars; ptr->next; ptr = ptr->next)
-				fprintf(stdout, "%s = '%s'\n", ptr->next->name, ptr->next->value);
+			PrintVariables(pset.vars);
 			success = true;
 		}
 		else
@@ -1073,9 +1065,7 @@ scan_option(char **string, enum option_type type, char *quote, bool semicolon)
 				save_char = options_string[pos + token_end + 1];
 				options_string[pos + token_end + 1] = '\0';
 				value = GetVariable(pset.vars, options_string + pos + 1);
-				if (!value)
-					value = "";
-				return_val = xstrdup(value);
+				return_val = xstrdup(value ? value : "");
 				options_string[pos + token_end + 1] = save_char;
 				*string = &options_string[pos + token_end + 1];
 				/* XXX should we set *quote to ':' here? */
@@ -1287,15 +1277,9 @@ unescape(const unsigned char *source, size_t len)
 				case '7':
 				case '8':
 				case '9':
-					{
-						long int	l;
-						char	   *end;
-
-						l = strtol(p, &end, 0);
-						c = (char) l;
-						p = end - 1;
+					c = parse_char((char **)&p);
 						break;
-					}
+
 				default:
 					c = *p;
 			}

@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/common.h,v 1.23 2003/03/20 06:00:12 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/common.h,v 1.24 2003/03/20 06:43:35 momjian Exp $
  */
 #ifndef COMMON_H
 #define COMMON_H
@@ -41,6 +41,12 @@ extern bool SendQuery(const char *query);
 
 /* sprompt.h */
 extern char *simple_prompt(const char *prompt, int maxlen, bool echo);
+
+/* Parse a numeric character code from the string pointed at by *buf, e.g.
+ * one written as 0x0c (hexadecimal) or 015 (octal); advance *buf to the last
+ * character of the numeric character code.
+ */
+extern char parse_char(char **buf);
 
 /* Used for all Win32 popen/pclose calls */
 #ifdef WIN32

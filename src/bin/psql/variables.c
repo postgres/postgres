@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/variables.c,v 1.9 2001/02/10 02:31:28 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/variables.c,v 1.10 2003/03/20 06:43:35 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "variables.h"
@@ -67,6 +67,74 @@ GetVariableBool(VariableSpace space, const char *name)
 	return GetVariable(space, name) != NULL ? true : false;
 }
 
+
+bool
+VariableEquals(VariableSpace space, const char name[], const char value[])
+{
+	const char *var;
+	var = GetVariable(space, name);
+	return var && (strcmp(var, value) == 0);
+}
+
+
+int 
+GetVariableNum(VariableSpace space, 
+	 				const char name[], 
+					int defaultval,
+					int faultval,
+					bool allowtrail)
+{
+	const char *var;
+	int result;
+
+	var = GetVariable(space, name);
+	if (!var)
+	  result = defaultval;
+	else if (!var[0])
+	  result = faultval;
+	else
+	{
+		char *end;
+		result = strtol(var, &end, 0);
+		if (!allowtrail && *end)
+		  result = faultval;
+	}
+
+	return result;
+}
+
+
+int
+SwitchVariable(VariableSpace space, const char name[], const char *opt, ...)
+{
+	int result;
+	const char *var;
+
+	var = GetVariable(space, name);
+	if (var) 
+	{
+		va_list args;
+		va_start(args, opt);
+		for (result=1; opt && (strcmp(var, opt) != 0); result++)
+			opt = va_arg(args,const char *);
+
+		if (!opt) result = var_notfound;
+		va_end(args);
+	}
+	else
+	  result = var_notset;
+
+	return result;
+}
+
+
+void 
+PrintVariables(VariableSpace space)
+{
+  struct _variable *ptr;
+  for (ptr = space->next; ptr; ptr = ptr->next)
+	 printf("%s = '%s'\n", ptr->name, ptr->value);
+}
 
 
 bool
