@@ -9,7 +9,7 @@ import java.sql.*;
  *
  * PS: Do you know how difficult it is to type on a train? ;-)
  *
- * $PostgreSQL: pgsql/src/interfaces/jdbc/org/postgresql/test/jdbc2/DatabaseMetaDataTest.java,v 1.21 2003/12/11 15:50:20 davec Exp $
+ * $PostgreSQL: pgsql/src/interfaces/jdbc/org/postgresql/test/jdbc2/DatabaseMetaDataTest.java,v 1.22 2003/12/12 18:30:27 davec Exp $
  */
 
 public class DatabaseMetaDataTest extends TestCase
@@ -52,28 +52,28 @@ public class DatabaseMetaDataTest extends TestCase
 			ResultSet rs = dbmd.getTables( null, null, "testmetadat%", new String[] {"TABLE"});
 			assertTrue( rs.next() );
 			String tableName = rs.getString("TABLE_NAME");
-			assertTrue( tableName.equals("testmetadata") );
+			assertEquals( "testmetadata", tableName );
 			String tableType = rs.getString("TABLE_TYPE");
-			assertTrue( tableType.equals("TABLE") );
+			assertEquals( "TABLE", tableType );
             //There should only be one row returned 
             assertTrue( "getTables() returned too many rows", rs.next() == false);
 			rs.close();
 
 			rs = dbmd.getColumns("", "", "test%", "%" );
 			assertTrue( rs.next() );
-			assertTrue( rs.getString("TABLE_NAME").equals("testmetadata") );
-			assertTrue( rs.getString("COLUMN_NAME").equals("id") );
-			assertTrue( rs.getInt("DATA_TYPE") == java.sql.Types.INTEGER );
+			assertEquals( "testmetadata", rs.getString("TABLE_NAME") );
+			assertEquals( "id", rs.getString("COLUMN_NAME") );
+			assertEquals( java.sql.Types.INTEGER, rs.getInt("DATA_TYPE") );
 
 			assertTrue( rs.next() );
-			assertTrue( rs.getString("TABLE_NAME").equals("testmetadata") );
-			assertTrue( rs.getString("COLUMN_NAME").equals("name") );
-			assertTrue( rs.getInt("DATA_TYPE") == java.sql.Types.VARCHAR );
+			assertEquals( "testmetadata", rs.getString("TABLE_NAME") );
+			assertEquals( "name", rs.getString("COLUMN_NAME") );
+			assertEquals( java.sql.Types.VARCHAR, rs.getInt("DATA_TYPE") );
 
 			assertTrue( rs.next() );
-			assertTrue( rs.getString("TABLE_NAME").equals("testmetadata") );
-			assertTrue( rs.getString("COLUMN_NAME").equals("updated") );
-			assertTrue( rs.getInt("DATA_TYPE") == java.sql.Types.TIMESTAMP );
+			assertEquals( "testmetadata", rs.getString("TABLE_NAME") );
+			assertEquals( "updated", rs.getString("COLUMN_NAME") );
+			assertEquals( java.sql.Types.TIMESTAMP, rs.getInt("DATA_TYPE") );
 
 		}
 		catch (SQLException ex)
@@ -102,13 +102,13 @@ public class DatabaseMetaDataTest extends TestCase
 			{
 
 				String pkTableName = rs.getString( "PKTABLE_NAME" );
-				assertTrue ( pkTableName.equals("vv") );
+				assertEquals ( "vv", pkTableName );
 
 				String pkColumnName = rs.getString( "PKCOLUMN_NAME" );
 				assertTrue( pkColumnName.equals("a") || pkColumnName.equals("b"));
 
 				String fkTableName = rs.getString( "FKTABLE_NAME" );
-				assertTrue( fkTableName.equals( "ww" ) );
+				assertEquals( "ww", fkTableName );
 
 				String fkColumnName = rs.getString( "FKCOLUMN_NAME" );
 				assertTrue( fkColumnName.equals( "m" ) || fkColumnName.equals( "n" ) ) ;
@@ -121,10 +121,10 @@ public class DatabaseMetaDataTest extends TestCase
 				}
 
 				String pkName = rs.getString( "PK_NAME" );
-				assertTrue( pkName.equals("vv_pkey") );
+				assertEquals( "vv_pkey", pkName );
 
 				int keySeq = rs.getInt( "KEY_SEQ" );
-				assertTrue( keySeq == j );
+				assertEquals( j, keySeq );
 			}
 
 
@@ -263,10 +263,10 @@ public class DatabaseMetaDataTest extends TestCase
 				assertTrue ( pkTableName.equals("people") || pkTableName.equals("policy") );
 
 				String pkColumnName = rs.getString( "PKCOLUMN_NAME" );
-				assertTrue( pkColumnName.equals("id") );
+				assertEquals( "id", pkColumnName );
 
 				String fkTableName = rs.getString( "FKTABLE_NAME" );
-				assertTrue( fkTableName.equals( "users" ) );
+				assertEquals( "users", fkTableName );
 
 				String fkColumnName = rs.getString( "FKCOLUMN_NAME" );
 				assertTrue( fkColumnName.equals( "people_id" ) || fkColumnName.equals( "policy_id" ) ) ;
@@ -286,11 +286,11 @@ public class DatabaseMetaDataTest extends TestCase
 			// this is hacky, but it will serve the purpose
 			assertTrue ( rs.next() );
 
-			assertTrue( rs.getString( "PKTABLE_NAME" ).equals( "people" ) );
-			assertTrue( rs.getString( "PKCOLUMN_NAME" ).equals( "id" ) );
+			assertEquals( "people", rs.getString( "PKTABLE_NAME" ) );
+			assertEquals( "id", rs.getString( "PKCOLUMN_NAME" ) );
 
-			assertTrue( rs.getString( "FKTABLE_NAME" ).equals( "users" ) );
-			assertTrue( rs.getString( "FKCOLUMN_NAME" ).equals( "people_id" ) );
+			assertEquals( "users", rs.getString( "FKTABLE_NAME" ) );
+			assertEquals( "people_id", rs.getString( "FKCOLUMN_NAME" ) );
 
 			assertTrue( rs.getString( "FK_NAME" ).startsWith( "people" ) );
 
