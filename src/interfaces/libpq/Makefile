@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/interfaces/libpq/Makefile,v 1.71 2003/01/06 03:18:27 momjian Exp $
+# $Header: /cvsroot/pgsql/src/interfaces/libpq/Makefile,v 1.72 2003/01/10 10:59:08 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -73,5 +73,5 @@ uninstall: uninstall-lib
 	rm -f $(DESTDIR)$(includedir)/libpq-fe.h $(DESTDIR)$(includedir_internal)/libpq-int.h $(includedir_internal)/pqexpbuffer.h
 
 clean distclean maintainer-clean: clean-lib
-	rm -f $(OBJS) dllist.c md5.c v6util.c wchar.c encnames.c
+	rm -f $(OBJS) dllist.c md5.c ip.c wchar.c encnames.c
 	rm -f $(OBJS) inet_aton.c snprintf.c strerror.c
