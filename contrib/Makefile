@@ -1,4 +1,4 @@
-# $Header: /cvsroot/pgsql/contrib/Makefile,v 1.38 2002/09/05 18:40:33 petere Exp $
+# $Header: /cvsroot/pgsql/contrib/Makefile,v 1.39 2002/09/05 20:53:45 tgl Exp $
 
 subdir = contrib
 top_builddir = ..
@@ -14,6 +14,7 @@ WANTED_DIRS = \
 		dbmirror	\
 		dbsize		\
 		earthdistance	\
+		findoidjoins	\
 		fulltextindex	\
 		fuzzystrmatch	\
 		intagg		\
@@ -36,11 +37,9 @@ WANTED_DIRS = \
 		string		\
 		tablefunc	\
 		tips		\
+		tsearch		\
 		userlock	\
 		vacuumlo
-
-#		findoidjoins	\
-		tsearch		\
 
 ifeq ($(with_java),yes)
 WANTED_DIRS += retep
