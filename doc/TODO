@@ -238,6 +238,7 @@ SOURCE CODE
 * Remove SET KSQO option now that OR processing is improved(Tom)
 * Use macros to define NT open() file parameters, remove NT-specific defines
 * Change CURRENT to OLD internally for rules
+* rename pl/tcl to pl/pltcl
 
 ---------------------------------------------------------------------------
 
