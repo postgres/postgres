@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: rel.h,v 1.38 2000/06/18 22:44:34 tgl Exp $
+ * $Id: rel.h,v 1.39 2000/06/30 07:04:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -85,7 +85,7 @@ typedef struct TriggerDesc
 
 typedef struct RelationData
 {
-	File		rd_fd;			/* open file descriptor */
+	File		rd_fd;			/* open file descriptor, or -1 if none */
 	int			rd_nblocks;		/* number of blocks in rel */
 	uint16		rd_refcnt;		/* reference count */
 	bool		rd_myxactonly;	/* rel uses the local buffer mgr */
@@ -99,6 +99,7 @@ typedef struct RelationData
 	LockInfoData rd_lockInfo;	/* lock mgr's info for locking relation */
 	TupleDesc	rd_att;			/* tuple descriptor */
 	RuleLock   *rd_rules;		/* rewrite rules */
+	MemoryContext rd_rulescxt;	/* private memory cxt for rd_rules, if any */
 	IndexStrategy rd_istrat;	/* info needed if rel is an index */
 	RegProcedure *rd_support;
 	TriggerDesc *trigdesc;		/* Trigger info, or NULL if rel has none */

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: index.h,v 1.25 2000/06/17 23:41:51 tgl Exp $
+ * $Id: index.h,v 1.26 2000/06/30 07:04:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,7 +17,8 @@
 #include "access/itup.h"
 #include "nodes/execnodes.h"
 
-extern Form_pg_am AccessMethodObjectIdGetForm(Oid accessMethodObjectId);
+extern Form_pg_am AccessMethodObjectIdGetForm(Oid accessMethodObjectId,
+											  MemoryContext resultCxt);
 
 extern void UpdateIndexPredicate(Oid indexoid, Node *oldPred, Node *predicate);
 

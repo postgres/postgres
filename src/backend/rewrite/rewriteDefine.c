@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteDefine.c,v 1.47 2000/06/28 03:31:56 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteDefine.c,v 1.48 2000/06/30 07:04:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,27 +29,16 @@
  * InsertRule -
  *	  takes the arguments and inserts them as attributes into the system
  *	  relation "pg_rewrite"
- *
- *		ARGS :	rulname			-		name of the rule
- *				evtype			-		one of RETRIEVE,REPLACE,DELETE,APPEND
- *				evobj			-		name of relation
- *				evslot			-		comma delimited list of slots
- *										if null => multi-attr rule
- *				evinstead		-		is an instead rule
- *				actiontree		-		parsetree(s) of rule action
  */
 static Oid
 InsertRule(char *rulname,
 		   int evtype,
-		   char *evobj,
-		   char *evslot,
-		   char *evqual,
+		   Oid eventrel_oid,
+		   AttrNumber evslot_index,
 		   bool evinstead,
+		   char *evqual,
 		   char *actiontree)
 {
-	Relation	eventrel;
-	Oid			eventrel_oid;
-	AttrNumber	evslot_index;
 	int			i;
 	Datum		values[Natts_pg_rewrite];
 	char		nulls[Natts_pg_rewrite];
@@ -58,21 +47,6 @@ InsertRule(char *rulname,
 	TupleDesc	tupDesc;
 	HeapTuple	tup;
 	Oid			rewriteObjectId;
-
-	eventrel = heap_openr(evobj, AccessShareLock);
-	eventrel_oid = RelationGetRelid(eventrel);
-
-	/*
-	 * if the slotname is null, we know that this is a multi-attr rule
-	 */
-	if (evslot == NULL)
-		evslot_index = -1;
-	else
-		evslot_index = attnameAttNum(eventrel, evslot);
-	heap_close(eventrel, AccessShareLock);
-
-	if (evqual == NULL)
-		evqual = "<>";
 
 	if (IsDefinedRewriteRule(rulname))
 		elog(ERROR, "Attempt to insert rule '%s' failed: already exists",
@@ -177,16 +151,26 @@ DefineQueryRewrite(RuleStmt *stmt)
 	Node	   *event_qual = stmt->whereClause;
 	bool		is_instead = stmt->instead;
 	List	   *action = stmt->actions;
-	Relation	event_relation = NULL;
+	Relation	event_relation;
+	Oid			ev_relid;
 	Oid			ruleId;
-	Oid			ev_relid = 0;
 	char	   *eslot_string = NULL;
-	int			event_attno = 0;
-	Oid			event_attype = 0;
+	int			event_attno;
+	Oid			event_attype;
 	char	   *actionP,
 			   *event_qualP;
 	List	   *l;
 	Query	   *query;
+
+	/*
+	 * If we are installing an ON SELECT rule, we had better grab
+	 * AccessExclusiveLock to ensure no SELECTs are currently running on
+	 * the event relation.  For other types of rules, it might be sufficient
+	 * to grab ShareLock to lock out insert/update/delete actions.  But
+	 * for now, let's just grab AccessExclusiveLock all the time.
+	 */
+	event_relation = heap_openr(event_obj->relname, AccessExclusiveLock);
+	ev_relid = RelationGetRelid(event_relation);
 
 	/* ----------
 	 * The current rewrite handler is known to work on relation level
@@ -209,19 +193,18 @@ DefineQueryRewrite(RuleStmt *stmt)
 	/*
 	 * No rule actions that modify OLD or NEW
 	 */
-	if (action != NIL)
-		foreach(l, action)
+	foreach(l, action)
 	{
 		query = (Query *) lfirst(l);
 		if (query->resultRelation == 1)
 		{
-			elog(NOTICE, "rule actions on OLD currently not supported");
-			elog(ERROR, " use views or triggers instead");
+			elog(ERROR, "rule actions on OLD currently not supported"
+				 "\n\tuse views or triggers instead");
 		}
 		if (query->resultRelation == 2)
 		{
-			elog(NOTICE, "rule actions on NEW currently not supported");
-			elog(ERROR, " use triggers instead");
+			elog(ERROR, "rule actions on NEW currently not supported"
+				 "\n\tuse triggers instead");
 		}
 	}
 
@@ -242,8 +225,8 @@ DefineQueryRewrite(RuleStmt *stmt)
 		 */
 		if (length(action) == 0)
 		{
-			elog(NOTICE, "instead nothing rules on select currently not supported");
-			elog(ERROR, " use views instead");
+			elog(ERROR, "instead nothing rules on select currently not supported"
+				 "\n\tuse views instead");
 		}
 
 		/*
@@ -265,8 +248,6 @@ DefineQueryRewrite(RuleStmt *stmt)
 		 * ... the targetlist of the SELECT action must exactly match the
 		 * event relation, ...
 		 */
-		event_relation = heap_openr(event_obj->relname, AccessShareLock);
-
 		if (event_relation->rd_att->natts != length(query->targetList))
 			elog(ERROR, "select rules target list must match event relations structure");
 
@@ -275,7 +256,7 @@ DefineQueryRewrite(RuleStmt *stmt)
 			tle = (TargetEntry *) nth(i - 1, query->targetList);
 			resdom = tle->resdom;
 			attr = event_relation->rd_att->attrs[i - 1];
-			attname = pstrdup(NameStr(attr->attname));
+			attname = NameStr(attr->attname);
 
 			if (strcmp(resdom->resname, attname) != 0)
 				elog(ERROR, "select rules target entry %d has different column name from %s", i, attname);
@@ -302,8 +283,6 @@ DefineQueryRewrite(RuleStmt *stmt)
 						 RelationGetRelationName(event_relation));
 			}
 		}
-
-		heap_close(event_relation, AccessShareLock);
 
 		/*
 		 * LIMIT in view is not supported
@@ -337,62 +316,46 @@ DefineQueryRewrite(RuleStmt *stmt)
 	/*
 	 * This rule is allowed - install it.
 	 */
-
-	event_relation = heap_openr(event_obj->relname, AccessShareLock);
-	ev_relid = RelationGetRelid(event_relation);
-
 	if (eslot_string == NULL)
 	{
 		event_attno = -1;
-		event_attype = -1;		/* XXX - don't care */
+		event_attype = InvalidOid;
 	}
 	else
 	{
 		event_attno = attnameAttNum(event_relation, eslot_string);
 		event_attype = attnumTypeId(event_relation, event_attno);
 	}
-	heap_close(event_relation, AccessShareLock);
 
 	/* fix bug about instead nothing */
 	ValidateRule(event_type, event_obj->relname,
 				 eslot_string, event_qual, &action,
 				 is_instead, event_attype);
 
-	if (action == NULL)
-	{
-		if (!is_instead)
-			return;				/* doesn't do anything */
-
-		event_qualP = nodeToString(event_qual);
-
-		ruleId = InsertRule(stmt->rulename,
-							event_type,
-							event_obj->relname,
-							eslot_string,
-							event_qualP,
-							true,
-							"<>");
-		prs2_addToRelation(ev_relid, ruleId, event_type, event_attno, TRUE,
-						   event_qual, NIL);
-
-	}
-	else
+	/* discard rule if it's null action and not INSTEAD; it's a no-op */
+	if (action != NULL || is_instead)
 	{
 		event_qualP = nodeToString(event_qual);
 		actionP = nodeToString(action);
 
 		ruleId = InsertRule(stmt->rulename,
 							event_type,
-							event_obj->relname,
-							eslot_string,
-							event_qualP,
+							ev_relid,
+							event_attno,
 							is_instead,
+							event_qualP,
 							actionP);
 
-		/* what is the max size of type text? XXX -- glass */
-		if (length(action) > 15)
-			elog(ERROR, "max # of actions exceeded");
-		prs2_addToRelation(ev_relid, ruleId, event_type, event_attno,
-						   is_instead, event_qual, action);
+		/*
+		 * Set pg_class 'relhasrules' field TRUE for event relation.
+		 *
+		 * Important side effect: an SI notice is broadcast to force all
+		 * backends (including me!) to update relcache entries with the new
+		 * rule.
+		 */
+		setRelhasrulesInRelation(ev_relid, true);
 	}
+
+	/* Close rel, but keep lock till commit... */
+	heap_close(event_relation, NoLock);
 }

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteRemove.c,v 1.37 2000/05/28 17:56:02 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteRemove.c,v 1.38 2000/06/30 07:04:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -52,30 +52,20 @@ RewriteGetRuleEventRel(char *rulename)
 	return NameStr(((Form_pg_class) GETSTRUCT(htup))->relname);
 }
 
-/* ----------------------------------------------------------------
- *
+/*
  * RemoveRewriteRule
  *
  * Delete a rule given its rulename.
- *
- * There are three steps.
- *	 1) Find the corresponding tuple in 'pg_rewrite' relation.
- *		Find the rule Id (i.e. the Oid of the tuple) and finally delete
- *		the tuple.
- *	 3) Delete the locks from the 'pg_class' relation.
- *
- *
- * ----------------------------------------------------------------
  */
 void
 RemoveRewriteRule(char *ruleName)
 {
-	Relation	RewriteRelation = NULL;
-	HeapTuple	tuple = NULL;
-	Oid			ruleId = (Oid) 0;
-	Oid			eventRelationOid = (Oid) NULL;
-	Datum		eventRelationOidDatum = (Datum) NULL;
-	bool		isNull = false;
+	Relation	RewriteRelation;
+	Relation	event_relation;
+	HeapTuple	tuple;
+	Oid			ruleId;
+	Oid			eventRelationOid;
+	bool		hasMoreRules;
 
 	/*
 	 * Open the pg_rewrite relation.
@@ -83,7 +73,7 @@ RemoveRewriteRule(char *ruleName)
 	RewriteRelation = heap_openr(RewriteRelationName, RowExclusiveLock);
 
 	/*
-	 * Scan the RuleRelation ('pg_rewrite') until we find a tuple
+	 * Find the tuple for the target rule.
 	 */
 	tuple = SearchSysCacheTupleCopy(RULENAME,
 									PointerGetDatum(ruleName),
@@ -99,44 +89,49 @@ RemoveRewriteRule(char *ruleName)
 	}
 
 	/*
-	 * Store the OID of the rule (i.e. the tuple's OID) and the event
+	 * Save the OID of the rule (i.e. the tuple's OID) and the event
 	 * relation's OID
 	 */
 	ruleId = tuple->t_data->t_oid;
-	eventRelationOidDatum = heap_getattr(tuple,
-										 Anum_pg_rewrite_ev_class,
-									   RelationGetDescr(RewriteRelation),
-										 &isNull);
-	if (isNull)
-	{
-		/* XXX strange!!! */
-		heap_freetuple(tuple);
-		elog(ERROR, "RemoveRewriteRule: internal error; null event target relation!");
-	}
-	eventRelationOid = DatumGetObjectId(eventRelationOidDatum);
+	eventRelationOid = ((Form_pg_rewrite) GETSTRUCT(tuple))->ev_class;
 
 	/*
-	 * Now delete the relation level locks from the updated relation.
-	 * (Make sure we do this before we remove the rule from pg_rewrite.
-	 * Otherwise, heap_openr on eventRelationOid which reads pg_rwrite for
-	 * the rules will fail.)
+	 * We had better grab AccessExclusiveLock so that we know no other
+	 * rule additions/deletions are going on for this relation.  Else
+	 * we cannot set relhasrules correctly.  Besides, we don't want to
+	 * be changing the ruleset while queries are executing on the rel.
 	 */
-	prs2_deleteFromRelation(eventRelationOid, ruleId);
+	event_relation = heap_open(eventRelationOid, AccessExclusiveLock);
+
+	hasMoreRules = event_relation->rd_rules != NULL &&
+		event_relation->rd_rules->numLocks > 1;
 
 	/*
 	 * Delete any comments associated with this rule
-	 *
 	 */
-
 	DeleteComments(ruleId);
 
 	/*
-	 * Now delete the tuple...
+	 * Now delete the pg_rewrite tuple for the rule
 	 */
 	heap_delete(RewriteRelation, &tuple->t_self, NULL);
 
 	heap_freetuple(tuple);
+
 	heap_close(RewriteRelation, RowExclusiveLock);
+
+	/*
+	 * Set pg_class 'relhasrules' field correctly for event relation.
+	 *
+	 * Important side effect: an SI notice is broadcast to force all
+	 * backends (including me!) to update relcache entries with the
+	 * new rule set.  Therefore, must do this even if relhasrules is
+	 * still true!
+	 */
+	setRelhasrulesInRelation(eventRelationOid, hasMoreRules);
+
+	/* Close rel, but keep lock till commit... */
+	heap_close(event_relation, NoLock);
 }
 
 /*

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.120 2000/06/28 03:31:23 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.121 2000/06/30 07:04:17 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -369,16 +369,21 @@ ConstructTupleDescriptor(Oid heapoid,
 
 /* ----------------------------------------------------------------
  * AccessMethodObjectIdGetForm
- *		Returns the formated access method tuple given its object identifier.
+ *		Returns an access method tuple given its object identifier,
+ *		or NULL if no such AM tuple can be found.
  *
- * XXX ADD INDEXING
+ * Scanning is done using CurrentMemoryContext as working storage,
+ * but the returned tuple will be allocated in resultCxt (which is
+ * typically CacheMemoryContext).
  *
- * Note:
- *		Assumes object identifier is valid.
+ * There was a note here about adding indexing, but I don't see a need
+ * for it.  There are so few tuples in pg_am that an indexscan would
+ * surely be slower.
  * ----------------------------------------------------------------
  */
 Form_pg_am
-AccessMethodObjectIdGetForm(Oid accessMethodObjectId)
+AccessMethodObjectIdGetForm(Oid accessMethodObjectId,
+							MemoryContext resultCxt)
 {
 	Relation	pg_am_desc;
 	HeapScanDesc pg_am_scan;
@@ -415,10 +420,10 @@ AccessMethodObjectIdGetForm(Oid accessMethodObjectId)
 	}
 
 	/* ----------------
-	 *	if found am tuple, then copy the form and return the copy
+	 *	if found AM tuple, then copy it into resultCxt and return the copy
 	 * ----------------
 	 */
-	aform = (Form_pg_am) palloc(sizeof *aform);
+	aform = (Form_pg_am) MemoryContextAlloc(resultCxt, sizeof *aform);
 	memcpy(aform, GETSTRUCT(pg_am_tuple), sizeof *aform);
 
 	heap_endscan(pg_am_scan);
@@ -434,22 +439,8 @@ AccessMethodObjectIdGetForm(Oid accessMethodObjectId)
 static void
 ConstructIndexReldesc(Relation indexRelation, Oid amoid)
 {
-	MemoryContext oldcxt;
-
-	/* ----------------
-	 *	  here we make certain to allocate the access method
-	 *	  tuple within the cache context lest it vanish when the
-	 *	  context changes
-	 * ----------------
-	 */
-	if (!CacheMemoryContext)
-		CreateCacheMemoryContext();
-
-	oldcxt = MemoryContextSwitchTo(CacheMemoryContext);
-
-	indexRelation->rd_am = AccessMethodObjectIdGetForm(amoid);
-
-	MemoryContextSwitchTo(oldcxt);
+	indexRelation->rd_am = AccessMethodObjectIdGetForm(amoid,
+													   CacheMemoryContext);
 
 	/* ----------------
 	 *	 XXX missing the initialization of some other fields

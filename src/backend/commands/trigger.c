@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/trigger.c,v 1.70 2000/06/28 03:31:28 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/trigger.c,v 1.71 2000/06/30 07:04:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -431,10 +431,17 @@ RelationRemoveTriggers(Relation rel)
 	heap_close(tgrel, RowExclusiveLock);
 }
 
+/*
+ * Build trigger data to attach to the given relcache entry.
+ *
+ * Note that trigger data must be allocated in CacheMemoryContext
+ * to ensure it survives as long as the relcache entry.  But we
+ * are probably running in a less long-lived working context.
+ */
 void
 RelationBuildTriggers(Relation relation)
 {
-	TriggerDesc *trigdesc = (TriggerDesc *) palloc(sizeof(TriggerDesc));
+	TriggerDesc *trigdesc;
 	int			ntrigs = relation->rd_rel->reltriggers;
 	Trigger    *triggers = NULL;
 	Trigger    *build;
@@ -453,6 +460,8 @@ RelationBuildTriggers(Relation relation)
 	int			found;
 	bool		hasindex;
 
+	trigdesc = (TriggerDesc *) MemoryContextAlloc(CacheMemoryContext,
+												  sizeof(TriggerDesc));
 	MemSet(trigdesc, 0, sizeof(TriggerDesc));
 
 	ScanKeyEntryInitialize(&skey,
@@ -499,13 +508,16 @@ RelationBuildTriggers(Relation relation)
 		pg_trigger = (Form_pg_trigger) GETSTRUCT(htup);
 
 		if (triggers == NULL)
-			triggers = (Trigger *) palloc(sizeof(Trigger));
+			triggers = (Trigger *) MemoryContextAlloc(CacheMemoryContext,
+													  sizeof(Trigger));
 		else
-			triggers = (Trigger *) repalloc(triggers, (found + 1) * sizeof(Trigger));
+			triggers = (Trigger *) repalloc(triggers,
+											(found + 1) * sizeof(Trigger));
 		build = &(triggers[found]);
 
 		build->tgoid = htup->t_data->t_oid;
-		build->tgname = nameout(&pg_trigger->tgname);
+		build->tgname = MemoryContextStrdup(CacheMemoryContext,
+											nameout(&pg_trigger->tgname));
 		build->tgfoid = pg_trigger->tgfoid;
 		build->tgfunc.fn_oid = InvalidOid; /* mark FmgrInfo as uninitialized */
 		build->tgtype = pg_trigger->tgtype;
@@ -514,7 +526,8 @@ RelationBuildTriggers(Relation relation)
 		build->tgdeferrable = pg_trigger->tgdeferrable;
 		build->tginitdeferred = pg_trigger->tginitdeferred;
 		build->tgnargs = pg_trigger->tgnargs;
-		memcpy(build->tgattr, &(pg_trigger->tgattr), FUNC_MAX_ARGS * sizeof(int16));
+		memcpy(build->tgattr, &(pg_trigger->tgattr),
+			   FUNC_MAX_ARGS * sizeof(int16));
 		val = (struct varlena *) fastgetattr(htup,
 											 Anum_pg_trigger_tgargs,
 											 tgrel->rd_att, &isnull);
@@ -533,10 +546,13 @@ RelationBuildTriggers(Relation relation)
 				elog(ERROR, "RelationBuildTriggers: tgargs IS NULL for rel %s",
 					 RelationGetRelationName(relation));
 			p = (char *) VARDATA(val);
-			build->tgargs = (char **) palloc(build->tgnargs * sizeof(char *));
+			build->tgargs = (char **)
+				MemoryContextAlloc(CacheMemoryContext,
+								   build->tgnargs * sizeof(char *));
 			for (i = 0; i < build->tgnargs; i++)
 			{
-				build->tgargs[i] = pstrdup(p);
+				build->tgargs[i] = MemoryContextStrdup(CacheMemoryContext,
+													   p);
 				p += strlen(p) + 1;
 			}
 		}
@@ -611,7 +627,8 @@ DescribeTrigger(TriggerDesc *trigdesc, Trigger *trigger)
 	{
 		tp = &(t[TRIGGER_EVENT_INSERT]);
 		if (*tp == NULL)
-			*tp = (Trigger **) palloc(sizeof(Trigger *));
+			*tp = (Trigger **) MemoryContextAlloc(CacheMemoryContext,
+												  sizeof(Trigger *));
 		else
 			*tp = (Trigger **) repalloc(*tp, (n[TRIGGER_EVENT_INSERT] + 1) *
 										sizeof(Trigger *));
@@ -623,7 +640,8 @@ DescribeTrigger(TriggerDesc *trigdesc, Trigger *trigger)
 	{
 		tp = &(t[TRIGGER_EVENT_DELETE]);
 		if (*tp == NULL)
-			*tp = (Trigger **) palloc(sizeof(Trigger *));
+			*tp = (Trigger **) MemoryContextAlloc(CacheMemoryContext,
+												  sizeof(Trigger *));
 		else
 			*tp = (Trigger **) repalloc(*tp, (n[TRIGGER_EVENT_DELETE] + 1) *
 										sizeof(Trigger *));
@@ -635,7 +653,8 @@ DescribeTrigger(TriggerDesc *trigdesc, Trigger *trigger)
 	{
 		tp = &(t[TRIGGER_EVENT_UPDATE]);
 		if (*tp == NULL)
-			*tp = (Trigger **) palloc(sizeof(Trigger *));
+			*tp = (Trigger **) MemoryContextAlloc(CacheMemoryContext,
+												  sizeof(Trigger *));
 		else
 			*tp = (Trigger **) repalloc(*tp, (n[TRIGGER_EVENT_UPDATE] + 1) *
 										sizeof(Trigger *));
@@ -1023,10 +1042,9 @@ ltrmark:;
 
 /* ----------
  * Internal data to the deferred trigger mechanism is held
- * during entire session in a global memor created at startup and
- * over statements/commands in a separate global memory which
- * is created at transaction start and destroyed at transaction
- * end.
+ * during entire session in a global context created at startup and
+ * over statements/commands in a separate context which
+ * is created at transaction start and destroyed at transaction end.
  * ----------
  */
 static MemoryContext deftrig_gcxt = NULL;

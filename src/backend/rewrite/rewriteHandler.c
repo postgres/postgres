@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.76 2000/06/15 03:32:22 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.77 2000/06/30 07:04:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1332,11 +1332,11 @@ RewriteQuery(Query *parsetree, bool *instead_flag, List **qual_products)
 	rt_entry = rt_fetch(result_relation, parsetree->rtable);
 	rt_entry_relation = heap_openr(rt_entry->relname, AccessShareLock);
 	rt_entry_locks = rt_entry_relation->rd_rules;
-	heap_close(rt_entry_relation, AccessShareLock);
 
 	if (rt_entry_locks != NULL)
 	{
-		List	   *locks = matchLocks(event, rt_entry_locks, result_relation, parsetree);
+		List	   *locks = matchLocks(event, rt_entry_locks,
+									   result_relation, parsetree);
 
 		product_queries = fireRules(parsetree,
 									result_relation,
@@ -1346,13 +1346,15 @@ RewriteQuery(Query *parsetree, bool *instead_flag, List **qual_products)
 									qual_products);
 	}
 
+	heap_close(rt_entry_relation, AccessShareLock);
+
 	return product_queries;
 }
 
 
 /*
  * to avoid infinite recursion, we restrict the number of times a query
- * can be rewritten. Detecting cycles is left for the reader as an excercise.
+ * can be rewritten. Detecting cycles is left for the reader as an exercise.
  */
 #ifndef REWRITE_INVOKE_MAX
 #define REWRITE_INVOKE_MAX		10
@@ -1372,8 +1374,6 @@ deepRewriteQuery(Query *parsetree)
 	List	   *result = NIL;
 	bool		instead;
 	List	   *qual_products = NIL;
-
-
 
 	if (++numQueryRewriteInvoked > REWRITE_INVOKE_MAX)
 	{
