@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.3 1996/09/10 06:48:01 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.4 1996/09/19 19:57:18 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -61,6 +61,18 @@ static void ExecReplace(TupleTableSlot *slot, ItemPointer tupleid,
 			EState *estate, Query *parseTree);
 
 /* end of local decls */
+
+#ifdef QUERY_LIMIT
+static int queryLimit = ALL_TUPLES;
+#undef ALL_TUPLES
+#define ALL_TUPLES queryLimit
+
+int
+ExecutorLimit(int limit)
+{
+    return queryLimit = limit;
+}
+#endif
 
 /* ----------------------------------------------------------------
  *   	ExecutorStart
