@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Thu Jul 27 14:47:28 EDT 2000
+Last updated:		Thu Jul 27 14:49:13 EDT 2000
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -145,7 +145,7 @@ CLIENTS
 * Update reltuples from COPY command
 * fix array handling for ECPG
 * add pg_dump option to dump type names as standard ANSI types
-* make pg_dump dump in oid order, so dependencies are resolved
+* -make pg_dump dump in oid order, so dependencies are resolved (Philip)
 * allow psql \d to show primary and foreign keys
 * allow psql \d to show temporary table schema
 
@@ -278,6 +278,7 @@ Developers who have claimed items are:
 	* Michael is Michael Meskes <meskes@postgresql.org>
 	* Oleg is Oleg Bartunov <oleg@sai.msu.su>
 	* Peter is Peter T Mount <peter@retep.org.uk>
+	* Philip Warner <pjw@rhyme.com.au>
 	* Peter E is Peter Eisentraut<peter_e@gmx.net>
 	* Ryan is Ryan Bradetich <rbrad@hpb50023.boi.hp.com>
 	* Stefan Simkovics <ssimkovi@rainbow.studorg.tuwien.ac.at>
