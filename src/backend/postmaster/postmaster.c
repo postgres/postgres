@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.290.2.2 2003/01/16 00:27:17 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.290.2.3 2003/02/23 04:48:38 tgl Exp $
  *
  * NOTES
  *
@@ -1621,7 +1621,26 @@ reaper(SIGNAL_ARGS)
 				ExitPostmaster(1);
 			}
 			StartupPID = 0;
+
+			/*
+			 * Startup succeeded - remember its ID and RedoRecPtr.
+			 *
+			 * NB: this MUST happen before we fork a checkpoint or shutdown
+			 * subprocess, else they will have wrong local ThisStartUpId.
+			 */
+			SetThisStartUpID();
+
 			FatalError = false; /* done with recovery */
+
+			/*
+			 * Arrange for first checkpoint to occur after standard delay.
+			 */
+			CheckPointPID = 0;
+			checkpointed = time(NULL);
+
+			/*
+			 * Go to shutdown mode if a shutdown request was pending.
+			 */
 			if (Shutdown > NoShutdown)
 			{
 				if (ShutdownPID > 0)
@@ -1632,17 +1651,6 @@ reaper(SIGNAL_ARGS)
 				}
 				ShutdownPID = ShutdownDataBase();
 			}
-
-			/*
-			 * Startup succeeded - remember its ID and RedoRecPtr
-			 */
-			SetThisStartUpID();
-
-			/*
-			 * Arrange for first checkpoint to occur after standard delay.
-			 */
-			CheckPointPID = 0;
-			checkpointed = time(NULL);
 
 			goto reaper_done;
 		}
