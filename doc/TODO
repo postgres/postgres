@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Thu Jun 10 00:06:02 EDT 2004
+Last updated:		Thu Jun 10 00:33:46 EDT 2004
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -271,6 +271,7 @@ Clients
 * Have pg_dump use multi-statement transactions for INSERT dumps
 * Move psql backslash database information into the backend, use mnemonic
   commands? [psql]
+* Allow pg_dump to use multiple -t and -n switches
 
 
 * ECPG
