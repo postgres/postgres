@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/ecpg.c,v 1.57 2002/09/04 20:31:46 momjian Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/ecpg.c,v 1.58 2002/10/18 22:05:36 petere Exp $ */
 
 /* New main for ecpg, the PostgreSQL embedded SQL precompiler. */
 /* (C) Michael Meskes <meskes@postgresql.org> Feb 5th, 1998 */
@@ -29,27 +29,23 @@ help(const char *progname)
 {
 	printf("%s is the PostgreSQL embedded SQL preprocessor for C programs.\n\n",
 		   progname);
-	/* printf is a macro some places; don't #ifdef inside its arguments */
-#ifdef YYDEBUG
 	printf("Usage:\n"
-		   "  %s [-d] [-I DIRECTORY] [-o OUTFILE] [-t] [-c] [-D symbol] file1 [file2...]\n\n",
+		   "  %s [OPTION]... FILE...\n\n",
 		   progname);
-#else
-	printf("Usage:\n"
-		   "  %s [-I DIRECTORY] [-o OUTFILE] [-t] [-c] [-D symbol] file1 [file2...]\n\n",
-		   progname);
-#endif
 	printf("Options:\n");
+	printf("  -c             automatically generate C code from embedded SQL code;\n"
+		   "                 currently this works for EXEC SQL TYPE\n");
 #ifdef YYDEBUG
-	printf("  -d                   generate parser debug output\n");
+	printf("  -d             generate parser debug output\n");
 #endif
-	printf("  -I DIRECTORY         search DIRECTORY for include files\n");
-	printf("  -o OUTFILE           write result to OUTFILE\n");
-	printf("  -t                   turn on autocommit of transactions\n");
-	printf("  -c                   automatically generate C code from embedded SQL code\n                        currently this works for EXEC SQL TYPE\n");
-	printf("  -D symbol           define symbo\n");
-	printf("\nIf no output file is specified, the name is formed by adding .c\n"
-	   "to the input file name, after stripping off .pgc if present.\n");
+	printf("  -D SYMBOL      define SYMBOL\n");
+	printf("  -I DIRECTORY   search DIRECTORY for include files\n");
+	printf("  -o OUTFILE     write result to OUTFILE\n");
+	printf("  -t             turn on autocommit of transactions\n");
+	printf("  --help         show this help, then exit\n");
+	printf("  --version      output version information, then exit\n");
+	printf("\nIf no output file is specified, the name is formed by adding .c to the\n"
+		   "input file name, after stripping off .pgc if present.\n");
 	printf("\nReport bugs to <pgsql-bugs@postgresql.org>.\n");
 }
 

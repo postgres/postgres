@@ -12,7 +12,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/vacuumdb,v 1.25 2002/10/16 03:44:28 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/vacuumdb,v 1.26 2002/10/18 22:05:36 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -126,21 +126,24 @@ if [ "$usage" ]; then
         echo "$CMDNAME cleans and analyzes a PostgreSQL database."
         echo
 	echo "Usage:"
-        echo "  $CMDNAME [options] [dbname]"
+        echo "  $CMDNAME [OPTION]... [DBNAME]"
 	echo
         echo "Options:"
-	echo "  -h, --host=HOSTNAME             Database server host"
-	echo "  -p, --port=PORT                 Database server port"
-	echo "  -U, --username=USERNAME         Username to connect as"
-	echo "  -W, --password                  Prompt for password"
-	echo "  -d, --dbname=DBNAME             Database to vacuum"
-	echo "  -a, --all                       Vacuum all databases"
-	echo "  -t, --table='TABLE[(columns)]'  Vacuum specific table only"
-	echo "  -f, --full                      Do full vacuuming"
-	echo "  -v, --verbose                   Write a lot of output"
-	echo "  -z, --analyze                   Update optimizer hints"
-	echo "  -e, --echo                      Show the command being sent to the backend"
-        echo "  -q, --quiet                     Don't write any output"
+	echo "  -a, --all                       vacuum all databases"
+	echo "  -d, --dbname=DBNAME             database to vacuum"
+	echo "  -t, --table='TABLE[(columns)]'  vacuum specific table only"
+	echo "  -f, --full                      do full vacuuming"
+	echo "  -z, --analyze                   update optimizer hints"
+	echo "  -e, --echo                      show the command being sent to the backend"
+        echo "  -q, --quiet                     don't write any output"
+	echo "  -v, --verbose                   write a lot of output"
+	echo " --help                           show this help, then exit"
+	echo
+	echo "Connection options:"
+	echo "  -h, --host=HOSTNAME             database server host"
+	echo "  -p, --port=PORT                 database server port"
+	echo "  -U, --username=USERNAME         user name to connect as"
+	echo "  -W, --password                  prompt for password"
         echo
         echo "Read the description of the SQL command VACUUM for details."
         echo

@@ -8,7 +8,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/pg_ctl/Attic/pg_ctl.sh,v 1.29 2002/08/17 15:12:07 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/bin/pg_ctl/Attic/pg_ctl.sh,v 1.30 2002/10/18 22:05:35 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -26,29 +26,30 @@ Usage:
   $CMDNAME status  [-D DATADIR]
 
 Common options:
-  -D DATADIR            Location of the database storage area
-  -s                    Only print errors, no informational messages
-  -w                    Wait until operation completes
-  -W                    Do not wait until operation completes
+  -D DATADIR   location of the database storage area
+  -s           only print errors, no informational messages
+  -w           wait until operation completes
+  -W           do not wait until operation completes
+  --help       show this help, then exit
+  --version    output version information, then exit
 (The default is to wait for shutdown, but not for start or restart.)
 
 If the -D option is omitted, the environment variable PGDATA is used.
 
 Options for start or restart:
-  -l FILENAME           Write (or append) server log to FILENAME.  The
-                        use of this option is highly recommended.
-  -o OPTIONS            Command line options to pass to the postmaster
-                        (PostgreSQL server executable)
-  -p PATH-TO-POSTMASTER Normally not necessary
+  -l FILENAME             write (or append) server log to FILENAME.  The
+                          use of this option is highly recommended.
+  -o OPTIONS              command line options to pass to the postmaster
+                          (PostgreSQL server executable)
+  -p PATH-TO-POSTMASTER   normally not necessary
 
 Options for stop or restart:
-  -m SHUTDOWN-MODE      May be 'smart', 'fast', or 'immediate'
+  -m SHUTDOWN-MODE   may be 'smart', 'fast', or 'immediate'
 
 Shutdown modes are:
-  smart                 Quit after all clients have disconnected
-  fast                  Quit directly, with proper shutdown
-  immediate             Quit without complete shutdown; will lead
-                        to recovery run on restart
+  smart       quit after all clients have disconnected
+  fast        quit directly, with proper shutdown
+  immediate   quit without complete shutdown; will lead to recovery on restart
 
 Report bugs to <pgsql-bugs@postgresql.org>."
 

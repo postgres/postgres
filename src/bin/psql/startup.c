@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/startup.c,v 1.67 2002/09/22 20:57:21 petere Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/startup.c,v 1.68 2002/10/18 22:05:36 petere Exp $
  */
 #include "postgres_fe.h"
 
@@ -640,11 +640,6 @@ showVersion(void)
 #if defined(USE_READLINE)
 	puts(gettext("contains support for command-line editing"));
 #endif
-
-	puts(gettext("Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group\n"
-				 "Portions Copyright (c) 1996, Regents of the University of California\n"
-	"Read the file COPYRIGHT or use the command \\copyright to see the\n"
-				 "usage and distribution terms."));
 }
 
 

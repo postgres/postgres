@@ -27,7 +27,7 @@
 # Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.175 2002/09/24 23:14:25 tgl Exp $
+# $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.176 2002/10/18 22:05:35 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -335,24 +335,30 @@ if [ "$usage" ]; then
     echo "$CMDNAME initializes a PostgreSQL database cluster."
     echo
     echo "Usage:"
-    echo "  $CMDNAME [options] datadir"
+    echo "  $CMDNAME [OPTION]... [DATADIR]"
     echo
     echo "Options:"
-    echo " [-D, --pgdata] DATADIR       Location for this database cluster"
-    echo "  -W, --pwprompt              Prompt for a password for the new superuser"
-    echo "  -E, --encoding ENCODING     Set default encoding for new databases"
-    echo "  --locale LOCALE             Initialize database cluster with given locale"
-    echo "  --lc-collate, --lc-ctype, --lc-messages LOCALE"
-    echo "  --lc-monetary, --lc-numeric, --lc-time LOCALE"
-    echo "                              Initialize database cluster with given locale"
-    echo "                              in the respective category"
-    echo "                              (default taken from environment)"
-    echo "  --no-locale                 Equivalent to --locale=C"
-    echo "  -U, --username NAME         Database superuser name"
+    echo " [-D, --pgdata=]DATADIR     location for this database cluster"
+    echo "  -E, --encoding=ENCODING   set default encoding for new databases"
+    echo "  --locale=LOCALE           initialize database cluster with given locale"
+    echo "  --lc-collate, --lc-ctype, --lc-messages=LOCALE"
+    echo "  --lc-monetary, --lc-numeric, --lc-time=LOCALE"
+    echo "                            initialize database cluster with given locale"
+    echo "                            in the respective category (default taken from"
+    echo "                            environment)"
+    echo "  --no-locale               equivalent to --locale=C"
+    echo "  -U, --username=NAME       database superuser name"
+    echo "  -W, --pwprompt            prompt for a password for the new superuser"
+    echo "  --help                    show this help, then exit"
+    echo "  --version                 output version information, then exit"
+    echo
     echo "Less commonly used options: "
-    echo "  -L DIRECTORY                Where to find the input files"
-    echo "  -d, --debug                 Generate lots of debugging output"
-    echo "  -n, --noclean               Do not clean up after errors"
+    echo "  -d, --debug               generate lots of debugging output"
+    echo "  -L DIRECTORY              where to find the input files"
+    echo "  -n, --noclean             do not clean up after errors"
+    echo
+    echo "If the data directory is not specified, the environment variable PGDATA"
+    echo "is used."
     echo
     echo "Report bugs to <pgsql-bugs@postgresql.org>."
     exit 0

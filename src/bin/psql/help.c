@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/help.c,v 1.57 2002/09/22 20:57:21 petere Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/help.c,v 1.58 2002/10/18 22:05:36 petere Exp $
  */
 #include "postgres_fe.h"
 #include "print.h"
@@ -83,58 +83,58 @@ usage(void)
 	printf(_("This is psql %s, the PostgreSQL interactive terminal.\n\n"),
 		   PG_VERSION);
 	puts(_("Usage:"));
-	puts(_("  psql [OPTIONS] [DBNAME [USERNAME]]\n"));
-	puts(_("Options:"));
-	puts(_("  -a              Echo all input from script"));
-	puts(_("  -A              Unaligned table output mode (-P format=unaligned)"));
-	puts(_("  -c COMMAND      Run only single command (SQL or internal) and exit"));
+	puts(_("  psql [OPTIONS]... [DBNAME [USERNAME]]\n"));
 
+	puts(_("General options:"));
 	/* Display default database */
 	env = getenv("PGDATABASE");
 	if (!env)
 		env = user;
-	printf(_("  -d DBNAME       Specify database name to connect to (default: %s)\n"), env);
+	printf(_("  -d DBNAME       specify database name to connect to (default: %s)\n"), env);
+	puts(_("  -c COMMAND      run only single command (SQL or internal) and exit"));
+	puts(_("  -f FILENAME     execute commands from file, then exit"));
+	puts(_("  -l              list available databases, then exit"));
+	puts(_("  -v NAME=VALUE   set psql variable 'NAME' to 'VALUE'"));
+	puts(_("  -X              do not read startup file (~/.psqlrc)"));
+	puts(_("  --help          show this help, then exit"));
+	puts(_("  --version       output version information, then exit"));
 
-	puts(_("  -e              Echo commands sent to server"));
-	puts(_("  -E              Display queries that internal commands generate"));
-	puts(_("  -f FILENAME     Execute commands from file, then exit"));
-	printf(_("  -F STRING       Set field separator (default: \"%s\") (-P fieldsep=)\n"),
+	puts(_("\nInput and output options:"));
+	puts(_("  -a              echo all input from script"));
+	puts(_("  -e              echo commands sent to server"));
+	puts(_("  -E              display queries that internal commands generate"));
+	puts(_("  -q              run quietly (no messages, only query output)"));
+	puts(_("  -o FILENAME     send query results to file (or |pipe)"));
+	puts(_("  -n              disable enhanced command line editing (readline)"));
+	puts(_("  -s              single step mode (confirm each query)"));
+	puts(_("  -S              single line mode (end of line terminates SQL command)"));
+
+	puts(_("\nOutput format options:"));
+	puts(_("  -A              unaligned table output mode (-P format=unaligned)"));
+	puts(_("  -H              HTML table output mode (-P format=html)"));
+	puts(_("  -t              print rows only (-P tuples_only)"));
+	puts(_("  -T TEXT         set HTML table tag attributes (width, border) (-P tableattr=)"));
+	puts(_("  -x              turn on expanded table output (-P expanded)"));
+	puts(_("  -P VAR[=ARG]    set printing option 'VAR' to 'ARG' (see \\pset command)"));
+	printf(_("  -F STRING       set field separator (default: \"%s\") (-P fieldsep=)\n"),
 		   DEFAULT_FIELD_SEP);
+	puts(_("  -R STRING       set record separator (default: newline) (-P recordsep=)"));
 
+	puts(_("\nConnection options:"));
 	/* Display default host */
 	env = getenv("PGHOST");
-	printf(_("  -h HOSTNAME     Specify database server host (default: %s)\n"),
+	printf(_("  -h HOSTNAME     specify database server host (default: %s)\n"),
 		   env ? env : _("local socket"));
-
-	puts(_("  -H              HTML table output mode (-P format=html)"));
-	puts(_("  -l              List available databases, then exit"));
-	puts(_("  -n              Disable enhanced command line editing (readline)"));
-	puts(_("  -o FILENAME     Send query results to file (or |pipe)"));
-
 	/* Display default port */
 	env = getenv("PGPORT");
-	printf(_("  -p PORT         Specify database server port (default: %s)\n"),
+	printf(_("  -p PORT         specify database server port (default: %s)\n"),
 		   env ? env : DEF_PGPORT_STR);
-
-	puts(_("  -P VAR[=ARG]    Set printing option 'VAR' to 'ARG' (see \\pset command)"));
-	puts(_("  -q              Run quietly (no messages, only query output)"));
-	puts(_("  -R STRING       Set record separator (default: newline) (-P recordsep=)"));
-	puts(_("  -s              Single step mode (confirm each query)"));
-	puts(_("  -S              Single line mode (end of line terminates SQL command)"));
-	puts(_("  -t              Print rows only (-P tuples_only)"));
-	puts(_("  -T TEXT         Set HTML table tag attributes (width, border) (-P tableattr=)"));
-
 	/* Display default user */
 	env = getenv("PGUSER");
 	if (!env)
 		env = user;
-	printf(_("  -U NAME         Specify database user name (default: %s)\n"), env);
-
-	puts(_("  -v NAME=VALUE   Set psql variable 'NAME' to 'VALUE'"));
-	puts(_("  -V              Show version information and exit"));
-	puts(_("  -W              Prompt for password (should happen automatically)"));
-	puts(_("  -x              Turn on expanded table output (-P expanded)"));
-	puts(_("  -X              Do not read startup file (~/.psqlrc)"));
+	printf(_("  -U NAME         specify database user name (default: %s)\n"), env);
+	puts(_("  -W              prompt for password (should happen automatically)"));
 
 	puts(_(
 		   "\nFor more information, type \"\\?\" (for internal commands) or \"\\help\"\n"

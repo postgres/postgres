@@ -9,7 +9,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/dropuser,v 1.20 2002/10/16 03:44:28 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/dropuser,v 1.21 2002/10/18 22:05:36 petere Exp $
 #
 # Note - this should NOT be setuid.
 #
@@ -110,16 +110,17 @@ if [ "$usage" ]; then
 	echo "$CMDNAME removes a PostgreSQL user."
         echo
 	echo "Usage:"
-        echo "  $CMDNAME [options] [username]"
+        echo "  $CMDNAME [OPTION]... [USERNAME]"
         echo
 	echo "Options:"
-	echo "  -h, --host=HOSTNAME             Database server host"
-	echo "  -p, --port=PORT                 Database server port"
-	echo "  -U, --username=USERNAME         Username to connect as (not the one to drop)"
-	echo "  -W, --password                  Prompt for password to connect"
-	echo "  -i, --interactive               Prompt before deleting anything"
-        echo "  -e, --echo                      Show the query being sent to the backend"
-        echo "  -q, --quiet                     Don't write any messages"
+        echo "  -e, --echo                show the query being sent to the backend"
+	echo "  -i, --interactive         prompt before deleting anything"
+        echo "  -q, --quiet               don't write any messages"
+	echo "  -h, --host=HOSTNAME       database server host"
+	echo "  -p, --port=PORT           database server port"
+	echo "  -U, --username=USERNAME   user name to connect as (not the one to drop)"
+	echo "  -W, --password            prompt for password to connect"
+	echo " --help                     show this help, then exit"
 	echo
 	echo "Report bugs to <pgsql-bugs@postgresql.org>."
 	exit 0

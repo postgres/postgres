@@ -9,7 +9,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/createuser,v 1.28 2002/10/16 03:44:28 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/createuser,v 1.29 2002/10/18 22:05:36 petere Exp $
 #
 # Note - this should NOT be setuid.
 #
@@ -141,25 +141,28 @@ if [ "$usage" ]; then
         echo "$CMDNAME creates a new PostgreSQL user."
         echo
 	echo "Usage:"
-        echo "  $CMDNAME [options] [username]"
+        echo "  $CMDNAME [OPTION]... [USERNAME]"
         echo
 	echo "Options:"
-	echo "  -d, --createdb                  User can create new databases"
-	echo "  -D, --no-createdb               User cannot create databases"
-	echo "  -a, --adduser                   User can add new users"
-	echo "  -A, --no-adduser                User cannot add new users"
-	echo "  -i, --sysid=SYSID               Select sysid for new user"     
-	echo "  -P, --pwprompt                  Assign a password to new user"
-	echo "  -E, --encrypted                 Encrypt stored password"
-	echo "  -N, --unencrypted               Do no encrypt stored password"
-	echo "  -h, --host=HOSTNAME             Database server host"
-	echo "  -p, --port=PORT                 Database server port"
-	echo "  -U, --username=USERNAME         Username to connect as (not the one to create)"
-	echo "  -W, --password                  Prompt for password to connect"
-	echo "  -e, --echo                      Show the query being sent to the backend"
-        echo "  -q, --quiet                     Don't write any messages"
+	echo "  -a, --adduser             user can add new users"
+	echo "  -A, --no-adduser          user cannot add new users"
+	echo "  -d, --createdb            user can create new databases"
+	echo "  -D, --no-createdb         user cannot create databases"
+	echo "  -P, --pwprompt            assign a password to new user"
+	echo "  -E, --encrypted           encrypt stored password"
+	echo "  -N, --unencrypted         do no encrypt stored password"
+	echo "  -i, --sysid=SYSID         select sysid for new user"     
+	echo "  -e, --echo                show the query being sent to the backend"
+        echo "  -q, --quiet               don't write any messages"
+	echo " --help                     show this help, then exit"
 	echo
-        echo "If one of -d, -D, -a, -A, and 'username' is not specified, you will"
+	echo "Connection options:"
+	echo "  -h, --host=HOSTNAME       database server host"
+	echo "  -p, --port=PORT           database server port"
+	echo "  -U, --username=USERNAME   user name to connect as (not the one to create)"
+	echo "  -W, --password            prompt for password to connect"
+	echo
+        echo "If one of -a, -A, -d, -D, and USERNAME is not specified, you will"
         echo "be prompted interactively."
         echo
 	echo "Report bugs to <pgsql-bugs@postgresql.org>."

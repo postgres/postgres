@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.289 2002/09/26 05:17:00 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.290 2002/10/18 22:05:35 petere Exp $
  *
  * NOTES
  *
@@ -846,7 +846,7 @@ static void
 usage(const char *progname)
 {
 	printf(gettext("%s is the PostgreSQL server.\n\n"), progname);
-	printf(gettext("Usage:\n  %s [options...]\n\n"), progname);
+	printf(gettext("Usage:\n  %s [OPTION]...\n\n"), progname);
 	printf(gettext("Options:\n"));
 #ifdef USE_ASSERT_CHECKING
 	printf(gettext("  -A 1|0          enable/disable run-time assert checking\n"));
@@ -867,6 +867,8 @@ usage(const char *progname)
 	printf(gettext("  -o OPTIONS      pass 'OPTIONS' to each backend server\n"));
 	printf(gettext("  -p PORT         port number to listen on (default %d)\n"), DEF_PGPORT);
 	printf(gettext("  -S              silent mode (start in background without logging output)\n"));
+	printf(gettext("  --help          show this help, then exit\n"));
+	printf(gettext("  --version       output version information, then exit\n"));
 
 	printf(gettext("\nDeveloper options:\n"));
 	printf(gettext("  -n              do not reinitialize shared memory after abnormal exit\n"));

@@ -7,7 +7,7 @@
 # Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/bin/scripts/Attic/createlang.sh,v 1.41 2002/10/16 03:44:28 momjian Exp $
+# $Header: /cvsroot/pgsql/src/bin/scripts/Attic/createlang.sh,v 1.42 2002/10/18 22:05:36 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -130,16 +130,17 @@ if [ -n "$usage" ]; then
         echo "$CMDNAME installs a procedural language into a PostgreSQL database."
 	echo
 	echo "Usage:"
-        echo "  $CMDNAME [options] langname [dbname]"
+        echo "  $CMDNAME [OPTION]... LANGNAME [DBNAME]"
         echo
 	echo "Options:"
-	echo "  -h, --host=HOSTNAME             Database server host"
-	echo "  -p, --port=PORT                 Database server port"
-	echo "  -U, --username=USERNAME         Username to connect as"
-	echo "  -W, --password                  Prompt for password"
-	echo "  -d, --dbname=DBNAME             Database to install language in"
-	echo "  -L, --pglib=DIRECTORY           Find language interpreter file in DIRECTORY"
-	echo "  -l, --list                      Show a list of currently installed languages"
+	echo "  -d, --dbname=DBNAME       database to install language in"
+	echo "  -l, --list                show a list of currently installed languages"
+	echo "  -L, --pglib=DIRECTORY     find language interpreter file in DIRECTORY"
+	echo "  -h, --host=HOSTNAME       database server host"
+	echo "  -p, --port=PORT           database server port"
+	echo "  -U, --username=USERNAME   user name to connect as"
+	echo "  -W, --password            prompt for password"
+	echo " --help                     show this help, then exit"
         echo
 	echo "Report bugs to <pgsql-bugs@postgresql.org>."
 	exit 0

@@ -11,7 +11,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/clusterdb,v 1.6 2002/10/16 03:44:28 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/clusterdb,v 1.7 2002/10/18 22:05:36 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -109,22 +109,25 @@ do
 done
 
 if [ "$usage" ]; then	
-	echo "$CMDNAME cluster all previously clustered tables in a database"
+	echo "$CMDNAME cluster all previously clustered tables in a database."
 	echo
 	echo "Usage:"
-	echo "  $CMDNAME [options] [dbname]"
+	echo "  $CMDNAME [OPTION]... [DBNAME]"
 	echo
 	echo "Options:"
-	echo "  -h, --host=HOSTNAME             Database server host"
-	echo "  -p, --port=PORT                 Database server port"
-	echo "  -U, --username=USERNAME         Username to connect as"
-	echo "  -W, --password                  Prompt for password"
-	echo "  -d, --dbname=DBNAME             Database to cluster"
-	echo "  -a, --all                       Cluster all databases"
-	echo "  -t, --table='TABLE'             Cluster specific table only"
-	echo "  -v, --verbose                   Write a lot of output"
-	echo "  -e, --echo                      Show the command being sent to the backend"
-	echo "  -q, --quiet                     Don't write any output"
+	echo "  -a, --all                 cluster all databases"
+	echo "  -d, --dbname=DBNAME       database to cluster"
+	echo "  -t, --table='TABLE'       cluster specific table only"
+	echo "  -e, --echo                show the command being sent to the backend"
+	echo "  -q, --quiet               don't write any output"
+	echo "  -v, --verbose             write a lot of output"
+	echo " --help                     show this help, then exit"
+	echo
+	echo "Connection options:"
+	echo "  -h, --host=HOSTNAME       database server host"
+	echo "  -p, --port=PORT           database server port"
+	echo "  -U, --username=USERNAME   user name to connect as"
+	echo "  -W, --password            prompt for password"
 	echo
 	echo "Read the description of the SQL command CLUSTER for details."
 	echo

@@ -12,7 +12,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/createdb,v 1.27 2002/10/16 03:44:28 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/createdb,v 1.28 2002/10/18 22:05:36 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -134,19 +134,22 @@ if [ "$usage" ]; then
         echo "$CMDNAME creates a PostgreSQL database."
         echo
 	echo "Usage:"
-        echo "  $CMDNAME [options] [dbname] [description]"
+        echo "  $CMDNAME [OPTION]... [DBNAME] [DESCRIPTION]"
         echo
 	echo "Options:"
-	echo "  -O, --owner=OWNER               Database user to own the new database"
-	echo "  -D, --location=PATH             Alternative place to store the database"
-	echo "  -T, --template=TEMPLATE         Template database to copy"
-	echo "  -E, --encoding=ENCODING         Encoding for the database"
-	echo "  -h, --host=HOSTNAME             Database server host"
-	echo "  -p, --port=PORT                 Database server port"
-	echo "  -U, --username=USERNAME         Username to connect as"
-	echo "  -W, --password                  Prompt for password"
-	echo "  -e, --echo                      Show the query being sent to the backend"
-        echo "  -q, --quiet                     Don't write any messages"
+	echo "  -D, --location=PATH       alternative place to store the database"
+	echo "  -E, --encoding=ENCODING   encoding for the database"
+	echo "  -O, --owner=OWNER         database user to own the new database"
+	echo "  -T, --template=TEMPLATE   template database to copy"
+	echo "  -e, --echo                show the query being sent to the backend"
+        echo "  -q, --quiet               don't write any messages"
+	echo "  --help                    show this help, then exit"
+	echo
+	echo "Connection options:"
+	echo "  -h, --host=HOSTNAME       database server host"
+	echo "  -p, --port=PORT           database server port"
+	echo "  -U, --username=USERNAME   user name to connect as"
+	echo "  -W, --password            prompt for password"
         echo
         echo "By default, a database with the same name as the current user is created."
 	echo

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.303 2002/10/14 23:49:20 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.304 2002/10/18 22:05:35 petere Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -1156,14 +1156,14 @@ usage(char *progname)
 {
 	printf("%s is the PostgreSQL stand-alone backend.  It is not\nintended to be used by normal users.\n\n", progname);
 
-	printf("Usage:\n  %s [options...] [dbname]\n\n", progname);
+	printf("Usage:\n  %s [OPTION]... [DBNAME]\n\n", progname);
 	printf("Options:\n");
 #ifdef USE_ASSERT_CHECKING
 	printf("  -A 1|0          enable/disable run-time assert checking\n");
 #endif
 	printf("  -B NBUFFERS     number of shared buffers (default %d)\n", DEF_NBUFFERS);
 	printf("  -c NAME=VALUE   set run-time parameter\n");
-	printf("  -d 1-5,0        debugging level (0 is off)\n");
+	printf("  -d 0-5          debugging level (0 is off)\n");
 	printf("  -D DATADIR      database directory\n");
 	printf("  -e              use European date format\n");
 	printf("  -E              echo query before execution\n");
@@ -1173,11 +1173,13 @@ usage(char *progname)
 	printf("  -P              disable system indexes\n");
 	printf("  -s              show statistics after each query\n");
 	printf("  -S SORT-MEM     set amount of memory for sorts (in kbytes)\n");
-	printf("Developer options:\n");
-	printf("  -f [s|i|n|m|h]  forbid use of some plan types\n");
+	printf("  --help          show this help, then exit\n");
+	printf("  --version       output version information, then exit\n");
+	printf("\nDeveloper options:\n");
+	printf("  -f s|i|n|m|h    forbid use of some plan types\n");
 	printf("  -i              do not execute queries\n");
 	printf("  -O              allow system table structure changes\n");
-	printf("  -t [pa|pl|ex]   show timings after each query\n");
+	printf("  -t pa|pl|ex     show timings after each query\n");
 	printf("  -W NUM          wait NUM seconds to allow attach from a debugger\n");
 	printf("\nReport bugs to <pgsql-bugs@postgresql.org>.\n");
 }
@@ -1767,7 +1769,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.303 $ $Date: 2002/10/14 23:49:20 $\n");
+		puts("$Revision: 1.304 $ $Date: 2002/10/18 22:05:35 $\n");
 	}
 
 	/*

@@ -1,12 +1,13 @@
 #!/bin/sh
 #
-# $Header: /cvsroot/pgsql/src/bin/ipcclean/Attic/ipcclean.sh,v 1.12 2001/09/30 22:17:50 momjian Exp $
+# $Header: /cvsroot/pgsql/src/bin/ipcclean/Attic/ipcclean.sh,v 1.13 2002/10/18 22:05:35 petere Exp $
 #
 
 CMDNAME=`basename $0`
 
 if [ "$1" = '-?' -o "$1" = "--help" ]; then
-    echo "$CMDNAME cleans up shared memory and semaphores from aborted PostgreSQL backends."
+    echo "$CMDNAME cleans up shared memory and semaphores from aborted PostgreSQL"
+    echo "backends."
     echo
     echo "Usage:"
     echo "  $CMDNAME"

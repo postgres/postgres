@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
- * $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.8 2002/09/22 20:57:20 petere Exp $
+ * $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.9 2002/10/18 22:05:36 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -213,36 +213,43 @@ help(void)
 {
 	printf(_("%s extracts a PostgreSQL database cluster into an SQL script file.\n\n"), progname);
 	printf(_("Usage:\n"));
-	printf(_("  %s [OPTIONS]\n\n"), progname);
+	printf(_("  %s [OPTION]...\n"), progname);
 
-	printf(_("Options:\n"));
+	printf(_("\nOptions:\n"));
 #ifdef HAVE_GETOPT_LONG
 	printf(_("  -c, --clean              clean (drop) databases prior to create\n"));
 	printf(_("  -d, --inserts            dump data as INSERT, rather than COPY, commands\n"));
 	printf(_("  -D, --column-inserts     dump data as INSERT commands with column names\n"));
 	printf(_("  -g, --globals-only       dump only global objects, no databases\n"));
-	printf(_("  -h, --host=HOSTNAME      database server host name\n"));
 	printf(_("  -i, --ignore-version     proceed even when server version mismatches\n"
 			 "                           pg_dumpall version\n"));
 	printf(_("  -o, --oids               include OIDs in dump\n"));
-	printf(_("  -p, --port=PORT          database server port number\n"));
-	printf(_("  -U, --username=NAME      connect as specified database user\n"));
 	printf(_("  -v, --verbose            verbose mode\n"));
-	printf(_("  -W, --password           force password prompt (should happen automatically)\n"));
-#else							/* not HAVE_GETOPT_LONG */
+#else /* not HAVE_GETOPT_LONG */
 	printf(_("  -c                       clean (drop) databases prior to create\n"));
 	printf(_("  -d                       dump data as INSERT, rather than COPY, commands\n"));
 	printf(_("  -D                       dump data as INSERT commands with column names\n"));
 	printf(_("  -g                       dump only global objects, no databases\n"));
-	printf(_("  -h HOSTNAME              database server host name\n"));
 	printf(_("  -i                       proceed even when server version mismatches\n"
 			 "                           pg_dumpall version\n"));
 	printf(_("  -o                       include OIDs in dump\n"));
+	printf(_("  -v                       verbose mode\n"));
+#endif /* not HAVE_GETOPT_LONG */
+	printf(_("  --help                   show this help, then exit\n"));
+	printf(_("  --version                output version information, then exit\n"));
+
+	printf(_("\nConnection options:\n"));
+#ifdef HAVE_GETOPT_LONG
+	printf(_("  -h, --host=HOSTNAME      database server host name\n"));
+	printf(_("  -p, --port=PORT          database server port number\n"));
+	printf(_("  -U, --username=NAME      connect as specified database user\n"));
+	printf(_("  -W, --password           force password prompt (should happen automatically)\n"));
+#else /* not HAVE_GETOPT_LONG */
+	printf(_("  -h HOSTNAME              database server host name\n"));
 	printf(_("  -p PORT                  database server port number\n"));
 	printf(_("  -U NAME                  connect as specified database user\n"));
-	printf(_("  -v                       verbose mode\n"));
 	printf(_("  -W                       force password prompt (should happen automatically)\n"));
-#endif   /* not HAVE_GETOPT_LONG */
+#endif /* not HAVE_GETOPT_LONG */
 
 	printf(_("\nThe SQL script will be written to the standard output.\n\n"));
 	printf(_("Report bugs to <pgsql-bugs@postgresql.org>.\n"));

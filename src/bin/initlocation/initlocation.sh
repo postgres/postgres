@@ -9,7 +9,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/initlocation/Attic/initlocation.sh,v 1.14 2002/06/20 20:29:41 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/bin/initlocation/Attic/initlocation.sh,v 1.15 2002/10/18 22:05:35 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -64,7 +64,8 @@ done
 
 
 if [ "$usage" ]; then
-        echo "$CMDNAME initializes an alternative filesystem location for database creation."
+        echo "$CMDNAME initializes an alternative filesystem location for database"
+	echo "creation."
 	echo ""
 	echo "Usage:"
         echo "  $CMDNAME LOCATION"
