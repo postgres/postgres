@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/lsyscache.c,v 1.39 2000/01/26 05:57:17 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/lsyscache.c,v 1.40 2000/02/16 01:00:23 tgl Exp $
  *
  * NOTES
  *	  Eventually, the index information should go through here, too.
@@ -183,6 +183,7 @@ double
 get_attdisbursion(Oid relid, AttrNumber attnum, double min_estimate)
 {
 	HeapTuple	atp;
+	Form_pg_attribute att_tup;
 	double		disbursion;
 	int32		ntuples;
 
@@ -197,10 +198,21 @@ get_attdisbursion(Oid relid, AttrNumber attnum, double min_estimate)
 			 relid, attnum);
 		return min_estimate;
 	}
+	att_tup = (Form_pg_attribute) GETSTRUCT(atp);
 
-	disbursion = ((Form_pg_attribute) GETSTRUCT(atp))->attdisbursion;
+	disbursion = att_tup->attdisbursion;
 	if (disbursion > 0.0)
-		return disbursion;		/* we have a specific estimate */
+		return disbursion;		/* we have a specific estimate from VACUUM */
+
+	/*
+	 * Special-case boolean columns: the disbursion of a boolean is highly
+	 * unlikely to be anywhere near 1/numtuples, instead it's probably more
+	 * like 0.5.
+	 *
+	 * Are there any other cases we should wire in special estimates for?
+	 */
+	if (att_tup->atttypid == BOOLOID)
+		return 0.5;
 
 	/*
 	 * Disbursion is either 0 (no data available) or -1 (disbursion
