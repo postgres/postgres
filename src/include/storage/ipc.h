@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: ipc.h,v 1.4 1996/10/19 06:27:12 scrappy Exp $
+ * $Id: ipc.h,v 1.5 1996/10/31 05:57:40 momjian Exp $
  *
  * NOTES
  *    This file is very architecture-specific.  This stuff should actually
@@ -22,6 +22,8 @@
 #endif
 
 #include <sys/types.h>
+
+#include "postgres.h"
 
 /*
  * Many architectures have support for user-level spinlocks (i.e., an

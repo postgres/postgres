@@ -40,6 +40,8 @@
 #ifndef _REGEX_H_
 #define	_REGEX_H_
 
+#include <assert.h>
+
 /* #include <sys/cdefs.h> */
 /* since not all systems have cdefs.h, we'll use our own here - jolly */
 #include "cdefs.h"

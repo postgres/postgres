@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/optimizer/path/costsize.c,v 1.3 1996/07/22 23:30:50 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/optimizer/path/costsize.c,v 1.4 1996/10/31 05:53:52 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,6 +37,8 @@
 #include "optimizer/tlist.h"
 
 #include "storage/bufmgr.h"	/* for BLCKSZ */
+
+extern int NBuffers;
 
 static int compute_attribute_width(TargetEntry *tlistentry);
 static double base_log(double x, double b);

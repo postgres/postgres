@@ -6,12 +6,14 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: attnum.h,v 1.2 1996/08/28 01:23:59 scrappy Exp $
+ * $Id: attnum.h,v 1.3 1996/10/31 05:56:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef	ATTNUM_H
 #define ATTNUM_H
+
+#include "postgres.h"
 
 /*
  * user defined attribute numbers start at 1.	-ay 2/95

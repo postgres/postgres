@@ -12,7 +12,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: miscadmin.h,v 1.5 1996/10/23 07:40:32 scrappy Exp $
+ * $Id: miscadmin.h,v 1.6 1996/10/31 05:53:43 momjian Exp $
  *
  * NOTES
  *    some of the information in this file will be moved to
@@ -26,6 +26,8 @@
 /*****************************************************************************
  *    globals.h --                                                           *
  *****************************************************************************/
+
+#include "postgres.h"
 
 /* #include "storage/sinval.h" */
 

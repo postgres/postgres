@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: proc.h,v 1.1 1996/08/28 01:58:24 scrappy Exp $
+ * $Id: proc.h,v 1.2 1996/10/31 05:57:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,6 +16,7 @@
 #include "storage/ipc.h"
 #include "storage/lock.h"
 #ifndef WIN32
+#include <sys/ipc.h>
 #include <sys/sem.h>
 #else
 /* This is because WIN32 already defines PROC */

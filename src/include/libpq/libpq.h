@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq.h,v 1.3 1996/10/23 07:41:41 scrappy Exp $
+ * $Id: libpq.h,v 1.4 1996/10/31 05:56:42 momjian Exp $
  *
  * NOTES
  *    This file contains definitions for structures and
@@ -19,6 +19,7 @@
 #ifndef LIBPQ_H
 #define LIBPQ_H
 
+#include <sys/types.h>
 #include <netinet/in.h>
 
 #include "libpq/pqcomm.h"

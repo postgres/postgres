@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/cache/lsyscache.c,v 1.1.1.1 1996/07/09 06:22:06 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/cache/lsyscache.c,v 1.2 1996/10/31 05:55:32 momjian Exp $
  *
  * NOTES
  *    Eventually, the index information should go through here, too.
@@ -31,6 +31,7 @@
 #include "access/heapam.h"
 
 #include "catalog/pg_amop.h"
+#include "catalog/pg_operator.h"
 #include "catalog/pg_type.h"
 
 /*    		---------- AMOP CACHES ----------			 */

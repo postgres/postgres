@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: syscache.h,v 1.2 1996/10/19 04:16:04 scrappy Exp $
+ * $Id: syscache.h,v 1.3 1996/10/31 05:58:01 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -14,6 +14,7 @@
 #define SYSCACHE_H
 
 #include "access/attnum.h"
+#include "access/htup.h"
 
 /*#define CACHEDEBUG*/ 	/* turns DEBUG elogs on */
 
