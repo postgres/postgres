@@ -297,3 +297,17 @@ Thu Aug 20 15:31:29 CEST 1998
 	- Cleaned up memory allocation in ecpglib.c
 	- Set library version to 2.6
 
+Wed Aug 26 16:17:39 CEST 1998
+
+	- Sync preproc.y with gram.y
+
+Thu Aug 27 15:32:23 CEST 1998
+
+	- Fix some minor glitches that the AIX compiler complains about
+	- Added patchlevel to library
+
+Fri Aug 28 15:36:58 CEST 1998
+
+	- Removed one line of code that AIX complains about since it was not
+	  needed anyway
+	- Set library version to 2.6.1

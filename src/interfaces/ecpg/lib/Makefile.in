@@ -5,6 +5,7 @@ PQ_INCLUDE=-I$(SRCDIR)/interfaces/libpq
 
 SO_MAJOR_VERSION=2
 SO_MINOR_VERSION=6
+SO_PATCHLEVEL=1
 
 PORTNAME=@PORTNAME@
 
@@ -19,21 +20,21 @@ ifeq ($(PORTNAME), linux)
   LINUX_ELF=@LINUX_ELF@
   ifdef LINUX_ELF
     install-shlib-dep := install-shlib
-    shlib := libecpg.so.$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
+    shlib := libecpg.so.$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION).$(SO_PATCHLEVEL)
     LDFLAGS_SL = -shared -soname libecpg.so.$(SO_MAJOR_VERSION)
   endif
 endif
 ifeq ($(PORTNAME), bsd)
   ifdef BSD_SHLIB
     install-shlib-dep := install-shlib
-    shlib := libecpg.so.$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
+    shlib := libecpg.so.$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION).$(SO_PATCHLEVEL)
     LDFLAGS_SL = -x -Bshareable -Bforcearchive
     CFLAGS += $(CFLAGS_SL)
   endif
 endif
 #ifeq ($(PORTNAME), solaris)
 #  install-shlib-dep := install-shlib
-#  shlib := libecpg.so.$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
+#  shlib := libecpg.so.$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION).$(SO_PATCHLEVEL)
 #  LDFLAGS_SL = -G -z text
 #  CFLAGS += $(CFLAGS_SL)
 #endif

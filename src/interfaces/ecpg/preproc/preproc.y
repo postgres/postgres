@@ -566,7 +566,7 @@ output_statement(char * stmt, int mode)
                 LANCOMPILER, LISTEN, UNLISTEN, LOAD, LOCK_P, LOCATION, MAXVALUE, MINVALUE, MOVE,
                 NEW, NONE, NOTHING, NOTNULL, OIDS, OPERATOR, PROCEDURAL,
                 RECIPE, RENAME, RESET, RETURNS, ROW, RULE,
-                SEQUENCE, SETOF, SHOW, START, STATEMENT, STDIN, STDOUT, TRUSTED,
+                SERIAL, SEQUENCE, SETOF, SHOW, START, STATEMENT, STDIN, STDOUT, TRUSTED,
                 VACUUM, VERBOSE, VERSION, ENCODING
 
 /* Keywords (obsolete; retain through next version for parser - thomas 1997-12-0 4) */
@@ -1083,6 +1083,10 @@ columnDef:  ColId Typename ColQualifier
 				{
 					$$ = cat3_str($1, $2, $3);
 				}
+	| ColId SERIAL
+		{
+			$$ = make2_str($1, make1_str(" serial"));
+		}
 		;
 
 ColQualifier:  ColQualList	{ $$ = $1; }
@@ -3795,6 +3799,7 @@ ColId:  ident							{ $$ = $1; }
 		| PRIVILEGES					{ $$ = make1_str("privileges"); }
 		| RECIPE						{ $$ = make1_str("recipe"); }
 		| ROW							{ $$ = make1_str("row"); }
+		| SERIAL						{ $$ = make1_str("serial"); }
 		| START							{ $$ = make1_str("start"); }
 		| STATEMENT						{ $$ = make1_str("statement"); }
 		| TIME							{ $$ = make1_str("time"); }

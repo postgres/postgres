@@ -701,7 +701,7 @@ ECPGexecute(struct statement *stmt)
                                                                  }
                                                                  else
                                                                  {
-                                                                         strncpy((char *) (var->value + var->offset * act_tuple), pval, var->varcharsize);
+                                                                         strncpy((char *) ((long)var->value + var->offset * act_tuple), pval, var->varcharsize);
                                                                          if (var->varcharsize < strlen(pval))
                                                                          {
                                                                                  /* truncation */
@@ -731,7 +731,7 @@ ECPGexecute(struct statement *stmt)
                                                  case ECPGt_varchar:
                                                          {
                                                                  struct ECPGgeneric_varchar *variable =
-								 (struct ECPGgeneric_varchar *) (var->value + var->offset * act_tuple);
+								 (struct ECPGgeneric_varchar *) ((long)var->value + var->offset * act_tuple);
     
 								 if (var->varcharsize == 0)
 								   strncpy(variable->arr, pval, strlen(pval));
@@ -828,7 +828,6 @@ ECPGexecute(struct statement *stmt)
 		free(notify);
 	}
 
-	va_end(ap);
 	return status;
 }
 
