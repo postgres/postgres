@@ -1224,21 +1224,26 @@ Lobby your company to join W3C, see http://www.w3.org/Consortium
     <H4><A name="4.24">4.24</A>) How do I do an <I>outer</I> join?<BR>
     </H4>
 
-    <P>PostgreSQL 7.1 and later supports outer joins. Here is an
-    example:</P>
+    <P>PostgreSQL 7.1 and later supports outer joins. Here are two
+    examples:</P>
+<PRE>
+    SELECT *
+    FROM t1 LEFT OUTER JOIN t2 ON (t1.col = t2.col);
+</PRE>
+or
 <PRE>
     SELECT *
     FROM t1 LEFT OUTER JOIN t2 USING (col);
 </PRE>
-    This will join t1.col to t2.col, and return any unjoined rows in t1
-    with <SMALL>NULL</SMALL> values for t2 columns. A
-    <SMALL>RIGHT</SMALL> join would return unjoined rows of table t2. A
-    <SMALL>FULL</SMALL> join would return unjoined rows from t1 and t2.
-    The word <SMALL>OUTER</SMALL> is optional and is assumed in
-    <SMALL>LEFT</SMALL>, <SMALL>RIGHT</SMALL>, and <SMALL>FULL</SMALL>
-    joins. Ordinary joins are called <SMALL>INNER</SMALL> joins.<BR>
-    <BR>
-     In previous releases, outer joins can be simulated using
+    These identical queries join t1.col to t2.col, and return any
+    unjoined rows in t1. A <SMALL>RIGHT</SMALL> join would return
+    unjoined rows of table t2. A <SMALL>FULL</SMALL> join would return
+    unjoined rows from t1 and t2. The word <SMALL>OUTER</SMALL> is
+    optional and is assumed in <SMALL>LEFT</SMALL>,
+    <SMALL>RIGHT</SMALL>, and <SMALL>FULL</SMALL> joins. Ordinary joins
+    are called <SMALL>INNER</SMALL> joins.</P>
+
+    <P>In previous releases, outer joins can be simulated using
     <SMALL>UNION</SMALL> and <SMALL>NOT IN</SMALL>. For example, when
     joining <I>tab1</I> and <I>tab2,</I> the following query does an
     <I>outer</I> join of the two tables:<BR>
