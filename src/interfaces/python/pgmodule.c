@@ -2375,6 +2375,9 @@ pg_inserttable(pgobject * self, PyObject * args)
 
 	if (m)
 	{
+		/* not strictly necessary but removes a bogus warning */
+		n = 0;
+
 		/* checks sublists type and size */
 		for (i = 0; i < m; i++)
 		{
@@ -2399,7 +2402,7 @@ pg_inserttable(pgobject * self, PyObject * args)
 				}
 			}
 			else
-				n=j;
+				n = j;		/* never used before this assignment */
 		}
 		if (n)
 		{	
