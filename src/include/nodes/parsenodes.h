@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsenodes.h,v 1.76 1999/07/15 23:03:54 momjian Exp $
+ * $Id: parsenodes.h,v 1.77 1999/07/18 03:45:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -810,14 +810,23 @@ typedef struct A_Indices
 /*
  * ResTarget -
  *	  result target (used in target list of pre-transformed Parse trees)
+ *
+ * In a SELECT or INSERT target list, 'name' is either NULL or
+ * the column name assigned to the value.  (If there is an 'AS ColumnLabel'
+ * clause, the grammar sets 'name' from it; otherwise 'name' is initially NULL
+ * and is filled in during the parse analysis phase.)
+ * The 'indirection' field is not used at all.
+ *
+ * In an UPDATE target list, 'name' is the name of the destination column,
+ * and 'indirection' stores any subscripts attached to the destination.
+ * That is, our representation is UPDATE table SET name [indirection] = val.
  */
 typedef struct ResTarget
 {
 	NodeTag		type;
-	char	   *name;			/* name of the result column */
-	List	   *indirection;	/* array references */
-	Node	   *val;			/* the value of the result (A_Expr or
-								 * Attr) (or A_Const) */
+	char	   *name;			/* column name or NULL */
+	List	   *indirection;	/* subscripts for destination column, or NIL */
+	Node	   *val;			/* the value expression to compute or assign */
 } ResTarget;
 
 /*

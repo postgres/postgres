@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: primnodes.h,v 1.31 1999/07/16 17:07:33 momjian Exp $
+ * $Id: primnodes.h,v 1.32 1999/07/18 03:45:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -302,13 +302,13 @@ typedef struct SubLink
 
 /* ----------------
  * Array
- *		arrayelemtype	- base type of the array's elements (homogenous!)
+ *		arrayelemtype	- type of the array's elements (homogenous!)
  *		arrayelemlength - length of that type
- *		arrayelembyval	- can you pass this element by value?
+ *		arrayelembyval	- is the element type pass-by-value?
  *		arrayndim		- number of dimensions of the array
  *		arraylow		- base for array indexing
  *		arrayhigh		- limit for array indexing
- *		arraylen		-
+ *		arraylen		- total length of array object
  * ----------------
  *
  *	memo from mao:	the array support we inherited from 3.1 is just
@@ -328,15 +328,39 @@ typedef struct Array
 } Array;
 
 /* ----------------
- *	ArrayRef:
- *		refelemtype		- type of the element referenced here
- *		refelemlength	- length of that type
- *		refelembyval	- can you pass this element type by value?
- *		refupperindexpr - expressions that evaluate to upper array index
- *		reflowerexpr- the expressions that evaluate to a lower array index
- *		refexpr			- the expression that evaluates to an array
- *		refassignexpr- the expression that evaluates to the new value
- *	to be assigned to the array in case of replace.
+ *	ArrayRef: describes an array subscripting operation
+ *
+ * An ArrayRef can describe fetching a single element from an array,
+ * fetching a subarray (array slice), storing a single element into
+ * an array, or storing a slice.  The "store" cases work with an
+ * initial array value and a source value that is inserted into the
+ * appropriate part of the array.
+ *
+ *		refattrlength	- total length of array object
+ *		refelemtype		- type of the result of the subscript operation
+ *		refelemlength	- length of the array element type
+ *		refelembyval	- is the element type pass-by-value?
+ *		refupperindexpr - expressions that evaluate to upper array indexes
+ *		reflowerindexpr	- expressions that evaluate to lower array indexes
+ *		refexpr			- the expression that evaluates to an array value
+ *		refassgnexpr	- expression for the source value, or NULL if fetch
+ *
+ * If reflowerindexpr = NIL, then we are fetching or storing a single array
+ * element at the subscripts given by refupperindexpr.  Otherwise we are
+ * fetching or storing an array slice, that is a rectangular subarray
+ * with lower and upper bounds given by the index expressions.
+ * reflowerindexpr must be the same length as refupperindexpr when it
+ * is not NIL.
+ *
+ * Note: array types can be fixed-length (refattrlength > 0), but only
+ * when the element type is itself fixed-length.  Otherwise they are
+ * varlena structures and have refattrlength = -1.  In any case,
+ * an array type is never pass-by-value.
+ *
+ * Note: currently, refelemtype is NOT the element type, but the array type,
+ * when doing subarray fetch or either type of store.  It would be cleaner
+ * to add more fields so we can distinguish the array element type from the
+ * result type of the subscript operator...
  * ----------------
  */
 typedef struct ArrayRef
