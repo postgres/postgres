@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.357 2003/08/06 17:46:45 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.358 2003/08/12 18:23:21 tgl Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -1730,7 +1730,8 @@ start_xact_command(void)
 {
 	if (!xact_started)
 	{
-		elog(DEBUG3, "StartTransactionCommand");
+		ereport(DEBUG3,
+				(errmsg_internal("StartTransactionCommand")));
 		StartTransactionCommand();
 
 		/* Set statement timeout running, if any */
@@ -1753,7 +1754,8 @@ finish_xact_command(void)
 		disable_sig_alarm(true);
 
 		/* Now commit the command */
-		elog(DEBUG3, "CommitTransactionCommand");
+		ereport(DEBUG3,
+				(errmsg_internal("CommitTransactionCommand")));
 
 		CommitTransactionCommand();
 
@@ -2620,7 +2622,8 @@ PostgresMain(int argc, char *argv[], const char *username)
 	 * putting it inside InitPostgres() instead.  In particular, anything
 	 * that involves database access should be there, not here.
 	 */
-	elog(DEBUG3, "InitPostgres");
+	ereport(DEBUG3,
+			(errmsg_internal("InitPostgres")));
 	InitPostgres(dbname, username);
 
 	SetProcessingMode(NormalProcessing);
@@ -2643,7 +2646,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.357 $ $Date: 2003/08/06 17:46:45 $\n");
+		puts("$Revision: 1.358 $ $Date: 2003/08/12 18:23:21 $\n");
 	}
 
 	/*
@@ -2702,7 +2705,8 @@ PostgresMain(int argc, char *argv[], const char *username)
 		MemoryContextSwitchTo(ErrorContext);
 
 		/* Do the recovery */
-		elog(DEBUG2, "AbortCurrentTransaction");
+		ereport(DEBUG2,
+				(errmsg_internal("AbortCurrentTransaction")));
 		AbortCurrentTransaction();
 
 		/*

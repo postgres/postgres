@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.340 2003/08/04 02:40:02 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.341 2003/08/12 18:23:20 tgl Exp $
  *
  * NOTES
  *
@@ -654,11 +654,16 @@ PostmasterMain(int argc, char *argv[])
 		extern char **environ;
 		char	  **p;
 
-		elog(DEBUG3, "%s: PostmasterMain: initial environ dump:", progname);
-		elog(DEBUG3, "-----------------------------------------");
+		ereport(DEBUG3,
+				(errmsg_internal("%s: PostmasterMain: initial environ dump:",
+								 progname)));
+		ereport(DEBUG3,
+				(errmsg_internal("-----------------------------------------")));
 		for (p = environ; *p; ++p)
-			elog(DEBUG3, "\t%s", *p);
-		elog(DEBUG3, "-----------------------------------------");
+			ereport(DEBUG3,
+					(errmsg_internal("\t%s", *p)));
+		ereport(DEBUG3,
+				(errmsg_internal("-----------------------------------------")));
 	}
 
 	/*
@@ -1468,8 +1473,9 @@ processCancelRequest(Port *port, void *pkt)
 
 	if (backendPID == CheckPointPID)
 	{
-		elog(DEBUG2, "ignoring cancel request for checkpoint process %d",
-			 backendPID);
+		ereport(DEBUG2,
+				(errmsg_internal("ignoring cancel request for checkpoint process %d",
+								 backendPID)));
 		return;
 	}
 	else if (ExecBackend)
@@ -1485,20 +1491,24 @@ processCancelRequest(Port *port, void *pkt)
 			if (bp->cancel_key == cancelAuthCode)
 			{
 				/* Found a match; signal that backend to cancel current op */
-				elog(DEBUG2, "processing cancel request: sending SIGINT to process %d",
-					 backendPID);
+				ereport(DEBUG2,
+						(errmsg_internal("processing cancel request: sending SIGINT to process %d",
+										 backendPID)));
 				kill(bp->pid, SIGINT);
 			}
 			else
 				/* Right PID, wrong key: no way, Jose */
-				elog(DEBUG2, "bad key in cancel request for process %d",
-					 backendPID);
+				ereport(DEBUG2,
+						(errmsg_internal("bad key in cancel request for process %d",
+										 backendPID)));
 			return;
 		}
 	}
 
 	/* No matching backend */
-	elog(DEBUG2, "bad pid in cancel request for process %d", backendPID);
+	ereport(DEBUG2,
+			(errmsg_internal("bad pid in cancel request for process %d",
+							 backendPID)));
 }
 
 /*
@@ -1669,7 +1679,9 @@ pmdie(SIGNAL_ARGS)
 
 	PG_SETMASK(&BlockSig);
 
-	elog(DEBUG2, "postmaster received signal %d", postgres_signal_arg);
+	ereport(DEBUG2,
+			(errmsg_internal("postmaster received signal %d",
+							 postgres_signal_arg)));
 
 	switch (postgres_signal_arg)
 	{
@@ -1797,7 +1809,8 @@ reaper(SIGNAL_ARGS)
 
 	PG_SETMASK(&BlockSig);
 
-	elog(DEBUG4, "reaping dead processes");
+	ereport(DEBUG4,
+			(errmsg_internal("reaping dead processes")));
 #ifdef HAVE_WAITPID
 	while ((pid = waitpid(-1, &status, WNOHANG)) > 0)
 	{
@@ -2007,8 +2020,10 @@ CleanupProc(int pid,
 			 */
 			if (!FatalError)
 			{
-				elog(DEBUG2, "sending %s to process %d",
-					 (SendStop ? "SIGSTOP" : "SIGQUIT"), (int) bp->pid);
+				ereport(DEBUG2,
+						(errmsg_internal("sending %s to process %d",
+										 (SendStop ? "SIGSTOP" : "SIGQUIT"),
+										 (int) bp->pid)));
 				kill(bp->pid, (SendStop ? SIGSTOP : SIGQUIT));
 			}
 		}
@@ -2093,8 +2108,10 @@ SignalChildren(int signal)
 
 		if (bp->pid != MyProcPid)
 		{
-			elog(DEBUG2, "sending signal %d to process %d",
-				 signal, (int) bp->pid);
+			ereport(DEBUG2,
+					(errmsg_internal("sending signal %d to process %d",
+									 signal,
+									 (int) bp->pid)));
 			kill(bp->pid, signal);
 		}
 
@@ -2207,8 +2224,9 @@ BackendStartup(Port *port)
 	}
 
 	/* in parent, normal */
-	elog(DEBUG2, "forked new backend, pid=%d socket=%d",
-		 (int) pid, port->sock);
+	ereport(DEBUG2,
+			(errmsg_internal("forked new backend, pid=%d socket=%d",
+							 (int) pid, port->sock)));
 
 	/*
 	 * Everything's been successful, it's safe to add this backend to our
@@ -2525,10 +2543,14 @@ BackendFork(Port *port)
 	/*
 	 * Debug: print arguments being passed to backend
 	 */
-	elog(DEBUG3, "%s child[%d]: starting with (", progname, MyProcPid);
+	ereport(DEBUG3,
+			(errmsg_internal("%s child[%d]: starting with (",
+							 progname, MyProcPid)));
 	for (i = 0; i < ac; ++i)
-		elog(DEBUG3, "\t%s", av[i]);
-	elog(DEBUG3, ")");
+		ereport(DEBUG3,
+				(errmsg_internal("\t%s", av[i])));
+	ereport(DEBUG3,
+			(errmsg_internal(")")));
 
 	ClientAuthInProgress = false;		/* client_min_messages is active
 										 * now */
