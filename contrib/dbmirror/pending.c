@@ -1,6 +1,6 @@
 /****************************************************************************
  * pending.c
- * $Id: pending.c,v 1.6.2.3 2002/11/22 16:25:52 tgl Exp $
+ * $Id: pending.c,v 1.6.2.4 2002/11/26 03:08:23 momjian Exp $
  *
  * This file contains a trigger for Postgresql-7.x to record changes to tables
  * to a pending table for mirroring.
@@ -95,11 +95,11 @@ recordchange(PG_FUNCTION_ARGS)
 #ifndef NOSCHEMAS
 		schemaname = get_namespace_name(RelationGetNamespace(trigdata->tg_relation));
 		fullyqualtblname = SPI_palloc(strlen(tblname) + 
-					      strlen(schemaname) + 4);
+					      strlen(schemaname) + 6);
  		sprintf(fullyqualtblname,"\"%s\".\"%s\"",
 			schemaname,tblname);
 #else
-		fullyqualtblname = SPI_palloc(strlen(tblname+3));
+		fullyqualtblname = SPI_palloc(strlen(tblname + 3));
 		sprintf(fullyqualtblname,"\"%s\"",tblname);
 #endif
 		tupdesc = trigdata->tg_relation->rd_att;
