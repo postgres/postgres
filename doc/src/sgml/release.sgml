@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.325 2005/01/30 01:26:41 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.326 2005/02/02 18:16:13 momjian Exp $
 -->
 
 <appendix id="release">
@@ -485,8 +485,8 @@ typedefs (Michael)</para></listitem>
    <itemizedlist>
     <listitem>
      <para>
-      The 8.1 release will remove the function
-       <function>to_char(interval, text)</>.
+      The 8.1 release will remove the <function>to_char()</> function
+      for intervals.
      </para>
     </listitem>
 
