@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Thu Jan  3 00:20:19 EST 2002
+Last updated:		Thu Jan  3 00:48:38 EST 2002
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -253,7 +253,7 @@ CLIENTS
 	o JDBC-standard BLOB support
 	o Error Codes (pending backend implementation)
 	o -Support for binary data/bytea
-	o Move to using 'make' rather than 'ant'(?)
+	o Support both 'make' and 'ant'
 	o -Add MD5 capability
 	o Fix LargeObject API to handle OIDs as unsigned ints
 	o Implement cancel() method on Statement
