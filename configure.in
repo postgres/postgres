@@ -1,5 +1,5 @@
 dnl Process this file with autoconf to produce a configure script.
-dnl $PostgreSQL: pgsql/configure.in,v 1.347 2004/05/13 01:45:02 momjian Exp $
+dnl $PostgreSQL: pgsql/configure.in,v 1.348 2004/05/13 22:59:14 momjian Exp $
 dnl
 dnl Developers, please strive to achieve this order:
 dnl
@@ -1236,24 +1236,6 @@ AC_CONFIG_LINKS([
   src/Makefile.port:src/makefiles/Makefile.${template}
 ])
 
-# Links sometimes fail undetected on Mingw - 
-# so here we detect it and warn the user
-case $host_os in mingw*)
- for linktarget in \
-	src/backend/port/tas.s \
-	src/backend/port/dynloader.c \
-	src/backend/port/pg_sema.c \
-	src/backend/port/pg_shmem.c \
-	src/include/dynloader.h \
-	src/include/pg_config_os.h \
-	src/Makefile.port
- do
-	# test -e works for symlinks in the MinGW console
-	test -e $linktarget || AC_MSG_WARN([*** link for $linktarget failed - please fix by hand])
- done
-	;;
-esac
-
 AC_CONFIG_HEADERS([src/include/pg_config.h],
 [
 # Update timestamp for pg_config.h (see Makefile.global)
@@ -1261,3 +1243,15 @@ echo >src/include/stamp-h
 ])
 
 AC_OUTPUT
+
+# Links sometimes fail undetected on Mingw - 
+# so here we detect it and warn the user
+case $host_os in mingw*)
+for FILE in "$CONFIG_LINKS"
+ do
+	# test -e works for symlinks in the MinGW console
+	test -e `expr "$FILE" : '\([^:]*\)'` || AC_MSG_WARN([*** link for $FILE - please fix by hand])
+ done
+	;;
+esac
+
