@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/common.c,v 1.78 2003/12/06 03:00:11 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/common.c,v 1.79 2003/12/07 03:14:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,6 +38,13 @@ static int	allocedDumpIds = 0;
 static DumpId lastDumpId = 0;
 
 /*
+ * Variables for mapping CatalogId to DumpableObject
+ */
+static bool catalogIdMapValid = false;
+static DumpableObject **catalogIdMap = NULL;
+static int	numCatalogIds = 0;
+
+/*
  * These variables are static to avoid the notational cruft of having to pass
  * them into findTableByOid() and friends.
  */
@@ -51,12 +58,13 @@ static int		numFuncs;
 static int		numOperators;
 
 
-static void findParentsByOid(TableInfo *self,
-							 InhInfo *inhinfo, int numInherits);
 static void flagInhTables(TableInfo *tbinfo, int numTables,
 			  InhInfo *inhinfo, int numInherits);
 static void flagInhAttrs(TableInfo *tbinfo, int numTables,
 			 InhInfo *inhinfo, int numInherits);
+static int	DOCatalogIdCompare(const void *p1, const void *p2);
+static void findParentsByOid(TableInfo *self,
+							 InhInfo *inhinfo, int numInherits);
 static int	strInArray(const char *pattern, char **arr, int arr_size);
 
 
@@ -413,6 +421,9 @@ AssignDumpId(DumpableObject *dobj)
 		allocedDumpIds = newAlloc;
 	}
 	dumpIdMap[dobj->dumpId] = dobj;
+
+	/* mark catalogIdMap invalid, but don't rebuild it yet */
+	catalogIdMapValid = false;
 }
 
 /*
@@ -454,23 +465,72 @@ findObjectByDumpId(DumpId dumpId)
  *
  * Returns NULL for unknown ID
  *
- * NOTE:  should hash this, but just do linear search for now
+ * We use binary search in a sorted list that is built on first call.
+ * If AssignDumpId() and findObjectByCatalogId() calls were intermixed,
+ * the code would work, but possibly be very slow.  In the current usage
+ * pattern that does not happen, indeed we only need to build the list once.
  */
 DumpableObject *
 findObjectByCatalogId(CatalogId catalogId)
 {
-	DumpId		i;
+	DumpableObject **low;
+	DumpableObject **high;
 
-	for (i = 1; i < allocedDumpIds; i++)
+	if (!catalogIdMapValid)
 	{
-		DumpableObject *dobj = dumpIdMap[i];
+		if (catalogIdMap)
+			free(catalogIdMap);
+		getDumpableObjects(&catalogIdMap, &numCatalogIds);
+		if (numCatalogIds > 1)
+			qsort((void *) catalogIdMap, numCatalogIds,
+				  sizeof(DumpableObject *), DOCatalogIdCompare);
+		catalogIdMapValid = true;
+	}
 
-		if (dobj &&
-			dobj->catId.tableoid == catalogId.tableoid &&
-			dobj->catId.oid == catalogId.oid)
-			return dobj;
+	/*
+	 * We could use bsearch() here, but the notational cruft of calling
+	 * bsearch is nearly as bad as doing it ourselves; and the generalized
+	 * bsearch function is noticeably slower as well.
+	 */
+	if (numCatalogIds <= 0)
+		return NULL;
+	low = catalogIdMap;
+	high = catalogIdMap + (numCatalogIds - 1);
+	while (low <= high)
+	{
+		DumpableObject **middle;
+		int			difference;
+
+		middle = low + (high - low) / 2;
+		/* comparison must match DOCatalogIdCompare, below */
+		difference = oidcmp((*middle)->catId.oid, catalogId.oid);
+		if (difference == 0)
+			difference = oidcmp((*middle)->catId.tableoid, catalogId.tableoid);
+		if (difference == 0)
+			return *middle;
+		else if (difference < 0)
+			low = middle + 1;
+		else
+			high = middle - 1;
 	}
 	return NULL;
+}
+
+static int
+DOCatalogIdCompare(const void *p1, const void *p2)
+{
+	DumpableObject *obj1 = *(DumpableObject **) p1;
+	DumpableObject *obj2 = *(DumpableObject **) p2;
+	int			cmpval;
+
+	/*
+	 * Compare OID first since it's usually unique, whereas there will
+	 * only be a few distinct values of tableoid.
+	 */
+	cmpval = oidcmp(obj1->catId.oid, obj2->catId.oid);
+	if (cmpval == 0)
+		cmpval = oidcmp(obj1->catId.tableoid, obj2->catId.tableoid);
+	return cmpval;
 }
 
 /*
