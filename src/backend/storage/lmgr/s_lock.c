@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/s_lock.c,v 1.32 2004/08/30 23:47:20 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/s_lock.c,v 1.33 2004/12/18 22:12:52 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -136,12 +136,26 @@ s_lock(volatile slock_t *lock, const char *file, int line)
 
 
 #if defined(__m68k__)
+/* really means: extern int tas(slock_t* **lock); */
 static void
-tas_dummy()						/* really means: extern int tas(slock_t
-								 * **lock); */
+tas_dummy()
 {
 	__asm__		__volatile__(
-										 "\
+#if defined(__NetBSD__) && defined(__ELF__)
+/* no underscore for label and % for registers */
+										"\
+.global		tas 				\n\
+tas:							\n\
+			movel	%sp@(0x4),%a0	\n\
+			tas 	%a0@		\n\
+			beq 	_success	\n\
+			moveq	#-128,%d0	\n\
+			rts 				\n\
+_success:						\n\
+			moveq	#0,%d0		\n\
+			rts 				\n"
+#else
+										"\
 .global		_tas				\n\
 _tas:							\n\
 			movel	sp@(0x4),a0	\n\
@@ -151,8 +165,9 @@ _tas:							\n\
 			rts					\n\
 _success:						\n\
 			moveq 	#0,d0		\n\
-			rts					\n\
-");
+			rts					\n"
+#endif   /* __NetBSD__ && __ELF__ */
+);
 }
 #endif   /* __m68k__ */
 
