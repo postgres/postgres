@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2003, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/mainloop.c,v 1.58 2003/11/29 19:52:06 pgsql Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/mainloop.c,v 1.59 2004/01/21 22:05:44 tgl Exp $
  */
 #include "postgres_fe.h"
 #include "mainloop.h"
@@ -103,7 +103,6 @@ MainLoop(FILE *source)
 			}
 
 			cancel_pressed = false;
-			fflush(stdout);
 		}
 
 #ifndef WIN32
@@ -122,7 +121,6 @@ MainLoop(FILE *source)
 				paren_level = 0;
 				count_eof = 0;
 				slashCmdStatus = CMD_UNKNOWN;
-				fflush(stdout);
 			}
 			else
 			{
@@ -137,6 +135,8 @@ MainLoop(FILE *source)
 		 */
 		pqsignal(SIGINT, handle_sigint);		/* control-C => cancel */
 #endif   /* not WIN32 */
+
+		fflush(stdout);
 
 		if (slashCmdStatus == CMD_NEWEDIT)
 		{
@@ -161,8 +161,6 @@ MainLoop(FILE *source)
 		{
 			int			prompt_status;
 
-			fflush(stdout);
-
 			if (in_quote && in_quote == '\'')
 				prompt_status = PROMPT_SINGLEQUOTE;
 			else if (in_quote && in_quote == '"')
@@ -180,7 +178,6 @@ MainLoop(FILE *source)
 		}
 		else
 			line = gets_fromFile(source);
-
 
 		/* Setting this will not have effect until next line. */
 		die_on_error = GetVariableBool(pset.vars, "ON_ERROR_STOP");
