@@ -6,7 +6,7 @@
 # and "pg_group" tables, which belong to the whole installation rather
 # than any one individual database.
 #
-# $Header: /cvsroot/pgsql/src/bin/pg_dump/Attic/pg_dumpall.sh,v 1.18 2002/04/11 19:23:36 momjian Exp $
+# $Header: /cvsroot/pgsql/src/bin/pg_dump/Attic/pg_dumpall.sh,v 1.19 2002/04/11 21:16:28 momjian Exp $
 
 CMDNAME="`basename $0`"
 
@@ -14,6 +14,11 @@ CMDNAME="`basename $0`"
 VERSION='@VERSION@'
 MULTIBYTE='@MULTIBYTE@'
 bindir='@bindir@'
+
+# These handle spaces/tabs in identifiers
+_IFS="$IFS"
+NL="
+"
 
 #
 # Find out where we're located
@@ -25,7 +30,10 @@ if echo "$0" | grep '/' > /dev/null 2>&1 ; then
 else
     # look for it in PATH ('which' command is not portable)
     echo "$PATH" | sed 's/:/\
-/g' | while read dir; do
+/g' | while :; do
+        IFS="$NL"
+        read dir || break
+        IFS="$_IFS"
         # empty entry in path means current dir
         [ x"$dir" = x ] && dir='.'
         if [ -f "$dir/$CMDNAME" ] ; then
@@ -197,9 +205,12 @@ echo
 
 $PSQL -d template1 -At -F '
 ' -c 'SELECT groname,grosysid,grolist FROM pg_group;' | \
-while read GRONAME ; do
-    read GROSYSID
-    read GROLIST
+while : ; do
+    IFS="$NL"
+    read GRONAME || break
+    read GROSYSID || break
+    read GROLIST || break
+    IFS="$_IFS"
     echo "CREATE GROUP \"$GRONAME\" WITH SYSID ${GROSYSID};"
     echo "$GROLIST" | sed 's/^{\(.*\)}$/\1/' | tr ',' '\n' |
     while read userid; do
@@ -224,10 +235,12 @@ exec 4<&0
 $PSQL -d template1 -At -F '
 ' -c "SELECT datname, coalesce(usename, (select usename from pg_shadow where usesysid=(select datdba from pg_database where datname='template0'))), pg_encoding_to_char(d.encoding), datistemplate, datpath FROM pg_database d LEFT JOIN pg_shadow u ON (datdba = usesysid) WHERE datallowconn ORDER BY 1;" | \
 while read DATABASE ; do
+    IFS="$NL"
     read DBOWNER
     read ENCODING
     read ISTEMPLATE
     read DBPATH
+    IFS="$_IFS"
     if [ "$DATABASE" != template1 ] ; then
 	echo
 
@@ -251,7 +264,10 @@ done
 
 $PSQL -d template1 -At -F '
 ' -c "SELECT datname FROM pg_database WHERE datallowconn ORDER BY 1;" | \
-while read DATABASE; do
+while :; do
+    IFS="$NL"
+    read DATABASE || break
+    IFS="$_IFS"
     echo "dumping database \"$DATABASE\"..." 1>&2
     echo
     echo "--"
