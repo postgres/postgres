@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.107 2001/02/18 04:39:42 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.108 2001/03/21 10:13:29 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -727,7 +727,6 @@ BufferSync()
 	RelFileNode	rnode;
 	XLogRecPtr	recptr;
 	Relation	reln = NULL;
-	bool		dirty = false;
 
 	for (i = 0, bufHdr = BufferDescriptors; i < NBuffers; i++, bufHdr++)
 	{
@@ -741,16 +740,44 @@ BufferSync()
 		}
 
 		/*
-		 * Pin buffer and ensure that no one reads it from disk
+		 * We can check bufHdr->cntxDirty here *without* holding any lock
+		 * on buffer context as long as we set this flag in access methods
+		 * *before* logging changes with XLogInsert(): if someone will set
+		 * cntxDirty just after our check we don't worry because of our
+		 * checkpoint.redo points before log record for upcoming changes
+		 * and so we are not required to write such dirty buffer.
+		 */
+		if (!(bufHdr->flags & BM_DIRTY) && !(bufHdr->cntxDirty))
+		{
+			SpinRelease(BufMgrLock);
+			continue;
+		}
+
+		/*
+		 * IO synchronization. Note that we do it with unpinned buffer
+		 * to avoid conflicts with FlushRelationBuffers.
+		 */
+		if (bufHdr->flags & BM_IO_IN_PROGRESS)
+		{
+			WaitIO(bufHdr, BufMgrLock);
+			if (!(bufHdr->flags & BM_VALID) ||
+				(!(bufHdr->flags & BM_DIRTY) && !(bufHdr->cntxDirty)))
+			{
+				SpinRelease(BufMgrLock);
+				continue;
+			}
+		}
+
+		/*
+		 * Here: no one doing IO for this buffer and it's dirty.
+		 * Pin buffer now and set IO state for it *before* acquiring
+		 * shlock to avoid conflicts with FlushRelationBuffers.
 		 */
 		PinBuffer(bufHdr);
-		/* Synchronize with BufferAlloc */
-		if (bufHdr->flags & BM_IO_IN_PROGRESS)
-			WaitIO(bufHdr, BufMgrLock);
+		StartBufferIO(bufHdr, false);		/* output IO start */
 
 		buffer = BufferDescriptorGetBuffer(bufHdr);
 		rnode = bufHdr->tag.rnode;
-		dirty = bufHdr->flags & BM_DIRTY;
 
 		SpinRelease(BufMgrLock);
 
@@ -764,17 +791,6 @@ BufferSync()
 		 */
 		LockBuffer(buffer, BUFFER_LOCK_SHARE);
 
-		if (!dirty && !(bufHdr->cntxDirty))
-		{
-			LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
-			SpinAcquire(BufMgrLock);
-			UnpinBuffer(bufHdr);
-			SpinRelease(BufMgrLock);
-			if (reln != (Relation) NULL)
-				RelationDecrementReferenceCount(reln);
-			continue;
-		}
-
 		/*
 		 * Force XLOG flush for buffer' LSN
 		 */
@@ -782,73 +798,61 @@ BufferSync()
 		XLogFlush(recptr);
 
 		/*
-		 * Now it's safe to write buffer to disk
-		 * (if no one else already)
+		 * Now it's safe to write buffer to disk. Note that no one else
+		 * should not be able to write it while we were busy with locking
+		 * and log flushing because of we setted IO flag.
 		 */
 		SpinAcquire(BufMgrLock);
-		if (bufHdr->flags & BM_IO_IN_PROGRESS)
-			WaitIO(bufHdr, BufMgrLock);
+		Assert(bufHdr->flags & BM_DIRTY || bufHdr->cntxDirty);
+		bufHdr->flags &= ~BM_JUST_DIRTIED;
+		SpinRelease(BufMgrLock);
 
-		if (bufHdr->flags & BM_DIRTY || bufHdr->cntxDirty)
+		if (reln == (Relation) NULL)
 		{
-			bufHdr->flags &= ~BM_JUST_DIRTIED;
-			StartBufferIO(bufHdr, false);		/* output IO start */
-
-			SpinRelease(BufMgrLock);
-
-			if (reln == (Relation) NULL)
-			{
-				status = smgrblindwrt(DEFAULT_SMGR,
-									bufHdr->tag.rnode,
-									bufHdr->tag.blockNum,
-									(char *) MAKE_PTR(bufHdr->data),
-									true);	/* must fsync */
-			}
-			else
-			{
-				status = smgrwrite(DEFAULT_SMGR, reln,
+			status = smgrblindwrt(DEFAULT_SMGR,
+								bufHdr->tag.rnode,
 								bufHdr->tag.blockNum,
-								(char *) MAKE_PTR(bufHdr->data));
-			}
-
-			if (status == SM_FAIL)	/* disk failure ?! */
-				elog(STOP, "BufferSync: cannot write %u for %s",
-					 bufHdr->tag.blockNum, bufHdr->blind.relname);
-
-			/*
-			 * Note that it's safe to change cntxDirty here because of
-			 * we protect it from upper writers by share lock and from
-			 * other bufmgr routines by BM_IO_IN_PROGRESS
-			 */
-			bufHdr->cntxDirty = false;
-
-			/*
-			 * Release the per-buffer readlock, reacquire BufMgrLock.
-			 */
-			LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
-			BufferFlushCount++;
-
-			SpinAcquire(BufMgrLock);
-
-			bufHdr->flags &= ~BM_IO_IN_PROGRESS;	/* mark IO finished */
-			TerminateBufferIO(bufHdr);				/* Sync IO finished */
-
-			/*
-			 * If this buffer was marked by someone as DIRTY while
-			 * we were flushing it out we must not clear DIRTY
-			 * flag - vadim 01/17/97
-			 */
-			if (!(bufHdr->flags & BM_JUST_DIRTIED))
-				bufHdr->flags &= ~BM_DIRTY;
-			UnpinBuffer(bufHdr);
-			SpinRelease(BufMgrLock);
+								(char *) MAKE_PTR(bufHdr->data),
+								true);	/* must fsync */
 		}
 		else
 		{
-			UnpinBuffer(bufHdr);
-			SpinRelease(BufMgrLock);
-			LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
+			status = smgrwrite(DEFAULT_SMGR, reln,
+							bufHdr->tag.blockNum,
+							(char *) MAKE_PTR(bufHdr->data));
 		}
+
+		if (status == SM_FAIL)	/* disk failure ?! */
+			elog(STOP, "BufferSync: cannot write %u for %s",
+				 bufHdr->tag.blockNum, bufHdr->blind.relname);
+
+		/*
+		 * Note that it's safe to change cntxDirty here because of
+		 * we protect it from upper writers by share lock and from
+		 * other bufmgr routines by BM_IO_IN_PROGRESS
+		 */
+		bufHdr->cntxDirty = false;
+
+		/*
+		 * Release the per-buffer readlock, reacquire BufMgrLock.
+		 */
+		LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
+		BufferFlushCount++;
+
+		SpinAcquire(BufMgrLock);
+
+		bufHdr->flags &= ~BM_IO_IN_PROGRESS;	/* mark IO finished */
+		TerminateBufferIO(bufHdr);				/* Sync IO finished */
+
+		/*
+		 * If this buffer was marked by someone as DIRTY while
+		 * we were flushing it out we must not clear DIRTY
+		 * flag - vadim 01/17/97
+		 */
+		if (!(bufHdr->flags & BM_JUST_DIRTIED))
+			bufHdr->flags &= ~BM_DIRTY;
+		UnpinBuffer(bufHdr);
+		SpinRelease(BufMgrLock);
 
 		/* drop refcnt obtained by RelationNodeCacheGetRelation */
 		if (reln != (Relation) NULL)
@@ -2079,6 +2083,12 @@ LockBuffer(Buffer buffer, int mode)
 		buf->w_lock = true;
 		*buflock |= BL_W_LOCK;
 
+		/*
+		 * This is not the best place to set cntxDirty flag (eg indices
+		 * do not always change buffer they lock in excl mode). But please
+		 * remember that it's critical to set cntxDirty *before* logging
+		 * changes with XLogInsert() - see comments in BufferSync().
+		 */
 		buf->cntxDirty = true;
 
 		if (*buflock & BL_RI_LOCK)
