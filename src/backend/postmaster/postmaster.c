@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.396 2004/05/27 15:07:41 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.397 2004/05/27 17:12:52 tgl Exp $
  *
  * NOTES
  *
@@ -1909,8 +1909,8 @@ reaper(SIGNAL_ARGS)
 		 * trouble...
 		 */
 		win32_RemoveChild(pid);
-#endif
-#endif
+#endif /* WIN32 */
+#endif /* HAVE_WAITPID */
 
 		/*
 		 * Check if this child was the statistics collector. If so, try to
@@ -1953,14 +1953,9 @@ reaper(SIGNAL_ARGS)
 			StartupPID = 0;
 
 			/*
-			 * Startup succeeded - remember its ID and RedoRecPtr.
-			 *
-			 * NB: this MUST happen before we fork a checkpoint or shutdown
-			 * subprocess, else they will have wrong local ThisStartUpId.
+			 * Startup succeeded - we are done with system startup or recovery.
 			 */
-			SetThisStartUpID();
-
-			FatalError = false; /* done with recovery */
+			FatalError = false;
 
 			/*
 			 * Arrange for first checkpoint to occur after standard delay.
@@ -2073,8 +2068,6 @@ CleanupProc(int pid,
 			if (!FatalError)
 			{
 				checkpointed = time(NULL);
-				/* Update RedoRecPtr for future child backends */
-				GetSavedRedoRecPtr();
 			}
 		}
 		else if (pid == BgWriterPID)
@@ -3287,7 +3280,6 @@ postmaster_error(const char *fmt,...)
  * functions
  */
 #include "storage/spin.h"
-extern XLogRecPtr RedoRecPtr;
 extern XLogwrtResult LogwrtResult;
 extern slock_t *ShmemLock;
 extern slock_t *ShmemIndexLock;
@@ -3351,7 +3343,6 @@ write_backend_variables(Port *port)
 	}
 	write_var(MyCancelKey, fp);
 
-	write_var(RedoRecPtr, fp);
 	write_var(LogwrtResult, fp);
 
 	write_var(UsedShmemSegID, fp);
@@ -3416,7 +3407,6 @@ read_backend_variables(unsigned long id, Port *port)
 	}
 	read_var(MyCancelKey, fp);
 
-	read_var(RedoRecPtr, fp);
 	read_var(LogwrtResult, fp);
 
 	read_var(UsedShmemSegID, fp);

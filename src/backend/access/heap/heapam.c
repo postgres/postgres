@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/heap/heapam.c,v 1.167 2004/05/20 15:07:30 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/heap/heapam.c,v 1.168 2004/05/27 17:12:37 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1902,7 +1902,7 @@ l3:
 	 * XLOG stuff: no logging is required as long as we have no
 	 * savepoints. For savepoints private log could be used...
 	 */
-	((PageHeader) BufferGetPage(*buffer))->pd_sui = ThisStartUpID;
+	PageSetSUI(BufferGetPage(*buffer), ThisStartUpID);
 
 	/* store transaction information of xact marking the tuple */
 	tuple->t_data->t_infomask &= ~(HEAP_XMAX_COMMITTED |

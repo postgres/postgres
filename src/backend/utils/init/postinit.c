@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/init/postinit.c,v 1.131 2003/12/12 18:45:09 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/init/postinit.c,v 1.132 2004/05/27 17:12:54 tgl Exp $
  *
  *
  *-------------------------------------------------------------------------
@@ -324,6 +324,13 @@ InitPostgres(const char *dbname, const char *username)
 	 * Initialize the transaction system override state.
 	 */
 	AmiTransactionOverride(bootstrap);
+
+	/*
+	 * Initialize local process's access to XLOG.  In bootstrap case
+	 * we may skip this since StartupXLOG() was run instead.
+	 */
+	if (!bootstrap)
+		InitXLOGAccess();
 
 	/*
 	 * Initialize the relation descriptor cache.  This must create at

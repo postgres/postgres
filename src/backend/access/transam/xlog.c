@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.142 2004/05/21 16:08:46 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.143 2004/05/27 17:12:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -166,9 +166,10 @@ XLogRecPtr	ProcLastRecEnd = {0, 0};
  * XLogCtl->Insert.RedoRecPtr, whenever we can safely do so (ie, when we
  * hold the Insert lock).  See XLogInsert for details.	We are also allowed
  * to update from XLogCtl->Insert.RedoRecPtr if we hold the info_lck;
- * see GetRedoRecPtr.
+ * see GetRedoRecPtr.  A freshly spawned backend obtains the value during
+ * InitXLOGAccess.
  */
-NON_EXEC_STATIC XLogRecPtr RedoRecPtr;
+static XLogRecPtr RedoRecPtr;
 
 /*----------
  * Shared-memory data structures for XLOG control
@@ -279,10 +280,6 @@ typedef struct XLogCtlData
 	uint32		XLogCacheByte;	/* # bytes in xlog buffers */
 	uint32		XLogCacheBlck;	/* highest allocated xlog buffer index */
 	StartUpID	ThisStartUpID;
-
-	/* This value is not protected by *any* lock... */
-	/* see SetSavedRedoRecPtr/GetSavedRedoRecPtr */
-	XLogRecPtr	SavedRedoRecPtr;
 
 	slock_t		info_lck;		/* locks shared LogwrtRqst/LogwrtResult */
 } XLogCtlData;
@@ -2893,8 +2890,7 @@ StartupXLOG(void)
 	else
 		ThisStartUpID = checkPoint.ThisStartUpID;
 
-	RedoRecPtr = XLogCtl->Insert.RedoRecPtr =
-		XLogCtl->SavedRedoRecPtr = checkPoint.redo;
+	RedoRecPtr = XLogCtl->Insert.RedoRecPtr = checkPoint.redo;
 
 	if (XLByteLT(RecPtr, checkPoint.redo))
 		ereport(PANIC,
@@ -3251,35 +3247,22 @@ ReadCheckpointRecord(XLogRecPtr RecPtr,
 }
 
 /*
- * Postmaster uses this to initialize ThisStartUpID & RedoRecPtr from
- * XLogCtlData located in shmem after successful startup.
+ * This must be called during startup of a backend process, except that
+ * it need not be called in a standalone backend (which does StartupXLOG
+ * instead).  We need to initialize the local copies of ThisStartUpID and
+ * RedoRecPtr.
+ *
+ * Note: before Postgres 7.5, we went to some effort to keep the postmaster
+ * process's copies of ThisStartUpID and RedoRecPtr valid too.  This was
+ * unnecessary however, since the postmaster itself never touches XLOG anyway.
  */
 void
-SetThisStartUpID(void)
+InitXLOGAccess(void)
 {
+	/* ThisStartUpID doesn't change so we need no lock to copy it */
 	ThisStartUpID = XLogCtl->ThisStartUpID;
-	RedoRecPtr = XLogCtl->SavedRedoRecPtr;
-}
-
-/*
- * CheckPoint process called by postmaster saves copy of new RedoRecPtr
- * in shmem (using SetSavedRedoRecPtr).  When checkpointer completes,
- * postmaster calls GetSavedRedoRecPtr to update its own copy of RedoRecPtr,
- * so that subsequently-spawned backends will start out with a reasonably
- * up-to-date local RedoRecPtr.  Since these operations are not protected by
- * any lock and copying an XLogRecPtr isn't atomic, it's unsafe to use either
- * of these routines at other times!
- */
-void
-SetSavedRedoRecPtr(void)
-{
-	XLogCtl->SavedRedoRecPtr = RedoRecPtr;
-}
-
-void
-GetSavedRedoRecPtr(void)
-{
-	RedoRecPtr = XLogCtl->SavedRedoRecPtr;
+	/* Use GetRedoRecPtr to copy the RedoRecPtr safely */
+	(void) GetRedoRecPtr();
 }
 
 /*
