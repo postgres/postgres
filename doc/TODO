@@ -1,16 +1,19 @@
 
 TODO list for PostgreSQL
 ========================
-#A hyphen (-) marks changes that will appear in the upcoming 8.1 release.#
-
-Bracketed items "[]" have more detail.
-
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Mon Nov 29 23:33:09 EST 2004
+Last updated:		Tue Nov 30 00:03:37 EST 2004
 
 The most recent version of this document can be viewed at the PostgreSQL web
 site, http://www.PostgreSQL.org.
 
+#A hyphen, "-", marks changes that will appear in the upcoming 8.1 release.#
+
+Bracketed items, "[]", have more detail.
+
+This list contains all known PostgreSQL bugs and feature requests. If
+you would like to work on an item, please read the developer's FAQ
+first.
 
 
 Administration
