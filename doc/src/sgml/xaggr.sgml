@@ -2,26 +2,57 @@
 <Title>Extending <Acronym>SQL</Acronym>: Aggregates</Title>
 
 <Para>
-     Aggregates  in <ProductName>Postgres</ProductName> 
-are expressed in terms of state
-     transition functions.  That is,  an  aggregate  can  be
+     Aggregate functions  in <ProductName>Postgres</ProductName> 
+     are expressed as <firstterm>state values</firstterm>
+     and <firstterm>state transition functions</firstterm>.
+     That is,  an  aggregate  can  be
      defined  in terms of state that is modified whenever an
-     instance is processed.  Some state functions look at  a
-     particular value in the instance when computing the new
-     state (<Acronym>sfunc1</Acronym> in the  
-create  aggregate  syntax)  while
-     others  only  keep  track  of  their own internal state
-     (<Acronym>sfunc2</Acronym>).
-     If we define an aggregate that  uses  only  
-<Acronym>sfunc1</Acronym>,  we
-     define an aggregate that computes a running function of
+     input item is processed.  To define a new aggregate
+     function, one selects a datatype for the state value,
+     an initial value for the state, and a state transition
+     function.  The state transition function is just an
+     ordinary function that could also be used outside the
+     context of the aggregate.
+</Para>
+
+<Para>
+     Actually, in order to make it easier to construct useful
+     aggregates from existing functions, an aggregate can have
+     one or two separate state values, one or two transition
+     functions to update those state values, and a
+     <firstterm>final function</firstterm> that computes the
+     actual aggregate result from the ending state values.
+</Para>
+
+<Para>
+     Thus there can be as many as four datatypes involved:
+     the type of the input data items, the type of the aggregate's
+     result, and the types of the two state values.  Only the
+     input and result datatypes are seen by a user of the aggregate.
+</Para>
+
+<Para>
+     Some state transition functions need to look at each successive
+     input to compute the next state value, while others ignore the
+     specific input value and simply update their internal state.
+     (The most useful example of the second kind is a running count
+     of the number of input items.)  The <ProductName>Postgres</ProductName>
+     aggregate machinery defines <Acronym>sfunc1</Acronym> for
+     an aggregate as a function that is passed both the old state
+     value and the current input value, while <Acronym>sfunc2</Acronym>
+     is a function that is passed only the old state value.
+</Para>
+
+<Para>
+     If we define an aggregate that  uses  only <Acronym>sfunc1</Acronym>,
+     we have an aggregate that computes a running function of
      the attribute values from each instance.  "Sum"  is  an
      example  of  this  kind  of aggregate.  "Sum" starts at
      zero and always adds the current  instance's  value  to
-     its  running  total.   We  will  use the 
-<Acronym>int4pl</Acronym> that is
-     built into <ProductName>Postgres</ProductName> 
-to perform this addition.
+     its  running  total.  For example, if we want to make a Sum
+     aggregate to work on a datatype for complex numbers,
+     we only need the addition function for that datatype.
+     The aggregate definition is:
      
 <ProgramListing>
 CREATE AGGREGATE complex_sum (
@@ -39,11 +70,15 @@ SELECT complex_sum(a) FROM test_complex;
          |(34,53.9)   |
          +------------+
 </ProgramListing>
+
+     (In practice, we'd just name the aggregate "sum", and rely on
+     <ProductName>Postgres</ProductName> to figure out which kind
+     of sum to apply to a complex column.)
 </Para>
 
 <Para>
      If we define only <Acronym>sfunc2</Acronym>, we are 
-specifying  an  aggregate  
+     specifying  an  aggregate  
      that computes a running function that is independent  of  
      the  attribute  values  from  each  instance.
      "Count"  is  the  most  common  example of this kind of
@@ -103,5 +138,11 @@ SELECT my_average(salary) as emp_average FROM EMP;
          |1640        |
          +------------+
 </ProgramListing>
+</Para>
+
+<Para>
+    For further details see
+    <xref endterm="sql-createaggregate-title"
+    linkend="sql-createaggregate-title">.
 </Para>
 </Chapter>
