@@ -50,7 +50,7 @@ else
 		echo '#!' $2/$OBJNAME
 	fi
 fi
-$NM -Bg $1 | \
+$NM -BCg $1 | \
 	egrep ' [TDB] ' | \
 	sed -e 's/.* //' | \
 	egrep -v '\$' | \

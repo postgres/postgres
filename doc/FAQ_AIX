@@ -1,18 +1,27 @@
 From: Zeugswetter Andreas <ZeugswetterA@wien.spardat.at>
-Wed Nov  8 11:16:35 MEZ 2000
+Tue Mar 27 10:47:31 MSZ 2001
 
-AIX 4.3.2 with native IBM compiler xlc 3.6.4 passes all regression tests.
-Other versions of OS and compiler should also work. If you don't have 
-a powerpc there might be differences in the geometry regression test.
+On AIX 4.3.2 PostgreSQL compiled with the native IBM compiler xlc 
+(vac.C 5.0.1) passes all regression tests.
+Other versions of OS and compiler should also work. If you don't have a 
+powerpc or use gcc you might see rounding differences in the geometry
+regression test.
 
 Use the following configure flags in addition to your own
 if you have readline or libz there:
 --with-includes=/usr/local/include --with-libraries=/usr/local/lib
 
-libpq++ does not work because xlC does not have the string and bool classes.
-compiling the few files, that fail, with g++ does work.
-
-Compiling PostgreSQL with gcc (2.95.2) on AIX also works.
+If you need libpq++ and have trouble --with-CXX=xlC make sure you have
+installed the appropriate C++ include files and use a C++ version that
+supports the string class (e.g. VisualAge C++ filesets vacpp.cmp.batch 5.0
+and vacpp.cmp.include 5.0).
 
 There will probably be warnings about int8 - int64 redefines, 0.0/0.0
 division and duplicate symbol warnings which you can safely ignore.
+
+Compiling PostgreSQL with gcc (2.95.2) on AIX also works.
+Use the configure flags: --with-CC=gcc
+
+Since the mktime() function does not work on AIX for dates before
+1970, all localtime formatted datetimes will not use summer time for
+dates before 1970.
