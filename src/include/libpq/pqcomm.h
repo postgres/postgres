@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pqcomm.h,v 1.14 1997/09/08 21:52:38 momjian Exp $
+ * $Id: pqcomm.h,v 1.15 1997/09/12 22:26:13 momjian Exp $
  *
  * NOTES
  *	  Some of this should move to libpq.h
@@ -77,7 +77,7 @@ typedef struct StartupInfo
 } StartupInfo;
 
 /* amount of available data in a packet buffer */
-#define MESSAGE_SIZE	sizeof(StartupInfo) + 5 /* why 5? BJM 2/11/97 */
+#define MESSAGE_SIZE	sizeof(StartupInfo)
 
 /* I/O can be blocking or non-blocking */
 #define BLOCKING		(FALSE)
