@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/scan.l,v 1.111 2003/10/09 19:13:23 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/scan.l,v 1.111.2.1 2004/02/21 00:35:13 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,6 +26,7 @@
 #include "parser/keywords.h"
 /* Not needed now that this file is compiled as part of gram.y */
 /* #include "parser/parse.h" */
+#include "parser/scansup.h"
 #include "utils/builtins.h"
 #include "mb/pg_wchar.h"
 
@@ -394,23 +395,15 @@ other			.
 					startlit();
 				}
 <xd>{xdstop}	{
+					char		   *ident;
+
 					BEGIN(INITIAL);
 					if (literallen == 0)
 						yyerror("zero-length delimited identifier");
+					ident = litbufdup();
 					if (literallen >= NAMEDATALEN)
-					{
-						int len;
-
-						len = pg_mbcliplen(literalbuf, literallen,
-										   NAMEDATALEN-1);
-						ereport(NOTICE,
-								(errcode(ERRCODE_NAME_TOO_LONG),
-								 errmsg("identifier \"%s\" will be truncated to \"%.*s\"",
-										literalbuf, len, literalbuf)));
-						literalbuf[len] = '\0';
-						literallen = len;
-					}
-					yylval.str = litbufdup();
+						truncate_identifier(ident, literallen, true);
+					yylval.str = ident;
 					return IDENT;
 				}
 <xd>{xddouble} {
@@ -532,7 +525,6 @@ other			.
 {identifier}	{
 					const ScanKeyword *keyword;
 					char		   *ident;
-					int				i;
 
 					/* Is it a keyword? */
 					keyword = ScanKeywordLookup(yytext);
@@ -545,28 +537,8 @@ other			.
 					/*
 					 * No.  Convert the identifier to lower case, and truncate
 					 * if necessary.
-					 *
-					 * Note: here we use a locale-dependent case conversion,
-					 * which seems appropriate under standard SQL rules, whereas
-					 * the keyword comparison was NOT locale-dependent.
 					 */
-					ident = pstrdup(yytext);
-					for (i = 0; ident[i]; i++)
-					{
-						if (isupper((unsigned char) ident[i]))
-							ident[i] = tolower((unsigned char) ident[i]);
-					}
-					if (i >= NAMEDATALEN)
-                    {
-						int len;
-
-						len = pg_mbcliplen(ident, i, NAMEDATALEN-1);
-						ereport(NOTICE,
-								(errcode(ERRCODE_NAME_TOO_LONG),
-								 errmsg("identifier \"%s\" will be truncated to \"%.*s\"",
-										ident, len, ident)));
-						ident[len] = '\0';
-                    }
+					ident = downcase_truncate_identifier(yytext, yyleng, true);
 					yylval.str = ident;
 					return IDENT;
 				}

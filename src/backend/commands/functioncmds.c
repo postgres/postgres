@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/functioncmds.c,v 1.38 2003/10/02 06:34:03 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/functioncmds.c,v 1.38.2.1 2004/02/21 00:35:13 tgl Exp $
  *
  * DESCRIPTION
  *	  These routines take the parse tree and pick out the
@@ -393,7 +393,7 @@ CreateFunction(CreateFunctionStmt *stmt)
 	Oid			prorettype;
 	bool		returnsSet;
 	char	   *language;
-	char		languageName[NAMEDATALEN];
+	char	   *languageName;
 	Oid			languageOid;
 	Oid			languageValidator;
 	char	   *funcname;
@@ -428,7 +428,7 @@ CreateFunction(CreateFunctionStmt *stmt)
 			   &as_clause, &language, &volatility, &isStrict, &security);
 
 	/* Convert language name to canonical case */
-	case_translate_language_name(language, languageName);
+	languageName = case_translate_language_name(language);
 
 	/* Look up the language and validate permissions */
 	languageTuple = SearchSysCache(LANGNAME,
