@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.272 2002/04/04 04:25:48 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.273 2002/05/05 00:03:28 tgl Exp $
  *
  * NOTES
  *
@@ -1362,17 +1362,14 @@ static void
 reset_shared(unsigned short port)
 {
 	/*
-	 * Reset assignment of shared mem and semaphore IPC keys. Doing this
-	 * means that in normal cases we'll assign the same keys on each
-	 * "cycle of life", and thereby avoid leaving dead IPC objects
-	 * floating around if the postmaster crashes and is restarted.
-	 */
-	IpcInitKeyAssignment(port);
-
-	/*
 	 * Create or re-create shared memory and semaphores.
+	 *
+	 * Note: in each "cycle of life" we will normally assign the same IPC
+	 * keys (if using SysV shmem and/or semas), since the port number is
+	 * used to determine IPC keys.  This helps ensure that we will clean up
+	 * dead IPC objects if the postmaster crashes and is restarted.
 	 */
-	CreateSharedMemoryAndSemaphores(false, MaxBackends);
+	CreateSharedMemoryAndSemaphores(false, MaxBackends, port);
 }
 
 

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: proc.h,v 1.54 2001/11/06 00:38:26 tgl Exp $
+ * $Id: proc.h,v 1.55 2002/05/05 00:03:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,15 +16,9 @@
 
 #include "access/xlog.h"
 #include "storage/backendid.h"
-#include "storage/ipc.h"
 #include "storage/lock.h"
+#include "storage/pg_sema.h"
 
-
-typedef struct
-{
-	IpcSemaphoreId semId;		/* SysV semaphore set ID */
-	int			semNum;			/* semaphore number within set */
-} SEMA;
 
 /*
  * Each backend has a PROC struct in shared memory.  There is also a list of
@@ -39,7 +33,7 @@ struct PROC
 	/* proc->links MUST BE FIRST IN STRUCT (see ProcSleep,ProcWakeup,etc) */
 	SHM_QUEUE	links;			/* list link if process is in a list */
 
-	SEMA		sem;			/* ONE semaphore to sleep on */
+	PGSemaphoreData sem;		/* ONE semaphore to sleep on */
 	int			errType;		/* STATUS_OK or STATUS_ERROR after wakeup */
 
 	TransactionId xid;			/* transaction currently being executed by
@@ -84,47 +78,11 @@ extern PROC *MyProc;
 
 /*
  * There is one ProcGlobal struct for the whole installation.
- *
- * PROC_NSEMS_PER_SET is the number of semaphores in each sys-V semaphore set
- * we allocate.  It must be no more than 32 (or however many bits in an int
- * on your machine), or our free-semaphores bitmap won't work.  It also must
- * be *less than* your kernel's SEMMSL (max semaphores per set) parameter,
- * which is often around 25.  (Less than, because we allocate one extra sema
- * in each set for identification purposes.)
- *
- * PROC_SEM_MAP_ENTRIES is the number of semaphore sets we need to allocate
- * to keep track of up to maxBackends backends.  Note that we need one extra
- * semaphore (see storage/lmgr/proc.c), so the computation may look wrong,
- * but it's right.
  */
-#define  PROC_NSEMS_PER_SET		16
-#define  PROC_SEM_MAP_ENTRIES(maxBackends)	((maxBackends)/PROC_NSEMS_PER_SET+1)
-
-typedef struct
-{
-	/* info about a single set of per-process semaphores */
-	IpcSemaphoreId procSemId;
-	int32		freeSemMap;
-
-	/*
-	 * In freeSemMap, bit i is set if the i'th semaphore of this sema set
-	 * is allocated to a process.  (i counts from 0 at the LSB)
-	 */
-} SEM_MAP_ENTRY;
-
 typedef struct PROC_HDR
 {
 	/* Head of list of free PROC structures */
 	SHMEM_OFFSET freeProcs;
-
-	/* Info about semaphore sets used for per-process semaphores */
-	int			semMapEntries;
-
-	/*
-	 * VARIABLE LENGTH ARRAY: actual length is semMapEntries. THIS MUST BE
-	 * LAST IN THE STRUCT DECLARATION.
-	 */
-	SEM_MAP_ENTRY procSemMap[1];
 } PROC_HDR;
 
 
@@ -135,6 +93,7 @@ extern int	DeadlockTimeout;
 /*
  * Function Prototypes
  */
+extern int	ProcGlobalSemas(int maxBackends);
 extern void InitProcGlobal(int maxBackends);
 extern void InitProcess(void);
 extern void InitDummyProcess(void);

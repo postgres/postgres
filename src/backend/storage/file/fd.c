@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/file/fd.c,v 1.90 2002/03/06 06:10:03 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/file/fd.c,v 1.91 2002/05/05 00:03:28 tgl Exp $
  *
  * NOTES:
  *
@@ -51,6 +51,7 @@
 
 #include "miscadmin.h"
 #include "storage/fd.h"
+#include "storage/ipc.h"
 
 
 /* Filename components for OpenTemporaryFile */

@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lwlock.c,v 1.9 2002/03/02 21:39:29 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lwlock.c,v 1.10 2002/05/05 00:03:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -302,7 +302,7 @@ LWLockAcquire(LWLockId lockid, LWLockMode mode)
 		for (;;)
 		{
 			/* "false" means cannot accept cancel/die interrupt here. */
-			IpcSemaphoreLock(proc->sem.semId, proc->sem.semNum, false);
+			PGSemaphoreLock(&proc->sem, false);
 			if (!proc->lwWaiting)
 				break;
 			extraWaits++;
@@ -325,7 +325,7 @@ LWLockAcquire(LWLockId lockid, LWLockMode mode)
 	 * Fix the process wait semaphore's count for any absorbed wakeups.
 	 */
 	while (extraWaits-- > 0)
-		IpcSemaphoreUnlock(proc->sem.semId, proc->sem.semNum);
+		PGSemaphoreUnlock(&proc->sem);
 }
 
 /*
@@ -485,7 +485,7 @@ LWLockRelease(LWLockId lockid)
 		head = proc->lwWaitLink;
 		proc->lwWaitLink = NULL;
 		proc->lwWaiting = false;
-		IpcSemaphoreUnlock(proc->sem.semId, proc->sem.semNum);
+		PGSemaphoreUnlock(&proc->sem);
 	}
 
 	/*

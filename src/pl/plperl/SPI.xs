@@ -21,22 +21,6 @@
 #include "catalog/pg_type.h"
 
 /* perl stuff */
-/*
- * Evil Code Alert
- *
- * both posgreSQL and perl try to do 'the right thing'
- * and provide union semun if the platform doesn't define
- * it in a system header.
- * psql uses HAVE_UNION_SEMUN
- * perl uses HAS_UNION_SEMUN
- * together, they cause compile errors.
- * If we need it, the psql headers above will provide it.
- * So we tell perl that we have it.
- */
-#ifndef HAS_UNION_SEMUN
-#define HAS_UNION_SEMUN
-#endif
-
 #include "EXTERN.h"
 #include "perl.h"
 #include "XSUB.h"

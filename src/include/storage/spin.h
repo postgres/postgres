@@ -40,7 +40,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: spin.h,v 1.19 2001/11/05 17:46:35 momjian Exp $
+ * $Id: spin.h,v 1.20 2002/05/05 00:03:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -72,6 +72,6 @@
 #define SpinLockFree(lock)	S_LOCK_FREE(lock)
 
 
-extern void CreateSpinlocks(void);
+extern int	SpinlockSemas(void);
 
 #endif   /* SPIN_H */

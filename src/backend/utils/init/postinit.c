@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.103 2002/04/27 21:24:34 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.104 2002/05/05 00:03:29 tgl Exp $
  *
  *
  *-------------------------------------------------------------------------
@@ -32,6 +32,7 @@
 #include "mb/pg_wchar.h"
 #include "miscadmin.h"
 #include "storage/backendid.h"
+#include "storage/ipc.h"
 #include "storage/proc.h"
 #include "storage/sinval.h"
 #include "storage/smgr.h"
@@ -181,7 +182,7 @@ InitCommunication(void)
 		 * postmaster.	Create private "shmem" and semaphores.	Setting
 		 * MaxBackends = 16 is arbitrary.
 		 */
-		CreateSharedMemoryAndSemaphores(true, 16);
+		CreateSharedMemoryAndSemaphores(true, 16, 0);
 	}
 }
 

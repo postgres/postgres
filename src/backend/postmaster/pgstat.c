@@ -16,7 +16,7 @@
  *
  *	Copyright (c) 2001, PostgreSQL Global Development Group
  *
- *	$Header: /cvsroot/pgsql/src/backend/postmaster/pgstat.c,v 1.19 2002/04/03 00:27:25 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/postmaster/pgstat.c,v 1.20 2002/05/05 00:03:28 tgl Exp $
  * ----------
  */
 #include "postgres.h"
@@ -44,6 +44,7 @@
 #include "miscadmin.h"
 #include "utils/memutils.h"
 #include "storage/backendid.h"
+#include "storage/ipc.h"
 #include "utils/rel.h"
 #include "utils/hsearch.h"
 #include "utils/ps_status.h"

@@ -13,7 +13,7 @@
 # be converted to Method 2.  
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/port/Makefile,v 1.11 2002/03/13 00:05:06 petere Exp $
+#    $Header: /cvsroot/pgsql/src/backend/port/Makefile,v 1.12 2002/05/05 00:03:28 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -21,7 +21,7 @@ subdir = src/backend/port
 top_builddir = ../../..
 include $(top_builddir)/src/Makefile.global
 
-OBJS = dynloader.o
+OBJS = dynloader.o pg_sema.o pg_shmem.o
 
 OBJS += $(GETHOSTNAME) $(GETRUSAGE) $(INET_ATON) $(ISINF) $(MEMCMP) \
         $(MISSING_RANDOM) $(SNPRINTF) $(SRANDOM) $(STRCASECMP) $(STRERROR) \

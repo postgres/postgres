@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipci.c,v 1.46 2002/03/02 21:39:29 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipci.c,v 1.47 2002/05/05 00:03:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,8 +21,11 @@
 #include "access/xlog.h"
 #include "storage/bufmgr.h"
 #include "storage/freespace.h"
+#include "storage/ipc.h"
 #include "storage/lmgr.h"
 #include "storage/lwlock.h"
+#include "storage/pg_sema.h"
+#include "storage/pg_shmem.h"
 #include "storage/pmsignal.h"
 #include "storage/proc.h"
 #include "storage/sinval.h"
@@ -41,9 +44,12 @@
  * memory.	This is true for a standalone backend, false for a postmaster.
  */
 void
-CreateSharedMemoryAndSemaphores(bool makePrivate, int maxBackends)
+CreateSharedMemoryAndSemaphores(bool makePrivate,
+								int maxBackends,
+								int port)
 {
 	int			size;
+	int			numSemas;
 	PGShmemHeader *seghdr;
 
 	/*
@@ -70,12 +76,14 @@ CreateSharedMemoryAndSemaphores(bool makePrivate, int maxBackends)
 	/*
 	 * Create the shmem segment
 	 */
-	seghdr = IpcMemoryCreate(size, makePrivate, IPCProtection);
+	seghdr = PGSharedMemoryCreate(size, makePrivate, port);
 
 	/*
-	 * First initialize spinlocks --- needed by InitShmemAllocation()
+	 * Create semaphores
 	 */
-	CreateSpinlocks();
+	numSemas = ProcGlobalSemas(maxBackends);
+	numSemas += SpinlockSemas();
+	PGReserveSemaphores(numSemas, port);
 
 	/*
 	 * Set up shared memory allocation mechanism

@@ -8,7 +8,7 @@
  * or in pg_config.h afterwards.  Of course, if you edit pg_config.h, then your
  * changes will be overwritten the next time you run configure.
  *
- * $Id: pg_config.h.in,v 1.23 2002/04/21 19:48:19 thomas Exp $
+ * $Id: pg_config.h.in,v 1.24 2002/05/05 00:03:29 tgl Exp $
  */
 
 #ifndef PG_CONFIG_H
@@ -710,6 +710,15 @@ extern int fdatasync(int fildes);
 
 /* Define if you have syslog() */
 #undef HAVE_SYSLOG
+
+/* Define exactly one of these symbols to select semaphore implementation */
+#undef USE_NAMED_POSIX_SEMAPHORES
+#undef USE_UNNAMED_POSIX_SEMAPHORES
+#undef USE_SYSV_SEMAPHORES
+
+/* Define exactly one of these symbols to select shared-mem implementation */
+#undef USE_SYSV_SHARED_MEMORY
+
 
 /*
  *------------------------------------------------------------------------

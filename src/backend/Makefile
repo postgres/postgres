@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/backend/Makefile,v 1.77 2002/03/13 00:05:05 petere Exp $
+# $Header: /cvsroot/pgsql/src/backend/Makefile,v 1.78 2002/05/05 00:03:28 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -194,7 +194,7 @@ ifeq ($(enable_nls), yes)
 endif
 
 distclean: clean
-	rm -f port/tas.s port/dynloader.c
+	rm -f port/tas.s port/dynloader.c port/pg_sema.c port/pg_shmem.c
 
 maintainer-clean: distclean
 	rm -f $(srcdir)/bootstrap/bootparse.c \

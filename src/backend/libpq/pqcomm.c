@@ -29,7 +29,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: pqcomm.c,v 1.132 2002/04/21 01:03:33 tgl Exp $
+ *	$Id: pqcomm.c,v 1.133 2002/05/05 00:03:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -79,6 +79,7 @@
 
 #include "libpq/libpq.h"
 #include "miscadmin.h"
+#include "storage/ipc.h"
 
 
 static void pq_close(void);

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.118 2002/03/02 21:39:29 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.119 2002/05/05 00:03:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,12 +37,6 @@
  *		in the first place was to allow the lock table to grow larger
  *		than available shared memory and that isn't going to work
  *		without a lot of unimplemented support anyway.
- *
- * 4/7/95 -- instead of allocating a set of 1 semaphore per process, we
- *		allocate a semaphore from a set of PROC_NSEMS_PER_SET semaphores
- *		shared among backends (we keep a few sets of semaphores around).
- *		This is so that we can support more backends. (system-wide semaphore
- *		sets run out pretty fast.)				  -ay 4/95
  */
 #include "postgres.h"
 
@@ -51,18 +45,9 @@
 #include <unistd.h>
 #include <sys/time.h>
 
-#include "storage/ipc.h"
-/* In Ultrix, sem.h and shm.h must be included AFTER ipc.h */
-#ifdef HAVE_SYS_SEM_H
-#include <sys/sem.h>
-#endif
-
-#if defined(__darwin__)
-#include "port/darwin/sem.h"
-#endif
-
 #include "miscadmin.h"
 #include "access/xact.h"
+#include "storage/ipc.h"
 #include "storage/proc.h"
 #include "storage/sinval.h"
 #include "storage/spin.h"
@@ -73,11 +58,11 @@ int			DeadlockTimeout = 1000;
 PROC	   *MyProc = NULL;
 
 /*
- * This spinlock protects the freelist of recycled PROC structures and the
- * bitmap of free semaphores.  We cannot use an LWLock because the LWLock
- * manager depends on already having a PROC and a wait semaphore!  But these
- * structures are touched relatively infrequently (only at backend startup
- * or shutdown) and not for very long, so a spinlock is okay.
+ * This spinlock protects the freelist of recycled PROC structures.
+ * We cannot use an LWLock because the LWLock manager depends on already
+ * having a PROC and a wait semaphore!  But these structures are touched
+ * relatively infrequently (only at backend startup or shutdown) and not for
+ * very long, so a spinlock is okay.
  */
 static slock_t *ProcStructLock = NULL;
 
@@ -90,21 +75,24 @@ static bool waitingForSignal = false;
 
 static void ProcKill(void);
 static void DummyProcKill(void);
-static void ProcGetNewSemIdAndNum(IpcSemaphoreId *semId, int *semNum);
-static void ProcFreeSem(IpcSemaphoreId semId, int semNum);
-static void ZeroProcSemaphore(PROC *proc);
-static void ProcFreeAllSemaphores(void);
 
+
+/*
+ * Report number of semaphores needed by InitProcGlobal.
+ */
+int
+ProcGlobalSemas(int maxBackends)
+{
+	/* We need a sema per backend, plus one for the dummy process. */
+	return maxBackends + 1;
+}
 
 /*
  * InitProcGlobal -
  *	  initializes the global process table. We put it here so that
- *	  the postmaster can do this initialization. (ProcFreeAllSemaphores needs
- *	  to read this table on exiting the postmaster. If we have the first
- *	  backend do this, starting up and killing the postmaster without
- *	  starting any backends will be a problem.)
+ *	  the postmaster can do this initialization.
  *
- *	  We also allocate all the per-process semaphores we will need to support
+ *	  We also create all the per-process semaphores we will need to support
  *	  the requested number of backends.  We used to allocate semaphores
  *	  only when backends were actually started up, but that is bad because
  *	  it lets Postgres fail under load --- a lot of Unix systems are
@@ -114,28 +102,19 @@ static void ProcFreeAllSemaphores(void);
  *	  of backends immediately at initialization --- if the sysadmin has set
  *	  MaxBackends higher than his kernel will support, he'll find out sooner
  *	  rather than later.
+ *
+ *	  Another reason for creating semaphores here is that the semaphore
+ *	  implementation typically requires us to create semaphores in the
+ *	  postmaster, not in backends.
  */
 void
 InitProcGlobal(int maxBackends)
 {
-	int			semMapEntries;
-	Size		procGlobalSize;
 	bool		found = false;
-
-	/*
-	 * Compute size for ProcGlobal structure.  Note we need one more sema
-	 * besides those used for regular backends; this is accounted for in
-	 * the PROC_SEM_MAP_ENTRIES macro.	(We do it that way so that other
-	 * modules that use PROC_SEM_MAP_ENTRIES(maxBackends) to size data
-	 * structures don't have to know about this explicitly.)
-	 */
-	Assert(maxBackends > 0);
-	semMapEntries = PROC_SEM_MAP_ENTRIES(maxBackends);
-	procGlobalSize = sizeof(PROC_HDR) + (semMapEntries - 1) *sizeof(SEM_MAP_ENTRY);
 
 	/* Create or attach to the ProcGlobal shared structure */
 	ProcGlobal = (PROC_HDR *)
-		ShmemInitStruct("Proc Header", procGlobalSize, &found);
+		ShmemInitStruct("Proc Header", sizeof(PROC_HDR), &found);
 
 	/* --------------------
 	 * We're the first - initialize.
@@ -148,47 +127,33 @@ InitProcGlobal(int maxBackends)
 		int			i;
 
 		ProcGlobal->freeProcs = INVALID_OFFSET;
-		ProcGlobal->semMapEntries = semMapEntries;
-
-		for (i = 0; i < semMapEntries; i++)
-		{
-			ProcGlobal->procSemMap[i].procSemId = -1;
-			ProcGlobal->procSemMap[i].freeSemMap = 0;
-		}
 
 		/*
-		 * Arrange to delete semas on exit --- set this up now so that we
-		 * will clean up if pre-allocation fails.  We use our own
-		 * freeproc, rather than IpcSemaphoreCreate's removeOnExit option,
-		 * because we don't want to fill up the on_shmem_exit list with a
-		 * separate entry for each semaphore set.
+		 * Pre-create the PROC structures and create a semaphore for each.
 		 */
-		on_shmem_exit(ProcFreeAllSemaphores, 0);
-
-		/*
-		 * Pre-create the semaphores.
-		 */
-		for (i = 0; i < semMapEntries; i++)
+		for (i = 0; i < maxBackends; i++)
 		{
-			IpcSemaphoreId semId;
+			PROC   *proc;
 
-			semId = IpcSemaphoreCreate(PROC_NSEMS_PER_SET,
-									   IPCProtection,
-									   1,
-									   false);
-			ProcGlobal->procSemMap[i].procSemId = semId;
+			proc = (PROC *) ShmemAlloc(sizeof(PROC));
+			if (!proc)
+				elog(FATAL, "cannot create new proc: out of memory");
+			MemSet(proc, 0, sizeof(PROC));
+			PGSemaphoreCreate(&proc->sem);
+			proc->links.next = ProcGlobal->freeProcs;
+			ProcGlobal->freeProcs = MAKE_OFFSET(proc);
 		}
 
 		/*
 		 * Pre-allocate a PROC structure for dummy (checkpoint) processes,
-		 * and reserve the last sema of the precreated semas for it.
+		 * too.  This does not get linked into the freeProcs list.
 		 */
 		DummyProc = (PROC *) ShmemAlloc(sizeof(PROC));
+		if (!DummyProc)
+			elog(FATAL, "cannot create new proc: out of memory");
+		MemSet(DummyProc, 0, sizeof(PROC));
 		DummyProc->pid = 0;		/* marks DummyProc as not in use */
-		i = semMapEntries - 1;
-		ProcGlobal->procSemMap[i].freeSemMap |= 1 << (PROC_NSEMS_PER_SET - 1);
-		DummyProc->sem.semId = ProcGlobal->procSemMap[i].procSemId;
-		DummyProc->sem.semNum = PROC_NSEMS_PER_SET - 1;
+		PGSemaphoreCreate(&DummyProc->sem);
 
 		/* Create ProcStructLock spinlock, too */
 		ProcStructLock = (slock_t *) ShmemAlloc(sizeof(slock_t));
@@ -197,7 +162,7 @@ InitProcGlobal(int maxBackends)
 }
 
 /*
- * InitProcess -- create a per-process data structure for this backend
+ * InitProcess -- initialize a per-process data structure for this backend
  */
 void
 InitProcess(void)
@@ -217,7 +182,8 @@ InitProcess(void)
 		elog(ERROR, "InitProcess: you already exist");
 
 	/*
-	 * try to get a proc struct from the free list first
+	 * Try to get a proc struct from the free list.  If this fails,
+	 * we must be out of PROC structures (not to mention semaphores).
 	 */
 	SpinLockAcquire(ProcStructLock);
 
@@ -232,20 +198,19 @@ InitProcess(void)
 	else
 	{
 		/*
-		 * have to allocate a new one.
+		 * If we reach here, all the PROCs are in use.  This is one of
+		 * the possible places to detect "too many backends", so give the
+		 * standard error message.
 		 */
 		SpinLockRelease(ProcStructLock);
-		MyProc = (PROC *) ShmemAlloc(sizeof(PROC));
-		if (!MyProc)
-			elog(FATAL, "cannot create new proc: out of memory");
+		elog(FATAL, "Sorry, too many clients already");
 	}
 
 	/*
-	 * Initialize all fields of MyProc.
+	 * Initialize all fields of MyProc, except for the semaphore which
+	 * was prepared for us by InitProcGlobal.
 	 */
 	SHMQueueElemInit(&(MyProc->links));
-	MyProc->sem.semId = -1;		/* no wait-semaphore acquired yet */
-	MyProc->sem.semNum = -1;
 	MyProc->errType = STATUS_OK;
 	MyProc->xid = InvalidTransactionId;
 	MyProc->xmin = InvalidTransactionId;
@@ -265,18 +230,10 @@ InitProcess(void)
 	on_shmem_exit(ProcKill, 0);
 
 	/*
-	 * Set up a wait-semaphore for the proc.  (We rely on ProcKill to
-	 * clean up MyProc if this fails.)
-	 */
-	if (IsUnderPostmaster)
-		ProcGetNewSemIdAndNum(&MyProc->sem.semId, &MyProc->sem.semNum);
-
-	/*
 	 * We might be reusing a semaphore that belonged to a failed process.
 	 * So be careful and reinitialize its value here.
 	 */
-	if (MyProc->sem.semId >= 0)
-		ZeroProcSemaphore(MyProc);
+	PGSemaphoreReset(&MyProc->sem);
 
 	/*
 	 * Now that we have a PROC, we could try to acquire locks, so
@@ -340,25 +297,7 @@ InitDummyProcess(void)
 	 * We might be reusing a semaphore that belonged to a failed process.
 	 * So be careful and reinitialize its value here.
 	 */
-	if (MyProc->sem.semId >= 0)
-		ZeroProcSemaphore(MyProc);
-}
-
-/*
- * Initialize the proc's wait-semaphore to count zero.
- */
-static void
-ZeroProcSemaphore(PROC *proc)
-{
-	union semun semun;
-
-	semun.val = 0;
-	if (semctl(proc->sem.semId, proc->sem.semNum, SETVAL, semun) < 0)
-	{
-		fprintf(stderr, "ZeroProcSemaphore: semctl(id=%d,SETVAL) failed: %s\n",
-				proc->sem.semId, strerror(errno));
-		proc_exit(255);
-	}
+	PGSemaphoreReset(&MyProc->sem);
 }
 
 /*
@@ -397,7 +336,7 @@ LockWaitCancel(void)
 	 * to zero. Otherwise, our next attempt to wait for a lock will fall
 	 * through prematurely.
 	 */
-	ZeroProcSemaphore(MyProc);
+	PGSemaphoreReset(&MyProc->sem);
 
 	/*
 	 * Return true even if we were kicked off the lock before we were able
@@ -463,11 +402,7 @@ ProcKill(void)
 
 	SpinLockAcquire(ProcStructLock);
 
-	/* Free up my wait semaphore, if I got one */
-	if (MyProc->sem.semId >= 0)
-		ProcFreeSem(MyProc->sem.semId, MyProc->sem.semNum);
-
-	/* Add PROC struct to freelist so space can be recycled in future */
+	/* Return PROC structure (and semaphore) to freelist */
 	MyProc->links.next = procglobal->freeProcs;
 	procglobal->freeProcs = MAKE_OFFSET(MyProc);
 
@@ -701,10 +636,10 @@ ProcSleep(LOCKMETHODTABLE *lockMethodTable,
 		elog(FATAL, "ProcSleep: Unable to set timer for process wakeup");
 
 	/*
-	 * If someone wakes us between LWLockRelease and IpcSemaphoreLock,
-	 * IpcSemaphoreLock will not block.  The wakeup is "saved" by the
+	 * If someone wakes us between LWLockRelease and PGSemaphoreLock,
+	 * PGSemaphoreLock will not block.  The wakeup is "saved" by the
 	 * semaphore implementation.  Note also that if HandleDeadLock is
-	 * invoked but does not detect a deadlock, IpcSemaphoreLock() will
+	 * invoked but does not detect a deadlock, PGSemaphoreLock() will
 	 * continue to wait.  There used to be a loop here, but it was useless
 	 * code...
 	 *
@@ -714,7 +649,7 @@ ProcSleep(LOCKMETHODTABLE *lockMethodTable,
 	 * here.  We don't, because we have no state-change work to do after
 	 * being granted the lock (the grantor did it all).
 	 */
-	IpcSemaphoreLock(MyProc->sem.semId, MyProc->sem.semNum, true);
+	PGSemaphoreLock(&MyProc->sem, true);
 
 	/*
 	 * Disable the timer, if it's still running
@@ -775,7 +710,7 @@ ProcWakeup(PROC *proc, int errType)
 	proc->errType = errType;
 
 	/* And awaken it */
-	IpcSemaphoreUnlock(proc->sem.semId, proc->sem.semNum);
+	PGSemaphoreUnlock(&proc->sem);
 
 	return retProc;
 }
@@ -914,7 +849,7 @@ HandleDeadLock(SIGNAL_ARGS)
 	 * Unlock my semaphore so that the interrupted ProcSleep() call can
 	 * finish.
 	 */
-	IpcSemaphoreUnlock(MyProc->sem.semId, MyProc->sem.semNum);
+	PGSemaphoreUnlock(&MyProc->sem);
 
 	/*
 	 * We're done here.  Transaction abort caused by the error that
@@ -943,7 +878,7 @@ void
 ProcWaitForSignal(void)
 {
 	waitingForSignal = true;
-	IpcSemaphoreLock(MyProc->sem.semId, MyProc->sem.semNum, true);
+	PGSemaphoreLock(&MyProc->sem, true);
 	waitingForSignal = false;
 }
 
@@ -957,7 +892,7 @@ ProcWaitForSignal(void)
 void
 ProcCancelWaitForSignal(void)
 {
-	ZeroProcSemaphore(MyProc);
+	PGSemaphoreReset(&MyProc->sem);
 	waitingForSignal = false;
 }
 
@@ -970,7 +905,7 @@ ProcSendSignal(BackendId procId)
 	PROC	   *proc = BackendIdGetProc(procId);
 
 	if (proc != NULL)
-		IpcSemaphoreUnlock(proc->sem.semId, proc->sem.semNum);
+		PGSemaphoreUnlock(&proc->sem);
 }
 
 
@@ -1034,111 +969,4 @@ disable_sigalrm_interrupt(void)
 #endif
 
 	return true;
-}
-
-
-/*****************************************************************************
- *
- *****************************************************************************/
-
-/*
- * ProcGetNewSemIdAndNum -
- *	  scan the free semaphore bitmap and allocate a single semaphore from
- *	  a semaphore set.
- */
-static void
-ProcGetNewSemIdAndNum(IpcSemaphoreId *semId, int *semNum)
-{
-	/* use volatile pointer to prevent code rearrangement */
-	volatile PROC_HDR *procglobal = ProcGlobal;
-	int			semMapEntries = procglobal->semMapEntries;
-	volatile SEM_MAP_ENTRY *procSemMap = procglobal->procSemMap;
-	int32		fullmask = (1 << PROC_NSEMS_PER_SET) - 1;
-	int			i;
-
-	SpinLockAcquire(ProcStructLock);
-
-	for (i = 0; i < semMapEntries; i++)
-	{
-		int			mask = 1;
-		int			j;
-
-		if (procSemMap[i].freeSemMap == fullmask)
-			continue;			/* this set is fully allocated */
-		if (procSemMap[i].procSemId < 0)
-			continue;			/* this set hasn't been initialized */
-
-		for (j = 0; j < PROC_NSEMS_PER_SET; j++)
-		{
-			if ((procSemMap[i].freeSemMap & mask) == 0)
-			{
-				/* A free semaphore found. Mark it as allocated. */
-				procSemMap[i].freeSemMap |= mask;
-
-				*semId = procSemMap[i].procSemId;
-				*semNum = j;
-
-				SpinLockRelease(ProcStructLock);
-
-				return;
-			}
-			mask <<= 1;
-		}
-	}
-
-	SpinLockRelease(ProcStructLock);
-
-	/*
-	 * If we reach here, all the semaphores are in use.  This is one of
-	 * the possible places to detect "too many backends", so give the
-	 * standard error message.	(Whether we detect it here or in sinval.c
-	 * depends on whether MaxBackends is a multiple of
-	 * PROC_NSEMS_PER_SET.)
-	 */
-	elog(FATAL, "Sorry, too many clients already");
-}
-
-/*
- * ProcFreeSem -
- *	  free up our semaphore in the semaphore set.
- *
- * Caller is assumed to hold ProcStructLock.
- */
-static void
-ProcFreeSem(IpcSemaphoreId semId, int semNum)
-{
-	int32		mask;
-	int			i;
-	int			semMapEntries = ProcGlobal->semMapEntries;
-
-	mask = ~(1 << semNum);
-
-	for (i = 0; i < semMapEntries; i++)
-	{
-		if (ProcGlobal->procSemMap[i].procSemId == semId)
-		{
-			ProcGlobal->procSemMap[i].freeSemMap &= mask;
-			return;
-		}
-	}
-	/* can't elog here!!! */
-	fprintf(stderr, "ProcFreeSem: no ProcGlobal entry for semId %d\n", semId);
-}
-
-/*
- * ProcFreeAllSemaphores -
- *	  called at shmem_exit time, ie when exiting the postmaster or
- *	  destroying shared state for a failed set of backends.
- *	  Free up all the semaphores allocated to the lmgrs of the backends.
- */
-static void
-ProcFreeAllSemaphores(void)
-{
-	int			i;
-
-	for (i = 0; i < ProcGlobal->semMapEntries; i++)
-	{
-		if (ProcGlobal->procSemMap[i].procSemId >= 0)
-			IpcSemaphoreKill(ProcGlobal->procSemMap[i].procSemId);
-	}
 }

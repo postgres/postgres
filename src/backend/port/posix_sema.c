@@ -1,0 +1,357 @@
+/*-------------------------------------------------------------------------
+ *
+ * posix_sema.c
+ *	  Implement PGSemaphores using POSIX semaphore facilities
+ *
+ * We prefer the unnamed style of POSIX semaphore (the kind made with
+ * sem_init).  We can cope with the kind made with sem_open, however.
+ *
+ *
+ * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1994, Regents of the University of California
+ *
+ * IDENTIFICATION
+ *	  $Header: /cvsroot/pgsql/src/backend/port/posix_sema.c,v 1.1 2002/05/05 00:03:28 tgl Exp $
+ *
+ *-------------------------------------------------------------------------
+ */
+#include "postgres.h"
+
+#include <errno.h>
+#include <signal.h>
+#include <unistd.h>
+
+#include "storage/pg_sema.h"
+
+
+#ifdef USE_NAMED_POSIX_SEMAPHORES
+/* PGSemaphore is pointer to pointer to sem_t */
+#define PG_SEM_REF(x)	(*(x))
+#else
+/* PGSemaphore is pointer to sem_t */
+#define PG_SEM_REF(x)	(x)
+#endif
+
+
+#define IPCProtection	(0600)	/* access/modify by user only */
+
+static sem_t **mySemPointers;	/* keep track of created semaphores */
+static int	numSems;			/* number of semas acquired so far */
+static int	maxSems;			/* allocated size of mySemaPointers array */
+static int	nextSemKey;			/* next name to try */
+
+
+static void ReleaseSemaphores(int status, Datum arg);
+
+
+#ifdef USE_NAMED_POSIX_SEMAPHORES
+
+/*
+ * PosixSemaphoreCreate
+ *
+ * Attempt to create a new named semaphore.
+ *
+ * If we fail with a failure code other than collision-with-existing-sema,
+ * print out an error and abort.  Other types of errors suggest nonrecoverable
+ * problems.
+ */
+static sem_t *
+PosixSemaphoreCreate(void)
+{
+	int			semKey;
+	char		semname[64];
+	sem_t	   *mySem;
+
+	for (;;)
+	{
+		semKey = nextSemKey++;
+
+		snprintf(semname, sizeof(semname), "/pgsql-%d", semKey);
+
+		mySem = sem_open(semname, O_CREAT | O_EXCL,
+						 (mode_t) IPCProtection, (unsigned) 1);
+		if (mySem != SEM_FAILED)
+			break;
+
+		/* Loop if error indicates a collision */
+		if (errno == EEXIST || errno == EACCES || errno == EINTR)
+			continue;
+
+		/*
+		 * Else complain and abort
+		 */
+		fprintf(stderr, "PosixSemaphoreCreate: sem_open(%s) failed: %s\n",
+				semname, strerror(errno));
+		proc_exit(1);
+	}
+
+	/*
+	 * Unlink the semaphore immediately, so it can't be accessed externally.
+	 * This also ensures that it will go away if we crash.
+	 */
+	sem_unlink(semname);
+
+	return mySem;
+}
+
+#else /* !USE_NAMED_POSIX_SEMAPHORES */
+
+/*
+ * PosixSemaphoreCreate
+ *
+ * Attempt to create a new unnamed semaphore.
+ */
+static void
+PosixSemaphoreCreate(sem_t *sem)
+{
+	if (sem_init(sem, 1, 1) < 0)
+	{
+		fprintf(stderr, "PosixSemaphoreCreate: sem_init failed: %s\n",
+				strerror(errno));
+		proc_exit(1);
+	}
+}
+
+#endif /* USE_NAMED_POSIX_SEMAPHORES */
+
+
+/*
+ * PosixSemaphoreKill	- removes a semaphore
+ */
+static void
+PosixSemaphoreKill(sem_t *sem)
+{
+#ifdef USE_NAMED_POSIX_SEMAPHORES
+	/* Got to use sem_close for named semaphores */
+	if (sem_close(sem) < 0)
+		fprintf(stderr, "PosixSemaphoreKill: sem_close failed: %s\n",
+				strerror(errno));
+#else
+	/* Got to use sem_destroy for unnamed semaphores */
+	if (sem_destroy(sem) < 0)
+		fprintf(stderr, "PosixSemaphoreKill: sem_destroy failed: %s\n",
+				strerror(errno));
+#endif
+}
+
+
+/*
+ * PGReserveSemaphores --- initialize semaphore support
+ *
+ * This is called during postmaster start or shared memory reinitialization.
+ * It should do whatever is needed to be able to support up to maxSemas
+ * subsequent PGSemaphoreCreate calls.  Also, if any system resources
+ * are acquired here or in PGSemaphoreCreate, register an on_shmem_exit
+ * callback to release them.
+ *
+ * The port number is passed for possible use as a key (for Posix, we use
+ * it to generate the starting semaphore name).  In a standalone backend,
+ * zero will be passed.
+ *
+ * In the Posix implementation, we acquire semaphores on-demand; the
+ * maxSemas parameter is just used to size the array that keeps track of
+ * acquired semas for subsequent releasing.
+ */
+void
+PGReserveSemaphores(int maxSemas, int port)
+{
+	mySemPointers = (sem_t **) malloc(maxSemas * sizeof(sem_t *));
+	if (mySemPointers == NULL)
+		elog(PANIC, "Out of memory in PGReserveSemaphores");
+	numSems = 0;
+	maxSems = maxSemas;
+	nextSemKey = port * 1000;
+
+	on_shmem_exit(ReleaseSemaphores, 0);
+}
+
+/*
+ * Release semaphores at shutdown or shmem reinitialization
+ *
+ * (called as an on_shmem_exit callback, hence funny argument list)
+ */
+static void
+ReleaseSemaphores(int status, Datum arg)
+{
+	int			i;
+
+	for (i = 0; i < numSems; i++)
+		PosixSemaphoreKill(mySemPointers[i]);
+	free(mySemPointers);
+}
+
+/*
+ * PGSemaphoreCreate
+ *
+ * Initialize a PGSemaphore structure to represent a sema with count 1
+ */
+void
+PGSemaphoreCreate(PGSemaphore sema)
+{
+	sem_t  *newsem;
+
+	/* Can't do this in a backend, because static state is postmaster's */
+	Assert(!IsUnderPostmaster);
+
+	if (numSems >= maxSems)
+		elog(PANIC, "PGSemaphoreCreate: too many semaphores created");
+
+#ifdef USE_NAMED_POSIX_SEMAPHORES
+	*sema = newsem = PosixSemaphoreCreate();
+#else
+	PosixSemaphoreCreate(sema);
+	newsem = sema;
+#endif
+
+	/* Remember new sema for ReleaseSemaphores */
+	mySemPointers[numSems++] = newsem;
+}
+
+/*
+ * PGSemaphoreReset
+ *
+ * Reset a previously-initialized PGSemaphore to have count 0
+ */
+void
+PGSemaphoreReset(PGSemaphore sema)
+{
+	/*
+	 * There's no direct API for this in POSIX, so we have to ratchet the
+	 * semaphore down to 0 with repeated trywait's.
+	 */
+	for (;;)
+	{
+		if (sem_trywait(PG_SEM_REF(sema)) < 0)
+		{
+			if (errno == EAGAIN || errno == EDEADLK)
+				break;			/* got it down to 0 */
+			if (errno == EINTR)
+				continue;		/* can this happen? */
+			fprintf(stderr, "PGSemaphoreReset: sem_trywait failed: %s\n",
+					strerror(errno));
+			proc_exit(1);
+		}
+	}
+}
+
+/*
+ * PGSemaphoreLock
+ *
+ * Lock a semaphore (decrement count), blocking if count would be < 0
+ */
+void
+PGSemaphoreLock(PGSemaphore sema, bool interruptOK)
+{
+	int			errStatus;
+
+	/*
+	 * Note: if errStatus is -1 and errno == EINTR then it means we
+	 * returned from the operation prematurely because we were sent a
+	 * signal.	So we try and lock the semaphore again.
+	 *
+	 * Each time around the loop, we check for a cancel/die interrupt. We
+	 * assume that if such an interrupt comes in while we are waiting, it
+	 * will cause the sem_wait() call to exit with errno == EINTR, so that we
+	 * will be able to service the interrupt (if not in a critical section
+	 * already).
+	 *
+	 * Once we acquire the lock, we do NOT check for an interrupt before
+	 * returning.  The caller needs to be able to record ownership of the
+	 * lock before any interrupt can be accepted.
+	 *
+	 * There is a window of a few instructions between CHECK_FOR_INTERRUPTS
+	 * and entering the sem_wait() call.  If a cancel/die interrupt occurs in
+	 * that window, we would fail to notice it until after we acquire the
+	 * lock (or get another interrupt to escape the sem_wait()).  We can
+	 * avoid this problem by temporarily setting ImmediateInterruptOK to
+	 * true before we do CHECK_FOR_INTERRUPTS; then, a die() interrupt in
+	 * this interval will execute directly.  However, there is a huge
+	 * pitfall: there is another window of a few instructions after the
+	 * sem_wait() before we are able to reset ImmediateInterruptOK.  If an
+	 * interrupt occurs then, we'll lose control, which means that the
+	 * lock has been acquired but our caller did not get a chance to
+	 * record the fact. Therefore, we only set ImmediateInterruptOK if the
+	 * caller tells us it's OK to do so, ie, the caller does not need to
+	 * record acquiring the lock.  (This is currently true for lockmanager
+	 * locks, since the process that granted us the lock did all the
+	 * necessary state updates. It's not true for Posix semaphores used to
+	 * implement LW locks or emulate spinlocks --- but the wait time for
+	 * such locks should not be very long, anyway.)
+	 */
+	do
+	{
+		ImmediateInterruptOK = interruptOK;
+		CHECK_FOR_INTERRUPTS();
+		errStatus = sem_wait(PG_SEM_REF(sema));
+		ImmediateInterruptOK = false;
+	} while (errStatus < 0 && errno == EINTR);
+
+	if (errStatus < 0)
+	{
+		fprintf(stderr, "PGSemaphoreLock: sem_wait failed: %s\n",
+				strerror(errno));
+		proc_exit(255);
+	}
+}
+
+/*
+ * PGSemaphoreUnlock
+ *
+ * Unlock a semaphore (increment count)
+ */
+void
+PGSemaphoreUnlock(PGSemaphore sema)
+{
+	int			errStatus;
+
+	/*
+	 * Note: if errStatus is -1 and errno == EINTR then it means we
+	 * returned from the operation prematurely because we were sent a
+	 * signal.	So we try and unlock the semaphore again. Not clear this
+	 * can really happen, but might as well cope.
+	 */
+	do
+	{
+		errStatus = sem_post(PG_SEM_REF(sema));
+	} while (errStatus < 0 && errno == EINTR);
+
+	if (errStatus < 0)
+	{
+		fprintf(stderr, "PGSemaphoreUnlock: sem_post failed: %s\n",
+				strerror(errno));
+		proc_exit(255);
+	}
+}
+
+/*
+ * PGSemaphoreTryLock
+ *
+ * Lock a semaphore only if able to do so without blocking
+ */
+bool
+PGSemaphoreTryLock(PGSemaphore sema)
+{
+	int			errStatus;
+
+	/*
+	 * Note: if errStatus is -1 and errno == EINTR then it means we
+	 * returned from the operation prematurely because we were sent a
+	 * signal.	So we try and lock the semaphore again.
+	 */
+	do
+	{
+		errStatus = sem_trywait(PG_SEM_REF(sema));
+	} while (errStatus < 0 && errno == EINTR);
+
+	if (errStatus < 0)
+	{
+		if (errno == EAGAIN || errno == EDEADLK)
+			return false;		/* failed to lock it */
+		/* Otherwise we got trouble */
+		fprintf(stderr, "PGSemaphoreTryLock: sem_trywait failed: %s\n",
+				strerror(errno));
+		proc_exit(255);
+	}
+
+	return true;
+}

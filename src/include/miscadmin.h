@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: miscadmin.h,v 1.102 2002/04/04 04:25:51 momjian Exp $
+ * $Id: miscadmin.h,v 1.103 2002/05/05 00:03:29 tgl Exp $
  *
  * NOTES
  *	  some of the information in this file should be moved to
@@ -23,7 +23,8 @@
 #ifndef MISCADMIN_H
 #define MISCADMIN_H
 
-#include "storage/ipc.h"
+#include <sys/types.h>
+
 
 /*****************************************************************************
  *	  System interrupt and critical section handling
@@ -291,8 +292,8 @@ extern void BaseInit(void);
 extern bool CreateDataDirLockFile(const char *datadir, bool amPostmaster);
 extern bool CreateSocketLockFile(const char *socketfile, bool amPostmaster);
 extern void TouchSocketLockFile(void);
-extern void RecordSharedMemoryInLockFile(IpcMemoryKey shmKey,
-							 IpcMemoryId shmId);
+extern void RecordSharedMemoryInLockFile(unsigned long id1,
+										 unsigned long id2);
 
 extern void ValidatePgVersion(const char *path);
 

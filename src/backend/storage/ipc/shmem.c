@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/shmem.c,v 1.64 2002/03/06 06:10:05 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/shmem.c,v 1.65 2002/05/05 00:03:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -61,6 +61,7 @@
 #include "postgres.h"
 
 #include "access/transam.h"
+#include "storage/pg_shmem.h"
 #include "storage/spin.h"
 #include "utils/tqual.h"
 

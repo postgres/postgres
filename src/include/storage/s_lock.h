@@ -63,14 +63,14 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	  $Id: s_lock.h,v 1.97 2002/01/29 15:44:42 tgl Exp $
+ *	  $Id: s_lock.h,v 1.98 2002/05/05 00:03:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef S_LOCK_H
 #define S_LOCK_H
 
-#include "storage/ipc.h"
+#include "storage/pg_sema.h"
 
 
 #if defined(HAS_TEST_AND_SET)
@@ -438,7 +438,6 @@ extern slock_t wc_tas(volatile slock_t *lock);
  * AIX (POWER)
  *
  * Note that slock_t on POWER/POWER2/PowerPC is int instead of char
- * (see storage/ipc.h).
  */
 #define TAS(lock)	cs((int *) (lock), 0, 1)
 #endif	 /* _AIX */
@@ -462,17 +461,11 @@ extern slock_t wc_tas(volatile slock_t *lock);
 #else							/* !HAS_TEST_AND_SET */
 
 /*
- * Fake spinlock implementation using SysV semaphores --- slow and prone
+ * Fake spinlock implementation using semaphores --- slow and prone
  * to fall foul of kernel limits on number of semaphores, so don't use this
  * unless you must!  The subroutines appear in spin.c.
  */
-
-typedef struct
-{
-	/* reference to semaphore used to implement this spinlock */
-	IpcSemaphoreId semId;
-	int			sem;
-} slock_t;
+typedef PGSemaphoreData slock_t;
 
 extern bool s_lock_free_sema(volatile slock_t *lock);
 extern void s_unlock_sema(volatile slock_t *lock);

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/miscinit.c,v 1.88 2002/05/03 20:43:30 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/miscinit.c,v 1.89 2002/05/05 00:03:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,6 +32,8 @@
 #include "catalog/pg_shadow.h"
 #include "libpq/libpq-be.h"
 #include "miscadmin.h"
+#include "storage/ipc.h"
+#include "storage/pg_shmem.h"
 #include "utils/builtins.h"
 #include "utils/guc.h"
 #include "utils/lsyscache.h"
@@ -819,25 +821,24 @@ CreateLockFile(const char *filename, bool amPostmaster,
 		if (isDDLock)
 		{
 			char	   *ptr;
-			unsigned long shmKey,
-						shmId;
+			unsigned long id1,
+						id2;
 
 			ptr = strchr(buffer, '\n');
 			if (ptr != NULL &&
 				(ptr = strchr(ptr + 1, '\n')) != NULL)
 			{
 				ptr++;
-				if (sscanf(ptr, "%lu %lu", &shmKey, &shmId) == 2)
+				if (sscanf(ptr, "%lu %lu", &id1, &id2) == 2)
 				{
-					if (SharedMemoryIsInUse((IpcMemoryKey) shmKey,
-											(IpcMemoryId) shmId))
+					if (PGSharedMemoryIsInUse(id1, id2))
 					{
 						fprintf(stderr,
-								"Found a pre-existing shared memory block (ID %d) still in use.\n"
+								"Found a pre-existing shared memory block (key %lu, id %lu) still in use.\n"
 								"If you're sure there are no old backends still running,\n"
 								"remove the shared memory block with ipcrm(1), or just\n"
 								"delete \"%s\".\n",
-								(int) shmId, filename);
+								id1, id2, filename);
 						return false;
 					}
 				}
@@ -941,11 +942,11 @@ TouchSocketLockFile(void)
  * This may be called multiple times in the life of a postmaster, if we
  * delete and recreate shmem due to backend crash.	Therefore, be prepared
  * to overwrite existing information.  (As of 7.1, a postmaster only creates
- * one shm seg anyway; but for the purposes here, if we did have more than
+ * one shm seg at a time; but for the purposes here, if we did have more than
  * one then any one of them would do anyway.)
  */
 void
-RecordSharedMemoryInLockFile(IpcMemoryKey shmKey, IpcMemoryId shmId)
+RecordSharedMemoryInLockFile(unsigned long id1, unsigned long id2)
 {
 	int			fd;
 	int			len;
@@ -988,11 +989,10 @@ RecordSharedMemoryInLockFile(IpcMemoryKey shmKey, IpcMemoryId shmId)
 	ptr++;
 
 	/*
-	 * Append shm key and ID.  Format to try to keep it the same length
+	 * Append key information.  Format to try to keep it the same length
 	 * always (trailing junk won't hurt, but might confuse humans).
 	 */
-	sprintf(ptr, "%9lu %9lu\n",
-			(unsigned long) shmKey, (unsigned long) shmId);
+	sprintf(ptr, "%9lu %9lu\n", id1, id2);
 
 	/*
 	 * And rewrite the data.  Since we write in a single kernel call, this
