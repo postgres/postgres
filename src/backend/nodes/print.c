@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/print.c,v 1.16 1998/07/15 14:54:33 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/print.c,v 1.17 1998/08/16 05:35:35 thomas Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -201,7 +201,7 @@ print_expr(Node *expr, List *rtable)
 
 			print_expr((Node *) get_leftop(e), rtable);
 			opname = get_opname(((Oper *) e->oper)->opno);
-			printf(" %s ", opname);
+			printf(" %s ", ((opname != NULL)? opname: "(invalid operator)"));
 			print_expr((Node *) get_rightop(e), rtable);
 		}
 		else
