@@ -6,7 +6,7 @@
 # Copyright (c) 1998, Regents of the University of California
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Makefile.shlib,v 1.42 2001/02/10 17:17:39 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/Makefile.shlib,v 1.43 2001/02/10 17:36:57 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -108,6 +108,12 @@ ifeq ($(PORTNAME), darwin)
   shlib			:= lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
   LINK.shared		= $(COMPILER) $(CFLAGS_SL)
 endif
+
+# While the linker allows creation of most shared libraries,
+# -Bsymbolic requires resolution of all symbols, making the
+# compiler a better choice for shared library creation on BSD platforms.
+# With the linker, -Bsymbolic requires the crt1.o startup object file.
+# bjm 2001-02-10
 
 ifeq ($(PORTNAME), openbsd)
   shlib			:= lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
