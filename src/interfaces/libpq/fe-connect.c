@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.199 2002/08/29 23:06:32 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.200 2002/08/30 05:28:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2953,8 +2953,7 @@ PasswordFromFile(char *hostname, char *port, char *dbname,
 				(t = pwdfMatchesString(t, dbname)) == NULL ||
 				(t = pwdfMatchesString(t, username)) == NULL)
 			continue;
-		ret=(char *)malloc(sizeof(char)*strlen(t));
-		strncpy(ret, t, strlen(t));
+		ret = strdup(t);
 		fclose(fp);
 		return ret;
 	}
