@@ -14,10 +14,8 @@ libpq++ does not work because xlC does not have the string and bool classes.
 compiling the few files, that fail, with g++ does work.
 
 Compiling PostgreSQL with gcc (2.95.2) on AIX does work if you use the
-configure
-option: --template=aix_gcc 
+configure option: --with-template=aix_gcc 
 
-With the current compiler flags the redefines of int8 - int64 that prior
-versions
-had a problem with are not a problem any more.
+With the current compiler flags the redefines of int8 - int64, that prior
+versions had a problem with, are not a problem any more.
 
