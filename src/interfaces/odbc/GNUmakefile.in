@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/interfaces/odbc/Attic/GNUmakefile.in,v 1.7 1998/10/19 00:00:49 tgl Exp $
+#    $Header: /cvsroot/pgsql/src/interfaces/odbc/Attic/GNUmakefile.in,v 1.8 1998/10/21 05:39:19 thomas Exp $
 #
 #-------------------------------------------------------------------------
 @SET_MAKE@
@@ -86,7 +86,7 @@ standalone:
 	fi
 	-rm -f psqlodbc-$(SO_MAJOR_VERSION)$(SO_MINOR_VERSION).tar.gz
 	$(TAR) -chf psqlodbc-$(SO_MAJOR_VERSION)$(SO_MINOR_VERSION).tar \
-	    $(SOURCES) -C @top_srcdir@ makefiles template
+	    $(SOURCES) -C @top_srcdir@ makefiles template Makefile.shlib
 	gzip psqlodbc-$(SO_MAJOR_VERSION)$(SO_MINOR_VERSION).tar
 
 .PHONY: integrated
