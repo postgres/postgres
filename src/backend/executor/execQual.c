@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execQual.c,v 1.161 2004/05/30 23:40:26 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execQual.c,v 1.162 2004/06/01 03:28:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2826,12 +2826,11 @@ ExecInitExpr(Expr *node, PlanState *parent)
 			{
 				CaseExpr   *caseexpr = (CaseExpr *) node;
 				CaseExprState *cstate = makeNode(CaseExprState);
-				FastList	outlist;
+				List	   *outlist = NIL;
 				ListCell   *l;
 
 				cstate->xprstate.evalfunc = (ExprStateEvalFunc) ExecEvalCase;
 				cstate->arg = ExecInitExpr(caseexpr->arg, parent);
-				FastListInit(&outlist);
 				foreach(l, caseexpr->args)
 				{
 					CaseWhen   *when = (CaseWhen *) lfirst(l);
@@ -2842,9 +2841,9 @@ ExecInitExpr(Expr *node, PlanState *parent)
 					wstate->xprstate.expr = (Expr *) when;
 					wstate->expr = ExecInitExpr(when->expr, parent);
 					wstate->result = ExecInitExpr(when->result, parent);
-					FastAppend(&outlist, wstate);
+					outlist = lappend(outlist, wstate);
 				}
-				cstate->args = FastListValue(&outlist);
+				cstate->args = outlist;
 				cstate->defresult = ExecInitExpr(caseexpr->defresult, parent);
 				state = (ExprState *) cstate;
 			}
@@ -2853,20 +2852,19 @@ ExecInitExpr(Expr *node, PlanState *parent)
 			{
 				ArrayExpr  *arrayexpr = (ArrayExpr *) node;
 				ArrayExprState *astate = makeNode(ArrayExprState);
-				FastList	outlist;
+				List	   *outlist = NIL;
 				ListCell   *l;
 
 				astate->xprstate.evalfunc = (ExprStateEvalFunc) ExecEvalArray;
-				FastListInit(&outlist);
 				foreach(l, arrayexpr->elements)
 				{
 					Expr	   *e = (Expr *) lfirst(l);
 					ExprState  *estate;
 
 					estate = ExecInitExpr(e, parent);
-					FastAppend(&outlist, estate);
+					outlist = lappend(outlist, estate);
 				}
-				astate->elements = FastListValue(&outlist);
+				astate->elements = outlist;
 				/* do one-time catalog lookup for type info */
 				get_typlenbyvalalign(arrayexpr->element_typeid,
 									 &astate->elemlength,
@@ -2879,11 +2877,10 @@ ExecInitExpr(Expr *node, PlanState *parent)
 			{
 				RowExpr	   *rowexpr = (RowExpr *) node;
 				RowExprState *rstate = makeNode(RowExprState);
-				List	   *outlist;
+				List	   *outlist = NIL;
 				ListCell   *l;
 
 				rstate->xprstate.evalfunc = (ExprStateEvalFunc) ExecEvalRow;
-				outlist = NIL;
 				foreach(l, rowexpr->args)
 				{
 					Expr	   *e = (Expr *) lfirst(l);
@@ -2912,20 +2909,19 @@ ExecInitExpr(Expr *node, PlanState *parent)
 			{
 				CoalesceExpr *coalesceexpr = (CoalesceExpr *) node;
 				CoalesceExprState *cstate = makeNode(CoalesceExprState);
-				FastList	outlist;
+				List	   *outlist = NIL;
 				ListCell   *l;
 
 				cstate->xprstate.evalfunc = (ExprStateEvalFunc) ExecEvalCoalesce;
-				FastListInit(&outlist);
 				foreach(l, coalesceexpr->args)
 				{
 					Expr	   *e = (Expr *) lfirst(l);
 					ExprState  *estate;
 
 					estate = ExecInitExpr(e, parent);
-					FastAppend(&outlist, estate);
+					outlist = lappend(outlist, estate);
 				}
-				cstate->args = FastListValue(&outlist);
+				cstate->args = outlist;
 				state = (ExprState *) cstate;
 			}
 			break;
@@ -2984,18 +2980,17 @@ ExecInitExpr(Expr *node, PlanState *parent)
 			break;
 		case T_List:
 			{
-				FastList	outlist;
+				List	   *outlist = NIL;
 				ListCell   *l;
 
-				FastListInit(&outlist);
 				foreach(l, (List *) node)
 				{
-					FastAppend(&outlist,
-							   ExecInitExpr((Expr *) lfirst(l),
-											parent));
+					outlist = lappend(outlist,
+									  ExecInitExpr((Expr *) lfirst(l),
+												   parent));
 				}
 				/* Don't fall through to the "common" code below */
-				return (ExprState *) FastListValue(&outlist);
+				return (ExprState *) outlist;
 			}
 		default:
 			elog(ERROR, "unrecognized node type: %d",

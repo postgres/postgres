@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_target.c,v 1.119 2004/05/30 23:40:35 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_target.c,v 1.120 2004/06/01 03:28:48 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -92,10 +92,8 @@ transformTargetEntry(ParseState *pstate,
 List *
 transformTargetList(ParseState *pstate, List *targetlist)
 {
-	FastList	p_target;
+	List	   *p_target = NIL;
 	ListCell   *o_target;
-
-	FastListInit(&p_target);
 
 	foreach(o_target, targetlist)
 	{
@@ -116,8 +114,8 @@ transformTargetList(ParseState *pstate, List *targetlist)
 					 * Target item is a single '*', expand all tables
 					 * (e.g., SELECT * FROM emp)
 					 */
-					FastConc(&p_target,
-							 ExpandAllTables(pstate));
+					p_target = list_concat(p_target,
+										   ExpandAllTables(pstate));
 				}
 				else
 				{
@@ -173,34 +171,34 @@ transformTargetList(ParseState *pstate, List *targetlist)
 						rte = addImplicitRTE(pstate, makeRangeVar(schemaname,
 																  relname));
 
-					FastConc(&p_target,
-							 expandRelAttrs(pstate, rte));
+					p_target = list_concat(p_target,
+										   expandRelAttrs(pstate, rte));
 				}
 			}
 			else
 			{
 				/* Plain ColumnRef node, treat it as an expression */
-				FastAppend(&p_target,
-						   transformTargetEntry(pstate,
-												res->val,
-												NULL,
-												res->name,
-												false));
+				p_target = lappend(p_target,
+								   transformTargetEntry(pstate,
+														res->val,
+														NULL,
+														res->name,
+														false));
 			}
 		}
 		else
 		{
 			/* Everything else but ColumnRef */
-			FastAppend(&p_target,
-					   transformTargetEntry(pstate,
-											res->val,
-											NULL,
-											res->name,
-											false));
+			p_target = lappend(p_target,
+							   transformTargetEntry(pstate,
+													res->val,
+													NULL,
+													res->name,
+													false));
 		}
 	}
 
-	return FastListValue(&p_target);
+	return p_target;
 }
 
 
