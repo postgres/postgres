@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: analyze.c,v 1.125 1999/12/06 18:02:42 wieck Exp $
+ *	$Id: analyze.c,v 1.126 1999/12/10 07:37:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -624,6 +624,8 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 					funccallnode = makeNode(FuncCall);
 					funccallnode->funcname = "nextval";
 					funccallnode->args = lcons(snamenode, NIL);
+					funccallnode->agg_star = false;
+					funccallnode->agg_distinct = false;
 
 					constraint = makeNode(Constraint);
 					constraint->contype = CONSTR_DEFAULT;

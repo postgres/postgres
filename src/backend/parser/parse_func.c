@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.63 1999/12/07 04:09:39 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.64 1999/12/10 07:37:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -87,6 +87,7 @@ ParseNestedFuncOrColumn(ParseState *pstate, Attr *attr, int *curr_resno, int pre
 
 		retval = ParseFuncOrColumn(pstate, strVal(lfirst(attr->attrs)),
 								   lcons(param, NIL),
+								   false, false,
 								   curr_resno,
 								   precedence);
 	}
@@ -98,6 +99,7 @@ ParseNestedFuncOrColumn(ParseState *pstate, Attr *attr, int *curr_resno, int pre
 		ident->isRel = TRUE;
 		retval = ParseFuncOrColumn(pstate, strVal(lfirst(attr->attrs)),
 								   lcons(ident, NIL),
+								   false, false,
 								   curr_resno,
 								   precedence);
 	}
@@ -107,6 +109,7 @@ ParseNestedFuncOrColumn(ParseState *pstate, Attr *attr, int *curr_resno, int pre
 	{
 		retval = ParseFuncOrColumn(pstate, strVal(lfirst(mutator_iter)),
 								   lcons(retval, NIL),
+								   false, false,
 								   curr_resno,
 								   precedence);
 	}
@@ -219,6 +222,7 @@ agg_select_candidate(Oid typeid, CandidateList candidates)
  */
 Node *
 ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
+				  bool agg_star, bool agg_distinct,
 				  int *curr_resno, int precedence)
 {
 	Oid			rettype = InvalidOid;
@@ -230,12 +234,13 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 	char	   *refname = NULL;
 	Relation	rd;
 	Oid			relid;
-	int			nargs;
+	int			nargs = length(fargs);
 	Func	   *funcnode;
 	Oid			oid_array[MAXFARGS];
 	Oid		   *true_oid_array;
 	Node	   *retval;
 	bool		retset;
+	bool		must_be_agg = agg_star || agg_distinct;
 	bool		attisset = false;
 	Oid			toid = InvalidOid;
 	Expr	   *expr;
@@ -252,11 +257,11 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 	 * that argument is a relation, param, or PQ function returning a
 	 * complex * type, then the function could be a projection.
 	 */
-	/* We only have one parameter */
-	if (length(fargs) == 1)
+	/* We only have one parameter, and it's not got aggregate decoration */
+	if (nargs == 1 && !must_be_agg)
 	{
-		/* Is is a plain Relation name from the parser? */
-		if (nodeTag(first_arg) == T_Ident && ((Ident *) first_arg)->isRel)
+		/* Is it a plain Relation name from the parser? */
+		if (IsA(first_arg, Ident) && ((Ident *) first_arg)->isRel)
 		{
 			RangeTblEntry *rte;
 			Ident	   *ident = (Ident *) first_arg;
@@ -292,15 +297,10 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 										 refname,
 										 funcname);
 			}
-			else
-			{
-				/* drop through - attr is a set */
-				;
-			}
+			/* else drop through - attr is a set */
 		}
 		else if (ISCOMPLEX(exprType(first_arg)))
 		{
-
 			/*
 			 * Attempt to handle projection of a complex argument. If
 			 * ParseComplexProjection can't handle the projection, we have
@@ -325,8 +325,7 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 				argrelid = typeidTypeRelid(toid);
 
 				/*
-				 * A projection contains either an attribute name or the
-				 * "*".
+				 * A projection contains either an attribute name or "*".
 				 */
 				if ((get_attnum(argrelid, funcname) == InvalidAttrNumber)
 					&& strcmp(funcname, "*"))
@@ -336,76 +335,99 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 			if (retval)
 				return retval;
 		}
+	}
+
+	if (nargs == 1 || must_be_agg)
+	{
+		/*
+		 * See if it's an aggregate.
+		 */
+		Oid			basetype;
+		int			ncandidates;
+		CandidateList candidates;
+
+		/* We don't presently cope with, eg, foo(DISTINCT x,y) */
+		if (nargs != 1)
+			elog(ERROR, "Aggregate functions may only have one parameter");
+
+		/*
+		 * the aggregate COUNT is a special case, ignore its base
+		 * type.  Treat it as zero.   XXX mighty ugly --- FIXME
+		 */
+		if (strcmp(funcname, "count") == 0)
+			basetype = 0;
 		else
+			basetype = exprType(lfirst(fargs));
+
+		/* try for exact match first... */
+		if (SearchSysCacheTuple(AGGNAME,
+								PointerGetDatum(funcname),
+								ObjectIdGetDatum(basetype),
+								0, 0))
+			return (Node *) ParseAgg(pstate, funcname, basetype,
+									 fargs, agg_star, agg_distinct,
+									 precedence);
+
+		/*
+		 * No exact match yet, so see if there is another entry in the
+		 * aggregate table which is compatible. - thomas 1998-12-05
+		 */
+		ncandidates = agg_get_candidates(funcname, basetype, &candidates);
+		if (ncandidates > 0)
 		{
+			Oid			type;
 
-			/*
-			 * Parsing aggregates.
-			 */
-			Type		tp;
-			Oid			basetype;
-			int			ncandidates;
-			CandidateList candidates;
-
-			/*
-			 * the aggregate COUNT is a special case, ignore its base
-			 * type.  Treat it as zero
-			 */
-			if (strcmp(funcname, "count") == 0)
-				basetype = 0;
-			else
-				basetype = exprType(lfirst(fargs));
-
-			/* try for exact match first... */
-			if (SearchSysCacheTuple(AGGNAME,
-									PointerGetDatum(funcname),
-									ObjectIdGetDatum(basetype),
-									0, 0))
-				return (Node *) ParseAgg(pstate, funcname, basetype,
-										 fargs, precedence);
-
-			/*
-			 * No exact match yet, so see if there is another entry in the
-			 * aggregate table which is compatible. - thomas 1998-12-05
-			 */
-			ncandidates = agg_get_candidates(funcname, basetype, &candidates);
-			if (ncandidates > 0)
+			type = agg_select_candidate(basetype, candidates);
+			if (OidIsValid(type))
 			{
-				Oid			type;
-
-				type = agg_select_candidate(basetype, candidates);
-				if (OidIsValid(type))
-				{
-					lfirst(fargs) = coerce_type(pstate, lfirst(fargs),
-												basetype, type, -1);
-					basetype = type;
-
-					return (Node *) ParseAgg(pstate, funcname, basetype,
-											 fargs, precedence);
-				}
-				else
-				{
-					elog(ERROR, "Unable to select an aggregate function %s(%s)",
-						 funcname, typeidTypeName(basetype));
-				}
+				lfirst(fargs) = coerce_type(pstate, lfirst(fargs),
+											basetype, type, -1);
+				basetype = type;
+				return (Node *) ParseAgg(pstate, funcname, basetype,
+										 fargs, agg_star, agg_distinct,
+										 precedence);
 			}
+			else
+			{
+				/* Multiple possible matches --- give up */
+				elog(ERROR, "Unable to select an aggregate function %s(%s)",
+					 funcname, typeidTypeName(basetype));
+			}
+		}
 
+		if (must_be_agg)
+		{
 			/*
-			 * See if this is a single argument function with the function
-			 * name also a type name and the input argument and type name
-			 * binary compatible... This means that you are trying for a
-			 * type conversion which does not need to take place, so we'll
-			 * just pass through the argument itself. (make this clearer
-			 * with some extra brackets - thomas 1998-12-05)
+			 * No matching agg, but we had '*' or DISTINCT, so a plain
+			 * function could not have been meant.
 			 */
-			if ((HeapTupleIsValid(tp = SearchSysCacheTuple(TYPENAME,
-											   PointerGetDatum(funcname),
-														   0, 0, 0)))
-				&& IS_BINARY_COMPATIBLE(typeTypeId(tp), basetype))
-				return ((Node *) lfirst(fargs));
+			elog(ERROR, "There is no aggregate function %s(%s)",
+				 funcname, typeidTypeName(basetype));
 		}
 	}
 
+	/*
+	 * See if this is a single argument function with the function
+	 * name also a type name and the input argument and type name
+	 * binary compatible... This means that you are trying for a
+	 * type conversion which does not need to take place, so we'll
+	 * just pass through the argument itself. (make this clearer
+	 * with some extra brackets - thomas 1998-12-05)
+	 */
+	if (nargs == 1)
+	{
+		Type		tp;
+
+		tp = SearchSysCacheTuple(TYPENAME,
+								 PointerGetDatum(funcname),
+								 0, 0, 0);
+		if (HeapTupleIsValid(tp) &&
+			IS_BINARY_COMPATIBLE(typeTypeId(tp), exprType(lfirst(fargs))))
+		{
+			/* XXX FIXME: probably need to change expression's marked type? */
+			return (Node *) lfirst(fargs);
+		}
+	}
 
 	/*
 	 * If we dropped through to here it's really a function (or a set,
@@ -461,14 +483,14 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 		{						/* set functions don't have parameters */
 
 			/*
-			 * any functiona args which are typed "unknown", but aren't
+			 * any function args which are typed "unknown", but aren't
 			 * constants, we don't know what to do with, because we can't
 			 * cast them	- jolly
 			 */
 			if (exprType(pair) == UNKNOWNOID && !IsA(pair, Const))
 				elog(ERROR, "There is no function '%s'"
 					 " with argument #%d of type UNKNOWN",
-					 funcname, nargs);
+					 funcname, nargs+1);
 			else
 				toid = exprType(pair);
 		}
@@ -572,7 +594,7 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 		text	   *seqname;
 		int32		aclcheck_result = -1;
 
-		Assert(length(fargs) == ((funcid == F_SETVAL) ? 2 : 1));
+		Assert(nargs == ((funcid == F_SETVAL) ? 2 : 1));
 		seq = (Const *) lfirst(fargs);
 		if (!IsA((Node *) seq, Const))
 			elog(ERROR, "Only constant sequence names are acceptable for function '%s'", funcname);

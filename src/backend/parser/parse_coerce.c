@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_coerce.c,v 2.25 1999/11/22 17:56:20 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_coerce.c,v 2.26 1999/12/10 07:37:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -99,6 +99,8 @@ coerce_type(ParseState *pstate, Node *node, Oid inputTypeId, Oid targetTypeId,
 
 		n->funcname = typeTypeName(targetType);
 		n->args = lcons(node, NIL);
+		n->agg_star = false;
+		n->agg_distinct = false;
 
 		result = transformExpr(pstate, (Node *) n, EXPR_COLUMN_FIRST);
 

@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.120 1999/12/10 05:17:13 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.121 1999/12/10 07:37:35 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -246,7 +246,7 @@ static Node *doNegate(Node *n);
 %type <str>		TypeId
 
 %type <node>	TableConstraint
-%type <list>	ColPrimaryKey, ColQualifier
+%type <list>	ColPrimaryKey, ColConstraintList
 %type <node>	ColConstraint, ColConstraintElem
 %type <ival>	key_actions, key_action, key_reference
 %type <str>		key_match
@@ -912,7 +912,7 @@ OptTableElement:  columnDef						{ $$ = $1; }
 			| TableConstraint					{ $$ = $1; }
 		;
 
-columnDef:  ColId Typename ColQualifier
+columnDef:  ColId Typename ColConstraintList
 				{
 					ColumnDef *n = makeNode(ColumnDef);
 					n->colname = $1;
@@ -939,14 +939,15 @@ columnDef:  ColId Typename ColQualifier
 				}
 		;
 
-ColQualifier:  ColQualifier ColConstraint
+ColConstraintList:  ColConstraintList ColConstraint
 				{
 					if ($2 != NULL)
 						$$ = lappend($1, $2);
 					else
 						$$ = $1;
 				}
-			| /*EMPTY*/							{ $$ = NULL; }
+			| /*EMPTY*/
+				{ $$ = NIL; }
 		;
 
 ColPrimaryKey:  PRIMARY KEY
@@ -3792,6 +3793,8 @@ a_expr:  com_expr
 						FuncCall *n = makeNode(FuncCall);
 						n->funcname = $3->name;
 						n->args = lcons($1,NIL);
+						n->agg_star = false;
+						n->agg_distinct = false;
 						$$ = (Node *)n;
 					}
 				}
@@ -4037,6 +4040,8 @@ b_expr:  com_expr
 						FuncCall *n = makeNode(FuncCall);
 						n->funcname = $3->name;
 						n->args = lcons($1,NIL);
+						n->agg_star = false;
+						n->agg_distinct = false;
 						$$ = (Node *)n;
 					}
 				}
@@ -4129,6 +4134,8 @@ com_expr:  attr
 						FuncCall *n = makeNode(FuncCall);
 						n->funcname = $5->name;
 						n->args = lcons($3,NIL);
+						n->agg_star = false;
+						n->agg_distinct = false;
 						$$ = (Node *)n;
 					}
 				}
@@ -4139,6 +4146,8 @@ com_expr:  attr
 					FuncCall *n = makeNode(FuncCall);
 					n->funcname = $1;
 					n->args = NIL;
+					n->agg_star = false;
+					n->agg_distinct = false;
 					$$ = (Node *)n;
 				}
 		| func_name '(' expr_list ')'
@@ -4146,6 +4155,17 @@ com_expr:  attr
 					FuncCall *n = makeNode(FuncCall);
 					n->funcname = $1;
 					n->args = $3;
+					n->agg_star = false;
+					n->agg_distinct = false;
+					$$ = (Node *)n;
+				}
+		| func_name '(' DISTINCT expr_list ')'
+				{
+					FuncCall *n = makeNode(FuncCall);
+					n->funcname = $1;
+					n->args = $4;
+					n->agg_star = false;
+					n->agg_distinct = true;
 					$$ = (Node *)n;
 				}
 		| func_name '(' '*' ')'
@@ -4158,12 +4178,9 @@ com_expr:  attr
 					 * and there are no other aggregates in SQL92 that accept
 					 * '*' as parameter.
 					 *
-					 * XXX really, the '*' ought to be transformed to some
-					 * special construct that wouldn't be acceptable as the
-					 * input of a non-aggregate function, in case the given
-					 * func_name matches a plain function.  This would also
-					 * support a possible extension to let user-defined
-					 * aggregates do something special with '*' as input.
+					 * The FuncCall node is also marked agg_star = true,
+					 * so that later processing can detect what the argument
+					 * really was.
 					 */
 					FuncCall *n = makeNode(FuncCall);
 					A_Const *star = makeNode(A_Const);
@@ -4172,6 +4189,8 @@ com_expr:  attr
 					star->val.val.ival = 1;
 					n->funcname = $1;
 					n->args = lcons(star, NIL);
+					n->agg_star = true;
+					n->agg_distinct = false;
 					$$ = (Node *)n;
 				}
 		| CURRENT_DATE
@@ -4203,6 +4222,8 @@ com_expr:  attr
 
 					n->funcname = xlateSqlType("date");
 					n->args = lcons(s, NIL);
+					n->agg_star = false;
+					n->agg_distinct = false;
 
 					$$ = (Node *)n;
 				}
@@ -4226,6 +4247,8 @@ com_expr:  attr
 
 					n->funcname = xlateSqlType("time");
 					n->args = lcons(s, NIL);
+					n->agg_star = false;
+					n->agg_distinct = false;
 
 					$$ = (Node *)n;
 				}
@@ -4249,6 +4272,8 @@ com_expr:  attr
 
 					n->funcname = xlateSqlType("time");
 					n->args = lcons(s, NIL);
+					n->agg_star = false;
+					n->agg_distinct = false;
 
 					if ($3 != 0)
 						elog(NOTICE,"CURRENT_TIME(%d) precision not implemented; zero used instead",$3);
@@ -4275,6 +4300,8 @@ com_expr:  attr
 
 					n->funcname = xlateSqlType("timestamp");
 					n->args = lcons(s, NIL);
+					n->agg_star = false;
+					n->agg_distinct = false;
 
 					$$ = (Node *)n;
 				}
@@ -4298,6 +4325,8 @@ com_expr:  attr
 
 					n->funcname = xlateSqlType("timestamp");
 					n->args = lcons(s, NIL);
+					n->agg_star = false;
+					n->agg_distinct = false;
 
 					if ($3 != 0)
 						elog(NOTICE,"CURRENT_TIMESTAMP(%d) precision not implemented; zero used instead",$3);
@@ -4309,6 +4338,8 @@ com_expr:  attr
 					FuncCall *n = makeNode(FuncCall);
 					n->funcname = "getpgusername";
 					n->args = NIL;
+					n->agg_star = false;
+					n->agg_distinct = false;
 					$$ = (Node *)n;
 				}
 		| USER
@@ -4316,6 +4347,8 @@ com_expr:  attr
 					FuncCall *n = makeNode(FuncCall);
 					n->funcname = "getpgusername";
 					n->args = NIL;
+					n->agg_star = false;
+					n->agg_distinct = false;
 					$$ = (Node *)n;
 				}
 		| EXTRACT '(' extract_list ')'
@@ -4323,6 +4356,8 @@ com_expr:  attr
 					FuncCall *n = makeNode(FuncCall);
 					n->funcname = "date_part";
 					n->args = $3;
+					n->agg_star = false;
+					n->agg_distinct = false;
 					$$ = (Node *)n;
 				}
 		| POSITION '(' position_list ')'
@@ -4330,6 +4365,8 @@ com_expr:  attr
 					FuncCall *n = makeNode(FuncCall);
 					n->funcname = "strpos";
 					n->args = $3;
+					n->agg_star = false;
+					n->agg_distinct = false;
 					$$ = (Node *)n;
 				}
 		| SUBSTRING '(' substr_list ')'
@@ -4337,6 +4374,8 @@ com_expr:  attr
 					FuncCall *n = makeNode(FuncCall);
 					n->funcname = "substr";
 					n->args = $3;
+					n->agg_star = false;
+					n->agg_distinct = false;
 					$$ = (Node *)n;
 				}
 		/* various trim expressions are defined in SQL92 - thomas 1997-07-19 */
@@ -4345,6 +4384,8 @@ com_expr:  attr
 					FuncCall *n = makeNode(FuncCall);
 					n->funcname = "btrim";
 					n->args = $4;
+					n->agg_star = false;
+					n->agg_distinct = false;
 					$$ = (Node *)n;
 				}
 		| TRIM '(' LEADING trim_list ')'
@@ -4352,6 +4393,8 @@ com_expr:  attr
 					FuncCall *n = makeNode(FuncCall);
 					n->funcname = "ltrim";
 					n->args = $4;
+					n->agg_star = false;
+					n->agg_distinct = false;
 					$$ = (Node *)n;
 				}
 		| TRIM '(' TRAILING trim_list ')'
@@ -4359,6 +4402,8 @@ com_expr:  attr
 					FuncCall *n = makeNode(FuncCall);
 					n->funcname = "rtrim";
 					n->args = $4;
+					n->agg_star = false;
+					n->agg_distinct = false;
 					$$ = (Node *)n;
 				}
 		| TRIM '(' trim_list ')'
@@ -4366,6 +4411,8 @@ com_expr:  attr
 					FuncCall *n = makeNode(FuncCall);
 					n->funcname = "btrim";
 					n->args = $3;
+					n->agg_star = false;
+					n->agg_distinct = false;
 					$$ = (Node *)n;
 				}
 		| '(' SubSelect ')'

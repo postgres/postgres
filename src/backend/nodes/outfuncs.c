@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: outfuncs.c,v 1.98 1999/11/23 20:06:53 momjian Exp $
+ *	$Id: outfuncs.c,v 1.99 1999/12/10 07:37:31 tgl Exp $
  *
  * NOTES
  *	  Every (plan) node in POSTGRES has an associated "out" routine which
@@ -114,8 +114,12 @@ _outSelectStmt(StringInfo str, SelectStmt *node)
 static void
 _outFuncCall(StringInfo str, FuncCall *node)
 {
-	appendStringInfo(str, "FUNCTION %s :args ", stringStringInfo(node->funcname));
+	appendStringInfo(str, "FUNCTION %s :args ",
+					 stringStringInfo(node->funcname));
 	_outNode(str, node->args);
+	appendStringInfo(str, " :agg_star %s :agg_distinct %s ",
+					 node->agg_star ? "true" : "false",
+					 node->agg_distinct ? "true" : "false");
 }
 
 static void

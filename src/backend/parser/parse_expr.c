@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.59 1999/11/15 02:00:10 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.60 1999/12/10 07:37:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -106,8 +106,10 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 							Node	   *lexpr = transformExpr(pstate, a->lexpr, precedence);
 
 							result = ParseFuncOrColumn(pstate,
-										  "nullvalue", lcons(lexpr, NIL),
-												   &pstate->p_last_resno,
+													   "nullvalue",
+													   lcons(lexpr, NIL),
+													   false, false,
+													   &pstate->p_last_resno,
 													   precedence);
 						}
 						break;
@@ -116,8 +118,10 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 							Node	   *lexpr = transformExpr(pstate, a->lexpr, precedence);
 
 							result = ParseFuncOrColumn(pstate,
-									   "nonnullvalue", lcons(lexpr, NIL),
-												   &pstate->p_last_resno,
+													   "nonnullvalue",
+													   lcons(lexpr, NIL),
+													   false, false,
+													   &pstate->p_last_resno,
 													   precedence);
 						}
 						break;
@@ -192,6 +196,8 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 				result = ParseFuncOrColumn(pstate,
 										   fn->funcname,
 										   fn->args,
+										   fn->agg_star,
+										   fn->agg_distinct,
 										   &pstate->p_last_resno,
 										   precedence);
 				break;

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_target.c,v 1.49 1999/11/22 17:56:21 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_target.c,v 1.50 1999/12/10 07:37:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -337,16 +337,16 @@ SizeTargetExpr(ParseState *pstate,
 
 	if (HeapTupleIsValid(ftup))
 	{
-		FuncCall   *func;
-		A_Const    *cons;
+		A_Const    *cons = makeNode(A_Const);
+		FuncCall   *func = makeNode(FuncCall);
 
-		func = makeNode(FuncCall);
-		func->funcname = funcname;
-
-		cons = makeNode(A_Const);
 		cons->val.type = T_Integer;
 		cons->val.val.ival = attrtypmod;
+
+		func->funcname = funcname;
 		func->args = lappend(lcons(expr, NIL), cons);
+		func->agg_star = false;
+		func->agg_distinct = false;
 
 		expr = transformExpr(pstate, (Node *) func, EXPR_COLUMN_FIRST);
 	}

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsenodes.h,v 1.89 1999/12/10 03:56:09 momjian Exp $
+ * $Id: parsenodes.h,v 1.90 1999/12/10 07:37:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -758,6 +758,10 @@ typedef struct SelectStmt
 
 /****************************************************************************
  *	Supporting data structures for Parse Trees
+ *
+ *	Most of these node types appear in raw parsetrees output by the grammar,
+ *	and get transformed to something else by the analyzer.  A few of them
+ *	are used as-is in transformed querytrees.
  ****************************************************************************/
 
 /*
@@ -889,13 +893,20 @@ typedef struct Ident
 } Ident;
 
 /*
- * FuncCall - a function/aggregate invocation
+ * FuncCall - a function or aggregate invocation
+ *
+ * agg_star indicates we saw a 'foo(*)' construct, while agg_distinct
+ * indicates we saw 'foo(DISTINCT ...)'.  In either case, the construct
+ * *must* be an aggregate call.  Otherwise, it might be either an
+ * aggregate or some other kind of function.
  */
 typedef struct FuncCall
 {
 	NodeTag		type;
 	char	   *funcname;		/* name of function */
 	List	   *args;			/* the arguments (list of exprs) */
+	bool		agg_star;		/* argument was really '*' */
+	bool		agg_distinct;	/* arguments were labeled DISTINCT */
 } FuncCall;
 
 /*

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parse_func.h,v 1.19 1999/08/21 03:49:17 tgl Exp $
+ * $Id: parse_func.h,v 1.20 1999/12/10 07:37:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,8 +42,10 @@ typedef struct _CandidateList
 
 extern Node *ParseNestedFuncOrColumn(ParseState *pstate, Attr *attr,
 						int *curr_resno, int precedence);
-extern Node *ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
-				  int *curr_resno, int precedence);
+extern Node *ParseFuncOrColumn(ParseState *pstate,
+							   char *funcname, List *fargs,
+							   bool agg_star, bool agg_distinct,
+							   int *curr_resno, int precedence);
 
 extern List *setup_base_tlist(Oid typeid);
 

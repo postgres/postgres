@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_agg.c,v 1.30 1999/12/09 05:58:54 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_agg.c,v 1.31 1999/12/10 07:37:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -203,7 +203,8 @@ parseCheckAggregates(ParseState *pstate, Query *qry)
 
 Aggref *
 ParseAgg(ParseState *pstate, char *aggname, Oid basetype,
-		 List *target, int precedence)
+		 List *args, bool agg_star, bool agg_distinct,
+		 int precedence)
 {
 	HeapTuple	theAggTuple;
 	Form_pg_aggregate aggform;
@@ -242,7 +243,7 @@ ParseAgg(ParseState *pstate, char *aggname, Oid basetype,
 	if (OidIsValid(xfn1))
 	{
 		basetype = aggform->aggbasetype;
-		vartype = exprType(lfirst(target));
+		vartype = exprType(lfirst(args));
 		if ((basetype != vartype)
 			&& (!IS_BINARY_COMPATIBLE(basetype, vartype)))
 		{
@@ -261,8 +262,16 @@ ParseAgg(ParseState *pstate, char *aggname, Oid basetype,
 	aggref->aggname = pstrdup(aggname);
 	aggref->basetype = aggform->aggbasetype;
 	aggref->aggtype = fintype;
-	aggref->target = lfirst(target);
+	aggref->target = lfirst(args);
 	aggref->usenulls = usenulls;
+
+	/*
+	 * We should store agg_star and agg_distinct into the Aggref node,
+	 * and let downstream processing deal with them.  Currently, agg_star
+	 * is ignored and agg_distinct is not implemented...
+	 */
+	if (agg_distinct)
+		elog(ERROR, "aggregate(DISTINCT ...) is not implemented yet");
 
 	pstate->p_hasAggs = true;
 
