@@ -568,7 +568,7 @@ For a fresh install or upgrading from previous releases of Postgres:
 
           pg:2345:respawn:/bin/su - postgres -c
               "/usr/local/pgsql/bin/postmaster -D/usr/local/pgsql/data
-               /usr/local/pgsql/server.log 2&1 /dev/null"
+               /usr/local/pgsql/server.log 2>&1 /dev/null"
 
           (The author of this example says this example will revive the
           postmaster if it dies, but he doesn't know if there are other side
