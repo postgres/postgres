@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: timestamp.h,v 1.10 2000/08/29 04:41:48 momjian Exp $
+ * $Id: timestamp.h,v 1.11 2000/11/06 16:05:25 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,10 +35,8 @@ typedef double Timestamp;
 
 typedef struct
 {
-	double		time;			/* all time units other than months and
-								 * years */
-	int4		month;			/* months and years, after time for
-								 * alignment */
+	double		time;	/* all time units other than months and years */
+	int4		month;	/* months and years, after time for alignment */
 } Interval;
 
 
@@ -164,6 +162,7 @@ extern Datum interval_trunc(PG_FUNCTION_ARGS);
 extern Datum timestamp_part(PG_FUNCTION_ARGS);
 extern Datum interval_part(PG_FUNCTION_ARGS);
 extern Datum timestamp_zone(PG_FUNCTION_ARGS);
+extern Datum timestamp_izone(PG_FUNCTION_ARGS);
 
 extern Datum interval_um(PG_FUNCTION_ARGS);
 extern Datum interval_pl(PG_FUNCTION_ARGS);
