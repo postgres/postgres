@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/keywords.c,v 1.27 1997/12/04 00:27:04 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/keywords.c,v 1.28 1997/12/16 05:04:00 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -135,10 +135,10 @@ static ScanKeyword ScanKeywords[] = {
 	{"natural", NATURAL},
 	{"nchar", NCHAR},
 	{"new", NEW},
+	{"no", NO},
 	{"nocreatedb", NOCREATEDB},
 	{"nocreateuser", NOCREATEUSER},
 	{"none", NONE},
-	{"no", NO},
 	{"not", NOT},
 	{"nothing", NOTHING},
 	{"notify", NOTIFY},
