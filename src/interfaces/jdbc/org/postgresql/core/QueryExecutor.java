@@ -13,7 +13,7 @@ import org.postgresql.util.PSQLException;
  * <p>The lifetime of a QueryExecutor object is from sending the query
  * until the response has been received from the backend.
  *
- * $Id: QueryExecutor.java,v 1.16.2.1 2002/11/14 05:54:39 barry Exp $
+ * $Id: QueryExecutor.java,v 1.16.2.2 2003/02/04 11:16:00 davec Exp $
  */
 
 public class QueryExecutor
@@ -139,13 +139,18 @@ public class QueryExecutor
 	 */
 	private void sendQuery() throws SQLException
 	{
+		// check the binds before starting the query send process.
+		for (int i = 0 ; i < m_binds.length ; ++i)
+		{
+			if (m_binds[i] == null)
+				throw new PSQLException("postgresql.prep.param", new Integer(i + 1));
+		}
+
 		try
 		{
 			pg_stream.SendChar('Q');
 			for (int i = 0 ; i < m_binds.length ; ++i)
 			{
-				if (m_binds[i] == null)
-					throw new PSQLException("postgresql.prep.param", new Integer(i + 1));
 				pg_stream.Send(connection.getEncoding().encode(m_sqlFrags[i]));
 				pg_stream.Send(connection.getEncoding().encode(m_binds[i].toString()));
 			}
