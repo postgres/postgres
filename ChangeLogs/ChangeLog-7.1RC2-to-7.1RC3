@@ -1,3 +1,26 @@
+2001-04-06 11:52  petere
+
+	* INSTALL, doc/src/sgml/installation.sgml: Revert wrong SCO
+	OpenServer report, update comments and improve formatting a bit. 
+	Regenerate INSTALL.
+
+2001-04-06 11:31  inoue
+
+	* src/interfaces/odbc/convert.c: Sorry my previous change was a
+	mistake.
+
+2001-04-06 11:01  thomas
+
+	* doc/src/sgml/fixrtf: Utility to add the stylesheet "s0"
+	definition to an RTF file.   This stylesheet must be present for
+	Applixware to be happy generating   a ToC. M$Word does not seem to
+	care one way or the other.
+
+2001-04-06 10:35  scrappy
+
+	* configure, configure.in, ChangeLogs/ChangeLog-7.1RC2-to-7.1RC3: 
+	mark it as RC3 ...
+
 2001-04-06 05:23  inoue
 
 	* src/interfaces/odbc/convert.c: 1) Fit the precision of floating
