@@ -2912,62 +2912,6 @@ public abstract class AbstractJdbc1DatabaseMetaData
 		return connection.createStatement().executeQuery(sql);
 	}
 
-	/*
-	 SELECT
-			c.relname as primary,
-			c2.relname as foreign,
-			t.tgconstrname,
-			ic.relname as fkeyname,
-			af.attnum as fkeyseq,
-			ipc.relname as pkeyname,
-			ap.attnum as pkeyseq,
-			t.tgdeferrable,
-			t.tginitdeferred,
-			t.tgnargs,t.tgargs,
-			p1.proname as updaterule,
-			p2.proname as deleterule
-	FROM
-			pg_trigger t,
-			pg_trigger t1,
-			pg_class c,
-			pg_class c2,
-			pg_class ic,
-			pg_class ipc,
-			pg_proc p1,
-			pg_proc p2,
-			pg_index if,
-			pg_index ip,
-			pg_attribute af,
-			pg_attribute ap
-	WHERE
-			(t.tgrelid=c.oid
-			AND t.tgisconstraint
-			AND t.tgconstrrelid=c2.oid
-			AND t.tgfoid=p1.oid
-			and p1.proname like '%%upd')
-
-			and
-			(t1.tgrelid=c.oid
-			and t1.tgisconstraint
-			and t1.tgconstrrelid=c2.oid
-			AND t1.tgfoid=p2.oid
-			and p2.proname like '%%del')
-
-			AND c2.relname='users'
-
-			AND
-			(if.indrelid=c.oid
-			AND if.indexrelid=ic.oid
-			and ic.oid=af.attrelid
-			AND if.indisprimary)
-
-			and
-			(ip.indrelid=c2.oid
-			and ip.indexrelid=ipc.oid
-			and ipc.oid=ap.attrelid
-			and ip.indisprimary)
-
-	*/
 	/**
 	 *
 	 * @param catalog
@@ -3014,55 +2958,68 @@ public abstract class AbstractJdbc1DatabaseMetaData
 		 */
 
 		if (connection.haveMinimumServerVersion("7.3")) {
-			select = "SELECT DISTINCT n.nspname as pnspname,n2.nspname as fnspname, ";
-			from = " FROM pg_catalog.pg_namespace n, pg_catalog.pg_namespace n2, pg_catalog.pg_trigger t, pg_catalog.pg_trigger t1, pg_catalog.pg_class c, pg_catalog.pg_class c2, pg_catalog.pg_class ic, pg_catalog.pg_proc p1, pg_catalog.pg_proc p2, pg_catalog.pg_index i, pg_catalog.pg_attribute a ";
-			where = " AND c.relnamespace = n.oid AND c2.relnamespace=n2.oid ";
+			select = "SELECT n1.nspname as pnspname,n2.nspname as fnspname, ";
+			from = " FROM pg_catalog.pg_namespace n1 "+
+				" JOIN pg_catalog.pg_class c1 ON (c1.relnamespace = n1.oid) "+
+				" JOIN pg_catalog.pg_index i ON (c1.oid=i.indrelid) "+
+				" JOIN pg_catalog.pg_class ic ON (i.indexrelid=ic.oid) "+
+				" JOIN pg_catalog.pg_attribute a ON (ic.oid=a.attrelid), "+
+				" pg_catalog.pg_namespace n2 "+
+				" JOIN pg_catalog.pg_class c2 ON (c2.relnamespace=n2.oid), "+
+				" pg_catalog.pg_trigger t1 "+
+				" JOIN pg_catalog.pg_proc p1 ON (t1.tgfoid=p1.oid), "+
+				" pg_catalog.pg_trigger t2 "+
+				" JOIN pg_catalog.pg_proc p2 ON (t2.tgfoid=p2.oid) ";
 			if (primarySchema != null && !"".equals(primarySchema)) {
-				where += " AND n.nspname = '"+escapeQuotes(primarySchema)+"' ";
+				where += " AND n1.nspname = '"+escapeQuotes(primarySchema)+"' ";
 			}
 			if (foreignSchema != null && !"".equals(foreignSchema)) {
 				where += " AND n2.nspname = '"+escapeQuotes(foreignSchema)+"' ";
 			}
 		} else {
-			select = "SELECT DISTINCT NULL::text as pnspname, NULL::text as fnspname, ";
-			from = " FROM pg_trigger t, pg_trigger t1, pg_class c, pg_class c2, pg_class ic, pg_proc p1, pg_proc p2, pg_index i, pg_attribute a ";
+			select = "SELECT NULL::text as pnspname, NULL::text as fnspname, ";
+			from = " FROM pg_class c1 "+
+				" JOIN pg_index i ON (c1.oid=i.indrelid) "+
+				" JOIN pg_class ic ON (i.indexrelid=ic.oid) "+
+				" JOIN pg_attribute a ON (ic.oid=a.attrelid), "+
+				" pg_class c2, "+
+				" pg_trigger t1 "+
+				" JOIN pg_proc p1 ON (t1.tgfoid=p1.oid), "+
+				" pg_trigger t2 "+
+				" JOIN pg_proc p2 ON (t2.tgfoid=p2.oid) ";
 		}
 
 		String sql = select
-			+ "c.relname as prelname, "
+			+ "c1.relname as prelname, "
 			+ "c2.relname as frelname, "
-			+ "t.tgconstrname, "
+			+ "t1.tgconstrname, "
 			+ "a.attnum as keyseq, "
 			+ "ic.relname as fkeyname, "
-			+ "t.tgdeferrable, "
-			+ "t.tginitdeferred, "
-			+ "t.tgnargs,t.tgargs, "
+			+ "t1.tgdeferrable, "
+			+ "t1.tginitdeferred, "
+			+ "t1.tgnargs,t1.tgargs, "
 			+ "p1.proname as updaterule, "
 			+ "p2.proname as deleterule "
 			+ from 
 			+ "WHERE "
 			// isolate the update rule
-			+ "(t.tgrelid=c.oid "
-			+ "AND t.tgisconstraint "
-			+ "AND t.tgconstrrelid=c2.oid "
-			+ "AND t.tgfoid=p1.oid "
-			+ "and p1.proname like 'RI\\\\_FKey\\\\_%\\\\_upd') "
+			+ "(t1.tgrelid=c1.oid "
+			+ "AND t1.tgisconstraint "
+			+ "AND t1.tgconstrrelid=c2.oid "
+			+ "AND p1.proname LIKE 'RI\\\\_FKey\\\\_%\\\\_upd') "
 
-			+ "and "
+			+ "AND "
 			// isolate the delete rule
-			+ "(t1.tgrelid=c.oid "
-			+ "and t1.tgisconstraint "
-			+ "and t1.tgconstrrelid=c2.oid "
-			+ "AND t1.tgfoid=p2.oid "
-			+ "and p2.proname like 'RI\\\\_FKey\\\\_%\\\\_del') "
-			+ "AND i.indrelid=c.oid "
-			+ "AND i.indexrelid=ic.oid "
-			+ "AND ic.oid=a.attrelid "
+			+ "(t2.tgrelid=c1.oid "
+			+ "AND t2.tgisconstraint "
+			+ "AND t2.tgconstrrelid=c2.oid "
+			+ "AND p2.proname LIKE 'RI\\\\_FKey\\\\_%\\\\_del') "
+
 			+ "AND i.indisprimary "
 			+ where;
 
 		if (primaryTable != null) {
-			sql += "AND c.relname='" + escapeQuotes(primaryTable) + "' ";
+			sql += "AND c1.relname='" + escapeQuotes(primaryTable) + "' ";
 		}
 		if (foreignTable != null) {
 			sql += "AND c2.relname='" + escapeQuotes(foreignTable) + "' ";
@@ -3076,8 +3033,14 @@ public abstract class AbstractJdbc1DatabaseMetaData
 		// since when getting crossreference, primaryTable will be defined
 
 		if (primaryTable != null) {
+			if (connection.haveMinimumServerVersion("7.3")) {
+				sql += "fnspname,";
+			}
 			sql += "frelname";
 		} else {
+			if (connection.haveMinimumServerVersion("7.3")) {
+				sql += "pnspname,";
+			}
 			sql += "prelname";
 		}
 
@@ -3160,6 +3123,7 @@ public abstract class AbstractJdbc1DatabaseMetaData
 			// Parse the tgargs data
 			String fkeyColumn = "";
 			String pkeyColumn = "";
+			String fkName = "";
 			// Note, I am guessing at most of this, but it should be close
 			// if not, please correct
 			// the keys are in pairs and start after the first four arguments
@@ -3172,9 +3136,16 @@ public abstract class AbstractJdbc1DatabaseMetaData
 			// we are primarily interested in the column names which are the last items in the string
 
 			StringTokenizer st = new StringTokenizer(targs, "\\000");
+			if (st.hasMoreTokens()) {
+				fkName = st.nextToken();
+			}
+
+			if (fkName.startsWith("<unnamed>")) {
+				fkName = targs;
+			}
 
 			int advance = 4 + (keySequence - 1) * 2;
-			for ( int i = 0; st.hasMoreTokens() && i < advance ; i++ )
+			for ( int i = 1; st.hasMoreTokens() && i < advance ; i++ )
 				st.nextToken(); // advance to the key column of interest
 
 			if ( st.hasMoreTokens() )
@@ -3190,7 +3161,7 @@ public abstract class AbstractJdbc1DatabaseMetaData
 			tuple[7] = fkeyColumn.getBytes(); //FKCOLUMN_NAME
 
 			tuple[8] = rs.getBytes(6); //KEY_SEQ
-			tuple[11] = targs.getBytes(); //FK_NAME this will give us a unique name for the foreign key
+			tuple[11] = fkName.getBytes(); //FK_NAME this will give us a unique name for the foreign key
 			tuple[12] = rs.getBytes(7); //PK_NAME
 
 			// DEFERRABILITY
