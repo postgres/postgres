@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.3 1996/11/03 23:27:01 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.4 1996/11/05 11:57:50 scrappy Exp $
  *
  * INTERFACE ROUTINES
  *	heap_creatr()		- Create an uncataloged heap relation
@@ -29,6 +29,9 @@
 #include <string.h>
 
 #include "postgres.h"
+
+#include <catalog/heap.h>
+#include <catalog/pg_proc.h>
 
 #include "parser/catalog_utils.h"
 

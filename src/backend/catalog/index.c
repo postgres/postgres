@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.5 1996/11/03 23:27:02 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.6 1996/11/05 11:57:52 scrappy Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -24,6 +24,10 @@
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
+
+#include <catalog/pg_proc.h>
+#include <storage/bufmgr.h>
+#include <fmgr.h>
 
 #include "access/genam.h"
 #include "access/heapam.h"
@@ -60,6 +64,11 @@
 #include "optimizer/prep.h"
 
 #include "access/istrat.h"
+#ifndef HAVE_MEMMOVE
+# include <regex/utils.h>
+#else
+# include <string.h>
+#endif
 
 /*
  * macros used in guessing how many tuples are on a page.
@@ -1469,9 +1478,11 @@ DefaultBuild(Relation heapRelation,
     Datum		*datum;
     char		*nullv;
     long		reltuples, indtuples;
+#ifndef OMIT_PARTIAL_INDEX
     ExprContext		*econtext;
     TupleTable		tupleTable;
     TupleTableSlot	*slot;
+#endif
     Node		*predicate;
     Node		*oldPred;
     

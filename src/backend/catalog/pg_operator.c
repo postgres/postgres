@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/catalog/pg_operator.c,v 1.3 1996/11/03 23:27:06 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/catalog/pg_operator.c,v 1.4 1996/11/05 11:57:53 scrappy Exp $
  *
  * NOTES
  *    these routines moved here from commands/define.c and somewhat cleaned up.
@@ -16,6 +16,9 @@
  */
 #include <string.h>
 #include "postgres.h"
+
+#include <catalog/pg_proc.h>
+#include <utils/syscache.h>
 
 #include "access/heapam.h"
 #include "access/skey.h"

@@ -7,12 +7,15 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/catalog/pg_type.c,v 1.2 1996/11/03 23:27:08 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/catalog/pg_type.c,v 1.3 1996/11/05 11:57:55 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include <string.h>
 #include "postgres.h"
+#include <utils/syscache.h>
+#include <catalog/pg_proc.h>
+
 
 #include "access/heapam.h"
 #include "access/relscan.h"
