@@ -1,0 +1,39 @@
+        0x0d2C
+      ==========
+
+May your signals all trap
+    May your references be bounded
+All memory aligned
+    Floats to ints rounded
+
+
+Remember ...
+
+
+Non-zero is true
+    ++ adds one
+Arrays start with zero
+and, NULL is for none
+
+
+For octal, use zero
+    0x means hex
+= will set
+    == means test
+
+
+use -&gt; for a pointer
+    a dot if its not
+? : is confusing
+    use them a lot
+
+
+a.out is your program
+        there's no U in foobar
+and, char (*(*x())[])() is
+        a function returning a pointer
+        to an array of pointers to
+        functions returning char
+
+  -- Jon S. Stumpf
+
