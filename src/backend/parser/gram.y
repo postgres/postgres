@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.163 2000/03/24 23:34:19 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.164 2000/03/27 17:12:06 thomas Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -180,8 +180,7 @@ static void doNegateFloat(Value *v);
 		def_list, opt_indirection, group_clause, TriggerFuncArgs,
 		opt_select_limit
 
-%type <node>	func_return
-%type <boolean>	set_opt
+%type <typnam>	func_arg, func_return
 
 %type <boolean>	TriggerForOpt, TriggerForType, OptTemp
 
@@ -250,7 +249,7 @@ static void doNegateFloat(Value *v);
 
 %type <typnam>	Typename, opt_type, SimpleTypename,
 				Generic, Numeric, Character, Datetime, Bit
-%type <str>		generic, numeric, character, datetime, bit
+%type <str>		generic, character, datetime, bit
 %type <str>		extract_arg
 %type <str>		opt_charset, opt_collate
 %type <str>		opt_float
@@ -261,7 +260,6 @@ static void doNegateFloat(Value *v);
 %type <str>		Sconst, comment_text
 %type <str>		UserId, var_value, zone_value
 %type <str>		ColId, ColLabel
-%type <str>		TypeId
 
 %type <node>	TableConstraint
 %type <list>	ColQualList
@@ -311,7 +309,7 @@ static void doNegateFloat(Value *v);
 		PARTIAL, POSITION, PRECISION, PRIMARY, PRIOR, PRIVILEGES, PROCEDURE, PUBLIC,
 		READ, REFERENCES, RELATIVE, REVOKE, RIGHT, ROLLBACK,
 		SCROLL, SECOND_P, SELECT, SESSION_USER, SET, SUBSTRING,
-		TABLE, TEMP, TEMPORARY, THEN, TIME, TIMESTAMP, TIMEZONE_HOUR,
+		TABLE, TEMPORARY, THEN, TIME, TIMESTAMP, TIMEZONE_HOUR,
 		TIMEZONE_MINUTE, TO, TRAILING, TRANSACTION, TRIM, TRUE_P,
 		UNION, UNIQUE, UPDATE, USER, USING,
 		VALUES, VARCHAR, VARYING, VIEW,
@@ -346,7 +344,7 @@ static void doNegateFloat(Value *v);
 		OFFSET, OIDS, OPERATOR, PASSWORD, PROCEDURAL,
 		REINDEX, RENAME, RESET, RETURNS, ROW, RULE,
 		SEQUENCE, SERIAL, SETOF, SHARE, SHOW, START, STATEMENT, STDIN, STDOUT, SYSID,
-		TRUNCATE, TRUSTED, 
+		TEMP, TRUNCATE, TRUSTED, 
 		UNLISTEN, UNTIL, VACUUM, VALID, VERBOSE, VERSION
 
 /* Special keywords, not in the query language - see the "lex" file */
@@ -1491,8 +1489,8 @@ CreatePLangStmt:  CREATE PLangTrusted PROCEDURAL LANGUAGE Sconst
 			}
 		;
 
-PLangTrusted:		TRUSTED { $$ = TRUE; }
-			|	{ $$ = FALSE; }
+PLangTrusted:  TRUSTED			{ $$ = TRUE; }
+			| /*EMPTY*/			{ $$ = FALSE; }
 
 DropPLangStmt:  DROP PROCEDURAL LANGUAGE Sconst
 			{
@@ -2282,28 +2280,29 @@ RecipeStmt:  EXECUTE RECIPE recipe_name
  *
  *		QUERY:
  *				define function <fname>
- *					   (language = <lang>, returntype = <typename>
- *						[, arch_pct = <percentage | pre-defined>]
+ *						[(<type-1> { , <type-n>})]
+ *						returns <type-r>
+ *						as <filename or code in language as appropriate>
+ *						language <lang> [with
+ *						[  arch_pct = <percentage | pre-defined>]
  *						[, disk_pct = <percentage | pre-defined>]
  *						[, byte_pct = <percentage | pre-defined>]
  *						[, perbyte_cpu = <int | pre-defined>]
  *						[, percall_cpu = <int | pre-defined>]
- *						[, iscachable])
- *						[arg is (<type-1> { , <type-n>})]
- *						as <filename or code in language as appropriate>
+ *						[, iscachable] ]
  *
  *****************************************************************************/
 
 ProcedureStmt:	CREATE FUNCTION func_name func_args
-			 RETURNS func_return opt_with AS func_as LANGUAGE Sconst
+			 RETURNS func_return AS func_as LANGUAGE Sconst opt_with
 				{
 					ProcedureStmt *n = makeNode(ProcedureStmt);
 					n->funcname = $3;
 					n->defArgs = $4;
-					n->returnType = $6;
-					n->withClause = $7;
-					n->as = $9;
-					n->language = $11;
+					n->returnType = (Node *)$6;
+					n->withClause = $11;
+					n->as = $8;
+					n->language = $10;
 					$$ = (Node *)n;
 				};
 
@@ -2315,32 +2314,50 @@ func_args:  '(' func_args_list ')'				{ $$ = $2; }
 		| '(' ')'								{ $$ = NIL; }
 		;
 
-func_args_list:  TypeId
-				{	$$ = lcons(makeString($1),NIL); }
-		| func_args_list ',' TypeId
-				{	$$ = lappend($1,makeString($3)); }
+func_args_list:  func_arg
+				{	$$ = lcons(makeString($1->name),NIL); }
+		| func_args_list ',' func_arg
+				{	$$ = lappend($1,makeString($3->name)); }
 		;
 
-func_as: Sconst	
+/* Would be nice to use the full Typename production for these fields,
+ * but that one sometimes dives into the catalogs looking for valid types.
+ * Arguments like "opaque" are valid when defining functions,
+ * so that won't work here. The only thing we give up is array notation,
+ * which isn't meaningful in this context anyway.
+ * - thomas 2000-03-25
+ */
+func_arg:  SimpleTypename
+				{
+					/* We can catch over-specified arguments here if we want to,
+					 * but for now better to silently swallow typmod, etc.
+					 * - thomas 2000-03-22
+					 */
+					$$ = $1;
+				}
+		;
+
+func_as: Sconst
 				{   $$ = lcons(makeString($1),NIL); }
 		| Sconst ',' Sconst
 				{ 	$$ = lappend(lcons(makeString($1),NIL), makeString($3)); }
 		;
 
-func_return:  set_opt TypeId
+func_return:  SimpleTypename
 				{
-					TypeName *n = makeNode(TypeName);
-					n->name = $2;
-					n->setof = $1;
-					n->arrayBounds = NULL;
-					n->typmod = -1;
-					$$ = (Node *)n;
+					/* We can catch over-specified arguments here if we want to,
+					 * but for now better to silently swallow typmod, etc.
+					 * - thomas 2000-03-22
+					 */
+					$$ = $1;
+				}
+		| SETOF SimpleTypename
+				{
+					$$ = $2;
+					$$->setof = TRUE;
 				}
 		;
 
-set_opt:  SETOF									{ $$ = TRUE; }
-		| /*EMPTY*/								{ $$ = FALSE; }
-		;
 
 /*****************************************************************************
  *
@@ -3743,7 +3760,7 @@ Typename:  SimpleTypename opt_array_bounds
 					/* Is this the name of a complex type? If so, implement
 					 * it as a set.
 					 */
-					if (!strcmp(saved_relname, $$->name))
+					if (strcmp(saved_relname, $$->name) == 0)
 						/* This attr is the same type as the relation
 						 * being defined. The classic example: create
 						 * emp(name=text,mgr=emp)
@@ -3818,18 +3835,6 @@ Numeric:  FLOAT opt_float
 					$$->name = xlateSqlType("numeric");
 					$$->typmod = $2;
 				}
-		;
-
-numeric:  FLOAT
-				{	$$ = xlateSqlType("float8"); }
-		| DOUBLE PRECISION
-				{	$$ = xlateSqlType("float8"); }
-		| DECIMAL
-				{	$$ = xlateSqlType("decimal"); }
-		| DEC
-				{	$$ = xlateSqlType("decimal"); }
-		| NUMERIC
-				{	$$ = xlateSqlType("numeric"); }
 		;
 
 opt_float:  '(' Iconst ')'
@@ -5224,21 +5229,6 @@ Iconst:  ICONST							{ $$ = $1; };
 Sconst:  SCONST							{ $$ = $1; };
 UserId:  IDENT							{ $$ = $1; };
 
-/* Column and type identifier
- * Does not include explicit datetime types
- *  since these must be decoupled in Typename syntax.
- * Use ColId for most identifiers. - thomas 1997-10-21
- */
-TypeId:  ColId
-			{	$$ = xlateSqlType($1); }
-		| numeric
-			{	$$ = xlateSqlType($1); }
-		| bit
-			{	$$ = xlateSqlType($1); }
-		| character
-			{	$$ = xlateSqlType($1); }
-		;
-
 /* Column identifier
  * Include date/time keywords as SQL92 extension.
  * Include TYPE as a SQL92 unreserved keyword. - thomas 1997-10-05
@@ -5252,35 +5242,54 @@ ColId:  IDENT							{ $$ = $1; }
 		| ABSOLUTE						{ $$ = "absolute"; }
 		| ACCESS						{ $$ = "access"; }
 		| ACTION						{ $$ = "action"; }
+		| ADD							{ $$ = "add"; }
 		| AFTER							{ $$ = "after"; }
 		| AGGREGATE						{ $$ = "aggregate"; }
+		| ALTER							{ $$ = "alter"; }
 		| BACKWARD						{ $$ = "backward"; }
 		| BEFORE						{ $$ = "before"; }
+		| BEGIN_TRANS					{ $$ = "begin"; }
+		| BETWEEN						{ $$ = "between"; }
+		| BY							{ $$ = "by"; }
 		| CACHE							{ $$ = "cache"; }
+		| CASCADE						{ $$ = "cascade"; }
+		| CLOSE							{ $$ = "close"; }
 		| COMMENT						{ $$ = "comment"; }
+		| COMMIT						{ $$ = "commit"; }
 		| COMMITTED						{ $$ = "committed"; }
 		| CONSTRAINTS					{ $$ = "constraints"; }
+		| CREATE						{ $$ = "create"; }
 		| CREATEDB						{ $$ = "createdb"; }
 		| CREATEUSER					{ $$ = "createuser"; }
+		| CURSOR						{ $$ = "cursor"; }
 		| CYCLE							{ $$ = "cycle"; }
 		| DATABASE						{ $$ = "database"; }
+		| DECLARE						{ $$ = "declare"; }
 		| DEFERRED						{ $$ = "deferred"; }
+		| DELETE						{ $$ = "delete"; }
 		| DELIMITERS					{ $$ = "delimiters"; }
 		| DOUBLE						{ $$ = "double"; }
+		| DROP							{ $$ = "drop"; }
 		| EACH							{ $$ = "each"; }
 		| ENCODING						{ $$ = "encoding"; }
 		| EXCLUSIVE						{ $$ = "exclusive"; }
+		| EXECUTE						{ $$ = "execute"; }
+		| FETCH							{ $$ = "fetch"; }
 		| FORCE							{ $$ = "force"; }
 		| FORWARD						{ $$ = "forward"; }
 		| FUNCTION						{ $$ = "function"; }
+		| GRANT							{ $$ = "grant"; }
 		| HANDLER						{ $$ = "handler"; }
 		| IMMEDIATE						{ $$ = "immediate"; }
+		| IN							{ $$ = "in"; }
 		| INCREMENT						{ $$ = "increment"; }
 		| INDEX							{ $$ = "index"; }
 		| INHERITS						{ $$ = "inherits"; }
 		| INSENSITIVE					{ $$ = "insensitive"; }
+		| INSERT						{ $$ = "insert"; }
 		| INSTEAD						{ $$ = "instead"; }
 		| INTERVAL						{ $$ = "interval"; }
+		| IS							{ $$ = "is"; }
 		| ISNULL						{ $$ = "isnull"; }
 		| ISOLATION						{ $$ = "isolation"; }
 		| KEY							{ $$ = "key"; }
@@ -5292,10 +5301,14 @@ ColId:  IDENT							{ $$ = $1; }
 		| MAXVALUE						{ $$ = "maxvalue"; }
 		| MINVALUE						{ $$ = "minvalue"; }
 		| MODE							{ $$ = "mode"; }
+		| NAMES							{ $$ = "names"; }
+		| NATIONAL						{ $$ = "national"; }
 		| NEXT							{ $$ = "next"; }
+		| NO							{ $$ = "no"; }
 		| NOCREATEDB					{ $$ = "nocreatedb"; }
 		| NOCREATEUSER					{ $$ = "nocreateuser"; }
 		| NOTHING						{ $$ = "nothing"; }
+		| NOTIFY						{ $$ = "notify"; }
 		| NOTNULL						{ $$ = "notnull"; }
 		| OF							{ $$ = "of"; }
 		| OIDS							{ $$ = "oids"; }
@@ -5303,22 +5316,27 @@ ColId:  IDENT							{ $$ = $1; }
 		| OPERATOR						{ $$ = "operator"; }
 		| OPTION						{ $$ = "option"; }
 		| OVERLAPS						{ $$ = "overlaps"; }
+		| PARTIAL						{ $$ = "partial"; }
 		| PASSWORD						{ $$ = "password"; }
 		| PENDANT						{ $$ = "pendant"; }
 		| PRIOR							{ $$ = "prior"; }
 		| PRIVILEGES					{ $$ = "privileges"; }
 		| PROCEDURAL					{ $$ = "procedural"; }
 		| READ							{ $$ = "read"; }
+		| REINDEX						{ $$ = "reindex"; }
 		| RELATIVE						{ $$ = "relative"; }
 		| RENAME						{ $$ = "rename"; }
 		| RESTRICT						{ $$ = "restrict"; }
 		| RETURNS						{ $$ = "returns"; }
+		| REVOKE						{ $$ = "revoke"; }
+		| ROLLBACK						{ $$ = "rollback"; }
 		| ROW							{ $$ = "row"; }
 		| RULE							{ $$ = "rule"; }
 		| SCROLL						{ $$ = "scroll"; }
 		| SEQUENCE						{ $$ = "sequence"; }
 		| SERIAL						{ $$ = "serial"; }
 		| SERIALIZABLE					{ $$ = "serializable"; }
+		| SET							{ $$ = "set"; }
 		| SHARE							{ $$ = "share"; }
 		| START							{ $$ = "start"; }
 		| STATEMENT						{ $$ = "statement"; }
@@ -5335,8 +5353,16 @@ ColId:  IDENT							{ $$ = $1; }
 		| TRUNCATE						{ $$ = "truncate"; }
 		| TRUSTED						{ $$ = "trusted"; }
 		| TYPE_P						{ $$ = "type"; }
+		| UNLISTEN						{ $$ = "unlisten"; }
+		| UNTIL							{ $$ = "until"; }
+		| UPDATE						{ $$ = "update"; }
 		| VALID							{ $$ = "valid"; }
+		| VALUES						{ $$ = "values"; }
+		| VARYING						{ $$ = "varying"; }
 		| VERSION						{ $$ = "version"; }
+		| VIEW							{ $$ = "view"; }
+		| WITH							{ $$ = "with"; }
+		| WORK							{ $$ = "work"; }
 		| ZONE							{ $$ = "zone"; }
 		;
 
@@ -5352,55 +5378,107 @@ ColId:  IDENT							{ $$ = $1; }
  */
 ColLabel:  ColId						{ $$ = $1; }
 		| ABORT_TRANS					{ $$ = "abort"; }
+		| ALL							{ $$ = "all"; }
 		| ANALYZE						{ $$ = "analyze"; }
+		| ANY							{ $$ = "any"; }
+		| ASC							{ $$ = "asc"; }
 		| BINARY						{ $$ = "binary"; }
 		| BIT							{ $$ = "bit"; }
+		| BOTH							{ $$ = "both"; }
 		| CASE							{ $$ = "case"; }
+		| CAST							{ $$ = "cast"; }
+		| CHAR							{ $$ = "char"; }
 		| CHARACTER						{ $$ = "character"; }
+		| CHECK							{ $$ = "check"; }
 		| CLUSTER						{ $$ = "cluster"; }
 		| COALESCE						{ $$ = "coalesce"; }
+		| COLLATE						{ $$ = "collate"; }
+		| COLUMN						{ $$ = "column"; }
 		| CONSTRAINT					{ $$ = "constraint"; }
 		| COPY							{ $$ = "copy"; }
+		| CROSS							{ $$ = "cross"; }
 		| CURRENT						{ $$ = "current"; }
+		| CURRENT_DATE					{ $$ = "current_date"; }
+		| CURRENT_TIME					{ $$ = "current_time"; }
+		| CURRENT_TIMESTAMP				{ $$ = "current_timestamp"; }
 		| CURRENT_USER					{ $$ = "current_user"; }
 		| DEC							{ $$ = "dec"; }
 		| DECIMAL						{ $$ = "decimal"; }
+		| DEFAULT						{ $$ = "default"; }
 		| DEFERRABLE					{ $$ = "deferrable"; }
+		| DESC							{ $$ = "desc"; }
+		| DISTINCT						{ $$ = "distinct"; }
 		| DO							{ $$ = "do"; }
 		| ELSE							{ $$ = "else"; }
 		| END_TRANS						{ $$ = "end"; }
+		| EXCEPT						{ $$ = "except"; }
+		| EXISTS						{ $$ = "exists"; }
 		| EXPLAIN						{ $$ = "explain"; }
 		| EXTEND						{ $$ = "extend"; }
+		| EXTRACT						{ $$ = "extract"; }
 		| FALSE_P						{ $$ = "false"; }
 		| FLOAT							{ $$ = "float"; }
+		| FOR							{ $$ = "for"; }
 		| FOREIGN						{ $$ = "foreign"; }
+		| FROM							{ $$ = "from"; }
+		| FULL							{ $$ = "full"; }
 		| GLOBAL						{ $$ = "global"; }
 		| GROUP							{ $$ = "group"; }
+		| HAVING						{ $$ = "having"; }
 		| INITIALLY						{ $$ = "initially"; }
+		| INNER_P						{ $$ = "inner"; }
+		| INTERSECT						{ $$ = "intersect"; }
+		| INTO							{ $$ = "into"; }
+		| JOIN							{ $$ = "join"; }
+		| LEADING						{ $$ = "leading"; }
+		| LEFT							{ $$ = "left"; }
+		| LIKE							{ $$ = "like"; }
 		| LISTEN						{ $$ = "listen"; }
 		| LOAD							{ $$ = "load"; }
 		| LOCAL							{ $$ = "local"; }
 		| LOCK_P						{ $$ = "lock"; }
 		| MOVE							{ $$ = "move"; }
+		| NATURAL						{ $$ = "natural"; }
+		| NCHAR							{ $$ = "nchar"; }
 		| NEW							{ $$ = "new"; }
 		| NONE							{ $$ = "none"; }
+		| NOT							{ $$ = "not"; }
 		| NULLIF						{ $$ = "nullif"; }
+		| NULL_P						{ $$ = "null_p"; }
 		| NUMERIC						{ $$ = "numeric"; }
+		| OFFSET						{ $$ = "offset"; }
+		| ON							{ $$ = "on"; }
+		| OR							{ $$ = "or"; }
 		| ORDER							{ $$ = "order"; }
+		| OUTER_P						{ $$ = "outer"; }
 		| POSITION						{ $$ = "position"; }
 		| PRECISION						{ $$ = "precision"; }
+		| PRIMARY						{ $$ = "primary"; }
+		| PROCEDURE						{ $$ = "procedure"; }
+		| PUBLIC						{ $$ = "public"; }
+		| REFERENCES					{ $$ = "references"; }
 		| RESET							{ $$ = "reset"; }
+		| RIGHT							{ $$ = "right"; }
+		| SELECT						{ $$ = "select"; }
 		| SESSION_USER					{ $$ = "session_user"; }
 		| SETOF							{ $$ = "setof"; }
 		| SHOW							{ $$ = "show"; }
+		| SUBSTRING						{ $$ = "substring"; }
 		| TABLE							{ $$ = "table"; }
 		| THEN							{ $$ = "then"; }
+		| TO							{ $$ = "to"; }
 		| TRANSACTION					{ $$ = "transaction"; }
+		| TRIM							{ $$ = "trim"; }
 		| TRUE_P						{ $$ = "true"; }
+		| UNION							{ $$ = "union"; }
+		| UNIQUE						{ $$ = "unique"; }
 		| USER							{ $$ = "user"; }
+		| USING							{ $$ = "using"; }
 		| VACUUM						{ $$ = "vacuum"; }
+		| VARCHAR						{ $$ = "varchar"; }
 		| VERBOSE						{ $$ = "verbose"; }
 		| WHEN							{ $$ = "when"; }
+		| WHERE							{ $$ = "where"; }
 		;
 
 SpecialRuleRelation:  CURRENT
@@ -5539,16 +5617,16 @@ mapTargetColumns(List *src, List *dst)
  *
  * Converting "datetime" to "timestamp" and "timespan" to "interval"
  * is a temporary expedient for pre-7.0 to 7.0 compatibility;
- * these should go away someday.
+ * these should go away for v7.1.
  */
 static char *
 xlateSqlFunc(char *name)
 {
-	if (!strcmp(name,"character_length"))
+	if (strcmp(name,"character_length") == 0)
 		return "char_length";
-	else if (!strcmp(name,"datetime"))
+	else if (strcmp(name,"datetime") == 0)
 		return "timestamp";
-	else if (!strcmp(name,"timespan"))
+	else if (strcmp(name,"timespan") == 0)
 		return "interval";
 	else
 		return name;
@@ -5560,25 +5638,28 @@ xlateSqlFunc(char *name)
  * NB: do NOT put "char" -> "bpchar" here, because that renders it impossible
  * to refer to our single-byte char type, even with quotes.  (Without quotes,
  * CHAR is a keyword, and the code above produces "bpchar" for it.)
+ *
+ * Convert "datetime" and "timespan" to allow a transition to SQL92 type names.
+ * Remove this translation for v7.1 - thomas 2000-03-25
  */
 static char *
 xlateSqlType(char *name)
 {
-	if (!strcmp(name,"int")
-	 || !strcmp(name,"integer"))
+	if ((strcmp(name,"int") == 0)
+		|| (strcmp(name,"integer") == 0))
 		return "int4";
-	else if (!strcmp(name, "smallint"))
+	else if (strcmp(name, "smallint") == 0)
 		return "int2";
-	else if (!strcmp(name, "real")
-	 || !strcmp(name, "float"))
+	else if ((strcmp(name, "real") == 0)
+			 || (strcmp(name, "float") == 0))
 		return "float8";
-	else if (!strcmp(name, "decimal"))
+	else if (strcmp(name, "decimal") == 0)
 		return "numeric";
-	else if (!strcmp(name, "datetime"))
+	else if (strcmp(name, "datetime") == 0)
 		return "timestamp";
-	else if (!strcmp(name, "timespan"))
+	else if (strcmp(name, "timespan") == 0)
 		return "interval";
-	else if (!strcmp(name, "boolean"))
+	else if (strcmp(name, "boolean") == 0)
 		return "bool";
 	else
 		return name;
