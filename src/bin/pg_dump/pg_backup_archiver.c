@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.95 2004/08/29 05:06:53 momjian Exp $
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.96 2004/08/30 19:44:14 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2357,8 +2357,6 @@ _getObjectFromDropStmt(const char *dropStmt, const char *type)
 static void
 _printTocEntry(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt, bool isData, bool acl_pass)
 {
-	const char *pfx;
-
 	/* ACLs are dumped only during acl pass */
 	if (acl_pass)
 	{
@@ -2370,9 +2368,6 @@ _printTocEntry(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt, bool isDat
 		if (strcmp(te->desc, "ACL") == 0)
 			return;
 	}
-
-	if (AH->noTocComments)
-		return;
 
 	/*
 	 * Avoid dumping the public schema, as it will already be created ...
@@ -2392,33 +2387,38 @@ _printTocEntry(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt, bool isDat
 		_setWithOids(AH, te);
 
 	/* Emit header comment for item */
-	if (isData)
-		pfx = "Data for ";
-	else
-		pfx = "";
-
-	ahprintf(AH, "--\n");
-	if (AH->public.verbose)
+	if (!AH->noTocComments)
 	{
-		ahprintf(AH, "-- TOC entry %d (class %u OID %u)\n",
-				 te->dumpId, te->catalogId.tableoid, te->catalogId.oid);
-		if (te->nDeps > 0)
-		{
-			int			i;
+		const char *pfx;
 
-			ahprintf(AH, "-- Dependencies:");
-			for (i = 0; i < te->nDeps; i++)
-				ahprintf(AH, " %d", te->dependencies[i]);
-			ahprintf(AH, "\n");
+		if (isData)
+			pfx = "Data for ";
+		else
+			pfx = "";
+
+		ahprintf(AH, "--\n");
+		if (AH->public.verbose)
+		{
+			ahprintf(AH, "-- TOC entry %d (class %u OID %u)\n",
+					 te->dumpId, te->catalogId.tableoid, te->catalogId.oid);
+			if (te->nDeps > 0)
+			{
+				int			i;
+
+				ahprintf(AH, "-- Dependencies:");
+				for (i = 0; i < te->nDeps; i++)
+					ahprintf(AH, " %d", te->dependencies[i]);
+				ahprintf(AH, "\n");
+			}
 		}
+		ahprintf(AH, "-- %sName: %s; Type: %s; Schema: %s; Owner: %s\n",
+				 pfx, te->tag, te->desc,
+				 te->namespace ? te->namespace : "-",
+				 te->owner);
+		if (AH->PrintExtraTocPtr != NULL)
+			(*AH->PrintExtraTocPtr) (AH, te);
+		ahprintf(AH, "--\n\n");
 	}
-	ahprintf(AH, "-- %sName: %s; Type: %s; Schema: %s; Owner: %s\n",
-			 pfx, te->tag, te->desc,
-			 te->namespace ? te->namespace : "-",
-			 te->owner);
-	if (AH->PrintExtraTocPtr !=NULL)
-		(*AH->PrintExtraTocPtr) (AH, te);
-	ahprintf(AH, "--\n\n");
 
 	/*
 	 * Actually print the definition.
