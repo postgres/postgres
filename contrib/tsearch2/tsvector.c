@@ -51,7 +51,7 @@ static int
 comparePos(const void *a, const void *b)
 {
 	if (((WordEntryPos *) a)->pos == ((WordEntryPos *) b)->pos)
-		return 1;
+		return 0;
 	return (((WordEntryPos *) a)->pos > ((WordEntryPos *) b)->pos) ? 1 : -1;
 }
 
