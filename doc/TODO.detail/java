@@ -510,3 +510,115 @@ thanks,
 ---------------------------(end of broadcast)---------------------------
 TIP 4: Don't 'kill -9' the postmaster
 
+From pgsql-jdbc-owner+M968@postgresql.org Sun Jul  8 18:59:29 2001
+Return-path: <pgsql-jdbc-owner+M968@postgresql.org>
+Received: from postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by candle.pha.pa.us (8.10.1/8.10.1) with ESMTP id f68MxTl05403
+	for <pgman@candle.pha.pa.us>; Sun, 8 Jul 2001 18:59:29 -0400 (EDT)
+Received: from postgresql.org.org (webmail.postgresql.org [216.126.85.28])
+	by postgresql.org (8.11.3/8.11.1) with SMTP id f68MxWa07043
+	for <pgman@candle.pha.pa.us>; Sun, 8 Jul 2001 18:59:32 -0400 (EDT)
+	(envelope-from pgsql-jdbc-owner+M968@postgresql.org)
+Received: from mailout02.sul.t-online.de (mailout02.sul.t-online.com [194.25.134.17])
+	by postgresql.org (8.11.3/8.11.1) with ESMTP id f68MrGa05368
+	for <pgsql-jdbc@postgresql.org>; Sun, 8 Jul 2001 18:53:16 -0400 (EDT)
+	(envelope-from peter_e@gmx.net)
+Received: from fwd06.sul.t-online.de 
+	by mailout02.sul.t-online.de with smtp 
+	id 15JNQP-0004x9-00; Mon, 09 Jul 2001 00:53:13 +0200
+Received: from peter.localdomain (520083510237-0001@[212.185.245.47]) by fmrl06.sul.t-online.com
+	with esmtp id 15JNQH-0xfc00C; Mon, 9 Jul 2001 00:53:05 +0200
+Date: Mon, 9 Jul 2001 00:55:37 +0200 (CEST)
+From: Peter Eisentraut <peter_e@gmx.net>
+To: <pgsql-jdbc@postgresql.org>
+Subject: [JDBC] To do list for DatabaseMetaData
+Message-ID: <Pine.LNX.4.30.0107090041240.677-100000@peter.localdomain>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+X-Sender: 520083510237-0001@t-dialin.net
+Precedence: bulk
+Sender: pgsql-jdbc-owner@postgresql.org
+Status: OR
+
+Since DatabaseMetaData seems to have been a subject of interest lately I
+have composed a list of concrete things that need to be done there.
+
+The spec of DatabaseMetaData is here:
+http://java.sun.com/j2se/1.3/docs/api/java/sql/DatabaseMetaData.html
+
+All the functions listed in the spec and not listed below I have recently
+checked and updated for correctness and compliance.  Thus, this list is
+complete.  Functions marked with '?' I have not checked yet.
+
+If someone wants to tackle some of the getThings() functions, a
+description of the system catalogs is in the Developer's Guide.  Also note
+that some functions currently incorrectly handle the case of null patterns
+vs. "" patterns vs. "%" patterns.
+
+At least two parameters obtained by a DatabaseMetaData method are
+user-tunable on the server side.  The only way to get at those numbers
+currently is to use SHOW and parse the NOTICE: it sends back (which is
+impossible in the days of internationalized messages), so a nice
+side-project would be to implement a get_config_variable(text) returns
+text (better names possible) function to allow easier access.
+
+Now the list:
+
+allProceduresAreCallable()		not all procedures listed are
+					callable (triggers, in/out)
+allTablesAreSelectable()		should this check access
+					privileges or what?
+getSQLKeywords()			outdated, could be automated like
+					keywords.sgml
+getNumericFunctions()			decide what exactly is a "numeric function"?
+getStringFunctions()			ditto
+getSystemFunctions()			ditto
+getTimeDateFunctions()			ditto
+getExtraNameCharacters()		server allows \200 to \377, how
+					does this fit in with Unicode?
+getMaxColumnNameLength()		32 is hard-coded here, maybe query server
+getMaxColumnsInIndex()			this should be detected from server
+getMaxColumnsInTable()			this limit is probably shaky
+getMaxConnections()			could query the server for this
+					(SHOW, see above)
+getMaxCursorNameLength()		32 hard-coded
+getMaxSchemaNameLength()		will be 32 when done
+getMaxProcedureNameLength()		32 hard-coded
+getMaxCatalogNameLength()		should be NAMEDATALEN
+doesMaxRowSizeIncludeBlobs()		since we don't have blobs, should
+					this throw an exception?
+getMaxStatements()			questionable, see comment there
+getMaxTableNameLength()			32 hard-coded
+getMaxUserNameLength()			32 hard-coded
+getDefaultTransactionIsolation()	This is configurable in 7.2.
+					(SHOW, see above)
+getProcedures()				missing catalog (database) and
+					remarks columns
+getProcedureColumns()			only dummy implementation
+getTables()				fails to handle pre-7.1 servers
+					(relkind 'v')
+getSchemas()				This should throw an exception.
+getTableTypes()				?
+getColumns()				?
+getColumnPrivileges()			not implemented
+getTablePrivileges()			not implemented
+getBestRowIdentifier()			only dummy implementation
+getVersionColumns()			not implemented
+getPrimaryKeys()			?
+getImportedKeys()			?
+getExportedKeys()			not implemented
+getCrossReference()			not implemented
+getTypeInfo()				?
+getIndexInfo()				?
+getUDTs()				?
+
+
+-- 
+Peter Eisentraut   peter_e@gmx.net   http://funkturm.homeip.net/~peter
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 6: Have you searched our list archives?
+
+http://www.postgresql.org/search.mpl
+
