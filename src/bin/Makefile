@@ -2,9 +2,10 @@
 #
 # Makefile for src/bin (client programs)
 #
-# Copyright (c) 1994, Regents of the University of California
+# Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
+# Portions Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/bin/Makefile,v 1.33 2000/10/10 22:01:52 momjian Exp $
+# $Header: /cvsroot/pgsql/src/bin/Makefile,v 1.34 2001/02/18 18:33:59 momjian Exp $
 #
 #-------------------------------------------------------------------------
 

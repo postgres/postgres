@@ -4,11 +4,12 @@
 # createlang.sh--
 #    Install a procedural language in a database
 #
-# Copyright (c) 1994, Regents of the University of California
+# Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
+# Portions Copyright (c) 1994, Regents of the University of California
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/createlang.sh,v 1.22 2001/01/21 05:16:45 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/createlang.sh,v 1.23 2001/02/18 18:34:01 momjian Exp $
 #
 #-------------------------------------------------------------------------
 

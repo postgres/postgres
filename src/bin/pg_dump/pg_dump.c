@@ -2,7 +2,10 @@
  *
  * pg_dump.c
  *	  pg_dump is an utility for dumping out a postgres database
- * into a script file.
+ *    into a script file.
+ *
+ * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
  *	pg_dump will read the system catalogs in a database and
  *	dump out a script that reproduces
@@ -17,12 +20,9 @@
  *
  * the output script is SQL that is understood by PostgreSQL
  *
- * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
- * Portions Copyright (c) 1994, Regents of the University of California
- *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.192 2001/02/13 01:31:54 pjw Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.193 2001/02/18 18:33:59 momjian Exp $
  *
  * Modifications - 6/10/96 - dave@bensoft.com - version 1.13.dhb
  *

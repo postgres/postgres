@@ -2,9 +2,10 @@
 #
 # Makefile for src/bin/ipcclean
 #
-# Copyright (c) 1994, Regents of the University of California
+# Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
+# Portions Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/bin/ipcclean/Attic/Makefile,v 1.14 2000/09/17 13:02:33 petere Exp $
+# $Header: /cvsroot/pgsql/src/bin/ipcclean/Attic/Makefile,v 1.15 2001/02/18 18:33:59 momjian Exp $
 #
 #-------------------------------------------------------------------------
 

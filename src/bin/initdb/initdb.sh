@@ -20,9 +20,10 @@
 # made just by copying the completed template1.
 #
 #
-# Copyright (c) 1994, Regents of the University of California
+# Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
+# Portions Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.120 2001/01/20 22:09:24 tgl Exp $
+# $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.121 2001/02/18 18:33:59 momjian Exp $
 #
 #-------------------------------------------------------------------------
 

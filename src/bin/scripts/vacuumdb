@@ -7,11 +7,12 @@
 #    This script runs psql with the "-c" option to vacuum
 #    the requested database.
 #
-# Copyright (c) 1994, Regents of the University of California
+# Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
+# Portions Copyright (c) 1994, Regents of the University of California
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/vacuumdb,v 1.15 2001/01/08 23:02:36 tgl Exp $
+#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/vacuumdb,v 1.16 2001/02/18 18:34:02 momjian Exp $
 #
 #-------------------------------------------------------------------------
 

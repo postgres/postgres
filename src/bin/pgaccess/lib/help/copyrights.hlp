@@ -1,9 +1,11 @@
 .pgaw:Help.f.t insert end \
 "Copyrights\n\n" {title} \
 "
-PostgreSQL is Copyright © 1996-9 by the PostgreSQL Global Development Group, and is distributed under the terms of the Berkeley license. 
+PostgreSQL is Copyright © 1996-2001,  PostgreSQL Global Development Group.
 
-Postgres95 is Copyright © 1994-5 by the Regents of the University of California. Permission to use, copy, modify, and distribute this software and its documentation for any purpose, without fee, and without a written agreement is hereby granted, provided that the above copyright notice and this paragraph and the following two paragraphs appear in all copies. 
+Postgres95 is Copyright © 1994, Regents of the University of California.
+
+Permission to use, copy, modify, and distribute this software and its documentation for any purpose, without fee, and without a written agreement is hereby granted, provided that the above copyright notice and this paragraph and the following two paragraphs appear in all copies. 
 
 In no event shall the University of California be liable to any party for direct, indirect, special, incidental, or consequential damages, including lost profits, arising out of the use of this software and its documentation, even if the University of California has been advised of the possibility of such damage. 
 

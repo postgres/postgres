@@ -1,6 +1,5 @@
 /*
  * pgtclAppInit.c
- *
  *		a skeletal Tcl_AppInit that provides pgtcl initialization
  *	  to create a tclsh that can talk to pglite backends
  *
