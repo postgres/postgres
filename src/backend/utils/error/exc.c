@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/error/Attic/exc.c,v 1.20 1998/02/26 04:37:35 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/error/Attic/exc.c,v 1.21 1998/06/27 04:53:45 momjian Exp $
  *
  * NOTE
  *	  XXX this code needs improvement--check for state violations and
@@ -78,7 +78,7 @@ EnableExceptionHandling(bool on)
 	if (on == ExceptionHandlingEnabled)
 	{
 		/* XXX add logging of failed state */
-		exitpg(255);
+		proc_exit(255);
 		/* ExitPostgres(FatalExitStatus); */
 	}
 

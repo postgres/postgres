@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/Attic/multi.c,v 1.16 1998/06/26 19:57:49 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/Attic/multi.c,v 1.17 1998/06/27 04:53:38 momjian Exp $
  *
  * NOTES:
  *	 (1) The lock.c module assumes that the caller here is doing
@@ -88,13 +88,6 @@ LockTableId
 InitMultiLevelLocks()
 {
 	int			tableId;
-
-	/* -----------------------
-	 * If we're already initialized just return the table id.
-	 * -----------------------
-	 */
-	if (MultiTableId)
-		return MultiTableId;
 
 	tableId = LockTableInit("LockTable", MultiConflicts, MultiPrios, 5);
 	MultiTableId = tableId;

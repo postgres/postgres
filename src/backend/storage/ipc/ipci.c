@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipci.c,v 1.13 1998/06/26 19:57:48 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipci.c,v 1.14 1998/06/27 04:53:35 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -92,7 +92,6 @@ CreateSharedMemoryAndSemaphores(IPCKey key)
 	 * ----------------
 	 */
 	InitLocks();
-	InitMultiLevelLocks();
 	if (InitMultiLevelLocks() == INVALID_TABLEID)
 		elog(FATAL, "Couldn't create the lock table");
 
@@ -101,7 +100,7 @@ CreateSharedMemoryAndSemaphores(IPCKey key)
 	 * ----------------
 	 */
 	InitProcGlobal(key);
-	on_exitpg(ProcFreeAllSemaphores, NULL);
+	on_shmem_exit(ProcFreeAllSemaphores, NULL);
 
 	CreateSharedInvalidationState(key);
 }

@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.89 1998/06/18 03:43:59 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.90 1998/06/27 04:53:31 momjian Exp $
  *
  * NOTES
  *
@@ -895,7 +895,7 @@ reset_shared(short port)
 static void
 pmdie(SIGNAL_ARGS)
 {
-	exitpg(0);
+	proc_exit(0);
 }
 
 /*
@@ -986,9 +986,9 @@ CleanupProc(int pid,
 	{
 		bp = (Backend *) DLE_VAL(curr);
 
-		/*
-		 * ----------------- SIGUSR1 is the special signal that sez exit
-		 * without exitpg and let the user know what's going on.
+		/* -----------------
+		 * SIGUSR1 is the special signal that says exit
+		 * without proc_exit and let the user know what's going on.
 		 * ProcSemaphoreKill() cleans up the backends semaphore.  If
 		 * SendStop is set (-s on command line), then we send a SIGSTOP so
 		 * that we can core dumps from all backends by hand.
@@ -1020,10 +1020,6 @@ CleanupProc(int pid,
 	}
 
 	/*
-	 * Quasi_exit means run all of the on_exitpg routines
-	 * but don't acutally call exit().  The on_exit list of routines to do
-	 * is also truncated.
-	 *
 	 * Nothing up my sleeve here, ActiveBackends means that since the last
 	 * time we recreated shared memory and sems another frontend has
 	 * requested and received a connection and I have forked off another
@@ -1036,7 +1032,7 @@ CleanupProc(int pid,
 		if (DebugLvl)
 			fprintf(stderr, "%s: CleanupProc: reinitializing shared memory and semaphores\n",
 					progname);
-		quasi_exitpg();
+		shmem_exit();
 		reset_shared(PostPortName);
 	}
 }
@@ -1230,7 +1226,7 @@ DoBackend(Port *port)
 	 *	Let's clean up ourselves as the postmaster child
 	 */
 	
-	clear_exitpg(); /* we don't want the postmaster's exitpg() handlers */
+	clear_proc_exit(); /* we don't want the postmaster's proc_exit() handlers */
 
 	/* ----------------
 	 *	register signal handlers.
@@ -1352,7 +1348,7 @@ ExitPostmaster(int status)
 		StreamClose(ServerSock_INET);
 	if (ServerSock_UNIX != INVALID_SOCK)
 		StreamClose(ServerSock_UNIX);
-	exitpg(status);
+	proc_exit(status);
 }
 
 static void

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipc.c,v 1.26 1998/06/23 16:04:46 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipc.c,v 1.27 1998/06/27 04:53:34 momjian Exp $
  *
  * NOTES
  *
@@ -60,9 +60,9 @@ static struct ONEXIT
 {
 	void		(*function) ();
 	caddr_t		arg;
-}			onexit_list[MAX_ON_EXITS];
+}	on_proc_exit_list[MAX_ON_EXITS], on_shmem_exit_list[MAX_ON_EXITS];
 
-static int	onexit_index;
+static int	on_proc_exit_index, on_shmem_exit_index;
 static void IpcConfigTip(void);
 
 typedef struct _PrivateMemStruct
@@ -98,7 +98,7 @@ PrivateMemoryAttach(IpcMemoryId memid)
 
 
 /* ----------------------------------------------------------------
- *		exitpg
+ *		proc_exit
  *
  *		this function calls all the callbacks registered
  *		for it (to free resources) and then calls exit.
@@ -106,100 +106,124 @@ PrivateMemoryAttach(IpcMemoryId memid)
  *		-cim 2/6/90
  * ----------------------------------------------------------------
  */
-static int	exitpg_inprogress = 0;
+static int	proc_exit_inprogress = 0;
 
 void
-exitpg(int code)
+proc_exit(int code)
 {
 	int			i;
 
 	/* ----------------
-	 *	if exitpg_inprocess is true, then it means that we
+	 *	if proc_exit_inprocess is true, then it means that we
 	 *	are being invoked from within an on_exit() handler
 	 *	and so we return immediately to avoid recursion.
 	 * ----------------
 	 */
-	if (exitpg_inprogress)
+	if (proc_exit_inprogress)
 		return;
 
-	exitpg_inprogress = 1;
+	proc_exit_inprogress = 1;
 
+	/* do our shared memory exits first */
+	shmem_exit(code);
+	
 	/* ----------------
 	 *	call all the callbacks registered before calling exit().
 	 * ----------------
 	 */
-	for (i = onexit_index - 1; i >= 0; --i)
-		(*onexit_list[i].function) (code, onexit_list[i].arg);
+	for (i = on_proc_exit_index - 1; i >= 0; --i)
+		(*on_proc_exit_list[i].function) (code, on_proc_exit_list[i].arg);
 
 	exit(code);
 }
 
 /* ------------------
- * Run all of the on_exitpg routines but don't exit in the end.
+ * Run all of the on_shmem_exit routines but don't exit in the end.
  * This is used by the postmaster to re-initialize shared memory and
  * semaphores after a backend dies horribly
  * ------------------
  */
+static int	shmem_exit_inprogress = 0;
+
 void
-quasi_exitpg()
+shmem_exit(int code)
 {
 	int			i;
 
 	/* ----------------
-	 *	if exitpg_inprocess is true, then it means that we
+	 *	if shmem_exit_inprocess is true, then it means that we
 	 *	are being invoked from within an on_exit() handler
 	 *	and so we return immediately to avoid recursion.
 	 * ----------------
 	 */
-	if (exitpg_inprogress)
+	if (shmem_exit_inprogress)
 		return;
 
-	exitpg_inprogress = 1;
+	shmem_exit_inprogress = 1;
 
 	/* ----------------
 	 *	call all the callbacks registered before calling exit().
 	 * ----------------
 	 */
-	for (i = onexit_index - 1; i >= 0; --i)
-		/* Don't do StreamDoUnlink on quasi_exit */
-		if (onexit_list[i].function != StreamDoUnlink)
-			(*onexit_list[i].function) (0, onexit_list[i].arg);
+	for (i = on_shmem_exit_index - 1; i >= 0; --i)
+		(*on_shmem_exit_list[i].function) (code, on_shmem_exit_list[i].arg);
 
-	onexit_index = 0;
-	exitpg_inprogress = 0;
+	on_shmem_exit_index = 0;
+	shmem_exit_inprogress = 0;
 }
 
 /* ----------------------------------------------------------------
- *		on_exitpg
+ *		on_proc_exit
  *
  *		this function adds a callback function to the list of
- *		functions invoked by exitpg().	-cim 2/6/90
+ *		functions invoked by proc_exit().	-cim 2/6/90
  * ----------------------------------------------------------------
  */
 int
-on_exitpg(void (*function) (), caddr_t arg)
+on_proc_exit(void (*function) (), caddr_t arg)
 {
-	if (onexit_index >= MAX_ON_EXITS)
+	if (on_proc_exit_index >= MAX_ON_EXITS)
 		return (-1);
 
-	onexit_list[onexit_index].function = function;
-	onexit_list[onexit_index].arg = arg;
+	on_proc_exit_list[on_proc_exit_index].function = function;
+	on_proc_exit_list[on_proc_exit_index].arg = arg;
 
-	++onexit_index;
+	++on_proc_exit_index;
 
 	return (0);
 }
 
 /* ----------------------------------------------------------------
- *		clear_exitpg
+ *		on_shmem_exit
  *
- *		this function clears all exitpg() registered functions.
+ *		this function adds a callback function to the list of
+ *		functions invoked by shmem_exit().	-cim 2/6/90
+ * ----------------------------------------------------------------
+ */
+int
+on_shmem_exit(void (*function) (), caddr_t arg)
+{
+	if (on_shmem_exit_index >= MAX_ON_EXITS)
+		return (-1);
+
+	on_shmem_exit_list[on_shmem_exit_index].function = function;
+	on_shmem_exit_list[on_shmem_exit_index].arg = arg;
+
+	++on_shmem_exit_index;
+
+	return (0);
+}
+
+/* ----------------------------------------------------------------
+ *		clear_proc_exit
+ *
+ *		this function clears all proc_exit() registered functions.
  * ----------------------------------------------------------------
  */
 void
-clear_exitpg(void)
+clear_proc_exit(void)
 {
-	onexit_index = 0;
+	on_proc_exit_index = 0;
 }
 
 /****************************************************************************/
@@ -301,7 +325,7 @@ IpcSemaphoreCreate(IpcSemaphoreKey semKey,
 		{
 			perror("semget");
 			IpcConfigTip();
-			exitpg(3);
+			proc_exit(3);
 		}
 		for (i = 0; i < semNum; i++)
 			array[i] = semStartValue;
@@ -314,7 +338,7 @@ IpcSemaphoreCreate(IpcSemaphoreKey semKey,
 		}
 
 		if (removeOnExit)
-			on_exitpg(IPCPrivateSemaphoreKill, (caddr_t) semId);
+			on_shmem_exit(IPCPrivateSemaphoreKill, (caddr_t) semId);
 
 	}
 	else
@@ -418,7 +442,7 @@ IpcSemaphoreLock(IpcSemaphoreId semId, int sem, int lock)
 	{
 		perror("semop");
 		IpcConfigTip();
-		exitpg(255);
+		proc_exit(255);
 	}
 }
 
@@ -463,7 +487,7 @@ IpcSemaphoreUnlock(IpcSemaphoreId semId, int sem, int lock)
 	{
 		perror("semop");
 		IpcConfigTip();
-		exitpg(255);
+		proc_exit(255);
 	}
 }
 
@@ -517,7 +541,7 @@ IpcMemoryCreate(IpcMemoryKey memKey, uint32 size, int permission)
 	}
 
 	/* if (memKey == PrivateIPCKey) */
-	on_exitpg(IPCPrivateMemoryKill, (caddr_t) shmid);
+	on_shmem_exit(IPCPrivateMemoryKill, (caddr_t) shmid);
 
 	return (shmid);
 }
@@ -583,7 +607,7 @@ IpcMemoryAttach(IpcMemoryId memId)
 	}
 
 	if (!UsePrivateMemory)
-		on_exitpg(IpcMemoryDetach, (caddr_t) memAddress);
+		on_shmem_exit(IpcMemoryDetach, (caddr_t) memAddress);
 
 	return ((char *) memAddress);
 }

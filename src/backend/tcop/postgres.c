@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.77 1998/06/16 07:29:30 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.78 1998/06/27 04:53:43 momjian Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -263,7 +263,7 @@ InteractiveBackend(char *inBuf)
 			if (!Quiet)
 				puts("EOF");
 			IsEmptyQuery = true;
-			exitpg(0);
+			proc_exit(0);
 		}
 
 		/* ----------------
@@ -312,7 +312,7 @@ SocketBackend(char *inBuf)
 		 *	when front-end applications quits/dies
 		 * ------------
 		 */
-		exitpg(0);
+		proc_exit(0);
 	}
 
 	switch (*qtype)
@@ -1176,7 +1176,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 	if (errs || argc - optind > 1)
 	{
 		usage(argv[0]);
-		exitpg(1);
+		proc_exit(1);
 	}
 	else if (argc - optind == 1)
 		DBName = argv[optind];
@@ -1184,14 +1184,14 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 	{
 		fprintf(stderr, "%s: USER undefined and no database specified\n",
 				argv[0]);
-		exitpg(1);
+		proc_exit(1);
 	}
 
 	if (ShowStats &&
 		(ShowParserStats || ShowPlannerStats || ShowExecutorStats))
 	{
 		fprintf(stderr, "-s can not be used together with -t.\n");
-		exitpg(1);
+		proc_exit(1);
 	}
 
 	if (!DataDir)
@@ -1201,7 +1201,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 				"database system either by specifying the -D invocation "
 			 "option or by setting the PGDATA environment variable.\n\n",
 				argv[0]);
-		exitpg(1);
+		proc_exit(1);
 	}
 
 	Noversion = flagC;
@@ -1325,7 +1325,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface");
-		puts("$Revision: 1.77 $ $Date: 1998/06/16 07:29:30 $");
+		puts("$Revision: 1.78 $ $Date: 1998/06/27 04:53:43 $");
 	}
 
 	/* ----------------
@@ -1335,7 +1335,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 	 * ----------------
 	 */
 	if (!TransactionFlushEnabled())
-		on_exitpg(FlushBufferPool, NULL);
+		on_shmem_exit(FlushBufferPool, NULL);
 
 	for (;;)
 	{
@@ -1427,7 +1427,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 				 */
 			case 'X':
 				pq_close();
-				exitpg(0);
+				proc_exit(0);
 				break;
 
 			default:
@@ -1458,7 +1458,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 		}
 
 	}							/* infinite for-loop */
-	exitpg(0);
+	proc_exit(0);
 	return 1;
 }
 

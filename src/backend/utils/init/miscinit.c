@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/miscinit.c,v 1.15 1998/05/29 17:00:19 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/miscinit.c,v 1.16 1998/06/27 04:53:47 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -84,7 +84,7 @@ unsigned char RecodeBackTable[128];
 void
 ExitPostgres(ExitStatus status)
 {
-	exitpg(status);
+	proc_exit(status);
 }
 
 /*
@@ -111,7 +111,7 @@ AbortPostgres()
 	if (PointerIsValid(abortValue) && abortValue[0] != '\0')
 		abort();
 	else
-		exitpg(FatalExitStatus);
+		proc_exit(FatalExitStatus);
 }
 
 #endif
@@ -125,7 +125,7 @@ StatusBackendExit(int status)
 {
 	/* someday, do some real cleanup and then call the LISP exit */
 	/* someday, call StatusPostmasterExit if running without postmaster */
-	exitpg(status);
+	proc_exit(status);
 }
 
 /* ----------------
@@ -136,7 +136,7 @@ void
 StatusPostmasterExit(int status)
 {
 	/* someday, do some real cleanup and then call the LISP exit */
-	exitpg(status);
+	proc_exit(status);
 }
 
 /* ----------------------------------------------------------------

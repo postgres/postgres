@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/smgr.c,v 1.16 1998/06/23 15:35:45 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/smgr.c,v 1.17 1998/06/27 04:53:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -100,7 +100,7 @@ smgrinit()
 	}
 
 	/* register the shutdown proc */
-	on_exitpg(smgrshutdown, NULL);
+	on_proc_exit(smgrshutdown, NULL);
 
 	return (SM_SUCCESS);
 }

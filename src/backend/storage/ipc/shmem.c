@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/shmem.c,v 1.22 1998/06/25 14:24:34 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/shmem.c,v 1.23 1998/06/27 04:53:36 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -524,7 +524,7 @@ ShmemInitStruct(char *name, unsigned long size, bool *foundPtr)
 	}
 	else
 	{
-		/* look it up in the bindint table */
+		/* look it up in the binding table */
 		result = (BindingEnt *)
 			hash_search(BindingTable, (char *) &item, HASH_ENTER, foundPtr);
 	}

@@ -7,7 +7,7 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.43 1998/06/15 19:28:04 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.44 1998/06/27 04:53:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -262,7 +262,7 @@ usage(void)
 	fprintf(stderr, "     O: set BootstrapProcessing mode\n");
 	fprintf(stderr, "     P portno: specify port number\n");
 
-	exitpg(1);
+	proc_exit(1);
 }
 
 
@@ -360,7 +360,7 @@ BootstrapMain(int argc, char *argv[])
 				"database system either by specifying the -D invocation "
 			 "option or by setting the PGDATA environment variable.\n\n",
 				argv[0]);
-		exitpg(1);
+		proc_exit(1);
 	}
 
 	if (dbName == NULL)
@@ -370,7 +370,7 @@ BootstrapMain(int argc, char *argv[])
 		{
 			fputs("bootstrap backend: failed, no db name specified\n", stderr);
 			fputs("          and no USER enviroment variable\n", stderr);
-			exitpg(1);
+			proc_exit(1);
 		}
 	}
 
@@ -381,7 +381,7 @@ BootstrapMain(int argc, char *argv[])
 	if (IsUnderPostmaster && portFd < 0)
 	{
 		fputs("backend: failed, no -P option with -postmaster opt.\n", stderr);
-		exitpg(1);
+		proc_exit(1);
 	}
 
 	/* ----------------
@@ -770,12 +770,12 @@ cleanup()
 	else
 	{
 		elog(FATAL, "Memory manager fault: cleanup called twice.\n", stderr);
-		exitpg(1);
+		proc_exit(1);
 	}
 	if (reldesc != (Relation) NULL)
 		heap_close(reldesc);
 	CommitTransactionCommand();
-	exitpg(Warnings);
+	proc_exit(Warnings);
 }
 
 /* ----------------

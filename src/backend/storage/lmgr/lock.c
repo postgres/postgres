@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.28 1998/06/26 01:58:45 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.29 1998/06/27 04:53:37 momjian Exp $
  *
  * NOTES
  *	  Outside modules can create a lock table and acquire/release
@@ -153,7 +153,7 @@ static LOCKTAB *AllTables[MAX_TABLES];
  * no zero-th table
  * -------------------
  */
-static int	NumTables = 1;
+static int	NumTables;
 
 /* -------------------
  * InitLocks -- Init the lock module.  Create a private data
@@ -242,14 +242,6 @@ LockTableInit(char *tabName,
 		return (INVALID_TABLEID);
 	}
 
-	if (NumTables > MAX_TABLES)
-	{
-		elog(NOTICE,
-			 "LockTableInit: system limit of MAX_TABLES (%d) lock tables",
-			 MAX_TABLES);
-		return (INVALID_TABLEID);
-	}
-
 	/* allocate a string for the binding table lookup */
 	shmemName = (char *) palloc((unsigned) (strlen(tabName) + 32));
 	if (!shmemName)
@@ -288,6 +280,8 @@ LockTableInit(char *tabName,
 		elog(FATAL, "LockTableInit: couldn't initialize %s", tabName);
 		status = FALSE;
 	}
+
+	NumTables = 1;
 
 	/* ----------------
 	 * we're first - initialize

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/pqcomm.c,v 1.46 1998/06/21 16:39:10 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/pqcomm.c,v 1.47 1998/06/27 04:53:30 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -650,7 +650,7 @@ StreamServerPort(char *hostName, short portName, int *fdP)
 	}
 
 	if (family == AF_UNIX)
-		on_exitpg(StreamDoUnlink, NULL);
+		on_proc_exit(StreamDoUnlink, NULL);
 
 	listen(fd, SOMAXCONN);
 

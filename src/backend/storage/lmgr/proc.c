@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.36 1998/06/19 02:55:11 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.37 1998/06/27 04:53:39 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,7 +46,7 @@
  *		This is so that we can support more backends. (system-wide semaphore
  *		sets run out pretty fast.)				  -ay 4/95
  *
- * $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.36 1998/06/19 02:55:11 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.37 1998/06/27 04:53:39 momjian Exp $
  */
 #include <sys/time.h>
 #include <unistd.h>
@@ -274,7 +274,7 @@ InitProcess(IPCKey key)
 	MyProc->errType = NO_ERROR;
 	SHMQueueElemInit(&(MyProc->links));
 
-	on_exitpg(ProcKill, (caddr_t) MyProcPid);
+	on_shmem_exit(ProcKill, (caddr_t) MyProcPid);
 
 	ProcInitialized = TRUE;
 }

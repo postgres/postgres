@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/sinvaladt.c,v 1.10 1998/06/18 04:20:34 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/sinvaladt.c,v 1.11 1998/06/27 04:53:36 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -100,7 +100,7 @@ SIBackendInit(SISeg *segInOutP)
 #endif							/* INVALIDDEBUG */
 
 	SISetActiveProcess(segInOutP, MyBackendId);
-	on_exitpg(CleanupInvalidationState, (caddr_t) segInOutP);
+	on_shmem_exit(CleanupInvalidationState, (caddr_t) segInOutP);
 	return 1;
 }
 
@@ -193,7 +193,7 @@ SISetDeadProcess(SISeg *segP, int backendId)
  * CleanupInvalidationState --
  * Note:
  *		This is a temporary hack.  ExitBackend should call this instead
- *		of exit (via on_exitpg).
+ *		of exit (via on_shmem_exit).
  */
 static void
 CleanupInvalidationState(int status,	/* XXX */
