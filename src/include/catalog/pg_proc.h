@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.91 1999/03/14 05:09:00 momjian Exp $
+ * $Id: pg_proc.h,v 1.92 1999/03/14 16:32:46 momjian Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -819,25 +819,25 @@ DATA(insert OID = 447 (  hashrestrpos	   PGUID 11 f t f 1 f 23 "0" 100 0 0 100  
 DESCR("hash(internal)");
 DATA(insert OID = 448 (  hashbuild		   PGUID 11 f t f 9 f 23 "0" 100 0 0 100  foo bar ));
 DESCR("hash(internal)");
-DATA(insert OID = 449 (  hashint2		   PGUID 11 f t f 2 f 23 "21 21" 100 0 0 100  foo bar ));
+DATA(insert OID = 449 (  hashint2		   PGUID 11 f t f 1 f 23 "21" 100 0 0 100  foo bar ));
 DESCR("hash");
-DATA(insert OID = 450 (  hashint4		   PGUID 11 f t f 2 f 23 "23 23" 100 0 0 100  foo bar ));
+DATA(insert OID = 450 (  hashint4		   PGUID 11 f t f 1 f 23 "23" 100 0 0 100  foo bar ));
 DESCR("hash");
-DATA(insert OID = 949 (  hashint8		   PGUID 11 f t f 2 f 23 "20 20" 100 0 0 100  foo bar ));
+DATA(insert OID = 949 (  hashint8		   PGUID 11 f t f 1 f 23 "20" 100 0 0 100  foo bar ));
 DESCR("hash");
-DATA(insert OID = 451 (  hashfloat4		   PGUID 11 f t f 2 f 23 "700 700" 100 0 0 100	foo bar ));
+DATA(insert OID = 451 (  hashfloat4		   PGUID 11 f t f 1 f 23 "700" 100 0 0 100	foo bar ));
 DESCR("hash");
-DATA(insert OID = 452 (  hashfloat8		   PGUID 11 f t f 2 f 23 "701 701" 100 0 0 100	foo bar ));
+DATA(insert OID = 452 (  hashfloat8		   PGUID 11 f t f 1 f 23 "701" 100 0 0 100	foo bar ));
 DESCR("hash");
-DATA(insert OID = 453 (  hashoid		   PGUID 11 f t f 2 f 23 "26 26" 100 0 0 100  foo bar ));
+DATA(insert OID = 453 (  hashoid		   PGUID 11 f t f 1 f 23 "26" 100 0 0 100  foo bar ));
 DESCR("hash");
-DATA(insert OID = 454 (  hashchar		   PGUID 11 f t f 2 f 23 "18 18" 100 0 0 100  foo bar ));
+DATA(insert OID = 454 (  hashchar		   PGUID 11 f t f 1 f 23 "18" 100 0 0 100  foo bar ));
 DESCR("hash");
-DATA(insert OID = 455 (  hashname		   PGUID 11 f t f 2 f 23 "19 19" 100 0 0 100  foo bar ));
+DATA(insert OID = 455 (  hashname		   PGUID 11 f t f 1 f 23 "19" 100 0 0 100  foo bar ));
 DESCR("hash");
-DATA(insert OID = 456 (  hashtext		   PGUID 11 f t f 2 f 23 "25 25" 100 0 0 100  foo bar ));
+DATA(insert OID = 456 (  hashtext		   PGUID 11 f t f 1 f 23 "25" 100 0 0 100  foo bar ));
 DESCR("hash");
-DATA(insert OID = 457 (  hashoid8		   PGUID 11 f t f 2 f 23 "30 30" 100 0 0 100  foo bar ));
+DATA(insert OID = 457 (  hashoid8		   PGUID 11 f t f 1 f 23 "30" 100 0 0 100  foo bar ));
 DESCR("hash");
 DATA(insert OID = 458 (  text_larger	   PGUID 11 f t f 2 f 25 "25 25" 100 0 0 100  foo bar ));
 DESCR("larger of two");
