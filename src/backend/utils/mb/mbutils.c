@@ -3,7 +3,7 @@
  * client encoding and server internal encoding.
  * (currently mule internal code (mic) is used)
  * Tatsuo Ishii
- * $Id: mbutils.c,v 1.30 2002/08/08 06:35:26 ishii Exp $
+ * $Id: mbutils.c,v 1.31 2002/08/14 05:33:34 ishii Exp $
  */
 #include "postgres.h"
 #include "access/xact.h"
@@ -90,7 +90,21 @@ SetClientEncoding(int encoding, bool doit)
 	if (IsTransactionState())
 	{
 		ClientEncoding = &pg_enc2name_tbl[encoding];
+
+		if(ToServerConvPorc != NULL)
+		{
+			if (ToServerConvPorc->fn_extra)
+				pfree(ToServerConvPorc->fn_extra);
+			pfree(ToServerConvPorc);
+		}
 		ToServerConvPorc = to_server;
+
+		if(ToClientConvPorc != NULL)
+		{
+			if (ToClientConvPorc->fn_extra)
+				pfree(ToClientConvPorc->fn_extra);
+			pfree(ToClientConvPorc);
+		}
 		ToClientConvPorc = to_client;
 	}
 	return 0;
