@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/aclchk.c,v 1.41 2000/10/02 04:49:28 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/aclchk.c,v 1.42 2000/11/03 19:02:18 tgl Exp $
  *
  * NOTES
  *	  See acl.h.
@@ -185,41 +185,40 @@ get_groname(AclId grosysid)
 static bool
 in_group(AclId uid, AclId gid)
 {
-	Relation	relation;
 	HeapTuple	tuple;
-	Acl		   *tmp;
+	Datum		att;
+	bool		isNull;
+	IdList	   *tmp;
+	AclId	   *aidp;
 	int			i,
 				num;
-	AclId	   *aidp;
-	bool		found = false;
 
-	relation = heap_openr(GroupRelationName, RowExclusiveLock);
 	tuple = SearchSysCacheTuple(GROSYSID,
 								ObjectIdGetDatum(gid),
 								0, 0, 0);
-	if (HeapTupleIsValid(tuple) &&
-		!heap_attisnull(tuple, Anum_pg_group_grolist))
+	if (HeapTupleIsValid(tuple))
 	{
-		tmp = (IdList *) heap_getattr(tuple,
-									  Anum_pg_group_grolist,
-									  RelationGetDescr(relation),
-									  (bool *) NULL);
-		/* be sure the IdList is not toasted */
-		tmp = DatumGetIdListP(PointerGetDatum(tmp));
-		/* XXX make me a function */
-		num = IDLIST_NUM(tmp);
-		aidp = IDLIST_DAT(tmp);
-		for (i = 0; i < num; ++i)
-			if (aidp[i] == uid)
+		att = SysCacheGetAttr(GROSYSID,
+							  tuple,
+							  Anum_pg_group_grolist,
+							  &isNull);
+		if (!isNull)
+		{
+			/* be sure the IdList is not toasted */
+			tmp = DatumGetIdListP(att);
+			/* scan it */
+			num = IDLIST_NUM(tmp);
+			aidp = IDLIST_DAT(tmp);
+			for (i = 0; i < num; ++i)
 			{
-				found = true;
-				break;
+				if (aidp[i] == uid)
+					return true;
 			}
+		}
 	}
 	else
-		elog(NOTICE, "in_group: group %d not found", gid);
-	heap_close(relation, RowExclusiveLock);
-	return found;
+		elog(NOTICE, "in_group: group %u not found", gid);
+	return false;
 }
 
 /*
@@ -230,11 +229,10 @@ in_group(AclId uid, AclId gid)
 static int32
 aclcheck(char *relname, Acl *acl, AclId id, AclIdType idtype, AclMode mode)
 {
-	unsigned	i;
 	AclItem    *aip,
 			   *aidat;
-	unsigned	num,
-				found_group;
+	int			i,
+				num;
 
 	/*
 	 * If ACL is null, default to "OK" --- this should not happen,
@@ -252,17 +250,20 @@ aclcheck(char *relname, Acl *acl, AclId id, AclIdType idtype, AclMode mode)
 	/*
 	 * We'll treat the empty ACL like that, too, although this is more
 	 * like an error (i.e., you manually blew away your ACL array) -- the
-	 * system never creates an empty ACL.
+	 * system never creates an empty ACL, since there must always be
+	 * a "world" entry in the first slot.
 	 */
 	if (num < 1)
 	{
 		elog(DEBUG, "aclcheck: zero-length ACL, returning 1");
 		return ACLCHECK_OK;
 	}
+	Assert(aidat->ai_idtype == ACL_IDTYPE_WORLD);
 
 	switch (idtype)
 	{
 		case ACL_IDTYPE_UID:
+			/* Look for exact match to user */
 			for (i = 1, aip = aidat + 1;		/* skip world entry */
 				 i < num && aip->ai_idtype == ACL_IDTYPE_UID;
 				 ++i, ++aip)
@@ -270,34 +271,33 @@ aclcheck(char *relname, Acl *acl, AclId id, AclIdType idtype, AclMode mode)
 				if (aip->ai_id == id)
 				{
 #ifdef ACLDEBUG_TRACE
-					elog(DEBUG, "aclcheck: found %d/%d",
+					elog(DEBUG, "aclcheck: found user %u/%d",
 						 aip->ai_id, aip->ai_mode);
 #endif
 					return (aip->ai_mode & mode) ? ACLCHECK_OK : ACLCHECK_NO_PRIV;
 				}
 			}
-			for (found_group = 0;
+			/* See if he has the permission via any group */
+			for (;
 				 i < num && aip->ai_idtype == ACL_IDTYPE_GID;
 				 ++i, ++aip)
 			{
-				if (in_group(id, aip->ai_id))
+				if (aip->ai_mode & mode)
 				{
-					if (aip->ai_mode & mode)
+					if (in_group(id, aip->ai_id))
 					{
-						found_group = 1;
-						break;
+#ifdef ACLDEBUG_TRACE
+						elog(DEBUG, "aclcheck: found group %u/%d",
+							 aip->ai_id, aip->ai_mode);
+#endif
+						return ACLCHECK_OK;
 					}
 				}
 			}
-			if (found_group)
-			{
-#ifdef ACLDEBUG_TRACE
-				elog(DEBUG, "aclcheck: all groups ok");
-#endif
-				return ACLCHECK_OK;
-			}
+			/* Else, look to the world entry */
 			break;
 		case ACL_IDTYPE_GID:
+			/* Look for this group ID */
 			for (i = 1, aip = aidat + 1;		/* skip world entry and
 												 * UIDs */
 				 i < num && aip->ai_idtype == ACL_IDTYPE_UID;
@@ -310,14 +310,16 @@ aclcheck(char *relname, Acl *acl, AclId id, AclIdType idtype, AclMode mode)
 				if (aip->ai_id == id)
 				{
 #ifdef ACLDEBUG_TRACE
-					elog(DEBUG, "aclcheck: found %d/%d",
+					elog(DEBUG, "aclcheck: found group %u/%d",
 						 aip->ai_id, aip->ai_mode);
 #endif
 					return (aip->ai_mode & mode) ? ACLCHECK_OK : ACLCHECK_NO_PRIV;
 				}
 			}
+			/* Else, look to the world entry */
 			break;
 		case ACL_IDTYPE_WORLD:
+			/* Only check the world entry */
 			break;
 		default:
 			elog(ERROR, "aclcheck: bogus ACL id type: %d", idtype);
