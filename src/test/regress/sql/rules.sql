@@ -100,6 +100,9 @@ create rule rtest_t6_ins as on insert to rtest_t6
 --
 -- Tables and rules for the rule fire order test
 --
+-- As of PG 7.3, the rules should fire in order by name, regardless
+-- of INSTEAD attributes or creation order.
+--
 create table rtest_order1 (a int4);
 create table rtest_order2 (a int4, b int4, c text);
 
@@ -107,20 +110,20 @@ create sequence rtest_seq;
 
 create rule rtest_order_r3 as on insert to rtest_order1 do instead
 	insert into rtest_order2 values (new.a, nextval('rtest_seq'),
-		'rule 3 - this should run 3rd or 4th');
+		'rule 3 - this should run 3rd');
 
 create rule rtest_order_r4 as on insert to rtest_order1
 		where a < 100 do instead
 	insert into rtest_order2 values (new.a, nextval('rtest_seq'),
-		'rule 4 - this should run 2nd');
+		'rule 4 - this should run 4th');
 
 create rule rtest_order_r2 as on insert to rtest_order1 do
 	insert into rtest_order2 values (new.a, nextval('rtest_seq'),
-		'rule 2 - this should run 1st');
+		'rule 2 - this should run 2nd');
 
 create rule rtest_order_r1 as on insert to rtest_order1 do instead
 	insert into rtest_order2 values (new.a, nextval('rtest_seq'),
-		'rule 1 - this should run 3rd or 4th');
+		'rule 1 - this should run 1st');
 
 --
 -- Tables and rules for the instead nothing test

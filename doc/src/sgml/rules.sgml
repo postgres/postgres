@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/rules.sgml,v 1.25 2002/10/14 22:14:34 tgl Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/rules.sgml,v 1.26 2002/10/19 19:00:47 tgl Exp $ -->
 
 <Chapter Id="rules">
 <Title>The Rule System</Title>
@@ -1043,8 +1043,8 @@ CREATE RULE rule_name AS ON event
     in more or less parse trees.
     So the parse trees in the rule actions must have either another command type
     or another result relation. Otherwise this recursive process will end up in a loop.
-    There is a compiled in recursion limit of currently 10 iterations.
-    If after 10 iterations there are still update rules to apply the
+    There is a compiled-in recursion limit of currently 100 iterations.
+    If after 100 iterations there are still update rules to apply the
     rule system assumes a loop over multiple rule definitions and reports
     an error.
 </Para>

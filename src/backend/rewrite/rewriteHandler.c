@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.111 2002/10/14 22:14:35 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.112 2002/10/19 19:00:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -503,7 +503,7 @@ matchLocks(CmdType event,
 		   int varno,
 		   Query *parsetree)
 {
-	List	   *real_locks = NIL;
+	List	   *matching_locks = NIL;
 	int			nlocks;
 	int			i;
 
@@ -529,11 +529,11 @@ matchLocks(CmdType event,
 				 rangeTableEntry_used((Node *) parsetree, varno, 0) :
 				 attribute_used((Node *) parsetree,
 								varno, oneLock->attrno, 0)))
-				real_locks = lappend(real_locks, oneLock);
+				matching_locks = lappend(matching_locks, oneLock);
 		}
 	}
 
-	return real_locks;
+	return matching_locks;
 }
 
 
@@ -842,36 +842,6 @@ fireRIRrules(Query *parsetree)
 
 
 /*
- * idea is to fire regular rules first, then qualified instead
- * rules and unqualified instead rules last. Any lemming is counted for.
- */
-static List *
-orderRules(List *locks)
-{
-	List	   *regular = NIL;
-	List	   *instead_rules = NIL;
-	List	   *instead_qualified = NIL;
-	List	   *i;
-
-	foreach(i, locks)
-	{
-		RewriteRule *rule_lock = (RewriteRule *) lfirst(i);
-
-		if (rule_lock->isInstead)
-		{
-			if (rule_lock->qual == NULL)
-				instead_rules = lappend(instead_rules, rule_lock);
-			else
-				instead_qualified = lappend(instead_qualified, rule_lock);
-		}
-		else
-			regular = lappend(regular, rule_lock);
-	}
-	return nconc(nconc(regular, instead_qualified), instead_rules);
-}
-
-
-/*
  * Modify the given query by adding 'AND NOT rule_qual' to its qualification.
  * This is used to generate suitable "else clauses" for conditional INSTEAD
  * rules.
@@ -908,47 +878,50 @@ CopyAndAddQual(Query *parsetree,
 }
 
 
-
 /*
  *	fireRules -
  *	   Iterate through rule locks applying rules.
- *	   All rules create their own parsetrees. Instead rules
- *	   with rule qualification save the original parsetree
- *	   and add their negated qualification to it. Real instead
- *	   rules finally throw away the original parsetree.
  *
- *	   remember: reality is for dead birds -- glass
+ * Input arguments:
+ *	parsetree - original query
+ *	rt_index - RT index of result relation in original query
+ *	event - type of rule event
+ *	locks - list of rules to fire
+ * Output arguments:
+ *	*instead_flag - set TRUE if any unqualified INSTEAD rule is found
+ *					(must be initialized to FALSE)
+ *	*qual_product - filled with modified original query if any qualified
+ *					INSTEAD rule is found (must be initialized to NULL)
+ * Return value:
+ *	list of rule actions adjusted for use with this query
  *
+ * Qualified INSTEAD rules generate their action with the qualification
+ * condition added.  They also generate a modified version of the original
+ * query with the negated qualification added, so that it will run only for
+ * rows that the qualified action doesn't act on.  (If there are multiple
+ * qualified INSTEAD rules, we AND all the negated quals onto a single
+ * modified original query.)  We won't execute the original, unmodified
+ * query if we find either qualified or unqualified INSTEAD rules.  If
+ * we find both, the modified original query is discarded too.
  */
 static List *
 fireRules(Query *parsetree,
 		  int rt_index,
 		  CmdType event,
-		  bool *instead_flag,
 		  List *locks,
-		  List **qual_products)
+		  bool *instead_flag,
+		  Query **qual_product)
 {
 	List	   *results = NIL;
 	List	   *i;
 
-	/* choose rule to fire from list of rules */
-	if (locks == NIL)
-		return NIL;
-
-	locks = orderRules(locks);	/* real instead rules last */
-
 	foreach(i, locks)
 	{
 		RewriteRule *rule_lock = (RewriteRule *) lfirst(i);
-		Node	   *event_qual;
-		List	   *actions;
+		Node	   *event_qual = rule_lock->qual;
+		List	   *actions = rule_lock->actions;
 		QuerySource	qsrc;
 		List	   *r;
-
-		/* multiple rule action time */
-		*instead_flag = rule_lock->isInstead;
-		event_qual = rule_lock->qual;
-		actions = rule_lock->actions;
 
 		/* Determine correct QuerySource value for actions */
 		if (rule_lock->isInstead)
@@ -956,36 +929,38 @@ fireRules(Query *parsetree,
 			if (event_qual != NULL)
 				qsrc = QSRC_QUAL_INSTEAD_RULE;
 			else
+			{
 				qsrc = QSRC_INSTEAD_RULE;
+				*instead_flag = true; /* report unqualified INSTEAD */
+			}
 		}
 		else
 			qsrc = QSRC_NON_INSTEAD_RULE;
 
 		if (qsrc == QSRC_QUAL_INSTEAD_RULE)
 		{
-			Query	   *qual_product;
-
 			/*
-			 * If there are instead rules with qualifications, the
+			 * If there are INSTEAD rules with qualifications, the
 			 * original query is still performed. But all the negated rule
-			 * qualifications of the instead rules are added so it does
+			 * qualifications of the INSTEAD rules are added so it does
 			 * its actions only in cases where the rule quals of all
-			 * instead rules are false. Think of it as the default action
-			 * in a case. We save this in *qual_products so
+			 * INSTEAD rules are false. Think of it as the default action
+			 * in a case. We save this in *qual_product so
 			 * deepRewriteQuery() can add it to the query list after we
 			 * mangled it up enough.
+			 *
+			 * If we have already found an unqualified INSTEAD rule,
+			 * then *qual_product won't be used, so don't bother building it.
 			 */
-			if (*qual_products == NIL)
-				qual_product = parsetree;
-			else
-				qual_product = (Query *) lfirst(*qual_products);
-
-			qual_product = CopyAndAddQual(qual_product,
-										  event_qual,
-										  rt_index,
-										  event);
-
-			*qual_products = makeList1(qual_product);
+			if (! *instead_flag)
+			{
+				if (*qual_product == NULL)
+					*qual_product = parsetree;
+				*qual_product = CopyAndAddQual(*qual_product,
+											   event_qual,
+											   rt_index,
+											   event);
+			}
 		}
 
 		/* Now process the rule's actions and add them to the result list */
@@ -1003,22 +978,20 @@ fireRules(Query *parsetree,
 
 			results = lappend(results, rule_action);
 		}
-
-		/*
-		 * If this was an unqualified instead rule, throw away an
-		 * eventually saved 'default' parsetree
-		 */
-		if (qsrc == QSRC_INSTEAD_RULE)
-			*qual_products = NIL;
 	}
 
 	return results;
 }
 
 
-
+/*
+ * One pass of rewriting a single query.
+ *
+ * parsetree is the input query.  Return value and output parameters
+ * are defined the same as for fireRules, above.
+ */
 static List *
-RewriteQuery(Query *parsetree, bool *instead_flag, List **qual_products)
+RewriteQuery(Query *parsetree, bool *instead_flag, Query **qual_product)
 {
 	CmdType		event;
 	List	   *product_queries = NIL;
@@ -1083,9 +1056,9 @@ RewriteQuery(Query *parsetree, bool *instead_flag, List **qual_products)
 		product_queries = fireRules(parsetree,
 									result_relation,
 									event,
-									instead_flag,
 									locks,
-									qual_products);
+									instead_flag,
+									qual_product);
 	}
 
 	heap_close(rt_entry_relation, NoLock);		/* keep lock! */
@@ -1099,7 +1072,7 @@ RewriteQuery(Query *parsetree, bool *instead_flag, List **qual_products)
  * can be rewritten. Detecting cycles is left for the reader as an exercise.
  */
 #ifndef REWRITE_INVOKE_MAX
-#define REWRITE_INVOKE_MAX		10
+#define REWRITE_INVOKE_MAX		100
 #endif
 
 static int	numQueryRewriteInvoked = 0;
@@ -1111,20 +1084,17 @@ static int	numQueryRewriteInvoked = 0;
 static List *
 deepRewriteQuery(Query *parsetree)
 {
-	List	   *n;
 	List	   *rewritten = NIL;
 	List	   *result;
-	bool		instead;
-	List	   *qual_products = NIL;
+	bool		instead = false;
+	Query	   *qual_product = NULL;
+	List	   *n;
 
 	if (++numQueryRewriteInvoked > REWRITE_INVOKE_MAX)
-	{
 		elog(ERROR, "query rewritten %d times, may contain cycles",
 			 numQueryRewriteInvoked - 1);
-	}
 
-	instead = false;
-	result = RewriteQuery(parsetree, &instead, &qual_products);
+	result = RewriteQuery(parsetree, &instead, &qual_product);
 
 	foreach(n, result)
 	{
@@ -1132,8 +1102,7 @@ deepRewriteQuery(Query *parsetree)
 		List	   *newstuff;
 
 		newstuff = deepRewriteQuery(pt);
-		if (newstuff != NIL)
-			rewritten = nconc(rewritten, newstuff);
+		rewritten = nconc(rewritten, newstuff);
 	}
 
 	/*
@@ -1141,39 +1110,30 @@ deepRewriteQuery(Query *parsetree)
 	 * it is done last.  This is needed because update and delete rule
 	 * actions might not do anything if they are invoked after the update
 	 * or delete is performed. The command counter increment between the
-	 * query execution makes the deleted (and maybe the updated) tuples
+	 * query executions makes the deleted (and maybe the updated) tuples
 	 * disappear so the scans for them in the rule actions cannot find
 	 * them.
+	 *
+	 * If we found any unqualified INSTEAD, the original query is not
+	 * done at all, in any form.  Otherwise, we add the modified form
+	 * if qualified INSTEADs were found, else the unmodified form.
 	 */
-	if (parsetree->commandType == CMD_INSERT)
+	if (!instead)
 	{
-		/*
-		 * qual_products are the original query with the negated rule
-		 * qualification of an INSTEAD rule
-		 */
-		if (qual_products != NIL)
-			rewritten = nconc(qual_products, rewritten);
-
-		/*
-		 * Add the unmodified original query, if no INSTEAD rule was seen.
-		 */
-		if (!instead)
-			rewritten = lcons(parsetree, rewritten);
-	}
-	else
-	{
-		/*
-		 * qual_products are the original query with the negated rule
-		 * qualification of an INSTEAD rule
-		 */
-		if (qual_products != NIL)
-			rewritten = nconc(rewritten, qual_products);
-
-		/*
-		 * Add the unmodified original query, if no INSTEAD rule was seen.
-		 */
-		if (!instead)
-			rewritten = lappend(rewritten, parsetree);
+		if (parsetree->commandType == CMD_INSERT)
+		{
+			if (qual_product != NULL)
+				rewritten = lcons(qual_product, rewritten);
+			else
+				rewritten = lcons(parsetree, rewritten);
+		}
+		else
+		{
+			if (qual_product != NULL)
+				rewritten = lappend(rewritten, qual_product);
+			else
+				rewritten = lappend(rewritten, parsetree);
+		}
 	}
 
 	return rewritten;
