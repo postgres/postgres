@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.52 2004/12/17 03:51:34 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.53 2004/12/19 22:10:41 tgl Exp $
 -->
 
 <chapter id="plpgsql"> 
@@ -1642,7 +1642,8 @@ END IF;
 
       <para>
        <literal>ELSEIF</> is an alias for <literal>ELSIF</>.
-     </para>
+      </para>
+     </sect3>
    </sect2>
 
    <sect2 id="plpgsql-control-structures-loops">
