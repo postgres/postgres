@@ -258,7 +258,7 @@ msgstr "失敗。\n"
 
 #: common.c:382 common.c:552
 msgid "Succeeded.\n"
-msgstr "成功。\n"
+msgstr "完成。\n"
 
 #: common.c:420
 #, c-format
@@ -384,7 +384,7 @@ msgstr "  -l              列出所有可用資料庫，然後退出"
 
 #: help.c:105
 msgid "  -n              Disable enhanced command line editing (readline)"
-msgstr "  -n              關閉增強的指令列編輯功能 (readline)"
+msgstr "  -n              關閉命令列的增強模式 (readline)"
 
 #: help.c:106
 msgid "  -o FILENAME     Send query results to file (or |pipe)"
@@ -819,7 +819,7 @@ msgid ""
 msgstr ""
 "Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group\n"
 "Portions Copyright (c) 1996, Regents of the University of California\n"
-"閱讀 COPYRIGHT 檔案或使用 \\copyright 指令查看\n"
+"參見 COPYRIGHT 檔案或使用 \\copyright 指令查看\n"
 "使用和發行條款。"
 
 #: startup.c:695
