@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.91 2001/03/22 06:16:16 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.92 2001/04/17 00:32:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -486,16 +486,25 @@ fireRIRrules(Query *parsetree)
 
 		rel = heap_openr(rte->relname, lockmode);
 
+		/*
+		 * Check to see if relation's OID matches the RTE.  If not, the RTE
+		 * actually refers to an older relation that had the same name.
+		 * Eventually we might want to reparse the referencing rule, but
+		 * for now all we can do is punt.
+		 */
+		if (RelationGetRelid(rel) != rte->relid)
+			elog(ERROR, "Relation \"%s\" with OID %u no longer exists",
+				 rte->relname, rte->relid);
+
+		/*
+		 * Collect the RIR rules that we must apply
+		 */
 		rules = rel->rd_rules;
 		if (rules == NULL)
 		{
 			heap_close(rel, NoLock);
 			continue;
 		}
-
-		/*
-		 * Collect the RIR rules that we must apply
-		 */
 		locks = NIL;
 		for (i = 0; i < rules->numLocks; i++)
 		{
@@ -776,6 +785,19 @@ RewriteQuery(Query *parsetree, bool *instead_flag, List **qual_products)
 	 */
 	rt_entry_relation = heap_openr(rt_entry->relname, RowExclusiveLock);
 
+	/*
+	 * Check to see if relation's OID matches the RTE.  If not, the RTE
+	 * actually refers to an older relation that had the same name.
+	 * Eventually we might want to reparse the referencing rule, but
+	 * for now all we can do is punt.
+	 */
+	if (RelationGetRelid(rt_entry_relation) != rt_entry->relid)
+		elog(ERROR, "Relation \"%s\" with OID %u no longer exists",
+			 rt_entry->relname, rt_entry->relid);
+
+	/*
+	 * Collect and apply the appropriate rules.
+	 */
 	rt_entry_locks = rt_entry_relation->rd_rules;
 
 	if (rt_entry_locks != NULL)
