@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: lock.h,v 1.68 2003/01/16 21:01:45 tgl Exp $
+ * $Id: lock.h,v 1.69 2003/02/18 02:13:24 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -68,7 +68,7 @@ typedef int LOCKMETHOD;
  *
  * lockHash -- hash table holding per-locked-object lock information
  *
- * holderHash -- hash table holding per-lock-holder lock information
+ * proclockHash -- hash table holding per-lock-waiter/holder lock information
  *
  * lockmethod -- the handle used by the lock table's clients to
  *		refer to the type of lock table being used.
@@ -86,7 +86,7 @@ typedef int LOCKMETHOD;
 typedef struct LOCKMETHODTABLE
 {
 	HTAB	   *lockHash;
-	HTAB	   *holderHash;
+	HTAB	   *proclockHash;
 	LOCKMETHOD	lockmethod;
 	int			numLockModes;
 	int			conflictTab[MAX_LOCKMODES];
@@ -156,24 +156,25 @@ typedef struct LOCK
 
 /*
  * We may have several different transactions holding or awaiting locks
- * on the same lockable object.  We need to store some per-holder information
- * for each such holder (or would-be holder).
+ * on the same lockable object.  We need to store some per-waiter/holder
+ * information for each such holder (or would-be holder).
  *
  * PROCLOCKTAG is the key information needed to look up a PROCLOCK item in the
- * holder hashtable.  A PROCLOCKTAG value uniquely identifies a lock holder.
+ * proclock hashtable.  A PROCLOCKTAG value uniquely identifies a lock
+ * holder/waiter.
  *
- * There are two possible kinds of holder tags: a transaction (identified
+ * There are two possible kinds of proclock tags: a transaction (identified
  * both by the PGPROC of the backend running it, and the xact's own ID) and
  * a session (identified by backend PGPROC, with xid = InvalidTransactionId).
  *
- * Currently, session holders are used for user locks and for cross-xact
+ * Currently, session proclocks are used for user locks and for cross-xact
  * locks obtained for VACUUM.  We assume that a session lock never conflicts
  * with per-transaction locks obtained by the same backend.
  *
  * The holding[] array counts the granted locks (of each type) represented
- * by this holder.	Note that there will be a holder object, possibly with
+ * by this proclock. Note that there will be a proclock object, possibly with
  * zero holding[], for any lock that the process is currently waiting on.
- * Otherwise, holder objects whose counts have gone to zero are recycled
+ * Otherwise, proclock objects whose counts have gone to zero are recycled
  * as soon as convenient.
  *
  * Each PROCLOCK object is linked into lists for both the associated LOCK object
@@ -192,17 +193,17 @@ typedef struct PROCLOCKTAG
 typedef struct PROCLOCK
 {
 	/* tag */
-	PROCLOCKTAG tag;			/* unique identifier of holder object */
+	PROCLOCKTAG tag;			/* unique identifier of proclock object */
 
 	/* data */
 	int			holding[MAX_LOCKMODES]; /* count of locks currently held */
 	int			nHolding;		/* total of holding[] array */
-	SHM_QUEUE	lockLink;		/* list link for lock's list of holders */
-	SHM_QUEUE	procLink;		/* list link for process's list of holders */
+	SHM_QUEUE	lockLink;		/* list link for lock's list of proclocks */
+	SHM_QUEUE	procLink;		/* list link for process's list of proclocks */
 } PROCLOCK;
 
-#define PROCLOCK_LOCKMETHOD(holder) \
-		(((LOCK *) MAKE_PTR((holder).tag.lock))->tag.lockmethod)
+#define PROCLOCK_LOCKMETHOD(proclock) \
+		(((LOCK *) MAKE_PTR((proclock).tag.lock))->tag.lockmethod)
 
 /*
  * This struct holds information passed from lmgr internals to the lock
@@ -215,8 +216,8 @@ typedef struct PROCLOCK
 typedef struct
 {
 	int			nelements;		/* The length of each of the arrays */
-	SHMEM_OFFSET *holderaddrs;
-	PROCLOCK   *holders;
+	SHMEM_OFFSET *proclockaddrs;
+	PROCLOCK   *proclocks;
 	PGPROC	   *procs;
 	LOCK	   *locks;
 } LockData;
@@ -237,9 +238,9 @@ extern bool LockReleaseAll(LOCKMETHOD lockmethod, PGPROC *proc,
 			   bool allxids, TransactionId xid);
 extern int LockCheckConflicts(LOCKMETHODTABLE *lockMethodTable,
 				   LOCKMODE lockmode,
-				   LOCK *lock, PROCLOCK *holder, PGPROC *proc,
+				   LOCK *lock, PROCLOCK *proclock, PGPROC *proc,
 				   int *myHolding);
-extern void GrantLock(LOCK *lock, PROCLOCK *holder, LOCKMODE lockmode);
+extern void GrantLock(LOCK *lock, PROCLOCK *proclock, LOCKMODE lockmode);
 extern void RemoveFromWaitQueue(PGPROC *proc);
 extern int	LockShmemSize(int maxBackends);
 extern bool DeadLockCheck(PGPROC *proc);

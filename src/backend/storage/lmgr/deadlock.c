@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/deadlock.c,v 1.16 2003/01/16 21:01:44 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/deadlock.c,v 1.17 2003/02/18 02:13:24 momjian Exp $
  *
  *	Interface:
  *
@@ -425,7 +425,7 @@ FindLockCycleRecurse(PGPROC *checkProc,
 {
 	PGPROC	   *proc;
 	LOCK	   *lock;
-	PROCLOCK   *holder;
+	PROCLOCK   *proclock;
 	SHM_QUEUE  *lockHolders;
 	LOCKMETHODTABLE *lockMethodTable;
 	PROC_QUEUE *waitQueue;
@@ -484,19 +484,19 @@ FindLockCycleRecurse(PGPROC *checkProc,
 	 */
 	lockHolders = &(lock->lockHolders);
 
-	holder = (PROCLOCK *) SHMQueueNext(lockHolders, lockHolders,
+	proclock = (PROCLOCK *) SHMQueueNext(lockHolders, lockHolders,
 									   offsetof(PROCLOCK, lockLink));
 
-	while (holder)
+	while (proclock)
 	{
-		proc = (PGPROC *) MAKE_PTR(holder->tag.proc);
+		proc = (PGPROC *) MAKE_PTR(proclock->tag.proc);
 
 		/* A proc never blocks itself */
 		if (proc != checkProc)
 		{
 			for (lm = 1; lm <= numLockModes; lm++)
 			{
-				if (holder->holding[lm] > 0 &&
+				if (proclock->holding[lm] > 0 &&
 					((1 << lm) & conflictMask) != 0)
 				{
 					/* This proc hard-blocks checkProc */
@@ -512,13 +512,13 @@ FindLockCycleRecurse(PGPROC *checkProc,
 
 						return true;
 					}
-					/* If no deadlock, we're done looking at this holder */
+					/* If no deadlock, we're done looking at this proclock */
 					break;
 				}
 			}
 		}
 
-		holder = (PROCLOCK *) SHMQueueNext(lockHolders, &holder->lockLink,
+		proclock = (PROCLOCK *) SHMQueueNext(lockHolders, &proclock->lockLink,
 										   offsetof(PROCLOCK, lockLink));
 	}
 
