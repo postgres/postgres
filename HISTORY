@@ -1,56 +1,41 @@
-
-Chapter 0. Release Notes
-
-	Table of Contents
-	Release 7.0
-	Release 6.5.3
-	Release 6.5.2
-	Release 6.5.1
-	Release 6.5
-	Release 6.4.2
-	Release 6.4.1
-	Release 6.4
-	Release 6.3.2
-	Release 6.3.1
-	Release 6.3
-	Release 6.2.1
-	Release 6.2
-	Release 6.1.1
-	Release 6.1
-	Release v6.0
-	Release v1.09
-	Release v1.02
-	Release v1.01
-	Release v1.0
-	Postgres95 Beta 0.03
-	Postgres95 Beta 0.02
-	Postgres95 Beta 0.01
-	Timing Results
-
+  ------------------------------------------------------------------------
+                                Release Notes
+  ------------------------------------------------------------------------
+          
 Release 7.0
------------
 
-This release shows the continued growth of PostgreSQL. There are more
-updated items in 7.0 than in any previous release. Don't be concerned
-this is a dot-zero release. PostgreSQL does its best to put
-out only solid releases, and this one is no exception.
-
+   This release shows the continued growth of PostgreSQL. There are more
+   changes in 7.0 than in any previous release. Don't be concerned this
+   is a dot-zero release. We do our best to put out only solid releases,
+   and this one is no exception.
+   
 Major changes in this release:
+   
+   Foreign Keys
+          Foreign keys are now implemented, with the exception of PARTIAL
+          MATCH foreign keys. Many users have been asking for this
+          feature, and we are pleased to offer it.
+          
+   Optimizer Overhaul
+          Continuing on work started a year ago, the optimizer has been
+          overhauled, allowing improved query execution and better
+          performance with less memory usage.
+          
+   Updated psql
+          psql, our interactive terminal monitor, has been updated with a
+          variety of new features. See the psql manual page for details.
+          
+   Upcoming Features
+          In 7.1, we plan to have outer joins, storage for very long
+          rows, and a write-ahead logging system.
+          
+Migration to v7.0
 
-Foreign Keys: Foreign keys are now implemented, with the exception of
-PARTIAL MATCH foreign keys. Many users have been asking for this
-feature, and we are pleased to finally offer it.
-
-Optimizer Overhaul: Continuing on work started a year ago, the
-optimizer has been overhauled in many significant ways, allowing better
-query execution processing with faster performance and less memory
-usage.
-
-Updated psql: psql, our interactive terminal monitor, has been updated,
-with a variety of new features. See the psql manual page for the details.
-
-Upcoming Features: In 7.1, we plan to have outer joins, storage for very long
-rows, and a write-ahead logging system.
+   A dump/restore using pg_dump is required for those wishing to migrate
+   data from any previous release. For those upgrading from 6.5.*, you
+   can use pg_upgrade to upgrade to this release.
+   
+Detailed Change List
 
 Bug Fixes
 ---------
@@ -58,7 +43,6 @@ Prevent function calls with more than maximum number of arguments (Tom)
 Many fixes for CASE  (Tom)
 Fix SELECT coalesce(f1,0) FROM int4_tbl GROUP BY f1 (Tom)
 Fix SELECT sentence.words[0] FROM sentence GROUP BY sentence.words[0] (Tom)
-Allow utility statements in plpgsql (Tom)
 Fix GROUP BY scan bug (Tom)
 Improvements in SQL grammar processing (Tom)
 Fix for views involved in INSERT ... SELECT ... (Tom)
@@ -67,9 +51,9 @@ Fix for subselects in INSERT ... SELECT (Tom)
 Prevent INSERT ... SELECT ... ORDER BY (Tom)
 Fixes for relations greater than 2GB, including vacuum
 Improve communication of system table changes to other running backends (Tom)
-Improve communication of user table modifications to other running backends (Tom)
+Improve communication of user table modifications to other running backends (To
+m)
 Fix handling of temp tables in complex situations (Bruce, Tom)
-Disallow DROP TABLE/DROP INDEX inside a transaction block
 Allow table locking when tables opened, improving concurrent reliability (Tom)
 Properly quote sequence names in pg_dump (Ross J. Reedstrom)
 Prevent DESTROY DATABASE while others accessing
@@ -110,6 +94,12 @@ Fix for spinlock stuck problem when error is generated (Hiroshi)
 Fix ipcclean on Linux
 Fix handling of NULL constraint conditions (Tom)
 Fix memory leak in odbc driver (Nick Gorham)
+Fix for permission check on UNION tables (Tom)
+Fix to allow SELECT 'a' LIKE 'a' (Tom)
+Fix for SELECT 1 + NULL (Tom)
+Fixes to CHAR
+Fix log() on numeric type (Tom)
+Remove ':' and ';' operators
 
 Enhancements
 ------------
@@ -123,8 +113,8 @@ Issue ecpg error if NULL value is returned to variable with no NULL
 indicator (Christof)
 Allow ^C to cancel COPY command (Massimo)
 Add SET FSYNC and SHOW PG_OPTIONS commands(Massimo)
-Improve CREATE FUNCTION to allow type conversion specification 
-	(Bernie Frankpitt)
+Improve CREATE FUNCTION to allow type conversion specification
+        (Bernie Frankpitt)
 Add CmdTuples() to libpq++(Vince)
 New CREATE CONSTRAINT TRIGGER and SET CONSTRAINTS commands(Jan)
 Allow CREATE FUNCTION WITH clause to be used for all language types
@@ -133,12 +123,12 @@ configure --disable-debug removes -g (Peter E)
 Allow more complex default expressions (Tom)
 First real FOREIGN KEY constraint trigger functionality (Jan)
 Add FOREIGN KEY ... MATCH FULL ... ON DELETE CASCADE (Jan)
-Add FOREIGN KEY ... MATCH <unspecified> referential actions (Don Baccus)
+Add FOREIGN KEY ... MATCH  referential actions (Don Baccus)
 Allow WHERE restriction on ctid (physical heap location) (Hiroshi)
 Move pginterface from contrib to interface directory, rename to pgeasy (Bruce)
 Add DEC and SESSION_USER as reserved words
 Require SELECT DISTINCT target list to have all ORDER BY columns (Tom)
-Add Oracle's COMMENT ON command (Mike Mascari <mascarim@yahoo.
+Add Oracle's COMMENT ON command (Mike Mascari yahoo.
 libpq's PQsetNoticeProcessor function now returns previous hook(Peter E)
 Prevent PQsetNoticeProcessor from being set to NULL (Peter E)
 Make USING in COPY optional (Bruce)
@@ -151,8 +141,8 @@ Added psql LastOid variable to return last inserted oid (Peter E)
 Allow concurrent vacuum and remove pg_vlock vacuum lock file (Tom)
 Add permissions check so only Postgres superuser or table owner can
 vacuum (Peter E)
-New libpq functions to allow asynchronous connections: PQconnectStart(), 
-   PQconnectPoll(), PQresetStart(), PQresetPoll(), PQsetenvStart(), 
+New libpq functions to allow asynchronous connections: PQconnectStart(),
+   PQconnectPoll(), PQresetStart(), PQresetPoll(), PQsetenvStart(),
    PQsetenvPoll(), PQsetenvAbort (Ewan Mellor)
 New libpq PQsetenv() function (Ewan Mellor)
 create/alter user extension (Peter E)
@@ -170,8 +160,8 @@ Add CREATE/ALTER/DROP GROUP (Peter E)
 All administration scripts now support --long options (Peter E, Karel)
 Vacuumdb script now supports --alldb option (Peter E)
 ecpg new portable FETCH syntax
-Add ecpg EXEC SQL IFDEF, EXEC SQL IFNDEF, EXEC SQL ELSE, EXEC SQL ELIF 
-	and EXEC SQL ENDIF directives
+Add ecpg EXEC SQL IFDEF, EXEC SQL IFNDEF, EXEC SQL ELSE, EXEC SQL ELIF
+        and EXEC SQL ENDIF directives
 Add pg_ctl script to control backend startup (Tatsuo)
 Add postmaster.opts.default file to store startup flags (Tatsuo)
 Allow --with-mb=SQL_ASCII
@@ -196,7 +186,7 @@ Allow COPY IN to read file that do not end with a newline (Tom)
 Indicate when long identifiers are truncated (Tom)
 Allow aggregates to use type equivalency (Peter E)
 Add Oracle's to_char(), to_date(), to_datetime(), to_timestamp(), to_number()
-	conversion functions (Karel Zak <zakkr@zf.jcu.cz>)
+        conversion functions (Karel Zak zf.jcu.cz>)
 Add SELECT DISTINCT ON (expr [, expr ...]) targetlist ... (Tom)
 Check to be sure ORDER BY is compatible with the DISTINCT operation (Tom)
 Add NUMERIC and int8 types to ODBC
@@ -222,9 +212,15 @@ Allow PQrequestCancel() to terminate when in waiting-for-lock state (Hiroshi)
 Allow negation of a negative number in all cases
 Add ecpg descriptors (Christof, Michael)
 Allow CREATE VIEW v AS SELECT f1::char(8) FROM tbl
+Allow casts with length, like foo::char(8)
 New libpq functions PQsetClientEncoding(), PQclientEncoding() (Tatsuo)
 Add support for SJIS user defined characters (Tatsuo)
 Larger views/rules supported
+Make libpq's PQconndefaults() thread-safe (Tom)
+Disable // as comment to be ANSI conforming, should use --
+Allow column aliases on views CREATE VIEW name (collist)
+Fixes for views with subqueries (Tom)
+Allow UPDATE table SET fld = (SELECT ...) (Tom)
 
 Types
 -----
@@ -233,10 +229,10 @@ Allow bare column names to be subscripted as arrays (Tom)
 Improve type casting of int and float constants (Tom)
 Cleanups for int8 inputs, range checking, and type conversion (Tom)
 Fix for SELECT timespan('21:11:26'::time) (Tom)
-Fix for netmask('x.x.x.x/0') is 255.255.255.255 instead of 0.0.0.0 
-	(Oleg Sharoiko)
+Fix for netmask('x.x.x.x/0') is 255.255.255.255 instead of 0.0.0.0
+        (Oleg Sharoiko)
 Add btree index on NUMERIC(Jan)
-Perl fix for large objects containing NUL characters (Douglas Thomson) 
+Perl fix for large objects containing NUL characters (Douglas Thomson)
 ODBC fix for for large objects (free)
 Fix indexing of cidr data type
 Fix for Ethernet MAC addresses (macaddr type) comparisons
@@ -249,13 +245,25 @@ Make char_length()/octet_length including trailing blanks (Tom)
 Made abstime/reltime use int4 instead of time_t (Peter E)
 New lztext data type for compressed text fields
 Revise code to handle coercion of int and float constants (Tom)
-New C-routines to implement a BIT and BIT VARYING type in /contrib 
-	(Adriaan Joubert)
+New C-routines to implement a BIT and BIT VARYING type in /contrib
+        (Adriaan Joubert)
 NUMERIC now accepts scientific notation (Tom)
 NUMERIC to int4 rounds (Tom)
 Convert float4/8 to NUMERIC properly (Tom)
 Allow type conversion with NUMERIC (Thomas)
 Make ISO date style (2000-02-16 09:33) the default (Thomas)
+Add NATIONAL CHAR [ VARYING ]
+Allow NUMERIC round and trunc to accept negative scales (Tom)
+New TIME WITH TIME ZONE type (Thomas)
+Add MAX()/MIN() on time type (Thomas)
+Add abs(), mod(), fac() for int8 (Thomas)
+Add round(), sqrt(), cbrt(), pow()
+Rename NUMERIC power() to pow()
+Improved TRANSLATE() function
+Allow X=-Y operators  (Tom)
+Add exp() and ln() as NUMERIC types
+Allow SELECT float8(COUNT(*)) / (SELECT COUNT(*) FROM int4_tbl) FROM int4_tbl
+        GROUP BY f1; (Tom)
 
 Performance
 -----------
@@ -286,7 +294,8 @@ Improve pg_statistics management for VACUUM speed improvement (Tom)
 Flush backend cache less frequently (Tom, Hiroshi)
 COPY now reuses previous memory allocation, improving performance (Tom)
 Improve optimization cost estimation (Tom)
-Improve optimizer estimate of range queries x > lowbound AND x < highbound (Tom)
+Improve optimizer estimate of range queries x > lowbound AND x < highbound (Tom
+)
 Use DNF instead of CNF where appropriate (Tom, Taral)
 Further cleanup for OR-of-AND WHERE-clauses (Tom)
 Make use of index in OR clauses (x = 1 AND y = 2) OR (x = 2 AND y = 4) (Tom)
@@ -294,6 +303,7 @@ Smarter optimizer computations for random index page access (Tom)
 New SET variable to control optimizer costs (Tom)
 Optimizer queries based on LIMIT, OFFSET, and EXISTS qualifications (Tom)
 Reduce optimizer internal housekeeping of join paths for speedup (Tom)
+Major subquery speedup (Tom)
 
 Source Tree Changes
 -------------------
@@ -304,9 +314,10 @@ Improved range checking for large integers on Alpha's
 Clean up #include in /include directory (Bruce)
 Add scripts for checking includes (Bruce)
 Remove un-needed #include's from *.c files (Bruce)
-Change #include's to use <> and "" as appropriate (Bruce)
+Change #include's to use
+and "" as appropriate (Bruce)
 Enable WIN32 compilation of libpq
-Alpha spinlock fix from Uncle George <gatgul@voicenet.com>
+Alpha spinlock fix from Uncle George voicenet.com>
 Overhaul of optimizer data structures (Tom)
 Fix to cygipc library (Yutaka Tanida)
 Allow pgsql to work on newer Cygwin snapshots(Dan)
@@ -323,6 +334,10 @@ Internally change datetime and timespan into timestamp and interval (Thomas)
 Fix for plpgsql on BSDI
 Add SQL_ASCII test case to the regression test (Tatsuo)
 configure --with-mb now deprecated (Tatsuo)
+NT fixes
+NetBSD fixes Johnny C. Lam stat.cmu.edu>
+Fixes for Alpha compiles
+New multibyte encodings
 
 
 

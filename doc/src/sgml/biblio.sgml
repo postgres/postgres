@@ -19,8 +19,8 @@
     <title id="BOWMAN93-full">
      The Practical <acronym>SQL</acronym> Handbook
     </title>
-    <titleabbrev id="BOWMAN93">
-     Bowman et al, 1993
+    <titleabbrev id="BOWMAN96">
+     Bowman et al, 1996
     </titleabbrev>
     <subtitle>
      Using Structured Query Language
@@ -28,7 +28,7 @@
     <edition>3</edition>
     <authorgroup>
      <author>
-      <firstname>Judity</firstname>
+      <firstname>Judith</firstname>
       <surname>Bowman</surname>
      </author>
      <author>
@@ -37,7 +37,7 @@
      </author>
      <author>
       <firstname>Marcy</firstname>
-      <surname>Damovsky</surname>
+      <surname>Darnovsky</surname>
      </author>
     </authorgroup>
     <isbn>0-201-44787-8</isbn>
@@ -46,7 +46,7 @@
      <publishername>Addison-Wesley</publishername>
     </publisher>
     <copyright>
-     <year>1997</year>
+     <year>1996</year>
      <holder>Addison-Wesley Longman, Inc.</holder>
     </copyright>
 <!--
