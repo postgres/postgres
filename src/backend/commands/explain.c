@@ -1,20 +1,23 @@
-/*
+/*-------------------------------------------------------------------------
+ *
  * explain.c
- *	  Explain the query execution plan
+ *	  Explain query execution plans
  *
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994-5, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/commands/explain.c,v 1.99 2002/12/15 16:17:38 tgl Exp $
+ * IDENTIFICATION
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/explain.c,v 1.100 2003/02/02 23:46:38 tgl Exp $
  *
+ *-------------------------------------------------------------------------
  */
-
 #include "postgres.h"
 
 #include "access/genam.h"
 #include "access/heapam.h"
 #include "catalog/pg_type.h"
 #include "commands/explain.h"
+#include "commands/prepare.h"
 #include "executor/executor.h"
 #include "executor/instrument.h"
 #include "lib/stringinfo.h"
@@ -81,8 +84,11 @@ ExplainQuery(ExplainStmt *stmt, CommandDest dest)
 
 	if (query->commandType == CMD_UTILITY)
 	{
-		/* rewriter will not cope with utility statements */
-		do_text_output_oneline(tstate, "Utility statements have no plan structure");
+		/* Rewriter will not cope with utility statements */
+		if (query->utilityStmt && IsA(query->utilityStmt, ExecuteStmt))
+			ExplainExecuteQuery(stmt, tstate);
+		else
+			do_text_output_oneline(tstate, "Utility statements have no plan structure");
 	}
 	else
 	{
@@ -119,10 +125,6 @@ ExplainOneQuery(Query *query, ExplainStmt *stmt, TupOutputState *tstate)
 {
 	Plan	   *plan;
 	QueryDesc  *queryDesc;
-	ExplainState *es;
-	StringInfo	str;
-	double		totaltime = 0;
-	struct timeval starttime;
 
 	/* planner will not cope with utility statements */
 	if (query->commandType == CMD_UTILITY)
@@ -134,6 +136,13 @@ ExplainOneQuery(Query *query, ExplainStmt *stmt, TupOutputState *tstate)
 		return;
 	}
 
+	/*
+	 * We don't support DECLARE CURSOR in EXPLAIN, but parser will take it
+	 * because it's an OptimizableStmt
+	 */
+	if (query->isPortal)
+		elog(ERROR, "EXPLAIN / DECLARE CURSOR is not supported");
+
 	/* plan the query */
 	plan = planner(query);
 
@@ -141,14 +150,33 @@ ExplainOneQuery(Query *query, ExplainStmt *stmt, TupOutputState *tstate)
 	if (plan == NULL)
 		return;
 
-	/* We don't support DECLARE CURSOR here */
-	Assert(!query->isPortal);
-
-	gettimeofday(&starttime, NULL);
-
 	/* Create a QueryDesc requesting no output */
 	queryDesc = CreateQueryDesc(query, plan, None, NULL, NULL,
 								stmt->analyze);
+
+	ExplainOnePlan(queryDesc, stmt, tstate);
+}
+
+/*
+ * ExplainOnePlan -
+ *		given a planned query, execute it if needed, and then print
+ *		EXPLAIN output
+ *
+ * This is exported because it's called back from prepare.c in the
+ * EXPLAIN EXECUTE case
+ *
+ * Note: the passed-in QueryDesc is freed when we're done with it
+ */
+void
+ExplainOnePlan(QueryDesc *queryDesc, ExplainStmt *stmt,
+			   TupOutputState *tstate)
+{
+	struct timeval starttime;
+	double		totaltime = 0;
+	ExplainState *es;
+	StringInfo	str;
+
+	gettimeofday(&starttime, NULL);
 
 	/* call ExecutorStart to prepare the plan for execution */
 	ExecutorStart(queryDesc);
@@ -160,7 +188,6 @@ ExplainOneQuery(Query *query, ExplainStmt *stmt, TupOutputState *tstate)
 		ExecutorRun(queryDesc, ForwardScanDirection, 0L);
 
 		/* We can't clean up 'till we're done printing the stats... */
-
 		totaltime += elapsed_time(&starttime);
 	}
 
@@ -169,14 +196,14 @@ ExplainOneQuery(Query *query, ExplainStmt *stmt, TupOutputState *tstate)
 	es->printCost = true;		/* default */
 	es->printNodes = stmt->verbose;
 	es->printAnalyze = stmt->analyze;
-	es->rtable = query->rtable;
+	es->rtable = queryDesc->parsetree->rtable;
 
 	if (es->printNodes)
 	{
 		char	   *s;
 		char	   *f;
 
-		s = nodeToString(plan);
+		s = nodeToString(queryDesc->plantree);
 		if (s)
 		{
 			if (Explain_pretty_print)
@@ -195,7 +222,7 @@ ExplainOneQuery(Query *query, ExplainStmt *stmt, TupOutputState *tstate)
 
 	if (es->printCost)
 	{
-		explain_outNode(str, plan, queryDesc->planstate,
+		explain_outNode(str, queryDesc->plantree, queryDesc->planstate,
 						NULL, 0, es);
 	}
 

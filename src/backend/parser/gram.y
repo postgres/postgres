@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.396 2003/01/23 23:38:56 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.397 2003/02/02 23:46:38 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -241,7 +241,7 @@ static void doNegateFloat(Value *v);
 %type <ival>	opt_interval
 %type <node>	overlay_placing substr_from substr_for
 
-%type <boolean> opt_instead opt_cursor
+%type <boolean> opt_instead opt_cursor opt_analyze
 %type <boolean> index_opt_unique opt_verbose opt_full
 %type <boolean> opt_freeze opt_default opt_recheck
 %type <defelt>	opt_binary opt_oids copy_delimiter
@@ -3953,28 +3953,32 @@ opt_name_list:
 /*****************************************************************************
  *
  *		QUERY:
- *				EXPLAIN query
- *				EXPLAIN ANALYZE query
+ *				EXPLAIN [ANALYZE] [VERBOSE] query
  *
  *****************************************************************************/
 
 ExplainStmt:
-			EXPLAIN opt_verbose OptimizableStmt
+			EXPLAIN opt_analyze opt_verbose OptimizableStmt
 				{
 					ExplainStmt *n = makeNode(ExplainStmt);
-					n->verbose = $2;
-					n->analyze = FALSE;
-					n->query = (Query*)$3;
-					$$ = (Node *)n;
-				}
-			| EXPLAIN analyze_keyword opt_verbose OptimizableStmt
-				{
-					ExplainStmt *n = makeNode(ExplainStmt);
+					n->analyze = $2;
 					n->verbose = $3;
-					n->analyze = TRUE;
 					n->query = (Query*)$4;
 					$$ = (Node *)n;
 				}
+			| EXPLAIN opt_analyze opt_verbose ExecuteStmt
+				{
+					ExplainStmt *n = makeNode(ExplainStmt);
+					n->analyze = $2;
+					n->verbose = $3;
+					n->query = (Query*)$4;
+					$$ = (Node *)n;
+				}
+		;
+
+opt_analyze:
+			analyze_keyword			{ $$ = TRUE; }
+			| /* EMPTY */			{ $$ = FALSE; }
 		;
 
 /*****************************************************************************

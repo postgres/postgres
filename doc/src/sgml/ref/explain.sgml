@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/explain.sgml,v 1.22 2003/01/19 00:13:29 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/explain.sgml,v 1.23 2003/02/02 23:46:37 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -55,7 +55,8 @@ EXPLAIN [ ANALYZE ] [ VERBOSE ] <replaceable class="PARAMETER">query</replaceabl
       <term><replaceable class="PARAMETER">query</replaceable></term>
       <listitem>
        <para>
-	Any <replaceable class="PARAMETER">query</replaceable>.
+	Any <command>SELECT</>, <command>INSERT</>, <command>UPDATE</>,
+	<command>DELETE</>, or <command>EXECUTE</> query.
        </para>
       </listitem>
      </varlistentry>
@@ -132,13 +133,13 @@ EXPLAIN [ ANALYZE ] [ VERBOSE ] <replaceable class="PARAMETER">query</replaceabl
    <para>
     In order to allow the <productname>PostgreSQL</productname> query
     planner to make reasonably informed decisions when optimizing
-    queries, the <command>ANALYZE</command> statement should be used
+    queries, the <command>ANALYZE</command> statement should be run
     to record statistics about the distribution of data within the
-    table. If you have not done this (or the statistical distribution
+    table. If you have not done this (or if the statistical distribution
     of the data in the table has changed significantly since the last
-    time <command>ANALYZE</command> was run), the estimated costs and
-    the resulting query plan displayed by <command>EXPLAIN</command>
-    are unlikely to conform to the real properties of the query.
+    time <command>ANALYZE</command> was run), the estimated costs
+    are unlikely to conform to the real properties of the query,
+    and consequently an inferior query plan may be chosen.
    </para>
   </note>
 
@@ -147,7 +148,7 @@ EXPLAIN [ ANALYZE ] [ VERBOSE ] <replaceable class="PARAMETER">query</replaceabl
    planned.  The total elapsed time expended within each plan node (in
    milliseconds) and total number of rows it actually returned are added to
    the display.  This is useful for seeing whether the planner's estimates
-   are close to the actual performance of the query.
+   are close to reality.
   </para>
 
   <caution>
@@ -157,8 +158,8 @@ EXPLAIN [ ANALYZE ] [ VERBOSE ] <replaceable class="PARAMETER">query</replaceabl
     would return,
     other side-effects of the query will happen as usual.
     If you wish to use <command>EXPLAIN ANALYZE</command> on an INSERT,
-    UPDATE, or DELETE query without letting the query affect your data,
-    use this approach:
+    UPDATE, DELETE, or EXECUTE query without letting the query affect your
+    data, use this approach:
       <programlisting>
 BEGIN;
 EXPLAIN ANALYZE ...;
@@ -245,12 +246,34 @@ EXPLAIN SELECT sum(i) FROM foo WHERE i &lt; 10;
   </para>
 
   <para>
+   Here is an example of using EXPLAIN EXECUTE to display the query
+   plan for a prepared query:
+
+   <programlisting>
+PREPARE query(int, int) AS SELECT sum(bar) FROM test
+    WHERE id &gt; $1 AND id &lt; $2
+    GROUP BY foo;
+
+EXPLAIN ANALYZE EXECUTE query(100, 200);
+    <computeroutput>
+                                                       QUERY PLAN                                                        
+-------------------------------------------------------------------------------------------------------------------------
+ HashAggregate  (cost=39.53..39.53 rows=1 width=8) (actual time=0.66..0.67 rows=7 loops=1)
+   -&gt;  Index Scan using test_pkey on test  (cost=0.00..32.97 rows=1311 width=8) (actual time=0.05..0.39 rows=99 loops=1)
+         Index Cond: ((id &gt; $1) AND (id &lt; $2))
+ Total runtime: 0.85 msec
+(4 rows)
+    </computeroutput>
+   </programlisting>
+  </para>
+
+  <para>
    Note that the specific numbers shown, and even the selected query
    strategy, may vary between <productname>PostgreSQL</productname>
-   releases due to planner improvements. In addition, the algorithm
-   used by <command>ANALYZE</command> to generate statistics is not
-   completely deterministic; therefore, it is possible (although not
-   likely) for cost estimations to change between runs of
+   releases due to planner improvements. In addition, the
+   <command>ANALYZE</command> command uses random sampling to estimate
+   data statistics; therefore, it is possible
+   for cost estimates to change after a fresh run of
    <command>ANALYZE</command>, even if the actual distribution of data
    in the table has not changed.
   </para>

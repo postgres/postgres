@@ -6,12 +6,13 @@
  * Copyright (c) 2002, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/prepare.c,v 1.12 2002/12/15 21:01:34 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/prepare.c,v 1.13 2003/02/02 23:46:38 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
+#include "commands/explain.h"
 #include "commands/prepare.h"
 #include "executor/executor.h"
 #include "utils/guc.h"
@@ -47,9 +48,10 @@ static HTAB *prepared_queries = NULL;
 
 static void InitQueryHashTable(void);
 static void StoreQuery(const char *stmt_name, List *query_list,
-		   List *plan_list, List *argtype_list);
+					   List *plan_list, List *argtype_list);
 static QueryHashEntry *FetchQuery(const char *plan_name);
-
+static ParamListInfo EvaluateParams(EState *estate,
+									List *params, List *argtypes);
 
 /*
  * Implements the 'PREPARE' utility statement.
@@ -94,7 +96,7 @@ ExecuteQuery(ExecuteStmt *stmt, CommandDest outputDest)
 			   *query_list,
 			   *plan_list;
 	ParamListInfo paramLI = NULL;
-	EState	   *estate;
+	EState	   *estate = NULL;
 
 	/* Look it up in the hash table */
 	entry = FetchQuery(stmt->name);
@@ -104,51 +106,22 @@ ExecuteQuery(ExecuteStmt *stmt, CommandDest outputDest)
 
 	Assert(length(query_list) == length(plan_list));
 
-	/*
-	 * Need an EState to evaluate parameters; must not delete it till end
-	 * of query, in case parameters are pass-by-reference.
-	 */
-	estate = CreateExecutorState();
-
 	/* Evaluate parameters, if any */
 	if (entry->argtype_list != NIL)
 	{
-		int			nargs = length(entry->argtype_list);
-		int			i = 0;
-		List	   *exprstates;
-
-		/* Parser should have caught this error, but check */
-		if (nargs != length(stmt->params))
-			elog(ERROR, "ExecuteQuery: wrong number of arguments");
-
-		exprstates = (List *) ExecPrepareExpr((Expr *) stmt->params, estate);
-
-		paramLI = (ParamListInfo)
-			palloc0((nargs + 1) * sizeof(ParamListInfoData));
-
-		foreach(l, exprstates)
-		{
-			ExprState  *n = lfirst(l);
-			bool		isNull;
-
-			paramLI[i].value = ExecEvalExprSwitchContext(n,
-											 GetPerTupleExprContext(estate),
-														 &isNull,
-														 NULL);
-			paramLI[i].kind = PARAM_NUM;
-			paramLI[i].id = i + 1;
-			paramLI[i].isnull = isNull;
-
-			i++;
-		}
-		paramLI[i].kind = PARAM_INVALID;
+		/*
+		 * Need an EState to evaluate parameters; must not delete it
+		 * till end of query, in case parameters are pass-by-reference.
+		 */
+		estate = CreateExecutorState();
+		paramLI = EvaluateParams(estate, stmt->params, entry->argtype_list);
 	}
 
 	/* Execute each query */
 	foreach(l, query_list)
 	{
-		Query	   *query = lfirst(l);
-		Plan	   *plan = lfirst(plan_list);
+		Query	  *query = (Query *) lfirst(l);
+		Plan	  *plan = (Plan *) lfirst(plan_list);
 		bool		is_last_query;
 
 		plan_list = lnext(plan_list);
@@ -196,10 +169,58 @@ ExecuteQuery(ExecuteStmt *stmt, CommandDest outputDest)
 			CommandCounterIncrement();
 	}
 
-	FreeExecutorState(estate);
+	if (estate)
+		FreeExecutorState(estate);
 
 	/* No need to pfree other memory, MemoryContext will be reset */
 }
+
+/*
+ * Evaluates a list of parameters, using the given executor state. It
+ * requires a list of the parameter values themselves, and a list of
+ * their types. It returns a filled-in ParamListInfo -- this can later
+ * be passed to CreateQueryDesc(), which allows the executor to make use
+ * of the parameters during query execution.
+ */
+static ParamListInfo
+EvaluateParams(EState *estate, List *params, List *argtypes)
+{
+	int				nargs = length(argtypes);
+	ParamListInfo	paramLI;
+	List		   *exprstates;
+	List		   *l;
+	int				i = 0;
+
+	/* Parser should have caught this error, but check anyway */
+	if (length(params) != nargs)
+		elog(ERROR, "EvaluateParams: wrong number of arguments");
+
+	exprstates = (List *) ExecPrepareExpr((Expr *) params, estate);
+
+	paramLI = (ParamListInfo)
+		palloc0((nargs + 1) * sizeof(ParamListInfoData));
+
+	foreach(l, exprstates)
+	{
+		ExprState  *n = lfirst(l);
+		bool		isNull;
+
+		paramLI[i].value = ExecEvalExprSwitchContext(n,
+													 GetPerTupleExprContext(estate),
+													 &isNull,
+													 NULL);
+		paramLI[i].kind = PARAM_NUM;
+		paramLI[i].id = i + 1;
+		paramLI[i].isnull = isNull;
+
+		i++;
+	}
+
+	paramLI[i].kind = PARAM_INVALID;
+
+	return paramLI;
+}
+
 
 /*
  * Initialize query hash table upon first use.
@@ -229,8 +250,8 @@ InitQueryHashTable(void)
  * to the hash entry, so the caller can dispose of their copy.
  */
 static void
-StoreQuery(const char *stmt_name, List *query_list, List *plan_list,
-		   List *argtype_list)
+StoreQuery(const char *stmt_name, List *query_list,
+		   List *plan_list, List *argtype_list)
 {
 	QueryHashEntry *entry;
 	MemoryContext oldcxt,
@@ -278,7 +299,7 @@ StoreQuery(const char *stmt_name, List *query_list, List *plan_list,
 										   HASH_ENTER,
 										   &found);
 
-	/* Shouldn't get a failure, nor duplicate entry */
+	/* Shouldn't get a failure, nor a duplicate entry */
 	if (!entry || found)
 		elog(ERROR, "Unable to store prepared statement \"%s\"!",
 			 stmt_name);
@@ -293,7 +314,8 @@ StoreQuery(const char *stmt_name, List *query_list, List *plan_list,
 }
 
 /*
- * Lookup an existing query in the hash table.
+ * Lookup an existing query in the hash table. If the query does not
+ * actually exist, an elog(ERROR) is thrown.
  */
 static QueryHashEntry *
 FetchQuery(const char *plan_name)
@@ -346,52 +368,104 @@ FetchQueryParams(const char *plan_name)
 /*
  * Implements the 'DEALLOCATE' utility statement: deletes the
  * specified plan from storage.
- *
- * The initial part of this routine is identical to FetchQuery(),
- * but we repeat the coding because we need to use the key twice.
  */
 void
 DeallocateQuery(DeallocateStmt *stmt)
 {
-	char		key[HASH_KEY_LEN];
 	QueryHashEntry *entry;
 
-	/*
-	 * If the hash table hasn't been initialized, it can't be storing
-	 * anything, therefore it couldn't possibly store our plan.
-	 */
-	if (!prepared_queries)
-		elog(ERROR, "Prepared statement with name \"%s\" does not exist",
-			 stmt->name);
-
-	/*
-	 * We can't just use the statement name as supplied by the user: the
-	 * hash package is picky enough that it needs to be NULL-padded out to
-	 * the appropriate length to work correctly.
-	 */
-	MemSet(key, 0, sizeof(key));
-	strncpy(key, stmt->name, sizeof(key));
-
-	/*
-	 * First lookup the entry, so we can release all the subsidiary memory
-	 * it has allocated (when it's removed, hash_search() will return a
-	 * dangling pointer, so it needs to be done prior to HASH_REMOVE).
-	 * This requires an extra hash-table lookup, but DEALLOCATE isn't
-	 * exactly a performance bottleneck.
-	 */
-	entry = (QueryHashEntry *) hash_search(prepared_queries,
-										   key,
-										   HASH_FIND,
-										   NULL);
-
-	if (!entry)
-		elog(ERROR, "Prepared statement with name \"%s\" does not exist",
-			 stmt->name);
+	/* Find the query's hash table entry */
+	entry = FetchQuery(stmt->name);
 
 	/* Flush the context holding the subsidiary data */
 	Assert(MemoryContextIsValid(entry->context));
 	MemoryContextDelete(entry->context);
 
 	/* Now we can remove the hash table entry */
-	hash_search(prepared_queries, key, HASH_REMOVE, NULL);
+	hash_search(prepared_queries, entry->key, HASH_REMOVE, NULL);
+}
+
+/*
+ * Implements the 'EXPLAIN EXECUTE' utility statement.
+ */
+void
+ExplainExecuteQuery(ExplainStmt *stmt, TupOutputState *tstate)
+{
+	ExecuteStmt	   *execstmt = (ExecuteStmt *) stmt->query->utilityStmt;
+	QueryHashEntry *entry;
+	List	   *l,
+			   *query_list,
+			   *plan_list;
+	ParamListInfo paramLI = NULL;
+	EState	   *estate = NULL;
+
+	/* explain.c should only call me for EXECUTE stmt */
+	Assert(execstmt && IsA(execstmt, ExecuteStmt));
+
+	/* Look it up in the hash table */
+	entry = FetchQuery(execstmt->name);
+
+	query_list = entry->query_list;
+	plan_list = entry->plan_list;
+
+	Assert(length(query_list) == length(plan_list));
+
+	/* Evaluate parameters, if any */
+	if (entry->argtype_list != NIL)
+	{
+		/*
+		 * Need an EState to evaluate parameters; must not delete it
+		 * till end of query, in case parameters are pass-by-reference.
+		 */
+		estate = CreateExecutorState();
+		paramLI = EvaluateParams(estate, execstmt->params,
+								 entry->argtype_list);
+	}
+
+	/* Explain each query */
+	foreach(l, query_list)
+	{
+		Query	  *query = (Query *) lfirst(l);
+		Plan	  *plan = (Plan *) lfirst(plan_list);
+		bool		is_last_query;
+
+		plan_list = lnext(plan_list);
+		is_last_query = (plan_list == NIL);
+
+		if (query->commandType == CMD_UTILITY)
+		{
+			if (query->utilityStmt && IsA(query->utilityStmt, NotifyStmt))
+				do_text_output_oneline(tstate, "NOTIFY");
+			else
+				do_text_output_oneline(tstate, "UTILITY");
+		}
+		else
+		{
+			QueryDesc  *qdesc;
+
+			/* Create a QueryDesc requesting no output */
+			qdesc = CreateQueryDesc(query, plan, None, NULL,
+									paramLI, stmt->analyze);
+
+			if (execstmt->into)
+			{
+				if (qdesc->operation != CMD_SELECT)
+					elog(ERROR, "INTO clause specified for non-SELECT query");
+
+				query->into = execstmt->into;
+				qdesc->dest = None;
+			}
+
+			ExplainOnePlan(qdesc, stmt, tstate);
+		}
+
+		/* No need for CommandCounterIncrement, as ExplainOnePlan did it */
+
+		/* put a blank line between plans */
+		if (!is_last_query)
+			do_text_output_oneline(tstate, "");
+	}
+
+	if (estate)
+		FreeExecutorState(estate);
 }

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/prepare.sgml,v 1.1 2002/08/27 04:55:07 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/prepare.sgml,v 1.2 2003/02/02 23:46:37 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -156,7 +156,9 @@ PostgreSQL documentation
 	constant values in a query to make guesses about the likely
 	result of executing the query. Since this data is unavailable when
 	planning prepared queries with parameters, the chosen plan may be
-	sub-optimal.
+	sub-optimal. To examine the query plan
+	<productname>PostgreSQL</productname> has chosen for a prepared
+	query, use <command>EXPLAIN EXECUTE</command>.
    </para>
 
    <para>

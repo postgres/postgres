@@ -6,16 +6,20 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994-5, Regents of the University of California
  *
- * $Id: explain.h,v 1.17 2002/06/20 20:29:49 momjian Exp $
+ * $Id: explain.h,v 1.18 2003/02/02 23:46:38 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef EXPLAIN_H
 #define EXPLAIN_H
 
+#include "executor/executor.h"
 #include "nodes/parsenodes.h"
 #include "tcop/dest.h"
 
+
 extern void ExplainQuery(ExplainStmt *stmt, CommandDest dest);
+extern void ExplainOnePlan(QueryDesc *queryDesc, ExplainStmt *stmt,
+						   TupOutputState *tstate);
 
 #endif   /* EXPLAIN_H */
