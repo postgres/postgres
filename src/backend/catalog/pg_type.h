@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_type.h,v 1.1.1.1 1996/07/09 06:21:18 scrappy Exp $
+ * $Id: pg_type.h,v 1.2 1996/07/19 05:12:40 scrappy Exp $
  *
  * NOTES
  *    the genbki.sh script reads this file and generates .bki
@@ -200,7 +200,7 @@ DATA(insert OID = 1000 (  _bool      PGUID -1  -1 f b t \054 0  16 array_in arra
 DATA(insert OID = 1001 (  _bytea     PGUID -1  -1 f b t \054 0  17 array_in array_out array_in array_out i _null_ ));
 DATA(insert OID = 1002 (  _char      PGUID -1  -1 f b t \054 0  18 array_in array_out array_in array_out i _null_ ));
 DATA(insert OID = 1003 (  _name    PGUID -1  -1 f b t \054 0  19 array_in array_out array_in array_out i _null_ ));
-DATA(insert OID = 1004 (  _char16    PGUID -1  -1 f b t \054 0  19 array_in array_out array_in array_out i _null_ ));
+DATA(insert OID = 1004 (  _char16    PGUID -1  -1 f b t \054 0  20 array_in array_out array_in array_out i _null_ ));
 DATA(insert OID = 1005 (  _int2      PGUID -1  -1 f b t \054 0  21 array_in array_out array_in array_out i _null_ ));
 DATA(insert OID = 1006 (  _int28     PGUID -1  -1 f b t \054 0  22 array_in array_out array_in array_out i _null_ )); 
 DATA(insert OID = 1007 (  _int4      PGUID -1  -1 f b t \054 0  23 array_in array_out array_in array_out i _null_ ));  
