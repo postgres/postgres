@@ -1,7 +1,7 @@
 
           Developer's Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Fri Oct 15 12:10:14 EDT 2004
+   Last updated: Fri Oct 15 12:26:50 EDT 2004
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -509,7 +509,7 @@
   
    There are three versions of the SQL standard: SQL-92, SQL:1999, and
    SQL:2003. They are endorsed by ANSI and ISO. Draft versions can be
-   download from:
+   downloaded from:
      * SQL-92 http://www.contrib.andrew.cmu.edu/~shadow/sql/sql1992.txt
      * SQL:1999
        http://www.cse.iitb.ac.in/dbms/Data/Papers-Other/SQL1999/ansi-iso-
