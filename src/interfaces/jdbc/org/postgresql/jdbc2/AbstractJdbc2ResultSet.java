@@ -1,26 +1,37 @@
+/*-------------------------------------------------------------------------
+ *
+ * AbstractJdbc2ResultSet.java
+ *     This class defines methods of the jdbc2 specification.  This class 
+ *     extends org.postgresql.jdbc1.AbstractJdbc1ResultSet which provides the 
+ *     jdbc1 methods.  The real Statement class (for jdbc2) is 
+ *     org.postgresql.jdbc2.Jdbc2ResultSet
+ *
+ * Copyright (c) 2003, PostgreSQL Global Development Group
+ *
+ * IDENTIFICATION
+ *	  $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc2/Attic/AbstractJdbc2ResultSet.java,v 1.17 2003/03/14 05:36:58 barry Exp $
+ *
+ *-------------------------------------------------------------------------
+ */
 package org.postgresql.jdbc2;
 
-
+import java.io.CharArrayReader;
+import java.io.InputStream;
+import java.io.IOException;
 import java.math.BigDecimal;
-import java.io.*;
 import java.sql.*;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.Enumeration;
+import java.util.Hashtable;
+import java.util.Iterator;
+import java.util.StringTokenizer;
+import java.util.Vector;
 import org.postgresql.Driver;
 import org.postgresql.core.BaseStatement;
 import org.postgresql.core.Field;
 import org.postgresql.core.Encoding;
-import org.postgresql.largeobject.*;
-import org.postgresql.util.PGbytea;
 import org.postgresql.util.PSQLException;
 
 
-/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc2/Attic/AbstractJdbc2ResultSet.java,v 1.16 2003/03/08 06:06:55 barry Exp $
- * This class defines methods of the jdbc2 specification.  This class extends
- * org.postgresql.jdbc1.AbstractJdbc1ResultSet which provides the jdbc1
- * methods.  The real Statement class (for jdbc2) is org.postgresql.jdbc2.Jdbc2ResultSet
- */
 public abstract class AbstractJdbc2ResultSet extends org.postgresql.jdbc1.AbstractJdbc1ResultSet
 {
 
@@ -1413,7 +1424,7 @@ public abstract class AbstractJdbc2ResultSet extends org.postgresql.jdbc1.Abstra
 	{
 		String[] l_sqlFragments = ((AbstractJdbc2Statement)statement).getSqlFragments();
 		String l_sql = l_sqlFragments[0];
-		StringTokenizer st = new StringTokenizer(l_sql, " \r\t");
+		StringTokenizer st = new StringTokenizer(l_sql, " \r\t\n");
 		boolean tableFound = false, tablesChecked = false;
 		String name = "";
 
