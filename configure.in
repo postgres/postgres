@@ -911,7 +911,7 @@ dnl We cope with snprintfs that use either %lld or %qd as the format.
 dnl If neither works, fall back to our own snprintf emulation (which we
 dnl know uses %lld).
 
-if [[ $HAVE_LONG_LONG_INT_64 -eq 1 ]] ; then
+if [[ x"$HAVE_LONG_LONG_INT_64" = xyes ]] ; then
   if [[ x$SNPRINTF = x ]] ; then
     AC_MSG_CHECKING(whether snprintf handles 'long long int' as %lld)
     AC_TRY_RUN([#include <stdio.h>
@@ -1002,7 +1002,7 @@ dnl Determine memory alignment requirements for the basic C datatypes.
 PGAC_CHECK_ALIGNOF(short)
 PGAC_CHECK_ALIGNOF(int)
 PGAC_CHECK_ALIGNOF(long)
-if [[ $HAVE_LONG_LONG_INT_64 -eq 1 ]] ; then
+if [[ x"$HAVE_LONG_LONG_INT_64" = xyes ]] ; then
   PGAC_CHECK_ALIGNOF(long long int)
 fi
 PGAC_CHECK_ALIGNOF(double)
@@ -1016,7 +1016,7 @@ if test $pgac_cv_alignof_double != 'sizeof(double)' ; then
   if test $MAX_ALIGNOF -lt $pgac_cv_alignof_double ; then
     MAX_ALIGNOF=$pgac_cv_alignof_double
   fi
-  if test $HAVE_LONG_LONG_INT_64 -eq 1 && test $MAX_ALIGNOF -lt $pgac_cv_alignof_long_long_int ; then
+  if test x"$HAVE_LONG_LONG_INT_64" = xyes && test $MAX_ALIGNOF -lt $pgac_cv_alignof_long_long_int ; then
     MAX_ALIGNOF="$pgac_cv_alignof_long_long_int"
   fi
 else

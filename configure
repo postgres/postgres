@@ -7084,7 +7084,7 @@ fi
 
 
 
-if [ $HAVE_LONG_LONG_INT_64 -eq 1 ] ; then
+if [ x"$HAVE_LONG_LONG_INT_64" = xyes ] ; then
   if [ x$SNPRINTF = x ] ; then
     echo $ac_n "checking whether snprintf handles 'long long int' as %lld""... $ac_c" 1>&6
 echo "configure:7091: checking whether snprintf handles 'long long int' as %lld" >&5
@@ -7328,7 +7328,7 @@ cat >> confdefs.h <<EOF
 EOF
 
 
-if [ $HAVE_LONG_LONG_INT_64 -eq 1 ] ; then
+if [ x"$HAVE_LONG_LONG_INT_64" = xyes ] ; then
   echo $ac_n "checking alignment of long long int""... $ac_c" 1>&6
 echo "configure:7334: checking alignment of long long int" >&5
 if eval "test \"`echo '$''{'pgac_cv_alignof_long_long_int'+set}'`\" = set"; then
@@ -7417,7 +7417,7 @@ if test $pgac_cv_alignof_double != 'sizeof(double)' ; then
   if test $MAX_ALIGNOF -lt $pgac_cv_alignof_double ; then
     MAX_ALIGNOF=$pgac_cv_alignof_double
   fi
-  if test $HAVE_LONG_LONG_INT_64 -eq 1 && test $MAX_ALIGNOF -lt $pgac_cv_alignof_long_long_int ; then
+  if test x"$HAVE_LONG_LONG_INT_64" = xyes && test $MAX_ALIGNOF -lt $pgac_cv_alignof_long_long_int ; then
     MAX_ALIGNOF="$pgac_cv_alignof_long_long_int"
   fi
 else
