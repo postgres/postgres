@@ -49,7 +49,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/costsize.c,v 1.122 2004/01/06 04:31:01 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/costsize.c,v 1.123 2004/01/19 03:52:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -763,9 +763,7 @@ cost_nestloop(NestPath *path, Query *root)
 	 * an outer tuple as soon as we have one match.  Account for the
 	 * effects of this by scaling down the cost estimates in proportion to
 	 * the JOIN_IN selectivity.  (This assumes that all the quals
-	 * attached to the join are IN quals, which should be true.)  This would
-	 * probably be the wrong approach if an input path is a UniquePath, but
-	 * we'd never have that with JOIN_IN join type.
+	 * attached to the join are IN quals, which should be true.)
 	 */
 	joininfactor = join_in_selectivity(path, root);
 
@@ -1001,9 +999,7 @@ cost_mergejoin(MergePath *path, Query *root)
 	 * for an outer tuple as soon as we have one match.  Account for the
 	 * effects of this by scaling down the cost estimates in proportion to
 	 * the expected output size.  (This assumes that all the quals
-	 * attached to the join are IN quals, which should be true.)  This would
-	 * probably be the wrong approach if an input path is a UniquePath, but
-	 * we'd never have that with JOIN_IN join type.
+	 * attached to the join are IN quals, which should be true.)
 	 */
 	joininfactor = join_in_selectivity(&path->jpath, root);
 
@@ -1208,9 +1204,7 @@ cost_hashjoin(HashPath *path, Query *root)
 	 * an outer tuple as soon as we have one match.  Account for the
 	 * effects of this by scaling down the cost estimates in proportion to
 	 * the expected output size.  (This assumes that all the quals
-	 * attached to the join are IN quals, which should be true.)  This would
-	 * probably be the wrong approach if an input path is a UniquePath, but
-	 * we'd never have that with JOIN_IN join type.
+	 * attached to the join are IN quals, which should be true.)
 	 */
 	joininfactor = join_in_selectivity(&path->jpath, root);
 
@@ -1779,10 +1773,29 @@ set_joinrel_size_estimates(Query *root, RelOptInfo *rel,
 static Selectivity
 join_in_selectivity(JoinPath *path, Query *root)
 {
+	RelOptInfo *innerrel;
+	UniquePath *innerunique;
 	Selectivity selec;
 	double		nrows;
 
+	/* Return 1.0 whenever it's not JOIN_IN */
 	if (path->jointype != JOIN_IN)
+		return 1.0;
+
+	/*
+	 * Return 1.0 if the inner side is already known unique.  The case where
+	 * the inner path is already a UniquePath probably cannot happen in
+	 * current usage, but check it anyway for completeness.  The interesting
+	 * case is where we've determined the inner relation itself is unique,
+	 * which we can check by looking at the rows estimate for its UniquePath.
+	 */
+	if (IsA(path->innerjoinpath, UniquePath))
+		return 1.0;
+	innerrel = path->innerjoinpath->parent;
+	innerunique = create_unique_path(root,
+									 innerrel,
+									 innerrel->cheapest_total_path);
+	if (innerunique->rows >= innerrel->rows)
 		return 1.0;
 
 	/*
@@ -1796,8 +1809,7 @@ join_in_selectivity(JoinPath *path, Query *root)
 								   path->joinrestrictinfo,
 								   0,
 								   JOIN_INNER);
-	nrows = path->outerjoinpath->parent->rows *
-		path->innerjoinpath->parent->rows * selec;
+	nrows = path->outerjoinpath->parent->rows * innerrel->rows * selec;
 
 	nrows = clamp_row_est(nrows);
 
