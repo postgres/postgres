@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/tcop/dest.c,v 1.8 1997/08/27 09:03:14 vadim Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/tcop/dest.c,v 1.9 1997/08/28 05:05:43 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -104,6 +104,7 @@ EndCommand(char *commandTag, CommandDest dest)
 	 */
 	pq_putnchar("C", 1);
 	sprintf(buf, "%s%s", commandTag, CommandInfo);
+	CommandInfo[0] = 0;
 	pq_putstr(buf);
 	pq_flush();
 	break;
