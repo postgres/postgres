@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Fri Jun 29 17:28:08 EDT 2001
+Last updated:		Wed Jul  4 10:59:00 EDT 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -119,6 +119,7 @@ INDEXES
 * Add deleted bit to index tuples to reduce heap access
 * Prevent index uniqueness checks when UPDATE does not modifying column
 * Add bitmap indexes [performance]
+* Improve handling of index scans for NULL
 
 SYSTEM TABLES
 
