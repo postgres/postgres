@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/scan.l,v 1.54 1999/09/11 22:26:35 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/scan.l,v 1.55 1999/09/27 19:40:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -81,7 +81,6 @@ char literal[MAX_PARSE_BUFFER];
  *  <xc> extended C-style comments - tgl 1997-07-12
  *  <xd> delimited identifiers (double-quoted identifiers) - tgl 1997-10-27
  *  <xh> hexadecimal numeric string - thomas 1997-11-16
- *  <xm> numeric strings with embedded minus sign - tgl 1997-09-05
  *  <xq> quoted strings - tgl 1997-07-30
  *
  * The "extended comment" syntax closely resembles allowable operator syntax.
@@ -95,7 +94,6 @@ char literal[MAX_PARSE_BUFFER];
 %x xc
 %x xd
 %x xh
-%x xm
 %x xq
 
 /* Binary number
@@ -144,7 +142,6 @@ xcinside		[^*]*
 xcstar			[^/]
 
 digit			[0-9]
-number			[-+.0-9Ee]
 letter			[\200-\377_A-Za-z]
 letter_or_digit	[\200-\377_A-Za-z0-9]
 
@@ -156,13 +153,16 @@ self			[,()\[\].;$\:\+\-\*\/\%\^\<\>\=\|]
 op_and_self		[\~\!\@\#\^\&\|\`\?\$\:\+\-\*\/\%\<\>\=]
 operator		{op_and_self}+
 
-xmstop			-
+/* we do not allow unary minus in numbers. 
+ * instead we pass it verbatim to parser. there it gets
+ * coerced via doNegate() -- Leon aug 20 1999 
+ */
 
-integer			[\-]?{digit}+
-decimal			[\-]?(({digit}*\.{digit}+)|({digit}+\.{digit}*))
-real			[\-]?((({digit}*\.{digit}+)|({digit}+\.{digit}*)|({digit}+))([Ee][-+]?{digit}+))
+integer			{digit}+
+decimal			(({digit}*\.{digit}+)|({digit}+\.{digit}*))
+real				((({digit}*\.{digit}+)|({digit}+\.{digit}*)|({digit}+))([Ee][-+]?{digit}+))
 /*
-real			[\-]?(((({digit}*\.{digit}+)|({digit}+\.{digit}*))([Ee][-+]?{digit}+)?)|({digit}+[Ee][-+]?{digit}+))
+real				(((({digit}*\.{digit}+)|({digit}+\.{digit}*))([Ee][-+]?{digit}+)?)|({digit}+[Ee][-+]?{digit}+))
 */
 
 param			\${integer}
@@ -278,26 +278,10 @@ other			.
 					llen += yyleng;
 				}
 
-
-<xm>{space}*	{ /* ignore */ }
-<xm>{xmstop}	{
-					BEGIN(INITIAL);
-					return yytext[0];
-				}
-
-
 {typecast}		{ return TYPECAST; }
 
-{self}/{space}*-[\.0-9]	{
-					BEGIN(xm);
-					return yytext[0];
-				}
 {self}			{ 	return yytext[0]; }
-{self}			{ 	return yytext[0]; }
-{operator}/-[\.0-9]	{
-					yylval.str = pstrdup((char*)yytext);
-					return Op;
-				}
+
 {operator}		{
 					if (strcmp((char*)yytext,"!=") == 0)
 						yylval.str = pstrdup("<>"); /* compatability */
@@ -311,77 +295,6 @@ other			.
 				}
 
 
-{identifier}/{space}*-{number}	{
-					int i;
-					ScanKeyword		*keyword;
-
-					BEGIN(xm);
-					for(i = 0; yytext[i]; i++)
-						if (isascii((unsigned char)yytext[i]) &&
-							isupper(yytext[i]))
-							yytext[i] = tolower(yytext[i]);
-					if (i >= NAMEDATALEN)
-						yytext[NAMEDATALEN-1] = '\0';
-
-					keyword = ScanKeywordLookup((char*)yytext);
-					if (keyword != NULL) {
-						return keyword->value;
-					}
-					else
-					{
-						yylval.str = pstrdup((char*)yytext);
-						return IDENT;
-					}
-				}
-{integer}/{space}*-{number}	{
-					char* endptr;
-
-					BEGIN(xm);
-					errno = 0;
-					yylval.ival = strtol((char *)yytext,&endptr,10);
-					if (*endptr != '\0' || errno == ERANGE)
-					{
-						errno = 0;
-#if 0
-						yylval.dval = strtod(((char *)yytext),&endptr);
-						if (*endptr != '\0' || errno == ERANGE)
-							elog(ERROR,"Bad integer input '%s'",yytext);
-						CheckFloat8Val(yylval.dval);
-						elog(NOTICE,"Integer input '%s' is out of range; promoted to float", yytext);
-						return FCONST;
-#endif
-						yylval.str = pstrdup((char*)yytext);
-						return SCONST;
-					}
-					return ICONST;
-				}
-{decimal}/{space}*-{number} {
-					char* endptr;
-
-					BEGIN(xm);
-					if (strlen((char *)yytext) <= 17)
-					{
-						errno = 0;
-						yylval.dval = strtod(((char *)yytext),&endptr);
-						if (*endptr != '\0' || errno == ERANGE)
-							elog(ERROR,"Bad float8 input '%s'",yytext);
-						CheckFloat8Val(yylval.dval);
-						return FCONST;
-					}
-					yylval.str = pstrdup((char*)yytext);
-					return SCONST;
-				}
-{real}/{space}*-{number} {
-					char* endptr;
-
-					BEGIN(xm);
-					errno = 0;
-					yylval.dval = strtod(((char *)yytext),&endptr);
-					if (*endptr != '\0' || errno == ERANGE)
-						elog(ERROR,"Bad float8 input '%s'",yytext);
-					CheckFloat8Val(yylval.dval);
-					return FCONST;
-				}
 {integer}		{
 					char* endptr;
 
