@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/charset.sgml,v 2.44 2004/03/23 02:47:35 neilc Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/charset.sgml,v 2.45 2004/09/17 21:59:56 petere Exp $ -->
 
 <chapter id="charset">
  <title>Localization</>
@@ -397,12 +397,20 @@ initdb --locale=sv_SE
 	 <entry><acronym>KOI</acronym>8-R(U)</entry>
 	</row>
 	<row>
-	 <entry><literal>WIN</literal></entry>
-	 <entry>Windows CP1251</entry>
-	</row>
-	<row>
 	 <entry><literal>ALT</literal></entry>
 	 <entry>Windows CP866</entry>
+	</row>
+	<row>
+	 <entry><literal>WIN874</literal></entry>
+	 <entry>Windows CP874 (Thai)</entry>
+	</row>
+	<row>
+	 <entry><literal>WIN1250</literal></entry>
+	 <entry>Windows CP1250</entry>
+	</row>
+	<row>
+	 <entry><literal>WIN</literal></entry>
+	 <entry>Windows CP1251</entry>
 	</row>
 	<row>
 	 <entry><literal>WIN1256</literal></entry>
@@ -411,10 +419,6 @@ initdb --locale=sv_SE
 	<row>
 	 <entry><literal>TCVN</literal></entry>
 	 <entry><acronym>TCVN</>-5712/Windows CP1258 (Vietnamese)</entry>
-	</row>
-	<row>
-	 <entry><literal>WIN874</literal></entry>
-	 <entry>Windows CP874 (Thai)</entry>
 	</row>
        </tbody>
       </tgroup>
@@ -677,14 +681,26 @@ $ <userinput>psql -l</userinput>
 	 </entry>
 	</row>
 	<row>
-	 <entry><literal>WIN</literal></entry>
+	 <entry><literal>ALT</literal></entry>
 	 <entry><literal>ISO_8859_5</literal>, <literal>WIN</literal>, 
 	 <literal>ALT</literal>, <literal>KOI8</literal>,
 	 <literal>UNICODE</literal>, <literal>MULE_INTERNAL</literal>
 	 </entry>
 	</row>
 	<row>
-	 <entry><literal>ALT</literal></entry>
+	 <entry><literal>WIN874</literal></entry>
+	 <entry><literal>WIN874</literal>,
+	 <literal>UNICODE</literal>
+	 </entry>
+	</row>
+	<row>
+	 <entry><literal>WIN1250</literal></entry>
+	 <entry><literal>LATIN2</literal>, <literal>WIN1250</literal>,
+         <literal>UNICODE</literal>, <literal>MULE_INTERNAL</literal>
+	 </entry>
+	</row>
+	<row>
+	 <entry><literal>WIN</literal></entry>
 	 <entry><literal>ISO_8859_5</literal>, <literal>WIN</literal>, 
 	 <literal>ALT</literal>, <literal>KOI8</literal>,
 	 <literal>UNICODE</literal>, <literal>MULE_INTERNAL</literal>
@@ -699,12 +715,6 @@ $ <userinput>psql -l</userinput>
 	<row>
 	 <entry><literal>TCVN</literal></entry>
 	 <entry><literal>TCVN</literal>,
-	 <literal>UNICODE</literal>
-	 </entry>
-	</row>
-	<row>
-	 <entry><literal>WIN874</literal></entry>
-	 <entry><literal>WIN874</literal>,
 	 <literal>UNICODE</literal>
 	 </entry>
 	</row>
