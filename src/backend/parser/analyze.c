@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.23 1997/03/12 20:51:33 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.24 1997/04/02 04:00:55 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,13 +29,17 @@
 #include "utils/palloc.h"
 #include "utils/mcxt.h"
 #include "utils/syscache.h"
+#include "utils/acl.h"
 #include "parser/parse_query.h"
 #include "parser/parse_state.h"
 #include "nodes/makefuncs.h"	/* for makeResdom(), etc. */
 #include "nodes/nodeFuncs.h"
+#include "commands/sequence.h"
 
 #include "optimizer/clauses.h"
 #include "access/heapam.h"
+
+#include "miscadmin.h"
 
 #include "port-protos.h"        /* strdup() */
 
@@ -65,6 +69,7 @@ static List *transformTargetList(ParseState *pstate, List *targetlist);
 static TargetEntry *make_targetlist_expr(ParseState *pstate,
 					 char *colname, Node *expr,
 					 List *arrayRef);
+static bool inWhereClause = false;
 static Node *transformWhereClause(ParseState *pstate, Node *a_expr);
 static List *transformGroupClause(ParseState *pstate, List *grouplist,
 							List *targetlist);
@@ -133,6 +138,8 @@ parse_analyze(List *pl)
     result = malloc(sizeof(QueryTreeList));
     result->len = length(pl);
     result->qtrees = (Query**)malloc(result->len * sizeof(Query*));
+    
+    inWhereClause = false;	/* to avoid nextval(sequence) in WHERE */
 
     while(pl!=NIL) {
 	pstate = makeParseState();
@@ -1446,7 +1453,9 @@ transformWhereClause(ParseState *pstate, Node *a_expr)
     if (a_expr == NULL)
 	return (Node *)NULL;		/* no qualifiers */
 
+    inWhereClause = true;
     qual = transformExpr(pstate, a_expr, EXPR_COLUMN_FIRST);
+    inWhereClause = false;
     if (exprType(qual) != BOOLOID) {
 	elog(WARN,
 	     "where clause must return type bool, not %s",
@@ -2180,6 +2189,34 @@ ParseFunc(ParseState *pstate, char *funcname, List *fargs, int *curr_resno)
 	    funcnode->func_tlist = setup_tlist(funcname,argrelid);
 	    rettype = find_atttype(argrelid, funcname);
 	}
+    }
+
+    /*
+     * Sequence handling.
+     */
+    if ( funcid == SeqNextValueRegProcedure || 
+    		funcid == SeqCurrValueRegProcedure )
+    {
+	Const *seq;
+	char *seqrel;
+	int32 aclcheck_result = -1;
+	
+    	Assert ( length(fargs) == 1 );
+    	seq = (Const*)lfirst(fargs);
+    	if ( ! IsA ((Node*)seq, Const) )
+    	    elog (WARN, "%s: only constant sequence names are acceptable", funcname);
+    	seqrel = textout ((struct varlena *) (seq->constvalue));
+    	
+    	if ( ( aclcheck_result = pg_aclcheck (seqrel, GetPgUserName(), 
+    		((funcid == SeqNextValueRegProcedure) ? ACL_WR : ACL_RD)) )
+			    			!= ACLCHECK_OK )
+    	    elog (WARN, "%s.%s: %s", 
+    	    	seqrel, funcname, aclcheck_error_strings[aclcheck_result]);
+    	
+	pfree (seqrel);
+
+    	if ( funcid == SeqNextValueRegProcedure && inWhereClause )
+	    elog (WARN, "nextval of a sequence in WHERE disallowed"); 
     }
 
     expr = makeNode(Expr);

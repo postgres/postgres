@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 1.27 1997/03/26 02:52:49 vadim Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 1.28 1997/04/02 04:01:03 vadim Exp $
  *
  * HISTORY
  *    AUTHOR		DATE		MAJOR EVENT
@@ -100,7 +100,7 @@ static Node *makeA_Expr(int oper, char *opname, Node *lexpr, Node *rexpr);
 
 %type <node>	stmt, 
 	AddAttrStmt, ClosePortalStmt,
-	CopyStmt, CreateStmt, DefineStmt, DestroyStmt, 
+	CopyStmt, CreateStmt, CreateSeqStmt, DefineStmt, DestroyStmt, 
 	ExtendStmt, FetchStmt,	GrantStmt,
 	IndexStmt, MoveStmt, ListenStmt, OptimizableStmt, 
         ProcedureStmt, PurgeStmt,
@@ -140,6 +140,9 @@ static Node *makeA_Expr(int oper, char *opname, Node *lexpr, Node *rexpr);
 	def_type, opt_direction, remove_type, opt_column, event
 
 %type <ival>	OptLocation, opt_move_where, fetch_how_many 
+
+%type <list>	OptSeqList
+%type <defelt>	OptSeqElem
 
 %type <dstmt>	def_rest
 %type <pstmt>	purge_quals
@@ -190,7 +193,7 @@ static Node *makeA_Expr(int oper, char *opname, Node *lexpr, Node *rexpr);
         SELECT, SET, SETOF, STDIN, STDOUT, STORE, 
 	TABLE, TO, TRANSACTION, UNIQUE, UPDATE, USING, VACUUM, VALUES
 	VERBOSE, VERSION, VIEW, WHERE, WITH, WORK
-%token	EXECUTE, RECIPE, EXPLAIN, LIKE 
+%token	EXECUTE, RECIPE, EXPLAIN, LIKE, SEQUENCE
 
 /* Special keywords, not in the query language - see the "lex" file */
 %token <str>	IDENT, SCONST, Op 
@@ -243,6 +246,7 @@ stmt :	  AddAttrStmt
 	| ClosePortalStmt
 	| CopyStmt
 	| CreateStmt
+	| CreateSeqStmt
 	| ClusterStmt
 	| DefineStmt
 	| DestroyStmt
@@ -427,6 +431,43 @@ OptInherit:  INHERITS '(' relation_name_list ')'	{ $$ = $3; }
 
 /*****************************************************************************
  *
+ *	QUERY :
+ *		CREATE SEQUENCE seqname
+ *
+ *****************************************************************************/
+
+CreateSeqStmt:  CREATE SEQUENCE relation_name OptSeqList
+		{
+		    CreateSeqStmt *n = makeNode(CreateSeqStmt);
+		    n->seqname = $3;
+		    n->options = $4;
+		    $$ = (Node *)n;
+		}
+	;
+
+OptSeqList:	
+		OptSeqList OptSeqElem
+			{ $$ = lappend($1, $2); }
+	| 		{ $$ = NIL; }
+	;
+
+OptSeqElem:	IDENT NumConst
+		{ 
+		    $$ = makeNode(DefElem);
+		    $$->defname = $1;
+		    $$->arg = (Node *)$2;
+		}
+	|	IDENT
+		{
+		    $$ = makeNode(DefElem);
+		    $$->defname = $1;
+		    $$->arg = (Node *)NULL;
+		}
+	;
+
+
+/*****************************************************************************
+ *
  *  	QUERY :
  *		define (type,operator,aggregate)
  *
@@ -501,10 +542,18 @@ def_arg:  Id			{  $$ = (Node *)makeString($1); }
  *
  *****************************************************************************/
 
-DestroyStmt:  DROP TABLE relation_name_list		
+DestroyStmt:	DROP TABLE relation_name_list
 		{ 
 		    DestroyStmt *n = makeNode(DestroyStmt);
 		    n->relNames = $3;
+		    n->sequence = false;
+		    $$ = (Node *)n;
+		}
+	|	DROP SEQUENCE relation_name_list
+		{ 
+		    DestroyStmt *n = makeNode(DestroyStmt);
+		    n->relNames = $3;
+		    n->sequence = true;
 		    $$ = (Node *)n;
 		}
 	;
