@@ -1645,6 +1645,12 @@ Sat Sep 20 11:06:13 CEST 2003
 	- Applied some bug fixing patches by Dave Cramer <dave@fastcrypt.com>.
 	- Added protecting defines to include files.
 	- Renamed my own strndup() function because of a name clash.
+	
+Mon Sep 22 15:13:02 CEST 2003
+
+	- Fixed order mismatch in processing "using" arguments.
+	- Fixed some minor things in test cases.
+	- Use defines for Informix error codes.
 	- Set ecpg version to 3.0.0
 	- Set ecpg library to 4.0.0
 	- Set pgtypes library to 1.0.0

@@ -20,13 +20,13 @@ int main()
 	$commit;
 	
 	$insert into test (i, j) values (7, 2);
-	printf("%ld: %s\n", sqlca.sqlcode, sqlca.sqlerrm.sqlerrmc);
+	printf("INSERT: %ld=%s\n", sqlca.sqlcode, sqlca.sqlerrm.sqlerrmc);
 	if (sqlca.sqlcode != 0) $rollback;
 
 	$insert into test (i, j) values (:i, 1);
 
 	$select i from test where j=(select j from test);
-	printf("%ld: %s\n", sqlca.sqlcode, sqlca.sqlerrm.sqlerrmc);
+	printf("SELECT: %ld=%s\n", sqlca.sqlcode, sqlca.sqlerrm.sqlerrmc);
 	if (sqlca.sqlcode != 0) $rollback;
 
 	$declare c cursor for select * from test where i <= :i;
@@ -55,7 +55,7 @@ int main()
 	deccvint(14, &m);
 	decadd(&j, &m, &n);
 	$delete from test where i=:n;
-	printf("delete: %ld\n", sqlca.sqlcode);
+	printf("DELETE: %ld\n", sqlca.sqlcode);
 
 	$select 1 from test where i=14;
 	printf("Exists: %ld\n", sqlca.sqlcode);

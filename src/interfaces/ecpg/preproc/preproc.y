@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/Attic/preproc.y,v 1.257 2003/09/19 14:13:16 meskes Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/Attic/preproc.y,v 1.258 2003/09/22 13:19:39 meskes Exp $ */
 
 /* Copyright comment */
 %{
@@ -268,16 +268,16 @@ add_additional_variables(char *name, bool insert)
 	}
 	if (insert)
 	{
-		/* add all those input variables that were given earlier */
+		/* add all those input variables that were given earlier 
+		 * note that we have to append here but have to keep the existing order */
 		for (p = ptr->argsinsert; p; p = p->next)
-			add_variable(&argsinsert, p->variable, p->indicator);
+			append_variable(&argsinsert, p->variable, p->indicator);
 	}
-	else
-	{
-		/* add all those output variables that were given earlier */
-		for (p = ptr->argsresult; p; p = p->next)
-			add_variable(&argsresult, p->variable, p->indicator);
-	}
+
+	/* add all those output variables that were given earlier */
+	for (p = ptr->argsresult; p; p = p->next)
+		add_variable(&argsresult, p->variable, p->indicator);
+	
 	return ptr;
 }
 %}
@@ -5320,7 +5320,7 @@ UsingConst: AllConst
 				char *length = mm_alloc(32);
 
 				sprintf(length, "%d", (int) strlen($1));
-				add_variable(&argsinsert, new_variable($1, ECPGmake_simple_type(ECPGt_const, length), 0), &no_indicator);
+				append_variable(&argsinsert, new_variable($1, ECPGmake_simple_type(ECPGt_const, length), 0), &no_indicator);
 			}
 		}
 		;
@@ -6168,7 +6168,7 @@ c_args: /*EMPTY*/		{ $$ = EMPTY; }
 coutputvariable: CVARIABLE indicator
 			{ add_variable(&argsresult, find_variable($1), find_variable($2)); }
 		| CVARIABLE
-			{ add_variable(&argsresult, find_variable($1), &no_indicator); } 
+			{ add_variable(&argsresult, find_variable($1), &no_indicator); }
 		;
 
 

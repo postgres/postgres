@@ -345,7 +345,9 @@ reset_variables(void)
 	argsresult = NULL;
 }
 
-/* Insert a new variable into our request list. */
+/* Insert a new variable into our request list. 
+ * Note: The list is dumped from the end,
+ * so we have to add new entries at the beginning */
 void
 add_variable(struct arguments ** list, struct variable * var, struct variable * ind)
 {
