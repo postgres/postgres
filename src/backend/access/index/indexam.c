@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/index/indexam.c,v 1.6 1996/11/03 22:57:36 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/index/indexam.c,v 1.7 1996/11/05 10:02:03 scrappy Exp $
  *
  * INTERFACE ROUTINES
  *	index_open 	- open an index relation by relationId
@@ -63,19 +63,13 @@
  *-------------------------------------------------------------------------
  */
 
-#include "postgres.h"
+#include <postgres.h>
  
-#include "access/genam.h"  
-
-#include "utils/relcache.h"
-
-#include "fmgr.h"
-
-#include "utils/palloc.h"
-
-#include "storage/lmgr.h"
-
-#include "access/heaptuple.h"
+#include <access/genam.h>  
+#include <utils/relcache.h>
+#include <fmgr.h>
+#include <storage/lmgr.h>
+#include <access/heaptuple.h>
 
 /* ----------------
  *   undefine macros we aren't going to use that would otherwise
