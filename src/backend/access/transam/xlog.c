@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.180 2004/12/31 21:59:30 pgsql Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.181 2005/02/12 23:53:37 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2065,7 +2065,7 @@ RestoreArchivedFile(char *path, const char *xlogfname,
 	 * restore, or because the administrator has specified the restore
 	 * program incorrectly.  We have to assume the former.
 	 */
-	ereport(DEBUG1,
+	ereport(DEBUG2,
 		 (errmsg("could not restore file \"%s\" from archive: return code %d",
 				 xlogfname, rc)));
 
@@ -4893,7 +4893,7 @@ CreateCheckPoint(bool shutdown, bool force)
 	END_CRIT_SECTION();
 
 	if (!shutdown)
-		ereport(DEBUG1,
+		ereport(DEBUG2,
 				(errmsg("checkpoint starting")));
 
 	CheckPointCLOG();
@@ -4994,7 +4994,7 @@ CreateCheckPoint(bool shutdown, bool force)
 		TruncateSUBTRANS(GetOldestXmin(true));
 
 	if (!shutdown)
-		ereport(DEBUG1,
+		ereport(DEBUG2,
 				(errmsg("checkpoint complete; %d transaction log file(s) added, %d removed, %d recycled",
 						nsegsadded, nsegsremoved, nsegsrecycled)));
 

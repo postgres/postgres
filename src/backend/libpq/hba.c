@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/hba.c,v 1.136 2004/12/31 21:59:50 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/hba.c,v 1.137 2005/02/12 23:53:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1640,7 +1640,7 @@ authident(hbaPort *port)
 			return STATUS_ERROR;
 	}
 
-	ereport(DEBUG1,
+	ereport(DEBUG2,
 			(errmsg("Ident protocol identifies remote user as \"%s\"",
 					ident_user)));
 
