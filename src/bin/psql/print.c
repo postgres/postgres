@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/print.c,v 1.21 2001/08/01 18:44:54 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/print.c,v 1.22 2001/10/15 01:25:10 ishii Exp $
  */
 #include "postgres_fe.h"
 #include "print.h"
@@ -33,6 +33,7 @@
 #include <termios.h>
 #endif
 
+#include "mbprint.h"
 
 /*************************/
 /* Unaligned text		 */
@@ -209,10 +210,17 @@ _print_horizontal_line(const unsigned int col_count, const unsigned int *widths,
 static void
 print_aligned_text(const char *title, const char *const * headers,
 				   const char *const * cells, const char *const * footers,
-const char *opt_align, bool opt_barebones, unsigned short int opt_border,
+				   const char *opt_align, bool opt_barebones,
+				   unsigned short int opt_border,
 				   FILE *fout)
 {
 	unsigned int col_count = 0;
+
+#ifdef MULTIBYTE
+	unsigned int cell_count = 0;
+	unsigned int *head_w, *cell_w;
+#endif
+
 	unsigned int i,
 				tmp;
 	unsigned int *widths,
@@ -230,15 +238,44 @@ const char *opt_align, bool opt_barebones, unsigned short int opt_border,
 		exit(EXIT_FAILURE);
 	}
 
+#ifdef MULTIBYTE
+	head_w = calloc(col_count, sizeof(*head_w));
+	if (!head_w) {
+	  perror("calloc");
+	  exit(EXIT_FAILURE);
+	}
+
+	/* count rows */
+	for (ptr = cells; *ptr; ptr++) {
+	  cell_count++;
+	}
+
+	cell_w = calloc(cell_count, sizeof(*cell_w));
+	if (!cell_w) {
+	  perror("calloc");
+	  exit(EXIT_FAILURE);
+	}
+#endif
+	
+
 	/* calc column widths */
-	for (i = 0; i < col_count; i++)
-		if ((tmp = strlen(headers[i])) > widths[i])
-			widths[i] = tmp;	/* don't wanna call strlen twice */
+	for (i = 0; i < col_count; i++) {
+	    if ((tmp = pg_wcswidth((unsigned char *)headers[i], strlen(headers[i]))) > widths[i]) {
+			widths[i] = tmp;
+		}
+#ifdef MULTIBYTE
+		head_w[i] = tmp;
+#endif
+	}
 
-	for (i = 0, ptr = cells; *ptr; ptr++, i++)
-		if ((tmp = strlen(*ptr)) > widths[i % col_count])
+	for (i = 0, ptr = cells; *ptr; ptr++, i++) {
+	    if ((tmp = pg_wcswidth((unsigned char *)*ptr, strlen(*ptr))) > widths[i % col_count]) {
 			widths[i % col_count] = tmp;
-
+		}
+#ifdef MULTIBYTE
+		cell_w[i] = tmp;
+#endif
+	}
 	if (opt_border == 0)
 		total_w = col_count - 1;
 	else if (opt_border == 1)
@@ -250,12 +287,14 @@ const char *opt_align, bool opt_barebones, unsigned short int opt_border,
 		total_w += widths[i];
 
 	/* print title */
-	if (title && !opt_barebones)
-	{
-		if (strlen(title) >= total_w)
+	if (title && !opt_barebones) {
+	    int tlen;
+		if ((tlen = pg_wcswidth((unsigned char *)title, strlen(title))) >= total_w) {
 			fprintf(fout, "%s\n", title);
-		else
-			fprintf(fout, "%-*s%s\n", (int) (total_w - strlen(title)) / 2, "", title);
+		}
+		else {
+			fprintf(fout, "%-*s%s\n", (int) (total_w - tlen) / 2, "", title);
+		}
 	}
 
 	/* print headers */
@@ -271,10 +310,16 @@ const char *opt_align, bool opt_barebones, unsigned short int opt_border,
 
 		for (i = 0; i < col_count; i++)
 		{
+		    int nbspace;
+#ifdef MULTIBYTE
+		    nbspace = widths[i] - head_w[i];
+#else
+		    nbspace = widths[i] - strlen(headers[i]);
+#endif
+
 			/* centered */
-			fprintf(fout, "%-*s%s%-*s",
-				 (int) floor((widths[i] - strlen(headers[i])) / 2.0), "",
-					headers[i], (int) ceil((widths[i] - strlen(headers[i])) / 2.0), "");
+			fprintf(fout, "%-*s%s%-*s", 
+					nbspace / 2, "", headers[i], (nbspace+1) / 2, "");
 
 			if (i < col_count - 1)
 			{
@@ -307,14 +352,26 @@ const char *opt_align, bool opt_barebones, unsigned short int opt_border,
 		}
 
 		/* content */
-		if (opt_align[(i) % col_count] == 'r')
+		if (opt_align[(i) % col_count] == 'r') {
+#ifdef MULTIBYTE
+		  fprintf(fout, "%*s%s",
+				  widths[i % col_count] - cell_w[i], "", cells[i] );
+#else
 			fprintf(fout, "%*s", widths[i % col_count], cells[i]);
+#endif
+		}
 		else
 		{
 			if ((i + 1) % col_count == 0 && opt_border != 2)
 				fputs(cells[i], fout);
-			else
+			else {
+#ifdef MULTIBYTE
+			  fprintf(fout, "%-s%*s", cells[i], 
+					  widths[i % col_count] - cell_w[i], "" );
+#else
 				fprintf(fout, "%-*s", widths[i % col_count], cells[i]);
+#endif
+			}
 		}
 
 		/* divider */
@@ -345,6 +402,10 @@ const char *opt_align, bool opt_barebones, unsigned short int opt_border,
 	fputc('\n', fout);
 
 	/* clean up */
+#ifdef MULTIBYTE
+	free(cell_w);
+	free(head_w);
+#endif
 	free(widths);
 }
 
@@ -360,10 +421,14 @@ print_aligned_vertical(const char *title, const char *const * headers,
 	unsigned int record = 1;
 	const char *const * ptr;
 	unsigned int i,
-				tmp,
+				tmp = 0,
 				hwidth = 0,
 				dwidth = 0;
 	char	   *divider;
+#ifdef MULTIBYTE
+	unsigned int cell_count = 0;
+	unsigned int *cell_w,*head_w;
+#endif
 
 	if (cells[0] == NULL)
 	{
@@ -371,6 +436,40 @@ print_aligned_vertical(const char *title, const char *const * headers,
 		return;
 	}
 
+#ifdef MULTIBYTE
+	/* pre-count headers */
+	for (ptr = headers; *ptr; ptr++) {
+	  col_count++;
+	}
+	head_w = calloc(col_count, sizeof(*head_w));
+	if (!head_w) {
+	  perror("calloc");
+	  exit(EXIT_FAILURE);
+	}
+	for (i = 0; i < col_count; i++)
+	{
+		if ((tmp = pg_wcswidth((unsigned char *)headers[i], strlen(headers[i]))) > hwidth)
+			hwidth = tmp;
+		head_w[i] = tmp;
+	}
+	for (ptr = cells; *ptr; ptr++) {
+	  cell_count++;
+	}
+
+	cell_w = calloc(cell_count, sizeof(*cell_w));
+	if (!cell_w) {
+	  perror("calloc");
+	  exit(EXIT_FAILURE);
+	}	
+
+	/* find longest data cell */
+	for (i = 0, ptr = cells; *ptr; ptr++, i++) {
+	  if ((tmp = pg_wcswidth((unsigned char *)*ptr, strlen(*ptr))) > dwidth) {
+			dwidth = tmp;
+	  }
+	  cell_w[i] = tmp;
+	}
+#else
 	/* count columns and find longest header */
 	for (ptr = headers; *ptr; ptr++)
 	{
@@ -380,9 +479,11 @@ print_aligned_vertical(const char *title, const char *const * headers,
 	}
 
 	/* find longest data cell */
-	for (ptr = cells; *ptr; ptr++)
+	for (ptr = cells; *ptr; ptr++) {
 		if ((tmp = strlen(*ptr)) > dwidth)
 			dwidth = tmp;
+	}
+#endif
 
 	/* print title */
 	if (!opt_barebones && title)
@@ -456,7 +557,12 @@ print_aligned_vertical(const char *title, const char *const * headers,
 
 		if (opt_border == 2)
 			fputs("| ", fout);
+#if MULTIBYTE
+		fprintf(fout, "%-s%*s", headers[i % col_count],
+				hwidth - head_w[i % col_count], "");
+#else
 		fprintf(fout, "%-*s", hwidth, headers[i % col_count]);
+#endif
 
 		if (opt_border > 0)
 			fputs(" | ", fout);
@@ -465,8 +571,13 @@ print_aligned_vertical(const char *title, const char *const * headers,
 
 		if (opt_border < 2)
 			fprintf(fout, "%s\n", *ptr);
-		else
+		else {
+#ifdef MULTIBYTE
+			fprintf(fout, "%-s%*s |\n", *ptr, dwidth - cell_w[i], "");
+#else
 			fprintf(fout, "%-*s |\n", dwidth, *ptr);
+#endif
+		}
 	}
 
 	if (opt_border == 2)
@@ -485,6 +596,10 @@ print_aligned_vertical(const char *title, const char *const * headers,
 
 	fputc('\n', fout);
 	free(divider);
+
+#ifdef MULTIBYTE
+	free(cell_w);
+#endif
 }
 
 
@@ -1037,8 +1152,13 @@ printQuery(const PGresult *result, const printQueryOpt *opt, FILE *fout)
 		exit(EXIT_FAILURE);
 	}
 
-	for (i = 0; i < nfields; i++)
+	for (i = 0; i < nfields; i++) {
+#ifdef MULTIBYTE
+		headers[i] = mbvalidate(PQfname(result, i));
+#else
 		headers[i] = PQfname(result, i);
+#endif
+	}
 
 	/* set cells */
 
@@ -1053,8 +1173,13 @@ printQuery(const PGresult *result, const printQueryOpt *opt, FILE *fout)
 	{
 		if (PQgetisnull(result, i / nfields, i % nfields))
 			cells[i] = opt->nullPrint ? opt->nullPrint : "";
-		else
+		else {
+#ifdef MULTIBYTE
+			cells[i] = mbvalidate(PQgetvalue(result, i / nfields, i % nfields));
+#else
 			cells[i] = PQgetvalue(result, i / nfields, i % nfields);
+#endif
+		}
 	}
 
 	/* set footers */
