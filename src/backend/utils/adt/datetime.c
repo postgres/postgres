@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.96 2002/09/04 20:31:27 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.97 2002/11/13 17:24:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2537,6 +2537,9 @@ DecodeNumberField(int len, char *str, int fmask,
 
 /* DecodeTimezone()
  * Interpret string as a numeric timezone.
+ *
+ * Note: we allow timezone offsets up to 13:59.  There are places that
+ * use +1300 summer time.
  */
 static int
 DecodeTimezone(char *str, int *tzp)
@@ -2562,7 +2565,7 @@ DecodeTimezone(char *str, int *tzp)
 
 		*(str + len - 2) = '\0';
 		hr = strtol((str + 1), &cp, 10);
-		if ((hr < 0) || (hr > 12))
+		if ((hr < 0) || (hr > 13))
 			return -1;
 	}
 	else
