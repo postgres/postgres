@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/prune.c,v 1.12 1998/02/26 04:32:43 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/prune.c,v 1.13 1998/04/02 07:27:15 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -61,39 +61,25 @@ prune_joinrels(List *rel_list)
 static List *
 prune_joinrel(Rel *rel, List *other_rels)
 {
-	List	   *cur = NIL;
-	List	   *return_list = NIL;
+	List	   *i = NIL;
+	List	   *result = NIL;
 
-	/* find first relation that doesn't match */
-	foreach(cur, other_rels)
+	foreach(i, other_rels)
 	{
-		Rel		   *other_rel = (Rel *) lfirst(cur);
-
-		if (!same(rel->relids, other_rel->relids))
-			break;
-	}
-
-	/* we now know cur doesn't match, or is NIL */
-	return_list = cur;
-
-	/*
-	 * remove relations that do match, we use lnext so we can remove
-	 * easily
-	 */
-	while (cur != NIL && lnext(cur) != NIL)
-	{
-		Rel		   *other_rel = (Rel *) lfirst(lnext(cur));
-
+		Rel	   *other_rel = (Rel *) lfirst(i);
+		
 		if (same(rel->relids, other_rel->relids))
 		{
 			rel->pathlist = add_pathlist(rel,
 										 rel->pathlist,
 										 other_rel->pathlist);
-			lnext(cur) = lnext(lnext(cur));		/* delete it */
 		}
-		cur = lnext(cur);
+		else
+		{
+			result = nconc(result, lcons(other_rel, NIL));
+		}
 	}
-	return return_list;
+	return (result);
 }
 
 /*
