@@ -1059,7 +1059,7 @@ From owner-pgsql-hackers@hub.org Thu Jan 20 18:45:32 2000
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id TAA00672
 	for <pgman@candle.pha.pa.us>; Thu, 20 Jan 2000 19:45:30 -0500 (EST)
-Received: from hub.org (hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.15 $) with ESMTP id TAA01989 for <pgman@candle.pha.pa.us>; Thu, 20 Jan 2000 19:39:15 -0500 (EST)
+Received: from hub.org (hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.16 $) with ESMTP id TAA01989 for <pgman@candle.pha.pa.us>; Thu, 20 Jan 2000 19:39:15 -0500 (EST)
 Received: from localhost (majordom@localhost)
 	by hub.org (8.9.3/8.9.3) with SMTP id TAA00957;
 	Thu, 20 Jan 2000 19:35:19 -0500 (EST)
@@ -1585,4 +1585,255 @@ support a couple gigs of RAM now.
   http://donb.photo.net.
 
 ************
+
+From pgsql-hackers-owner+M6019@hub.org Mon Aug 21 11:47:56 2000
+Received: from hub.org (root@hub.org [216.126.84.1])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id LAA07289
+	for <pgman@candle.pha.pa.us>; Mon, 21 Aug 2000 11:47:55 -0400 (EDT)
+Received: from hub.org (majordom@localhost [127.0.0.1])
+	by hub.org (8.10.1/8.10.1) with SMTP id e7LFlpT03383;
+	Mon, 21 Aug 2000 11:47:51 -0400 (EDT)
+Received: from mail.fct.unl.pt (fct1.si.fct.unl.pt [193.136.120.1])
+	by hub.org (8.10.1/8.10.1) with SMTP id e7LFlaT03243
+	for <pgsql-hackers@postgresql.org>; Mon, 21 Aug 2000 11:47:37 -0400 (EDT)
+Received: (qmail 7416 invoked by alias); 21 Aug 2000 15:54:33 -0000
+Received: (qmail 7410 invoked from network); 21 Aug 2000 15:54:32 -0000
+Received: from eros.si.fct.unl.pt (193.136.120.112)
+  by fct1.si.fct.unl.pt with SMTP; 21 Aug 2000 15:54:32 -0000
+Date: Mon, 21 Aug 2000 16:48:08 +0100 (WEST)
+From: =?iso-8859-1?Q?Tiago_Ant=E3o?= <tra@fct.unl.pt>
+X-Sender: tiago@eros.si.fct.unl.pt
+To: Tom Lane <tgl@sss.pgh.pa.us>
+cc: pgsql-hackers@postgresql.org
+Subject: Re: [HACKERS] Optimisation deficiency: currval('seq')-->seq scan,
+	constant-->index scan 
+In-Reply-To: <1731.966868649@sss.pgh.pa.us>
+Message-ID: <Pine.LNX.4.21.0008211626250.25226-100000@eros.si.fct.unl.pt>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+X-Mailing-List: pgsql-hackers@postgresql.org
+Precedence: bulk
+Sender: pgsql-hackers-owner@hub.org
+Status: ORr
+
+On Mon, 21 Aug 2000, Tom Lane wrote:
+
+> >   One thing it might be interesting (please tell me if you think
+> > otherwise) would be to improve pg with better statistical information, by
+> > using, for example, histograms.
+> 
+> Yes, that's been on the todo list for a while.
+
+  If it's ok and nobody is working on that, I'll look on that subject.
+  I'll start by looking at the analize portion of vacuum. I'm thinking in
+using arrays for the histogram (I've never used the array data type of
+postgres).
+  Should I use 7.0.2 or the cvs version?
+  
+
+> Interesting article.  We do most of what she talks about, but we don't
+> have anything like the ClusterRatio statistic.  We need it --- that was
+> just being discussed a few days ago in another thread.  Do you have any
+> reference on exactly how DB2 defines that stat?
+
+
+  I don't remember seeing that information spefically. From what I've
+read I can speculate:
+
+  1. They have clusterratios for both indexes and the relation itself.
+  2. They might use an index even if there is no "order by" if the table
+has a low clusterratio: just to get the RIDs, then sort the RIDs and
+fetch.
+  3. One possible way to calculate this ratio:
+     a) for tables
+         SeqScan
+            if tuple points to a next tuple on the same page then its
+"good"
+        ratio = # good tuples / # all tuples
+     b) for indexes (high speculation ratio here)
+          foreach pointed RID in index
+             if RID is in same page of next RID in index than mark as
+"good"
+
+  I suspect that if a tuple size is big (relative to page size) than the
+cluster ratio is always low.
+
+  A tuple might also be "good" if it pointed to the next page.
+
+Tiago
+
+
+From pgsql-hackers-owner+M6152@hub.org Wed Aug 23 13:00:33 2000
+Received: from hub.org (root@hub.org [216.126.84.1])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id NAA10259
+	for <pgman@candle.pha.pa.us>; Wed, 23 Aug 2000 13:00:33 -0400 (EDT)
+Received: from hub.org (majordom@localhost [127.0.0.1])
+	by hub.org (8.10.1/8.10.1) with SMTP id e7NGsPN83008;
+	Wed, 23 Aug 2000 12:54:25 -0400 (EDT)
+Received: from mail.fct.unl.pt (fct1.si.fct.unl.pt [193.136.120.1])
+	by hub.org (8.10.1/8.10.1) with SMTP id e7NGniN81749
+	for <pgsql-hackers@postgresql.org>; Wed, 23 Aug 2000 12:49:44 -0400 (EDT)
+Received: (qmail 9869 invoked by alias); 23 Aug 2000 15:10:04 -0000
+Received: (qmail 9860 invoked from network); 23 Aug 2000 15:10:04 -0000
+Received: from eros.si.fct.unl.pt (193.136.120.112)
+  by fct1.si.fct.unl.pt with SMTP; 23 Aug 2000 15:10:04 -0000
+Date: Wed, 23 Aug 2000 16:03:42 +0100 (WEST)
+From: =?iso-8859-1?Q?Tiago_Ant=E3o?= <tra@fct.unl.pt>
+X-Sender: tiago@eros.si.fct.unl.pt
+To: Tom Lane <tgl@sss.pgh.pa.us>
+cc: Jules Bean <jules@jellybean.co.uk>, pgsql-hackers@postgresql.org
+Subject: Re: [HACKERS] Optimisation deficiency: currval('seq')-->seq scan,
+	constant-->index scan 
+In-Reply-To: <27971.967041030@sss.pgh.pa.us>
+Message-ID: <Pine.LNX.4.21.0008231543340.4273-100000@eros.si.fct.unl.pt>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+X-Mailing-List: pgsql-hackers@postgresql.org
+Precedence: bulk
+Sender: pgsql-hackers-owner@hub.org
+Status: ORr
+
+Hi!
+
+On Wed, 23 Aug 2000, Tom Lane wrote:
+
+> Yes, we know about that one.  We have stats about the most common value
+> in a column, but no information about how the less-common values are
+> distributed.  We definitely need stats about several top values not just
+> one, because this phenomenon of a badly skewed distribution is pretty
+> common.
+
+
+  An end-biased histogram has stats on top values and also on the least
+frequent values. So if a there is a selection on a value that is well
+bellow average, the selectivity estimation will be more acurate. On some
+research papers I've read, it's refered that this is a better approach
+than equi-width histograms (which are said to be the "industry" standard).
+
+  I not sure whether to use a table or a array attribute on pg_stat for
+the histogram, the problem is what could be expected from the size of the
+attribute (being a text). I'm very affraid of the cost of going through
+several tuples on a table (pg_histogram?) during the optimization phase.
+
+  One other idea would be to only have better statistics for special
+attributes requested by the user... something like "analyze special
+table(column)".
+
+Best Regards,
+Tiago
+
+
+
+From pgsql-hackers-owner+M6160@hub.org Thu Aug 24 00:21:39 2000
+Received: from hub.org (root@hub.org [216.126.84.1])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id AAA27662
+	for <pgman@candle.pha.pa.us>; Thu, 24 Aug 2000 00:21:38 -0400 (EDT)
+Received: from hub.org (majordom@localhost [127.0.0.1])
+	by hub.org (8.10.1/8.10.1) with SMTP id e7O46w585951;
+	Thu, 24 Aug 2000 00:06:58 -0400 (EDT)
+Received: from sss2.sss.pgh.pa.us (sss.pgh.pa.us [209.114.166.2])
+	by hub.org (8.10.1/8.10.1) with ESMTP id e7O3uv583775
+	for <pgsql-hackers@postgresql.org>; Wed, 23 Aug 2000 23:56:57 -0400 (EDT)
+Received: from sss2.sss.pgh.pa.us (tgl@localhost [127.0.0.1])
+	by sss2.sss.pgh.pa.us (8.9.3/8.9.3) with ESMTP id XAA20973;
+	Wed, 23 Aug 2000 23:56:35 -0400 (EDT)
+To: =?iso-8859-1?Q?Tiago_Ant=E3o?= <tra@fct.unl.pt>
+cc: Jules Bean <jules@jellybean.co.uk>, pgsql-hackers@postgresql.org
+Subject: Re: [HACKERS] Optimisation deficiency: currval('seq')-->seq scan, constant-->index scan 
+In-reply-to: <Pine.LNX.4.21.0008231543340.4273-100000@eros.si.fct.unl.pt> 
+References: <Pine.LNX.4.21.0008231543340.4273-100000@eros.si.fct.unl.pt>
+Comments: In-reply-to =?iso-8859-1?Q?Tiago_Ant=E3o?= <tra@fct.unl.pt>
+	message dated "Wed, 23 Aug 2000 16:03:42 +0100"
+Date: Wed, 23 Aug 2000 23:56:35 -0400
+Message-ID: <20970.967089395@sss.pgh.pa.us>
+From: Tom Lane <tgl@sss.pgh.pa.us>
+X-Mailing-List: pgsql-hackers@postgresql.org
+Precedence: bulk
+Sender: pgsql-hackers-owner@hub.org
+Status: OR
+
+=?iso-8859-1?Q?Tiago_Ant=E3o?= <tra@fct.unl.pt> writes:
+>   One other idea would be to only have better statistics for special
+> attributes requested by the user... something like "analyze special
+> table(column)".
+
+This might actually fall out "for free" from the cheapest way of
+implementing the stats.  We've talked before about scanning btree
+indexes directly to obtain data values in sorted order, which makes
+it very easy to find the most common values.  If you do that, you
+get good stats for exactly those columns that the user has created
+indexes on.  A tad indirect but I bet it'd be effective...
+
+			regards, tom lane
+
+From pgsql-hackers-owner+M6165@hub.org Thu Aug 24 05:33:02 2000
+Received: from hub.org (root@hub.org [216.126.84.1])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id FAA14309
+	for <pgman@candle.pha.pa.us>; Thu, 24 Aug 2000 05:33:01 -0400 (EDT)
+Received: from hub.org (majordom@localhost [127.0.0.1])
+	by hub.org (8.10.1/8.10.1) with SMTP id e7O9X0584670;
+	Thu, 24 Aug 2000 05:33:00 -0400 (EDT)
+Received: from athena.office.vi.net (office-gwb.fulham.vi.net [194.88.77.158])
+	by hub.org (8.10.1/8.10.1) with ESMTP id e7O9Ix581216
+	for <pgsql-hackers@postgresql.org>; Thu, 24 Aug 2000 05:19:03 -0400 (EDT)
+Received: from grommit.office.vi.net [192.168.1.200] (mail)
+	by athena.office.vi.net with esmtp (Exim 3.12 #1 (Debian))
+	id 13Rt2Y-00073I-00; Thu, 24 Aug 2000 10:11:14 +0100
+Received: from jules by grommit.office.vi.net with local (Exim 3.12 #1 (Debian))
+	id 13Rt2Y-0005GV-00; Thu, 24 Aug 2000 10:11:14 +0100
+Date: Thu, 24 Aug 2000 10:11:14 +0100
+From: Jules Bean <jules@jellybean.co.uk>
+To: Tom Lane <tgl@sss.pgh.pa.us>
+Cc: Tiago Ant?o <tra@fct.unl.pt>, pgsql-hackers@postgresql.org
+Subject: Re: [HACKERS] Optimisation deficiency: currval('seq')-->seq scan, constant-->index scan
+Message-ID: <20000824101113.N17510@grommit.office.vi.net>
+References: <1731.966868649@sss.pgh.pa.us> <Pine.LNX.4.21.0008211626250.25226-100000@eros.si.fct.unl.pt> <20000823133418.F17510@grommit.office.vi.net> <27971.967041030@sss.pgh.pa.us>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+User-Agent: Mutt/1.2i
+In-Reply-To: <27971.967041030@sss.pgh.pa.us>; from tgl@sss.pgh.pa.us on Wed, Aug 23, 2000 at 10:30:30AM -0400
+X-Mailing-List: pgsql-hackers@postgresql.org
+Precedence: bulk
+Sender: pgsql-hackers-owner@hub.org
+Status: OR
+
+On Wed, Aug 23, 2000 at 10:30:30AM -0400, Tom Lane wrote:
+> Jules Bean <jules@jellybean.co.uk> writes:
+> > I have in a table a 'category' column which takes a small number of
+> > (basically fixed) values.  Here by 'small', I mean ~1000, while the
+> > table itself has ~10 000 000 rows. Some categories have many, many
+> > more rows than others.  In particular, there's one category which hits
+> > over half the rows.  Because of this (AIUI) postgresql assumes
+> > that the query
+> >	select ... from thistable where category='something'
+> > is best served by a seqscan, even though there is an index on
+> > category.
+> 
+> Yes, we know about that one.  We have stats about the most common value
+> in a column, but no information about how the less-common values are
+> distributed.  We definitely need stats about several top values not just
+> one, because this phenomenon of a badly skewed distribution is pretty
+> common.
+
+ISTM that that might be enough, in fact.
+
+If you have stats telling you that the most popular value is 'xyz',
+and that it constitutes 50% of the rows (i.e. 5 000 000) then you can
+conclude that, on average, other entries constitute a mere 5 000
+000/999 ~~ 5000 entries, and it would be definitely be enough.
+(That's assuming you store the number of distinct values somewhere).
+
+
+> BTW, if your highly-popular value is actually a dummy value ('UNKNOWN'
+> or something like that), a fairly effective workaround is to replace the
+> dummy entries with NULL.  The system does account for NULLs separately
+> from real values, so you'd then get stats based on the most common
+> non-dummy value.
+
+I can't really do that.  Even if I could, the distribution is very
+skewed -- so the next most common makes up a very high proportion of
+what's left.  I forget the figures exactly.
+
+Jules
 
