@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/timezone/pgtz.c,v 1.13 2004/05/23 23:26:53 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/timezone/pgtz.c,v 1.14 2004/05/24 02:30:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,24 +44,21 @@ pg_TZDIR(void)
  * Try to determine the system timezone (as opposed to the timezone
  * set in our own library).
  */
-#define T_YEAR	(60*60*24*365)
-#define T_MONTH (60*60*24*30)
+#define T_DAY	((time_t) (60*60*24))
+#define T_MONTH ((time_t) (60*60*24*31))
 
 struct tztry
 {
-	time_t		std_t,
-				dst_t;
-	char		std_time[TZ_STRLEN_MAX + 1],
-				dst_time[TZ_STRLEN_MAX + 1];
-	int			std_ofs,
-				dst_ofs;
-	struct tm	std_tm,
-				dst_tm;
+	char		std_zone_name[TZ_STRLEN_MAX + 1],
+				dst_zone_name[TZ_STRLEN_MAX + 1];
+#define MAX_TEST_TIMES 5
+	int			n_test_times;
+	time_t		test_times[MAX_TEST_TIMES];
 };
 
 
 static bool
-compare_tm(struct tm * s, struct pg_tm * p)
+compare_tm(struct tm *s, struct pg_tm *p)
 {
 	if (s->tm_sec != p->tm_sec ||
 		s->tm_min != p->tm_min ||
@@ -77,36 +74,31 @@ compare_tm(struct tm * s, struct pg_tm * p)
 }
 
 static bool
-try_timezone(char *tzname, struct tztry * tt, bool checkdst)
+try_timezone(char *tzname, struct tztry *tt)
 {
-	struct pg_tm *pgtm;
+	int			i;
+	struct tm	   *systm;
+	struct pg_tm   *pgtm;
 
 	if (!pg_tzset(tzname))
-		return false;			/* If this timezone couldn't be picked at
-								 * all */
+		return false;			/* can't handle the TZ name at all */
 
-	/* Verify standard time */
-	pgtm = pg_localtime(&(tt->std_t));
-	if (!pgtm)
-		return false;
-	if (!compare_tm(&(tt->std_tm), pgtm))
-		return false;
-
-	if (!checkdst)
-		return true;
-
-	/* Now check daylight time */
-	pgtm = pg_localtime(&(tt->dst_t));
-	if (!pgtm)
-		return false;
-	if (!compare_tm(&(tt->dst_tm), pgtm))
-		return false;
+	/* Check for match at all the test times */
+	for (i = 0; i < tt->n_test_times; i++)
+	{
+		pgtm = pg_localtime(&(tt->test_times[i]));
+		if (!pgtm)
+			return false;		/* probably shouldn't happen */
+		systm = localtime(&(tt->test_times[i]));
+		if (!compare_tm(systm, pgtm))
+			return false;
+	}
 
 	return true;
 }
 
 static int
-get_timezone_offset(struct tm * tm)
+get_timezone_offset(struct tm *tm)
 {
 #if defined(HAVE_STRUCT_TM_TM_ZONE)
 	return tm->tm_gmtoff;
@@ -150,88 +142,132 @@ win32_get_timezone_abbrev(char *tz)
  * Try to identify a timezone name (in our terminology) that matches the
  * observed behavior of the system timezone library.  We cannot assume that
  * the system TZ environment setting (if indeed there is one) matches our
- * terminology, so ignore it and just look at what localtime() returns.
+ * terminology, so we ignore it and just look at what localtime() returns.
  */
 static char *
 identify_system_timezone(void)
 {
-	static char __tzbuf[TZ_STRLEN_MAX + 1];
-	bool		std_found = false,
-				dst_found = false;
-	time_t		tnow = time(NULL);
+	static char resultbuf[TZ_STRLEN_MAX + 1];
+	time_t		tnow;
 	time_t		t;
+	int			nowisdst,
+				curisdst;
+	int			std_ofs = 0;
 	struct tztry tt;
+	struct tm  *tm;
 	char		cbuf[TZ_STRLEN_MAX + 1];
 
 	/* Initialize OS timezone library */
 	tzset();
 
+	/* No info yet */
 	memset(&tt, 0, sizeof(tt));
 
-	for (t = tnow; t < tnow + T_YEAR; t += T_MONTH)
-	{
-		struct tm  *tm = localtime(&t);
+	/*
+	 * The idea here is to scan forward from today and try to locate the
+	 * next two daylight-savings transition boundaries.  We will test for
+	 * correct results on the day before and after each boundary; this
+	 * gives at least some confidence that we've selected the right DST
+	 * rule set.
+	 */
+	tnow = time(NULL);
 
-		if (tm->tm_isdst == 0 && !std_found)
-		{
-			/* Standard time */
-			memcpy(&tt.std_tm, tm, sizeof(struct tm));
-			memset(cbuf, 0, sizeof(cbuf));
-			strftime(cbuf, sizeof(cbuf) - 1, "%Z", tm); /* zone abbr */
-			strcpy(tt.std_time, TZABBREV(cbuf));
-			tt.std_ofs = get_timezone_offset(tm);
-			tt.std_t = t;
-			std_found = true;
-		}
-		else if (tm->tm_isdst == 1 && !dst_found)
-		{
-			/* Daylight time */
-			memcpy(&tt.dst_tm, tm, sizeof(struct tm));
-			memset(cbuf, 0, sizeof(cbuf));
-			strftime(cbuf, sizeof(cbuf) - 1, "%Z", tm); /* zone abbr */
-			strcpy(tt.dst_time, TZABBREV(cbuf));
-			tt.dst_ofs = get_timezone_offset(tm);
-			tt.dst_t = t;
-			dst_found = true;
-		}
-		if (std_found && dst_found)
-			break;				/* Got both standard and daylight */
+	/*
+	 * Round back to a GMT midnight so results don't depend on local time
+	 * of day
+	 */
+	tnow -= (tnow % T_DAY);
+
+	/* Always test today, so we have at least one test point */
+	tt.test_times[tt.n_test_times++] = tnow;
+
+	tm = localtime(&tnow);
+	nowisdst = tm->tm_isdst;
+	curisdst = nowisdst;
+
+	if (curisdst == 0)
+	{
+		/* Set up STD zone name, in case we are in a non-DST zone */
+		memset(cbuf, 0, sizeof(cbuf));
+		strftime(cbuf, sizeof(cbuf) - 1, "%Z", tm); /* zone abbr */
+		strcpy(tt.std_zone_name, TZABBREV(cbuf));
+		/* Also preset std_ofs */
+		std_ofs = get_timezone_offset(tm);
 	}
 
-	if (!std_found)
+	/*
+	 * We have to look a little further ahead than one year, in case today
+	 * is just past a DST boundary that falls earlier in the year than the
+	 * next similar boundary.  Arbitrarily scan up to 14 months.
+	 */
+	for (t = tnow + T_DAY; t < tnow + T_MONTH * 14; t += T_DAY)
 	{
-		/* Failed to determine TZ! */
+		tm = localtime(&t);
+		if (tm->tm_isdst >= 0 && tm->tm_isdst != curisdst)
+		{
+			/* Found a boundary */
+			tt.test_times[tt.n_test_times++] = t - T_DAY;
+			tt.test_times[tt.n_test_times++] = t;
+			curisdst = tm->tm_isdst;
+			/* Save STD or DST zone name, also std_ofs */
+			memset(cbuf, 0, sizeof(cbuf));
+			strftime(cbuf, sizeof(cbuf) - 1, "%Z", tm); /* zone abbr */
+			if (curisdst == 0)
+			{
+				strcpy(tt.std_zone_name, TZABBREV(cbuf));
+				std_ofs = get_timezone_offset(tm);
+			}
+			else
+				strcpy(tt.dst_zone_name, TZABBREV(cbuf));
+			/* Have we found two boundaries? */
+			if (tt.n_test_times >= 5)
+				break;
+		}
+	}
+
+	/* We should have found a STD zone name by now... */
+	if (tt.std_zone_name[0] == '\0')
+	{
 		ereport(LOG,
 				(errmsg("unable to determine system timezone, defaulting to \"%s\"", "GMT"),
 				 errhint("You can specify the correct timezone in postgresql.conf.")));
 		return NULL;			/* go to GMT */
 	}
 
-	if (dst_found)
+	/* If we found DST too then try STD<ofs>DST */
+	if (tt.dst_zone_name[0] != '\0')
 	{
-		/* Try STD<ofs>DST */
-		sprintf(__tzbuf, "%s%d%s", tt.std_time, -tt.std_ofs / 3600, tt.dst_time);
-		if (try_timezone(__tzbuf, &tt, dst_found))
-			return __tzbuf;
+		snprintf(resultbuf, sizeof(resultbuf), "%s%d%s",
+				 tt.std_zone_name, -std_ofs / 3600, tt.dst_zone_name);
+		if (try_timezone(resultbuf, &tt))
+			return resultbuf;
 	}
-	/* Try just the STD timezone */
-	strcpy(__tzbuf, tt.std_time);
-	if (try_timezone(__tzbuf, &tt, dst_found))
-		return __tzbuf;
+
+	/* Try just the STD timezone (works for GMT at least) */
+	strcpy(resultbuf, tt.std_zone_name);
+	if (try_timezone(resultbuf, &tt))
+		return resultbuf;
+
+	/* Try STD<ofs> */
+	snprintf(resultbuf, sizeof(resultbuf), "%s%d",
+			 tt.std_zone_name, -std_ofs / 3600);
+	if (try_timezone(resultbuf, &tt))
+		return resultbuf;
 
 	/*
-	 * Did not find the timezone.  Fallback to try a GMT zone.  Note that the
+	 * Did not find the timezone.  Fallback to use a GMT zone.  Note that the
 	 * zic timezone database names the GMT-offset zones in POSIX style: plus
 	 * is west of Greenwich.  It's unfortunate that this is opposite of SQL
 	 * conventions.  Should we therefore change the names?  Probably not...
 	 */
-	sprintf(__tzbuf, "Etc/GMT%s%d",
-			(-tt.std_ofs > 0) ? "+" : "", -tt.std_ofs / 3600);
+	snprintf(resultbuf, sizeof(resultbuf), "Etc/GMT%s%d",
+			(-std_ofs > 0) ? "+" : "", -std_ofs / 3600);
+
 	ereport(LOG,
-	 (errmsg("could not recognize system timezone, defaulting to \"%s\"",
-			 __tzbuf),
-	errhint("You can specify the correct timezone in postgresql.conf.")));
-	return __tzbuf;
+			(errmsg("could not recognize system timezone, defaulting to \"%s\"",
+					resultbuf),
+			 errhint("You can specify the correct timezone in postgresql.conf.")));
+	return resultbuf;
 }
 
 /*
