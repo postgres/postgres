@@ -1,0 +1,16 @@
+/*
+ * Parts of config.h that you get with autoconf on other systems
+ */
+
+
+/* Since we don't do autoconf, we need to read the .in file. Ugly */
+#include "version.h.in" 
+
+#define DEF_PGPORT "5432"
+#define MAXIMUM_ALIGNOF 4
+#define MAXPGPATH 1024
+
+#define INDEX_MAX_KEYS		16
+
+#define HAVE_MEMMOVE
+#define BLCKSZ	8192

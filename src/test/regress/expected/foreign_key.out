@@ -1,0 +1,692 @@
+--
+-- FOREIGN KEY
+--
+-- MATCH FULL
+--
+-- First test, check and cascade
+--
+CREATE TABLE PKTABLE ( ptest1 int PRIMARY KEY, ptest2 text );
+NOTICE:  CREATE TABLE/PRIMARY KEY will create implicit index 'pktable_pkey' for table 'pktable'
+CREATE TABLE FKTABLE ( ftest1 int REFERENCES PKTABLE MATCH FULL ON DELETE CASCADE ON UPDATE CASCADE, ftest2 int );
+NOTICE:  CREATE TABLE will create implicit trigger(s) for FOREIGN KEY check(s)
+-- Insert test data into PKTABLE
+INSERT INTO PKTABLE VALUES (1, 'Test1');
+INSERT INTO PKTABLE VALUES (2, 'Test2');
+INSERT INTO PKTABLE VALUES (3, 'Test3');
+INSERT INTO PKTABLE VALUES (4, 'Test4');
+INSERT INTO PKTABLE VALUES (5, 'Test5');
+-- Insert successful rows into FK TABLE
+INSERT INTO FKTABLE VALUES (1, 2);
+INSERT INTO FKTABLE VALUES (2, 3);
+INSERT INTO FKTABLE VALUES (3, 4);
+INSERT INTO FKTABLE VALUES (NULL, 1);
+-- Insert a failed row into FK TABLE
+INSERT INTO FKTABLE VALUES (100, 2);
+ERROR:  <unnamed> referential integrity violation - key referenced from fktable not found in pktable
+-- Check FKTABLE
+SELECT * FROM FKTABLE;
+ ftest1 | ftest2 
+--------+--------
+      1 |      2
+      2 |      3
+      3 |      4
+        |      1
+(4 rows)
+
+-- Delete a row from PK TABLE
+DELETE FROM PKTABLE WHERE ptest1=1;
+-- Check FKTABLE for removal of matched row
+SELECT * FROM FKTABLE;
+ ftest1 | ftest2 
+--------+--------
+      2 |      3
+      3 |      4
+        |      1
+(3 rows)
+
+-- Update a row from PK TABLE
+UPDATE PKTABLE SET ptest1=1 WHERE ptest1=2;
+-- Check FKTABLE for update of matched row
+SELECT * FROM FKTABLE;
+ ftest1 | ftest2 
+--------+--------
+      3 |      4
+        |      1
+      1 |      3
+(3 rows)
+
+DROP TABLE PKTABLE;
+NOTICE:  DROP TABLE implicitly drops referential integrity trigger from table "fktable"
+DROP TABLE FKTABLE;
+--
+-- check set NULL and table constraint on multiple columns
+--
+CREATE TABLE PKTABLE ( ptest1 int, ptest2 int, ptest3 text, PRIMARY KEY(ptest1, ptest2) );
+NOTICE:  CREATE TABLE/PRIMARY KEY will create implicit index 'pktable_pkey' for table 'pktable'
+CREATE TABLE FKTABLE ( ftest1 int, ftest2 int, ftest3 int, CONSTRAINT constrname FOREIGN KEY(ftest1, ftest2) 
+                       REFERENCES PKTABLE MATCH FULL ON DELETE SET NULL ON UPDATE SET NULL);
+NOTICE:  CREATE TABLE will create implicit trigger(s) for FOREIGN KEY check(s)
+-- Insert test data into PKTABLE
+INSERT INTO PKTABLE VALUES (1, 2, 'Test1');
+INSERT INTO PKTABLE VALUES (1, 3, 'Test1-2');
+INSERT INTO PKTABLE VALUES (2, 4, 'Test2');
+INSERT INTO PKTABLE VALUES (3, 6, 'Test3');
+INSERT INTO PKTABLE VALUES (4, 8, 'Test4');
+INSERT INTO PKTABLE VALUES (5, 10, 'Test5');
+-- Insert successful rows into FK TABLE
+INSERT INTO FKTABLE VALUES (1, 2, 4);
+INSERT INTO FKTABLE VALUES (1, 3, 5);
+INSERT INTO FKTABLE VALUES (2, 4, 8);
+INSERT INTO FKTABLE VALUES (3, 6, 12);
+INSERT INTO FKTABLE VALUES (NULL, NULL, 0);
+-- Insert failed rows into FK TABLE
+INSERT INTO FKTABLE VALUES (100, 2, 4);
+ERROR:  constrname referential integrity violation - key referenced from fktable not found in pktable
+INSERT INTO FKTABLE VALUES (2, 2, 4);
+ERROR:  constrname referential integrity violation - key referenced from fktable not found in pktable
+INSERT INTO FKTABLE VALUES (NULL, 2, 4);
+ERROR:  constrname referential integrity violation - MATCH FULL doesn't allow mixing of NULL and NON-NULL key values
+INSERT INTO FKTABLE VALUES (1, NULL, 4);
+ERROR:  constrname referential integrity violation - MATCH FULL doesn't allow mixing of NULL and NON-NULL key values
+-- Check FKTABLE
+SELECT * FROM FKTABLE;
+ ftest1 | ftest2 | ftest3 
+--------+--------+--------
+      1 |      2 |      4
+      1 |      3 |      5
+      2 |      4 |      8
+      3 |      6 |     12
+        |        |      0
+(5 rows)
+
+-- Delete a row from PK TABLE
+DELETE FROM PKTABLE WHERE ptest1=1 and ptest2=2;
+-- Check FKTABLE for removal of matched row
+SELECT * FROM FKTABLE;
+ ftest1 | ftest2 | ftest3 
+--------+--------+--------
+      1 |      3 |      5
+      2 |      4 |      8
+      3 |      6 |     12
+        |        |      0
+        |        |      4
+(5 rows)
+
+-- Delete another row from PK TABLE
+DELETE FROM PKTABLE WHERE ptest1=5 and ptest2=10;
+-- Check FKTABLE (should be no change)
+SELECT * FROM FKTABLE;
+ ftest1 | ftest2 | ftest3 
+--------+--------+--------
+      1 |      3 |      5
+      2 |      4 |      8
+      3 |      6 |     12
+        |        |      0
+        |        |      4
+(5 rows)
+
+-- Update a row from PK TABLE
+UPDATE PKTABLE SET ptest1=1 WHERE ptest1=2;
+-- Check FKTABLE for update of matched row
+SELECT * FROM FKTABLE;
+ ftest1 | ftest2 | ftest3 
+--------+--------+--------
+      1 |      3 |      5
+      3 |      6 |     12
+        |        |      0
+        |        |      4
+        |        |      8
+(5 rows)
+
+DROP TABLE PKTABLE;
+NOTICE:  DROP TABLE implicitly drops referential integrity trigger from table "fktable"
+DROP TABLE FKTABLE;
+--
+-- check set default and table constraint on multiple columns
+--
+CREATE TABLE PKTABLE ( ptest1 int, ptest2 int, ptest3 text, PRIMARY KEY(ptest1, ptest2) );
+NOTICE:  CREATE TABLE/PRIMARY KEY will create implicit index 'pktable_pkey' for table 'pktable'
+CREATE TABLE FKTABLE ( ftest1 int DEFAULT -1, ftest2 int DEFAULT -2, ftest3 int, CONSTRAINT constrname2 FOREIGN KEY(ftest1, ftest2) 
+                       REFERENCES PKTABLE MATCH FULL ON DELETE SET DEFAULT ON UPDATE SET DEFAULT);
+NOTICE:  CREATE TABLE will create implicit trigger(s) for FOREIGN KEY check(s)
+-- Insert a value in PKTABLE for default
+INSERT INTO PKTABLE VALUES (-1, -2, 'The Default!');
+-- Insert test data into PKTABLE
+INSERT INTO PKTABLE VALUES (1, 2, 'Test1');
+INSERT INTO PKTABLE VALUES (1, 3, 'Test1-2');
+INSERT INTO PKTABLE VALUES (2, 4, 'Test2');
+INSERT INTO PKTABLE VALUES (3, 6, 'Test3');
+INSERT INTO PKTABLE VALUES (4, 8, 'Test4');
+INSERT INTO PKTABLE VALUES (5, 10, 'Test5');
+-- Insert successful rows into FK TABLE
+INSERT INTO FKTABLE VALUES (1, 2, 4);
+INSERT INTO FKTABLE VALUES (1, 3, 5);
+INSERT INTO FKTABLE VALUES (2, 4, 8);
+INSERT INTO FKTABLE VALUES (3, 6, 12);
+INSERT INTO FKTABLE VALUES (NULL, NULL, 0);
+-- Insert failed rows into FK TABLE
+INSERT INTO FKTABLE VALUES (100, 2, 4);
+ERROR:  constrname2 referential integrity violation - key referenced from fktable not found in pktable
+INSERT INTO FKTABLE VALUES (2, 2, 4);
+ERROR:  constrname2 referential integrity violation - key referenced from fktable not found in pktable
+INSERT INTO FKTABLE VALUES (NULL, 2, 4);
+ERROR:  constrname2 referential integrity violation - MATCH FULL doesn't allow mixing of NULL and NON-NULL key values
+INSERT INTO FKTABLE VALUES (1, NULL, 4);
+ERROR:  constrname2 referential integrity violation - MATCH FULL doesn't allow mixing of NULL and NON-NULL key values
+-- Check FKTABLE
+SELECT * FROM FKTABLE;
+ ftest1 | ftest2 | ftest3 
+--------+--------+--------
+      1 |      2 |      4
+      1 |      3 |      5
+      2 |      4 |      8
+      3 |      6 |     12
+        |        |      0
+(5 rows)
+
+-- Delete a row from PK TABLE
+DELETE FROM PKTABLE WHERE ptest1=1 and ptest2=2;
+-- Check FKTABLE to check for removal
+SELECT * FROM FKTABLE;
+ ftest1 | ftest2 | ftest3 
+--------+--------+--------
+      1 |      3 |      5
+      2 |      4 |      8
+      3 |      6 |     12
+        |        |      0
+     -1 |     -2 |      4
+(5 rows)
+
+-- Delete another row from PK TABLE
+DELETE FROM PKTABLE WHERE ptest1=5 and ptest2=10;
+-- Check FKTABLE (should be no change)
+SELECT * FROM FKTABLE;
+ ftest1 | ftest2 | ftest3 
+--------+--------+--------
+      1 |      3 |      5
+      2 |      4 |      8
+      3 |      6 |     12
+        |        |      0
+     -1 |     -2 |      4
+(5 rows)
+
+-- Update a row from PK TABLE
+UPDATE PKTABLE SET ptest1=1 WHERE ptest1=2;
+-- Check FKTABLE for update of matched row
+SELECT * FROM FKTABLE;
+ ftest1 | ftest2 | ftest3 
+--------+--------+--------
+      1 |      3 |      5
+      3 |      6 |     12
+        |        |      0
+     -1 |     -2 |      4
+     -1 |     -2 |      8
+(5 rows)
+
+DROP TABLE PKTABLE;
+NOTICE:  DROP TABLE implicitly drops referential integrity trigger from table "fktable"
+DROP TABLE FKTABLE;
+--
+-- First test, check with no on delete or on update
+--
+CREATE TABLE PKTABLE ( ptest1 int PRIMARY KEY, ptest2 text );
+NOTICE:  CREATE TABLE/PRIMARY KEY will create implicit index 'pktable_pkey' for table 'pktable'
+CREATE TABLE FKTABLE ( ftest1 int REFERENCES PKTABLE MATCH FULL, ftest2 int );
+NOTICE:  CREATE TABLE will create implicit trigger(s) for FOREIGN KEY check(s)
+-- Insert test data into PKTABLE
+INSERT INTO PKTABLE VALUES (1, 'Test1');
+INSERT INTO PKTABLE VALUES (2, 'Test2');
+INSERT INTO PKTABLE VALUES (3, 'Test3');
+INSERT INTO PKTABLE VALUES (4, 'Test4');
+INSERT INTO PKTABLE VALUES (5, 'Test5');
+-- Insert successful rows into FK TABLE
+INSERT INTO FKTABLE VALUES (1, 2);
+INSERT INTO FKTABLE VALUES (2, 3);
+INSERT INTO FKTABLE VALUES (3, 4);
+INSERT INTO FKTABLE VALUES (NULL, 1);
+-- Insert a failed row into FK TABLE
+INSERT INTO FKTABLE VALUES (100, 2);
+ERROR:  <unnamed> referential integrity violation - key referenced from fktable not found in pktable
+-- Check FKTABLE
+SELECT * FROM FKTABLE;
+ ftest1 | ftest2 
+--------+--------
+      1 |      2
+      2 |      3
+      3 |      4
+        |      1
+(4 rows)
+
+-- Check PKTABLE
+SELECT * FROM PKTABLE;
+ ptest1 | ptest2 
+--------+--------
+      1 | Test1
+      2 | Test2
+      3 | Test3
+      4 | Test4
+      5 | Test5
+(5 rows)
+
+-- Delete a row from PK TABLE (should fail)
+DELETE FROM PKTABLE WHERE ptest1=1;
+ERROR:  <unnamed> referential integrity violation - key in pktable still referenced from fktable
+-- Delete a row from PK TABLE (should succeed)
+DELETE FROM PKTABLE WHERE ptest1=5;
+-- Check PKTABLE for deletes
+SELECT * FROM PKTABLE;
+ ptest1 | ptest2 
+--------+--------
+      1 | Test1
+      2 | Test2
+      3 | Test3
+      4 | Test4
+(4 rows)
+
+-- Update a row from PK TABLE (should fail)
+UPDATE PKTABLE SET ptest1=0 WHERE ptest1=2;
+ERROR:  <unnamed> referential integrity violation - key in pktable still referenced from fktable
+-- Update a row from PK TABLE (should succeed)
+UPDATE PKTABLE SET ptest1=0 WHERE ptest1=4;
+-- Check PKTABLE for updates
+SELECT * FROM PKTABLE;
+ ptest1 | ptest2 
+--------+--------
+      1 | Test1
+      2 | Test2
+      3 | Test3
+      0 | Test4
+(4 rows)
+
+DROP TABLE PKTABLE;
+NOTICE:  DROP TABLE implicitly drops referential integrity trigger from table "fktable"
+DROP TABLE FKTABLE;
+-- MATCH unspecified
+-- Base test restricting update/delete
+CREATE TABLE PKTABLE ( ptest1 int, ptest2 int, ptest3 int, ptest4 text, PRIMARY KEY(ptest1, ptest2, ptest3) );
+NOTICE:  CREATE TABLE/PRIMARY KEY will create implicit index 'pktable_pkey' for table 'pktable'
+CREATE TABLE FKTABLE ( ftest1 int, ftest2 int, ftest3 int, ftest4 int,  CONSTRAINT constrname3
+			FOREIGN KEY(ftest1, ftest2, ftest3) REFERENCES PKTABLE);
+NOTICE:  CREATE TABLE will create implicit trigger(s) for FOREIGN KEY check(s)
+-- Insert Primary Key values
+INSERT INTO PKTABLE VALUES (1, 2, 3, 'test1');
+INSERT INTO PKTABLE VALUES (1, 3, 3, 'test2');
+INSERT INTO PKTABLE VALUES (2, 3, 4, 'test3');
+INSERT INTO PKTABLE VALUES (2, 4, 5, 'test4');
+-- Insert Foreign Key values
+INSERT INTO FKTABLE VALUES (1, 2, 3, 1); 
+INSERT INTO FKTABLE VALUES (NULL, 2, 3, 2);
+INSERT INTO FKTABLE VALUES (2, NULL, 3, 3);
+INSERT INTO FKTABLE VALUES (NULL, 2, 7, 4);
+INSERT INTO FKTABLE VALUES (NULL, 3, 4, 5);
+-- Insert a failed values
+INSERT INTO FKTABLE VALUES (1, 2, 7, 6);
+ERROR:  constrname3 referential integrity violation - key referenced from fktable not found in pktable
+-- Show FKTABLE
+SELECT * from FKTABLE;
+ ftest1 | ftest2 | ftest3 | ftest4 
+--------+--------+--------+--------
+      1 |      2 |      3 |      1
+        |      2 |      3 |      2
+      2 |        |      3 |      3
+        |      2 |      7 |      4
+        |      3 |      4 |      5
+(5 rows)
+
+-- Try to update something that should fail
+UPDATE PKTABLE set ptest2=5 where ptest2=2;
+ERROR:  constrname3 referential integrity violation - key in pktable still referenced from fktable
+-- Try to update something that should succeed
+UPDATE PKTABLE set ptest1=1 WHERE ptest2=3;
+-- Try to delete something that should fail
+DELETE FROM PKTABLE where ptest1=1 and ptest2=2 and ptest3=3;
+ERROR:  constrname3 referential integrity violation - key in pktable still referenced from fktable
+-- Try to delete something that should work
+DELETE FROM PKTABLE where ptest1=2;
+-- Show PKTABLE and FKTABLE
+SELECT * from PKTABLE;
+ ptest1 | ptest2 | ptest3 | ptest4 
+--------+--------+--------+--------
+      1 |      2 |      3 | test1
+      1 |      3 |      3 | test2
+      1 |      3 |      4 | test3
+(3 rows)
+
+SELECT * from FKTABLE;
+ ftest1 | ftest2 | ftest3 | ftest4 
+--------+--------+--------+--------
+      1 |      2 |      3 |      1
+        |      2 |      3 |      2
+      2 |        |      3 |      3
+        |      2 |      7 |      4
+        |      3 |      4 |      5
+(5 rows)
+
+DROP TABLE FKTABLE;
+NOTICE:  DROP TABLE implicitly drops referential integrity trigger from table "pktable"
+NOTICE:  DROP TABLE implicitly drops referential integrity trigger from table "pktable"
+DROP TABLE PKTABLE;
+-- cascade update/delete
+CREATE TABLE PKTABLE ( ptest1 int, ptest2 int, ptest3 int, ptest4 text, PRIMARY KEY(ptest1, ptest2, ptest3) );
+NOTICE:  CREATE TABLE/PRIMARY KEY will create implicit index 'pktable_pkey' for table 'pktable'
+CREATE TABLE FKTABLE ( ftest1 int, ftest2 int, ftest3 int, ftest4 int,  CONSTRAINT constrname3
+			FOREIGN KEY(ftest1, ftest2, ftest3) REFERENCES PKTABLE
+			ON DELETE CASCADE ON UPDATE CASCADE);
+NOTICE:  CREATE TABLE will create implicit trigger(s) for FOREIGN KEY check(s)
+-- Insert Primary Key values
+INSERT INTO PKTABLE VALUES (1, 2, 3, 'test1');
+INSERT INTO PKTABLE VALUES (1, 3, 3, 'test2');
+INSERT INTO PKTABLE VALUES (2, 3, 4, 'test3');
+INSERT INTO PKTABLE VALUES (2, 4, 5, 'test4');
+-- Insert Foreign Key values
+INSERT INTO FKTABLE VALUES (1, 2, 3, 1); 
+INSERT INTO FKTABLE VALUES (NULL, 2, 3, 2);
+INSERT INTO FKTABLE VALUES (2, NULL, 3, 3);
+INSERT INTO FKTABLE VALUES (NULL, 2, 7, 4);
+INSERT INTO FKTABLE VALUES (NULL, 3, 4, 5);
+-- Insert a failed values
+INSERT INTO FKTABLE VALUES (1, 2, 7, 6);
+ERROR:  constrname3 referential integrity violation - key referenced from fktable not found in pktable
+-- Show FKTABLE
+SELECT * from FKTABLE;
+ ftest1 | ftest2 | ftest3 | ftest4 
+--------+--------+--------+--------
+      1 |      2 |      3 |      1
+        |      2 |      3 |      2
+      2 |        |      3 |      3
+        |      2 |      7 |      4
+        |      3 |      4 |      5
+(5 rows)
+
+-- Try to update something that will cascade
+UPDATE PKTABLE set ptest2=5 where ptest2=2;
+-- Try to update something that should not cascade
+UPDATE PKTABLE set ptest1=1 WHERE ptest2=3;
+-- Show PKTABLE and FKTABLE
+SELECT * from PKTABLE;
+ ptest1 | ptest2 | ptest3 | ptest4 
+--------+--------+--------+--------
+      2 |      4 |      5 | test4
+      1 |      5 |      3 | test1
+      1 |      3 |      3 | test2
+      1 |      3 |      4 | test3
+(4 rows)
+
+SELECT * from FKTABLE;
+ ftest1 | ftest2 | ftest3 | ftest4 
+--------+--------+--------+--------
+        |      2 |      3 |      2
+      2 |        |      3 |      3
+        |      2 |      7 |      4
+        |      3 |      4 |      5
+      1 |      5 |      3 |      1
+(5 rows)
+
+-- Try to delete something that should cascade
+DELETE FROM PKTABLE where ptest1=1 and ptest2=5 and ptest3=3;
+-- Show PKTABLE and FKTABLE
+SELECT * from PKTABLE;
+ ptest1 | ptest2 | ptest3 | ptest4 
+--------+--------+--------+--------
+      2 |      4 |      5 | test4
+      1 |      3 |      3 | test2
+      1 |      3 |      4 | test3
+(3 rows)
+
+SELECT * from FKTABLE;
+ ftest1 | ftest2 | ftest3 | ftest4 
+--------+--------+--------+--------
+        |      2 |      3 |      2
+      2 |        |      3 |      3
+        |      2 |      7 |      4
+        |      3 |      4 |      5
+(4 rows)
+
+-- Try to delete something that should not have a cascade
+DELETE FROM PKTABLE where ptest1=2;
+-- Show PKTABLE and FKTABLE
+SELECT * from PKTABLE;
+ ptest1 | ptest2 | ptest3 | ptest4 
+--------+--------+--------+--------
+      1 |      3 |      3 | test2
+      1 |      3 |      4 | test3
+(2 rows)
+
+SELECT * from FKTABLE;
+ ftest1 | ftest2 | ftest3 | ftest4 
+--------+--------+--------+--------
+        |      2 |      3 |      2
+      2 |        |      3 |      3
+        |      2 |      7 |      4
+        |      3 |      4 |      5
+(4 rows)
+
+DROP TABLE FKTABLE;
+NOTICE:  DROP TABLE implicitly drops referential integrity trigger from table "pktable"
+NOTICE:  DROP TABLE implicitly drops referential integrity trigger from table "pktable"
+DROP TABLE PKTABLE;
+-- set null update / set default delete
+CREATE TABLE PKTABLE ( ptest1 int, ptest2 int, ptest3 int, ptest4 text, PRIMARY KEY(ptest1, ptest2, ptest3) );
+NOTICE:  CREATE TABLE/PRIMARY KEY will create implicit index 'pktable_pkey' for table 'pktable'
+CREATE TABLE FKTABLE ( ftest1 int DEFAULT 0, ftest2 int, ftest3 int, ftest4 int,  CONSTRAINT constrname3
+			FOREIGN KEY(ftest1, ftest2, ftest3) REFERENCES PKTABLE
+			ON DELETE SET DEFAULT ON UPDATE SET NULL);
+NOTICE:  CREATE TABLE will create implicit trigger(s) for FOREIGN KEY check(s)
+-- Insert Primary Key values
+INSERT INTO PKTABLE VALUES (1, 2, 3, 'test1');
+INSERT INTO PKTABLE VALUES (1, 3, 3, 'test2');
+INSERT INTO PKTABLE VALUES (2, 3, 4, 'test3');
+INSERT INTO PKTABLE VALUES (2, 4, 5, 'test4');
+-- Insert Foreign Key values
+INSERT INTO FKTABLE VALUES (1, 2, 3, 1); 
+INSERT INTO FKTABLE VALUES (2, 3, 4, 1); 
+INSERT INTO FKTABLE VALUES (NULL, 2, 3, 2);
+INSERT INTO FKTABLE VALUES (2, NULL, 3, 3);
+INSERT INTO FKTABLE VALUES (NULL, 2, 7, 4);
+INSERT INTO FKTABLE VALUES (NULL, 3, 4, 5);
+-- Insert a failed values
+INSERT INTO FKTABLE VALUES (1, 2, 7, 6);
+ERROR:  constrname3 referential integrity violation - key referenced from fktable not found in pktable
+-- Show FKTABLE
+SELECT * from FKTABLE;
+ ftest1 | ftest2 | ftest3 | ftest4 
+--------+--------+--------+--------
+      1 |      2 |      3 |      1
+      2 |      3 |      4 |      1
+        |      2 |      3 |      2
+      2 |        |      3 |      3
+        |      2 |      7 |      4
+        |      3 |      4 |      5
+(6 rows)
+
+-- Try to update something that will set null
+UPDATE PKTABLE set ptest2=5 where ptest2=2;
+-- Try to update something that should not set null
+UPDATE PKTABLE set ptest2=2 WHERE ptest2=3 and ptest1=1;
+-- Show PKTABLE and FKTABLE
+SELECT * from PKTABLE;
+ ptest1 | ptest2 | ptest3 | ptest4 
+--------+--------+--------+--------
+      2 |      3 |      4 | test3
+      2 |      4 |      5 | test4
+      1 |      5 |      3 | test1
+      1 |      2 |      3 | test2
+(4 rows)
+
+SELECT * from FKTABLE;
+ ftest1 | ftest2 | ftest3 | ftest4 
+--------+--------+--------+--------
+      2 |      3 |      4 |      1
+        |      2 |      3 |      2
+      2 |        |      3 |      3
+        |      2 |      7 |      4
+        |      3 |      4 |      5
+      1 |        |      3 |      1
+(6 rows)
+
+-- Try to delete something that should set default
+DELETE FROM PKTABLE where ptest1=2 and ptest2=3 and ptest3=4;
+-- Show PKTABLE and FKTABLE
+SELECT * from PKTABLE;
+ ptest1 | ptest2 | ptest3 | ptest4 
+--------+--------+--------+--------
+      2 |      4 |      5 | test4
+      1 |      5 |      3 | test1
+      1 |      2 |      3 | test2
+(3 rows)
+
+SELECT * from FKTABLE;
+ ftest1 | ftest2 | ftest3 | ftest4 
+--------+--------+--------+--------
+        |      2 |      3 |      2
+      2 |        |      3 |      3
+        |      2 |      7 |      4
+        |      3 |      4 |      5
+      1 |        |      3 |      1
+      0 |        |        |      1
+(6 rows)
+
+-- Try to delete something that should not set default
+DELETE FROM PKTABLE where ptest2=5;
+-- Show PKTABLE and FKTABLE
+SELECT * from PKTABLE;
+ ptest1 | ptest2 | ptest3 | ptest4 
+--------+--------+--------+--------
+      2 |      4 |      5 | test4
+      1 |      2 |      3 | test2
+(2 rows)
+
+SELECT * from FKTABLE;
+ ftest1 | ftest2 | ftest3 | ftest4 
+--------+--------+--------+--------
+        |      2 |      3 |      2
+      2 |        |      3 |      3
+        |      2 |      7 |      4
+        |      3 |      4 |      5
+      1 |        |      3 |      1
+      0 |        |        |      1
+(6 rows)
+
+DROP TABLE FKTABLE;
+NOTICE:  DROP TABLE implicitly drops referential integrity trigger from table "pktable"
+NOTICE:  DROP TABLE implicitly drops referential integrity trigger from table "pktable"
+DROP TABLE PKTABLE;
+-- set default update / set null delete
+CREATE TABLE PKTABLE ( ptest1 int, ptest2 int, ptest3 int, ptest4 text, PRIMARY KEY(ptest1, ptest2, ptest3) );
+NOTICE:  CREATE TABLE/PRIMARY KEY will create implicit index 'pktable_pkey' for table 'pktable'
+CREATE TABLE FKTABLE ( ftest1 int DEFAULT 0, ftest2 int DEFAULT -1, ftest3 int, ftest4 int,  CONSTRAINT constrname3
+			FOREIGN KEY(ftest1, ftest2, ftest3) REFERENCES PKTABLE
+			ON DELETE SET NULL ON UPDATE SET DEFAULT);
+NOTICE:  CREATE TABLE will create implicit trigger(s) for FOREIGN KEY check(s)
+-- Insert Primary Key values
+INSERT INTO PKTABLE VALUES (1, 2, 3, 'test1');
+INSERT INTO PKTABLE VALUES (1, 3, 3, 'test2');
+INSERT INTO PKTABLE VALUES (2, 3, 4, 'test3');
+INSERT INTO PKTABLE VALUES (2, 4, 5, 'test4');
+INSERT INTO PKTABLE VALUES (2, -1, 5, 'test5');
+-- Insert Foreign Key values
+INSERT INTO FKTABLE VALUES (1, 2, 3, 1); 
+INSERT INTO FKTABLE VALUES (2, 3, 4, 1); 
+INSERT INTO FKTABLE VALUES (2, 4, 5, 1);
+INSERT INTO FKTABLE VALUES (NULL, 2, 3, 2);
+INSERT INTO FKTABLE VALUES (2, NULL, 3, 3);
+INSERT INTO FKTABLE VALUES (NULL, 2, 7, 4);
+INSERT INTO FKTABLE VALUES (NULL, 3, 4, 5);
+-- Insert a failed values
+INSERT INTO FKTABLE VALUES (1, 2, 7, 6);
+ERROR:  constrname3 referential integrity violation - key referenced from fktable not found in pktable
+-- Show FKTABLE
+SELECT * from FKTABLE;
+ ftest1 | ftest2 | ftest3 | ftest4 
+--------+--------+--------+--------
+      1 |      2 |      3 |      1
+      2 |      3 |      4 |      1
+      2 |      4 |      5 |      1
+        |      2 |      3 |      2
+      2 |        |      3 |      3
+        |      2 |      7 |      4
+        |      3 |      4 |      5
+(7 rows)
+
+-- Try to update something that will fail
+UPDATE PKTABLE set ptest2=5 where ptest2=2;
+ERROR:  constrname3 referential integrity violation - key referenced from fktable not found in pktable
+-- Try to update something that will set default
+UPDATE PKTABLE set ptest1=0, ptest2=5, ptest3=10 where ptest2=2;
+UPDATE PKTABLE set ptest2=10 where ptest2=4;
+-- Try to update something that should not set default
+UPDATE PKTABLE set ptest2=2 WHERE ptest2=3 and ptest1=1;
+-- Show PKTABLE and FKTABLE
+SELECT * from PKTABLE;
+ ptest1 | ptest2 | ptest3 | ptest4 
+--------+--------+--------+--------
+      2 |      3 |      4 | test3
+      2 |     -1 |      5 | test5
+      0 |      5 |     10 | test1
+      2 |     10 |      5 | test4
+      1 |      2 |      3 | test2
+(5 rows)
+
+SELECT * from FKTABLE;
+ ftest1 | ftest2 | ftest3 | ftest4 
+--------+--------+--------+--------
+      2 |      3 |      4 |      1
+        |      2 |      3 |      2
+      2 |        |      3 |      3
+        |      2 |      7 |      4
+        |      3 |      4 |      5
+      0 |     -1 |        |      1
+      2 |     -1 |      5 |      1
+(7 rows)
+
+-- Try to delete something that should set null
+DELETE FROM PKTABLE where ptest1=2 and ptest2=3 and ptest3=4;
+-- Show PKTABLE and FKTABLE
+SELECT * from PKTABLE;
+ ptest1 | ptest2 | ptest3 | ptest4 
+--------+--------+--------+--------
+      2 |     -1 |      5 | test5
+      0 |      5 |     10 | test1
+      2 |     10 |      5 | test4
+      1 |      2 |      3 | test2
+(4 rows)
+
+SELECT * from FKTABLE;
+ ftest1 | ftest2 | ftest3 | ftest4 
+--------+--------+--------+--------
+        |      2 |      3 |      2
+      2 |        |      3 |      3
+        |      2 |      7 |      4
+        |      3 |      4 |      5
+      0 |     -1 |        |      1
+      2 |     -1 |      5 |      1
+        |        |        |      1
+(7 rows)
+
+-- Try to delete something that should not set null
+DELETE FROM PKTABLE where ptest2=5;
+-- Show PKTABLE and FKTABLE
+SELECT * from PKTABLE;
+ ptest1 | ptest2 | ptest3 | ptest4 
+--------+--------+--------+--------
+      2 |     -1 |      5 | test5
+      2 |     10 |      5 | test4
+      1 |      2 |      3 | test2
+(3 rows)
+
+SELECT * from FKTABLE;
+ ftest1 | ftest2 | ftest3 | ftest4 
+--------+--------+--------+--------
+        |      2 |      3 |      2
+      2 |        |      3 |      3
+        |      2 |      7 |      4
+        |      3 |      4 |      5
+      0 |     -1 |        |      1
+      2 |     -1 |      5 |      1
+        |        |        |      1
+(7 rows)
+
+DROP TABLE FKTABLE;
+NOTICE:  DROP TABLE implicitly drops referential integrity trigger from table "pktable"
+NOTICE:  DROP TABLE implicitly drops referential integrity trigger from table "pktable"
+DROP TABLE PKTABLE;
