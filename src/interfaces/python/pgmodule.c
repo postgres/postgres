@@ -102,6 +102,9 @@ static PyObject *pg_default_passwd;		/* default password */
 
 #endif	 /* DEFAULT_VARS */
 
+DL_EXPORT(void) init_pg(void);
+int *get_type_array(PGresult *result, int nfields);
+
 /* --------------------------------------------------------------------- */
 /* OBJECTS DECLARATION */
 
@@ -476,7 +479,6 @@ static PyObject *
 pgsource_oidstatus(pgsourceobject * self, PyObject * args)
 {
 	long		oid;
-	const char *status;
 
 	/* checks validity */
 	if (!check_source_obj(self, CHECK_RESULT))
