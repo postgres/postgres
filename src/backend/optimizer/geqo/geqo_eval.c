@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/optimizer/geqo/geqo_eval.c,v 1.71 2004/08/29 05:06:43 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/optimizer/geqo/geqo_eval.c,v 1.72 2004/12/15 21:13:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -80,11 +80,16 @@ geqo_eval(Gene *tour, int num_gene, GeqoEvalData *evaldata)
 	oldcxt = MemoryContextSwitchTo(mycontext);
 
 	/*
-	 * preserve root->join_rel_list, which gimme_tree changes; without
-	 * this, it'll be pointing at recycled storage after the
-	 * MemoryContextDelete below.
+	 * gimme_tree will add entries to root->join_rel_list, which may or may
+	 * not already contain some entries.  The newly added entries will be
+	 * recycled by the MemoryContextDelete below, so we must ensure that
+	 * the list is restored to its former state before exiting.  With the
+	 * new List implementation, the easiest way is to make a duplicate list
+	 * that gimme_tree can modify.
 	 */
 	savelist = evaldata->root->join_rel_list;
+
+	evaldata->root->join_rel_list = list_copy(savelist);
 
 	/* construct the best path for the given combination of relations */
 	joinrel = gimme_tree(tour, num_gene, evaldata);
