@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/pg_dump/Attic/Makefile.in,v 1.13.2.1 2000/11/02 16:54:21 wieck Exp $
+#    $Header: /cvsroot/pgsql/src/bin/pg_dump/Attic/Makefile.in,v 1.13.2.2 2000/11/02 17:33:41 wieck Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -41,7 +41,6 @@ submake:
 install: pg_dump
 	$(INSTALL) $(INSTL_EXE_OPTS) pg_dump$(X) $(BINDIR)/pg_dump$(X)
 	$(INSTALL) $(INSTL_EXE_OPTS) pg_dumpall $(BINDIR)/pg_dumpall
-	$(INSTALL) $(INSTL_EXE_OPTS) pg_dumpaccounts $(BINDIR)/pg_dumpaccounts
 	$(INSTALL) $(INSTL_EXE_OPTS) pg_upgrade $(BINDIR)/pg_upgrade
 
 depend dep:
