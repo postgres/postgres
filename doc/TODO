@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Mon Oct  9 15:41:14 EDT 2000
+Last updated:		Wed Oct 11 21:22:25 EDT 2000
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -129,7 +129,7 @@ COMMANDS
 * Auto-destroy sequence on DROP of table with SERIAL(Ryan)
 * Allow LOCK TABLE tab1, tab2, tab3 so all tables locked in unison [lock]
 * Allow INSERT/UPDATE of system-generated oid value for a row
-* Allow ESCAPE '\' at the end of LIKE for ANSI compliance [like]
+* -Allow ESCAPE '\' at the end of LIKE for ANSI compliance (Thomas)
 * Rewrite the LIKE handling by rewriting the user string with the 
   supplied ESCAPE [like]
 * Allow RULE recompilation
