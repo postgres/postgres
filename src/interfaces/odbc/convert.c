@@ -193,7 +193,7 @@ timestamp2stime(const char *str, SIMPLE_TIME *st, BOOL *bZone, int *zone)
 			}
 			for (i = 1; i < 10; i++)
 			{
-				if (!isdigit(rest[i]))
+				if (!isdigit((unsigned char) rest[i]))
 					break;
 			}
 			for (; i < 10; i++)
@@ -1351,7 +1351,7 @@ copy_statement_with_parameters(StatementClass *stmt)
 					while (isspace((unsigned char) old_statement[++opos]));
 				}
 				if (strnicmp(&old_statement[opos], "call", lit_call_len) ||
-					!isspace(old_statement[opos + lit_call_len]))
+					!isspace((unsigned char) old_statement[opos + lit_call_len]))
 				{
 					opos--;
 					continue;
@@ -1407,7 +1407,7 @@ copy_statement_with_parameters(StatementClass *stmt)
 				in_dquote = TRUE;
 			else
 			{
-				if (isspace(oldchar))
+				if (isspace((unsigned char) oldchar))
 				{
 					if (!prev_token_end)
 					{

@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: pgcrypto.c,v 1.11 2001/11/20 15:50:53 momjian Exp $
+ * $Id: pgcrypto.c,v 1.12 2001/12/30 23:09:41 tgl Exp $
  */
 
 #include <postgres.h>
@@ -556,7 +556,7 @@ find_provider(text *name,
 
 	p = VARDATA(name);
 	for (i = 0; i < len; i++)
-		buf[i] = tolower(p[i]);
+		buf[i] = tolower((unsigned char) p[i]);
 	buf[len] = 0;
 
 	err = provider_lookup(buf, &res);

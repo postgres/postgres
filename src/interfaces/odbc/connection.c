@@ -1092,7 +1092,7 @@ CC_send_query(ConnectionClass *self, char *query, QueryInfo *qi)
 
 	ReadyToReturn = FALSE;
 	empty_reqs = 0;
-	for (wq = query; isspace(*wq); wq++)
+	for (wq = query; isspace((unsigned char) *wq); wq++)
 		;
 	if (*wq == '\0')
 		empty_reqs = 1;

@@ -253,17 +253,18 @@ metaphone(PG_FUNCTION_ARGS)
  * accesssing the array directly... */
 
 /* Look at the next letter in the word */
-#define Next_Letter (toupper(word[w_idx+1]))
+#define Next_Letter (toupper((unsigned char) word[w_idx+1]))
 /* Look at the current letter in the word */
-#define Curr_Letter (toupper(word[w_idx]))
+#define Curr_Letter (toupper((unsigned char) word[w_idx]))
 /* Go N letters back. */
-#define Look_Back_Letter(n) (w_idx >= n ? toupper(word[w_idx-n]) : '\0')
+#define Look_Back_Letter(n) \
+	(w_idx >= (n) ? toupper((unsigned char) word[w_idx-(n)]) : '\0')
 /* Previous letter.  I dunno, should this return null on failure? */
 #define Prev_Letter (Look_Back_Letter(1))
 /* Look two letters down.  It makes sure you don't walk off the string. */
-#define After_Next_Letter	(Next_Letter != '\0' ? toupper(word[w_idx+2]) \
-												 : '\0')
-#define Look_Ahead_Letter(n) (toupper(Lookahead(word+w_idx, n)))
+#define After_Next_Letter \
+	(Next_Letter != '\0' ? toupper((unsigned char) word[w_idx+2]) : '\0')
+#define Look_Ahead_Letter(n) toupper((unsigned char) Lookahead(word+w_idx, n))
 
 
 /* Allows us to safely look ahead an arbitrary # of letters */
@@ -291,7 +292,7 @@ Lookahead(char *word, int how_far)
 #define Phone_Len	(p_idx)
 
 /* Note is a letter is a 'break' in the word */
-#define Isbreak(c)	(!isalpha(c))
+#define Isbreak(c)	(!isalpha((unsigned char) (c)))
 
 
 int
@@ -336,7 +337,7 @@ _metaphone(
 
 	/*-- The first phoneme has to be processed specially. --*/
 	/* Find our first letter */
-	for (; !isalpha(Curr_Letter); w_idx++)
+	for (; !isalpha((unsigned char) (Curr_Letter)); w_idx++)
 	{
 		/* On the off chance we were given nothing but crap... */
 		if (Curr_Letter == '\0')
@@ -435,7 +436,7 @@ _metaphone(
 		 */
 
 		/* Ignore non-alphas */
-		if (!isalpha(Curr_Letter))
+		if (!isalpha((unsigned char) (Curr_Letter)))
 			continue;
 
 		/* Drop duplicates, except CC */

@@ -153,7 +153,7 @@ char		_codes[26] = {
 };
 
 
-#define ENCODE(c) (isalpha(c) ? _codes[((toupper(c)) - 'A')] : 0)
+#define ENCODE(c) (isalpha((unsigned char) (c)) ? _codes[((toupper((unsigned char) (c))) - 'A')] : 0)
 
 #define isvowel(c)	(ENCODE(c) & 1)		/* AEIOU */
 

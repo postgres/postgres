@@ -78,7 +78,7 @@ isinteger(char *buff)
 				i++;
 				continue;
 			}
-		if (!isdigit((int) *i))
+		if (!isdigit((unsigned char) *i))
 			return 0;
 		i++;
 	}
@@ -90,7 +90,7 @@ strtoupper(char *string)
 {
 	while (*string != '\0')
 	{
-		*string = toupper(*string);
+		*string = toupper((unsigned char) *string);
 		string++;
 	}
 }
@@ -100,7 +100,7 @@ strtolower(char *string)
 {
 	while (*string != '\0')
 	{
-		*string = tolower(*string);
+		*string = tolower((unsigned char) *string);
 		string++;
 	}
 }
