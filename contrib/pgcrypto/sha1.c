@@ -1,4 +1,4 @@
-/*	$Id: sha1.c,v 1.6 2001/08/21 00:42:41 momjian Exp $ */
+/*	$Id: sha1.c,v 1.7 2001/10/25 01:29:37 momjian Exp $ */
 /*	   $KAME: sha1.c,v 1.3 2000/02/22 14:01:18 itojun Exp $    */
 
 /*
@@ -65,22 +65,24 @@ static uint32 _K[] = {0x5a827999, 0x6ed9eba1, 0x8f1bbcdc, 0xca62c1d6};
 #define BCOUNT	(ctxt->c.b64[0] / 8)
 #define W(n)	(ctxt->m.b32[(n)])
 
-#define PUTBYTE(x)	{ \
+#define PUTBYTE(x) \
+do { \
 	ctxt->m.b8[(COUNT % 64)] = (x);		\
 	COUNT++;				\
 	COUNT %= 64;				\
 	ctxt->c.b64[0] += 8;			\
 	if (COUNT % 64 == 0)			\
 		sha1_step(ctxt);		\
-	 }
+} while (0)
 
-#define PUTPAD(x)	{ \
+#define PUTPAD(x) \
+do { \
 	ctxt->m.b8[(COUNT % 64)] = (x);		\
 	COUNT++;				\
 	COUNT %= 64;				\
 	if (COUNT % 64 == 0)			\
 		sha1_step(ctxt);		\
-	 }
+} while (0)
 
 static void sha1_step(struct sha1_ctxt *);
 

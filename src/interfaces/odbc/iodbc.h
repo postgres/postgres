@@ -8,7 +8,11 @@
 #include  <sys/types.h>
 
 #define   MEM_ALLOC(size)	(malloc((size_t)(size)))
-#define   MEM_FREE(ptr)		{if(ptr) free(ptr);}
+#define   MEM_FREE(ptr)	\
+do { \
+	if(ptr) \
+		free(ptr); \
+} while (0)
 
 #define   STRCPY(t, s)		(strcpy((char*)(t), (char*)(s)))
 #define   STRNCPY(t,s,n)	(strncpy((char*)(t), (char*)(s), (size_t)(n)))

@@ -1,7 +1,7 @@
 /* ----------
  * pg_lzcompress.c -
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/pg_lzcompress.c,v 1.11 2001/03/22 06:16:17 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/pg_lzcompress.c,v 1.12 2001/10/25 01:29:37 momjian Exp $
  *
  *		This is an implementation of LZ compression for PostgreSQL.
  *		It uses a simple history table and generates 2-3 byte tags
@@ -283,7 +283,8 @@ static PGLZ_HistEntry hist_entries[PGLZ_HISTORY_SIZE];
  *		Adds a new entry to the history table.
  * ----------
  */
-#define pglz_hist_add(_hs,_he,_hn,_s,_e) {									\
+#define pglz_hist_add(_hs,_he,_hn,_s,_e) \
+do {									\
 			int __hindex = pglz_hist_idx((_s),(_e));						\
 			if ((_he)[(_hn)].prev == NULL) {								\
 				(_hs)[__hindex] = (_he)[(_hn)].next;						\
@@ -303,7 +304,7 @@ static PGLZ_HistEntry hist_entries[PGLZ_HISTORY_SIZE];
 			if (++(_hn) >= PGLZ_HISTORY_SIZE) {								\
 				(_hn) = 0;													\
 			}																\
-		}
+} while (0)
 
 
 /* ----------
@@ -312,7 +313,8 @@ static PGLZ_HistEntry hist_entries[PGLZ_HISTORY_SIZE];
  *		Outputs the last and allocates a new control byte if needed.
  * ----------
  */
-#define pglz_out_ctrl(__ctrlp,__ctrlb,__ctrl,__buf) {						\
+#define pglz_out_ctrl(__ctrlp,__ctrlb,__ctrl,__buf) \
+do { \
 	if ((__ctrl & 0xff) == 0)												\
 	{																		\
 		*__ctrlp = __ctrlb;													\
@@ -320,7 +322,7 @@ static PGLZ_HistEntry hist_entries[PGLZ_HISTORY_SIZE];
 		__ctrlb = 0;														\
 		__ctrl = 1;															\
 	}																		\
-}
+} while (0)
 
 
 /* ----------
@@ -330,11 +332,12 @@ static PGLZ_HistEntry hist_entries[PGLZ_HISTORY_SIZE];
  *		appropriate control bit.
  * ----------
  */
-#define pglz_out_literal(_ctrlp,_ctrlb,_ctrl,_buf,_byte) {					\
+#define pglz_out_literal(_ctrlp,_ctrlb,_ctrl,_buf,_byte) \
+do { \
 	pglz_out_ctrl(_ctrlp,_ctrlb,_ctrl,_buf);								\
 	*_buf++ = (unsigned char)(_byte);										\
 	_ctrl <<= 1;															\
-}
+} while (0)
 
 
 /* ----------
@@ -345,7 +348,8 @@ static PGLZ_HistEntry hist_entries[PGLZ_HISTORY_SIZE];
  *		appropriate control bit.
  * ----------
  */
-#define pglz_out_tag(_ctrlp,_ctrlb,_ctrl,_buf,_len,_off) {					\
+#define pglz_out_tag(_ctrlp,_ctrlb,_ctrl,_buf,_len,_off) \
+do { \
 	pglz_out_ctrl(_ctrlp,_ctrlb,_ctrl,_buf);								\
 	_ctrlb |= _ctrl;														\
 	_ctrl <<= 1;															\
@@ -360,7 +364,7 @@ static PGLZ_HistEntry hist_entries[PGLZ_HISTORY_SIZE];
 		_buf[1] = (unsigned char)((_off) & 0xff);							\
 		_buf += 2;															\
 	}																		\
-}
+} while (0)
 
 
 /* ----------

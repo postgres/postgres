@@ -114,10 +114,19 @@ static int	nope = 0;			/* for use in asserts; shuts lint up */
 #define ASSIGN(d, s)	memcpy(d, s, m->g->nstates)
 #define EQ(a, b)		(memcmp(a, b, m->g->nstates) == 0)
 #define STATEVARS		int vn; char *space
-#define STATESETUP(m, nv)		{ (m)->space = malloc((nv)*(m)->g->nstates); \
-								if ((m)->space == NULL) return(REG_ESPACE); \
-								(m)->vn = 0; }
-#define STATETEARDOWN(m)		{ free((m)->space); }
+#define STATESETUP(m, nv) \
+do { \
+	(m)->space = malloc((nv)*(m)->g->nstates); \
+	if ((m)->space == NULL) \
+		return(REG_ESPACE); \
+	(m)->vn = 0; \
+} while (0)
+
+#define STATETEARDOWN(m) \
+do { \
+	free((m)->space); \
+} while (0)
+	
 #define SETUP(v)		((v) = &m->space[m->vn++ * m->g->nstates])
 #define onestate		int
 #define INIT(o, n)		((o) = (n))

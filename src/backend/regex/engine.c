@@ -129,7 +129,12 @@ static int	pg_isprint(int c);
 #ifdef REDEBUG
 #define SP(t, s, c)		print(m, t, s, c, stdout)
 #define AT(t, p1, p2, s1, s2)	at(m, t, p1, p2, s1, s2)
-#define NOTE(str)		{ if (m->eflags&REG_TRACE) printf("=%s\n", (str)); }
+#define NOTE(str) \
+do { \
+	if (m->eflags&REG_TRACE) \
+		printf("=%s\n", (str)); \
+} while (0)
+
 #else
 #define SP(t, s, c)				/* nothing */
 #define AT(t, p1, p2, s1, s2)	/* nothing */

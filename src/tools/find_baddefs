@@ -14,6 +14,7 @@ do
 					was_define = "Y"
 				  else
 					was_define = "N"
-				}' $FILE
+				}' "$FILE"
+	grep -on '^#define.*{' "$FILE" | grep -v 'do[ 	]*{'
 done
 

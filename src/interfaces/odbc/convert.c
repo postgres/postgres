@@ -817,7 +817,10 @@ do { \
  *	Terminate the stmt_with_params string with NULL.
  *----------
  */
-#define	CVT_TERMINATE { new_statement[npos] = '\0'; }
+#define	CVT_TERMINATE \
+do { \
+	new_statement[npos] = '\0'; \
+} while (0)
 
 /*----------
  *	Append a data.
@@ -1434,7 +1437,7 @@ copy_statement_with_parameters(StatementClass *stmt)
 				/* error */
 				stmt->errormsg = "Unrecognized C_parameter type in copy_statement_with_parameters";
 				stmt->errornumber = STMT_NOT_IMPLEMENTED_ERROR;
-				CVT_TERMINATE	/* just in case */
+				CVT_TERMINATE;	/* just in case */
 				SC_log_error(func, "", stmt);
 				return SQL_ERROR;
 		}
@@ -1684,7 +1687,7 @@ copy_statement_with_parameters(StatementClass *stmt)
 	}							/* end, for */
 
 	/* make sure new_statement is always null-terminated */
-	CVT_TERMINATE
+	CVT_TERMINATE;
 
 	if (conn->DriverToDataSource != NULL)
 	{

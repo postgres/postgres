@@ -280,9 +280,9 @@ char Lookahead(char * word, int how_far) {
 
 
 /* phonize one letter */
-#define Phonize(c)	{(*phoned_word)[p_idx++] = c;}
+#define Phonize(c)	do {(*phoned_word)[p_idx++] = c;} while (0)
 /* Slap a null character on the end of the phoned word */
-#define End_Phoned_Word	{(*phoned_word)[p_idx] = '\0';}
+#define End_Phoned_Word	do {(*phoned_word)[p_idx] = '\0';} while (0)
 /* How long is the phoned word? */
 #define Phone_Len	(p_idx)
 

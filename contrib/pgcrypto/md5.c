@@ -1,4 +1,4 @@
-/*	$Id: md5.c,v 1.6 2001/08/21 00:42:41 momjian Exp $	*/
+/*	$Id: md5.c,v 1.7 2001/10/25 01:29:37 momjian Exp $	*/
 /*	   $KAME: md5.c,v 1.3 2000/02/22 14:01:17 itojun Exp $	   */
 
 /*
@@ -41,29 +41,33 @@
 #define H(X, Y, Z) ((X) ^ (Y) ^ (Z))
 #define I(X, Y, Z) ((Y) ^ ((X) | (~Z)))
 
-#define ROUND1(a, b, c, d, k, s, i) { \
+#define ROUND1(a, b, c, d, k, s, i) \
+do { \
 	(a) = (a) + F((b), (c), (d)) + X[(k)] + T[(i)]; \
 	(a) = SHIFT((a), (s)); \
 	(a) = (b) + (a); \
-}
+} while (0)
 
-#define ROUND2(a, b, c, d, k, s, i) { \
+#define ROUND2(a, b, c, d, k, s, i) \
+do { \
 	(a) = (a) + G((b), (c), (d)) + X[(k)] + T[(i)]; \
 	(a) = SHIFT((a), (s)); \
 	(a) = (b) + (a); \
-}
+} while (0)
 
-#define ROUND3(a, b, c, d, k, s, i) { \
+#define ROUND3(a, b, c, d, k, s, i) \
+do { \
 	(a) = (a) + H((b), (c), (d)) + X[(k)] + T[(i)]; \
 	(a) = SHIFT((a), (s)); \
 	(a) = (b) + (a); \
-}
+} while (0)
 
-#define ROUND4(a, b, c, d, k, s, i) { \
+#define ROUND4(a, b, c, d, k, s, i) \
+do { \
 	(a) = (a) + I((b), (c), (d)) + X[(k)] + T[(i)]; \
 	(a) = SHIFT((a), (s)); \
 	(a) = (b) + (a); \
-}
+} while (0)
 
 #define Sa	 7
 #define Sb	12

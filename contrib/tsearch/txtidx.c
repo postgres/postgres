@@ -88,12 +88,16 @@ uniqueentry( WordEntry* a, int4 l, char *buf, int4 *outbuflen ) {
 #define WAITNEXTCHAR	3
 #define WAITENDCMPLX	4
 
-#define RESIZEPRSBUF if ( state->curpos - state->word == state->len ) { \
+#define RESIZEPRSBUF \
+do { \
+	if ( state->curpos - state->word == state->len ) \
+	{ \
         int4 clen = state->curpos - state->word; \
         state->len *= 2; \
         state->word = (char*)repalloc( (void*)state->word, state->len ); \
         state->curpos = state->word + clen; \
-}
+    } \
+} while (0)
 
 int4
 gettoken_txtidx( TI_IN_STATE *state ) {
