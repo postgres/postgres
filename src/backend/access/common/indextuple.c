@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/indextuple.c,v 1.23 1998/01/31 04:38:03 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/indextuple.c,v 1.24 1998/02/04 21:32:09 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,6 +19,7 @@
 #include <access/ibit.h>
 #include <access/itup.h>
 #include <access/tupmacs.h>
+#include <catalog/pg_type.h>
 
 #ifndef HAVE_MEMMOVE
 #include <regex/utils.h>
@@ -188,8 +189,6 @@ nocache_index_getattr(IndexTuple tup,
 		}
 #endif
 
-		tp = (char *) tup + data_off;
-
 		slow = 0;
 	}
 	else
@@ -224,34 +223,32 @@ nocache_index_getattr(IndexTuple tup,
 			register int mask;	/* bit in byte we're looking at */
 			register char n;	/* current byte in bp */
 			register int byte,
-						finalbit;
+						 finalbit;
 
 			byte = attnum >> 3;
 			finalbit = attnum & 0x07;
 
-			for (; i <= byte; i++)
+			for (; i <= byte && !slow; i++)
 			{
 				n = bp[i];
 				if (i < byte)
 				{
 					/* check for nulls in any "earlier" bytes */
 					if ((~n) != 0)
-					{
-						slow++;
-						break;
-					}
+						slow=1;
 				}
 				else
 				{
 					/* check for nulls "before" final bit of last byte */
-					mask = (finalbit << 1) - 1;
+					mask = (1 << finalbit) - 1;
 					if ((~n) & mask)
-						slow++;
+						slow=1;
 				}
 			}
 		}
-		tp = (char *) tup + data_off;
 	}
+
+	tp = (char *) tup + data_off;
 
 	/* now check for any non-fixed length attrs before our attribute */
 
@@ -262,12 +259,16 @@ nocache_index_getattr(IndexTuple tup,
 			return (Datum) fetchatt(&(att[attnum]),
 							 tp + att[attnum]->attcacheoff);
 		}
+		else if (attnum == 0)
+		{
+			return ((Datum) fetchatt(&(att[0]), (char *) tp));
+		}
 		else if (!IndexTupleAllFixed(tup))
 		{
 			register int j = 0;
 
 			for (j = 0; j < attnum && !slow; j++)
-				if (att[j]->attlen < 1)
+				if (att[j]->attlen < 1 && !VARLENA_FIXED_SIZE(att[j]))
 					slow = 1;
 		}
 	}
@@ -292,12 +293,13 @@ nocache_index_getattr(IndexTuple tup,
 		while (att[j]->attcacheoff > 0)
 			j++;
 
-		off = att[j - 1]->attcacheoff +
-			att[j - 1]->attlen;
+		if (!VARLENA_FIXED_SIZE(att[j]))
+			off = att[j - 1]->attcacheoff + att[j - 1]->attlen;
+		else
+			off = att[j - 1]->attcacheoff + att[j - 1]->atttypmod;
 
 		for (; j < attnum + 1; j++)
 		{
-
 			/*
 			 * Fix me when going to a machine with more than a four-byte
 			 * word!
@@ -329,11 +331,18 @@ nocache_index_getattr(IndexTuple tup,
 			}
 
 			att[j]->attcacheoff = off;
-			off += att[j]->attlen;
+
+			/* The only varlena/-1 length value to get here is this */
+			if (!VARLENA_FIXED_SIZE(att[j]))
+				off += att[j]->attlen;
+			else
+			{
+				Assert(att[j]->atttypmod == VARSIZE(tp + off));
+				off += att[j]->atttypmod;
+			}
 		}
 
-		return (Datum) fetchatt(&(att[attnum]),
-						 tp + att[attnum]->attcacheoff);
+		return (Datum) fetchatt(&(att[attnum]), tp + att[attnum]->attcacheoff);
 	}
 	else
 	{
@@ -356,51 +365,64 @@ nocache_index_getattr(IndexTuple tup,
 				}
 			}
 
+			/* If we know the next offset, we can skip the rest */
 			if (usecache && att[i]->attcacheoff > 0)
-			{
 				off = att[i]->attcacheoff;
-				if (att[i]->attlen == -1)
-					usecache = false;
-				else
-					continue;
+			else
+			{
+				switch (att[i]->attlen)
+				{
+					case -1:
+						off = (att[i]->attalign == 'd') ?
+							DOUBLEALIGN(off) : INTALIGN(off);
+						break;
+					case sizeof(char):
+						break;
+					case sizeof(short):
+						off = SHORTALIGN(off);
+						break;
+					case sizeof(int32):
+						off = INTALIGN(off);
+						break;
+					default:
+						if (att[i]->attlen < sizeof(int32))
+							elog(ERROR,
+								 "nocachegetiattr2: attribute %d has len %d",
+								 i, att[i]->attlen);
+						if (att[i]->attalign == 'd')
+							off = DOUBLEALIGN(off);
+						else
+							off = LONGALIGN(off);
+						break;
+				}
+				if (usecache)
+					att[i]->attcacheoff = off;
 			}
 
-			if (usecache)
-				att[i]->attcacheoff = off;
 			switch (att[i]->attlen)
 			{
 				case sizeof(char):
 					off++;
 					break;
 				case sizeof(short):
-					off = SHORTALIGN(off) +sizeof(short);
+					off += sizeof(short);
 					break;
 				case sizeof(int32):
-					off = INTALIGN(off) +sizeof(int32);
+					off += sizeof(int32);
 					break;
 				case -1:
-					usecache = false;
-					off = (att[i]->attalign == 'd') ?
-						DOUBLEALIGN(off) : INTALIGN(off);
+					Assert(!VARLENA_FIXED_SIZE(att[i]) ||
+							att[i]->atttypmod == VARSIZE(tp + off));
 					off += VARSIZE(tp + off);
+					if (!VARLENA_FIXED_SIZE(att[i]))
+						usecache = false;
 					break;
 				default:
-					if (att[i]->attlen > sizeof(int32))
-						off = (att[i]->attalign == 'd') ?
-							DOUBLEALIGN(off) + att[i]->attlen :
-							LONGALIGN(off) + att[i]->attlen;
-					else
-						elog(ERROR, "nocache_index_getattr2: attribute %d has len %d",
-							 i, att[i]->attlen);
-
+					off += att[i]->attlen;
 					break;
 			}
 		}
 
-		/*
-		 * I don't know why this code was missed here! I've got it from
-		 * heaptuple.c:nocachegetattr(). - vadim 06/12/97
-		 */
 		switch (att[attnum]->attlen)
 		{
 			case -1:

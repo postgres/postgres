@@ -1,4 +1,4 @@
- /*-------------------------------------------------------------------------
+/*-------------------------------------------------------------------------
  *
  * heaptuple.c--
  *	  This file contains heap tuple accessor and mutator routines, as well
@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/heaptuple.c,v 1.31 1998/01/31 04:38:02 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/heaptuple.c,v 1.32 1998/02/04 21:32:08 momjian Exp $
  *
  * NOTES
  *	  The old interface functions have been converted to macros
@@ -23,6 +23,7 @@
 #include <access/htup.h>
 #include <access/transam.h>
 #include <access/tupmacs.h>
+#include <catalog/pg_type.h>
 #include <storage/bufpage.h>
 #include <utils/memutils.h>
 
@@ -435,15 +436,12 @@ nocachegetattr(HeapTuple tup,
 		}
 		else if (attnum == 0)
 		{
-
 			/*
 			 * first attribute is always at position zero
 			 */
 			return ((Datum) fetchatt(&(att[0]), (char *) tup + tup->t_hoff));
 		}
 #endif
-
-		tp = (char *) tup + tup->t_hoff;
 
 		slow = 0;
 	}
@@ -478,17 +476,37 @@ nocachegetattr(HeapTuple tup,
 		 *		Now check to see if any preceeding bits are null...
 		 * ----------------
 		 */
-
 		{
 			register int i = 0; /* current offset in bp */
+			register int mask;	/* bit in byte we're looking at */
+			register char n;	/* current byte in bp */
+			register int byte,
+						 finalbit;
 
-			for (i = 0; i < attnum && !slow; i++)
+			byte = attnum >> 3;
+			finalbit = attnum & 0x07;
+
+			for (; i <= byte && !slow; i++)
 			{
-				if (att_isnull(i, bp))
-					slow = 1;
+				n = bp[i];
+				if (i < byte)
+				{
+					/* check for nulls in any "earlier" bytes */
+					if ((~n) != 0)
+						slow=1;
+				}
+				else
+				{
+					/* check for nulls "before" final bit of last byte */
+					mask = (1 << finalbit) - 1;
+					if ((~n) & mask)
+						slow=1;
+				}
 			}
 		}
 	}
+
+	tp = (char *) tup + tup->t_hoff;
 
 	/*
 	 * now check for any non-fixed length attrs before our attribute
@@ -497,21 +515,19 @@ nocachegetattr(HeapTuple tup,
 	{
 		if (att[attnum]->attcacheoff > 0)
 		{
-			return (Datum)
-				fetchatt(&(att[attnum]),
-						 tp + att[attnum]->attcacheoff);
+			return (Datum)fetchatt(&(att[attnum]),
+						tp + att[attnum]->attcacheoff);
 		}
 		else if (attnum == 0)
 		{
-			return (Datum)
-				fetchatt(&(att[0]), (char *) tup + tup->t_hoff);
+			return ((Datum) fetchatt(&(att[0]), (char *) tp));
 		}
 		else if (!HeapTupleAllFixed(tup))
 		{
 			register int j = 0;
 
 			for (j = 0; j < attnum && !slow; j++)
-				if (att[j]->attlen < 1)
+				if (att[j]->attlen < 1 && !VARLENA_FIXED_SIZE(att[j]))
 					slow = 1;
 		}
 	}
@@ -535,10 +551,18 @@ nocachegetattr(HeapTuple tup,
 		while (att[j]->attcacheoff > 0)
 			j++;
 
-		off = att[j - 1]->attcacheoff + att[j - 1]->attlen;
+		if (!VARLENA_FIXED_SIZE(att[j]))
+			off = att[j - 1]->attcacheoff + att[j - 1]->attlen;
+		else
+			off = att[j - 1]->attcacheoff + att[j - 1]->atttypmod;
 
 		for (; j < attnum + 1; j++)
 		{
+			/*
+			 * Fix me when going to a machine with more than a four-byte
+			 * word!
+			 */
+
 			switch (att[j]->attlen)
 			{
 				case -1:
@@ -554,25 +578,28 @@ nocachegetattr(HeapTuple tup,
 					off = INTALIGN(off);
 					break;
 				default:
-					if (att[j]->attlen < sizeof(int32))
-					{
-						elog(ERROR,
-							 "nocachegetattr: attribute %d has len %d",
-							 j, att[j]->attlen);
-					}
-					if (att[j]->attalign == 'd')
-						off = DOUBLEALIGN(off);
+					if (att[j]->attlen > sizeof(int32))
+						off = (att[j]->attalign == 'd') ?
+							DOUBLEALIGN(off) : LONGALIGN(off);
 					else
-						off = LONGALIGN(off);
+						elog(ERROR, "nocache_index_getattr: attribute %d has len %d",
+							 j, att[j]->attlen);
 					break;
 			}
 
 			att[j]->attcacheoff = off;
-			off += att[j]->attlen;
+
+			/* The only varlena/-1 length value to get here is this */
+			if (!VARLENA_FIXED_SIZE(att[j]))
+				off += att[j]->attlen;
+			else
+			{
+				Assert(att[j]->atttypmod == VARSIZE(tp + off));
+				off += att[j]->atttypmod;
+			}
 		}
 
-		return
-			(Datum) fetchatt(&(att[attnum]), tp + att[attnum]->attcacheoff);
+		return (Datum) fetchatt(&(att[attnum]), tp + att[attnum]->attcacheoff);
 	}
 	else
 	{
@@ -600,41 +627,37 @@ nocachegetattr(HeapTuple tup,
 					continue;
 				}
 			}
-			switch (att[i]->attlen)
-			{
-				case -1:
-					off = (att[i]->attalign == 'd') ?
-						DOUBLEALIGN(off) : INTALIGN(off);
-					break;
-				case sizeof(char):
-					break;
-				case sizeof(short):
-					off = SHORTALIGN(off);
-					break;
-				case sizeof(int32):
-					off = INTALIGN(off);
-					break;
-				default:
-					if (att[i]->attlen < sizeof(int32))
-						elog(ERROR,
-							 "nocachegetattr2: attribute %d has len %d",
-							 i, att[i]->attlen);
-					if (att[i]->attalign == 'd')
-						off = DOUBLEALIGN(off);
-					else
-						off = LONGALIGN(off);
-					break;
-			}
+
+			/* If we know the next offset, we can skip the rest */
 			if (usecache && att[i]->attcacheoff > 0)
-			{
 				off = att[i]->attcacheoff;
-				if (att[i]->attlen == -1)
-				{
-					usecache = false;
-				}
-			}
 			else
 			{
+				switch (att[i]->attlen)
+				{
+					case -1:
+						off = (att[i]->attalign == 'd') ?
+							DOUBLEALIGN(off) : INTALIGN(off);
+						break;
+					case sizeof(char):
+						break;
+					case sizeof(short):
+						off = SHORTALIGN(off);
+						break;
+					case sizeof(int32):
+						off = INTALIGN(off);
+						break;
+					default:
+						if (att[i]->attlen < sizeof(int32))
+							elog(ERROR,
+								 "nocachegetattr2: attribute %d has len %d",
+								 i, att[i]->attlen);
+						if (att[i]->attalign == 'd')
+							off = DOUBLEALIGN(off);
+						else
+							off = LONGALIGN(off);
+						break;
+				}
 				if (usecache)
 					att[i]->attcacheoff = off;
 			}
@@ -644,21 +667,25 @@ nocachegetattr(HeapTuple tup,
 				case sizeof(char):
 					off++;
 					break;
-				case sizeof(int16):
-					off += sizeof(int16);
+				case sizeof(short):
+					off += sizeof(short);
 					break;
 				case sizeof(int32):
 					off += sizeof(int32);
 					break;
 				case -1:
-					usecache = false;
+					Assert(!VARLENA_FIXED_SIZE(att[i]) ||
+							att[i]->atttypmod == VARSIZE(tp + off));
 					off += VARSIZE(tp + off);
+					if (!VARLENA_FIXED_SIZE(att[i]))
+						usecache = false;
 					break;
 				default:
 					off += att[i]->attlen;
 					break;
 			}
 		}
+
 		switch (att[attnum]->attlen)
 		{
 			case -1:
@@ -683,7 +710,8 @@ nocachegetattr(HeapTuple tup,
 					off = LONGALIGN(off);
 				break;
 		}
-		return ((Datum) fetchatt(&(att[attnum]), tp + off));
+
+		return (Datum) fetchatt(&(att[attnum]), tp + off);
 	}
 }
 

@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_type.h,v 1.30 1998/02/03 19:27:17 momjian Exp $
+ * $Id: pg_type.h,v 1.31 1998/02/04 21:32:12 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -366,7 +366,7 @@ DESCR("limited-range ISO-format date and time");
 
 
 #define USE_ATTTYPMOD(typeid)	((typeid) == BPCHAROID || (typeid) == VARCHAROID)
-#define VARLENA_FIXED_SIZE(attr)	(false && (attr)->atttypid == BPCHAROID && (attr)->atttypmod > 0)
+#define VARLENA_FIXED_SIZE(attr)	((attr)->atttypid == BPCHAROID && (attr)->atttypmod > 0)
 
 /*
  * prototypes for functions in pg_type.c
