@@ -4,7 +4,7 @@
 #    Makefile for lib (miscellaneous stuff)
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/lib/Makefile,v 1.16 2001/10/05 17:28:12 tgl Exp $
+#    $Header: /cvsroot/pgsql/src/backend/lib/Makefile,v 1.17 2003/01/09 01:23:55 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -12,7 +12,7 @@ subdir = src/backend/lib
 top_builddir = ../../..
 include $(top_builddir)/src/Makefile.global
 
-OBJS = bit.o dllist.o lispsort.o stringinfo.o
+OBJS = dllist.o lispsort.o stringinfo.o
 
 all: SUBSYS.o
 
