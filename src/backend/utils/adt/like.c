@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	$Header: /cvsroot/pgsql/src/backend/utils/adt/like.c,v 1.39 2000/08/07 01:45:00 thomas Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/utils/adt/like.c,v 1.40 2000/08/09 14:13:03 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,101 +37,321 @@ static int MatchTextLower(pg_wchar * t, int tlen, pg_wchar * p, int plen, char *
 Datum
 namelike(PG_FUNCTION_ARGS)
 {
-	Name		n = PG_GETARG_NAME(0);
-	text	   *p = PG_GETARG_TEXT_P(1);
+	bool		result;
+	Name		str = PG_GETARG_NAME(0);
+	text	   *pat = PG_GETARG_TEXT_P(1);
+	pg_wchar   *s, *p;
+	int			slen, plen;
 
-	PG_RETURN_BOOL(MatchText(NameStr(*n), strlen(NameStr(*n)),
-							 VARDATA(p), (VARSIZE(p)-VARHDRSZ),
-							 NULL)
-				   == LIKE_TRUE);
+#ifdef MULTIBYTE
+	pg_wchar   *ss, *pp;
+
+	slen = strlen(NameStr(*str));
+	s = (pg_wchar *) palloc((slen+1) * sizeof(pg_wchar));
+	(void) pg_mb2wchar_with_len((unsigned char *) NameStr(*str), s, slen);
+	for (ss = s, slen = 0; *ss != 0; ss++) slen++;
+
+	plen = (VARSIZE(pat)-VARHDRSZ);
+	p = (pg_wchar *) palloc((plen+1) * sizeof(pg_wchar));
+	(void) pg_mb2wchar_with_len((unsigned char *) VARDATA(pat), p, plen);
+	for (pp = p, plen = 0; *pp != 0; pp++) plen++;
+#else
+	s = NameStr(*str);
+	slen = strlen(s);
+	p = VARDATA(pat);
+	plen = (VARSIZE(pat)-VARHDRSZ);
+#endif
+
+	result = (MatchText(s, slen, p, plen, "\\") == LIKE_TRUE);
+
+#ifdef MULTIBYTE
+	pfree(s);
+	pfree(p);
+#endif
+
+	PG_RETURN_BOOL(result);
 }
 
 Datum
 namenlike(PG_FUNCTION_ARGS)
 {
-	Name		n = PG_GETARG_NAME(0);
-	text	   *p = PG_GETARG_TEXT_P(1);
+	bool		result;
+	Name		str = PG_GETARG_NAME(0);
+	text	   *pat = PG_GETARG_TEXT_P(1);
+	pg_wchar   *s, *p;
+	int			slen, plen;
 
-	PG_RETURN_BOOL(MatchText(NameStr(*n), strlen(NameStr(*n)),
-							 VARDATA(p), (VARSIZE(p)-VARHDRSZ),
-							 NULL)
-				   != LIKE_TRUE);
+#ifdef MULTIBYTE
+	pg_wchar   *ss, *pp;
+
+	slen = strlen(NameStr(*str));
+	s = (pg_wchar *) palloc((slen+1) * sizeof(pg_wchar));
+	(void) pg_mb2wchar_with_len((unsigned char *) NameStr(*str), s, slen);
+	for (ss = s, slen = 0; *ss != 0; ss++) slen++;
+
+	plen = (VARSIZE(pat)-VARHDRSZ);
+	p = (pg_wchar *) palloc((plen+1) * sizeof(pg_wchar));
+	(void) pg_mb2wchar_with_len((unsigned char *) VARDATA(pat), p, plen);
+	for (pp = p, plen = 0; *pp != 0; pp++) plen++;
+#else
+	s = NameStr(*str);
+	slen = strlen(s);
+	p = VARDATA(pat);
+	plen = (VARSIZE(pat)-VARHDRSZ);
+#endif
+
+	result = (MatchText(s, slen, p, plen, "\\") != LIKE_TRUE);
+
+#ifdef MULTIBYTE
+	pfree(s);
+	pfree(p);
+#endif
+
+	PG_RETURN_BOOL(result);
 }
 
 Datum
 namelike_escape(PG_FUNCTION_ARGS)
 {
-	Name		n = PG_GETARG_NAME(0);
-	text	   *p = PG_GETARG_TEXT_P(1);
-	text	   *e = PG_GETARG_TEXT_P(2);
+	bool		result;
+	Name		str = PG_GETARG_NAME(0);
+	text	   *pat = PG_GETARG_TEXT_P(1);
+	text	   *esc = PG_GETARG_TEXT_P(2);
+	pg_wchar   *s, *p;
+	int			slen, plen;
+	char	   *e;
 
-	PG_RETURN_BOOL(MatchText(NameStr(*n), strlen(NameStr(*n)),
-							 VARDATA(p), (VARSIZE(p)-VARHDRSZ),
-							 ((VARSIZE(e)-VARHDRSZ) > 0? VARDATA(e): NULL))
-				   == LIKE_TRUE);
+#ifdef MULTIBYTE
+	pg_wchar   *ss, *pp;
+
+	slen = strlen(NameStr(*str));
+	s = (pg_wchar *) palloc((slen+1) * sizeof(pg_wchar));
+	(void) pg_mb2wchar_with_len((unsigned char *) NameStr(*str), s, slen);
+	for (ss = s, slen = 0; *ss != 0; ss++) slen++;
+
+	plen = (VARSIZE(pat)-VARHDRSZ);
+	p = (pg_wchar *) palloc((plen+1) * sizeof(pg_wchar));
+	(void) pg_mb2wchar_with_len((unsigned char *) VARDATA(pat), p, plen);
+	for (pp = p, plen = 0; *pp != 0; pp++) plen++;
+#else
+	s = NameStr(*str);
+	slen = strlen(s);
+	p = VARDATA(pat);
+	plen = (VARSIZE(pat)-VARHDRSZ);
+#endif
+
+	e = ((VARSIZE(esc)-VARHDRSZ) > 0? VARDATA(esc): NULL);
+
+	result = (MatchText(s, slen, p, plen, e) == LIKE_TRUE);
+
+#ifdef MULTIBYTE
+	pfree(s);
+	pfree(p);
+#endif
+
+	PG_RETURN_BOOL(result);
 }
 
 Datum
 namenlike_escape(PG_FUNCTION_ARGS)
 {
-	Name		n = PG_GETARG_NAME(0);
-	text	   *p = PG_GETARG_TEXT_P(1);
-	text	   *e = PG_GETARG_TEXT_P(2);
+	bool		result;
+	Name		str = PG_GETARG_NAME(0);
+	text	   *pat = PG_GETARG_TEXT_P(1);
+	text	   *esc = PG_GETARG_TEXT_P(2);
+	pg_wchar   *s, *p;
+	int			slen, plen;
+	char	   *e;
 
-	PG_RETURN_BOOL(MatchText(NameStr(*n), strlen(NameStr(*n)),
-							 VARDATA(p), (VARSIZE(p)-VARHDRSZ),
-							 ((VARSIZE(e)-VARHDRSZ) > 0? VARDATA(e): NULL))
-				   != LIKE_TRUE);
+#ifdef MULTIBYTE
+	pg_wchar   *ss, *pp;
+
+	slen = strlen(NameStr(*str));
+	s = (pg_wchar *) palloc((slen+1) * sizeof(pg_wchar));
+	(void) pg_mb2wchar_with_len((unsigned char *) NameStr(*str), s, slen);
+	for (ss = s, slen = 0; *ss != 0; ss++) slen++;
+
+	plen = (VARSIZE(pat)-VARHDRSZ);
+	p = (pg_wchar *) palloc((plen+1) * sizeof(pg_wchar));
+	(void) pg_mb2wchar_with_len((unsigned char *) VARDATA(pat), p, plen);
+	for (pp = p, plen = 0; *pp != 0; pp++) plen++;
+#else
+	s = NameStr(*str);
+	slen = strlen(s);
+	p = VARDATA(pat);
+	plen = (VARSIZE(pat)-VARHDRSZ);
+#endif
+
+	e = ((VARSIZE(esc)-VARHDRSZ) > 0? VARDATA(esc): NULL);
+
+	result = (MatchText(s, slen, p, plen, e) != LIKE_TRUE);
+
+#ifdef MULTIBYTE
+	pfree(s);
+	pfree(p);
+#endif
+
+	PG_RETURN_BOOL(result);
 }
 
 Datum
 textlike(PG_FUNCTION_ARGS)
 {
-	text	   *s = PG_GETARG_TEXT_P(0);
-	text	   *p = PG_GETARG_TEXT_P(1);
+	bool		result;
+	text	   *str = PG_GETARG_TEXT_P(0);
+	text	   *pat = PG_GETARG_TEXT_P(1);
+	pg_wchar   *s, *p;
+	int			slen, plen;
 
-	PG_RETURN_BOOL(MatchText(VARDATA(s), (VARSIZE(s)-VARHDRSZ),
-							 VARDATA(p), (VARSIZE(p)-VARHDRSZ),
-							 NULL)
-				   == LIKE_TRUE);
+#ifdef MULTIBYTE
+	pg_wchar   *ss, *pp;
+
+	slen = (VARSIZE(str)-VARHDRSZ);
+	s = (pg_wchar *) palloc((slen+1) * sizeof(pg_wchar));
+	(void) pg_mb2wchar_with_len((unsigned char *) VARDATA(str), s, slen);
+	for (ss = s, slen = 0; *ss != 0; ss++) slen++;
+
+	plen = (VARSIZE(pat)-VARHDRSZ);
+	p = (pg_wchar *) palloc((plen+1) * sizeof(pg_wchar));
+	(void) pg_mb2wchar_with_len((unsigned char *) VARDATA(pat), p, plen);
+	for (pp = p, plen = 0; *pp != 0; pp++) plen++;
+#else
+	s = VARDATA(str);
+	slen = (VARSIZE(str)-VARHDRSZ);
+	p = VARDATA(pat);
+	plen = (VARSIZE(pat)-VARHDRSZ);
+#endif
+
+	result = (MatchText(s, slen, p, plen, NULL) == LIKE_TRUE);
+
+#ifdef MULTIBYTE
+	pfree(s);
+	pfree(p);
+#endif
+
+	PG_RETURN_BOOL(result);
 }
 
 Datum
 textnlike(PG_FUNCTION_ARGS)
 {
-	text	   *s = PG_GETARG_TEXT_P(0);
-	text	   *p = PG_GETARG_TEXT_P(1);
+	bool		result;
+	text	   *str = PG_GETARG_TEXT_P(0);
+	text	   *pat = PG_GETARG_TEXT_P(1);
+	pg_wchar   *s, *p;
+	int			slen, plen;
 
-	PG_RETURN_BOOL(MatchText(VARDATA(s), (VARSIZE(s)-VARHDRSZ),
-							 VARDATA(p), (VARSIZE(p)-VARHDRSZ),
-							 NULL)
-				   != LIKE_TRUE);
+#ifdef MULTIBYTE
+	pg_wchar   *ss, *pp;
+
+	slen = (VARSIZE(str)-VARHDRSZ);
+	s = (pg_wchar *) palloc((slen+1) * sizeof(pg_wchar));
+	(void) pg_mb2wchar_with_len((unsigned char *) VARDATA(str), s, slen);
+	for (ss = s, slen = 0; *ss != 0; ss++) slen++;
+
+	plen = (VARSIZE(pat)-VARHDRSZ);
+	p = (pg_wchar *) palloc((plen+1) * sizeof(pg_wchar));
+	(void) pg_mb2wchar_with_len((unsigned char *) VARDATA(pat), p, plen);
+	for (pp = p, plen = 0; *pp != 0; pp++) plen++;
+#else
+	s = VARDATA(str);
+	slen = (VARSIZE(str)-VARHDRSZ);
+	p = VARDATA(pat);
+	plen = (VARSIZE(pat)-VARHDRSZ);
+#endif
+
+	result = (MatchText(s, slen, p, plen, "\\") != LIKE_TRUE);
+
+#ifdef MULTIBYTE
+	pfree(s);
+	pfree(p);
+#endif
+
+	PG_RETURN_BOOL(result);
 }
 
 Datum
 textlike_escape(PG_FUNCTION_ARGS)
 {
-	text	   *s = PG_GETARG_TEXT_P(0);
-	text	   *p = PG_GETARG_TEXT_P(1);
-	text	   *e = PG_GETARG_TEXT_P(2);
+	bool		result;
+	text	   *str = PG_GETARG_TEXT_P(0);
+	text	   *pat = PG_GETARG_TEXT_P(1);
+	text	   *esc = PG_GETARG_TEXT_P(2);
+	pg_wchar   *s, *p;
+	int			slen, plen;
+	char	   *e;
 
-	PG_RETURN_BOOL(MatchText(VARDATA(s), (VARSIZE(s)-VARHDRSZ),
-							 VARDATA(p), (VARSIZE(p)-VARHDRSZ),
-							 ((VARSIZE(e)-VARHDRSZ) > 0? VARDATA(e): NULL))
-				   == LIKE_TRUE);
+#ifdef MULTIBYTE
+	pg_wchar   *ss, *pp;
+
+	slen = (VARSIZE(str)-VARHDRSZ);
+	s = (pg_wchar *) palloc((slen+1) * sizeof(pg_wchar));
+	(void) pg_mb2wchar_with_len((unsigned char *) VARDATA(str), s, slen);
+	for (ss = s, slen = 0; *ss != 0; ss++) slen++;
+
+	plen = (VARSIZE(pat)-VARHDRSZ);
+	p = (pg_wchar *) palloc((plen+1) * sizeof(pg_wchar));
+	(void) pg_mb2wchar_with_len((unsigned char *) VARDATA(pat), p, plen);
+	for (pp = p, plen = 0; *pp != 0; pp++) plen++;
+#else
+	s = VARDATA(str);
+	slen = (VARSIZE(str)-VARHDRSZ);
+	p = VARDATA(pat);
+	plen = (VARSIZE(pat)-VARHDRSZ);
+#endif
+
+	e = ((VARSIZE(esc)-VARHDRSZ) > 0? VARDATA(esc): NULL);
+
+	result = (MatchText(s, slen, p, plen, e) == LIKE_TRUE);
+
+#ifdef MULTIBYTE
+	pfree(s);
+	pfree(p);
+#endif
+
+	PG_RETURN_BOOL(result);
 }
 
 Datum
 textnlike_escape(PG_FUNCTION_ARGS)
 {
-	text	   *s = PG_GETARG_TEXT_P(0);
-	text	   *p = PG_GETARG_TEXT_P(1);
-	text	   *e = PG_GETARG_TEXT_P(2);
+	bool		result;
+	text	   *str = PG_GETARG_TEXT_P(0);
+	text	   *pat = PG_GETARG_TEXT_P(1);
+	text	   *esc = PG_GETARG_TEXT_P(2);
+	pg_wchar   *s, *p;
+	int			slen, plen;
+	char	   *e;
 
-	PG_RETURN_BOOL(MatchText(VARDATA(s), (VARSIZE(s)-VARHDRSZ),
-							 VARDATA(p), (VARSIZE(p)-VARHDRSZ),
-							 ((VARSIZE(e)-VARHDRSZ) > 0? VARDATA(e): NULL))
-				   != LIKE_TRUE);
+#ifdef MULTIBYTE
+	pg_wchar   *ss, *pp;
+
+	slen = (VARSIZE(str)-VARHDRSZ);
+	s = (pg_wchar *) palloc((slen+1) * sizeof(pg_wchar));
+	(void) pg_mb2wchar_with_len((unsigned char *) VARDATA(str), s, slen);
+	for (ss = s, slen = 0; *ss != 0; ss++) slen++;
+
+	plen = (VARSIZE(pat)-VARHDRSZ);
+	p = (pg_wchar *) palloc((plen+1) * sizeof(pg_wchar));
+	(void) pg_mb2wchar_with_len((unsigned char *) VARDATA(pat), p, plen);
+	for (pp = p, plen = 0; *pp != 0; pp++) plen++;
+#else
+	s = VARDATA(str);
+	slen = (VARSIZE(str)-VARHDRSZ);
+	p = VARDATA(pat);
+	plen = (VARSIZE(pat)-VARHDRSZ);
+#endif
+
+	e = ((VARSIZE(esc)-VARHDRSZ) > 0? VARDATA(esc): NULL);
+
+	result = (MatchText(s, slen, p, plen, e) != LIKE_TRUE);
+
+#ifdef MULTIBYTE
+	pfree(s);
+	pfree(p);
+#endif
+
+	PG_RETURN_BOOL(result);
 }
 
 /*
@@ -141,101 +361,217 @@ textnlike_escape(PG_FUNCTION_ARGS)
 Datum
 inamelike(PG_FUNCTION_ARGS)
 {
-	Name		n = PG_GETARG_NAME(0);
-	text	   *p = PG_GETARG_TEXT_P(1);
+	bool		result;
+#ifndef MULTIBYTE
+	Name		str = PG_GETARG_NAME(0);
+	text	   *pat = PG_GETARG_TEXT_P(1);
+#endif
+	pg_wchar   *s, *p;
+	int			slen, plen;
 
-	PG_RETURN_BOOL(MatchTextLower(NameStr(*n), strlen(NameStr(*n)),
-								  VARDATA(p), (VARSIZE(p)-VARHDRSZ),
-								  NULL)
-				   == LIKE_TRUE);
+#ifdef MULTIBYTE
+	elog(ERROR, "Case-insensitive multi-byte comparisons are not yet supported");
+#else
+	s = NameStr(*str);
+	slen = strlen(s);
+	p = VARDATA(pat);
+	plen = (VARSIZE(pat)-VARHDRSZ);
+#endif
+
+	result = (MatchTextLower(s, slen, p, plen, "\\") == LIKE_TRUE);
+
+	PG_RETURN_BOOL(result);
 }
 
 Datum
 inamenlike(PG_FUNCTION_ARGS)
 {
-	Name		n = PG_GETARG_NAME(0);
-	text	   *p = PG_GETARG_TEXT_P(1);
+	bool		result;
+#ifndef MULTIBYTE
+	Name		str = PG_GETARG_NAME(0);
+	text	   *pat = PG_GETARG_TEXT_P(1);
+#endif
+	pg_wchar   *s, *p;
+	int			slen, plen;
 
-	PG_RETURN_BOOL(MatchTextLower(NameStr(*n), strlen(NameStr(*n)),
-								  VARDATA(p), (VARSIZE(p)-VARHDRSZ),
-								  NULL)
-				   != LIKE_TRUE);
+#ifdef MULTIBYTE
+	elog(ERROR, "Case-insensitive multi-byte comparisons are not yet supported");
+#else
+	s = NameStr(*str);
+	slen = strlen(s);
+	p = VARDATA(pat);
+	plen = (VARSIZE(pat)-VARHDRSZ);
+#endif
+
+	result = (MatchTextLower(s, slen, p, plen, "\\") != LIKE_TRUE);
+
+	PG_RETURN_BOOL(result);
 }
 
 Datum
 inamelike_escape(PG_FUNCTION_ARGS)
 {
-	Name		n = PG_GETARG_NAME(0);
-	text	   *p = PG_GETARG_TEXT_P(1);
-	text	   *e = PG_GETARG_TEXT_P(2);
+	bool		result;
+#ifndef MULTIBYTE
+	Name		str = PG_GETARG_NAME(0);
+	text	   *pat = PG_GETARG_TEXT_P(1);
+#endif
+	text	   *esc = PG_GETARG_TEXT_P(2);
+	pg_wchar   *s, *p;
+	int			slen, plen;
+	char	   *e;
 
-	PG_RETURN_BOOL(MatchTextLower(NameStr(*n), strlen(NameStr(*n)),
-								  VARDATA(p), (VARSIZE(p)-VARHDRSZ),
-								  ((VARSIZE(e)-VARHDRSZ) > 0? VARDATA(e): NULL))
-				   == LIKE_TRUE);
+#ifdef MULTIBYTE
+	elog(ERROR, "Case-insensitive multi-byte comparisons are not yet supported");
+#else
+	s = NameStr(*str);
+	slen = strlen(s);
+	p = VARDATA(pat);
+	plen = (VARSIZE(pat)-VARHDRSZ);
+#endif
+
+	e = ((VARSIZE(esc)-VARHDRSZ) > 0? VARDATA(esc): NULL);
+
+	result = (MatchTextLower(s, slen, p, plen, e) == LIKE_TRUE);
+
+	PG_RETURN_BOOL(result);
 }
 
 Datum
 inamenlike_escape(PG_FUNCTION_ARGS)
 {
-	Name		n = PG_GETARG_NAME(0);
-	text	   *p = PG_GETARG_TEXT_P(1);
-	text	   *e = PG_GETARG_TEXT_P(2);
+	bool		result;
+#ifndef MULTIBYTE
+	Name		str = PG_GETARG_NAME(0);
+	text	   *pat = PG_GETARG_TEXT_P(1);
+#endif
+	text	   *esc = PG_GETARG_TEXT_P(2);
+	pg_wchar   *s, *p;
+	int			slen, plen;
+	char	   *e;
 
-	PG_RETURN_BOOL(MatchTextLower(NameStr(*n), strlen(NameStr(*n)),
-								  VARDATA(p), (VARSIZE(p)-VARHDRSZ),
-								  ((VARSIZE(e)-VARHDRSZ) > 0? VARDATA(e): NULL))
-				   != LIKE_TRUE);
+#ifdef MULTIBYTE
+	elog(ERROR, "Case-insensitive multi-byte comparisons are not yet supported");
+#else
+	s = NameStr(*str);
+	slen = strlen(s);
+	p = VARDATA(pat);
+	plen = (VARSIZE(pat)-VARHDRSZ);
+#endif
+
+	e = ((VARSIZE(esc)-VARHDRSZ) > 0? VARDATA(esc): NULL);
+
+	result = (MatchTextLower(s, slen, p, plen, e) != LIKE_TRUE);
+
+	PG_RETURN_BOOL(result);
 }
 
 Datum
 itextlike(PG_FUNCTION_ARGS)
 {
-	text	   *s = PG_GETARG_TEXT_P(0);
-	text	   *p = PG_GETARG_TEXT_P(1);
+	bool		result;
+#ifndef MULTIBYTE
+	text	   *str = PG_GETARG_TEXT_P(0);
+	text	   *pat = PG_GETARG_TEXT_P(1);
+#endif
+	pg_wchar   *s, *p;
+	int			slen, plen;
 
-	PG_RETURN_BOOL(MatchTextLower(VARDATA(s), (VARSIZE(s)-VARHDRSZ),
-								  VARDATA(p), (VARSIZE(p)-VARHDRSZ),
-								  NULL)
-				   == LIKE_TRUE);
+#ifdef MULTIBYTE
+	elog(ERROR, "Case-insensitive multi-byte comparisons are not yet supported");
+#else
+	s = VARDATA(str);
+	slen = (VARSIZE(str)-VARHDRSZ);
+	p = VARDATA(pat);
+	plen = (VARSIZE(pat)-VARHDRSZ);
+#endif
+
+	result = (MatchTextLower(s, slen, p, plen, "\\") == LIKE_TRUE);
+
+	PG_RETURN_BOOL(result);
 }
 
 Datum
 itextnlike(PG_FUNCTION_ARGS)
 {
-	text	   *s = PG_GETARG_TEXT_P(0);
-	text	   *p = PG_GETARG_TEXT_P(1);
+	bool		result;
+#ifndef MULTIBYTE
+	text	   *str = PG_GETARG_TEXT_P(0);
+	text	   *pat = PG_GETARG_TEXT_P(1);
+#endif
+	pg_wchar   *s, *p;
+	int			slen, plen;
 
-	PG_RETURN_BOOL(MatchTextLower(VARDATA(s), (VARSIZE(s)-VARHDRSZ),
-								  VARDATA(p), (VARSIZE(p)-VARHDRSZ),
-								  NULL)
-				   != LIKE_TRUE);
+#ifdef MULTIBYTE
+	elog(ERROR, "Case-insensitive multi-byte comparisons are not yet supported");
+#else
+	s = VARDATA(str);
+	slen = (VARSIZE(str)-VARHDRSZ);
+	p = VARDATA(pat);
+	plen = (VARSIZE(pat)-VARHDRSZ);
+#endif
+
+	result = (MatchTextLower(s, slen, p, plen, "\\") != LIKE_TRUE);
+
+	PG_RETURN_BOOL(result);
 }
 
 Datum
 itextlike_escape(PG_FUNCTION_ARGS)
 {
-	text	   *s = PG_GETARG_TEXT_P(0);
-	text	   *p = PG_GETARG_TEXT_P(1);
-	text	   *e = PG_GETARG_TEXT_P(2);
+	bool		result;
+#ifndef MULTIBYTE
+	text	   *str = PG_GETARG_TEXT_P(0);
+	text	   *pat = PG_GETARG_TEXT_P(1);
+#endif
+	text	   *esc = PG_GETARG_TEXT_P(2);
+	pg_wchar   *s, *p;
+	int			slen, plen;
+	char	   *e;
 
-	PG_RETURN_BOOL(MatchTextLower(VARDATA(s), (VARSIZE(s)-VARHDRSZ),
-								  VARDATA(p), (VARSIZE(p)-VARHDRSZ),
-								  ((VARSIZE(e)-VARHDRSZ) > 0? VARDATA(e): NULL))
-				   == LIKE_TRUE);
+#ifdef MULTIBYTE
+	elog(ERROR, "Case-insensitive multi-byte comparisons are not yet supported");
+#else
+	s = VARDATA(str);
+	slen = (VARSIZE(str)-VARHDRSZ);
+	p = VARDATA(pat);
+	plen = (VARSIZE(pat)-VARHDRSZ);
+#endif
+
+	e = ((VARSIZE(esc)-VARHDRSZ) > 0? VARDATA(esc): NULL);
+
+	result = (MatchTextLower(s, slen, p, plen, e) == LIKE_TRUE);
+
+	PG_RETURN_BOOL(result);
 }
 
 Datum
 itextnlike_escape(PG_FUNCTION_ARGS)
 {
-	text	   *s = PG_GETARG_TEXT_P(0);
-	text	   *p = PG_GETARG_TEXT_P(1);
-	text	   *e = PG_GETARG_TEXT_P(2);
+	bool		result;
+#ifndef MULTIBYTE
+	text	   *str = PG_GETARG_TEXT_P(0);
+	text	   *pat = PG_GETARG_TEXT_P(1);
+#endif
+	text	   *esc = PG_GETARG_TEXT_P(2);
+	pg_wchar   *s, *p;
+	int			slen, plen;
+	char	   *e;
 
-	PG_RETURN_BOOL(MatchTextLower(VARDATA(s), (VARSIZE(s)-VARHDRSZ),
-								  VARDATA(p), (VARSIZE(p)-VARHDRSZ),
-								  ((VARSIZE(e)-VARHDRSZ) > 0? VARDATA(e): NULL))
-				   != LIKE_TRUE);
+#ifdef MULTIBYTE
+	elog(ERROR, "Case-insensitive multi-byte comparisons are not yet supported");
+#else
+	s = VARDATA(str);
+	slen = (VARSIZE(str)-VARHDRSZ);
+	p = VARDATA(pat);
+	plen = (VARSIZE(pat)-VARHDRSZ);
+#endif
+
+	e = ((VARSIZE(esc)-VARHDRSZ) > 0? VARDATA(esc): NULL);
+
+	result = (MatchTextLower(s, slen, p, plen, e) != LIKE_TRUE);
+
+	PG_RETURN_BOOL(result);
 }
 
 
