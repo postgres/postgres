@@ -434,7 +434,7 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData
    */
   public boolean isDefinitelyWritable(int column) throws SQLException
   {
-    return isWritable(column);
+    return false;
   }
   
   // ********************************************************
