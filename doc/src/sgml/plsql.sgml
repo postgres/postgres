@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/plsql.sgml,v 2.39 2001/09/13 15:55:23 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/plsql.sgml,v 2.40 2001/09/18 12:08:26 petere Exp $
 -->
 
 <chapter id="plpgsql"> 
@@ -1715,13 +1715,15 @@ CREATE FUNCTION c_overpaid (EMP, integer) RETURNS boolean AS '
      </address>
     </affiliation>
    </author>
-
+<!--
+  Breaks HTML manifest file
    <legalnotice>
     <para>
      Except for portions of this document quoted from other sources,
      this document is licensed under the BSD License.
     </para>
    </legalnotice>
+-->
   </sect1info> 
 
   <title>Porting from Oracle PL/SQL</title>

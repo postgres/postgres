@@ -8,7 +8,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/doc/src/sgml/Makefile,v 1.38 2001/08/29 19:14:39 petere Exp $
+#    $Header: /cvsroot/pgsql/doc/src/sgml/Makefile,v 1.39 2001/09/18 12:08:26 petere Exp $
 #
 #----------------------------------------------------------------------------
 
@@ -82,12 +82,17 @@ JADE.html = $(JADE) $(JADEFLAGS) $(SGMLINCLUDE) -c $(CATALOG) -d stylesheet.dsl 
 postgres.html: postgres.sgml $(ALLSGML) stylesheet.dsl
 	@rm -f *.html
 	$(JADE.html) $<
-	ln -sf $@ index.html
+	ln -sf index.html $@
 
 $(addsuffix .html, $(ALLBOOKS)): %.html: %.sgml $(ALLSGML) stylesheet.dsl
 	@rm -f *.html
 	$(JADE.html) book-decl.sgml $<
-	ln -sf $@ index.html
+	ln -sf index.html $@
+
+tutorial.html: clientserver.gif
+programmer.html: catalogs.gif connections.gif
+postgres.html: clientserver.gif catalogs.gif connections.gif
+
 
 COLLATEINDEX = $(PERL) $(DOCBOOKSTYLE)/bin/collateindex.pl -f -g -t 'Index'
 
@@ -134,7 +139,7 @@ $(addsuffix .tex, $(ALLBOOKS)): %.tex: %.sgml $(ALLSGML) stylesheet.dsl
 # Graphics
 
 %.gif:
-	cp -p ../graphics/$@ .
+	cp $(srcdir)/../graphics/$@ .
 
 
 ##
@@ -179,7 +184,7 @@ check-postgres: postgres.sgml
 
 clean distclean maintainer-clean:
 # HTML
-	rm -f HTML.manifest *.html
+	rm -f HTML.manifest *.html *.gif
 # man
 	rm -rf *.1 *.$(DEFAULTSECTION) man1 man$(DEFAULTSECTION) manpage.refs manpage.links manpage.log
 # print

@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/stylesheet.dsl,v 1.10 2001/09/15 00:48:59 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/stylesheet.dsl,v 1.11 2001/09/18 12:08:27 petere Exp $ -->
 <!DOCTYPE style-sheet PUBLIC "-//James Clark//DTD DSSSL Style Sheet//EN" [
 
 <!-- must turn on one of these with -i on the jade command line -->
@@ -44,6 +44,7 @@
 (define %section-autolabel% #t)
 (define %generate-legalnotice-link% #t)
 (define %html-ext%              ".html")
+(define %root-filename%         "index")
 (define %link-mailto-url%       (string-append "mailto:" pgsql-docs-list))
 (define %use-id-as-filename%    #t)
 (define %stylesheet%            "stylesheet.css")
