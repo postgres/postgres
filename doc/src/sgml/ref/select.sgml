@@ -17,7 +17,7 @@
    <date>1998-09-24</date>
   </refsynopsisdivinfo>
   <synopsis>
-SELECT [ALL|DISTINCT]
+SELECT [ALL|DISTINCT [ON <replaceable class="PARAMETER">column</replaceable>] ]
     <replaceable class="PARAMETER">expression</replaceable> [ AS <replaceable class="PARAMETER">name</replaceable> ] [, ...]
     [ INTO [TABLE] <replaceable class="PARAMETER">new_table</replaceable> ]
     [ FROM <replaceable class="PARAMETER">table</replaceable> [<replaceable class="PARAMETER">alias</replaceable> ] [, ...] ]

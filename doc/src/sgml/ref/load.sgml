@@ -154,7 +154,7 @@ Usage
 <ProgramListing>
 --Load the file /usr/postgres/demo/circle.o
 --
-LOAD "/usr/postgres/demo/circle.o"
+LOAD '/usr/postgres/demo/circle.o'
 </ProgramListing>
         
 </REFSECT1>

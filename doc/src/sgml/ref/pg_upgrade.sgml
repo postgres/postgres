@@ -1,0 +1,59 @@
+<REFENTRY ID="APP-PG-UPGRADE">
+<REFMETA>
+<REFENTRYTITLE>
+<application>pg_upgrade</application>
+</REFENTRYTITLE>
+<REFMISCINFO>Application</REFMISCINFO>
+</REFMETA>
+<REFNAMEDIV>
+<REFNAME>
+<application>pg_upgrade</application>
+</REFNAME>
+<REFPURPOSE>
+Allows upgrade from a previous release without reloading data
+</REFPURPOSE>
+<REFSYNOPSISDIV>
+<REFSYNOPSISDIVINFO>
+<DATE>1998-10-04</DATE>
+</REFSYNOPSISDIVINFO>
+<SYNOPSIS>
+pg_upgrade
+pg_upgrade [-f <replaceable class="parameter">input_file</replaceable>] <replaceable class="parameter">old_data_dir</replaceable>
+</SYNOPSIS>
+
+<REFSECT1 ID="R1-APP-PG-UPGRADE-1">
+<REFSECT1INFO>
+<DATE>1998-10-04</DATE>
+</REFSECT1INFO>
+<TITLE>
+Description
+</TITLE>
+<PARA>
+<application>pg_upgrade</application>
+ is a utility for upgrading from a previous
+ PostgreSQL release without reloading all the data.  First,
+ to be safe, back up your data directory.  Then, use:
+<programlisting>
+% pg_dumpall -s >db.out
+</programlisting>
+to dump out your old  database definitions without any
+data.  Stop the postmaster and all backends.
+</para>
+
+<para>
+Then  rename  (using mv) your old pgsql /data directory to
+/data.old and do a make install to install the new binaries.
+Run initdb to create a new template1 database containing the system
+tables for the new release.  Start the new postmaster, cd to the 
+pgsql main directory, and type:
+<programlisting>
+% pg_upgrade -f db.out data.old
+</programlisting>
+The  system  will do some checking to make sure everything
+is properly configured, and run your db.out script to create
+all the  databases and  tables you had, but with no
+data.  It will then move the  data  files  from /data.old
+into  the  proper /data directory.  You can then check out
+the data.  You can delete the /data.old directory when you
+are finished.
+</REFENTRY>

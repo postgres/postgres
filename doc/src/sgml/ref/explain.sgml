@@ -101,7 +101,8 @@ Description
 <PARA>
    This command outputs details about the supplied query.
    The default output is the computed query cost. 
-   VERBOSE displays the full query plan and cost.
+   VERBOSE displays the full query plan and cost to your screen,
+   and pretty-prints the plan to the postmaster log file.   
 
 <REFSECT2 ID="R2-SQL-EXPLAIN-3">
 <REFSECT2INFO>

@@ -19,9 +19,13 @@
   </REFSYNOPSISDIVINFO>
   <SYNOPSIS>
 CREATE TABLE <REPLACEABLE CLASS="PARAMETER">table</REPLACEABLE> (
-    <REPLACEABLE CLASS="PARAMETER">column</REPLACEABLE> <REPLACEABLE CLASS="PARAMETER">type</REPLACEABLE> [ DEFAULT <REPLACEABLE CLASS="PARAMETER">value</REPLACEABLE> | <REPLACEABLE>column_constraint_clause</REPLACEABLE> | PRIMARY KEY } [ ... ] ]
+    <REPLACEABLE CLASS="PARAMETER">column</REPLACEABLE> <REPLACEABLE CLASS="PARAMETER">type</REPLACEABLE>
+    [ DEFAULT <REPLACEABLE CLASS="PARAMETER">value</REPLACEABLE>]
+    [, NOT NULL ] [ ,UNIQUE ]
+    [<REPLACEABLE>column_constraint_clause</REPLACEABLE> | PRIMARY KEY } [ ... ] ]
     [, ... ]
     [, PRIMARY KEY ( <REPLACEABLE CLASS="PARAMETER">column</REPLACEABLE> [, ...] ) ]
+    [, CHECK ( <REPLACEABLE CLASS="PARAMETER">condition</REPLACEABLE> ) ]
     [, <REPLACEABLE>table_constraint_clause</REPLACEABLE> ]
     ) [ INHERITS ( <REPLACEABLE>inherited_table</REPLACEABLE> [, ...] ) ]
   </SYNOPSIS>
@@ -89,8 +93,8 @@ CREATE TABLE <REPLACEABLE CLASS="PARAMETER">table</REPLACEABLE> (
      </TERM>
      <LISTITEM>
       <PARA>
-       The optional column constraint clause specifies a list of integrity 
-       constraints which new or updated entries must satisfy for
+       The optional column constraint clauses specify a list of integrity 
+       constraints or tests which new or updated entries must satisfy for
        an insert or update operation to succeed. Each constraint
        must evaluate to a boolean expression. Although <acronym>SQL92</acronym>
 requires the <REPLACEABLE CLASS="PARAMETER">column_constraint_clause</REPLACEABLE>
@@ -113,6 +117,16 @@ requires the <REPLACEABLE CLASS="PARAMETER">column_constraint_clause</REPLACEABL
        an insert or update operation to succeed. Each constraint
        must evaluate to a boolean expression. Multiple columns
        may be referenced within a single constraint.
+       The use of
+       <TERM>
+       PRIMARY KEY <REPLACEABLE>column</REPLACEABLE>
+       </TERM>
+       as a table constraint
+       is mutually incompatible with
+       <TERM>
+       PRIMARY KEY
+       </TERM>
+       used as a column constraint.
        See the table constraint clause for more information.
       </PARA>
      </LISTITEM>

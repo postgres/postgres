@@ -68,7 +68,7 @@ CREATE SEQUENCE <replaceable class="parameter">seqname</replaceable>
 	   The optional clause <option>MINVALUE
 	   <replaceable class="parameter">minvalue</replaceable></option>
 	   determines the minimum value
-	   a sequence can be. The defaults are 1 and -2147483647 for
+	   a sequence can generate. The defaults are 1 and -2147483647 for
 	   ascending and descending sequences, respectively.
 	  </PARA>
 	 </LISTITEM>
@@ -113,7 +113,8 @@ CREATE SEQUENCE <replaceable class="parameter">seqname</replaceable>
 	   The <option>CACHE <replaceable class="parameter">cache</replaceable></option> option
 	   enables sequence numbers to be preallocated
 	   and stored in memory for faster access. The  minimum
-	   value is 1 (no cache) and this is also the default.
+	   value is 1 (only one value can be generated at a time, i.e. no cache)
+	   and this is also the default.
 	  </PARA>
 	 </LISTITEM>
 	</VARLISTENTRY>
@@ -223,12 +224,12 @@ CREATE SEQUENCE <replaceable class="parameter">seqname</replaceable>
   <PARA>
    CREATE SEQUENCE will enter a new sequence number generator
    into the current data base. This involves creating and initialising a
-   new single block
+   new single-row
    table with the name <replaceable class="parameter">seqname</replaceable>.
    The generator will be "owned" by the user issuing the command.
   </PARA>
   <para>
-   After the sequence is created, you may use the function
+   After a sequence is created, you may use the function
 <function>nextval(<replaceable class="parameter">seqname</replaceable>)</function>
 to get a new number from the sequence.
 The function
@@ -245,10 +246,41 @@ The function
 SELECT * FROM sequence_name;
    </programlisting>
    to get the parameters of a sequence.
+   Aside from fetching the original
+   parameters, you can use
+   <programlisting>
+SELECT last_value FROM sequence_name;
+   </programlisting>
+   to obtain the last value allocated by any backend.
+   parameters, you can use
   </para>
   <para>
    Low-level locking is used to enable multiple simultaneous
    calls to a generator.
+  </para>
+
+  <para>
+  <TITLE>
+  NOTE:
+  </TITLE>
+  Unexpected results may be obtained if a cache setting greater than one
+  is used for a sequence object that will be used concurrently by multiple
+  backends.  Each backend will allocate "cache" successive sequence values
+  during one access to the sequence object and increase the sequence
+  object's last_value accordingly.  Then, the next cache-1 uses of nextval
+  within that backend simply return the preallocated values without touching
+  the shared object.  So, numbers allocated but not used in the current session
+  will be lost.  Furthermore, although multiple backends are guaranteed to
+  allocate distinct sequence values, the values may be generated out of
+  sequence when all the backends are considered.  (For example, with a cache
+  setting of 10, backend A might reserve values 1..10 and return nextval=1, then
+  backend B might reserve values 11..20 and return nextval=11 before backend
+  A has generated nextval=2.)  Thus, with a cache setting of one it is safe
+  to assume that nextval values are generated sequentially; with a cache
+  setting greater than one you should only assume that the nextval values
+  are all distinct, not that they are generated purely sequentially.
+  Also, last_value will reflect the latest value reserved by any backend,
+  whether or not it has yet been returned by nextval.
   </para>
   
   <REFSECT2 ID="R2-SQL-CREATESEQUENCE-3">
