@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.60 2001/05/02 17:04:53 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.61 2001/05/03 17:28:13 momjian Exp $
 -->
 
 <Chapter Id="runtime">
@@ -1449,13 +1449,13 @@ env PGOPTIONS='-c geqo=off' psql
       <row>
        <entry><varname>SHMMAX</></>
        <entry>Maximum size of shared memory segment (bytes)</>
-       <entry>700 kB + 8192 * buffers + extra ... infinity</entry>
+       <entry>250 kB + 8192 * buffers or infinity</entry>
       </row>
 
       <row>
        <entry><varname>SHMMIN</></>
        <entry>Minimum size of shared memory segment (bytes)</>
-       <entry>1 (at most about 256 kB)</>
+       <entry>1</>
       </row>
 
       <row>
@@ -1473,7 +1473,7 @@ env PGOPTIONS='-c geqo=off' psql
        <row>
         <entry><varname>SHMMNI</></>
         <entry>Maximum number of shared memory segments system-wide</>
-        <entry>like <varname>SHMSEG</> + room for other applications</>
+        <entry>like <varname>SHMSEG</> plus room for other applications</>
        </row>
 
        <row>
