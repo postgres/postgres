@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/Attic/pg_upgrade.sgml,v 1.16 2002/01/11 04:39:19 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/Attic/pg_upgrade.sgml,v 1.17 2002/01/11 06:08:02 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -56,18 +56,18 @@ pg_upgrade -s <replaceable class="parameter">filename</replaceable> <replaceable
 
    <step performance="required">
     <para>
-     <command>VACUUM</command> your entire database using
-     <command>vacuumdb -a</command.>
-    </para>
-   </step>
-
-   <step performance="required">
-    <para>
      Then do:
      <programlisting>
 $ pg_dumpall -s > schema.out
      </programlisting>
      to dump out your old database's table definitions without any data.
+    </para>
+   </step>
+
+   <step performance="required">
+    <para>
+     <command>VACUUM</command> your entire database using
+     <command>vacuumdb -a</command.>
     </para>
    </step>
 

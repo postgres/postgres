@@ -3,7 +3,7 @@
 # pg_upgrade: update a database without needing a full dump/reload cycle.
 # CAUTION: Read the manual page before trying to use this!
 
-# $Header: /cvsroot/pgsql/src/bin/pg_dump/Attic/pg_upgrade,v 1.25 2002/01/11 05:54:59 momjian Exp $
+# $Header: /cvsroot/pgsql/src/bin/pg_dump/Attic/pg_upgrade,v 1.26 2002/01/11 06:08:02 momjian Exp $
 #
 # NOTE: we must be sure to update the version-checking code a few dozen lines
 # below for each new PostgreSQL release.
@@ -99,6 +99,7 @@ case "$SRC_VERSION" in
 esac
 
 pg_resetxlog 2>/dev/null
+# file not found status is normally 127, not 1
 if [ "$?" -ne 1 ]
 then	echo "Unable to find pg_resetxlog in path.
 Install it from pgsql/contrib/pg_resetxlog and continue.;  exiting" 1>&2
@@ -241,13 +242,15 @@ done
 
 
 # Set this so the next VACUUM sets the old row XID's as "frozen"
+# Commit status already updated by vacuum above
+
 pg_resetxlog -x "$XID" data
 if [ "$?" -ne 0 ]
 then	echo "Unable to set new XID.;  exiting" 1>&2
 	exit 1
 fi
 
-# set last checkpoint location from old database
+# Set last checkpoint location from old database
 
 CHKPOINT=`pg_resetxlog -n "$OLDDIR" | grep "checkpoint location:" |
 	awk -F'  *' '{print $4}'`
@@ -255,6 +258,8 @@ if [ "$CHKPOINT" = "" ]
 then	echo "Unable to get old checkpoint location.;  exiting" 1>&2
 	exit 1
 fi
+
+# Set checkpoint location of new database
 
 pg_resetxlog -l `echo "$CHKPOINT | tr '/' ' '` data
 if [ "$?" -ne 0 ]
@@ -271,6 +276,7 @@ then	echo "Unable to restart database server.;  exiting" 1>&2
 fi
 
 # Set sequence values for 7.1-version sequences, which were int4.
+
 if [ "$SRC_VERSION" = "7.1" ]
 else	echo "Set int8 sequence values from 7.1..."
 
