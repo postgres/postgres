@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.37 1997/08/06 03:41:41 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.38 1997/08/06 05:08:37 momjian Exp $
  *
  * NOTES
  *    this is the "main" module of the postgres backend and
@@ -108,7 +108,7 @@ extern int      lockingOff;
 extern int      NBuffers;
 
 int     fsyncOff = 0;
-int	SortMem = 512;
+int	SortMem = 512 * 1024;
 
 int     dontExecute = 0;
 static int      ShowStats;
@@ -1045,7 +1045,7 @@ PostgresMain(int argc, char *argv[])
              *  S - amount of sort memory to use in 1k bytes
              * ----------------
              */
-            SortMem = atoi(optarg);
+            SortMem = atoi(optarg) * 1024;
             break;
 
 #ifdef NOT_USED
@@ -1292,7 +1292,7 @@ PostgresMain(int argc, char *argv[])
      */
     if (IsUnderPostmaster == false) {
         puts("\nPOSTGRES backend interactive interface");
-        puts("$Revision: 1.37 $ $Date: 1997/08/06 03:41:41 $");
+        puts("$Revision: 1.38 $ $Date: 1997/08/06 05:08:37 $");
     }
     
     /* ----------------
