@@ -80,6 +80,8 @@ public class Field
 	  sql_type = Types.TIME;
 	else if (type_name.equals("abstime"))
 	  sql_type = Types.TIMESTAMP;
+	else if (type_name.equals("timestamp"))
+	  sql_type = Types.TIMESTAMP;
 	else
 	  sql_type = Types.OTHER;
       }	
