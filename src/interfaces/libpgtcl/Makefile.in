@@ -6,7 +6,7 @@
 # Copyright (c) 1994, Regents of the University of California
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/Makefile.in,v 1.35 1999/06/30 23:57:24 tgl Exp $
+#    $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/Makefile.in,v 1.36 1999/10/11 17:46:59 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -52,7 +52,7 @@ beforeinstall-headers:
 .PHONY: clean
 
 clean: clean-shlib
-	rm -f $(OBJS) lib$(NAME).a
+	rm -f lib$(NAME).a $(OBJS)
 
 depend dep:
 	$(CC) -MM $(CFLAGS) *.c >depend

@@ -1,5 +1,5 @@
 /*
- * pginterface.c
+ * pgeasy.c
  *
 */
 
@@ -9,7 +9,7 @@
 
 #include <libpq-fe.h>
 #include "halt.h"
-#include "pginterface.h"
+#include "pgeasy.h"
 
 #define NUL '\0'
 

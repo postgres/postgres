@@ -6,7 +6,7 @@ and the tables they join to.  CAUTION: it is ver-r-r-y slow on a large
 database, or even a not-so-large one.  We don't really recommend running
 it on anything but an empty database.
 
-It requires pgsql/contrib/pginterface to be compiled first.
+Uses pgeasy library.
 
 Run on an empty database, it returns the system join relationships (shown
 below for 6.5).  Note that unexpected matches may indicate bogus entries

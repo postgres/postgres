@@ -1,0 +1,89 @@
+#-------------------------------------------------------------------------
+#
+# Makefile
+#    Makefile for pgeasy library
+#
+# IDENTIFICATION
+#    $Header: /cvsroot/pgsql/src/interfaces/pgeasy/Attic/Makefile.in,v 1.1 1999/10/11 17:47:01 momjian Exp $
+#
+#-------------------------------------------------------------------------
+
+NAME= pgeasy
+SO_MAJOR_VERSION= 2
+SO_MINOR_VERSION= 0
+
+SRCDIR= @top_srcdir@
+include $(SRCDIR)/Makefile.global
+
+ifdef KRBVERS
+CFLAGS+= $(KRBFLAGS)
+endif
+
+OBJS= pgeasy.o halt.o
+
+SHLIB_LINK+= -L../libpq -lpq
+
+SHLIB_LINK+= -L../libpq -lpq
+
+# If crypt is a separate library, rather than part of libc, it may need
+# to be referenced separately to keep (broken) linkers happy.  (This is
+# braindead; users of libpq should not need to know what it depends on.)
+SHLIB_LINK+= $(findstring -lcrypt,$(LIBS))
+
+# Shared library stuff, also default 'all' target
+include $(SRCDIR)/Makefile.shlib
+
+
+.PHONY: install install-headers
+
+install: install-headers install-lib $(install-shlib-dep)
+
+install-headers: pgeasy.h
+	@if [ ! -d $(HEADERDIR) ]; then mkdir $(HEADERDIR); fi
+	$(INSTALL) $(INSTLOPTS) pgeasy.h $(HEADERDIR)/pgeasy.h
+
+.PHONY: clean
+
+clean: clean-shlib
+	rm -f lib$(NAME).a $(OBJS)
+
+depend dep:
+	$(CC) -MM $(CFLAGS) *.c >depend
+
+ifeq (depend,$(wildcard depend))
+include depend
+endif
+
+
+
+PGEASY = pgeasy.o halt.o 
+TARGET = libpgeasy.a pginsert pgwordcount pgnulltest
+CFLAGS = -g -Wall -I. -I../../src/interfaces/libpq  -I/usr/local/pgsql/include
+LDFLAGS = -L/usr/local/pgsql/lib -lpq
+
+all : $(TARGET)
+
+libpgeasy.a:	pgeasy.o halt.o
+	ar r libpgeasy.a pgeasy.o halt.o
+
+pgeasy.o:	pgeasy.c
+	gcc -c $(CFLAGS) pgeasy.c
+
+halt.o:	halt.c
+	gcc -c $(CFLAGS) halt.c
+
+pginsert:	$(PGEASY) pginsert.c
+	gcc -o $@ $(CFLAGS) $@.c $(PGEASY) $(LDFLAGS)
+
+pgwordcount:	$(PGEASY) pgwordcount.c
+	gcc -o $@ $(CFLAGS) $@.c $(PGEASY) $(LDFLAGS)
+
+pgnulltest:	$(PGEASY) pgnulltest.c
+	gcc -o $@ $(CFLAGS) $@.c $(PGEASY) $(LDFLAGS)
+
+clean:
+	rm -f *.o $(TARGET) log core
+
+install:
+	install -s -o bin -g bin $(TARGET) /usr/local/pgsql/bin
+

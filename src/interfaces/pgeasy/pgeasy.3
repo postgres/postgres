@@ -1,9 +1,9 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/contrib/pginterface/Attic/pginterface.3,v 1.1 1998/09/11 05:14:08 momjian Exp $
-.TH PGINTERFACE INTRO 08/08/98 PostgreSQL PostgreSQL
+.\" $Header: /cvsroot/pgsql/src/interfaces/pgeasy/Attic/pgeasy.3,v 1.1 1999/10/11 17:47:01 momjian Exp $
+.TH PGEASY INTRO 08/08/98 PostgreSQL PostgreSQL
 .SH DESCRIPTION
-Pginterface allows you to cleanly interface to the libpq library,
+Pgeasy allows you to cleanly interface to the libpq library,
 more like a 4gl SQL interface.
 .PP
 It consists of set of simplified C functions that encapsulate the
@@ -46,7 +46,7 @@ queries,
 allows you to pass pointers as parameters, and on return the variables
 are filled with data from the binary cursor you opened.  These binary
 cursors can not be used if you are running the
-.BR pginterface
+.BR pgeasy
 client on a system with a different architecture than the database
 server.  If you pass a NULL pointer parameter, the column is skipped.
 .BR fetchwithnulls
@@ -67,5 +67,5 @@ and
 allow you to handle multiple result sets at the same time.
 .PP
 There are a variety of demonstration programs in the
-.BR pginterface
+.BR pgeasy
 source directory.

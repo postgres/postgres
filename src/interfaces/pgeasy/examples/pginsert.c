@@ -7,7 +7,7 @@
 #include <time.h>
 #include <libpq-fe.h>
 #include "halt.h"
-#include "pginterface.h"
+#include "pgeasy.h"
 
 int
 main(int argc, char **argv)

@@ -1220,6 +1220,7 @@ AC_OUTPUT(
 	interfaces/libpq/Makefile
 	interfaces/ecpg/lib/Makefile
 	interfaces/libpq++/Makefile
+	interfaces/libpgeasy/Makefile
 	interfaces/libpgtcl/Makefile
 	interfaces/odbc/GNUmakefile
 	interfaces/odbc/Makefile.global

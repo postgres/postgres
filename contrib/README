@@ -50,14 +50,6 @@ mSQL-interface -
 noupdate -
 	trigger to prevent updates on single columns
 
-plpgsql - 
-	Postgres procedural language
-	by Jan Wieck <jwieck@debis.com>
-
-pginterface -
-	A crude C/4GL
-	by Bruce Momjian <root@candle.pha.pa.us>
-
 soundex -
 	Prototype for soundex function
 
