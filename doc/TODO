@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Wed Jan 12 22:36:16 EST 2000
+Last updated:		Thu Jan 13 08:17:47 EST 2000
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -177,6 +177,7 @@ CLIENTS
 * -Add a function to return the last inserted oid, for use in psql
 	scripts (Peter E)
 * -Allow psql to print nulls as distinct from "" [null]
+* fix array handling for ECPG
 
 EXOTIC FEATURES
 
