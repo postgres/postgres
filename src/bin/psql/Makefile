@@ -7,46 +7,45 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/psql/Makefile,v 1.12 1996/11/12 06:11:52 bryanh Exp $
+#    $Header: /cvsroot/pgsql/src/bin/psql/Makefile,v 1.13 1996/11/13 10:35:26 bryanh Exp $
 #
 #-------------------------------------------------------------------------
 
-SRCDIR = ../..
-LIBPQDIR = $(SRCDIR)/libpq
+SRCDIR= ../..
 include ../../Makefile.global
 
-INCLUDE_OPT := \
+INCLUDE_OPT:= \
                -I$(LIBPQDIR) \
-               -I$(SRCDIR)/include
+               -I../../include
 
-CFLAGS += $(INCLUDE_OPT)
+CFLAGS+= $(INCLUDE_OPT)
 #
 #USE_READLINE is set in Makefile.global
 # 
 
 ifeq ($(USE_READLINE), true)
-   CFLAGS += $(READLINE_INC) $(HISTORY_INC)
+   CFLAGS+= $(READLINE_INC) $(HISTORY_INC)
 
    LIBCURSES=	-lcurses 
-   LD_ADD += $(READLINE_LIB) $(HISTORY_LIB) $(LIBCURSES)
+   LD_ADD+= $(READLINE_LIB) $(HISTORY_LIB) $(LIBCURSES)
 
    ifeq ($(PORTNAME), ultrix4)
-   LD_ADD += -ltermcap
+   LD_ADD+= -ltermcap
    else
    ifeq ($(PORTNAME), sparc)
-   LD_ADD += -ltermcap
+   LD_ADD+= -ltermcap
    else
    ifeq ($(PORTNAME), linux)
-   LD_ADD += -ltermcap
+   LD_ADD+= -ltermcap
    else
    ifeq ($(PORTNAME), next)
-   LD_ADD += -ltermcap
+   LD_ADD+= -ltermcap
    else
    ifeq ($(PORTNAME), bsdi)
-   LD_ADD += -ltermcap
+   LD_ADD+= -ltermcap
    else
    ifeq ($(PORTNAME), BSD44_derived)
-   LD_ADD += -ltermcap
+   LD_ADD+= -ltermcap
    endif
    endif
    endif
@@ -54,7 +53,7 @@ ifeq ($(USE_READLINE), true)
    endif
    endif
 else
-   CFLAGS += -DNOREADLINE
+   CFLAGS+= -DNOREADLINE
 endif
 
 OBJS= psql.o stringutils.o 

@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Attic/Makefile.global,v 1.64 1996/11/13 08:36:31 bryanh Exp $
+#    $Header: /cvsroot/pgsql/src/Attic/Makefile.global,v 1.65 1996/11/13 10:35:00 bryanh Exp $
 #
 # NOTES
 #    Essentially all Postgres make files include this file and use the 
@@ -68,27 +68,12 @@ PORTNAME= UNDEFINED
 # library), set LINUX_ELF to null in Makefile.custom.
 LINUX_ELF= 1
 
-# SRCDIR specifies where the source files are.  It should be defined before
-# we are included, but for transition purposes, we put this default here.
-ifdef SRCDIR
-MKDIR:= $(SRCDIR)/mk
-else
-SRCDIR:= $(MKDIR)/..
-endif
-
 LIBPQDIR:= $(SRCDIR)/libpq
 
 # For convenience, POSTGRESDIR is where DATADIR, BINDIR, and LIBDIR 
 # and other target destinations are rooted.  Of course, each of these is 
 # changable separately.
 POSTGRESDIR= /usr/local/pgsql
-
-# POSTGRESLOGIN is the login name of the user who gets special
-# privileges within the database.  By default it is "postgres", but
-# you can change it to any existing login name (such as your own 
-# login if you are compiling a private version or don't have root
-# access).
-POSTGRESLOGIN= postgres
 
 # DATADIR specifies where the postmaster expects to find its database.
 # This may be overridden by command line options or the PGDATA environment
@@ -268,8 +253,6 @@ DASH_N= -n
 BACKSLASH_C=
 
 
-objdir= obj
-
 ##############################################################################
 #
 # Customization.
@@ -277,8 +260,8 @@ objdir= obj
 # This includes your local customizations if Makefile.custom exists
 # in the source directory.  This file doesn't exist in the original
 # distribution so that it doesn't get overwritten when you upgrade.
-ifneq ($(wildcard $(MKDIR)/../Makefile.custom), )
-include $(MKDIR)/../Makefile.custom
+ifneq ($(wildcard $(SRCDIR/Makefile.custom), )
+include $(SRCDIR)/Makefile.custom
 endif
 
 #############################################################################
@@ -304,10 +287,9 @@ endif
 # HISTORY: Before October 1996, this file included the following line:
 #     -include $(MKDIR)/port/postgres.mk.$(PORTNAME)
 # Now, we instead have all the former contents of those .mk files inline
-# with ifeq ($(PORTNAME) ...).  This makes it a little bit easier to use
-# Makefile.global because you don't have to set MKDIR too.  It also makes
-# it easier to read the make files.  Finally, it should help with 
-# migration to autoconf.   - Bryan
+# with ifeq ($(PORTNAME) ...).  This makes it easier to read the make
+# files and to make certain updates.  It should also help with the migration
+# to autoconf.  -Bryan
 
 # Since there are no longer separate files for each platform, much of the
 # commonality among the platforms ought to be factored out of the following.
@@ -548,7 +530,7 @@ INSTALL= /usr/ucb/install
 # everything to compile.  :-/
 #
 # The extra -I flag is to scoop up extra BSD-emulating headers.
-CFLAGS_BE+= -DSYSV_DIRENT -I$(POSTGRESDIR)/src/backend/port/sparc_solaris
+CFLAGS_BE+= -DSYSV_DIRENT -I$(SRCDIR)/backend/port/sparc_solaris
 LDADD_BE+= -lsocket -lnsl
 
 LD_ADD+= $(LDADD_BE)
@@ -715,7 +697,7 @@ INSTALL= /home/tools/bin/install
 # everything to compile.  :-/
 #
 # The extra -I flag is to scoop up extra BSD-emulating headers.
-CFLAGS_BE+= -DSYSV_DIRENT -I$(POSTGRESDIR)/src/backend/port/svr4
+CFLAGS_BE+= -DSYSV_DIRENT -I$(SRCDIR)/backend/port/svr4
 LDADD_BE+= -lsocket -lnsl -lc /usr/ucblib/libucb.a
 
 LD_ADD+= $(LDADD_BE)
@@ -753,15 +735,6 @@ SLSUFF= .o
 
 endif
 
-
-
-##############################################################################
-#
-# Miscellaneous configuration
-#
-
-srcdir= $(SRCDIR)
-includedir= $(HEADERDIR)
 
 
 # This goes here so that customization in Makefile.custom is effective

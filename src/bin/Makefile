@@ -7,12 +7,12 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/Makefile,v 1.5 1996/11/11 13:39:09 bryanh Exp $
+#    $Header: /cvsroot/pgsql/src/bin/Makefile,v 1.6 1996/11/13 10:35:20 bryanh Exp $
 #
 #-------------------------------------------------------------------------
 
 SRCDIR=..
-include $(SRCDIR)/Makefile.global
+include ../Makefile.global
 
 .DEFAULT all:
 #

@@ -3,7 +3,6 @@
 #
 
 SRCDIR= ../..
-LIBPQDIR= $(SRCDIR)/libpq
 include ../../Makefile.global
 
 CXXFLAGS= $(CFLAGS)

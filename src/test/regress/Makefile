@@ -7,12 +7,11 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/test/regress/Makefile,v 1.8 1996/11/12 11:43:05 bryanh Exp $
+#    $Header: /cvsroot/pgsql/src/test/regress/Makefile,v 1.9 1996/11/13 10:36:17 bryanh Exp $
 #
 #-------------------------------------------------------------------------
 
 SRCDIR= ../..
-LIBPQDIR= $(SRCDIR)/libpq
 include ../../Makefile.global
 
 CFLAGS+= -I$(LIBPQDIR) -I../../include

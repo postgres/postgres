@@ -7,15 +7,12 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Makefile,v 1.10 1996/11/11 13:51:20 bryanh Exp $
-#
-# NOTES
-#	objdir	- location of the objects and generated files (eg. obj)
+#    $Header: /cvsroot/pgsql/src/Makefile,v 1.11 1996/11/13 10:34:58 bryanh Exp $
 #
 #-------------------------------------------------------------------------
 
-MKDIR=./mk
--include $(MKDIR)/../Makefile.global
+SRCDIR= .
+include Makefile.global
 
 FIND = find
 # assuming gnu tar and split here
@@ -41,7 +38,7 @@ ifeq ($(USE_TCL), true)
 	$(MAKE) -C libpgtcl $@
 endif
 	$(MAKE) -C bin $@
-ifneq ($(wildcard $(MKDIR)/../../doc), )
+ifneq ($(wildcard ../doc), )
 	$(MAKE) -C ../doc $@
 endif
 	@if test $@. = all. -o $@. = .; then \
