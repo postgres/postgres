@@ -1,23 +1,23 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/drop_trigger.l,v 1.1 1997/09/26 15:13:09 thomas Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/drop_trigger.l,v 1.2 1997/09/30 09:50:28 vadim Exp $
 .TH "DROP TRIGGER" SQL 09/26/97 PostgreSQL
 .SH NAME
-drop trigger \(em destroy existing classes
+drop trigger \(em destroy existing trigger
 .SH SYNOPSIS
 .nf
-\fBdrop trigger\fR trigname
+\fBdrop trigger\fR trigname \fBon\fR relname
 .fi
 .SH DESCRIPTION
 .BR "Drop Trigger"
-removes triggers from the data base.  Only its owner may destroy a
+removes trigger for relation from the data base. Only relation owner may destroy a
 trigger.
 .SH EXAMPLE
 .nf
 --
---Destroy the empverify trigger
+--Destroy the empverify trigger on relation emp
 --
-drop trigger empverify
+drop trigger empverify on emp
 .fi
 .SH "SEE ALSO"
 create trigger(l).
