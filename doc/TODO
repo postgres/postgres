@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Tue Aug 13 22:24:31 EDT 2002
+Last updated:		Tue Aug 13 22:49:31 EDT 2002
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -253,7 +253,14 @@ Commands
 	o Fix problems with complex temporary table creation/destruction
 	  without using PL/PgSQL EXECUTE, needs cache prevention/invalidation
         o Fix PL/pgSQL RENAME to work on variables other than OLD/NEW
-
+	o Improve PL/PgSQL exception handling
+	o Allow PL/PgSQL parameters to be specified by name and type during 
+	  definition
+	o Allow PL/PgSQL function parameters to be passed by name,
+	  get_employee_salary(emp_id => 12345, tax_year => 2001)
+	o Add PL/PgSQL packages
+	o Allow array declarations and other data types in PL/PgSQl DECLARE
+	o Add PL/PgSQL PROCEDURES that can return multiple values
 
 Clients
 =======
