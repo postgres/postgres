@@ -4,12 +4,10 @@
  * External declarations pertaining to backend/utils/misc/guc.c and
  * backend/utils/misc/guc-file.l
  *
- * $Header: /cvsroot/pgsql/src/include/utils/guc.h,v 1.4 2000/07/27 19:49:24 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/include/utils/guc.h,v 1.5 2001/02/10 02:31:29 tgl Exp $
  */
 #ifndef GUC_H
 #define GUC_H
-
-#include "postgres.h"
 
 /*
  * Certain options can only be set at certain times. The rules are

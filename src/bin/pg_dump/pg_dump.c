@@ -22,7 +22,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.190 2001/01/28 03:47:49 pjw Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.191 2001/02/10 02:31:27 tgl Exp $
  *
  * Modifications - 6/10/96 - dave@bensoft.com - version 1.13.dhb
  *
@@ -104,12 +104,17 @@
  *-------------------------------------------------------------------------
  */
 
+/*
+ * Although this is not a backend module, we must include postgres.h anyway
+ * so that we can include a bunch of backend include files.  pg_dump has
+ * never pretended to be very independent of the backend anyhow ...
+ */
+#include "postgres.h"
+
 #include <unistd.h>				/* for getopt() */
 #include <ctype.h>
 
 #include "pg_backup.h"
-
-#include "postgres.h"
 
 #ifdef HAVE_GETOPT_H
 #include <getopt.h>
@@ -120,13 +125,12 @@
 
 #include "access/attnum.h"
 #include "access/htup.h"
-#include "catalog/pg_index.h"
-#include "catalog/pg_language.h"
+#include "catalog/pg_class.h"
 #include "catalog/pg_trigger.h"
 #include "catalog/pg_type.h"
 
 #include "libpq-fe.h"
-#include <libpq/libpq-fs.h>
+#include "libpq/libpq-fs.h"
 #ifndef HAVE_STRDUP
 #include "strdup.h"
 #endif

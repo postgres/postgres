@@ -10,12 +10,12 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtcl.c,v 1.19 2001/01/24 19:43:29 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtcl.c,v 1.20 2001/02/10 02:31:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 
-#include "postgres.h"
+#include "postgres_fe.h"
 #include "libpgtcl.h"
 #include "pgtclCmds.h"
 #include "pgtclId.h"

@@ -4,10 +4,12 @@
  *
  * Tatsuo Ishii
  *
- * $Id: alt.c,v 1.2 1999/05/25 16:12:38 momjian Exp $
+ * $Id: alt.c,v 1.3 2001/02/10 02:31:27 tgl Exp $
  */
 
 #include <stdio.h>
+
+
 main()
 {
 	int			i;

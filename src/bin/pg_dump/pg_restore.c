@@ -50,23 +50,12 @@
  *-------------------------------------------------------------------------
  */
 
+#include "pg_backup.h"
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
-
-
-/*
-#include "postgres.h"
-#include "access/htup.h"
-#include "catalog/pg_type.h"
-#include "catalog/pg_language.h"
-#include "catalog/pg_index.h"
-#include "catalog/pg_trigger.h"
-#include "libpq-fe.h"
-*/
-
-#include "pg_backup.h"
 
 #ifndef HAVE_STRDUP
 #include "strdup.h"

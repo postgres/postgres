@@ -3,9 +3,8 @@
  * client encoding and server internal encoding.
  * (currently mule internal code (mic) is used)
  * Tatsuo Ishii
- * $Id: mbutils.c,v 1.14 2000/11/14 18:37:44 tgl Exp $ */
-
-
+ * $Id: mbutils.c,v 1.15 2001/02/10 02:31:27 tgl Exp $
+ */
 #include "postgres.h"
 
 #include "miscadmin.h"

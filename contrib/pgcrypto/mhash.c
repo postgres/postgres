@@ -26,10 +26,11 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: mhash.c,v 1.1 2000/10/31 13:11:28 petere Exp $
+ * $Id: mhash.c,v 1.2 2001/02/10 02:31:26 tgl Exp $
  */
 
-#include <postgres.h>
+#include "postgres.h"
+
 #include "pgcrypto.h"
 
 #include <mhash.h>

@@ -9,18 +9,16 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pqcomm.h,v 1.53 2001/01/24 19:43:25 momjian Exp $
+ * $Id: pqcomm.h,v 1.54 2001/02/10 02:31:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef PQCOMM_H
 #define PQCOMM_H
 
-#include "postgres.h"
-
 #include <sys/types.h>
 #ifdef WIN32
-# include "winsock.h"
+# include <winsock.h>
 #else /* not WIN32 */
 # include <sys/socket.h>
 # ifdef HAVE_SYS_UN_H

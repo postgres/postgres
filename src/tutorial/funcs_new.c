@@ -9,8 +9,6 @@
   See funcs.c for examples of "old style".
 *****************************************************************************/
 
-#include <string.h>
-
 #include "postgres.h"			/* general Postgres declarations */
 
 #include "fmgr.h"               /* for argument/result macros */

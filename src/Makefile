@@ -11,7 +11,7 @@
 # GNUmakefile won't exist yet, so we catch that case as well.
 
 
-all check install installdirs installcheck uninstall dep depend clean distclean maintainer-clean:
+all check install installdirs install-all-headers installcheck uninstall dep depend clean distclean maintainer-clean:
 	@if [ ! -f GNUmakefile ] ; then \
 	   echo "You need to run the 'configure' program first. See the file"; \
 	   echo "'INSTALL' for installation instructions." ; \

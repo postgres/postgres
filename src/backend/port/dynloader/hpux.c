@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/port/dynloader/hpux.c,v 1.16 2001/02/07 17:59:58 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/port/dynloader/hpux.c,v 1.17 2001/02/10 02:31:26 tgl Exp $
  *
  *	NOTES
  *		all functions are defined here -- it's impossible to trace the
@@ -23,7 +23,6 @@
 
 #include "dl.h"
 #include "dynloader.h"
-#include "fmgr.h"
 #include "utils/dynamic_loader.h"
 
 void *

@@ -40,13 +40,10 @@
  */
 
 #ifndef PG_BACKUP__
-
-#include "config.h"
-#include "c.h"
-
 #define PG_BACKUP__
 
-#include "postgres.h"
+#include "postgres_fe.h"
+
 #include "libpq-fe.h"
 
 typedef enum _archiveFormat {

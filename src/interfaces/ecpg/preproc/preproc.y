@@ -1,13 +1,6 @@
 /* Copyright comment */
 %{
-#include <stdarg.h>
-
-#include "postgres.h"
-#include "access/htup.h"
-#include "catalog/catname.h"
-#include "utils/numeric.h"
-#include "utils/memutils.h"
-#include "storage/bufpage.h"
+#include "postgres_fe.h"
 
 #include "extern.h"
 
@@ -2976,10 +2969,6 @@ Geometric:  PATH_P 	{ $$ = make_str("path"); };
 
 opt_float:  '(' PosIntConst ')'
 				{
-					if (atol($2) < 1)
-						mmerror(ET_ERROR, "precision for FLOAT must be at least 1");
-					else if (atol($2) >= 16)
-						mmerror(ET_ERROR, "precision for FLOAT must be less than 16");
 					$$ = cat_str(3, make_str("("), $2, make_str(")"));
 				}
 		| /*EMPTY*/
@@ -2990,22 +2979,10 @@ opt_float:  '(' PosIntConst ')'
 
 opt_numeric:  '(' PosIntConst ',' PosIntConst ')'
 				{
-					if (atol($2) < 1 || atol($2) > NUMERIC_MAX_PRECISION) {
-						sprintf(errortext, "NUMERIC precision %s must be between 1 and %d", $2, NUMERIC_MAX_PRECISION);
-						mmerror(ET_ERROR, errortext);
-					}
-					if (atol($4) < 0 || atol($4) > atol($2)) {
-						sprintf(errortext, "NUMERIC scale %s must be between 0 and precision %s", $4, $2);
-						mmerror(ET_ERROR, errortext);
-					}
 					$$ = cat_str(5, make_str("("), $2, make_str(","), $4, make_str(")"));
 				}
 		| '(' PosIntConst ')'
 				{
-					if (atol($2) < 1 || atol($2) > NUMERIC_MAX_PRECISION) {
-						sprintf(errortext, "NUMERIC precision %s must be between 1 and %d", $2, NUMERIC_MAX_PRECISION);
-						mmerror(ET_ERROR, errortext);
-					}
 					$$ = cat_str(3, make_str("("), $2, make_str(")"));
 				}
 		| /*EMPTY*/
@@ -3016,22 +2993,10 @@ opt_numeric:  '(' PosIntConst ',' PosIntConst ')'
 
 opt_decimal:  '(' PosIntConst ',' PosIntConst ')'
 				{
-					if (atol($2) < 1 || atol($2) > NUMERIC_MAX_PRECISION) {
-						sprintf(errortext, "NUMERIC precision %s must be between 1 and %d", $2, NUMERIC_MAX_PRECISION);
-						mmerror(ET_ERROR, errortext);
-					}
-					if (atol($4) < 0 || atol($4) > atol($2)) {
-						sprintf(errortext, "NUMERIC scale %s must be between 0 and precision %s", $4, $2);
-						mmerror(ET_ERROR, errortext);
-					}
 					$$ = cat_str(5, make_str("("), $2, make_str(","), $4, make_str(")"));
 				}
 		| '(' PosIntConst ')'
 				{
-					if (atol($2) < 1 || atol($2) > NUMERIC_MAX_PRECISION) {
-						sprintf(errortext, "NUMERIC precision %s must be between 1 and %d", $2, NUMERIC_MAX_PRECISION);
-						mmerror(ET_ERROR, errortext);
-					}
 					$$ = cat_str(3, make_str("("), $2, make_str(")"));
 				}
 		| /*EMPTY*/
@@ -3045,23 +3010,12 @@ opt_decimal:  '(' PosIntConst ',' PosIntConst ')'
  * The following implements BIT() and BIT VARYING().
  */
 Bit:  bit '(' PosIntConst ')'
-                                {
-                                        $$ = cat_str(4, $1, make_str("("), $3, make_str(")"));
-                                        if (atol($3) < 1)
-					{
-                                                sprintf(errortext,"length for type '%s' must be at least 1",$1);  
-												mmerror(ET_ERROR, errortext);
-					}
-                                        else if (atol($3) > (MaxAttrSize * BITS_PER_BYTE))
-					{
-                                                sprintf(errortext, "length for type '%s' cannot exceed %d", $1,
-                                                         (MaxAttrSize * BITS_PER_BYTE));
-												mmerror(ET_ERROR, errortext);
-					}
-                                }
+				{
+					$$ = cat_str(4, $1, make_str("("), $3, make_str(")"));
+				}
                 | bit
-                                {
-                                        $$ = $1;
+				{
+					$$ = $1;
 				}
 		;
 
@@ -3077,17 +3031,6 @@ bit:  BIT opt_varying
  */
 Character:  character '(' PosIntConst ')'
 				{
-					if (atol($3) < 1)
-					{
-						sprintf(errortext, "length for type '%s' type must be at least 1",$1);
-						mmerror(ET_ERROR, errortext);
-					}
-					else if (atol($3) > MaxAttrSize)
-					{
-						sprintf(errortext, "length for type '%s' cannot exceed %d", $1, MaxAttrSize);
-						mmerror(ET_ERROR, errortext);
-					}
-
 					$$ = cat_str(4, $1, make_str("("), $3, make_str(")"));
 				}
 		| character
@@ -3730,14 +3673,7 @@ relation_name:	SpecialRuleRelation
 				}
 		| ColId
 				{
-					/* disallow refs to variable system tables */
-					if (strcmp(LogRelationName, $1) == 0
-					   || strcmp(VariableRelationName, $1) == 0) {
-						sprintf(errortext, make_str("%s cannot be accessed by users"),$1);
-						mmerror(ET_ERROR, errortext);
-					}
-					else
-						$$ = $1;
+					$$ = $1;
 				}
 		;
 

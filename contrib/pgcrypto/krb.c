@@ -31,15 +31,15 @@
  *	It is possible that this works with other SHA1/MD5
  *	implementations too.
  *
- * $Id: krb.c,v 1.1 2000/10/31 13:11:28 petere Exp $
+ * $Id: krb.c,v 1.2 2001/02/10 02:31:25 tgl Exp $
  */
 
-#include <postgres.h>
+#include "postgres.h"
 
 #include "pgcrypto.h"
 
-#include <md5.h>
-#include <sha.h>
+#include "md5.h"
+#include "sha.h"
 
 #ifndef MD5_DIGEST_LENGTH
 #define MD5_DIGEST_LENGTH 16

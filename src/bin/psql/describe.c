@@ -3,9 +3,9 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/describe.c,v 1.26 2000/10/25 20:36:52 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/describe.c,v 1.27 2001/02/10 02:31:28 tgl Exp $
  */
-#include "postgres.h"
+#include "postgres_fe.h"
 #include "describe.h"
 
 #include "libpq-fe.h"

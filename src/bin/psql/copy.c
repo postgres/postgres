@@ -3,9 +3,9 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/copy.c,v 1.16 2000/12/03 15:39:38 petere Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/copy.c,v 1.17 2001/02/10 02:31:28 tgl Exp $
  */
-#include "postgres.h"
+#include "postgres_fe.h"
 #include "copy.h"
 
 #include <errno.h>

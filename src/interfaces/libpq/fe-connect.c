@@ -8,12 +8,12 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.159 2001/01/24 19:43:30 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.160 2001/02/10 02:31:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 
-#include "postgres.h"
+#include "postgres_fe.h"
 
 #include <sys/types.h>
 #include <fcntl.h>
@@ -45,7 +45,6 @@
 #endif
 
 #ifdef MULTIBYTE
-#include "miscadmin.h"
 #include "mb/pg_wchar.h"
 #endif
 

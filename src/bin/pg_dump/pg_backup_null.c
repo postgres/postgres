@@ -30,11 +30,12 @@
  *-------------------------------------------------------------------------
  */
 
+#include "pg_backup.h"
+#include "pg_backup_archiver.h"
+
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h> /* for dup */
-#include "pg_backup.h"
-#include "pg_backup_archiver.h"
 
 static int	_WriteData(ArchiveHandle* AH, const void* data, int dLen);
 static void     _EndData(ArchiveHandle* AH, TocEntry* te);

@@ -4,11 +4,11 @@
   format for these routines is dictated by Postgres architecture.
 ******************************************************************************/
 
-#include <stdio.h>
+#include "postgres.h"
+
 #include <float.h>
 #include <string.h>
 
-#include "postgres.h"
 #include "access/gist.h"
 #include "access/itup.h"
 #include "access/rtree.h"

@@ -6,13 +6,12 @@
  * WIN1250 client encoding support contributed by Pavel Behal
  * SJIS UDC (NEC selection IBM kanji) support contributed by Eiji Tokuya
  *
- * $Id: conv.c,v 1.21 2000/11/17 04:42:10 ishii Exp $
+ * $Id: conv.c,v 1.22 2001/02/10 02:31:27 tgl Exp $
  *
  *
  */
-
-#include <stdio.h>
-#include <string.h>
+/* can be used in either frontend or backend */
+#include "postgres_fe.h"
 
 #include "mb/pg_wchar.h"
 

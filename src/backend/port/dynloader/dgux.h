@@ -5,7 +5,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: dgux.h,v 1.8 2001/01/24 19:43:04 momjian Exp $
+ * $Id: dgux.h,v 1.9 2001/02/10 02:31:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -13,7 +13,6 @@
 #define PORT_PROTOS_H
 
 #include <dlfcn.h>
-#include "fmgr.h"
 #include "utils/dynamic_loader.h"
 
 /*

@@ -7,8 +7,11 @@
  *
  * 1999/1/15 Tatsuo Ishii
  *
- * $Id: big5.c,v 1.6 2000/12/09 04:27:36 ishii Exp $
+ * $Id: big5.c,v 1.7 2001/02/10 02:31:27 tgl Exp $
  */
+
+/* can be used in either frontend or backend */
+#include "postgres_fe.h"
 
 #include "mb/pg_wchar.h"
 

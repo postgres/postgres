@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  * 
- * $Id: pgconnection.h,v 1.9 2001/01/24 19:43:32 momjian Exp $
+ * $Id: pgconnection.h,v 1.10 2001/02/10 02:31:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,7 +38,7 @@ extern "C" {
 #endif
 
 extern "C" {
-#include "postgres.h"
+#include "postgres_fe.h"
 #include "libpq-fe.h"
 }
 

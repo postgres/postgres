@@ -9,12 +9,10 @@
  * either version 2, or (at your option) any later version.
  */
 
-#include <ctype.h>
-#include <string.h>
-
 #include "postgres.h"
-#include "utils/elog.h"
-#include "utils/palloc.h"
+
+#include <ctype.h>
+
 #include "utils/builtins.h"
 
 #include "string_io.h"

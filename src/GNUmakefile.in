@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/Attic/GNUmakefile.in,v 1.60 2000/09/29 17:17:32 petere Exp $
+# $Header: /cvsroot/pgsql/src/Attic/GNUmakefile.in,v 1.61 2001/02/10 02:31:26 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -19,6 +19,9 @@ all install installdirs uninstall dep depend distprep:
 	$(MAKE) -C interfaces $@
 	$(MAKE) -C bin $@
 	$(MAKE) -C pl $@
+
+install-all-headers:
+	$(MAKE) -C include $@
 
 clean:
 	$(MAKE) -C backend $@

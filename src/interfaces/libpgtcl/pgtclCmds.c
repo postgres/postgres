@@ -8,14 +8,14 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtclCmds.c,v 1.53 2001/01/24 19:43:29 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtclCmds.c,v 1.54 2001/02/10 02:31:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
+#include "postgres_fe.h"
 
 #include <ctype.h>
 
-#include "postgres.h"
 #include "pgtclCmds.h"
 #include "pgtclId.h"
 #include "libpq/libpq-fs.h"		/* large-object interface */

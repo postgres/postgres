@@ -1,11 +1,13 @@
 /*
  * conversion functions between pg_wchar and multi-byte streams.
  * Tatsuo Ishii
- * $Id: wchar.c,v 1.13 2000/10/12 06:06:50 ishii Exp $
+ * $Id: wchar.c,v 1.14 2001/02/10 02:31:27 tgl Exp $
  *
  * WIN1250 client encoding updated by Pavel Behal
  *
  */
+/* can be used in either frontend or backend */
+#include "postgres_fe.h"
 
 #include "mb/pg_wchar.h"
 

@@ -1,4 +1,4 @@
-#include "postgres.h"
+#include "postgres_fe.h"
 #include "libpq-fe.h"
 
 /* Here are some methods used by the lib. */

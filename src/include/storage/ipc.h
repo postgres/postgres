@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: ipc.h,v 1.46 2001/01/24 19:43:27 momjian Exp $
+ * $Id: ipc.h,v 1.47 2001/02/10 02:31:28 tgl Exp $
  *
  * Some files that would normally need to include only sys/ipc.h must
  * instead include this file because on Ultrix, sys/ipc.h is not designed
@@ -17,8 +17,6 @@
  */
 #ifndef IPC_H
 #define IPC_H
-
-#include "config.h"
 
 #include <sys/types.h>
 #ifdef HAVE_SYS_IPC_H

@@ -3,9 +3,10 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/common.c,v 1.29 2000/12/18 17:33:42 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/common.c,v 1.30 2001/02/10 02:31:28 tgl Exp $
  */
-#include "postgres.h"
+#include "postgres_fe.h"
+
 #include "common.h"
 
 #include <errno.h>
@@ -26,7 +27,6 @@
 #endif
 
 #include "libpq-fe.h"
-#include "postgres_ext.h"
 #include "pqsignal.h"
 
 #include "settings.h"

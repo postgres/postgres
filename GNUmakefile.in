@@ -1,7 +1,7 @@
 #
 # PostgreSQL top level makefile
 #
-# $Header: /cvsroot/pgsql/GNUmakefile.in,v 1.16 2001/01/06 21:24:01 petere Exp $
+# $Header: /cvsroot/pgsql/GNUmakefile.in,v 1.17 2001/02/10 02:31:25 tgl Exp $
 #
 
 subdir =
@@ -20,6 +20,9 @@ install:
 
 installdirs uninstall distprep:
 	$(MAKE) -C doc $@
+	$(MAKE) -C src $@
+
+install-all-headers:
 	$(MAKE) -C src $@
 
 # clean, distclean, etc should apply to contrib too, even though

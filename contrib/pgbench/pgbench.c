@@ -1,5 +1,5 @@
 /*
- * $Header: /cvsroot/pgsql/contrib/pgbench/pgbench.c,v 1.7 2000/11/01 00:45:46 ishii Exp $
+ * $Header: /cvsroot/pgsql/contrib/pgbench/pgbench.c,v 1.8 2001/02/10 02:31:25 tgl Exp $
  *
  * pgbench: a simple TPC-B like benchmark program for PostgreSQL
  * written by Tatsuo Ishii
@@ -17,11 +17,8 @@
  * suitability of this software for any purpose.  It is provided "as
  * is" without express or implied warranty.
  */
+#include "postgres_fe.h"
 
-#include "config.h"
-
-#include <stdio.h>
-#include "postgres.h"
 #include "libpq-fe.h"
 
 #include <errno.h>

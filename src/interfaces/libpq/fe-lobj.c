@@ -8,15 +8,15 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-lobj.c,v 1.32 2001/01/24 19:43:30 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-lobj.c,v 1.33 2001/02/10 02:31:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
+#include "postgres_fe.h"
 
 #include <fcntl.h>
 #include <sys/stat.h>
 
-#include "postgres.h"
 #include "libpq-fe.h"
 #include "libpq-int.h"
 

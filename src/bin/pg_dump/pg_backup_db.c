@@ -13,32 +13,23 @@
  *-------------------------------------------------------------------------
  */
 
+#include "pg_dump.h"
+#include "pg_backup.h"
+#include "pg_backup_archiver.h"
+#include "pg_backup_db.h"
+
 #include <unistd.h>				/* for getopt() */
 #include <ctype.h>
-
-#include "postgres.h"
 
 #ifdef HAVE_TERMIOS_H
 #include <termios.h>
 #endif
 
-#include "access/attnum.h"
-#include "access/htup.h"
-#include "catalog/pg_index.h"
-#include "catalog/pg_language.h"
-#include "catalog/pg_trigger.h"
-#include "catalog/pg_type.h"
-
 #include "libpq-fe.h"
-#include <libpq/libpq-fs.h>
+#include "libpq/libpq-fs.h"
 #ifndef HAVE_STRDUP
 #include "strdup.h"
 #endif
-
-#include "pg_dump.h"
-#include "pg_backup.h"
-#include "pg_backup_archiver.h"
-#include "pg_backup_db.h"
 
 static const char	*progname = "Archiver(db)";
 

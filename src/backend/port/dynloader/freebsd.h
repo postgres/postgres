@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: freebsd.h,v 1.7 2001/01/24 19:43:04 momjian Exp $
+ * $Id: freebsd.h,v 1.8 2001/02/10 02:31:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,9 +18,6 @@
 #include <nlist.h>
 #include <link.h>
 
-#include "postgres.h"
-
-#include "fmgr.h"
 #include "utils/dynamic_loader.h"
 
 /* dynloader.c */

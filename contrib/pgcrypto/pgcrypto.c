@@ -26,11 +26,12 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: pgcrypto.c,v 1.5 2001/02/06 18:05:13 momjian Exp $
+ * $Id: pgcrypto.c,v 1.6 2001/02/10 02:31:26 tgl Exp $
  */
 
-#include <postgres.h>
-#include <utils/builtins.h>
+#include "postgres.h"
+
+#include "utils/builtins.h"
 
 #include "pgcrypto.h"
 

@@ -3,12 +3,12 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/mainloop.h,v 1.9 2000/04/12 17:16:22 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/mainloop.h,v 1.10 2001/02/10 02:31:28 tgl Exp $
  */
 #ifndef MAINLOOP_H
 #define MAINLOOP_H
 
-#include "postgres.h"
+#include "postgres_fe.h"
 #include <stdio.h>
 #ifndef WIN32
 #include <setjmp.h>

@@ -1,5 +1,5 @@
-#include "parser/keywords.h"
 #include "type.h"
+
 #include <errno.h>
 
 /* defines */
@@ -74,6 +74,7 @@ extern void reset_variables(void);
 extern void check_indicator(struct ECPGtype *);
 extern void remove_variables(int);
 extern struct variable *new_variable(const char *, struct ECPGtype *);
+extern ScanKeyword *ScanKeywordLookup(char *text);
 
 /* return codes */
 

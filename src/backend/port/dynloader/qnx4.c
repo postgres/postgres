@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/port/dynloader/Attic/qnx4.c,v 1.2 2000/05/28 17:56:02 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/port/dynloader/Attic/qnx4.c,v 1.3 2001/02/10 02:31:26 tgl Exp $
  *
  *	NOTES
  *
@@ -20,7 +20,7 @@
 #include <dl.h>
 */
 #include "postgres.h"
-#include "fmgr.h"
+
 #include "utils/dynamic_loader.h"
 #include "dynloader.h"
 

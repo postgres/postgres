@@ -5,9 +5,10 @@
  *
  *-------------------------------------------------------------------------
  */
+#include "postgres_fe.h"
+
 #include <ctype.h>
 
-#include "postgres.h"
 #include "extern.h"
 #include "preproc.h"
 

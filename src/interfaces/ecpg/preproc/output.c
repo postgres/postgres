@@ -1,6 +1,5 @@
-#include <stdarg.h>
+#include "postgres_fe.h"
 
-#include "postgres.h"
 #include "extern.h"
 
 void

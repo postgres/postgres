@@ -1,9 +1,8 @@
-/* $Id: pg_wchar.h,v 1.23 2000/11/14 18:37:48 tgl Exp $ */
+/* $Id: pg_wchar.h,v 1.24 2001/02/10 02:31:28 tgl Exp $ */
 
 #ifndef PG_WCHAR_H
 #define PG_WCHAR_H
 
-#include "postgres.h"
 #include <sys/types.h>
 
 #ifdef FRONTEND

@@ -1,8 +1,9 @@
 #include "postgres.h"
+
+#include <ctype.h>
+
 #include "executor/spi.h"
 #include "commands/trigger.h"
-#include <ctype.h>
-#include <stdio.h>				/* debugging */
 
 /*
  * Trigger function takes 2 arguments:

@@ -21,7 +21,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: palloc.h,v 1.14 2001/01/24 19:43:28 momjian Exp $
+ * $Id: palloc.h,v 1.15 2001/02/10 02:31:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -62,26 +62,6 @@ extern MemoryContext MemoryContextSwitchTo(MemoryContext context);
 extern char *MemoryContextStrdup(MemoryContext context, const char *string);
 
 #define pstrdup(str)  MemoryContextStrdup(CurrentMemoryContext, (str))
-
-
-/* ----------------
- * Alignment macros: align a length or address appropriately for a given type.
- *
- * There used to be some incredibly crufty platform-dependent hackery here,
- * but now we rely on the configure script to get the info for us. Much nicer.
- *
- * NOTE: TYPEALIGN will not work if ALIGNVAL is not a power of 2.
- * That case seems extremely unlikely to occur in practice, however.
- * ----------------
- */
-
-#define TYPEALIGN(ALIGNVAL,LEN) (((long)(LEN) + (ALIGNVAL-1)) & ~(ALIGNVAL-1))
-
-#define SHORTALIGN(LEN)			TYPEALIGN(ALIGNOF_SHORT, (LEN))
-#define INTALIGN(LEN)			TYPEALIGN(ALIGNOF_INT, (LEN))
-#define LONGALIGN(LEN)			TYPEALIGN(ALIGNOF_LONG, (LEN))
-#define DOUBLEALIGN(LEN)		TYPEALIGN(ALIGNOF_DOUBLE, (LEN))
-#define MAXALIGN(LEN)			TYPEALIGN(MAXIMUM_ALIGNOF, (LEN))
 
 
 #endif	 /* PALLOC_H */

@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/tab-complete.c,v 1.25 2000/12/31 11:57:58 petere Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/tab-complete.c,v 1.26 2001/02/10 02:31:28 tgl Exp $
  */
 
 /*----------------------------------------------------------------------
@@ -42,7 +42,7 @@
  *----------------------------------------------------------------------
  */
 
-#include "postgres.h"
+#include "postgres_fe.h"
 #include "tab-complete.h"
 
 #include "input.h"

@@ -45,6 +45,7 @@ static char sccsid[] = "@(#)dl.c	5.4 (Berkeley) 2/23/91";
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "postgres.h"
 #include "dynloader.h"
 
 static char error_message[BUFSIZ];

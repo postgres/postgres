@@ -1,5 +1,6 @@
-#include <stdio.h>
-#include <string.h>
+#include "postgres_fe.h"
+
+#include <ctype.h>
 
 #include "mb/pg_wchar.h"
 

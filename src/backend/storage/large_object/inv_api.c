@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/large_object/inv_api.c,v 1.84 2001/01/24 19:43:07 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/large_object/inv_api.c,v 1.85 2001/02/10 02:31:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,8 +22,9 @@
 
 #include "access/genam.h"
 #include "access/heapam.h"
-#include "access/nbtree.h"
 #include "access/htup.h"
+#include "access/nbtree.h"
+#include "access/tuptoaster.h"
 #include "catalog/catalog.h"
 #include "catalog/catname.h"
 #include "catalog/heap.h"

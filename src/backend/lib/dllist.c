@@ -9,22 +9,21 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/lib/dllist.c,v 1.20 2001/01/24 19:42:55 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/lib/dllist.c,v 1.21 2001/02/10 02:31:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 
-#include "postgres.h"
-#include "lib/dllist.h"
-
-/* When this file is compiled for inclusion in libpq,
- * it can't use assert checking.  Probably this fix ought to be
- * in c.h or somewhere like that...
- */
+/* can be used in frontend or backend */
 #ifdef FRONTEND
-#undef Assert
+#include "postgres_fe.h"
+/* No assert checks in frontend ... */
 #define Assert(condition)
+#else
+#include "postgres.h"
 #endif
+
+#include "lib/dllist.h"
 
 
 Dllist *

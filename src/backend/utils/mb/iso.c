@@ -4,10 +4,12 @@
  *
  * Tatsuo Ishii
  *
- * $Id: iso.c,v 1.2 1999/05/25 16:12:42 momjian Exp $
+ * $Id: iso.c,v 1.3 2001/02/10 02:31:27 tgl Exp $
  */
 
 #include <stdio.h>
+
+
 main()
 {
 	int			i;

@@ -9,8 +9,6 @@
   See funcs_new.c for examples of "new style".
 *****************************************************************************/
 
-#include <string.h>
-
 #include "postgres.h"			/* general Postgres declarations */
 
 #include "executor/executor.h"	/* for GetAttributeByName() */

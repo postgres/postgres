@@ -163,3 +163,9 @@ struct fetch_desc
 	char	   *str;
 	char	   *name;
 };
+
+typedef struct ScanKeyword
+{
+	char	   *name;
+	int			value;
+} ScanKeyword;

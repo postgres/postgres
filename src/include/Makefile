@@ -2,10 +2,11 @@
 #
 # Makefile for src/include
 #
-# Install exported headers to the include directory (these headers are
-# the minimal ones needed to build loadable backend extensions).
+# 'make install' installs only those headers needed for client-side
+# programming.  'make install-all-headers' installs the whole contents
+# of src/include.
 #
-# $Header: /cvsroot/pgsql/src/include/Makefile,v 1.5 2000/10/20 21:04:03 petere Exp $
+# $Header: /cvsroot/pgsql/src/include/Makefile,v 1.6 2001/02/10 02:31:28 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -13,30 +14,23 @@ subdir = src/include
 top_builddir = ../..
 include $(top_builddir)/src/Makefile.global
 
+# Headers needed by clients
+srcdir_headers := c.h postgres_ext.h postgres_fe.h \
+	libpq/pqcomm.h libpq/libpq-fs.h lib/dllist.h
 
-srcdir_headers := c.h postgres.h postgres_ext.h fmgr.h \
-	libpq/pqcomm.h libpq/libpq-fs.h lib/dllist.h \
-	utils/geo_decls.h utils/elog.h utils/palloc.h \
-	access/attnum.h executor/spi.h commands/trigger.h
-
-builddir_headers := os.h config.h utils/fmgroids.h
+builddir_headers := os.h config.h
 
 HEADERS = $(srcdir_headers) $(builddir_headers)
+
+# Subdirectories containing headers that install-all-headers should install
+SUBDIRS = access bootstrap catalog commands executor lib libpq mb \
+	nodes optimizer parser port regex rewrite storage tcop utils
 
 
 all: $(HEADERS)
 
 
-# These rules are necessary in case someone installs the include tree
-# before building the backend tree. Very messy.
-utils/fmgroids.h: $(top_builddir)/src/backend/utils/fmgroids.h
-	cd utils && rm -f fmgroids.h && $(LN_S) ../$(top_builddir)/src/backend/utils/fmgroids.h .
-
-# This file is built in the backend tree, but we need to keep track of
-# the dependencies here.
-$(top_builddir)/src/backend/utils/fmgroids.h: $(top_srcdir)/src/backend/utils/Gen_fmgrtab.sh catalog/pg_proc.h
-	$(MAKE) -C $(dir $@) fmgroids.h
-
+# Install only selected headers
 
 install: all installdirs
 	for file in $(srcdir_headers); do \
@@ -46,13 +40,34 @@ install: all installdirs
 	  $(INSTALL_DATA) $$file $(DESTDIR)$(includedir)/$$file || exit; \
 	done
 
-# Automatically pick out the needed subdirectories for the include
-# tree.
+# Automatically pick out the needed subdirectories for the include tree.
 installdirs:
 	$(mkinstalldirs) $(addprefix $(DESTDIR)$(includedir)/, $(sort $(dir $(HEADERS))))
 
+
+# Install all headers
+
+install-all-headers: all install-all-dirs
+	for file in $(srcdir)/*.h; do \
+	  $(INSTALL_DATA) $$file $(DESTDIR)$(includedir)/`basename $$file` || exit; \
+	done
+	for dir in $(SUBDIRS); do \
+	  for file in $(srcdir)/$$dir/*.h; do \
+	    $(INSTALL_DATA) $$file $(DESTDIR)$(includedir)/$$dir/`basename $$file` || exit; \
+	  done \
+	done
+	for file in $(builddir_headers); do \
+	  $(INSTALL_DATA) $$file $(DESTDIR)$(includedir)/$$file || exit; \
+	done
+
+install-all-dirs:
+	$(mkinstalldirs) $(addprefix $(DESTDIR)$(includedir)/, $(SUBDIRS))
+
+
+# This isn't a complete uninstall, but rm'ing everything under
+# $(DESTDIR)$(includedir) is probably too drastic...
 uninstall:
-	rm -f $(addprefix $(DESTDIR)$(includedir)/, $(HEADERS))
+	rm -rf $(addprefix $(DESTDIR)$(includedir)/, $(HEADERS) $(SUBDIRS))
 
 clean:
 	rm -f utils/fmgroids.h parser/parse.h

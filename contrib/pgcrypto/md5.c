@@ -1,4 +1,4 @@
-/*	$Id: md5.c,v 1.3 2001/01/09 16:07:13 momjian Exp $	*/
+/*	$Id: md5.c,v 1.4 2001/02/10 02:31:25 tgl Exp $	*/
 /*     $KAME: md5.c,v 1.3 2000/02/22 14:01:17 itojun Exp $     */
 
 /*
@@ -30,7 +30,7 @@
  * SUCH DAMAGE.
  */
 
-#include <postgres.h>
+#include "postgres.h"
 
 #include "md5.h"
 

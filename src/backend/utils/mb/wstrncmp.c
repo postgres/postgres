@@ -32,6 +32,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+/* can be used in either frontend or backend */
+#include "postgres_fe.h"
 
 #include "mb/pg_wchar.h"
 

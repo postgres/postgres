@@ -3,9 +3,9 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/print.c,v 1.14 2000/11/16 05:51:03 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/print.c,v 1.15 2001/02/10 02:31:28 tgl Exp $
  */
-#include "postgres.h"
+#include "postgres_fe.h"
 #include "print.h"
 
 #include <math.h>

@@ -13,14 +13,14 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtclId.c,v 1.24 2001/01/24 19:43:29 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtclId.c,v 1.25 2001/02/10 02:31:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
+#include "postgres_fe.h"
 
 #include <errno.h>
 
-#include "postgres.h"
 #include "pgtclCmds.h"
 #include "pgtclId.h"
 

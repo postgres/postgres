@@ -5,7 +5,7 @@
  *	  wherein you authenticate a user by seeing what IP address the system
  *	  says he comes from and possibly using ident).
  *
- *	$Id: hba.c,v 1.54 2000/08/27 21:50:18 tgl Exp $
+ *	$Id: hba.c,v 1.55 2001/02/10 02:31:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -882,7 +882,7 @@ struct CharsetItem
 	char		Table[MAX_TOKEN];
 };
 
-int
+static bool
 InRange(char *buf, int host)
 {
 	int			valid,

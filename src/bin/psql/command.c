@@ -3,9 +3,9 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/command.c,v 1.45 2001/01/27 21:49:58 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/command.c,v 1.46 2001/02/10 02:31:27 tgl Exp $
  */
-#include "postgres.h"
+#include "postgres_fe.h"
 #include "command.h"
 
 #include <errno.h>
@@ -37,7 +37,6 @@
 #include "variables.h"
 
 #ifdef MULTIBYTE
-#include "miscadmin.h"
 #include "mb/pg_wchar.h"
 #else
 /* Grand unified hard-coded badness */

@@ -8,6 +8,10 @@
 #ifndef SPI_H
 #define SPI_H
 
+/*
+ * This file may be used by client modules that haven't already
+ * included postgres.h
+ */
 #include "postgres.h"
 
 /*

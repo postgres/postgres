@@ -1,4 +1,4 @@
-/*	$Id: sha1.c,v 1.3 2001/01/09 16:07:13 momjian Exp $	*/
+/*	$Id: sha1.c,v 1.4 2001/02/10 02:31:26 tgl Exp $	*/
 /*     $KAME: sha1.c,v 1.3 2000/02/22 14:01:18 itojun Exp $    */
 
 /*
@@ -35,7 +35,7 @@
  * implemented by Jun-ichiro itojun Itoh <itojun@itojun.org>
  */
 
-#include <postgres.h>
+#include "postgres.h"
 
 #include "sha1.h"
 

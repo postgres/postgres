@@ -6,9 +6,9 @@
  *
  * Copyright (C) 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/pg_id/Attic/pg_id.c,v 1.16 2000/10/07 14:39:15 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/pg_id/Attic/pg_id.c,v 1.17 2001/02/10 02:31:27 tgl Exp $
  */
-#include "postgres.h"
+#include "postgres_fe.h"
 
 #ifdef HAVE_GETOPT_H
 #include <getopt.h>

@@ -32,10 +32,11 @@
  *-------------------------------------------------------------------------
  */
 
-#include <stdlib.h>
-#include <string.h>
 #include "pg_backup.h"
 #include "pg_backup_archiver.h"
+
+#include <stdlib.h>
+#include <string.h>
 
 static void     _ArchiveEntry(ArchiveHandle* AH, TocEntry* te);
 static void	_StartData(ArchiveHandle* AH, TocEntry* te);

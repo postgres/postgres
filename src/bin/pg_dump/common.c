@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/common.c,v 1.52 2001/01/28 03:47:49 pjw Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/common.c,v 1.53 2001/02/10 02:31:27 tgl Exp $
  *
  * Modifications - 6/12/96 - dave@bensoft.com - version 1.13.dhb.2
  *
@@ -27,17 +27,14 @@
  *-------------------------------------------------------------------------
  */
 
+#include "pg_dump.h"
 
 #include <ctype.h>
-
-#include "postgres.h"
 
 #include "libpq-fe.h"
 #ifndef HAVE_STRDUP
 #include "strdup.h"
 #endif
-
-#include "pg_dump.h"
 
 static char **findParentsByOid(TableInfo *tbinfo, int numTables,
 				 InhInfo *inhinfo, int numInherits,

@@ -4,10 +4,12 @@
  *
  * Tatsuo Ishii
  *
- * $Id: win.c,v 1.2 1999/05/25 16:12:45 momjian Exp $
+ * $Id: win.c,v 1.3 2001/02/10 02:31:27 tgl Exp $
  */
 
 #include <stdio.h>
+
+
 main()
 {
 	int			i;

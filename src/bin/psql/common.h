@@ -3,12 +3,12 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/common.h,v 1.12 2000/08/29 09:36:48 petere Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/common.h,v 1.13 2001/02/10 02:31:28 tgl Exp $
  */
 #ifndef COMMON_H
 #define COMMON_H
 
-#include "postgres.h"
+#include "postgres_fe.h"
 #include <signal.h>
 #include "pqsignal.h"
 #include "libpq-fe.h"

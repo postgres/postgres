@@ -1,7 +1,8 @@
 /*
  * @(#) pg_passwd.c 1.8 09:13:16 97/07/02		Y. Ichikawa
  */
-#include "postgres.h"
+#include "postgres_fe.h"
+
 #include <unistd.h>
 #include <errno.h>
 #include <time.h>

@@ -37,9 +37,7 @@
  *		@(#)utils.h		8.3 (Berkeley) 3/20/94
  */
 
-#include "postgres.h"
-
-#include "limits.h"
+#include <limits.h>
 
 /* utility definitions */
 #define DUPMAX			100000000		/* xxx is this right? */
@@ -50,6 +48,7 @@
 #else
 #define NC				(CHAR_MAX - CHAR_MIN + 1)
 #endif
+
 typedef unsigned char uch;
 
 /* switch off assertions (if not already off) if no REDEBUG */
@@ -57,9 +56,4 @@ typedef unsigned char uch;
 #ifndef NDEBUG
 #define NDEBUG					/* no assertions please */
 #endif
-#endif
-
-/* for old systems with bcopy() but no memmove() */
-#if !defined(HAVE_MEMMOVE) && !defined(memmove)
-#define memmove(d, s, c)		bcopy(s, d, c)
 #endif

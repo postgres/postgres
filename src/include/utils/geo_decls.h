@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geo_decls.h,v 1.32 2001/01/24 19:43:28 momjian Exp $
+ * $Id: geo_decls.h,v 1.33 2001/02/10 02:31:29 tgl Exp $
  *
  * NOTE
  *	  These routines do *not* use the float types from adt/.
@@ -21,7 +21,6 @@
 #ifndef GEO_DECLS_H
 #define GEO_DECLS_H
 
-#include "access/attnum.h"
 #include "fmgr.h"
 
 /*--------------------------------------------------------------------

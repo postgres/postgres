@@ -3,9 +3,9 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/startup.c,v 1.43 2001/01/24 19:43:18 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/startup.c,v 1.44 2001/02/10 02:31:28 tgl Exp $
  */
-#include "postgres.h"
+#include "postgres_fe.h"
 
 #include <sys/types.h>
 
@@ -34,7 +34,6 @@
 #include "variables.h"
 
 #ifdef MULTIBYTE
-#include "miscadmin.h"
 #include "mb/pg_wchar.h"
 #else
 /* XXX Grand unified hard-coded badness; this should go into libpq */

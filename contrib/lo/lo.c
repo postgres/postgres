@@ -1,15 +1,11 @@
 /*
  *	PostgreSQL type definitions for managed LargeObjects.
  *
- *	$Header: /cvsroot/pgsql/contrib/lo/lo.c,v 1.6 2000/11/21 21:51:58 tgl Exp $
+ *	$Header: /cvsroot/pgsql/contrib/lo/lo.c,v 1.7 2001/02/10 02:31:25 tgl Exp $
  *
  */
 
 #include "postgres.h"
-
-#include <stdio.h>
-
-#include "utils/palloc.h"
 
 /* Required for largeobjects */
 #include "libpq/libpq-fs.h"

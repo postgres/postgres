@@ -8,18 +8,16 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/keywords.c,v 1.36 2001/01/24 19:43:29 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/keywords.c,v 1.37 2001/02/10 02:31:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
+#include "postgres_fe.h"
+
 #include <ctype.h>
 
-#include "postgres.h"
-#include "nodes/parsenodes.h"
-#include "nodes/pg_list.h"
-#include "type.h"
+#include "extern.h"
 #include "preproc.h"
-#include "parser/keywords.h"
 
 /*
  * List of (keyword-name, keyword-token-value) pairs.

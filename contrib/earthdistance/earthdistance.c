@@ -1,10 +1,9 @@
-#include <math.h>
-#include <stdio.h>
-#include <string.h>
+#include "postgres.h"
 
-#include <postgres.h>
-#include <utils/geo_decls.h>	/* for Pt */
-#include <utils/palloc.h>		/* for palloc */
+#include <math.h>
+
+#include "utils/geo_decls.h"	/* for Pt */
+
 
 /* Earth's radius is in statute miles. */
 const int	EARTH_RADIUS = 3958.747716;

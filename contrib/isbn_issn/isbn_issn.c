@@ -1,13 +1,11 @@
 /*
  *	PostgreSQL type definitions for ISBNs.
  *
- *	$Id: isbn_issn.c,v 1.2 2000/06/19 13:53:39 momjian Exp $
+ *	$Id: isbn_issn.c,v 1.3 2001/02/10 02:31:25 tgl Exp $
  */
 
-#include <stdio.h>
+#include "postgres.h"
 
-#include <postgres.h>
-#include <utils/palloc.h>
 
 /*
  *	This is the internal storage format for ISBNs.

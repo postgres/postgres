@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.205 2001/02/08 00:35:10 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.206 2001/02/10 02:31:26 tgl Exp $
  *
  * NOTES
  *
@@ -232,11 +232,6 @@ static pid_t SSDataBase(int xlop);
 
 #ifdef USE_SSL
 static void InitSSL(void);
-
-#endif
-
-#ifdef CYR_RECODE
-extern void GetCharSetByHost(char *, int, char *);
 
 #endif
 

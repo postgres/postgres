@@ -1,37 +1,45 @@
 /*-------------------------------------------------------------------------
  *
  * postgres.h
- *	  definition of (and support for) postgres system types.
- * this file is included by almost every .c in the system
+ *	  Primary include file for PostgreSQL server .c files
+ *
+ * This should be the first file included by PostgreSQL backend modules.
+ * Client-side code should include postgres_fe.h instead.
+ *
  *
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1995, Regents of the University of California
  *
- * $Id: postgres.h,v 1.45 2001/01/24 19:43:19 momjian Exp $
+ * $Id: postgres.h,v 1.46 2001/02/10 02:31:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 /*
- *	 NOTES
- *		this file will eventually contain the definitions for the
- *		following (and perhaps other) system types:
- *
- *				int2	   int4		  float4	   float8
- *				Oid		   regproc	  RegProcedure
- *				aclitem
- *				struct varlena
- *				int2vector	  oidvector
- *				bytea	   text
- *				NameData   Name
- *
+ *----------------------------------------------------------------
  *	 TABLE OF CONTENTS
- *		1)		simple type definitions
- *		2)		varlena and array types
- *		3)		TransactionId and CommandId
- *		4)		genbki macros used by catalog/pg_xxx.h files
- *		5)		random stuff
  *
- * ----------------------------------------------------------------
+ *		When adding stuff to this file, please try to put stuff
+ *		into the relevant section, or add new sections as appropriate.
+ *
+ *	  section	description
+ *	  -------	------------------------------------------------
+ *		1)		variable-length datatypes (TOAST support)
+ *		2)		datum type + support macros
+ *		3)		exception handling definitions
+ *		4)		genbki macros used by catalog/pg_xxx.h files
+ *
+ *	 NOTES
+ *
+ *	In general, this file should contain declarations that are widely needed in the
+ *	backend environment, but are of no interest outside the backend.
+ *
+ *	Simple type definitions live in c.h, where they are shared with postgres_fe.h.
+ *	We do that since those type definitions are needed by frontend modules that want
+ *	to deal with binary data transmission to or from the backend.  Type definitions
+ *	in this file should be for representations that never escape the backend, such
+ *	as Datum or TOASTed varlena objects.
+ *
+ *----------------------------------------------------------------
  */
 #ifndef POSTGRES_H
 #define POSTGRES_H
@@ -42,59 +50,16 @@
 #include "utils/palloc.h"
 
 /* ----------------------------------------------------------------
- *				Section 1:	simple type definitions
+ *				Section 1:	variable-length datatypes (TOAST support)
  * ----------------------------------------------------------------
  */
 
-#define InvalidOid		((Oid) 0)
-#define OidIsValid(objectId)  ((bool) ((objectId) != InvalidOid))
-
-/* unfortunately, both regproc and RegProcedure are used */
-typedef Oid regproc;
-typedef Oid RegProcedure;
-
-#define RegProcedureIsValid(p)	OidIsValid(p)
-
-typedef int4 aclitem;			/* PHONY definition for catalog use only */
-
-/* ----------------------------------------------------------------
- *				Section 2:	variable length and array types
- * ----------------------------------------------------------------
- */
 /* ----------------
- *		struct varlena
+ *		struct varattrib is the header of a varlena object that may have been TOASTed.
  * ----------------
  */
-struct varlena
-{
-	int32		vl_len;
-	char		vl_dat[1];
-};
-
 #define TUPLE_TOASTER_ACTIVE
 
-#ifndef TUPLE_TOASTER_ACTIVE
-#define VARSIZE(PTR)	(((struct varlena *)(PTR))->vl_len)
-#define VARDATA(PTR)	(((struct varlena *)(PTR))->vl_dat)
-#endif
-#define VARHDRSZ		((int32) sizeof(int32))
-
-/*
- * These widely-used datatypes are just a varlena header and the data bytes.
- * There is no terminating null or anything like that --- the data length is
- * always VARSIZE(ptr) - VARHDRSZ.
- */
-typedef struct varlena bytea;
-typedef struct varlena text;
-typedef struct varlena BpChar;	/* blank-padded char, ie SQL char(n) */
-typedef struct varlena VarChar;	/* var-length char, ie SQL varchar(n) */
-
-/*
- * Proposed new layout for variable length attributes
- * DO NOT USE YET - Jan
- */
-
-#ifdef TUPLE_TOASTER_ACTIVE
 typedef struct varattrib
 {
 	int32		va_header;		/* External/compressed storage */
@@ -142,64 +107,466 @@ typedef struct varattrib
 #define VARATT_IS_COMPRESSED(PTR)	\
 				((VARATT_SIZEP(PTR) & VARATT_FLAG_COMPRESSED) != 0)
 
-/* ----------
- * This is regularly declared in access/tuptoaster.h,
- * but we don't want to include that into every source,
- * so we (evil evil evil) declare it here once more.
- * ----------
- */
-extern varattrib *heap_tuple_untoast_attr(varattrib * attr);
-
-#define VARATT_GETPLAIN(_ARG,_VAR) {								\
-				if (VARATT_IS_EXTENDED(_ARG))						\
-					(_VAR) = (void *)heap_tuple_untoast_attr(_ARG); \
-				else												\
-					(_VAR) = (void *)(_ARG);						\
-			}
-#define VARATT_FREE(_ARG,_VAR) do {									\
-				if ((void *)(_VAR) != (void *)(_ARG))				\
-					pfree((void *)(_VAR));							\
-			} while (0)
-#else							/* TUPLE_TOASTER_ACTIVE */
-#define VARATT_SIZE(__PTR) VARSIZE(__PTR)
-#define VARATT_SIZEP(__PTR) VARSIZE(__PTR)
-#endif	 /* TUPLE_TOASTER_ACTIVE */
-
-
-/* fixed-length array types (these are not varlena's!) */
-
-typedef int2 int2vector[INDEX_MAX_KEYS];
-typedef Oid oidvector[INDEX_MAX_KEYS];
-
-/* We want NameData to have length NAMEDATALEN and int alignment,
- * because that's how the data type 'name' is defined in pg_type.
- * Use a union to make sure the compiler agrees.
- */
-typedef union nameData
-{
-	char		data[NAMEDATALEN];
-	int			alignmentDummy;
-} NameData;
-typedef NameData *Name;
-
-#define NameStr(name)	((name).data)
 
 /* ----------------------------------------------------------------
- *				Section 3: TransactionId and CommandId
+ *				Section 2:	datum type + support macros
  * ----------------------------------------------------------------
  */
 
-typedef uint32 TransactionId;
+/*
+ * Port Notes:
+ *	Postgres makes the following assumption about machines:
+ *
+ *	sizeof(Datum) == sizeof(long) >= sizeof(void *) >= 4
+ *
+ *	Postgres also assumes that
+ *
+ *	sizeof(char) == 1
+ *
+ *	and that
+ *
+ *	sizeof(short) == 2
+ *
+ *	If your machine meets these requirements, Datums should also be checked
+ *	to see if the positioning is correct.
+ */
 
-#define InvalidTransactionId	0
+typedef unsigned long Datum;	/* XXX sizeof(long) >= sizeof(void *) */
+typedef Datum *DatumPtr;
 
-typedef uint32 CommandId;
+#define GET_1_BYTE(datum)	(((Datum) (datum)) & 0x000000ff)
+#define GET_2_BYTES(datum)	(((Datum) (datum)) & 0x0000ffff)
+#define GET_4_BYTES(datum)	(((Datum) (datum)) & 0xffffffff)
+#define SET_1_BYTE(value)	(((Datum) (value)) & 0x000000ff)
+#define SET_2_BYTES(value)	(((Datum) (value)) & 0x0000ffff)
+#define SET_4_BYTES(value)	(((Datum) (value)) & 0xffffffff)
 
-#define FirstCommandId	0
+/*
+ * DatumGetBool
+ *		Returns boolean value of a datum.
+ *
+ * Note: any nonzero value will be considered TRUE.
+ */
+
+#define DatumGetBool(X) ((bool) (((Datum) (X)) != 0))
+
+/*
+ * BoolGetDatum
+ *		Returns datum representation for a boolean.
+ *
+ * Note: any nonzero value will be considered TRUE.
+ */
+
+#define BoolGetDatum(X) ((Datum) ((X) ? 1 : 0))
+
+/*
+ * DatumGetChar
+ *		Returns character value of a datum.
+ */
+
+#define DatumGetChar(X) ((char) GET_1_BYTE(X))
+
+/*
+ * CharGetDatum
+ *		Returns datum representation for a character.
+ */
+
+#define CharGetDatum(X) ((Datum) SET_1_BYTE(X))
+
+/*
+ * Int8GetDatum
+ *		Returns datum representation for an 8-bit integer.
+ */
+
+#define Int8GetDatum(X) ((Datum) SET_1_BYTE(X))
+
+/*
+ * DatumGetUInt8
+ *		Returns 8-bit unsigned integer value of a datum.
+ */
+
+#define DatumGetUInt8(X) ((uint8) GET_1_BYTE(X))
+
+/*
+ * UInt8GetDatum
+ *		Returns datum representation for an 8-bit unsigned integer.
+ */
+
+#define UInt8GetDatum(X) ((Datum) SET_1_BYTE(X))
+
+/*
+ * DatumGetInt16
+ *		Returns 16-bit integer value of a datum.
+ */
+
+#define DatumGetInt16(X) ((int16) GET_2_BYTES(X))
+
+/*
+ * Int16GetDatum
+ *		Returns datum representation for a 16-bit integer.
+ */
+
+#define Int16GetDatum(X) ((Datum) SET_2_BYTES(X))
+
+/*
+ * DatumGetUInt16
+ *		Returns 16-bit unsigned integer value of a datum.
+ */
+
+#define DatumGetUInt16(X) ((uint16) GET_2_BYTES(X))
+
+/*
+ * UInt16GetDatum
+ *		Returns datum representation for a 16-bit unsigned integer.
+ */
+
+#define UInt16GetDatum(X) ((Datum) SET_2_BYTES(X))
+
+/*
+ * DatumGetInt32
+ *		Returns 32-bit integer value of a datum.
+ */
+
+#define DatumGetInt32(X) ((int32) GET_4_BYTES(X))
+
+/*
+ * Int32GetDatum
+ *		Returns datum representation for a 32-bit integer.
+ */
+
+#define Int32GetDatum(X) ((Datum) SET_4_BYTES(X))
+
+/*
+ * DatumGetUInt32
+ *		Returns 32-bit unsigned integer value of a datum.
+ */
+
+#define DatumGetUInt32(X) ((uint32) GET_4_BYTES(X))
+
+/*
+ * UInt32GetDatum
+ *		Returns datum representation for a 32-bit unsigned integer.
+ */
+
+#define UInt32GetDatum(X) ((Datum) SET_4_BYTES(X))
+
+/*
+ * DatumGetObjectId
+ *		Returns object identifier value of a datum.
+ */
+
+#define DatumGetObjectId(X) ((Oid) GET_4_BYTES(X))
+
+/*
+ * ObjectIdGetDatum
+ *		Returns datum representation for an object identifier.
+ */
+
+#define ObjectIdGetDatum(X) ((Datum) SET_4_BYTES(X))
+
+/*
+ * DatumGetPointer
+ *		Returns pointer value of a datum.
+ */
+
+#define DatumGetPointer(X) ((Pointer) (X))
+
+/*
+ * PointerGetDatum
+ *		Returns datum representation for a pointer.
+ */
+
+#define PointerGetDatum(X) ((Datum) (X))
+
+/*
+ * DatumGetCString
+ *		Returns C string (null-terminated string) value of a datum.
+ *
+ * Note: C string is not a full-fledged Postgres type at present,
+ * but type input functions use this conversion for their inputs.
+ */
+
+#define DatumGetCString(X) ((char *) DatumGetPointer(X))
+
+/*
+ * CStringGetDatum
+ *		Returns datum representation for a C string (null-terminated string).
+ *
+ * Note: C string is not a full-fledged Postgres type at present,
+ * but type output functions use this conversion for their outputs.
+ * Note: CString is pass-by-reference; caller must ensure the pointed-to
+ * value has adequate lifetime.
+ */
+
+#define CStringGetDatum(X) PointerGetDatum(X)
+
+/*
+ * DatumGetName
+ *		Returns name value of a datum.
+ */
+
+#define DatumGetName(X) ((Name) DatumGetPointer(X))
+
+/*
+ * NameGetDatum
+ *		Returns datum representation for a name.
+ *
+ * Note: Name is pass-by-reference; caller must ensure the pointed-to
+ * value has adequate lifetime.
+ */
+
+#define NameGetDatum(X) PointerGetDatum(X)
+
+/*
+ * DatumGetInt64
+ *		Returns 64-bit integer value of a datum.
+ *
+ * Note: this macro hides the fact that int64 is currently a
+ * pass-by-reference type.  Someday it may be pass-by-value,
+ * at least on some platforms.
+ */
+
+#define DatumGetInt64(X) (* ((int64 *) DatumGetPointer(X)))
+
+/*
+ * Int64GetDatum
+ *		Returns datum representation for a 64-bit integer.
+ *
+ * Note: this routine returns a reference to palloc'd space.
+ */
+
+extern Datum Int64GetDatum(int64 X);
+
+/*
+ * DatumGetFloat4
+ *		Returns 4-byte floating point value of a datum.
+ *
+ * Note: this macro hides the fact that float4 is currently a
+ * pass-by-reference type.  Someday it may be pass-by-value.
+ */
+
+#define DatumGetFloat4(X) (* ((float4 *) DatumGetPointer(X)))
+
+/*
+ * Float4GetDatum
+ *		Returns datum representation for a 4-byte floating point number.
+ *
+ * Note: this routine returns a reference to palloc'd space.
+ */
+
+extern Datum Float4GetDatum(float4 X);
+
+/*
+ * DatumGetFloat8
+ *		Returns 8-byte floating point value of a datum.
+ *
+ * Note: this macro hides the fact that float8 is currently a
+ * pass-by-reference type.  Someday it may be pass-by-value,
+ * at least on some platforms.
+ */
+
+#define DatumGetFloat8(X) (* ((float8 *) DatumGetPointer(X)))
+
+/*
+ * Float8GetDatum
+ *		Returns datum representation for an 8-byte floating point number.
+ *
+ * Note: this routine returns a reference to palloc'd space.
+ */
+
+extern Datum Float8GetDatum(float8 X);
+
+
+/*
+ * DatumGetFloat32
+ *		Returns 32-bit floating point value of a datum.
+ *		This is really a pointer, of course.
+ *
+ * XXX: this macro is now deprecated in favor of DatumGetFloat4.
+ * It will eventually go away.
+ */
+
+#define DatumGetFloat32(X) ((float32) DatumGetPointer(X))
+
+/*
+ * Float32GetDatum
+ *		Returns datum representation for a 32-bit floating point number.
+ *		This is really a pointer, of course.
+ *
+ * XXX: this macro is now deprecated in favor of Float4GetDatum.
+ * It will eventually go away.
+ */
+
+#define Float32GetDatum(X) PointerGetDatum(X)
+
+/*
+ * DatumGetFloat64
+ *		Returns 64-bit floating point value of a datum.
+ *		This is really a pointer, of course.
+ *
+ * XXX: this macro is now deprecated in favor of DatumGetFloat8.
+ * It will eventually go away.
+ */
+
+#define DatumGetFloat64(X) ((float64) DatumGetPointer(X))
+
+/*
+ * Float64GetDatum
+ *		Returns datum representation for a 64-bit floating point number.
+ *		This is really a pointer, of course.
+ *
+ * XXX: this macro is now deprecated in favor of Float8GetDatum.
+ * It will eventually go away.
+ */
+
+#define Float64GetDatum(X) PointerGetDatum(X)
+
+/*
+ * Int64GetDatumFast
+ * Float4GetDatumFast
+ * Float8GetDatumFast
+ *
+ * These macros are intended to allow writing code that does not depend on
+ * whether int64, float4, float8 are pass-by-reference types, while not
+ * sacrificing performance when they are.  The argument must be a variable
+ * that will exist and have the same value for as long as the Datum is needed.
+ * In the pass-by-ref case, the address of the variable is taken to use as
+ * the Datum.  In the pass-by-val case, these will be the same as the non-Fast
+ * macros.
+ */
+
+#define Int64GetDatumFast(X)  PointerGetDatum(&(X))
+#define Float4GetDatumFast(X) PointerGetDatum(&(X))
+#define Float8GetDatumFast(X) PointerGetDatum(&(X))
+
 
 /* ----------------------------------------------------------------
- *				Section 4: genbki macros used by the
- *						   catalog/pg_xxx.h files
+ *				Section 3:	exception handling definitions
+ *							Assert, Trap, etc macros
+ * ----------------------------------------------------------------
+ */
+
+typedef char *ExcMessage;
+
+typedef struct Exception
+{
+	ExcMessage	message;
+} Exception;
+
+extern Exception FailedAssertion;
+extern Exception BadArg;
+extern Exception BadState;
+
+extern bool	assert_enabled;
+
+/*
+ * USE_ASSERT_CHECKING, if defined, turns on all the assertions.
+ * - plai  9/5/90
+ *
+ * It should _NOT_ be defined in releases or in benchmark copies
+ */
+
+/*
+ * Trap
+ *		Generates an exception if the given condition is true.
+ *
+ */
+#define Trap(condition, exception) \
+		do { \
+			if ((assert_enabled) && (condition)) \
+				ExceptionalCondition(CppAsString(condition), &(exception), \
+						(char*)NULL, __FILE__, __LINE__); \
+		} while (0)
+
+/*
+ *	TrapMacro is the same as Trap but it's intended for use in macros:
+ *
+ *		#define foo(x) (AssertM(x != 0) && bar(x))
+ *
+ *	Isn't CPP fun?
+ */
+#define TrapMacro(condition, exception) \
+	((bool) ((! assert_enabled) || ! (condition) || \
+			 (ExceptionalCondition(CppAsString(condition), \
+								  &(exception), \
+								  (char*) NULL, __FILE__, __LINE__))))
+
+#ifndef USE_ASSERT_CHECKING
+#define Assert(condition)
+#define AssertMacro(condition)	((void)true)
+#define AssertArg(condition)
+#define AssertState(condition)
+#define assert_enabled 0
+#else
+#define Assert(condition) \
+		Trap(!(condition), FailedAssertion)
+
+#define AssertMacro(condition) \
+		((void) TrapMacro(!(condition), FailedAssertion))
+
+#define AssertArg(condition) \
+		Trap(!(condition), BadArg)
+
+#define AssertState(condition) \
+		Trap(!(condition), BadState)
+
+#endif	 /* USE_ASSERT_CHECKING */
+
+/*
+ * LogTrap
+ *		Generates an exception with a message if the given condition is true.
+ *
+ */
+#define LogTrap(condition, exception, printArgs) \
+		do { \
+			if ((assert_enabled) && (condition)) \
+				ExceptionalCondition(CppAsString(condition), &(exception), \
+						vararg_format printArgs, __FILE__, __LINE__); \
+		} while (0)
+
+/*
+ *	LogTrapMacro is the same as LogTrap but it's intended for use in macros:
+ *
+ *		#define foo(x) (LogAssertMacro(x != 0, "yow!") && bar(x))
+ */
+#define LogTrapMacro(condition, exception, printArgs) \
+	((bool) ((! assert_enabled) || ! (condition) || \
+			 (ExceptionalCondition(CppAsString(condition), \
+								   &(exception), \
+								   vararg_format printArgs, __FILE__, __LINE__))))
+
+extern int ExceptionalCondition(char *conditionName,
+					 Exception *exceptionP, char *details,
+					 char *fileName, int lineNumber);
+extern char *vararg_format(const char *fmt, ...);
+
+#ifndef USE_ASSERT_CHECKING
+#define LogAssert(condition, printArgs)
+#define LogAssertMacro(condition, printArgs) true
+#define LogAssertArg(condition, printArgs)
+#define LogAssertState(condition, printArgs)
+#else
+#define LogAssert(condition, printArgs) \
+		LogTrap(!(condition), FailedAssertion, printArgs)
+
+#define LogAssertMacro(condition, printArgs) \
+		LogTrapMacro(!(condition), FailedAssertion, printArgs)
+
+#define LogAssertArg(condition, printArgs) \
+		LogTrap(!(condition), BadArg, printArgs)
+
+#define LogAssertState(condition, printArgs) \
+		LogTrap(!(condition), BadState, printArgs)
+
+#ifdef ASSERT_CHECKING_TEST
+extern int	assertTest(int val);
+
+#endif
+
+#endif	 /* USE_ASSERT_CHECKING */
+
+/* ----------------------------------------------------------------
+ *				Section 4: genbki macros used by catalog/pg_xxx.h files
  * ----------------------------------------------------------------
  */
 #define CATALOG(x) \
@@ -217,35 +584,7 @@ typedef uint32 CommandId;
 #define BKI_BEGIN
 #define BKI_END
 
-/* ----------------------------------------------------------------
- *				Section 5:	random stuff
- *							CSIGNBIT, STATUS...
- * ----------------------------------------------------------------
- */
+typedef int4 aclitem;			/* PHONY definition for catalog use only */
 
-/* msb for int/unsigned */
-#define ISIGNBIT (0x80000000)
-#define WSIGNBIT (0x8000)
-
-/* msb for char */
-#define CSIGNBIT (0x80)
-
-#define STATUS_OK				(0)
-#define STATUS_ERROR			(-1)
-#define STATUS_NOT_FOUND		(-2)
-#define STATUS_INVALID			(-3)
-#define STATUS_UNCATALOGUED		(-4)
-#define STATUS_REPLACED			(-5)
-#define STATUS_NOT_DONE			(-6)
-#define STATUS_BAD_PACKET		(-7)
-#define STATUS_FOUND			(1)
-
-/* ---------------
- * Cyrillic on the fly charsets recode
- * ---------------
- */
-#ifdef CYR_RECODE
-extern void SetCharSet(void);
-#endif	 /* CYR_RECODE */
 
 #endif	 /* POSTGRES_H */

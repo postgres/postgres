@@ -8,15 +8,16 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.100 2001/02/06 02:02:27 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.101 2001/02/10 02:31:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
+#include "postgres_fe.h"
+
 #include <errno.h>
 #include <ctype.h>
 #include <fcntl.h>
 
-#include "postgres.h"
 #include "libpq-fe.h"
 #include "libpq-int.h"
 

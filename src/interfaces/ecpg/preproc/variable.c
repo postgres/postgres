@@ -1,4 +1,4 @@
-#include "postgres.h"
+#include "postgres_fe.h"
 
 #include "extern.h"
 

@@ -32,10 +32,11 @@
  * SUCH DAMAGE.
  */
 
+/* might be in either frontend or backend */
+#include "postgres_fe.h"
+
 #include <sys/ioctl.h>
 #include <sys/param.h>
-
-#include "postgres.h"
 
 
 /*
@@ -74,7 +75,7 @@ typedef unsigned long ulong_long;
  * causing nast effects.
  **************************************************************/
 
-/*static char _id[] = "$Id: snprintf.c,v 1.29 2000/12/30 19:17:47 tgl Exp $";*/
+/*static char _id[] = "$Id: snprintf.c,v 1.30 2001/02/10 02:31:26 tgl Exp $";*/
 static char *end;
 static int	SnprfOverflow;
 

@@ -25,12 +25,12 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-misc.c,v 1.43 2001/01/24 19:43:30 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-misc.c,v 1.44 2001/02/10 02:31:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 
-#include "postgres.h"
+#include "postgres_fe.h"
 
 #ifdef WIN32
 #include "win32.h"
@@ -52,7 +52,6 @@
 #include "pqsignal.h"
 
 #ifdef MULTIBYTE
-#include "miscadmin.h"
 #include "mb/pg_wchar.h"
 #endif
 

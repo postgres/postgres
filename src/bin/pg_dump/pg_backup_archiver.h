@@ -31,10 +31,10 @@
 #ifndef __PG_BACKUP_ARCHIVE__
 #define __PG_BACKUP_ARCHIVE__
 
-#include <stdio.h>
+#include "postgres_fe.h"
+
 #include <time.h>
 
-#include "postgres.h"
 #include "pqexpbuffer.h"
 
 #ifdef HAVE_LIBZ

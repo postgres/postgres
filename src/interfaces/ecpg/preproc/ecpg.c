@@ -2,8 +2,9 @@
 /* (C) Michael Meskes <meskes@postgresql.org> Feb 5th, 1998 */
 /* Placed under the same copyright as PostgresSQL */
 
+#include "postgres_fe.h"
+
 #include <unistd.h>
-#include "postgres.h"
 
 #ifdef HAVE_GETOPT_H
 #include "getopt.h"

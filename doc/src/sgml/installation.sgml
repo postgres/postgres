@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.34 2001/01/15 21:17:27 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.35 2001/02/10 02:31:26 tgl Exp $ -->
 
 <chapter id="installation">
  <title><![%flattext-install-include[<productname>PostgreSQL</>]]> Installation Instructions</title>
@@ -783,11 +783,26 @@ All of PostgreSQL is successfully made. Ready to install.
     them, but how to do that is left as an exercise.
    </para>
 
+   <para>
+    The standard install installs only the header files needed for client
+    application development.  If you plan to do any server-side program
+    development (such as custom functions or datatypes written in C),
+    then you may want to install the entire <productname>PostgreSQL</>
+    include tree into your target include directory.  To do that, enter
+<screen>
+<userinput>gmake install-all-headers</userinput>
+</screen>
+    This adds a megabyte or two to the install footprint, and is only
+    useful if you don't plan to keep the whole source tree around for
+    reference.  (If you do, you can just use the source's include
+    directory when building server-side software.)
+   </para>
+
    <formalpara>
     <title>Client-only installation</title>
     <para>
      If you want to install only the client applications and
-     interfaces, then you can use these commands:
+     interface libraries, then you can use these commands:
 <screen>
 <userinput>gmake -C src/bin install</>
 <userinput>gmake -C src/interfaces install</>

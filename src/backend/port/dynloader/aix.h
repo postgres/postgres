@@ -1,5 +1,5 @@
 /*
- * $Id: aix.h,v 1.3 2000/09/29 22:00:43 momjian Exp $
+ * $Id: aix.h,v 1.4 2001/02/10 02:31:26 tgl Exp $
  *
  * @(#)dlfcn.h	1.4 revision of 95/04/25  09:36:52
  * This is an unpublished work copyright (c) 1992 HELIOS Software GmbH
@@ -56,7 +56,6 @@ extern		"C"
 
 #endif /* HAVE_DLOPEN */
 
-#include "fmgr.h"
 #include "utils/dynamic_loader.h"
 
 #define  pg_dlopen(f)	dlopen(f, RTLD_LAZY)

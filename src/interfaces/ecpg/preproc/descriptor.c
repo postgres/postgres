@@ -2,7 +2,8 @@
  * functions needed for descriptor handling
  */
 
-#include "postgres.h"
+#include "postgres_fe.h"
+
 #include "extern.h"
 
 /*

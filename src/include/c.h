@@ -2,17 +2,22 @@
  *
  * c.h
  *	  Fundamental C definitions.  This is included by every .c file in
- *	  postgres.
+ *	  PostgreSQL (via either postgres.h or postgres_fe.h, as appropriate).
+ *
+ *	  Note that the definitions here are not intended to be exposed to clients of
+ *	  the frontend interface libraries --- so we don't worry much about polluting
+ *	  the namespace with lots of stuff...
  *
  *
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: c.h,v 1.89 2001/01/24 19:43:19 momjian Exp $
+ * $Id: c.h,v 1.90 2001/02/10 02:31:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 /*
+ *----------------------------------------------------------------
  *	 TABLE OF CONTENTS
  *
  *		When adding stuff to this file, please try to put stuff
@@ -20,21 +25,21 @@
  *
  *	  section	description
  *	  -------	------------------------------------------------
- *		1)		bool, true, false, TRUE, FALSE, NULL
- *		2)		non-ansi C definitions:
- *				type prefixes: const, signed, volatile, inline
- *				cpp magic macros
+ *		0)		config.h and standard system headers
+ *		1)		hacks to cope with non-ANSI C compilers
+ *		2)		bool, true, false, TRUE, FALSE, NULL
  *		3)		standard system types
- *		4)		datum type
- *		5)		IsValid macros for system types
- *		6)		offsetof, lengthof, endof
- *		7)		exception handling definitions, Assert, Trap, etc macros
- *		8)		Min, Max, Abs, StrNCpy macros
- *		9)		externs
- *		10)		Berkeley-specific defs
- *		11)		system-specific hacks
+ *		4)		IsValid macros for system types
+ *		5)		offsetof, lengthof, endof, alignment
+ *		6)		widely useful macros
+ *		7)		random stuff
+ *		8)		system-specific hacks
  *
- * ----------------------------------------------------------------
+ * NOTE: since this file is included by both frontend and backend modules, it's
+ * almost certainly wrong to put an "extern" declaration here.  typedefs and macros
+ * are the kind of thing that might go here.
+ *
+ *----------------------------------------------------------------
  */
 #ifndef C_H
 #define C_H
@@ -63,56 +68,11 @@
 #include <SupportDefs.h>
 #endif
 
-/* ----------------------------------------------------------------
- *				Section 1:	bool, true, false, TRUE, FALSE, NULL
- * ----------------------------------------------------------------
- */
-/*
- * bool
- *		Boolean value, either true or false.
- *
- */
-
-/* BeOS defines bool already, but the compiler chokes on the
- * #ifndef unless we wrap it in this check.
- */
-#ifndef __BEOS__ 
-#ifndef __cplusplus
-#ifndef bool
-typedef char bool;
-
-#endif	 /* ndef bool */
-#endif	 /* not C++ */
-#ifndef true
-#define true	((bool) 1)
-#endif
-#ifndef false
-#define false	((bool) 0)
-#endif
-#endif /* __BEOS__ */
-typedef bool *BoolPtr;
-
-#ifndef TRUE
-#define TRUE	1
-#endif	 /* TRUE */
-
-#ifndef FALSE
-#define FALSE	0
-#endif	 /* FALSE */
-
-/*
- * NULL
- *		Null pointer.
- */
-#ifndef NULL
-#define NULL	((void *) 0)
-#endif	 /* !defined(NULL) */
 
 /* ----------------------------------------------------------------
- *				Section 2: non-ansi C definitions:
+ *				Section 1: hacks to cope with non-ANSI C compilers
  *
- *				type prefixes: const, signed, volatile, inline
- *				cpp magic macros
+ * type prefixes (const, signed, volatile, inline) are now handled in config.h.
  * ----------------------------------------------------------------
  */
 
@@ -157,6 +117,57 @@ typedef bool *BoolPtr;
 #define dummyret	char
 #endif
 
+
+/* ----------------------------------------------------------------
+ *				Section 2:	bool, true, false, TRUE, FALSE, NULL
+ * ----------------------------------------------------------------
+ */
+/*
+ * bool
+ *		Boolean value, either true or false.
+ *
+ */
+
+/* BeOS defines bool already, but the compiler chokes on the
+ * #ifndef unless we wrap it in this check.
+ */
+#ifndef __BEOS__ 
+
+#ifndef __cplusplus
+#ifndef bool
+typedef char bool;
+#endif	 /* ndef bool */
+#endif	 /* not C++ */
+
+#ifndef true
+#define true	((bool) 1)
+#endif
+
+#ifndef false
+#define false	((bool) 0)
+#endif
+
+#endif /* __BEOS__ */
+
+typedef bool *BoolPtr;
+
+#ifndef TRUE
+#define TRUE	1
+#endif
+
+#ifndef FALSE
+#define FALSE	0
+#endif
+
+/*
+ * NULL
+ *		Null pointer.
+ */
+#ifndef NULL
+#define NULL	((void *) 0)
+#endif
+
+
 /* ----------------------------------------------------------------
  *				Section 3:	standard system types
  * ----------------------------------------------------------------
@@ -182,6 +193,7 @@ typedef signed char int8;		/* == 8 bits */
 typedef signed short int16;		/* == 16 bits */
 typedef signed int int32;		/* == 32 bits */
 #endif /* __BEOS__ */
+
 /*
  * uintN
  *		Unsigned integer, EXACTLY N BITS IN SIZE,
@@ -193,21 +205,6 @@ typedef unsigned char uint8;	/* == 8 bits */
 typedef unsigned short uint16;	/* == 16 bits */
 typedef unsigned int uint32;	/* == 32 bits */
 #endif /* __BEOS__ */
-/*
- * floatN
- *		Floating point number, AT LEAST N BITS IN SIZE,
- *		used for numerical computations.
- *
- *		Since sizeof(floatN) may be > sizeof(char *), always pass
- *		floatN by reference.
- *
- * XXX: these typedefs are now deprecated in favor of float4 and float8.
- * They will eventually go away.
- */
-typedef float float32data;
-typedef double float64data;
-typedef float *float32;
-typedef double *float64;
 
 /*
  * boolN
@@ -235,44 +232,24 @@ typedef uint16 word16;			/* >= 16 bits */
 typedef uint32 word32;			/* >= 32 bits */
 
 /*
- * Size
- *		Size of any memory resident object, as returned by sizeof.
- */
-typedef size_t Size;
-
-/*
- * Index
- *		Index into any memory resident array.
+ * floatN
+ *		Floating point number, AT LEAST N BITS IN SIZE,
+ *		used for numerical computations.
  *
- * Note:
- *		Indices are non negative.
- */
-typedef unsigned int Index;
-
-#define MAXDIM 6
-typedef struct
-{
-	int			indx[MAXDIM];
-} IntArray;
-
-/*
- * Offset
- *		Offset into any memory resident array.
+ *		Since sizeof(floatN) may be > sizeof(char *), always pass
+ *		floatN by reference.
  *
- * Note:
- *		This differs from an Index in that an Index is always
- *		non negative, whereas Offset may be negative.
+ * XXX: these typedefs are now deprecated in favor of float4 and float8.
+ * They will eventually go away.
  */
-typedef signed int Offset;
+typedef float float32data;
+typedef double float64data;
+typedef float *float32;
+typedef double *float64;
 
 /*
- * Common Postgres datatypes.
+ * 64-bit integers
  */
-typedef int16 int2;
-typedef int32 int4;
-typedef float float4;
-typedef double float8;
-
 #ifndef __BEOS__ /* this is already defined on BeOS */
 #ifdef HAVE_LONG_INT_64
 /* Plain "long int" fits, use it */
@@ -292,344 +269,117 @@ typedef unsigned long int uint64;
 #endif
 #endif /* __BEOS__ */
 
-/* ----------------------------------------------------------------
- *				Section 4:	datum type + support macros
- * ----------------------------------------------------------------
- */
 /*
- * datum.h
- *		POSTGRES abstract data type datum representation definitions.
+ * Size
+ *		Size of any memory resident object, as returned by sizeof.
+ */
+typedef size_t Size;
+
+/*
+ * Index
+ *		Index into any memory resident array.
  *
  * Note:
+ *		Indices are non negative.
+ */
+typedef unsigned int Index;
+
+/*
+ * Offset
+ *		Offset into any memory resident array.
  *
- * Port Notes:
- *	Postgres makes the following assumption about machines:
+ * Note:
+ *		This differs from an Index in that an Index is always
+ *		non negative, whereas Offset may be negative.
+ */
+typedef signed int Offset;
+
+/*
+ * Common Postgres datatype names (as used in the catalogs)
+ */
+typedef int16 int2;
+typedef int32 int4;
+typedef float float4;
+typedef double float8;
+
+/*
+ * Oid, RegProcedure, TransactionId, CommandId
+ */
+
+/* typedef Oid is in postgres_ext.h */
+
+/* unfortunately, both regproc and RegProcedure are used */
+typedef Oid regproc;
+typedef Oid RegProcedure;
+
+typedef uint32 TransactionId;
+
+#define InvalidTransactionId	0
+
+typedef uint32 CommandId;
+
+#define FirstCommandId	0
+
+/*
+ * Array indexing support
+ */
+#define MAXDIM 6
+typedef struct
+{
+	int			indx[MAXDIM];
+} IntArray;
+
+/* ----------------
+ *		Variable-length datatypes all share the 'struct varlena' header.
  *
- *	sizeof(Datum) == sizeof(long) >= sizeof(void *) >= 4
- *
- *	Postgres also assumes that
- *
- *	sizeof(char) == 1
- *
- *	and that
- *
- *	sizeof(short) == 2
- *
- *	If your machine meets these requirements, Datums should also be checked
- *	to see if the positioning is correct.
+ * NOTE: for TOASTable types, this is an oversimplification, since the value may be
+ * compressed or moved out-of-line.  However datatype-specific routines are mostly
+ * content to deal with de-TOASTed values only, and of course client-side routines
+ * should never see a TOASTed value.  See postgres.h for details of the TOASTed form.
+ * ----------------
  */
+struct varlena
+{
+	int32		vl_len;
+	char		vl_dat[1];
+};
 
-typedef unsigned long Datum;	/* XXX sizeof(long) >= sizeof(void *) */
-typedef Datum *DatumPtr;
-
-#define GET_1_BYTE(datum)	(((Datum) (datum)) & 0x000000ff)
-#define GET_2_BYTES(datum)	(((Datum) (datum)) & 0x0000ffff)
-#define GET_4_BYTES(datum)	(((Datum) (datum)) & 0xffffffff)
-#define SET_1_BYTE(value)	(((Datum) (value)) & 0x000000ff)
-#define SET_2_BYTES(value)	(((Datum) (value)) & 0x0000ffff)
-#define SET_4_BYTES(value)	(((Datum) (value)) & 0xffffffff)
+#define VARHDRSZ		((int32) sizeof(int32))
 
 /*
- * DatumGetBool
- *		Returns boolean value of a datum.
- *
- * Note: any nonzero value will be considered TRUE.
+ * These widely-used datatypes are just a varlena header and the data bytes.
+ * There is no terminating null or anything like that --- the data length is
+ * always VARSIZE(ptr) - VARHDRSZ.
  */
-
-#define DatumGetBool(X) ((bool) (((Datum) (X)) != 0))
+typedef struct varlena bytea;
+typedef struct varlena text;
+typedef struct varlena BpChar;	/* blank-padded char, ie SQL char(n) */
+typedef struct varlena VarChar;	/* var-length char, ie SQL varchar(n) */
 
 /*
- * BoolGetDatum
- *		Returns datum representation for a boolean.
- *
- * Note: any nonzero value will be considered TRUE.
+ * Fixed-length array types (these are not varlena's!)
  */
 
-#define BoolGetDatum(X) ((Datum) ((X) ? 1 : 0))
+typedef int2 int2vector[INDEX_MAX_KEYS];
+typedef Oid oidvector[INDEX_MAX_KEYS];
 
 /*
- * DatumGetChar
- *		Returns character value of a datum.
+ * We want NameData to have length NAMEDATALEN and int alignment,
+ * because that's how the data type 'name' is defined in pg_type.
+ * Use a union to make sure the compiler agrees.
  */
-
-#define DatumGetChar(X) ((char) GET_1_BYTE(X))
-
-/*
- * CharGetDatum
- *		Returns datum representation for a character.
- */
-
-#define CharGetDatum(X) ((Datum) SET_1_BYTE(X))
-
-/*
- * Int8GetDatum
- *		Returns datum representation for an 8-bit integer.
- */
-
-#define Int8GetDatum(X) ((Datum) SET_1_BYTE(X))
-
-/*
- * DatumGetUInt8
- *		Returns 8-bit unsigned integer value of a datum.
- */
-
-#define DatumGetUInt8(X) ((uint8) GET_1_BYTE(X))
-
-/*
- * UInt8GetDatum
- *		Returns datum representation for an 8-bit unsigned integer.
- */
-
-#define UInt8GetDatum(X) ((Datum) SET_1_BYTE(X))
-
-/*
- * DatumGetInt16
- *		Returns 16-bit integer value of a datum.
- */
-
-#define DatumGetInt16(X) ((int16) GET_2_BYTES(X))
-
-/*
- * Int16GetDatum
- *		Returns datum representation for a 16-bit integer.
- */
-
-#define Int16GetDatum(X) ((Datum) SET_2_BYTES(X))
-
-/*
- * DatumGetUInt16
- *		Returns 16-bit unsigned integer value of a datum.
- */
-
-#define DatumGetUInt16(X) ((uint16) GET_2_BYTES(X))
-
-/*
- * UInt16GetDatum
- *		Returns datum representation for a 16-bit unsigned integer.
- */
-
-#define UInt16GetDatum(X) ((Datum) SET_2_BYTES(X))
-
-/*
- * DatumGetInt32
- *		Returns 32-bit integer value of a datum.
- */
-
-#define DatumGetInt32(X) ((int32) GET_4_BYTES(X))
-
-/*
- * Int32GetDatum
- *		Returns datum representation for a 32-bit integer.
- */
-
-#define Int32GetDatum(X) ((Datum) SET_4_BYTES(X))
-
-/*
- * DatumGetUInt32
- *		Returns 32-bit unsigned integer value of a datum.
- */
-
-#define DatumGetUInt32(X) ((uint32) GET_4_BYTES(X))
-
-/*
- * UInt32GetDatum
- *		Returns datum representation for a 32-bit unsigned integer.
- */
-
-#define UInt32GetDatum(X) ((Datum) SET_4_BYTES(X))
-
-/*
- * DatumGetObjectId
- *		Returns object identifier value of a datum.
- */
-
-#define DatumGetObjectId(X) ((Oid) GET_4_BYTES(X))
-
-/*
- * ObjectIdGetDatum
- *		Returns datum representation for an object identifier.
- */
-
-#define ObjectIdGetDatum(X) ((Datum) SET_4_BYTES(X))
-
-/*
- * DatumGetPointer
- *		Returns pointer value of a datum.
- */
-
-#define DatumGetPointer(X) ((Pointer) (X))
-
-/*
- * PointerGetDatum
- *		Returns datum representation for a pointer.
- */
-
-#define PointerGetDatum(X) ((Datum) (X))
-
-/*
- * DatumGetCString
- *		Returns C string (null-terminated string) value of a datum.
- *
- * Note: C string is not a full-fledged Postgres type at present,
- * but type input functions use this conversion for their inputs.
- */
-
-#define DatumGetCString(X) ((char *) DatumGetPointer(X))
-
-/*
- * CStringGetDatum
- *		Returns datum representation for a C string (null-terminated string).
- *
- * Note: C string is not a full-fledged Postgres type at present,
- * but type output functions use this conversion for their outputs.
- * Note: CString is pass-by-reference; caller must ensure the pointed-to
- * value has adequate lifetime.
- */
-
-#define CStringGetDatum(X) PointerGetDatum(X)
-
-/*
- * DatumGetName
- *		Returns name value of a datum.
- */
-
-#define DatumGetName(X) ((Name) DatumGetPointer(X))
-
-/*
- * NameGetDatum
- *		Returns datum representation for a name.
- *
- * Note: Name is pass-by-reference; caller must ensure the pointed-to
- * value has adequate lifetime.
- */
-
-#define NameGetDatum(X) PointerGetDatum(X)
-
-/*
- * DatumGetInt64
- *		Returns 64-bit integer value of a datum.
- *
- * Note: this macro hides the fact that int64 is currently a
- * pass-by-reference type.  Someday it may be pass-by-value,
- * at least on some platforms.
- */
-
-#define DatumGetInt64(X) (* ((int64 *) DatumGetPointer(X)))
-
-/*
- * Int64GetDatum
- *		Returns datum representation for a 64-bit integer.
- *
- * Note: this routine returns a reference to palloc'd space.
- */
-
-extern Datum Int64GetDatum(int64 X);
-
-/*
- * DatumGetFloat4
- *		Returns 4-byte floating point value of a datum.
- *
- * Note: this macro hides the fact that float4 is currently a
- * pass-by-reference type.  Someday it may be pass-by-value.
- */
-
-#define DatumGetFloat4(X) (* ((float4 *) DatumGetPointer(X)))
-
-/*
- * Float4GetDatum
- *		Returns datum representation for a 4-byte floating point number.
- *
- * Note: this routine returns a reference to palloc'd space.
- */
-
-extern Datum Float4GetDatum(float4 X);
-
-/*
- * DatumGetFloat8
- *		Returns 8-byte floating point value of a datum.
- *
- * Note: this macro hides the fact that float8 is currently a
- * pass-by-reference type.  Someday it may be pass-by-value,
- * at least on some platforms.
- */
-
-#define DatumGetFloat8(X) (* ((float8 *) DatumGetPointer(X)))
-
-/*
- * Float8GetDatum
- *		Returns datum representation for an 8-byte floating point number.
- *
- * Note: this routine returns a reference to palloc'd space.
- */
-
-extern Datum Float8GetDatum(float8 X);
-
-
-/*
- * DatumGetFloat32
- *		Returns 32-bit floating point value of a datum.
- *		This is really a pointer, of course.
- *
- * XXX: this macro is now deprecated in favor of DatumGetFloat4.
- * It will eventually go away.
- */
-
-#define DatumGetFloat32(X) ((float32) DatumGetPointer(X))
-
-/*
- * Float32GetDatum
- *		Returns datum representation for a 32-bit floating point number.
- *		This is really a pointer, of course.
- *
- * XXX: this macro is now deprecated in favor of Float4GetDatum.
- * It will eventually go away.
- */
-
-#define Float32GetDatum(X) PointerGetDatum(X)
-
-/*
- * DatumGetFloat64
- *		Returns 64-bit floating point value of a datum.
- *		This is really a pointer, of course.
- *
- * XXX: this macro is now deprecated in favor of DatumGetFloat8.
- * It will eventually go away.
- */
-
-#define DatumGetFloat64(X) ((float64) DatumGetPointer(X))
-
-/*
- * Float64GetDatum
- *		Returns datum representation for a 64-bit floating point number.
- *		This is really a pointer, of course.
- *
- * XXX: this macro is now deprecated in favor of Float8GetDatum.
- * It will eventually go away.
- */
-
-#define Float64GetDatum(X) PointerGetDatum(X)
-
-/*
- * Int64GetDatumFast
- * Float4GetDatumFast
- * Float8GetDatumFast
- *
- * These macros are intended to allow writing code that does not depend on
- * whether int64, float4, float8 are pass-by-reference types, while not
- * sacrificing performance when they are.  The argument must be a variable
- * that will exist and have the same value for as long as the Datum is needed.
- * In the pass-by-ref case, the address of the variable is taken to use as
- * the Datum.  In the pass-by-val case, these will be the same as the non-Fast
- * macros.
- */
-
-#define Int64GetDatumFast(X)  PointerGetDatum(&(X))
-#define Float4GetDatumFast(X) PointerGetDatum(&(X))
-#define Float8GetDatumFast(X) PointerGetDatum(&(X))
+typedef union nameData
+{
+	char		data[NAMEDATALEN];
+	int			alignmentDummy;
+} NameData;
+typedef NameData *Name;
+
+#define NameStr(name)	((name).data)
 
 
 /* ----------------------------------------------------------------
- *				Section 5:	IsValid macros for system types
+ *				Section 4:	IsValid macros for system types
  * ----------------------------------------------------------------
  */
 /*
@@ -651,8 +401,13 @@ extern Datum Float8GetDatum(float8 X);
 #define PointerIsAligned(pointer, type) \
 		(((long)(pointer) % (sizeof (type))) == 0)
 
+#define OidIsValid(objectId)  ((bool) ((objectId) != InvalidOid))
+
+#define RegProcedureIsValid(p)	OidIsValid(p)
+
+
 /* ----------------------------------------------------------------
- *				Section 6:	offsetof, lengthof, endof
+ *				Section 5:	offsetof, lengthof, endof, alignment
  * ----------------------------------------------------------------
  */
 /*
@@ -678,125 +433,28 @@ extern Datum Float8GetDatum(float8 X);
  */
 #define endof(array)	(&array[lengthof(array)])
 
-/* ----------------------------------------------------------------
- *				Section 7:	exception handling definitions
- *							Assert, Trap, etc macros
- * ----------------------------------------------------------------
- */
-/*
- * Exception Handling definitions
- */
-
-typedef char *ExcMessage;
-typedef struct Exception
-{
-	ExcMessage	message;
-} Exception;
-
-/*
- * USE_ASSERT_CHECKING, if defined, turns on all the assertions.
- * - plai  9/5/90
+/* ----------------
+ * Alignment macros: align a length or address appropriately for a given type.
  *
- * It should _NOT_ be defined in releases or in benchmark copies
+ * There used to be some incredibly crufty platform-dependent hackery here,
+ * but now we rely on the configure script to get the info for us. Much nicer.
+ *
+ * NOTE: TYPEALIGN will not work if ALIGNVAL is not a power of 2.
+ * That case seems extremely unlikely to occur in practice, however.
+ * ----------------
  */
 
-/*
- * Trap
- *		Generates an exception if the given condition is true.
- *
- */
-#define Trap(condition, exception) \
-		do { \
-			if ((assert_enabled) && (condition)) \
-				ExceptionalCondition(CppAsString(condition), &(exception), \
-						(char*)NULL, __FILE__, __LINE__); \
-		} while (0)
+#define TYPEALIGN(ALIGNVAL,LEN) (((long)(LEN) + (ALIGNVAL-1)) & ~(ALIGNVAL-1))
 
-/*
- *	TrapMacro is the same as Trap but it's intended for use in macros:
- *
- *		#define foo(x) (AssertM(x != 0) && bar(x))
- *
- *	Isn't CPP fun?
- */
-#define TrapMacro(condition, exception) \
-	((bool) ((! assert_enabled) || ! (condition) || \
-			 (ExceptionalCondition(CppAsString(condition), \
-								  &(exception), \
-								  (char*) NULL, __FILE__, __LINE__))))
+#define SHORTALIGN(LEN)			TYPEALIGN(ALIGNOF_SHORT, (LEN))
+#define INTALIGN(LEN)			TYPEALIGN(ALIGNOF_INT, (LEN))
+#define LONGALIGN(LEN)			TYPEALIGN(ALIGNOF_LONG, (LEN))
+#define DOUBLEALIGN(LEN)		TYPEALIGN(ALIGNOF_DOUBLE, (LEN))
+#define MAXALIGN(LEN)			TYPEALIGN(MAXIMUM_ALIGNOF, (LEN))
 
-#ifndef USE_ASSERT_CHECKING
-#define Assert(condition)
-#define AssertMacro(condition)	((void)true)
-#define AssertArg(condition)
-#define AssertState(condition)
-#define assert_enabled 0
-#else
-#define Assert(condition) \
-		Trap(!(condition), FailedAssertion)
-
-#define AssertMacro(condition) \
-		((void) TrapMacro(!(condition), FailedAssertion))
-
-#define AssertArg(condition) \
-		Trap(!(condition), BadArg)
-
-#define AssertState(condition) \
-		Trap(!(condition), BadState)
-
-extern bool	assert_enabled;
-
-#endif	 /* USE_ASSERT_CHECKING */
-
-/*
- * LogTrap
- *		Generates an exception with a message if the given condition is true.
- *
- */
-#define LogTrap(condition, exception, printArgs) \
-		do { \
-			if ((assert_enabled) && (condition)) \
-				ExceptionalCondition(CppAsString(condition), &(exception), \
-						vararg_format printArgs, __FILE__, __LINE__); \
-		} while (0)
-
-/*
- *	LogTrapMacro is the same as LogTrap but it's intended for use in macros:
- *
- *		#define foo(x) (LogAssertMacro(x != 0, "yow!") && bar(x))
- */
-#define LogTrapMacro(condition, exception, printArgs) \
-	((bool) ((! assert_enabled) || ! (condition) || \
-			 (ExceptionalCondition(CppAsString(condition), \
-								   &(exception), \
-								   vararg_format printArgs, __FILE__, __LINE__))))
-
-#ifndef USE_ASSERT_CHECKING
-#define LogAssert(condition, printArgs)
-#define LogAssertMacro(condition, printArgs) true
-#define LogAssertArg(condition, printArgs)
-#define LogAssertState(condition, printArgs)
-#else
-#define LogAssert(condition, printArgs) \
-		LogTrap(!(condition), FailedAssertion, printArgs)
-
-#define LogAssertMacro(condition, printArgs) \
-		LogTrapMacro(!(condition), FailedAssertion, printArgs)
-
-#define LogAssertArg(condition, printArgs) \
-		LogTrap(!(condition), BadArg, printArgs)
-
-#define LogAssertState(condition, printArgs) \
-		LogTrap(!(condition), BadState, printArgs)
-
-#ifdef ASSERT_CHECKING_TEST
-extern int	assertTest(int val);
-
-#endif
-#endif	 /* USE_ASSERT_CHECKING */
 
 /* ----------------------------------------------------------------
- *				Section 8:	Min, Max, Abs macros
+ *				Section 6:	widely useful macros
  * ----------------------------------------------------------------
  */
 /*
@@ -887,56 +545,30 @@ extern int	assertTest(int val);
 
 
 /* ----------------------------------------------------------------
- *				Section 9: externs
+ *				Section 7:	random stuff
  * ----------------------------------------------------------------
  */
 
-extern Exception FailedAssertion;
-extern Exception BadArg;
-extern Exception BadState;
+/* msb for char */
+#define CSIGNBIT (0x80)
 
-/* in utils/error/assert.c */
-extern int ExceptionalCondition(char *conditionName,
-					 Exception *exceptionP, char *details,
-					 char *fileName, int lineNumber);
-
-
-/* ----------------
- *		vararg_format is used by assert and the exception handling stuff
- * ----------------
- */
-extern char *vararg_format(const char *fmt,...);
-
+#define STATUS_OK				(0)
+#define STATUS_ERROR			(-1)
+#define STATUS_NOT_FOUND		(-2)
+#define STATUS_INVALID			(-3)
+#define STATUS_UNCATALOGUED		(-4)
+#define STATUS_REPLACED			(-5)
+#define STATUS_NOT_DONE			(-6)
+#define STATUS_BAD_PACKET		(-7)
+#define STATUS_FOUND			(1)
 
 
 /* ----------------------------------------------------------------
- *				Section 10: berkeley-specific configuration
- *
- * this section contains settings which are only relevant to the UC Berkeley
- * sites.  Other sites can ignore this
- * ----------------------------------------------------------------
- */
-
-/* ----------------
- *		storage managers
- *
- *		These are experimental and are not supported in the code that
- *		we distribute to other sites.
- * ----------------
- */
-#ifdef NOT_USED
-#define STABLE_MEMORY_STORAGE
-#endif
-
-
-
-/* ----------------------------------------------------------------
- *				Section 11: system-specific hacks
+ *				Section 8: system-specific hacks
  *
  *		This should be limited to things that absolutely have to be
- *		included in every source file.	The changes should be factored
- *		into a separate file so that changes to one port don't require
- *		changes to c.h (and everyone recompiling their whole system).
+ *		included in every source file.  The port-specific header file
+ *		is usually a better place for this sort of thing.
  * ----------------------------------------------------------------
  */
 
@@ -951,7 +583,6 @@ extern char *vararg_format(const char *fmt,...);
 #endif
 
 #if defined(sun) && defined(__sparc__) && !defined(__SVR4)
-#define memmove(d, s, l)		bcopy(s, d, l)
 #include <unistd.h>
 #include <varargs.h>
 #endif
@@ -989,8 +620,8 @@ extern int	vsnprintf(char *str, size_t count, const char *fmt, va_list args);
 
 #endif
 
-#ifndef HAVE_MEMMOVE
-#include <regex/utils.h>
+#if !defined(HAVE_MEMMOVE) && !defined(memmove)
+#define memmove(d, s, c)		bcopy(s, d, c)
 #endif
 
 /* ----------------

@@ -1,10 +1,10 @@
-/* $Header: /cvsroot/pgsql/contrib/soundex/Attic/soundex.c,v 1.9 2000/12/03 20:45:31 tgl Exp $ */
+/* $Header: /cvsroot/pgsql/contrib/soundex/Attic/soundex.c,v 1.10 2001/02/10 02:31:26 tgl Exp $ */
 #include "postgres.h"
+
+#include <ctype.h>
+
 #include "fmgr.h"
 #include "utils/builtins.h"
-#include <ctype.h>
-#include <string.h>
-#include <stdio.h>
 
 
 Datum text_soundex(PG_FUNCTION_ARGS);

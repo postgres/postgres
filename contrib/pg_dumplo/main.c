@@ -1,22 +1,22 @@
 /* -------------------------------------------------------------------------
  * pg_dumplo
  *
- * $Header: /cvsroot/pgsql/contrib/pg_dumplo/Attic/main.c,v 1.5 2001/01/24 19:42:45 momjian Exp $
+ * $Header: /cvsroot/pgsql/contrib/pg_dumplo/Attic/main.c,v 1.6 2001/02/10 02:31:25 tgl Exp $
  *
  *					Karel Zak 1999-2000
  * -------------------------------------------------------------------------
  */
+
+/* We import postgres_fe.h mostly to get the HAVE_GETOPT_LONG configure result. */
+#ifndef OUT_OF_PG
+#include "postgres_fe.h"
+#endif
 
 #include <stdio.h>	
 #include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>                            
-
-/* We import postgres.h mostly to get the HAVE_GETOPT_LONG configure result. */
-#ifndef OUT_OF_PG
-#include "postgres.h"
-#endif
 
 #include <libpq-fe.h>
 #include <libpq/libpq-fs.h>
