@@ -31,9 +31,11 @@
  *	  ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/tcl/pltcl.c,v 1.34 2001/03/22 04:01:42 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/tcl/pltcl.c,v 1.35 2001/05/11 23:38:06 petere Exp $
  *
  **********************************************************************/
+
+#include "postgres.h"
 
 #include <tcl.h>
 
@@ -111,10 +113,9 @@ static FunctionCallInfo pltcl_current_fcinfo = NULL;
 static void pltcl_init_all(void);
 static void pltcl_init_interp(Tcl_Interp *interp);
 
-#ifdef PLTCL_UNKNOWN_SUPPORT
+#ifdef ENABLE_PLTCL_UNKNOWN
 static void pltcl_init_load_unknown(Tcl_Interp *interp);
-
-#endif	 /* PLTCL_UNKNOWN_SUPPORT */
+#endif
 
 Datum		pltcl_call_handler(PG_FUNCTION_ARGS);
 Datum		pltclu_call_handler(PG_FUNCTION_ARGS);
@@ -230,7 +231,7 @@ pltcl_init_interp(Tcl_Interp *interp)
 	Tcl_CreateCommand(interp, "spi_execp",
 					  pltcl_SPI_execp, NULL, NULL);
 
-#ifdef PLTCL_UNKNOWN_SUPPORT
+#ifdef ENABLE_PLTCL_UNKNOWN
 	/************************************************************
 	 * Try to load the unknown procedure from pltcl_modules
 	 ************************************************************/
@@ -239,11 +240,11 @@ pltcl_init_interp(Tcl_Interp *interp)
 	pltcl_init_load_unknown(interp);
 	if (SPI_finish() != SPI_OK_FINISH)
 		elog(ERROR, "pltcl_init_interp(): SPI_finish failed");
-#endif	 /* PLTCL_UNKNOWN_SUPPORT */
+#endif	 /* ENABLE_PLTCL_UNKNOWN */
 }
 
 
-#ifdef PLTCL_UNKNOWN_SUPPORT
+#ifdef ENABLE_PLTCL_UNKNOWN
 
 /**********************************************************************
  * pltcl_init_load_unknown()	- Load the unknown procedure from
@@ -315,7 +316,7 @@ pltcl_init_load_unknown(Tcl_Interp *interp)
 	Tcl_DStringFree(&unknown_src);
 }
 
-#endif	 /* PLTCL_UNKNOWN_SUPPORT */
+#endif	 /* ENABLE_PLTCL_UNKNOWN */
 
 
 /**********************************************************************

@@ -1,6 +1,6 @@
-#!/bin/sh
+#! /bin/sh
 # Start tclsh \
-exec @TCLSH@ "$0" $@
+exec @TCLSH@ "$0" "$@"
 
 #
 # Code still has to be documented
@@ -119,4 +119,3 @@ if {$i == $argc} {
 }
 
 pg_disconnect $conn
-

@@ -359,16 +359,6 @@ PGAC_ARG_BOOL(with, tcl, no, [  --with-tcl              build Tcl and Tk interfa
 AC_MSG_RESULT([$with_tcl])
 AC_SUBST([with_tcl])
 
-# If Tcl is enabled (above) then check for pltcl_unknown_support
-AC_MSG_CHECKING([whether to build with pl/tcl unknown support])
-if test "$with_tcl" = yes; then
-  PGAC_ARG_BOOL(with, pltcl_unknown, no, [  --enable-pltcl-unknown    build pl/tcl unknown support if Tcl is enabled])
-else
-  enable_pltcl_unknown=no
-fi
-AC_MSG_RESULT([$enable_pltcl_unknown])
-AC_SUBST([enable_pltcl_unknown])
-
 # If Tcl is enabled (above) then Tk is also, unless the user disables it using --without-tk
 AC_MSG_CHECKING([whether to build with Tk])
 if test "$with_tcl" = yes; then
@@ -389,6 +379,21 @@ PGAC_ARG_REQ(with, tclconfig, [  --with-tclconfig=DIR    tclConfig.sh and tkConf
 # This will override the use of tclsh to find the paths to search.
 
 PGAC_ARG_REQ(with, tkconfig,  [  --with-tkconfig=DIR     tkConfig.sh is in DIR])
+
+
+#
+# If Tcl is enabled (above) then check for pltcl_unknown_support
+#
+AC_MSG_CHECKING([whether to build with PL/Tcl unknown support])
+if test "$with_tcl" = yes; then
+  PGAC_ARG_BOOL(enable, pltcl-unknown, no,
+                [  --enable-pltcl-unknown  build PL/Tcl unknown support (if Tcl is enabled)],
+                [AC_DEFINE([ENABLE_PLTCL_UNKNOWN])])
+else
+  enable_pltcl_unknown=no
+fi
+AC_MSG_RESULT([$enable_pltcl_unknown])
+AC_SUBST([enable_pltcl_unknown])
 
 
 #

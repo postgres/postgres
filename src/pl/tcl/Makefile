@@ -2,7 +2,7 @@
 #
 # Makefile for the pltcl shared object
 #
-# $Header: /cvsroot/pgsql/src/pl/tcl/Makefile,v 1.32 2001/05/09 21:42:29 momjian Exp $
+# $Header: /cvsroot/pgsql/src/pl/tcl/Makefile,v 1.33 2001/05/11 23:38:06 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -66,17 +66,6 @@ override CPPFLAGS += $(TCL_DEFS)
 override CFLAGS = $(TCL_CFLAGS_OPTIMIZE) $(TCL_SHLIB_CFLAGS)
 
 
-# Uncomment the following to enable the unknown command lookup on the
-# first of all calls to the call handler. See the doc in the modules
-# directory about details.
-
-ifeq ($(enable_pltcl_unknown), yes)
-override CPPFLAGS+= -DPLTCL_UNKNOWN_SUPPORT
-TCL_UNKNOWN_MODS=	modules/pltcl_loadmod \
-			modules/pltcl_delmod \
-			modules/pltcl_listmod
-endif
-
 #
 # DLOBJS is the dynamically-loaded object file.
 #
@@ -96,57 +85,45 @@ endif
 
 ifeq ($(TCL_SHARED_BUILD), 1)
 
-all: $(INFILES) $(TCL_UNKNOWN_MODS)
-
-modules/pltcl_loadmod: modules/pltcl_loadmod.in \
-	$(top_builddir)/src/Makefile.global
-	sed -e 's,@TCLSH@,$(TCLSH),g' \
-	  $< >$@
-	chmod a+x $@
-
-modules/pltcl_delmod: modules/pltcl_delmod.in \
-	$(top_builddir)/src/Makefile.global
-	sed -e 's,@TCLSH@,$(TCLSH),g' \
-	  $< >$@
-	chmod a+x $@
-
-modules/pltcl_listmod: modules/pltcl_listmod.in \
-	$(top_builddir)/src/Makefile.global
-	sed -e 's,@TCLSH@,$(TCLSH),g' \
-	  $< >$@
-	chmod a+x $@
+all: $(INFILES)
+ifeq ($(enable_pltcl_unknown), yes)
+	$(MAKE) -C modules $@
+endif
 
 pltcl$(DLSUFFIX): pltcl.o
 
 install: all installdirs
 	$(INSTALL_SHLIB) $(DLOBJS) $(DESTDIR)$(libdir)/$(DLOBJS)
 ifeq ($(enable_pltcl_unknown), yes)
-	$(INSTALL_SCRIPT) modules/pltcl_loadmod \
-		$(DESTDIR)$(bindir)/pltcl_loadmod
-	$(INSTALL_SCRIPT) modules/pltcl_delmod \
-		$(DESTDIR)$(bindir)/pltcl_delmod
-	$(INSTALL_SCRIPT) modules/pltcl_listmod \
-		$(DESTDIR)$(bindir)/pltcl_listmod
-	$(INSTALL_DATA) modules/unknown.pltcl \
-		$(DESTDIR)$(datadir)/unknown.pltcl
+	$(MAKE) -C modules $@
 endif
 
 installdirs:
 	$(mkinstalldirs) $(DESTDIR)$(libdir)
+ifeq ($(enable_pltcl_unknown), yes)
+	$(MAKE) -C modules $@
+endif
 
 uninstall:
 	rm -f $(DESTDIR)$(libdir)/$(DLOBJS)
+ifeq ($(enable_pltcl_unknown), yes)
+	$(MAKE) -C modules $@
+endif
 
-else
+else # TCL_SHARED_BUILD = 0
 
 all install:
 	@echo "*****"; \
 	 echo "* Cannot build pltcl because Tcl is not a shared library; skipping it."; \
 	 echo "*****"
-endif
+
+endif # TCL_SHARED_BUILD = 0
 
 Makefile.tcldefs: mkMakefile.tcldefs.sh
 	$(SHELL) $< '$(TCL_CONFIG_SH)' '$@'
 
 clean distclean maintainer-clean:
-	rm -f $(INFILES) pltcl.o Makefile.tcldefs modules/pltcl_listmod modules/pltcl_loadmod modules/pltcl_delmod
+	rm -f $(INFILES) pltcl.o Makefile.tcldefs
+ifeq ($(enable_pltcl_unknown), yes)
+	$(MAKE) -C modules $@
+endif
