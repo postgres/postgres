@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: plancat.h,v 1.18 2000/04/12 17:16:42 momjian Exp $
+ * $Id: plancat.h,v 1.19 2000/06/09 03:17:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,6 +23,8 @@ extern void relation_info(Query *root, Index relid,
 extern List *find_secondary_indexes(Query *root, Index relid);
 
 extern List *find_inheritance_children(Oid inhparent);
+
+extern bool has_subclass(Oid relationId);
 
 extern Selectivity restriction_selectivity(Oid functionObjectId,
 						Oid operatorObjectId,

@@ -10,9 +10,9 @@
  *
  * IDENTIFICATION
 <<<<<<< plancat.c
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/plancat.c,v 1.54 2000/06/09 01:44:16 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/plancat.c,v 1.55 2000/06/09 03:17:12 tgl Exp $
 =======
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/plancat.c,v 1.54 2000/06/09 01:44:16 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/plancat.c,v 1.55 2000/06/09 03:17:12 tgl Exp $
 >>>>>>> 1.53
  *
  *-------------------------------------------------------------------------
@@ -292,13 +292,18 @@ find_inheritance_children(Oid inhparent)
  * Currently has_subclass is only used as an efficiency hack, so this
  * is ok.
  */
-bool has_subclass(Oid relationId)
+bool
+has_subclass(Oid relationId)
 {
-        HeapTuple       tuple = 
-          SearchSysCacheTuple(RELOID,
-                              ObjectIdGetDatum(relationId),
-                              0, 0, 0);
-        return ((Form_pg_class) GETSTRUCT(tuple))->relhassubclass;
+	HeapTuple	tuple =
+		SearchSysCacheTuple(RELOID,
+							ObjectIdGetDatum(relationId),
+							0, 0, 0);
+
+	if (!HeapTupleIsValid(tuple))
+		elog(ERROR, "has_subclass: Relation %u not found",
+			 relationId);
+	return ((Form_pg_class) GETSTRUCT(tuple))->relhassubclass;
 }
 
 #ifdef NOT_USED
