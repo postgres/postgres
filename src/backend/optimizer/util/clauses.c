@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.92 2001/12/10 22:54:12 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.93 2002/01/03 18:01:59 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -1544,7 +1544,8 @@ simplify_op_or_func(Expr *expr, List *args)
 										  &const_is_null, NULL);
 
 	/* Must copy result out of sub-context used by expression eval */
-	const_val = datumCopy(const_val, resultTypByVal, resultTypLen);
+	if (!const_is_null)
+		const_val = datumCopy(const_val, resultTypByVal, resultTypLen);
 
 	FreeExprContext(econtext);
 	pfree(newexpr);
