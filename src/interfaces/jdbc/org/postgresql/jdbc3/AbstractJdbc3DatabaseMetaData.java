@@ -22,7 +22,7 @@ public abstract class AbstractJdbc3DatabaseMetaData extends org.postgresql.jdbc2
 	 */
 	public boolean supportsSavepoints() throws SQLException
 	{
-		throw org.postgresql.Driver.notImplemented();
+		return false;
 	}
 
 	/**
@@ -36,7 +36,7 @@ public abstract class AbstractJdbc3DatabaseMetaData extends org.postgresql.jdbc2
 	 */
 	public boolean supportsNamedParameters() throws SQLException
 	{
-		throw org.postgresql.Driver.notImplemented();
+		return false;
 	}
 
 	/**
@@ -52,7 +52,7 @@ public abstract class AbstractJdbc3DatabaseMetaData extends org.postgresql.jdbc2
 	 */
 	public boolean supportsMultipleOpenResults() throws SQLException
 	{
-		throw org.postgresql.Driver.notImplemented();
+		return false;
 	}
 
 	/**
@@ -66,7 +66,7 @@ public abstract class AbstractJdbc3DatabaseMetaData extends org.postgresql.jdbc2
 	 */
 	public boolean supportsGetGeneratedKeys() throws SQLException
 	{
-		throw org.postgresql.Driver.notImplemented();
+		return false;
 	}
 
 	/**
@@ -244,7 +244,7 @@ public abstract class AbstractJdbc3DatabaseMetaData extends org.postgresql.jdbc2
 	 */
 	public boolean supportsResultSetHoldability(int holdability) throws SQLException
 	{
-		throw org.postgresql.Driver.notImplemented();
+		return true;
 	}
 
 	/**
@@ -259,7 +259,7 @@ public abstract class AbstractJdbc3DatabaseMetaData extends org.postgresql.jdbc2
 	 */
 	public int getResultSetHoldability() throws SQLException
 	{
-		throw org.postgresql.Driver.notImplemented();
+		return ResultSet.HOLD_CURSORS_OVER_COMMIT;
 	}
 
 	/**
