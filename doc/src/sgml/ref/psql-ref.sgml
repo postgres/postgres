@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.129 2005/01/06 21:20:44 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.130 2005/01/14 00:24:23 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -2525,7 +2525,7 @@ $endif
      <filename>psqlrc</filename> file and the user's
      <filename>~/.psqlrc</filename> file.
      (On Windows, the user's startup file is named
-     <filename>%APPDATA%\postgresql\psqlrc.txt</filename>.)
+     <filename>%APPDATA%\postgresql\psqlrc.conf</filename>.)
      See <filename><replaceable>PREFIX</>/share/psqlrc.sample</>
      for information on setting up the system-wide file.  It could be used
      to set up the client or the server to taste (using the <command>\set

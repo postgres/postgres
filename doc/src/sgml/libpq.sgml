@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.177 2005/01/08 22:13:28 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.178 2005/01/14 00:23:21 momjian Exp $
 -->
 
  <chapter id="libpq">
@@ -3883,7 +3883,7 @@ The file <filename>.pgpass</filename> in a user's home directory is a file
 that can contain passwords to be used if the connection requires a
 password (and no password has been specified otherwise).
 On Microsoft Windows the file is named
-<filename>%APPDATA%\postgresql\pgpass.txt</> (where <filename>%APPDATA%</>
+<filename>%APPDATA%\postgresql\pgpass.conf</> (where <filename>%APPDATA%</>
 refers to the Application Data subdirectory in the user's profile).
 </para>
 
