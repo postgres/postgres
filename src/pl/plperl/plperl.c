@@ -33,7 +33,7 @@
  *	  ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plperl/plperl.c,v 1.17 2000/12/08 00:11:55 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plperl/plperl.c,v 1.18 2001/01/19 16:14:36 momjian Exp $
  *
  **********************************************************************/
 
@@ -227,7 +227,7 @@ plperl_init_safe_interp(void)
 		/* no commas between the next 4 please. They are supposed to be one string
 		 */
 		"require Safe; SPI::bootstrap();"
-		"sub ::mksafefunc { my $x = new Safe; $x->permit_only(':default');"
+		"sub ::mksafefunc { my $x = new Safe; $x->permit_only(':default');$x->permit(':base_math');"
 		"$x->share(qw[&elog &DEBUG &NOTICE &NOIND &ERROR]);"
 		" return $x->reval(qq[sub { $_[0] }]); }"
 		};
