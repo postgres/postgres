@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.196 2004/02/27 01:23:18 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.197 2004/04/20 01:11:49 momjian Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -726,10 +726,7 @@ su - postgres
        <term><option>--with-tcl</option></term>
        <listitem>
         <para>
-         Build components that require Tcl/Tk, which are
-         <application>libpgtcl</>, <application>pgtclsh</>,
-         <application>pgtksh</application>,
-         and <application>PL/Tcl</>.  But see below about
+         Build <application>PL/Tcl</>, which requires Tcl/Tk
          <option>--without-tk</>.
         </para>
        </listitem>

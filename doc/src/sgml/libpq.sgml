@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.150 2004/03/24 03:44:58 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.151 2004/04/20 01:11:49 momjian Exp $
 -->
 
  <chapter id="libpq">
@@ -21,8 +21,7 @@ $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.150 2004/03/24 03:44:58 momjian E
    <productname>PostgreSQL</productname> backend server and to receive the
    results of these queries.  <application>libpq</application> is also the
    underlying engine for several other <productname>PostgreSQL</productname>
-   application interfaces, including <application>libpq++</application> (C++),
-   <application>libpgtcl</application> (Tcl), <productname>Perl</productname>, and
+   application interfaces, including those written for C++, TCL, Perl, Python
    <application>ECPG</application>.  So some aspects of <application>libpq</>'s behavior will be
    important to you if you use one of those packages.
   </para>
