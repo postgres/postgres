@@ -33,10 +33,13 @@ char *ps_status_buffer = NULL
 	} while (0)
 
 #define PS_CLEAR_STATUS() \
-	do { if (ps_status_buffer) memset(ps_status_buffer, 0, strlen(ps_status_buffer)); }
+	do { \
+		if (ps_status_buffer) \
+			memset(ps_status_buffer, 0, strlen(ps_status_buffer)); \
+	} while (0)
 
 #define PS_SET_STATUS(status) \
-	{ \
+	do { \
 		if (ps_status_buffer) \
 		{ \
 			PS_CLEAR_STATUS(); \
