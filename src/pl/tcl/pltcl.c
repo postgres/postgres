@@ -31,7 +31,7 @@
  *	  ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/tcl/pltcl.c,v 1.44 2001/10/13 04:23:50 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/tcl/pltcl.c,v 1.45 2001/10/19 02:43:46 tgl Exp $
  *
  **********************************************************************/
 
@@ -99,6 +99,8 @@ utf_e2u(unsigned char *src) {
 typedef struct pltcl_proc_desc
 {
 	char	   *proname;
+	TransactionId fn_xmin;
+	CommandId	fn_cmin;
 	bool		lanpltrusted;
 	FmgrInfo	result_in_func;
 	Oid			result_in_elem;
@@ -155,6 +157,8 @@ static Datum pltcl_func_handler(PG_FUNCTION_ARGS);
 
 static HeapTuple pltcl_trigger_handler(PG_FUNCTION_ARGS);
 
+static pltcl_proc_desc *compile_pltcl_function(Oid fn_oid, bool is_trigger);
+
 static int pltcl_elog(ClientData cdata, Tcl_Interp *interp,
 		   int argc, char *argv[]);
 static int pltcl_quote(ClientData cdata, Tcl_Interp *interp,
@@ -201,11 +205,6 @@ perm_fmgr_info(Oid functionId, FmgrInfo *finfo)
 static void
 pltcl_init_all(void)
 {
-	Tcl_HashEntry *hashent;
-	Tcl_HashSearch hashsearch;
-	pltcl_proc_desc *prodesc;
-	pltcl_query_desc *querydesc;
-
 	/************************************************************
 	 * Do initialization only once
 	 ************************************************************/
@@ -450,243 +449,22 @@ pltclu_call_handler(PG_FUNCTION_ARGS)
 static Datum
 pltcl_func_handler(PG_FUNCTION_ARGS)
 {
-	Tcl_Interp *interp;
-	int			i;
-	char		internal_proname[512];
-	Tcl_HashEntry *hashent;
-	int			hashnew;
-	pltcl_proc_desc *volatile prodesc;
+	pltcl_proc_desc *prodesc;
+	Tcl_Interp *volatile interp;
 	Tcl_DString tcl_cmd;
 	Tcl_DString list_tmp;
+	int			i;
 	int			tcl_rc;
 	Datum		retval;
 	sigjmp_buf	save_restart;
 
-	/************************************************************
-	 * Build our internal proc name from the functions Oid
-	 ************************************************************/
-	sprintf(internal_proname, "__PLTcl_proc_%u", fcinfo->flinfo->fn_oid);
+	/* Find or compile the function */
+	prodesc = compile_pltcl_function(fcinfo->flinfo->fn_oid, false);
 
-	/************************************************************
-	 * Lookup the internal proc name in the hashtable
-	 ************************************************************/
-	hashent = Tcl_FindHashEntry(pltcl_proc_hash, internal_proname);
-	if (hashent == NULL)
-	{
-		/************************************************************
-		 * If we haven't found it in the hashtable, we analyze
-		 * the functions arguments and returntype and store
-		 * the in-/out-functions in the prodesc block and create
-		 * a new hashtable entry for it.
-		 *
-		 * Then we load the procedure into the safe interpreter.
-		 ************************************************************/
-		HeapTuple	procTup;
-		HeapTuple	langTup;
-		HeapTuple	typeTup;
-		Form_pg_proc procStruct;
-		Form_pg_language langStruct;
-		Form_pg_type typeStruct;
-		Tcl_DString proc_internal_def;
-		Tcl_DString proc_internal_body;
-		char		proc_internal_args[4096];
-		char	   *proc_source;
-		char		buf[512];
-
-		/************************************************************
-		 * Allocate a new procedure description block
-		 ************************************************************/
-		prodesc = (pltcl_proc_desc *) malloc(sizeof(pltcl_proc_desc));
-		prodesc->proname = malloc(strlen(internal_proname) + 1);
-		strcpy(prodesc->proname, internal_proname);
-
-		/************************************************************
-		 * Lookup the pg_proc tuple by Oid
-		 ************************************************************/
-		procTup = SearchSysCache(PROCOID,
-								 ObjectIdGetDatum(fcinfo->flinfo->fn_oid),
-								 0, 0, 0);
-		if (!HeapTupleIsValid(procTup))
-		{
-			free(prodesc->proname);
-			free(prodesc);
-			elog(ERROR, "pltcl: cache lookup for proc %u failed",
-				 fcinfo->flinfo->fn_oid);
-		}
-		procStruct = (Form_pg_proc) GETSTRUCT(procTup);
-
-		/************************************************************
-		 * Lookup the pg_language tuple by Oid
-		 ************************************************************/
-		langTup = SearchSysCache(LANGOID,
-								 ObjectIdGetDatum(procStruct->prolang),
-								 0, 0, 0);
-		if (!HeapTupleIsValid(langTup))
-		{
-			free(prodesc->proname);
-			free(prodesc);
-			elog(ERROR, "pltcl: cache lookup for language %u failed",
-				 procStruct->prolang);
-		}
-		langStruct = (Form_pg_language) GETSTRUCT(langTup);
-
-		prodesc->lanpltrusted = langStruct->lanpltrusted;
-		if (prodesc->lanpltrusted)
-			interp = pltcl_safe_interp;
-		else
-			interp = pltcl_norm_interp;
-		ReleaseSysCache(langTup);
-
-		/************************************************************
-		 * Get the required information for input conversion of the
-		 * return value.
-		 ************************************************************/
-		typeTup = SearchSysCache(TYPEOID,
-								 ObjectIdGetDatum(procStruct->prorettype),
-								 0, 0, 0);
-		if (!HeapTupleIsValid(typeTup))
-		{
-			free(prodesc->proname);
-			free(prodesc);
-			if (!OidIsValid(procStruct->prorettype))
-				elog(ERROR, "pltcl functions cannot return type \"opaque\""
-					 "\n\texcept when used as triggers");
-			else
-				elog(ERROR, "pltcl: cache lookup for return type %u failed",
-					 procStruct->prorettype);
-		}
-		typeStruct = (Form_pg_type) GETSTRUCT(typeTup);
-
-		if (typeStruct->typrelid != InvalidOid)
-		{
-			free(prodesc->proname);
-			free(prodesc);
-			elog(ERROR, "pltcl: return types of tuples not supported yet");
-		}
-
-		perm_fmgr_info(typeStruct->typinput, &(prodesc->result_in_func));
-		prodesc->result_in_elem = typeStruct->typelem;
-
-		ReleaseSysCache(typeTup);
-
-		/************************************************************
-		 * Get the required information for output conversion
-		 * of all procedure arguments
-		 ************************************************************/
-		prodesc->nargs = procStruct->pronargs;
-		proc_internal_args[0] = '\0';
-		for (i = 0; i < prodesc->nargs; i++)
-		{
-			typeTup = SearchSysCache(TYPEOID,
-							ObjectIdGetDatum(procStruct->proargtypes[i]),
-									 0, 0, 0);
-			if (!HeapTupleIsValid(typeTup))
-			{
-				free(prodesc->proname);
-				free(prodesc);
-				if (!OidIsValid(procStruct->proargtypes[i]))
-					elog(ERROR, "pltcl functions cannot take type \"opaque\"");
-				else
-					elog(ERROR, "pltcl: cache lookup for argument type %u failed",
-						 procStruct->proargtypes[i]);
-			}
-			typeStruct = (Form_pg_type) GETSTRUCT(typeTup);
-
-			if (typeStruct->typrelid != InvalidOid)
-			{
-				prodesc->arg_is_rel[i] = 1;
-				if (i > 0)
-					strcat(proc_internal_args, " ");
-				sprintf(buf, "__PLTcl_Tup_%d", i + 1);
-				strcat(proc_internal_args, buf);
-				ReleaseSysCache(typeTup);
-				continue;
-			}
-			else
-				prodesc->arg_is_rel[i] = 0;
-
-			perm_fmgr_info(typeStruct->typoutput, &(prodesc->arg_out_func[i]));
-			prodesc->arg_out_elem[i] = (Oid) (typeStruct->typelem);
-			prodesc->arg_out_len[i] = typeStruct->typlen;
-
-			if (i > 0)
-				strcat(proc_internal_args, " ");
-			sprintf(buf, "%d", i + 1);
-			strcat(proc_internal_args, buf);
-
-			ReleaseSysCache(typeTup);
-		}
-
-		/************************************************************
-		 * Create the tcl command to define the internal
-		 * procedure
-		 ************************************************************/
-		Tcl_DStringInit(&proc_internal_def);
-		Tcl_DStringInit(&proc_internal_body);
-		Tcl_DStringAppendElement(&proc_internal_def, "proc");
-		Tcl_DStringAppendElement(&proc_internal_def, internal_proname);
-		Tcl_DStringAppendElement(&proc_internal_def, proc_internal_args);
-
-		/************************************************************
-		 * prefix procedure body with
-		 * upvar #0 <internal_procname> GD
-		 * and with appropriate upvars for tuple arguments
-		 ************************************************************/
-		Tcl_DStringAppend(&proc_internal_body, "upvar #0 ", -1);
-		Tcl_DStringAppend(&proc_internal_body, internal_proname, -1);
-		Tcl_DStringAppend(&proc_internal_body, " GD\n", -1);
-		for (i = 0; i < fcinfo->nargs; i++)
-		{
-			if (!prodesc->arg_is_rel[i])
-				continue;
-			sprintf(buf, "array set %d $__PLTcl_Tup_%d\n", i + 1, i + 1);
-			Tcl_DStringAppend(&proc_internal_body, buf, -1);
-		}
-		proc_source = DatumGetCString(DirectFunctionCall1(textout,
-								  PointerGetDatum(&procStruct->prosrc)));
-		UTF_BEGIN;
-		Tcl_DStringAppend(&proc_internal_body, UTF_E2U(proc_source), -1);
-		UTF_END;
-		pfree(proc_source);
-		Tcl_DStringAppendElement(&proc_internal_def,
-								 Tcl_DStringValue(&proc_internal_body));
-		Tcl_DStringFree(&proc_internal_body);
-
-		/************************************************************
-		 * Create the procedure in the interpreter
-		 ************************************************************/
-		tcl_rc = Tcl_GlobalEval(interp,
-								Tcl_DStringValue(&proc_internal_def));
-		Tcl_DStringFree(&proc_internal_def);
-		if (tcl_rc != TCL_OK)
-		{
-			free(prodesc->proname);
-			free(prodesc);
-			elog(ERROR, "pltcl: cannot create internal procedure %s - %s",
-				 internal_proname, interp->result);
-		}
-
-		/************************************************************
-		 * Add the proc description block to the hashtable
-		 ************************************************************/
-		hashent = Tcl_CreateHashEntry(pltcl_proc_hash,
-									  prodesc->proname, &hashnew);
-		Tcl_SetHashValue(hashent, (ClientData) prodesc);
-
-		ReleaseSysCache(procTup);
-	}
+	if (prodesc->lanpltrusted)
+		interp = pltcl_safe_interp;
 	else
-	{
-		/************************************************************
-		 * Found the proc description block in the hashtable
-		 ************************************************************/
-		prodesc = (pltcl_proc_desc *) Tcl_GetHashValue(hashent);
-
-		if (prodesc->lanpltrusted)
-			interp = pltcl_safe_interp;
-		else
-			interp = pltcl_norm_interp;
-	}
+		interp = pltcl_norm_interp;
 
 	/************************************************************
 	 * Create the tcl command to call the internal
@@ -694,7 +472,7 @@ pltcl_func_handler(PG_FUNCTION_ARGS)
 	 ************************************************************/
 	Tcl_DStringInit(&tcl_cmd);
 	Tcl_DStringInit(&list_tmp);
-	Tcl_DStringAppendElement(&tcl_cmd, internal_proname);
+	Tcl_DStringAppendElement(&tcl_cmd, prodesc->proname);
 
 	/************************************************************
 	 * Catch elog(ERROR) during build of the Tcl command
@@ -841,13 +619,10 @@ pltcl_func_handler(PG_FUNCTION_ARGS)
 static HeapTuple
 pltcl_trigger_handler(PG_FUNCTION_ARGS)
 {
-	Tcl_Interp *interp;
-	TriggerData *trigdata = (TriggerData *) fcinfo->context;
-	char		internal_proname[512];
-	char	   *stroid;
-	Tcl_HashEntry *hashent;
-	int			hashnew;
 	pltcl_proc_desc *prodesc;
+	Tcl_Interp *volatile interp;
+	TriggerData *trigdata = (TriggerData *) fcinfo->context;
+	char	   *stroid;
 	TupleDesc	tupdesc;
 	volatile HeapTuple rettup;
 	Tcl_DString tcl_cmd;
@@ -865,154 +640,13 @@ pltcl_trigger_handler(PG_FUNCTION_ARGS)
 
 	sigjmp_buf	save_restart;
 
-	/************************************************************
-	 * Build our internal proc name from the functions Oid
-	 ************************************************************/
-	sprintf(internal_proname, "__PLTcl_proc_%u", fcinfo->flinfo->fn_oid);
+	/* Find or compile the function */
+	prodesc = compile_pltcl_function(fcinfo->flinfo->fn_oid, true);
 
-	/************************************************************
-	 * Lookup the internal proc name in the hashtable
-	 ************************************************************/
-	hashent = Tcl_FindHashEntry(pltcl_proc_hash, internal_proname);
-	if (hashent == NULL)
-	{
-		/************************************************************
-		 * If we haven't found it in the hashtable,
-		 * we load the procedure into the safe interpreter.
-		 ************************************************************/
-		Tcl_DString proc_internal_def;
-		Tcl_DString proc_internal_body;
-		HeapTuple	procTup;
-		HeapTuple	langTup;
-		Form_pg_proc procStruct;
-		Form_pg_language langStruct;
-		char	   *proc_source;
-
-		/************************************************************
-		 * Allocate a new procedure description block
-		 ************************************************************/
-		prodesc = (pltcl_proc_desc *) malloc(sizeof(pltcl_proc_desc));
-		memset(prodesc, 0, sizeof(pltcl_proc_desc));
-		prodesc->proname = malloc(strlen(internal_proname) + 1);
-		strcpy(prodesc->proname, internal_proname);
-
-		/************************************************************
-		 * Lookup the pg_proc tuple by Oid
-		 ************************************************************/
-		procTup = SearchSysCache(PROCOID,
-								 ObjectIdGetDatum(fcinfo->flinfo->fn_oid),
-								 0, 0, 0);
-		if (!HeapTupleIsValid(procTup))
-		{
-			free(prodesc->proname);
-			free(prodesc);
-			elog(ERROR, "pltcl: cache lookup for proc %u failed",
-				 fcinfo->flinfo->fn_oid);
-		}
-		procStruct = (Form_pg_proc) GETSTRUCT(procTup);
-
-		/************************************************************
-		 * Lookup the pg_language tuple by Oid
-		 ************************************************************/
-		langTup = SearchSysCache(LANGOID,
-								 ObjectIdGetDatum(procStruct->prolang),
-								 0, 0, 0);
-		if (!HeapTupleIsValid(langTup))
-		{
-			free(prodesc->proname);
-			free(prodesc);
-			elog(ERROR, "pltcl: cache lookup for language %u failed",
-				 procStruct->prolang);
-		}
-		langStruct = (Form_pg_language) GETSTRUCT(langTup);
-
-		prodesc->lanpltrusted = langStruct->lanpltrusted;
-		if (prodesc->lanpltrusted)
-			interp = pltcl_safe_interp;
-		else
-			interp = pltcl_norm_interp;
-		ReleaseSysCache(langTup);
-
-		/************************************************************
-		 * Create the tcl command to define the internal
-		 * procedure
-		 ************************************************************/
-		Tcl_DStringInit(&proc_internal_def);
-		Tcl_DStringInit(&proc_internal_body);
-		Tcl_DStringAppendElement(&proc_internal_def, "proc");
-		Tcl_DStringAppendElement(&proc_internal_def, internal_proname);
-		Tcl_DStringAppendElement(&proc_internal_def,
-								 "TG_name TG_relid TG_relatts TG_when TG_level TG_op __PLTcl_Tup_NEW __PLTcl_Tup_OLD args");
-
-		/************************************************************
-		 * prefix procedure body with
-		 * upvar #0 <internal_procname> GD
-		 * and with appropriate setting of NEW, OLD,
-		 * and the arguments as numerical variables.
-		 ************************************************************/
-		Tcl_DStringAppend(&proc_internal_body, "upvar #0 ", -1);
-		Tcl_DStringAppend(&proc_internal_body, internal_proname, -1);
-		Tcl_DStringAppend(&proc_internal_body, " GD\n", -1);
-
-		Tcl_DStringAppend(&proc_internal_body,
-						  "array set NEW $__PLTcl_Tup_NEW\n", -1);
-		Tcl_DStringAppend(&proc_internal_body,
-						  "array set OLD $__PLTcl_Tup_OLD\n", -1);
-
-		Tcl_DStringAppend(&proc_internal_body,
-						  "set i 0\n"
-						  "set v 0\n"
-						  "foreach v $args {\n"
-						  "  incr i\n"
-						  "  set $i $v\n"
-						  "}\n"
-						  "unset i v\n\n", -1);
-
-		proc_source = DatumGetCString(DirectFunctionCall1(textout,
-								  PointerGetDatum(&procStruct->prosrc)));
-		UTF_BEGIN;
-		Tcl_DStringAppend(&proc_internal_body, UTF_E2U(proc_source), -1);
-		UTF_END;
-		pfree(proc_source);
-		Tcl_DStringAppendElement(&proc_internal_def,
-								 Tcl_DStringValue(&proc_internal_body));
-		Tcl_DStringFree(&proc_internal_body);
-
-		/************************************************************
-		 * Create the procedure in the interpreter
-		 ************************************************************/
-		tcl_rc = Tcl_GlobalEval(interp,
-								Tcl_DStringValue(&proc_internal_def));
-		Tcl_DStringFree(&proc_internal_def);
-		if (tcl_rc != TCL_OK)
-		{
-			free(prodesc->proname);
-			free(prodesc);
-			elog(ERROR, "pltcl: cannot create internal procedure %s - %s",
-				 internal_proname, interp->result);
-		}
-
-		/************************************************************
-		 * Add the proc description block to the hashtable
-		 ************************************************************/
-		hashent = Tcl_CreateHashEntry(pltcl_proc_hash,
-									  prodesc->proname, &hashnew);
-		Tcl_SetHashValue(hashent, (ClientData) prodesc);
-
-		ReleaseSysCache(procTup);
-	}
+	if (prodesc->lanpltrusted)
+		interp = pltcl_safe_interp;
 	else
-	{
-		/************************************************************
-		 * Found the proc description block in the hashtable
-		 ************************************************************/
-		prodesc = (pltcl_proc_desc *) Tcl_GetHashValue(hashent);
-
-		if (prodesc->lanpltrusted)
-			interp = pltcl_safe_interp;
-		else
-			interp = pltcl_norm_interp;
-	}
+		interp = pltcl_norm_interp;
 
 	tupdesc = trigdata->tg_relation->rd_att;
 
@@ -1041,7 +675,7 @@ pltcl_trigger_handler(PG_FUNCTION_ARGS)
 	}
 
 	/* The procedure name */
-	Tcl_DStringAppendElement(&tcl_cmd, internal_proname);
+	Tcl_DStringAppendElement(&tcl_cmd, prodesc->proname);
 
 	/* The trigger name for argument TG_name */
 	Tcl_DStringAppendElement(&tcl_cmd, trigdata->tg_trigger->tgname);
@@ -1304,6 +938,295 @@ pltcl_trigger_handler(PG_FUNCTION_ARGS)
 
 
 /**********************************************************************
+ * compile_pltcl_function	- compile (or hopefully just look up) function
+ **********************************************************************/
+static pltcl_proc_desc *
+compile_pltcl_function(Oid fn_oid, bool is_trigger)
+{
+	HeapTuple	procTup;
+	Form_pg_proc procStruct;
+	char		internal_proname[64];
+	Tcl_HashEntry *hashent;
+	pltcl_proc_desc *prodesc = NULL;
+	Tcl_Interp *interp;
+	int			i;
+	int			hashnew;
+	int			tcl_rc;
+
+	/* We'll need the pg_proc tuple in any case... */
+	procTup = SearchSysCache(PROCOID,
+							 ObjectIdGetDatum(fn_oid),
+							 0, 0, 0);
+	if (!HeapTupleIsValid(procTup))
+		elog(ERROR, "pltcl: cache lookup for proc %u failed", fn_oid);
+	procStruct = (Form_pg_proc) GETSTRUCT(procTup);
+
+	/************************************************************
+	 * Build our internal proc name from the functions Oid
+	 ************************************************************/
+	if (!is_trigger)
+		sprintf(internal_proname, "__PLTcl_proc_%u", fn_oid);
+	else
+		sprintf(internal_proname, "__PLTcl_proc_%u_trigger", fn_oid);
+
+	/************************************************************
+	 * Lookup the internal proc name in the hashtable
+	 ************************************************************/
+	hashent = Tcl_FindHashEntry(pltcl_proc_hash, internal_proname);
+
+	/************************************************************
+	 * If it's present, must check whether it's still up to date.
+	 * This is needed because CREATE OR REPLACE FUNCTION can modify the
+	 * function's pg_proc entry without changing its OID.
+	 ************************************************************/
+	if (hashent != NULL)
+	{
+		bool		uptodate;
+
+		prodesc = (pltcl_proc_desc *) Tcl_GetHashValue(hashent);
+
+		uptodate = (prodesc->fn_xmin == procTup->t_data->t_xmin &&
+					prodesc->fn_cmin == procTup->t_data->t_cmin);
+
+		if (!uptodate)
+		{
+			Tcl_DeleteHashEntry(hashent);
+			hashent = NULL;
+		}
+	}
+
+	/************************************************************
+	 * If we haven't found it in the hashtable, we analyze
+	 * the functions arguments and returntype and store
+	 * the in-/out-functions in the prodesc block and create
+	 * a new hashtable entry for it.
+	 *
+	 * Then we load the procedure into the safe interpreter.
+	 ************************************************************/
+	if (hashent == NULL)
+	{
+		HeapTuple	langTup;
+		HeapTuple	typeTup;
+		Form_pg_language langStruct;
+		Form_pg_type typeStruct;
+		Tcl_DString proc_internal_def;
+		Tcl_DString proc_internal_body;
+		char		proc_internal_args[4096];
+		char	   *proc_source;
+		char		buf[512];
+
+		/************************************************************
+		 * Allocate a new procedure description block
+		 ************************************************************/
+		prodesc = (pltcl_proc_desc *) malloc(sizeof(pltcl_proc_desc));
+		if (prodesc == NULL)
+			elog(ERROR, "pltcl: out of memory");
+		MemSet(prodesc, 0, sizeof(pltcl_proc_desc));
+		prodesc->proname = strdup(internal_proname);
+		prodesc->fn_xmin = procTup->t_data->t_xmin;
+		prodesc->fn_cmin = procTup->t_data->t_cmin;
+
+		/************************************************************
+		 * Lookup the pg_language tuple by Oid
+		 ************************************************************/
+		langTup = SearchSysCache(LANGOID,
+								 ObjectIdGetDatum(procStruct->prolang),
+								 0, 0, 0);
+		if (!HeapTupleIsValid(langTup))
+		{
+			free(prodesc->proname);
+			free(prodesc);
+			elog(ERROR, "pltcl: cache lookup for language %u failed",
+				 procStruct->prolang);
+		}
+		langStruct = (Form_pg_language) GETSTRUCT(langTup);
+		prodesc->lanpltrusted = langStruct->lanpltrusted;
+		ReleaseSysCache(langTup);
+
+		if (prodesc->lanpltrusted)
+			interp = pltcl_safe_interp;
+		else
+			interp = pltcl_norm_interp;
+
+		/************************************************************
+		 * Get the required information for input conversion of the
+		 * return value.
+		 ************************************************************/
+		if (!is_trigger)
+		{
+			typeTup = SearchSysCache(TYPEOID,
+									 ObjectIdGetDatum(procStruct->prorettype),
+									 0, 0, 0);
+			if (!HeapTupleIsValid(typeTup))
+			{
+				free(prodesc->proname);
+				free(prodesc);
+				if (!OidIsValid(procStruct->prorettype))
+					elog(ERROR, "pltcl functions cannot return type \"opaque\""
+						 "\n\texcept when used as triggers");
+				else
+					elog(ERROR, "pltcl: cache lookup for return type %u failed",
+						 procStruct->prorettype);
+			}
+			typeStruct = (Form_pg_type) GETSTRUCT(typeTup);
+
+			if (typeStruct->typrelid != InvalidOid)
+			{
+				free(prodesc->proname);
+				free(prodesc);
+				elog(ERROR, "pltcl: return types of tuples not supported yet");
+			}
+
+			perm_fmgr_info(typeStruct->typinput, &(prodesc->result_in_func));
+			prodesc->result_in_elem = typeStruct->typelem;
+
+			ReleaseSysCache(typeTup);
+		}
+
+		/************************************************************
+		 * Get the required information for output conversion
+		 * of all procedure arguments
+		 ************************************************************/
+		if (!is_trigger)
+		{
+			prodesc->nargs = procStruct->pronargs;
+			proc_internal_args[0] = '\0';
+			for (i = 0; i < prodesc->nargs; i++)
+			{
+				typeTup = SearchSysCache(TYPEOID,
+										 ObjectIdGetDatum(procStruct->proargtypes[i]),
+										 0, 0, 0);
+				if (!HeapTupleIsValid(typeTup))
+				{
+					free(prodesc->proname);
+					free(prodesc);
+					if (!OidIsValid(procStruct->proargtypes[i]))
+						elog(ERROR, "pltcl functions cannot take type \"opaque\"");
+					else
+						elog(ERROR, "pltcl: cache lookup for argument type %u failed",
+							 procStruct->proargtypes[i]);
+				}
+				typeStruct = (Form_pg_type) GETSTRUCT(typeTup);
+
+				if (typeStruct->typrelid != InvalidOid)
+				{
+					prodesc->arg_is_rel[i] = 1;
+					if (i > 0)
+						strcat(proc_internal_args, " ");
+					sprintf(buf, "__PLTcl_Tup_%d", i + 1);
+					strcat(proc_internal_args, buf);
+					ReleaseSysCache(typeTup);
+					continue;
+				}
+				else
+					prodesc->arg_is_rel[i] = 0;
+
+				perm_fmgr_info(typeStruct->typoutput, &(prodesc->arg_out_func[i]));
+				prodesc->arg_out_elem[i] = (Oid) (typeStruct->typelem);
+				prodesc->arg_out_len[i] = typeStruct->typlen;
+
+				if (i > 0)
+					strcat(proc_internal_args, " ");
+				sprintf(buf, "%d", i + 1);
+				strcat(proc_internal_args, buf);
+
+				ReleaseSysCache(typeTup);
+			}
+		}
+		else
+		{
+			/* trigger procedure has fixed args */
+			strcpy(proc_internal_args,
+				   "TG_name TG_relid TG_relatts TG_when TG_level TG_op __PLTcl_Tup_NEW __PLTcl_Tup_OLD args");
+		}
+
+		/************************************************************
+		 * Create the tcl command to define the internal
+		 * procedure
+		 ************************************************************/
+		Tcl_DStringInit(&proc_internal_def);
+		Tcl_DStringInit(&proc_internal_body);
+		Tcl_DStringAppendElement(&proc_internal_def, "proc");
+		Tcl_DStringAppendElement(&proc_internal_def, internal_proname);
+		Tcl_DStringAppendElement(&proc_internal_def, proc_internal_args);
+
+		/************************************************************
+		 * prefix procedure body with
+		 * upvar #0 <internal_procname> GD
+		 * and with appropriate setting of arguments
+		 ************************************************************/
+		Tcl_DStringAppend(&proc_internal_body, "upvar #0 ", -1);
+		Tcl_DStringAppend(&proc_internal_body, internal_proname, -1);
+		Tcl_DStringAppend(&proc_internal_body, " GD\n", -1);
+		if (!is_trigger)
+		{
+			for (i = 0; i < prodesc->nargs; i++)
+			{
+				if (!prodesc->arg_is_rel[i])
+					continue;
+				sprintf(buf, "array set %d $__PLTcl_Tup_%d\n", i + 1, i + 1);
+				Tcl_DStringAppend(&proc_internal_body, buf, -1);
+			}
+		}
+		else
+		{
+			Tcl_DStringAppend(&proc_internal_body,
+							  "array set NEW $__PLTcl_Tup_NEW\n", -1);
+			Tcl_DStringAppend(&proc_internal_body,
+							  "array set OLD $__PLTcl_Tup_OLD\n", -1);
+
+			Tcl_DStringAppend(&proc_internal_body,
+							  "set i 0\n"
+							  "set v 0\n"
+							  "foreach v $args {\n"
+							  "  incr i\n"
+							  "  set $i $v\n"
+							  "}\n"
+							  "unset i v\n\n", -1);
+		}
+
+		/************************************************************
+		 * Add user's function definition to proc body
+		 ************************************************************/
+		proc_source = DatumGetCString(DirectFunctionCall1(textout,
+								  PointerGetDatum(&procStruct->prosrc)));
+		UTF_BEGIN;
+		Tcl_DStringAppend(&proc_internal_body, UTF_E2U(proc_source), -1);
+		UTF_END;
+		pfree(proc_source);
+		Tcl_DStringAppendElement(&proc_internal_def,
+								 Tcl_DStringValue(&proc_internal_body));
+		Tcl_DStringFree(&proc_internal_body);
+
+		/************************************************************
+		 * Create the procedure in the interpreter
+		 ************************************************************/
+		tcl_rc = Tcl_GlobalEval(interp,
+								Tcl_DStringValue(&proc_internal_def));
+		Tcl_DStringFree(&proc_internal_def);
+		if (tcl_rc != TCL_OK)
+		{
+			free(prodesc->proname);
+			free(prodesc);
+			elog(ERROR, "pltcl: cannot create internal procedure %s - %s",
+				 internal_proname, interp->result);
+		}
+
+		/************************************************************
+		 * Add the proc description block to the hashtable
+		 ************************************************************/
+		hashent = Tcl_CreateHashEntry(pltcl_proc_hash,
+									  prodesc->proname, &hashnew);
+		Tcl_SetHashValue(hashent, (ClientData) prodesc);
+	}
+
+	ReleaseSysCache(procTup);
+
+	return prodesc;
+}
+
+
+/**********************************************************************
  * pltcl_elog()		- elog() support for PLTcl
  **********************************************************************/
 static int
@@ -1486,7 +1409,6 @@ static int
 pltcl_returnnull(ClientData cdata, Tcl_Interp *interp,
 				 int argc, char *argv[])
 {
-	int			argno;
 	FunctionCallInfo fcinfo = pltcl_current_fcinfo;
 
 	/************************************************************
