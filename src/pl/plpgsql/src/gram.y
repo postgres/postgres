@@ -4,7 +4,7 @@
  *						  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/gram.y,v 1.33 2002/05/21 18:50:16 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/gram.y,v 1.34 2002/08/08 01:36:04 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -48,6 +48,7 @@ static	PLpgSQL_type	*read_datatype(int tok);
 static	PLpgSQL_stmt	*make_select_stmt(void);
 static	PLpgSQL_stmt	*make_fetch_stmt(void);
 static	PLpgSQL_expr	*make_tupret_expr(PLpgSQL_row *row);
+static void check_assignable(PLpgSQL_datum *datum);
 
 %}
 
@@ -83,11 +84,10 @@ static	PLpgSQL_expr	*make_tupret_expr(PLpgSQL_row *row);
 			int  *initvarnos;
 		}						declhdr;
 		PLpgSQL_type			*dtype;
+		PLpgSQL_datum			*variable; /* a VAR, RECFIELD, or TRIGARG */
 		PLpgSQL_var				*var;
 		PLpgSQL_row				*row;
 		PLpgSQL_rec				*rec;
-		PLpgSQL_recfield		*recfield;
-		PLpgSQL_trigarg			*trigarg;
 		PLpgSQL_expr			*expr;
 		PLpgSQL_stmt			*stmt;
 		PLpgSQL_stmts			*stmts;
@@ -191,17 +191,14 @@ static	PLpgSQL_expr	*make_tupret_expr(PLpgSQL_row *row);
 		 */
 %token	T_FUNCTION
 %token	T_TRIGGER
-%token	T_LABEL
 %token	T_STRING
-%token	T_VARIABLE
-%token	T_ROW
-%token	T_ROWTYPE
-%token	T_RECORD
-%token	T_RECFIELD
-%token	T_TGARGV
-%token	T_DTYPE
-%token	T_WORD
 %token	T_NUMBER
+%token	T_VARIABLE				/* a VAR, RECFIELD, or TRIGARG */
+%token	T_ROW
+%token	T_RECORD
+%token	T_DTYPE
+%token	T_LABEL
+%token	T_WORD
 %token	T_ERROR
 
 %token	O_OPTION
@@ -514,16 +511,16 @@ decl_is_from	:	K_IS |		/* Oracle */
 
 decl_aliasitem	: T_WORD
 					{
-						PLpgSQL_nsitem *nsi;
 						char	*name;
+						PLpgSQL_nsitem *nsi;
 
-						plpgsql_ns_setlocal(false);
-						name = plpgsql_tolower(yytext);
+						plpgsql_convert_ident(yytext, &name, 1);
 						if (name[0] != '$')
 						{
 							plpgsql_error_lineno = yylineno;
 							elog(ERROR, "can only alias positional parameters");
 						}
+						plpgsql_ns_setlocal(false);
 						nsi = plpgsql_ns_lookup(name, NULL);
 						if (nsi == NULL)
 						{
@@ -532,6 +529,8 @@ decl_aliasitem	: T_WORD
 						}
 
 						plpgsql_ns_setlocal(true);
+
+						pfree(name);
 
 						$$ = nsi;
 					}
@@ -545,16 +544,23 @@ decl_rowtype	: T_ROW
 
 decl_varname	: T_WORD
 					{
+						char	*name;
+
+						plpgsql_convert_ident(yytext, &name, 1);
 						/* name should be malloc'd for use as varname */
-						$$.name = strdup(plpgsql_tolower(yytext));
+						$$.name = strdup(name);
 						$$.lineno  = yylineno;
+						pfree(name);
 					}
 				;
 
 decl_renname	: T_WORD
 					{
+						char	*name;
+
+						plpgsql_convert_ident(yytext, &name, 1);
 						/* the result must be palloc'd, see plpgsql_ns_rename */
-						$$ = plpgsql_tolower(yytext);
+						$$ = name;
 					}
 				;
 
@@ -808,32 +814,16 @@ getdiag_item : K_ROW_COUNT
 
 getdiag_target	: T_VARIABLE
 					{
-						if (yylval.var->isconst)
-						{
-							plpgsql_error_lineno = yylineno;
-							elog(ERROR, "%s is declared CONSTANT; can not receive diagnostics", yylval.var->refname);
-						}
-						$$ = yylval.var->varno;
-					}
-				| T_RECFIELD
-					{
-						$$ = yylval.recfield->rfno;
+						check_assignable(yylval.variable);
+						$$ = yylval.variable->dno;
 					}
 				;
 
 
 assign_var		: T_VARIABLE
 					{
-						if (yylval.var->isconst)
-						{
-							plpgsql_error_lineno = yylineno;
-							elog(ERROR, "%s is declared CONSTANT", yylval.var->refname);
-						}
-						$$ = yylval.var->varno;
-					}
-				| T_RECFIELD
-					{
-						$$ = yylval.recfield->rfno;
+						check_assignable(yylval.variable);
+						$$ = yylval.variable->dno;
 					}
 				;
 
@@ -998,13 +988,23 @@ fori_var		: fori_varname
 
 fori_varname	: T_VARIABLE
 					{
-						$$.name = strdup(yytext);
-						$$.lineno = yylineno;
+						char	*name;
+
+						plpgsql_convert_ident(yytext, &name, 1);
+						/* name should be malloc'd for use as varname */
+						$$.name = strdup(name);
+						$$.lineno  = yylineno;
+						pfree(name);
 					}
 				| T_WORD
 					{
-						$$.name = strdup(yytext);
-						$$.lineno = yylineno;
+						char	*name;
+
+						plpgsql_convert_ident(yytext, &name, 1);
+						/* name should be malloc'd for use as varname */
+						$$.name = strdup(name);
+						$$.lineno  = yylineno;
+						pfree(name);
 					}
 				;
 
@@ -1254,15 +1254,7 @@ raise_params	: raise_params raise_param
 
 raise_param		: ',' T_VARIABLE
 					{
-						$$ = yylval.var->varno;
-					}
-				| ',' T_RECFIELD
-					{
-						$$ = yylval.recfield->rfno;
-					}
-				| ',' T_TGARGV
-					{
-						$$ = yylval.trigarg->dno;
+						$$ = yylval.variable->dno;
 					}
 				;
 
@@ -1440,23 +1432,35 @@ stmt_close		: K_CLOSE lno cursor_variable ';'
 
 cursor_varptr	: T_VARIABLE
 					{
-						if (yylval.var->datatype->typoid != REFCURSOROID)
+						if (yylval.variable->dtype != PLPGSQL_DTYPE_VAR)
 						{
 							plpgsql_error_lineno = yylineno;
-							elog(ERROR, "%s must be of type cursor or refcursor", yylval.var->refname);
+							elog(ERROR, "cursor variable must be a simple variable");
 						}
-						$$ = yylval.var;
+						if (((PLpgSQL_var *) yylval.variable)->datatype->typoid != REFCURSOROID)
+						{
+							plpgsql_error_lineno = yylineno;
+							elog(ERROR, "%s must be of type cursor or refcursor",
+								 ((PLpgSQL_var *) yylval.variable)->refname);
+						}
+						$$ = (PLpgSQL_var *) yylval.variable;
 					}
 				;
 
 cursor_variable	: T_VARIABLE
 					{
-						if (yylval.var->datatype->typoid != REFCURSOROID)
+						if (yylval.variable->dtype != PLPGSQL_DTYPE_VAR)
 						{
 							plpgsql_error_lineno = yylineno;
-							elog(ERROR, "%s must be of type refcursor", yylval.var->refname);
+							elog(ERROR, "cursor variable must be a simple variable");
 						}
-						$$ = yylval.var->varno;
+						if (((PLpgSQL_var *) yylval.variable)->datatype->typoid != REFCURSOROID)
+						{
+							plpgsql_error_lineno = yylineno;
+							elog(ERROR, "%s must be of type refcursor",
+								 ((PLpgSQL_var *) yylval.variable)->refname);
+						}
+						$$ = yylval.variable->dno;
 					}
 				;
 
@@ -1503,7 +1507,13 @@ opt_exitcond	: ';'
 				;
 
 opt_lblname		: T_WORD
-					{ $$ = strdup(yytext); }
+					{
+						char	*name;
+
+						plpgsql_convert_ident(yytext, &name, 1);
+						$$ = strdup(name);
+						pfree(name);
+					}
 				;
 
 lno				:
@@ -1583,19 +1593,7 @@ read_sql_construct(int until,
 		switch (tok)
 		{
 			case T_VARIABLE:
-				params[nparams] = yylval.var->varno;
-				sprintf(buf, " $%d ", ++nparams);
-				plpgsql_dstring_append(&ds, buf);
-				break;
-
-			case T_RECFIELD:
-				params[nparams] = yylval.recfield->rfno;
-				sprintf(buf, " $%d ", ++nparams);
-				plpgsql_dstring_append(&ds, buf);
-				break;
-
-			case T_TGARGV:
-				params[nparams] = yylval.trigarg->dno;
+				params[nparams] = yylval.variable->dno;
 				sprintf(buf, " $%d ", ++nparams);
 				plpgsql_dstring_append(&ds, buf);
 				break;
@@ -1681,10 +1679,8 @@ read_datatype(int tok)
 
 
 static PLpgSQL_stmt *
-make_select_stmt()
+make_select_stmt(void)
 {
-	int					tok;
-	int					lno;
 	PLpgSQL_dstring		ds;
 	int					nparams = 0;
 	int					params[1024];
@@ -1692,220 +1688,101 @@ make_select_stmt()
 	PLpgSQL_expr		*expr;
 	PLpgSQL_row			*row = NULL;
 	PLpgSQL_rec			*rec = NULL;
-	PLpgSQL_stmt_select *select;
+	int					tok = 0;
 	int					have_nexttok = 0;
+	int					have_into = 0;
 
-	lno = yylineno;
 	plpgsql_dstring_init(&ds);
 	plpgsql_dstring_append(&ds, "SELECT ");
 
-	while((tok = yylex()) != K_INTO)
-	{
-		if (tok == ';')
-		{
-			PLpgSQL_stmt_execsql		*execsql;
-
-			expr = malloc(sizeof(PLpgSQL_expr) + sizeof(int) * nparams - sizeof(int));
-			expr->dtype			= PLPGSQL_DTYPE_EXPR;
-			expr->query			= strdup(plpgsql_dstring_get(&ds));
-			expr->plan			= NULL;
-			expr->nparams		= nparams;
-			while(nparams-- > 0)
-				expr->params[nparams] = params[nparams];
-			plpgsql_dstring_free(&ds);
-
-			execsql = malloc(sizeof(PLpgSQL_stmt_execsql));
-			execsql->cmd_type = PLPGSQL_STMT_EXECSQL;
-			execsql->sqlstmt  = expr;
-
-			return (PLpgSQL_stmt *)execsql;
-		}
-
-		if (plpgsql_SpaceScanned)
-			plpgsql_dstring_append(&ds, " ");
-		switch (tok)
-		{
-			case T_VARIABLE:
-				params[nparams] = yylval.var->varno;
-				sprintf(buf, " $%d ", ++nparams);
-				plpgsql_dstring_append(&ds, buf);
-				break;
-
-			case T_RECFIELD:
-				params[nparams] = yylval.recfield->rfno;
-				sprintf(buf, " $%d ", ++nparams);
-				plpgsql_dstring_append(&ds, buf);
-				break;
-
-			case T_TGARGV:
-				params[nparams] = yylval.trigarg->dno;
-				sprintf(buf, " $%d ", ++nparams);
-				plpgsql_dstring_append(&ds, buf);
-				break;
-
-			default:
-				if (tok == 0)
-				{
-					plpgsql_error_lineno = yylineno;
-					elog(ERROR, "unexpected end of file");
-				}
-				plpgsql_dstring_append(&ds, yytext);
-				break;
-		}
-	}
-
-	tok = yylex();
-	switch (tok)
-	{
-		case T_ROW:
-			row = yylval.row;
-			break;
-
-		case T_RECORD:
-			rec = yylval.rec;
-			break;
-
-		case T_VARIABLE:
-		case T_RECFIELD:
-			{
-				PLpgSQL_var		*var;
-				PLpgSQL_recfield *recfield;
-				int				nfields = 1;
-				char			*fieldnames[1024];
-				int				varnos[1024];
-
-				switch (tok)
-				{	
-					case T_VARIABLE:
-						var = yylval.var;
-						fieldnames[0] = strdup(yytext);
-						varnos[0]	  = var->varno;
-						break;
-
-					case T_RECFIELD:
-						recfield = yylval.recfield;
-						fieldnames[0] = strdup(yytext);
-						varnos[0]	  = recfield->rfno;
-						break;
-				}
-
-				while ((tok = yylex()) == ',')
-				{
-					tok = yylex();
-					switch(tok)
-					{
-						case T_VARIABLE:
-							var = yylval.var;
-							fieldnames[nfields] = strdup(yytext);
-							varnos[nfields++]	= var->varno;
-							break;
-
-						case T_RECFIELD:
-							recfield = yylval.recfield;
-							fieldnames[0] = strdup(yytext);
-							varnos[0]	  = recfield->rfno;
-							break;
-
-						default:
-							plpgsql_error_lineno = yylineno;
-							elog(ERROR, "plpgsql: %s is not a variable or record field", yytext);
-					}
-				}
-				row = malloc(sizeof(PLpgSQL_row));
-				row->dtype = PLPGSQL_DTYPE_ROW;
-				row->refname = strdup("*internal*");
-				row->lineno = yylineno;
-				row->rowtypeclass = InvalidOid;
-				row->nfields = nfields;
-				row->fieldnames = malloc(sizeof(char *) * nfields);
-				row->varnos = malloc(sizeof(int) * nfields);
-				while (--nfields >= 0)
-				{
-					row->fieldnames[nfields] = fieldnames[nfields];
-					row->varnos[nfields] = varnos[nfields];
-				}
-
-				plpgsql_adddatum((PLpgSQL_datum *)row);
-
-				have_nexttok = 1;
-			}
-			break;
-
-		default:
-			{
-				if (plpgsql_SpaceScanned)
-					plpgsql_dstring_append(&ds, " ");
-				plpgsql_dstring_append(&ds, yytext);
-
-				while(1)
-				{
-					tok = yylex();
-					if (tok == ';')
-					{
-						PLpgSQL_stmt_execsql	*execsql;
-
-						expr = malloc(sizeof(PLpgSQL_expr) + sizeof(int) * nparams - sizeof(int));
-						expr->dtype				= PLPGSQL_DTYPE_EXPR;
-						expr->query				= strdup(plpgsql_dstring_get(&ds));
-						expr->plan				= NULL;
-						expr->nparams	= nparams;
-						while (nparams-- > 0)
-							expr->params[nparams] = params[nparams];
-						plpgsql_dstring_free(&ds);
-
-						execsql = malloc(sizeof(PLpgSQL_stmt_execsql));
-						execsql->cmd_type = PLPGSQL_STMT_EXECSQL;
-						execsql->sqlstmt  = expr;
-
-						return (PLpgSQL_stmt *)execsql;
-					}
-
-					if (plpgsql_SpaceScanned)
-						plpgsql_dstring_append(&ds, " ");
-					switch (tok)
-					{
-						case T_VARIABLE:
-							params[nparams] = yylval.var->varno;
-							sprintf(buf, " $%d ", ++nparams);
-							plpgsql_dstring_append(&ds, buf);
-							break;
-
-						case T_RECFIELD:
-							params[nparams] = yylval.recfield->rfno;
-							sprintf(buf, " $%d ", ++nparams);
-							plpgsql_dstring_append(&ds, buf);
-							break;
-
-						case T_TGARGV:
-							params[nparams] = yylval.trigarg->dno;
-							sprintf(buf, " $%d ", ++nparams);
-							plpgsql_dstring_append(&ds, buf);
-							break;
-
-						default:
-							if (tok == 0)
-							{
-								plpgsql_error_lineno = yylineno;
-								elog(ERROR, "unexpected end of file");
-							}
-							plpgsql_dstring_append(&ds, yytext);
-							break;
-					}
-				}
-			}
-	}
-
-	/************************************************************
-	 * Eat up the rest of the statement after the target fields
-	 ************************************************************/
 	while(1)
 	{
-		if (!have_nexttok) {
+		if (!have_nexttok)
 			tok = yylex();
-		}
 		have_nexttok = 0;
-		if (tok == ';') {
+		if (tok == ';')
 			break;
+		if (tok == 0)
+		{
+			plpgsql_error_lineno = yylineno;
+			elog(ERROR, "unexpected end of file");
+		}
+		if (tok == K_INTO)
+		{
+			if (have_into)
+			{
+				plpgsql_error_lineno = yylineno;
+				elog(ERROR, "INTO specified more than once");
+			}
+			tok = yylex();
+			switch (tok)
+			{
+				case T_ROW:
+					row = yylval.row;
+					have_into = 1;
+					break;
+
+				case T_RECORD:
+					rec = yylval.rec;
+					have_into = 1;
+					break;
+
+				case T_VARIABLE:
+				{
+					int				nfields = 1;
+					char			*fieldnames[1024];
+					int				varnos[1024];
+
+					check_assignable(yylval.variable);
+					fieldnames[0] = strdup(yytext);
+					varnos[0]	  = yylval.variable->dno;
+
+					while ((tok = yylex()) == ',')
+					{
+						tok = yylex();
+						switch(tok)
+						{
+							case T_VARIABLE:
+								check_assignable(yylval.variable);
+								fieldnames[nfields] = strdup(yytext);
+								varnos[nfields++]	= yylval.variable->dno;
+								break;
+
+							default:
+								plpgsql_error_lineno = yylineno;
+								elog(ERROR, "plpgsql: %s is not a variable",
+									 yytext);
+						}
+					}
+					have_nexttok = 1;
+
+					row = malloc(sizeof(PLpgSQL_row));
+					row->dtype = PLPGSQL_DTYPE_ROW;
+					row->refname = strdup("*internal*");
+					row->lineno = yylineno;
+					row->rowtypeclass = InvalidOid;
+					row->nfields = nfields;
+					row->fieldnames = malloc(sizeof(char *) * nfields);
+					row->varnos = malloc(sizeof(int) * nfields);
+					while (--nfields >= 0)
+					{
+						row->fieldnames[nfields] = fieldnames[nfields];
+						row->varnos[nfields] = varnos[nfields];
+					}
+
+					plpgsql_adddatum((PLpgSQL_datum *)row);
+
+					have_into = 1;
+				}
+				break;
+
+				default:
+					/* Treat the INTO as non-special */
+					plpgsql_dstring_append(&ds, " INTO ");
+					have_nexttok = 1;
+					break;
+			}
+			continue;
 		}
 
 		if (plpgsql_SpaceScanned)
@@ -1913,29 +1790,12 @@ make_select_stmt()
 		switch (tok)
 		{
 			case T_VARIABLE:
-				params[nparams] = yylval.var->varno;
-				sprintf(buf, " $%d ", ++nparams);
-				plpgsql_dstring_append(&ds, buf);
-				break;
-
-			case T_RECFIELD:
-				params[nparams] = yylval.recfield->rfno;
-				sprintf(buf, " $%d ", ++nparams);
-				plpgsql_dstring_append(&ds, buf);
-				break;
-
-			case T_TGARGV:
-				params[nparams] = yylval.trigarg->dno;
+				params[nparams] = yylval.variable->dno;
 				sprintf(buf, " $%d ", ++nparams);
 				plpgsql_dstring_append(&ds, buf);
 				break;
 
 			default:
-				if (tok == 0)
-				{
-					plpgsql_error_lineno = yylineno;
-					elog(ERROR, "unexpected end of file");
-				}
 				plpgsql_dstring_append(&ds, yytext);
 				break;
 		}
@@ -1950,25 +1810,42 @@ make_select_stmt()
 		expr->params[nparams] = params[nparams];
 	plpgsql_dstring_free(&ds);
 
-	select = malloc(sizeof(PLpgSQL_stmt_select));
-	memset(select, 0, sizeof(PLpgSQL_stmt_select));
-	select->cmd_type = PLPGSQL_STMT_SELECT;
-	select->rec		 = rec;
-	select->row		 = row;
-	select->query	 = expr;
+	if (have_into)
+	{
+		PLpgSQL_stmt_select *select;
 
-	return (PLpgSQL_stmt *)select;
+		select = malloc(sizeof(PLpgSQL_stmt_select));
+		memset(select, 0, sizeof(PLpgSQL_stmt_select));
+		select->cmd_type = PLPGSQL_STMT_SELECT;
+		select->rec		 = rec;
+		select->row		 = row;
+		select->query	 = expr;
+
+		return (PLpgSQL_stmt *)select;
+	}
+	else
+	{
+		PLpgSQL_stmt_execsql *execsql;
+
+		execsql = malloc(sizeof(PLpgSQL_stmt_execsql));
+		execsql->cmd_type = PLPGSQL_STMT_EXECSQL;
+		execsql->sqlstmt  = expr;
+
+		return (PLpgSQL_stmt *)execsql;
+	}
 }
 
 
 static PLpgSQL_stmt *
-make_fetch_stmt()
+make_fetch_stmt(void)
 {
 	int					tok;
 	PLpgSQL_row		   *row = NULL;
 	PLpgSQL_rec		   *rec = NULL;
 	PLpgSQL_stmt_fetch *fetch;
 	int					have_nexttok = 0;
+
+	/* We have already parsed everything through the INTO keyword */
 
 	tok = yylex();
 	switch (tok)
@@ -1982,28 +1859,14 @@ make_fetch_stmt()
 			break;
 
 		case T_VARIABLE:
-		case T_RECFIELD:
 			{
-				PLpgSQL_var		*var;
-				PLpgSQL_recfield *recfield;
 				int				nfields = 1;
 				char			*fieldnames[1024];
 				int				varnos[1024];
 
-				switch (tok)
-				{	
-					case T_VARIABLE:
-						var = yylval.var;
-						fieldnames[0] = strdup(yytext);
-						varnos[0]	  = var->varno;
-						break;
-
-					case T_RECFIELD:
-						recfield = yylval.recfield;
-						fieldnames[0] = strdup(yytext);
-						varnos[0]	  = recfield->rfno;
-						break;
-				}
+				check_assignable(yylval.variable);
+				fieldnames[0] = strdup(yytext);
+				varnos[0]	  = yylval.variable->dno;
 
 				while ((tok = yylex()) == ',')
 				{
@@ -2011,22 +1874,19 @@ make_fetch_stmt()
 					switch(tok)
 					{
 						case T_VARIABLE:
-							var = yylval.var;
+							check_assignable(yylval.variable);
 							fieldnames[nfields] = strdup(yytext);
-							varnos[nfields++]	= var->varno;
-							break;
-
-						case T_RECFIELD:
-							recfield = yylval.recfield;
-							fieldnames[0] = strdup(yytext);
-							varnos[0]	  = recfield->rfno;
+							varnos[nfields++]	= yylval.variable->dno;
 							break;
 
 						default:
 							plpgsql_error_lineno = yylineno;
-							elog(ERROR, "plpgsql: %s is not a variable or record field", yytext);
+							elog(ERROR, "plpgsql: %s is not a variable",
+								 yytext);
 					}
 				}
+				have_nexttok = 1;
+
 				row = malloc(sizeof(PLpgSQL_row));
 				row->dtype = PLPGSQL_DTYPE_ROW;
 				row->refname = strdup("*internal*");
@@ -2042,8 +1902,6 @@ make_fetch_stmt()
 				}
 
 				plpgsql_adddatum((PLpgSQL_datum *)row);
-
-				have_nexttok = 1;
 			}
 			break;
 
@@ -2099,4 +1957,30 @@ make_tupret_expr(PLpgSQL_row *row)
 
 	plpgsql_dstring_free(&ds);
 	return expr;
+}
+
+static void
+check_assignable(PLpgSQL_datum *datum)
+{
+	switch (datum->dtype)
+	{
+		case PLPGSQL_DTYPE_VAR:
+			if (((PLpgSQL_var *) datum)->isconst)
+			{
+				plpgsql_error_lineno = yylineno;
+				elog(ERROR, "%s is declared CONSTANT",
+					 ((PLpgSQL_var *) datum)->refname);
+			}
+			break;
+		case PLPGSQL_DTYPE_RECFIELD:
+			/* always assignable? */
+			break;
+		case PLPGSQL_DTYPE_TRIGARG:
+			plpgsql_error_lineno = yylineno;
+			elog(ERROR, "cannot assign to tg_argv");
+			break;
+		default:
+			elog(ERROR, "check_assignable: unexpected datum type");
+			break;
+	}
 }

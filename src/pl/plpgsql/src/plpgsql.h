@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/plpgsql.h,v 1.24 2001/11/29 22:57:37 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/plpgsql.h,v 1.25 2002/08/08 01:36:05 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -547,11 +547,11 @@ extern PLpgSQL_function *plpgsql_curr_compile;
  */
 extern PLpgSQL_function *plpgsql_compile(Oid fn_oid, int functype);
 extern int	plpgsql_parse_word(char *word);
-extern int	plpgsql_parse_dblword(char *string);
-extern int	plpgsql_parse_tripword(char *string);
-extern int	plpgsql_parse_wordtype(char *string);
-extern int	plpgsql_parse_dblwordtype(char *string);
-extern int	plpgsql_parse_wordrowtype(char *string);
+extern int	plpgsql_parse_dblword(char *word);
+extern int	plpgsql_parse_tripword(char *word);
+extern int	plpgsql_parse_wordtype(char *word);
+extern int	plpgsql_parse_dblwordtype(char *word);
+extern int	plpgsql_parse_wordrowtype(char *word);
 extern PLpgSQL_type *plpgsql_parse_datatype(char *string);
 extern void plpgsql_adddatum(PLpgSQL_datum * new);
 extern int	plpgsql_add_initdatums(int **varnos);
@@ -598,7 +598,7 @@ extern void plpgsql_ns_rename(char *oldname, char *newname);
  * Other functions in pl_funcs.c
  * ----------
  */
-extern char *plpgsql_tolower(char *s);
+extern void plpgsql_convert_ident(const char *s, char **output, int numidents);
 extern const char *plpgsql_stmt_typename(PLpgSQL_stmt * stmt);
 extern void plpgsql_dumptree(PLpgSQL_function * func);
 

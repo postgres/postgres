@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_funcs.c,v 1.18 2002/05/05 17:38:26 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_funcs.c,v 1.19 2002/08/08 01:36:05 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -45,6 +45,10 @@
 
 #include "plpgsql.h"
 #include "pl.tab.h"
+
+#ifdef MULTIBYTE
+#include "mb/pg_wchar.h"
+#endif
 
 
 /* ----------
@@ -152,6 +156,9 @@ plpgsql_ns_push(char *label)
 {
 	PLpgSQL_ns *new;
 
+	if (label == NULL)
+		label = "";
+
 	new = palloc(sizeof(PLpgSQL_ns));
 	memset(new, 0, sizeof(PLpgSQL_ns));
 	new->upper = ns_current;
@@ -192,9 +199,7 @@ plpgsql_ns_additem(int itemtype, int itemno, char *name)
 	PLpgSQL_ns *ns = ns_current;
 	PLpgSQL_nsitem *nse;
 
-	if (name == NULL)
-		name = "";
-	name = plpgsql_tolower(name);
+	Assert(name != NULL);
 
 	if (ns->items_used == ns->items_alloc)
 	{
@@ -322,46 +327,115 @@ plpgsql_ns_rename(char *oldname, char *newname)
 
 
 /* ----------
- * plpgsql_tolower			Translate a string to lower case
- *					but honor "" escaping.
+ * plpgsql_convert_ident
+ *
+ * Convert a possibly-qualified identifier to internal form: handle
+ * double quotes, translate to lower case where not inside quotes,
+ * truncate to NAMEDATALEN.
+ *
+ * There may be several identifiers separated by dots and optional
+ * whitespace.  Each one is converted to a separate palloc'd string.
+ * The caller passes the expected number of identifiers, as well as
+ * a char* array to hold them.  It is an error if we find the wrong
+ * number of identifiers (cf grammar processing of fori_varname).
+ *
+ * NOTE: the input string has already been accepted by the flex lexer,
+ * so we don't need a heckuva lot of error checking here.
  * ----------
  */
-char *
-plpgsql_tolower(char *s)
+void
+plpgsql_convert_ident(const char *s, char **output, int numidents)
 {
-	char	   *sstart = s;
-	char	   *ret;
-	char	   *cp;
+	const char *sstart = s;
+	int			identctr = 0;
 
-	ret = palloc(strlen(s) + 1);
-	cp = ret;
-
+	/* Outer loop over identifiers */
 	while (*s)
 	{
+		char	   *curident;
+		char	   *cp;
+		int			i;
+
+		/* Process current identifier */
+		curident = palloc(strlen(s) + 1); /* surely enough room */
+		cp = curident;
+
 		if (*s == '"')
 		{
+			/* Quoted identifier: copy, collapsing out doubled quotes */
 			s++;
 			while (*s)
 			{
 				if (*s == '"')
-					break;
+				{
+					if (s[1] != '"')
+						break;
+					s++;
+				}
 				*cp++ = *s++;
 			}
-			if (*s != '"')
-				elog(ERROR, "unterminated \" in name %s", sstart);
+			if (*s != '"')		/* should not happen if lexer checked */
+				elog(ERROR, "unterminated \" in name: %s", sstart);
 			s++;
 		}
 		else
 		{
-			if (isupper((unsigned char) *s))
-				*cp++ = tolower((unsigned char) *s++);
-			else
-				*cp++ = *s++;
+			/*
+			 * Normal identifier: downcase, stop at dot or whitespace.
+			 *
+			 * Note that downcasing is locale-sensitive, following SQL99
+			 * rules for identifiers.  We have already decided that the
+			 * item is not a PLPGSQL keyword.
+			 */
+			while (*s && *s != '.' && !isspace((unsigned char) *s))
+			{
+				if (isupper((unsigned char) *s))
+					*cp++ = tolower((unsigned char) *s++);
+				else
+					*cp++ = *s++;
+			}
+		}
+
+		/* Truncate to NAMEDATALEN */
+		*cp = '\0';
+		i = cp - curident;
+
+		if (i >= NAMEDATALEN)
+		{
+			int len;
+
+#ifdef MULTIBYTE
+			len = pg_mbcliplen(curident, i, NAMEDATALEN-1);
+#else
+			len = NAMEDATALEN-1;
+#endif
+			curident[len] = '\0';
+		}
+
+		/* Pass ident to caller */
+		if (identctr < numidents)
+			output[identctr++] = curident;
+		else
+			elog(ERROR, "Qualified identifier cannot be used here: %s",
+				 sstart);
+
+		/* If not done, skip whitespace, dot, whitespace */
+		if (*s)
+		{
+			while (*s && isspace((unsigned char) *s))
+				s++;
+			if (*s++ != '.')
+				elog(ERROR, "Expected dot between identifiers: %s", sstart);
+			while (*s && isspace((unsigned char) *s))
+				s++;
+			if (*s == '\0')
+				elog(ERROR, "Expected another identifier: %s", sstart);
 		}
 	}
-	*cp = '\0';
 
-	return ret;
+	if (identctr != numidents)
+		elog(ERROR, "Improperly qualified identifier: %s",
+			 sstart);
 }
 
 

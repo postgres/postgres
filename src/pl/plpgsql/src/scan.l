@@ -4,7 +4,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/pl/plpgsql/src/Attic/scan.l,v 1.20 2002/08/04 04:17:33 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/pl/plpgsql/src/Attic/scan.l,v 1.21 2002/08/08 01:36:05 tgl Exp $
  *
  *    This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -60,12 +60,20 @@ static void plpgsql_input(char *buf, int *result, int max);
 %option noyywrap
 
 %option yylineno
+%option case-insensitive
 
-
-WS    [\200-\377_A-Za-z"]
-WC    [\200-\377_A-Za-z0-9"]
 
 %x	IN_STRING IN_COMMENT
+
+digit			[0-9]
+letter			[\200-\377_A-Za-z]
+letter_or_digit	[\200-\377_A-Za-z0-9]
+
+quoted_ident	(\"[^\"]*\")+
+
+identifier		({letter}{letter_or_digit}*|{quoted_ident})
+
+space			[ \t\n\r\f]
 
 %%
     /* ----------
@@ -154,37 +162,43 @@ dump			{ return O_DUMP;			}
      * Special word rules
      * ----------
      */
-{WS}{WC}*		{ return plpgsql_parse_word(yytext);	}
-{WS}{WC}*\.{WS}{WC}*	{ return plpgsql_parse_dblword(yytext);	}
-{WS}{WC}*\.{WS}{WC}*\.{WS}{WC}*	{ return plpgsql_parse_tripword(yytext); }
-{WS}{WC}*%TYPE		{ return plpgsql_parse_wordtype(yytext);	}
-{WS}{WC}*\.{WS}{WC}*%TYPE	{ return plpgsql_parse_dblwordtype(yytext); }
-{WS}{WC}*%ROWTYPE	{ return plpgsql_parse_wordrowtype(yytext);	}
+{identifier}					{ return plpgsql_parse_word(yytext);	}
+{identifier}{space}*\.{space}*{identifier}	{ return plpgsql_parse_dblword(yytext);	}
+{identifier}{space}*\.{space}*{identifier}{space}*\.{space}*{identifier}	{ return plpgsql_parse_tripword(yytext); }
+{identifier}{space}*%TYPE		{ return plpgsql_parse_wordtype(yytext);	}
+{identifier}{space}*\.{space}*{identifier}{space}*%TYPE	{ return plpgsql_parse_dblwordtype(yytext); }
+{identifier}{space}*%ROWTYPE	{ return plpgsql_parse_wordrowtype(yytext);	}
 
-\$[0-9]+		{ return plpgsql_parse_word(yytext);	}
-\$[0-9]+\.{WS}{WC}*	{ return plpgsql_parse_dblword(yytext);	}
-\$[0-9]+\.{WS}{WC}*\.{WS}{WC}*	{ return plpgsql_parse_tripword(yytext); }
-\$[0-9]+%TYPE		{ return plpgsql_parse_wordtype(yytext);	}
-\$[0-9]+\.{WS}{WC}*%TYPE	{ return plpgsql_parse_dblwordtype(yytext); }
-\$[0-9]+%ROWTYPE	{ return plpgsql_parse_wordrowtype(yytext);	}
+\${digit}+						{ return plpgsql_parse_word(yytext);	}
+\${digit}+{space}*\.{space}*{identifier}	{ return plpgsql_parse_dblword(yytext);	}
+\${digit}+{space}*\.{space}*{identifier}{space}*\.{space}*{identifier}	{ return plpgsql_parse_tripword(yytext); }
+\${digit}+{space}*%TYPE			{ return plpgsql_parse_wordtype(yytext);	}
+\${digit}+{space}*\.{space}*{identifier}{space}*%TYPE	{ return plpgsql_parse_dblwordtype(yytext); }
+\${digit}+{space}*%ROWTYPE		{ return plpgsql_parse_wordrowtype(yytext);	}
 
-[0-9]+			{ return T_NUMBER;			}
+{digit}+		{ return T_NUMBER;			}
+
+\".				{
+				plpgsql_error_lineno = yylineno;
+				elog(ERROR, "unterminated quoted identifier");
+			}
 
     /* ----------
      * Ignore whitespaces but remember this happened
      * ----------
      */
-[ \t\r\n]+		{ plpgsql_SpaceScanned = 1;		}
+{space}+		{ plpgsql_SpaceScanned = 1;		}
 
     /* ----------
      * Eat up comments
      * ----------
      */
 --[^\r\n]*		;
+
 \/\*			{ start_lineno = yylineno;
 			  BEGIN IN_COMMENT;
 			}
-<IN_COMMENT>\*\/	{ BEGIN INITIAL;			}
+<IN_COMMENT>\*\/	{ BEGIN INITIAL; plpgsql_SpaceScanned = 1; }
 <IN_COMMENT>\n		;
 <IN_COMMENT>.		;
 <IN_COMMENT><<EOF>>	{
