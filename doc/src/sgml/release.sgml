@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.160 2002/09/21 18:32:53 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.161 2002/09/24 23:37:42 momjian Exp $
 -->
 
 <appendix id="release">
@@ -164,7 +164,7 @@ Regular expression function SUBSTRING() implemented per SQL99
 
     <para>
 <literallayout>
-Allow EXECUTE of "CREATE TABLE AS ... SELECT" in PL/PgSQL (Tom)
+Allow EXECUTE of "CREATE TABLE AS ... SELECT" in PL/pgSQL (Tom)
 Fix for compressed transaction log id wraparound (Tom)
 Fix PQescapeBytea/PQunescapeBytea so that they handle bytes > 0x7f (Tatsuo)
 Fix for psql and pg_dump crashing when invoked with non-existand long 
@@ -227,7 +227,7 @@ contrib/btree_gist improvements (Teodor Sigaev)
 contrib/tsearch dictionary improvements, see README.tsearch for
   an additional installation step (Thomas T. Thai, Teodor Sigaev)
 Fix for array subscripts handling (Tom)
-Allow EXECUTE of "CREATE TABLE AS ... SELECT" in PL/PgSQL (Tom)
+Allow EXECUTE of "CREATE TABLE AS ... SELECT" in PL/pgSQL (Tom)
 </literallayout>
     </para>
    </sect2>

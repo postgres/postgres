@@ -334,8 +334,8 @@ Server-side Languages
 =====================
 Allow recursive SQL function (Peter)
 Change PL/Tcl build to use configured compiler and Makefile.shlib (Peter)
-Overhaul the PL/PgSQL FOUND variable to be more Oracle-compatible (Tom, Neil)
-Allow PL/PgSQL to handle quoted identifiers (Tom)
+Overhaul the PL/pgSQL FOUND variable to be more Oracle-compatible (Tom, Neil)
+Allow PL/pgSQL to handle quoted identifiers (Tom)
 Allow PL/pgSQL functions can return sets (Neil)
 
 Psql
@@ -488,7 +488,7 @@ Migration to version 7.2.2
 
 Changes
 
- Allow EXECUTE of "CREATE TABLE AS ... SELECT" in PL/PgSQL (Tom)
+ Allow EXECUTE of "CREATE TABLE AS ... SELECT" in PL/pgSQL (Tom)
  Fix for compressed transaction log id wraparound (Tom)
  Fix PQescapeBytea/PQunescapeBytea so that they handle bytes > 0x7f (Tatsuo)
  Fix for psql and pg_dump crashing when invoked with non-existent long 
@@ -542,7 +542,7 @@ Changes
  contrib/tsearch dictionary improvements, see README.tsearch for
    an additional installation step (Thomas T. Thai, Teodor Sigaev)
  Fix for array subscripts handling (Tom)
- Allow EXECUTE of "CREATE TABLE AS ... SELECT" in PL/PgSQL (Tom)
+ Allow EXECUTE of "CREATE TABLE AS ... SELECT" in PL/pgSQL (Tom)
 
 
      ----------------------------------------------------------------------
@@ -1178,7 +1178,7 @@ Changes
  Fix lpad() and rpad() to handle length less than input string (Tom)
  Fix use of NOTIFY in some rules (Tom)
  Overhaul btree code (Tom)
- Fix NOT NULL use in Pl/pgSQL variables (Tom)
+ Fix NOT NULL use in PL/pgSQL variables (Tom)
  Overhaul GIST code (Oleg)
  Fix CLUSTER to preserve constraints and column default (Tom)
  Improved deadlock detection handling (Tom)
@@ -2093,7 +2093,7 @@ Changes
  Adjust handling of data type names to suppress double quotes(Thomas)
  Use type coercion for matching columns and DEFAULT(Thomas)
  Fix deadlock so it only checks once after one second of sleep(Bruce)
- Fixes for aggregates and PL/pgsql(Hiroshi)
+ Fixes for aggregates and PL/pgSQL(Hiroshi)
  Fix for subquery crash(Vadim)
  Fix for libpq function PQfnumber and case-insensitive names(Bahman Rafatjoo)
  Fix for large object write-in-middle, no extra block, memory consumption(Tatsuo)
