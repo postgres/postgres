@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/copyfuncs.c,v 1.269 2003/11/29 19:51:49 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/copyfuncs.c,v 1.270 2003/12/30 23:53:14 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1169,11 +1169,12 @@ _copyRestrictInfo(RestrictInfo *from)
 
 	COPY_NODE_FIELD(clause);
 	COPY_SCALAR_FIELD(ispusheddown);
+	COPY_SCALAR_FIELD(canjoin);
+	COPY_BITMAPSET_FIELD(left_relids);
+	COPY_BITMAPSET_FIELD(right_relids);
 	COPY_NODE_FIELD(subclauseindices);	/* XXX probably bad */
 	COPY_SCALAR_FIELD(eval_cost);
 	COPY_SCALAR_FIELD(this_selec);
-	COPY_BITMAPSET_FIELD(left_relids);
-	COPY_BITMAPSET_FIELD(right_relids);
 	COPY_SCALAR_FIELD(mergejoinoperator);
 	COPY_SCALAR_FIELD(left_sortop);
 	COPY_SCALAR_FIELD(right_sortop);

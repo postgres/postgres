@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/initsplan.c,v 1.93 2003/11/29 19:51:50 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/initsplan.c,v 1.94 2003/12/30 23:53:14 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -380,12 +380,13 @@ distribute_qual_to_rels(Query *root, Node *clause,
 	bool		can_be_equijoin;
 
 	restrictinfo->clause = (Expr *) clause;
+	restrictinfo->canjoin = false;		/* set below, if join clause */
+	restrictinfo->left_relids = NULL;
+	restrictinfo->right_relids = NULL;
 	restrictinfo->subclauseindices = NIL;
 	restrictinfo->eval_cost.startup = -1;		/* not computed until
 												 * needed */
 	restrictinfo->this_selec = -1;		/* not computed until needed */
-	restrictinfo->left_relids = NULL;	/* set below, if join clause */
-	restrictinfo->right_relids = NULL;
 	restrictinfo->mergejoinoperator = InvalidOid;
 	restrictinfo->left_sortop = InvalidOid;
 	restrictinfo->right_sortop = InvalidOid;
@@ -510,6 +511,15 @@ distribute_qual_to_rels(Query *root, Node *clause,
 	restrictinfo->ispusheddown = ispusheddown || !bms_equal(relids,
 															qualscope);
 
+	/*
+	 * If it's a binary opclause, set up left/right relids info.
+	 */
+	if (is_opclause(clause) && length(((OpExpr *) clause)->args) == 2)
+	{
+		restrictinfo->left_relids = pull_varnos(get_leftop((Expr *) clause));
+		restrictinfo->right_relids = pull_varnos(get_rightop((Expr *) clause));
+	}
+
 	switch (bms_membership(relids))
 	{
 		case BMS_SINGLETON:
@@ -562,18 +572,11 @@ distribute_qual_to_rels(Query *root, Node *clause,
 			 */
 			if (is_opclause(clause) && length(((OpExpr *) clause)->args) == 2)
 			{
-				Relids		left_relids;
-				Relids		right_relids;
-
-				left_relids = pull_varnos(get_leftop((Expr *) clause));
-				right_relids = pull_varnos(get_rightop((Expr *) clause));
-				if (!bms_is_empty(left_relids) &&
-					!bms_is_empty(right_relids) &&
-					!bms_overlap(left_relids, right_relids))
-				{
-					restrictinfo->left_relids = left_relids;
-					restrictinfo->right_relids = right_relids;
-				}
+				if (!bms_is_empty(restrictinfo->left_relids) &&
+					!bms_is_empty(restrictinfo->right_relids) &&
+					!bms_overlap(restrictinfo->left_relids,
+								 restrictinfo->right_relids))
+					restrictinfo->canjoin = true;
 			}
 
 			/*
@@ -814,12 +817,13 @@ qual_is_redundant(Query *root,
 	List	   *equalexprs;
 	bool		someadded;
 
+	/* Never redundant unless vars appear on both sides */
+	if (bms_is_empty(restrictinfo->left_relids) ||
+		bms_is_empty(restrictinfo->right_relids))
+		return false;
+
 	newleft = get_leftop(restrictinfo->clause);
 	newright = get_rightop(restrictinfo->clause);
-
-	/* Never redundant unless vars appear on both sides */
-	if (!contain_var_clause(newleft) || !contain_var_clause(newright))
-		return false;
 
 	/*
 	 * Set cached pathkeys.  NB: it is okay to do this now because this

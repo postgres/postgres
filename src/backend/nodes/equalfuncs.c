@@ -18,7 +18,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/equalfuncs.c,v 1.210 2003/11/29 19:51:49 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/equalfuncs.c,v 1.211 2003/12/30 23:53:14 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -563,16 +563,9 @@ _equalRestrictInfo(RestrictInfo *a, RestrictInfo *b)
 	COMPARE_SCALAR_FIELD(ispusheddown);
 
 	/*
-	 * We ignore subclauseindices, eval_cost, this_selec,
-	 * left/right_relids, left/right_pathkey, and left/right_bucketsize,
-	 * since they may not be set yet, and should be derivable from the
-	 * clause anyway.  Probably it's not really necessary to compare any
-	 * of these remaining fields ...
+	 * We ignore all the remaining fields, since they may not be set yet,
+	 * and should be derivable from the clause anyway.
 	 */
-	COMPARE_SCALAR_FIELD(mergejoinoperator);
-	COMPARE_SCALAR_FIELD(left_sortop);
-	COMPARE_SCALAR_FIELD(right_sortop);
-	COMPARE_SCALAR_FIELD(hashjoinoperator);
 
 	return true;
 }

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.157 2003/12/28 21:57:37 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.158 2003/12/30 23:53:15 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -806,6 +806,20 @@ is_pseudo_constant_clause(Node *clause)
 	 * check for volatile functions if we find no Vars.
 	 */
 	if (!contain_var_clause(clause) &&
+		!contain_volatile_functions(clause))
+		return true;
+	return false;
+}
+
+/*
+ * is_pseudo_constant_clause_relids
+ *	  Same as above, except caller already has available the var membership
+ *	  of the clause; this lets us avoid the contain_var_clause() scan.
+ */
+bool
+is_pseudo_constant_clause_relids(Node *clause, Relids relids)
+{
+	if (bms_is_empty(relids) &&
 		!contain_volatile_functions(clause))
 		return true;
 	return false;

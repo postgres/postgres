@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/restrictinfo.c,v 1.20 2003/11/29 19:51:51 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/restrictinfo.c,v 1.21 2003/12/30 23:53:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -227,15 +227,9 @@ join_clause_is_redundant(Query *root,
 
 		if (redundant)
 		{
-			/*
-			 * It looks redundant, now check for "var = const" case. If
-			 * left_relids/right_relids are set, then there are definitely
-			 * vars on both sides; else we must check the hard way.
-			 */
-			if (rinfo->left_relids)
-				return true;	/* var = var, so redundant */
-			if (contain_var_clause(get_leftop(rinfo->clause)) &&
-				contain_var_clause(get_rightop(rinfo->clause)))
+			/* It looks redundant, but check for "var = const" case */
+			if (!bms_is_empty(rinfo->left_relids) &&
+				!bms_is_empty(rinfo->right_relids))
 				return true;	/* var = var, so redundant */
 			/* else var = const, not redundant */
 		}

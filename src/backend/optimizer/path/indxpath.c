@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/indxpath.c,v 1.150 2003/12/18 00:22:12 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/indxpath.c,v 1.151 2003/12/30 23:53:14 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -64,9 +64,11 @@ static List *group_clauses_by_indexkey_for_join(Query *root,
 								   Relids outer_relids,
 								   JoinType jointype, bool isouterjoin);
 static bool match_clause_to_indexcol(RelOptInfo *rel, IndexOptInfo *index,
-						 int indexcol, Oid opclass, Expr *clause);
+									 int indexcol, Oid opclass,
+									 Expr *clause, RestrictInfo *rinfo);
 static bool match_join_clause_to_indexcol(RelOptInfo *rel, IndexOptInfo *index,
-							  int indexcol, Oid opclass, Expr *clause);
+										  int indexcol, Oid opclass,
+										  RestrictInfo *rinfo);
 static Oid indexable_operator(Expr *clause, Oid opclass,
 				   bool indexkey_on_left);
 static bool pred_test(List *predicate_list, List *restrictinfo_list,
@@ -374,14 +376,14 @@ match_or_subclause_to_indexkey(RelOptInfo *rel,
 		foreach(item, ((BoolExpr *) clause)->args)
 		{
 			if (match_clause_to_indexcol(rel, index, 0, opclass,
-										 lfirst(item)))
+										 lfirst(item), NULL))
 				return true;
 		}
 		return false;
 	}
 	else
 		return match_clause_to_indexcol(rel, index, 0, opclass,
-										clause);
+										clause, NULL);
 }
 
 /*----------
@@ -445,7 +447,7 @@ extract_or_indexqual_conditions(RelOptInfo *rel,
 
 				if (match_clause_to_indexcol(rel, index,
 											 indexcol, curClass,
-											 subsubclause))
+											 subsubclause, NULL))
 					FastConc(&clausegroup,
 							 expand_indexqual_condition(subsubclause,
 														curClass));
@@ -453,7 +455,7 @@ extract_or_indexqual_conditions(RelOptInfo *rel,
 		}
 		else if (match_clause_to_indexcol(rel, index,
 										  indexcol, curClass,
-										  orsubclause))
+										  orsubclause, NULL))
 			FastConc(&clausegroup,
 					 expand_indexqual_condition(orsubclause,
 												curClass));
@@ -470,7 +472,7 @@ extract_or_indexqual_conditions(RelOptInfo *rel,
 
 				if (match_clause_to_indexcol(rel, index,
 											 indexcol, curClass,
-											 rinfo->clause))
+											 rinfo->clause, rinfo))
 					FastConc(&clausegroup,
 							 expand_indexqual_condition(rinfo->clause,
 														curClass));
@@ -550,7 +552,8 @@ group_clauses_by_indexkey(RelOptInfo *rel, IndexOptInfo *index)
 										 index,
 										 indexcol,
 										 curClass,
-										 rinfo->clause))
+										 rinfo->clause,
+										 rinfo))
 				FastAppend(&clausegroup, rinfo);
 		}
 
@@ -625,7 +628,8 @@ group_clauses_by_indexkey_for_join(Query *root,
 										 index,
 										 indexcol,
 										 curClass,
-										 rinfo->clause))
+										 rinfo->clause,
+										 rinfo))
 				FastAppend(&clausegroup, rinfo);
 		}
 
@@ -654,7 +658,7 @@ group_clauses_by_indexkey_for_join(Query *root,
 												  index,
 												  indexcol,
 												  curClass,
-												  rinfo->clause))
+												  rinfo))
 				{
 					FastAppend(&clausegroup, rinfo);
 					if (!jfoundhere)
@@ -726,6 +730,7 @@ group_clauses_by_indexkey_for_join(Query *root,
  * 'indexcol' is a column number of 'index' (counting from 0).
  * 'opclass' is the corresponding operator class.
  * 'clause' is the clause to be tested.
+ * 'rinfo' is the clause's RestrictInfo, if available (NULL if not).
  *
  * Returns true if the clause can be used with this index key.
  *
@@ -737,7 +742,8 @@ match_clause_to_indexcol(RelOptInfo *rel,
 						 IndexOptInfo *index,
 						 int indexcol,
 						 Oid opclass,
-						 Expr *clause)
+						 Expr *clause,
+						 RestrictInfo *rinfo)
 {
 	Node	   *leftop,
 			   *rightop;
@@ -754,9 +760,13 @@ match_clause_to_indexcol(RelOptInfo *rel,
 	 * Check for clauses of the form: (indexkey operator constant) or
 	 * (constant operator indexkey). Anything that is a "pseudo constant"
 	 * expression will do.
+	 *
+	 * If we have the RestrictInfo available, we can make a more efficient
+	 * test for pseudo-constness.
 	 */
 	if (match_index_to_operand(leftop, indexcol, rel, index) &&
-		is_pseudo_constant_clause(rightop))
+		(rinfo ? is_pseudo_constant_clause_relids(rightop, rinfo->right_relids)
+		 : is_pseudo_constant_clause(rightop)))
 	{
 		if (is_indexable_operator(clause, opclass, true))
 			return true;
@@ -771,7 +781,8 @@ match_clause_to_indexcol(RelOptInfo *rel,
 	}
 
 	if (match_index_to_operand(rightop, indexcol, rel, index) &&
-		is_pseudo_constant_clause(leftop))
+		(rinfo ? is_pseudo_constant_clause_relids(leftop, rinfo->left_relids)
+		 : is_pseudo_constant_clause(leftop)))
 	{
 		if (is_indexable_operator(clause, opclass, false))
 			return true;
@@ -813,7 +824,7 @@ match_clause_to_indexcol(RelOptInfo *rel,
  * 'index' is an index on 'rel'.
  * 'indexcol' is a column number of 'index' (counting from 0).
  * 'opclass' is the corresponding operator class.
- * 'clause' is the clause to be tested.
+ * 'rinfo' is the clause to be tested (as a RestrictInfo node).
  *
  * Returns true if the clause can be used with this index key.
  *
@@ -825,8 +836,9 @@ match_join_clause_to_indexcol(RelOptInfo *rel,
 							  IndexOptInfo *index,
 							  int indexcol,
 							  Oid opclass,
-							  Expr *clause)
+							  RestrictInfo *rinfo)
 {
+	Expr	   *clause = rinfo->clause;
 	Node	   *leftop,
 			   *rightop;
 
@@ -846,27 +858,25 @@ match_join_clause_to_indexcol(RelOptInfo *rel,
 	 */
 	if (match_index_to_operand(leftop, indexcol, rel, index))
 	{
-		Relids		othervarnos = pull_varnos(rightop);
+		Relids		othervarnos = rinfo->right_relids;
 		bool		isIndexable;
 
 		isIndexable =
 			!bms_overlap(rel->relids, othervarnos) &&
 			!contain_volatile_functions(rightop) &&
 			is_indexable_operator(clause, opclass, true);
-		bms_free(othervarnos);
 		return isIndexable;
 	}
 
 	if (match_index_to_operand(rightop, indexcol, rel, index))
 	{
-		Relids		othervarnos = pull_varnos(leftop);
+		Relids		othervarnos = rinfo->left_relids;
 		bool		isIndexable;
 
 		isIndexable =
 			!bms_overlap(rel->relids, othervarnos) &&
 			!contain_volatile_functions(leftop) &&
 			is_indexable_operator(clause, opclass, false);
-		bms_free(othervarnos);
 		return isIndexable;
 	}
 
@@ -1351,7 +1361,6 @@ indexable_outerrelids(RelOptInfo *rel, IndexOptInfo *index)
 		foreach(j, joininfo->jinfo_restrictinfo)
 		{
 			RestrictInfo *rinfo = (RestrictInfo *) lfirst(j);
-			Expr	   *clause = rinfo->clause;
 			int			indexcol = 0;
 			Oid		   *classes = index->classlist;
 
@@ -1363,7 +1372,7 @@ indexable_outerrelids(RelOptInfo *rel, IndexOptInfo *index)
 												  index,
 												  indexcol,
 												  curClass,
-												  clause))
+												  rinfo))
 				{
 					match_found = true;
 					break;

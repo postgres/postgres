@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/joinpath.c,v 1.83 2003/11/29 19:51:50 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/joinpath.c,v 1.84 2003/12/30 23:53:14 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -690,7 +690,7 @@ hash_inner_and_outer(Query *root,
 	{
 		RestrictInfo *restrictinfo = (RestrictInfo *) lfirst(i);
 
-		if (restrictinfo->left_relids == NULL ||
+		if (!restrictinfo->canjoin ||
 			restrictinfo->hashjoinoperator == InvalidOid)
 			continue;			/* not hashjoinable */
 
@@ -809,12 +809,12 @@ select_mergejoin_clauses(RelOptInfo *joinrel,
 			switch (jointype)
 			{
 				case JOIN_RIGHT:
-					if (restrictinfo->left_relids == NULL ||
+					if (!restrictinfo->canjoin ||
 						restrictinfo->mergejoinoperator == InvalidOid)
 						return NIL;		/* not mergejoinable */
 					break;
 				case JOIN_FULL:
-					if (restrictinfo->left_relids == NULL ||
+					if (!restrictinfo->canjoin ||
 						restrictinfo->mergejoinoperator == InvalidOid)
 						ereport(ERROR,
 								(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
@@ -826,7 +826,7 @@ select_mergejoin_clauses(RelOptInfo *joinrel,
 			}
 		}
 
-		if (restrictinfo->left_relids == NULL ||
+		if (!restrictinfo->canjoin ||
 			restrictinfo->mergejoinoperator == InvalidOid)
 			continue;			/* not mergejoinable */
 

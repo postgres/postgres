@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/relation.h,v 1.87 2003/12/28 21:57:37 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/relation.h,v 1.88 2003/12/30 23:53:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -596,6 +596,19 @@ typedef struct RestrictInfo
 
 	bool		ispusheddown;	/* TRUE if clause was pushed down in level */
 
+	/*
+	 * This flag is set true if the clause looks potentially useful as a
+	 * merge or hash join clause, that is if it is a binary opclause with
+	 * nonoverlapping sets of relids referenced in the left and right sides.
+	 * (Whether the operator is actually merge or hash joinable isn't
+	 * checked, however.)
+	 */
+	bool		canjoin;
+
+	/* These fields are set for any binary opclause: */
+	Relids		left_relids;	/* relids in left side of clause */
+	Relids		right_relids;	/* relids in right side of clause */
+
 	/* only used if clause is an OR clause: */
 	List	   *subclauseindices;		/* indexes matching subclauses */
 	/* subclauseindices is a List of Lists of IndexOptInfos */
@@ -603,15 +616,6 @@ typedef struct RestrictInfo
 	/* cache space for costs (currently only used for join clauses) */
 	QualCost	eval_cost;		/* eval cost of clause; -1 if not yet set */
 	Selectivity this_selec;		/* selectivity; -1 if not yet set */
-
-	/*
-	 * If the clause looks useful for joining --- that is, it is a binary
-	 * opclause with nonoverlapping sets of relids referenced in the left
-	 * and right sides --- then these two fields are set to sets of the
-	 * referenced relids.  Otherwise they are both NULL.
-	 */
-	Relids		left_relids;	/* relids in left side of join clause */
-	Relids		right_relids;	/* relids in right side of join clause */
 
 	/* valid if clause is mergejoinable, else InvalidOid: */
 	Oid			mergejoinoperator;		/* copy of clause operator */
