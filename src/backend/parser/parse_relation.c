@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_relation.c,v 1.76 2002/08/08 01:44:30 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_relation.c,v 1.77 2002/08/08 17:00:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1499,29 +1499,36 @@ get_rte_attribute_name(RangeTblEntry *rte, AttrNumber attnum)
 		return "*";
 
 	/*
-	 * If there is an alias, use it.  (This path should always be taken
-	 * for non-relation RTEs.)
+	 * If there is a user-written column alias, use it.
+	 */
+	if (rte->alias &&
+		attnum > 0 && attnum <= length(rte->alias->colnames))
+		return strVal(nth(attnum - 1, rte->alias->colnames));
+
+	/*
+	 * If the RTE is a relation, go to the system catalogs not the
+	 * eref->colnames list.  This is a little slower but it will give
+	 * the right answer if the column has been renamed since the eref
+	 * list was built (which can easily happen for rules).
+	 */
+	if (rte->rtekind == RTE_RELATION)
+	{
+		attname = get_attname(rte->relid, attnum);
+		if (attname == NULL)
+			elog(ERROR, "cache lookup of attribute %d in relation %u failed",
+				 attnum, rte->relid);
+		return attname;
+	}
+
+	/*
+	 * Otherwise use the column name from eref.  There should always be one.
 	 */
 	if (attnum > 0 && attnum <= length(rte->eref->colnames))
 		return strVal(nth(attnum - 1, rte->eref->colnames));
 
-	/*
-	 * Can get here for a system attribute (which never has an alias), or
-	 * if alias name list is too short (which probably can't happen
-	 * anymore).  Neither of these cases is valid for a non-relation RTE.
-	 */
-	if (rte->rtekind != RTE_RELATION)
-		elog(ERROR, "Invalid attnum %d for rangetable entry %s",
-			 attnum, rte->eref->aliasname);
-
-	/*
-	 * Use the real name of the table's column
-	 */
-	attname = get_attname(rte->relid, attnum);
-	if (attname == NULL)
-		elog(ERROR, "cache lookup of attribute %d in relation %u failed",
-			 attnum, rte->relid);
-	return attname;
+	elog(ERROR, "Invalid attnum %d for rangetable entry %s",
+		 attnum, rte->eref->aliasname);
+	return NULL;				/* keep compiler quiet */
 }
 
 /*

@@ -3,7 +3,7 @@
  *				back to source text
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.113 2002/08/08 01:44:31 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.114 2002/08/08 17:00:19 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -118,15 +118,19 @@ static char *query_getviewrule = "SELECT * FROM pg_catalog.pg_rewrite WHERE ev_c
 static text *pg_do_getviewdef(Oid viewoid);
 static void make_ruledef(StringInfo buf, HeapTuple ruletup, TupleDesc rulettc);
 static void make_viewdef(StringInfo buf, HeapTuple ruletup, TupleDesc rulettc);
-static void get_query_def(Query *query, StringInfo buf, List *parentnamespace);
-static void get_select_query_def(Query *query, deparse_context *context);
+static void get_query_def(Query *query, StringInfo buf, List *parentnamespace,
+						  TupleDesc resultDesc);
+static void get_select_query_def(Query *query, deparse_context *context,
+								 TupleDesc resultDesc);
 static void get_insert_query_def(Query *query, deparse_context *context);
 static void get_update_query_def(Query *query, deparse_context *context);
 static void get_delete_query_def(Query *query, deparse_context *context);
 static void get_utility_query_def(Query *query, deparse_context *context);
-static void get_basic_select_query(Query *query, deparse_context *context);
+static void get_basic_select_query(Query *query, deparse_context *context,
+								   TupleDesc resultDesc);
 static void get_setop_query(Node *setOp, Query *query,
-							deparse_context *context);
+							deparse_context *context,
+							TupleDesc resultDesc);
 static Node *get_rule_sortgroupclause(SortClause *srt, List *tlist,
 						 bool force_colno,
 						 deparse_context *context);
@@ -936,25 +940,22 @@ make_ruledef(StringInfo buf, HeapTuple ruletup, TupleDesc rulettc)
 		foreach(action, actions)
 		{
 			query = (Query *) lfirst(action);
-			get_query_def(query, buf, NIL);
+			get_query_def(query, buf, NIL, NULL);
 			appendStringInfo(buf, "; ");
 		}
 		appendStringInfo(buf, ");");
 	}
+	else if (length(actions) == 0)
+	{
+		appendStringInfo(buf, "NOTHING;");
+	}
 	else
 	{
-		if (length(actions) == 0)
-		{
-			appendStringInfo(buf, "NOTHING;");
-		}
-		else
-		{
-			Query	   *query;
+		Query	   *query;
 
-			query = (Query *) lfirst(actions);
-			get_query_def(query, buf, NIL);
-			appendStringInfo(buf, ";");
-		}
+		query = (Query *) lfirst(actions);
+		get_query_def(query, buf, NIL, NULL);
+		appendStringInfo(buf, ";");
 	}
 }
 
@@ -975,6 +976,7 @@ make_viewdef(StringInfo buf, HeapTuple ruletup, TupleDesc rulettc)
 	char	   *ev_qual;
 	char	   *ev_action;
 	List	   *actions = NIL;
+	Relation	ev_relation;
 	int			fno;
 	bool		isnull;
 
@@ -1010,25 +1012,31 @@ make_viewdef(StringInfo buf, HeapTuple ruletup, TupleDesc rulettc)
 	query = (Query *) lfirst(actions);
 
 	if (ev_type != '1' || ev_attr >= 0 || !is_instead ||
-		strcmp(ev_qual, "<>") != 0)
+		strcmp(ev_qual, "<>") != 0 || query->commandType != CMD_SELECT)
 	{
 		appendStringInfo(buf, "Not a view");
 		return;
 	}
 
-	get_query_def(query, buf, NIL);
+	ev_relation = heap_open(ev_class, AccessShareLock);
+
+	get_query_def(query, buf, NIL, RelationGetDescr(ev_relation));
 	appendStringInfo(buf, ";");
+
+	heap_close(ev_relation, AccessShareLock);
 }
 
 
 /* ----------
- * get_query_def			- Parse back one action from
- *					  the parsetree in the actions
- *					  list
+ * get_query_def			- Parse back one query parsetree
+ *
+ * If resultDesc is not NULL, then it is the output tuple descriptor for
+ * the view represented by a SELECT query.
  * ----------
  */
 static void
-get_query_def(Query *query, StringInfo buf, List *parentnamespace)
+get_query_def(Query *query, StringInfo buf, List *parentnamespace,
+			  TupleDesc resultDesc)
 {
 	deparse_context context;
 	deparse_namespace dpns;
@@ -1044,7 +1052,7 @@ get_query_def(Query *query, StringInfo buf, List *parentnamespace)
 	switch (query->commandType)
 	{
 		case CMD_SELECT:
-			get_select_query_def(query, &context);
+			get_select_query_def(query, &context, resultDesc);
 			break;
 
 		case CMD_UPDATE:
@@ -1080,7 +1088,8 @@ get_query_def(Query *query, StringInfo buf, List *parentnamespace)
  * ----------
  */
 static void
-get_select_query_def(Query *query, deparse_context *context)
+get_select_query_def(Query *query, deparse_context *context,
+					 TupleDesc resultDesc)
 {
 	StringInfo	buf = context->buf;
 	bool		force_colno;
@@ -1094,13 +1103,13 @@ get_select_query_def(Query *query, deparse_context *context)
 	 */
 	if (query->setOperations)
 	{
-		get_setop_query(query->setOperations, query, context);
+		get_setop_query(query->setOperations, query, context, resultDesc);
 		/* ORDER BY clauses must be simple in this case */
 		force_colno = true;
 	}
 	else
 	{
-		get_basic_select_query(query, context);
+		get_basic_select_query(query, context, resultDesc);
 		force_colno = false;
 	}
 
@@ -1151,11 +1160,13 @@ get_select_query_def(Query *query, deparse_context *context)
 }
 
 static void
-get_basic_select_query(Query *query, deparse_context *context)
+get_basic_select_query(Query *query, deparse_context *context,
+					   TupleDesc resultDesc)
 {
 	StringInfo	buf = context->buf;
 	char	   *sep;
 	List	   *l;
+	int			colno;
 
 	/*
 	 * Build up the query string - first we say SELECT
@@ -1186,23 +1197,37 @@ get_basic_select_query(Query *query, deparse_context *context)
 
 	/* Then we tell what to select (the targetlist) */
 	sep = " ";
+	colno = 0;
 	foreach(l, query->targetList)
 	{
 		TargetEntry *tle = (TargetEntry *) lfirst(l);
 		bool		tell_as = false;
+		char	   *colname;
 
 		if (tle->resdom->resjunk)
 			continue;			/* ignore junk entries */
 
 		appendStringInfo(buf, sep);
 		sep = ", ";
+		colno++;
 
 		/* Do NOT use get_tle_expr here; see its comments! */
 		get_rule_expr(tle->expr, context);
 
+		/*
+		 * Figure out what the result column should be called.  In the
+		 * context of a view, use the view's tuple descriptor (so as to
+		 * pick up the effects of any column RENAME that's been done on the
+		 * view).  Otherwise, just use what we can find in the TLE.
+		 */
+		if (resultDesc && colno <= resultDesc->natts)
+			colname = NameStr(resultDesc->attrs[colno-1]->attname);
+		else
+			colname = tle->resdom->resname;
+
 		/* Check if we must say AS ... */
 		if (!IsA(tle->expr, Var))
-			tell_as = (strcmp(tle->resdom->resname, "?column?") != 0);
+			tell_as = (strcmp(colname, "?column?") != 0);
 		else
 		{
 			Var		   *var = (Var *) (tle->expr);
@@ -1212,13 +1237,12 @@ get_basic_select_query(Query *query, deparse_context *context)
 
 			get_names_for_var(var, context, &schemaname, &refname, &attname);
 			tell_as = (attname == NULL ||
-					   strcmp(attname, tle->resdom->resname) != 0);
+					   strcmp(attname, colname) != 0);
 		}
 
 		/* and do if so */
 		if (tell_as)
-			appendStringInfo(buf, " AS %s",
-							 quote_identifier(tle->resdom->resname));
+			appendStringInfo(buf, " AS %s", quote_identifier(colname));
 	}
 
 	/* Add the FROM clause if needed */
@@ -1256,7 +1280,8 @@ get_basic_select_query(Query *query, deparse_context *context)
 }
 
 static void
-get_setop_query(Node *setOp, Query *query, deparse_context *context)
+get_setop_query(Node *setOp, Query *query, deparse_context *context,
+				TupleDesc resultDesc)
 {
 	StringInfo	buf = context->buf;
 
@@ -1267,14 +1292,14 @@ get_setop_query(Node *setOp, Query *query, deparse_context *context)
 		Query	   *subquery = rte->subquery;
 
 		Assert(subquery != NULL);
-		get_query_def(subquery, buf, context->namespaces);
+		get_query_def(subquery, buf, context->namespaces, resultDesc);
 	}
 	else if (IsA(setOp, SetOperationStmt))
 	{
 		SetOperationStmt *op = (SetOperationStmt *) setOp;
 
 		appendStringInfo(buf, "((");
-		get_setop_query(op->larg, query, context);
+		get_setop_query(op->larg, query, context, resultDesc);
 		switch (op->op)
 		{
 			case SETOP_UNION:
@@ -1294,7 +1319,7 @@ get_setop_query(Node *setOp, Query *query, deparse_context *context)
 			appendStringInfo(buf, "ALL (");
 		else
 			appendStringInfo(buf, "(");
-		get_setop_query(op->rarg, query, context);
+		get_setop_query(op->rarg, query, context, resultDesc);
 		appendStringInfo(buf, "))");
 	}
 	else
@@ -1405,7 +1430,7 @@ get_insert_query_def(Query *query, deparse_context *context)
 		appendStringInfoChar(buf, ')');
 	}
 	else
-		get_query_def(select_rte->subquery, buf, NIL);
+		get_query_def(select_rte->subquery, buf, NIL, NULL);
 }
 
 
@@ -2418,7 +2443,7 @@ get_sublink_expr(Node *node, deparse_context *context)
 	if (need_paren)
 		appendStringInfoChar(buf, '(');
 
-	get_query_def(query, buf, context->namespaces);
+	get_query_def(query, buf, context->namespaces, NULL);
 
 	if (need_paren)
 		appendStringInfo(buf, "))");
@@ -2491,7 +2516,7 @@ get_from_clause_item(Node *jtnode, Query *query, deparse_context *context)
 			case RTE_SUBQUERY:
 				/* Subquery RTE */
 				appendStringInfoChar(buf, '(');
-				get_query_def(rte->subquery, buf, context->namespaces);
+				get_query_def(rte->subquery, buf, context->namespaces, NULL);
 				appendStringInfoChar(buf, ')');
 				break;
 			case RTE_FUNCTION:
@@ -2520,6 +2545,18 @@ get_from_clause_item(Node *jtnode, Query *query, deparse_context *context)
 				}
 				appendStringInfoChar(buf, ')');
 			}
+		}
+		else if (rte->rtekind == RTE_RELATION &&
+				 strcmp(rte->eref->aliasname, get_rel_name(rte->relid)) != 0)
+		{
+			/*
+			 * Apparently the rel has been renamed since the rule was made.
+			 * Emit a fake alias clause so that variable references will
+			 * still work.  This is not a 100% solution but should work in
+			 * most reasonable situations.
+			 */
+			appendStringInfo(buf, " %s",
+							 quote_identifier(rte->eref->aliasname));
 		}
 	}
 	else if (IsA(jtnode, JoinExpr))
