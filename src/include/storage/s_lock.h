@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/include/storage/s_lock.h,v 1.79 2001/01/19 02:58:59 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/include/storage/s_lock.h,v 1.80 2001/01/19 03:58:35 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -100,9 +100,9 @@ extern void s_lock_sleep(unsigned spins, int microsec,
  */
 
 /*
- * Standard __asm__ format:
+ * Standard _asm format:
  *
- *	__asm__(
+ *	__asm__ __volatile__(
  *			"command;"
  *			"command;"
  *			"command;"
@@ -120,11 +120,11 @@ tas(volatile slock_t *lock)
 {
 	register slock_t _res = 1;
 
-	__asm__(
-			"lock;"
-			"xchgb %0,%1;"
-:			"=q"(_res), "=m"(*lock)
-:			"0"(_res));
+	__asm__ __volatile__(
+						"lock;"
+						"xchgb %0,%1;"
+			:			"=q"(_res), "=m"(*lock)
+			:			"0"(_res));
 	return (int) _res;
 }
 
@@ -139,11 +139,11 @@ tas(volatile slock_t *lock)
 {
 	long int	ret;
 
-	__asm__		__volatile__(
-										 "xchg4 %0=%1,%2;"
-							 :			 "=r"(ret), "=m"(*lock)
-							 :			 "r"(1), "1"(*lock)
-							 :			 "memory");
+	__asm__ __volatile__(
+						"xchg4 %0=%1,%2;"
+			 :			"=r"(ret), "=m"(*lock)
+			 :			"r"(1), "1"(*lock)
+			 :			"memory");
 
 	return (int) ret;
 }
@@ -159,10 +159,10 @@ tas(volatile slock_t *lock)
 {
 	register slock_t _res = 1;
 
-	__asm__(
-			"swpb %0, %0, [%3];"
-:			"=r"(_res), "=m"(*lock)
-:			"0"(_res), "r"(lock));
+	__asm__ __volatile__(
+						"swpb %0, %0, [%3];"
+			:			"=r"(_res), "=m"(*lock)
+			:			"0"(_res), "r"(lock));
 	return (int) _res;
 }
 
@@ -179,15 +179,15 @@ tas(volatile slock_t *lock)
 {
 	int			_res;
 
-	__asm__		__volatile(
-									   "la 1,1;"
-									   "l 2,%2;"
-									   "slr 0,0;"
-									   "cs 0,1,0(2);"
-									   "lr %1,0;"
-						   :		   "=m"(lock), "=d"(_res)
-						   :		   "m"(lock)
-						   :		   "0", "1", "2");
+	__asm__	__volatile__(
+						"la 1,1;"
+						"l 2,%2;"
+						"slr 0,0;"
+						"cs 0,1,0(2);"
+						"lr %1,0;"
+		   :			"=m"(lock), "=d"(_res)
+		   :			"m"(lock)
+		   :			"0", "1", "2");
 
 	return (_res);
 }
@@ -203,10 +203,10 @@ tas(volatile slock_t *lock)
 {
 	register slock_t _res = 1;
 
-	__asm__(
-			"ldstub [%2], %0;"
-:			"=r"(_res), "=m"(*lock)
-:			"r"(lock));
+	__asm__ __volatile__(
+						"ldstub [%2], %0;"
+			:			"=r"(_res), "=m"(*lock)
+			:			"r"(lock));
 	return (int) _res;
 }
 
@@ -221,12 +221,12 @@ tas(volatile slock_t *lock)
 {
 	register int rv;
 
-	__asm__		__volatile__(
-										 "tas %1;"
-										 "sne %0;"
-							 :			 "=d"(rv), "=m"(*lock)
-							 :			 "1"(*lock)
-							 :			 "cc");
+	__asm__	__volatile__(
+						"tas %1;"
+						"sne %0;"
+			 :			"=d"(rv), "=m"(*lock)
+			 :			"1"(*lock)
+			 :			"cc");
 
 	return rv;
 }
@@ -248,14 +248,14 @@ tas(volatile slock_t *lock)
 {
 	register	_res;
 
-	__asm__(
-			"movl $1, r0;"
-			"bbssi $0, (%1), 1f;"
-			"clrl r0;"
-			"1: movl r0, %0;"
-:			"=r"(_res)
-:			"r"(lock)
-:			"r0");
+	__asm__ __volatile__(
+						"movl $1, r0;"
+						"bbssi $0, (%1), 1f;"
+						"clrl r0;"
+						"1: movl r0, %0;"
+			:			"=r"(_res)
+			:			"r"(lock)
+			:			"r0");
 	return (int) _res;
 }
 
@@ -270,10 +270,10 @@ tas(volatile slock_t *lock)
 {
 	register	_res;
 
-	__asm__(
-			"sbitb 0, %0;"
-			"sfsd %1;"
-:			"=m"(*lock), "=r"(_res));
+	__asm__ __volatile__(
+						"sbitb 0, %0;"
+						"sfsd %1;"
+			:			"=m"(*lock), "=r"(_res));
 	return (int) _res;
 }
 
@@ -326,28 +326,33 @@ tas(volatile slock_t *s_lock)
 #if defined(__GNUC__)
 
 #define TAS(lock)  tas(lock)
-#define S_UNLOCK(lock)	do { __asm__ volatile ("mb"); *(lock) = 0; } while (0)
+#define S_UNLOCK(lock)	\
+do \
+{\
+	__asm__ __volatile__ ("mb"); \
+	*(lock) = 0; \
+} while (0)
 
 static __inline__ int
 tas(volatile slock_t *lock)
 {
 	register slock_t _res;
 
-	__asm__		volatile(
-									 "ldq   $0, %0;"
-									 "bne   $0, 2f;"
-									 "ldq_l %1, %0;"
-									 "bne   %1, 2f;"
-									 "mov   1, $0;"
-									 "stq_c $0, %0;"
-									 "beq   $0, 2f;"
-									 "mb;"
-									 "br 3f;"
-									 "2: mov   1, %1;"
-									 "3:"
-						 :			 "=m"(*lock), "=r"(_res)
-						 :
-						 :			 "0");
+	__asm__	__volatile__(
+						"ldq   $0, %0;"
+						"bne   $0, 2f;"
+						"ldq_l %1, %0;"
+						"bne   %1, 2f;"
+						"mov   1, $0;"
+						"stq_c $0, %0;"
+						"beq   $0, 2f;"
+						"mb;"
+						"br 3f;"
+						"2: mov   1, %1;"
+						"3:"
+			 :			"=m"(*lock), "=r"(_res)
+			 :
+			 :			"0");
 
 	return (int) _res;
 }
