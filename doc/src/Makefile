@@ -1,6 +1,7 @@
 # Postgres documentation makefile
 # Thomas Lockhart
 
+# Not yet generated from configure, so use relative path names for now...
 PGDOCS= ..
 SRCDIR= ../../src
 
@@ -69,6 +70,10 @@ user.tar:
 	$(MAKE) -C sgml clean
 	$(MAKE) -C sgml user.html
 	(cd sgml; $(TAR) -cf ../$@ $(TAREXCLUDE) *.html *.htm)
+
+man.tar:
+	$(MAKE) -C sgml man1 manl
+	$(TAR) -cf $@ -C sgml man1 manl
 
 # Generic production rules
 
