@@ -29,12 +29,24 @@
  *	  of course).  A non-strict finalfunc can make its own choice of
  *	  what to return for a NULL ending transvalue.
  *
+ *	  When the transvalue datatype is pass-by-reference, we have to be
+ *	  careful to ensure that the values survive across tuple cycles yet
+ *	  are not allowed to accumulate until end of query.  We do this by
+ *	  "ping-ponging" between two memory contexts; successive calls to the
+ *	  transfunc are executed in alternate contexts, passing the previous
+ *	  transvalue that is in the other context.  At the beginning of each
+ *	  tuple cycle we can reset the current output context to avoid memory
+ *	  usage growth.  Note: we must use MemoryContextContains() to check
+ *	  whether the transfunc has perhaps handed us back one of its input
+ *	  values rather than a freshly palloc'd value; if so, we copy the value
+ *	  to the context we want it in.
+ *
  *
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeAgg.c,v 1.73 2001/01/24 19:42:54 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeAgg.c,v 1.74 2001/02/15 21:47:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
