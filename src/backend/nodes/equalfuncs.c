@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.53 1999/12/13 01:26:53 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.54 1999/12/24 06:43:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -144,6 +144,13 @@ _equalConst(Const *a, Const *b)
 	if (a->constbyval != b->constbyval)
 		return false;
 	/* XXX What about constisset and constiscast? */
+	/*
+	 * We treat all NULL constants of the same type as equal.
+	 * Someday this might need to change?  But datumIsEqual
+	 * doesn't work on nulls, so...
+	 */
+	if (a->constisnull)
+		return true;
 	return (datumIsEqual(a->constvalue, b->constvalue,
 						 a->consttype, a->constbyval, a->constlen));
 }

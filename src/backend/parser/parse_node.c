@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_node.c,v 1.33 1999/11/22 17:56:21 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_node.c,v 1.34 1999/12/24 06:43:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -61,28 +61,27 @@ make_operand(char *opname,
 			 Oid target_typeId)
 {
 	Node	   *result;
-	Type		target_type;
+	Type		target_type = typeidType(target_typeId);
 
 	if (tree != NULL)
 	{
-		result = tree;
-		target_type = typeidType(target_typeId);
-		disallow_setop(opname, target_type, result);
-
+		disallow_setop(opname, target_type, tree);
 		/* must coerce? */
 		if (target_typeId != orig_typeId)
 			result = coerce_type(NULL, tree, orig_typeId, target_typeId, -1);
+		else
+			result = tree;
 	}
-	/* otherwise, this is a NULL value */
 	else
 	{
+		/* otherwise, this is a NULL value */
 		Const	   *con = makeNode(Const);
 
 		con->consttype = target_typeId;
-		con->constlen = 0;
-		con->constvalue = (Datum) (struct varlena *) NULL;
+		con->constlen = typeLen(target_type);
+		con->constvalue = (Datum) NULL;
 		con->constisnull = true;
-		con->constbyval = true;
+		con->constbyval = typeByVal(target_type);
 		con->constisset = false;
 		result = (Node *) con;
 	}
@@ -394,7 +393,8 @@ transformArraySubscripts(ParseState *pstate,
  *	of the "natural" type for the constant.  For strings we produce
  *	a constant of type UNKNOWN ---- representation is the same as text,
  *	but this indicates to later type resolution that we're not sure that
- *	it should be considered text.
+ *	it should be considered text.  Explicit "NULL" constants are also
+ *	typed as UNKNOWN.
  */
 Const *
 make_const(Value *value)
@@ -444,7 +444,13 @@ make_const(Value *value)
 				elog(NOTICE, "make_const: unknown type %d\n", nodeTag(value));
 
 			/* return a null const */
-			con = makeConst(0, 0, (Datum) NULL, true, false, false, false);
+			con = makeConst(UNKNOWNOID,
+							-1,
+							(Datum) NULL,
+							true,
+							false,
+							false,
+							false);
 			return con;
 	}
 

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.62 1999/12/17 01:25:25 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.63 1999/12/24 06:43:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -353,7 +353,7 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 					n->val.type = T_Null;
 					c->defresult = (Node *) n;
 				}
-				c->defresult = transformExpr(pstate, (Node *) c->defresult, precedence);
+				c->defresult = transformExpr(pstate, c->defresult, precedence);
 
 				/* now check types across result clauses... */
 				c->casetype = exprType(c->defresult);
@@ -369,32 +369,30 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 					if (wtype && (wtype != UNKNOWNOID)
 						&& (wtype != ptype))
 					{
-						/* so far, only nulls so take anything... */
-						if (!ptype)
+						if (!ptype || ptype == UNKNOWNOID)
 						{
+							/* so far, only nulls so take anything... */
 							ptype = wtype;
 							pcategory = TypeCategory(ptype);
 						}
-
-						/*
-						 * both types in different categories? then not
-						 * much hope...
-						 */
 						else if ((TypeCategory(wtype) != pcategory)
 								 || ((TypeCategory(wtype) == USER_TYPE)
 							&& (TypeCategory(c->casetype) == USER_TYPE)))
 						{
+							/*
+							 * both types in different categories?
+							 * then not much hope...
+							 */
 							elog(ERROR, "CASE/WHEN types '%s' and '%s' not matched",
 								 typeidTypeName(c->casetype), typeidTypeName(wtype));
 						}
-
-						/*
-						 * new one is preferred and can convert? then take
-						 * it...
-						 */
 						else if (IsPreferredType(pcategory, wtype)
 								 && can_coerce_type(1, &ptype, &wtype))
 						{
+							/*
+							 * new one is preferred and can convert?
+							 * then take it...
+							 */
 							ptype = wtype;
 							pcategory = TypeCategory(ptype);
 						}
@@ -404,9 +402,8 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 				/* Convert default result clause, if necessary */
 				if (c->casetype != ptype)
 				{
-					if (!c->casetype)
+					if (!c->casetype || c->casetype == UNKNOWNOID)
 					{
-
 						/*
 						 * default clause is NULL, so assign preferred
 						 * type from WHEN clauses...
@@ -694,11 +691,12 @@ exprTypmod(Node *expr)
 static Node *
 parser_typecast(Value *expr, TypeName *typename, int32 atttypmod)
 {
-	Const	   *adt;
-	Datum		lcp;
+	Const	   *con;
 	Type		tp;
+	Datum		datum;
 	char	   *const_string = NULL;
 	bool		string_palloced = false;
+	bool		isNull = false;
 
 	switch (nodeTag(expr))
 	{
@@ -712,6 +710,9 @@ parser_typecast(Value *expr, TypeName *typename, int32 atttypmod)
 		case T_Float:
 			string_palloced = true;
 			const_string = float8out(&expr->val.dval);
+			break;
+		case T_Null:
+			isNull = true;
 			break;
 		default:
 			elog(ERROR,
@@ -729,12 +730,15 @@ parser_typecast(Value *expr, TypeName *typename, int32 atttypmod)
 	else
 		tp = (Type) typenameType(typename->name);
 
-	lcp = stringTypeDatum(tp, const_string, atttypmod);
+	if (isNull)
+		datum = (Datum) NULL;
+	else
+		datum = stringTypeDatum(tp, const_string, atttypmod);
 
-	adt = makeConst(typeTypeId(tp),
+	con = makeConst(typeTypeId(tp),
 					typeLen(tp),
-					(Datum) lcp,
-					false,
+					datum,
+					isNull,
 					typeByVal(tp),
 					false,		/* not a set */
 					true /* is cast */ );
@@ -742,5 +746,5 @@ parser_typecast(Value *expr, TypeName *typename, int32 atttypmod)
 	if (string_palloced)
 		pfree(const_string);
 
-	return (Node *) adt;
+	return (Node *) con;
 }

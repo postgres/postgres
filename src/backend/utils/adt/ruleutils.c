@@ -3,7 +3,7 @@
  *			  out of it's tuple
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.35 1999/12/13 01:27:01 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.36 1999/12/24 06:43:34 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -1606,12 +1606,6 @@ get_const_expr(Const *constval, deparse_context *context)
 	char	   *valptr;
 	bool		isnull = FALSE;
 
-	if (constval->constisnull)
-	{
-		appendStringInfo(buf, "NULL");
-		return;
-	}
-
 	typetup = SearchSysCacheTuple(TYPEOID,
 								  ObjectIdGetDatum(constval->consttype),
 								  0, 0, 0);
@@ -1619,6 +1613,19 @@ get_const_expr(Const *constval, deparse_context *context)
 		elog(ERROR, "cache lookup of type %u failed", constval->consttype);
 
 	typeStruct = (Form_pg_type) GETSTRUCT(typetup);
+
+	if (constval->constisnull)
+	{
+		/*
+		 * Always label the type of a NULL constant.  This not only
+		 * prevents misdecisions about the type, but it ensures that
+		 * our output is a valid b_expr.
+		 */
+		extval = pstrdup(NameStr(typeStruct->typname));
+		appendStringInfo(buf, "NULL::%s", quote_identifier(extval));
+		pfree(extval);
+		return;
+	}
 
 	fmgr_info(typeStruct->typoutput, &finfo_output);
 	extval = (char *) (*fmgr_faddr(&finfo_output)) (constval->constvalue,
