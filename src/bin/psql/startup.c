@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2003, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/startup.c,v 1.96 2004/08/18 02:59:11 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/startup.c,v 1.97 2004/08/20 20:18:23 momjian Exp $
  */
 #include "postgres_fe.h"
 
@@ -216,6 +216,9 @@ main(int argc, char *argv[])
 	PQsetNoticeProcessor(pset.db, NoticeProcessor, NULL);
 
 	SyncVariables();
+
+	/* Grab the backend server version */
+	pset.sversion = PQserverVersion(pset.db);
 
 	if (options.action == ACT_LIST_DB)
 	{

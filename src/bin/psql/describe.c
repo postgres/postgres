@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2003, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.103 2004/07/15 03:56:06 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.104 2004/08/20 20:18:23 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "describe.h"
@@ -111,6 +111,12 @@ describeTablespaces(const char *pattern, bool verbose)
 	PQExpBufferData buf;
 	PGresult   *res;
 	printQueryOpt myopt = pset.popt;
+
+	if (pset.sversion < 70500) {
+			fprintf(stderr, _("This server version (%d) does not support tablespaces.\n"),
+							pset.sversion);
+			return true;
+	}
 
 	initPQExpBuffer(&buf);
 
@@ -706,8 +712,9 @@ describeOneTableDetails(const char *schemaname,
 	/* Get general table info */
 	printfPQExpBuffer(&buf,
 	 "SELECT relhasindex, relkind, relchecks, reltriggers, relhasrules, \n" 
-					"relhasoids, reltablespace \n"
+					"relhasoids %s \n"
 					  "FROM pg_catalog.pg_class WHERE oid = '%s'",
+					  pset.sversion >= 70500 ? ", reltablespace" : "",
 					  oid);
 	res = PSQLexec(buf.data, false);
 	if (!res)
@@ -729,7 +736,8 @@ describeOneTableDetails(const char *schemaname,
 	tableinfo.hasindex = strcmp(PQgetvalue(res, 0, 0), "t") == 0;
 	tableinfo.hasrules = strcmp(PQgetvalue(res, 0, 4), "t") == 0;
 	tableinfo.hasoids = strcmp(PQgetvalue(res, 0, 5), "t") == 0;
-	tableinfo.tablespace = atooid(PQgetvalue(res, 0, 6));
+	tableinfo.tablespace = (pset.sversion >= 70500) ? 
+			atooid(PQgetvalue(res, 0, 6)) : 0;
 	PQclear(res);
 
 	headers[0] = _("Column");
@@ -932,8 +940,8 @@ describeOneTableDetails(const char *schemaname,
 
 			footers = pg_malloc_zero(4 * sizeof(*footers));
 			footers[count_footers++] = pg_strdup(tmpbuf.data);
-	        add_tablespace_footer(tableinfo.relkind, tableinfo.tablespace,
-    	        footers, &count_footers, tmpbuf);
+			add_tablespace_footer(tableinfo.relkind, tableinfo.tablespace,
+														footers, &count_footers, tmpbuf);
 			footers[count_footers] = NULL;
 
 		}

@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2003, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/settings.h,v 1.18 2004/05/12 13:38:45 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/settings.h,v 1.19 2004/08/20 20:18:23 momjian Exp $
  */
 #ifndef SETTINGS_H
 #define SETTINGS_H
@@ -41,7 +41,7 @@ typedef struct _psqlSettings
 	FILE	   *cur_cmd_source; /* describe the status of the current main
 								 * loop */
 	bool		cur_cmd_interactive;
-
+	int		sversion; /* backend server version */
 	const char *progname;		/* in case you renamed psql */
 	char	   *inputfile;		/* for error reporting */
 	unsigned	lineno;			/* also for error reporting */
