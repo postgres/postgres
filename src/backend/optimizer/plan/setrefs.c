@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/setrefs.c,v 1.20 1998/03/30 16:36:14 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/setrefs.c,v 1.21 1998/04/15 15:29:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -934,3 +934,110 @@ del_agg_clause(Node *clause)
 	}
 	return NULL;
 }
+
+
+List *
+check_having_qual_for_aggs(Node *clause, List *subplanTargetList)
+{
+	List	   *t;
+	List	   *agg_list = NIL;
+
+	if (IsA(clause, Var))
+	{
+	  TargetEntry *subplanVar;
+	  
+	  /*
+	   * Ha! A Var node!
+	   */
+	  subplanVar = match_varid((Var *) clause, subplanTargetList);
+	  
+	  /*
+	   * Change the varno & varattno fields of the var node.
+	   *
+	   */
+	  ((Var *) clause)->varattno = subplanVar->resdom->resno;
+	  return NIL;
+	}
+	else if (is_funcclause(clause) || not_clause(clause) || 
+		 or_clause(clause) || and_clause(clause))
+	{
+
+		/*
+		 * This is a function. Recursively call this routine for its
+		 * arguments...
+		 */
+		foreach(t, ((Expr *) clause)->args)
+		{
+			agg_list = nconc(agg_list,
+					   check_having_qual_for_aggs(lfirst(t), subplanTargetList));
+		}
+		return agg_list;
+	}
+	else if (IsA(clause, Aggreg))
+	{
+		return lcons(clause,
+		    check_having_qual_for_aggs(((Aggreg *) clause)->target, subplanTargetList));
+		
+	}
+	else if (IsA(clause, ArrayRef))
+	{
+		ArrayRef   *aref = (ArrayRef *) clause;
+
+		/*
+		 * This is an arrayref. Recursively call this routine for its
+		 * expression and its index expression...
+		 */
+		foreach(t, aref->refupperindexpr)
+		{
+			agg_list = nconc(agg_list,
+					 check_having_qual_for_aggs(lfirst(t), subplanTargetList));
+		}
+		foreach(t, aref->reflowerindexpr)
+		{
+			agg_list = nconc(agg_list,
+					 check_having_qual_for_aggs(lfirst(t), subplanTargetList));
+		}
+		agg_list = nconc(agg_list,
+				 check_having_qual_for_aggs(aref->refexpr, subplanTargetList));
+		agg_list = nconc(agg_list,
+				 check_having_qual_for_aggs(aref->refassgnexpr, subplanTargetList));
+
+		return agg_list;
+	}
+	else if (is_opclause(clause))
+	{
+
+		/*
+		 * This is an operator. Recursively call this routine for both its
+		 * left and right operands
+		 */
+		Node	   *left = (Node *) get_leftop((Expr *) clause);
+		Node	   *right = (Node *) get_rightop((Expr *) clause);
+
+		if (left != (Node *) NULL)
+			agg_list = nconc(agg_list,
+					 check_having_qual_for_aggs(left, subplanTargetList));
+		if (right != (Node *) NULL)
+			agg_list = nconc(agg_list,
+					 check_having_qual_for_aggs(right, subplanTargetList));
+
+		return agg_list;
+	}
+	else if (IsA(clause, Param) ||IsA(clause, Const))
+	{
+		/* do nothing! */
+		return NIL;
+	}
+	else
+	{
+
+		/*
+		 * Ooops! we can not handle that!
+		 */
+		elog(ERROR, "check_having_qual_for_aggs: Can not handle this having_qual!\n");
+		return NIL;
+	}
+}
+
+
+
