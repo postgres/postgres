@@ -6,14 +6,12 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: funcindex.h,v 1.1 1996/08/27 21:50:08 scrappy Exp $
+ * $Id: funcindex.h,v 1.2 1996/08/28 01:56:16 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef _FUNC_INDEX_INCLUDED_
 #define _FUNC_INDEX_INCLUDED_
-
-#include "postgres.h"
 
 typedef struct {
 	int	nargs;
