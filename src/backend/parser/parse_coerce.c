@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_coerce.c,v 2.78 2002/07/18 23:11:28 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_coerce.c,v 2.79 2002/07/20 05:29:01 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -809,7 +809,7 @@ find_typmod_coercion_function(Oid typeId)
 			!pform->proisagg)
 		{
 			/* Okay to use it */
-			funcid = ftup->t_data->t_oid;
+			funcid = HeapTupleGetOid(ftup);
 		}
 		ReleaseSysCache(ftup);
 	}
