@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/pg_ctl-ref.sgml,v 1.30 2004/12/22 02:17:15 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/pg_ctl-ref.sgml,v 1.31 2005/02/21 02:13:26 neilc Exp $
 PostgreSQL documentation
 -->
 
@@ -70,6 +70,19 @@ PostgreSQL documentation
    <arg choice="plain">kill</arg>
    <arg><replaceable>signal_name</replaceable></arg>
    <arg><replaceable>process_id</replaceable></arg>
+   <sbr>
+   <command>pg_ctl</command>
+   <arg choice="plain">register</arg>
+   <arg>-N <replaceable>servicename</replaceable></arg>
+   <arg>-U <replaceable>username</replaceable></arg>
+   <arg>-P <replaceable>password</replaceable></arg>
+   <arg>-D <replaceable>datadir</replaceable></arg>
+   <arg>-w</arg>
+   <arg>-o <replaceable>options</replaceable></arg>
+   <sbr>
+   <command>pg_ctl</command>
+   <arg choice="plain">unregister</arg>
+   <arg>-N <replaceable>servicename</replaceable></arg>
   </cmdsynopsis>
  </refsynopsisdiv>
 
@@ -142,6 +155,17 @@ PostgreSQL documentation
     process.  This is particularly valuable for <productname>Microsoft Windows</>
     which does not have a <application>kill</> command.  Use 
     <literal>--help</> to see a list of supported signal names.
+  </para>
+
+  <para>
+   <option>register</option> mode allows you to register a system service
+   on <productname>Microsoft Windows</>.
+  </para>
+
+  <para>
+   <option>unregister</option> mode allows you to unregister a system service
+   on <productname>Microsoft Windows</>, previously registered with the
+   <option>register</option> command.
   </para>
  </refsect1>
 
@@ -253,8 +277,44 @@ PostgreSQL documentation
        </para>
       </listitem>
      </varlistentry>
-    </variablelist>
-   </para>
+   </variablelist>
+  </para>
+ </refsect1>
+
+ <refsect1 id="app-pg-ctl-svcoptions">
+  <title>Windows options</title>
+  <para>
+   <variablelist>
+    <varlistentry>
+     <term><option>-N <replaceable class="parameter">servicename</replaceable></option></term>
+     <listitem>
+      <para>
+       Name of the system service to register. The name will be used
+       as both the service name and the display name.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><option>-P <replaceable class="parameter">password</replaceable></option></term>
+     <listitem>
+      <para>
+       Password for the user to start the service.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><option>-U <replaceable class="parameter">username</replaceable></option></term>
+     <listitem>
+      <para>
+       Username for the user to start the service. For domain users, use the
+       format <literal>DOMAIN\username</literal>.
+      </para>
+     </listitem>
+    </varlistentry>
+   </variablelist>
+  </para>
  </refsect1>
 
 
