@@ -30,21 +30,3 @@ These bugs become pretty major when you are doing >400k lines of code.
 If you don't believe me, take a directory and make a copy.  Run pgindent
 on the copy using GNU indent, and do a diff -r. You will see what I
 mean. GNU indent does some things better, but mangles too.
-
-
----------------------------------------------------------------------------
-
-For java, we use astyle, http://astyle.sourceforge.net/, with the
-following options:
-
-	find . \( -name '*.java' -o -name '*.java.in' \) -print |
-		xargs -n100 pgjindent
-
----------------------------------------------------------------------------
-
-For cpp, we use astyle, http://astyle.sourceforge.net/, with the
-following options:
-
-	find src/interfaces/libpq++ -name '*.[ch]' -print |
-		xargs -n100 pgcppindent
-
