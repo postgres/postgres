@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/interfaces/libpq/Makefile,v 1.55 2001/08/15 21:08:21 momjian Exp $
+# $Header: /cvsroot/pgsql/src/interfaces/libpq/Makefile,v 1.56 2001/08/28 14:20:28 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -33,7 +33,7 @@ endif
 SHLIB_LINK += $(filter -L%, $(LDFLAGS)) $(filter -lcrypt -ldes -lkrb -lcom_err -lcrypto -lk5crypto -lkrb5 -lssl -lsocket -lnsl -lresolv -lintl, $(LIBS))
 
 
-all: md5.c all-lib
+all: all-lib
 
 # Shared library stuff
 include $(top_srcdir)/src/Makefile.shlib
@@ -70,27 +70,17 @@ wchar.c : % : $(backend_src)/utils/mb/%
 endif
 
 
-install: all installdirs install-headers install-lib
-
-.PHONY: install-headers
-install-headers: libpq-fe.h libpq-int.h pqexpbuffer.h
+install: all installdirs install-lib
 	$(INSTALL_DATA) $(srcdir)/libpq-fe.h $(DESTDIR)$(includedir)
-	$(INSTALL_DATA) $(srcdir)/libpq-int.h $(DESTDIR)$(includedir)
-	$(INSTALL_DATA) $(srcdir)/pqexpbuffer.h $(DESTDIR)$(includedir)
+	$(INSTALL_DATA) $(srcdir)/libpq-int.h $(DESTDIR)$(includedir_internal)
+	$(INSTALL_DATA) $(srcdir)/pqexpbuffer.h $(DESTDIR)$(includedir_internal)
 
 installdirs:
-	$(mkinstalldirs) $(DESTDIR)$(libdir) $(DESTDIR)$(includedir)
+	$(mkinstalldirs) $(DESTDIR)$(libdir) $(DESTDIR)$(includedir) $(DESTDIR)$(includedir_internal)
 
 uninstall: uninstall-lib
-	rm -f $(addprefix $(DESTDIR)$(includedir)/, libpq-fe.h libpq-int.h pqexpbuffer.h)
+	rm -f $(DESTDIR)$(includedir)/libpq-fe.h $(DESTDIR)$(includedir_internal)/libpq-int.h $(includedir_internal)/pqexpbuffer.h
 
 clean distclean maintainer-clean: clean-lib
 	rm -f $(OBJS) dllist.c md5.c md5.h wchar.c
 	rm -f $(OBJS) inet_aton.c snprintf.c strerror.c
-
-depend dep:
-	$(CC) -MM $(CFLAGS) *.c >depend
-
-ifeq (depend,$(wildcard depend))
-include depend
-endif

@@ -6,7 +6,7 @@
 # programming.  'make install-all-headers' installs the whole contents
 # of src/include.
 #
-# $Header: /cvsroot/pgsql/src/include/Makefile,v 1.9 2001/08/24 14:07:49 petere Exp $
+# $Header: /cvsroot/pgsql/src/include/Makefile,v 1.10 2001/08/28 14:20:28 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -14,54 +14,48 @@ subdir = src/include
 top_builddir = ../..
 include $(top_builddir)/src/Makefile.global
 
-# Headers needed by clients
-srcdir_headers := c.h postgres_ext.h postgres_fe.h \
-	libpq/pqcomm.h libpq/libpq-fs.h lib/dllist.h
 
-builddir_headers := pg_config_os.h pg_config.h
-
-HEADERS = $(srcdir_headers) $(builddir_headers)
-
-# Subdirectories containing headers that install-all-headers should install
-SUBDIRS = access bootstrap catalog commands executor lib libpq mb \
-	nodes optimizer parser port regex rewrite storage tcop utils
-
-
-all: $(HEADERS)
+all: pg_config.h pg_config_os.h
 
 
 # Install only selected headers
 
 install: all installdirs remove-old-headers
-	for file in $(srcdir_headers); do \
-	  $(INSTALL_DATA) $(srcdir)/$$file $(DESTDIR)$(includedir)/$$file || exit; \
-	done
-	for file in $(builddir_headers); do \
-	  $(INSTALL_DATA) $$file $(DESTDIR)$(includedir)/$$file || exit; \
-	done
+# These headers are needed by the public headers of the interfaces.
+	$(INSTALL_DATA) $(srcdir)/postgres_ext.h   $(DESTDIR)$(includedir)
+	$(INSTALL_DATA) $(srcdir)/libpq/libpq-fs.h $(DESTDIR)$(includedir)/libpq
+	$(INSTALL_DATA) pg_config.h    $(DESTDIR)$(includedir)
+	$(INSTALL_DATA) pg_config_os.h $(DESTDIR)$(includedir)
+# These headers are needed by the not-so-public headers of the interfaces.
+	$(INSTALL_DATA) $(srcdir)/c.h            $(DESTDIR)$(includedir_internal)
+	$(INSTALL_DATA) $(srcdir)/postgres_fe.h  $(DESTDIR)$(includedir_internal)
+	$(INSTALL_DATA) $(srcdir)/libpq/pqcomm.h $(DESTDIR)$(includedir_internal)/libpq
+	$(INSTALL_DATA) $(srcdir)/lib/dllist.h   $(DESTDIR)$(includedir_internal)/lib
 
-# Automatically pick out the needed subdirectories for the include tree.
 installdirs:
-	$(mkinstalldirs) $(addprefix $(DESTDIR)$(includedir)/, $(sort $(dir $(HEADERS))))
+	$(mkinstalldirs) $(DESTDIR)$(includedir)/libpq $(DESTDIR)$(includedir_internal)/libpq $(DESTDIR)$(includedir_internal)/lib
 
 
 # Install all headers
 
+# Subdirectories containing headers that install-all-headers should install
+SUBDIRS = access bootstrap catalog commands executor lib libpq mb \
+	nodes optimizer parser port regex rewrite storage tcop utils
+
 install-all-headers: all install-all-dirs
+	$(INSTALL_DATA) pg_config.h    $(DESTDIR)$(includedir_server)
+	$(INSTALL_DATA) pg_config_os.h $(DESTDIR)$(includedir_server)
 	for file in $(srcdir)/*.h; do \
-	  $(INSTALL_DATA) $$file $(DESTDIR)$(includedir)/`basename $$file` || exit; \
+	  $(INSTALL_DATA) $$file $(DESTDIR)$(includedir_server)/`basename $$file` || exit; \
 	done
 	for dir in $(SUBDIRS); do \
 	  for file in $(srcdir)/$$dir/*.h; do \
-	    $(INSTALL_DATA) $$file $(DESTDIR)$(includedir)/$$dir/`basename $$file` || exit; \
+	    $(INSTALL_DATA) $$file $(DESTDIR)$(includedir_server)/$$dir/`basename $$file` || exit; \
 	  done \
-	done
-	for file in $(builddir_headers); do \
-	  $(INSTALL_DATA) $$file $(DESTDIR)$(includedir)/$$file || exit; \
 	done
 
 install-all-dirs:
-	$(mkinstalldirs) $(addprefix $(DESTDIR)$(includedir)/, $(SUBDIRS))
+	$(mkinstalldirs) $(addprefix $(DESTDIR)$(includedir_server)/, $(SUBDIRS))
 
 
 # Pre-7.1 Postgres installed some headers that are no longer installed by
@@ -82,10 +76,12 @@ remove-old-headers:
 	done
 
 
-# This isn't a complete uninstall, but rm'ing everything under
-# $(DESTDIR)$(includedir) is probably too drastic...
 uninstall:
-	rm -rf $(addprefix $(DESTDIR)$(includedir)/, $(HEADERS) $(SUBDIRS))
+	rm -f $(addprefix $(DESTDIR)$(includedir)/, pg_config.h pg_config_os.h postgres_ext.h libpq/libpq-fs.h)
+	rm -f $(addprefix $(DESTDIR)$(includedir_internal)/, c.h postgres_fe.h lib/dllist.h libpq/pqcomm.h)
+# heuristic...
+	rm -rf $(addprefix $(DESTDIR)$(includedir_server)/, $(SUBDIRS) *.h)
+
 
 clean:
 	rm -f utils/fmgroids.h parser/parse.h

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/xfunc.sgml,v 1.32 2001/05/19 09:01:10 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/xfunc.sgml,v 1.33 2001/08/28 14:20:26 petere Exp $
 -->
 
  <chapter id="xfunc">
@@ -1203,13 +1203,16 @@ LANGUAGE 'c';
      <itemizedlist>
       <listitem>
        <para>
-        The relevant header (include) files are installed under
-	<filename>/usr/local/pgsql/include</filename> or equivalent.
-	You can use <literal>pg_config --includedir</literal> to find
-	out where it is on your system (or the system that your
-	users will be running on).  For very low-level work you might
-	need to have a complete <productname>PostgreSQL</productname>
-	source tree available.
+	Use <literal>pg_config --includedir-server</literal> to find
+	out where the PostgreSQL server header files are installed on
+	your system (or the system that your users will be running
+	on).  This option is new with PostgreSQL 7.2.  For PostgreSQL
+	7.1 you should use the option <option>--includedir</option>.
+	(<command>pg_config</command> will exit with a non-zero status
+	if it encounters an unknown option.)  For releases prior to
+	7.1 you will have to guess, but since that was before the
+	current calling conventions were introduced, it is unlikely
+	that you want to support those releases.
        </para>
       </listitem>
 

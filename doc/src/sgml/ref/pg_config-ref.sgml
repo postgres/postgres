@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_config-ref.sgml,v 1.5 2001/03/05 18:42:56 momjian Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_config-ref.sgml,v 1.6 2001/08/28 14:20:26 petere Exp $ -->
 
 <refentry id="app-pgconfig">
  <docinfo>
@@ -22,6 +22,7 @@
    <group choice="req" rep="repeat">
     <arg>--bindir</arg>
     <arg>--includedir</arg>
+    <arg>--includedir-server</arg>
     <arg>--libdir</arg>
     <arg>--configure</arg>
     <arg>--version</arg>
@@ -32,12 +33,17 @@
  <refsect1>
   <title>Description</>
   <para>
-   The <application>pg_config</> utility provides configuration parameters
+   The <application>pg_config</> utility prints configuration parameters
    of the currently installed version of <productname>PostgreSQL</>. It is
    intended, for example, to be used by software packages that want to interface
-   to <productname>PostgreSQL</> in order to find the respective header files
+   to <productname>PostgreSQL</> to facilitate finding the required header files
    and libraries.
   </para>
+ </refsect1>
+
+
+ <refsect1>
+  <title>Options</title>
 
   <para>
    To use <application>pg_config</>, supply one or more of the following options:
@@ -57,7 +63,17 @@
      <term>--includedir</>
      <listitem>
       <para>
-       Print the location of C and C++ header files.
+       Print the location of C and C++ header files of the client interfaces.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term>--includedir-server</>
+     <listitem>
+      <para>
+       Print the location of C and C++ header files for server
+       programming.
       </para>
      </listitem>
     </varlistentry>
@@ -97,6 +113,44 @@
 
    If more than one option (except for <option>--version</>) is given, the
    information is printed in that order, one item per line.
+  </para>
+ </refsect1>
+
+
+ <refsect1>
+  <title>Notes</title>
+
+  <para>
+   The option <option>--includedir-server</option> is new in
+   PostgreSQL 7.2.  In prior releases, the server include files were
+   installed in the same location as the client headers, which could
+   be queried with the <option>--includedir</option>.  To make your
+   package handle both cases, try the newer option first and test the
+   exit status to see whether it succeeded.
+  </para>
+
+  <para>
+   In releases prior to PostgreSQL 7.1, before the
+   <command>pg_config</command> came to be, a method for finding the
+   equivalent configuration information did not exist.
+  </para>
+ </refsect1>
+
+
+ <refsect1>
+  <title>History</title>
+
+  <para>
+   The <command>pg_config</command> utility first appeared in PostgreSQL 7.1.
+  </para>
+ </refsect1>
+
+
+ <refsect1>
+  <title>See Also</title>
+
+  <para>
+   <citetitle>PostgreSQL Programmer's Guide</citetitle>
   </para>
  </refsect1>
 </refentry>

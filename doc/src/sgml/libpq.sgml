@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/libpq.sgml,v 1.66 2001/08/10 22:50:09 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/libpq.sgml,v 1.67 2001/08/28 14:20:25 petere Exp $
 -->
 
  <chapter id="libpq">
@@ -1992,6 +1992,129 @@ call <function>fe_setauthsvc</function> at all.
 </para>
 
 </sect1>
+
+
+ <sect1 id="libpq-build">
+  <title>Building Libpq Programs</title>
+
+  <para>
+   To build (i.e., compile and link) your libpq programs you need to
+   do the following things:
+
+   <itemizedlist>
+    <listitem>
+     <para>
+      Include the <filename>libpq-fe.h</filename> header file:
+<programlisting>
+#include &lt;libpq-fe&gt;
+</programlisting>
+      If you failed to do that then you will normally get error
+      messages from your compiler, such as
+<screen>
+foo.c: In function `main':
+foo.c:34: `PGconn' undeclared (first use in this function)
+foo.c:35: `PGresult' undeclared (first use in this function)
+foo.c:54: `CONNECTION_BAD' undeclared (first use in this function)
+foo.c:68: `PGRES_COMMAND_OK' undeclared (first use in this function)
+foo.c:95: `PGRES_TUPLES_OK' undeclared (first use in this function)
+</screen>
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Point your compiler to the directory where the PostgreSQL header
+      files were installed, by supplying the
+      <literal>-I<replaceable>directory</replaceable></literal> option
+      to your compiler.  (In some cases the compiler will look into
+      the directory in question by default, so you can omit this
+      option.)  For instance, your compile command line could look
+      like:
+<programlisting>
+cc -c -I/usr/local/pgsql/include testprog.c
+</programlisting>
+      If you are using makefiles then add the option to the
+      <varname>CPPFLAGS</varname> variable:
+<programlisting>
+CPPFLAGS += -I/usr/local/pgsql/include
+</programlisting>
+     </para>
+
+     <para>
+      If there is any chance that your program might be compiled by
+      other users then you should not hardcode the directory location
+      like that.  Instead, you can run the utility
+      <command>pg_config</command> to find out where the header files
+      are on the local system:
+<screen>
+<prompt>$</prompt> pg_config --includedir
+<computeroutput>/usr/local/include</computeroutput>
+</screen>
+     </para>
+
+     <para>
+      Failure to specify the correct option to the compiler will
+      result in an error message such as
+<screen>
+testlibpq.c:8:22: libpq-fe.h: No such file or directory
+</screen>
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      When linking the final program, specify the option
+      <literal>-lpq</literal> so that the libpq library gets pulled
+      in, as well as the option
+      <literal>-L<replaceable>directory</replaceable></literal> to
+      point it to the directory where libpq resides.  (Again, the
+      compiler will search some directories by default.)  For maximum
+      portability, put the <option>-L</option> option before the
+      <option>-lpq</option> option.  For example:
+<programlisting>
+cc -o testprog testprog1.o testprog2.o -L/usr/local/pgsql/lib -lpq
+</programlisting>
+     </para>
+
+     <para>
+      You can find out the library directory using
+      <command>pg_config</command> as well:
+<screen>
+<prompt>$</prompt> pg_config --libdir
+<computeroutput>/usr/local/pgsql/lib</computeroutput>
+</screen>
+     </para>
+
+     <para>
+      Error messages that point to problems in this area could look
+      like the following.
+<screen>
+testlibpq.o: In function `main':
+testlibpq.o(.text+0x60): undefined reference to `PQsetdbLogin'
+testlibpq.o(.text+0x71): undefined reference to `PQstatus'
+testlibpq.o(.text+0xa4): undefined reference to `PQerrorMessage'
+</screen>
+      This means you forgot <option>-lpq</option>.
+<screen>
+/usr/bin/ld: cannot find -lpq
+</screen>
+      This means you forgot the <option>-L</option> or did not specify
+      the right path.
+     </para>
+    </listitem>
+   </itemizedlist>
+  </para>
+
+  <para>
+   If your codes references the header file
+   <filename>libpq-int.h</filename> and you refuse to fix your code to
+   not use it, starting in PostgreSQL 7.2, this file will be found in
+   <filename><replaceable>includedir</replaceable>/postgresql/internal/libpq-int.h</filename>,
+   so you need to add the appropriate <option>-I</option> option to
+   your compiler command line.
+  </para>
+
+ </sect1>
 
 
  <sect1 id="libpq-example">
