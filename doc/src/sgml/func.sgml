@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.197 2004/04/10 18:02:59 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.198 2004/04/23 20:32:19 neilc Exp $
 PostgreSQL documentation
 -->
 
@@ -588,6 +588,14 @@ PostgreSQL documentation
       </row>
 
       <row>
+       <entry><literal><function>ceiling</function>(<type>dp</type> or <type>numeric</type>)</literal></entry>
+       <entry>(same as input)</entry>
+       <entry>smallest integer not less than argument (alias for <function>ceil</function>)</entry>
+       <entry><literal>ceiling(-95.3)</literal></entry>
+       <entry><literal>-95</literal></entry>
+      </row>
+
+      <row>
        <entry><literal><function>degrees</function>(<type>dp</type>)</literal></entry>
        <entry><type>dp</type></entry>
        <entry>radians to degrees</entry>
@@ -654,20 +662,20 @@ PostgreSQL documentation
       </row>
 
       <row>
-       <entry><literal><function>pow</function>(<parameter>a</parameter> <type>dp</type>,
+       <entry><literal><function>power</function>(<parameter>a</parameter> <type>dp</type>,
         <parameter>b</parameter> <type>dp</type>)</literal></entry>
        <entry><type>dp</type></entry>
        <entry><parameter>a</> raised to the power of <parameter>b</parameter></entry>
-       <entry><literal>pow(9.0, 3.0)</literal></entry>
+       <entry><literal>power(9.0, 3.0)</literal></entry>
        <entry><literal>729</literal></entry>
       </row>
 
       <row>
-       <entry><literal><function>pow</function>(<parameter>a</parameter> <type>numeric</type>,
+       <entry><literal><function>power</function>(<parameter>a</parameter> <type>numeric</type>,
         <parameter>b</parameter> <type>numeric</type>)</literal></entry>
        <entry><type>numeric</type></entry>
        <entry><parameter>a</> raised to the power of <parameter>b</parameter></entry>
-       <entry><literal>pow(9.0, 3.0)</literal></entry>
+       <entry><literal>power(9.0, 3.0)</literal></entry>
        <entry><literal>729</literal></entry>
       </row>
 

@@ -85,8 +85,9 @@ SELECT '' AS five, f.f1, %f.f1 AS trunc_f1
 SELECT '' AS five, f.f1, f.f1 % AS round_f1
    FROM FLOAT8_TBL f;
 
--- ceil
+-- ceil / ceiling
 select ceil(f1) as ceil_f1 from float8_tbl f;
+select ceiling(f1) as ceiling_f1 from float8_tbl f;
 
 -- floor
 select floor(f1) as floor_f1 from float8_tbl f;
@@ -102,6 +103,9 @@ SELECT |/ float8 '64' AS eight;
 SELECT '' AS three, f.f1, |/f.f1 AS sqrt_f1
    FROM FLOAT8_TBL f
    WHERE f.f1 > '0.0';
+
+-- power
+SELECT power(float8 '144', float8 '0.5');
 
 -- take exp of ln(f.f1) 
 SELECT '' AS three, f.f1, exp(ln(f.f1)) AS exp_ln_f1

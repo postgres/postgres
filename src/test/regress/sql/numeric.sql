@@ -623,10 +623,10 @@ SELECT t1.id1, t1.result, t2.expected
     AND t1.result != t2.expected;
 
 -- ******************************
--- * POW(10, LN(value)) check
+-- * POWER(10, LN(value)) check
 -- ******************************
 DELETE FROM num_result;
-INSERT INTO num_result SELECT id, 0, POW(numeric '10', LN(ABS(round(val,200))))
+INSERT INTO num_result SELECT id, 0, POWER(numeric '10', LN(ABS(round(val,200))))
     FROM num_data
     WHERE val != '0.0';
 SELECT t1.id1, t1.result, t2.expected
@@ -654,6 +654,18 @@ INSERT INTO fract_only VALUES (7, '0.00001');
 INSERT INTO fract_only VALUES (8, '0.00017');
 SELECT * FROM fract_only;
 DROP TABLE fract_only;
+
+-- Simple check that ceil(), floor(), and round() work correctly
+CREATE TABLE ceil_floor_round (a numeric);
+INSERT INTO ceil_floor_round VALUES ('-5.5');
+INSERT INTO ceil_floor_round VALUES ('-5.499999');
+INSERT INTO ceil_floor_round VALUES ('9.5');
+INSERT INTO ceil_floor_round VALUES ('9.4999999');
+INSERT INTO ceil_floor_round VALUES ('0.0');
+INSERT INTO ceil_floor_round VALUES ('0.0000001');
+INSERT INTO ceil_floor_round VALUES ('-0.000001');
+SELECT a, ceil(a), ceiling(a), floor(a), round(a) FROM ceil_floor_round;
+DROP TABLE ceil_floor_round;
 
 -- TO_CHAR()
 --

@@ -224,9 +224,19 @@ SELECT '' AS five, f.f1, f.f1 % AS round_f1
       | 1.2345678901234e-200 |                    0
 (5 rows)
 
--- ceil
+-- ceil / ceiling
 select ceil(f1) as ceil_f1 from float8_tbl f;
        ceil_f1        
+----------------------
+                    0
+                 1005
+                  -34
+ 1.2345678901234e+200
+                    1
+(5 rows)
+
+select ceiling(f1) as ceiling_f1 from float8_tbl f;
+      ceiling_f1      
 ----------------------
                     0
                  1005
@@ -279,6 +289,13 @@ SELECT '' AS three, f.f1, |/f.f1 AS sqrt_f1
        | 1.2345678901234e+200 | 1.11111110611109e+100
        | 1.2345678901234e-200 | 1.11111110611109e-100
 (3 rows)
+
+-- power
+SELECT power(float8 '144', float8 '0.5');
+ power 
+-------
+    12
+(1 row)
 
 -- take exp of ln(f.f1) 
 SELECT '' AS three, f.f1, exp(ln(f.f1)) AS exp_ln_f1
