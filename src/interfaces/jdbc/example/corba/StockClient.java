@@ -9,7 +9,7 @@ import org.omg.CosNaming.*;
  *
  * It has no GUI, just a text frontend to keep it simple.
  *
- * $Id: StockClient.java,v 1.4 2001/11/19 23:16:45 momjian Exp $
+ * $Id: StockClient.java,v 1.5 2001/11/19 23:19:20 momjian Exp $
  */
 public class StockClient
 {
@@ -35,14 +35,14 @@ public class StockClient
 			if (nameServiceObj == null)
 			{
 				System.err.println("nameServiceObj == null");
-				return ;
+				return;
 			}
 
 			nameService = org.omg.CosNaming.NamingContextHelper.narrow(nameServiceObj);
 			if (nameService == null)
 			{
 				System.err.println("nameService == null");
-				return ;
+				return;
 			}
 
 			// Resolve the dispenser
@@ -53,7 +53,7 @@ public class StockClient
 			if (dispenser == null)
 			{
 				System.err.println("dispenser == null");
-				return ;
+				return;
 			}
 
 			// Now run the front end.

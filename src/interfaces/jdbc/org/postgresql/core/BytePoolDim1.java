@@ -76,7 +76,7 @@ public class BytePoolDim1
 	{
 		// If it's larger than maxsize then we don't touch it
 		if (b.length > maxsize)
-			return ;
+			return;
 
 		ObjectPool not_usel = notusemap[b.length];
 		ObjectPool in_usel = inusemap[b.length];

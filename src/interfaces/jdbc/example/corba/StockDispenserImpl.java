@@ -5,7 +5,7 @@ import org.omg.CosNaming.*;
 /*
  * This class implements the server side of the example.
  *
- * $Id: StockDispenserImpl.java,v 1.3 2001/11/19 22:43:13 momjian Exp $
+ * $Id: StockDispenserImpl.java,v 1.4 2001/11/19 23:19:20 momjian Exp $
  */
 public class StockDispenserImpl extends stock._StockDispenserImplBase
 {
@@ -67,11 +67,11 @@ public class StockDispenserImpl extends stock._StockDispenserImplBase
 			{
 				stock[i].inUse = false;
 				System.out.println("Releasing slot " + i);
-				return ;
+				return;
 			}
 		}
 		System.out.println("Reserved object not a member of this dispenser");
-		return ;
+		return;
 	}
 
 	/*

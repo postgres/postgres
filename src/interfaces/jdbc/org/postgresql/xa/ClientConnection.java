@@ -40,7 +40,7 @@
 *
 * Copyright 1999 (C) Exoffice Technologies Inc. All Rights Reserved.
 *
-* $Id: ClientConnection.java,v 1.3 2001/11/19 22:33:39 momjian Exp $
+* $Id: ClientConnection.java,v 1.4 2001/11/19 23:19:21 momjian Exp $
 */
 
 
@@ -464,7 +464,7 @@ final class ClientConnection
 	throws SQLException
 	{
 		if ( _xaConn == null )
-			return ;
+			return;
 
 		// Notify the XA connection that we are no longer going
 		// to be used. Whether the underlying connection is released,

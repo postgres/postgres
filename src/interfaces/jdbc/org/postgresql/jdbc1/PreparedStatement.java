@@ -613,7 +613,7 @@ public class PreparedStatement extends Statement implements java.sql.PreparedSta
 		if (x == null)
 		{
 			setNull(parameterIndex, Types.OTHER);
-			return ;
+			return;
 		}
 		switch (targetSqlType)
 		{
@@ -683,7 +683,7 @@ public class PreparedStatement extends Statement implements java.sql.PreparedSta
 		if (x == null)
 		{
 			setNull(parameterIndex, Types.OTHER);
-			return ;
+			return;
 		}
 		if (x instanceof String)
 			setString(parameterIndex, (String)x);

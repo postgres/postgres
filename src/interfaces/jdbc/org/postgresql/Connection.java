@@ -11,7 +11,7 @@ import org.postgresql.util.*;
 import org.postgresql.core.*;
 
 /*
- * $Id: Connection.java,v 1.37 2001/11/19 23:16:45 momjian Exp $
+ * $Id: Connection.java,v 1.38 2001/11/19 23:19:20 momjian Exp $
  *
  * This abstract class is used by org.postgresql.Driver to open either the JDBC1 or
  * JDBC2 versions of the Connection class.
@@ -817,7 +817,7 @@ public abstract class Connection
 	public void setAutoCommit(boolean autoCommit) throws SQLException
 	{
 		if (this.autoCommit == autoCommit)
-			return ;
+			return;
 		if (autoCommit)
 			ExecSQL("end");
 		else
@@ -860,7 +860,7 @@ public abstract class Connection
 	public void commit() throws SQLException
 	{
 		if (autoCommit)
-			return ;
+			return;
 		if (haveMinimumServerVersion("7.1"))
 		{
 			ExecSQL("commit;begin;" + getIsolationLevelSQL());
@@ -884,7 +884,7 @@ public abstract class Connection
 	public void rollback() throws SQLException
 	{
 		if (autoCommit)
-			return ;
+			return;
 		if (haveMinimumServerVersion("7.1"))
 		{
 			ExecSQL("rollback; begin;" + getIsolationLevelSQL());

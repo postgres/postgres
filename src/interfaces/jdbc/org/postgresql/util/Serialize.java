@@ -485,7 +485,7 @@ public class Serialize
 		{
 			DriverManager.println("Serialize.create: table " + tableName + " exists, skipping");
 			rs.close();
-			return ;
+			return;
 		}
 
 		// else table not found, so create it

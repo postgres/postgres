@@ -83,7 +83,7 @@ public class SimpleObjectPool implements ObjectPool
 
 		int srcsize = pool.size();
 		if (srcsize == 0)
-			return ;
+			return;
 		int totalsize = srcsize + cursize;
 		if (totalsize > maxsize)
 		{

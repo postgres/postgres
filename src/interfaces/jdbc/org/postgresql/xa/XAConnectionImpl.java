@@ -40,7 +40,7 @@
 *
 * Copyright 1999 (C) Exoffice Technologies Inc. All Rights Reserved.
 *
-* $Id: XAConnectionImpl.java,v 1.3 2001/11/19 22:33:39 momjian Exp $
+* $Id: XAConnectionImpl.java,v 1.4 2001/11/19 23:19:21 momjian Exp $
 */
 
 
@@ -310,7 +310,7 @@ public final class XAConnectionImpl
 		// We have to expect being called by a ClientConnection that we
 		// no longer regard as valid. That's acceptable, we just ignore.
 		if ( clientId != _clientId )
-			return ;
+			return;
 
 		// If we are handling an underlying connection, we commit the
 		// old transaction and are ready to work for a new one.
@@ -329,7 +329,7 @@ public final class XAConnectionImpl
 					event = new ConnectionEvent( this, except );
 					_listener.connectionErrorOccurred( event );
 				}
-				return ;
+				return;
 			}
 		}
 		// Notify the listener.
@@ -355,7 +355,7 @@ public final class XAConnectionImpl
 		ConnectionEvent event;
 
 		if ( clientId != _clientId )
-			return ;
+			return;
 
 		// If the connection is not two-phase commit we cannot determine
 		// whether the error is critical, we just return. If the connection
@@ -364,11 +364,11 @@ public final class XAConnectionImpl
 		{
 			if ( ! ( _underlying instanceof TwoPhaseConnection ) ||
 					! ( (TwoPhaseConnection) _underlying ).isCriticalError( except ) )
-				return ;
+				return;
 			if ( _txConn.conn == null ||
 					! ( _txConn.conn instanceof TwoPhaseConnection ) ||
 					! ( (TwoPhaseConnection) _txConn.conn ).isCriticalError( except ) )
-				return ;
+				return;
 		}
 
 		// The client connection is no longer useable, the underlying
@@ -766,7 +766,7 @@ public final class XAConnectionImpl
 			// If connection has been prepared and is read-only,
 			// nothing to do at this stage.
 			if ( txConn.readOnly )
-				return ;
+				return;
 
 			// This must be a one-phase commite, or the connection
 			// should have been prepared before.
@@ -829,7 +829,7 @@ public final class XAConnectionImpl
 			// been terminated any other way, nothing to do
 			// either.
 			if ( txConn.readOnly || txConn.conn == null )
-				return ;
+				return;
 
 			try
 			{
