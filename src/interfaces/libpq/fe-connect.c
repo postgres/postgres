@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.170 2001/07/21 04:32:41 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.171 2001/07/31 02:14:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -70,7 +70,7 @@ static SSL_CTX *SSL_context = NULL;
 
 #define NOTIFYLIST_INITIAL_SIZE 10
 #define NOTIFYLIST_GROWBY 10
-#define WIN32_NON_BLOCKING_CONNECTIONS
+
 
 /* ----------
  * Definition of the conninfo parameters and their fallback resources.
@@ -906,17 +906,7 @@ connectDBStart(PGconn *conn)
 			goto connect_errReturn;
 	}
 
-	/*
-	 * Since I have no idea whether this is a valid thing to do under
-	 * Windows before a connection is made, and since I have no way of
-	 * testing it, I leave the code looking as below.  When someone
-	 * decides that they want non-blocking connections under Windows, they
-	 * can define WIN32_NON_BLOCKING_CONNECTIONS before compilation.  If
-	 * it works, then this code can be cleaned up.
-	 *
-	 * Ewan Mellor <eem21@cam.ac.uk>.
-	 */
-#if ((!defined(WIN32) && !defined(__CYGWIN__)) || defined(WIN32_NON_BLOCKING_CONNECTIONS)) && !defined(USE_SSL)
+#if !defined(USE_SSL)
 	if (connectMakeNonblocking(conn) == 0)
 		goto connect_errReturn;
 #endif
@@ -926,23 +916,14 @@ connectDBStart(PGconn *conn)
 	 * now, but it is possible that:
 	 *	 1. Older systems will still block on connect, despite the
 	 *		non-blocking flag. (Anyone know if this is true?)
-	 *	 2. We are running under Windows, and aren't even trying
-	 *		to be non-blocking (see above).
-	 *	 3. We are using SSL.
-	 * Thus, we have make arrangements for all eventualities.
+	 *	 2. We are using SSL.
+	 * Thus, we have to make arrangements for all eventualities.
 	 * ----------
 	 */
-#ifndef WIN32
 	if (connect(conn->sock, &conn->raddr.sa, conn->raddr_len) < 0)
 	{
-		if (errno == EINPROGRESS || errno == 0)
-#else
- if (connect(conn->sock, &conn->raddr.sa, conn->raddr_len) != 0)
- {
-  if (errno == EINPROGRESS || errno == EWOULDBLOCK)
-#endif
+		if (errno == EINPROGRESS || errno == EWOULDBLOCK || errno == 0)
 		{
-
 			/*
 			 * This is fine - we're in non-blocking mode, and the
 			 * connection is in progress.
@@ -1040,7 +1021,7 @@ connectDBStart(PGconn *conn)
 	 * This makes the connection non-blocking, for all those cases which
 	 * forced us not to do it above.
 	 */
-#if ((defined(WIN32) || defined(__CYGWIN__)) && !defined(WIN32_NON_BLOCKING_CONNECTIONS)) || defined(USE_SSL)
+#if defined(USE_SSL)
 	if (connectMakeNonblocking(conn) == 0)
 		goto connect_errReturn;
 #endif
@@ -1949,11 +1930,13 @@ freePGconn(PGconn *conn)
 		SSL_free(conn->ssl);
 #endif
 	if (conn->sock >= 0)
+	{
 #ifdef WIN32
 		closesocket(conn->sock);
 #else
 		close(conn->sock);
 #endif
+	}
 	if (conn->pghost)
 		free(conn->pghost);
 	if (conn->pghostaddr)
@@ -2019,11 +2002,13 @@ closePGconn(PGconn *conn)
 	 * Close the connection, reset all transient state, flush I/O buffers.
 	 */
 	if (conn->sock >= 0)
+	{
 #ifdef WIN32
 		closesocket(conn->sock);
 #else
 		close(conn->sock);
 #endif
+	}
 	conn->sock = -1;
 	conn->status = CONNECTION_BAD;		/* Well, not really _bad_ - just
 										 * absent */
