@@ -1,5 +1,5 @@
 dnl Process this file with autoconf to produce a configure script.
-dnl $Header: /cvsroot/pgsql/configure.in,v 1.279 2003/08/07 21:38:55 tgl Exp $
+dnl $Header: /cvsroot/pgsql/configure.in,v 1.280 2003/08/11 18:07:38 tgl Exp $
 dnl
 dnl Developers, please strive to achieve this order:
 dnl
@@ -52,7 +52,7 @@ PGAC_ARG_REQ(with, template, [],
   esac
 ],
 [
-  # --with-template not given
+# --with-template not given
 
 case $host_os in
      aix*) template=aix ;;
@@ -178,11 +178,11 @@ AC_MSG_RESULT([$default_port])
 # Need both of these because some places want an integer and some a string
 AC_DEFINE_UNQUOTED(DEF_PGPORT, ${default_port},
 [Define to the default TCP port number on which the server listens and
-to which clients will try to connect to.  This can be overridden at
-run-time, but it's convenient if your clients have the right default
-compiled in.  (--with-pgport=PORTNUM)])
+to which clients will try to connect.  This can be overridden at run-time,
+but it's convenient if your clients have the right default compiled in.
+(--with-pgport=PORTNUM)])
 AC_DEFINE_UNQUOTED(DEF_PGPORT_STR, "${default_port}",
-                   [Define to the default TCP port number as string constant.])
+                   [Define to the default TCP port number as a string constant.])
 AC_SUBST(default_port)
 
 #
@@ -223,9 +223,13 @@ case $template in
 esac
 
 AC_PROG_CC([$pgac_cc_list])
+
+#
 # Read the template
+#
 . "$srcdir/src/template/$template" || exit
 
+# adjust CFLAGS per template
 if test "$ac_env_CFLAGS_set" = set; then
   CFLAGS=$ac_env_CFLAGS_value
 fi
@@ -311,11 +315,12 @@ done
 IFS=$ac_save_IFS
 
 #
-# Enable libpq to be thread-safety
+# Enable thread-safe client libraries
 #
-AC_MSG_CHECKING([allow thread-safe libpq and ecpg])
-PGAC_ARG_BOOL(enable, thread-safety, no, [  --enable-thread-safety allow libpq and ecpg to be thread-safe],
-              [AC_DEFINE([USE_THREADS], 1, [Define to 1 to build libpq and ecpg to be thread-safe. (--enable-thread-safety)])])
+AC_MSG_CHECKING([allow thread-safe client libraries])
+PGAC_ARG_BOOL(enable, thread-safety, no, [  --enable-thread-safety  make client libraries thread-safe],
+              [AC_DEFINE([USE_THREADS], 1,
+                         [Define to 1 to build client libraries as thread-safe code. (--enable-thread-safety)])])
 AC_MSG_RESULT([$enable_thread_safety])
 AC_SUBST(enable_thread_safety)
 
@@ -631,7 +636,6 @@ AC_CHECK_LIB(BSD,      main)
 AC_CHECK_LIB(gen,      main)
 AC_CHECK_LIB(PW,       main)
 AC_CHECK_LIB(resolv,   main)
-AC_CHECK_LIB(wsock32,   main)
 AC_SEARCH_LIBS(getopt_long, [getopt gnugetopt])
 # QNX:
 AC_CHECK_LIB(unix, main)
@@ -645,6 +649,11 @@ fi
 AC_SEARCH_LIBS(fdatasync, [rt posix4])
 # Cygwin:
 AC_CHECK_LIB(cygipc, shmget)
+# WIN32:
+if test "$PORTNAME" = "win32"
+then
+	AC_CHECK_LIB(wsock32, main)
+fi
 
 if test "$with_readline" = yes; then
   PGAC_CHECK_READLINE

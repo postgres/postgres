@@ -844,7 +844,7 @@ Optional Features:
   --enable-debug          build with debugging symbols (-g)
   --enable-depend         turn on automatic dependency tracking
   --enable-cassert        enable assertion checks (for debugging)
-  --enable-thread-safety allow libpq and ecpg to be thread-safe
+  --enable-thread-safety  make client libraries thread-safe
   --disable-largefile     omit support for large files
 
 Optional Packages:
@@ -1381,7 +1381,7 @@ echo "$as_me: error: '$withval' is not a valid template name. Use 'list' for a l
 
 else
 
-  # --with-template not given
+# --with-template not given
 
 case $host_os in
      aix*) template=aix ;;
@@ -2354,9 +2354,13 @@ ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
 ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
 ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
+
+#
 # Read the template
+#
 . "$srcdir/src/template/$template" || exit
 
+# adjust CFLAGS per template
 if test "$ac_env_CFLAGS_set" = set; then
   CFLAGS=$ac_env_CFLAGS_value
 fi
@@ -2773,10 +2777,10 @@ done
 IFS=$ac_save_IFS
 
 #
-# Enable libpq to be thread-safety
+# Enable thread-safe client libraries
 #
-echo "$as_me:$LINENO: checking allow thread-safe libpq and ecpg" >&5
-echo $ECHO_N "checking allow thread-safe libpq and ecpg... $ECHO_C" >&6
+echo "$as_me:$LINENO: checking allow thread-safe client libraries" >&5
+echo $ECHO_N "checking allow thread-safe client libraries... $ECHO_C" >&6
 
 
 # Check whether --enable-thread-safety or --disable-thread-safety was given.
@@ -5294,65 +5298,6 @@ _ACEOF
 
 fi
 
-
-echo "$as_me:$LINENO: checking for main in -lwsock32" >&5
-echo $ECHO_N "checking for main in -lwsock32... $ECHO_C" >&6
-if test "${ac_cv_lib_wsock32_main+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-lwsock32  $LIBS"
-cat >conftest.$ac_ext <<_ACEOF
-#line $LINENO "configure"
-#include "confdefs.h"
-
-
-#ifdef F77_DUMMY_MAIN
-#  ifdef __cplusplus
-     extern "C"
-#  endif
-   int F77_DUMMY_MAIN() { return 1; }
-#endif
-int
-main ()
-{
-main ();
-  ;
-  return 0;
-}
-_ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
-if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
-  (eval $ac_link) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } &&
-         { ac_try='test -s conftest$ac_exeext'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; }; then
-  ac_cv_lib_wsock32_main=yes
-else
-  echo "$as_me: failed program was:" >&5
-cat conftest.$ac_ext >&5
-ac_cv_lib_wsock32_main=no
-fi
-rm -f conftest.$ac_objext conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-echo "$as_me:$LINENO: result: $ac_cv_lib_wsock32_main" >&5
-echo "${ECHO_T}$ac_cv_lib_wsock32_main" >&6
-if test $ac_cv_lib_wsock32_main = yes; then
-  cat >>confdefs.h <<_ACEOF
-#define HAVE_LIBWSOCK32 1
-_ACEOF
-
-  LIBS="-lwsock32 $LIBS"
-
-fi
-
 echo "$as_me:$LINENO: checking for library containing getopt_long" >&5
 echo $ECHO_N "checking for library containing getopt_long... $ECHO_C" >&6
 if test "${ac_cv_search_getopt_long+set}" = set; then
@@ -5873,6 +5818,69 @@ _ACEOF
 
 fi
 
+# WIN32:
+if test "$PORTNAME" = "win32"
+then
+
+echo "$as_me:$LINENO: checking for main in -lwsock32" >&5
+echo $ECHO_N "checking for main in -lwsock32... $ECHO_C" >&6
+if test "${ac_cv_lib_wsock32_main+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lwsock32  $LIBS"
+cat >conftest.$ac_ext <<_ACEOF
+#line $LINENO "configure"
+#include "confdefs.h"
+
+
+#ifdef F77_DUMMY_MAIN
+#  ifdef __cplusplus
+     extern "C"
+#  endif
+   int F77_DUMMY_MAIN() { return 1; }
+#endif
+int
+main ()
+{
+main ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+         { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_lib_wsock32_main=yes
+else
+  echo "$as_me: failed program was:" >&5
+cat conftest.$ac_ext >&5
+ac_cv_lib_wsock32_main=no
+fi
+rm -f conftest.$ac_objext conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+echo "$as_me:$LINENO: result: $ac_cv_lib_wsock32_main" >&5
+echo "${ECHO_T}$ac_cv_lib_wsock32_main" >&6
+if test $ac_cv_lib_wsock32_main = yes; then
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_LIBWSOCK32 1
+_ACEOF
+
+  LIBS="-lwsock32 $LIBS"
+
+fi
+
+fi
 
 if test "$with_readline" = yes; then
 

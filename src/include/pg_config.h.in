@@ -25,12 +25,12 @@
 #undef ALIGNOF_SHORT
 
 /* Define to the default TCP port number on which the server listens and to
-   which clients will try to connect to. This can be overridden at run-time,
-   but it's convenient if your clients have the right default compiled in.
+   which clients will try to connect. This can be overridden at run-time, but
+   it's convenient if your clients have the right default compiled in.
    (--with-pgport=PORTNUM) */
 #undef DEF_PGPORT
 
-/* Define to the default TCP port number as string constant. */
+/* Define to the default TCP port number as a string constant. */
 #undef DEF_PGPORT_STR
 
 /* Define to 1 if you want National Language Support. (--enable-nls) */
@@ -603,7 +603,7 @@
 /* Define to select SysV-style shared memory. */
 #undef USE_SYSV_SHARED_MEMORY
 
-/* Define to 1 to build libpq and ecpg to be thread-safe.
+/* Define to 1 to build client libraries as thread-safe code.
    (--enable-thread-safety) */
 #undef USE_THREADS
 
