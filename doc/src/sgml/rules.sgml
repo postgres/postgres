@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/rules.sgml,v 1.15 2001/09/10 21:58:47 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/rules.sgml,v 1.16 2001/09/12 01:22:25 ishii Exp $ -->
 
 <Chapter Id="rules">
 <Title>The <ProductName>Postgres</ProductName> Rule System</Title>
@@ -1395,7 +1395,7 @@
     at the current data,
     
 <ProgramListing>
-    al_bundy=> SELECT * FROM shoelace ORDER BY sl_name;
+    al_bundy=> SELECT * FROM shoelace;
     sl_name   |sl_avail|sl_color  |sl_len|sl_unit |sl_len_cm
     ----------+--------+----------+------+--------+---------
     sl1       |       5|black     |    80|cm      |       80
@@ -1832,7 +1832,7 @@ Merge Join
 
 <ProgramListing>
     CREATE TABLE computer (
-        hostname        text     -- indexed
+        hostname        text,    -- indexed
 	manufacturer    text     -- indexed
     );
 
