@@ -13,3 +13,8 @@ SHLIB_LINK=$(DLLLIBS)
 	$(DLLTOOL) --export-all --output-def $*.def $<
 	$(DLLWRAP) -o $@ --def $*.def $< $(SRCDIR)/utils/dllinit.o $(DLLLIBS)
 	rm -f $*.def
+
+curdir:=$(shell pwd)
+ifeq ($(findstring backend,$(curdir)), backend)
+CFLAGS+= -DBUILDING_DLL=1
+endif

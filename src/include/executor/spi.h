@@ -66,9 +66,9 @@ typedef struct
 #define SPI_OK_UPDATE			9
 #define SPI_OK_CURSOR			10
 
-extern uint32 SPI_processed;
-extern SPITupleTable *SPI_tuptable;
-extern int	SPI_result;
+extern DLLIMPORT uint32 SPI_processed;
+extern DLLIMPORT SPITupleTable *SPI_tuptable;
+extern DLLIMPORT int	SPI_result;
 
 extern int	SPI_connect(void);
 extern int	SPI_finish(void);

@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: c.h,v 1.51 1999/02/13 23:20:44 momjian Exp $
+ * $Id: c.h,v 1.52 1999/03/09 13:39:01 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -51,6 +51,10 @@
 #ifdef STDC_HEADERS
 #include <stddef.h>
 #include <stdarg.h>
+#endif
+
+#ifdef __CYGWIN32__
+#include <errno.h>
 #endif
 
 #ifdef __CYGWIN32__
@@ -828,6 +832,20 @@ extern char *form(const char *fmt,...);
 #define NULL_DEV		"/dev/null"
 #define COPY_CMD		"cp"
 #define SEP_CHAR		'/'
+
+/* defines for dynamic linking on Win32 platform */
+#ifdef __CYGWIN32__
+#if __GNUC__ && ! defined (__declspec)
+#error You need egcs 1.1 or newer for compiling!
+#endif
+#ifdef BUILDING_DLL
+#define DLLIMPORT __declspec (dllexport)
+#else /* not BUILDING_DLL */
+#define DLLIMPORT __declspec (dllimport)
+#endif
+#else /* not CYGWIN */
+#define DLLIMPORT
+#endif
 
 /* Provide prototypes for routines not present in a particular machine's
  * standard C library.  It'd be better to put these in config.h, but

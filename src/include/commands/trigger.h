@@ -26,7 +26,7 @@ typedef struct TriggerData
 	Trigger    *tg_trigger;
 } TriggerData;
 
-extern TriggerData *CurrentTriggerData;
+extern DLLIMPORT TriggerData *CurrentTriggerData;
 
 #define TRIGGER_EVENT_INSERT			0x00000000
 #define TRIGGER_EVENT_DELETE			0x00000001

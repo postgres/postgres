@@ -35,7 +35,7 @@
 #include "utils/acl.h"
 #endif
 
-TriggerData *CurrentTriggerData = NULL;
+DLLIMPORT TriggerData *CurrentTriggerData = NULL;
 
 void		RelationBuildTriggers(Relation relation);
 void		FreeTriggerDesc(Relation relation);

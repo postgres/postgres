@@ -3,7 +3,7 @@
  * spi.c
  *				Server Programming Interface
  *
- * $Id: spi.c,v 1.34 1999/02/13 23:15:30 momjian Exp $
+ * $Id: spi.c,v 1.35 1999/03/09 13:39:00 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,9 +19,9 @@ static _SPI_connection *_SPI_current = NULL;
 static int	_SPI_connected = -1;
 static int	_SPI_curid = -1;
 
-uint32		SPI_processed = 0;
-SPITupleTable *SPI_tuptable;
-int			SPI_result;
+DLLIMPORT uint32 	SPI_processed = 0;
+DLLIMPORT SPITupleTable *SPI_tuptable;
+DLLIMPORT int			SPI_result;
 
 static int	_SPI_execute(char *src, int tcount, _SPI_plan *plan);
 static int	_SPI_pquery(QueryDesc *queryDesc, EState *state, int tcount);
