@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/client-auth.sgml,v 1.46 2003/03/13 01:30:26 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/client-auth.sgml,v 1.47 2003/06/06 18:09:17 momjian Exp $
 -->
 
 <chapter id="client-authentication">
@@ -639,8 +639,15 @@ local   db1,db2,@demodbs  all                                       md5
    </para>
 
    <para>
-    If you use <application>mod_auth_krb</application> and
-    <application>mod_perl</application> on your
+<ulink url="http://www.kernel.org/pub/linux/libs/pam/"><productname>Linux-PAM</>
+    Page
+
+    If you use <application>mod_auth_kerb</application> from
+    <ulink url="http://modauthkerb.sf.net">http://modauthkerb.sf.net</ulink>
+    or <application>mod_auth_gss_krb5</application> from
+    <ulink url="http://meta.cesnet.cz/software/negotiate.en.html">
+    http://meta.cesnet.cz/software/negotiate.en.html</ulink>,
+    and <application>mod_perl</application> on your
     <productname>Apache</productname> web server, you can use
     <literal>AuthType KerberosV5SaveCredentials</literal> with a
     <application>mod_perl</application> script. This gives secure
