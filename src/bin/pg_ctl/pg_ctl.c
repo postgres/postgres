@@ -4,7 +4,7 @@
  *
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/pg_ctl/pg_ctl.c,v 1.25 2004/08/21 03:12:55 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_ctl/pg_ctl.c,v 1.26 2004/08/28 21:01:38 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -832,6 +832,9 @@ static char* pgwin32_CommandLine(bool registration)
 		strcat(cmdLine,"\"");
 	}
 
+	if (do_wait)
+		strcat(cmdLine, " -w");
+	
 	if (post_opts)
 	{
 		strcat(cmdLine," ");
@@ -1038,7 +1041,7 @@ do_help(void)
 	printf(_("  %s status  [-D DATADIR]\n"), progname);
 	printf(_("  %s kill    SIGNALNAME PROCESSID\n"), progname);
 #ifdef WIN32
-	printf(_("  %s register   [-N servicename] [-U username] [-P password] [-D DATADIR] [-o \"OPTIONS\"]\n"), progname);
+	printf(_("  %s register   [-N servicename] [-U username] [-P password] [-D DATADIR] [-w] [-o \"OPTIONS\"]\n"), progname);
 	printf(_("  %s unregister [-N servicename]\n"), progname);
 #endif
 	printf(_("Common options:\n"));
