@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/date.c,v 1.73 2002/09/21 19:52:41 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/date.c,v 1.74 2002/11/21 23:31:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2013,7 +2013,6 @@ timetz_zone(PG_FUNCTION_ARGS)
 	text	   *zone = PG_GETARG_TEXT_P(0);
 	TimeTzADT  *time = PG_GETARG_TIMETZADT_P(1);
 	TimeTzADT  *result;
-	TimeADT		time1;
 	int			tz;
 	int			type,
 				val;
@@ -2040,15 +2039,17 @@ timetz_zone(PG_FUNCTION_ARGS)
 	{
 		tz = val * 60;
 #ifdef HAVE_INT64_TIMESTAMP
-		time1 = (time->time - ((time->zone + tz) * INT64CONST(1000000)));
-		result->time -= ((result->time / time1) * time1);
-		if (result->time < INT64CONST(0))
+		result->time = time->time + ((time->zone - tz) * INT64CONST(1000000));
+		while (result->time < INT64CONST(0))
 			result->time += INT64CONST(86400000000);
+		while (result->time >= INT64CONST(86400000000))
+			result->time -= INT64CONST(86400000000);
 #else
-		time1 = (time->time - time->zone + tz);
-		TMODULO(result->time, time1, 86400e0);
-		if (result->time < 0)
+		result->time = time->time + (time->zone - tz);
+		while (result->time < 0)
 			result->time += 86400;
+		while (result->time >= 86400)
+			result->time -= 86400;
 #endif
 
 		result->zone = tz;
@@ -2087,13 +2088,13 @@ timetz_izone(PG_FUNCTION_ARGS)
 	result = (TimeTzADT *) palloc(sizeof(TimeTzADT));
 
 #ifdef HAVE_INT64_TIMESTAMP
-	result->time = (time->time + ((time->zone - tz) * INT64CONST(1000000)));
+	result->time = time->time + ((time->zone - tz) * INT64CONST(1000000));
 	while (result->time < INT64CONST(0))
 		result->time += INT64CONST(86400000000);
 	while (result->time >= INT64CONST(86400000000))
 		result->time -= INT64CONST(86400000000);
 #else
-	result->time = (time->time + (time->zone - tz));
+	result->time = time->time + (time->zone - tz);
 	while (result->time < 0)
 		result->time += 86400;
 	while (result->time >= 86400)

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.108 2002/11/15 03:11:15 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.109 2002/11/21 23:31:20 tgl Exp $
 -->
 
  <chapter id="datatype">
@@ -1570,18 +1570,30 @@ SELECT b, char_length(b) FROM test2;
     </indexterm>
 
     <indexterm>
+     <primary>timestamp with time zone</primary>
+     <secondary>data type</secondary>
+    </indexterm>
+
+    <indexterm>
      <primary>timestamp without time zone</primary>
      <secondary>data type</secondary>
     </indexterm>
 
      <para>
-      Time stamp types exist as <type>timestamp [
-      (<replaceable>p</replaceable>) ]</type>, <type>timestamp [
+      The time stamp types are <type>timestamp [
       (<replaceable>p</replaceable>) ] without time zone</type> and
-      <type>timestamp [ (<replaceable>p</replaceable>) ] without time
-      zone</type>.  A plain <type>timestamp</type> is equivalent to
-      <type>timestamp without timezone</type>.
+      <type>timestamp [ (<replaceable>p</replaceable>) ] with time
+      zone</type>.  Writing just <type>timestamp</type> is equivalent to
+      <type>timestamp without time zone</type>.
      </para>
+
+    <note>
+     <para>
+      Prior to <productname>PostgreSQL</productname> 7.3, writing just
+      <type>timestamp</type> was equivalent to <type>timestamp with time
+      zone</type>.  This was changed for SQL spec compliance.
+     </para>
+    </note>
 
      <para>
       Valid input for the time stamp types consists of a concatenation
@@ -1615,9 +1627,36 @@ January 8 04:05:06 1999 PST
 
      <para>
       For <type>timestamp without time zone</type>, any explicit time
-      zone specified in the input is silently swallowed. That is, the
+      zone specified in the input is silently ignored. That is, the
       resulting date/time value is derived from the explicit date/time
       fields in the input value, and is not adjusted for time zone.
+     </para>
+
+     <para>
+      For <type>timestamp with time zone</type>, the internally stored
+      value is always in UTC (GMT).  An input value that has an explicit
+      time zone specified is converted to UTC using the appropriate offset
+      for that time zone.  If no time zone is stated in the input string,
+      then it is assumed to be in the time zone indicated by the system's
+      <varname>TimeZone</> parameter, and is converted to UTC using the
+      offset for the <varname>TimeZone</> zone.
+     </para>
+
+     <para>
+      When a <type>timestamp with time
+      zone</type> value is output, it is always converted from UTC to the
+      current <varname>TimeZone</> zone, and displayed as local time in that
+      zone.  To see the time in another time zone, either change
+      <varname>TimeZone</> or use the <literal>AT TIME ZONE</> construct
+      (see <xref linkend="functions-datetime-zoneconvert">).
+     </para>
+
+     <para>
+      Conversions between <type>timestamp without time zone</type> and
+      <type>timestamp with time zone</type> normally assume that the
+      <type>timestamp without time zone</type> value should be taken or given
+      as <varname>TimeZone</> local time.  A different zone reference can
+      be specified for the conversion using <literal>AT TIME ZONE</>.
      </para>
 
       <table tocentry="1" id="datatype-timezone-table">
@@ -1707,24 +1746,28 @@ January 8 04:05:06 1999 PST
      <para>
       The following <acronym>SQL</acronym>-compatible functions can be
       used as date or time
-      input for the corresponding data type: <literal>CURRENT_DATE</literal>,
+      values for the corresponding data type: <literal>CURRENT_DATE</literal>,
       <literal>CURRENT_TIME</literal>,
       <literal>CURRENT_TIMESTAMP</literal>. The latter two accept an
-      optional precision specification.  (See also <xref linkend="functions-datetime">.)
+      optional precision specification.  (See also <xref linkend="functions-datetime-current">.)
      </para>
 
      <para>
       <productname>PostgreSQL</productname> also supports several
-      special constants for convenience, shown in <xref
-      linkend="datatype-datetime-special-table">.
+      special date/time input values for convenience, as shown in <xref
+      linkend="datatype-datetime-special-table">.  The values
+      <literal>infinity</literal> and <literal>-infinity</literal>
+      are specially represented inside the system and will be displayed
+      the same way; but the others are simply notational shorthands
+      that will be converted to ordinary date/time values when read.
      </para>
 
       <table id="datatype-datetime-special-table">
-       <title>Special Date/Time Constants</title>
+       <title>Special Date/Time Inputs</title>
        <tgroup cols="2">
 	<thead>
 	 <row>
-	  <entry>Constant</entry>
+	  <entry>Input string</entry>
 	  <entry>Description</entry>
 	 </row>
 	</thead>
@@ -1735,15 +1778,13 @@ January 8 04:05:06 1999 PST
 	 </row>
 	 <row>
 	  <entry><literal>infinity</literal></entry>
-	  <entry>later than other valid times</entry>
+	  <entry>later than all other timestamps (not available for
+	  type <type>date</>)</entry>
 	 </row>
 	 <row>
 	  <entry><literal>-infinity</literal></entry>
-	  <entry>earlier than other valid times</entry>
-	 </row>
-	 <row>
-	  <entry><literal>invalid</literal></entry>
-	  <entry>illegal entry</entry>
+	  <entry>earlier than all other timestamps (not available for
+	  type <type>date</>)</entry>
 	 </row>
 	 <row>
 	  <entry><literal>now</literal></entry>
@@ -1962,13 +2003,21 @@ January 8 04:05:06 1999 PST
     </para>
 
     <para>
-     There are several ways to affect the time-zone behavior:
+     There are several ways to select the time zone used by the server:
 
      <itemizedlist>
       <listitem>
        <para>
 	The <envar>TZ</envar> environment variable on the server host
-	is used by the server as the default time zone.
+	is used by the server as the default time zone, if no other is
+	specified.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+	The <varname>timezone</varname> configuration parameter can be
+	set in <filename>postgresql.conf</>.
        </para>
       </listitem>
 
@@ -1985,18 +2034,6 @@ January 8 04:05:06 1999 PST
        <para>
 	The <acronym>SQL</acronym> command <command>SET TIME ZONE</command>
 	sets the time zone for the session.
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-	The construct
-<programlisting>
-<replaceable>timestamp</replaceable> AT TIME ZONE '<replaceable>zone</replaceable>'
-</programlisting>
-	where <replaceable>zone</replaceable> can be specified as a
-	text time zone (e.g., <literal>'PST'</literal>) or as an
-	interval (e.g., <literal>INTERVAL '-08:00'</literal>).
        </para>
       </listitem>
      </itemizedlist>
