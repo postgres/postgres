@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: execdebug.h,v 1.15 2001/01/24 19:43:23 momjian Exp $
+ * $Id: execdebug.h,v 1.16 2001/09/20 21:07:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,14 +28,6 @@
  */
 
 /* ----------------
- *		EXEC_DEBUGSTORETUP is for tuple table debugging - this
- *		will print a message every time we call ExecStoreTuple.
- *		-cim 3/20/91
- * ----------------
-#undef EXEC_DEBUGSTORETUP
- */
-
-/* ----------------
  *		EXEC_TUPLECOUNT is a #define which causes the
  *		executor keep track of tuple counts.  This might be
  *		causing some problems with the decstation stuff so
@@ -46,37 +38,11 @@
  */
 
 /* ----------------
- *		EXEC_SHOWBUFSTATS controls whether or not buffer statistics
- *		are shown for each query.  -cim 2/9/89
- * ----------------
-#undef EXEC_SHOWBUFSTATS
- */
-
-/* ----------------
  *		EXEC_CONTEXTDEBUG turns on the printing of debugging information
  *		by CXT_printf() calls regarding which memory context is the
  *		CurrentMemoryContext for palloc() calls.
  * ----------------
 #undef EXEC_CONTEXTDEBUG
- */
-
-/* ----------------
- *		EXEC_RETURNSIZE is a compile flag governing the
- *		behaviour of lispFmgr..  See ExecMakeFunctionResult().
- *		Undefining this avoids a problem in the system cache.
- *
- *		Note: undefining this means that there is incorrect
- *			  information in the const nodes corresponding
- *			  to function (or operator) results.  The thing is,
- *			  99% of the time this is fine because when you do
- *			  something like x = emp.sal + 1, you already know
- *			  the type and size of x so the fact that + didn't
- *			  return the correct size doesn't matter.
- *			  With variable length stuff the size is stored in
- *			  the first few bytes of the data so again, it's
- *			  not likely to matter.
- * ----------------
-#undef EXEC_RETURNSIZE
  */
 
 /* ----------------
@@ -126,30 +92,6 @@
  *		the ExecMergeJoin() stuff by MJ_printf() in mergejoin.c
  * ----------------
 #undef EXEC_MERGEJOINDEBUG
- */
-
-/* ----------------
- *		EXEC_DEBUGINTERACTIVE is a flag which enables the
- *		user to issue "DEBUG" commands from an interactive
- *		backend.
- * ----------------
-#undef EXEC_DEBUGINTERACTIVE
- */
-
-/* ----------------
- *		EXEC_DEBUGVARIABLEFILE is string, which if defined will
- *		be loaded when the executor is initialized.  If this
- *		string is not defined then nothing will be loaded..
- *
- *		Example:
- *
- * #define EXEC_DEBUGVARIABLEFILE "/a/postgres/cimarron/.pg_debugvars"
- #
- *		Note: since these variables are read at execution time,
- *		they can't affect the first query.. this hack should be
- *		replaced by something better sometime. -cim 11/2/89
- * ----------------
-#undef EXEC_DEBUGVARIABLEFILE
  */
 
 /* ----------------------------------------------------------------
