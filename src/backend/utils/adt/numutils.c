@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/numutils.c,v 1.2 1996/07/16 07:13:35 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/numutils.c,v 1.3 1996/07/22 21:56:03 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -132,7 +132,9 @@ ltoa(int32 l, char *a)
 int
 ftoa(double value, char *ascii, int width, int prec1, char format)
 {
-#if defined(PORTNAME_BSD44_derived) || defined(PORTNAME_bsdi) || defined(PORTNAME_bsdi_2_1)
+#if defined(PORTNAME_BSD44_derived) || \
+    defined(PORTNAME_bsdi) || \
+    defined(PORTNAME_bsdi_2_1)
 	char	out[256];
 	char	fmt[256];
 	int	ret;

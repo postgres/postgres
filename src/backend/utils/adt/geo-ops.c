@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/geo-ops.c,v 1.1.1.1 1996/07/09 06:22:04 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/geo-ops.c,v 1.2 1996/07/22 21:56:01 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -717,8 +717,8 @@ long path_inter(PATH *p1, PATH *p2)
     int	i, j;
     LSEG seg1, seg2;
     
-    b1.xh = b1.yh = b2.xh = b2.yh = DBL_MAX;
-    b1.xl = b1.yl = b2.xl = b2.yl = -DBL_MAX;
+    b1.xh = b1.yh = b2.xh = b2.yh = (double)DBL_MAX;
+    b1.xl = b1.yl = b2.xl = b2.yl = -(double)DBL_MAX;
     for (i = 0; i < p1->npts; ++i) {
 	b1.xh = Max(p1->p[i].x, b1.xh);
 	b1.yh = Max(p1->p[i].y, b1.yh);
@@ -955,7 +955,7 @@ double *point_slope(Point *pt1, Point *pt2)
     
     result = PALLOCTYPE(double);
     if (point_vert(pt1, pt2))
-	*result = DBL_MAX;
+	*result = (double)DBL_MAX;
     else
 	*result = (pt1->y - pt2->y) / (pt1->x - pt1->x);
     return(result);
@@ -965,7 +965,7 @@ double *point_slope(Point *pt1, Point *pt2)
 double point_sl(Point *pt1, Point *pt2)
 {
     return(	point_vert(pt1, pt2)
-	   ? DBL_MAX
+	   ? (double)DBL_MAX
 	   : (pt1->y - pt2->y) / (pt1->x - pt2->x) );
 }
 
@@ -1124,7 +1124,7 @@ double *lseg_distance(LSEG *l1, LSEG *l2)
 	*result = 0.0;
 	return(result);
     }
-    *result = DBL_MAX;
+    *result = (double)DBL_MAX;
     d = dist_ps(&l1->p[0], l2);
     *result = Min(*result, *d);
     PFREE(d);
@@ -1148,7 +1148,7 @@ double lseg_dt(LSEG *l1, LSEG *l2)
     
     if (lseg_intersect(l1, l2))
 	return(0.0);
-    result = DBL_MAX;
+    result = (double)DBL_MAX;
     d = dist_ps(&l1->p[0], l2);
     result = Min(result, *d);
     PFREE(d);
@@ -1231,7 +1231,7 @@ double *dist_ps(Point *pt, LSEG *lseg)
     if (lseg->p[1].x == lseg->p[0].x)
 	m = 0;
     else if (lseg->p[1].y == lseg->p[0].y) /* slope is infinite */
-	m = DBL_MAX;
+	m = (double)DBL_MAX;
     else m = (-1) * (lseg->p[1].y - lseg->p[0].y) / 
 	(lseg->p[1].x - lseg->p[0].x);
     ln = line_construct_pm(pt, m);
@@ -1512,8 +1512,8 @@ long on_pl(Point *pt, LINE *line)
  */
 long on_ps(Point *pt, LSEG *lseg)
 {
-    return( point_dt(pt, &lseg->p[0]) + point_dt(pt, &lseg->p[1])
-	   == point_dt(&lseg->p[0], &lseg->p[1]) );
+    return( FPeq (point_dt(pt, &lseg->p[0]) + point_dt(pt, &lseg->p[1]),
+            point_dt(&lseg->p[0], &lseg->p[1])) );
 }
 
 long on_pb(Point *pt, BOX *box)

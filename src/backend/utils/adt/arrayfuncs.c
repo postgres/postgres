@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.2 1996/07/20 07:58:44 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.3 1996/07/22 21:56:00 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -224,6 +224,14 @@ _ArrayCount(char *str, int dim[], int typdelim)
         bool done = false;
         while (!done) {
             switch (*q) {
+#ifdef ESCAPE_PATCH
+            case '\\':
+                /* skip escaped characters (\ and ") inside strings */
+                if (scanning_string && *(q+1)) {
+                    q++;
+                }
+                break;
+#endif
 	    case '\"':
 		scanning_string = ! scanning_string;
 		break;

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/nabstime.c,v 1.2 1996/07/20 08:36:19 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/nabstime.c,v 1.3 1996/07/22 21:56:03 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -291,23 +291,24 @@ tryabsdate(char *fields[], int nf, struct tm *tm, int *tzp)
     (void) ftime(&now);
     *tzp = now.timezone;
 #else /* USE_POSIX_TIME */
-#if defined(PORTNAME_hpux) || \
-    defined(PORTNAME_aix) || \
+#if defined(PORTNAME_aix) || \
+    defined(PORTNAME_hpux) || \
+    defined(PORTNAME_i386_solaris) || \
     defined(PORTNAME_irix5) || \
-    defined(WIN32) || \
-	defined(PORTNAME_sparc_solaris) || defined(PORTNAME_i386_solaris)
+    defined(PORTNAME_sparc_solaris) || \
+    defined(WIN32)
 	    tzset();
 #ifndef WIN32
     *tzp = timezone / 60;		/* this is an X/Open-ism */
 #else
     *tzp = _timezone / 60;            /* this is an X/Open-ism */
 #endif /* WIN32 */
-#else /* PORTNAME_hpux || PORTNAME_aix || PORTNAME_sparc_solaris || PORTNAME_irix5 */
+#else /* PORTNAME_aix || PORTNAME_hpux || ... */
     time_t now = time((time_t *) NULL);
     struct tm *tmnow = localtime(&now);
     
     *tzp = - tmnow->tm_gmtoff / 60;	/* tm_gmtoff is Sun/DEC-ism */
-#endif /* PORTNAME_hpux || PORTNAME_aix */
+#endif /* PORTNAME_aix || PORTNAME_hpux || ... */
 #endif /* USE_POSIX_TIME */
     
     tm->tm_mday = tm->tm_mon = tm->tm_year = -1;	/* mandatory */

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/varlena.c,v 1.3 1996/07/19 07:14:14 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/varlena.c,v 1.4 1996/07/22 21:56:04 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -219,23 +219,35 @@ int textlen (text* t)
  *    takes two text* and returns a text* that is the concatentation of 
  *  the two
  */
+
+/*
+ * Rewrited by Sapa, sapa@hq.icb.chel.su. 8-Jul-96.
+ */
+
 text* 
 textcat(text* t1, text* t2)
 {
     int len1, len2, newlen;
+    char *ptr;
     text* result;
 
+    /* Check for NULL strings... */
     if (t1 == NULL) return t2;
     if (t2 == NULL) return t1;
 
-    len1 = textlen (t1);
-    len2 = textlen (t2);
-    newlen = len1 + len2 + VARHDRSZ;
-    result = (text*) palloc (newlen);
+    /* Check for ZERO-LENGTH strings... */
+    /* I use <= instead of == , I know - it's paranoia, but... */
+    if((len1 = VARSIZE(t1) - VARHDRSZ) <= 0) return t2;
+    if((len2 = VARSIZE(t2) - VARHDRSZ) <= 0) return t1;
 
+    result = (text *)palloc(newlen = len1 + len2 + VARHDRSZ);
+
+    /* Fill data field of result string... */
+    memcpy(ptr = VARDATA(result), VARDATA(t1), len1);
+    memcpy(ptr + len1, VARDATA(t2), len2);
+
+    /* Set size of result string... */
     VARSIZE(result) = newlen;
-    memcpy (VARDATA(result),        VARDATA(t1), len1);
-    memcpy (VARDATA(result) + len1, VARDATA(t2), len2);
 
     return result;
 }
