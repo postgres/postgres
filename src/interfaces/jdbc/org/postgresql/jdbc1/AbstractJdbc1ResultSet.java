@@ -9,7 +9,7 @@
  * Copyright (c) 2003, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/AbstractJdbc1ResultSet.java,v 1.19 2003/09/17 07:00:24 barry Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/AbstractJdbc1ResultSet.java,v 1.20 2003/09/18 04:09:02 barry Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -798,7 +798,18 @@ public abstract class AbstractJdbc1ResultSet implements BaseResultSet
 		if (s != null)
 		{
 			s = s.trim();
-			return (s.equalsIgnoreCase("true") || s.equals("1") || s.equalsIgnoreCase("t"));
+
+			if (s.equalsIgnoreCase("true") || s.equalsIgnoreCase("t"))
+				return true;
+
+			try
+			{
+				if (Double.parseDouble(s)==1)
+					return true;
+			}
+			catch (NumberFormatException e)
+			{
+			}
 		}
 		return false;		// SQL NULL
 	}
