@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_relation.c,v 1.19 1999/02/23 07:53:01 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_relation.c,v 1.20 1999/05/17 17:03:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -283,7 +283,7 @@ expandAll(ParseState *pstate, char *relname, char *refname, int *this_resno)
 								attrname,
 								(Index) 0,
 								(Oid) 0,
-								0);
+								false);
 		te->expr = (Node *) varnode;
 		if (te_head == NIL)
 			te_head = te_tail = lcons(te, NIL);

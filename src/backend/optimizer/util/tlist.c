@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/tlist.c,v 1.30 1999/05/12 15:01:44 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/tlist.c,v 1.31 1999/05/17 17:03:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -138,7 +138,7 @@ create_tl_element(Var *var, int resdomno)
 									  NULL,
 									  (Index) 0,
 									  (Oid) 0,
-									  0),
+									  false),
 						   (Node *) var);
 }
 
@@ -379,7 +379,7 @@ flatten_tlist(List *tlist)
 						   NULL,
 						   (Index) 0,
 						   (Oid) 0,
-						   0);
+						   false);
 			last_resdomno++;
 			new_tlist = lappend(new_tlist, makeTargetEntry(r, (Node *) var));
 		}
@@ -573,7 +573,7 @@ AddGroupAttrToTlist(List *tlist, List *grpCl)
 						   NULL,
 						   (Index) 0,
 						   (Oid) 0,
-						   0);
+						   false);
 			last_resdomno++;
 			tlist = lappend(tlist, makeTargetEntry(r, (Node *) var));
 		}

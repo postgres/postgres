@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/makefuncs.c,v 1.14 1999/05/12 15:01:34 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/makefuncs.c,v 1.15 1999/05/17 17:03:12 momjian Exp $
  *
  * NOTES
  *	  Creator functions in POSTGRES 4.2 are generated automatically. Most of
@@ -97,7 +97,7 @@ makeResdom(AttrNumber resno,
 		   char *resname,
 		   Index reskey,
 		   Oid reskeyop,
-		   int resjunk)
+		   bool resjunk)
 {
 	Resdom	   *resdom = makeNode(Resdom);
 

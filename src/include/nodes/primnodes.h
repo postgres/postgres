@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: primnodes.h,v 1.26 1999/05/12 15:02:07 wieck Exp $
+ * $Id: primnodes.h,v 1.27 1999/05/17 17:03:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,9 +31,8 @@
  *		reskey			- order of key in a sort (for those > 0)
  *		reskeyop		- sort operator Oid
  *		resgroupref		- set to nonzero if referenced from a group by clause
- *		resjunk			- set to nonzero to eliminate the attribute
- *						  from final target list  e.g., ctid for replace
- *						  and delete
+ *		resjunk			- set to true to eliminate the attribute
+ *						  from final target list
  *
  * ----------------
  */
@@ -47,7 +46,7 @@ typedef struct Resdom
 	Index		reskey;
 	Oid			reskeyop;
 	Index		resgroupref;
-	int			resjunk;
+	bool		resjunk;
 } Resdom;
 
 /* -------------

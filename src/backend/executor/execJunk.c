@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execJunk.c,v 1.16 1999/02/13 23:15:16 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execJunk.c,v 1.17 1999/05/17 17:03:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,7 +36,7 @@
  *
  * The general idea is the following: A target list consists of a list of
  * Resdom nodes & expression pairs. Each Resdom node has an attribute
- * called 'resjunk'. If the value of this attribute is 1 then the
+ * called 'resjunk'. If the value of this attribute is true then the
  * corresponding attribute is a "junk" attribute.
  *
  * When we initialize a plan  we call 'ExecInitJunkFilter' to create
@@ -73,7 +73,7 @@ ExecInitJunkFilter(List *targetList)
 	TargetEntry *tle;
 	Resdom	   *resdom,
 			   *cleanResdom;
-	int			resjunk;
+	bool		resjunk;
 	AttrNumber	cleanResno;
 	AttrNumber *cleanMap;
 	Size		size;
@@ -81,7 +81,7 @@ ExecInitJunkFilter(List *targetList)
 
 	/* ---------------------
 	 * First find the "clean" target list, i.e. all the entries
-	 * in the original target list which have a zero 'resjunk'
+	 * in the original target list which have a false 'resjunk'
 	 * NOTE: make copy of the Resdom nodes, because we have
 	 * to change the 'resno's...
 	 * ---------------------
@@ -98,7 +98,7 @@ ExecInitJunkFilter(List *targetList)
 			resdom = rtarget->resdom;
 			expr = rtarget->expr;
 			resjunk = resdom->resjunk;
-			if (resjunk == 0)
+			if (!resjunk)
 			{
 
 				/*
@@ -194,7 +194,7 @@ ExecInitJunkFilter(List *targetList)
 				resdom = tle->resdom;
 				expr = tle->expr;
 				resjunk = resdom->resjunk;
-				if (resjunk == 0)
+				if (!resjunk)
 				{
 					cleanMap[cleanResno - 1] = resdom->resno;
 					cleanResno++;
@@ -271,7 +271,7 @@ ExecGetJunkAttribute(JunkFilter *junkfilter,
 	Resdom	   *resdom;
 	AttrNumber	resno;
 	char	   *resname;
-	int			resjunk;
+	bool		resjunk;
 	TupleDesc	tupType;
 	HeapTuple	tuple;
 
@@ -290,7 +290,7 @@ ExecGetJunkAttribute(JunkFilter *junkfilter,
 		resdom = tle->resdom;
 		resname = resdom->resname;
 		resjunk = resdom->resjunk;
-		if (resjunk != 0 && (strcmp(resname, attrName) == 0))
+		if (resjunk && (strcmp(resname, attrName) == 0))
 		{
 			/* We found it ! */
 			resno = resdom->resno;

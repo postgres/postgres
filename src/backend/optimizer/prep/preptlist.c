@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/preptlist.c,v 1.19 1999/05/12 15:01:41 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/preptlist.c,v 1.20 1999/05/17 17:03:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -106,7 +106,7 @@ preprocess_targetlist(List *tlist,
 							"ctid",
 							0,
 							0,
-							1);
+							true);
 
 		var = makeVar(result_relation, -1, TIDOID, -1, 0, result_relation, -1);
 
@@ -211,7 +211,7 @@ replace_matching_resname(List *new_tlist, List *old_tlist)
 	 * locks.
 	 *
 	 * So, copy all these entries to the end of the target list and set their
-	 * 'resjunk' value to 1 to show that these are special attributes and
+	 * 'resjunk' value to true to show that these are special attributes and
 	 * have to be treated specially by the executor!
 	 */
 	foreach(temp, old_tlist)
@@ -225,7 +225,7 @@ replace_matching_resname(List *new_tlist, List *old_tlist)
 		{
 			newresno = (Resdom *) copyObject((Node *) old_tle->resdom);
 			newresno->resno = length(t_list) + 1;
-			newresno->resjunk = 1;
+			newresno->resjunk = true;
 			new_tl = makeTargetEntry(newresno, old_tle->expr);
 			t_list = lappend(t_list, new_tl);
 		}
@@ -267,7 +267,7 @@ replace_matching_resname(List *new_tlist, List *old_tlist)
 			{
 				newresno = (Resdom *) copyObject((Node *) old_tle->resdom);
 				newresno->resno = length(t_list) + 1;
-				newresno->resjunk = 1;
+				newresno->resjunk = true;
 				new_tl = makeTargetEntry(newresno, old_tle->expr);
 				t_list = lappend(t_list, new_tl);
 			}
@@ -338,7 +338,7 @@ new_relation_targetlist(Oid relid, Index rt_index, NodeTag node_type)
 													   attname,
 													   0,
 													   (Oid) 0,
-													   0),
+													   false),
 											(Node *) temp2);
 					t_list = lappend(t_list, temp3);
 					break;
@@ -358,7 +358,7 @@ new_relation_targetlist(Oid relid, Index rt_index, NodeTag node_type)
 														   attname,
 														   0,
 														   (Oid) 0,
-														   0),
+														   false),
 												(Node *) temp_var);
 					t_list = lappend(t_list, temp_list);
 					break;

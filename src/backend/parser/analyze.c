@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *  $Id: analyze.c,v 1.105 1999/05/17 04:50:07 tgl Exp $
+ *  $Id: analyze.c,v 1.106 1999/05/17 17:03:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -338,7 +338,7 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt)
 								   att[defval[ndef].adnum - 1]->atttypid,
 								  att[defval[ndef].adnum - 1]->atttypmod,
 			   pstrdup(nameout(&(att[defval[ndef].adnum - 1]->attname))),
-											0, 0, 0),
+											0, 0, false),
 							  (Node *) stringToNode(defval[ndef].adbin));
 			qry->targetList = lappend(qry->targetList, te);
 		}

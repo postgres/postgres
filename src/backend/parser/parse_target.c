@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_target.c,v 1.36 1999/05/17 04:19:33 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_target.c,v 1.37 1999/05/17 17:03:35 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -60,7 +60,7 @@ MakeTargetEntryIdent(ParseState *pstate,
 					 char **resname,
 					 char *refname,
 					 char *colname,
-					 int16 resjunk)
+					 bool resjunk)
 {
 	Node	   *expr = NULL;
 	Oid			attrtype_target;
@@ -123,7 +123,7 @@ MakeTargetEntryIdent(ParseState *pstate,
 			{
 				expr = coerce_type(pstate, node, attrtype_id, attrtype_target);
 				expr = transformExpr(pstate, expr, EXPR_COLUMN_FIRST);
-				tent = MakeTargetEntryExpr(pstate, *resname, expr, FALSE, FALSE);
+				tent = MakeTargetEntryExpr(pstate, *resname, expr, false, false);
 				expr = tent->expr;
 			}
 			else
@@ -185,7 +185,7 @@ MakeTargetEntryExpr(ParseState *pstate,
 					char *colname,
 					Node *expr,
 					List *arrayRef,
-					int16 resjunk)
+					bool resjunk)
 {
 	Oid			type_id,
 				attrtype;
@@ -345,7 +345,7 @@ MakeTargetEntryCase(ParseState *pstate,
 						 res->name,
 						 (Index) 0,
 						 (Oid) 0,
-						 0);
+						 false);
 
 	tent = makeNode(TargetEntry);
 	tent->resdom = resnode;
@@ -426,7 +426,7 @@ MakeTargetEntryComplex(ParseState *pstate,
 		constval->val.str = save_str;
 		return MakeTargetEntryExpr(pstate, res->name,
 								   (Node *) make_const(constval),
-								   NULL, FALSE);
+								   NULL, false);
 		pfree(save_str);
 	}
 	else
@@ -458,7 +458,7 @@ MakeTargetEntryComplex(ParseState *pstate,
 		}
 		res->name = colname;
 		return MakeTargetEntryExpr(pstate, res->name, expr,
-								   res->indirection, FALSE);
+								   res->indirection, false);
 	}
 }
 
@@ -531,7 +531,7 @@ MakeTargetEntryAttr(ParseState *pstate,
 						 resname,
 						 (Index) 0,
 						 (Oid) 0,
-						 0);
+						 false);
 	tent = makeNode(TargetEntry);
 	tent->resdom = resnode;
 	tent->expr = result;
@@ -560,7 +560,8 @@ transformTargetList(ParseState *pstate, List *targetlist)
 					char	   *identname;
 
 					identname = ((Ident *) res->val)->name;
-					tent = MakeTargetEntryIdent(pstate, (Node *) res->val, &res->name, NULL, identname, FALSE);
+					tent = MakeTargetEntryIdent(pstate,
+						(Node *) res->val, &res->name, NULL, identname, false);
 					break;
 				}
 			case T_ParamNo:

@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.41 1999/05/13 07:28:41 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.42 1999/05/17 17:03:38 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1063,7 +1063,7 @@ modifyAggrefMakeSublink(Expr *origexp, Query *parsetree)
 	resdom->resname = pstrdup("<noname>");
 	resdom->reskey	= 0;
 	resdom->reskeyop = 0;
-	resdom->resjunk	= 0;
+	resdom->resjunk	= false;
 
 	tle->resdom	= resdom;
 	tle->expr	= (Node *)aggref;

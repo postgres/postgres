@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *  $Id: outfuncs.c,v 1.81 1999/05/12 15:01:34 wieck Exp $
+ *  $Id: outfuncs.c,v 1.82 1999/05/17 17:03:13 momjian Exp $
  *
  * NOTES
  *	  Every (plan) node in POSTGRES has an associated "out" routine which
@@ -565,9 +565,9 @@ _outResdom(StringInfo str, Resdom *node)
 			node->reskey,
 			node->reskeyop);
 
-	appendStringInfo(str, " :resgroupref %d :resjunk %d",
+	appendStringInfo(str, " :resgroupref %d :resjunk %s ",
 			node->resgroupref,
-			node->resjunk);
+			node->resjunk ? "true" : "false");
 }
 
 static void

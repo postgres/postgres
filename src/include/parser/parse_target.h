@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parse_target.h,v 1.11 1998/09/01 04:37:39 momjian Exp $
+ * $Id: parse_target.h,v 1.12 1999/05/17 17:03:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,13 +29,13 @@ extern TargetEntry *MakeTargetEntryIdent(ParseState *pstate,
 					 char **resname,
 					 char *refname,
 					 char *colname,
-					 int16 resjunk);
+					 bool resjunk);
 extern Node *CoerceTargetExpr(ParseState *pstate, Node *expr,
 				 Oid type_id, Oid attrtype);
 TargetEntry *MakeTargetEntryExpr(ParseState *pstate,
 					char *colname,
 					Node *expr,
 					List *arrayRef,
-					int16 resjunk);
+					bool resjunk);
 
 #endif	 /* PARSE_TARGET_H */

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.52 1999/05/13 07:28:32 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.53 1999/05/17 17:03:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -168,7 +168,7 @@ union_planner(Query *parse)
 								resname,
 								0,
 								0,
-								1);
+								true);
 
 			var = makeVar(rowmark->rti, -1, TIDOID, 
 						  -1, 0, rowmark->rti, -1);
