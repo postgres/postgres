@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/dbcommands.c,v 1.138 2004/08/01 06:19:22 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/dbcommands.c,v 1.139 2004/08/01 20:30:48 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -768,8 +768,7 @@ AlterDatabaseSet(AlterDatabaseSetStmt *stmt)
 void
 AlterDatabaseOwner(const char *dbname, AclId newOwnerSysId)
 {
-	HeapTuple	tuple,
-				newtuple;
+	HeapTuple	tuple;
 	Relation	rel;
 	ScanKeyData scankey;
 	SysScanDesc scan;
@@ -788,8 +787,7 @@ AlterDatabaseOwner(const char *dbname, AclId newOwnerSysId)
 				(errcode(ERRCODE_UNDEFINED_DATABASE),
 				 errmsg("database \"%s\" does not exist", dbname)));
 
-	newtuple = heap_copytuple(tuple);
-	datForm = (Form_pg_database) GETSTRUCT(newtuple);
+	datForm = (Form_pg_database) GETSTRUCT(tuple);
 
 	/* 
 	 * If the new owner is the same as the existing owner, consider the
@@ -797,6 +795,14 @@ AlterDatabaseOwner(const char *dbname, AclId newOwnerSysId)
 	 */
 	if (datForm->datdba != newOwnerSysId)
 	{
+		Datum		repl_val[Natts_pg_database];
+		char		repl_null[Natts_pg_database];
+		char		repl_repl[Natts_pg_database];
+		Acl		*newAcl;
+		Datum		aclDatum;
+		bool		isNull;
+		HeapTuple	newtuple;
+
 		/* changing owner's database for someone else: must be superuser */
 		/* note that the someone else need not have any permissions */
 		if (!superuser())
@@ -804,10 +810,33 @@ AlterDatabaseOwner(const char *dbname, AclId newOwnerSysId)
 					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 					 errmsg("must be superuser to change owner")));
 
-		/* change owner */
-		datForm->datdba = newOwnerSysId;
+		memset(repl_null, ' ', sizeof(repl_null));
+		memset(repl_repl, ' ', sizeof(repl_repl));
+
+		repl_repl[Anum_pg_database_datdba - 1] = 'r';
+		repl_val[Anum_pg_database_datdba - 1] = Int32GetDatum(newOwnerSysId);
+
+		/*
+		 * Determine the modified ACL for the new owner.  This is only
+		 * necessary when the ACL is non-null.
+		 */
+		aclDatum = heap_getattr(tuple,
+							Anum_pg_database_datacl,
+							RelationGetDescr(rel),
+							&isNull);
+		if (!isNull)
+		{
+			newAcl = aclnewowner(DatumGetAclP(aclDatum),
+								 datForm->datdba, newOwnerSysId);
+			repl_repl[Anum_pg_database_datacl - 1] = 'r';
+			repl_val[Anum_pg_database_datacl - 1] = PointerGetDatum(newAcl);
+		}
+
+		newtuple = heap_modifytuple(tuple, rel, repl_val, repl_null, repl_repl);
 		simple_heap_update(rel, &newtuple->t_self, newtuple);
 		CatalogUpdateIndexes(rel, newtuple);
+
+		heap_freetuple(newtuple);
 	}
 
 	systable_endscan(scan);

@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/functioncmds.c,v 1.49 2004/06/25 21:55:53 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/functioncmds.c,v 1.50 2004/08/01 20:30:48 tgl Exp $
  *
  * DESCRIPTION
  *	  These routines take the parse tree and pick out the
@@ -738,7 +738,7 @@ AlterFunctionOwner(List *name, List *argtypes, AclId newOwnerSysId)
 
 	procOid = LookupFuncNameTypeNames(name, argtypes, false);
 
-	tup = SearchSysCacheCopy(PROCOID,
+	tup = SearchSysCache(PROCOID,
 							 ObjectIdGetDatum(procOid),
 							 0, 0, 0);
 	if (!HeapTupleIsValid(tup)) /* should not happen */
@@ -758,22 +758,51 @@ AlterFunctionOwner(List *name, List *argtypes, AclId newOwnerSysId)
 	 */
 	if (procForm->proowner != newOwnerSysId)
 	{
+		Datum		repl_val[Natts_pg_proc];
+		char		repl_null[Natts_pg_proc];
+		char		repl_repl[Natts_pg_proc];
+		Acl		*newAcl;
+		Datum		aclDatum;
+		bool		isNull;
+		HeapTuple	newtuple;
+
 		/* Otherwise, must be superuser to change object ownership */
 		if (!superuser())
 			ereport(ERROR,
 					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 					 errmsg("must be superuser to change owner")));
 
-		/* Modify the owner --- okay to scribble on tup because it's a copy */
-		procForm->proowner = newOwnerSysId;
+		memset(repl_null, ' ', sizeof(repl_null));
+		memset(repl_repl, ' ', sizeof(repl_repl));
 
-		simple_heap_update(rel, &tup->t_self, tup);
+		repl_repl[Anum_pg_proc_proowner - 1] = 'r';
+		repl_val[Anum_pg_proc_proowner - 1] = Int32GetDatum(newOwnerSysId);
 
-		CatalogUpdateIndexes(rel, tup);
+		/*
+		 * Determine the modified ACL for the new owner.  This is only
+		 * necessary when the ACL is non-null.
+		 */
+		aclDatum = SysCacheGetAttr(PROCOID, tup,
+								   Anum_pg_proc_proacl,
+								   &isNull);
+		if (!isNull)
+		{
+			newAcl = aclnewowner(DatumGetAclP(aclDatum),
+								 procForm->proowner, newOwnerSysId);
+			repl_repl[Anum_pg_proc_proacl - 1] = 'r';
+			repl_val[Anum_pg_proc_proacl - 1] = PointerGetDatum(newAcl);
+		}
+
+		newtuple = heap_modifytuple(tup, rel, repl_val, repl_null, repl_repl);
+
+		simple_heap_update(rel, &newtuple->t_self, newtuple);
+		CatalogUpdateIndexes(rel, newtuple);
+
+		heap_freetuple(newtuple);
 	}
 
+	ReleaseSysCache(tup);
 	heap_close(rel, NoLock);
-	heap_freetuple(tup);
 }
 
 

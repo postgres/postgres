@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/acl.h,v 1.71 2004/06/18 06:14:21 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/utils/acl.h,v 1.72 2004/08/01 20:30:49 tgl Exp $
  *
  * NOTES
  *	  An ACL array is simply an array of AclItems, representing the union
@@ -224,6 +224,8 @@ typedef enum AclObjectKind
 extern Acl *acldefault(GrantObjectType objtype, AclId ownerid);
 extern Acl *aclupdate(const Acl *old_acl, const AclItem *mod_aip,
 					  int modechg, AclId ownerid, DropBehavior behavior);
+extern Acl *aclnewowner(const Acl *old_acl, AclId oldownerid, AclId newownerid);
+					  
 extern AclMode aclmask(const Acl *acl, AclId userid, AclId ownerid,
 					   AclMode mask, AclMaskHow how);
 

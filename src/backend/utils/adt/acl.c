@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/acl.c,v 1.107 2004/07/12 20:23:50 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/acl.c,v 1.108 2004/08/01 20:30:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -712,6 +712,109 @@ aclupdate(const Acl *old_acl, const AclItem *mod_aip,
 		new_acl = recursive_revoke(new_acl, mod_aip->ai_grantee,
 								   (old_goptions & ~new_goptions),
 								   ownerid, behavior);
+	}
+
+	return new_acl;
+}
+
+/*
+ * Update an ACL array to reflect a change of owner to the parent object
+ *
+ *	old_acl: the input ACL array (must not be NULL)
+ *	oldownerid: AclId of the old object owner
+ *	newownerid: AclId of the new object owner
+ *
+ * The result is a modified copy; the input object is not changed.
+ *
+ * NB: caller is responsible for having detoasted the input ACL, if needed.
+ */
+Acl *
+aclnewowner(const Acl *old_acl, AclId oldownerid, AclId newownerid)
+{
+	Acl		   *new_acl;
+	AclItem	   *new_aip;
+	AclItem	   *old_aip;
+	AclItem	   *dst_aip;
+	AclItem	   *src_aip;
+	AclItem	   *targ_aip;
+	bool		newpresent = false;
+	int			dst,
+				src,
+				targ,
+				num;
+
+	/*
+	 * Make a copy of the given ACL, substituting new owner ID for old
+	 * wherever it appears as either grantor or grantee.  Also note if
+	 * the new owner ID is already present.
+	 */
+	num = ACL_NUM(old_acl);
+	old_aip = ACL_DAT(old_acl);
+	new_acl = allocacl(num);
+	new_aip = ACL_DAT(new_acl);
+	memcpy(new_aip, old_aip, num * sizeof(AclItem));
+	for (dst = 0, dst_aip = new_aip; dst < num; dst++, dst_aip++)
+	{
+		/* grantor is always a UID, but grantee might not be */
+		if (dst_aip->ai_grantor == oldownerid)
+			dst_aip->ai_grantor = newownerid;
+		else if (dst_aip->ai_grantor == newownerid)
+			newpresent = true;
+		if (ACLITEM_GET_IDTYPE(*dst_aip) == ACL_IDTYPE_UID)
+		{
+			if (dst_aip->ai_grantee == oldownerid)
+				dst_aip->ai_grantee = newownerid;
+			else if (dst_aip->ai_grantee == newownerid)
+				newpresent = true;
+		}
+	}
+
+	/*
+	 * If the old ACL contained any references to the new owner, then we
+	 * may now have generated an ACL containing duplicate entries.  Find
+	 * them and merge them so that there are not duplicates.  (This is
+	 * relatively expensive since we use a stupid O(N^2) algorithm, but
+	 * it's unlikely to be the normal case.)
+	 *
+	 * To simplify deletion of duplicate entries, we temporarily leave them
+	 * in the array but set their privilege masks to zero; when we reach
+	 * such an entry it's just skipped.  (Thus, a side effect of this code
+	 * will be to remove privilege-free entries, should there be any in the
+	 * input.)  dst is the next output slot, targ is the currently considered
+	 * input slot (always >= dst), and src scans entries to the right of targ
+	 * looking for duplicates.  Once an entry has been emitted to dst it is
+	 * known duplicate-free and need not be considered anymore.
+	 */
+	if (newpresent)
+	{
+		dst = 0;
+		for (targ = 0, targ_aip = new_aip; targ < num; targ++, targ_aip++)
+		{
+			/* ignore if deleted in an earlier pass */
+			if (ACLITEM_GET_RIGHTS(*targ_aip) == ACL_NO_RIGHTS)
+				continue;
+			/* find and merge any duplicates */
+			for (src = targ + 1, src_aip = targ_aip + 1; src < num;
+				 src++, src_aip++)
+			{
+				if (ACLITEM_GET_RIGHTS(*src_aip) == ACL_NO_RIGHTS)
+					continue;
+				if (aclitem_match(targ_aip, src_aip))
+				{
+					ACLITEM_SET_RIGHTS(*targ_aip,
+									   ACLITEM_GET_RIGHTS(*targ_aip) |
+									   ACLITEM_GET_RIGHTS(*src_aip));
+					/* mark the duplicate deleted */
+					ACLITEM_SET_RIGHTS(*src_aip, ACL_NO_RIGHTS);
+				}
+			}
+			/* and emit to output */
+			new_aip[dst] = *targ_aip;
+			dst++;
+		}
+		/* Adjust array size to be 'dst' items */
+		ARR_DIMS(new_acl)[0] = dst;
+		ARR_SIZE(new_acl) = ACL_N_SIZE(dst);
 	}
 
 	return new_acl;
@@ -2373,15 +2476,15 @@ convert_tablespace_name(text *tablespacename)
 {
 	char			*spcname;
 	Oid			oid;
-	
+
 	spcname = DatumGetCString(DirectFunctionCall1(textout,
-                                                           PointerGetDatum(tablespacename)));
+												  PointerGetDatum(tablespacename)));
 	oid = get_tablespace_oid(spcname);
 
-        if (!OidIsValid(oid))
-                ereport(ERROR,
-                                (errcode(ERRCODE_UNDEFINED_OBJECT),
-                                 errmsg("tablespace \"%s\" does not exist", spcname)));
+	if (!OidIsValid(oid))
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("tablespace \"%s\" does not exist", spcname)));
 
 	return oid;
 }

@@ -45,7 +45,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablespace.c,v 1.6 2004/07/11 19:52:49 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablespace.c,v 1.7 2004/08/01 20:30:48 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -757,7 +757,6 @@ AlterTableSpaceOwner(const char *name, AclId newOwnerSysId)
 	HeapScanDesc scandesc;
 	Form_pg_tablespace spcForm;
 	HeapTuple	tup;
-	HeapTuple	newtuple;
 
 	/* Search pg_tablespace */
 	rel = heap_openr(TableSpaceRelationName, RowExclusiveLock);
@@ -773,8 +772,7 @@ AlterTableSpaceOwner(const char *name, AclId newOwnerSysId)
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
 				 errmsg("tablespace \"%s\" does not exist", name)));
 
-	newtuple = heap_copytuple(tup);
-	spcForm = (Form_pg_tablespace) GETSTRUCT(newtuple);
+	spcForm = (Form_pg_tablespace) GETSTRUCT(tup);
 
 	/* 
 	 * If the new owner is the same as the existing owner, consider the
@@ -782,16 +780,48 @@ AlterTableSpaceOwner(const char *name, AclId newOwnerSysId)
 	 */
 	if (spcForm->spcowner != newOwnerSysId)
 	{
+		Datum		repl_val[Natts_pg_tablespace];
+		char		repl_null[Natts_pg_tablespace];
+		char		repl_repl[Natts_pg_tablespace];
+		Acl		*newAcl;
+		Datum		aclDatum;
+		bool		isNull;
+		HeapTuple	newtuple;
+
 		/* Otherwise, must be superuser to change object ownership */
 		if (!superuser())
 			ereport(ERROR,
 					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 					 errmsg("must be superuser to change owner")));
 
-		/* Modify the owner */
-		spcForm->spcowner = newOwnerSysId;
+		memset(repl_null, ' ', sizeof(repl_null));
+		memset(repl_repl, ' ', sizeof(repl_repl));
+
+		repl_repl[Anum_pg_tablespace_spcowner - 1] = 'r';
+		repl_val[Anum_pg_tablespace_spcowner - 1] = Int32GetDatum(newOwnerSysId);
+
+		/*
+		 * Determine the modified ACL for the new owner.  This is only
+		 * necessary when the ACL is non-null.
+		 */
+		aclDatum = heap_getattr(tup,
+							Anum_pg_tablespace_spcacl,
+							RelationGetDescr(rel),
+							&isNull);
+		if (!isNull)
+		{
+			newAcl = aclnewowner(DatumGetAclP(aclDatum),
+								 spcForm->spcowner, newOwnerSysId);
+			repl_repl[Anum_pg_tablespace_spcacl - 1] = 'r';
+			repl_val[Anum_pg_tablespace_spcacl - 1] = PointerGetDatum(newAcl);
+		}
+
+		newtuple = heap_modifytuple(tup, rel, repl_val, repl_null, repl_repl);
+
 		simple_heap_update(rel, &newtuple->t_self, newtuple);
 		CatalogUpdateIndexes(rel, newtuple);
+
+		heap_freetuple(newtuple);
 	}
 
 	heap_endscan(scandesc);

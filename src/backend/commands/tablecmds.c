@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.122 2004/07/21 22:31:21 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.123 2004/08/01 20:30:48 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -5115,7 +5115,7 @@ ATExecChangeOwner(Oid relationOid, int32 newOwnerSysId)
 	/* Get its pg_class tuple, too */
 	class_rel = heap_openr(RelationRelationName, RowExclusiveLock);
 
-	tuple = SearchSysCacheCopy(RELOID,
+	tuple = SearchSysCache(RELOID,
 							   ObjectIdGetDatum(relationOid),
 							   0, 0, 0);
 	if (!HeapTupleIsValid(tuple))
@@ -5145,21 +5145,47 @@ ATExecChangeOwner(Oid relationOid, int32 newOwnerSysId)
 	 */
 	if (tuple_class->relowner != newOwnerSysId)
 	{
+		Datum		repl_val[Natts_pg_class];
+		char		repl_null[Natts_pg_class];
+		char		repl_repl[Natts_pg_class];
+		Acl		*newAcl;
+		Datum		aclDatum;
+		bool		isNull;
+		HeapTuple	newtuple;
+
 		/* Otherwise, check that we are the superuser */
 		if (!superuser())
 			ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 			errmsg("must be superuser to change owner")));
 
-		/*
-		 * Okay, this is a valid tuple: change its ownership and write to the
-		 * heap.
-		 */
-		tuple_class->relowner = newOwnerSysId;
-		simple_heap_update(class_rel, &tuple->t_self, tuple);
+		memset(repl_null, ' ', sizeof(repl_null));
+		memset(repl_repl, ' ', sizeof(repl_repl));
 
-		/* Keep the catalog indexes up to date */
-		CatalogUpdateIndexes(class_rel, tuple);
+		repl_repl[Anum_pg_class_relowner - 1] = 'r';
+		repl_val[Anum_pg_class_relowner - 1] = Int32GetDatum(newOwnerSysId);
+
+		/*
+		 * Determine the modified ACL for the new owner.  This is only
+		 * necessary when the ACL is non-null.
+		 */
+		aclDatum = SysCacheGetAttr(RELOID, tuple,
+								   Anum_pg_class_relacl,
+								   &isNull);
+		if (!isNull)
+		{
+			newAcl = aclnewowner(DatumGetAclP(aclDatum),
+								 tuple_class->relowner, newOwnerSysId);
+			repl_repl[Anum_pg_class_relacl - 1] = 'r';
+			repl_val[Anum_pg_class_relacl - 1] = PointerGetDatum(newAcl);
+		}
+
+		newtuple = heap_modifytuple(tuple, class_rel, repl_val, repl_null, repl_repl);
+
+		simple_heap_update(class_rel, &newtuple->t_self, newtuple);
+		CatalogUpdateIndexes(class_rel, newtuple);
+
+		heap_freetuple(newtuple);
 
 		/*
 		 * If we are operating on a table, also change the ownership of any
@@ -5190,7 +5216,7 @@ ATExecChangeOwner(Oid relationOid, int32 newOwnerSysId)
 		}
 	}
 
-	heap_freetuple(tuple);
+	ReleaseSysCache(tuple);
 	heap_close(class_rel, RowExclusiveLock);
 	relation_close(target_rel, NoLock);
 }
