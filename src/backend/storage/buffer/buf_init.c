@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/buf_init.c,v 1.54 2003/08/04 02:40:03 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/buf_init.c,v 1.55 2003/11/13 00:40:01 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -48,9 +48,6 @@ long	   *CurTraceBuf;
 int			ShowPinTrace = 0;
 
 int			Data_Descriptors;
-int			Free_List_Descriptor;
-int			Lookup_List_Descriptor;
-int			Num_Descriptors;
 
 BufferDesc *BufferDescriptors;
 Block	   *BufferBlockPointers;
@@ -133,9 +130,6 @@ InitBufferPool(void)
 	int			i;
 
 	Data_Descriptors = NBuffers;
-	Free_List_Descriptor = Data_Descriptors;
-	Lookup_List_Descriptor = Data_Descriptors + 1;
-	Num_Descriptors = Data_Descriptors + 1;
 
 	/*
 	 * It's probably not really necessary to grab the lock --- if there's
@@ -156,7 +150,7 @@ InitBufferPool(void)
 
 	BufferDescriptors = (BufferDesc *)
 		ShmemInitStruct("Buffer Descriptors",
-					  Num_Descriptors * sizeof(BufferDesc), &foundDescs);
+					  Data_Descriptors * sizeof(BufferDesc), &foundDescs);
 
 	BufferBlocks = (char *)
 		ShmemInitStruct("Buffer Blocks",
@@ -176,16 +170,14 @@ InitBufferPool(void)
 		block = BufferBlocks;
 
 		/*
-		 * link the buffers into a circular, doubly-linked list to
-		 * initialize free list, and initialize the buffer headers. Still
-		 * don't know anything about replacement strategy in this file.
+		 * link the buffers into a single linked list. This will become the
+		 * LiFo list of unused buffers returned by StragegyGetBuffer().
 		 */
 		for (i = 0; i < Data_Descriptors; block += BLCKSZ, buf++, i++)
 		{
 			Assert(ShmemIsValid((unsigned long) block));
 
-			buf->freeNext = i + 1;
-			buf->freePrev = i - 1;
+			buf->bufNext = i + 1;
 
 			CLEAR_BUFFERTAG(&(buf->tag));
 			buf->buf_id = i;
@@ -199,14 +191,12 @@ InitBufferPool(void)
 			buf->wait_backend_id = 0;
 		}
 
-		/* close the circular queue */
-		BufferDescriptors[0].freePrev = Data_Descriptors - 1;
-		BufferDescriptors[Data_Descriptors - 1].freeNext = 0;
+		/* Correct last entry */
+		BufferDescriptors[Data_Descriptors - 1].bufNext = -1;
 	}
 
 	/* Init other shared buffer-management stuff */
-	InitBufTable();
-	InitFreeList(!foundDescs);
+	StrategyInitialize(!foundDescs);
 
 	LWLockRelease(BufMgrLock);
 }

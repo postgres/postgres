@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: miscadmin.h,v 1.134 2003/09/24 18:54:01 tgl Exp $
+ * $Id: miscadmin.h,v 1.135 2003/11/13 00:40:01 wieck Exp $
  *
  * NOTES
  *	  some of the information in this file should be moved to
@@ -96,6 +96,13 @@ extern void ProcessInterrupts(void);
 		CritSectionCount--; \
 	} while(0)
 
+#define PG_DELAY(_msec) \
+{ \
+	struct timeval delay; \
+	delay.tv_sec = (_msec) / 1000; \
+	delay.tv_usec = ((_msec) % 1000) * 1000; \
+	(void) select(0, NULL, NULL, NULL, &delay); \
+}
 
 /*****************************************************************************
  *	  globals.h --															 *
