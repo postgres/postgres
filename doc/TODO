@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Mon Jun 14 09:42:46 EDT 2004
+Last updated:		Mon Jun 14 09:43:58 EDT 2004
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -51,7 +51,7 @@ Administration
 * Allow external interfaces to extend the GUC variable set
 * Allow GRANT/REVOKE permissions to be given to all schema objects with one command
 * Remove unreferenced table files created by transactions that were
-  in-progress when the server terminates abruptly
+  in-progress when the server terminated abruptly
 
 
 
