@@ -200,15 +200,11 @@ planner()
  do final cleanup after planning.
 -subquery_planner()
  pull up subqueries from rangetable, if possible
- simplify constant expressions
  canonicalize qual
-     Attempt to reduce WHERE clause to either CNF or DNF canonical form.
-     CNF (top-level-AND) is preferred, since the optimizer can then use
-     any of the AND subclauses to filter tuples; but quals that are in
-     or close to DNF form will suffer exponential expansion if we try to
-     force them to CNF.  In pathological cases either transform may expand
-     the qual unreasonably; so we may have to leave it un-normalized,
-     thereby reducing the accuracy of selectivity estimates.
+     Attempt to simplify WHERE clause to the most useful form; this includes
+     flattening nested AND/ORs and detecting clauses that are duplicated in
+     different branches of an OR.
+ simplify constant expressions
  process sublinks
  convert Vars of outer query levels into Params
 --grouping_planner()
