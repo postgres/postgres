@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/tab-complete.c,v 1.24 2000/12/03 20:45:38 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/tab-complete.c,v 1.25 2000/12/31 11:57:58 petere Exp $
  */
 
 /*----------------------------------------------------------------------
@@ -102,8 +102,7 @@ initialize_readline(void)
 	rl_readline_name = pset.progname;
 	rl_attempted_completion_function = psql_completion;
 
-	rl_special_prefixes = "()'";
-	rl_basic_word_break_characters = "\t\n\"'`@$><=;|&{ ";
+	rl_basic_word_break_characters = "\t\n@$><=;|&{( ";
 
 	completion_max_records = 100;
 
