@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/main/main.c,v 1.12 1998/02/03 01:25:23 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/main/main.c,v 1.13 1998/02/05 04:21:56 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,9 +22,6 @@
 #include "miscadmin.h"
 #include "bootstrap/bootstrap.h"/* for BootstrapMain() */
 #include "tcop/tcopprot.h"		/* for PostgresMain() */
-#if defined(NOFIXADE) || defined(NOPRINTADE)
-#  include "port-protos.h"		/* for init_address_fixup() */
-#endif
 
 #define NOROOTEXEC "\
 \n\"root\" execution of the PostgreSQL backend is not permitted\n\n\
