@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.228 2004/08/07 03:08:44 wieck Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.229 2004/08/08 15:37:06 momjian Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -1046,7 +1046,7 @@ static struct config_int ConfigureNamesInt[] =
 			NULL
 		},
 		&VacuumCostDelay,
-		50, 0, 1000, NULL, NULL
+		0, 0, 1000, NULL, NULL
 	},
 
 	{

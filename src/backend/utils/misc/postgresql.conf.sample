@@ -74,7 +74,7 @@
 #vacuum_cost_page_miss = 10	# 0-10000 credits
 #vacuum_cost_page_dirty = 20	# 0-10000 credits
 #vacuum_cost_limit = 200	# 0-10000 credits
-#vacuum_cost_delay = 50		# 0-1000 milliseconds
+#vacuum_cost_delay = 0		# 0-1000 milliseconds
 
 # - Background writer -
 #bgwriter_delay = 200		# 10-5000 milliseconds
