@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/help.c,v 1.43 2002/03/05 00:01:01 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/help.c,v 1.44 2002/03/05 06:13:19 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "help.h"
@@ -205,6 +205,7 @@ slashUsage(void)
 	fprintf(fout, _(" \\df            list functions\n"));
 	fprintf(fout, _(" \\do            list operators\n"));
 	fprintf(fout, _(" \\dT            list data types\n"));
+	fprintf(fout, _(" \\du [PATTERN]  Lists all configured users or only those that match pattern\n"));
 	fprintf(fout, _(" \\e FILENAME    edit the current query buffer or file with external editor\n"));
 	fprintf(fout, _(" \\echo TEXT     write text to standard output\n"));
 	fprintf(fout, _(" \\encoding ENCODING  set client encoding\n"));
