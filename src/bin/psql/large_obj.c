@@ -3,7 +3,7 @@
  *
  * Copyright 2000-2002 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/large_obj.c,v 1.24 2003/03/20 06:43:35 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/large_obj.c,v 1.25 2003/04/18 23:38:47 tgl Exp $
  */
 #include "postgres_fe.h"
 #include "large_obj.h"
@@ -45,14 +45,15 @@ handle_transaction(void)
 	PQnoticeProcessor old_notice_hook;
 
 	switch (SwitchVariable(pset.vars, "LO_TRANSACTION", 
-									"nothing", 
-									"commit", 
-									NULL))
+						   "nothing", 
+						   "commit", 
+						   NULL))
 	{
-	  case 1:
-		return true;
-	  case 2:
-		 commit = true;
+		case 1:					/* nothing */
+			return true;
+		case 2:					/* commit */
+			commit = true;
+			break;
 	}
 
 	notice[0] = '\0';
@@ -94,7 +95,7 @@ do_lo_export(const char *loid_arg, const char *filename_arg)
 	int			status;
 	bool		own_transaction;
 
-	own_transaction = VariableEquals(pset.vars, "LO_TRANSACTION", "nothing");
+	own_transaction = !VariableEquals(pset.vars, "LO_TRANSACTION", "nothing");
 
 	if (!pset.db)
 	{
@@ -159,7 +160,7 @@ do_lo_import(const char *filename_arg, const char *comment_arg)
 	unsigned int i;
 	bool		own_transaction;
 
-	own_transaction = VariableEquals(pset.vars, "LO_TRANSACTION", "nothing");
+	own_transaction = !VariableEquals(pset.vars, "LO_TRANSACTION", "nothing");
 
 	if (!pset.db)
 	{
@@ -272,10 +273,9 @@ do_lo_unlink(const char *loid_arg)
 	int			status;
 	Oid			loid = atooid(loid_arg);
 	char		buf[256];
-
 	bool		own_transaction;
 
-	own_transaction = VariableEquals(pset.vars, "LO_TRANSACTION", "nothing");
+	own_transaction = !VariableEquals(pset.vars, "LO_TRANSACTION", "nothing");
 
 	if (!pset.db)
 	{
@@ -311,9 +311,10 @@ do_lo_unlink(const char *loid_arg)
 	/* XXX ought to replace this with some kind of COMMENT command */
 	if (pset.issuper)
 	{
-		sprintf(buf, "DELETE FROM pg_catalog.pg_description WHERE objoid = '%u' "
-				"AND classoid = 'pg_catalog.pg_largeobject'::regclass",
-				loid);
+		snprintf(buf, sizeof(buf),
+				 "DELETE FROM pg_catalog.pg_description WHERE objoid = '%u' "
+				 "AND classoid = 'pg_catalog.pg_largeobject'::regclass",
+				 loid);
 		if (!(res = PSQLexec(buf, false)))
 		{
 			if (own_transaction)
