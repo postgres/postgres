@@ -1,9 +1,13 @@
 
-SRCDIR= /home/postgres/current/pgsql/src
+SRCDIR= ../../src
 
 include $(SRCDIR)/Makefile.global
 
-CFLAGS+= $(CFLAGS_SL) -I$(SRCDIR)/include -DREFINT_QUIET
+CFLAGS+= $(CFLAGS_SL) -I$(SRCDIR)/include
+
+ifdef REFINT_VERBOSE
+CFLAGS+= -DREFINT_VERBOSE
+endif
 
 TARGETS= refint$(DLSUFFIX) refint.sql
 
@@ -18,4 +22,4 @@ all:: $(TARGETS)
 	    -e "s:_DLSUFFIX_:$(DLSUFFIX):g" < $< > $@
 
 clean: 
-	rm -f $(TARGETS)
+	rm -f $(TARGETS) refint.o
