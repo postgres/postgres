@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_ctl-ref.sgml,v 1.6 2001/02/08 19:39:24 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_ctl-ref.sgml,v 1.7 2001/04/27 01:31:56 momjian Exp $
 Postgres documentation
 -->
 
@@ -24,6 +24,7 @@ Postgres documentation
    <command>pg_ctl</command>
    <arg choice="plain">start</arg>
    <arg>-w</arg>
+   <arg>-s</arg>
    <arg>-D <replaceable>datadir</replaceable></arg>
    <arg>-l <replaceable>filename</replaceable></arg>
    <arg>-o <replaceable>options</replaceable></arg>
@@ -32,6 +33,7 @@ Postgres documentation
    <command>pg_ctl</command>
    <arg choice="plain">stop</arg>
    <arg>-W</arg>
+   <arg>-s</arg>
    <arg>-D <replaceable>datadir</replaceable></arg>
    <arg>-m
      <group choice="plain">
@@ -44,6 +46,7 @@ Postgres documentation
    <command>pg_ctl</command>
    <arg choice="plain">restart</arg>
    <arg>-w</arg>
+   <arg>-s</arg>
    <arg>-D <replaceable>datadir</replaceable></arg>
    <arg>-m
      <group choice="plain">
@@ -197,6 +200,15 @@ Postgres documentation
        <para>
         Do not wait for start or shutdown to complete.  This is the
         default for starts and restarts.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>-s</term>
+      <listitem>
+       <para>
+        Only print errors, no informational messages.
        </para>
       </listitem>
      </varlistentry>
