@@ -1,9 +1,9 @@
 /*
  * psql - the PostgreSQL interactive terminal
  *
- * Copyright (c) 2000-2003, PostgreSQL Global Development Group
+ * Copyright (c) 2000-2004, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/tab-complete.h,v 1.10 2003/11/29 19:52:07 pgsql Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/tab-complete.h,v 1.11 2004/08/29 04:13:03 momjian Exp $
  */
 #ifndef TAB_COMPLETE_H
 #define TAB_COMPLETE_H

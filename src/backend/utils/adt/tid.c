@@ -3,12 +3,12 @@
  * tid.c
  *	  Functions for the built-in type tuple id
  *
- * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/tid.c,v 1.45 2004/05/30 23:40:36 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/tid.c,v 1.46 2004/08/29 04:12:52 momjian Exp $
  *
  * NOTES
  *	  input routine largely stolen from boxin().

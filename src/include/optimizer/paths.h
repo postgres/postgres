@@ -5,10 +5,10 @@
  *	  header files)
  *
  *
- * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/optimizer/paths.h,v 1.73 2004/01/05 23:39:54 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/optimizer/paths.h,v 1.74 2004/08/29 04:13:08 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -11,12 +11,12 @@
  * by the caller, so no synchronization is needed.
  *
  *
- * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/buffer/buf_table.c,v 1.35 2004/04/19 23:27:17 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/buffer/buf_table.c,v 1.36 2004/08/29 04:12:47 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

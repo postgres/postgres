@@ -6,10 +6,10 @@
  *	   including abstime, reltime, date, and time.
  *
  *
- * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/datetime.h,v 1.49 2004/06/03 02:08:06 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/utils/datetime.h,v 1.50 2004/08/29 04:13:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

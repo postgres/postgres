@@ -5,10 +5,10 @@
  *	  on system catalogs
  *
  *
- * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/indexing.h,v 1.82 2004/06/18 06:14:06 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/indexing.h,v 1.83 2004/08/29 04:13:05 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -8,10 +8,10 @@
  * needed by rmgr routines (redo/undo support for individual record types).
  * So the XLogRecord typedef and associated stuff appear in xlog.h.
  *
- * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/xlog_internal.h,v 1.2 2004/08/03 20:32:34 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/access/xlog_internal.h,v 1.3 2004/08/29 04:13:04 momjian Exp $
  */
 #ifndef XLOG_INTERNAL_H
 #define XLOG_INTERNAL_H

@@ -4,10 +4,10 @@
  *	  prototypes for files in optimizer/prep/
  *
  *
- * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/optimizer/prep.h,v 1.44 2004/04/07 18:17:25 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/optimizer/prep.h,v 1.45 2004/08/29 04:13:08 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

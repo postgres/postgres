@@ -4,10 +4,10 @@
  *	  prototypes for pquery.c.
  *
  *
- * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/tcop/pquery.h,v 1.31 2004/03/21 22:29:11 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/tcop/pquery.h,v 1.32 2004/08/29 04:13:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

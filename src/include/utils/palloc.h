@@ -18,10 +18,10 @@
  * everything that should be freed.  See utils/mmgr/README for more info.
  *
  *
- * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/palloc.h,v 1.29 2004/08/08 16:13:05 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/utils/palloc.h,v 1.30 2004/08/29 04:13:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -2,11 +2,11 @@
  *
  *	  WIN1250 and UTF-8
  *
- * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/mb/conversion_procs/utf8_and_win1250/utf8_and_win1250.c,v 1.7 2003/11/29 19:52:03 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/mb/conversion_procs/utf8_and_win1250/utf8_and_win1250.c,v 1.8 2004/08/29 04:12:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

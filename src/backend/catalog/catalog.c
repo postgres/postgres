@@ -4,12 +4,12 @@
  *		routines concerned with catalog naming conventions
  *
  *
- * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/catalog.c,v 1.55 2004/08/04 21:33:47 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/catalog.c,v 1.56 2004/08/29 04:12:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

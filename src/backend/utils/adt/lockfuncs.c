@@ -3,10 +3,10 @@
  * lockfuncs.c
  *		Set-returning functions to view the state of locks within the DB.
  *
- * Copyright (c) 2002-2003, PostgreSQL Global Development Group
+ * Copyright (c) 2002-2004, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/backend/utils/adt/lockfuncs.c,v 1.14 2004/08/27 17:07:41 tgl Exp $
+ *		$PostgreSQL: pgsql/src/backend/utils/adt/lockfuncs.c,v 1.15 2004/08/29 04:12:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -1,9 +1,9 @@
 /*
  * psql - the PostgreSQL interactive terminal
  *
- * Copyright (c) 2000-2003, PostgreSQL Global Development Group
+ * Copyright (c) 2000-2004, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/prompt.h,v 1.14 2004/02/24 21:45:18 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/prompt.h,v 1.15 2004/08/29 04:13:02 momjian Exp $
  */
 #ifndef PROMPT_H
 #define PROMPT_H

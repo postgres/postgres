@@ -8,9 +8,9 @@
  * but also length coercion functions.
  *
  *
- * Copyright (c) 2002-2003, PostgreSQL Global Development Group
+ * Copyright (c) 2002-2004, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_cast.h,v 1.13 2004/08/04 21:34:23 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_cast.h,v 1.14 2004/08/29 04:13:05 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki

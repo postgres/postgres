@@ -8,10 +8,10 @@
  * postgres.h.
  *
  *
- * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  * Portions Copyright (c) 1995, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/postgres_fe.h,v 1.8 2003/11/29 22:40:53 pgsql Exp $
+ * $PostgreSQL: pgsql/src/include/postgres_fe.h,v 1.9 2004/08/29 04:13:03 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

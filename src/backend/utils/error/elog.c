@@ -32,12 +32,12 @@
  * be able to process an "out of memory" message successfully.
  *
  *
- * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/error/elog.c,v 1.146 2004/08/05 23:32:11 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/error/elog.c,v 1.147 2004/08/29 04:12:53 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

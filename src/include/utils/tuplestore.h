@@ -14,10 +14,10 @@
  * A temporary file is used to handle the data if it exceeds the
  * space limit specified by the caller.
  *
- * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/tuplestore.h,v 1.14 2003/11/29 22:41:16 pgsql Exp $
+ * $PostgreSQL: pgsql/src/include/utils/tuplestore.h,v 1.15 2004/08/29 04:13:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

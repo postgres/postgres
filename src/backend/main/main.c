@@ -8,12 +8,12 @@
  * dispatches to the proper FooMain() routine for the incarnation.
  *
  *
- * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/main/main.c,v 1.87 2004/06/24 21:02:33 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/main/main.c,v 1.88 2004/08/29 04:12:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

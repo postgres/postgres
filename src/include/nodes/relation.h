@@ -4,10 +4,10 @@
  *	  Definitions for planner's internal data structures.
  *
  *
- * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/relation.h,v 1.97 2004/08/04 21:34:24 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/relation.h,v 1.98 2004/08/29 04:13:07 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

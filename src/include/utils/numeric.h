@@ -5,9 +5,9 @@
  *
  * Original coding 1998, Jan Wieck.  Heavily revised 2003, Tom Lane.
  *
- * Copyright (c) 1998-2003, PostgreSQL Global Development Group
+ * Copyright (c) 1998-2004, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/utils/numeric.h,v 1.18 2003/11/29 22:41:15 pgsql Exp $
+ * $PostgreSQL: pgsql/src/include/utils/numeric.h,v 1.19 2004/08/29 04:13:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

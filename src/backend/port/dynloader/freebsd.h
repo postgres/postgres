@@ -3,10 +3,10 @@
  * freebsd.h
  *	  port-specific prototypes for FreeBSD
  *
- * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/port/dynloader/freebsd.h,v 1.18 2003/11/29 22:39:52 pgsql Exp $
+ * $PostgreSQL: pgsql/src/backend/port/dynloader/freebsd.h,v 1.19 2004/08/29 04:12:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

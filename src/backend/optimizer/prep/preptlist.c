@@ -11,11 +11,11 @@
  * executor relies on this to find the tuple to be replaced/deleted.
  *
  *
- * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/preptlist.c,v 1.69 2004/06/16 01:26:43 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/preptlist.c,v 1.70 2004/08/29 04:12:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
