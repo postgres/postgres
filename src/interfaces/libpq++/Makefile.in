@@ -6,7 +6,7 @@
 # Copyright (c) 1994, Regents of the University of California
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/interfaces/libpq++/Attic/Makefile.in,v 1.22 2000/03/16 15:34:36 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/interfaces/libpq++/Attic/Makefile.in,v 1.23 2000/03/31 05:00:36 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -18,17 +18,10 @@ SRCDIR= @top_srcdir@
 include $(SRCDIR)/Makefile.global
 
 CXX=@CXX@
+CXXFLAGS=@CXXFLAGS@
 
 SRCHEADERDIR = $(SRCDIR)/include
 LIBPQHEADERDIR = $(SRCHEADERDIR)/libpq
-
-# We have to override -Werror, which makes warnings fatal, because we
-# inevitably get the warning, "abstract declarator used as declaration"
-# because of our inclusion of c.h and we don't know how to stop that.
-
-ifeq ($(CXX), g++)
-CXXFLAGS+= -Wno-error
-endif
 
 CXXFLAGS+=   -I$(SRCDIR)/backend \
              -I$(SRCHEADERDIR) \
@@ -62,7 +55,7 @@ include $(SRCDIR)/Makefile.shlib
 
 
 # Pull shared-lib CFLAGS into CXXFLAGS
-CXXFLAGS+= $(CFLAGS)
+CXXFLAGS+= $(CFLAGS_SL)
 
 
 .PHONY: examples
