@@ -11,10 +11,6 @@
 
 #include "extern.h"
 
-#ifdef MULTIBYTE
-#include "mb/pg_wchar.h"
-#endif
-
 /*
  * Variables containing simple states.
  */
@@ -838,11 +834,7 @@ VariableSetStmt:  SET ColId TO var_value
 				}
 		| SET NAMES opt_encoding
                                 {
-#ifdef MULTIBYTE
 					$$ = cat2_str(make_str("set names"), $3);
-#else
-                                        mmerror(ET_ERROR, "SET NAMES is not supported.");
-#endif
                                 }
                 ;
 
@@ -2252,16 +2244,10 @@ createdb_opt_location:  LOCATION '=' StringConst	{ $$ = cat2_str(make_str("locat
 
 createdb_opt_encoding:  ENCODING '=' PosIntStringConst  
 			{
-#ifndef MULTIBYTE
-				mmerror(ET_ERROR, "Multi-byte support is not enabled.");
-#endif
 				$$ = cat2_str(make_str("encoding ="), $3);
 			}
 		| ENCODING '=' DEFAULT
 			{
-#ifndef MULTIBYTE
-				mmerror(ET_ERROR, "Multi-byte support is not enabled.");
-#endif
 				$$ = make_str("encoding = default");
 			}
                 | /*EMPTY*/	        { $$ = NULL; }
