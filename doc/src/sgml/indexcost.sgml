@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/indexcost.sgml,v 2.3 2000/03/31 17:18:26 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/indexcost.sgml,v 2.4 2000/08/29 20:02:07 momjian Exp $
 -->
 
  <chapter>
@@ -111,7 +111,7 @@ amcostestimate (Query *root,
      <term>*indexStartupCost</term>
      <listitem>
       <para>
-       Set to cost of index startup processing
+       Set to cost of index start-up processing
       </para>
      </listitem>
     </varlistentry>
@@ -160,9 +160,9 @@ amcostestimate (Query *root,
   </para>
 
   <para>
-   The "startup cost" is the part of the total scan cost that must be expended
+   The "start-up cost" is the part of the total scan cost that must be expended
    before we can begin to fetch the first tuple.  For most indexes this can
-   be taken as zero, but an index type with a high startup cost might want
+   be taken as zero, but an index type with a high start-up cost might want
    to set it nonzero.
   </para>
 

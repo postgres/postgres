@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.22 2000/08/29 04:15:43 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.23 2000/08/29 20:02:07 momjian Exp $
 -->
 
 <Chapter Id="runtime">
@@ -234,7 +234,7 @@ su postgres -c "/usr/local/pgsql/bin/postmaster -D /usr/local/pgsql/data"
    </para>
 
    <sect2 id="postmaster-start-failures">
-    <title>Server Startup Failures</title>
+    <title>Server Start-up Failures</title>
 
     <para>
      There are several common reasons for the postmaster to fail to
@@ -1697,7 +1697,7 @@ perl: warning: Falling back to the standard locale ("C").
        will cause the postmaster to send a SIGUSR1 to all backends and
        exit immediately (without properly shutting down the database
        system). When WAL is implemented, this will lead to recovery on
-       startup. Right now it's not recommendable to use this option.
+       start-up. Right now it's not recommendable to use this option.
       </para>
      </listitem>
     </varlistentry>
@@ -1770,7 +1770,7 @@ perl: warning: Falling back to the standard locale ("C").
    Fill out the information the script asks for. Make sure to enter
    the local hostname as Common Name. The script will generate a key
    which is passphrase protected. To remove the passphrase (required
-   if you want automatic startup of the postmaster), run the command
+   if you want automatic start-up of the postmaster), run the command
 <programlisting>
    openssl x509 -inform PEM -outform PEM -in newreq.pem -out newkey_no_passphrase.pem
 </programlisting>

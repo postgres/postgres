@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/libpq.sgml,v 1.39 2000/08/29 04:15:43 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/libpq.sgml,v 1.40 2000/08/29 20:02:07 momjian Exp $
 -->
 
  <chapter id="libpq-chapter">
@@ -337,7 +337,7 @@ PostgresPollingStatusType *PQconnectPoll(PQconn *conn)
      </listitem>
      <listitem>
       <para>
-      CONNECTION_AUTH_OK: Received authentication; waiting for backend startup.
+      CONNECTION_AUTH_OK: Received authentication; waiting for backend start-up.
       </para>
      </listitem>
      <listitem>

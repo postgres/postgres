@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.15 2000/08/29 04:15:43 momjian Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.16 2000/08/29 20:02:07 momjian Exp $ -->
 
 <chapter id="installation">
  <title><![%flattext-install-include[<productname>PostgreSQL</> ]]>Installation Instructions</title>
@@ -165,7 +165,7 @@ su - postgres
 
     <para>
      On systems which have <productname>PostgreSQL</> started at boot time, there is
-     probably a startup file that will accomplish the same thing. For
+     probably a start-up file that will accomplish the same thing. For
      example, on a Redhat Linux system one might find that
 <programlisting>
 /etc/rc.d/init.d/postgres.init stop
@@ -777,7 +777,7 @@ setenv LD_LIBRARY_PATH /usr/local/pgsql/lib
 </programlisting>
     Replace <literal>/usr/local/pgsql/lib</> with whatever you set
     <option><literal>--libdir</></> to in <xref linkend="configure">.
-    You should put these commands into a shell startup file such as
+    You should put these commands into a shell start-up file such as
     <filename>/etc/profile</> or <filename>~/.bash_profile</>.
    </para>
 
@@ -810,7 +810,7 @@ libpq.so.2.1: cannot open shared object file: No such file or directory
     add <filename>/usr/local/pgsql/bin</> (or what you set
     <option><literal>--bindir</></> to in <xref linkend="configure">)
     into your <envar>PATH</>. To do this, add the following to your
-    shell startup file, such as <filename>~/.bash_profile</> (or
+    shell start-up file, such as <filename>~/.bash_profile</> (or
     <filename>/etc/profile</>, if you want it to affect every user):
 <programlisting>
 PATH=$PATH:/usr/local/pgsql/bin
@@ -824,7 +824,7 @@ set path = ( /usr/local/pgsql/bin path )
    <para>
     To enable your system to find the <application>man</>
     documentation, you need to add a line like the following to a
-    shell startup file:
+    shell start-up file:
 <programlisting>
 MANPATH=$MANPATH:/usr/local/pgsql/man
 </programlisting>

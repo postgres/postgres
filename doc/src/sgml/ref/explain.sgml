@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/explain.sgml,v 1.9 2000/02/15 23:37:49 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/explain.sgml,v 1.10 2000/08/29 20:02:09 momjian Exp $
 Postgres documentation
 -->
 
@@ -114,10 +114,10 @@ EXPLAIN
    The most critical part of the display is the estimated query execution
    cost, which is the planner's guess at how long it will take to run the
    query (measured in units of disk page fetches).  Actually two numbers
-   are shown: the startup time before the first tuple can be returned, and
+   are shown: the start-up time before the first tuple can be returned, and
    the total time to return all the tuples.  For most queries the total time
    is what matters, but in contexts such as an EXISTS sub-query the planner
-   will choose the smallest startup time instead of the smallest total time
+   will choose the smallest start-up time instead of the smallest total time
    (since the executor will stop after getting one tuple, anyway).
    Also, if you limit the number of tuples to return with a LIMIT clause,
    the planner makes an appropriate interpolation between the endpoint

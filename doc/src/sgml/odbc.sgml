@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/odbc.sgml,v 1.15 2000/05/02 20:01:52 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/odbc.sgml,v 1.16 2000/08/29 20:02:07 momjian Exp $
 -->
 
  <chapter id="odbc">
@@ -1070,7 +1070,7 @@ can't load library 'libodbc.so'\n", 61) = -1 EIO (I/O error)
 
     <para>
      You can add information about your
-     database login and password to the standard Applix startup
+     database login and password to the standard Applix start-up
      macro file. This is an example 
      <filename>~/axhome/macros/login.am</filename> file:
 

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.34 2000/08/24 23:36:28 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.35 2000/08/29 20:02:07 momjian Exp $
 -->
 
  <chapter id="datatype">
@@ -1219,13 +1219,13 @@ January 8 04:05:06 1999 PST
       <listitem>
        <para>
 	The <envar>PGDATESTYLE</envar> environment variable used by the backend directly 
-	on postmaster startup.
+	on postmaster start-up.
        </para>
       </listitem>
       <listitem>
        <para>
 	The <envar>PGDATESTYLE</envar> environment variable used by the frontend libpq 
-	on session startup.
+	on session start-up.
        </para>
       </listitem>
       <listitem>
@@ -1305,7 +1305,7 @@ January 8 04:05:06 1999 PST
       <listitem>
        <para>
 	The TZ environment variable used by the backend directly
-	on postmaster startup as the default time zone.
+	on postmaster start-up as the default time zone.
        </para>
       </listitem>
       <listitem>

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/plan.sgml,v 2.3 2000/03/31 17:45:00 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/plan.sgml,v 2.4 2000/08/29 20:02:07 momjian Exp $
 -->
 
  <chapter>
@@ -40,7 +40,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/plan.sgml,v 2.3 2000/03/31 17:45:00 t
     <itemizedlist>
      <listitem>
       <para>
-       Estimated startup cost (time expended before output scan can start,
+       Estimated start-up cost (time expended before output scan can start,
        eg, time to do the sorting in a SORT node).
       </para>
      </listitem>
@@ -241,7 +241,7 @@ Hash Join  (cost=89.60..574.10 rows=100 width=296)
     using ye same olde indexscan, stash them into an in-memory hash table,
     and then do a sequential scan of tenk2, probing into the hash table
     for possible matches of "t1.unique2 = t2.unique2" at each tenk2 tuple.
-    The cost to read tenk1 and set up the hash table is entirely startup
+    The cost to read tenk1 and set up the hash table is entirely start-up
     cost for the hash join, since we won't get any tuples out until we can
     start reading tenk2.  The total time estimate for the join also
     includes a pretty hefty charge for CPU time to probe the hash table

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/set.sgml,v 1.47 2000/08/07 00:51:18 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/set.sgml,v 1.48 2000/08/29 20:02:09 momjian Exp $
 Postgres documentation
 -->
 
@@ -165,7 +165,7 @@ SET TIME ZONE { '<replaceable class="PARAMETER">timezone</replaceable>' | LOCAL 
 	 Setting the <envar>PGDATESTYLE</envar> environment variable.
 	 If PGDATESTYLE is set in the frontend environment of a client
 	 based on libpq, libpq will automatically set DATESTYLE to the
-	 value of PGDATESTYLE during connection startup.
+	 value of PGDATESTYLE during connection start-up.
 	</member>
 	<member>
 	 Running postmaster using the option <option>-o -e</option> to
@@ -288,7 +288,7 @@ SELECT setseed(<replaceable>value</replaceable>);
        <para>
         If the PGTZ environment variable is set in the frontend
 	environment of a client based on libpq, libpq will automatically
-	set TIMEZONE to the value of PGTZ during connection startup.
+	set TIMEZONE to the value of PGTZ during connection start-up.
        </para>
       </listitem>
      </varlistentry>
@@ -341,7 +341,7 @@ SELECT setseed(<replaceable>value</replaceable>);
     </varlistentry>
      
     <varlistentry>
-     <term><computeroutput>ERROR:  <replaceable>name</replaceable> can only be set at startup</computeroutput></term>
+     <term><computeroutput>ERROR:  <replaceable>name</replaceable> can only be set at start-up</computeroutput></term>
      <listitem>
       <para>
        Some parameters are fixed once the server is started.

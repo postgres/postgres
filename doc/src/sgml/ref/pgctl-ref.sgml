@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/Attic/pgctl-ref.sgml,v 1.6 2000/07/22 04:30:27 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/Attic/pgctl-ref.sgml,v 1.7 2000/08/29 20:02:09 momjian Exp $
 Postgres documentation
 -->
 
@@ -119,7 +119,7 @@ pg_ctl [-D <replaceable class="parameter">datadir</replaceable>] status
 	   <para>
 	    Immediate mode sends SIGUSR1
 	    to the backends and lets them abort. In this case, database recovery
-	    will be necessary on the next startup.
+	    will be necessary on the next start-up.
 	   </para>
 	  </listitem>
 	 </varlistentry>

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/jdbc.sgml,v 1.11 2000/08/23 05:59:02 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/jdbc.sgml,v 1.12 2000/08/29 20:02:07 momjian Exp $
 -->
 
  <chapter id="jdbc">
@@ -816,7 +816,7 @@ used. Also, only the function's required are entered into this table,
 keeping connection times as fast as possible.
 
           The postgresql.LargeObject class performs a query upon it's 
-startup, and passes the returned ResultSet to the addFunctions() 
+start-up, and passes the returned ResultSet to the addFunctions() 
 method here.
        
           Once this has been done, the LargeObject api refers to the 

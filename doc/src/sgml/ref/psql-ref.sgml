@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.35 2000/07/22 04:45:09 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.36 2000/08/29 20:02:09 momjian Exp $
 Postgres documentation
 -->
 
@@ -1296,7 +1296,7 @@ Access permissions for database "test"
       In general, both will do what you expect, but using <literal>-f</literal>
       enables some nice features such as error messages with line numbers.
       There is also a slight chance that using this option will reduce
-      the startup overhead. On the other hand, the variant using the shell's
+      the start-up overhead. On the other hand, the variant using the shell's
       input redirection is (in theory) guaranteed to yield exactly the same
       output that you would have gotten had you entered everything by hand.
       </para>
@@ -1503,7 +1503,7 @@ Access permissions for database "test"
       Performs a variable assignment, like the <command>\set</command> internal command.
       Note that you must separate name and value, if any, by an equal sign on the command
       line. To unset a variable, leave off the equal sign. These assignments are done
-      during a very early state of startup, so variables reserved for internal purposes
+      during a very early state of start-up, so variables reserved for internal purposes
       might get overwritten later.
       </para>
       </listitem>
@@ -1557,7 +1557,7 @@ Access permissions for database "test"
       <term>-X, --no-psqlrc</term>
       <listitem>
       <para>
-      Do not read the startup file <filename>~/.psqlrc</filename>.
+      Do not read the start-up file <filename>~/.psqlrc</filename>.
       </para>
       </listitem>
     </varlistentry>
@@ -1646,7 +1646,7 @@ bar
 	<listitem>
 	<para>
         The name of the database you are currently connected to. This is set every time
-        you connect to a database (including program startup), but can be unset.
+        you connect to a database (including program start-up), but can be unset.
 	</para>
 	</listitem>
       </varlistentry>
@@ -1657,7 +1657,7 @@ bar
 	<para>
 	If set to <quote><literal>all</literal></quote>, all lines entered or from a script
         are written to the standard output before they
-	are parsed or executed. To specify this on program startup, use the switch
+	are parsed or executed. To specify this on program start-up, use the switch
         <option>-a</option>. If set to <quote><literal>queries</literal></quote>,
         <application>psql</application> merely prints all queries as they are sent to the
         backend. The option for this is <option>-e</option>.
@@ -1728,7 +1728,7 @@ bar
 	<listitem>
 	<para>
         The database server host you are currently connected to. This is set every time
-        you connect to a database (including program startup), but can be unset.
+        you connect to a database (including program start-up), but can be unset.
 	</para>
 	</listitem>
       </varlistentry>
@@ -1816,7 +1816,7 @@ bar
 	<listitem>
 	<para>
         The database server port to which you are currently connected. This is set every time
-        you connect to a database (including program startup), but can be unset.
+        you connect to a database (including program start-up), but can be unset.
 	</para>
 	</listitem>
       </varlistentry>
@@ -1867,7 +1867,7 @@ bar
 	<listitem>
 	<para>
         The database user you are currently connected as. This is set every time
-        you connect to a database (including program startup), but can be unset.
+        you connect to a database (including program start-up), but can be unset.
 	</para>
 	</listitem>
       </varlistentry>

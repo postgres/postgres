@@ -47,7 +47,7 @@ have different roles but may be implemented by the same executable.
 </para>
 
 <Para>
-A frontend sends a startup packet to the postmaster.  This includes the names
+A frontend sends a start-up packet to the postmaster.  This includes the names
 of the user and the database the user wants to connect to.  The postmaster then
 uses this, and the information in the <filename>pg_hba.conf</filename>
 file
@@ -60,7 +60,7 @@ and responds to the frontend accordingly.
 The frontend then sends any required authentication information.  Once the
 postmaster validates this it responds to the frontend that it is authenticated
 and hands over the connection to a backend.  The backend then sends a message
-indicating successful startup (normal case) or failure (for example, an
+indicating successful start-up (normal case) or failure (for example, an
 invalid database name).
 </para>
 
@@ -91,17 +91,17 @@ itself.  The difference is historical.
 <Para>
 This section describes the message flow.  There are four different types of
 flows depending on the state of the connection:
-startup, query, function call, and termination.
+start-up, query, function call, and termination.
 There are also special provisions for notification responses and command
-cancellation, which can occur at any time after the startup phase.
+cancellation, which can occur at any time after the start-up phase.
 </para>
 
 
 <Sect2>
-<Title>Startup</Title>
+<Title>Start-up</Title>
 
 <Para>
-Startup is divided into an authentication phase and a backend startup phase.
+Start-up is divided into an authentication phase and a backend start-up phase.
 </para>
 
 <Para>
@@ -197,8 +197,8 @@ postmaster, then it should immediately close the connection.
 <Para>
 After sending AuthenticationOk, the postmaster attempts to launch a backend
 process.  Since this might fail, or the backend might encounter a failure
-during startup, the frontend must wait for the backend to acknowledge
-successful startup.  The frontend should send no messages at this point.
+during start-up, the frontend must wait for the backend to acknowledge
+successful start-up.  The frontend should send no messages at this point.
 The possible messages from the backend during this phase are:
 
 <VariableList>
@@ -208,7 +208,7 @@ The possible messages from the backend during this phase are:
 </Term>
 <ListItem>
 <Para>
-		This message is issued after successful backend startup.
+		This message is issued after successful backend start-up.
 		It provides secret-key data that the frontend must save
 		if it wants to be able to issue cancel requests later.
 		The frontend should not respond to this message, but should
@@ -222,7 +222,7 @@ The possible messages from the backend during this phase are:
 </Term>
 <ListItem>
 <Para>
-		Backend startup is successful.  The frontend may now issue
+		Backend start-up is successful.  The frontend may now issue
 		query or function call messages.
 </Para>
 </ListItem>
@@ -233,7 +233,7 @@ The possible messages from the backend during this phase are:
 </Term>
 <ListItem>
 <Para>
-		Backend startup failed.  The connection is closed after
+		Backend start-up failed.  The connection is closed after
 		sending this message.
 </Para>
 </ListItem>
@@ -257,8 +257,8 @@ The possible messages from the backend during this phase are:
 The ReadyForQuery message is the same one that the backend will issue after
 each query cycle.  Depending on the coding needs of the frontend, it is
 reasonable to consider ReadyForQuery as starting a query cycle (and then
-BackendKeyData indicates successful conclusion of the startup phase),
-or to consider ReadyForQuery as ending the startup phase and each subsequent
+BackendKeyData indicates successful conclusion of the start-up phase),
+or to consider ReadyForQuery as ending the start-up phase and each subsequent
 query cycle.
 </para>
 </sect2>
@@ -516,7 +516,7 @@ whenever a notify(l) command is executed for the same notification name.
 
 <Para>
 Notification responses are permitted at any point in the protocol (after
-startup), except within another backend message.  Thus, the frontend
+start-up), except within another backend message.  Thus, the frontend
 must be prepared to recognize a NotificationResponse message whenever it is
 expecting any message.  Indeed, it should be able to handle
 NotificationResponse messages even when it is not engaged in a query.
@@ -568,7 +568,7 @@ reasons, no direct reply is made to the cancel request message.
 
 <Para>
 A CancelRequest message will be ignored unless it contains the same key data
-(PID and secret key) passed to the frontend during connection startup.  If the
+(PID and secret key) passed to the frontend during connection start-up.  If the
 request matches the PID and secret key for a currently executing backend, the
 postmaster signals the backend to abort processing of the current query.
 </para>

@@ -114,7 +114,7 @@
    <itemizedlist>
     <listitem>
      <para>
-      The exact sequence of steps <emphasis>from program startup</emphasis>
+      The exact sequence of steps <emphasis>from program start-up</emphasis>
       necessary to reproduce the problem. This should be self-contained;
       it is not enough to send in a bare select statement without the
       preceeding create table and insert statements, if the output should
@@ -125,7 +125,7 @@
       query-language related problems is a file that can be run through the
       <application>psql</application> frontend
       that shows the problem. (Be sure to not have anything in your
-      <filename>~/.psqlrc</filename> startup file.) You are encouraged to
+      <filename>~/.psqlrc</filename> start-up file.) You are encouraged to
       minimize the size of your example, but this is not absolutely necessary.
       If the bug is reproduceable, we'll find it either way.
      </para>
@@ -176,7 +176,7 @@
 
     <listitem>
      <para>
-      Any command line options and other startup options, including concerned
+      Any command line options and other start-up options, including concerned
       environment variables or configuration files that you changed from the
       default. Again, be exact. If you are using a pre-packaged
       distribution that starts the database server at boot time, you should try

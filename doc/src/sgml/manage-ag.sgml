@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/manage-ag.sgml,v 2.9 2000/06/30 16:14:21 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/manage-ag.sgml,v 2.10 2000/08/29 20:02:07 momjian Exp $
 -->
 
 <chapter id="managing-databases">
@@ -134,8 +134,8 @@ setenv PGDATA2 /home/postgres/data
     in csh or tcsh. You have to make sure that this environment
     variable is always defined in the server environment, otherwise
     you won't be able to access that database. Therefore you probably
-    want to set it in some sort of shell startup file or server
-    startup script.
+    want to set it in some sort of shell start-up file or server
+    start-up script.
    </para>
 
    <para>

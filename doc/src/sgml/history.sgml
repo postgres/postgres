@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/history.sgml,v 1.8 2000/05/02 20:01:51 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/history.sgml,v 1.9 2000/08/29 20:02:07 momjian Exp $
 -->
 
 <sect1>
@@ -246,7 +246,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/history.sgml,v 1.8 2000/05/02 20:01:51 thom
    <listitem>
     <para>
      Overall backend code speed has been increased by approximately 20-40%, 
-     and backend startup time has decreased 80% since v6.0 was released.
+     and backend start-up time has decreased 80% since v6.0 was released.
     </para>
    </listitem>
   </itemizedlist>
