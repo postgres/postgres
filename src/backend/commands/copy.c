@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.60 1998/09/07 05:35:42 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.61 1998/09/08 22:15:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -661,7 +661,7 @@ CopyFrom(Relation rel, bool binary, bool oids, FILE *fp, char *delim)
 					}
 					else if (nulls[i] != 'n')
 					{
-						ptr = att_align(ptr, attr[i]->attlen, attr[i]->attalign);
+						ptr = (char *)att_align(ptr, attr[i]->attlen, attr[i]->attalign);
 						values[i] = (Datum) ptr;
 						ptr = att_addlength(ptr, attr[i]->attlen, ptr);
 					}
