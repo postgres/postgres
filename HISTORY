@@ -386,6 +386,8 @@ Require readline and zlib by default in configure (Peter)
 Allow Solaris to use Intimate Shared Memory (ISM), for performance
   (Scott Brunza, P.J. Josh Rovero)
 Always enable syslog in compile, remove --enable-syslog option (Tatsuo)
+Always enable multibyte in compile, remove --enable-multibyte option (Tatsuo)
+Always enable locale in compile, remove --enable-locale option (Tatsuo)
 Fix for Win9x DLL creation (Magnus Naeslund)
 Fix for link() usage by WAL code on Win32, Netware, BeOS (Jason Tishler)
 Add sys/types.h to c.h, remove from main files (Peter, Bruce)
