@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.275 2002/07/30 05:35:53 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.276 2002/07/30 16:55:45 momjian Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -1693,7 +1693,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.275 $ $Date: 2002/07/30 05:35:53 $\n");
+		puts("$Revision: 1.276 $ $Date: 2002/07/30 16:55:45 $\n");
 	}
 
 	/*
@@ -2351,12 +2351,6 @@ CreateCommandTag(Node *parsetree)
 		case T_ExplainStmt:
 			tag = "EXPLAIN";
 			break;
-
-#ifdef NOT_USED
-		case T_RecipeStmt:
-			tag = "EXECUTE RECIPE";
-			break;
-#endif
 
 		case T_VariableSetStmt:
 			tag = "SET";

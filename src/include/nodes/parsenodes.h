@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsenodes.h,v 1.195 2002/07/29 22:14:11 tgl Exp $
+ * $Id: parsenodes.h,v 1.196 2002/07/30 16:55:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1225,16 +1225,6 @@ typedef struct CommentStmt
 	List	   *objargs;		/* Arguments if needed (eg, for functions) */
 	char	   *comment;		/* Comment to insert, or NULL to remove */
 } CommentStmt;
-
-/* ----------------------
- *		Begin Recipe Statement
- * ----------------------
- */
-typedef struct RecipeStmt
-{
-	NodeTag		type;
-	char	   *recipeName;		/* name of the recipe */
-} RecipeStmt;
 
 /* ----------------------
  *		Fetch Statement

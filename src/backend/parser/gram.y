@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.350 2002/07/29 22:14:10 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.351 2002/07/30 16:55:44 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -2949,23 +2949,6 @@ opt_class:	any_name
 			| USING any_name						{ $$ = $2; }
 			| /*EMPTY*/								{ $$ = NIL; }
 		;
-
-/*****************************************************************************
- *
- *		QUERY:
- *				execute recipe <recipeName>
- *
- *****************************************************************************/
-
-/* NOT USED
-RecipeStmt:  EXECUTE RECIPE recipe_name
-				{
-					RecipeStmt *n = makeNode(RecipeStmt);
-					n->recipeName = $3;
-					$$ = (Node *)n;
-				}
-		;
-*/
 
 /*****************************************************************************
  *
