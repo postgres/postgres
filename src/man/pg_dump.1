@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/pg_dump.1,v 1.15 1998/10/07 02:49:10 momjian Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/pg_dump.1,v 1.16 1999/01/21 22:53:37 momjian Exp $
 .TH PG_DUMP UNIX 7/15/98 PostgreSQL PostgreSQL
 .SH NAME
 pg_dump - dumps out a Postgres database into a script file
@@ -8,6 +8,9 @@ pg_dump - dumps out a Postgres database into a script file
 .BR pg_dump
 [\c
 .BR "-a"
+]
+[\c
+.BR "-c"
 ]
 [\c
 .BR "-d"
@@ -73,6 +76,9 @@ pg_dump understands the following options:
 .TP
 .BR "-a" ""
 Dump out only the data, no schema
+.TP
+.BR "-c" ""
+Clean(drop) schema prior to create
 .TP
 .BR "-d" ""
 Dump data as proper insert strings

@@ -22,7 +22,7 @@ pg_dump [ <replaceable class="parameter">dbname</replaceable> ]
 pg_dump [ -h <replaceable class="parameter">host</replaceable> ] [ -p <replaceable class="parameter">port</replaceable> ]
     [ -t <replaceable class="parameter">table</replaceable> ]
     [ -f <replaceable class="parameter">outputfile</replaceable> ]
-    [ -a ] [ -d ] [ -D ] [ -n ] [ -N ] [ -o ] [ -s ] [ -u ] [ -v ] [ -z ]
+    [ -a ] [ -c ] [ -d ] [ -D ] [ -n ] [ -N ] [ -o ] [ -s ] [ -u ] [ -v ] [ -z ]
     [ <replaceable class="parameter">dbname</replaceable> ]
 </SYNOPSIS>
 
@@ -59,6 +59,17 @@ pg_dump [ -h <replaceable class="parameter">host</replaceable> ] [ -p <replaceab
 	    <listitem>
 	      <para>
 		Dump out only the data, no schema (definitions).
+	      </para>
+	    </listitem>
+	  </varlistentry>
+	  
+	  <varlistentry>
+	    <term>
+	      -c
+	    </term>
+	    <listitem>
+	      <para>
+		Clean(drop) schema prior to create.
 	      </para>
 	    </listitem>
 	  </varlistentry>

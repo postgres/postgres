@@ -21,7 +21,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.99 1999/01/18 06:32:26 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.100 1999/01/21 22:53:36 momjian Exp $
  *
  * Modifications - 6/10/96 - dave@bensoft.com - version 1.13.dhb
  *
@@ -117,6 +117,7 @@ int		attrNames;			/* put attr names into insert strings */
 int		schemaOnly;
 int		dataOnly;
 int		aclsOption;
+bool		drop_schema;
 
 char		g_opaque_type[10];		/* name for the opaque type */
 
@@ -132,6 +133,8 @@ usage(const char *progname)
 			"usage:  %s [options] dbname\n", progname);
 	fprintf(stderr,
 			"\t -a          \t\t dump out only the data, no schema\n");
+	fprintf(stderr,
+			"\t -c          \t\t clean(drop) schema prior to create\n");
 	fprintf(stderr,
 			"\t -d          \t\t dump data as proper insert strings\n");
 	fprintf(stderr,
@@ -556,6 +559,7 @@ main(int argc, char **argv)
 
 	g_verbose = false;
 	force_quotes = true;
+	drop_schema = false;
 
 	strcpy(g_comment_start, "-- ");
 	g_comment_end[0] = '\0';
@@ -565,12 +569,15 @@ main(int argc, char **argv)
 
 	progname = *argv;
 
-	while ((c = getopt(argc, argv, "adDf:h:nNop:st:vzu")) != EOF)
+	while ((c = getopt(argc, argv, "acdDf:h:nNop:st:vzu")) != EOF)
 	{
 		switch (c)
 		{
 			case 'a':			/* Dump data only */
 				dataOnly = 1;
+				break;
+			case 'c':			/* clean (i.e., drop) schema prior to create */
+				drop_schema = true;
 				break;
 			case 'd':			/* dump data as proper insert strings */
 				dumpData = 1;
@@ -1638,6 +1645,18 @@ getTables(int *numTables, FuncInfo *finfo, int numFuncs)
 					exit_nicely(g_conn);
 				}
 				tgfunc = finfo[findx].proname;
+
+#if 0				
+				/* XXX - how to emit this DROP TRIGGER? */
+				if (drop_schema)
+				  {
+				    sprintf(query, "DROP TRIGGER %s ON %s;\n",
+					    fmtId(PQgetvalue(res2, i2, i_tgname), force_quotes),
+					    fmtId(tblinfo[i].relname, force_quotes));
+				    fputs(query, fout);
+				  }
+#endif
+
 				sprintf(query, "CREATE TRIGGER %s ", fmtId(PQgetvalue(res2, i2, i_tgname), force_quotes));
 				/* Trigger type */
 				findx = 0;
@@ -2034,6 +2053,12 @@ dumpTypes(FILE *fout, FuncInfo *finfo, int numFuncs,
 
 		becomeUser(fout, tinfo[i].usename);
 
+		if (drop_schema)
+		  {
+		    sprintf(q, "DROP TYPE %s;\n", fmtId(tinfo[i].typname, force_quotes));
+		    fputs(q, fout);
+		  }
+
 		sprintf(q,
 				"CREATE TYPE %s "
 				"( internallength = %s, externallength = %s, input = %s, "
@@ -2129,6 +2154,9 @@ dumpProcLangs(FILE *fout, FuncInfo *finfo, int numFuncs,
 
 		lanname = checkForQuote(PQgetvalue(res, i, i_lanname));
 		lancompiler = checkForQuote(PQgetvalue(res, i, i_lancompiler));
+
+		if (drop_schema)
+		  fprintf(fout, "DROP PROCEDURAL LANGUAGE '%s';\n", lanname);
 
 		fprintf(fout, "CREATE %sPROCEDURAL LANGUAGE '%s' "
 			"HANDLER %s LANCOMPILER '%s';\n",
@@ -2245,6 +2273,23 @@ dumpOneFunc(FILE *fout, FuncInfo *finfo, int i,
 		PQclear(res);
 	}
 
+	if (drop_schema)
+	  {
+	    sprintf(q, "DROP FUNCTION %s (", fmtId(finfo[i].proname, force_quotes));
+	    for (j = 0; j < finfo[i].nargs; j++)
+	      {
+		char	   *typname;
+		
+		typname = findTypeByOid(tinfo, numTypes, finfo[i].argtypes[j]);
+		sprintf(q, "%s%s%s",
+			q,
+			(j > 0) ? "," : "",
+			fmtId(typname, false));
+	      }
+	    sprintf (q, "%s);\n", q);
+	    fputs(q, fout);
+	  }
+
 	sprintf(q, "CREATE FUNCTION %s (", fmtId(finfo[i].proname, force_quotes));
 	for (j = 0; j < finfo[i].nargs; j++)
 	{
@@ -2355,6 +2400,14 @@ dumpOprs(FILE *fout, OprInfo *oprinfo, int numOperators,
 
 		becomeUser(fout, oprinfo[i].usename);
 
+		if (drop_schema)
+		  {
+		    sprintf(q, "DROP OPERATOR %s (%s, %s);\n", oprinfo[i].oprname, 
+			    fmtId(findTypeByOid(tinfo, numTypes, oprinfo[i].oprleft), false),
+			    fmtId(findTypeByOid(tinfo, numTypes, oprinfo[i].oprright), false));
+		    fputs(q, fout);
+		  }
+
 		sprintf(q,
 				"CREATE OPERATOR %s "
 				"(PROCEDURE = %s %s %s %s %s %s %s %s %s);\n ",
@@ -2449,6 +2502,13 @@ dumpAggs(FILE *fout, AggInfo *agginfo, int numAggs,
 			comma2[0] = '\0';
 
 		becomeUser(fout, agginfo[i].usename);
+
+		if (drop_schema)
+		  {
+		    sprintf(q, "DROP AGGREGATE %s %s;\n", agginfo[i].aggname,
+			    fmtId(findTypeByOid(tinfo, numTypes, agginfo[i].aggbasetype), false));
+		    fputs(q, fout);
+		  }
 
 		sprintf(q, "CREATE AGGREGATE %s ( %s %s%s %s%s %s );\n",
 				agginfo[i].aggname,
@@ -2648,6 +2708,12 @@ dumpTables(FILE *fout, TableInfo *tblinfo, int numTables,
 			numParents = tblinfo[i].numParents;
 
 			becomeUser(fout, tblinfo[i].usename);
+
+			if (drop_schema)
+			  {
+			    sprintf(q, "DROP TABLE %s;\n", fmtId(tblinfo[i].relname, force_quotes));
+			    fputs(q, fout);
+			  }
 
 			sprintf(q, "CREATE TABLE %s (\n\t", fmtId(tblinfo[i].relname, force_quotes));
 			actual_atts = 0;
@@ -2865,6 +2931,13 @@ dumpIndices(FILE *fout, IndInfo *indinfo, int numIndices,
 
 			strcpy(id1, fmtId(indinfo[i].indexrelname, force_quotes));
 			strcpy(id2, fmtId(indinfo[i].indrelname, force_quotes));
+
+			if (drop_schema)
+			  {
+			    sprintf(q, "DROP INDEX %s;\n", id1);
+			    fputs(q, fout);
+			  }
+
 			fprintf(fout, "CREATE %s INDEX %s on %s using %s (",
 			  (strcmp(indinfo[i].indisunique, "t") == 0) ? "UNIQUE" : "",
 					id1,
@@ -3124,6 +3197,12 @@ dumpSequence(FILE *fout, TableInfo tbinfo)
 	called = *t;
 
 	PQclear(res);
+
+	if (drop_schema)
+	  {
+	    sprintf(query, "DROP SEQUENCE %s;\n", fmtId(tbinfo.relname, force_quotes));
+	    fputs(query, fout);
+	  }
 
 	sprintf(query,
 			"CREATE SEQUENCE %s start %d increment %d maxvalue %d "
