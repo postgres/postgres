@@ -1179,3 +1179,31 @@ order by relname, attnum;
 drop table p1, p2 cascade;
 NOTICE:  Drop cascades to table c1
 NOTICE:  Drop cascades to table gc1
+-- test renumbering of child-table columns in inherited operations
+create table p1 (f1 int);
+create table c1 (f2 text, f3 int) inherits (p1);
+alter table p1 add column a1 int check (a1 > 0);
+alter table p1 add column f2 text;
+NOTICE:  ALTER TABLE: merging definition of column "f2" for child c1
+insert into p1 values (1,2,'abc');
+insert into c1 values(11,'xyz',33,0); -- should fail
+ERROR:  ExecInsert: rejected due to CHECK constraint "p1_a1" on "c1"
+insert into c1 values(11,'xyz',33,22);
+select * from p1;
+ f1 | a1 | f2  
+----+----+-----
+  1 |  2 | abc
+ 11 | 22 | xyz
+(2 rows)
+
+update p1 set a1 = a1 + 1, f2 = upper(f2);
+select * from p1;
+ f1 | a1 | f2  
+----+----+-----
+  1 |  3 | ABC
+ 11 | 23 | XYZ
+(2 rows)
+
+drop table p1 cascade;
+NOTICE:  Drop cascades to table c1
+NOTICE:  Drop cascades to constraint p1_a1 on table c1

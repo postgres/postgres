@@ -849,3 +849,21 @@ where relname in ('p1','p2','c1','gc1') and attnum > 0 and not attisdropped
 order by relname, attnum;
 
 drop table p1, p2 cascade;
+
+-- test renumbering of child-table columns in inherited operations
+
+create table p1 (f1 int);
+create table c1 (f2 text, f3 int) inherits (p1);
+
+alter table p1 add column a1 int check (a1 > 0);
+alter table p1 add column f2 text;
+
+insert into p1 values (1,2,'abc');
+insert into c1 values(11,'xyz',33,0); -- should fail
+insert into c1 values(11,'xyz',33,22);
+
+select * from p1;
+update p1 set a1 = a1 + 1, f2 = upper(f2);
+select * from p1;
+
+drop table p1 cascade;
