@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.310 2002/12/01 18:44:00 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.311 2002/12/12 21:03:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -827,6 +827,9 @@ dumpClasses_nodumpData(Archive *fout, char *oid, void *dctxv)
 	 * possibility of retrieving data in the wrong column order.  (The
 	 * default column ordering of COPY will not be what we want in certain
 	 * corner cases involving ADD COLUMN and inheritance.)
+	 *
+	 * NB: caller should have already determined that there are dumpable
+	 * columns, so that fmtCopyColumnList will return something.
 	 */
 	if (g_fout->remoteVersion >= 70300)
 		column_list = fmtCopyColumnList(tbinfo);
@@ -1140,40 +1143,45 @@ dumpClasses(const TableInfo *tblinfo, const int numTables, Archive *fout,
 
 		if (tblinfo[i].dump)
 		{
+			const char *column_list;
+
 			if (g_verbose)
 				write_msg(NULL, "preparing to dump the contents of table %s\n",
 						  classname);
 
-			dumpCtx = (DumpContext *) malloc(sizeof(DumpContext));
-			dumpCtx->tblinfo = (TableInfo *) tblinfo;
-			dumpCtx->tblidx = i;
-			dumpCtx->oids = oids;
-
-			if (!dumpData)
+			/* Get column list first to check for zero-column table */
+			column_list = fmtCopyColumnList(&(tblinfo[i]));
+			if (column_list)
 			{
-				/* Dump/restore using COPY */
-				const char *column_list;
+				dumpCtx = (DumpContext *) malloc(sizeof(DumpContext));
+				dumpCtx->tblinfo = (TableInfo *) tblinfo;
+				dumpCtx->tblidx = i;
+				dumpCtx->oids = oids;
 
-				dumpFn = dumpClasses_nodumpData;
-				column_list = fmtCopyColumnList(&(tblinfo[i]));
-				resetPQExpBuffer(copyBuf);
-				appendPQExpBuffer(copyBuf, "COPY %s %s %sFROM stdin;\n",
-								  fmtId(tblinfo[i].relname),
-								  column_list,
+				if (!dumpData)
+				{
+					/* Dump/restore using COPY */
+					dumpFn = dumpClasses_nodumpData;
+					resetPQExpBuffer(copyBuf);
+					appendPQExpBuffer(copyBuf, "COPY %s %s %sFROM stdin;\n",
+									  fmtId(tblinfo[i].relname),
+									  column_list,
 					   (oids && tblinfo[i].hasoids) ? "WITH OIDS " : "");
-				copyStmt = copyBuf->data;
-			}
-			else
-			{
-				/* Restore using INSERT */
-				dumpFn = dumpClasses_dumpData;
-				copyStmt = NULL;
-			}
+					copyStmt = copyBuf->data;
+				}
+				else
+				{
+					/* Restore using INSERT */
+					dumpFn = dumpClasses_dumpData;
+					copyStmt = NULL;
+				}
 
-			ArchiveEntry(fout, tblinfo[i].oid, tblinfo[i].relname,
-					tblinfo[i].relnamespace->nspname, tblinfo[i].usename,
-						 "TABLE DATA", NULL, "", "", copyStmt,
-						 dumpFn, dumpCtx);
+				ArchiveEntry(fout, tblinfo[i].oid, tblinfo[i].relname,
+							 tblinfo[i].relnamespace->nspname,
+							 tblinfo[i].usename,
+							 "TABLE DATA", NULL, "", "", copyStmt,
+							 dumpFn, dumpCtx);
+			}
 		}
 	}
 
@@ -3220,13 +3228,16 @@ dumpOneDomain(Archive *fout, TypeInfo *tinfo)
 	if (typdefault)
 		appendPQExpBuffer(q, " DEFAULT %s", typdefault);
 
-	/* Fetch and process CHECK Constraints */
+	PQclear(res);
+
+	/*
+	 * Fetch and process CHECK constraints for the domain
+	 */
 	appendPQExpBuffer(chkquery, "SELECT conname, consrc "
 					  "FROM pg_catalog.pg_constraint "
 					  "WHERE contypid = '%s'::pg_catalog.oid",
 					  tinfo->oid);
 
-	PQclear(res);
 	res = PQexec(g_conn, chkquery->data);
 	if (!res ||
 		PQresultStatus(res) != PGRES_TUPLES_OK)
@@ -3236,7 +3247,6 @@ dumpOneDomain(Archive *fout, TypeInfo *tinfo)
 		exit_nicely();
 	}
 
-	/* Expecting a single result only */
 	ntups = PQntuples(res);
 	for (i = 0; i < ntups; i++)
 	{
@@ -3246,7 +3256,8 @@ dumpOneDomain(Archive *fout, TypeInfo *tinfo)
 		conname = PQgetvalue(res, i, PQfnumber(res, "conname"));
 		consrc = PQgetvalue(res, i, PQfnumber(res, "consrc"));
 
-		appendPQExpBuffer(q, " CONSTRAINT %s CHECK %s", fmtId(conname), consrc);
+		appendPQExpBuffer(q, "\n\tCONSTRAINT %s CHECK %s",
+						  fmtId(conname), consrc);
 	}
 	
 	appendPQExpBuffer(q, ";\n");
@@ -6744,7 +6755,10 @@ fmtQualifiedId(const char *schema, const char *id)
 }
 
 /*
- * return a column list clause for the given relation.
+ * Return a column list clause for the given relation.
+ *
+ * Special case: if there are no undropped columns in the relation, return
+ * NULL, not an invalid "()" column list.
  */
 static const char *
 fmtCopyColumnList(const TableInfo *ti)
@@ -6772,6 +6786,10 @@ fmtCopyColumnList(const TableInfo *ti)
 		appendPQExpBuffer(q, "%s", fmtId(attnames[i]));
 		needComma = true;
 	}
+
+	if (!needComma)
+		return NULL;			/* no undropped columns */
+
 	appendPQExpBuffer(q, ")");
 	return q->data;
 }
