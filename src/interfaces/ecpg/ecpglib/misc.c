@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/ecpglib/misc.c,v 1.15 2003/09/09 10:46:37 meskes Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/ecpglib/misc.c,v 1.16 2003/10/21 15:34:34 tgl Exp $ */
 
 #define POSTGRES_ECPG_INTERNAL
 #include "postgres_fe.h"
@@ -20,7 +20,11 @@
 
 #ifdef HAVE_LONG_LONG_INT_64
 #ifndef LONG_LONG_MIN
+#ifdef LLONG_MIN
 #define LONG_LONG_MIN LLONG_MIN
+#else
+#define LONG_LONG_MIN LONGLONG_MIN
+#endif
 #endif
 #endif
 
