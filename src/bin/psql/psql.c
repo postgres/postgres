@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.70 1997/06/03 06:17:34 vadim Exp $
+ *    $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.71 1997/06/06 01:41:24 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -184,7 +184,8 @@ slashUsage(PsqlSettings * ps)
 static PGresult *
 PSQLexec(PsqlSettings * ps, char *query)
 {
-    PGresult       *res = PQexec(ps->db, query);
+    PGresult       *res;
+    res = PQexec(ps->db, query);
     if (!res)
 	fputs(PQerrorMessage(ps->db), stderr);
     else {
@@ -259,7 +260,6 @@ tableList(PsqlSettings * ps, bool deep_tablelist, char table_index_both)
     strcat(listbuf, "  ORDER BY relname ");
     if (!(res = PSQLexec(ps, listbuf)))
 	return -1;
-
     /* first, print out the attribute names */
     nColumns = PQntuples(res);
     if (nColumns > 0) {
@@ -278,7 +278,7 @@ tableList(PsqlSettings * ps, bool deep_tablelist, char table_index_both)
 		strcpy(table[i], PQgetvalue(res, i, 1));
 	    }
 
-	    PQclear(res);
+	    PQclear(res);  /* PURIFY */
 	    for (i = 0; i < nColumns; i++) {
 		tableDesc(ps, table[i]);
 	    }
@@ -309,6 +309,7 @@ tableList(PsqlSettings * ps, bool deep_tablelist, char table_index_both)
 	return (0);
 
     } else {
+        PQclear(res);  /* PURIFY */
  	switch (table_index_both) {
  		case 't':	fprintf(stderr, "Couldn't find any tables!\n");
  		 		break;
@@ -507,7 +508,10 @@ gets_fromFile(char *prompt, FILE * source)
 
     /* read up to MAX_QUERY_BUFFER characters */
     if (fgets(line, MAX_QUERY_BUFFER, source) == NULL)
+	{
+	free(line);
 	return NULL;
+	}
 
     line[MAX_QUERY_BUFFER - 1] = '\0';
     len = strlen(line);
@@ -579,17 +583,14 @@ SendQuery(bool * success_p, PsqlSettings * settings, const char *query,
 			&(settings->opt));
 		fflush(settings->queryFout);
 	    }
-	    PQclear(results);
 	    break;
 	case PGRES_EMPTY_QUERY:
 	    *success_p = true;
-	    PQclear(results);
 	    break;
 	case PGRES_COMMAND_OK:
 	    *success_p = true;
 	    if (!settings->quiet)
 		fprintf(stdout, "%s\n", PQcmdStatus(results));
-	    PQclear(results);
 	    break;
 	case PGRES_COPY_OUT:
 	    *success_p = true;
@@ -601,7 +602,6 @@ SendQuery(bool * success_p, PsqlSettings * settings, const char *query,
 
 		handleCopyOut(results, settings->quiet, stdout);
 	    }
-	    PQclear(results);
 	    break;
 	case PGRES_COPY_IN:
 	    *success_p = true;
@@ -609,7 +609,6 @@ SendQuery(bool * success_p, PsqlSettings * settings, const char *query,
 		handleCopyIn(results, false, copystream);
 	    else
 		handleCopyIn(results, !settings->quiet, stdin);
-	    PQclear(results);
 	    break;
 	case PGRES_NONFATAL_ERROR:
 	case PGRES_FATAL_ERROR:
@@ -634,6 +633,7 @@ SendQuery(bool * success_p, PsqlSettings * settings, const char *query,
 		    notify->relname, notify->be_pid);
 	    free(notify);
 	}
+ 	if(results) PQclear(results);
     }
 }
 
@@ -1434,7 +1434,6 @@ MainLoop(PsqlSettings * settings, FILE * source)
 	}
 
 	query_start = line;
-
 	if (line == NULL) {	/* No more input.  Time to quit */
 	    if (!settings->quiet)
 		printf("EOF\n");	/* Goes on prompt line */
@@ -1544,8 +1543,10 @@ MainLoop(PsqlSettings * settings, FILE * source)
 		fprintf(stderr, "query buffer max length of %d exceeded\n",
 			MAX_QUERY_BUFFER);
 		fprintf(stderr, "query line ignored\n");
+	        free (line);
 	    } else {
 		if (query_start[0] != '\0') {
+
 		    querySent = false;
 		    if (query[0] != '\0') {
 			strcat(query, "\n");
@@ -1553,6 +1554,7 @@ MainLoop(PsqlSettings * settings, FILE * source)
 		    } else
 			strcpy(query, query_start);
 		}
+	free(line); /* PURIFY */
 	    }
 
 	    if (slashCmdStatus == 0) {
@@ -1560,7 +1562,6 @@ MainLoop(PsqlSettings * settings, FILE * source)
 		successResult &= success;
 		querySent = true;
 	    }
-	    free(line);		/* free storage malloc'd by GetNextLine */
 	}
     }				/* while */
     return successResult;
@@ -1702,6 +1703,7 @@ main(int argc, char **argv)
     if (PQstatus(settings.db) == CONNECTION_BAD) {
 	fprintf(stderr, "Connection to database '%s' failed.\n", dbname);
 	fprintf(stderr, "%s", PQerrorMessage(settings.db));
+	PQfinish(settings.db);
 	exit(1);
     }
     if (listDatabases) {
@@ -1731,6 +1733,8 @@ main(int argc, char **argv)
 	    sprintf(line, "\\i %s", qfilename);
 	}
 	HandleSlashCmds(&settings, line, "");
+        if (!singleSlashCmd) free (line);	/* PURIFY */
+	
     } else {
 	if (singleQuery) {
 	    bool            success;	/* The query succeeded at the backend */
@@ -1741,6 +1745,8 @@ main(int argc, char **argv)
     }
 
     PQfinish(settings.db);
+    free(settings.opt.fieldSep);	        /* PURIFY */
+    if(settings.prompt) free(settings.prompt);	/* PURIFY */
 
     return !successResult;
 }
