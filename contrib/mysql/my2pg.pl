@@ -35,17 +35,26 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 #
-# $My2pg: my2pg.pl,v 1.27 2001/12/06 19:32:20 fonin Exp $
-# $PostgreSQL: pgsql/contrib/mysql/my2pg.pl,v 1.11 2003/11/29 22:39:26 pgsql Exp $
+# $My2pg: my2pg.pl,v 1.28 2001/12/06 19:32:20 fonin Exp $
+# $Id: my2pg.pl,v 1.12 2004/04/19 23:11:49 momjian Exp $
 
 #
 # $Log: my2pg.pl,v $
-# Revision 1.11  2003/11/29 22:39:26  pgsql
+# Revision 1.12  2004/04/19 23:11:49  momjian
+# Update to my2pg 1.28, from:
 #
-# make sure the $Id tags are converted to $PostgreSQL as well ...
+# 	http://www.omnistarinc.com/~fonin/downloads.php#my2pg
 #
-# Revision 1.10  2003/01/07 22:18:43  momjian
-# Upgrade to my2pg 1.9
+# Revision 1.28  2002/11/30 12:03:48  fonin
+# PostgreSQL does not support indexes on the partial length of column,
+# e.g.
+# CREATE INDEX i_index ON table (column(16));
+# will not work. Fixed.
+#
+# Added command-line option -s that prevents my2pg from attempting convert
+# the data (currently only timestamps).
+#
+# Better timestamps conversion.
 #
 # Revision 1.27  2002/07/16 14:54:07  fonin
 # Bugfix - didn't quote the fields inside PRIMARY KEY with -d option.
@@ -162,7 +171,7 @@ my $chareg='';		# CHAR conversion regexps
 my $dq=''; # double quote
 
 # parse command line
-getopts('nhd',\%opts);
+getopts('nhds',\%opts);
 
 # output syntax
 if($opts{h} ne '') {
@@ -179,10 +188,17 @@ if($opts{d} ne '') {
     $dq='"';
 }
 
+if($opts{s} ne '') {
+    $safe_data_conv=1;
+}
+else {
+    $safe_data_conv=0;
+}
+
 $|=1;
 
 print("------------------------------------------------------------------");
-print("\n-- My2Pg 1.27 translated dump");
+print("\n-- My2Pg 1.28 translated dump");
 print("\n--");
 print("\n------------------------------------------------------------------");
 
@@ -213,86 +229,86 @@ print LIBTYPES "\n#define ADD_COMMA if(strcmp(result,\"\")!=0) strcat(result,\",
 # reading STDIN...
 my $tabledef=0; # we are outside a table definition
 while (<>) {
-
-	if(!$tabledef && /^CREATE TABLE \S+/i){
-		$tabledef=1;
-	} elsif($tabledef && /^\) type=\w*;/i){ # /^\w/i
-		$tabledef=0;
-	}
+    if(!$tabledef && /^CREATE TABLE \S+/i){
+    	$tabledef=1;
+    } elsif($tabledef && /^\) type=\w*;/i){ # /^\w/i
+    	$tabledef=0;
+    }
 	
 # Comments start with -- in SQL
     if(/^#/) {# !/insert into.*\(.*#.*\)/i, in mysqldump output
 	s/#/--/;
     }
 
-  if($tabledef){##################################
+    if($tabledef) {
 # Convert numeric types
-    s/tinyint\(\d+\)/INT2/i;
-    s/smallint\(\d+\)/INT2/i;
-    s/mediumint\(\d+\)/INT4/i;
-    s/bigint\(\d+\)/INT8/i;
-    s/int\(\d+\)/INT4/i;
-    s/float(\(\d+,\d*\))/DECIMAL$1/i;
-    s/double precision/FLOAT8 /i;
-    s/([\W])double(\(\d+,\d*\))/$1DECIMAL$2/i;
-    s/([\W])double[\W]/$1FLOAT8 /i;
-    s/([\W])real[\W]/$1FLOAT8 /i;
-    s/([\W])real(\(\d+,\d*\))/$1DECIMAL$2/i;
+	s/tinyint\(\d+\)/INT2/i;
+	s/smallint\(\d+\)/INT2/i;
+        s/mediumint\(\d+\)/INT4/i;
+        s/bigint\(\d+\)/INT8/i;
+        s/int\(\d+\)/INT4/i;
+        s/float(\(\d+,\d*\))/DECIMAL$1/i;
+        s/double precision/FLOAT8 /i;
+        s/([\W])double(\(\d+,\d*\))/$1DECIMAL$2/i;
+        s/([\W])double[\W]/$1FLOAT8 /i;
+        s/([\W])real[\W]/$1FLOAT8 /i;
+        s/([\W])real(\(\d+,\d*\))/$1DECIMAL$2/i;
     
 # Convert string types
-    s/\w*blob$chareg/text/i;
-    s/mediumtext$chareg/text/i;
-    s/tinytext$chareg/text/i;
-    s/\stext\s+not\s+null/ TEXT DEFAULT '' NOT NULL/i;
-    s/(.*?char\(.*?\))$chareg/$1/i;
+        s/\w*blob$chareg/text/i;
+        s/mediumtext$chareg/text/i;
+        s/tinytext$chareg/text/i;
+        s/\stext\s+not\s+null/ TEXT DEFAULT '' NOT NULL/i;
+        s/(.*?char\(.*?\))$chareg/$1/i;
 
 # Old and New are reserved words in Postgres    
-    s/^(\s+)Old /${1}MyOld /;
-    s/^(\s+)New /${1}MyNew /;
+        s/^(\s+)Old /${1}MyOld /;
+        s/^(\s+)New /${1}MyNew /;
 
 # Convert DATE types
-    s/datetime/TIMESTAMP/;
-    s/timestamp\(\d+\)/TIMESTAMP/i;
-    s/ date / DATE /i;
-    s/,(\d{4})(\d{2})(\d{2}),/,'$1-$2-$3 00:00:00',/g;
+        s/datetime/TIMESTAMP/;
+        s/timestamp\(\d+\)/TIMESTAMP/i;
+        s/ date / DATE /i;
+        if((/date/ig || /time/ig) && /[,(]\d{4}(\d{2})(\d{2})[,)]/ && 
+			    $1>=0 && $1<=12 && $2>=0 && $2<=31) {
+	    s/,(\d{4})(\d{2})(\d{2}),/,'$1-$2-$3 00:00:00',/g;
+        }
 
 # small hack - convert "default" to uppercase, because below we 
 # enclose all lowercase words in double quotes
-    if(!/^INSERT/) {
-	s/default/DEFAULT/;
-    }
+        if(!/^INSERT/) {
+	    s/default/DEFAULT/;
+        }
 
 # Change all AUTO_INCREMENT fields to SERIAL ones with a pre-defined sequence
-    if(/([\w\d]+)\sint.*auto_increment/i) {
-	$tmpseq=new_name("$table_name"."_"."$+"."_SEQ",28);
-	$seq{$table_name}=$tmpseq;
-	$primary{$table_name}=$+;
-	s/(int.*?) .*AUTO_INCREMENT/$1 DEFAULT nextval\('$tmpseq'\)/i;
-	#s/(int.*?)DEFAULT\s*?'.*?'(.*?)AUTO_INCREMENT/$1$2DEFAULT nextval\('$tmpseq'\)/i;
-    }
+        if(/([\w\d]+)\sint.*auto_increment/i) {
+	    $tmpseq=new_name("$table_name"."_"."$+"."_SEQ",28);
+	    $seq{$table_name}=$tmpseq;
+	    $primary{$table_name}=$+;
+	    s/(int.*?) .*AUTO_INCREMENT/$1 DEFAULT nextval\('$tmpseq'\)/i;
+        }
 
 # convert UNSIGNED to CHECK constraints
-    if(/^\s+?([\w\d_]+).*?unsigned/i) {
-	$check.=",\n  CHECK ($dq$1$dq>=0)";
-    }
-    s/unsigned//i;
+        if(/^\s+?([\w\d_]+).*?unsigned/i) {
+	    $check.=",\n  CHECK ($dq$1$dq>=0)";
+        }
+        s/unsigned//i;
 
 # Limited ENUM support - little heuristic
-    s/enum\('N','Y'\)/BOOL/i;
-    s/enum\('Y','N'\)/BOOL/i;
+        s/enum\('N','Y'\)/BOOL/i;
+        s/enum\('Y','N'\)/BOOL/i;
 # ENUM support
-    if(/^\s+?([\w\d_]+).*?enum\((.*?)\)/i) {
-	my $enumlist=$2;
-	my @item;
-	$item[0]='';
-	while($enumlist=~s/'([\d\w_]+)'//i) {
-	    $item[++$#item]=$1;
-	}
+        if(/^\s+?([\w\d_]+).*?enum\((.*?)\)/i) {
+	    my $enumlist=$2;
+	    my @item;
+	    $item[0]='';
+	    while($enumlist=~s/'([\d\w_]+)'//i) {
+	        $item[++$#item]=$1;
+	    }
 # forming identifier name
-	$typename=new_name('enum_'.$table_name.'_'.$item[1],28);
-#	$typename=lc('enum_'.$table_name.'_'.$item[1]);
+	    $typename=new_name('enum_'.$table_name.'_'.$item[1],28);
 # creating input type function
-	my $func_in="
+	    my $func_in="
 int2* $typename"."_in (char *str) {
     int2* result;
 
@@ -301,34 +317,34 @@ int2* $typename"."_in (char *str) {
     
     result=(int2*)palloc(sizeof(int2));
     *result=-1;";
-	for(my $i=0;$i<=$#item;$i++) {
-	    $func_in.="
+	    for(my $i=0;$i<=$#item;$i++) {
+	        $func_in.="
     if(strcmp(str,\"$item[$i]\")==0) {
 	*result=$i;
     }";
-	}
-	$func_in.="
+	    }
+	    $func_in.="
     if(*result == -1) {
 	elog(ERROR,\"$typename"."_in: incorrect input value\");
 	return NULL;
     }
     return (result);
 }\n";
-	$types.="\n---";
-	$types.="\n--- Types for table ".uc($table_name);
-	$types.="\n---\n";
-	print LIBTYPES "\n/*";
-	print LIBTYPES "\n * Types for table ".uc($table_name);
-	print LIBTYPES "\n */\n";
+	    $types.="\n---";
+	    $types.="\n--- Types for table ".uc($table_name);
+	    $types.="\n---\n";
+	    print LIBTYPES "\n/*";
+	    print LIBTYPES "\n * Types for table ".uc($table_name);
+	    print LIBTYPES "\n */\n";
 
-	$types.="\nCREATE FUNCTION $typename"."_in (opaque)
+	    $types.="\nCREATE FUNCTION $typename"."_in (opaque)
 	RETURNS $typename
 	AS '$libtypename'
 	LANGUAGE 'c'
 	WITH (ISCACHABLE);\n";
 
 # creating output function
-	my $func_out="
+	    my $func_out="
 char* $typename"."_out (int2 *outvalue) {
     char* result;
 
@@ -337,13 +353,13 @@ char* $typename"."_out (int2 *outvalue) {
 
     result=(char*)palloc(10);
     switch (*outvalue) {";
-	for(my $i=0;$i<=$#item;$i++) {
-	    $func_out.="
+	    for(my $i=0;$i<=$#item;$i++) {
+	        $func_out.="
 	case $i:
 	    strcpy(result,\"$item[$i]\");
 	    break;";
-	}
-	$func_out.="
+	    }
+	    $func_out.="
 	default	 :
 	    elog(ERROR,\"$typename"."_out: incorrect stored value\");
 	    return NULL;
@@ -351,7 +367,7 @@ char* $typename"."_out (int2 *outvalue) {
     }
     return result;
 }\n";
-	$func_out.="\nbool $typename"."_eq(int2* a, int2* b) {
+	    $func_out.="\nbool $typename"."_eq(int2* a, int2* b) {
     return (*a==*b);
 }
 
@@ -375,19 +391,19 @@ bool $typename"."_ge(int2* a, int2* b) {
     return (*a>=*b);
 }\n";
 
-	$types.="\nCREATE FUNCTION $typename"."_out (opaque)
+	    $types.="\nCREATE FUNCTION $typename"."_out (opaque)
 	RETURNS opaque
 	AS '$libtypename'
 	LANGUAGE 'c'
 	WITH (ISCACHABLE);\n";
 
-	$types.="\nCREATE TYPE $typename (
+	    $types.="\nCREATE TYPE $typename (
 	internallength = 2,
 	input = $typename\_in,
 	output = $typename\_out
 );\n";
 
-	$types.="\nCREATE FUNCTION $typename"."_eq ($typename,$typename)
+	    $types.="\nCREATE FUNCTION $typename"."_eq ($typename,$typename)
 	RETURNS bool
 	AS '$libtypename'
 	LANGUAGE 'c';
@@ -460,32 +476,31 @@ CREATE OPERATOR <> (
 	procedure = $typename"."_ne
 );\n";
 
-	print LIBTYPES $func_in;
-	print LIBTYPES $func_out;
-	s/enum\(.*?\)/$typename/i;
-    }
+	    print LIBTYPES $func_in;
+	    print LIBTYPES $func_out;
+	    s/enum\(.*?\)/$typename/i;
+        }
 
 # SET support
-    if(/^\s+?([\w\d_]+).*?set\((.*?)\)/i) {
-	my $setlist=$2;
-	my @item;
-	$item[0]='';
-	my $maxlen=0;	# maximal string length
-	while($setlist=~s/'([\d\w_]+)'//i) {
-	    $item[++$#item]=$1;
-	    $maxlen+=length($item[$#item])+1;
-	}
-	$maxlen+=1;
-	my $typesize=int($#item/8);
-	if($typesize<2) {
-	    $typesize=2;
-	}
-	$internalsize=$typesize;
-	$typesize='int'.$typesize;
-#	$typename=lc('set_'.$table_name.'_'.$item[1]);
-	$typename=new_name('set_'.$table_name.'_'.$item[1],28);
+        if(/^\s+?([\w\d_]+).*?set\((.*?)\)/i) {
+	    my $setlist=$2;
+	    my @item;
+	    $item[0]='';
+	    my $maxlen=0;	# maximal string length
+	    while($setlist=~s/'([\d\w_]+)'//i) {
+	        $item[++$#item]=$1;
+	        $maxlen+=length($item[$#item])+1;
+	    }
+	    $maxlen+=1;
+	    my $typesize=int($#item/8);
+	    if($typesize<2) {
+	        $typesize=2;
+	    }
+	    $internalsize=$typesize;
+	    $typesize='int'.$typesize;
+	    $typename=new_name('set_'.$table_name.'_'.$item[1],28);
 # creating input type function
-	my $func_in="
+	    my $func_in="
 $typesize* $typename"."_in (char *str) {
     $typesize* result;
     char* token;
@@ -498,14 +513,14 @@ $typesize* $typename"."_in (char *str) {
     if(strcmp(str,\"\")==0)
 	return result;
     for(token=strtok(str,\",\");token!=NULL;token=strtok(NULL,\",\")) {";
-	for(my $i=0,my $j=1;$i<=$#item;$i++,$j*=2) {
-	    $func_in.="
+	    for(my $i=0,my $j=1;$i<=$#item;$i++,$j*=2) {
+	        $func_in.="
 	if(strcmp(token,\"$item[$i]\")==0) {
 	    *result|=$j;
 	    continue;
 	}";
-	}
-	$func_in.="
+	    }
+	    $func_in.="
     }
 
     if(*result == 0) {
@@ -515,20 +530,20 @@ $typesize* $typename"."_in (char *str) {
     return (result);
 
 }\n";
-	$types.="\n---";
-	$types.="\n--- Types for table ".uc($table_name);
-	$types.="\n---\n";
-	print LIBTYPES "\n/*";
-	print LIBTYPES "\n * Types for table ".uc($table_name);
-	print LIBTYPES "\n */\n";
+	    $types.="\n---";
+	    $types.="\n--- Types for table ".uc($table_name);
+	    $types.="\n---\n";
+	    print LIBTYPES "\n/*";
+	    print LIBTYPES "\n * Types for table ".uc($table_name);
+	    print LIBTYPES "\n */\n";
 
-	$types.="\nCREATE FUNCTION $typename"."_in (opaque)
+	    $types.="\nCREATE FUNCTION $typename"."_in (opaque)
 	RETURNS $typename
 	AS '$libtypename'
 	LANGUAGE 'c';\n";
 
 # creating output function
-	my $func_out="
+	    my $func_out="
 char* $typename"."_out ($typesize *outvalue) {
     char* result;
     int i;
@@ -540,16 +555,16 @@ char* $typename"."_out ($typesize *outvalue) {
     strcpy(result,\"\");
     for(i=1;i<=2 << (sizeof(int2)*8);i*=2) {
 	switch (*outvalue & i) {";
-	for(my $i=0,$j=1;$i<=$#item;$i++,$j*=2) {
-	    $func_out.="
+	    for(my $i=0,$j=1;$i<=$#item;$i++,$j*=2) {
+	        $func_out.="
 	case $j:";
-	    if($item[$i] ne '') {
-		$func_out.="ADD_COMMA;";
-	    }
-	    $func_out.="strcat(result,\"$item[$i]\");
+	        if($item[$i] ne '') {
+		    $func_out.="ADD_COMMA;";
+	        }
+	        $func_out.="strcat(result,\"$item[$i]\");
 	    break;";
-	}
-	$func_out.="
+	    }
+	    $func_out.="
 	default	 :
 	    break;
 	}
@@ -557,7 +572,7 @@ char* $typename"."_out ($typesize *outvalue) {
     
     return result;
 }\n";
-	$func_out.="\nbool $typename"."_eq($typesize* a, $typesize* b) {
+	    $func_out.="\nbool $typename"."_eq($typesize* a, $typesize* b) {
     return (*a==*b);
 }
 
@@ -574,18 +589,18 @@ $typesize find_in_set($typesize *a, $typesize *b) {
 
 \n";
 
-	$types.="\nCREATE FUNCTION $typename"."_out (opaque)
+	    $types.="\nCREATE FUNCTION $typename"."_out (opaque)
 	RETURNS opaque
 	AS '$libtypename'
 	LANGUAGE 'c';\n";
 
-	$types.="\nCREATE TYPE $typename (
+	    $types.="\nCREATE TYPE $typename (
 	internallength = $internalsize,
 	input = $typename\_in,
 	output = $typename\_out
 );\n";
 
-	$types.="\nCREATE FUNCTION $typename"."_eq ($typename,$typename)
+	    $types.="\nCREATE FUNCTION $typename"."_eq ($typename,$typename)
 	RETURNS bool
 	AS '$libtypename'
 	LANGUAGE 'c';
@@ -612,10 +627,10 @@ CREATE OPERATOR <> (
 
 \n";
 
-	print LIBTYPES $func_in;
-	print LIBTYPES $func_out;
-	s/set\(.*?\)/$typename/i;
-    }
+	    print LIBTYPES $func_in;
+	    print LIBTYPES $func_out;
+	    s/set\(.*?\)/$typename/i;
+        }
 
 # Change multy-field keys to multi-field indices
 # MySQL Dump usually ends the CREATE TABLE statement like this:
@@ -632,71 +647,80 @@ CREATE OPERATOR <> (
 # );
 #   CREATE INDEX offer_id ON bids (offer_id,user_id,the_time);
 #   CREATE INDEX bid_value ON bids (bid_value);
-    if (s/CREATE TABLE (.*) /CREATE TABLE $dq$1$dq /i) {
-	if($oldtable ne $table_name) {
-	    $oldtable=$table_name;
-	    $j=-1;
-	    $check='';
+        if (s/CREATE TABLE (.*) /CREATE TABLE $dq$1$dq /i) {
+	    if($oldtable ne $table_name) {
+	        $oldtable=$table_name;
+	        $j=-1;
+	        $check='';
 
-	    if($seq{$table_name} ne '') {
-		print "\n\n--";
-		print "\n-- Sequences for table ".uc($table_name);
-		print "\n--\n";
-		print "\nCREATE SEQUENCE ".$seq{$table_name}.";\n\n";
-	    }
+	        if($seq{$table_name} ne '') {
+		    print "\n\n--";
+		    print "\n-- Sequences for table ".uc($table_name);
+		    print "\n--\n";
+		    print "\nCREATE SEQUENCE ".$seq{$table_name}.";\n\n";
+	        }
 
-	    print $types;
-	    $types='';
-	    $dump=~s/,\n\).*;/\n\);/gmi;
+	        print $types;
+	        $types='';
+	        $dump=~s/,\n\).*;/\n\);/gmi;
 # removing table options after closing bracket:
 # ) TYPE=ISAM PACK_KEYS=1;
-	    $dump=~s/\n\).*/\n\);/gmi;
-	    print $dump;
-	    $dump='';
-	}
-	$table_name=$1;
-    }
+	        $dump=~s/\n\).*/\n\);/gmi;
+	        print $dump;
+	        $dump='';
+	    }
+	    $table_name=$1;
+        }
 
 # output CHECK constraints instead UNSIGNED modifiers
-    if(/PRIMARY KEY\s+\((.*)\)/i) {
-	my $tmpfld=$1;
-	$tmpfld=~s/,/","/g if $dq;
-	$tmpfld=~s/ //g;
-	s/PRIMARY KEY\s+(\(.*\))/PRIMARY KEY \($dq$tmpfld$dq\)/i;
-	s/(PRIMARY KEY \(.*\)).*/$1$check\n/i;
-    }
+        if(/PRIMARY KEY\s+\((.*)\)/i) {
+	    my $tmpfld=$1;
+	    $tmpfld=~s/,/","/g if $dq;
+	    $tmpfld=~s/ //g;
+	    s/PRIMARY KEY\s+(\(.*\))/PRIMARY KEY \($dq$tmpfld$dq\)/i;
+	    s/(PRIMARY KEY \(.*\)).*/$1$check\n/i;
+        }
     
-    if(/^\s*KEY ([\w\d_]+)\s*\((.*)\).*/i) {
-	my $tmpfld=$2; my $ky=$1;
-	$tmpfld=~s/\s*,\s*/","/g if $dq;
-	$index{$table_name}[++$j]="CREATE INDEX ${ky}_$table_name\_index ON $dq$table_name$dq ($dq$tmpfld$dq);";
-    }
-    if(/^\s*UNIQUE.*?([\w\d_]+)\s*\((.*)\).*/i) {
-	my $tmpfld=$2; my $ky=$1;
-	$tmpfld=~s/,/","/g if $dq;
-	$index{$table_name}[++$j]="CREATE UNIQUE INDEX ${ky}_$table_name\_index ON $dq$table_name$dq ($dq$tmpfld$dq);";
-    }
-    s/^\s*UNIQUE (.+).*(\(.*\)).*\n//i;
-    s/^\s*KEY (.+).*(\(.*\)).*\n//i;
+        if(/^\s*KEY ([\w\d_]+)\s*\((.*)\).*/i) {
+	    my $tmpfld=$2; my $ky=$1;
+	    $tmpfld=~s/\s*,\s*/","/g if $dq;
+	    $tmpfld=~s/(\(\d+\))//g;
+	    $index{$table_name}[++$j]="CREATE INDEX ${ky}_$table_name\_index ON $dq$table_name$dq ($dq$tmpfld$dq);";
+        }
+        if(/^\s*UNIQUE.*?([\w\d_]+)\s*\((.*)\).*/i) {
+	    my $tmpfld=$2; my $ky=$1;
+	    $tmpfld=~s/,/","/g if $dq;
+	    $tmpfld=~s/(\(\d+\))//g;
+	    $index{$table_name}[++$j]="CREATE UNIQUE INDEX ${ky}_$table_name\_index ON $dq$table_name$dq ($dq$tmpfld$dq);";
+        }
+        s/^\s*UNIQUE (.+).*(\(.*\)).*\n//i;
+        s/^\s*KEY (.+).*(\(.*\)).*\n//i;
     
-    if($dq && !/^\s*(PRIMARY KEY|UNIQUE |KEY |CREATE TABLE |\);)/i){
-    	s/\s([A-Za-z_\d]+)\s/ $dq$+$dq /;
-    }
-  } ####if($tabledef)###############################
+        if($dq && !/^\s*(PRIMARY KEY|UNIQUE |KEY |CREATE TABLE|INSERT INTO|\);)/i) {
+    	    s/\s([A-Za-z_\d]+)\s/ $dq$+$dq /;
+        }
+    } # end of if($tabledef)
 
-    if($dq && !s/INSERT INTO\s+?(.*?)\s+?/INSERT INTO $dq$1$dq /i) {
-# Quote lowercase identifiers in double quotes
-	#while(!/^--/ && s/\s([A-Za-z_\d]+[a-z][A-Za-z_\d]*)\s/ $dq$+$dq /) {;}
-    }
+    s/INSERT INTO\s+?(.*?)\s+?/INSERT INTO $dq$1$dq /i;
 
+# if not defined -s command-line option (safe data conversion),
+# attempting to convert timestamp data
+    if(!$safe_data_conv) {
 # Fix timestamps
-    s/'0000-00-00/'0001-01-01/g;
-# may work wrong !!!
-    s/([,(])00000000000000(?=[,)])/$1'00010101 000000'/g;
-    s/([,(])(\d{8})(\d{6})(?=[,)])/$1'$2 $3'/g;
-    s/([,(])(\d{4})(\d{2})(\d{2})(?=[,)])/$1'$2-$3-$4 00:00:00'/g;
-#<Hackzone> ---------------------------------------------------
-#</Hackzone> --------------------------------------------------
+	s/'0000-00-00/'0001-01-01/g;
+# may corrupt data !!!
+	s/([,(])00000000000000(?=[,)])/$1'00010101 000000'/g;
+	if(/[,(]\d{4}(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})[,)]/ && 
+		$1>=0 && $1<=12 && $2>=0 && $2<=31 && $3>=0 && $3<=23 &&
+		    $4>=0 && $4<=59 && $5>=0 && $5<=59) {
+	    s/([,(])(\d{8})(\d{6})(?=[,)])/$1'$2 $3'/g;
+	}
+	if(/[,(]\d{4}(\d{2})(\d{2})[,)]/ && 
+		$2>=0 && $2<=12 && $3>=0 && $3<=31) {
+	    s/([,(])(\d{4})(\d{2})(\d{2})(?=[,)])/$1'$2-$3-$4 00:00:00'/g;
+	}
+    }
+
     $dump.=$_;
 }
 
@@ -738,7 +762,7 @@ close(LIBTYPES);
 
 open(MAKE,">Makefile");
 print MAKE "#
-# My2Pg \$Revision: 1.11 $ \translated dump
+# My2Pg \$Revision: 1.12 $ \translated dump
 # Makefile
 #
 
@@ -784,7 +808,7 @@ sub usage() {
 print <<EOF
 my2pg - MySQL to PostgreSQL database dump converter
 
-Copyright (c) 2000 Max Rudensky		<fonin\@ziet.zhitomir.ua>
+Copyright (c) 2000-2002 Max Rudensky	<fonin\@ziet.zhitomir.ua>
 Copyright (c) 2000 Valentine Danilchuk	<valdan\@ziet.zhitomir.ua>
 
 This program is distributed in the hope that it will be useful,
@@ -793,12 +817,13 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 code source for license details.
 
 SYNTAX:
-    my2pg [-hnd]
+    my2pg [-hnds]
 
 OPTIONS:
     h		- this help
     n		- convert *CHAR NOT NULL DEFAULT '' types to *CHAR NULL
-    d       - double quotes around table and column names
+    d       	- double quotes around table and column names
+    s		- do not attempt to convert data (timestamps at the moment)
 EOF
 ;
 }
@@ -810,7 +835,7 @@ my2pg - MySQL -> PostgreSQL dump conversion utility.
 
 =head1 SYNTAX
 
-	mysqldump db | ./my2pg.pl [-n] > pgsqldump.sql
+	mysqldump db | ./my2pg.pl [-nds] > pgsqldump.sql
 	vi libtypes.c
 	make
 	psql database < pgsqldump.txt
@@ -818,11 +843,11 @@ where
 
 =over 4
 
-=item B<pgsqldump.sql>
+=item F<pgsqldump.sql>
 
 - file suitable for loading into PostgreSQL.
 
-=item B<libtypes.c>
+=item F<libtypes.c>
 
 - C source for emulated MySQL types (ENUM, SET) generated by B<my2pg>
 
@@ -835,7 +860,7 @@ B<my2pg> performs such conversions:
 
 =over 4
 
-=item Type conversion.
+=item * Type conversion.
 
 It tries to find proper Postgres 
 type for each column.
@@ -844,30 +869,30 @@ ENUM and SET types implemented via user types
 (C source for such types can be found in 
 B<libtypes.c> file);
 
-=item Identifiers double-quotation.
+=item * Encloses identifiers into double quotes.
 
 All column and table 
 names should be enclosed to double-quotes to prevent 
-interferension with reserved words;
+conflict with reserved SQL keywords;
 
-=item Converting
+=item * Converting
 
 AUTO_INCREMENT fields to SERIAL. Actually, creating the sequence and 
 setting default value to nextval('seq'), well, you know :)
 
-=item Converting
+=item * Converting
 
 KEY(field) to CREATE INDEX i_field on table (field);
 
-=item The same
+=item * The same
 
 for UNIQUE keys;
 
-=item Indices
+=item * Indices
 
 are creating AFTER rows insertion (to speed up the load);
 
-=item Translates '#'
+=item * Translates '#'
 
 MySQL comments to ANSI SQL '--'
 
@@ -895,18 +920,23 @@ Add double quotes around table and column names
 
 Show usage banner.
 
+=item -s
+
+Do not attempt to convert data. Currently my2pg only tries to convert
+date and time data.
+
 =back
 
 =head1 SIDE EFFECTS
 
 =over 4
 
-=item creates
+=item * creates
 
 file B<libtypes.c> in current directory 
 overwriting existed file without any checks;
 
-=item the same
+=item * the same
 
 for Makefile.
 
@@ -914,26 +944,42 @@ for Makefile.
 
 =head1 BUGS
 
-This program is still beta. Testers wanted.
 Known bugs are:
 
 =over 4
 
-=item Poor doublequotation.
+=item * Possible problems with the timestamp data.
+
+PostgreSQL does not accept incorrect date/time values like B<2002-00-15>,
+while MySQL does not care about that. Currently my2pg cannot handle this
+issue. You should care yourself to convert such a data.
+
+=item * Use -s option if your numeric data are broken during conversion.
+
+My2pg attempts to convert MySQL timestamps of the form B<yyyymmdd> to
+B<yyyy-mm-dd> and B<yyyymmddhhmmss> to B<yyyy-mm-dd hh:mm:ss>. It performs
+some heuristic checks to ensure that the month,day,hour,minutes and seconds have
+values from the correct range (0..12, 0..31, 0..23, 0..59, 0..59 respectively).
+It is still possible that your numeric values that satisfy these conditions
+will get broken.
+
+=item * Possible problems with enclosing identifiers in double quotes.
 
 All identifiers such as table and column names should be enclosed in double 
 quotes. Program can't handle upper-case identifiers, 
 like DBA. Lower-case identifiers are OK.
 
-=item SET type emulation is not full. LIKE operation on 
+=item * SET type emulation is not full. LIKE operation on 
 
 SETs, raw integer input values should be implemented
 
-=item B<Makefile> generated during output is 
+=item * B<Makefile>
+
+generated during output is 
 platform-dependent and surely works only on 
 Linux/gcc (FreeBSD/gcc probably works as well - not tested)
 
-=item Generated B<libtypes.c> contain line
+=item * Generated B<libtypes.c> contain line
 
 	#include <postgres.h>
 
@@ -944,15 +990,24 @@ include path, you need to check it before compiling.
 
 =head1 AUTHORS
 
-B<(c) 2000 Maxim V. Rudensky	 (fonin@ziet.zhitomir.ua)>
-B<(c) 2000 Valentine V. Danilchuk (valdan@ziet.zhitomir.ua)>
+B<(c) 2000-2002 Maxim V. Rudensky	 (fonin@ziet.zhitomir.ua)> (developer, maintainer)
+
+B<(c) 2000 Valentine V. Danilchuk (valdan@ziet.zhitomir.ua)> (original script)
 
 =head1 CREDITS
 
+Great thanks to all those people who provided feedback and make development
+of this tool easier.
+
 Jeff Waugh <jaw@ic.net>
+
 Joakim Lemström <jocke@bytewize.com> || <buddyh19@hotmail.com>
+
 Yunliang Yu <yu@math.duke.edu>
+
 Brad Hilton <bhilton@vpop.net>
+
+If you are not listed here please write to me.
 
 =head1 LICENSE
 
