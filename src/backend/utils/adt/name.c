@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/name.c,v 1.36 2002/06/11 13:40:52 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/name.c,v 1.37 2002/06/13 06:19:45 ishii Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,7 +23,7 @@
 #include "utils/array.h"
 #include "utils/builtins.h"
 #include "utils/lsyscache.h"
-
+#include "mb/pg_wchar.h"
 
 /*****************************************************************************
  *	 USER I/O ROUTINES (none)												 *
@@ -43,16 +43,20 @@ namein(PG_FUNCTION_ARGS)
 	char	   *s = PG_GETARG_CSTRING(0);
 	NameData   *result;
 	int			len;
+	char	   *ermsg;
+
+	/* veryfy encoding */
+	len = strlen(s);
+	if ((ermsg = pg_verifymbstr(s, len)))
+		elog(ERROR, "%s", ermsg);
+
+	len = pg_mbcliplen(s, len, NAMEDATALEN-1);
 
 	result = (NameData *) palloc(NAMEDATALEN);
 	/* always keep it null-padded */
-	StrNCpy(NameStr(*result), s, NAMEDATALEN);
-	len = strlen(NameStr(*result));
-	while (len < NAMEDATALEN)
-	{
-		*(NameStr(*result) + len) = '\0';
-		len++;
-	}
+	memset(result, 0, NAMEDATALEN);
+	memcpy(NameStr(*result), s, len);
+
 	PG_RETURN_NAME(result);
 }
 
