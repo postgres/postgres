@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.33 1998/09/03 02:34:30 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.34 1998/09/08 02:50:20 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -95,17 +95,9 @@ Plan *
 union_planner(Query *parse)
 {
 	List	   *tlist = parse->targetList;
-
-	/*
-	 * copy the original tlist, we will need the original one for the AGG
-	 * node later on
-	 */
-	List	   *new_tlist = new_unsorted_tlist(tlist);
-
+	int			tlist_len = length(tlist);
 	List	   *rangetable = parse->rtable;
-
 	Plan	   *result_plan = (Plan *) NULL;
-
 	Index		rt_index;
 
 
@@ -133,36 +125,18 @@ union_planner(Query *parse)
 		List	  **vpm = NULL;
 
 		/*
-		 * This is only necessary if aggregates are in use in queries
-		 * like: SELECT sid FROM part GROUP BY sid HAVING MIN(pid) > 1;
-		 * (pid is used but never selected for!!!) because the function
-		 * 'query_planner' creates the plan for the lefttree of the
-		 * 'GROUP' node and returns only those attributes contained in
-		 * 'tlist'. The original 'tlist' contains only 'sid' here and
-		 * that's why we have to to extend it to attributes which are not
-		 * selected but are used in the havingQual.
-		 */
-
-		/*
-		 * 'check_having_qual_for_vars' takes the havingQual and the
-		 * actual 'tlist' as arguments and recursively scans the
-		 * havingQual for attributes (VAR nodes) that are not contained in
-		 * 'tlist' yet. If so, it creates a new entry and attaches it to
-		 * the list 'new_tlist' (consisting of the VAR node and the RESDOM
-		 * node as usual with tlists :-)  )
+		 * check_having_qual_for_vars takes the havingQual and the tlist
+		 * as arguments and recursively scans the havingQual for VAR nodes 
+		 * that are not contained in tlist yet. If so, it creates a new entry 
+		 * and attaches it to the tlist. Latter, we use tlist_len to 
+		 * truncate tlist - ie restore actual tlist...
 		 */
 		if (parse->hasAggs)
 		{
 			if (parse->havingQual != NULL)
-				new_tlist = check_having_qual_for_vars(parse->havingQual, new_tlist);
+				tlist = check_having_qual_for_vars(parse->havingQual, tlist);
 		}
 
-		new_tlist = preprocess_targetlist(new_tlist,
-										  parse->commandType,
-										  parse->resultRelation,
-										  parse->rtable);
-
-		/* Here starts the original (pre having) code */
 		tlist = preprocess_targetlist(tlist,
 									  parse->commandType,
 									  parse->resultRelation,
@@ -176,7 +150,7 @@ union_planner(Query *parse)
 		PlannerVarParam = lcons(vpm, PlannerVarParam);
 		result_plan = query_planner(parse,
 									parse->commandType,
-									new_tlist,
+									tlist,
 									(List *) parse->qual);
 		PlannerVarParam = lnext(PlannerVarParam);
 		if (vpm != NULL)
@@ -199,9 +173,8 @@ union_planner(Query *parse)
 		 */
 		tuplePerGroup = parse->hasAggs;
 
-		/* Use 'new_tlist' instead of 'tlist' */
 		result_plan =
-			make_groupPlan(&new_tlist,
+			make_groupPlan(&tlist,
 						   tuplePerGroup,
 						   parse->groupClause,
 						   result_plan);
@@ -215,11 +188,6 @@ union_planner(Query *parse)
 		int			old_length = 0,
 					new_length = 0;
 
-		/*
-		 * Create the AGG node but use 'tlist' not 'new_tlist' as target
-		 * list because we don't want the additional attributes (only used
-		 * for the havingQual, see above) to show up in the result
-		 */
 		result_plan = (Plan *) make_agg(tlist, result_plan);
 
 		/*
@@ -235,7 +203,22 @@ union_planner(Query *parse)
 			List	   *clause;
 			List	  **vpm = NULL;
 
-
+			/* 
+			 * Restore target list: get rid of Vars added for havingQual.
+			 * Assumption: tlist_len > 0...
+			 */
+			{
+				List   *l;
+				int		tlen = 0;
+			
+				foreach (l, ((Agg *) result_plan)->plan.targetlist)
+				{
+					if (++tlen == tlist_len)
+						break;
+				}
+				lnext(l) = NIL;
+			}
+			
 			/*
 			 * stuff copied from above to handle the use of attributes
 			 * from outside in subselects
