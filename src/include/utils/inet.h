@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: inet.h,v 1.1 1998/10/08 00:19:45 momjian Exp $
+ * $Id: inet.h,v 1.2 1998/10/21 16:06:50 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,6 +21,7 @@ typedef struct
 {
 	unsigned char family;
 	unsigned char bits;
+	unsigned char type;
 	union
 	{
 		unsigned int	ipv4_addr;	/* network byte order */

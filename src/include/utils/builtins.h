@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: builtins.h,v 1.62 1998/10/20 23:03:20 momjian Exp $
+ * $Id: builtins.h,v 1.63 1998/10/21 16:06:49 momjian Exp $
  *
  * NOTES
  *	  This should normally only be included by fmgr.h.
@@ -518,6 +518,9 @@ int inet_net_pton(int af, const char *src, void *dst, size_t size);
 char *inet_cidr_ntop(int af, const void *src, size_t len, int bits, char *dst, size_t size);
 int inet_cidr_pton(int af, const void *src, void *dst, size_t size, int *used);
 
+/* cidr.c */
+inet	   *cidr_in(char *str);
+
 /* inet.c */
 inet	   *inet_in(char *str);
 char	   *inet_out(inet * addr);
@@ -534,8 +537,9 @@ bool		inet_supeq(inet * a1, inet * a2);
 int4		inet_cmp(inet * a1, inet * a2);
 
 text	   *inet_netmask(inet * addr);
-int4		inet_masklen(inet * addr);
+int4		inet_netmasklen(inet * addr);
 text	   *inet_broadcast(inet * addr);
+text	   *inet_host(inet * addr);
 
 
 /* mac.c */

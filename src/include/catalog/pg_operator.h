@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_operator.h,v 1.40 1998/10/08 00:19:39 momjian Exp $
+ * $Id: pg_operator.h,v 1.41 1998/10/21 16:06:46 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -643,7 +643,7 @@ DATA(insert OID = 1223 (  "<="	   PGUID 0 b t f 829 829	 16 1225 1224 0 0 macadd
 DATA(insert OID = 1224 (  ">"	   PGUID 0 b t f 829 829	 16 1222 1223 0 0 macaddr_gt intltsel intltjoinsel ));
 DATA(insert OID = 1225 (  ">="	   PGUID 0 b t f 829 829	 16 1223 1222 0 0 macaddr_ge intltsel intltjoinsel ));
 
-/* IP type */
+/* INET type */
 DATA(insert OID = 1201 (  "="	   PGUID 0 b t t 869 869	 16 1201 1202 0 0 inet_eq eqsel eqjoinsel ));
 DATA(insert OID = 1202 (  "<>"	   PGUID 0 b t f 869 869	 16 1202 1201 0 0 inet_ne neqsel neqjoinsel ));
 DATA(insert OID = 1203 (  "<"	   PGUID 0 b t f 869 869	 16 1205 1206 0 0 inet_lt intltsel intltjoinsel ));
@@ -654,6 +654,18 @@ DATA(insert OID = 931  (  "<<"	   PGUID 0 b t f 869 869     16 933  934  0 0 ine
 DATA(insert OID = 932  (  "<<="	   PGUID 0 b t f 869 869     16 934  933  0 0 inet_subeq intltsel intltjoinsel ));
 DATA(insert OID = 933  (  ">>"	   PGUID 0 b t f 869 869     16 931  932  0 0 inet_sup intltsel intltjoinsel ));
 DATA(insert OID = 934  (  ">>="	   PGUID 0 b t f 869 869     16 932  931  0 0 inet_supeq intltsel intltjoinsel ));
+
+/* CIDR type */
+DATA(insert OID = 820 (  "="	   PGUID 0 b t t 650 650	 16 820 821 0 0 inet_eq eqsel eqjoinsel ));
+DATA(insert OID = 821 (  "<>"	   PGUID 0 b t f 650 650	 16 821 820 0 0 inet_ne neqsel neqjoinsel ));
+DATA(insert OID = 822 (  "<"	   PGUID 0 b t f 650 650	 16 824 825 0 0 inet_lt intltsel intltjoinsel ));
+DATA(insert OID = 823 (  "<="	   PGUID 0 b t f 650 650	 16 825 824 0 0 inet_le intltsel intltjoinsel ));
+DATA(insert OID = 824 (  ">"	   PGUID 0 b t f 650 650	 16 822 823 0 0 inet_gt intltsel intltjoinsel ));
+DATA(insert OID = 825 (  ">="	   PGUID 0 b t f 650 650	 16 823 822 0 0 inet_ge intltsel intltjoinsel ));
+DATA(insert OID = 826  (  "<<"	   PGUID 0 b t f 650 650     16 828 1004  0 0 inet_sub intltsel intltjoinsel ));
+DATA(insert OID = 827  (  "<<="	   PGUID 0 b t f 650 650     16 1004 828  0 0 inet_subeq intltsel intltjoinsel ));
+DATA(insert OID = 828  (  ">>"	   PGUID 0 b t f 650 650     16 826  827  0 0 inet_sup intltsel intltjoinsel ));
+DATA(insert OID = 1004  (  ">>="   PGUID 0 b t f 650 650     16 827  826  0 0 inet_supeq intltsel intltjoinsel ));
 
 
 /*
