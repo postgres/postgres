@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/portalmem.c,v 1.14 1998/09/01 04:33:39 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/portalmem.c,v 1.15 1999/01/01 04:48:47 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -129,7 +129,7 @@ do { \
 	PortalHashEnt *hentry; bool found; char key[MAX_PORTALNAME_LEN]; \
 	\
 	MemSet(key, 0, MAX_PORTALNAME_LEN); \
-	sprintf(key, "%s", NAME); \
+	snprintf(key, MAX_PORTALNAME_LEN - 1, "%s", NAME); \
 	hentry = (PortalHashEnt*)hash_search(PortalHashTable, \
 										 key, HASH_FIND, &found); \
 	if (hentry == NULL) \
@@ -145,7 +145,7 @@ do { \
 	PortalHashEnt *hentry; bool found; char key[MAX_PORTALNAME_LEN]; \
 	\
 	MemSet(key, 0, MAX_PORTALNAME_LEN); \
-	sprintf(key, "%s", PORTAL->name); \
+	snprintf(key, MAX_PORTALNAME_LEN - 1, "%s", PORTAL->name); \
 	hentry = (PortalHashEnt*)hash_search(PortalHashTable, \
 										 key, HASH_ENTER, &found); \
 	if (hentry == NULL) \
@@ -160,7 +160,7 @@ do { \
 	PortalHashEnt *hentry; bool found; char key[MAX_PORTALNAME_LEN]; \
 	\
 	MemSet(key, 0, MAX_PORTALNAME_LEN); \
-	sprintf(key, "%s", PORTAL->name); \
+	snprintf(key, MAX_PORTALNAME_LEN - 1, "%s", PORTAL->name); \
 	hentry = (PortalHashEnt*)hash_search(PortalHashTable, \
 										 key, HASH_REMOVE, &found); \
 	if (hentry == NULL) \
