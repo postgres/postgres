@@ -2698,3 +2698,142 @@ TIP 4: Don't 'kill -9' the postmaster
 
 
 
+From pgsql-hackers-owner+M31893@postgresql.org Fri Nov 15 11:25:58 2002
+Return-path: <pgsql-hackers-owner+M31893@postgresql.org>
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by candle.pha.pa.us (8.11.6/8.10.1) with ESMTP id gAFHPvR10276
+	for <pgman@candle.pha.pa.us>; Fri, 15 Nov 2002 12:25:57 -0500 (EST)
+Received: from localhost (postgresql.org [64.49.215.8])
+	by postgresql.org (Postfix) with ESMTP
+	id A2D5A4774A1; Fri, 15 Nov 2002 11:34:54 -0500 (EST)
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by postgresql.org (Postfix) with SMTP
+	id 5E898477132; Fri, 15 Nov 2002 11:15:45 -0500 (EST)
+Received: from localhost (postgresql.org [64.49.215.8])
+	by postgresql.org (Postfix) with ESMTP id 90CF1475B85
+	for <pgsql-hackers@postgresql.org>; Mon, 11 Nov 2002 15:33:47 -0500 (EST)
+Received: from Curtis-Vaio (unknown [63.164.0.45])
+	by postgresql.org (Postfix) with SMTP id C6CB1475A3F
+	for <pgsql-hackers@postgresql.org>; Mon, 11 Nov 2002 15:33:46 -0500 (EST)
+Received: from [127.0.0.1] by Curtis-Vaio
+  (ArGoSoft Mail Server Freeware, Version 1.8 (1.8.1.7)); Mon, 11 Nov 2002 16:33:42 -0400
+From: "Curtis Faith" <curtis@galtcapital.com>
+To: <pgsql-hackers@postgresql.org>
+Subject: [HACKERS] 500 tpsQL + WAL log implementation
+Date: Mon, 11 Nov 2002 16:33:41 -0400
+Message-ID: <DMEEJMCDOJAKPPFACMPMCEBMCFAA.curtis@galtcapital.com>
+MIME-Version: 1.0
+Content-Type: text/plain;
+	charset="iso-8859-1"
+Content-Transfer-Encoding: 7bit
+X-Priority: 3 (Normal)
+X-MSMail-Priority: Normal
+X-Mailer: Microsoft Outlook IMO, Build 9.0.2416 (9.0.2911.0)
+X-MimeOLE: Produced By Microsoft MimeOLE V5.00.2919.6700
+Importance: Normal
+X-Virus-Scanned: by AMaViS new-20020517
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+X-Virus-Scanned: by AMaViS new-20020517
+Status: ORr
+
+I have been experimenting with empirical tests of file system and device
+level writes to determine the actual constraints in order to speed up the WAL
+logging code.
+
+Using a raw file partition and a time-based technique for determining the
+optimal write position, I am able to get 8K writes physically written to disk
+synchronously in the range of 500 to 650 writes per second using FreeBSD raw
+device partitions on IDE disks (with write cache disabled).  I will be
+testing it soon under linux with 10,00RPM SCSI which should be even better.
+It is my belief that the mechanism used to achieve these speeds could be
+incorporated into the existing WAL logging code as an abstraction that looks
+to the WAL code just like the file level access currently used. The current
+speeds are limited by the speed of a single disk rotation. For a 7,200 RPM
+disk this is 120/second, for a 10,000 RPM disk this is 166.66/second
+
+The mechanism works by adjusting the seek offset of the write by using
+gettimeofday to determine approximately where the disk head is in its
+rotation. The mechanism does not use any AIO calls.
+
+Assuming the following:
+
+1) Disk rotation time is 8.333ms or 8333us (7200 RPM).
+
+2) A write at offset 1,500K completes at system time 103s 000ms 000us
+
+3) A new write is requested at system time 103s 004ms 166us
+
+4) A 390K per rotation alignment of the data on the disk.
+
+5) A write must be sent at least 20K ahead of the current head position to
+ensure that it is written in less than one rotation.
+
+It can be determined from the above that a write for an offset of something
+slightly more than 195K past the last write, or offset 1,695K will be ahead
+of the current location of the head and will therefore complete in less than
+a single rotation's time.
+
+The disk specific metrics (rotation speed, bytes per rotation, base write
+time, etc.) can be derived empirically through a tester program that would
+take a few minutes to run and which could be run at log setup time.
+
+The obvious problem with the above mechanism is that the WAL log needs to be
+able to read from the log file in transaction order during recovery. This
+could be provided for using an abstraction that prepends the logical order
+for each block written to the disk and makes sure that the log blocks contain
+either a valid logical order number or some other marker indicating that the
+block is not being used.
+
+A bitmap of blocks that have already been used would be kept in memory for
+quickly determining the next set of possible unused blocks but this bitmap
+would not need to be written to disk except during normal shutdown since in
+the even of a failure the bitmaps would be reconstructed by reading all the
+blocks from the disk.
+
+Checkpointing and something akin to log rotation could be handled using this
+mechanism as well.
+
+So, MY REAL QUESTION is whether or not this is the sort of speed improvement
+that warrants the work of writing the required abstraction layer and making
+this very robust. The WAL code should remain essentially unchanged, with
+perhaps new calls for the five or six routines used to access the log files,
+and handle the equivalent of log rotation for raw device access. These new
+calls would either use the current file based implementation or the new
+logging mechanism depending on the configuration.
+
+I anticipate that the extra work required for a PostgreSQL administrator to
+use the proposed logging mechanism would be to:
+
+1) Create a raw device partition of the appropriate size
+2) Run the metrics tester for that device partition
+3) Set the appropriate configuration parameters to indicate raw WAL logging
+
+I anticipate that the additional space requirements for this system would be
+on the order of 10% to 15% beyond the current file-based implementation's
+requirements.
+
+So, is this worth doing? Would a robust implementation likely be accepted for
+7.4 assuming it can demonstrate speed improvements in the range of 500tps?
+
+- Curtis
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 1: subscribe and unsubscribe commands go to majordomo@postgresql.org
+
