@@ -3,7 +3,7 @@
  *
  * Copyright 2000-2002 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/describe.c,v 1.71 2002/10/19 20:50:44 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/describe.c,v 1.71.2.1 2002/12/21 01:07:21 tgl Exp $
  */
 #include "postgres_fe.h"
 #include "describe.h"
@@ -41,6 +41,16 @@ xmalloc(size_t size)
 		psql_error("out of memory\n");
 		exit(EXIT_FAILURE);
 	}
+	return tmp;
+}
+
+static void *
+xmalloczero(size_t size)
+{
+	void	   *tmp;
+
+	tmp = xmalloc(size);
+	memset(tmp, 0, size);
 	return tmp;
 }
 
@@ -635,7 +645,9 @@ describeOneTableDetails(const char *schemaname,
 	char	  **footers = NULL;
 	char	  **ptr;
 	PQExpBufferData title;
-	unsigned int cols = 0;
+	PQExpBufferData tmpbuf;
+	int			cols = 0;
+	int			numrows = 0;
 	struct
 	{
 		bool		hasindex;
@@ -644,12 +656,14 @@ describeOneTableDetails(const char *schemaname,
 		int16		triggers;
 		bool		hasrules;
 	}			tableinfo;
+	bool		show_modifiers = false;
 	bool		retval;
 
 	retval = false;
 
 	initPQExpBuffer(&buf);
 	initPQExpBuffer(&title);
+	initPQExpBuffer(&tmpbuf);
 
 	/* Get general table info */
 	printfPQExpBuffer(&buf,
@@ -683,6 +697,7 @@ describeOneTableDetails(const char *schemaname,
 
 	if (tableinfo.relkind == 'r' || tableinfo.relkind == 'v')
 	{
+		show_modifiers = true;
 		cols++;
 		headers[cols - 1] = _("Modifiers");
 	}
@@ -715,6 +730,7 @@ describeOneTableDetails(const char *schemaname,
 	res = PSQLexec(buf.data, false);
 	if (!res)
 		goto error_return;
+	numrows = PQntuples(res);
 
 	/* Check if table is a view */
 	if (tableinfo.relkind == 'v')
@@ -733,10 +749,10 @@ describeOneTableDetails(const char *schemaname,
 	}
 
 	/* Generate table cells to be printed */
-	cells = xmalloc((PQntuples(res) * cols + 1) * sizeof(*cells));
-	cells[PQntuples(res) * cols] = NULL;		/* end of list */
+	/* note: initialize all cells[] to NULL in case of error exit */
+	cells = xmalloczero((numrows * cols + 1) * sizeof(*cells));
 
-	for (i = 0; i < PQntuples(res); i++)
+	for (i = 0; i < numrows; i++)
 	{
 		/* Name */
 		cells[i * cols + 0] = PQgetvalue(res, i, 0);	/* don't free this
@@ -747,12 +763,11 @@ describeOneTableDetails(const char *schemaname,
 
 		/* Extra: not null and default */
 		/* (I'm cutting off the 'default' string at 128) */
-		if (tableinfo.relkind == 'r' || tableinfo.relkind == 'v')
+		if (show_modifiers)
 		{
-			cells[i * cols + 2] = xmalloc(128 + 128);
-			cells[i * cols + 2][0] = '\0';
+			resetPQExpBuffer(&tmpbuf);
 			if (strcmp(PQgetvalue(res, i, 2), "t") == 0)
-				strcat(cells[i * cols + 2], "not null");
+				appendPQExpBufferStr(&tmpbuf, "not null");
 
 			/* handle "default" here */
 			if (strcmp(PQgetvalue(res, i, 3), "t") == 0)
@@ -761,18 +776,21 @@ describeOneTableDetails(const char *schemaname,
 
 				printfPQExpBuffer(&buf,
 								  "SELECT substring(d.adsrc for 128) FROM pg_catalog.pg_attrdef d\n"
-							   "WHERE d.adrelid = '%s' AND d.adnum = %s",
+								  "WHERE d.adrelid = '%s' AND d.adnum = %s",
 								  oid, PQgetvalue(res, i, 4));
 
 				result = PSQLexec(buf.data, false);
 
-				if (cells[i * cols + 2][0])
-					strcat(cells[i * cols + 2], " ");
-				strcat(cells[i * cols + 2], "default ");
-				strcat(cells[i * cols + 2], result ? PQgetvalue(result, 0, 0) : "?");
+				if (tmpbuf.len > 0)
+					appendPQExpBufferStr(&tmpbuf, " ");
+
+				appendPQExpBuffer(&tmpbuf, "default %s",
+								  result ? PQgetvalue(result, 0, 0) : "?");
 
 				PQclear(result);
 			}
+
+			cells[i * cols + 2] = xstrdup(tmpbuf.data);
 		}
 
 		/* Description */
@@ -841,14 +859,11 @@ describeOneTableDetails(const char *schemaname,
 		}
 		else
 		{
-			PQExpBufferData tmpbuf;
 			char	   *indisunique = PQgetvalue(result, 0, 0);
 			char	   *indisprimary = PQgetvalue(result, 0, 1);
 			char	   *indamname = PQgetvalue(result, 0, 2);
 			char	   *indtable = PQgetvalue(result, 0, 3);
 			char	   *indpred = PQgetvalue(result, 0, 4);
-
-			initPQExpBuffer(&tmpbuf);
 
 			if (strcmp(indisprimary, "t") == 0)
 				printfPQExpBuffer(&tmpbuf, _("primary key, "));
@@ -865,10 +880,9 @@ describeOneTableDetails(const char *schemaname,
 			if (strlen(indpred))
 				appendPQExpBuffer(&tmpbuf, ", predicate %s", indpred);
 
-			footers = xmalloc(2 * sizeof(*footers));
+			footers = xmalloczero(2 * sizeof(*footers));
 			footers[0] = xstrdup(tmpbuf.data);
 			footers[1] = NULL;
-			termPQExpBuffer(&tmpbuf);
 		}
 
 		PQclear(result);
@@ -895,7 +909,7 @@ describeOneTableDetails(const char *schemaname,
 		}
 
 		/* Footer information about a view */
-		footers = xmalloc((rule_count + 2) * sizeof(*footers));
+		footers = xmalloczero((rule_count + 2) * sizeof(*footers));
 		footers[count_footers] = xmalloc(64 + strlen(view_def));
 		snprintf(footers[count_footers], 64 + strlen(view_def),
 				 _("View definition: %s"), view_def);
@@ -1018,8 +1032,8 @@ describeOneTableDetails(const char *schemaname,
 				foreignkey_count = PQntuples(result5);
 		}
 
-		footers = xmalloc((index_count + check_count + rule_count + trigger_count + foreignkey_count + 1)
-						  * sizeof(*footers));
+		footers = xmalloczero((index_count + check_count + rule_count + trigger_count + foreignkey_count + 1)
+							  * sizeof(*footers));
 
 		/* print indexes */
 		for (i = 0; i < index_count; i++)
@@ -1148,12 +1162,15 @@ error_return:
 	/* clean up */
 	termPQExpBuffer(&buf);
 	termPQExpBuffer(&title);
+	termPQExpBuffer(&tmpbuf);
 
 	if (cells)
 	{
-		for (i = 0; i < PQntuples(res); i++)
-			if (tableinfo.relkind == 'r' || tableinfo.relkind == 'v')
+		for (i = 0; i < numrows; i++)
+		{
+			if (show_modifiers)
 				free(cells[i * cols + 2]);
+		}
 		free(cells);
 	}
 
