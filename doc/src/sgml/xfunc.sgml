@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/xfunc.sgml,v 1.95 2005/01/08 22:13:36 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/xfunc.sgml,v 1.96 2005/01/14 21:46:09 jurka Exp $
 -->
 
  <sect1 id="xfunc">
@@ -771,6 +771,15 @@ CREATE FUNCTION test(int, int) RETURNS int
    <indexterm zone="xfunc-volatility">
     <primary>volatility</primary>
     <secondary>functions</secondary>
+   </indexterm>
+   <indexterm zone="xfunc-volatility">
+    <primary>VOLATILE</primary>
+   </indexterm>
+   <indexterm zone="xfunc-volatility">
+    <primary>STABLE</primary>
+   </indexterm>
+   <indexterm zone="xfunc-volatility">
+    <primary>IMMUTABLE</primary>
    </indexterm>
 
    <para>
