@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/scan.l,v 1.57 1999/09/28 03:41:36 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/scan.l,v 1.58 1999/10/08 05:03:13 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -167,7 +167,7 @@ real				(((({digit}*\.{digit}+)|({digit}+\.{digit}*))([Ee][-+]?{digit}+)?)|({dig
 
 param			\${integer}
 
-comment			("--"|"//").*\n
+comment			("--"|"//").*
 
 space			[ \t\n\f]
 other			.

@@ -1,6 +1,6 @@
 #!/usr/local/bin/perl -w
 
-# $Id: test.pl,v 1.9 1998/09/27 19:12:26 mergl Exp $
+# $Id: test.pl,v 1.10 1999/10/08 05:03:14 momjian Exp $
 
 # Before `make install' is performed this script should be runnable with
 # `make test'. After `make install' it should work as `perl test.pl'
@@ -147,7 +147,7 @@ my $port = $conn->port;
 
 ######################### create and insert into table
 
-$result = $conn->exec("CREATE TABLE person (id int4, name char(16))");
+$result = $conn->exec("CREATE TABLE person (id int4, name char(16)) -- test");
 die $conn->errorMessage unless PGRES_COMMAND_OK eq $result->resultStatus;
 my $cmd = $result->cmdStatus;
 ( "CREATE" eq $cmd )
