@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/nodes/print.c,v 1.2 1996/11/06 08:54:17 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/nodes/print.c,v 1.3 1996/11/10 03:00:49 momjian Exp $
  *
  * HISTORY
  *    AUTHOR		DATE		MAJOR EVENT
@@ -24,6 +24,7 @@
 #include "nodes/pg_list.h"
 #include "nodes/execnodes.h"
 #include "nodes/parsenodes.h"
+#include "nodes/print.h"
 #include "parser/parsetree.h"
 #include "parser/catalog_utils.h"
 #include "access/heapam.h"
@@ -377,3 +378,4 @@ print_plan (Plan* p, Query* parsetree)
 }
 
 
+ 

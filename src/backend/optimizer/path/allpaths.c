@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/optimizer/path/allpaths.c,v 1.3 1996/11/08 05:56:52 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/optimizer/path/allpaths.c,v 1.4 1996/11/10 03:00:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -236,6 +236,7 @@ find_join_paths(Query *root, List *outer_rels, int levels_left)
  *
  *****************************************************************************/
 
+#ifdef OPTIMIZER_DEBUG
 static void
 print_joinclauses(Query *root, List *clauses)
 {
@@ -250,7 +251,7 @@ print_joinclauses(Query *root, List *clauses)
     }
 }
 
-void
+static void
 print_path(Query *root, Path *path, int indent)
 {
     char *ptype = NULL;
@@ -330,7 +331,6 @@ print_path(Query *root, Path *path, int indent)
     }
 }
 
-#ifdef OPTIMIZER_DEBUG
 static void 
 debug_print_rel(Query *root, Rel *rel)
 {

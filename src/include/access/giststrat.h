@@ -15,11 +15,9 @@
 #include <access/strat.h>
 #include <utils/rel.h>
 
-StrategyNumber
-RelationGetGISTStrategy(Relation r, AttrNumber attnum, RegProcedure proc);
-
-bool
-RelationInvokeGISTStrategy(Relation r, AttrNumber attnum, StrategyNumber s,
-                           Datum left, Datum right);
+extern StrategyNumber RelationGetGISTStrategy(Relation r,
+		AttrNumber attnum, RegProcedure proc);
+extern bool RelationInvokeGISTStrategy(Relation r, AttrNumber attnum,
+		StrategyNumber s, Datum left, Datum right);
 
 #endif /* GISTSTRAT_H */

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/heap/Attic/stats.c,v 1.8 1996/11/05 11:17:47 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/heap/Attic/stats.c,v 1.9 1996/11/10 02:58:11 momjian Exp $
  *
  * NOTES
  *    initam should be moved someplace else.
@@ -324,7 +324,7 @@ PrintAndFreeHeapAccessStatistics(HeapAccessStatistics stats)
  * ----------------
  */
 void
-initam()
+initam(void)
 {
     /* ----------------
      *	initialize heap statistics.

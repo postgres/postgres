@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.26 1996/11/08 20:46:19 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.27 1996/11/10 03:04:12 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -124,7 +124,7 @@ usage(char *progname)
  *    print out usage for the backslash commands 
  */
 
-char *on(bool f)
+static char *on(bool f)
 {
     return f? "on": "off";
 }
@@ -159,7 +159,7 @@ slashUsage(PsqlSettings *ps)
   fprintf(stderr,"\t \\! [<cmd>]   -- shell escape or command\n");
 }
 
-PGresult *
+static PGresult *
 PSQLexec(PsqlSettings *ps, char *query)
 {
     PGresult *res = PQexec(ps->db, query);
@@ -554,7 +554,7 @@ SendQuery(bool *success_p, PsqlSettings *settings, const char *query,
 
 
 
-void
+static void
 editFile(char *fname)
 {
     char *editorName;
@@ -573,7 +573,7 @@ editFile(char *fname)
     free(sys);
 }
 
-bool
+static bool
 toggle(PsqlSettings *settings, bool *sw, char *msg)
 {
     *sw= !*sw;
@@ -584,7 +584,7 @@ toggle(PsqlSettings *settings, bool *sw, char *msg)
 
 
 
-void
+static void
 unescape(char *dest, const char *source) {
 /*-----------------------------------------------------------------------------
   Return as the string <dest> the value of string <source> with escape
@@ -633,7 +633,7 @@ unescape(char *dest, const char *source) {
 
 
 
-void
+static void
 parse_slash_copy(const char *args, char *table, const int table_len,
                  char *file, const int file_len, 
                  bool *from_p, bool *error_p) {
@@ -695,7 +695,7 @@ parse_slash_copy(const char *args, char *table, const int table_len,
 
 
 
-void
+static void
 do_copy(const char *args, PsqlSettings *settings) {
 /*---------------------------------------------------------------------------
   Execute a \copy command (frontend copy).  We have to open a file, then
@@ -755,7 +755,7 @@ do_copy(const char *args, PsqlSettings *settings) {
 }
 
 
-void
+static void
 do_connect(const char *new_dbname, PsqlSettings *settings) {
 
     char *dbname=PQdb(settings->db);
@@ -788,7 +788,7 @@ do_connect(const char *new_dbname, PsqlSettings *settings) {
 }
 
 
-void
+static void
 do_edit(const char *filename_arg, char *query, int *retcode_p) {
 
     int fd;
@@ -853,7 +853,7 @@ do_edit(const char *filename_arg, char *query, int *retcode_p) {
 
 
 
-void
+static void
 do_help(const char *topic) {
 
     if (!topic) {
@@ -907,7 +907,7 @@ do_help(const char *topic) {
 
 
 
-void
+static void
 do_shell(const char *command) {
 
     if (!command) {

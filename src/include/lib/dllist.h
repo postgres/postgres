@@ -26,7 +26,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: dllist.h,v 1.2 1996/10/31 09:48:40 scrappy Exp $
+ * $Id: dllist.h,v 1.3 1996/11/10 03:05:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -50,7 +50,7 @@ typedef struct Dllist {
   Dlelem *dll_tail;
 } Dllist;
   
-extern Dllist* DLNewList(); /* initialize a new list */
+extern Dllist* DLNewList(void); /* initialize a new list */
 extern void    DLFreeList(Dllist*); /* free up a list and all the nodes in it*/
 extern Dlelem* DLNewElem(void* val); 
 extern void    DLFreeElem(Dlelem*); 

@@ -15,7 +15,7 @@
  *	ExecEndTee
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/executor/Attic/nodeTee.c,v 1.4 1996/11/08 00:46:01 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/executor/Attic/nodeTee.c,v 1.5 1996/11/10 03:00:08 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -210,7 +210,7 @@ ExecCountSlotsTee(Tee *node)
       because the left and right scans may be at different points
 * ----------------------------------------------------------------
 */
-void 
+static void 
 initTeeScanDescs(Tee* node)
 {
   TeeState *teeState;

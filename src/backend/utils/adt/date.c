@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/date.c,v 1.3 1996/11/06 10:30:44 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/date.c,v 1.4 1996/11/10 03:03:05 momjian Exp $
  *
  * NOTES
  *   This code is actually (almost) unused.
@@ -852,7 +852,7 @@ static int istinterval(char *i_string,
  *     time with precision up to microsecs.)              - ay 3/95
  */
 text *
-timeofday()
+timeofday(void)
 {
 
 #ifndef WIN32

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.4 1996/11/06 10:31:27 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.5 1996/11/10 03:03:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1447,7 +1447,7 @@ RelationPurgeLocalRelation(bool xactCommitted)
 #define INITRELCACHESIZE	400
 
 void
-RelationInitialize()
+RelationInitialize(void)
 {
     MemoryContext		oldcxt;
     HASHCTL			ctl;
@@ -1536,7 +1536,7 @@ RelationInitialize()
 #define Num_indices_bootstrap	3
 
 void
-init_irels()
+init_irels(void)
 {
     Size len;
     int nread;
@@ -1676,7 +1676,7 @@ init_irels()
 }
 
 void
-write_irels()
+write_irels(void)
 {
     int len;
     int nwritten;

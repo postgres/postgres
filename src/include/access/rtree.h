@@ -6,14 +6,19 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: rtree.h,v 1.2 1996/11/05 08:18:14 scrappy Exp $
+ * $Id: rtree.h,v 1.3 1996/11/10 03:04:39 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef RTREE_H
 #define RTREE_H
 
+#include <access/funcindex.h>
+#include <access/itup.h>
+#include <access/relscan.h>
+#include <access/sdir.h>
 #include <access/skey.h>
+#include <access/strat.h>
 #include <storage/block.h>
 #include <storage/off.h>
 
@@ -98,5 +103,40 @@ typedef RTreeScanOpaqueData	*RTreeScanOpaque;
 
 /* defined in rtree.c */
 extern void freestack(RTSTACK *s);
+
+/* rget.c */
+extern RetrieveIndexResult rtgettuple(IndexScanDesc s, ScanDirection dir);
+
+/*
+ *	RTree code.
+ *	Defined in access/index-rtree/
+ */
+extern InsertIndexResult rtinsert(Relation r, Datum *datum, char *nulls,
+			ItemPointer ht_ctid);
+extern char *rtdelete(Relation r, ItemPointer tid);
+
+extern RetrieveIndexResult rtgettuple(IndexScanDesc s, ScanDirection dir);
+extern IndexScanDesc rtbeginscan(Relation r, bool fromEnd, uint16 nkeys,
+	    ScanKey key);
+
+extern void rtendscan(IndexScanDesc s);
+extern void rtmarkpos(IndexScanDesc s);
+extern void rtrestrpos(IndexScanDesc s);
+extern void rtrescan(IndexScanDesc s, bool fromEnd, ScanKey key);
+extern void rtbuild(Relation heap, Relation index, int natts,
+	AttrNumber *attnum, IndexStrategy istrat, uint16 pcount,
+	Datum *params, FuncIndexInfo *finfo, PredInfo *predInfo);
+extern void _rtdump(Relation r);
+
+/* rtscan.c */
+extern void rtadjscans(Relation r, int op, BlockNumber blkno,
+				OffsetNumber offnum);
+/* rtstrat.h */
+extern StrategyNumber RelationGetRTStrategy(Relation r,
+			AttrNumber attnum, RegProcedure proc);
+extern bool RelationInvokeRTStrategy(Relation r, AttrNumber attnum,
+			StrategyNumber s, Datum left, Datum right);
+extern RegProcedure RTMapOperator(Relation r, AttrNumber attnum,
+			RegProcedure proc);
 
 #endif /* RTREE_H */

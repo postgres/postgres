@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/common/Attic/indexvalid.c,v 1.11 1996/11/05 07:42:43 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/common/Attic/indexvalid.c,v 1.12 1996/11/10 02:56:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,6 +15,7 @@
 #include <postgres.h>
 
 #include <access/htup.h>
+#include <access/iqual.h>
 #include <access/itup.h>
 #include <access/skey.h>
 #include <executor/execdebug.h>

@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/rewrite/Attic/locks.c,v 1.1.1.1 1996/07/09 06:21:51 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/rewrite/Attic/locks.c,v 1.2 1996/11/10 03:01:50 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,7 +26,7 @@
  * if we find at least one such match, we return true
  * otherwise, we return false
  */
-bool
+static bool
 nodeThisLockWasTriggered(Node *node, int varno, AttrNumber attnum)
 {
     if (node==NULL)

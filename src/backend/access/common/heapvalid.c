@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/common/Attic/heapvalid.c,v 1.11 1996/11/05 07:42:41 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/common/Attic/heapvalid.c,v 1.12 1996/11/10 02:56:47 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,6 +16,7 @@
 
 #include <fmgr.h>
 #include <access/heaptuple.h>
+#include <access/valid.h>
 #include <access/xact.h>
 #include <storage/bufpage.h>
 #include <utils/rel.h>

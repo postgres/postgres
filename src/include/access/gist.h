@@ -12,6 +12,10 @@
 #ifndef GIST_H
 #define GIST_H
 
+#include <access/funcindex.h>
+#include <access/itup.h>
+#include <access/relscan.h>
+#include <access/sdir.h>
 #include <storage/page.h>
 #include <storage/block.h>
 #include <utils/rel.h>
@@ -142,6 +146,38 @@ typedef struct GISTENTRY {
    {(e).pred = pr; (e).rel = r; (e).page = pg; (e).offset = o; (e).bytes = b; (e).leafkey = l;}
 
 /* defined in gist.c */
+#define TRLOWER(tr) (((tr)->bytes))
+#define TRUPPER(tr) (&((tr)->bytes[MAXALIGN(VARSIZE(TRLOWER(tr)))]))
+
+typedef struct txtrange {
+    /* flag: NINF means that lower is negative infinity; PINF means that
+    ** upper is positive infinity.  0 means that both are numbers.
+    */
+    int32 vl_len;
+    int32 flag;  
+    char bytes[2];
+} TXTRANGE;
+
+typedef struct intrange {
+    int lower;
+    int upper;
+    /* flag: NINF means that lower is negative infinity; PINF means that
+    ** upper is positive infinity.  0 means that both are numbers.
+    */
+    int flag;  
+} INTRANGE;
+
+extern void gistbuild(Relation heap,
+	  Relation index, int natts,
+	  AttrNumber *attnum, IndexStrategy istrat,
+	  uint16 pint, Datum *params,
+	  FuncIndexInfo *finfo,
+	  PredInfo *predInfo);
+extern InsertIndexResult gistinsert(Relation r, Datum *datum,
+			char *nulls,ItemPointer ht_ctid);
+extern void _gistdump(Relation r);
+extern char *text_range_out(TXTRANGE *r);
+extern char *int_range_out(INTRANGE *r);
 extern void gistfreestack(GISTSTACK *s);
 extern void initGISTstate(GISTSTATE *giststate, Relation index);
 extern void gistdentryinit(GISTSTATE *giststate, GISTENTRY *e, char *pr, 
@@ -149,4 +185,15 @@ extern void gistdentryinit(GISTSTATE *giststate, GISTENTRY *e, char *pr,
 extern void gistcentryinit(GISTSTATE *giststate, GISTENTRY *e, char *pr, 
 			   Relation r, Page pg, OffsetNumber o, int b, bool l) ;
 extern StrategyNumber RelationGetGISTStrategy(Relation, AttrNumber, RegProcedure);
+
+/* gistget.c */
+extern RetrieveIndexResult gistgettuple(IndexScanDesc s, ScanDirection dir);
+extern bool gistindex_keytest(IndexTuple tuple, TupleDesc tupdesc,
+		  int scanKeySize, ScanKey key, GISTSTATE *giststate,
+		  Relation r, Page p, OffsetNumber offset);
+
+/* giststrat.c */
+extern bool RelationInvokeGISTStrategy(Relation r, AttrNumber attnum,
+			 StrategyNumber s, Datum left, Datum right);
+
 #endif /* GIST_H */

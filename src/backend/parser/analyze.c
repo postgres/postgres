@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.13 1996/11/08 05:57:25 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.14 1996/11/10 03:01:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -89,7 +89,8 @@ static void parseCheckAggregates(ParseState *pstate, Query *qry);
  */
 
 ParseState* 
-makeParseState() {
+makeParseState(void)
+{
     ParseState *pstate;
 
     pstate = malloc(sizeof(ParseState));

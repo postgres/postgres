@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.2 1996/11/08 05:56:43 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.3 1996/11/10 03:00:44 momjian Exp $
  *
  * NOTES
  *    Every (plan) node in POSTGRES has an associated "out" routine which
@@ -52,7 +52,7 @@ static void _outNode(StringInfo str, void *obj);
  * _outIntList -
  *     converts a List of integers
  */
-void
+static void
 _outIntList(StringInfo str, List *list)
 {
     List *l;

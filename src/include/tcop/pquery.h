@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pquery.h,v 1.2 1996/11/04 12:07:01 scrappy Exp $
+ * $Id: pquery.h,v 1.3 1996/11/10 03:06:09 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,7 +20,7 @@ extern QueryDesc *CreateQueryDesc(Query *parsetree, Plan *plantree,
 				  CommandDest dest);
 
 */
-extern EState *CreateExecutorState();
+extern EState *CreateExecutorState(void);
 
 
 extern void ProcessPortal(char *portalName, Query *parseTree,

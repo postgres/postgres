@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq-fe.h,v 1.10 1996/11/09 10:39:54 scrappy Exp $
+ * $Id: libpq-fe.h,v 1.11 1996/11/10 03:06:38 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -170,7 +170,7 @@ typedef struct _PQconninfoOption PQconninfoOption;
 /* ===  in fe-connect.c === */
   /* make a new client connection to the backend */
 extern PGconn* PQconnectdb(const char* conninfo);
-extern PQconninfoOption *PQconndefaults();
+extern PQconninfoOption *PQconndefaults(void);
 extern PGconn* PQsetdb(const char* pghost, const char* pgport, const char* pgoptions, 
 		       const char* pgtty, const char* dbName);
   /* close the current connection and free the PGconn data structure */

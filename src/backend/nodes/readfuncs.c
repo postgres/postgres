@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.3 1996/11/08 05:56:49 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.4 1996/11/10 03:00:51 momjian Exp $
  *
  * NOTES
  *    Most of the read functions for plan nodes are tested. (In fact, they
@@ -1788,7 +1788,7 @@ _readIter()
  * ----------------
  */
 Node *
-parsePlanString()
+parsePlanString(void)
 {
     char *token;
     int length;

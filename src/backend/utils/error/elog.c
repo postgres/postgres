@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.9 1996/11/08 05:59:57 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.10 1996/11/10 03:03:28 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -196,7 +196,7 @@ elog(int lev, const char *fmt, ... )
 
 #ifndef PG_STANDALONE
 int
-DebugFileOpen()
+DebugFileOpen(void)
 {
     int fd, istty;
     

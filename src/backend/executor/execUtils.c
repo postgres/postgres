@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/executor/execUtils.c,v 1.4 1996/11/06 06:47:35 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/executor/execUtils.c,v 1.5 1996/11/10 02:59:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -81,7 +81,7 @@ extern int NIndexTupleProcessed;  /* have to be defined in the access
  * ----------------------------------------------------------------
  */
 void
-ResetTupleCount()
+ResetTupleCount(void)
 {
     NTupleProcessed = 0;
     NTupleRetrieved = 0;

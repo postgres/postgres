@@ -13,6 +13,7 @@
 #include <postgres.h>
 
 #include <access/gist.h>
+#include <access/gistscan.h>
 #include <access/genam.h>
 #include <access/rtree.h>
 #include <storage/bufmgr.h>

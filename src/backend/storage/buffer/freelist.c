@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/storage/buffer/freelist.c,v 1.2 1996/11/03 04:57:02 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/storage/buffer/freelist.c,v 1.3 1996/11/10 03:02:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -257,11 +257,12 @@ DBG_FreeListCheck(int nfree)
     }
 }
 
+#ifdef NOT_USED
 /*
  * PrintBufferFreeList -
  *    prints the buffer free list, for debugging
  */
-void
+static void
 PrintBufferFreeList()
 {
     BufferDesc *buf;
@@ -285,3 +286,5 @@ PrintBufferFreeList()
 	buf = &(BufferDescriptors[buf->freeNext]);
     }
 }
+
+#endif

@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/parser/parser.c,v 1.8 1996/11/10 02:23:15 bryanh Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/parser/parser.c,v 1.9 1996/11/10 03:01:30 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -118,7 +118,6 @@ fixupsets(Query *parse)
 	return;
     define_sets(parse);
 }
-#endif
 
 #ifdef SETS_FIXED
 /* Recursively find all of the Consts in the parsetree.  Some of
@@ -175,8 +174,8 @@ define_sets(Node *clause)
 	define_sets(get_leftop (clause));
 	define_sets(get_rightop (clause));
     }
-#endif
 }
+#endif
 
 #define    PSIZE(PTR)      (*((int32 *)(PTR) - 1))
 Node *

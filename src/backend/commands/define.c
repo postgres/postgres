@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/commands/define.c,v 1.9 1996/11/08 20:45:16 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/commands/define.c,v 1.10 1996/11/10 02:59:38 momjian Exp $
  *
  * DESCRIPTION
  *    The "DefineFoo" routines take the parse tree and pick out the
@@ -59,7 +59,7 @@ static int  defGetTypeLength(DefElem *def);
 #define DEFAULT_TYPDELIM        ','
 
 
-void
+static void
 case_translate_language_name(const char *input, char *output) {
 /*-------------------------------------------------------------------------
   Translate the input language name to lower case, except if it's C,
@@ -77,7 +77,7 @@ case_translate_language_name(const char *input, char *output) {
 
 
 
-void
+static void
 compute_return_type(const Node *returnType, 
                     char **prorettype_p, bool *returnsSet_p) {
 /*---------------------------------------------------------------------------
@@ -98,7 +98,7 @@ compute_return_type(const Node *returnType,
 
     
 
-void 
+static void 
 compute_full_attributes(const List *parameters, int32 *byte_pct_p, 
                         int32 *perbyte_cpu_p, int32 *percall_cpu_p, 
                         int32 *outin_ratio_p, bool *canCache_p) {
@@ -157,7 +157,7 @@ compute_full_attributes(const List *parameters, int32 *byte_pct_p,
 
 
 
-void
+static void
 interpret_AS_clause(const char languageName[], const char as[],
                     char **prosrc_str_p, char **probin_str_p) {
 

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/tcop/dest.c,v 1.2 1996/11/03 06:52:31 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/tcop/dest.c,v 1.3 1996/11/10 03:02:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -135,7 +135,7 @@ EndCommand(char *commandTag, CommandDest dest)
  *
  */
 void
-SendCopyBegin()
+SendCopyBegin(void)
 {
     pq_putnchar("B", 1);
 /*    pq_putint(0, 4); */
@@ -143,7 +143,7 @@ SendCopyBegin()
 }
 
 void
-ReceiveCopyBegin()
+ReceiveCopyBegin(void)
 {
     pq_putnchar("D", 1);
 /*    pq_putint(0, 4); */
@@ -316,7 +316,7 @@ BeginCommand(char *pname,
 static Oid AppendOid;
 
 void
-ResetAppendOid()
+ResetAppendOid(void)
 {
     AppendOid = InvalidOid;
 }
@@ -345,7 +345,7 @@ UpdateAppendOid(Oid newoid)
 }
 
 Oid
-GetAppendOid()
+GetAppendOid(void)
 {
     if (AppendOid == MULTI_TUPLE_APPEND)
 	return InvalidOid;

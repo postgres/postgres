@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/transam/transam.c,v 1.5 1996/11/05 11:12:28 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/transam/transam.c,v 1.6 1996/11/10 02:59:11 momjian Exp $
  *
  * NOTES
  *    This file contains the high level access-method interface to the
@@ -96,7 +96,7 @@ extern bool	BuildingBtree;
  * ----------------
  */
 int
-RecoveryCheckingEnabled()
+RecoveryCheckingEnabled(void)
 {    
     return RecoveryCheckingEnableState;
 }
@@ -453,7 +453,7 @@ TransRecover(Relation logRelation)
  *	Initializes transaction logging.
  */
 void
-InitializeTransactionLog()
+InitializeTransactionLog(void)
 {
     Relation	  logRelation;
     Relation	  timeRelation;

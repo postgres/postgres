@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: exc.h,v 1.3 1996/11/04 04:00:47 momjian Exp $
+ * $Id: exc.h,v 1.4 1996/11/10 03:06:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -79,7 +79,7 @@ typedef	void ExcProc(Exception*, ExcDetail, ExcData, ExcMessage);
 extern void EnableExceptionHandling(bool on);
 extern void ExcPrint(Exception *excP, ExcDetail detail, ExcData data,
 		     ExcMessage message);
-extern ExcProc *ExcGetUnCaught();
+extern ExcProc *ExcGetUnCaught(void);
 extern ExcProc *ExcSetUnCaught(ExcProc *newP);
 extern void ExcUnCaught(Exception *excP, ExcDetail detail, ExcData data,
 			ExcMessage message);

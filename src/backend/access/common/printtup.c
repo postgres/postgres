@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/common/printtup.c,v 1.11 1996/11/05 07:42:44 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/common/printtup.c,v 1.12 1996/11/10 02:57:00 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,6 +17,7 @@
 
 #include <fmgr.h> 
 #include <access/heaptuple.h> 
+#include <access/printtup.h> 
 #include <catalog/pg_type.h>
 #include <libpq/libpq.h>
 #include <utils/syscache.h>

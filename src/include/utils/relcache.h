@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: relcache.h,v 1.3 1996/11/04 11:51:26 scrappy Exp $
+ * $Id: relcache.h,v 1.4 1996/11/10 03:06:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,9 +36,9 @@ extern void RelationCacheInvalidate(bool onlyFlushReferenceCountZero);
 
 extern void RelationRegisterRelation(Relation relation);
 extern void RelationPurgeLocalRelation(bool xactComitted);
-extern void RelationInitialize();
-extern void init_irels();
-extern void write_irels();
+extern void RelationInitialize(void);
+extern void init_irels(void);
+extern void write_irels(void);
 
 
 #endif	/* RELCACHE_H */

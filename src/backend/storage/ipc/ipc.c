@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipc.c,v 1.8 1996/11/08 05:58:30 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipc.c,v 1.9 1996/11/10 03:02:21 momjian Exp $
  *
  * NOTES
  *
@@ -66,7 +66,7 @@ static struct ONEXIT {
 } onexit_list[ MAX_ON_EXITS ];
 
 static int onexit_index;
-static void IpcConfigTip();
+static void IpcConfigTip(void);
 
 typedef struct _PrivateMemStruct {
     int id;
@@ -725,7 +725,7 @@ LockIsFree(int lockid)
 #endif /* HAS_TEST_AND_SET */
 
 static void
-IpcConfigTip()
+IpcConfigTip(void)
 {
 	fprintf(stderr,"This type of error is usually caused by improper\n");
 	fprintf(stderr,"shared memory or System V IPC semaphore configuration.\n");

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/executor/nodeMergejoin.c,v 1.4 1996/11/08 00:45:59 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/executor/nodeMergejoin.c,v 1.5 1996/11/10 02:59:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -201,7 +201,7 @@ MJFormOSortopI(List *qualList, Oid sortOp)
  *   	by "sortOp" and reversing the positions of the keys.
  *  ----------------------------------------------------------------
  */
-List *
+static List *
 MJFormISortopO(List *qualList, Oid sortOp)
 {
     List 	*ISortopO;

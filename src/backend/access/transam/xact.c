@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.4 1996/11/05 11:12:32 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.5 1996/11/10 02:59:16 momjian Exp $
  *	
  * NOTES
  *	Transaction aborts can now occur two ways:
@@ -218,7 +218,7 @@ bool AMI_OVERRIDE = false;
 static int TransactionFlushState = 1;
 
 int
-TransactionFlushEnabled()
+TransactionFlushEnabled(void)
 {    
     return TransactionFlushState;
 }
@@ -237,7 +237,7 @@ SetTransactionFlushEnabled(bool state)
  * --------------------------------
  */
 bool
-IsTransactionState()
+IsTransactionState(void)
 {
     TransactionState s = CurrentTransactionState;
     
@@ -1113,7 +1113,7 @@ AbortCurrentTransaction()
  * --------------------------------
  */
 void
-BeginTransactionBlock()
+BeginTransactionBlock(void)
 {
     TransactionState s = CurrentTransactionState;
     
@@ -1151,7 +1151,7 @@ BeginTransactionBlock()
  * --------------------------------
  */
 void
-EndTransactionBlock()
+EndTransactionBlock(void)
 {
     TransactionState s = CurrentTransactionState;
     
@@ -1205,7 +1205,7 @@ EndTransactionBlock()
  * --------------------------------
  */
 void
-AbortTransactionBlock()
+AbortTransactionBlock(void)
 {
     TransactionState s = CurrentTransactionState;
     

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geo-decls.h,v 1.3 1996/11/04 07:46:04 scrappy Exp $
+ * $Id: geo-decls.h,v 1.4 1996/11/10 03:06:32 momjian Exp $
  *
  * NOTE
  *    These routines do *not* use the float types from adt/.
@@ -17,6 +17,8 @@
  */
 #ifndef	GEO_DECLS_H
 #define	GEO_DECLS_H
+
+#include "access/attnum.h"
 
 /*#ifndef FmgrIncluded -- seems like always included. (it's FMgrIncluded) AY */
 
@@ -234,13 +236,17 @@ extern long poly_contain(POLYGON *polya, POLYGON *polyb);
 extern long poly_contained(POLYGON *polya, POLYGON *polyb);
 
 /* geo-selfuncs.c */
-#if 0	/* FIX ME! */
-extern float64 areasel(Oid opid, Oid relid, AttrNumber attno, char *value, int32 flag);
-extern float64 areajoinsel(Oid opid, Oid relid, AttrNumber attno, char *value, int32 flag);
-extern float64 leftsel(Oid opid, Oid relid, AttrNumber attno, char *value, int32 flag);
-extern float64 leftjoinsel(Oid opid, Oid relid, AttrNumber attno, char *value, int32 flag);
-extern float64 contsel(Oid opid, Oid relid, AttrNumber attno, char *value, int32 flag);
-extern float64 contjoinsel(Oid opid, Oid relid, AttrNumber attno, char *value, int32 flag);
-#endif
+extern float64 areasel(Oid opid, Oid relid, AttrNumber attno, 
+	char *value, int32 flag);
+extern float64 areajoinsel(Oid opid, Oid relid, AttrNumber attno,
+	char *value, int32 flag);
+extern float64 leftsel(Oid opid, Oid relid, AttrNumber attno,
+	char *value, int32 flag);
+extern float64 leftjoinsel(Oid opid, Oid relid, AttrNumber attno,
+	char *value, int32 flag);
+extern float64 contsel(Oid opid, Oid relid, AttrNumber attno,
+	char *value, int32 flag);
+extern float64 contjoinsel(Oid opid, Oid relid, AttrNumber attno,
+	    char *value, int32 flag);
 
 #endif	/* GEO_DECLS_H */

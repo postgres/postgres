@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: readfuncs.h,v 1.1 1996/08/28 01:57:47 scrappy Exp $
+ * $Id: readfuncs.h,v 1.2 1996/11/10 03:05:30 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,6 +22,6 @@ extern void *nodeRead(bool read_car_only);
 /*
  * prototypes for functions in readfuncs.c 
  */
-extern Node *parsePlanString();
+extern Node *parsePlanString(void);
 
 #endif	/* READFUNCS_H */

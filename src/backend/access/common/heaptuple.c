@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/common/heaptuple.c,v 1.15 1996/11/05 07:42:40 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/common/heaptuple.c,v 1.16 1996/11/10 02:56:41 momjian Exp $
  *
  * NOTES
  *    The old interface functions have been converted to macros
@@ -19,6 +19,7 @@
 
 #include <postgres.h>
 
+#include <access/heapam.h>
 #include <access/htup.h>
 #include <access/transam.h>
 #include <access/tupmacs.h>

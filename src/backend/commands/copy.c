@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.15 1996/11/08 00:45:22 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.16 1996/11/10 02:59:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,6 +33,7 @@
 #include <catalog/pg_type.h>
 #include <catalog/catname.h>
 #include <catalog/pg_user.h>
+#include <commands/copy.h>
 
 #define ISOCTAL(c) (((c) >= '0') && ((c) <= '7'))
 #define VALUE(c) ((c) - '0')

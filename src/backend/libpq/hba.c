@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/libpq/hba.c,v 1.10 1996/11/06 08:48:27 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/libpq/hba.c,v 1.11 1996/11/10 03:00:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -59,7 +59,7 @@ enum Userauth {Trust, Ident};
 /* Some standard C libraries, including GNU, have an isblank() function.
    Others, including Solaris, do not.  So we have our own.
 */
-bool
+static bool
 isblank(const char c) {
   return(c == ' ' || c == 9 /* tab */);
 }

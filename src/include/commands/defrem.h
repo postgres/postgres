@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: defrem.h,v 1.4 1996/11/10 02:27:15 bryanh Exp $
+ * $Id: defrem.h,v 1.5 1996/11/10 03:04:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,6 +37,7 @@ extern void CreateFunction(ProcedureStmt *stmt, CommandDest dest);
 extern void DefineOperator(char *name, List *parameters);
 extern void DefineAggregate(char *name, List *parameters);
 extern void DefineType(char *name, List *parameters);
+extern void CreateFunction(ProcedureStmt *stmt, CommandDest dest);
 
 /*
  * prototypes in remove.c

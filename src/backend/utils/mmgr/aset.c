@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/mmgr/aset.c,v 1.3 1996/11/08 06:00:48 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/mmgr/aset.c,v 1.4 1996/11/10 03:03:45 momjian Exp $
  *
  * NOTE
  *    XXX This is a preliminary implementation which lacks fail-fast
@@ -128,6 +128,7 @@ AllocSetReset(AllocSet set)
     }
 }
 
+#ifdef NOT_USED
 void
 AllocSetReset_debug(char *file, int line, AllocSet set)
 {
@@ -139,6 +140,7 @@ AllocSetReset_debug(char *file, int line, AllocSet set)
 	AllocSetFree(set, pointer);
     }
 }
+#endif
 
 /*
  * AllocSetContains --

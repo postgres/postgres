@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/datetimes.c,v 1.5 1996/11/06 06:49:45 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/datetimes.c,v 1.6 1996/11/10 03:03:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,22 +15,8 @@
 #include <string.h>
 
 #include <postgres.h>
-#include <utils/palloc.h>
-
-/* these things look like structs, but we pass them by value so be careful
-   For example, passing an int -> DateADT is not portable! */
-typedef struct DateADT {
-    char	day;
-    char	month;
-    short	year;
-} DateADT;
-
-typedef struct TimeADT {
-    short	hr;
-    short	min;
-    float	sec;
-} TimeADT;
-
+#include <utils/builtins.h>
+#include <utils/datetime.h>
 
 static int	day_tab[2][12] = {
 	{31,28,31,30,31,30,31,31,30,31,30,31},

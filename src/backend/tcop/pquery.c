@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/tcop/pquery.c,v 1.4 1996/11/08 05:59:34 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/tcop/pquery.c,v 1.5 1996/11/10 03:02:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -65,7 +65,7 @@ CreateQueryDesc(Query *parsetree,
  * ----------------------------------------------------------------
  */
 EState *
-CreateExecutorState()
+CreateExecutorState(void)
 {
     EState		*state;
     extern int		NBuffers;

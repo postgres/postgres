@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/hash/dynahash.c,v 1.5 1996/11/08 20:46:07 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/hash/dynahash.c,v 1.6 1996/11/10 03:03:36 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -122,9 +122,9 @@ DynaHashFree(Pointer ptr)
  * ----------------
  */
 
-static int expand_table();
-static int hdefault();
-static int init_htab();
+static int expand_table(HTAB *hashp);
+static int hdefault(HTAB *hashp);
+static int init_htab(HTAB *hashp, int nelem);
 
 
 /*

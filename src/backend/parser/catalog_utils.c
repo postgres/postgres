@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/parser/Attic/catalog_utils.c,v 1.8 1996/11/08 05:57:29 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/parser/Attic/catalog_utils.c,v 1.9 1996/11/10 03:01:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -83,10 +83,6 @@ static char *attnum_type[SPECIALS] = {
 
 #define	MAXFARGS 8		/* max # args to a c or postquel function */
 
-static Oid **argtype_inherit();
-static Oid **genxprod();
-
-static int findsupers(Oid relid, Oid **supervec);
 /*
  *  This structure is used to explore the inheritance hierarchy above
  *  nodes in the type tree in order to disambiguate among polymorphic
@@ -107,6 +103,10 @@ typedef struct _CandidateList {
     Oid *args;
     struct _CandidateList *next;
 } *CandidateList;
+
+static Oid **argtype_inherit(int nargs, Oid *oid_array);
+static Oid **genxprod(InhPaths *arginh, int nargs);
+static int findsupers(Oid relid, Oid **supervec);
 
 /* check to see if a type id is valid,
  * returns true if it is. By using this call before calling 
@@ -241,7 +241,7 @@ tbyvalue(Type t)
 }
 
 /* given a type, return its typetype ('c' for 'c'atalog types) */
-char
+static char
 typetypetype(Type t)
 {
     TypeTupleForm typ;

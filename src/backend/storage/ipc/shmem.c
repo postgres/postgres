@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/storage/ipc/shmem.c,v 1.5 1996/11/08 20:45:51 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/storage/ipc/shmem.c,v 1.6 1996/11/10 03:02:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -98,7 +98,7 @@ static HTAB *BindingTable = NULL;
  * ----------------------
  */
 void
-ShmemBindingTabReset()
+ShmemBindingTabReset(void)
 {
     BindingTable = (HTAB *)NULL;
 }

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/commands/Attic/rename.c,v 1.3 1996/11/06 08:21:39 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/commands/Attic/rename.c,v 1.4 1996/11/10 02:59:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,6 +21,7 @@
 #include <catalog/indexing.h>
 #include <catalog/catalog.h>
 #include <commands/copy.h>
+#include <commands/rename.h>
 #include <executor/execdefs.h>	/* for EXEC_{FOR,BACK,FDEBUG,BDEBUG} */
 #include <miscadmin.h>
 #include <utils/portal.h>

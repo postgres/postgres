@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/cache/Attic/fcache.c,v 1.3 1996/11/06 10:31:22 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/cache/Attic/fcache.c,v 1.4 1996/11/10 03:03:22 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,6 +26,7 @@
 #include "parser/parsetree.h"		/* for getrelname() */
 #include "utils/builtins.h"
 #include "utils/fcache.h"
+#include "utils/fcache2.h"
 #include "nodes/primnodes.h"
 #include "nodes/execnodes.h"
 #ifndef HAVE_MEMMOVE

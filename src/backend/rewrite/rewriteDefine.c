@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteDefine.c,v 1.1.1.1 1996/07/09 06:21:51 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteDefine.c,v 1.2 1996/11/10 03:01:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,6 +25,7 @@
 #include "nodes/parsenodes.h"
 #include "parser/catalog_utils.h"
 #include "rewrite/locks.h"			
+#include "rewrite/rewriteDefine.h"
 #include "rewrite/rewriteRemove.h"
 #include "rewrite/rewriteSupport.h"
 #include "tcop/tcopprot.h"

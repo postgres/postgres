@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/storage/buffer/localbuf.c,v 1.3 1996/11/08 05:58:16 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/storage/buffer/localbuf.c,v 1.4 1996/11/10 03:02:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,6 +38,7 @@
 #include "storage/spin.h"
 #include "storage/smgr.h"
 #include "storage/lmgr.h"
+#include "storage/buf_internals.h"
 #include "miscadmin.h"
 #include "utils/builtins.h"
 #include "utils/hsearch.h"
@@ -205,7 +206,7 @@ FlushLocalBuffer(Buffer buffer)
  *    buffer until we need it.
  */
 void
-InitLocalBuffer()
+InitLocalBuffer(void)
 {
     int i;
     
@@ -241,7 +242,7 @@ InitLocalBuffer()
  *    we will not need these buffers again.
  */
 void
-LocalBufferSync()
+LocalBufferSync(void)
 {
     int i;
     
@@ -269,7 +270,7 @@ LocalBufferSync()
 }
 
 void
-ResetLocalBufferPool()
+ResetLocalBufferPool(void)
 {
     int i;
 

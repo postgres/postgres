@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: sinval.h,v 1.3 1996/11/05 06:11:05 scrappy Exp $
+ * $Id: sinval.h,v 1.4 1996/11/10 03:06:00 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,7 +20,7 @@ extern SPINLOCK SInvalLock;
 
 extern void CreateSharedInvalidationState(IPCKey key);
 extern void AttachSharedInvalidationState(IPCKey key);
-extern void InitSharedInvalidationState();
+extern void InitSharedInvalidationState(void);
 extern void RegisterSharedInvalid(int cacheId, Index hashIndex,
 				  ItemPointer pointer);
 extern void InvalidateSharedInvalid(void (*invalFunction)(),

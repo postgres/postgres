@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteManip.c,v 1.3 1996/11/06 06:48:44 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteManip.c,v 1.4 1996/11/10 03:02:04 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,6 +21,7 @@
 #include "utils/lsyscache.h"
 #include "utils/builtins.h"
 #include "rewrite/rewriteHandler.h"
+#include "rewrite/rewriteManip.h"
 #include "rewrite/rewriteSupport.h"
 #include "rewrite/locks.h"
 

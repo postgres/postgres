@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: heap.h,v 1.2 1996/11/05 11:23:43 scrappy Exp $
+ * $Id: heap.h,v 1.3 1996/11/10 03:04:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,9 +36,9 @@ extern void DeletePgTypeTuple(Relation rdesc);
 extern void heap_destroy(char relname[]);
 extern void heap_destroyr(Relation r);
  
-extern void InitTempRelList();
+extern void InitTempRelList(void);
 extern void AddToTempRelList(Relation r);
 extern void RemoveFromTempRelList(Relation r);
-extern void DestroyTempRels();
+extern void DestroyTempRels(void);
 
 #endif	/* HEAP_H */

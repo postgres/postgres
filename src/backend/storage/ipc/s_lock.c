@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/storage/ipc/Attic/s_lock.c,v 1.7 1996/11/06 06:49:04 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/storage/ipc/Attic/s_lock.c,v 1.8 1996/11/10 03:02:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,6 +47,8 @@
 
 
 #if defined(HAS_TEST_AND_SET)
+
+extern int tas(slock_t *lock);
 
 #if defined (next)
 /*
@@ -163,9 +165,7 @@ S_LOCK_FREE(slock_t *lock)
 
 #if defined(i386_solaris) || \
     defined(sparc_solaris)
-
 /* for xxxxx_solaris, this is defined in port/.../tas.s */
-extern int tas(slock_t *lock);
 
 void
 S_LOCK(slock_t *lock)
@@ -226,9 +226,6 @@ S_INIT_LOCK(slock_t *lock)
  */
 
 #if defined(hpux)
-
-/* defined in port/.../tas.s */
-extern int tas(slock_t *lock);
 
 /*
 * a "set" slock_t has a single word cleared.  a "clear" slock_t has 
@@ -389,6 +386,7 @@ S_INIT_LOCK(unsigned char *addr)
     defined(bsdi_2_1) || \
     defined(linux)
 
+    
 int
 tas(slock_t *m)
 {

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/lib/dllist.c,v 1.3 1996/11/06 08:27:11 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/lib/dllist.c,v 1.4 1996/11/10 03:00:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,7 +19,7 @@
 #include <lib/dllist.h>
 
 Dllist*
-DLNewList()
+DLNewList(void)
 {
   Dllist* l;
 

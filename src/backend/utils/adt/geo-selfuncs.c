@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/geo-selfuncs.c,v 1.1.1.1 1996/07/09 06:22:04 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/geo-selfuncs.c,v 1.2 1996/11/10 03:03:13 momjian Exp $
  *
  *	XXX These are totally bogus.
  *
@@ -19,6 +19,7 @@
 #include "access/attnum.h"
 #include "utils/geo-decls.h"	/* where function declarations go */
 #include "utils/palloc.h"
+#include "utils/builtins.h"
 
 float64
 areasel(Oid opid, 

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.3 1996/11/08 05:56:39 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.4 1996/11/10 03:00:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -87,7 +87,8 @@ _equalExpr(Expr *a, Expr *b)
     return (true);
 }
 
-bool _equalIter(Iter *a, Iter *b)
+static bool
+_equalIter(Iter *a, Iter *b)
 {
     return (equal(a->iterexpr, b->iterexpr));
 }

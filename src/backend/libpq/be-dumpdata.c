@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/libpq/Attic/be-dumpdata.c,v 1.3 1996/11/06 08:48:24 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/libpq/Attic/be-dumpdata.c,v 1.4 1996/11/10 03:00:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -61,7 +61,7 @@ static Dllist *be_portalstack;
  * ----------------
  */
 void
-be_portalinit()
+be_portalinit(void)
 {
   be_portalstack = DLNewList();
 }
@@ -85,7 +85,7 @@ be_portalpush(PortalEntry *entry)
  * ----------------
  */
 PortalEntry *
-be_portalpop()
+be_portalpop(void)
 {
   PortalEntry *p;
   Dlelem* elt;
@@ -105,7 +105,7 @@ be_portalpop()
  * ----------------
  */
 PortalEntry *
-be_currentportal()
+be_currentportal(void)
 {
   Dlelem* elt;
   elt = DLGetTail(be_portalstack);
@@ -128,7 +128,7 @@ static Oid	be_portaloid;
 static u_int	be_portalcnt = 0;
 
 PortalEntry *
-be_newportal()   
+be_newportal(void)   
 {
     PortalEntry *entry;
     char 	buf[PortalNameLength];

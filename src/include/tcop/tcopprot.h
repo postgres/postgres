@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: tcopprot.h,v 1.2 1996/11/04 12:07:04 scrappy Exp $
+ * $Id: tcopprot.h,v 1.3 1996/11/10 03:06:11 momjian Exp $
  *
  * OLD COMMENTS
  *    This file was created so that other c files could get the two
@@ -29,11 +29,11 @@ extern void pg_eval_dest(char *query_string, char **argv, Oid *typev,
 			 int nargs, CommandDest dest);
 #endif /* BOOTSTRAP_HEADER */
 
-extern void handle_warn();
-extern void quickdie();
-extern void die();
+extern void handle_warn(SIGNAL_ARGS);
+extern void quickdie(SIGNAL_ARGS);
+extern void die(SIGNAL_ARGS);
 extern int PostgresMain(int argc, char *argv[]);
-extern void ResetUsage();
-extern void ShowUsage();
+extern void ResetUsage(void);
+extern void ShowUsage(void);
 
 #endif /* tcopprotIncluded */

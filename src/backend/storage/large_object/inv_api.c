@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/storage/large_object/inv_api.c,v 1.5 1996/11/08 05:58:41 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/storage/large_object/inv_api.c,v 1.6 1996/11/10 03:02:36 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -61,8 +61,9 @@
 #define IMINBLK		512
 
 /* non-export function prototypes */
-static HeapTuple inv_fetchtup();
-static HeapTuple inv_newtuple();
+static HeapTuple inv_newtuple(LargeObjectDesc *obj_desc, Buffer buffer,
+	     Page page, char *dbuf, int nwrite);
+static HeapTuple inv_fetchtup(LargeObjectDesc *obj_desc, Buffer *bufP);
 static int inv_wrnew(LargeObjectDesc *obj_desc, char *buf, int nbytes);
 static int inv_wrold(LargeObjectDesc *obj_desc, char *dbuf, int nbytes,
 		     HeapTuple htup, Buffer buffer);

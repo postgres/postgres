@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq-be.h,v 1.2 1996/11/06 08:07:45 scrappy Exp $
+ * $Id: libpq-be.h,v 1.3 1996/11/10 03:05:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,7 +33,7 @@
 extern void be_portalinit(void);
 extern void be_portalpush(PortalEntry *entry);
 extern PortalEntry *be_portalpop(void);
-extern PortalEntry *be_currentportal();
+extern PortalEntry *be_currentportal(void);
 extern PortalEntry *be_newportal(void);
 extern void be_typeinit(PortalEntry *entry, TupleDesc attrs,
 			int natts);

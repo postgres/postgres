@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: shmem.h,v 1.2 1996/11/05 06:11:04 scrappy Exp $
+ * $Id: shmem.h,v 1.3 1996/11/10 03:05:56 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -57,7 +57,7 @@ typedef struct SHM_QUEUE {
 } SHM_QUEUE;
 
 /* shmem.c */
-extern void ShmemBindingTabReset();
+extern void ShmemBindingTabReset(void);
 extern void ShmemCreate(unsigned int key, unsigned int size);
 extern int InitShmem(unsigned int key, unsigned int size);
 extern long *ShmemAlloc(unsigned long size);

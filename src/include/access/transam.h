@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: transam.h,v 1.4 1996/11/05 07:07:22 scrappy Exp $
+ * $Id: transam.h,v 1.5 1996/11/10 03:04:41 momjian Exp $
  *
  *   NOTES
  *	Transaction System Version 101 now support proper oid
@@ -140,14 +140,14 @@ typedef VariableRelationContentsData *VariableRelationContents;
 /*
  * prototypes for functions in transam/transam.c
  */
-extern int RecoveryCheckingEnabled();
+extern int RecoveryCheckingEnabled(void);
 extern void SetRecoveryCheckingEnabled(bool state);
 extern bool TransactionLogTest(TransactionId transactionId, XidStatus status);
 extern void TransactionLogUpdate(TransactionId transactionId,
 				 XidStatus status);
 extern AbsoluteTime TransactionIdGetCommitTime(TransactionId transactionId);
 extern void TransRecover(Relation logRelation);
-extern void InitializeTransactionLog();
+extern void InitializeTransactionLog(void);
 extern bool TransactionIdDidCommit(TransactionId transactionId);
 extern bool TransactionIdDidAbort(TransactionId transactionId);
 extern bool TransactionIdIsInProgress(TransactionId transactionId);

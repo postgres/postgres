@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.16 1996/11/10 02:25:15 bryanh Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.17 1996/11/10 03:02:50 momjian Exp $
  *
  * NOTES
  *    this is the "main" module of the postgres backend and
@@ -54,6 +54,7 @@
 #include "tcop/tcopprot.h"	    /* where declarations for this file go */
 #include "optimizer/planner.h"
 
+#include "tcop/tcopprot.h"
 #include "tcop/tcopdebug.h"
 
 #include "executor/execdebug.h"
@@ -1256,7 +1257,7 @@ PostgresMain(int argc, char *argv[])
      */
     if (IsUnderPostmaster == false) {
 	puts("\nPOSTGRES backend interactive interface");
-	puts("$Revision: 1.16 $ $Date: 1996/11/10 02:25:15 $");
+	puts("$Revision: 1.17 $ $Date: 1996/11/10 03:02:50 $");
     }
     
     /* ----------------
@@ -1464,7 +1465,7 @@ struct rusage Save_r;
 struct timeval Save_t;
 
 void
-ResetUsage()
+ResetUsage(void)
 {
     struct timezone tz;
     getrusage(RUSAGE_SELF, &Save_r);
@@ -1474,7 +1475,7 @@ ResetUsage()
 }
 
 void
-ShowUsage()
+ShowUsage(void)
 {
     struct timeval user, sys;
     struct timeval elapse_t;

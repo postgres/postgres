@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/acl.c,v 1.5 1996/11/06 10:30:36 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/acl.c,v 1.6 1996/11/10 03:03:00 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -325,7 +325,7 @@ aclownerdefault(AclId ownerid)
 }
 
 Acl *
-acldefault()
+acldefault(void)
 {
     Acl *acl;
     AclItem *aip;

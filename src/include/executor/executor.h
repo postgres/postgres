@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: executor.h,v 1.4 1996/11/05 08:18:34 scrappy Exp $
+ * $Id: executor.h,v 1.5 1996/11/10 03:04:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -142,7 +142,7 @@ extern TupleDesc ExecTypeFromTL(List *targetList);
 /*
  * prototypes from functions in execTuples.c
  */
-extern void ResetTupleCount();
+extern void ResetTupleCount(void);
 extern void DisplayTupleCount(FILE *statfp);
 extern void ExecAssignNodeBaseInfo(EState *estate, CommonState *basenode,
 				   Plan *parent);

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: hash.h,v 1.3 1996/11/05 10:37:02 scrappy Exp $
+ * $Id: hash.h,v 1.4 1996/11/10 03:04:36 momjian Exp $
  *
  * NOTES
  *	modeled after Margo Seltzer's hash implementation for unix. 
@@ -277,6 +277,7 @@ extern uint32 hashchar4(uint32 intkey);
 extern uint32 hashchar8(char *key);
 extern uint32 hashchar16(char *key);
 extern uint32 hashtext(struct varlena *key);
+extern uint32 hashname(NameData *n);
 
 /* private routines */
 

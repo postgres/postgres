@@ -1190,9 +1190,6 @@ gistcentryinit(GISTSTATE *giststate, GISTENTRY *e, char *pr, Relation r,
 
 #ifdef GISTDEBUG
 
-extern char *text_range_out();
-extern char *int_range_out();
-
 /*
 ** sloppy debugging support routine, requires recompilation with appropriate
 ** "out" method for the index keys.  Could be fixed to find that info
@@ -1236,7 +1233,7 @@ _gistdump(Relation r)
 	    datum = ((char *) itup);
 	    datum += sizeof(IndexTupleData);
 	    /* get out function for type of key, and out it! */
-	    itkey = (char *) int_range_out(datum);
+	    itkey = (char *) int_range_out((INTRANGE *)datum);
 	    /* itkey = " unable to print"; */
 	    printf("\t[%d] size %d heap <%d,%d> key:%s\n",
 		   offnum, IndexTupleSize(itup), itblkno, itoffno, itkey);
@@ -1246,26 +1243,6 @@ _gistdump(Relation r)
 	ReleaseBuffer(buf);
     }
 }
-
-#define TRLOWER(tr) (((tr)->bytes))
-#define TRUPPER(tr) (&((tr)->bytes[MAXALIGN(VARSIZE(TRLOWER(tr)))]))
-typedef struct txtrange {
-    /* flag: NINF means that lower is negative infinity; PINF means that
-    ** upper is positive infinity.  0 means that both are numbers.
-    */
-    int32 vl_len;
-    int32 flag;  
-    char bytes[2];
-} TXTRANGE;
-
-typedef struct intrange {
-    int lower;
-    int upper;
-    /* flag: NINF means that lower is negative infinity; PINF means that
-    ** upper is positive infinity.  0 means that both are numbers.
-    */
-    int flag;  
-} INTRANGE;
 
 char *text_range_out(TXTRANGE *r)
 {

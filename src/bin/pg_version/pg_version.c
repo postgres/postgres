@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/bin/pg_version/Attic/pg_version.c,v 1.4 1996/11/08 06:01:17 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/bin/pg_version/Attic/pg_version.c,v 1.5 1996/11/10 03:04:02 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,8 +30,12 @@ main(int argc, char **argv)
     return(0);
 }
 
+void elog(void); /* make compiler happy */
+
 void
 elog(void) {}
+
+int GetDataHome(void); /* make compiler happy */
 
 int
 GetDataHome(void)

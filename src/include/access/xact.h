@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: xact.h,v 1.3 1996/11/05 07:15:58 scrappy Exp $
+ * $Id: xact.h,v 1.4 1996/11/10 03:04:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -55,7 +55,7 @@ typedef TransactionStateData *TransactionState;
  *	extern definitions
  * ----------------
  */
-extern int TransactionFlushEnabled();
+extern int TransactionFlushEnabled(void);
 extern void SetTransactionFlushEnabled(bool state);
 
 extern bool IsTransactionState(void);
@@ -90,12 +90,15 @@ extern void AbortCurrentTransaction(void);
 extern void BeginTransactionBlock(void);
 extern void EndTransactionBlock(void);
 extern void AbortTransactionBlock(void);
-extern bool IsTransactionBlock();
-extern void UserAbortTransactionBlock();
+extern bool IsTransactionBlock(void);
+extern void UserAbortTransactionBlock(void);
 
 extern TransactionId DisabledTransactionId;
 
 /* defined in xid.c */
+extern TransactionId xidin(char *representation);
+extern char *xidout(TransactionId transactionId);
+extern bool xideq(TransactionId xid1, TransactionId xid2);
 extern bool TransactionIdIsValid(TransactionId transactionId);
 extern void StoreInvalidTransactionId(TransactionId *destination);
 extern void TransactionIdStore(TransactionId transactionId,

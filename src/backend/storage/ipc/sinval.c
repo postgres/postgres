@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/storage/ipc/sinval.c,v 1.4 1996/11/06 06:49:09 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/storage/ipc/sinval.c,v 1.5 1996/11/10 03:02:30 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -75,7 +75,7 @@ AttachSharedInvalidationState(IPCKey key)
 }
 
 void
-InitSharedInvalidationState()
+InitSharedInvalidationState(void)
 {
     SpinAcquire(SInvalLock);
     if (!SIBackendInit(shmInvalBuffer))

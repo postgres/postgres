@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: elog.h,v 1.2 1996/11/06 10:15:25 scrappy Exp $
+ * $Id: elog.h,v 1.3 1996/11/10 03:06:24 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,7 +35,7 @@
 
 extern void elog(int lev, const char *fmt, ...);
 #ifndef PG_STANDALONE
-int DebugFileOpen();
+int DebugFileOpen(void);
 #endif
 
 #endif	/* ELOG_H */

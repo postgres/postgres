@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.22 1996/11/10 02:24:12 bryanh Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.23 1996/11/10 03:01:41 momjian Exp $
  *
  * NOTES
  *
@@ -982,7 +982,7 @@ BackendStartup(StartupInfo *packet, /* client's startup packet */
  * If you don't like that, well, we *used* to pass the whole option string
  * as ONE argument to execl(), which was even less intelligent...
  */
-void
+static void
 split_opts(char **argv, int *argcp, char *s)
 {
     int	i = *argcp;

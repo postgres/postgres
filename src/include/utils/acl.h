@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: acl.h,v 1.3 1996/11/04 07:18:36 scrappy Exp $
+ * $Id: acl.h,v 1.4 1996/11/10 03:06:14 momjian Exp $
  *
  * NOTES
  *    For backward-compatability purposes we have to allow there
@@ -126,7 +126,7 @@ typedef ArrayType IdList;
  */
 extern char *aclparse(char *s, AclItem *aip, unsigned *modechg);
 extern Acl *aclownerdefault(AclId ownerid);
-extern Acl *acldefault();
+extern Acl *acldefault(void);
 extern Acl *aclinsert3(Acl *old_acl, AclItem *mod_aip, unsigned modechg);
 
 extern char* aclmakepriv(char* old_privlist, char new_priv);

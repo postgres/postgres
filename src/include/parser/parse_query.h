@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parse_query.h,v 1.5 1996/11/04 12:12:50 scrappy Exp $
+ * $Id: parse_query.h,v 1.6 1996/11/10 03:05:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -66,7 +66,7 @@ extern int NumLevels;
 #endif
 
 Oid exprType(Node *expr);
-ParseState* makeParseState();
+ParseState* makeParseState(void);
 QueryTreeList *parse_analyze(List *querytree_list);
 
 /* define in parse_query.c, used in gram.y */

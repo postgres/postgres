@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/error/Attic/exc.c,v 1.5 1996/11/03 06:53:26 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/error/Attic/exc.c,v 1.6 1996/11/10 03:03:31 momjian Exp $
  *
  * NOTE
  *    XXX this code needs improvement--check for state violations and
@@ -135,7 +135,7 @@ ExcPrint(Exception *excP,
 }
 
 ExcProc *
-ExcGetUnCaught()
+ExcGetUnCaught(void)
 {
     return (ExcUnCaughtP);
 }

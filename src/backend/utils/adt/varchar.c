@@ -1,20 +1,20 @@
 /*-------------------------------------------------------------------------
  *
- * char.c--
+ * varchar.c--
  *    Functions for the built-in type char() and varchar().
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/varchar.c,v 1.5 1996/11/06 06:50:06 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/varchar.c,v 1.6 1996/11/10 03:03:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include <stdio.h>		/* for sprintf() */
 #include <string.h>
 #include "postgres.h"
-#include "utils/palloc.h"
+#include "utils/builtins.h"
 
 /*
  * CHAR() and VARCHAR() types are part of the ANSI SQL standard. CHAR()

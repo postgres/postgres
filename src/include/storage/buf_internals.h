@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: buf_internals.h,v 1.5 1996/11/05 06:10:53 scrappy Exp $
+ * $Id: buf_internals.h,v 1.6 1996/11/10 03:05:53 momjian Exp $
  *
  * NOTE
  *	If BUFFERPAGE0 is defined, then 0 will be used as a
@@ -230,8 +230,8 @@ extern BufferDesc *LocalBufferAlloc(Relation reln, BlockNumber blockNum,
 				    bool *foundPtr);
 extern int WriteLocalBuffer(Buffer buffer, bool release);
 extern int FlushLocalBuffer(Buffer buffer);
-extern void InitLocalBuffer();
-extern void LocalBufferSync();
-extern void ResetLocalBufferPool();
+extern void InitLocalBuffer(void);
+extern void LocalBufferSync(void);
+extern void ResetLocalBufferPool(void);
      
 #endif	/* BUFMGR_INTERNALS_H */

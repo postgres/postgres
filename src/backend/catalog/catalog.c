@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/catalog/catalog.c,v 1.4 1996/11/06 06:47:01 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/catalog/catalog.c,v 1.5 1996/11/10 02:59:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,6 +37,7 @@ relpath(char relname[])
     return(relname);
 }
 
+#ifdef NOT_USED
 /*
  * issystem	- returns non-zero iff relname is a system catalog
  *
@@ -56,6 +57,7 @@ issystem(char relname[])
     else
 	return FALSE;
 }
+#endif
 
 /*
  * IsSystemRelationName --

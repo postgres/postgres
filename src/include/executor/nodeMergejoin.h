@@ -6,17 +6,13 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nodeMergejoin.h,v 1.1 1996/08/28 07:22:22 scrappy Exp $
+ * $Id: nodeMergejoin.h,v 1.2 1996/11/10 03:05:09 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef	NODEMERGEJOIN_H
 #define	NODEMERGEJOIN_H
 
-#if 0	/* aren't these static? */
-extern List MJFormOSortopI(List qualList, Oid sortOp);
-extern List MJFormISortopO(List qualList, Oid sortOp);
-#endif
 extern bool MergeCompare(List *eqQual, List *compareQual, ExprContext *econtext);
 
 extern void ExecMergeTupleDumpInner(ExprContext *econtext);

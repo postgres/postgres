@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/optimizer/util/joininfo.c,v 1.1.1.1 1996/07/09 06:21:38 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/optimizer/util/joininfo.c,v 1.2 1996/11/10 03:01:00 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,6 +16,7 @@
 #include "nodes/relation.h"
 
 #include "optimizer/internal.h"
+#include "optimizer/joininfo.h"
 #include "optimizer/var.h"
 #include "optimizer/clauses.h"
 
