@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: c.h,v 1.100 2001/08/24 22:46:28 petere Exp $
+ * $Id: c.h,v 1.101 2001/08/27 23:02:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -133,10 +133,13 @@
  *				Section 2:	bool, true, false, TRUE, FALSE, NULL
  * ----------------------------------------------------------------
  */
+
 /*
  * bool
  *		Boolean value, either true or false.
  *
+ * XXX for C++ compilers, we assume the compiler has a compatible
+ * built-in definition of bool.
  */
 
 /* BeOS defines bool already, but the compiler chokes on the
@@ -145,11 +148,10 @@
 #ifndef __BEOS__
 
 #ifndef __cplusplus
+
 #ifndef bool
 typedef char bool;
-
-#endif	 /* ndef bool */
-#endif	 /* not C++ */
+#endif
 
 #ifndef true
 #define true	((bool) 1)
@@ -158,6 +160,8 @@ typedef char bool;
 #ifndef false
 #define false	((bool) 0)
 #endif
+
+#endif	 /* not C++ */
 
 #endif	 /* __BEOS__ */
 
