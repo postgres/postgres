@@ -362,12 +362,12 @@ AC_SUBST([with_tcl])
 # If Tcl is enabled (above) then check for pltcl_unknown_support
 AC_MSG_CHECKING([whether to build with pl/tcl unknown support])
 if test "$with_tcl" = yes; then
-  PGAC_ARG_BOOL(with, pltcl_unknown, no, [  --with-pltcl-unknown    build pl/tcl unknown support if Tcl is enabled])
+  PGAC_ARG_BOOL(with, pltcl_unknown, no, [  --enable-pltcl-unknown    build pl/tcl unknown support if Tcl is enabled])
 else
-  with_pltcl_unknown=no
+  enable_pltcl_unknown=no
 fi
-AC_MSG_RESULT([$with_pltcl_unknown])
-AC_SUBST([with_pltcl_unknown])
+AC_MSG_RESULT([$enable_pltcl_unknown])
+AC_SUBST([enable_pltcl_unknown])
 
 # If Tcl is enabled (above) then Tk is also, unless the user disables it using --without-tk
 AC_MSG_CHECKING([whether to build with Tk])
