@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/client-auth.sgml,v 1.66 2004/08/26 16:50:05 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/client-auth.sgml,v 1.67 2004/11/10 21:54:23 petere Exp $
 -->
 
 <chapter id="client-authentication">
@@ -88,7 +88,7 @@ $PostgreSQL: pgsql/doc/src/sgml/client-auth.sgml,v 1.66 2004/08/26 16:50:05 momj
 local      <replaceable>database</replaceable>  <replaceable>user</replaceable>  <replaceable>authentication-method</replaceable>  <optional><replaceable>authentication-option</replaceable></optional>
 host       <replaceable>database</replaceable>  <replaceable>user</replaceable>  <replaceable>CIDR-address</replaceable>  <replaceable>authentication-method</replaceable>  <optional><replaceable>authentication-option</replaceable></optional>
 hostssl    <replaceable>database</replaceable>  <replaceable>user</replaceable>  <replaceable>CIDR-address</replaceable>  <replaceable>authentication-method</replaceable>  <optional><replaceable>authentication-option</replaceable></optional>
-hostnossl  <replaceable>database</replaceable>	<replaceable>user</replaceable>  <replaceable>CIDR-address</replaceable>  <replaceable>authentication-method</replaceable>  <optional><replaceable>authentication-option</replaceable></optional>
+hostnossl  <replaceable>database</replaceable>  <replaceable>user</replaceable>  <replaceable>CIDR-address</replaceable>  <replaceable>authentication-method</replaceable>  <optional><replaceable>authentication-option</replaceable></optional>
 host       <replaceable>database</replaceable>  <replaceable>user</replaceable>  <replaceable>IP-address</replaceable>  <replaceable>IP-mask</replaceable>  <replaceable>authentication-method</replaceable>  <optional><replaceable>authentication-option</replaceable></optional>
 hostssl    <replaceable>database</replaceable>  <replaceable>user</replaceable>  <replaceable>IP-address</replaceable>  <replaceable>IP-mask</replaceable>  <replaceable>authentication-method</replaceable>  <optional><replaceable>authentication-option</replaceable></optional>
 hostnossl  <replaceable>database</replaceable>  <replaceable>user</replaceable>  <replaceable>IP-address</replaceable>  <replaceable>IP-mask</replaceable>  <replaceable>authentication-method</replaceable>  <optional><replaceable>authentication-option</replaceable></optional>
@@ -199,7 +199,7 @@ hostnossl  <replaceable>database</replaceable>  <replaceable>user</replaceable> 
      <term><replaceable>CIDR-address</replaceable></term>
      <listitem>
       <para>
-       specifies the client machine IP addresses that this record
+       Specifies the client machine IP addresses that this record
        matches. It contains an IP address in standard dotted decimal
        notation and a CIDR mask length. (IP addresses can only be
        specified numerically, not as domain or host names.) For example,
@@ -511,15 +511,15 @@ host    all         all         192.168.0.0/16        ident omicron
 # all cases.
 #
 # TYPE  DATABASE    USER        CIDR-ADDRESS          METHOD
-local   sameuser    all                                             md5
-local   all         @admins                                         md5
-local   all         +support                                        md5
+local   sameuser    all                               md5
+local   all         @admins                           md5
+local   all         +support                          md5
 
 # The last two lines above can be combined into a single line:
-local   all         @admins,+support                                md5
+local   all         @admins,+support                  md5
 
 # The database column can also use lists and file names, but not groups:
-local   db1,db2,@demodbs  all                                       md5
+local   db1,db2,@demodbs  all                         md5
 </programlisting>
    </example>
  </sect1>
