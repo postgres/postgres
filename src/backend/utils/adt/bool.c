@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/bool.c,v 1.32 2004/05/07 00:24:58 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/bool.c,v 1.33 2004/05/26 15:25:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -247,4 +247,24 @@ isnotfalse(PG_FUNCTION_ARGS)
 	b = PG_GETARG_BOOL(0);
 
 	PG_RETURN_BOOL(b);
+}
+
+/*
+ * boolean-and and boolean-or aggregates.
+ */
+
+/* function for standard EVERY aggregate implementation conforming to SQL 2003.
+ * must be strict. It is also named bool_and for homogeneity.
+ */
+Datum booland_statefunc(PG_FUNCTION_ARGS)
+{
+	PG_RETURN_BOOL(PG_GETARG_BOOL(0) && PG_GETARG_BOOL(1));
+}
+
+/* function for standard ANY/SOME aggregate conforming to SQL 2003.
+ * must be strict. The name of the aggregate is bool_or. See the doc.
+ */
+Datum boolor_statefunc(PG_FUNCTION_ARGS)
+{
+	PG_RETURN_BOOL(PG_GETARG_BOOL(0) || PG_GETARG_BOOL(1));
 }

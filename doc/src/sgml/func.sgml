@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.203 2004/05/19 23:56:38 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.204 2004/05/26 15:25:57 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -7554,6 +7554,76 @@ SELECT pg_type_is_visible('myschema.widget'::regtype);
      </row>
 
      <row>
+      <entry>
+       <indexterm>
+        <primary>bit_and</primary>
+       </indexterm>
+       <function>bit_and(<replaceable class="parameter">expression</replaceable>)</function>
+      </entry>
+      <entry>
+       <type>smallint</type>, <type>integer</type>, <type>bigint</type> or
+       <type>bit</type>,
+      </entry>
+      <entry>
+        same as argument data type.
+      </entry>
+      <entry>the bitwise-and of all non-null input values, or null if empty
+      </entry>
+     </row>
+
+     <row>
+      <entry>
+       <indexterm>
+        <primary>bit_or</primary>
+       </indexterm>
+       <function>bit_or(<replaceable class="parameter">expression</replaceable>)</function>
+      </entry>
+      <entry>
+       <type>smallint</type>, <type>integer</type>, <type>bigint</type> or
+       <type>bit</type>,
+      </entry>
+      <entry>
+        same as argument data type.
+      </entry>
+      <entry>the bitwise-or of all non-null input values, or null if empty.
+      </entry>
+     </row>
+
+     <row>
+      <entry>
+       <indexterm>
+        <primary>bool_and</primary>
+       </indexterm>
+       <function>bool_and(<replaceable class="parameter">expression</replaceable>)</function>
+      </entry>
+      <entry>
+       <type>bool</type>
+      </entry>
+      <entry>
+       <type>bool</type>
+      </entry>
+      <entry>true if all input values are true, otherwise false.
+      Also known as <function>bool_and</function>.
+      </entry>
+     </row>
+
+     <row>
+      <entry>
+       <indexterm>
+        <primary>bool_or</primary>
+       </indexterm>
+       <function>bool_or(<replaceable class="parameter">expression</replaceable>)</function>
+      </entry>
+      <entry>
+       <type>bool</type>
+      </entry>
+      <entry>
+       <type>bool</type>
+      </entry>
+      <entry>true if at least one input value is true, otherwise false</entry>
+     </row>
+
+     <row>
       <entry><function>count(*)</function></entry>
       <entry></entry>
       <entry><type>bigint</type></entry>
@@ -7567,6 +7637,24 @@ SELECT pg_type_is_visible('myschema.widget'::regtype);
       <entry>
        number of input values for which the value of <replaceable
        class="parameter">expression</replaceable> is not null
+      </entry>
+     </row>
+
+     <row>
+      <entry>
+       <indexterm>
+        <primary>every</primary>
+       </indexterm>
+       <function>every(<replaceable class="parameter">expression</replaceable>)</function>
+      </entry>
+      <entry>
+       <type>bool</type>
+      </entry>
+      <entry>
+       <type>bool</type>
+      </entry>
+      <entry>true if all input values are true, otherwise false.
+      Also known as <function>bool_and</function>.
       </entry>
      </row>
 
@@ -7659,6 +7747,29 @@ SELECT pg_type_is_visible('myschema.widget'::regtype);
    zero as one might expect.  The function <function>coalesce</function> may be
    used to substitute zero for null when necessary.
   </para>
+
+  <note>
+    <indexterm>
+      <primary>ANY</primary>
+    </indexterm>
+    <indexterm>
+      <primary>SOME</primary>
+    </indexterm>
+    <para>
+      Boolean aggregates <function>bool_and</function> and 
+      <function>bool_or</function> correspond to standard SQL aggregates
+      <function>every</function> and <function>any</function> or
+      <function>some</function>. 
+      As for <function>any</function> and <function>some</function>, 
+      it seems that there is an ambiguity built into the standard syntax:
+<programlisting>
+SELECT b1 = ANY((SELECT b2 FROM t2 ...)) FROM t1 ...;
+</programlisting>
+      Here <function>ANY</function> can be considered both as leading
+      to a subquery or as an aggregate if the select expression returns 1 row.
+      Thus the standard name cannot be given to these aggregates.
+    </para>
+  </note>
 
   <note>
    <para>
