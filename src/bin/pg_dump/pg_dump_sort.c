@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump_sort.c,v 1.8 2004/12/31 22:03:09 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump_sort.c,v 1.9 2005/02/03 23:38:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,7 +30,7 @@ static const int oldObjectTypePriority[] =
 	1,							/* DO_NAMESPACE */
 	2,							/* DO_TYPE */
 	2,							/* DO_FUNC */
-	2,							/* DO_AGG */
+	3,							/* DO_AGG */
 	3,							/* DO_OPERATOR */
 	4,							/* DO_OPCLASS */
 	5,							/* DO_CONVERSION */
