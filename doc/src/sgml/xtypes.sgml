@@ -1,5 +1,9 @@
- <chapter id="xtypes">
-  <title>Extending <acronym>SQL</acronym>: Types</title>
+<!--
+$Header: /cvsroot/pgsql/doc/src/sgml/xtypes.sgml,v 1.17 2003/04/10 01:22:45 petere Exp $
+-->
+
+ <sect1 id="xtypes">
+  <title>User-Defined Types</title>
 
   <indexterm zone="xtypes">
    <primary>data types</primary>
@@ -7,22 +11,20 @@
   </indexterm>
 
  <comment>
-  This chapter needs to be updated for the version-1 function manager
+  This section needs to be updated for the version-1 function manager
   interface.
  </comment>
 
   <para>
-   As previously mentioned, there are two kinds of types in
-   <productname>PostgreSQL</productname>: base types (defined in a
-   programming language) and composite types. This chapter describes
-   how to define new base types.
+   As described above, there are two kinds of data types in
+   <productname>PostgreSQL</productname>: base types and composite
+   types. This section describes how to define new base types.
   </para>
 
   <para>
    The examples in this section can be found in
    <filename>complex.sql</filename> and <filename>complex.c</filename>
-   in the tutorial directory.  Composite examples are in
-   <filename>funcs.sql</filename>.
+   in the tutorial directory.
   </para>
 
  <para>
@@ -36,15 +38,15 @@
   These functions determine how the type appears in strings (for input
   by the user and output to the user) and how the type is organized in
   memory.  The input function takes a null-terminated character string
-  as its input and returns the internal (in memory) representation of
+  as its argument and returns the internal (in memory) representation of
   the type.  The output function takes the internal representation of
-  the type and returns a null-terminated character string.
+  the type as argument and returns a null-terminated character string.
  </para>
 
  <para>
-  Suppose we want to define a complex type which represents complex
-  numbers. Naturally, we would choose to represent a complex in memory
-  as the following <acronym>C</acronym> structure:
+  Suppose we want to define a type <type>complex</> that represents
+  complex numbers. A natural way to to represent a complex number in
+  memory would be the following C structure:
 
 <programlisting>
 typedef struct Complex {
@@ -53,24 +55,16 @@ typedef struct Complex {
 } Complex;
 </programlisting>
 
-  and  a  string of the form <literal>(x,y)</literal> as the external string
-  representation.
+  As the external string representation of the type, we choose a
+  string of the form <literal>(x,y)</literal>.
  </para>
 
  <para>
-  The functions are usually not hard to write, especially the output
-  function.  However, there are a number of points to remember:
-
-  <itemizedlist>
-   <listitem>
-    <para>
-     When defining your external (string) representation, remember
-     that you must eventually write a complete and robust parser for
-     that representation as your input function!
-    </para>
-
-    <para>
-     For instance:
+  The input and output functions are usually not hard to write,
+  especially the output function.  But when defining the external
+  string representation of the type, remember that you must eventually
+  write a complete and robust parser for that representation as your
+  input function.  For instance:
 
 <programlisting>
 Complex *
@@ -78,48 +72,42 @@ complex_in(char *str)
 {
     double x, y;
     Complex *result;
-    if (sscanf(str, " ( %lf , %lf )", &amp;x, &amp;y) != 2) {
+
+    if (sscanf(str, " ( %lf , %lf )", &amp;x, &amp;y) != 2)
+    {
         elog(ERROR, "complex_in: error in parsing %s", str);
         return NULL;
     }
-    result = (Complex *)palloc(sizeof(Complex));
+    result = (Complex *) palloc(sizeof(Complex));
     result-&gt;x = x;
     result-&gt;y = y;
-    return (result);
+    return result;
 }
 </programlisting>
-    </para>
 
-    <para>
-     The output function can simply be:
+  The output function can simply be:
 
 <programlisting>
 char *
 complex_out(Complex *complex)
 {
     char *result;
+
     if (complex == NULL)
         return(NULL);
     result = (char *) palloc(60);
     sprintf(result, "(%g,%g)", complex-&gt;x, complex-&gt;y);
-    return(result);
+    return result;
 }
 </programlisting>
+ </para>
 
-    </para>
-   </listitem>
-
-   <listitem>
-    <para>
-     You should try to make the input and output functions inverses of
-     each other.  If you do not, you will have severe problems when
-     you need to dump your data into a file and then read it back in
-     (say, into someone else's database on another computer).  This is
-     a particularly common problem when floating-point numbers are
-     involved.
-    </para>
-   </listitem>
-  </itemizedlist>
+ <para>
+  You should try to make the input and output functions inverses of
+  each other.  If you do not, you will have severe problems when you
+  need to dump your data into a file and then read it back in.  This
+  is a particularly common problem when floating-point numbers are
+  involved.
  </para>
 
  <para>
@@ -130,14 +118,18 @@ complex_out(Complex *complex)
 <programlisting>
 CREATE FUNCTION complex_in(cstring)
     RETURNS complex
-    AS '<replaceable>PGROOT</replaceable>/tutorial/complex'
+    AS '<replaceable>filename</replaceable>'
     LANGUAGE C;
 
 CREATE FUNCTION complex_out(complex)
     RETURNS cstring
-    AS '<replaceable>PGROOT</replaceable>/tutorial/complex'
+    AS '<replaceable>filename</replaceable>'
     LANGUAGE C;
 </programlisting>
+
+  Notice that the declarations of the input and output functions must
+  reference the not-yet-defined type.  This is allowed, but will draw
+  warning messages that may be ignored.
  </para>
 
  <para>
@@ -149,49 +141,36 @@ CREATE TYPE complex (
     output = complex_out
 );
 </programlisting>
-
-  Notice that the declarations of the input and output functions must
-  reference the not-yet-defined type.  This is allowed, but will draw
-  warning messages that may be ignored.
  </para>
 
  <para>
-  <indexterm>
-   <primary>arrays</primary>
-  </indexterm>
-  As discussed earlier, <productname>PostgreSQL</productname> fully
-  supports arrays of base types.  Additionally,
-  <productname>PostgreSQL</productname> supports arrays of
-  user-defined types as well.  When you define a type,
+  When you define a new base type,
   <productname>PostgreSQL</productname> automatically provides support
-  for arrays of that type.  For historical reasons, the array type has
-  the same name as the user-defined type with the underscore character
-  <literal>_</> prepended.
+  for arrays of that
+  type.<indexterm><primary>array</primary><secondary>of user-defined
+  type</secondary></indexterm> For historical reasons, the array type
+  has the same name as the base type with the underscore character
+  (<literal>_</>) prepended.
  </para>
 
  <para>
-  Composite types do not need any function defined on them, since the
-  system already understands what they look like inside.
- </para>
-
- <para>
-  <indexterm>
-   <primary>TOAST</primary>
-   <secondary>and user-defined types</secondary>
-  </indexterm>
   If the values of your data type might exceed a few hundred bytes in
-  size (in internal form), you should be careful to mark them
-  TOAST-able.  To do this, the internal representation must follow the
-  standard layout for variable-length data: the first four bytes must
-  be an <type>int32</type> containing the total length in bytes of the
-  datum (including itself).  Then, all your functions that accept
-  values of the type must be careful to call
-  <function>pg_detoast_datum()</function> on the supplied values ---
-  after checking that the value is not NULL, if your function is not
-  strict.  Finally, select the appropriate storage option when giving
-  the <command>CREATE TYPE</command> command.
+  size (in internal form), you should mark them
+  TOAST-able.<indexterm><primary>TOAST</primary><secondary>and
+  user-defined types</secondary></indexterm> To do this, the internal
+  representation must follow the standard layout for variable-length
+  data: the first four bytes must be an <type>int32</type> containing
+  the total length in bytes of the datum (including itself).  Also,
+  when running the <command>CREATE TYPE</command> command, specify the
+  internal length as <literal>variable</> and select the appropriate
+  storage option.
  </para>
-</chapter>
+
+ <para>
+  For further details see the description of the <command>CREATE
+  TYPE</command> command in <xref linkend="reference">.
+ </para>
+</sect1>
 
 <!-- Keep this comment at the end of the file
 Local variables:

@@ -1,14 +1,11 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/xfunc.sgml,v 1.66 2003/03/25 16:15:38 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/xfunc.sgml,v 1.67 2003/04/10 01:22:45 petere Exp $
 -->
 
- <chapter id="xfunc">
-  <title id="xfunc-title">Extending <acronym>SQL</acronym>: Functions</title>
+ <sect1 id="xfunc">
+  <title>User-Defined Functions</title>
 
   <indexterm zone="xfunc"><primary>function</></>
-
-  <sect1 id="xfunc-intro">
-   <title>Introduction</title>
 
   <para>
    <productname>PostgreSQL</productname> provides four kinds of
@@ -17,24 +14,25 @@ $Header: /cvsroot/pgsql/doc/src/sgml/xfunc.sgml,v 1.66 2003/03/25 16:15:38 peter
    <itemizedlist>
     <listitem>
      <para>
-      query language functions 
-      (functions written in <acronym>SQL</acronym>)
+      query language functions (functions written in
+      <acronym>SQL</acronym>) (<xref linkend="xfunc-sql">)
      </para>
     </listitem>
     <listitem>
      <para>
-      procedural language 
-      functions (functions written in, for example, <application>PL/Tcl</> or <application>PL/pgSQL</>)
+      procedural language functions (functions written in, for
+      example, <application>PL/Tcl</> or <application>PL/pgSQL</>)
+      (<xref linkend="xfunc-pl">)
      </para>
     </listitem>
     <listitem>
      <para>
-      internal functions
+      internal functions (<xref linkend="xfunc-internal">)
      </para>
     </listitem>
     <listitem>
      <para>
-      C language functions
+      C-language functions (<xref linkend="xfunc-c">)
      </para>
     </listitem>
    </itemizedlist>
@@ -42,10 +40,14 @@ $Header: /cvsroot/pgsql/doc/src/sgml/xfunc.sgml,v 1.66 2003/03/25 16:15:38 peter
 
   <para>
    Every kind
-   of  function  can take a base type, a composite type, or
+   of  function  can take base types, composite types, or
    some combination as arguments (parameters).   In  addition, 
    every kind of function can return a base type or
-   a composite type.  It's easiest to define <acronym>SQL</acronym> 
+   a composite type.
+  </para>
+
+  <para>
+   It's easiest to define <acronym>SQL</acronym> 
    functions, so we'll start with those.  Examples in this section 
    can also be found in <filename>funcs.sql</filename> 
    and <filename>funcs.c</filename> in the tutorial directory.
@@ -72,14 +74,14 @@ $Header: /cvsroot/pgsql/doc/src/sgml/xfunc.sgml,v 1.66 2003/03/25 16:15:38 peter
     (Bear in mind that <quote>the first row</quote> of a multirow
     result is not well-defined unless you use <literal>ORDER BY</>.)
     If the last query happens
-    to return no rows at all, NULL will be returned.
+    to return no rows at all, the null value will be returned.
    </para>
 
    <para>
     <indexterm><primary>SETOF</><seealso>function</></>
     Alternatively, an SQL function may be declared to return a set,
     by specifying the function's return type
-    as <literal>SETOF</literal> <replaceable>sometype</>.  In this case
+    as <literal>SETOF <replaceable>sometype</></literal>.  In this case
     all rows of the last query's result are returned.  Further details
     appear below.
    </para>
@@ -97,22 +99,65 @@ $Header: /cvsroot/pgsql/doc/src/sgml/xfunc.sgml,v 1.66 2003/03/25 16:15:38 peter
 
    <para>
     Arguments to the SQL function may be referenced in the function
-    body using the syntax <literal>$<replaceable>n</></>: $1 refers to
-    the first argument, $2 to the second, and so on.  If an argument
-    is of a composite type, then the <quote>dot notation</quote>,
-    e.g., <literal>$1.emp</literal>, may be used to access attributes
+    body using the syntax <literal>$<replaceable>n</></>: <literal>$1</> refers to
+    the first argument, <literal>$2</> to the second, and so on.  If an argument
+    is of a composite type, then the dot notation,
+    e.g., <literal>$1.name</literal>, may be used to access attributes
     of the argument.
    </para>
 
    <sect2>
-    <title>Examples</title>
+    <title><acronym>SQL</acronym> Functions on Base Types</title>
 
     <para>
-     To illustrate a simple SQL function, consider the following,
-     which might be used to debit a bank account:
+     The simplest possible <acronym>SQL</acronym> function has no arguments and
+     simply returns a base type, such as <type>integer</type>:
+     
+<screen>
+CREATE FUNCTION one() RETURNS integer AS '
+    SELECT 1 AS result;
+' LANGUAGE SQL;
+
+SELECT one();
+
+ one
+-----
+   1
+</screen>
+    </para>
+
+    <para>
+     Notice that we defined a column alias within the function body for the result of the function
+     (with  the  name <literal>result</>),  but this column alias is not visible
+     outside the function.  Hence,  the  result  is labeled <literal>one</>
+     instead of <literal>result</>.
+    </para>
+
+    <para>
+     It is almost as easy to define <acronym>SQL</acronym> functions  
+     that take base types as arguments.  In the example below, notice
+     how we refer to the arguments within the function as <literal>$1</>
+     and <literal>$2</>.
+
+<screen>
+CREATE FUNCTION add_em(integer, integer) RETURNS integer AS '
+    SELECT $1 + $2;
+' LANGUAGE SQL;
+
+SELECT add_em(1, 2) AS answer;
+
+ answer
+--------
+      3
+</screen>
+    </para>
+
+    <para>
+     Here is a more useful function, which might be used to debit a
+     bank account:
 
 <programlisting>
-CREATE FUNCTION tp1 (integer, numeric) RETURNS integer AS '
+CREATE FUNCTION tf1 (integer, numeric) RETURNS integer AS '
     UPDATE bank 
         SET balance = balance - $2
         WHERE accountno = $1;
@@ -124,17 +169,17 @@ CREATE FUNCTION tp1 (integer, numeric) RETURNS integer AS '
      follows:
 
 <programlisting>
-SELECT tp1(17, 100.0);
+SELECT tf1(17, 100.0);
 </programlisting>
     </para>
 
     <para>
      In practice one would probably like a more useful result from the
-     function than a constant <quote>1</>, so a more likely definition
+     function than a constant 1, so a more likely definition
      is
 
 <programlisting>
-CREATE FUNCTION tp1 (integer, numeric) RETURNS numeric AS '
+CREATE FUNCTION tf1 (integer, numeric) RETURNS numeric AS '
     UPDATE bank 
         SET balance = balance - $2
         WHERE accountno = $1;
@@ -148,83 +193,29 @@ CREATE FUNCTION tp1 (integer, numeric) RETURNS numeric AS '
     <para>
      Any collection of commands in the  <acronym>SQL</acronym>
      language can be packaged together and defined as a function.
-     The commands can include data modification (i.e.,
+     Besides <command>SELECT</command> queries,
+     the commands can include data modification (i.e.,
      <command>INSERT</command>, <command>UPDATE</command>, and
-     <command>DELETE</command>) as well
-     as <command>SELECT</command> queries.  However, the final command 
+     <command>DELETE</command>).  However, the final command 
      must be a <command>SELECT</command> that returns whatever is
      specified as the function's return type.  Alternatively, if you
      want to define a SQL function that performs actions but has no
      useful value to return, you can define it as returning <type>void</>.
-     In that case it must not end with a <command>SELECT</command>.
+     In that case, the function body must not end with a <command>SELECT</command>.
      For example:
 
-<programlisting>
-CREATE FUNCTION clean_EMP () RETURNS void AS '
-    DELETE FROM EMP 
-        WHERE EMP.salary &lt;= 0;
+<screen>
+CREATE FUNCTION clean_emp() RETURNS void AS '
+    DELETE FROM emp
+        WHERE salary &lt;= 0;
 ' LANGUAGE SQL;
 
-SELECT clean_EMP();
-</programlisting>
+SELECT clean_emp();
 
-<screen>
  clean_emp
 -----------
 
 (1 row)
-</screen>
-    </para>
-
-   </sect2>
-
-   <sect2>
-    <title><acronym>SQL</acronym> Functions on Base Types</title>
-
-    <para>
-     The simplest possible <acronym>SQL</acronym> function has no arguments and
-     simply returns a base type, such as <type>integer</type>:
-     
-<programlisting>
-CREATE FUNCTION one() RETURNS integer AS '
-    SELECT 1 as RESULT;
-' LANGUAGE SQL;
-
-SELECT one();
-</programlisting>
-
-<screen>
- one
------
-   1
-</screen>
-    </para>
-
-    <para>
-     Notice that we defined a column alias within the function body for the result of the function
-     (with  the  name <literal>RESULT</>),  but this column alias is not visible
-     outside the function.  Hence,  the  result  is labeled <literal>one</>
-     instead of <literal>RESULT</>.
-    </para>
-
-    <para>
-     It is almost as easy to define <acronym>SQL</acronym> functions  
-     that take base types as arguments.  In the example below, notice
-     how we refer to the arguments within the function as <literal>$1</>
-     and <literal>$2</>:
-
-<programlisting>
-CREATE FUNCTION add_em(integer, integer) RETURNS integer AS '
-    SELECT $1 + $2;
-' LANGUAGE SQL;
-
-SELECT add_em(1, 2) AS answer;
-</programlisting>
-
-<screen>
- answer
---------
-      3
 </screen>
     </para>
    </sect2>
@@ -237,22 +228,27 @@ SELECT add_em(1, 2) AS answer;
      types, we must  not  only  specify  which
      argument  we  want (as we did above with <literal>$1</> and <literal>$2</literal>) but
      also the attributes of  that  argument.   For  example, suppose that
-     <type>EMP</type> is a table containing employee data, and therefore
+     <type>emp</type> is a table containing employee data, and therefore
      also the name of the composite type of each row of the table.  Here
-     is a function <function>double_salary</function> that computes what your
+     is a function <function>double_salary</function> that computes what someone's
      salary would be if it were doubled:
 
-<programlisting>
-CREATE FUNCTION double_salary(EMP) RETURNS integer AS '
+<screen>
+CREATE TABLE emp (
+    name        text,
+    salary      integer,
+    age         integer,
+    cubicle     point
+);
+
+CREATE FUNCTION double_salary(emp) RETURNS integer AS '
     SELECT $1.salary * 2 AS salary;
 ' LANGUAGE SQL;
 
-SELECT name, double_salary(EMP) AS dream
-    FROM EMP
-    WHERE EMP.cubicle ~= point '(2,1)';
-</programlisting>
+SELECT name, double_salary(emp) AS dream
+    FROM emp
+    WHERE emp.cubicle ~= point '(2,1)';
 
-<screen>
  name | dream
 ------+-------
  Sam  |  2400
@@ -269,28 +265,29 @@ SELECT name, double_salary(EMP) AS dream
     <para>
      It is also possible to build a function that returns a composite type.
      This is an example of a function 
-     that returns a single <type>EMP</type> row:
+     that returns a single <type>emp</type> row:
 
 <programlisting>
-CREATE FUNCTION new_emp() RETURNS EMP AS '
+CREATE FUNCTION new_emp() RETURNS emp AS '
     SELECT text ''None'' AS name,
         1000 AS salary,
         25 AS age,
         point ''(2,2)'' AS cubicle;
 ' LANGUAGE SQL;
 </programlisting>
+
+     In this case we have specified each of  the  attributes
+     with  a  constant value, but any computation
+     could have been substituted for these constants.
     </para>
 
     <para>
-     In this case we have specified each of  the  attributes
-     with  a  constant value, but any computation or expression 
-     could have been substituted for these constants.
      Note two important things about defining the function:
 
      <itemizedlist>
       <listitem>
        <para>
-	The  target  list  order must be exactly the same as
+	The select list order in the query must be exactly the same as
 	that in which the columns appear in the table associated
 	with the composite type.  (Naming the columns, as we did above,
 	is irrelevant to the system.)
@@ -315,13 +312,15 @@ ERROR:  function declared to return emp returns varchar instead of text at colum
      function, as described below.  It can also be called in the context
      of an SQL expression, but only when you
      extract a single attribute out of the row or pass the entire row into
-     another function that accepts the same composite type.  For example,
+     another function that accepts the same composite type.
+    </para>
 
-<programlisting>
-SELECT (new_emp()).name;
-</programlisting>
+    <para>
+     This is an example for how to extract an attribute out of a row type:
 
 <screen>
+SELECT (new_emp()).name;
+
  name
 ------
  None
@@ -340,29 +339,24 @@ ERROR:  parser: parse error at or near "."
      functional notation for extracting an attribute.  The  simple  way 
      to explain this is that we can use the
      notations <literal>attribute(table)</>  and  <literal>table.attribute</>
-     interchangeably:
-
-<programlisting>
-SELECT name(new_emp());
-</programlisting>
+     interchangeably.
 
 <screen>
+SELECT name(new_emp());
+
  name
 ------
  None
 </screen>
 
-<programlisting>
---
--- this is the same as:
---  SELECT EMP.name AS youngster FROM EMP WHERE EMP.age &lt; 30
---
-SELECT name(EMP) AS youngster
-    FROM EMP
-    WHERE age(EMP) &lt; 30;
-</programlisting>
-
 <screen>
+-- This is the same as:
+-- SELECT emp.name AS youngster FROM emp WHERE emp.age &lt; 30
+
+SELECT name(emp) AS youngster
+    FROM emp
+    WHERE age(emp) &lt; 30;
+
  youngster
 -----------
  Sam
@@ -370,17 +364,15 @@ SELECT name(EMP) AS youngster
     </para>
 
     <para>
-     Another way to use a function returning a row result is to declare a
-     second function accepting a row type parameter, and pass the function
-     result to it:
+     The other way to use a function returning a row result is to declare a
+     second function accepting a row type argument and pass the
+     result of the first function to it:
 
-<programlisting>
+<screen>
 CREATE FUNCTION getname(emp) RETURNS text AS
 'SELECT $1.name;'
 LANGUAGE SQL;
-</programlisting>
 
-<screen>
 SELECT getname(new_emp());
  getname
 ---------
@@ -391,35 +383,32 @@ SELECT getname(new_emp());
    </sect2>
 
    <sect2>
-    <title><acronym>SQL</acronym> Table Functions</title>
+    <title><acronym>SQL</acronym> Functions as Table Sources</title>
 
     <para>
-     A table function is one that may be used in the <command>FROM</command>
-     clause of a query. All SQL language functions may be used in this manner,
+     All SQL functions may be used in the <literal>FROM</> clause of a query,
      but it is particularly useful for functions returning composite types.
      If the function is defined to return a base type, the table function
      produces a one-column table.  If the function is defined to return
-     a composite type, the table function produces a column for each column
+     a composite type, the table function produces a column for each attribute
      of the composite type.
     </para>
 
     <para>
      Here is an example:
 
-<programlisting>
+<screen>
 CREATE TABLE foo (fooid int, foosubid int, fooname text);
-INSERT INTO foo VALUES(1,1,'Joe');
-INSERT INTO foo VALUES(1,2,'Ed');
-INSERT INTO foo VALUES(2,1,'Mary');
+INSERT INTO foo VALUES (1, 1, 'Joe');
+INSERT INTO foo VALUES (1, 2, 'Ed');
+INSERT INTO foo VALUES (2, 1, 'Mary');
 
 CREATE FUNCTION getfoo(int) RETURNS foo AS '
     SELECT * FROM foo WHERE fooid = $1;
 ' LANGUAGE SQL;
 
 SELECT *, upper(fooname) FROM getfoo(1) AS t1;
-</programlisting>
 
-<screen>
  fooid | foosubid | fooname | upper
 -------+----------+---------+-------
      1 |        1 | Joe     | JOE
@@ -432,35 +421,35 @@ SELECT *, upper(fooname) FROM getfoo(1) AS t1;
 
     <para>
      Note that we only got one row out of the function.  This is because
-     we did not say <literal>SETOF</>.
+     we did not use <literal>SETOF</>.  This is described in the next section.
     </para>
-
    </sect2>
 
    <sect2>
     <title><acronym>SQL</acronym> Functions Returning Sets</title>
 
     <para>
-     When an SQL function is declared as returning <literal>SETOF</literal>
-     <replaceable>sometype</>, the function's final
+     When an SQL function is declared as returning <literal>SETOF
+     <replaceable>sometype</></literal>, the function's final
      <command>SELECT</> query is executed to completion, and each row it
-     outputs is returned as an element of the set.
+     outputs is returned as an element of the result set.
     </para>
 
     <para>
-     This feature is normally used by calling the function as a table
-     function.  In this case each row returned by the function becomes
+     This feature is normally used when calling the function in the <literal>FROM</>
+     clause.  In this case each row returned by the function becomes
      a row of the table seen by the query.  For example, assume that
      table <literal>foo</> has the same contents as above, and we say:
 
 <programlisting>
-CREATE FUNCTION getfoo(int) RETURNS setof foo AS '
+CREATE FUNCTION getfoo(int) RETURNS SETOF foo AS '
     SELECT * FROM foo WHERE fooid = $1;
 ' LANGUAGE SQL;
 
 SELECT * FROM getfoo(1) AS t1;
 </programlisting>
 
+     Then we would get:
 <screen>
  fooid | foosubid | fooname
 -------+----------+---------
@@ -471,21 +460,19 @@ SELECT * FROM getfoo(1) AS t1;
     </para>
 
     <para>
-     Currently, functions returning sets may also be called in the target list
-     of a <command>SELECT</> query.  For each row that the <command>SELECT</>
+     Currently, functions returning sets may also be called in the select list
+     of a query.  For each row that the query
      generates by itself, the function returning set is invoked, and an output
      row is generated for each element of the function's result set. Note,
      however, that this capability is deprecated and may be removed in future
      releases. The following is an example function returning a set from the
-     target list:
+     select list:
 
-<programlisting>
+<screen>
 CREATE FUNCTION listchildren(text) RETURNS SETOF text AS
 'SELECT name FROM nodes WHERE parent = $1'
 LANGUAGE SQL;
-</programlisting>
 
-<screen>
 SELECT * FROM nodes;
    name    | parent
 -----------+--------
@@ -519,7 +506,7 @@ SELECT name, listchildren(name) FROM nodes;
      In the last <command>SELECT</command>,
      notice that no output row appears for <literal>Child2</>, <literal>Child3</>, etc.
      This happens because <function>listchildren</function> returns an empty set
-     for those inputs, so no output rows are generated.
+     for those arguments, so no result rows are generated.
     </para>
    </sect2>
   </sect1>
@@ -562,7 +549,7 @@ SELECT name, listchildren(name) FROM nodes;
 
    <para>
     Normally, all internal functions present in the
-    backend are declared during the initialization of the database cluster (<command>initdb</command>),
+    server are declared during the initialization of the database cluster (<command>initdb</command>),
     but a user could use <command>CREATE FUNCTION</command>
     to create additional alias names for an internal function.
     Internal functions are declared in <command>CREATE FUNCTION</command>
@@ -571,8 +558,8 @@ SELECT name, listchildren(name) FROM nodes;
 <programlisting>
 CREATE FUNCTION square_root(double precision) RETURNS double precision
     AS 'dsqrt'
-    LANGUAGE INTERNAL
-    WITH (isStrict);
+    LANGUAGE internal
+    STRICT;
 </programlisting>
     (Most internal functions expect to be declared <quote>strict</quote>.)
    </para>
@@ -587,7 +574,7 @@ CREATE FUNCTION square_root(double precision) RETURNS double precision
   </sect1>
 
   <sect1 id="xfunc-c">
-   <title>C Language Functions</title>
+   <title>C-Language Functions</title>
 
    <para>
     User-defined functions can be written in C (or a language that can
@@ -617,7 +604,7 @@ CREATE FUNCTION square_root(double precision) RETURNS double precision
 
    <para>
     The first time a user-defined function in a particular
-    loadable object file is called in a backend session,
+    loadable object file is called in a session,
     the dynamic loader loads that object file into memory so that the
     function can be called.  The <command>CREATE FUNCTION</command>
     for a user-defined C function must therefore specify two pieces of
@@ -736,9 +723,140 @@ CREATE FUNCTION square_root(double precision) RETURNS double precision
     <title>Base Types in C-Language Functions</title>
 
     <para>
-     <xref linkend="xfunc-c-type-table"> gives the C type required for
-     parameters in the C functions that will be loaded into 
-     <productname>PostgreSQL</>.
+     To know how to write C-language functions, you need to know how
+     PostgreSQL internally represents base data types and how they can
+     be passed to and from functions.
+     Internally, <productname>PostgreSQL</productname> regards a
+     base type as a <quote>blob of memory</quote>.   The  user-defined  
+     functions that you define over a type in turn define the 
+     way  that  <productname>PostgreSQL</productname> can operate  
+     on  it.  That is, <productname>PostgreSQL</productname> will 
+     only store and retrieve the data from disk and use  your  
+     user-defined functions to input, process, and output the data.
+    </para>
+
+    <para>
+     Base types can have one of three internal formats:
+
+     <itemizedlist>
+      <listitem>
+       <para>
+	pass by value, fixed-length
+       </para>
+      </listitem>
+      <listitem>
+       <para>
+	pass by reference, fixed-length
+       </para>
+      </listitem>
+      <listitem>
+       <para>
+	pass by reference, variable-length
+       </para>
+      </listitem>
+     </itemizedlist>
+    </para>
+
+    <para>
+     By-value  types  can  only be 1, 2, or 4 bytes in length
+     (also 8 bytes, if <literal>sizeof(Datum)</literal> is 8 on your machine).
+     You should be careful 
+     to define your types such that  they  will  be  the  same  
+     size (in bytes) on all architectures.  For example, the 
+     <literal>long</literal> type is dangerous because  it  
+     is 4 bytes on some machines and 8 bytes on others, whereas 
+     <type>int</type>  type  is  4  bytes  on  most  
+     Unix machines.  A reasonable implementation of  
+     the  <type>int4</type>  type  on  Unix
+     machines might be:
+     
+<programlisting>
+/* 4-byte integer, passed by value */
+typedef int int4;
+</programlisting>
+    </para>
+
+    <para>
+     On  the  other hand, fixed-length types of any size may
+     be passed by-reference.  For example, here is a  sample
+     implementation of a <productname>PostgreSQL</productname> type:
+     
+<programlisting>
+/* 16-byte structure, passed by reference */
+typedef struct
+{
+    double  x, y;
+} Point;
+</programlisting>
+
+     Only  pointers  to  such types can be used when passing
+     them in and out of <productname>PostgreSQL</productname> functions.
+     To return a value of such a type, allocate the right amount of
+     memory with <literal>palloc</literal>, fill in the allocated memory,
+     and return a pointer to it.  (You can also return an input value
+     that has the same type as the return value directly by returning
+     the pointer to the input value.  <emphasis>Never</> modify the
+     contents of a pass-by-reference input value, however.)
+    </para>
+
+    <para>
+     Finally, all variable-length types must also be  passed
+     by  reference.   All  variable-length  types must begin
+     with a length field of exactly 4 bytes, and all data to
+     be  stored within that type must be located in the memory 
+     immediately  following  that  length  field.   The
+     length field contains the total length of the structure,
+     that is,  it  includes  the  size  of  the  length  field
+     itself.
+    </para>
+
+    <para>
+     As an example, we can define the type <type>text</type> as
+     follows:
+
+<programlisting>
+typedef struct {
+    int4 length;
+    char data[1];
+} text;
+</programlisting>
+
+     Obviously,  the  data  field declared here is not long enough to hold
+     all possible strings.  Since it's impossible to declare a variable-size
+     structure in <acronym>C</acronym>, we rely on the knowledge that the
+     <acronym>C</acronym> compiler won't range-check array subscripts.  We
+     just allocate the necessary amount of space and then access the array as
+     if it were declared the right length.  (This is a common trick, which
+     you can read about in many textbooks about C.)
+    </para>
+
+    <para>
+     When manipulating 
+     variable-length types, we must  be  careful  to  allocate  
+     the  correct amount  of memory and set the length field correctly.
+     For example, if we wanted to  store  40  bytes  in  a <structname>text</>
+     structure, we might use a code fragment like this:
+
+<programlisting>
+#include "postgres.h"
+...
+char buffer[40]; /* our source data */
+...
+text *destination = (text *) palloc(VARHDRSZ + 40);
+destination-&gt;length = VARHDRSZ + 40;
+memcpy(destination-&gt;data, buffer, 40);
+...
+</programlisting>
+
+     <literal>VARHDRSZ</> is the same as <literal>sizeof(int4)</>, but
+     it's considered good style to use the macro <literal>VARHDRSZ</>
+     to refer to the size of the overhead for a variable-length type.
+    </para>
+
+    <para>
+     <xref linkend="xfunc-c-type-table"> specifies which C type
+     corresponds to which SQL type when writing a C-language function
+     that uses a built-in type of <productname>PostgreSQL</>.
      The <quote>Defined In</quote> column gives the header file that
      needs to be included to get the type definition.  (The actual
      definition may be in a different file that is included by the
@@ -749,9 +867,7 @@ CREATE FUNCTION square_root(double precision) RETURNS double precision
     </para>
 
      <table tocentry="1" id="xfunc-c-type-table">
-      <title>Equivalent C Types
-       for Built-In <productname>PostgreSQL</productname> Types</title>
-      <titleabbrev>Equivalent C Types</titleabbrev>
+      <title>Equivalent C Types for Built-In SQL Types</title>
       <tgroup cols="3">
        <thead>
 	<row>
@@ -922,139 +1038,13 @@ CREATE FUNCTION square_root(double precision) RETURNS double precision
      </table>
 
     <para>
-     Internally, <productname>PostgreSQL</productname> regards a
-     base type as a <quote>blob  of memory</quote>.   The  user-defined  
-     functions that you define over a type in turn define the 
-     way  that  <productname>PostgreSQL</productname> can operate  
-     on  it.  That is, <productname>PostgreSQL</productname> will 
-     only store and retrieve the data from disk and use  your  
-     user-defined functions to input, process, and output the data.
-     Base types can have one of three internal formats:
-
-     <itemizedlist>
-      <listitem>
-       <para>
-	pass by value, fixed-length
-       </para>
-      </listitem>
-      <listitem>
-       <para>
-	pass by reference, fixed-length
-       </para>
-      </listitem>
-      <listitem>
-       <para>
-	pass by reference, variable-length
-       </para>
-      </listitem>
-     </itemizedlist>
-    </para>
-
-    <para>
-     By-value  types  can  only be 1, 2 or 4 bytes in length
-     (also 8 bytes, if <literal>sizeof(Datum)</literal> is 8 on your machine).
-     You should be careful 
-     to define your types such that  they  will  be  the  same  
-     size (in bytes) on all architectures.  For example, the 
-     <literal>long</literal> type is dangerous because  it  
-     is 4 bytes on some machines and 8 bytes on others, whereas 
-     <type>int</type>  type  is  4  bytes  on  most  
-     Unix machines.  A reasonable implementation of  
-     the  <type>int4</type>  type  on  Unix
-     machines might be:
-     
-<programlisting>
-/* 4-byte integer, passed by value */
-typedef int int4;
-</programlisting>
-
-     <productname>PostgreSQL</productname> automatically figures
-     things out so that the integer types really have the size they
-     advertise.
-    </para>
-
-    <para>
-     On  the  other hand, fixed-length types of any size may
-     be passed by-reference.  For example, here is a  sample
-     implementation of a <productname>PostgreSQL</productname> type:
-     
-<programlisting>
-/* 16-byte structure, passed by reference */
-typedef struct
-{
-    double  x, y;
-} Point;
-</programlisting>
-    </para>
-
-    <para>
-     Only  pointers  to  such types can be used when passing
-     them in and out of <productname>PostgreSQL</productname> functions.
-     To return a value of such a type, allocate the right amount of
-     memory with <literal>palloc()</literal>, fill in the allocated memory,
-     and return a pointer to it.  (Alternatively, you can return an input
-     value of the same type by returning its pointer.  <emphasis>Never</>
-     modify the contents of a pass-by-reference input value, however.)
-    </para>
-
-    <para>
-     Finally, all variable-length types must also be  passed
-     by  reference.   All  variable-length  types must begin
-     with a length field of exactly 4 bytes, and all data to
-     be  stored within that type must be located in the memory 
-     immediately  following  that  length  field.   The
-     length  field  is  the  total  length  of the structure
-     (i.e.,  it  includes  the  size  of  the  length  field
-     itself).  We can define the text type as follows:
-
-<programlisting>
-typedef struct {
-    int4 length;
-    char data[1];
-} text;
-</programlisting>
-    </para>
-
-    <para>
-     Obviously,  the  data  field declared here is not long enough to hold
-     all possible strings.  Since it's impossible to declare a variable-size
-     structure in <acronym>C</acronym>, we rely on the knowledge that the
-     <acronym>C</acronym> compiler won't range-check array subscripts.  We
-     just allocate the necessary amount of space and then access the array as
-     if it were declared the right length.  (If this isn't a familiar trick to
-     you, you may wish to spend some time with an introductory
-     <acronym>C</acronym> programming textbook before delving deeper into
-     <productname>PostgreSQL</productname> server programming.)
-     When manipulating 
-     variable-length types, we must  be  careful  to  allocate  
-     the  correct amount  of memory and set the length field correctly.
-     For example, if we wanted to  store  40  bytes  in  a  text
-     structure, we might use a code fragment like this:
-
-<programlisting>
-#include "postgres.h"
-...
-char buffer[40]; /* our source data */
-...
-text *destination = (text *) palloc(VARHDRSZ + 40);
-destination-&gt;length = VARHDRSZ + 40;
-memcpy(destination-&gt;data, buffer, 40);
-...
-</programlisting>
-
-     <literal>VARHDRSZ</> is the same as <literal>sizeof(int4)</>, but
-     it's considered good style to use the macro <literal>VARHDRSZ</>
-     to refer to the size of the overhead for a variable-length type.
-    </para>
-
-    <para>
      Now that we've gone over all of the possible structures
      for base types, we can show some examples of real functions.
     </para>
    </sect2>
 
    <sect2>
-    <title>Version-0 Calling Conventions for C-Language Functions</title>
+    <title>Calling Conventions Version 0 for C-Language Functions</title>
 
     <para>
      We present the <quote>old style</quote> calling convention first --- although
@@ -1072,7 +1062,7 @@ memcpy(destination-&gt;data, buffer, 40);
 #include "postgres.h"
 #include &lt;string.h&gt;
 
-/* By Value */
+/* by value */
          
 int
 add_one(int arg)
@@ -1080,7 +1070,7 @@ add_one(int arg)
     return arg + 1;
 }
 
-/* By Reference, Fixed Length */
+/* by reference, fixed length */
 
 float8 *
 add_one_float8(float8 *arg)
@@ -1103,7 +1093,7 @@ makepoint(Point *pointx, Point *pointy)
     return new_point;
 }
 
-/* By Reference, Variable Length */
+/* by reference, variable length */
 
 text *
 copytext(text *t)
@@ -1144,47 +1134,48 @@ concat_text(text *arg1, text *arg2)
      with commands like this:
      
 <programlisting>
-CREATE FUNCTION add_one(int4) RETURNS int4
-     AS '<replaceable>PGROOT</replaceable>/tutorial/funcs' LANGUAGE C
-     WITH (isStrict);
+CREATE FUNCTION add_one(integer) RETURNS integer
+     AS '<replaceable>DIRECTORY</replaceable>/funcs', 'add_one'
+     LANGUAGE C STRICT;
 
--- note overloading of SQL function name add_one()
-CREATE FUNCTION add_one(float8) RETURNS float8
-     AS '<replaceable>PGROOT</replaceable>/tutorial/funcs',
-        'add_one_float8'
-     LANGUAGE C WITH (isStrict);
+-- note overloading of SQL function name "add_one"
+CREATE FUNCTION add_one(double precision) RETURNS double precision
+     AS '<replaceable>DIRECTORY</replaceable>/funcs', 'add_one_float8'
+     LANGUAGE C STRICT;
 
 CREATE FUNCTION makepoint(point, point) RETURNS point
-     AS '<replaceable>PGROOT</replaceable>/tutorial/funcs' LANGUAGE C
-     WITH (isStrict);
+     AS '<replaceable>DIRECTORY</replaceable>/funcs', 'makepoint'
+     LANGUAGE C STRICT;
                          
 CREATE FUNCTION copytext(text) RETURNS text
-     AS '<replaceable>PGROOT</replaceable>/tutorial/funcs' LANGUAGE C
-     WITH (isStrict);
+     AS '<replaceable>DIRECTORY</replaceable>/funcs', 'copytext'
+     LANGUAGE C STRICT;
 
 CREATE FUNCTION concat_text(text, text) RETURNS text
-     AS '<replaceable>PGROOT</replaceable>/tutorial/funcs' LANGUAGE C
-     WITH (isStrict);
+     AS '<replaceable>DIRECTORY</replaceable>/funcs', 'concat_text',
+     LANGUAGE C STRICT;
 </programlisting>
     </para>
 
     <para>
-     Here <replaceable>PGROOT</replaceable> stands for the full path to
-     the <productname>PostgreSQL</productname> source tree. (Better style would
-     be to use just <literal>'funcs'</> in the <literal>AS</> clause,
-     after having added <replaceable>PGROOT</replaceable><literal>/tutorial</>
-     to the search path.  In any case, we may omit the system-specific
-     extension for a shared library, commonly <literal>.so</literal> or
+     Here, <replaceable>DIRECTORY</replaceable> stands for the
+     directory of the shared library file (for instance the PostgreSQL
+     tutorial directory, which contains the code for the examples used
+     in this section).  (Better style would be to use just
+     <literal>'funcs'</> in the <literal>AS</> clause, after having
+     added <replaceable>DIRECTORY</replaceable> to the search path.
+     In any case, we may omit the system-specific extension for a
+     shared library, commonly <literal>.so</literal> or
      <literal>.sl</literal>.)
     </para>
 
     <para>
      Notice that we have specified the functions as <quote>strict</quote>,
      meaning that
-     the system should automatically assume a NULL result if any input
-     value is NULL.  By doing this, we avoid having to check for NULL inputs
+     the system should automatically assume a null result if any input
+     value is null.  By doing this, we avoid having to check for null inputs
      in the function code.  Without this, we'd have to check for null values
-     explicitly, for example by checking for a null pointer for each
+     explicitly, by checking for a null pointer for each
      pass-by-reference argument.  (For pass-by-value arguments, we don't
      even have a way to check!)
     </para>
@@ -1192,15 +1183,15 @@ CREATE FUNCTION concat_text(text, text) RETURNS text
     <para>
      Although this calling convention is simple to use,
      it is not very portable; on some architectures there are problems
-     with passing smaller-than-int data types this way.  Also, there is
-     no simple way to return a NULL result, nor to cope with NULL arguments
+     with passing data types that are smaller than <type>int</type> this way.  Also, there is
+     no simple way to return a null result, nor to cope with null arguments
      in any way other than making the function strict.  The version-1
      convention, presented next, overcomes these objections.
     </para>
    </sect2>
 
    <sect2>
-    <title>Version-1 Calling Conventions for C-Language Functions</title>
+    <title>Calling Conventions Version 1 for C-Language Functions</title>
 
     <para>
      The version-1 calling convention relies on macros to suppress most
@@ -1213,21 +1204,26 @@ Datum funcname(PG_FUNCTION_ARGS)
 <programlisting>
 PG_FUNCTION_INFO_V1(funcname);
 </programlisting>
-     must appear in the same source file (conventionally it's written
-     just before the function itself).  This macro call is not needed
-     for <literal>internal</>-language functions, since
-     <productname>PostgreSQL</> currently
-     assumes all internal functions are version-1.  However, it is
-     <emphasis>required</emphasis> for dynamically-loaded functions.
+     must appear in the same source file.  (Conventionally. it's
+     written just before the function itself.)  This macro call is not
+     needed for <literal>internal</>-language functions, since
+     <productname>PostgreSQL</> assumes that all internal functions
+     use the version-1 convention.  It is, however, required for
+     dynamically-loaded functions.
     </para>
 
     <para>
      In a version-1 function, each actual argument is fetched using a
      <function>PG_GETARG_<replaceable>xxx</replaceable>()</function>
-     macro that corresponds to the argument's data type, and the result
-     is returned using a
+     macro that corresponds to the argument's data type, and the
+     result is returned using a
      <function>PG_RETURN_<replaceable>xxx</replaceable>()</function>
      macro for the return type.
+     <function>PG_GETARG_<replaceable>xxx</replaceable>()</function>
+     takes as its argument the number of the function argument to
+     fetch, where the count starts at 0.
+     <function>PG_RETURN_<replaceable>xxx</replaceable>()</function>
+     takes as its argument the actual value to return.
     </para>
 
     <para>
@@ -1238,7 +1234,7 @@ PG_FUNCTION_INFO_V1(funcname);
 #include &lt;string.h&gt;
 #include "fmgr.h"
 
-/* By Value */
+/* by value */
 
 PG_FUNCTION_INFO_V1(add_one);
          
@@ -1250,14 +1246,14 @@ add_one(PG_FUNCTION_ARGS)
     PG_RETURN_INT32(arg + 1);
 }
 
-/* By Reference, Fixed Length */
+/* b reference, fixed length */
 
 PG_FUNCTION_INFO_V1(add_one_float8);
 
 Datum
 add_one_float8(PG_FUNCTION_ARGS)
 {
-    /* The macros for FLOAT8 hide its pass-by-reference nature */
+    /* The macros for FLOAT8 hide its pass-by-reference nature. */
     float8   arg = PG_GETARG_FLOAT8(0);
 
     PG_RETURN_FLOAT8(arg + 1.0);
@@ -1268,7 +1264,7 @@ PG_FUNCTION_INFO_V1(makepoint);
 Datum
 makepoint(PG_FUNCTION_ARGS)
 {
-    /* Here, the pass-by-reference nature of Point is not hidden */
+    /* Here, the pass-by-reference nature of Point is not hidden. */
     Point     *pointx = PG_GETARG_POINT_P(0);
     Point     *pointy = PG_GETARG_POINT_P(1);
     Point     *new_point = (Point *) palloc(sizeof(Point));
@@ -1279,7 +1275,7 @@ makepoint(PG_FUNCTION_ARGS)
     PG_RETURN_POINT_P(new_point);
 }
 
-/* By Reference, Variable Length */
+/* by reference, variable length */
 
 PG_FUNCTION_INFO_V1(copytext);
 
@@ -1327,80 +1323,178 @@ concat_text(PG_FUNCTION_ARGS)
 
     <para>
      At first glance, the version-1 coding conventions may appear to
-     be just pointless obscurantism.  However, they do offer a number
+     be just pointless obscurantism.  They do, however, offer a number
      of improvements, because the macros can hide unnecessary detail.
      An example is that in coding <function>add_one_float8</>, we no longer need to
      be aware that <type>float8</type> is a pass-by-reference type.  Another
-     example is that the <literal>GETARG</> macros for variable-length types hide
-     the need to deal with fetching <quote>toasted</quote> (compressed or
-     out-of-line) values.  The old-style <function>copytext</function>
-     and <function>concat_text</function> functions shown above are
-     actually wrong in the presence of toasted values, because they
-     don't call <function>pg_detoast_datum()</function> on their
-     inputs.  (The handler for old-style dynamically-loaded functions
-     currently takes care of this detail, but it does so less
-     efficiently than is possible for a version-1 function.)
+     example is that the <literal>GETARG</> macros for variable-length types allow
+     for more efficient fetching of <quote>toasted</quote> (compressed or
+     out-of-line) values.
     </para>
 
     <para>
-     One big improvement in version-1 functions is better handling of NULL
+     One big improvement in version-1 functions is better handling of null
      inputs and results.  The macro <function>PG_ARGISNULL(<replaceable>n</>)</function>
-     allows a function to test whether each input is NULL (of course, doing
-     this is only necessary in functions not declared <quote>strict</>).
+     allows a function to test whether each input is null.  (Of course, doing
+     this is only necessary in functions not declared <quote>strict</>.)
      As with the
      <function>PG_GETARG_<replaceable>xxx</replaceable>()</function> macros,
      the input arguments are counted beginning at zero.  Note that one
      should refrain from executing
      <function>PG_GETARG_<replaceable>xxx</replaceable>()</function> until
-     one has verified that the argument isn't NULL.
-     To return a NULL result, execute <function>PG_RETURN_NULL()</function>;
+     one has verified that the argument isn't null.
+     To return a null result, execute <function>PG_RETURN_NULL()</function>;
      this works in both strict and nonstrict functions.
     </para>
 
     <para>
-    Other options provided in the new-style interface are two
+     Other options provided in the new-style interface are two
      variants of the
      <function>PG_GETARG_<replaceable>xxx</replaceable>()</function>
      macros. The first of these,
-     <function>PG_GETARG_<replaceable>xxx</replaceable>_COPY()</function>
-     guarantees to return a copy of the specified parameter which is
+     <function>PG_GETARG_<replaceable>xxx</replaceable>_COPY()</function>,
+     guarantees to return a copy of the specified argument that is
      safe for writing into. (The normal macros will sometimes return a
-     pointer to a value that is physically stored in a table, and so
+     pointer to a value that is physically stored in a table, which
      must not be written to. Using the
      <function>PG_GETARG_<replaceable>xxx</replaceable>_COPY()</function>
      macros guarantees a writable result.)
-    </para>
-
-    <para>
     The second variant consists of the
     <function>PG_GETARG_<replaceable>xxx</replaceable>_SLICE()</function>
-    macros which take three parameters. The first is the number of the
-    parameter (as above). The second and third are the offset and
+    macros which take three arguments. The first is the number of the
+    function argument (as above). The second and third are the offset and
     length of the segment to be returned. Offsets are counted from
     zero, and a negative length requests that the remainder of the
-    value be returned. These routines provide more efficient access to
+    value be returned. These macros provide more efficient access to
     parts of large values in the case where they have storage type
     <quote>external</quote>. (The storage type of a column can be specified using
     <literal>ALTER TABLE <replaceable>tablename</replaceable> ALTER
     COLUMN <replaceable>colname</replaceable> SET STORAGE
-    <replaceable>storagetype</replaceable></literal>. Storage type is one of
+    <replaceable>storagetype</replaceable></literal>. <replaceable>storagetype</replaceable> is one of
     <literal>plain</>, <literal>external</>, <literal>extended</literal>,
      or <literal>main</>.)
     </para>
 
     <para>
-     The version-1 function call conventions make it possible to
-     return <quote>set</quote> results and implement trigger functions and
-     procedural-language call handlers.  Version-1 code is also more
-     portable than version-0, because it does not break ANSI C restrictions
-     on function call protocol.  For more details see
-     <filename>src/backend/utils/fmgr/README</filename> in the source
-     distribution.
+     Finally, the version-1 function call conventions make it possible
+     to return set results (<xref linkend="xfunc-c-return-set">) and
+     implement trigger functions (<xref linkend="triggers">) and
+     procedural-language call handlers (<xref
+     linkend="xfunc-plhandler">).  Version-1 code is also more
+     portable than version-0, because it does not break restrictions
+     on function call protocol in the C standard.  For more details
+     see <filename>src/backend/utils/fmgr/README</filename> in the
+     source distribution.
     </para>
    </sect2>
 
    <sect2>
-    <title>Composite Types in C-Language Functions</title>
+    <title>Writing Code</title>
+
+    <para>
+     Before we turn to the more advanced topics, we should discuss
+     some coding rules for PostgreSQL C-language functions.  While it
+     may be possible to load functions written in languages other than
+     C into <productname>PostgreSQL</productname>, this is usually
+     difficult (when it is possible at all) because other languages,
+     such as C++, FORTRAN, or Pascal often do not follow the same
+     calling convention as C.  That is, other languages do not pass
+     argument and return values between functions in the same way.
+     For this reason, we will assume that your C-language functions
+     are actually written in C.
+    </para>
+
+    <para>
+     The basic rules for writing and building C functions are as follows:
+
+     <itemizedlist>
+      <listitem>
+       <para>
+        Use <literal>pg_config
+        --includedir-server</literal><indexterm><primary>pg_config</></>
+        to find out where the <productname>PostgreSQL</> server header
+        files are installed on your system (or the system that your
+        users will be running on).  This option is new with
+        <productname>PostgreSQL</> 7.2.  For
+        <productname>PostgreSQL</> 7.1 you should use the option
+        <option>--includedir</option>.  (<command>pg_config</command>
+        will exit with a non-zero status if it encounters an unknown
+        option.)  For releases prior to 7.1 you will have to guess,
+        but since that was before the current calling conventions were
+        introduced, it is unlikely that you want to support those
+        releases.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        When allocating memory, use the
+        <productname>PostgreSQL</productname> functions
+        <function>palloc</function> and <function>pfree</function>
+        instead of the corresponding C library functions
+        <function>malloc</function> and <function>free</function>.
+        The memory allocated by <function>palloc</function> will be
+        freed automatically at the end of each transaction, preventing
+        memory leaks.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Always zero the bytes of your structures using
+        <function>memset</function> or <function>bzero</function>.
+        Several routines (such as the hash access method, hash joins,
+        and the sort algorithm) compute functions of the raw bits
+        contained in your structure.  Even if you initialize all
+        fields of your structure, there may be several bytes of
+        alignment padding (holes in the structure) that may contain
+        garbage values.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Most of the internal <productname>PostgreSQL</productname>
+        types are declared in <filename>postgres.h</filename>, while
+        the function manager interfaces
+        (<symbol>PG_FUNCTION_ARGS</symbol>, etc.)  are in
+        <filename>fmgr.h</filename>, so you will need to include at
+        least these two files.  For portability reasons it's best to
+        include <filename>postgres.h</filename> <emphasis>first</>,
+        before any other system or user header files.  Including
+        <filename>postgres.h</filename> will also include
+        <filename>elog.h</filename> and <filename>palloc.h</filename>
+        for you.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Symbol names defined within object files must not conflict
+        with each other or with symbols defined in the
+        <productname>PostgreSQL</productname> server executable.  You
+        will have to rename your functions or variables if you get
+        error messages to this effect.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Compiling and linking your code so that it can be dynamically
+        loaded into <productname>PostgreSQL</productname> always
+        requires special flags.  See <xref linkend="dfunc"> for a
+        detailed explanation of how to do it for your particular
+        operating system.
+       </para>
+      </listitem>
+     </itemizedlist>
+    </para>
+   </sect2>
+
+&dfunc;
+
+   <sect2>
+    <title>Composite-Type Arguments in C-Language Functions</title>
 
     <para>
      Composite types do not  have  a  fixed  layout  like  C
@@ -1409,26 +1503,28 @@ concat_text(PG_FUNCTION_ARGS)
      part  of  an  inheritance  hierarchy may have different
      fields than other members of the same inheritance hierarchy.    
      Therefore,  <productname>PostgreSQL</productname>  provides  
-     a  procedural interface for accessing fields of composite types  
-     from C.  As <productname>PostgreSQL</productname> processes 
-     a set of rows, each row will be passed into your 
-     function as an  opaque  structure of type <literal>TUPLE</literal>.
+     a function interface for accessing fields of composite types  
+     from C.
+    </para>
+
+    <para>
      Suppose we want to write a function to answer the query
 
 <programlisting>
 SELECT name, c_overpaid(emp, 1500) AS overpaid
-FROM emp
-WHERE name = 'Bill' OR name = 'Sam';
+    FROM emp
+    WHERE name = 'Bill' OR name = 'Sam';
 </programlisting>
 
-     In the query above, we can define <function>c_overpaid</> as:
+     Using call conventions version 0, we can define
+     <function>c_overpaid</> as:
      
 <programlisting>
 #include "postgres.h"
 #include "executor/executor.h"  /* for GetAttributeByName() */
 
 bool
-c_overpaid(TupleTableSlot *t, /* the current row of EMP */
+c_overpaid(TupleTableSlot *t, /* the current row of emp */
            int32 limit)
 {
     bool isnull;
@@ -1436,11 +1532,16 @@ c_overpaid(TupleTableSlot *t, /* the current row of EMP */
 
     salary = DatumGetInt32(GetAttributeByName(t, "salary", &amp;isnull));
     if (isnull)
-        return (false);
+        return false;
     return salary &gt; limit;
 }
+</programlisting>
 
-/* In version-1 coding, the above would look like this: */
+     In version-1 coding, the above would look like this:
+
+<programlisting>
+#include "postgres.h"
+#include "executor/executor.h"  /* for GetAttributeByName() */
 
 PG_FUNCTION_INFO_V1(c_overpaid);
 
@@ -1455,7 +1556,7 @@ c_overpaid(PG_FUNCTION_ARGS)
     salary = DatumGetInt32(GetAttributeByName(t, "salary", &amp;isnull));
     if (isnull)
         PG_RETURN_BOOL(false);
-    /* Alternatively, we might prefer to do PG_RETURN_NULL() for null salary */
+    /* Alternatively, we might prefer to do PG_RETURN_NULL() for null salary. */
 
     PG_RETURN_BOOL(salary &gt; limit);
 }
@@ -1465,7 +1566,7 @@ c_overpaid(PG_FUNCTION_ARGS)
     <para>
      <function>GetAttributeByName</function> is the 
      <productname>PostgreSQL</productname> system function that
-     returns attributes out of the current row.  It has
+     returns attributes out of the specified row.  It has
      three arguments: the argument of type <type>TupleTableSlot*</type> passed into
      the  function, the name of the desired attribute, and a
      return parameter that tells whether  the  attribute
@@ -1475,55 +1576,43 @@ c_overpaid(PG_FUNCTION_ARGS)
     </para>
 
     <para>
-     The  following  command  lets  <productname>PostgreSQL</productname>  
-     know  about  the <function>c_overpaid</function> function:
+     The following command declares the function
+     <function>c_overpaid</function> in SQL:
 
 <programlisting>
-CREATE FUNCTION c_overpaid(emp, int4) 
-RETURNS bool
-AS '<replaceable>PGROOT</replaceable>/tutorial/funcs' 
-LANGUAGE C;
+CREATE FUNCTION c_overpaid(emp, integer) 
+    RETURNS boolean
+    AS '<replaceable>DIRECTORY</replaceable>/funcs', 'c_overpaid'
+    LANGUAGE C;
 </programlisting>
     </para>
    </sect2>
 
    <sect2>
-    <title>Table Function API</title>
+    <title>Returning Rows (Composite Types) from C-Language Functions</title>
 
     <para>
-     The Table Function API assists in the creation of user-defined
-     C language table functions (<xref linkend="xfunc-tablefunctions">).
-     Table functions are functions that produce a set of rows, made up of
-     either base (scalar) data types, or composite (multi-column) data types.
-     The API is split into two main components: support for returning
-     composite data types, and support for returning multiple rows
-     (set-returning functions or <acronym>SRF</>s).
-    </para>
-
-    <para>
-     The Table Function API relies on macros and functions to suppress most
-     of the complexity of building composite data types and returning multiple
-     results.  A table function must follow the version-1 calling convention
-     described above.  In addition, the source file must include:
+     To return a row or composite-type value from a C-language
+     function, you can use a special API that provides macros and
+     functions to hide most of the complexity of building composite
+     data types.  To use this API, the source file must include:
 <programlisting>
 #include "funcapi.h"
 </programlisting>
     </para>
 
-   <sect3>
-    <title>Returning Rows (Composite Types)</title>
-
     <para>
-     The Table Function API support for returning composite data types
-     (or rows) starts with the <structname>AttInMetadata</>
-     structure. This structure holds arrays of individual attribute
-     information needed to create a row from raw C strings. It also
-     saves a pointer to the <structname>TupleDesc</>. The information
-     carried here is derived from the <structname>TupleDesc</>, but it
-     is stored here to avoid redundant CPU cycles on each call to a
-     table function.  In the case of a function returning a set, the
-     <structname>AttInMetadata</> structure should be computed
-     once during the first call and saved for re-use in later calls.
+     The support for returning composite data types (or rows) starts
+     with the <structname>AttInMetadata</> structure. This structure
+     holds arrays of individual attribute information needed to create
+     a row from raw C strings. The information contained in the
+     structure is derived from a <structname>TupleDesc</> structure,
+     but it is stored to avoid redundant computations on each call to
+     a set-returning function (see next section).  In the case of a
+     function returning a set, the <structname>AttInMetadata</>
+     structure should be computed once during the first call and saved
+     for reuse in later calls.  <structname>AttInMetadata</> also
+     saves a pointer to the original <structname>TupleDesc</>.
 <programlisting>
 typedef struct AttInMetadata
 {
@@ -1548,13 +1637,13 @@ typedef struct AttInMetadata
 <programlisting>
 TupleDesc RelationNameGetTupleDesc(const char *relname)
 </programlisting>
-     to get a <structname>TupleDesc</> based on a specified relation, or
+     to get a <structname>TupleDesc</> for a named relation, or
 <programlisting>
 TupleDesc TypeGetTupleDesc(Oid typeoid, List *colaliases)
 </programlisting>
      to get a <structname>TupleDesc</> based on a type OID. This can
-     be used to get a <structname>TupleDesc</> for a base (scalar) or
-     composite (relation) type. Then
+     be used to get a <structname>TupleDesc</> for a base or
+     composite type. Then
 <programlisting>
 AttInMetadata *TupleDescGetAttInMetadata(TupleDesc tupdesc)
 </programlisting>
@@ -1562,8 +1651,7 @@ AttInMetadata *TupleDescGetAttInMetadata(TupleDesc tupdesc)
      initialized based on the given
      <structname>TupleDesc</>. <structname>AttInMetadata</> can be
      used in conjunction with C strings to produce a properly formed
-     tuple. The metadata is stored here to avoid redundant work across
-     multiple calls.
+     row value (internally called tuple).
     </para>
 
     <para>
@@ -1574,7 +1662,7 @@ TupleTableSlot *TupleDescGetSlot(TupleDesc tupdesc)
 </programlisting>
      to initialize this tuple slot, or obtain one through other (user provided)
      means. The tuple slot is needed to create a <type>Datum</> for return by the
-     function.  The same slot can (and should) be re-used on each call.
+     function.  The same slot can (and should) be reused on each call.
     </para>
 
     <para>
@@ -1583,13 +1671,13 @@ TupleTableSlot *TupleDescGetSlot(TupleDesc tupdesc)
 HeapTuple BuildTupleFromCStrings(AttInMetadata *attinmeta, char **values)
 </programlisting>
      can be used to build a <structname>HeapTuple</> given user data
-     in C string form.  <quote>values</quote> is an array of C strings, one for
-     each attribute of the return tuple. Each C string should be in
+     in C string form.  <literal>values</literal> is an array of C strings, one for
+     each attribute of the return row. Each C string should be in
      the form expected by the input function of the attribute data
      type. In order to return a null value for one of the attributes,
      the corresponding pointer in the <parameter>values</> array
      should be set to <symbol>NULL</>.  This function will need to
-     be called again for each tuple you return.
+     be called again for each row you return.
     </para>
 
     <para>
@@ -1597,16 +1685,16 @@ HeapTuple BuildTupleFromCStrings(AttInMetadata *attinmeta, char **values)
      <function>BuildTupleFromCStrings</> is only convenient if your
      function naturally computes the values to be returned as text
      strings.  If your code naturally computes the values as a set of
-     Datums, you should instead use the underlying
-     <function>heap_formtuple</> routine to convert the
-     <type>Datum</type>s directly into a tuple.  You will still need
+     <type>Datum</> values, you should instead use the underlying
+     function <function>heap_formtuple</> to convert the
+     <type>Datum</type> values directly into a tuple.  You will still need
      the <structname>TupleDesc</> and a <structname>TupleTableSlot</>,
      but not <structname>AttInMetadata</>.
     </para>
 
     <para>
-     Once you have built a tuple to return from your function, the tuple must
-     be converted into a <type>Datum</>. Use
+     Once you have built a tuple to return from your function, it
+     must be converted into a <type>Datum</>. Use
 <programlisting>
 TupleGetDatum(TupleTableSlot *slot, HeapTuple tuple)
 </programlisting>
@@ -1617,28 +1705,36 @@ TupleGetDatum(TupleTableSlot *slot, HeapTuple tuple)
     </para>
 
     <para>
-     An example appears below.
+     An example appears in the next section.
     </para>
 
-   </sect3>
+   </sect2>
 
-   <sect3>
-    <title>Returning Sets</title>
+   <sect2 id="xfunc-c-return-set">
+    <title>Returning Sets from C-Language Functions</title>
 
     <para>
-     A set-returning function (<acronym>SRF</>) is normally called
+     There is also a special API that provides support for returning
+     sets (multiple rows) from a C-language function.  A set-returning
+     function must follow the version-1 calling conventions.  Also,
+     source files must include <filename>funcapi.h</filename>, as
+     above.
+    </para>
+
+    <para>
+     A set-returning function (<acronym>SRF</>) is called
      once for each item it returns.  The <acronym>SRF</> must
      therefore save enough state to remember what it was doing and
-     return the next item on each call.  The Table Function API
-     provides the <structname>FuncCallContext</> structure to help
-     control this process.  <literal>fcinfo-&gt;flinfo-&gt;fn_extra</>
+     return the next item on each call.
+     The structure <structname>FuncCallContext</> is provided to help
+     control this process.  Within a function, <literal>fcinfo-&gt;flinfo-&gt;fn_extra</>
      is used to hold a pointer to <structname>FuncCallContext</>
      across calls.
 <programlisting>
 typedef struct
 {
     /*
-     * Number of times we've been called before.
+     * Number of times we've been called before
      * 
      * call_cntr is initialized to 0 for you by SRF_FIRSTCALL_INIT(), and
      * incremented for you every time SRF_RETURN_NEXT() is called.
@@ -1648,7 +1744,7 @@ typedef struct
     /*
      * OPTIONAL maximum number of calls
      *
-     * max_calls is here for convenience ONLY and setting it is OPTIONAL.
+     * max_calls is here for convenience only and setting it is optional.
      * If not set, you must provide alternative means to know when the
      * function is done.
      */
@@ -1657,41 +1753,43 @@ typedef struct
     /*
      * OPTIONAL pointer to result slot
      * 
-     * slot is for use when returning tuples (i.e. composite data types)
-     * and is not needed when returning base (i.e. scalar) data types.
+     * slot is for use when returning tuples (i.e., composite data types)
+     * and is not needed when returning base data types.
      */
     TupleTableSlot *slot;
 
     /*
-     * OPTIONAL pointer to misc user provided context info
+     * OPTIONAL pointer to miscellaneous user-provided context information
      * 
-     * user_fctx is for use as a pointer to your own struct to retain
-     * arbitrary context information between calls for your function.
+     * user_fctx is for use as a pointer to your own data to retain
+     * arbitrary context information between calls of your function.
      */
     void *user_fctx;
 
     /*
-     * OPTIONAL pointer to struct containing arrays of attribute type input
-     * metainfo
+     * OPTIONAL pointer to struct containing attribute type input metadata
      * 
-     * attinmeta is for use when returning tuples (i.e. composite data types)
-     * and is not needed when returning base (i.e. scalar) data types. It
-     * is ONLY needed if you intend to use BuildTupleFromCStrings() to create
+     * attinmeta is for use when returning tuples (i.e., composite data types)
+     * and is not needed when returning base data types. It
+     * is only needed if you intend to use BuildTupleFromCStrings() to create
      * the return tuple.
      */
     AttInMetadata *attinmeta;
 
     /*
-     * memory context used for structures which must live for multiple calls
+     * memory context used for structures that must live for multiple calls
      *
      * multi_call_memory_ctx is set by SRF_FIRSTCALL_INIT() for you, and used
      * by SRF_RETURN_DONE() for cleanup. It is the most appropriate memory
-     * context for any memory that is to be re-used across multiple calls
+     * context for any memory that is to be reused across multiple calls
      * of the SRF.
      */
     MemoryContext multi_call_memory_ctx;
 } FuncCallContext;
 </programlisting>
+    </para>
+
+    <para>
      An <acronym>SRF</> uses several functions and macros that
      automatically manipulate the <structname>FuncCallContext</>
      structure (and expect to find it via <literal>fn_extra</>).  Use
@@ -1718,9 +1816,9 @@ SRF_PERCALL_SETUP()
 <programlisting>
 SRF_RETURN_NEXT(funcctx, result)
 </programlisting>
-     to return it to the caller.  (The <literal>result</> must be a
+     to return it to the caller.  (<literal>result</> must be of type
      <type>Datum</>, either a single value or a tuple prepared as
-     described earlier.)  Finally, when your function is finished
+     described above.)  Finally, when your function is finished
      returning data, use
 <programlisting>
 SRF_RETURN_DONE(funcctx)
@@ -1731,8 +1829,8 @@ SRF_RETURN_DONE(funcctx)
     <para>
      The memory context that is current when the <acronym>SRF</> is called is
      a transient context that will be cleared between calls.  This means
-     that you do not need to <function>pfree</> everything
-     you <function>palloc</>; it will go away anyway.  However, if you want to allocate
+     that you do not need to call <function>pfree</> on everything
+     you allocated using <function>palloc</>; it will go away anyway.  However, if you want to allocate
      any data structures to live across calls, you need to put them somewhere
      else.  The memory context referenced by
      <structfield>multi_call_memory_ctx</> is a suitable location for any
@@ -1745,45 +1843,45 @@ SRF_RETURN_DONE(funcctx)
      A complete pseudo-code example looks like the following:
 <programlisting>
 Datum
-my_Set_Returning_Function(PG_FUNCTION_ARGS)
+my_set_returning_function(PG_FUNCTION_ARGS)
 {
     FuncCallContext  *funcctx;
     Datum             result;
     MemoryContext     oldcontext;
-    [user defined declarations]
+    <replaceable>further declarations as needed</replaceable>
 
     if (SRF_IS_FIRSTCALL())
     {
         funcctx = SRF_FIRSTCALL_INIT();
         oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
-        /* one-time setup code appears here: */
-        [user defined code]
-        [if returning composite]
-            [build TupleDesc, and perhaps AttInMetadata]
-            [obtain slot]
+        /* One-time setup code appears here: */
+        <replaceable>user code</replaceable>
+        <replaceable>if returning composite</replaceable>
+            <replaceable>build TupleDesc, and perhaps AttInMetadata</replaceable>
+            <replaceable>obtain slot</replaceable>
             funcctx-&gt;slot = slot;
-        [endif returning composite]
-        [user defined code]
+        <replaceable>endif returning composite</replaceable>
+        <replaceable>user code</replaceable>
         MemoryContextSwitchTo(oldcontext);
     }
 
-    /* each-time setup code appears here: */
-    [user defined code]
+    /* Each-time setup code appears here: */
+    <replaceable>user code</replaceable>
     funcctx = SRF_PERCALL_SETUP();
-    [user defined code]
+    <replaceable>user code</replaceable>
 
     /* this is just one way we might test whether we are done: */
     if (funcctx-&gt;call_cntr &lt; funcctx-&gt;max_calls)
     {
-        /* here we want to return another item: */
-        [user defined code]
-        [obtain result Datum]
+        /* Here we want to return another item: */
+        <replaceable>user code</replaceable>
+        <replaceable>obtain result Datum</replaceable>
         SRF_RETURN_NEXT(funcctx, result);
     }
     else
     {
-        /* here we are done returning items, and just need to clean up: */
-        [user defined code]
+        /* Here we are done returning items and just need to clean up: */
+        <replaceable>user code</replaceable>
         SRF_RETURN_DONE(funcctx);
     }
 }
@@ -1794,6 +1892,7 @@ my_Set_Returning_Function(PG_FUNCTION_ARGS)
      A complete example of a simple <acronym>SRF</> returning a composite type looks like:
 <programlisting>
 PG_FUNCTION_INFO_V1(testpassbyval);
+
 Datum
 testpassbyval(PG_FUNCTION_ARGS)
 {
@@ -1801,7 +1900,7 @@ testpassbyval(PG_FUNCTION_ARGS)
     int                  call_cntr;
     int                  max_calls;
     TupleDesc            tupdesc;
-    TupleTableSlot       *slot;
+    TupleTableSlot      *slot;
     AttInMetadata       *attinmeta;
 
      /* stuff done only on the first call of the function */
@@ -1818,9 +1917,7 @@ testpassbyval(PG_FUNCTION_ARGS)
         /* total number of tuples to be returned */
         funcctx-&gt;max_calls = PG_GETARG_UINT32(0);
 
-        /*
-         * Build a tuple description for a __testpassbyval tuple
-         */
+        /* Build a tuple description for a __testpassbyval tuple */
         tupdesc = RelationNameGetTupleDesc("__testpassbyval");
 
         /* allocate a slot for a tuple with this tupdesc */
@@ -1830,7 +1927,7 @@ testpassbyval(PG_FUNCTION_ARGS)
         funcctx-&gt;slot = slot;
 
         /*
-         * Generate attribute metadata needed later to produce tuples from raw
+         * generate attribute metadata needed later to produce tuples from raw
          * C strings
          */
         attinmeta = TupleDescGetAttInMetadata(tupdesc);
@@ -1856,7 +1953,7 @@ testpassbyval(PG_FUNCTION_ARGS)
         /*
          * Prepare a values array for storage in our slot.
          * This should be an array of C strings which will
-         * be processed later by the appropriate "in" functions.
+         * be processed later by the type input functions.
          */
         values = (char **) palloc(3 * sizeof(char *));
         values[0] = (char *) palloc(16 * sizeof(char));
@@ -1873,150 +1970,36 @@ testpassbyval(PG_FUNCTION_ARGS)
         /* make the tuple into a datum */
         result = TupleGetDatum(slot, tuple);
 
-        /* Clean up (this is not actually necessary) */
+        /* clean up (this is not really necessary) */
         pfree(values[0]);
         pfree(values[1]);
         pfree(values[2]);
         pfree(values);
 
-         SRF_RETURN_NEXT(funcctx, result);
+        SRF_RETURN_NEXT(funcctx, result);
     }
     else    /* do when there is no more left */
     {
-         SRF_RETURN_DONE(funcctx);
+        SRF_RETURN_DONE(funcctx);
     }
 }
 </programlisting>
-     with supporting SQL code of
-<programlisting>
-CREATE TYPE __testpassbyval AS (f1 int4, f2 int4, f3 int4);
 
-CREATE OR REPLACE FUNCTION testpassbyval(int4, int4) RETURNS setof __testpassbyval
-  AS 'MODULE_PATHNAME','testpassbyval' LANGUAGE 'c' IMMUTABLE STRICT;
+     The SQL code to declare this function is:
+<programlisting>
+CREATE TYPE __testpassbyval AS (f1 integer, f2 integer, f3 integer);
+
+CREATE OR REPLACE FUNCTION testpassbyval(integer, integer) RETURNS SETOF __testpassbyval
+    AS '<replaceable>filename</>', 'testpassbyval'
+    LANGUAGE C IMMUTABLE STRICT;
 </programlisting>
     </para>
 
     <para>
-     See <filename>contrib/tablefunc</> for more examples of table functions.
-    </para>
-
-   </sect3>
-
-   </sect2>
-
-   <sect2>
-    <title>Writing Code</title>
-
-    <para>
-     We now turn to the more difficult task of writing  
-     programming  language  functions.  Be warned: this section
-     of the manual will not make you a programmer.  You must
-     have  a  good  understanding of <acronym>C</acronym>
-     (including the use of pointers)  
-     before  trying to write <acronym>C</acronym> functions for 
-     use with <productname>PostgreSQL</productname>. While  it may 
-     be possible to load functions written in languages other 
-     than <acronym>C</acronym> into  <productname>PostgreSQL</productname>,  
-     this  is  often difficult  (when  it  is possible at all) 
-     because other languages, such as <acronym>FORTRAN</acronym> 
-     and <acronym>Pascal</acronym> often do not follow the same 
-     <firstterm>calling convention</firstterm>
-     as <acronym>C</acronym>.  That is, other
-     languages  do  not  pass  argument  and  return  values
-     between functions in the same way.  For this reason, we
-     will assume that your  programming  language  functions
-     are written in <acronym>C</acronym>.
-    </para>
-
-    <para>
-     The  basic  rules  for building <acronym>C</acronym> functions 
-     are as follows:
-
-     <itemizedlist>
-      <listitem>
-       <para>
-	Use <literal>pg_config --includedir-server</literal><indexterm><primary>pg_config</></> to find
-	out where the <productname>PostgreSQL</> server header files are installed on
-	your system (or the system that your users will be running
-	on).  This option is new with <productname>PostgreSQL</> 7.2.
-	For <productname>PostgreSQL</>
-	7.1 you should use the option <option>--includedir</option>.
-	(<command>pg_config</command> will exit with a non-zero status
-	if it encounters an unknown option.)  For releases prior to
-	7.1 you will have to guess, but since that was before the
-	current calling conventions were introduced, it is unlikely
-	that you want to support those releases.
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-	When allocating memory, use the
-	<productname>PostgreSQL</productname> routines
-	<function>palloc</function> and <function>pfree</function>
-	instead of the corresponding <acronym>C</acronym> library
-	routines <function>malloc</function> and
-	<function>free</function>.  The memory allocated by
-	<function>palloc</function> will be freed automatically at the
-	end of each transaction, preventing memory leaks.
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-	Always zero the bytes of your structures using
-	<function>memset</function> or <function>bzero</function>.
-	Several routines (such as the hash access method, hash join
-	and the sort algorithm) compute functions of the raw bits
-	contained in your structure.  Even if you initialize all
-	fields of your structure, there may be several bytes of
-	alignment padding (holes in the structure) that may contain
-	garbage values.
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Most of the internal <productname>PostgreSQL</productname> types
-	are declared in <filename>postgres.h</filename>, while the function
-	manager interfaces (<symbol>PG_FUNCTION_ARGS</symbol>, etc.)
-	are in <filename>fmgr.h</filename>, so you will need to
-	include at least these two files.  For portability reasons it's best
-	to include <filename>postgres.h</filename> <emphasis>first</>,
-	before any other system or user header files.
-	Including <filename>postgres.h</filename> will also include
-	<filename>elog.h</filename> and <filename>palloc.h</filename>
-	for you.
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Symbol names defined within object files must not conflict
-        with each other or with symbols defined in the
-        <productname>PostgreSQL</productname> server executable.  You
-        will have to rename your functions or variables if you get
-        error messages to this effect.
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-	Compiling and linking your object code  so  that
-	it  can  be  dynamically  loaded  into  
-	<productname>PostgreSQL</productname>
-	always requires special flags.
-	See <xref linkend="dfunc">
-	for  a  detailed explanation of how to do it for
-	your particular operating system.
-       </para>
-      </listitem>
-     </itemizedlist>
+     The directory <filename>contrib/tablefunc</> in the source
+     distribution contains more examples of set-returning functions.
     </para>
    </sect2>
-
-&dfunc;
-
   </sect1>
 
   <sect1 id="xfunc-overload">
@@ -2035,9 +2018,11 @@ CREATE OR REPLACE FUNCTION testpassbyval(int4, int4) RETURNS setof __testpassbyv
    </para>
 
    <para>
-    A function may also have the same name as an attribute.  In the case
-    that there is an ambiguity between a function on a complex type and
-    an attribute of the complex type, the attribute will always be used.
+    A function may also have the same name as an attribute.  (Recall
+    that <literal>attribute(table)</literal> is equivalent to
+    <literal>table.attribute</literal>.)  In the case that there is an
+    ambiguity between a function on a complex type and an attribute of
+    the complex type, the attribute will always be used.
    </para>
 
    <para>
@@ -2056,7 +2041,7 @@ CREATE FUNCTION test(smallint, double precision) RETURNS ...
    </para>
 
    <para>
-    When overloading C language functions, there is an additional
+    When overloading C-language functions, there is an additional
     constraint: The C name of each function in the family of
     overloaded functions must be different from the C names of all
     other functions, either internal or dynamically loaded.  If this
@@ -2076,85 +2061,6 @@ CREATE FUNCTION test(int, int) RETURNS int
 </programlisting>
     The names of the C functions here reflect one of many possible conventions.
    </para>
-
-   <para>
-    Prior to <productname>PostgreSQL</productname> 7.0, this
-    alternative syntax did not exist.  There is a trick to get around
-    the problem, by defining a set of C functions with different names
-    and then define a set of identically-named SQL function wrappers
-    that take the appropriate argument types and call the matching C
-    function.
-   </para>
-  </sect1>
-
-  <sect1 id="xfunc-tablefunctions">
-   <title>Table Functions</title>
-
-   <indexterm zone="xfunc-tablefunctions"><primary>function</></>
-
-   <para>
-    Table functions are functions that produce a set of rows, made up of
-    either base (scalar) data types, or composite (multi-column) data types.
-    They are used like a table, view, or subselect in the <literal>FROM</>
-    clause of a query. Columns returned by table functions may be included in
-    <literal>SELECT</>, <literal>JOIN</>, or <literal>WHERE</> clauses in the
-    same manner as a table, view, or subselect column.
-   </para>
-
-   <para>
-    If a table function returns a base data type, the single result column
-    is named for the function. If the function returns a composite type, the
-    result columns get the same names as the individual attributes of the type.
-   </para>
-
-   <para>
-    A table function may be aliased in the <literal>FROM</> clause, but it also
-    may be left unaliased. If a function is used in the FROM clause with no
-    alias, the function name is used as the relation name.
-   </para>
-
-   <para>
-    Table functions work wherever tables do in <literal>SELECT</> statements.
-    For example
-<programlisting>
-CREATE TABLE foo (fooid int, foosubid int, fooname text);
-
-CREATE FUNCTION getfoo(int) RETURNS setof foo AS '
-    SELECT * FROM foo WHERE fooid = $1;
-' LANGUAGE SQL;
-
-SELECT * FROM getfoo(1) AS t1;
-
-SELECT * FROM foo
-WHERE foosubid in (select foosubid from getfoo(foo.fooid) z
-                   where z.fooid = foo.fooid);
-
-CREATE VIEW vw_getfoo AS SELECT * FROM getfoo(1);
-SELECT * FROM vw_getfoo;
-</programlisting>
-    are all valid statements.
-   </para>
-
-   <para>
-    In some cases it is useful to define table functions that can return
-    different column sets depending on how they are invoked.  To support this,
-    the table function can be declared as returning the pseudo-type
-    <type>record</>.  When such a function is used in a query, the expected
-    row structure must be specified in the query itself, so that the system
-    can know how to parse and plan the query.  Consider this example:
-<programlisting>
-SELECT *
-FROM dblink('dbname=template1', 'select proname, prosrc from pg_proc')
-  AS t1(proname name, prosrc text)
-WHERE proname LIKE 'bytea%';
-</programlisting>
-    The <literal>dblink</> function executes a remote query (see
-    <literal>contrib/dblink</>).  It is declared to return <type>record</>
-    since it might be used for any kind of query.  The actual column set
-    must be specified in the calling query so that the parser knows, for
-    example, what <literal>*</> should expand to.
-   </para>
-
   </sect1>
 
   <sect1 id="xfunc-plhandler">
@@ -2179,21 +2085,13 @@ WHERE proname LIKE 'bytea%';
 
    <para>
     The call handler for a procedural language is a
-    <quote>normal</quote> function, which must be written in a
-    compiled language such as C and registered with
-    <productname>PostgreSQL</productname> as taking no arguments and
-    returning the <type>language_handler</type> type.
-    This special pseudo-type identifies the handler as a call handler
-    and prevents it from being called directly in queries.
+    <quote>normal</quote> function that must be written in a compiled
+    language such as C, using the version-1 interface, and registered
+    with <productname>PostgreSQL</productname> as taking no arguments
+    and returning the type <type>language_handler</type>.  This
+    special pseudotype identifies the function as a call handler and
+    prevents it from being called directly in SQL commands.
    </para>
-
-   <note>
-    <para>
-     In <productname>PostgreSQL</productname> 7.1 and later, call
-     handlers must adhere to the <quote>version 1</quote> function
-     manager interface, not the old-style interface.
-    </para>
-   </note>
 
    <para>
     The call handler is called in the same way as any other function:
@@ -2203,7 +2101,7 @@ WHERE proname LIKE 'bytea%';
     is expected to return a <type>Datum</type> result (and possibly
     set the <structfield>isnull</structfield> field of the
     <structname>FunctionCallInfoData</structname> structure, if it wishes
-    to return an SQL NULL result).  The difference between a call
+    to return an SQL null result).  The difference between a call
     handler and an ordinary callee function is that the
     <structfield>flinfo-&gt;fn_oid</structfield> field of the
     <structname>FunctionCallInfoData</structname> structure will contain
@@ -2215,12 +2113,12 @@ WHERE proname LIKE 'bytea%';
    </para>
 
    <para>
-    It's up to the call handler to fetch the
-    <classname>pg_proc</classname> entry and to analyze the argument
-    and return types of the called procedure. The AS clause from the
-    <command>CREATE FUNCTION</command> of the procedure will be found
-    in the <literal>prosrc</literal> attribute of the
-    <classname>pg_proc</classname> table entry. This may be the source
+    It's up to the call handler to fetch the entry of the function from the system table
+    <classname>pg_proc</classname> and to analyze the argument
+    and return types of the called function. The <literal>AS</> clause from the
+    <command>CREATE FUNCTION</command> of the function will be found
+    in the <literal>prosrc</literal> column of the
+    <classname>pg_proc</classname> row. This may be the source
     text in the procedural language itself (like for PL/Tcl), a
     path name to a file, or anything else that tells the call handler
     what to do in detail.
@@ -2231,11 +2129,11 @@ WHERE proname LIKE 'bytea%';
     A call handler can avoid repeated lookups of information about the
     called function by using the
     <structfield>flinfo-&gt;fn_extra</structfield> field.  This will
-    initially be NULL, but can be set by the call handler to point at
-    information about the PL function.  On subsequent calls, if
-    <structfield>flinfo-&gt;fn_extra</structfield> is already non-NULL
+    initially be <symbol>NULL</>, but can be set by the call handler to point at
+    information about the called function.  On subsequent calls, if
+    <structfield>flinfo-&gt;fn_extra</structfield> is already non-<symbol>NULL</>
     then it can be used and the information lookup step skipped.  The
-    call handler must be careful that
+    call handler must make sure that
     <structfield>flinfo-&gt;fn_extra</structfield> is made to point at
     memory that will live at least until the end of the current query,
     since an <structname>FmgrInfo</structname> data structure could be
@@ -2244,23 +2142,23 @@ WHERE proname LIKE 'bytea%';
     <structfield>flinfo-&gt;fn_mcxt</structfield>; such data will
     normally have the same lifespan as the
     <structname>FmgrInfo</structname> itself.  But the handler could
-    also choose to use a longer-lived context so that it can cache
+    also choose to use a longer-lived memory context so that it can cache
     function definition information across queries.
    </para>
 
    <para>
-    When a PL function is invoked as a trigger, no explicit arguments
-    are passed, but the
+    When a procedural-language function is invoked as a trigger, no arguments
+    are passed in the usual way, but the
     <structname>FunctionCallInfoData</structname>'s
     <structfield>context</structfield> field points at a
-    <structname>TriggerData</structname> node, rather than being NULL
+    <structname>TriggerData</structname> structure, rather than being <symbol>NULL</>
     as it is in a plain function call.  A language handler should
-    provide mechanisms for PL functions to get at the trigger
+    provide mechanisms for procedural-language functions to get at the trigger
     information.
    </para>
 
    <para>
-    This is a template for a PL handler written in C:
+    This is a template for a procedural-language handler written in C:
 <programlisting>
 #include "postgres.h"
 #include "executor/spi.h"
@@ -2288,7 +2186,8 @@ plsample_call_handler(PG_FUNCTION_ARGS)
 
         retval = ...
     }
-    else {
+    else
+    {
         /*
          * Called as a function
          */
@@ -2299,27 +2198,23 @@ plsample_call_handler(PG_FUNCTION_ARGS)
     return retval;
 }
 </programlisting>
-   </para>
-
-   <para>
     Only a few thousand lines of code have to be added instead of the
-    dots to complete the call handler.  See <xref linkend="xfunc-c">
-    for information on how to compile it into a loadable module.
+    dots to complete the call handler.
    </para>
 
    <para>
-    The following commands then register the sample procedural
-    language:
+    After having compiled the handler function into a loadable module
+    (see <xref linkend="dfunc">), the following commands then
+    register the sample procedural language:
 <programlisting>
-CREATE FUNCTION plsample_call_handler () RETURNS language_handler
-    AS '/usr/local/pgsql/lib/plsample'
+CREATE FUNCTION plsample_call_handler() RETURNS language_handler
+    AS '<replaceable>filename</replaceable>'
     LANGUAGE C;
 CREATE LANGUAGE plsample
     HANDLER plsample_call_handler;
 </programlisting>
    </para>
   </sect1>
- </chapter>
 
 <!-- Keep this comment at the end of the file
 Local variables:

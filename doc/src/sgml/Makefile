@@ -2,7 +2,7 @@
 #
 # PostgreSQL documentation makefile
 #
-# $Header: /cvsroot/pgsql/doc/src/sgml/Makefile,v 1.56 2003/03/25 16:15:35 petere Exp $
+# $Header: /cvsroot/pgsql/doc/src/sgml/Makefile,v 1.57 2003/04/10 01:22:44 petere Exp $
 #
 #----------------------------------------------------------------------------
 
@@ -77,7 +77,7 @@ all: html
 
 .PHONY: html
 
-html: postgres.sgml $(ALLSGML) stylesheet.dsl catalogs.gif connections.gif
+html: postgres.sgml $(ALLSGML) stylesheet.dsl
 	@rm -f *.html
 	$(JADE) $(JADEFLAGS) $(SGMLINCLUDE) $(CATALOG) -d stylesheet.dsl -i output-html -t sgml $<
 
@@ -114,8 +114,6 @@ features-unsupported.sgml: $(top_srcdir)/src/backend/catalog/sql_feature_package
 %.rtf: %.sgml $(ALLSGML) stylesheet.dsl
 	$(JADE) $(JADEFLAGS) $(SGMLINCLUDE) $(CATALOG) -d stylesheet.dsl -t rtf -V rtf-backend -i output-print $<
 
-postgres.rtf: catalogs.gif connections.gif
-
 # TeX
 # Regular TeX and pdfTeX have slightly differing requirements, so we
 # need to distinguish the path we're taking.
@@ -123,12 +121,8 @@ postgres.rtf: catalogs.gif connections.gif
 %.tex-ps: %.sgml $(ALLSGML) stylesheet.dsl
 	$(JADE) $(JADEFLAGS) $(SGMLINCLUDE) $(CATALOG) -d stylesheet.dsl -t tex -V tex-backend -i output-print -V texdvi-output -o $@ $<
 
-postgres.tex-ps: catalogs.eps connections.eps
-
 %.tex-pdf: %.sgml $(ALLSGML) stylesheet.dsl
 	$(JADE) $(JADEFLAGS) $(SGMLINCLUDE) $(CATALOG) -d stylesheet.dsl -t tex -V tex-backend -i output-print -V texpdf-output -o $@ $<
-
-postgres.tex-pdf: catalogs.pdf connections.pdf
 
 %.dvi: %.tex-ps
 	@rm -f $*.aux $*.log

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/dfunc.sgml,v 1.24 2003/03/25 16:15:35 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/dfunc.sgml,v 1.25 2003/04/10 01:22:44 petere Exp $
 -->
 
 <sect2 id="dfunc">
@@ -14,7 +14,8 @@ $Header: /cvsroot/pgsql/doc/src/sgml/dfunc.sgml,v 1.24 2003/03/25 16:15:35 peter
  </para>
 
  <para>
-  For more information you should read the documentation of your
+  For information beyond what is contained in this section
+  you should read the documentation of your
   operating system, in particular the manual pages for the C compiler,
   <command>cc</command>, and the link editor, <command>ld</command>.
   In addition, the <productname>PostgreSQL</productname> source code
@@ -47,13 +48,10 @@ $Header: /cvsroot/pgsql/doc/src/sgml/dfunc.sgml,v 1.24 2003/03/25 16:15:35 peter
   here.
  </para>
 
- <para>
-
 <!--
-  Note:  Reading GNU Libtool sources is generally a good way of figuring out
-  this information.  The methods used within
- <productname>PostgreSQL</> source code are not
-  necessarily ideal.
+  Note: Reading GNU Libtool sources is generally a good way of
+  figuring out this information.  The methods used within PostgreSQL
+  source code are not necessarily ideal.
 -->
 
   <variablelist>
@@ -160,7 +158,7 @@ cc -shared -o foo.so foo.o
     <indexterm><primary>MacOS X</></>
     <listitem>
      <para>
-      Here is a sample.  It assumes the developer tools are installed.
+      Here is an example.  It assumes the developer tools are installed.
 <programlisting>
 cc -c foo.c 
 cc -bundle -flat_namespace -undefined suppress -o foo.so foo.o
@@ -271,17 +269,13 @@ gcc -shared -o foo.so foo.o
    </varlistentry>
 
   </variablelist>
- </para>
 
  <tip>
   <para>
-   If you want to package your extension modules for wide distribution
-   you should consider using <ulink
-   url="http://www.gnu.org/software/libtool/"><productname>GNU
-   Libtool</productname></ulink> for building shared libraries.  It
-   encapsulates the platform differences into a general and powerful
-   interface.  Serious packaging also requires considerations about
-   library versioning, symbol resolution methods, and other issues.
+   If this is too complicated for you, you should consider using
+   <ulink url="http://www.gnu.org/software/libtool/"><productname>GNU
+   Libtool</productname></ulink>, which hides the platform differences
+   behind a uniform interface.
   </para>
  </tip>
 

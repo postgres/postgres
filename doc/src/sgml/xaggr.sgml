@@ -1,9 +1,9 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/xaggr.sgml,v 1.19 2003/03/25 16:15:38 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/xaggr.sgml,v 1.20 2003/04/10 01:22:44 petere Exp $
 -->
 
- <chapter id="xaggr">
-  <title>Extending <acronym>SQL</acronym>: Aggregates</title>
+ <sect1 id="xaggr">
+  <title>User-Defined Aggregates</title>
 
   <indexterm zone="xaggr">
    <primary>aggregate functions</primary>
@@ -22,38 +22,36 @@ $Header: /cvsroot/pgsql/doc/src/sgml/xaggr.sgml,v 1.19 2003/03/25 16:15:38 peter
    function.  The state transition function is just an
    ordinary function that could also be used outside the
    context of the aggregate.  A <firstterm>final function</firstterm>
-   can also be specified, in case the desired output of the aggregate
+   can also be specified, in case the desired result of the aggregate
    is different from the data that needs to be kept in the running
    state value.
   </para>
 
   <para>
-   Thus, in addition to the input and result data types seen by a user
+   Thus, in addition to the argument and result data types seen by a user
    of the aggregate, there is an internal state-value data type that
-   may be different from both the input and result types.
+   may be different from both the argument and result types.
   </para>
 
   <para>
    If we define an aggregate that does not use a final function,
    we have an aggregate that computes a running function of
-   the column values from each row.  <function>Sum</>  is  an
-   example  of  this  kind  of aggregate.  <function>Sum</> starts at
+   the column values from each row.  <function>sum</>  is  an
+   example  of  this  kind  of aggregate.  <function>sum</> starts at
    zero and always adds the current  row's  value  to
    its  running  total.  For example, if we want to make a <function>sum</>
    aggregate to work on a data type for complex numbers,
    we only need the addition function for that data type.
-   The aggregate definition is:
+   The aggregate definition would be:
    
-<programlisting>
+<screen>
 CREATE AGGREGATE complex_sum (
     sfunc = complex_add,
     basetype = complex,
     stype = complex,
     initcond = '(0,0)'
 );
-</programlisting>
 
-<screen>
 SELECT complex_sum(a) FROM test_complex;
 
  complex_sum
@@ -61,43 +59,43 @@ SELECT complex_sum(a) FROM test_complex;
  (34,53.9)
 </screen>
 
-   (In practice, we'd just name the aggregate <function>sum</function>, and rely on
+   (In practice, we'd just name the aggregate <function>sum</function> and rely on
    <productname>PostgreSQL</productname> to figure out which kind
    of sum to apply to a column of type <type>complex</type>.)
   </para>
 
   <para>
    The above definition of <function>sum</function> will return zero (the initial
-   state condition) if there are no non-null input values.
-   Perhaps we want to return NULL in that case instead --- the SQL standard
+   state condition) if there are no nonnull input values.
+   Perhaps we want to return null in that case instead --- the SQL standard
    expects <function>sum</function> to behave that way.  We can do this simply by
    omitting the <literal>initcond</literal> phrase, so that the initial state
-   condition is NULL.  Ordinarily this would mean that the <literal>sfunc</literal>
-   would need to check for a NULL state-condition input, but for
+   condition is null.  Ordinarily this would mean that the <literal>sfunc</literal>
+   would need to check for a null state-condition input, but for
    <function>sum</function> and some other simple aggregates like <function>max</> and <function>min</>,
-   it's sufficient to insert the first non-null input value into
+   it would be sufficient to insert the first nonnull input value into
    the state variable and then start applying the transition function
-   at the second non-null input value.  <productname>PostgreSQL</productname>
-   will do that automatically if the initial condition is NULL and
+   at the second nonnull input value.  <productname>PostgreSQL</productname>
+   will do that automatically if the initial condition is null and
    the transition function is marked <quote>strict</> (i.e., not to be called
-   for NULL inputs).
+   for null inputs).
   </para>
   
   <para>
    Another bit of default behavior for a <quote>strict</> transition function
    is that the previous state value is retained unchanged whenever a
-   NULL input value is encountered.  Thus, null values are ignored.  If you
-   need some other behavior for NULL inputs, just define your transition
-   function as non-strict, and code it to test for NULL inputs and do
+   null input value is encountered.  Thus, null values are ignored.  If you
+   need some other behavior for null inputs, just do not define your transition
+   function as strict, and code it to test for null inputs and do
    whatever is needed.
   </para>
   
   <para>
-   <function>Avg</> (average) is a more complex example of an aggregate.  It requires
+   <function>avg</> (average) is a more complex example of an aggregate.  It requires
    two pieces of running state: the sum of the inputs and the count
    of the number of inputs.  The final result is obtained by dividing
    these quantities.  Average is typically implemented by using a
-   two-element array as the transition state value.  For example,
+   two-element array as the state value.  For example,
    the built-in implementation of <function>avg(float8)</function>
    looks like:
 
@@ -116,7 +114,7 @@ CREATE AGGREGATE avg (
    For further details see the description of the <command>CREATE
    AGGREGATE</command> command in <xref linkend="reference">.
   </para>
- </chapter>
+ </sect1>
 
 <!-- Keep this comment at the end of the file
 Local variables:

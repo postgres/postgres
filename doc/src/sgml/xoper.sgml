@@ -1,25 +1,9 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/xoper.sgml,v 1.22 2003/01/15 19:35:35 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/xoper.sgml,v 1.23 2003/04/10 01:22:45 petere Exp $
 -->
 
- <Chapter Id="xoper">
-  <Title>Extending <Acronym>SQL</Acronym>: Operators</Title>
-
- <sect1 id="xoper-intro">
-  <title>Introduction</title>
-
-  <Para>
-   <ProductName>PostgreSQL</ProductName> supports left unary,
-   right  unary,  and  binary
-   operators.   Operators  can  be  overloaded; that is,
-   the same operator name can be used for different operators
-   that have different numbers and types of operands.   If
-   there  is  an ambiguous situation and the system cannot
-   determine the correct operator to use, it  will  return
-   an  error.  You may have to type-cast the left and/or
-   right operands to help it understand which operator you
-   meant to use.
-  </Para>
+ <sect1 id="xoper">
+  <title>User-defined Operators</title>
 
   <Para>
    Every operator is <quote>syntactic sugar</quote> for a call to an
@@ -28,13 +12,18 @@ $Header: /cvsroot/pgsql/doc/src/sgml/xoper.sgml,v 1.22 2003/01/15 19:35:35 tgl E
    the operator.  However, an operator is <emphasis>not merely</emphasis>
    syntactic sugar, because it carries additional information
    that helps the query planner optimize queries that use the
-   operator.  Much of this chapter will be devoted to explaining
+   operator.  The next section will be devoted to explaining
    that additional information.
   </Para>
- </sect1>
 
- <sect1 id="xoper-example">
-  <title>Example</title>
+  <Para>
+   <productname>PostgreSQL</productname> supports left unary, right
+   unary, and binary operators.  Operators can be overloaded; that is,
+   the same operator name can be used for different operators that
+   have different numbers and types of operands.  When a query is
+   executed, the system determines the operator to call from the
+   number and types of the provided operands.
+  </Para>
 
   <Para>
    Here is an example of creating an operator for adding two complex
@@ -45,7 +34,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/xoper.sgml,v 1.22 2003/01/15 19:35:35 tgl E
 <ProgramListing>
 CREATE FUNCTION complex_add(complex, complex)
     RETURNS complex
-    AS '<replaceable>PGROOT</replaceable>/tutorial/complex'
+    AS '<replaceable>filename</replaceable>', 'complex_add'
     LANGUAGE C;
 
 CREATE OPERATOR + (
@@ -58,7 +47,7 @@ CREATE OPERATOR + (
   </Para>
 
   <Para>
-   Now we can do:
+   Now we could execute a query like this:
      
 <screen>
 SELECT (a + b) AS c FROM test_complex;
@@ -78,19 +67,12 @@ SELECT (a + b) AS c FROM test_complex;
    <command>CREATE OPERATOR</command>.  The <literal>commutator</>
    clause shown in the example is an optional hint to the query
    optimizer.  Further details about <literal>commutator</> and other
-   optimizer hints appear below.
+   optimizer hints appear in the next section.
   </Para>
  </sect1>
 
   <sect1 id="xoper-optimization">
    <title>Operator Optimization Information</title>
-
-   <note>
-    <title>Author</title>
-    <para>
-     Written by Tom Lane.
-    </para>
-   </note>
 
    <para>
     A <ProductName>PostgreSQL</ProductName> operator definition can include
@@ -99,7 +81,7 @@ SELECT (a + b) AS c FROM test_complex;
     appropriate, because they can make for considerable speedups in execution
     of queries that use the operator.  But if you provide them, you must be
     sure that they are right!  Incorrect use of an optimization clause can
-    result in backend crashes, subtly wrong output, or other Bad Things.
+    result in server process crashes, subtly wrong output, or other Bad Things.
     You can always leave out an optimization clause if you are not sure
     about it; the only consequence is that queries might run slower than
     they need to.
@@ -112,7 +94,7 @@ SELECT (a + b) AS c FROM test_complex;
    </para>
 
    <sect2>
-    <title>COMMUTATOR</title>
+    <title><literal>COMMUTATOR</></title>
 
     <para>
      The <literal>COMMUTATOR</> clause, if provided, names an operator that is the
@@ -155,7 +137,7 @@ SELECT (a + b) AS c FROM test_complex;
        <para>
 	The other, more straightforward way is just to include <literal>COMMUTATOR</> clauses
 	in both definitions.  When <ProductName>PostgreSQL</ProductName> processes
-	the first definition and realizes that <literal>COMMUTATOR</> refers to a non-existent
+	the first definition and realizes that <literal>COMMUTATOR</> refers to a nonexistent
 	operator, the system will make a dummy entry for that operator in the
 	system catalog.  This dummy entry will have valid data only
 	for the operator name, left and right operand types, and result type,
@@ -164,9 +146,7 @@ SELECT (a + b) AS c FROM test_complex;
 	dummy entry.  Later, when you define the second operator, the system
 	updates the dummy entry with the additional information from the second
 	definition.  If you try to use the dummy operator before it's been filled
-	in, you'll just get an error message.  (Note: This procedure did not work
-	reliably in <ProductName>PostgreSQL</ProductName> versions before 6.5,
-	but it is now the recommended way to do things.)
+	in, you'll just get an error message.
        </para>
       </listitem>
      </itemizedlist>
@@ -174,7 +154,7 @@ SELECT (a + b) AS c FROM test_complex;
    </sect2>
 
    <sect2>
-    <title>NEGATOR</title>
+    <title><literal>NEGATOR</></title>
 
     <para>
      The <literal>NEGATOR</> clause, if provided, names an operator that is the
@@ -194,14 +174,14 @@ SELECT (a + b) AS c FROM test_complex;
 
    <para>
     An operator's negator must have the same left and/or right operand types
-    as the operator itself, so just as with <literal>COMMUTATOR</>, only the operator
+    as the operator to be defined, so just as with <literal>COMMUTATOR</>, only the operator
     name need be given in the <literal>NEGATOR</> clause.
    </para>
 
    <para>
     Providing a negator is very helpful to the query optimizer since
     it allows expressions like <literal>NOT (x = y)</> to be simplified into
-    x &lt;&gt; y.  This comes up more often than you might think, because
+    <literal>x &lt;&gt; y</>.  This comes up more often than you might think, because
     <literal>NOT</> operations can be inserted as a consequence of other rearrangements.
    </para>
 
@@ -213,12 +193,12 @@ SELECT (a + b) AS c FROM test_complex;
   </sect2>
 
   <sect2>
-   <title>RESTRICT</title>
+   <title><literal>RESTRICT</></title>
 
    <para>
     The <literal>RESTRICT</> clause, if provided, names a restriction selectivity
-    estimation function for the operator (note that this is a function
-    name, not an operator name).  <literal>RESTRICT</> clauses only make sense for
+    estimation function for the operator.  (Note that this is a function
+    name, not an operator name.)  <literal>RESTRICT</> clauses only make sense for
     binary operators that return <type>boolean</>.  The idea behind a restriction
     selectivity estimator is to guess what fraction of the rows in a
     table will satisfy a <literal>WHERE</literal>-clause condition of the form
@@ -269,15 +249,15 @@ column OP constant
     You can use <function>scalarltsel</> and <function>scalargtsel</> for comparisons on data types that
     have some sensible means of being converted into numeric scalars for
     range comparisons.  If possible, add the data type to those understood
-    by the routine <function>convert_to_scalar()</function> in <filename>src/backend/utils/adt/selfuncs.c</filename>.
-    (Eventually, this routine should be replaced by per-data-type functions
+    by the function <function>convert_to_scalar()</function> in <filename>src/backend/utils/adt/selfuncs.c</filename>.
+    (Eventually, this function should be replaced by per-data-type functions
     identified through a column of the <classname>pg_type</> system catalog; but that hasn't happened
     yet.)  If you do not do this, things will still work, but the optimizer's
     estimates won't be as good as they could be.
    </para>
 
    <para>
-    There are additional selectivity functions designed for geometric
+    There are additional selectivity estimation functions designed for geometric
     operators in <filename>src/backend/utils/adt/geo_selfuncs.c</filename>: <function>areasel</function>, <function>positionsel</function>,
     and <function>contsel</function>.  At this writing these are just stubs, but you may want
     to use them (or even better, improve them) anyway.
@@ -285,12 +265,12 @@ column OP constant
    </sect2>
 
    <sect2>
-    <title>JOIN</title>
+    <title><literal>JOIN</></title>
 
     <para>
      The <literal>JOIN</> clause, if provided, names a join selectivity
-     estimation function for the operator (note that this is a function
-     name, not an operator name).  <literal>JOIN</> clauses only make sense for
+     estimation function for the operator.  (Note that this is a function
+     name, not an operator name.)  <literal>JOIN</> clauses only make sense for
      binary operators that return <type>boolean</type>.  The idea behind a join
      selectivity estimator is to guess what fraction of the rows in a
      pair of tables will satisfy a <literal>WHERE</>-clause condition of the form
@@ -319,13 +299,13 @@ table1.column1 OP table2.column2
    </sect2>
 
    <sect2>
-    <title>HASHES</title>
+    <title><literal>HASHES</></title>
 
     <para>
      The <literal>HASHES</literal> clause, if present, tells the system that
      it is permissible to use the hash join method for a join based on this
-     operator.  <literal>HASHES</> only makes sense for binary operators that
-     return <literal>boolean</>, and in practice the operator had better be
+     operator.  <literal>HASHES</> only makes sense for a binary operator that
+     returns <literal>boolean</>, and in practice the operator had better be
      equality for some data type.
     </para>
 
@@ -340,33 +320,35 @@ table1.column1 OP table2.column2
 
     <para>
      In fact, logical equality is not good enough either; the operator
-     had better represent pure bitwise equality, because the hash function
-     will be computed on the memory representation of the values regardless
-     of what the bits mean.  For example, equality of
-     time intervals is not bitwise equality; the interval equality operator
-     considers two time intervals equal if they have the same
-     duration, whether or not their endpoints are identical.  What this means
-     is that a join using <literal>=</literal> between interval fields would yield different
-     results if implemented as a hash join than if implemented another way,
-     because a large fraction of the pairs that should match will hash to
-     different values and will never be compared by the hash join.  But
-     if the optimizer chose to use a different kind of join, all the pairs
-     that the equality operator says are equal will be found.
-     We don't want that kind of inconsistency, so we don't mark interval
-     equality as hashable.
+     had better represent pure bitwise equality, because the hash
+     function will be computed on the memory representation of the
+     values regardless of what the bits mean.  For example, the
+     polygon operator <literal>~=</literal>, which checks whether two
+     polygons are the same, is not bitwise equality, because two
+     polygons can be considered the same even if their vertices are
+     specified in a different order.  What this means is that a join
+     using <literal>~=</literal> between polygon fields would yield
+     different results if implemented as a hash join than if
+     implemented another way, because a large fraction of the pairs
+     that should match will hash to different values and will never be
+     compared by the hash join.  But if the optimizer chooses to use a
+     different kind of join, all the pairs that the operator
+     <literal>~=</literal> says are the same will be found.  We don't
+     want that kind of inconsistency, so we don't mark the polygon
+     operator <literal>~=</literal> as hashable.
     </para>
 
     <para>
      There are also machine-dependent ways in which a hash join might fail
      to do the right thing.  For example, if your data type
      is a structure in which there may be uninteresting pad bits, it's unsafe
-     to mark the equality operator <literal>HASHES</>.  (Unless, perhaps, you write
-     your other operators to ensure that the unused bits are always zero.)
+     to mark the equality operator <literal>HASHES</>.  (Unless you write
+     your other operators and functions to ensure that the unused bits are always zero, which is the recommended strategy.)
      Another example is that the floating-point data types are unsafe for hash
-     joins.  On machines that meet the <acronym>IEEE</> floating-point standard, minus
-     zero and plus zero are different values (different bit patterns) but
+     joins.  On machines that meet the <acronym>IEEE</> floating-point standard, negative
+     zero and positive zero are different values (different bit patterns) but
      they are defined to compare equal.  So, if the equality operator on floating-point data types were marked
-     <literal>HASHES</>, a minus zero and a plus zero would probably not be matched up
+     <literal>HASHES</>, a negative zero and a positive zero would probably not be matched up
      by a hash join, but they would be matched up by any other join process.
     </para>
 
@@ -403,9 +385,9 @@ table1.column1 OP table2.column2
 
     <para>
      The <literal>MERGES</literal> clause, if present, tells the system that
-     it is permissible to use the merge join method for a join based on this
-     operator.  <literal>MERGES</> only makes sense for binary operators that
-     return <literal>boolean</>, and in practice the operator must represent
+     it is permissible to use the merge-join method for a join based on this
+     operator.  <literal>MERGES</> only makes sense for a binary operator that
+     returns <literal>boolean</>, and in practice the operator must represent
      equality for some data type or pair of data types.
     </para>
 
@@ -420,7 +402,7 @@ table1.column1 OP table2.column2
      data types had better be the same (or at least bitwise equivalent),
      it is possible to merge-join two
      distinct data types so long as they are logically compatible.  For
-     example, the <type>int2</type>-versus-<type>int4</type> equality operator
+     example, the <type>smallint</type>-versus-<type>integer</type> equality operator
      is merge-joinable.
      We only need sorting operators that will bring both data types into a
      logically compatible sequence.
@@ -429,11 +411,11 @@ table1.column1 OP table2.column2
     <para>
      Execution of a merge join requires that the system be able to identify
      four operators related to the merge-join equality operator: less-than
-     comparison for the left input data type, less-than comparison for the
-     right input data type, less-than comparison between the two data types, and
+     comparison for the left operand data type, less-than comparison for the
+     right operand data type, less-than comparison between the two data types, and
      greater-than comparison between the two data types.  (These are actually
      four distinct operators if the merge-joinable operator has two different
-     input data types; but when the input types are the same the three
+     operand data types; but when the operand types are the same the three
      less-than operators are all the same operator.)
      It is possible to
      specify these operators individually by name, as the <literal>SORT1</>,
@@ -447,8 +429,8 @@ table1.column1 OP table2.column2
     </para>
 
     <para>
-     The input data types of the four comparison operators can be deduced
-     from the input types of the merge-joinable operator, so just as with
+     The operand data types of the four comparison operators can be deduced
+     from the operand types of the merge-joinable operator, so just as with
      <literal>COMMUTATOR</>, only the operator names need be given in these
      clauses.  Unless you are using peculiar choices of operator names,
      it's sufficient to write <literal>MERGES</> and let the system fill in
@@ -469,7 +451,7 @@ table1.column1 OP table2.column2
       <listitem>
        <para>
 	A merge-joinable equality operator must have a merge-joinable
-        commutator (itself if the two data types are the same, or a related
+        commutator (itself if the two operand data types are the same, or a related
         equality operator if they are different).
        </para>
       </listitem>
@@ -523,11 +505,8 @@ table1.column1 OP table2.column2
      <literal>&lt;</> and <literal>&gt;</> respectively.
     </para>
     </note>
-
    </sect2>
-
   </sect1>
- </Chapter>
 
 <!-- Keep this comment at the end of the file
 Local variables:

@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/filelist.sgml,v 1.27 2003/03/25 16:15:36 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/filelist.sgml,v 1.28 2003/04/10 01:22:44 petere Exp $ -->
 
 <!entity history    SYSTEM "history.sgml">
 <!entity info       SYSTEM "info.sgml">
@@ -57,7 +57,6 @@
 <!entity wal           SYSTEM "wal.sgml">
 
 <!-- programmer's guide -->
-<!entity arch-pg    SYSTEM "arch-pg.sgml">
 <!entity dfunc      SYSTEM "dfunc.sgml">
 <!entity ecpg       SYSTEM "ecpg.sgml">
 <!entity extend     SYSTEM "extend.sgml">

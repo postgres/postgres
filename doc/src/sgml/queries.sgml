@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/queries.sgml,v 1.20 2003/03/13 01:30:29 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/queries.sgml,v 1.21 2003/04/10 01:22:44 petere Exp $ -->
 
 <chapter id="queries">
  <title>Queries</title>
@@ -550,6 +550,78 @@ FROM (SELECT * FROM table1) AS alias_name
      grouping or aggregation.
     </para>
    </sect3>
+
+   <sect3 id="queries-tablefunctions">
+    <title>Table Functions</title>
+
+    <indexterm zone="queries-tablefunctions"><primary>table function</></>
+
+    <para>
+     Table functions are functions that produce a set of rows, made up
+     of either base data types (scalar types) or composite data types
+     (table rows).  They are used like a table, view, or subquery in
+     the <literal>FROM</> clause of a query. Columns returned by table
+     functions may be included in <literal>SELECT</>,
+     <literal>JOIN</>, or <literal>WHERE</> clauses in the same manner
+     as a table, view, or subquery column.
+    </para>
+
+    <para>
+     If a table function returns a base data type, the single result
+     column is named like the function. If the function returns a
+     composite type, the result columns get the same names as the
+     individual attributes of the type.
+    </para>
+
+    <para>
+     A table function may be aliased in the <literal>FROM</> clause,
+     but it also may be left unaliased. If a function is used in the
+     <literal>FROM</> clause with no alias, the function name is used
+     as the resulting table name.
+    </para>
+
+    <para>
+     Some examples:
+<programlisting>
+CREATE TABLE foo (fooid int, foosubid int, fooname text);
+
+CREATE FUNCTION getfoo(int) RETURNS SETOF foo AS '
+    SELECT * FROM foo WHERE fooid = $1;
+' LANGUAGE SQL;
+
+SELECT * FROM getfoo(1) AS t1;
+
+SELECT * FROM foo
+    WHERE foosubid IN (select foosubid from getfoo(foo.fooid) z
+                           where z.fooid = foo.fooid);
+
+CREATE VIEW vw_getfoo AS SELECT * FROM getfoo(1);
+SELECT * FROM vw_getfoo;
+</programlisting>
+    </para>
+
+    <para>
+     In some cases it is useful to define table functions that can
+     return different column sets depending on how they are invoked.
+     To support this, the table function can be declared as returning
+     the pseudotype <type>record</>.  When such a function is used in
+     a query, the expected row structure must be specified in the
+     query itself, so that the system can know how to parse and plan
+     the query.  Consider this example:
+<programlisting>
+SELECT *
+    FROM dblink('dbname=mydb', 'select proname, prosrc from pg_proc')
+      AS t1(proname name, prosrc text)
+    WHERE proname LIKE 'bytea%';
+</programlisting>
+     The <literal>dblink</> function executes a remote query (see
+     <filename>contrib/dblink</>).  It is declared to return
+     <type>record</> since it might be used for any kind of query.
+     The actual column set must be specified in the calling query so
+     that the parser knows, for example, what <literal>*</> should
+     expand to.
+    </para>
+   </sect3>
   </sect2>
 
   <sect2 id="queries-where">
@@ -951,7 +1023,7 @@ SELECT DISTINCT ON (<replaceable>expression</replaceable> <optional>, <replaceab
     The <literal>DISTINCT ON</> clause is not part of the SQL standard
     and is sometimes considered bad style because of the potentially
     indeterminate nature of its results.  With judicious use of
-    <literal>GROUP BY</> and subselects in <literal>FROM</> the
+    <literal>GROUP BY</> and subqueries in <literal>FROM</> the
     construct can be avoided, but it is often the most convenient
     alternative.
    </para>
