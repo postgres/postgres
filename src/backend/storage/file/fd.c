@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/file/fd.c,v 1.52 2000/01/26 05:56:55 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/file/fd.c,v 1.53 2000/02/28 08:51:43 momjian Exp $
  *
  * NOTES:
  *
@@ -451,7 +451,6 @@ AllocateVfd()
 
 	if (VfdCache[0].nextFree == 0)
 	{
-
 		/*
 		 * The free list is empty so it is time to increase the size of
 		 * the array.  We choose to double it each time this happens.
@@ -566,7 +565,6 @@ FileAccess(File file)
 	}
 	else if (VfdCache[0].lruLessRecently != file)
 	{
-
 		/*
 		 * We now know that the file is open and that it is not the last
 		 * one accessed, so we need to move it to the head of the Lru
