@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Fri Dec 28 13:30:58 EST 2001
+Last updated:		Fri Dec 28 14:35:26 EST 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -330,6 +330,7 @@ MISCELLANEOUS
 * Show location of syntax error in query [yacc]
 * Change representation of whole-tuple parameters to functions
 * Add optional CRC checksum to heap and index pages
+* Add WAL index reliability improvement to non-btree indexes
 
 PERFORMANCE
 -----------
