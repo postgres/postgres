@@ -1,14 +1,14 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/doc/man/Attic/copy.l,v 1.3 1996/09/19 20:09:01 scrappy Exp $
+.\" $Header: /cvsroot/pgsql/doc/man/Attic/copy.l,v 1.4 1996/10/30 06:19:53 scrappy Exp $
 .TH COPY SQL 11/05/95 Postgres95 Postgres95
 .SH NAME
 copy \(em copy data to or from a class from or to a Unix file.
 .SH SYNOPSIS
 .nf
 \fBcopy\fP [\fBbinary\fP] classname [\fBwith oids\fP]
-	\fBto\fP|\fBfrom\fP "filename"|\fBstdin\fR|\fBstdout\fR
-	[\fBusing delimiters\fP delim]
+	\fBto\fP|\fBfrom '\fPfilename\fB'\fP|\fBstdin\fR|\fBstdout\fR
+	[\fBusing delimiters '\fPdelim\fB'\fP]
 .fi
 .SH DESCRIPTION
 .BR Copy
@@ -24,7 +24,7 @@ copies the internal unique object id (OID) for each row.
 .IR Classname
 is the name of an existing class.
 .IR Filename
-is the Unix pathname of the file.  In place of a filename, the
+is the absolute Unix pathname of the file.  In place of a filename, the
 keywords
 .BR "stdin" " and " "stdout"
 can be used so that input to
