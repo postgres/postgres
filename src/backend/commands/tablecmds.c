@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.113 2004/06/10 17:55:56 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.114 2004/06/10 18:25:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -199,6 +199,8 @@ static void ATPrepAddColumn(List **wqueue, Relation rel, bool recurse,
 static void ATExecAddColumn(AlteredTableInfo *tab, Relation rel,
 							ColumnDef *colDef);
 static void add_column_datatype_dependency(Oid relid, int32 attnum, Oid typid);
+static void add_column_support_dependency(Oid relid, int32 attnum,
+										  RangeVar *support);
 static void ATExecDropNotNull(Relation rel, const char *colName);
 static void ATExecSetNotNull(AlteredTableInfo *tab, Relation rel,
 							 const char *colName);
@@ -438,20 +440,9 @@ DefineRelation(CreateStmt *stmt, char relkind)
 			rawDefaults = lappend(rawDefaults, rawEnt);
 		}
 
+		/* Create dependency for supporting relation for this column */
 		if (colDef->support != NULL)
-		{
-			/* Create dependency for supporting relation for this column */
-			ObjectAddress colobject,
-						suppobject;
-
-			colobject.classId = RelOid_pg_class;
-			colobject.objectId = relationId;
-			colobject.objectSubId = attnum;
-			suppobject.classId = RelOid_pg_class;
-			suppobject.objectId = RangeVarGetRelid(colDef->support, false);
-			suppobject.objectSubId = 0;
-			recordDependencyOn(&suppobject, &colobject, DEPENDENCY_INTERNAL);
-		}
+			add_column_support_dependency(relationId, attnum, colDef->support);
 	}
 
 	/*
@@ -2926,9 +2917,11 @@ ATExecAddColumn(AlteredTableInfo *tab, Relation rel,
 	}
 
 	/*
-	 * Add datatype dependency for the new column.
+	 * Add needed dependency entries for the new column.
 	 */
 	add_column_datatype_dependency(myrelid, i, attribute->atttypid);
+	if (colDef->support != NULL)
+		add_column_support_dependency(myrelid, i, colDef->support);
 }
 
 /*
@@ -2947,6 +2940,24 @@ add_column_datatype_dependency(Oid relid, int32 attnum, Oid typid)
 	referenced.objectId = typid;
 	referenced.objectSubId = 0;
 	recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
+}
+
+/*
+ * Install a dependency for a column's supporting relation (serial sequence).
+ */
+static void
+add_column_support_dependency(Oid relid, int32 attnum, RangeVar *support)
+{
+	ObjectAddress colobject,
+				suppobject;
+
+	colobject.classId = RelOid_pg_class;
+	colobject.objectId = relid;
+	colobject.objectSubId = attnum;
+	suppobject.classId = RelOid_pg_class;
+	suppobject.objectId = RangeVarGetRelid(support, false);
+	suppobject.objectSubId = 0;
+	recordDependencyOn(&suppobject, &colobject, DEPENDENCY_INTERNAL);
 }
 
 /*
