@@ -509,12 +509,13 @@ trigf(PG_FUNCTION_ARGS)
    </para>
 
    <para>
-    Now, compile and 
-    create table ttest (x int4):
+    Now, compile and create the trigger function:
 
     <programlisting>
 create function trigf () returns opaque as 
-'...path_to_so' language 'c';
+'...path_to_so' language 'newC';
+
+create table ttest (x int4);
     </programlisting>
 
     <programlisting>

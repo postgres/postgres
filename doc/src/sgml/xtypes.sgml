@@ -55,7 +55,7 @@ complex_in(char *str)
     double x, y;
     Complex *result;
     if (sscanf(str, " ( %lf , %lf )", &amp;x, &amp;y) != 2) {
-        elog(NOTICE, "complex_in: error in parsing
+        elog(ERROR, "complex_in: error in parsing %s", str);
         return NULL;
     }
     result = (Complex *)palloc(sizeof(Complex));
@@ -138,22 +138,16 @@ CREATE TYPE complex (
     <title>Large Objects</title>
 
     <para>
-     The types discussed  to  this  point  are  all  "small"
-     objects -- that is, they are smaller than 8KB in size.
-     <note>
-      <para>
-       1024 longwords == 8192 bytes.  In fact, the type must be considerably smaller than 8192 bytes,
-       since the <productname>Postgres</productname>  tuple
-       and  page  overhead  must also fit into this 8KB limitation.
-       The actual value that fits depends on the machine  architecture.
-      </para>
-     </note>
-     If you require a larger type for something like a document  
-     retrieval system or for storing bitmaps, you will
-     need to use the <productname>Postgres</productname> large object
-     interface, or will need to recompile the
-     <productname>Postgres</productname> backend to use internal
-     storage blocks greater than 8kbytes..
+     If the values of your datatype might exceed a few hundred bytes in
+     size (in internal form), you should be careful to mark them TOASTable.
+     To do this, the internal representation must follow the standard
+     layout for variable-length data: the first four bytes must be an int32
+     containing the total length in bytes of the datum (including itself).
+     Then, all your functions that accept values of the type must be careful
+     to call pg_detoast_datum() on the supplied values --- after checking
+     that the value is not NULL, if your function is not strict.  Finally,
+     select the appropriate storage option when giving the CREATE TYPE
+     command.
     </para>
    </sect2>
   </sect1>
