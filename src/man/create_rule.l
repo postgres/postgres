@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/create_rule.l,v 1.3 1998/01/11 22:17:16 momjian Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/create_rule.l,v 1.4 1998/03/26 21:01:44 momjian Exp $
 .TH "CREATE RULE" SQL 11/05/95 PostgreSQL PostgreSQL
 .SH NAME
 create rule - define a new rule
@@ -13,7 +13,6 @@ create rule - define a new rule
     [action | nothing | \fB[\fPactions...\fB]\fP]
 .fi
 .SH DESCRIPTION
-.IR "The current rule system implementation is very brittle and is unstable.  Users are discouraged from using rules at this time."
 .PP
 .BR "Create rule"
 is used to define a new rule.
