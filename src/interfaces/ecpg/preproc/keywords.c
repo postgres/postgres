@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/keywords.c,v 1.24 2000/03/15 19:09:10 meskes Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/keywords.c,v 1.25 2000/03/23 07:53:48 meskes Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -48,6 +48,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"begin", BEGIN_TRANS},
 	{"between", BETWEEN},
 	{"binary", BINARY},
+	{"bit", BIT},
 	{"both", BOTH},
 	{"by", BY},
 	{"cache", CACHE},

@@ -223,7 +223,7 @@ make_name(void)
  * - Todd A. Brandys 1998-01-01?
  */
 %token  ABORT_TRANS, ACCESS, AFTER, AGGREGATE, ANALYZE,
-		BACKWARD, BEFORE, BINARY,
+		BACKWARD, BEFORE, BINARY, BIT
 		CACHE, CLUSTER, COMMENT, COPY, CREATEDB, CREATEUSER, CYCLE,
                 DATABASE, DELIMITERS, DO,
 		EACH, ENCODING, EXCLUSIVE, EXPLAIN, EXTEND,
@@ -326,7 +326,7 @@ make_name(void)
 %type  <str>    CreatePLangStmt IntegerOnly TriggerFuncArgs TriggerFuncArg
 %type  <str>    ViewStmt LoadStmt CreatedbStmt createdb_opt_encoding
 %type  <str>	createdb_opt_location opt_encoding AlterTableStmt
-%type  <str>    DropdbStmt ClusterStmt grantee RevokeStmt table_expr
+%type  <str>    DropdbStmt ClusterStmt grantee RevokeStmt table_expr Bit bit
 %type  <str>	GrantStmt privileges operation_commalist operation
 %type  <str>	opt_cursor opt_lmode ConstraintsSetStmt comment_tg
 %type  <str>	case_expr when_clause_list case_default case_arg when_clause
@@ -2899,6 +2899,7 @@ Typename:  SimpleTypename opt_array_bounds
 SimpleTypename:  Generic	{ $$ = $1; }
 		| Datetime	{ $$ = $1; }
 		| Numeric	{ $$ = $1; }
+		| Bit		{ $$ = $1; }
 		| Character	{ $$ = $1; }
 		;
 
@@ -3058,6 +3059,35 @@ opt_decimal:  '(' Iconst ',' Iconst ')'
 					$$ = EMPTY;
 				}
 		;
+
+/*
+ * SQL92 bit-field data types
+ * The following implements BIT() and BIT VARYING().
+ */
+Bit:  bit '(' Iconst ')'
+                                {
+                                        $$ = cat_str(4, $1, make_str("("), $3, make_str(")"));
+                                        if (atol($3) < 1)
+					{
+                                                sprintf(errortext,"length for type '%s' must be at least 1",$1);  
+						mmerror(ET_ERROR, errortext);
+					}
+                                        else if (atol($3) > (MaxAttrSize *sizeof(char)))
+					{
+                                                sprintf(errortext, "length for type '%s' cannot exceed %ld", $1,    
+                                                         (MaxAttrSize * sizeof(char)));
+					}
+                                }
+                | bit
+                                {
+                                        $$ = $1;
+				}
+		;
+
+bit:  BIT opt_varying
+				{
+					$$ = cat2_str(make_str("bit"), $2);
+				}
 
 /* 
  * SQL92 character data types
@@ -3250,6 +3280,8 @@ a_expr:  c_expr
                  * If you add more explicitly-known operators, be sure to add them
                  * also to b_expr and to the MathOp list above.
                  */
+		| '+' a_expr %prec UMINUS
+				{	$$ = cat2_str(make_str("+"), $2); }
 		| '-' a_expr %prec UMINUS
 				{	$$ = cat2_str(make_str("-"), $2); }
 		| '%' a_expr
@@ -3262,7 +3294,10 @@ a_expr:  c_expr
 				{       $$ = cat2_str(make_str(":"), $2); }
 */
 		| ';' a_expr
-				{       $$ = cat2_str(make_str(";"), $2); }
+				{       $$ = cat2_str(make_str(";"), $2);
+					mmerror(ET_WARN, "The ';' operator is deprecated.  Use ln(x) instead."
+					"\n\tThis operator will be removed in a future release.");
+				}
 		| a_expr '%'
 				{       $$ = cat2_str($1, make_str("%")); }
 		| a_expr '^'
@@ -3380,7 +3415,10 @@ b_expr:  c_expr
 				{       $$ = cat2_str(make_str(":"), $2); }
 */
 		| ';' b_expr
-				{       $$ = cat2_str(make_str(";"), $2); }
+				{       $$ = cat2_str(make_str(";"), $2);
+					mmerror(ET_WARN, "The ';' operator is deprecated.  Use ln(x) instead."
+					"\n\tThis operator will be removed in a future release.");
+				}
 		| b_expr '%'
 				{       $$ = cat2_str($1, make_str("%")); }
 		| b_expr '^'
@@ -3809,6 +3847,8 @@ UserId:  ident                                  { $$ = $1;};
 TypeId:  ColId
 			{	$$ = $1; }
 		| numeric
+			{	$$ = $1; }
+		| bit
 			{	$$ = $1; }
 		| character
 			{	$$ = $1; }
@@ -4884,6 +4924,7 @@ ECPGColId:  /* to be used instead of ColId */
 	| EACH				{ $$ = make_str("each"); }
 	| ENCODING			{ $$ = make_str("encoding"); }
 	| EXCLUSIVE			{ $$ = make_str("exclusive"); }
+	| FORCE				{ $$ = make_str("force"); }
 	| FORWARD			{ $$ = make_str("forward"); }
 	| FUNCTION			{ $$ = make_str("function"); }
 	| HANDLER			{ $$ = make_str("handler"); }
@@ -4957,7 +4998,9 @@ ECPGColLabel:  ECPGColId		{ $$ = $1; }
 		| ABORT_TRANS           { $$ = make_str("abort"); }
 		| ANALYZE               { $$ = make_str("analyze"); }
 		| BINARY                { $$ = make_str("binary"); }
+		| BIT	                { $$ = make_str("bit"); }
 		| CASE                  { $$ = make_str("case"); }
+		| CHARACTER             { $$ = make_str("character"); }
 		| CLUSTER		{ $$ = make_str("cluster"); }
 		| COALESCE              { $$ = make_str("coalesce"); }
 		| CONSTRAINT		{ $$ = make_str("constraint"); }

@@ -871,5 +871,9 @@ Wed Mar 15 17:36:02 CET 2000
 Sun Mar 19 11:03:13 CET 2000
 
 	- Fixed quoting bug in disconnect statement.
+
+Thu Mar 23 08:13:39 CET 2000
+
+	- Synced preproc.y and keyword.c.
 	- Set library version to 3.1.0.
 	- Set ecpg version to 2.7.0.
