@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.250 2004/03/15 15:56:21 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.251 2004/03/15 17:57:51 momjian Exp $
 -->
 
 <Chapter Id="runtime">
@@ -23,8 +23,8 @@ $PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.250 2004/03/15 15:56:21 momjian
    separate user account. This user account should only own the data
    that is managed by the server, and should not be shared with other
    daemons. (For example, using the user <literal>nobody</literal> is a bad
-   idea.) It is not advisable to install executables owned by
-   this user because compromised systems could then modify their own 
+   idea.) It is not advisable to install executables owned by this 
+   user because compromised systems could then modify their own 
    binaries.
   </para>
 
