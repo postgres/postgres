@@ -15,7 +15,7 @@
  *	  locate group boundaries.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeGroup.c,v 1.35 2000/05/30 00:49:44 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeGroup.c,v 1.36 2000/05/30 04:24:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -430,7 +430,6 @@ execTuplesMatch(HeapTuple tuple1,
 					attr2;
 		bool		isNull1,
 					isNull2;
-		Datum		equal;
 
 		attr1 = heap_getattr(tuple1,
 							 att,
@@ -450,9 +449,8 @@ execTuplesMatch(HeapTuple tuple1,
 
 		/* Apply the type-specific equality function */
 
-		equal = (Datum) (*fmgr_faddr(&eqfunctions[i])) (attr1, attr2);
-
-		if (DatumGetInt32(equal) == 0)
+		if (! DatumGetBool(FunctionCall2(&eqfunctions[i],
+										 attr1, attr2)))
 			return FALSE;
 	}
 

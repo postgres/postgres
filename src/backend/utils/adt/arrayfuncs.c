@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.53 2000/05/29 21:02:32 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.54 2000/05/30 04:24:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -441,7 +441,10 @@ _ReadArrayStr(char *arrayStr,
 		*q = '\0';
 		if (i >= nitems)
 			elog(ERROR, "array_in: illformed array constant");
-		values[i] = (*fmgr_faddr(inputproc)) (p, typelem, typmod);
+		values[i] = (char *) FunctionCall3(inputproc,
+										   CStringGetDatum(p),
+										   ObjectIdGetDatum(typelem),
+										   Int32GetDatum(typmod));
 		p = ++q;
 		if (!eoArray)
 
@@ -669,21 +672,33 @@ array_out(ArrayType *v, Oid element_type)
 			switch (typlen)
 			{
 				case 1:
-					values[i] = (*fmgr_faddr(&outputproc)) (*p, typelem, -1);
+					values[i] = DatumGetCString(FunctionCall3(&outputproc,
+												CharGetDatum(*p),
+												ObjectIdGetDatum(typelem),
+												Int32GetDatum(-1)));
 					break;
 				case 2:
-					values[i] = (*fmgr_faddr(&outputproc)) (*(int16 *) p, typelem, -1);
+					values[i] = DatumGetCString(FunctionCall3(&outputproc,
+												Int16GetDatum(*(int16 *) p),
+												ObjectIdGetDatum(typelem),
+												Int32GetDatum(-1)));
 					break;
 				case 3:
 				case 4:
-					values[i] = (*fmgr_faddr(&outputproc)) (*(int32 *) p, typelem, -1);
+					values[i] = DatumGetCString(FunctionCall3(&outputproc,
+												Int32GetDatum(*(int32 *) p),
+												ObjectIdGetDatum(typelem),
+												Int32GetDatum(-1)));
 					break;
 			}
 			p += typlen;
 		}
 		else
 		{
-			values[i] = (*fmgr_faddr(&outputproc)) (p, typelem, -1);
+			values[i] = DatumGetCString(FunctionCall3(&outputproc,
+												PointerGetDatum(p),
+												ObjectIdGetDatum(typelem),
+												Int32GetDatum(-1)));
 			if (typlen > 0)
 				p += typlen;
 			else

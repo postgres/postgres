@@ -78,7 +78,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/sort/tuplesort.c,v 1.9 2000/04/12 17:16:12 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/sort/tuplesort.c,v 1.10 2000/05/30 04:24:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1694,7 +1694,6 @@ comparetup_heap(Tuplesortstate *state, const void *a, const void *b)
 					rattr;
 		bool		isnull1,
 					isnull2;
-		int			result;
 
 		lattr = heap_getattr(ltup, attno, tupDesc, &isnull1);
 		rattr = heap_getattr(rtup, attno, tupDesc, &isnull2);
@@ -1708,17 +1707,21 @@ comparetup_heap(Tuplesortstate *state, const void *a, const void *b)
 			return -1;
 		else if (scanKey->sk_flags & SK_COMMUTE)
 		{
-			if (!(result = -(int) (*fmgr_faddr(&scanKey->sk_func)) (rattr, lattr)))
-				result = (int) (*fmgr_faddr(&scanKey->sk_func)) (lattr, rattr);
-			if (result)
-				return result;
+			if (DatumGetBool(FunctionCall2(&scanKey->sk_func,
+										   rattr, lattr)))
+				return -1;		/* a < b after commute */
+			if (DatumGetBool(FunctionCall2(&scanKey->sk_func,
+										   lattr, rattr)))
+				return 1;		/* a > b after commute */
 		}
 		else
 		{
-			if (!(result = -(int) (*fmgr_faddr(&scanKey->sk_func)) (lattr, rattr)))
-				result = (int) (*fmgr_faddr(&scanKey->sk_func)) (rattr, lattr);
-			if (result)
-				return result;
+			if (DatumGetBool(FunctionCall2(&scanKey->sk_func,
+										   lattr, rattr)))
+				return -1;		/* a < b */
+			if (DatumGetBool(FunctionCall2(&scanKey->sk_func,
+										   rattr, lattr)))
+				return 1;		/* a > b */
 		}
 	}
 
@@ -1846,8 +1849,8 @@ comparetup_index(Tuplesortstate *state, const void *a, const void *b)
 		}
 		else
 		{
-			compare = (int32) FMGR_PTR2(&entry->sk_func,
-										attrDatum1, attrDatum2);
+			compare = DatumGetInt32(FunctionCall2(&entry->sk_func,
+												  attrDatum1, attrDatum2));
 		}
 
 		if (compare != 0)
@@ -1950,13 +1953,13 @@ comparetup_datum(Tuplesortstate *state, const void *a, const void *b)
 		return -1;
 	else
 	{
-		int			result;
-
-		if (!(result = -(int) (*fmgr_faddr(&state->sortOpFn)) (ltup->val,
-															 rtup->val)))
-			result = (int) (*fmgr_faddr(&state->sortOpFn)) (rtup->val,
-															ltup->val);
-		return result;
+		if (DatumGetBool(FunctionCall2(&state->sortOpFn,
+									   ltup->val, rtup->val)))
+			return -1;			/* a < b */
+		if (DatumGetBool(FunctionCall2(&state->sortOpFn,
+									   rtup->val, ltup->val)))
+			return 1;			/* a > b */
+		return 0;
 	}
 }
 

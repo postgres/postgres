@@ -3,7 +3,7 @@
  *			  out of its tuple
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.49 2000/05/30 00:49:53 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.50 2000/05/30 04:24:51 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -1647,7 +1647,6 @@ get_const_expr(Const *constval, deparse_context *context)
 	StringInfo	buf = context->buf;
 	HeapTuple	typetup;
 	Form_pg_type typeStruct;
-	FmgrInfo	finfo_output;
 	char	   *extval;
 	char	   *valptr;
 
@@ -1673,10 +1672,10 @@ get_const_expr(Const *constval, deparse_context *context)
 		return;
 	}
 
-	fmgr_info(typeStruct->typoutput, &finfo_output);
-	extval = (char *) (*fmgr_faddr(&finfo_output)) (constval->constvalue,
-													typeStruct->typelem,
-													-1);
+	extval = DatumGetCString(OidFunctionCall3(typeStruct->typoutput,
+							 constval->constvalue,
+							 ObjectIdGetDatum(typeStruct->typelem),
+							 Int32GetDatum(-1)));
 
 	switch (constval->consttype)
 	{

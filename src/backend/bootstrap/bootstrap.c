@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.82 2000/05/28 17:55:53 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.83 2000/05/30 04:24:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -139,7 +139,7 @@ static char Blanks[MAXATTR];
 static char *relname;			/* current relation name */
 
 Form_pg_attribute attrtypes[MAXATTR];	/* points to attribute info */
-static char *values[MAXATTR];	/* cooresponding attribute values */
+static Datum values[MAXATTR];	/* corresponding attribute values */
 int			numattr;			/* number of attributes for cur. rel */
 
 int			DebugMode;
@@ -622,7 +622,7 @@ InsertOneTuple(Oid objectid)
 	}
 
 	tupDesc = CreateTupleDesc(numattr, attrtypes);
-	tuple = heap_formtuple(tupDesc, (Datum *) values, Blanks);
+	tuple = heap_formtuple(tupDesc, values, Blanks);
 	pfree(tupDesc);				/* just free's tupDesc, not the attrtypes */
 
 	if (objectid != (Oid) 0)
@@ -678,13 +678,14 @@ InsertOneValue(Oid objectid, char *value, int i)
 				);
 			Assert(0);
 		}
-		values[i] = fmgr(ap->am_typ.typinput,
-						 value,
-						 ap->am_typ.typelem,
-						 -1);
-		prt = fmgr(ap->am_typ.typoutput, values[i],
-				   ap->am_typ.typelem,
-				   -1);
+		values[i] = OidFunctionCall3(ap->am_typ.typinput,
+									 CStringGetDatum(value),
+									 ObjectIdGetDatum(ap->am_typ.typelem),
+									 Int32GetDatum(-1));
+		prt = DatumGetCString(OidFunctionCall3(ap->am_typ.typoutput,
+							  values[i],
+							  ObjectIdGetDatum(ap->am_typ.typelem),
+							  Int32GetDatum(-1)));
 		if (!Quiet)
 			printf("%s ", prt);
 		pfree(prt);
@@ -700,10 +701,14 @@ InsertOneValue(Oid objectid, char *value, int i)
 			elog(ERROR, "can't find type OID %u", attrtypes[i]->atttypid);
 		if (DebugMode)
 			printf("Typ == NULL, typeindex = %u idx = %d\n", typeindex, i);
-		values[i] = fmgr(Procid[typeindex].inproc, value,
-						 Procid[typeindex].elem, -1);
-		prt = fmgr(Procid[typeindex].outproc, values[i],
-				   Procid[typeindex].elem);
+		values[i] = OidFunctionCall3(Procid[typeindex].inproc,
+									 CStringGetDatum(value),
+									 ObjectIdGetDatum(Procid[typeindex].elem),
+									 Int32GetDatum(-1));
+		prt = DatumGetCString(OidFunctionCall3(Procid[typeindex].outproc,
+							  values[i],
+							  ObjectIdGetDatum(Procid[typeindex].elem),
+							  Int32GetDatum(-1)));
 		if (!Quiet)
 			printf("%s ", prt);
 		pfree(prt);
@@ -726,7 +731,7 @@ InsertOneNull(int i)
 		printf("Inserting null\n");
 	if (i < 0 || i >= MAXATTR)
 		elog(FATAL, "i out of range (too many attrs): %d\n", i);
-	values[i] = (char *) NULL;
+	values[i] = PointerGetDatum(NULL);
 	Blanks[i] = 'n';
 }
 

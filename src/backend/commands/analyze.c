@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/analyze.c,v 1.1 2000/05/29 17:44:17 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/analyze.c,v 1.2 2000/05/30 04:25:00 tgl Exp $
  *
 
  *-------------------------------------------------------------------------
@@ -236,7 +236,7 @@ analyze_rel(Oid relid, List *anal_cols2, int MESSAGE_LEVEL)
  *	frequently in each column.	These figures are used to compute
  *	the selectivity of the column.
  *
- *	We use a three-bucked cache to get the most frequent item.
+ *	We use a three-bucket cache to get the most frequent item.
  *	The 'guess' buckets count hits.  A cache miss causes guess1
  *	to get the most hit 'guess' item in the most recent cycle, and
  *	the new item goes into guess2.	Whenever the total count of hits
@@ -254,101 +254,114 @@ attr_stats(Relation onerel, int attr_cnt, VacAttrStats *vacattrstats, HeapTuple 
 {
 	int			i;
 	TupleDesc	tupDesc = onerel->rd_att;
-	Datum		value;
-	bool		isnull;
 
 	for (i = 0; i < attr_cnt; i++)
 	{
 		VacAttrStats *stats = &vacattrstats[i];
-		bool		value_hit = true;
+		Datum		value;
+		bool		isnull;
+		bool		value_hit;
+
+		if (!VacAttrStatsEqValid(stats))
+			continue;
 
 #ifdef	_DROP_COLUMN_HACK__
 		if (COLUMN_IS_DROPPED(stats->attr))
 			continue;
 #endif	 /* _DROP_COLUMN_HACK__ */
+
 		value = heap_getattr(tuple,
 							 stats->attr->attnum, tupDesc, &isnull);
 
-		if (!VacAttrStatsEqValid(stats))
-			continue;
-
 		if (isnull)
-			stats->null_cnt++;
-		else
 		{
-			stats->nonnull_cnt++;
-			if (stats->initialized == false)
-			{
-				bucketcpy(stats->attr, value, &stats->best, &stats->best_len);
-				/* best_cnt gets incremented later */
-				bucketcpy(stats->attr, value, &stats->guess1, &stats->guess1_len);
-				stats->guess1_cnt = stats->guess1_hits = 1;
-				bucketcpy(stats->attr, value, &stats->guess2, &stats->guess2_len);
-				stats->guess2_hits = 1;
-				if (VacAttrStatsLtGtValid(stats))
-				{
-					bucketcpy(stats->attr, value, &stats->max, &stats->max_len);
-					bucketcpy(stats->attr, value, &stats->min, &stats->min_len);
-				}
-				stats->initialized = true;
-			}
+			stats->null_cnt++;
+			continue;
+		}
+
+		stats->nonnull_cnt++;
+		if (! stats->initialized)
+		{
+			bucketcpy(stats->attr, value, &stats->best, &stats->best_len);
+			/* best_cnt gets incremented below */
+			bucketcpy(stats->attr, value, &stats->guess1, &stats->guess1_len);
+			stats->guess1_cnt = stats->guess1_hits = 1;
+			bucketcpy(stats->attr, value, &stats->guess2, &stats->guess2_len);
+			stats->guess2_hits = 1;
 			if (VacAttrStatsLtGtValid(stats))
 			{
-				if ((*fmgr_faddr(&stats->f_cmplt)) (value, stats->min))
-				{
-					bucketcpy(stats->attr, value, &stats->min, &stats->min_len);
-					stats->min_cnt = 0;
-				}
-				if ((*fmgr_faddr(&stats->f_cmpgt)) (value, stats->max))
-				{
-					bucketcpy(stats->attr, value, &stats->max, &stats->max_len);
-					stats->max_cnt = 0;
-				}
-				if ((*fmgr_faddr(&stats->f_cmpeq)) (value, stats->min))
-					stats->min_cnt++;
-				else if ((*fmgr_faddr(&stats->f_cmpeq)) (value, stats->max))
-					stats->max_cnt++;
+				bucketcpy(stats->attr, value, &stats->max, &stats->max_len);
+				bucketcpy(stats->attr, value, &stats->min, &stats->min_len);
+				/* min_cnt, max_cnt get incremented below */
 			}
-			if ((*fmgr_faddr(&stats->f_cmpeq)) (value, stats->best))
-				stats->best_cnt++;
-			else if ((*fmgr_faddr(&stats->f_cmpeq)) (value, stats->guess1))
-			{
-				stats->guess1_cnt++;
-				stats->guess1_hits++;
-			}
-			else if ((*fmgr_faddr(&stats->f_cmpeq)) (value, stats->guess2))
-				stats->guess2_hits++;
-			else
-				value_hit = false;
+			stats->initialized = true;
+		}
 
-			if (stats->guess2_hits > stats->guess1_hits)
+		if (VacAttrStatsLtGtValid(stats))
+		{
+			if (DatumGetBool(FunctionCall2(&stats->f_cmplt,
+										   value, stats->min)))
 			{
-				swapDatum(stats->guess1, stats->guess2);
-				swapInt(stats->guess1_len, stats->guess2_len);
-				swapLong(stats->guess1_hits, stats->guess2_hits);
-				stats->guess1_cnt = stats->guess1_hits;
+				bucketcpy(stats->attr, value, &stats->min, &stats->min_len);
+				stats->min_cnt = 1;
 			}
-			if (stats->guess1_cnt > stats->best_cnt)
+			else if (DatumGetBool(FunctionCall2(&stats->f_cmpeq,
+												value, stats->min)))
+				stats->min_cnt++;
+
+			if (DatumGetBool(FunctionCall2(&stats->f_cmpgt,
+										   value, stats->max)))
 			{
-				swapDatum(stats->best, stats->guess1);
-				swapInt(stats->best_len, stats->guess1_len);
-				swapLong(stats->best_cnt, stats->guess1_cnt);
-				stats->guess1_hits = 1;
-				stats->guess2_hits = 1;
+				bucketcpy(stats->attr, value, &stats->max, &stats->max_len);
+				stats->max_cnt = 1;
 			}
-			if (!value_hit)
-			{
-				bucketcpy(stats->attr, value, &stats->guess2, &stats->guess2_len);
-				stats->guess1_hits = 1;
-				stats->guess2_hits = 1;
-			}
+			else if (DatumGetBool(FunctionCall2(&stats->f_cmpeq,
+												value, stats->max)))
+				stats->max_cnt++;
+		}
+
+		value_hit = true;
+		if (DatumGetBool(FunctionCall2(&stats->f_cmpeq,
+									   value, stats->best)))
+			stats->best_cnt++;
+		else if (DatumGetBool(FunctionCall2(&stats->f_cmpeq,
+											value, stats->guess1)))
+		{
+			stats->guess1_cnt++;
+			stats->guess1_hits++;
+		}
+		else if (DatumGetBool(FunctionCall2(&stats->f_cmpeq,
+											value, stats->guess2)))
+			stats->guess2_hits++;
+		else
+			value_hit = false;
+
+		if (stats->guess2_hits > stats->guess1_hits)
+		{
+			swapDatum(stats->guess1, stats->guess2);
+			swapInt(stats->guess1_len, stats->guess2_len);
+			swapLong(stats->guess1_hits, stats->guess2_hits);
+			stats->guess1_cnt = stats->guess1_hits;
+		}
+		if (stats->guess1_cnt > stats->best_cnt)
+		{
+			swapDatum(stats->best, stats->guess1);
+			swapInt(stats->best_len, stats->guess1_len);
+			swapLong(stats->best_cnt, stats->guess1_cnt);
+			stats->guess1_hits = 1;
+			stats->guess2_hits = 1;
+		}
+		if (!value_hit)
+		{
+			bucketcpy(stats->attr, value, &stats->guess2, &stats->guess2_len);
+			stats->guess1_hits = 1;
+			stats->guess2_hits = 1;
 		}
 	}
-	return;
 }
 
 /*
- *	bucketcpy() -- update pg_class statistics for one relation
+ *	bucketcpy() -- copy a new value into one of the statistics buckets
  *
  */
 static void
@@ -367,7 +380,7 @@ bucketcpy(Form_pg_attribute attr, Datum value, Datum *bucket, int *bucket_len)
 			*bucket = PointerGetDatum(palloc(len));
 			*bucket_len = len;
 		}
-		memmove(DatumGetPointer(*bucket), DatumGetPointer(value), len);
+		memcpy(DatumGetPointer(*bucket), DatumGetPointer(value), len);
 	}
 }
 
@@ -525,19 +538,28 @@ update_attstats(Oid relid, int natts, VacAttrStats *vacattrstats)
 				 * ----------------
 				 */
 				i = 0;
-				values[i++] = (Datum) relid;		/* starelid */
-				values[i++] = (Datum) attp->attnum; /* staattnum */
-				values[i++] = (Datum) stats->op_cmplt;		/* staop */
+				values[i++] = ObjectIdGetDatum(relid);		/* starelid */
+				values[i++] = Int16GetDatum(attp->attnum);	/* staattnum */
+				values[i++] = ObjectIdGetDatum(stats->op_cmplt); /* staop */
 				/* hack: this code knows float4 is pass-by-ref */
-				values[i++] = PointerGetDatum(&nullratio);	/* stanullfrac */
-				values[i++] = PointerGetDatum(&bestratio);	/* stacommonfrac */
-				out_string = (*fmgr_faddr(&out_function)) (stats->best, stats->typelem, stats->attr->atttypmod);
+				values[i++] = Float32GetDatum(&nullratio);	/* stanullfrac */
+				values[i++] = Float32GetDatum(&bestratio);	/* stacommonfrac */
+				out_string = DatumGetCString(FunctionCall3(&out_function,
+											 stats->best,
+											 ObjectIdGetDatum(stats->typelem),
+											 Int32GetDatum(stats->attr->atttypmod)));
 				values[i++] = PointerGetDatum(textin(out_string));	/* stacommonval */
 				pfree(out_string);
-				out_string = (*fmgr_faddr(&out_function)) (stats->min, stats->typelem, stats->attr->atttypmod);
+				out_string = DatumGetCString(FunctionCall3(&out_function,
+											 stats->min,
+											 ObjectIdGetDatum(stats->typelem),
+											 Int32GetDatum(stats->attr->atttypmod)));
 				values[i++] = PointerGetDatum(textin(out_string));	/* staloval */
 				pfree(out_string);
-				out_string = (char *) (*fmgr_faddr(&out_function)) (stats->max, stats->typelem, stats->attr->atttypmod);
+				out_string = DatumGetCString(FunctionCall3(&out_function,
+											 stats->max,
+											 ObjectIdGetDatum(stats->typelem),
+											 Int32GetDatum(stats->attr->atttypmod)));
 				values[i++] = PointerGetDatum(textin(out_string));	/* stahival */
 				pfree(out_string);
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtutils.c,v 1.36 2000/04/12 17:14:50 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtutils.c,v 1.37 2000/05/30 04:24:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -133,7 +133,7 @@ _bt_orderkeys(Relation relation, BTScanOpaque so)
 	ScanKeyData *cur;
 	StrategyMap map;
 	int			nbytes;
-	long		test;
+	Datum		test;
 	int			i,
 				j;
 	int			init[BTMaxStrategyNumber + 1];
@@ -212,8 +212,9 @@ _bt_orderkeys(Relation relation, BTScanOpaque so)
 					if (j == (BTEqualStrategyNumber - 1) || init[j] == 0)
 						continue;
 					chk = &xform[j];
-					test = (long) fmgr(chk->sk_procedure, eq->sk_argument, chk->sk_argument);
-					if (!test)
+					test = OidFunctionCall2(chk->sk_procedure,
+											eq->sk_argument, chk->sk_argument);
+					if (!DatumGetBool(test))
 						so->qual_ok = 0;
 				}
 				init[BTLessStrategyNumber - 1] = 0;
@@ -241,8 +242,9 @@ _bt_orderkeys(Relation relation, BTScanOpaque so)
 				 * anyway.	The transform maps are hard-coded, and can't
 				 * be initialized in the correct way.
 				 */
-				test = (long) fmgr(le->sk_procedure, lt->sk_argument, le->sk_argument);
-				if (test)
+				test = OidFunctionCall2(le->sk_procedure,
+										lt->sk_argument, le->sk_argument);
+				if (DatumGetBool(test))
 					init[BTLessEqualStrategyNumber - 1] = 0;
 				else
 					init[BTLessStrategyNumber - 1] = 0;
@@ -259,8 +261,9 @@ _bt_orderkeys(Relation relation, BTScanOpaque so)
 				ge = &xform[BTGreaterEqualStrategyNumber - 1];
 
 				/* see note above on function cache */
-				test = (long) fmgr(ge->sk_procedure, gt->sk_argument, ge->sk_argument);
-				if (test)
+				test = OidFunctionCall2(ge->sk_procedure,
+										gt->sk_argument, ge->sk_argument);
+				if (DatumGetBool(test))
 					init[BTGreaterEqualStrategyNumber - 1] = 0;
 				else
 					init[BTGreaterStrategyNumber - 1] = 0;
@@ -298,8 +301,9 @@ _bt_orderkeys(Relation relation, BTScanOpaque so)
 		if (init[j])
 		{
 			/* yup, use the appropriate value */
-			test = (long) FMGR_PTR2(&cur->sk_func, cur->sk_argument, xform[j].sk_argument);
-			if (test)
+			test = FunctionCall2(&cur->sk_func,
+								 cur->sk_argument, xform[j].sk_argument);
+			if (DatumGetBool(test))
 				xform[j].sk_argument = cur->sk_argument;
 			else if (j == (BTEqualStrategyNumber - 1))
 				so->qual_ok = 0;/* key == a && key == b, but a != b */
@@ -385,7 +389,7 @@ _bt_checkkeys(IndexScanDesc scan, IndexTuple tuple, Size *keysok)
 	ScanKey		key;
 	Datum		datum;
 	bool		isNull;
-	int			test;
+	Datum		test;
 
 	*keysok = 0;
 	if (keysz == 0)
@@ -415,18 +419,16 @@ _bt_checkkeys(IndexScanDesc scan, IndexTuple tuple, Size *keysok)
 
 		if (key[0].sk_flags & SK_COMMUTE)
 		{
-			test = (int) (*fmgr_faddr(&key[0].sk_func))
-				(DatumGetPointer(key[0].sk_argument),
-				 datum);
+			test = FunctionCall2(&key[0].sk_func,
+								 key[0].sk_argument, datum);
 		}
 		else
 		{
-			test = (int) (*fmgr_faddr(&key[0].sk_func))
-				(datum,
-				 DatumGetPointer(key[0].sk_argument));
+			test = FunctionCall2(&key[0].sk_func,
+								 datum, key[0].sk_argument);
 		}
 
-		if (!test == !(key[0].sk_flags & SK_NEGATE))
+		if (DatumGetBool(test) == !!(key[0].sk_flags & SK_NEGATE))
 			return false;
 
 		keysz -= 1;

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtree.c,v 1.46 2000/05/30 00:49:41 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtree.c,v 1.47 2000/05/30 04:24:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -415,10 +415,18 @@ rttighten(Relation r,
 	oldud = (char *) PageGetItem(p, PageGetItemId(p, stk->rts_child));
 	oldud += sizeof(IndexTupleData);
 
-	(*fmgr_faddr(&rtstate->sizeFn)) (oldud, &old_size);
-	datum = (char *) (*fmgr_faddr(&rtstate->unionFn)) (oldud, datum);
+	FunctionCall2(&rtstate->sizeFn,
+				  PointerGetDatum(oldud),
+				  PointerGetDatum(&old_size));
 
-	(*fmgr_faddr(&rtstate->sizeFn)) (datum, &newd_size);
+	datum = (char *)
+		DatumGetPointer(FunctionCall2(&rtstate->unionFn,
+									  PointerGetDatum(oldud),
+									  PointerGetDatum(datum)));
+
+	FunctionCall2(&rtstate->sizeFn,
+				  PointerGetDatum(datum),
+				  PointerGetDatum(&newd_size));
 
 	if (newd_size != old_size)
 	{
@@ -445,7 +453,10 @@ rttighten(Relation r,
 		 * union proc, which is guaranteed to return a rectangle.
 		 */
 
-		tdatum = (char *) (*fmgr_faddr(&rtstate->unionFn)) (datum, datum);
+		tdatum = (char *)
+			DatumGetPointer(FunctionCall2(&rtstate->unionFn,
+										  PointerGetDatum(datum),
+										  PointerGetDatum(datum)));
 		rttighten(r, stk->rts_parent, tdatum, att_size, rtstate);
 		pfree(tdatum);
 	}
@@ -665,7 +676,10 @@ rtintinsert(Relation r,
 		WriteBuffer(b);
 		ldatum = (((char *) ltup) + sizeof(IndexTupleData));
 		rdatum = (((char *) rtup) + sizeof(IndexTupleData));
-		newdatum = (char *) (*fmgr_faddr(&rtstate->unionFn)) (ldatum, rdatum);
+		newdatum = (char *)
+			DatumGetPointer(FunctionCall2(&rtstate->unionFn,
+										  PointerGetDatum(ldatum),
+										  PointerGetDatum(rdatum)));
 
 		rttighten(r, stk->rts_parent, newdatum,
 			   (IndexTupleSize(rtup) - sizeof(IndexTupleData)), rtstate);
@@ -744,10 +758,20 @@ picksplit(Relation r,
 			datum_beta = ((char *) item_2) + sizeof(IndexTupleData);
 
 			/* compute the wasted space by unioning these guys */
-			union_d = (char *) (*fmgr_faddr(&rtstate->unionFn)) (datum_alpha, datum_beta);
-			(*fmgr_faddr(&rtstate->sizeFn)) (union_d, &size_union);
-			inter_d = (char *) (*fmgr_faddr(&rtstate->interFn)) (datum_alpha, datum_beta);
-			(*fmgr_faddr(&rtstate->sizeFn)) (inter_d, &size_inter);
+			union_d = (char *)
+				DatumGetPointer(FunctionCall2(&rtstate->unionFn,
+											  PointerGetDatum(datum_alpha),
+											  PointerGetDatum(datum_beta)));
+			FunctionCall2(&rtstate->sizeFn,
+						  PointerGetDatum(union_d),
+						  PointerGetDatum(&size_union));
+			inter_d = (char *)
+				DatumGetPointer(FunctionCall2(&rtstate->interFn,
+											  PointerGetDatum(datum_alpha),
+											  PointerGetDatum(datum_beta)));
+			FunctionCall2(&rtstate->sizeFn,
+						  PointerGetDatum(inter_d),
+						  PointerGetDatum(&size_inter));
 			size_waste = size_union - size_inter;
 
 			pfree(union_d);
@@ -777,12 +801,22 @@ picksplit(Relation r,
 
 	item_1 = (IndexTuple) PageGetItem(page, PageGetItemId(page, seed_1));
 	datum_alpha = ((char *) item_1) + sizeof(IndexTupleData);
-	datum_l = (char *) (*fmgr_faddr(&rtstate->unionFn)) (datum_alpha, datum_alpha);
-	(*fmgr_faddr(&rtstate->sizeFn)) (datum_l, &size_l);
+	datum_l = (char *)
+		DatumGetPointer(FunctionCall2(&rtstate->unionFn,
+									  PointerGetDatum(datum_alpha),
+									  PointerGetDatum(datum_alpha)));
+	FunctionCall2(&rtstate->sizeFn,
+				  PointerGetDatum(datum_l),
+				  PointerGetDatum(&size_l));
 	item_2 = (IndexTuple) PageGetItem(page, PageGetItemId(page, seed_2));
 	datum_beta = ((char *) item_2) + sizeof(IndexTupleData);
-	datum_r = (char *) (*fmgr_faddr(&rtstate->unionFn)) (datum_beta, datum_beta);
-	(*fmgr_faddr(&rtstate->sizeFn)) (datum_r, &size_r);
+	datum_r = (char *)
+		DatumGetPointer(FunctionCall2(&rtstate->unionFn,
+									  PointerGetDatum(datum_beta),
+									  PointerGetDatum(datum_beta)));
+	FunctionCall2(&rtstate->sizeFn,
+				  PointerGetDatum(datum_r),
+				  PointerGetDatum(&size_r));
 
 	/*
 	 * Now split up the regions between the two seeds.	An important
@@ -826,10 +860,20 @@ picksplit(Relation r,
 			item_1 = (IndexTuple) PageGetItem(page, PageGetItemId(page, i));
 
 		datum_alpha = ((char *) item_1) + sizeof(IndexTupleData);
-		union_dl = (char *) (*fmgr_faddr(&rtstate->unionFn)) (datum_l, datum_alpha);
-		union_dr = (char *) (*fmgr_faddr(&rtstate->unionFn)) (datum_r, datum_alpha);
-		(*fmgr_faddr(&rtstate->sizeFn)) (union_dl, &size_alpha);
-		(*fmgr_faddr(&rtstate->sizeFn)) (union_dr, &size_beta);
+		union_dl = (char *)
+			DatumGetPointer(FunctionCall2(&rtstate->unionFn,
+										  PointerGetDatum(datum_l),
+										  PointerGetDatum(datum_alpha)));
+		union_dr = (char *)
+			DatumGetPointer(FunctionCall2(&rtstate->unionFn,
+										  PointerGetDatum(datum_r),
+										  PointerGetDatum(datum_alpha)));
+		FunctionCall2(&rtstate->sizeFn,
+					  PointerGetDatum(union_dl),
+					  PointerGetDatum(&size_alpha));
+		FunctionCall2(&rtstate->sizeFn,
+					  PointerGetDatum(union_dr),
+					  PointerGetDatum(&size_beta));
 
 		/* pick which page to add it to */
 		if (size_alpha - size_l < size_beta - size_r)
@@ -896,9 +940,16 @@ choose(Relation r, Page p, IndexTuple it, RTSTATE *rtstate)
 	{
 		datum = (char *) PageGetItem(p, PageGetItemId(p, i));
 		datum += sizeof(IndexTupleData);
-		(*fmgr_faddr(&rtstate->sizeFn)) (datum, &dsize);
-		ud = (char *) (*fmgr_faddr(&rtstate->unionFn)) (datum, id);
-		(*fmgr_faddr(&rtstate->sizeFn)) (ud, &usize);
+		FunctionCall2(&rtstate->sizeFn,
+					  PointerGetDatum(datum),
+					  PointerGetDatum(&dsize));
+		ud = (char *)
+			DatumGetPointer(FunctionCall2(&rtstate->unionFn,
+										  PointerGetDatum(datum),
+										  PointerGetDatum(id)));
+		FunctionCall2(&rtstate->sizeFn,
+					  PointerGetDatum(ud),
+					  PointerGetDatum(&usize));
 		pfree(ud);
 		if (which_grow < 0 || usize - dsize < which_grow)
 		{

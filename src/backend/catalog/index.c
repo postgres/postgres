@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.112 2000/05/30 00:49:42 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.113 2000/05/30 04:24:35 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1922,16 +1922,16 @@ index_build(Relation heapRelation,
 	 * ----------------
 	 */
 	if (RegProcedureIsValid(procedure))
-		fmgr(procedure,
-			 heapRelation,
-			 indexRelation,
-			 numberOfAttributes,
-			 attributeNumber,
-			 RelationGetIndexStrategy(indexRelation),
-			 parameterCount,
-			 parameter,
-			 funcInfo,
-			 predInfo);
+		OidFunctionCall9(procedure,
+						 PointerGetDatum(heapRelation),
+						 PointerGetDatum(indexRelation),
+						 Int32GetDatum(numberOfAttributes),
+						 PointerGetDatum(attributeNumber),
+						 PointerGetDatum(RelationGetIndexStrategy(indexRelation)),
+						 UInt16GetDatum(parameterCount),
+						 PointerGetDatum(parameter),
+						 PointerGetDatum(funcInfo),
+						 PointerGetDatum(predInfo));
 	else
 		DefaultBuild(heapRelation,
 					 indexRelation,

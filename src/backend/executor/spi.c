@@ -3,7 +3,7 @@
  * spi.c
  *				Server Programming Interface
  *
- * $Id: spi.c,v 1.45 2000/04/04 21:44:39 tgl Exp $
+ * $Id: spi.c,v 1.46 2000/05/30 04:24:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -415,8 +415,10 @@ SPI_getvalue(HeapTuple tuple, TupleDesc tupdesc, int fnumber)
 		return NULL;
 	}
 
-	return (fmgr(foutoid, val, typelem,
-				 tupdesc->attrs[fnumber - 1]->atttypmod));
+	return DatumGetCString(OidFunctionCall3(foutoid,
+						   val,
+						   ObjectIdGetDatum(typelem),
+						   Int32GetDatum(tupdesc->attrs[fnumber - 1]->atttypmod)));
 }
 
 Datum

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/Attic/indexvalid.c,v 1.24 2000/01/26 05:55:53 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/Attic/indexvalid.c,v 1.25 2000/05/30 04:24:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,7 +40,7 @@ index_keytest(IndexTuple tuple,
 {
 	bool		isNull;
 	Datum		datum;
-	int			test;
+	Datum		test;
 
 	IncrIndexProcessed();
 
@@ -62,18 +62,16 @@ index_keytest(IndexTuple tuple,
 
 		if (key[0].sk_flags & SK_COMMUTE)
 		{
-			test = (*(fmgr_faddr(&key[0].sk_func)))
-				(DatumGetPointer(key[0].sk_argument),
-				 datum) ? 1 : 0;
+			test = FunctionCall2(&key[0].sk_func,
+								 key[0].sk_argument, datum);
 		}
 		else
 		{
-			test = (*(fmgr_faddr(&key[0].sk_func)))
-				(datum,
-				 DatumGetPointer(key[0].sk_argument)) ? 1 : 0;
+			test = FunctionCall2(&key[0].sk_func,
+								 datum, key[0].sk_argument);
 		}
 
-		if (!test == !(key[0].sk_flags & SK_NEGATE))
+		if (DatumGetBool(test) == !!(key[0].sk_flags & SK_NEGATE))
 			return false;
 
 		scanKeySize -= 1;

@@ -227,7 +227,7 @@ gistindex_keytest(IndexTuple tuple,
 {
 	bool		isNull;
 	Datum		datum;
-	int			test;
+	Datum		test;
 	GISTENTRY	de;
 
 	IncrIndexProcessed();
@@ -251,19 +251,20 @@ gistindex_keytest(IndexTuple tuple,
 
 		if (key[0].sk_flags & SK_COMMUTE)
 		{
-			test = (*fmgr_faddr(&key[0].sk_func))
-				(DatumGetPointer(key[0].sk_argument),
-				 &de, key[0].sk_procedure) ? 1 : 0;
+			test = FunctionCall3(&key[0].sk_func,
+								 key[0].sk_argument,
+								 PointerGetDatum(&de),
+								 ObjectIdGetDatum(key[0].sk_procedure));
 		}
 		else
 		{
-			test = (*fmgr_faddr(&key[0].sk_func))
-				(&de,
-				 DatumGetPointer(key[0].sk_argument),
-				 key[0].sk_procedure) ? 1 : 0;
+			test = FunctionCall3(&key[0].sk_func,
+								 PointerGetDatum(&de),
+								 key[0].sk_argument,
+								 ObjectIdGetDatum(key[0].sk_procedure));
 		}
 
-		if (!test == !(key[0].sk_flags & SK_NEGATE))
+		if (DatumGetBool(test) == !!(key[0].sk_flags & SK_NEGATE))
 			return false;
 
 		scanKeySize -= 1;

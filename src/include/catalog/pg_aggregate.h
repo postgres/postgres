@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_aggregate.h,v 1.25 2000/04/12 17:16:27 momjian Exp $
+ * $Id: pg_aggregate.h,v 1.26 2000/05/30 04:24:55 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -151,7 +151,8 @@ extern void AggregateCreate(char *aggName,
 				char *aggtransfn2typeName,
 				char *agginitval1,
 				char *agginitval2);
-extern char *AggNameGetInitVal(char *aggName, Oid basetype,
-				  int xfuncno, bool *isNull);
+
+extern Datum AggNameGetInitVal(char *aggName, Oid basetype,
+							   int xfuncno, bool *isNull);
 
 #endif	 /* PG_AGGREGATE_H */

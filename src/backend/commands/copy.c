@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.108 2000/05/30 00:49:43 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.109 2000/05/30 04:25:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -501,8 +501,10 @@ CopyTo(Relation rel, bool binary, bool oids, FILE *fp, char *delim, char *null_p
 #endif	 /* _DROP_COLUMN_HACK__ */
 				if (!isnull)
 				{
-					string = (char *) (*fmgr_faddr(&out_functions[i]))
-						(value, elements[i], typmod[i]);
+					string = DatumGetCString(FunctionCall3(&out_functions[i],
+												value,
+												ObjectIdGetDatum(elements[i]),
+												Int32GetDatum(typmod[i])));
 					CopyAttributeOut(fp, string, delim);
 					pfree(string);
 				}
@@ -814,17 +816,10 @@ CopyFrom(Relation rel, bool binary, bool oids, FILE *fp, char *delim, char *null
 					done = 1;
 				else
 				{
-					values[i] = (Datum) (*fmgr_faddr(&in_functions[i])) (string,
-															 elements[i],
-															  typmod[i]);
-
-					/*
-					 * Sanity check - by reference attributes cannot
-					 * return NULL
-					 */
-					if (!PointerIsValid(values[i]) &&
-						!(rel->rd_att->attrs[i]->attbyval))
-						elog(ERROR, "COPY: Bad file format");
+					values[i] = FunctionCall3(&in_functions[i],
+											  CStringGetDatum(string),
+											  ObjectIdGetDatum(elements[i]),
+											  Int32GetDatum(typmod[i]));
 				}
 			}
 			if (!done)

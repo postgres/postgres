@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/printtup.c,v 1.52 2000/01/26 05:55:53 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/printtup.c,v 1.53 2000/05/30 04:24:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -206,8 +206,10 @@ printtup(HeapTuple tuple, TupleDesc typeinfo, DestReceiver *self)
 			continue;
 		if (OidIsValid(thisState->typoutput))
 		{
-			outputstr = (char *) (*fmgr_faddr(&thisState->finfo))
-				(attr, thisState->typelem, typeinfo->attrs[i]->atttypmod);
+			outputstr = DatumGetCString(FunctionCall3(&thisState->finfo,
+										attr,
+										ObjectIdGetDatum(thisState->typelem),
+										Int32GetDatum(typeinfo->attrs[i]->atttypmod)));
 			pq_sendcountedtext(&buf, outputstr, strlen(outputstr));
 			pfree(outputstr);
 		}
@@ -295,8 +297,10 @@ debugtup(HeapTuple tuple, TupleDesc typeinfo, DestReceiver *self)
 		if (getTypeOutAndElem((Oid) typeinfo->attrs[i]->atttypid,
 							  &typoutput, &typelem))
 		{
-			value = fmgr(typoutput, attr, typelem,
-						 typeinfo->attrs[i]->atttypmod);
+			value = DatumGetCString(OidFunctionCall3(typoutput,
+									attr,
+									ObjectIdGetDatum(typelem),
+									Int32GetDatum(typeinfo->attrs[i]->atttypmod)));
 			printatt((unsigned) i + 1, typeinfo->attrs[i], value);
 			pfree(value);
 		}

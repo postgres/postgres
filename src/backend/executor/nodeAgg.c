@@ -32,7 +32,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeAgg.c,v 1.65 2000/05/30 00:49:44 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeAgg.c,v 1.66 2000/05/30 04:24:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -327,12 +327,10 @@ finalize_aggregate(AggStatePerAgg peraggstate,
 				continue;
 			if (haveOldVal)
 			{
-				Datum		equal;
-
-				equal = (Datum) (*fmgr_faddr(&peraggstate->equalfn)) (oldVal,
-																 newVal);
-				if (DatumGetInt32(equal) != 0)
+				if (DatumGetBool(FunctionCall2(&peraggstate->equalfn,
+											   oldVal, newVal)))
 				{
+					/* equal to prior, so forget this one */
 					if (!peraggstate->inputtypeByVal)
 						pfree(DatumGetPointer(newVal));
 					continue;
@@ -780,13 +778,13 @@ ExecInitAgg(Agg *node, EState *estate, Plan *parent)
 				 typeidTypeName(aggref->basetype));
 		aggform = (Form_pg_aggregate) GETSTRUCT(aggTuple);
 
-		peraggstate->initValue1 = (Datum)
+		peraggstate->initValue1 =
 			AggNameGetInitVal(aggname,
 							  aggform->aggbasetype,
 							  1,
 							  &peraggstate->initValue1IsNull);
 
-		peraggstate->initValue2 = (Datum)
+		peraggstate->initValue2 =
 			AggNameGetInitVal(aggname,
 							  aggform->aggbasetype,
 							  2,

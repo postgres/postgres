@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/gist/gist.c,v 1.54 2000/05/30 00:49:39 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/gist/gist.c,v 1.55 2000/05/30 04:24:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -551,10 +551,16 @@ gistAdjustKeys(Relation r,
 	ev1p = &((GISTENTRY *) VARDATA(evec))[1];
 
 	/* form union of decompressed entries */
-	datum = (*fmgr_faddr(&giststate->unionFn)) (evec, &datumsize);
+	datum = (char *)
+		DatumGetPointer(FunctionCall2(&giststate->unionFn,
+									  PointerGetDatum(evec),
+									  PointerGetDatum(&datumsize)));
 
 	/* did union leave decompressed version of oldud unchanged? */
-	(*fmgr_faddr(&giststate->equalFn)) (ev0p->pred, datum, &result);
+	FunctionCall3(&giststate->equalFn,
+				  PointerGetDatum(ev0p->pred),
+				  PointerGetDatum(datum),
+				  PointerGetDatum(&result));
 	if (!result)
 	{
 		TupleDesc	td = RelationGetDescr(r);
@@ -727,7 +733,9 @@ gistSplit(Relation r,
 	VARSIZE(entryvec) = (maxoff + 2) * sizeof(GISTENTRY) + VARHDRSZ;
 
 	/* now let the user-defined picksplit function set up the split vector */
-	(*fmgr_faddr(&giststate->picksplitFn)) (entryvec, &v);
+	FunctionCall2(&giststate->picksplitFn,
+				  PointerGetDatum(entryvec),
+				  PointerGetDatum(&v));
 
 	/* compress ldatum and rdatum */
 	gistcentryinit(giststate, &tmpentry, v.spl_ldatum, (Relation) NULL,
@@ -1054,7 +1062,10 @@ gistchoose(Relation r, Page p, IndexTuple it,	/* it has compressed entry */
 		size = IndexTupleSize(datum) - sizeof(IndexTupleData);
 		datum += sizeof(IndexTupleData);
 		gistdentryinit(giststate, &entry, datum, r, p, i, size, FALSE);
-		(*fmgr_faddr(&giststate->penaltyFn)) (&entry, &identry, &usize);
+		FunctionCall3(&giststate->penaltyFn,
+					  PointerGetDatum(&entry),
+					  PointerGetDatum(&identry),
+					  PointerGetDatum(&usize));
 		if (which_grow < 0 || usize < which_grow)
 		{
 			which = i;
@@ -1237,7 +1248,9 @@ gistdentryinit(GISTSTATE *giststate, GISTENTRY *e, char *pr, Relation r,
 	gistentryinit(*e, pr, r, pg, o, b, l);
 	if (giststate->haskeytype)
 	{
-		dep = (GISTENTRY *) ((*fmgr_faddr(&giststate->decompressFn)) (e));
+		dep = (GISTENTRY *)
+			DatumGetPointer(FunctionCall1(&giststate->decompressFn,
+										  PointerGetDatum(e)));
 		gistentryinit(*e, dep->pred, dep->rel, dep->page, dep->offset, dep->bytes,
 					  dep->leafkey);
 		if (dep != e)
@@ -1258,7 +1271,9 @@ gistcentryinit(GISTSTATE *giststate, GISTENTRY *e, char *pr, Relation r,
 	gistentryinit(*e, pr, r, pg, o, b, l);
 	if (giststate->haskeytype)
 	{
-		cep = (GISTENTRY *) ((*fmgr_faddr(&giststate->compressFn)) (e));
+		cep = (GISTENTRY *)
+			DatumGetPointer(FunctionCall1(&giststate->compressFn,
+										  PointerGetDatum(e)));
 		gistentryinit(*e, cep->pred, cep->rel, cep->page, cep->offset, cep->bytes,
 					  cep->leafkey);
 		if (cep != e)

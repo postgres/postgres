@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: be-dumpdata.c,v 1.33 2000/04/12 17:15:14 momjian Exp $
+ *	$Id: be-dumpdata.c,v 1.34 2000/05/30 04:24:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -306,8 +306,10 @@ be_printtup(HeapTuple tuple, TupleDesc typeinfo, DestReceiver *self)
 		}
 
 		if (!isnull && OidIsValid(typoutput))
-			values[i] = fmgr(typoutput, attr, typelem,
-							 typeinfo->attrs[i]->atttypmod);
+			values[i] = DatumGetCString(OidFunctionCall3(typoutput,
+										attr,
+										ObjectIdGetDatum(typelem),
+										Int32GetDatum(typeinfo->attrs[i]->atttypmod)));
 		else
 			values[i] = NULL;
 

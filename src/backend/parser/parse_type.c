@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_type.c,v 1.29 2000/01/26 05:56:42 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_type.c,v 1.30 2000/05/30 04:24:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -143,7 +143,10 @@ stringTypeDatum(Type tp, char *string, int32 atttypmod)
 	op = ((Form_pg_type) GETSTRUCT(tp))->typinput;
 	typelem = ((Form_pg_type) GETSTRUCT(tp))->typelem;	/* XXX - used for
 														 * array_in */
-	return (Datum) fmgr(op, string, typelem, atttypmod);
+	return OidFunctionCall3(op,
+							CStringGetDatum(string),
+							ObjectIdGetDatum(typelem),
+							Int32GetDatum(atttypmod));
 }
 
 /* Given a type id, returns the out-conversion function of the type */

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/index/Attic/istrat.c,v 1.43 2000/05/28 17:55:52 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/index/Attic/istrat.c,v 1.44 2000/05/30 04:24:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -217,15 +217,14 @@ StrategyTermEvaluate(StrategyTerm term,
 					 Datum left,
 					 Datum right)
 {
+	bool		result = false;
 	Index		index;
-	long		tmpres = 0;
-	bool		result = 0;
 	StrategyOperator operator;
-	ScanKey		entry;
 
 	for (index = 0, operator = &term->operatorData[0];
 		 index < term->degree; index += 1, operator += 1)
 	{
+		ScanKey		entry;
 
 		entry = &map->entry[operator->strategy - 1];
 
@@ -234,31 +233,29 @@ StrategyTermEvaluate(StrategyTerm term,
 		switch (operator->flags ^ entry->sk_flags)
 		{
 			case 0x0:
-				tmpres = (long) FMGR_PTR2(&entry->sk_func,
-										  left, right);
+				result = DatumGetBool(FunctionCall2(&entry->sk_func,
+													left, right));
 				break;
 
 			case SK_NEGATE:
-				tmpres = (long) !FMGR_PTR2(&entry->sk_func,
-										   left, right);
+				result = ! DatumGetBool(FunctionCall2(&entry->sk_func,
+													  left, right));
 				break;
 
 			case SK_COMMUTE:
-				tmpres = (long) FMGR_PTR2(&entry->sk_func,
-										  right, left);
+				result = DatumGetBool(FunctionCall2(&entry->sk_func,
+													right, left));
 				break;
 
 			case SK_NEGATE | SK_COMMUTE:
-				tmpres = (long) !FMGR_PTR2(&entry->sk_func,
-										   right, left);
+				result = ! DatumGetBool(FunctionCall2(&entry->sk_func,
+													  right, left));
 				break;
 
 			default:
-				elog(FATAL, "StrategyTermEvaluate: impossible case %d",
+				elog(ERROR, "StrategyTermEvaluate: impossible case %d",
 					 operator->flags ^ entry->sk_flags);
 		}
-
-		result = (bool) tmpres;
 		if (!result)
 			return result;
 	}

@@ -42,7 +42,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/costsize.c,v 1.59 2000/05/30 00:49:46 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/costsize.c,v 1.60 2000/05/30 04:24:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -240,8 +240,14 @@ cost_index(Path *path, Query *root,
 	 * index (ie, the fraction of main-table tuples we will have to
 	 * retrieve).
 	 */
-	fmgr(index->amcostestimate, root, baserel, index, indexQuals,
-		 &indexStartupCost, &indexTotalCost, &indexSelectivity);
+	OidFunctionCall7(index->amcostestimate,
+					 PointerGetDatum(root),
+					 PointerGetDatum(baserel),
+					 PointerGetDatum(index),
+					 PointerGetDatum(indexQuals),
+					 PointerGetDatum(&indexStartupCost),
+					 PointerGetDatum(&indexTotalCost),
+					 PointerGetDatum(&indexSelectivity));
 
 	/* all costs for touching index itself included here */
 	startup_cost += indexStartupCost;

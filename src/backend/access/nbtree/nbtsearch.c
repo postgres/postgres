@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtsearch.c,v 1.59 2000/04/12 17:14:49 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtsearch.c,v 1.60 2000/05/30 04:24:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,8 +22,8 @@
 
 static BTStack _bt_searchr(Relation rel, int keysz, ScanKey scankey,
 			Buffer *bufP, BTStack stack_in);
-static int _bt_compare(Relation rel, TupleDesc itupdesc, Page page,
-			int keysz, ScanKey scankey, OffsetNumber offnum);
+static int32 _bt_compare(Relation rel, TupleDesc itupdesc, Page page,
+						 int keysz, ScanKey scankey, OffsetNumber offnum);
 static bool
 			_bt_twostep(IndexScanDesc scan, Buffer *bufP, ScanDirection dir);
 static RetrieveIndexResult
@@ -277,14 +277,12 @@ _bt_skeycmp(Relation rel,
 		ScanKey		entry = &scankey[i - 1];
 		Datum		attrDatum;
 		bool		isNull;
-		Datum		keyDatum;
 
 		Assert(entry->sk_attno == i);
 		attrDatum = index_getattr(indexTuple,
 								  entry->sk_attno,
 								  tupDes,
 								  &isNull);
-		keyDatum = entry->sk_argument;
 
 		/* see comments about NULLs handling in btbuild */
 		if (entry->sk_flags & SK_ISNULL)		/* key is NULL */
@@ -299,7 +297,9 @@ _bt_skeycmp(Relation rel,
 			compare = -1;		/* not-NULL key "<" NULL datum */
 		}
 		else
-			compare = (int32) FMGR_PTR2(&entry->sk_func, keyDatum, attrDatum);
+			compare = DatumGetInt32(FunctionCall2(&entry->sk_func,
+												  entry->sk_argument,
+												  attrDatum));
 
 		if (compare != 0)
 			break;				/* done when we find unequal attributes */
@@ -353,7 +353,7 @@ _bt_binsrch(Relation rel,
 				high;
 	bool		haveEq;
 	int			natts = rel->rd_rel->relnatts;
-	int			result;
+	int32		result;
 
 	itupdesc = RelationGetDescr(rel);
 	page = BufferGetPage(buf);
@@ -474,9 +474,9 @@ _bt_binsrch(Relation rel,
  *	_bt_compare() -- Compare scankey to a particular tuple on the page.
  *
  *		This routine returns:
- *			-1 if scankey < tuple at offnum;
+ *			<0 if scankey < tuple at offnum;
  *			 0 if scankey == tuple at offnum;
- *			+1 if scankey > tuple at offnum.
+ *			>0 if scankey > tuple at offnum.
  *
  *		-- Old comments:
  *		In order to avoid having to propagate changes up the tree any time
@@ -492,7 +492,7 @@ _bt_binsrch(Relation rel,
  *		but not "any time a new min key is inserted" (see _bt_insertonpg).
  *				- vadim 12/05/96
  */
-static int
+static int32
 _bt_compare(Relation rel,
 			TupleDesc itupdesc,
 			Page page,
@@ -506,7 +506,7 @@ _bt_compare(Relation rel,
 	BTPageOpaque opaque;
 	ScanKey		entry;
 	AttrNumber	attno;
-	int			result;
+	int32		result;
 	int			i;
 	bool		null;
 
@@ -573,8 +573,6 @@ _bt_compare(Relation rel,
 
 	for (i = 1; i <= keysz; i++)
 	{
-		long		tmpres;
-
 		entry = &scankey[i - 1];
 		attno = entry->sk_attno;
 		datum = index_getattr(itup, attno, itupdesc, &null);
@@ -583,17 +581,17 @@ _bt_compare(Relation rel,
 		if (entry->sk_flags & SK_ISNULL)		/* key is NULL */
 		{
 			if (null)
-				tmpres = (long) 0;		/* NULL "=" NULL */
+				result = 0;		/* NULL "=" NULL */
 			else
-				tmpres = (long) 1;		/* NULL ">" NOT_NULL */
+				result = 1;		/* NULL ">" NOT_NULL */
 		}
 		else if (null)			/* key is NOT_NULL and item is NULL */
 		{
-			tmpres = (long) -1; /* NOT_NULL "<" NULL */
+			result = -1;		/* NOT_NULL "<" NULL */
 		}
 		else
-			tmpres = (long) FMGR_PTR2(&entry->sk_func, entry->sk_argument, datum);
-		result = tmpres;
+			result = DatumGetInt32(FunctionCall2(&entry->sk_func,
+												 entry->sk_argument, datum));
 
 		/* if the keys are unequal, return the difference */
 		if (result != 0)
@@ -697,7 +695,7 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 	StrategyNumber strat;
 	RetrieveIndexResult res;
 	RegProcedure proc;
-	int			result;
+	int32		result;
 	BTScanOpaque so;
 	Size		keysok;
 

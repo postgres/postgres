@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashutil.c,v 1.23 2000/01/26 05:55:55 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashutil.c,v 1.24 2000/05/30 04:24:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -91,10 +91,8 @@ _hash_call(Relation rel, HashMetaPage metap, Datum key)
 {
 	uint32		n;
 	Bucket		bucket;
-	RegProcedure proc;
 
-	proc = metap->hashm_procid;
-	n = (uint32) fmgr(proc, key);
+	n = DatumGetUInt32(OidFunctionCall1(metap->hashm_procid, key));
 	bucket = n & metap->hashm_highmask;
 	if (bucket > metap->hashm_maxbucket)
 		bucket = bucket & metap->hashm_lowmask;

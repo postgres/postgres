@@ -33,7 +33,7 @@
  *	  ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plperl/plperl.c,v 1.9 2000/05/29 21:25:06 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plperl/plperl.c,v 1.10 2000/05/30 04:24:57 tgl Exp $
  *
  **********************************************************************/
 
@@ -427,10 +427,10 @@ plperl_call_perl_func(plperl_proc_desc * desc, FunctionCallInfo fcinfo)
 			{
 				char	   *tmp;
 
-				tmp = (*fmgr_faddr(&(desc->arg_out_func[i])))
-					(fcinfo->arg[i],
-					 desc->arg_out_elem[i],
-					 desc->arg_out_len[i]);
+				tmp = DatumGetCString(FunctionCall3(&(desc->arg_out_func[i]),
+									  fcinfo->arg[i],
+									  ObjectIdGetDatum(desc->arg_out_elem[i]),
+									  Int32GetDatum(desc->arg_out_len[i])));
 				XPUSHs(sv_2mortal(newSVpv(tmp, 0)));
 				pfree(tmp);
 			}
@@ -1081,13 +1081,11 @@ plperl_trigger_handler(PG_FUNCTION_ARGS)
 		 ************************************************************/
 		modnulls[attnum - 1] = ' ';
 		fmgr_info(typinput, &finfo);
-		modvalues[attnum - 1] = (Datum) (*fmgr_faddr(&finfo))
-			(ret_values[i++],
-			 typelem,
-			 (!VARLENA_FIXED_SIZE(tupdesc->attrs[attnum - 1]))
-			 ? tupdesc->attrs[attnum - 1]->attlen
-			 : tupdesc->attrs[attnum - 1]->atttypmod
-			);
+		modvalues[attnum - 1] =
+			FunctionCall3(&finfo,
+						  CStringGetDatum(ret_values[i++]),
+						  ObjectIdGetDatum(typelem),
+						  Int32GetDatum(tupdesc->attrs[attnum-1]->atttypmod));
 	}
 
 
@@ -1825,10 +1823,11 @@ plperl_SPI_execp(ClientData cdata, Tcl_Interp *interp,
 		 ************************************************************/
 		for (j = 0; j < callnargs; j++)
 		{
-			qdesc->argvalues[j] = (Datum) (*fmgr_faddr(&qdesc->arginfuncs[j]))
-				(callargs[j],
-				 qdesc->argtypelems[j],
-				 qdesc->arglen[j]);
+			qdesc->argvalues[j] =
+				FunctionCall3(&qdesc->arginfuncs[j],
+							  CStringGetDatum(callargs[j]),
+							  ObjectIdGetDatum(qdesc->argtypelems[j]),
+							  Int32GetDatum(qdesc->arglen[j]));
 		}
 
 		/************************************************************
@@ -2103,14 +2102,10 @@ plperl_set_tuple_values(Tcl_Interp *interp, char *arrayname,
 		 ************************************************************/
 		if (!isnull && OidIsValid(typoutput))
 		{
-			FmgrInfo	finfo;
-
-			fmgr_info(typoutput, &finfo);
-
-			outputstr = (*fmgr_faddr(&finfo))
-				(attr, typelem,
-				 tupdesc->attrs[i]->attlen);
-
+			outputstr = DatumGetCString(OidFunctionCall3(typoutput,
+										attr,
+										ObjectIdGetDatum(typelem),
+										Int32GetDatum(tupdesc->attrs[i]->attlen)));
 			Tcl_SetVar2(interp, *arrptr, *nameptr, outputstr, 0);
 			pfree(outputstr);
 		}
@@ -2176,14 +2171,10 @@ plperl_build_tuple_argument(HeapTuple tuple, TupleDesc tupdesc)
 		 ************************************************************/
 		if (!isnull && OidIsValid(typoutput))
 		{
-			FmgrInfo	finfo;
-
-			fmgr_info(typoutput, &finfo);
-
-			outputstr = (*fmgr_faddr(&finfo))
-				(attr, typelem,
-				 tupdesc->attrs[i]->attlen);
-
+			outputstr = DatumGetCString(OidFunctionCall3(typoutput,
+										attr,
+										ObjectIdGetDatum(typelem),
+										Int32GetDatum(tupdesc->attrs[i]->attlen)));
 			sv_catpvf(output, "'%s' => '%s',", attname, outputstr);
 			pfree(outputstr);
 		}

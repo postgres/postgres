@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/index/indexam.c,v 1.43 2000/05/28 17:55:52 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/index/indexam.c,v 1.44 2000/05/30 04:24:32 tgl Exp $
  *
  * INTERFACE ROUTINES
  *		index_open		- open an index relation by relationId
@@ -195,7 +195,13 @@ index_insert(Relation relation,
 	 * ----------------
 	 */
 	specificResult = (InsertIndexResult)
-		fmgr(procedure, relation, datum, nulls, heap_t_ctid, heapRel, NULL);
+		DatumGetPointer(OidFunctionCall6(procedure,
+										 PointerGetDatum(relation),
+										 PointerGetDatum(datum),
+										 PointerGetDatum(nulls),
+										 PointerGetDatum(heap_t_ctid),
+										 PointerGetDatum(heapRel),
+										 PointerGetDatum(NULL)));
 
 	/* must be pfree'ed */
 	return specificResult;
@@ -213,7 +219,9 @@ index_delete(Relation relation, ItemPointer indexItem)
 	RELATION_CHECKS;
 	GET_REL_PROCEDURE(delete, amdelete);
 
-	fmgr(procedure, relation, indexItem);
+	OidFunctionCall2(procedure,
+					 PointerGetDatum(relation),
+					 PointerGetDatum(indexItem));
 }
 
 /* ----------------
@@ -245,7 +253,11 @@ index_beginscan(Relation relation,
 	LockRelation(relation, AccessShareLock);
 
 	scandesc = (IndexScanDesc)
-		fmgr(procedure, relation, scanFromEnd, numberOfKeys, key);
+		DatumGetPointer(OidFunctionCall4(procedure,
+										 PointerGetDatum(relation),
+										 BoolGetDatum(scanFromEnd),
+										 UInt16GetDatum(numberOfKeys),
+										 PointerGetDatum(key)));
 
 	return scandesc;
 }
@@ -262,7 +274,10 @@ index_rescan(IndexScanDesc scan, bool scanFromEnd, ScanKey key)
 	SCAN_CHECKS;
 	GET_SCAN_PROCEDURE(rescan, amrescan);
 
-	fmgr(procedure, scan, scanFromEnd, key);
+	OidFunctionCall3(procedure,
+					 PointerGetDatum(scan),
+					 BoolGetDatum(scanFromEnd),
+					 PointerGetDatum(key));
 }
 
 /* ----------------
@@ -277,7 +292,7 @@ index_endscan(IndexScanDesc scan)
 	SCAN_CHECKS;
 	GET_SCAN_PROCEDURE(endscan, amendscan);
 
-	fmgr(procedure, scan);
+	OidFunctionCall1(procedure, PointerGetDatum(scan));
 
 	/* Release lock and refcount acquired by index_beginscan */
 
@@ -301,7 +316,7 @@ index_markpos(IndexScanDesc scan)
 	SCAN_CHECKS;
 	GET_SCAN_PROCEDURE(markpos, ammarkpos);
 
-	fmgr(procedure, scan);
+	OidFunctionCall1(procedure, PointerGetDatum(scan));
 }
 
 /* ----------------
@@ -316,7 +331,7 @@ index_restrpos(IndexScanDesc scan)
 	SCAN_CHECKS;
 	GET_SCAN_PROCEDURE(restrpos, amrestrpos);
 
-	fmgr(procedure, scan);
+	OidFunctionCall1(procedure, PointerGetDatum(scan));
 }
 
 /* ----------------
@@ -350,7 +365,9 @@ index_getnext(IndexScanDesc scan,
 	 * ----------------
 	 */
 	result = (RetrieveIndexResult)
-		(*fmgr_faddr(&scan->fn_getnext)) (scan, direction);
+		DatumGetPointer(FunctionCall2(&scan->fn_getnext,
+									  PointerGetDatum(scan),
+									  Int32GetDatum(direction)));
 
 	return result;
 }

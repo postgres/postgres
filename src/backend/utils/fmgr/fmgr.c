@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/fmgr.c,v 1.41 2000/05/29 01:59:09 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/fmgr.c,v 1.42 2000/05/30 04:24:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -420,6 +420,8 @@ fmgr_sql(PG_FUNCTION_ARGS)
 	return 0;					/* keep compiler happy */
 }
 
+#if 0
+
 /*
  * Interface routine for functions using fmgr_faddr
  */
@@ -509,6 +511,8 @@ fmgr(Oid procedureId,...)
 
 	return (char *) result;
 }
+
+#endif
 
 
 /*-------------------------------------------------------------------------

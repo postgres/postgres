@@ -31,7 +31,7 @@
  *	  ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/tcl/pltcl.c,v 1.24 2000/05/29 01:59:15 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/tcl/pltcl.c,v 1.25 2000/05/30 04:24:59 tgl Exp $
  *
  **********************************************************************/
 
@@ -655,10 +655,10 @@ pltcl_func_handler(PG_FUNCTION_ARGS)
 			{
 				char	   *tmp;
 
-				tmp = (*fmgr_faddr(&(prodesc->arg_out_func[i])))
-					(fcinfo->arg[i],
-					 prodesc->arg_out_elem[i],
-					 prodesc->arg_out_len[i]);
+				tmp = DatumGetCString(FunctionCall3(&prodesc->arg_out_func[i],
+									  fcinfo->arg[i],
+									  ObjectIdGetDatum(prodesc->arg_out_elem[i]),
+									  Int32GetDatum(prodesc->arg_out_len[i])));
 				Tcl_DStringAppendElement(&tcl_cmd, tmp);
 				pfree(tmp);
 			}
@@ -696,7 +696,7 @@ pltcl_func_handler(PG_FUNCTION_ARGS)
 	/************************************************************
 	 * Convert the result value from the safe interpreter
 	 * into its PostgreSQL data format and return it.
-	 * Again, the call to fmgr() could fire an elog and we
+	 * Again, the function call could fire an elog and we
 	 * have to count for the current interpreter level we are
 	 * on. The save_restart from above is still good.
 	 ************************************************************/
@@ -1129,12 +1129,12 @@ pltcl_trigger_handler(PG_FUNCTION_ARGS)
 		 ************************************************************/
 		modnulls[attnum - 1] = ' ';
 		fmgr_info(typinput, &finfo);
-		modvalues[attnum - 1] = (Datum) (*fmgr_faddr(&finfo))
-			(ret_values[i++],
-			 typelem,
-			 tupdesc->attrs[attnum - 1]->atttypmod);
+		modvalues[attnum - 1] =
+			FunctionCall3(&finfo,
+						  CStringGetDatum(ret_values[i++]),
+						  ObjectIdGetDatum(typelem),
+						  Int32GetDatum(tupdesc->attrs[attnum-1]->atttypmod));
 	}
-
 
 	rettup = SPI_modifytuple(trigdata->tg_relation, rettup, tupdesc->natts,
 							 modattrs, modvalues, modnulls);
@@ -1870,10 +1870,11 @@ pltcl_SPI_execp(ClientData cdata, Tcl_Interp *interp,
 		 ************************************************************/
 		for (j = 0; j < callnargs; j++)
 		{
-			qdesc->argvalues[j] = (Datum) (*fmgr_faddr(&qdesc->arginfuncs[j]))
-				(callargs[j],
-				 qdesc->argtypelems[j],
-				 qdesc->arglen[j]);
+			qdesc->argvalues[j] =
+				FunctionCall3(&qdesc->arginfuncs[j],
+							  CStringGetDatum(callargs[j]),
+							  ObjectIdGetDatum(qdesc->argtypelems[j]),
+							  Int32GetDatum(qdesc->arglen[j]));
 		}
 
 		/************************************************************
@@ -2148,14 +2149,10 @@ pltcl_set_tuple_values(Tcl_Interp *interp, char *arrayname,
 		 ************************************************************/
 		if (!isnull && OidIsValid(typoutput))
 		{
-			FmgrInfo	finfo;
-
-			fmgr_info(typoutput, &finfo);
-
-			outputstr = (*fmgr_faddr(&finfo))
-				(attr, typelem,
-				 tupdesc->attrs[i]->attlen);
-
+			outputstr = DatumGetCString(OidFunctionCall3(typoutput,
+										attr,
+										ObjectIdGetDatum(typelem),
+										Int32GetDatum(tupdesc->attrs[i]->attlen)));
 			Tcl_SetVar2(interp, *arrptr, *nameptr, outputstr, 0);
 			pfree(outputstr);
 		}
@@ -2221,14 +2218,10 @@ pltcl_build_tuple_argument(HeapTuple tuple, TupleDesc tupdesc,
 		 ************************************************************/
 		if (!isnull && OidIsValid(typoutput))
 		{
-			FmgrInfo	finfo;
-
-			fmgr_info(typoutput, &finfo);
-
-			outputstr = (*fmgr_faddr(&finfo))
-				(attr, typelem,
-				 tupdesc->attrs[i]->attlen);
-
+			outputstr = DatumGetCString(OidFunctionCall3(typoutput,
+										attr,
+										ObjectIdGetDatum(typelem),
+										Int32GetDatum(tupdesc->attrs[i]->attlen)));
 			Tcl_DStringAppendElement(retval, attname);
 			Tcl_DStringAppendElement(retval, outputstr);
 			pfree(outputstr);

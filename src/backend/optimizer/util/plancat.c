@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/plancat.c,v 1.52 2000/05/30 00:49:49 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/plancat.c,v 1.53 2000/05/30 04:24:48 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -195,22 +195,19 @@ restriction_selectivity(Oid functionObjectId,
 						Datum constValue,
 						int constFlag)
 {
-	float64		result;
+	float8		result;
 
-	result = (float64) fmgr(functionObjectId,
-							(char *) operatorObjectId,
-							(char *) relationObjectId,
-							(char *) (int) attributeNumber,
-							(char *) constValue,
-							(char *) constFlag,
-							NULL);
-	if (!PointerIsValid(result))
-		elog(ERROR, "restriction_selectivity: bad pointer");
+	result = DatumGetFloat8(OidFunctionCall5(functionObjectId,
+							ObjectIdGetDatum(operatorObjectId),
+							ObjectIdGetDatum(relationObjectId),
+							Int16GetDatum(attributeNumber),
+							constValue,
+							Int32GetDatum(constFlag)));
 
-	if (*result < 0.0 || *result > 1.0)
-		elog(ERROR, "restriction_selectivity: bad value %f", *result);
+	if (result < 0.0 || result > 1.0)
+		elog(ERROR, "restriction_selectivity: bad value %f", result);
 
-	return (Selectivity) *result;
+	return (Selectivity) result;
 }
 
 /*
@@ -231,22 +228,19 @@ join_selectivity(Oid functionObjectId,
 				 Oid relationObjectId2,
 				 AttrNumber attributeNumber2)
 {
-	float64		result;
+	float8		result;
 
-	result = (float64) fmgr(functionObjectId,
-							(char *) operatorObjectId,
-							(char *) relationObjectId1,
-							(char *) (int) attributeNumber1,
-							(char *) relationObjectId2,
-							(char *) (int) attributeNumber2,
-							NULL);
-	if (!PointerIsValid(result))
-		elog(ERROR, "join_selectivity: bad pointer");
+	result = DatumGetFloat8(OidFunctionCall5(functionObjectId,
+							ObjectIdGetDatum(operatorObjectId),
+							ObjectIdGetDatum(relationObjectId1),
+							Int16GetDatum(attributeNumber1),
+							ObjectIdGetDatum(relationObjectId2),
+							Int16GetDatum(attributeNumber2)));
 
-	if (*result < 0.0 || *result > 1.0)
-		elog(ERROR, "join_selectivity: bad value %f", *result);
+	if (result < 0.0 || result > 1.0)
+		elog(ERROR, "join_selectivity: bad value %f", result);
 
-	return (Selectivity) *result;
+	return (Selectivity) result;
 }
 
 /*

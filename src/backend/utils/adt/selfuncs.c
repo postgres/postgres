@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.67 2000/05/28 17:56:06 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.68 2000/05/30 04:24:51 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,6 +32,7 @@
 #include "catalog/pg_statistic.h"
 #include "catalog/pg_type.h"
 #include "mb/pg_wchar.h"
+#include "optimizer/clauses.h"
 #include "optimizer/cost.h"
 #include "parser/parse_func.h"
 #include "parser/parse_oper.h"
@@ -157,11 +158,13 @@ eqsel(Oid opid,
 
 				/* be careful to apply operator right way 'round */
 				if (flag & SEL_RIGHT)
-					mostcommon = (bool)
-						DatumGetUInt8(fmgr(eqproc, commonval, value));
+					mostcommon = DatumGetBool(OidFunctionCall2(eqproc,
+															   commonval,
+															   value));
 				else
-					mostcommon = (bool)
-						DatumGetUInt8(fmgr(eqproc, value, commonval));
+					mostcommon = DatumGetBool(OidFunctionCall2(eqproc,
+															   value,
+															   commonval));
 
 				if (mostcommon)
 				{
@@ -1278,8 +1281,10 @@ getattstatistics(Oid relid,
 		{
 			char	   *strval = textout(val);
 
-			*commonval = (Datum)
-				(*fmgr_faddr(&inputproc)) (strval, typelem, typmod);
+			*commonval = FunctionCall3(&inputproc,
+									   CStringGetDatum(strval),
+									   ObjectIdGetDatum(typelem),
+									   Int32GetDatum(typmod));
 			pfree(strval);
 		}
 	}
@@ -1287,7 +1292,7 @@ getattstatistics(Oid relid,
 	if (loval)
 	{
 		text	   *val = (text *) SysCacheGetAttr(STATRELID, tuple,
-											  Anum_pg_statistic_staloval,
+												   Anum_pg_statistic_staloval,
 												   &isnull);
 
 		if (isnull)
@@ -1299,8 +1304,10 @@ getattstatistics(Oid relid,
 		{
 			char	   *strval = textout(val);
 
-			*loval = (Datum)
-				(*fmgr_faddr(&inputproc)) (strval, typelem, typmod);
+			*loval = FunctionCall3(&inputproc,
+								   CStringGetDatum(strval),
+								   ObjectIdGetDatum(typelem),
+								   Int32GetDatum(typmod));
 			pfree(strval);
 		}
 	}
@@ -1320,8 +1327,10 @@ getattstatistics(Oid relid,
 		{
 			char	   *strval = textout(val);
 
-			*hival = (Datum)
-				(*fmgr_faddr(&inputproc)) (strval, typelem, typmod);
+			*hival = FunctionCall3(&inputproc,
+								   CStringGetDatum(strval),
+								   ObjectIdGetDatum(typelem),
+								   Int32GetDatum(typmod));
 			pfree(strval);
 		}
 	}

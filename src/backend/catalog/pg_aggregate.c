@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_aggregate.c,v 1.32 2000/04/16 04:16:09 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_aggregate.c,v 1.33 2000/05/30 04:24:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -268,7 +268,7 @@ AggregateCreate(char *aggName,
 	heap_close(aggdesc, RowExclusiveLock);
 }
 
-char *
+Datum
 AggNameGetInitVal(char *aggName, Oid basetype, int xfuncno, bool *isNull)
 {
 	HeapTuple	tup;
@@ -278,8 +278,8 @@ AggNameGetInitVal(char *aggName, Oid basetype, int xfuncno, bool *isNull)
 				typinput,
 				typelem;
 	text	   *textInitVal;
-	char	   *strInitVal,
-			   *initVal;
+	char	   *strInitVal;
+	Datum		initVal;
 
 	Assert(PointerIsValid(aggName));
 	Assert(PointerIsValid(isNull));
@@ -320,7 +320,7 @@ AggNameGetInitVal(char *aggName, Oid basetype, int xfuncno, bool *isNull)
 	if (*isNull)
 	{
 		heap_close(aggRel, AccessShareLock);
-		return (char *) NULL;
+		return PointerGetDatum(NULL);
 	}
 	strInitVal = textout(textInitVal);
 
@@ -337,7 +337,10 @@ AggNameGetInitVal(char *aggName, Oid basetype, int xfuncno, bool *isNull)
 	typinput = ((Form_pg_type) GETSTRUCT(tup))->typinput;
 	typelem = ((Form_pg_type) GETSTRUCT(tup))->typelem;
 
-	initVal = fmgr(typinput, strInitVal, typelem, -1);
+	initVal = OidFunctionCall3(typinput,
+							   CStringGetDatum(strInitVal),
+							   ObjectIdGetDatum(typelem),
+							   Int32GetDatum(-1));
 
 	pfree(strInitVal);
 	return initVal;
