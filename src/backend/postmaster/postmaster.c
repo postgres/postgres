@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.261 2001/11/12 05:43:24 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.262 2001/12/04 16:17:48 tgl Exp $
  *
  * NOTES
  *
@@ -280,7 +280,9 @@ checkDataDir(const char *checkdir)
 {
 	char		path[MAXPGPATH];
 	FILE	   *fp;
+#ifndef __CYGWIN__
 	struct stat stat_buf;
+#endif
 
 	if (checkdir == NULL)
 	{
@@ -295,7 +297,13 @@ checkDataDir(const char *checkdir)
 
 	/*
 	 * Check if the directory has group or world access.  If so, reject.
+	 *
+	 * XXX temporarily suppress check when on Windows, because there may
+	 * not be proper support for Unix-y file permissions.  Need to think
+	 * of a reasonable check to apply on Windows.
 	 */
+#ifndef __CYGWIN__
+
 	if (stat(checkdir, &stat_buf) == -1)
 	{
 		if (errno == ENOENT)
@@ -308,6 +316,8 @@ checkDataDir(const char *checkdir)
 	if (stat_buf.st_mode & (S_IRWXG | S_IRWXO))
 		elog(FATAL, "data directory %s has group or world access; permissions should be u=rwx (0700)",
 			 checkdir);
+
+#endif /* !__CYGWIN__ */
 
 	/* Look for PG_VERSION before looking for pg_control */
 	ValidatePgVersion(checkdir);
