@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.338 2004/06/16 01:26:49 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.339 2004/06/25 17:20:28 tgl Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -2238,6 +2238,8 @@ DATA(insert OID = 1387 (  pg_get_constraintdef PGNSP PGUID 12 f f t f s 1 25 "26
 DESCR("constraint description");
 DATA(insert OID = 1716 (  pg_get_expr		   PGNSP PGUID 12 f f t f s 2 25 "25 26" _null_	pg_get_expr - _null_ ));
 DESCR("deparse an encoded expression");
+DATA(insert OID = 1665 (  pg_get_serial_sequence	PGNSP PGUID 12 f f t f s 2 25 "25 25" _null_  pg_get_serial_sequence - _null_ ));
+DESCR("name of sequence for a serial column");
 
 
 /* Generic referential integrity constraint triggers */

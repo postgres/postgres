@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.210 2004/06/24 19:57:14 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.211 2004/06/25 17:20:21 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -7228,29 +7228,13 @@ SELECT pg_type_is_visible('myschema.widget'::regtype);
     <primary>pg_get_userbyid</primary>
    </indexterm>
 
+   <indexterm zone="functions-misc">
+    <primary>pg_get_serial_sequence</primary>
+   </indexterm>
+
   <para>
    <xref linkend="functions-misc-catalog-table"> lists functions that
    extract information from the system catalogs.
-   <function>pg_get_viewdef</function>,
-   <function>pg_get_ruledef</function>,
-   <function>pg_get_indexdef</function>,
-   <function>pg_get_triggerdef</function>, and
-   <function>pg_get_constraintdef</function> respectively
-   reconstruct the creating command for a view, rule, index, trigger, or
-   constraint.  (Note that this is a decompiled reconstruction, not
-   the original text of the command.)  Most of these come in two
-   variants, one of which can optionally <quote>pretty-print</> the result.
-   The pretty-printed format is more readable, but the default format is more
-   likely to be
-   interpreted the same way by future versions of <productname>PostgreSQL</>;
-   avoid using pretty-printed output for dump purposes.
-   Passing <literal>false</> for the pretty-print parameter yields the
-   same result as the variant that does not have the parameter at all.
-   <function>pg_get_expr</function> decompiles the internal form of an
-   individual expression, such as the default value for a column.  It
-   may be useful when examining the contents of system catalogs.
-   <function>pg_get_userbyid</function>
-   extracts a user's name given a user ID number.
   </para>
 
    <table id="functions-misc-catalog-table">
@@ -7335,9 +7319,48 @@ SELECT pg_type_is_visible('myschema.widget'::regtype);
        <entry><type>name</type></entry>
        <entry>get user name with given ID</entry>
       </row>
+      <row>
+       <entry><literal><function>pg_get_serial_sequence</function>(<parameter>table_name</parameter>, <parameter>column_name</parameter>)</literal></entry>
+       <entry><type>text</type></entry>
+       <entry>get name of the sequence that a serial or bigserial column
+       uses</entry>
+      </row>
      </tbody>
     </tgroup>
    </table>
+
+  <para>
+   <function>pg_get_viewdef</function>,
+   <function>pg_get_ruledef</function>,
+   <function>pg_get_indexdef</function>,
+   <function>pg_get_triggerdef</function>, and
+   <function>pg_get_constraintdef</function> respectively
+   reconstruct the creating command for a view, rule, index, trigger, or
+   constraint.  (Note that this is a decompiled reconstruction, not
+   the original text of the command.)
+   <function>pg_get_expr</function> decompiles the internal form of an
+   individual expression, such as the default value for a column.  It
+   may be useful when examining the contents of system catalogs.
+   Most of these functions come in two
+   variants, one of which can optionally <quote>pretty-print</> the result.
+   The pretty-printed format is more readable, but the default format is more
+   likely to be
+   interpreted the same way by future versions of <productname>PostgreSQL</>;
+   avoid using pretty-printed output for dump purposes.
+   Passing <literal>false</> for the pretty-print parameter yields the
+   same result as the variant that does not have the parameter at all.
+  </para>
+
+  <para>
+   <function>pg_get_userbyid</function>
+   extracts a user's name given a user ID number.
+   <function>pg_get_serial_sequence</function>
+   fetches the name of the sequence associated with a serial or
+   bigserial column.  The name is suitably formatted
+   for passing to the sequence functions (see <xref
+   linkend="functions-sequence">).
+   NULL is returned if the column does not have a sequence attached.
+  </para>
 
    <indexterm zone="functions-misc">
     <primary>obj_description</primary>

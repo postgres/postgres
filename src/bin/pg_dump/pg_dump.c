@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.376 2004/06/21 13:36:41 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.377 2004/06/25 17:20:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -7319,9 +7319,27 @@ dumpSequence(Archive *fout, TableInfo *tbinfo)
 
 	if (!schemaOnly)
 	{
+		TableInfo	*owning_tab;
+
 		resetPQExpBuffer(query);
 		appendPQExpBuffer(query, "SELECT pg_catalog.setval(");
-		appendStringLiteral(query, fmtId(tbinfo->dobj.name), true);
+		/*
+		 * If this is a SERIAL sequence, then use the pg_get_serial_sequence
+		 * function to avoid hard-coding the sequence name.  Note that this
+		 * implicitly assumes that the sequence and its owning table are in
+		 * the same schema, because we don't schema-qualify the reference.
+		 */
+		if (OidIsValid(tbinfo->owning_tab) &&
+			(owning_tab = findTableByOid(tbinfo->owning_tab)) != NULL)
+		{
+			appendPQExpBuffer(query, "pg_catalog.pg_get_serial_sequence(");
+			appendStringLiteral(query, fmtId(owning_tab->dobj.name), true);
+			appendPQExpBuffer(query, ", ");
+			appendStringLiteral(query, owning_tab->attnames[tbinfo->owning_col-1], true);
+			appendPQExpBuffer(query, ")");
+		}
+		else
+			appendStringLiteral(query, fmtId(tbinfo->dobj.name), true);
 		appendPQExpBuffer(query, ", %s, %s);\n",
 						  last, (called ? "true" : "false"));
 

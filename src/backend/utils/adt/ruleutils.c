@@ -3,7 +3,7 @@
  *				back to source text
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.173 2004/06/18 06:13:49 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.174 2004/06/25 17:20:24 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -42,12 +42,14 @@
 
 #include "access/genam.h"
 #include "catalog/catname.h"
+#include "catalog/dependency.h"
 #include "catalog/heap.h"
 #include "catalog/index.h"
 #include "catalog/indexing.h"
 #include "catalog/namespace.h"
 #include "catalog/pg_cast.h"
 #include "catalog/pg_constraint.h"
+#include "catalog/pg_depend.h"
 #include "catalog/pg_index.h"
 #include "catalog/pg_opclass.h"
 #include "catalog/pg_operator.h"
@@ -1231,6 +1233,116 @@ pg_get_userbyid(PG_FUNCTION_ARGS)
 
 	PG_RETURN_NAME(result);
 }
+
+
+/*
+ * pg_get_serial_sequence
+ *		Get the name of the sequence used by a serial column,
+ *		formatted suitably for passing to setval, nextval or currval.
+ */
+Datum
+pg_get_serial_sequence(PG_FUNCTION_ARGS)
+{
+	text	*tablename = PG_GETARG_TEXT_P(0);
+	text	*columnname = PG_GETARG_TEXT_P(1);
+	RangeVar   *tablerv;
+	Oid			tableOid;
+	char	*column;
+	AttrNumber	attnum;
+	Oid		sequenceId = InvalidOid;
+	Relation	depRel;
+	ScanKeyData key[3];
+	SysScanDesc scan;
+	HeapTuple	tup;
+
+	/* Get the OID of the table */
+	tablerv = makeRangeVarFromNameList(textToQualifiedNameList(tablename,
+													"pg_get_serial_sequence"));
+	tableOid = RangeVarGetRelid(tablerv, false);
+
+	/* Get the number of the column */
+	column = DatumGetCString(DirectFunctionCall1(textout,
+												 PointerGetDatum(columnname)));
+
+	attnum = get_attnum(tableOid, column);
+	if (attnum == InvalidAttrNumber)
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_COLUMN),
+				 errmsg("column \"%s\" of relation \"%s\" does not exist",
+						column, tablerv->relname)));
+
+	/* Search the dependency table for the dependent sequence */
+	depRel = heap_openr(DependRelationName, AccessShareLock);
+
+	ScanKeyInit(&key[0],
+				Anum_pg_depend_refclassid,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(RelOid_pg_class));
+	ScanKeyInit(&key[1],
+				Anum_pg_depend_refobjid,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(tableOid));
+	ScanKeyInit(&key[2],
+				Anum_pg_depend_refobjsubid,
+				BTEqualStrategyNumber, F_INT4EQ,
+				Int32GetDatum(attnum));
+
+	scan = systable_beginscan(depRel, DependReferenceIndex, true,
+							  SnapshotNow, 3, key);
+
+	while (HeapTupleIsValid(tup = systable_getnext(scan)))
+	{
+		Form_pg_depend	deprec = (Form_pg_depend) GETSTRUCT(tup);
+
+		/*
+		 * We assume any internal dependency of a relation on a column
+		 * must be what we are looking for.
+		 */
+		if (deprec->classid == RelOid_pg_class &&
+			deprec->objsubid == 0 &&
+			deprec->deptype == DEPENDENCY_INTERNAL)
+		{
+			sequenceId = deprec->objid;
+			break;
+		}
+	}
+
+	systable_endscan(scan);
+	heap_close(depRel, AccessShareLock);
+
+	if (OidIsValid(sequenceId))
+	{
+		HeapTuple	classtup;
+		Form_pg_class	classtuple;
+		char *nspname;
+		char *result;
+
+		/* Get the sequence's pg_class entry */
+		classtup = SearchSysCache(RELOID,
+								  ObjectIdGetDatum(sequenceId),
+								  0, 0, 0);
+		if (!HeapTupleIsValid(classtup))
+			elog(ERROR, "cache lookup failed for relation %u", sequenceId);
+		classtuple = (Form_pg_class) GETSTRUCT(classtup);
+
+		/* Get the namespace */
+		nspname = get_namespace_name(classtuple->relnamespace);
+		if (!nspname)
+			elog(ERROR, "cache lookup failed for namespace %u",
+				 classtuple->relnamespace);
+
+		/* And construct the result string */
+		result = quote_qualified_identifier(nspname,
+											NameStr(classtuple->relname));
+
+		ReleaseSysCache(classtup);
+
+		PG_RETURN_TEXT_P(string_to_text(result));
+	}
+
+	PG_RETURN_NULL();
+}
+
 
 /* ----------
  * deparse_expression			- General utility for deparsing expressions
