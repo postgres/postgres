@@ -2,7 +2,7 @@
 TODO list for PostgreSQL
 ========================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Tue Jan  4 00:35:42 EST 2005
+Last updated:		Wed Jan 19 09:17:41 EST 2005
 
 The most recent version of this document can be viewed at the PostgreSQL web
 site, http://www.PostgreSQL.org.
@@ -169,6 +169,7 @@ Data Types
 * Prevent INET cast to CIDR if the unmasked bits are not zero, or
   zero the bits
 * Prevent INET cast to CIDR from droping netmask, SELECT '1.1.1.1'::inet::cidr
+* Add 'tid != tid ' operator for use in corruption recovery
 
 
 * ARRAYS
