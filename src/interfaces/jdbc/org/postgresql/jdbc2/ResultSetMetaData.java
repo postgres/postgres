@@ -550,7 +550,7 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData
 				return("java.sql.Timestamp");
 			case Types.BINARY:
 			case Types.VARBINARY:
-				return("java.sql.Object");
+				return("[B");
 			case Types.ARRAY:
 				return("java.sql.Array");
 			default:
