@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/tab-complete.c,v 1.33 2001/06/11 22:12:48 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/tab-complete.c,v 1.34 2001/06/20 18:39:14 petere Exp $
  */
 
 /*----------------------------------------------------------------------
@@ -62,6 +62,9 @@
 
 #ifdef HAVE_RL_FILENAME_COMPLETION_FUNCTION
 #define filename_completion_function rl_filename_completion_function
+#else
+/* missing in some header files */
+extern char *filename_completion_function();
 #endif
 
 #ifdef HAVE_RL_COMPLETION_MATCHES
