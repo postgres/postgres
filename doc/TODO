@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Wed Oct 11 23:04:31 EDT 2000
+Last updated:		Thu Oct 12 00:24:09 EDT 2000
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -87,7 +87,8 @@ TYPES
 * Allow LOCALE on a per-column basis, default to ASCII
 * Allow nulls in arrays
 * Allow arrays to be ORDER'ed
-* Add foreign key constraint for arrays
+* Change foreign key constraint for array -> element to mean element
+   in array
 * Remove Money type, add money formatting for decimal type
 * Declare typein/out functions in pg_proc with a special "C string" data type
 * Add non-large-object binary field
@@ -152,6 +153,7 @@ CLIENTS
 * -make pg_dump dump in oid order, so dependencies are resolved (Philip)
 * allow psql \d to show primary and foreign keys
 * allow psql \d to show temporary table schema
+* add XML interface capability
 
 REFERENTIAL INTEGRITY
 
