@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_opclass.sgml,v 1.3 2002/09/21 18:32:54 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_opclass.sgml,v 1.4 2002/10/04 22:19:29 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -209,9 +209,10 @@ CREATE OPERATOR CLASS
    are for different index access methods.
   </para>
   <para>
-   The user who defines an operator class becomes its owner.  The user
-   must own the data type for which the operator class is being defined,
-   and must have execute permission for all referenced operators and functions.
+   The user who defines an operator class becomes its owner.  Presently,
+   the creating user must be a superuser.  (This restriction is made because
+   an erroneous operator class definition could confuse or even crash the
+   server.)
   </para>
 
   <para>

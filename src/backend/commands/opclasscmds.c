@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/opclasscmds.c,v 1.5 2002/09/04 20:31:15 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/opclasscmds.c,v 1.6 2002/10/04 22:19:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -96,12 +96,25 @@ DefineOpClass(CreateOpClassStmt *stmt)
 
 	ReleaseSysCache(tup);
 
+	/*
+	 * Currently, we require superuser privileges to create an opclass.
+	 * This seems necessary because we have no way to validate that the
+	 * offered set of operators and functions are consistent with the AM's
+	 * expectations.  It would be nice to provide such a check someday,
+	 * if it can be done without solving the halting problem :-(
+	 */
+	if (!superuser())
+		elog(ERROR, "Must be superuser to create an operator class");
+
 	/* Look up the datatype */
 	typeoid = typenameTypeId(stmt->datatype);
 
+#ifdef NOT_USED
+	/* XXX this is unnecessary given the superuser check above */
 	/* Check we have ownership of the datatype */
 	if (!pg_type_ownercheck(typeoid, GetUserId()))
 		aclcheck_error(ACLCHECK_NOT_OWNER, format_type_be(typeoid));
+#endif
 
 	/* Storage datatype is optional */
 	storageoid = InvalidOid;
