@@ -1,8 +1,8 @@
 all: stp.so test1 test2 test3 test4 test5 perftest
 
 #LDFLAGS=-g -I /usr/local/pgsql/include -L/usr/local/pgsql/lib -lecpg -lpq -lcrypt
-LDFLAGS=-g -I../include -I/usr/include/postgresql  -L/usr/lib/postgresql -L../lib -lecpg -lpq -lcrypt
-#LDFLAGS=-g -I/usr/include/postgresql -lecpg -lpq -lcrypt
+#LDFLAGS=-g -I../include -I/usr/include/postgresql  -L/usr/lib/postgresql -L../lib -lecpg -lpq -lcrypt
+LDFLAGS=-g -I/usr/include/postgresql -lecpg -lpq -lcrypt
 
 #ECPG=/usr/local/pgsql/bin/ecpg
 ECPG=../preproc/ecpg -I../include

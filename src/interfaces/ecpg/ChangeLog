@@ -799,5 +799,15 @@ Tue Feb 15 11:14:07 CET 2000
 
 	- Synced keyword.c.
 	- Synced preproc.y with gram.y.
+
+Tue Feb 15 17:39:19 CET 2000
+
+	- Do only write the first 70 bytes of the error message to the 
+	  sqlca structure since there are only 70 bytes free space.
 	- Set library version to 3.0.10.
+
+Wed Feb 16 11:57:02 CET 2000
+
+	- Fixed library to be able to input complete arrays.
+	- Set library version to 3.1.0.
 	- Set ecpg version to 2.7.0.

@@ -18,7 +18,7 @@ void warn(void)
 exec sql include sqlca;
 
 /* comment */
-exec sql define AMOUNT 4;
+exec sql define AMOUNT 6;
 
 exec sql type intarray is int[AMOUNT];
 exec sql type string is char(8); 
@@ -97,12 +97,18 @@ exec sql end declare section;
 	printf("Database: mm\n");
         for (i=0, j=sqlca.sqlerrd[2]; i<j; i++)
 	{
-            printf("name[%d]=%8.8s\tamount[%d]=%d\tletter[%d]=%c\n", i, name[i], i, amount[i],i, letter[i][0]);
-	    amount[i]+=1000;
-	}
+	    exec sql begin declare section;
+	    char n[8], l = letter[i][0];
+	    int a = amount[i];
+	    exec sql end declare section;
 
-	strcpy(msg, "insert");
-	exec sql at pm insert into "Test" (name, amount, letter) values (:name, :amount, :letter);
+	    strncpy(n, name[i], 8);
+            printf("name[%d]=%8.8s\tamount[%d]=%d\tletter[%d]=%c\n", i, n, i, a, i, l);
+	    amount[i]+=1000;
+
+	    strcpy(msg, "insert");
+	    exec sql at pm insert into "Test" (name, amount, letter) values (:n, :a, :l);	     
+	}
 
         strcpy(msg, "select");
         exec sql at pm select * into :name, :amount, :letter from "Test";

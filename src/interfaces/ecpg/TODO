@@ -13,7 +13,8 @@ stderr. Instead it should be listed as a warning.
 The error handling has to be improved by adding additional error-rules to
 the parser.
 
-it would be nice to be able to use :var[:index] as cvariable for an array var
+it would be nice to be able to use :var[:index] or :var[<integer>] as
+cvariable for an array var
 
 How can one insert arrays from c variables?
 
