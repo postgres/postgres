@@ -14,7 +14,7 @@
   alink="#0000ff">
     <H1>Frequently Asked Questions (FAQ) for PostgreSQL</H1>
 
-    <P>Last updated: Thu Feb 14 12:14:47 EST 2002</P>
+    <P>Last updated: Mon Feb 18 00:08:54 EST 2002</P>
 
     <P>Current maintainer: Bruce Momjian (<A href=
     "mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</A>)<BR>
@@ -855,27 +855,27 @@
 
     <P>As an example, consider a file of 100,000 lines with an integer
     and text description on each line. Suppose the text string avergages
-    twenty characters in length. The flat file would be 2.8 MB. The size
+    twenty bytes in length. The flat file would be 2.8 MB. The size
     of the PostgreSQL database file containing this data can be
-    estimated as 6.6 MB:</P>
+    estimated as 6.4 MB:</P>
 <PRE>
     36 bytes: each row header (approximate)
-    26 bytes: two int fields @ 4 bytes each
+    24 bytes: one int field and one text filed
    + 4 bytes: pointer on page to tuple
    ----------------------------------------
-    66 bytes per row
+    64 bytes per row
 
    The data page size in PostgreSQL is 8192 bytes (8 KB), so:
 
    8192 bytes per page
-   -------------------   =  124 rows per database page (rounded down)
-     66 bytes per row
+   -------------------   =  128 rows per database page (rounded down)
+     64 bytes per row
 
    100000 data rows
-   --------------------  =  807 database pages (rounded up)
-      124 rows per page
+   --------------------  =  782 database pages (rounded up)
+      128 rows per page
 
-807 database pages * 8192 bytes per page  =  6,610,944 bytes (6.6 MB)
+782 database pages * 8192 bytes per page  =  6,406,144 bytes (6.4 MB)
 </PRE>
 
     <P>Indexes do not require as much overhead, but do contain the data
