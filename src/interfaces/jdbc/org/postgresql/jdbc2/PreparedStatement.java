@@ -310,12 +310,11 @@ public class PreparedStatement extends Statement implements java.sql.PreparedSta
 	 * @param x the parameter value
 	 * @exception SQLException if a database access error occurs
 	 */
+        private static final SimpleDateFormat DF1 = new SimpleDateFormat("yyyy-MM-dd");
 	public void setDate(int parameterIndex, java.sql.Date x) throws SQLException
 	{
-	  SimpleDateFormat df = new SimpleDateFormat("''yyyy-MM-dd''");
-	  
-	  set(parameterIndex, df.format(x));
-	  
+	  set(parameterIndex, DF1.format(x));
+
 	  // The above is how the date should be handled.
 	  //
 	  // However, in JDK's prior to 1.1.6 (confirmed with the
@@ -349,9 +348,17 @@ public class PreparedStatement extends Statement implements java.sql.PreparedSta
 	 * @param x the parameter value
 	 * @exception SQLException if a database access error occurs
 	 */
+        private static SimpleDateFormat DF2 = getDF2();
+        private static SimpleDateFormat getDF2() {
+          SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+          sdf.setTimeZone(TimeZone.getTimeZone("GMT"));
+          return sdf;
+        }
 	public void setTimestamp(int parameterIndex, Timestamp x) throws SQLException
-	{
-		set(parameterIndex, "'" + x.toString() + "'");
+        {
+            StringBuffer strBuf = new StringBuffer("'");
+            strBuf.append(DF2.format(x)).append('.').append(x.getNanos()/10000000).append("+00'");
+	    set(parameterIndex, strBuf.toString());
 	}
 
 	/**
