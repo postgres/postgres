@@ -6,7 +6,7 @@
 
   This file now requires Ant 1.4.1.  2002-04-18
 
-  $Header: /cvsroot/pgsql/src/interfaces/jdbc/Attic/build.xml,v 1.29 2002/09/25 07:01:30 barry Exp $
+  $Header: /cvsroot/pgsql/src/interfaces/jdbc/Attic/build.xml,v 1.30 2002/10/20 00:10:55 barry Exp $
 
 -->
 
@@ -156,10 +156,14 @@
     <filter token="JDBCCONNECTCLASS" value="${connectclass}" />
     <filter token="DEF_PGPORT" value="${def_pgport}" />
 
+     <fail unless="major" message="'major' undefined. Please follow the directions in README."/>
+     <fail unless="minor" message="'minor' undefined. Please follow the directions in README."/>
+ 
     <!-- Put a check for the current version here -->
 
     <!-- now copy and filter the file -->
     <copy file="${package}/Driver.java.in"
+          overwrite="true"
           tofile="${package}/Driver.java"
           filtering="yes" />
 

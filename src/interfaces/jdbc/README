@@ -1,13 +1,10 @@
 This is a simple readme describing how to compile and use the jdbc driver.
 
-This file was amended on January 17 2001 to reflect the changes made in the 7.1
-release.
-
 ---------------------------------------------------------------------------
 
-This isn't a guide on how to use JDBC - for that refer to Javasoft's web site:
+This isn't a guide on how to use JDBC - for that refer to sun's web site:
 
-	http://www.javasoft.com/
+	http://java.sun.com/
 
 For problems with this driver, then refer to the postgres-jdbc email
 list:
@@ -17,10 +14,6 @@ list:
 The Driver's home page is:
 
 	http://jdbc.postgresql.org/
-or	http://www.retep.org.uk/postgresql/
-
-NB: They are both the same physical directory so both will always be in sync
-(unless the laws of physics break down ;-) )
 
 ---------------------------------------------------------------------------
 
@@ -39,19 +32,9 @@ the directory PREFIX/share/java.
 
 That jar file will contain the driver for _your_ version of the JDK.
 
-Note: As of 7.1, you can build from the top-level directory or from
-src/interfaces/jdbc.
-
 REMEMBER: Once you have compiled the driver, it will work on ALL platforms
 that support that version of the API. You don't need to build it for each
 platform.
-
-That means you don't have to compile it on every platform. Believe me, I
-still hear from people who ask me "I've compiled it ok under Solaris, but it
-won't compile under Linux" - there's no difference.
-
-Don't try to run javac directly.  Don't try to run ant directly.  Neither
-will work.
 
 Possible problems
 
@@ -63,11 +46,8 @@ postgresql/Driver.java:87: interface java.sql.Connection is an interface. It can
 This is caused by not having the current directory in your CLASSPATH. Under
 Linux/Solaris, unset the CLASSPATH environment variable, and rerun ant.
 
-If you are still having problems, I keep a copy of the driver (for different
-versions of the backend) on my web site http://www.retep.org.uk/postgres/
-or http://jdbc.postgresql.org/
-
-More details are in the Implementation file src/interfaces/jdbc/Implementation
+If you are still having problems, prebuilt versions of the driver 
+are available at http://jdbc.postgresql.org/
 
 ---------------------------------------------------------------------------
 
@@ -78,9 +58,6 @@ To install the driver, the .class files have to be in the classpath.
 ie: under LINUX/SOLARIS (the example here is my linux box):
 
 	export CLASSPATH=.:/usr/local/pgsql/share/java/postgresql.jar
-
-Please don't be tempted to extract the files from the .jar file. There are a
-lot of files in there, and you may break the Exception handling.
 
 ---------------------------------------------------------------------------
 
@@ -177,10 +154,6 @@ For example:
 
 Large Object API
 
-Most of the time, you can use the getBytes()/setBytes() methods to read and
-write small Large Objects. However, PostgreSQL's own internal api's are
-available. These allow you to access the object as if it was a file.
-
 The first thing you need to do is to open the LargeObjectManager. This class
 handles the opening of existing objects, and creating new ones. To do this,
 you use the following line of code:
@@ -227,28 +200,6 @@ SQLException to be thrown.
 
 			------------------
 
-Date datatype:
-
-The driver now issues the "show datestyle;" query when it first connects, so
-any call to ResultSet.getDate() how returns the correct date.
-
-One caveat though: if you change the datestyle from within JDBC, you must also
-issue the "show datestyle" query. Without this, the driver will not know of
-the change.
-
-ie:
-	Statement s = db.createStatement();
-	...
-	s.executeUpdate("set datestyle='european'");
-	s.executeUpdate("show datestyle");
-	..
-	s.close();
-
-Please note: This may change later, so that the driver uses the same format
-internally (similar to how the ODBC driver works).
-
-			------------------
-
 JDBC supports database specific data types using the getObject() call. The
 following types have their own Java equivalents supplied by the driver:
 
@@ -269,9 +220,3 @@ syntax for writing these to the database.
 
 ---------------------------------------------------------------------------
 
-Peter T Mount, December 29 1998
-home email: peter@retep.org.uk		http://www.retep.org.uk
-work email: petermount@it.maidstone.gov.uk or peter@taer.maidstone.gov.uk
-
-PS: Please use the home email whenever possible. If you must contact me at work
-then please cc my home one at the same time.
