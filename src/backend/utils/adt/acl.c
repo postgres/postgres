@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/acl.c,v 1.55 2000/12/03 20:45:35 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/acl.c,v 1.56 2001/01/14 19:23:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -333,8 +333,10 @@ aclitemout(PG_FUNCTION_ARGS)
  * aclitemeq
  * aclitemgt
  *		AclItem equality and greater-than comparison routines.
- *		Two AclItems are equal iff they have the
- *		same identifier (and identifier type).
+ *		Two AclItems are considered equal iff they have the
+ *		same identifier (and identifier type); the mode is ignored.
+ *		Note that these routines are really only useful for sorting
+ *		AclItems into identifier order.
  *
  * RETURNS:
  *		a boolean value indicating = or >
@@ -581,8 +583,12 @@ aclcontains(PG_FUNCTION_ARGS)
 	num = ACL_NUM(acl);
 	aidat = ACL_DAT(acl);
 	for (i = 0; i < num; ++i)
-		if (aclitemeq(aip, aidat + i))
+	{
+		/* Note that aclitemeq only considers id, not mode */
+		if (aclitemeq(aip, aidat + i) &&
+			aip->ai_mode == aidat[i].ai_mode)
 			PG_RETURN_BOOL(true);
+	}
 	PG_RETURN_BOOL(false);
 }
 
