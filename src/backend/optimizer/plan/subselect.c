@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/subselect.c,v 1.46 2000/11/21 00:17:59 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/subselect.c,v 1.47 2001/01/09 03:48:51 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -125,6 +125,7 @@ make_subplan(SubLink *slink)
 {
 	SubPlan    *node = makeNode(SubPlan);
 	Query	   *subquery = (Query *) (slink->subselect);
+	Oid			result_type = exprType((Node *) slink);
 	double		tuple_fraction;
 	Plan	   *plan;
 	List	   *lst;
@@ -368,7 +369,7 @@ make_subplan(SubLink *slink)
 		/*
 		 * Make expression of SUBPLAN type
 		 */
-		expr->typeOid = BOOLOID;/* bogus, but we don't really care */
+		expr->typeOid = result_type;
 		expr->opType = SUBPLAN_EXPR;
 		expr->oper = (Node *) node;
 
