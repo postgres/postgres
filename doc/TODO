@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Thu Sep 23 18:04:44 EDT 1999
+Last updated:		Sun Sep 26 20:37:50 EDT 1999
 
 Current maintainer:	Bruce Momjian (maillist@candle.pha.pa.us)
 
@@ -74,7 +74,8 @@ URGENT
 * Add OUTER joins, left and right(see TODO.detail/outer)(Thomas, Bruce)
 * Allow long tuples by chaining or auto-storing outside db (chaining,large objs)
 * Eliminate limits on query length
-* Fix memory leak for expressions?, aggregates?(see TODO.detail/memory)(Tom?)
+* Fix memory leak for expressions?(see TODO.detail/memory)(Tom?) 
+* -Fix memory leak for aggregates?
 
 ADMIN
 
