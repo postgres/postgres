@@ -2,7 +2,7 @@
 /* -----------------------------------------------------------------------
  * pg_locale.c
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/pg_locale.c,v 1.4 2000/04/12 17:15:51 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/pg_locale.c,v 1.5 2000/06/29 01:19:36 momjian Exp $
  *
  *
  *	 Portions Copyright (c) 1999-2000, PostgreSQL, Inc
@@ -40,8 +40,9 @@ PGLC_current(PG_LocaleCategories * lc)
 	lc->lc_time = setlocale(LC_TIME, NULL);
 	lc->lc_collate = setlocale(LC_COLLATE, NULL);
 	lc->lc_monetary = setlocale(LC_MONETARY, NULL);
+#ifdef LC_MESSAGES
 	lc->lc_messages = setlocale(LC_MESSAGES, NULL);
-
+#endif
 	return lc;
 }
 
@@ -55,14 +56,20 @@ PGLC_current(PG_LocaleCategories * lc)
 PG_LocaleCategories *
 PGLC_debug_lc(PG_LocaleCategories * lc)
 {
+#ifdef LC_MESSAGES
 	elog(DEBUG, "CURRENT LOCALE ENVIRONMENT:\n\nLANG:   \t%s\nLC_CTYPE:\t%s\nLC_NUMERIC:\t%s\nLC_TIME:\t%s\nLC_COLLATE:\t%s\nLC_MONETARY:\t%s\nLC_MESSAGES:\t%s\n",
+#else
+	elog(DEBUG, "CURRENT LOCALE ENVIRONMENT:\n\nLANG:   \t%s\nLC_CTYPE:\t%s\nLC_NUMERIC:\t%s\nLC_TIME:\t%s\nLC_COLLATE:\t%s\nLC_MONETARY:\t%s\n",
+#endif
 		 lc->lang,
 		 lc->lc_ctype,
 		 lc->lc_numeric,
 		 lc->lc_time,
 		 lc->lc_collate,
-		 lc->lc_monetary,
-		 lc->lc_messages
+		 lc->lc_monetary
+#ifdef LC_MESSAGES
+		 , lc->lc_messages
+#endif
 	);
 
 	return lc;
@@ -91,10 +98,10 @@ PGLC_setlocale(PG_LocaleCategories * lc)
 
 	if (!setlocale(LC_MONETARY, lc->lc_monetary))
 		elog(NOTICE, "pg_setlocale(): 'LC_MONETARY=%s' cannot be honored.", lc->lc_monetary);
-
+#ifdef LC_MESSAGES
 	if (!setlocale(LC_MESSAGES, lc->lc_messages))
 		elog(NOTICE, "pg_setlocale(): 'LC_MESSAGE=%s' cannot be honored.", lc->lc_messages);
-
+#endif
 	return lc;
 }
 
