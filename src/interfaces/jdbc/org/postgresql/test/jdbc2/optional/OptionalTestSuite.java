@@ -8,7 +8,7 @@ import junit.framework.TestSuite;
  * PooledConnection implementations.
  *
  * @author Aaron Mulder (ammulder@chariotsolutions.com)
- * @version $Revision: 1.3 $
+ * @version $Revision: 1.4 $
  */
 public class OptionalTestSuite extends TestSuite
 {
@@ -21,7 +21,7 @@ public class OptionalTestSuite extends TestSuite
 		TestSuite suite = new TestSuite();
 		suite.addTestSuite(SimpleDataSourceTest.class);
 		suite.addTestSuite(ConnectionPoolTest.class);
-        suite.addTestSuite(ConnectionPoolTest.class);
+        suite.addTestSuite(PoolingDataSourceTest.class);
 		return suite;
 	}
 }
