@@ -8,12 +8,13 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/Attic/fcache.c,v 1.30 2000/04/12 17:15:53 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/Attic/fcache.c,v 1.30.2.1 2000/06/06 17:45:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
+#include "access/heapam.h"
 #include "catalog/pg_language.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_type.h"
@@ -89,9 +90,9 @@ init_fcache(Oid foid,
 	if (!use_syscache)
 		elog(ERROR, "what the ????, init the fcache without the catalogs?");
 
-	procedureTuple = SearchSysCacheTuple(PROCOID,
-										 ObjectIdGetDatum(foid),
-										 0, 0, 0);
+	procedureTuple = SearchSysCacheTupleCopy(PROCOID,
+											 ObjectIdGetDatum(foid),
+											 0, 0, 0);
 
 	if (!HeapTupleIsValid(procedureTuple))
 		elog(ERROR, "init_fcache: Cache lookup failed for procedure %u",
@@ -258,6 +259,8 @@ init_fcache(Oid foid,
 	}
 	else
 		retval->func.fn_addr = (func_ptr) NULL;
+
+	heap_freetuple(procedureTuple);
 
 	return retval;
 }
