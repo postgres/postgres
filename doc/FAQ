@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Sun Jan 16 22:01:06 EST 2005
+   Last updated: Sun Jan 16 23:27:08 EST 2005
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -799,7 +799,7 @@ log_*
           + ~ (regular expression) patterns must start with ^.
      * The search string can not start with a character class, e.g.
        [a-e].
-     * Case-insensitive searches such as ILIKE and ~* do not utilise
+     * Case-insensitive searches such as ILIKE and ~* do not utilize
        indexes. Instead, use functional indexes, which are described in
        section 4.11.
      * The default C locale must be used during initdb because it is not
