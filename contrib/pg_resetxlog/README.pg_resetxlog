@@ -21,6 +21,9 @@ module pg_controldata and run it to be sure the DB state is SHUTDOWN).
 Then run pg_resetxlog, and finally install and start the new version of
 the database software.
 
+A tertiary purpose it its use by pg_upgrade to set the next transaction
+id in pg_control.
+
 To run the program, make sure your postmaster is not running, then
 (as the Postgres admin user) do
 

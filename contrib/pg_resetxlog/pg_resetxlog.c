@@ -23,7 +23,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/contrib/pg_resetxlog/Attic/pg_resetxlog.c,v 1.10 2001/11/05 17:46:23 momjian Exp $
+ * $Header: /cvsroot/pgsql/contrib/pg_resetxlog/Attic/pg_resetxlog.c,v 1.11 2002/01/10 17:51:52 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -709,34 +709,39 @@ PrintControlValues(void)
  * Write out the new pg_control file.
  */
 static void
-RewriteControlFile(void)
+RewriteControlFile(TransactionId set_xid)
 {
 	int			fd;
 	char		buffer[BLCKSZ]; /* need not be aligned */
 
-	/*
-	 * Adjust fields as needed to force an empty XLOG starting at the next
-	 * available segment.
-	 */
-	newXlogId = ControlFile.logId;
-	newXlogSeg = ControlFile.logSeg;
-	/* be sure we wrap around correctly at end of a logfile */
-	NextLogSeg(newXlogId, newXlogSeg);
-
-	ControlFile.checkPointCopy.redo.xlogid = newXlogId;
-	ControlFile.checkPointCopy.redo.xrecoff =
-		newXlogSeg * XLogSegSize + SizeOfXLogPHD;
-	ControlFile.checkPointCopy.undo = ControlFile.checkPointCopy.redo;
-	ControlFile.checkPointCopy.time = time(NULL);
-
-	ControlFile.state = DB_SHUTDOWNED;
-	ControlFile.time = time(NULL);
-	ControlFile.logId = newXlogId;
-	ControlFile.logSeg = newXlogSeg + 1;
-	ControlFile.checkPoint = ControlFile.checkPointCopy.redo;
-	ControlFile.prevCheckPoint.xlogid = 0;
-	ControlFile.prevCheckPoint.xrecoff = 0;
-
+	if (set_xid == 0)
+	{
+		/*
+		 * Adjust fields as needed to force an empty XLOG starting at the next
+		 * available segment.
+		 */
+		newXlogId = ControlFile.logId;
+		newXlogSeg = ControlFile.logSeg;
+		/* be sure we wrap around correctly at end of a logfile */
+		NextLogSeg(newXlogId, newXlogSeg);
+	
+		ControlFile.checkPointCopy.redo.xlogid = newXlogId;
+		ControlFile.checkPointCopy.redo.xrecoff =
+			newXlogSeg * XLogSegSize + SizeOfXLogPHD;
+		ControlFile.checkPointCopy.undo = ControlFile.checkPointCopy.redo;
+		ControlFile.checkPointCopy.time = time(NULL);
+	
+		ControlFile.state = DB_SHUTDOWNED;
+		ControlFile.time = time(NULL);
+		ControlFile.logId = newXlogId;
+		ControlFile.logSeg = newXlogSeg + 1;
+		ControlFile.checkPoint = ControlFile.checkPointCopy.redo;
+		ControlFile.prevCheckPoint.xlogid = 0;
+		ControlFile.prevCheckPoint.xrecoff = 0;
+	}
+	else
+		ControlFile.checkPointCopy.nextXid = set_xid;
+	
 	/* Contents are protected with a CRC */
 	INIT_CRC64(ControlFile.crc);
 	COMP_CRC64(ControlFile.crc,
@@ -926,9 +931,10 @@ WriteEmptyXLOG(void)
 static void
 usage(void)
 {
-	fprintf(stderr, "Usage: pg_resetxlog [-f] [-n] PGDataDirectory\n\n"
-			"  -f\tforce update to be done\n"
-			"  -n\tno update, just show extracted pg_control values (for testing)\n");
+	fprintf(stderr, "Usage: pg_resetxlog [-f] [-n] [-x xid] PGDataDirectory\n"
+			" -f\tforce update to be done\n"
+			" -n\tno update, just show extracted pg_control values (for testing)\n"
+			" -x XID\tset XID in pg_control\n");
 	exit(1);
 }
 
@@ -939,6 +945,7 @@ main(int argc, char **argv)
 	int			argn;
 	bool		force = false;
 	bool		noupdate = false;
+	TransactionId set_xid = 0;
 	int			fd;
 	char		path[MAXPGPATH];
 
@@ -950,6 +957,18 @@ main(int argc, char **argv)
 			force = true;
 		else if (strcmp(argv[argn], "-n") == 0)
 			noupdate = true;
+		else if (strcmp(argv[argn], "-x") == 0)
+		{
+			argn++;
+			if (argn == argc)
+				usage();
+			set_xid = strtoul(argv[argn], NULL, 0);
+			if (set_xid == 0)
+			{
+				fprintf(stderr, "XID can not be 0.");
+				exit(1);
+			}
+		}
 		else
 			usage();
 	}
@@ -993,6 +1012,20 @@ main(int argc, char **argv)
 		GuessControlValues();
 
 	/*
+	 * Set XID in pg_control and exit
+	 */
+	if (set_xid)
+	{
+		if (guessed)
+		{
+			printf("\npg_control appears corrupt.  Can not update XID.\n");
+			exit(1);
+		}
+		RewriteControlFile(set_xid);
+		exit(0);
+	}
+
+	/*
 	 * If we had to guess anything, and -f was not given, just print the
 	 * guessed values and exit.  Also print if -n is given.
 	 */
@@ -1018,7 +1051,7 @@ main(int argc, char **argv)
 	/*
 	 * Else, do the dirty deed.
 	 */
-	RewriteControlFile();
+	RewriteControlFile(0);
 	KillExistingXLOG();
 	WriteEmptyXLOG();
 
