@@ -4,20 +4,6 @@
 PGDOCS= ..
 SRCDIR= ../../src
 
-HPATH=$(PGDOCS)/doc
-PPATH=$(PGDOCS)/doc
-
-#HSTYLE=/usr/lib/sgml/stylesheets/jade/docbook/html
-#PSTYLE=/usr/lib/sgml/stylesheets/jade/docbook/print
-
-HSTYLE=/home/tgl/SGML/db107.d/docbook/html
-PSTYLE=/home/tgl/SGML/db107.d/docbook/print
-
-HDSL=$(HSTYLE)/docbook.dsl
-PDSL=$(PSTYLE)/docbook.dsl
-
-#DBOPTS=-V %no-split-output% -V %no-make-index%
-
 TAR= tar
 TAREXCLUDE= --exclude=Makefile --exclude='*.sgml'
 
@@ -28,38 +14,52 @@ ifneq ($(wildcard $(SRCDIR)/Makefile.custom), )
 include $(SRCDIR)/Makefile.custom
 endif
 
-TARGETS= postgres tutorial user admin programmer
+SRC= admin postgres programmer tutorial user
 
-HTARGETS=#make this a mapping from targets
-PTARGETS=#make this a mapping from targets
+TARGETS= $(SRC:%=%.tar.gz)
 
-.PRECIOUS: postgres.html postgres.tex postgres.dvi
-.PHONY: sources clean
+.PRECIOUS:
+.PHONY: install all sources clean distclean
 
 install::
 	$(MAKE) all
-	(mv -rf *.gz ..)
+	(mv -f *.gz ..)
 
-all:: $(SGO) $(SGP)
+clean::
+	$(MAKE) -C sgml clean
+
+distclean::
+	$(MAKE) -C sgml distclean
+
+all:: $(TARGETS)
 
 sources::
-	($(TAR) zcf sources.tar.gz --exclude='*.htm*' --exclude='*.gz' .)
+	($(TAR) zcf sources.tar.gz sgml graphics)
 
-user.tar.gz:
+admin.tar.gz:
 	$(MAKE) -C sgml clean
-	$(MAKE) -C sgml user.html
-	($(TAR) zcf $@ $(TAREXCLUDE) -C sgml .)
+	$(MAKE) -C sgml admin.html
+	($(TAR) zcf $@ $(TAREXCLUDE) -C sgml . -C .. -C graphics layout.gif)
+
+postgres.tar.gz:
+	$(MAKE) -C sgml clean
+	$(MAKE) -C sgml postgres.html
+	($(TAR) zcf $@ $(TAREXCLUDE) -C sgml . -C .. -C graphics catalogs.gif connections.gif layout.gif)
+
+programmer.tar.gz:
+	$(MAKE) -C sgml clean
+	$(MAKE) -C sgml programmer.html
+	($(TAR) zcf $@ $(TAREXCLUDE) -C sgml . -C .. -C graphics catalogs.gif connections.gif)
 
 tutorial.tar.gz:
 	$(MAKE) -C sgml clean
 	$(MAKE) -C sgml tutorial.html
 	($(TAR) zcf $@ $(TAREXCLUDE) -C sgml . -C .. -C graphics clientserver.gif)
 
-clean::
-	(rm -rf *.html *.htm)
-
-distclean::
+user.tar.gz:
 	$(MAKE) -C sgml clean
+	$(MAKE) -C sgml user.html
+	($(TAR) zcf $@ $(TAREXCLUDE) -C sgml .)
 
 # Generic production rules
 
@@ -68,53 +68,3 @@ distclean::
 %.gz:	%
 	(gzip -f $<)
 
-# TAR file for HTML package
-
-%.tar:	%.html # %.ps
-	(tar cf $@ $*.html index.html *.htm *.gif) # $*.ps
-	(rm -rf index.html *.htm)
-
-#	(mkdir $*)
-#	(rm -rf $*/*)
-#	(mv *.htm $*/)
-#	(cd $*/; ln -sf book01.htm index.html)
-#	(tar cf $@ $*)
-
-# HTML
-# Include some softlinks to the generic default file names
-
-%.html:	%.sgml $(HDSL)
-	(rm -rf *.htm)
-	jade $(DBOPTS) -D sgml -d $(HDSL) -t sgml $<
-	(ln -sf book01.htm index.html)
-	(ln -sf book01.htm $*.html)
-
-#	(mkdir $(HPATH)/$*)	# be sure there is somewhere to put them
-#	(rm -rf $(HPATH)/$*/*)	# remove existing files since some names may be obsolete
-#	(mv *.htm $(HPATH)/$*/)	# and copy 'em over
-#	(cd $(HPATH)/$*/; ln -sf book01.htm index.html)
-
-# RTF to allow minor editing for hardcopy
-# This is used for v6.3 docs
-
-%.rtf: %.sgml $(PDSL)
-	jade $(DBOPTS) -d $(PDSL) -t rtf $<
-
-# TeX and DVI
-
-%.tex: %.sgml $(PDSL)
-	jade $(DBOPTS) -d $(PDSL) -t tex $<
-
-%.dvi: %.tex
-	jadetex $<
-	jadetex $<
-
-# Postscript from TeX
-
-%.ps: %.dvi
-	dvips -o $@ $<
-
-# Graphics
-
-%.gif:
-	cp -p graphics/%.gif .
