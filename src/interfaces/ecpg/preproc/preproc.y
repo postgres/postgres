@@ -1142,7 +1142,7 @@ VariableSetStmt:  SET ColId TO var_value
 				}
 		| SET NAMES encoding
                                 {
-#ifdef MB
+#ifdef MULTIBYTE
 					$$ = cat2_str(make1_str("set names"), $3);
 #else
                                         yyerror("SET NAMES is not supported");

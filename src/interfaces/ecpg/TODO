@@ -14,6 +14,7 @@ support for dynamic SQL with unknown number of variables with DESCRIPTORS
 The line numbering is not exact.
 
 Missing statements:
+ - exec slq ifdef
  - exec sql allocate
  - exec sql deallocate
  - SQLSTATE

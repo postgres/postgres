@@ -368,7 +368,7 @@ next_insert(char *text)
 	bool		string = false;
 
 	for (; *ptr != '\0' && (*ptr != '?' || string); ptr++)
-		if (*ptr == '\'')
+		if (*ptr == '\'' && *(ptr-1) != '\\')
 			string = string ? false : true;
 
 	return (*ptr == '\0') ? NULL : ptr;
@@ -977,6 +977,7 @@ ECPGexecute(struct statement * stmt)
 				break;
 			case PGRES_COMMAND_OK:
 				status = true;
+				sqlca.sqlerrd[1] = atol(PQoidStatus(results));
 				sqlca.sqlerrd[2] = atol(PQcmdTuples(results));
 				ECPGlog("ECPGexecute line %d Ok: %s\n", stmt->lineno, PQcmdStatus(results));
 				break;

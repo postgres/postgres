@@ -622,3 +622,12 @@ Sun Aug  1 13:31:19 CEST 1999
 
 	- Synced preproc.y with gram.y.
 	- Set ecpg version to 2.6.2
+
+Tue Sep 14 22:26:40 CEST 1999
+
+	- Added patch by Andreas Theofilu <theofilu@eunet.at> to fix yet
+          another quoting bug.
+	- Minor bugfixes to ecpg
+	- Return OID in sqlca.sqlerrd[1] if possible.
+	- Set ecpg version to 2.6.3
+	- Set library version to 3.0.2
