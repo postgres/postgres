@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_list.h,v 1.1.1.1 1996/07/09 06:21:33 scrappy Exp $
+ * $Id: pg_list.h,v 1.2 1996/07/28 06:56:28 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -88,7 +88,7 @@ extern void *nth(int n, List *l);
 extern void set_nth(List *l, int n, void *elem);
 		    
 /* hack for now */
-#define	lconsi(i,l)	lcons((void*)i,l)
+#define	lconsi(i,l)	lcons((void*)(int)i,l)
 #define lfirsti(l)	((int)lfirst(l))
 #define	lappendi(l,i)	lappend(l,(void*)i)
 extern bool intMember(int, List *);
