@@ -1,4 +1,4 @@
-# $Header: /cvsroot/pgsql/src/test/regress/serial_schedule,v 1.4 2001/05/27 09:59:30 petere Exp $
+# $Header: /cvsroot/pgsql/src/test/regress/serial_schedule,v 1.5 2001/06/12 15:58:34 momjian Exp $
 # This should probably be in an order similar to parallel_schedule.
 test: boolean
 test: char
@@ -69,6 +69,7 @@ test: arrays
 test: btree_index
 test: hash_index
 test: privileges
+test: has_table_priv
 test: misc
 test: select_views
 test: alter_table

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/acl.c,v 1.61 2001/06/09 23:21:55 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/acl.c,v 1.62 2001/06/12 15:58:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,6 +30,12 @@
 static const char *getid(const char *s, char *n);
 static bool aclitemeq(const AclItem *a1, const AclItem *a2);
 static bool aclitemgt(const AclItem *a1, const AclItem *a2);
+
+AclMode convert_priv_string(text *priv_type_text);
+bool has_table_privilege_cname_cname(char *username, char *relname, text *priv_type_text);
+bool has_table_privilege_id_cname(Oid usesysid, char *relname, text *priv_type_text);
+bool has_table_privilege_cname_id(char *username, Oid reloid, text *priv_type_text);
+static char *get_Name(text *relin);
 
 #define ACL_IDTYPE_GID_KEYWORD	"group"
 #define ACL_IDTYPE_UID_KEYWORD	"user"
@@ -709,4 +715,753 @@ makeAclString(const char *privileges, const char *grantee, char grant_or_revoke)
 	ret = pstrdup(str.data);
 	pfree(str.data);
 	return ret;
+}
+
+
+/*
+ * has_table_privilege_tname_tname
+ *		Check user privileges on a relation given
+ *		text usename, text relname, and text priv name.
+ *
+ * RETURNS
+ *		a boolean value
+ *		't' indicating user has the privilege
+ *		'f' indicating user does not have the privilege
+ */
+Datum
+has_table_privilege_tname_tname(PG_FUNCTION_ARGS)
+{
+	text		*username_text;
+	char		*username;
+	text		*relname_text;
+	char		*relname;
+	text		*priv_type_text;
+	bool		result;
+
+	username_text = PG_GETARG_TEXT_P(0);
+	relname_text = PG_GETARG_TEXT_P(1);
+	priv_type_text = PG_GETARG_TEXT_P(2);
+
+	/* 
+	 * Convert username and relname 'text' pattern to null-terminated string
+	 */
+	username = get_Name(username_text);
+	relname = get_Name(relname_text);
+
+	/*
+	 * Make use of has_table_privilege_cname_cname.
+	 * It accepts the arguments we now have.
+	 */
+	result = has_table_privilege_cname_cname(username, relname, priv_type_text);
+
+	PG_RETURN_BOOL(result);
+
+}
+
+
+/*
+ * has_table_privilege_tname_name
+ *		Check user privileges on a relation given
+ *		text usename, name relname, and text priv name.
+ *
+ * RETURNS
+ *		a boolean value
+ *		't' indicating user has the privilege
+ *		'f' indicating user does not have the privilege
+ */
+Datum
+has_table_privilege_tname_name(PG_FUNCTION_ARGS)
+{
+	text		*username_text;
+	char		*username;
+	Name		relname_name;
+	char		*relname;
+	text		*priv_type_text;
+	bool		result;
+
+	username_text = PG_GETARG_TEXT_P(0);
+	relname_name = PG_GETARG_NAME(1);
+	priv_type_text = PG_GETARG_TEXT_P(2);
+
+	/* 
+	 * Convert username 'text' pattern to null-terminated string
+	 */
+	username = get_Name(username_text);
+
+	/* 
+	 * Convert relname 'name' pattern to null-terminated string
+	 */
+	relname = DatumGetCString(DirectFunctionCall1(nameout, PointerGetDatum(relname_name)));
+
+	/*
+	 * Make use of has_table_privilege_cname_cname.
+	 * It accepts the arguments we now have.
+	 */
+	result = has_table_privilege_cname_cname(username, relname, priv_type_text);
+
+	PG_RETURN_BOOL(result);
+
+}
+
+
+/*
+ * has_table_privilege_name_tname
+ *		Check user privileges on a relation given
+ *		name usename, text relname, and text priv name.
+ *
+ * RETURNS
+ *		a boolean value
+ *		't' indicating user has the privilege
+ *		'f' indicating user does not have the privilege
+ */
+Datum
+has_table_privilege_name_tname(PG_FUNCTION_ARGS)
+{
+	Name		username_name;
+	char		*username;
+	text		*relname_text;
+	char		*relname;
+	text		*priv_type_text;
+	bool		result;
+
+	username_name = PG_GETARG_NAME(0);
+	relname_text = PG_GETARG_TEXT_P(1);
+	priv_type_text = PG_GETARG_TEXT_P(2);
+
+	/* 
+	 * Convert username 'name' pattern to null-terminated string
+	 */
+	username = DatumGetCString(DirectFunctionCall1(nameout, PointerGetDatum(username_name)));
+
+	/* 
+	 * Convert relname 'text' pattern to null-terminated string
+	 */
+	relname = get_Name(relname_text);
+
+	/*
+	 * Make use of has_table_privilege_cname_cname.
+	 * It accepts the arguments we now have.
+	 */
+	result = has_table_privilege_cname_cname(username, relname, priv_type_text);
+
+	PG_RETURN_BOOL(result);
+
+}
+
+
+/*
+ * has_table_privilege_name_name
+ *		Check user privileges on a relation given
+ *		name usename, name relname, and text priv name.
+ *
+ * RETURNS
+ *		a boolean value
+ *		't' indicating user has the privilege
+ *		'f' indicating user does not have the privilege
+ */
+Datum
+has_table_privilege_name_name(PG_FUNCTION_ARGS)
+{
+	Name		username_name;
+	char		*username;
+	Name		relname_name;
+	char		*relname;
+	text		*priv_type_text;
+	bool		result;
+
+	username_name = PG_GETARG_NAME(0);
+	relname_name = PG_GETARG_NAME(1);
+	priv_type_text = PG_GETARG_TEXT_P(2);
+
+	/* 
+	 * Convert username and relname 'name' pattern to null-terminated string
+	 */
+	username = DatumGetCString(DirectFunctionCall1(nameout, PointerGetDatum(username_name)));
+	relname = DatumGetCString(DirectFunctionCall1(nameout, PointerGetDatum(relname_name)));
+
+	/*
+	 * Make use of has_table_privilege_cname_cname.
+	 * It accepts the arguments we now have.
+	 */
+	result = has_table_privilege_cname_cname(username, relname, priv_type_text);
+
+	PG_RETURN_BOOL(result);
+
+}
+
+
+/*
+ * has_table_privilege_tname
+ *		Check user privileges on a relation given
+ *		text relname and text priv name.
+ *		current_user is assumed
+ *
+ * RETURNS
+ *		a boolean value
+ *		't' indicating user has the privilege
+ *		'f' indicating user does not have the privilege
+ */
+Datum
+has_table_privilege_tname(PG_FUNCTION_ARGS)
+{
+	Oid			usesysid = (Oid) -1;
+	text		*relname_text;
+	char		*relname;
+	text		*priv_type_text;
+	bool		result;
+
+	relname_text = PG_GETARG_TEXT_P(0);
+	priv_type_text = PG_GETARG_TEXT_P(1);
+
+	usesysid = GetUserId();
+
+	/* 
+	 * Convert relname 'text' pattern to null-terminated string
+	 */
+	relname = get_Name(relname_text);
+
+	/*
+	 * Make use of has_table_privilege_id_cname.
+	 * It accepts the arguments we now have.
+	 */
+	result = has_table_privilege_id_cname(usesysid, relname, priv_type_text);
+
+	PG_RETURN_BOOL(result);
+
+}
+
+/*
+ * has_table_privilege_name
+ *		Check user privileges on a relation given
+ *		name relname and text priv name.
+ *		current_user is assumed
+ *
+ * RETURNS
+ *		a boolean value
+ *		't' indicating user has the privilege
+ *		'f' indicating user does not have the privilege
+ */
+Datum
+has_table_privilege_name(PG_FUNCTION_ARGS)
+{
+	Oid			usesysid = (Oid) -1;
+	Name		relname_name;
+	char		*relname;
+	text		*priv_type_text;
+	bool		result;
+
+	relname_name = PG_GETARG_NAME(0);
+	priv_type_text = PG_GETARG_TEXT_P(1);
+
+	usesysid = GetUserId();
+
+	/* 
+	 * Convert relname 'Name' pattern to null-terminated string
+	 */
+	relname = DatumGetCString(DirectFunctionCall1(nameout, PointerGetDatum(relname_name)));
+
+	/*
+	 * Make use of has_table_privilege_id_cname.
+	 * It accepts the arguments we now have.
+	 */
+	result = has_table_privilege_id_cname(usesysid, relname, priv_type_text);
+
+	PG_RETURN_BOOL(result);
+
+}
+
+
+/*
+ * has_table_privilege_tname_id
+ *		Check user privileges on a relation given
+ *		text usename, rel oid, and text priv name.
+ *
+ * RETURNS
+ *		a boolean value
+ *		't' indicating user has the privilege
+ *		'f' indicating user does not have the privilege
+ */
+Datum
+has_table_privilege_tname_id(PG_FUNCTION_ARGS)
+{
+	text		*username_text;
+	char		*username;
+	Oid			reloid = 0;
+	text		*priv_type_text;
+	bool		result;
+
+	username_text = PG_GETARG_TEXT_P(0);
+	reloid = PG_GETARG_OID(1);
+	priv_type_text = PG_GETARG_TEXT_P(2);
+
+	/* 
+	 * Convert username 'text' pattern to null-terminated string
+	 */
+	username = get_Name(username_text);
+
+	/*
+	 * Make use of has_table_privilege_cname_id.
+	 * It accepts the arguments we now have.
+	 */
+	result = has_table_privilege_cname_id(username, reloid, priv_type_text);
+
+	PG_RETURN_BOOL(result);
+
+}
+
+
+/*
+ * has_table_privilege_name_id
+ *		Check user privileges on a relation given
+ *		name usename, rel oid, and text priv name.
+ *
+ * RETURNS
+ *		a boolean value
+ *		't' indicating user has the privilege
+ *		'f' indicating user does not have the privilege
+ */
+Datum
+has_table_privilege_name_id(PG_FUNCTION_ARGS)
+{
+	Name		username_name;
+	char		*username;
+	Oid			reloid = 0;
+	text		*priv_type_text = NULL;
+	bool		result;
+
+	username_name = PG_GETARG_NAME(0);
+	reloid = PG_GETARG_OID(1);
+	priv_type_text = PG_GETARG_TEXT_P(2);
+
+	/* 
+	 * Convert username 'name' pattern to null-terminated string
+	 */
+	username = DatumGetCString(DirectFunctionCall1(nameout, PointerGetDatum(username_name)));
+
+	/*
+	 * Make use of has_table_privilege_cname_id.
+	 * It accepts the arguments we now have.
+	 */
+	result = has_table_privilege_cname_id(username, reloid, priv_type_text);
+
+	PG_RETURN_BOOL(result);
+
+}
+
+
+/*
+ * has_table_privilege_id
+ *		Check user privileges on a relation given
+ *		rel oid, and text priv name.
+ *		current_user is assumed
+ *
+ * RETURNS
+ *		a boolean value
+ *		't' indicating user has the privilege
+ *		'f' indicating user does not have the privilege
+ */
+Datum
+has_table_privilege_id(PG_FUNCTION_ARGS)
+{
+	char		*username;
+	Oid			reloid = 0;
+	text		*priv_type_text;
+	bool		result;
+
+	reloid = PG_GETARG_OID(0);
+	priv_type_text = PG_GETARG_TEXT_P(1);
+	username = GetUserName(GetUserId());
+
+	/*
+	 * Make use of has_table_privilege_cname_id.
+	 * It accepts the arguments we now have.
+	 */
+	result = has_table_privilege_cname_id(username, reloid, priv_type_text);
+
+	PG_RETURN_BOOL(result);
+
+}
+
+
+/*
+ * has_table_privilege_id_tname
+ *		Check user privileges on a relation given
+ *		usesysid, text relname, and priv name.
+ *
+ * RETURNS
+ *		a boolean value
+ *		't' indicating user has the privilege
+ *		'f' indicating user does not have the privilege
+ */
+Datum
+has_table_privilege_id_tname(PG_FUNCTION_ARGS)
+{
+	Oid			usesysid;
+	text		*relname_text;
+	char		*relname;
+	text		*priv_type_text;
+	bool		result;
+
+	usesysid = PG_GETARG_OID(0);
+	relname_text = PG_GETARG_TEXT_P(1);
+	priv_type_text = PG_GETARG_TEXT_P(2);
+
+	/* 
+	 * Convert relname 'text' pattern to null-terminated string
+	 */
+	relname = get_Name(relname_text);
+
+	/*
+	 * Make use of has_table_privilege_id_cname.
+	 * It accepts the arguments we now have.
+	 */
+	result = has_table_privilege_id_cname(usesysid, relname, priv_type_text);
+
+	PG_RETURN_BOOL(result);
+
+}
+
+
+/*
+ * has_table_privilege_id_name
+ *		Check user privileges on a relation given
+ *		usesysid, name relname, and priv name.
+ *
+ * RETURNS
+ *		a boolean value
+ *		't' indicating user has the privilege
+ *		'f' indicating user does not have the privilege
+ */
+Datum
+has_table_privilege_id_name(PG_FUNCTION_ARGS)
+{
+	Oid			usesysid;
+	Name		relname_name;
+	char		*relname;
+	text		*priv_type_text;
+	bool		result;
+
+	usesysid = PG_GETARG_OID(0);
+	relname_name = PG_GETARG_NAME(1);
+	priv_type_text = PG_GETARG_TEXT_P(2);
+
+	/* 
+	 * Convert relname 'name' pattern to null-terminated string
+	 */
+	relname = DatumGetCString(DirectFunctionCall1(nameout, PointerGetDatum(relname_name)));
+
+	/*
+	 * Make use of has_table_privilege_id_cname.
+	 * It accepts the arguments we now have.
+	 */
+	result = has_table_privilege_id_cname(usesysid, relname, priv_type_text);
+
+	PG_RETURN_BOOL(result);
+
+}
+
+
+/*
+ * has_table_privilege_id_id
+ *		Check user privileges on a relation given
+ *		usesysid, rel oid, and priv name.
+ *
+ * RETURNS
+ *		a boolean value
+ *		't' indicating user has the privilege
+ *		'f' indicating user does not have the privilege
+ */
+Datum
+has_table_privilege_id_id(PG_FUNCTION_ARGS)
+{
+	Oid			usesysid;
+	Oid			reloid;
+	char		*relname;
+	text		*priv_type_text;
+	HeapTuple	tuple;
+	AclMode		mode;
+	int32		result;
+
+
+	usesysid = PG_GETARG_OID(0);
+	reloid = PG_GETARG_OID(1);
+	priv_type_text = PG_GETARG_TEXT_P(2);
+
+	/*
+	 * Lookup relname based on rel oid
+	 */
+	tuple = SearchSysCache(RELOID, ObjectIdGetDatum(reloid), 0, 0, 0);
+	if (!HeapTupleIsValid(tuple)) {
+		elog(ERROR, "has_table_privilege: invalid relation oid %d", (int) reloid);
+	}
+
+	relname = NameStr(((Form_pg_class) GETSTRUCT(tuple))->relname);
+
+	ReleaseSysCache(tuple);
+
+	/* 
+	 * Convert priv_type_text to an AclMode
+	 */
+	mode = convert_priv_string(priv_type_text);
+
+	/* 
+	 * Finally, check for the privilege
+	 */
+	result = pg_aclcheck(relname, usesysid, mode);
+
+	if (result == ACLCHECK_OK) {
+		PG_RETURN_BOOL(TRUE);
+	} else {
+		PG_RETURN_BOOL(FALSE);
+	}
+
+}
+
+/*
+ *		Internal functions.
+ */
+
+/*
+ * convert_priv_string
+ *		Internal function.
+ *		Return mode from priv_type string
+ *
+ * RETURNS
+ *		AclMode
+ */
+
+AclMode
+convert_priv_string(text *priv_type_text)
+{
+	char	*priv_type = DatumGetCString(DirectFunctionCall1(textout, PointerGetDatum(priv_type_text)));
+
+	/*
+	 * Return mode from priv_type string
+	 */
+	if (strcasecmp(priv_type, "SELECT") == 0)
+		return ACL_SELECT;
+
+	if (strcasecmp(priv_type, "INSERT") == 0)
+		return ACL_INSERT;
+
+	if (strcasecmp(priv_type, "UPDATE") == 0)
+		return ACL_UPDATE;
+
+	if (strcasecmp(priv_type, "DELETE") == 0)
+		return ACL_DELETE;
+
+	if (strcasecmp(priv_type, "RULE") == 0)
+		return ACL_RULE;
+
+	if (strcasecmp(priv_type, "REFERENCES") == 0)
+		return ACL_REFERENCES;
+
+	if (strcasecmp(priv_type, "TRIGGER") == 0)
+		return ACL_TRIGGER;
+
+	elog(ERROR, "has_table_privilege: invalid privilege type %s", priv_type);
+	/*
+	 * We should never get here, but stop the compiler from complaining
+	 */
+	return ACL_NO;
+
+}
+
+/*
+ * has_table_privilege_cname_cname
+ *		Check user privileges on a relation given
+ *		char *usename, char *relname, and text priv name.
+ *
+ * RETURNS
+ *		a boolean value
+ *		't' indicating user has the privilege
+ *		'f' indicating user does not have the privilege
+ */
+bool
+has_table_privilege_cname_cname(char *username, char *relname, text *priv_type_text)
+{
+
+	Oid			usesysid = (Oid) -1;
+	HeapTuple	tuple;
+	bool		result;
+
+	/*
+	 * Lookup userid based on username
+	 */
+
+	tuple = SearchSysCache(SHADOWNAME, NameGetDatum(username), 0, 0, 0);
+	if (!HeapTupleIsValid(tuple)) {
+		elog(ERROR, "has_table_privilege: invalid user name %s", (char *) username);
+	}
+
+	usesysid = (Oid) ((Form_pg_shadow) GETSTRUCT(tuple))->usesysid;
+	ReleaseSysCache(tuple);
+
+	/*
+	 * Make use of has_table_privilege_id_cname.
+	 * It accepts the arguments we now have.
+	 */
+	result = has_table_privilege_id_cname(usesysid, relname, priv_type_text);
+
+	return result;
+
+}
+
+
+/*
+ * has_table_privilege_cname_id
+ *		Check user privileges on a relation given
+ *		char *usename, rel oid, and text priv name.
+ *
+ * RETURNS
+ *		a boolean value
+ *		't' indicating user has the privilege
+ *		'f' indicating user does not have the privilege
+ */
+bool
+has_table_privilege_cname_id(char *username, Oid reloid, text *priv_type_text)
+{
+	Oid			usesysid = (Oid) -1;
+	char		*relname = NULL;
+	HeapTuple	tuple;
+	bool		result;
+
+	/*
+	 * Lookup userid based on username
+	 */
+
+	tuple = SearchSysCache(SHADOWNAME, NameGetDatum(username), 0, 0, 0);
+	if (!HeapTupleIsValid(tuple)) {
+		elog(ERROR, "has_table_privilege: invalid user name %s", (char *) username);
+	}
+
+	usesysid = (Oid) ((Form_pg_shadow) GETSTRUCT(tuple))->usesysid;
+
+	ReleaseSysCache(tuple);
+
+	/*
+	 * Lookup relname based on rel oid
+	 */
+	tuple = SearchSysCache(RELOID, ObjectIdGetDatum(reloid), 0, 0, 0);
+	if (!HeapTupleIsValid(tuple)) {
+		elog(ERROR, "has_table_privilege: invalid relation oid %d", (int) reloid);
+	}
+
+	relname = NameStr(((Form_pg_class) GETSTRUCT(tuple))->relname);
+
+	ReleaseSysCache(tuple);
+
+	/*
+	 * Make use of has_table_privilege_id_cname.
+	 * It accepts the arguments we now have.
+	 */
+	result = has_table_privilege_id_cname(usesysid, relname, priv_type_text);
+
+	return result;
+
+}
+
+
+/*
+ * has_table_privilege_id_cname
+ *		Check user privileges on a relation given
+ *		usesysid, char *relname, and text priv name.
+ *
+ * RETURNS
+ *		a boolean value
+ *		't' indicating user has the privilege
+ *		'f' indicating user does not have the privilege
+ */
+bool
+has_table_privilege_id_cname(Oid usesysid, char *relname, text *priv_type_text)
+{
+
+	HeapTuple	tuple;
+	AclMode		mode;
+	int32		result;
+
+	/*
+	 * Check relname is valid.
+	 * This is needed to deal with the case when usename is a superuser
+	 * in which case pg_aclcheck simply returns ACLCHECK_OK
+	 * without validating relname
+	 */
+	tuple = SearchSysCache(RELNAME, PointerGetDatum(relname), 0, 0, 0);
+
+	if (!HeapTupleIsValid(tuple)) {
+		elog(ERROR, "has_table_privilege: invalid relname %s", relname);
+	}
+	ReleaseSysCache(tuple);
+
+	/* 
+	 * Convert priv_type_text to an AclMode
+	 */
+	mode = convert_priv_string(priv_type_text);
+
+	/* 
+	 * Finally, check for the privilege
+	 */
+	result = pg_aclcheck(relname, usesysid, mode);
+
+	if (result == ACLCHECK_OK) {
+		return TRUE;
+	} else {
+		return FALSE;
+	}
+
+}
+
+
+/*
+ * Given a 'text' relname parameter to a function, extract the actual
+ * relname.  We downcase the name if it's not double-quoted,
+ * and truncate it if it's too long.
+ *
+ * This is a kluge, really --- should be able to write, e.g. nextval(seqrel).
+ */
+static char *
+get_Name(text *relin)
+{
+	char	   *rawname = DatumGetCString(DirectFunctionCall1(textout,
+												PointerGetDatum(relin)));
+	int			rawlen = strlen(rawname);
+	char	   *relname;
+
+	if (rawlen >= 2 &&
+		rawname[0] == '\"' && rawname[rawlen - 1] == '\"')
+	{
+		/* strip off quotes, keep case */
+		rawname[rawlen - 1] = '\0';
+		relname = pstrdup(rawname + 1);
+		pfree(rawname);
+	}
+	else
+	{
+		relname = rawname;
+
+		/*
+		 * It's important that this match the identifier downcasing code
+		 * used by backend/parser/scan.l.
+		 */
+		for (; *rawname; rawname++)
+		{
+			if (isupper((unsigned char) *rawname))
+				*rawname = tolower((unsigned char) *rawname);
+		}
+	}
+
+	/* Truncate name if it's overlength; again, should match scan.l */
+	if (strlen(relname) >= NAMEDATALEN)
+	{
+#ifdef MULTIBYTE
+		int len;
+
+		len = pg_mbcliplen(relname, i, NAMEDATALEN-1);
+		relname[len] = '\0';
+#else
+		relname[NAMEDATALEN-1] = '\0';
+#endif
+	}
+
+	return relname;
 }

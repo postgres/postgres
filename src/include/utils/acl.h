@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: acl.h,v 1.34 2001/06/09 23:21:55 petere Exp $
+ * $Id: acl.h,v 1.35 2001/06/12 15:58:34 momjian Exp $
  *
  * NOTES
  *	  For backward-compatibility purposes we have to allow there
@@ -190,6 +190,22 @@ extern Datum aclremove(PG_FUNCTION_ARGS);
 extern Datum aclcontains(PG_FUNCTION_ARGS);
 extern const char *aclparse(const char *s, AclItem *aip, unsigned *modechg);
 extern char *makeAclString(const char *privileges, const char *grantee, char grant_or_revoke);
+
+extern Datum has_table_privilege_tname_tname(PG_FUNCTION_ARGS);
+extern Datum has_table_privilege_tname_name(PG_FUNCTION_ARGS);
+extern Datum has_table_privilege_name_tname(PG_FUNCTION_ARGS);
+extern Datum has_table_privilege_name_name(PG_FUNCTION_ARGS);
+extern Datum has_table_privilege_tname(PG_FUNCTION_ARGS);
+extern Datum has_table_privilege_name(PG_FUNCTION_ARGS);
+
+extern Datum has_table_privilege_tname_id(PG_FUNCTION_ARGS);
+extern Datum has_table_privilege_name_id(PG_FUNCTION_ARGS);
+extern Datum has_table_privilege_id(PG_FUNCTION_ARGS);
+
+extern Datum has_table_privilege_id_tname(PG_FUNCTION_ARGS);
+extern Datum has_table_privilege_id_name(PG_FUNCTION_ARGS);
+
+extern Datum has_table_privilege_id_id(PG_FUNCTION_ARGS);
 
 /*
  * prototypes for functions in aclchk.c
