@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.115 2002/09/04 20:31:25 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.116 2002/09/26 05:18:30 momjian Exp $
  *
  * NOTES
  *	  Outside modules can create a lock table and acquire/release
@@ -256,6 +256,7 @@ LockMethodTableInit(char *tabName,
 	shmemName = (char *) palloc(strlen(tabName) + 32);
 
 	/* each lock table has a non-shared, permanent header */
+	sprintf(shmemName, "%s (lock method table)", tabName);
 	lockMethodTable = (LOCKMETHODTABLE *)
 		ShmemInitStruct(shmemName, sizeof(LOCKMETHODTABLE), &found);
 
