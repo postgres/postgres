@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.122 2002/06/20 20:29:31 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.123 2002/08/28 20:46:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -961,7 +961,7 @@ grouping_planner(Query *parse, double tuple_fraction)
 				TargetEntry *ctid;
 
 				resname = (char *) palloc(32);
-				sprintf(resname, "ctid%u", rti);
+				snprintf(resname, 32, "ctid%u", rti);
 				resdom = makeResdom(length(tlist) + 1,
 									TIDOID,
 									-1,

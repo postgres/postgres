@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.47 2002/08/22 00:01:50 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.48 2002/08/28 20:46:24 momjian Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -249,7 +249,7 @@ plpgsql_compile(Oid fn_oid, int functype)
 			{
 				char		buf[32];
 
-				sprintf(buf, "$%d", i + 1);	/* name for variable */
+				snprintf(buf, sizeof(buf), "$%d", i + 1);	/* name for variable */
 
 				/*
 				 * Get the parameters type

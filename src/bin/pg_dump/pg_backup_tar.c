@@ -16,7 +16,7 @@
  *
  *
  * IDENTIFICATION
- *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_tar.c,v 1.25 2002/08/20 17:54:44 petere Exp $
+ *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_tar.c,v 1.26 2002/08/28 20:46:24 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1189,12 +1189,10 @@ static void
 _tarWriteHeader(TAR_MEMBER *th)
 {
 	char		h[512];
-	int			i;
 	int			lastSum = 0;
 	int			sum;
 
-	for (i = 0; i < 512; i++)
-		h[i] = '\0';
+	memset(h, 0, sizeof(h));
 
 	/* Name 100 */
 	sprintf(&h[0], "%.99s", th->targetFile);

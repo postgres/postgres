@@ -1,10 +1,10 @@
 /*
- * $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_tar.h,v 1.3 2001/03/22 04:00:14 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_tar.h,v 1.4 2002/08/28 20:46:24 momjian Exp $
  *
  * TAR Header
  *
  * Offset	Length	 Contents
- *	 0	  100 bytes  File name ('\0' terminated, 99 maxmum length)
+ *	 0	  100 bytes  File name ('\0' terminated, 99 maximum length)
  * 100		8 bytes  File mode (in octal ascii)
  * 108		8 bytes  User ID (in octal ascii)
  * 116		8 bytes  Group ID (in octal ascii)
@@ -12,10 +12,10 @@
  * 136	   12 bytes  Modify time (in octal ascii)
  * 148		8 bytes  Header checksum (in octal ascii)
  * 156		1 bytes  Link flag
- * 157	  100 bytes  Linkname ('\0' terminated, 99 maxmum length)
+ * 157	  100 bytes  Linkname ('\0' terminated, 99 maximum length)
  * 257		8 bytes  Magic ("ustar  \0")
- * 265	   32 bytes  User name ('\0' terminated, 31 maxmum length)
- * 297	   32 bytes  Group name ('\0' terminated, 31 maxmum length)
+ * 265	   32 bytes  User name ('\0' terminated, 31 maximum length)
+ * 297	   32 bytes  Group name ('\0' terminated, 31 maximum length)
  * 329		8 bytes  Major device ID (in octal ascii)
  * 337		8 bytes  Minor device ID (in octal ascii)
  * 345	  167 bytes  Padding

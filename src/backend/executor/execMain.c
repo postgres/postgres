@@ -27,7 +27,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.174 2002/08/15 16:36:02 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.175 2002/08/28 20:46:22 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -545,7 +545,7 @@ InitPlan(CmdType operation, Query *parseTree, Plan *plan, EState *estate)
 			erm = (execRowMark *) palloc(sizeof(execRowMark));
 			erm->relation = relation;
 			erm->rti = rti;
-			sprintf(erm->resname, "ctid%u", rti);
+			snprintf(erm->resname, 32, "ctid%u", rti);
 			estate->es_rowMark = lappend(estate->es_rowMark, erm);
 		}
 	}

@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/print.c,v 1.29 2002/08/27 20:16:48 petere Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/print.c,v 1.30 2002/08/28 20:46:24 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "print.h"
@@ -494,9 +494,9 @@ print_aligned_vertical(const char *title, const char *const * headers,
 				}
 
 				if (opt_border == 0)
-					sprintf(record_str, "* Record %d", record++);
+					snprintf(record_str, 32, "* Record %d", record++);
 				else
-					sprintf(record_str, "[ RECORD %d ]", record++);
+					snprintf(record_str, 32, "[ RECORD %d ]", record++);
 				record_str_len = strlen(record_str);
 
 				if (record_str_len + opt_border > strlen(divider))

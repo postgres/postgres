@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.362 2002/08/28 14:35:37 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.363 2002/08/28 20:46:23 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -2096,7 +2096,7 @@ TriggerFuncArg:
 			ICONST
 				{
 					char buf[64];
-					sprintf (buf, "%d", $1);
+					snprintf (buf, sizeof(buf), "%d", $1);
 					$$ = makeString(pstrdup(buf));
 				}
 			| FCONST								{ $$ = makeString($1); }

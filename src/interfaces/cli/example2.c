@@ -56,7 +56,7 @@ example2(SQLCHAR *server, SQLCHAR *uid, SQLCHAR *authen, SQLCHAR *sqlstr)
 	SQLHDBC		hdbc;
 	SQLHSTMT	hstmt;
 	SQLCHAR		errmsg[256];
-	SQLCHAR		colname[32];
+	SQLCHAR		colname[64];
 	SQLSMALLINT coltype;
 	SQLSMALLINT colnamelen;
 	SQLSMALLINT nullable;

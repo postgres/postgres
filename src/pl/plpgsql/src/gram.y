@@ -4,7 +4,7 @@
  *						  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/gram.y,v 1.34 2002/08/08 01:36:04 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/gram.y,v 1.35 2002/08/28 20:46:24 momjian Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -1594,7 +1594,7 @@ read_sql_construct(int until,
 		{
 			case T_VARIABLE:
 				params[nparams] = yylval.variable->dno;
-				sprintf(buf, " $%d ", ++nparams);
+				snprintf(buf, sizeof(buf), " $%d ", ++nparams);
 				plpgsql_dstring_append(&ds, buf);
 				break;
 
@@ -1791,7 +1791,7 @@ make_select_stmt(void)
 		{
 			case T_VARIABLE:
 				params[nparams] = yylval.variable->dno;
-				sprintf(buf, " $%d ", ++nparams);
+				snprintf(buf, sizeof(buf), " $%d ", ++nparams);
 				plpgsql_dstring_append(&ds, buf);
 				break;
 

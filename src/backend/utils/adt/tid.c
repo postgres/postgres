@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/tid.c,v 1.33 2002/08/15 16:36:05 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/tid.c,v 1.34 2002/08/28 20:46:24 momjian Exp $
  *
  * NOTES
  *	  input routine largely stolen from boxin().
@@ -101,7 +101,7 @@ tidout(PG_FUNCTION_ARGS)
 	blockNumber = BlockIdGetBlockNumber(blockId);
 	offsetNumber = itemPtr->ip_posid;
 
-	sprintf(buf, "(%u,%u)", blockNumber, offsetNumber);
+	snprintf(buf, sizeof(buf), "(%u,%u)", blockNumber, offsetNumber);
 
 	PG_RETURN_CSTRING(pstrdup(buf));
 }
