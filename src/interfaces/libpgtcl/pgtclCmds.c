@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtclCmds.c,v 1.69 2002/10/17 14:51:50 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtclCmds.c,v 1.70 2002/11/26 21:38:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -506,6 +506,8 @@ Pg_exec(ClientData cData, Tcl_Interp *interp, int argc, char *argv[])
 
 	-numTuples	the number of tuples in the query
 
+	-cmdTuples	the number of tuples affected by the query
+
 	-numAttrs	returns the number of attributes returned by the query
 
 	-assign arrayName
@@ -589,6 +591,11 @@ Pg_result(ClientData cData, Tcl_Interp *interp, int argc, char *argv[])
 	else if (strcmp(opt, "-numTuples") == 0)
 	{
 		sprintf(interp->result, "%d", PQntuples(result));
+		return TCL_OK;
+	}
+	else if (strcmp(opt, "-cmdTuples") == 0)
+	{
+		sprintf(interp->result, "%s", PQcmdTuples(result));
 		return TCL_OK;
 	}
 	else if (strcmp(opt, "-numAttrs") == 0)
@@ -768,6 +775,7 @@ Pg_result_errReturn:
 					 "\t-conn\n",
 					 "\t-oid\n",
 					 "\t-numTuples\n",
+					 "\t-cmdTuples\n",
 					 "\t-numAttrs\n"
 					 "\t-assign arrayVarName\n",
 					 "\t-assignbyidx arrayVarName ?appendstr?\n",

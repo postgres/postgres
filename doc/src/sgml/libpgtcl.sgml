@@ -728,6 +728,16 @@ the number of tuples returned by the query.
 </VARLISTENTRY>
 <VARLISTENTRY>
 <TERM>
+<option>-cmdTuples</option>
+</TERM>
+<LISTITEM>
+<PARA>
+the number of tuples affected by the query.
+</PARA>
+</LISTITEM>
+</VARLISTENTRY>
+<VARLISTENTRY>
+<TERM>
 <option>-numAttrs</option>
 </TERM>
 <LISTITEM>
