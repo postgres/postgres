@@ -6,7 +6,7 @@ DBMirror is a database mirroring system developed for the PostgreSQL
 database Written and maintained by Steven Singer(ssinger@navtechinc.com)
 
 
-(c) 2001-2002 Navtech Systems Support Inc.
+(c) 2001-2004 Navtech Systems Support Inc.
 ALL RIGHTS RESERVED
 
   Permission to use, copy, modify, and distribute this software and its
@@ -57,7 +57,7 @@ Pending tables.
 Requirments:
 ---------------------------------
 -PostgreSQL-7.4 (Older versions are no longer supported)
--Perl 5.6(Other versions might work)
+-Perl 5.6 or 5.8 (Other versions might work)
 -PgPerl (http://gborg.postgresql.org/project/pgperl/projdisplay.php)
 
 
@@ -81,13 +81,8 @@ PostgreSQL-7.4  Make Instructions:
 
 You should now have a file named pending.so that contains the trigger.
 
-Install this file in /usr/local/pgsql/lib  (or another suitable location).
+Install this file in your Postgresql lib directory (/usr/local/pgsql/lib)
 
-If you choose a different location the MirrorSetup.sql script will need
-to be modified to reflect your new location.   The CREATE FUNCTION command
-in the MirrorSetup.sql script associates the trigger function with the
-pending.so shared library.  Modify the arguments to this command if you
-choose to install the trigger elsewhere.
 
 2) Run MirrorSetup.sql
 
@@ -95,7 +90,8 @@ This file contains SQL commands to setup the Mirroring environment.
 This includes
 
 -Telling PostgreSQL about the "recordchange" trigger function.
--Creating the Pending,PendingData, MirrorHost, MirroredTransaction tables
+-Creating the dbmirror_Pending,dbmirror_PendingData,dbmirror_MirrorHost, 
+dbmirror_MirroredTransaction tables
 
 
 To execute the script use psql as follows 
@@ -114,17 +110,34 @@ DBMirror.pl script.  See slaveDatabase.conf for a sample.
 The master settings refer to the master database(The one that is
 being mirrored).
 
-The slave settings refer to the database that the data is being mirrored to.
-The slaveHost parameter must refer to the machine name of the slave (Either
-a resolvable hostname or an IP address).  The value for slave host
-must match the Hostname field in the MirrorHost table(See step 6).
+The slave settings refer to the database that the data is being
+mirrored to.
 
-The master user must have sufficient permissions to modify the Pending
-tables and to read all of the tables being mirrored.
+The slaveName setting in the configuration file must match the slave
+name specified in the dbmirror_MirrorHost table.
 
-The slave user must have enough permissions on the slave database to
-modify(INSERT,UPDATE,DELETE) any tables on the slave system that are being
-mirrored. 
+DBMirror.pl can be run in two modes of operation: 
+
+ A) It can connect directly to the slave database.  To do this specify
+ a slave database name and optional host and port along with a username
+ and password.  See slaveDatabase.conf for details.
+
+
+ The master user must have sufficient permissions to modify the Pending
+ tables and to read all of the tables being mirrored.
+
+ The slave user must have enough permissions on the slave database to
+ modify(INSERT,UPDATE,DELETE) any tables on the slave system that are being
+ mirrored. 
+
+ B) The SQL statements that should be executed on the slave can be
+ written to files which can then be executed slave database through
+ psql.  This would be suitable for setups where their is no direct
+ connection between the slave database and the master. A file is
+ generated for each transaction in the directory specified by
+ TransactionFileDirectory. The file name contains the date/time the
+ file was created along with the transaction id.
+
 
 4) Add the trigger to tables.
 
@@ -153,7 +166,7 @@ The name of the host in the MirrorHost table must exactly match the
 slaveHost variable for that slave in the configuration file.
 
 For example
-INSERT INTO "MirrorHost" ("HostName") VALUES ('mySlaveMachine.mycompany.com');
+INSERT INTO "MirrorHost" ("SlaveName") VALUES ('backup_system');
 
 
 6)  Start DBMirror.pl
@@ -171,7 +184,8 @@ Any errors are printed to standard out and emailed to the address specified in
 the configuration file. 
 
 DBMirror can be run from the master, the slave, or a third machine as long
-as it is able to access both the master and slave databases.
+as it is able to access both the master and slave databases(not
+required if SQL files are being generated)
 
 7) Periodically run clean_pending.pl 
 clean_pending.pl cleans out any entries from the Pending tables that
@@ -194,9 +208,26 @@ TODO(Current Limitations)
 ----------
 -Support for selective mirroring based on the content of data.
 -Support for BLOB's.
--Support for conflict resolution.
--Batching SQL commands in DBMirror for better performance over WAN's.
+-Support for multi-master mirroring with conflict resolution.
 -Better support for dealing with Schema changes.
+
+
+
+Significant Changes Since 7.4
+----------------
+-Support for mirroring SEQUENCE's
+-Support for unix domain sockets
+-Support for outputting slave SQL statements to a file
+-Changed the names of replication tables are now named
+dbmirror_pending etc..
+
+
+
+Credits
+-----------
+Achilleus Mantzios <achill@matrix.gatewaynet.com>
+
+
 
 
 Steven Singer

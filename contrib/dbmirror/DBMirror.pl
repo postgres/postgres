@@ -33,7 +33,7 @@
 # 
 #
 ##############################################################################
-# $PostgreSQL: pgsql/contrib/dbmirror/DBMirror.pl,v 1.7 2003/11/29 22:39:19 pgsql Exp $ 
+# $PostgreSQL: pgsql/contrib/dbmirror/DBMirror.pl,v 1.8 2004/02/17 03:34:35 momjian Exp $ 
 #
 ##############################################################################
 
@@ -79,17 +79,17 @@ sub mirrorCommand($$$$$$);
 sub mirrorInsert($$$$$);
 sub mirrorDelete($$$$$);
 sub mirrorUpdate($$$$$);
-sub sendQueryToSlaves($$);
 sub logErrorMessage($);
-sub openSlaveConnection($);
+sub setupSlave($);
 sub updateMirrorHostTable($$);
-			sub extractData($$);
+sub extractData($$);
 local $::masterHost;
 local $::masterDb; 
 local $::masterUser; 
 local $::masterPassword; 
 local $::errorThreshold=5;
 local $::errorEmailAddr=undef;
+local $::sleepInterval=60;
 
 my %slaveInfoHash;
 local $::slaveInfo = \%slaveInfoHash;
@@ -115,8 +115,25 @@ sub Main() {
     die;
   }
   
-  
-  my $connectString = "host=$::masterHost dbname=$::masterDb user=$::masterUser password=$::masterPassword";
+  if (defined($::syslog))
+  {
+      # log with syslog
+      require Sys::Syslog; 
+      import Sys::Syslog qw(openlog syslog);
+      openlog($0, 'cons,pid', 'user');
+      syslog("info", '%s', "starting $0 script with $ARGV[0]");
+  }
+
+  my $connectString;
+  if(defined($::masterHost))
+  {
+      $connectString .= "host=$::masterHost ";
+  }
+  if(defined($::masterPort))
+  {
+      $connectString .= "port=$::masterPort ";
+  }
+  $connectString .= "dbname=$::masterDb user=$::masterUser password=$::masterPassword";
   
   $masterConn = Pg::connectdb($connectString);
   
@@ -138,33 +155,29 @@ sub Main() {
   my $firstTime = 1;
   while(1) {
     if($firstTime == 0) {
-      sleep 60; 
+      sleep $::sleepInterval; 
     } 
     $firstTime = 0;
-# Open up the connection to the slave.
-    if(! defined $::slaveInfo->{"status"} ||
-       $::slaveInfo->{"status"} == -1) {
-      openSlaveConnection($::slaveInfo);	    
-    }
     
-    
+    setupSlave($::slaveInfo);
    
-    sendQueryToSlaves(undef,"SET TRANSACTION ISOLATION LEVEL SERIALIZABLE");
-    sendQueryToSlaves(undef,"SET CONSTRAINTS ALL DEFERRED");
+   
     
     
     #Obtain a list of pending transactions using ordering by our approximation
     #to the commit time.  The commit time approximation is taken to be the
     #SeqId of the last row edit in the transaction.
-    my $pendingTransQuery = "SELECT pd.\"XID\",MAX(\"SeqId\") FROM \"Pending\" pd";
-    $pendingTransQuery .= " LEFT JOIN \"MirroredTransaction\" mt INNER JOIN";
-    $pendingTransQuery .= " \"MirrorHost\" mh ON mt.\"MirrorHostId\" = ";
-    $pendingTransQuery .= " mh.\"MirrorHostId\" AND mh.\"HostName\"=";
-    $pendingTransQuery .= " '$::slaveInfo->{\"slaveHost\"}' "; 
-    $pendingTransQuery .= " ON pd.\"XID\"";
-    $pendingTransQuery .= " = mt.\"XID\" WHERE mt.\"XID\" is null  ";
-    $pendingTransQuery .= " GROUP BY pd.\"XID\" ";
-    $pendingTransQuery .= " ORDER BY MAX(pd.\"SeqId\")";
+    my $pendingTransQuery = "SELECT pd.XID,MAX(SeqId) FROM dbmirror_Pending pd";
+    $pendingTransQuery .= " LEFT JOIN dbmirror_MirroredTransaction mt INNER JOIN";
+    $pendingTransQuery .= " dbmirror_MirrorHost mh ON mt.MirrorHostId = ";
+    $pendingTransQuery .= " mh.MirrorHostId AND mh.SlaveName=";
+    $pendingTransQuery .= " '$::slaveInfo->{\"slaveName\"}' "; 
+    $pendingTransQuery .= " ON pd.XID";
+    $pendingTransQuery .= " = mt.XID WHERE mt.XID is null ";
+   
+
+    $pendingTransQuery .= " GROUP BY pd.XID";
+    $pendingTransQuery .= " ORDER BY MAX(pd.SeqId)";
     
     
     my $pendingTransResults = $masterConn->exec($pendingTransQuery);
@@ -185,13 +198,21 @@ sub Main() {
       my $XID = $pendingTransResults->getvalue($curTransTuple,0);
       my $maxSeqId = $pendingTransResults->getvalue($curTransTuple,1);
       my $seqId;
-      
-      my $pendingQuery = "SELECT pnd.\"SeqId\",pnd.\"TableName\",";
-      $pendingQuery .= " pnd.\"Op\",pnddata.\"IsKey\", pnddata.\"Data\" AS \"Data\" ";
-      $pendingQuery .= " FROM \"Pending\" pnd, \"PendingData\" pnddata ";
-      $pendingQuery .= " WHERE pnd.\"SeqId\" = pnddata.\"SeqId\" AND ";
-      
-      $pendingQuery .= " pnd.\"XID\"=$XID ORDER BY \"SeqId\", \"IsKey\" DESC";
+
+     
+      if($::slaveInfo->{'status'} eq 'FileClosed')
+      {
+	  openTransactionFile($::slaveInfo,$XID);
+      }
+ 
+
+
+      my $pendingQuery = "SELECT pnd.SeqId,pnd.TableName,";
+      $pendingQuery .= " pnd.Op,pnddata.IsKey, pnddata.Data AS Data ";
+      $pendingQuery .= " FROM dbmirror_Pending pnd, dbmirror_PendingData pnddata ";
+      $pendingQuery .= " WHERE pnd.SeqId = pnddata.SeqId ";
+     
+      $pendingQuery .= " AND pnd.XID=$XID ORDER BY SeqId, IsKey DESC";
       
       
       my $pendingResults = $masterConn->exec($pendingQuery);
@@ -200,40 +221,47 @@ sub Main() {
 	die;
       }
       
-	    
+      sendQueryToSlaves($XID,"BEGIN");
 	    
       my $numPending = $pendingResults->ntuples;
       my $curTuple = 0;
-      sendQueryToSlaves(undef,"BEGIN");
       while ($curTuple < $numPending) {
 	$seqId = $pendingResults->getvalue($curTuple,0);
 	my $tableName = $pendingResults->getvalue($curTuple,1);
 	my $op = $pendingResults->getvalue($curTuple,2);
-	
 	$curTuple = mirrorCommand($seqId,$tableName,$op,$XID,
 				  $pendingResults,$curTuple) +1;
-	if($::slaveInfo->{"status"}==-1) {
-	    last;
-	}
 	
       }
-      #Now commit the transaction.
-      if($::slaveInfo->{"status"}==-1) {
+
+      if($::slaveInfo->{'status'} ne 'DBOpen' &&
+	 $::slaveInfo->{'status'} ne 'FileOpen')
+      {
 	  last;
       }
       sendQueryToSlaves(undef,"COMMIT");
+      #Now commit the transaction.
       updateMirrorHostTable($XID,$seqId);
-      if($commandCount > 5000) {
-	$commandCount = 0;
-	$::slaveInfo->{"status"} = -1;
-	$::slaveInfo->{"slaveConn"}->reset;
-	#Open the connection right away.
-	openSlaveConnection($::slaveInfo);
-	
-      }
       
       $pendingResults = undef;
       $curTransTuple = $curTransTuple +1;
+
+      if($::slaveInfo->{'status'} eq 'FileOpen')
+      {
+	  close ($::slaveInfo->{'TransactionFile'});
+      }
+      elsif($::slaveInfo->{'status'} eq 'DBOpen')
+      {
+	  if($commandCount > 5000) {
+	      $commandCount = 0;
+	      $::slaveInfo->{"status"} = 'DBClosed';
+	      $::slaveInfo->{"slaveConn"}->reset;
+	      #Open the connection right away.
+	      openSlaveConnection($::slaveInfo);
+	      
+	  }
+      }
+
     }#while transactions left.
 	
 	$pendingTransResults = undef;
@@ -303,6 +331,7 @@ sub mirrorCommand($$$$$$) {
     my $pendingResults = $_[4];
     my $currentTuple = $_[5];
 
+
     if($op eq 'i') {
       $currentTuple = mirrorInsert($seqId,$tableName,$transId,$pendingResults
 			       ,$currentTuple);
@@ -314,6 +343,10 @@ sub mirrorCommand($$$$$$) {
     if($op eq 'u') {
       $currentTuple = mirrorUpdate($seqId,$tableName,$transId,$pendingResults,
 		   $currentTuple);
+    }
+    if($op eq 's')  {
+	$currentTuple = mirrorSequence($seqId,$tableName,$transId,$pendingResults,
+				       $currentTuple);
     }
     $commandCount = $commandCount +1;
     if($commandCount % 100 == 0) {
@@ -411,7 +444,7 @@ sub mirrorInsert($$$$$) {
 	$firstIteration=0;
     }
     $valuesQuery .= ")";
-    sendQueryToSlaves(undef,$insertQuery . $valuesQuery);
+    sendQueryToSlaves($transId,$insertQuery . $valuesQuery);
     return $currentTuple;
 }
 
@@ -491,7 +524,6 @@ sub mirrorDelete($$$$$) {
       $counter++;
       $firstField=0;
     }
-    
     sendQueryToSlaves($transId,$deleteQuery);
     return $currentTuple;
 }
@@ -554,13 +586,11 @@ sub mirrorUpdate($$$$$) {
     my $transId = $_[2];
     my $pendingResult = $_[3];
     my $currentTuple = $_[4];
-
+  
     my $counter;
     my $quotedValue;
     my $updateQuery = "UPDATE $tableName SET ";
     my $currentField;
-
-
 
     my %keyValueHash;
     my %dataValueHash;
@@ -615,12 +645,27 @@ sub mirrorUpdate($$$$$) {
       }
       $firstIteration=0;
     }
-    
     sendQueryToSlaves($transId,$updateQuery);
     return $currentTuple+1;
 }
 
 
+sub mirrorSequence($$$$$) {
+    my $seqId = $_[0];
+    my $sequenceName = $_[1];
+    my $transId = $_[2];
+    my $pendingResult = $_[3];
+    my $currentTuple = $_[4];
+ 
+
+    my $query;
+    my $sequenceValue = $pendingResult->getvalue($currentTuple,4);
+    $query = sprintf("select setval(%s,%s)",$sequenceName,$sequenceValue);
+
+    sendQueryToSlaves($transId,$query);
+    return $currentTuple;
+
+}
 
 =item sendQueryToSlaves(seqId,sqlQuery)
 
@@ -647,7 +692,7 @@ sub sendQueryToSlaves($$) {
     my $seqId = $_[0];
     my  $sqlQuery = $_[1];
        
-   if($::slaveInfo->{"status"} == 0) {
+   if($::slaveInfo->{"status"} eq 'DBOpen') {
        my $queryResult = $::slaveInfo->{"slaveConn"}->exec($sqlQuery);
        unless($queryResult->resultStatus == PGRES_COMMAND_OK) {
 	   my $errorMessage;
@@ -660,8 +705,16 @@ sub sendQueryToSlaves($$) {
 	   $::slaveInfo->{"status"} = -1;
        }
    }
+    elsif($::slaveInfo->{"status"} eq 'FileOpen' ) {
+	my $xfile = $::slaveInfo->{'TransactionFile'};
+	print $xfile  $sqlQuery . ";\n";
+    }
+    
+    
 
 }
+
+
 
 
 =item logErrorMessage(error)
@@ -707,41 +760,30 @@ sub logErrorMessage($) {
       print mailPipe "\n\n\n=================================================\n";
       close mailPipe;
     }
+
+    if (defined($::syslog))
+    {
+	syslog('err', '%s (%m)', $error);
+    }
+
     warn($error);    
     
     $lastErrorMsg = $error;
 
 }
 
-sub openSlaveConnection($) {
+sub setupSlave($) {
     my $slavePtr = $_[0];
-    my $slaveConn;
     
     
-    my $slaveConnString = "host=" . $slavePtr->{"slaveHost"};    
-    $slaveConnString .= " dbname=" . $slavePtr->{"slaveDb"};
-    $slaveConnString .= " user=" . $slavePtr->{"slaveUser"};
-    $slaveConnString .= " password=" . $slavePtr->{"slavePassword"};
-    
-    $slaveConn = Pg::connectdb($slaveConnString);
-    
-    if($slaveConn->status != PGRES_CONNECTION_OK) {
-	my $errorMessage = "Can't connect to slave database " ;
-	$errorMessage .= $slavePtr->{"slaveHost"} . "\n";
-	$errorMessage .= $slaveConn->errorMessage;
-	logErrorMessage($errorMessage);    
-	$slavePtr->{"status"} = -1;
-    }
-    else {
-	$slavePtr->{"slaveConn"} = $slaveConn;
 	$slavePtr->{"status"} = 0;
 	#Determine the MirrorHostId for the slave from the master's database
-	my $resultSet = $masterConn->exec('SELECT "MirrorHostId" FROM '
-					  . ' "MirrorHost" WHERE "HostName"'
-					  . '=\'' . $slavePtr->{"slaveHost"}
+	my $resultSet = $masterConn->exec('SELECT MirrorHostId FROM '
+					  . ' dbmirror_MirrorHost WHERE SlaveName'
+					  . '=\'' . $slavePtr->{"slaveName"}
 					  . '\'');
 	if($resultSet->ntuples !=1) {
-	    my $errorMessage .= $slavePtr->{"slaveHost"} ."\n";
+	    my $errorMessage .= $slavePtr->{"slaveName"} ."\n";
 	    $errorMessage .= "Has no MirrorHost entry on master\n";
 	    logErrorMessage($errorMessage);
 	    $slavePtr->{"status"}=-1;
@@ -749,13 +791,23 @@ sub openSlaveConnection($) {
 	    
 	}
 	$slavePtr->{"MirrorHostId"} = $resultSet->getvalue(0,0);
-	
-	
-	
+
+    if(defined($::slaveInfo->{'slaveDb'})) {
+	# We talk directly to a slave database.
+        #
+	if($::slaveInfo->{"status"} ne 'DBOpen')
+	{
+	    openSlaveConnection($::slaveInfo);
+	}
+	sendQueryToSlaves(undef,"SET TRANSACTION ISOLATION LEVEL SERIALIZABLE");
+	sendQueryToSlaves(undef,"SET CONSTRAINTS ALL DEFERRED");
     }
+    else {
+	$::slaveInfo->{"status"} = 'FileClosed';
+    }
+	
 
 }
-
 
 =item updateMirrorHostTable(lastTransId,lastSeqId)
 
@@ -783,39 +835,40 @@ sub updateMirrorHostTable($$) {
     my $lastTransId = shift;
     my $lastSeqId = shift;
 
-    if($::slaveInfo->{"status"}==0) {
-	my $deleteTransactionQuery;
-	my $deleteResult;
-	my $updateMasterQuery = "INSERT INTO \"MirroredTransaction\" ";
-	$updateMasterQuery .= " (\"XID\",\"LastSeqId\",\"MirrorHostId\")";
-	$updateMasterQuery .= " VALUES ($lastTransId,$lastSeqId,$::slaveInfo->{\"MirrorHostId\"}) ";
-	
-	my $updateResult = $masterConn->exec($updateMasterQuery);
-	unless($updateResult->resultStatus == PGRES_COMMAND_OK) {
-	    my $errorMessage = $masterConn->errorMessage . "\n";
-	    $errorMessage .= $updateMasterQuery;
-	    logErrorMessage($errorMessage);
-	    die;
-	}
+
+    
+    my $deleteTransactionQuery;
+    my $deleteResult;
+    my $updateMasterQuery = "INSERT INTO dbmirror_MirroredTransaction ";
+    $updateMasterQuery .= " (XID,LastSeqId,MirrorHostId)";
+    $updateMasterQuery .= " VALUES ($lastTransId,$lastSeqId,$::slaveInfo->{\"MirrorHostId\"}) ";
+    
+    my $updateResult = $masterConn->exec($updateMasterQuery);
+    unless($updateResult->resultStatus == PGRES_COMMAND_OK) {
+	my $errorMessage = $masterConn->errorMessage . "\n";
+	$errorMessage .= $updateMasterQuery;
+	logErrorMessage($errorMessage);
+	die;
+    }
 #	print "Updated slaves to transaction $lastTransId\n" ;	 
 #        flush STDOUT;  
 
-	#If this transaction has now been mirrored to all mirror hosts
-	#then it can be deleted.
-	$deleteTransactionQuery = 'DELETE FROM "Pending" WHERE "XID"='
-	    . $lastTransId . ' AND (SELECT COUNT(*) FROM "MirroredTransaction"'
-		. ' WHERE "XID"=' . $lastTransId . ')=(SELECT COUNT(*) FROM'
-		    . ' "MirrorHost")';
-	
-	$deleteResult = $masterConn->exec($deleteTransactionQuery);
-	if($deleteResult->resultStatus!=PGRES_COMMAND_OK) { 
-	    logErrorMessage($masterConn->errorMessage . "\n" . 
-			    $deleteTransactionQuery);
-	    die;
-	}
-	
+    #If this transaction has now been mirrored to all mirror hosts
+    #then it can be deleted.
+    $deleteTransactionQuery = 'DELETE FROM dbmirror_Pending WHERE XID='
+	. $lastTransId . ' AND (SELECT COUNT(*) FROM dbmirror_MirroredTransaction'
+	. ' WHERE XID=' . $lastTransId . ')=(SELECT COUNT(*) FROM'
+	. ' dbmirror_MirrorHost)';
+    
+    $deleteResult = $masterConn->exec($deleteTransactionQuery);
+    if($deleteResult->resultStatus!=PGRES_COMMAND_OK) { 
+	logErrorMessage($masterConn->errorMessage . "\n" . 
+			$deleteTransactionQuery);
+	die;
     }
     
+  
+
 }
 
 
@@ -888,4 +941,70 @@ sub extractData($$) {
   } #while
   return %valuesHash;
     
+}
+
+
+sub openTransactionFile($$)
+{
+    my $slaveInfo = shift;
+    my $XID =shift;
+#      my $now_str = localtime;
+    my $nowsec;
+    my $nowmin;
+    my $nowhour;
+    my $nowmday;
+    my $nowmon;
+    my $nowyear;
+    my $nowwday;
+    my $nowyday;
+    my $nowisdst;
+    ($nowsec,$nowmin,$nowhour,$nowmday,$nowmon,$nowyear,$nowwday,$nowyday,$nowisdst) =
+	localtime;
+    my $fileName=sprintf(">%s/%s_%d-%d-%d_%d:%d:%dXID%d.sql", $::slaveInfo->{'TransactionFileDirectory'},
+			 $::slaveInfo->{"MirrorHostId"},($nowyear+1900),($nowmon+1),$nowmday,$nowhour,$nowmin,
+			 $nowsec,$XID);
+    
+    my $xfile;
+    open($xfile,$fileName) or die "Can't open $fileName : $!";
+    
+    $slaveInfo->{'TransactionFile'} = $xfile;
+    $slaveInfo->{'status'} = 'FileOpen';
+}
+
+
+
+sub openSlaveConnection($) {
+    my $slavePtr = $_[0];
+    my $slaveConn;
+    
+    
+    my $slaveConnString;
+    if(defined($slavePtr->{"slaveHost"}))
+    {
+	$slaveConnString .= "host=" . $slavePtr->{"slaveHost"} . " ";    
+    }
+    if(defined($slavePtr->{"slavePort"}))
+    {
+	$slaveConnString .= "port=" . $slavePtr->{"slavePort"} . " ";
+    }
+
+    $slaveConnString .= " dbname=" . $slavePtr->{"slaveDb"};
+    $slaveConnString .= " user=" . $slavePtr->{"slaveUser"};
+    $slaveConnString .= " password=" . $slavePtr->{"slavePassword"};
+    
+    $slaveConn = Pg::connectdb($slaveConnString);
+    
+    if($slaveConn->status != PGRES_CONNECTION_OK) {
+	my $errorMessage = "Can't connect to slave database " ;
+	$errorMessage .= $slavePtr->{"slaveHost"} . "\n";
+	$errorMessage .= $slaveConn->errorMessage;
+	logErrorMessage($errorMessage);    
+	$slavePtr->{"status"} = 'DBFailed';
+    }
+    else {
+	$slavePtr->{"slaveConn"} = $slaveConn;
+	$slavePtr->{"status"} = 'DBOpen';	
+    }
+    	       
+
 }
