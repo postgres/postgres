@@ -6,4 +6,5 @@ MK_NO_LORDER= true
 %.so: %.o
 	$(LD) -G -Bdynamic -shared -o $@ $< 
 
+CFLAGS+= -U_NO_XOPEN4
 
