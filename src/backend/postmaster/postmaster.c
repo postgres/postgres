@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.403 2004/06/11 03:54:43 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.404 2004/06/14 18:08:19 tgl Exp $
  *
  * NOTES
  *
@@ -191,7 +191,8 @@ char	   *preload_libraries_string = NULL;
 
 /* PIDs of special child processes; 0 when not running */
 static pid_t StartupPID = 0,
-			BgWriterPID = 0;
+			BgWriterPID = 0,
+			PgStatPID = 0;
 
 /* Startup/shutdown state */
 #define			NoShutdown		0
@@ -812,10 +813,9 @@ PostmasterMain(int argc, char *argv[])
 	whereToSendOutput = None;
 
 	/*
-	 * Initialize and try to startup the statistics collector process
+	 * Initialize the statistics collector stuff
 	 */
 	pgstat_init();
-	pgstat_start();
 
 	/*
 	 * Load cached files for client authentication.
@@ -1149,8 +1149,9 @@ ServerLoop(void)
 		}
 
 		/* If we have lost the stats collector, try to start a new one */
-		if (!pgstat_is_running)
-			pgstat_start();
+		if (PgStatPID == 0 &&
+			StartupPID == 0 && !FatalError && Shutdown == NoShutdown)
+			PgStatPID = pgstat_start();
 
 		/*
 		 * Touch the socket and lock file at least every ten minutes, to ensure
@@ -1509,14 +1510,6 @@ processCancelRequest(Port *port, void *pkt)
 	backendPID = (int) ntohl(canc->backendPID);
 	cancelAuthCode = (long) ntohl(canc->cancelAuthCode);
 
-	if (backendPID == BgWriterPID)
-	{
-		ereport(DEBUG2,
-				(errmsg_internal("ignoring cancel request for bgwriter process %d",
-								 backendPID)));
-		return;
-	}
-
 	/*
 	 * See if we have a matching backend.  In the EXEC_BACKEND case, we
 	 * can no longer access the postmaster's own backend list, and must
@@ -1698,6 +1691,7 @@ SIGHUP_handler(SIGNAL_ARGS)
 		SignalChildren(SIGHUP);
 		if (BgWriterPID != 0)
 			kill(BgWriterPID, SIGHUP);
+		/* PgStatPID does not currently need SIGHUP */
 		load_hba();
 		load_ident();
 
@@ -1755,6 +1749,9 @@ pmdie(SIGNAL_ARGS)
 			/* And tell it to shut down */
 			if (BgWriterPID != 0)
 				kill(BgWriterPID, SIGUSR2);
+			/* Tell pgstat to shut down too; nothing left for it to do */
+			if (PgStatPID != 0)
+				kill(PgStatPID, SIGQUIT);
 			break;
 
 		case SIGINT:
@@ -1796,6 +1793,9 @@ pmdie(SIGNAL_ARGS)
 			/* And tell it to shut down */
 			if (BgWriterPID != 0)
 				kill(BgWriterPID, SIGUSR2);
+			/* Tell pgstat to shut down too; nothing left for it to do */
+			if (PgStatPID != 0)
+				kill(PgStatPID, SIGQUIT);
 			break;
 
 		case SIGQUIT:
@@ -1811,6 +1811,8 @@ pmdie(SIGNAL_ARGS)
 				kill(StartupPID, SIGQUIT);
 			if (BgWriterPID != 0)
 				kill(BgWriterPID, SIGQUIT);
+			if (PgStatPID != 0)
+				kill(PgStatPID, SIGQUIT);
 			if (DLGetHead(BackendList))
 				SignalChildren(SIGQUIT);
 			ExitPostmaster(0);
@@ -1868,19 +1870,6 @@ reaper(SIGNAL_ARGS)
 #endif /* HAVE_WAITPID */
 
 		/*
-		 * Check if this child was the statistics collector. If so, try to
-		 * start a new one.  (If fail, we'll try again in future cycles of
-		 * the main loop.)
-		 */
-		if (pgstat_ispgstat(pid))
-		{
-			LogChildExit(LOG, gettext("statistics collector process"),
-						 pid, exitstatus);
-			pgstat_start();
-			continue;
-		}
-
-		/*
 		 * Check if this child was a startup process.
 		 */
 		if (StartupPID != 0 && pid == StartupPID)
@@ -1909,9 +1898,12 @@ reaper(SIGNAL_ARGS)
 
 			/*
 			 * Go to shutdown mode if a shutdown request was pending.
+			 * Otherwise, try to start the stats collector too.
 			 */
 			if (Shutdown > NoShutdown && BgWriterPID != 0)
 				kill(BgWriterPID, SIGUSR2);
+			else if (PgStatPID == 0 && Shutdown == NoShutdown)
+				PgStatPID = pgstat_start();
 
 			continue;
 		}
@@ -1921,6 +1913,7 @@ reaper(SIGNAL_ARGS)
 		 */
 		if (BgWriterPID != 0 && pid == BgWriterPID)
 		{
+			BgWriterPID = 0;
 			if (exitstatus == 0 && Shutdown > NoShutdown &&
 				!FatalError && !DLGetHead(BackendList))
 			{
@@ -1936,9 +1929,25 @@ reaper(SIGNAL_ARGS)
 			/*
 			 * Any unexpected exit of the bgwriter is treated as a crash.
 			 */
-			LogChildExit(DEBUG2, gettext("background writer process"),
+			LogChildExit(LOG, gettext("background writer process"),
 						 pid, exitstatus);
 			HandleChildCrash(pid, exitstatus);
+			continue;
+		}
+
+		/*
+		 * Was it the statistics collector?  If so, just try to start a new
+		 * one; no need to force reset of the rest of the system.  (If fail,
+		 * we'll try again in future cycles of the main loop.)
+		 */
+		if (PgStatPID != 0 && pid == PgStatPID)
+		{
+			PgStatPID = 0;
+			if (exitstatus != 0)
+				LogChildExit(LOG, gettext("statistics collector process"),
+							 pid, exitstatus);
+			if (StartupPID == 0 && !FatalError && Shutdown == NoShutdown)
+				PgStatPID = pgstat_start();
 			continue;
 		}
 
@@ -2113,6 +2122,17 @@ HandleChildCrash(int pid,
 		kill(BgWriterPID, (SendStop ? SIGSTOP : SIGQUIT));
 	}
 
+	/* Force a power-cycle of the pgstat processes too */
+	/* (Shouldn't be necessary, but just for luck) */
+	if (PgStatPID != 0 && !FatalError)
+	{
+		ereport(DEBUG2,
+				(errmsg_internal("sending %s to process %d",
+								 "SIGQUIT",
+								 (int) PgStatPID)));
+		kill(PgStatPID, SIGQUIT);
+	}
+
 	FatalError = true;
 }
 
@@ -2152,7 +2172,7 @@ LogChildExit(int lev, const char *procname, int pid, int exitstatus)
 }
 
 /*
- * Send a signal to all backend children.
+ * Send a signal to all backend children (but NOT special children)
  */
 static void
 SignalChildren(int signal)
@@ -2954,7 +2974,7 @@ PostmasterRandom(void)
 }
 
 /*
- * Count up number of child processes.
+ * Count up number of child processes (regular backends only)
  */
 static int
 CountChildren(void)

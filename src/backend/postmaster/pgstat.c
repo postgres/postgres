@@ -13,7 +13,7 @@
  *
  *	Copyright (c) 2001-2003, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.74 2004/06/03 02:08:03 tgl Exp $
+ *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.75 2004/06/14 18:08:18 tgl Exp $
  * ----------
  */
 #include "postgres.h"
@@ -66,12 +66,6 @@ bool		pgstat_collect_tuplelevel = false;
 bool		pgstat_collect_blocklevel = false;
 
 /* ----------
- * Other global variables
- * ----------
- */
-bool		pgstat_is_running = false;
-
-/* ----------
  * Local data
  * ----------
  */
@@ -79,7 +73,6 @@ NON_EXEC_STATIC int	pgStatSock = -1;
 static int	pgStatPipe[2];
 static struct sockaddr_storage pgStatAddr;
 
-static int	pgStatPid;
 static time_t last_pgstat_start_time;
 
 static long pgStatNumMessages = 0;
@@ -125,6 +118,7 @@ static void pgstat_parseArgs(int argc, char *argv[]);
 NON_EXEC_STATIC void PgstatBufferMain(int argc, char *argv[]);
 NON_EXEC_STATIC void PgstatCollectorMain(int argc, char *argv[]);
 static void pgstat_recvbuffer(void);
+static void pgstat_exit(SIGNAL_ARGS);
 static void pgstat_die(SIGNAL_ARGS);
 
 static int	pgstat_add_backend(PgStat_MsgHdr *msg);
@@ -496,19 +490,22 @@ pgstat_parseArgs(int argc, char *argv[])
  *	Called from postmaster at startup or after an existing collector
  *	died.  Attempt to fire up a fresh statistics collector.
  *
+ *	Returns PID of child process, or 0 if fail.
+ *
  *	Note: if fail, we will be called again from the postmaster main loop.
  * ----------
  */
-void
+int
 pgstat_start(void)
 {
 	time_t		curtime;
+	pid_t		pgStatPid;
 
 	/*
 	 * Do nothing if no collector needed
 	 */
-	if (pgstat_is_running || !pgstat_collect_startcollector)
-		return;
+	if (!pgstat_collect_startcollector)
+		return 0;
 
 	/*
 	 * Do nothing if too soon since last collector start.  This is a
@@ -520,7 +517,7 @@ pgstat_start(void)
 	curtime = time(NULL);
 	if ((unsigned int) (curtime - last_pgstat_start_time) <
 		(unsigned int) PGSTAT_RESTART_INTERVAL)
-		return;
+		return 0;
 	last_pgstat_start_time = curtime;
 
 	/*
@@ -536,12 +533,11 @@ pgstat_start(void)
 		 * pgstat_collect_startcollector on after it had been off.
 		 */
 		pgstat_collect_startcollector = false;
-		return;
+		return 0;
 	}
 
 	/*
-	 * Okay, fork off the collector.  Remember its PID for
-	 * pgstat_ispgstat.
+	 * Okay, fork off the collector.
 	 */
 
 	fflush(stdout);
@@ -553,9 +549,9 @@ pgstat_start(void)
 #endif
 
 #ifdef EXEC_BACKEND
-	switch ((pgStatPid = (int) pgstat_forkexec(STAT_PROC_BUFFER)))
+	switch ((pgStatPid = pgstat_forkexec(STAT_PROC_BUFFER)))
 #else
-	switch ((pgStatPid = (int) fork()))
+	switch ((pgStatPid = fork()))
 #endif
 	{
 		case -1:
@@ -565,7 +561,7 @@ pgstat_start(void)
 #endif
 			ereport(LOG,
 					(errmsg("could not fork statistics buffer: %m")));
-			return;
+			return 0;
 
 #ifndef EXEC_BACKEND
 		case 0:
@@ -585,32 +581,11 @@ pgstat_start(void)
 #endif
 
 		default:
-			pgstat_is_running = true;
-			return;
+			return (int) pgStatPid;
 	}
-}
 
-
-/* ----------
- * pgstat_ispgstat() -
- *
- *	Called from postmaster to check if a terminated child process
- *	was the statistics collector.
- * ----------
- */
-bool
-pgstat_ispgstat(int pid)
-{
-	if (!pgstat_is_running)
-		return false;
-
-	if (pgStatPid != pid)
-		return false;
-
-	/* Oh dear ... */
-	pgstat_is_running = false;
-
-	return true;
+	/* shouldn't get here */
+	return 0;
 }
 
 
@@ -1381,12 +1356,12 @@ PgstatBufferMain(int argc, char *argv[])
 
 	/*
 	 * Ignore all signals usually bound to some action in the postmaster,
-	 * except for SIGCHLD --- see pgstat_recvbuffer.
+	 * except for SIGCHLD and SIGQUIT --- see pgstat_recvbuffer.
 	 */
 	pqsignal(SIGHUP, SIG_IGN);
 	pqsignal(SIGINT, SIG_IGN);
 	pqsignal(SIGTERM, SIG_IGN);
-	pqsignal(SIGQUIT, SIG_IGN);
+	pqsignal(SIGQUIT, pgstat_exit);
 	pqsignal(SIGALRM, SIG_IGN);
 	pqsignal(SIGPIPE, SIG_IGN);
 	pqsignal(SIGUSR1, SIG_IGN);
@@ -1476,9 +1451,9 @@ PgstatCollectorMain(int argc, char *argv[])
 
 	/*
 	 * Reset signal handling.  With the exception of restoring default
-	 * SIGCHLD handling, this is a no-op in the non-EXEC_BACKEND case
-	 * because we'll have inherited these settings from the buffer process;
-	 * but it's not a no-op for EXEC_BACKEND.
+	 * SIGCHLD and SIGQUIT handling, this is a no-op in the non-EXEC_BACKEND
+	 * case because we'll have inherited these settings from the buffer
+	 * process; but it's not a no-op for EXEC_BACKEND.
 	 */
 	pqsignal(SIGHUP, SIG_IGN);
 	pqsignal(SIGINT, SIG_IGN);
@@ -1885,9 +1860,9 @@ pgstat_recvbuffer(void)
 		}
 
 		/*
-		 * Wait for some work to do; but not for more than 10 seconds
-		 * (this determines how quickly we will shut down after postmaster
-		 * termination).
+		 * Wait for some work to do; but not for more than 10 seconds.
+		 * (This determines how quickly we will shut down after an
+		 * ungraceful postmaster termination; so it needn't be very fast.)
 		 */
 		timeout.tv_sec = 10;
 		timeout.tv_usec = 0;
@@ -1992,19 +1967,33 @@ pgstat_recvbuffer(void)
 
 		/*
 		 * Make sure we forwarded all messages before we check for
-		 * Postmaster termination.
+		 * postmaster termination.
 		 */
 		if (msg_have != 0 || FD_ISSET(pgStatSock, &rfds))
 			continue;
 
 		/*
-		 * If the postmaster has terminated, we've done our job.
+		 * If the postmaster has terminated, we die too.  (This is no longer
+		 * the normal exit path, however.)
 		 */
 		if (!PostmasterIsAlive(true))
 			exit(0);
 	}
 }
 
+/* SIGQUIT signal handler for buffer process */
+static void
+pgstat_exit(SIGNAL_ARGS)
+{
+	/*
+	 * For now, we just nail the doors shut and get out of town.  It might
+	 * be cleaner to allow any pending messages to be sent, but that creates
+	 * a tradeoff against speed of exit.
+	 */
+	exit(0);
+}
+
+/* SIGCHLD signal handler for buffer process */
 static void
 pgstat_die(SIGNAL_ARGS)
 {

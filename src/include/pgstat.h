@@ -5,7 +5,7 @@
  *
  *	Copyright (c) 2001-2003, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/include/pgstat.h,v 1.23 2004/05/29 22:48:22 tgl Exp $
+ *	$PostgreSQL: pgsql/src/include/pgstat.h,v 1.24 2004/06/14 18:08:19 tgl Exp $
  * ----------
  */
 #ifndef PGSTAT_H
@@ -335,20 +335,13 @@ extern bool pgstat_collect_querystring;
 extern bool pgstat_collect_tuplelevel;
 extern bool pgstat_collect_blocklevel;
 
-/* ----------
- * Other global variables
- * ----------
- */
-extern bool pgstat_is_running;
-
 
 /* ----------
  * Functions called from postmaster
  * ----------
  */
 extern void pgstat_init(void);
-extern void pgstat_start(void);
-extern bool pgstat_ispgstat(int pid);
+extern int	pgstat_start(void);
 extern void pgstat_beterm(int pid);
 
 #ifdef EXEC_BACKEND
