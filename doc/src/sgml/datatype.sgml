@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.48 2001/01/26 22:04:22 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.49 2001/02/10 18:02:35 petere Exp $
 -->
 
  <chapter id="datatype">
@@ -1966,6 +1966,13 @@ January 8 04:05:06 1999 PST
      address.  Upper and lower case is accepted for the digits
      <literal>a</> through <literal>f</>.  Output is always in the
      latter of the given forms.
+    </para>
+
+    <para>
+     The directory <filename class="directory">contrib/mac</filename>
+     in the <productname>Postgres</productname> source distribution
+     contains tools that can be used to map MAC addresses to hardware
+     manufacturer names.
     </para>
    </sect2>
 
