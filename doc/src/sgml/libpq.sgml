@@ -377,6 +377,10 @@ PostgresPollingStatusType *PQconnectPoll(PQconn *conn)
    changed in the future.
   </para>
   <para>
+   These functions leave the socket in a non-blocking state as if 
+   <function>PQsetnonblocking</function> had been called.
+  </para>
+  <para>
    These functions are not thread-safe.
   </para>
  </listitem>
@@ -1168,8 +1172,58 @@ discarded by <function>PQexec</function>.
 Applications that do not like these limitations can instead use the
 underlying functions that <function>PQexec</function> is built from:
 <function>PQsendQuery</function> and <function>PQgetResult</function>.
+</para>
+<para>
+Older programs that used this functionality as well as 
+<function>PQputline</function> and <function>PQputnbytes</function>
+could block waiting to send data to the backend, to
+address that issue, the function <function>PQsetnonblocking</function>
+was added.
+</para>
+<para>
+Old applications can neglect to use <function>PQsetnonblocking</function>
+and get the older potentially blocking behavior.  Newer programs can use 
+<function>PQsetnonblocking</function> to achieve a completely non-blocking
+connection to the backend.
 
 <itemizedlist>
+ <listitem>
+   <para>
+    <function>PQsetnonblocking</function> Sets the state of the connection
+    to non-blocking.
+<synopsis>
+int PQsetnonblocking(PGconn *conn)
+</synopsis>
+    this function will ensure that calls to 
+    <function>PQputline</function>, <function>PQputnbytes</function>,
+    <function>PQsendQuery</function> and <function>PQendcopy</function>
+    will not block but instead return an error if they need to be called
+    again.
+   </para>
+   <para>
+    When a database connection has been set to non-blocking mode and
+    <function>PQexec</function> is called, it will temporarily set the state
+    of the connection to blocking until the <function>PQexec</function> 
+    completes. 
+   </para>
+   <para>
+    More of libpq is expected to be made safe for 
+    <function>PQsetnonblocking</function> functionality in the near future.
+  </para>
+ </listitem>
+
+<listitem>
+<para>
+<function>PQisnonblocking</function>
+       Returns the blocking status of the database connection.
+<synopsis>
+int PQisnonblocking(const PGconn *conn)
+</synopsis>
+       Returns TRUE if the connection is set to non-blocking mode,
+       FALSE if blocking.
+</para>
+</listitem>
+
 <listitem>
 <para>
 <function>PQsendQuery</function>
@@ -1267,20 +1321,43 @@ state will never end.
 
 <listitem>
 <para>
+<function>PQflush</function> Attempt to flush any data queued to the backend,
+returns 0 if successful (or if the send queue is empty) or EOF if it failed for
+some reason.
+<synopsis>
+int PQflush(PGconn *conn);
+</synopsis>
+<function>PQflush</function> needs to be called on a non-blocking connection 
+before calling <function>select</function> to determine if a responce has
+arrived.  If 0 is returned it ensures that there is no data queued to the 
+backend that has not actually been sent.  Only applications that have used
+<function>PQsetnonblocking</function> have a need for this.
+</para>
+</listitem>
+
+<listitem>
+<para>
 <function>PQsocket</function>
 	  Obtain the file descriptor number for the backend connection socket.
-	  A valid descriptor will be >= 0; a result of -1 indicates that
+	  A valid descriptor will be &gt;= 0; a result of -1 indicates that
 	  no backend connection is currently open.
 <synopsis>
 int PQsocket(const PGconn *conn);
 </synopsis>
 <function>PQsocket</function> should be used to obtain the backend socket descriptor
 in preparation for executing <function>select</function>(2).  This allows an
-application to wait for either backend responses or other conditions.
+application using a blocking connection to wait for either backend responses or
+other conditions.
 If the result of <function>select</function>(2) indicates that data can be read from
 the backend socket, then <function>PQconsumeInput</function> should be called to read the
 data; after which, <function>PQisBusy</function>, <function>PQgetResult</function>,
 and/or <function>PQnotifies</function> can be used to process the response.
+</para>
+<para>
+Non-blocking connections (that have used <function>PQsetnonblocking</function>)
+should not use <function>select</function> until <function>PQflush</function>
+has returned 0 indicating that there is no buffered data waiting to be sent
+to the backend.
 </para>
 </listitem>
 

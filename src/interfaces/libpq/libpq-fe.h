@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq-fe.h,v 1.55 2000/01/15 05:37:21 ishii Exp $
+ * $Id: libpq-fe.h,v 1.56 2000/01/18 06:09:24 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -262,6 +262,13 @@ extern		"C"
 	extern int	PQgetlineAsync(PGconn *conn, char *buffer, int bufsize);
 	extern int	PQputnbytes(PGconn *conn, const char *buffer, int nbytes);
 	extern int	PQendcopy(PGconn *conn);
+
+	/* Set blocking/nonblocking connection to the backend */
+	extern int	PQsetnonblocking(PGconn *conn, int arg);
+	extern int	PQisnonblocking(const PGconn *conn);
+
+	/* Force the write buffer to be written (or at least try) */
+	extern int	PQflush(PGconn *conn);
 
 	/*
 	 * "Fast path" interface --- not really recommended for application

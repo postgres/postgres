@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.111 2000/01/16 21:18:52 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.112 2000/01/18 06:09:24 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -594,31 +594,6 @@ update_db_info(PGconn *conn)
 	return 0;
 }
 
-
-/* ----------
- * connectMakeNonblocking -
- * Make a connection non-blocking.
- * Returns 1 if successful, 0 if not.
- * ----------
- */
-static int
-connectMakeNonblocking(PGconn *conn)
-{
-#ifndef WIN32
-	if (fcntl(conn->sock, F_SETFL, O_NONBLOCK) < 0)
-#else
-	if (ioctlsocket(conn->sock, FIONBIO, &on) != 0)
-#endif
-	{
-		printfPQExpBuffer(&conn->errorMessage,
-						  "connectMakeNonblocking -- fcntl() failed: errno=%d\n%s\n",
-						  errno, strerror(errno));
-		return 0;
-	}
-
-	return 1;
-}
-
 /* ----------
  * connectNoDelay -
  * Sets the TCP_NODELAY socket option.
@@ -789,7 +764,7 @@ connectDBStart(PGconn *conn)
 	 *   Ewan Mellor <eem21@cam.ac.uk>.
 	 * ---------- */
 #if (!defined(WIN32) || defined(WIN32_NON_BLOCKING_CONNECTIONS)) && !defined(USE_SSL)
-	if (!connectMakeNonblocking(conn))
+	if (PQsetnonblocking(conn, TRUE) != 0)
 		goto connect_errReturn;
 #endif	
 
@@ -898,7 +873,7 @@ connectDBStart(PGconn *conn)
 	/* This makes the connection non-blocking, for all those cases which forced us
 	   not to do it above. */
 #if (defined(WIN32) && !defined(WIN32_NON_BLOCKING_CONNECTIONS)) || defined(USE_SSL)
-	if (!connectMakeNonblocking(conn))
+	if (PQsetnonblocking(conn, TRUE) != 0)
 		goto connect_errReturn;
 #endif	
 
@@ -1720,6 +1695,7 @@ makeEmptyPGconn(void)
 	conn->inBuffer = (char *) malloc(conn->inBufSize);
 	conn->outBufSize = 8 * 1024;
 	conn->outBuffer = (char *) malloc(conn->outBufSize);
+	conn->nonblocking = FALSE;
 	initPQExpBuffer(&conn->errorMessage);
 	initPQExpBuffer(&conn->workBuffer);
 	if (conn->inBuffer == NULL ||
@@ -1830,6 +1806,7 @@ closePGconn(PGconn *conn)
 	conn->lobjfuncs = NULL;
 	conn->inStart = conn->inCursor = conn->inEnd = 0;
 	conn->outCount = 0;
+	conn->nonblocking = FALSE;
 
 }
 

@@ -24,7 +24,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-misc.c,v 1.33 1999/11/30 03:08:19 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-misc.c,v 1.34 2000/01/18 06:09:24 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -86,6 +86,37 @@ pqPutBytes(const char *s, size_t nbytes, PGconn *conn)
 {
 	size_t avail = Max(conn->outBufSize - conn->outCount, 0);
 
+	/*
+	 * if we are non-blocking and the send queue is too full to buffer this
+	 * request then try to flush some and return an error 
+	 */
+	if (pqIsnonblocking(conn) && nbytes > avail && pqFlush(conn))
+	{
+		/* 
+		 * even if the flush failed we may still have written some
+		 * data, recalculate the size of the send-queue relative
+		 * to the amount we have to send, we may be able to queue it
+		 * afterall even though it's not sent to the database it's
+		 * ok, any routines that check the data coming from the
+		 * database better call pqFlush() anyway.
+		 */
+		if (nbytes > Max(conn->outBufSize - conn->outCount, 0))
+		{
+			printfPQExpBuffer(&conn->errorMessage,
+				"pqPutBytes --  pqFlush couldn't flush enough"
+				" data: space available: %d, space needed %d\n",
+				Max(conn->outBufSize - conn->outCount, 0), nbytes);
+			return EOF;
+		}
+	}
+
+	/* 
+	 * is the amount of data to be sent is larger than the size of the
+	 * output buffer then we must flush it to make more room.
+	 *
+	 * the code above will make sure the loop conditional is never 
+	 * true for non-blocking connections
+	 */
 	while (nbytes > avail)
 	{
 		memcpy(conn->outBuffer + conn->outCount, s, avail);
@@ -548,6 +579,14 @@ pqFlush(PGconn *conn)
 		return EOF;
 	}
 
+	/* 
+	 * don't try to send zero data, allows us to use this function
+	 * without too much worry about overhead
+	 */
+	if (len == 0)
+		return (0);
+
+	/* while there's still data to send */
 	while (len > 0)
 	{
 		/* Prevent being SIGPIPEd if backend has closed the connection. */
@@ -556,6 +595,7 @@ pqFlush(PGconn *conn)
 #endif
 
 		int sent;
+
 #ifdef USE_SSL
 		if (conn->ssl) 
 		  sent = SSL_write(conn->ssl, ptr, len);
@@ -585,6 +625,8 @@ pqFlush(PGconn *conn)
 				case EWOULDBLOCK:
 					break;
 #endif
+				case EINTR:
+					continue;
 
 				case EPIPE:
 #ifdef ECONNRESET
@@ -616,13 +658,31 @@ pqFlush(PGconn *conn)
 			ptr += sent;
 			len -= sent;
 		}
+
 		if (len > 0)
 		{
 			/* We didn't send it all, wait till we can send more */
 
-			/* At first glance this looks as though it should block.  I think
-			 * that it will be OK though, as long as the socket is
-			 * non-blocking. */
+			/* 
+			 * if the socket is in non-blocking mode we may need
+			 * to abort here 
+			 */
+#ifdef USE_SSL
+			/* can't do anything for our SSL users yet */
+			if (conn->ssl == NULL)
+			{
+#endif
+				if (pqIsnonblocking(conn))
+				{
+					/* shift the contents of the buffer */
+					memmove(conn->outBuffer, ptr, len);
+					conn->outCount = len;
+					return EOF;
+				}
+#ifdef USE_SSL
+			}
+#endif
+
 			if (pqWait(FALSE, TRUE, conn))
 				return EOF;
 		}
