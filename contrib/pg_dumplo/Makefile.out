@@ -1,0 +1,42 @@
+
+# ----------
+# pg_dumplo - Makefile for compilation out of PostgreSQL contrib tree 
+# ----------
+
+
+# Set correct values
+#
+CFLAGS 	= -Wall -fpic
+CC	= gcc
+RM	= rm
+INCLUDE = -I/usr/include/pgsql
+LIBS	=-L/usr/lib/postgresql/lib -lpq
+
+# Comment this option if your system not has getopt_long()
+#
+HAVE_GETOPT_LONG = -DHAVE_GETOPT_LONG
+
+
+# --------------------------- not edit ---------------------------------
+
+PROGRAM	= pg_dumplo
+	
+OBJECTS	= main.o lo_export.o lo_import.o utils.o
+
+CFLAGS  += -DOUT_OF_PG $(HAVE_GETOPT_LONG)
+
+COMPILE = $(CC) $(CPPFLAGS) $(CFLAGS) $(INCLUDE)
+LINK    = $(CC) $(CFLAGS) -o $@ $(LIBS)
+
+
+all: $(PROGRAM) 	
+
+$(PROGRAM): $(OBJECTS)
+	$(LINK) $(OBJECTS)
+
+.c.o: $<
+	$(COMPILE) -c $<
+
+clean:
+	$(RM) -f *~ $(OBJECTS) $(PROGRAM)
+

@@ -1,0 +1,23 @@
+
+--------------- geo_distance
+
+DROP FUNCTION geo_distance (point, point);
+CREATE FUNCTION geo_distance (point, point) RETURNS float8
+  AS 'MODULE_PATHNAME' LANGUAGE 'c';
+
+SELECT geo_distance ('(1,2)'::point, '(3,4)'::point);
+
+--------------- geo_distance as operator <@>
+
+DROP OPERATOR <@> (point, point);
+CREATE OPERATOR <@> (
+  leftarg = point,
+  rightarg = point,
+  procedure = geo_distance,
+  commutator = <@>
+);
+
+-- ( 87.6, 41.8) is in Chicago
+-- (106.7, 35.1) is in Albuquerque
+-- The cities are about 1100 miles apart
+SELECT '(87.6,41.8)'::point <@> '(106.7,35.1)'::point;

@@ -1,0 +1,7 @@
+DROP FUNCTION noup ();
+
+CREATE FUNCTION noup ()
+	RETURNS opaque
+	AS 'MODULE_PATHNAME'
+	LANGUAGE 'C'
+;

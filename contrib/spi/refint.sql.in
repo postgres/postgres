@@ -1,0 +1,14 @@
+DROP FUNCTION check_primary_key ();
+DROP FUNCTION check_foreign_key ();
+
+CREATE FUNCTION check_primary_key ()
+	RETURNS opaque
+	AS 'MODULE_PATHNAME'
+	LANGUAGE 'newC'
+;
+
+CREATE FUNCTION check_foreign_key ()
+	RETURNS opaque
+	AS 'MODULE_PATHNAME'
+	LANGUAGE 'newC'
+;

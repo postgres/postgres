@@ -1,0 +1,228 @@
+--
+--	PostgreSQL code for ISSNs.
+--
+--	$Id: isbn_issn.sql.in,v 1.1 2000/06/15 19:04:50 momjian Exp $
+--
+
+
+--
+--	Input and output functions and the type itself:
+--
+
+create function issn_in(opaque)
+	returns opaque
+	as 'MODULE_PATHNAME'
+	language 'c';
+
+create function issn_out(opaque)
+	returns opaque
+	as 'MODULE_PATHNAME'
+	language 'c';
+
+create type issn (
+	internallength = 16,
+	externallength = 9,
+	input = issn_in,
+	output = issn_out
+);
+
+--
+--	The various boolean tests:
+--
+
+create function issn_lt(issn, issn)
+	returns bool
+	as 'MODULE_PATHNAME'
+	language 'c';
+
+create function issn_le(issn, issn)
+	returns bool
+	as 'MODULE_PATHNAME'
+	language 'c';
+
+create function issn_eq(issn, issn)
+	returns bool
+	as 'MODULE_PATHNAME'
+	language 'c';
+
+create function issn_ge(issn, issn)
+	returns bool
+	as 'MODULE_PATHNAME'
+	language 'c';
+
+create function issn_gt(issn, issn)
+	returns bool
+	as 'MODULE_PATHNAME'
+	language 'c';
+
+create function issn_ne(issn, issn)
+	returns bool
+	as 'MODULE_PATHNAME'
+	language 'c';
+
+--
+--	Now the operators.  Note how some of the parameters to some
+--	of the 'create operator' commands are commented out.  This
+--	is because they reference as yet undefined operators, and
+--	will be implicitly defined when those are, further down.
+--
+
+create operator < (
+	leftarg = issn,
+	rightarg = issn,
+--	negator = >=,
+	procedure = issn_lt
+);
+
+create operator <= (
+	leftarg = issn,
+	rightarg = issn,
+--	negator = >,
+	procedure = issn_le
+);
+
+create operator = (
+	leftarg = issn,
+	rightarg = issn,
+	commutator = =,
+--	negator = <>,
+	procedure = issn_eq
+);
+
+create operator >= (
+	leftarg = issn,
+	rightarg = issn,
+	negator = <,
+	procedure = issn_ge
+);
+
+create operator > (
+	leftarg = issn,
+	rightarg = issn,
+	negator = <=,
+	procedure = issn_gt
+);
+
+create operator <> (
+	leftarg = issn,
+	rightarg = issn,
+	negator = =,
+	procedure = issn_ne
+);
+
+--
+--	eof
+--
+--
+--	PostgreSQL code for ISBNs.
+--
+--	$Id: isbn_issn.sql.in,v 1.1 2000/06/15 19:04:50 momjian Exp $
+--
+--
+--	Input and output functions and the type itself:
+--
+
+create function isbn_in(opaque)
+	returns opaque
+	as 'MODULE_PATHNAME'
+	language 'c';
+
+create function isbn_out(opaque)
+	returns opaque
+	as 'MODULE_PATHNAME'
+	language 'c';
+
+create type isbn (
+	internallength = 16,
+	externallength = 13,
+	input = isbn_in,
+	output = isbn_out
+);
+
+--
+--	The various boolean tests:
+--
+
+create function isbn_lt(isbn, isbn)
+	returns bool
+	as 'MODULE_PATHNAME'
+	language 'c';
+
+create function isbn_le(isbn, isbn)
+	returns bool
+	as 'MODULE_PATHNAME'
+	language 'c';
+
+create function isbn_eq(isbn, isbn)
+	returns bool
+	as 'MODULE_PATHNAME'
+	language 'c';
+
+create function isbn_ge(isbn, isbn)
+	returns bool
+	as 'MODULE_PATHNAME'
+	language 'c';
+
+create function isbn_gt(isbn, isbn)
+	returns bool
+	as 'MODULE_PATHNAME'
+	language 'c';
+
+create function isbn_ne(isbn, isbn)
+	returns bool
+	as 'MODULE_PATHNAME'
+	language 'c';
+
+--
+--	Now the operators.  Note how some of the parameters to some
+--	of the 'create operator' commands are commented out.  This
+--	is because they reference as yet undefined operators, and
+--	will be implicitly defined when those are, further down.
+--
+
+create operator < (
+	leftarg = isbn,
+	rightarg = isbn,
+--	negator = >=,
+	procedure = isbn_lt
+);
+
+create operator <= (
+	leftarg = isbn,
+	rightarg = isbn,
+--	negator = >,
+	procedure = isbn_le
+);
+
+create operator = (
+	leftarg = isbn,
+	rightarg = isbn,
+	commutator = =,
+--	negator = <>,
+	procedure = isbn_eq
+);
+
+create operator >= (
+	leftarg = isbn,
+	rightarg = isbn,
+	negator = <,
+	procedure = isbn_ge
+);
+
+create operator > (
+	leftarg = isbn,
+	rightarg = isbn,
+	negator = <=,
+	procedure = isbn_gt
+);
+
+create operator <> (
+	leftarg = isbn,
+	rightarg = isbn,
+	negator = =,
+	procedure = isbn_ne
+);
+
+--
+--	eof
+--

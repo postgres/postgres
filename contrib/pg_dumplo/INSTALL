@@ -1,0 +1,37 @@
+
+
+pg_dumplo - PostgreSQL large object dumper
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~        
+
+For more information see the help ( pg_dumplo -h ) and examples in 
+this help or the cool HOWTO.
+
+
+Compilation:
+~~~~~~~~~~~
+	- In the PG contrib tree:
+		* run master ./configure in the PG source top directory  
+		* run 'make'
+		* run 'make install'
+
+	- Out of PG contrib:
+		* edit Makefile.out
+		* run 'make -f Makefile.out' 
+
+	
+THANKS:
+~~~~~~ 
+	<??? I lost his e-mail ???>
+		* option '--all' and pg_class usage
+
+	Pavel Janík ml. <Pavel.Janik@linux.cz>
+		* HOWTO
+		
+		
+		
+ 				        Karel Zak <zakkr@zf.jcu.cz>		
+		
+				
+
+	
+
