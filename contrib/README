@@ -1,59 +1,77 @@
-  This directory contains the contribution functions or tools.
+This directory contains the contribution functions or tools.
 
- - contrib -|
-            |- apache_logging -
-	    |   Getting Apache to log to PostgreSQL
-	    |   	by Terry Mackintosh <terry@terrym.com>
-            |- array -
-	    |   Array iterator functions
-	    |   	by Massimo Dal Zotto <dz@cs.unitn.it>
-            |- datetime -
-	    |   Date & time functions
-	    |   	by Sergio Lenzi <lenzi@bsi.com.br>
-            |- earthdistance -
-	    |   Operator for computing earth distance for two points
-	    |   	by Hal Snyder <hal@vailsys.com>
-            |- fulltextindex -
-	    |   Full text indexing using triggers
-	    |   	by Maarten Boekhold <maartenb@dutepp0.et.tudelft.nl>
-            |- int8 -
-	    |   64-bit integer arithmetic for Postgres
-	    |   	by Thomas G. Lockhart <Thomas.Lockhart@jpl.nasa.gov>
-            |- ip_and_mac -
-	    |   PostgreSQL type extensions for IP and MAC addresses
-	    |   	by Tom Ivar Helbekkmo <tih@Hamartun.Priv.NO>
-            |- linux -
-	    |   Start postgres back end system
-	    |   	by Thomas Lockhart <lockhart@alumni.caltech.edu>
-            |- lo -
-	    |   Large Object maintenance
-	    |   	by Peter Mount <peter@retep.org.uk> 
-            |- miscutil -
-	    |   Postgres assert checking and various utility functions
-	    |   	by Dal Zotto <dz@cs.unitn.it>
-            |- mSQL-interface -
-	    |   mSQL API translation library
-	    |   	by Aldrin Leal <aldrin@americasnet.com>
-            |- noupdate -
-	    |   trigger to prevent updates on single columns
-	    |   	by unknown
-            |- pginterface -
-	    |   A crude C/4GL
-	    |   	by Bruce Momjian <root@candle.pha.pa.us>
-            |- sequence -
-	    |   Set a new sequence value
-	    |   	by Massimo Dal Zotto <dz@cs.unitn.it>
-            |- soundex -
-	    |   Prototype for soundex function
-            |- spi -
-	    |   A general trigger function autoinc() and so on.
-            |- string -
-	    |   New input/output conversion routines for strings
-	    |   	by Massimo Dal Zotto <dz@cs.unitn.it>
-            |- unixdate -
-	    |   Conversions from integer to datetime
-	    |   	by Thomas Lockhart <lockhart@alumni.caltech.edu>
-            |- userlock -
-	    |   User locks
-	    |   	by Massimo Dal Zotto <dz@cs.unitn.it>
+---------------------------------------------------------------------------
+
+apache_logging -
+	Getting Apache to log to PostgreSQL
+	by Terry Mackintosh <terry@terrym.com>
+
+array -
+	Array iterator functions
+	by Massimo Dal Zotto <dz@cs.unitn.it>
+
+datetime -
+	Date & time functions
+	by Sergio Lenzi <lenzi@bsi.com.br>
+
+earthdistance -
+	Operator for computing earth distance for two points
+	by Hal Snyder <hal@vailsys.com>
+
+fulltextindex -
+	Full text indexing using triggers
+	by Maarten Boekhold <maartenb@dutepp0.et.tudelft.nl>
+
+int8 -
+	64-bit integer arithmetic for Postgres
+	by Thomas G. Lockhart <Thomas.Lockhart@jpl.nasa.gov>
+
+ip_and_mac -
+	PostgreSQL type extensions for IP and MAC addresses
+	by Tom Ivar Helbekkmo <tih@Hamartun.Priv.NO>
+
+linux -
+	Start postgres back end system
+	by Thomas Lockhart <lockhart@alumni.caltech.edu>
+
+lo -
+	Large Object maintenance
+	by Peter Mount <peter@retep.org.uk> 
+
+miscutil -
+	Postgres assert checking and various utility functions
+	by Dal Zotto <dz@cs.unitn.it>
+
+mSQL-interface -
+	mSQL API translation library
+	by Aldrin Leal <aldrin@americasnet.com>
+
+noupdate -
+	trigger to prevent updates on single columns
+
+pginterface -
+	A crude C/4GL
+	by Bruce Momjian <root@candle.pha.pa.us>
+
+sequence -
+	Set a new sequence value
+	by Massimo Dal Zotto <dz@cs.unitn.it>
+
+soundex -
+	Prototype for soundex function
+
+spi -
+	A general trigger function autoinc() and so on.
+
+string -
+	New input/output conversion routines for strings
+	by Massimo Dal Zotto <dz@cs.unitn.it>
+
+unixdate -
+	Conversions from integer to datetime
+	by Thomas Lockhart <lockhart@alumni.caltech.edu>
+
+userlock -
+	User locks
+	by Massimo Dal Zotto <dz@cs.unitn.it>
 
