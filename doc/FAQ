@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Mon Jun 10 22:22:31 EDT 2002
+   Last updated: Tue Jun 11 06:29:44 EDT 2002
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -325,9 +325,8 @@
    Performance
           PostgreSQL has performance similar to other commercial and open
           source databases. it is faster for some things, slower for
-          others.
-          In comparison to MySQL or leaner database systems, we are
-          slower on inserts/updates because we have transaction overhead.
+          others. In comparison to MySQL or leaner database systems, we
+          are slower on inserts/updates because of transaction overhead.
           Of course, MySQL does not have any of the features mentioned in
           the Features section above. We are built for reliability and
           features, though we continue to improve performance in every
