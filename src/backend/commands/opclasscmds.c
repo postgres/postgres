@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/opclasscmds.c,v 1.2 2002/07/29 23:46:35 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/opclasscmds.c,v 1.3 2002/08/05 03:29:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -286,15 +286,7 @@ DefineOpClass(CreateOpClassStmt *stmt)
 
 	opclassoid = simple_heap_insert(rel, tup);
 
-	if (RelationGetForm(rel)->relhasindex)
-	{
-		Relation	idescs[Num_pg_opclass_indices];
-
-		CatalogOpenIndices(Num_pg_opclass_indices, Name_pg_opclass_indices,
-						   idescs);
-		CatalogIndexInsert(idescs, Num_pg_opclass_indices, rel, tup);
-		CatalogCloseIndices(Num_pg_opclass_indices, idescs);
-	}
+	CatalogUpdateIndexes(rel, tup);
 
 	heap_freetuple(tup);
 
@@ -395,15 +387,8 @@ storeOperators(Oid opclassoid, int numOperators,
 
 		simple_heap_insert(rel, tup);
 
-		if (RelationGetForm(rel)->relhasindex)
-		{
-			Relation	idescs[Num_pg_amop_indices];
+		CatalogUpdateIndexes(rel, tup);
 
-			CatalogOpenIndices(Num_pg_amop_indices, Name_pg_amop_indices,
-							   idescs);
-			CatalogIndexInsert(idescs, Num_pg_amop_indices, rel, tup);
-			CatalogCloseIndices(Num_pg_amop_indices, idescs);
-		}
 		heap_freetuple(tup);
 	}
 
@@ -444,15 +429,8 @@ storeProcedures(Oid opclassoid, int numProcs, Oid *procedures)
 
 		simple_heap_insert(rel, tup);
 
-		if (RelationGetForm(rel)->relhasindex)
-		{
-			Relation	idescs[Num_pg_amproc_indices];
+		CatalogUpdateIndexes(rel, tup);
 
-			CatalogOpenIndices(Num_pg_amproc_indices, Name_pg_amproc_indices,
-							   idescs);
-			CatalogIndexInsert(idescs, Num_pg_amproc_indices, rel, tup);
-			CatalogCloseIndices(Num_pg_amproc_indices, idescs);
-		}
 		heap_freetuple(tup);
 	}
 

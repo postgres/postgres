@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_conversion.c,v 1.3 2002/07/25 10:07:10 ishii Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_conversion.c,v 1.4 2002/08/05 03:29:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -105,14 +105,7 @@ Oid	ConversionCreate(const char *conname, Oid connamespace,
 	Assert(OidIsValid(oid));
 
 	/* update the index if any */
-	if (RelationGetForm(rel)->relhasindex)
-	{
-		Relation	idescs[Num_pg_conversion_indices];
-
-		CatalogOpenIndices(Num_pg_conversion_indices, Name_pg_conversion_indices, idescs);
-		CatalogIndexInsert(idescs, Num_pg_conversion_indices, rel, tup);
-		CatalogCloseIndices(Num_pg_conversion_indices, idescs);
-	}
+	CatalogUpdateIndexes(rel, tup);
 
 	myself.classId = get_system_catalog_relid(ConversionRelationName);
 	myself.objectId = HeapTupleGetOid(tup);

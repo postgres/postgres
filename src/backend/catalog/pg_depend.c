@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_depend.c,v 1.3 2002/07/16 22:12:18 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_depend.c,v 1.4 2002/08/05 03:29:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -53,12 +53,11 @@ recordMultipleDependencies(const ObjectAddress *depender,
 						   DependencyType behavior)
 {
 	Relation	dependDesc;
+	CatalogIndexState indstate;
 	HeapTuple	tup;
 	int			i;
 	char		nulls[Natts_pg_depend];
 	Datum		values[Natts_pg_depend];
-	Relation	idescs[Num_pg_depend_indices];
-	bool		indices_opened = false;
 
 	if (nreferenced <= 0)
 		return;					/* nothing to do */
@@ -71,6 +70,9 @@ recordMultipleDependencies(const ObjectAddress *depender,
 		return;
 
 	dependDesc = heap_openr(DependRelationName, RowExclusiveLock);
+
+	/* Don't open indexes unless we need to make an update */
+	indstate = NULL;
 
 	memset(nulls, ' ', sizeof(nulls));
 
@@ -101,22 +103,18 @@ recordMultipleDependencies(const ObjectAddress *depender,
 
 			simple_heap_insert(dependDesc, tup);
 
-			/*
-			 * Keep indices current
-			 */
-			if (!indices_opened)
-			{
-				CatalogOpenIndices(Num_pg_depend_indices, Name_pg_depend_indices, idescs);
-				indices_opened = true;
-			}
-			CatalogIndexInsert(idescs, Num_pg_depend_indices, dependDesc, tup);
+			/* keep indexes current */
+			if (indstate == NULL)
+				indstate = CatalogOpenIndexes(dependDesc);
+
+			CatalogIndexInsert(indstate, tup);
 
 			heap_freetuple(tup);
 		}
 	}
 
-	if (indices_opened)
-		CatalogCloseIndices(Num_pg_depend_indices, idescs);
+	if (indstate != NULL)
+		CatalogCloseIndexes(indstate);
 
 	heap_close(dependDesc, RowExclusiveLock);
 }

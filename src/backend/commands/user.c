@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/commands/user.c,v 1.106 2002/07/24 19:11:09 petere Exp $
+ * $Header: /cvsroot/pgsql/src/backend/commands/user.c,v 1.107 2002/08/05 03:29:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -597,19 +597,8 @@ CreateUser(CreateUserStmt *stmt)
 	 */
 	simple_heap_insert(pg_shadow_rel, tuple);
 
-	/*
-	 * Update indexes
-	 */
-	if (RelationGetForm(pg_shadow_rel)->relhasindex)
-	{
-		Relation	idescs[Num_pg_shadow_indices];
-
-		CatalogOpenIndices(Num_pg_shadow_indices,
-						   Name_pg_shadow_indices, idescs);
-		CatalogIndexInsert(idescs, Num_pg_shadow_indices, pg_shadow_rel,
-						   tuple);
-		CatalogCloseIndices(Num_pg_shadow_indices, idescs);
-	}
+	/* Update indexes */
+	CatalogUpdateIndexes(pg_shadow_rel, tuple);
 
 	/*
 	 * Add the user to the groups specified. We'll just call the below
@@ -809,16 +798,7 @@ AlterUser(AlterUserStmt *stmt)
 	simple_heap_update(pg_shadow_rel, &tuple->t_self, new_tuple);
 
 	/* Update indexes */
-	if (RelationGetForm(pg_shadow_rel)->relhasindex)
-	{
-		Relation	idescs[Num_pg_shadow_indices];
-
-		CatalogOpenIndices(Num_pg_shadow_indices,
-						   Name_pg_shadow_indices, idescs);
-		CatalogIndexInsert(idescs, Num_pg_shadow_indices, pg_shadow_rel,
-						   new_tuple);
-		CatalogCloseIndices(Num_pg_shadow_indices, idescs);
-	}
+	CatalogUpdateIndexes(pg_shadow_rel, new_tuple);
 
 	ReleaseSysCache(tuple);
 	heap_freetuple(new_tuple);
@@ -898,13 +878,7 @@ AlterUserSet(AlterUserSetStmt *stmt)
 	newtuple = heap_modifytuple(oldtuple, rel, repl_val, repl_null, repl_repl);
 	simple_heap_update(rel, &oldtuple->t_self, newtuple);
 
-	{
-		Relation	idescs[Num_pg_shadow_indices];
-
-		CatalogOpenIndices(Num_pg_shadow_indices, Name_pg_shadow_indices, idescs);
-		CatalogIndexInsert(idescs, Num_pg_shadow_indices, rel, newtuple);
-		CatalogCloseIndices(Num_pg_shadow_indices, idescs);
-	}
+	CatalogUpdateIndexes(rel, newtuple);
 
 	ReleaseSysCache(oldtuple);
 	heap_close(rel, RowExclusiveLock);
@@ -1216,19 +1190,8 @@ CreateGroup(CreateGroupStmt *stmt)
 	 */
 	simple_heap_insert(pg_group_rel, tuple);
 
-	/*
-	 * Update indexes
-	 */
-	if (RelationGetForm(pg_group_rel)->relhasindex)
-	{
-		Relation	idescs[Num_pg_group_indices];
-
-		CatalogOpenIndices(Num_pg_group_indices,
-						   Name_pg_group_indices, idescs);
-		CatalogIndexInsert(idescs, Num_pg_group_indices, pg_group_rel,
-						   tuple);
-		CatalogCloseIndices(Num_pg_group_indices, idescs);
-	}
+	/* Update indexes */
+	CatalogUpdateIndexes(pg_group_rel, tuple);
 
 	heap_close(pg_group_rel, NoLock);
 
@@ -1417,16 +1380,7 @@ UpdateGroupMembership(Relation group_rel, HeapTuple group_tuple,
 	simple_heap_update(group_rel, &group_tuple->t_self, tuple);
 
 	/* Update indexes */
-	if (RelationGetForm(group_rel)->relhasindex)
-	{
-		Relation	idescs[Num_pg_group_indices];
-
-		CatalogOpenIndices(Num_pg_group_indices,
-						   Name_pg_group_indices, idescs);
-		CatalogIndexInsert(idescs, Num_pg_group_indices, group_rel,
-						   tuple);
-		CatalogCloseIndices(Num_pg_group_indices, idescs);
-	}
+	CatalogUpdateIndexes(group_rel, tuple);
 }
 
 

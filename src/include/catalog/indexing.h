@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: indexing.h,v 1.73 2002/07/25 10:07:12 ishii Exp $
+ * $Id: indexing.h,v 1.74 2002/08/05 03:29:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,38 +18,10 @@
 #include "access/htup.h"
 
 /*
- * Number of indices that exist for each system catalog
- */
-#define Num_pg_aggregate_indices	1
-#define Num_pg_am_indices			2
-#define Num_pg_amop_indices			2
-#define Num_pg_amproc_indices		1
-#define Num_pg_attr_indices			2
-#define Num_pg_attrdef_indices		2
-#define Num_pg_cast_indices			2
-#define Num_pg_class_indices		2
-#define Num_pg_constraint_indices	3
-#define Num_pg_conversion_indices	3
-#define Num_pg_database_indices		2
-#define Num_pg_depend_indices		2
-#define Num_pg_description_indices	1
-#define Num_pg_group_indices		2
-#define Num_pg_index_indices		2
-#define Num_pg_inherits_indices		1
-#define Num_pg_language_indices		2
-#define Num_pg_largeobject_indices	1
-#define Num_pg_namespace_indices	2
-#define Num_pg_opclass_indices		2
-#define Num_pg_operator_indices		2
-#define Num_pg_proc_indices			2
-#define Num_pg_rewrite_indices		2
-#define Num_pg_shadow_indices		2
-#define Num_pg_statistic_indices	1
-#define Num_pg_trigger_indices		4
-#define Num_pg_type_indices			2
-
-/*
- * Names of indices on system catalogs
+ * Names of indexes on system catalogs
+ *
+ * References to specific system indexes in the C code should use these
+ * macros rather than hardwiring the actual index name.
  */
 #define AccessMethodOperatorIndex	"pg_amop_opc_opr_index"
 #define AccessMethodStrategyIndex	"pg_amop_opc_strategy_index"
@@ -104,43 +76,22 @@
 #define TypeNameNspIndex			"pg_type_typname_nsp_index"
 #define TypeOidIndex				"pg_type_oid_index"
 
-/* Arrays of names of indices for each system catalog */
-extern char *Name_pg_aggregate_indices[];
-extern char *Name_pg_am_indices[];
-extern char *Name_pg_amop_indices[];
-extern char *Name_pg_amproc_indices[];
-extern char *Name_pg_attr_indices[];
-extern char *Name_pg_attrdef_indices[];
-extern char *Name_pg_cast_indices[];
-extern char *Name_pg_class_indices[];
-extern char *Name_pg_constraint_indices[];
-extern char *Name_pg_conversion_indices[];
-extern char *Name_pg_database_indices[];
-extern char *Name_pg_depend_indices[];
-extern char *Name_pg_description_indices[];
-extern char *Name_pg_group_indices[];
-extern char *Name_pg_index_indices[];
-extern char *Name_pg_inherits_indices[];
-extern char *Name_pg_language_indices[];
-extern char *Name_pg_largeobject_indices[];
-extern char *Name_pg_namespace_indices[];
-extern char *Name_pg_opclass_indices[];
-extern char *Name_pg_operator_indices[];
-extern char *Name_pg_proc_indices[];
-extern char *Name_pg_rewrite_indices[];
-extern char *Name_pg_shadow_indices[];
-extern char *Name_pg_statistic_indices[];
-extern char *Name_pg_trigger_indices[];
-extern char *Name_pg_type_indices[];
 
+/*
+ * The state object used by CatalogOpenIndexes and friends is actually the
+ * same as the executor's ResultRelInfo, but we give it another type name
+ * to decouple callers from that fact.
+ */
+typedef struct ResultRelInfo *CatalogIndexState;
 
 /*
  * indexing.c prototypes
  */
-extern void CatalogOpenIndices(int nIndices, char **names, Relation *idescs);
-extern void CatalogCloseIndices(int nIndices, Relation *idescs);
-extern void CatalogIndexInsert(Relation *idescs, int nIndices,
-				   Relation heapRelation, HeapTuple heapTuple);
+extern CatalogIndexState CatalogOpenIndexes(Relation heapRel);
+extern void CatalogCloseIndexes(CatalogIndexState indstate);
+extern void CatalogIndexInsert(CatalogIndexState indstate,
+							   HeapTuple heapTuple);
+extern void CatalogUpdateIndexes(Relation heapRel, HeapTuple heapTuple);
 
 
 /*
@@ -221,7 +172,7 @@ DECLARE_UNIQUE_INDEX(pg_trigger_oid_index on pg_trigger using btree(oid oid_ops)
 DECLARE_UNIQUE_INDEX(pg_type_oid_index on pg_type using btree(oid oid_ops));
 DECLARE_UNIQUE_INDEX(pg_type_typname_nsp_index on pg_type using btree(typname name_ops, typnamespace oid_ops));
 
-/* last step of initialization script: build the indices declared above */
+/* last step of initialization script: build the indexes declared above */
 BUILD_INDICES
 
 #endif   /* INDEXING_H */

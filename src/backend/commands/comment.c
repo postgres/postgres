@@ -7,7 +7,7 @@
  * Copyright (c) 1996-2001, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/comment.c,v 1.54 2002/08/02 18:15:05 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/comment.c,v 1.55 2002/08/05 03:29:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -206,19 +206,9 @@ CreateComments(Oid oid, Oid classoid, int32 subid, char *comment)
 	}
 
 	/* Update indexes, if necessary */
-
 	if (newtuple != NULL)
 	{
-		if (RelationGetForm(description)->relhasindex)
-		{
-			Relation	idescs[Num_pg_description_indices];
-
-			CatalogOpenIndices(Num_pg_description_indices,
-							   Name_pg_description_indices, idescs);
-			CatalogIndexInsert(idescs, Num_pg_description_indices, description,
-							   newtuple);
-			CatalogCloseIndices(Num_pg_description_indices, idescs);
-		}
+		CatalogUpdateIndexes(description, newtuple);
 		heap_freetuple(newtuple);
 	}
 

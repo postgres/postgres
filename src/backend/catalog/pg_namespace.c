@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_namespace.c,v 1.4 2002/06/20 20:29:26 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_namespace.c,v 1.5 2002/08/05 03:29:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -63,17 +63,11 @@ NamespaceCreate(const char *nspName, int32 ownerSysId)
 	tupDesc = nspdesc->rd_att;
 
 	tup = heap_formtuple(tupDesc, values, nulls);
+
 	nspoid = simple_heap_insert(nspdesc, tup);
 	Assert(OidIsValid(nspoid));
 
-	if (RelationGetForm(nspdesc)->relhasindex)
-	{
-		Relation	idescs[Num_pg_namespace_indices];
-
-		CatalogOpenIndices(Num_pg_namespace_indices, Name_pg_namespace_indices, idescs);
-		CatalogIndexInsert(idescs, Num_pg_namespace_indices, nspdesc, tup);
-		CatalogCloseIndices(Num_pg_namespace_indices, idescs);
-	}
+	CatalogUpdateIndexes(nspdesc, tup);
 
 	heap_close(nspdesc, RowExclusiveLock);
 

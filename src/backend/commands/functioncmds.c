@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/functioncmds.c,v 1.15 2002/07/29 23:44:44 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/functioncmds.c,v 1.16 2002/08/05 03:29:16 tgl Exp $
  *
  * DESCRIPTION
  *	  These routines take the parse tree and pick out the
@@ -685,16 +685,10 @@ CreateCast(CreateCastStmt *stmt)
 		nulls[i] = ' ';
 
 	tuple = heap_formtuple(RelationGetDescr(relation), values, nulls);
+
 	simple_heap_insert(relation, tuple);
 
-	if (RelationGetForm(relation)->relhasindex)
-	{
-		Relation	idescs[Num_pg_cast_indices];
-
-		CatalogOpenIndices(Num_pg_cast_indices, Name_pg_cast_indices, idescs);
-		CatalogIndexInsert(idescs, Num_pg_cast_indices, relation, tuple);
-		CatalogCloseIndices(Num_pg_cast_indices, idescs);
-	}
+	CatalogUpdateIndexes(relation, tuple);
 
 	myself.classId = RelationGetRelid(relation);
 	myself.objectId = HeapTupleGetOid(tuple);

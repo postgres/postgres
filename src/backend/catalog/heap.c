@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.217 2002/08/05 02:30:50 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.218 2002/08/05 03:29:16 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -423,23 +423,17 @@ AddNewAttributeTuples(Oid new_rel_oid,
 	int			i;
 	HeapTuple	tup;
 	Relation	rel;
-	bool		hasindex;
-	Relation	idescs[Num_pg_attr_indices];
+	CatalogIndexState indstate;
 	int			natts = tupdesc->natts;
 	ObjectAddress	myself,
 					referenced;
 
 	/*
-	 * open pg_attribute
+	 * open pg_attribute and its indexes.
 	 */
 	rel = heap_openr(AttributeRelationName, RowExclusiveLock);
 
-	/*
-	 * Check if we have any indices defined on pg_attribute.
-	 */
-	hasindex = RelationGetForm(rel)->relhasindex;
-	if (hasindex)
-		CatalogOpenIndices(Num_pg_attr_indices, Name_pg_attr_indices, idescs);
+	indstate = CatalogOpenIndexes(rel);
 
 	/*
 	 * First we add the user attributes.  This is also a convenient place
@@ -461,8 +455,7 @@ AddNewAttributeTuples(Oid new_rel_oid,
 
 		simple_heap_insert(rel, tup);
 
-		if (hasindex)
-			CatalogIndexInsert(idescs, Num_pg_attr_indices, rel, tup);
+		CatalogIndexInsert(indstate, tup);
 
 		heap_freetuple(tup);
 
@@ -509,8 +502,7 @@ AddNewAttributeTuples(Oid new_rel_oid,
 
 				simple_heap_insert(rel, tup);
 
-				if (hasindex)
-					CatalogIndexInsert(idescs, Num_pg_attr_indices, rel, tup);
+				CatalogIndexInsert(indstate, tup);
 
 				heap_freetuple(tup);
 			}
@@ -521,8 +513,7 @@ AddNewAttributeTuples(Oid new_rel_oid,
 	/*
 	 * clean up
 	 */
-	if (hasindex)
-		CatalogCloseIndices(Num_pg_attr_indices, idescs);
+	CatalogCloseIndexes(indstate);
 
 	heap_close(rel, RowExclusiveLock);
 }
@@ -543,7 +534,6 @@ AddNewRelationTuple(Relation pg_class_desc,
 {
 	Form_pg_class new_rel_reltup;
 	HeapTuple	tup;
-	Relation	idescs[Num_pg_class_indices];
 
 	/*
 	 * first we update some of the information in our uncataloged
@@ -606,20 +596,11 @@ AddNewRelationTuple(Relation pg_class_desc,
 	HeapTupleSetOid(tup, new_rel_oid);
 
 	/*
-	 * finally insert the new tuple and free it.
+	 * finally insert the new tuple, update the indexes, and clean up.
 	 */
 	simple_heap_insert(pg_class_desc, tup);
 
-	if (!IsIgnoringSystemIndexes())
-	{
-		/*
-		 * First, open the catalog indices and insert index tuples for the
-		 * new relation.
-		 */
-		CatalogOpenIndices(Num_pg_class_indices, Name_pg_class_indices, idescs);
-		CatalogIndexInsert(idescs, Num_pg_class_indices, pg_class_desc, tup);
-		CatalogCloseIndices(Num_pg_class_indices, idescs);
-	}
+	CatalogUpdateIndexes(pg_class_desc, tup);
 
 	heap_freetuple(tup);
 }
@@ -953,15 +934,8 @@ RemoveAttributeById(Oid relid, AttrNumber attnum)
 
 	simple_heap_update(attr_rel, &tuple->t_self, tuple);
 
-	/* keep the system catalog indices current */
-	if (RelationGetForm(attr_rel)->relhasindex)
-	{
-		Relation	idescs[Num_pg_attr_indices];
-
-		CatalogOpenIndices(Num_pg_attr_indices, Name_pg_attr_indices, idescs);
-		CatalogIndexInsert(idescs, Num_pg_attr_indices, attr_rel, tuple);
-		CatalogCloseIndices(Num_pg_attr_indices, idescs);
-	}
+	/* keep the system catalog indexes current */
+	CatalogUpdateIndexes(attr_rel, tuple);
 
 	/*
 	 * Because updating the pg_attribute row will trigger a relcache flush
@@ -1087,15 +1061,8 @@ RemoveAttrDefaultById(Oid attrdefId)
 
 	simple_heap_update(attr_rel, &tuple->t_self, tuple);
 
-	/* keep the system catalog indices current */
-	if (RelationGetForm(attr_rel)->relhasindex)
-	{
-		Relation	idescs[Num_pg_attr_indices];
-
-		CatalogOpenIndices(Num_pg_attr_indices, Name_pg_attr_indices, idescs);
-		CatalogIndexInsert(idescs, Num_pg_attr_indices, attr_rel, tuple);
-		CatalogCloseIndices(Num_pg_attr_indices, idescs);
-	}
+	/* keep the system catalog indexes current */
+	CatalogUpdateIndexes(attr_rel, tuple);
 
 	/*
 	 * Our update of the pg_attribute row will force a relcache rebuild,
@@ -1195,12 +1162,10 @@ StoreAttrDefault(Relation rel, AttrNumber attnum, char *adbin)
 	Node	   *expr;
 	char	   *adsrc;
 	Relation	adrel;
-	Relation	idescs[Num_pg_attrdef_indices];
 	HeapTuple	tuple;
 	Datum		values[4];
 	static char nulls[4] = {' ', ' ', ' ', ' '};
 	Relation	attrrel;
-	Relation	attridescs[Num_pg_attr_indices];
 	HeapTuple	atttup;
 	Form_pg_attribute attStruct;
 	Oid			attrdefOid;
@@ -1235,10 +1200,7 @@ StoreAttrDefault(Relation rel, AttrNumber attnum, char *adbin)
 	tuple = heap_formtuple(adrel->rd_att, values, nulls);
 	attrdefOid = simple_heap_insert(adrel, tuple);
 
-	CatalogOpenIndices(Num_pg_attrdef_indices, Name_pg_attrdef_indices,
-					   idescs);
-	CatalogIndexInsert(idescs, Num_pg_attrdef_indices, adrel, tuple);
-	CatalogCloseIndices(Num_pg_attrdef_indices, idescs);
+	CatalogUpdateIndexes(adrel, tuple);
 
 	defobject.classId = RelationGetRelid(adrel);
 	defobject.objectId = attrdefOid;
@@ -1269,11 +1231,8 @@ StoreAttrDefault(Relation rel, AttrNumber attnum, char *adbin)
 	{
 		attStruct->atthasdef = true;
 		simple_heap_update(attrrel, &atttup->t_self, atttup);
-		/* keep catalog indices current */
-		CatalogOpenIndices(Num_pg_attr_indices, Name_pg_attr_indices,
-						   attridescs);
-		CatalogIndexInsert(attridescs, Num_pg_attr_indices, attrrel, atttup);
-		CatalogCloseIndices(Num_pg_attr_indices, attridescs);
+		/* keep catalog indexes current */
+		CatalogUpdateIndexes(attrrel, atttup);
 	}
 	heap_close(attrrel, RowExclusiveLock);
 	heap_freetuple(atttup);
@@ -1655,7 +1614,6 @@ SetRelationNumChecks(Relation rel, int numchecks)
 	Relation	relrel;
 	HeapTuple	reltup;
 	Form_pg_class relStruct;
-	Relation	relidescs[Num_pg_class_indices];
 
 	relrel = heap_openr(RelationRelationName, RowExclusiveLock);
 	reltup = SearchSysCacheCopy(RELOID,
@@ -1672,11 +1630,8 @@ SetRelationNumChecks(Relation rel, int numchecks)
 
 		simple_heap_update(relrel, &reltup->t_self, reltup);
 
-		/* keep catalog indices current */
-		CatalogOpenIndices(Num_pg_class_indices, Name_pg_class_indices,
-						   relidescs);
-		CatalogIndexInsert(relidescs, Num_pg_class_indices, relrel, reltup);
-		CatalogCloseIndices(Num_pg_class_indices, relidescs);
+		/* keep catalog indexes current */
+		CatalogUpdateIndexes(relrel, reltup);
 	}
 	else
 	{
@@ -1866,9 +1821,9 @@ RemoveStatistics(Relation rel)
 
 /*
  * RelationTruncateIndexes - truncate all
- * indices associated with the heap relation to zero tuples.
+ * indexes associated with the heap relation to zero tuples.
  *
- * The routine will truncate and then reconstruct the indices on
+ * The routine will truncate and then reconstruct the indexes on
  * the relation specified by the heapId parameter.
  */
 static void

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_operator.c,v 1.74 2002/07/24 19:11:08 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_operator.c,v 1.75 2002/08/05 03:29:16 tgl Exp $
  *
  * NOTES
  *	  these routines moved here from commands/define.c and somewhat cleaned up.
@@ -263,14 +263,7 @@ OperatorShellMake(const char *operatorName,
 	 */
 	operatorObjectId = simple_heap_insert(pg_operator_desc, tup);
 
-	if (RelationGetForm(pg_operator_desc)->relhasindex)
-	{
-		Relation	idescs[Num_pg_operator_indices];
-
-		CatalogOpenIndices(Num_pg_operator_indices, Name_pg_operator_indices, idescs);
-		CatalogIndexInsert(idescs, Num_pg_operator_indices, pg_operator_desc, tup);
-		CatalogCloseIndices(Num_pg_operator_indices, idescs);
-	}
+	CatalogUpdateIndexes(pg_operator_desc, tup);
 
 	/* Add dependencies for the entry */
 	makeOperatorDependencies(tup, RelationGetRelid(pg_operator_desc));
@@ -646,14 +639,7 @@ OperatorCreate(const char *operatorName,
 	}
 
 	/* Must update the indexes in either case */
-	if (RelationGetForm(pg_operator_desc)->relhasindex)
-	{
-		Relation	idescs[Num_pg_operator_indices];
-
-		CatalogOpenIndices(Num_pg_operator_indices, Name_pg_operator_indices, idescs);
-		CatalogIndexInsert(idescs, Num_pg_operator_indices, pg_operator_desc, tup);
-		CatalogCloseIndices(Num_pg_operator_indices, idescs);
-	}
+	CatalogUpdateIndexes(pg_operator_desc, tup);
 
 	/* Add dependencies for the entry */
 	makeOperatorDependencies(tup, RelationGetRelid(pg_operator_desc));
@@ -815,14 +801,7 @@ OperatorUpd(Oid baseId, Oid commId, Oid negId)
 
 				simple_heap_update(pg_operator_desc, &tup->t_self, tup);
 
-				if (RelationGetForm(pg_operator_desc)->relhasindex)
-				{
-					Relation	idescs[Num_pg_operator_indices];
-
-					CatalogOpenIndices(Num_pg_operator_indices, Name_pg_operator_indices, idescs);
-					CatalogIndexInsert(idescs, Num_pg_operator_indices, pg_operator_desc, tup);
-					CatalogCloseIndices(Num_pg_operator_indices, idescs);
-				}
+				CatalogUpdateIndexes(pg_operator_desc, tup);
 			}
 		}
 
@@ -847,14 +826,7 @@ OperatorUpd(Oid baseId, Oid commId, Oid negId)
 
 		simple_heap_update(pg_operator_desc, &tup->t_self, tup);
 
-		if (RelationGetForm(pg_operator_desc)->relhasindex)
-		{
-			Relation	idescs[Num_pg_operator_indices];
-
-			CatalogOpenIndices(Num_pg_operator_indices, Name_pg_operator_indices, idescs);
-			CatalogIndexInsert(idescs, Num_pg_operator_indices, pg_operator_desc, tup);
-			CatalogCloseIndices(Num_pg_operator_indices, idescs);
-		}
+		CatalogUpdateIndexes(pg_operator_desc, tup);
 
 		values[Anum_pg_operator_oprcom - 1] = (Datum) NULL;
 		replaces[Anum_pg_operator_oprcom - 1] = ' ';
@@ -880,14 +852,7 @@ OperatorUpd(Oid baseId, Oid commId, Oid negId)
 
 		simple_heap_update(pg_operator_desc, &tup->t_self, tup);
 
-		if (RelationGetForm(pg_operator_desc)->relhasindex)
-		{
-			Relation	idescs[Num_pg_operator_indices];
-
-			CatalogOpenIndices(Num_pg_operator_indices, Name_pg_operator_indices, idescs);
-			CatalogIndexInsert(idescs, Num_pg_operator_indices, pg_operator_desc, tup);
-			CatalogCloseIndices(Num_pg_operator_indices, idescs);
-		}
+		CatalogUpdateIndexes(pg_operator_desc, tup);
 	}
 
 	heap_close(pg_operator_desc, RowExclusiveLock);

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/analyze.c,v 1.40 2002/08/02 18:15:05 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/analyze.c,v 1.41 2002/08/05 03:29:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1670,7 +1670,6 @@ update_attstats(Oid relid, int natts, VacAttrStats **vacattrstats)
 		Datum		values[Natts_pg_statistic];
 		char		nulls[Natts_pg_statistic];
 		char		replaces[Natts_pg_statistic];
-		Relation	irelations[Num_pg_statistic_indices];
 
 		/* Ignore attr if we weren't able to collect stats */
 		if (!stats->stats_valid)
@@ -1784,11 +1783,8 @@ update_attstats(Oid relid, int natts, VacAttrStats **vacattrstats)
 			simple_heap_insert(sd, stup);
 		}
 
-		/* update indices too */
-		CatalogOpenIndices(Num_pg_statistic_indices, Name_pg_statistic_indices,
-						   irelations);
-		CatalogIndexInsert(irelations, Num_pg_statistic_indices, sd, stup);
-		CatalogCloseIndices(Num_pg_statistic_indices, irelations);
+		/* update indexes too */
+		CatalogUpdateIndexes(sd, stup);
 
 		heap_freetuple(stup);
 	}

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/aclchk.c,v 1.72 2002/07/29 22:14:10 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/aclchk.c,v 1.73 2002/08/05 03:29:16 tgl Exp $
  *
  * NOTES
  *	  See acl.h.
@@ -236,15 +236,8 @@ ExecuteGrantStmt_Relation(GrantStmt *stmt)
 
 		simple_heap_update(relation, &newtuple->t_self, newtuple);
 
-		{
-			/* keep the catalog indexes up to date */
-			Relation	idescs[Num_pg_class_indices];
-
-			CatalogOpenIndices(Num_pg_class_indices, Name_pg_class_indices,
-							   idescs);
-			CatalogIndexInsert(idescs, Num_pg_class_indices, relation, newtuple);
-			CatalogCloseIndices(Num_pg_class_indices, idescs);
-		}
+		/* keep the catalog indexes up to date */
+		CatalogUpdateIndexes(relation, newtuple);
 
 		pfree(old_acl);
 		pfree(new_acl);
@@ -332,15 +325,8 @@ ExecuteGrantStmt_Database(GrantStmt *stmt)
 
 		simple_heap_update(relation, &newtuple->t_self, newtuple);
 
-		{
-			/* keep the catalog indexes up to date */
-			Relation	idescs[Num_pg_database_indices];
-
-			CatalogOpenIndices(Num_pg_database_indices, Name_pg_database_indices,
-							   idescs);
-			CatalogIndexInsert(idescs, Num_pg_database_indices, relation, newtuple);
-			CatalogCloseIndices(Num_pg_database_indices, idescs);
-		}
+		/* keep the catalog indexes up to date */
+		CatalogUpdateIndexes(relation, newtuple);
 
 		pfree(old_acl);
 		pfree(new_acl);
@@ -434,15 +420,8 @@ ExecuteGrantStmt_Function(GrantStmt *stmt)
 
 		simple_heap_update(relation, &newtuple->t_self, newtuple);
 
-		{
-			/* keep the catalog indexes up to date */
-			Relation	idescs[Num_pg_proc_indices];
-
-			CatalogOpenIndices(Num_pg_proc_indices, Name_pg_proc_indices,
-							   idescs);
-			CatalogIndexInsert(idescs, Num_pg_proc_indices, relation, newtuple);
-			CatalogCloseIndices(Num_pg_proc_indices, idescs);
-		}
+		/* keep the catalog indexes up to date */
+		CatalogUpdateIndexes(relation, newtuple);
 
 		pfree(old_acl);
 		pfree(new_acl);
@@ -531,15 +510,8 @@ ExecuteGrantStmt_Language(GrantStmt *stmt)
 
 		simple_heap_update(relation, &newtuple->t_self, newtuple);
 
-		{
-			/* keep the catalog indexes up to date */
-			Relation	idescs[Num_pg_language_indices];
-
-			CatalogOpenIndices(Num_pg_language_indices, Name_pg_language_indices,
-							   idescs);
-			CatalogIndexInsert(idescs, Num_pg_language_indices, relation, newtuple);
-			CatalogCloseIndices(Num_pg_language_indices, idescs);
-		}
+		/* keep the catalog indexes up to date */
+		CatalogUpdateIndexes(relation, newtuple);
 
 		pfree(old_acl);
 		pfree(new_acl);
@@ -628,15 +600,8 @@ ExecuteGrantStmt_Namespace(GrantStmt *stmt)
 
 		simple_heap_update(relation, &newtuple->t_self, newtuple);
 
-		{
-			/* keep the catalog indexes up to date */
-			Relation	idescs[Num_pg_namespace_indices];
-
-			CatalogOpenIndices(Num_pg_namespace_indices, Name_pg_namespace_indices,
-							   idescs);
-			CatalogIndexInsert(idescs, Num_pg_namespace_indices, relation, newtuple);
-			CatalogCloseIndices(Num_pg_namespace_indices, idescs);
-		}
+		/* keep the catalog indexes up to date */
+		CatalogUpdateIndexes(relation, newtuple);
 
 		pfree(old_acl);
 		pfree(new_acl);

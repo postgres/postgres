@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/proclang.c,v 1.38 2002/07/24 19:11:09 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/proclang.c,v 1.39 2002/08/05 03:29:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -119,14 +119,7 @@ CreateProceduralLanguage(CreatePLangStmt *stmt)
 
 	simple_heap_insert(rel, tup);
 
-	if (RelationGetForm(rel)->relhasindex)
-	{
-		Relation	idescs[Num_pg_language_indices];
-
-		CatalogOpenIndices(Num_pg_language_indices, Name_pg_language_indices, idescs);
-		CatalogIndexInsert(idescs, Num_pg_language_indices, rel, tup);
-		CatalogCloseIndices(Num_pg_language_indices, idescs);
-	}
+	CatalogUpdateIndexes(rel, tup);
 
 	/*
 	 * Create dependencies for language

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/trigger.c,v 1.123 2002/07/20 19:55:38 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/trigger.c,v 1.124 2002/08/05 03:29:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -72,8 +72,6 @@ CreateTrigger(CreateTrigStmt *stmt, bool forConstraint)
 	ScanKeyData key;
 	Relation	pgrel;
 	HeapTuple	tuple;
-	Relation	idescs[Num_pg_trigger_indices];
-	Relation	ridescs[Num_pg_class_indices];
 	Oid			fargtypes[FUNC_MAX_ARGS];
 	Oid			funcoid;
 	Oid			funclang;
@@ -302,9 +300,7 @@ CreateTrigger(CreateTrigStmt *stmt, bool forConstraint)
 	 */
 	simple_heap_insert(tgrel, tuple);
 
-	CatalogOpenIndices(Num_pg_trigger_indices, Name_pg_trigger_indices, idescs);
-	CatalogIndexInsert(idescs, Num_pg_trigger_indices, tgrel, tuple);
-	CatalogCloseIndices(Num_pg_trigger_indices, idescs);
+	CatalogUpdateIndexes(tgrel, tuple);
 
 	myself.classId = RelationGetRelid(tgrel);
 	myself.objectId = trigoid;
@@ -333,9 +329,7 @@ CreateTrigger(CreateTrigStmt *stmt, bool forConstraint)
 
 	simple_heap_update(pgrel, &tuple->t_self, tuple);
 
-	CatalogOpenIndices(Num_pg_class_indices, Name_pg_class_indices, ridescs);
-	CatalogIndexInsert(ridescs, Num_pg_class_indices, pgrel, tuple);
-	CatalogCloseIndices(Num_pg_class_indices, ridescs);
+	CatalogUpdateIndexes(pgrel, tuple);
 
 	heap_freetuple(tuple);
 	heap_close(pgrel, RowExclusiveLock);
@@ -447,7 +441,6 @@ RemoveTriggerById(Oid trigOid)
 	Relation	pgrel;
 	HeapTuple	tuple;
 	Form_pg_class	classForm;
-	Relation	ridescs[Num_pg_class_indices];
 
 	tgrel = heap_openr(TriggerRelationName, RowExclusiveLock);
 
@@ -514,9 +507,7 @@ RemoveTriggerById(Oid trigOid)
 
 	simple_heap_update(pgrel, &tuple->t_self, tuple);
 
-	CatalogOpenIndices(Num_pg_class_indices, Name_pg_class_indices, ridescs);
-	CatalogIndexInsert(ridescs, Num_pg_class_indices, pgrel, tuple);
-	CatalogCloseIndices(Num_pg_class_indices, ridescs);
+	CatalogUpdateIndexes(pgrel, tuple);
 
 	heap_freetuple(tuple);
 
@@ -549,7 +540,6 @@ renametrig(Oid relid,
 	HeapTuple	tuple;
 	SysScanDesc	tgscan;
 	ScanKeyData key[2];
-	Relation	idescs[Num_pg_trigger_indices];
 
 	/*
 	 * Grab an exclusive lock on the target table, which we will NOT
@@ -610,12 +600,8 @@ renametrig(Oid relid,
 
 		simple_heap_update(tgrel, &tuple->t_self, tuple);
 
-		/*
-		 * keep system catalog indices current
-		 */
-		CatalogOpenIndices(Num_pg_trigger_indices, Name_pg_trigger_indices, idescs);
-		CatalogIndexInsert(idescs, Num_pg_trigger_indices, tgrel, tuple);
-		CatalogCloseIndices(Num_pg_trigger_indices, idescs);
+		/* keep system catalog indexes current */
+		CatalogUpdateIndexes(tgrel, tuple);
 
 		/*
 		 * Invalidate relation's relcache entry so that other backends (and

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteSupport.c,v 1.53 2002/07/12 18:43:17 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteSupport.c,v 1.54 2002/08/05 03:29:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -55,7 +55,6 @@ SetRelationRuleStatus(Oid relationId, bool relHasRules,
 	Relation	relationRelation;
 	HeapTuple	tuple;
 	Form_pg_class classForm;
-	Relation	idescs[Num_pg_class_indices];
 
 	/*
 	 * Find the tuple to update in pg_class, using syscache for the
@@ -79,10 +78,8 @@ SetRelationRuleStatus(Oid relationId, bool relHasRules,
 
 		simple_heap_update(relationRelation, &tuple->t_self, tuple);
 
-		/* Keep the catalog indices up to date */
-		CatalogOpenIndices(Num_pg_class_indices, Name_pg_class_indices, idescs);
-		CatalogIndexInsert(idescs, Num_pg_class_indices, relationRelation, tuple);
-		CatalogCloseIndices(Num_pg_class_indices, idescs);
+		/* Keep the catalog indexes up to date */
+		CatalogUpdateIndexes(relationRelation, tuple);
 	}
 	else
 	{

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.187 2002/07/29 22:14:10 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.188 2002/08/05 03:29:16 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -314,7 +314,6 @@ UpdateRelationRelation(Relation indexRelation)
 {
 	Relation	pg_class;
 	HeapTuple	tuple;
-	Relation	idescs[Num_pg_class_indices];
 
 	pg_class = heap_openr(RelationRelationName, RowExclusiveLock);
 
@@ -332,18 +331,8 @@ UpdateRelationRelation(Relation indexRelation)
 	HeapTupleSetOid(tuple, RelationGetRelid(indexRelation));
 	simple_heap_insert(pg_class, tuple);
 
-	/*
-	 * During normal processing, we need to make sure that the system
-	 * catalog indices are correct.  Bootstrap (initdb) time doesn't
-	 * require this, because we make sure that the indices are correct
-	 * just before exiting.
-	 */
-	if (!IsIgnoringSystemIndexes())
-	{
-		CatalogOpenIndices(Num_pg_class_indices, Name_pg_class_indices, idescs);
-		CatalogIndexInsert(idescs, Num_pg_class_indices, pg_class, tuple);
-		CatalogCloseIndices(Num_pg_class_indices, idescs);
-	}
+	/* update the system catalog indexes */
+	CatalogUpdateIndexes(pg_class, tuple);
 
 	heap_freetuple(tuple);
 	heap_close(pg_class, RowExclusiveLock);
@@ -375,23 +364,17 @@ static void
 AppendAttributeTuples(Relation indexRelation, int numatts)
 {
 	Relation	pg_attribute;
-	bool		hasind;
-	Relation	idescs[Num_pg_attr_indices];
+	CatalogIndexState indstate;
 	TupleDesc	indexTupDesc;
 	HeapTuple	new_tuple;
 	int			i;
 
 	/*
-	 * open the attribute relation
+	 * open the attribute relation and its indexes
 	 */
 	pg_attribute = heap_openr(AttributeRelationName, RowExclusiveLock);
 
-	hasind = false;
-	if (!IsIgnoringSystemIndexes() && pg_attribute->rd_rel->relhasindex)
-	{
-		hasind = true;
-		CatalogOpenIndices(Num_pg_attr_indices, Name_pg_attr_indices, idescs);
-	}
+	indstate = CatalogOpenIndexes(pg_attribute);
 
 	/*
 	 * insert data from new index's tupdesc into pg_attribute
@@ -414,14 +397,12 @@ AppendAttributeTuples(Relation indexRelation, int numatts)
 
 		simple_heap_insert(pg_attribute, new_tuple);
 
-		if (hasind)
-			CatalogIndexInsert(idescs, Num_pg_attr_indices, pg_attribute, new_tuple);
+		CatalogIndexInsert(indstate, new_tuple);
 
 		heap_freetuple(new_tuple);
 	}
 
-	if (hasind)
-		CatalogCloseIndices(Num_pg_attr_indices, idescs);
+	CatalogCloseIndexes(indstate);
 
 	heap_close(pg_attribute, RowExclusiveLock);
 }
@@ -445,7 +426,6 @@ UpdateIndexRelation(Oid indexoid,
 	Relation	pg_index;
 	HeapTuple	tuple;
 	int			i;
-	Relation	idescs[Num_pg_index_indices];
 
 	/*
 	 * allocate a Form_pg_index big enough to hold the index-predicate (if
@@ -503,19 +483,12 @@ UpdateIndexRelation(Oid indexoid,
 						   (void *) indexForm);
 
 	/*
-	 * insert the tuple into the pg_index
+	 * insert the tuple into the pg_index catalog
 	 */
 	simple_heap_insert(pg_index, tuple);
 
-	/*
-	 * add index tuples for it
-	 */
-	if (!IsIgnoringSystemIndexes())
-	{
-		CatalogOpenIndices(Num_pg_index_indices, Name_pg_index_indices, idescs);
-		CatalogIndexInsert(idescs, Num_pg_index_indices, pg_index, tuple);
-		CatalogCloseIndices(Num_pg_index_indices, idescs);
-	}
+	/* update the indexes on pg_index */
+	CatalogUpdateIndexes(pg_index, tuple);
 
 	/*
 	 * close the relation and free the tuple
@@ -774,7 +747,7 @@ index_create(Oid heapRelationId,
 
 	/*
 	 * If this is bootstrap (initdb) time, then we don't actually fill in
-	 * the index yet.  We'll be creating more indices and classes later,
+	 * the index yet.  We'll be creating more indexes and classes later,
 	 * so we delay filling them in until just before we're done with
 	 * bootstrapping.  Otherwise, we call the routine that constructs the
 	 * index.
@@ -1245,16 +1218,8 @@ setRelhasindex(Oid relid, bool hasindex, bool isprimary, Oid reltoastidxid)
 	{
 		simple_heap_update(pg_class, &tuple->t_self, tuple);
 
-		/* Keep the catalog indices up to date */
-		if (!IsIgnoringSystemIndexes())
-		{
-			Relation	idescs[Num_pg_class_indices];
-
-			CatalogOpenIndices(Num_pg_class_indices, Name_pg_class_indices,
-							   idescs);
-			CatalogIndexInsert(idescs, Num_pg_class_indices, pg_class, tuple);
-			CatalogCloseIndices(Num_pg_class_indices, idescs);
-		}
+		/* Keep the catalog indexes up to date */
+		CatalogUpdateIndexes(pg_class, tuple);
 	}
 	else
 	{
@@ -1273,8 +1238,7 @@ setRelhasindex(Oid relid, bool hasindex, bool isprimary, Oid reltoastidxid)
 void
 setNewRelfilenode(Relation relation)
 {
-	Relation	pg_class,
-				idescs[Num_pg_class_indices];
+	Relation	pg_class;
 	Oid			newrelfilenode;
 	bool		in_place_update = false;
 	HeapTupleData lockTupleData;
@@ -1321,14 +1285,10 @@ setNewRelfilenode(Relation relation)
 		WriteBuffer(buffer);
 		BufferSync();
 	}
-	/* Keep the catalog indices up to date */
-	if (!in_place_update && pg_class->rd_rel->relhasindex)
-	{
-		CatalogOpenIndices(Num_pg_class_indices, Name_pg_class_indices,
-						   idescs);
-		CatalogIndexInsert(idescs, Num_pg_class_indices, pg_class, classTuple);
-		CatalogCloseIndices(Num_pg_class_indices, idescs);
-	}
+	/* Keep the catalog indexes up to date */
+	if (!in_place_update)
+		CatalogUpdateIndexes(pg_class, classTuple);
+
 	heap_close(pg_class, NoLock);
 	if (!in_place_update)
 		heap_freetuple(classTuple);
@@ -1355,7 +1315,6 @@ UpdateStats(Oid relid, double reltuples)
 	BlockNumber relpages;
 	int			i;
 	Form_pg_class rd_rel;
-	Relation	idescs[Num_pg_class_indices];
 	Datum		values[Natts_pg_class];
 	char		nulls[Natts_pg_class];
 	char		replace[Natts_pg_class];
@@ -1494,12 +1453,7 @@ UpdateStats(Oid relid, double reltuples)
 		values[Anum_pg_class_reltuples - 1] = Float4GetDatum((float4) reltuples);
 		newtup = heap_modifytuple(tuple, pg_class, values, nulls, replace);
 		simple_heap_update(pg_class, &tuple->t_self, newtup);
-		if (!IsIgnoringSystemIndexes())
-		{
-			CatalogOpenIndices(Num_pg_class_indices, Name_pg_class_indices, idescs);
-			CatalogIndexInsert(idescs, Num_pg_class_indices, pg_class, newtup);
-			CatalogCloseIndices(Num_pg_class_indices, idescs);
-		}
+		CatalogUpdateIndexes(pg_class, newtup);
 		heap_freetuple(newtup);
 	}
 

@@ -1,7 +1,7 @@
 /*-------------------------------------------------------------------------
  *
  * indexing.c
- *	  This file contains routines to support indices defined on system
+ *	  This file contains routines to support indexes defined on system
  *	  catalogs.
  *
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
@@ -9,155 +9,103 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/indexing.c,v 1.99 2002/07/22 20:23:19 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/indexing.c,v 1.100 2002/08/05 03:29:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
-
 #include "postgres.h"
 
 #include "access/genam.h"
-#include "access/heapam.h"
-#include "catalog/catalog.h"
-#include "catalog/catname.h"
 #include "catalog/index.h"
 #include "catalog/indexing.h"
-#include "catalog/pg_index.h"
-#include "miscadmin.h"
-#include "utils/fmgroids.h"
-#include "utils/syscache.h"
-
-/*
- * Names of indices for each system catalog.
- */
-
-char	   *Name_pg_aggregate_indices[Num_pg_aggregate_indices] =
-{AggregateFnoidIndex};
-char	   *Name_pg_am_indices[Num_pg_am_indices] =
-{AmNameIndex, AmOidIndex};
-char	   *Name_pg_amop_indices[Num_pg_amop_indices] =
-{AccessMethodOperatorIndex, AccessMethodStrategyIndex};
-char	   *Name_pg_amproc_indices[Num_pg_amproc_indices] =
-{AccessMethodProcedureIndex};
-char	   *Name_pg_attr_indices[Num_pg_attr_indices] =
-{AttributeRelidNameIndex, AttributeRelidNumIndex};
-char	   *Name_pg_attrdef_indices[Num_pg_attrdef_indices] =
-{AttrDefaultIndex, AttrDefaultOidIndex};
-char	   *Name_pg_cast_indices[Num_pg_cast_indices] =
-{CastOidIndex, CastSourceTargetIndex};
-char	   *Name_pg_class_indices[Num_pg_class_indices] =
-{ClassNameNspIndex, ClassOidIndex};
-char	   *Name_pg_constraint_indices[Num_pg_constraint_indices] =
-{ConstraintNameNspIndex, ConstraintOidIndex, ConstraintRelidIndex};
-char	   *Name_pg_conversion_indices[Num_pg_conversion_indices] =
-{ConversionDefaultIndex, ConversionNameNspIndex, ConversionOidIndex};
-char	   *Name_pg_database_indices[Num_pg_database_indices] =
-{DatabaseNameIndex, DatabaseOidIndex};
-char	   *Name_pg_depend_indices[Num_pg_depend_indices] =
-{DependDependerIndex, DependReferenceIndex};
-char	   *Name_pg_group_indices[Num_pg_group_indices] =
-{GroupNameIndex, GroupSysidIndex};
-char	   *Name_pg_index_indices[Num_pg_index_indices] =
-{IndexRelidIndex, IndexIndrelidIndex};
-char	   *Name_pg_inherits_indices[Num_pg_inherits_indices] =
-{InheritsRelidSeqnoIndex};
-char	   *Name_pg_language_indices[Num_pg_language_indices] =
-{LanguageOidIndex, LanguageNameIndex};
-char	   *Name_pg_largeobject_indices[Num_pg_largeobject_indices] =
-{LargeObjectLOidPNIndex};
-char	   *Name_pg_namespace_indices[Num_pg_namespace_indices] =
-{NamespaceNameIndex, NamespaceOidIndex};
-char	   *Name_pg_opclass_indices[Num_pg_opclass_indices] =
-{OpclassAmNameNspIndex, OpclassOidIndex};
-char	   *Name_pg_operator_indices[Num_pg_operator_indices] =
-{OperatorOidIndex, OperatorNameNspIndex};
-char	   *Name_pg_proc_indices[Num_pg_proc_indices] =
-{ProcedureOidIndex, ProcedureNameNspIndex};
-char	   *Name_pg_rewrite_indices[Num_pg_rewrite_indices] =
-{RewriteOidIndex, RewriteRelRulenameIndex};
-char	   *Name_pg_shadow_indices[Num_pg_shadow_indices] =
-{ShadowNameIndex, ShadowSysidIndex};
-char	   *Name_pg_statistic_indices[Num_pg_statistic_indices] =
-{StatisticRelidAttnumIndex};
-char	   *Name_pg_trigger_indices[Num_pg_trigger_indices] =
-{TriggerRelidNameIndex, TriggerConstrNameIndex, TriggerConstrRelidIndex, TriggerOidIndex};
-char	   *Name_pg_type_indices[Num_pg_type_indices] =
-{TypeNameNspIndex, TypeOidIndex};
-char	   *Name_pg_description_indices[Num_pg_description_indices] =
-{DescriptionObjIndex};
-
+#include "executor/executor.h"
 
 
 /*
- * Changes (appends) to catalogs can and do happen at various places
- * throughout the code.  We need a generic routine that will open all of
- * the indices defined on a given catalog and return the relation descriptors
- * associated with them.
+ * CatalogOpenIndexes - open the indexes on a system catalog.
+ *
+ * When inserting or updating tuples in a system catalog, call this
+ * to prepare to update the indexes for the catalog.
+ *
+ * In the current implementation, we share code for opening/closing the
+ * indexes with execUtils.c.  But we do not use ExecInsertIndexTuples,
+ * because we don't want to create an EState.  This implies that we
+ * do not support partial indexes on system catalogs.  Nor do we handle
+ * functional indexes very well (the code will work, but will leak memory
+ * intraquery, because the index function is called in the per-query context
+ * that we are invoked in).  This could be fixed with localized changes here
+ * if we wanted to pay the extra overhead of building an EState.
  */
-void
-CatalogOpenIndices(int nIndices, char **names, Relation *idescs)
+CatalogIndexState
+CatalogOpenIndexes(Relation heapRel)
 {
-	int			i;
+	ResultRelInfo *resultRelInfo;
 
-	if (IsIgnoringSystemIndexes())
-		return;
-	for (i = 0; i < nIndices; i++)
-		idescs[i] = index_openr(names[i]);
+	resultRelInfo = makeNode(ResultRelInfo);
+	resultRelInfo->ri_RangeTableIndex = 1;		/* dummy */
+	resultRelInfo->ri_RelationDesc = heapRel;
+	resultRelInfo->ri_TrigDesc = NULL; /* we don't fire triggers */
+
+	ExecOpenIndices(resultRelInfo);
+
+	return resultRelInfo;
 }
 
 /*
- * This is the inverse routine to CatalogOpenIndices()
+ * CatalogCloseIndexes - clean up resources allocated by CatalogOpenIndexes
  */
 void
-CatalogCloseIndices(int nIndices, Relation *idescs)
+CatalogCloseIndexes(CatalogIndexState indstate)
 {
-	int			i;
-
-	if (IsIgnoringSystemIndexes())
-		return;
-	for (i = 0; i < nIndices; i++)
-		index_close(idescs[i]);
+	ExecCloseIndices(indstate);
+	pfree(indstate);
 }
 
-
 /*
- * For the same reasons outlined above for CatalogOpenIndices(), we need a
- * routine that takes a new catalog tuple and inserts an associated index
- * tuple into each catalog index.
+ * CatalogIndexInsert - insert index entries for one catalog tuple
  *
- * NOTE: since this routine looks up all the pg_index data on each call,
- * it's relatively inefficient for inserting a large number of tuples into
- * the same catalog.  We use it only for inserting one or a few tuples
- * in a given command.	See ExecOpenIndices() and related routines if you
- * are inserting tuples in bulk.
+ * This should be called for each inserted or updated catalog tuple.
  *
- * NOTE: we do not bother to handle partial indices.  Nor do we try to
- * be efficient for functional indices (the code should work for them,
- * but may leak memory intraquery).  This should be OK for system catalogs,
- * but don't use this routine for user tables!
+ * This is effectively a cut-down version of ExecInsertIndexTuples.
  */
 void
-CatalogIndexInsert(Relation *idescs,
-				   int nIndices,
-				   Relation heapRelation,
-				   HeapTuple heapTuple)
+CatalogIndexInsert(CatalogIndexState indstate, HeapTuple heapTuple)
 {
+	int			i;
+	int			numIndexes;
+	RelationPtr relationDescs;
+	Relation	heapRelation;
 	TupleDesc	heapDescriptor;
+	IndexInfo **indexInfoArray;
 	Datum		datum[INDEX_MAX_KEYS];
 	char		nullv[INDEX_MAX_KEYS];
-	int			i;
 
-	if (IsIgnoringSystemIndexes() || (!heapRelation->rd_rel->relhasindex))
-		return;
+	/*
+	 * Get information from the state structure.
+	 */
+	numIndexes = indstate->ri_NumIndices;
+	relationDescs = indstate->ri_IndexRelationDescs;
+	indexInfoArray = indstate->ri_IndexRelationInfo;
+	heapRelation = indstate->ri_RelationDesc;
 	heapDescriptor = RelationGetDescr(heapRelation);
 
-	for (i = 0; i < nIndices; i++)
+	/*
+	 * for each index, form and insert the index tuple
+	 */
+	for (i = 0; i < numIndexes; i++)
 	{
 		IndexInfo  *indexInfo;
-		InsertIndexResult indexRes;
+		InsertIndexResult result;
 
-		indexInfo = BuildIndexInfo(idescs[i]->rd_index);
+		indexInfo = indexInfoArray[i];
 
+		/* Partial indexes on system catalogs are not supported */
+		Assert(indexInfo->ii_Predicate == NIL);
+
+		/*
+		 * FormIndexDatum fills in its datum and null parameters with
+		 * attribute information taken from the given heap tuple.
+		 */
 		FormIndexDatum(indexInfo,
 					   heapTuple,
 					   heapDescriptor,
@@ -165,11 +113,35 @@ CatalogIndexInsert(Relation *idescs,
 					   datum,
 					   nullv);
 
-		indexRes = index_insert(idescs[i], datum, nullv,
-								&heapTuple->t_self, heapRelation,
-								idescs[i]->rd_uniqueindex);
-		if (indexRes)
-			pfree(indexRes);
-		pfree(indexInfo);
+		/*
+		 * The index AM does the rest.
+		 */
+		result = index_insert(relationDescs[i], /* index relation */
+							  datum,	/* array of heaptuple Datums */
+							  nullv,	/* info on nulls */
+							  &(heapTuple->t_self),		/* tid of heap tuple */
+							  heapRelation,
+							  relationDescs[i]->rd_uniqueindex);
+
+		if (result)
+			pfree(result);
 	}
+}
+
+/*
+ * CatalogUpdateIndexes - do all the indexing work for a new catalog tuple
+ *
+ * This is a convenience routine for the common case where we only need
+ * to insert or update a single tuple in a system catalog.  Avoid using it for
+ * multiple tuples, since opening the indexes and building the index info
+ * structures is moderately expensive.
+ */
+void
+CatalogUpdateIndexes(Relation heapRel, HeapTuple heapTuple)
+{
+	CatalogIndexState	indstate;
+
+	indstate = CatalogOpenIndexes(heapRel);
+	CatalogIndexInsert(indstate, heapTuple);
+	CatalogCloseIndexes(indstate);
 }

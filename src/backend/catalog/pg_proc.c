@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_proc.c,v 1.87 2002/08/05 02:30:50 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_proc.c,v 1.88 2002/08/05 03:29:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -236,15 +236,8 @@ ProcedureCreate(const char *procedureName,
 		is_update = false;
 	}
 
-	/* Need to update indices for either the insert or update case */
-	if (RelationGetForm(rel)->relhasindex)
-	{
-		Relation	idescs[Num_pg_proc_indices];
-
-		CatalogOpenIndices(Num_pg_proc_indices, Name_pg_proc_indices, idescs);
-		CatalogIndexInsert(idescs, Num_pg_proc_indices, rel, tup);
-		CatalogCloseIndices(Num_pg_proc_indices, idescs);
-	}
+	/* Need to update indexes for either the insert or update case */
+	CatalogUpdateIndexes(rel, tup);
 
 	AssertTupleDescHasOid(tupDesc);
 	retval = HeapTupleGetOid(tup);

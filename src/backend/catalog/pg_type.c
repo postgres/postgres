@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_type.c,v 1.76 2002/07/24 19:11:09 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_type.c,v 1.77 2002/08/05 03:29:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -103,14 +103,7 @@ TypeShellMake(const char *typeName, Oid typeNamespace)
 	 */
 	typoid = simple_heap_insert(pg_type_desc, tup);
 
-	if (RelationGetForm(pg_type_desc)->relhasindex)
-	{
-		Relation	idescs[Num_pg_type_indices];
-
-		CatalogOpenIndices(Num_pg_type_indices, Name_pg_type_indices, idescs);
-		CatalogIndexInsert(idescs, Num_pg_type_indices, pg_type_desc, tup);
-		CatalogCloseIndices(Num_pg_type_indices, idescs);
-	}
+	CatalogUpdateIndexes(pg_type_desc, tup);
 
 	/*
 	 * clean up and return the type-oid
@@ -280,15 +273,8 @@ TypeCreate(const char *typeName,
 		typeObjectId = simple_heap_insert(pg_type_desc, tup);
 	}
 
-	/* Update indices (not necessary if bootstrapping) */
-	if (RelationGetForm(pg_type_desc)->relhasindex)
-	{
-		Relation	idescs[Num_pg_type_indices];
-
-		CatalogOpenIndices(Num_pg_type_indices, Name_pg_type_indices, idescs);
-		CatalogIndexInsert(idescs, Num_pg_type_indices, pg_type_desc, tup);
-		CatalogCloseIndices(Num_pg_type_indices, idescs);
-	}
+	/* Update indexes */
+	CatalogUpdateIndexes(pg_type_desc, tup);
 
 	/*
 	 * Create dependencies.  We can/must skip this in bootstrap mode.
@@ -382,7 +368,6 @@ TypeRename(const char *oldTypeName, Oid typeNamespace,
 		   const char *newTypeName)
 {
 	Relation	pg_type_desc;
-	Relation	idescs[Num_pg_type_indices];
 	HeapTuple	tuple;
 
 	pg_type_desc = heap_openr(TypeRelationName, RowExclusiveLock);
@@ -404,10 +389,8 @@ TypeRename(const char *oldTypeName, Oid typeNamespace,
 
 	simple_heap_update(pg_type_desc, &tuple->t_self, tuple);
 
-	/* update the system catalog indices */
-	CatalogOpenIndices(Num_pg_type_indices, Name_pg_type_indices, idescs);
-	CatalogIndexInsert(idescs, Num_pg_type_indices, pg_type_desc, tuple);
-	CatalogCloseIndices(Num_pg_type_indices, idescs);
+	/* update the system catalog indexes */
+	CatalogUpdateIndexes(pg_type_desc, tuple);
 
 	heap_freetuple(tuple);
 	heap_close(pg_type_desc, RowExclusiveLock);

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/async.c,v 1.87 2002/06/20 20:29:26 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/async.c,v 1.88 2002/08/05 03:29:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -245,14 +245,7 @@ Async_Listen(char *relname, int pid)
 	simple_heap_insert(lRel, tuple);
 
 #ifdef NOT_USED					/* currently there are no indexes */
-	if (RelationGetForm(lRel)->relhasindex)
-	{
-		Relation	idescs[Num_pg_listener_indices];
-
-		CatalogOpenIndices(Num_pg_listener_indices, Name_pg_listener_indices, idescs);
-		CatalogIndexInsert(idescs, Num_pg_listener_indices, lRel, tuple);
-		CatalogCloseIndices(Num_pg_listener_indices, idescs);
-	}
+	CatalogUpdateIndexes(lRel, tuple);
 #endif
 
 	heap_freetuple(tuple);
@@ -529,14 +522,7 @@ AtCommit_Notify(void)
 				simple_heap_update(lRel, &lTuple->t_self, rTuple);
 
 #ifdef NOT_USED					/* currently there are no indexes */
-				if (RelationGetForm(lRel)->relhasindex)
-				{
-					Relation	idescs[Num_pg_listener_indices];
-
-					CatalogOpenIndices(Num_pg_listener_indices, Name_pg_listener_indices, idescs);
-					CatalogIndexInsert(idescs, Num_pg_listener_indices, lRel, rTuple);
-					CatalogCloseIndices(Num_pg_listener_indices, idescs);
-				}
+				CatalogUpdateIndexes(lRel, rTuple);
 #endif
 			}
 		}
@@ -802,14 +788,7 @@ ProcessIncomingNotify(void)
 			simple_heap_update(lRel, &lTuple->t_self, rTuple);
 
 #ifdef NOT_USED					/* currently there are no indexes */
-			if (RelationGetForm(lRel)->relhasindex)
-			{
-				Relation	idescs[Num_pg_listener_indices];
-
-				CatalogOpenIndices(Num_pg_listener_indices, Name_pg_listener_indices, idescs);
-				CatalogIndexInsert(idescs, Num_pg_listener_indices, lRel, rTuple);
-				CatalogCloseIndices(Num_pg_listener_indices, idescs);
-			}
+			CatalogUpdateIndexes(lRel, rTuple);
 #endif
 		}
 	}

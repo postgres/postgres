@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/tablecmds.c,v 1.26 2002/08/02 18:15:06 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/tablecmds.c,v 1.27 2002/08/05 03:29:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -325,7 +325,7 @@ RemoveRelation(const RangeVar *relation, DropBehavior behavior)
  *				  BadArg if name is invalid
  *
  * Note:
- *				  Rows are removed, indices are truncated and reconstructed.
+ *				  Rows are removed, indexes are truncated and reconstructed.
  */
 void
 TruncateRelation(const RangeVar *relation)
@@ -832,14 +832,7 @@ StoreCatalogInheritance(Oid relationId, List *supers)
 
 		simple_heap_insert(relation, tuple);
 
-		if (RelationGetForm(relation)->relhasindex)
-		{
-			Relation	idescs[Num_pg_inherits_indices];
-
-			CatalogOpenIndices(Num_pg_inherits_indices, Name_pg_inherits_indices, idescs);
-			CatalogIndexInsert(idescs, Num_pg_inherits_indices, relation, tuple);
-			CatalogCloseIndices(Num_pg_inherits_indices, idescs);
-		}
+		CatalogUpdateIndexes(relation, tuple);
 
 		heap_freetuple(tuple);
 
@@ -969,7 +962,6 @@ setRelhassubclassInRelation(Oid relationId, bool relhassubclass)
 {
 	Relation	relationRelation;
 	HeapTuple	tuple;
-	Relation	idescs[Num_pg_class_indices];
 
 	/*
 	 * Fetch a modifiable copy of the tuple, modify it, update pg_class.
@@ -984,10 +976,8 @@ setRelhassubclassInRelation(Oid relationId, bool relhassubclass)
 	((Form_pg_class) GETSTRUCT(tuple))->relhassubclass = relhassubclass;
 	simple_heap_update(relationRelation, &tuple->t_self, tuple);
 
-	/* keep the catalog indices up to date */
-	CatalogOpenIndices(Num_pg_class_indices, Name_pg_class_indices, idescs);
-	CatalogIndexInsert(idescs, Num_pg_class_indices, relationRelation, tuple);
-	CatalogCloseIndices(Num_pg_class_indices, idescs);
+	/* keep the catalog indexes up to date */
+	CatalogUpdateIndexes(relationRelation, tuple);
 
 	heap_freetuple(tuple);
 	heap_close(relationRelation, RowExclusiveLock);
@@ -1097,14 +1087,8 @@ renameatt(Oid relid,
 
 	simple_heap_update(attrelation, &atttup->t_self, atttup);
 
-	/* keep system catalog indices current */
-	{
-		Relation	irelations[Num_pg_attr_indices];
-
-		CatalogOpenIndices(Num_pg_attr_indices, Name_pg_attr_indices, irelations);
-		CatalogIndexInsert(irelations, Num_pg_attr_indices, attrelation, atttup);
-		CatalogCloseIndices(Num_pg_attr_indices, irelations);
-	}
+	/* keep system catalog indexes current */
+	CatalogUpdateIndexes(attrelation, atttup);
 
 	heap_freetuple(atttup);
 
@@ -1151,14 +1135,9 @@ renameatt(Oid relid,
 
 		simple_heap_update(attrelation, &atttup->t_self, atttup);
 
-		/* keep system catalog indices current */
-		{
-			Relation	irelations[Num_pg_attr_indices];
+		/* keep system catalog indexes current */
+		CatalogUpdateIndexes(attrelation, atttup);
 
-			CatalogOpenIndices(Num_pg_attr_indices, Name_pg_attr_indices, irelations);
-			CatalogIndexInsert(irelations, Num_pg_attr_indices, attrelation, atttup);
-			CatalogCloseIndices(Num_pg_attr_indices, irelations);
-		}
 		heap_freetuple(atttup);
 	}
 
@@ -1203,7 +1182,6 @@ renamerel(Oid relid, const char *newrelname)
 	char	   *oldrelname;
 	char		relkind;
 	bool		relhastriggers;
-	Relation	irelations[Num_pg_class_indices];
 
 	/*
 	 * Grab an exclusive lock on the target table or index, which we will
@@ -1247,10 +1225,8 @@ renamerel(Oid relid, const char *newrelname)
 
 	simple_heap_update(relrelation, &reltup->t_self, reltup);
 
-	/* keep the system catalog indices current */
-	CatalogOpenIndices(Num_pg_class_indices, Name_pg_class_indices, irelations);
-	CatalogIndexInsert(irelations, Num_pg_class_indices, relrelation, reltup);
-	CatalogCloseIndices(Num_pg_class_indices, irelations);
+	/* keep the system catalog indexes current */
+	CatalogUpdateIndexes(relrelation, reltup);
 
 	heap_close(relrelation, NoLock);
 	heap_freetuple(reltup);
@@ -1481,13 +1457,7 @@ update_ri_trigger_args(Oid relid,
 		 */
 		simple_heap_update(tgrel, &tuple->t_self, tuple);
 
-		{
-			Relation	irelations[Num_pg_attr_indices];
-
-			CatalogOpenIndices(Num_pg_trigger_indices, Name_pg_trigger_indices, irelations);
-			CatalogIndexInsert(irelations, Num_pg_trigger_indices, tgrel, tuple);
-			CatalogCloseIndices(Num_pg_trigger_indices, irelations);
-		}
+		CatalogUpdateIndexes(tgrel, tuple);
 
 		/* free up our scratch memory */
 		pfree(newtgargs);
@@ -1703,14 +1673,7 @@ AlterTableAddColumn(Oid myrelid,
 	simple_heap_insert(attrdesc, attributeTuple);
 
 	/* Update indexes on pg_attribute */
-	if (RelationGetForm(attrdesc)->relhasindex)
-	{
-		Relation	idescs[Num_pg_attr_indices];
-
-		CatalogOpenIndices(Num_pg_attr_indices, Name_pg_attr_indices, idescs);
-		CatalogIndexInsert(idescs, Num_pg_attr_indices, attrdesc, attributeTuple);
-		CatalogCloseIndices(Num_pg_attr_indices, idescs);
-	}
+	CatalogUpdateIndexes(attrdesc, attributeTuple);
 
 	heap_close(attrdesc, RowExclusiveLock);
 
@@ -1723,15 +1686,8 @@ AlterTableAddColumn(Oid myrelid,
 	AssertTupleDescHasOid(pgclass->rd_att);
 	simple_heap_update(pgclass, &newreltup->t_self, newreltup);
 
-	/* keep catalog indices current */
-	if (RelationGetForm(pgclass)->relhasindex)
-	{
-		Relation	ridescs[Num_pg_class_indices];
-
-		CatalogOpenIndices(Num_pg_class_indices, Name_pg_class_indices, ridescs);
-		CatalogIndexInsert(ridescs, Num_pg_class_indices, pgclass, newreltup);
-		CatalogCloseIndices(Num_pg_class_indices, ridescs);
-	}
+	/* keep catalog indexes current */
+	CatalogUpdateIndexes(pgclass, newreltup);
 
 	heap_freetuple(newreltup);
 	ReleaseSysCache(reltup);
@@ -1850,7 +1806,7 @@ AlterTableAlterColumnDropNotNull(Oid myrelid,
 	 * Check that the attribute is not in a primary key
 	 */
 
-	/* Loop over all indices on the relation */
+	/* Loop over all indexes on the relation */
 	indexoidlist = RelationGetIndexList(rel);
 
 	foreach(indexoidscan, indexoidlist)
@@ -1902,15 +1858,8 @@ AlterTableAlterColumnDropNotNull(Oid myrelid,
 
 	simple_heap_update(attr_rel, &tuple->t_self, tuple);
 
-	/* keep the system catalog indices current */
-	if (RelationGetForm(attr_rel)->relhasindex)
-	{
-		Relation	idescs[Num_pg_attr_indices];
-
-		CatalogOpenIndices(Num_pg_attr_indices, Name_pg_attr_indices, idescs);
-		CatalogIndexInsert(idescs, Num_pg_attr_indices, attr_rel, tuple);
-		CatalogCloseIndices(Num_pg_attr_indices, idescs);
-	}
+	/* keep the system catalog indexes current */
+	CatalogUpdateIndexes(attr_rel, tuple);
 
 	heap_close(attr_rel, RowExclusiveLock);
 
@@ -2023,15 +1972,8 @@ AlterTableAlterColumnSetNotNull(Oid myrelid,
 
 	simple_heap_update(attr_rel, &tuple->t_self, tuple);
 
-	/* keep the system catalog indices current */
-	if (RelationGetForm(attr_rel)->relhasindex)
-	{
-		Relation	idescs[Num_pg_attr_indices];
-
-		CatalogOpenIndices(Num_pg_attr_indices, Name_pg_attr_indices, idescs);
-		CatalogIndexInsert(idescs, Num_pg_attr_indices, attr_rel, tuple);
-		CatalogCloseIndices(Num_pg_attr_indices, idescs);
-	}
+	/* keep the system catalog indexes current */
+	CatalogUpdateIndexes(attr_rel, tuple);
 
 	heap_close(attr_rel, RowExclusiveLock);
 
@@ -2278,16 +2220,11 @@ AlterTableAlterColumnFlags(Oid myrelid,
 
 	simple_heap_update(attrelation, &tuple->t_self, tuple);
 
-	/* keep system catalog indices current */
-	{
-		Relation	irelations[Num_pg_attr_indices];
-
-		CatalogOpenIndices(Num_pg_attr_indices, Name_pg_attr_indices, irelations);
-		CatalogIndexInsert(irelations, Num_pg_attr_indices, attrelation, tuple);
-		CatalogCloseIndices(Num_pg_attr_indices, irelations);
-	}
+	/* keep system catalog indexes current */
+	CatalogUpdateIndexes(attrelation, tuple);
 
 	heap_freetuple(tuple);
+
 	heap_close(attrelation, NoLock);
 	heap_close(rel, NoLock);	/* close rel, but keep lock! */
 }
@@ -3200,7 +3137,6 @@ AlterTableOwner(Oid relationOid, int32 newOwnerSysId)
 	Relation		target_rel;
 	Relation		class_rel;
 	HeapTuple		tuple;
-	Relation		idescs[Num_pg_class_indices];
 	Form_pg_class	tuple_class;
 
 	/* Get exclusive lock till end of transaction on the target table */
@@ -3227,10 +3163,8 @@ AlterTableOwner(Oid relationOid, int32 newOwnerSysId)
 	tuple_class->relowner = newOwnerSysId;
 	simple_heap_update(class_rel, &tuple->t_self, tuple);
 
-	/* Keep the catalog indices up to date */
-	CatalogOpenIndices(Num_pg_class_indices, Name_pg_class_indices, idescs);
-	CatalogIndexInsert(idescs, Num_pg_class_indices, class_rel, tuple);
-	CatalogCloseIndices(Num_pg_class_indices, idescs);
+	/* Keep the catalog indexes up to date */
+	CatalogUpdateIndexes(class_rel, tuple);
 
 	/*
 	 * If we are operating on a table, also change the ownership of any
@@ -3299,7 +3233,6 @@ AlterTableCreateToastTable(Oid relOid, bool silent)
 	bool		shared_relation;
 	Relation	class_rel;
 	Buffer		buffer;
-	Relation	ridescs[Num_pg_class_indices];
 	Oid			toast_relid;
 	Oid			toast_idxid;
 	char		toast_relname[NAMEDATALEN];
@@ -3481,14 +3414,11 @@ AlterTableCreateToastTable(Oid relOid, bool silent)
 	 * Store the toast table's OID in the parent relation's tuple
 	 */
 	((Form_pg_class) GETSTRUCT(reltup))->reltoastrelid = toast_relid;
+
 	simple_heap_update(class_rel, &reltup->t_self, reltup);
 
-	/*
-	 * Keep catalog indices current
-	 */
-	CatalogOpenIndices(Num_pg_class_indices, Name_pg_class_indices, ridescs);
-	CatalogIndexInsert(ridescs, Num_pg_class_indices, class_rel, reltup);
-	CatalogCloseIndices(Num_pg_class_indices, ridescs);
+	/* Keep catalog indexes current */
+	CatalogUpdateIndexes(class_rel, reltup);
 
 	heap_freetuple(reltup);
 

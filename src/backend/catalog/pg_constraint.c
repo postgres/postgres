@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_constraint.c,v 1.3 2002/07/16 22:12:18 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_constraint.c,v 1.4 2002/08/05 03:29:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -152,15 +152,8 @@ CreateConstraintEntry(const char *constraintName,
 
 	conOid = simple_heap_insert(conDesc, tup);
 
-	/* Handle Indices */
-	if (RelationGetForm(conDesc)->relhasindex)
-	{
-		Relation	idescs[Num_pg_constraint_indices];
-
-		CatalogOpenIndices(Num_pg_constraint_indices, Name_pg_constraint_indices, idescs);
-		CatalogIndexInsert(idescs, Num_pg_constraint_indices, conDesc, tup);
-		CatalogCloseIndices(Num_pg_constraint_indices, idescs);
-	}
+	/* update catalog indexes */
+	CatalogUpdateIndexes(conDesc, tup);
 
 	conobject.classId = RelationGetRelid(conDesc);
 	conobject.objectId = conOid;
@@ -426,7 +419,6 @@ RemoveConstraintById(Oid conId)
 			Relation		pgrel;
 			HeapTuple		relTup;
 			Form_pg_class	classForm;
-			Relation		ridescs[Num_pg_class_indices];
 		
 			pgrel = heap_openr(RelationRelationName, RowExclusiveLock);
 			relTup = SearchSysCacheCopy(RELOID,
@@ -444,9 +436,7 @@ RemoveConstraintById(Oid conId)
 
 			simple_heap_update(pgrel, &relTup->t_self, relTup);
 
-			CatalogOpenIndices(Num_pg_class_indices, Name_pg_class_indices, ridescs);
-			CatalogIndexInsert(ridescs, Num_pg_class_indices, pgrel, relTup);
-			CatalogCloseIndices(Num_pg_class_indices, ridescs);
+			CatalogUpdateIndexes(pgrel, relTup);
 
 			heap_freetuple(relTup);
 
