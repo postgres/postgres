@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/Makefile,v 1.20 2004/05/21 03:10:47 momjian Exp $
+# $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/Makefile,v 1.21 2004/05/21 03:12:03 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -23,6 +23,7 @@ override CFLAGS += $(PTHREAD_CFLAGS)
 OBJS= execute.o typename.o descriptor.o data.o error.o prepare.o memory.o \
 	connect.o misc.o
 
+# needed by dllwrap
 ifeq ($(PORTNAME), win32)
 PGPORT=-lpgport
 endif
