@@ -38,7 +38,7 @@ def _quote(d, t):
 	if t in ('inet', 'cidr') and d == '': return "NULL"
 
 	return "'%s'" % string.strip(re.sub("'", "''", \
-							 re.sub("\\\\", "\\\\\\\\", "%s" %d)))
+							 re.sub("\\\\", "\\\\\\\\", "%s" % d)))
 
 class DB:
 	"""This class wraps the pg connection type"""
