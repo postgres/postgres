@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/storage/smgr/md.c,v 1.9 1996/11/25 06:33:51 bryanh Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/storage/smgr/md.c,v 1.10 1996/11/27 07:24:02 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -527,6 +527,36 @@ mdnblocks(Relation reln)
 	}
     }
 }
+
+/*
+ *  mdtruncate() -- Truncate relation to specified number of blocks.
+ *
+ *	Returns # of blocks or -1 on error.
+ */
+int
+mdtruncate (Relation reln, int nblocks)
+{
+    int fd;
+    MdfdVec *v;
+    int curnblk;
+
+    curnblk = mdnblocks (reln);
+    if ( curnblk / RELSEG_SIZE > 0 )
+    {
+    	elog (NOTICE, "Can't truncate multi-segments relation %.*s",
+    		NAMEDATALEN, &(reln->rd_rel->relname.data[0]));
+    	return (curnblk);
+    }
+
+    fd = RelationGetFile(reln);
+    v = &Md_fdvec[fd];
+
+    if ( FileTruncate (v->mdfd_vfd, nblocks * BLCKSZ) < 0 )
+    	return (-1);
+    
+    return (nblocks);
+
+} /* mdtruncate */
 
 /*
  *  mdcommit() -- Commit a transaction.
