@@ -4,7 +4,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/pl/plpgsql/src/Attic/scan.l,v 1.4 2000/06/20 16:40:10 petere Exp $
+ *    $Header: /cvsroot/pgsql/src/pl/plpgsql/src/Attic/scan.l,v 1.5 2000/08/22 14:59:28 tgl Exp $
  *
  *    This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -40,11 +40,13 @@ static char	*plpgsql_source;
 static int	plpgsql_bytes_left;
 static int	scanner_functype;
 static int	scanner_typereported;
+
 int	plpgsql_SpaceScanned = 0;
 
 extern int yylineno;
 
 static void plpgsql_input(char *buf, int *result, int max);
+
 #define YY_INPUT(buf,res,max)	plpgsql_input(buf, &res, max)
 #define YY_NO_UNPUT
 %}
@@ -74,37 +76,38 @@ WC	[[:alnum:]_"]
      * functions type (T_FUNCTION or T_TRIGGER)
      * ----------
      */
-    if (!scanner_typereported) {
-        scanner_typereported = 1;
-	return scanner_functype;
-    }
+	if (!scanner_typereported)
+	{
+		scanner_typereported = 1;
+		return scanner_functype;
+	}
 
     /* ----------
      * The keyword rules
      * ----------
      */
-:=			{ return K_ASSIGN;			}
-=			{ return K_ASSIGN;			}
+:=				{ return K_ASSIGN;			}
+=				{ return K_ASSIGN;			}
 \.\.			{ return K_DOTDOT;			}
 alias			{ return K_ALIAS;			}
 begin			{ return K_BEGIN;			}
 bpchar			{ return T_BPCHAR;			}
 char			{ return T_CHAR;			}
-constant		{ return K_CONSTANT;			}
+constant		{ return K_CONSTANT;		}
 debug			{ return K_DEBUG;			}
 declare			{ return K_DECLARE;			}
 default			{ return K_DEFAULT;			}
 else			{ return K_ELSE;			}
-end			{ return K_END;				}
-exception		{ return K_EXCEPTION;			}
+end				{ return K_END;				}
+exception		{ return K_EXCEPTION;		}
 exit			{ return K_EXIT;			}
-for			{ return K_FOR;				}
+for				{ return K_FOR;				}
 from			{ return K_FROM;			}
-if			{ return K_IF;				}
-in			{ return K_IN;				}
+if				{ return K_IF;				}
+in				{ return K_IN;				}
 into			{ return K_INTO;			}
 loop			{ return K_LOOP;			}
-not			{ return K_NOT;				}
+not				{ return K_NOT;				}
 notice			{ return K_NOTICE;			}
 null			{ return K_NULL;			}
 perform			{ return K_PERFORM;			}
@@ -115,7 +118,7 @@ return			{ return K_RETURN;			}
 reverse			{ return K_REVERSE;			}
 select			{ return K_SELECT;			}
 then			{ return K_THEN;			}
-to			{ return K_TO;				}
+to				{ return K_TO;				}
 type			{ return K_TYPE;			}
 varchar			{ return T_VARCHAR;			}
 when			{ return K_WHEN;			}
@@ -143,13 +146,13 @@ dump			{ return O_DUMP;			}
      * Ignore whitespaces but remember this happened
      * ----------
      */
-[ \t\n]+		{ plpgsql_SpaceScanned = 1;		}
+[ \t\r\n]+		{ plpgsql_SpaceScanned = 1;		}
 
     /* ----------
      * Eat up comments
      * ----------
      */
---[^\n]*		;
+--[^\r\n]*		;
 \/\*			{ start_lineno = yylineno;
 			  BEGIN IN_COMMENT;
 			}
@@ -188,22 +191,25 @@ dump			{ return O_DUMP;			}
 
 %%
 
-int yywrap()
+int
+yywrap()
 {
     return 1;
 }
 
 
-static void plpgsql_input(char *buf, int *result, int max)
+static void
+plpgsql_input(char *buf, int *result, int max)
 {
-    int n = max;
-    if (n > plpgsql_bytes_left) {
-        n = plpgsql_bytes_left;
-    }
+    int		n = max;
 
-    if (n == 0) {
+    if (n > plpgsql_bytes_left)
+        n = plpgsql_bytes_left;
+
+    if (n == 0)
+	{
         *result = YY_NULL;
-	return;
+		return;
     }
 
     *result = n;
@@ -213,18 +219,29 @@ static void plpgsql_input(char *buf, int *result, int max)
 }
 
 
-void plpgsql_setinput(char *source, int functype)
+void
+plpgsql_setinput(char *source, int functype)
 {
     yyrestart(NULL);
     yylineno = 1;
 
     plpgsql_source = source;
+
+	/*----------
+	 * Hack: skip any initial newline, so that in the common coding layout
+	 *		CREATE FUNCTION ... AS '
+	 *			code body
+	 *		' LANGUAGE 'plpgsql';
+	 * we will think "line 1" is what the programmer thinks of as line 1.
+	 *----------
+	 */
+    if (*plpgsql_source == '\r')
+        plpgsql_source++;
     if (*plpgsql_source == '\n')
         plpgsql_source++;
+
     plpgsql_bytes_left = strlen(plpgsql_source);
 
     scanner_functype     = functype;
     scanner_typereported = 0;
 }
-
-
