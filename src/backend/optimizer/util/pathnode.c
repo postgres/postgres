@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/pathnode.c,v 1.97 2004/01/05 05:07:35 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/pathnode.c,v 1.98 2004/01/05 18:04:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,12 +20,14 @@
 #include "executor/executor.h"
 #include "miscadmin.h"
 #include "nodes/plannodes.h"
+#include "optimizer/clauses.h"
 #include "optimizer/cost.h"
 #include "optimizer/pathnode.h"
 #include "optimizer/paths.h"
 #include "optimizer/restrictinfo.h"
 #include "parser/parse_expr.h"
 #include "parser/parse_oper.h"
+#include "parser/parsetree.h"
 #include "utils/memutils.h"
 #include "utils/selfuncs.h"
 #include "utils/syscache.h"
@@ -547,6 +549,30 @@ create_unique_path(Query *root, RelOptInfo *rel, Path *subpath)
 	pathnode->subpath = subpath;
 
 	/*
+	 * If the input is a subquery that uses DISTINCT, we don't need to do
+	 * anything; its output is already unique.  (Are there any other cases
+	 * in which we can easily prove the input must be distinct?)
+	 */
+	if (rel->rtekind == RTE_SUBQUERY)
+	{
+		RangeTblEntry *rte = rt_fetch(rel->relid, root->rtable);
+		Query	   *subquery = rte->subquery;
+
+		if (has_distinct_clause(subquery))
+		{
+			pathnode->umethod = UNIQUE_PATH_NOOP;
+			pathnode->rows = rel->rows;
+			pathnode->path.startup_cost = subpath->startup_cost;
+			pathnode->path.total_cost = subpath->total_cost;
+			pathnode->path.pathkeys = subpath->pathkeys;
+
+			rel->cheapest_unique_path = (Path *) pathnode;
+
+			return pathnode;
+		}
+	}
+
+	/*
 	 * Try to identify the targetlist that will actually be unique-ified.
 	 * In current usage, this routine is only used for sub-selects of IN
 	 * clauses, so we should be able to find the tlist in in_info_list.
@@ -599,7 +625,7 @@ create_unique_path(Query *root, RelOptInfo *rel, Path *subpath)
 	 * compare costs.  We only try this if we know the targetlist for sure
 	 * (else we can't be sure about the datatypes involved).
 	 */
-	pathnode->use_hash = false;
+	pathnode->umethod = UNIQUE_PATH_SORT;
 	if (enable_hashagg && sub_targetlist && hash_safe_tlist(sub_targetlist))
 	{
 		/*
@@ -617,11 +643,11 @@ create_unique_path(Query *root, RelOptInfo *rel, Path *subpath)
 					 subpath->total_cost,
 					 rel->rows);
 			if (agg_path.total_cost < sort_path.total_cost)
-				pathnode->use_hash = true;
+				pathnode->umethod = UNIQUE_PATH_HASH;
 		}
 	}
 
-	if (pathnode->use_hash)
+	if (pathnode->umethod == UNIQUE_PATH_HASH)
 	{
 		pathnode->path.startup_cost = agg_path.startup_cost;
 		pathnode->path.total_cost = agg_path.total_cost;

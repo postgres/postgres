@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.159 2004/01/04 03:51:52 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.160 2004/01/05 18:04:39 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -919,6 +919,21 @@ has_distinct_on_clause(Query *query)
 	}
 	/* It's a simple DISTINCT */
 	return false;
+}
+
+/*
+ * Test whether a query uses simple DISTINCT, ie, has a distinct-list that
+ * is the same as the set of output columns.
+ */
+bool
+has_distinct_clause(Query *query)
+{
+	/* Is there a DISTINCT clause at all? */
+	if (query->distinctClause == NIL)
+		return false;
+
+	/* It's DISTINCT if it's not DISTINCT ON */
+	return !has_distinct_on_clause(query);
 }
 
 
