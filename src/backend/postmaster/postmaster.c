@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.242 2001/09/21 17:06:12 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.243 2001/09/21 20:31:48 tgl Exp $
  *
  * NOTES
  *
@@ -1235,6 +1235,14 @@ ConnCreate(int serverFd)
 	}
 	else
 	{
+		/*
+		 * Precompute password salt values to use for this connection.
+		 * It's slightly annoying to do this long in advance of knowing
+		 * whether we'll need 'em or not, but we must do the random()
+		 * calls before we fork, not after.  Else the postmaster's random
+		 * sequence won't get advanced, and all backends would end up
+		 * using the same salt...
+		 */
 		RandomSalt(port->cryptSalt, port->md5Salt);
 		port->pktInfo.state = Idle;
 	}
@@ -2145,16 +2153,16 @@ schedule_checkpoint(SIGNAL_ARGS)
 
 
 /*
- * CharRemap
+ * CharRemap: given an int in range 0..61, produce textual encoding of it
+ * per crypt(3) conventions.
  */
 static char
-CharRemap(long int ch)
+CharRemap(long ch)
 {
-
 	if (ch < 0)
 		ch = -ch;
-
 	ch = ch % 62;
+
 	if (ch < 26)
 		return 'A' + ch;
 
@@ -2176,13 +2184,22 @@ RandomSalt(char *cryptSalt, char *md5Salt)
 
 	cryptSalt[0] = CharRemap(rand % 62);
 	cryptSalt[1] = CharRemap(rand / 62);
-	/* Grab top 16-bits of two random runs so as not to send full
-	   random value over the network.  The high-order bits are more random. */
-	md5Salt[0] = rand & 0xff000000;
-	md5Salt[1] = rand & 0x00ff0000;
+	/*
+	 * It's okay to reuse the first random value for one of the MD5 salt bytes,
+	 * since only one of the two salts will be sent to the client.  After that
+	 * we need to compute more random bits.
+	 *
+	 * We use % 255, sacrificing one possible byte value, so as to ensure
+	 * that all bits of the random() value participate in the result.  While
+	 * at it, add one to avoid generating any null bytes.
+	 */
+	md5Salt[0] = (rand % 255) + 1;
 	rand = PostmasterRandom();
-	md5Salt[2] = rand & 0xff000000;
-	md5Salt[3] = rand & 0x00ff0000;
+	md5Salt[1] = (rand % 255) + 1;
+	rand = PostmasterRandom();
+	md5Salt[2] = (rand % 255) + 1;
+	rand = PostmasterRandom();
+	md5Salt[3] = (rand % 255) + 1;
 }
 
 /*
@@ -2200,7 +2217,7 @@ PostmasterRandom(void)
 		initialized = true;
 	}
 
-	return random() ^ random_seed;
+	return random();
 }
 
 /*

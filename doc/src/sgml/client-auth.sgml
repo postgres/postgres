@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/client-auth.sgml,v 1.19 2001/09/09 23:52:12 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/client-auth.sgml,v 1.20 2001/09/21 20:31:41 tgl Exp $ -->
 
 <chapter id="client-authentication">
  <title>Client Authentication</title>
@@ -219,7 +219,13 @@ hostssl <replaceable>database</replaceable> <replaceable>IP-address</replaceable
         <listitem>
          <para>
           Like the <literal>md5</literal> method but uses older crypt
-          authentication for pre-7.2 clients.
+          authentication for pre-7.2 clients.  <literal>md5</literal>
+	  is preferred, unless you need to support old clients that
+	  do not have <literal>md5</literal>.  The <literal>crypt</>
+	  method is not compatible with encrypting passwords in
+	  <filename>pg_shadow</>, and it has been observed to fail
+	  when client and server machines have different implementations
+	  of the crypt() library routine.
          </para>
         </listitem>
        </varlistentry>
@@ -284,7 +290,7 @@ hostssl <replaceable>database</replaceable> <replaceable>IP-address</replaceable
         <term><literal>pam</></term>
         <listitem>
          <para>
-          This authentication type operates similar to
+          This authentication type operates similarly to
           <firstterm>password</firstterm>, with the main difference that
           it will use PAM (Pluggable Authentication Modules) as the
           authentication mechanism. The <replaceable>authentication
@@ -448,9 +454,9 @@ host         all        192.168.0.0    255.255.0.0        ident     omicron
 
    <para>
     Alternative passwords cannot be used when using the <literal>md5</>
-    or <literal>crypt</> methods. The file will still be evaluated as
-    usual but the password field will simply be ignored and the
-    <literal>pg_shadow</> password will be used.
+    or <literal>crypt</> methods. The file will be read as
+    usual, but the password field will simply be ignored and the
+    <literal>pg_shadow</> password will always be used.
    </para>
 
    <para>

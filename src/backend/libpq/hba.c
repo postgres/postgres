@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/hba.c,v 1.71 2001/09/07 19:59:04 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/hba.c,v 1.72 2001/09/21 20:31:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -208,8 +208,8 @@ free_lines(List **lines)
  *  *error_p.  line points to the next token of the line.
  */
 static void
-parse_hba_auth(List *line, ProtocolVersion proto, UserAuth *userauth_p,
-				char *auth_arg, bool *error_p)
+parse_hba_auth(List *line, UserAuth *userauth_p, char *auth_arg,
+			   bool *error_p)
 {
 	char		*token;
 
@@ -295,8 +295,7 @@ parse_hba(List *line, hbaPort *port, bool *found_p, bool *error_p)
 		line = lnext(line);
 		if (!line)
 			goto hba_syntax;
-		parse_hba_auth(line, port->proto, &port->auth_method,
-					   port->auth_arg, error_p);
+		parse_hba_auth(line, &port->auth_method, port->auth_arg, error_p);
 		if (*error_p)
 			goto hba_syntax;
 
@@ -365,8 +364,7 @@ parse_hba(List *line, hbaPort *port, bool *found_p, bool *error_p)
 		line = lnext(line);
 		if (!line)
 			goto hba_syntax;
-		parse_hba_auth(line, port->proto, &port->auth_method,
-					   port->auth_arg, error_p);
+		parse_hba_auth(line, &port->auth_method, port->auth_arg, error_p);
 		if (*error_p)
 			goto hba_syntax;
 

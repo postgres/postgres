@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_user.sgml,v 1.20 2001/09/14 08:24:29 ishii Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_user.sgml,v 1.21 2001/09/21 20:31:45 tgl Exp $
 Postgres documentation
 -->
 
@@ -66,28 +66,45 @@ where <replaceable class="PARAMETER">option</replaceable> can be:
        </para>
        <para>
         If this is not specified, the highest assigned user id plus one
-        will be used as default.
+	(with a minimum of 100) will be used as default.
        </para>
       </listitem>
      </varlistentry>
 
      <varlistentry>
-      <term><replaceable class="parameter">[ encrypted | unencrypted ] password</replaceable></term>
+      <term><replaceable class="parameter">password</replaceable></term>
       <listitem>
        <para>
         Sets the user's password. If you do not plan to use password
-        authentication you can omit this option, otherwise the user
+        authentication you can omit this option, but the user
         won't be able to connect to a password-authenticated server.
-	</para>
-	<para>
-	<literal>ENCRYPTED/UNENCRYPTED</literal> controls whether the
-	password is stored encrypted in the database. Older clients may
-	have trouble communicating using encrypted password storage.
+	The password can be set or changed later, using
+	<xref linkend="SQL-ALTERUSER" endterm="SQL-ALTERUSER-title">.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>ENCRYPTED</term>
+      <term>UNENCRYPTED</term>
+      <listitem>
+       <para> 
+	These keywords control whether the
+	password is stored encrypted in <literal>pg_shadow</>.  (If neither
+	is specified, the default behavior is determined by the
+	<varname>PASSWORD_ENCRYPTION</varname> server parameter.)
+	If the presented string is already in MD5-encrypted format,
+	then it is stored as-is, regardless of whether
+	ENCRYPTED or UNENCRYPTED
+	is specified.  This allows reloading of encrypted passwords
+	during dump/restore.
 	</para>
 	<para>
         See the chapter on client authentication in the
 	<citetitle>Administrator's Guide</citetitle> for details on
-        how to set up authentication mechanisms.
+        how to set up authentication mechanisms.  Note that older clients
+	may lack support for the MD5 authentication mechanism that's needed
+	to work with passwords that are stored encrypted.
        </para>
       </listitem>
      </varlistentry>

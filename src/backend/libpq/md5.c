@@ -9,27 +9,20 @@
  *  generating hashed passwords from limited input.
  *
  *  Sverre H. Huseby <sverrehu@online.no>
+ *
+ * $Header: /cvsroot/pgsql/src/backend/libpq/md5.c,v 1.6 2001/09/21 20:31:47 tgl Exp $
  */
 
+#include "postgres.h"
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 #include <errno.h>
 
-#include "postgres.h"
 #include "libpq/crypt.h"
 
 /*
  *	PRIVATE FUNCTIONS
  */
 
-#ifdef FRONTEND
-#undef palloc
-#define palloc malloc
-#undef pfree
-#define pfree free
-#endif
 
 /*
  *	The returned array is allocated using malloc.  the caller should free it

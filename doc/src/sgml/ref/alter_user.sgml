@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_user.sgml,v 1.16 2001/09/03 12:57:49 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_user.sgml,v 1.17 2001/09/21 20:31:45 tgl Exp $
 Postgres documentation
 -->
 
@@ -53,13 +53,23 @@ where <replaceable class="PARAMETER">option</replaceable> can be:
      </varlistentry>
 
      <varlistentry>
-      <term><replaceable class="PARAMETER">[ encrypted | unencrypted ] password</replaceable></term>
+      <term><replaceable class="PARAMETER">password</replaceable></term>
       <listitem>
        <para>
 	The new password to be used for this account.
-	<literal>Encrypted</literal>/ <literal>unencrypted</literal>
-	controls whether the password is stored encrypted in the
-	database.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>ENCRYPTED</term>
+      <term>UNENCRYPTED</term>
+      <listitem>
+       <para> 
+	These keywords control whether the
+	password is stored encrypted in <literal>pg_shadow</>.  (See
+	<xref linkend="SQL-CREATEUSER" endterm="SQL-CREATEUSER-title">
+	for more information about this choice.)
        </para>
       </listitem>
      </varlistentry>

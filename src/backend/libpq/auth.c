@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/auth.c,v 1.66 2001/09/07 19:52:53 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/auth.c,v 1.67 2001/09/21 20:31:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -594,15 +594,11 @@ sendAuthRequest(Port *port, AuthRequest areq)
 	/* Add the salt for encrypted passwords. */
 	if (areq == AUTH_REQ_MD5)
 	{
-		pq_sendint(&buf, port->md5Salt[0], 1);
-		pq_sendint(&buf, port->md5Salt[1], 1);
-		pq_sendint(&buf, port->md5Salt[2], 1);
-		pq_sendint(&buf, port->md5Salt[3], 1);
+		pq_sendbytes(&buf, port->md5Salt, 4);
 	}
-	if (areq == AUTH_REQ_CRYPT)
+	else if (areq == AUTH_REQ_CRYPT)
 	{
-		pq_sendint(&buf, port->cryptSalt[0], 1);
-		pq_sendint(&buf, port->cryptSalt[1], 1);
+		pq_sendbytes(&buf, port->cryptSalt, 2);
 	}
 
 	pq_endmessage(&buf);

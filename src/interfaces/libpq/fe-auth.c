@@ -10,7 +10,7 @@
  * exceed INITIAL_EXPBUFFER_SIZE (currently 256 bytes).
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-auth.c,v 1.59 2001/09/07 19:52:54 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-auth.c,v 1.60 2001/09/21 20:31:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,12 +29,6 @@
  */
 
 #include "postgres_fe.h"
-
-/* XXX is there a reason these appear before the system defines? */
-#include "libpq-fe.h"
-#include "libpq-int.h"
-#include "fe-auth.h"
-#include "libpq/crypt.h"
 
 #ifdef WIN32
 #include "win32.h"
@@ -58,6 +52,11 @@
 #ifdef HAVE_CRYPT_H
 #include <crypt.h>
 #endif
+
+#include "libpq-fe.h"
+#include "libpq-int.h"
+#include "fe-auth.h"
+#include "libpq/crypt.h"
 
 
 /*

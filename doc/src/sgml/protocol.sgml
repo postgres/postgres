@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/protocol.sgml,v 1.20 2001/09/13 15:55:23 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/protocol.sgml,v 1.21 2001/09/21 20:31:42 tgl Exp $ -->
 
 <chapter id="protocol">
  <title>Frontend/Backend Protocol</title>
@@ -142,10 +142,11 @@
      </VarListEntry>
 
      <VarListEntry>
-      <Term>AuthenticationUnencryptedPassword</Term>
+      <Term>AuthenticationCleartextPassword</Term>
       <ListItem>
        <Para>
-        The frontend must then send an UnencryptedPasswordPacket.  If
+        The frontend must then send a PasswordPacket containing the
+	password in clear-text form.  If
         this is the correct password, the server responds with an
         AuthenticationOk, otherwise it responds with an ErrorResponse.
        </Para>
@@ -153,11 +154,42 @@
      </VarListEntry>
 
      <VarListEntry>
-      <Term>AuthenticationEncryptedPassword</Term>
+      <Term>AuthenticationCryptPassword</Term>
       <ListItem>
        <Para>
-        The frontend must then send an EncryptedPasswordPacket.  If
+        The frontend must then send a PasswordPacket containing the
+	password encrypted via crypt(3), using the 2-character salt
+	specified in the AuthenticationCryptPassword packet.  If
         this is the correct password, the server responds with an
+        AuthenticationOk, otherwise it responds with an ErrorResponse.
+       </Para>
+      </ListItem>
+     </VarListEntry>
+
+     <VarListEntry>
+      <Term>AuthenticationMD5Password</Term>
+      <ListItem>
+       <Para>
+        The frontend must then send a PasswordPacket containing the
+	password encrypted via MD5, using the 4-character salt
+	specified in the AuthenticationMD5Password packet.  If
+        this is the correct password, the server responds with an
+        AuthenticationOk, otherwise it responds with an ErrorResponse.
+       </Para>
+      </ListItem>
+     </VarListEntry>
+
+     <VarListEntry>
+      <Term>AuthenticationSCMCredential</Term>
+      <ListItem>
+       <Para>
+        This method is only possible for local Unix-domain connections
+	on platforms that support SCM credential messages.  The frontend
+	must issue an SCM credential message and then send a single data
+	byte.  (The contents of the data byte are uninteresting; it's
+	only used to ensure that the server waits long enough to receive
+	the credential message.)  If the credential is acceptable,
+	the server responds with an
         AuthenticationOk, otherwise it responds with an ErrorResponse.
        </Para>
       </ListItem>
@@ -857,7 +889,7 @@ AuthenticationKerberosV5 (B)
 </VarListEntry>
 <VarListEntry>
 <Term>
-AuthenticationUnencryptedPassword (B)
+AuthenticationCleartextPassword (B)
 </Term>
 <ListItem>
 <Para>
@@ -879,19 +911,18 @@ AuthenticationUnencryptedPassword (B)
 </Term>
 <ListItem>
 <Para>
-                Specifies that an unencrypted password is required.
+                Specifies that a cleartext password is required.
 </Para>
 </ListItem>
 </VarListEntry>
 </VariableList>
-
-
 </Para>
 </ListItem>
 </VarListEntry>
+
 <VarListEntry>
 <Term>
-AuthenticationEncryptedPassword (B)
+AuthenticationCryptPassword (B)
 </Term>
 <ListItem>
 <Para>
@@ -913,7 +944,7 @@ AuthenticationEncryptedPassword (B)
 </Term>
 <ListItem>
 <Para>
-                Specifies that an encrypted password is required.
+                Specifies that a crypt()-encrypted password is required.
 </Para>
 </ListItem>
 </VarListEntry>
@@ -932,6 +963,85 @@ AuthenticationEncryptedPassword (B)
 </Para>
 </ListItem>
 </VarListEntry>
+
+<VarListEntry>
+<Term>
+AuthenticationMD5Password (B)
+</Term>
+<ListItem>
+<Para>
+
+<VariableList>
+<VarListEntry>
+<Term>
+        Byte1('R')
+</Term>
+<ListItem>
+<Para>
+                Identifies the message as an authentication request.
+</Para>
+</ListItem>
+</VarListEntry>
+<VarListEntry>
+<Term>
+        Int32(5)
+</Term>
+<ListItem>
+<Para>
+                Specifies that an MD5-encrypted password is required.
+</Para>
+</ListItem>
+</VarListEntry>
+<VarListEntry>
+<Term>
+        Byte4
+</Term>
+<ListItem>
+<Para>
+                The salt to use when encrypting the password.
+</Para>
+</ListItem>
+</VarListEntry>
+</VariableList>
+
+</Para>
+</ListItem>
+</VarListEntry>
+
+<VarListEntry>
+<Term>
+AuthenticationSCMCredential (B)
+</Term>
+<ListItem>
+<Para>
+
+<VariableList>
+<VarListEntry>
+<Term>
+        Byte1('R')
+</Term>
+<ListItem>
+<Para>
+                Identifies the message as an authentication request.
+</Para>
+</ListItem>
+</VarListEntry>
+<VarListEntry>
+<Term>
+        Int32(6)
+</Term>
+<ListItem>
+<Para>
+                Specifies that an SCM credentials message is required.
+</Para>
+</ListItem>
+</VarListEntry>
+</VariableList>
+
+</Para>
+</ListItem>
+</VarListEntry>
+
 <VarListEntry>
 <Term>
 BackendKeyData (B)
@@ -1271,40 +1381,7 @@ EmptyQueryResponse (B)
 </Para>
 </ListItem>
 </VarListEntry>
-<VarListEntry>
-<Term>
-EncryptedPasswordPacket (F)
-</Term>
-<ListItem>
-<Para>
 
-<VariableList>
-<VarListEntry>
-<Term>
-        Int32
-</Term>
-<ListItem>
-<Para>
-                The size of the packet in bytes.
-</Para>
-</ListItem>
-</VarListEntry>
-<VarListEntry>
-<Term>
-        String
-</Term>
-<ListItem>
-<Para>
-                The encrypted (using MD5 or crypt()) password.
-</Para>
-</ListItem>
-</VarListEntry>
-</VariableList>
-
-
-</Para>
-</ListItem>
-</VarListEntry>
 <VarListEntry>
 <Term>
 ErrorResponse (B)
@@ -1602,6 +1679,40 @@ NotificationResponse (B)
 </Para>
 </ListItem>
 </VarListEntry>
+
+<VarListEntry>
+<Term>
+PasswordPacket (F)
+</Term>
+<ListItem>
+<Para>
+
+<VariableList>
+<VarListEntry>
+<Term>
+        Int32
+</Term>
+<ListItem>
+<Para>
+                The size of the packet in bytes.
+</Para>
+</ListItem>
+</VarListEntry>
+<VarListEntry>
+<Term>
+        String
+</Term>
+<ListItem>
+<Para>
+                The password (encrypted, if requested).
+</Para>
+</ListItem>
+</VarListEntry>
+</VariableList>
+</Para>
+</ListItem>
+</VarListEntry>
+
 <VarListEntry>
 <Term>
 Query (F)
@@ -1852,39 +1963,7 @@ Terminate (F)
 </Para>
 </ListItem>
 </VarListEntry>
-<VarListEntry>
-<Term>
-UnencryptedPasswordPacket (F)
-</Term>
-<ListItem>
-<Para>
 
-<VariableList>
-<VarListEntry>
-<Term>
-        Int32
-</Term>
-<ListItem>
-<Para>
-                The size of the packet in bytes.
-</Para>
-</ListItem>
-</VarListEntry>
-<VarListEntry>
-<Term>
-        String
-</Term>
-<ListItem>
-<Para>
-                The unencrypted password.
-</Para>
-</ListItem>
-</VarListEntry>
-</VariableList>
-
-</Para>
-</ListItem>
-</VarListEntry>
 </VariableList>
 
 </sect1>
