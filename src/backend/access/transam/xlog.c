@@ -97,6 +97,7 @@ typedef struct ControlFileData
 	XLogRecPtr		checkPoint;		/* last check point record ptr */
 	time_t			time;			/* time stamp of last modification */
 	DBState			state;			/* */
+	uint32			blcksz;			/* block size for this DB */
 	/* MORE DATA FOLLOWS AT THE END OF THIS STRUCTURE
 	 * - locations of data dirs 
 	 */
@@ -1162,6 +1163,7 @@ BootStrapXLOG()
 	ControlFile->checkPoint = checkPoint.redo;
 	ControlFile->time = time(NULL);
 	ControlFile->state = DB_SHUTDOWNED;
+	ControlFile->blcksz = BLCKSZ;
 
 	if (write(fd, buffer, BLCKSZ) != BLCKSZ)
 		elog(STOP, "BootStrapXLOG failed to write control file: %d", errno);
@@ -1248,6 +1250,9 @@ tryAgain:
 		ControlFile->state > DB_IN_PRODUCTION || 
 		!XRecOffIsValid(ControlFile->checkPoint.xrecoff))
 		elog(STOP, "Control file context is broken");
+
+	if (ControlFile->blcksz != BLCKSZ)
+		elog(STOP, "database was initialized in BLCKSZ(%d), but the backend was compiled in BLCKSZ(%d)",ControlFile->blcksz,BLCKSZ);
 
 	if (ControlFile->state == DB_SHUTDOWNED)
 		elog(LOG, "Data Base System was shutdowned at %s",
