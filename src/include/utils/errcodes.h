@@ -11,7 +11,7 @@
  *
  * Copyright (c) 2003, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/utils/errcodes.h,v 1.11 2004/05/16 23:18:55 neilc Exp $
+ * $PostgreSQL: pgsql/src/include/utils/errcodes.h,v 1.12 2004/06/01 21:49:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -59,6 +59,8 @@
 #define ERRCODE_WARNING_DYNAMIC_RESULT_SETS_RETURNED		MAKE_SQLSTATE('0','1', '0','0','C')
 #define ERRCODE_WARNING_IMPLICIT_ZERO_BIT_PADDING	MAKE_SQLSTATE('0','1', '0','0','8')
 #define ERRCODE_WARNING_NULL_VALUE_ELIMINATED_IN_SET_FUNCTION	MAKE_SQLSTATE('0','1', '0','0','3')
+#define ERRCODE_WARNING_PRIVILEGE_NOT_GRANTED		MAKE_SQLSTATE('0','1', '0','0','7')
+#define ERRCODE_WARNING_PRIVILEGE_NOT_REVOKED		MAKE_SQLSTATE('0','1', '0','0','6')
 #define ERRCODE_WARNING_STRING_DATA_RIGHT_TRUNCATION	MAKE_SQLSTATE('0','1', '0','0','4')
 #define ERRCODE_WARNING_DEPRECATED_FEATURE	MAKE_SQLSTATE('0','1', 'P','0','1')
 

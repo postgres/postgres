@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/acl.c,v 1.104 2004/05/07 00:24:57 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/acl.c,v 1.105 2004/06/01 21:49:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,6 +17,7 @@
 #include <ctype.h>
 
 #include "catalog/namespace.h"
+#include "catalog/pg_group.h"
 #include "catalog/pg_shadow.h"
 #include "catalog/pg_type.h"
 #include "commands/dbcommands.h"
@@ -35,8 +36,11 @@ static void putid(char *p, const char *s);
 static Acl *allocacl(int n);
 static const char *aclparse(const char *s, AclItem *aip);
 static bool aclitem_match(const AclItem *a1, const AclItem *a2);
-static Acl *recursive_revoke(Acl *acl, AclId grantee,
-				 AclMode revoke_privs, DropBehavior behavior);
+static void check_circularity(const Acl *old_acl, const AclItem *mod_aip,
+							  AclId ownerid);
+static Acl *recursive_revoke(Acl *acl, AclId grantee, AclMode revoke_privs,
+							 AclId ownerid, DropBehavior behavior);
+static bool in_group(AclId uid, AclId gid);
 
 static AclMode convert_priv_string(text *priv_type_text);
 
@@ -554,10 +558,19 @@ acldefault(GrantObjectType objtype, AclId ownerid)
 		aip++;
 	}
 
+	/*
+	 * Note that the owner's entry shows all ordinary privileges but no
+	 * grant options.  This is because his grant options come "from the
+	 * system" and not from his own efforts.  (The SQL spec says that
+	 * the owner's rights come from a "_SYSTEM" authid.)  However, we do
+	 * consider that the owner's ordinary privileges are self-granted;
+	 * this lets him revoke them.  We implement the owner's grant options
+	 * without any explicit "_SYSTEM"-like ACL entry, by internally
+	 * special-casing the owner whereever we are testing grant options.
+	 */
 	aip->ai_grantee = ownerid;
 	aip->ai_grantor = ownerid;
-	/* owner gets default privileges with grant option */
-	ACLITEM_SET_PRIVS_IDTYPE(*aip, owner_default, owner_default,
+	ACLITEM_SET_PRIVS_IDTYPE(*aip, owner_default, ACL_NO_RIGHTS,
 							 ACL_IDTYPE_UID);
 
 	return acl;
@@ -565,21 +578,31 @@ acldefault(GrantObjectType objtype, AclId ownerid)
 
 
 /*
- * Add or replace an item in an ACL array.	The result is a modified copy;
- * the input object is not changed.
+ * Update an ACL array to add or remove specified privileges.
+ *
+ *	old_acl: the input ACL array
+ *	mod_aip: defines the privileges to be added, removed, or substituted
+ *	modechg: ACL_MODECHG_ADD, ACL_MODECHG_DEL, or ACL_MODECHG_EQL
+ *	ownerid: AclId of object owner
+ *	behavior: RESTRICT or CASCADE behavior for recursive removal
+ *
+ * ownerid and behavior are only relevant when the update operation specifies
+ * deletion of grant options.
+ *
+ * The result is a modified copy; the input object is not changed.
  *
  * NB: caller is responsible for having detoasted the input ACL, if needed.
  */
 Acl *
-aclinsert3(const Acl *old_acl, const AclItem *mod_aip,
-		   unsigned modechg, DropBehavior behavior)
+aclupdate(const Acl *old_acl, const AclItem *mod_aip,
+		  int modechg, AclId ownerid, DropBehavior behavior)
 {
 	Acl		   *new_acl = NULL;
 	AclItem    *old_aip,
 			   *new_aip = NULL;
-	AclMode		old_privs,
+	AclMode		old_rights,
 				old_goptions,
-				new_privs,
+				new_rights,
 				new_goptions;
 	int			dst,
 				num;
@@ -590,9 +613,14 @@ aclinsert3(const Acl *old_acl, const AclItem *mod_aip,
 	if (!mod_aip)
 	{
 		new_acl = allocacl(ACL_NUM(old_acl));
-		memcpy((char *) new_acl, (char *) old_acl, ACL_SIZE(old_acl));
+		memcpy(new_acl, old_acl, ACL_SIZE(old_acl));
 		return new_acl;
 	}
+
+	/* If granting grant options, check for circularity */
+	if (modechg != ACL_MODECHG_DEL &&
+		ACLITEM_GET_GOPTIONS(*mod_aip) != ACL_NO_RIGHTS)
+		check_circularity(old_acl, mod_aip, ownerid);
 
 	num = ACL_NUM(old_acl);
 	old_aip = ACL_DAT(old_acl);
@@ -626,44 +654,39 @@ aclinsert3(const Acl *old_acl, const AclItem *mod_aip,
 		/* initialize the new entry with no permissions */
 		new_aip[dst].ai_grantee = mod_aip->ai_grantee;
 		new_aip[dst].ai_grantor = mod_aip->ai_grantor;
-		ACLITEM_SET_PRIVS_IDTYPE(new_aip[dst], ACL_NO_RIGHTS, ACL_NO_RIGHTS,
+		ACLITEM_SET_PRIVS_IDTYPE(new_aip[dst],
+								 ACL_NO_RIGHTS, ACL_NO_RIGHTS,
 								 ACLITEM_GET_IDTYPE(*mod_aip));
 		num++;					/* set num to the size of new_acl */
 	}
 
-	old_privs = ACLITEM_GET_PRIVS(new_aip[dst]);
+	old_rights = ACLITEM_GET_RIGHTS(new_aip[dst]);
 	old_goptions = ACLITEM_GET_GOPTIONS(new_aip[dst]);
 
 	/* apply the specified permissions change */
 	switch (modechg)
 	{
 		case ACL_MODECHG_ADD:
-			ACLITEM_SET_PRIVS(new_aip[dst],
-							  old_privs | ACLITEM_GET_PRIVS(*mod_aip));
-			ACLITEM_SET_GOPTIONS(new_aip[dst],
-								 old_goptions | ACLITEM_GET_GOPTIONS(*mod_aip));
+			ACLITEM_SET_RIGHTS(new_aip[dst],
+							   old_rights | ACLITEM_GET_RIGHTS(*mod_aip));
 			break;
 		case ACL_MODECHG_DEL:
-			ACLITEM_SET_PRIVS(new_aip[dst],
-							  old_privs & ~ACLITEM_GET_PRIVS(*mod_aip));
-			ACLITEM_SET_GOPTIONS(new_aip[dst],
-								 old_goptions & ~ACLITEM_GET_GOPTIONS(*mod_aip));
+			ACLITEM_SET_RIGHTS(new_aip[dst],
+							   old_rights & ~ACLITEM_GET_RIGHTS(*mod_aip));
 			break;
 		case ACL_MODECHG_EQL:
-			ACLITEM_SET_PRIVS_IDTYPE(new_aip[dst],
-									 ACLITEM_GET_PRIVS(*mod_aip),
-									 ACLITEM_GET_GOPTIONS(*mod_aip),
-									 ACLITEM_GET_IDTYPE(new_aip[dst]));
+			ACLITEM_SET_RIGHTS(new_aip[dst],
+							   ACLITEM_GET_RIGHTS(*mod_aip));
 			break;
 	}
 
-	new_privs = ACLITEM_GET_PRIVS(new_aip[dst]);
+	new_rights = ACLITEM_GET_RIGHTS(new_aip[dst]);
 	new_goptions = ACLITEM_GET_GOPTIONS(new_aip[dst]);
 
 	/*
 	 * If the adjusted entry has no permissions, delete it from the list.
 	 */
-	if (new_privs == ACL_NO_RIGHTS && new_goptions == ACL_NO_RIGHTS)
+	if (new_rights == ACL_NO_RIGHTS)
 	{
 		memmove(new_aip + dst,
 				new_aip + dst + 1,
@@ -676,13 +699,91 @@ aclinsert3(const Acl *old_acl, const AclItem *mod_aip,
 	 * Remove abandoned privileges (cascading revoke).  Currently we
 	 * can only handle this when the grantee is a user.
 	 */
-	if ((old_goptions & ~new_goptions) != 0
-		&& ACLITEM_GET_IDTYPE(*mod_aip) == ACL_IDTYPE_UID)
+	if ((old_goptions & ~new_goptions) != 0)
+	{
+		Assert(ACLITEM_GET_IDTYPE(*mod_aip) == ACL_IDTYPE_UID);
 		new_acl = recursive_revoke(new_acl, mod_aip->ai_grantee,
 								   (old_goptions & ~new_goptions),
-								   behavior);
+								   ownerid, behavior);
+	}
 
 	return new_acl;
+}
+
+
+/*
+ * When granting grant options, we must disallow attempts to set up circular
+ * chains of grant options.  Suppose A (the object owner) grants B some
+ * privileges with grant option, and B re-grants them to C.  If C could
+ * grant the privileges to B as well, then A would be unable to effectively
+ * revoke the privileges from B, since recursive_revoke would consider that
+ * B still has 'em from C.
+ *
+ * We check for this by recursively deleting all grant options belonging to
+ * the target grantee, and then seeing if the would-be grantor still has the
+ * grant option or not.
+ */
+static void
+check_circularity(const Acl *old_acl, const AclItem *mod_aip,
+				  AclId ownerid)
+{
+	Acl		   *acl;
+	AclItem    *aip;
+	int			i,
+				num;
+	AclMode		own_privs;
+
+	/*
+	 * For now, grant options can only be granted to users, not groups or
+	 * PUBLIC.  Otherwise we'd have to work a bit harder here.
+	 */
+	Assert(ACLITEM_GET_IDTYPE(*mod_aip) == ACL_IDTYPE_UID);
+
+	/* The owner always has grant options, no need to check */
+	if (mod_aip->ai_grantor == ownerid)
+		return;
+
+	/* Make a working copy */
+	acl = allocacl(ACL_NUM(old_acl));
+	memcpy(acl, old_acl, ACL_SIZE(old_acl));
+
+	/* Zap all grant options of target grantee, plus what depends on 'em */
+cc_restart:
+	num = ACL_NUM(acl);
+	aip = ACL_DAT(acl);
+	for (i = 0; i < num; i++)
+	{
+		if (ACLITEM_GET_IDTYPE(aip[i]) == ACL_IDTYPE_UID &&
+			aip[i].ai_grantee == mod_aip->ai_grantee &&
+			ACLITEM_GET_GOPTIONS(aip[i]) != ACL_NO_RIGHTS)
+		{
+			Acl		   *new_acl;
+
+			/* We'll actually zap ordinary privs too, but no matter */
+			new_acl = aclupdate(acl, &aip[i], ACL_MODECHG_DEL,
+								ownerid, DROP_CASCADE);
+
+			pfree(acl);
+			acl = new_acl;
+
+			goto cc_restart;
+		}
+	}
+
+	/* Now we can compute grantor's independently-derived privileges */
+	own_privs = aclmask(acl,
+						mod_aip->ai_grantor,
+						ownerid,
+						ACL_GRANT_OPTION_FOR(ACLITEM_GET_GOPTIONS(*mod_aip)),
+						ACLMASK_ALL);
+	own_privs = ACL_OPTION_TO_PRIVS(own_privs);
+
+	if ((ACLITEM_GET_GOPTIONS(*mod_aip) & ~own_privs) != 0)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_GRANT_OPERATION),
+				 errmsg("grant options cannot be granted back to your own grantor")));
+
+	pfree(acl);
 }
 
 
@@ -692,24 +793,49 @@ aclinsert3(const Acl *old_acl, const AclItem *mod_aip,
  * the chain through which it was granted is broken.)  Either the
  * abandoned privileges are revoked as well, or an error message is
  * printed, depending on the drop behavior option.
+ *
+ *	acl: the input ACL list
+ *	grantee: the user from whom some grant options have been revoked
+ *	revoke_privs: the grant options being revoked
+ *	ownerid: AclId of object owner
+ *	behavior: RESTRICT or CASCADE behavior for recursive removal
+ *
+ * The input Acl object is pfree'd if replaced.
  */
 static Acl *
 recursive_revoke(Acl *acl,
 				 AclId grantee,
 				 AclMode revoke_privs,
+				 AclId ownerid,
 				 DropBehavior behavior)
 {
-	int			i;
+	AclMode		still_has;
+	AclItem    *aip;
+	int			i,
+				num;
+
+	/* The owner can never truly lose grant options, so short-circuit */
+	if (grantee == ownerid)
+		return acl;
+
+	/* The grantee might still have the privileges via another grantor */
+	still_has = aclmask(acl, grantee, ownerid,
+						ACL_GRANT_OPTION_FOR(revoke_privs),
+						ACLMASK_ALL);
+	revoke_privs &= ~still_has;
+	if (revoke_privs == ACL_NO_RIGHTS)
+		return acl;
 
 restart:
-	for (i = 0; i < ACL_NUM(acl); i++)
+	num = ACL_NUM(acl);
+	aip = ACL_DAT(acl);
+	for (i = 0; i < num; i++)
 	{
-		AclItem    *aip = ACL_DAT(acl);
-
 		if (aip[i].ai_grantor == grantee
 			&& (ACLITEM_GET_PRIVS(aip[i]) & revoke_privs) != 0)
 		{
 			AclItem		mod_acl;
+			Acl		   *new_acl;
 
 			if (behavior == DROP_RESTRICT)
 				ereport(ERROR,
@@ -724,7 +850,12 @@ restart:
 									 revoke_privs,
 									 ACLITEM_GET_IDTYPE(aip[i]));
 
-			acl = aclinsert3(acl, &mod_acl, ACL_MODECHG_DEL, behavior);
+			new_acl = aclupdate(acl, &mod_acl, ACL_MODECHG_DEL,
+								ownerid, behavior);
+
+			pfree(acl);
+			acl = new_acl;
+
 			goto restart;
 		}
 	}
@@ -734,70 +865,177 @@ restart:
 
 
 /*
+ * aclmask --- compute bitmask of all privileges held by userid.
+ *
+ * When 'how' = ACLMASK_ALL, this simply returns the privilege bits
+ * held by the given userid according to the given ACL list, ANDed
+ * with 'mask'.  (The point of passing 'mask' is to let the routine
+ * exit early if all privileges of interest have been found.)
+ *
+ * When 'how' = ACLMASK_ANY, returns as soon as any bit in the mask
+ * is known true.  (This lets us exit soonest in cases where the
+ * caller is only going to test for zero or nonzero result.)
+ *
+ * Usage patterns:
+ *
+ * To see if any of a set of privileges are held:
+ *		if (aclmask(acl, userid, ownerid, privs, ACLMASK_ANY) != 0)
+ *
+ * To see if all of a set of privileges are held:
+ *		if (aclmask(acl, userid, ownerid, privs, ACLMASK_ALL) == privs)
+ *
+ * To determine exactly which of a set of privileges are held:
+ *		heldprivs = aclmask(acl, userid, ownerid, privs, ACLMASK_ALL);
+ */
+AclMode
+aclmask(const Acl *acl, AclId userid, AclId ownerid,
+		AclMode mask, AclMaskHow how)
+{
+	AclMode		result;
+	AclMode		remaining;
+	AclItem    *aidat;
+	int			i,
+				num;
+
+	/*
+	 * Null ACL should not happen, since caller should have inserted
+	 * appropriate default
+	 */
+	if (acl == NULL)
+		elog(ERROR, "null ACL");
+
+	/* Quick exit for mask == 0 */
+	if (mask == 0)
+		return 0;
+
+	result = 0;
+
+	/* Owner always implicitly has all grant options */
+	if (userid == ownerid)
+	{
+		result = mask & ACLITEM_ALL_GOPTION_BITS;
+		if (result == mask)
+			return result;
+	}
+
+	num = ACL_NUM(acl);
+	aidat = ACL_DAT(acl);
+
+	/*
+	 * Check privileges granted directly to user or to public
+	 */
+	for (i = 0; i < num; i++)
+	{
+		AclItem	   *aidata = &aidat[i];
+
+		if (ACLITEM_GET_IDTYPE(*aidata) == ACL_IDTYPE_WORLD
+			|| (ACLITEM_GET_IDTYPE(*aidata) == ACL_IDTYPE_UID
+				&& aidata->ai_grantee == userid))
+		{
+			result |= (aidata->ai_privs & mask);
+			if ((how == ACLMASK_ALL) ? (result == mask) : (result != 0))
+				return result;
+		}
+	}
+
+	/*
+	 * Check privileges granted via groups.  We do this in a separate
+	 * pass to minimize expensive lookups in pg_group.
+	 */
+	remaining = (mask & ~result);
+	for (i = 0; i < num; i++)
+	{
+		AclItem	   *aidata = &aidat[i];
+
+		if (ACLITEM_GET_IDTYPE(*aidata) == ACL_IDTYPE_GID
+			&& (aidata->ai_privs & remaining)
+			&& in_group(userid, aidata->ai_grantee))
+		{
+			result |= (aidata->ai_privs & mask);
+			if ((how == ACLMASK_ALL) ? (result == mask) : (result != 0))
+				return result;
+			remaining = (mask & ~result);
+		}
+	}
+
+	return result;
+}
+
+
+/*
+ * Is user a member of group?
+ */
+static bool
+in_group(AclId uid, AclId gid)
+{
+	bool		result = false;
+	HeapTuple	tuple;
+	Datum		att;
+	bool		isNull;
+	IdList	   *glist;
+	AclId	   *aidp;
+	int			i,
+				num;
+
+	tuple = SearchSysCache(GROSYSID,
+						   ObjectIdGetDatum(gid),
+						   0, 0, 0);
+	if (HeapTupleIsValid(tuple))
+	{
+		att = SysCacheGetAttr(GROSYSID,
+							  tuple,
+							  Anum_pg_group_grolist,
+							  &isNull);
+		if (!isNull)
+		{
+			/* be sure the IdList is not toasted */
+			glist = DatumGetIdListP(att);
+			/* scan it */
+			num = IDLIST_NUM(glist);
+			aidp = IDLIST_DAT(glist);
+			for (i = 0; i < num; ++i)
+			{
+				if (aidp[i] == uid)
+				{
+					result = true;
+					break;
+				}
+			}
+			/* if IdList was toasted, free detoasted copy */
+			if ((Pointer) glist != DatumGetPointer(att))
+				pfree(glist);
+		}
+		ReleaseSysCache(tuple);
+	}
+	else
+		ereport(WARNING,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("group with ID %u does not exist", gid)));
+	return result;
+}
+
+
+/*
  * aclinsert (exported function)
  */
 Datum
 aclinsert(PG_FUNCTION_ARGS)
 {
-	Acl		   *old_acl = PG_GETARG_ACL_P(0);
-	AclItem    *mod_aip = PG_GETARG_ACLITEM_P(1);
+	ereport(ERROR,
+			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+			 errmsg("aclinsert is no longer supported")));
 
-	PG_RETURN_ACL_P(aclinsert3(old_acl, mod_aip, ACL_MODECHG_EQL, DROP_CASCADE));
+	PG_RETURN_NULL();			/* keep compiler quiet */
 }
 
 Datum
 aclremove(PG_FUNCTION_ARGS)
 {
-	Acl		   *old_acl = PG_GETARG_ACL_P(0);
-	AclItem    *mod_aip = PG_GETARG_ACLITEM_P(1);
-	Acl		   *new_acl;
-	AclItem    *old_aip,
-			   *new_aip;
-	int			dst,
-				old_num,
-				new_num;
+	ereport(ERROR,
+			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+			 errmsg("aclremove is no longer supported")));
 
-	/* These checks for null input should be dead code, but... */
-	if (!old_acl || ACL_NUM(old_acl) < 0)
-		old_acl = allocacl(0);
-	if (!mod_aip)
-	{
-		new_acl = allocacl(ACL_NUM(old_acl));
-		memcpy((char *) new_acl, (char *) old_acl, ACL_SIZE(old_acl));
-		PG_RETURN_ACL_P(new_acl);
-	}
-
-	old_num = ACL_NUM(old_acl);
-	old_aip = ACL_DAT(old_acl);
-
-	/* Search for the matching entry */
-	for (dst = 0;
-		 dst < old_num && !aclitem_match(mod_aip, old_aip + dst);
-		 ++dst)
-		 /* continue */ ;
-
-	if (dst >= old_num)
-	{
-		/* Not found, so return copy of source ACL */
-		new_acl = allocacl(old_num);
-		memcpy((char *) new_acl, (char *) old_acl, ACL_SIZE(old_acl));
-	}
-	else
-	{
-		new_num = old_num - 1;
-		new_acl = allocacl(new_num);
-		new_aip = ACL_DAT(new_acl);
-		if (dst > 0)
-			memcpy((char *) new_aip,
-				   (char *) old_aip,
-				   dst * sizeof(AclItem));
-		if (dst < new_num)
-			memcpy((char *) (new_aip + dst),
-				   (char *) (old_aip + dst + 1),
-				   (new_num - dst) * sizeof(AclItem));
-	}
-
-	PG_RETURN_ACL_P(new_acl);
+	PG_RETURN_NULL();			/* keep compiler quiet */
 }
 
 Datum
@@ -816,8 +1054,7 @@ aclcontains(PG_FUNCTION_ARGS)
 		if (aip->ai_grantee == aidat[i].ai_grantee
 			&& ACLITEM_GET_IDTYPE(*aip) == ACLITEM_GET_IDTYPE(aidat[i])
 			&& aip->ai_grantor == aidat[i].ai_grantor
-			&& (ACLITEM_GET_PRIVS(*aip) & ACLITEM_GET_PRIVS(aidat[i])) == ACLITEM_GET_PRIVS(*aip)
-			&& (ACLITEM_GET_GOPTIONS(*aip) & ACLITEM_GET_GOPTIONS(aidat[i])) == ACLITEM_GET_GOPTIONS(*aip))
+			&& (ACLITEM_GET_RIGHTS(*aip) & ACLITEM_GET_RIGHTS(aidat[i])) == ACLITEM_GET_RIGHTS(*aip))
 			PG_RETURN_BOOL(true);
 	}
 	PG_RETURN_BOOL(false);

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/grant.sgml,v 1.39 2004/03/22 03:38:24 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/grant.sgml,v 1.40 2004/06/01 21:49:21 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -67,9 +67,10 @@ GRANT { { CREATE | USAGE } [,...] | ALL [ PRIVILEGES ] }
 
   <para>
    If <literal>WITH GRANT OPTION</literal> is specified, the recipient
-   of the privilege may in turn grant it to others.  By default this
-   is not allowed.  Grant options can only be granted to individual
-   users, not to groups or <literal>PUBLIC</literal>.
+   of the privilege may in turn grant it to others.  Without a grant
+   option, the recipient cannot do that.  At present, grant options can
+   only be granted to individual users, not to groups or
+   <literal>PUBLIC</literal>.
   </para>
 
   <para>
@@ -79,8 +80,8 @@ GRANT { { CREATE | USAGE } [,...] | ALL [ PRIVILEGES ] }
    however, choose to revoke some of his own privileges for safety.)
    The right to drop an object, or to alter its definition in any way is
    not described by a grantable privilege; it is inherent in the owner,
-   and cannot be granted or revoked.  It is not possible for the owner's
-   grant options to be revoked, either.
+   and cannot be granted or revoked.  The owner implicitly has all grant
+   options for the object, too.
   </para>
 
   <para>
@@ -150,7 +151,7 @@ GRANT { { CREATE | USAGE } [,...] | ALL [ PRIVILEGES ] }
      <term>RULE</term>
      <listitem>
       <para>
-       Allows the creation of a rule on the table/view.  (See <xref
+       Allows the creation of a rule on the table/view.  (See the <xref
        linkend="sql-createrule" endterm="sql-createrule-title"> statement.)
       </para>
      </listitem>
@@ -171,7 +172,7 @@ GRANT { { CREATE | USAGE } [,...] | ALL [ PRIVILEGES ] }
      <term>TRIGGER</term>
      <listitem>
       <para>
-       Allows the creation of a trigger on the specified table.  (See
+       Allows the creation of a trigger on the specified table.  (See the
        <xref linkend="sql-createtrigger" endterm="sql-createtrigger-title"> statement.)
       </para>
      </listitem>
@@ -234,7 +235,7 @@ GRANT { { CREATE | USAGE } [,...] | ALL [ PRIVILEGES ] }
      <term>ALL PRIVILEGES</term>
      <listitem>
       <para>
-       Grant all of the privileges applicable to the object at once.
+       Grant all of the available privileges at once.
        The <literal>PRIVILEGES</literal> key word is optional in
        <productname>PostgreSQL</productname>, though it is required by
        strict SQL.
@@ -258,6 +259,20 @@ GRANT { { CREATE | USAGE } [,...] | ALL [ PRIVILEGES ] }
    </para>
 
    <para>
+    When a non-owner of an object attempts to <command>GRANT</> privileges
+    on the object, the command will fail outright if the user has no
+    privileges whatsoever on the object.  As long as some privilege is
+    available, the command will proceed, but it will grant only those
+    privileges for which the user has grant options.  The <command>GRANT ALL
+    PRIVILEGES</> forms will issue a warning message if no grant options are
+    held, while the other forms will issue a warning if grant options for
+    any of the privileges specifically named in the command are not held.
+    (In principle these statements apply to the object owner as well, but
+    since the owner is always treated as holding all grant options, the
+    cases can never occur.)
+   </para>
+
+   <para>
     It should be noted that database superusers can access
     all objects regardless of object privilege settings.  This
     is comparable to the rights of <literal>root</> in a Unix system.
@@ -273,10 +288,10 @@ GRANT { { CREATE | USAGE } [,...] | ALL [ PRIVILEGES ] }
    </para>
 
    <para>
-    Currently, to grant privileges in <productname>PostgreSQL</productname>
-    to only a few columns, you must
-    create a view having the desired columns and then grant privileges
-    to that view.
+    Currently, <productname>PostgreSQL</productname> does not support
+    granting or revoking privileges for individual columns of a table.
+    One possible workaround is to create a view having just the desired
+    columns and then grant privileges to that view.
    </para>
 
    <para>
@@ -286,9 +301,9 @@ GRANT { { CREATE | USAGE } [,...] | ALL [ PRIVILEGES ] }
 => \z mytable
 
                         Access privileges for database "lusitania"
- Schema |  Name   | Type  |          Access privileges
---------+---------+-------+-----------------------------------------------------------------
- public | mytable | table | {=r/postgres,miriam=arwdRxt/postgres,"group todos=arw/postgres"}
+ Schema |  Name   | Type  |                     Access privileges
+--------+---------+-------+------------------------------------------------------------
+ public | mytable | table | {miriam=arwdRxt/miriam,=r/miriam,"group todos=arw/miriam"}
 (1 row)
 </programlisting>
     The entries shown by <command>\z</command> are interpreted thus:
@@ -331,7 +346,14 @@ and may include some privileges for <literal>PUBLIC</> depending on the
 object type, as explained above.  The first <command>GRANT</> or
 <command>REVOKE</> on an object
 will instantiate the default privileges (producing, for example,
-<literal>{=,miriam=arwdRxt}</>) and then modify them per the specified request.
+<literal>{miriam=arwdRxt/miriam}</>) and then modify them per the
+specified request.
+   </para>
+
+   <para>
+    Notice that the owner's implicit grant options are not marked in the
+    access privileges display.  A <literal>*</> will appear only when
+    grant options have been explicitly granted to someone.
    </para>
  </refsect1>
 
@@ -347,11 +369,17 @@ GRANT INSERT ON films TO PUBLIC;
   </para>
 
   <para>
-   Grant all privileges to user <literal>manuel</literal> on view <literal>kinds</literal>:
+   Grant all available privileges to user <literal>manuel</literal> on view
+   <literal>kinds</literal>:
 
 <programlisting>
 GRANT ALL PRIVILEGES ON kinds TO manuel;
 </programlisting>
+
+   Note that while the above will indeed grant all privileges if executed by a
+   superuser or the owner of <literal>kinds</literal>, when executed by someone
+   else it will only grant those permissions for which the someone else has
+   grant options.
   </para>
  </refsect1>
 

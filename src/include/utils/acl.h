@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/acl.h,v 1.69 2004/05/11 17:36:13 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/utils/acl.h,v 1.70 2004/06/01 21:49:22 tgl Exp $
  *
  * NOTES
  *	  An ACL array is simply an array of AclItems, representing the union
@@ -63,13 +63,16 @@ typedef struct AclItem
 /*
  * The AclIdType is stored in the top two bits of the ai_privs field
  * of an AclItem.  The middle 15 bits are the grant option markers,
- * and the lower 15 bits are the actual privileges.
+ * and the lower 15 bits are the actual privileges.  We use "rights"
+ * to mean the combined grant option and privilege bits fields.
  */
 #define ACLITEM_GET_PRIVS(item)    ((item).ai_privs & 0x7FFF)
 #define ACLITEM_GET_GOPTIONS(item) (((item).ai_privs >> 15) & 0x7FFF)
+#define ACLITEM_GET_RIGHTS(item)   ((item).ai_privs & 0x3FFFFFFF)
 #define ACLITEM_GET_IDTYPE(item)   ((item).ai_privs >> 30)
 
 #define ACL_GRANT_OPTION_FOR(privs) (((AclMode) (privs) & 0x7FFF) << 15)
+#define ACL_OPTION_TO_PRIVS(privs)  (((AclMode) (privs) >> 15) & 0x7FFF)
 
 #define ACLITEM_SET_PRIVS(item,privs) \
   ((item).ai_privs = ((item).ai_privs & ~((AclMode) 0x7FFF)) | \
@@ -77,6 +80,9 @@ typedef struct AclItem
 #define ACLITEM_SET_GOPTIONS(item,goptions) \
   ((item).ai_privs = ((item).ai_privs & ~(((AclMode) 0x7FFF) << 15)) | \
 					 (((AclMode) (goptions) & 0x7FFF) << 15))
+#define ACLITEM_SET_RIGHTS(item,rights) \
+  ((item).ai_privs = ((item).ai_privs & ~((AclMode) 0x3FFFFFFF)) | \
+					 ((AclMode) (rights) & 0x3FFFFFFF))
 #define ACLITEM_SET_IDTYPE(item,idtype) \
   ((item).ai_privs = ((item).ai_privs & ~(((AclMode) 0x03) << 30)) | \
 					 (((AclMode) (idtype) & 0x03) << 30))
@@ -86,6 +92,8 @@ typedef struct AclItem
 					 (((AclMode) (goption) & 0x7FFF) << 15) | \
 					 ((AclMode) (idtype) << 30))
 
+#define ACLITEM_ALL_PRIV_BITS		((AclMode) 0x7FFF)
+#define ACLITEM_ALL_GOPTION_BITS	((AclMode) 0x7FFF << 15)
 
 /*
  * Definitions for convenient access to Acl (array of AclItem) and IdList
@@ -143,7 +151,7 @@ typedef ArrayType IdList;
 
 
 /*
- * ACL modification opcodes
+ * ACL modification opcodes for aclupdate
  */
 #define ACL_MODECHG_ADD			1
 #define ACL_MODECHG_DEL			2
@@ -212,8 +220,10 @@ typedef enum AclObjectKind
  * routines used internally
  */
 extern Acl *acldefault(GrantObjectType objtype, AclId ownerid);
-extern Acl *aclinsert3(const Acl *old_acl, const AclItem *mod_aip,
-		   unsigned modechg, DropBehavior behavior);
+extern Acl *aclupdate(const Acl *old_acl, const AclItem *mod_aip,
+					  int modechg, AclId ownerid, DropBehavior behavior);
+extern AclMode aclmask(const Acl *acl, AclId userid, AclId ownerid,
+					   AclMode mask, AclMaskHow how);
 
 /*
  * SQL functions (from acl.c)

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/revoke.sgml,v 1.29 2003/11/29 19:51:39 pgsql Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/revoke.sgml,v 1.30 2004/06/01 21:49:21 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -81,6 +81,7 @@ REVOKE [ GRANT OPTION FOR ]
   <para>
    If <literal>GRANT OPTION FOR</literal> is specified, only the grant
    option for the privilege is revoked, not the privilege itself.
+   Otherwise, both the privilege and the grant option are revoked.
   </para>
 
   <para>
@@ -103,7 +104,7 @@ REVOKE [ GRANT OPTION FOR ]
 
   <para>
    Use <xref linkend="app-psql">'s <command>\z</command> command to
-   display the privileges granted on existing objects.  See also <xref
+   display the privileges granted on existing objects.  See <xref
    linkend="sql-grant" endterm="sql-grant-title"> for information about the format.
   </para>
 
@@ -114,8 +115,24 @@ REVOKE [ GRANT OPTION FOR ]
    C, then user A cannot revoke the privilege directly from C.
    Instead, user A could revoke the grant option from user B and use
    the <literal>CASCADE</literal> option so that the privilege is
-   automatically revoked from user C.
+   in turn revoked from user C.  For another example, if both A and B
+   have granted the same privilege to C, A can revoke his own grant
+   but not B's grant, so C will still effectively have the privilege.
   </para>
+
+   <para>
+    When a non-owner of an object attempts to <command>REVOKE</> privileges
+    on the object, the command will fail outright if the user has no
+    privileges whatsoever on the object.  As long as some privilege is
+    available, the command will proceed, but it will revoke only those
+    privileges for which the user has grant options.  The <command>REVOKE ALL
+    PRIVILEGES</> forms will issue a warning message if no grant options are
+    held, while the other forms will issue a warning if grant options for
+    any of the privileges specifically named in the command are not held.
+    (In principle these statements apply to the object owner as well, but
+    since the owner is always treated as holding all grant options, the
+    cases can never occur.)
+   </para>
 
    <para>
     If a superuser chooses to issue a <command>GRANT</> or <command>REVOKE</>
@@ -140,11 +157,15 @@ REVOKE INSERT ON films FROM PUBLIC;
   </para>
 
   <para>
-   Revoke all privileges from user <literal>manuel</literal> on view <literal>kinds</literal>:
+   Revoke all privileges from user <literal>manuel</literal> on view
+   <literal>kinds</literal>:
 
-<programlisting>  
+<programlisting>
 REVOKE ALL PRIVILEGES ON kinds FROM manuel;
 </programlisting>
+
+   Note that this actually means <quote>revoke all privileges that I
+   granted</>.
   </para>
  </refsect1>
 

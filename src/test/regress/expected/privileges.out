@@ -89,7 +89,7 @@ ERROR:  permission denied for relation atest2
 COPY atest2 FROM stdin; -- fail
 ERROR:  permission denied for relation atest2
 GRANT ALL ON atest1 TO PUBLIC; -- fail
-ERROR:  permission denied for relation atest1
+WARNING:  no privileges were granted
 -- checks in subquery, both ok
 SELECT * FROM atest1 WHERE ( b IN ( SELECT col1 FROM atest2 ) );
  a | b 
@@ -225,7 +225,7 @@ GRANT USAGE ON LANGUAGE c TO PUBLIC; -- fail
 ERROR:  language "c" is not trusted
 SET SESSION AUTHORIZATION regressuser1;
 GRANT USAGE ON LANGUAGE sql TO regressuser2; -- fail
-ERROR:  permission denied for language sql
+WARNING:  no privileges were granted
 CREATE FUNCTION testfunc1(int) RETURNS int AS 'select 2 * $1;' LANGUAGE sql;
 CREATE FUNCTION testfunc2(int) RETURNS int AS 'select 3 * $1;' LANGUAGE sql;
 REVOKE ALL ON FUNCTION testfunc1(int), testfunc2(int) FROM PUBLIC;
@@ -550,7 +550,7 @@ ERROR:  grant options can only be granted to individual users
 SET SESSION AUTHORIZATION regressuser2;
 GRANT SELECT ON atest4 TO regressuser3;
 GRANT UPDATE ON atest4 TO regressuser3; -- fail
-ERROR:  permission denied for relation atest4
+WARNING:  no privileges were granted
 SET SESSION AUTHORIZATION regressuser1;
 REVOKE SELECT ON atest4 FROM regressuser3; -- does nothing
 SELECT has_table_privilege('regressuser3', 'atest4', 'SELECT'); -- true
