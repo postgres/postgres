@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/keywords.c,v 1.4 1998/09/01 03:28:41 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/keywords.c,v 1.5 1998/09/21 05:52:53 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -150,6 +150,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"notnull", NOTNULL},
 	{"null", NULL_P},
 	{"numeric", NUMERIC},
+	{"of", OF},
 	{"oids", OIDS},
 	{"on", ON},
 	{"operator", OPERATOR},

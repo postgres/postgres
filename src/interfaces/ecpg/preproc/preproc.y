@@ -528,7 +528,7 @@ output_statement(char * stmt, int mode)
 %token		TYPECAST
 
 /* Keywords (in SQL92 reserved words) */
-%token  ACTION, ADD, ALL, ALTER, AND, ANY AS, ASC,
+%token  ABSOLUTE, ACTION, ADD, ALL, ALTER, AND, ANY AS, ASC,
                 BEGIN_TRANS, BETWEEN, BOTH, BY,
                 CASCADE, CAST, CHAR, CHARACTER, CHECK, CLOSE, COLLATE, COLUMN, COMMIT, 
                 CONSTRAINT, CREATE, CROSS, CURRENT, CURRENT_DATE, CURRENT_TIME, 
@@ -537,14 +537,14 @@ output_statement(char * stmt, int mode)
                 END_TRANS, EXECUTE, EXISTS, EXTRACT,
                 FETCH, FLOAT, FOR, FOREIGN, FROM, FULL,
                 GRANT, GROUP, HAVING, HOUR_P,
-                IN, INNER_P, INSERT, INTERVAL, INTO, IS,
+                IN, INNER_P, INSENSITIVE, INSERT, INTERVAL, INTO, IS,
                 JOIN, KEY, LANGUAGE, LEADING, LEFT, LIKE, LOCAL,
                 MATCH, MINUTE_P, MONTH_P, NAMES,
-                NATIONAL, NATURAL, NCHAR, NO, NOT, NOTIFY, NULL_P, NUMERIC,
-                ON, OPTION, OR, ORDER, OUTER_P,
-                PARTIAL, POSITION, PRECISION, PRIMARY, PRIVILEGES, PROCEDURE, PUBLIC,
-                REFERENCES, REVOKE, RIGHT, ROLLBACK,
-                SECOND_P, SELECT, SET, SUBSTRING,
+                NATIONAL, NATURAL, NCHAR, NEXT, NO, NOT, NOTIFY, NULL_P, NUMERIC,
+                OF, ON, ONLY, OPTION, OR, ORDER, OUTER_P,
+                PARTIAL, POSITION, PRECISION, PRIMARY, PRIOR, PRIVILEGES, PROCEDURE, PUBLIC,
+                READ, REFERENCES, RELATIVE, REVOKE, RIGHT, ROLLBACK,
+                SCROLL, SECOND_P, SELECT, SET, SUBSTRING,
                 TABLE, TIME, TIMESTAMP, TIMEZONE_HOUR, TIMEZONE_MINUTE,
 		TO, TRAILING, TRANSACTION, TRIM,
                 UNION, UNIQUE, UPDATE, USER, USING,
@@ -620,7 +620,7 @@ output_statement(char * stmt, int mode)
 %type  <str> 	ColId default_expr ColQualifier columnDef ColQualList
 %type  <str>    ColConstraint ColConstraintElem default_list NumericOnly FloatOnly
 %type  <str>    OptTableElementList OptTableElement TableConstraint
-%type  <str>    ConstraintElem key_actions constraint_list
+%type  <str>    ConstraintElem key_actions constraint_list ColPrimaryKey
 %type  <str>    res_target_list res_target_el res_target_list2
 %type  <str>    res_target_el2 opt_id relation_name database_name
 %type  <str>    access_method attr_name class index_name name func_name
@@ -667,6 +667,7 @@ output_statement(char * stmt, int mode)
 %type  <str>    ViewStmt LoadStmt CreatedbStmt opt_database1 opt_database2 location
 %type  <str>    DestroydbStmt ClusterStmt grantee RevokeStmt encoding
 %type  <str>	GrantStmt privileges operation_commalist operation
+%type  <str>	cursor_clause, opt_cursor, opt_readonly, opt_of
 
 %type  <str>	ECPGWhenever ECPGConnect connection_target ECPGOpen open_opts
 %type  <str>	indicator ECPGExecute ecpg_expr dotext
@@ -1083,9 +1084,9 @@ columnDef:  ColId Typename ColQualifier
 				{
 					$$ = cat3_str($1, $2, $3);
 				}
-	| ColId SERIAL
+	| ColId SERIAL ColPrimaryKey
 		{
-			$$ = make2_str($1, make1_str(" serial"));
+			$$ = make3_str($1, make1_str(" serial "), $3);
 		}
 		;
 
@@ -1097,6 +1098,16 @@ ColQualList:  ColQualList ColConstraint	{ $$ = cat2_str($1,$2); }
 			| ColConstraint		{ $$ = $1; }
 		;
 
+ColPrimaryKey:  PRIMARY KEY
+                {
+			$$ = make1_str("primary key");
+                }
+              | /*EMPTY*/
+		{
+			$$ = make1_str("");
+		}
+                ;
+
 ColConstraint:
 		CONSTRAINT name ColConstraintElem
 				{
@@ -1106,9 +1117,28 @@ ColConstraint:
 				{ $$ = $1; }
 		;
 
+/* The column constraint WITH NULL gives a shift/reduce error
+ * because it requires yacc to look more than one token ahead to
+ * resolve WITH TIME ZONE and WITH NULL.
+ * So, leave it out of the syntax for now.
+                       | WITH NULL_P
+                               {
+                                       $$ = NULL;
+                               }
+ * - thomas 1998-09-12
+ *
+ * DEFAULT NULL is already the default for Postgres.
+ * Bue define it here and carry it forward into the system
+ * to make it explicit.
+ * - thomas 1998-09-13
+ */
 ColConstraintElem:  CHECK '(' constraint_expr ')'
 				{
 					$$ = make3_str(make1_str("check("), $3, make1_str(")"));
+				}
+			| DEFAULT NULL_P
+				{
+					$$ = make1_str("default null");
 				}
 			| DEFAULT default_expr
 				{
@@ -1143,10 +1173,16 @@ default_list:  default_list ',' default_expr
 				}
 		;
 
+/* The Postgres default column value is NULL.
+ * Rather than carrying DEFAULT NULL forward as a clause,
+ * let's just have it be a no-op.
+                        | NULL_P
+				{	$$ = make1_str("null"); }
+ * - thomas 1998-09-13
+ */
+
 default_expr:  AexprConst
 				{	$$ = $1; }
-			| NULL_P
-				{	$$ = make1_str("null"); }
 			| '-' default_expr %prec UMINUS
 				{	$$ = cat2_str(make1_str("-"), $2); }
 			| default_expr '+' default_expr
@@ -1559,7 +1595,7 @@ TriggerForType:  ROW					{ $$ = make1_str("row"); }
 		;
 
 TriggerFuncArgs:  TriggerFuncArg
-				{ $$ = $1 }
+				{ $$ = $1; }
 			| TriggerFuncArgs ',' TriggerFuncArg
 				{ $$ = cat3_str($1, make1_str(","), $3); }
 			| /*EMPTY*/
@@ -1667,12 +1703,17 @@ DestroyStmt:  DROP TABLE relation_name_list
 /*****************************************************************************
  *
  *		QUERY:
- *			fetch/move [forward | backward] [number | all ] [ in <portalname> ]
+ *                     fetch/move [forward | backward] [ # | all ] [ in <portalname> ]
+ *                     fetch [ forward | backward | absolute | relative ]
+ *                           [ # | all | next | prior ] [ [ in | from ] <portalname> ]
  *
  *****************************************************************************/
 
 FetchStmt:	FETCH opt_direction fetch_how_many opt_portal_name INTO into_list
 				{
+					if (strncmp($2, "relative", strlen("relative")) == 0 && atol($3) == 0L)
+						yyerror("FETCH/RELATIVE at current position is not supported");
+
 					$$ = cat4_str(make1_str("fetch"), $2, $3, $4);
 				}
 		|	MOVE opt_direction fetch_how_many opt_portal_name
@@ -1683,18 +1724,26 @@ FetchStmt:	FETCH opt_direction fetch_how_many opt_portal_name INTO into_list
 
 opt_direction:	FORWARD		{ $$ = make1_str("forward"); }
 		| BACKWARD	{ $$ = make1_str("backward"); }
+		| RELATIVE      { $$ = make1_str("relative"); }
+                | ABSOLUTE
+ 				{
+					fprintf(stderr, "FETCH/ABSOLUTE not supported, using RELATIVE");
+					$$ = make1_str("absolute");
+				}
 		| /*EMPTY*/	{ $$ = make1_str(""); /* default */ }
 		;
 
-fetch_how_many:  Iconst
-			   { $$ = $1;
-				 if (atol($1) <= 0) yyerror("Please specify nonnegative count for fetch"); }
+fetch_how_many:   Iconst        { $$ = $1; }
+		| '-' Iconst    { $$ = make2_str(make1_str("-"), $2); }
 		| ALL		{ $$ = make1_str("all"); }
+		| NEXT		{ $$ = make1_str("next"); }
+		| PRIOR		{ $$ = make1_str("prior"); }
 		| /*EMPTY*/	{ $$ = make1_str(""); /*default*/ }
 		;
 
 opt_portal_name:  IN name		{ $$ = cat2_str(make1_str("in"), $2); }
-		| name			{ $$ = cat2_str(make1_str("in"), $1); }
+		| FROM name		{ $$ = cat2_str(make1_str("from"), $2); }
+/*		| name			{ $$ = cat2_str(make1_str("in"), $1); */
 		| /*EMPTY*/		{ $$ = make1_str(""); }
 		;
 
@@ -2328,6 +2377,10 @@ insert_rest:  VALUES '(' res_target_list2 ')'
 				{
 					$$ = make3_str(make1_str("values("), $3, make1_str(")"));
 				}
+		| DEFAULT VALUES
+				{
+					$$ = make1_str("default values");
+				}
 		| SELECT opt_unique res_target_list2
 			 from_clause where_clause
 			 group_clause having_clause
@@ -2404,11 +2457,12 @@ UpdateStmt:  UPDATE relation_name
  *				CURSOR STATEMENTS
  *
  *****************************************************************************/
-CursorStmt:  DECLARE name opt_binary CURSOR FOR
+CursorStmt:  DECLARE name opt_cursor CURSOR FOR
  			 SELECT opt_unique res_target_list2
 			 from_clause where_clause
 			 group_clause having_clause
 			 union_clause sort_clause
+			 cursor_clause
 				{
 					struct cursor *ptr, *this;
 	
@@ -2438,7 +2492,26 @@ CursorStmt:  DECLARE name opt_binary CURSOR FOR
 				}
 		;
 
+opt_cursor:  BINARY             { $$ = make1_str("binary"); }
+               | INSENSITIVE	{ $$ = make1_str("insensitive"); }
+               | SCROLL         { $$ = make1_str("scroll"); }
+               | INSENSITIVE SCROLL	{ $$ = make1_str("insensitive scroll"); }
+               | /*EMPTY*/      { $$ = make1_str(""); }
+               ;
 
+cursor_clause:  FOR opt_readonly	{ $$ = cat2_str(make1_str("for"), $2); }
+               | /*EMPTY*/              { $$ = make1_str(""); }
+
+               ;
+
+opt_readonly:  READ ONLY		{ $$ = make1_str("read only"); }
+               | UPDATE opt_of
+                       {
+                               yyerror("DECLARE/UPDATE not supported; Cursors must be READ ONLY.");
+                       }
+               ;
+
+opt_of:  OF columnList { $$ = make2_str(make1_str("of"), $2); }
 
 /*****************************************************************************
  *
@@ -3776,6 +3849,7 @@ TypeId:  ColId
  */
 ColId:  ident							{ $$ = $1; }
 		| datetime						{ $$ = $1; }
+		| ABSOLUTE						{ $$ = make1_str("absolute"); }
 		| ACTION						{ $$ = make1_str("action"); }
 		| CACHE							{ $$ = make1_str("cache"); }
 		| CYCLE							{ $$ = make1_str("cycle"); }
@@ -3787,18 +3861,26 @@ ColId:  ident							{ $$ = $1; }
 		| FUNCTION						{ $$ = make1_str("function"); }
 		| INCREMENT						{ $$ = make1_str("increment"); }
 		| INDEX							{ $$ = make1_str("index"); }
+		| INSENSITIVE						{ $$ = make1_str("insensitive"); }
 		| KEY							{ $$ = make1_str("key"); }
 		| LANGUAGE						{ $$ = make1_str("language"); }
 		| LOCATION						{ $$ = make1_str("location"); }
 		| MATCH							{ $$ = make1_str("match"); }
 		| MAXVALUE						{ $$ = make1_str("maxvalue"); }
 		| MINVALUE						{ $$ = make1_str("minvalue"); }
+		| NEXT							{ $$ = make1_str("next"); }
+		| OF							{ $$ = make1_str("of"); }
+		| ONLY							{ $$ = make1_str("only"); }
 		| OPERATOR						{ $$ = make1_str("operator"); }
 		| OPTION						{ $$ = make1_str("option"); }
 		| PASSWORD						{ $$ = make1_str("password"); }
-		| PRIVILEGES					{ $$ = make1_str("privileges"); }
+		| PRIOR							{ $$ = make1_str("prior"); }
+		| PRIVILEGES						{ $$ = make1_str("privileges"); }
+		| READ							{ $$ = make1_str("read"); }
 		| RECIPE						{ $$ = make1_str("recipe"); }
+		| RELATIVE						{ $$ = make1_str("relative"); }
 		| ROW							{ $$ = make1_str("row"); }
+		| SCROLL						{ $$ = make1_str("scroll"); }
 		| SERIAL						{ $$ = make1_str("serial"); }
 		| START							{ $$ = make1_str("start"); }
 		| STATEMENT						{ $$ = make1_str("statement"); }
@@ -4006,7 +4088,7 @@ variable: opt_pointer symbol opt_array_bounds opt_initializer
                                switch(dimension)
                                {
                                   case 0:
-                                      strcpy("[]", dim);
+                                      strcpy(dim, "[]");
                                       break;
                                   case 1:
                                       *dim = '\0';

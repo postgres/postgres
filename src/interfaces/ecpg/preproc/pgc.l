@@ -340,6 +340,9 @@ cppline		{space}*#.*(\\{space}*\n)*\n*
 						if (isascii((unsigned char)yytext[i]) && isupper(yytext[i]))
 							yytext[i] = tolower(yytext[i]);
 
+					if (i >= NAMEDATALEN)
+						yytext[NAMEDATALEN-1] = '\0';
+
 					keyword = ScanKeywordLookup((char*)yytext);
 					if (keyword != NULL) {
 						return keyword->value;
@@ -477,6 +480,9 @@ cppline		{space}*#.*(\\{space}*\n)*\n*
 					for(i = 0; yytext[i]; i++)
 						if (isascii((unsigned char)yytext[i]) && isupper(yytext[i]))
 							yytext[i] = tolower(yytext[i]);
+
+					if (i >= NAMEDATALEN)
+						yytext[NAMEDATALEN-1] = '\0';
 
 					keyword = ScanKeywordLookup((char*)yytext);
 					if (keyword != NULL) {

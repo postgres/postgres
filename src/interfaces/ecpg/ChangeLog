@@ -311,3 +311,29 @@ Fri Aug 28 15:36:58 CEST 1998
 	- Removed one line of code that AIX complains about since it was not
 	  needed anyway
 	- Set library version to 2.6.1
+
+Mon Aug 31 09:40:04 CEST 1998
+
+	- Minor patch to Makefile
+	- Put pgc.l in sync with scan.l
+
+Tue Sep  1 11:31:05 CEST 1998
+
+	- Fixed another bug in preproc.y
+
+Thu Sep  3 12:21:16 CEST 1998
+
+	- Sync preproc.y with gram.y
+
+Mon Sep 14 09:21:02 CEST 1998
+
+	- Sync preproc.y with gram.y yet again
+
+Thu Sep 17 08:55:33 CEST 1998
+
+	- Synced preproc.y and gram.y one more time
+
+Thu Sep 17 19:23:24 CEST 1998
+
+	- Added missing ´;´ in preproc.y
+	- Set version to 2.4.2
