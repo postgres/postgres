@@ -8,7 +8,7 @@
 #include <strings.h>
 #include <unistd.h>
 #include <errno.h>
-#include <sys/time.h>
+#include <time.h>
 #include <ctype.h>
 #define issaltchar(c)	(isalnum(c) || (c) == '.' || (c) == '/')
 
@@ -111,7 +111,7 @@ try_again:
 
 		/* get user name */
 		p = line;
-		if ((q = index(p, ':')) == NULL)
+		if ((q = strchr(p, ':')) == NULL)
 		{
 			fprintf(stderr, "%s: line %d: illegal format.\n",
 					filename, npwds + 1);
@@ -138,10 +138,10 @@ try_again:
 
 		/* get password field */
 		p = q;
-		q = index(p, ':');
+		q = strchr(p, ':');
 
 		/*
-		 * --- don't care ----- if ((q = index(p, ':')) == NULL) {
+		 * --- don't care ----- if ((q = strchr(p, ':')) == NULL) {
 		 * fprintf(stderr, "%s: line %d: illegal format.\n", filename,
 		 * npwds + 1); exit(1); }
 		 */
@@ -215,10 +215,7 @@ encrypt_pwd(char key[9], char salt[3], char passwd[14])
 	/* get encrypted password */
 	if (salt[0] == '\0')
 	{
-		struct timeval tm;
-
-		gettimeofday(&tm, NULL);
-		srand(tm.tv_sec ? tm.tv_sec : 1);
+		srand(time(NULL));
 		do
 		{
 			n = rand() % 256;
