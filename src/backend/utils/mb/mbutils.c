@@ -3,7 +3,7 @@
  * client encoding and server internal encoding.
  * (currently mule internal code (mic) is used)
  * Tatsuo Ishii
- * $Id: mbutils.c,v 1.15 2001/02/10 02:31:27 tgl Exp $
+ * $Id: mbutils.c,v 1.16 2001/03/08 00:24:34 tgl Exp $
  */
 #include "postgres.h"
 
@@ -230,7 +230,7 @@ pg_mbstrlen_with_len(const unsigned char *mbstr, int limit)
 	int			len = 0;
 	int			l;
 
-	while (*mbstr && limit > 0)
+	while (limit > 0 && *mbstr)
 	{
 		l = pg_mblen(mbstr);
 		limit -= l;
@@ -252,7 +252,7 @@ pg_mbcliplen(const unsigned char *mbstr, int len, int limit)
 	int			clen = 0;
 	int			l;
 
-	while (*mbstr && len > 0)
+	while (len > 0 && *mbstr)
 	{
 		l = pg_mblen(mbstr);
 		if ((clen + l) > limit)
@@ -267,7 +267,7 @@ pg_mbcliplen(const unsigned char *mbstr, int len, int limit)
 }
 
 /*
- * fuctions for utils/init
+ * functions for utils/init
  */
 static int	DatabaseEncoding = MULTIBYTE;
 

@@ -1,7 +1,7 @@
 /*
  * conversion functions between pg_wchar and multi-byte streams.
  * Tatsuo Ishii
- * $Id: wchar.c,v 1.15 2001/02/11 01:59:22 ishii Exp $
+ * $Id: wchar.c,v 1.16 2001/03/08 00:24:34 tgl Exp $
  *
  * WIN1250 client encoding updated by Pavel Behal
  *
@@ -27,7 +27,7 @@ static int pg_ascii2wchar_with_len
 {
 	int cnt = 0;
 
-	while (*from && len > 0)
+	while (len > 0 && *from)
 	{
 		*to++ = *from++;
 		len--;
@@ -52,23 +52,22 @@ static int pg_euc2wchar_with_len
 {
 	int cnt = 0;
 
-	while (*from && len > 0)
+	while (len > 0 && *from)
 	{
-		if (*from == SS2)
+		if (*from == SS2 && len >= 2)
 		{
 			from++;
-			len--;
 			*to = 0xff & *from++;
-			len--;
+			len -= 2;
 		}
-		else if (*from == SS3)
+		else if (*from == SS3 && len >= 3)
 		{
 			from++;
 			*to = *from++ << 8;
 			*to |= 0x3f & *from++;
 			len -= 3;
 		}
-		else if (*from & 0x80)
+		else if ((*from & 0x80) && len >= 2)
 		{
 			*to = *from++ << 8;
 			*to |= *from++;
@@ -140,24 +139,23 @@ static int pg_euccn2wchar_with_len
 {
 	int cnt = 0;
 
-	while (*from && len > 0)
+	while (len > 0 && *from)
 	{
-		if (*from == SS2)
+		if (*from == SS2 && len >= 3)
 		{
 			from++;
-			len--;
 			*to = 0x3f00 & (*from++ << 8);
 			*to = *from++;
-			len -= 2;
+			len -= 3;
 		}
-		else if (*from == SS3)
+		else if (*from == SS3 && len >= 3)
 		{
 			from++;
 			*to = *from++ << 8;
 			*to |= 0x3f & *from++;
 			len -= 3;
 		}
-		else if (*from & 0x80)
+		else if ((*from & 0x80) && len >= 2)
 		{
 			*to = *from++ << 8;
 			*to |= *from++;
@@ -195,25 +193,24 @@ static int pg_euctw2wchar_with_len
 {
 	int cnt = 0;
 
-	while (*from && len > 0)
+	while (len > 0 && *from)
 	{
-		if (*from == SS2)
+		if (*from == SS2 && len >= 4)
 		{
 			from++;
-			len--;
 			*to = *from++ << 16;
 			*to |= *from++ << 8;
 			*to |= *from++;
-			len -= 3;
+			len -= 4;
 		}
-		else if (*from == SS3)
+		else if (*from == SS3 && len >= 3)
 		{
 			from++;
 			*to = *from++ << 8;
 			*to |= 0x3f & *from++;
 			len -= 3;
 		}
-		else if (*from & 0x80)
+		else if ((*from & 0x80) && len >= 2)
 		{
 			*to = *from++ << 8;
 			*to |= *from++;
@@ -261,30 +258,30 @@ pg_utf2wchar_with_len(const unsigned char *from, pg_wchar * to, int len)
 				c3;
 	int cnt = 0;
 
-	while (*from && len > 0)
+	while (len > 0 && *from)
 	{
 		if ((*from & 0x80) == 0)
 		{
 			*to = *from++;
 			len--;
 		}
-		else if ((*from & 0xe0) == 0xc0)
+		else if ((*from & 0xe0) == 0xc0 && len >= 2)
 		{
 			c1 = *from++ & 0x1f;
 			c2 = *from++ & 0x3f;
-			len -= 2;
 			*to = c1 << 6;
 			*to |= c2;
+			len -= 2;
 		}
-		else if ((*from & 0xe0) == 0xe0)
+		else if ((*from & 0xe0) == 0xe0 && len >= 3)
 		{
 			c1 = *from++ & 0x0f;
 			c2 = *from++ & 0x3f;
 			c3 = *from++ & 0x3f;
-			len -= 3;
 			*to = c1 << 12;
 			*to |= c2 << 6;
 			*to |= c3;
+			len -= 3;
 		}
 		else
 		{
@@ -326,29 +323,29 @@ pg_mule2wchar_with_len(const unsigned char *from, pg_wchar * to, int len)
 {
 	int cnt = 0;
 
-	while (*from && len > 0)
+	while (len > 0 && *from)
 	{
-		if (IS_LC1(*from))
+		if (IS_LC1(*from) && len >= 2)
 		{
 			*to = *from++ << 16;
 			*to |= *from++;
 			len -= 2;
 		}
-		else if (IS_LCPRV1(*from))
+		else if (IS_LCPRV1(*from) && len >= 3)
 		{
 			from++;
 			*to = *from++ << 16;
 			*to |= *from++;
 			len -= 3;
 		}
-		else if (IS_LC2(*from))
+		else if (IS_LC2(*from) && len >= 3)
 		{
 			*to = *from++ << 16;
 			*to |= *from++ << 8;
 			*to |= *from++;
 			len -= 3;
 		}
-		else if (IS_LCPRV2(*from))
+		else if (IS_LCPRV2(*from) && len >= 4)
 		{
 			from++;
 			*to = *from++ << 16;
@@ -396,9 +393,10 @@ pg_latin12wchar_with_len(const unsigned char *from, pg_wchar * to, int len)
 {
 	int cnt = 0;
 
-	while (*from && len-- > 0)
+	while (len > 0 && *from)
 	{
 		*to++ = *from++;
+		len--;
 		cnt++;
 	}
 	*to = 0;
