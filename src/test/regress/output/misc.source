@@ -679,7 +679,7 @@ select i, length(t), octet_length(t), oldstyle_length(i,t) from oldstyle_test;
       |        |              |                
     0 |      2 |            2 |               2
  1000 |      2 |            2 |            1002
-    0 |  50000 |          581 |           50000
+    0 |  50000 |        50000 |           50000
 (4 rows)
 
 drop table oldstyle_test;
