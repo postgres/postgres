@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.41 2001/03/19 16:19:26 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.42 2001/03/24 02:36:01 thomas Exp $ -->
 
 <chapter id="installation">
  <title><![%flattext-install-include[<productname>PostgreSQL</>]]> Installation Instructions</title>
@@ -1186,10 +1186,10 @@ gunzip -c user.ps.gz \
       </thead>
       <tbody>
        <row>
-	<entry>AIX 4.3.2</entry>
+	<entry>AIX 4.3.3</entry>
 	<entry>RS6000</entry>
-	<entry>7.0</entry>
-	<entry>2000-04-05, Andreas Zeugswetter (<email>Andreas.Zeugswetter@telecom.at</email>)</entry>
+	<entry>7.1</entry>
+	<entry>2001-03-21, Gilles Darold (<email>gilles@darold.net</email>)</entry>
         <entry>See also <filename>doc/FAQ_AIX</filename></entry>
        </row>
        <row>
@@ -1202,65 +1202,58 @@ gunzip -c user.ps.gz \
        <row>
 	<entry>BSDI 4.01</entry>
 	<entry>x86</entry>
-	<entry>7.0</entry>
-	<entry>2000-04-04, Bruce Momjian (<email>pgman@candle.pha.pa.us</email>)</entry>
+	<entry>7.1</entry>
+	<entry>2001-03-19, Bruce Momjian (<email>pgman@candle.pha.pa.us</email>)</entry>
         <entry></entry>
        </row>
        <row>
-	<entry>Compaq Tru64 5.0</entry>
+	<entry>Compaq Tru64 4.0[dg]</entry>
 	<entry>Alpha</entry>
-	<entry>7.0</entry>
-	<entry>2000-04-11, Andrew McMurry (<email>andrew.mcmurry@astro.uio.no</email>)</entry>
+	<entry>7.1</entry>
+	<entry>2001-03-19, Brent Verner (<email>brent@rcfile.org</email>)</entry>
         <entry></entry>
        </row>
        <row>
-	<entry>FreeBSD 4.0</entry>
+	<entry>FreeBSD 4.3</entry>
 	<entry>x86</entry>
-	<entry>7.0</entry>
-	<entry>2000-04-04, Marc Fournier (<email>scrappy@hub.org</email>)</entry>
+	<entry>7.1</entry>
+	<entry>2001-03-19, Vince Vielhaber (<email>vev@hub.org</email>)</entry>
         <entry></entry>
        </row>
        <row>
-	<entry>HPUX 9.0x and 10.20</entry>
+	<entry>HPUX 10.20</entry>
 	<entry>PA-RISC</entry>
-	<entry>7.0</entry>
-	<entry>2000-04-12, Tom Lane (<email>tgl@sss.pgh.pa.us</email>)</entry>
+	<entry>7.1</entry>
+	<entry>2001-03-19, Tom Lane (<email>tgl@sss.pgh.pa.us</email>)</entry>
         <entry>See also <filename>doc/FAQ_HPUX</filename></entry>
        </row>
        <row>
-	<entry>IBM</entry>
-	<entry>S/390</entry>
-	<entry>7.1</entry>
-	<entry>2000-11-17, Neale Ferguson (<email>Neale.Ferguson@softwareAG-usa.com</email>)</entry>
-	<entry></entry>
-       </row>
-       <row>
-	<entry>IRIX 6.5.6f</entry>
+	<entry>IRIX 6.5.11</entry>
 	<entry>MIPS</entry>
-	<entry>6.5.3</entry>
-	<entry>2000-02-18, Kevin Wheatley (<email>hxpro@cinesite.co.uk</email>)</entry>
-	<entry>MIPSPro 7.3.1.1m N32 build</entry>
+	<entry>7.1</entry>
+	<entry>2001-03-22, Robert Bruccoleri (<email>bruc@acm.org</email>)</entry>
+	<entry>32-bit compilation model</entry>
        </row>
        <row>
 	<entry>Linux 2.2.x</entry>
 	<entry>Alpha</entry>
 	<entry>7.1</entry>
 	<entry>2001-01-23, Ryan Kirkpatrick (<email>pgsql@rkirkpat.net</email>)</entry>
-	<entry>No patches required!</entry>
+	<entry></entry>
        </row>
        <row>
 	<entry>Linux 2.2.x</entry>
 	<entry>armv4l</entry>
-	<entry>7.0</entry>
-	<entry>2000-04-17, Mark Knox (<email>segfault@hardline.org</email>)</entry>
-	<entry>Regression test needs work.</entry>
+	<entry>7.1</entry>
+	<entry>2001-02-22, Mark Knox (<email>segfault@hardline.org</email>)</entry>
+	<entry></entry>
        </row>
        <row>
-	<entry>Linux 2.2.x</entry>
+	<entry>Linux 2.2.16</entry>
 	<entry>x86</entry>
-	<entry>7.0</entry>
-	<entry>2000-03-26, Lamar Owen (<email>lamar.owen@wgcr.org</email>)</entry>
-	<entry></entry>
+	<entry>7.1</entry>
+	<entry>2001-03-19, Thomas Lockhart (<email>thomas@fourpalms.org</email>)</entry>
+	<entry>Also tested on a patched 2.4.2</entry>
        </row>
        <row>
 	<entry>Linux 2.0.x</entry>
@@ -1270,6 +1263,20 @@ gunzip -c user.ps.gz \
 	<entry>Cobalt Qube</entry>
        </row>
        <row>
+	<entry>Linux 2.2.18</entry>
+	<entry>PPC750</entry>
+	<entry>7.1</entry>
+	<entry>2001-03-19, Tom Lane (<email>tgl@sss.pgh.pa.us</email>)</entry>
+	<entry></entry>
+       </row>
+       <row>
+	<entry>Linux</entry>
+	<entry>S/390</entry>
+	<entry>7.1</entry>
+	<entry>2000-11-17, Neale Ferguson (<email>Neale.Ferguson@softwareAG-usa.com</email>)</entry>
+	<entry></entry>
+       </row>
+       <row>
 	<entry>Linux 2.2.15</entry>
 	<entry>Sparc</entry>
 	<entry>7.1</entry>
@@ -1277,18 +1284,11 @@ gunzip -c user.ps.gz \
 	<entry></entry>
        </row>
        <row>
-	<entry>LinuxPPC R4</entry>
-	<entry>PPC603e</entry>
-	<entry>7.0</entry>
-	<entry>2000-04-13, Tatsuo Ishii (<email>t-ishii@sra.co.jp</email>)</entry>
-	<entry></entry>
-       </row>
-       <row>
-	<entry>MacOS-X Darwin</entry>
+	<entry>MacOS X</entry>
 	<entry>PowerPC</entry>
 	<entry>7.1</entry>
 	<entry>2000-12-11, Peter Bierman (<email>bierman@apple.com</email>)</entry>
-	<entry>Darwin Beta-2 or higher</entry>
+	<entry>Darwin (only) Beta-2 or higher</entry>
        </row>
        <row>
 	<entry>mklinux</entry>
@@ -1298,17 +1298,24 @@ gunzip -c user.ps.gz \
 	<entry></entry>
        </row>
        <row>
-	<entry>NetBSD 1.4</entry>
+	<entry>NetBSD 1.5E</entry>
 	<entry>arm32</entry>
-	<entry>7.0</entry>
-	<entry>2000-04-08, Patrick Welche (<email>prlw1@newn.cam.ac.uk</email>)</entry>
+	<entry>7.1</entry>
+	<entry>2001-03-21, Patrick Welche (<email>prlw1@cam.ac.uk</email>)</entry>
 	<entry></entry>
        </row>
        <row>
-	<entry>NetBSD 1.4U</entry>
+	<entry>NetBSD 1.5S</entry>
 	<entry>x86</entry>
-	<entry>7.0</entry>
-	<entry>2000-03-26, Patrick Welche (<email>prlw1@newn.cam.ac.uk</email>)</entry>
+	<entry>7.1</entry>
+	<entry>2001-03-21, Patrick Welche (<email>prlw1@cam.ac.uk</email>)</entry>
+	<entry></entry>
+       </row>
+       <row>
+	<entry>NetBSD 1.5</entry>
+	<entry>Alpha</entry>
+	<entry>7.1</entry>
+	<entry>2001-03-22, Giles Lean (<email>giles@nemeton.com.au</email>)</entry>
 	<entry></entry>
        </row>
        <row>
@@ -1326,6 +1333,13 @@ gunzip -c user.ps.gz \
 	<entry></entry>
        </row>
        <row>
+	<entry>OpenBSD 2.8</entry>
+	<entry>x86</entry>
+	<entry>7.1</entry>
+	<entry>2001-03-21, Brandon Palmer (<email>bpalmer@crimelabs.net</email>)</entry>
+        <entry></entry>
+       </row>
+       <row>
 	<entry>QNX 4.25</entry>
 	<entry>x86</entry>
 	<entry>7.0</entry>
@@ -1335,16 +1349,16 @@ gunzip -c user.ps.gz \
        <row>
 	<entry>SCO OpenServer 5</entry>
 	<entry>x86</entry>
-	<entry>6.5</entry>
-	<entry>1999-05-25, Andrew Merrill (<email>andrew@compclass.com</email>)</entry>
+	<entry>7.1</entry>
+	<entry>2001-03-13, Billy G. Allie (<email>Bill.Allie@mug.org</email>)</entry>
 	<entry>See also <filename>doc/FAQ_SCO</filename></entry>
        </row>
        <row>
-	<entry>SCO UnixWare 7</entry>
+	<entry>SCO UnixWare 7.1.1</entry>
 	<entry>x86</entry>
-	<entry>7.0</entry>
-	<entry>2000-04-18, Billy G. Allie (<email>Bill.Allie@mug.org</email>)</entry>
-	<entry>See also <filename>doc/FAQ_SCO</filename></entry>
+	<entry>7.1</entry>
+	<entry>2001-03-19, Larry Rosenman (<email>ler@lerctr.org</email>)</entry>
+	<entry>UDK FS compiler. See <filename>doc/FAQ_SCO</filename></entry>
        </row>
        <row>
 	<entry>Solaris</entry>
@@ -1354,18 +1368,17 @@ gunzip -c user.ps.gz \
 	<entry></entry>
        </row>
        <row>
-	<entry>Solaris 2.5.1-2.7</entry>
+	<entry>Solaris 2.7</entry>
 	<entry>Sparc</entry>
-	<entry>7.0</entry>
-	<entry>2000-04-12, Peter Eisentraut (<email>peter_e@gmx.net</email>),
-                           Marc Fournier (<email>scrappy@hub.org</email>)</entry>
+	<entry>7.1</entry>
+	<entry>2001-03-22, Marc Fournier (<email>scrappy@hub.org</email>)</entry>
 	<entry></entry>
        </row>
        <row>
 	<entry>SunOS 4.1.4</entry>
 	<entry>Sparc</entry>
-	<entry>7.0</entry>
-	<entry>2000-04-13, Tatsuo Ishii (<email>t-ishii@sra.co.jp</email>)</entry>
+	<entry>7.1</entry>
+	<entry>2001-03-23, Tatsuo Ishii (<email>t-ishii@sra.co.jp</email>)</entry>
 	<entry></entry>
        </row>
        <row>
@@ -1378,9 +1391,9 @@ gunzip -c user.ps.gz \
        <row>
 	<entry>WinNT/Cygwin</entry>
 	<entry>x86</entry>
-	<entry>7.0</entry>
-	<entry>2000-03-30, Daniel Horak (<email>horak@sit.plzen-city.cz</email>)</entry>
-        <entry>with RedHat/Cygnus <productname>Cygwin</productname> toolset</entry>
+	<entry>7.1</entry>
+	<entry>2001-03-16, Jason Tishler (<email>Jason.Tishler@dothill.com</email>)</entry>
+        <entry>with <productname>Cygwin</productname> toolset</entry>
        </row>
       </tbody>
      </tgroup>
