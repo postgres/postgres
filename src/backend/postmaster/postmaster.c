@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.142 2000/05/24 00:14:25 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.143 2000/05/26 01:38:08 tgl Exp $
  *
  * NOTES
  *
@@ -1280,7 +1280,6 @@ ConnCreate(int serverFd)
 {
 	Port	   *port;
 
-
 	if (!(port = (Port *) calloc(1, sizeof(Port))))
 	{
 		fprintf(stderr, "%s: ConnCreate: malloc failed\n",
@@ -1292,7 +1291,7 @@ ConnCreate(int serverFd)
 	if (StreamConnection(serverFd, port) != STATUS_OK)
 	{
 		StreamClose(port->sock);
-		free(port);
+		ConnFree(port);
 		port = NULL;
 	}
 	else
@@ -1306,7 +1305,7 @@ ConnCreate(int serverFd)
 }
 
 /*
- * ConnFree -- cree a local connection data structure
+ * ConnFree -- free a local connection data structure
  */
 static void
 ConnFree(Port *conn)
@@ -1891,8 +1890,10 @@ DoBackend(Port *port)
 	/* Close the postmaster sockets */
 	if (NetServer)
 		StreamClose(ServerSock_INET);
+	ServerSock_INET = INVALID_SOCK;
 #if !defined(__CYGWIN32__) && !defined(__QNX__)
 	StreamClose(ServerSock_UNIX);
+	ServerSock_UNIX = INVALID_SOCK;
 #endif
 
 	/* Save port etc. for ps status */
@@ -2024,10 +2025,13 @@ ExitPostmaster(int status)
 	 */
 	if (ServerSock_INET != INVALID_SOCK)
 		StreamClose(ServerSock_INET);
+	ServerSock_INET = INVALID_SOCK;
 #if !defined(__CYGWIN32__) && !defined(__QNX__)
 	if (ServerSock_UNIX != INVALID_SOCK)
 		StreamClose(ServerSock_UNIX);
+	ServerSock_UNIX = INVALID_SOCK;
 #endif
+
 	proc_exit(status);
 }
 
@@ -2190,11 +2194,15 @@ SSDataBase(bool startup)
 		char		nbbuf[ARGV_SIZE];
 		char		dbbuf[ARGV_SIZE];
 
+		/* Lose the postmaster's on-exit routines and port connections */
 		on_exit_reset();
+
 		if (NetServer)
 			StreamClose(ServerSock_INET);
+		ServerSock_INET = INVALID_SOCK;
 #if !defined(__CYGWIN32__) && !defined(__QNX__)
 		StreamClose(ServerSock_UNIX);
+		ServerSock_UNIX = INVALID_SOCK;
 #endif
 
 		StrNCpy(execbuf, Execfile, MAXPGPATH);
