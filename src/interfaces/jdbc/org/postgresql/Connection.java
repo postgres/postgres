@@ -11,7 +11,7 @@ import org.postgresql.util.*;
 import org.postgresql.core.*;
 
 /**
- * $Id: Connection.java,v 1.34 2001/11/01 01:08:36 barry Exp $
+ * $Id: Connection.java,v 1.35 2001/11/12 19:11:56 barry Exp $
  *
  * This abstract class is used by org.postgresql.Driver to open either the JDBC1 or
  * JDBC2 versions of the Connection class.
@@ -63,6 +63,7 @@ public abstract class Connection
 	private static final int AUTH_REQ_KRB5 = 2;
 	private static final int AUTH_REQ_PASSWORD = 3;
 	private static final int AUTH_REQ_CRYPT = 4;
+        private static final int AUTH_REQ_MD5 = 5;
 
 	// New for 6.3, salt value for crypt authorisation
 	private String salt;
@@ -180,22 +181,34 @@ public abstract class Connection
 					// Get the type of request
 					areq = pg_stream.ReceiveIntegerR(4);
 
-					// Get the password salt if there is one
+					// Get the crypt password salt if there is one
 					if (areq == AUTH_REQ_CRYPT)
 					{
 						byte[] rst = new byte[2];
 						rst[0] = (byte)pg_stream.ReceiveChar();
 						rst[1] = (byte)pg_stream.ReceiveChar();
 						salt = new String(rst, 0, 2);
-						DriverManager.println("Salt=" + salt);
+						DriverManager.println("Crypt salt=" + salt);
+					}
+
+					// Or get the md5 password salt if there is one
+					if (areq == AUTH_REQ_MD5)
+					{
+						byte[] rst = new byte[4];
+						rst[0] = (byte)pg_stream.ReceiveChar();
+						rst[1] = (byte)pg_stream.ReceiveChar();
+						rst[2] = (byte)pg_stream.ReceiveChar();
+						rst[3] = (byte)pg_stream.ReceiveChar();
+						salt = new String(rst, 0, 4);
+						DriverManager.println("MD5 salt=" + salt);
 					}
 
 					// now send the auth packet
 					switch (areq)
 					{
 					case AUTH_REQ_OK:
-						break;
-
+					    break;
+						
 					case AUTH_REQ_KRB4:
 						DriverManager.println("postgresql: KRB4");
 						throw new PSQLException("postgresql.con.kerb4");
@@ -217,6 +230,15 @@ public abstract class Connection
 						String crypted = UnixCrypt.crypt(salt, PG_PASSWORD);
 						pg_stream.SendInteger(5 + crypted.length(), 4);
 						pg_stream.Send(crypted.getBytes());
+						pg_stream.SendInteger(0, 1);
+						pg_stream.flush();
+						break;
+
+					case AUTH_REQ_MD5:
+					        DriverManager.println("postgresql: MD5");
+						byte[] digest = MD5Digest.encode(PG_USER, PG_PASSWORD, salt);
+						pg_stream.SendInteger(5 + digest.length, 4);
+						pg_stream.Send(digest);
 						pg_stream.SendInteger(0, 1);
 						pg_stream.flush();
 						break;
