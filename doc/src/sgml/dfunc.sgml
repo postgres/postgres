@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/dfunc.sgml,v 1.12 2001/01/12 22:15:32 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/dfunc.sgml,v 1.13 2001/01/20 20:59:28 petere Exp $
 -->
 
 <sect2 id="dfunc">
@@ -20,7 +20,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/dfunc.sgml,v 1.12 2001/01/12 22:15:32 peter
   In addition, the <productname>PostgreSQL</productname> source code
   contains several working examples in the
   <filename>contrib</filename> directory.  If you rely on these
-  examples you will make your modules dependent on the documentation
+  examples you will make your modules dependent on the availability
   of the <productname>PostgreSQL</productname> source code, however.
  </para>
 
@@ -29,8 +29,8 @@ $Header: /cvsroot/pgsql/doc/src/sgml/dfunc.sgml,v 1.12 2001/01/12 22:15:32 peter
   executables:  first the source files are compiled into object files,
   then the object files are linked together.  The object files need to
   be created as <firstterm>position-independent code</firstterm>
-  (<acronym>PIC</acronym>), which conceptually means that it can be
-  placed at an arbitrary location in memory when it is loaded by the
+  (<acronym>PIC</acronym>), which conceptually means that they can be
+  placed at an arbitrary location in memory when they are loaded by the
   executable.  (Object files intended for executables are not compiled
   that way.)  The command to link a shared library contains special
   flags to distinguish it from linking an executable. --- At least

@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.47 2001/01/13 18:34:51 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.48 2001/01/20 20:59:28 petere Exp $ -->
 
 <chapter id="functions">
  <title>Functions and Operators</title>
@@ -1274,9 +1274,9 @@
 	<entry>to_char(125, '999')</entry>
        </row>
        <row>
-	<entry>to_char(float, text)</entry>
+	<entry>to_char(double precision, text)</entry>
 	<entry>text</entry>
-	<entry>convert float4/float8 to string</entry>
+	<entry>convert real/double precision to string</entry>
 	<entry>to_char(125.8, '999D9')</entry>
        </row>
        <row>
@@ -1927,13 +1927,13 @@
        </row>
        <row>
 	<entry>date_part(text,timestamp)</entry>
-	<entry>float8</entry>
+	<entry>double precision</entry>
 	<entry>portion of date</entry>
 	<entry>date_part('dow',timestamp 'now')</entry>
        </row>
        <row>
 	<entry>date_part(text,interval)</entry>
-	<entry>float8</entry>
+	<entry>double precision</entry>
 	<entry>portion of time</entry>
 	<entry>date_part('hour',interval '4 hrs 3 mins')</entry>
        </row>
@@ -2033,22 +2033,22 @@
        <ROW>
 	<ENTRY> + </ENTRY>
 	<ENTRY>Translation</ENTRY>
-	<ENTRY>'((0,0),(1,1))'::box + '(2.0,0)'::point</ENTRY>
+	<ENTRY>box '((0,0),(1,1))' + point '(2.0,0)'</ENTRY>
        </ROW>
        <ROW>
 	<ENTRY> - </ENTRY>
 	<ENTRY>Translation</ENTRY>
-	<ENTRY>'((0,0),(1,1))'::box - '(2.0,0)'::point</ENTRY>
+	<ENTRY>box '((0,0),(1,1))' - point '(2.0,0)'</ENTRY>
        </ROW>
        <ROW>
 	<ENTRY> * </ENTRY>
 	<ENTRY>Scaling/rotation</ENTRY>
-	<ENTRY>'((0,0),(1,1))'::box * '(2.0,0)'::point</ENTRY>
+	<ENTRY>box '((0,0),(1,1))' * point '(2.0,0)'</ENTRY>
        </ROW>
        <ROW>
 	<ENTRY> / </ENTRY>
 	<ENTRY>Scaling/rotation</ENTRY>
-	<ENTRY>'((0,0),(2,2))'::box / '(2.0,0)'::point</ENTRY>
+	<ENTRY>box '((0,0),(2,2))' / point '(2.0,0)'</ENTRY>
        </ROW>
        <ROW>
 	<ENTRY> # </ENTRY>
@@ -2063,92 +2063,92 @@
        <ROW>
 	<ENTRY> ## </ENTRY>
 	<ENTRY>Point of closest proximity</ENTRY>
-	<ENTRY>'(0,0)'::point ## '((2,0),(0,2))'::lseg</ENTRY>
+	<ENTRY>point '(0,0)' ## lseg '((2,0),(0,2))'</ENTRY>
        </ROW>
        <ROW>
 	<ENTRY> &amp;&amp; </ENTRY>
 	<ENTRY>Overlaps?</ENTRY>
-	<ENTRY>'((0,0),(1,1))'::box &amp;&amp; '((0,0),(2,2))'::box</ENTRY>
+	<ENTRY>box '((0,0),(1,1))' &amp;&amp; box '((0,0),(2,2))'</ENTRY>
        </ROW>
        <ROW>
 	<ENTRY> &amp;&lt; </ENTRY>
 	<ENTRY>Overlaps to left?</ENTRY>
-	<ENTRY>'((0,0),(1,1))'::box &amp;&lt; '((0,0),(2,2))'::box</ENTRY>
+	<ENTRY>box '((0,0),(1,1))' &amp;&lt; box '((0,0),(2,2))'</ENTRY>
        </ROW>
        <ROW>
 	<ENTRY> &amp;&gt; </ENTRY>
 	<ENTRY>Overlaps to right?</ENTRY>
-	<ENTRY>'((0,0),(3,3))'::box &amp;&gt; '((0,0),(2,2))'::box</ENTRY>
+	<ENTRY>box '((0,0),(3,3))' &amp;&gt; box '((0,0),(2,2))'</ENTRY>
        </ROW>
        <ROW>
 	<ENTRY> &lt;-&gt; </ENTRY>
 	<ENTRY>Distance between</ENTRY>
-	<ENTRY>'((0,0),1)'::circle &lt;-&gt; '((5,0),1)'::circle</ENTRY>
+	<ENTRY>circle '((0,0),1)' &lt;-&gt; circle '((5,0),1)'</ENTRY>
        </ROW>
        <ROW>
 	<ENTRY> &lt;&lt; </ENTRY>
 	<ENTRY>Left of?</ENTRY>
-	<ENTRY>'((0,0),1)'::circle &lt;&lt; '((5,0),1)'::circle</ENTRY>
+	<ENTRY>circle '((0,0),1)' &lt;&lt; circle '((5,0),1)'</ENTRY>
        </ROW>
        <ROW>
 	<ENTRY> &lt;^ </ENTRY>
 	<ENTRY>Is below?</ENTRY>
-	<ENTRY>'((0,0),1)'::circle &lt;^ '((0,5),1)'::circle</ENTRY>
+	<ENTRY>circle '((0,0),1)' &lt;^ circle '((0,5),1)'</ENTRY>
        </ROW>
        <ROW>
 	<ENTRY> &gt;&gt; </ENTRY>
 	<ENTRY>Is right of?</ENTRY>
-	<ENTRY>'((5,0),1)'::circle &gt;&gt; '((0,0),1)'::circle</ENTRY>
+	<ENTRY>circle '((5,0),1)' &gt;&gt; circle '((0,0),1)'</ENTRY>
        </ROW>
        <ROW>
 	<ENTRY> &gt;^ </ENTRY>
 	<ENTRY>Is above?</ENTRY>
-	<ENTRY>'((0,5),1)'::circle >^ '((0,0),1)'::circle</ENTRY>
+	<ENTRY>circle '((0,5),1)' >^ circle '((0,0),1)'</ENTRY>
        </ROW>
        <ROW>
 	<ENTRY> ?# </ENTRY>
 	<ENTRY>Intersects or overlaps</ENTRY>
-	<ENTRY>'((-1,0),(1,0))'::lseg ?# '((-2,-2),(2,2))'::box;</ENTRY>
+	<ENTRY>lseg '((-1,0),(1,0))' ?# box '((-2,-2),(2,2))';</ENTRY>
        </ROW>
        <ROW>
 	<ENTRY> ?- </ENTRY>
 	<ENTRY>Is horizontal?</ENTRY>
-	<ENTRY>'(1,0)'::point ?- '(0,0)'::point</ENTRY>
+	<ENTRY>point '(1,0)' ?- point '(0,0)'</ENTRY>
        </ROW>
        <ROW>
 	<ENTRY> ?-| </ENTRY>
 	<ENTRY>Is perpendicular?</ENTRY>
-	<ENTRY>'((0,0),(0,1))'::lseg ?-| '((0,0),(1,0))'::lseg</ENTRY>
+	<ENTRY>lseg '((0,0),(0,1))' ?-| lseg '((0,0),(1,0))'</ENTRY>
        </ROW>
        <ROW>
 	<ENTRY> @-@  </ENTRY>
 	<ENTRY>Length or circumference</ENTRY>
-	<ENTRY>@-@ '((0,0),(1,0))'::path</ENTRY>
+	<ENTRY>@-@ path '((0,0),(1,0))'</ENTRY>
        </ROW>
        <ROW>
 	<ENTRY> ?| </ENTRY>
 	<ENTRY>Is vertical?</ENTRY>
-	<ENTRY>'(0,1)'::point ?| '(0,0)'::point</ENTRY>
+	<ENTRY>point '(0,1)' ?| point '(0,0)'</ENTRY>
        </ROW>
        <ROW>
 	<ENTRY> ?|| </ENTRY>
 	<ENTRY>Is parallel?</ENTRY>
-	<ENTRY>'((-1,0),(1,0))'::lseg ?|| '((-1,2),(1,2))'::lseg</ENTRY>
+	<ENTRY>lseg '((-1,0),(1,0))' ?|| lseg '((-1,2),(1,2))'</ENTRY>
        </ROW>
        <ROW>
 	<ENTRY> @ </ENTRY>
 	<ENTRY>Contained or on</ENTRY>
-	<ENTRY>'(1,1)'::point @ '((0,0),2)'::circle</ENTRY>
+	<ENTRY>point '(1,1)' @ circle '((0,0),2)'</ENTRY>
        </ROW>
        <ROW>
 	<ENTRY> @@ </ENTRY>
 	<ENTRY>Center of</ENTRY>
-	<ENTRY>@@ '((0,0),10)'::circle</ENTRY>
+	<ENTRY>@@ circle '((0,0),10)'</ENTRY>
        </ROW>
        <ROW>
 	<ENTRY> ~= </ENTRY>
 	<ENTRY>Same as</ENTRY>
-	<ENTRY>'((0,0),(1,1))'::polygon ~= '((1,1),(0,0))'::polygon</ENTRY>
+	<ENTRY>polygon '((0,0),(1,1))' ~= polygon '((1,1),(0,0))'</ENTRY>
        </ROW>
       </TBODY>
      </TGROUP>
@@ -2168,12 +2168,12 @@
       <tbody>
        <row>
 	<entry>area(object)</entry>
-	<entry>float8</entry>
+	<entry>double precision</entry>
 	<entry>area of item</entry>
 	<entry>area(box '((0,0),(1,1))')</entry>
        </row>
        <row>
-	<entry>box(box,box)</entry>
+	<entry>box(box, box)</entry>
 	<entry>box</entry>
 	<entry>intersection box</entry>
 	<entry>box(box '((0,0),(1,1))',box '((0.5,0.5),(2,2))')</entry>
@@ -2186,13 +2186,13 @@
        </row>
        <row>
 	<entry>diameter(circle)</entry>
-	<entry>float8</entry>
+	<entry>double precision</entry>
 	<entry>diameter of circle</entry>
 	<entry>diameter(circle '((0,0),2.0)')</entry>
        </row>
        <row>
 	<entry>height(box)</entry>
-	<entry>float8</entry>
+	<entry>double precision</entry>
 	<entry>vertical size of box</entry>
 	<entry>height(box '((0,0),(1,1))')</entry>
        </row>
@@ -2210,7 +2210,7 @@
        </row>
        <row>
 	<entry>length(object)</entry>
-	<entry>float8</entry>
+	<entry>double precision</entry>
 	<entry>length of item</entry>
 	<entry>length(path '((-1,0),(1,0))')</entry>
        </row>
@@ -2243,13 +2243,13 @@ Not defined by this name. Implements the intersection operator '#'
        </row>
        <row>
 	<entry>radius(circle)</entry>
-	<entry>float8</entry>
+	<entry>double precision</entry>
 	<entry>radius of circle</entry>
 	<entry>radius(circle '((0,0),2.0)')</entry>
        </row>
        <row>
 	<entry>width(box)</entry>
-	<entry>float8</entry>
+	<entry>double precision</entry>
 	<entry>horizontal size</entry>
 	<entry>width(box '((0,0),(1,1))')</entry>
        </row>
@@ -2274,91 +2274,91 @@ Not defined by this name. Implements the intersection operator '#'
 	<entry>box(circle)</entry>
 	<entry>box</entry>
 	<entry>circle to box</entry>
-	<entry>box('((0,0),2.0)'::circle)</entry>
+	<entry>box(circle '((0,0),2.0)')</entry>
        </row>
        <row>
-	<entry>box(point,point)</entry>
+	<entry>box(point, point)</entry>
 	<entry>box</entry>
 	<entry>points to box</entry>
-	<entry>box('(0,0)'::point,'(1,1)'::point)</entry>
+	<entry>box(point '(0,0)', point '(1,1)')</entry>
        </row>
        <row>
 	<entry>box(polygon)</entry>
 	<entry>box</entry>
 	<entry>polygon to box</entry>
-	<entry>box('((0,0),(1,1),(2,0))'::polygon)</entry>
+	<entry>box(polygon '((0,0),(1,1),(2,0))')</entry>
        </row>
        <row>
 	<entry>circle(box)</entry>
 	<entry>circle</entry>
 	<entry>to circle</entry>
-	<entry>circle('((0,0),(1,1))'::box)</entry>
+	<entry>circle(box '((0,0),(1,1))')</entry>
        </row>
        <row>
-	<entry>circle(point,float8)</entry>
+	<entry>circle(point, double precision)</entry>
 	<entry>circle</entry>
 	<entry>point to circle</entry>
-	<entry>circle('(0,0)'::point,2.0)</entry>
+	<entry>circle(point '(0,0)', 2.0)</entry>
        </row>
        <row>
 	<entry>lseg(box)</entry>
 	<entry>lseg</entry>
 	<entry>box diagonal to lseg</entry>
-	<entry>lseg('((-1,0),(1,0))'::box)</entry>
+	<entry>lseg(box '((-1,0),(1,0))')</entry>
        </row>
        <row>
-	<entry>lseg(point,point)</entry>
+	<entry>lseg(point, point)</entry>
 	<entry>lseg</entry>
 	<entry>points to lseg</entry>
-	<entry>lseg('(-1,0)'::point,'(1,0)'::point)</entry>
+	<entry>lseg(point '(-1,0)', point '(1,0)')</entry>
        </row>
        <row>
 	<entry>path(polygon)</entry>
 	<entry>point</entry>
 	<entry>polygon to path</entry>
-	<entry>path('((0,0),(1,1),(2,0))'::polygon)</entry>
+	<entry>path(polygon '((0,0),(1,1),(2,0))')</entry>
        </row>
        <row>
 	<entry>point(circle)</entry>
 	<entry>point</entry>
 	<entry>center</entry>
-	<entry>point('((0,0),2.0)'::circle)</entry>
+	<entry>point(circle '((0,0),2.0)')</entry>
        </row>
        <row>
-	<entry>point(lseg,lseg)</entry>
+	<entry>point(lseg, lseg)</entry>
 	<entry>point</entry>
 	<entry>intersection</entry>
-	<entry>point('((-1,0),(1,0))'::lseg, '((-2,-2),(2,2))'::lseg)</entry>
+	<entry>point(lseg '((-1,0),(1,0))', lseg '((-2,-2),(2,2))')</entry>
        </row>
        <row>
 	<entry>point(polygon)</entry>
 	<entry>point</entry>
 	<entry>center</entry>
-	<entry>point('((0,0),(1,1),(2,0))'::polygon)</entry>
+	<entry>point(polygon '((0,0),(1,1),(2,0))')</entry>
        </row>
        <row>
 	<entry>polygon(box)</entry>
 	<entry>polygon</entry>
 	<entry>12 point polygon</entry>
-	<entry>polygon('((0,0),(1,1))'::box)</entry>
+	<entry>polygon(box '((0,0),(1,1))')</entry>
        </row>
        <row>
 	<entry>polygon(circle)</entry>
 	<entry>polygon</entry>
 	<entry>12-point polygon</entry>
-	<entry>polygon('((0,0),2.0)'::circle)</entry>
+	<entry>polygon(circle '((0,0),2.0)')</entry>
        </row>
        <row>
-	<entry>polygon(<replaceable class="parameter">npts</replaceable>,circle)</entry>
+	<entry>polygon(<replaceable class="parameter">npts</replaceable>, circle)</entry>
 	<entry>polygon</entry>
 	<entry><replaceable class="parameter">npts</replaceable> polygon</entry>
-	<entry>polygon(12,'((0,0),2.0)'::circle)</entry>
+	<entry>polygon(12, circle '((0,0),2.0)')</entry>
        </row>
        <row>
 	<entry>polygon(path)</entry>
 	<entry>polygon</entry>
 	<entry>path to polygon</entry>
-	<entry>polygon('((0,0),(1,1),(2,0))'::path)</entry>
+	<entry>polygon(path '((0,0),(1,1),(2,0))')</entry>
        </row>
       </tbody>
      </tgroup>

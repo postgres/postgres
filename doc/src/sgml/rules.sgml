@@ -1053,8 +1053,8 @@
     CREATE TABLE shoelace_log (
         sl_name    char(10),      -- shoelace changed
         sl_avail   integer,       -- new available value
-        log_who    name,          -- who did it
-        log_when   datetime       -- when
+        log_who    text,          -- who did it
+        log_when   timestamp      -- when
     );
 
     CREATE RULE log_shoelace AS ON UPDATE TO shoelace_data
@@ -1062,21 +1062,10 @@
         DO INSERT INTO shoelace_log VALUES (
                                         NEW.sl_name,
                                         NEW.sl_avail,
-                                        getpgusername(),
-                                        'now'::text
+                                        current_user,
+                                        current_timestamp
                                     );
 </ProgramListing>
-
-    One interesting detail is the casting of 'now' in the rules
-    INSERT action to type text. Without that, the parser would see
-    at CREATE RULE time, that the target type in <Filename>shoelace_log</Filename>
-    is a datetime and tries to make a constant from it - with success.
-    So a constant datetime value would be stored in the rule action
-    and all log entries would have the time of the CREATE RULE statement.
-    Not exactly what we want. The casting causes the parser to
-    construct a datetime('now'::text) expression and this will be 
-    evaluated when the rule is executed.  (Another way to do this is to
-    use the function now() instead of a literal constant.)
 </Para>
 
 <Para>
@@ -1120,7 +1109,7 @@
 <ProgramListing>
     INSERT INTO shoelace_log VALUES(
            *NEW*.sl_name, *NEW*.sl_avail,
-           getpgusername(), datetime('now'::text))
+           current_user, current_timestamp
       FROM shoelace_data *NEW*, shoelace_data *OLD*;
 </ProgramListing>
 
@@ -1140,7 +1129,7 @@
 <ProgramListing>
     INSERT INTO shoelace_log VALUES(
            *NEW*.sl_name, *NEW*.sl_avail,
-           getpgusername(), datetime('now'::text))
+           current_user, current_timestamp
       FROM shoelace_data *NEW*, shoelace_data *OLD*,
            <FirstTerm>shoelace_data shoelace_data</FirstTerm>;
 </ProgramListing>
@@ -1151,7 +1140,7 @@
 <ProgramListing>
     INSERT INTO shoelace_log VALUES(
            *NEW*.sl_name, *NEW*.sl_avail,
-           getpgusername(), datetime('now'::text))
+           current_user, current_timestamp
       FROM shoelace_data *NEW*, shoelace_data *OLD*,
            shoelace_data shoelace_data
      <FirstTerm>WHERE int4ne(*NEW*.sl_avail, *OLD*.sl_avail)</FirstTerm>;
@@ -1169,7 +1158,7 @@
 <ProgramListing>
     INSERT INTO shoelace_log VALUES(
            *NEW*.sl_name, *NEW*.sl_avail,
-           getpgusername(), datetime('now'::text))
+           current_user, current_timestamp
       FROM shoelace_data *NEW*, shoelace_data *OLD*,
            shoelace_data shoelace_data
      WHERE int4ne(*NEW*.sl_avail, *OLD*.sl_avail)
@@ -1183,7 +1172,7 @@
 <ProgramListing>
     INSERT INTO shoelace_log VALUES(
            <FirstTerm>shoelace_data.sl_name</FirstTerm>, <FirstTerm>6</FirstTerm>,
-           getpgusername(), datetime('now'::text))
+           current_user, current_timestamp
       FROM shoelace_data *NEW*, shoelace_data *OLD*,
            shoelace_data shoelace_data
      WHERE int4ne(<FirstTerm>6</FirstTerm>, *OLD*.sl_avail)
@@ -1195,7 +1184,7 @@
 <ProgramListing>
     INSERT INTO shoelace_log VALUES(
            shoelace_data.sl_name, 6,
-           getpgusername(), datetime('now'::text))
+           current_user, current_timestamp
       FROM shoelace_data *NEW*, shoelace_data *OLD*,
            shoelace_data shoelace_data
      WHERE int4ne(6, <FirstTerm>shoelace_data.sl_avail</FirstTerm>)
@@ -1209,7 +1198,7 @@
 <ProgramListing>
     INSERT INTO shoelace_log VALUES(
            shoelace_data.sl_name, 6,
-           getpgusername(), datetime('now'::text))
+           current_user, current_timestamp
       FROM shoelace_data
      WHERE 6 != shoelace_data.sl_avail
        AND shoelace_data.sl_name = 'sl7';
@@ -1235,7 +1224,7 @@
 <ProgramListing>
     INSERT INTO shoelace_log VALUES(
            shoelace_data.sl_name, <FirstTerm>shoelace_data.sl_avail</FirstTerm>,
-           getpgusername(), 'now')
+           current_user, current_timestamp)
       FROM shoelace_data
      WHERE <FirstTerm>shoelace_data.sl_avail</FirstTerm> != shoelace_data.sl_avail
        AND shoelace_data.sl_name = 'sl7';
@@ -1258,7 +1247,7 @@
 <ProgramListing>
     INSERT INTO shoelace_log SELECT
            shoelace_data.sl_name, 0,
-           getpgusername(), 'now'
+           current_user, current_timestamp
       FROM shoelace_data
      WHERE 0 != shoelace_data.sl_avail
        AND <FirstTerm>shoelace_data.sl_color = 'black'</FirstTerm>;
@@ -1512,8 +1501,8 @@
     INSERT INTO shoelace_log SELECT
            s.sl_name,
            int4pl(s.sl_avail, shoelace_arrive.arr_quant),
-           getpgusername(),
-           datetime('now'::text)
+           current_user,
+           current_timestamp
       FROM shoelace_arrive shoelace_arrive, shoelace_ok shoelace_ok,
            shoelace_ok *OLD*, shoelace_ok *NEW*,
            shoelace shoelace, shoelace *OLD*,
@@ -1537,8 +1526,8 @@
     INSERT INTO shoelace_log SELECT
            s.sl_name,
            s.sl_avail + shoelace_arrive.arr_quant,
-           getpgusername(),
-           'now'
+           current_user,
+           current_timestamp
       FROM shoelace_arrive shoelace_arrive, shoelace_data shoelace_data,
            shoelace_data s
      WHERE s.sl_name = shoelace_arrive.arr_name

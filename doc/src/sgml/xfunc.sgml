@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/xfunc.sgml,v 1.28 2001/01/13 23:58:55 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/xfunc.sgml,v 1.29 2001/01/20 20:59:29 petere Exp $
 -->
 
  <chapter id="xfunc">
@@ -186,7 +186,7 @@ CREATE FUNCTION double_salary(EMP)
 
 SELECT name, double_salary(EMP) AS dream
     FROM EMP
-    WHERE EMP.cubicle ~= '(2,1)'::point;
+    WHERE EMP.cubicle ~= point '(2,1)';
 
 
 +-----+-------+
@@ -231,10 +231,10 @@ SELECT name(EMP) AS youngster
      <programlisting>
 CREATE FUNCTION new_emp() 
     RETURNS EMP
-    AS 'SELECT \'None\'::text AS name,
+    AS 'SELECT text ''None'' AS name,
         1000 AS salary,
         25 AS age,
-        \'(2,2)\'::point AS cubicle'
+        point ''(2,2)'' AS cubicle'
     LANGUAGE 'sql';
      </programlisting>
     </para>
@@ -255,7 +255,7 @@ CREATE FUNCTION new_emp()
       </listitem>
       <listitem>
        <para>
-	You must typecast the expressions (using ::) to match the
+	You must typecast the expressions to match the
 	composite type's definition, or you will get errors like this:
 	<programlisting>
 	 <computeroutput>
@@ -1186,7 +1186,7 @@ LANGUAGE 'c';
 
       <listitem>
        <para>
-	Compiling and loading your object code  so  that
+	Compiling and linking your object code  so  that
 	it  can  be  dynamically  loaded  into  
 	<productname>Postgres</productname>
 	always requires special flags.

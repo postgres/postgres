@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/plsql.sgml,v 2.17 2001/01/18 07:11:36 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/plsql.sgml,v 2.18 2001/01/20 20:59:29 petere Exp $
 -->
 
  <chapter id="plsql">
@@ -170,9 +170,9 @@ END;
 	must also have a default value specified.
        </para>
        <para>
-	The default value is evaluated ever time the function is called. So
+	The default value is evaluated every time the function is called. So
 	assigning '<replaceable>now</replaceable>' to a variable of type
-	<replaceable>datetime</replaceable> causes the variable to have the
+	<type>timestamp</type> causes the variable to have the
 	time of the actual function call, not when the function was
 	precompiled into its bytecode.
        </para>
@@ -322,7 +322,7 @@ RENAME <replaceable>oldname</replaceable> TO <replaceable>newname</replaceable>;
      All expressions used in PL/pgSQL statements are processed using
      the backend's executor. Expressions that appear to contain
      constants may in fact require run-time evaluation (e.g. 'now' for the
-     datetime type) so
+     <type>timestamp</type> type) so
      it is impossible for the PL/pgSQL parser
      to identify real constant values other than the NULL keyword. All
      expressions are evaluated internally by executing a query
@@ -343,7 +343,7 @@ RENAME <replaceable>oldname</replaceable> TO <replaceable>newname</replaceable>;
      is a difference between what the two functions
 
      <programlisting>
-CREATE FUNCTION logfunc1 (text) RETURNS datetime AS '
+CREATE FUNCTION logfunc1 (text) RETURNS timestamp AS '
     DECLARE
         logtxt ALIAS FOR $1;
     BEGIN
@@ -356,10 +356,10 @@ CREATE FUNCTION logfunc1 (text) RETURNS datetime AS '
      and
 
      <programlisting>
-CREATE FUNCTION logfunc2 (text) RETURNS datetime AS '
+CREATE FUNCTION logfunc2 (text) RETURNS timestamp AS '
     DECLARE
         logtxt ALIAS FOR $1;
-        curtime datetime;
+        curtime timestamp;
     BEGIN
         curtime := ''now'';
         INSERT INTO logtable VALUES (logtxt, curtime);
@@ -371,7 +371,7 @@ CREATE FUNCTION logfunc2 (text) RETURNS datetime AS '
      do. In the case of logfunc1(), the <productname>Postgres</productname>
      main parser
      knows when preparing the plan for the INSERT, that the string 'now'
-     should be interpreted as datetime because the target field of logtable
+     should be interpreted as <type>timestamp</type> because the target field of logtable
      is of that type. Thus, it will make a constant from it at this time
      and this constant value is then used in all invocations of logfunc1()
      during the lifetime of the backend. Needless to say that this isn't what the
@@ -383,7 +383,7 @@ CREATE FUNCTION logfunc2 (text) RETURNS datetime AS '
      what type 'now' should become and therefore it returns a data type of
      text containing the string 'now'. During the assignment
      to the local variable curtime, the PL/pgSQL interpreter casts this
-     string to the datetime type by calling the text_out() and datetime_in()
+     string to the timestamp type by calling the text_out() and timestamp_in()
      functions for the conversion.
     </para>
     <para>
@@ -855,7 +855,7 @@ EXIT [ <replaceable>label</replaceable> ] [ WHEN <replaceable>expression</replac
      counterparts from the C language function discussion.
 
      <programlisting>
-CREATE FUNCTION add_one (int4) RETURNS int4 AS '
+CREATE FUNCTION add_one (integer) RETURNS integer AS '
     BEGIN
         RETURN $1 + 1;
     END;
@@ -881,7 +881,7 @@ CREATE FUNCTION concat_text (text, text) RETURNS text AS '
      The C functions.
 
      <programlisting>
-CREATE FUNCTION c_overpaid (EMP, int4) RETURNS bool AS '
+CREATE FUNCTION c_overpaid (EMP, integer) RETURNS bool AS '
     DECLARE
         emprec ALIAS FOR $1;
         sallim ALIAS FOR $2;
@@ -909,9 +909,9 @@ CREATE FUNCTION c_overpaid (EMP, int4) RETURNS bool AS '
      <programlisting>
 CREATE TABLE emp (
     empname text,
-    salary int4,
-    last_date datetime,
-    last_user name);
+    salary integer,
+    last_date timestamp,
+    last_user text);
 
 CREATE FUNCTION emp_stamp () RETURNS OPAQUE AS '
     BEGIN
@@ -930,7 +930,7 @@ CREATE FUNCTION emp_stamp () RETURNS OPAQUE AS '
 
         -- Remember who changed the payroll when
         NEW.last_date := ''now'';
-        NEW.last_user := getpgusername();
+        NEW.last_user := current_user;
         RETURN NEW;
     END;
 ' LANGUAGE 'plpgsql';

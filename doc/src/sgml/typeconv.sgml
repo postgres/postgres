@@ -307,7 +307,8 @@ then fail.
 
 <para>
 There is only one exponentiation
-operator defined in the catalog, and it takes <type>float8</type> arguments.
+operator defined in the catalog, and it takes arguments of type 
+<type>double precision</type>.
 The scanner assigns an initial type of <type>int4</type> to both arguments
 of this query expression:
 <programlisting>
@@ -322,7 +323,7 @@ So the parser does a type conversion on both operands and the query
 is equivalent to
 
 <programlisting>
-tgl=> select float8(2) ^ float8(3) AS "Exp";
+tgl=> select CAST(2 AS double precision) ^ CAST(3 AS double precision) AS "Exp";
  Exp
 -----
    8
@@ -754,8 +755,8 @@ Here, the unknown-type literal 'b' will be resolved as type text.
 
 <para>
 <programlisting>
-tgl=> SELECT 1.2 AS "Float8" UNION SELECT 1;
- Float8
+tgl=> SELECT 1.2 AS "Double" UNION SELECT 1;
+ Double
 --------
       1
     1.2
@@ -773,7 +774,7 @@ the first/top clause in the union:
 
 <programlisting>
 tgl=> SELECT 1 AS "All integers"
-tgl-> UNION SELECT '2.2'::float4;
+tgl-> UNION SELECT CAST('2.2' AS REAL);
  All integers
 --------------
             1
@@ -782,8 +783,9 @@ tgl-> UNION SELECT '2.2'::float4;
 </programlisting>
 </para>
 <para>
-Since float4 is not a preferred type, the parser sees no reason to select it
-over int4, and instead falls back on the use-the-first-alternative rule.
+Since <type>REAL</type> is not a preferred type, the parser sees no reason
+to select it over <type>INTEGER</type> (which is what the 1 is), and instead
+falls back on the use-the-first-alternative rule.
 This example demonstrates that the preferred-type mechanism doesn't encode
 as much information as we'd like.  Future versions of
 <productname>Postgres</productname> may support a more general notion of

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/libpq++.sgml,v 1.23 2001/01/13 23:58:55 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/libpq++.sgml,v 1.24 2001/01/20 20:59:28 petere Exp $
 -->
 
  <chapter id="libpqplusplus">
@@ -735,7 +735,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/libpq++.sgml,v 1.23 2001/01/13 23:58:
     
     <programlisting>
 PgDatabase data;
-data.Exec("create table foo (a int4, b char(16), d float8)");
+data.Exec("create table foo (a int4, b char(16), d double precision)");
 data.Exec("copy foo from stdin");
 data.PutLine("3\tHello World\t4.5\n");
 data.PutLine("4\tGoodbye World\t7.11\n");

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/comment.sgml,v 1.5 2000/12/10 21:56:00 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/comment.sgml,v 1.6 2001/01/20 20:59:29 petere Exp $
 Postgres documentation
 -->
 
@@ -131,8 +131,8 @@ COMMENT ON TABLE my_table IS 'Employee Information';
 COMMENT ON TYPE my_type IS 'Complex Number support';
 COMMENT ON VIEW my_view IS 'View of departmental costs';
 COMMENT ON COLUMN my_table.my_field IS 'Employee ID number';
-COMMENT ON AGGREGATE my_aggregate float8 IS 'Computes sample variance';
-COMMENT ON FUNCTION my_function (datetime) IS 'Returns Roman Numeral';
+COMMENT ON AGGREGATE my_aggregate (double precision) IS 'Computes sample variance';
+COMMENT ON FUNCTION my_function (timestamp) IS 'Returns Roman Numeral';
 COMMENT ON OPERATOR ^ (text, text) IS 'Performs intersection of two text';
 COMMENT ON TRIGGER my_trigger ON my_table IS 'Used for R.I.';
    </programlisting>

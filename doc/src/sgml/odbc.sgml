@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/odbc.sgml,v 1.20 2000/12/22 21:51:58 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/odbc.sgml,v 1.21 2001/01/20 20:59:28 petere Exp $
 -->
 
  <chapter id="odbc">
@@ -290,14 +290,6 @@ InstallDir = /opt/applix/axdata/axshlib
      </para>
     </tip>
 
-    <!--
-   <Para>
-   <Tip>
-   <Para>
-    The <productname>Postgres</productname> datetime type will break MS Access.
-   </Para>
-   </Tip>
-    -->
    </sect2>
   </sect1>
 
