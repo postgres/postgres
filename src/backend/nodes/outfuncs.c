@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.47 1998/10/22 13:52:21 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.48 1998/11/22 10:48:39 vadim Exp $
  *
  * NOTES
  *	  Every (plan) node in POSTGRES has an associated "out" routine which
@@ -516,6 +516,9 @@ _outIndexScan(StringInfo str, IndexScan *node)
 
 	appendStringInfo(str, " :indxqual ");
 	_outNode(str, node->indxqual);
+
+	appendStringInfo(str, " :indxqualorig ");
+	_outNode(str, node->indxqualorig);
 
 }
 

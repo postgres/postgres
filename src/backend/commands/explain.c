@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/explain.c,v 1.26 1998/11/08 19:38:34 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/explain.c,v 1.27 1998/11/22 10:48:34 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -217,9 +217,14 @@ explain_outNode(StringInfo str, Plan *plan, int indent, ExplainState *es)
 	{
 		case T_IndexScan:
 			appendStringInfo(str, " using ");
-			l = ((IndexScan *) plan)->indxid;
-			relation = RelationIdCacheGetRelation((int) lfirst(l));
-			appendStringInfo(str, (RelationGetRelationName(relation))->data);
+			i = 0;
+			foreach (l, ((IndexScan *) plan)->indxid)
+			{
+				relation = RelationIdCacheGetRelation((int) lfirst(l));
+				if (++i > 1)
+					appendStringInfo(str, ", ");
+				appendStringInfo(str, (RelationGetRelationName(relation))->data);
+			}
 		case T_SeqScan:
 			if (((Scan *) plan)->scanrelid > 0)
 			{

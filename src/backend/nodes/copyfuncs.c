@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.49 1998/10/22 13:52:20 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.50 1998/11/22 10:48:38 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -247,6 +247,7 @@ _copyIndexScan(IndexScan *from)
 	 */
 	newnode->indxid = listCopy(from->indxid);
 	Node_Copy(from, newnode, indxqual);
+	Node_Copy(from, newnode, indxqualorig);
 	Node_Copy(from, newnode, indxstate);
 
 	return newnode;

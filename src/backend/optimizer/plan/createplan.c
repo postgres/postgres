@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.32 1998/09/01 04:29:47 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.33 1998/11/22 10:48:43 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -63,7 +63,7 @@ static Node *fix_indxqual_references(Node *clause, Path *index_path);
 static Temp *make_temp(List *tlist, List *keys, Oid *operators,
 		  Plan *plan_node, int temptype);
 static IndexScan *make_indexscan(List *qptlist, List *qpqual, Index scanrelid,
-			   List *indxid, List *indxqual, Cost cost);
+			   List *indxid, List *indxqual, List *indxqualorig, Cost cost);
 static NestLoop *make_nestloop(List *qptlist, List *qpqual, Plan *lefttree,
 			  Plan *righttree);
 static HashJoin *make_hashjoin(List *tlist, List *qpqual,
@@ -405,6 +405,7 @@ create_indexscan_node(IndexPath *best_path,
 					   lfirsti(best_path->path.parent->relids),
 					   best_path->indexid,
 					   fixed_indxqual,
+					   indxqual,
 					   best_path->path.path_cost);
 
 	return scan_node;
@@ -937,6 +938,7 @@ make_indexscan(List *qptlist,
 			   Index scanrelid,
 			   List *indxid,
 			   List *indxqual,
+			   List *indxqualorig,
 			   Cost cost)
 {
 	IndexScan  *node = makeNode(IndexScan);
@@ -951,6 +953,7 @@ make_indexscan(List *qptlist,
 	node->scan.scanrelid = scanrelid;
 	node->indxid = indxid;
 	node->indxqual = indxqual;
+	node->indxqualorig = indxqualorig;
 	node->scan.scanstate = (CommonScanState *) NULL;
 
 	return node;
