@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/Attic/database.c,v 1.37 2000/04/12 17:16:07 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/Attic/database.c,v 1.37.2.1 2001/01/14 03:16:12 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -180,7 +180,7 @@ GetRawDatabaseInfo(const char *name, Oid *db_id, char *path)
 		max = PageGetMaxOffsetNumber(pg);
 
 		/* look at each tuple on the page */
-		for (i = 0; i <= max; i++)
+		for (i = 0; i < max; i++)
 		{
 			int			offset;
 
