@@ -172,19 +172,23 @@
    
     1.4) What non-unix ports are available?
     
+        Client
+        
    It is possible to compile the libpq C library, psql, and other
    interfaces and binaries to run on MS Windows platforms. In this case,
    the client is running on MS Windows, and communicates via TCP/IP to a
    server running on one of our supported Unix platforms. A file
    win31.mak is included in the distribution for making a Win32 libpq
-   library and psql.
+   library and psql. PostgreSQL also communicates with ODBC clients.
    
+        Server
+        
    The database server can run on Windows NT and later using Cygwin, the
    Cygnus Unix/NT porting library. See pgsql/doc/FAQ_MSWIN in the
-   distribution. The database server does not run on MS Windows 9X
-   because Cygwin does not support the required features on those
-   platforms. We have no plans to do a native port to any Microsoft
-   platform.
+   distribution or the MS Windows FAQ on our web site. The database
+   server does not run on MS Windows 9X because Cygwin does not support
+   the required features on those platforms. We have no plan to do a
+   native port to any Microsoft platform.
    
     1.5) Where can I get PostgreSQL?
     
@@ -310,8 +314,7 @@
           key referential integrity, and sophisticated locking. We have
           some features they don't have, like user-defined types,
           inheritance, rules, and multi-version concurrency control to
-          reduce lock contention. We don't have outer joins, but are
-          working on them.
+          reduce lock contention.
           
    Performance
           PostgreSQL runs in two modes. Normal fsync mode flushes every
@@ -759,7 +762,7 @@ Maximum number of indexes on a table?    unlimited
 
     4.14) In a query, how do I detect if a field is NULL?
     
-   You test the column with IS NULL and IS NOT NULL.
+   You test the column with IS NULLIS NOT NULL.
    
     4.15) What is the difference between the various character types?
     
@@ -896,9 +899,13 @@ BYTEA           bytea           variable-length byte array (null-safe)
    Depending on your shell, only one of these may succeed, but it will
    set your process data segment limit much higher and perhaps allow the
    query to complete. This command applies to the current process, and
-   all subprocesses created after the command is run. If you are having a
-   problem with the SQL client because the backend is returning too much
-   data, try it before starting the client.
+   all subprocessesHTML & CSS specifications are available from
+   http://www.w3.org/ To learn more about Tidy see
+   http://www.w3.org/People/Raggett/tidy/ Please send bug reports to Dave
+   Raggett care of Lobby your company to join W3C, see
+   http://www.w3.org/Consortium created after the command is run. If you
+   are having a problem with the SQL client because the backend is
+   returning too much data, try it before starting the client.
    
     4.20) How do I tell what PostgreSQL version I am running?
     
@@ -941,10 +948,18 @@ SELECT *
    
     4.24) How do I do an outer join?
     
-   PostgreSQL 7.1 and later supports outer joins. In previous releases,
-   outer joins can be simulated using UNION and NOT IN. For example, when
-   joining tab1 and tab2, the following query does an outer join of the
-   two tables:
+   PostgreSQL 7.1 and later supports outer joins. Here is an example:
+    SELECT *
+    FROM t1 LEFT OUTER JOIN t2 USING (col);
+
+   This will join t1.col to t2.col, and return any unjoined rows in t1
+   with NULL values for t2 columns. A RIGHT join would return unjoined
+   rows of table t2. A FULL join would return unjoined rows from t1 and
+   t2. The word OUTER is optional and is assumed in LEFT, RIGHT, and FULL
+   joins. Ordinary joins are called INNER joins.
+   In previous releases, outer joins can be simulated using UNION and NOT
+   IN. For example, when joining tab1 and tab2, the following query does
+   an outer join of the two tables:
     SELECT tab1.col1, tab2.col2
     FROM tab1, tab2
     WHERE tab1.col1 = tab2.col1
