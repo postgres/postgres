@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.51 1999/08/05 02:33:54 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.52 1999/08/16 02:08:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -52,7 +52,6 @@ func_get_detail(char *funcname,
 				Oid *rettype,	/* return value */
 				bool *retset,	/* return value */
 				Oid **true_typeids);
-static Oid	funcid_get_rettype(Oid funcid);
 static Oid **gen_cross_product(InhPaths *arginh, int nargs);
 static void make_arguments(ParseState *pstate,
 			   int nargs,
@@ -627,25 +626,6 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 	}
 
 	return retval;
-}
-
-static Oid
-funcid_get_rettype(Oid funcid)
-{
-	HeapTuple	func_tuple = NULL;
-	Oid			funcrettype = InvalidOid;
-
-	func_tuple = SearchSysCacheTuple(PROOID,
-									 ObjectIdGetDatum(funcid),
-									 0, 0, 0);
-
-	if (!HeapTupleIsValid(func_tuple))
-		elog(ERROR, "Function OID %u does not exist", funcid);
-
-	funcrettype = (Oid)
-		((Form_pg_proc) GETSTRUCT(func_tuple))->prorettype;
-
-	return funcrettype;
 }
 
 
@@ -1378,7 +1358,7 @@ ParseComplexProjection(ParseState *pstate,
 
 				iter = (Iter *) first_arg;
 				func = (Func *) ((Expr *) iter->iterexpr)->oper;
-				argtype = funcid_get_rettype(func->funcid);
+				argtype = get_func_rettype(func->funcid);
 				argrelid = typeidTypeRelid(argtype);
 				if (argrelid &&
 					((attnum = get_attnum(argrelid, funcname))
@@ -1435,7 +1415,7 @@ ParseComplexProjection(ParseState *pstate,
 					break;
 
 				funcnode = (Func *) expr->oper;
-				argtype = funcid_get_rettype(funcnode->funcid);
+				argtype = get_func_rettype(funcnode->funcid);
 				argrelid = typeidTypeRelid(argtype);
 
 				/*
