@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/client-auth.sgml,v 1.51 2003/06/25 01:14:05 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/client-auth.sgml,v 1.52 2003/06/25 01:20:50 momjian Exp $
 -->
 
 <chapter id="client-authentication">
@@ -83,11 +83,13 @@ $Header: /cvsroot/pgsql/doc/src/sgml/client-auth.sgml,v 1.51 2003/06/25 01:14:05
   </para>
 
   <para>
-   A record may have one of the three formats
+   A record may have one of the five formats
 <synopsis>
 local   <replaceable>database</replaceable>  <replaceable>user</replaceable>  <replaceable>authentication-method</replaceable>  <optional><replaceable>authentication-option</replaceable></optional>
 host    <replaceable>database</replaceable>  <replaceable>user</replaceable>  <replaceable>IP-address</replaceable>  <replaceable>IP-mask</replaceable>  <replaceable>authentication-method</replaceable>  <optional><replaceable>authentication-option</replaceable></optional>
 hostssl  <replaceable>database</replaceable>  <replaceable>user</replaceable>  <replaceable>IP-address</replaceable>  <replaceable>IP-mask</replaceable>  <replaceable>authentication-method</replaceable>  <optional><replaceable>authentication-option</replaceable></optional>
+host    <replaceable>database</replaceable>  <replaceable>user</replaceable>  <replaceable>IP-address</replaceable>/<replaceable>CIDR-mask</replaceable>  <replaceable>authentication-method</replaceable>  <optional><replaceable>authentication-option</replaceable></optional>
+hostssl  <replaceable>database</replaceable>  <replaceable>user</replaceable>  <replaceable>IP-address</replaceable>/<replaceable>CIDR-mask</replaceable>  <replaceable>authentication-method</replaceable>  <optional><replaceable>authentication-option</replaceable></optional>
 </synopsis>
    The meaning of the fields is as follows:
 
@@ -176,7 +178,7 @@ hostssl  <replaceable>database</replaceable>  <replaceable>user</replaceable>  <
      <term><replaceable>IP-mask</replaceable></term>
      <listitem>
       <para>
-       These two fields contain IP address/mask values in standard
+       These two fields contain IP address and mask values in standard
        dotted decimal notation. (IP addresses can only be specified
        numerically, not as domain or host names.)  Taken together they
        specify the client machine IP addresses that this record
@@ -199,6 +201,34 @@ hostssl  <replaceable>database</replaceable>  <replaceable>user</replaceable>  <
       </para>
      </listitem>
     </varlistentry>
+
+    <varlistentry>
+     <term><replaceable>CIDR-mask</replaceable></term>
+     <listitem>
+      <para>
+        This is an integer specifying the number of significant bits 
+        to set in the mask, and is an alternative to using the 
+        <replaceable>IP-mask</replaceable> notation. The number must
+        be between 0 and 32 (in the case of an IPv4 address) or 128
+        (in the case of an IPv6 address) inclusive. 0 will match any
+        address, while 32/128 will match only the exact host specified.
+        The same matching logic is used as for a dotted notation
+        <replaceable>IP-Mask</replaceable>.
+      </para>
+
+      <para>
+        There must be no white space between the <replaceable>IP-address</replaceable>
+        and the <literal>/</literal> or the <literal>/</literal> and the
+        <replaceable>CIDR-mask</replaceable>, or the file will not be parsed 
+        correctly.
+      </para>
+
+      <para>
+       This field only applies to <literal>host</literal> and
+       <literal>hostssl</literal> records.
+      </para>
+     </listitem>
+    </varlistentry>  
 
     <varlistentry>
      <term><replaceable>authentication-method</replaceable></term>
