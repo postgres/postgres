@@ -1,5 +1,5 @@
 QUERY: DROP TABLE INET_TBL;
-ERROR:  Relation inet_tbl Does Not Exist!
+ERROR:  Relation 'inet_tbl' does not exist
 QUERY: CREATE TABLE INET_TBL (c cidr, i inet);
 QUERY: INSERT INTO INET_TBL (c, i) VALUES ('192.168.1', '192.168.1.226/24');
 QUERY: INSERT INTO INET_TBL (c, i) VALUES ('192.168.1.2/24', '192.168.1.226');

@@ -19,7 +19,7 @@ ERROR:  nonesuch: Table does not exist.
 QUERY: drop table;
 ERROR:  parser: parse error at or near ";"
 QUERY: drop table nonesuch;
-ERROR:  Relation nonesuch Does Not Exist!
+ERROR:  Relation 'nonesuch' does not exist
 QUERY: alter table rename;
 ERROR:  parser: parse error at or near ";"
 QUERY: alter table nonesuch rename to newnonesuch;
