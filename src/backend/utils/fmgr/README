@@ -464,7 +464,7 @@ definition of the struct is just
 where api_version is 0 to indicate old-style or 1 to indicate new-style
 calling convention.  In future releases, additional fields may be defined
 after api_version, but these additional fields will only be used if
-api_version is greater than 2.
+api_version is greater than 1.
 
 These details will be hidden from the author of a dynamically loaded
 function by using a macro.  To define a new-style dynamically loaded
