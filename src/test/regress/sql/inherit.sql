@@ -92,3 +92,7 @@ SELECT relname, a.* FROM ONLY a, pg_class where a.tableoid = pg_class.oid;
 SELECT relname, b.* FROM ONLY b, pg_class where b.tableoid = pg_class.oid;
 SELECT relname, c.* FROM ONLY c, pg_class where c.tableoid = pg_class.oid;
 SELECT relname, d.* FROM ONLY d, pg_class where d.tableoid = pg_class.oid;
+
+-- Confirm PRIMARY KEY adds NOT NULL constraint to child table
+CREATE TEMP TABLE z (b TEXT, PRIMARY KEY(aa, b)) inherits (a);
+INSERT INTO z VALUES (NULL, 'text'); -- should fail

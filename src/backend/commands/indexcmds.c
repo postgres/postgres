@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.95 2002/12/15 16:17:39 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.96 2003/01/02 19:29:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,11 +19,13 @@
 #include "catalog/catalog.h"
 #include "catalog/catname.h"
 #include "catalog/dependency.h"
+#include "catalog/heap.h"
 #include "catalog/index.h"
 #include "catalog/namespace.h"
 #include "catalog/pg_opclass.h"
 #include "catalog/pg_proc.h"
 #include "commands/defrem.h"
+#include "commands/tablecmds.h"
 #include "executor/executor.h"
 #include "miscadmin.h"
 #include "optimizer/clauses.h"
@@ -166,6 +168,50 @@ DefineIndex(RangeVar *heapRelation,
 	}
 
 	/*
+	 * Check that all of the attributes in a primary key are marked
+	 * as not null, otherwise attempt to ALTER TABLE .. SET NOT NULL
+	 */
+	if (primary && !IsFuncIndex(attributeList))
+	{
+		List   *keys;
+
+		foreach(keys, attributeList)
+		{
+			IndexElem   *key = (IndexElem *) lfirst(keys);
+			HeapTuple	atttuple;
+
+			/* System attributes are never null, so no problem */
+			if (SystemAttributeByName(key->name, rel->rd_rel->relhasoids))
+				continue;
+
+			atttuple = SearchSysCacheAttName(relationId, key->name);
+			if (HeapTupleIsValid(atttuple))
+			{
+				if (! ((Form_pg_attribute) GETSTRUCT(atttuple))->attnotnull)
+				{
+					/*
+					 * Try to make it NOT NULL.
+					 *
+					 * XXX: Shouldn't the ALTER TABLE .. SET NOT NULL cascade
+					 * to child tables?  Currently, since the PRIMARY KEY
+					 * itself doesn't cascade, we don't cascade the notnull
+					 * constraint either; but this is pretty debatable.
+					 */
+					AlterTableAlterColumnSetNotNull(relationId, false,
+													key->name);
+				}
+				ReleaseSysCache(atttuple);
+			}
+			else
+			{
+				/* This shouldn't happen if parser did its job ... */
+				elog(ERROR, "DefineIndex: column \"%s\" named in key does not exist",
+					 key->name);
+			}
+		}
+	}
+
+	/*
 	 * Prepare arguments for index_create, primarily an IndexInfo
 	 * structure
 	 */
@@ -296,7 +342,7 @@ FuncIndexArgs(IndexInfo *indexInfo,
 
 		tuple = SearchSysCacheAttName(relId, arg);
 		if (!HeapTupleIsValid(tuple))
-			elog(ERROR, "DefineIndex: attribute \"%s\" not found", arg);
+			elog(ERROR, "DefineIndex: column \"%s\" named in key does not exist", arg);
 		att = (Form_pg_attribute) GETSTRUCT(tuple);
 		indexInfo->ii_KeyAttrNumbers[nargs] = att->attnum;
 		argTypes[nargs] = att->atttypid;

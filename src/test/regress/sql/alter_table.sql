@@ -415,7 +415,11 @@ insert into atacc1 (test) values (2);
 insert into atacc1 (test) values (4);
 -- inserting NULL should fail
 insert into atacc1 (test) values(NULL);
--- try adding a primary key oid constraint
+-- try adding a second primary key (should fail)
+alter table atacc1 add constraint atacc_oid1 primary key(oid);
+-- drop first primary key constraint
+alter table atacc1 drop constraint atacc_test1 restrict;
+-- try adding a primary key on oid (should succeed)
 alter table atacc1 add constraint atacc_oid1 primary key(oid);
 drop table atacc1;
 

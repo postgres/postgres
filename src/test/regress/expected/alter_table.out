@@ -539,16 +539,23 @@ drop table atacc1;
 create table atacc1 ( test int );
 -- add a primary key constraint
 alter table atacc1 add constraint atacc_test1 primary key (test);
-ERROR:  Existing attribute "test" cannot be a PRIMARY KEY because it is not marked NOT NULL
+NOTICE:  ALTER TABLE / ADD PRIMARY KEY will create implicit index 'atacc_test1' for table 'atacc1'
 -- insert first value
 insert into atacc1 (test) values (2);
 -- should fail
 insert into atacc1 (test) values (2);
+ERROR:  Cannot insert a duplicate key into unique index atacc_test1
 -- should succeed
 insert into atacc1 (test) values (4);
 -- inserting NULL should fail
 insert into atacc1 (test) values(NULL);
--- try adding a primary key oid constraint
+ERROR:  ExecInsert: Fail to add null value in not null attribute test
+-- try adding a second primary key (should fail)
+alter table atacc1 add constraint atacc_oid1 primary key(oid);
+ERROR:  ALTER TABLE / PRIMARY KEY multiple primary keys for table 'atacc1' are not allowed
+-- drop first primary key constraint
+alter table atacc1 drop constraint atacc_test1 restrict;
+-- try adding a primary key on oid (should succeed)
 alter table atacc1 add constraint atacc_oid1 primary key(oid);
 NOTICE:  ALTER TABLE / ADD PRIMARY KEY will create implicit index 'atacc_oid1' for table 'atacc1'
 drop table atacc1;
@@ -559,7 +566,8 @@ insert into atacc1 (test) values (2);
 insert into atacc1 (test) values (2);
 -- add a primary key (fails)
 alter table atacc1 add constraint atacc_test1 primary key (test);
-ERROR:  Existing attribute "test" cannot be a PRIMARY KEY because it is not marked NOT NULL
+NOTICE:  ALTER TABLE / ADD PRIMARY KEY will create implicit index 'atacc_test1' for table 'atacc1'
+ERROR:  Cannot create unique index. Table contains non-unique values
 insert into atacc1 (test) values (3);
 drop table atacc1;
 -- let's do another one where the primary key constraint fails when added
@@ -568,7 +576,8 @@ create table atacc1 ( test int );
 insert into atacc1 (test) values (NULL);
 -- add a primary key (fails)
 alter table atacc1 add constraint atacc_test1 primary key (test);
-ERROR:  Existing attribute "test" cannot be a PRIMARY KEY because it is not marked NOT NULL
+NOTICE:  ALTER TABLE / ADD PRIMARY KEY will create implicit index 'atacc_test1' for table 'atacc1'
+ERROR:  ALTER TABLE: Attribute "test" contains NULL values
 insert into atacc1 (test) values (3);
 drop table atacc1;
 -- let's do one where the primary key constraint fails
@@ -582,17 +591,21 @@ drop table atacc1;
 create table atacc1 ( test int, test2 int);
 -- add a primary key constraint
 alter table atacc1 add constraint atacc_test1 primary key (test, test2);
-ERROR:  Existing attribute "test" cannot be a PRIMARY KEY because it is not marked NOT NULL
+NOTICE:  ALTER TABLE / ADD PRIMARY KEY will create implicit index 'atacc_test1' for table 'atacc1'
 -- try adding a second primary key - should fail
 alter table atacc1 add constraint atacc_test2 primary key (test);
-ERROR:  Existing attribute "test" cannot be a PRIMARY KEY because it is not marked NOT NULL
+ERROR:  ALTER TABLE / PRIMARY KEY multiple primary keys for table 'atacc1' are not allowed
 -- insert initial value
 insert into atacc1 (test,test2) values (4,4);
 -- should fail
 insert into atacc1 (test,test2) values (4,4);
+ERROR:  Cannot insert a duplicate key into unique index atacc_test1
 insert into atacc1 (test,test2) values (NULL,3);
+ERROR:  ExecInsert: Fail to add null value in not null attribute test
 insert into atacc1 (test,test2) values (3, NULL);
+ERROR:  ExecInsert: Fail to add null value in not null attribute test2
 insert into atacc1 (test,test2) values (NULL,NULL);
+ERROR:  ExecInsert: Fail to add null value in not null attribute test
 -- should all succeed
 insert into atacc1 (test,test2) values (4,5);
 insert into atacc1 (test,test2) values (5,4);
