@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: execnodes.h,v 1.76 2002/11/06 00:00:44 tgl Exp $
+ * $Id: execnodes.h,v 1.77 2002/11/06 22:31:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -661,12 +661,18 @@ typedef struct MaterialState
  *
  *	csstate.css_ScanTupleSlot refers to output of underlying plan.
  *
- *	Note: the associated ExprContext contains ecxt_aggvalues and ecxt_aggnulls
- *	arrays, which hold the computed agg values for the current input group
- *	during evaluation of an Agg node's output tuple(s).
+ *	Note: csstate.cstate.cs_ExprContext contains ecxt_aggvalues and
+ *	ecxt_aggnulls arrays, which hold the computed agg values for the current
+ *	input group during evaluation of an Agg node's output tuple(s).  We
+ *	create a second ExprContext, tmpcontext, in which to evaluate input
+ *	expressions and run the aggregate transition functions.
  * -------------------------
  */
-typedef struct AggStatePerAggData *AggStatePerAgg;		/* private in nodeAgg.c */
+/* these structs are private in nodeAgg.c: */
+typedef struct AggStatePerAggData *AggStatePerAgg;
+typedef struct AggStatePerGroupData *AggStatePerGroup;
+typedef struct AggHashEntryData *AggHashEntry;
+typedef struct AggHashTableData *AggHashTable;
 
 typedef struct AggState
 {
@@ -674,13 +680,18 @@ typedef struct AggState
 	List	   *aggs;			/* all Aggref nodes in targetlist & quals */
 	int			numaggs;		/* length of list (could be zero!) */
 	FmgrInfo   *eqfunctions;	/* per-grouping-field equality fns */
-	HeapTuple	grp_firstTuple;	/* copy of first tuple of current group */
-	AggStatePerAgg peragg;		/* per-Aggref working state */
-	MemoryContext tup_cxt;		/* context for per-output-tuple
-								 * expressions */
-	MemoryContext agg_cxt[2];	/* pair of expression eval memory contexts */
-	int			which_cxt;		/* 0 or 1, indicates current agg_cxt */
+	AggStatePerAgg peragg;		/* per-Aggref information */
+	MemoryContext aggcontext;	/* memory context for long-lived data */
+	ExprContext *tmpcontext;	/* econtext for input expressions */
 	bool		agg_done;		/* indicates completion of Agg scan */
+	/* these fields are used in AGG_PLAIN and AGG_SORTED modes: */
+	AggStatePerGroup pergroup;	/* per-Aggref-per-group working state */
+	HeapTuple	grp_firstTuple;	/* copy of first tuple of current group */
+	/* these fields are used in AGG_HASHED mode: */
+	AggHashTable hashtable;		/* hash table with one entry per group */
+	bool		table_filled;	/* hash table filled yet? */
+	AggHashEntry next_hash_entry; /* next entry in current chain */
+	int			next_hash_bucket; /* next chain */
 } AggState;
 
 /* ---------------------
@@ -691,9 +702,8 @@ typedef struct GroupState
 {
 	CommonScanState csstate;	/* its first field is NodeTag */
 	FmgrInfo   *eqfunctions;	/* per-field lookup data for equality fns */
-	bool		grp_useFirstTuple;		/* first tuple not processed yet */
-	bool		grp_done;
 	HeapTuple	grp_firstTuple;	/* copy of first tuple of current group */
+	bool		grp_done;		/* indicates completion of Group scan */
 } GroupState;
 
 /* ----------------

@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.120 2002/11/06 00:00:44 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.121 2002/11/06 22:31:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1675,6 +1675,7 @@ make_agg(List *tlist, List *qual, AggStrategy aggstrategy,
 		plan->plan_rows *= 0.1;
 		if (plan->plan_rows < 1)
 			plan->plan_rows = 1;
+		node->numGroups = (long) plan->plan_rows;
 	}
 
 	plan->state = (EState *) NULL;

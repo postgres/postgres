@@ -5,7 +5,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.177 2002/11/06 00:00:44 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.178 2002/11/06 22:31:24 tgl Exp $
  *
  * NOTES
  *	  Every (plan) node in POSTGRES has an associated "out" routine which
@@ -597,8 +597,8 @@ _outAgg(StringInfo str, Agg *node)
 {
 	appendStringInfo(str, " AGG ");
 	_outPlanInfo(str, (Plan *) node);
-	appendStringInfo(str, " :aggstrategy %d :numCols %d ",
-					 (int) node->aggstrategy, node->numCols);
+	appendStringInfo(str, " :aggstrategy %d :numCols %d :numGroups %ld ",
+					 (int) node->aggstrategy, node->numCols, node->numGroups);
 }
 
 static void

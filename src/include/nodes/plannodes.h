@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: plannodes.h,v 1.59 2002/11/06 00:00:44 tgl Exp $
+ * $Id: plannodes.h,v 1.60 2002/11/06 22:31:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -349,6 +349,7 @@ typedef struct Agg
 	AggStrategy	aggstrategy;
 	int			numCols;		/* number of grouping columns */
 	AttrNumber *grpColIdx;		/* their indexes in the target list */
+	long		numGroups;		/* estimated number of groups in input */
 	AggState   *aggstate;
 } Agg;
 

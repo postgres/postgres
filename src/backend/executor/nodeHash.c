@@ -7,7 +7,8 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
- *	$Id: nodeHash.c,v 1.66 2002/09/04 20:31:18 momjian Exp $
+ * IDENTIFICATION
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeHash.c,v 1.67 2002/11/06 22:31:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,8 +31,6 @@
 #include "utils/memutils.h"
 #include "utils/lsyscache.h"
 
-
-static uint32 hashFunc(Datum key, int typLen, bool byVal);
 
 /* ----------------------------------------------------------------
  *		ExecHash
@@ -532,7 +531,7 @@ ExecHashGetBucket(HashJoinTable hashtable,
 
 	/*
 	 * We reset the eval context each time to reclaim any memory leaked in
-	 * the hashkey expression or hashFunc itself.
+	 * the hashkey expression or ComputeHashFunc itself.
 	 */
 	ResetExprContext(econtext);
 
@@ -550,9 +549,9 @@ ExecHashGetBucket(HashJoinTable hashtable,
 		bucketno = 0;
 	else
 	{
-		bucketno = hashFunc(keyval,
-							(int) hashtable->typLen,
-							hashtable->typByVal)
+		bucketno = ComputeHashFunc(keyval,
+								   (int) hashtable->typLen,
+								   hashtable->typByVal)
 			% (uint32) hashtable->totalbuckets;
 	}
 
@@ -622,16 +621,16 @@ ExecScanHashBucket(HashJoinState *hjstate,
 }
 
 /* ----------------------------------------------------------------
- *		hashFunc
+ *		ComputeHashFunc
  *
- *		the hash function for hash joins
+ *		the hash function for hash joins (also used for hash aggregation)
  *
  *		XXX this probably ought to be replaced with datatype-specific
  *		hash functions, such as those already implemented for hash indexes.
  * ----------------------------------------------------------------
  */
-static uint32
-hashFunc(Datum key, int typLen, bool byVal)
+uint32
+ComputeHashFunc(Datum key, int typLen, bool byVal)
 {
 	unsigned char *k;
 
@@ -681,7 +680,7 @@ hashFunc(Datum key, int typLen, bool byVal)
 		}
 		else
 		{
-			elog(ERROR, "hashFunc: Invalid typLen %d", typLen);
+			elog(ERROR, "ComputeHashFunc: Invalid typLen %d", typLen);
 			k = NULL;			/* keep compiler quiet */
 		}
 	}

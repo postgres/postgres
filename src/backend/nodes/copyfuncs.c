@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.215 2002/11/06 00:00:43 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.216 2002/11/06 22:31:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -524,6 +524,7 @@ _copyAgg(Agg *from)
 		memcpy(newnode->grpColIdx, from->grpColIdx,
 			   from->numCols * sizeof(AttrNumber));
 	}
+	newnode->numGroups = from->numGroups;
 
 	return newnode;
 }

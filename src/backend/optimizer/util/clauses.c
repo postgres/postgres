@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.109 2002/09/11 14:48:54 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.110 2002/11/06 22:31:24 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -46,6 +46,7 @@ typedef struct
 } check_subplans_for_ungrouped_vars_context;
 
 static bool contain_agg_clause_walker(Node *node, void *context);
+static bool contain_distinct_agg_clause_walker(Node *node, void *context);
 static bool pull_agg_clause_walker(Node *node, List **listptr);
 static bool expression_returns_set_walker(Node *node, void *context);
 static bool contain_subplans_walker(Node *node, void *context);
@@ -408,6 +409,32 @@ contain_agg_clause_walker(Node *node, void *context)
 		return true;			/* abort the tree traversal and return
 								 * true */
 	return expression_tree_walker(node, contain_agg_clause_walker, context);
+}
+
+/*
+ * contain_distinct_agg_clause
+ *	  Recursively search for DISTINCT Aggref nodes within a clause.
+ *
+ *	  Returns true if any DISTINCT aggregate found.
+ */
+bool
+contain_distinct_agg_clause(Node *clause)
+{
+	return contain_distinct_agg_clause_walker(clause, NULL);
+}
+
+static bool
+contain_distinct_agg_clause_walker(Node *node, void *context)
+{
+	if (node == NULL)
+		return false;
+	if (IsA(node, Aggref))
+	{
+		if (((Aggref *) node)->aggdistinct)
+			return true;		/* abort the tree traversal and return
+								 * true */
+	}
+	return expression_tree_walker(node, contain_distinct_agg_clause_walker, context);
 }
 
 /*

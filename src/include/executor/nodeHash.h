@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nodeHash.h,v 1.24 2002/06/20 20:29:49 momjian Exp $
+ * $Id: nodeHash.h,v 1.25 2002/11/06 22:31:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,5 +36,6 @@ extern void ExecChooseHashTableSize(double ntuples, int tupwidth,
 						int *virtualbuckets,
 						int *physicalbuckets,
 						int *numbatches);
+extern uint32 ComputeHashFunc(Datum key, int typLen, bool byVal);
 
 #endif   /* NODEHASH_H */

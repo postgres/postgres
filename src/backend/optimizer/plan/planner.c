@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.126 2002/11/06 00:00:44 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.127 2002/11/06 22:31:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -931,6 +931,7 @@ grouping_planner(Query *parse, double tuple_fraction)
 		AttrNumber *groupColIdx = NULL;
 		Path	   *cheapest_path;
 		Path	   *sorted_path;
+		bool		use_hashed_grouping = false;
 
 		/* Preprocess targetlist in case we are inside an INSERT/UPDATE. */
 		tlist = preprocess_targetlist(tlist,
@@ -1210,6 +1211,29 @@ grouping_planner(Query *parse, double tuple_fraction)
 		sort_pathkeys = canonicalize_pathkeys(parse, sort_pathkeys);
 
 		/*
+		 * Consider whether we might want to use hashed grouping.
+		 */
+		if (parse->groupClause)
+		{
+			/*
+			 * Executor doesn't support hashed aggregation with DISTINCT
+			 * aggregates.  (Doing so would imply storing *all* the input
+			 * values in the hash table, which seems like a certain loser.)
+			 */
+			if (parse->hasAggs &&
+				(contain_distinct_agg_clause((Node *) tlist) ||
+				 contain_distinct_agg_clause(parse->havingQual)))
+				use_hashed_grouping = false;
+			else
+			{
+#if 0							/* much more to do here */
+				/* TEMPORARY HOTWIRE FOR TESTING */
+				use_hashed_grouping = true;
+#endif
+			}
+		}
+
+		/*
 		 * Select the best path and create a plan to execute it.
 		 *
 		 * If no special sort order is wanted, or if the cheapest path is
@@ -1279,22 +1303,30 @@ grouping_planner(Query *parse, double tuple_fraction)
 		}
 
 		/*
-		 * If any aggregate is present, insert the Agg node, plus an explicit
-		 * sort if necessary.
+		 * Insert AGG or GROUP node if needed, plus an explicit sort step
+		 * if necessary.
 		 *
 		 * HAVING clause, if any, becomes qual of the Agg node
 		 */
-		if (parse->hasAggs)
+		if (use_hashed_grouping)
 		{
+			/* Hashed aggregate plan --- no sort needed */
+			result_plan = (Plan *) make_agg(tlist,
+											(List *) parse->havingQual,
+											AGG_HASHED,
+											length(parse->groupClause),
+											groupColIdx,
+											result_plan);
+			/* Hashed aggregation produces randomly-ordered results */
+			current_pathkeys = NIL;
+		}
+		else if (parse->hasAggs)
+		{
+			/* Plain aggregate plan --- sort if needed */
 			AggStrategy aggstrategy;
 
 			if (parse->groupClause)
 			{
-				aggstrategy = AGG_SORTED;
-				/*
-				 * Add an explicit sort if we couldn't make the path come out
-				 * the way the AGG node needs it.
-				 */
 				if (!pathkeys_contained_in(group_pathkeys, current_pathkeys))
 				{
 					result_plan = make_groupsortplan(parse,
@@ -1303,9 +1335,18 @@ grouping_planner(Query *parse, double tuple_fraction)
 													 result_plan);
 					current_pathkeys = group_pathkeys;
 				}
+				aggstrategy = AGG_SORTED;
+				/*
+				 * The AGG node will not change the sort ordering of its
+				 * groups, so current_pathkeys describes the result too.
+				 */
 			}
 			else
+			{
 				aggstrategy = AGG_PLAIN;
+				/* Result will be only one row anyway; no sort order */
+				current_pathkeys = NIL;
+			}
 
 			result_plan = (Plan *) make_agg(tlist,
 											(List *) parse->havingQual,
@@ -1313,10 +1354,6 @@ grouping_planner(Query *parse, double tuple_fraction)
 											length(parse->groupClause),
 											groupColIdx,
 											result_plan);
-			/*
-			 * Note: plain or grouped Agg does not affect any existing
-			 * sort order of the tuples
-			 */
 		}
 		else
 		{
