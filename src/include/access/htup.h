@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: htup.h,v 1.20 1999/07/04 05:44:56 momjian Exp $
+ * $Id: htup.h,v 1.21 1999/07/04 05:47:06 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -53,7 +53,7 @@ typedef struct HeapTupleHeaderData
 
 typedef HeapTupleHeaderData *HeapTupleHeader;
 
-#define MinTupleSize	(MAXALIGN(sizeof (PageHeaderData) + \
+#define MinTupleSize	(MAXALIGN(sizeof (PageHeaderData)) + \
 						 MAXALIGN(sizeof(HeapTupleHeaderData)) + \
 						 MAXALIGN(sizeof(char)))
 
