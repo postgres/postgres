@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Thu Mar  6 14:52:53 EST 2003
+Last updated:		Fri Mar  7 22:03:10 EST 2003
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -55,7 +55,6 @@ Administration
 * Add group object ownership, so groups can rename/drop/grant on objects,
   so we can implement roles
 * Add the concept of dataspaces/tablespaces [tablespaces]
-* Allow incremental backups
 * Allow CIDR format to be used in pg_hba.conf
 
 
@@ -75,11 +74,7 @@ Data Types
 * Disallow changing default expression of a SERIAL column
 * Allow infinite dates just like infinite timestamps
 * Allow pg_dump to dump sequences using NO_MAXVALUE and NO_MINVALUE
-
-
-* CONVERSION
-	o Allow better handling of numeric constants, type conversion 
-	  [typeconv]
+* Allow better handling of numeric constants, type conversion [typeconv]
 
 * ARRAYS
 	o Allow nulls in arrays
@@ -169,6 +164,7 @@ Commands
 * -Make a transaction-safe TRUNCATE (Rod)
 * Add ROLLUP, CUBE, GROUPING SETS options to GROUP BY
 * Add schema option to createlang
+* Allow savepoints / nested transactions [transactions] (Bruce)
 
 
 * ALTER
@@ -212,7 +208,6 @@ Commands
 	o Add SET SCHEMA
 	o Allow EXPLAIN EXECUTE to see prepared plans
 	o Allow SHOW of non-modifiable variables, like pg_controldata
-	o Add GUC parameter to control the maximum number of rewrite cycles
 
 * SERVER-SIDE LANGUAGES
 	o Allow PL/PgSQL's RAISE function to take expressions
@@ -224,8 +219,7 @@ Commands
 	  without using PL/PgSQL EXECUTE, needs cache prevention/invalidation
         o Fix PL/pgSQL RENAME to work on variables other than OLD/NEW
 	o Improve PL/PgSQL exception handling
-	o Allow parameters to be specified by name and type during 
-	  definition
+	o Allow parameters to be specified by name and type during definition
 	o Allow function parameters to be passed by name,
 	  get_employee_salary(emp_id => 12345, tax_year => 2001)
 	o Add PL/PgSQL packages
@@ -301,8 +295,6 @@ Dependency Checking
 Transactions
 ============
 
-* Overhaul bufmgr/lockmgr/transaction manager
-* Allow savepoints / nested transactions [transactions] (Bruce)
 
 
 Exotic Features
@@ -383,11 +375,10 @@ Write-Ahead Log
 * Turn off after-change writes if fsync is disabled (?)
 * Add WAL index reliability improvement to non-btree indexes
 * Find proper defaults for postgresql.conf WAL entries
-* Add checkpoint_min_warning postgresql.conf option to warn about checkpoints
-  that are too frequent
+* -Add checkpoint_min_warning postgresql.conf option to warn about checkpoints
+  that are too frequent (Bruce)
 * Allow xlog directory location to be specified during initdb, perhaps
   using symlinks
-* Allow pg_xlog to be moved without symlinks
 * Allow WAL information to recover corrupted pg_controldata
 
 
@@ -403,7 +394,7 @@ Optimizer / Executor
 * Allow ORDER BY ... LIMIT to select top values without sort or index
   using a sequential scan for highest/lowest values (Oleg)
 * -Inline simple SQL functions to avoid overhead (Tom)
-* Precompile SQL functions to avoid overhead (Neil)
+* -Precompile SQL functions to avoid overhead (Neil)
 * Add utility to compute accurate random_page_cost value
 * Improve ability to display optimizer analysis using OPTIMIZER_DEBUG
 * Use CHECK constraints to improve optimizer decisions
