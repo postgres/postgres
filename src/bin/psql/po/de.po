@@ -1,15 +1,16 @@
 # German message translation file for psql
 # Peter Eisentraut <peter_e@gmx.net>, 2001, 2002, 2003.
 #
-# $Header: /cvsroot/pgsql/src/bin/psql/po/de.po,v 1.7 2003/10/04 01:07:05 petere Exp $
+# $Header: /cvsroot/pgsql/src/bin/psql/po/de.po,v 1.8 2003/10/24 12:07:56 petere Exp $
 #
 # Use these quotes: »%s«
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 7.4\n"
-"POT-Creation-Date: 2003-10-04 02:15+0200\n"
-"PO-Revision-Date: 2003-10-04 02:16+0200\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2003-10-24 11:43+0200\n"
+"PO-Revision-Date: 2003-10-24 11:44+0200\n"
 "Last-Translator: Peter Eisentraut <peter_e@gmx.net>\n"
 "Language-Team: German <peter_e@gmx.net>\n"
 "MIME-Version: 1.0\n"
@@ -69,8 +70,8 @@ msgstr "Anfragepuffer wurde gelöscht."
 msgid "Wrote history to file \"%s\".\n"
 msgstr "Befehlsgeschichte in Datei »%s« geschrieben.\n"
 
-#: command.c:692 command.c:1149 command.c:1246 command.c:1964 common.c:81
-#: copy.c:88 copy.c:116 describe.c:51 mainloop.c:78 mainloop.c:341
+#: command.c:692 command.c:1149 command.c:1246 command.c:1964 common.c:86
+#: copy.c:88 copy.c:116 mainloop.c:78 mainloop.c:341 describe.c:51
 msgid "out of memory\n"
 msgstr "Speicher aufgebraucht\n"
 
@@ -89,7 +90,7 @@ msgstr "Zeitmessung ist aus."
 
 #: command.c:793 command.c:813 command.c:1011 command.c:1024 command.c:1035
 #: command.c:1606 command.c:1619 command.c:1631 command.c:1644 command.c:1658
-#: command.c:1680 command.c:1710 common.c:130 copy.c:378
+#: command.c:1680 command.c:1710 common.c:135 copy.c:378
 #, c-format
 msgid "%s: %s\n"
 msgstr "%s: %s\n"
@@ -107,7 +108,7 @@ msgstr "Parse-Fehler am Zeilenende\n"
 msgid "Password: "
 msgstr "Passwort: "
 
-#: command.c:1389 common.c:176 common.c:346 common.c:400 common.c:614
+#: command.c:1389 common.c:181 common.c:351 common.c:405 common.c:652
 #, c-format
 msgid "%s"
 msgstr "%s"
@@ -246,39 +247,39 @@ msgstr "\\pset: unbekannte Option: %s\n"
 msgid "\\!: failed\n"
 msgstr "\\!: fehlgeschlagen\n"
 
-#: common.c:74
+#: common.c:79
 #, c-format
 msgid "%s: xstrdup: cannot duplicate null pointer (internal error)\n"
 msgstr "%s: xstrdup: Versuch NULL-Zeiger zu kopieren (interner Fehler)\n"
 
-#: common.c:258
+#: common.c:263
 msgid "connection to server was lost\n"
 msgstr "Verbindung zum Server wurde verloren\n"
 
-#: common.c:262
+#: common.c:267
 msgid "The connection to the server was lost. Attempting reset: "
 msgstr "Die Verbindung zum Server wurde verloren.  Versuche Reset: "
 
-#: common.c:267
+#: common.c:272
 msgid "Failed.\n"
 msgstr "Fehlgeschlagen.\n"
 
-#: common.c:274
+#: common.c:279
 msgid "Succeeded.\n"
 msgstr "Erfolgreich.\n"
 
-#: common.c:376 common.c:582
+#: common.c:381 common.c:620
 msgid "You are currently not connected to a database.\n"
 msgstr "Sie sind gegenwärtig nicht mit einer Datenbank verbunden.\n"
 
-#: common.c:431
+#: common.c:436
 #, c-format
 msgid ""
 "Asynchronous notification \"%s\" received from server process with PID %d.\n"
 msgstr ""
 "Asynchrone Benachrichtigung »%s« vom Serverprozess mit PID %d empfangen.\n"
 
-#: common.c:534
+#: common.c:516
 msgid ""
 "Enter data to be copied followed by a newline.\n"
 "End with a backslash and a period on a line by itself."
@@ -286,12 +287,7 @@ msgstr ""
 "Geben Sie die zu kopierenden Daten ein, gefolgt von einem Zeilenende.\n"
 "Beenden Sie mit einem Backslash und einem Punkt alleine auf einer Zeile."
 
-#: common.c:553
-#, c-format
-msgid "Time: %.2f ms\n"
-msgstr "Zeit: %.2f ms\n"
-
-#: common.c:590
+#: common.c:628
 #, c-format
 msgid ""
 "***(Single step mode: verify command)"
@@ -305,6 +301,11 @@ msgstr ""
 "%s\n"
 "***(Drücken Sie die Eingabetaste um fortzufahren oder »x« um abzubrechen)"
 "*******\n"
+
+#: common.c:679
+#, c-format
+msgid "Time: %.3f ms\n"
+msgstr "Zeit: %.3f ms\n"
 
 #: copy.c:110
 msgid "\\copy: arguments required\n"
@@ -861,8 +862,8 @@ msgstr "%s: aktuelle Transaktion is abgebrochen\n"
 msgid "%s: unknown transaction status\n"
 msgstr "%s: unbekannter Transaktionsstatus\n"
 
-#: describe.c:106 describe.c:157 describe.c:230 describe.c:292 describe.c:339
-#: describe.c:438 describe.c:718 describe.c:1343 large_obj.c:278
+#: large_obj.c:278 describe.c:106 describe.c:157 describe.c:230 describe.c:292
+#: describe.c:339 describe.c:438 describe.c:718 describe.c:1345
 msgid "Description"
 msgstr "Beschreibung"
 
@@ -962,13 +963,13 @@ msgstr ""
 "\n"
 
 #: describe.c:105 describe.c:147 describe.c:217 describe.c:290 describe.c:384
-#: describe.c:438 describe.c:1336 describe.c:1442 describe.c:1490
+#: describe.c:438 describe.c:1338 describe.c:1444 describe.c:1492
 msgid "Schema"
 msgstr "Schema"
 
 #: describe.c:105 describe.c:147 describe.c:217 describe.c:290 describe.c:332
-#: describe.c:438 describe.c:1336 describe.c:1443 describe.c:1491
-#: describe.c:1586
+#: describe.c:438 describe.c:1338 describe.c:1445 describe.c:1493
+#: describe.c:1588
 msgid "Name"
 msgstr "Name"
 
@@ -992,7 +993,7 @@ msgstr "Ergebnisdatentyp"
 msgid "Argument data types"
 msgstr "Argumentdatentypen"
 
-#: describe.c:156 describe.c:332 describe.c:1338 describe.c:1587
+#: describe.c:156 describe.c:332 describe.c:1340 describe.c:1589
 msgid "Owner"
 msgstr "Eigentümer"
 
@@ -1044,7 +1045,7 @@ msgstr "Kodierung"
 msgid "List of databases"
 msgstr "Liste der Datenbanken"
 
-#: describe.c:384 describe.c:1353
+#: describe.c:384 describe.c:1355
 msgid "Table"
 msgstr "Tabelle"
 
@@ -1077,19 +1078,19 @@ msgstr "Operator"
 msgid "data type"
 msgstr "Datentyp"
 
-#: describe.c:512 describe.c:1337
+#: describe.c:512 describe.c:1339
 msgid "table"
 msgstr "Tabelle"
 
-#: describe.c:512 describe.c:1337
+#: describe.c:512 describe.c:1339
 msgid "view"
 msgstr "Sicht"
 
-#: describe.c:512 describe.c:1337
+#: describe.c:512 describe.c:1339
 msgid "index"
 msgstr "Index"
 
-#: describe.c:512 describe.c:1337
+#: describe.c:512 describe.c:1339
 msgid "sequence"
 msgstr "Sequenz"
 
@@ -1119,7 +1120,7 @@ msgstr "Keine Relation mit OID %s gefunden.\n"
 msgid "Column"
 msgstr "Spalte"
 
-#: describe.c:705 describe.c:1338 describe.c:1444
+#: describe.c:705 describe.c:1340 describe.c:1446
 msgid "Type"
 msgstr "Typ"
 
@@ -1193,158 +1194,153 @@ msgstr ""
 msgid "Rules"
 msgstr "Rules"
 
-#: describe.c:1084
+#: describe.c:1086
 msgid "Indexes:"
 msgstr "Indexe:"
 
-#: describe.c:1092
+#: describe.c:1094
 #, c-format
 msgid "    \"%s\""
 msgstr "    »%s«"
 
-#: describe.c:1098
+#: describe.c:1100
 msgid " primary key,"
 msgstr " Primärschlüssel,"
 
-#: describe.c:1100
+#: describe.c:1102
 msgid " unique,"
 msgstr " eindeutig,"
 
-#: describe.c:1118
+#: describe.c:1120
 msgid "Check constraints:"
 msgstr "Check-Constraints:"
 
-#: describe.c:1122
-#, c-format
-msgid "    \"%s\" CHECK %s"
-msgstr "    »%s« CHECK %s"
-
-#: describe.c:1133
-msgid "Foreign-key constraints:"
-msgstr "Fremdschlüssel-Constraints:"
-
-#: describe.c:1137
+#: describe.c:1124 describe.c:1139
 #, c-format
 msgid "    \"%s\" %s"
 msgstr "    »%s« %s"
 
-#: describe.c:1148
+#: describe.c:1135
+msgid "Foreign-key constraints:"
+msgstr "Fremdschlüssel-Constraints:"
+
+#: describe.c:1150
 msgid "Rules:"
 msgstr "Regeln:"
 
-#: describe.c:1167
+#: describe.c:1169
 msgid "Triggers:"
 msgstr "Trigger:"
 
-#: describe.c:1189
+#: describe.c:1191
 msgid "Inherits"
 msgstr "Erbt von"
 
-#: describe.c:1275
+#: describe.c:1277
 msgid "User name"
 msgstr "Benutzername"
 
-#: describe.c:1275
+#: describe.c:1277
 msgid "User ID"
 msgstr "Benutzer-ID"
 
-#: describe.c:1276
+#: describe.c:1278
 msgid "superuser, create database"
 msgstr "Superuser, Datenbanken erstellen"
 
-#: describe.c:1277
+#: describe.c:1279
 msgid "superuser"
 msgstr "Superuser"
 
-#: describe.c:1277
+#: describe.c:1279
 msgid "create database"
 msgstr "Datenbanken erstellen"
 
-#: describe.c:1278
+#: describe.c:1280
 msgid "Attributes"
 msgstr "Attribute"
 
-#: describe.c:1291
+#: describe.c:1293
 msgid "List of database users"
 msgstr "Liste der Datenbankbenutzer"
 
-#: describe.c:1338
+#: describe.c:1340
 msgid "special"
 msgstr "spezial"
 
-#: describe.c:1399
+#: describe.c:1401
 msgid "No matching relations found.\n"
 msgstr "Keine passenden Relationen gefunden\n"
 
-#: describe.c:1401
+#: describe.c:1403
 msgid "No relations found.\n"
 msgstr "Keine Relationen gefunden\n"
 
-#: describe.c:1406
+#: describe.c:1408
 msgid "List of relations"
 msgstr "Liste der Relationen"
 
-#: describe.c:1445
+#: describe.c:1447
 msgid "Modifier"
 msgstr "Attribute"
 
-#: describe.c:1459
+#: describe.c:1461
 msgid "List of domains"
 msgstr "Liste der Domänen"
 
-#: describe.c:1492
+#: describe.c:1494
 msgid "Source"
 msgstr "Quelle"
 
-#: describe.c:1493
+#: describe.c:1495
 msgid "Destination"
 msgstr "Ziel"
 
-#: describe.c:1494 describe.c:1551
+#: describe.c:1496 describe.c:1553
 msgid "yes"
 msgstr "ja"
 
-#: describe.c:1495 describe.c:1549
+#: describe.c:1497 describe.c:1551
 msgid "no"
 msgstr "nein"
 
-#: describe.c:1496
+#: describe.c:1498
 msgid "Default?"
 msgstr "Standard?"
 
-#: describe.c:1510
+#: describe.c:1512
 msgid "List of conversions"
 msgstr "Liste der Konversionen"
 
-#: describe.c:1545
+#: describe.c:1547
 msgid "Source type"
 msgstr "Quelltyp"
 
-#: describe.c:1546
+#: describe.c:1548
 msgid "Target type"
 msgstr "Zieltyp"
 
-#: describe.c:1547
+#: describe.c:1549
 msgid "(binary compatible)"
 msgstr "(binärkompatibel)"
 
-#: describe.c:1548
+#: describe.c:1550
 msgid "Function"
 msgstr "Funktion"
 
-#: describe.c:1550
+#: describe.c:1552
 msgid "in assignment"
 msgstr "in Zuweisung"
 
-#: describe.c:1552
+#: describe.c:1554
 msgid "Implicit?"
 msgstr "Implizit?"
 
-#: describe.c:1560
+#: describe.c:1562
 msgid "List of casts"
 msgstr "Liste der Typumwandlungen"
 
-#: describe.c:1601
+#: describe.c:1603
 msgid "List of schemas"
 msgstr "Liste der Schemas"
 
