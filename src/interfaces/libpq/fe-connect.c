@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-connect.c,v 1.285 2004/10/16 22:52:49 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-connect.c,v 1.286 2004/10/21 20:23:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,9 +18,9 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-#include <errno.h>
 #include <ctype.h>
 #include <time.h>
+#include <unistd.h>
 
 #ifndef HAVE_STRDUP
 #include "strdup.h"
@@ -50,6 +50,11 @@
 
 #include "libpq/ip.h"
 #include "mb/pg_wchar.h"
+
+#ifndef FD_CLOEXEC
+#define FD_CLOEXEC 1
+#endif
+
 
 #define PGPASSFILE ".pgpass"
 
@@ -767,28 +772,6 @@ update_db_info(PGconn *conn)
 
 
 /* ----------
- * connectMakeNonblocking -
- * Make a connection non-blocking.
- * Returns 1 if successful, 0 if not.
- * ----------
- */
-static int
-connectMakeNonblocking(PGconn *conn)
-{
-	if (!set_noblock(conn->sock))
-	{
-		char		sebuf[256];
-
-		printfPQExpBuffer(&conn->errorMessage,
-		libpq_gettext("could not set socket to non-blocking mode: %s\n"),
-						SOCK_STRERROR(SOCK_ERRNO, sebuf, sizeof(sebuf)));
-		return 0;
-	}
-
-	return 1;
-}
-
-/* ----------
  * connectNoDelay -
  * Sets the TCP_NODELAY socket option.
  * Returns 1 if successful, 0 if not.
@@ -1201,8 +1184,8 @@ keep_going:						/* We will come back to here until there
 
 					/*
 					 * Select socket options: no delay of outgoing data
-					 * for TCP sockets, and nonblock mode.	Fail if this
-					 * fails.
+					 * for TCP sockets, nonblock mode, close-on-exec.
+					 * Fail if any of this fails.
 					 */
 					if (!IS_AF_UNIX(addr_cur->ai_family))
 					{
@@ -1214,13 +1197,29 @@ keep_going:						/* We will come back to here until there
 							continue;
 						}
 					}
-					if (connectMakeNonblocking(conn) == 0)
+					if (!set_noblock(conn->sock))
 					{
+						printfPQExpBuffer(&conn->errorMessage,
+										  libpq_gettext("could not set socket to non-blocking mode: %s\n"),
+										  SOCK_STRERROR(SOCK_ERRNO, sebuf, sizeof(sebuf)));
 						closesocket(conn->sock);
 						conn->sock = -1;
 						conn->addr_cur = addr_cur->ai_next;
 						continue;
 					}
+
+#ifdef F_SETFD
+					if (fcntl(conn->sock, F_SETFD, FD_CLOEXEC) == -1)
+					{
+						printfPQExpBuffer(&conn->errorMessage,
+										  libpq_gettext("could not set socket to close-on-exec mode: %s\n"),
+										  SOCK_STRERROR(SOCK_ERRNO, sebuf, sizeof(sebuf)));
+						closesocket(conn->sock);
+						conn->sock = -1;
+						conn->addr_cur = addr_cur->ai_next;
+						continue;
+					}
+#endif /* F_SETFD */
 
 					/*
 					 * Start/make connection.  This should not block,
