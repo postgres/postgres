@@ -480,6 +480,8 @@ check_foreign_key()
 
 		relname = args[0];
 
+		sprintf(ident, "%s$%u", trigger->tgname, rel->rd_id);
+		plan = find_plan(ident, &FPlans, &nFPlans);
 		ret = SPI_execp(plan->splan[r], kvals, NULL, tcount);
 		/* we have no NULLs - so we pass   ^^^^  here */
 

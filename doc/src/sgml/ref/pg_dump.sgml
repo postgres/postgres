@@ -281,13 +281,13 @@ catalogs.
 <variablelist>
 <varlistentry>
 <term>
-rules and views
+rules
 <listitem>
 <para>
 <application>pg_dump</application> 
-does not understand user-defined rules and views and
+does not understand user-defined rules and
 will fail to dump them properly.  (This is due to the fact that
-rules are stored as plans in the catalogs and not textually).
+rules are stored as plans in the catalogs and not textually.)
 
 <varlistentry>
 <term>
