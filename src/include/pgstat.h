@@ -5,13 +5,11 @@
  *
  *	Copyright (c) 2001, PostgreSQL Global Development Group
  *
- *	$Id: pgstat.h,v 1.11 2002/12/05 04:04:51 momjian Exp $
+ *	$Id: pgstat.h,v 1.12 2003/01/09 18:00:24 tgl Exp $
  * ----------
  */
 #ifndef PGSTAT_H
 #define PGSTAT_H
-
-#include "miscadmin.h"
 
 /* ----------
  * Paths for the statistics files. The %s is replaced with the

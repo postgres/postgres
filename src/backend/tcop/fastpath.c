@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/fastpath.c,v 1.56 2003/01/07 22:32:10 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/fastpath.c,v 1.57 2003/01/09 18:00:23 tgl Exp $
  *
  * NOTES
  *	  This cruft is the server side of PQfn.
@@ -64,6 +64,7 @@
 #include "catalog/pg_proc.h"
 #include "libpq/libpq.h"
 #include "libpq/pqformat.h"
+#include "miscadmin.h"
 #include "tcop/fastpath.h"
 #include "utils/acl.h"
 #include "utils/lsyscache.h"

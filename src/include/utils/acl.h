@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: acl.h,v 1.49 2002/12/05 04:04:51 momjian Exp $
+ * $Id: acl.h,v 1.50 2003/01/09 18:00:24 tgl Exp $
  *
  * NOTES
  *	  For backward-compatibility purposes we have to allow there
@@ -22,10 +22,11 @@
 #ifndef ACL_H
 #define ACL_H
 
-#include "miscadmin.h"
 #include "nodes/parsenodes.h"
 #include "utils/array.h"
 
+
+/* typedef AclId is declared in c.h */
 
 #define ACL_ID_WORLD	0		/* placeholder for id in a WORLD acl item */
 

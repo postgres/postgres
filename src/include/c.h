@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: c.h,v 1.134 2002/12/16 16:22:46 tgl Exp $
+ * $Id: c.h,v 1.135 2003/01/09 18:00:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -358,7 +358,7 @@ typedef float float4;
 typedef double float8;
 
 /*
- * Oid, RegProcedure, TransactionId, CommandId
+ * Oid, RegProcedure, TransactionId, CommandId, AclId
  */
 
 /* typedef Oid is in postgres_ext.h */
@@ -375,6 +375,8 @@ typedef uint32 TransactionId;
 typedef uint32 CommandId;
 
 #define FirstCommandId	((CommandId) 0)
+
+typedef int32 AclId;			/* user and group identifiers */
 
 /*
  * Array indexing support

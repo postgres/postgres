@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_conversion.h,v 1.8 2002/12/04 05:18:35 momjian Exp $
+ * $Id: pg_conversion.h,v 1.9 2003/01/09 18:00:24 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -18,8 +18,6 @@
  */
 #ifndef PG_CONVERSION_H
 #define PG_CONVERSION_H
-
-#include "miscadmin.h"
 
 /* ----------------
  *		postgres.h contains the system type definitions and the

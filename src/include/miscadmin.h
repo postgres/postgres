@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: miscadmin.h,v 1.114 2002/12/09 18:21:43 tgl Exp $
+ * $Id: miscadmin.h,v 1.115 2003/01/09 18:00:24 tgl Exp $
  *
  * NOTES
  *	  some of the information in this file should be moved to
@@ -176,7 +176,7 @@ extern bool EnableSSL;
 extern bool SilentMode;
 extern int	MaxBackends;
 extern int	ReservedBackends;
-extern int	NBuffers;
+extern DLLIMPORT int	NBuffers;
 extern int	PostPortNumber;
 extern int	Unix_socket_permissions;
 extern char *Unix_socket_group;
@@ -200,13 +200,7 @@ extern char *ExpandDatabasePath(const char *path);
 extern void SetDatabaseName(const char *name);
 extern void SetDatabasePath(const char *path);
 
-/*
- * AclId		system identifier for the user, group, etc.
- */
-typedef int32 AclId;
-
 extern char *GetUserNameFromId(AclId userid);
-
 extern AclId GetUserId(void);
 extern void SetUserId(AclId userid);
 extern AclId GetSessionUserId(void);
