@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.34 1997/01/24 18:27:29 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.35 1997/01/26 15:30:23 scrappy Exp $
  *
  * NOTES
  *
@@ -251,7 +251,7 @@ PostmasterMain(int argc, char *argv[])
     DataDir = getenv("PGDATA");  /* default value */
     
     opterr = 0;
-    while ((opt = getopt(argc, argv, "a:B:b:D:dmM:no:p:Ss")) != EOF) {
+    while ((opt = getopt(argc, argv, "a:B:b:D:demM:no:p:Ss")) != EOF) {
         switch (opt) {
         case 'a': 
             /* Set the authentication system. */
@@ -294,13 +294,19 @@ PostmasterMain(int argc, char *argv[])
             else
                 DebugLvl = 1;
             break;
-          case 'm':
+        case 'e':
+            /*
+             * Use european date formats.
+             */
+            EuroDates = 1;
+            break;
+        case 'm':
             MultiplexedBackends = 1;
             MultiplexedBackendPort = atoi(optarg);
             break;
         case 'M':
             /* ignore this flag.  This may be passed in because the
-               program was run as 'postgres -M' instead of 'postmaster' */
+                program was run as 'postgres -M' instead of 'postmaster' */
             break;
         case 'n': 
             /* Don't reinit shared mem after abnormal exit */
@@ -1128,6 +1134,10 @@ DoExec(StartupInfo *packet, int portFd)
 #endif /* WIN32 */
 
     }
+
+    /* tell the backend we're using European dates */
+    if (EuroDates == 1)
+      av[ac++] = "-e";
     
     /* tell the multiplexed backend to start on a certain port */
     if (MultiplexedBackends) {

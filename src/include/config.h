@@ -21,7 +21,7 @@
 
 /* Define one for either <history.h> or <readline/history.h> 
  */
-/* #undef HAVE_HISTORY  */
+/* #undef HAVE_HISTORY */
 
 
 #define HAVE_SYS_SELECT_H
@@ -264,11 +264,6 @@ typedef unsigned char slock_t;
  */ 
 
 #define DEF_PGPORT "5432"
-
-/* turn this on if you prefer European style dates instead of American
- * style dates
- */
-/* #define EUROPEAN_DATES  */
 
 /*
  * If you do not plan to use Host based authentication,

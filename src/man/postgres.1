@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/postgres.1,v 1.4 1996/12/11 22:58:14 momjian Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/postgres.1,v 1.5 1997/01/26 15:32:20 scrappy Exp $
 .TH POSTGRES95 UNIX 12/08/96 Postgres95 Postgres95
 .SH NAME
 postgres \(em the Postgres backend server
@@ -24,6 +24,9 @@ data_directory]
 filedes]
 [\c
 .BR "-Q"
+]
+[\c
+.BR "-e"
 ]
 .br
 [\c
@@ -78,9 +81,6 @@ has allocated for the backend server processes that it starts.  If the
 backend is running standalone, this specifies the number of buffers to
 allocate.  This value defaults to 64.
 .TP
-.BR "-E"
-Echo all queries.
-.TP
 .BR "-F"
 Disable automatic fsync() call after each transaction.
 This option improves performance, but an operating system crash
@@ -95,6 +95,26 @@ useful for interactive use.
 .TP
 .BR "-Q"
 Specifies \*(lqquiet\*(rq mode.
+.TP
+.BR "-E"
+Echo all queries.
+.TP
+.BR "-e"
+The
+.IR "-e"
+option controls how dates are input to and output from the database.
+.IP
+If the
+.IR "-e"
+option is supplied, then all dates passed to and from the frontend
+processes will be assumed to be in
+.IR "European"
+format ie.
+.IR "DD-MM-YYYY"
+otherwise dates are input and output in
+.IR "American"
+format ie.
+.IR "MM-DD-YYYY"
 .TP
 .BR "-d" " debug_level"
 Turns on debugging at the numeric level

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/init/globals.c,v 1.4 1997/01/14 08:05:36 bryanh Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/init/globals.c,v 1.5 1997/01/26 15:31:29 scrappy Exp $
  *
  * NOTES
  *    Globals used all over the place should be declared here and not
@@ -64,6 +64,8 @@ bool		IsUnderPostmaster = false;
 bool		IsPostmaster = false;
 
 short		DebugLvl = 0;
+
+int             EuroDates = 0;
 
 char *IndexedCatalogNames[] = {
     AttributeRelationName,

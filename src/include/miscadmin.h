@@ -11,7 +11,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: miscadmin.h,v 1.4 1996/11/14 10:25:42 bryanh Exp $
+ * $Id: miscadmin.h,v 1.5 1997/01/26 15:32:06 scrappy Exp $
  *
  * NOTES
  *    some of the information in this file will be moved to
@@ -56,6 +56,8 @@ extern bool	    IsUnderPostmaster;
 extern bool	    IsPostmaster;
 
 extern short	    DebugLvl;
+
+extern int          EuroDates;
 
 extern Oid	    LastOidProcessed;	/* for query rewrite */
 

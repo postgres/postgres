@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/datetimes.c,v 1.7 1996/11/14 21:38:58 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/datetimes.c,v 1.8 1997/01/26 15:31:12 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,6 +15,7 @@
 #include <string.h>
 
 #include <postgres.h>
+#include <miscadmin.h>
 #include <utils/builtins.h>
 #include <utils/datetime.h>
 
@@ -50,19 +51,19 @@ date_in(char *datestr)
 # define CHECK_DATE_LEN(datestr) 1
 #endif
 
-#ifndef EUROPEAN_DATES
-    if (!CHECK_DATE_LEN(datestr) ||
-	sscanf(datestr, "%d%*c%d%*c%d", &m, &d, &y) != 3) {
-	elog(WARN, "date_in: date \"%s\" not of the form mm-dd-yyyy",
-	     datestr);
+    if (EuroDates == 1) { /* Expect european format dates */
+        if (!CHECK_DATE_LEN(datestr) ||
+          sscanf(datestr, "%d%*c%d%*c%d", &d, &m, &y) != 3) {
+            elog(WARN, "date_in: date \"%s\" not of the form dd-mm-yyyy",
+             datestr);
+        }
+    } else {
+        if (!CHECK_DATE_LEN(datestr) ||
+          sscanf(datestr, "%d%*c%d%*c%d", &m, &d, &y) != 3) {
+            elog(WARN, "date_in: date \"%s\" not of the form mm-dd-yyyy",
+              datestr);
+        }
     }
-#else
-    if (!CHECK_DATE_LEN(datestr) ||
-	sscanf(datestr, "%d%*c%d%*c%d", &d, &m, &y) != 3) {
-	elog(WARN, "date_in: date \"%s\" not of the form dd-mm-yyyy",
-	     datestr);
-    }
-#endif
     if (y < 0 || y > 32767)
 	elog(WARN, "date_in: year must be limited to values 0 through 32767 in \"%s\"", datestr);
     if (m < 1 || m > 12)
@@ -94,13 +95,12 @@ date_out(int4 dateVal)
     date = (DateADT*)&dateStore;
     dateStore = dateVal;
 
-#ifndef EUROPEAN_DATES
-    sprintf(datestr, "%02d-%02d-%04d",
-            (int)date->month, (int)date->day, (int)date->year);
-#else
-    sprintf(datestr, "%02d-%02d-%04d",
-            (int)date->day, (int)date->month, (int)date->year);
-#endif
+    if (EuroDates == 1) /* Output european format dates */
+        sprintf(datestr, "%02d-%02d-%04d",
+                (int)date->day, (int)date->month, (int)date->year);
+    else
+        sprintf(datestr, "%02d-%02d-%04d",
+                (int)date->month, (int)date->day, (int)date->year);
 
     return datestr;
 }

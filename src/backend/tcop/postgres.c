@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.25 1997/01/14 08:05:26 bryanh Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.26 1997/01/26 15:30:48 scrappy Exp $
  *
  * NOTES
  *    this is the "main" module of the postgres backend and
@@ -784,6 +784,7 @@ PostgresMain(int argc, char *argv[])
     int    flagQ;
     int    flagS;
     int    flagE;
+    int    flagEu;
     int    flag;
     
     char   *DBName = NULL; 
@@ -842,7 +843,7 @@ PostgresMain(int argc, char *argv[])
      *  parse command line arguments
      * ----------------
      */
-    flagC = flagQ = flagS = flagE = ShowStats = 0;
+    flagC = flagQ = flagS = flagE = flagEu = ShowStats = 0;
     ShowParserStats = ShowPlannerStats = ShowExecutorStats = 0;
     
     /* get hostname is either the environment variable PGHOST
@@ -856,7 +857,7 @@ PostgresMain(int argc, char *argv[])
     DataDir = getenv("PGDATA");   /* default */
     multiplexedBackend = false;   /* default */
 
-    while ((flag = getopt(argc, argv, "B:bCD:d:Ef:iLm:MNo:P:pQSst:x:F")) 
+    while ((flag = getopt(argc, argv, "B:bCD:d:Eef:iLm:MNo:P:pQSst:x:F")) 
            != EOF)
         switch (flag) {
             
@@ -907,6 +908,14 @@ PostgresMain(int argc, char *argv[])
             flagE = 1;
             break;
             
+        case 'e':
+            /* --------------------------
+             * Use european date formats.
+             * --------------------------
+             */
+            flagEu = 1;
+            break;
+
         case 'F':
             /* --------------------
              *  turn off fsync
@@ -1135,6 +1144,7 @@ PostgresMain(int argc, char *argv[])
     Noversion = flagC;
     Quiet = flagQ;
     EchoQuery = flagE;
+    EuroDates = flagEu;
     
     /* ----------------
      *  print flags
@@ -1146,6 +1156,7 @@ PostgresMain(int argc, char *argv[])
         printf("\tNoversion =    %c\n", Noversion ? 't' : 'f');
         printf("\tstable    =    %c\n", flagS     ? 't' : 'f');
         printf("\ttimings   =    %c\n", ShowStats ? 't' : 'f');
+        printf("\tdates     =    %s\n", EuroDates ? "European" : "Normal");
         printf("\tbufsize   =    %d\n", NBuffers);
         
         printf("\tquery echo =   %c\n", EchoQuery ? 't' : 'f');
@@ -1271,7 +1282,7 @@ PostgresMain(int argc, char *argv[])
      */
     if (IsUnderPostmaster == false) {
         puts("\nPOSTGRES backend interactive interface");
-        puts("$Revision: 1.25 $ $Date: 1997/01/14 08:05:26 $");
+        puts("$Revision: 1.26 $ $Date: 1997/01/26 15:30:48 $");
     }
     
     /* ----------------
