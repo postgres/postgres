@@ -2,7 +2,7 @@
 #
 # Makefile for the pltcl shared object
 #
-# $Header: /cvsroot/pgsql/src/pl/tcl/Makefile,v 1.23 2000/09/17 13:02:52 petere Exp $
+# $Header: /cvsroot/pgsql/src/pl/tcl/Makefile,v 1.24 2000/10/20 21:04:17 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -62,18 +62,15 @@ CC = $(TCL_CC)
 
 # Can choose either TCL_CFLAGS_OPTIMIZE or TCL_CFLAGS_DEBUG here, as
 # needed
-CFLAGS= $(TCL_CFLAGS_OPTIMIZE)
-
-CFLAGS+= $(TCL_SHLIB_CFLAGS) $(TCL_DEFS)
-
-CFLAGS+= -I$(top_srcdir)/src/include $(INCLUDES)
+override CPPFLAGS += $(TCL_DEFS)
+override CFLAGS = $(TCL_CFLAGS_OPTIMIZE) $(TCL_SHLIB_CFLAGS)
 
 
 # Uncomment the following to enable the unknown command lookup on the
 # first of all calls to the call handler. See the doc in the modules
 # directory about details.
 
-#CFLAGS+= -DPLTCL_UNKNOWN_SUPPORT
+#override CPPFLAGS+= -DPLTCL_UNKNOWN_SUPPORT
 
 
 #
@@ -90,6 +87,10 @@ ifdef EXPSUFF
 INFILES+= $(DLOBJS:.o=$(EXPSUFF))
 endif
 
+# Prevent removal of pltcl.o, being an intermediate file.  This would
+# not be wrong in general, but for some reason the next make run will
+# not realize this and rebuild it.
+.SECONDARY: pltcl.o
 
 # Provide dummy targets for the case where we can't build the shared library.
 

@@ -1,10 +1,10 @@
 #
-# $Header: /cvsroot/pgsql/contrib/spi/Makefile,v 1.17 2000/07/09 13:13:36 petere Exp $
+# $Header: /cvsroot/pgsql/contrib/spi/Makefile,v 1.18 2000/10/20 21:03:31 petere Exp $
 #
 
 subdir = contrib/spi
 top_builddir = ../..
-include ../../src/Makefile.global
+include $(top_builddir)/src/Makefile.global
 
 OBJS	= autoinc.o insert_username.o moddatetime.o refint.o timetravel.o
 DOCS	= README.spi
@@ -12,10 +12,11 @@ SQLS	= $(OBJS:.o=.sql)
 EXAMPLES= $(OBJS:.o=.example)
 MODS	= $(OBJS:.o=$(DLSUFFIX))
 
-CFLAGS += -I. $(CFLAGS_SL)
+override CPPFLAGS += -I$(srcdir)
+override CFLAGS += $(CFLAGS_SL)
 
 ifdef REFINT_VERBOSE
-CFLAGS+= -DREFINT_VERBOSE
+override CPPFLAGS+= -DREFINT_VERBOSE
 endif
 
 all: $(MODS) $(SQLS)

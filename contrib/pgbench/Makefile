@@ -1,13 +1,13 @@
 #
-# $Header: /cvsroot/pgsql/contrib/pgbench/Makefile,v 1.6 2000/08/31 16:09:09 petere Exp $
+# $Header: /cvsroot/pgsql/contrib/pgbench/Makefile,v 1.7 2000/10/20 21:03:26 petere Exp $
 #
 
 subdir = contrib/pgbench
 top_builddir = ../..
-include ../../src/Makefile.global
+include $(top_builddir)/src/Makefile.global
 
-CFLAGS	+= -I$(libpq_srcdir)
-LIBS	+= $(libpq)
+override CPPFLAGS += -I$(libpq_srcdir)
+override LIBS += $(libpq)
 
 all: pgbench
 

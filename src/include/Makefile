@@ -5,7 +5,7 @@
 # Install exported headers to the include directory (these headers are
 # the minimal ones needed to build loadable backend extensions).
 #
-# $Header: /cvsroot/pgsql/src/include/Makefile,v 1.4 2000/09/17 13:02:44 petere Exp $
+# $Header: /cvsroot/pgsql/src/include/Makefile,v 1.5 2000/10/20 21:04:03 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -14,10 +14,14 @@ top_builddir = ../..
 include $(top_builddir)/src/Makefile.global
 
 
-HEADERS := os.h config.h c.h postgres.h postgres_ext.h fmgr.h \
+srcdir_headers := c.h postgres.h postgres_ext.h fmgr.h \
 	libpq/pqcomm.h libpq/libpq-fs.h lib/dllist.h \
-	utils/geo_decls.h utils/elog.h utils/fmgroids.h utils/palloc.h \
+	utils/geo_decls.h utils/elog.h utils/palloc.h \
 	access/attnum.h executor/spi.h commands/trigger.h
+
+builddir_headers := os.h config.h utils/fmgroids.h
+
+HEADERS = $(srcdir_headers) $(builddir_headers)
 
 
 all: $(HEADERS)
@@ -35,8 +39,11 @@ $(top_builddir)/src/backend/utils/fmgroids.h: $(top_srcdir)/src/backend/utils/Ge
 
 
 install: all installdirs
-	for i in $(HEADERS); do \
-	  $(INSTALL_DATA) $(srcdir)/$$i $(DESTDIR)$(includedir)/$$i || exit; \
+	for file in $(srcdir_headers); do \
+	  $(INSTALL_DATA) $(srcdir)/$$file $(DESTDIR)$(includedir)/$$file || exit; \
+	done
+	for file in $(builddir_headers); do \
+	  $(INSTALL_DATA) $$file $(DESTDIR)$(includedir)/$$file || exit; \
 	done
 
 # Automatically pick out the needed subdirectories for the include

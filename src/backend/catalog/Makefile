@@ -2,7 +2,7 @@
 #
 # Makefile for catalog
 #
-# $Header: /cvsroot/pgsql/src/backend/catalog/Makefile,v 1.27 2000/10/08 03:53:13 momjian Exp $
+# $Header: /cvsroot/pgsql/src/backend/catalog/Makefile,v 1.28 2000/10/20 21:03:42 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -34,12 +34,15 @@ TEMPLATE1_BKI_SRCS := $(addprefix $(top_srcdir)/src/include/catalog/,\
 	pg_rewrite.h pg_listener.h pg_description.h indexing.h \
     )
 
+pg_includes := $(sort -I$(top_srcdir)/src/include -I$(top_builddir)/src/include)
 
-global.bki global.description: genbki.sh $(GLOBAL_BKI_SRCS) $(top_srcdir)/src/include/catalog/indexing.h
-	CPP='$(CPP)' AWK='$(AWK)' $(SHELL) $< $(BKIOPTS) -o global -I$(top_srcdir)/src/include $(GLOBAL_BKI_SRCS)
+global.bki global.description: genbki.sh $(GLOBAL_BKI_SRCS) $(top_srcdir)/src/include/catalog/indexing.h \
+    $(top_srcdir)/src/include/postgres_ext.h $(top_builddir)/src/include/config.h
+	CPP='$(CPP)' AWK='$(AWK)' $(SHELL) $< $(BKIOPTS) -o global $(pg_includes) $(GLOBAL_BKI_SRCS)
 
-template1.bki template1.description: genbki.sh $(TEMPLATE1_BKI_SRCS)
-	CPP='$(CPP)' AWK='$(AWK)' $(SHELL) $< $(BKIOPTS) -o template1 -I$(top_srcdir)/src/include $(TEMPLATE1_BKI_SRCS)
+template1.bki template1.description: genbki.sh $(TEMPLATE1_BKI_SRCS) \
+    $(top_srcdir)/src/include/postgres_ext.h $(top_builddir)/src/include/config.h
+	CPP='$(CPP)' AWK='$(AWK)' $(SHELL) $< $(BKIOPTS) -o template1 $(pg_includes) $(TEMPLATE1_BKI_SRCS)
 
 .PHONY: install-bki
 install-bki: $(BKIFILES) installdirs

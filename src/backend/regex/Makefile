@@ -4,7 +4,7 @@
 #    Makefile for regex
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/regex/Makefile,v 1.14 2000/08/31 16:10:25 petere Exp $
+#    $Header: /cvsroot/pgsql/src/backend/regex/Makefile,v 1.15 2000/10/20 21:03:46 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -12,7 +12,7 @@ subdir = src/backend/regex
 top_builddir = ../../..
 include $(top_builddir)/src/Makefile.global
 
-CPPFLAGS += -DPOSIX_MISTAKE 
+override CPPFLAGS += -DPOSIX_MISTAKE 
 
 DEBUGOBJ =
 
@@ -28,7 +28,7 @@ SUBSYS.o: $(OBJS)
 	$(LD) $(LDREL) $(LDOUT) SUBSYS.o $(OBJS)
 
 retest: retest.o SUBSYS.o $(DEBUGOBJ)
-	$(CC) $(CFLAGS) -o retest retest.o SUBSYS.o $(DEBUGOBJ)
+	$(CC) -o $@ $^ $(CFLAGS) $(LDFLAGS)
 
 depend dep:
 	$(CC) -MM $(CFLAGS) *.c >depend

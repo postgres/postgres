@@ -32,6 +32,11 @@ VERSION='7.1devel'
 AC_SUBST(VERSION)
 AC_DEFINE_UNQUOTED(PG_VERSION, "$VERSION")
 
+abs_top_srcdir=`cd $srcdir && pwd`
+AC_SUBST(abs_top_srcdir)
+abs_top_builddir=`pwd`
+AC_SUBST(abs_top_builddir)
+
 AC_CANONICAL_HOST
 AC_SUBST(host)
 AC_SUBST(host_cpu)
@@ -546,12 +551,12 @@ PGAC_ARG_OPTARG(with, CXX, [  --with-CXX              build C++ modules (libpq++
   AC_MSG_RESULT(yes)
   AC_PROG_CXX
   AC_PROG_CXXCPP
+  AC_SUBST(GXX)
   PGAC_CLASS_STRING
   PGAC_CXX_NAMESPACE_STD
 ],
 [AC_MSG_RESULT(no)])
 AC_SUBST(with_CXX)
-
 
 CPPFLAGS="$CPPFLAGS $INCLUDES"
 LDFLAGS="$LDFLAGS $PGSQL_LDFLAGS"
@@ -1041,6 +1046,13 @@ fi
 
 
 # Finally ready to produce output files ...
+
+if test x"$abs_top_srcdir" != x"$abs_top_builddir"; then
+  echo $ac_n "preparing build tree... $ac_c" 1>&6
+  /bin/sh "$srcdir/config/prep_buildtree" "$abs_top_srcdir" "$abs_top_builddir" \
+    || AC_MSG_ERROR(failed)
+  AC_MSG_RESULT(done)
+fi
 
 AC_OUTPUT(
 [

@@ -6,4 +6,5 @@ MK_NO_LORDER= true
 %.so: %.o
 	$(LD) -G -Bdynamic -shared -o $@ $< 
 
-CFLAGS+= -U_NO_XOPEN4 -woff 1164,1171,1185,1195,1552 -Wl,-woff,15 -Wl,-woff,84
+override CPPFLAGS += -U_NO_XOPEN4
+override CFLAGS += -woff 1164,1171,1185,1195,1552 -Wl,-woff,15 -Wl,-woff,84

@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/backend/Makefile,v 1.66 2000/10/07 18:43:22 petere Exp $
+# $Header: /cvsroot/pgsql/src/backend/Makefile,v 1.67 2000/10/20 21:03:39 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -58,7 +58,7 @@ $(OBJS): $(DIRS:%=%-recursive)
 
 .PHONY: $(DIRS:%=%-recursive)
 # Update the commonly used headers before building the subdirectories
-$(DIRS:%=%-recursive): $(top_srcdir)/src/include/parser/parse.h $(top_builddir)/src/include/utils/fmgroids.h
+$(DIRS:%=%-recursive): $(top_builddir)/src/include/parser/parse.h $(top_builddir)/src/include/utils/fmgroids.h
 	$(MAKE) -C $(subst -recursive,,$@) all
 
 
@@ -98,8 +98,9 @@ utils/fmgroids.h: utils/Gen_fmgrtab.sh $(top_srcdir)/src/include/catalog/pg_proc
 # up to date when we update the base file.
 
 $(top_builddir)/src/include/parser/parse.h: $(srcdir)/parser/parse.h
-	cd $(dir $@) && rm -f $(notdir $@) && \
-	    $(LN_S) ../../../$(subdir)/parser/parse.h .
+	prereqdir=`cd $(dir $<) && pwd` && \
+	  cd $(dir $@) && rm -f $(notdir $@) && \
+	  $(LN_S) $$prereqdir/$(notdir $<) .
 
 $(top_builddir)/src/include/utils/fmgroids.h: utils/fmgroids.h
 	cd $(dir $@) && rm -f $(notdir $@) && \
@@ -123,9 +124,9 @@ ifeq ($(MAKE_DLL), true)
 endif
 endif
 	$(MAKE) -C catalog install-bki
-	$(INSTALL_DATA) libpq/pg_hba.conf.sample $(DESTDIR)$(datadir)/pg_hba.conf.sample
-	$(INSTALL_DATA) libpq/pg_ident.conf.sample $(DESTDIR)$(datadir)/pg_ident.conf.sample
-	$(INSTALL_DATA) utils/misc/postgresql.conf.sample $(DESTDIR)$(datadir)/postgresql.conf.sample
+	$(INSTALL_DATA) $(srcdir)/libpq/pg_hba.conf.sample $(DESTDIR)$(datadir)/pg_hba.conf.sample
+	$(INSTALL_DATA) $(srcdir)/libpq/pg_ident.conf.sample $(DESTDIR)$(datadir)/pg_ident.conf.sample
+	$(INSTALL_DATA) $(srcdir)/utils/misc/postgresql.conf.sample $(DESTDIR)$(datadir)/postgresql.conf.sample
 
 installdirs:
 	$(mkinstalldirs) $(DESTDIR)$(bindir) $(DESTDIR)$(libdir) $(DESTDIR)$(datadir)

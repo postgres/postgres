@@ -1,5 +1,5 @@
 # -*-makefile-*-
-# $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.100 2000/10/10 21:22:21 petere Exp $
+# $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.101 2000/10/20 21:03:38 petere Exp $
 
 #------------------------------------------------------------------------------
 # All PostgreSQL makefiles include this file and use the variables it sets,
@@ -18,7 +18,7 @@
 #
 # Meta configuration
 
-.PHONY: all install installdirs uninstall dep depend clean distclean maintainer-clean distprep check installcheck
+.PHONY: all install installdirs uninstall clean distclean maintainer-clean distprep check installcheck
 .SILENT: installdirs
 
 # make `all' the default target
@@ -31,15 +31,18 @@ all:
 # PostgreSQL version number
 VERSION = @VERSION@
 
-# This should be changed once we have separate build dirs.
-top_srcdir = $(top_builddir)
+# Support for VPATH builds
+abs_top_srcdir = @abs_top_srcdir@
+abs_top_builddir = @abs_top_builddir@
 
-ifeq ($(top_builddir), $(top_srcdir))
+ifeq ($(abs_top_builddir), $(abs_top_srcdir))
+top_srcdir = $(top_builddir)
 srcdir = .
 else
+top_srcdir = $(abs_top_srcdir)
 srcdir = $(top_srcdir)/$(subdir)
-endif
 VPATH = $(srcdir)
+endif
 
 
 ##########################################################################
@@ -127,17 +130,23 @@ TK_CONFIG_SH = @TK_CONFIG_SH@
 
 # Compilers
 
-CC = @CC@
 CPP = @CPP@
-GCC = @GCC@
 CPPFLAGS = @CPPFLAGS@
-CFLAGS = -I$(top_srcdir)/src/include $(CPPFLAGS) @CFLAGS@
-CFLAGS_SL = @SHARED_LIB@
-CXX = @CXX@
-CXXFLAGS = @CXXFLAGS@ @INCLUDES@
+override CPPFLAGS += $(sort -I$(top_srcdir)/src/include -I$(top_builddir)/src/include)
 
+CC = @CC@
+GCC = @GCC@
+CFLAGS = @CFLAGS@
+CFLAGS_SL = @SHARED_LIB@
 ifeq ($(GCC), yes)
   CFLAGS += -Wall -Wmissing-prototypes -Wmissing-declarations
+endif
+
+CXX = @CXX@
+GXX = @GXX@
+CXXFLAGS = @CXXFLAGS@
+ifeq ($(GXX), yes)
+  CXXFLAGS += -Wall
 endif
 
 # Kind-of compilers
@@ -220,7 +229,7 @@ libpq_builddir = $(top_builddir)/src/interfaces/libpq
 libpq = -L$(libpq_builddir) -lpq
 
 libpgeasy_srcdir = $(top_srcdir)/src/interfaces/libpgeasy
-libpgeasy_builddir = $(top_builddir/src/interfaces/libpgeasy
+libpgeasy_builddir = $(top_builddir)/src/interfaces/libpgeasy
 libpgeasy = -L$(libpgeasy_builddir) -lpgeasy
 
 

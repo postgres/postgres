@@ -1,0 +1,33 @@
+#! /bin/sh
+
+# This script prepares a PostgreSQL build tree.  It is intended
+# to be run by the configure script.
+
+set -e
+me=`basename $0`
+
+help="\
+Usage: $me sourcetree [buildtree]"
+
+if test -z "$1"; then
+    echo "$help" 1>&2
+    exit 1
+elif test x"$1" = x"--help"; then
+    echo "$help"
+    exit 0
+fi
+sourcetree=$1
+
+buildtree=${2:-'.'}
+
+for item in `find "$sourcetree" -type d -\( -name CVS -prune -o -print -\)`; do
+    subdir=`expr "$item" : "$sourcetree\(.*\)"` || true
+    mkdir -p "$buildtree/$subdir"
+done
+
+for item in `find "$sourcetree" -name Makefile -o -name GNUmakefile`; do
+    subdir=`expr "$item" : "$sourcetree\(.*\)"` || true
+    if test ! -e "${item}.in"; then
+        ln -fs "$item" "$buildtree/$subdir"
+    fi
+done

@@ -1,5 +1,5 @@
 #
-# $Header: /cvsroot/pgsql/contrib/fulltextindex/Attic/Makefile,v 1.7 2000/07/09 13:13:07 petere Exp $
+# $Header: /cvsroot/pgsql/contrib/fulltextindex/Attic/Makefile,v 1.8 2000/10/20 21:03:10 petere Exp $
 #
 
 subdir = contrib/fulltextindex
@@ -9,7 +9,8 @@ include ../../src/Makefile.global
 NAME	:= fti
 SONAME	:= $(NAME)$(DLSUFFIX)
 
-CFLAGS += -I. $(CFLAGS_SL)
+override CPPFLAGS += -I$(srcdir)
+override CFLAGS += $(CFLAGS_SL)
 
 all: $(SONAME) $(NAME).sql
 

@@ -1,9 +1,7 @@
-# install creates intermediate directories
-NO_BEFOREINSTL= true
 SHELL=/bin/sh5
 
 #
 # "-G 0" works for both DEC cc and GNU cc.
 #
 %.so: %.c
-	$(CC) -c -G 0 $(CFLAGS) -o $@ $<
+	$(CC) -c -G 0 $(CPPFLAGS) $(CFLAGS) -o $@ $<

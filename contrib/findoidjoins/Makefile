@@ -1,13 +1,13 @@
 #
-# $Header: /cvsroot/pgsql/contrib/findoidjoins/Attic/Makefile,v 1.9 2000/08/31 16:08:59 petere Exp $
+# $Header: /cvsroot/pgsql/contrib/findoidjoins/Attic/Makefile,v 1.10 2000/10/20 21:03:06 petere Exp $
 #
 
 subdir = contrib/findoidjoins
 top_builddir = ../..
-include ../../src/Makefile.global
+include $(top_builddir)/src/Makefile.global
 
-CFLAGS	+= -I$(libpgeasy_srcdir) -I$(libpq_srcdir)
-LIBS	+= $(libpgeasy)
+override CPPFLAGS += -I$(libpgeasy_srcdir) -I$(libpq_srcdir)
+override LIBS += $(libpgeasy)
 
 all: findoidjoins
 

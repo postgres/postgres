@@ -1,5 +1,5 @@
 #
-# $Header: /cvsroot/pgsql/contrib/mSQL-interface/Attic/Makefile,v 1.5 2000/08/31 16:09:00 petere Exp $
+# $Header: /cvsroot/pgsql/contrib/mSQL-interface/Attic/Makefile,v 1.6 2000/10/20 21:03:18 petere Exp $
 #
 
 subdir = contrib/mSQL-interface
@@ -11,7 +11,7 @@ SO_MAJOR_VERSION := 0
 SO_MINOR_VERSION := 0
 OBJS	:= mpgsql.o
 
-CFLAGS	+= -I$(libpq_srcdir)
+override CPPFLAGS += -I$(libpq_srcdir)
 
 include $(top_srcdir)/src/Makefile.shlib
 

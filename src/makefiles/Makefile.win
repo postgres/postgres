@@ -1,4 +1,4 @@
-# $Header: /cvsroot/pgsql/src/makefiles/Attic/Makefile.win,v 1.5 2000/09/29 13:36:50 petere Exp $
+# $Header: /cvsroot/pgsql/src/makefiles/Attic/Makefile.win,v 1.6 2000/10/20 21:04:13 petere Exp $
 LDFLAGS+= -g
 DLLTOOL= dlltool
 DLLWRAP= dllwrap
@@ -18,5 +18,5 @@ LIBS:=$(filter-out -lm -lc, $(LIBS))
 
 curdir:=$(shell pwd)
 ifeq ($(findstring backend,$(curdir)), backend)
-CPPFLAGS+= -DBUILDING_DLL=1
+override CPPFLAGS+= -DBUILDING_DLL=1
 endif

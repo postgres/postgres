@@ -2,7 +2,7 @@
 #
 # Makefile for src/interfaces/libpgeasy
 #
-# $Header: /cvsroot/pgsql/src/interfaces/libpgeasy/Attic/Makefile,v 1.3 2000/09/17 13:02:48 petere Exp $
+# $Header: /cvsroot/pgsql/src/interfaces/libpgeasy/Attic/Makefile,v 1.4 2000/10/20 21:04:07 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -16,7 +16,7 @@ NAME= pgeasy
 SO_MAJOR_VERSION= 2
 SO_MINOR_VERSION= 1
 
-CPPFLAGS += -I$(libpq_srcdir)
+override CPPFLAGS += -I$(libpq_srcdir)
 
 OBJS= libpgeasy.o halt.o
 

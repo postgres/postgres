@@ -2,7 +2,7 @@
 #
 # GNUMakefile for psqlodbc (Postgres ODBC driver)
 #
-# $Header: /cvsroot/pgsql/src/interfaces/odbc/Attic/GNUmakefile,v 1.4 2000/09/18 20:11:37 petere Exp $
+# $Header: /cvsroot/pgsql/src/interfaces/odbc/Attic/GNUmakefile,v 1.5 2000/10/20 21:04:13 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -15,7 +15,7 @@ NAME = psqlodbc
 SO_MAJOR_VERSION = 0
 SO_MINOR_VERSION = 26
 
-CPPFLAGS += -I$(srcdir) -DHAVE_CONFIG_H -DODBCINSTDIR='"$(odbcinst_ini_dir)"'
+override CPPFLAGS += -I$(srcdir) -DHAVE_CONFIG_H -DODBCINSTDIR='"$(odbcinst_ini_dir)"'
 
 
 OBJS = info.o bind.o columninfo.o connection.o convert.o drvconn.o \
@@ -35,22 +35,14 @@ LDFLAGS_SL+= $(LDFLAGS_ODBC)
 odbc_headers = isql.h isqlext.h iodbc.h
 odbc_includedir = $(includedir)/iodbc
 
-install: all installdirs install-headers install-ini install-lib install-data
+install: all installdirs
+	for i in $(odbc_headers); do $(INSTALL_DATA) $(srcdir)/$$i $(DESTDIR)$(odbc_includedir)/$$i || exit 1; done
+	$(INSTALL_DATA) $(srcdir)/odbcinst.ini $(DESTDIR)$(odbcinst_ini_dir)/odbcinst.ini
+	$(INSTALL_DATA) $(srcdir)/odbc.sql $(DESTDIR)$(datadir)/odbc.sql
+	$(MAKE) install-lib
 
 installdirs:
 	$(mkinstalldirs) $(DESTDIR)$(odbc_includedir) $(DESTDIR)$(libdir) $(DESTDIR)$(odbcinst_ini_dir) $(DESTDIR)$(datadir)
-
-.PHONY: install-headers
-install-headers: $(odbc_headers)
-	for i in $^; do $(INSTALL_DATA) $$i $(DESTDIR)$(odbc_includedir)/$$i || exit 1; done
-
-.PHONY: install-ini
-install-ini: odbcinst.ini
-	$(INSTALL_DATA) $< $(DESTDIR)$(odbcinst_ini_dir)/$<
-
-.PHONY: install-data
-install-data: odbc.sql
-	$(INSTALL_DATA) $< $(DESTDIR)$(datadir)/$<
 
 uninstall: uninstall-lib
 	rm -f $(addprefix $(DESTDIR)$(odbc_includedir)/, $(odbc_headers))

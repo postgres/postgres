@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/bin/pg_dump/Makefile,v 1.25 2000/09/17 13:02:36 petere Exp $
+# $Header: /cvsroot/pgsql/src/bin/pg_dump/Makefile,v 1.26 2000/10/20 21:03:56 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -15,8 +15,7 @@ include $(top_builddir)/src/Makefile.global
 OBJS= pg_backup_archiver.o pg_backup_db.o pg_backup_custom.o pg_backup_files.o \
        pg_backup_null.o pg_backup_tar.o $(STRDUP)
 
-CPPFLAGS+= -I$(libpq_srcdir)
-LIBS+= -lz
+override CPPFLAGS+= -I$(libpq_srcdir)
 
 all: submake pg_dump pg_restore pg_dumpall
 
@@ -44,7 +43,7 @@ install: all installdirs
 	$(INSTALL_PROGRAM) pg_dump$(X) $(DESTDIR)$(bindir)/pg_dump$(X)
 	$(INSTALL_PROGRAM) pg_restore$(X) $(DESTDIR)$(bindir)/pg_restore$(X)
 	$(INSTALL_SCRIPT) pg_dumpall $(DESTDIR)$(bindir)/pg_dumpall
-	$(INSTALL_SCRIPT) pg_upgrade $(DESTDIR)$(bindir)/pg_upgrade
+	$(INSTALL_SCRIPT) $(srcdir)/pg_upgrade $(DESTDIR)$(bindir)/pg_upgrade
 
 installdirs:
 	$(mkinstalldirs) $(DESTDIR)$(bindir)

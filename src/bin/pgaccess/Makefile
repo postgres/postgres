@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/bin/pgaccess/Attic/Makefile,v 1.13 2000/09/25 22:22:56 petere Exp $
+# $Header: /cvsroot/pgsql/src/bin/pgaccess/Attic/Makefile,v 1.14 2000/10/20 21:03:58 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -24,11 +24,11 @@ pgaccess: pgaccess.sh $(top_builddir)/src/Makefile.global
 
 install: all installdirs
 	$(INSTALL_SCRIPT) pgaccess $(DESTDIR)$(bindir)/pgaccess
-	$(INSTALL_SCRIPT) main.tcl $(DESTDIR)$(pgaccessdir)
-	for i in lib/*.tcl; do $(INSTALL_DATA) $$i $(DESTDIR)$(pgaccessdir)/lib || exit 1; done
-	for i in lib/help/*.hlp; do $(INSTALL_DATA) $$i $(DESTDIR)$(pgaccessdir)/lib/help || exit 1; done
-	for i in lib/languages/[a-z]*; do $(INSTALL_DATA) $$i $(DESTDIR)$(pgaccessdir)/lib/languages || exit 1; done
-	for i in images/*.gif; do $(INSTALL_DATA) $$i $(DESTDIR)$(pgaccessdir)/images || exit 1; done
+	$(INSTALL_SCRIPT) $(srcdir)/main.tcl $(DESTDIR)$(pgaccessdir)
+	for i in $(srcdir)/lib/*.tcl; do $(INSTALL_DATA) $$i $(DESTDIR)$(pgaccessdir)/lib || exit 1; done
+	for i in $(srcdir)/lib/help/*.hlp; do $(INSTALL_DATA) $$i $(DESTDIR)$(pgaccessdir)/lib/help || exit 1; done
+	for i in $(srcdir)/lib/languages/[a-z]*; do $(INSTALL_DATA) $$i $(DESTDIR)$(pgaccessdir)/lib/languages || exit 1; done
+	for i in $(srcdir)/images/*.gif; do $(INSTALL_DATA) $$i $(DESTDIR)$(pgaccessdir)/images || exit 1; done
 
 installdirs:
 	$(mkinstalldirs) $(DESTDIR)$(bindir) $(DESTDIR)$(pgaccessdir)/lib/help $(DESTDIR)$(pgaccessdir)/lib/languages $(DESTDIR)$(pgaccessdir)/images

@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/interfaces/libpq++/Attic/Makefile,v 1.25 2000/09/17 13:02:50 petere Exp $
+# $Header: /cvsroot/pgsql/src/interfaces/libpq++/Attic/Makefile,v 1.26 2000/10/20 21:04:12 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -16,8 +16,7 @@ NAME= pq++
 SO_MAJOR_VERSION= 3
 SO_MINOR_VERSION= 1
 
-SRCHEADERDIR = $(top_srcdir)/src/include
-CXXFLAGS+= -I$(SRCHEADERDIR) -I$(libpq_srcdir)
+override CPPFLAGS += -I$(libpq_srcdir)
 
 OBJS = pgconnection.o pgdatabase.o pgtransdb.o pgcursordb.o pglobject.o 
 
@@ -29,35 +28,29 @@ endif
 
 # For CC on IRIX, must use CC as linker/archiver of C++ libraries
 ifeq ($(PORTNAME), irix5)
-  ifeq ($(CXX), CC)
+  ifneq ($(GXX), yes)
     AR		:= CC
     AROPT	:= -ar -o
     LD		:= CC
   endif
 endif
 # Same for Solaris with native compiler
-ifeq ($(PORTNAME), solaris_sparc)
-  ifeq ($(CXX), CC)
+ifeq ($(PORTNAME), solaris)
+  ifneq ($(GXX), yes)
     AR		:= CC
     AROPT	:= -xar -o
     LD		:= CC
   endif
 endif
-ifeq ($(PORTNAME), solaris_i386)
-  ifeq ($(CXX), CC)
-    AR		:= CC
-    AROPT	:= -xar -o
-    LD		:= CC
-  endif
-endif
+
 
 all: all-lib
 
 # Shared library stuff
-include $(top_builddir)/src/Makefile.shlib
+include $(top_srcdir)/src/Makefile.shlib
 
 # Pull shared-lib CFLAGS into CXXFLAGS
-CXXFLAGS+= $(CFLAGS_SL)
+override CXXFLAGS+= $(CFLAGS_SL)
 
 
 .PHONY: examples
@@ -88,7 +81,7 @@ clean distclean maintainer-clean: clean-lib
 
 
 dep depend:
-	$(CXX) -MM $(CXXFLAGS) *.cc >depend
+	$(CXX) -MM $(CPPFLAGS) $(CXXFLAGS) *.cc >depend
 
 ifeq (depend,$(wildcard depend))
 include depend

@@ -10,7 +10,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/catalog/Attic/genbki.sh,v 1.16 2000/07/09 13:16:12 petere Exp $
+#    $Header: /cvsroot/pgsql/src/backend/catalog/Attic/genbki.sh,v 1.17 2000/10/20 21:03:42 petere Exp $
 #
 # NOTES
 #    non-essential whitespace is removed from the generated file.
@@ -25,7 +25,7 @@
 CMDNAME=`basename $0`
 
 BKIOPTS=
-INCLUDE_DIR=
+INCLUDE_DIRS=
 OUTPUT_PREFIX=
 INFILES=
 
@@ -42,10 +42,11 @@ do
             BKIOPTS="$BKIOPTS $1"
             ;;
         -I)
-            INCLUDE_DIR="$2"
+            INCLUDE_DIRS="$INCLUDE_DIRS $2"
             shift;;
         -I*)
-            INCLUDE_DIR=`echo $1 | sed -e 's/^-I//'`
+            arg=`echo $1 | sed -e 's/^-I//'`
+            INCLUDE_DIRS="$INCLUDE_DIRS $arg"
             ;;
         -o)
             OUTPUT_PREFIX="$2"
@@ -91,7 +92,7 @@ if [ x"$OUTPUT_PREFIX" = x"" ] ; then
     exit 1
 fi
 
-if [ x"$INCLUDE_DIR" = x"" ] ; then
+if [ x"$INCLUDE_DIRS" = x"" ] ; then
     echo "$CMDNAME: path to include directory unknown" 1>&2
     exit 1
 fi
@@ -113,17 +114,27 @@ trap "rm -f $TMPFILE" 0 1 2 3 15
 
 
 # Get NAMEDATALEN from postgres_ext.h
-NAMEDATALEN=`grep '#define[ 	]*NAMEDATALEN' $INCLUDE_DIR/postgres_ext.h | awk '{ print $3 }'`
+for dir in $INCLUDE_DIRS; do
+    if [ -f "$dir/postgres_ext.h" ]; then
+        NAMEDATALEN=`grep '#define[ 	]*NAMEDATALEN' $dir/postgres_ext.h | $AWK '{ print $3 }'`
+        break
+    fi
+done
 
 # Get INDEX_MAX_KEYS from config.h (who needs consistency?)
-INDEXMAXKEYS=`grep '#define[ 	]*INDEX_MAX_KEYS' $INCLUDE_DIR/config.h | awk '{ print $3 }'`
+for dir in $INCLUDE_DIRS; do
+    if [ -f "$dir/config.h" ]; then
+        INDEXMAXKEYS=`grep '#define[ 	]*INDEX_MAX_KEYS' $dir/config.h | $AWK '{ print $3 }'`
+        break
+    fi
+done
 
 # NOTE: we assume here that FUNC_MAX_ARGS has the same value as INDEX_MAX_KEYS,
 # and don't read it separately from config.h.  This is OK because both of them
 # must be equal to the length of oidvector.
 
-INDEXMAXKEYS2=`expr $INDEXMAXKEYS '*' 2`
-INDEXMAXKEYS4=`expr $INDEXMAXKEYS '*' 4`
+INDEXMAXKEYS2=`expr $INDEXMAXKEYS '*' 2` || exit
+INDEXMAXKEYS4=`expr $INDEXMAXKEYS '*' 4` || exit
 
 # ----------------
 # 	strip comments and trash from .h before we generate

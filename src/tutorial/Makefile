@@ -4,7 +4,7 @@
 #    Makefile for tutorial
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/tutorial/Makefile,v 1.11 2000/08/31 16:12:33 petere Exp $
+#    $Header: /cvsroot/pgsql/src/tutorial/Makefile,v 1.12 2000/10/20 21:04:27 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -12,7 +12,7 @@ subdir = src/tutorial
 top_builddir = ../..
 include $(top_builddir)/src/Makefile.global
 
-CFLAGS+= $(CFLAGS_SL)
+override CFLAGS+= $(CFLAGS_SL)
 
 #
 # DLOBJS is the dynamically-loaded object files.  The "funcs" queries

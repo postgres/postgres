@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/Makefile,v 1.22 2000/09/25 22:23:00 petere Exp $
+# $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/Makefile,v 1.23 2000/10/20 21:04:10 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -16,7 +16,7 @@ NAME= pgtcl
 SO_MAJOR_VERSION= 2
 SO_MINOR_VERSION= 1
 
-CPPFLAGS += -I$(libpq_srcdir)
+override CPPFLAGS += -I$(libpq_srcdir)
 
 OBJS= pgtcl.o pgtclCmds.o pgtclId.o
 

@@ -13,7 +13,7 @@
 # be converted to Method 2.  
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/port/Attic/Makefile.in,v 1.26 2000/10/09 16:42:53 petere Exp $
+#    $Header: /cvsroot/pgsql/src/backend/port/Attic/Makefile.in,v 1.27 2000/10/20 21:03:45 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -46,7 +46,7 @@ beos.dir:
 	$(MAKE) -C beos all
 
 tas.o: tas.s
-	$(CC) $(CFLAGS) -c tas.s
+	$(CC) $(CFLAGS) -c $<
 
 distclean clean:
 	rm -f SUBSYS.o $(OBJS)

@@ -5,7 +5,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/bin/pgtclsh/Attic/Makefile,v 1.33 2000/09/25 22:22:58 petere Exp $
+# $Header: /cvsroot/pgsql/src/bin/pgtclsh/Attic/Makefile,v 1.34 2000/10/20 21:04:00 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -25,7 +25,7 @@ libpgtcl_srcdir = $(top_srcdir)/src/interfaces/libpgtcl
 libpgtcl_builddir = $(top_builddir)/src/interfaces/libpgtcl
 libpgtcl = -L$(libpgtcl_builddir) -lpgtcl
 
-CPPFLAGS += -I$(libpgtcl_srcdir) $(TK_XINCLUDES)
+override CPPFLAGS += -I$(libpgtcl_srcdir) $(TK_XINCLUDES)
 
 
 # If we are here then Tcl is available

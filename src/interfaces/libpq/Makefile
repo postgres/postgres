@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/interfaces/libpq/Makefile,v 1.44 2000/10/20 03:45:35 tgl Exp $
+# $Header: /cvsroot/pgsql/src/interfaces/libpq/Makefile,v 1.45 2000/10/20 21:04:11 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -17,7 +17,7 @@ NAME= pq
 SO_MAJOR_VERSION= 2
 SO_MINOR_VERSION= 1
 
-CFLAGS += -DFRONTEND -I$(srcdir) -DSYSCONFDIR='"$(sysconfdir)"'
+override CPPFLAGS += -DFRONTEND -I$(srcdir) -DSYSCONFDIR='"$(sysconfdir)"'
 
 OBJS= fe-auth.o fe-connect.o fe-exec.o fe-misc.o fe-print.o fe-lobj.o \
       pqexpbuffer.o dllist.o pqsignal.o $(SNPRINTF) $(INET_ATON)
@@ -77,7 +77,7 @@ installdirs:
 	$(mkinstalldirs) $(DESTDIR)$(libdir) $(DESTDIR)$(includedir)
 
 uninstall: uninstall-lib
-	rm -f $(addprefix ($DESTDIR)$(includedir)/, libpq-fe.h libpq-int.h pqexpbuffer.h)
+	rm -f $(addprefix $(DESTDIR)$(includedir)/, libpq-fe.h libpq-int.h pqexpbuffer.h)
 
 clean distclean maintainer-clean: clean-lib
 	rm -f $(OBJS) dllist.c snprintf.c inet_aton.c common.c wchar.c conv.c big5.c

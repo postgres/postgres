@@ -1,15 +1,16 @@
 #
-# $Header: /cvsroot/pgsql/contrib/noupdate/Attic/Makefile,v 1.5 2000/07/09 13:13:24 petere Exp $
+# $Header: /cvsroot/pgsql/contrib/noupdate/Attic/Makefile,v 1.6 2000/10/20 21:03:24 petere Exp $
 #
 
 subdir = contrib/noupdate
 top_builddir = ../..
-include ../../src/Makefile.global
+include $(top_builddir)/src/Makefile.global
 
 NAME	:= noup
 SONAME	:= $(NAME)$(DLSUFFIX)
 
-CFLAGS += -I. $(CFLAGS_SL)
+override CPPFLAGS += -I$(srcdir)
+override CFLAGS += $(CFLAGS_SL)
 
 all: $(SONAME) $(NAME).sql
 

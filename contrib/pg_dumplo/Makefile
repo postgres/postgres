@@ -1,18 +1,18 @@
 #
-# $Header: /cvsroot/pgsql/contrib/pg_dumplo/Attic/Makefile,v 1.6 2000/08/31 16:09:05 petere Exp $
+# $Header: /cvsroot/pgsql/contrib/pg_dumplo/Attic/Makefile,v 1.7 2000/10/20 21:03:25 petere Exp $
 #
 
 subdir = contrib/pg_dumplo
 top_builddir = ../..
-include ../../src/Makefile.global
+include $(top_builddir)/src/Makefile.global
 
 OBJS	= main.o lo_export.o lo_import.o utils.o
-CFLAGS += -I$(libpq_srcdir)
+override CPPFLAGS += -I$(libpq_srcdir)
 
 all: pg_dumplo
 
 pg_dumplo: $(OBJS) $(libpq_builddir)/libpq.a
-	$(CC) $(CFLAGS) -o $@ $(OBJS) $(libpq)
+	$(CC) -o $@ $(OBJS) $(libpq) $(CFLAGS) $(LDFLAGS)
 
 install: all installdirs
 	$(INSTALL_PROGRAM) pg_dumplo$(X)	$(bindir)
