@@ -33,7 +33,7 @@
 # 
 #
 ##############################################################################
-# $PostgreSQL: pgsql/contrib/dbmirror/DBMirror.pl,v 1.9 2004/04/22 03:48:38 momjian Exp $ 
+# $PostgreSQL: pgsql/contrib/dbmirror/DBMirror.pl,v 1.10 2004/07/02 00:58:09 joe Exp $ 
 #
 ##############################################################################
 
@@ -249,6 +249,8 @@ sub Main() {
       if($::slaveInfo->{'status'} eq 'FileOpen')
       {
 	  close ($::slaveInfo->{'TransactionFile'});
+	   $::slaveInfo->{"status"} = 'FileClosed';
+
       }
       elsif($::slaveInfo->{'status'} eq 'DBOpen')
       {
