@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/define.c,v 1.41 2000/04/13 11:51:07 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/define.c,v 1.42 2000/05/12 18:51:59 momjian Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -35,6 +35,8 @@
  */
 #include <ctype.h>
 #include <math.h>
+#include <sys/stat.h>
+
 
 #include "postgres.h"
 
@@ -180,6 +182,8 @@ static void
 interpret_AS_clause(const char *languageName, const List *as,
 					char **prosrc_str_p, char **probin_str_p)
 {
+	struct stat stat_buf;
+
 	Assert(as != NIL);
 
 	if (strcmp(languageName, "C") == 0)
@@ -187,9 +191,15 @@ interpret_AS_clause(const char *languageName, const List *as,
 
 		/*
 		 * For "C" language, store the file name in probin and, when
-		 * given, the link symbol name in prosrc.
+		 * given, the link symbol name in prosrc. But first, stat the
+		 * file to make sure it's there!
 		 */
+		
+		if (stat(strVal(lfirst(as)), &stat_buf) == -1)
+				elog(ERROR, "stat failed on file '%s': %m", strVal(lfirst(as)));
+
 		*probin_str_p = strVal(lfirst(as));
+
 		if (lnext(as) == NULL)
 			*prosrc_str_p = "-";
 		else
