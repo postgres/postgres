@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.100 2001/03/22 06:16:17 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.100.2.1 2001/09/12 17:14:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -516,16 +516,14 @@ ProcSleep(LOCKMETHODTABLE *lockMethodTable,
 	SPINLOCK	spinlock = lockctl->masterLock;
 	PROC_QUEUE *waitQueue = &(lock->waitProcs);
 	int			myHeldLocks = MyProc->heldLocks;
+	bool		early_deadlock = false;
 	PROC	   *proc;
 	int			i;
-
 #ifndef __BEOS__
 	struct itimerval timeval,
 				dummy;
-
 #else
 	bigtime_t	time_interval;
-
 #endif
 
 	/*
@@ -545,7 +543,6 @@ ProcSleep(LOCKMETHODTABLE *lockMethodTable,
 	 * immediately.  This is the same as the test for immediate grant in
 	 * LockAcquire, except we are only considering the part of the wait
 	 * queue before my insertion point.
-	 *
 	 */
 	if (myHeldLocks != 0)
 	{
@@ -560,9 +557,14 @@ ProcSleep(LOCKMETHODTABLE *lockMethodTable,
 				/* Must I wait for him ? */
 				if (lockctl->conflictTab[lockmode] & proc->heldLocks)
 				{
-					/* Yes, can report deadlock failure immediately */
-					MyProc->errType = STATUS_ERROR;
-					return STATUS_ERROR;
+					/*
+					 * Yes, so we have a deadlock.  Easiest way to clean up
+					 * correctly is to call RemoveFromWaitQueue(), but we
+					 * can't do that until we are *on* the wait queue.
+					 * So, set a flag to check below, and break out of loop.
+					 */
+					early_deadlock = true;
+					break;
 				}
 				/* I must go before this waiter.  Check special case. */
 				if ((lockctl->conflictTab[lockmode] & aheadRequests) == 0 &&
@@ -610,7 +612,19 @@ ProcSleep(LOCKMETHODTABLE *lockMethodTable,
 	MyProc->waitHolder = holder;
 	MyProc->waitLockMode = lockmode;
 
-	MyProc->errType = STATUS_OK;/* initialize result for success */
+	MyProc->errType = STATUS_OK; /* initialize result for success */
+
+	/*
+	 * If we detected deadlock, give up without waiting.  This must agree
+	 * with HandleDeadLock's recovery code, except that we shouldn't release
+	 * the semaphore since we haven't tried to lock it yet.
+	 */
+	if (early_deadlock)
+	{
+		RemoveFromWaitQueue(MyProc);
+		MyProc->errType = STATUS_ERROR;
+		return STATUS_ERROR;
+	}
 
 	/* mark that we are waiting for a lock */
 	waitingForLock = true;
@@ -703,6 +717,10 @@ ProcSleep(LOCKMETHODTABLE *lockMethodTable,
  *
  *	 Also remove the process from the wait queue and set its links invalid.
  *	 RETURN: the next process in the wait queue.
+ *
+ * XXX: presently, this code is only used for the "success" case, and only
+ * works correctly for that case.  To clean up in failure case, would need
+ * to twiddle the lock's request counts too --- see RemoveFromWaitQueue.
  */
 PROC *
 ProcWakeup(PROC *proc, int errType)
