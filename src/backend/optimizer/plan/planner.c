@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.48 1999/05/03 00:38:43 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.49 1999/05/04 00:00:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -505,8 +505,13 @@ make_subplanTargetList(Query *parse,
 
 		if (tlist_member(v, sub_tlist) == NULL)
 		{
+			/* Make sure sub_tlist element is a fresh object not shared with
+			 * any other structure; not sure if anything will break if it is
+			 * shared, but better to be safe...
+			 */
 			sub_tlist = lappend(sub_tlist,
-								create_tl_element(v, next_resno));
+								create_tl_element((Var *) copyObject(v),
+												  next_resno));
 			next_resno++;
 		}
 	}
