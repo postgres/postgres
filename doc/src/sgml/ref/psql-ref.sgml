@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.95 2003/08/31 17:32:24 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.96 2003/09/03 22:05:08 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -2214,8 +2214,14 @@ testdb=> <userinput>\set content '\'' `sed -e "s/'/\\\\\\'/g" < my_file.txt` '\'
 
       <varlistentry>
         <term><literal>%n</literal></term>
-	<listitem><para>The user name you are connected as (not your local system
-         user name).</para></listitem>
+	<listitem>
+         <para>
+          The database session user name.  (The expansion of this
+          value might change during a database session as the result
+          of the command <command>SET SESSION
+          AUTHORIZATION</command>.)
+         </para>
+        </listitem>
       </varlistentry>
 
       <varlistentry>
@@ -2231,8 +2237,15 @@ testdb=> <userinput>\set content '\'' `sed -e "s/'/\\\\\\'/g" < my_file.txt` '\'
 
       <varlistentry>
         <term><literal>%#</literal></term>
-	<listitem><para>If the current user is a database superuser, then a
-         <literal>#</literal>, otherwise a <literal>&gt;</literal>.</para></listitem>
+	<listitem>
+         <para>
+          If the session user is a database superuser, then a
+          <literal>#</literal>, otherwise a <literal>&gt;</literal>.
+          (The expansion of this value might change during a database
+          session as the result of the command <command>SET SESSION
+          AUTHORIZATION</command>.)
+         </para>
+        </listitem>
       </varlistentry>
 
       <varlistentry>

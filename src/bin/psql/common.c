@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2003, PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/common.c,v 1.72 2003/08/14 18:48:35 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/common.c,v 1.73 2003/09/03 22:05:08 petere Exp $
  */
 #include "postgres_fe.h"
 #include "common.h"
@@ -723,4 +723,27 @@ is_superuser(void)
 		return true;
 
 	return false;
+}
+
+
+/*
+ * Return the session user of the current connection.
+ *
+ * Note: this will correctly detect the session user only with a
+ * protocol-3.0 or newer backend; otherwise it will return the
+ * connection user.
+ */
+const char *
+session_username(void)
+{
+	const char *val;
+
+	if (!pset.db)
+		return NULL;
+
+	val = PQparameterStatus(pset.db, "session_authorization");
+	if (val)
+		return val;
+	else
+		return PQuser(pset.db);
 }

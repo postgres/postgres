@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2003, PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/prompt.c,v 1.28 2003/08/04 23:59:40 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/prompt.c,v 1.29 2003/09/03 22:05:09 petere Exp $
  */
 #include "postgres_fe.h"
 #include "prompt.h"
@@ -160,7 +160,7 @@ get_prompt(promptStatus_t status)
 					/* DB server user name */
 				case 'n':
 					if (pset.db)
-						strncpy(buf, PQuser(pset.db), MAX_PROMPT_SIZE);
+						strncpy(buf, session_username(), MAX_PROMPT_SIZE);
 					break;
 
 				case '0':

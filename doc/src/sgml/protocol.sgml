@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/protocol.sgml,v 1.42 2003/09/01 23:04:49 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/protocol.sgml,v 1.43 2003/09/03 22:05:07 petere Exp $ -->
 
 <chapter id="protocol">
  <title>Frontend/Backend Protocol</title>
@@ -1006,7 +1006,8 @@
     <literal>server_version</> (a pseudo-parameter that cannot change after
     startup);
     <literal>client_encoding</>,
-    <literal>is_superuser</>, and
+    <literal>is_superuser</>,
+    <literal>session_authorization</literal>, and
     <literal>DateStyle</>.
     This set might change in the future, or even become configurable.
     Accordingly, a frontend should simply ignore ParameterStatus for
