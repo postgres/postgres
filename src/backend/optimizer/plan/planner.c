@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.75 2000/02/15 20:49:18 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.76 2000/02/21 01:13:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -291,30 +291,46 @@ union_planner(Query *parse,
 			/* Initial assumption is we need all the tuples */
 			tuple_fraction = 0.0;
 			/*
-			 * Check for a LIMIT.
-			 *
-			 * For now, we deliberately ignore the OFFSET clause, so that
-			 * queries with the same LIMIT and different OFFSETs will get
-			 * the same queryplan and therefore generate consistent results
-			 * (to the extent the planner can guarantee that, anyway).
-			 * XXX Perhaps it would be better to use the OFFSET too, and tell
-			 * users to specify ORDER BY if they want consistent results
-			 * across different LIMIT queries.
+			 * Check for a LIMIT clause.
 			 */
 			if (parse->limitCount != NULL)
 			{
 				if (IsA(parse->limitCount, Const))
 				{
-					Const	   *ccount = (Const *) parse->limitCount;
-					tuple_fraction = (double) ((int) (ccount->constvalue));
-					/* the constant can legally be either 0 ("ALL") or a
-					 * positive integer; either is consistent with our
-					 * conventions for tuple_fraction.
+					Const	   *limitc = (Const *) parse->limitCount;
+					int			count = (int) (limitc->constvalue);
+
+					/*
+					 * The constant can legally be either 0 ("ALL") or a
+					 * positive integer.  If it is not ALL, we also need
+					 * to consider the OFFSET part of LIMIT.
 					 */
+					if (count > 0)
+					{
+						tuple_fraction = (double) count;
+						if (parse->limitOffset != NULL)
+						{
+							if (IsA(parse->limitOffset, Const))
+							{
+								int			offset;
+
+								limitc = (Const *) parse->limitOffset;
+								offset = (int) (limitc->constvalue);
+								if (offset > 0)
+									tuple_fraction += (double) offset;
+							}
+							else
+							{
+								/* It's a PARAM ... punt ... */
+								tuple_fraction = 0.10;
+							}
+						}
+					}
 				}
 				else
 				{
-					/* It's a PARAM ... don't know exactly what the limit
+					/*
+					 * COUNT is a PARAM ... don't know exactly what the limit
 					 * will be, but for lack of a better idea assume 10%
 					 * of the plan's result is wanted.
 					 */
