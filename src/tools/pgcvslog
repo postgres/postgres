@@ -42,7 +42,7 @@ awk '
 		datetime=$2"-"$3
 		if (workingfile != "")
 		{
-			# remove semicolon from committer's name
+			# remove semicolon from committers name
 			gsub(";", "", $5);
 			printf ("%s| %10d|%s\n", datetime, NR-2, workingfile);
 			printf ("%s| %10d|%s\n", datetime, NR-1, $0);
