@@ -1,7 +1,7 @@
 /* this must be first: */
 #include "postgres.h"
 /* Defined by Perl */
-#undef _(x)
+#undef _
 
 /* perl stuff */
 #include "EXTERN.h"

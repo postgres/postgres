@@ -6,7 +6,7 @@
 
 #include "postgres.h"
 /* Defined by Perl */
-#undef _(x)
+#undef _
 
 #include "spi_internal.h"
 
