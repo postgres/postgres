@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.94 2002/07/16 03:30:26 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.95 2002/07/16 04:45:59 momjian Exp $
 -->
 
  <chapter id="datatype">
@@ -843,19 +843,20 @@ CREATE TABLE <replaceable class="parameter">tablename</replaceable> (<replaceabl
    </para>
 
    <para>
-    The storage requirement for data of these types is 4 bytes plus
-    the actual string, and in case of <type>character</type> plus the
-    padding.  Long strings will be compressed by the system
-    automatically, so the physical requirement on disk may be less.
-    In any case, the longest possible character string
-    that can be stored is about 1 GB.  (The maximum value that will be
-    allowed for <replaceable>n</> in the data type declaration is
-    less than that.  It wouldn't be very useful to change
-    this because with multibyte character encodings the number of
-    characters and bytes can be quite different anyway.  If you desire
-    to store long strings with no specific upper limit, use <type>text</type>
-    or <type>character varying</type> without a length specifier,
-    rather than making up an arbitrary length limit.)
+    The storage requirement for data of these types is 4 bytes plus the
+    actual string, and in case of <type>character</type> plus the
+    padding. Long strings are compressed by the system automatically, so
+    the physical requirement on disk may be less. Long values are also
+    stored in background tables so they don't interfere with rapid
+    access to the shorter column values. In any case, the longest
+    possible character string that can be stored is about 1 GB. (The
+    maximum value that will be allowed for <replaceable>n</> in the data
+    type declaration is less than that. It wouldn't be very useful to
+    change this because with multibyte character encodings the number of
+    characters and bytes can be quite different anyway. If you desire to
+    store long strings with no specific upper limit, use
+    <type>text</type> or <type>character varying</type> without a length
+    specifier, rather than making up an arbitrary length limit.)
    </para>
 
    <tip>
