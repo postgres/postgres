@@ -1,18 +1,19 @@
-This can format all PostgreSQL *.c and *.h files, excluding libpq++,
-*.y, and *.l files.
+This can format all PostgreSQL *.c and *.h files, but excludes *.y, and *.l
+files.
 
-Get the list of typedef's included in pgindent by running this on the 
+Get the list of typedef's included in pgindent by running this on the
 pgsql/bin directory:
 
 	/src/tools/find_typedef
 
-and update the list in pgindent.  This requires debug symbols.
+and update the list in pgindent.  This requires the binaries have debug 
+symbols.
 
 From the top directory, run:
 
   find . -name '*.[ch]' -type f -print | egrep -v '\+\+|s_lock.h' | xargs -n100 pgindent
 
-The stock BSD indent has two bugs.  First, a comment after the word 'else' 
+The stock BSD indent has two bugs.  First, a comment after the word 'else'
 causes the rest of the file to be ignored.  Second, it silently ignores
 typedefs after getting the first 100.
 
@@ -38,6 +39,7 @@ following options:
 
 	find . \( -name '*.java' -o -name '*.java.in' \) -print |
 		xargs -n100 pgjindent
+
 ---------------------------------------------------------------------------
 
 For cpp, we use astyle, http://astyle.sourceforge.net/, with the
