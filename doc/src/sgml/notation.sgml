@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/notation.sgml,v 1.23 2003/09/08 23:02:28 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/notation.sgml,v 1.24 2003/09/08 23:17:15 tgl Exp $
 -->
 
 <sect1 id="notation">
@@ -7,14 +7,14 @@ $Header: /cvsroot/pgsql/doc/src/sgml/notation.sgml,v 1.23 2003/09/08 23:02:28 pe
 
  <para>
   This book uses the following typographical conventions to mark
-  certain portions of test: new terms, foreign phrases, and other
+  certain portions of text: new terms, foreign phrases, and other
   important passages are emphasized in <emphasis>italics</>.
   Everything that represents input or output of the computer, in
   particular commands, program code, and screen output, is shown in a
-  monospaced front (<literal>example</literal>).  Within such
-  passages, italics (<replaceable>example</replaceable>) indicate,
-  that you must insert an actual value instead of the placeholder.  On
-  occasion, parts of program code are emphasized in bold face
+  monospaced font (<literal>example</literal>).  Within such
+  passages, italics (<replaceable>example</replaceable>) indicate
+  placeholders; you must insert an actual value instead of the placeholder.
+  On occasion, parts of program code are emphasized in bold face
   (<emphasis role="bold"><literal>example</></>), if they have been
   added or changed since the preceding example.
  </para>
