@@ -1,4 +1,4 @@
-# $PostgreSQL: pgsql/src/makefiles/Makefile.win32,v 1.3 2003/11/29 19:52:12 pgsql Exp $
+# $PostgreSQL: pgsql/src/makefiles/Makefile.win32,v 1.4 2004/10/22 22:33:58 tgl Exp $
 
 # Use replacement include files for those missing on Win32
 override CPPFLAGS+="-I$(top_srcdir)/src/include/port/win32"
@@ -21,6 +21,10 @@ ifneq (,$(findstring backend,$(subdir)))
 ifeq (,$(findstring conversion_procs,$(subdir)))
 override CPPFLAGS+= -DBUILDING_DLL
 endif
+endif
+
+ifneq (,$(findstring timezone,$(subdir)))
+override CPPFLAGS+= -DBUILDING_DLL
 endif
 
 ifneq (,$(findstring ecpg/lib,$(subdir)))
