@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-secure.c,v 1.45 2004/07/12 14:23:28 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-secure.c,v 1.46 2004/08/17 04:24:23 tgl Exp $
  *
  * NOTES
  *	  The client *requires* a valid server certificate.  Since
@@ -152,7 +152,7 @@ static SSL_CTX *SSL_context = NULL;
 
 #ifdef ENABLE_THREAD_SAFETY
 static void sigpipe_handler_ignore_send(int signo);
-pthread_key_t thread_in_send;
+pthread_key_t pq_thread_in_send = 0;
 #endif
 
 /* ------------------------------------------------------------ */
@@ -367,7 +367,7 @@ pqsecure_write(PGconn *conn, const void *ptr, size_t len)
 	ssize_t		n;
 
 #ifdef ENABLE_THREAD_SAFETY
-	pthread_setspecific(thread_in_send, "t");
+	pthread_setspecific(pq_thread_in_send, "t");
 #else
 #ifndef WIN32
 	pqsigfunc	oldsighandler = pqsignal(SIGPIPE, SIG_IGN);
@@ -435,7 +435,7 @@ pqsecure_write(PGconn *conn, const void *ptr, size_t len)
 		n = send(conn->sock, ptr, len, 0);
 
 #ifdef ENABLE_THREAD_SAFETY
-	pthread_setspecific(thread_in_send, "f");
+	pthread_setspecific(pq_thread_in_send, "f");
 #else
 #ifndef WIN32
 	pqsignal(SIGPIPE, oldsighandler);
@@ -1188,7 +1188,7 @@ PQgetssl(PGconn *conn)
  *	Check SIGPIPE handler and perhaps install our own.
  */
 void
-check_sigpipe_handler(void)
+pq_check_sigpipe_handler(void)
 {
 	pqsigfunc pipehandler;
 
@@ -1204,7 +1204,7 @@ check_sigpipe_handler(void)
 		 *	Create key first because the signal handler might be called
 		 *	right after being installed.
 		 */
-		pthread_key_create(&thread_in_send, NULL);	
+		pthread_key_create(&pq_thread_in_send, NULL);	
 		pqsignal(SIGPIPE, sigpipe_handler_ignore_send);
 	}
 }
@@ -1236,8 +1236,8 @@ pqbool
 PQinSend(void)
 {
 #ifdef ENABLE_THREAD_SAFETY
-	return (pthread_getspecific(thread_in_send) /* has it been set? */ &&
-			*(char *)pthread_getspecific(thread_in_send) == 't') ? true : false;
+	return (pthread_getspecific(pq_thread_in_send) /* has it been set? */ &&
+			*(char *)pthread_getspecific(pq_thread_in_send) == 't') ? true : false;
 #else
 	/*
 	 *	No threading: our code ignores SIGPIPE around send().

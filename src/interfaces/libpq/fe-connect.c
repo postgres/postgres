@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-connect.c,v 1.279 2004/08/11 18:06:01 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-connect.c,v 1.280 2004/08/17 04:24:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -886,7 +886,7 @@ connectDBStart(PGconn *conn)
 	static pthread_once_t check_sigpipe_once = PTHREAD_ONCE_INIT;
 
 	/* Check only on first connection request */
-	pthread_once(&check_sigpipe_once, check_sigpipe_handler);
+	pthread_once(&check_sigpipe_once, pq_check_sigpipe_handler);
 #endif
 #endif
 
