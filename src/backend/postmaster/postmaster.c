@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.165 2000/09/06 14:15:19 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.166 2000/09/06 19:54:46 petere Exp $
  *
  * NOTES
  *
@@ -193,10 +193,8 @@ static bool Reinit = true;
 static int	SendStop = false;
 
 bool NetServer = false;	/* listen on TCP/IP */
+bool EnableSSL = false;
 
-#ifdef USE_SSL
-static bool DisableSSL = false; /* Completely disable SSL, even if compiled in */
-#endif
 
 static pid_t StartupPID = 0,
 			ShutdownPID = 0;
@@ -452,7 +450,7 @@ PostmasterMain(int argc, char *argv[])
 				break;
 #ifdef USE_SSL
 			case 'l':
- 			        DisableSSL = true;
+			        EnableSSL = true;
 				break;
 #endif
 			case 'm':
@@ -563,13 +561,13 @@ PostmasterMain(int argc, char *argv[])
 	}
 
 #ifdef USE_SSL
-	if (!NetServer && !DisableSSL)
+	if (EnableSSL && !NetServer)
 	{
-		fprintf(stderr, "%s: For SSL, you must enable TCP/IP connections. Use -l to disable SSL\n",
+		fprintf(stderr, "%s: For SSL, TCP/IP connections must be enabled. See -? for help.\n",
 				progname);
 		exit(1);
 	}
-	if (!DisableSSL)
+	if (EnableSSL)
 	        InitSSL();
 #endif
 
@@ -750,9 +748,9 @@ usage(const char *progname)
 	printf("  -d 1-5          debugging level\n");
 	printf("  -D <directory>  database directory\n");
 	printf("  -F              turn fsync off\n");
-	printf("  -i              listen on TCP/IP sockets\n");
+	printf("  -i              enable TCP/IP connections\n");
 #ifdef USE_SSL
-	printf("  -l              disable SSL\n");
+	printf("  -l              enable SSL connections\n");
 #endif
 	printf("  -N <number>     maximum number of allowed connections (1..%d, default %d)\n",
 			MAXBACKENDS, DEF_MAXBACKENDS);
@@ -1060,7 +1058,7 @@ readStartupPacket(void *arg, PacketLen len, void *pkt)
 		char		SSLok;
 
 #ifdef USE_SSL
-                if (DisableSSL || port->laddr.sa.sa_family != AF_INET)
+                if (!EnableSSL || port->laddr.sa.sa_family != AF_INET)
 		        /* No SSL when disabled or on Unix sockets */
    		        SSLok = 'N';
 		else

@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/client-auth.sgml,v 1.5 2000/08/29 04:15:43 momjian Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/client-auth.sgml,v 1.6 2000/09/06 19:54:45 petere Exp $ -->
 
 <chapter id="client-authentication">
  <title>Client Authentication</title>
@@ -45,14 +45,14 @@
    of a set of records, one per line. Blank lines and lines beginning
    with a hash character (<quote>#</quote>) are ignored. A record is
    made up of a number of fields which are separated by spaces and/or
-   tabs.
+   tabs and cannot be continued across several lines.
   </para>
 
   <para>
-   A record may have one of the two formats
+   A record may have one of the three formats
    <synopsis>
-local <replaceable>database</replaceable> <replaceable>authentication-method</replaceable> [ <replaceable>authentication-option</replaceable> ]
-host <replaceable>database</replaceable> <replaceable>IP-address</replaceable> <replaceable>IP-mask</replaceable> <replaceable>authentication-method</replaceable> [ <replaceable>authentication-option</replaceable> ]
+local   <replaceable>database</replaceable> <replaceable>authentication-method</replaceable> [ <replaceable>authentication-option</replaceable> ]
+host    <replaceable>database</replaceable> <replaceable>IP-address</replaceable> <replaceable>IP-mask</replaceable> <replaceable>authentication-method</replaceable> [ <replaceable>authentication-option</replaceable> ]
 hostssl <replaceable>database</replaceable> <replaceable>IP-address</replaceable> <replaceable>IP-mask</replaceable> <replaceable>authentication-method</replaceable> [ <replaceable>authentication-option</replaceable> ]
     </synopsis>
    The meaning of the fields is as follows:
@@ -85,11 +85,10 @@ hostssl <replaceable>database</replaceable> <replaceable>IP-address</replaceable
      <listitem>
       <para>
        This record pertains to connection attemps with SSL over
-       TCP/IP. Note that SSL connections are completely disabled
-       unless the server is started with the <option>-i</option>,
-       and also require ordinary TCP/IP connections to be enabled.
-       SSL connections also require SSL support to be enabled in
-       the backend at compile time.
+       TCP/IP. To make use of this option the server must be
+       built with SSL support enabled. Furthermore, SSL must be
+       enabled with the <option>-l</> option or equivalent configuration
+       setting when the server is started.
       </para>
      </listitem>
     </varlistentry>
@@ -100,7 +99,8 @@ hostssl <replaceable>database</replaceable> <replaceable>IP-address</replaceable
       <para>
        Specifies the database that this record applies to. The value
        <literal>all</literal> specifies that it applies to all
-       databases.
+       databases, the value <literal>sameuser</> identifies the
+       database with the same name as the connecting user.
       </para>
      </listitem>
     </varlistentry>
@@ -129,8 +129,108 @@ hostssl <replaceable>database</replaceable> <replaceable>IP-address</replaceable
      <term><replaceable>authentication method</replaceable></term>
      <listitem>
       <para>
-       Specifies the method a user must use to authenticate themselves
-       when connecting to that database.
+       Specifies the method that users must use to authenticate themselves
+       when connecting to that database. The possible choices follow,
+       details are in <xref linkend="auth-methods">.
+
+       <variablelist>
+        <varlistentry>
+         <term>trust</>
+         <listitem>
+         <para>
+          The connection is allowed unconditionally. This method allows
+          any user that has login access to the client host to connect as
+          any user whatsoever.
+         </para>
+        </listitem>
+       </varlistentry>
+
+       <varlistentry>
+        <term>reject</>
+        <listitem>
+         <para>
+          The connection is rejected unconditionally. This is mostly
+          useful to <quote>filter out</> certain hosts from a group.
+         </para>
+        </listitem>
+       </varlistentry>
+
+       <varlistentry>
+        <term>password</>
+        <listitem>
+         <para>
+          The client is required to supply a password with the connection
+          attempt which is required to match the password that was set up
+          for the user.
+         </para>
+
+         <para>
+          An optional file name may be specified after the
+          <literal>password</literal> keyword. This file is expected to
+          contain a list of users that this record pertains to, and
+          optionally alternative passwords.
+         </para>
+
+         <para>
+          The password is sent over the wire in clear text. For better
+          protection, use the <literal>crypt</literal> method.
+         </para>
+        </listitem>
+       </varlistentry>
+
+       <varlistentry>
+        <term>crypt</>
+        <listitem>
+         <para>
+          Like the <literal>password</literal> method, but the password
+          is sent over the wire encrypted using a simple
+          challenge-response protocol. This is still not
+          cryptographically secure but it protects against incidental
+          wire-sniffing. The name of a file may follow the
+          <literal>crypt</literal> keyword that contains a list of users
+          that this record pertains to.
+         </para>
+        </listitem>
+       </varlistentry>
+
+       <varlistentry>
+        <term>krb4</>
+        <listitem>
+         <para>
+          Kerberos V4 is used to authenticate the user. This is only
+          available for TCP/IP connections.
+         </para>
+        </listitem>
+       </varlistentry>
+
+       <varlistentry>
+        <term>krb5</term>
+        <listitem>
+         <para>
+          Kerberos V5 is used to authenticate the user. This is only
+          available for TCP/IP connections.
+         </para>
+        </listitem>
+       </varlistentry>
+
+       <varlistentry>
+        <term>ident</term>
+        <listitem>
+         <para>
+          The ident server on the client host is asked for the identity
+          of the connecting user. <productname>Postgres</productname>
+          then verifies whether the so identified operating system user
+          is allowed to connect as the database user that is requested.
+          The <replaceable>authentication option</replaceable> following
+          the <literal>ident</> keyword specifies the name of an
+          <firstterm>ident map</firstterm> that specifies which operating
+          system users equate with which database users. See below for
+          details.
+         </para>
+        </listitem>
+       </varlistentry>
+      </variablelist>
+
       </para>
      </listitem>
     </varlistentry>
@@ -140,15 +240,15 @@ hostssl <replaceable>database</replaceable> <replaceable>IP-address</replaceable
      <listitem>
       <para>
        This field is interpreted differently depending on the
-       authentication method.
+       authentication method, as described there.
       </para>
      </listitem>
     </varlistentry>
    </variablelist>
 
-   The first record that matches a connection attempt is used. Note
-   that there is no <quote>fall-through</quote> or
-   <quote>backup</quote>, that is, if one record is chosen and the
+   The first record that matches a connection attempt is used. There
+   is no <quote>fall-through</> or <quote>backup</>, that means, if
+   one record is chosen and the
    authentication fails, the following records are not considered. If
    no record matches, the access will be denied.
   </para>
@@ -167,19 +267,42 @@ hostssl <replaceable>database</replaceable> <replaceable>IP-address</replaceable
    <example id="example-pg-hba.conf">
     <title>An example <filename>pg_hba.conf</filename> file</title>
 <programlisting>
-# Trust any connection via Unix domain sockets.
-local	trust
-# Trust any connection via TCP/IP from this machine.
-host	all	127.0.0.1	255.255.255.255		trust
-# We don't like this machine.
-host	all	192.168.0.10	255.255.255.0		reject
-# This machine can't encrypt so we ask for passwords in clear.
-host	all	192.168.0.3	255.255.255.0		password
-# The rest of this group of machines should provide encrypted passwords.
-host	all	192.168.0.0	255.255.255.0		crypt
-# Authenticate these networks using ident
-host    all     192.168.1.0     255.255.255.0           ident usermap
-host    all     192.168.2.0     255.255.255.0           ident othermap
+#TYPE    DATABASE       IP-ADDRESS     MASK                AUTHTYPE   ARG
+
+# Allow any user on the local system to connect to any database under
+# any user name.
+#
+host     all            127.0.0.1      255.255.255.255     trust     
+ 
+# Allow any user from any host with IP address 192.168.93.x to connect
+# to database "template1" as the same user name that ident on that
+# host identifies him as (typically his Unix user name).
+#
+host     template1      192.168.93.0   255.255.255.0       ident      sameuser
+
+# Allow a user from host 192.168.12.10 to connect to database
+# "template1" if the user's password in pg_shadow is supplied.
+#
+host     template1      192.168.12.10  255.255.255.255     crypt
+
+# In absence of the other records, this would allow anyone anywhere
+# except from 192.168.54.1 to connect to any database under any user
+# name.
+#
+host     all            192.168.54.1   255.255.255.255     reject
+host     all            0.0.0.0        0.0.0.0             trust
+
+# Allow users from 192.168.77.x hosts to connect to any database, but if,
+# for example, ident says the user is "bryanh" and he requests to
+# connect as PostgreSQL user "guest1", the connection is only allowed if
+# there is an entry for map "omicron" in `pg_ident.conf' that says
+# "bryanh" is allowed to connect as "guest1".
+#
+host     all            192.168.77.0  255.255.255.0        ident      omicron
+
+# Allow all users to connect to all databases via Unix sockets.
+#
+local        all                                           trust
 </programlisting>
    </example>
   </para>
@@ -188,104 +311,7 @@ host    all     192.168.2.0     255.255.255.0           ident othermap
  <sect1 id="auth-methods">
   <title>Authentication methods</title>
   <para>
-   The following authentication methods are supported. They are
-   descibed in detail below.
-
-   <variablelist>
-    <varlistentry>
-     <term>trust</term>
-     <listitem>
-      <para>
-       The connection is allowed unconditionally. This method allows
-       any user that has login access to the client host to connect as
-       any user whatsoever. Use with care.
-      </para>
-     </listitem>
-    </varlistentry>
-
-    <varlistentry>
-     <term>reject</term>
-     <listitem>
-      <para>
-       The connection is rejected unconditionally. This is mostly
-       useful to <quote>filter out</quote> certain hosts from a group.
-      </para>
-     </listitem>
-    </varlistentry>
-
-    <varlistentry>
-     <term>password</term>
-     <listitem>
-      <para>
-       The client is required to supply a password with the connection
-       attempt which is required to match the password that was set up
-       for the user.
-      </para>
-      <para>
-       An optional file name may be specified after the
-       <literal>password</literal> keyword. This file is expected to
-       contain a list of users that this record pertains to, and
-       optionally alternative passwords.
-      </para>
-      <para>
-       The password is sent over the wire in clear text. For better
-       protection, use the <literal>crypt</literal> method.
-      </para>
-     </listitem>
-    </varlistentry>
-
-    <varlistentry>
-     <term>crypt</term>
-     <listitem>
-      <para>
-       Like the <literal>password</literal> method, but the password
-       is sent over the wire encrypted using a simple
-       challenge-response protocol. This is still not
-       cryptographically secure but it protects against incidental
-       wire-sniffing. The name of a file may follow the
-       <literal>crypt</literal> keyword that contains a list of users
-       that this record pertains to.
-      </para>
-     </listitem>
-    </varlistentry>
-
-    <varlistentry>
-     <term>krb4</term>
-     <listitem>
-      <para>
-       Kerberos V4 is used to authenticate the user. This is only
-       available for TCP/IP connections.
-      </para>
-     </listitem>
-    </varlistentry>
-
-    <varlistentry>
-     <term>krb5</term>
-     <listitem>
-      <para>
-       Kerberos V5 is used to authenticate the user. This is only
-       available for TCP/IP connections.
-      </para>
-     </listitem>
-    </varlistentry>
-
-    <varlistentry>
-     <term>ident</term>
-     <listitem>
-      <para>
-       The ident server on the client host is asked for the identity
-       of the connecting user. <productname>Postgres</productname>
-       then verifies whether the so identified operating system user
-       is allowed to connect as the database user that is requested.
-       The <replaceable>authentication option</replaceable> following
-       the <literal>ident</> keyword specifies the name of an
-       <firstterm>ident map</firstterm> that specifies which operating
-       system users equate with which database users. See below for
-       details.
-      </para>
-     </listitem>
-    </varlistentry>
-   </variablelist>
+   The following describes the authentication methods in detail.
   </para>
 
   <sect2>
@@ -398,8 +424,8 @@ host    all     192.168.2.0     255.255.255.0           ident othermap
    <para>
     To generate the keytab file, use for example (with version 5)
 <screen>
-kadmin% <userinput>ank -randkey postgres/server.my.domain.org</>
-kadmin% <userinput>ktadd -k krb5.keytab postgres/server.my.domain.org</>
+<prompt>kadmin% </><userinput>ank -randkey postgres/server.my.domain.org</>
+<prompt>kadmin% </><userinput>ktadd -k krb5.keytab postgres/server.my.domain.org</>
 </screen>
     Read the <productname>Kerberos</> documentation for defails.
    </para>
@@ -528,29 +554,26 @@ kadmin% <userinput>ktadd -k krb5.keytab postgres/server.my.domain.org</>
     conjunction with the <filename>pg_hba.conf</> file in <xref
     linkend="example-pg-hba.conf"> is shown in <xref
     linkend="example-pg-ident.conf">. In that example setup, anyone
-    logged in to a machine on the 192.168.1 network that does not have
-    the a user name joe, robert, or ann would not be granted access.
+    logged in to a machine on the 192.168.77 network that does not have
+    the a user name bryanh, ann, or robert would not be granted access.
     Unix user robert would only be allowed access when he tries to
     connect as <quote>bob</quote>, not as <quote>robert</quote> or
-    anyone else. <quote>ann</quote> and <quote>joe</quote> would only
-    be allowed to connect <quote>as themselves</quote>. On the
-    192.168.2 network, however, a user <quote>ann</quote> would not be
-    allowed to connect at all, only the user <quote>bob</> can connect
-    as <quote>bob</> and some user <quote>karl</> can connect as
-    <quote>joe</> as well.
+    anyone else. <quote>ann</quote> would only be allowed to connect
+    <quote>as herself</>. User bryanh would be allowed to connect as either
+    <quote>bryanh</> himself or as <quote>guest1</>.
    </para>
 
    <example id="example-pg-ident.conf">
     <title>An example <filename>pg_ident.conf</> file</title>
 <programlisting>
-usermap         joe     joe
-# bob has username robert on these machines
-usermap         robert  bob
-usermap         ann     ann
+#MAP           IDENT-NAME   POSTGRESQL-NAME
 
-othermap        joe     joe
-othermap        bob     bob
-othermap        karl    joe
+omicron        bryanh       bryanh
+omicron        ann          ann
+# bob has username robert on these machines
+omicron        robert       bob
+# bryanh can also connect as guest1
+omicron        bryanh       guest1
 </programlisting>
    </example>
   </sect2>
@@ -605,4 +628,3 @@ FATAL 1:  Database testdb does not exist in pg_database
   </sect1>
 
  </chapter>
-

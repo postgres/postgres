@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: miscadmin.h,v 1.65 2000/09/06 14:15:24 petere Exp $
+ * $Id: miscadmin.h,v 1.66 2000/09/06 19:54:52 petere Exp $
  *
  * NOTES
  *	  some of the information in this file will be moved to
@@ -107,6 +107,7 @@ extern int	SortMem;
    configuration file processor has access to them */
 
 extern bool NetServer;
+extern bool EnableSSL;
 extern int MaxBackends;
 extern int NBuffers;
 extern int PostPortName;

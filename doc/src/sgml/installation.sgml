@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.16 2000/08/29 20:02:07 momjian Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.17 2000/09/06 19:54:45 petere Exp $ -->
 
 <chapter id="installation">
  <title><![%flattext-install-include[<productname>PostgreSQL</> ]]>Installation Instructions</title>
@@ -354,7 +354,7 @@ su - postgres
          The man pages that come with <productname>PostgreSQL</> will be installed under
          this directory, in their respective
          <filename>man<replaceable>x</></> subdirectories.
-         <filename><replaceable>PREFIX</>/man</>.
+         The default is <filename><replaceable>PREFIX</>/man</>.
         </para>
        </listitem>
       </varlistentry>
@@ -581,15 +581,16 @@ su - postgres
        <term>--with-openssl=<replaceable>DIRECTORY</></term>
        <listitem>
         <para>
-         Build with support for SSL (encrypted) connections. 
-         This requires the OpenSSL library to be installed.
+         Build with support for <acronym>SSL</> (encrypted) connections. 
+         This requires the <productname>OpenSSL</> package to be installed.
          The <replaceable>DIRECTORY</> argument specifies the
-         root directory of the OpenSSL installation.
+         root directory of the <productname>OpenSSL</> installation; the
+         default is <filename>/usr/local/ssl</>.
         </para>
 
         <para>
          <filename>configure</> will check for the required header
-         files and libraries to make sure that your OpenSSL
+         files and libraries to make sure that your <productname>OpenSSL</>
          installation is sufficient before proceeding.
         </para>
        </listitem>
@@ -601,7 +602,7 @@ su - postgres
         <para>
          Enables the <productname>PostgreSQL</> server to use the
          syslog logging facility. (Using this option does not mean
-         that you will have to log with syslog or even that it will be done
+         that you must log with syslog or even that it will be done
          by default, it simply makes it possible to turn this option
          on at run time.)
         </para>

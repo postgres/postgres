@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.23 2000/08/29 20:02:07 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.24 2000/09/06 19:54:45 petere Exp $
 -->
 
 <Chapter Id="runtime">
@@ -942,18 +942,6 @@ env PGOPTIONS='--geqo=off' psql
      </varlistentry>
 
      <varlistentry>
-      <term>TCPIP_SOCKET (<type>boolean</type>)</term>
-      <listitem>
-       <para>
-        If this is true, then the server will accept TCP/IP
-        connections. Otherwise only local Unix domain socket
-        connections are accepted. It is off by default. This option
-        can only be set at server start.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
       <term>PORT (<type>integer</type>)</term>
       <listitem>
        <para>
@@ -1005,6 +993,29 @@ env PGOPTIONS='--geqo=off' psql
        </para>
       </listitem>
      </varlistentry>
+
+     <varlistentry>
+      <term>SSL (<type>boolean</type>)</term>
+      <listitem>
+       <para>
+        Enables <acronym>SSL</> connections. Please read
+        <xref linkend="ssl"> before using this. The default
+        is off.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>TCPIP_SOCKET (<type>boolean</type>)</term>
+      <listitem>
+       <para>
+        If this is true, then the server will accept TCP/IP
+        connections. Otherwise only local Unix domain socket
+        connections are accepted. It is off by default. This option
+        can only be set at server start.
+       </para>
+      </listitem>
+     </varlistentry>
     </variablelist>
    </para>
    </sect2>
@@ -1046,6 +1057,11 @@ env PGOPTIONS='--geqo=off' psql
        <row>
         <entry>-i</entry>
         <entry>tcpip_socket = on</entry>
+        <entry></entry>
+       </row>
+       <row>
+        <entry>-l</entry>
+        <entry>ssl = on</entry>
         <entry></entry>
        </row>
        <row>
@@ -1726,64 +1742,66 @@ perl: warning: Falling back to the standard locale ("C").
   </para>
  </sect1>
 
- <sect1>
-  <title>Secure TCP/IP Connection with SSL</title>
+ <sect1 id="ssl">
+  <title>Secure TCP/IP Connections with SSL</title>
 
   <para>
-   PostgreSQL has native support for connections over SSL to encrypt
+   <productname>PostgreSQL</> has native support for connections over
+   <acronym>SSL</> to encrypt
    client/server communications for increased security. This requires
    <productname>OpenSSL</productname> to be installed on both client
-   and server systems and support enabled at compile-time using
-   the configure script.
+   and server systems and support enabled at build-time (see <xref
+   linkend="installation">).
   </para>
 
   <para>
-   With SSL support compiled in, the Postgres backend can be 
-   started with argument -l to enable SSL connections. 
-   When starting in SSL mode, the postmaster will look for the 
-   files <filename>server.key</filename> and
-   <filename>server.cert</filename> in the <envar>PGDATA</envar>
-   directory. These files should contain the server private key and
-   certificate respectively. If the private key is protected with a 
-   passphrase, the postmaster will prompt for the passphrase and not 
-   start until it has been provided.
+   With SSL support compiled in, the <productname>PostgreSQL</> server
+   can be started with the argument <option>-l</> (ell) to enable
+   SSL connections. When starting in SSL mode, the postmaster will look
+   for the files <filename>server.key</> and <filename>server.crt</> in
+   the data directory. These files should contain the server private key
+   and certificate respectively. These files must be set up correctly
+   before an SSL-enabled server can start. If the private key is protected
+   with a passphrase, the postmaster will prompt for the passphrase and will
+   not start until it has been provided.
   </para>
 
   <para>
    The postmaster will listen for both standard and SSL connections
    on the same TCP/IP port, and will negotiate with any connecting
-   client wether to use SSL or not. Use the <filename>pg_hba.conf</filename>
-   file to optionally require SSL in order to accept a connection.
+   client wether to use SSL or not. See <xref linkend="client-authentication">
+   about how to force on the server side the use of SSL for certain
+   connections.
   </para>
 
   <para>
    For details on how to create your server private key and certificate,
-   refer to the OpenSSL documentation. A simple self-signed certificate
-   can be used to get started testing, but a certificate signed by a CA
-   (either one of the global CAs or a local one) should be used in 
+   refer to the <productname>OpenSSL</> documentation. A simple self-signed
+   certificate can be used to get started testing, but a certificate signed
+   by a CA (either one of the global CAs or a local one) should be used in 
    production so the client can verify the servers identity. To create
    a quick self-signed certificate, use the <filename>CA.pl</filename>
    script included in OpenSSL:
 <programlisting>
-   CA.pl -newcert
+CA.pl -newcert
 </programlisting>
    Fill out the information the script asks for. Make sure to enter
-   the local hostname as Common Name. The script will generate a key
-   which is passphrase protected. To remove the passphrase (required
+   the local host name as Common Name. The script will generate a key
+   that is passphrase protected. To remove the passphrase (required
    if you want automatic start-up of the postmaster), run the command
 <programlisting>
-   openssl x509 -inform PEM -outform PEM -in newreq.pem -out newkey_no_passphrase.pem
+openssl x509 -inform PEM -outform PEM -in newreq.pem -out newkey_no_passphrase.pem
 </programlisting>
    Enter the old passphrase to unlock the existing key. Copy the file
-   <filename>newreq.pem</filename> to <filename>PGDATA/server.cert</filename>
-   and <filename>newkey_no_passphrase.pem</filename> to 
-   <filename>PGDATA/server.key</filename>. Remove the PRIVATE KEY part
-   from the <filename>server.cert</filename> using any text editor.
+   <filename>newreq.pem</> to <filename><replaceable>PGDATA</>/server.crt</>
+   and <filename>newkey_no_passphrase.pem</> to
+   <filename><replaceable>PGDATA</>/server.key</>. Remove the PRIVATE KEY part
+   from the <filename>server.crt</filename> using any text editor.
   </para>
  </sect1>
 
  <sect1>
-  <title>Secure TCP/IP Connection with SSH</title>
+  <title>Secure TCP/IP Connections with SSH tunnels</title>
 
   <note>
    <title>Acknowledgement</title>
@@ -1827,6 +1845,13 @@ psql -h localhost -p 3333 template1
    joe@foo.com, just as if you had attempted to use ssh to set up a
    terminal session.
   </para>
+
+  <tip>
+   <para>
+    Several other products exist that can provide secure tunnels using
+    a procedure similar in concept to the one just described.
+   </para>
+  </tip>
 
  </sect1>
 

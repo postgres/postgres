@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/startup.c,v 1.35 2000/08/30 14:54:23 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/startup.c,v 1.36 2000/09/06 19:54:48 petere Exp $
  */
 #include "postgres.h"
 
@@ -264,12 +264,13 @@ main(int argc, char *argv[])
 				   "Type:  \\copyright for distribution terms\n"
 				   "       \\h for help with SQL commands\n"
 				   "       \\? for help on internal slash commands\n"
-			  "       \\g or terminate with semicolon to execute query\n"
+				   "       \\g or terminate with semicolon to execute query\n"
 				   "       \\q to quit\n\n", pset.progname);
-		}
 #ifdef USE_SSL
-		printSSLInfo();
+			printSSLInfo();
 #endif
+		}
+
 		SetVariable(pset.vars, "PROMPT1", DEFAULT_PROMPT1);
 		SetVariable(pset.vars, "PROMPT2", DEFAULT_PROMPT2);
 		SetVariable(pset.vars, "PROMPT3", DEFAULT_PROMPT3);
