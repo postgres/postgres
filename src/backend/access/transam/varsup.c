@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/varsup.c,v 1.15 1998/01/07 21:02:21 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/varsup.c,v 1.16 1998/07/21 06:17:13 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,6 +30,8 @@ static void VariableRelationPutNextOid(Oid *oidP);
  * ---------------------
  */
 int			OidGenLockId;
+
+VariableCache	ShmemVariableCache = NULL;
 
 /* ----------------------------------------------------------------
  *			  variable relation query/update routines
@@ -258,16 +260,7 @@ VariableRelationPutNextOid(Oid *oidP)
  *		In the version 2 transaction system, transaction id's are
  *		restricted in several ways.
  *
- *		First, all transaction id's are even numbers (4, 88, 121342, etc).
- *		This means the binary representation of the number will never
- *		have the least significent bit set.  This bit is reserved to
- *		indicate that the transaction id does not in fact hold an XID,
- *		but rather a commit time.  This makes it possible for the
- *		vaccuum daemon to disgard information from the log and time
- *		relations for committed tuples.  This is important when archiving
- *		tuples to an optical disk because tuples with commit times
- *		stored in their xid fields will not need to consult the log
- *		and time relations.
+ *		-- Old comments removed --
  *
  *		Second, since we may someday preform compression of the data
  *		in the log and time relations, we cause the numbering of the
@@ -276,32 +269,16 @@ VariableRelationPutNextOid(Oid *oidP)
  *		transaction id's 0 - 510 will never be used.  This space is
  *		in fact used to store the version number of the postgres
  *		transaction log and will someday store compression information
- *		about the log.
- *
- *		Lastly, rather then access the variable relation each time
- *		a backend requests a new transction id, we "prefetch" 32
- *		transaction id's by incrementing the nextXid stored in the
- *		var relation by 64 (remember only even xid's are legal) and then
- *		returning these id's one at a time until they are exhausted.
- *		This means we reduce the number of accesses to the variable
- *		relation by 32 for each backend.
- *
- *		Note:  32 has no special significance.	We don't want the
- *			   number to be too large because if when the backend
- *			   terminates, we lose the xid's we cached.
+ *		about the log.	-- this is also old comments...
  *
  * ----------------
  */
 
-#define VAR_XID_PREFETCH		32
-
-static int	prefetched_xid_count = 0;
-static TransactionId next_prefetched_xid;
+#define VAR_XID_PREFETCH		1024
 
 void
 GetNewTransactionId(TransactionId *xid)
 {
-	TransactionId nextid;
 
 	/* ----------------
 	 *	during bootstrap initialization, we return the special
@@ -314,51 +291,24 @@ GetNewTransactionId(TransactionId *xid)
 		return;
 	}
 
-	/* ----------------
-	 *	if we run out of prefetched xids, then we get some
-	 *	more before handing them out to the caller.
-	 * ----------------
-	 */
-
-	if (prefetched_xid_count == 0)
+	SpinAcquire(OidGenLockId);	/* not good for concurrency... */
+	
+	if (ShmemVariableCache->xid_count == 0)
 	{
-		/* ----------------
-		 *		obtain exclusive access to the variable relation page
-		 *
-		 *		get the "next" xid from the variable relation
-		 *		and save it in the prefetched id.
-		 * ----------------
-		 */
-		SpinAcquire(OidGenLockId);
+		TransactionId nextid;
+		
 		VariableRelationGetNextXid(&nextid);
-		TransactionIdStore(nextid, &next_prefetched_xid);
-
-		/* ----------------
-		 *		now increment the variable relation's next xid
-		 *		and reset the prefetched_xid_count.  We multiply
-		 *		the id by two because our xid's are always even.
-		 * ----------------
-		 */
-		prefetched_xid_count = VAR_XID_PREFETCH;
-		TransactionIdAdd(&nextid, prefetched_xid_count);
+		TransactionIdStore(nextid, &(ShmemVariableCache->nextXid));
+		ShmemVariableCache->xid_count = VAR_XID_PREFETCH;
+		TransactionIdAdd(&nextid, VAR_XID_PREFETCH);
 		VariableRelationPutNextXid(nextid);
-		SpinRelease(OidGenLockId);
 	}
 
-	/* ----------------
-	 *	return the next prefetched xid in the pointer passed by
-	 *	the user and decrement the prefetch count.	We add two
-	 *	to id we return the next time this is called because our
-	 *	transaction ids are always even.
-	 *
-	 *	XXX Transaction Ids used to be even as the low order bit was
-	 *		used to determine commit status.  This is no long true so
-	 *		we now use even and odd transaction ids. -mer 5/26/92
-	 * ----------------
-	 */
-	TransactionIdStore(next_prefetched_xid, xid);
-	TransactionIdAdd(&next_prefetched_xid, 1);
-	prefetched_xid_count--;
+	TransactionIdStore(ShmemVariableCache->nextXid, xid);
+	TransactionIdAdd(&(ShmemVariableCache->nextXid), 1);
+	(ShmemVariableCache->xid_count)--;
+	
+	SpinRelease(OidGenLockId);
 }
 
 /* ----------------------------------------------------------------
