@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
- * $Header: /cvsroot/pgsql/src/bin/pg_dump/dumputils.h,v 1.1 2002/08/27 18:57:26 petere Exp $
+ * $Header: /cvsroot/pgsql/src/bin/pg_dump/dumputils.h,v 1.2 2002/08/27 21:50:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,4 +23,4 @@ extern char *simple_prompt(const char *prompt, int maxlen, bool echo);
 extern const char *fmtId(const char *identifier);
 extern void appendStringLiteral(PQExpBuffer buf, const char *str, bool escapeAll);
 
-#endif DUMPUTILS_H
+#endif /* DUMPUTILS_H */
