@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: execAmi.c,v 1.49 2000/07/12 02:37:00 tgl Exp $
+ *	$Id: execAmi.c,v 1.50 2000/07/25 23:43:38 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -356,7 +356,8 @@ ExecReScan(Plan *node, ExprContext *exprCtxt, Plan *parent)
 			break;
 
 		default:
-			elog(ERROR, "ExecReScan: node type %u not supported", nodeTag(node));
+			elog(ERROR, "ExecReScan: node type %d not supported",
+				 nodeTag(node));
 			return;
 	}
 
@@ -393,7 +394,8 @@ ExecReScanR(Relation relDesc,	/* LLL relDesc unused  */
  *
  *		Marks the current scan position.
  *
- *		XXX Needs to be extended to include all the node types.
+ *		XXX Needs to be extended to include all the node types,
+ *		or at least all the ones that can be directly below a mergejoin.
  * ----------------------------------------------------------------
  */
 void
@@ -422,16 +424,20 @@ ExecMarkPos(Plan *node)
 			break;
 
 		default:
-			elog(DEBUG, "ExecMarkPos: node type %u not supported", nodeTag(node));
+			/* don't make hard error unless caller asks to restore... */
+			elog(DEBUG, "ExecMarkPos: node type %d not supported",
+				 nodeTag(node));
 			break;
 	}
-	return;
 }
 
 /* ----------------------------------------------------------------
  *		ExecRestrPos
  *
  *		restores the scan position previously saved with ExecMarkPos()
+ *
+ *		XXX Needs to be extended to include all the node types,
+ *		or at least all the ones that can be directly below a mergejoin.
  * ----------------------------------------------------------------
  */
 void
@@ -441,22 +447,23 @@ ExecRestrPos(Plan *node)
 	{
 		case T_SeqScan:
 			ExecSeqRestrPos((SeqScan *) node);
-			return;
+			break;
 
 		case T_IndexScan:
 			ExecIndexRestrPos((IndexScan *) node);
-			return;
+			break;
 
 		case T_Material:
 			ExecMaterialRestrPos((Material *) node);
-			return;
+			break;
 
 		case T_Sort:
 			ExecSortRestrPos((Sort *) node);
-			return;
+			break;
 
 		default:
-			elog(DEBUG, "ExecRestrPos: node type %u not supported", nodeTag(node));
-			return;
+			elog(ERROR, "ExecRestrPos: node type %d not supported",
+				 nodeTag(node));
+			break;
 	}
 }
