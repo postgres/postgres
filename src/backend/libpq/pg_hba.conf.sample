@@ -128,4 +128,4 @@
 # By default, allow anything over UNIX domain sockets and localhost.
 
 local        all                                         trust
-host         all         127.0.0.1     255.255.255.255   trust     
+host         all         127.0.0.1     255.255.255.255   trust
