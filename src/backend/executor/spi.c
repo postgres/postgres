@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/spi.c,v 1.109 2003/12/02 19:26:47 joe Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/spi.c,v 1.110 2004/03/05 00:47:01 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -916,6 +916,65 @@ SPI_cursor_close(Portal portal)
 		elog(ERROR, "invalid portal in SPI cursor operation");
 
 	PortalDrop(portal, false);
+}
+
+/*
+ * Returns the Oid representing the type id for argument at argIndex. First
+ * parameter is at index zero.
+ */
+Oid
+SPI_getargtypeid(void *plan, int argIndex)
+{
+ if (plan == NULL || argIndex < 0 || argIndex >= ((_SPI_plan*)plan)->nargs)
+ {
+  SPI_result = SPI_ERROR_ARGUMENT;
+  return InvalidOid;
+ }
+ return ((_SPI_plan *) plan)->argtypes[argIndex];
+}
+
+/*
+ * Returns the number of arguments for the prepared plan.
+ */
+int
+SPI_getargcount(void *plan)
+{
+ if (plan == NULL)
+ {
+  SPI_result = SPI_ERROR_ARGUMENT;
+  return -1;
+ }
+ return ((_SPI_plan *) plan)->nargs;
+}
+
+/*
+ * Returns true if the plan contains exactly one command
+ * and that command originates from normal SELECT (i.e.
+ * *not* a SELECT ... INTO). In essence, the result indicates
+ * if the command can be used with SPI_cursor_open
+ *
+ * Parameters
+ *    plan A plan previously prepared using SPI_prepare
+ */
+bool
+SPI_is_cursor_plan(void *plan)
+{
+ List *qtlist;
+ _SPI_plan *spiplan = (_SPI_plan *) plan;
+ if (spiplan == NULL)
+ {
+  SPI_result = SPI_ERROR_ARGUMENT;
+  return false;
+ }
+
+ qtlist = spiplan->qtlist;
+ if(length(spiplan->ptlist) == 1 && length(qtlist) == 1)
+ {
+  Query *queryTree = (Query *) lfirst((List *) lfirst(qtlist));
+  if(queryTree->commandType == CMD_SELECT && queryTree->into == NULL)
+   return true;
+ }
+ return false;
 }
 
 /* =================== private functions =================== */

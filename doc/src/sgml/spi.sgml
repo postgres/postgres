@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/spi.sgml,v 1.30 2003/12/01 22:07:57 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/spi.sgml,v 1.31 2004/03/05 00:47:01 momjian Exp $
 -->
 
 <chapter id="spi">
@@ -567,6 +567,190 @@ void * SPI_prepare(const char * <parameter>command</parameter>, int <parameter>n
    not know the values that will be supplied for the parameters, it
    may make worse planning choices than it would make for a normal
    command with all constants visible.
+  </para>
+ </refsect1>
+</refentry>
+
+<!-- *********************************************** -->
+
+<refentry id="spi-spi-getargcount">
+ <refmeta>
+  <refentrytitle>SPI_getargcount</refentrytitle>
+ </refmeta>
+
+ <refnamediv>
+  <refname>SPI_getargcount</refname>
+  <refpurpose>returns the number of arguments needed when executing a plan
+  prepared by <function>SPI_prepare</function></refpurpose>
+ </refnamediv>
+
+ <indexterm><primary>SPI_getargcount</primary></indexterm>
+
+ <refsynopsisdiv>
+<synopsis>
+int SPI_getargcount(void * <parameter>plan</parameter>)
+</synopsis>
+ </refsynopsisdiv>
+
+ <refsect1>
+  <title>Description</title>
+
+  <para>
+   <function>SPI_getargcount</function> returns the number of arguments needed
+   when executing a plan prepared by <function>SPI_prepare</function>.
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>Arguments</title>
+
+  <variablelist>
+   <varlistentry>
+    <term><literal>void * <parameter>plan</parameter></literal></term>
+    <listitem>
+     <para>
+      execution plan (returned by <function>SPI_prepare</function>)
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+ </refsect1>
+
+ <refsect1>
+  <title>Return Value</title>
+  <para>
+    The expected argument count for the <parameter>plan</parameter> or
+    <symbol>SPI_ERROR_ARGUMENT</symbol> if the <parameter>plan
+    </parameter> is <symbol>NULL</symbol>
+  </para>
+ </refsect1>
+</refentry>
+
+<!-- *********************************************** -->
+
+<refentry id="spi-spi-getargtypeid">
+ <refmeta>
+  <refentrytitle>SPI_getargtypeid</refentrytitle>
+ </refmeta>
+
+ <refnamediv>
+  <refname>SPI_getargtypeid</refname>
+  <refpurpose>returns the expected typeid for the specified argument when
+  executing a plan prepared by <function>SPI_prepare</function></refpurpose>
+ </refnamediv>
+
+ <indexterm><primary>SPI_getargtypeid</primary></indexterm>
+
+ <refsynopsisdiv>
+<synopsis>
+Oid SPI_getargtypeid(void * <parameter>plan</parameter>, int <parameter>argIndex</parameter>)
+</synopsis>
+ </refsynopsisdiv>
+
+ <refsect1>
+  <title>Description</title>
+
+  <para>
+   <function>SPI_getargtypeid</function> returns the Oid representing the type
+   id for argument at <parameter>argIndex</parameter> in a plan prepared by
+   <function>SPI_prepare</function>. First argument is at index zero.
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>Arguments</title>
+
+  <variablelist>
+   <varlistentry>
+    <term><literal>void * <parameter>plan</parameter></literal></term>
+    <listitem>
+     <para>
+      execution plan (returned by <function>SPI_prepare</function>)
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>int <parameter>argIndex</parameter></literal></term>
+    <listitem>
+     <para>
+      zero based index of the argument
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+ </refsect1>
+
+ <refsect1>
+  <title>Return Value</title>
+  <para>
+    The type id of the argument at the given index or <symbol>
+    SPI_ERROR_ARGUMENT</symbol> if the <parameter>plan</parameter> is
+    <symbol>NULL</symbol> or <parameter>argIndex</parameter> is less than 0 or
+    not less than the number of arguments declared for the <parameter>plan
+    </parameter>
+  </para>
+ </refsect1>
+</refentry>
+
+<!-- *********************************************** -->
+
+<refentry id="spi-spi-is_cursor_plan">
+ <refmeta>
+  <refentrytitle>SPI_is_cursor_plan</refentrytitle>
+ </refmeta>
+
+ <refnamediv>
+  <refname>SPI_is_cursor_plan</refname>
+  <refpurpose>returns <symbol>true</symbol> if a plan
+  prepared by <function>SPI_prepare</function> can be passed
+  as an argument to <function>SPI_cursor_open</function></refpurpose>
+ </refnamediv>
+
+ <indexterm><primary>SPI_is_cursor_plan</primary></indexterm>
+
+ <refsynopsisdiv>
+<synopsis>
+bool SPI_is_cursor_plan(void * <parameter>plan</parameter>)
+</synopsis>
+ </refsynopsisdiv>
+
+ <refsect1>
+  <title>Description</title>
+
+  <para>
+   <function>SPI_is_cursor_plan</function> returns <symbol>true</symbol>
+   if a plan prepared by <function>SPI_prepare</function> can be passed
+   as an argument to <function>SPI_cursor_open</function> and <symbol>
+   false</symbol> if that is not the case. The criteria is that the
+   <parameter>plan</parameter> represents one single command and that this
+   command is a <command>SELECT</command> without an <command>INTO</command>
+   clause.
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>Arguments</title>
+
+  <variablelist>
+   <varlistentry>
+    <term><literal>void * <parameter>plan</parameter></literal></term>
+    <listitem>
+     <para>
+      execution plan (returned by <function>SPI_prepare</function>)
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+ </refsect1>
+
+ <refsect1>
+  <title>Return Value</title>
+  <para>
+    <symbol>true</symbol> or <symbol>false</symbol> to indicate if the
+    <parameter>plan</parameter> can produce a cursor or not, or
+    <symbol>SPI_ERROR_ARGUMENT</symbol> if the <parameter>plan</parameter>
+    is <symbol>NULL</symbol>
   </para>
  </refsect1>
 </refentry>
