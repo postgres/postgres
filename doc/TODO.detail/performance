@@ -345,7 +345,7 @@ From owner-pgsql-hackers@hub.org Tue Oct 19 10:31:10 1999
 Received: from renoir.op.net (root@renoir.op.net [209.152.193.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id KAA29087
 	for <maillist@candle.pha.pa.us>; Tue, 19 Oct 1999 10:31:08 -0400 (EDT)
-Received: from hub.org (hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.10 $) with ESMTP id KAA27535 for <maillist@candle.pha.pa.us>; Tue, 19 Oct 1999 10:19:47 -0400 (EDT)
+Received: from hub.org (hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.11 $) with ESMTP id KAA27535 for <maillist@candle.pha.pa.us>; Tue, 19 Oct 1999 10:19:47 -0400 (EDT)
 Received: from localhost (majordom@localhost)
 	by hub.org (8.9.3/8.9.3) with SMTP id KAA30328;
 	Tue, 19 Oct 1999 10:12:10 -0400 (EDT)
@@ -454,7 +454,7 @@ From owner-pgsql-hackers@hub.org Tue Oct 19 21:25:30 1999
 Received: from renoir.op.net (root@renoir.op.net [209.152.193.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id VAA28130
 	for <maillist@candle.pha.pa.us>; Tue, 19 Oct 1999 21:25:26 -0400 (EDT)
-Received: from hub.org (hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.10 $) with ESMTP id VAA10512 for <maillist@candle.pha.pa.us>; Tue, 19 Oct 1999 21:15:28 -0400 (EDT)
+Received: from hub.org (hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.11 $) with ESMTP id VAA10512 for <maillist@candle.pha.pa.us>; Tue, 19 Oct 1999 21:15:28 -0400 (EDT)
 Received: from localhost (majordom@localhost)
 	by hub.org (8.9.3/8.9.3) with SMTP id VAA50745;
 	Tue, 19 Oct 1999 21:07:23 -0400 (EDT)
@@ -1006,7 +1006,7 @@ From pgsql-general-owner+M2497@hub.org Fri Jun 16 18:31:03 2000
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id RAA04165
 	for <pgman@candle.pha.pa.us>; Fri, 16 Jun 2000 17:31:01 -0400 (EDT)
-Received: from hub.org (root@hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.10 $) with ESMTP id RAA13110 for <pgman@candle.pha.pa.us>; Fri, 16 Jun 2000 17:20:12 -0400 (EDT)
+Received: from hub.org (root@hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.11 $) with ESMTP id RAA13110 for <pgman@candle.pha.pa.us>; Fri, 16 Jun 2000 17:20:12 -0400 (EDT)
 Received: from hub.org (majordom@localhost [127.0.0.1])
 	by hub.org (8.10.1/8.10.1) with SMTP id e5GLDaM14477;
 	Fri, 16 Jun 2000 17:13:36 -0400 (EDT)
@@ -1282,4 +1282,234 @@ in src/Makefile.custom.
 -- 
 -Alfred Perlstein - [bright@wintelcom.net|alfred@freebsd.org]
 "I have the heart of a child; I keep it in a jar on my desk."
+
+From pgsql-general-owner+M4010@postgresql.org Mon Feb  5 18:50:47 2001
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id SAA02209
+	for <pgman@candle.pha.pa.us>; Mon, 5 Feb 2001 18:50:46 -0500 (EST)
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by mail.postgresql.org (8.11.1/8.11.1) with SMTP id f15Nn8x86486;
+	Mon, 5 Feb 2001 18:49:08 -0500 (EST)
+	(envelope-from pgsql-general-owner+M4010@postgresql.org)
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by mail.postgresql.org (8.11.1/8.11.1) with SMTP id f15N7Ux81124
+	for <pgsql-general@postgresql.org>; Mon, 5 Feb 2001 18:07:30 -0500 (EST)
+	(envelope-from pgsql-general-owner@postgresql.org)
+Received: from news.tht.net (news.hub.org [216.126.91.242])
+	by mail.postgresql.org (8.11.1/8.11.1) with ESMTP id f0V0Twq69854
+	for <pgsql-general@postgresql.org>; Tue, 30 Jan 2001 19:29:58 -0500 (EST)
+	(envelope-from news@news.tht.net)
+Received: (from news@localhost)
+	by news.tht.net (8.11.1/8.11.1) id f0V0RAO01011
+	for pgsql-general@postgresql.org; Tue, 30 Jan 2001 19:27:10 -0500 (EST)
+	(envelope-from news)
+From: Mike Hoskins <mikehoskins@yahoo.com>
+X-Newsgroups: comp.databases.postgresql.general
+Subject: Re: [GENERAL] MySQL file system
+Date: Tue, 30 Jan 2001 18:30:36 -0600
+Organization: Hub.Org Networking Services (http://www.hub.org)
+Lines: 120
+Message-ID: <3A775CAB.C416AA16@yahoo.com>
+References: <016e01c080b7$ea554080$330a0a0a@6014cwpza006>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+X-Complaints-To: scrappy@hub.org
+X-Mailer: Mozilla 4.76 [en] (Windows NT 5.0; U)
+X-Accept-Language: en
+To: pgsql-general@postgresql.org
+Precedence: bulk
+Sender: pgsql-general-owner@postgresql.org
+Status: OR
+
+This idea is such a popular (even old) one that Oracle developed it for 8i --
+IFS.  Yep, AS/400 has had it forever, and BeOS is another example.  Informix has
+had its DataBlades for years, as well.  In fact, Reiser-FS is an FS implemented
+on a DB, albeit probably not a SQL DB.  AIX's LVM and JFS is extent/DB-based, as
+well. Let's see now, why would all those guys do that?  (Now, some of those that
+aren't SQL-based probably won't allow SQL queries on files, so just think about
+those that do, for a minute)....
+
+Rather than asking why, a far better question is why not?  There is SO much
+functionality to be gained here that it's silly to ask why.  At a higher level,
+treating BLOBs as files and as DB entries simultaneously has so many uses, that
+one has trouble answering the question properly without the puzzled stare back
+at the questioner.  Again, look at the above list, particularly at AS/400 -- the
+entire OS's FS sits on top of DB/2!
+
+For example, think how easy dynamically generated web sites could access online
+catalog information, with all those JPEG's, GIFs, PNGs, HTML files, Text files,
+.PDF's, etc., both in the DB and in the FS.  This would be so much easier to
+maintain, when you have webmasters, web designers, artists, programmers,
+sysadmins, dba's, etc., all trying to manage a big, dynamic, graphics-rich web
+site.  Who cares if the FS is a bit slow, as long as it's not too slow?  That's
+not the point, anyway.
+
+The point is easy access to data:  asset management, version control, the
+ability to access the same data as a file and as a BLOB simultaneously, the
+ability to replicate easier, the ability to use more tools on the same info,
+etc.  It's not for speed, per se; instead, it's for accessibility.
+
+Think about this issue.  You have some already compiled text-based program that
+works on binary files, but not on databases -- it was simply never designed into
+the program.  How are you going to get your graphics BLOBs into that program?
+Oh yeah, let's write another program to transform our data into files, first,
+then after processing delete them in some cleanup routine....  Why?  If you have
+a DB'ed FS, then file data can simultaneously have two views -- one for the DB
+and one as an FS.  (You can easily reverse the scenario.)  Not only does this
+save time and disk space; it saves you from having to pay for the most expensive
+element of all -- programmer time.
+
+BTW, once this FS-on-a-DB concept really sinks in, imagine how tightly
+integrated Linux/Unix apps could be written.  Imagine if a bunch of GPL'ed
+software started coding for this and used this as a means to exchange data, all
+using a common set of libraries.  You could get to the point of uniting files,
+BLOBs, data of all sorts, IPC, version control, etc., all under one umbrella,
+especially if XML was the means data was exchanged.  Heck, distributed
+authentication, file access, data access, etc., could be improved greatly.
+Well, this paragraph sounds like flame bait, but really consider the
+ramifications.  Also, read the next paragraph....
+
+Something like this *has* existed for Postgres for a long time -- PGFS, by Brian
+Bartholomew.  It's even supposedly matured with age.  Unfortunately, I cannot
+get to http://www.wv.com/ (Working Version's main site).  Working Version is a
+version control system that keeps old versions of files around in the FS.  It
+uses PG as the back-end DB and lets you mount it like another FS.  It's
+supposedly an awesome system, but where is it?  It's not some clunky korbit
+thingy, either.  (If someone can find it, please let me know by email, if
+possible.)
+
+The only thing I can find on this is from a Google search, which caches
+everything but the actual software:
+
+http://www.google.com/search?q=pgfs+postgres&num=100&hl=en&lr=lang_en&newwindow=1&safe=active
+
+Also, there is the Perl-FS that can be transformed into something like PGFS:
+http://www.assurdo.com/perlfs/  It allows you to write Perl code that can mount
+various protocols or data types as an FS, in user space.  (One example is the
+ability to mount FTP sites, BTW.)
+
+Instead of ridiculing something you've never tried, consider that MySQL-FS,
+Oracle (IFS), Informix (DataBlades), AS/400 (DB/2), BeOS, and Reiser-FS are
+doing this today.  Do you want to be left behind and let them tell us what it's
+good for?  Or, do we want this for PG?  (Reiser-FS, BTW, is FASTER than ext2,
+but has no SQL hooks).
+
+There were many posts on this on slashdot:
+    http://slashdot.org/article.pl?sid=01/01/16/1855253&mode=thread
+    (I wrote some comments here, as well, just look for mikehoskins)
+
+I, for one, want to see this succeed for MySQL, PostgreSQL, msql, etc.  It's an
+awesome feature that doesn't need to be speedy because it can save HUMANS time.
+
+The question really is, "When do we want to catch up to everyone else?"  We are
+always moving to higher levels of abstraction, anyway, so it's just a matter of
+time.  PG should participate.
+
+
+Adam Lang wrote:
+
+> I wasn't following the thread too closely, but database for a filesystem has
+> been done.  BeOS uses a database for a filesystem as well as AS/400 and
+> Mainframes.
+>
+> Adam Lang
+> Systems Engineer
+> Rutgers Casualty Insurance Company
+> http://www.rutgersinsurance.com
+> ----- Original Message -----
+> From: "Alfred Perlstein" <bright@wintelcom.net>
+> To: "Robert D. Nelson" <RDNELSON@co.centre.pa.us>
+> Cc: "Joseph Shraibman" <jks@selectacast.net>; "Karl DeBisschop"
+> <karl@debisschop.net>; "Ned Lilly" <ned@greatbridge.com>; "PostgreSQL
+> General" <pgsql-general@postgresql.org>
+> Sent: Wednesday, January 17, 2001 12:23 PM
+> Subject: Re: [GENERAL] MySQL file system
+>
+> > * Robert D. Nelson <RDNELSON@co.centre.pa.us> [010117 05:17] wrote:
+> > > >Raw disk access allows:
+> > >
+> > > If I'm correct, mysql is providing a filesystem, not a way to access raw
+> > > disk, like Oracle does. Huge difference there - with a filesystem, you
+> have
+> > > overhead of FS *and* SQL at the same time.
+> >
+> > Oh, so it's sort of like /proc for mysql?
+> >
+> > What a terrible waste of time and resources. :(
+> >
+> > --
+> > -Alfred Perlstein - [bright@wintelcom.net|alfred@freebsd.org]
+> > "I have the heart of a child; I keep it in a jar on my desk."
+
+
+From pgsql-general-owner+M4049@postgresql.org Tue Feb  6 01:26:19 2001
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id BAA21425
+	for <pgman@candle.pha.pa.us>; Tue, 6 Feb 2001 01:26:18 -0500 (EST)
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by mail.postgresql.org (8.11.1/8.11.1) with SMTP id f166Nxx26400;
+	Tue, 6 Feb 2001 01:23:59 -0500 (EST)
+	(envelope-from pgsql-general-owner+M4049@postgresql.org)
+Received: from simecity.com ([202.188.254.2])
+	by mail.postgresql.org (8.11.1/8.11.1) with ESMTP id f166GUx25754
+	for <pgsql-general@postgresql.org>; Tue, 6 Feb 2001 01:16:30 -0500 (EST)
+	(envelope-from lyeoh@pop.jaring.my)
+Received: (from mail@localhost)
+	by simecity.com (8.9.3/8.8.7) id OAA23910;
+	Tue, 6 Feb 2001 14:28:48 +0800
+Received: from <lyeoh@pop.jaring.my> (ilab2.mecomb.po.my [192.168.3.22]) by cirrus.simecity.com via smap (V2.1)
+	id xma023908; Tue, 6 Feb 01 14:28:34 +0800
+Message-ID: <3.0.5.32.20010206141555.00a3d100@192.228.128.13>
+X-Sender: lyeoh@192.228.128.13
+X-Mailer: QUALCOMM Windows Eudora Light Version 3.0.5 (32)
+Date: Tue, 06 Feb 2001 14:15:55 +0800
+To: Mike Hoskins <mikehoskins@yahoo.com>, pgsql-general@postgresql.org
+From: Lincoln Yeoh <lyeoh@pop.jaring.my>
+Subject: [GENERAL] Re: MySQL file system
+In-Reply-To: <3A775CF7.3C5F1909@yahoo.com>
+References: <016e01c080b7$ea554080$330a0a0a@6014cwpza006>
+MIME-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Precedence: bulk
+Sender: pgsql-general-owner@postgresql.org
+Status: OR
+
+What you're saying seems to be to have a data structure where the same data
+can be accessed in both the filesystem style and the RDBMs style. How does
+that work? How is the mapping done between both structures? Slapping a
+filesystem on top of a RDBMs doesn't do that does it?
+
+Most filesystems are basically databases already, just differently
+structured and featured databases. And so far most of them do their job
+pretty well. You move a folder/directory somewhere, and everything inside
+it moves. Tons of data are already arranged in that form. Though porting
+over data from one filesystem to another is not always straightforward,
+RDBMSes are far worse.
+
+Maybe what would be nice is not a filesystem based on a database, rather
+one influenced by databases. One with a decent fulltextindex for data and
+filenames, where you have the option to ignore or not ignore
+nonalphanumerics and still get an indexed search.
+
+Then perhaps we could do something like the following:
+
+select file.name from path "/var/logs/" where file.name like "%.log%' and
+file.lastmodified > '2000/1/1' and file.contents =~ 'te_st[0-9]+\.gif$' use
+index
+
+Checkpoints would be nice too. Then I can rollback to a known point if I
+screw up ;).
+
+In fact the SQL style interface doesn't have to be built in at all. Neither
+does the index have to be realtime. I suppose there could be an option to
+make it realtime if performance is not an issue. 
+
+What could be done is to use some fast filesystem. Then we add tools to
+maintain indexes, for SQL style interfaces and other style interfaces.
+Checkpoints and rollbacks would be harder of course.
+
+Cheerio,
+Link.
+
 
