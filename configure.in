@@ -1,5 +1,5 @@
 dnl Process this file with autoconf to produce a configure script.
-dnl $Header: /cvsroot/pgsql/configure.in,v 1.172 2002/03/30 00:20:15 petere Exp $
+dnl $Header: /cvsroot/pgsql/configure.in,v 1.173 2002/03/30 00:59:52 petere Exp $
 
 dnl Developers, please strive to achieve this order:
 dnl
@@ -759,7 +759,8 @@ AC_CHECK_HEADERS([crypt.h dld.h endian.h fp_class.h getopt.h ieeefp.h pwd.h sys/
 # netinet/in.h is included first.
 AC_CHECK_HEADERS([netinet/in.h])
 AC_CHECK_HEADERS([netinet/tcp.h], [], [],
-[#ifdef HAVE_NETINET_IN_H
+[AC_INCLUDES_DEFAULT
+#ifdef HAVE_NETINET_IN_H
 #include <netinet/in.h>
 #endif
 ])

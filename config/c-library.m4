@@ -1,5 +1,5 @@
 # Macros that test various C library quirks
-# $Header: /cvsroot/pgsql/config/c-library.m4,v 1.12 2002/03/29 17:32:53 petere Exp $
+# $Header: /cvsroot/pgsql/config/c-library.m4,v 1.13 2002/03/30 00:59:52 petere Exp $
 
 
 # PGAC_VAR_INT_TIMEZONE
@@ -66,7 +66,7 @@ AC_SUBST(MEMCMP)dnl
 # If it doesn't then one could define it as
 # union semun { int val; struct semid_ds *buf; unsigned short *array; }
 AC_DEFUN([PGAC_UNION_SEMUN],
-[AC_CHECK_TYPE([union semun], [], [],
+[AC_CHECK_TYPES([union semun], [], [],
 [#include <sys/types.h>
 #include <sys/ipc.h>
 #include <sys/sem.h>])])# PGAC_UNION_SEMUN

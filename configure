@@ -7455,8 +7455,7 @@ done
 
 
 
-
-for ac_header in crypt.h dld.h endian.h fp_class.h getopt.h ieeefp.h pwd.h strings.h sys/ipc.h sys/pstat.h sys/select.h sys/sem.h sys/socket.h sys/shm.h sys/un.h termios.h kernel/OS.h kernel/image.h SupportDefs.h
+for ac_header in crypt.h dld.h endian.h fp_class.h getopt.h ieeefp.h pwd.h sys/ipc.h sys/pstat.h sys/select.h sys/sem.h sys/socket.h sys/shm.h sys/un.h termios.h kernel/OS.h kernel/image.h SupportDefs.h
 do
 as_ac_Header=`echo "ac_cv_header_$ac_header" | $as_tr_sh`
 if eval "test \"\${$as_ac_Header+set}\" = set"; then
@@ -7698,6 +7697,7 @@ else
   cat >conftest.$ac_ext <<_ACEOF
 #line $LINENO "configure"
 #include "confdefs.h"
+$ac_includes_default
 #ifdef HAVE_NETINET_IN_H
 #include <netinet/in.h>
 #endif
@@ -9164,6 +9164,14 @@ rm -f conftest.$ac_objext conftest.$ac_ext
 fi
 echo "$as_me:$LINENO: result: $ac_cv_type_union_semun" >&5
 echo "${ECHO_T}$ac_cv_type_union_semun" >&6
+if test $ac_cv_type_union_semun = yes; then
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_UNION_SEMUN 1
+_ACEOF
+
+
+fi
 
 echo "$as_me:$LINENO: checking for struct sockaddr_un" >&5
 echo $ECHO_N "checking for struct sockaddr_un... $ECHO_C" >&6
