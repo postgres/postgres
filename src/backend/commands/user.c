@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/commands/user.c,v 1.97 2002/04/26 19:29:47 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/commands/user.c,v 1.98 2002/04/27 15:30:07 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -195,8 +195,7 @@ write_group_file(Relation urel, Relation grel)
 				}
 
 				/* File format is:
-				 *		"dbname"	"user1","user2","user3"
-				 * This matches pg_hba.conf.
+				 *		"dbname"	"user1" "user2" "user3"
 				 */
 				if (first_user)
 				{
@@ -335,6 +334,7 @@ write_user_file(Relation urel)
 		fputs_quote(passwd, fp);
 		fputs(" ", fp);
 		fputs_quote(valuntil, fp);
+		fputs("\n", fp);
 
 		pfree(passwd);
 		pfree(valuntil);
