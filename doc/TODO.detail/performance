@@ -345,7 +345,7 @@ From owner-pgsql-hackers@hub.org Tue Oct 19 10:31:10 1999
 Received: from renoir.op.net (root@renoir.op.net [209.152.193.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id KAA29087
 	for <maillist@candle.pha.pa.us>; Tue, 19 Oct 1999 10:31:08 -0400 (EDT)
-Received: from hub.org (hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.8 $) with ESMTP id KAA27535 for <maillist@candle.pha.pa.us>; Tue, 19 Oct 1999 10:19:47 -0400 (EDT)
+Received: from hub.org (hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.9 $) with ESMTP id KAA27535 for <maillist@candle.pha.pa.us>; Tue, 19 Oct 1999 10:19:47 -0400 (EDT)
 Received: from localhost (majordom@localhost)
 	by hub.org (8.9.3/8.9.3) with SMTP id KAA30328;
 	Tue, 19 Oct 1999 10:12:10 -0400 (EDT)
@@ -454,7 +454,7 @@ From owner-pgsql-hackers@hub.org Tue Oct 19 21:25:30 1999
 Received: from renoir.op.net (root@renoir.op.net [209.152.193.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id VAA28130
 	for <maillist@candle.pha.pa.us>; Tue, 19 Oct 1999 21:25:26 -0400 (EDT)
-Received: from hub.org (hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.8 $) with ESMTP id VAA10512 for <maillist@candle.pha.pa.us>; Tue, 19 Oct 1999 21:15:28 -0400 (EDT)
+Received: from hub.org (hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.9 $) with ESMTP id VAA10512 for <maillist@candle.pha.pa.us>; Tue, 19 Oct 1999 21:15:28 -0400 (EDT)
 Received: from localhost (majordom@localhost)
 	by hub.org (8.9.3/8.9.3) with SMTP id VAA50745;
 	Tue, 19 Oct 1999 21:07:23 -0400 (EDT)
@@ -1000,5 +1000,116 @@ Oleg Bartunov, sci.researcher, hostmaster of AstroNet,
 Sternberg Astronomical Institute, Moscow University (Russia)
 Internet: oleg@sai.msu.su, http://www.sai.msu.su/~megera/
 phone: +007(095)939-16-83, +007(095)939-23-83
+
+
+From pgsql-general-owner+M2497@hub.org Fri Jun 16 18:31:03 2000
+Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id RAA04165
+	for <pgman@candle.pha.pa.us>; Fri, 16 Jun 2000 17:31:01 -0400 (EDT)
+Received: from hub.org (root@hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.9 $) with ESMTP id RAA13110 for <pgman@candle.pha.pa.us>; Fri, 16 Jun 2000 17:20:12 -0400 (EDT)
+Received: from hub.org (majordom@localhost [127.0.0.1])
+	by hub.org (8.10.1/8.10.1) with SMTP id e5GLDaM14477;
+	Fri, 16 Jun 2000 17:13:36 -0400 (EDT)
+Received: from home.dialix.com ([203.15.150.26])
+	by hub.org (8.10.1/8.10.1) with ESMTP id e5GLCQM14064
+	for <pgsql-general@postgresql.org>; Fri, 16 Jun 2000 17:12:27 -0400 (EDT)
+Received: from nemeton.com.au ([202.76.153.71])
+	by home.dialix.com (8.9.3/8.9.3/JustNet) with SMTP id HAA95516
+	for <pgsql-general@postgresql.org>; Sat, 17 Jun 2000 07:11:44 +1000 (EST)
+	(envelope-from giles@nemeton.com.au)
+Received: (qmail 10213 invoked from network); 16 Jun 2000 09:52:29 -0000
+Received: from nemeton.com.au (203.8.3.17)
+  by nemeton.com.au with SMTP; 16 Jun 2000 09:52:29 -0000
+To: Jurgen Defurne <defurnj@glo.be>
+cc: Mark Stier <kalium@gmx.de>,
+        postgreSQL general mailing list <pgsql-general@postgresql.org>
+Subject: Re: [GENERAL] optimization by removing the file system layer? 
+In-Reply-To: Message from Jurgen Defurne <defurnj@glo.be> 
+   of "Thu, 15 Jun 2000 20:26:57 +0200." <39491FF1.E1E583F8@glo.be> 
+Date: Fri, 16 Jun 2000 19:52:28 +1000
+Message-ID: <10210.961149148@nemeton.com.au>
+From: Giles Lean <giles@nemeton.com.au>
+X-Mailing-List: pgsql-general@postgresql.org
+Precedence: bulk
+Sender: pgsql-general-owner@hub.org
+Status: OR
+
+
+
+> I think that the Un*x filesystem is one of the reasons that large
+> database vendors rather use raw devices, than filesystem storage
+> files.
+
+This used to be the preference, back in the late 80s and possibly
+early 90s.  I'm seeing a preference toward using the filesystem now,
+possibly with some sort of async I/O and co-operation from the OS
+filesystem about interactions with the filesystem cache.
+
+Performance preferences don't stand still.  The hardware changes, the
+software changes, the volume of data changes, and different solutions
+become preferable.
+
+> Using a raw device on the disk gives them the possibility to have
+> complete control over their files, indices and objects without being
+> bothered by the operating system.
+>
+> This speeds up things in several ways :
+> - the least possible OS intervention
+
+Not that this is especially useful, necessarily.  If the "raw" device
+is in fact managed by a logical volume manager doing mirroring onto
+some sort of storage array there is still plenty of OS code involved.
+
+The cost of using a filesystem in addition may not be much if anything
+and of course a filesystem is considerably more flexible to
+administer (backup, move, change size, check integrity, etc.)
+
+> - choose block sizes according to applications
+> - reducing fragmentation
+> - packing data in nearby cilinders
+
+... but when this storage area is spread over multiple mechanisms in a
+smart storage array with write caching, you've no idea what is where
+anyway.  Better to let the hardware or at least the OS manage this;
+there are so many levels of caching between a database and the
+magnetic media that working hard to influence layout is almost
+certainly a waste of time.
+
+Kirk McKusick tells a lovely story that once upon a time it used to be
+sensible to check some registers on a particular disk controller to
+find out where the heads were when scheduling I/O.  Needless to say,
+that is history now!
+
+There's a considerable cost in complexity and code in using "raw"
+storage too, and it's not a one off cost: as the technologies change,
+the "fast" way to do things will change and the code will have to be
+updated to match.  Better to leave this to the OS vendor where
+possible, and take advantage of the tuning they do.
+
+> - Anyone other ideas -> the sky is the limit here
+
+> It also aids portability, at least on platforms that have an
+> equivalent of a raw device.
+
+I don't understand that claim.  Not much is portable about raw
+devices, and they're typically not nearlly as well documented as the
+filesystem interfaces.
+
+> It is also independent of the standard implemented Un*x filesystems,
+> for which you will have to pay extra if you want to take extra
+> measures against power loss.
+
+Rather, it is worse.  With a Unix filesystem you get quite defined
+semantics about what is written when.
+
+> The problem with e.g. e2fs, is that it is not robust enough if a CPU
+> fails.
+
+ext2fs doesn't even claim to have Unix filesystem semantics.
+
+Regards,
+
+Giles
+
 
 
