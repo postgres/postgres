@@ -9,7 +9,7 @@
  * Copyright (c) 2003, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/AbstractJdbc1ResultSet.java,v 1.20 2003/09/18 04:09:02 barry Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/AbstractJdbc1ResultSet.java,v 1.21 2003/09/22 04:54:59 barry Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -201,7 +201,11 @@ public abstract class AbstractJdbc1ResultSet implements BaseResultSet
 					case Types.DOUBLE:
 					case Types.FLOAT:
 					case Types.DECIMAL:
-						s = (s.indexOf(".")==-1) ? s : s.substring(0,s.indexOf("."));
+						int loc = s.indexOf(".");
+						if (loc!=-1 && Integer.parseInt(s.substring(loc+1,s.length()))==0)
+						{
+							s = s.substring(0,loc);
+						}
 						break;
 					case Types.CHAR:
 						s = s.trim();
@@ -232,7 +236,11 @@ public abstract class AbstractJdbc1ResultSet implements BaseResultSet
 					case Types.DOUBLE:
 					case Types.FLOAT:
 					case Types.DECIMAL:
-						s = (s.indexOf(".")==-1) ? s : s.substring(0,s.indexOf("."));
+						int loc = s.indexOf(".");
+						if (loc!=-1 && Integer.parseInt(s.substring(loc+1,s.length()))==0)
+						{
+							s = s.substring(0,loc);
+						}
 						break;
 					case Types.CHAR:
 						s = s.trim();

@@ -38,6 +38,35 @@ public class ResultSetTest extends TestCase
 		
 		TestUtil.createTable(con, "testint", "a int");
 		stmt.executeUpdate("INSERT INTO testint VALUES (12345)");
+		
+                TestUtil.createTable(con, "testbool", "a boolean");
+                                                                                 
+                TestUtil.createTable(con, "testbit", "a bit");
+                                                                                 
+                TestUtil.createTable(con, "testboolstring", "a varchar(30)");
+                                                                                 
+                stmt.executeUpdate("INSERT INTO testboolstring VALUES('true')");
+                stmt.executeUpdate("INSERT INTO testboolstring VALUES('false')");
+                stmt.executeUpdate("INSERT INTO testboolstring VALUES('t')");
+                stmt.executeUpdate("INSERT INTO testboolstring VALUES('f')");
+                stmt.executeUpdate("INSERT INTO testboolstring VALUES('1.0')");
+                stmt.executeUpdate("INSERT INTO testboolstring VALUES('0.0')");
+                stmt.executeUpdate("INSERT INTO testboolstring VALUES('TRUE')");
+                stmt.executeUpdate("INSERT INTO testboolstring VALUES('this is not true')");
+		
+		TestUtil.createTable(con, "testnumeric", "a numeric");
+		stmt.executeUpdate("INSERT INTO testnumeric VALUES('1.0')");
+		stmt.executeUpdate("INSERT INTO testnumeric VALUES('0.0')");
+		stmt.executeUpdate("INSERT INTO testnumeric VALUES('-1.0')");		
+		stmt.executeUpdate("INSERT INTO testnumeric VALUES('1.2')");
+		stmt.executeUpdate("INSERT INTO testnumeric VALUES('99999.2')");
+		stmt.executeUpdate("INSERT INTO testnumeric VALUES('99999')");
+		stmt.executeUpdate("INSERT INTO testnumeric VALUES('-2.5')");
+		stmt.executeUpdate("INSERT INTO testnumeric VALUES('-99999.2')");
+		stmt.executeUpdate("INSERT INTO testnumeric VALUES('-99999')");
+		  
+                stmt.close();
+
 
 		stmt.close();
 	}
@@ -47,6 +76,10 @@ public class ResultSetTest extends TestCase
 		TestUtil.dropTable(con, "testrs");
 		TestUtil.dropTable(con, "teststring");
 		TestUtil.dropTable(con, "testint");
+		TestUtil.dropTable(con, "testbool");
+		TestUtil.dropTable(con, "testbit");
+		TestUtil.dropTable(con, "testboolstring");
+		TestUtil.dropTable(con, "testnumeric");
 		TestUtil.closeDB(con);
 	}
 
@@ -114,4 +147,139 @@ public class ResultSetTest extends TestCase
    			assertEquals(rs.getString(1), "12");
    			assertEquals(new String(rs.getBytes(1)), "12");
 	}
+
+	public void booleanTests(boolean useServerPrepare) throws Exception
+        {
+                java.sql.PreparedStatement pstmt = con.prepareStatement("insert into testbool values (?)");
+                if (useServerPrepare)
+			((org.postgresql.PGStatement)pstmt).setUseServerPrepare(true);
+                                                                                 
+		pstmt.setObject(1, new Float(0), java.sql.Types.BIT);
+                pstmt.executeUpdate();
+                                                                                  
+                pstmt.setObject(1, new Float(1), java.sql.Types.BIT);
+                pstmt.executeUpdate();
+                                                                                 
+                pstmt.setObject(1, "False", java.sql.Types.BIT);
+                pstmt.executeUpdate();
+                                                                                 
+                pstmt.setObject(1, "True", java.sql.Types.BIT);
+                pstmt.executeUpdate();
+                                                                                 
+                ResultSet rs = con.createStatement().executeQuery("select * from testbool");
+		for (int i = 0; i<2; i++)
+                {
+                	assertTrue(rs.next());
+                        assertEquals(false, rs.getBoolean(1));
+                        assertTrue(rs.next());
+                        assertEquals(true, rs.getBoolean(1));
+                }
+                                                                                 
+                pstmt = con.prepareStatement("insert into testbit values (?)");
+                                                                                 
+                pstmt.setObject(1, new Float(0), java.sql.Types.BIT);
+                pstmt.executeUpdate();
+                                                                                 
+                pstmt.setObject(1, new Float(1), java.sql.Types.BIT);
+                pstmt.executeUpdate();
+                                                                                 
+                pstmt.setObject(1, "false", java.sql.Types.BIT);
+                pstmt.executeUpdate();
+                                                                                 
+                pstmt.setObject(1, "true", java.sql.Types.BIT);
+                pstmt.executeUpdate();
+ 		
+		rs = con.createStatement().executeQuery("select * from testbit");
+		
+                for (int i = 0;i<2; i++)
+                {
+		        assertTrue(rs.next());
+                	assertEquals(false, rs.getBoolean(1));
+                        assertTrue(rs.next());
+                        assertEquals(true, rs.getBoolean(1));
+                }
+                                                                                
+                rs = con.createStatement().executeQuery("select * from testboolstring");
+                                                                         
+                for (int i = 0;i<4; i++)
+                {
+                        assertTrue(rs.next());
+                        assertEquals(true, rs.getBoolean(1));
+                        assertTrue(rs.next());
+                        assertEquals(false, rs.getBoolean(1));
+               }
+       }
+
+       public void testBoolean() throws Exception
+       {
+               booleanTests(true);
+               booleanTests(false);
+       }
+       
+       public void testgetByte() throws Exception
+       {
+       		ResultSet rs = con.createStatement().executeQuery("select * from testnumeric");
+		boolean thrown = false;
+		
+		assertTrue(rs.next());
+		assertEquals(1,rs.getByte(1));
+		
+		assertTrue(rs.next());
+		assertEquals(0,rs.getByte(1));
+		
+		assertTrue(rs.next());
+		assertEquals(-1,rs.getByte(1));
+		int count = 3;
+		
+		while (rs.next())
+		{
+			try
+			{
+				rs.getByte(1);
+			}
+			catch (Exception e)
+			{
+				thrown = true;
+			}
+			if (!thrown)
+				fail("Exception expected.");
+			count++;
+		}
+		if (count != 9)
+			fail("Exception expected.");
+	}
+		
+       public void testgetShort() throws Exception
+       {
+       		ResultSet rs = con.createStatement().executeQuery("select * from testnumeric");
+		boolean thrown = false;
+		
+		assertTrue(rs.next());
+		assertEquals(1,rs.getShort(1));
+		
+		assertTrue(rs.next());
+		assertEquals(0,rs.getShort(1));
+		
+		assertTrue(rs.next());
+		assertEquals(-1,rs.getShort(1));
+		int count = 3;
+		
+		while (rs.next())
+		{
+			try
+			{
+				rs.getShort(1);
+			}
+			catch (Exception e)
+			{
+				thrown = true;
+			}
+			if (!thrown)
+				fail("Exception expected.");
+			count++;
+		}
+		if (count != 9)
+			fail("Exception expected.");
+	}
+       
 }
