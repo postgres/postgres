@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.18 1998/01/07 21:05:32 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.19 1998/01/23 06:01:03 momjian Exp $
  *
  * NOTES
  *	  Outside modules can create a lock table and acquire/release
@@ -48,8 +48,7 @@
 #include "access/xact.h"
 #include "access/transam.h"
 
-static int
-WaitOnLock(LOCKTAB *ltable, LockTableId tableId, LOCK *lock,
+static int WaitOnLock(LOCKTAB *ltable, LockTableId tableId, LOCK *lock,
 		   LOCKT lockt);
 		   
 /*#define LOCK_MGR_DEBUG*/

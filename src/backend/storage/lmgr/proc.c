@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.25 1998/01/07 21:05:36 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.26 1998/01/23 06:01:05 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,7 +46,7 @@
  *		This is so that we can support more backends. (system-wide semaphore
  *		sets run out pretty fast.)				  -ay 4/95
  *
- * $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.25 1998/01/07 21:05:36 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.26 1998/01/23 06:01:05 momjian Exp $
  */
 #include <sys/time.h>
 #include <unistd.h>
@@ -729,7 +729,8 @@ HandleDeadLock(int sig)
 	 */
 	UnlockLockTable();
 
-	elog(NOTICE, "Timeout -- possible deadlock");
+	elog(NOTICE, "Timeout interval reached -- possible deadlock.");
+	elog(NOTICE, "See the lock(l) manual page for a possible cause.");
 	return;
 }
 
