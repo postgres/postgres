@@ -1,7 +1,7 @@
 
           Developer's Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Mon Feb 25 15:29:28 EST 2002
+   Last updated: Tue Apr 16 22:10:03 EDT 2002
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -96,7 +96,7 @@
    
   1.2) How do I add a feature or fix a bug?
   
-   The source code is over 250,000 lines. Many problems/features are
+   The source code is over 350,000 lines. Many fixes/features are
    isolated to one specific area of the code. Others require knowledge of
    much of the source. If you are confused about where to start, ask the
    hackers list, and they will be glad to assess the complexity and give
@@ -111,6 +111,15 @@
    facilities in the source, for performance reasons and for simplicity.
    Often a review of existing code doing similar things is helpful.
    
+   The usual process for source additions is:
+     * Review the TODO list.
+     * Discuss hackers the desirability of the fix/feature.
+     * How should it behave in complex circumstances?
+     * How should it be implemented?
+     * Submit the patch to the patches list.
+     * Answer email questions.
+     * Wait for the patch to be applied.
+       
   1.3) How do I download/update the current source tree?
   
    There are several ways to obtain the source tree. Occasional
