@@ -4,7 +4,7 @@
 #    Makefile for the plpgsql shared object
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/pl/plpgsql/src/Attic/Makefile.in,v 1.1 1998/10/08 23:45:17 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/pl/plpgsql/src/Attic/Makefile.in,v 1.2 1998/10/09 03:08:00 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -42,12 +42,12 @@ endif
 
 ifeq ($(PORTNAME), bsdi)
   ifdef BSD_SHLIB
-    ifeq ($(LDSUFFIX), .so)
+    ifeq ($(DLSUFFIX), .so)
       LD		:= shlicc
       LDFLAGS_SL	+= -O -shared
       CFLAGS		+= $(CFLAGS_SL)
     endif
-    ifeq ($(LDSUFFIX), .o)
+    ifeq ($(DLSUFFIX), .o)
       LD		:= shlicc
       LDFLAGS_SL	+= -O -r
       CFLAGS		+= $(CFLAGS_SL)

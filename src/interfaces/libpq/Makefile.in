@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/interfaces/libpq/Attic/Makefile.in,v 1.30 1998/10/07 06:50:33 thomas Exp $
+#    $Header: /cvsroot/pgsql/src/interfaces/libpq/Attic/Makefile.in,v 1.31 1998/10/09 03:07:57 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -58,14 +58,14 @@ endif
 
 ifeq ($(PORTNAME), bsdi)
   ifdef BSD_SHLIB
-    ifeq ($(LDSUFFIX), .so)
+    ifeq ($(DLSUFFIX), .so)
       install-shlib-dep := install-shlib
       shlib		:= libpq.so.$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
       LD		:= shlicc
       LDFLAGS_SL	+= -O -shared
       CFLAGS		+= $(CFLAGS_SL)
     endif
-    ifeq ($(LDSUFFIX), .o)
+    ifeq ($(DLSUFFIX), .o)
       install-shlib-dep	:= install-shlib
       shlib		:= libpq.o.$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
       LD		:=shlicc
