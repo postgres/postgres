@@ -1332,7 +1332,7 @@ int	pgindent_func_no_var_fix;\
 	detab -t8 -qc |
 	entab -t4 -qc |
 # move trailing * in function return type
-	sed 's;^\([A-Za-z_][^	]*\)[ 	][ 	]*\*$;\1 *;' |
+	sed 's;^\([A-Za-z_][^ 	]*\)[ 	][ 	]*\*$;\1 *;' |
 # remove un-needed braces around single statements
 	awk '
 	{	
