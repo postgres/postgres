@@ -1,6 +1,6 @@
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
- $Header: /cvsroot/pgsql/doc/src/sgml/catalogs.sgml,v 2.75 2003/10/17 00:55:17 tgl Exp $
+ $Header: /cvsroot/pgsql/doc/src/sgml/catalogs.sgml,v 2.76 2003/10/17 22:38:20 tgl Exp $
  -->
 
 <chapter id="catalogs">
@@ -2937,8 +2937,9 @@
    The catalog <structname>pg_shadow</structname> contains information about
    database users.  The name stems from the fact that this table
    should not be readable by the public since it contains passwords.
-   <structfield>pg_user</structfield> is a publicly readable view on
-   <structfield>pg_shadow</structfield> that blanks out the password field.
+   <link linkend="view-pg-user"><structname>pg_user</structname></link>
+   is a publicly readable view on
+   <structname>pg_shadow</structname> that blanks out the password field.
   </para>
 
   <para>
@@ -3066,13 +3067,10 @@
    public, since even statistical information about a table's contents
    may be considered sensitive.  (Example: minimum and maximum values
    of a salary column might be quite interesting.)
-   <structname>pg_stats</structname> is a publicly readable view on
+   <link linkend="view-pg-stats"><structname>pg_stats</structname></link>
+   is a publicly readable view on
    <structname>pg_statistic</structname> that only exposes information
    about those tables that are readable by the current user.
-   <structname>pg_stats</structname> is also designed to present the
-   information in a more readable format than the underlying
-   <structname>pg_statistic</structname> table --- at the cost that
-   its schema must be extended whenever new slot types are added.
   </para>
 
   <table>
@@ -3649,6 +3647,808 @@
    </tgroup>
   </table>
  </sect1>
+
+ <sect1 id="views-overview">
+  <title>System Views</title>
+
+  <para>
+   In addition to the system catalogs, <productname>PostgreSQL</productname>
+   provides a number of built-in views.  The system views provide convenient
+   access to some commonly used queries on the system catalogs.  Some of these
+   views provide access to internal server state, as well.
+  </para>
+
+  <para>
+   <xref linkend="view-table"> lists the system views described here.
+   More detailed documentation of each view follows below.
+   There are some additional views that provide access to the results of
+   the statistics collector; they are described in <xref
+   linkend="monitoring-stats-views-table">.
+  </para>
+
+  <para>
+   The information schema (<xref linkend="information-schema">) provides
+   an alternative set of views which overlap the functionality of the system
+   views.  Since the information schema is SQL-standard whereas the views
+   described here are <productname>PostgreSQL</productname>-specific,
+   it's usually better to use the information schema if it provides all
+   the information you need.
+  </para>
+
+  <para>
+   Except where noted, all the views described here are read-only.
+  </para>
+
+  <table id="view-table">
+   <title>System Views</title>
+
+   <tgroup cols="2">
+    <thead>
+     <row>
+      <entry>View Name</entry>
+      <entry>Purpose</entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry><link linkend="view-pg-indexes"><structname>pg_indexes</structname></link></entry>
+      <entry>indexes</entry>
+     </row>
+
+     <row>
+      <entry><link linkend="view-pg-locks"><structname>pg_locks</structname></link></entry>
+      <entry>currently held locks</entry>
+     </row>
+
+     <row>
+      <entry><link linkend="view-pg-rules"><structname>pg_rules</structname></link></entry>
+      <entry>rules</entry>
+     </row>
+
+     <row>
+      <entry><link linkend="view-pg-settings"><structname>pg_settings</structname></link></entry>
+      <entry>parameter settings</entry>
+     </row>
+
+     <row>
+      <entry><link linkend="view-pg-stats"><structname>pg_stats</structname></link></entry>
+      <entry>planner statistics</entry>
+     </row>
+
+     <row>
+      <entry><link linkend="view-pg-tables"><structname>pg_tables</structname></link></entry>
+      <entry>tables</entry>
+     </row>
+
+     <row>
+      <entry><link linkend="view-pg-user"><structname>pg_user</structname></link></entry>
+      <entry>database users</entry>
+     </row>
+
+     <row>
+      <entry><link linkend="view-pg-views"><structname>pg_views</structname></link></entry>
+      <entry>views</entry>
+     </row>
+
+    </tbody>
+   </tgroup>
+  </table>
+ </sect1>
+
+ <sect1 id="view-pg-indexes">
+  <title><structname>pg_indexes</structname></title>
+
+  <indexterm zone="view-pg-indexes">
+   <primary>pg_indexes</primary>
+  </indexterm>
+
+  <para>
+   The view <structname>pg_indexes</structname> provides access to
+   useful information about each index in the database.
+  </para>
+
+  <table>
+   <title><structname>pg_indexes</> Columns</title>
+
+   <tgroup cols=4>
+    <thead>
+     <row>
+      <entry>Name</entry>
+      <entry>Type</entry>
+      <entry>References</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+    <tbody>
+     <row>
+      <entry><structfield>schemaname</structfield></entry>
+      <entry><type>name</type></entry>
+      <entry><literal><link linkend="catalog-pg-namespace"><structname>pg_namespace</structname></link>.nspname</literal></entry>
+      <entry>name of schema containing table and index</entry>
+     </row>
+     <row>
+      <entry><structfield>tablename</structfield></entry>
+      <entry><type>name</type></entry>
+      <entry><literal><link linkend="catalog-pg-class"><structname>pg_class</structname></link>.relname</literal></entry>
+      <entry>name of table the index is for</entry>
+     </row>
+     <row>
+      <entry><structfield>indexname</structfield></entry>
+      <entry><type>name</type></entry>
+      <entry><literal><link linkend="catalog-pg-class"><structname>pg_class</structname></link>.relname</literal></entry>
+      <entry>name of index</entry>
+     </row>
+     <row>
+      <entry><structfield>indexdef</structfield></entry>
+      <entry><type>text</type></entry>
+      <entry></entry>
+      <entry>index definition (a reconstructed creation command)</entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+
+ </sect1>
+
+ <sect1 id="view-pg-locks">
+  <title><structname>pg_locks</structname></title>
+
+  <indexterm zone="view-pg-locks">
+   <primary>pg_locks</primary>
+  </indexterm>
+
+  <para>
+   The view <structname>pg_locks</structname> provides access to
+   information about the locks held by open transactions within the
+   database server.  See <xref linkend="mvcc"> for more discussion
+   of locking.
+  </para>
+
+  <para>
+   <structname>pg_locks</structname> contains one row per active lockable
+   object, requested lock mode, and relevant transaction.  Thus, the same
+   lockable object may
+   appear many times, if multiple transactions are holding or waiting
+   for locks on it.  However, an object that currently has no locks on it
+   will not appear at all.  A lockable object is either a relation (e.g., a
+   table) or a transaction ID.
+  </para>
+
+  <para>
+   Note that this view includes only table-level
+   locks, not row-level ones.  If a transaction is waiting for a
+   row-level lock, it will appear in the view as waiting for the
+   transaction ID of the current holder of that row lock.
+  </para>
+
+  <table>
+   <title><structname>pg_locks</> Columns</title>
+
+   <tgroup cols=4>
+    <thead>
+     <row>
+      <entry>Name</entry>
+      <entry>Type</entry>
+      <entry>References</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+    <tbody>
+     <row>
+      <entry><structfield>relation</structfield></entry>
+      <entry><type>oid</type></entry>
+      <entry><literal><link linkend="catalog-pg-class"><structname>pg_class</structname></link>.oid</literal></entry>
+      <entry>
+       OID of the locked relation, or NULL if the lockable object
+       is a transaction ID
+      </entry>
+     </row>
+     <row>
+      <entry><structfield>database</structfield></entry>
+      <entry><type>oid</type></entry>
+      <entry><literal><link linkend="catalog-pg-database"><structname>pg_database</structname></link>.oid</literal></entry>
+      <entry>
+       OID of the database in which the locked relation exists, or
+       zero if the locked relation is a globally-shared table, or
+       NULL if the lockable object is a transaction ID
+      </entry>
+     </row>
+     <row>
+      <entry><structfield>transaction</structfield></entry>
+      <entry><type>xid</type></entry>
+      <entry></entry>
+      <entry>
+       ID of a transaction, or NULL if the lockable object is a relation
+      </entry>
+     </row>
+     <row>
+      <entry><structfield>pid</structfield></entry>
+      <entry><type>integer</type></entry>
+      <entry></entry>
+      <entry>process ID of a server process holding or awaiting this
+      lock</entry>
+     </row>
+     <row>
+      <entry><structfield>mode</structfield></entry>
+      <entry><type>text</type></entry>
+      <entry></entry>
+      <entry>name of the lock mode held or desired by this process (see <xref
+      linkend="locking-tables">)</entry>
+     </row>
+     <row>
+      <entry><structfield>granted</structfield></entry>
+      <entry><type>boolean</type></entry>
+      <entry></entry>
+      <entry>true if lock is held, false if lock is awaited</entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+
+  <para>
+   <structfield>granted</structfield> is true in a row representing a lock
+   held by the indicated session.  False indicates that this session is
+   currently waiting to acquire this lock, which implies that some other
+   session is holding a conflicting lock mode on the same lockable object.
+   The waiting session will sleep until the other lock is released (or a
+   deadlock situation is detected). A single session can be waiting to acquire
+   at most one lock at a time.
+  </para>
+
+  <para>
+   Every transaction holds an exclusive lock on its transaction ID for its
+   entire duration. If one transaction finds it necessary to wait specifically
+   for another transaction, it does so by attempting to acquire share lock on
+   the other transaction ID. That will succeed only when the other transaction
+   terminates and releases its locks. 
+  </para>
+
+  <para>
+   When the <structname>pg_locks</structname> view is accessed, the
+   internal lock manager data structures are momentarily locked, and
+   a copy is made for the view to display.  This ensures that the
+   view produces a consistent set of results, while not blocking
+   normal lock manager operations longer than necessary.  Nonetheless
+   there could be some impact on database performance if this view is
+   read often.
+  </para>
+
+  <para>
+   <structname>pg_locks</structname> provides a global view of all locks
+   in the database cluster, not only those relevant to the current database.
+   Although its <structfield>relation</structfield> column can be joined
+   against <structname>pg_class</>.<structfield>oid</> to identify locked
+   relations, this will only work correctly for relations in the current
+   database (those for which the <structfield>database</structfield> column
+   is either the current database's OID or zero).
+  </para>
+
+  <para>
+   If you have enabled the statistics collector, the
+   <structfield>pid</structfield> column can be joined to the
+   <structfield>procpid</structfield> column of the
+   <structname>pg_stat_activity</structname> view to get more
+   information on the session holding or waiting to hold the lock.
+  </para>
+
+ </sect1>
+
+ <sect1 id="view-pg-rules">
+  <title><structname>pg_rules</structname></title>
+
+  <indexterm zone="view-pg-rules">
+   <primary>pg_rules</primary>
+  </indexterm>
+
+  <para>
+   The view <structname>pg_rules</structname> provides access to
+   useful information about query rewrite rules.
+  </para>
+
+  <table>
+   <title><structname>pg_rules</> Columns</title>
+
+   <tgroup cols=4>
+    <thead>
+     <row>
+      <entry>Name</entry>
+      <entry>Type</entry>
+      <entry>References</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+    <tbody>
+     <row>
+      <entry><structfield>schemaname</structfield></entry>
+      <entry><type>name</type></entry>
+      <entry><literal><link linkend="catalog-pg-namespace"><structname>pg_namespace</structname></link>.nspname</literal></entry>
+      <entry>name of schema containing table</entry>
+     </row>
+     <row>
+      <entry><structfield>tablename</structfield></entry>
+      <entry><type>name</type></entry>
+      <entry><literal><link linkend="catalog-pg-class"><structname>pg_class</structname></link>.relname</literal></entry>
+      <entry>name of table the rule is for</entry>
+     </row>
+     <row>
+      <entry><structfield>rulename</structfield></entry>
+      <entry><type>name</type></entry>
+      <entry><literal><link linkend="catalog-pg-rewrite"><structname>pg_rewrite</structname></link>.rulename</literal></entry>
+      <entry>name of rule</entry>
+     </row>
+     <row>
+      <entry><structfield>definition</structfield></entry>
+      <entry><type>text</type></entry>
+      <entry></entry>
+      <entry>rule definition (a reconstructed creation command)</entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+
+  <para>
+   The <structname>pg_rules</structname> view excludes the ON SELECT rules of
+   views; those can be seen in <structname>pg_views</structname>.
+  </para>
+
+ </sect1>
+
+ <sect1 id="view-pg-settings">
+  <title><structname>pg_settings</structname></title>
+
+  <indexterm zone="view-pg-settings">
+   <primary>pg_settings</primary>
+  </indexterm>
+
+  <para>
+   The view <structname>pg_settings</structname> provides access to
+   run-time parameters of the server.  It is essentially an alternative
+   interface to the <command>SHOW</> and <command>SET</> commands.
+   It also provides access to some facts about each parameter that are
+   not directly available from <command>SHOW</>, such as minimum and
+   maximum values.
+  </para>
+
+  <table>
+   <title><structname>pg_settings</> Columns</title>
+
+   <tgroup cols=4>
+    <thead>
+     <row>
+      <entry>Name</entry>
+      <entry>Type</entry>
+      <entry>References</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+    <tbody>
+     <row>
+      <entry><structfield>name</structfield></entry>
+      <entry><type>text</type></entry>
+      <entry></entry>
+      <entry>run-time configuration parameter name</entry>
+     </row>
+     <row>
+      <entry><structfield>setting</structfield></entry>
+      <entry><type>text</type></entry>
+      <entry></entry>
+      <entry>current value of the parameter</entry>
+     </row>
+     <row>
+      <entry><structfield>context</structfield></entry>
+      <entry><type>text</type></entry>
+      <entry></entry>
+      <entry>context required to set the parameter's value</entry>
+     </row>
+     <row>
+      <entry><structfield>vartype</structfield></entry>
+      <entry><type>text</type></entry>
+      <entry></entry>
+      <entry>parameter type (<literal>bool</>, <literal>integer</>,
+       <literal>real</>, or <literal>string</>)
+      </entry>
+     </row>
+     <row>
+      <entry><structfield>source</structfield></entry>
+      <entry><type>text</type></entry>
+      <entry></entry>
+      <entry>source of the current parameter value</entry>
+     </row>
+     <row>
+      <entry><structfield>min_val</structfield></entry>
+      <entry><type>text</type></entry>
+      <entry></entry>
+      <entry>minimum allowed value of the parameter (NULL for nonnumeric
+      values)</entry>
+     </row>
+     <row>
+      <entry><structfield>max_val</structfield></entry>
+      <entry><type>text</type></entry>
+      <entry></entry>
+      <entry>maximum allowed value of the parameter (NULL for nonnumeric
+      values)</entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+  
+  <para>
+   The <structname>pg_settings</structname> view cannot be inserted into or
+   deleted from, but it can be updated.  An <command>UPDATE</command> applied
+   to a row of <structname>pg_settings</structname> is equivalent to executing
+   the <xref linkend="SQL-SET" endterm="SQL-SET-title"> command on that named
+   parameter. The change only affects the value used by the current
+   session. If an <command>UPDATE</command> is issued within a transaction
+   that is later aborted, the effects of the <command>UPDATE</command> command
+   disappear when the transaction is rolled back. Once the surrounding
+   transaction is committed, the effects will persist until the end of the
+   session, unless overridden by another <command>UPDATE</command> or
+   <command>SET</command>.
+  </para>
+
+ </sect1>
+
+ <sect1 id="view-pg-stats">
+  <title><structname>pg_stats</structname></title>
+
+  <indexterm zone="view-pg-stats">
+   <primary>pg_stats</primary>
+  </indexterm>
+
+  <para>
+   The view <structname>pg_stats</structname> provides access to
+   the information stored in the <link
+   linkend="catalog-pg-statistic"><structname>pg_statistic</structname></link>
+   catalog.  This view allows access only to rows of
+   <structname>pg_statistic</structname> that correspond to tables the
+   user has permission to read, and therefore it is safe to allow public
+   read access to this view.
+  </para>
+
+  <para>
+   <structname>pg_stats</structname> is also designed to present the
+   information in a more readable format than the underlying catalog
+   --- at the cost that its schema must be extended whenever new slot types
+   are defined for <structname>pg_statistic</structname>.
+  </para>
+
+  <table>
+   <title><structname>pg_stats</> Columns</title>
+
+   <tgroup cols=4>
+    <thead>
+     <row>
+      <entry>Name</entry>
+      <entry>Type</entry>
+      <entry>References</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+    <tbody>
+     <row>
+      <entry><structfield>schemaname</structfield></entry>
+      <entry><type>name</type></entry>
+      <entry><literal><link linkend="catalog-pg-namespace"><structname>pg_namespace</structname></link>.nspname</literal></entry>
+      <entry>name of schema containing table</entry>
+     </row>
+
+     <row>
+      <entry><structfield>tablename</structfield></entry>
+      <entry><type>name</type></entry>
+      <entry><literal><link linkend="catalog-pg-class"><structname>pg_class</structname></link>.relname</literal></entry>
+      <entry>name of table</entry>
+     </row>
+
+     <row>
+      <entry><structfield>attname</structfield></entry>
+      <entry><type>name</type></entry>
+      <entry><literal><link linkend="catalog-pg-attribute"><structname>pg_attribute</structname></link>.attname</literal></entry>
+      <entry>name of the column described by this row</entry>
+     </row>
+
+     <row>
+      <entry><structfield>null_frac</structfield></entry>
+      <entry><type>real</type></entry>
+      <entry></entry>
+      <entry>fraction of column entries that are null</entry>
+     </row>
+
+     <row>
+      <entry><structfield>avg_width</structfield></entry>
+      <entry><type>integer</type></entry>
+      <entry></entry>
+      <entry>average width in bytes of column's entries</entry>
+     </row>
+
+     <row>
+      <entry><structfield>n_distinct</structfield></entry>
+      <entry><type>real</type></entry>
+      <entry></entry>
+      <entry>If greater than zero, the estimated number of distinct values
+      in the column.  If less than zero, the negative of the number of
+      distinct values divided by the number of rows.  (The negated form
+      is used when <command>ANALYZE</> believes that the number of distinct
+      values
+      is likely to increase as the table grows; the positive form is used
+      when the column seems to have a fixed number of possible values.)
+      For example, -1 indicates a unique column in which the number of
+      distinct values is the same as the number of rows.
+      </entry>
+     </row>
+
+     <row>
+      <entry><structfield>most_common_vals</structfield></entry>
+      <entry><type>anyarray</type></entry>
+      <entry></entry>
+      <entry>A list of the most common values in the column. (NULL if
+      no values seem to be more common than any others.)</entry>
+     </row>
+
+     <row>
+      <entry><structfield>most_common_freqs</structfield></entry>
+      <entry><type>real[]</type></entry>
+      <entry></entry>
+      <entry>A list of the frequencies of the most common values,
+      i.e., number of occurrences of each divided by total number of rows.
+      (NULL when <structfield>most_common_vals</structfield> is.)
+     </entry>
+     </row>
+
+     <row>
+      <entry><structfield>histogram_bounds</structfield></entry>
+      <entry><type>anyarray</type></entry>
+      <entry></entry>
+      <entry>A list of values that divide the column's values into
+      groups of approximately equal population.  The values in
+      <structfield>most_common_vals</>, if present, are omitted from this
+      histogram calculation.  (This column is NULL if the column data type
+      does not have a <literal>&lt;</> operator or if the
+      <structfield>most_common_vals</> list accounts for the entire
+      population.)
+      </entry>
+     </row>
+
+     <row>
+      <entry><structfield>correlation</structfield></entry>
+      <entry><type>real</type></entry>
+      <entry></entry>
+      <entry>Statistical correlation between physical row ordering and
+      logical ordering of the column values.  This ranges from -1 to +1.
+      When the value is near -1 or +1, an index scan on the column will
+      be estimated to be cheaper than when it is near zero, due to reduction
+      of random access to the disk.  (This column is NULL if the column data
+      type does not have a <literal>&lt;</> operator.)
+      </entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+
+  <para>
+   The maximum number of entries in the <structfield>most_common_vals</>
+   and <structfield>histogram_bounds</> arrays can be set on a
+   column-by-column basis using the <command>ALTER TABLE SET STATISTICS</>
+   command, or globally by setting the
+   <varname>default_statistics_target</varname> runtime parameter.
+  </para>
+
+ </sect1>
+
+ <sect1 id="view-pg-tables">
+  <title><structname>pg_tables</structname></title>
+
+  <indexterm zone="view-pg-tables">
+   <primary>pg_tables</primary>
+  </indexterm>
+
+  <para>
+   The view <structname>pg_tables</structname> provides access to
+   useful information about each table in the database.
+  </para>
+
+  <table>
+   <title><structname>pg_tables</> Columns</title>
+
+   <tgroup cols=4>
+    <thead>
+     <row>
+      <entry>Name</entry>
+      <entry>Type</entry>
+      <entry>References</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+    <tbody>
+     <row>
+      <entry><structfield>schemaname</structfield></entry>
+      <entry><type>name</type></entry>
+      <entry><literal><link linkend="catalog-pg-namespace"><structname>pg_namespace</structname></link>.nspname</literal></entry>
+      <entry>name of schema containing table</entry>
+     </row>
+     <row>
+      <entry><structfield>tablename</structfield></entry>
+      <entry><type>name</type></entry>
+      <entry><literal><link linkend="catalog-pg-class"><structname>pg_class</structname></link>.relname</literal></entry>
+      <entry>name of table</entry>
+     </row>
+     <row>
+      <entry><structfield>tableowner</structfield></entry>
+      <entry><type>name</type></entry>
+      <entry><literal><link linkend="catalog-pg-shadow"><structname>pg_shadow</structname></link>.usename</literal></entry>
+      <entry>name of table's owner</entry>
+     </row>
+     <row>
+      <entry><structfield>hasindexes</structfield></entry>
+      <entry><type>boolean</type></entry>
+      <entry><literal><link linkend="catalog-pg-class"><structname>pg_class</structname></link>.relhasindex</literal></entry>
+      <entry>true if table has (or recently had) any indexes</entry>
+     </row>
+     <row>
+      <entry><structfield>hasrules</structfield></entry>
+      <entry><type>boolean</type></entry>
+      <entry><literal><link linkend="catalog-pg-class"><structname>pg_class</structname></link>.relhasrules</literal></entry>
+      <entry>true if table has rules</entry>
+     </row>
+     <row>
+      <entry><structfield>hastriggers</structfield></entry>
+      <entry><type>boolean</type></entry>
+      <entry><literal><link linkend="catalog-pg-class"><structname>pg_class</structname></link>.reltriggers</literal></entry>
+      <entry>true if table has triggers</entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+
+ </sect1>
+
+ <sect1 id="view-pg-user">
+  <title><structname>pg_user</structname></title>
+
+  <indexterm zone="view-pg-user">
+   <primary>pg_user</primary>
+  </indexterm>
+
+  <para>
+   The view <structname>pg_user</structname> provides access to
+   information about database users.  This is simply a publicly
+   readable view of 
+   <link linkend="catalog-pg-shadow"><structname>pg_shadow</structname></link>
+   that blanks out the password field.
+  </para>
+
+  <table>
+   <title><structname>pg_user</> Columns</title>
+
+   <tgroup cols=4>
+    <thead>
+     <row>
+      <entry>Name</entry>
+      <entry>Type</entry>
+      <entry>References</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+    <tbody>
+     <row>
+      <entry><structfield>usename</structfield></entry>
+      <entry><type>name</type></entry>
+      <entry></entry>
+      <entry>User name</entry>
+     </row>
+
+     <row>
+      <entry><structfield>usesysid</structfield></entry>
+      <entry><type>int4</type></entry>
+      <entry></entry>
+      <entry>User id (arbitrary number used to reference this user)</entry>
+     </row>
+
+     <row>
+      <entry><structfield>usecreatedb</structfield></entry>
+      <entry><type>bool</type></entry>
+      <entry></entry>
+      <entry>User may create databases</entry>
+     </row>
+
+     <row>
+      <entry><structfield>usesuper</structfield></entry>
+      <entry><type>bool</type></entry>
+      <entry></entry>
+      <entry>User is a superuser</entry>
+     </row>
+
+     <row>
+      <entry><structfield>usecatupd</structfield></entry>
+      <entry><type>bool</type></entry>
+      <entry></entry>
+      <entry>
+       User may update system catalogs.  (Even a superuser may not do
+       this unless this column is true.)
+      </entry>
+     </row>
+
+     <row>
+      <entry><structfield>passwd</structfield></entry>
+      <entry><type>text</type></entry>
+      <entry></entry>
+      <entry>Not the password (always reads as <literal>********</>)</entry>
+     </row>
+
+     <row>
+      <entry><structfield>valuntil</structfield></entry>
+      <entry><type>abstime</type></entry>
+      <entry></entry>
+      <entry>Account expiry time (only used for password authentication)</entry>
+     </row>
+
+     <row>
+      <entry><structfield>useconfig</structfield></entry>
+      <entry><type>text[]</type></entry>
+      <entry></entry>
+      <entry>Session defaults for run-time configuration variables</entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+
+ </sect1>
+
+ <sect1 id="view-pg-views">
+  <title><structname>pg_views</structname></title>
+
+  <indexterm zone="view-pg-views">
+   <primary>pg_views</primary>
+  </indexterm>
+
+  <para>
+   The view <structname>pg_views</structname> provides access to
+   useful information about each view in the database.
+  </para>
+
+  <table>
+   <title><structname>pg_views</> Columns</title>
+
+   <tgroup cols=4>
+    <thead>
+     <row>
+      <entry>Name</entry>
+      <entry>Type</entry>
+      <entry>References</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+    <tbody>
+     <row>
+      <entry><structfield>schemaname</structfield></entry>
+      <entry><type>name</type></entry>
+      <entry><literal><link linkend="catalog-pg-namespace"><structname>pg_namespace</structname></link>.nspname</literal></entry>
+      <entry>name of schema containing view</entry>
+     </row>
+     <row>
+      <entry><structfield>viewname</structfield></entry>
+      <entry><type>name</type></entry>
+      <entry><literal><link linkend="catalog-pg-class"><structname>pg_class</structname></link>.relname</literal></entry>
+      <entry>name of view</entry>
+     </row>
+     <row>
+      <entry><structfield>viewowner</structfield></entry>
+      <entry><type>name</type></entry>
+      <entry><literal><link linkend="catalog-pg-shadow"><structname>pg_shadow</structname></link>.usename</literal></entry>
+      <entry>name of view's owner</entry>
+     </row>
+     <row>
+      <entry><structfield>definition</structfield></entry>
+      <entry><type>text</type></entry>
+      <entry></entry>
+      <entry>view definition (a reconstructed SELECT query)</entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+
+ </sect1>
+
 </chapter>
 
 <!-- Keep this comment at the end of the file

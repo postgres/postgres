@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.213 2003/10/10 02:08:42 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.214 2003/10/17 22:38:20 tgl Exp $
 -->
 
 <Chapter Id="runtime">
@@ -466,7 +466,7 @@ psql: could not connect to server: No such file or directory
    </para>
 
    <para>
-    One way to set these options is to edit the file
+    One way to set these parameters is to edit the file
     <filename>postgresql.conf</filename><indexterm><primary>postgresql.conf</></>
     in the data directory. (A default file is installed there.) An
     example of what this file might look like is:
@@ -476,7 +476,7 @@ log_connections = yes
 syslog = 2
 search_path = '$user, public'
 </programlisting>
-    One option is specified per line. The equal sign between name and
+    One parameter is specified per line. The equal sign between name and
     value is optional. Whitespace is insignificant and blank lines are
     ignored. Hash marks (<literal>#</literal>) introduce comments
     anywhere.  Parameter values that are not simple identifiers or
@@ -517,18 +517,8 @@ env PGOPTIONS='-c geqo=off' psql
 </programlisting>
     (This works for any <application>libpq</>-based client application, not just
     <application>psql</application>.) Note that this won't work for
-    options that are fixed when the server is started, such as the port
+    parameters that are fixed when the server is started, such as the port
     number.
-   </para>
-
-   <para>
-    Some options can be changed in individual <acronym>SQL</acronym>
-    sessions with the <command>SET</command> command, for example:
-<screen>
-SET ENABLE_SEQSCAN TO OFF;
-</screen>
-    See the <acronym>SQL</acronym> command language reference for
-    details on the syntax.
    </para>
 
    <para>
@@ -537,90 +527,37 @@ SET ENABLE_SEQSCAN TO OFF;
     settings for the user and database involved are loaded.  The
     commands <command>ALTER DATABASE</command> and <command>ALTER
     USER</command>, respectively, are used to configure these
-    settings.  Such per-database settings override anything received
+    settings.  Per-database settings override anything received
     from the <command>postmaster</command> command-line or the
     configuration file, and in turn are overridden by per-user
-    settings.
+    settings; both are overridden by per-session options.
    </para>
 
    <para>
-    The virtual table <structname>pg_settings</structname> allows
-    displaying and updating session run-time parameters. It contains one
-    row for each configuration parameter; the columns are shown in
-    <xref linkend="runtime-pgsettings-table">.  This table allows the
-    configuration data to be joined with other tables and have a
-    selection criteria applied.
+    Some parameters can be changed in individual <acronym>SQL</acronym>
+    sessions with the <xref linkend="SQL-SET" endterm="SQL-SET-title">
+    command, for example:
+<screen>
+SET ENABLE_SEQSCAN TO OFF;
+</screen>
+    If <command>SET</> is allowed, it overrides all other sources of
+    values for the parameter.  Superusers are allowed to <command>SET</>
+    more values than ordinary users.
    </para>
-  
-    <para>
-     An <command>UPDATE</command> performed on <structname>pg_settings</structname>
-     is equivalent to executing the <command>SET</command> command on that named
-     parameter. The change only affects the value used by the current session. If
-     an <command>UPDATE</command> is issued within a transaction that is later
-     aborted, the effects of the <command>UPDATE</command> command disappear when
-     the transaction is rolled back. Once the surrounding transaction is
-     committed, the effects will persist until the end of the session, unless
-     overridden by another <command>UPDATE</command> or <command>SET</command>.
-    </para>
-  
-   <table id="runtime-pgsettings-table">
-    <title><literal>pg_settings</> Columns</title>
-  
-    <tgroup cols=3>
-     <thead>
-      <row>
-       <entry>Name</entry>
-       <entry>Data Type</entry>
-       <entry>Description</entry>
-      </row>
-     </thead>
- 
-     <tbody>
-      <row>
-       <entry><literal>name</literal></entry>
-       <entry><type>text</type></entry>
-       <entry>run-time configuration parameter name</entry>
-      </row>
- 
-      <row>
-       <entry><literal>setting</literal></entry>
-       <entry><type>text</type></entry>
-       <entry>current value of the parameter</entry>
-      </row>
 
-      <row>
-       <entry><literal>context</literal></entry>
-       <entry><type>text</type></entry>
-       <entry>context required to set the parameter's value</entry>
-      </row>
+   <para>
+    The <xref linkend="SQL-SHOW" endterm="SQL-SHOW-title">
+    command allows inspection of the current values of all parameters.
+   </para>
 
-      <row>
-       <entry><literal>vartype</literal></entry>
-       <entry><type>text</type></entry>
-       <entry>parameter type</entry>
-      </row>
-
-      <row>
-       <entry><literal>source</literal></entry>
-       <entry><type>text</type></entry>
-       <entry>source of the current parameter value</entry>
-      </row>
-
-      <row>
-       <entry><literal>min_val</literal></entry>
-       <entry><type>text</type></entry>
-       <entry>minimum allowed value of the parameter</entry>
-      </row>
-
-      <row>
-       <entry><literal>max_val</literal></entry>
-       <entry><type>text</type></entry>
-       <entry>maximum allowed value of the parameter</entry>
-      </row>
-
-     </tbody>
-    </tgroup>
-    </table>
+   <para>
+    The virtual table <structname>pg_settings</structname>
+    (described in <xref linkend="view-pg-settings">) also allows
+    displaying and updating session run-time parameters.  It is equivalent
+    to <command>SHOW</> and <command>SET</>, but can be more convenient
+    to use because it can be joined with other tables, or selected from using
+    any desired selection condition.
+   </para>
     
    <sect2 id="runtime-config-connection">
     <title>Connections and Authentication</title>

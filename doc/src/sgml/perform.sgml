@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/perform.sgml,v 1.35 2003/10/17 01:14:26 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/perform.sgml,v 1.36 2003/10/17 22:38:20 tgl Exp $
 -->
 
  <chapter id="performance-tips">
@@ -439,114 +439,19 @@ SELECT attname, n_distinct, most_common_vals FROM pg_stats WHERE tablename = 'ro
   </para>
 
   <para>
-   <xref linkend="planner-pg-stats-table"> shows the columns that
-   exist in <structname>pg_stats</structname>.
+   <structname>pg_stats</structname> is described in detail in
+   <xref linkend="view-pg-stats">.
   </para>
 
-  <table id="planner-pg-stats-table">
-   <title><structname>pg_stats</structname> Columns</title>
-
-   <tgroup cols=3>
-    <thead>
-     <row>
-      <entry>Name</entry>
-      <entry>Data Type</entry>
-      <entry>Description</entry>
-     </row>
-    </thead>
-
-    <tbody>
-     <row>
-      <entry><literal>schemaname</literal></entry>
-      <entry><type>name</type></entry>
-      <entry>Name of the schema containing the table.</entry>
-     </row>
-
-     <row>
-      <entry><literal>tablename</literal></entry>
-      <entry><type>name</type></entry>
-      <entry>Name of the table containing the column.</entry>
-     </row>
-
-     <row>
-      <entry><literal>attname</literal></entry>
-      <entry><type>name</type></entry>
-      <entry>Name of the column described by this row.</entry>
-     </row>
-
-     <row>
-      <entry><literal>null_frac</literal></entry>
-      <entry><type>real</type></entry>
-      <entry>Fraction of column entries that are null.</entry>
-     </row>
-
-     <row>
-      <entry><literal>avg_width</literal></entry>
-      <entry><type>integer</type></entry>
-      <entry>Average width in bytes of the column entries.</entry>
-     </row>
-
-     <row>
-      <entry><literal>n_distinct</literal></entry>
-      <entry><type>real</type></entry>
-      <entry>If greater than zero, the estimated number of distinct values
-      in the column.  If less than zero, the negative of the number of
-      distinct values divided by the number of rows.  (The negated form
-      is used when <command>ANALYZE</> believes that the number of distinct values
-      is likely to increase as the table grows; the positive form is used
-      when the column seems to have a fixed number of possible values.)
-      For example, -1 indicates a unique column in which the number of
-      distinct values is the same as the number of rows.
-      </entry>
-     </row>
-
-     <row>
-      <entry><literal>most_common_vals</literal></entry>
-      <entry><type>text[]</type></entry>
-      <entry>A list of the most common values in the column. (Omitted if
-      no values seem to be more common than any others.)</entry>
-     </row>
-
-     <row>
-      <entry><literal>most_common_freqs</literal></entry>
-      <entry><type>real[]</type></entry>
-      <entry>A list of the frequencies of the most common values,
-      i.e., number of occurrences of each divided by total number of rows.
-     </entry>
-     </row>
-
-     <row>
-      <entry><literal>histogram_bounds</literal></entry>
-      <entry><type>text[]</type></entry>
-      <entry>A list of values that divide the column's values into
-      groups of approximately equal population.  The values in
-      <structfield>most_common_vals</>, if present, are omitted from this
-      histogram calculation.  (This columns is not filled if the column data type does not have a
-      <literal>&lt;</> operator or if the <structfield>most_common_vals</>
-      list accounts for the entire population.)
-      </entry>
-     </row>
-
-     <row>
-      <entry><literal>correlation</literal></entry>
-      <entry><type>real</type></entry>
-      <entry>Statistical correlation between physical row ordering and
-      logical ordering of the column values.  This ranges from -1 to +1.
-      When the value is near -1 or +1, an index scan on the column will
-      be estimated to be cheaper than when it is near zero, due to reduction
-      of random access to the disk.  (This column is not filled if the column data type does
-      not have a <literal>&lt;</> operator.)
-      </entry>
-     </row>
-    </tbody>
-   </tgroup>
-  </table>
-
   <para>
-   The maximum number of entries in the <structfield>most_common_vals</>
-   and <structfield>histogram_bounds</> arrays can be set on a
+   The amount of information stored in <structname>pg_statistic</structname>,
+   in particular the maximum number of entries in the
+   <structfield>most_common_vals</> and <structfield>histogram_bounds</>
+   arrays for each column, can be set on a
    column-by-column basis using the <command>ALTER TABLE SET STATISTICS</>
-   command.  The default limit is presently 10 entries.  Raising the limit
+   command, or globally by setting the
+   <varname>default_statistics_target</varname> runtime parameter.
+   The default limit is presently 10 entries.  Raising the limit
    may allow more accurate planner estimates to be made, particularly for
    columns with irregular data distributions, at the price of consuming
    more space in <structname>pg_statistic</structname> and slightly more

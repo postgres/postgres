@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/monitoring.sgml,v 1.21 2003/08/31 17:32:19 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/monitoring.sgml,v 1.22 2003/10/17 22:38:20 tgl Exp $
 -->
 
 <chapter id="monitoring">
@@ -606,7 +606,7 @@ SELECT pg_stat_get_backend_pid(s.backendid) AS procpid,
 
   <para>
    Another useful tool for monitoring database activity is the
-   <literal>pg_locks</literal> system table.  It allows the
+   <structname>pg_locks</structname> system table.  It allows the
    database administrator to view information about the outstanding
    locks in the lock manager. For example, this capability can be used
    to:
@@ -638,130 +638,11 @@ SELECT pg_stat_get_backend_pid(s.backendid) AS procpid,
     </listitem>
    </itemizedlist>
 
+   Details of the <structname>pg_locks</structname> view appear in
+   <xref linkend="view-pg-locks">.
    For more information on locking and managing concurrency with
    <productname>PostgreSQL</productname>, refer to <xref linkend="mvcc">.
   </para>
-
-  <note>
-   <para>
-    When the <literal>pg_locks</literal> view is accessed, the
-    internal lock manager data structures are momentarily locked, and
-    a copy is made for the view to display.  This ensures that the
-    view produces a consistent set of results, while not blocking
-    normal lock manager operations longer than necessary.  Nonetheless
-    there could be some impact on database performance if this view is
-    read often.
-   </para>
-  </note>
-
-  <para>
-   <xref linkend="monitoring-locks-table"> shows the definition of the
-   <literal>pg_locks</literal> columns.  The
-   <literal>pg_locks</literal> view contains one row per lockable
-   object and requested lock mode.  Thus, the same lockable object may
-   appear many times, if multiple transactions are holding or waiting
-   for locks on it.  A lockable object is either a relation (e.g., a table) or a
-   transaction ID.  (Note that this view includes only table-level
-   locks, not row-level ones.  If a transaction is waiting for a
-   row-level lock, it will appear in the view as waiting for the
-   transaction ID of the current holder of that row lock.)
-  </para>
-
-  <table id="monitoring-locks-table">
-   <title><literal>pg_locks</literal> Columns</title>
-
-   <tgroup cols="3">
-    <thead>
-     <row>
-      <entry>Column Name</entry>
-      <entry>Data Type</entry>
-      <entry>Description</entry>
-     </row>
-    </thead>
-
-    <tbody>
-     <row>
-      <entry><structfield>relation</structfield></entry>
-      <entry><type>oid</type></entry>
-      <entry>
-       The OID of the locked relation, or null if the lockable object
-       is a transaction ID. This column can be joined with the column <literal>oid</> of the
-       <literal>pg_class</literal> system catalog to get more
-       information on the locked relation.  Note however that this
-       will only work for relations in the current database (those for
-       which the <structfield>database</structfield> column is either
-       the current database's OID or zero).
-      </entry>
-     </row>
-
-     <row>
-      <entry><structfield>database</structfield></entry>
-      <entry><type>oid</type></entry>
-      <entry>
-       The OID of the database in which the locked relation exists, or
-       null if the lockable object is a transaction ID.  If the lock
-       is on a globally-shared table, this field will be zero. This
-       column can be joined with the column <literal>oid</> of the <literal>pg_database</literal>
-       system catalog to get more information on the locked object's
-       database.
-      </entry>
-     </row>
-
-     <row>
-      <entry><structfield>transaction</structfield></entry>
-      <entry><type>xid</type></entry>
-      <entry>
-       The ID of a transaction, or null if the lockable object is a
-       relation.  Every transaction holds an exclusive lock on its
-       transaction ID for its entire duration.  If one transaction
-       finds it necessary to wait specifically for another
-       transaction, it does so by attempting to acquire share lock on
-       the other transaction ID.  That will succeed only when the
-       other transaction terminates and releases its locks.
-      </entry>
-     </row>
-
-     <row>
-      <entry><structfield>pid</structfield></entry>
-      <entry><type>integer</type></entry>
-      <entry>
-       The process ID of the <productname>PostgreSQL</productname>
-       server process belonging to the session that has acquired or is
-       attempting to acquire the lock. If you have enabled the
-       statistics collector, this column can be joined with the column
-       <literal>pg_stat_activity</literal> view to get more
-       information on the session holding or waiting to hold the
-       lock.
-      </entry>
-     </row>
-
-     <row>
-      <entry><structfield>mode</structfield></entry>
-      <entry><type>text</type></entry>
-      <entry>
-       The mode of the requested or held lock on the lockable
-       object. For more information on the different lock modes
-       available in <productname>PostgreSQL</productname>, refer to
-       <xref linkend="mvcc">.
-      </entry>
-     </row>
-
-     <row>
-      <entry><structfield>isgranted</structfield></entry>
-      <entry><type>boolean</type></entry>
-      <entry>
-       True if this lock has been granted (is held by this session).
-       False indicates that this session is currently waiting to
-       acquire this lock, which implies that some other session is
-       holding a conflicting lock mode on the same lockable object.
-       The waiting session will sleep until the other lock is released (or a
-       deadlock situation is detected). A single session can be
-       waiting to acquire at most one lock at a time.
-      </entry>
-     </row>
-    </tbody>
-   </tgroup>
-  </table>
  </sect1>
 </chapter>
 

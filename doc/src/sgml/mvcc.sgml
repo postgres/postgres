@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/mvcc.sgml,v 2.38 2003/09/20 20:12:05 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/mvcc.sgml,v 2.39 2003/10/17 22:38:20 tgl Exp $
 -->
 
  <chapter id="mvcc">
@@ -399,6 +399,14 @@ ERROR:  could not serialize access due to concurrent update
     executed concurrently with other operations on the same table.)
    </para>
 
+   <para>
+    To examine a list of the currently outstanding locks in a database
+    server, use the <structname>pg_locks</structname> system view
+    (<xref linkend="view-pg-locks">). For more
+    information on monitoring the status of the lock manager
+    subsystem, refer to <xref linkend="monitoring">.
+   </para>
+
   <sect2 id="locking-tables">
    <title>Table-Level Locks</title>
 
@@ -427,13 +435,6 @@ ERROR:  could not serialize access due to concurrent update
     transaction at a time) while others are not self-conflicting (for example,
     an <literal>ACCESS SHARE</literal> lock can be held by multiple transactions).
     Once acquired, a lock is held till end of transaction.
-   </para>
-
-   <para>
-    To examine a list of the currently outstanding locks in a database
-    server, use the <literal>pg_locks</literal> system view. For more
-    information on monitoring the status of the lock manager
-    subsystem, refer to <xref linkend="monitoring">.
    </para>
 
      <variablelist>
