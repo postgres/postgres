@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/port/dynloader/hpux.c,v 1.24 2004/01/04 04:06:37 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/port/dynloader/hpux.c,v 1.25 2004/02/23 04:11:10 tgl Exp $
  *
  *	NOTES
  *		all functions are defined here -- it's impossible to trace the
@@ -20,8 +20,8 @@
 
 /* System includes */
 #include <a.out.h>
+#include <dl.h>
 
-#include "dl.h"
 #include "dynloader.h"
 #include "utils/dynamic_loader.h"
 
