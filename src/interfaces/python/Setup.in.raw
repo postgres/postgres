@@ -1,3 +1,3 @@
 *shared*
 
-_pg  pgmodule.c -I@libpq_srcdir@ -I@pg_includedir@ -L@libpq_builddir@ -lpq @EXTRA_LIBS@
+_pg  pgmodule.c -I@libpq_srcdir@ @INCLUDES@ -L@libpq_builddir@ -lpq @EXTRA_LIBS@
