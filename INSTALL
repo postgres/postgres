@@ -286,6 +286,16 @@ PostgreSQL:
                           for archive libraries.  (Typical use will need
                           --with-libraries=/usr/local/lib)
 
+       --with-CC=compiler
+                          Use a specific C compiler that the configure
+                          script cannot find.
+
+       --with-CXX=compiler
+       --without-CXX
+                          Use a specific C++ compiler that the configure
+                          script cannot find, or exclude C++ compilation
+                          altogether.
+
      As an example, here is the configure script I use on a Sparc
      Solaris 2.5 system with /opt/postgres being the install base.
 
