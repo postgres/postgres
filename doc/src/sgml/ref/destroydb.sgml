@@ -10,7 +10,7 @@
 <application>destroydb</application>
 </REFNAME>
 <REFPURPOSE>
-Create a new <productname>Postgres</productname> database
+Remove an existing <productname>Postgres</productname> database
 </REFPURPOSE>
   </refnamediv>
 <REFSYNOPSISDIV>
