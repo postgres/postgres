@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/access/transam/xlog.c,v 1.28 2000/11/20 05:18:39 vadim Exp $
+ * $Header: /cvsroot/pgsql/src/backend/access/transam/xlog.c,v 1.29 2000/11/21 02:11:06 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1293,6 +1293,10 @@ BootStrapXLOG()
 	checkPoint.nextXid = FirstTransactionId;
 	checkPoint.nextOid = BootstrapObjectIdData;
 	checkPoint.ThisStartUpID = 0;
+
+	ShmemVariableCache->nextXid = checkPoint.nextXid;
+	ShmemVariableCache->nextOid = checkPoint.nextOid;
+	ShmemVariableCache->oidCount = 0;
 
 #ifdef XLOG
 
