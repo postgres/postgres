@@ -841,6 +841,7 @@ Optional Features:
   --enable-nls[=LANGUAGES]  enable Native Language Support
   --disable-shared        do not build shared libraries
   --disable-rpath         do not embed shared library search path in executables
+  --disable-spinlocks     do not use Spinlocks
   --enable-debug          build with debugging symbols (-g)
   --enable-depend         turn on automatic dependency tracking
   --enable-cassert        enable assertion checks (for debugging)
@@ -869,7 +870,6 @@ Optional Packages:
   --with-rendezvous       build with Rendezvous support
   --with-openssl[=DIR]    build with OpenSSL support [/usr/local/ssl]
   --without-readline      do not use Readline
-  --without-spinlocks     do not use Spinlocks
   --without-zlib          do not use Zlib
   --with-gnu-ld           assume the C compiler uses GNU ld default=no
 
@@ -1745,6 +1745,34 @@ else
 fi;
 
 
+
+#
+# Spinlocks
+#
+
+
+# Check whether --enable-spinlocks or --disable-spinlocks was given.
+if test "${enable_spinlocks+set}" = set; then
+  enableval="$enable_spinlocks"
+
+  case $enableval in
+    yes)
+      :
+      ;;
+    no)
+      :
+      ;;
+    *)
+      { { echo "$as_me:$LINENO: error: no argument expected for --enable-spinlocks option" >&5
+echo "$as_me: error: no argument expected for --enable-spinlocks option" >&2;}
+   { (exit 1); exit 1; }; }
+      ;;
+  esac
+
+else
+  enable_spinlocks=yes
+
+fi;
 
 
 #
@@ -3490,36 +3518,6 @@ echo "$as_me: error: no argument expected for --with-readline option" >&2;}
 
 else
   with_readline=yes
-
-fi;
-
-
-#
-# Spinlocks
-#
-
-
-
-# Check whether --with-spinlocks or --without-spinlocks was given.
-if test "${with_spinlocks+set}" = set; then
-  withval="$with_spinlocks"
-
-  case $withval in
-    yes)
-      :
-      ;;
-    no)
-      :
-      ;;
-    *)
-      { { echo "$as_me:$LINENO: error: no argument expected for --with-spinlocks option" >&5
-echo "$as_me: error: no argument expected for --with-spinlocks option" >&2;}
-   { (exit 1); exit 1; }; }
-      ;;
-  esac
-
-else
-  with_spinlocks=yes
 
 fi;
 
@@ -6092,7 +6090,7 @@ fi
 
 fi
 
-if test "$with_spinlocks" = yes; then
+if test "$enable_spinlocks" = yes; then
 
 cat >>confdefs.h <<\_ACEOF
 #define HAVE_SPINLOCKS 1

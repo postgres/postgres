@@ -1,5 +1,5 @@
-dnl Process this file with autoconf to produce a configure script.
-dnl $Header: /cvsroot/pgsql/configure.in,v 1.288 2003/09/13 14:49:51 momjian Exp $
+\dnl Process this file with autoconf to produce a configure script.
+dnl $Header: /cvsroot/pgsql/configure.in,v 1.289 2003/09/13 17:01:09 momjian Exp $
 dnl
 dnl Developers, please strive to achieve this order:
 dnl
@@ -199,6 +199,11 @@ PGAC_ARG_BOOL(enable, rpath, yes,
               [  --disable-rpath         do not embed shared library search path in executables])
 AC_SUBST(enable_rpath)
 
+#
+# Spinlocks
+#
+PGAC_ARG_BOOL(enable, spinlocks, yes,
+              [  --disable-spinlocks     do not use Spinlocks])
 
 #
 # --enable-debug adds -g to compiler flags
@@ -522,12 +527,6 @@ PGAC_ARG_BOOL(with, readline, yes,
               [  --without-readline      do not use Readline])
 
 #
-# Spinlocks
-#
-PGAC_ARG_BOOL(with, spinlocks, yes,
-              [  --without-spinlocks     do not use Spinlocks])
-
-#
 # Zlib
 #
 PGAC_ARG_BOOL(with, zlib, yes,
@@ -683,7 +682,7 @@ failure.  It is possible the compiler isn't looking in the proper directory.
 Use --without-zlib to disable zlib support.])])
 fi
 
-if test "$with_spinlocks" = yes; then
+if test "$enable_spinlocks" = yes; then
   AC_DEFINE(HAVE_SPINLOCKS, 1, [Define to 1 if you have spinlocks.])
 else
   AC_MSG_WARN([

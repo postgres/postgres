@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.142 2003/09/12 16:10:26 momjian Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.143 2003/09/13 17:01:09 momjian Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -900,12 +900,12 @@ JAVACMD=$JAVA_HOME/bin/java
       </varlistentry>
 
       <varlistentry>
-       <term><option>--without-spinlocks</option></term>
+       <term><option>--disable-spinlocks</option></term>
        <listitem>
         <para>
          Allows source builds to succeed without CPU spinlock support.
          Lack of spinlock support will produce poor performance.
-         This option is to be used only by platforms without
+         This option is to be used only by platforms lacking
          spinlock support.
         </para>
        </listitem>
