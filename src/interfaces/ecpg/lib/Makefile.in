@@ -32,12 +32,18 @@ ifeq ($(PORTNAME), bsd)
     CFLAGS += $(CFLAGS_SL)
   endif
 endif
-#ifeq ($(PORTNAME), solaris)
-#  install-shlib-dep := install-shlib
-#  shlib := libecpg.so.$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION).$(SO_PATCHLEVEL)
-#  LDFLAGS_SL = -G -z text
-#  CFLAGS += $(CFLAGS_SL)
-#endif
+ifeq ($(PORTNAME), solaris_sparc)
+  install-shlib-dep := install-shlib
+  shlib := libecpg.so.$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION).$(SO_PATCHLEVEL)
+  LDFLAGS_SL = -G -z text
+  CFLAGS += $(CFLAGS_SL)
+endif
+ifeq ($(PORTNAME), solaris_i386)
+  install-shlib-dep := install-shlib
+  shlib := libecpg.so.$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION).$(SO_PATCHLEVEL)
+  LDFLAGS_SL = -G
+  CFLAGS += $(CFLAGS_SL)
+endif
 ifeq ($(PORTNAME), univel)
   install-shlib-dep := install-shlib
   shlib := libecpg.so.1
