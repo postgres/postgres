@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Wed Oct 31 10:10:58 EST 2001
+Last updated:		Thu Nov  1 15:06:47 EST 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -227,13 +227,21 @@ CLIENTS
 	o -Support for binary data/bytea
 	o Move to using 'make' rather than 'ant'(?)
 * ECPG
-	o implement set descriptor, using descriptor
-	o make casts work in variable initializations
-	o allow variable to specify the connection name
-	o implement SQLDA
-	o allow SELECT of array of strings into a auto-sized variable
+	o Implement set descriptor, using descriptor
+	o Make casts work in variable initializations
+	o Allow variable to specify the connection name
+	o Implement SQLDA
+	o Allow SELECT of array of strings into a auto-sized variable
 	o Use cursors implicitly to avoid large results (see setCursorName())
 	o Solve cardinality > 1 for input descriptors / variables
+	o Understand structure definitions outside a declare section
+	o sqlwarn[6] should be 'W' if the PRECISION or SCALE value specified
+	o Improve error handling
+	o Allow :var[:index] or :var[<integer>] as cvariable for an array var
+	o Add a semantic check level, e.g. check if a table really exists
+	o Remove space_or_nl and line_end from pgc.l
+	o Fix nested C comments
+	o Add SQLSTATE
 
 REFERENTIAL INTEGRITY
 
