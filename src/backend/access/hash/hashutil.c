@@ -1,14 +1,14 @@
 /*-------------------------------------------------------------------------
  *
- * btutils.c
- *	  Utility code for Postgres btree implementation.
+ * hashutil.c
+ *	  Utility code for Postgres hash implementation.
  *
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashutil.c,v 1.27 2001/10/06 23:21:43 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashutil.c,v 1.28 2002/03/06 20:49:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,7 +21,7 @@
 
 
 ScanKey
-_hash_mkscankey(Relation rel, IndexTuple itup, HashMetaPage metap)
+_hash_mkscankey(Relation rel, IndexTuple itup)
 {
 	ScanKey		skey;
 	TupleDesc	itupdesc;

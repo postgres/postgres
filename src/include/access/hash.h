@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: hash.h,v 1.43 2002/02/25 04:06:52 momjian Exp $
+ * $Id: hash.h,v 1.44 2002/03/06 20:49:45 momjian Exp $
  *
  * NOTES
  *		modeled after Margo Seltzer's hash implementation for unix.
@@ -265,8 +265,7 @@ extern Datum hashoidvector(PG_FUNCTION_ARGS);
 extern Datum hashint2vector(PG_FUNCTION_ARGS);
 extern Datum hashname(PG_FUNCTION_ARGS);
 extern Datum hashvarlena(PG_FUNCTION_ARGS);
-extern Datum hash_any(const char *keydata, int keylen);
-
+extern Datum hash_any(register const char *k, register int keylen);
 
 /* private routines */
 
@@ -288,7 +287,7 @@ extern void _hash_metapinit(Relation rel);
 extern Buffer _hash_getbuf(Relation rel, BlockNumber blkno, int access);
 extern void _hash_relbuf(Relation rel, Buffer buf, int access);
 extern void _hash_wrtbuf(Relation rel, Buffer buf);
-extern void _hash_wrtnorelbuf(Relation rel, Buffer buf);
+extern void _hash_wrtnorelbuf(Buffer buf);
 extern Page _hash_chgbufaccess(Relation rel, Buffer *bufp, int from_access,
 				   int to_access);
 extern void _hash_pageinit(Page page, Size size);
@@ -313,8 +312,7 @@ extern bool _hash_step(IndexScanDesc scan, Buffer *bufP, ScanDirection dir,
 
 
 /* hashutil.c */
-extern ScanKey _hash_mkscankey(Relation rel, IndexTuple itup,
-				HashMetaPage metap);
+extern ScanKey _hash_mkscankey(Relation rel, IndexTuple itup);
 extern void _hash_freeskey(ScanKey skey);
 extern bool _hash_checkqual(IndexScanDesc scan, IndexTuple itup);
 extern HashItem _hash_formitem(IndexTuple itup);

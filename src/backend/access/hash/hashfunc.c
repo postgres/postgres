@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashfunc.c,v 1.31 2002/02/25 04:06:47 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashfunc.c,v 1.32 2002/03/06 20:49:38 momjian Exp $
  *
  * NOTES
  *	  These functions are stored in pg_amproc.	For each operator class
@@ -95,6 +95,8 @@ hashname(PG_FUNCTION_ARGS)
 {
 	char	   *key = NameStr(*PG_GETARG_NAME(0));
 
+	Assert(strlen(key) <= NAMEDATALEN);
+
 	return hash_any(key, strlen(key));
 }
 
@@ -116,61 +118,89 @@ hashvarlena(PG_FUNCTION_ARGS)
 	return result;
 }
 
+/* This hash function was written by Bob Jenkins
+ * (bob_jenkins@burtleburtle.net), and superficially adapted
+ * for PostgreSQL by Neil Conway. For more information on this
+ * hash function, see http://burtleburtle.net/bob/hash/doobs.html
+ */
 
 /*
- * hash_any --- compute a hash function for any specified chunk of memory
- *
- * This can be used as the underlying hash function for any pass-by-reference
- * data type in which there are no non-significant bits.
- *
- * (Comment from the original db3 hashing code: )
- *
- * This is INCREDIBLY ugly, but fast.  We break the string up into 8 byte
- * units.  On the first time through the loop we get the 'leftover bytes'
- * (strlen % 8).  On every later iteration, we perform 8 HASHC's so we handle
- * all 8 bytes.  Essentially, this saves us 7 cmp & branch instructions.  If
- * this routine is heavily used enough, it's worth the ugly coding.
- *
- * "OZ's original sdbm hash"
+ * mix -- mix 3 32-bit values reversibly.
+ * For every delta with one or two bits set, and the deltas of all three
+ * high bits or all three low bits, whether the original value of a,b,c
+ * is almost all zero or is uniformly distributed,
+ * - If mix() is run forward or backward, at least 32 bits in a,b,c
+ *   have at least 1/4 probability of changing.
+ * - If mix() is run forward, every bit of c will change between 1/3 and
+ *   2/3 of the time.  (Well, 22/100 and 78/100 for some 2-bit deltas.)
+ */
+#define mix(a,b,c) \
+{ \
+  a -= b; a -= c; a ^= (c>>13); \
+  b -= c; b -= a; b ^= (a<<8); \
+  c -= a; c -= b; c ^= (b>>13); \
+  a -= b; a -= c; a ^= (c>>12);  \
+  b -= c; b -= a; b ^= (a<<16); \
+  c -= a; c -= b; c ^= (b>>5); \
+  a -= b; a -= c; a ^= (c>>3);  \
+  b -= c; b -= a; b ^= (a<<10); \
+  c -= a; c -= b; c ^= (b>>15); \
+}
+
+/*
+ * hash_any() -- hash a variable-length key into a 32-bit value
+ *      k       : the key (the unaligned variable-length array of bytes)
+ *      len     : the length of the key, counting by bytes
+ * Returns a 32-bit value.  Every bit of the key affects every bit of
+ * the return value.  Every 1-bit and 2-bit delta achieves avalanche.
+ * About 6*len+35 instructions. The best hash table sizes are powers
+ * of 2.  There is no need to do mod a prime (mod is sooo slow!).
+ * If you need less than 32 bits, use a bitmask.
  */
 Datum
-hash_any(const char *keydata, int keylen)
+hash_any(register const char *k, register int keylen)
 {
-	uint32		n;
-	int			loop;
+   register Datum a,b,c,len;
 
-#define HASHC	n = *keydata++ + 65599 * n
+   /* Set up the internal state */
+   len = keylen;
+   a = b = 0x9e3779b9;  /* the golden ratio; an arbitrary value */
+   /* Another arbitrary value. If the hash function is called
+    * multiple times, this could be the previously generated
+    * hash value; however, the interface currently doesn't allow
+    * this. AFAIK this isn't a big deal.
+    */
+   c = 3923095;
 
-	n = 0;
-	if (keylen > 0)
-	{
-		loop = (keylen + 8 - 1) >> 3;
+   /* handle most of the key */
+   while (len >= 12)
+   {
+      a += (k[0] +((Datum)k[1]<<8) +((Datum)k[2]<<16) +((Datum)k[3]<<24));
+      b += (k[4] +((Datum)k[5]<<8) +((Datum)k[6]<<16) +((Datum)k[7]<<24));
+      c += (k[8] +((Datum)k[9]<<8) +((Datum)k[10]<<16)+((Datum)k[11]<<24));
+      mix(a,b,c);
+      k += 12; len -= 12;
+   }
 
-		switch (keylen & (8 - 1))
-		{
-			case 0:
-				do
-				{				/* All fall throughs */
-					HASHC;
-			case 7:
-					HASHC;
-			case 6:
-					HASHC;
-			case 5:
-					HASHC;
-			case 4:
-					HASHC;
-			case 3:
-					HASHC;
-			case 2:
-					HASHC;
-			case 1:
-					HASHC;
-				} while (--loop);
-		}
-	}
-
-#undef HASHC
-
-	PG_RETURN_UINT32(n);
+   /* handle the last 11 bytes */
+   c += keylen;
+   switch(len)              /* all the case statements fall through */
+   {
+   case 11: c+=((Datum)k[10]<<24);
+   case 10: c+=((Datum)k[9]<<16);
+   case 9 : c+=((Datum)k[8]<<8);
+      /* the first byte of c is reserved for the length */
+   case 8 : b+=((Datum)k[7]<<24);
+   case 7 : b+=((Datum)k[6]<<16);
+   case 6 : b+=((Datum)k[5]<<8);
+   case 5 : b+=k[4];
+   case 4 : a+=((Datum)k[3]<<24);
+   case 3 : a+=((Datum)k[2]<<16);
+   case 2 : a+=((Datum)k[1]<<8);
+   case 1 : a+=k[0];
+     /* case 0: nothing left to add */
+   }
+   mix(a,b,c);
+   /* report the result */
+   return c;
 }

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashinsert.c,v 1.23 2001/10/25 05:49:21 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashinsert.c,v 1.24 2002/03/06 20:49:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -49,7 +49,7 @@ _hash_doinsert(Relation rel, HashItem hitem)
 	itup = &(hitem->hash_itup);
 	if ((natts = rel->rd_rel->relnatts) != 1)
 		elog(ERROR, "Hash indices valid for only one index key.");
-	itup_scankey = _hash_mkscankey(rel, itup, metap);
+	itup_scankey = _hash_mkscankey(rel, itup);
 
 	/*
 	 * find the first page in the bucket chain containing this key and
@@ -232,7 +232,7 @@ _hash_pgaddtup(Relation rel,
 			 RelationGetRelationName(rel));
 
 	/* write the buffer, but hold our lock */
-	_hash_wrtnorelbuf(rel, buf);
+	_hash_wrtnorelbuf(buf);
 
 	return itup_off;
 }

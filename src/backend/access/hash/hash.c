@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hash.c,v 1.54 2002/03/02 21:39:16 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hash.c,v 1.55 2002/03/06 20:49:37 momjian Exp $
  *
  * NOTES
  *	  This file contains only the public interface routines.
@@ -165,9 +165,6 @@ hashinsert(PG_FUNCTION_ARGS)
 	char	   *nulls = (char *) PG_GETARG_POINTER(2);
 	ItemPointer ht_ctid = (ItemPointer) PG_GETARG_POINTER(3);
 
-#ifdef NOT_USED
-	Relation	heapRel = (Relation) PG_GETARG_POINTER(4);
-#endif
 	InsertIndexResult res;
 	HashItem	hitem;
 	IndexTuple	itup;
@@ -333,7 +330,6 @@ hashendscan(PG_FUNCTION_ARGS)
 
 /*
  *	hashmarkpos() -- save current scan position
- *
  */
 Datum
 hashmarkpos(PG_FUNCTION_ARGS)

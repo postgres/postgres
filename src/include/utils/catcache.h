@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: catcache.h,v 1.39 2002/03/03 17:47:56 tgl Exp $
+ * $Id: catcache.h,v 1.40 2002/03/06 20:49:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,8 +40,8 @@ typedef struct catcache
 	TupleDesc	cc_tupdesc;		/* tuple descriptor (copied from reldesc) */
 	int			cc_reloidattr;	/* AttrNumber of relation OID attr, or 0 */
 	int			cc_ntup;		/* # of tuples currently in this cache */
-	int			cc_size;		/* # of hash buckets in this cache */
-	int			cc_nkeys;		/* number of keys (1..4) */
+	int			cc_nbuckets;	/* # of hash buckets in this cache */
+	int			cc_nkeys;		/* # of keys (1..4) */
 	int			cc_key[4];		/* AttrNumber of each key */
 	PGFunction	cc_hashfunc[4]; /* hash function to use for each key */
 	ScanKeyData cc_skey[4];		/* precomputed key info for heap scans */

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashpage.c,v 1.34 2002/01/15 22:14:16 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashpage.c,v 1.35 2002/03/06 20:49:42 momjian Exp $
  *
  * NOTES
  *	  Postgres hash pages look like ordinary relation pages.  The opaque
@@ -151,7 +151,7 @@ _hash_metapinit(Relation rel)
 		elog(ERROR, "Problem with _hash_initbitmap.");
 
 	/* all done */
-	_hash_wrtnorelbuf(rel, metabuf);
+	_hash_wrtnorelbuf(metabuf);
 
 	/*
 	 * initialize the first two buckets
@@ -260,7 +260,7 @@ _hash_wrtbuf(Relation rel, Buffer buf)
  *		or a reference to the buffer.
  */
 void
-_hash_wrtnorelbuf(Relation rel, Buffer buf)
+_hash_wrtnorelbuf(Buffer buf)
 {
 	BlockNumber blkno;
 
@@ -383,7 +383,7 @@ _hash_pagedel(Relation rel, ItemPointer tid)
 	opaque = (HashPageOpaque) PageGetSpecialPointer(page);
 
 	PageIndexTupleDelete(page, offno);
-	_hash_wrtnorelbuf(rel, buf);
+	_hash_wrtnorelbuf(buf);
 
 	if (PageIsEmpty(page) && (opaque->hasho_flag & LH_OVERFLOW_PAGE))
 	{
@@ -505,7 +505,7 @@ _hash_splitpage(Relation rel,
 	nopaque->hasho_flag = LH_BUCKET_PAGE;
 	nopaque->hasho_oaddr = InvalidOvflAddress;
 	nopaque->hasho_bucket = nbucket;
-	_hash_wrtnorelbuf(rel, nbuf);
+	_hash_wrtnorelbuf(nbuf);
 
 	/*
 	 * make sure the old bucket isn't empty.  advance 'opage' and friends
@@ -628,7 +628,7 @@ _hash_splitpage(Relation rel,
 				== InvalidOffsetNumber)
 				elog(ERROR, "_hash_splitpage: failed to add index item to %s",
 					 RelationGetRelationName(rel));
-			_hash_wrtnorelbuf(rel, nbuf);
+			_hash_wrtnorelbuf(nbuf);
 
 			/*
 			 * now delete the tuple from the old bucket.  after this
@@ -640,7 +640,7 @@ _hash_splitpage(Relation rel,
 			 * instead of calling PageGetMaxOffsetNumber.
 			 */
 			PageIndexTupleDelete(opage, ooffnum);
-			_hash_wrtnorelbuf(rel, obuf);
+			_hash_wrtnorelbuf(obuf);
 			omaxoffnum = OffsetNumberPrev(omaxoffnum);
 
 			/*

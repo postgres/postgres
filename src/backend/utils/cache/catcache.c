@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/catcache.c,v 1.91 2002/03/06 06:10:21 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/catcache.c,v 1.92 2002/03/06 20:49:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,7 +39,7 @@
 /*
  * Constants related to size of the catcache.
  *
- * NCCBUCKETS should be prime and must be less than 64K (because
+ * NCCBUCKETS must be a power of two and must be less than 64K (because
  * SharedInvalCatcacheMsg crams hash indexes into a uint16 field).	In
  * practice it should be a lot less, anyway, to avoid chewing up too much
  * space on hash bucket headers.
@@ -47,8 +47,15 @@
  * MAXCCTUPLES could be as small as a few hundred, if per-backend memory
  * consumption is at a premium.
  */
-#define NCCBUCKETS 257			/* Hash buckets per CatCache */
+#define NCCBUCKETS 256			/* Hash buckets per CatCache */
 #define MAXCCTUPLES 5000		/* Maximum # of tuples in all caches */
+
+/*
+ * Given a hash value and the size of the hash table, find the bucket
+ * in which the hash value belongs. Since the hash table must contain
+ * a power-of-2 number of elements, this is a simple bitmask.
+ */
+#define HASH_INDEX(h, sz) ((Index) ((h) & ((sz) - 1)))
 
 
 /*
@@ -380,7 +387,7 @@ CatalogCacheIdInvalidate(int cacheId,
 		/*
 		 * inspect the proper hash bucket for matches
 		 */
-		hashIndex = (Index) (hashValue % (uint32) ccp->cc_size);
+		hashIndex = HASH_INDEX(hashValue, ccp->cc_nbuckets);
 
 		for (elt = DLGetHead(&ccp->cc_bucket[hashIndex]); elt; elt = nextelt)
 		{
@@ -490,7 +497,7 @@ ResetCatalogCache(CatCache *cache)
 	int			i;
 
 	/* Remove each tuple in this cache, or at least mark it dead */
-	for (i = 0; i < cache->cc_size; i++)
+	for (i = 0; i < cache->cc_nbuckets; i++)
 	{
 		Dlelem	   *elt,
 				   *nextelt;
@@ -578,7 +585,7 @@ CatalogCacheFlushRelation(Oid relId)
 			continue;			/* nope, leave it alone */
 
 		/* Yes, scan the tuples and remove those related to relId */
-		for (i = 0; i < cache->cc_size; i++)
+		for (i = 0; i < cache->cc_nbuckets; i++)
 		{
 			Dlelem	   *elt,
 					   *nextelt;
@@ -640,7 +647,7 @@ CatalogCacheFlushRelation(Oid relId)
 #define InitCatCache_DEBUG1 \
 do { \
 	elog(DEBUG1, "InitCatCache: rel=%s id=%d nkeys=%d size=%d\n", \
-		cp->cc_relname, cp->id, cp->cc_nkeys, cp->cc_size); \
+		cp->cc_relname, cp->id, cp->cc_nkeys, cp->cc_nbuckets); \
 } while(0)
 
 #else
@@ -705,7 +712,7 @@ InitCatCache(int id,
 	cp->cc_tupdesc = (TupleDesc) NULL;
 	cp->cc_reloidattr = reloidattr;
 	cp->cc_ntup = 0;
-	cp->cc_size = NCCBUCKETS;
+	cp->cc_nbuckets = NCCBUCKETS;
 	cp->cc_nkeys = nkeys;
 	for (i = 0; i < nkeys; ++i)
 		cp->cc_key[i] = key[i];
@@ -985,7 +992,7 @@ SearchCatCache(CatCache *cache,
 	 * find the hash bucket in which to look for the tuple
 	 */
 	hashValue = CatalogCacheComputeHashValue(cache, cur_skey);
-	hashIndex = (Index) (hashValue % (uint32) cache->cc_size);
+	hashIndex = HASH_INDEX(hashValue, cache->cc_nbuckets);
 
 	/*
 	 * scan the hash bucket until we find a match or exhaust our tuples

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashovfl.c,v 1.31 2001/10/25 05:49:21 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashovfl.c,v 1.32 2002/03/06 20:49:41 momjian Exp $
  *
  * NOTES
  *	  Overflow pages look like ordinary relation pages.
@@ -73,11 +73,11 @@ _hash_addovflpage(Relation rel, Buffer *metabufp, Buffer buf)
 	ovflopaque->hasho_flag = LH_OVERFLOW_PAGE;
 	ovflopaque->hasho_oaddr = oaddr;
 	ovflopaque->hasho_bucket = pageopaque->hasho_bucket;
-	_hash_wrtnorelbuf(rel, ovflbuf);
+	_hash_wrtnorelbuf(ovflbuf);
 
 	/* logically chain overflow page to previous page */
 	pageopaque->hasho_nextblkno = ovflblkno;
-	_hash_wrtnorelbuf(rel, buf);
+	_hash_wrtnorelbuf(buf);
 	return ovflbuf;
 }
 
@@ -574,7 +574,7 @@ _hash_squeezebucket(Relation rel,
 		 * the "next" ItemId.
 		 */
 		PageIndexTupleDelete(rpage, roffnum);
-		_hash_wrtnorelbuf(rel, rbuf);
+		_hash_wrtnorelbuf(rbuf);
 
 		/*
 		 * if the "read" page is now empty because of the deletion, free
