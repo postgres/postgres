@@ -1,0 +1,317 @@
+<REFENTRY ID="SQL-CREATESEQUENCE-1">
+ <REFMETA>
+  <REFENTRYTITLE>
+   CREATE SEQUENCE
+  </REFENTRYTITLE>
+  <REFMISCINFO>SQL - Language Statements</REFMISCINFO>
+ </REFMETA>
+ <REFNAMEDIV>
+  <REFNAME>
+   CREATE SEQUENCE
+  </REFNAME>
+  <REFPURPOSE>
+   creates a new sequence number generator.
+  </REFPURPOSE>
+  
+ <REFSYNOPSISDIV>
+  <REFSYNOPSISDIVINFO>
+   <DATE>1998-04-15</DATE>
+  </REFSYNOPSISDIVINFO>
+  <SYNOPSIS>
+   CREATE SEQUENCE <replaceable class="parameter">seqname</replaceable>
+        [INCREMENT <replaceable class="parameter">increment</replaceable>]
+        [MINVALUE  <replaceable class="parameter">minvalue</replaceable>]
+        [MAXVALUE  <replaceable class="parameter">maxvalue</replaceable>]
+        [START     <replaceable class="parameter">start</replaceable>]
+        [CACHE     <replaceable class="parameter">cache</replaceable>]
+        [CYCLE]
+  </SYNOPSIS>
+  
+  <REFSECT2 ID="R2-SQL-CREATESEQUENCE-1">
+   <REFSECT2INFO>
+    <DATE>1998-04-15</DATE>
+   </REFSECT2INFO>
+   <TITLE>
+    Inputs
+   </TITLE>
+   <PARA>
+   </PARA>
+   <VARIABLELIST>
+    <VARLISTENTRY>
+     <TERM>
+     </TERM>
+     <LISTITEM>
+      <PARA>
+       <VARIABLELIST>
+	<VARLISTENTRY>
+	 <TERM>
+	  <ReturnValue><replaceable class="parameter">seqname</replaceable></ReturnValue>
+	 </TERM>
+	 <LISTITEM>
+	  <PARA>
+          The name of a sequence to be created.
+	  </PARA>
+	 </LISTITEM>
+	</VARLISTENTRY>
+	<VARLISTENTRY>
+	 <TERM>
+	  <ReturnValue><replaceable class="parameter">increment</replaceable></ReturnValue>
+	 </TERM>
+	 <LISTITEM>
+	  <PARA>
+	   The <option>INCREMENT <replaceable class="parameter">increment</replaceable></option> clause is optional. A positive value will make an
+	    ascending sequence, a negative one a descending sequence. The default value
+	    is 1.
+	  </PARA>
+	 </LISTITEM>
+	</VARLISTENTRY>
+	<VARLISTENTRY>
+	 <TERM>
+	  <ReturnValue><replaceable class="parameter">minvalue</replaceable></ReturnValue>
+	 </TERM>
+	 <LISTITEM>
+	  <PARA>
+	   The optional clause <option>MINVALUE
+	   <replaceable class="parameter">minvalue</replaceable></option>
+	   determines the minimum value
+	   a sequence can be. The defaults are 1 and -2147483647 for
+	   ascending and descending sequences, respectively.
+	  </PARA>
+	 </LISTITEM>
+	</VARLISTENTRY>
+	<VARLISTENTRY>
+	 <TERM>
+	  <ReturnValue><replaceable class="parameter">maxvalue</replaceable></ReturnValue>
+	 </TERM>
+	 <LISTITEM>
+	  <PARA>
+	   Use the optional clause <option>MAXVALUE
+	   <replaceable class="parameter">maxvalue</replaceable></option> to
+	   determine the maximum
+	   value for the sequence. The defaults are 2147483647 and -1 for
+	   ascending and descending sequences, respectively.
+	  </PARA>
+	 </LISTITEM>
+	</VARLISTENTRY>
+	<VARLISTENTRY>
+	 <TERM>
+	  <ReturnValue><replaceable class="parameter">start</replaceable></ReturnValue>
+	 </TERM>
+	 <LISTITEM>
+	  <PARA>
+	   The optional <option>START
+	    <replaceable class="parameter">start</replaceable>
+	    clause</option> enables the sequence to begin anywhere.
+	   The default starting value is
+	   <replaceable class="parameter">minvalue</replaceable>
+	   for ascending sequences and
+	   <replaceable class="parameter">maxvalue</replaceable>
+	   for descending ones.
+	   <comment>
+	    What happens if the user specifies start outside the range?
+	   </comment>
+	  </PARA>
+	 </LISTITEM>
+	</VARLISTENTRY>
+	<VARLISTENTRY>
+	 <TERM>
+	  <ReturnValue><replaceable class="parameter">cache</replaceable></ReturnValue>
+	 </TERM>
+	 <LISTITEM>
+	  <PARA>
+	   The <option>CACHE <replaceable class="parameter">cache</replaceable></option> option
+	   enables sequence numbers to be preallocated
+	   and stored in memory for faster access. The  minimum
+	   value is 1 (no cache) and this is also the default.
+	  </PARA>
+	 </LISTITEM>
+	</VARLISTENTRY>
+	<VARLISTENTRY>
+	 <TERM>
+	  <ReturnValue>CYCLE</ReturnValue>
+	 </TERM>
+	 <LISTITEM>
+	  <PARA>
+	   The optional CYCLE keyword may be used to enable the sequence
+	   to continue when the
+	   <replaceable class="parameter">maxvalue</replaceable> or
+	   <replaceable class="parameter">minvalue</replaceable> has been
+	   reached by
+	   an ascending or descending sequence respectively. If the limit is
+	   reached, the next number generated will be whatever the
+	   <replaceable class="parameter">minvalue</replaceable> or
+	   <replaceable class="parameter">maxvalue</replaceable> is,
+	   as appropriate.
+	  </PARA>
+	 </LISTITEM>
+	</VARLISTENTRY>
+       </variablelist>
+     </LISTITEM>
+    </VARLISTENTRY>
+   </variablelist>
+  </REFSECT2>
+  
+  <REFSECT2 ID="R2-SQL-CREATESEQUENCE-2">
+   <REFSECT2INFO>
+    <DATE>1998-04-15</DATE>
+   </REFSECT2INFO>
+   <TITLE>
+    Outputs
+   </TITLE>
+   <PARA>
+   </PARA>
+   <VARIABLELIST>
+    <VARLISTENTRY>
+     <TERM>
+     </TERM>
+     <LISTITEM>
+      <PARA>
+       <VARIABLELIST>
+	<VARLISTENTRY>
+	 <TERM>
+	  <ReturnValue>CREATE</ReturnValue>
+	 </TERM>
+	 <LISTITEM>
+	  <PARA>
+	   Message returned if the command is successful.
+	  </PARA>
+	 </LISTITEM>
+	</VARLISTENTRY>
+	<VARLISTENTRY>
+	 <TERM>
+	  <ReturnValue>ERROR:  amcreate: '<replaceable class="parameter">       seqname</replaceable>' relation already exists</ReturnValue>
+	 </TERM>
+	 <LISTITEM>
+	  <PARA>
+	   If the sequence specified already exists.
+	  </PARA>
+	 </LISTITEM>
+	</VARLISTENTRY>
+       </variablelist>
+     </LISTITEM>
+    </VARLISTENTRY>
+   </VARIABLELIST>
+  </REFSECT2>
+ </REFSYNOPSISDIV>
+ 
+ <REFSECT1 ID="R1-SQL-CREATESEQUENCE-1">
+  <REFSECT1INFO>
+   <DATE>1998-04-15</DATE>
+  </REFSECT1INFO>
+  <TITLE>
+   Description
+  </TITLE>
+  <PARA>
+   CREATE SEQUENCE will enter a new sequence number generator
+   into the current data base. This involves creating and initialising a
+   new single block
+   table with the name <replaceable class="parameter">seqname</replaceable>.
+   The generator will be "owned" by the user issuing the command.
+  </PARA>
+  <para>
+   After the sequence is created, you may use the function
+   <function>nextval()</function> with the
+   sequence name as the argument to get a new number from the sequence.
+   The function <function>currval('<replaceable class="parameter">sequence_name</replaceable>')</function> may be used
+   to determine the number returned by the last call to
+   <function>nextval()</function> for the
+   specified sequence in the current session.
+  </para>
+  
+  <para>
+   Use a query like
+   <programlisting>
+    SELECT * FROM sequence_name;
+   </programlisting>
+   to get the parameters of a sequence.
+  </para>
+  <para>
+   Low-level locking is used to enable multiple simultaneous
+   calls to a generator.
+  </para>
+  
+  <REFSECT2 ID="R2-SQL-CREATESEQUENCE-3">
+   <REFSECT2INFO>
+    <DATE>1998-04-15</DATE>
+   </REFSECT2INFO>
+   <TITLE>
+    Notes
+   </TITLE>
+   <PARA>
+    Refer to the DROP SEQUENCE statement to remove a sequence.
+   </PARA>
+   <para>
+    Each backend uses its own cache to store allocated numbers.
+    Numbers that are cached but not used in the current session will be
+    lost.
+   </para>
+  </REFSECT2>
+ </refsect1>
+ 
+ <REFSECT1 ID="R1-SQL-CREATESEQUENCE-2">
+  <TITLE>
+   Usage
+  </TITLE>
+  <PARA>
+   Create an ascending sequence called serial, starting at 101:
+  </PARA>
+  <ProgramListing>
+   CREATE SEQUENCE serial START 101;
+  </ProgramListing>
+  <para>
+   Select the next number from this sequence
+   <programlisting>
+    SELECT NEXTVAL ('serial');
+    
+    nextval
+    -------
+        114
+   </programlisting>
+  </para>
+  <para>
+   Use this sequence in an INSERT:
+   <programlisting>
+    INSERT INTO distributors VALUES (NEXTVAL ('serial'),'nothing');
+   </programlisting>
+  </para>
+ </REFSECT1>
+ 
+ <REFSECT1 ID="R1-SQL-CREATESEQUENCE-3">
+  <TITLE>
+   Compatibility
+  </TITLE>
+  <PARA>
+   CREATE SEQUENCE statement is a PostgreSQL language extension.
+  </PARA>
+  
+  <REFSECT2 ID="R2-SQL-CREATESEQUENCE-4">
+   <REFSECT2INFO>
+    <DATE>1998-04-15</DATE>
+   </REFSECT2INFO>
+   <TITLE>
+    SQL92
+   </TITLE>
+   <PARA>
+    There is no CREATE SEQUENCE statement on SQL92.
+   </PARA>
+  </refsect2>
+ </refsect1>
+</REFENTRY>
+
+
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-omittag:t
+sgml-shorttag:t
+sgml-minimize-attributes:nil
+sgml-always-quote-attributes:t
+sgml-indent-step:1
+sgml-indent-data:t
+sgml-parent-document:nil
+sgml-default-dtd-file:"../reference.ced"
+sgml-exposed-tags:nil
+sgml-local-catalogs:"/usr/lib/sgml/catalog"
+sgml-local-ecat-files:nil
+End:
+-->

@@ -16,6 +16,10 @@
 &createFunction;
 &createIndex;
 &createLanguage;
+&createOperator;
+&createRule;
+&createSequence;
+&createTable;
 &dropFunction;
 &select;
 
