@@ -23,10 +23,44 @@ CREATE TRIGGER trg_x_after AFTER INSERT ON x
 FOR EACH ROW EXECUTE PROCEDURE fn_x_after();
 CREATE TRIGGER trg_x_before BEFORE INSERT ON x
 FOR EACH ROW EXECUTE PROCEDURE fn_x_before();
-COPY x (a,b,c,d,e) from stdin;
-COPY x (b,d) from stdin;
-COPY x (b,d) from stdin;
-COPY x (a,b,c,d,e) from stdin;
+COPY x (a, b, c, d, e) from stdin;
+COPY x (b, d) from stdin;
+COPY x (b, d) from stdin;
+COPY x (a, b, c, d, e) from stdin;
+-- non-existent column in column list: should fail
+COPY x (xyz) from stdin;
+ERROR:  COPY: Specified column "xyz" does not exist
+-- too many columns in column list: should fail
+COPY x (a, b, c, d, e, d, c) from stdin;
+ERROR:  COPY: Too many columns specified
+-- missing data: should fail
+COPY x from stdin;
+ERROR:  copy: line 1, COPY TEXT: Missing data for attribute 1
+lost synchronization with server, resetting connection
+COPY x from stdin;
+ERROR:  copy: line 1, COPY TEXT: Missing data for attribute 4
+lost synchronization with server, resetting connection
+COPY x from stdin;
+ERROR:  copy: line 1, COPY TEXT: Missing data for attribute 4
+lost synchronization with server, resetting connection
+-- extra data: should fail
+COPY x from stdin;
+ERROR:  copy: line 1, COPY TEXT: Extra data encountered
+lost synchronization with server, resetting connection
+-- various COPY options: delimiters, oids, NULL string
+COPY x (b, c, d, e) from stdin with oids delimiter ',' null 'x';
+-- COPY w/ oids on a table w/o oids should fail
+CREATE TABLE no_oids (
+	a	int,
+	b	int
+) WITHOUT OIDS;
+INSERT INTO no_oids (a, b) VALUES (5, 10);
+INSERT INTO no_oids (a, b) VALUES (20, 30);
+-- should fail
+COPY no_oids FROM stdin WITH OIDS;
+ERROR:  COPY: table "no_oids" does not have OIDs
+COPY no_oids TO stdout WITH OIDS;
+ERROR:  COPY: table "no_oids" does not have OIDs
 COPY x TO stdout;
 10000	21	31	41	before trigger fired
 10001	22	32	42	before trigger fired
@@ -34,11 +68,25 @@ COPY x TO stdout;
 10003	24	34	44	before trigger fired
 10004	25	35	45	before trigger fired
 10005	26	36	46	before trigger fired
+6	\N	45	80	before trigger fired
 1	1	stuff	test_1	after trigger fired
 2	2	stuff	test_2	after trigger fired
 3	3	stuff	test_3	after trigger fired
 4	4	stuff	test_4	after trigger fired
 5	5	stuff	test_5	after trigger fired
+COPY x (c, e) TO stdout;
+31	before trigger fired
+32	before trigger fired
+33	before trigger fired
+34	before trigger fired
+35	before trigger fired
+36	before trigger fired
+45	before trigger fired
+stuff	after trigger fired
+stuff	after trigger fired
+stuff	after trigger fired
+stuff	after trigger fired
+stuff	after trigger fired
 DROP TABLE x;
 DROP FUNCTION fn_x_before();
 DROP FUNCTION fn_x_after();
