@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.150 2002/04/18 20:01:09 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.151 2002/04/24 02:48:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -377,23 +377,30 @@ ProcessUtility(Node *parsetree,
 
 				CheckOwnership(stmt->relation, true);
 
-				if (stmt->column == NULL)
+				switch (stmt->renameType)
 				{
-					/*
-					 * rename relation
-					 */
-					renamerel(RangeVarGetRelid(stmt->relation, false),
-							  stmt->newname);
-				}
-				else
-				{
-					/*
-					 * rename attribute
-					 */
-					renameatt(RangeVarGetRelid(stmt->relation, false),
-							  stmt->column,		/* old att name */
+					case RENAME_TABLE:
+						renamerel(RangeVarGetRelid(stmt->relation, false),
+								  stmt->newname);
+						break;
+					case RENAME_COLUMN:
+						renameatt(RangeVarGetRelid(stmt->relation, false),
+							  stmt->oldname,	/* old att name */
 							  stmt->newname,	/* new att name */
-							  interpretInhOption(stmt->relation->inhOpt));		/* recursive? */
+							  interpretInhOption(stmt->relation->inhOpt));	/* recursive? */
+						break;
+					case RENAME_TRIGGER:
+						renametrig(RangeVarGetRelid(stmt->relation, false),
+							  stmt->oldname,	/* old att name */
+							  stmt->newname);	/* new att name */
+						break;
+					case RENAME_RULE:
+						elog(ERROR, "ProcessUtility: Invalid target for RENAME: %d",
+								stmt->renameType);
+						break;
+					default:
+						elog(ERROR, "ProcessUtility: Invalid target for RENAME: %d",
+								stmt->renameType);
 				}
 			}
 			break;

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: tablecmds.h,v 1.1 2002/04/15 05:22:04 tgl Exp $
+ * $Id: tablecmds.h,v 1.2 2002/04/24 02:48:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,6 +15,7 @@
 #define TABLECMDS_H
 
 #include "nodes/parsenodes.h"
+#include "utils/inval.h"
 
 extern void AlterTableAddColumn(Oid myrelid, bool inherits,
 								ColumnDef *colDef);
@@ -59,5 +60,9 @@ extern void renameatt(Oid relid,
 
 extern void renamerel(Oid relid,
 		  const char *newrelname);
+
+extern void renametrig(Oid relid,
+		  const char *oldname,
+		  const char *newname);
 
 #endif   /* TABLECMDS_H */

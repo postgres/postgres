@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.180 2002/04/18 20:01:09 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.181 2002/04/24 02:48:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2137,10 +2137,11 @@ _copyRenameStmt(RenameStmt *from)
 	RenameStmt *newnode = makeNode(RenameStmt);
 
 	Node_Copy(from, newnode, relation);
-	if (from->column)
-		newnode->column = pstrdup(from->column);
+	if (from->oldname)
+		newnode->oldname = pstrdup(from->oldname);
 	if (from->newname)
 		newnode->newname = pstrdup(from->newname);
+	newnode->renameType = from->renameType;
 
 	return newnode;
 }

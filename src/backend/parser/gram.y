@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.309 2002/04/21 21:53:23 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.310 2002/04/24 02:48:54 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -2919,8 +2919,21 @@ RenameStmt:  ALTER TABLE relation_expr RENAME opt_column opt_name TO name
 				{
 					RenameStmt *n = makeNode(RenameStmt);
 					n->relation = $3;
-					n->column = $6;
+					n->oldname = $6;
 					n->newname = $8;
+					if ($6 == NULL)
+						n->renameType = RENAME_TABLE;
+					else
+						n->renameType = RENAME_COLUMN;
+					$$ = (Node *)n;
+				}
+		| ALTER TRIGGER name ON relation_expr RENAME TO name
+				{
+					RenameStmt *n = makeNode(RenameStmt);
+					n->relation = $5;
+					n->oldname = $3;
+					n->newname = $8;
+					n->renameType = RENAME_TRIGGER;
 					$$ = (Node *)n;
 				}
 		;

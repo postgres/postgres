@@ -20,7 +20,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.128 2002/04/18 20:01:09 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.129 2002/04/24 02:48:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -983,9 +983,11 @@ _equalRenameStmt(RenameStmt *a, RenameStmt *b)
 {
 	if (!equal(a->relation, b->relation))
 		return false;
-	if (!equalstr(a->column, b->column))
+	if (!equalstr(a->oldname, b->oldname))
 		return false;
 	if (!equalstr(a->newname, b->newname))
+		return false;
+	if (a->renameType != b->renameType)
 		return false;
 
 	return true;

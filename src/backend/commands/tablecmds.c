@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/tablecmds.c,v 1.8 2002/04/24 02:38:58 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/tablecmds.c,v 1.9 2002/04/24 02:48:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2845,6 +2845,123 @@ renamerel(Oid relid, const char *newrelname)
 	 */
 	relation_close(targetrelation, NoLock);
 }
+
+/*
+ *		renametrig		- changes the name of a trigger on a relation
+ *
+ *		trigger name is changed in trigger catalog.
+ *		No record of the previous name is kept.
+ *
+ *		get proper relrelation from relation catalog (if not arg)
+ *		scan trigger catalog
+ *				for name conflict (within rel)
+ *				for original trigger (if not arg)
+ *		modify tgname in trigger tuple
+ *		insert modified trigger in trigger catalog
+ *		delete original trigger from trigger catalog
+ */
+extern void renametrig(Oid relid,
+		  const char *oldname,
+		  const char *newname)
+{
+	Relation	targetrel;
+	Relation	tgrel;
+	HeapTuple	tuple;
+	SysScanDesc	tgscan;
+	ScanKeyData key;
+	bool		found = FALSE;
+	Relation	idescs[Num_pg_trigger_indices];
+
+	/*
+	 * Grab an exclusive lock on the target table, which we will NOT
+	 * release until end of transaction.
+	 */
+	targetrel = heap_open(relid, AccessExclusiveLock);
+
+	/*
+	 * Scan pg_trigger twice for existing triggers on relation.  We do this in
+	 * order to ensure a trigger does not exist with newname (The unique index
+	 * on tgrelid/tgname would complain anyway) and to ensure a trigger does
+	 * exist with oldname.
+	 *
+	 * NOTE that this is cool only because we have AccessExclusiveLock on the
+	 * relation, so the trigger set won't be changing underneath us.
+	 */
+	tgrel = heap_openr(TriggerRelationName, RowExclusiveLock);
+
+	/*
+	 * First pass -- look for name conflict
+	 */
+	ScanKeyEntryInitialize(&key, 0,
+						   Anum_pg_trigger_tgrelid,
+						   F_OIDEQ,
+						   ObjectIdGetDatum(relid));
+	tgscan = systable_beginscan(tgrel, TriggerRelidNameIndex, true,
+								SnapshotNow, 1, &key);
+	while (HeapTupleIsValid(tuple = systable_getnext(tgscan)))
+	{
+		Form_pg_trigger pg_trigger = (Form_pg_trigger) GETSTRUCT(tuple);
+
+		if (namestrcmp(&(pg_trigger->tgname), newname) == 0)
+			elog(ERROR, "renametrig: trigger %s already defined on relation %s",
+				 newname, RelationGetRelationName(targetrel));
+	}
+	systable_endscan(tgscan);
+
+	/*
+	 * Second pass -- look for trigger existing with oldname and update
+	 */
+	ScanKeyEntryInitialize(&key, 0,
+						   Anum_pg_trigger_tgrelid,
+						   F_OIDEQ,
+						   ObjectIdGetDatum(relid));
+	tgscan = systable_beginscan(tgrel, TriggerRelidNameIndex, true,
+								SnapshotNow, 1, &key);
+	while (HeapTupleIsValid(tuple = systable_getnext(tgscan)))
+	{
+		Form_pg_trigger pg_trigger = (Form_pg_trigger) GETSTRUCT(tuple);
+
+		if (namestrcmp(&(pg_trigger->tgname), oldname) == 0)
+		{
+			/*
+			 * Update pg_trigger tuple with new tgname.
+			 * (Scribbling on tuple is OK because it's a copy...)
+			 */
+			namestrcpy(&(pg_trigger->tgname), newname);
+			simple_heap_update(tgrel, &tuple->t_self, tuple);
+
+			/*
+			 * keep system catalog indices current
+			 */
+			CatalogOpenIndices(Num_pg_trigger_indices, Name_pg_trigger_indices, idescs);
+			CatalogIndexInsert(idescs, Num_pg_trigger_indices, tgrel, tuple);
+			CatalogCloseIndices(Num_pg_trigger_indices, idescs);
+
+			/*
+			 * Invalidate relation's relcache entry so that other
+			 * backends (and this one too!) are sent SI message to make them
+			 * rebuild relcache entries.
+			 */
+			CacheInvalidateRelcache(relid);
+
+			found = TRUE;
+			break;
+		}
+	}
+	systable_endscan(tgscan);
+
+	heap_close(tgrel, RowExclusiveLock);
+
+	if (!found)
+		elog(ERROR, "renametrig: trigger %s not defined on relation %s",
+			 oldname, RelationGetRelationName(targetrel));
+
+	/*
+	 * Close rel, but keep exclusive lock!
+	 */
+	heap_close(targetrel, NoLock);
+}
+
 
 /*
  * Given a trigger function OID, determine whether it is an RI trigger,

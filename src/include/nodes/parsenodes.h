@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsenodes.h,v 1.173 2002/04/21 00:26:43 tgl Exp $
+ * $Id: parsenodes.h,v 1.174 2002/04/24 02:48:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1233,17 +1233,23 @@ typedef struct RemoveOperStmt
 } RemoveOperStmt;
 
 /* ----------------------
- *		Alter Table Rename Statement
+ *		Alter Object Rename Statement
  * ----------------------
+ * Currently supports renaming tables, table columns, and triggers.
+ * If renaming a table, oldname is ignored.
  */
+#define RENAME_TABLE	110
+#define RENAME_COLUMN	111
+#define RENAME_TRIGGER	112
+#define RENAME_RULE		113
+
 typedef struct RenameStmt
 {
 	NodeTag		type;
-	RangeVar   *relation;		/* relation to be altered */
-	char	   *column;			/* if NULL, rename the relation name to
-								 * the new name. Otherwise, rename this
-								 * column name. */
+	RangeVar   *relation;		/* owning relation */
+	char	   *oldname;		/* name of rule, trigger, etc */
 	char	   *newname;		/* the new name */
+	int			renameType;		/* RENAME_TABLE, RENAME_COLUMN, etc */
 } RenameStmt;
 
 /* ----------------------
