@@ -1,3 +1,554 @@
+2001-03-23 19:24  tgl
+
+	* doc/src/sgml/runtime.sgml: Miscellaneous updates and minor
+	copy-editing.
+
+2001-03-23 17:07  tgl
+
+	* doc/src/sgml/plsql.sgml: Doc update from Roberto Mello: improved
+	versions of instr() examples.
+
+2001-03-23 13:42  tgl
+
+	* configure, configure.in, src/backend/utils/hash/pg_crc.c,
+	src/include/config.h.in, src/include/utils/pg_crc.h: When using
+	'long long int' for int64 type, check to see if the compiler
+	accepts nnnLL syntax for long long constants.  If so, decorate the
+	CRC64 constants with LL to avoid warnings and/or erroneous results
+	from certain non-standards-compliant compilers.
+
+2001-03-23 13:26  tgl
+
+	* src/: backend/tcop/postgres.c, include/postgres.h,
+	include/utils/excid.h: Mark exception and assert global variables
+	as DLLIMPORT, so that plpgsql can be compiled with asserts enabled
+	on Windoze.
+
+2001-03-23 00:46  ishii
+
+	* src/bin/pg_encoding/Makefile: Add checking for strtoul. SunOS4
+	does not have it.
+
+2001-03-22 23:49  momjian
+
+	* contrib/spi/refint.c, src/backend/access/gist/gistscan.c,
+	src/backend/access/hash/hashsearch.c,
+	src/backend/access/heap/tuptoaster.c,
+	src/backend/access/nbtree/nbtsearch.c,
+	src/backend/access/nbtree/nbtutils.c,
+	src/backend/commands/command.c,
+	src/backend/commands/_deadcode/version.c,
+	src/backend/executor/execQual.c, src/backend/executor/nodeLimit.c,
+	src/backend/executor/nodeMergejoin.c,
+	src/backend/optimizer/path/clausesel.c,
+	src/backend/optimizer/path/indxpath.c,
+	src/backend/rewrite/rewriteDefine.c, src/backend/storage/ipc/ipc.c,
+	src/backend/storage/ipc/sinval.c,
+	src/backend/utils/adt/formatting.c,
+	src/backend/utils/adt/selfuncs.c,
+	src/backend/utils/cache/lsyscache.c,
+	src/backend/utils/cache/relcache.c,
+	src/backend/utils/sort/tuplesort.c, src/bin/pg_dump/pg_backup_db.c,
+	src/bin/pg_dump/pg_dump.c, src/bin/pg_dump/pg_dump.h,
+	src/include/catalog/pg_type.h, src/include/nodes/parsenodes.h,
+	src/interfaces/ecpg/lib/connect.c,
+	src/interfaces/libpq/fe-connect.c, src/interfaces/odbc/info.c,
+	src/interfaces/odbc/options.c: Fix comments that were mis-wrapped,
+	for Tom Lane.
+
+2001-03-22 20:51  tgl
+
+	* doc/src/sgml/spi.sgml: Fix SPI example to reflect new-style
+	calling convention for textout().
+
+2001-03-22 20:27  pjw
+
+	* src/bin/pg_dump/pg_backup_files.c: Fix checking of file
+	operations in demo ('files') output format.
+
+2001-03-22 19:36  tgl
+
+	* src/bin/psql/: mainloop.c, startup.c: Fix problems with coredumps
+	due to ^C when longjmp buffer isn't valid.  Now, we will only catch
+	^C at times when it is valid.
+
+2001-03-22 12:41  tgl
+
+	* src/backend/: nodes/read.c, parser/scan.l, utils/misc/guc.c: Fix
+	Joubert's complaint that int8-sized numeric literals are mishandled
+	on Alpha (because parser mistakenly assumes that a nonoverflow
+	result from strtol means the value will fit into int4).  A scan for
+	other uses of strtol and strtoul found a couple other places with
+	the same mistake; fix them too.  The changes are all conditional on
+	HAVE_LONG_INT_64 to avoid complaints from compilers that think x !=
+	x is a silly test (cf. pg_atoi).
+
+2001-03-22 10:24  momjian
+
+	* contrib/intarray/_int.c: Run pgindent on _int.c, for Tom Lane.  I
+	had skipped this file because of a complex macro that pgindent
+	complained about.  Hand-adjusted macro for pgindent run.
+
+2001-03-22 10:13  scrappy
+
+	* src/test/regress/: resultmap,
+	expected/geometry-solaris-i386-pc.out: 
+	geometry tests 'FAILED' from a precision standpoint, but
+	differently then what solaris-precision takes into account ... its
+	possible that solaris-precision is 'stale', but created a new one
+	"just in case" ...
+
+2001-03-22 01:16  momjian
+
+	* contrib/pg_dumplo/lo_export.c, contrib/pg_dumplo/lo_import.c,
+	contrib/pg_dumplo/main.c, src/backend/access/common/heaptuple.c,
+	src/backend/access/common/indextuple.c,
+	src/backend/access/common/printtup.c,
+	src/backend/access/common/tupdesc.c,
+	src/backend/access/heap/heapam.c, src/backend/access/heap/hio.c,
+	src/backend/access/heap/stats.c,
+	src/backend/access/heap/tuptoaster.c,
+	src/backend/access/index/indexam.c,
+	src/backend/access/nbtree/nbtsearch.c,
+	src/backend/access/transam/transam.c,
+	src/backend/access/transam/transsup.c,
+	src/backend/access/transam/xact.c,
+	src/backend/bootstrap/bootstrap.c, src/backend/catalog/heap.c,
+	src/backend/catalog/index.c, src/backend/catalog/pg_operator.c,
+	src/backend/catalog/pg_proc.c, src/backend/catalog/pg_type.c,
+	src/backend/commands/analyze.c, src/backend/commands/command.c,
+	src/backend/commands/copy.c, src/backend/commands/creatinh.c,
+	src/backend/commands/define.c, src/backend/commands/indexcmds.c,
+	src/backend/commands/proclang.c, src/backend/commands/trigger.c,
+	src/backend/commands/user.c,
+	src/backend/commands/_deadcode/recipe.c,
+	src/backend/executor/execAmi.c, src/backend/executor/execJunk.c,
+	src/backend/executor/execProcnode.c,
+	src/backend/executor/execScan.c, src/backend/executor/execTuples.c,
+	src/backend/executor/execUtils.c, src/backend/executor/functions.c,
+	src/backend/executor/nodeAgg.c, src/backend/executor/nodeAppend.c,
+	src/backend/executor/nodeGroup.c, src/backend/executor/nodeHash.c,
+	src/backend/executor/nodeHashjoin.c,
+	src/backend/executor/nodeIndexscan.c,
+	src/backend/executor/nodeLimit.c,
+	src/backend/executor/nodeMaterial.c,
+	src/backend/executor/nodeMergejoin.c,
+	src/backend/executor/nodeNestloop.c,
+	src/backend/executor/nodeResult.c,
+	src/backend/executor/nodeSeqscan.c,
+	src/backend/executor/nodeSetOp.c, src/backend/executor/nodeSort.c,
+	src/backend/executor/nodeSubqueryscan.c,
+	src/backend/executor/nodeTidscan.c,
+	src/backend/executor/nodeUnique.c,
+	src/backend/executor/_deadcode/nodeTee.c,
+	src/backend/lib/stringinfo.c, src/backend/nodes/copyfuncs.c,
+	src/backend/optimizer/path/pathkeys.c,
+	src/backend/optimizer/path/_deadcode/predmig.c,
+	src/backend/optimizer/path/_deadcode/xfunc.c,
+	src/backend/parser/analyze.c, src/backend/parser/parse_clause.c,
+	src/backend/rewrite/rewriteDefine.c,
+	src/backend/rewrite/rewriteHandler.c,
+	src/backend/storage/ipc/ipc.c, src/backend/storage/lmgr/proc.c,
+	src/backend/tcop/dest.c, src/backend/tcop/fastpath.c,
+	src/backend/tcop/postgres.c, src/backend/tcop/pquery.c,
+	src/backend/tcop/utility.c, src/backend/tioga/tgRecipe.h,
+	src/backend/utils/adt/ascii.c, src/backend/utils/adt/formatting.c,
+	src/backend/utils/adt/numeric.c,
+	src/backend/utils/adt/pg_lzcompress.c,
+	src/backend/utils/adt/ri_triggers.c,
+	src/backend/utils/adt/ruleutils.c,
+	src/backend/utils/init/postinit.c,
+	src/backend/utils/misc/database.c, src/include/access/strat.h,
+	src/include/nodes/nodes.h, src/include/port/osf.h,
+	src/interfaces/ecpg/include/sqlca.h,
+	src/interfaces/libpq/fe-connect.c, src/interfaces/libpq/fe-lobj.c,
+	src/interfaces/libpq/pqexpbuffer.c,
+	src/interfaces/odbc/dlg_specific.c, src/interfaces/odbc/drvconn.c,
+	src/interfaces/odbc/multibyte.c, src/interfaces/odbc/pgtypes.c,
+	src/interfaces/odbc/psqlodbc.c, src/interfaces/odbc/results.c,
+	src/interfaces/odbc/setup.c, src/pl/plpgsql/src/pl_comp.c,
+	src/pl/plpgsql/src/pl_exec.c, src/pl/plpgsql/src/pl_funcs.c,
+	src/pl/plpgsql/src/pl_handler.c: Remove dashes in comments that
+	don't need them, rewrap with pgindent.
+
+2001-03-21 22:59  momjian
+
+	* contrib/cube/buffer.c, contrib/cube/buffer.h,
+	contrib/cube/cube.c, contrib/cube/cubedata.h,
+	contrib/earthdistance/earthdistance.c,
+	contrib/findoidjoins/findoidjoins.c, contrib/fulltextindex/fti.c,
+	contrib/lo/lo.c, contrib/oid2name/oid2name.c,
+	contrib/pg_controldata/pg_controldata.c,
+	contrib/pg_dumplo/lo_export.c, contrib/pg_dumplo/lo_import.c,
+	contrib/pg_dumplo/main.c, contrib/pg_dumplo/pg_dumplo.h,
+	contrib/pg_dumplo/utils.c, contrib/pg_logger/pg_logger.c,
+	contrib/pg_resetxlog/pg_resetxlog.c, contrib/pgcrypto/encode.c,
+	contrib/pgcrypto/encode.h, contrib/pgcrypto/internal.c,
+	contrib/pgcrypto/krb.c, contrib/pgcrypto/md5.c,
+	contrib/pgcrypto/md5.h, contrib/pgcrypto/mhash.c,
+	contrib/pgcrypto/openssl.c, contrib/pgcrypto/pgcrypto.c,
+	contrib/pgcrypto/pgcrypto.h, contrib/pgcrypto/sha1.c,
+	contrib/pgcrypto/sha1.h, contrib/rserv/rserv.c,
+	contrib/seg/buffer.c, contrib/seg/buffer.h, contrib/seg/seg.c,
+	contrib/seg/segdata.h, contrib/soundex/soundex.c,
+	contrib/spi/insert_username.c, contrib/spi/moddatetime.c,
+	contrib/spi/timetravel.c, contrib/vacuumlo/vacuumlo.c,
+	src/backend/access/common/heaptuple.c,
+	src/backend/access/common/indextuple.c,
+	src/backend/access/common/printtup.c,
+	src/backend/access/common/tupdesc.c,
+	src/backend/access/gist/gist.c, src/backend/access/gist/gistget.c,
+	src/backend/access/gist/gistscan.c, src/backend/access/hash/hash.c,
+	src/backend/access/hash/hashfunc.c,
+	src/backend/access/heap/heapam.c, src/backend/access/heap/hio.c,
+	src/backend/access/heap/tuptoaster.c,
+	src/backend/access/index/istrat.c,
+	src/backend/access/nbtree/nbtcompare.c,
+	src/backend/access/nbtree/nbtinsert.c,
+	src/backend/access/nbtree/nbtpage.c,
+	src/backend/access/nbtree/nbtree.c,
+	src/backend/access/nbtree/nbtsearch.c,
+	src/backend/access/nbtree/nbtsort.c,
+	src/backend/access/nbtree/nbtutils.c,
+	src/backend/access/rtree/rtget.c,
+	src/backend/access/rtree/rtproc.c,
+	src/backend/access/rtree/rtree.c,
+	src/backend/access/rtree/rtscan.c,
+	src/backend/access/transam/rmgr.c,
+	src/backend/access/transam/transam.c,
+	src/backend/access/transam/transsup.c,
+	src/backend/access/transam/varsup.c,
+	src/backend/access/transam/xact.c,
+	src/backend/access/transam/xid.c,
+	src/backend/access/transam/xlog.c,
+	src/backend/access/transam/xlogutils.c,
+	src/backend/catalog/aclchk.c, src/backend/catalog/catalog.c,
+	src/backend/catalog/heap.c, src/backend/catalog/index.c,
+	src/backend/catalog/indexing.c, src/backend/catalog/pg_aggregate.c,
+	src/backend/catalog/pg_largeobject.c,
+	src/backend/catalog/pg_operator.c, src/backend/catalog/pg_proc.c,
+	src/backend/catalog/pg_type.c, src/backend/commands/analyze.c,
+	src/backend/commands/async.c, src/backend/commands/cluster.c,
+	src/backend/commands/command.c, src/backend/commands/comment.c,
+	src/backend/commands/copy.c, src/backend/commands/creatinh.c,
+	src/backend/commands/dbcommands.c, src/backend/commands/define.c,
+	src/backend/commands/explain.c, src/backend/commands/indexcmds.c,
+	src/backend/commands/proclang.c, src/backend/commands/remove.c,
+	src/backend/commands/rename.c, src/backend/commands/sequence.c,
+	src/backend/commands/trigger.c, src/backend/commands/user.c,
+	src/backend/commands/vacuum.c, src/backend/commands/variable.c,
+	src/backend/commands/view.c, src/backend/executor/execAmi.c,
+	src/backend/executor/execJunk.c, src/backend/executor/execMain.c,
+	src/backend/executor/execQual.c, src/backend/executor/execScan.c,
+	src/backend/executor/execTuples.c,
+	src/backend/executor/execUtils.c, src/backend/executor/functions.c,
+	src/backend/executor/nodeAgg.c, src/backend/executor/nodeGroup.c,
+	src/backend/executor/nodeHash.c,
+	src/backend/executor/nodeHashjoin.c,
+	src/backend/executor/nodeIndexscan.c,
+	src/backend/executor/nodeLimit.c,
+	src/backend/executor/nodeMaterial.c,
+	src/backend/executor/nodeMergejoin.c,
+	src/backend/executor/nodeNestloop.c,
+	src/backend/executor/nodeResult.c,
+	src/backend/executor/nodeSeqscan.c,
+	src/backend/executor/nodeSetOp.c,
+	src/backend/executor/nodeSubplan.c,
+	src/backend/executor/nodeSubqueryscan.c,
+	src/backend/executor/nodeTidscan.c, src/backend/executor/spi.c,
+	src/backend/lib/bit.c, src/backend/libpq/auth.c,
+	src/backend/libpq/be-fsstubs.c, src/backend/libpq/crypt.c,
+	src/backend/libpq/password.c, src/backend/libpq/pqcomm.c,
+	src/backend/libpq/pqpacket.c, src/backend/libpq/pqsignal.c,
+	src/backend/main/main.c, src/backend/nodes/copyfuncs.c,
+	src/backend/nodes/equalfuncs.c, src/backend/nodes/list.c,
+	src/backend/nodes/makefuncs.c, src/backend/nodes/nodeFuncs.c,
+	src/backend/nodes/outfuncs.c, src/backend/nodes/print.c,
+	src/backend/nodes/read.c, src/backend/nodes/readfuncs.c,
+	src/backend/optimizer/geqo/geqo_eval.c,
+	src/backend/optimizer/geqo/geqo_main.c,
+	src/backend/optimizer/path/allpaths.c,
+	src/backend/optimizer/path/clausesel.c,
+	src/backend/optimizer/path/costsize.c,
+	src/backend/optimizer/path/indxpath.c,
+	src/backend/optimizer/path/joinpath.c,
+	src/backend/optimizer/path/joinrels.c,
+	src/backend/optimizer/path/pathkeys.c,
+	src/backend/optimizer/path/_deadcode/predmig.c,
+	src/backend/optimizer/plan/createplan.c,
+	src/backend/optimizer/plan/initsplan.c,
+	src/backend/optimizer/plan/planmain.c,
+	src/backend/optimizer/plan/planner.c,
+	src/backend/optimizer/plan/setrefs.c,
+	src/backend/optimizer/plan/subselect.c,
+	src/backend/optimizer/prep/prepkeyset.c,
+	src/backend/optimizer/prep/prepqual.c,
+	src/backend/optimizer/prep/preptlist.c,
+	src/backend/optimizer/prep/prepunion.c,
+	src/backend/optimizer/util/clauses.c,
+	src/backend/optimizer/util/joininfo.c,
+	src/backend/optimizer/util/pathnode.c,
+	src/backend/optimizer/util/plancat.c,
+	src/backend/optimizer/util/tlist.c,
+	src/backend/optimizer/util/var.c, src/backend/parser/analyze.c,
+	src/backend/parser/keywords.c, src/backend/parser/parse_clause.c,
+	src/backend/parser/parse_coerce.c, src/backend/parser/parse_expr.c,
+	src/backend/parser/parse_func.c, src/backend/parser/parse_node.c,
+	src/backend/parser/parse_oper.c,
+	src/backend/parser/parse_relation.c,
+	src/backend/parser/parse_target.c, src/backend/parser/parse_type.c,
+	src/backend/parser/parser.c, src/backend/port/strtol.c,
+	src/backend/port/beos/sem.c, src/backend/port/beos/shm.c,
+	src/backend/port/beos/support.c, src/backend/port/darwin/sem.c,
+	src/backend/port/dynloader/aix.c, src/backend/port/dynloader/aix.h,
+	src/backend/port/dynloader/beos.c,
+	src/backend/port/dynloader/darwin.c,
+	src/backend/port/dynloader/darwin.h,
+	src/backend/port/dynloader/hpux.c,
+	src/backend/port/dynloader/solaris.h, src/backend/port/qnx4/shm.c,
+	src/backend/postmaster/postmaster.c, src/backend/regex/engine.c,
+	src/backend/regex/regcomp.c, src/backend/regex/regexec.c,
+	src/backend/rewrite/rewriteDefine.c,
+	src/backend/rewrite/rewriteHandler.c,
+	src/backend/rewrite/rewriteManip.c,
+	src/backend/rewrite/rewriteRemove.c,
+	src/backend/rewrite/rewriteSupport.c,
+	src/backend/storage/buffer/buf_init.c,
+	src/backend/storage/buffer/buf_table.c,
+	src/backend/storage/buffer/bufmgr.c,
+	src/backend/storage/buffer/localbuf.c,
+	src/backend/storage/buffer/s_lock.c,
+	src/backend/storage/file/buffile.c, src/backend/storage/file/fd.c,
+	src/backend/storage/ipc/ipc.c, src/backend/storage/ipc/ipci.c,
+	src/backend/storage/ipc/shmem.c,
+	src/backend/storage/ipc/shmqueue.c,
+	src/backend/storage/ipc/sinval.c,
+	src/backend/storage/ipc/sinvaladt.c,
+	src/backend/storage/ipc/spin.c,
+	src/backend/storage/large_object/inv_api.c,
+	src/backend/storage/lmgr/deadlock.c,
+	src/backend/storage/lmgr/lmgr.c, src/backend/storage/lmgr/lock.c,
+	src/backend/storage/lmgr/proc.c,
+	src/backend/storage/page/bufpage.c, src/backend/storage/smgr/md.c,
+	src/backend/storage/smgr/smgr.c, src/backend/tcop/dest.c,
+	src/backend/tcop/fastpath.c, src/backend/tcop/postgres.c,
+	src/backend/tcop/pquery.c, src/backend/tcop/utility.c,
+	src/backend/tioga/tgRecipe.c, src/backend/tioga/tgRecipe.h,
+	src/backend/utils/adt/acl.c, src/backend/utils/adt/arrayfuncs.c,
+	src/backend/utils/adt/ascii.c, src/backend/utils/adt/bool.c,
+	src/backend/utils/adt/cash.c, src/backend/utils/adt/date.c,
+	src/backend/utils/adt/datetime.c, src/backend/utils/adt/datum.c,
+	src/backend/utils/adt/float.c, src/backend/utils/adt/format_type.c,
+	src/backend/utils/adt/formatting.c,
+	src/backend/utils/adt/geo_ops.c,
+	src/backend/utils/adt/inet_net_ntop.c, src/backend/utils/adt/int.c,
+	src/backend/utils/adt/int8.c, src/backend/utils/adt/like.c,
+	src/backend/utils/adt/mac.c, src/backend/utils/adt/misc.c,
+	src/backend/utils/adt/nabstime.c, src/backend/utils/adt/network.c,
+	src/backend/utils/adt/not_in.c, src/backend/utils/adt/numeric.c,
+	src/backend/utils/adt/numutils.c, src/backend/utils/adt/oid.c,
+	src/backend/utils/adt/oracle_compat.c,
+	src/backend/utils/adt/pg_locale.c,
+	src/backend/utils/adt/pg_lzcompress.c,
+	src/backend/utils/adt/quote.c, src/backend/utils/adt/regexp.c,
+	src/backend/utils/adt/regproc.c,
+	src/backend/utils/adt/ri_triggers.c,
+	src/backend/utils/adt/ruleutils.c,
+	src/backend/utils/adt/selfuncs.c, src/backend/utils/adt/sets.c,
+	src/backend/utils/adt/tid.c, src/backend/utils/adt/timestamp.c,
+	src/backend/utils/adt/varbit.c, src/backend/utils/adt/varchar.c,
+	src/backend/utils/adt/varlena.c,
+	src/backend/utils/cache/catcache.c,
+	src/backend/utils/cache/fcache.c, src/backend/utils/cache/inval.c,
+	src/backend/utils/cache/lsyscache.c,
+	src/backend/utils/cache/relcache.c,
+	src/backend/utils/cache/syscache.c,
+	src/backend/utils/cache/temprel.c, src/backend/utils/error/elog.c,
+	src/backend/utils/error/exc.c, src/backend/utils/fmgr/dfmgr.c,
+	src/backend/utils/fmgr/fmgr.c, src/backend/utils/hash/dynahash.c,
+	src/backend/utils/hash/pg_crc.c, src/backend/utils/init/globals.c,
+	src/backend/utils/init/miscinit.c,
+	src/backend/utils/init/postinit.c, src/backend/utils/mb/conv.c,
+	src/backend/utils/mb/liketest.c, src/backend/utils/mb/palloc.c,
+	src/backend/utils/mb/utftest.c, src/backend/utils/mb/wchar.c,
+	src/backend/utils/misc/database.c, src/backend/utils/misc/guc.c,
+	src/backend/utils/misc/ps_status.c, src/backend/utils/mmgr/aset.c,
+	src/backend/utils/mmgr/mcxt.c, src/backend/utils/mmgr/portalmem.c,
+	src/backend/utils/sort/tuplesort.c,
+	src/backend/utils/sort/tuplestore.c, src/bin/pg_dump/common.c,
+	src/bin/pg_dump/pg_backup.h, src/bin/pg_dump/pg_backup_archiver.c,
+	src/bin/pg_dump/pg_backup_archiver.h,
+	src/bin/pg_dump/pg_backup_custom.c, src/bin/pg_dump/pg_backup_db.c,
+	src/bin/pg_dump/pg_backup_db.h, src/bin/pg_dump/pg_backup_files.c,
+	src/bin/pg_dump/pg_backup_null.c, src/bin/pg_dump/pg_backup_tar.c,
+	src/bin/pg_dump/pg_backup_tar.h, src/bin/pg_dump/pg_dump.c,
+	src/bin/pg_dump/pg_dump.h, src/bin/pg_dump/pg_restore.c,
+	src/bin/pg_id/pg_id.c, src/bin/pg_passwd/pg_passwd.c,
+	src/bin/psql/command.c, src/bin/psql/copy.c,
+	src/bin/psql/describe.c, src/bin/psql/help.c,
+	src/bin/psql/large_obj.c, src/bin/psql/mainloop.c,
+	src/bin/psql/print.c, src/bin/psql/prompt.c,
+	src/bin/psql/startup.c, src/bin/psql/tab-complete.c,
+	src/include/c.h, src/include/fmgr.h, src/include/miscadmin.h,
+	src/include/postgres.h, src/include/postgres_ext.h,
+	src/include/access/gist.h, src/include/access/hash.h,
+	src/include/access/heapam.h, src/include/access/htup.h,
+	src/include/access/istrat.h, src/include/access/itup.h,
+	src/include/access/nbtree.h, src/include/access/printtup.h,
+	src/include/access/rtree.h, src/include/access/strat.h,
+	src/include/access/transam.h, src/include/access/tupmacs.h,
+	src/include/access/tuptoaster.h, src/include/access/xact.h,
+	src/include/access/xlog.h, src/include/access/xlogdefs.h,
+	src/include/access/xlogutils.h, src/include/catalog/catalog.h,
+	src/include/catalog/catversion.h, src/include/catalog/heap.h,
+	src/include/catalog/index.h, src/include/catalog/indexing.h,
+	src/include/catalog/pg_aggregate.h, src/include/catalog/pg_amop.h,
+	src/include/catalog/pg_attribute.h, src/include/catalog/pg_class.h,
+	src/include/catalog/pg_control.h,
+	src/include/catalog/pg_database.h,
+	src/include/catalog/pg_largeobject.h,
+	src/include/catalog/pg_operator.h, src/include/catalog/pg_proc.h,
+	src/include/catalog/pg_rewrite.h, src/include/catalog/pg_type.h,
+	src/include/commands/command.h, src/include/commands/comment.h,
+	src/include/commands/dbcommands.h, src/include/commands/sequence.h,
+	src/include/commands/trigger.h, src/include/commands/vacuum.h,
+	src/include/executor/execFlatten.h,
+	src/include/executor/executor.h, src/include/executor/hashjoin.h,
+	src/include/executor/nodeHash.h, src/include/lib/dllist.h,
+	src/include/libpq/auth.h, src/include/libpq/hba.h,
+	src/include/libpq/libpq.h, src/include/libpq/pqcomm.h,
+	src/include/mb/pg_wchar.h, src/include/nodes/execnodes.h,
+	src/include/nodes/memnodes.h, src/include/nodes/nodes.h,
+	src/include/nodes/parsenodes.h, src/include/nodes/plannodes.h,
+	src/include/nodes/primnodes.h, src/include/nodes/relation.h,
+	src/include/optimizer/clauses.h, src/include/optimizer/geqo.h,
+	src/include/optimizer/geqo_pool.h,
+	src/include/optimizer/pathnode.h, src/include/optimizer/paths.h,
+	src/include/optimizer/plancat.h, src/include/optimizer/planmain.h,
+	src/include/optimizer/prep.h, src/include/optimizer/restrictinfo.h,
+	src/include/parser/parse_clause.h,
+	src/include/parser/parse_coerce.h, src/include/parser/parse_func.h,
+	src/include/parser/parse_node.h, src/include/parser/parse_oper.h,
+	src/include/parser/parse_relation.h, src/include/port/beos.h,
+	src/include/port/darwin.h, src/include/port/freebsd.h,
+	src/include/port/netbsd.h, src/include/port/openbsd.h,
+	src/include/port/osf.h, src/include/port/solaris.h,
+	src/include/port/win.h, src/include/port/darwin/sem.h,
+	src/include/regex/regex.h, src/include/regex/utils.h,
+	src/include/rewrite/rewriteManip.h,
+	src/include/rewrite/rewriteSupport.h,
+	src/include/storage/buf_internals.h, src/include/storage/bufmgr.h,
+	src/include/storage/bufpage.h, src/include/storage/ipc.h,
+	src/include/storage/itemid.h, src/include/storage/itemptr.h,
+	src/include/storage/large_object.h, src/include/storage/lmgr.h,
+	src/include/storage/lock.h, src/include/storage/proc.h,
+	src/include/storage/relfilenode.h, src/include/storage/shmem.h,
+	src/include/storage/sinvaladt.h, src/include/storage/smgr.h,
+	src/include/storage/spin.h, src/include/tcop/tcopprot.h,
+	src/include/utils/acl.h, src/include/utils/array.h,
+	src/include/utils/ascii.h, src/include/utils/builtins.h,
+	src/include/utils/catcache.h, src/include/utils/date.h,
+	src/include/utils/datum.h, src/include/utils/elog.h,
+	src/include/utils/fcache.h, src/include/utils/fmgrtab.h,
+	src/include/utils/geo_decls.h, src/include/utils/guc.h,
+	src/include/utils/hsearch.h, src/include/utils/inet.h,
+	src/include/utils/lsyscache.h, src/include/utils/memutils.h,
+	src/include/utils/nabstime.h, src/include/utils/numeric.h,
+	src/include/utils/palloc.h, src/include/utils/pg_crc.h,
+	src/include/utils/pg_locale.h, src/include/utils/portal.h,
+	src/include/utils/ps_status.h, src/include/utils/rel.h,
+	src/include/utils/syscache.h, src/include/utils/temprel.h,
+	src/include/utils/timestamp.h, src/include/utils/tuplestore.h,
+	src/include/utils/varbit.h, src/interfaces/cli/example1.c,
+	src/interfaces/cli/example2.c, src/interfaces/cli/sqlcli.h,
+	src/interfaces/ecpg/include/ecpgerrno.h,
+	src/interfaces/ecpg/include/ecpglib.h,
+	src/interfaces/ecpg/include/sqlca.h,
+	src/interfaces/ecpg/lib/connect.c, src/interfaces/ecpg/lib/data.c,
+	src/interfaces/ecpg/lib/descriptor.c,
+	src/interfaces/ecpg/lib/error.c, src/interfaces/ecpg/lib/execute.c,
+	src/interfaces/ecpg/lib/extern.h,
+	src/interfaces/ecpg/lib/typename.c,
+	src/interfaces/ecpg/preproc/descriptor.c,
+	src/interfaces/ecpg/preproc/ecpg.c,
+	src/interfaces/ecpg/preproc/ecpg_keywords.c,
+	src/interfaces/ecpg/preproc/extern.h,
+	src/interfaces/ecpg/preproc/keywords.c,
+	src/interfaces/ecpg/preproc/type.c,
+	src/interfaces/libpgeasy/halt.c,
+	src/interfaces/libpgeasy/libpgeasy.h,
+	src/interfaces/libpgeasy/examples/pginsert.c,
+	src/interfaces/libpgeasy/examples/pgnulltest.c,
+	src/interfaces/libpgeasy/examples/pgwordcount.c,
+	src/interfaces/libpgtcl/pgtcl.c,
+	src/interfaces/libpgtcl/pgtclCmds.c,
+	src/interfaces/libpgtcl/pgtclCmds.h,
+	src/interfaces/libpq/fe-auth.c, src/interfaces/libpq/fe-connect.c,
+	src/interfaces/libpq/fe-misc.c, src/interfaces/libpq/fe-print.c,
+	src/interfaces/libpq/libpq-fe.h, src/interfaces/libpq/libpq-int.h,
+	src/interfaces/odbc/bind.c, src/interfaces/odbc/bind.h,
+	src/interfaces/odbc/columninfo.c, src/interfaces/odbc/columninfo.h,
+	src/interfaces/odbc/connection.c, src/interfaces/odbc/connection.h,
+	src/interfaces/odbc/convert.c, src/interfaces/odbc/convert.h,
+	src/interfaces/odbc/dlg_specific.c,
+	src/interfaces/odbc/dlg_specific.h, src/interfaces/odbc/drvconn.c,
+	src/interfaces/odbc/environ.c, src/interfaces/odbc/environ.h,
+	src/interfaces/odbc/execute.c, src/interfaces/odbc/gpps.c,
+	src/interfaces/odbc/gpps.h, src/interfaces/odbc/info.c,
+	src/interfaces/odbc/iodbc.h, src/interfaces/odbc/isql.h,
+	src/interfaces/odbc/isqlext.h, src/interfaces/odbc/lobj.c,
+	src/interfaces/odbc/lobj.h, src/interfaces/odbc/misc.c,
+	src/interfaces/odbc/misc.h, src/interfaces/odbc/multibyte.c,
+	src/interfaces/odbc/multibyte.h, src/interfaces/odbc/options.c,
+	src/interfaces/odbc/parse.c, src/interfaces/odbc/pgtypes.c,
+	src/interfaces/odbc/pgtypes.h, src/interfaces/odbc/psqlodbc.c,
+	src/interfaces/odbc/psqlodbc.h, src/interfaces/odbc/qresult.c,
+	src/interfaces/odbc/qresult.h, src/interfaces/odbc/resource.h,
+	src/interfaces/odbc/results.c, src/interfaces/odbc/setup.c,
+	src/interfaces/odbc/socket.c, src/interfaces/odbc/socket.h,
+	src/interfaces/odbc/statement.c, src/interfaces/odbc/statement.h,
+	src/interfaces/odbc/tuple.c, src/interfaces/odbc/tuple.h,
+	src/interfaces/odbc/tuplelist.c, src/interfaces/odbc/tuplelist.h,
+	src/interfaces/perl5/ppport.h, src/interfaces/python/pgmodule.c,
+	src/pl/plperl/plperl.c, src/pl/plperl/ppport.h,
+	src/pl/plpgsql/src/pl_comp.c, src/pl/plpgsql/src/pl_exec.c,
+	src/pl/plpgsql/src/pl_funcs.c, src/pl/plpgsql/src/pl_handler.c,
+	src/pl/plpgsql/src/plpgsql.h, src/pl/tcl/pltcl.c,
+	src/test/examples/testlo.c, src/test/regress/regress.c,
+	src/tools/entab/halt.c, src/tutorial/beard.c, src/tutorial/funcs.c,
+	src/tutorial/funcs_new.c, src/utils/dllinit.c: pgindent run.  Make
+	it all clean.
+
+2001-03-21 14:09  petere
+
+	* doc/src/sgml/libpq.sgml: correction
+
+2001-03-21 11:26  inoue
+
+	* src/interfaces/odbc/win32.mak: The attached patch fixes win32.mak
+	which got broken by the Multibyte mod :-(, and tidies it up a
+	little as well.
+	
+	Regards, Dave.
+
+2001-03-21 05:13  vadim
+
+	* src/backend/storage/buffer/bufmgr.c: Check bufHdr->cntxDirty and
+	call StartBufferIO in BufferSync() *before* acquiring shlock on
+	buffer context. This way we should be protected against conflicts
+	with FlushRelationBuffers.  (Seems we never do excl lock and then
+	StartBufferIO for the same buffer, so there should be no deadlock
+	here, - but we'd better check this very soon).
+
+2001-03-21 04:35  inoue
+
+	* src/interfaces/odbc/multibyte.c: a fix from Eiji Tokuya.
+
+2001-03-20 18:35  scrappy
+
+	* configure, configure.in, ChangeLogs/ChangeLog-7.1beta6-7.1RC1: 
+	well, here goes our first Release Candidate for 7.1 *cross fingers*
+
 2001-03-20 17:31  momjian
 
 	* src/backend/utils/misc/ps_status.c: Fix 'ps' WAIT status display
@@ -170,4 +721,9 @@
 2001-03-16 17:12  petere
 
 	* doc/FAQ_MSWIN: Make note that version 1.1.8 doesn't work.
+
+2001-03-16 16:49  scrappy
+
+	* ChangeLogs/ChangeLog-7.1beta5-to-7.1beta6: 
+	Generated Changelog since last Beta ...
 
