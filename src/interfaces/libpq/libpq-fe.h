@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq-fe.h,v 1.15 1996/12/10 07:05:12 bryanh Exp $
+ * $Id: libpq-fe.h,v 1.16 1996/12/26 23:27:16 bryanh Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -144,13 +144,19 @@ typedef struct pg_result{
   PGconn* conn;
 } PGresult;
 
+typedef char pqbool;
+  /* We can't use the conventional "bool", because we are designed to be
+     included in a user's program, and user may already have that type
+     defined.  Pqbool, on the other hand, is unlikely to be used.
+     */
+
 struct _PQprintOpt {
-    bool header;         /* print output field headings and row count */
-    bool align;          /* fill align the fields */
-    bool standard;       /* old brain dead format */
-    bool html3;          /* output html tables */
-    bool expanded;       /* expand tables */
-    bool pager;          /* use pager for output if needed */
+    pqbool header;         /* print output field headings and row count */
+    pqbool align;          /* fill align the fields */
+    pqbool standard;       /* old brain dead format */
+    pqbool html3;          /* output html tables */
+    pqbool expanded;       /* expand tables */
+    pqbool pager;          /* use pager for output if needed */
     char *fieldSep;      /* field separator */
     char *tableOpt;	 /* insert to HTML <table ...> */
     char *caption;       /* HTML <caption> */
