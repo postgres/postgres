@@ -1473,6 +1473,10 @@ Fri May 30 15:19:39 CEST 2003
 Mon Jun  2 17:36:03 CEST 2003
 
 	- Fixed segfault in forward definition parsing.
+	
+Tue Jun 10 19:43:49 CEST 2003
+
+	- Fixed several small bugs.
 	- Set ecpg version to 2.12.0.
 	- Set ecpg library to 3.4.2.
 	- Set pgtypes library to 1.0.0

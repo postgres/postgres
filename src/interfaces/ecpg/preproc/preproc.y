@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/Attic/preproc.y,v 1.228 2003/06/02 15:38:02 meskes Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/Attic/preproc.y,v 1.229 2003/06/10 17:46:43 meskes Exp $ */
 
 /* Copyright comment */
 %{
@@ -47,7 +47,15 @@ static struct inf_compat_val
 	char *val;
 	struct inf_compat_val *next;
 } *informix_val;
- 
+
+void mm(void)
+{
+	int i,j;
+
+	i=1;
+	j=i+1;
+}
+
 /*
  * Handle parsing errors and warnings
  */
@@ -367,7 +375,7 @@ create_questionmarks(char *name, bool array)
 %type  <str>	copy_delimiter ListenStmt CopyStmt copy_file_name opt_binary
 %type  <str>	FetchStmt from_in CreateOpClassStmt
 %type  <str>	ClosePortalStmt DropStmt VacuumStmt AnalyzeStmt opt_verbose
-%type  <str>	opt_full func_arg OptWithOids opt_freeze opt_ecpg_into
+%type  <str>	opt_full func_arg OptWithOids opt_freeze 
 %type  <str>	analyze_keyword opt_name_list ExplainStmt index_params
 %type  <str>	index_elem opt_class access_method_clause
 %type  <str>	index_opt_unique IndexStmt func_return ConstInterval
@@ -424,7 +432,7 @@ create_questionmarks(char *name, bool array)
 %type  <str>	opt_sort_clause transaction_access_mode
 
 %type  <str>	ECPGWhenever ECPGConnect connection_target ECPGOpen
-%type  <str>	indicator ECPGExecute ECPGPrepare opt_ecpg_using ecpg_into
+%type  <str>	indicator ECPGExecute ECPGPrepare ecpg_using ecpg_into 
 %type  <str>	storage_declaration storage_clause opt_initializer c_anything
 %type  <str>	variable_list variable c_thing c_term ECPGKeywords_vanames
 %type  <str>	opt_pointer ECPGDisconnect dis_name storage_modifier
@@ -433,18 +441,19 @@ create_questionmarks(char *name, bool array)
 %type  <str>	user_name opt_user char_variable ora_user ident opt_reference
 %type  <str>	var_type_declarations quoted_ident_stringvar ECPGKeywords_rest
 %type  <str>	db_prefix server opt_options opt_connection_name c_list
-%type  <str>	ECPGSetConnection ECPGTypedef c_args ECPGKeywords
+%type  <str>	ECPGSetConnection ECPGTypedef c_args ECPGKeywords 
 %type  <str>	enum_type civar civarind ECPGCursorStmt ECPGDeallocate
 %type  <str>	ECPGFree ECPGDeclare ECPGVar opt_at enum_definition
-%type  <str>	struct_union_type s_struct_union vt_declarations 
+%type  <str>	struct_union_type s_struct_union vt_declarations execute_rest
 %type  <str>	var_declaration type_declaration single_vt_declaration
 %type  <str>	ECPGSetAutocommit on_off variable_declarations ECPGDescribe
 %type  <str>	ECPGAllocateDescr ECPGDeallocateDescr symbol opt_output
 %type  <str>	ECPGGetDescriptorHeader ECPGColLabel single_var_declaration
-%type  <str>	reserved_keyword unreserved_keyword ecpg_interval
+%type  <str>	reserved_keyword unreserved_keyword ecpg_interval opt_ecpg_using
 %type  <str>	col_name_keyword func_name_keyword precision opt_scale
-%type  <str>	ECPGTypeName variablelist ECPGColLabelCommon c_variable
+%type  <str>	ECPGTypeName using_list ECPGColLabelCommon 
 %type  <str>	inf_val_list inf_col_list using_descriptor into_descriptor 
+%type  <str>	ecpg_into_using
 
 %type  <struct_union> s_struct_union_symbol
 
@@ -664,6 +673,7 @@ stmt:  AlterDatabaseSetStmt		{ output_statement($1, 0, connection); }
 			struct cursor *ptr;
 			struct arguments *p;
 
+		mm();
 			for (ptr = cur; ptr != NULL; ptr=ptr->next)
 			{
 				if (strcmp(ptr->name, $1) == 0)
@@ -1729,9 +1739,9 @@ TruncateStmt:  TRUNCATE opt_table qualified_name
  *
  *****************************************************************************/
 
-FetchStmt: FETCH fetch_direction from_in name ecpg_into
+FetchStmt: FETCH fetch_direction from_in name ecpg_into_using
 			{ $$ = cat_str(4, make_str("fetch"), $2, $3, $4); }
-		| FETCH name ecpg_into
+		| FETCH name ecpg_into_using
 			{ $$ = cat2_str(make_str("fetch"), $2); }
 		| MOVE fetch_direction from_in name
 			{ $$ = cat_str(4, make_str("move"), $2, $3, $4); }
@@ -2622,6 +2632,7 @@ DeclareCursorStmt:  DECLARE name cursor_options CURSOR opt_hold FOR SelectStmt
 			this = (struct cursor *) mm_alloc(sizeof(struct cursor));
 
 			/* initial definition */
+			mm();
 			this->next = cur;
 			this->name = $2;
 			this->connection = connection;
@@ -2698,7 +2709,7 @@ into_clause:  INTO OptTempTableName
 			FoundInto = 1;
 			$$= cat2_str(make_str("into"), $2);
 		}
-		| ecpg_into			{ $$ = EMPTY; }
+		| ecpg_into_using		{ $$ = EMPTY; }
 		| /*EMPTY*/			{ $$ = EMPTY; }
 		;
 
@@ -4333,6 +4344,7 @@ opt_scale:	',' NumConst	{ $$ = $2; }
 
 ecpg_interval:	opt_interval	{ $$ = $1; }
 		| YEAR_P TO MINUTE_P	{ $$ = make_str("year to minute"); }
+		| YEAR_P TO SECOND_P	{ $$ = make_str("year to second"); }
 		| DAY_P TO DAY_P	{ $$ = make_str("day to day"); }
 		| MONTH_P TO MONTH_P	{ $$ = make_str("month to month"); }
 		;
@@ -5116,10 +5128,17 @@ ECPGExecute : EXECUTE IMMEDIATE execstring
 
 			add_variable(&argsinsert, thisquery, &no_indicator);
 		}
-		opt_ecpg_using opt_ecpg_into
+		execute_rest
 		{
 			$$ = make_str("?");
 		}
+		;
+
+execute_rest:	ecpg_using ecpg_into	{ $$ = EMPTY; }
+		| ecpg_into ecpg_using	{ $$ = EMPTY; }
+		| ecpg_using		{ $$ = EMPTY; }
+		| ecpg_into 		{ $$ = EMPTY; }
+		| /* EMPTY */		{ $$ = EMPTY; }
 		;
 
 execstring: char_variable
@@ -5140,7 +5159,10 @@ ECPGFree:	SQL_FREE name	{ $$ = $2; };
 ECPGOpen: SQL_OPEN name opt_ecpg_using { $$ = $2; };
 
 opt_ecpg_using: /*EMPTY*/		{ $$ = EMPTY; }
-		| USING variablelist 	{ $$ = EMPTY; }
+		| ecpg_using		{ $$ = $1; }
+		;
+
+ecpg_using:	USING using_list 	{ $$ = EMPTY; }
 		;
 
 using_descriptor: USING opt_sql SQL_DESCRIPTOR quoted_ident_stringvar
@@ -5159,19 +5181,15 @@ into_descriptor: INTO opt_sql SQL_DESCRIPTOR quoted_ident_stringvar
 		
 opt_sql: /*EMPTY*/ | SQL_SQL;
 
-ecpg_into: INTO into_list		{ $$ = EMPTY; }
-		| into_descriptor	{ $$ = $1; }
+ecpg_into_using: ecpg_into		{ $$ = EMPTY; }
 		| using_descriptor	{ $$ = $1; }
 		;
 
-opt_ecpg_into: /*EMPTY*/		{ $$ = EMPTY; }
-		| INTO into_list	{ $$ = EMPTY; }
+ecpg_into: INTO into_list		{ $$ = EMPTY; }
 		| into_descriptor	{ $$ = $1; }
 		;
-
-c_variable: civarind | civar;
-
-variablelist: c_variable | c_variable ',' variablelist;
+		
+using_list: civar | civar ',' using_list;
 
 /*
  * As long as the prepare statement is not supported by the backend, we will
@@ -5186,19 +5204,22 @@ ECPGPrepare: PREPARE name FROM execstring
  * We accept descibe but do nothing with it so far.
  */
 ECPGDescribe: SQL_DESCRIBE INPUT_P name using_descriptor 
-	{ 
+	{
 		mmerror(PARSE_ERROR, ET_WARNING, "using unsupported describe statement.\n");
-		$$ = cat_str(3, make_str("1, ECPGprepared_statement(\""), $3, make_str("\")"));
+		$$ = (char *) mm_alloc(sizeof("1, ECPGprepared_statement(\"\")") + strlen($3));
+		sprintf($$, "1, ECPGprepared_statement(\"%s\")", $3);
 	}
 	| SQL_DESCRIBE opt_output name using_descriptor
 	{
 		mmerror(PARSE_ERROR, ET_WARNING, "using unsupported describe statement.\n");
-		$$ = cat_str(3, make_str("0, ECPGprepared_statement(\""), $3, make_str("\")"));
+		$$ = (char *) mm_alloc(sizeof("0, ECPGprepared_statement(\"\")") + strlen($3));
+		sprintf($$, "0, ECPGprepared_statement(\"%s\")", $3);
 	}
 	| SQL_DESCRIBE opt_output name into_descriptor
 	{
 		mmerror(PARSE_ERROR, ET_WARNING, "using unsupported describe statement.\n");
-		$$ = cat_str(3, make_str("0, ECPGprepared_statement(\""), $3, make_str("\")"));
+		$$ = (char *) mm_alloc(sizeof("0, ECPGprepared_statement(\"\")") + strlen($3));
+		sprintf($$, "0, ECPGprepared_statement(\"%s\")", $3);
 	}
 	;
 
@@ -6076,55 +6097,60 @@ c_thing:	c_anything	{ $$ = $1; }
 		|	';'	{ $$ = make_str(";"); }
 		;
 
-c_anything:  IDENT					{ $$ = $1; }
-		| CSTRING					{ $$ = make3_str(make_str("\""), $1, make_str("\"")); }
-		| Iconst				{ $$ = $1; }
-		| Fconst					{ $$ = $1; }
-		| Sconst					{ $$ = $1; }
-		| '*'						{ $$ = make_str("*"); }
-		| '+'						{ $$ = make_str("+"); }
-		| '-'						{ $$ = make_str("-"); }
-		| '/'						{ $$ = make_str("/"); }
-		| '%'						{ $$ = make_str("%"); }
-		| NULL_P					{ $$ = make_str("NULL"); }
-		| S_ADD						{ $$ = make_str("+="); }
-		| S_AND						{ $$ = make_str("&&"); }
-		| S_ANYTHING				{ $$ = make_name(); }
-		| S_AUTO					{ $$ = make_str("auto"); }
-		| S_CONST					{ $$ = make_str("const"); }
-		| S_DEC						{ $$ = make_str("--"); }
-		| S_DIV						{ $$ = make_str("/="); }
-		| S_DOTPOINT				{ $$ = make_str(".*"); }
-		| S_EQUAL					{ $$ = make_str("=="); }
-		| S_EXTERN					{ $$ = make_str("extern"); }
-		| S_INC						{ $$ = make_str("++"); }
-		| S_LSHIFT					{ $$ = make_str("<<"); }
-		| S_MEMBER					{ $$ = make_str("->"); }
-		| S_MEMPOINT				{ $$ = make_str("->*"); }
-		| S_MOD						{ $$ = make_str("%="); }
-		| S_MUL						{ $$ = make_str("*="); }
-		| S_NEQUAL					{ $$ = make_str("!="); }
-		| S_OR						{ $$ = make_str("||"); }
-		| S_REGISTER				{ $$ = make_str("register"); }
-		| S_RSHIFT					{ $$ = make_str(">>"); }
-		| S_STATIC					{ $$ = make_str("static"); }
-		| S_SUB						{ $$ = make_str("-="); }
-		| S_TYPEDEF					{ $$ = make_str("typedef"); }
-		| SQL_BOOL					{ $$ = make_str("bool"); }
-		| SQL_ENUM					{ $$ = make_str("enum"); }
-		| INT_P						{ $$ = make_str("int"); }
-		| SQL_LONG					{ $$ = make_str("long"); }
-		| SQL_SHORT					{ $$ = make_str("short"); }
-		| SQL_SIGNED				{ $$ = make_str("signed"); }
-		| SQL_STRUCT				{ $$ = make_str("struct"); }
-		| SQL_UNSIGNED				{ $$ = make_str("unsigned"); }
-		| CHAR_P					{ $$ = make_str("char"); }
-		| FLOAT_P					{ $$ = make_str("float"); }
-		| UNION						{ $$ = make_str("union"); }
-		| VARCHAR					{ $$ = make_str("varchar"); }
-		| '['						{ $$ = make_str("["); }
-		| ']'						{ $$ = make_str("]"); }
-		| '='						{ $$ = make_str("="); }
+c_anything:  IDENT				{ $$ = $1; }
+		| CSTRING			{ $$ = make3_str(make_str("\""), $1, make_str("\"")); }
+		| Iconst			{ $$ = $1; }
+		| Fconst			{ $$ = $1; }
+		| Sconst			{ $$ = $1; }
+		| '*'				{ $$ = make_str("*"); }
+		| '+'				{ $$ = make_str("+"); }
+		| '-'				{ $$ = make_str("-"); }
+		| '/'				{ $$ = make_str("/"); }
+		| '%'				{ $$ = make_str("%"); }
+		| NULL_P			{ $$ = make_str("NULL"); }
+		| S_ADD				{ $$ = make_str("+="); }
+		| S_AND				{ $$ = make_str("&&"); }
+		| S_ANYTHING			{ $$ = make_name(); }
+		| S_AUTO			{ $$ = make_str("auto"); }
+		| S_CONST			{ $$ = make_str("const"); }
+		| S_DEC				{ $$ = make_str("--"); }
+		| S_DIV				{ $$ = make_str("/="); }
+		| S_DOTPOINT			{ $$ = make_str(".*"); }
+		| S_EQUAL			{ $$ = make_str("=="); }
+		| S_EXTERN			{ $$ = make_str("extern"); }
+		| S_INC				{ $$ = make_str("++"); }
+		| S_LSHIFT			{ $$ = make_str("<<"); }
+		| S_MEMBER			{ $$ = make_str("->"); }
+		| S_MEMPOINT			{ $$ = make_str("->*"); }
+		| S_MOD				{ $$ = make_str("%="); }
+		| S_MUL				{ $$ = make_str("*="); }
+		| S_NEQUAL			{ $$ = make_str("!="); }
+		| S_OR				{ $$ = make_str("||"); }
+		| S_REGISTER			{ $$ = make_str("register"); }
+		| S_RSHIFT			{ $$ = make_str(">>"); }
+		| S_STATIC			{ $$ = make_str("static"); }
+		| S_SUB				{ $$ = make_str("-="); }
+		| S_TYPEDEF			{ $$ = make_str("typedef"); }
+		| SQL_BOOL			{ $$ = make_str("bool"); }
+		| SQL_ENUM			{ $$ = make_str("enum"); }
+		| HOUR_P			{ $$ = make_str("hour"); }
+		| INT_P				{ $$ = make_str("int"); }
+		| SQL_LONG			{ $$ = make_str("long"); }
+		| MINUTE_P			{ $$ = make_str("minute"); }
+		| MONTH_P			{ $$ = make_str("month"); }
+		| SECOND_P			{ $$ = make_str("second"); }
+		| SQL_SHORT			{ $$ = make_str("short"); }
+		| SQL_SIGNED			{ $$ = make_str("signed"); }
+		| SQL_STRUCT			{ $$ = make_str("struct"); }
+		| SQL_UNSIGNED			{ $$ = make_str("unsigned"); }
+		| YEAR_P			{ $$ = make_str("year"); }
+		| CHAR_P			{ $$ = make_str("char"); }
+		| FLOAT_P			{ $$ = make_str("float"); }
+		| UNION				{ $$ = make_str("union"); }
+		| VARCHAR			{ $$ = make_str("varchar"); }
+		| '['				{ $$ = make_str("["); }
+		| ']'				{ $$ = make_str("]"); }
+		| '='				{ $$ = make_str("="); }
 		;
 
 %%
