@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.33 1999/03/28 20:31:59 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.34 1999/05/09 00:52:08 tgl Exp $
  *
  * NOTES
  *		Transaction aborts can now occur two ways:
@@ -148,6 +148,7 @@
 #include <utils/inval.h>
 #include <utils/portal.h>
 #include <access/transam.h>
+#include <storage/fd.h>
 #include <storage/proc.h>
 #include <utils/mcxt.h>
 #include <catalog/heap.h>
@@ -920,6 +921,7 @@ CommitTransaction()
 	AtCommit_Cache();
 	AtCommit_Locks();
 	AtCommit_Memory();
+	AtEOXact_Files();
 
 	/* ----------------
 	 *	done with commit processing, set current transaction
@@ -990,6 +992,7 @@ AbortTransaction()
 	AtAbort_Cache();
 	AtAbort_Locks();
 	AtAbort_Memory();
+	AtEOXact_Files();
 
 	/* ----------------
 	 *	done with abort processing, set current transaction

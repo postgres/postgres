@@ -6,7 +6,7 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Id: fd.c,v 1.38 1999/03/17 22:53:06 momjian Exp $
+ *	  $Id: fd.c,v 1.39 1999/05/09 00:52:07 tgl Exp $
  *
  * NOTES:
  *
@@ -37,12 +37,12 @@
  *-------------------------------------------------------------------------
  */
 
-#include <sys/types.h>
 #include <stdio.h>
+#include <sys/types.h>
 #include <sys/file.h>
 #include <sys/param.h>
-#include <errno.h>
 #include <sys/stat.h>
+#include <errno.h>
 #include <string.h>
 #include <unistd.h>
 #include <fcntl.h>
@@ -51,16 +51,16 @@
 #include "miscadmin.h"			/* for DataDir */
 #include "utils/palloc.h"
 #include "storage/fd.h"
+#include "utils/elog.h"
 
 /*
- * Problem: Postgres does a system(ld...) to do dynamic loading.  This
- * will open several extra files in addition to those used by
- * Postgres.  We need to do this hack to guarentee that there are file
- * descriptors free for ld to use.
+ * Problem: Postgres does a system(ld...) to do dynamic loading.
+ * This will open several extra files in addition to those used by
+ * Postgres.  We need to guarantee that there are file descriptors free
+ * for ld to use.
  *
- * The current solution is to limit the number of files descriptors
- * that this code will allocated at one time.  (it leaves
- * RESERVE_FOR_LD free).
+ * The current solution is to limit the number of file descriptors
+ * that this code will allocate at one time: it leaves RESERVE_FOR_LD free.
  *
  * (Even though most dynamic loaders now use dlopen(3) or the
  * equivalent, the OS must still open several files to perform the
@@ -75,7 +75,7 @@
  * available to postgreSQL after we've reserved the ones for LD,
  * so we set that value here.
  *
- * I think 10 is an apropriate value so that's what it'll be
+ * I think 10 is an appropriate value so that's what it'll be
  * for now.
  */
 #ifndef FD_MINFREE
@@ -90,54 +90,83 @@
 #define DO_DB(A)				/* A */
 #endif
 
-#define VFD_CLOSED -1
+#define VFD_CLOSED (-1)
 
-#include "storage/fd.h"
-#include "utils/elog.h"
+#define FileIsValid(file) \
+	((file) > 0 && (file) < SizeVfdCache && VfdCache[file].fileName != NULL)
 
 #define FileIsNotOpen(file) (VfdCache[file].fd == VFD_CLOSED)
 
 typedef struct vfd
 {
-	signed short fd;
-	unsigned short fdstate;
+	signed short fd;			/* current FD, or VFD_CLOSED if none */
+	unsigned short fdstate;		/* bitflags for VFD's state */
 
-#define FD_DIRTY		(1 << 0)
+/* these are the assigned bits in fdstate: */
+#define FD_DIRTY		(1 << 0)	/* written to, but not yet fsync'd */
+#define FD_TEMPORARY	(1 << 1)	/* should be unlinked when closed */
 
-	File		nextFree;
-	File		lruMoreRecently;
+	File		nextFree;		/* link to next free VFD, if in freelist */
+	File		lruMoreRecently; /* doubly linked recency-of-use list */
 	File		lruLessRecently;
-	long		seekPos;
-	char	   *fileName;
-	int			fileFlags;
-	int			fileMode;
+	long		seekPos;		/* current logical file position */
+	char	   *fileName;		/* name of file, or NULL for unused VFD */
+	/* NB: fileName is malloc'd, and must be free'd when closing the VFD */
+	int			fileFlags;		/* open(2) flags for opening the file */
+	int			fileMode;		/* mode to pass to open(2) */
 } Vfd;
 
 /*
  * Virtual File Descriptor array pointer and size.	This grows as
- * needed.
+ * needed.  'File' values are indexes into this array.
+ * Note that VfdCache[0] is not a usable VFD, just a list header.
  */
 static Vfd *VfdCache;
 static Size SizeVfdCache = 0;
 
 /*
- * Number of file descriptors known to be open.
+ * Number of file descriptors known to be in use by VFD entries.
  */
 static int	nfile = 0;
 
 /*
+ * List of stdio FILEs opened with AllocateFile.
+ *
+ * Since we don't want to encourage heavy use of AllocateFile, it seems
+ * OK to put a pretty small maximum limit on the number of simultaneously
+ * allocated files.
+ */
+#define MAX_ALLOCATED_FILES  32
+
+static int	numAllocatedFiles = 0;
+static FILE * allocatedFiles[MAX_ALLOCATED_FILES];
+
+/*
+ * Number of temporary files opened during the current transaction;
+ * this is used in generation of tempfile names.
+ */
+static long tempFileCounter = 0;
+
+
+/*--------------------
+ *
  * Private Routines
  *
  * Delete		   - delete a file from the Lru ring
- * LruDelete	   - remove a file from the Lru ring and close
+ * LruDelete	   - remove a file from the Lru ring and close its FD
  * Insert		   - put a file at the front of the Lru ring
- * LruInsert	   - put a file at the front of the Lru ring and open
- * AssertLruRoom   - make sure that there is a free fd.
+ * LruInsert	   - put a file at the front of the Lru ring and open it
+ * ReleaseLruFile  - Release an fd by closing the last entry in the Lru ring
+ * AllocateVfd	   - grab a free (or new) file record (from VfdArray)
+ * FreeVfd		   - free a file record
  *
- * the Last Recently Used ring is a doubly linked list that begins and
+ * The Least Recently Used ring is a doubly linked list that begins and
  * ends on element zero.  Element zero is special -- it doesn't represent
  * a file and its "fd" field always == VFD_CLOSED.	Element zero is just an
  * anchor that shows us the beginning/end of the ring.
+ * Only VFD elements that are currently really open (have an FD assigned) are
+ * in the Lru ring.  Elements that are "virtually" open can be recognized
+ * by having a non-null fileName field.
  *
  * example:
  *
@@ -148,15 +177,13 @@ static int	nfile = 0;
  *	   \\less--> MostRecentlyUsedFile	<---/ |
  *		\more---/					 \--less--/
  *
- * AllocateVfd	   - grab a free (or new) file record (from VfdArray)
- * FreeVfd		   - free a file record
- *
+ *--------------------
  */
 static void Delete(File file);
 static void LruDelete(File file);
 static void Insert(File file);
 static int	LruInsert(File file);
-static void AssertLruRoom(void);
+static void ReleaseLruFile(void);
 static File AllocateVfd(void);
 static void FreeVfd(File file);
 
@@ -165,14 +192,18 @@ static File fileNameOpenFile(FileName fileName, int fileFlags, int fileMode);
 static char *filepath(char *filename);
 static long pg_nofile(void);
 
+/*
+ * pg_fsync --- same as fsync except does nothing if -F switch was given
+ */
 int
 pg_fsync(int fd)
 {
 	return disableFsync ? 0 : fsync(fd);
 }
 
-#define fsync pg_fsync
-
+/*
+ * pg_nofile: determine number of filedescriptors that fd.c is allowed to use
+ */
 static long
 pg_nofile(void)
 {
@@ -180,26 +211,31 @@ pg_nofile(void)
 
 	if (no_files == 0)
 	{
+		/* need do this calculation only once */
 #ifndef HAVE_SYSCONF
 		no_files = (long) NOFILE;
 #else
 		no_files = sysconf(_SC_OPEN_MAX);
 		if (no_files == -1)
 		{
-			elog(DEBUG, "pg_nofile: Unable to get _SC_OPEN_MAX using sysconf() using (%d)", NOFILE);
+			elog(DEBUG, "pg_nofile: Unable to get _SC_OPEN_MAX using sysconf(); using %d", NOFILE);
 			no_files = (long) NOFILE;
 		}
 #endif
+
+		if ((no_files - RESERVE_FOR_LD) < FD_MINFREE)
+			elog(FATAL, "pg_nofile: insufficient File Descriptors in postmaster to start backend (%ld).\n"
+				 "                   O/S allows %ld, Postmaster reserves %d, We need %d (MIN) after that.",
+				 no_files - RESERVE_FOR_LD, no_files, RESERVE_FOR_LD, FD_MINFREE);
+
+		no_files -= RESERVE_FOR_LD;
 	}
 
-	if ((no_files - RESERVE_FOR_LD) < FD_MINFREE)
-		elog(FATAL, "pg_nofile: insufficient File Descriptors in postmaster to start backend (%ld).\n"
-			 "                   O/S allows %ld, Postmaster reserves %d, We need %d (MIN) after that.",
-		no_files - RESERVE_FOR_LD, no_files, RESERVE_FOR_LD, FD_MINFREE);
-	return no_files - RESERVE_FOR_LD;
+	return no_files;
 }
 
 #if defined(FDDEBUG)
+
 static void
 _dump_lru()
 {
@@ -223,18 +259,18 @@ _dump_lru()
 static void
 Delete(File file)
 {
-	Vfd		   *fileP;
+	Vfd		   *vfdP;
+
+	Assert(file != 0);
 
 	DO_DB(elog(DEBUG, "Delete %d (%s)",
 			   file, VfdCache[file].fileName));
 	DO_DB(_dump_lru());
 
-	Assert(file != 0);
+	vfdP = &VfdCache[file];
 
-	fileP = &VfdCache[file];
-
-	VfdCache[fileP->lruLessRecently].lruMoreRecently = VfdCache[file].lruMoreRecently;
-	VfdCache[fileP->lruMoreRecently].lruLessRecently = VfdCache[file].lruLessRecently;
+	VfdCache[vfdP->lruLessRecently].lruMoreRecently = vfdP->lruMoreRecently;
+	VfdCache[vfdP->lruMoreRecently].lruLessRecently = vfdP->lruLessRecently;
 
 	DO_DB(_dump_lru());
 }
@@ -242,44 +278,45 @@ Delete(File file)
 static void
 LruDelete(File file)
 {
-	Vfd		   *fileP;
+	Vfd		   *vfdP;
 	int			returnValue;
+
+	Assert(file != 0);
 
 	DO_DB(elog(DEBUG, "LruDelete %d (%s)",
 			   file, VfdCache[file].fileName));
 
-	Assert(file != 0);
-
-	fileP = &VfdCache[file];
+	vfdP = &VfdCache[file];
 
 	/* delete the vfd record from the LRU ring */
 	Delete(file);
 
 	/* save the seek position */
-	fileP->seekPos = (long) lseek(fileP->fd, 0L, SEEK_CUR);
-	Assert(fileP->seekPos != -1);
+	vfdP->seekPos = (long) lseek(vfdP->fd, 0L, SEEK_CUR);
+	Assert(vfdP->seekPos != -1);
 
 	/* if we have written to the file, sync it */
-	if (fileP->fdstate & FD_DIRTY)
+	if (vfdP->fdstate & FD_DIRTY)
 	{
-		returnValue = fsync(fileP->fd);
+		returnValue = pg_fsync(vfdP->fd);
 		Assert(returnValue != -1);
-		fileP->fdstate &= ~FD_DIRTY;
+		vfdP->fdstate &= ~FD_DIRTY;
 	}
 
 	/* close the file */
-	returnValue = close(fileP->fd);
+	returnValue = close(vfdP->fd);
 	Assert(returnValue != -1);
 
 	--nfile;
-	fileP->fd = VFD_CLOSED;
-
+	vfdP->fd = VFD_CLOSED;
 }
 
 static void
 Insert(File file)
 {
 	Vfd		   *vfdP;
+
+	Assert(file != 0);
 
 	DO_DB(elog(DEBUG, "Insert %d (%s)",
 			   file, VfdCache[file].fileName));
@@ -301,6 +338,8 @@ LruInsert(File file)
 	Vfd		   *vfdP;
 	int			returnValue;
 
+	Assert(file != 0);
+
 	DO_DB(elog(DEBUG, "LruInsert %d (%s)",
 			   file, VfdCache[file].fileName));
 
@@ -309,22 +348,20 @@ LruInsert(File file)
 	if (FileIsNotOpen(file))
 	{
 
-		if (nfile >= pg_nofile())
-			AssertLruRoom();
+		while (nfile+numAllocatedFiles >= pg_nofile())
+			ReleaseLruFile();
 
 		/*
-		 * Note, we check to see if there's a free file descriptor before
-		 * attempting to open a file. One general way to do this is to try
-		 * to open the null device which everybody should be able to open
-		 * all the time. If this fails, we assume this is because there's
-		 * no free file descriptors.
+		 * The open could still fail for lack of file descriptors, eg due
+		 * to overall system file table being full.  So, be prepared to
+		 * release another FD if necessary...
 		 */
 tryAgain:
 		vfdP->fd = open(vfdP->fileName, vfdP->fileFlags, vfdP->fileMode);
 		if (vfdP->fd < 0 && (errno == EMFILE || errno == ENFILE))
 		{
 			errno = 0;
-			AssertLruRoom();
+			ReleaseLruFile();
 			goto tryAgain;
 		}
 
@@ -347,9 +384,8 @@ tryAgain:
 			Assert(returnValue != -1);
 		}
 
-		/* init state on open */
-		vfdP->fdstate = 0x0;
-
+		/* Update state as appropriate for re-open (needed?) */
+		vfdP->fdstate &= ~FD_DIRTY;
 	}
 
 	/*
@@ -362,12 +398,12 @@ tryAgain:
 }
 
 static void
-AssertLruRoom()
+ReleaseLruFile()
 {
-	DO_DB(elog(DEBUG, "AssertLruRoom. Opened %d", nfile));
+	DO_DB(elog(DEBUG, "ReleaseLruFile. Opened %d", nfile));
 
 	if (nfile <= 0)
-		elog(FATAL, "AssertLruRoom: No opened files - no one can be closed");
+		elog(FATAL, "ReleaseLruFile: No opened files - no one can be closed");
 
 	/*
 	 * There are opened files and so there should be at least one used vfd
@@ -387,53 +423,50 @@ AllocateVfd()
 
 	if (SizeVfdCache == 0)
 	{
-
-		/* initialize */
+		/* initialize header entry first time through */
 		VfdCache = (Vfd *) malloc(sizeof(Vfd));
-		VfdCache->nextFree = 0;
-		VfdCache->lruMoreRecently = 0;
-		VfdCache->lruLessRecently = 0;
+		Assert(VfdCache != NULL);
+		MemSet((char *) &(VfdCache[0]), 0, sizeof(Vfd));
 		VfdCache->fd = VFD_CLOSED;
-		VfdCache->fdstate = 0x0;
 
 		SizeVfdCache = 1;
 	}
 
 	if (VfdCache[0].nextFree == 0)
 	{
-
 		/*
 		 * The free list is empty so it is time to increase the size of
-		 * the array
+		 * the array.  We choose to double it each time this happens.
+		 * However, there's not much point in starting *real* small.
 		 */
+		Size newCacheSize = SizeVfdCache * 2;
 
-		VfdCache = (Vfd *) realloc(VfdCache, sizeof(Vfd) * SizeVfdCache * 2);
+		if (newCacheSize < 32)
+			newCacheSize = 32;
+
+		VfdCache = (Vfd *) realloc(VfdCache, sizeof(Vfd) * newCacheSize);
 		Assert(VfdCache != NULL);
 
 		/*
-		 * Set up the free list for the new entries
+		 * Initialize the new entries and link them into the free list.
 		 */
 
-		for (i = SizeVfdCache; i < 2 * SizeVfdCache; i++)
+		for (i = SizeVfdCache; i < newCacheSize; i++)
 		{
-			MemSet((char *) &(VfdCache[i]), 0, sizeof(VfdCache[0]));
+			MemSet((char *) &(VfdCache[i]), 0, sizeof(Vfd));
 			VfdCache[i].nextFree = i + 1;
 			VfdCache[i].fd = VFD_CLOSED;
 		}
-
-		/*
-		 * Element 0 is the first and last element of the free list
-		 */
-
+		VfdCache[newCacheSize - 1].nextFree = 0;
 		VfdCache[0].nextFree = SizeVfdCache;
-		VfdCache[2 * SizeVfdCache - 1].nextFree = 0;
 
 		/*
 		 * Record the new size
 		 */
 
-		SizeVfdCache *= 2;
+		SizeVfdCache = newCacheSize;
 	}
+
 	file = VfdCache[0].nextFree;
 
 	VfdCache[0].nextFree = VfdCache[file].nextFree;
@@ -444,17 +477,25 @@ AllocateVfd()
 static void
 FreeVfd(File file)
 {
-	DO_DB(elog(DEBUG, "FreeVfd: %d (%s)",
-			   file, VfdCache[file].fileName));
+	Vfd		   *vfdP = &VfdCache[file];
 
-	VfdCache[file].nextFree = VfdCache[0].nextFree;
+	DO_DB(elog(DEBUG, "FreeVfd: %d (%s)",
+			   file, vfdP->fileName ? vfdP->fileName : ""));
+
+	if (vfdP->fileName != NULL)
+	{
+		free(vfdP->fileName);
+		vfdP->fileName = NULL;
+	}
+
+	vfdP->nextFree = VfdCache[0].nextFree;
 	VfdCache[0].nextFree = file;
 }
 
 /* filepath()
- * Open specified file name.
- * Fill in absolute path fields if necessary.
- *
+ * Convert given pathname to absolute.
+ * (Is this actually necessary, considering that we should be cd'd
+ * into the database directory??)
  */
 static char *
 filepath(char *filename)
@@ -491,24 +532,22 @@ FileAccess(File file)
 			   file, VfdCache[file].fileName));
 
 	/*
-	 * Is the file open?  If not, close the least recently used, then open
-	 * it and stick it at the head of the used ring
+	 * Is the file open?  If not, open it and put it at the head of the LRU
+	 * ring (possibly closing the least recently used file to get an FD).
 	 */
 
 	if (FileIsNotOpen(file))
 	{
-
 		returnValue = LruInsert(file);
 		if (returnValue != 0)
 			return returnValue;
-
 	}
-	else
+	else if (VfdCache[0].lruLessRecently != file)
 	{
 
 		/*
 		 * We now know that the file is open and that it is not the last
-		 * one accessed, so we need to more it to the head of the Lru
+		 * one accessed, so we need to move it to the head of the Lru
 		 * ring.
 		 */
 
@@ -526,14 +565,13 @@ FileAccess(File file)
 void
 FileInvalidate(File file)
 {
-	Assert(file > 0);
+	Assert(FileIsValid(file));
 	if (!FileIsNotOpen(file))
 		LruDelete(file);
 }
 
 #endif
 
-/* VARARGS2 */
 static File
 fileNameOpenFile(FileName fileName,
 				 int fileFlags,
@@ -542,14 +580,17 @@ fileNameOpenFile(FileName fileName,
 	File		file;
 	Vfd		   *vfdP;
 
+	if (fileName == NULL)
+		elog(ERROR, "fileNameOpenFile: NULL fname");
+
 	DO_DB(elog(DEBUG, "fileNameOpenFile: %s %x %o",
 			   fileName, fileFlags, fileMode));
 
 	file = AllocateVfd();
 	vfdP = &VfdCache[file];
 
-	if (nfile >= pg_nofile())
-		AssertLruRoom();
+	while (nfile+numAllocatedFiles >= pg_nofile())
+		ReleaseLruFile();
 
 tryAgain:
 	vfdP->fd = open(fileName, fileFlags, fileMode);
@@ -558,11 +599,9 @@ tryAgain:
 		DO_DB(elog(DEBUG, "fileNameOpenFile: not enough descs, retry, er= %d",
 				   errno));
 		errno = 0;
-		AssertLruRoom();
+		ReleaseLruFile();
 		goto tryAgain;
 	}
-
-	vfdP->fdstate = 0x0;
 
 	if (vfdP->fd < 0)
 	{
@@ -575,14 +614,13 @@ tryAgain:
 
 	Insert(file);
 
-	if (fileName == NULL)
-		elog(ERROR, "fileNameOpenFile: NULL fname");
 	vfdP->fileName = malloc(strlen(fileName) + 1);
 	strcpy(vfdP->fileName, fileName);
 
 	vfdP->fileFlags = fileFlags & ~(O_TRUNC | O_EXCL);
 	vfdP->fileMode = fileMode;
 	vfdP->seekPos = 0;
+	vfdP->fdstate = 0x0;
 
 	return file;
 }
@@ -611,10 +649,50 @@ PathNameOpenFile(FileName fileName, int fileFlags, int fileMode)
 	return fileNameOpenFile(fileName, fileFlags, fileMode);
 }
 
+/*
+ * Open a temporary file that will disappear when we close it.
+ *
+ * This routine takes care of generating an appropriate tempfile name.
+ * There's no need to pass in fileFlags or fileMode either, since only
+ * one setting makes any sense for a temp file.
+ */
+File
+OpenTemporaryFile(void)
+{
+	char tempfilename[64];
+	File file;
+
+	/* Generate a tempfile name that's unique within the current transaction */
+	snprintf(tempfilename, sizeof(tempfilename),
+			 "pg_temp%d.%ld", (int) getpid(), tempFileCounter++);
+
+	/* Open the file */
+#ifndef __CYGWIN32__
+	file = FileNameOpenFile(tempfilename,
+							O_RDWR | O_CREAT | O_TRUNC, 0600);
+#else
+	file = FileNameOpenFile(tempfilename,
+							O_RDWR | O_CREAT | O_TRUNC | O_BINARY, 0600);
+#endif
+
+	if (file <= 0)
+		elog(ERROR, "Failed to create temporary file %s", tempfilename);
+
+	/* Mark it for deletion at close or EOXact */
+	VfdCache[file].fdstate |= FD_TEMPORARY;
+
+	return file;
+}
+
+/*
+ * close a file when done with it
+ */
 void
 FileClose(File file)
 {
 	int			returnValue;
+
+	Assert(FileIsValid(file));
 
 	DO_DB(elog(DEBUG, "FileClose: %d (%s)",
 			   file, VfdCache[file].fileName));
@@ -628,7 +706,7 @@ FileClose(File file)
 		/* if we did any writes, sync the file before closing */
 		if (VfdCache[file].fdstate & FD_DIRTY)
 		{
-			returnValue = fsync(VfdCache[file].fd);
+			returnValue = pg_fsync(VfdCache[file].fd);
 			Assert(returnValue != -1);
 			VfdCache[file].fdstate &= ~FD_DIRTY;
 		}
@@ -642,57 +720,42 @@ FileClose(File file)
 	}
 
 	/*
-	 * Add the Vfd slot to the free list
+	 * Delete the file if it was temporary
 	 */
-	FreeVfd(file);
+	if (VfdCache[file].fdstate & FD_TEMPORARY)
+	{
+		unlink(VfdCache[file].fileName);
+	}
 
 	/*
-	 * Free the filename string
+	 * Return the Vfd slot to the free list
 	 */
-	free(VfdCache[file].fileName);
+	FreeVfd(file);
 }
 
+/*
+ * close a file and forcibly delete the underlying Unix file
+ */
 void
 FileUnlink(File file)
 {
-	int			returnValue;
+	Assert(FileIsValid(file));
 
 	DO_DB(elog(DEBUG, "FileUnlink: %d (%s)",
 			   file, VfdCache[file].fileName));
 
-	if (!FileIsNotOpen(file))
-	{
+	/* force FileClose to delete it */
+	VfdCache[file].fdstate |= FD_TEMPORARY;
 
-		/* remove the file from the lru ring */
-		Delete(file);
-
-		/* if we did any writes, sync the file before closing */
-		if (VfdCache[file].fdstate & FD_DIRTY)
-		{
-			returnValue = fsync(VfdCache[file].fd);
-			Assert(returnValue != -1);
-			VfdCache[file].fdstate &= ~FD_DIRTY;
-		}
-
-		/* close the file */
-		returnValue = close(VfdCache[file].fd);
-		Assert(returnValue != -1);
-
-		--nfile;
-		VfdCache[file].fd = VFD_CLOSED;
-	}
-	/* add the Vfd slot to the free list */
-	FreeVfd(file);
-
-	/* free the filename string */
-	unlink(VfdCache[file].fileName);
-	free(VfdCache[file].fileName);
+	FileClose(file);
 }
 
 int
 FileRead(File file, char *buffer, int amount)
 {
 	int			returnCode;
+
+	Assert(FileIsValid(file));
 
 	DO_DB(elog(DEBUG, "FileRead: %d (%s) %d %p",
 			   file, VfdCache[file].fileName, amount, buffer));
@@ -710,15 +773,15 @@ FileWrite(File file, char *buffer, int amount)
 {
 	int			returnCode;
 
+	Assert(FileIsValid(file));
+
 	DO_DB(elog(DEBUG, "FileWrite: %d (%s) %d %p",
 			   file, VfdCache[file].fileName, amount, buffer));
 
 	FileAccess(file);
 	returnCode = write(VfdCache[file].fd, buffer, amount);
 	if (returnCode > 0)
-	{							/* changed by Boris with Mao's advice */
 		VfdCache[file].seekPos += returnCode;
-	}
 
 	/* record the write */
 	VfdCache[file].fdstate |= FD_DIRTY;
@@ -729,7 +792,7 @@ FileWrite(File file, char *buffer, int amount)
 long
 FileSeek(File file, long offset, int whence)
 {
-	int			returnCode;
+	Assert(FileIsValid(file));
 
 	DO_DB(elog(DEBUG, "FileSeek: %d (%s) %ld %d",
 			   file, VfdCache[file].fileName, offset, whence));
@@ -740,14 +803,14 @@ FileSeek(File file, long offset, int whence)
 		{
 			case SEEK_SET:
 				VfdCache[file].seekPos = offset;
-				return offset;
+				break;
 			case SEEK_CUR:
-				VfdCache[file].seekPos = VfdCache[file].seekPos + offset;
-				return VfdCache[file].seekPos;
+				VfdCache[file].seekPos += offset;
+				break;
 			case SEEK_END:
 				FileAccess(file);
-				returnCode = VfdCache[file].seekPos = lseek(VfdCache[file].fd, offset, whence);
-				return returnCode;
+				VfdCache[file].seekPos = lseek(VfdCache[file].fd, offset, whence);
+				break;
 			default:
 				elog(ERROR, "FileSeek: invalid whence: %d", whence);
 				break;
@@ -755,11 +818,9 @@ FileSeek(File file, long offset, int whence)
 	}
 	else
 	{
-		returnCode = VfdCache[file].seekPos = lseek(VfdCache[file].fd, offset, whence);
-		return returnCode;
+		VfdCache[file].seekPos = lseek(VfdCache[file].fd, offset, whence);
 	}
-	/* NOTREACHED */
-	return -1L;
+	return VfdCache[file].seekPos;
 }
 
 /*
@@ -769,6 +830,7 @@ FileSeek(File file, long offset, int whence)
 long
 FileTell(File file)
 {
+	Assert(FileIsValid(file));
 	DO_DB(elog(DEBUG, "FileTell %d (%s)",
 			   file, VfdCache[file].fileName));
 	return VfdCache[file].seekPos;
@@ -780,6 +842,8 @@ int
 FileTruncate(File file, int offset)
 {
 	int			returnCode;
+
+	Assert(FileIsValid(file));
 
 	DO_DB(elog(DEBUG, "FileTruncate %d (%s)",
 			   file, VfdCache[file].fileName));
@@ -795,6 +859,8 @@ FileSync(File file)
 {
 	int			returnCode;
 
+	Assert(FileIsValid(file));
+
 	/*
 	 * If the file isn't open, then we don't need to sync it; we always
 	 * sync files when we close them.  Also, if we haven't done any writes
@@ -805,7 +871,7 @@ FileSync(File file)
 		returnCode = 0;
 	else
 	{
-		returnCode = fsync(VfdCache[file].fd);
+		returnCode = pg_fsync(VfdCache[file].fd);
 		VfdCache[file].fdstate &= ~FD_DIRTY;
 	}
 
@@ -825,23 +891,30 @@ FileNameUnlink(char *filename)
 }
 
 /*
- * if we want to be sure that we have a real file descriptor available
- * (e.g., we want to know this in psort) we call AllocateFile to force
- * availability.  when we are done we call FreeFile to deallocate the
- * descriptor.
+ * Routines that want to use stdio (ie, FILE*) should use AllocateFile
+ * rather than plain fopen().  This lets fd.c deal with freeing FDs if
+ * necessary to open the file.  When done, call FreeFile rather than fclose.
  *
- * allocatedFiles keeps track of how many have been allocated so we
- * can give a warning if there are too few left.
+ * Note that files that will be open for any significant length of time
+ * should NOT be handled this way, since they cannot share kernel file
+ * descriptors with other files; there is grave risk of running out of FDs
+ * if anyone locks down too many FDs.  Most callers of this routine are
+ * simply reading a config file that they will read and close immediately.
+ *
+ * fd.c will automatically close all files opened with AllocateFile at
+ * transaction commit or abort; this prevents FD leakage if a routine
+ * that calls AllocateFile is terminated prematurely by elog(ERROR).
  */
-static int	allocatedFiles = 0;
 
 FILE *
 AllocateFile(char *name, char *mode)
 {
 	FILE	   *file;
-	int			fdleft;
 
-	DO_DB(elog(DEBUG, "AllocateFile: Allocated %d.", allocatedFiles));
+	DO_DB(elog(DEBUG, "AllocateFile: Allocated %d.", numAllocatedFiles));
+
+	if (numAllocatedFiles >= MAX_ALLOCATED_FILES)
+		elog(ERROR, "AllocateFile: too many private FDs demanded");
 
 TryAgain:
 	if ((file = fopen(name, mode)) == NULL)
@@ -851,43 +924,275 @@ TryAgain:
 			DO_DB(elog(DEBUG, "AllocateFile: not enough descs, retry, er= %d",
 					   errno));
 			errno = 0;
-			AssertLruRoom();
+			ReleaseLruFile();
 			goto TryAgain;
 		}
 	}
 	else
 	{
-		++allocatedFiles;
-		fdleft = pg_nofile() - allocatedFiles;
-		if (fdleft < 6)
-			elog(NOTICE, "warning: few usable file descriptors left (%d)", fdleft);
+		allocatedFiles[numAllocatedFiles++] = file;
 	}
 	return file;
 }
 
-/*
- * XXX What happens if FreeFile() is called without a previous
- * AllocateFile()?
- */
 void
 FreeFile(FILE *file)
 {
-	DO_DB(elog(DEBUG, "FreeFile: Allocated %d.", allocatedFiles));
+	int i;
 
-	Assert(allocatedFiles > 0);
+	DO_DB(elog(DEBUG, "FreeFile: Allocated %d.", numAllocatedFiles));
+
+	/* Remove file from list of allocated files, if it's present */
+	for (i = numAllocatedFiles; --i >= 0; )
+	{
+		if (allocatedFiles[i] == file)
+		{
+			allocatedFiles[i] = allocatedFiles[--numAllocatedFiles];
+			break;
+		}
+	}
+	if (i < 0)
+		elog(NOTICE, "FreeFile: file was not obtained from AllocateFile");
+
 	fclose(file);
-	--allocatedFiles;
 }
 
+/*
+ * closeAllVfds
+ *
+ * Force all VFDs into the physically-closed state, so that the fewest
+ * possible number of kernel file descriptors are in use.  There is no
+ * change in the logical state of the VFDs.
+ */
 void
 closeAllVfds()
 {
-	int			i;
+	Index		i;
 
-	Assert(FileIsNotOpen(0));	/* Make sure ring not corrupted */
-	for (i = 1; i < SizeVfdCache; i++)
+	if (SizeVfdCache > 0)
 	{
-		if (!FileIsNotOpen(i))
-			LruDelete(i);
+		Assert(FileIsNotOpen(0));	/* Make sure ring not corrupted */
+		for (i = 1; i < SizeVfdCache; i++)
+		{
+			if (!FileIsNotOpen(i))
+				LruDelete(i);
+		}
 	}
+}
+
+/*
+ * AtEOXact_Files
+ *
+ * This routine is called during transaction commit or abort (it doesn't
+ * particularly care which).  All still-open temporary-file VFDs are closed,
+ * which also causes the underlying files to be deleted.  Furthermore,
+ * all "allocated" stdio files are closed.
+ */
+void
+AtEOXact_Files(void)
+{
+	Index		i;
+
+	if (SizeVfdCache > 0)
+	{
+		Assert(FileIsNotOpen(0));	/* Make sure ring not corrupted */
+		for (i = 1; i < SizeVfdCache; i++)
+		{
+			if ((VfdCache[i].fdstate & FD_TEMPORARY) &&
+				VfdCache[i].fileName != NULL)
+				FileClose(i);
+		}
+	}
+
+	while (numAllocatedFiles > 0)
+	{
+		FreeFile(allocatedFiles[0]);
+	}
+
+	/* Reset the tempfile name counter to 0; not really necessary,
+	 * but helps keep the names from growing unreasonably long.
+	 */
+	tempFileCounter = 0;
+}
+
+
+/*
+ * Operations on BufFiles --- a very incomplete emulation of stdio
+ * atop virtual Files.  Currently, we only support the buffered-I/O
+ * aspect of stdio: a read or write of the low-level File occurs only
+ * when the buffer is filled or emptied.  This is an even bigger win
+ * for virtual Files than ordinary kernel files, since reducing the
+ * frequency with which a virtual File is touched reduces "thrashing"
+ * of opening/closing file descriptors.
+ *
+ * Note that BufFile structs are allocated with palloc(), and therefore
+ * will go away automatically at transaction end.  If the underlying
+ * virtual File is made with OpenTemporaryFile, then all resources for
+ * the file are certain to be cleaned up even if processing is aborted
+ * by elog(ERROR).
+ */
+
+struct BufFile {
+	File	file;				/* the underlying virtual File */
+	bool	dirty;				/* does buffer need to be written? */
+	int		pos;				/* next read/write position in buffer */
+	int		nbytes;				/* total # of valid bytes in buffer */
+	char	buffer[BLCKSZ];
+};
+
+
+/*
+ * Create a BufFile and attach it to an (already opened) virtual File.
+ *
+ * This is comparable to fdopen() in stdio.
+ */
+BufFile *
+BufFileCreate(File file)
+{
+	BufFile	   *bfile = (BufFile *) palloc(sizeof(BufFile));
+
+	bfile->file = file;
+	bfile->dirty = false;
+	bfile->pos = 0;
+	bfile->nbytes = 0;
+
+	return bfile;
+}
+
+/*
+ * Close a BufFile
+ *
+ * Like fclose(), this also implicitly FileCloses the underlying File.
+ */
+void
+BufFileClose(BufFile *file)
+{
+	/* flush any unwritten data */
+	BufFileFlush(file);
+	/* close the underlying (with delete if it's a temp file) */
+	FileClose(file->file);
+	/* release the buffer space */
+	pfree(file);
+}
+
+/* BufFileRead
+ *
+ * Like fread() except we assume 1-byte element size.
+ */
+size_t
+BufFileRead(BufFile *file, void *ptr, size_t size)
+{
+	size_t nread = 0;
+	size_t nthistime;
+
+	if (file->dirty)
+	{
+		elog(NOTICE, "BufFileRead: should have flushed after writing");
+		BufFileFlush(file);
+	}
+
+	while (size > 0)
+	{
+		if (file->pos >= file->nbytes)
+		{
+			/* Try to load more data into buffer */
+			file->pos = 0;
+			file->nbytes = FileRead(file->file, file->buffer,
+									sizeof(file->buffer));
+			if (file->nbytes < 0)
+				file->nbytes = 0;
+			if (file->nbytes <= 0)
+				break;			/* no more data available */
+		}
+
+		nthistime = file->nbytes - file->pos;
+		if (nthistime > size)
+			nthistime = size;
+		Assert(nthistime > 0);
+
+		memcpy(ptr, file->buffer + file->pos, nthistime);
+
+		file->pos += nthistime;
+		ptr = (void *) ((char *) ptr + nthistime);
+		size -= nthistime;
+		nread += nthistime;
+	}
+
+	return nread;
+}
+
+/* BufFileWrite
+ *
+ * Like fwrite() except we assume 1-byte element size.
+ */
+size_t
+BufFileWrite(BufFile *file, void *ptr, size_t size)
+{
+	size_t nwritten = 0;
+	size_t nthistime;
+
+	while (size > 0)
+	{
+		if (file->pos >= BLCKSZ)
+		{
+			/* Buffer full, dump it out */
+			if (file->dirty)
+			{
+				if (FileWrite(file->file, file->buffer, file->nbytes) < 0)
+					break;		/* I/O error */
+				file->dirty = false;
+			}
+			file->pos = 0;
+			file->nbytes = 0;
+		}
+
+		nthistime = BLCKSZ - file->pos;
+		if (nthistime > size)
+			nthistime = size;
+		Assert(nthistime > 0);
+
+		memcpy(file->buffer + file->pos, ptr, nthistime);
+
+		file->dirty = true;
+		file->pos += nthistime;
+		if (file->nbytes < file->pos)
+			file->nbytes = file->pos;
+		ptr = (void *) ((char *) ptr + nthistime);
+		size -= nthistime;
+		nwritten += nthistime;
+	}
+
+	return nwritten;
+}
+
+/* BufFileFlush
+ *
+ * Like fflush()
+ */
+int
+BufFileFlush(BufFile *file)
+{
+	if (file->dirty)
+	{
+		if (FileWrite(file->file, file->buffer, file->nbytes) < 0)
+			return EOF;
+		file->dirty = false;
+	}
+
+	return 0;
+}
+
+/* BufFileSeek
+ *
+ * Like fseek(), or really more like lseek() since the return value is
+ * the new file offset (or -1 in case of error).
+ */
+long
+BufFileSeek(BufFile *file, long offset, int whence)
+{
+	if (BufFileFlush(file) < 0)
+		return -1L;
+	file->pos = 0;
+	file->nbytes = 0;
+	return FileSeek(file->file, offset, whence);
 }
