@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: htup.h,v 1.47 2001/03/22 04:00:27 momjian Exp $
+ * $Id: htup.h,v 1.48 2001/03/25 22:40:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -83,6 +83,11 @@ typedef HeapTupleHeaderData *HeapTupleHeader;
 
 /*
  * All what we need to find changed tuple (18 bytes)
+ *
+ * NB: on most machines, sizeof(xl_heaptid) will include some trailing pad
+ * bytes for alignment.  We don't want to store the pad space in the XLOG,
+ * so use SizeOfHeapTid for space calculations.  Similar comments apply for
+ * the other xl_FOO structs.
  */
 typedef struct xl_heaptid
 {
@@ -90,13 +95,15 @@ typedef struct xl_heaptid
 	ItemPointerData tid;		/* changed tuple id */
 } xl_heaptid;
 
+#define SizeOfHeapTid		(offsetof(xl_heaptid, tid) + SizeOfIptrData)
+
 /* This is what we need to know about delete */
 typedef struct xl_heap_delete
 {
 	xl_heaptid	target;			/* deleted tuple id */
 } xl_heap_delete;
 
-#define SizeOfHeapDelete	(offsetof(xl_heaptid, tid) + SizeOfIptrData)
+#define SizeOfHeapDelete	(offsetof(xl_heap_delete, target) + SizeOfHeapTid)
 
 typedef struct xl_heap_header
 {
@@ -115,14 +122,14 @@ typedef struct xl_heap_insert
 	/* xl_heap_header & TUPLE DATA FOLLOWS AT END OF STRUCT */
 } xl_heap_insert;
 
-#define SizeOfHeapInsert	(offsetof(xl_heaptid, tid) + SizeOfIptrData)
+#define SizeOfHeapInsert	(offsetof(xl_heap_insert, target) + SizeOfHeapTid)
 
 /* This is what we need to know about update|move */
 typedef struct xl_heap_update
 {
 	xl_heaptid	target;			/* deleted tuple id */
 	ItemPointerData newtid;		/* new inserted tuple id */
-	/* NEW TUPLE xl_heap_header (XMIN & XMAX FOR MOVE OP) */
+	/* NEW TUPLE xl_heap_header (PLUS xmax & xmin IF MOVE OP) */
 	/* and TUPLE DATA FOLLOWS AT END OF STRUCT */
 } xl_heap_update;
 
