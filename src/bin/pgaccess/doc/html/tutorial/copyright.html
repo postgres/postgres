@@ -1,343 +1,40 @@
-<!doctype html public "-//w3c//dtd html 4.0 transitional//en">
-<html><head><title>PgAccess - a Tcl/Tk interface for PostgreSQL</title></head>
-<body bgcolor="#C0C0C0">
-<h1>PgAccess - a Tcl/Tk interface for PostgreSQL</h1>
-<hr>
-<a name="intro">
-<ul><li><a href="intro.html">Introduction</a>
- <ul><li><a href="intro.html#whatpga">What is PgAccess?</a>
-  <li><a href="intro.html#helppga">How to get help with PgAccess</a>
- </ul>
-<a name="start">
- <li><a href="start.html">Getting Started</a>
- <ul><li><a href="start.html#getpga">How to get PgAccess</a>
-  <li><a href="start.html#uncpga">How to uncompress PgAccess</a>
-  <li><a href="start.html#putpga">Putting PgAccess where it will be found</a>
-  <li><a href="start.html#startpga">Starting PgAccess</a>
-  <li><a href="irix.html">Installing PgAccess under IRIX 5.3</a>
- </ul>
-<a name="problems">
- <li><a href="problems.html">Common Problems with PgAccess</a>
- <ul><li><a href="problems.html#connfail">Connection failure</a>
-  <li><a href="problems.html#libpg">libpgtcl not found</a>
-  <li><a href="problems.html#spchar">Locale specific characters</a>
-  <li><a href="problems.html#pg63">Problems with PostgreSQL 6.3.x</a>
- </ul>
-</ul>
-</body></html>
-<html><head><title>PgAccess - Introduction</title></head>
-<body bgcolor="#C0C0C0">
-<h1>PgAccess - Introduction</h1>
-<a name="whatpga"><h2>What is PgAccess?</h2> 
-PgAccess is a graphical user interface for the PostgreSQL database management
-system written in the Tcl/Tk scripting language by Constantin Teodorescu.  It 
-allows the user to interact with PostgreSQL in a manner similar to many PC 
-database applications, with menu choices and graphical tools like buttons.  
-This means that the user can avoid the basic command line interface for most 
-common tasks.  PgAccess doesn't change the way PostgreSQL operates, just makes 
-it easier to use for those familiar with graphical interfaces.<p>
-Obviously, you <u>must</u> have PostgreSQL installed and running, and Tcl/Tk on
-your system before you can use PgAccess.<p>
-PgAccess is an "open source" application.  The source code is available to the 
-user, and may be modified by the user.  The user can fix a bug, or change the 
-way a function operates.  You may not want to get that involved with the
-programming, but you have the option to do so.  If you feel you have made an
-improvement to the program, you are encouraged to share it with other users.<p>
-If you are not familiar with how open source software can be altered and
-redistributed, please read <a href="copyright.html">this</a>.<p>
-<a name="helppga"><h2>How to get help with PgAccess</h2>
-The mailing list for PgAccess is: <b>pgsql-interfaces@postgresql.org</b><p>
-If you have any questions regarding PgAccess you should subscribe to this
-list in the following way:<p>
-First subscribe to the list by sending an email message to:<p>
-<samp>pgsql-interfaces-request@postgresql.org</samp><p>
-Send a single line in the body of the message as follows:<p>
-<samp>subscribe</samp><p>
-In a short time you should receive a message beginning like this:<p>
-<samp>Welcome to the pgsql-interfaces mailing list!<br>
-...</samp><p>
-This will contain instructions on how to remove yourself from the mailing
-list, so save that message.  You may only want to ask a few questions and then
-stop receiving messages.<p>
-You may also email <a href="mailto:teo@flex.ro">Constantin Teodorescu</a>
-directly, although writing to a mailing list with many correspondents will often
-produce a quicker answer.<p>
-<a href="index.html#intro">Back to index</a>
-</body></html>
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
 <HTML>
 <HEAD>
-   <TITLE>PgAccess on Irix</TITLE>
-   <META NAME="GENERATOR" CONTENT="Mozilla/3.04Gold (X11; I; Linux 2.0.33 i586) [Netscape]">
+   <META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=iso-8859-1">
+   <META NAME="GENERATOR" CONTENT="Mozilla/4.03 [en] (X11; I; Linux 2.0.30 i586) [Netscape]">
+   <TITLE>PgAccess - Copyright notice</TITLE>
 </HEAD>
-<BODY TEXT="#000000" BGCOLOR="#FFFFFF" LINK="#0000EF" VLINK="#51188E" ALINK="#FF0000">
+<BODY BGCOLOR="#FFFFFF">
+<TT>---------------------------------------------------------------------------</TT>
+<BR><TT></TT>&nbsp;
+<BR><TT></TT>&nbsp;<TT></TT>
 
-<H1>INSTALLING PgAccess UNDER IRIX 5.3.
-<HR WIDTH="100%"></H1>
+<P><TT>Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group</TT>
+<P><TT>Portions Copyright (c) 1994, Regents of the University of California</TT>
 
-<P><B><FONT COLOR="#000080">This HOWO-TO make PgAccess working under Irix
-is written by Stuart Rison</FONT></B></P>
+<P><TT>Permission to use, copy, modify, and distribute this software and
+its</TT>
+<BR><TT>documentation for any purpose, without fee, and without a written
+agreement</TT>
+<BR><TT>is hereby granted, provided that the above copyright notice and
+this</TT>
+<BR><TT>paragraph and the following two paragraphs appear in all copies.</TT><TT></TT>
 
-<P>These are the steps that I had to follow to get pgaccess to run on an
-INDIGO2 running postgreSQL 6.3.2 under IRIX 5.3. I make no guarantee whatsoever
-that the same step will work for others but at least it should point you
-in the right direction. Also, I am a biologist by training so I only got
-pgaccess working by fudging (that is, trial and error) this means that
-some of the steps may be unnecessary (e.g. compiling $postgreSQL_source/src/interfaces/libpgtcl
-as both a shared and static library) and they certainly haven't been optimised
-(I know nothing about compiler switches etc.).</P>
+<P><TT>IN NO EVENT SHALL THE UNIVERSITY OF CALIFORNIA BE LIABLE TO ANY
+PARTY FOR</TT>
+<BR><TT>DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES,
+INCLUDING</TT>
+<BR><TT>LOST PROFITS, ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS</TT>
+<BR><TT>DOCUMENTATION, EVEN IF THE UNIVERSITY OF CALIFORNIA HAS BEEN ADVISED
+OF THE</TT>
+<BR><TT>POSSIBILITY OF SUCH DAMAGE.</TT><TT></TT>
 
-<P><B>1) Requirements:</B></P>
-
-<UL>
-<P>You will need:</P>
-
-<UL>
-<LI>postgreSQL source (http://www.postgresql.org)</LI>
-
-<LI>tcl8.0 source (http://www.tclconsortium.org/)</LI>
-
-<LI>tk8.0 source (http://www.tclconsortium.org/)</LI>
-
-<LI>pgaccess source (http://www.flex.ro/pgaccess)</LI>
-</UL>
-</UL>
-
-<P><B>2) Installation:</B></P>
-
-<P>a) tcl/tk:</P>
-
-<UL>
-<P>You must first install tcl and then tk (in that order). I just used
-./configure, no switches and gmake. Their installation should be trouble
-free. Then you must move headers and libraries to the right places so:</P>
-
-<P>Header files: both tcl and tk have a header file (tcl.h and tk.h). The
-tcl.h file is in $tcl_source_dir/generic and the tk.h file is in $tk_source_dir/generic;
-both should be copied to /usr/local/include.</P>
-
-<P>Libraries: compilation (with cc) of tcl and tk yield libraries libtcl8.0.a
-and libtk8.0.a in $source_dir/unix. Both should be copied to /usr/local/lib.</P>
-</UL>
-
-<P>b) postgreSQL:</P>
-
-<UL>
-<P>Make sure you have a fully patched postgreSQL source. If your ./configure
-says it can't load 'IRIX' settings then you most probably will need to
-patch ./configure.</P>
-
-<P>Configure using ./configure with the following switches: ./configure
---with-includes=/usr/local/include</P>
-
-<P>--with-libraries=/usr/local/lib --with-tcl [this and previous line as
-one]</P>
-
-<P>Then make, make install as usual</P>
-</UL>
-
-<P>c) Compiling libpgtcl:</P>
-
-<UL>
-<P>The source for libpgtcl is in $postgreSQL_directory/src/interfaces/libpgsql.</P>
-
-<P>I do this twice. Once with just gmake. This produces a static library
-libpgtcl.a which I leave where it is (I don't know what to do with it but
-it may just come in handy). The I modify Makefile manually with a text
-editor. Essentially I modify two line:</P>
-
-<P>before:</P>
-
-<P># Shared library stuff</P>
-
-<P>install-shlib-dep := shlib :=</P>
-
-<P>after:</P>
-
-<P># Shared library stuff</P>
-
-<P>install-shlib-dep := install-shlib shlib := libpgtcl.so.1</P>
-
-<P>Then gmake -f Makefile_modified. This creates two shared (.so) libraries:
-libpgtcl.so and libpgtcl.so.1. I can't tell the difference between them
-so I copied them both to /usr/lib/.</P>
-</UL>
-
-<P>d) running pgaccess:</P>
-
-<UL>
-<P>Uncompress pgaccess (usually with gunzip and tar). So long as 'wish'
-(a binary produced when compiling tk8.0) is somewhere in your path, you
-should be able to run pgaccess with:</P>
-
-<P>wish -f $pgaccess_dir/pgaccess.tcl [postgreSQL_database_name]</P>
-</UL>
-
-<P>e) et voila!</P>
-
-<P><B>3) Concluding remarks:</B></P>
-
-<UL>
-<P>As I stated at the start of this document, following the procedure indicated
-above worked for me. I am sure, however, that a few of the steps are unnecessary/non-optimised/stupid
-etc. If any Unix (IRIX) boffin is reading this and you spot anything you
-would like to comment/correct etc. please e-mail me (stuart@ludwig.ucl.ac.uk).
-Also, if you just have questions and think I might help, please contact
-me at the same e-mail.</P>
-
-<P>Finally, I can accept no responsibility if these steps don't work for
-you or if it all goes horribly wrong and you 'damage' your computer trying
-them. Let common sense prevail!</P>
-</UL>
-
-<P>Good luck</P>
-
-<P>Stuart Rison LICR University College London London W1P 8BT<BR>
-<A HREF="mailto:stuart@ludwig.ucl.ac.uk">stuart@ludwig.ucl.ac.uk</A></P>
-<a href="index.html#start">Back to index</a>
+<P><TT>THE UNIVERSITY OF CALIFORNIA SPECIFICALLY DISCLAIMS ANY WARRANTIES,</TT>
+<BR><TT>INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY</TT>
+<BR><TT>AND FITNESS FOR A PARTICULAR PURPOSE. THE SOFTWARE PROVIDED HEREUNDER
+IS</TT>
+<BR><TT>ON AN "AS IS" BASIS, AND THE UNIVERSITY OF CALIFORNIA HAS NO OBLIGATIONS
+TO</TT>
+<BR><TT>PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.</TT>
 </BODY>
 </HTML>
-<html><head><title>PgAccess - Common Problems</title></head>
-<body bgcolor="#C0C0C0">
-<h1>Common Problems with PgAccess</h1>
-<a name="connfail"><h2>Connection failure</h2>
-One of the most common initial problems is the message:<p>
-<samp>Error connecting database<br>
-Connection to database failed<br>
-connectDB() failed: Is the<br>
-postmaster running and<br>
-accepting TCP/IP (with -i)<br>
-connections at 'localhost' on<br>
-port '5432'?</samp><p>
-This usually occurs because the "postmaster" (the postgreSQL backend) was not
-started with the <samp>-i</samp> option.  Usually just adding <samp>-i</samp> to
-the command line that starts the postmaster and restarting will fix this.
-<a name="libpg"><h2>libpgtcl not found</h2>
-PgAccess requires a library of functions named <samp>libpgtcl</samp>.  This
-should be available with the postgreSQL distribution, and is usually placed in
-the correct location when installing postgreSQL.  First check that there is a
-file named <samp>libpgtcl.so</samp> (perhaps with a number appended - or
-<samp>libpgtcl.dll</samp> on Windows systems) on your
-system.  If not, you will have to download and perhaps compile this library.<p>
-<samp>ftp://ftp.flex.ro/pub/pgaccess</samp><p>
-is one place that you can download precompiled libpgtcl libraries for
-PgAccess.<p>
-<a name="spchar">
-<h2>Locale specific characters</h2>
-This problem occurs with some special characters used in different
-countries because PgAccess did not use fonts with `-ISO8859-1' encoding.<p>
-One solution was proposed by H.P.Heidinger ( hph@hphbbs.ruhr.de) and
-is very simple.<p>
-If you look in the file pgaccess.tcl, you will find the fonts declared in 
-this manner:<p>
-<TT>$ grep -e '-font' -i pgaccess.tcl<BR>
--font -Adobe-Helvetica-Medium-R-Normal--*-120-*-*-*-*-*-* \<br>
-...</TT></P>
-The font declarations should be altered to:<p>
-<tt>-font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-iso8859-1<br>
-...</tt><p>
-That is, inserting an asterisk between the first pair of hyphens, and changing
-the final two asterisks to <samp>iso8859</samp> and <samp>1</samp>
-respectively.<p>
-You can alter the source code by running the following script :
-<P><TT>#!/bin/sh<BR>
-cp pgaccess.tcl pgaccess.tcl-org<BR>
-cat pgaccess.tcl |\<BR>
-sed -e's/\-\*\-\*\ /\-iso8859\-1\ /g' |\<BR>
-sed -e's/\-\*\-\*\}/\-iso8859\-1}/g' |\<BR>
-sed -e's/\-\*\-\*\]/\-iso8859\-1]/g' |\<BR>
-sed -e's/\-\*\-\*$/\-iso8859\-1/g' |\<BR>
-sed -e's/\-Clean\-/\-Fixed\-/g' |\<BR>
-sed -e's/clean/fixed/g' &gt;pgaccess.iso<BR>
-mv pgaccess.iso pgaccess.tcl<BR>
-chmod +x pgaccess.tcl</TT><P>
-The final version of PgAccess (1.0) will let the user decide what fonts
-will be used through a &quot;preferences&quot; dialog window.</p>
-<!doctype html public "-//w3c//dtd html 4.0 transitional//en">
-a name="pg63">
-<h2>Problem with PostgreSQL 6.3.x</h2>
-PgAccess 0.93 and later may have problems working with PostgreSQL 6.3.x.
-Changes in libpgtcl have been made to remove these, but if you are
-using PostgreSQL 6.3.x, this patch will allow you to get around the problems.<p>
-In the procedure <tt>wpg_exec</tt> change the following line:<p>
-<tt>set pgsql(errmsg) [pg_result $pgsql(res) -error]</tt><p>
-to this:<p>
-<tt>set pgsql(errmsg) "NO ERROR INFORMATION SUPPLIED"</tt><p>
-and the program will work. The only disadvantage is that with some error 
-conditions, you will not get the appropriate error message from libpgtcl.<p>
-<a href="index.html#problems">Back to index</a>
-</body></html>
-<html><head><title>PgAccess - Getting Started</title></head>
-<body bgcolor="#C0C0C0">
-<h1>PgAccess - Getting Started</h1>
-<a name="getpga"><h2>How to get PgAccess</h2>
-If you have this HTML help system, you have probably already downloaded 
-PgAccess.  If not, or you wish to download the latest version, it is available
-from the URL:<p>
-<samp>http://www.flex.ro</samp><p>
-The home page will contain instructions on which files to download for your
-operating system.  Download the file to a directory where the program will
-eventually reside (see below).<p>
-<a name="uncpga"><h2>How to uncompress PgAccess</h2>
-PgAccess, like most applications available for download, is usually downloaded 
-in compressed format to save download time.  You must uncompress these files in
-order to use the application.<p>
-<h3>UNIX (Linux, BSD, IRIX, Solaris, etc.)</h3>
-The files will be compressed using "gzip" and packaged using "tar", and have
-filenames like this:<p>
-<samp>pgaccess-n.nn.tar.gz</samp><p>
-Note that "n.nn" will be the version number in an actual file.<p>
-First decide where you want to have the program.  A typical location on UNIX
-systems is <samp>/usr/local/src/&lt;name&gt;</samp>, where &lt;name&gt; is the name of
-the program.  To use this location, download or move the "tar.gz" file to the
-directory <samp>/usr/local/src</samp>.  Change to that directory, and 
-uncompress the file with the command:<p>
-<samp>tar -zxvf pgaccess-n.nn.tar.gz</samp><p>
-You should see the files listed as they are uncompressed and placed in the new
-directory, and now have a directory named:<p>
-<samp>/usr/local/src/pgaccess</samp><p>
-In that directory will be all of the files that were packaged in the downloaded
-file.  When you have PgAccess working, you can delete the file with the ".tar"
-or ".tar.gz" extension.
-<h3>Windows</h3>
-The files will be compressed so that "WinZip" will uncompress the package.  Just
-open the file with "WinZip" and the program files will be extracted.<p>
-<a name="putpga"><h2>Putting PgAccess where it will be found</h2>
-<h3>UNIX</h3>
-In order to run PgAccess easily, the program file "pgaccess.tcl" should be in a
-location on the "PATH" of the system.  You can find out what the PATH is by
-entering:<p>
-<samp>echo $PATH<br>
-/sbin:/usr/sbin:/bin:/usr/bin:/usr/X11R6/bin:/usr/local/bin:./:/usr/local/pgsql/bin
-</samp><p>
-Usually the directory <samp>/usr/local/bin</samp> will be in your PATH, and that
-is a fairly common place to put programs like PgAccess.  Other common
-directories in the PATH are <samp>/usr/bin</samp> and <samp>/usr/sbin</samp>. 
-Simply move the file "pgaccess.tcl" to the directory where you want it.<p>
-<h3>Windows</h3>
-You will usually link PgAccess to an icon, so just specify the full path to the
-program when you create the icon.
-<a name=startpga"><h2>Starting PgAccess</h2>
-The easiest way to start PgAccess is to simply invoke the program by name:<p>
-<samp>pgaccess.tcl</samp><p>
-If the program has been placed in a directory listed in the PATH, the PgAccess 
-window should appear.<p>
-<h3>Starting from a menu</h3>
-Most users will want to link the program to a menu or icon so that it can be 
-started using the mouse or other pointing device.  Here is a method that will
-work on most Linux X-Windows systems.  Create a file named "pgaccess" in the directory
-<samp>/etc/X11/wmconfig</samp> with the following contents:<p>
-<samp>pgaccess name "PgAccess"<br>
-pgaccess description "postgreSQL frontend"<br>
-pgaccess mini-icon "mini-pgaccess.xpm"<br>
-pgaccess group "Applications"<br>
-pgaccess exec "pgaccess.tcl &"</samp><p>
-This assumes that you have an "Applications" sub-menu.  You may prefer
-"Programs" or some other place.  Also, you will have to create the
-"mini-pgaccess.xpm" icon if you want it to appear.  You can edit an existing
-icon from the <samp>/usr/share/icons/mini</samp> directory in XPaint and rename
-it.  When you next start an X-Windows session, there should be a "PgAccess" item
-on the menu that you have chosen.  Clicking on this item should start
-PgAccess.<p>
-<a href="index.html#start">Back to index</a>
-</body></html>

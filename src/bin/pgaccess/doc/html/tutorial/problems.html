@@ -12,21 +12,7 @@ connections at 'localhost' on<br>
 port '5432'?</samp><p>
 This usually occurs because the "postmaster" (the postgreSQL backend) was not
 started with the <samp>-i</samp> option.  Usually just adding <samp>-i</samp> to
-the command line that starts the postmaster and restarting will fix this.<p>
-If you have installed the prewritten script to start <b>postgreSQL</b> 
-automatically, this option is (currently) commented out:<p>
-<samp># PGOPTS="-i"</samp><p>
-just remove the hash and space and comment out the "blank" option above:<p>
-<samp>PGOPTS=""</samp><p>
-<a name="nonuser"><h2>User not defined</h2>
-Initially, <b>postgreSQL</b> only has one user, <samp>postgres</samp>, and any
-other user who starts up PgAccess will get the message:<p>
-<samp>Error connecting database<br>
-Connection to database failed<br>
-FATAL 1: SetUserId: user<br>
-'jim' is not in 'pg_shadow'</samp><p>
-See <b>User Administration</b> in the <b>PgAccess tutorial</b> for a description
-of how to create users.<p>
+the command line that starts the postmaster and restarting will fix this.
 <a name="libpg"><h2>libpgtcl not found</h2>
 PgAccess requires a library of functions named <samp>libpgtcl</samp>.  This
 should be available with the postgreSQL distribution, and is usually placed in
@@ -68,7 +54,8 @@ mv pgaccess.iso pgaccess.tcl<BR>
 chmod +x pgaccess.tcl</TT><P>
 The final version of PgAccess (1.0) will let the user decide what fonts
 will be used through a &quot;preferences&quot; dialog window.</p>
-<a name="pg63">
+<!doctype html public "-//w3c//dtd html 4.0 transitional//en">
+a name="pg63">
 <h2>Problem with PostgreSQL 6.3.x</h2>
 PgAccess 0.93 and later may have problems working with PostgreSQL 6.3.x.
 Changes in libpgtcl have been made to remove these, but if you are
