@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.173 2000/06/12 19:40:40 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.174 2000/06/22 22:31:18 petere Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -49,7 +49,7 @@
 #include "storage/lmgr.h"
 #include "utils/acl.h"
 #include "utils/numeric.h"
-#include "commands/variable.h"
+#include "utils/guc.h"
 
 #ifdef MULTIBYTE
 #include "miscadmin.h"
@@ -884,7 +884,7 @@ AlterTableStmt:
 					AlterTableStmt *n = makeNode(AlterTableStmt);
 					n->subtype = 'A';
 					n->relname = $3;
-					n->inh = $4 || examine_subclass;
+					n->inh = $4 || SQL_inheritance;
 					n->def = $7;
 					$$ = (Node *)n;
 				}
@@ -894,7 +894,7 @@ AlterTableStmt:
 					AlterTableStmt *n = makeNode(AlterTableStmt);
 					n->subtype = 'T';
 					n->relname = $3;
-					n->inh = $4 || examine_subclass;
+					n->inh = $4 || SQL_inheritance;
 					n->name = $7;
 					n->def = $8;
 					$$ = (Node *)n;
@@ -905,7 +905,7 @@ AlterTableStmt:
 					AlterTableStmt *n = makeNode(AlterTableStmt);
 					n->subtype = 'D';
 					n->relname = $3;
-					n->inh = $4 || examine_subclass;
+					n->inh = $4 || SQL_inheritance;
 					n->name = $7;
 					n->behavior = $8;
 					$$ = (Node *)n;
@@ -916,7 +916,7 @@ AlterTableStmt:
 					AlterTableStmt *n = makeNode(AlterTableStmt);
 					n->subtype = 'C';
 					n->relname = $3;
-					n->inh = $4 || examine_subclass;
+					n->inh = $4 || SQL_inheritance;
 					n->def = $6;
 					$$ = (Node *)n;
 				}
@@ -926,7 +926,7 @@ AlterTableStmt:
 					AlterTableStmt *n = makeNode(AlterTableStmt);
 					n->subtype = 'X';
 					n->relname = $3;
-					n->inh = $4 || examine_subclass;
+					n->inh = $4 || SQL_inheritance;
 					n->name = $7;
 					n->behavior = $8;
 					$$ = (Node *)n;
@@ -2562,7 +2562,7 @@ RenameStmt:  ALTER TABLE relation_name opt_inh_star
 				{
 					RenameStmt *n = makeNode(RenameStmt);
 					n->relname = $3;
-					n->inh = $4 || examine_subclass;
+					n->inh = $4 || SQL_inheritance;
 					n->column = $7;
 					n->newname = $9;
 					$$ = (Node *)n;
@@ -3806,7 +3806,7 @@ relation_expr:	relation_name
     				/* default inheritance */
 					$$ = makeNode(RelExpr);
 					$$->relname = $1;
-					$$->inh = examine_subclass;
+					$$->inh = SQL_inheritance;
 				}
 		| relation_name '*'				  %prec '='
 				{

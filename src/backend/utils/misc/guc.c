@@ -4,7 +4,7 @@
  * Support for grand unified configuration scheme, including SET
  * command, configuration file, and command line options.
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.3 2000/06/15 04:10:30 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.4 2000/06/22 22:31:21 petere Exp $
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  * Written by Peter Eisentraut <peter_e@gmx.net>.
@@ -49,6 +49,7 @@ bool Show_executor_stats    = false;
 bool Show_query_stats       = false; /* this is sort of all three above together */
 bool Show_btree_build_stats = false;
 
+bool SQL_inheritance;
 
 
 enum config_type
@@ -115,6 +116,23 @@ struct config_string
 };
 
 
+/*
+ * TO ADD AN OPTION:
+ *
+ * 1. Declare a global variable of type bool, int, double, or char*
+ * and make use of it.
+ *
+ * 2. Decide at what times it's safe to set the option. See guc.h for
+ * details.
+ *
+ * 3. Decide on a name, a default value, upper and lower bounds (if
+ * applicable), etc.
+ *
+ * 4. Add a record below.
+ *
+ * 5. Don't forget to document that option.
+ */
+
 
 /******** option names follow ********/
 
@@ -133,27 +151,27 @@ ConfigureNamesBool[] =
 	{"geqo",                    PGC_USERSET,    &enable_geqo,           true},
 
 	{"net_server",              PGC_POSTMASTER, &NetServer,             false},
-	{"fsync",                   PGC_BACKEND,    &enableFsync,           true},
+	{"fsync",                   PGC_USERSET,    &enableFsync,           true},
 
-	{"log_connections",         PGC_POSTMASTER, &Log_connections,       false},
-	{"log_timestamp",           PGC_BACKEND,    &Log_timestamp,         false},
-	{"log_pid",                 PGC_BACKEND,    &Log_pid,               false},
+	{"log_connections",         PGC_SIGHUP,     &Log_connections,       false},
+	{"log_timestamp",           PGC_SIGHUP,     &Log_timestamp,         false},
+	{"log_pid",                 PGC_SIGHUP,     &Log_pid,               false},
 
-	{"debug_print_query",       PGC_SUSET,      &Debug_print_query,     false},
-	{"debug_print_parse",       PGC_SUSET,      &Debug_print_parse,     false},
-	{"debug_print_rewritten",   PGC_SUSET,      &Debug_print_rewritten, false},
-	{"debug_print_plan",        PGC_SUSET,      &Debug_print_plan,      false},
-	{"debug_pretty_print",      PGC_SUSET,      &Debug_pretty_print,    false},
+	{"debug_print_query",       PGC_USERSET,    &Debug_print_query,     false},
+	{"debug_print_parse",       PGC_USERSET,    &Debug_print_parse,     false},
+	{"debug_print_rewritten",   PGC_USERSET,    &Debug_print_rewritten, false},
+	{"debug_print_plan",        PGC_USERSET,    &Debug_print_plan,      false},
+	{"debug_pretty_print",      PGC_USERSET,    &Debug_pretty_print,    false},
 
-	{"show_parser_stats",       PGC_SUSET,      &Show_parser_stats,     false},
-	{"show_planner_stats",      PGC_SUSET,      &Show_planner_stats,    false},
-	{"show_executor_stats",     PGC_SUSET,      &Show_executor_stats,   false},
-	{"show_query_stats",        PGC_SUSET,      &Show_query_stats,      false},
+	{"show_parser_stats",       PGC_USERSET,    &Show_parser_stats,     false},
+	{"show_planner_stats",      PGC_USERSET,    &Show_planner_stats,    false},
+	{"show_executor_stats",     PGC_USERSET,    &Show_executor_stats,   false},
+	{"show_query_stats",        PGC_USERSET,    &Show_query_stats,      false},
 #ifdef BTREE_BUILD_STATS
 	{"show_btree_build_stats",  PGC_SUSET,      &Show_btree_build_stats, false},
 #endif
 
-	{"trace_notify",            PGC_SUSET,      &Trace_notify,          false},
+	{"trace_notify",            PGC_USERSET,    &Trace_notify,          false},
 
 #ifdef LOCK_DEBUG
 	{"trace_locks",             PGC_SUSET,      &Trace_locks,           false},
@@ -162,8 +180,10 @@ ConfigureNamesBool[] =
 	{"debug_deadlocks",         PGC_SUSET,      &Debug_deadlocks,       false},
 #endif
 
-	{"hostlookup",              PGC_POSTMASTER, &HostnameLookup,        false},
-	{"showportnumber",          PGC_POSTMASTER, &ShowPortNumber,        false},
+	{"hostlookup",              PGC_SIGHUP,     &HostnameLookup,        false},
+	{"showportnumber",          PGC_SIGHUP,     &ShowPortNumber,        false},
+
+	{"sql_inheritance",         PGC_USERSET,    &SQL_inheritance,       true},
 
 	{NULL, 0, NULL, false}
 };
@@ -187,7 +207,7 @@ ConfigureNamesInt[] =
 	 1000, 0, INT_MAX},
 
 #ifdef ENABLE_SYSLOG
-	{"syslog",                  PGC_POSTMASTER,         &Use_syslog,
+	{"syslog",                  PGC_SIGHUP,             &Use_syslog,
 	 0, 0, 2},
 #endif
 
@@ -203,11 +223,10 @@ ConfigureNamesInt[] =
 	{"port",                    PGC_POSTMASTER,         &PostPortName,
 	 DEF_PGPORT, 1, 65535},
 
-	/* XXX Is this really changeable at runtime? */
-	{"sort_mem",                PGC_SUSET,              &SortMem,
+	{"sort_mem",                PGC_USERSET,            &SortMem,
 	 512, 1, INT_MAX},
 
-	{"debug_level",             PGC_SUSET,              &DebugLvl,
+	{"debug_level",             PGC_USERSET,            &DebugLvl,
 	 0, 0, 16},
 
 #ifdef LOCK_DEBUG
@@ -217,7 +236,7 @@ ConfigureNamesInt[] =
 	 0, 0, INT_MAX},
 #endif
 	{"max_expr_depth",          PGC_USERSET,            &max_expr_depth,
-         DEFAULT_MAX_EXPR_DEPTH, 10, INT_MAX},
+	 DEFAULT_MAX_EXPR_DEPTH, 10, INT_MAX},
 
     {NULL, 0, NULL, 0, 0, 0}
 };
@@ -483,29 +502,45 @@ set_config_option(const char * name, const char * value, GucContext
 		return false;
 	}
 
-    if (record->context < context)
+	/*
+	 * Check if the option can be set at this time. See guc.h for the
+	 * precise rules. Note that we don't want to throw errors if we're
+	 * in the SIGHUP context. In that case we just ignore the attempt.
+	 */
+    if (record->context == PGC_POSTMASTER && context != PGC_POSTMASTER)
 	{
-        /* can't set option right now */
-		switch (context)
-		{
-			case PGC_USERSET:
-				elog(ERROR, "permission denied");
-				/*NORETURN*/
-            case PGC_SUSET:
-				elog(ERROR, "%s can only be set at startup", name);
-				/*NORETURN*/
-			case PGC_SIGHUP:
-				/* ignore the option */
-				return true;
-			case PGC_BACKEND:
-			    /* ignore; is this the right thing to do? */
-				return true;
-			default:
-				elog(FATAL, "%s:%d: internal error", __FILE__, __LINE__);
-				/*NORETURN*/
-		}
+		if (context != PGC_SIGHUP)
+			elog(ERROR, "%s cannot be changed after server start", name);
+		else
+			return true;
+	}
+	else if (record->context == PGC_SIGHUP && context != PGC_SIGHUP &&
+			 context != PGC_POSTMASTER)
+	{
+		elog(ERROR, "%s cannot be changed now", name);
+		/* Hmm, the idea of the SIGHUP context is "ought to be global,
+		 * but can be changed after postmaster start". But there's
+		 * nothing that prevents a crafty administrator from sending
+		 * SIGHUP signals to individual backends only. */
+	}
+	else if (record->context == PGC_BACKEND && context != PGC_BACKEND
+			 && context != PGC_POSTMASTER)
+	{
+		if (context != PGC_SIGHUP)
+			elog(ERROR, "%s cannot be set after connection start", name);
+		else
+			return true;
+	}
+	else if (record->context == PGC_SUSET && (context == PGC_USERSET
+											  || context == PGC_BACKEND))
+	{
+		elog(ERROR, "permission denied");
 	}
 
+
+	/*
+	 * Evaluate value and set variable
+	 */
     switch(type)
     {
         case PGC_BOOL:
@@ -652,7 +687,7 @@ SetConfigOption(const char * name, const char * value, GucContext
  * valid until the next call to configuration related functions.
  */
 const char *
-GetConfigOption(const char * name, bool issuper)
+GetConfigOption(const char * name)
 {
     struct config_generic * record;
 	static char buffer[256];
@@ -662,13 +697,10 @@ GetConfigOption(const char * name, bool issuper)
 	if (opttype == PGC_NONE)
 		elog(ERROR, "not a valid option name: %s", name);
 
-	if (record->context < PGC_USERSET && !issuper)
-		elog(ERROR, "permission denied");
-
 	switch(opttype)
     {
         case PGC_BOOL:
-            return *((struct config_bool *)record)->variable ? "true" : "false";
+            return *((struct config_bool *)record)->variable ? "on" : "off";
 
         case PGC_INT:
 			snprintf(buffer, 256, "%d", *((struct config_int *)record)->variable);

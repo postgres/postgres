@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.148 2000/06/14 18:17:38 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.149 2000/06/22 22:31:20 petere Exp $
  *
  * NOTES
  *
@@ -364,6 +364,8 @@ PostmasterMain(int argc, char *argv[])
 	bool		DataDirOK;		/* We have a usable PGDATA value */
 	char		original_extraoptions[MAXPGPATH];
 
+	IsUnderPostmaster = true;	/* so that backends know this */
+
 	*original_extraoptions = '\0';
 
 	progname = argv[0];
@@ -379,7 +381,8 @@ PostmasterMain(int argc, char *argv[])
 	ResetAllOptions();
 
 	MyProcPid = getpid();
-	DataDir = getenv("PGDATA"); /* default value */
+	if (getenv("PGDATA"))
+		DataDir = strdup(getenv("PGDATA")); /* default value */
 
 	if (getenv("PGPORT"))
 		PostPortName = atoi(getenv("PGPORT"));
@@ -401,7 +404,11 @@ PostmasterMain(int argc, char *argv[])
 	while ((opt = getopt(argc, argv, "A:a:B:b:D:d:Film:MN:no:p:Ss-:")) != EOF)
 	{
 		if (opt == 'D')
-			DataDir = optarg;
+		{
+			if (DataDir)
+				free(DataDir);
+			DataDir = strdup(optarg);
+		}
 	}
 
 	optind = 1; /* start over */
@@ -2040,7 +2047,7 @@ PostmasterRandom(void)
 
 	if (!initialized)
 	{
-		Assert(random_seed != 0 && !IsUnderPostmaster);
+		Assert(random_seed != 0);
 		srandom(random_seed);
 		initialized = true;
 	}

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.160 2000/06/15 04:10:19 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.161 2000/06/22 22:31:20 petere Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -824,13 +824,15 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 	/*
 	 * Set default values for command-line options.
 	 */
-	IsUnderPostmaster = false;
 	Noversion = false;
 	EchoQuery = false;
-#ifdef LOCK_MGR_DEBUG
-	LockDebug = 0;
-#endif
-	DataDir = getenv("PGDATA");
+
+	if (!IsUnderPostmaster)
+	{
+		ResetAllOptions();
+		if (getenv("PGDATA"))
+			DataDir = strdup(getenv("PGDATA"));
+	}
 	StatFp = stderr;
 
 	SetProcessingMode(InitProcessing);
@@ -891,7 +893,11 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 
 			case 'D':			/* PGDATA directory */
 				if (secure)
-					DataDir = optarg;
+				{
+					if (DataDir)
+						free(DataDir);
+					DataDir = strdup(optarg);
+				}
 				break;
 
 			case 'd':			/* debug level */
@@ -1022,8 +1028,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 				 */
 				if (secure)
 				{
-					IsUnderPostmaster = true;
-					DBName = optarg;
+					DBName = strdup(optarg);
 					secure = false;		/* subsequent switches are NOT
 										 * secure */
 				}
@@ -1169,12 +1174,6 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 				argv[0]);
 		proc_exit(1);
 	}
-
-	/*
-	 * Make a copy of DataDir because the arguments and environment
-	 * might be moved around later on.
-	 */
-	DataDir = strdup(DataDir);
 
 	/*
 	 * 1. Set BlockSig and UnBlockSig masks. 2. Set up signal handlers. 3.
@@ -1330,7 +1329,12 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 
 
 		/*
-		 * Set process params for ps
+		 * Set process parameters for ps
+		 *
+		 * WARNING: On some platforms the environment will be moved
+		 * around to make room for the ps display string. So any
+		 * references to optarg or getenv() from above will be invalid
+		 * after this call. Better use strdup or something similar.
 		 */
 		init_ps_display(real_argc, real_argv, userName, DBName, remote_host);
 		set_ps_display("startup");
@@ -1382,7 +1386,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.160 $ $Date: 2000/06/15 04:10:19 $\n");
+		puts("$Revision: 1.161 $ $Date: 2000/06/22 22:31:20 $\n");
 	}
 
 	/*

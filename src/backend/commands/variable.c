@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/variable.c,v 1.37 2000/06/14 18:17:25 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/variable.c,v 1.38 2000/06/22 22:31:17 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -49,12 +49,7 @@ static bool parse_XactIsoLevel(char *);
 static bool parse_random_seed(char *);
 static bool show_random_seed(void);
 static bool reset_random_seed(void);
-static bool parse_examine_subclass(char *);
-static bool show_examine_subclass(void);
-static bool reset_examine_subclass(void);
 
-#define examine_subclass_default true
-bool examine_subclass = examine_subclass_default;
 
 /*
  * get_token
@@ -169,44 +164,6 @@ get_token(char **tok, char **val, char *str)
 	return str;
 }
 
-/*
- *
- * EXAMINE_SUBCLASS
- *
- */
-#define EXAMINE_SUBCLASS "EXAMINE_SUBCLASS"
-
-static bool
-parse_examine_subclass(char *value)
-{
-    if (strcasecmp(value, "on") == 0)
-        examine_subclass = true;
-    else if (strcasecmp(value, "off") == 0)
-        examine_subclass = false;
-    else if (strcasecmp(value, "default") == 0) 
-        examine_subclass = examine_subclass_default;
-	else
-		elog(ERROR, "Bad value for %s (%s)", EXAMINE_SUBCLASS, value);
-	return TRUE;
-}
-
-static bool
-show_examine_subclass()
-{
-    
-	if (examine_subclass)
-		elog(NOTICE, "%s is ON", EXAMINE_SUBCLASS);
-	else
-		elog(NOTICE, "%s is OFF", EXAMINE_SUBCLASS);
-	return TRUE;
-}
-
-static bool
-reset_examine_subclass(void)
-{
-    examine_subclass = examine_subclass_default;
-	return TRUE;
-}
 
 /*
  * DATE_STYLE
@@ -571,7 +528,7 @@ void
 SetPGVariable(const char *name, const char *value)
 {
     /*
-     * Special cases ought to be removed are handled separately
+     * Special cases ought to be removed and handled separately
      * by TCOP
      */
     if (strcasecmp(name, "datestyle")==0)
@@ -588,8 +545,6 @@ SetPGVariable(const char *name, const char *value)
 #endif
     else if (strcasecmp(name, "random_seed")==0)
         parse_random_seed(pstrdup(value));
-    else if (strcasecmp(name, "examine_subclass")==0)
-        parse_examine_subclass(pstrdup(value));
     else
         SetConfigOption(name, value, superuser() ? PGC_SUSET : PGC_USERSET);
 }
@@ -612,12 +567,10 @@ GetPGVariable(const char *name)
 #endif
     else if (strcasecmp(name, "random_seed")==0)
         show_random_seed();
-    else if (strcasecmp(name, "examine_subclass")==0)
-        show_examine_subclass();
     else
     {
-        const char * val = GetConfigOption(name, superuser());
-        elog(NOTICE, "%s = %s", name, val);
+        const char * val = GetConfigOption(name);
+        elog(NOTICE, "%s is %s", name, val);
     }
 } 
 
@@ -638,8 +591,6 @@ ResetPGVariable(const char *name)
 #endif
     else if (strcasecmp(name, "random_seed")==0)
         reset_random_seed();
-    else if (strcasecmp(name, "examine_subclass")==0)
-        reset_examine_subclass();
     else
         SetConfigOption(name, NULL, superuser() ? PGC_SUSET : PGC_USERSET);
 }  

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.11 2000/06/18 21:24:51 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.12 2000/06/22 22:31:15 petere Exp $
 -->
 
 <Chapter Id="runtime">
@@ -911,6 +911,23 @@ env PGOPTIONS='--geqo=off' psql
 	running in parallel, and each one will be allowed to use as
 	much memory as this value specifies before it starts to put
 	data into temporary files.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>SQL_INHERITANCE (<type>bool</type>)</term>
+      <listitem>
+       <para>
+        This controls the inheritance semantics, in particular whether
+        subtables are included into the consideration of various
+        commands by default. This was not the case in versions prior
+        to 7.1. If you need this behaviour you can set this variable
+        to off, but in the long run you are encouraged to change your
+        applications to use the <literal>ONLY</literal> keyword to
+        exclude subtables. See the SQL language reference and the
+        <citetitle>User's Guide</citetitle> for more information about
+        inheritance.
        </para>
       </listitem>
      </varlistentry>

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/advanced.sgml,v 1.14 2000/06/14 13:12:52 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/advanced.sgml,v 1.15 2000/06/22 22:31:15 petere Exp $
 -->
 
  <chapter id="advanced">
@@ -116,22 +116,25 @@ SELECT name, altitude
     support this <quote>ONLY</quote> notation.
    </para>
 
-   <para>
-    Deprecated: In previous versions of postgres, the default was not to
-    get access to child classes. By experience this was found to be error
-    prone. Under the old syntax, to get the sub-classes you append "*"
-    to the table name. For example
-
-    <programlisting>
+   <note>
+    <title>Deprecated</title> 
+    <para>
+     In previous versions of <productname>Postgres</productname>, the
+     default was not to get access to child tables. This was found to
+     be error prone and is also in violation of SQL. Under the old
+     syntax, to get the sub-classes you append "*" to the table name.
+     For example
+<programlisting>
 SELECT * from cities*;
-    </programlisting>
-
-    This old behaviour is still available by using a SET command:
-
-    <programlisting>
-SET EXAMINE_SUBCLASS TO on;
-    </programlisting>     
-   </para>
+</programlisting>
+     To get the old behavior, the set configuration option
+     <literal>SQL_Inheritance</literal> to off, e.g.,
+<programlisting>
+SET SQL_Inheritance TO OFF;
+</programlisting>
+     or add a line in your <filename>postgresql.conf</filename> file.
+    </para>
+   </note>
   </sect1>
 
   <sect1>

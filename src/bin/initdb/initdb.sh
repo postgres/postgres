@@ -26,7 +26,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.96 2000/06/12 03:40:41 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.97 2000/06/22 22:31:22 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -460,6 +460,7 @@ then
 
     cp "$PG_HBA_SAMPLE" "$PGDATA"/pg_hba.conf     || exit_nicely
     cp "$POSTGRESQL_CONF_SAMPLE" "$PGDATA"/postgresql.conf || exit_nicely
+    chmod 0600 "$PGDATA"/pg_hba.conf "$PGDATA"/postgresql.conf
 
     echo "Adding template1 database to pg_database"
 

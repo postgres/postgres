@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/select.sgml,v 1.29 2000/06/09 01:44:00 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/select.sgml,v 1.30 2000/06/22 22:31:16 petere Exp $
 Postgres documentation
 -->
 
@@ -208,7 +208,7 @@ SELECT [ ALL | DISTINCT [ ON ( <replaceable class="PARAMETER">expression</replac
   This was previously the default result, and getting subclasses was
   obtained by appending <command>*</command> to the table name.
   The old behaviour is available via the command 
-  <command>SET EXAMINE_SUBCLASS TO 'on';</command>
+  <command>SET SQL_Inheritance TO OFF;</command>
   </para>
 
   <para>
