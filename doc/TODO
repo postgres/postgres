@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Tue Jul 31 09:21:21 EDT 2001
+Last updated:		Fri Aug 10 10:21:44 EDT 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -138,7 +138,7 @@ SYSTEM TABLES
 COMMANDS
 
 * Add SIMILAR TO to allow character classes, 'pg_[a-c]%'
-* Allow LOCK TABLE tab1, tab2, tab3 so all tables locked in unison [lock]
+* -Allow LOCK TABLE tab1, tab2, tab3 so all tables locked in unison [lock]
 * Allow RULE recompilation
 * Add BETWEEN ASYMMETRIC/SYMMETRIC
 * Change LIMIT val,val to offset,limit to match MySQL
