@@ -1,7 +1,7 @@
-This is B-Tree implementation using GiST for int2, int4, int8, float4, float8
-timestamp with/without time zone, time with/without time zone, date,
-interval, oid, money and macaddr, char, varchar/text, bytea, numeric,
-bit, varbit, inet/cidr types.
+This is a B-Tree implementation using GiST that supports the int2, int4,
+int8, float4, float8 timestamp with/without time zone, time
+with/without time zone, date, interval, oid, money, macaddr, char,
+varchar/text, bytea, numeric, bit, varbit and inet/cidr types.
 
 All work was done by Teodor Sigaev (teodor@stack.net) , Oleg Bartunov
 (oleg@sai.msu.su), Janko Richter (jankorichter@yahoo.de).
@@ -23,9 +23,9 @@ NEWS:
      Feb  5, 2003 - btree_gist now support int2, int8, float4, float8
      
 NOTICE:
-     This version will works only with postgresql version 7.4 and above
-     because of changes in interface of function calling and in system
-     tables.
+     This version will only work with PostgreSQL version 7.4 and above
+     because of changes in the system catalogs and the function call
+     interface.
      
      If you want to index varchar attributes, you have to index using
      the function text(<varchar>):

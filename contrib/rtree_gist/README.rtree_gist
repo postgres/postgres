@@ -1,4 +1,4 @@
-This is R-Tree implementation using GiST.
+This is a R-Tree implementation using GiST.
 Code (for PG95) are taken from http://s2k-ftp.cs.berkeley.edu:8000/gist/pggist/
 and changed according to new version of GiST (7.1 and above)
 
@@ -24,10 +24,10 @@ CHANGES:
      2. gist_poly_ops is lossy
      3. NULLs support
      4. works with multi-key GiST
-     
+
 NOTICE:
-     This version will works only with postgresql version 7.1 and above
-     because of changes in interface of function calling.
+     This version will only work with PostgreSQL version 7.1 and above
+     because of changes in the function call interface.
 
 INSTALLATION:
 
