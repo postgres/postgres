@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_table.sgml,v 1.84 2004/08/02 04:25:31 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_table.sgml,v 1.85 2004/10/21 21:33:59 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -417,12 +417,10 @@ and <replaceable class="PARAMETER">table_constraint</replaceable> is:
 
     <listitem>
      <para>
-      Theses clauses specify a foreign key constraint, which specifies
+      These clauses specify a foreign key constraint, which requires
       that a group of one or more columns of the new table must only
-      contain values which match against values in the referenced
-      column(s) <replaceable class="parameter">refcolumn</replaceable>
-      of the referenced table <replaceable
-      class="parameter">reftable</replaceable>.  If <replaceable
+      contain values that match values in the referenced
+      column(s) of some row of the referenced table.  If <replaceable
       class="parameter">refcolumn</replaceable> is omitted, the
       primary key of the <replaceable
       class="parameter">reftable</replaceable> is used.  The
@@ -431,7 +429,7 @@ and <replaceable class="PARAMETER">table_constraint</replaceable> is:
      </para>
 
      <para>
-      A value inserted into these columns is matched against the
+      A value inserted into the referencing column(s) is matched against the
       values of the referenced table and referenced columns using the
       given match type.  There are three match types: <literal>MATCH
       FULL</>, <literal>MATCH PARTIAL</>, and <literal>MATCH
@@ -452,7 +450,9 @@ and <replaceable class="PARAMETER">table_constraint</replaceable> is:
       clause specifies the action to perform when a referenced column
       in the referenced table is being updated to a new value. If the
       row is updated, but the referenced column is not actually
-      changed, no action is done.  There are the following possible
+      changed, no action is done. Referential actions apart from the
+      check of <literal>NO ACTION</literal> can not be deferred even if
+      the constraint is deferrable. There are the following possible
       actions for each clause:
 
       <variablelist>
@@ -461,8 +461,10 @@ and <replaceable class="PARAMETER">table_constraint</replaceable> is:
         <listitem>
          <para>
           Produce an error indicating that the deletion or update
-          would create a foreign key constraint violation.  This is
-          the default action.
+          would create a foreign key constraint violation.
+          If the constraint is deferred, this
+          error will be produced at constraint check time if there still
+          exist any referencing rows.  This is the default action.
          </para>
         </listitem>
        </varlistentry>
@@ -471,9 +473,10 @@ and <replaceable class="PARAMETER">table_constraint</replaceable> is:
         <term><literal>RESTRICT</literal></term>
         <listitem>
          <para>
-          Same as <literal>NO ACTION</literal> except that this action
-          will not be deferred even if the rest of the constraint is
-          deferrable and deferred.
+          Produce an error indicating that the deletion or update
+          would create a foreign key constraint violation.
+          This is the same as <literal>NO ACTION</literal> except that
+	  the check is not deferrable.
          </para>
         </listitem>
        </varlistentry>
@@ -493,7 +496,7 @@ and <replaceable class="PARAMETER">table_constraint</replaceable> is:
         <term><literal>SET NULL</literal></term>
         <listitem>
          <para>
-          Set the referencing column values to null.
+          Set the referencing column(s) to null.
          </para>
         </listitem>
        </varlistentry>
@@ -502,7 +505,7 @@ and <replaceable class="PARAMETER">table_constraint</replaceable> is:
         <term><literal>SET DEFAULT</literal></term>
         <listitem>
          <para>
-          Set the referencing column values to their default value.
+          Set the referencing column(s) to their default values.
          </para>
         </listitem>
        </varlistentry>
@@ -510,11 +513,10 @@ and <replaceable class="PARAMETER">table_constraint</replaceable> is:
      </para>
 
      <para>
-      If primary key column is updated frequently, it may be wise to
-      add an index to the foreign key column so that <literal>NO
-      ACTION</literal> and <literal>CASCADE</literal> actions
-      associated with the foreign key column can be more efficiently
-      performed.
+      If the referenced column(s) are changed frequently, it may be wise to
+      add an index to the foreign key column so that referential actions
+      associated with the foreign key column can be performed more
+      efficiently.
      </para>
     </listitem>
    </varlistentry>
@@ -844,9 +846,9 @@ CREATE TABLE distributors (
 
 <programlisting>
 CREATE TABLE cinemas (
-	id serial,
-	name text,
-	location text
+        id serial,
+        name text,
+        location text
 ) TABLESPACE diskvol1;
 </programlisting>
   </para>

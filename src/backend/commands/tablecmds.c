@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.135 2004/10/16 21:16:36 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.136 2004/10/21 21:33:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -4361,12 +4361,12 @@ createForeignKeyTriggers(Relation rel, FkConstraint *fkconstraint,
 	fk_trigger->actions[1] = '\0';
 
 	fk_trigger->isconstraint = true;
-	fk_trigger->deferrable = fkconstraint->deferrable;
-	fk_trigger->initdeferred = fkconstraint->initdeferred;
 	fk_trigger->constrrel = myRel;
 	switch (fkconstraint->fk_del_action)
 	{
 		case FKCONSTR_ACTION_NOACTION:
+			fk_trigger->deferrable = fkconstraint->deferrable;
+			fk_trigger->initdeferred = fkconstraint->initdeferred;
 			fk_trigger->funcname = SystemFuncName("RI_FKey_noaction_del");
 			break;
 		case FKCONSTR_ACTION_RESTRICT:
@@ -4375,12 +4375,18 @@ createForeignKeyTriggers(Relation rel, FkConstraint *fkconstraint,
 			fk_trigger->funcname = SystemFuncName("RI_FKey_restrict_del");
 			break;
 		case FKCONSTR_ACTION_CASCADE:
+			fk_trigger->deferrable = false;
+			fk_trigger->initdeferred = false;
 			fk_trigger->funcname = SystemFuncName("RI_FKey_cascade_del");
 			break;
 		case FKCONSTR_ACTION_SETNULL:
+			fk_trigger->deferrable = false;
+			fk_trigger->initdeferred = false;
 			fk_trigger->funcname = SystemFuncName("RI_FKey_setnull_del");
 			break;
 		case FKCONSTR_ACTION_SETDEFAULT:
+			fk_trigger->deferrable = false;
+			fk_trigger->initdeferred = false;
 			fk_trigger->funcname = SystemFuncName("RI_FKey_setdefault_del");
 			break;
 		default:
@@ -4425,12 +4431,12 @@ createForeignKeyTriggers(Relation rel, FkConstraint *fkconstraint,
 	fk_trigger->actions[0] = 'u';
 	fk_trigger->actions[1] = '\0';
 	fk_trigger->isconstraint = true;
-	fk_trigger->deferrable = fkconstraint->deferrable;
-	fk_trigger->initdeferred = fkconstraint->initdeferred;
 	fk_trigger->constrrel = myRel;
 	switch (fkconstraint->fk_upd_action)
 	{
 		case FKCONSTR_ACTION_NOACTION:
+			fk_trigger->deferrable = fkconstraint->deferrable;
+			fk_trigger->initdeferred = fkconstraint->initdeferred;
 			fk_trigger->funcname = SystemFuncName("RI_FKey_noaction_upd");
 			break;
 		case FKCONSTR_ACTION_RESTRICT:
@@ -4439,12 +4445,18 @@ createForeignKeyTriggers(Relation rel, FkConstraint *fkconstraint,
 			fk_trigger->funcname = SystemFuncName("RI_FKey_restrict_upd");
 			break;
 		case FKCONSTR_ACTION_CASCADE:
+			fk_trigger->deferrable = false;
+			fk_trigger->initdeferred = false;
 			fk_trigger->funcname = SystemFuncName("RI_FKey_cascade_upd");
 			break;
 		case FKCONSTR_ACTION_SETNULL:
+			fk_trigger->deferrable = false;
+			fk_trigger->initdeferred = false;
 			fk_trigger->funcname = SystemFuncName("RI_FKey_setnull_upd");
 			break;
 		case FKCONSTR_ACTION_SETDEFAULT:
+			fk_trigger->deferrable = false;
+			fk_trigger->initdeferred = false;
 			fk_trigger->funcname = SystemFuncName("RI_FKey_setdefault_upd");
 			break;
 		default:

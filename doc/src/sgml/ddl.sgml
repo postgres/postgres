@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ddl.sgml,v 1.30 2004/08/08 21:33:11 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/ddl.sgml,v 1.31 2004/10/21 21:33:59 tgl Exp $ -->
 
 <chapter id="ddl">
  <title>Data Definition</title>
@@ -940,11 +940,17 @@ CREATE TABLE order_items (
 
    <para>
     Restricting and cascading deletes are the two most common options.
-    <literal>RESTRICT</literal> can also be written as <literal>NO
-    ACTION</literal> and it's also the default if you do not specify
-    anything.  There are two other options for what should happen with
-    the foreign key columns when a primary key is deleted:
+    <literal>RESTRICT</literal> prevents a statement from deleting a
+    referenced row. <literal>NO ACTION</literal> means that if any
+    referencing rows still exist when the constraint is checked, an error
+    is raised; this is the default if you do not specify anything.
+    (The essential difference between these choices is that
+    <literal>NO ACTION</literal> allows the check to be deferred until
+    later in the transaction, whereas <literal>RESTRICT</literal> does not.)
+    There are two other options:
     <literal>SET NULL</literal> and <literal>SET DEFAULT</literal>.
+    These cause the referencing columns to be set to nulls or default
+    values, respectively, when the referenced row is deleted.
     Note that these do not excuse you from observing any constraints.
     For example, if an action specifies <literal>SET DEFAULT</literal>
     but the default value would not satisfy the foreign key, the
@@ -964,7 +970,7 @@ CREATE TABLE order_items (
 
    <para>
     Finally, we should mention that a foreign key must reference
-    columns that are either a primary key or form a unique constraint.
+    columns that either are a primary key or form a unique constraint.
     If the foreign key references a unique constraint, there are some
     additional possibilities regarding how null values are matched.
     These are explained in the reference documentation for

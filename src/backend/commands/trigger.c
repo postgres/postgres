@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/trigger.c,v 1.172 2004/09/10 18:39:56 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/trigger.c,v 1.173 2004/10/21 21:33:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2729,11 +2729,17 @@ AfterTriggerSetState(ConstraintsSetStmt *stmt)
 
 				/*
 				 * If we found some, check that they fit the deferrability
-				 * but skip ON <event> RESTRICT ones, since they are
+				 * but skip referential action ones, since they are
 				 * silently never deferrable.
 				 */
 				if (pg_trigger->tgfoid != F_RI_FKEY_RESTRICT_UPD &&
-					pg_trigger->tgfoid != F_RI_FKEY_RESTRICT_DEL)
+					pg_trigger->tgfoid != F_RI_FKEY_RESTRICT_DEL &&
+					pg_trigger->tgfoid != F_RI_FKEY_CASCADE_UPD &&
+					pg_trigger->tgfoid != F_RI_FKEY_CASCADE_DEL &&
+					pg_trigger->tgfoid != F_RI_FKEY_SETNULL_UPD &&
+					pg_trigger->tgfoid != F_RI_FKEY_SETNULL_DEL &&
+					pg_trigger->tgfoid != F_RI_FKEY_SETDEFAULT_UPD &&
+					pg_trigger->tgfoid != F_RI_FKEY_SETDEFAULT_DEL)
 				{
 					if (stmt->deferred && !pg_trigger->tgdeferrable)
 						ereport(ERROR,
