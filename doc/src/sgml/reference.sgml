@@ -1,0 +1,110 @@
+<!-- reference.sgml
+-
+- Postgres User's Reference documentation.
+- thomas 1998-03-14
+-
+- -->
+<!doctype book      PUBLIC "-//Davenport//DTD DocBook V3.0//EN" [
+<!entity intro      SYSTEM "intro.sgml">
+
+<!entity % allfiles SYSTEM "allfiles.sgml">
+%allfiles;
+
+<!entity biblio     SYSTEM "biblio.sgml">
+<!entity contacts   SYSTEM "contacts.sgml">
+]>
+<Book>
+
+<!-- Title information -->
+
+<Title>PostgreSQL Reference Manual</Title>
+<BookInfo>
+    <ReleaseInfo>Covering v6.4 for general release</ReleaseInfo>
+    <BookBiblio>
+    <AuthorGroup>
+      <Author>
+        <FirstName>Jose</FirstName>
+        <SurName>Soares Da Silva</SurName>
+      </Author>
+      <Author>
+        <FirstName>Oliver</FirstName>
+        <SurName>Elphick</SurName>
+      </Author>
+    </AuthorGroup>
+<!--
+    <AuthorGroup>
+      <CorpAuthor>The PostgreSQL Development Team</CorpAuthor>
+    </AuthorGroup>
+-->
+<!-- editor in authorgroup is not supported
+    <AuthorGroup>
+-->
+<!--
+      <Editor>
+        <FirstName>Thomas</FirstName>
+        <SurName>Lockhart</SurName>
+        <Affiliation>
+          <OrgName>Caltech/JPL</OrgName>
+        </Affiliation>
+      </Editor>
+-->
+      <Editor>
+        <FirstName>Oliver</FirstName>
+        <SurName>Elphick</SurName>
+      </Editor>
+<!--
+    </AuthorGroup>
+-->
+ 
+    <Date>(last updated 1998-04-18)</Date>
+    </BookBiblio>
+
+<LegalNotice>
+<Para>
+<ProductName>PostgreSQL</ProductName> is copyright (C) 1998 by the Postgres Global Development Group.
+</Para>
+</LegalNotice>
+
+</BookInfo>
+
+<!--
+<TOC> </TOC>
+<LOT> </LOT>
+-->
+
+<!--
+<Dedication>
+<Para>
+Your name here...
+</Para>
+</Dedication>
+-->
+
+<Preface>
+<Title>Summary</Title>
+
+<Para>
+<ProductName>Postgres</ProductName>, 
+ developed originally in the UC Berkeley Computer Science Department,
+ pioneered many of the object-relational concepts
+ now becoming available in some commercial databases.
+It provides SQL92/SQL3 language support,
+ transaction integrity, and type extensibility.
+ <ProductName>PostgreSQL</ProductName> is a public-domain, open source descendant
+ of this original Berkeley code.
+</Para>
+</Preface>
+
+<!--
+&intro-ref;
+-->
+
+&commands;
+
+&contacts;
+&biblio;
+
+<INDEX> </INDEX>
+
+</Book>
+
