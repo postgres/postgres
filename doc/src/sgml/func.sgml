@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.92 2002/01/25 02:39:28 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.93 2002/01/30 21:55:33 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -1803,7 +1803,6 @@ PostgreSQL documentation
     template that defines the output or input format.
    </para>
 
-   <para>
     <table tocentry="1">
      <title>Formatting Functions</title>
      <tgroup cols="4">
@@ -1867,7 +1866,6 @@ PostgreSQL documentation
       </tbody>
      </tgroup>
     </table>
-   </para>
 
    <para>
     In an output template string, there are certain patterns that are
@@ -1878,7 +1876,6 @@ PostgreSQL documentation
     values to be found there.
    </para>
 
-   <para>
     <table tocentry="1">
      <title>Template patterns for date/time conversions</title>
      <tgroup cols="2">
@@ -2064,7 +2061,6 @@ PostgreSQL documentation
       </tbody>
      </tgroup>
     </table>
-   </para>
 
    <para>
     Certain modifiers may be applied to any template pattern to alter its
@@ -2073,7 +2069,6 @@ PostgreSQL documentation
     <quote><literal>FM</literal></quote> prefix.
    </para>
 
-   <para>
     <table tocentry="1">
      <title>Template pattern modifiers for date/time conversions</title>
      <tgroup cols="3">
@@ -2113,7 +2108,6 @@ PostgreSQL documentation
       </tbody>
      </tgroup>
     </table>
-   </para>
 
    <para>
     Usage notes:
@@ -2209,7 +2203,6 @@ PostgreSQL documentation
     </itemizedlist>
    </para>
 
-   <para>
     <table tocentry="1">
      <title>Template patterns for numeric conversions</title>
      <tgroup cols="2">
@@ -2288,7 +2281,6 @@ PostgreSQL documentation
       </tbody>
      </tgroup>
     </table>
-   </para>
 
    <para>
     Usage notes:
@@ -2346,7 +2338,6 @@ PostgreSQL documentation
     </itemizedlist>
    </para>   
 
-   <para>
     <table tocentry="1">
      <title><function>to_char</function> Examples</title>
      <tgroup cols="2">
@@ -2492,7 +2483,7 @@ PostgreSQL documentation
       </tbody>
      </tgroup>
     </table>
-   </para>
+
   </sect1>
 
 
@@ -3827,7 +3818,6 @@ SELECT TIMESTAMP 'now';
     <literal>colname::inet</literal>.
    </para>
 
-   <para>
     <table tocentry="1" id="macaddr-functions">
      <title><type>macaddr</> Functions</title>
      <tgroup cols="5">
@@ -3851,7 +3841,6 @@ SELECT TIMESTAMP 'now';
       </tbody>
      </tgroup>
     </table>
-   </para>
 
    <para>
     The function <function>trunc</>(<type>macaddr</>) returns a MAC
