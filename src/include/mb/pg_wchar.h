@@ -1,4 +1,4 @@
-/* $Id: pg_wchar.h,v 1.21 2000/10/27 02:21:15 ishii Exp $ */
+/* $Id: pg_wchar.h,v 1.22 2000/10/30 10:41:05 ishii Exp $ */
 
 #ifndef PG_WCHAR_H
 #define PG_WCHAR_H
@@ -46,8 +46,8 @@ typedef unsigned int pg_wchar;
 /*
  * various definitions for EUC
  */
-#define SS2 0x8e				/* single shift 2 */
-#define SS3 0x8f				/* single shift 3 */
+#define SS2 0x8e				/* single shift 2 (JIS0201) */
+#define SS3 0x8f				/* single shift 3 (JIS0212) */
 
 /*
  * various definitions for mule internal code
@@ -104,13 +104,18 @@ typedef struct
 
 extern pg_wchar_tbl pg_wchar_table[];
 
+/*
+ * UTF-8 to local code conversion map
+ */
 typedef struct
 {
 	unsigned int utf;		/* UTF-8 */
 	unsigned int code;		/* local code */
-	unsigned char encoding;		/* encoding */
 } pg_utf_to_local;
 
+/*
+ * local code to UTF-8 conversion map
+ */
 typedef struct
 {
 	unsigned int code;	/* local code */
@@ -124,7 +129,6 @@ extern int	pg_wchar_strncmp(const pg_wchar *, const pg_wchar *, size_t);
 extern int	pg_char_and_wchar_strncmp(const char *, const pg_wchar *, size_t);
 extern size_t pg_wchar_strlen(const pg_wchar *);
 extern int	pg_mblen(const unsigned char *);
-extern int	pg_mblen_with_encoding(const unsigned char *, int);
 extern int	pg_encoding_mblen(int, const unsigned char *);
 extern int	pg_mule_mblen(const unsigned char *);
 extern int	pg_mic_mblen(const unsigned char *);

@@ -3,7 +3,7 @@
  * client encoding and server internal encoding.
  * (currently mule internal code (mic) is used)
  * Tatsuo Ishii
- * $Id: mbutils.c,v 1.12 2000/10/12 06:06:50 ishii Exp $ */
+ * $Id: mbutils.c,v 1.13 2000/10/30 10:40:28 ishii Exp $ */
 
 
 #include "postgres.h"
@@ -207,13 +207,6 @@ int
 pg_mblen(const unsigned char *mbstr)
 {
 	return ((*pg_wchar_table[GetDatabaseEncoding()].mblen) (mbstr));
-}
-
-/* returns the byte length of a multi-byte word with specified enciding */
-int
-pg_mblen_with_encoding(const unsigned char *mbstr, int encoding)
-{
-	return ((*pg_wchar_table[encoding].mblen) (mbstr));
 }
 
 /* returns the length (counted as a wchar) of a multi-byte string */

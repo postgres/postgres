@@ -4,7 +4,7 @@
 #    Makefile for utils/mb
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/utils/mb/Makefile,v 1.13 2000/10/25 19:44:44 tgl Exp $
+#    $Header: /cvsroot/pgsql/src/backend/utils/mb/Makefile,v 1.14 2000/10/30 10:40:28 ishii Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -28,12 +28,6 @@ liketest: liketest.o palloc.o $(OBJS)
 	$(CC) -o $@ $^ $(CFLAGS) $(LDFLAGS)
 
 utftest: utftest.o palloc.o common.o wstrcmp.o wstrncmp.o big5.o
-	$(CC) -o $@ $^ $(CFLAGS) $(LDFLAGS)
-
-uconv: uconv.o palloc.o common.o conv.o wchar.o big5.o mbutils.o
-	$(CC) -o $@ $^ $(CFLAGS) $(LDFLAGS)
-
-uconv2: uconv2.o palloc.o common.o conv.o wchar.o big5.o mbutils.o
 	$(CC) -o $@ $^ $(CFLAGS) $(LDFLAGS)
 
 depend dep:
