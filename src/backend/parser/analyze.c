@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *  $Id: analyze.c,v 1.106 1999/05/17 17:03:27 momjian Exp $
+ *  $Id: analyze.c,v 1.107 1999/05/23 21:41:14 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -373,7 +373,7 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt)
 										  qry->uniqueFlag);
 
 	qry->hasAggs = pstate->p_hasAggs;
-	if (pstate->p_hasAggs)
+	if (pstate->p_hasAggs || qry->groupClause)
 		parseCheckAggregates(pstate, qry);
 
 	/*
@@ -997,7 +997,7 @@ transformSelectStmt(ParseState *pstate, SelectStmt *stmt)
 	qry->rtable = pstate->p_rtable;
 
 	qry->hasAggs = pstate->p_hasAggs;
-	if (pstate->p_hasAggs)
+	if (pstate->p_hasAggs || qry->groupClause)
 		parseCheckAggregates(pstate, qry);
 
 	/*

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_agg.c,v 1.19 1999/05/12 15:01:48 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_agg.c,v 1.20 1999/05/23 21:41:14 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -173,28 +173,34 @@ tleIsAggOrGroupCol(TargetEntry *tle, List *groupClause, List *tlist)
 }
 
 /*
- * parseCheckAggregates -
- *	  this should really be done earlier but the current grammar
- *	  cannot differentiate functions from aggregates. So we have do check
- *	  here when the target list and the qualifications are finalized.
+ * parseCheckAggregates
+ *	Check for aggregates where they shouldn't be and improper grouping.
+ *
+ *	Ideally this should be done earlier, but it's difficult to distinguish
+ *	aggregates from plain functions at the grammar level.  So instead we
+ *	check here.  This function should be called after the target list and
+ *	qualifications are finalized.
  */
 void
 parseCheckAggregates(ParseState *pstate, Query *qry)
 {
 	List	   *tl;
 
-	Assert(pstate->p_hasAggs);
+	/* This should only be called if we found aggregates or grouping */
+	Assert(pstate->p_hasAggs || qry->groupClause);
 
 	/*
-	 * aggregates never appear in WHERE clauses. (we have to check where
-	 * clause first because if there is an aggregate, the check for
-	 * non-group column in target list may fail.)
+	 * Aggregates must never appear in WHERE clauses.
+	 * (Note this check should appear first to deliver an appropriate
+	 * error message; otherwise we are likely to generate the generic
+	 * "illegal use of aggregates in target list" message, which is
+	 * outright misleading if the problem is in WHERE.)
 	 */
 	if (contain_agg_clause(qry->qual))
 		elog(ERROR, "Aggregates not allowed in WHERE clause");
 
 	/*
-	 * the target list can only contain aggregates, group columns and
+	 * The target list can only contain aggregates, group columns and
 	 * functions thereof.
 	 */
 	foreach(tl, qry->targetList)
@@ -214,7 +220,6 @@ parseCheckAggregates(ParseState *pstate, Query *qry)
 	if (!exprIsAggOrGroupCol(qry->havingQual, qry->groupClause, qry->targetList))
 		elog(ERROR,
 			 "Illegal use of aggregates or non-group column in HAVING clause");
-	return;
 }
 
 
