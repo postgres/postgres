@@ -855,6 +855,9 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
 	return getTime(columnIndex);
       case Types.TIMESTAMP:
 	return getTimestamp(columnIndex);
+      case Types.BINARY:
+      case Types.VARBINARY:
+	return getBytes(columnIndex);   
       default:
 	return connection.getObject(field.getTypeName(), getString(columnIndex));
       }

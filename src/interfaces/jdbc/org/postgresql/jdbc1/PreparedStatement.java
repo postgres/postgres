@@ -489,6 +489,17 @@ public class PreparedStatement extends Statement implements java.sql.PreparedSta
 			case Types.TIMESTAMP:
 				setTimestamp(parameterIndex, (Timestamp)x);
 				break;
+			case Types.BIT:
+				if (x instanceof Boolean) {
+					set(parameterIndex, ((Boolean)x).booleanValue() ? "TRUE" : "FALSE");
+				} else {
+					throw new PSQLException("postgresql.prep.type");
+				}
+				break;
+			case Types.BINARY:
+			case Types.VARBINARY:
+				setObject(parameterIndex,x);
+				break;
 			case Types.OTHER:
 				setString(parameterIndex, ((PGobject)x).getValue());
 				break;
