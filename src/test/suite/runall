@@ -2,7 +2,7 @@
 
 foreach s (*.sql)
 	echo "===> $s";
-	psql -q -e -n $USER < $s >& $s.out;
+	psql -q -e -n $USER < $s > $s.out 2>&1;
 	diff $s.out results/$s.out;
 end
 

@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $Header: /cvsroot/pgsql/src/bin/ipcclean/Attic/ipcclean.sh,v 1.4 2000/01/19 20:08:27 petere Exp $
+# $Header: /cvsroot/pgsql/src/bin/ipcclean/Attic/ipcclean.sh,v 1.5 2000/03/25 14:44:41 momjian Exp $
 #
 
 CMDNAME=`basename $0`
@@ -41,7 +41,7 @@ if [ `uname` = 'Linux' ]; then
     ipcs_lpid=
     did_anything=
 
-    if ps x | grep -s 'postmaster' >& /dev/null ; then
+    if ps x | grep -s 'postmaster' >/dev/null 2>&1 ; then
         echo "$CMDNAME: You still have a postmaster running."
         exit 1
     fi
@@ -60,7 +60,7 @@ if [ `uname` = 'Linux' ]; then
         # Don't do anything if process still running.
         # (This check is conceptually phony, but it's
         # useful anyway in practice.)
-        ps hj$ipcs_pid >& /dev/null
+        ps hj$ipcs_pid >/dev/null 2>&1
         if [ $? -eq 0 ]; then
             echo "skipped. Process still exists (pid $ipcs_pid)."
         else
