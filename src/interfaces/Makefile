@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/interfaces/Makefile,v 1.34 2000/04/11 18:58:18 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/interfaces/Makefile,v 1.35 2000/04/20 17:21:46 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -26,7 +26,7 @@ include $(SRCDIR)/Makefile.global
 	$(MAKE) -C libpq $@
 	$(MAKE) -C ecpg $@
 ifeq ($(HAVE_Cplusplus), true)
-	-$(MAKE) -C libpq++ $@
+	$(MAKE) -C libpq++ $@
 else
 	echo $(HAVE_Cplusplus): No C++
 endif
