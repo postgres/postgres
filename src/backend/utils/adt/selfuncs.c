@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/selfuncs.c,v 1.165 2004/08/30 02:54:39 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/selfuncs.c,v 1.166 2004/09/18 19:39:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1869,6 +1869,71 @@ fail:
 	ReleaseVariableStats(rightvar);
 }
 
+
+/*
+ * Helper routine for estimate_num_groups: add an item to a list of
+ * GroupVarInfos, but only if it's not known equal to any of the existing
+ * entries.
+ */
+typedef struct
+{
+	Node	   *var;		/* might be an expression, not just a Var */
+	RelOptInfo *rel;		/* relation it belongs to */
+	double		ndistinct;	/* # distinct values */
+} GroupVarInfo;
+
+static List *
+add_unique_group_var(Query *root, List *varinfos,
+					 Node *var, VariableStatData *vardata)
+{
+	GroupVarInfo *varinfo;
+	double		ndistinct;
+	ListCell   *lc;
+
+	ndistinct = get_variable_numdistinct(vardata);
+
+	/* cannot use foreach here because of possible list_delete */
+	lc = list_head(varinfos);
+	while (lc)
+	{
+		varinfo = (GroupVarInfo *) lfirst(lc);
+
+		/* must advance lc before list_delete possibly pfree's it */
+		lc = lnext(lc);
+
+		/* Drop exact duplicates */
+		if (equal(var, varinfo->var))
+			return varinfos;
+
+		/*
+		 * Drop known-equal vars, but only if they belong to different
+		 * relations (see comments for estimate_num_groups)
+		 */
+		if (vardata->rel != varinfo->rel &&
+			exprs_known_equal(root, var, varinfo->var))
+		{
+			if (varinfo->ndistinct <= ndistinct)
+			{
+				/* Keep older item, forget new one */
+				return varinfos;
+			}
+			else
+			{
+				/* Delete the older item */
+				varinfos = list_delete_ptr(varinfos, varinfo);
+			}
+		}
+	}
+
+	varinfo = (GroupVarInfo *) palloc(sizeof(GroupVarInfo));
+
+	varinfo->var = var;
+	varinfo->rel = vardata->rel;
+	varinfo->ndistinct = ndistinct;
+	varinfos = lappend(varinfos, varinfo);
+	return varinfos;
+}
+
 /*
  * estimate_num_groups		- Estimate number of groups in a grouped query
  *
@@ -1900,6 +1965,9 @@ fail:
  *		increase the number of distinct values (unless it is volatile,
  *		which we consider unlikely for grouping), but it probably won't
  *		reduce the number of distinct values much either.
+ *		As a special case, if a GROUP BY expression can be matched to an
+ *		expressional index for which we have statistics, then we treat the
+ *		whole expression as though it were just a Var.
  *	2.	If the list contains Vars of different relations that are known equal
  *		due to equijoin clauses, then drop all but one of the Vars from each
  *		known-equal set, keeping the one with smallest estimated # of values
@@ -1926,25 +1994,44 @@ fail:
 double
 estimate_num_groups(Query *root, List *groupExprs, double input_rows)
 {
-	List	   *allvars = NIL;
 	List	   *varinfos = NIL;
 	double		numdistinct;
 	ListCell   *l;
-	typedef struct
-	{							/* varinfos is a List of these */
-		Var		   *var;
-		double		ndistinct;
-	} MyVarInfo;
 
 	/* We should not be called unless query has GROUP BY (or DISTINCT) */
 	Assert(groupExprs != NIL);
 
-	/* Step 1: get the unique Vars used */
+	/*
+	 * Steps 1/2: find the unique Vars used, treating an expression as a Var
+	 * if we can find stats for it.  For each one, record the statistical
+	 * estimate of number of distinct values (total in its table, without
+	 * regard for filtering).
+	 */
 	foreach(l, groupExprs)
 	{
 		Node	   *groupexpr = (Node *) lfirst(l);
+		VariableStatData vardata;
 		List	   *varshere;
+		ListCell   *l2;
 
+		/*
+		 * If examine_variable is able to deduce anything about the GROUP BY
+		 * expression, treat it as a single variable even if it's really more
+		 * complicated.
+		 */
+		examine_variable(root, groupexpr, 0, &vardata);
+		if (vardata.statsTuple != NULL || vardata.isunique)
+		{
+			varinfos = add_unique_group_var(root, varinfos,
+											groupexpr, &vardata);
+			ReleaseVariableStats(vardata);
+			continue;
+		}
+		ReleaseVariableStats(vardata);
+
+		/*
+		 * Else pull out the component Vars
+		 */
 		varshere = pull_var_clause(groupexpr, false);
 
 		/*
@@ -1959,69 +2046,23 @@ estimate_num_groups(Query *root, List *groupExprs, double input_rows)
 				return input_rows;
 			continue;
 		}
-		allvars = list_concat(allvars, varshere);
+
+		/*
+		 * Else add variables to varinfos list
+		 */
+		foreach(l2, varshere)
+		{
+			Node	   *var = (Node *) lfirst(l2);
+
+			examine_variable(root, var, 0, &vardata);
+			varinfos = add_unique_group_var(root, varinfos, var, &vardata);
+			ReleaseVariableStats(vardata);
+		}
 	}
 
 	/* If now no Vars, we must have an all-constant GROUP BY list. */
-	if (allvars == NIL)
+	if (varinfos == NIL)
 		return 1.0;
-
-	/* Use list_union() to discard duplicates */
-	allvars = list_union(NIL, allvars);
-
-	/*
-	 * Step 2: acquire statistical estimate of number of distinct values
-	 * of each Var (total in its table, without regard for filtering).
-	 * Also, detect known-equal Vars and discard the ones we don't want.
-	 */
-	foreach(l, allvars)
-	{
-		Var		   *var = (Var *) lfirst(l);
-		VariableStatData vardata;
-		double		ndistinct;
-		bool		keep = true;
-		ListCell   *l2;
-
-		examine_variable(root, (Node *) var, 0, &vardata);
-		ndistinct = get_variable_numdistinct(&vardata);
-		ReleaseVariableStats(vardata);
-
-		/* cannot use foreach here because of possible list_delete */
-		l2 = list_head(varinfos);
-		while (l2)
-		{
-			MyVarInfo  *varinfo = (MyVarInfo *) lfirst(l2);
-
-			/* must advance l2 before list_delete possibly pfree's it */
-			l2 = lnext(l2);
-
-			if (var->varno != varinfo->var->varno &&
-			exprs_known_equal(root, (Node *) var, (Node *) varinfo->var))
-			{
-				/* Found a match */
-				if (varinfo->ndistinct <= ndistinct)
-				{
-					/* Keep older item, forget new one */
-					keep = false;
-					break;
-				}
-				else
-				{
-					/* Delete the older item */
-					varinfos = list_delete_ptr(varinfos, varinfo);
-				}
-			}
-		}
-
-		if (keep)
-		{
-			MyVarInfo  *varinfo = (MyVarInfo *) palloc(sizeof(MyVarInfo));
-
-			varinfo->var = var;
-			varinfo->ndistinct = ndistinct;
-			varinfos = lcons(varinfo, varinfos);
-		}
-	}
 
 	/*
 	 * Steps 3/4: group Vars by relation and estimate total numdistinct.
@@ -2031,25 +2072,24 @@ estimate_num_groups(Query *root, List *groupExprs, double input_rows)
 	 * these Vars from the newvarinfos list for the next iteration. This
 	 * is the easiest way to group Vars of same rel together.
 	 */
-	Assert(varinfos != NIL);
 	numdistinct = 1.0;
 
 	do
 	{
-		MyVarInfo  *varinfo1 = (MyVarInfo *) linitial(varinfos);
-		RelOptInfo *rel = find_base_rel(root, varinfo1->var->varno);
+		GroupVarInfo *varinfo1 = (GroupVarInfo *) linitial(varinfos);
+		RelOptInfo *rel = varinfo1->rel;
 		double		reldistinct = varinfo1->ndistinct;
 		List	   *newvarinfos = NIL;
 
 		/*
-		 * Get the largest numdistinct estimate of the Vars for this rel.
+		 * Get the product of numdistinct estimates of the Vars for this rel.
 		 * Also, construct new varinfos list of remaining Vars.
 		 */
 		for_each_cell(l, lnext(list_head(varinfos)))
 		{
-			MyVarInfo  *varinfo2 = (MyVarInfo *) lfirst(l);
+			GroupVarInfo *varinfo2 = (GroupVarInfo *) lfirst(l);
 
-			if (varinfo2->var->varno == varinfo1->var->varno)
+			if (varinfo2->rel == varinfo1->rel)
 				reldistinct *= varinfo2->ndistinct;
 			else
 			{
