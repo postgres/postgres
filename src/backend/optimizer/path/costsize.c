@@ -42,7 +42,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/costsize.c,v 1.94 2002/12/12 15:49:28 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/costsize.c,v 1.95 2002/12/13 17:29:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -672,12 +672,22 @@ cost_nestloop(Path *path, Query *root,
 	 */
 	startup_cost += outer_path->startup_cost + inner_path->startup_cost;
 	run_cost += outer_path->total_cost - outer_path->startup_cost;
-	run_cost += outer_path->parent->rows *
-		(inner_path->total_cost - inner_path->startup_cost);
-	if (!(IsA(inner_path, MaterialPath) ||
-		  IsA(inner_path, HashPath)) &&
-		outer_path->parent->rows > 1)
-		run_cost += (outer_path->parent->rows - 1) * inner_path->startup_cost;
+	if (IsA(inner_path, MaterialPath) ||
+		IsA(inner_path, HashPath))
+	{
+		/* charge only run cost for each iteration of inner path */
+		run_cost += outer_path->parent->rows *
+			(inner_path->total_cost - inner_path->startup_cost);
+	}
+	else
+	{
+		/*
+		 * charge total cost for each iteration of inner path, except we
+		 * already charged the first startup_cost in our own startup
+		 */
+		run_cost += outer_path->parent->rows * inner_path->total_cost
+			- inner_path->startup_cost;
+	}
 
 	/*
 	 * Number of tuples processed (not number emitted!).  If inner path is
@@ -768,8 +778,8 @@ cost_mergejoin(Path *path, Query *root,
 		innerscansel = firstclause->left_mergescansel;
 	}
 
-	outer_rows = outer_path->parent->rows * outerscansel;
-	inner_rows = inner_path->parent->rows * innerscansel;
+	outer_rows = ceil(outer_path->parent->rows * outerscansel);
+	inner_rows = ceil(inner_path->parent->rows * innerscansel);
 
 	/* cost of source data */
 
@@ -1343,10 +1353,12 @@ approx_selectivity(Query *root, List *quals)
 void
 set_baserel_size_estimates(Query *root, RelOptInfo *rel)
 {
+	double		temp;
+
 	/* Should only be applied to base relations */
 	Assert(length(rel->relids) == 1);
 
-	rel->rows = rel->tuples *
+	temp = rel->tuples *
 		restrictlist_selectivity(root,
 								 rel->baserestrictinfo,
 								 lfirsti(rel->relids));
@@ -1354,10 +1366,14 @@ set_baserel_size_estimates(Query *root, RelOptInfo *rel)
 	/*
 	 * Force estimate to be at least one row, to make explain output look
 	 * better and to avoid possible divide-by-zero when interpolating
-	 * cost.
+	 * cost.  Make it an integer, too.
 	 */
-	if (rel->rows < 1.0)
-		rel->rows = 1.0;
+	if (temp < 1.0)
+		temp = 1.0;
+	else
+		temp = ceil(temp);
+
+	rel->rows = temp;
 
 	rel->baserestrictcost = cost_qual_eval(rel->baserestrictinfo);
 
@@ -1437,10 +1453,12 @@ set_joinrel_size_estimates(Query *root, RelOptInfo *rel,
 	/*
 	 * Force estimate to be at least one row, to make explain output look
 	 * better and to avoid possible divide-by-zero when interpolating
-	 * cost.
+	 * cost.  Make it an integer, too.
 	 */
 	if (temp < 1.0)
 		temp = 1.0;
+	else
+		temp = ceil(temp);
 
 	rel->rows = temp;
 
@@ -1470,6 +1488,8 @@ set_joinrel_size_estimates(Query *root, RelOptInfo *rel,
 void
 set_function_size_estimates(Query *root, RelOptInfo *rel)
 {
+	double		temp;
+
 	/* Should only be applied to base relations that are functions */
 	Assert(length(rel->relids) == 1);
 	Assert(rel->rtekind == RTE_FUNCTION);
@@ -1483,7 +1503,7 @@ set_function_size_estimates(Query *root, RelOptInfo *rel)
 	rel->tuples = 1000;
 
 	/* Now estimate number of output rows */
-	rel->rows = rel->tuples *
+	temp = rel->tuples *
 		restrictlist_selectivity(root,
 								 rel->baserestrictinfo,
 								 lfirsti(rel->relids));
@@ -1491,10 +1511,14 @@ set_function_size_estimates(Query *root, RelOptInfo *rel)
 	/*
 	 * Force estimate to be at least one row, to make explain output look
 	 * better and to avoid possible divide-by-zero when interpolating
-	 * cost.
+	 * cost.  Make it an integer, too.
 	 */
-	if (rel->rows < 1.0)
-		rel->rows = 1.0;
+	if (temp < 1.0)
+		temp = 1.0;
+	else
+		temp = ceil(temp);
+
+	rel->rows = temp;
 
 	rel->baserestrictcost = cost_qual_eval(rel->baserestrictinfo);
 
