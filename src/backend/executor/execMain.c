@@ -27,7 +27,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.133 2000/12/05 22:03:57 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.134 2001/01/01 21:22:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -762,7 +762,10 @@ InitPlan(CmdType operation, Query *parseTree, Plan *plan, EState *estate)
 				CommandCounterIncrement();
 
 				/*
-				 * Eventually create a TOAST table for the into relation
+				 * If necessary, create a TOAST table for the into relation.
+				 * Note that AlterTableCreateToastTable ends with
+				 * CommandCounterIncrement(), so that the TOAST table will
+				 * be visible for insertion.
 				 */
 				AlterTableCreateToastTable(intoName, true);
 
