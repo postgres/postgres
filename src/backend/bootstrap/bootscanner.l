@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/bootstrap/bootscanner.l,v 1.4 1996/10/23 07:39:39 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/bootstrap/bootscanner.l,v 1.5 1996/11/15 18:37:37 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -105,7 +105,9 @@ insert		{ return(INSERT_TUPLE); }
 		    return(ID);
 		}
 {sid}		{
-		    yylval.ival = EnterString(scanstr((char*)yytext));
+		    yytext[strlen(yytext)-1] = '\0'; /* strip off quotes */
+		    yylval.ival = EnterString(scanstr((char*)yytext+1));
+		    yytext[strlen(yytext)] = '"'; /* restore quotes */
 		    return(ID);
 		}
 
