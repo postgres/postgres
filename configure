@@ -13102,6 +13102,7 @@ fi
 #
 # For each platform, we need to know about any special compile and link
 # libraries, and whether the normal C function names are thread-safe.
+# See the comment at the top of src/port/thread.c for more information.
 #
 if test "$enable_thread_safety" = yes; then
 if test "${ac_cv_header_pthread_h+set}" = set; then
@@ -13208,8 +13209,8 @@ fi
 if test $ac_cv_header_pthread_h = yes; then
   :
 else
-  { { echo "$as_me:$LINENO: error: pthread.h not found, required for --with-threads" >&5
-echo "$as_me: error: pthread.h not found, required for --with-threads" >&2;}
+  { { echo "$as_me:$LINENO: error: pthread.h not found, required for --enable-thread-safetys" >&5
+echo "$as_me: error: pthread.h not found, required for --enable-thread-safetys" >&2;}
    { (exit 1); exit 1; }; }
 fi
 
@@ -13221,12 +13222,14 @@ Cannot enable threads on your platform.
 Please report your platform threading info to the PostgreSQL mailing lists
 so it can be added to the next release.  Report all compile flags, link flags,
 functions, or libraries required for threading support.
+See the comment at the top of src/port/thread.c for more information.
 " >&5
 echo "$as_me: error:
 Cannot enable threads on your platform.
 Please report your platform threading info to the PostgreSQL mailing lists
 so it can be added to the next release.  Report all compile flags, link flags,
 functions, or libraries required for threading support.
+See the comment at the top of src/port/thread.c for more information.
 " >&2;}
    { (exit 1); exit 1; }; }
 fi
@@ -13254,22 +13257,16 @@ _CFLAGS="$CFLAGS"
 _LIBS="$LIBS"
 CFLAGS="$CFLAGS $THREAD_CFLAGS"
 LIBS="$LIBS $THREAD_LIBS"
-
-
-
-for ac_func in strerror_r getpwuid_r gethostbyname_r
-do
-as_ac_var=`echo "ac_cv_func_$ac_func" | $as_tr_sh`
-echo "$as_me:$LINENO: checking for $ac_func" >&5
-echo $ECHO_N "checking for $ac_func... $ECHO_C" >&6
-if eval "test \"\${$as_ac_var+set}\" = set"; then
+echo "$as_me:$LINENO: checking for strerror_r" >&5
+echo $ECHO_N "checking for strerror_r... $ECHO_C" >&6
+if test "${ac_cv_func_strerror_r+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   cat >conftest.$ac_ext <<_ACEOF
 #line $LINENO "configure"
 #include "confdefs.h"
 /* System header to define __stub macros and hopefully few prototypes,
-    which can conflict with char $ac_func (); below.  */
+    which can conflict with char strerror_r (); below.  */
 #include <assert.h>
 /* Override any gcc2 internal prototype to avoid an error.  */
 #ifdef __cplusplus
@@ -13277,7 +13274,7 @@ extern "C"
 #endif
 /* We use char because int might match the return type of a gcc2
    builtin and then its argument prototype would still apply.  */
-char $ac_func ();
+char strerror_r ();
 char (*f) ();
 
 #ifdef F77_DUMMY_MAIN
@@ -13292,10 +13289,10 @@ main ()
 /* The GNU C library defines this for functions which it implements
     to always fail with ENOSYS.  Some functions are actually named
     something starting with __ and the normal name is an alias.  */
-#if defined (__stub_$ac_func) || defined (__stub___$ac_func)
+#if defined (__stub_strerror_r) || defined (__stub___strerror_r)
 choke me
 #else
-f = $ac_func;
+f = strerror_r;
 #endif
 
   ;
@@ -13314,23 +13311,167 @@ if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
   ac_status=$?
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
-  eval "$as_ac_var=yes"
+  ac_cv_func_strerror_r=yes
 else
   echo "$as_me: failed program was:" >&5
 cat conftest.$ac_ext >&5
-eval "$as_ac_var=no"
+ac_cv_func_strerror_r=no
 fi
 rm -f conftest.$ac_objext conftest$ac_exeext conftest.$ac_ext
 fi
-echo "$as_me:$LINENO: result: `eval echo '${'$as_ac_var'}'`" >&5
-echo "${ECHO_T}`eval echo '${'$as_ac_var'}'`" >&6
-if test `eval echo '${'$as_ac_var'}'` = yes; then
-  cat >>confdefs.h <<_ACEOF
-#define `echo "HAVE_$ac_func" | $as_tr_cpp` 1
-_ACEOF
-
+echo "$as_me:$LINENO: result: $ac_cv_func_strerror_r" >&5
+echo "${ECHO_T}$ac_cv_func_strerror_r" >&6
+if test $ac_cv_func_strerror_r = yes; then
+  :
+else
+  { { echo "$as_me:$LINENO: error: strerror_r not found, required on this platform for --enable-thread-safety" >&5
+echo "$as_me: error: strerror_r not found, required on this platform for --enable-thread-safety" >&2;}
+   { (exit 1); exit 1; }; }
 fi
-done
+
+echo "$as_me:$LINENO: checking for getpwuid_r" >&5
+echo $ECHO_N "checking for getpwuid_r... $ECHO_C" >&6
+if test "${ac_cv_func_getpwuid_r+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  cat >conftest.$ac_ext <<_ACEOF
+#line $LINENO "configure"
+#include "confdefs.h"
+/* System header to define __stub macros and hopefully few prototypes,
+    which can conflict with char getpwuid_r (); below.  */
+#include <assert.h>
+/* Override any gcc2 internal prototype to avoid an error.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+/* We use char because int might match the return type of a gcc2
+   builtin and then its argument prototype would still apply.  */
+char getpwuid_r ();
+char (*f) ();
+
+#ifdef F77_DUMMY_MAIN
+#  ifdef __cplusplus
+     extern "C"
+#  endif
+   int F77_DUMMY_MAIN() { return 1; }
+#endif
+int
+main ()
+{
+/* The GNU C library defines this for functions which it implements
+    to always fail with ENOSYS.  Some functions are actually named
+    something starting with __ and the normal name is an alias.  */
+#if defined (__stub_getpwuid_r) || defined (__stub___getpwuid_r)
+choke me
+#else
+f = getpwuid_r;
+#endif
+
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+         { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_func_getpwuid_r=yes
+else
+  echo "$as_me: failed program was:" >&5
+cat conftest.$ac_ext >&5
+ac_cv_func_getpwuid_r=no
+fi
+rm -f conftest.$ac_objext conftest$ac_exeext conftest.$ac_ext
+fi
+echo "$as_me:$LINENO: result: $ac_cv_func_getpwuid_r" >&5
+echo "${ECHO_T}$ac_cv_func_getpwuid_r" >&6
+if test $ac_cv_func_getpwuid_r = yes; then
+  :
+else
+  { { echo "$as_me:$LINENO: error: getpwuid_r not found, required on this platform for --enable-thread-safety" >&5
+echo "$as_me: error: getpwuid_r not found, required on this platform for --enable-thread-safety" >&2;}
+   { (exit 1); exit 1; }; }
+fi
+
+echo "$as_me:$LINENO: checking for gethostbyname_r" >&5
+echo $ECHO_N "checking for gethostbyname_r... $ECHO_C" >&6
+if test "${ac_cv_func_gethostbyname_r+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  cat >conftest.$ac_ext <<_ACEOF
+#line $LINENO "configure"
+#include "confdefs.h"
+/* System header to define __stub macros and hopefully few prototypes,
+    which can conflict with char gethostbyname_r (); below.  */
+#include <assert.h>
+/* Override any gcc2 internal prototype to avoid an error.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+/* We use char because int might match the return type of a gcc2
+   builtin and then its argument prototype would still apply.  */
+char gethostbyname_r ();
+char (*f) ();
+
+#ifdef F77_DUMMY_MAIN
+#  ifdef __cplusplus
+     extern "C"
+#  endif
+   int F77_DUMMY_MAIN() { return 1; }
+#endif
+int
+main ()
+{
+/* The GNU C library defines this for functions which it implements
+    to always fail with ENOSYS.  Some functions are actually named
+    something starting with __ and the normal name is an alias.  */
+#if defined (__stub_gethostbyname_r) || defined (__stub___gethostbyname_r)
+choke me
+#else
+f = gethostbyname_r;
+#endif
+
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+         { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_func_gethostbyname_r=yes
+else
+  echo "$as_me: failed program was:" >&5
+cat conftest.$ac_ext >&5
+ac_cv_func_gethostbyname_r=no
+fi
+rm -f conftest.$ac_objext conftest$ac_exeext conftest.$ac_ext
+fi
+echo "$as_me:$LINENO: result: $ac_cv_func_gethostbyname_r" >&5
+echo "${ECHO_T}$ac_cv_func_gethostbyname_r" >&6
+if test $ac_cv_func_gethostbyname_r = yes; then
+  :
+else
+  { { echo "$as_me:$LINENO: error: gethostbyname_r not found, required on this platform for --enable-thread-safety" >&5
+echo "$as_me: error: gethostbyname_r not found, required on this platform for --enable-thread-safety" >&2;}
+   { (exit 1); exit 1; }; }
+fi
 
 CFLAGS="$_CFLAGS"
 LIBS="$_LIBS"

@@ -7,7 +7,7 @@
  *
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  *
- * $Id: thread.c,v 1.3 2003/08/14 05:27:18 momjian Exp $
+ * $Id: thread.c,v 1.4 2003/08/16 15:35:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -49,7 +49,7 @@
 char *
 pqStrerror(int errnum, char *strerrbuf, size_t buflen)
 {
-#if defined(USE_THREADS) && defined(HAVE_STRERROR_R)
+#if defined(USE_THREADS) && defined(NEED_REENTRANT_FUNC_NAMES)
 	/* reentrant strerror_r is available */
 	/* some early standards had strerror_r returning char * */
 	strerror_r(errnum, strerrbuf, buflen);
@@ -68,7 +68,7 @@ int
 pqGetpwuid(uid_t uid, struct passwd *resultbuf, char *buffer,
 		   size_t buflen, struct passwd **result)
 {
-#if defined(USE_THREADS) && defined(HAVE_GETPWUID_R)
+#if defined(USE_THREADS) && defined(NEED_REENTRANT_FUNC_NAMES)
 	/*
 	 * Early POSIX draft of getpwuid_r() returns 'struct passwd *'.
 	 *    getpwuid_r(uid, resultbuf, buffer, buflen)
@@ -94,8 +94,7 @@ pqGethostbyname(const char *name,
 				struct hostent **result,
 				int *herrno)
 {
-#if defined(USE_THREADS) && defined(HAVE_GETHOSTBYNAME_R)
-
+#if defined(USE_THREADS) && defined(NEED_REENTRANT_FUNC_NAMES)
 	/*
 	 * broken (well early POSIX draft) gethostbyname_r() which returns
 	 * 'struct hostent *'

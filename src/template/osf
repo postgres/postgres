@@ -4,6 +4,7 @@ else
   CC="$CC -std"
   CFLAGS='-O4 -Olimit 2000'
 fi
-SUPPORTS_THREADS=yes
-THREAD_CFLAGS="-pthread"
 
+SUPPORTS_THREADS=yes
+NEED_REENTRANT_FUNC_NAMES=no
+THREAD_CFLAGS="-pthread"
