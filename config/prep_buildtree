@@ -15,20 +15,25 @@ elif test x"$1" = x"--help"; then
     echo "$help"
     exit 0
 fi
-sourcetree=$1
 
-buildtree=${2:-'.'}
+unset CDPATH
+
+sourcetree=`cd $1 && pwd`
+
+buildtree=`cd ${2:-'.'} && pwd`
 
 for item in `find "$sourcetree" -type d \( -name CVS -prune -o -print \)`; do
     subdir=`expr "$item" : "$sourcetree\(.*\)"`
     if test ! -d "$buildtree/$subdir"; then
-        mkdir -p "$buildtree/$subdir" || exit
+        mkdir -p "$buildtree/$subdir" || exit 1
     fi
 done
 
 for item in `find "$sourcetree" -name Makefile -o -name GNUmakefile`; do
     subdir=`expr "$item" : "$sourcetree\(.*\)"`
     if test ! -f "${item}.in"; then
-        ln -fs "$item" "$buildtree/$subdir" || exit
+        ln -fs "$item" "$buildtree/$subdir" || exit 1
     fi
 done
+
+exit 0

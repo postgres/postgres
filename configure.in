@@ -33,10 +33,6 @@ AC_SUBST(VERSION)
 AC_DEFINE_UNQUOTED(PG_VERSION, "$VERSION")
 
 unset CDPATH
-abs_top_srcdir=`cd $srcdir && pwd`
-AC_SUBST(abs_top_srcdir)
-abs_top_builddir=`pwd`
-AC_SUBST(abs_top_builddir)
 
 AC_CANONICAL_HOST
 AC_SUBST(host)
@@ -688,6 +684,7 @@ AC_CHECK_LIB(BSD,      main)
 AC_CHECK_LIB(gen,      main)
 AC_CHECK_LIB(PW,       main)
 AC_CHECK_LIB(resolv,   main)
+AC_CHECK_LIB([[unix]], main)
 AC_SEARCH_LIBS(crypt,  crypt)
 AC_CHECK_LIB(bind,     __inet_ntoa)
 dnl only consider libz to be present if we find <zlib.h> as well
@@ -1140,13 +1137,25 @@ if test -n "$NSGMLS"; then
 fi
 
 
-# Finally ready to produce output files ...
+# check whether 'test -ef' works
+if (test "$srcdir" -ef "$srcdir") >/dev/null 2>&1 ; then
+  test_ef_works=yes
+else
+  test_ef_works=no
+fi
 
-if test x"$abs_top_srcdir" != x"$abs_top_builddir"; then
-  echo $ac_n "preparing build tree... $ac_c" 1>&6
-  /bin/sh "$srcdir/config/prep_buildtree" "$abs_top_srcdir" "$abs_top_builddir" \
-    || AC_MSG_ERROR(failed)
-  AC_MSG_RESULT(done)
+abs_top_srcdir=
+AC_SUBST(abs_top_srcdir)
+
+if test "$test_ef_works" = yes ; then
+# prepare build tree if outside source tree
+  if test "$srcdir" -ef . ; then : ; else
+    abs_top_srcdir=`cd $srcdir && pwd`
+    echo $ac_n "preparing build tree... $ac_c" 1>&6
+    /bin/sh "$srcdir/config/prep_buildtree" "$abs_top_srcdir" "." \
+      || AC_MSG_ERROR(failed)
+    AC_MSG_RESULT(done)
+  fi
 fi
 
 AC_OUTPUT(

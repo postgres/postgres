@@ -1,5 +1,5 @@
 # -*-makefile-*-
-# $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.120 2001/02/27 08:13:29 ishii Exp $
+# $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.121 2001/03/03 15:53:41 petere Exp $
 
 #------------------------------------------------------------------------------
 # All PostgreSQL makefiles include this file and use the variables it sets,
@@ -33,9 +33,8 @@ VERSION = @VERSION@
 
 # Support for VPATH builds
 abs_top_srcdir = @abs_top_srcdir@
-abs_top_builddir = @abs_top_builddir@
 
-ifeq ($(abs_top_builddir), $(abs_top_srcdir))
+ifndef abs_top_srcdir
 top_srcdir = $(top_builddir)
 srcdir = .
 else

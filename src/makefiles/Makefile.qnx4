@@ -4,7 +4,6 @@ AROPT = cr
 LD= $(AR)
 LDREL= $(AROPT)
 LDOUT=
-LIBS= -lunix
 LDFLAGS=
 
 enable_shared = no
