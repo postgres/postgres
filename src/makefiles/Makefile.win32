@@ -1,7 +1,7 @@
-# $Header: /cvsroot/pgsql/src/makefiles/Makefile.win32,v 1.1 2003/05/15 16:35:30 momjian Exp $
+# $Header: /cvsroot/pgsql/src/makefiles/Makefile.win32,v 1.2 2003/05/19 17:31:59 momjian Exp $
 
 # Use replacement include files for those missing on Win32
-override CPPFLAGS+="-I$(top_srcdir)/src/include/port/win32_include"
+override CPPFLAGS+="-I$(top_srcdir)/src/include/port/win32"
 
 DLLTOOL= dlltool
 DLLWRAP= dllwrap
