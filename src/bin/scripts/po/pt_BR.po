@@ -4,10 +4,10 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 7.4\n"
-"POT-Creation-Date: 2003-10-04 21:59-0300\n"
-"PO-Revision-Date: 2003-08-24 21:55-0300\n"
+"POT-Creation-Date: 2003-10-04 21:59-0200\n"
+"PO-Revision-Date: 2004-01-07 11:37-0200\n"
 "Last-Translator: Euler Taveira de Oliveira <euler@ufgnet.ufg.br>\n"
-"Language-Team: Brazilian Portuguese <euler@ufgnet.ufg.br>\n"
+"Language-Team: Brazilian Portuguese <pgsqlbr-dev@lists.querencialivre.rs.gov.br>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=ISO-8859-1\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -103,7 +103,7 @@ msgstr "  -q, --quiet               não exibe nenhuma mensagem\n"
 #: createdb.c:223 createlang.c:283 createuser.c:249 dropdb.c:153
 #: droplang.c:252 dropuser.c:153 clusterdb.c:240
 msgid "  --help                    show this help, then exit\n"
-msgstr "  --help                    mostra esta ajuda e sai\n"
+msgstr "  --help                    mostra essa ajuda e sai\n"
 
 #: createdb.c:224 createlang.c:284 createuser.c:250 dropdb.c:154
 #: droplang.c:253 dropuser.c:154 clusterdb.c:241
@@ -574,7 +574,7 @@ msgstr "  -v, --verbose                   mostra muitas mensagens\n"
 
 #: vacuumdb.c:267
 msgid "  --help                          show this help, then exit\n"
-msgstr "  --help                          mostra esta ajuda e sai\n"
+msgstr "  --help                          mostra essa ajuda e sai\n"
 
 #: vacuumdb.c:268
 msgid ""

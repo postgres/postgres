@@ -6,10 +6,10 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 7.4\n"
-"POT-Creation-Date: 2003-10-04 21:52-0300\n"
-"PO-Revision-Date: 2003-08-24 21:24-0300\n"
+"POT-Creation-Date: 2003-10-04 21:52-0200\n"
+"PO-Revision-Date: 2004-01-07 11:37-0200\n"
 "Last-Translator: Euler Taveira de Oliveira <euler@ufgnet.ufg.br>\n"
-"Language-Team: Brazilian Portuguese <euler@ufgnet.ufg.br>\n"
+"Language-Team: Brazilian Portuguese <pgsqlbr-dev@lists.querencialivre.rs.gov.br>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=ISO-8859-1\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -34,37 +34,37 @@ msgstr "Autenticação Kerberos 5 rejeitada: %*s\n"
 msgid "could not restore non-blocking mode on socket: %s\n"
 msgstr "não pôde restaurar modo não-bloqueado no conector (socket): %s\n"
 
-#: fe-auth.c:509
+#: fe-auth.c:508
 msgid "SCM_CRED authentication method not supported\n"
 msgstr "método de autenticação SCM_CRED não é suportado\n"
 
-#: fe-auth.c:600
+#: fe-auth.c:599
 msgid "Kerberos 4 authentication failed\n"
 msgstr "Autenticação Kerberos 4 falhou\n"
 
-#: fe-auth.c:606
+#: fe-auth.c:605
 msgid "Kerberos 4 authentication not supported\n"
 msgstr "Autenticação Kerberos 4 não é suportada\n"
 
-#: fe-auth.c:616
+#: fe-auth.c:615
 msgid "Kerberos 5 authentication failed\n"
 msgstr "Autenticação Kerberos 5 falhou\n"
 
-#: fe-auth.c:622
+#: fe-auth.c:621
 msgid "Kerberos 5 authentication not supported\n"
 msgstr "Autenticação Kerberos 5 não é suportada\n"
 
-#: fe-auth.c:650
+#: fe-auth.c:649
 #, c-format
 msgid "authentication method %u not supported\n"
 msgstr "método de autenticação %u não é suportado\n"
 
-#: fe-auth.c:687
+#: fe-auth.c:686
 #, c-format
 msgid "invalid authentication service name \"%s\", ignored\n"
 msgstr "nome do serviço de autenticação \"%s\" é inválido, ignorado\n"
 
-#: fe-auth.c:758
+#: fe-auth.c:757
 #, c-format
 msgid "fe_getauthname: invalid authentication system: %d\n"
 msgstr "fe_getauthname: sistema de autenticação inválido: %d\n"
@@ -150,7 +150,7 @@ msgstr "não pôde obter do conector (socket) o endereço do cliente: %s\n"
 msgid "could not send SSL negotiation packet: %s\n"
 msgstr "não pôde mandar pacote de negociação SSL: %s\n"
 
-#: fe-connect.c:1404 fe-connect.c:2527 fe-connect.c:2536 fe-connect.c:3103
+#: fe-connect.c:1404 fe-connect.c:2524 fe-connect.c:2533 fe-connect.c:3100
 #: fe-lobj.c:540
 msgid "out of memory\n"
 msgstr "sem memória\n"
@@ -191,25 +191,25 @@ msgstr ""
 "estado de conexão %c é inválido, provavelmente indicativo de corrupção de "
 "memória\n"
 
-#: fe-connect.c:2575
+#: fe-connect.c:2572
 #, c-format
 msgid "missing \"=\" after \"%s\" in connection info string\n"
 msgstr "faltando \"=\" depois de \"%s\" na linha de informação da conexão\n"
 
-#: fe-connect.c:2624
+#: fe-connect.c:2621
 msgid "unterminated quoted string in connection info string\n"
 msgstr "frase em aspas não terminada na linha de informação da conexão\n"
 
-#: fe-connect.c:2658
+#: fe-connect.c:2655
 #, c-format
 msgid "invalid connection option \"%s\"\n"
 msgstr "opção de conexão \"%s\" inválida\n"
 
-#: fe-connect.c:2870
+#: fe-connect.c:2867
 msgid "connection pointer is NULL\n"
 msgstr "ponteiro de conexão é NULL\n"
 
-#: fe-connect.c:3121
+#: fe-connect.c:3118
 #, c-format
 msgid ""
 "WARNING: Password file %s has world or group read access; permission should "
@@ -228,7 +228,7 @@ msgstr "linha de comando é um ponteiro nulo\n"
 
 #: fe-exec.c:724
 msgid "statement name is a null pointer\n"
-msgstr "expressão é um ponteiro nulo\n"
+msgstr "sentença é um ponteiro nulo\n"
 
 #: fe-exec.c:755
 msgid "no connection to the server\n"
@@ -238,7 +238,7 @@ msgstr "sem conexão ao servidor\n"
 msgid "another command is already in progress\n"
 msgstr "outro comando já está em execução\n"
 
-#: fe-exec.c:798 fe-exec.c:1432
+#: fe-exec.c:798 fe-exec.c:1443
 msgid "function requires at least protocol version 3.0\n"
 msgstr "função requer pelo menos a versão 3.0 do protocolo\n"
 
@@ -259,29 +259,29 @@ msgstr "Estado de COPY IN deve ser terminado primeiro\n"
 msgid "COPY OUT state must be terminated first\n"
 msgstr "Estado de COPY OUT deve ser terminado primeiro\n"
 
-#: fe-exec.c:1336 fe-exec.c:1390 fe-exec.c:1474
+#: fe-exec.c:1336 fe-exec.c:1401 fe-exec.c:1485
 msgid "no COPY in progress\n"
 msgstr "Nenhum COPY em andamento\n"
 
-#: fe-exec.c:1666
+#: fe-exec.c:1677
 msgid "connection in wrong state\n"
-msgstr "conexão em estado errado\n"
+msgstr "conexão está em estado incorreto\n"
 
-#: fe-exec.c:1697
+#: fe-exec.c:1708
 msgid "invalid ExecStatusType code"
 msgstr "código ExecStatusType inválido"
 
-#: fe-exec.c:1761 fe-exec.c:1784
+#: fe-exec.c:1772 fe-exec.c:1795
 #, c-format
 msgid "column number %d is out of range 0..%d"
 msgstr "coluna número %d está fora do intervalo 0..%d"
 
-#: fe-exec.c:1777
+#: fe-exec.c:1788
 #, c-format
 msgid "row number %d is out of range 0..%d"
 msgstr "linha número %d está fora do intervalo 0..%d"
 
-#: fe-exec.c:2062
+#: fe-exec.c:2073
 #, c-format
 msgid "could not interpret result from server: %s"
 msgstr "não pôde interpretar resultado do servidor: %s"
@@ -382,15 +382,15 @@ msgstr ""
 msgid "could not send data to server: %s\n"
 msgstr "não pôde enviar dados ao servidor: %s\n"
 
-#: fe-misc.c:905
+#: fe-misc.c:922
 msgid "timeout expired\n"
 msgstr "tempo de espera expirado\n"
 
-#: fe-misc.c:950
+#: fe-misc.c:967
 msgid "socket not open\n"
 msgstr "conector (socket) não está aberto\n"
 
-#: fe-misc.c:973
+#: fe-misc.c:990
 #, c-format
 msgid "select() failed: %s\n"
 msgstr "select() falhou: %s\n"

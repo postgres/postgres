@@ -4,10 +4,10 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 7.4\n"
-"POT-Creation-Date: 2003-11-15 21:21+0100\n"
-"PO-Revision-Date: 2003-11-15 21:35+0100\n"
+"POT-Creation-Date: 2003-11-15 17:21-0200\n"
+"PO-Revision-Date: 2004-01-07 11:37-0200\n"
 "Last-Translator: Euler Taveira de Oliveira <euler@ufgnet.ufg.br>\n"
-"Language-Team: Brazilian Portuguese <euler@ufgnet.ufg.br>\n"
+"Language-Team: Brazilian Portuguese <pgsqlbr-dev@lists.querencialivre.rs.gov.br>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=ISO-8859-1\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -67,7 +67,7 @@ msgid "Wrote history to file \"%s\".\n"
 msgstr "Histórico escrito para arquivo \"%s\".\n"
 
 #: command.c:692 command.c:1149 command.c:1246 command.c:1964 common.c:86
-#: copy.c:88 copy.c:116 describe.c:51 mainloop.c:78 mainloop.c:341
+#: copy.c:88 copy.c:116 mainloop.c:78 mainloop.c:341 describe.c:51
 msgid "out of memory\n"
 msgstr "sem memória\n"
 
@@ -396,7 +396,7 @@ msgstr "  -X              não lê o arquivo de inicialização (~/.psqlrc)"
 
 #: help.c:99
 msgid "  --help          show this help, then exit"
-msgstr "  --help          mostra esta ajuda e sai"
+msgstr "  --help          mostra essa ajuda e sai"
 
 #: help.c:100
 msgid "  --version       output version information, then exit"
@@ -700,7 +700,7 @@ msgstr "  \\dc [MODELO]  lista conversões\n"
 
 #: help.c:215
 msgid "  \\dC            list casts\n"
-msgstr "  \\dC           lista moldes (casts)\n"
+msgstr "  \\dC           lista conversões de tipos (casts)\n"
 
 #: help.c:216
 msgid "  \\dd [PATTERN]  show comment for object\n"
@@ -874,8 +874,8 @@ msgstr "%s: transação atual foi terminada\n"
 msgid "%s: unknown transaction status\n"
 msgstr "%s: status da transação é desconhecido\n"
 
-#: describe.c:106 describe.c:157 describe.c:230 describe.c:292 describe.c:339
-#: describe.c:438 describe.c:718 describe.c:1345 large_obj.c:278
+#: large_obj.c:278 describe.c:106 describe.c:157 describe.c:230 describe.c:292
+#: describe.c:339 describe.c:438 describe.c:718 describe.c:1345
 msgid "Description"
 msgstr "Descrição"
 
@@ -1350,7 +1350,7 @@ msgstr "Implícito?"
 
 #: describe.c:1562
 msgid "List of casts"
-msgstr "Lista de moldes"
+msgstr "Lista de conversões de tipos (casts)"
 
 #: describe.c:1603
 msgid "List of schemas"
@@ -1751,7 +1751,7 @@ msgstr ""
 
 #: sql_help.h:117
 msgid "define a new cast"
-msgstr "define um novo molde (cast)"
+msgstr "define uma nova conversão de tipo (cast)"
 
 #: sql_help.h:118
 msgid ""
@@ -2046,7 +2046,8 @@ msgid ""
 "[ DEFERRABLE | NOT DEFERRABLE ] [ INITIALLY DEFERRED | INITIALLY IMMEDIATE ]"
 msgstr ""
 "CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } ] TABLE nome_tabela (\n"
-"    { nome_coluna tipo_dado [ DEFAULT expressão_padrão ] [ restrição_coluna [ ... ] ]\n"
+"    { nome_coluna tipo_dado [ DEFAULT expressão_padrão ] [ restrição_coluna "
+"[ ... ] ]\n"
 "    | restrição_tabela\n"
 "    | LIKE tabela_pai [ { INCLUDING | EXCLUDING } DEFAULTS ] }  [, ... ]\n"
 ")\n"
@@ -2059,9 +2060,11 @@ msgstr ""
 "[ CONSTRAINT nome_restrição ]\n"
 "{ NOT NULL | NULL | UNIQUE | PRIMARY KEY |\n"
 "  CHECK (expressão) |\n"
-"  REFERENCES tabela_ref [ ( coluna_ref ) ] [ MATCH FULL | MATCH PARTIAL | MATCH SIMPLE ]\n"
+"  REFERENCES tabela_ref [ ( coluna_ref ) ] [ MATCH FULL | MATCH PARTIAL | "
+"MATCH SIMPLE ]\n"
 "    [ ON DELETE ação ] [ ON UPDATE ação ] }\n"
-"[ DEFERRABLE | NOT DEFERRABLE ] [ INITIALLY DEFERRED | INITIALLY IMMEDIATE ]\n"
+"[ DEFERRABLE | NOT DEFERRABLE ] [ INITIALLY DEFERRED | INITIALLY "
+"IMMEDIATE ]\n"
 "\n"
 "e restrição_tabela é:\n"
 "\n"
@@ -2069,8 +2072,10 @@ msgstr ""
 "{ UNIQUE ( nome_coluna [, ... ] ) |\n"
 "  PRIMARY KEY ( nome_coluna [, ... ] ) |\n"
 "  CHECK ( expressão ) |\n"
-"  FOREIGN KEY ( nome_coluna [, ... ] ) REFERENCES tabela_ref [ ( coluna_ref [, ... ] ) ]\n"
-"    [ MATCH FULL | MATCH PARTIAL | MATCH SIMPLE ] [ ON DELETE ação ] [ ON UPDATE ação ] }\n"
+"  FOREIGN KEY ( nome_coluna [, ... ] ) REFERENCES tabela_ref [ ( coluna_ref "
+"[, ... ] ) ]\n"
+"    [ MATCH FULL | MATCH PARTIAL | MATCH SIMPLE ] [ ON DELETE ação ] [ ON "
+"UPDATE ação ] }\n"
 "[ DEFERRABLE | NOT DEFERRABLE ] [ INITIALLY DEFERRED | INITIALLY IMMEDIATE ]"
 
 #: sql_help.h:177 sql_help.h:353
@@ -2180,7 +2185,7 @@ msgstr ""
 
 #: sql_help.h:197
 msgid "deallocate a prepared statement"
-msgstr "desaloca um comando preparado"
+msgstr "desaloca uma setença preparada"
 
 #: sql_help.h:198
 msgid "DEALLOCATE [ PREPARE ] plan_name"
@@ -2218,7 +2223,7 @@ msgstr "DROP AGGREGATE nome ( tipo ) [ CASCADE | RESTRICT ]"
 
 #: sql_help.h:213
 msgid "remove a cast"
-msgstr "remove um molde (cast)"
+msgstr "remove uma conversão de tipo (cast)"
 
 #: sql_help.h:214
 msgid "DROP CAST (sourcetype AS targettype) [ CASCADE | RESTRICT ]"
@@ -2370,7 +2375,7 @@ msgstr "END [ WORK | TRANSACTION ]"
 
 #: sql_help.h:289
 msgid "execute a prepared statement"
-msgstr "executa um comando preparado"
+msgstr "executa uma sentença preparada"
 
 #: sql_help.h:290
 msgid "EXECUTE plan_name [ (parameter [, ...] ) ]"
@@ -2378,11 +2383,11 @@ msgstr "EXECUTE nome_plan [ (parâmetro [, ...] ) ]"
 
 #: sql_help.h:293
 msgid "show the execution plan of a statement"
-msgstr "mostra o plano de execução de um comando"
+msgstr "mostra o plano de execução de uma sentença"
 
 #: sql_help.h:294
 msgid "EXPLAIN [ ANALYZE ] [ VERBOSE ] statement"
-msgstr "EXPLAIN [ ANALYZE ] [ VERBOSE ] comando"
+msgstr "EXPLAIN [ ANALYZE ] [ VERBOSE ] sentença"
 
 #: sql_help.h:297
 msgid "retrieve rows from a query using a cursor"
@@ -2551,11 +2556,11 @@ msgstr "NOTIFY nome"
 
 #: sql_help.h:329
 msgid "prepare a statement for execution"
-msgstr "prepara um comando para execução"
+msgstr "prepara uma sentença para execução"
 
 #: sql_help.h:330
 msgid "PREPARE plan_name [ (datatype [, ...] ) ] AS statement"
-msgstr "PREPARE nome_plan [ (tipo_dado [, ...] ) ] AS comando"
+msgstr "PREPARE nome_plan [ (tipo_dado [, ...] ) ] AS sentença"
 
 #: sql_help.h:333
 msgid "rebuild indexes"
