@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/date.h,v 1.26 2004/02/14 20:16:18 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/utils/date.h,v 1.27 2004/07/02 22:50:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -147,7 +147,6 @@ extern Datum text_time(PG_FUNCTION_ARGS);
 extern Datum time_text(PG_FUNCTION_ARGS);
 extern Datum time_pl_interval(PG_FUNCTION_ARGS);
 extern Datum time_mi_interval(PG_FUNCTION_ARGS);
-extern Datum interval_pl_time(PG_FUNCTION_ARGS);
 extern Datum time_part(PG_FUNCTION_ARGS);
 
 extern Datum timetz_in(PG_FUNCTION_ARGS);

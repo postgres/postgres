@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.212 2004/07/02 18:59:20 joe Exp $
+$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.213 2004/07/02 22:49:45 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -4689,7 +4689,10 @@ substring('foobar' from 'o(.)b')   <lineannotation>o</lineannotation>
    All the functions and operators described below that take <type>time</type> or <type>timestamp</type>
    inputs actually come in two variants: one that takes <type>time with time zone</type> or <type>timestamp
    with time zone</type>, and one that takes <type>time without time zone</type> or <type>timestamp without time zone</type>.
-   For brevity, these variants are not shown separately.
+   For brevity, these variants are not shown separately.  Also, the
+   <literal>+</> and <literal>*</> operators come in commutative pairs (for
+   example both date + integer and integer + date); we show only one of each
+   such pair.
   </para>
 
     <table id="operators-datetime-table">
@@ -4725,12 +4728,6 @@ substring('foobar' from 'o(.)b')   <lineannotation>o</lineannotation>
 
        <row>
         <entry> <literal>+</literal> </entry>
-        <entry><literal>time '03:00' + date '2001-09-28'</literal></entry>
-        <entry><literal>timestamp '2001-09-28 03:00'</literal></entry>
-       </row>
-
-       <row>
-        <entry> <literal>+</literal> </entry>
         <entry><literal>interval '1 day' + interval '1 hour'</literal></entry>
         <entry><literal>interval '1 day 01:00'</literal></entry>
        </row>
@@ -4744,12 +4741,6 @@ substring('foobar' from 'o(.)b')   <lineannotation>o</lineannotation>
        <row>
         <entry> <literal>+</literal> </entry>
         <entry><literal>time '01:00' + interval '3 hours'</literal></entry>
-        <entry><literal>time '04:00'</literal></entry>
-       </row>
-
-       <row>
-        <entry> <literal>+</literal> </entry>
-        <entry><literal>interval '3 hours' + time '01:00'</literal></entry>
         <entry><literal>time '04:00'</literal></entry>
        </row>
 
@@ -4803,20 +4794,8 @@ substring('foobar' from 'o(.)b')   <lineannotation>o</lineannotation>
 
        <row>
         <entry> <literal>-</literal> </entry>
-        <entry><literal>interval '2 hours' - time '05:00'</literal></entry>
-        <entry><literal>time '03:00'</literal></entry>
-       </row>
-
-       <row>
-        <entry> <literal>-</literal> </entry>
         <entry><literal>timestamp '2001-09-29 03:00' - timestamp '2001-09-27 12:00'</literal></entry>
         <entry><literal>interval '1 day 15:00'</literal></entry>
-       </row>
-
-       <row>
-        <entry> <literal>*</literal> </entry>
-        <entry><literal>double precision '3.5' * interval '1 hour'</literal></entry>
-        <entry><literal>interval '03:30'</literal></entry>
        </row>
 
        <row>
@@ -7332,7 +7311,7 @@ SELECT pg_type_is_visible('myschema.widget'::regtype);
       <row>
        <entry><literal><function>pg_tablespace_databases</function>(<parameter>tablespace_oid</parameter>)</literal></entry>
        <entry><type>setof oid</type></entry>
-       <entry>get set of database oids that have objects in the tablespace</entry>
+       <entry>get set of database OIDs that have objects in the tablespace</entry>
       </row>
      </tbody>
     </tgroup>
@@ -7373,12 +7352,13 @@ SELECT pg_type_is_visible('myschema.widget'::regtype);
 
   <para>
   <function>pg_tablespace_databases</function> allows usage examination of a
-  tablespace. It will return a set of database oids, that have objects
+  tablespace. It will return a set of OIDs of databases that have objects
   stored in the tablespace. If this function returns any row, the
-  tablespace is assumed not to be empty and cannot be dropped. To
-  display the actual objects populating the tablespace, you will need
-  to connect to the databases returned by 
-  <function>pg_tablespace_databases</function> to query pg_class.
+  tablespace is not empty and cannot be dropped. To
+  display the specific objects populating the tablespace, you will need
+  to connect to the databases identified by 
+  <function>pg_tablespace_databases</function> and query their
+  <structname>pg_class</> catalogs.
   </para>
 
    <indexterm zone="functions-misc">

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.340 2004/07/02 18:59:24 joe Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.341 2004/07/02 22:49:48 tgl Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -2677,7 +2677,7 @@ DESCR("encode text from encoding to ASCII text");
 DATA(insert OID = 1847 ( to_ascii	PGNSP PGUID 12 f f t f i 2	25 "25 19" _null_	to_ascii_encname - _null_ ));
 DESCR("encode text from encoding to ASCII text");
 
-DATA(insert OID = 1848 ( interval_pl_time		PGNSP PGUID 12 f f t f i 2 1083 "1186 1083" _null_  interval_pl_time - _null_ ));
+DATA(insert OID = 1848 ( interval_pl_time	PGNSP PGUID 14 f f t f i 2 1083 "1186 1083" _null_  "select $2 + $1" - _null_ ));
 DESCR("plus");
 
 DATA(insert OID = 1850 (  int28eq		   PGNSP PGUID 12 f f t f i 2 16 "21 20" _null_	int28eq - _null_ ));
@@ -2938,10 +2938,6 @@ DATA(insert OID = 2048 (  isfinite			PGNSP PGUID 12 f f t f i 1	 16 "1114" _null
 DESCR("finite timestamp?");
 DATA(insert OID = 2049 ( to_char			PGNSP PGUID 12 f f t f s 2	25 "1114 25" _null_  timestamp_to_char - _null_ ));
 DESCR("format timestamp to text");
-DATA(insert OID = 2050 ( interval_mi_time	PGNSP PGUID 14 f f t f i 2 1083 "1186 1083" _null_  "select $2 - $1" - _null_ ));
-DESCR("minus");
-DATA(insert OID = 2051 ( interval_mi_timetz PGNSP PGUID 14 f f t f i 2 1266 "1186 1266" _null_  "select $2 - $1" - _null_ ));
-DESCR("minus");
 DATA(insert OID = 2052 (  timestamp_eq		PGNSP PGUID 12 f f t f i 2 16 "1114 1114" _null_  timestamp_eq - _null_ ));
 DESCR("equal");
 DATA(insert OID = 2053 (  timestamp_ne		PGNSP PGUID 12 f f t f i 2 16 "1114 1114" _null_  timestamp_ne - _null_ ));
@@ -3553,19 +3549,16 @@ DATA(insert OID = 1066 (  generate_series PGNSP PGUID 12 f f t t v 3 23 "23 23 2
 DESCR("non-persistent series generator");
 DATA(insert OID = 1067 (  generate_series PGNSP PGUID 12 f f t t v 2 23 "23 23" _null_ generate_series_int4 - _null_ ));
 DESCR("non-persistent series generator");
-
 DATA(insert OID = 1068 (  generate_series PGNSP PGUID 12 f f t t v 3 20 "20 20 20" _null_ generate_series_step_int8 - _null_ ));
 DESCR("non-persistent series generator");
 DATA(insert OID = 1069 (  generate_series PGNSP PGUID 12 f f t t v 2 20 "20 20" _null_ generate_series_int8 - _null_ ));
 DESCR("non-persistent series generator");
-
 
 /* boolean aggregates */
 DATA(insert OID = 2515 ( booland_statefunc             PGNSP PGUID 12 f f t f i 2 16 "16 16" _null_ booland_statefunc - _null_ ));
 DESCR("boolean-and aggregate transition function");
 DATA(insert OID = 2516 ( boolor_statefunc              PGNSP PGUID 12 f f t f i 2 16 "16 16" _null_ boolor_statefunc - _null_ ));
 DESCR("boolean-or aggregate transition function");
-
 DATA(insert OID = 2517 ( bool_and 					   PGNSP PGUID 12 t f f f i 1 16 "16" _null_ aggregate_dummy - _null_ ));
 DESCR("boolean-and aggregate");
 /* ANY, SOME? These names conflict with subquery operators. See doc. */
@@ -3579,24 +3572,29 @@ DATA(insert OID = 2236 ( bit_and 					   PGNSP PGUID 12 t f f f i 1 21 "21" _nul
 DESCR("bitwise-and smallint aggregate");
 DATA(insert OID = 2237 ( bit_or						   PGNSP PGUID 12 t f f f i 1 21 "21" _null_ aggregate_dummy - _null_));
 DESCR("bitwise-or smallint aggregate");
-
 DATA(insert OID = 2238 ( bit_and 					   PGNSP PGUID 12 t f f f i 1 23 "23" _null_ aggregate_dummy - _null_));
 DESCR("bitwise-and integer aggregate");
 DATA(insert OID = 2239 ( bit_or						   PGNSP PGUID 12 t f f f i 1 23 "23" _null_ aggregate_dummy - _null_));
 DESCR("bitwise-or integer aggregate");
-
 DATA(insert OID = 2240 ( bit_and 					   PGNSP PGUID 12 t f f f i 1 20 "20" _null_ aggregate_dummy - _null_));
 DESCR("bitwise-and bigint aggregate");
 DATA(insert OID = 2241 ( bit_or						   PGNSP PGUID 12 t f f f i 1 20 "20" _null_ aggregate_dummy - _null_));
 DESCR("bitwise-or bigint aggregate");
-
 DATA(insert OID = 2242 ( bit_and 					   PGNSP PGUID 12 t f f f i 1 1560 "1560" _null_ aggregate_dummy - _null_));
 DESCR("bitwise-and bit aggregate");
 DATA(insert OID = 2243 ( bit_or						   PGNSP PGUID 12 t f f f i 1 1560 "1560" _null_ aggregate_dummy - _null_));
 DESCR("bitwise-or bit aggregate");
 
-DATA(insert OID = 2554(  pg_tablespace_databases       PGNSP PGUID 12 f f t t s 1 26 "26" _null_ pg_tablespace_databases - _null_));
+/* formerly-missing interval + datetime operators */
+DATA(insert OID = 2546 ( interval_pl_date			PGNSP PGUID 14 f f t f i 2 1114 "1186 1082" _null_  "select $2 + $1" - _null_ ));
+DATA(insert OID = 2547 ( interval_pl_timetz			PGNSP PGUID 14 f f t f i 2 1266 "1186 1266" _null_  "select $2 + $1" - _null_ ));
+DATA(insert OID = 2548 ( interval_pl_timestamp		PGNSP PGUID 14 f f t f i 2 1114 "1186 1114" _null_  "select $2 + $1" - _null_ ));
+DATA(insert OID = 2549 ( interval_pl_timestamptz	PGNSP PGUID 14 f f t f i 2 1184 "1186 1184" _null_  "select $2 + $1" - _null_ ));
+DATA(insert OID = 2550 ( integer_pl_date			PGNSP PGUID 14 f f t f i 2 1082 "23 1082" _null_  "select $2 + $1" - _null_ ));
+
+DATA(insert OID = 2556 ( pg_tablespace_databases	PGNSP PGUID 12 f f t t s 1 26 "26" _null_ pg_tablespace_databases - _null_));
 DESCR("returns database oids in a tablespace");
+
 
 /*
  * Symbolic values for provolatile column: these indicate whether the result

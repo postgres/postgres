@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/date.c,v 1.99 2004/06/03 02:08:04 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/date.c,v 1.100 2004/07/02 22:49:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1529,18 +1529,6 @@ time_mi_interval(PG_FUNCTION_ARGS)
 #endif
 
 	PG_RETURN_TIMEADT(result);
-}
-
-/* interval_pl_time()
- * Add time to interval.
- */
-Datum
-interval_pl_time(PG_FUNCTION_ARGS)
-{
-	Datum		span = PG_GETARG_DATUM(0);
-	Datum		time = PG_GETARG_DATUM(1);
-
-	return DirectFunctionCall2(time_pl_interval, time, span);
 }
 
 

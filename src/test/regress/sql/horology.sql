@@ -133,7 +133,6 @@ SELECT time '01:30' + interval '02:01' AS "03:31:00";
 SELECT time '01:30' - interval '02:01' AS "23:29:00";
 SELECT time '02:30' + interval '36:01' AS "14:31:00";
 SELECT time '03:30' + interval '1 month 04:01' AS "07:31:00";
-SELECT interval '04:30' - time '01:02' AS "20:32:00";
 SELECT CAST(time with time zone '01:02-08' AS interval) AS "+00:01";
 SELECT CAST(interval '02:03' AS time with time zone) AS "02:03:00-08";
 SELECT time with time zone '01:30-08' - interval '02:01' AS "23:29:00-08";
@@ -150,8 +149,6 @@ SELECT CAST(CAST(date 'today' + time with time zone '01:30'
 
 SELECT CAST(cast(date 'today' + time with time zone '03:30'
   + interval '1 month 04:01' as timestamp without time zone) AS time) AS "07:31:00";
-
-SELECT interval '04:30' - time with time zone '01:02-05' AS "20:32:00-05";
 
 SELECT t.d1 + i.f1 AS "102" FROM TIMESTAMP_TBL t, INTERVAL_TBL i
   WHERE t.d1 BETWEEN '1990-01-01' AND '2001-01-01'
