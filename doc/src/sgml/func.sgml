@@ -689,6 +689,14 @@
 	<entry>seconds past midnight (0-86399)</entry>
        </row>
        <row>
+	<entry>AM or A.M. or PM or P.M.</entry>
+	<entry>meridian indicator (upper case)</entry>
+       </row>
+       <row>
+	<entry>am or a.m. or pm or p.m.</entry>
+	<entry>meridian indicator (lower case)</entry>
+       </row>
+       <row>
 	<entry>Y,YYY</entry>
 	<entry>year (4 and more digits) with comma</entry>
        </row>
@@ -707,6 +715,14 @@
        <row>
 	<entry>Y</entry>
 	<entry>last digit of year</entry>
+       </row>
+       <row>
+	<entry>BC or B.C. or AD or A.D.</entry>
+	<entry>year indicator (upper case)</entry>
+       </row>
+       <row>
+	<entry>bc or b.c. or ad or a.d.</entry>
+	<entry>year indicator (lower case)</entry>
        </row>
        <row>
 	<entry>MONTH</entry>
@@ -794,7 +810,11 @@
        </row>
        <row>
 	<entry>RM</entry>
-	<entry>month in Roman Numerals (I-XII; I=JAN)</entry>
+	<entry>month in Roman Numerals (I-XII; I=JAN) - upper case</entry>
+       </row>
+       <row>
+	<entry>rn</entry>
+	<entry>month in Roman Numerals (I-XII; I=JAN) - lower case</entry>
        </row>
       </tbody>
      </tgroup>

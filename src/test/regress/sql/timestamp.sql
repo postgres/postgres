@@ -199,6 +199,9 @@ SELECT '' AS to_char_7, to_char(d1, 'HH24--text--MI--text--SS')
 
 SELECT '' AS to_char_8, to_char(d1, 'YYYYTH YYYYth Jth') 
    FROM TIMESTAMP_TBL;
+  
+SELECT '' AS to_char_9, to_char(d1, 'YYYY A.D. YYYY a.d. YYYY bc HH:MI:SS P.M. HH:MI:SS p.m. HH:MI:SS pm') 
+   FROM TIMESTAMP_TBL;   
 
 -- TO_TIMESTAMP()
 --

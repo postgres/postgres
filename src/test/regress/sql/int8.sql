@@ -52,5 +52,5 @@ SELECT '' AS to_char_12, to_char(q2, 'FM9999999999999999.000') FROM INT8_TBL;
 SELECT '' AS to_char_13, to_char(q2, 'L9999999999999999.000')  FROM INT8_TBL;	
 SELECT '' AS to_char_14, to_char(q2, 'FM9999999999999999.999') FROM INT8_TBL;
 SELECT '' AS to_char_15, to_char(q2, 'S 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9 . 9 9 9') FROM INT8_TBL;
-SELECT '' AS to_char_16, to_char(q2, '99999 text 9999 "9999" 999 "\\"text between quote marks\\"" 9999') FROM INT8_TBL;
+SELECT '' AS to_char_16, to_char(q2, '99999 "text" 9999 "9999" 999 "\\"text between quote marks\\"" 9999') FROM INT8_TBL;
 SELECT '' AS to_char_17, to_char(q2, '999999SG9999999999')     FROM INT8_TBL;

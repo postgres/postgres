@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_rule.sgml,v 1.13 2000/04/07 17:37:24 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_rule.sgml,v 1.14 2000/04/07 19:17:30 momjian Exp $
 Postgres documentation
 -->
 
@@ -126,16 +126,17 @@ CREATE
   <para>
    The <productname>Postgres</productname> 
    <firstterm>rule system</firstterm> allows one to define an
-   alternate action to be performed on updates, inserts, or deletions
+   alternate action to be performed on inserts, updates, or deletions
    from database tables or classes. Currently, rules are used to
    implement table views.
   </para>
 
   <para>
    The semantics of a rule is that at the time an individual instance is
-   accessed, updated, inserted or deleted, there is a current instance (for
-   retrieves, updates and deletes) and a new instance (for updates and
-   appends).  If the <replaceable class="parameter">event</replaceable>
+   accessed, inserted, updated, or deleted, there is a current instance (for
+   selects, updates and deletes) and a new instance (for inserts and
+  updates).
+  If the <replaceable class="parameter">event</replaceable>
    specified in the ON clause and the
    <replaceable class="parameter">condition</replaceable> specified in the
    WHERE clause are true for the current instance, the
@@ -162,8 +163,8 @@ CREATE
    <para>
     A caution about SQL rules is in  order.  If the same class name
     or instance variable appears in the
-    <replaceable class="parameter">event</replaceable>, the
-    <replaceable class="parameter">condition</replaceable> and the
+    <replaceable class="parameter">event</replaceable>,
+    <replaceable class="parameter">condition</replaceable> and
     <replaceable class="parameter">action</replaceable> parts of a rule,
     they are all considered different tuple variables. More accurately,
     <literal>new</literal> and <literal>current</literal> are the only tuple
@@ -172,13 +173,13 @@ CREATE
     <programlisting>
 ON UPDATE TO emp.salary WHERE emp.name = "Joe"
     DO 
-	UPDATE emp ( ... ) WHERE ...
+	UPDATE emp SET ... WHERE ...
     </programlisting>
 
     <programlisting>
 ON UPDATE TO emp-1.salary WHERE emp-2.name = "Joe"
     DO 
-	UPDATE emp-3 ( ... ) WHERE ...
+	UPDATE emp-3 SET ...  WHERE ...
     </programlisting>
 
     Each rule can have the optional tag INSTEAD.
@@ -194,11 +195,12 @@ ON UPDATE TO emp-1.salary WHERE emp-2.name = "Joe"
     <literal>NOTHING</literal>.
    </para>
    <para>
-    It is very important to note that the rewrite rule system
-    will neither detect nor process circular rules. For example, though each
+    It is very important to note to avoid circular rules.
+    For example, though each
     of the following two rule definitions are accepted by
     <productname>Postgres</productname>, the
-    retrieve command will cause <productname>Postgres</productname> to crash:
+    select command will cause <productname>Postgres</productname> to 
+    report an error because the query cycled too many times:
 
     <example>
      <title>Example of a circular rewrite rule combination.</title>
@@ -216,8 +218,9 @@ CREATE RULE bad_rule_combination_2 AS
 	SELECT TO emp;
      </programlisting>
      <para>
-      This attempt to retrieve from EMP will cause
-      <productname>Postgres</productname> to crash.
+      This attempt to select from EMP will cause
+      <productname>Postgres</productname> to issue an error
+      because the queries cycled too many times.
       <programlisting>
 SELECT * FROM emp;
       </programlisting></para>
@@ -306,7 +309,7 @@ CREATE toyemp(name = char16, salary = int4);
 CREATE RULE example_4 AS
     ON SELECT TO toyemp
     DO INSTEAD
-    	SELECT (emp.name, emp.salary) 
+    	SELECT emp.name, emp.salary
 	FROM emp
         WHERE emp.dept = "toy";
    </programlisting>
@@ -317,7 +320,7 @@ CREATE RULE example_4 AS
 CREATE RULE example_5 AS
     ON INERT TO emp WHERE new.salary > 5000
     DO 
-	UPDATE NEWSET salary = 5000;
+	UPDATE NEWSET SET salary = 5000;
    </programlisting>
   </para>
  </refsect1>

@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------
  * formatting.c
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/formatting.c,v 1.6 2000/03/16 01:35:41 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/formatting.c,v 1.7 2000/04/07 19:17:31 momjian Exp $
  *
  *
  *   Portions Copyright (c) 1999-2000, PostgreSQL, Inc
@@ -29,7 +29,7 @@
  *	In this module the POSIX 'struct tm' type is *not* used, but rather
  *	PgSQL type, which has tm_mon based on one (*non* zero) and
  *	year *not* based on 1900, but is used full year number.  
- *	Module supports AC / BC years.
+ *	Module supports AD / BC / AM / PM.
  *
  *  Supported types for to_char():
  *		
@@ -51,7 +51,7 @@
  * UnComment me for DEBUG
  * ----------
  */
-/*** 
+/***
 #define DEBUG_TO_FROM_CHAR	
 #define DEBUG_elog_output	NOTICE
 ***/
@@ -81,8 +81,8 @@
  * KeyWord Index (ascii from position 32 (' ') to 126 (~))
  * ----------
  */
-#define KeyWord_INDEX_SIZE		('~' - ' ' + 1)
-#define KeyWord_INDEX_FILTER(_c)	((_c) < ' ' || (_c) > '~' ? 0 : 1)
+#define KeyWord_INDEX_SIZE		('~' - ' ')
+#define KeyWord_INDEX_FILTER(_c)	((_c) <= ' ' || (_c) >= '~' ? 0 : 1)
 
 /* ----------
  * Maximal length of one node 
@@ -153,7 +153,33 @@ static char *months_full[]	= {
  * ----------
  */
 #define YEAR_ABS(_y)	(_y < 0 ? -(_y -1) : _y)
-#define BC_STR		" BC"
+#define BC_STR_ORIG	" BC"
+
+#define A_D_STR		"A.D."
+#define a_d_STR		"a.d."
+#define AD_STR		"AD"
+#define ad_STR		"ad"
+
+#define B_C_STR		"B.C."
+#define b_c_STR		"b.c."
+#define BC_STR		"BC"
+#define bc_STR		"bc"
+
+
+/* ----------
+ * AM / PM
+ * ----------
+ */
+#define A_M_STR		"A.M."
+#define a_m_STR		"a.m."
+#define AM_STR		"AM"
+#define am_STR		"am"
+
+#define P_M_STR		"P.M."
+#define p_m_STR		"p.m."
+#define PM_STR		"PM"
+#define pm_STR		"pm"
+
 
 /* ---------- 
  * Months in roman-numeral 
@@ -161,10 +187,11 @@ static char *months_full[]	= {
  *  'VIII' must be over 'V')   
  * ----------
  */
-static char *rm_months[] = {
-	"XII", "XI", "X", "IX", "VIII", "VII",
-	"VI", "V", "IV", "III", "II", "I", NULL
-};
+static char *rm_months_upper[] = 
+{ "XII", "XI", "X", "IX", "VIII", "VII", "VI", "V", "IV", "III", "II", "I", NULL };
+
+static char *rm_months_lower[] = 
+{ "xii", "xi", "x", "ix", "viii", "vii", "vi", "v", "iv", "iii", "ii", "i", NULL };
 
 /* ----------
  * Roman numbers
@@ -361,6 +388,7 @@ static int dch_date(int arg, char *inout, int suf, int flag, FormatNode *node);
  */
 static KeySuffix DCH_suff[] = {
 	{	"FM",		2, DCH_S_FM,	SUFFTYPE_PREFIX	 },
+	{	"fm",		2, DCH_S_FM,	SUFFTYPE_PREFIX	 },	
 	{	"TH",		2, DCH_S_TH,	SUFFTYPE_POSTFIX },		
 	{	"th",		2, DCH_S_th,	SUFFTYPE_POSTFIX },		
 	{	"SP",		2, DCH_S_SP,	SUFFTYPE_POSTFIX },
@@ -397,6 +425,12 @@ static KeySuffix DCH_suff[] = {
  */
 
 typedef enum { 
+	DCH_A_D,
+	DCH_A_M,
+	DCH_AD,	
+	DCH_AM,
+	DCH_B_C,
+	DCH_BC,
 	DCH_CC,
 	DCH_DAY,
 	DCH_DDD,
@@ -416,6 +450,8 @@ typedef enum {
 	DCH_MON,
 	DCH_Month,
 	DCH_Mon,
+	DCH_P_M,
+	DCH_PM,
 	DCH_Q,
 	DCH_RM,
 	DCH_SSSS,
@@ -427,10 +463,41 @@ typedef enum {
 	DCH_YYY,
 	DCH_YY,
 	DCH_Y,
-	DCH_day,
+	DCH_a_d,	
+	DCH_a_m,
+	DCH_ad,
+	DCH_am,	
+	DCH_b_c,
+	DCH_bc,
+	DCH_cc,
+	DCH_day,	
+	DCH_ddd,
+	DCH_dd,
 	DCH_dy,
+	DCH_d,
+	DCH_fx,
+	DCH_hh24,
+	DCH_hh12,
+	DCH_hh,	
+	DCH_j,
+	DCH_mi,
+	DCH_mm,
 	DCH_month,
 	DCH_mon,
+	DCH_p_m,
+	DCH_pm,
+	DCH_q,
+	DCH_rm,
+	DCH_ssss,
+	DCH_ss,
+	DCH_ww,
+	DCH_w,
+	DCH_y_yyy,
+	DCH_yyyy,
+	DCH_yyy,
+	DCH_yy,
+	DCH_y,    
+
 	/* last */
 	_DCH_last_
 } DCH_poz;
@@ -456,8 +523,23 @@ typedef enum {
 	NUM_S,
 	NUM_TH,
 	NUM_V,
+	NUM_b,
+	NUM_c,
+	NUM_d,
+	NUM_e,
+	NUM_fm,
+	NUM_g,
+	NUM_l,
+	NUM_mi,
+	NUM_pl,
+	NUM_pr,
 	NUM_rn,
+	NUM_sg,
+	NUM_sp,
+	NUM_s,
 	NUM_th,
+	NUM_v,   
+	
 	/* last */
 	_NUM_last_
 } NUM_poz;
@@ -468,44 +550,80 @@ typedef enum {
  */
 static KeyWord DCH_keywords[] = {	
 /*	keyword,	len, func.	type                 is in Index */
-							
-{	"CC",           2, dch_date,	DCH_CC		},	/*C*/
-{	"DAY",          3, dch_date,	DCH_DAY		},	/*D*/
-{	"DDD",          3, dch_date,	DCH_DDD		},
-{	"DD",           2, dch_date,	DCH_DD		},
-{	"DY",           2, dch_date,	DCH_DY		},
-{	"Day",		3, dch_date,	DCH_Day		},
-{	"Dy",           2, dch_date,	DCH_Dy		},
-{	"D",            1, dch_date,	DCH_D		},	
-{	"FX",		2, dch_global,	DCH_FX		},	/*F*/
-{	"HH24",		4, dch_time,	DCH_HH24	},	/*H*/
-{	"HH12",		4, dch_time,	DCH_HH12	},
-{	"HH",		2, dch_time,	DCH_HH		},
-{	"J",            1, dch_date,	DCH_J	 	},	/*J*/	
-{	"MI",		2, dch_time,	DCH_MI		},
-{	"MM",          	2, dch_date,	DCH_MM		},
-{	"MONTH",        5, dch_date,	DCH_MONTH	},
-{	"MON",          3, dch_date,	DCH_MON		},
-{	"Month",        5, dch_date,	DCH_Month	},
-{	"Mon",          3, dch_date,	DCH_Mon		},
-{	"Q",            1, dch_date,	DCH_Q		},	/*Q*/	
-{	"RM",           2, dch_date,	DCH_RM	 	},	/*R*/
-{	"SSSS",		4, dch_time,	DCH_SSSS	},	/*S*/
-{	"SS",		2, dch_time,	DCH_SS		},
-{	"WW",           2, dch_date,	DCH_WW		},	/*W*/
-{	"W",            1, dch_date,	DCH_W	 	},
-{	"Y,YYY",        5, dch_date,	DCH_Y_YYY	},	/*Y*/
-{	"YYYY",         4, dch_date,	DCH_YYYY	},
-{	"YYY",          3, dch_date,	DCH_YYY		},
-{	"YY",           2, dch_date,	DCH_YY		},
-{	"Y",            1, dch_date,	DCH_Y	 	},
-{	"day",		3, dch_date,	DCH_day		},	/*d*/
-{	"dy",           2, dch_date,	DCH_dy		},	
-{	"month",        5, dch_date,	DCH_month	},	/*m*/	
-{	"mon",          3, dch_date,	DCH_mon		},
-
+{	"A.D.",		4, dch_date,	DCH_A_D		},	/*A*/
+{	"A.M.",		4, dch_time,	DCH_A_M		},	
+{	"AD",		2, dch_date,	DCH_AD		},	
+{	"AM",		2, dch_time,	DCH_AM		},	
+{	"B.C.",		4, dch_date,	DCH_B_C		},	/*B*/
+{	"BC",		2, dch_date,	DCH_BC		},
+{	"CC",		2, dch_date,	DCH_CC		},	/*C*/
+{ 	"DAY",          3, dch_date,	DCH_DAY		},	/*D*/
+{ 	"DDD",          3, dch_date,	DCH_DDD		},
+{ 	"DD",           2, dch_date,	DCH_DD		},
+{ 	"DY",           2, dch_date,	DCH_DY		},
+{ 	"Day",		3, dch_date,	DCH_Day		},
+{ 	"Dy",           2, dch_date,	DCH_Dy		},
+{ 	"D",            1, dch_date,	DCH_D		},	
+{ 	"FX",		2, dch_global,	DCH_FX		},	/*F*/
+{ 	"HH24",		4, dch_time,	DCH_HH24	},	/*H*/
+{ 	"HH12",		4, dch_time,	DCH_HH12	},
+{ 	"HH",		2, dch_time,	DCH_HH		},
+{ 	"J",            1, dch_date,	DCH_J	 	},	/*J*/	
+{ 	"MI",		2, dch_time,	DCH_MI		},
+{ 	"MM",          	2, dch_date,	DCH_MM		},
+{ 	"MONTH",        5, dch_date,	DCH_MONTH	},
+{ 	"MON",          3, dch_date,	DCH_MON		},
+{ 	"Month",        5, dch_date,	DCH_Month	},
+{ 	"Mon",          3, dch_date,	DCH_Mon		},
+{	"P.M.",		4, dch_time,	DCH_P_M		},	/*P*/
+{	"PM",		2, dch_time,	DCH_PM		},
+{ 	"Q",            1, dch_date,	DCH_Q		},	/*Q*/	
+{ 	"RM",           2, dch_date,	DCH_RM	 	},	/*R*/
+{ 	"SSSS",		4, dch_time,	DCH_SSSS	},	/*S*/
+{ 	"SS",		2, dch_time,	DCH_SS		},
+{ 	"WW",           2, dch_date,	DCH_WW		},	/*W*/
+{ 	"W",            1, dch_date,	DCH_W	 	},
+{ 	"Y,YYY",        5, dch_date,	DCH_Y_YYY	},	/*Y*/
+{ 	"YYYY",         4, dch_date,	DCH_YYYY	},
+{ 	"YYY",          3, dch_date,	DCH_YYY		},
+{ 	"YY",           2, dch_date,	DCH_YY		},
+{ 	"Y",            1, dch_date,	DCH_Y	 	},
+{	"a.d.",		4, dch_date,	DCH_a_d		},	/*a*/
+{	"a.m.",		4, dch_time,	DCH_a_m		},
+{	"ad",		2, dch_date,	DCH_ad		},	
+{	"am",		2, dch_time,	DCH_am		},
+{ 	"b.c.",		4, dch_date,	DCH_b_c		},	/*b*/
+{ 	"bc",		2, dch_date,	DCH_bc		},
+{ 	"cc",		2, dch_date,	DCH_CC		},	/*c*/
+{ 	"day",		3, dch_date,	DCH_day		},	/*d*/
+{ 	"ddd",		3, dch_date,	DCH_DDD		},		
+{ 	"dd",		2, dch_date,	DCH_DD		},	
+{  	"dy",           2, dch_date,	DCH_dy		},
+{	"d",		1, dch_date,	DCH_D		},	
+{	"fx",		2, dch_global,  DCH_FX		},	/*f*/
+{  	"hh24",		4, dch_time,	DCH_HH24	},	/*h*/
+{  	"hh12",		4, dch_time,	DCH_HH12	},	
+{  	"hh",		2, dch_time,	DCH_HH		},	
+{  	"j",		1, dch_time,	DCH_J		},	/*j*/
+{  	"mi",		2, dch_time,	DCH_MI		},	/*m*/
+{  	"mm",		2, dch_date,	DCH_MM		},	
+{  	"month",        5, dch_date,	DCH_month	},	
+{  	"mon",          3, dch_date,	DCH_mon		},
+{	"p.m.",		4, dch_time,	DCH_p_m		},	/*p*/
+{	"pm",		2, dch_time,	DCH_pm		},
+{  	"q",		1, dch_date,	DCH_Q		},	/*q*/
+{  	"rm",		2, dch_date,	DCH_rm		},	/*r*/
+{  	"ssss",		4, dch_time,	DCH_SSSS	},	/*s*/
+{  	"ss",		2, dch_time,	DCH_SS		},	
+{  	"ww",		2, dch_date,	DCH_WW		},	/*w*/
+{  	"w",		1, dch_date,	DCH_W		},	
+{  	"y,yyy",	5, dch_date,	DCH_Y_YYY	},	/*y*/
+{  	"yyyy",		4, dch_date,	DCH_YYYY	},	
+{  	"yyy",		3, dch_date,	DCH_YYY		},	
+{  	"yy",		2, dch_date,	DCH_YY		},	
+{  	"y",		1, dch_date,	DCH_Y		},	
 /* last */
-{	NULL,		0, NULL,	0 		}};
+{    NULL,		0, NULL,	0 		}};
 
 /* ----------
  * KeyWords for NUMBER version
@@ -513,28 +631,42 @@ static KeyWord DCH_keywords[] = {
  */
 static KeyWord NUM_keywords[] = {	
 /*	keyword,	len, func.	type   	     	   is in Index */
-{	",",	        1, NULL,	NUM_COMMA	},  /*,*/
-{	".",	        1, NULL,	NUM_DEC		},  /*.*/
-{	"0",	        1, NULL,	NUM_0		},  /*0*/
-{	"9",	        1, NULL,	NUM_9		},  /*9*/	
-{	"B",	        1, NULL,	NUM_B		},  /*B*/	
-{	"C",	        1, NULL,	NUM_C		},  /*C*/
-{	"D",	        1, NULL,	NUM_D		},  /*D*/
-{	"E",	        1, NULL,	NUM_E		},  /*E*/	
-{	"FM",	        2, NULL,	NUM_FM		},  /*F*/	
-{	"G",	        1, NULL,	NUM_G		},  /*G*/	
-{	"L",	        1, NULL,	NUM_L		},  /*L*/	
-{	"MI",	        2, NULL,	NUM_MI		},  /*M*/	
-{	"PL",        	2, NULL,	NUM_PL		},  /*P*/	
-{	"PR",	        2, NULL,	NUM_PR		},  	
-{	"RN",	        2, NULL,	NUM_RN		},  /*R*/
-{	"SG",	        2, NULL,	NUM_SG		},  /*S*/
-{	"SP",	        2, NULL,	NUM_SP   	},
-{	"S",	        1, NULL,	NUM_S		},  
-{	"TH",		2, NULL,	NUM_TH		},  /*T*/
-{	"V",	        1, NULL,	NUM_V   	},  /*V*/			
-{	"rn",	        2, NULL,	NUM_rn	 	},  /*r*/
-{	"th",	        2, NULL,	NUM_th	 	},  /*t*/
+{ 	",",	        1, NULL,	NUM_COMMA	},  /*,*/
+{ 	".",	        1, NULL,	NUM_DEC		},  /*.*/
+{ 	"0",	        1, NULL,	NUM_0		},  /*0*/
+{ 	"9",	        1, NULL,	NUM_9		},  /*9*/	
+{ 	"B",	        1, NULL,	NUM_B		},  /*B*/	
+{ 	"C",	        1, NULL,	NUM_C		},  /*C*/
+{ 	"D",	        1, NULL,	NUM_D		},  /*D*/
+{ 	"E",	        1, NULL,	NUM_E		},  /*E*/	
+{ 	"FM",	        2, NULL,	NUM_FM		},  /*F*/	
+{ 	"G",	        1, NULL,	NUM_G		},  /*G*/	
+{ 	"L",	        1, NULL,	NUM_L		},  /*L*/	
+{ 	"MI",	        2, NULL,	NUM_MI		},  /*M*/	
+{ 	"PL",        	2, NULL,	NUM_PL		},  /*P*/	
+{ 	"PR",	        2, NULL,	NUM_PR		},  	
+{ 	"RN",	        2, NULL,	NUM_RN		},  /*R*/
+{ 	"SG",	        2, NULL,	NUM_SG		},  /*S*/
+{ 	"SP",	        2, NULL,	NUM_SP   	},
+{ 	"S",	        1, NULL,	NUM_S		},  
+{ 	"TH",		2, NULL,	NUM_TH		},  /*T*/
+{ 	"V",	        1, NULL,	NUM_V   	},  /*V*/			
+{ 	"b",		1, NULL,	NUM_B		},  /*b*/
+{ 	"c",		1, NULL,	NUM_C		},  /*c*/
+{ 	"d",		1, NULL,	NUM_D		},  /*d*/
+{ 	"e",		1, NULL,	NUM_E		},  /*e*/
+{ 	"fm",		2, NULL,	NUM_FM		},  /*f*/
+{ 	"g",		1, NULL,	NUM_G		},  /*g*/
+{ 	"l",		1, NULL,	NUM_L		},  /*l*/
+{ 	"mi",		2, NULL,	NUM_MI		},  /*m*/
+{ 	"pl",		2, NULL,	NUM_PL		},  /*p*/
+{ 	"pr",		2, NULL,	NUM_PR		},
+{ 	"rn",	        2, NULL,	NUM_rn	 	},  /*r*/
+{ 	"sg",		2, NULL,	NUM_SG		},  /*s*/
+{ 	"sp",		2, NULL,	NUM_SP		},	
+{ 	"s",		1, NULL,	NUM_S		},	
+{ 	"th",	        2, NULL,	NUM_th	 	},  /*t*/	
+{ 	"v",		1, NULL,	NUM_V		},  /*v*/	
 
 /* last */	
 {	NULL,		0, NULL,	0 		}};
@@ -544,7 +676,7 @@ static KeyWord NUM_keywords[] = {
  * KeyWords index for DATE-TIME version
  * ----------
  */
-static int DCH_index[256 - 32] = {
+static int DCH_index[ KeyWord_INDEX_SIZE ] = {
 /*
 0	1	2	3	4	5	6	7	8	9
 */
@@ -553,14 +685,13 @@ static int DCH_index[256 - 32] = {
 		-1,	-1,	-1,	-1,	-1,	-1,	-1,	-1,
 -1,	-1,	-1,	-1,	-1,	-1,	-1,	-1,	-1,	-1,
 -1,	-1,	-1,	-1,	-1,	-1,	-1,	-1,	-1,	-1,
--1,	-1,	-1,	-1,	-1,	-1,	-1,	DCH_CC,	DCH_DAY,-1,	
+-1,	-1,	-1,	-1,	-1,	DCH_A_D,DCH_B_C,DCH_CC,	DCH_DAY,-1,	
 DCH_FX,	-1,	DCH_HH24,-1,	DCH_J,	-1,	-1,	DCH_MI,	-1,	-1,
--1,	DCH_Q,	DCH_RM,	DCH_SSSS,-1,	-1,	-1,	DCH_WW,	-1,	DCH_Y_YYY,
--1,	-1,	-1,	-1,	-1,	-1,	-1,	-1,	-1,	-1,
-DCH_day,-1,	-1,	-1,	-1,	-1,	-1,	-1,	-1,	DCH_month,	
--1,	-1,	-1,	-1,	-1,	-1,	-1,	-1,	-1,	-1,
--1,	-1,	-1,	-1,	-1,	-1,	-1,	-1,	-1,	-1,
--1,	-1,	-1,	-1,	-1,	-1
+DCH_P_M, DCH_Q,	DCH_RM,	DCH_SSSS,-1,	-1,	-1,	DCH_WW,	-1,	DCH_Y_YYY,
+-1,	-1,	-1,	-1,	-1,	-1,	-1,	DCH_a_d,DCH_b_c,DCH_cc,
+DCH_day,-1,	DCH_fx,	-1,	DCH_hh24,-1,	DCH_j,	-1,	-1,	DCH_mi,	
+-1,	-1,	DCH_p_m, DCH_q,	DCH_rm,	DCH_ssss,-1,	-1,	-1,	DCH_ww,
+-1,	DCH_y_yyy,-1,	-1,	-1,	-1
 
 	/*---- chars over 126 are skiped ----*/
 };	
@@ -569,7 +700,7 @@ DCH_day,-1,	-1,	-1,	-1,	-1,	-1,	-1,	-1,	DCH_month,
  * KeyWords index for NUMBER version
  * ----------
  */
-static int NUM_index[256 - 32] = {
+static int NUM_index[ KeyWord_INDEX_SIZE ] = {
 /*
 0	1	2	3	4	5	6	7	8	9
 */
@@ -581,10 +712,9 @@ static int NUM_index[256 - 32] = {
 -1,	-1,	-1,	-1,	-1,	-1,	NUM_B,	NUM_C,	NUM_D,	NUM_E,	
 NUM_FM,	NUM_G,	-1,	-1,	-1,	-1,	NUM_L,	NUM_MI,	-1,	-1,
 NUM_PL,-1,	NUM_RN,	NUM_SG,	NUM_TH,	-1,	NUM_V,	-1,	-1,	-1,
--1,	-1,	-1,	-1,	-1,	-1,	-1,	-1,	-1,	-1,
--1,	-1,	-1,	-1,	-1,	-1,	-1,	-1,	-1,	-1,	
--1,	-1,	-1,	-1,	NUM_rn,	-1,	NUM_th,	-1,	-1,	-1,
--1,	-1,	-1,	-1,	-1,	-1,	-1,	-1,	-1,	-1,
+-1,	-1,	-1,	-1,	-1,	-1,	-1,	-1,	NUM_b,	NUM_c,
+NUM_d,	NUM_e,	NUM_fm,	NUM_g,	-1,	-1,	-1,	-1,	NUM_l,	NUM_mi,	
+-1,	-1,	NUM_pl,	-1,	NUM_rn,	NUM_sg,	NUM_th,	-1,	NUM_v,	-1,
 -1,	-1,	-1,	-1,	-1,	-1
 
 	/*---- chars over 126 are skiped ----*/
@@ -646,7 +776,7 @@ static char *str_numth(char *dest, char *num, int type);
 static int int4len(int4 num);
 static char *str_toupper(char *buff);
 static char *str_tolower(char *buff);
-static int is_acdc(char *str, int *len);
+/* static int is_acdc(char *str, int *len); */
 static int seq_search(char *name, char **array, int type, int max, int *len);
 static int dch_global(int arg, char *inout, int suf, int flag, FormatNode *node); 
 static int dch_time(int arg, char *inout, int suf, int flag, FormatNode *node);
@@ -1165,6 +1295,7 @@ str_tolower(char *buff)
  * Check if in string is AC or BC (return: 0==none; -1==BC; 1==AC)  
  * ----------
  */
+/************* not used - use AD/BC format pictures instead  **********
 static int 
 is_acdc(char *str, int *len)
 {
@@ -1187,6 +1318,7 @@ is_acdc(char *str, int *len)
 	}
 	return 0;
 } 
+******************************/
  
 /* ----------
  * Sequential search with to upper/lower conversion
@@ -1316,6 +1448,54 @@ dch_time(int arg, char *inout, int suf, int flag, FormatNode *node)
 	char	*p_inout = inout;
 
 	switch(arg) {
+
+	case DCH_A_M:
+	case DCH_P_M:
+		if (flag == TO_CHAR) {
+			strcpy(inout, (tm->tm_hour > 13 ? P_M_STR : A_M_STR ));
+			return 3;
+			
+		} else if (flag == FROM_CHAR) {
+			if (strncmp(inout, P_M_STR, 4)==0 && tm->tm_hour < 13)
+				tm->tm_hour += 12;
+			return 3;	 	
+		}
+
+	case DCH_AM:
+	case DCH_PM:
+		if (flag == TO_CHAR) {
+			strcpy(inout, (tm->tm_hour > 13 ? PM_STR : AM_STR ));
+			return 1;
+		
+		} else if (flag == FROM_CHAR) {
+			if (strncmp(inout, PM_STR, 2)==0 && tm->tm_hour < 13)
+				tm->tm_hour += 12;
+			return 1;	 	
+		}
+
+	case DCH_a_m:
+	case DCH_p_m:
+		if (flag == TO_CHAR) {
+			strcpy(inout, (tm->tm_hour > 13 ? p_m_STR : a_m_STR ));
+			return 3;
+		
+		} else if (flag == FROM_CHAR) {
+			if (strncmp(inout, p_m_STR, 4)==0 && tm->tm_hour < 13)
+				tm->tm_hour += 12;
+			return 3;	 	
+		}
+	
+	case DCH_am:
+	case DCH_pm:
+		if (flag == TO_CHAR) {
+			strcpy(inout, (tm->tm_hour > 13 ? pm_STR : am_STR ));
+			return 1;
+		
+		} else if (flag == FROM_CHAR) {
+			if (strncmp(inout, pm_STR, 2)==0 && tm->tm_hour < 13)
+				tm->tm_hour += 12;
+			return 1;	 	
+		}		
 	
 	case DCH_HH:	
 	case DCH_HH12:
@@ -1407,7 +1587,7 @@ dch_time(int arg, char *inout, int suf, int flag, FormatNode *node)
 				str_numth(p_inout, inout, S_TH_TYPE(suf));
 			return strlen(p_inout)-1;		
 		}  else if (flag == FROM_CHAR) 
-			elog(ERROR, "to_datatime(): SSSS is not supported");
+			elog(ERROR, "to_timestamp(): SSSS is not supported");
 	}	
 	return -1;	
 }
@@ -1472,6 +1652,63 @@ dch_date(int arg, char *inout, int suf, int flag, FormatNode *node)
 	} 
 	
 	switch(arg) {
+
+	case DCH_A_D:
+	case DCH_B_C:
+		if (flag == TO_CHAR) {
+			strcpy(inout, (tm->tm_year < 0 ? B_C_STR : A_D_STR ));
+			return 3;
+			
+		} else if (flag == FROM_CHAR) {
+			if (strncmp(inout, B_C_STR, 4)==0 && tm->tm_year > 0)
+				tm->tm_year = -(tm->tm_year);
+			if (tm->tm_year < 0) 
+				tm->tm_year = tm->tm_year+1; 
+			return 3;
+		}
+
+	case DCH_AD:
+	case DCH_BC:
+		if (flag == TO_CHAR) {
+			strcpy(inout, (tm->tm_year < 0 ? BC_STR : AD_STR ));
+			return 1;
+		
+		} else if (flag == FROM_CHAR) {
+			if (strncmp(inout, BC_STR, 2)==0 && tm->tm_year > 0)
+				tm->tm_year = -(tm->tm_year);
+			if (tm->tm_year < 0) 
+				tm->tm_year = tm->tm_year+1; 
+			return 1;
+		}
+
+	case DCH_a_d:
+	case DCH_b_c:
+		if (flag == TO_CHAR) {
+			strcpy(inout, (tm->tm_year < 0 ? b_c_STR : a_d_STR ));
+			return 3;
+			
+		} else if (flag == FROM_CHAR) {
+			if (strncmp(inout, b_c_STR, 4)==0 && tm->tm_year > 0)
+				tm->tm_year = -(tm->tm_year);
+			if (tm->tm_year < 0) 
+				tm->tm_year = tm->tm_year+1; 
+			return 3;
+		}
+
+	case DCH_ad:
+	case DCH_bc:
+		if (flag == TO_CHAR) {
+			strcpy(inout, (tm->tm_year < 0 ? bc_STR : ad_STR ));
+			return 1;
+		
+		} else if (flag == FROM_CHAR) {
+			if (strncmp(inout, bc_STR, 2)==0 && tm->tm_year > 0)
+				tm->tm_year = -(tm->tm_year);
+			if (tm->tm_year < 0) 
+				tm->tm_year = tm->tm_year+1; 
+			return 1;
+		}
+
 	case DCH_MONTH:
 		strcpy(inout, months_full[ tm->tm_mon - 1]);		
 		sprintf(inout, "%*s", S_FM(suf) ? 0 : -9, str_toupper(inout));	
@@ -1662,8 +1899,10 @@ dch_date(int arg, char *inout, int suf, int flag, FormatNode *node)
 			sprintf(inout, "%d,%03d", i, YEAR_ABS(tm->tm_year) -(i*1000));
 			if (S_THth(suf)) 
 				str_numth(p_inout, inout, S_TH_TYPE(suf));
+		/*	
 			if (tm->tm_year < 0)
-				strcat(inout, BC_STR);	
+				strcat(inout, BC_STR_ORIG);	
+		*/
 			return strlen(p_inout)-1;
 			
 		} else if (flag == FROM_CHAR) {
@@ -1676,15 +1915,16 @@ dch_date(int arg, char *inout, int suf, int flag, FormatNode *node)
 			else 					
 				len = int4len((int4) tm->tm_year)+1;
 			len +=  SKIP_THth(suf);	
-			/* AC/BC */ 	
+		/* AC/BC  	
 			if (is_acdc(inout+len, &len) < 0 && tm->tm_year > 0) 
 				tm->tm_year = -(tm->tm_year);
 			if (tm->tm_year < 0) 
 				tm->tm_year = tm->tm_year+1; 
+		*/		
 			return len-1;
 		}	
 		
-	case DCH_YYYY:
+	case DCH_YYYY	:
 		if (flag == TO_CHAR) {
 			if (tm->tm_year <= 9999 && tm->tm_year >= -9998)
 				sprintf(inout, "%0*d", S_FM(suf) ? 0 : 4,  YEAR_ABS(tm->tm_year));
@@ -1692,8 +1932,10 @@ dch_date(int arg, char *inout, int suf, int flag, FormatNode *node)
 				sprintf(inout, "%d", YEAR_ABS(tm->tm_year));	
 			if (S_THth(suf)) 
 				str_numth(p_inout, inout, S_TH_TYPE(suf));
+		/*	
 			if (tm->tm_year < 0)
-				strcat(inout, BC_STR);
+				strcat(inout, BC_STR_ORIG);
+		*/		
 			return strlen(p_inout)-1;
 			
 		} else if (flag == FROM_CHAR) {
@@ -1703,11 +1945,12 @@ dch_date(int arg, char *inout, int suf, int flag, FormatNode *node)
 			else 					
 				len = int4len((int4) tm->tm_year);
 			len +=  SKIP_THth(suf);
-			/* AC/BC */ 	
+		/* AC/BC  	
 			if (is_acdc(inout+len, &len) < 0 && tm->tm_year > 0) 
 				tm->tm_year = -(tm->tm_year);
 			if (tm->tm_year < 0) 
 				tm->tm_year = tm->tm_year+1; 
+		*/		
 			return len-1;
 		}	
 		
@@ -1768,14 +2011,14 @@ dch_date(int arg, char *inout, int suf, int flag, FormatNode *node)
 	case DCH_RM:
 		if (flag == TO_CHAR) {
 			sprintf(inout, "%*s", S_FM(suf) ? 0 : -4,   
-				rm_months[ 12 - tm->tm_mon ]);
+				rm_months_upper[ 12 - tm->tm_mon ]);
 			if (S_FM(suf)) 
 				return strlen(p_inout)-1;
 			else 
 				return 3;
 				
 		} else if (flag == FROM_CHAR) {
-			tm->tm_mon = 11-seq_search(inout, rm_months, ALL_UPPER, FULL_SIZ, &len);
+			tm->tm_mon = 11-seq_search(inout, rm_months_upper, ALL_UPPER, FULL_SIZ, &len);
 			CHECK_SEQ_SEARCH(len, "RM");
 			++tm->tm_mon;
 			if (S_FM(suf))	
@@ -1783,6 +2026,25 @@ dch_date(int arg, char *inout, int suf, int flag, FormatNode *node)
 			else 		
 				return 3;
 		}	
+	
+	case DCH_rm:
+		if (flag == TO_CHAR) {
+			sprintf(inout, "%*s", S_FM(suf) ? 0 : -4,   
+				rm_months_lower[ 12 - tm->tm_mon ]);
+			if (S_FM(suf)) 
+				return strlen(p_inout)-1;
+			else 
+				return 3;
+				
+		} else if (flag == FROM_CHAR) {
+			tm->tm_mon = 11-seq_search(inout, rm_months_lower, ALL_UPPER, FULL_SIZ, &len);
+			CHECK_SEQ_SEARCH(len, "rm");
+			++tm->tm_mon;
+			if (S_FM(suf))	
+				return len-1;
+			else 		
+				return 3;
+		}
 		
 	case DCH_W:
 		if (flag == TO_CHAR) {
@@ -1988,7 +2250,7 @@ timestamp_to_char(Timestamp *dt, text *fmt)
 			
 #ifdef DEBUG_TO_FROM_CHAR	 
 			/* dump_node(ent->format, len); */
-			/* dump_index(DCH_keywords, DCH_index); */
+			/* dump_index(DCH_keywords, DCH_index);  */
 #endif         	
         	} 
         	format = ent->format; 
@@ -2360,6 +2622,11 @@ NUM_cache( int len, NUMDesc *Num, char *pars_str, int *flag)
 		Num->zero_start		= ent->Num.zero_start;
 		Num->zero_end		= ent->Num.zero_end;
 	}
+
+#ifdef DEBUG_TO_FROM_CHAR	 
+	/* dump_node(format, len); */
+	dump_index(NUM_keywords, NUM_index);  
+#endif         	
 
 	pfree(str);
 	return format;
