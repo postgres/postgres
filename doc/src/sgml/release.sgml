@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.47 2000/05/02 20:01:52 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.48 2000/05/04 16:15:08 thomas Exp $
 -->
 
  <chapter id="release">
@@ -243,19 +243,19 @@ Fix log() on numeric type (Tom)
 Deprecate ':' and ';' operators
 Allow vacuum of temporary tables
 Disallow inherited columns with the same name as new columns
-Recover or force failure when disk space is exhausted(Hiroshi)
+Recover or force failure when disk space is exhausted (Hiroshi)
 Fix INSERT INTO ... SELECT with AS columns matching result columns
-Fix INSERT ... SELECT ... GROUP BY groups by target columns not source columns(Tom)
-Fix CREATE TABLE test (a char(5) DEFAULT text '', b int4) with INSERT(Tom)
+Fix INSERT ... SELECT ... GROUP BY groups by target columns not source columns (Tom)
+Fix CREATE TABLE test (a char(5) DEFAULT text '', b int4) with INSERT (Tom)
 Fix UNION with LIMIT
 Fix CREATE TABLE x AS SELECT 1 UNION SELECT 2
 Fix CREATE TABLE test(col char(2) DEFAULT user)
 Fix mismatched types in CREATE TABLE ... DEFAULT
 Fix SELECT * FROM pg_class where oid in (0,-1)
 Fix SELECT COUNT('asdf') FROM pg_class WHERE oid=12
-Prevent user who can create databases can modifying pg_database table(Peter E)
-Fix btree to give a useful elog when key > 1/2 (page - overhead)(Tom)
-Fix INSERT of 0.0 into DECIMAL(4,4) field(Tom)
+Prevent user who can create databases can modifying pg_database table (Peter E)
+Fix btree to give a useful elog when key > 1/2 (page - overhead) (Tom)
+Fix INSERT of 0.0 into DECIMAL(4,4) field (Tom)
 
 Enhancements
 ------------
@@ -376,8 +376,8 @@ New pg_options.sample file
 New SET FSYNC command (Massimo)
 Allow pg_descriptions when creating tables
 Allow pg_descriptions when creating types, columns, and functions
-Allow psql \copy to allow delimiters(Peter E)
-Allow psql to print nulls as distinct from "" [null](Peter E)
+Allow psql \copy to allow delimiters (Peter E)
+Allow psql to print nulls as distinct from "" [null] (Peter E)
 
 Types
 -----

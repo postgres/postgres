@@ -71,7 +71,7 @@
 	<entry>v6.5.3</entry>
 	<entry>2000-02-18</entry>
 	<entry>MIPSPro 7.3.1.1m N32 build.
-	 <ulink url="hxpro@cinesite.co.uk">Kevin Wheatley</ulink></entry>
+	 <ulink url="mailto:hxpro@cinesite.co.uk">Kevin Wheatley</ulink></entry>
        </row>
        <row>
 	<entry>Linux 2.0.x</entry>
@@ -214,7 +214,7 @@
 	<entry>v7.0</entry>
 	<entry>2000-03-30</entry>
 	<entry>Uses Cygwin library.
-	 <ulink url="mailto:horak@sit.plzen-city.cz">Daniel Horak</ulink>) </entry>
+	 <ulink url="mailto:horak@sit.plzen-city.cz">Daniel Horak</ulink></entry>
        </row>
       </tbody>
      </tgroup>

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.10 2000/05/02 20:01:51 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.11 2000/05/04 16:15:08 thomas Exp $
 
 Postgres quick Installation Guide.
 - thomas 1998-10-26
@@ -106,7 +106,8 @@ Your name here...
    and is almost certainly adequate for a first installation. But you may want to
    do an initial installation up to the point of unpacking the source tree
    and installing documentation, and then print or browse the 
-   <citetitle>Administrator's Guide</citetitle>.</para>
+   <citetitle>Administrator's Guide</citetitle>.
+  </para>
 
  </chapter>
 
@@ -114,6 +115,7 @@ Your name here...
  &install;
  &config;
  &release;
+ &regress;
 
 <!--
 <INDEX> </INDEX>
