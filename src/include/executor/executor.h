@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: executor.h,v 1.102.2.1 2003/12/18 20:21:53 tgl Exp $
+ * $Id: executor.h,v 1.102.2.2 2004/01/22 02:23:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -93,6 +93,7 @@ extern void ExecutorEnd(QueryDesc *queryDesc);
 extern void ExecutorRewind(QueryDesc *queryDesc);
 extern void ExecCheckRTPerms(List *rangeTable, CmdType operation);
 extern void ExecEndPlan(PlanState *planstate, EState *estate);
+extern bool ExecContextForcesOids(PlanState *planstate, bool *hasoids);
 extern void ExecConstraints(ResultRelInfo *resultRelInfo,
 				TupleTableSlot *slot, EState *estate);
 extern TupleTableSlot *EvalPlanQual(EState *estate, Index rti,
