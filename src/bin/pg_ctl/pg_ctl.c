@@ -4,7 +4,7 @@
  *
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/pg_ctl/pg_ctl.c,v 1.26 2004/08/28 21:01:38 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_ctl/pg_ctl.c,v 1.27 2004/08/28 22:04:01 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -67,6 +67,7 @@ static ShutdownMode shutdown_mode = SMART_MODE;
 static int	sig = SIGTERM;	/* default */
 static CtlCommand ctl_command = NO_COMMAND;
 static char *pg_data = NULL;
+static char *pgdata_opt = NULL;
 static char *post_opts = NULL;
 static const char *progname;
 static char *log_file = NULL;
@@ -309,19 +310,20 @@ start_postmaster(void)
 	 */
 	if (log_file != NULL)
 #ifndef WIN32
-		snprintf(cmd, MAXPGPATH, "%s\"%s\" %s < \"%s\" >> \"%s\" 2>&1 &%s",
+		snprintf(cmd, MAXPGPATH, "%s\"%s\" %s%s < \"%s\" >> \"%s\" 2>&1 &%s",
 #else
-		snprintf(cmd, MAXPGPATH, "%sSTART /B \"\" \"%s\" %s < \"%s\" >> \"%s\" 2>&1%s",
+		snprintf(cmd, MAXPGPATH, "%sSTART /B \"\" \"%s\" %s%s < \"%s\" >> \"%s\" 2>&1%s",
 #endif
-				 SYSTEMQUOTE, postgres_path, post_opts, DEVNULL, log_file,
-				 SYSTEMQUOTE);
+				SYSTEMQUOTE, postgres_path, pgdata_opt, post_opts,
+				DEVNULL, log_file, SYSTEMQUOTE);
 	else
 #ifndef WIN32
-		snprintf(cmd, MAXPGPATH, "%s\"%s\" %s < \"%s\" 2>&1 &%s",
+		snprintf(cmd, MAXPGPATH, "%s\"%s\" %s%s < \"%s\" 2>&1 &%s",
 #else
-		snprintf(cmd, MAXPGPATH, "%sSTART /B \"\" \"%s\" %s < \"%s\" 2>&1%s",
+		snprintf(cmd, MAXPGPATH, "%sSTART /B \"\" \"%s\" %s%s < \"%s\" 2>&1%s",
 #endif
-				 SYSTEMQUOTE, postgres_path, post_opts, DEVNULL, SYSTEMQUOTE);
+				SYSTEMQUOTE, postgres_path, pgdata_opt, post_opts,
+				DEVNULL, SYSTEMQUOTE);
 
 	return system(cmd);
 }
@@ -494,6 +496,10 @@ do_start(void)
 		}
 	}
 
+	/* No -D or -D already added during server start */
+	if (ctl_command == RESTART_COMMAND || pgdata_opt == NULL)
+		pgdata_opt = "";	
+	
 	if (postgres_path == NULL)
 	{
 		char	   *postmaster_path;
@@ -1210,6 +1216,9 @@ main(int argc, char **argv)
 					env_var = xmalloc(len + 8);
 					snprintf(env_var, len + 8, "PGDATA=%s", optarg);
 					putenv(env_var);
+					/* Show -D for easier postmaster 'ps' identification */
+					pgdata_opt = xmalloc(len + 7);
+					snprintf(pgdata_opt, len + 7, "-D \"%s\" ", optarg);
 					break;
 				}
 				case 'l':
