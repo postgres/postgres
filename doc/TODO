@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Fri Apr  6 22:30:59 EDT 2001
+Last updated:		Sat Apr 14 21:55:58 EDT 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -364,6 +364,7 @@ SOURCE CODE
 * Remove warnings created by -Wcast-align
 * Move platform-specific ps status display info from ps_status.c to ports
 * Decide on spelling of indexes/indices
+* Allow ps status display to work on Solaris/SVr4-based systems
 
 ---------------------------------------------------------------------------
 
