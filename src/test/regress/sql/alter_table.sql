@@ -214,8 +214,11 @@ DROP TABLE tmp2;
 
 -- Foreign key adding test with mixed types
 
-CREATE TABLE PKTABLE (ptest1 int PRIMARY KEY);
-CREATE TABLE FKTABLE (ftest1 text);
+-- Note: these tables are TEMP to avoid name conflicts when this test
+-- is run in parallel with foreign_key.sql.
+
+CREATE TEMP TABLE PKTABLE (ptest1 int PRIMARY KEY);
+CREATE TEMP TABLE FKTABLE (ftest1 text);
 -- This next should fail, because text=int does not exist
 ALTER TABLE FKTABLE ADD FOREIGN KEY(ftest1) references pktable;
 -- This should also fail for the same reason, but here we
@@ -224,27 +227,30 @@ ALTER TABLE FKTABLE ADD FOREIGN KEY(ftest1) references pktable(ptest1);
 -- This should succeed, even though they are different types
 -- because varchar=int does exist
 DROP TABLE FKTABLE;
-CREATE TABLE FKTABLE (ftest1 varchar);
+CREATE TEMP TABLE FKTABLE (ftest1 varchar);
 ALTER TABLE FKTABLE ADD FOREIGN KEY(ftest1) references pktable;
 -- As should this
 ALTER TABLE FKTABLE ADD FOREIGN KEY(ftest1) references pktable(ptest1);
 DROP TABLE pktable;
 DROP TABLE fktable;
 
-CREATE TABLE PKTABLE (ptest1 int, ptest2 text, PRIMARY KEY(ptest1, ptest2));
+CREATE TEMP TABLE PKTABLE (ptest1 int, ptest2 text,
+                           PRIMARY KEY(ptest1, ptest2));
 -- This should fail, because we just chose really odd types
-CREATE TABLE FKTABLE (ftest1 cidr, ftest2 datetime);
+CREATE TEMP TABLE FKTABLE (ftest1 cidr, ftest2 datetime);
 ALTER TABLE FKTABLE ADD FOREIGN KEY(ftest1, ftest2) references pktable;
 -- Again, so should this...
 DROP TABLE FKTABLE;
-CREATE TABLE FKTABLE (ftest1 cidr, ftest2 datetime);
-ALTER TABLE FKTABLE ADD FOREIGN KEY(ftest1, ftest2) references pktable(ptest1, ptest2);
+CREATE TEMP TABLE FKTABLE (ftest1 cidr, ftest2 datetime);
+ALTER TABLE FKTABLE ADD FOREIGN KEY(ftest1, ftest2)
+     references pktable(ptest1, ptest2);
 -- This fails because we mixed up the column ordering
 DROP TABLE FKTABLE;
-CREATE TABLE FKTABLE (ftest1 int, ftest2 text);
-ALTER TABLE FKTABLE ADD FOREIGN KEY(ftest1, ftest2) references pktable(ptest2, ptest1);
+CREATE TEMP TABLE FKTABLE (ftest1 int, ftest2 text);
+ALTER TABLE FKTABLE ADD FOREIGN KEY(ftest1, ftest2)
+     references pktable(ptest2, ptest1);
 -- As does this...
-ALTER TABLE FKTABLE ADD FOREIGN KEY(ftest2, ftest1) references pktable(ptest1, ptest2);
+ALTER TABLE FKTABLE ADD FOREIGN KEY(ftest2, ftest1)
+     references pktable(ptest1, ptest2);
 
-DROP TABLE FKTABLE;
-DROP TABLE PKTABLE;
+-- temp tables should go away by themselves, need not drop them.
