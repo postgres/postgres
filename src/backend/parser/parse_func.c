@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.94 2000/11/16 22:30:28 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.95 2000/12/15 19:22:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -759,14 +759,15 @@ func_select_candidate(int nargs,
 	CandidateList current_candidate;
 	CandidateList last_candidate;
 	Oid		   *current_typeids;
+	Oid			current_type;
 	int			i;
 	int			ncandidates;
 	int			nbestMatch,
 				nmatch;
-	CATEGORY	slot_category,
+	CATEGORY	slot_category[FUNC_MAX_ARGS],
 				current_category;
-	Oid			slot_type,
-				current_type;
+	bool		slot_has_preferred_type[FUNC_MAX_ARGS];
+	bool		resolved_unknowns;
 
 	/*
 	 * Run through all candidates and keep those with the most matches on
@@ -911,98 +912,133 @@ func_select_candidate(int nargs,
 	 * Still too many candidates? Try assigning types for the unknown
 	 * columns.
 	 *
-	 * We do this by examining each unknown argument position to see if all
-	 * the candidates agree on the type category of that slot.	If so, and
-	 * if some candidates accept the preferred type in that category,
-	 * eliminate the candidates with other input types.  If we are down to
-	 * one candidate at the end, we win.
+	 * We do this by examining each unknown argument position to see if we
+	 * can determine a "type category" for it.  If any candidate has an
+	 * input datatype of STRING category, use STRING category (this bias
+	 * towards STRING is appropriate since unknown-type literals look like
+	 * strings).  Otherwise, if all the candidates agree on the type
+	 * category of this argument position, use that category.  Otherwise,
+	 * fail because we cannot determine a category.
 	 *
-	 * XXX It's kinda bogus to do this left-to-right, isn't it?  If we
-	 * eliminate some candidates because they are non-preferred at the
-	 * first slot, we won't notice that they didn't have the same type
-	 * category for a later slot.
-	 * XXX Hmm. How else would you do this? These candidates are here because
-	 * they all have the same number of matches on arguments with explicit
-	 * types, so from here on left-to-right resolution is as good as any.
-	 * Need a counterexample to see otherwise...
+	 * If we are able to determine a type category, also notice whether
+	 * any of the candidates takes a preferred datatype within the category.
+	 *
+	 * Having completed this examination, remove candidates that accept
+	 * the wrong category at any unknown position.  Also, if at least one
+	 * candidate accepted a preferred type at a position, remove candidates
+	 * that accept non-preferred types.
+	 *
+	 * If we are down to one candidate at the end, we win.
 	 */
+	resolved_unknowns = false;
 	for (i = 0; i < nargs; i++)
 	{
-		if (input_typeids[i] == UNKNOWNOID)
+		bool	have_conflict;
+
+		if (input_typeids[i] != UNKNOWNOID)
+			continue;
+		resolved_unknowns = true; /* assume we can do it */
+		slot_category[i] = INVALID_TYPE;
+		slot_has_preferred_type[i] = false;
+		have_conflict = false;
+		for (current_candidate = candidates;
+			 current_candidate != NULL;
+			 current_candidate = current_candidate->next)
 		{
-			slot_category = INVALID_TYPE;
-			slot_type = InvalidOid;
-			last_candidate = NULL;
-			for (current_candidate = candidates;
-				 current_candidate != NULL;
-				 current_candidate = current_candidate->next)
+			current_typeids = current_candidate->args;
+			current_type = current_typeids[i];
+			current_category = TypeCategory(current_type);
+			if (slot_category[i] == INVALID_TYPE)
 			{
-				current_typeids = current_candidate->args;
-				current_type = current_typeids[i];
-				current_category = TypeCategory(current_type);
-				if (slot_category == INVALID_TYPE)
+				/* first candidate */
+				slot_category[i] = current_category;
+				slot_has_preferred_type[i] =
+					IsPreferredType(current_category, current_type);
+			}
+			else if (current_category == slot_category[i])
+			{
+				/* more candidates in same category */
+				slot_has_preferred_type[i] |=
+					IsPreferredType(current_category, current_type);
+			}
+			else
+			{
+				/* category conflict! */
+				if (current_category == STRING_TYPE)
 				{
-					slot_category = current_category;
-					slot_type = current_type;
-					last_candidate = current_candidate;
-				}
-				else if (current_category != slot_category)
-				{
-					/* started out as unknown type, so give preference to string type, if available */
-					if (current_category == STRING_TYPE)
-					{
-						slot_category = current_category;
-						slot_type = current_type;
-						/* forget all previous candidates */
-						candidates = current_candidate;
-						last_candidate = current_candidate;
-					}
-					else if (slot_category == STRING_TYPE)
-					{
-						/* forget this candidate */
-						if (last_candidate)
-							last_candidate->next = current_candidate->next;
-						else
-							candidates = current_candidate->next;
-					}
-				}
-				else if (current_type != slot_type)
-				{
-					if (IsPreferredType(slot_category, current_type))
-					{
-						slot_type = current_type;
-						/* forget all previous candidates */
-						candidates = current_candidate;
-						last_candidate = current_candidate;
-					}
-					else if (IsPreferredType(slot_category, slot_type))
-					{
-						/* forget this candidate */
-						if (last_candidate)
-							last_candidate->next = current_candidate->next;
-						else
-							candidates = current_candidate->next;
-					}
-					else
-						last_candidate = current_candidate;
+					/* STRING always wins if available */
+					slot_category[i] = current_category;
+					slot_has_preferred_type[i] =
+						IsPreferredType(current_category, current_type);
 				}
 				else
 				{
-					/* keep this candidate */
-					last_candidate = current_candidate;
+					/* Remember conflict, but keep going (might find STRING) */
+					have_conflict = true;
 				}
 			}
-			if (last_candidate) /* terminate rebuilt list */
-				last_candidate->next = NULL;
+		}
+		if (have_conflict && slot_category[i] != STRING_TYPE)
+		{
+			/* Failed to resolve category conflict at this position */
+			resolved_unknowns = false;
+			break;
 		}
 	}
 
-	if (candidates == NULL)
-		return NULL;			/* no remaining candidates */
-	if (candidates->next != NULL)
-		return NULL;			/* more than one remaining candidate */
+	if (resolved_unknowns)
+	{
+		/* Strip non-matching candidates */
+		ncandidates = 0;
+		last_candidate = NULL;
+		for (current_candidate = candidates;
+			 current_candidate != NULL;
+			 current_candidate = current_candidate->next)
+		{
+			bool	keepit = true;
 
-	return candidates->args;
+			current_typeids = current_candidate->args;
+			for (i = 0; i < nargs; i++)
+			{
+				if (input_typeids[i] != UNKNOWNOID)
+					continue;
+				current_type = current_typeids[i];
+				current_category = TypeCategory(current_type);
+				if (current_category != slot_category[i])
+				{
+					keepit = false;
+					break;
+				}
+				if (slot_has_preferred_type[i] &&
+					!IsPreferredType(current_category, current_type))
+				{
+					keepit = false;
+					break;
+				}
+			}
+			if (keepit)
+			{
+				/* keep this candidate */
+				last_candidate = current_candidate;
+				ncandidates++;
+			}
+			else
+			{
+				/* forget this candidate */
+				if (last_candidate)
+					last_candidate->next = current_candidate->next;
+				else
+					candidates = current_candidate->next;
+			}
+		}
+		if (last_candidate)		/* terminate rebuilt list */
+			last_candidate->next = NULL;
+	}
+
+	if (ncandidates == 1)
+		return candidates->args;
+
+	return NULL;				/* failed to determine a unique candidate */
 }	/* func_select_candidate() */
 
 
