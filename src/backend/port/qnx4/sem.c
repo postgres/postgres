@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/port/qnx4/Attic/sem.c,v 1.1 1999/12/16 16:52:52 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/port/qnx4/Attic/sem.c,v 1.2 2000/03/14 18:12:06 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,23 +21,31 @@
 #include <sys/mman.h>
 #include "postgres.h"
 #include "storage/ipc.h"
+#include "storage/proc.h"
 #include <sys/sem.h>
 
 
-#define SETMAX    32
-#define SEMMAX    16
+#define SETMAX	((MAXBACKENDS + PROC_NSEMS_PER_SET - 1) / PROC_NSEMS_PER_SET)
+#define SEMMAX	(PROC_NSEMS_PER_SET)
+#define OPMAX	8
 
-#define MODE    0777
+#define MODE    0700
 #define SHM_INFO_NAME   "SysV_Sem_Info"
 
+
+struct pending_ops {
+    int         	op[OPMAX];		/* array of pending operations */
+    int         	idx;			/* index of first free array member */
+};
 
 struct sem_info {
   sem_t sem;
   struct {
-    key_t  key;
-    int    nsems;
-    sem_t  sem[SEMMAX];  /* array of semaphores */
-    pid_t  pid[SEMMAX];  /* array of PIDs */
+    key_t		key;
+    int			nsems;
+    sem_t		sem[SEMMAX];		/* array of POSIX semaphores */
+    struct sem		semV[SEMMAX];		/* array of System V semaphore structures */
+    struct pending_ops	pendingOps[SEMMAX];	/* array of pending operations */
   } set[SETMAX];
 };
 
@@ -46,7 +54,7 @@ static struct sem_info  *SemInfo = ( struct sem_info * )-1;
 
 int semctl( int semid, int semnum, int cmd, /*...*/union semun arg )
 {
-  int r;
+  int r = 0;
 
   sem_wait( &SemInfo->sem );
 
@@ -58,28 +66,36 @@ int semctl( int semid, int semnum, int cmd, /*...*/union semun arg )
   }
 
   switch( cmd )  {
+    case GETNCNT:
+      r = SemInfo->set[semid].semV[semnum].semncnt;
+      break;
+
     case GETPID:
-      r = SemInfo->set[semid].pid[semnum];
+      r = SemInfo->set[semid].semV[semnum].sempid;
       break;
 
     case GETVAL:
-      r = SemInfo->set[semid].sem[semnum].value;
+      r = SemInfo->set[semid].semV[semnum].semval;
       break;
 
     case GETALL:
       for( semnum = 0; semnum < SemInfo->set[semid].nsems; semnum++ )  {
-        arg.array[semnum] = SemInfo->set[semid].sem[semnum].value;
+        arg.array[semnum] = SemInfo->set[semid].semV[semnum].semval;
       }
       break;
 
     case SETVAL:
-      SemInfo->set[semid].sem[semnum].value = arg.val;
+      SemInfo->set[semid].semV[semnum].semval = arg.val;
       break;
 
     case SETALL:
       for( semnum = 0; semnum < SemInfo->set[semid].nsems; semnum++ )  {
-        SemInfo->set[semid].sem[semnum].value = arg.array[semnum];
+        SemInfo->set[semid].semV[semnum].semval = arg.array[semnum];
       }
+      break;
+
+    case GETZCNT:
+      r = SemInfo->set[semid].semV[semnum].semzcnt;
       break;
 
     case IPC_RMID:
@@ -121,12 +137,16 @@ int semget( key_t key, int nsems, int semflg )
       exist = 1;
       fd = shm_open( SHM_INFO_NAME, O_RDWR | O_CREAT, MODE );
     }
-    if( fd == -1 ) return fd;
+    if( fd == -1 ) {
+      return fd;
+    }
     /* The size may only be set once. Ignore errors. */
     ltrunc( fd, sizeof( struct sem_info ), SEEK_SET );
     SemInfo = mmap( NULL, sizeof( struct sem_info ),
                     PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0 );
-    if( SemInfo == MAP_FAILED ) return -1;
+    if( SemInfo == MAP_FAILED )  {
+      return -1;
+    }
     if( !exist )  {
       /* create semaphore for locking */
       sem_init( &SemInfo->sem, 1, 1 );
@@ -196,12 +216,12 @@ int semget( key_t key, int nsems, int semflg )
 
   sem_post( &SemInfo->sem );
 
-  return 0;
+  return semid;
 }
 
 int semop( int semid, struct sembuf *sops, size_t nsops )
 {
-  int i, j, r = 0, r1, errno1 = 0;
+  int i, r = 0, r1, errno1 = 0, op;
 
   sem_wait( &SemInfo->sem );
 
@@ -220,38 +240,67 @@ int semop( int semid, struct sembuf *sops, size_t nsops )
 
   for( i = 0; i < nsops; i++ )  {
     if( sops[i].sem_op < 0 )  {
-      if( sops[i].sem_flg & IPC_NOWAIT )  {
-        for( j = 0; j < -sops[i].sem_op; j++ )  {
-          if( sem_trywait( &SemInfo->set[semid].sem[sops[i].sem_num] ) )  {
-            errno1 = errno;
-            r = -1;
-          }
+      if( SemInfo->set[semid].semV[sops[i].sem_num].semval < -sops[i].sem_op )  {
+        if( sops[i].sem_flg & IPC_NOWAIT )  {
+          sem_post( &SemInfo->sem );
+          errno = EAGAIN;
+          return -1;
         }
+        SemInfo->set[semid].semV[sops[i].sem_num].semncnt++;
+        if( SemInfo->set[semid].pendingOps[sops[i].sem_num].idx >= OPMAX )  {
+          /* pending operations array overflow */
+          sem_post( &SemInfo->sem );
+          errno = ERANGE;
+          return -1;
+        }
+        SemInfo->set[semid].pendingOps[sops[i].sem_num].op[SemInfo->set[semid].pendingOps[sops[i].sem_num].idx++] = sops[i].sem_op;
+        /* suspend */
+        sem_post( &SemInfo->sem ); /* avoid deadlock */
+        r1 = sem_wait( &SemInfo->set[semid].sem[sops[i].sem_num] );
+        sem_wait( &SemInfo->sem );
+        if( r1 )  {
+          errno1 = errno;
+          r = r1;
+          /* remove pending operation */
+          SemInfo->set[semid].pendingOps[sops[i].sem_num].op[--SemInfo->set[semid].pendingOps[sops[i].sem_num].idx] = 0;
+        }
+        else  {
+          SemInfo->set[semid].semV[sops[i].sem_num].semval -= -sops[i].sem_op;
+        }
+        SemInfo->set[semid].semV[sops[i].sem_num].semncnt--;
       }
       else  {
-        for( j = 0; j < -sops[i].sem_op; j++ )  {
-          sem_post( &SemInfo->sem ); /* avoid deadlock */
-          r1 = sem_wait( &SemInfo->set[semid].sem[sops[i].sem_num] );
-          sem_wait( &SemInfo->sem );
-          if( r1 )  {
-            errno1 = errno;
-            r = r1;
-          }
-        }
+        SemInfo->set[semid].semV[sops[i].sem_num].semval -= -sops[i].sem_op;
       }
     }
     else if( sops[i].sem_op > 0 )  {
-      for( j = 0; j < sops[i].sem_op; j++ )  {
-        if( sem_post( &SemInfo->set[semid].sem[sops[i].sem_num] ) )  {
-          errno1 = errno;
-          r = -1;
+      SemInfo->set[semid].semV[sops[i].sem_num].semval += sops[i].sem_op;
+      op = sops[i].sem_op;
+      while( op > 0 && SemInfo->set[semid].pendingOps[sops[i].sem_num].idx > 0 )  {	/* operations pending */
+        if( SemInfo->set[semid].pendingOps[sops[i].sem_num].op[SemInfo->set[semid].pendingOps[sops[i].sem_num].idx-1] + op >= 0 )  {
+          /* unsuspend processes */
+          if( sem_post( &SemInfo->set[semid].sem[sops[i].sem_num] ) )  {
+            errno1 = errno;
+            r = -1;
+          }
+          /* adjust pending operations */
+          op += SemInfo->set[semid].pendingOps[sops[i].sem_num].op[--SemInfo->set[semid].pendingOps[sops[i].sem_num].idx];
+          SemInfo->set[semid].pendingOps[sops[i].sem_num].op[SemInfo->set[semid].pendingOps[sops[i].sem_num].idx] = 0;
+        }
+        else  {
+          /* adjust pending operations */
+          SemInfo->set[semid].pendingOps[sops[i].sem_num].op[SemInfo->set[semid].pendingOps[sops[i].sem_num].idx-1] += op;
+          op = 0;
         }
       }
     }
     else /* sops[i].sem_op == 0 */  {
       /* not supported */
+      sem_post( &SemInfo->sem );
+      errno = ENOSYS;
+      return -1;
     }
-    SemInfo->set[semid].pid[sops[i].sem_num] = getpid( );
+    SemInfo->set[semid].semV[sops[i].sem_num].sempid = getpid( );
   }
 
   sem_post( &SemInfo->sem );

@@ -7,12 +7,13 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/port/qnx4/Attic/tstsem.c,v 1.1 1999/12/16 16:52:52 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/port/qnx4/Attic/tstsem.c,v 1.2 2000/03/14 18:12:06 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 
 
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -22,9 +23,18 @@
 #include <sys/sem.h>
 
 
-#define SEMMAX  1
-#define OPSMAX  1
+#define SEMMAX	16
+#define OPSMAX	1
 
+static int semid;
+
+static void sig_handler( int sig_no )
+{
+  union semun arg;
+  int i = semctl( semid, 0, GETNCNT, arg );
+  if( i == -1 ) perror( "semctl" );
+  else printf( "semval = %d\n", i );
+}
 
 int main( int argc, char **argv )
 {
@@ -34,7 +44,7 @@ int main( int argc, char **argv )
   int     nsems = SEMMAX;
   int     semflg = 0;
   int     unlink = 0;
-  int     semid, i;
+  int     i;
   struct sembuf sops[OPSMAX];
   u_short array[SEMMAX];
   union semun arg;
@@ -67,8 +77,11 @@ int main( int argc, char **argv )
     exit( semid );
   }
 
+  /* test signal interrupts */
+  signal( SIGTERM, sig_handler );
+
   do  {
-    printf( "(-)sem_op, (+)sem_op, (G)ETVAL, (S)ETVAL, GET(P)ID, GET(A)LL, SETA(L)L, e(x)it: " );
+    printf( "(-)sem_op, (+)sem_op, (G)ETVAL, (S)ETVAL, GET(P)ID, GET(A)LL, SETA(L)L, GET(N)CNT, GET(Z)CNT, e(x)it: " );
     scanf( "%s", s );
     switch( s[0] )  {
       case '-': 
@@ -121,6 +134,20 @@ int main( int argc, char **argv )
           scanf( "%hu", &arg.array[i] );
         }
         if( semctl( semid, 0, SETALL, arg ) == -1 )perror( "semctl" );
+        break;
+
+      case 'N': 
+      case 'n': 
+        i = semctl( semid, 0, GETNCNT, arg );
+        if( i == -1 ) perror( "semctl" );
+        else printf( "semval = %d\n", i );
+        break;
+
+      case 'Z': 
+      case 'z': 
+        i = semctl( semid, 0, GETZCNT, arg );
+        if( i == -1 ) perror( "semctl" );
+        else printf( "semval = %d\n", i );
         break;
     }
   }
