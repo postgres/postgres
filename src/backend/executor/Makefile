@@ -4,16 +4,18 @@
 #    Makefile for executor
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/executor/Makefile,v 1.3 1997/08/30 10:28:47 vadim Exp $
+#    $Header: /cvsroot/pgsql/src/backend/executor/Makefile,v 1.4 1997/12/17 04:58:33 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
 SRCDIR = ../..
 include ../../Makefile.global
 
-INCLUDE_OPT = -I.. \
-              -I../port/$(PORTNAME) \
-              -I../../include
+INCLUDE_OPT = -I.. 
+
+ifdef PORTNAME
+INCLUDE_OPT+=-I../port/$(PORTNAME) 
+endif
 
 CFLAGS+=$(INCLUDE_OPT)
 

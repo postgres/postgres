@@ -34,7 +34,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/Makefile,v 1.27 1997/11/13 03:22:10 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/backend/Makefile,v 1.28 1997/12/17 04:58:19 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -60,7 +60,11 @@ postgres: $(OBJS) ../utils/version.o
 $(OBJS): $(DIRS:%=%.dir)
 
 $(DIRS:%=%.dir):
+ifdef PORTNAME
 	$(MAKE) -C $(subst .dir,,$@) all PORTNAME=$(PORTNAME)
+else
+	$(MAKE) -C $(subst .dir,,$@) all 
+endif
 
 ../utils/version.o:
 	$(MAKE) -C ../utils version.o        
@@ -96,10 +100,18 @@ clean:
 	rm -f postgres $(POSTGRES_IMP) fmgr.h parse.h \
 	    global1.bki.source local1_template1.bki.source \
 	    global1.description local1_template1.description
+ifdef PORTNAME
 	for i in $(DIRS); do $(MAKE) -C $$i clean PORTNAME=$(PORTNAME); done
+else
+	for i in $(DIRS); do $(MAKE) -C $$i clean; done
+endif
 
 .DEFAULT:
+ifdef PORTNAME
 	for i in $(DIRS); do $(MAKE) -C $$i $@ PORTNAME=$(PORTNAME); done
+else
+	for i in $(DIRS); do $(MAKE) -C $$i $@; done
+endif
 
 #############################################################################
 #
