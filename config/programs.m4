@@ -1,4 +1,4 @@
-# $PostgreSQL: pgsql/config/programs.m4,v 1.17 2004/11/30 06:13:02 tgl Exp $
+# $PostgreSQL: pgsql/config/programs.m4,v 1.18 2004/12/02 20:04:19 tgl Exp $
 
 
 # PGAC_PATH_FLEX
@@ -87,13 +87,14 @@ for pgac_rllib in -lreadline -ledit ; do
   for pgac_lib in "" " -ltermcap" " -lncurses" " -lcurses" ; do
     LIBS="${pgac_rllib}${pgac_lib} $pgac_save_LIBS"
     AC_TRY_LINK_FUNC([readline], [[
-      # NetBSD, OpenBSD, and Irix have a broken linker that does not
-      # recognize dependent libraries
-      case $host_os in netbsd* | openbsd* | irix*)
-        case $pgac_lib in
-          *curses*) ;;
-          *) pgac_lib=" -lcurses" ;;
-        esac
+      # Older NetBSD, OpenBSD, and Irix have a broken linker that does not
+      # recognize dependent libraries; assume curses is needed if we didn't
+      # find any dependency.
+      case $host_os in
+        netbsd* | openbsd* | irix*)
+          if test x"$pgac_lib" = x"" ; then
+            pgac_lib=" -lcurses"
+          fi ;;
       esac
 
       pgac_cv_check_readline="${pgac_rllib}${pgac_lib}"
