@@ -140,6 +140,9 @@
 
 /* does anybody use this? */
 #if defined(next)
+# if defined(__STRICT_ANSI__)
+#  define isascii(c)  ((unsigned)(c)<=0177)
+# endif
 #  define USE_LIMITS_H
 #  define JMP_BUF
 #  define NEED_SIG_JMP
