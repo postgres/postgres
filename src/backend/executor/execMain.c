@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.72 1999/02/07 13:37:55 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.73 1999/02/07 13:54:58 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -131,14 +131,19 @@ ExecutorStart(QueryDesc *queryDesc, EState *estate)
 	/*
 	 * Make our own private copy of the current queries snapshot data
 	 */
-	estate->es_snapshot = (Snapshot)palloc(sizeof(SnapshotData));
-	memcpy(estate->es_snapshot, QuerySnapshot, sizeof(SnapshotData));
-	if (estate->es_snapshot->xcnt > 0)
+	if (QuerySnapshot == NULL)
+		estate->es_snapshot = NULL
+	else
 	{
-		estate->es_snapshot->xip = (TransactionId *)
+		estate->es_snapshot = (Snapshot)palloc(sizeof(SnapshotData));
+		memcpy(estate->es_snapshot, QuerySnapshot, sizeof(SnapshotData));
+		if (estate->es_snapshot->xcnt > 0)
+		{
+			estate->es_snapshot->xip = (TransactionId *)
 					palloc(estate->es_snapshot->xcnt * sizeof(TransactionId));
-		memcpy(estate->es_snapshot->xip, QuerySnapshot->xip,
+			memcpy(estate->es_snapshot->xip, QuerySnapshot->xip,
 					estate->es_snapshot->xcnt * sizeof(TransactionId));
+		}
 	}
 
 	/*
