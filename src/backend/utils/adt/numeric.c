@@ -5,7 +5,7 @@
  *
  *	1998 Jan Wieck
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/numeric.c,v 1.7 1999/01/04 12:53:23 wieck Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/numeric.c,v 1.8 1999/01/04 17:51:58 wieck Exp $
  *
  * ----------
  */
@@ -3438,25 +3438,28 @@ cmp_abs(NumericVar *var1, NumericVar *var2)
 	int		w2 = var2->weight;
 	int		stat;
 
-	while (w1 > w2)
+	while (w1 > w2 && i1 < var1->ndigits)
 	{
 		if (var1->digits[i1++] != 0) return 1;
 		w1--;
 	}
-	while (w2 > w1)
+	while (w2 > w1 && i2 < var2->ndigits)
 	{
 		if (var2->digits[i2++] != 0) return -1;
 		w2--;
 	}
 
-	while (i1 < var1->ndigits && i2 < var2->ndigits)
+	if (w1 == w2)
 	{
-		stat = var1->digits[i1++] - var2->digits[i2++];
-		if (stat)
+		while (i1 < var1->ndigits && i2 < var2->ndigits)
 		{
-			if (stat > 0)
-				return 1;
-			return -1;
+			stat = var1->digits[i1++] - var2->digits[i2++];
+			if (stat)
+			{
+				if (stat > 0)
+					return 1;
+				return -1;
+			}
 		}
 	}
 
