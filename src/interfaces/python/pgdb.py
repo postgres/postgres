@@ -155,7 +155,7 @@ class pgdbTypeCache:
 			# have to be prepended by the caller.
 			res = (
 				res[0],
-				-1, string.atoi(res[1]),
+				None, string.atoi(res[1]),
 				None, None, None
 			)
 			self.__type_cache[oid] = res
