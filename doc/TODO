@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Thu Feb 12 23:47:05 EST 2004
+Last updated:		Tue Feb 17 10:37:48 EST 2004
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -201,6 +201,7 @@ Commands
 	o Allow ALTER TABLE ... ALTER CONSTRAINT ... RENAME
 	o Allow ALTER TABLE to change constraint deferrability and actions
 	o Disallow dropping of an inherited constraint
+	o Allow the schema of objects to be changed
 
 * CLUSTER
 	o Automatically maintain clustering on a table
@@ -460,7 +461,7 @@ Source Code
 * Acquire lock on a relation before building a relcache entry for it
 * Research interaction of setitimer() and sleep() used by statement_timeout
 * -Add checks for fclose() failure (Tom)
-* Change CVS $PostgreSQL: pgsql/doc/TODO,v 1.1216 2004/02/13 04:47:13 momjian Exp $ to $PostgreSQL: pgsql/doc/TODO,v 1.1216 2004/02/13 04:47:13 momjian Exp $
+* Change CVS $PostgreSQL: pgsql/doc/TODO,v 1.1217 2004/02/17 15:37:48 momjian Exp $ to $PostgreSQL: pgsql/doc/TODO,v 1.1217 2004/02/17 15:37:48 momjian Exp $
 * Exit postmaster if postgresql.conf can not be opened
 * Rename /scripts directory because they are all C programs now
 * Allow the regression tests to start postmaster with -i so the tests
