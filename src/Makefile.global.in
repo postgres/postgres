@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.33 1998/01/27 03:24:51 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.34 1998/02/13 05:09:12 scrappy Exp $
 #
 # NOTES
 #    Essentially all Postgres make files include this file and use the 
@@ -48,6 +48,11 @@
 # compiling to a.out (which means you're using the dld dynamic loading 
 # library), set LINUX_ELF to null in Makefile.custom.
 LINUX_ELF= true
+#
+# Ignore BSD_SHLIB if you're not using one of the BSD ports.  But if you
+# are, and it's one that doesn't have shared libraries (NetBSD/vax is an
+# example of this), set BSD_SHLIB to null in Makefile.custom.
+BSD_SHLIB= true
 
 LIBPQDIR:= $(SRCDIR)/interfaces/libpq
 

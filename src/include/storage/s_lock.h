@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/include/storage/s_lock.h,v 1.24 1998/02/05 03:31:01 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/include/storage/s_lock.h,v 1.25 1998/02/13 05:09:50 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -286,6 +286,18 @@ tas_dummy()
 #define	S_INIT_LOCK(addr)	(*(addr) = 0)
 
 #endif							/* NEED_SPARC_TAS_ASM */
+
+/*
+ * VAXen -- even multiprocessor ones
+ */
+
+#if defined(NEED_VAX_TAS_ASM)
+
+#define S_LOCK(addr)		__asm__("1: bbssi $0,(%0),1b": :"r"(addr))
+#define S_UNLOCK(addr)		(*(addr) = 0)
+#define S_INIT_LOCK(addr)	(*(addr) = 0)
+
+#endif							/* NEED_VAX_TAS_ASM */
 
 /*
  * i386 based things

@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/interfaces/libpq/Attic/Makefile.in,v 1.5 1998/01/26 01:42:24 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/interfaces/libpq/Attic/Makefile.in,v 1.6 1998/02/13 05:10:06 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -43,10 +43,12 @@ ifeq ($(PORTNAME), linux)
   endif
 endif
 ifeq ($(PORTNAME), bsd)
-  install-shlib-dep := install-shlib
-  shlib := libpq.so.$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
-  LDFLAGS_SL = -x -Bshareable -Bforcearchive
-  CFLAGS += $(CFLAGS_SL)
+  ifdef BSD_SHLIB
+    install-shlib-dep := install-shlib
+    shlib := libpq.so.$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
+    LDFLAGS_SL = -x -Bshareable -Bforcearchive
+    CFLAGS += $(CFLAGS_SL)
+  endif
 endif
 ifeq ($(PORTNAME), i386_solaris)
   install-shlib-dep := install-shlib

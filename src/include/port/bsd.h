@@ -10,6 +10,11 @@
 #define HAS_TEST_AND_SET
 #endif
 
+#if defined(vax)
+#define NEED_VAX_TAS_ASM
+#define HAS_TEST_AND_SET
+#endif
+
 #if defined(ns32k)
 #define NEED_NS32k_TAS_ASM
 #define HAS_TEST_AND_SET
