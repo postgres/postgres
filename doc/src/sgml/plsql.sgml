@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/plsql.sgml,v 2.18 2001/01/20 20:59:29 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/plsql.sgml,v 2.19 2001/02/10 05:32:33 tgl Exp $
 -->
 
  <chapter id="plsql">
@@ -54,26 +54,35 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/plsql.sgml,v 2.18 2001/01/20 20:59:29
     </itemizedlist>
    </para>
    <para>
-    The PL/pgSQL call handler parses the functions source text and
-    produces an internal binary instruction tree on the first time the
+    The PL/pgSQL call handler parses the function's source text and
+    produces an internal binary instruction tree the first time the
     function is called. The produced bytecode is identified
-    in the call handler by the object ID of the function. This ensures,
+    in the call handler by the object ID of the function. This ensures
     that changing a function by a DROP/CREATE sequence will take effect
     without establishing a new database connection. 
    </para>
    <para>
     For all expressions and <acronym>SQL</acronym> statements used in
     the function, the PL/pgSQL bytecode interpreter creates a
-    prepared execution plan using the SPI managers SPI_prepare() and
-    SPI_saveplan() functions. This is done the first time, the individual
+    prepared execution plan using the SPI manager's SPI_prepare() and
+    SPI_saveplan() functions. This is done the first time the individual
     statement is processed in the PL/pgSQL function. Thus, a function with
     conditional code that contains many statements for which execution
     plans would be required, will only prepare and save those plans
-    that are really used during the entire lifetime of the database
+    that are really used during the lifetime of the database
     connection.
    </para>
    <para>
-    Except for input-/output-conversion and calculation functions
+    Because PL/pgSQL saves execution plans in this way, queries that appear
+    directly in a PL/pgSQL function must refer to the same tables and fields
+    on every execution; that is, you cannot use a parameter as the name of
+    a table or field in a query.  To get around
+    this restriction, you can construct dynamic queries using the PL/pgSQL
+    EXECUTE statement --- at the price of constructing a new query plan
+    on every execution.
+   </para>
+   <para>
+    Except for input/output conversion and calculation functions
     for user defined types, anything that can be defined in C language
     functions can also be done with PL/pgSQL. It is possible to
     create complex conditional computation functions and later use
@@ -118,11 +127,13 @@ END;
     </para>
 
     <para>
-     It is important not to misunderstand the meaning of BEGIN/END for
-     grouping statements in PL/pgSQL and the database commands for
-     transaction control. Functions and trigger procedures cannot
-     start or commit transactions and <productname>Postgres</productname>
-     does not have nested transactions.
+     It is important not to confuse the use of BEGIN/END for
+     grouping statements in PL/pgSQL with the database commands for
+     transaction control.  PL/pgSQL's BEGIN/END are only for grouping;
+     they do not start or end a transaction.  Functions and trigger procedures
+     are always executed within a transaction established by an outer query
+     --- they cannot start or commit transactions, since
+     <productname>Postgres</productname> does not have nested transactions.
     </para>
    </sect2>
 
@@ -146,8 +157,8 @@ END;
 
     <para>
      All variables, rows and records used in a block or its
-     sub-blocks must be declared in the declarations section of a block
-     except for the loop variable of a FOR loop iterating over a range
+     sub-blocks must be declared in the declarations section of a block,
+     except for the loop variable of a FOR-loop iterating over a range
      of integer values. Parameters given to a PL/pgSQL function are
      automatically declared with the usual identifiers $n.
      The declarations have the following syntax:
@@ -439,7 +450,11 @@ CREATE FUNCTION logfunc2 (text) RETURNS timestamp AS '
 SELECT  INTO <replaceable>target</replaceable> <replaceable>expressions</replaceable> FROM ...;
 	</programlisting>
 	<replaceable>target</replaceable> can be a record, a row variable or a
-	comma separated list of variables and record-/row-fields.
+	comma separated list of variables and record-/row-fields.  Note that
+	this is quite different from Postgres' normal interpretation of
+	SELECT INTO, which is that the INTO target is a newly created table.
+	(If you want to create a table from a SELECT result inside a PL/pgSQL
+	function, use the equivalent syntax CREATE TABLE AS SELECT.)
        </para>
        <para>
 	if a row or a variable list is used as target, the selected values
@@ -506,10 +521,12 @@ PERFORM <replaceable>query</replaceable>
         within the procedure to perform actions on variable tables and
         fields.
        </para>
-		
+
        <para>
-		The results from SELECT queries are discarded by EXECUTE unless
-		SELECT INTO is used to save the results into a table.
+	The results from SELECT queries are discarded by EXECUTE, and
+	SELECT INTO is not currently supported within EXECUTE.  So, the
+	only way to extract a result from a dynamically-created SELECT
+	is to use the FOR ... EXECUTE form described later.
        </para>
 
        <para>
@@ -531,7 +548,7 @@ EXECUTE ''UPDATE tbl SET ''
         <function>quote_literal()</function>.  Both take the
         appropriate steps to return the input text enclosed in single
         or double quotes and with any embedded special characters
-        intact.
+        properly escaped.
        </para>
       </listitem>
      </varlistentry>
@@ -587,7 +604,7 @@ IF <replaceable>expression</replaceable> THEN
 END IF;
 	</programlisting>
 	The <replaceable>expression</replaceable> must return a value that
-	at least can be casted into a boolean type.
+	is a boolean or can be casted into a boolean.
        </para>
       </listitem>
      </varlistentry>
@@ -635,9 +652,21 @@ FOR <replaceable>record | row</replaceable> IN <replaceable>select_clause</repla
 END LOOP;
 	</programlisting>
 	The record or row is assigned all the rows resulting from the select
-	clause and the statements executed for each. If the loop is terminated
-	with an EXIT statement, the last assigned row is still accessible 
-	after the loop.
+	clause and the loop body is executed for each row. If the loop is
+	terminated with an EXIT statement, the last assigned row is still
+	accessible after the loop.
+	<programlisting>
+[&lt;&lt;label&gt;&gt;]
+FOR <replaceable>record | row</replaceable> IN EXECUTE <replaceable>text_expression</replaceable> LOOP
+    <replaceable>statements</replaceable>
+END LOOP;
+	</programlisting>
+	This is like the previous form, except that the source SELECT
+	statement is specified as a string expression, which is evaluated
+	and re-planned on each entry to the FOR loop.  This allows the
+	programmer to choose the speed of a pre-planned query or the
+	flexibility of a dynamic query, just as with a plain EXECUTE
+	statement.
 	<programlisting>
 EXIT [ <replaceable>label</replaceable> ] [ WHEN <replaceable>expression</replaceable> ];
 	</programlisting>
