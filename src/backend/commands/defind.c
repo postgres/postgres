@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/commands/Attic/defind.c,v 1.1.1.1 1996/07/09 06:21:20 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/commands/Attic/defind.c,v 1.2 1996/08/15 07:42:19 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,6 +23,7 @@
 #include "catalog/index.h"
 #include "catalog/pg_index.h"
 #include "catalog/pg_proc.h"
+#include "catalog/pg_opclass.h"
 #include "nodes/pg_list.h"
 #include "nodes/plannodes.h"
 #include "nodes/primnodes.h"
@@ -51,6 +52,7 @@ static void FuncIndexArgs(IndexElem *funcIndex, AttrNumber *attNumP,
 			  Oid *argTypes, Oid *opOidP, Oid relId);
 static void NormIndexAttrs(List *attList, AttrNumber *attNumP,
 			   Oid *opOidP, Oid relId);
+static char *GetDefaultOpClass(Oid atttypid);
 
 /*
  * DefineIndex --
@@ -439,13 +441,9 @@ NormIndexAttrs(List *attList,		/* list of IndexElem's */
     
     for (rest=attList; rest != NIL; rest = lnext(rest)) {
 	IndexElem *attribute;
+	AttributeTupleForm attform;
 	
 	attribute = lfirst(rest);
-	
-	if (attribute->class == NULL) {
-	    elog(WARN,
-		 "DefineIndex: default index class unsupported");
-	}
 	
 	if (attribute->name == NULL)
 	    elog(WARN, "missing attribute for define index");
@@ -459,7 +457,19 @@ NormIndexAttrs(List *attList,		/* list of IndexElem's */
 		 "DefineIndex: attribute \"%s\" not found",
 		 attribute->name);
 	}
-	*attNumP++ = ((AttributeTupleForm)GETSTRUCT(tuple))->attnum;
+
+	attform = (AttributeTupleForm)GETSTRUCT(tuple);
+	*attNumP++ = attform->attnum;
+	
+	if (attribute->class == NULL) {
+	    /* no operator class specified, so find the default */
+	    attribute->class = GetDefaultOpClass(attform->atttypid);
+	    if(attribute->class == NULL) {
+		elog(WARN,
+		     "Can't find a default operator class for type %d.",
+		     attform->atttypid);
+	    }
+	}
 	
 	tuple = SearchSysCacheTuple(CLANAME,
 				    PointerGetDatum(attribute->class),
@@ -471,6 +481,21 @@ NormIndexAttrs(List *attList,		/* list of IndexElem's */
 	}
 	*opOidP++ = tuple->t_oid;
     }
+}
+
+static char *
+GetDefaultOpClass(Oid atttypid)
+{
+    HeapTuple tuple;
+
+    tuple = SearchSysCacheTuple(CLADEFTYPE,
+				ObjectIdGetDatum(atttypid),
+				0, 0, 0);
+    if(!HeapTupleIsValid(tuple)) {
+	return 0;
+    }
+
+    return nameout(&(((Form_pg_opclass)GETSTRUCT(tuple))->opcname));
 }
 
 /*

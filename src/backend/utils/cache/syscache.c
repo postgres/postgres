@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/cache/syscache.c,v 1.1.1.1 1996/07/09 06:22:07 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/cache/syscache.c,v 1.2 1996/08/15 07:42:52 scrappy Exp $
  *
  * NOTES
  *    These routines allow the parser/planner/executor to perform
@@ -304,7 +304,16 @@ static struct cachedesc cacheinfo[] = {
 		  0 },
 	   offsetof(FormData_pg_proc, prosrc),
       ProcedureSrcIndex,
-      (ScanFunc) ProcedureSrcIndexScan  }
+      (ScanFunc) ProcedureSrcIndexScan  },
+    { OperatorClassRelationName,               /* CLADEFTYPE */
+	   1,
+  	   { Anum_pg_opclass_opcdeftype,
+                  0,
+                  0,
+                  0 },
+	   sizeof(FormData_pg_opclass),
+           NULL,
+           (ScanFunc) NULL   }
 };
  
 static struct catcache	*SysCache[lengthof(cacheinfo)];

@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 1.6 1996/08/13 01:29:33 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 1.7 1996/08/15 07:42:29 scrappy Exp $
  *
  * HISTORY
  *    AUTHOR		DATE		MAJOR EVENT
@@ -109,8 +109,8 @@ static Node *makeA_Expr(int op, char *opname, Node *lexpr, Node *rexpr);
 	ExplainStmt
 
 %type <str>	relation_name, copy_file_name, copy_delimiter, def_name,
-	database_name, access_method, attr_name, class, index_name,
-	var_name, name, file_name, recipe_name
+	database_name, access_method_clause, access_method, attr_name,
+	class, index_name, var_name, name, file_name, recipe_name
 
 %type <str>	opt_id, opt_portal_name,
 	before_clause, after_clause, all_Op, MathOp, opt_name, opt_unique
@@ -653,20 +653,24 @@ opt_portal_name: IN name			{ $$ = $2;}
  *****************************************************************************/
 
 IndexStmt:  CREATE INDEX index_name ON relation_name
-	    USING access_method '(' index_params ')'
+	    access_method_clause '(' index_params ')'
 		{
 		    /* should check that access_method is valid,
 		       etc ... but doesn't */
 		    IndexStmt *n = makeNode(IndexStmt);
 		    n->idxname = $3;
 		    n->relname = $5;
-		    n->accessMethod = $7;
-		    n->indexParams = $9;
+		    n->accessMethod = $6;
+		    n->indexParams = $8;
 		    n->withClause = NIL;
 		    n->whereClause = NULL;
 		    $$ = (Node *)n;
 		}
 	;
+
+access_method_clause:   USING access_method      { $$ = $2; }
+		      | /* empty -- 'btree' is default access method */
+						 { $$ = "btree"; }
 
 /*****************************************************************************
  *

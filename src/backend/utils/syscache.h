@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: syscache.h,v 1.1.1.1 1996/07/09 06:22:02 scrappy Exp $
+ * $Id: syscache.h,v 1.2 1996/08/15 07:42:45 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -58,6 +58,7 @@
 #define GROSYSID	24
 #define	REWRITENAME	25
 #define PROSRC          26
+#define CLADEFTYPE      27
 
 /* ----------------
  *	struct cachedesc:	information needed for a call to InitSysCache()

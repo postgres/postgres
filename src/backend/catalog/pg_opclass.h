@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_opclass.h,v 1.1.1.1 1996/07/09 06:21:17 scrappy Exp $
+ * $Id: pg_opclass.h,v 1.2 1996/08/15 07:42:09 scrappy Exp $
  *
  * NOTES
  *    the genbki.sh script reads this file and generates .bki
@@ -34,6 +34,7 @@
 
 CATALOG(pg_opclass) {
     NameData opcname;
+    Oid opcdeftype;
 } FormData_pg_opclass;
 
 /* ----------------
@@ -47,39 +48,46 @@ typedef FormData_pg_opclass	*Form_pg_opclass;
  *	compiler constants for pg_opclass
  * ----------------
  */
-#define Natts_pg_opclass		1
+#define Natts_pg_opclass		2
 #define Anum_pg_opclass_opcname		1
+#define Anum_pg_opclass_opcdeftype      2
 
 /* ----------------
  *	initial contents of pg_opclass
  * ----------------
  */
 
-DATA(insert OID = 406 (    char2_ops ));
-DATA(insert OID = 407 (    char4_ops ));
-DATA(insert OID = 408 (    char8_ops ));
-DATA(insert OID = 409 (    name_ops ));
-DATA(insert OID = 421 (    int2_ops ));
-DATA(insert OID = 422 (    box_ops ));
-DATA(insert OID = 423 (    float8_ops ));
-DATA(insert OID = 424 (    int24_ops ));
-DATA(insert OID = 425 (    int42_ops ));
-DATA(insert OID = 426 (    int4_ops ));
+/*
+ * putting _null_'s in the (fixed-length) type field is bad
+ * (see the README in this directory), so just put zeros
+ * in, which are invalid OID's anyway.  --djm
+ */
+DATA(insert OID = 406  (    char2_ops      409    ));
+DATA(insert OID = 407  (    char4_ops      410    ));
+DATA(insert OID = 408  (    char8_ops      411    ));
+/* OID 409 is already used in table pg_type--this one should be unused */
+DATA(insert OID = 1181 (    name_ops       19     ));
+DATA(insert OID = 421  (    int2_ops       21     ));
+DATA(insert OID = 422  (    box_ops        603    ));
+DATA(insert OID = 423  (    float8_ops     701    ));
+DATA(insert OID = 424  (    int24_ops      0      ));
+DATA(insert OID = 425  (    int42_ops      0      ));
+DATA(insert OID = 426  (    int4_ops       23     ));
 #define INT4_OPS_OID 426
-DATA(insert OID = 427 (    oid_ops ));
-DATA(insert OID = 428 (    float4_ops ));
-DATA(insert OID = 429 (    char_ops ));
-DATA(insert OID = 430 (    char16_ops ));
-DATA(insert OID = 431 (    text_ops ));
-DATA(insert OID = 432 (    abstime_ops ));
-DATA(insert OID = 433 (    bigbox_ops));
-DATA(insert OID = 434 (    poly_ops));
-DATA(insert OID = 435 (    oidint4_ops));
-DATA(insert OID = 436 (    oidname_ops));
-DATA(insert OID = 437 (    oidint2_ops));
-DATA(insert OID = 1076 (   bpchar_ops));
-DATA(insert OID = 1077 (   varchar_ops));
-DATA(insert OID = 1114 (   date_ops));
-DATA(insert OID = 1115 (   time_ops));
+DATA(insert OID = 427  (    oid_ops        26     ));
+DATA(insert OID = 428  (    float4_ops     700    ));
+DATA(insert OID = 429  (    char_ops       18     ));
+DATA(insert OID = 430  (    char16_ops     20     ));
+DATA(insert OID = 431  (    text_ops       25     ));
+DATA(insert OID = 432  (    abstime_ops    702    ));
+DATA(insert OID = 433  (    bigbox_ops     0      ));
+DATA(insert OID = 434  (    poly_ops       604    ));
+DATA(insert OID = 435  (    oidint4_ops    910    ));
+DATA(insert OID = 436  (    oidname_ops    911    ));
+DATA(insert OID = 437  (    oidint2_ops    810    ));
+DATA(insert OID = 1076 (    bpchar_ops     1042   ));
+DATA(insert OID = 1077 (    varchar_ops    1043   ));
+DATA(insert OID = 1114 (    date_ops       1082   ));
+DATA(insert OID = 1115 (    time_ops       1083   ));
 
 #endif /* PG_OPCLASS_H */
