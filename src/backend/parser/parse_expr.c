@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.10 1998/01/19 18:10:56 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.11 1998/01/20 05:04:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -55,8 +55,8 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 				Attr	   *att = (Attr *) expr;
 				Node	   *temp;
 
-				/* what if att.attrs == "*"?? */
-				temp = handleNestedDots(pstate, att, &pstate->p_last_resno,
+				/* what if att.attrs == "*"? */
+				temp = ParseNestedFuncOrColumn(pstate, att, &pstate->p_last_resno,
 										precedence);
 				if (att->indirection != NIL)
 				{
@@ -77,11 +77,6 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 							if (exprType(lexpr) != INT4OID)
 								elog(ERROR, "array index expressions must be int4's");
 						}
-#if 0
-						pfree(ai->uidx);
-						if (ai->lidx != NULL)
-							pfree(ai->lidx);
-#endif
 						ai->lidx = lexpr;
 						ai->uidx = uexpr;
 
@@ -106,13 +101,9 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 				Value	   *val = &con->val;
 
 				if (con->typename != NULL)
-				{
-					result = parser_typecast(val, con->typename, -1);
-				}
+					result = parser_typecast(val, con->typename, 0);
 				else
-				{
 					result = (Node *) make_const(val);
-				}
 				break;
 			}
 		case T_ParamNo:
@@ -125,9 +116,7 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 				paramno = pno->number;
 				toid = param_type(paramno);
 				if (!OidIsValid(toid))
-				{
 					elog(ERROR, "Parameter '$%d' is out of range", paramno);
-				}
 				param = makeNode(Param);
 				param->paramkind = PARAM_NUM;
 				param->paramid = (AttrNumber) paramno;
@@ -156,7 +145,7 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 						{
 							Node	   *lexpr = transformExpr(pstate, a->lexpr, precedence);
 
-							result = ParseFunc(pstate,
+							result = ParseFuncOrColumn(pstate,
 										  "nullvalue", lcons(lexpr, NIL),
 											   &pstate->p_last_resno,
 											   precedence);
@@ -166,7 +155,7 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 						{
 							Node	   *lexpr = transformExpr(pstate, a->lexpr, precedence);
 
-							result = ParseFunc(pstate,
+							result = ParseFuncOrColumn(pstate,
 									   "nonnullvalue", lcons(lexpr, NIL),
 											   &pstate->p_last_resno,
 											   precedence);
@@ -229,7 +218,6 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 			}
 		case T_Ident:
 			{
-
 				/*
 				 * look for a column name or a relation name (the default
 				 * behavior)
@@ -245,7 +233,7 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 				/* transform the list of arguments */
 				foreach(args, fn->args)
 					lfirst(args) = transformExpr(pstate, (Node *) lfirst(args), precedence);
-				result = ParseFunc(pstate,
+				result = ParseFuncOrColumn(pstate,
 						  fn->funcname, fn->args, &pstate->p_last_resno,
 						  precedence);
 				break;
@@ -272,22 +260,21 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 				{
 					char *op = lfirst(sublink->oper);
 					List *left_expr = sublink->lefthand;
-  					List *right_expr = subselect->targetList;
-  					List *elist;
-  
+					List *right_expr = subselect->targetList;
+					List *elist;
+
 					sublink->oper = NIL;
-  					foreach(elist, left_expr)
-  					{
+					foreach(elist, left_expr)
+					{
 						Node	   *lexpr = lfirst(elist);
-  						Node	   *rexpr = lfirst(right_expr);
-  						TargetEntry *tent = (TargetEntry *)rexpr;
-  						Expr	   *op_expr;						
-  
-  						op_expr = make_op(op, lexpr, tent->expr);
-						sublink->oper = lappendi(sublink->oper,
-								((Oper *)op_expr->oper)->opno);
-  						right_expr = lnext(right_expr);
-  					}
+						Node	   *rexpr = lfirst(right_expr);
+					TargetEntry *tent = (TargetEntry *)rexpr;
+						Expr	   *op_expr;						
+
+						op_expr = make_op(op, lexpr, tent->expr);
+						sublink->oper = lappend(sublink->oper, op_expr->oper);
+						right_expr = lnext(right_expr);
+					}
 					result = (Node *) expr;
 				}
 				break;
@@ -320,7 +307,7 @@ transformIdent(ParseState *pstate, Node *expr, int precedence)
 		att->relname = rte->refname;
 		att->attrs = lcons(makeString(ident->name), NIL);
 		column_result =
-			(Node *) handleNestedDots(pstate, att, &pstate->p_last_resno,
+			(Node *) ParseNestedFuncOrColumn(pstate, att, &pstate->p_last_resno,
 								precedence);
 	}
 
@@ -403,51 +390,6 @@ exprType(Node *expr)
 	return type;
 }
 
-/*
- ** HandleNestedDots --
- **    Given a nested dot expression (i.e. (relation func ... attr), build up
- ** a tree with of Iter and Func nodes.
- */
-Node *
-handleNestedDots(ParseState *pstate, Attr *attr, int *curr_resno, int precedence)
-{
-	List	   *mutator_iter;
-	Node	   *retval = NULL;
-
-	if (attr->paramNo != NULL)
-	{
-		Param	   *param = (Param *) transformExpr(pstate, (Node *) attr->paramNo, EXPR_RELATION_FIRST);
-
-		retval =
-			ParseFunc(pstate, strVal(lfirst(attr->attrs)),
-					  lcons(param, NIL),
-					  curr_resno,
-					  precedence);
-	}
-	else
-	{
-		Ident	   *ident = makeNode(Ident);
-
-		ident->name = attr->relname;
-		ident->isRel = TRUE;
-		retval =
-			ParseFunc(pstate, strVal(lfirst(attr->attrs)),
-					  lcons(ident, NIL),
-					  curr_resno,
-					  precedence);
-	}
-
-	foreach(mutator_iter, lnext(attr->attrs))
-	{
-		retval = ParseFunc(pstate, strVal(lfirst(mutator_iter)),
-						   lcons(retval, NIL),
-						   curr_resno,
-						   precedence);
-	}
-
-	return (retval);
-}
-
 static Node	   *
 parser_typecast(Value *expr, TypeName *typename, int atttypmod)
 {
@@ -489,69 +431,10 @@ parser_typecast(Value *expr, TypeName *typename, int atttypmod)
 
 	len = typeLen(tp);
 
-#if 0							/* fix me */
-	switch (CInteger(lfirst(expr)))
-	{
-		case INT4OID:			/* int4 */
-			const_string = (char *) palloc(256);
-			string_palloced = true;
-			sprintf(const_string, "%d", ((Const *) lnext(expr))->constvalue);
-			break;
-
-		case NAMEOID:			/* char16 */
-			const_string = (char *) palloc(256);
-			string_palloced = true;
-			sprintf(const_string, "%s", ((Const *) lnext(expr))->constvalue);
-			break;
-
-		case CHAROID:			/* char */
-			const_string = (char *) palloc(256);
-			string_palloced = true;
-			sprintf(const_string, "%c", ((Const) lnext(expr))->constvalue);
-			break;
-
-		case FLOAT8OID: /* float8 */
-			const_string = (char *) palloc(256);
-			string_palloced = true;
-			sprintf(const_string, "%f", ((Const) lnext(expr))->constvalue);
-			break;
-
-		case CASHOID:			/* money */
-			const_string = (char *) palloc(256);
-			string_palloced = true;
-			sprintf(const_string, "%d",
-					(int) ((Const *) expr)->constvalue);
-			break;
-
-		case TEXTOID:			/* text */
-			const_string = DatumGetPointer(((Const) lnext(expr))->constvalue);
-			const_string = (char *) textout((struct varlena *) const_string);
-			break;
-
-		case UNKNOWNOID:		/* unknown */
-			const_string = DatumGetPointer(((Const) lnext(expr))->constvalue);
-			const_string = (char *) textout((struct varlena *) const_string);
-			break;
-
-		default:
-			elog(ERROR, "unknown type %d", CInteger(lfirst(expr)));
-	}
-#endif
-
 	cp = stringTypeString(tp, const_string, atttypmod);
 
 	if (!typeByVal(tp))
-	{
-/*
-		if (len >= 0 && len != PSIZE(cp)) {
-			char *pp;
-			pp = (char *) palloc(len);
-			memmove(pp, cp, len);
-			cp = pp;
-		}
-*/
 		lcp = PointerGetDatum(cp);
-	}
 	else
 	{
 		switch (len)
@@ -676,17 +559,7 @@ parser_typecast2(Node *expr, Oid exprType, Type tp, int atttypmod)
 	cp = stringTypeString(tp, const_string, atttypmod);
 
 	if (!typeByVal(tp))
-	{
-/*
-		if (len >= 0 && len != PSIZE(cp)) {
-			char *pp;
-			pp = (char *) palloc(len);
-			memmove(pp, cp, len);
-			cp = pp;
-		}
-*/
 		lcp = PointerGetDatum(cp);
-	}
 	else
 	{
 		switch (len)

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/lsyscache.c,v 1.9 1998/01/07 21:06:12 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/lsyscache.c,v 1.10 1998/01/20 05:04:32 momjian Exp $
  *
  * NOTES
  *	  Eventually, the index information should go through here, too.
@@ -53,9 +53,9 @@ op_class(Oid opno, int32 opclass, Oid amopid)
 							 ObjectIdGetDatum(opno),
 							 ObjectIdGetDatum(amopid),
 							 0))
-		return (true);
+		return true;
 	else
-		return (false);
+		return false;
 }
 
 /*				---------- ATTRIBUTE CACHES ----------					 */
@@ -71,20 +71,15 @@ char	   *
 get_attname(Oid relid, AttrNumber attnum)
 {
 	FormData_pg_attribute att_tup;
-	char	   *retval;
 
 	if (SearchSysCacheStruct(ATTNUM,
 							 (char *) &att_tup,
 							 ObjectIdGetDatum(relid),
 							 UInt16GetDatum(attnum),
 							 0, 0))
-	{
-		retval = pstrdup(att_tup.attname.data);
-
-		return (retval);
-	}
+		return pstrdup(att_tup.attname.data);
 	else
-		return (NULL);
+		return NULL;
 }
 
 /*
@@ -103,9 +98,9 @@ get_attnum(Oid relid, char *attname)
 							 ObjectIdGetDatum(relid),
 							 PointerGetDatum(attname),
 							 0, 0))
-		return (att_tup.attnum);
+		return att_tup.attnum;
 	else
-		return (InvalidAttrNumber);
+		return InvalidAttrNumber;
 }
 
 /*
@@ -125,9 +120,9 @@ get_atttype(Oid relid, AttrNumber attnum)
 							 ObjectIdGetDatum(relid),
 							 UInt16GetDatum(attnum),
 							 0, 0))
-		return (att_tup->atttypid);
+		return att_tup->atttypid;
 	else
-		return ((Oid) NULL);
+		return (Oid) NULL;
 }
 
 /* This routine uses the attname instead of the attnum because it
@@ -151,12 +146,34 @@ get_attisset(Oid relid, char *attname)
 		elog(ERROR, "get_attisset: no attribute %s in relation %d",
 			 attname, relid);
 	if (heap_attisnull(htup, attno))
-		return (false);
+		return false;
 	else
 	{
 		att_tup = (AttributeTupleForm) GETSTRUCT(htup);
-		return (att_tup->attisset);
+		return att_tup->attisset;
 	}
+}
+
+/*
+ * get_atttypmod -
+ *
+ *		Given the relation id and the attribute number,
+ *		return the "atttypmod" field from the attribute relation.
+ *
+ */
+int
+get_atttypmod(Oid relid, AttrNumber attnum)
+{
+	FormData_pg_attribute att_tup;
+
+	if (SearchSysCacheStruct(ATTNUM,
+							 (char *) &att_tup,
+							 ObjectIdGetDatum(relid),
+							 UInt16GetDatum(attnum),
+							 0, 0))
+		return att_tup.atttypmod;
+	else
+		return NULL;
 }
 
 /*				---------- INDEX CACHE ----------						 */
@@ -181,9 +198,9 @@ get_opcode(Oid opno)
 	if (SearchSysCacheStruct(OPROID, (char *) &optup,
 							 ObjectIdGetDatum(opno),
 							 0, 0, 0))
-		return (optup.oprcode);
+		return optup.oprcode;
 	else
-		return ((RegProcedure) NULL);
+		return (RegProcedure) NULL;
 }
 
 /*
@@ -200,7 +217,7 @@ get_opname(Oid opno)
 	if (SearchSysCacheStruct(OPROID, (char *) &optup,
 							 ObjectIdGetDatum(opno),
 							 0, 0, 0))
-		return (pstrdup(optup.oprname.data));
+		return pstrdup(optup.oprname.data);
 	else
 	{
 		elog(ERROR, "can't look up operator %d\n", opno);
@@ -257,9 +274,9 @@ op_hashjoinable(Oid opno, Oid ltype, Oid rtype)
 		optup.oprcanhash &&
 		optup.oprleft == ltype &&
 		optup.oprright == rtype)
-		return (opno);
+		return opno;
 	else
-		return (InvalidOid);
+		return InvalidOid;
 }
 
 /*
@@ -276,9 +293,9 @@ get_commutator(Oid opno)
 	if (SearchSysCacheStruct(OPROID, (char *) &optup,
 							 ObjectIdGetDatum(opno),
 							 0, 0, 0))
-		return (optup.oprcom);
+		return optup.oprcom;
 	else
-		return ((Oid) NULL);
+		return (Oid) NULL;
 }
 
 HeapTuple
@@ -289,9 +306,9 @@ get_operator_tuple(Oid opno)
 	if ((optup = SearchSysCacheTuple(OPROID,
 									 ObjectIdGetDatum(opno),
 									 0, 0, 0)))
-		return (optup);
+		return optup;
 	else
-		return ((HeapTuple) NULL);
+		return (HeapTuple) NULL;
 }
 
 /*
@@ -308,9 +325,9 @@ get_negator(Oid opno)
 	if (SearchSysCacheStruct(OPROID, (char *) &optup,
 							 ObjectIdGetDatum(opno),
 							 0, 0, 0))
-		return (optup.oprnegate);
+		return optup.oprnegate;
 	else
-		return ((Oid) NULL);
+		return (Oid) NULL;
 }
 
 /*
@@ -327,9 +344,9 @@ get_oprrest(Oid opno)
 	if (SearchSysCacheStruct(OPROID, (char *) &optup,
 							 ObjectIdGetDatum(opno),
 							 0, 0, 0))
-		return (optup.oprrest);
+		return optup.oprrest;
 	else
-		return ((RegProcedure) NULL);
+		return (RegProcedure) NULL;
 }
 
 /*
@@ -346,9 +363,9 @@ get_oprjoin(Oid opno)
 	if (SearchSysCacheStruct(OPROID, (char *) &optup,
 							 ObjectIdGetDatum(opno),
 							 0, 0, 0))
-		return (optup.oprjoin);
+		return optup.oprjoin;
 	else
-		return ((RegProcedure) NULL);
+		return (RegProcedure) NULL;
 }
 
 /*				---------- RELATION CACHE ----------					 */
@@ -367,9 +384,9 @@ get_relnatts(Oid relid)
 	if (SearchSysCacheStruct(RELOID, (char *) &reltup,
 							 ObjectIdGetDatum(relid),
 							 0, 0, 0))
-		return (reltup.relnatts);
+		return reltup.relnatts;
 	else
-		return (InvalidAttrNumber);
+		return InvalidAttrNumber;
 }
 
 /*
@@ -387,11 +404,9 @@ get_rel_name(Oid relid)
 							  (char *) &reltup,
 							  ObjectIdGetDatum(relid),
 							  0, 0, 0)))
-	{
-		return (pstrdup(reltup.relname.data));
-	}
+		return pstrdup(reltup.relname.data);
 	else
-		return (NULL);
+		return NULL;
 }
 
 /*				---------- TYPE CACHE ----------						 */
@@ -410,9 +425,9 @@ get_typlen(Oid typid)
 	if (SearchSysCacheStruct(TYPOID, (char *) &typtup,
 							 ObjectIdGetDatum(typid),
 							 0, 0, 0))
-		return (typtup.typlen);
+		return typtup.typlen;
 	else
-		return ((int16) NULL);
+		return (int16) NULL;
 }
 
 /*
@@ -430,9 +445,9 @@ get_typbyval(Oid typid)
 	if (SearchSysCacheStruct(TYPOID, (char *) &typtup,
 							 ObjectIdGetDatum(typid),
 							 0, 0, 0))
-		return ((bool) typtup.typbyval);
+		return (bool) typtup.typbyval;
 	else
-		return (false);
+		return false;
 }
 
 /*
@@ -451,9 +466,9 @@ get_typalign(Oid typid)
 	if (SearchSysCacheStruct(TYPOID, (char *) &typtup,
 							 ObjectIdGetDatum(typid),
 							 0, 0, 0))
-		return (typtup.typalign);
+		return typtup.typalign;
 	else
-		return ('i');
+		return 'i';
 }
 
 #endif
@@ -470,7 +485,7 @@ get_typdefault(Oid typid)
 	struct varlena *typdefault =
 	(struct varlena *) TypeDefaultRetrieve(typid);
 
-	return (typdefault);
+	return typdefault;
 }
 
 /*
@@ -490,13 +505,9 @@ get_typtype(Oid typid)
 	if (SearchSysCacheStruct(TYPOID, (char *) &typtup,
 							 ObjectIdGetDatum(typid),
 							 0, 0, 0))
-	{
-		return (typtup.typtype);
-	}
+		return typtup.typtype;
 	else
-	{
-		return ('\0');
-	}
+		return '\0';
 }
 
 #endif

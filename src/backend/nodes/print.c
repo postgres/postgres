@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/print.c,v 1.13 1998/01/07 15:32:29 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/print.c,v 1.14 1998/01/20 05:03:54 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -187,15 +187,11 @@ print_expr(Node *expr, List *rtable)
 				break;
 			default:
 				{
-					Relation	r;
-
 					rt = rt_fetch(var->varno, rtable);
 					relname = rt->relname;
-					r = heap_openr(relname);
 					if (rt->refname)
 						relname = rt->refname;	/* table renamed */
-					attname = attnumAttName(r, var->varattno);
-					heap_close(r);
+					attname = get_attname(rt->relid, var->varattno);
 				}
 				break;
 		}

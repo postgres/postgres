@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.9 1998/01/19 05:06:17 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.10 1998/01/20 05:04:12 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -53,7 +53,6 @@ makeRangeTable(ParseState *pstate, char *relname, List *frmList)
 	pstate->p_target_rangetblentry = rte;
 	Assert(pstate->p_target_relation == NULL);
 	pstate->p_target_relation = heap_open(rte->relid);
-	Assert(pstate->p_target_relation != NULL);
 	/* will close relation later */
 }
 
@@ -68,11 +67,12 @@ transformWhereClause(ParseState *pstate, Node *a_expr)
 	Node	   *qual;
 
 	if (a_expr == NULL)
-		return (Node *) NULL;	/* no qualifiers */
+		return NULL;	/* no qualifiers */
 
 	pstate->p_in_where_clause = true;
 	qual = transformExpr(pstate, a_expr, EXPR_COLUMN_FIRST);
 	pstate->p_in_where_clause = false;
+
 	if (exprType(qual) != BOOLOID)
 	{
 		elog(ERROR,
@@ -88,7 +88,7 @@ transformWhereClause(ParseState *pstate, Node *a_expr)
  *	  range table. The range table may grow as we transform the expressions
  *	  in the target list. (Note that this happens because in POSTQUEL, we
  *	  allow references to relations not specified in the from-clause. We
- *	  also allow that in our POST-SQL)
+ *	  also allow now as an extension.)
  *
  */
 static void
@@ -147,11 +147,6 @@ find_targetlist_entry(ParseState *pstate, SortGroupBy *sortgroupby, List *tlist)
 		Var		   *var = (Var *) target->expr;
 		char	   *resname = resnode->resname;
 		int			test_rtable_pos = var->varno;
-
-#ifdef PARSEDEBUG
-		printf("find_targetlist_entry- target name is %s, position %d, resno %d\n",
-			   (sortgroupby->name ? sortgroupby->name : "(null)"), target_pos + 1, sortgroupby->resno);
-#endif
 
 		if (!sortgroupby->name)
 		{
@@ -345,10 +340,8 @@ transformSortClause(ParseState *pstate,
 					break;
 			}
 			if (i == NIL)
-			{
 				elog(ERROR, "The field specified in the UNIQUE ON clause is not in the targetlist");
-			}
-			s = sortlist;
+				
 			foreach(s, sortlist)
 			{
 				SortClause *sortcl = lfirst(s);

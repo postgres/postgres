@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_oper.c,v 1.7 1998/01/16 23:20:20 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_oper.c,v 1.8 1998/01/20 05:04:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -540,23 +540,6 @@ left_oper(char *op, Oid arg)
 	return ((Operator) tup);
 }
 
-/* Given a typename and value, returns the ascii form of the value */
-
-#ifdef NOT_USED
-char	   *
-outstr(char *typename,			/* Name of type of value */
-	   char *value)				/* Could be of any type */
-{
-	TypeTupleForm tp;
-	Oid			op;
-
-	tp = (TypeTupleForm) GETSTRUCT(type(typename));
-	op = tp->typoutput;
-	return ((char *) fmgr(op, value));
-}
-
-#endif
-
 /*
  * Give a somewhat useful error message when the operator for two types
  * is not found.
@@ -598,4 +581,3 @@ op_error(char *op, Oid arg1, Oid arg2)
 		"\n\tor you will have to define the operator using CREATE OPERATOR",
 		op, typeTypeName(tp1), typeTypeName(tp2));
 }
-

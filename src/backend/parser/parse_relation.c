@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_relation.c,v 1.6 1998/01/16 23:20:21 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_relation.c,v 1.7 1998/01/20 05:04:24 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -97,7 +97,7 @@ refnameRangeTablePosn(List *rtable, char *refname)
 			return index;
 		index++;
 	}
-	return (0);
+	return 0;
 }
 
 /*
@@ -162,10 +162,12 @@ addRangeTableEntry(ParseState *pstate,
 
 	relation = heap_openr(relname);
 	if (relation == NULL)
-	{
 		elog(ERROR, "%s: %s",
-			 relname, aclcheck_error_strings[ACLCHECK_NO_CLASS]);
-	}
+				relname, aclcheck_error_strings[ACLCHECK_NO_CLASS]);
+
+	rte->relid = RelationGetRelationId(relation);
+
+	heap_close(relation);
 
 	/*
 	 * Flags - zero or more from inheritance,union,version or
@@ -175,8 +177,6 @@ addRangeTableEntry(ParseState *pstate,
 	rte->inh = inh;
 
 	/* RelOID */
-	rte->relid = RelationGetRelationId(relation);
-
 	rte->inFromCl = inFromCl;
 
 	/*
@@ -184,8 +184,6 @@ addRangeTableEntry(ParseState *pstate,
 	 */
 	if (pstate != NULL)
 		pstate->p_rtable = lappend(pstate->p_rtable, rte);
-
-	heap_close(relation);
 
 	return rte;
 }
@@ -215,11 +213,9 @@ expandAll(ParseState *pstate, char *relname, char *refname, int *this_resno)
 	rdesc = heap_open(rte->relid);
 
 	if (rdesc == NULL)
-	{
 		elog(ERROR, "Unable to expand all -- heap_open failed on %s",
 			 rte->refname);
-		return NIL;
-	}
+
 	maxattrs = RelationGetNumberOfAttributes(rdesc);
 
 	for (varattno = 0; varattno <= maxattrs - 1; varattno++)
@@ -256,10 +252,17 @@ expandAll(ParseState *pstate, char *relname, char *refname, int *this_resno)
 	}
 
 	heap_close(rdesc);
+
 	return (te_head);
 }
 
-/* given relation and att name, return id of variable */
+/*
+ *	given relation and att name, return id of variable
+ *
+ *	This should only be used if the relation is already
+ *	heap_open()'ed.  Use the cache version get_attnum()
+ *	for access to non-opened relations.
+ */
 int
 attnameAttNum(Relation rd, char *a)
 {
@@ -279,10 +282,15 @@ attnameAttNum(Relation rd, char *a)
 	return 0;  /* lint */
 }
 
-/* Given range variable, return whether attribute of this name
+/*
+ * Given range variable, return whether attribute of this name
  * is a set.
  * NOTE the ASSUMPTION here that no system attributes are, or ever
  * will be, sets.
+ *
+ *	This should only be used if the relation is already
+ *	heap_open()'ed.  Use the cache version get_attisset()
+ *	for access to non-opened relations.
  */
 bool
 attnameIsSet(Relation rd, char *name)
@@ -300,46 +308,11 @@ attnameIsSet(Relation rd, char *name)
 	return (get_attisset(rd->rd_id, name));
 }
 
-/*-------------
- * given an attribute number and a relation, return its relation name
+/*
+ *	This should only be used if the relation is already
+ *	heap_open()'ed.  Use the cache version
+ *	for access to non-opened relations.
  */
-char	   *
-attnumAttName(Relation rd, int attrno)
-{
-	char	   *name;
-	int			i;
-
-	if (attrno < 0)
-	{
-		for (i = 0; i < SPECIALS; i++)
-		{
-			if (special_attr[i].code == attrno)
-			{
-				name = special_attr[i].field;
-				return (name);
-			}
-		}
-		elog(ERROR, "Illegal attr no %d for relation %s",
-			 attrno, RelationGetRelationName(rd));
-	}
-	else if (attrno >= 1 && attrno <= RelationGetNumberOfAttributes(rd))
-	{
-		name = (rd->rd_att->attrs[attrno - 1]->attname).data;
-		return (name);
-	}
-	else
-	{
-		elog(ERROR, "Illegal attr no %d for relation %s",
-			 attrno, RelationGetRelationName(rd));
-	}
-
-	/*
-	 * Shouldn't get here, but we want lint to be happy...
-	 */
-
-	return (NULL);
-}
-
 int
 attnumAttNelems(Relation rd, int attid)
 {
@@ -347,7 +320,11 @@ attnumAttNelems(Relation rd, int attid)
 }
 
 /* given attribute id, return type of that attribute */
-/* XXX Special case for pseudo-attributes is a hack */
+/*
+ *	This should only be used if the relation is already
+ *	heap_open()'ed.  Use the cache version get_atttype()
+ *	for access to non-opened relations.
+ */
 Oid
 attnumTypeId(Relation rd, int attid)
 {
@@ -398,7 +375,6 @@ checkTargetTypes(ParseState *pstate, char *target_colname,
 				attrtype_target;
 	int			resdomno_id,
 				resdomno_target;
-	Relation	rd;
 	RangeTblEntry *rte;
 
 	if (target_colname == NULL || colname == NULL)
@@ -418,10 +394,8 @@ checkTargetTypes(ParseState *pstate, char *target_colname,
 	if (pstate->p_is_insert && rte == pstate->p_target_rangetblentry)
 		elog(ERROR, "%s not available in this context", colname);
 */
-	rd = heap_open(rte->relid);
-
-	resdomno_id = attnameAttNum(rd, colname);
-	attrtype_id = attnumTypeId(rd, resdomno_id);
+	resdomno_id = get_attnum(rte->relid, colname);
+	attrtype_id = get_atttype(rte->relid, resdomno_id);
 
 	resdomno_target = attnameAttNum(pstate->p_target_relation, target_colname);
 	attrtype_target = attnumTypeId(pstate->p_target_relation, resdomno_target);
@@ -431,15 +405,14 @@ checkTargetTypes(ParseState *pstate, char *target_colname,
 			 colname, target_colname);
 
 	if (attrtype_id == BPCHAROID &&
-		rd->rd_att->attrs[resdomno_id - 1]->atttypmod !=
-	pstate->p_target_relation->rd_att->attrs[resdomno_target - 1]->atttypmod)
+		get_atttypmod(rte->relid, resdomno_id) !=
+		get_atttype(pstate->p_target_relation->rd_id, resdomno_target))
 		elog(ERROR, "Length of %s is longer than length of target column %s",
 			 colname, target_colname);
 	if (attrtype_id == VARCHAROID &&
-		rd->rd_att->attrs[resdomno_id - 1]->atttypmod >
-	pstate->p_target_relation->rd_att->attrs[resdomno_target - 1]->atttypmod)
+		get_atttypmod(rte->relid, resdomno_id) >
+		get_atttype(pstate->p_target_relation->rd_id, resdomno_target))
 		elog(ERROR, "Length of %s is longer than length of target column %s",
 			 colname, target_colname);
 
-	heap_close(rd);
 }

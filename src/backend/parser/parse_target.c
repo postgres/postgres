@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_target.c,v 1.6 1998/01/16 23:20:22 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_target.c,v 1.7 1998/01/20 05:04:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,6 +20,7 @@
 #include "nodes/makefuncs.h"
 #include "nodes/primnodes.h"
 #include "parser/parse_expr.h"
+#include "parser/parse_func.h"
 #include "parser/parse_node.h"
 #include "parser/parse_relation.h"
 #include "parser/parse_target.h"
@@ -255,7 +256,7 @@ transformTargetList(ParseState *pstate, List *targetlist)
 					 * Target item is fully specified: ie.
 					 * relation.attribute
 					 */
-					result = handleNestedDots(pstate, att, &pstate->p_last_resno,EXPR_COLUMN_FIRST);
+					result = ParseNestedFuncOrColumn(pstate, att, &pstate->p_last_resno,EXPR_COLUMN_FIRST);
 					handleTargetColname(pstate, &res->name, att->relname, attrname);
 					if (att->indirection != NIL)
 					{
@@ -345,13 +346,12 @@ make_targetlist_expr(ParseState *pstate,
 	else
 		type_len = typeLen(typeidType(type_id));
 
-	/* I have no idea what the following does! */
-	/* It appears to process target columns that will be receiving results */
+	/* Processes target columns that will be receiving results */
 	if (pstate->p_is_insert || pstate->p_is_update)
 	{
 
 		/*
-		 * append or replace query -- append, replace work only on one
+		 * insert or update query -- insert, update work only on one
 		 * relation, so multiple occurence of same resdomno is bogus
 		 */
 		rd = pstate->p_target_relation;
@@ -461,7 +461,7 @@ make_targetlist_expr(ParseState *pstate,
 
 			att->relname = pstrdup(RelationGetRelationName(rd)->data);
 			att->attrs = lcons(makeString(colname), NIL);
-			target_expr = (Expr *) handleNestedDots(pstate, att,
+			target_expr = (Expr *) ParseNestedFuncOrColumn(pstate, att,
 												  &pstate->p_last_resno,
 												  EXPR_COLUMN_FIRST);
 			while (ar != NIL)
@@ -641,9 +641,8 @@ figureColname(Node *expr, Node *resval)
 {
 	switch (nodeTag(expr))
 	{
-			case T_Aggreg:
-			return (char *)		/* XXX */
-			((Aggreg *) expr)->aggname;
+		case T_Aggreg:
+			return (char *)	((Aggreg *) expr)->aggname;
 		case T_Expr:
 			if (((Expr *) expr)->opType == FUNC_EXPR)
 			{

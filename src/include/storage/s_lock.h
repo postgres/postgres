@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/include/storage/s_lock.h,v 1.18 1998/01/19 05:48:55 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/include/storage/s_lock.h,v 1.19 1998/01/20 05:05:02 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -315,7 +315,7 @@ again:
 							slock_t		_res; \
 							do \
 							{ \
-				__asm__("xchgb %0,%1": "=q"(_res), "=m"(*lock):"0"(0x1)); \
+				__asm__("lock; xchgb %0,%1": "=q"(_res), "=m"(*lock):"0"(0x1)); \
 							} while (_res != 0); \
 						} while (0)
 #endif

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execUtils.c,v 1.25 1998/01/19 02:37:33 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execUtils.c,v 1.26 1998/01/20 05:03:30 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -51,6 +51,7 @@
 #include "optimizer/clauses.h"
 #include "utils/palloc.h"
 #include "utils/mcxt.h"
+#include "utils/lsyscache.h"
 #include "commands/command.h"
 #include "catalog/index.h"
 #include "catalog/catname.h"
@@ -1207,15 +1208,11 @@ setAtttypmodForCreateTable(TupleDesc tupType, List *targetList,
 			{
 				Var		   *var;
 				RangeTblEntry *rtentry;
-				Relation	rd;
 
 				var = (Var *) expr;
 				rtentry = rt_fetch(var->varnoold, rangeTable);
-				rd = heap_open(rtentry->relid);
-				/* set length to that defined in relation */
 				tupType->attrs[varno]->atttypmod =
-					(*rd->rd_att->attrs[var->varoattno - 1]).atttypmod;
-				heap_close(rd);
+					get_atttypmod(rtentry->relid, var->varoattno);
 			}
 			else
 				elog(ERROR, "setAtttypmodForCreateTable: can't get atttypmod for field (for length, etc.)");

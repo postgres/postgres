@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_node.c,v 1.8 1998/01/19 05:06:19 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_node.c,v 1.9 1998/01/20 05:04:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,6 +27,7 @@
 #include "parser/parse_type.h"
 #include "utils/builtins.h"
 #include "utils/syscache.h"
+#include "utils/lsyscache.h"
 
 static void disallow_setop(char *op, Type optype, Node *operand);
 static Node *make_operand(char *opname,
@@ -228,17 +229,11 @@ make_op(char *opname, Node *ltree, Node *rtree)
 	result->oper = (Node *) newop;
 
 	if (!left)
-	{
 		result->args = lcons(right, NIL);
-	}
 	else if (!right)
-	{
 		result->args = lcons(left, NIL);
-	}
 	else
-	{
 		result->args = lcons(left, lcons(right, NIL));
-	}
 
 	return result;
 }
@@ -250,7 +245,6 @@ make_var(ParseState *pstate, char *refname, char *attrname, Oid *type_id)
 	int			vnum,
 				attid;
 	Oid			vartypeid;
-	Relation	rd;
 	RangeTblEntry *rte;
 
 	rte = refnameRangeTableEntry(pstate->p_rtable, refname);
@@ -259,16 +253,15 @@ make_var(ParseState *pstate, char *refname, char *attrname, Oid *type_id)
 
 	vnum = refnameRangeTablePosn(pstate->p_rtable, refname);
 
-	rd = heap_open(rte->relid);
-
-	attid = attnameAttNum(rd, attrname); /* could elog(ERROR) */
-	vartypeid = attnumTypeId(rd, attid);
+	attid = get_attnum(rte->relid, attrname);
+	if (attid == InvalidAttrNumber)
+		elog(ERROR, "Relation %s does not have attribute %s",
+			 rte->relname, attrname);
+	vartypeid = get_atttype(rte->relid, attid);
 
 	varnode = makeVar(vnum, attid, vartypeid, vnum, attid);
-
-	heap_close(rd);
-
 	*type_id = vartypeid;
+
 	return varnode;
 }
 
@@ -311,10 +304,8 @@ make_array_ref(Node *expr,
 	type_struct_array = (TypeTupleForm) GETSTRUCT(type_tuple);
 
 	if (type_struct_array->typelem == InvalidOid)
-	{
 		elog(ERROR, "make_array_ref: type %s is not an array",
 			 (Name) &(type_struct_array->typname.data[0]));
-	}
 
 	/* get the type tuple for the element type */
 	type_tuple = SearchSysCacheTuple(TYPOID,
@@ -331,13 +322,11 @@ make_array_ref(Node *expr,
 		A_Indices  *ind = lfirst(indirection);
 
 		if (ind->lidx)
-		{
-
 			/*
 			 * XXX assumes all lower indices non null in this case
 			 */
 			lowerIndexpr = lappend(lowerIndexpr, ind->lidx);
-		}
+
 		upperIndexpr = lappend(upperIndexpr, ind->uidx);
 		indirection = lnext(indirection);
 	}
@@ -393,10 +382,8 @@ make_array_set(Expr *target_expr,
 	type_struct_array = (TypeTupleForm) GETSTRUCT(type_tuple);
 
 	if (type_struct_array->typelem == InvalidOid)
-	{
 		elog(ERROR, "make_array_ref: type %s is not an array",
 			 (Name) &(type_struct_array->typname.data[0]));
-	}
 	/* get the type tuple for the element type */
 	type_tuple = SearchSysCacheTuple(TYPOID,
 							ObjectIdGetDatum(type_struct_array->typelem),

@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 1.94 1998/01/19 05:06:15 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 1.95 1998/01/20 05:04:07 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -278,7 +278,7 @@ Oid	param_type(int t); /* used in parse_expr.c */
 		INDEX, INHERITS, INSTEAD, ISNULL,
 		LANCOMPILER, LISTEN, LOAD, LOCATION, MERGE, MOVE,
 		NEW, NONE, NOTHING, NOTNULL, OIDS, OPERATOR, PROCEDURAL,
-		RECIPE, RENAME, REPLACE, RESET, RETRIEVE, RETURNS, RULE,
+		RECIPE, RENAME, REPLACE, RESET, RETURNS, RULE,
 		SEQUENCE, SETOF, SHOW, STDIN, STDOUT, TRUSTED, 
 		VACUUM, VERBOSE, VERSION
 
@@ -2446,7 +2446,11 @@ groupby:  ColId
 				}
 		;
 
-having_clause:  HAVING a_expr					{ $$ = $2; }
+having_clause:  HAVING a_expr
+				{
+					elog(NOTICE, "HAVING not yet supported; ignore clause");
+					$$ = $2;
+				}
 		| /*EMPTY*/								{ $$ = NULL; }
 		;
 
@@ -3637,7 +3641,7 @@ res_target_el:  ColId opt_indirection '=' a_expr_or_null
 
 /*
 ** target list for select.
-** should get rid of the other but is still needed by the defunct retrieve into
+** should get rid of the other but is still needed by the defunct select into
 ** and update (uses a subset)
 */
 res_target_list2:  res_target_list2 ',' res_target_el2

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.6 1998/01/15 19:00:02 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.7 1998/01/20 05:04:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,6 +34,7 @@
 #include "parser/parse_func.h"
 #include "parser/parse_node.h"
 #include "parser/parse_relation.h"
+#include "parser/parse_target.h"
 #include "parser/parse_type.h"
 #include "storage/bufmgr.h"
 #include "storage/lmgr.h"
@@ -83,11 +84,54 @@ typedef struct _SuperQE
 } SuperQE;
 
 /*
+ ** ParseNestedFuncOrColumn --
+ **    Given a nested dot expression (i.e. (relation func ... attr), build up
+ ** a tree with of Iter and Func nodes.
+ */
+Node *
+ParseNestedFuncOrColumn(ParseState *pstate, Attr *attr, int *curr_resno, int precedence)
+{
+	List	   *mutator_iter;
+	Node	   *retval = NULL;
+
+	if (attr->paramNo != NULL)
+	{
+		Param	   *param = (Param *) transformExpr(pstate, (Node *) attr->paramNo, EXPR_RELATION_FIRST);
+
+		retval = ParseFuncOrColumn(pstate, strVal(lfirst(attr->attrs)),
+					  lcons(param, NIL),
+					  curr_resno,
+					  precedence);
+	}
+	else
+	{
+		Ident	   *ident = makeNode(Ident);
+
+		ident->name = attr->relname;
+		ident->isRel = TRUE;
+		retval = ParseFuncOrColumn(pstate, strVal(lfirst(attr->attrs)),
+					  lcons(ident, NIL),
+					  curr_resno,
+					  precedence);
+	}
+
+	/* Do more attributes follow this one? */
+	foreach(mutator_iter, lnext(attr->attrs))
+	{
+		retval = ParseFuncOrColumn(pstate, strVal(lfirst(mutator_iter)),
+						   lcons(retval, NIL),
+						   curr_resno,
+						   precedence);
+	}
+
+	return (retval);
+}
+
+/*
  * parse function
  */
-
 Node *
-ParseFunc(ParseState *pstate, char *funcname, List *fargs,
+ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 		int *curr_resno, int precedence)
 {
 	Oid			rettype = (Oid) 0;
@@ -122,9 +166,10 @@ ParseFunc(ParseState *pstate, char *funcname, List *fargs,
 	 * that argument is a relation, param, or PQ function returning a
 	 * complex * type, then the function could be a projection.
 	 */
+	/* We only have one parameter */
 	if (length(fargs) == 1)
 	{
-
+		/* Is is a plain Relation name from the parser? */
 		if (nodeTag(first_arg) == T_Ident && ((Ident *) first_arg)->isRel)
 		{
 			RangeTblEntry *rte;
@@ -150,8 +195,7 @@ ParseFunc(ParseState *pstate, char *funcname, List *fargs,
 			{
 				Oid			dummyTypeId;
 
-				return
-					((Node *) make_var(pstate,
+				return ((Node *) make_var(pstate,
 									   refname,
 									   funcname,
 									   &dummyTypeId));
@@ -210,7 +254,7 @@ ParseFunc(ParseState *pstate, char *funcname, List *fargs,
 			Oid			basetype;
 
 			/*
-			 * the aggregate count is a special case, ignore its base
+			 * the aggregate COUNT is a special case, ignore its base
 			 * type.  Treat it as zero
 			 */
 			if (strcmp(funcname, "count") == 0)
@@ -280,9 +324,7 @@ ParseFunc(ParseState *pstate, char *funcname, List *fargs,
 			 */
 			if (exprType(pair) == UNKNOWNOID &&
 				!IsA(pair, Const))
-			{
-				elog(ERROR, "ParseFunc: no function named '%s' that takes in an unknown type as argument #%d", funcname, nargs);
-			}
+				elog(ERROR, "ParseFuncOrColumn: no function named '%s' that takes in an unknown type as argument #%d", funcname, nargs);
 			else
 				toid = exprType(pair);
 		}
@@ -504,10 +546,8 @@ func_get_candidates(char *funcname, int nargs)
 						palloc(8 * sizeof(Oid));
 					MemSet(current_candidate->args, 0, 8 * sizeof(Oid));
 					for (i = 0; i < nargs; i++)
-					{
 						current_candidate->args[i] =
 							pgProcP->proargtypes[i];
-					}
 
 					current_candidate->next = candidates;
 					candidates = current_candidate;
@@ -1009,7 +1049,7 @@ make_arguments(int nargs,
 /*
  ** setup_tlist --
  **		Build a tlist that says which attribute to project to.
- **		This routine is called by ParseFunc() to set up a target list
+ **		This routine is called by ParseFuncOrColumn() to set up a target list
  **		on a tuple parameter or return value.  Due to a bug in 4.0,
  **		it's not possible to refer to system attributes in this case.
  */
@@ -1264,6 +1304,3 @@ func_error(char *caller, char *funcname, int nargs, Oid *argtypes)
 
 	elog(ERROR, "%s: function %s(%s) does not exist", caller, funcname, p);
 }
-
-
-

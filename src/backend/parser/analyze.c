@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.66 1998/01/19 05:06:13 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.67 1998/01/20 05:04:05 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -67,6 +67,9 @@ parse_analyze(List *pl, ParseState *parentParseState)
 	{
 		pstate = make_parsestate(parentParseState);
 		result->qtrees[i++] = transformStmt(pstate, lfirst(pl));
+		if (pstate->p_target_relation != NULL)
+			heap_close(pstate->p_target_relation);
+
 		if (extras != NIL)
 		{
 			result->len += length(extras);
@@ -74,13 +77,13 @@ parse_analyze(List *pl, ParseState *parentParseState)
 			while (extras != NIL)
 			{
 				result->qtrees[i++] = transformStmt(pstate, lfirst(extras));
+				if (pstate->p_target_relation != NULL)
+					heap_close(pstate->p_target_relation);
 				extras = lnext(extras);
 			}
 		}
 		extras = NIL;
 		pl = lnext(pl);
-		if (pstate->p_target_relation != NULL)
-			heap_close(pstate->p_target_relation);
 		pfree(pstate);
 	}
 
@@ -99,10 +102,10 @@ transformStmt(ParseState *pstate, Node *parseTree)
 
 	switch (nodeTag(parseTree))
 	{
-			/*------------------------
-			 *	Non-optimizable statements
-			 *------------------------
-			 */
+		/*------------------------
+		 *	Non-optimizable statements
+		 *------------------------
+		 */
 		case T_CreateStmt:
 			result = transformCreateStmt(pstate, (CreateStmt *) parseTree);
 			break;
@@ -159,10 +162,10 @@ transformStmt(ParseState *pstate, Node *parseTree)
 			}
 			break;
 
-			/*------------------------
-			 *	Optimizable statements
-			 *------------------------
-			 */
+		/*------------------------
+		 *	Optimizable statements
+		 *------------------------
+		 */
 		case T_InsertStmt:
 			result = transformInsertStmt(pstate, (InsertStmt *) parseTree);
 			break;
@@ -186,7 +189,7 @@ transformStmt(ParseState *pstate, Node *parseTree)
 
 			/*
 			 * other statments don't require any transformation-- just
-			 * return the original parsetree
+			 * return the original parsetree, yea!
 			 */
 			result = makeNode(Query);
 			result->commandType = CMD_UTILITY;
@@ -218,7 +221,7 @@ transformDeleteStmt(ParseState *pstate, DeleteStmt *stmt)
 	qry->rtable = pstate->p_rtable;
 	qry->resultRelation = refnameRangeTablePosn(pstate->p_rtable, stmt->relname);
 
-	/* make sure we don't have aggregates in the where clause */
+	qry->hasAggs = pstate->p_hasAggs;
 	if (pstate->p_hasAggs)
 		parseCheckAggregates(pstate, qry);
 
@@ -258,7 +261,7 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt)
 		int						ndef = pstate->p_target_relation->rd_att->constr->num_defval;
 		
 		/* 
-		 * if stmt->cols == NIL then makeTargetNames returns list of all 
+		 * if stmt->cols == NIL then makeTargetNames returns list of all
 		 * attrs: have to shorter icolumns list...
 		 */
 		if (stmt->cols == NIL)
@@ -315,10 +318,6 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt)
 	/* fix where clause */
 	qry->qual = transformWhereClause(pstate, stmt->whereClause);
 
-	/* check having clause */
-	if (stmt->havingClause)
-		elog(NOTICE, "HAVING not yet supported; ignore clause", NULL);
-
 	/* now the range table will not change */
 	qry->rtable = pstate->p_rtable;
 	qry->resultRelation = refnameRangeTablePosn(pstate->p_rtable, stmt->relname);
@@ -334,21 +333,21 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt)
 										  qry->targetList,
 										  qry->uniqueFlag);
 
+	qry->hasAggs = pstate->p_hasAggs;
 	if (pstate->p_hasAggs)
-		finalizeAggregates(pstate, qry);
+		parseCheckAggregates(pstate, qry);
 
+	/* The INSERT INTO ... SELECT ... could have a UNION */
 	qry->unionall = stmt->unionall;	/* in child, so unionClause may be false */
 	qry->unionClause = transformUnionClause(stmt->unionClause, qry->targetList);
 
 	return (Query *) qry;
 }
 
-/* makeTableName()
- * Create a table name from a list of fields.
+/*
+ *	makeTableName()
+ *	Create a table name from a list of fields.
  */
-static char *
-makeTableName(void *elem,...);
-
 static char *
 makeTableName(void *elem,...)
 {
@@ -357,7 +356,7 @@ makeTableName(void *elem,...)
 	char   *name;
 	char	buf[NAMEDATALEN+1];
 
-	strcpy(buf,"");
+	buf[0] = '\0';
 
 	va_start(args,elem);
 
@@ -368,7 +367,8 @@ makeTableName(void *elem,...)
 		if ((strlen(buf)+strlen(name)) >= (sizeof(buf)-1))
 			return (NULL);
 
-		if (strlen(buf) > 0) strcat(buf,"_");
+		if (strlen(buf) > 0)
+			strcat(buf,"_");
 		strcat(buf,name);
 
 		name = va_arg(args,void *);
@@ -380,12 +380,9 @@ makeTableName(void *elem,...)
 	strcpy(name,buf);
 
 	return (name);
-} /* makeTableName() */
+}
 
-char *
-CreateIndexName(char *tname, char *cname, char *label, List *indices);
-
-char *
+static char *
 CreateIndexName(char *tname, char *cname, char *label, List *indices)
 {
 	int			pass = 0;
@@ -403,17 +400,10 @@ CreateIndexName(char *tname, char *cname, char *label, List *indices)
 		if (iname == NULL)
 			break;
 
-#if PARSEDEBUG
-printf("CreateNameIndex- check %s against indices\n",iname);
-#endif
-
 		ilist = indices;
 		while (ilist != NIL)
 		{
 			index = lfirst(ilist);
-#if PARSEDEBUG
-printf("CreateNameIndex- compare %s with existing index %s\n",iname,index->idxname);
-#endif
 			if (strcasecmp(iname,index->idxname) == 0)
 				break;
 
@@ -431,7 +421,7 @@ printf("CreateNameIndex- compare %s with existing index %s\n",iname,index->idxna
 	}
 
 	return (iname);
-} /* CreateIndexName() */
+}
 
 /*
  * transformCreateStmt -
@@ -475,15 +465,9 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 		{
 			case T_ColumnDef:
 				column = (ColumnDef *) element;
-#if PARSEDEBUG
-printf("transformCreateStmt- found column %s\n",column->colname);
-#endif
 				columns = lappend(columns,column);
 				if (column->constraints != NIL)
 				{
-#if PARSEDEBUG
-printf("transformCreateStmt- found constraint(s) on column %s\n",column->colname);
-#endif
 					clist = column->constraints;
 					while (clist != NIL)
 					{
@@ -491,9 +475,6 @@ printf("transformCreateStmt- found constraint(s) on column %s\n",column->colname
 						switch (constraint->contype)
 						{
 							case CONSTR_NOTNULL:
-#if PARSEDEBUG
-printf("transformCreateStmt- found NOT NULL constraint on column %s\n",column->colname);
-#endif
 								if (column->is_not_null)
 									elog(ERROR,"CREATE TABLE/NOT NULL already specified"
 										" for %s.%s", stmt->relname, column->colname);
@@ -501,9 +482,6 @@ printf("transformCreateStmt- found NOT NULL constraint on column %s\n",column->c
 								break;
 
 							case CONSTR_DEFAULT:
-#if PARSEDEBUG
-printf("transformCreateStmt- found DEFAULT clause on column %s\n",column->colname);
-#endif
 								if (column->defval != NULL)
 									elog(ERROR,"CREATE TABLE/DEFAULT multiple values specified"
 										" for %s.%s", stmt->relname, column->colname);
@@ -511,9 +489,6 @@ printf("transformCreateStmt- found DEFAULT clause on column %s\n",column->colnam
 								break;
 
 							case CONSTR_PRIMARY:
-#if PARSEDEBUG
-printf("transformCreateStmt- found PRIMARY KEY clause on column %s\n",column->colname);
-#endif
 								if (constraint->name == NULL)
 									constraint->name = makeTableName(stmt->relname, "pkey", NULL);
 								if (constraint->keys == NIL)
@@ -522,9 +497,6 @@ printf("transformCreateStmt- found PRIMARY KEY clause on column %s\n",column->co
 								break;
 
 							case CONSTR_UNIQUE:
-#if PARSEDEBUG
-printf("transformCreateStmt- found UNIQUE clause on column %s\n",column->colname);
-#endif
 								if (constraint->name == NULL)
 									constraint->name = makeTableName(stmt->relname, column->colname, "key", NULL);
 								if (constraint->keys == NIL)
@@ -533,9 +505,6 @@ printf("transformCreateStmt- found UNIQUE clause on column %s\n",column->colname
 								break;
 
 							case CONSTR_CHECK:
-#if PARSEDEBUG
-printf("transformCreateStmt- found CHECK clause on column %s\n",column->colname);
-#endif
 								constraints = lappend(constraints, constraint);
 								if (constraint->name == NULL)
 									constraint->name = makeTableName(stmt->relname, column->colname, NULL);
@@ -552,24 +521,15 @@ printf("transformCreateStmt- found CHECK clause on column %s\n",column->colname)
 
 			case T_Constraint:
 				constraint = (Constraint *) element;
-#if PARSEDEBUG
-printf("transformCreateStmt- found constraint %s\n", ((constraint->name != NULL)? constraint->name: "(unknown)"));
-#endif
 				switch (constraint->contype)
 				{
 					case CONSTR_PRIMARY:
-#if PARSEDEBUG
-printf("transformCreateStmt- found PRIMARY KEY clause\n");
-#endif
 						if (constraint->name == NULL)
 							constraint->name = makeTableName(stmt->relname, "pkey", NULL);
 						dlist = lappend(dlist, constraint);
 						break;
 
 					case CONSTR_UNIQUE:
-#if PARSEDEBUG
-printf("transformCreateStmt- found UNIQUE clause\n");
-#endif
 #if FALSE
 						if (constraint->name == NULL)
 							constraint->name = makeTableName(stmt->relname, "key", NULL);
@@ -578,9 +538,6 @@ printf("transformCreateStmt- found UNIQUE clause\n");
 						break;
 
 					case CONSTR_CHECK:
-#if PARSEDEBUG
-printf("transformCreateStmt- found CHECK clause\n");
-#endif
 						constraints = lappend(constraints, constraint);
 						break;
 
@@ -620,11 +577,6 @@ printf("transformCreateStmt- found CHECK clause\n");
 		if (nodeTag(constraint) != T_Constraint)
 			elog(ERROR,"parser: internal error; unrecognized deferred node",NULL);
 
-#if PARSEDEBUG
-printf("transformCreateStmt- found deferred constraint %s\n",
- ((constraint->name != NULL)? constraint->name: "(unknown)"));
-#endif
-
 		if (constraint->contype == CONSTR_PRIMARY)
 			if (have_pkey)
 				elog(ERROR,"CREATE TABLE/PRIMARY KEY multiple primary keys"
@@ -633,11 +585,6 @@ printf("transformCreateStmt- found deferred constraint %s\n",
 				have_pkey = TRUE;
 		else if (constraint->contype != CONSTR_UNIQUE)
 			elog(ERROR,"parser: internal error; unrecognized deferred constraint",NULL);
-
-#if PARSEDEBUG
-printf("transformCreateStmt- found deferred %s clause\n",
- (constraint->contype == CONSTR_PRIMARY? "PRIMARY KEY": "UNIQUE"));
-#endif
 
 		index = makeNode(IndexStmt);
 
@@ -665,17 +612,11 @@ printf("transformCreateStmt- found deferred %s clause\n",
 		while (keys != NIL)
 		{
 			key = lfirst(keys);
-#if PARSEDEBUG
-printf("transformCreateStmt- check key %s for column match\n", key->name);
-#endif
 			columns = stmt->tableElts;
 			column = NULL;
 			while (columns != NIL)
 			{
 				column = lfirst(columns);
-#if PARSEDEBUG
-printf("transformCreateStmt- check column %s for key match\n", column->colname);
-#endif
 				if (strcasecmp(column->colname,key->name) == 0) break;
 				else column = NULL;
 				columns = lnext(columns);
@@ -684,12 +625,7 @@ printf("transformCreateStmt- check column %s for key match\n", column->colname);
 				elog(ERROR,"parser: column '%s' in key does not exist",key->name);
 
 			if (constraint->contype == CONSTR_PRIMARY)
-			{
-#if PARSEDEBUG
-printf("transformCreateStmt- mark column %s as NOT NULL\n", column->colname);
-#endif
 				column->is_not_null = TRUE;
-			}
 			iparam = makeNode(IndexElem);
 			iparam->name = strcpy(palloc(strlen(column->colname)+1), column->colname);
 			iparam->args = NIL;
@@ -719,7 +655,7 @@ printf("transformCreateStmt- mark column %s as NOT NULL\n", column->colname);
 	extras = ilist;
 
 	return q;
-} /* transformCreateStmt() */
+}
 
 /*
  * transformIndexStmt -
@@ -830,17 +766,10 @@ transformSelectStmt(ParseState *pstate, SelectStmt *stmt)
 	qry->into = stmt->into;
 	qry->isPortal = FALSE;
 
-	/* fix the target list */
 	qry->targetList = transformTargetList(pstate, stmt->targetList);
 
-	/* fix where clause */
 	qry->qual = transformWhereClause(pstate, stmt->whereClause);
 
-	/* check having clause */
-	if (stmt->havingClause)
-		elog(NOTICE, "HAVING not yet supported; ignore clause", NULL);
-
-	/* fix order clause */
 	qry->sortClause = transformSortClause(pstate,
 										  stmt->sortClause,
 										  NIL,
@@ -852,8 +781,9 @@ transformSelectStmt(ParseState *pstate, SelectStmt *stmt)
 											qry->targetList);
 	qry->rtable = pstate->p_rtable;
 
+	qry->hasAggs = pstate->p_hasAggs;
 	if (pstate->p_hasAggs)
-		finalizeAggregates(pstate, qry);
+		parseCheckAggregates(pstate, qry);
 
 	qry->unionall = stmt->unionall;	/* in child, so unionClause may be false */
 	qry->unionClause = transformUnionClause(stmt->unionClause, qry->targetList);
@@ -880,19 +810,15 @@ transformUpdateStmt(ParseState *pstate, UpdateStmt *stmt)
 	 */
 	makeRangeTable(pstate, stmt->relname, stmt->fromClause);
 
-	/* fix the target list */
 	qry->targetList = transformTargetList(pstate, stmt->targetList);
 
-	/* fix where clause */
 	qry->qual = transformWhereClause(pstate, stmt->whereClause);
 
 	qry->rtable = pstate->p_rtable;
+
 	qry->resultRelation = refnameRangeTablePosn(pstate->p_rtable, stmt->relname);
 
-	if (pstate->p_hasAggs)
-		finalizeAggregates(pstate, qry);
-
-	/* make sure we don't have aggregates in the where clause */
+	qry->hasAggs = pstate->p_hasAggs;
 	if (pstate->p_hasAggs)
 		parseCheckAggregates(pstate, qry);
 

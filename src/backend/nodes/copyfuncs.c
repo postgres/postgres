@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.33 1998/01/19 18:10:48 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.34 1998/01/20 05:03:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -908,7 +908,7 @@ _copySubLink(SubLink *from)
 	newnode->subLinkType = from->subLinkType;
 	newnode->useor = from->useor;
 	Node_Copy(from, newnode, lefthand);
-	newnode->oper = listCopy(from->oper);
+	Node_Copy(from, newnode, oper);
 	Node_Copy(from, newnode, subselect);
 
 	return newnode;

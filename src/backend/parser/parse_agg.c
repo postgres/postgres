@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_agg.c,v 1.7 1998/01/15 18:59:59 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_agg.c,v 1.8 1998/01/20 05:04:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,19 +33,6 @@
 static bool contain_agg_clause(Node *clause);
 static bool exprIsAggOrGroupCol(Node *expr, List *groupClause);
 static bool tleIsAggOrGroupCol(TargetEntry *tle, List *groupClause);
-
-/*
- * finalizeAggregates -
- *	  fill in hasAggs from pstate. Also checks to make sure that aggregates
- *	  are used in the proper place.
- */
-void
-finalizeAggregates(ParseState *pstate, Query *qry)
-{
-	parseCheckAggregates(pstate, qry);
-
-	qry->hasAggs = pstate->p_hasAggs;
-}
 
 /*
  * contain_agg_clause--
@@ -247,9 +234,7 @@ ParseAgg(ParseState *pstate, char *aggname, Oid basetype,
 									  ObjectIdGetDatum(basetype),
 									  0, 0);
 	if (!HeapTupleIsValid(theAggTuple))
-	{
 		elog(ERROR, "aggregate %s does not exist", aggname);
-	}
 
 	/*
 	 *	We do a major hack for count(*) here.
@@ -267,7 +252,10 @@ ParseAgg(ParseState *pstate, char *aggname, Oid basetype,
 	 *	range table entry, and pick the first column from the table.
 	 *	We set a flag to count nulls, because we could have nulls in
 	 *	that column.
-	*/
+	 *
+	 *	It's an ugly job, but someone has to do it.
+	 *	bjm 1998/1/18
+	 */
 		
 	if (nodeTag(lfirst(target)) == T_Const)
 	{
@@ -275,7 +263,7 @@ ParseAgg(ParseState *pstate, char *aggname, Oid basetype,
 		
 		if (con->consttype == UNKNOWNOID && VARSIZE(con->constvalue) == VARHDRSZ)
 		{
-			Attr *attr = makeNode(Attr);
+			Attr 		*attr = makeNode(Attr);
 			List	   *rtable, *rlist;
 			RangeTblEntry *first_valid_rte;
 
@@ -295,7 +283,7 @@ ParseAgg(ParseState *pstate, char *aggname, Oid basetype,
 				if (!rte->inFromCl && rte != pstate->p_target_rangetblentry)
 					continue;
 
-				first_valid_rte =rte;
+				first_valid_rte = rte;
 				break;
 			}
 			if (first_valid_rte == NULL)
@@ -314,7 +302,6 @@ ParseAgg(ParseState *pstate, char *aggname, Oid basetype,
 	fintype = aggform->aggfinaltype;
 	xfn1 = aggform->aggtransfn1;
 
-	
 	/* only aggregates with transfn1 need a base type */
 	if (OidIsValid(xfn1))
 	{
@@ -374,4 +361,3 @@ agg_error(char *caller, char *aggname, Oid basetypeID)
 			 typeidTypeName(basetypeID));
 	}
 }
-

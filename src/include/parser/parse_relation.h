@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parse_relation.h,v 1.4 1998/01/04 04:31:43 momjian Exp $
+ * $Id: parse_relation.h,v 1.5 1998/01/20 05:04:56 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,7 +32,6 @@ extern List *expandAll(ParseState *pstate, char *relname, char *refname,
 						int *this_resno);
 extern int attnameAttNum(Relation rd, char *a);
 extern bool attnameIsSet(Relation rd, char *name);
-extern char *attnumAttName(Relation rd, int attrno);
 extern int attnumAttNelems(Relation rd, int attid);
 extern Oid attnumTypeId(Relation rd, int attid);
 extern void handleTargetColname(ParseState *pstate, char **resname,

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parse_agg.h,v 1.4 1998/01/04 04:31:39 momjian Exp $
+ * $Id: parse_agg.h,v 1.5 1998/01/20 05:04:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,7 +19,6 @@
 #include <parser/parse_node.h>
 
 extern void AddAggToParseState(ParseState *pstate, Aggreg *aggreg);
-extern void finalizeAggregates(ParseState *pstate, Query *qry);
 extern void parseCheckAggregates(ParseState *pstate, Query *qry);
 extern Aggreg *ParseAgg(ParseState *pstate, char *aggname, Oid basetype,
 			List *target, int precedence);
