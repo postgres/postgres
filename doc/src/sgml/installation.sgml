@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.139 2003/08/31 17:32:19 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.140 2003/09/01 23:01:49 petere Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -169,10 +169,9 @@ su - postgres
 
     <listitem>
      <para>
-      To build the Python interface module or the PL/Python server
-      programming language, you need a Python installation, including
-      the header files.
-      Since PL/Python will be a shared library, the
+      To build the PL/Python server programming language, you need a
+      Python installation, including the header files.  Since
+      PL/Python will be a shared library, the
       <indexterm><primary>libpython</primary></indexterm>
       <filename>libpython</filename> library must be a shared library
       also on most platforms.  This is not the case in a default
@@ -751,10 +750,7 @@ JAVACMD=$JAVA_HOME/bin/java
        <term><option>--with-python</option></term>
        <listitem>
         <para>
-         Build the Python interface module and the PL/Python
-         server-side language. You need to have root access to be able
-         to install the Python module at its default place
-         (<filename>/usr/lib/python<replaceable>x</>.<replaceable>y</></>).
+         Build the PL/Python server-side language.
         </para>
        </listitem>
       </varlistentry>
@@ -1077,20 +1073,6 @@ All of PostgreSQL is successfully made. Ready to install.
     perfect knowledge of how to strip every unneeded byte from an
     executable file, so if you want to save all the disk space you
     possibly can, you will have to do manual work.
-   </para>
-
-   <para>
-    If you built the Python interfaces and you were not the
-    root user when you executed the above command then that part of
-    the installation probably failed. In that case you should become
-    the root user and then do
-<screen>
-<userinput>gmake -C src/interfaces/python install</userinput>
-</screen>
-    If you do not have root access you are on your own: 
-    you can still take the required files and place them in 
-    other directories where Python can find them, but how to 
-    do that is left as an exercise.
    </para>
 
    <para>

@@ -860,7 +860,7 @@ Optional Packages:
   --with-tclconfig=DIR    tclConfig.sh and tkConfig.sh are in DIR
   --with-tkconfig=DIR     tkConfig.sh is in DIR
   --with-perl             build Perl modules (PL/Perl)
-  --with-python           build Python interface module
+  --with-python           build Python modules (PL/Python)
   --with-java             build JDBC interface and Java tools
   --with-krb4[=DIR]       build with Kerberos 4 support [/usr/athena]
   --with-krb5[=DIR]       build with Kerberos 5 support [/usr/athena]
@@ -2981,7 +2981,7 @@ echo "${ECHO_T}$with_perl" >&6
 
 
 #
-# Optionally build Python interface module
+# Optionally build Python modules (PL/Python)
 #
 echo "$as_me:$LINENO: checking whether to build Python modules" >&5
 echo $ECHO_N "checking whether to build Python modules... $ECHO_C" >&6
@@ -4294,8 +4294,6 @@ python_version=`${PYTHON} -c "import sys; print sys.version[:3]"`
 python_prefix=`${PYTHON} -c "import sys; print sys.prefix"`
 python_execprefix=`${PYTHON} -c "import sys; print sys.exec_prefix"`
 python_configdir="${python_execprefix}/lib/python${python_version}/config"
-python_moduledir="${python_prefix}/lib/python${python_version}/site-packages"
-python_moduleexecdir="${python_execprefix}/lib/python${python_version}/site-packages"
 python_includespec="-I${python_prefix}/include/python${python_version}"
 if test "$python_prefix" != "$python_execprefix"; then
   python_includespec="-I${python_execprefix}/include/python${python_version} $python_includespec"
@@ -4309,9 +4307,6 @@ else
   echo "$as_me:$LINENO: result: $python_prefix/lib/python${python_version}" >&5
 echo "${ECHO_T}$python_prefix/lib/python${python_version}" >&6
 fi
-
-
-
 
 
 echo "$as_me:$LINENO: checking how to link an embedded Python application" >&5
@@ -18285,12 +18280,9 @@ s,@perl_privlibexp@,$perl_privlibexp,;t t
 s,@perl_useshrplib@,$perl_useshrplib,;t t
 s,@perl_embed_ldflags@,$perl_embed_ldflags,;t t
 s,@PYTHON@,$PYTHON,;t t
-s,@python_version@,$python_version,;t t
 s,@python_prefix@,$python_prefix,;t t
 s,@python_execprefix@,$python_execprefix,;t t
 s,@python_configdir@,$python_configdir,;t t
-s,@python_moduledir@,$python_moduledir,;t t
-s,@python_moduleexecdir@,$python_moduleexecdir,;t t
 s,@python_includespec@,$python_includespec,;t t
 s,@python_libspec@,$python_libspec,;t t
 s,@LIBOBJS@,$LIBOBJS,;t t

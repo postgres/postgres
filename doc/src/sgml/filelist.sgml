@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/filelist.sgml,v 1.29 2003/05/18 20:55:56 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/filelist.sgml,v 1.30 2003/09/01 23:01:49 petere Exp $ -->
 
 <!entity history    SYSTEM "history.sgml">
 <!entity info       SYSTEM "info.sgml">
@@ -68,7 +68,6 @@
 <!entity libpgeasy  SYSTEM "libpgeasy.sgml">
 <!entity libpq      SYSTEM "libpq.sgml">
 <!entity libpgtcl   SYSTEM "libpgtcl.sgml">
-<!entity pygresql   SYSTEM "pygresql.sgml">
 <!entity lobj       SYSTEM "lobj.sgml">
 <!entity odbc       SYSTEM "odbc.sgml">
 <!entity rules      SYSTEM "rules.sgml">

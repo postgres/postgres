@@ -1,7 +1,7 @@
 #
 # Autoconf macros for configuring the build of Python extension modules
 #
-# $Header: /cvsroot/pgsql/config/python.m4,v 1.5 2002/09/04 22:54:18 petere Exp $
+# $Header: /cvsroot/pgsql/config/python.m4,v 1.6 2003/09/01 23:01:48 petere Exp $
 #
 
 # PGAC_PATH_PYTHON
@@ -26,19 +26,14 @@ python_version=`${PYTHON} -c "import sys; print sys.version[[:3]]"`
 python_prefix=`${PYTHON} -c "import sys; print sys.prefix"`
 python_execprefix=`${PYTHON} -c "import sys; print sys.exec_prefix"`
 python_configdir="${python_execprefix}/lib/python${python_version}/config"
-python_moduledir="${python_prefix}/lib/python${python_version}/site-packages"
-python_moduleexecdir="${python_execprefix}/lib/python${python_version}/site-packages"
 python_includespec="-I${python_prefix}/include/python${python_version}"
 if test "$python_prefix" != "$python_execprefix"; then
   python_includespec="-I${python_execprefix}/include/python${python_version} $python_includespec"
 fi
 
-AC_SUBST(python_version)[]dnl
 AC_SUBST(python_prefix)[]dnl
 AC_SUBST(python_execprefix)[]dnl
 AC_SUBST(python_configdir)[]dnl
-AC_SUBST(python_moduledir)[]dnl
-AC_SUBST(python_moduleexecdir)[]dnl
 AC_SUBST(python_includespec)[]dnl
 # This should be enough of a message.
 if test "$python_prefix" != "$python_execprefix"; then
@@ -47,19 +42,6 @@ else
   AC_MSG_RESULT([$python_prefix/lib/python${python_version}])
 fi
 ])# _PGAC_CHECK_PYTHON_DIRS
-
-
-# PGAC_CHECK_PYTHON_MODULE_SETUP
-# ------------------------------
-# Finds things required to build a Python extension module.
-# This used to do more, that's why it's separate.
-#
-# It would be nice if we could check whether the current setup allows
-# the build of the shared module. Future project.
-AC_DEFUN([PGAC_CHECK_PYTHON_MODULE_SETUP],
-[
-  AC_REQUIRE([_PGAC_CHECK_PYTHON_DIRS])
-])# PGAC_CHECK_PYTHON_MODULE_SETUP
 
 
 # PGAC_CHECK_PYTHON_EMBED_SETUP
