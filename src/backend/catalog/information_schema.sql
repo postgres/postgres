@@ -2,9 +2,18 @@
  * SQL Information Schema
  * as defined in ISO 9075-2:1999 chapter 20
  *
- * Copyright 2002, PostgreSQL Global Development Group
+ * Copyright 2003, PostgreSQL Global Development Group
  *
- * $Id: information_schema.sql,v 1.9 2003/06/17 18:00:48 petere Exp $
+ * $Id: information_schema.sql,v 1.10 2003/06/28 20:50:08 petere Exp $
+ */
+
+/*
+ * Note: Generally, the definitions in this file should be ordered
+ * according to the clause numbers in the SQL standard, which is also the
+ * alphabetical order.  In some cases it is convenient or necessary to
+ * define one information schema view by using another one; in that case,
+ * put the referencing view at the very end and leave a note where it
+ * should have been put.
  */
 
 
@@ -18,7 +27,7 @@ GRANT USAGE ON SCHEMA information_schema TO PUBLIC;
 SET search_path TO information_schema, public;
 
 
--- Note: 20.3 follows later.  Some genius screwed up the order in the standard.
+-- 20.3 INFORMATION_SCHEMA_CATALOG_NAME view appears later.
 
 
 /*
@@ -211,12 +220,12 @@ CREATE VIEW columns AS
 
            CAST(
              CASE WHEN t.typtype = 'd' THEN
-               CASE WHEN nbt.nspname = 'pg_catalog'
-                    THEN format_type(t.typbasetype, null)
+               CASE WHEN bt.typelem <> 0 AND bt.typlen = -1 THEN 'ARRAY'
+                    WHEN nbt.nspname = 'pg_catalog' THEN format_type(t.typbasetype, null)
                     ELSE 'USER-DEFINED' END
              ELSE
-               CASE WHEN nt.nspname = 'pg_catalog'
-                    THEN format_type(a.atttypid, null)
+               CASE WHEN t.typelem <> 0 AND t.typlen = -1 THEN 'ARRAY'
+                    WHEN nt.nspname = 'pg_catalog' THEN format_type(a.atttypid, null)
                     ELSE 'USER-DEFINED' END
              END
              AS character_data)
@@ -326,7 +335,7 @@ CREATE VIEW columns AS
            CAST(null AS sql_identifier) AS scope_name,
 
            CAST(null AS cardinal_number) AS maximum_cardinality,
-           CAST(t.oid AS sql_identifier) AS dtd_identifier,
+           CAST(a.attnum AS sql_identifier) AS dtd_identifier,
            CAST('NO' AS character_data) AS is_self_referencing
 
     FROM (pg_attribute LEFT JOIN pg_attrdef ON attrelid = adrelid AND attnum = adnum) AS a,
@@ -442,6 +451,9 @@ CREATE VIEW constraint_table_usage AS
 GRANT SELECT ON constraint_table_usage TO PUBLIC;
 
 
+-- 20.21 DATA_TYPE_PRIVILEGES view appears later.
+
+
 /*
  * 20.24
  * DOMAIN_CONSTRAINTS view
@@ -506,9 +518,9 @@ CREATE VIEW domains AS
            CAST(t.typname AS sql_identifier) AS domain_name,
 
            CAST(
-             CASE WHEN nbt.nspname = 'pg_catalog'
-               THEN format_type(t.typbasetype, null)
-               ELSE 'USER-DEFINED' END
+             CASE WHEN t.typelem <> 0 AND t.typlen = -1 THEN 'ARRAY'
+                  WHEN nbt.nspname = 'pg_catalog' THEN format_type(t.typbasetype, null)
+                  ELSE 'USER-DEFINED' END
              AS character_data)
              AS data_type,
 
@@ -581,7 +593,7 @@ CREATE VIEW domains AS
            CAST(null AS sql_identifier) AS scope_name,
 
            CAST(null AS cardinal_number) AS maximum_cardinality,
-           CAST(t.oid AS sql_identifier) AS dtd_identifier
+           CAST(1 AS sql_identifier) AS dtd_identifier
 
     FROM pg_type t, pg_namespace nt,
          pg_type bt, pg_namespace nbt
@@ -592,6 +604,9 @@ CREATE VIEW domains AS
           AND t.typtype = 'd';
 
 GRANT SELECT ON domains TO PUBLIC;
+
+
+-- 20.27 ELEMENT_TYPES view appears later.
 
 
 /*
@@ -649,8 +664,8 @@ CREATE VIEW parameters AS
            CAST('NO' AS character_data) AS as_locator,
            CAST(null AS sql_identifier) AS parameter_name,
            CAST(
-             CASE WHEN nt.nspname = 'pg_catalog' 
-                  THEN format_type(t.oid, null)
+             CASE WHEN t.typelem <> 0 AND t.typlen = -1 THEN 'ARRAY'
+                  WHEN nt.nspname = 'pg_catalog' THEN format_type(t.oid, null)
                   ELSE 'USER-DEFINED' END AS character_data)
              AS data_type,
            CAST(null AS cardinal_number) AS character_maximum_length,
@@ -674,7 +689,7 @@ CREATE VIEW parameters AS
            CAST(null AS sql_identifier) AS scope_schema,
            CAST(null AS sql_identifier) AS scope_name,
            CAST(null AS cardinal_number) AS maximum_cardinality,
-           CAST(t.oid AS sql_identifier) AS dtd_identifier
+           CAST(n + 1 AS sql_identifier) AS dtd_identifier
 
     FROM pg_namespace n, pg_proc p, pg_type t, pg_namespace nt, pg_user u,
          (select 0 union select 1 union select 2 union select 3 union select 4 union
@@ -802,8 +817,8 @@ CREATE VIEW routines AS
            CAST(null AS sql_identifier) AS udt_name,
 
            CAST(
-             CASE WHEN nt.nspname = 'pg_catalog' 
-                  THEN format_type(t.oid, null)
+             CASE WHEN t.typelem <> 0 AND t.typlen = -1 THEN 'ARRAY'
+                  WHEN nt.nspname = 'pg_catalog' THEN format_type(t.oid, null)
                   ELSE 'USER-DEFINED' END AS character_data)
              AS data_type,
            CAST(null AS cardinal_number) AS character_maximum_length,
@@ -827,7 +842,7 @@ CREATE VIEW routines AS
            CAST(null AS sql_identifier) AS scope_schema,
            CAST(null AS sql_identifier) AS scope_name,
            CAST(null AS cardinal_number) AS maximum_cardinality,
-           CAST(t.oid AS sql_identifier) AS dtd_identifier,
+           CAST(0 AS sql_identifier) AS dtd_identifier,
 
            CAST(CASE WHEN l.lanname = 'sql' THEN 'SQL' ELSE 'EXTERNAL' END AS character_data)
              AS routine_body,
@@ -1364,3 +1379,125 @@ CREATE VIEW views AS
                OR has_table_privilege(c.oid, 'TRIGGER') );
 
 GRANT SELECT ON views TO PUBLIC;
+
+
+-- The following views have dependencies that force them to appear out of order.
+
+/*
+ * 20.21
+ * DATA_TYPE_PRIVILEGES view
+ */
+
+CREATE VIEW data_type_privileges AS
+    SELECT CAST(current_database() AS sql_identifier) AS object_catalog,
+           CAST(x.objschema AS sql_identifier) AS object_schema,
+           CAST(x.objname AS sql_identifier) AS object_name,
+           CAST(x.objtype AS character_data) AS object_type,
+           CAST(x.objdtdid AS sql_identifier) AS dtd_identifier
+
+    FROM
+      (
+        SELECT table_schema, table_name, 'TABLE'::text, dtd_identifier FROM columns
+        UNION
+        SELECT domain_schema, domain_name, 'DOMAIN'::text, dtd_identifier FROM domains
+        UNION
+        SELECT specific_schema, specific_name, 'ROUTINE'::text, dtd_identifier FROM parameters
+        UNION
+        SELECT specific_schema, specific_name, 'ROUTINE'::text, dtd_identifier FROM routines
+      ) AS x (objschema, objname, objtype, objdtdid);
+
+GRANT SELECT ON data_type_privileges TO PUBLIC;
+
+
+/*
+ * 20.27
+ * ELEMENT_TYPES view
+ */
+
+CREATE VIEW element_types AS
+    SELECT CAST(current_database() AS sql_identifier) AS object_catalog,
+           CAST(n.nspname AS sql_identifier) AS object_schema,
+           CAST(x.objname AS sql_identifier) AS object_name,
+           CAST(x.objtype AS character_data) AS object_type,
+           CAST(x.objdtdid AS sql_identifier) AS array_type_identifier,
+           CAST(
+             CASE WHEN nbt.nspname = 'pg_catalog' THEN format_type(bt.oid, null)
+                  ELSE 'USER-DEFINED' END AS character_data) AS data_type,
+
+           CAST(null AS cardinal_number) AS character_maximum_length,
+           CAST(null AS cardinal_number) AS character_octet_length,
+           CAST(null AS sql_identifier) AS character_set_catalog,
+           CAST(null AS sql_identifier) AS character_set_schema,
+           CAST(null AS sql_identifier) AS character_set_name,
+           CAST(null AS sql_identifier) AS collation_catalog,
+           CAST(null AS sql_identifier) AS collation_schema,
+           CAST(null AS sql_identifier) AS collation_name,
+           CAST(null AS cardinal_number) AS numeric_precision,
+           CAST(null AS cardinal_number) AS numeric_precision_radix,
+           CAST(null AS cardinal_number) AS numeric_scale,
+           CAST(null AS cardinal_number) AS datetime_precision,
+           CAST(null AS character_data) AS interval_type,
+           CAST(null AS character_data) AS interval_precision,
+           
+           CAST(null AS character_data) AS domain_default, -- XXX maybe a bug in the standard
+
+           CAST(current_database() AS sql_identifier) AS udt_catalog,
+           CAST(nbt.nspname AS sql_identifier) AS udt_schema,
+           CAST(bt.typname AS sql_identifier) AS udt_name,
+
+           CAST(null AS sql_identifier) AS scope_catalog,
+           CAST(null AS sql_identifier) AS scope_schema,
+           CAST(null AS sql_identifier) AS scope_name,
+
+           CAST(null AS cardinal_number) AS maximum_cardinality,
+           CAST('a' || x.objdtdid AS sql_identifier) AS dtd_identifier
+
+    FROM pg_namespace n, pg_type at, pg_namespace nbt, pg_type bt,
+         (
+           /* columns */
+           SELECT c.relnamespace, c.relname, 'TABLE'::text, a.attnum, a.atttypid
+           FROM pg_class c, pg_attribute a
+           WHERE c.oid = a.attrelid
+                 AND c.relkind IN ('r', 'v')
+                 AND attnum > 0 AND NOT attisdropped
+
+           UNION
+
+           /* domains */
+           SELECT t.typnamespace, t.typname, 'DOMAIN'::text, 1, t.typbasetype
+           FROM pg_type t
+           WHERE t.typtype = 'd'
+
+           UNION
+
+           /* parameters */
+           SELECT p.pronamespace, p.proname, 'ROUTINE'::text, pos.n + 1, p.proargtypes[n]
+           FROM pg_proc p,
+             (select 0 union select 1 union select 2 union select 3 union select 4 union
+              select 5 union select 6 union select 7 union select 8 union select 9 union
+              select 10 union select 11 union select 12 union select 13 union select 14 union
+              select 15 union select 16 union select 17 union select 18 union select 19 union
+              select 20 union select 21 union select 22 union select 23 union select 24 union
+              select 25 union select 26 union select 27 union select 28 union select 29 union
+              select 30 union select 31) AS pos(n)
+           WHERE p.pronargs > pos.n
+
+           UNION
+
+           /* result types */
+           SELECT p.pronamespace, p.proname, 'ROUTINE'::text, 0, p.prorettype
+           FROM pg_proc p
+
+         ) AS x (objschema, objname, objtype, objdtdid, objtypeid)
+
+    WHERE n.oid = x.objschema
+          AND at.oid = x.objtypeid
+          AND (at.typelem <> 0 AND at.typlen = -1)
+          AND at.typelem = bt.oid
+          AND nbt.oid = bt.typnamespace
+
+          AND (x.objschema, x.objname, x.objtype, x.objtypeid) IN
+              ( SELECT object_schema, object_name, object_type, dtd_identifier
+                    FROM data_type_privileges );
+
+GRANT SELECT ON element_types TO PUBLIC;

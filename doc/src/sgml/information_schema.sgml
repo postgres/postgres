@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/information_schema.sgml,v 1.4 2003/06/17 18:00:48 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/information_schema.sgml,v 1.5 2003/06/28 20:50:07 petere Exp $ -->
 
 <chapter id="information-schema">
  <title>The Information Schema</title>
@@ -509,7 +509,9 @@
       <entry><literal>data_type</literal></entry>
       <entry><type>character_data</type></entry>
       <entry>
-       Data type of the column, if it is a built-in type, else
+       Data type of the column, if it is a built-in type, or
+       <literal>ARRAY</literal> if it is some array (in that case, see
+       the view <literal>element_types</literal>), else
        <literal>USER-DEFINED</literal> (in that case, the type is
        identified in <literal>udt_name</literal> and associated
        columns).  If the column is based on a domain, this column
@@ -713,16 +715,19 @@
      <row>
       <entry><literal>maximum_cardinality</literal></entry>
       <entry><type>cardinal_number</type></entry>
-      <entry>Applies to a feature not available in PostgreSQL</entry>
+      <entry>Always null, because arrays always have unlimited maximum cardinality in PostgreSQL</entry>
      </row>
 
      <row>
       <entry><literal>dtd_identifier</literal></entry>
       <entry><type>sql_identifier</type></entry>
       <entry>
-       A unique identifier of the data type of the column (The
-       specific format of the identifier is not defined and not
-       guaranteed to remain the same in future versions.)
+       An identifier of the data type descriptor of the column, unique
+       among the data type descriptors pertaining to the table.  This
+       is mainly useful for joining with other instances of such
+       identifiers.  (The specific format of the identifier is not
+       defined and not guaranteed to remain the same in future
+       versions.)
       </entry>
      </row>
 
@@ -759,9 +764,7 @@
    and <literal>domain_catalog</literal>.  If you want to pair up
    columns with their associated data types and treat domains as
    separate types, you could write <literal>coalesce(domain_name,
-   udt_name)</literal>, etc.  Finally, if you want to check whether
-   two columns have the same type, use
-   <literal>dtd_identifier</literal>.
+   udt_name)</literal>, etc.
   </para>
  </sect1>
 
@@ -919,6 +922,82 @@
       <entry><literal>constraint_name</literal</entry>
       <entry><type>sql_identifier</type></entry>
       <entry>Name of the constraint</entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+ </sect1>
+
+ <sect1 id="infoschema-data-type-privileges">
+  <title><literal>data_type_privileges</literal></title>
+
+  <para>
+   The view <literal>data_type_privileges</literal> identifies all
+   data type descriptors that the current user has access to, by way
+   of being the owner of the described object or having some privilege
+   for it.  A data type descriptor is generated whenever a data type
+   is used in the definition of a table column, a domain, or a
+   function (as parameter or return type) and stores some information
+   about how the data type is used in that instance (for example, the
+   declared maximum length, if applicable).  Each data type
+   descriptors is assigned an arbitrary identifier that is unique
+   among the data type descriptor identifiers assigned for one object
+   (table, domain, function).  This view is probably not useful for
+   applications, but it is used to define some other views in the
+   information schema.
+  </para>
+
+  <table>
+   <title><literal>domain_constraints</literal> Columns</title>
+
+   <tgroup cols="3">
+    <thead>
+     <row>
+      <entry>Name</entry>
+      <entry>Data Type</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry><literal>object_catalog</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Name of the database that contains the described object (always the current database)</entry>
+     </row>
+
+     <row>
+      <entry><literal>object_schema</literal</entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Name of the schema that contains the described object</entry>
+     </row>
+
+     <row>
+      <entry><literal>object_name</literal</entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Name of the described object</entry>
+     </row>
+
+     <row>
+      <entry><literal>object_type</literal</entry>
+      <entry><type>character_data</type></entry>
+      <entry>
+       The type of the described object: one of
+       <literal>TABLE</literal> (the data type descriptor pertains to
+       a column of that table), <literal>DOMAIN</literal> (the data
+       type descriptors pertains to that domain),
+       <literal>ROUTINE</literal> (the data type descriptor pertains
+       to a parameter or the return data type of that function).
+      </entry>
+     </row>
+
+     <row>
+      <entry><literal>dtd_identifier</literal</entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>
+       The identifier of the data type descriptor, which is unique
+       among the data type descriptors for that same object.
+      </entry>
      </row>
     </tbody>
    </tgroup>
@@ -1103,7 +1182,14 @@
      <row>
       <entry><literal>data_type</literal></entry>
       <entry><type>character_data</type></entry>
-      <entry>Data type of the domain</entry>
+      <entry>
+       Data type of the domain, if it is a built-in type, or
+       <literal>ARRAY</literal> if it is some array (in that case, see
+       the view <literal>element_types</literal>), else
+       <literal>USER-DEFINED</literal> (in that case, the type is
+       identified in <literal>udt_name</literal> and associated
+       columns).
+      </entry>
      </row>
 
      <row>
@@ -1269,16 +1355,271 @@
      <row>
       <entry><literal>maximum_cardinality</literal></entry>
       <entry><type>cardinal_number</type></entry>
-      <entry>Applies to a feature not available in PostgreSQL</entry>
+      <entry>Always null, because arrays always have unlimited maximum cardinality in PostgreSQL</entry>
      </row>
 
      <row>
       <entry><literal>dtd_identifier</literal></entry>
       <entry><type>sql_identifier</type></entry>
       <entry>
-       A unique identifier of the data type of the domain (The
-       specific format of the identifier is not defined and not
-       guaranteed to remain the same in future versions.)
+       An identifier of the data type descriptor of the domain, unique
+       among the data type descriptors pertaining to the domain (which
+       is trivial, because a domain only contains one data type
+       descriptor).  This is mainly useful for joining with other
+       instances of such identifiers.  (The specific format of the
+       identifier is not defined and not guaranteed to remain the same
+       in future versions.)
+      </entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+ </sect1>
+
+ <sect1 id="infoschema-element-types">
+  <title><literal>element_types</literal></title>
+
+  <para>
+   The view <literal>element_types</literal> contains the data type
+   descriptors of the elements of arrays.  When a table column,
+   domain, function parameter, or function return value is defined to
+   be of an array type, the respective information schema view only
+   contains <literal>ARRAY</literal> in the column
+   <literal>data_type</literal>.  To obtain information on the element
+   type of the array, you can join the respective view with this view.
+   For example, to show the columns of a table with data types and
+   array element types, if applicable, you could do
+<programlisting>
+SELECT c.column_name, c.data_type, e.data_type AS element_type
+FROM information_schema.columns c LEFT JOIN information_schema.element_types e
+     ON ((c.table_catalog, c.table_schema, c.table_name, 'TABLE', c.dtd_identifier)
+       = (e.object_catalog, e.object_schema, e.object_name, e.object_type, e.array_type_identifier))
+WHERE c.table_schema = '...' AND c.table_name = '...'
+ORDER BY c.ordinal_position;
+</programlisting>
+   This view only includes objects that the current user has access
+   to, by way of being the owner or having some privilege.
+  </para>
+
+  <table>
+   <title><literal>element_types</literal> Columns</title>
+
+   <tgroup cols="3">
+    <thead>
+     <row>
+      <entry>Name</entry>
+      <entry>Data Type</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry><literal>object_catalog</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>
+       Name of the database that contains the object that uses the
+       array being described (always the current database)
+      </entry>
+     </row>
+
+     <row>
+      <entry><literal>object_schema</literal</entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>
+       Name of the schema that contains the object that uses the array
+       being described
+      </entry>
+     </row>
+
+     <row>
+      <entry><literal>object_name</literal</entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>
+       Name of the object that uses the array being described
+      </entry>
+     </row>
+
+     <row>
+      <entry><literal>object_type</literal</entry>
+      <entry><type>character_data</type></entry>
+      <entry>
+       The type of the object that uses the array being descibed: one
+       of <literal>TABLE</literal> (the array is used by a column of
+       that table), <literal>DOMAIN</literal> (the array is used by
+       that domain), <literal>ROUTINE</literal> (the array is used by
+       a parameter or the return data type of that function).
+      </entry>
+     </row>
+
+     <row>
+      <entry><literal>array_type_identifier</literal</entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>
+       The identifier of the data type descriptor of the array being
+       described.  Use this to join with the
+       <literal>dtd_identifier</literal> columns of other information
+       schema views.
+      </entry>
+     </row>
+
+     <row>
+      <entry><literal>data_type</literal></entry>
+      <entry><type>character_data</type></entry>
+      <entry>
+       Data type of the array elements, if it is a built-in type, else
+       <literal>USER-DEFINED</literal> (in that case, the type is
+       identified in <literal>udt_name</literal> and associated
+       columns).
+      </entry>
+     </row>
+
+     <row>
+      <entry><literal>character_maximum_length</literal></entry>
+      <entry><type>cardinal_number</type></entry>
+      <entry>Always null, since this information is not applied to array element data types in PostgreSQL</entry>
+     </row>
+
+     <row>
+      <entry><literal>character_octet_length</literal></entry>
+      <entry><type>cardinal_number</type></entry>
+      <entry>Always null, since this information is not applied to array element data types in PostgreSQL</entry>
+     </row>
+
+     <row>
+      <entry><literal>character_set_catalog</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Applies to a feature not available in PostgreSQL</entry>
+     </row>
+
+     <row>
+      <entry><literal>character_set_schema</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Applies to a feature not available in PostgreSQL</entry>
+     </row>
+
+     <row>
+      <entry><literal>character_set_name</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Applies to a feature not available in PostgreSQL</entry>
+     </row>
+
+     <row>
+      <entry><literal>collation_catalog</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Applies to a feature not available in PostgreSQL</entry>
+     </row>
+
+     <row>
+      <entry><literal>collation_schema</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Applies to a feature not available in PostgreSQL</entry>
+     </row>
+
+     <row>
+      <entry><literal>collation_name</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Applies to a feature not available in PostgreSQL</entry>
+     </row>
+
+     <row>
+      <entry><literal>numeric_precision</literal></entry>
+      <entry><type>cardinal_number</type></entry>
+      <entry>Always null, since this information is not applied to array element data types in PostgreSQL</entry>
+     </row>
+
+     <row>
+      <entry><literal>numeric_precision_radix</literal></entry>
+      <entry><type>cardinal_number</type></entry>
+      <entry>Always null, since this information is not applied to array element data types in PostgreSQL</entry>
+     </row>
+
+     <row>
+      <entry><literal>numeric_scale</literal></entry>
+      <entry><type>cardinal_number</type></entry>
+      <entry>Always null, since this information is not applied to array element data types in PostgreSQL</entry>
+     </row>
+
+     <row>
+      <entry><literal>datetime_precision</literal></entry>
+      <entry><type>cardinal_number</type></entry>
+      <entry>Always null, since this information is not applied to array element data types in PostgreSQL</entry>
+     </row>
+
+     <row>
+      <entry><literal>interval_type</literal></entry>
+      <entry><type>character_data</type></entry>
+      <entry>Always null, since this information is not applied to array element data types in PostgreSQL</entry>
+     </row>
+
+     <row>
+      <entry><literal>interval_precision</literal></entry>
+      <entry><type>character_data</type></entry>
+      <entry>Always null, since this information is not applied to array element data types in PostgreSQL</entry>
+     </row>
+
+     <row>
+      <entry><literal>domain_default</literal></entry>
+      <entry><type>character_data</type></entry>
+      <entry>Not yet implemented</entry>
+     </row>
+
+     <row>
+      <entry><literal>udt_catalog</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>
+       Name of the database that the data type of the elements is
+       defined in (always the current database)
+      </entry>
+     </row>
+
+     <row>
+      <entry><literal>udt_schema</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>
+       Name of the schema that the data type of the elements is
+       defined in
+      </entry>
+     </row>
+
+     <row>
+      <entry><literal>udt_name</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>
+       Name of the data type of the elements
+      </entry>
+     </row>
+
+     <row>
+      <entry><literal>scope_catalog</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Applies to a feature not available in PostgreSQL</entry>
+     </row>
+
+     <row>
+      <entry><literal>scope_schema</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Applies to a feature not available in PostgreSQL</entry>
+     </row>
+
+     <row>
+      <entry><literal>scope_name</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Applies to a feature not available in PostgreSQL</entry>
+     </row>
+
+     <row>
+      <entry><literal>maximum_cardinality</literal></entry>
+      <entry><type>cardinal_number</type></entry>
+      <entry>Always null, because arrays always have unlimited maximum cardinality in PostgreSQL</entry>
+     </row>
+
+     <row>
+      <entry><literal>dtd_identifier</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>
+       An identifier of the data type descriptor of the element.  This
+       is currently not useful.
       </entry>
      </row>
     </tbody>
@@ -1460,7 +1801,14 @@
      <row>
       <entry><literal>data_type</literal></entry>
       <entry><type>character_data</type></entry>
-      <entry>Data type of the parameter</entry>
+      <entry>
+       Data type of the parameter, if it is a built-in type, or
+       <literal>ARRAY</literal> if it is some array (in that case, see
+       the view <literal>element_types</literal>), else
+       <literal>USER-DEFINED</literal> (in that case, the type is
+       identified in <literal>udt_name</literal> and associated
+       columns).
+      </entry>
      </row>
 
      <row>
@@ -1594,16 +1942,19 @@
      <row>
       <entry><literal>maximum_cardinality</literal></entry>
       <entry><type>cardinal_number</type></entry>
-      <entry>Applies to a feature not available in PostgreSQL</entry>
+      <entry>Always null, because arrays always have unlimited maximum cardinality in PostgreSQL</entry>
      </row>
 
      <row>
       <entry><literal>dtd_identifier</literal></entry>
       <entry><type>sql_identifier</type></entry>
       <entry>
-       A unique identifier of the data type of the parameter (The
-       specific format of the identifier is not defined and not
-       guaranteed to remain the same in future versions.)
+       An identifier of the data type descriptor of the parameter,
+       unique among the data type descriptors pertaining to the
+       function.  This is mainly useful for joining with other
+       instances of such identifiers.  (The specific format of the
+       identifier is not defined and not guaranteed to remain the same
+       in future versions.)
       </entry>
      </row>
     </tbody>
@@ -1918,7 +2269,14 @@
      <row>
       <entry><literal>data_type</literal></entry>
       <entry><type>character_data</type></entry>
-      <entry>Return data type of the function</entry>
+      <entry>
+       Return data type of the function, if it is a built-in type, or
+       <literal>ARRAY</literal> if it is some array (in that case, see
+       the view <literal>element_types</literal>), else
+       <literal>USER-DEFINED</literal> (in that case, the type is
+       identified in <literal>type_udt_name</literal> and associated
+       columns).
+      </entry>
      </row>
 
      <row>
@@ -2052,16 +2410,19 @@
      <row>
       <entry><literal>maximum_cardinality</literal></entry>
       <entry><type>cardinal_number</type></entry>
-      <entry>Applies to a feature not available in PostgreSQL</entry>
+      <entry>Always null, because arrays always have unlimited maximum cardinality in PostgreSQL</entry>
      </row>
 
      <row>
       <entry><literal>dtd_identifier</literal></entry>
       <entry><type>sql_identifier</type></entry>
       <entry>
-       A unique identifier of the return data type of the function
-       (The specific format of the identifier is not defined and not
-       guaranteed to remain the same in future versions.)
+       An identifier of the data type descriptor of the return data
+       type of this function, unique among the data type descriptors
+       pertaining to the function.  This is mainly useful for joining
+       with other instances of such identifiers.  (The specific format
+       of the identifier is not defined and not guaranteed to remain
+       the same in future versions.)
       </entry>
      </row>
 
