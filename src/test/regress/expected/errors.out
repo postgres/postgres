@@ -22,13 +22,13 @@ select 1;
  
 -- missing relation name 
 select;
-ERROR:  parser: parse error at or near ";" at character 7
+ERROR:  syntax error at or near ";" at character 7
 -- no such relation 
 select * from nonesuch;
 ERROR:  Relation "nonesuch" does not exist
 -- missing target list
 select from pg_database;
-ERROR:  parser: parse error at or near "from" at character 8
+ERROR:  syntax error at or near "from" at character 8
 -- bad name in target list
 select nonesuch from pg_database;
 ERROR:  Attribute "nonesuch" not found
@@ -40,7 +40,7 @@ select * from pg_database where pg_database.datname = nonesuch;
 ERROR:  Attribute "nonesuch" not found
 -- bad select distinct on syntax, distinct attribute missing
 select distinct on (foobar) from pg_database;
-ERROR:  parser: parse error at or near "from" at character 29
+ERROR:  syntax error at or near "from" at character 29
 -- bad select distinct on syntax, distinct attribute not in target list
 select distinct on (foobar) * from pg_database;
 ERROR:  Attribute "foobar" not found
@@ -49,7 +49,7 @@ ERROR:  Attribute "foobar" not found
  
 -- missing relation name (this had better not wildcard!) 
 delete from;
-ERROR:  parser: parse error at or near ";" at character 12
+ERROR:  syntax error at or near ";" at character 12
 -- no such relation 
 delete from nonesuch;
 ERROR:  Relation "nonesuch" does not exist
@@ -58,7 +58,7 @@ ERROR:  Relation "nonesuch" does not exist
  
 -- missing relation name (this had better not wildcard!) 
 drop table;
-ERROR:  parser: parse error at or near ";" at character 11
+ERROR:  syntax error at or near ";" at character 11
 -- no such relation 
 drop table nonesuch;
 ERROR:  table "nonesuch" does not exist
@@ -68,7 +68,7 @@ ERROR:  table "nonesuch" does not exist
 -- relation renaming 
 -- missing relation name 
 alter table rename;
-ERROR:  parser: parse error at or near ";" at character 19
+ERROR:  syntax error at or near ";" at character 19
 -- no such relation 
 alter table nonesuch rename to newnonesuch;
 ERROR:  Relation "nonesuch" does not exist
@@ -122,10 +122,10 @@ ERROR:  Define: "basetype" unspecified
  
 -- missing index name 
 drop index;
-ERROR:  parser: parse error at or near ";" at character 11
+ERROR:  syntax error at or near ";" at character 11
 -- bad index name 
 drop index 314159;
-ERROR:  parser: parse error at or near "314159" at character 12
+ERROR:  syntax error at or near "314159" at character 12
 -- no such index 
 drop index nonesuch;
 ERROR:  index "nonesuch" does not exist
@@ -134,13 +134,13 @@ ERROR:  index "nonesuch" does not exist
  
 -- missing aggregate name 
 drop aggregate;
-ERROR:  parser: parse error at or near ";" at character 15
+ERROR:  syntax error at or near ";" at character 15
 -- missing aggregate type
 drop aggregate newcnt1;
-ERROR:  parser: parse error at or near ";" at character 23
+ERROR:  syntax error at or near ";" at character 23
 -- bad aggregate name 
 drop aggregate 314159 (int);
-ERROR:  parser: parse error at or near "314159" at character 16
+ERROR:  syntax error at or near "314159" at character 16
 -- bad aggregate type
 drop aggregate newcnt (nonesuch);
 ERROR:  Type "nonesuch" does not exist
@@ -155,10 +155,10 @@ ERROR:  RemoveAggregate: aggregate newcnt(real) does not exist
  
 -- missing function name 
 drop function ();
-ERROR:  parser: parse error at or near "(" at character 15
+ERROR:  syntax error at or near "(" at character 15
 -- bad function name 
 drop function 314159();
-ERROR:  parser: parse error at or near "314159" at character 15
+ERROR:  syntax error at or near "314159" at character 15
 -- no such function 
 drop function nonesuch();
 ERROR:  RemoveFunction: function nonesuch() does not exist
@@ -167,10 +167,10 @@ ERROR:  RemoveFunction: function nonesuch() does not exist
  
 -- missing type name 
 drop type;
-ERROR:  parser: parse error at or near ";" at character 10
+ERROR:  syntax error at or near ";" at character 10
 -- bad type name 
 drop type 314159;
-ERROR:  parser: parse error at or near "314159" at character 11
+ERROR:  syntax error at or near "314159" at character 11
 -- no such type 
 drop type nonesuch;
 ERROR:  Type "nonesuch" does not exist
@@ -179,22 +179,22 @@ ERROR:  Type "nonesuch" does not exist
  
 -- missing everything 
 drop operator;
-ERROR:  parser: parse error at or near ";" at character 14
+ERROR:  syntax error at or near ";" at character 14
 -- bad operator name 
 drop operator equals;
-ERROR:  parser: parse error at or near ";" at character 21
+ERROR:  syntax error at or near ";" at character 21
 -- missing type list 
 drop operator ===;
-ERROR:  parser: parse error at or near ";" at character 18
+ERROR:  syntax error at or near ";" at character 18
 -- missing parentheses 
 drop operator int4, int4;
-ERROR:  parser: parse error at or near "," at character 19
+ERROR:  syntax error at or near "," at character 19
 -- missing operator name 
 drop operator (int4, int4);
-ERROR:  parser: parse error at or near "(" at character 15
+ERROR:  syntax error at or near "(" at character 15
 -- missing type list contents 
 drop operator === ();
-ERROR:  parser: parse error at or near ")" at character 20
+ERROR:  syntax error at or near ")" at character 20
 -- no such operator 
 drop operator === (int4);
 ERROR:  parser: argument type missing (use NONE for unary operators)
@@ -206,7 +206,7 @@ drop operator = (nonesuch);
 ERROR:  parser: argument type missing (use NONE for unary operators)
 -- no such type1 
 drop operator = ( , int4);
-ERROR:  parser: parse error at or near "," at character 19
+ERROR:  syntax error at or near "," at character 19
 -- no such type1 
 drop operator = (nonesuch, int4);
 ERROR:  Type "nonesuch" does not exist
@@ -215,28 +215,28 @@ drop operator = (int4, nonesuch);
 ERROR:  Type "nonesuch" does not exist
 -- no such type2 
 drop operator = (int4, );
-ERROR:  parser: parse error at or near ")" at character 24
+ERROR:  syntax error at or near ")" at character 24
 --
 -- DROP RULE
  
 -- missing rule name 
 drop rule;
-ERROR:  parser: parse error at or near ";" at character 10
+ERROR:  syntax error at or near ";" at character 10
 -- bad rule name 
 drop rule 314159;
-ERROR:  parser: parse error at or near "314159" at character 11
+ERROR:  syntax error at or near "314159" at character 11
 -- no such rule 
 drop rule nonesuch on noplace;
 ERROR:  Relation "noplace" does not exist
 -- bad keyword 
 drop tuple rule nonesuch;
-ERROR:  parser: parse error at or near "tuple" at character 6
+ERROR:  syntax error at or near "tuple" at character 6
 -- no such rule 
 drop instance rule nonesuch on noplace;
-ERROR:  parser: parse error at or near "instance" at character 6
+ERROR:  syntax error at or near "instance" at character 6
 -- no such rule 
 drop rewrite rule nonesuch;
-ERROR:  parser: parse error at or near "rewrite" at character 6
+ERROR:  syntax error at or near "rewrite" at character 6
 --
 -- Check that division-by-zero is properly caught.
 --

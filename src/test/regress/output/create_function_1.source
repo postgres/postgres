@@ -51,7 +51,7 @@ CREATE FUNCTION test1 (int) RETURNS int LANGUAGE sql
 ERROR:  return type mismatch in function: declared to return integer, returns "unknown"
 CREATE FUNCTION test1 (int) RETURNS int LANGUAGE sql
     AS 'not even SQL';
-ERROR:  parser: parse error at or near "not" at character 1
+ERROR:  syntax error at or near "not" at character 1
 CREATE FUNCTION test1 (int) RETURNS int LANGUAGE sql
     AS 'SELECT 1, 2, 3;';
 ERROR:  function declared to return integer returns multiple columns in final SELECT

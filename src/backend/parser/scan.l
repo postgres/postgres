@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/scan.l,v 1.105 2003/04/27 20:09:44 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/scan.l,v 1.106 2003/05/29 20:40:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -581,13 +581,19 @@ yyerror(const char *message)
 	cursorpos = pg_mbstrlen_with_len(scanbuf, loc - scanbuf) + 1;
 
 	if (*loc == YY_END_OF_BUFFER_CHAR)
+	{
+		/* translator: %s is typically "syntax error" */
 		ereport(ERROR,
-				(errmsg("parser: %s at end of input", message),
+				(errmsg("%s at end of input", message),
 				 errposition(cursorpos)));
+	}
 	else
+	{
+		/* translator: first %s is typically "syntax error" */
 		ereport(ERROR,
-				(errmsg("parser: %s at or near \"%s\"", message, loc),
+				(errmsg("%s at or near \"%s\"", message, loc),
 				 errposition(cursorpos)));
+	}
 }
 
 

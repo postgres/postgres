@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.415 2003/05/28 16:03:57 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.416 2003/05/29 20:40:36 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -4680,7 +4680,7 @@ table_ref:	relation_expr
 					 * popular demand, but for now let's just implement
 					 * the spec and see if anyone complains.
 					 * However, it does seem like a good idea to emit
-					 * an error message that's better than "parse error".
+					 * an error message that's better than "syntax error".
 					 */
 					elog(ERROR, "sub-SELECT in FROM must have an alias"
 						 "\n\tFor example, FROM (SELECT ...) [AS] foo");

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/xfunc.sgml,v 1.67 2003/04/10 01:22:45 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/xfunc.sgml,v 1.68 2003/05/29 20:40:36 tgl Exp $
 -->
 
  <sect1 id="xfunc">
@@ -330,7 +330,7 @@ SELECT (new_emp()).name;
 
 <screen>
 SELECT new_emp().name;
-ERROR:  parser: parse error at or near "."
+ERROR:  syntax error at or near "."
 </screen>
     </para>
 
