@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.132 2002/09/04 20:31:13 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.133 2002/10/21 19:46:45 tgl Exp $
  *
  * NOTES
  *		Transaction aborts can now occur two ways:
@@ -167,6 +167,7 @@
 #include "catalog/namespace.h"
 #include "commands/async.h"
 #include "commands/trigger.h"
+#include "commands/user.h"
 #include "executor/spi.h"
 #include "libpq/be-fsstubs.h"
 #include "miscadmin.h"
@@ -959,18 +960,25 @@ CommitTransaction(void)
 	s->state = TRANS_COMMIT;
 
 	/*
-	 * do commit processing
+	 * Do pre-commit processing (most of this stuff requires database
+	 * access, and in fact could still cause an error...)
 	 */
-
-	/* handle commit for large objects [ PA, 7/17/98 ] */
-	lo_commit(true);
-
-	/* NOTIFY commit must also come before lower-level cleanup */
-	AtCommit_Notify();
 
 	AtEOXact_portals();
 
-	/* Here is where we really truly commit. */
+	/* handle commit for large objects [ PA, 7/17/98 ] */
+	/* XXX probably this does not belong here */
+	lo_commit(true);
+
+	/* NOTIFY commit must come before lower-level cleanup */
+	AtCommit_Notify();
+
+	/* Update the flat password file if we changed pg_shadow or pg_group */
+	AtEOXact_UpdatePasswordFile(true);
+
+	/*
+	 * Here is where we really truly commit.
+	 */
 	RecordTransactionCommit();
 
 	/*
@@ -1013,7 +1021,6 @@ CommitTransaction(void)
 	AtEOXact_CatCache(true);
 	AtCommit_Memory();
 	AtEOXact_Buffers(true);
-	smgrabort();
 	AtEOXact_Files();
 
 	/* Count transaction commit in statistics collector */
@@ -1080,9 +1087,10 @@ AbortTransaction(void)
 	 * do abort processing
 	 */
 	DeferredTriggerAbortXact();
+	AtEOXact_portals();
 	lo_commit(false);			/* 'false' means it's abort */
 	AtAbort_Notify();
-	AtEOXact_portals();
+	AtEOXact_UpdatePasswordFile(false);
 
 	/* Advertise the fact that we aborted in pg_clog. */
 	RecordTransactionAbort();
@@ -1114,6 +1122,7 @@ AbortTransaction(void)
 	AtEOXact_CatCache(false);
 	AtAbort_Memory();
 	AtEOXact_Buffers(false);
+	smgrabort();
 	AtEOXact_Files();
 	AtAbort_Locks();
 

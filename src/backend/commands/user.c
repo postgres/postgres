@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/commands/user.c,v 1.112 2002/09/14 13:46:23 petere Exp $
+ * $Header: /cvsroot/pgsql/src/backend/commands/user.c,v 1.113 2002/10/21 19:46:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,7 +37,15 @@
 #include "utils/syscache.h"
 
 
+#define PWD_FILE		"pg_pwd"
+#define USER_GROUP_FILE "pg_group"
+
+
 extern bool Password_encryption;
+
+static bool user_file_update_needed = false;
+static bool group_file_update_needed = false;
+
 
 static void CheckPgUserAclNotNull(void);
 static void UpdateGroupMembership(Relation group_rel, HeapTuple group_tuple,
@@ -67,7 +75,6 @@ fputs_quote(char *str, FILE *fp)
 }
 
 
-
 /*
  * group_getfilename --- get full pathname of group file
  *
@@ -88,9 +95,9 @@ group_getfilename(void)
 }
 
 
-
 /*
  * Get full pathname of password file.
+ *
  * Note that result string is palloc'd, and should be freed by the caller.
  */
 char *
@@ -108,12 +115,11 @@ user_getfilename(void)
 }
 
 
-
 /*
- * write_group_file for trigger update_pg_pwd_and_pg_group
+ * write_group_file: update the flat group file
  */
 static void
-write_group_file(Relation urel, Relation grel)
+write_group_file(Relation grel)
 {
 	char	   *filename,
 			   *tempname;
@@ -132,15 +138,19 @@ write_group_file(Relation urel, Relation grel)
 	filename = group_getfilename();
 	bufsize = strlen(filename) + 12;
 	tempname = (char *) palloc(bufsize);
-
 	snprintf(tempname, bufsize, "%s.%d", filename, MyProcPid);
+
 	oumask = umask((mode_t) 077);
 	fp = AllocateFile(tempname, "w");
 	umask(oumask);
 	if (fp == NULL)
 		elog(ERROR, "write_group_file: unable to write %s: %m", tempname);
 
-	/* read table */
+	/*
+	 * Read pg_group and write the file.  Note we use SnapshotSelf to ensure
+	 * we see all effects of current transaction.  (Perhaps could do a
+	 * CommandCounterIncrement beforehand, instead?)
+	 */
 	scan = heap_beginscan(grel, SnapshotSelf, 0, NULL);
 	while ((tuple = heap_getnext(scan, ForwardScanDirection)) != NULL)
 	{
@@ -244,19 +254,8 @@ write_group_file(Relation urel, Relation grel)
 }
 
 
-
 /*
- * write_password_file for trigger update_pg_pwd_and_pg_group
- *
- * copy the modified contents of pg_shadow to a file used by the postmaster
- * for user authentication.  The file is stored as $PGDATA/global/pg_pwd.
- *
- * This function set is both a trigger function for direct updates to pg_shadow
- * as well as being called directly from create/alter/drop user.
- *
- * We raise an error to force transaction rollback if we detect an illegal
- * username or password --- illegal being defined as values that would
- * mess up the pg_pwd parser.
+ * write_user_file: update the flat password file
  */
 static void
 write_user_file(Relation urel)
@@ -278,15 +277,19 @@ write_user_file(Relation urel)
 	filename = user_getfilename();
 	bufsize = strlen(filename) + 12;
 	tempname = (char *) palloc(bufsize);
-
 	snprintf(tempname, bufsize, "%s.%d", filename, MyProcPid);
+
 	oumask = umask((mode_t) 077);
 	fp = AllocateFile(tempname, "w");
 	umask(oumask);
 	if (fp == NULL)
-		elog(ERROR, "write_password_file: unable to write %s: %m", tempname);
+		elog(ERROR, "write_user_file: unable to write %s: %m", tempname);
 
-	/* read table */
+	/*
+	 * Read pg_shadow and write the file.  Note we use SnapshotSelf to ensure
+	 * we see all effects of current transaction.  (Perhaps could do a
+	 * CommandCounterIncrement beforehand, instead?)
+	 */
 	scan = heap_beginscan(urel, SnapshotSelf, 0, NULL);
 	while ((tuple = heap_getnext(scan, ForwardScanDirection)) != NULL)
 	{
@@ -328,10 +331,16 @@ write_user_file(Relation urel)
 		 */
 		i = strcspn(usename, "\n");
 		if (usename[i] != '\0')
-			elog(ERROR, "Invalid user name '%s'", usename);
+		{
+			elog(LOG, "Invalid user name '%s'", usename);
+			continue;
+		}
 		i = strcspn(passwd, "\n");
 		if (passwd[i] != '\0')
-			elog(ERROR, "Invalid user password '%s'", passwd);
+		{
+			elog(LOG, "Invalid user password '%s'", passwd);
+			continue;
+		}
 
 		/*
 		 * The extra columns we emit here are not really necessary. To
@@ -367,31 +376,84 @@ write_user_file(Relation urel)
 }
 
 
-
-/* This is the wrapper for triggers. */
+/*
+ * This trigger is fired whenever someone modifies pg_shadow or pg_group
+ * via general-purpose INSERT/UPDATE/DELETE commands.
+ *
+ * XXX should probably have two separate triggers.
+ */
 Datum
 update_pg_pwd_and_pg_group(PG_FUNCTION_ARGS)
 {
-	/*
-	 * ExclusiveLock ensures no one modifies pg_shadow while we read it,
-	 * and that only one backend rewrites the flat file at a time.	It's
-	 * OK to allow normal reads of pg_shadow in parallel, however.
-	 */
-	Relation	urel = heap_openr(ShadowRelationName, ExclusiveLock);
-	Relation	grel = heap_openr(GroupRelationName, ExclusiveLock);
+	user_file_update_needed = true;
+	group_file_update_needed = true;
 
-	write_user_file(urel);
-	write_group_file(urel, grel);
-	/* OK to release lock, since we did not modify the relation */
-	heap_close(grel, ExclusiveLock);
-	heap_close(urel, ExclusiveLock);
+	return PointerGetDatum(NULL);
+}
+
+
+/*
+ * This routine is called during transaction commit or abort.
+ *
+ * On commit, if we've written pg_shadow or pg_group during the current
+ * transaction, update the flat files and signal the postmaster.
+ *
+ * On abort, just reset the static flags so we don't try to do it on the
+ * next successful commit.
+ *
+ * NB: this should be the last step before actual transaction commit.
+ * If any error aborts the transaction after we run this code, the postmaster
+ * will still have received and cached the changed data; so minimize the
+ * window for such problems.
+ */
+void
+AtEOXact_UpdatePasswordFile(bool isCommit)
+{
+	Relation	urel = NULL;
+	Relation	grel = NULL;
+
+	if (! (user_file_update_needed || group_file_update_needed))
+		return;
+
+	if (! isCommit)
+	{
+		user_file_update_needed = false;
+		group_file_update_needed = false;
+		return;
+	}
+
+	/*
+	 * We use ExclusiveLock to ensure that only one backend writes the flat
+	 * file(s) at a time.  That's sufficient because it's okay to allow plain
+	 * reads of the tables in parallel.  There is some chance of a deadlock
+	 * here (if we were triggered by a user update of pg_shadow or pg_group,
+	 * which likely won't have gotten a strong enough lock), so get the locks
+	 * we need before writing anything.
+	 */
+	if (user_file_update_needed)
+		urel = heap_openr(ShadowRelationName, ExclusiveLock);
+	if (group_file_update_needed)
+		grel = heap_openr(GroupRelationName, ExclusiveLock);
+
+	/* Okay to write the files */
+	if (user_file_update_needed)
+	{
+		user_file_update_needed = false;
+		write_user_file(urel);
+		heap_close(urel, NoLock);
+	}
+
+	if (group_file_update_needed)
+	{
+		group_file_update_needed = false;
+		write_group_file(grel);
+		heap_close(grel, NoLock);
+	}
 
 	/*
 	 * Signal the postmaster to reload its password & group-file cache.
 	 */
 	SendPostmasterSignal(PMSIGNAL_PASSWORD_CHANGE);
-
-	return PointerGetDatum(NULL);
 }
 
 
@@ -515,7 +577,7 @@ CreateUser(CreateUserStmt *stmt)
 	 * Scan the pg_shadow relation to be certain the user or id doesn't
 	 * already exist.  Note we secure exclusive lock, because we also need
 	 * to be sure of what the next usesysid should be, and we need to
-	 * protect our update of the flat password file.
+	 * protect our eventual update of the flat password file.
 	 */
 	pg_shadow_rel = heap_openr(ShadowRelationName, ExclusiveLock);
 	pg_shadow_dsc = RelationGetDescr(pg_shadow_rel);
@@ -619,14 +681,15 @@ CreateUser(CreateUserStmt *stmt)
 	}
 
 	/*
-	 * Now we can clean up; but keep lock until commit.
+	 * Now we can clean up; but keep lock until commit (to avoid possible
+	 * deadlock when commit code tries to acquire lock).
 	 */
 	heap_close(pg_shadow_rel, NoLock);
 
 	/*
-	 * Write the updated pg_shadow and pg_group data to the flat file.
+	 * Set flag to update flat password file at commit.
 	 */
-	update_pg_pwd_and_pg_group(NULL);
+	user_file_update_needed = true;
 }
 
 
@@ -718,10 +781,6 @@ AlterUser(AlterUserStmt *stmt)
 		  strcmp(GetUserNameFromId(GetUserId()), stmt->user) == 0))
 		elog(ERROR, "ALTER USER: permission denied");
 
-	/* changes to the flat password file cannot be rolled back */
-	if (IsTransactionBlock() && password)
-		elog(NOTICE, "ALTER USER: password changes cannot be rolled back");
-
 	/*
 	 * Scan the pg_shadow relation to be certain the user exists. Note we
 	 * secure exclusive lock to protect our update of the flat password
@@ -807,14 +866,15 @@ AlterUser(AlterUserStmt *stmt)
 	heap_freetuple(new_tuple);
 
 	/*
-	 * Now we can clean up.
+	 * Now we can clean up; but keep lock until commit (to avoid possible
+	 * deadlock when commit code tries to acquire lock).
 	 */
 	heap_close(pg_shadow_rel, NoLock);
 
 	/*
-	 * Write the updated pg_shadow and pg_group data to the flat file.
+	 * Set flag to update flat password file at commit.
 	 */
-	update_pg_pwd_and_pg_group(NULL);
+	user_file_update_needed = true;
 }
 
 
@@ -901,9 +961,6 @@ DropUser(DropUserStmt *stmt)
 
 	if (!superuser())
 		elog(ERROR, "DROP USER: permission denied");
-
-	if (IsTransactionBlock())
-		elog(NOTICE, "DROP USER cannot be rolled back completely");
 
 	/*
 	 * Scan the pg_shadow relation to find the usesysid of the user to be
@@ -1017,14 +1074,15 @@ DropUser(DropUserStmt *stmt)
 	}
 
 	/*
-	 * Now we can clean up.
+	 * Now we can clean up; but keep lock until commit (to avoid possible
+	 * deadlock when commit code tries to acquire lock).
 	 */
 	heap_close(pg_shadow_rel, NoLock);
 
 	/*
-	 * Write the updated pg_shadow and pg_group data to the flat file.
+	 * Set flag to update flat password file at commit.
 	 */
-	update_pg_pwd_and_pg_group(NULL);
+	user_file_update_needed = true;
 }
 
 
@@ -1125,6 +1183,12 @@ CreateGroup(CreateGroupStmt *stmt)
 		elog(ERROR, "CREATE GROUP: group name \"%s\" is reserved",
 			 stmt->name);
 
+	/*
+	 * Scan the pg_group relation to be certain the group or id doesn't
+	 * already exist.  Note we secure exclusive lock, because we also need
+	 * to be sure of what the next grosysid should be, and we need to
+	 * protect our eventual update of the flat group file.
+	 */
 	pg_group_rel = heap_openr(GroupRelationName, ExclusiveLock);
 	pg_group_dsc = RelationGetDescr(pg_group_rel);
 
@@ -1200,14 +1264,17 @@ CreateGroup(CreateGroupStmt *stmt)
 	/* Update indexes */
 	CatalogUpdateIndexes(pg_group_rel, tuple);
 
+	/*
+	 * Now we can clean up; but keep lock until commit (to avoid possible
+	 * deadlock when commit code tries to acquire lock).
+	 */
 	heap_close(pg_group_rel, NoLock);
 
 	/*
-	 * Write the updated pg_shadow and pg_group data to the flat file.
+	 * Set flag to update flat group file at commit.
 	 */
-	update_pg_pwd_and_pg_group(NULL);
+	group_file_update_needed = true;
 }
-
 
 
 /*
@@ -1231,6 +1298,9 @@ AlterGroup(AlterGroupStmt *stmt, const char *tag)
 	if (!superuser())
 		elog(ERROR, "%s: permission denied", tag);
 
+	/*
+	 * Secure exclusive lock to protect our update of the flat group file.
+	 */
 	pg_group_rel = heap_openr(GroupRelationName, ExclusiveLock);
 	pg_group_dsc = RelationGetDescr(pg_group_rel);
 
@@ -1345,14 +1415,15 @@ AlterGroup(AlterGroupStmt *stmt, const char *tag)
 	ReleaseSysCache(group_tuple);
 
 	/*
-	 * Write the updated pg_shadow and pg_group data to the flat files.
+	 * Now we can clean up; but keep lock until commit (to avoid possible
+	 * deadlock when commit code tries to acquire lock).
 	 */
 	heap_close(pg_group_rel, NoLock);
 
 	/*
-	 * Write the updated pg_shadow and pg_group data to the flat file.
+	 * Set flag to update flat group file at commit.
 	 */
-	update_pg_pwd_and_pg_group(NULL);
+	group_file_update_needed = true;
 }
 
 /*
@@ -1465,9 +1536,11 @@ DropGroup(DropGroupStmt *stmt)
 		elog(ERROR, "DROP GROUP: permission denied");
 
 	/*
-	 * Drop the group.
+	 * Secure exclusive lock to protect our update of the flat group file.
 	 */
 	pg_group_rel = heap_openr(GroupRelationName, ExclusiveLock);
+
+	/* Find and delete the group. */
 
 	tuple = SearchSysCacheCopy(GRONAME,
 							   PointerGetDatum(stmt->name),
@@ -1477,10 +1550,14 @@ DropGroup(DropGroupStmt *stmt)
 
 	simple_heap_delete(pg_group_rel, &tuple->t_self);
 
+	/*
+	 * Now we can clean up; but keep lock until commit (to avoid possible
+	 * deadlock when commit code tries to acquire lock).
+	 */
 	heap_close(pg_group_rel, NoLock);
 
 	/*
-	 * Write the updated pg_shadow and pg_group data to the flat file.
+	 * Set flag to update flat group file at commit.
 	 */
-	update_pg_pwd_and_pg_group(NULL);
+	group_file_update_needed = true;
 }
