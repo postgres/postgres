@@ -29,7 +29,7 @@
  * MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	$Header: /cvsroot/pgsql/src/pl/plpython/plpython.c,v 1.41 2003/09/16 01:07:51 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/pl/plpython/plpython.c,v 1.41.2.1 2004/01/04 00:14:55 momjian Exp $
  *
  *********************************************************************
  */
@@ -149,7 +149,7 @@ typedef struct PLyProcedure
  */
 typedef struct PLyPlanObject
 {
-	PyObject_HEAD;
+	PyObject_HEAD
 	void	   *plan;			/* return of an SPI_saveplan */
 	int			nargs;
 	Oid		   *types;
@@ -159,7 +159,7 @@ typedef struct PLyPlanObject
 
 typedef struct PLyResultObject
 {
-	PyObject_HEAD;
+	PyObject_HEAD
 	/* HeapTuple *tuples; */
 	PyObject   *nrows;			/* number of rows returned by query */
 	PyObject   *rows;			/* data rows, or None if no data returned */
