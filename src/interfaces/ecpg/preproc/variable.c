@@ -459,7 +459,7 @@ get_typedef(char *name)
 }
 
 void
-adjust_array(enum ECPGttype type_enum, char **dimension, char **length, char *type_dimension, char *type_index, int pointer_len)
+adjust_array(enum ECPGttype type_enum, char **dimension, char **length, char *type_dimension, char *type_index, int pointer_len, bool type_definition)
 {
 	if (atoi(type_index) >= 0)
 	{
@@ -484,7 +484,6 @@ adjust_array(enum ECPGttype type_enum, char **dimension, char **length, char *ty
 	{
 		snprintf(errortext, sizeof(errortext), "No multilevel (more than 2) pointer supported %d", pointer_len);
 		mmerror(PARSE_ERROR, ET_FATAL, errortext);
-/*		mmerror(PARSE_ERROR, ET_FATAL, "No multilevel (more than 2) pointer supported %d",pointer_len);*/
 	}
 
 	if (pointer_len > 1 && type_enum != ECPGt_char && type_enum != ECPGt_unsigned_char)
@@ -544,7 +543,11 @@ adjust_array(enum ECPGttype type_enum, char **dimension, char **length, char *ty
 				 * make sure we return length = -1 for arrays without
 				 * given bounds
 				 */
-				if (atoi(*dimension) < 0)
+				if (atoi(*dimension) < 0 && !type_definition)
+					/*
+					 * do not change this for typedefs 
+					 * since it will be changed later on when the variable is defined
+					 */
 					*length = make_str("1");
 				else if (atoi(*dimension) == 0)
 					*length = make_str("-1");
