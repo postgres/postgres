@@ -1841,6 +1841,10 @@ Mon,  5 Jul 2004 10:41:54 +0200
 	- Fixed indicator in SET DESCRIPTOR.
 	- Added special handling of descriptor header information.
 	- More code cleanup.
+	
+Mon Jul  5 20:50:09 CEST 2004
+
+	- Added free() calls against memory leak in interval.c.
 	- Set pgtypes library version to 1.2.
 	- Set ecpg version to 3.2.0.
 	- Set compat library version to 1.2.
