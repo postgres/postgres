@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.53 2000/02/15 07:47:37 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.54 2000/02/15 23:09:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -172,14 +172,13 @@ ListTableAsAttrs(ParseState *pstate, char *table);
 List *
 ListTableAsAttrs(ParseState *pstate, char *table)
 {
-	List *rlist = NULL;
+	Attr *attr = expandTable(pstate, table, TRUE);
+	List *rlist = NIL;
 	List *col;
 
-	Attr *attr = expandTable(pstate, table, TRUE);
 	foreach(col, attr->attrs)
 	{
-		Attr *a;
-		a = makeAttr(table, strVal((Value *) col));
+		Attr *a = makeAttr(table, strVal((Value *) lfirst(col)));
 		rlist = lappend(rlist, a);
 	}
 
