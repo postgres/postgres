@@ -906,5 +906,10 @@ Wed Apr  5 07:54:56 CEST 2000
 Wed Apr  5 17:35:53 CEST 2000
 
 	- Fixed handling of bool variables.
+
+Sat Apr  8 13:10:12 CEST 2000
+
+	- Synced preproc.y with gram.y.
+	- Synced keyword.c.
 	- Set library version to 3.1.0.
 	- Set ecpg version to 2.7.0.

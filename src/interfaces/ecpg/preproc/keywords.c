@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/keywords.c,v 1.25 2000/03/23 07:53:48 meskes Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/keywords.c,v 1.26 2000/04/08 12:20:27 meskes Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -222,6 +222,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"setof", SETOF},
 	{"share", SHARE},
 	{"show", SHOW},
+	{"some", SOME},
 	{"start", START},
 	{"statement", STATEMENT},
 	{"stdin", STDIN},

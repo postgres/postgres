@@ -199,7 +199,7 @@ make_name(void)
                 OF, ON, ONLY, OPTION, OR, ORDER, OUTER_P, OVERLAPS,
                 PARTIAL, POSITION, PRECISION, PRIMARY, PRIOR, PRIVILEGES, PROCEDURE, PUBLIC,
                 READ, REFERENCES, RELATIVE, REVOKE, RIGHT, ROLLBACK,
-                SCROLL, SECOND_P, SELECT, SESSION_USER, SET, SUBSTRING,
+                SCROLL, SECOND_P, SELECT, SESSION_USER, SET, SOME, SUBSTRING,
                 TABLE, TEMPORARY, THEN, TIME, TIMESTAMP, TIMEZONE_HOUR,
 		TIMEZONE_MINUTE, TO, TRAILING, TRANSACTION, TRIM, TRUE_P,
                 UNION, UNIQUE, UPDATE, USER, USING,
@@ -280,7 +280,7 @@ make_name(void)
 %type  <str>    key_match ColLabel SpecialRuleRelation ColId columnDef
 %type  <str>    ColConstraint ColConstraintElem NumericOnly FloatOnly
 %type  <str>    OptTableElementList OptTableElement TableConstraint
-%type  <str>    ConstraintElem key_actions ColQualList
+%type  <str>    ConstraintElem key_actions ColQualList TokenId
 %type  <str>    target_list target_el update_target_list alias_clause
 %type  <str>    update_target_el opt_id relation_name database_name
 %type  <str>    access_method attr_name class index_name name func_name
@@ -292,7 +292,7 @@ make_name(void)
 %type  <str>	Typename SimpleTypename Generic Numeric generic opt_float opt_numeric
 %type  <str> 	opt_decimal Character character opt_varying opt_charset
 %type  <str>	opt_collate Datetime datetime opt_timezone opt_interval
-%type  <str>	row_expr row_descriptor row_list
+%type  <str>	row_expr row_descriptor row_list typename numeric
 %type  <str>	SelectStmt SubSelect result OptTemp ConstraintAttributeSpec
 %type  <str>	opt_table opt_all sort_clause sortby_list ConstraintAttr 
 %type  <str>	sortby OptUseOp opt_inh_star relation_name_list name_list
@@ -306,7 +306,7 @@ make_name(void)
 %type  <str>    ClosePortalStmt DropStmt VacuumStmt opt_verbose func_arg
 %type  <str>    opt_analyze opt_va_list va_list ExplainStmt index_params
 %type  <str>    index_list func_index index_elem opt_type opt_class access_method_clause
-%type  <str>    index_opt_unique IndexStmt func_return def_rest
+%type  <str>    index_opt_unique IndexStmt func_return
 %type  <str>    func_args_list func_args opt_with ProcedureStmt def_arg
 %type  <str>    def_elem def_list definition def_name def_type DefineStmt
 %type  <str>    opt_instead event event_object RuleActionList opt_using
@@ -790,6 +790,8 @@ var_value:  Sconst			{ $$ = $1; }
 
 					  $$ = $1;
 					}
+                /* "OFF" is not a token, so it is handled by the name_list production */
+                | ON			{ $$ = make_str("on"); }
 		| DEFAULT		{ $$ = make_str("default"); }
 		;
 
@@ -1443,17 +1445,18 @@ DropTrigStmt:  DROP TRIGGER name ON relation_name
  *
  *****************************************************************************/
 
-DefineStmt:  CREATE def_type def_rest
+DefineStmt:  CREATE def_type def_name definition
 				{
-					$$ = cat_str(3, make_str("create"), $2, $3);
+					$$ = cat_str(3, make_str("create"), $2, $3, $4);
 				}
 		;
-
+/*
 def_rest:  def_name definition
 				{
 					$$ = cat2_str($1, $2);
 				}
 		;
+*/
 
 def_type:  OPERATOR		{ $$ = make_str("operator"); }
 		| TYPE_P	{ $$ = make_str("type"); }
@@ -1462,8 +1465,12 @@ def_type:  OPERATOR		{ $$ = make_str("operator"); }
 
 def_name:  PROCEDURE		{ $$ = make_str("procedure"); }
 		| JOIN		{ $$ = make_str("join"); }
-		| ColId		{ $$ = $1; }
 		| all_Op	{ $$ = $1; }
+		| typename	{ $$ = $1; }
+                | TokenId	{ $$ = $1; }
+                | INTERVAL	{ $$ = make_str("interval"); }
+                | TIME		{ $$ = make_str("time"); }
+                | TIMESTAMP	{ $$ = make_str("timestamp"); }
 		;
 
 definition:  '(' def_list ')'				{ $$ = cat_str(3, make_str("("), $2, make_str(")")); }
@@ -1486,14 +1493,11 @@ def_elem:  def_name '=' def_arg	{
 				}
 		;
 
-def_arg:  ColId			{  $$ = $1; }
+def_arg:  func_return		{  $$ = $1; }
+		| TokenId	{  $$ = $1; }
 		| all_Op	{  $$ = $1; }
 		| NumericOnly	{  $$ = $1; }
 		| Sconst	{  $$ = $1; }
-		| SETOF ColId
-				{
-					$$ = cat2_str(make_str("setof"), $2);
-				}
 		;
 
 /*****************************************************************************
@@ -2934,6 +2938,13 @@ SimpleTypename:  Generic	{ $$ = $1; }
 		| Character	{ $$ = $1; }
 		;
 
+typename:	generic		{ $$ = $1; }
+              | numeric		{ $$ = $1; }
+              | bit		{ $$ = $1; }
+              | character	{ $$ = $1; }
+	      | datetime	{ $$ = $1; }
+              ;
+
 Generic:  generic
 				{
 					$$ = $1;
@@ -3014,6 +3025,13 @@ Numeric:  FLOAT opt_float
 					$$ = cat2_str(make_str("numeric"), $2);
 				}
 		;
+
+numeric:	FLOAT 			{ $$ = make_str("float"); }
+              | DOUBLE PRECISION	{ $$ = make_str("double precision"); }
+              | DECIMAL                 { $$ = make_str("decimal"); }
+              | DEC                     { $$ = make_str("dec"); }
+              | NUMERIC                 { $$ = make_str("numeric"); }
+              ;
 
 opt_float:  '(' Iconst ')'
 				{
@@ -3244,6 +3262,7 @@ row_descriptor:  row_list ',' a_expr
 		;
 
 sub_type:  ANY                  { $$ = make_str("ANY"); }
+         | SOME                 { $$ = make_str("SOME"); }
          | ALL                  { $$ = make_str("ALL"); }
               ;
 
@@ -4942,21 +4961,27 @@ opt_symbol:	symbol		{ $$ = $1; }
 
 symbol:		ColLabel	{ $$ = $1; };
 
-/* These show up as operators, and will screw up the parsing if
- * allowed as identifiers or labels.
+/* Any tokens which show up as operators will screw up the parsing if
+ * allowed as identifiers, but are acceptable as ColLabels:
+ * BETWEEN, IN, IS, ISNULL, NOTNULL, OVERLAPS
  * Thanks to Tom Lane for pointing this out. - thomas 2000-03-29
-	| BETWEEN			{ $$ = make_str("between"); }
-	| IN				{ $$ = make_str("in"); }
-	| IS				{ $$ = make_str("is"); }
-	| ISNULL			{ $$ = make_str("isnull"); }
-	| NOTNULL			{ $$ = make_str("notnull"); }
-	| OVERLAPS			{ $$ = make_str("overlaps"); }
  */
 ECPGColId:  /* to be used instead of ColId */
 	 ECPGKeywords			{ $$ = $1; }
 	| ident				{ $$ = $1; }
+	| TokenId			{ $$ = $1; }
 	| datetime			{ $$ = $1; }
-	| ABSOLUTE			{ $$ = make_str("absolute"); }
+	| INTERVAL			{ $$ = make_str("interval"); }
+	| TIME				{ $$ = make_str("time"); }
+	| TIMESTAMP			{ $$ = make_str("timestamp"); }
+	| TYPE_P			{ $$ = make_str("type"); }
+	;
+
+/* Parser tokens to be used as identifiers.
+ * Tokens involving data types should appear in ColId only,
+ * since they will conflict with real TypeName productions.
+ */
+TokenId:  ABSOLUTE			{ $$ = make_str("absolute"); }
 	| ACCESS			{ $$ = make_str("access"); }
 	| ACTION			{ $$ = make_str("action"); }
 	| ADD				{ $$ = make_str("add"); }
@@ -4999,7 +5024,6 @@ ECPGColId:  /* to be used instead of ColId */
 	| INSENSITIVE			{ $$ = make_str("insensitive"); }
 	| INSERT			{ $$ = make_str("insert"); }
 	| INSTEAD			{ $$ = make_str("instead"); }
-	| INTERVAL			{ $$ = make_str("interval"); }
 	| ISOLATION			{ $$ = make_str("isolation"); }
 	| KEY				{ $$ = make_str("key"); }
 	| LANGUAGE			{ $$ = make_str("language"); }
@@ -5052,14 +5076,11 @@ ECPGColId:  /* to be used instead of ColId */
 	| SYSID                         { $$ = make_str("sysid"); }
 	| TEMP				{ $$ = make_str("temp"); }
 	| TEMPORARY			{ $$ = make_str("temporary"); }
-	| TIME				{ $$ = make_str("time"); }
-	| TIMESTAMP			{ $$ = make_str("timestamp"); }
 	| TIMEZONE_HOUR                 { $$ = make_str("timezone_hour"); }
         | TIMEZONE_MINUTE               { $$ = make_str("timezone_minute"); }
 	| TRIGGER			{ $$ = make_str("trigger"); }
 	| TRUNCATE			{ $$ = make_str("truncate"); }
 	| TRUSTED			{ $$ = make_str("trusted"); }
-	| TYPE_P			{ $$ = make_str("type"); }
 	| UNLISTEN			{ $$ = make_str("unlisten"); }
 	| UNTIL				{ $$ = make_str("until"); }
 	| UPDATE			{ $$ = make_str("update"); }
@@ -5073,23 +5094,13 @@ ECPGColId:  /* to be used instead of ColId */
 	| ZONE				{ $$ = make_str("zone"); }
 	;
 
-/* These show up as operators, and will screw up the parsing if
- * allowed as identifiers or labels.
- * Thanks to Tom Lane for pointing this out. - thomas 2000-03-29
-		| ALL			{ $$ = make_str("all"); }
-		| ANY			{ $$ = make_str("any"); }
-		| EXCEPT		{ $$ = make_str("except"); }
-		| INTERSECT		{ $$ = make_str("intersect"); }
-		| LIKE			{ $$ = make_str("like"); }
-		| NOT			{ $$ = make_str("not"); }
-		| NULLIF                { $$ = make_str("nullif"); }
-		| NULL_P		{ $$ = make_str("null"); }
-		| OR			{ $$ = make_str("or"); }
- */
 ECPGColLabel:  ECPGColId		{ $$ = $1; }
 		| ABORT_TRANS           { $$ = make_str("abort"); }
+		| ALL			{ $$ = make_str("all"); }
 		| ANALYZE               { $$ = make_str("analyze"); }
+		| ANY			{ $$ = make_str("any"); }
 		| ASC			{ $$ = make_str("asc"); }
+	        | BETWEEN               { $$ = make_str("between"); }
 		| BINARY                { $$ = make_str("binary"); }
 		| BIT	                { $$ = make_str("bit"); }
 		| BOTH			{ $$ = make_str("both"); }
@@ -5118,6 +5129,7 @@ ECPGColLabel:  ECPGColId		{ $$ = $1; }
 		| DO			{ $$ = make_str("do"); }
 		| ELSE                  { $$ = make_str("else"); }
 		| END_TRANS             { $$ = make_str("end"); }
+		| EXCEPT		{ $$ = make_str("except"); }
 		| EXISTS		{ $$ = make_str("exists"); }
 		| EXPLAIN		{ $$ = make_str("explain"); }
 		| EXTEND		{ $$ = make_str("extend"); }
@@ -5127,15 +5139,20 @@ ECPGColLabel:  ECPGColId		{ $$ = $1; }
 		| FOREIGN		{ $$ = make_str("foreign"); }
 		| FROM			{ $$ = make_str("from"); }
 		| FULL			{ $$ = make_str("full"); }
+	        | IN                    { $$ = make_str("in"); }
+        	| IS                    { $$ = make_str("is"); }
+	        | ISNULL                { $$ = make_str("isnull"); }
 		| GLOBAL		{ $$ = make_str("global"); }
 		| GROUP			{ $$ = make_str("group"); }
 		| HAVING		{ $$ = make_str("having"); }
 		| INITIALLY		{ $$ = make_str("initially"); }
 		| INNER_P		{ $$ = make_str("inner"); }
+		| INTERSECT		{ $$ = make_str("intersect"); }
 		| INTO			{ $$ = make_str("into"); }
 		| JOIN			{ $$ = make_str("join"); }
 		| LEADING		{ $$ = make_str("leading"); }
 		| LEFT			{ $$ = make_str("left"); }
+		| LIKE			{ $$ = make_str("like"); }
 		| LISTEN		{ $$ = make_str("listen"); }
 		| LOAD			{ $$ = make_str("load"); }
 		| LOCK_P		{ $$ = make_str("lock"); }
@@ -5144,11 +5161,17 @@ ECPGColLabel:  ECPGColId		{ $$ = $1; }
 		| NCHAR			{ $$ = make_str("nchar"); }
 		| NEW			{ $$ = make_str("new"); }
 		| NONE			{ $$ = make_str("none"); }
+		| NOT			{ $$ = make_str("not"); }
+	        | NOTNULL               { $$ = make_str("notnull"); }
+		| NULLIF                { $$ = make_str("nullif"); }
+		| NULL_P		{ $$ = make_str("null"); }
 		| NUMERIC               { $$ = make_str("numeric"); }
 		| OFFSET		{ $$ = make_str("offset"); }
 		| ON			{ $$ = make_str("on"); }
+		| OR			{ $$ = make_str("or"); }
 		| ORDER			{ $$ = make_str("order"); }
 		| OUTER_P		{ $$ = make_str("outer"); }
+	        | OVERLAPS              { $$ = make_str("overlaps"); }
 		| POSITION		{ $$ = make_str("position"); }
 		| PRECISION		{ $$ = make_str("precision"); }
 		| PRIMARY		{ $$ = make_str("primary"); }
