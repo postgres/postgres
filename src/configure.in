@@ -301,6 +301,21 @@ AC_ARG_WITH(tclconfig,
     ]
 )
 
+dnl We see if the path to the TK configuration scripts is specified.
+dnl This will overide the use of tclsh to find the paths to search.
+
+AC_ARG_WITH(tkconfig,
+    [  --with-tkconfig=DIR     tkConfig.sh is in DIR],
+    [
+	case "$withval" in
+	"" | y | ye | yes | n | no)
+	    AC_MSG_ERROR([*** You must supply an argument to the --with-tkconfig option.])
+	  ;;
+	esac
+	TK_DIRS="$withval"
+    ]
+)
+
 dnl We exclude perl support unless we override it with --with-perl
 AC_MSG_CHECKING(setting USE_PERL)
 AC_ARG_WITH(
@@ -927,7 +942,7 @@ then
 	then
 		library_dirs=`echo 'puts $auto_path' | $TCLSH`
 	fi
-	library_dirs="$TCL_DIRS $library_dirs"
+	library_dirs="$TCL_DIRS $TK_DIRS $library_dirs"
 	for dir in $library_dirs; do
 		if test -d "$dir" -a -r "$dir/tclConfig.sh"; then
 			TCL_CONFIG_SH=$dir/tclConfig.sh
