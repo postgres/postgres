@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Mon Mar 17 11:32:59 EST 2003
+   Last updated: Mon Mar 17 14:47:21 EST 2003
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -194,9 +194,11 @@
    The database server can run on Windows NT and Win2k using Cygwin, the
    Cygnus Unix/NT porting library. See pgsql/doc/FAQ_MSWIN in the
    distribution or the MS Windows FAQ at
-   http://www.PostgreSQL.org/docs/faqs/faq-mswin.html.
+   http://www.PostgreSQL.org/docs/faqs/text/FAQ_MSWIN.
    
-   A native port to MS Win NT/2000/XP is currently being worked on.
+   A native port to MS Win NT/2000/XP is currently being worked on. For
+   more details on the current status of PostgreSQL on Windows see
+   http://techdocs.postgresql.org/guides/Windows.
    
     1.5) Where can I get PostgreSQL?
     
@@ -254,8 +256,7 @@
     
    Several manuals, manual pages, and some small test examples are
    included in the distribution. See the /doc directory. You can also
-   browse the manual online at
-   http://www.ca.PostgreSQL.org/users-lounge/docs/.
+   browse the manuals online at http://www.PostgreSQL.org/docs.
    
    There are two PostgreSQL books available online at
    http://www.PostgreSQL.org/docs/awbook.html and
@@ -1060,8 +1061,9 @@ CREATE TABLE test (x int, modtime timestamp DEFAULT CURRENT_TIMESTAMP );
     4.25) How do I return multiple rows or columns from a function?
     
    You can return result sets from PL/pgSQL functions using refcursors.
-   See http://www.PostgreSQL.org/idocs/index.php?plpgsql-cursors.html,
-   section 23.7.3.3.
+   See
+   http://www.PostgreSQL.org/docs/view.php?version=current&idoc=1&file=pl
+   pgsql-cursors.html, section 23.7.3.3.
    
     4.26) Why can't I reliably create/drop temporary tables in PL/PgSQL
     functions?
