@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/pathkeys.c,v 1.3 1999/02/20 16:32:35 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/pathkeys.c,v 1.4 1999/02/20 18:01:01 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -54,7 +54,7 @@ static List *new_matching_subkeys(Var *subkey, List *considered_subkeys,
  *	{ {tab1.col1, tab2.col1} }.  This allows future joins to use either Var
  *	as a pre-sorted key to prevent Mergejoins from having to re-sort the Path.
  *	They are equal, so they are both primary sort keys.  This is why pathkeys
- *	is a List of Lists.
+ *	is a List of Lists.  -- bjm
  */
  
 /****************************************************************************

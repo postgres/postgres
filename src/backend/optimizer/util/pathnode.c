@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/pathnode.c,v 1.37 1999/02/18 00:49:38 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/pathnode.c,v 1.38 1999/02/20 18:01:02 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -172,15 +172,15 @@ better_path(Path *new_path, List *unique_paths, bool *is_new)
 	{
 		path = (Path *) lfirst(temp);
 
-#if 0
-/*def OPTDUP_DEBUG*/
+#ifdef OPTDUP_DEBUG
 		if (!pathkeys_match(new_path->pathkeys, path->pathkeys, &better_key) ||
 		    better_key != 0)
 		{
-			printf("oldpath\n");
-			pprint(path->pathkeys);
+			printf("betterkey = %d\n", better_key);
 			printf("newpath\n");
 			pprint(new_path->pathkeys);
+			printf("oldpath\n");
+			pprint(path->pathkeys);
 			if (path->pathkeys && new_path->pathkeys &&
 				length(lfirst(path->pathkeys)) >= 2/* &&
 				length(lfirst(path->pathkeys)) <
@@ -191,10 +191,10 @@ better_path(Path *new_path, List *unique_paths, bool *is_new)
 			&better_sort) ||
 			better_sort != 0)
 		{
-			printf("oldord\n");
-			pprint(path->pathorder);
 			printf("neword\n");
 			pprint(new_path->pathorder);
+			printf("oldord\n");
+			pprint(path->pathorder);
 		}
 #endif
 
@@ -204,8 +204,8 @@ better_path(Path *new_path, List *unique_paths, bool *is_new)
 			&better_sort))
 		{
 			/*
-			 * Replace pathkeys that match exactly, (1,2), (1,2).
-			 * Replace pathkeys (1,2) with (1,2,3) if the latter is not
+			 * Replace pathkeys that match exactly, {{1,2}}, {{1,2}}
+			 * Replace pathkeys {{1,2}}with {{1,2,3}}} if the latter is not
 			 * more expensive and replace unordered path with ordered
 			 * path if it is not more expensive.  Favor sorted keys
 			 * over unsorted keys in the same way.
@@ -221,10 +221,10 @@ better_path(Path *new_path, List *unique_paths, bool *is_new)
 			{
 #ifdef OPTDUP_DEBUG
 				printf("replace with new %p old %p better key %d better sort %d\n", &new_path, &path, better_key, better_sort);
-				printf("old\n");
-				pprint(path);
 				printf("new\n");
 				pprint(new_path);
+				printf("old\n");
+				pprint(path);
 #endif
 				*is_new = false;
 				return path;
@@ -241,10 +241,10 @@ better_path(Path *new_path, List *unique_paths, bool *is_new)
 			{
 #ifdef OPTDUP_DEBUG
 				printf("skip new %p old %p better key %d better sort %d\n", &new_path, &path, better_key, better_sort);
-				printf("old\n");
-				pprint(path);
 				printf("new\n");
 				pprint(new_path);
+				printf("old\n");
+				pprint(path);
 #endif
 				*is_new = false;
 				return NULL;

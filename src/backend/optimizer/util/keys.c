@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/Attic/keys.c,v 1.18 1999/02/19 02:05:16 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/Attic/keys.c,v 1.19 1999/02/20 18:01:02 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -110,62 +110,70 @@ extract_join_key(JoinKey *jk, int outer_or_inner)
  *	  Returns t iff two sets of path keys are equivalent.  They are
  *	  equivalent if the first Var nodes match the second Var nodes.
  *
- *	  XXX		It isn't necessary to check that each sublist exactly contain
- *				the same elements because if the routine that built these
- *				sublists together is correct, having one element in common
- *				implies having all elements in common.
- *		Huh? bjm
+ *	See the top of optimizer/path/pathkeys.c for a description of pathkeys.
+ *	Each pathkey is ordered by its join order, so they not pre-ordered to
+ *	match.  We must search them ourselves.
  *
+ *	This gets called a lot, so it is optimized.
  */
 bool
 pathkeys_match(List *keys1, List *keys2, int *better_key)
 {
 	List	   *key1,
-			   *key2,
-			   *key1a,
-			   *key2a;
+			   *key2;
+	bool		key1_subsetof_key2 = true,
+				key2_subsetof_key1 = true;
 
 	for (key1 = keys1, key2 = keys2;
 		 key1 != NIL && key2 != NIL;
 		 key1 = lnext(key1), key2 = lnext(key2))
 	{
-		for (key1a = lfirst(key1), key2a = lfirst(key2);
-			 key1a != NIL && key2a != NIL;
-			 key1a = lnext(key1a), key2a = lnext(key2a))
-			if (!equal(lfirst(key1a), lfirst(key2a)))
+		List *i;
+
+		if (key1_subsetof_key2)
+			foreach(i, lfirst(key1))
 			{
-				*better_key = 0;
-				return false;
+				Var	*subkey = lfirst(i);
+				if (!member(subkey, lfirst(key2)))
+				{
+					key1_subsetof_key2 = false;
+					break;
+				}
 			}
-		if (key1a != NIL && key2a == NIL)
-		{
-			*better_key = 1;
-			return true;
-		}
-		if (key1a == NIL && key2a != NIL)
-		{
-			*better_key = 2;
-			return true;
-		}
+
+		if (key2_subsetof_key1)
+			foreach(i, lfirst(key2))
+			{
+				Var	*subkey = lfirst(i);
+				if (!member(subkey, lfirst(key1)))
+				{
+					key2_subsetof_key1 = false;
+					break;
+				}
+			}
+		if (!key1_subsetof_key2 && !key2_subsetof_key1)
+			break;	/* no need to continue comparisons. */
 	}
 
-	/* Now the result should be true if list keys2 has at least as many
-	 * entries as keys1, ie, we did not fall off the end of keys2 first.
-	 * If key1 is now NIL then we hit the end of keys1 before or at the
-	 * same time as the end of keys2.
-	 */
-	if (key1 != NIL && key2 == NIL)
+	if (!key1_subsetof_key2 && !key2_subsetof_key1)
 	{
-		*better_key = 1;
-		return true;
+		*better_key = 0;
+		return false;
 	}
-	if (key1 == NIL && key2 != NIL)
+	if (key1_subsetof_key2 && !key2_subsetof_key1)
 	{
 		*better_key = 2;
 		return true;
 	}
+	if (!key1_subsetof_key2 && key2_subsetof_key1)
+	{
+		*better_key = 1;
+		return true;
+	}
+
 	*better_key = 0;
 	return true;
+
 }
 
 /*
