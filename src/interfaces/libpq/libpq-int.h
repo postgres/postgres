@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq-int.h,v 1.81 2003/08/13 18:56:21 tgl Exp $
+ * $Id: libpq-int.h,v 1.82 2003/09/05 02:08:36 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -465,9 +465,11 @@ __attribute__((format_arg(1)));
 #ifdef WIN32
 #define SOCK_ERRNO (WSAGetLastError())
 #define SOCK_STRERROR winsock_strerror
+#define SOCK_ERRNO_SET(e) WSASetLastError(e)
 #else
 #define SOCK_ERRNO errno
 #define SOCK_STRERROR pqStrerror
+#define SOCK_ERRNO_SET(e) errno=e
 #endif
 
 #endif   /* LIBPQ_INT_H */

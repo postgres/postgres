@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.146 2003/08/27 00:33:34 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.147 2003/09/05 02:08:36 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2304,7 +2304,7 @@ PQunescapeBytea(const unsigned char *strtext, size_t *retbuflen)
 	if (buffer == NULL)
 		return NULL;
 
-	for (i = j = buflen = 0; i < strtextlen;)
+	for (i = j = buflen = 0; i < (int)strtextlen;)
 	{
 		switch (strtext[i])
 		{

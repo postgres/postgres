@@ -1,14 +1,16 @@
 # Makefile for Microsoft Visual C++ 5.0 (or compat)
 
-# Will build a Win32 static library (non-debug) libpq.lib
-#        and a Win32 dynamic library (non-debug) libpq.dll with import library libpqdll.lib
+# Will build a Win32 static library libpq.lib
+#        and a Win32 dynamic library libpq.dll with import library libpqdll.lib
+# USE_SSL=1 will compile with OpenSSL
+# DEBUG=1 compiles with debugging symbols
 
 
 !MESSAGE Building the Win32 static library...
 !MESSAGE
 
 !IFDEF DEBUG
-OPT=/Od
+OPT=/Od /Zi
 LOPT=/debug
 DEBUGDEF=/D _DEBUG
 !ELSE
@@ -26,12 +28,16 @@ NULL=nul
 CPP=cl.exe
 RSC=rc.exe
 
+!IFDEF DEBUG
+OUTDIR=.\Debug
+INTDIR=.\Debug
+CPP_OBJS=.\Debug/
+!ELSE
 OUTDIR=.\Release
 INTDIR=.\Release
+CPP_OBJS=.\Release/
+!ENDIF
 
-# Begin Custom Macros
-OutDir=.\Release
-# End Custom Macros
 
 ALL : "$(OUTDIR)\libpq.lib" "$(OUTDIR)\libpq.dll" 
 
@@ -72,16 +78,20 @@ CPP_PROJ=/nologo /MD /W3 /GX $(OPT) /I "..\..\include" /D "FRONTEND" $(DEBUGDEF)
  "WIN32" /D "_WINDOWS" /Fp"$(INTDIR)\libpq.pch" /YX\
  /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c  /D "HAVE_VSNPRINTF" /D "HAVE_STRDUP"
 
-CPP_OBJS=.\Release/
+!IFDEF USE_SSL
+CPP_PROJ=$(CPP_PROJ) /D USE_SSL
+SSL_LIBS=ssleay32.lib libeay32.lib gdi32.lib
+!ENDIF
+
 CPP_SBRS=.
 
 LIB32=link.exe -lib
 LIB32_FLAGS=$(LOPT) /nologo /out:"$(OUTDIR)\libpq.lib" 
 LIB32_OBJS= \
-	"$(OUTDIR)\win32.obj" \
+	"$(INTDIR)\win32.obj" \
 	"$(INTDIR)\getaddrinfo.obj" \
 	"$(INTDIR)\inet_aton.obj" \
-      "$(INTDIR)\crypt.obj" \
+        "$(INTDIR)\crypt.obj" \
 	"$(INTDIR)\path.obj" \
 	"$(INTDIR)\dllist.obj" \
 	"$(INTDIR)\md5.obj" \
@@ -94,15 +104,17 @@ LIB32_OBJS= \
 	"$(INTDIR)\fe-lobj.obj" \
 	"$(INTDIR)\fe-misc.obj" \
 	"$(INTDIR)\fe-print.obj" \
+	"$(INTDIR)\thread.obj" \
 	"$(INTDIR)\fe-secure.obj" \
 	"$(INTDIR)\pqexpbuffer.obj" \
 	"$(INTDIR)\wchar.obj" \
 	"$(INTDIR)\encnames.obj"
 
+
 RSC_PROJ=/l 0x409 /fo"$(INTDIR)\libpq.res"
 
 LINK32=link.exe
-LINK32_FLAGS=kernel32.lib user32.lib advapi32.lib wsock32.lib\
+LINK32_FLAGS=kernel32.lib user32.lib advapi32.lib wsock32.lib $(SSL_LIBS)  \
  /nologo /subsystem:windows /dll $(LOPT) /incremental:no\
  /pdb:"$(OUTDIR)\libpqdll.pdb" /machine:I386 /out:"$(OUTDIR)\libpq.dll"\
  /implib:"$(OUTDIR)\libpqdll.lib"  /def:libpqdll.def
@@ -126,38 +138,43 @@ LINK32_OBJS= \
   $(LINK32_FLAGS) $(LINK32_OBJS)
 <<
 
-"$(OUTDIR)\getaddrinfo.obj" : ..\..\port\getaddrinfo.c
+"$(INTDIR)\getaddrinfo.obj" : ..\..\port\getaddrinfo.c
     $(CPP) @<<
     $(CPP_PROJ) ..\..\port\getaddrinfo.c
 <<
 
-"$(OUTDIR)\inet_aton.obj" : ..\..\port\inet_aton.c
+"$(INTDIR)\thread.obj" : ..\..\port\thread.c
+    $(CPP) @<<
+    $(CPP_PROJ) ..\..\port\thread.c
+<<
+
+"$(INTDIR)\inet_aton.obj" : ..\..\port\inet_aton.c
     $(CPP) @<<
     $(CPP_PROJ) ..\..\port\inet_aton.c
 <<
 
-"$(OUTDIR)\crypt.obj" : ..\..\port\crypt.c
+"$(INTDIR)\crypt.obj" : ..\..\port\crypt.c
     $(CPP) @<<
     $(CPP_PROJ) ..\..\port\crypt.c
 <<
 
-"$(OUTDIR)\path.obj" : ..\..\port\path.c
+"$(INTDIR)\path.obj" : ..\..\port\path.c
     $(CPP) @<<
     $(CPP_PROJ) ..\..\port\path.c
 <<
 
-"$(OUTDIR)\dllist.obj" : ..\..\backend\lib\dllist.c
+"$(INTDIR)\dllist.obj" : ..\..\backend\lib\dllist.c
     $(CPP) @<<
     $(CPP_PROJ) ..\..\backend\lib\dllist.c
 <<
 
 
-"$(OUTDIR)\md5.obj" : ..\..\backend\libpq\md5.c
+"$(INTDIR)\md5.obj" : ..\..\backend\libpq\md5.c
     $(CPP) @<<
     $(CPP_PROJ) ..\..\backend\libpq\md5.c
 <<
 
-"$(OUTDIR)\ip.obj" : ..\..\backend\libpq\ip.c
+"$(INTDIR)\ip.obj" : ..\..\backend\libpq\ip.c
     $(CPP) @<<
     $(CPP_PROJ) ..\..\backend\libpq\ip.c
 <<

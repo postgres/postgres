@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-secure.c,v 1.29 2003/08/04 17:25:14 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-secure.c,v 1.30 2003/09/05 02:08:36 momjian Exp $
  *
  * NOTES
  *	  The client *requires* a valid server certificate.  Since
@@ -312,7 +312,7 @@ rloop:
 						printfPQExpBuffer(&conn->errorMessage,
 										  libpq_gettext("SSL SYSCALL error: EOF detected\n"));
 
-						SOCK_ERRNO = ECONNRESET;
+						SOCK_ERRNO_SET(ECONNRESET);
 						n = -1;
 					}
 					break;
@@ -322,7 +322,7 @@ rloop:
 					  libpq_gettext("SSL error: %s\n"), SSLerrmessage());
 				/* fall through */
 			case SSL_ERROR_ZERO_RETURN:
-				SOCK_ERRNO = ECONNRESET;
+				SOCK_ERRNO_SET(ECONNRESET);
 				n = -1;
 				break;
 			default:
@@ -383,7 +383,7 @@ pqsecure_write(PGconn *conn, const void *ptr, size_t len)
 					{
 						printfPQExpBuffer(&conn->errorMessage,
 										  libpq_gettext("SSL SYSCALL error: EOF detected\n"));
-						SOCK_ERRNO = ECONNRESET;
+						SOCK_ERRNO_SET(ECONNRESET);
 						n = -1;
 					}
 					break;
@@ -393,7 +393,7 @@ pqsecure_write(PGconn *conn, const void *ptr, size_t len)
 					  libpq_gettext("SSL error: %s\n"), SSLerrmessage());
 				/* fall through */
 			case SSL_ERROR_ZERO_RETURN:
-				SOCK_ERRNO = ECONNRESET;
+				SOCK_ERRNO_SET(ECONNRESET);
 				n = -1;
 				break;
 			default:
@@ -544,6 +544,9 @@ verify_peer(PGconn *conn)
 static DH  *
 load_dh_file(int keylength)
 {
+#ifdef WIN32
+    return NULL;
+#else
 	char		pwdbuf[BUFSIZ];
 	struct passwd pwdstr;
 	struct passwd *pwd = NULL;
@@ -558,6 +561,7 @@ load_dh_file(int keylength)
 	/* attempt to open file.  It's not an error if it doesn't exist. */
 	snprintf(fnbuf, sizeof fnbuf, "%s/.postgresql/dh%d.pem",
 			 pwd->pw_dir, keylength);
+
 	if ((fp = fopen(fnbuf, "r")) == NULL)
 		return NULL;
 
@@ -583,6 +587,7 @@ load_dh_file(int keylength)
 	}
 
 	return dh;
+#endif
 }
 
 /*
@@ -686,6 +691,9 @@ tmp_dh_cb(SSL *s, int is_export, int keylength)
 static int
 client_cert_cb(SSL *ssl, X509 **x509, EVP_PKEY **pkey)
 {
+#ifdef WIN32
+   return 0;
+#else
 	char		pwdbuf[BUFSIZ];
 	struct passwd pwdstr;
 	struct passwd *pwd = NULL;
@@ -785,6 +793,7 @@ client_cert_cb(SSL *ssl, X509 **x509, EVP_PKEY **pkey)
 	}
 
 	return 1;
+#endif
 }
 
 /*
@@ -793,11 +802,13 @@ client_cert_cb(SSL *ssl, X509 **x509, EVP_PKEY **pkey)
 static int
 initialize_SSL(PGconn *conn)
 {
+#ifndef WIN32
 	struct stat buf;
 	char		pwdbuf[BUFSIZ];
 	struct passwd pwdstr;
 	struct passwd *pwd = NULL;
 	char		fnbuf[2048];
+#endif
 
 	if (!SSL_context)
 	{
@@ -813,6 +824,7 @@ initialize_SSL(PGconn *conn)
 		}
 	}
 
+#ifndef WIN32
 	if (pqGetpwuid(getuid(), &pwdstr, pwdbuf, sizeof(pwdbuf), &pwd) == 0)
 	{
 		snprintf(fnbuf, sizeof fnbuf, "%s/.postgresql/root.crt",
@@ -849,6 +861,7 @@ initialize_SSL(PGconn *conn)
 
 	/* set up mechanism to provide client certificate, if available */
 	SSL_CTX_set_client_cert_cb(SSL_context, client_cert_cb);
+#endif
 
 	return 0;
 }
