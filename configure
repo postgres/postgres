@@ -3135,6 +3135,11 @@ if test -z "$ANT"; then
 echo "$as_me: error: Ant is required to build Java components" >&2;}
    { (exit 1); exit 1; }; }
 fi
+if "$ANT" -version | sed q | egrep -v ' 1\.[5-9]| [2-9]\.' >/dev/null ; then
+  { { echo "$as_me:$LINENO: error: Ant version >= 1.5 is required to build Java components" >&5
+echo "$as_me: error: Ant version >= 1.5 is required to build Java components" >&2;}
+   { (exit 1); exit 1; }; }
+fi
       ;;
     no)
       echo "$as_me:$LINENO: result: no" >&5
@@ -10470,7 +10475,7 @@ esac
 HPUXMATHLIB=""
 case $host_cpu in
   hppa1.1)
-	if [ -r /lib/pa1.1/libm.a ] ; then
+	if test -r /lib/pa1.1/libm.a ; then
 	    HPUXMATHLIB="-L /lib/pa1.1 -lm"
 	fi ;;
 esac
@@ -11744,7 +11749,7 @@ fi
 
 
 
-if [ x"$HAVE_LONG_LONG_INT_64" = xyes ] ; then
+if test x"$HAVE_LONG_LONG_INT_64" = xyes ; then
   cat >conftest.$ac_ext <<_ACEOF
 #line $LINENO "configure"
 #include "confdefs.h"
