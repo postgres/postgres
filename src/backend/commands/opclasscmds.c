@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/opclasscmds.c,v 1.18 2003/08/17 19:58:04 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/opclasscmds.c,v 1.19 2003/09/11 02:40:13 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -195,7 +195,7 @@ DefineOpClass(CreateOpClassStmt *stmt)
 				if (procedures[item->number - 1] != InvalidOid)
 					ereport(ERROR,
 							(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-							 errmsg("DefineOpClass: procedure number %d appears more than once",
+							 errmsg("procedure number %d appears more than once",
 									item->number)));
 				funcOid = LookupFuncNameTypeNames(item->name, item->args,
 												  false);
