@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.293 2004/07/20 18:06:41 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.294 2004/08/11 22:50:35 tgl Exp $ */
 
 /* Copyright comment */
 %{
@@ -1546,14 +1546,14 @@ OptTableSpace:  TABLESPACE name	{ $$ = cat2_str(make_str("tablespace"), $2); }
  * SELECT ... INTO.
  */
 
-CreateAsStmt:  CREATE OptTemp TABLE qualified_name OptCreateAs WithOidsAs AS
+CreateAsStmt:  CREATE OptTemp TABLE qualified_name OptCreateAs WithOidsAs
 		{ FoundInto = 0; }
 		SelectStmt
 		{
 			if (FoundInto == 1)
 				mmerror(PARSE_ERROR, ET_ERROR, "CREATE TABLE / AS SELECT may not specify INTO");
 
-			$$ = cat_str(8, make_str("create"), $2, make_str("table"), $4, $5, $6, make_str("as"), $9);
+			$$ = cat_str(8, make_str("create"), $2, make_str("table"), $4, $5, $6, $8);
 		}
 		;
 
