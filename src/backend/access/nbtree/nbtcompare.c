@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * btcompare.c--
+ * nbtcompare.c--
  *    Comparison functions for btree access method.
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtcompare.c,v 1.1.1.1 1996/07/09 06:21:12 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtcompare.c,v 1.2 1996/10/20 10:53:02 scrappy Exp $
  *
  *  NOTES
  *	These functions are stored in pg_amproc.  For each operator class
@@ -19,8 +19,9 @@
  *			> 0 if a > b.
  *-------------------------------------------------------------------------
  */
-#include <string.h>
+
 #include "postgres.h"
+#include <time.h>
 #include "utils/nabstime.h"
 
 int32
