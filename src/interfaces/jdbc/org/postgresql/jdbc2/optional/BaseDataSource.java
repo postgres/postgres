@@ -4,11 +4,15 @@ import javax.naming.*;
 import java.io.PrintWriter;
 import java.sql.*;
 
+import java.io.ObjectOutputStream;
+import java.io.ObjectInputStream;
+import java.io.IOException;
+
 /**
  * Base class for data sources and related classes.
  *
  * @author Aaron Mulder (ammulder@chariotsolutions.com)
- * @version $Revision: 1.3 $
+ * @version $Revision: 1.3.6.1 $
  */
 public abstract class BaseDataSource implements Referenceable
 {
@@ -53,7 +57,7 @@ public abstract class BaseDataSource implements Referenceable
 
 	/**
 	 * Gets a connection to the PostgreSQL database.  The database is identified by the
-	 * DataAource properties serverName, databaseName, and portNumber.	The user to
+	 * DataSource properties serverName, databaseName, and portNumber.	The user to
 	 * connect as is identified by the arguments user and password, which override
 	 * the DataSource properties by the same name.
 	 *
@@ -260,6 +264,24 @@ public abstract class BaseDataSource implements Referenceable
 			ref.add(new StringRefAddr("password", password));
 		}
 		return ref;
+	}
+
+	protected void writeBaseObject(ObjectOutputStream out) throws IOException
+	{
+		out.writeObject(serverName);
+		out.writeObject(databaseName);
+		out.writeObject(user);
+		out.writeObject(password);
+		out.writeInt(portNumber);
+	}
+
+	protected void readBaseObject(ObjectInputStream in) throws IOException, ClassNotFoundException
+	{
+		serverName = (String)in.readObject();
+		databaseName = (String)in.readObject();
+		user = (String)in.readObject();
+		password = (String)in.readObject();
+		portNumber = in.readInt();
 	}
 
 }
