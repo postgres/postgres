@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/initsplan.c,v 1.16 1998/08/09 04:17:38 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/initsplan.c,v 1.17 1998/08/09 04:59:03 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -172,7 +172,7 @@ add_clause_to_rels(Query *root, List *clause)
 	/*
 	 * Retrieve all relids and vars contained within the clause.
 	 */
-	clause_relids_vars((Node *) clause, &relids, &vars);
+	clause_get_relids_vars((Node *) clause, &relids, &vars);
 
 
 	clauseinfo->clause = (Expr *) clause;
