@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/plperl.sgml,v 2.28 2004/09/20 22:48:25 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/plperl.sgml,v 2.29 2004/10/15 16:51:48 momjian Exp $
 -->
 
  <chapter id="plperl">
@@ -260,7 +260,9 @@ composite types.
   </para>
 
   <para>
-   Here is an example of a PL/Perl function returning a rowset of a row type:
+   Here is an example of a PL/Perl function returning a rowset of a
+   row type.  Note that a composite type is always represented as a
+   hash reference.
 <programlisting>
 CREATE TABLE test (
        i int,
@@ -305,7 +307,10 @@ $$ LANGUAGE plperl;
   </para>
 
   <para>
-  Here is an example of a PL/Perl function returning a rowset of a composite type.
+  Here is an example of a PL/Perl function returning a rowset of a
+composite type.  As a rowset is always a reference to an array
+and a composite type is always a reference to a hash, a rowset of a
+composite type is a reference to an array of hash references.
   <programlisting>
 CREATE TYPE testsetperl AS (f1 integer, f2 text, f3 text);
 
