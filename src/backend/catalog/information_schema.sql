@@ -4,7 +4,7 @@
  *
  * Copyright 2003, PostgreSQL Global Development Group
  *
- * $Id: information_schema.sql,v 1.11 2003/06/29 10:18:26 petere Exp $
+ * $Id: information_schema.sql,v 1.12 2003/06/29 15:14:41 petere Exp $
  */
 
 /*
@@ -76,6 +76,24 @@ CREATE DOMAIN time_stamp AS timestamp(2)
 
 
 /*
+ * 20.9
+ * APPLICABLE_ROLES view
+ */
+
+CREATE VIEW applicable_roles AS
+    SELECT CAST(current_user AS sql_identifier) AS grantee,
+           CAST(g.groname AS sql_identifier) AS role_name,
+           CAST('NO' AS character_data) AS is_grantable
+
+    FROM pg_group g, pg_user u
+
+    WHERE u.usesysid = ANY (g.grolist)
+          AND u.usename = current_user;
+
+GRANT SELECT ON applicable_roles TO PUBLIC;
+
+
+/*
  * 20.13
  * CHECK_CONSTRAINTS view
  */
@@ -137,7 +155,7 @@ GRANT SELECT ON column_domain_usage TO PUBLIC;
 
 CREATE VIEW column_privileges AS
     SELECT CAST(u_grantor.usename AS sql_identifier) AS grantor,
-           CAST(u_grantee.usename AS sql_identifier) AS grantee,
+           CAST(grantee.name AS sql_identifier) AS grantee,
            CAST(current_database() AS sql_identifier) AS table_catalog,
            CAST(nc.nspname AS sql_identifier) AS table_schema,
            CAST(c.relname AS sql_identifier) AS table_name,
@@ -145,16 +163,21 @@ CREATE VIEW column_privileges AS
            CAST(pr.type AS character_data) AS privilege_type,
            CAST(
              CASE WHEN aclcontains(c.relacl,
-                                   makeaclitem(u_grantee.usesysid, 0, u_grantor.usesysid, pr.type, true))
+                                   makeaclitem(grantee.usesysid, grantee.grosysid, u_grantor.usesysid, pr.type, true))
                   THEN 'YES' ELSE 'NO' END AS character_data) AS is_grantable
 
     FROM pg_attribute a,
          pg_class c,
          pg_namespace nc,
          pg_user u_grantor,
-         (SELECT usesysid, usename FROM pg_user UNION SELECT 0, 'PUBLIC') AS u_grantee,
-         (SELECT 'SELECT' UNION SELECT 'DELETE' UNION SELECT 'INSERT' UNION SELECT 'UPDATE'
-          UNION SELECT 'REFERENCES' UNION SELECT 'TRIGGER') AS pr (type)
+         (
+           SELECT usesysid, 0, usename FROM pg_user
+           UNION
+           SELECT 0, grosysid, groname FROM pg_group
+           UNION
+           SELECT 0, 0, 'PUBLIC'
+         ) AS grantee (usesysid, grosysid, name),
+         (SELECT 'SELECT' UNION SELECT 'INSERT' UNION SELECT 'UPDATE' UNION SELECT 'REFERENCES') AS pr (type)
 
     WHERE a.attrelid = c.oid
           AND c.relnamespace = nc.oid
@@ -162,10 +185,10 @@ CREATE VIEW column_privileges AS
           AND NOT a.attisdropped
           AND c.relkind IN ('r', 'v')
           AND aclcontains(c.relacl,
-                          makeaclitem(u_grantee.usesysid, 0, u_grantor.usesysid, pr.type, false))
+                          makeaclitem(grantee.usesysid, grantee.grosysid, u_grantor.usesysid, pr.type, false))
           AND (u_grantor.usename = current_user
-               OR u_grantee.usename = current_user
-               OR u_grantee.usename = 'PUBLIC');
+               OR grantee.name = current_user
+               OR grantee.name = 'PUBLIC');
 
 GRANT SELECT ON column_privileges TO PUBLIC;
 
@@ -355,10 +378,7 @@ CREATE VIEW columns AS
                OR has_table_privilege(c.oid, 'SELECT')
                OR has_table_privilege(c.oid, 'INSERT')
                OR has_table_privilege(c.oid, 'UPDATE')
-               OR has_table_privilege(c.oid, 'DELETE')
-               OR has_table_privilege(c.oid, 'RULE')
-               OR has_table_privilege(c.oid, 'RERERENCES')
-               OR has_table_privilege(c.oid, 'TRIGGER') );
+               OR has_table_privilege(c.oid, 'RERERENCES') );
 
 GRANT SELECT ON columns TO PUBLIC;
 
@@ -610,6 +630,20 @@ GRANT SELECT ON domains TO PUBLIC;
 
 
 /*
+ * 20.28
+ * ENABLED_ROLES view
+ */
+
+CREATE VIEW enabled_roles AS
+    SELECT CAST(g.groname AS sql_identifier) AS role_name
+    FROM pg_group g, pg_user u
+    WHERE u.usesysid = ANY (g.grolist)
+          AND u.usename = current_user;
+
+GRANT SELECT ON enabled_roles TO PUBLIC;
+
+
+/*
  * 20.30
  * KEY_COLUMN_USAGE view
  */
@@ -762,13 +796,50 @@ GRANT SELECT ON referential_constraints TO PUBLIC;
 
 
 /*
- * 20.43
- * ROUTINE_PRIVILEGES view
+ * 20.36
+ * ROLE_COLUMN_GRANTS view
  */
 
-CREATE VIEW routine_privileges AS
+CREATE VIEW role_column_grants AS
     SELECT CAST(u_grantor.usename AS sql_identifier) AS grantor,
-           CAST(u_grantee.usename AS sql_identifier) AS grantee,
+           CAST(g_grantee.groname AS sql_identifier) AS grantee,
+           CAST(current_database() AS sql_identifier) AS table_catalog,
+           CAST(nc.nspname AS sql_identifier) AS table_schema,
+           CAST(c.relname AS sql_identifier) AS table_name,
+           CAST(a.attname AS sql_identifier) AS column_name,
+           CAST(pr.type AS character_data) AS privilege_type,
+           CAST(
+             CASE WHEN aclcontains(c.relacl,
+                                   makeaclitem(0, g_grantee.grosysid, u_grantor.usesysid, pr.type, true))
+                  THEN 'YES' ELSE 'NO' END AS character_data) AS is_grantable
+
+    FROM pg_attribute a,
+         pg_class c,
+         pg_namespace nc,
+         pg_user u_grantor,
+         pg_group g_grantee,
+         (SELECT 'SELECT' UNION SELECT 'INSERT' UNION SELECT 'UPDATE' UNION SELECT 'REFERENCES') AS pr (type)
+
+    WHERE a.attrelid = c.oid
+          AND c.relnamespace = nc.oid
+          AND a.attnum > 0
+          AND NOT a.attisdropped
+          AND c.relkind IN ('r', 'v')
+          AND aclcontains(c.relacl,
+                          makeaclitem(0, g_grantee.grosysid, u_grantor.usesysid, pr.type, false))
+          AND g_grantee.groname IN (SELECT role_name FROM enabled_roles);
+
+GRANT SELECT ON role_column_grants TO PUBLIC;
+
+
+/*
+ * 20.37
+ * ROLE_ROUTINE_GRANTS view
+ */
+
+CREATE VIEW role_routine_grants AS
+    SELECT CAST(u_grantor.usename AS sql_identifier) AS grantor,
+           CAST(g_grantee.groname AS sql_identifier) AS grantee,
            CAST(current_database() AS sql_identifier) AS specific_catalog,
            CAST(n.nspname AS sql_identifier) AS specific_schema,
            CAST(p.proname || '_' || CAST(p.oid AS text) AS sql_identifier) AS specific_name,
@@ -778,20 +849,115 @@ CREATE VIEW routine_privileges AS
            CAST('EXECUTE' AS character_data) AS privilege_type,
            CAST(
              CASE WHEN aclcontains(p.proacl,
-                                   makeaclitem(u_grantee.usesysid, 0, u_grantor.usesysid, 'EXECUTE', true))
+                                   makeaclitem(0, g_grantee.grosysid, u_grantor.usesysid, 'EXECUTE', true))
                   THEN 'YES' ELSE 'NO' END AS character_data) AS is_grantable
 
     FROM pg_proc p,
          pg_namespace n,
          pg_user u_grantor,
-         (SELECT usesysid, usename FROM pg_user UNION SELECT 0, 'PUBLIC') AS u_grantee
+         pg_group g_grantee
 
     WHERE p.pronamespace = n.oid
           AND aclcontains(p.proacl,
-                          makeaclitem(u_grantee.usesysid, 0, u_grantor.usesysid, 'EXECUTE', false))
+                          makeaclitem(0, g_grantee.grosysid, u_grantor.usesysid, 'EXECUTE', false))
+          AND g_grantee.groname IN (SELECT role_name FROM enabled_roles);
+
+GRANT SELECT ON role_routine_grants TO PUBLIC;
+
+
+/*
+ * 20.38
+ * ROLE_TABLE_GRANTS view
+ */
+
+CREATE VIEW role_table_grants AS
+    SELECT CAST(u_grantor.usename AS sql_identifier) AS grantor,
+           CAST(g_grantee.groname AS sql_identifier) AS grantee,
+           CAST(current_database() AS sql_identifier) AS table_catalog,
+           CAST(nc.nspname AS sql_identifier) AS table_schema,
+           CAST(c.relname AS sql_identifier) AS table_name,
+           CAST(pr.type AS character_data) AS privilege_type,
+           CAST(
+             CASE WHEN aclcontains(c.relacl,
+                                   makeaclitem(0, g_grantee.grosysid, u_grantor.usesysid, pr.type, true))
+                  THEN 'YES' ELSE 'NO' END AS character_data) AS is_grantable,
+           CAST('NO' AS character_data) AS with_hierarchy
+
+    FROM pg_class c,
+         pg_namespace nc,
+         pg_user u_grantor,
+         pg_group g_grantee,
+         (SELECT 'SELECT' UNION SELECT 'DELETE' UNION SELECT 'INSERT' UNION SELECT 'UPDATE'
+          UNION SELECT 'REFERENCES' UNION SELECT 'RULE' UNION SELECT 'TRIGGER') AS pr (type)
+
+    WHERE c.relnamespace = nc.oid
+          AND c.relkind IN ('r', 'v')
+          AND aclcontains(c.relacl,
+                          makeaclitem(0, g_grantee.grosysid, u_grantor.usesysid, pr.type, false))
+          AND g_grantee.groname IN (SELECT role_name FROM enabled_roles);
+
+GRANT SELECT ON role_table_grants TO PUBLIC;
+
+
+/*
+ * 20.40
+ * ROLE_USAGE_GRANTS view
+ */
+
+-- See USAGE_PRIVILEGES.
+
+CREATE VIEW role_usage_grants AS
+    SELECT CAST(null AS sql_identifier) AS grantor,
+           CAST(null AS sql_identifier) AS grantee,
+           CAST(current_database() AS sql_identifier) AS object_catalog,
+           CAST(null AS sql_identifier) AS object_schema,
+           CAST(null AS sql_identifier) AS object_name,
+           CAST(null AS character_data) AS object_type,
+           CAST('USAGE' AS character_data) AS privilege_type,
+           CAST(null AS character_data) AS is_grantable
+
+    WHERE false;
+
+GRANT SELECT ON role_usage_grants TO PUBLIC;
+
+
+/*
+ * 20.43
+ * ROUTINE_PRIVILEGES view
+ */
+
+CREATE VIEW routine_privileges AS
+    SELECT CAST(u_grantor.usename AS sql_identifier) AS grantor,
+           CAST(grantee.name AS sql_identifier) AS grantee,
+           CAST(current_database() AS sql_identifier) AS specific_catalog,
+           CAST(n.nspname AS sql_identifier) AS specific_schema,
+           CAST(p.proname || '_' || CAST(p.oid AS text) AS sql_identifier) AS specific_name,
+           CAST(current_database() AS sql_identifier) AS routine_catalog,
+           CAST(n.nspname AS sql_identifier) AS routine_schema,
+           CAST(p.proname AS sql_identifier) AS routine_name,
+           CAST('EXECUTE' AS character_data) AS privilege_type,
+           CAST(
+             CASE WHEN aclcontains(p.proacl,
+                                   makeaclitem(grantee.usesysid, grantee.grosysid, u_grantor.usesysid, 'EXECUTE', true))
+                  THEN 'YES' ELSE 'NO' END AS character_data) AS is_grantable
+
+    FROM pg_proc p,
+         pg_namespace n,
+         pg_user u_grantor,
+         (
+           SELECT usesysid, 0, usename FROM pg_user
+           UNION
+           SELECT 0, grosysid, groname FROM pg_group
+           UNION
+           SELECT 0, 0, 'PUBLIC'
+         ) AS grantee (usesysid, grosysid, name)
+
+    WHERE p.pronamespace = n.oid
+          AND aclcontains(p.proacl,
+                          makeaclitem(grantee.usesysid, grantee.grosysid, u_grantor.usesysid, 'EXECUTE', false))
           AND (u_grantor.usename = current_user
-               OR u_grantee.usename = current_user
-               OR u_grantee.usename = 'PUBLIC');
+               OR grantee.name = current_user
+               OR grantee.name = 'PUBLIC');
 
 GRANT SELECT ON routine_privileges TO PUBLIC;
 
@@ -1110,31 +1276,37 @@ GRANT SELECT ON table_constraints TO PUBLIC;
 
 CREATE VIEW table_privileges AS
     SELECT CAST(u_grantor.usename AS sql_identifier) AS grantor,
-           CAST(u_grantee.usename AS sql_identifier) AS grantee,
+           CAST(grantee.name AS sql_identifier) AS grantee,
            CAST(current_database() AS sql_identifier) AS table_catalog,
            CAST(nc.nspname AS sql_identifier) AS table_schema,
            CAST(c.relname AS sql_identifier) AS table_name,
            CAST(pr.type AS character_data) AS privilege_type,
            CAST(
              CASE WHEN aclcontains(c.relacl,
-                                   makeaclitem(u_grantee.usesysid, 0, u_grantor.usesysid, pr.type, true))
+                                   makeaclitem(grantee.usesysid, grantee.grosysid, u_grantor.usesysid, pr.type, true))
                   THEN 'YES' ELSE 'NO' END AS character_data) AS is_grantable,
            CAST('NO' AS character_data) AS with_hierarchy
 
     FROM pg_class c,
          pg_namespace nc,
          pg_user u_grantor,
-         (SELECT usesysid, usename FROM pg_user UNION SELECT 0, 'PUBLIC') AS u_grantee,
+         (
+           SELECT usesysid, 0, usename FROM pg_user
+           UNION
+           SELECT 0, grosysid, groname FROM pg_group
+           UNION
+           SELECT 0, 0, 'PUBLIC'
+         ) AS grantee (usesysid, grosysid, name),
          (SELECT 'SELECT' UNION SELECT 'DELETE' UNION SELECT 'INSERT' UNION SELECT 'UPDATE'
-          UNION SELECT 'REFERENCES' UNION SELECT 'TRIGGER') AS pr (type)
+          UNION SELECT 'REFERENCES' UNION SELECT 'RULE' UNION SELECT 'TRIGGER') AS pr (type)
 
     WHERE c.relnamespace = nc.oid
           AND c.relkind IN ('r', 'v')
           AND aclcontains(c.relacl,
-                          makeaclitem(u_grantee.usesysid, 0, u_grantor.usesysid, pr.type, false))
+                          makeaclitem(grantee.usesysid, grantee.grosysid, u_grantor.usesysid, pr.type, false))
           AND (u_grantor.usename = current_user
-               OR u_grantee.usename = current_user
-               OR u_grantee.usename = 'PUBLIC');
+               OR grantee.name = current_user
+               OR grantee.name = 'PUBLIC');
 
 GRANT SELECT ON table_privileges TO PUBLIC;
 

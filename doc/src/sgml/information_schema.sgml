@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/information_schema.sgml,v 1.5 2003/06/28 20:50:07 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/information_schema.sgml,v 1.6 2003/06/29 15:14:41 petere Exp $ -->
 
 <chapter id="information-schema">
  <title>The Information Schema</title>
@@ -142,6 +142,52 @@
   </table>
  </sect1>
 
+ <sect1 id="infoschema-applicable-roles">
+  <title><literal>applicable_roles</literal></title>
+
+  <para>
+   The view <literal>applicable_roles</literal> identifies all groups
+   that the current user is a member of.  (A role is the same thing as
+   a group.)  Generally, it is better to use the view
+   <literal>enabled_roles</literal> instead of this one; see also
+   there.
+  </para>
+
+  <table>
+   <title><literal>applicable_roles</literal> Columns</title>
+
+   <tgroup cols="3">
+    <thead>
+     <row>
+      <entry>Name</entry>
+      <entry>Data Type</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry><literal>grantee</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Always the name of the current user</entry>
+     </row>
+
+     <row>
+      <entry><literal>role_name</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Name of a group</entry>
+     </row>
+
+     <row>
+      <entry><literal>is_grantable</literal></entry>
+      <entry><type>character_data</type></entry>
+      <entry>Applies to a feature not available in PostgreSQL</entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+ </sect1>
+
  <sect1 id="infoschema-check-constraints">
   <title><literal>check_constraints</literal></title>
 
@@ -268,7 +314,8 @@
    The view <literal>column_privileges</literal> identifies all
    privileges granted on columns to the current user or by the current
    user.  There is one row for each combination of column, grantor,
-   and grantee.
+   and grantee.  Privileges granted to groups are identified in the
+   view <literal>role_column_grants</literal>.
   </para>
 
   <para>
@@ -276,9 +323,13 @@
    individual columns.  Therefore, this view contains the same
    information as <literal>table_privileges</literal>, just
    represented through one row for each column in each appropriate
-   table.  But if you want to make your applications fit for possible
-   future developements, it is generally the right choice to use this
-   view instead of <literal>table_privileges</literal>.
+   table, but it only convers privilege types where column granularity
+   is possible: <literal>SELECT</literal>, <literal>INSERT</literal>,
+   <literal>UPDATE</literal>, <literal>REFERENCES</literal>.  If you
+   want to make your applications fit for possible future
+   developements, it is generally the right choice to use this view
+   instead of <literal>table_privileges</literal> if one of those
+   privilege types is concerned.
   </para>
 
   <table>
@@ -303,7 +354,7 @@
      <row>
       <entry><literal>grantee</literal</entry>
       <entry><type>sql_identifier</type></entry>
-      <entry>Name of the user that the privilege was granted to</entry>
+      <entry>Name of the user or group that the privilege was granted to</entry>
      </row>
 
      <row>
@@ -335,9 +386,8 @@
       <entry><type>character_data</type></entry>
       <entry>
        Type of the privilege: <literal>SELECT</literal>,
-       <literal>DELETE</literal>, <literal>INSERT</literal>,
-       <literal>UPDATE</literal>, <literal>REFERENCES</literal>, or
-       <literal>TRIGGER</literal>
+       <literal>INSERT</literal>, <literal>UPDATE</literal>, or
+       <literal>REFERENCES</literal>
       </entry>
      </row>
 
@@ -349,6 +399,14 @@
     </tbody>
    </tgroup>
   </table>
+
+  <para>
+   Note that the column <literal>grantee</literal> makes no
+   distinction between users and groups.  If you have users and groups
+   with the same name, there is unfortunately no way to distinguish
+   them.  A future version of PostgreSQL will possibly prohibit having
+   users and groups with the same name.
+  </para>
  </sect1>
 
  <sect1 id="infoschema-column-udt-usage">
@@ -1627,6 +1685,42 @@ ORDER BY c.ordinal_position;
   </table>
  </sect1>
 
+ <sect1 id="infoschema-enabled-roles">
+  <title><literal>enabled_roles</literal></title>
+
+  <para>
+   The view <literal>enabled_roles</literal> identifies all groups
+   that the current user is a member of.  (A role is the same thing as
+   a group.)  The difference between this view and
+   <literal>applicable_roles</literal> is that in the future there may
+   be a mechanism to enable and disable groups during a session.  In
+   that case this view identifies those groups that are currently
+   enabled.
+  </para>
+
+  <table>
+   <title><literal>enabled_roles</literal> Columns</title>
+
+   <tgroup cols="3">
+    <thead>
+     <row>
+      <entry>Name</entry>
+      <entry>Data Type</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry><literal>role_name</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Name of a group</entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+ </sect1>
+
  <sect1 id="infoschema-key-column-usage">
   <title><literal>key_column_usage</literal></title>
 
@@ -2066,18 +2160,18 @@ ORDER BY c.ordinal_position;
   </table>
  </sect1>
 
- <sect1 id="infoschema-routine-privileges">
-  <title><literal>routine_privileges</literal></title>
+ <sect1 id="infoschema-role-column-grants">
+  <title><literal>role_columns_grants</literal></title>
 
   <para>
-   The view <literal>routine_privileges</literal> identifies all
-   privileges granted on functions to the current user or by the
-   current user.  There is one row for each combination of function,
-   grantor, and grantee.
+   The view <literal>role_column_grants</literal> identifies all
+   privileges granted on columns to a group that the current user is a
+   member of.  Further information can be found under
+   <literal>column_privileges</literal>.
   </para>
 
   <table>
-   <title><literal>routine_privileges</literal> Columns</title>
+   <title><literal>role_column_grants</literal> Columns</title>
 
    <tgroup cols="3">
     <thead>
@@ -2098,7 +2192,86 @@ ORDER BY c.ordinal_position;
      <row>
       <entry><literal>grantee</literal</entry>
       <entry><type>sql_identifier</type></entry>
-      <entry>Name of the user that the privilege was granted to</entry>
+      <entry>Name of the group that the privilege was granted to</entry>
+     </row>
+
+     <row>
+      <entry><literal>table_catalog</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Name of the database that contains the table that contains the column (always the current database)</entry>
+     </row>
+
+     <row>
+      <entry><literal>table_schema</literal</entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Name of the schema that contains the table that contains the column</entry>
+     </row>
+
+     <row>
+      <entry><literal>table_name</literal</entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Name of the table that contains the column</entry>
+     </row>
+
+     <row>
+      <entry><literal>column_name</literal</entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Name of the column</entry>
+     </row>
+
+     <row>
+      <entry><literal>privilege_type</literal</entry>
+      <entry><type>character_data</type></entry>
+      <entry>
+       Type of the privilege: <literal>SELECT</literal>,
+       <literal>INSERT</literal>, <literal>UPDATE</literal>, or
+       <literal>REFERENCES</literal>
+      </entry>
+     </row>
+
+     <row>
+      <entry><literal>is_grantable</literal></entry>
+      <entry><type>character_data</type></entry>
+      <entry><literal>YES</literal> if the privilege is grantable, <literal>NO</literal> if not</entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+ </sect1>
+
+ <sect1 id="infoschema-role-routine-grants">
+  <title><literal>role_routine_grants</literal></title>
+
+  <para>
+   The view <literal>role_routine_grants</literal> identifies all
+   privileges granted on functions to a group that the current user is
+   a member of.  Further information can be found under
+   <literal>routine_privileges</literal>.
+  </para>
+
+  <table>
+   <title><literal>role_routine_grants</literal> Columns</title>
+
+   <tgroup cols="3">
+    <thead>
+     <row>
+      <entry>Name</entry>
+      <entry>Data Type</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry><literal>grantor</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Name of the user that granted the privilege</entry>
+     </row>
+
+     <row>
+      <entry><literal>grantee</literal</entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Name of the group that the privilege was granted to</entry>
      </row>
 
      <row>
@@ -2154,6 +2327,264 @@ ORDER BY c.ordinal_position;
     </tbody>
    </tgroup>
   </table>
+ </sect1>
+
+ <sect1 id="infoschema-role-table-grants">
+  <title><literal>role_table_grants</literal></title>
+
+  <para>
+   The view <literal>role_table_grants</literal> identifies all
+   privileges granted on tables or views to a group that the current
+   user is a member of.  Further information can be found under
+   <literal>table_privileges</literal>.
+  </para>
+
+  <table>
+   <title><literal>role_table_grants</literal> Columns</title>
+
+   <tgroup cols="3">
+    <thead>
+     <row>
+      <entry>Name</entry>
+      <entry>Data Type</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry><literal>grantor</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Name of the user that granted the privilege</entry>
+     </row>
+
+     <row>
+      <entry><literal>grantee</literal</entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Name of the group that the privilege was granted to</entry>
+     </row>
+
+     <row>
+      <entry><literal>table_catalog</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Name of the database that contains the table (always the current database)</entry>
+     </row>
+
+     <row>
+      <entry><literal>table_schema</literal</entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Name of the schema that contains the table</entry>
+     </row>
+
+     <row>
+      <entry><literal>table_name</literal</entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Name of the table</entry>
+     </row>
+
+     <row>
+      <entry><literal>privilege_type</literal</entry>
+      <entry><type>character_data</type></entry>
+      <entry>
+       Type of the privilege: <literal>SELECT</literal>,
+       <literal>DELETE</literal>, <literal>INSERT</literal>,
+       <literal>UPDATE</literal>, <literal>REFERENCES</literal>,
+       <literal>RULE</literal>, or <literal>TRIGGER</literal>
+      </entry>
+     </row>
+
+     <row>
+      <entry><literal>is_grantable</literal></entry>
+      <entry><type>character_data</type></entry>
+      <entry><literal>YES</literal> if the privilege is grantable, <literal>NO</literal> if not</entry>
+     </row>
+
+     <row>
+      <entry><literal>with_hierarchy</literal></entry>
+      <entry><type>character_data</type></entry>
+      <entry>Applies to a feature not available in PostgreSQL</entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+ </sect1>
+
+ <sect1 id="infoschema-role-usage-grants">
+  <title><literal>role_usage_grants</literal></title>
+
+  <para>
+   The view <literal>role_usage_grants</literal> is meant to identify
+   <literal>USAGE</literal> privileges granted on various kinds of
+   objects to a group that the current user is a member of.  In
+   PostgreSQL, this currently only applies to domains, and since
+   domains do not have real privileges in PostgreSQL, this view is
+   empty.  Futher information can be found under
+   <literal>usage_privileges</literal>.  In the future, this view may
+   contain more useful information.
+  </para>
+
+  <table>
+   <title><literal>role_usage_grants</literal> Columns</title>
+
+   <tgroup cols="3">
+    <thead>
+     <row>
+      <entry>Name</entry>
+      <entry>Data Type</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry><literal>grantor</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>In the future, the name of the user that granted the privilege</entry>
+     </row>
+
+     <row>
+      <entry><literal>grantee</literal</entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>In the future, the name of the group that the privilege was granted to</entry>
+     </row>
+
+     <row>
+      <entry><literal>object_catalog</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Name of the database containing the object (always the current database)</entry>
+     </row>
+
+     <row>
+      <entry><literal>object_schema</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Name of the schema containing the object</entry>
+     </row>
+
+     <row>
+      <entry><literal>object_name</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Name of the object</entry>
+     </row>
+
+     <row>
+      <entry><literal>object_type</literal></entry>
+      <entry><type>character_data</type></entry>
+      <entry>In the future, the type of the object</entry>
+     </row>
+
+     <row>
+      <entry><literal>privilege_type</literal</entry>
+      <entry><type>character_data</type></entry>
+      <entry>Always <literal>USAGE</literal></entry>
+     </row>
+
+     <row>
+      <entry><literal>is_grantable</literal></entry>
+      <entry><type>character_data</type></entry>
+      <entry><literal>YES</literal> if the privilege is grantable, <literal>NO</literal> if not</entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+ </sect1>
+
+ <sect1 id="infoschema-routine-privileges">
+  <title><literal>routine_privileges</literal></title>
+
+  <para>
+   The view <literal>routine_privileges</literal> identifies all
+   privileges granted on functions to the current user or by the
+   current user.  There is one row for each combination of function,
+   grantor, and grantee.  Privileges granted to groups are identified
+   in the view <literal>role_routine_grants</literal>.
+  </para>
+
+  <table>
+   <title><literal>routine_privileges</literal> Columns</title>
+
+   <tgroup cols="3">
+    <thead>
+     <row>
+      <entry>Name</entry>
+      <entry>Data Type</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry><literal>grantor</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Name of the user that granted the privilege</entry>
+     </row>
+
+     <row>
+      <entry><literal>grantee</literal</entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Name of the user or group that the privilege was granted to</entry>
+     </row>
+
+     <row>
+      <entry><literal>specific_catalog</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Name of the database containing the function (always the current database)</entry>
+     </row>
+
+     <row>
+      <entry><literal>specific_schema</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Name of the schema containing the function</entry>
+     </row>
+
+     <row>
+      <entry><literal>specific_name</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>
+       The <quote>specific name</quote> of the function.  See <xref
+       linkend="infoschema-routines"> for more information.
+      </entry>
+     </row>
+
+     <row>
+      <entry><literal>routine_catalog</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Name of the database containing the function (always the current database)</entry>
+     </row>
+
+     <row>
+      <entry><literal>routine_schema</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Name of the schema containing the function</entry>
+     </row>
+
+     <row>
+      <entry><literal>routine_name</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Name of the function (may be duplicated in case of overloading)</entry>
+     </row>
+
+     <row>
+      <entry><literal>privilege_type</literal</entry>
+      <entry><type>character_data</type></entry>
+      <entry>Always <literal>EXECUTE</literal> (the only privilege type for functions)</entry>
+     </row>
+
+     <row>
+      <entry><literal>is_grantable</literal></entry>
+      <entry><type>character_data</type></entry>
+      <entry><literal>YES</literal> if the privilege is grantable, <literal>NO</literal> if not</entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+
+  <para>
+   Note that the column <literal>grantee</literal> makes no
+   distinction between users and groups.  If you have users and groups
+   with the same name, there is unfortunately no way to distinguish
+   them.  A future version of PostgreSQL will possibly prohibit having
+   users and groups with the same name.
+  </para>
  </sect1>
 
  <sect1 id="infoschema-routines">
@@ -3147,9 +3578,10 @@ ORDER BY c.ordinal_position;
 
   <para>
    The view <literal>table_privileges</literal> identifies all
-   privileges granted on tables to the current user or by the current
-   user.  There is one row for each combination of table, grantor, and
-   grantee.
+   privileges granted on tables or views to the current user or by the
+   current user.  There is one row for each combination of table,
+   grantor, and grantee.  Privileges granted to groups are identified
+   in the view <literal>role_table_grants</literal>.
   </para>
 
   <table>
@@ -3174,7 +3606,7 @@ ORDER BY c.ordinal_position;
      <row>
       <entry><literal>grantee</literal</entry>
       <entry><type>sql_identifier</type></entry>
-      <entry>Name of the user that the privilege was granted to</entry>
+      <entry>Name of the user or group that the privilege was granted to</entry>
      </row>
 
      <row>
@@ -3201,8 +3633,8 @@ ORDER BY c.ordinal_position;
       <entry>
        Type of the privilege: <literal>SELECT</literal>,
        <literal>DELETE</literal>, <literal>INSERT</literal>,
-       <literal>UPDATE</literal>, <literal>REFERENCES</literal>, or
-       <literal>TRIGGER</literal>
+       <literal>UPDATE</literal>, <literal>REFERENCES</literal>,
+       <literal>RULE</literal>, or <literal>TRIGGER</literal>
       </entry>
      </row>
 
@@ -3220,6 +3652,14 @@ ORDER BY c.ordinal_position;
     </tbody>
    </tgroup>
   </table>
+
+  <para>
+   Note that the column <literal>grantee</literal> makes no
+   distinction between users and groups.  If you have users and groups
+   with the same name, there is unfortunately no way to distinguish
+   them.  A future version of PostgreSQL will possibly prohibit having
+   users and groups with the same name.
+  </para>
  </sect1>
 
  <sect1 id="infoschema-tables">
@@ -3457,6 +3897,85 @@ ORDER BY c.ordinal_position;
    standard (trigger names unique in the schema and only one event
    type per trigger), this will not affect you.
   </para>
+ </sect1>
+
+ <sect1 id="infoschema-usage-privileges">
+  <title><literal>usage_privileges</literal></title>
+
+  <para>
+   The view <literal>usage_privileges</literal> is meant to identify
+   <literal>USAGE</literal> privileges granted on various kinds of
+   objects to the current user or by the current user.  In PostgreSQL,
+   this currently only applies to domains, and since domains do not
+   have real privileges in PostgreSQL, this view shows implicit
+   <literal>USAGE</literal> privileges granted to
+   <literal>PUBLIC</literal> for all domains.  In the future, this
+   view may contain more useful information.
+  </para>
+
+  <table>
+   <title><literal>usage_privileges</literal> Columns</title>
+
+   <tgroup cols="3">
+    <thead>
+     <row>
+      <entry>Name</entry>
+      <entry>Data Type</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry><literal>grantor</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Currently set to the name of the owner of the object</entry>
+     </row>
+
+     <row>
+      <entry><literal>grantee</literal</entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Currently always <literal>PUBLIC</literal></entry>
+     </row>
+
+     <row>
+      <entry><literal>object_catalog</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Name of the database containing the object (always the current database)</entry>
+     </row>
+
+     <row>
+      <entry><literal>object_schema</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Name of the schema containing the object</entry>
+     </row>
+
+     <row>
+      <entry><literal>object_name</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Name of the object</entry>
+     </row>
+
+     <row>
+      <entry><literal>object_type</literal></entry>
+      <entry><type>character_data</type></entry>
+      <entry>Currently always <literal>DOMAIN</literal></entry>
+     </row>
+
+     <row>
+      <entry><literal>privilege_type</literal</entry>
+      <entry><type>character_data</type></entry>
+      <entry>Always <literal>USAGE</literal></entry>
+     </row>
+
+     <row>
+      <entry><literal>is_grantable</literal></entry>
+      <entry><type>character_data</type></entry>
+      <entry>Currently always <literal>NO</literal></entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
  </sect1>
 
  <sect1 id="infoschema-view-column-usage">
