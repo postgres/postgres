@@ -2092,11 +2092,11 @@ public abstract class AbstractJdbc1DatabaseMetaData
 		ht = new Hashtable();
 		tableTypeClauses.put("SYSTEM TABLE",ht);
 		ht.put("SCHEMAS","c.relkind = 'r' AND n.nspname = 'pg_catalog'");
-		ht.put("NOSCHEMAS","c.relkind = r' AND c.relname LIKE 'pg\\\\_%' AND c.relname NOT LIKE 'pg\\\\_toast\\\\_%' AND c.relname NOT LIKE 'pg\\\\_temp\\\\_%'");
+		ht.put("NOSCHEMAS","c.relkind = 'r' AND c.relname LIKE 'pg\\\\_%' AND c.relname NOT LIKE 'pg\\\\_toast\\\\_%' AND c.relname NOT LIKE 'pg\\\\_temp\\\\_%'");
 		ht = new Hashtable();
 		tableTypeClauses.put("SYSTEM TOAST TABLE",ht);
 		ht.put("SCHEMAS","c.relkind = 'r' AND n.nspname = 'pg_toast'");
-		ht.put("NOSCHEMAS","c.relkind = r' AND c.relname LIKE 'pg\\\\_toast\\\\_%'");
+		ht.put("NOSCHEMAS","c.relkind = 'r' AND c.relname LIKE 'pg\\\\_toast\\\\_%'");
 		ht = new Hashtable();
 		tableTypeClauses.put("SYSTEM TOAST INDEX",ht);
 		ht.put("SCHEMAS","c.relkind = 'i' AND n.nspname = 'pg_toast'");
