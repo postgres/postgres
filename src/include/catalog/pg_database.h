@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_database.h,v 1.26 2002/08/04 06:54:10 thomas Exp $
+ * $Id: pg_database.h,v 1.27 2002/09/03 21:45:43 petere Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -35,7 +35,7 @@ CATALOG(pg_database) BOOTSTRAP BKI_SHARED_RELATION
 {
 	NameData	datname;		/* database name */
 	int4		datdba;			/* sysid of owner */
-	int4		encoding;		/* multibyte encoding, if any */
+	int4		encoding;		/* character encoding */
 	bool		datistemplate;	/* allowed as CREATE DATABASE template? */
 	bool		datallowconn;	/* new connections allowed? */
 	Oid			datlastsysoid;	/* highest OID to consider a system OID */

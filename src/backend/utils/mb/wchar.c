@@ -1,7 +1,7 @@
 /*
- * conversion functions between pg_wchar and multi-byte streams.
+ * conversion functions between pg_wchar and multibyte streams.
  * Tatsuo Ishii
- * $Id: wchar.c,v 1.28 2002/06/13 08:28:54 ishii Exp $
+ * $Id: wchar.c,v 1.29 2002/09/03 21:45:43 petere Exp $
  *
  * WIN1250 client encoding updated by Pavel Behal
  *
@@ -580,7 +580,7 @@ pg_mic_mblen(const unsigned char *mbstr)
 }
 
 /*
- * Returns the byte length of a multi-byte word.
+ * Returns the byte length of a multibyte word.
  */
 int
 pg_encoding_mblen(int encoding, const unsigned char *mbstr)
@@ -638,7 +638,7 @@ pg_verifymbstr(const unsigned char *mbstr, int len)
 
 		l = pg_mblen(mbstr);
 
-		/* multi-byte letter? */
+		/* multibyte letter? */
 		if (l > 1)
 		{
 			for (i = 1; i < l; i++)
@@ -646,7 +646,7 @@ pg_verifymbstr(const unsigned char *mbstr, int len)
 				if (i > len || *(mbstr + i) == '\0' ||
 
 				/*
-				 * we assume that every muti-byte letter consists of bytes
+				 * we assume that every multibyte letter consists of bytes
 				 * being the 8th bit set
 				 */
 					((*(mbstr + i) & 0x80) == 0))

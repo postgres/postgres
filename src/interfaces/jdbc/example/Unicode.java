@@ -11,9 +11,8 @@ import java.util.*;
  *	   example.Unicode <url> <user> <password>
  *	where <url> must specify an existing database to which <user> and
  *	<password> give access and which has UNICODE as its encoding.
- *	(To create a database with UNICODE encoding, you need to compile
- *	postgres with "--enable-multibyte" and run createdb with the
- *	flag "-E UNICODE".)
+ *	(To create a database with UNICODE encoding, you need to run createdb
+ *	with the flag "-E UNICODE".)
  *
  *	This test only produces output on error.
  *

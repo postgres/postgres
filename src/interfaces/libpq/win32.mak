@@ -6,29 +6,6 @@
 
 !MESSAGE Building the Win32 static library...
 !MESSAGE
-!IF "$(CFG)" == ""
-CFG=Release
-!MESSAGE No configuration specified. Defaulting to Release.
-!MESSAGE
-!ELSE
-!MESSAGE Configuration "$(CFG)"
-!MESSAGE
-!ENDIF
-
-!IF "$(CFG)" != "Release" && "$(CFG)" != "MultibyteRelease"
-!MESSAGE Invalid configuration "$(CFG)" specified.
-!MESSAGE You can specify a configuration when running NMAKE
-!MESSAGE by defining the macro CFG on the command line. For example:
-!MESSAGE
-!MESSAGE NMAKE /f win32.mak CFG=[Release | MultibyteRelease ]
-!MESSAGE
-!MESSAGE Possible choices for configuration are:
-!MESSAGE
-!MESSAGE "Release" (Win32 Release DLL)
-!MESSAGE "MultibyteRelease" (Win32 Release DLL with Multibyte support)
-!MESSAGE
-!ERROR An invalid configuration was specified.
-!ENDIF
 
 !IFDEF DEBUG
 OPT=/Od
@@ -45,10 +22,6 @@ NULL=
 !ELSE 
 NULL=nul
 !ENDIF 
-
-!IF "$(CFG)" == "MultibyteRelease"
-MULTIBYTE=1
-!ENDIF
 
 CPP=cl.exe
 RSC=rc.exe
@@ -82,10 +55,8 @@ CLEAN :
 	-@erase "$(OUTDIR)\libpq.pch"
 	-@erase "$(OUTDIR)\libpqdll.exp"
 	-@erase "$(OUTDIR)\libpqdll.lib"
-!IFDEF MULTIBYTE
 	-@erase "$(INTDIR)\wchar.obj"
 	-@erase "$(INTDIR)\encnames.obj"
-!ENDIF
 
 "$(OUTDIR)" :
     if not exist "$(OUTDIR)/$(NULL)" mkdir "$(OUTDIR)"
@@ -94,16 +65,9 @@ CPP_PROJ=/nologo /MD /W3 /GX $(OPT) /I "..\..\include" /D "FRONTEND" $(DEBUGDEF)
  "WIN32" /D "_WINDOWS" /Fp"$(INTDIR)\libpq.pch" /YX\
  /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c  /D "HAVE_VSNPRINTF" /D "HAVE_STRDUP"
 
-!IFDEF MULTIBYTE
-!IFNDEF	MBFLAGS
-MBFLAGS="-DMULTIBYTE=$(MULTIBYTE)"
-!ENDIF
-CPP_PROJ = $(CPP_PROJ) $(MBFLAGS)
-!ENDIF
-
 CPP_OBJS=.\Release/
 CPP_SBRS=.
-	
+
 LIB32=link.exe -lib
 LIB32_FLAGS=$(LOPT) /nologo /out:"$(OUTDIR)\libpq.lib" 
 LIB32_OBJS= \
@@ -117,11 +81,9 @@ LIB32_OBJS= \
 	"$(INTDIR)\fe-misc.obj" \
 	"$(INTDIR)\fe-print.obj" \
 	"$(INTDIR)\fe-secure.obj" \
-	"$(INTDIR)\pqexpbuffer.obj"
-
-!IFDEF MULTIBYTE
-LIB32_OBJS = $(LIB32_OBJS) "$(INTDIR)\wchar.obj" "$(INTDIR)\encnames.obj"
-!ENDIF
+	"$(INTDIR)\pqexpbuffer.obj" \
+	"$(INTDIR)\wchar.obj" \
+	"$(INTDIR)\encnames.obj"
 
 RSC_PROJ=/l 0x409 /fo"$(INTDIR)\libpq.res"
 
@@ -156,27 +118,23 @@ LINK32_OBJS= \
     $(CPP_PROJ) ..\..\backend\lib\dllist.c
 <<
 
-    
+
 "$(OUTDIR)\md5.obj" : ..\..\backend\libpq\md5.c
     $(CPP) @<<
     $(CPP_PROJ) ..\..\backend\libpq\md5.c
 <<
 
-    
-!IFDEF MULTIBYTE
+
 "$(INTDIR)\wchar.obj" : ..\..\backend\utils\mb\wchar.c
     $(CPP) @<<
     $(CPP_PROJ) /I "." ..\..\backend\utils\mb\wchar.c
 <<
-!ENDIF
 
 
-!IFDEF MULTIBYTE
 "$(INTDIR)\encnames.obj" : ..\..\backend\utils\mb\encnames.c
     $(CPP) @<<
     $(CPP_PROJ) /I "." ..\..\backend\utils\mb\encnames.c
 <<
-!ENDIF
 
 
 .c{$(CPP_OBJS)}.obj::

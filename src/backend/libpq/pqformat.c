@@ -8,7 +8,7 @@
  * formatting/conversion routines that are needed to produce valid messages.
  * Note in particular the distinction between "raw data" and "text"; raw data
  * is message protocol characters and binary values that are not subject to
- * MULTIBYTE conversion, while text is converted by MULTIBYTE rules.
+ * character set conversion, while text is converted by character encoding rules.
  *
  * Incoming messages are read directly off the wire, as it were, but there
  * are still data-conversion tasks to be performed.
@@ -16,7 +16,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: pqformat.c,v 1.23 2002/08/29 03:22:01 tgl Exp $
+ *	$Id: pqformat.c,v 1.24 2002/09/03 21:45:42 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,20 +27,20 @@
  *		pq_sendbyte		- append a raw byte to a StringInfo buffer
  *		pq_sendint		- append a binary integer to a StringInfo buffer
  *		pq_sendbytes	- append raw data to a StringInfo buffer
- *		pq_sendcountedtext - append a text string (with MULTIBYTE conversion)
- *		pq_sendstring	- append a null-terminated text string (with MULTIBYTE)
+ *		pq_sendcountedtext - append a text string (with character set conversion)
+ *		pq_sendstring	- append a null-terminated text string (with conversion)
  *		pq_endmessage	- send the completed message to the frontend
  * Note: it is also possible to append data to the StringInfo buffer using
  * the regular StringInfo routines, but this is discouraged since required
- * MULTIBYTE conversion may not occur.
+ * character set conversion may not occur.
  *
  * Special-case message output:
- *		pq_puttextmessage - generate a MULTIBYTE-converted message in one step
+ *		pq_puttextmessage - generate a character set-converted message in one step
  *
  * Message input:
  *		pq_getint		- get an integer from connection
  *		pq_getstr		- get a null terminated string from connection
- * pq_getstr performs MULTIBYTE conversion on the collected string.
+ * pq_getstr performs character set conversion on the collected string.
  * Use the raw pqcomm.c routines pq_getstring or pq_getbytes
  * to fetch data without conversion.
  */
@@ -79,7 +79,7 @@ pq_sendbytes(StringInfo buf, const char *data, int datalen)
 }
 
 /* --------------------------------
- *		pq_sendcountedtext - append a text string (with MULTIBYTE conversion)
+ *		pq_sendcountedtext - append a text string (with character set conversion)
  *
  * The data sent to the frontend by this routine is a 4-byte count field
  * (the count includes itself, by convention) followed by the string.
@@ -106,7 +106,7 @@ pq_sendcountedtext(StringInfo buf, const char *str, int slen)
 }
 
 /* --------------------------------
- *		pq_sendstring	- append a null-terminated text string (with MULTIBYTE)
+ *		pq_sendstring	- append a null-terminated text string (with conversion)
  *
  * NB: passed text string must be null-terminated, and so is the data
  * sent to the frontend.
@@ -178,10 +178,10 @@ pq_endmessage(StringInfo buf)
 }
 
 /* --------------------------------
- *		pq_puttextmessage - generate a MULTIBYTE-converted message in one step
+ *		pq_puttextmessage - generate a character set-converted message in one step
  *
  *		This is the same as the pqcomm.c routine pq_putmessage, except that
- *		the message body is a null-terminated string to which MULTIBYTE
+ *		the message body is a null-terminated string to which encoding
  *		conversion applies.
  *
  *		returns 0 if OK, EOF if trouble

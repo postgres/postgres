@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varlena.c,v 1.90 2002/08/29 07:22:27 ishii Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varlena.c,v 1.91 2002/09/03 21:45:42 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -412,9 +412,9 @@ textcat(PG_FUNCTION_ARGS)
  * If the length is less than zero, return the remaining string.
  *
  * Note that the arguments operate on octet length,
- *	so not aware of multi-byte character sets.
+ *	so not aware of multibyte character sets.
  *
- * Added multi-byte support.
+ * Added multibyte support.
  * - Tatsuo Ishii 1998-4-21
  * Changed behavior if starting position is less than one to conform to SQL92 behavior.
  * Formerly returned the entire string; now returns a portion.
@@ -624,9 +624,6 @@ text_substring(Datum str, int32 start, int32 length, bool length_not_specified)
  *	  Implements the SQL92 POSITION() function.
  *	  Ref: A Guide To The SQL Standard, Date & Darwen, 1997
  * - thomas 1997-07-27
- *
- * Added multi-byte support.
- * - Tatsuo Ishii 1998-4-21
  */
 Datum
 textpos(PG_FUNCTION_ARGS)

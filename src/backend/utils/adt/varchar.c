@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varchar.c,v 1.92 2002/08/29 07:22:27 ishii Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varchar.c,v 1.93 2002/09/03 21:45:42 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -350,8 +350,8 @@ name_bpchar(PG_FUNCTION_ARGS)
  * Convert a C string to VARCHAR internal representation.  atttypmod
  * is the declared length of the type plus VARHDRSZ.
  *
- * Note that if MULTIBYTE is enabled, atttypmod is regarded as the
- * number of characters, rather than number of bytes.
+ * Note that atttypmod is regarded as the number of characters, which
+ * is not necessarily the same as the number of bytes.
  *
  * If the C string is too long,
  * raise an error, unless the extra characters are spaces, in which
@@ -450,7 +450,7 @@ varchar(PG_FUNCTION_ARGS)
 	{
 		size_t		maxmblen;
 
-		/* truncate multi-byte string preserving multi-byte boundary */
+		/* truncate multibyte string preserving multibyte boundary */
 		maxmblen = pg_mbcharcliplen(VARDATA(source), len - VARHDRSZ,
 									maxlen - VARHDRSZ) + VARHDRSZ;
 

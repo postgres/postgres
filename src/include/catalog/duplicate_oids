@@ -5,9 +5,6 @@
 # finds oids that are duplicated in the system tables.
 #
 
-# no multibytes files
-FILES=`ls pg_*.h |grep -v '_mb.h'`
-
 #
 # The previous version did not use the -d option on uniq
 # so check here that it is supported.

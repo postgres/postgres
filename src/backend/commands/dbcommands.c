@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.102 2002/09/02 02:47:01 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.103 2002/09/03 21:45:41 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -591,7 +591,7 @@ get_db_info(const char *name, Oid *dbIdP, int4 *ownerIdP,
 		/* sysid of the owner */
 		if (ownerIdP)
 			*ownerIdP = dbform->datdba;
-		/* multibyte encoding */
+		/* character encoding */
 		if (encodingP)
 			*encodingP = dbform->encoding;
 		/* allowed as template? */

@@ -3,9 +3,6 @@
 PATH=..:$PATH
 
 echo "Testing PostgreSQL compilation..."
-if ! test-pgsql-locale; then
-   exit 1
-fi
 
 LC_CTYPE=gr_GR.ISO8859-7
 LC_COLLATE=$LC_CTYPE

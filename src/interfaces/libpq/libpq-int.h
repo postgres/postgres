@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq-int.h,v 1.55 2002/08/18 03:47:08 tgl Exp $
+ * $Id: libpq-int.h,v 1.56 2002/09/03 21:45:44 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -180,7 +180,6 @@ typedef enum
 {
 	SETENV_STATE_OPTION_SEND,	/* About to send an Environment Option */
 	SETENV_STATE_OPTION_WAIT,	/* Waiting for above send to complete  */
-	/* these next two are only used in MULTIBYTE mode */
 	SETENV_STATE_ENCODINGS_SEND,	/* About to send an "encodings" query */
 	SETENV_STATE_ENCODINGS_WAIT,	/* Waiting for query to complete	  */
 	SETENV_STATE_IDLE

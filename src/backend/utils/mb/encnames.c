@@ -2,7 +2,7 @@
  * Encoding names and routines for work with it. All
  * in this file is shared bedween FE and BE.
  *
- * $Id: encnames.c,v 1.8 2002/06/13 08:28:54 ishii Exp $
+ * $Id: encnames.c,v 1.9 2002/09/03 21:45:43 petere Exp $
  */
 #ifdef FRONTEND
 #include "postgres_fe.h"
@@ -44,7 +44,7 @@ pg_encname	pg_encname_tbl[] =
 	},							/* IBM866 */
 	{
 		"big5", PG_BIG5
-	},							/* Big5; Chinese for Taiwan Multi-byte set */
+	},							/* Big5; Chinese for Taiwan multibyte set */
 	{
 		"euccn", PG_EUC_CN
 	},							/* EUC-CN; Extended Unix Code for

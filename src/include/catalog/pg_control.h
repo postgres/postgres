@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_control.h,v 1.8 2002/06/20 20:29:44 momjian Exp $
+ * $Id: pg_control.h,v 1.9 2002/09/03 21:45:43 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -113,7 +113,7 @@ typedef struct ControlFileData
 	/* flag indicating internal format of timestamp, interval, time */
 	uint32		enableIntTimes;	/* int64 storage enabled? */
 
-	/* active locales --- "C" if compiled without USE_LOCALE: */
+	/* active locales */
 	uint32		localeBuflen;
 	char		lc_collate[LOCALE_NAME_BUFLEN];
 	char		lc_ctype[LOCALE_NAME_BUFLEN];

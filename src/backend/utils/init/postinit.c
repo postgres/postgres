@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.114 2002/09/02 02:47:05 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.115 2002/09/03 21:45:42 petere Exp $
  *
  *
  *-------------------------------------------------------------------------
@@ -69,7 +69,7 @@ static bool ThereIsAtLeastOneUser(void);
  * creating any serious problems.
  *
  * This is also a handy place to fetch the database encoding info out
- * of pg_database, if we are in MULTIBYTE mode.
+ * of pg_database.
  *
  * To avoid having to read pg_database more times than necessary
  * during session startup, this place is also fitting to set up any
@@ -124,9 +124,8 @@ ReverifyMyDatabase(const char *name)
 			 name);
 
 	/*
-	 * OK, we're golden.  Only other to-do item is to save the MULTIBYTE
-	 * encoding info out of the pg_database tuple --- or complain, if we
-	 * can't support it.
+	 * OK, we're golden.  Only other to-do item is to save the
+	 * encoding info out of the pg_database tuple.
 	 */
 	SetDatabaseEncoding(dbform->encoding);
 	/* If we have no other source of client_encoding, use server encoding */

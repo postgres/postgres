@@ -1,17 +1,14 @@
 #
 # Makefile for utils
 #
-# $Header: /cvsroot/pgsql/src/backend/utils/Makefile,v 1.19 2002/08/10 17:59:28 petere Exp $
+# $Header: /cvsroot/pgsql/src/backend/utils/Makefile,v 1.20 2002/09/03 21:45:42 petere Exp $
 #
 
 subdir = src/backend/utils/
 top_builddir = ../../..
 include $(top_builddir)/src/Makefile.global
 
-SUBDIRS     := adt cache error fmgr hash init misc mmgr sort time
-ifdef MULTIBYTE
-SUBDIRS     += mb
-endif
+SUBDIRS     := adt cache error fmgr hash init misc mmgr sort time mb
 SUBDIROBJS  := $(SUBDIRS:%=%/SUBSYS.o)
 
 
@@ -33,10 +30,3 @@ fmgroids.h fmgrtab.c: Gen_fmgrtab.sh $(top_srcdir)/src/include/catalog/pg_proc.h
 clean:
 	for dir in $(SUBDIRS); do $(MAKE) -C $$dir $@ || exit; done
 	rm -f SUBSYS.o fmgrtab.o fmgroids.h fmgrtab.c
-
-dep depend: fmgroids.h fmgrtab.c
-	for dir in $(SUBDIRS); do $(MAKE) -C $$dir $@ || exit; done
-
-ifeq (depend,$(wildcard depend))
-include depend
-endif

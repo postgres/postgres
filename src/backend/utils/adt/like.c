@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	$Header: /cvsroot/pgsql/src/backend/utils/adt/like.c,v 1.52 2002/09/02 06:22:19 momjian Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/utils/adt/like.c,v 1.53 2002/09/03 21:45:42 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -93,7 +93,7 @@ iwchareq(unsigned char *p1, unsigned char *p2)
 		return (0);
 
 	/*
-	 * ok, p1 and p2 are both > CHARMAX, then they must be multi-byte
+	 * ok, p1 and p2 are both > CHARMAX, then they must be multibyte
 	 * characters
 	 */
 	l = pg_mblen(p1);

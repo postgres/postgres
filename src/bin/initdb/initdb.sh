@@ -27,7 +27,7 @@
 # Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.170 2002/08/31 17:14:28 tgl Exp $
+# $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.171 2002/09/03 21:45:43 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -80,8 +80,6 @@ bindir='@bindir@'
 # Note that "datadir" is not the directory we're initializing, it's
 # merely how Autoconf names PREFIX/share.
 datadir='@datadir@'
-# as set by configure --enable-multibyte[=XXX].
-MULTIBYTE='@MULTIBYTE@'
 
 
 # Check for echo -n vs echo \c
@@ -190,7 +188,7 @@ fi
 # COMMAND LINE OPTIONS
 
 # 0 is the default (non-)encoding
-MULTIBYTEID=0
+ENCODINGID=0
 
 # Set defaults:
 debug=
@@ -263,13 +261,13 @@ do
 # The encoding of the template1 database. Defaults to what you chose
 # at configure time. (see above)
         --encoding|-E)
-                MULTIBYTE="$2"
+                ENCODING="$2"
                 shift;;
         --encoding=*)
-                MULTIBYTE=`echo $1 | sed 's/^--encoding=//'`
+                ENCODING=`echo $1 | sed 's/^--encoding=//'`
                 ;;
         -E*)
-                MULTIBYTE=`echo $1 | sed 's/^-E//'`
+                ENCODING=`echo $1 | sed 's/^-E//'`
                 ;;
 # Locale flags
         --locale)
@@ -342,9 +340,7 @@ if [ "$usage" ]; then
     echo "Options:"
     echo " [-D, --pgdata] DATADIR       Location for this database cluster"
     echo "  -W, --pwprompt              Prompt for a password for the new superuser"
-    if [ -n "$MULTIBYTE" ] ; then 
-        echo "  -E, --encoding ENCODING     Set default encoding for new databases"
-    fi
+    echo "  -E, --encoding ENCODING     Set default encoding for new databases"
     echo "  --locale LOCALE             Initialize database cluster with given locale"
     echo "  --lc-collate, --lc-ctype, --lc-messages LOCALE"
     echo "  --lc-monetary, --lc-numeric, --lc-time LOCALE"
@@ -363,25 +359,23 @@ if [ "$usage" ]; then
 fi
 
 #-------------------------------------------------------------------------
-# Resolve the multibyte encoding name
+# Resolve the encoding name
 #-------------------------------------------------------------------------
 
-if [ "$MULTIBYTE" ]
+if [ "$ENCODING" ]
 then
-	MULTIBYTEID=`$PGPATH/pg_encoding -b $MULTIBYTE`
+	ENCODINGID=`$PGPATH/pg_encoding -b $ENCODING`
 	if [ "$?" -ne 0 ]
 	then
               (
                 echo "$CMDNAME: pg_encoding failed"
-                echo
-                echo "Perhaps you did not configure PostgreSQL for multibyte support or"
-                echo "the program was not successfully installed."
+                echo "Make sure the program was installed correctly."
               ) 1>&2
                 exit 1
         fi
-	if [ -z "$MULTIBYTEID" ]
+	if [ -z "$ENCODINGID" ]
 	then
-		echo "$CMDNAME: $MULTIBYTE is not a valid backend encoding name" 1>&2
+		echo "$CMDNAME: $ENCODING is not a valid backend encoding name" 1>&2
 		exit 1
 	fi
 fi
@@ -418,7 +412,7 @@ then
   (
     echo
     echo "initdb variables:"
-    for var in PGDATA datadir PGPATH MULTIBYTE MULTIBYTEID \
+    for var in PGDATA datadir PGPATH ENCODING ENCODINGID \
         POSTGRES_SUPERUSERNAME POSTGRES_BKI \
         POSTGRES_DESCR POSTGRESQL_CONF_SAMPLE \
 	PG_HBA_SAMPLE PG_IDENT_SAMPLE ; do
@@ -569,7 +563,7 @@ echo "$short_version" > "$PGDATA/PG_VERSION" || exit_nicely
 
 cat "$POSTGRES_BKI" \
 | sed -e "s/POSTGRES/$POSTGRES_SUPERUSERNAME/g" \
-      -e "s/ENCODING/$MULTIBYTEID/g" \
+      -e "s/ENCODING/$ENCODINGID/g" \
 | 
 (
   LC_COLLATE=`pg_getlocale COLLATE`

@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/interfaces/libpq/Makefile,v 1.64 2002/07/27 20:10:05 petere Exp $
+# $Header: /cvsroot/pgsql/src/interfaces/libpq/Makefile,v 1.65 2002/09/03 21:45:44 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -22,11 +22,8 @@ override CPPFLAGS := -I$(srcdir) $(CPPFLAGS) -DFRONTEND -DSYSCONFDIR='"$(sysconf
 
 OBJS= fe-auth.o fe-connect.o fe-exec.o fe-misc.o fe-print.o fe-lobj.o \
       pqexpbuffer.o dllist.o md5.o pqsignal.o fe-secure.o \
+      wchar.o encnames.o \
       $(filter inet_aton.o snprintf.o strerror.o, $(LIBOBJS))
-
-ifdef MULTIBYTE
-OBJS+= wchar.o encnames.o
-endif
 
 
 # Add libraries that libpq depends (or might depend) on into the
@@ -57,12 +54,8 @@ md5.c: $(backend_src)/libpq/md5.c
 inet_aton.c snprintf.c strerror.c: %.c : $(top_srcdir)/src/port/%.c
 	rm -f $@ && $(LN_S) $< .
 
-ifdef MULTIBYTE
-wchar.c : % : $(backend_src)/utils/mb/%
+encnames.c wchar.c : % : $(backend_src)/utils/mb/%
 	rm -f $@ && $(LN_S) $< .
-encnames.c : % : $(backend_src)/utils/mb/%
-	rm -f $@ && $(LN_S) $< .
-endif
 
 
 install: all installdirs install-lib

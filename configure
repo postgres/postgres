@@ -1633,17 +1633,6 @@ echo "${ECHO_T}$enable_recode" >&6
 
 
 #
-# Multibyte support
-#
-MULTIBYTE=SQL_ASCII
-
-cat >>confdefs.h <<\_ACEOF
-#define MULTIBYTE 1
-_ACEOF
-
-
-
-#
 # NLS
 #
 echo "$as_me:$LINENO: checking whether NLS is wanted" >&5
@@ -16275,7 +16264,6 @@ s,@host_vendor@,$host_vendor,;t t
 s,@host_os@,$host_os,;t t
 s,@PORTNAME@,$PORTNAME,;t t
 s,@TAS@,$TAS,;t t
-s,@MULTIBYTE@,$MULTIBYTE,;t t
 s,@enable_nls@,$enable_nls,;t t
 s,@WANTED_LANGUAGES@,$WANTED_LANGUAGES,;t t
 s,@default_port@,$default_port,;t t

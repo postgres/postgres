@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/quote.c,v 1.8 2002/08/29 07:22:27 ishii Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/quote.c,v 1.9 2002/09/03 21:45:42 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -64,13 +64,9 @@ quote_literal(PG_FUNCTION_ARGS)
 	PG_RETURN_TEXT_P(result);
 }
 
-
 /*
- * MULTIBYTE dependant internal functions follow
- *
+ * Check if a given identifier needs quoting
  */
-
-/* Check if a given identifier needs quoting (MULTIBYTE version) */
 static bool
 quote_ident_required(text *iptr)
 {
@@ -106,7 +102,9 @@ quote_ident_required(text *iptr)
 	return false;
 }
 
-/* Return a properly quoted identifier (MULTIBYTE version) */
+/*
+ * Return a properly quoted identifier
+ */
 static text *
 do_quote_ident(text *iptr)
 {
@@ -147,7 +145,9 @@ do_quote_ident(text *iptr)
 	return result;
 }
 
-/* Return a properly quoted literal value (MULTIBYTE version) */
+/*
+ * Return a properly quoted literal value
+ */
 static text *
 do_quote_literal(text *lptr)
 {

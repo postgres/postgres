@@ -104,19 +104,15 @@ initmorph(void)
 				k;
 	MAPDICT    *md;
 	bool		needinit[lengthof(dicts)];
-
-#ifdef USE_LOCALE
 	PG_LocaleCategories lc;
 
 	int			bylocaledict = NODICT;
-#endif
 
 	if (inited)
 		return;
 	for (i = 1; i < lengthof(dicts); i++)
 		needinit[i] = false;
 
-#ifdef USE_LOCALE
 	PGLC_current(&lc);
 	if ( lc.lc_ctype )
 		for (i = 1; i < lengthof(dicts); i++)
@@ -126,7 +122,6 @@ initmorph(void)
 				break;
 			}
 	PGLC_free_categories(&lc);
-#endif
 
 	for (i = 1; i < lengthof(mapdict); i++)
 	{
@@ -139,13 +134,9 @@ initmorph(void)
 				break;
 			else if (GETDICT(md, k) == BYLOCALE)
 			{
-#ifdef USE_LOCALE
 				if (bylocaledict == NODICT)
 					continue;
 				GETDICT(md, k) = bylocaledict;
-#else
-				continue;
-#endif
 			}
 			if (GETDICT(md, k) >= (int2) lengthof(dicts))
 				continue;

@@ -29,7 +29,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: pqcomm.c,v 1.138 2002/09/02 02:47:02 momjian Exp $
+ *	$Id: pqcomm.c,v 1.139 2002/09/03 21:45:42 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -556,9 +556,9 @@ pq_getbytes(char *s, size_t len)
  *		The return value is placed in an expansible StringInfo.
  *		Note that space allocation comes from the current memory context!
  *
- *		NOTE: this routine does not do any MULTIBYTE conversion,
+ *		NOTE: this routine does not do any character set conversion,
  *		even though it is presumably useful only for text, because
- *		no code in this module should depend on MULTIBYTE mode.
+ *		no code in this module should depend on the encoding.
  *		See pq_getstr in pqformat.c for that.
  *
  *		returns 0 if OK, EOF if trouble

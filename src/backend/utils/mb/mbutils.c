@@ -3,7 +3,7 @@
  * client encoding and server internal encoding.
  * (currently mule internal code (mic) is used)
  * Tatsuo Ishii
- * $Id: mbutils.c,v 1.33 2002/08/29 07:22:28 ishii Exp $
+ * $Id: mbutils.c,v 1.34 2002/09/03 21:45:43 petere Exp $
  */
 #include "postgres.h"
 #include "access/xact.h"
@@ -347,28 +347,28 @@ perform_default_encoding_conversion(unsigned char *src, int len, bool is_client_
 	return result;
 }
 
-/* convert a multi-byte string to a wchar */
+/* convert a multibyte string to a wchar */
 int
 pg_mb2wchar(const unsigned char *from, pg_wchar *to)
 {
 	return (*pg_wchar_table[DatabaseEncoding->encoding].mb2wchar_with_len) (from, to, strlen(from));
 }
 
-/* convert a multi-byte string to a wchar with a limited length */
+/* convert a multibyte string to a wchar with a limited length */
 int
 pg_mb2wchar_with_len(const unsigned char *from, pg_wchar *to, int len)
 {
 	return (*pg_wchar_table[DatabaseEncoding->encoding].mb2wchar_with_len) (from, to, len);
 }
 
-/* returns the byte length of a multi-byte word */
+/* returns the byte length of a multibyte word */
 int
 pg_mblen(const unsigned char *mbstr)
 {
 	return ((*pg_wchar_table[DatabaseEncoding->encoding].mblen) (mbstr));
 }
 
-/* returns the length (counted as a wchar) of a multi-byte string */
+/* returns the length (counted as a wchar) of a multibyte string */
 int
 pg_mbstrlen(const unsigned char *mbstr)
 {
@@ -386,7 +386,7 @@ pg_mbstrlen(const unsigned char *mbstr)
 	return (len);
 }
 
-/* returns the length (counted as a wchar) of a multi-byte string
+/* returns the length (counted as a wchar) of a multibyte string
    (not necessarily  NULL terminated) */
 int
 pg_mbstrlen_with_len(const unsigned char *mbstr, int limit)
@@ -405,10 +405,10 @@ pg_mbstrlen_with_len(const unsigned char *mbstr, int limit)
 }
 
 /*
- * returns the byte length of a multi-byte string
+ * returns the byte length of a multibyte string
  * (not necessarily  NULL terminated)
  * that is no longer than limit.
- * this function does not break multi-byte word boundary.
+ * this function does not break multibyte word boundary.
  */
 int
 pg_mbcliplen(const unsigned char *mbstr, int len, int limit)

@@ -1,4 +1,4 @@
-/* $Id: pg_wchar.h,v 1.42 2002/08/14 02:45:10 ishii Exp $ */
+/* $Id: pg_wchar.h,v 1.43 2002/09/03 21:45:44 petere Exp $ */
 
 #ifndef PG_WCHAR_H
 #define PG_WCHAR_H
@@ -38,11 +38,11 @@ typedef unsigned int pg_wchar;
  */
 #define IS_LCPRV1(c)	((unsigned char)(c) == 0x9a || (unsigned char)(c) == 0x9b)
 /*
- * Is a leading byte for "official" multi byte encodings?
+ * Is a leading byte for "official" multibyte encodings?
  */
 #define IS_LC2(c)	((unsigned char)(c) >= 0x90 && (unsigned char)(c) <= 0x99)
 /*
- * Is a prefix byte for "private" multi byte encodings?
+ * Is a prefix byte for "private" multibyte encodings?
  */
 #define IS_LCPRV2(c)	((unsigned char)(c) == 0x9c || (unsigned char)(c) == 0x9d)
 
@@ -118,7 +118,7 @@ typedef unsigned int pg_wchar;
 #define LC_ARABIC_2_COLUMN	0xa8	/* Arabic 1-column (not supported) */
 
 /*
- * Private multi byte encodings (0xf0-0xff)
+ * Private multibyte encodings (0xf0-0xff)
  */
 #define LC_INDIAN_1_COLUMN	0xf0/* Indian charset for 1-column width
 								 * glypps (not supported) */
@@ -250,9 +250,9 @@ typedef int (*mblen_converter) (const unsigned char *mbstr);
 
 typedef struct
 {
-	mb2wchar_with_len_converter mb2wchar_with_len;		/* convert a multi-byte
+	mb2wchar_with_len_converter mb2wchar_with_len;		/* convert a multibyte
 														 * string to a wchar */
-	mblen_converter mblen;		/* returns the length of a multi-byte char */
+	mblen_converter mblen;		/* returns the length of a multibyte char */
 	int			maxmblen;		/* max bytes for a char in this charset */
 } pg_wchar_tbl;
 

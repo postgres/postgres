@@ -5,7 +5,7 @@
 # Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/bin/initdb/Makefile,v 1.27 2002/06/20 20:29:41 momjian Exp $
+# $Header: /cvsroot/pgsql/src/bin/initdb/Makefile,v 1.28 2002/09/03 21:45:43 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -16,8 +16,7 @@ include $(top_builddir)/src/Makefile.global
 all: initdb
 
 initdb: initdb.sh $(top_builddir)/src/Makefile.global
-	sed -e 's/@MULTIBYTE@/$(MULTIBYTE)/g' \
-	    -e 's/@VERSION@/$(VERSION)/g' \
+	sed -e 's/@VERSION@/$(VERSION)/g' \
 	    -e 's,@SHELL@,$(SHELL),g' \
 	    -e 's,@bindir@,$(bindir),g' \
 	    -e 's,@datadir@,$(datadir),g' \

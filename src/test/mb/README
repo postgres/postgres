@@ -1,9 +1,8 @@
-README for MB(multi-byte) regression test
+README for multibyte regression test
 							1998/7/22
 							Tatsuo Ishii
 
-This directory contains a set of tests for MB(multi-byte) supporting
+This directory contains a set of tests for multibyte supporting
 extentions for PostgreSQL. To run the test, simply type:
 
 % mbregress.sh
-

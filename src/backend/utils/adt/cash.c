@@ -9,7 +9,7 @@
  * workings can be found in the book "Software Solutions in C" by
  * Dale Schumacher, Academic Press, ISBN: 0-12-632360-7.
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/cash.c,v 1.54 2002/08/20 16:46:29 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/cash.c,v 1.55 2002/09/03 21:45:42 petere Exp $
  */
 
 #include "postgres.h"
@@ -61,7 +61,7 @@ CashGetDatum(Cash value)
  * XXX HACK It looks as though some of the symbols for
  *	monetary values returned by localeconv() can be multiple
  *	bytes/characters. This code assumes one byte only. - tgl 97/04/14
- * XXX UNHACK Allow the currency symbol to be multi-byte.
+ * XXX UNHACK Allow the currency symbol to be multibyte.
  *	- thomas 1998-03-01
  */
 Datum

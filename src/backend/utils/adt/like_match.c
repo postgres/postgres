@@ -3,8 +3,9 @@
  * like_match.c
  *	  like expression handling internal code.
  *
- * This file is included by like.c *twice* if multibyte is enabled.
- * This is for an optimization of single byte encodings.
+ * This file is included by like.c *twice*, to provide an optimization
+ * for single-byte encodings.
+ *
  * Before the inclusion, we need to define following macros:
  *
  * CHAREQ
@@ -18,7 +19,7 @@
  * Copyright (c) 1996-2002, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	$Header: /cvsroot/pgsql/src/backend/utils/adt/like_match.c,v 1.3 2002/06/20 20:29:37 momjian Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/utils/adt/like_match.c,v 1.4 2002/09/03 21:45:42 petere Exp $
  *
  *-------------------------------------------------------------------------
  */

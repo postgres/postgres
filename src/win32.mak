@@ -1,4 +1,4 @@
-# $Header: /cvsroot/pgsql/src/win32.mak,v 1.7 2002/08/22 00:15:08 scrappy Exp $
+# $Header: /cvsroot/pgsql/src/win32.mak,v 1.8 2002/09/03 21:45:41 petere Exp $
 
 # Makefile for Microsoft Visual C++ 5.0 (or compat)
 # Top-file makefile for Win32 parts of postgresql.
@@ -9,10 +9,6 @@ NULL=
 !ELSE 
 NULL=nul
 !ENDIF 
-
-!IFDEF	MULTIBYTE
-MAKEMACRO = "MULTIBYTE=$(MULTIBYTE)"
-!ENDIF
 
 ALL: 
    cd include
