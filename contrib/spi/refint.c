@@ -3,9 +3,14 @@
  *		constraints using general triggers.
  */
 
+#define  DEBUG_QUERY 1
+
 #include "executor/spi.h"		/* this is what you need to work with SPI */
 #include "commands/trigger.h"	/* -"- and triggers */
 #include <ctype.h>				/* tolower () */
+
+
+
 
 HeapTuple	check_primary_key(void);
 HeapTuple	check_foreign_key(void);
@@ -30,9 +35,9 @@ static EPlan *find_plan(char *ident, EPlan ** eplan, int *nplans);
  *			 references existing tuple in "primary" table.
  * Though it's called without args You have to specify referenced
  * table/keys while creating trigger:  key field names in triggered table,
- * referenced table name, referenced key field names,type of action [automatic|dependent]:
+ * referenced table name, referenced key field names:
  * EXECUTE PROCEDURE
- * check_primary_key ('Fkey1', 'Fkey2', 'Ptable', 'Pkey1', 'Pkey2','[automatic|dependent]').
+ * check_primary_key ('Fkey1', 'Fkey2', 'Ptable', 'Pkey1', 'Pkey2').
  */
 
 HeapTuple						/* have to return HeapTuple to Executor */
@@ -41,10 +46,9 @@ check_primary_key()
 	Trigger    *trigger;		/* to get trigger name */
 	int			nargs;			/* # of args specified in CREATE TRIGGER */
 	char	  **args;			/* arguments: column names and table name */
-	int			nkeys;			/* # of key columns (= (nargs-1) / 2) */
+	int			nkeys;			/* # of key columns (= nargs / 2) */
 	Datum	   *kvals;			/* key values */
 	char	   *relname;		/* referenced relation name */
-	char	   *action;             /* action on insert or update*/
 	Relation	rel;			/* triggered relation */
 	HeapTuple	tuple = NULL;	/* tuple to return */
 	TupleDesc	tupdesc;		/* tuple description */
@@ -58,7 +62,9 @@ check_primary_key()
 	/*
 	 * Some checks first...
 	 */
-
+#ifdef  DEBUG_QUERY       
+        elog(NOTICE,"Check_primary_key Enter Function"); 
+#endif
 	/* Called by trigger manager ? */
 	if (!CurrentTriggerData)
 		elog(ERROR, "check_primary_key: triggers are not initialized");
@@ -69,12 +75,10 @@ check_primary_key()
 
 	/* If INSERTion then must check Tuple to being inserted */
 	if (TRIGGER_FIRED_BY_INSERT(CurrentTriggerData->tg_event))
-
 		tuple = CurrentTriggerData->tg_trigtuple;
 
 	/* Not should be called for DELETE */
 	else if (TRIGGER_FIRED_BY_DELETE(CurrentTriggerData->tg_event))
-
 		elog(ERROR, "check_primary_key: can't process DELETE events");
 
 	/* If UPDATion the must check new Tuple, not old one */
@@ -85,14 +89,10 @@ check_primary_key()
 	nargs = trigger->tgnargs;
 	args = trigger->tgargs;
 
-	if ((nargs-1) % 2 != 1)			/* odd number of arguments! */
-		elog(ERROR, "check_primary_key: even number of arguments should be specified");
+	if (nargs % 2 != 1)			/* odd number of arguments! */
+		elog(ERROR, "check_primary_key: odd number of arguments should be specified");
 
-	nkeys = (nargs-1) / 2;
-	action=args[nargs -1];
-	if (strcmp(action,"automatic") && strcmp(action,"dependent"))
-		elog(ERROR,"check_primary_key: unknown action");
-	nargs=nargs-1;
+	nkeys = nargs / 2;
 	relname = args[nkeys];
 	rel = CurrentTriggerData->tg_relation;
 	tupdesc = rel->rd_att;
@@ -203,62 +203,9 @@ check_primary_key()
 	/*
 	 * If there are no tuples returned by SELECT then ...
 	 */
-	if (SPI_processed == 0 && strcmp(action,"dependent")==0)
+	if (SPI_processed == 0)
 		elog(ERROR, "%s: tuple references non-existing key in %s",
 			 trigger->tgname, relname);
-	else if (strcmp(action,"automatic")==0) 
-	{
-		/* insert tuple in parent with only primary keys */
-		/* prepare plan */
-		void	   *pplan;
-		char		sql[8192];
-
-		/*
-		 * Construct query:INSERT INTO relname (Pkey1[,Pkey2]*) values ($1,$2..); 
-		 */
-		sprintf(sql, "insert into %s ( ", relname);
-		for (i = 0; i < nkeys; i++)
-		{
-			sprintf(sql + strlen(sql), "%s%s ", args[i + nkeys + 1],(i<nkeys-1) ? ",":"");
-		}
-		sprintf(sql+strlen(sql),") values (");
-		for (i=0;i<nkeys; i++)
-		{
-			sprintf(sql+strlen(sql),"$%d%s ",i+1,(i<nkeys-1) ? ",":"");
-		} 
-		sprintf(sql+strlen(sql),")");
-
-		/* Prepare plan for query */
-		pplan = SPI_prepare(sql, nkeys, argtypes);
-		if (pplan == NULL)
-			elog(ERROR, "check_primary_key: SPI_prepare returned %d", SPI_result);
-
-		/*
-		 * Remember that SPI_prepare places plan in current memory context
-		 * - so, we have to save plan in Top memory context for latter
-		 * use.
-		 */
-		pplan = SPI_saveplan(pplan);
-		if (pplan == NULL)
-			elog(ERROR, "check_primary_key: SPI_saveplan returned %d", SPI_result);
-		plan->splan = (void **) malloc(sizeof(void *));
-		*(plan->splan) = pplan;
-		plan->nplans = 1;
-	/*
-	 * Ok, execute prepared plan.
-	 */
-	ret = SPI_execp(*(plan->splan), kvals, NULL, 1);
-	/* we have no NULLs - so we pass   ^^^^   here */
-
-	if (ret < 0)
-		elog(ERROR, "check_primary_key: SPI_execp returned %d", ret);
-
-	/*
-	 * If there are no tuples returned by INSERT then ...
-	 */
-	if (SPI_processed == 0)
-		elog(ERROR, "error: can't enter automatically in %s",relname);
-	}
 
 	SPI_finish();
 
@@ -283,6 +230,7 @@ check_foreign_key()
 	Trigger    *trigger;		/* to get trigger name */
 	int			nargs;			/* # of args specified in CREATE TRIGGER */
 	char	  **args;			/* arguments: as described above */
+        char	  **args_temp ;
 	int			nrefs;			/* number of references (== # of plans) */
 	char		action;			/* 'R'estrict | 'S'etnull | 'C'ascade */
 	int			nkeys;			/* # of key columns */
@@ -298,10 +246,13 @@ check_foreign_key()
 	bool		isequal = true; /* are keys in both tuples equal (in
 								 * UPDATE) */
 	char		ident[2 * NAMEDATALEN]; /* to identify myself */
+        int 		is_update=0;
 	int			ret;
 	int			i,
 				r;
-
+#ifdef DEBUG_QUERY                                
+   	elog(NOTICE,"Check_foreign_key Enter Function"); 
+#endif
 	/*
 	 * Some checks first...
 	 */
@@ -316,7 +267,6 @@ check_foreign_key()
 
 	/* Not should be called for INSERT */
 	if (TRIGGER_FIRED_BY_INSERT(CurrentTriggerData->tg_event))
-
 		elog(ERROR, "check_foreign_key: can't process INSERT events");
 
 	/* Have to check tg_trigtuple - tuple being deleted */
@@ -327,9 +277,12 @@ check_foreign_key()
 	 * key in tg_newtuple is the same as in tg_trigtuple then nothing to
 	 * do.
 	 */
+        is_update=0; 
 	if (TRIGGER_FIRED_BY_UPDATE(CurrentTriggerData->tg_event))
+        {
 		newtuple = CurrentTriggerData->tg_newtuple;
-
+                is_update=1;
+        }        
 	trigger = CurrentTriggerData->tg_trigger;
 	nargs = trigger->tgnargs;
 	args = trigger->tgargs;
@@ -337,6 +290,7 @@ check_foreign_key()
 	if (nargs < 5)				/* nrefs, action, key, Relation, key - at
 								 * least */
 		elog(ERROR, "check_foreign_key: too short %d (< 5) list of arguments", nargs);
+                
 	nrefs = pg_atoi(args[0], sizeof(int), 0);
 	if (nrefs < 1)
 		elog(ERROR, "check_foreign_key: %d (< 1) number of references specified", nrefs);
@@ -434,6 +388,7 @@ check_foreign_key()
 		if (plan->nplans <= 0)	/* Get typeId of column */
 			argtypes[i] = SPI_gettypeid(tupdesc, fnumber);
 	}
+        args_temp = args;
 	nargs -= nkeys;
 	args += nkeys;
 
@@ -444,14 +399,13 @@ check_foreign_key()
 	{
 		void	   *pplan;
 		char		sql[8192];
-		char	  **args2 = args;
+                char 	**args2 = args ;
 
 		plan->splan = (void **) malloc(nrefs * sizeof(void *));
 
 		for (r = 0; r < nrefs; r++)
 		{
 			relname = args2[0];
-
 			/*
 			 * For 'R'estrict action we construct SELECT query - SELECT 1
 			 * FROM _referencing_relation_ WHERE Fkey1 = $1 [AND Fkey2 =
@@ -465,11 +419,50 @@ check_foreign_key()
 			 * For 'C'ascade action we construct DELETE query - DELETE
 			 * FROM _referencing_relation_ WHERE Fkey1 = $1 [AND Fkey2 =
 			 * $2 [...]] - to delete all referencing tuples.
-			 */
-			else if (action == 'c')
-
+                        */
+                        /*Max : Cascade with UPDATE query i create update query that
+                           updates new key values in referenced tables
+                        */
+                         
+                         
+			else if (action == 'c'){
+                           if (is_update == 1)
+			    {
+				int	   fn;
+				char	   *nv;
+				int        k ;
+				sprintf(sql, "update %s set ", relname);
+				for (k = 1; k <= nkeys; k++)
+				{
+                                    int is_char_type =0;
+                                    char *type;
+                                    
+				    fn = SPI_fnumber(tupdesc, args_temp[k-1]);
+				    nv = SPI_getvalue(newtuple, tupdesc, fn);
+                                    type=SPI_gettype(tupdesc,fn);
+                                
+                                    if ( (strcmp(type,"text") && strcmp (type,"varchar")  &&
+                                          strcmp(type,"char") && strcmp (type,"bpchar")   &&
+                                          strcmp(type,"date") && strcmp (type,"datetime")) == 0 )
+                                         is_char_type=1;
+#ifdef  DEBUG_QUERY                                    
+                                    elog(NOTICE,"Check_foreign_key Debug value %s type %s %d", 
+                                       		nv,type,is_char_type);
+#endif
+                                    /* is_char_type =1 i set ' ' for define a new value
+                                    */            
+				    sprintf(sql + strlen(sql), " %s = %s%s%s %s ",
+					args2[k], (is_char_type>0) ? "'" :"" ,
+                                        nv, (is_char_type >0) ? "'" :"",(k < nkeys) ? ", " : "");
+                                    is_char_type=0;    
+				}
+				strcat(sql, " where ");
+                                
+			    }
+			    else /* DELETE */
 				sprintf(sql, "delete from %s where ", relname);
-
+                            
+                        }           
 			/*
 			 * For 'S'etnull action we construct UPDATE query - UPDATE
 			 * _referencing_relation_ SET Fkey1 null [, Fkey2 null [...]]
@@ -509,12 +502,15 @@ check_foreign_key()
 				elog(ERROR, "check_foreign_key: SPI_saveplan returned %d", SPI_result);
 
 			plan->splan[r] = pplan;
-
+                        
 			args2 += nkeys + 1; /* to the next relation */
 		}
 		plan->nplans = nrefs;
+#ifdef  DEBUG_QUERY                                    
+                elog(NOTICE,"Check_foreign_key Debug Query is :  %s ", sql);
+#endif
 	}
-
+        
 	/*
 	 * If UPDATE and key is not changed ...
 	 */

@@ -1,0 +1,76 @@
+
+Here are general trigger functions provided as workable examples
+of using SPI and triggers. "General" means that functions may be
+used for defining triggers for any tables but you have to specify
+table/field names (as described below) while creating a trigger.
+
+1. refint.c - functions for implementing referential integrity.
+
+check_primary_key () is to used for foreign keys of a table.
+   
+   You are to create trigger (BEFORE INSERT OR UPDATE) using this 
+function on a table referencing another table. You are to specify
+as function arguments: triggered table column names which correspond
+to foreign key, referenced table name and column names in referenced
+table which correspond to primary/unique key.
+   You may create as many triggers as you need - one trigger for
+one reference.
+
+check_foreign_key () is to used for primary/unique keys of a table.
+
+   You are to create trigger (BEFORE DELETE OR UPDATE) using this
+function on a table referenced by another table(s). You are to specify
+as function arguments: number of references for which function has to
+performe checking, action if referencing key found ('cascade' - to delete
+corresponding foreign key, 'restrict' - to abort transaction if foreign keys 
+exist, 'setnull' - to set foreign key referencing primary/unique key
+being deleted to null), triggered table column names which correspond
+to primary/unique key, referencing table name and column names corresponding
+to foreign key (, ... - as many referencing tables/keys as specified
+by first argument).
+   Note, that NOT NULL constraint and unique index have to be defined by
+youself.
+
+   There are examples in refint.example and regression tests
+(sql/triggers.sql).
+
+   To CREATE FUNCTIONs use refint.sql (will be made by gmake from
+refint.source).
+
+# Excuse me for my bad english. Massimo Lambertini
+#
+#
+# New check foreign key 
+#
+I think that cascade mode is to be considered like that the operation over 
+main table is to be made also in referenced table .
+When i Delete , i must delete from referenced table , 
+but when i update , i update referenced table and not delete like unmodified refint.c .
+
+I made a patch that when i update it check the type of modified key ( if is a text , char() i
+added '') and then create a update query that do the right think .
+
+For my point of view that policy is helpfull because i do not have in referenced table
+loss of information .
+
+
+In preprocessor subdir i have placed a little utility that from a SQL92 table definition,
+it create all trigger for foreign key .
+
+
+the schema that i use to analyze the problem is this 
+
+create table 
+A 
+( key int4 not null primary key ,...) ;
+create table
+REFERENCED_B 
+( key int 4 , ... , 
+foreign key ( key ) references A -- 
+);
+
+
+
+
+ 
+
