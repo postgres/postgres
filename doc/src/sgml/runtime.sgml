@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.218 2003/11/14 15:43:22 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.219 2003/11/16 03:38:34 tgl Exp $
 -->
 
 <Chapter Id="runtime">
@@ -1294,7 +1294,7 @@ SET ENABLE_SEQSCAN TO OFF;
     <para>
      Unfortunately, there is no well-defined method for determining
      ideal values for the family of <quote>cost</quote> variables that
-     below. You are encouraged to experiment and share
+     appear below. You are encouraged to experiment and share
      your findings.
     </para>
    </note>
@@ -3267,35 +3267,36 @@ default:\
    <title>Linux Memory Overcommit</title>
 
    <para>
-    Linux kernels of version 2.4.* have a poor default memory
-    overcommit behavior, which can result in the PostgreSQL server
-    (<filename>postmaster</filename> process) being killed by the
-    kernel if the memory demands of another process cause the system
-    to run out of memory.
+    In Linux 2.4, the default virtual memory behavior is not
+    optimal for <productname>PostgreSQL</productname>. Because of the
+    way that the kernel implements memory overcommit, the kernel may
+    terminate the <productname>PostgreSQL</productname> server (the
+    <filename>postmaster</filename> process) if the memory demands of
+    another process cause the system to run out of virtual memory.
    </para>
 
    <para>
-    If this happens, you will see a kernel message looking like this
-    (consult your system documentation and configuration on where to
-    look for such a message):
+    If this happens, you will see a kernel message that looks like
+    this (consult your system documentation and configuration on where
+    to look for such a message):
 <programlisting>
 Out of Memory: Killed process 12345 (postmaster). 
 </programlisting>
-    And, of course, you will find that your database server has
-    disappeared.
+    This indicates that the <filename>postmaster</filename> process
+    has been terminated due to memory pressure;
+    <productname>PostgreSQL</productname> will need to be restarted.
    </para>
 
    <para>
     To avoid this situation, run <productname>PostgreSQL</productname>
     on a machine where you can be sure that other processes will not
     run the machine out of memory. If your kernel supports the strict
-    and/or paranoid modes of overcommit handling, you can also relieve
-    this problem by altering the system's default behaviour. This can
-    be determined by examining the function
-    <function>vm_enough_memory</> in the file <filename>mm/mmap.c</>
-    in the kernel source. If this file reveals that the strict and/or
-    paranoid modes are supported by your kernel, turn one of these
-    modes on by using
+    and/or paranoid modes of overcommit handling, you can also relieve this
+    problem by altering the system's default behaviour. This can be
+    determined by examining the function <function>vm_enough_memory</>
+    in the file <filename>mm/mmap.c</> in the kernel source. If this
+    file reveals that the strict or paranoid modes are supported by
+    your kernel, turn one of these modes on by using
 <programlisting>
 sysctl -w vm.overcommit_memory=2
 </programlisting>
@@ -3304,12 +3305,16 @@ sysctl -w vm.overcommit_memory=2
 sysctl -w vm.overcommit_memory=3
 </programlisting>
     for paranoid mode, or placing an equivalent entry in
-    <filename>/etc/sysctl.conf</>.
+    <filename>/etc/sysctl.conf</>.  For more information on memory
+    overcommit handling and the meaning of these kernel settings,
+    consult the file
+    <filename>Documentation/vm/overcommit-accounting</filename> in a
+    recent version of the source code for the Linux kernel.
    </para>
 
    <caution>
     <para>
-     Using these settings in a kernel which does not support these
+     Using these settings with a kernel which does not support these
      modes will almost certainly increase the danger of the kernel
      killing the database server, rather than reducing it. If in any
      doubt, consult a kernel expert or your kernel vendor.
@@ -3317,15 +3322,12 @@ sysctl -w vm.overcommit_memory=3
    </caution>
 
    <para>
-    These modes are expected to be supported in all 2.6 and later
-    kernels. Some vendor 2.4 kernels may also support these modes. It
-    is, however, known that some vendor documents suggest that they
-    support them while examination of the kernel source reveals that
-    they do not.
-   </para>
-
-   <para>
-    Note, you will need enough swap space to cover all your memory needs.
+    The method described above for changing the kernel's overcommit
+    behavior should work with Linux kernel versions 2.6 and later. In addition,
+    some versions of the 2.4 kernel distributed by some vendors may
+    also support this functionality. However, it is known that some
+    vendor documents suggest that they support them while examination
+    of the kernel source reveals that they do not.
    </para>
   </sect2>
  </sect1>
