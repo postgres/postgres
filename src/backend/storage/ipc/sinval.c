@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/sinval.c,v 1.36 2001/07/12 04:11:13 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/sinval.c,v 1.37 2001/07/16 22:43:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -193,8 +193,10 @@ TransactionIdIsInProgress(TransactionId xid)
 		if (pOffset != INVALID_OFFSET)
 		{
 			PROC	   *proc = (PROC *) MAKE_PTR(pOffset);
+			/* Fetch xid just once - see GetNewTransactionId */
+			TransactionId pxid = proc->xid;
 
-			if (TransactionIdEquals(proc->xid, xid))
+			if (TransactionIdEquals(pxid, xid))
 			{
 				result = true;
 				break;
@@ -236,9 +238,9 @@ GetXmaxRecent(TransactionId *XmaxRecent)
 		if (pOffset != INVALID_OFFSET)
 		{
 			PROC	   *proc = (PROC *) MAKE_PTR(pOffset);
-			TransactionId xid;
+			/* Fetch xid just once - see GetNewTransactionId */
+			TransactionId xid = proc->xid;
 
-			xid = proc->xid;
 			if (! TransactionIdIsSpecial(xid))
 			{
 				if (TransactionIdPrecedes(xid, result))
@@ -256,8 +258,19 @@ GetXmaxRecent(TransactionId *XmaxRecent)
 	*XmaxRecent = result;
 }
 
-/*
+/*----------
  * GetSnapshotData -- returns information about running transactions.
+ *
+ * The returned snapshot includes xmin (lowest still-running xact ID),
+ * xmax (next xact ID to be assigned), and a list of running xact IDs
+ * in the range xmin <= xid < xmax.  It is used as follows:
+ *		All xact IDs < xmin are considered finished.
+ *		All xact IDs >= xmax are considered still running.
+ *		For an xact ID xmin <= xid < xmax, consult list to see whether
+ *		it is considered running or not.
+ * This ensures that the set of transactions seen as "running" by the
+ * current xact will not change after it takes the snapshot.
+ *----------
  */
 Snapshot
 GetSnapshotData(bool serializable)
@@ -287,12 +300,33 @@ GetSnapshotData(bool serializable)
 		elog(ERROR, "Memory exhausted in GetSnapshotData");
 	}
 
-	/*
-	 * Unfortunately, we have to call ReadNewTransactionId() after
-	 * acquiring SInvalLock above. It's not good because
-	 * ReadNewTransactionId() does SpinAcquire(XidGenLockId) but
-	 * _necessary_.
+	/*--------------------
+	 * Unfortunately, we have to call ReadNewTransactionId() after acquiring
+	 * SInvalLock above.  It's not good because ReadNewTransactionId() does
+	 * SpinAcquire(XidGenLockId), but *necessary*.  We need to be sure that
+	 * no transactions exit the set of currently-running transactions
+	 * between the time we fetch xmax and the time we finish building our
+	 * snapshot.  Otherwise we could have a situation like this:
+	 *
+	 *		1. Tx Old is running (in Read Committed mode).
+	 *		2. Tx S reads new transaction ID into xmax, then
+	 *		   is swapped out before acquiring SInvalLock.
+	 *		3. Tx New gets new transaction ID (>= S' xmax),
+	 *		   makes changes and commits.
+	 *		4. Tx Old changes some row R changed by Tx New and commits.
+	 *		5. Tx S finishes getting its snapshot data.  It sees Tx Old as
+	 *		   done, but sees Tx New as still running (since New >= xmax).
+	 *
+	 * Now S will see R changed by both Tx Old and Tx New, *but* does not
+	 * see other changes made by Tx New.  If S is supposed to be in
+	 * Serializable mode, this is wrong.
+	 *
+	 * By locking SInvalLock before we read xmax, we ensure that TX Old
+	 * cannot exit the set of running transactions seen by Tx S.  Therefore
+	 * both Old and New will be seen as still running => no inconsistency.
+	 *--------------------
 	 */
+
 	ReadNewTransactionId(&(snapshot->xmax));
 
 	for (index = 0; index < segP->lastBackend; index++)
@@ -302,6 +336,7 @@ GetSnapshotData(bool serializable)
 		if (pOffset != INVALID_OFFSET)
 		{
 			PROC	   *proc = (PROC *) MAKE_PTR(pOffset);
+			/* Fetch xid just once - see GetNewTransactionId */
 			TransactionId xid = proc->xid;
 
 			/*
@@ -325,10 +360,11 @@ GetSnapshotData(bool serializable)
 
 	if (serializable)
 		MyProc->xmin = snapshot->xmin;
-	/* Serializable snapshot must be computed before any other... */
-	Assert(MyProc->xmin != InvalidTransactionId);
 
 	SpinRelease(SInvalLock);
+
+	/* Serializable snapshot must be computed before any other... */
+	Assert(MyProc->xmin != InvalidTransactionId);
 
 	snapshot->xcnt = count;
 	return snapshot;

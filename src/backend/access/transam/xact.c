@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.107 2001/07/15 22:48:16 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.108 2001/07/16 22:43:33 tgl Exp $
  *
  * NOTES
  *		Transaction aborts can now occur two ways:
@@ -1018,16 +1018,21 @@ CommitTransaction(void)
 
 	CloseSequences();
 	AtEOXact_portals();
+
+	/* Here is where we really truly commit. */
 	RecordTransactionCommit();
 
 	/*
 	 * Let others know about no transaction in progress by me. Note that
-	 * this must be done _before_ releasing locks we hold and
+	 * this must be done _before_ releasing locks we hold and _after_
+	 * RecordTransactionCommit.
+	 *
 	 * SpinAcquire(SInvalLock) is required: UPDATE with xid 0 is blocked
 	 * by xid 1' UPDATE, xid 1 is doing commit while xid 2 gets snapshot -
 	 * if xid 2' GetSnapshotData sees xid 1 as running then it must see
 	 * xid 0 as running as well or it will see two tuple versions - one
-	 * deleted by xid 1 and one inserted by xid 0.
+	 * deleted by xid 1 and one inserted by xid 0.  See notes in
+	 * GetSnapshotData.
 	 */
 	if (MyProc != (PROC *) NULL)
 	{
@@ -1037,6 +1042,12 @@ CommitTransaction(void)
 		MyProc->xmin = InvalidTransactionId;
 		SpinRelease(SInvalLock);
 	}
+
+	/*
+	 * This is all post-commit cleanup.  Note that if an error is raised
+	 * here, it's too late to abort the transaction.  This should be just
+	 * noncritical resource releasing.
+	 */
 
 	RelationPurgeLocalRelation(true);
 	AtEOXact_temp_relations(true);
@@ -1079,23 +1090,6 @@ AbortTransaction(void)
 
 	/* Prevent cancel/die interrupt while cleaning up */
 	HOLD_INTERRUPTS();
-
-	/*
-	 * Let others to know about no transaction in progress - vadim
-	 * 11/26/96
-	 *
-	 * XXX it'd be nice to acquire SInvalLock for this, but too much risk of
-	 * lockup: what if we were holding SInvalLock when we elog'd?  Net effect
-	 * is that we are relying on fetch/store of an xid to be atomic, else
-	 * other backends might see a partially-zeroed xid here.  Would it be
-	 * safe to release spins before we reset xid/xmin?  But see also 
-	 * GetNewTransactionId, which does the same thing.
-	 */
-	if (MyProc != (PROC *) NULL)
-	{
-		MyProc->xid = InvalidTransactionId;
-		MyProc->xmin = InvalidTransactionId;
-	}
 
 	/*
 	 * Release any spinlocks or buffer context locks we might be holding
@@ -1143,10 +1137,23 @@ AbortTransaction(void)
 	AtAbort_Notify();
 	CloseSequences();
 	AtEOXact_portals();
+
+	/* Advertise the fact that we aborted in pg_log. */
 	RecordTransactionAbort();
 
-	/* Count transaction abort in statistics collector */
-	pgstat_count_xact_rollback();
+	/*
+	 * Let others know about no transaction in progress by me. Note that
+	 * this must be done _before_ releasing locks we hold and _after_
+	 * RecordTransactionAbort.
+	 */
+	if (MyProc != (PROC *) NULL)
+	{
+		/* Lock SInvalLock because that's what GetSnapshotData uses. */
+		SpinAcquire(SInvalLock);
+		MyProc->xid = InvalidTransactionId;
+		MyProc->xmin = InvalidTransactionId;
+		SpinRelease(SInvalLock);
+	}
 
 	RelationPurgeLocalRelation(false);
 	AtEOXact_temp_relations(false);
@@ -1164,6 +1171,9 @@ AbortTransaction(void)
 	AtAbort_Locks();
 
 	SharedBufferChanged = false;/* safest place to do it */
+
+	/* Count transaction abort in statistics collector */
+	pgstat_count_xact_rollback();
 
 	/*
 	 * State remains TRANS_ABORT until CleanupTransaction().

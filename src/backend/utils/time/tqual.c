@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/time/tqual.c,v 1.38 2001/07/12 04:11:13 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/time/tqual.c,v 1.39 2001/07/16 22:43:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -610,6 +610,13 @@ HeapTupleSatisfiesVacuum(HeapTupleHeader tuple, TransactionId XmaxRecent)
 	 *
 	 * If the inserting transaction aborted, then the tuple was never visible
 	 * to any other transaction, so we can delete it immediately.
+	 *
+	 * NOTE: must check TransactionIdIsInProgress (which looks in shared mem)
+	 * before TransactionIdDidCommit/TransactionIdDidAbort (which look in
+	 * pg_log).  Otherwise we have a race condition where we might decide
+	 * that a just-committed transaction crashed, because none of the tests
+	 * succeed.  xact.c is careful to record commit/abort in pg_log before
+	 * it unsets MyProc->xid in shared memory.
 	 */
 	if (!(tuple->t_infomask & HEAP_XMIN_COMMITTED))
 	{
@@ -636,19 +643,19 @@ HeapTupleSatisfiesVacuum(HeapTupleHeader tuple, TransactionId XmaxRecent)
 			}
 			tuple->t_infomask |= HEAP_XMIN_COMMITTED;
 		}
+		else if (TransactionIdIsInProgress(tuple->t_xmin))
+			return HEAPTUPLE_INSERT_IN_PROGRESS;
+		else if (TransactionIdDidCommit(tuple->t_xmin))
+			tuple->t_infomask |= HEAP_XMIN_COMMITTED;
 		else if (TransactionIdDidAbort(tuple->t_xmin))
 		{
 			tuple->t_infomask |= HEAP_XMIN_INVALID;
 			return HEAPTUPLE_DEAD;
 		}
-		else if (TransactionIdDidCommit(tuple->t_xmin))
-			tuple->t_infomask |= HEAP_XMIN_COMMITTED;
-		else if (TransactionIdIsInProgress(tuple->t_xmin))
-			return HEAPTUPLE_INSERT_IN_PROGRESS;
 		else
 		{
 			/*
-			 * Not Aborted, Not Committed, Not in Progress -
+			 * Not in Progress, Not Committed, Not Aborted -
 			 * so it's from crashed process. - vadim 11/26/96
 			 */
 			tuple->t_infomask |= HEAP_XMIN_INVALID;
@@ -667,19 +674,19 @@ HeapTupleSatisfiesVacuum(HeapTupleHeader tuple, TransactionId XmaxRecent)
 
 	if (!(tuple->t_infomask & HEAP_XMAX_COMMITTED))
 	{
-		if (TransactionIdDidAbort(tuple->t_xmax))
+		if (TransactionIdIsInProgress(tuple->t_xmax))
+			return HEAPTUPLE_DELETE_IN_PROGRESS;
+		else if (TransactionIdDidCommit(tuple->t_xmax))
+			tuple->t_infomask |= HEAP_XMAX_COMMITTED;
+		else if (TransactionIdDidAbort(tuple->t_xmax))
 		{
 			tuple->t_infomask |= HEAP_XMAX_INVALID;
 			return HEAPTUPLE_LIVE;
 		}
-		else if (TransactionIdDidCommit(tuple->t_xmax))
-			tuple->t_infomask |= HEAP_XMAX_COMMITTED;
-		else if (TransactionIdIsInProgress(tuple->t_xmax))
-			return HEAPTUPLE_DELETE_IN_PROGRESS;
 		else
 		{
 			/*
-			 * Not Aborted, Not Committed, Not in Progress -
+			 * Not in Progress, Not Committed, Not Aborted -
 			 * so it's from crashed process. - vadim 06/02/97
 			 */
 			tuple->t_infomask |= HEAP_XMAX_INVALID;
