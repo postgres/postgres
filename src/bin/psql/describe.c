@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Team
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/describe.c,v 1.13 2000/01/18 23:30:23 petere Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/describe.c,v 1.14 2000/01/20 15:29:20 momjian Exp $
  */
 #include <c.h>
 #include "describe.h"
@@ -49,10 +49,10 @@ describeAggregates(const char *name)
 	 */
 	strcpy(buf,
 		   "SELECT a.aggname AS \"Name\", t.typname AS \"Type\",\n"
-           "  obj_description(a.oid) as \"Description\"\n"
-           "FROM pg_aggregate a, pg_type t\n"
-           "WHERE a.aggbasetype = t.oid\n"
-        );
+	   "  obj_description(a.oid) as \"Description\"\n"
+	   "FROM pg_aggregate a, pg_type t\n"
+	   "WHERE a.aggbasetype = t.oid\n"
+	);
 
 	if (name)
 	{
@@ -64,10 +64,10 @@ describeAggregates(const char *name)
 	strcat(buf,
 		   "UNION\n"
 		   "SELECT a.aggname AS \"Name\", '(all types)' as \"Type\",\n"
-           "  obj_description(a.oid) as \"Description\"\n"
+	   "  obj_description(a.oid) as \"Description\"\n"
 		   "FROM pg_aggregate a\n"
-           "WHERE a.aggbasetype = 0\n"
-        );
+	   "WHERE a.aggbasetype = 0\n"
+	);
 
 	if (name)
 	{
@@ -107,11 +107,11 @@ describeFunctions(const char *name, bool verbose)
 	 * arguments, but have no types defined for those arguments
 	 */
 	strcpy(buf,
-           "SELECT t.typname as \"Result\", p.proname as \"Function\",\n"
+	   "SELECT t.typname as \"Result\", p.proname as \"Function\",\n"
 		   "       oidvectortypes(p.proargtypes) as \"Arguments\"");
     if (verbose)
 	strcat(buf, ",\n       u.usename as \"Owner\", l.lanname as \"Language\", p.prosrc as \"Source\",\n"
-           "       obj_description(p.oid) as \"Description\"");
+	   "       obj_description(p.oid) as \"Description\"");
 
     if (!verbose)
 	strcat(buf,
@@ -159,7 +159,7 @@ describeTypes(const char *name, bool verbose)
 
 	strcpy(buf, "SELECT t.typname AS \"Type\"");
     if (verbose)
-        strcat(buf, ",\n  (CASE WHEN t.typlen = -1 THEN 'var'::text ELSE t.typlen::text END) as \"Size\"");
+	strcat(buf, ",\n  (CASE WHEN t.typlen = -1 THEN 'var'::text ELSE t.typlen::text END) as \"Size\"");
 	strcat(buf, ",\n  obj_description(t.oid) as \"Description\"");
     /*
      * do not include array types (start with underscore),
@@ -200,12 +200,12 @@ describeOperators(const char *name)
 	printQueryOpt myopt = pset.popt;
 
 	strcpy(buf,
-           "SELECT o.oprname AS \"Op\",\n"
+	   "SELECT o.oprname AS \"Op\",\n"
 		   "       t1.typname AS \"Left arg\",\n"
 		   "       t2.typname AS \"Right arg\",\n"
 		   "       t0.typname AS \"Result\",\n"
 		   "       obj_description(p.oid) as \"Description\"\n"
-           "FROM   pg_proc p, pg_type t0,\n"
+	   "FROM   pg_proc p, pg_type t0,\n"
 		   "       pg_type t1, pg_type t2,\n"
 		   "       pg_operator o\n"
 		   "WHERE  p.prorettype = t0.oid AND\n"
@@ -225,8 +225,8 @@ describeOperators(const char *name)
 		   "       ''::name AS \"Left arg\",\n"
 		   "       t1.typname AS \"Right arg\",\n"
 		   "       t0.typname AS \"Result\",\n"
-           "       obj_description(p.oid) as \"Description\"\n"
-           "FROM   pg_operator o, pg_proc p, pg_type t0, pg_type t1\n"
+	   "       obj_description(p.oid) as \"Description\"\n"
+	   "FROM   pg_operator o, pg_proc p, pg_type t0, pg_type t1\n"
 		   "WHERE  RegprocToOid(o.oprcode) = p.oid AND\n"
 		   "       o.oprresult = t0.oid AND\n"
 		   "       o.oprkind = 'l' AND\n"
@@ -243,8 +243,8 @@ describeOperators(const char *name)
 		   "       t1.typname AS \"Left arg\",\n"
 		   "       ''::name AS \"Right arg\",\n"
 		   "       t0.typname AS \"Result\",\n"
-           "       obj_description(p.oid) as \"Description\"\n"
-           "FROM   pg_operator o, pg_proc p, pg_type t0, pg_type t1\n"
+	   "       obj_description(p.oid) as \"Description\"\n"
+	   "FROM   pg_operator o, pg_proc p, pg_type t0, pg_type t1\n"
 		   "WHERE  RegprocToOid(o.oprcode) = p.oid AND\n"
 		   "       o.oprresult = t0.oid AND\n"
 		   "       o.oprkind = 'r' AND\n"
@@ -284,7 +284,7 @@ listAllDbs(bool desc)
 	printQueryOpt myopt = pset.popt;
 
 	strcpy(buf,
-           "SELECT pg_database.datname as \"Database\",\n"
+	   "SELECT pg_database.datname as \"Database\",\n"
 		   "       pg_user.usename as \"Owner\"");
 #ifdef MULTIBYTE
 	strcat(buf,
@@ -299,7 +299,7 @@ listAllDbs(bool desc)
     strcat(buf, "\nUNION\n\n");
 
 	strcat(buf,
-           "SELECT pg_database.datname as \"Database\",\n"
+	   "SELECT pg_database.datname as \"Database\",\n"
 		   "       NULL as \"Owner\"");
 #ifdef MULTIBYTE
 	strcat(buf,
@@ -346,7 +346,7 @@ permissionsList(const char *name)
 		   "       relname !~ '^pg_'\n");
 	if (name)
 	{
-		strcat(descbuf, "  AND rename ~ '");
+		strcat(descbuf, "  AND relname ~ '");
 		strncat(descbuf, name, REGEXP_CUTOFF);
 		strcat(descbuf, "'\n");
 	}
@@ -867,7 +867,7 @@ describeTableDetails(const char *name, bool desc)
 	}
 
     if (!error)
-        printTable(title, headers, (const char**)cells, (const char**)footers, "llll", &myopt, pset.queryFout);
+	printTable(title, headers, (const char**)cells, (const char**)footers, "llll", &myopt, pset.queryFout);
 
 	/* clean up */
 	free(title);
@@ -940,14 +940,14 @@ listTables(const char *infotype, const char *name, bool desc)
 			strcat(buf, "'\n");
 		}
 
-        strcat(buf, "UNION\n");
+	strcat(buf, "UNION\n");
 		strcat(buf, "SELECT c.relname as \"Name\", 'table'::text as \"Type\", NULL as \"Owner\"");
 		if (desc)
 			strcat(buf, ", obj_description(c.oid) as \"Description\"");
 		strcat(buf, "\nFROM pg_class c\n"
 			   "WHERE c.relkind = 'r'\n"
 			   "  AND not exists (select 1 from pg_views where viewname = c.relname)\n"
-               "  AND not exists (select 1 from pg_user where usesysid = c.relowner)\n");
+	       "  AND not exists (select 1 from pg_user where usesysid = c.relowner)\n");
 		strcat(buf, showSystem ? "  AND c.relname ~ '^pg_'\n" : "  AND c.relname !~ '^pg_'\n");
 		if (name)
 		{
@@ -977,14 +977,14 @@ listTables(const char *infotype, const char *name, bool desc)
 			strcat(buf, "'\n");
 		}
 
-        strcat(buf, "UNION\n");
+	strcat(buf, "UNION\n");
 		strcat(buf, "SELECT c.relname as \"Name\", 'view'::text as \"Type\", NULL as \"Owner\"");
 		if (desc)
 			strcat(buf, ", obj_description(c.oid) as \"Description\"");
 		strcat(buf, "\nFROM pg_class c\n"
 			   "WHERE c.relkind = 'r'\n"
 			   "  AND exists (select 1 from pg_views where viewname = c.relname)\n"
-               "  AND not exists (select 1 from pg_user where usesysid = c.relowner)\n");
+	       "  AND not exists (select 1 from pg_user where usesysid = c.relowner)\n");
 		strcat(buf, showSystem ? "  AND c.relname ~ '^pg_'\n" : "  AND c.relname !~ '^pg_'\n");
 		if (name)
 		{
@@ -1029,7 +1029,7 @@ listTables(const char *infotype, const char *name, bool desc)
 			strcat(buf, "'\n");
 		}
 
-        strcat(buf, "UNION\n");
+	strcat(buf, "UNION\n");
 		strcat(buf,
 	       "SELECT c.relname as \"Name\",\n"
 			   "  (CASE WHEN relkind = 'S' THEN 'sequence'::text ELSE 'index'::text END) as \"Type\",\n"
@@ -1078,13 +1078,13 @@ listTables(const char *infotype, const char *name, bool desc)
 			strcat(buf, "'\n");
 		}
 
-        strcat(buf, "UNION\n");
+	strcat(buf, "UNION\n");
 		strcat(buf, "SELECT c.relname as \"Name\", 'special'::text as \"Type\", NULL as \"Owner\"");
 		if (desc)
 			strcat(buf, ", obj_description(c.oid) as \"Description\"");
 		strcat(buf, "\nFROM pg_class c\n"
 			   "WHERE c.relkind = 's'\n"
-               "  AND not exists (select 1 from pg_user where usesysid = c.relowner)");
+	       "  AND not exists (select 1 from pg_user where usesysid = c.relowner)");
 		if (name)
 		{
 			strcat(buf, "  AND c.relname ~ '");
@@ -1102,10 +1102,10 @@ listTables(const char *infotype, const char *name, bool desc)
 
 	if (PQntuples(res) == 0 && !QUIET())
     {
-        if (name)
-            fprintf(pset.queryFout, "No matching relations found.\n");
-        else
-            fprintf(pset.queryFout, "No relations found.\n");
+	if (name)
+	    fprintf(pset.queryFout, "No matching relations found.\n");
+	else
+	    fprintf(pset.queryFout, "No relations found.\n");
     }
 	else
 	{
