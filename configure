@@ -10027,23 +10027,32 @@ fi
 echo "$as_me:$LINENO: result: $ac_cv_func_getaddrinfo" >&5
 echo "${ECHO_T}$ac_cv_func_getaddrinfo" >&6
 if test $ac_cv_func_getaddrinfo = yes; then
-  if test "${ac_cv_header_netinet_ip6_h+set}" = set; then
-  echo "$as_me:$LINENO: checking for netinet/ip6.h" >&5
-echo $ECHO_N "checking for netinet/ip6.h... $ECHO_C" >&6
-if test "${ac_cv_header_netinet_ip6_h+set}" = set; then
+  echo "$as_me:$LINENO: checking for struct sockaddr_in6.sin6_len" >&5
+echo $ECHO_N "checking for struct sockaddr_in6.sin6_len... $ECHO_C" >&6
+if test "${ac_cv_member_struct_sockaddr_in6_sin6_len+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
-fi
-echo "$as_me:$LINENO: result: $ac_cv_header_netinet_ip6_h" >&5
-echo "${ECHO_T}$ac_cv_header_netinet_ip6_h" >&6
 else
-  # Is the header compilable?
-echo "$as_me:$LINENO: checking netinet/ip6.h usability" >&5
-echo $ECHO_N "checking netinet/ip6.h usability... $ECHO_C" >&6
-cat >conftest.$ac_ext <<_ACEOF
+  cat >conftest.$ac_ext <<_ACEOF
 #line $LINENO "configure"
 #include "confdefs.h"
-$ac_includes_default
-#include <netinet/ip6.h>
+#include <sys/socket.h>
+#include <netdb.h>
+
+#ifdef F77_DUMMY_MAIN
+#  ifdef __cplusplus
+     extern "C"
+#  endif
+   int F77_DUMMY_MAIN() { return 1; }
+#endif
+int
+main ()
+{
+static struct sockaddr_in6 ac_aggr;
+if (ac_aggr.sin6_len)
+return 0;
+  ;
+  return 0;
+}
 _ACEOF
 rm -f conftest.$ac_objext
 if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
@@ -10057,84 +10066,27 @@ if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
   ac_status=$?
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
-  ac_header_compiler=yes
+  ac_cv_member_struct_sockaddr_in6_sin6_len=yes
 else
   echo "$as_me: failed program was:" >&5
 cat conftest.$ac_ext >&5
-ac_header_compiler=no
+ac_cv_member_struct_sockaddr_in6_sin6_len=no
 fi
 rm -f conftest.$ac_objext conftest.$ac_ext
-echo "$as_me:$LINENO: result: $ac_header_compiler" >&5
-echo "${ECHO_T}$ac_header_compiler" >&6
+fi
+echo "$as_me:$LINENO: result: $ac_cv_member_struct_sockaddr_in6_sin6_len" >&5
+echo "${ECHO_T}$ac_cv_member_struct_sockaddr_in6_sin6_len" >&6
+if test $ac_cv_member_struct_sockaddr_in6_sin6_len = yes; then
 
-# Is the header present?
-echo "$as_me:$LINENO: checking netinet/ip6.h presence" >&5
-echo $ECHO_N "checking netinet/ip6.h presence... $ECHO_C" >&6
-cat >conftest.$ac_ext <<_ACEOF
-#line $LINENO "configure"
-#include "confdefs.h"
-#include <netinet/ip6.h>
+cat >>confdefs.h <<_ACEOF
+#define HAVE_STRUCT_SOCKADDR_IN6_SIN6_LEN 1
 _ACEOF
-if { (eval echo "$as_me:$LINENO: \"$ac_cpp conftest.$ac_ext\"") >&5
-  (eval $ac_cpp conftest.$ac_ext) 2>conftest.er1
-  ac_status=$?
-  egrep -v '^ *\+' conftest.er1 >conftest.err
-  rm -f conftest.er1
-  cat conftest.err >&5
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } >/dev/null; then
-  if test -s conftest.err; then
-    ac_cpp_err=$ac_c_preproc_warn_flag
-  else
-    ac_cpp_err=
-  fi
-else
-  ac_cpp_err=yes
-fi
-if test -z "$ac_cpp_err"; then
-  ac_header_preproc=yes
-else
-  echo "$as_me: failed program was:" >&5
-  cat conftest.$ac_ext >&5
-  ac_header_preproc=no
-fi
-rm -f conftest.err conftest.$ac_ext
-echo "$as_me:$LINENO: result: $ac_header_preproc" >&5
-echo "${ECHO_T}$ac_header_preproc" >&6
 
-# So?  What about this header?
-case $ac_header_compiler:$ac_header_preproc in
-  yes:no )
-    { echo "$as_me:$LINENO: WARNING: netinet/ip6.h: accepted by the compiler, rejected by the preprocessor!" >&5
-echo "$as_me: WARNING: netinet/ip6.h: accepted by the compiler, rejected by the preprocessor!" >&2;}
-    { echo "$as_me:$LINENO: WARNING: netinet/ip6.h: proceeding with the preprocessor's result" >&5
-echo "$as_me: WARNING: netinet/ip6.h: proceeding with the preprocessor's result" >&2;};;
-  no:yes )
-    { echo "$as_me:$LINENO: WARNING: netinet/ip6.h: present but cannot be compiled" >&5
-echo "$as_me: WARNING: netinet/ip6.h: present but cannot be compiled" >&2;}
-    { echo "$as_me:$LINENO: WARNING: netinet/ip6.h: check for missing prerequisite headers?" >&5
-echo "$as_me: WARNING: netinet/ip6.h: check for missing prerequisite headers?" >&2;}
-    { echo "$as_me:$LINENO: WARNING: netinet/ip6.h: proceeding with the preprocessor's result" >&5
-echo "$as_me: WARNING: netinet/ip6.h: proceeding with the preprocessor's result" >&2;};;
-esac
-echo "$as_me:$LINENO: checking for netinet/ip6.h" >&5
-echo $ECHO_N "checking for netinet/ip6.h... $ECHO_C" >&6
-if test "${ac_cv_header_netinet_ip6_h+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  ac_cv_header_netinet_ip6_h=$ac_header_preproc
-fi
-echo "$as_me:$LINENO: result: $ac_cv_header_netinet_ip6_h" >&5
-echo "${ECHO_T}$ac_cv_header_netinet_ip6_h" >&6
-
-fi
-if test $ac_cv_header_netinet_ip6_h = yes; then
-  HAVE_IPV6="yes"; cat >>confdefs.h <<\_ACEOF
+HAVE_IPV6="yes"; cat >>confdefs.h <<\_ACEOF
 #define HAVE_IPV6 1
 _ACEOF
 
 fi
-
 
 fi
 
