@@ -18,9 +18,10 @@ dyntest2: dyntest2.c
 test_code100: test_code100.c
 test_notice: test_notice.c
 test_init: test_init.c
+test_text: test_text.c
 
 .pgc.c:
 	$(ECPG) $? 
 
 clean:
-	rm -f test1 test2 test3 test4 perftest *.c log dyntest dyntest2 test_notice test_code100 test_init
+	rm -f test1 test2 test3 test4 perftest *.c log dyntest dyntest2 test_notice test_code100 test_init test_text

@@ -288,48 +288,52 @@ ECPGis_type_an_array(int type,const struct statement * stmt,const struct variabl
 	
 	if ((stmt->connection->cache_head)==NULL)
 	{	
+		/* Text like types are not an array for ecpg, but postgres counts them as
+		   an array. This define reminds you to not 'correct' these values. */
+#define not_an_array_in_ecpg false
+
 		/* populate cache with well known types to speed things up */
-		ECPGtypeinfocache_push(&(stmt->connection->cache_head),  BOOLOID, false, stmt->lineno);
-		ECPGtypeinfocache_push(&(stmt->connection->cache_head),  BYTEAOID, true, stmt->lineno);
-		ECPGtypeinfocache_push(&(stmt->connection->cache_head),  CHAROID, false, stmt->lineno);
-		ECPGtypeinfocache_push(&(stmt->connection->cache_head),  NAMEOID, true, stmt->lineno);
-		ECPGtypeinfocache_push(&(stmt->connection->cache_head),  INT8OID, false, stmt->lineno);
-		ECPGtypeinfocache_push(&(stmt->connection->cache_head),  INT2OID, false, stmt->lineno);
-		ECPGtypeinfocache_push(&(stmt->connection->cache_head),  INT2VECTOROID, true, stmt->lineno);
-		ECPGtypeinfocache_push(&(stmt->connection->cache_head),  INT4OID, false, stmt->lineno);
-		ECPGtypeinfocache_push(&(stmt->connection->cache_head),  REGPROCOID, false, stmt->lineno);
-		ECPGtypeinfocache_push(&(stmt->connection->cache_head),  TEXTOID, true, stmt->lineno);
-		ECPGtypeinfocache_push(&(stmt->connection->cache_head),  OIDOID, false, stmt->lineno);
-		ECPGtypeinfocache_push(&(stmt->connection->cache_head),  TIDOID, false, stmt->lineno);
-		ECPGtypeinfocache_push(&(stmt->connection->cache_head),  XIDOID, false, stmt->lineno);
-		ECPGtypeinfocache_push(&(stmt->connection->cache_head),  CIDOID, false, stmt->lineno);
-		ECPGtypeinfocache_push(&(stmt->connection->cache_head),  OIDVECTOROID, true, stmt->lineno);
-		ECPGtypeinfocache_push(&(stmt->connection->cache_head),  POINTOID, true, stmt->lineno);
-		ECPGtypeinfocache_push(&(stmt->connection->cache_head),  LSEGOID, true, stmt->lineno);
-		ECPGtypeinfocache_push(&(stmt->connection->cache_head),  PATHOID, true, stmt->lineno);
-		ECPGtypeinfocache_push(&(stmt->connection->cache_head),  BOXOID, true, stmt->lineno);
-		ECPGtypeinfocache_push(&(stmt->connection->cache_head),  POLYGONOID, false, stmt->lineno);
-		ECPGtypeinfocache_push(&(stmt->connection->cache_head),  LINEOID, true, stmt->lineno);
-		ECPGtypeinfocache_push(&(stmt->connection->cache_head),  FLOAT4OID, false, stmt->lineno);
-		ECPGtypeinfocache_push(&(stmt->connection->cache_head),  FLOAT8OID, false, stmt->lineno);
-		ECPGtypeinfocache_push(&(stmt->connection->cache_head),  ABSTIMEOID, false, stmt->lineno);
-		ECPGtypeinfocache_push(&(stmt->connection->cache_head),  RELTIMEOID, false, stmt->lineno);
-		ECPGtypeinfocache_push(&(stmt->connection->cache_head),  TINTERVALOID, false, stmt->lineno);
-		ECPGtypeinfocache_push(&(stmt->connection->cache_head),  UNKNOWNOID, true, stmt->lineno);
-		ECPGtypeinfocache_push(&(stmt->connection->cache_head),  CIRCLEOID, false, stmt->lineno);
-		ECPGtypeinfocache_push(&(stmt->connection->cache_head),  CASHOID, false, stmt->lineno);
-		ECPGtypeinfocache_push(&(stmt->connection->cache_head),  INETOID, false, stmt->lineno);
-		ECPGtypeinfocache_push(&(stmt->connection->cache_head),  CIDROID, false, stmt->lineno);
-		ECPGtypeinfocache_push(&(stmt->connection->cache_head),  BPCHAROID, false, stmt->lineno);
-		ECPGtypeinfocache_push(&(stmt->connection->cache_head),  VARCHAROID, false, stmt->lineno);
-		ECPGtypeinfocache_push(&(stmt->connection->cache_head),  DATEOID, false, stmt->lineno);
-		ECPGtypeinfocache_push(&(stmt->connection->cache_head),  TIMEOID, false, stmt->lineno);
-		ECPGtypeinfocache_push(&(stmt->connection->cache_head),  TIMESTAMPOID, false, stmt->lineno);
-		ECPGtypeinfocache_push(&(stmt->connection->cache_head),  INTERVALOID, false, stmt->lineno);
-		ECPGtypeinfocache_push(&(stmt->connection->cache_head),  TIMETZOID, false, stmt->lineno);
-		ECPGtypeinfocache_push(&(stmt->connection->cache_head),  ZPBITOID, false, stmt->lineno);
-		ECPGtypeinfocache_push(&(stmt->connection->cache_head),  VARBITOID, false, stmt->lineno);
-		ECPGtypeinfocache_push(&(stmt->connection->cache_head),  NUMERICOID, false, stmt->lineno);
+		ECPGtypeinfocache_push(&(stmt->connection->cache_head), BOOLOID, false, stmt->lineno);
+		ECPGtypeinfocache_push(&(stmt->connection->cache_head), BYTEAOID, not_an_array_in_ecpg, stmt->lineno);
+		ECPGtypeinfocache_push(&(stmt->connection->cache_head), CHAROID, false, stmt->lineno);
+		ECPGtypeinfocache_push(&(stmt->connection->cache_head), NAMEOID, not_an_array_in_ecpg, stmt->lineno);
+		ECPGtypeinfocache_push(&(stmt->connection->cache_head), INT8OID, false, stmt->lineno);
+		ECPGtypeinfocache_push(&(stmt->connection->cache_head), INT2OID, false, stmt->lineno);
+		ECPGtypeinfocache_push(&(stmt->connection->cache_head), INT2VECTOROID, true, stmt->lineno);
+		ECPGtypeinfocache_push(&(stmt->connection->cache_head), INT4OID, false, stmt->lineno);
+		ECPGtypeinfocache_push(&(stmt->connection->cache_head), REGPROCOID, false, stmt->lineno);
+		ECPGtypeinfocache_push(&(stmt->connection->cache_head), TEXTOID, not_an_array_in_ecpg, stmt->lineno);
+		ECPGtypeinfocache_push(&(stmt->connection->cache_head), OIDOID, false, stmt->lineno);
+		ECPGtypeinfocache_push(&(stmt->connection->cache_head), TIDOID, false, stmt->lineno);
+		ECPGtypeinfocache_push(&(stmt->connection->cache_head), XIDOID, false, stmt->lineno);
+		ECPGtypeinfocache_push(&(stmt->connection->cache_head), CIDOID, false, stmt->lineno);
+		ECPGtypeinfocache_push(&(stmt->connection->cache_head), OIDVECTOROID, true, stmt->lineno);
+		ECPGtypeinfocache_push(&(stmt->connection->cache_head), POINTOID, true, stmt->lineno);
+		ECPGtypeinfocache_push(&(stmt->connection->cache_head), LSEGOID, true, stmt->lineno);
+		ECPGtypeinfocache_push(&(stmt->connection->cache_head), PATHOID, not_an_array_in_ecpg , stmt->lineno);
+		ECPGtypeinfocache_push(&(stmt->connection->cache_head), BOXOID, true, stmt->lineno);
+		ECPGtypeinfocache_push(&(stmt->connection->cache_head), POLYGONOID, false, stmt->lineno);
+		ECPGtypeinfocache_push(&(stmt->connection->cache_head), LINEOID, true, stmt->lineno);
+		ECPGtypeinfocache_push(&(stmt->connection->cache_head), FLOAT4OID, false, stmt->lineno);
+		ECPGtypeinfocache_push(&(stmt->connection->cache_head), FLOAT8OID, false, stmt->lineno);
+		ECPGtypeinfocache_push(&(stmt->connection->cache_head), ABSTIMEOID, false, stmt->lineno);
+		ECPGtypeinfocache_push(&(stmt->connection->cache_head), RELTIMEOID, false, stmt->lineno);
+		ECPGtypeinfocache_push(&(stmt->connection->cache_head), TINTERVALOID, false, stmt->lineno);
+		ECPGtypeinfocache_push(&(stmt->connection->cache_head), UNKNOWNOID, not_an_array_in_ecpg, stmt->lineno);
+		ECPGtypeinfocache_push(&(stmt->connection->cache_head), CIRCLEOID, false, stmt->lineno);
+		ECPGtypeinfocache_push(&(stmt->connection->cache_head), CASHOID, false, stmt->lineno);
+		ECPGtypeinfocache_push(&(stmt->connection->cache_head), INETOID, false, stmt->lineno);
+		ECPGtypeinfocache_push(&(stmt->connection->cache_head), CIDROID, false, stmt->lineno);
+		ECPGtypeinfocache_push(&(stmt->connection->cache_head), BPCHAROID, false, stmt->lineno);
+		ECPGtypeinfocache_push(&(stmt->connection->cache_head), VARCHAROID, false, stmt->lineno);
+		ECPGtypeinfocache_push(&(stmt->connection->cache_head), DATEOID, false, stmt->lineno);
+		ECPGtypeinfocache_push(&(stmt->connection->cache_head), TIMEOID, false, stmt->lineno);
+		ECPGtypeinfocache_push(&(stmt->connection->cache_head), TIMESTAMPOID, false, stmt->lineno);
+		ECPGtypeinfocache_push(&(stmt->connection->cache_head), INTERVALOID, false, stmt->lineno);
+		ECPGtypeinfocache_push(&(stmt->connection->cache_head), TIMETZOID, false, stmt->lineno);
+		ECPGtypeinfocache_push(&(stmt->connection->cache_head), ZPBITOID, false, stmt->lineno);
+		ECPGtypeinfocache_push(&(stmt->connection->cache_head), VARBITOID, false, stmt->lineno);
+		ECPGtypeinfocache_push(&(stmt->connection->cache_head), NUMERICOID, false, stmt->lineno);
 	}
 
 	for (cache_entry = (stmt->connection->cache_head);cache_entry != NULL;cache_entry=cache_entry->next)
@@ -630,13 +634,27 @@ ECPGexecute(struct statement * stmt)
 					{
 						strncpy(mallocedval, "'{", sizeof("'{"));
 
-						for (element = 0; element < var->arrsize; element++)
-							sprintf(mallocedval + strlen(mallocedval), "%c,", (((char *) var->value)[element]) ? 't' : 'f');
+						if (var->offset==sizeof(char))
+							for (element = 0; element < var->arrsize; element++)
+								sprintf(mallocedval + strlen(mallocedval), "%c,", (((char *) var->value)[element]) ? 't' : 'f');
+						// this is necessary since sizeof(C++'s bool)==sizeof(int)
+						else if (var->offset==sizeof(int))
+							for (element = 0; element < var->arrsize; element++)
+								sprintf(mallocedval + strlen(mallocedval), "%c,", (((int *) var->value)[element]) ? 't' : 'f');
+						else
+							ECPGraise(stmt->lineno, ECPG_CONVERT_BOOL, "different size");
 
 						strncpy(mallocedval + strlen(mallocedval) - 1, "}'", sizeof("}'"));
 					}
 					else
-						sprintf(mallocedval, "'%c'", (*((char *) var->value)) ? 't' : 'f');
+					{
+						if (var->offset==sizeof(char))
+							sprintf(mallocedval, "'%c'", (*((char *) var->value)) ? 't' : 'f');
+						else if (var->offset==sizeof(int))
+							sprintf(mallocedval, "'%c'", (*((int *) var->value)) ? 't' : 'f');
+						else
+							ECPGraise(stmt->lineno, ECPG_CONVERT_BOOL, "different size");
+					}
 
 					tobeinserted = mallocedval;
 					break;
@@ -1006,7 +1024,7 @@ ECPGdo(int lineno, const char *connection_name, char *query,...)
  *
  * Copyright (c) 2000, Christof Petig <christof.petig@wtal.de>
  *
- * $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/execute.c,v 1.16 2001/01/02 22:03:02 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/execute.c,v 1.17 2001/01/31 16:12:34 meskes Exp $
  */
 
 PGconn	   *ECPG_internal_get_connection(char *name);

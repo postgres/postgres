@@ -1,0 +1,23 @@
+// $Id: test_text.pgc,v 1.1 2001/01/31 16:12:34 meskes Exp $
+
+exec sql include sqlca;
+#include <stdio.h>
+
+int main(int argc, char **argv)
+{  exec sql begin declare section;
+   int index;
+   char lab[15];
+   exec sql end declare section;
+
+   ECPGdebug(1,stdout);
+   
+   exec sql connect to mm;
+   if (sqlca.sqlcode) printf("%ld:%s\n",sqlca.sqlcode,sqlca.sqlerrm.sqlerrmc);
+
+   exec sql select 'a1234567890'::text into :lab;
+   if (sqlca.sqlcode) printf("%ld:%s\n",sqlca.sqlcode,sqlca.sqlerrm.sqlerrmc);
+
+   exec sql disconnect;
+   if (sqlca.sqlcode) printf("%ld:%s\n",sqlca.sqlcode,sqlca.sqlerrm.sqlerrmc);
+   return 0;
+}
