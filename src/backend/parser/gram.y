@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 1.73 1997/11/30 23:11:10 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 1.74 1997/12/02 02:54:15 thomas Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -731,17 +731,11 @@ ConstraintDef:	CHECK constraint_elem
 					$$ = constr;
 				}
 		| UNIQUE '(' columnList ')'
-				{	elog(WARN,"CREATE TABLE/UNIQUE not yet implemented",NULL); }
+				{	elog(NOTICE,"CREATE TABLE/UNIQUE clause ignored; not yet implemented",NULL); }
 		| PRIMARY KEY '(' columnList ')'
-				{
-					ConstraintDef *constr = palloc (sizeof(ConstraintDef));
-					constr->type = CONSTR_PRIMARY;
-					constr->name = NULL;
-					constr->keys = $4;
-					$$ = constr;
-				}
+				{	elog(NOTICE,"CREATE TABLE/PRIMARY KEY clause ignored; not yet implemented",NULL); }
 		| FOREIGN KEY '(' columnList ')' REFERENCES ColId opt_column_list key_match key_actions
-				{	elog(NOTICE,"FOREIGN KEY clause ignored; not yet implemented",NULL); }
+				{	elog(NOTICE,"CREATE TABLE/FOREIGN KEY clause ignored; not yet implemented",NULL); }
 		;
 
 constraint_elem:  AexprConst
