@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/libpq/be-fsstubs.c,v 1.5 1996/11/15 18:38:20 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/libpq/be-fsstubs.c,v 1.6 1997/03/18 21:29:21 scrappy Exp $
  *
  * NOTES
  *    This should be moved to a more appropriate place.  It is here
@@ -140,11 +140,21 @@ lo_write(int fd, char *buf, int len)
 int
 lo_lseek(int fd, int offset, int whence)
 {
+    MemoryContext currentContext;
+    int ret;
+
     if (fd >= MAX_LOBJ_FDS) {
 	elog(WARN,"lo_seek: large obj descriptor (%d) out of range", fd);
 	return -2;
     }
-    return inv_seek(cookies[fd], offset, whence);
+
+    currentContext = MemoryContextSwitchTo((MemoryContext)fscxt);
+
+    ret = inv_seek(cookies[fd], offset, whence);
+
+    MemoryContextSwitchTo(currentContext);
+
+    return ret;
 }
 
 Oid
