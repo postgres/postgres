@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execUtils.c,v 1.84 2002/06/25 17:27:20 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execUtils.c,v 1.85 2002/06/25 17:58:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,7 +18,7 @@
  *
  *		ExecOpenIndices			\
  *		ExecCloseIndices		 | referenced by InitPlan, EndPlan,
- *		ExecInsertIndexTuples	/  ExecInsert, ExecUpdate
+ *		ExecInsertIndexTuples	/  ExecAppend, ExecReplace
  *
  *		RegisterExprContextCallback    Register function shutdown callback
  *		UnregisterExprContextCallback  Deregister function shutdown callback

@@ -217,10 +217,3 @@ INSERT INTO serialTest VALUES ('force', 100);
 INSERT INTO serialTest VALUES ('wrong', NULL);
 
 SELECT * FROM serialTest;
-
-CREATE SEQUENCE sequence_test;
-
-BEGIN;
-SELECT nextval('sequence_test');
-DROP SEQUENCE sequence_test;
-END;

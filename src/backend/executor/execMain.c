@@ -27,7 +27,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.166 2002/06/25 17:27:20 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.167 2002/06/25 17:58:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -62,14 +62,14 @@ static TupleTableSlot *ExecutePlan(EState *estate, Plan *plan,
 			long numberTuples,
 			ScanDirection direction,
 			DestReceiver *destfunc);
-static void ExecSelect(TupleTableSlot *slot,
+static void ExecRetrieve(TupleTableSlot *slot,
 			 DestReceiver *destfunc,
 			 EState *estate);
-static void ExecInsert(TupleTableSlot *slot, ItemPointer tupleid,
+static void ExecAppend(TupleTableSlot *slot, ItemPointer tupleid,
 		   EState *estate);
 static void ExecDelete(TupleTableSlot *slot, ItemPointer tupleid,
 		   EState *estate);
-static void ExecUpdate(TupleTableSlot *slot, ItemPointer tupleid,
+static void ExecReplace(TupleTableSlot *slot, ItemPointer tupleid,
 			EState *estate);
 static TupleTableSlot *EvalPlanQualNext(EState *estate);
 static void EndEvalPlanQual(EState *estate);
@@ -251,7 +251,7 @@ ExecCheckQueryPerms(CmdType operation, Query *parseTree, Plan *plan)
 	ExecCheckRTPerms(parseTree->rtable, operation);
 
 	/*
-	 * Search for subplans and INSERT nodes to check their rangetables.
+	 * Search for subplans and APPEND nodes to check their rangetables.
 	 */
 	ExecCheckPlanPerms(plan, parseTree->rtable, operation);
 }
@@ -583,7 +583,7 @@ InitPlan(CmdType operation, Query *parseTree, Plan *plan, EState *estate)
 	/*
 	 * Get the tuple descriptor describing the type of tuples to return.
 	 * (this is especially important if we are creating a relation with
-	 * "SELECT INTO")
+	 * "retrieve into")
 	 */
 	tupType = ExecGetTupType(plan);		/* tuple descriptor */
 
@@ -892,7 +892,7 @@ EndPlan(Plan *plan, EState *estate)
  *		Retrieves all tuples if numberTuples is 0
  *
  *		result is either a slot containing the last tuple in the case
- *		of a SELECT or NULL otherwise.
+ *		of a RETRIEVE or NULL otherwise.
  *
  * Note: the ctid attribute is a 'junk' attribute that is removed before the
  * user can see it
@@ -1068,26 +1068,29 @@ lnext:	;
 
 			slot = ExecStoreTuple(newTuple,		/* tuple to store */
 								  junkfilter->jf_resultSlot,	/* dest slot */
-								  InvalidBuffer,	/* this tuple has no buffer */
+								  InvalidBuffer,		/* this tuple has no
+														 * buffer */
 								  true);		/* tuple should be pfreed */
-		}
+		}						/* if (junkfilter... */
 
 		/*
 		 * now that we have a tuple, do the appropriate thing with it..
 		 * either return it to the user, add it to a relation someplace,
 		 * delete it from a relation, or modify some of its attributes.
 		 */
+
 		switch (operation)
 		{
 			case CMD_SELECT:
-				ExecSelect(slot,		/* slot containing tuple */
-						   destfunc,	/* destination's tuple-receiver obj */
-						   estate);
+				ExecRetrieve(slot,		/* slot containing tuple */
+							 destfunc,	/* destination's tuple-receiver
+										 * obj */
+							 estate);	/* */
 				result = slot;
 				break;
 
 			case CMD_INSERT:
-				ExecInsert(slot, tupleid, estate);
+				ExecAppend(slot, tupleid, estate);
 				result = NULL;
 				break;
 
@@ -1097,7 +1100,7 @@ lnext:	;
 				break;
 
 			case CMD_UPDATE:
-				ExecUpdate(slot, tupleid, estate);
+				ExecReplace(slot, tupleid, estate);
 				result = NULL;
 				break;
 
@@ -1118,25 +1121,25 @@ lnext:	;
 
 	/*
 	 * here, result is either a slot containing a tuple in the case of a
-	 * SELECT or NULL otherwise.
+	 * RETRIEVE or NULL otherwise.
 	 */
 	return result;
 }
 
 /* ----------------------------------------------------------------
- *		ExecSelect
+ *		ExecRetrieve
  *
- *		SELECTs are easy.. we just pass the tuple to the appropriate
+ *		RETRIEVEs are easy.. we just pass the tuple to the appropriate
  *		print function.  The only complexity is when we do a
- *		"SELECT INTO", in which case we insert the tuple into
+ *		"retrieve into", in which case we insert the tuple into
  *		the appropriate relation (note: this is a newly created relation
  *		so we don't need to worry about indices or locks.)
  * ----------------------------------------------------------------
  */
 static void
-ExecSelect(TupleTableSlot *slot,
-		   DestReceiver *destfunc,
-		   EState *estate)
+ExecRetrieve(TupleTableSlot *slot,
+			 DestReceiver *destfunc,
+			 EState *estate)
 {
 	HeapTuple	tuple;
 	TupleDesc	attrtype;
@@ -1166,15 +1169,16 @@ ExecSelect(TupleTableSlot *slot,
 }
 
 /* ----------------------------------------------------------------
- *		ExecInsert
+ *		ExecAppend
  *
- *		INSERTs are trickier.. we have to insert the tuple into
+ *		APPENDs are trickier.. we have to insert the tuple into
  *		the base relation and insert appropriate tuples into the
  *		index relations.
  * ----------------------------------------------------------------
  */
+
 static void
-ExecInsert(TupleTableSlot *slot,
+ExecAppend(TupleTableSlot *slot,
 		   ItemPointer tupleid,
 		   EState *estate)
 {
@@ -1223,7 +1227,7 @@ ExecInsert(TupleTableSlot *slot,
 	 * Check the constraints of the tuple
 	 */
 	if (resultRelationDesc->rd_att->constr)
-		ExecConstraints("ExecInsert", resultRelInfo, slot, estate);
+		ExecConstraints("ExecAppend", resultRelInfo, slot, estate);
 
 	/*
 	 * insert the tuple
@@ -1255,7 +1259,7 @@ ExecInsert(TupleTableSlot *slot,
 /* ----------------------------------------------------------------
  *		ExecDelete
  *
- *		DELETE is like UPDATE, we delete the tuple and its
+ *		DELETE is like append, we delete the tuple and its
  *		index tuples.
  * ----------------------------------------------------------------
  */
@@ -1342,18 +1346,18 @@ ldelete:;
 }
 
 /* ----------------------------------------------------------------
- *		ExecUpdate
+ *		ExecReplace
  *
- *		note: we can't run UPDATE queries with transactions
- *		off because UPDATEs are actually INSERTs and our
- *		scan will mistakenly loop forever, updating the tuple
- *		it just inserted..	This should be fixed but until it
+ *		note: we can't run replace queries with transactions
+ *		off because replaces are actually appends and our
+ *		scan will mistakenly loop forever, replacing the tuple
+ *		it just appended..	This should be fixed but until it
  *		is, we don't want to get stuck in an infinite loop
  *		which corrupts your database..
  * ----------------------------------------------------------------
  */
 static void
-ExecUpdate(TupleTableSlot *slot,
+ExecReplace(TupleTableSlot *slot,
 			ItemPointer tupleid,
 			EState *estate)
 {
@@ -1369,7 +1373,7 @@ ExecUpdate(TupleTableSlot *slot,
 	 */
 	if (IsBootstrapProcessingMode())
 	{
-		elog(WARNING, "ExecUpdate: UPDATE can't run without transactions");
+		elog(WARNING, "ExecReplace: replace can't run without transactions");
 		return;
 	}
 
@@ -1420,7 +1424,7 @@ ExecUpdate(TupleTableSlot *slot,
 	 */
 lreplace:;
 	if (resultRelationDesc->rd_att->constr)
-		ExecConstraints("ExecUpdate", resultRelInfo, slot, estate);
+		ExecConstraints("ExecReplace", resultRelInfo, slot, estate);
 
 	/*
 	 * replace the heap tuple
@@ -1468,7 +1472,7 @@ lreplace:;
 	/*
 	 * Note: instead of having to update the old index tuples associated
 	 * with the heap tuple, all we do is form and insert new index tuples.
-	 * This is because UPDATEs are actually DELETEs and INSERTs and index
+	 * This is because replaces are actually deletes and inserts and index
 	 * tuple deletion is done automagically by the vacuum daemon. All we
 	 * do is insert new index tuples.  -cim 9/27/89
 	 */
@@ -1477,7 +1481,7 @@ lreplace:;
 	 * process indices
 	 *
 	 * heap_update updates a tuple in the base relation by invalidating it
-	 * and then inserting a new tuple to the relation.	As a side effect,
+	 * and then appending a new tuple to the relation.	As a side effect,
 	 * the tupleid of the new tuple is placed in the new tuple's t_ctid
 	 * field.  So we now insert index tuples using the new tupleid stored
 	 * there.
@@ -1550,7 +1554,7 @@ ExecRelCheck(ResultRelInfo *resultRelInfo,
 }
 
 void
-ExecConstraints(const char *caller, ResultRelInfo *resultRelInfo,
+ExecConstraints(char *caller, ResultRelInfo *resultRelInfo,
 				TupleTableSlot *slot, EState *estate)
 {
 	Relation	rel = resultRelInfo->ri_RelationDesc;

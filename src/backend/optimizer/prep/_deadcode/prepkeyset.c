@@ -1,7 +1,7 @@
 /*-------------------------------------------------------------------------
  *
  * prepkeyset.c
- *	  Special preparation for keyset queries (KSQO).
+ *	  Special preperation for keyset queries.
  *
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
@@ -13,6 +13,12 @@
  
 #include "postgres.h"
 #include "optimizer/planmain.h"
+
+/*
+ * Node_Copy
+ *		  a macro to simplify calling of copyObject on the specified field
+ */
+#define Node_Copy(from, newnode, field) newnode->field = copyObject(from->field)
 
 bool		_use_keyset_query_optimizer = FALSE;
 
@@ -49,20 +55,13 @@ static int	TotalExpr;
  *	 a HAVING, or a GROUP BY.	It must be a single table and have KSQO
  *	 set to 'on'.
  *
- *	 The primary use of this transformation is to avoid the exponential
+ *	 The primary use of this transformation is to avoid the exponrntial
  *	 memory consumption of cnfify() and to make use of index access
  *	 methods.
  *
  *		  daveh@insightdist.com   1998-08-31
  *
  *	 May want to also prune out duplicate terms.
- *
- *	 XXX: this code is currently not compiled because it has not been
- *	 updated to work with the re-implementation of UNION/INTERSECT/EXCEPT
- *	 in PostgreSQL 7.1. However, it is of questionable value in any
- *	 case, because it changes the semantics of the original query:
- *	 UNION will add an implicit SELECT DISTINCT, which might change
- *	 the results that are returned.
  **********************************************************************/
 void
 transformKeySetQuery(Query *origNode)

@@ -18,10 +18,6 @@ INSERT INTO test_having VALUES (9, 4, 'CCCC', 'j');
 SELECT b, c FROM test_having
 	GROUP BY b, c HAVING count(*) = 1;
 
--- HAVING is equivalent to WHERE in this case
-SELECT b, c FROM test_having
-	GROUP BY b, c HAVING b = 3; 
-
 SELECT lower(c), count(c) FROM test_having
 	GROUP BY lower(c) HAVING count(*) > 2 OR min(a) = max(a);
 

@@ -142,7 +142,7 @@ INSERT INTO serialTest VALUES ('foo');
 INSERT INTO serialTest VALUES ('bar');
 INSERT INTO serialTest VALUES ('force', 100);
 INSERT INTO serialTest VALUES ('wrong', NULL);
-ERROR:  ExecInsert: Fail to add null value in not null attribute f2
+ERROR:  ExecAppend: Fail to add null value in not null attribute f2
 SELECT * FROM serialTest;
   f1   | f2  
 -------+-----
@@ -151,13 +151,3 @@ SELECT * FROM serialTest;
  force | 100
 (3 rows)
 
-CREATE SEQUENCE sequence_test;
-BEGIN;
-SELECT nextval('sequence_test');
- nextval 
----------
-       1
-(1 row)
-
-DROP SEQUENCE sequence_test;
-END;
