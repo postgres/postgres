@@ -39,7 +39,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  * Portions taken from FreeBSD.
  *
- * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.57 2004/10/07 16:53:25 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.58 2004/10/07 17:29:12 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1909,7 +1909,7 @@ escape_locale(char **locale)
 {
 	int			len = strlen(*locale),
 				i, j;
-	char		*loc_temp = xmalloc(len * 2);
+	char		*loc_temp = xmalloc(len * 2 + 1);
 	
 	for (i = 0, j = 0; i < len; i++)
 	{
