@@ -11,7 +11,7 @@
 #define MAXNORMLEN 256
 
 #define STRNCASECMP(x,y)		pg_strncasecmp(x, y, strlen(y))
-#define GETWCHAR(W,L,N,T) ( ((uint8*)(W))[ ((T)=='p') ? (N) : ( (L) - 1 - (N) ) ] )
+#define GETWCHAR(W,L,N,T) ( ((uint8*)(W))[ ((T)==FF_PREFIX) ? (N) : ( (L) - 1 - (N) ) ] )
 #define GETCHAR(A,N,T)	  GETWCHAR( (A)->repl, (A)->replen, N, T )
 
 
@@ -103,7 +103,7 @@ cmpaffix(const void *s1, const void *s2)
 		return -1;
 	if (((const AFFIX *) s1)->type > ((const AFFIX *) s2)->type)
 		return 1;
-	if (((const AFFIX *) s1)->type == 'p')
+	if (((const AFFIX *) s1)->type == FF_PREFIX)
 		return (strcmp(((const AFFIX *) s1)->repl, ((const AFFIX *) s2)->repl));
 	else
 		return (strbcmp(((const AFFIX *) s1)->repl, ((const AFFIX *) s2)->repl));
@@ -620,7 +620,7 @@ NISortAffixes(IspellDict * Conf)
 
 	for (i = 0; i < Conf->naffixes; i++) {
 		Affix = &(((AFFIX *) Conf->Affix)[i]);
-		if ( Affix->type == 's' ) {
+		if ( Affix->type == FF_SUFFIX ) {
 			if ( firstsuffix<0 ) firstsuffix=i;
 			if ( Affix->flagflags & FF_COMPOUNDONLYAFX ) {
 				if ( !ptr->affix || strbncmp((ptr-1)->affix, Affix->repl, (ptr-1)->len) ) {
@@ -635,8 +635,8 @@ NISortAffixes(IspellDict * Conf)
 	ptr->affix = NULL;
 	Conf->CompoundAffix = (CMPDAffix*)realloc( Conf->CompoundAffix, sizeof(CMPDAffix) * (ptr-Conf->CompoundAffix+1) );
 
-	Conf->Prefix = mkANode(Conf, 0, firstsuffix, 0, 'p'); 
-	Conf->Suffix = mkANode(Conf, firstsuffix, Conf->naffixes, 0, 's');
+	Conf->Prefix = mkANode(Conf, 0, firstsuffix, 0, FF_PREFIX); 
+	Conf->Suffix = mkANode(Conf, firstsuffix, Conf->naffixes, 0, FF_SUFFIX);
         mkVoidAffix(Conf, 1, firstsuffix);
         mkVoidAffix(Conf, 0, firstsuffix);
 }
@@ -773,7 +773,7 @@ NormalizeSubWord(IspellDict * Conf, char *word, char flag) {
 	pnode=Conf->Prefix;
 	plevel=0;
 	while(pnode) {
-		prefix=FinfAffixes(pnode, word, wrdlen, &plevel,'p');
+		prefix=FinfAffixes(pnode, word, wrdlen, &plevel,FF_PREFIX);
 		if (!prefix) break;
 		for(j=0;j<prefix->naff;j++) {	
 			if ( CheckAffix(word,wrdlen,prefix->aff[j], flag, newword) ) {
@@ -792,7 +792,7 @@ NormalizeSubWord(IspellDict * Conf, char *word, char flag) {
 	/* Find all other NORMAL forms of the 'word' (check suffix and then prefix)*/
 	while( snode ) {
 		/* find possible suffix */
-		suffix = FinfAffixes(snode, word, wrdlen, &slevel, 's');
+		suffix = FinfAffixes(snode, word, wrdlen, &slevel, FF_SUFFIX);
 		if (!suffix) break;
 		/* foreach suffix check affix */
 		for(i=0;i<suffix->naff;i++) {
@@ -809,7 +809,7 @@ NormalizeSubWord(IspellDict * Conf, char *word, char flag) {
 				plevel=0;
 				swrdlen=strlen(newword);
 				while(pnode) {
-					prefix=FinfAffixes(pnode, newword, swrdlen, &plevel,'p');
+					prefix=FinfAffixes(pnode, newword, swrdlen, &plevel,FF_PREFIX);
 					if (!prefix) break;
 					for(j=0;j<prefix->naff;j++) {	
 						if ( CheckAffix(newword,swrdlen,prefix->aff[j], flag, pnewword) ) {
@@ -894,7 +894,7 @@ SplitToVariants( IspellDict * Conf, SPNode *snode, SplitVar * orig, char *word, 
 		StopLow = node->data;
 		StopHigh = node->data+node->length;
 		while (StopLow < StopHigh) {
-			StopMiddle = StopLow + (StopHigh - StopLow) / 2;
+			StopMiddle = StopLow + ((StopHigh - StopLow) >> 1);
 			if ( StopMiddle->val == ((uint8*)(word))[level] ) {
 				break;
 			} else if ( StopMiddle->val < ((uint8*)(word))[level] ) {
