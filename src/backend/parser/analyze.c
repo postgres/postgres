@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.88 1998/09/25 13:36:00 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.89 1998/10/28 16:06:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,7 +42,8 @@ static Query *transformUpdateStmt(ParseState *pstate, UpdateStmt *stmt);
 static Query *transformCursorStmt(ParseState *pstate, SelectStmt *stmt);
 static Query *transformCreateStmt(ParseState *pstate, CreateStmt *stmt);
 
-List	   *extras = NIL;
+List	   *extras_before = NIL;
+List	   *extras_after = NIL;
 
 /*
  * parse_analyze -
@@ -57,6 +58,7 @@ parse_analyze(List *pl, ParseState *parentParseState)
 {
 	QueryTreeList *result;
 	ParseState *pstate;
+	Query *parsetree;
 	int			i = 0;
 
 	result = malloc(sizeof(QueryTreeList));
@@ -66,23 +68,40 @@ parse_analyze(List *pl, ParseState *parentParseState)
 	while (pl != NIL)
 	{
 		pstate = make_parsestate(parentParseState);
-		result->qtrees[i++] = transformStmt(pstate, lfirst(pl));
+		parsetree = transformStmt(pstate, lfirst(pl));
 		if (pstate->p_target_relation != NULL)
 			heap_close(pstate->p_target_relation);
 
-		if (extras != NIL)
+		if (extras_before != NIL)
 		{
-			result->len += length(extras);
+			result->len += length(extras_before);
 			result->qtrees = (Query **) realloc(result->qtrees, result->len * sizeof(Query *));
-			while (extras != NIL)
+			while (extras_before != NIL)
 			{
-				result->qtrees[i++] = transformStmt(pstate, lfirst(extras));
+				result->qtrees[i++] = transformStmt(pstate, lfirst(extras_before));
 				if (pstate->p_target_relation != NULL)
 					heap_close(pstate->p_target_relation);
-				extras = lnext(extras);
+				extras_before = lnext(extras_before);
 			}
 		}
-		extras = NIL;
+		extras_before = NIL;
+
+		result->qtrees[i++] = parsetree;
+
+		if (extras_after != NIL)
+		{
+			result->len += length(extras_after);
+			result->qtrees = (Query **) realloc(result->qtrees, result->len * sizeof(Query *));
+			while (extras_after != NIL)
+			{
+				result->qtrees[i++] = transformStmt(pstate, lfirst(extras_after));
+				if (pstate->p_target_relation != NULL)
+					heap_close(pstate->p_target_relation);
+				extras_after = lnext(extras_after);
+			}
+		}
+		extras_after = NIL;
+
 		pl = lnext(pl);
 		pfree(pstate);
 	}
@@ -487,6 +506,7 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 	Constraint *constraint;
 	List	   *keys;
 	Ident	   *key;
+	List	   *blist = NIL;
 	List	   *ilist = NIL;
 	IndexStmt  *index;
 	IndexElem  *iparam;
@@ -553,7 +573,7 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 					elog(NOTICE, "CREATE TABLE will create implicit sequence %s for SERIAL column %s.%s",
 					  sequence->seqname, stmt->relname, column->colname);
 
-					ilist = lcons(sequence, NIL);
+					blist = lcons(sequence, NIL);
 				}
 
 				if (column->constraints != NIL)
@@ -745,7 +765,8 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 	}
 
 	q->utilityStmt = (Node *) stmt;
-	extras = ilist;
+	extras_before = blist;
+	extras_after = ilist;
 
 	return q;
 }
