@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/port/dynloader/linux.c,v 1.15 1999/07/17 20:17:31 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/port/dynloader/linux.c,v 1.16 1999/10/25 02:31:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,7 +21,7 @@
 #endif
 
 #ifdef NOT_USED
-extern char *pg_pathname;
+extern char pg_pathname[];
 
 void *
 pg_dlopen(char *filename)

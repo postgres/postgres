@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/port/dynloader/ultrix4.c,v 1.9 1999/07/17 20:17:31 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/port/dynloader/ultrix4.c,v 1.10 1999/10/25 02:31:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,7 +19,7 @@
 #include "port-protos.h"
 #include "utils/dynamic_loader.h"
 
-extern char *pg_pathname;
+extern char pg_pathname[];
 
 void *
 pg_dlopen(char *filename)

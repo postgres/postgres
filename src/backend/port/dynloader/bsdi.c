@@ -17,7 +17,7 @@
 #ifdef PRE_BSDI_2_1
 #include "postgres.h"
 
-extern char *pg_pathname;
+extern char pg_pathname[];
 
 void *
 pg_dlopen(char *filename)
