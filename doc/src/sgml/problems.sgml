@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/problems.sgml,v 2.9 2001/09/13 15:55:23 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/problems.sgml,v 2.10 2001/11/18 07:14:49 tgl Exp $
 -->
 
 <sect1 id="bug-reporting">
@@ -8,7 +8,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/problems.sgml,v 2.9 2001/09/13 15:55:23 pet
  <para>
   When you find a bug in <productname>PostgreSQL</productname> we want to
   hear about it. Your bug reports play an important part in making
-  <productname>PostgreSQL</productname> more reliable because even the utmost
+  <productname>PostgreSQL</productname> more reliable, because even the utmost
   care cannot guarantee that every part of PostgreSQL will work on every
   platform under every circumstance.
  </para>
@@ -66,7 +66,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/problems.sgml,v 2.9 2001/09/13 15:55:23 pet
     <listitem>
      <para>
       A program accepts invalid input without a notice or error message.
-      Keep in mind that your idea of invalid input might be our idea of
+      But keep in mind that your idea of invalid input might be our idea of
       an extension or compatibility with traditional practice.
      </para>
     </listitem>
@@ -83,9 +83,10 @@ $Header: /cvsroot/pgsql/doc/src/sgml/problems.sgml,v 2.9 2001/09/13 15:55:23 pet
   </para>
 
   <para>
-   Being slow or resource-hogging is not necessarily a bug. Read the documentation
-   or ask on one of the mailing lists for help in tuning your applications. Failing
-   to comply to <acronym>SQL</acronym> is not a bug unless compliance for the
+   Being slow or resource-hogging is not necessarily a bug. Read the
+   documentation or ask on one of the mailing lists for help in tuning your
+   applications. Failing to comply to the <acronym>SQL</acronym> standard is
+   not necessarily a bug either, unless compliance for the
    specific feature is explicitly claimed.
   </para>
 
@@ -161,9 +162,9 @@ $Header: /cvsroot/pgsql/doc/src/sgml/problems.sgml,v 2.9 2001/09/13 15:55:23 pet
      </para>
      <note>
       <para>
-       In case of fatal errors, the error message provided by the client might
-       not contain all the information available. In that case, also look at the
-       log output of the database server. If you do not keep your server
+       In case of fatal errors, the error message reported by the client might
+       not contain all the information available. Please also look at the
+       log output of the database server. If you do not keep your server's log
        output, this would be a good time to start doing so.
       </para>
      </note>
@@ -179,7 +180,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/problems.sgml,v 2.9 2001/09/13 15:55:23 pet
       Especially refrain from merely saying that <quote>This is not what SQL says/Oracle
       does.</quote> Digging out the correct behavior from <acronym>SQL</acronym>
       is not a fun undertaking, nor do we all know how all the other relational
-      databases out there behave. (If your problem is a program crash you can
+      databases out there behave. (If your problem is a program crash, you can
       obviously omit this item.)
      </para>
     </listitem>
@@ -208,8 +209,9 @@ $Header: /cvsroot/pgsql/doc/src/sgml/problems.sgml,v 2.9 2001/09/13 15:55:23 pet
       programs also support a <option>--version</option> option; at least
       <literal>postmaster --version</literal> and <literal>psql --version</literal>
       should work.
-      If the function or the options do not exist then your version is probably
-      old enough.  You can also look into the <filename>README</filename> file
+      If the function or the options do not exist then your version is
+      more than old enough to warrant an upgrade.  You can also look into the
+      <filename>README</filename> file 
       in the source directory or at the
       name of your distribution file or package name.
       If you run a prepackaged version, such as RPMs, say so, including any
@@ -254,13 +256,16 @@ $Header: /cvsroot/pgsql/doc/src/sgml/problems.sgml,v 2.9 2001/09/13 15:55:23 pet
 
   <para>
    When writing a bug report, please choose non-confusing terminology.
-   The software package as such is called <quote>PostgreSQL</quote>,
-   sometimes <quote>Postgres</quote> for short. (Sometimes
-   the abbreviation <quote>Pgsql</quote> is used but don't do that.) When you
+   The software package in total is called <quote>PostgreSQL</quote>,
+   sometimes <quote>Postgres</quote> for short. If you
    are specifically talking about the backend server, mention that, do not
-   just say <quote>Postgres crashes</quote>. The interactive frontend is called
-   <quote>psql</quote> and is for all intends and purposes completely separate
-   from the backend.
+   just say <quote>Postgres crashes</quote>.  A crash of a single
+   backend server process is quite different from crash of the parent
+   <quote>postmaster</> process; please don't say <quote>the postmaster
+   crashed</> when you mean a single backend went down, nor vice versa.
+   Also, client programs such as the interactive frontend <quote>psql</quote>
+   are completely separate from the backend.  Please try to be specific
+   about whether the problem is on the client or server side.
   </para>
  </sect2>
 
@@ -270,8 +275,16 @@ $Header: /cvsroot/pgsql/doc/src/sgml/problems.sgml,v 2.9 2001/09/13 15:55:23 pet
   <para>
    In general, send bug reports to the bug report mailing list at
    <email>pgsql-bugs@postgresql.org</email>.
-   You are invited to find a descriptive subject for your email
+   You are requested to use a descriptive subject for your email
    message, perhaps parts of the error message.
+  </para>
+
+  <para> 
+   Another method is to fill in the bug report web-form available
+   at the project's web site
+   <ulink url="http://www.postgresql.org/">http://www.postgresql.org/</ulink>.
+   Entering a bug report this way causes it to be mailed to the
+   <email>pgsql-bugs@postgresql.org</email> mailing list.
   </para>
 
   <para> 
@@ -290,13 +303,14 @@ $Header: /cvsroot/pgsql/doc/src/sgml/problems.sgml,v 2.9 2001/09/13 15:55:23 pet
    development of <productname>PostgreSQL</productname> and it would be nice
    if we could keep the bug reports separate. We might choose to take up a
    discussion
-   about your bug report on it, if the bug needs more review.
+   about your bug report on pgsql-hackers, if the problem needs more review.
   </para>
 
   <para>
-   If you have a problem with the documentation, send email to
-   the documentation mailing list <email>pgsql-docs@postgresql.org</email>.
-   Mention the document, chapter, and sections in your problem report.
+   If you have a problem with the documentation, the best place to report it
+   is the documentation mailing list <email>pgsql-docs@postgresql.org</email>.
+   Please be specific about what part of the documentation you are unhappy
+   with.
   </para>
  
   <para>
@@ -310,9 +324,10 @@ $Header: /cvsroot/pgsql/doc/src/sgml/problems.sgml,v 2.9 2001/09/13 15:55:23 pet
    <para>
     Due to the unfortunate amount of spam going around, all of the above
     email addresses are closed mailing lists. That is, you need to be
-    subscribed to a list to be allowed to post on it. If you simply
-    want to send mail but do not want to receive list traffic, you can
-    subscribe and set your subscription option to <literal>nomail</>.
+    subscribed to a list to be allowed to post on it.  (You need not be
+    subscribed to use the bug report web-form, however.)
+    If you would like to send mail but do not want to receive list traffic,
+    you can subscribe and set your subscription option to <literal>nomail</>.
     For more information send mail to
     <email>majordomo@postgresql.org</email>
     with the single word <literal>help</> in the body of the message.
