@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Attic/GNUmakefile.in,v 1.25 1998/04/06 17:02:13 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/Attic/GNUmakefile.in,v 1.26 1998/08/30 03:34:05 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -80,13 +80,14 @@ distclean: clean
 		bin/pg_version/Makefile \
 		include/config.h \
 		include/dynloader.h \
+		include/os.h \
+		include/version.h \
 		backend/port/tas.s \
 		backend/port/dynloader.c \
 		backend/utils/Gen_fmgrtab.sh \
 		interfaces/ecpg/lib/Makefile \
 		interfaces/libpq/Makefile \
 		interfaces/libpgtcl/Makefile \
-		include/os.h \
 		Makefile.port
 
 
