@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/port/linux/Attic/dynloader.c,v 1.4 1997/09/08 02:26:36 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/port/dynloader/linux.c,v 1.1 1997/12/20 02:36:17 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */

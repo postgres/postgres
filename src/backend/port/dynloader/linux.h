@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: port-protos.h,v 1.3 1997/09/07 04:46:15 momjian Exp $
+ * $Id: linux.h,v 1.1 1997/12/20 02:36:18 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
