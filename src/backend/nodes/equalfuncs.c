@@ -18,7 +18,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/equalfuncs.c,v 1.232 2004/11/05 19:15:59 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/equalfuncs.c,v 1.233 2004/12/11 23:26:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -375,6 +375,24 @@ _equalRelabelType(RelabelType *a, RelabelType *b)
 	if (a->relabelformat != b->relabelformat &&
 		a->relabelformat != COERCE_DONTCARE &&
 		b->relabelformat != COERCE_DONTCARE)
+		return false;
+
+	return true;
+}
+
+static bool
+_equalConvertRowtypeExpr(ConvertRowtypeExpr *a, ConvertRowtypeExpr *b)
+{
+	COMPARE_NODE_FIELD(arg);
+	COMPARE_SCALAR_FIELD(resulttype);
+
+	/*
+	 * Special-case COERCE_DONTCARE, so that planner can build coercion
+	 * nodes that are equal() to both explicit and implicit coercions.
+	 */
+	if (a->convertformat != b->convertformat &&
+		a->convertformat != COERCE_DONTCARE &&
+		b->convertformat != COERCE_DONTCARE)
 		return false;
 
 	return true;
@@ -1843,6 +1861,9 @@ equal(void *a, void *b)
 			break;
 		case T_RelabelType:
 			retval = _equalRelabelType(a, b);
+			break;
+		case T_ConvertRowtypeExpr:
+			retval = _equalConvertRowtypeExpr(a, b);
 			break;
 		case T_CaseExpr:
 			retval = _equalCaseExpr(a, b);

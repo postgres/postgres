@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/execnodes.h,v 1.120 2004/10/07 18:38:51 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/execnodes.h,v 1.121 2004/12/11 23:26:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -577,6 +577,23 @@ typedef struct FieldStoreState
 	List	   *newvals;		/* new value(s) for field(s) */
 	TupleDesc	argdesc;		/* tupdesc for most recent input */
 } FieldStoreState;
+
+/* ----------------
+ *		ConvertRowtypeExprState node
+ * ----------------
+ */
+typedef struct ConvertRowtypeExprState
+{
+	ExprState	xprstate;
+	ExprState  *arg;			/* input tuple value */
+	TupleDesc	indesc;			/* tupdesc for source rowtype */
+	TupleDesc	outdesc;		/* tupdesc for result rowtype */
+	AttrNumber *attrMap;		/* indexes of input fields, or 0 for null */
+	Datum	   *invalues;		/* workspace for deconstructing source */
+	char	   *innulls;
+	Datum	   *outvalues;		/* workspace for constructing result */
+	char	   *outnulls;
+} ConvertRowtypeExprState;
 
 /* ----------------
  *		CaseExprState node

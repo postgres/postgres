@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.184 2004/11/09 21:42:53 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.185 2004/12/11 23:26:39 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -1047,6 +1047,13 @@ strip_implicit_coercions(Node *node)
 		if (r->relabelformat == COERCE_IMPLICIT_CAST)
 			return strip_implicit_coercions((Node *) r->arg);
 	}
+	else if (IsA(node, ConvertRowtypeExpr))
+	{
+		ConvertRowtypeExpr *c = (ConvertRowtypeExpr *) node;
+
+		if (c->convertformat == COERCE_IMPLICIT_CAST)
+			return strip_implicit_coercions((Node *) c->arg);
+	}
 	else if (IsA(node, CoerceToDomain))
 	{
 		CoerceToDomain *c = (CoerceToDomain *) node;
@@ -1082,11 +1089,13 @@ set_coercionform_dontcare_walker(Node *node, void *context)
 		return false;
 	if (IsA(node, FuncExpr))
 		((FuncExpr *) node)->funcformat = COERCE_DONTCARE;
-	if (IsA(node, RelabelType))
+	else if (IsA(node, RelabelType))
 		((RelabelType *) node)->relabelformat = COERCE_DONTCARE;
-	if (IsA(node, RowExpr))
+	else if (IsA(node, ConvertRowtypeExpr))
+		((ConvertRowtypeExpr *) node)->convertformat = COERCE_DONTCARE;
+	else if (IsA(node, RowExpr))
 		((RowExpr *) node)->row_format = COERCE_DONTCARE;
-	if (IsA(node, CoerceToDomain))
+	else if (IsA(node, CoerceToDomain))
 		((CoerceToDomain *) node)->coercionformat = COERCE_DONTCARE;
 	return expression_tree_walker(node, set_coercionform_dontcare_walker,
 								  context);
@@ -2647,6 +2656,8 @@ expression_tree_walker(Node *node,
 			break;
 		case T_RelabelType:
 			return walker(((RelabelType *) node)->arg, context);
+		case T_ConvertRowtypeExpr:
+			return walker(((ConvertRowtypeExpr *) node)->arg, context);
 		case T_CaseExpr:
 			{
 				CaseExpr   *caseexpr = (CaseExpr *) node;
@@ -3054,6 +3065,16 @@ expression_tree_mutator(Node *node,
 
 				FLATCOPY(newnode, relabel, RelabelType);
 				MUTATE(newnode->arg, relabel->arg, Expr *);
+				return (Node *) newnode;
+			}
+			break;
+		case T_ConvertRowtypeExpr:
+			{
+				ConvertRowtypeExpr *convexpr = (ConvertRowtypeExpr *) node;
+				ConvertRowtypeExpr *newnode;
+
+				FLATCOPY(newnode, convexpr, ConvertRowtypeExpr);
+				MUTATE(newnode->arg, convexpr->arg, Expr *);
 				return (Node *) newnode;
 			}
 			break;

@@ -16,7 +16,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepjointree.c,v 1.23 2004/08/29 05:06:44 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepjointree.c,v 1.24 2004/12/11 23:26:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -836,6 +836,13 @@ find_nonnullable_rels(Node *node, bool top_level)
 	else if (IsA(node, RelabelType))
 	{
 		RelabelType *expr = (RelabelType *) node;
+
+		result = find_nonnullable_rels((Node *) expr->arg, top_level);
+	}
+	else if (IsA(node, ConvertRowtypeExpr))
+	{
+		/* not clear this is useful, but it can't hurt */
+		ConvertRowtypeExpr *expr = (ConvertRowtypeExpr *) node;
 
 		result = find_nonnullable_rels((Node *) expr->arg, top_level);
 	}

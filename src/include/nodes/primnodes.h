@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/primnodes.h,v 1.104 2004/08/29 05:06:57 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/primnodes.h,v 1.105 2004/12/11 23:26:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -590,6 +590,27 @@ typedef struct RelabelType
 	int32		resulttypmod;	/* output typmod (usually -1) */
 	CoercionForm relabelformat; /* how to display this node */
 } RelabelType;
+
+/* ----------------
+ * ConvertRowtypeExpr
+ *
+ * ConvertRowtypeExpr represents a type coercion from one composite type
+ * to another, where the source type is guaranteed to contain all the columns
+ * needed for the destination type plus possibly others; the columns need not
+ * be in the same positions, but are matched up by name.  This is primarily
+ * used to convert a whole-row value of an inheritance child table into a
+ * valid whole-row value of its parent table's rowtype.
+ * ----------------
+ */
+
+typedef struct ConvertRowtypeExpr
+{
+	Expr		xpr;
+	Expr	   *arg;			/* input expression */
+	Oid			resulttype;		/* output type (always a composite type) */
+	/* result typmod is not stored, but must be -1; see RowExpr comments */
+	CoercionForm convertformat; /* how to display this node */
+} ConvertRowtypeExpr;
 
 /*----------
  * CaseExpr - a CASE expression

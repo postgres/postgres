@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_coerce.c,v 2.124 2004/11/06 17:46:33 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_coerce.c,v 2.125 2004/12/11 23:26:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -321,13 +321,16 @@ coerce_type(ParseState *pstate, Node *node,
 	if (typeInheritsFrom(inputTypeId, targetTypeId))
 	{
 		/*
-		 * Input class type is a subclass of target, so nothing to do ---
-		 * except relabel the type.  This is binary compatibility for
-		 * complex types.
+		 * Input class type is a subclass of target, so generate an
+		 * appropriate runtime conversion (removing unneeded columns
+		 * and possibly rearranging the ones that are wanted).
 		 */
-		return (Node *) makeRelabelType((Expr *) node,
-										targetTypeId, -1,
-										cformat);
+		ConvertRowtypeExpr *r = makeNode(ConvertRowtypeExpr);
+
+		r->arg = (Expr *) node;
+		r->resulttype = targetTypeId;
+		r->convertformat = cformat;
+		return (Node *) r;
 	}
 	/* If we get here, caller blew it */
 	elog(ERROR, "failed to find conversion function from %s to %s",
@@ -567,6 +570,8 @@ hide_coercion_node(Node *node)
 		((FuncExpr *) node)->funcformat = COERCE_IMPLICIT_CAST;
 	else if (IsA(node, RelabelType))
 		((RelabelType *) node)->relabelformat = COERCE_IMPLICIT_CAST;
+	else if (IsA(node, ConvertRowtypeExpr))
+		((ConvertRowtypeExpr *) node)->convertformat = COERCE_IMPLICIT_CAST;
 	else if (IsA(node, RowExpr))
 		((RowExpr *) node)->row_format = COERCE_IMPLICIT_CAST;
 	else if (IsA(node, CoerceToDomain))

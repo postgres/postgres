@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/copyfuncs.c,v 1.293 2004/11/05 19:15:59 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/copyfuncs.c,v 1.294 2004/12/11 23:26:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -872,6 +872,21 @@ _copyRelabelType(RelabelType *from)
 	COPY_SCALAR_FIELD(resulttype);
 	COPY_SCALAR_FIELD(resulttypmod);
 	COPY_SCALAR_FIELD(relabelformat);
+
+	return newnode;
+}
+
+/*
+ * _copyConvertRowtypeExpr
+ */
+static ConvertRowtypeExpr *
+_copyConvertRowtypeExpr(ConvertRowtypeExpr *from)
+{
+	ConvertRowtypeExpr *newnode = makeNode(ConvertRowtypeExpr);
+
+	COPY_NODE_FIELD(arg);
+	COPY_SCALAR_FIELD(resulttype);
+	COPY_SCALAR_FIELD(convertformat);
 
 	return newnode;
 }
@@ -2695,6 +2710,9 @@ copyObject(void *from)
 			break;
 		case T_RelabelType:
 			retval = _copyRelabelType(from);
+			break;
+		case T_ConvertRowtypeExpr:
+			retval = _copyConvertRowtypeExpr(from);
 			break;
 		case T_CaseExpr:
 			retval = _copyCaseExpr(from);

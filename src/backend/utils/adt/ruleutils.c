@@ -3,7 +3,7 @@
  *				back to source text
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.185 2004/11/05 19:16:11 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.186 2004/12/11 23:26:45 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -2622,6 +2622,9 @@ isSimpleNode(Node *node, Node *parentNode, int prettyFlags)
 		case T_RelabelType:
 			return isSimpleNode((Node *) ((RelabelType *) node)->arg,
 								node, prettyFlags);
+		case T_ConvertRowtypeExpr:
+			return isSimpleNode((Node *) ((ConvertRowtypeExpr *) node)->arg,
+								node, prettyFlags);
 
 		case T_OpExpr:
 			{
@@ -3129,6 +3132,30 @@ get_rule_expr(Node *node, deparse_context *context,
 					appendStringInfo(buf, "::%s",
 							format_type_with_typemod(relabel->resulttype,
 												 relabel->resulttypmod));
+				}
+			}
+			break;
+
+		case T_ConvertRowtypeExpr:
+			{
+				ConvertRowtypeExpr *convert = (ConvertRowtypeExpr *) node;
+				Node	   *arg = (Node *) convert->arg;
+
+				if (convert->convertformat == COERCE_IMPLICIT_CAST &&
+					!showimplicit)
+				{
+					/* don't show the implicit cast */
+					get_rule_expr_paren(arg, context, false, node);
+				}
+				else
+				{
+					if (!PRETTY_PAREN(context))
+						appendStringInfoChar(buf, '(');
+					get_rule_expr_paren(arg, context, false, node);
+					if (!PRETTY_PAREN(context))
+						appendStringInfoChar(buf, ')');
+					appendStringInfo(buf, "::%s",
+							format_type_with_typemod(convert->resulttype, -1));
 				}
 			}
 			break;

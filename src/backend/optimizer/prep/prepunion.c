@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepunion.c,v 1.117 2004/10/02 22:39:47 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepunion.c,v 1.118 2004/12/11 23:26:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,6 +40,8 @@ typedef struct
 {
 	Index		old_rt_index;
 	Index		new_rt_index;
+	Oid			old_rel_type;
+	Oid			new_rel_type;
 	TupleDesc	old_tupdesc;
 	TupleDesc	new_tupdesc;
 	char	   *old_rel_name;
@@ -826,6 +828,8 @@ adjust_inherited_attrs(Node *node,
 
 	context.old_rt_index = old_rt_index;
 	context.new_rt_index = new_rt_index;
+	context.old_rel_type = oldrelation->rd_rel->reltype;
+	context.new_rel_type = newrelation->rd_rel->reltype;
 	context.old_tupdesc = RelationGetDescr(oldrelation);
 	context.new_tupdesc = RelationGetDescr(newrelation);
 	context.old_rel_name = RelationGetRelationName(oldrelation);
@@ -910,50 +914,6 @@ translate_inherited_attnum(AttrNumber old_attno,
 	return 0;					/* keep compiler quiet */
 }
 
-/*
- * Translate a whole-row Var to be correct for a child table.
- *
- * In general the child will not have a suitable field layout to be used
- * directly, so we translate the simple whole-row Var into a ROW() construct.
- */
-static Node *
-generate_whole_row(Var *var,
-				   adjust_inherited_attrs_context *context)
-{
-	RowExpr    *rowexpr;
-	List	   *fields = NIL;
-	int			oldnatts = context->old_tupdesc->natts;
-	int			i;
-
-	for (i = 0; i < oldnatts; i++)
-	{
-		Form_pg_attribute att = context->old_tupdesc->attrs[i];
-		Var		   *newvar;
-
-		if (att->attisdropped)
-		{
-			/*
-			 * can't use atttypid here, but it doesn't really matter what
-			 * type the Const claims to be.
-			 */
-			newvar = (Var *) makeNullConst(INT4OID);
-		}
-		else
-			newvar = makeVar(context->new_rt_index,
-							 translate_inherited_attnum(i + 1, context),
-							 att->atttypid,
-							 att->atttypmod,
-							 0);
-		fields = lappend(fields, newvar);
-	}
-	rowexpr = makeNode(RowExpr);
-	rowexpr->args = fields;
-	rowexpr->row_typeid = var->vartype; /* report parent's rowtype */
-	rowexpr->row_format = COERCE_IMPLICIT_CAST;
-
-	return (Node *) rowexpr;
-}
-
 static Node *
 adjust_inherited_attrs_mutator(Node *node,
 							   adjust_inherited_attrs_context *context)
@@ -977,8 +937,22 @@ adjust_inherited_attrs_mutator(Node *node,
 			}
 			else if (var->varattno == 0)
 			{
-				/* expand whole-row reference into a ROW() construct */
-				return generate_whole_row(var, context);
+				/*
+				 * Whole-row Var: we need to insert a coercion step to convert
+				 * the tuple layout to the parent's rowtype.
+				 */
+				if (context->old_rel_type != context->new_rel_type)
+				{
+					ConvertRowtypeExpr *r = makeNode(ConvertRowtypeExpr);
+
+					r->arg = (Expr *) var;
+					r->resulttype = context->old_rel_type;
+					r->convertformat = COERCE_IMPLICIT_CAST;
+					/* Make sure the Var node has the right type ID, too */
+					Assert(var->vartype == context->old_rel_type);
+					var->vartype = context->new_rel_type;
+					return (Node *) r;
+				}
 			}
 			/* system attributes don't need any translation */
 		}
