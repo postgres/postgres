@@ -29,13 +29,33 @@ timestamp_out(time_t timestamp)
 	char		zone[MAXDATELEN + 1],
 			   *tzn = zone;
 
-	abstime2tm(timestamp, &tz, tm, tzn);
-	EncodeDateTime(tm, fsec, &tz, &tzn, USE_ISO_DATES, buf);
-
+	switch (timestamp)
+	{
+		case EPOCH_ABSTIME:
+			strcpy(buf, EPOCH);
+			break;
+		case INVALID_ABSTIME:
+			strcpy(buf, INVALID);
+			break;
+		case CURRENT_ABSTIME:
+			strcpy(buf, DCURRENT);
+			break;
+		case NOEND_ABSTIME:
+			strcpy(buf, LATE);
+			break;
+		case NOSTART_ABSTIME:
+			strcpy(buf, EARLY);
+			break;
+		default:
+			abstime2tm(timestamp, &tz, tm, tzn);
+			EncodeDateTime(tm, fsec, &tz, &tzn, USE_ISO_DATES, buf);
+			break;
+	}
+ 
 	result = palloc(strlen(buf) + 1);
 	strcpy(result, buf);
 	return result;
-}
+} /* timestamp_out() */
 
 time_t
 now(void)
@@ -49,58 +69,40 @@ now(void)
 bool
 timestampeq(time_t t1, time_t t2)
 {
-#if FALSE
-	return(t1 == t2);
-#endif
 	return(abstimeeq(t1,t2));
 }
 
 bool
 timestampne(time_t t1, time_t t2)
 {
-#if FALSE
-	return(t1 != t2);
-#endif
 	return(abstimene(t1,t2));
 }
 
 bool
 timestamplt(time_t t1, time_t t2)
 {
-#if FALSE
-	return(t1 > t2);
-#endif
 	return(abstimelt(t1,t2));
 }
 
 bool
 timestampgt(time_t t1, time_t t2)
 {
-#if FALSE
-	return(t1 < t2);
-#endif
 	return(abstimegt(t1,t2));
 }
 
 bool
 timestample(time_t t1, time_t t2)
 {
-#if FALSE
-	return(t1 >= t2);
-#endif
 	return(abstimele(t1,t2));
 }
 
 bool
 timestampge(time_t t1, time_t t2)
 {
-#if FALSE
-	return(t1 <= t2);
-#endif
 	return(abstimege(t1,t2));
 }
 
-DateTime   *
+DateTime *
 timestamp_datetime(time_t timestamp)
 {
 	DateTime   *result;
