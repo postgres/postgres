@@ -1,10 +1,10 @@
 # ru.po
 # PSQL Translated Messages into the Russian Language (KOI8-R)
 #
-# $PostgreSQL: pgsql/src/bin/psql/po/ru.po,v 1.16 2004/09/13 12:11:22 petere Exp $
+# $PostgreSQL: pgsql/src/bin/psql/po/ru.po,v 1.17 2004/09/20 07:44:42 petere Exp $
 #
 # ChangeLog:
-#   - March 27 - August 24, 2004: Updates for 8.0; <mokhov@cs.concordia.ca>
+#   - March 27 - September 14, 2004: Updates for 8.0; <mokhov@cs.concordia.ca>
 #   - July 26 - October 12, 2003: Updates for 7.4.x; <mokhov@cs.concordia.ca>
 #   - October 12, 2002: Complete post-7.3beta2 Translation, Serguei A. Mokhov <mokhov@cs.concordia.ca>
 #   - September 7, 2002: Complete post-7.3beta1 Translation, Serguei A. Mokhov <mokhov@cs.concordia.ca>
@@ -13,8 +13,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 8.0\n"
-"POT-Creation-Date: 2004-08-24 19:08-0300\n"
-"PO-Revision-Date: 2004-08-24 23:15-0500\n"
+"POT-Creation-Date: 2004-09-14 01:15+0100\n"
+"PO-Revision-Date: 2004-09-14 00:16-0500\n"
 "Last-Translator: Serguei A. Mokhov <mokhov@cs.concordia.ca>\n"
 "Language-Team: pgsql-rus <pgsql-rus@yahoogroups.com>\n"
 "MIME-Version: 1.0\n"
@@ -85,9 +85,9 @@ msgid "Wrote history to file \"%s\".\n"
 msgstr "История записана в файл \"%s\".\n"
 
 #: command.c:681
-#: common.c:86
-#: common.c:100
-#: mainloop.c:70
+#: common.c:85
+#: common.c:99
+#: mainloop.c:71
 msgid "out of memory\n"
 msgstr "недостаточно памяти\n"
 
@@ -115,9 +115,9 @@ msgstr "Cекундомер выключен."
 #: command.c:1220
 #: command.c:1242
 #: command.c:1273
-#: common.c:171
-#: copy.c:540
-#: copy.c:585
+#: common.c:170
+#: copy.c:530
+#: copy.c:575
 #, c-format
 msgid "%s: %s\n"
 msgstr "%s: %s\n"
@@ -130,10 +130,10 @@ msgid "Password: "
 msgstr "Пароль: "
 
 #: command.c:953
-#: common.c:217
-#: common.c:599
-#: common.c:654
-#: common.c:897
+#: common.c:216
+#: common.c:605
+#: common.c:660
+#: common.c:903
 #, c-format
 msgid "%s"
 msgstr "%s"
@@ -272,58 +272,58 @@ msgstr "\\pset: неизвестная опция: %s\n"
 msgid "\\!: failed\n"
 msgstr "\\!: неудачно\n"
 
-#: common.c:79
+#: common.c:78
 #, c-format
 msgid "%s: xstrdup: cannot duplicate null pointer (internal error)\n"
 msgstr "%s: xstrdup: не возможно сделать копию нулевого указателя (внутренняя ошибка)\n"
 
-#: common.c:124
+#: common.c:123
 msgid "out of memory"
 msgstr "недостаточно памяти"
 
-#: common.c:299
+#: common.c:298
 msgid "connection to server was lost\n"
 msgstr "подсоединение к серверу было потеряно\n"
 
-#: common.c:303
+#: common.c:302
 msgid "The connection to the server was lost. Attempting reset: "
 msgstr "Подсоединение к серверу было потеряно. Попытка переустановить: "
 
-#: common.c:308
+#: common.c:307
 msgid "Failed.\n"
 msgstr "Безуспешно.\n"
 
-#: common.c:315
+#: common.c:314
 msgid "Succeeded.\n"
 msgstr "Успешно.\n"
 
-#: common.c:383
+#: common.c:391
 #, c-format
 msgid "INTERNAL ERROR: unexpected statement position \"%s\"\n"
 msgstr "ВНУТРЕННЯ: unexpected statement position \"%s\"\n"
 
-#: common.c:519
+#: common.c:527
 #, c-format
 msgid "LINE %d: "
 msgstr "СТРОКА %d: "
 
-#: common.c:538
-#: common.c:547
+#: common.c:544
+#: common.c:553
 #, c-format
 msgid "%s\n"
 msgstr "%s\n"
 
-#: common.c:630
-#: common.c:865
+#: common.c:636
+#: common.c:871
 msgid "You are currently not connected to a database.\n"
 msgstr "В данный момент вы не подсоединены к базе данных.\n"
 
-#: common.c:685
+#: common.c:691
 #, c-format
 msgid "Asynchronous notification \"%s\" received from server process with PID %d.\n"
 msgstr "Получено асинхронное оповещение \"%s\" от процесса-сервера с PID %d.\n"
 
-#: common.c:873
+#: common.c:879
 #, c-format
 msgid ""
 "***(Single step mode: verify command)*******************************************\n"
@@ -334,7 +334,7 @@ msgstr ""
 "%s\n"
 "***(нажмите ввод для продолжения или наберите x и ввод для отмены)**************\n"
 
-#: common.c:924
+#: common.c:930
 #, c-format
 msgid "Time: %.3f ms\n"
 msgstr "Время: %.3f мс\n"
@@ -343,31 +343,31 @@ msgstr "Время: %.3f мс\n"
 msgid "\\copy: arguments required\n"
 msgstr "\\copy: необходимы аргументы\n"
 
-#: copy.c:412
+#: copy.c:408
 #, c-format
 msgid "\\copy: parse error at \"%s\"\n"
 msgstr "\\copy: ошибка при анализе синтаксиса в \"%s\"\n"
 
-#: copy.c:414
+#: copy.c:410
 msgid "\\copy: parse error at end of line\n"
 msgstr "\\copy: ошибка при анализе синтаксиса в конце строки\n"
 
-#: copy.c:551
+#: copy.c:541
 #, c-format
 msgid "%s: cannot copy from/to a directory\n"
 msgstr "%s: нельзя использовать COPY TO/FROM для директорий\n"
 
-#: copy.c:572
+#: copy.c:562
 #, c-format
 msgid "\\copy: %s"
 msgstr "\\copy: %s"
 
-#: copy.c:576
+#: copy.c:566
 #, c-format
 msgid "\\copy: unexpected response (%d)\n"
 msgstr "\\copy: неожидаемый ответ (%d)\n"
 
-#: copy.c:678
+#: copy.c:668
 msgid ""
 "Enter data to be copied followed by a newline.\n"
 "End with a backslash and a period on a line by itself."
@@ -876,36 +876,36 @@ msgid "%s: unknown transaction status\n"
 msgstr "%s: неизвестное состояние транзакции\n"
 
 #: describe.c:83
-#: describe.c:186
-#: describe.c:259
-#: describe.c:321
-#: describe.c:368
-#: describe.c:468
-#: describe.c:757
-#: describe.c:1480
-#: describe.c:1727
-#: large_obj.c:255
+#: describe.c:187
+#: describe.c:260
+#: describe.c:322
+#: describe.c:369
+#: describe.c:469
+#: describe.c:758
+#: describe.c:1488
+#: describe.c:1733
+#: large_obj.c:256
 msgid "Description"
 msgstr "Описание"
 
-#: large_obj.c:263
+#: large_obj.c:264
 msgid "Large objects"
 msgstr "Большие объекты"
 
-#: mainloop.c:173
+#: mainloop.c:172
 #, c-format
 msgid "Use \"\\q\" to leave %s.\n"
 msgstr "Используйте \"\\q\" чтобы выйти из %s.\n"
 
-#: print.c:424
+#: print.c:428
 msgid "(No rows)\n"
 msgstr "(Нет записей)\n"
 
-#: print.c:1196
+#: print.c:1200
 msgid "(1 row)"
 msgstr "(1 запись)"
 
-#: print.c:1198
+#: print.c:1202
 #, c-format
 msgid "(%d rows)"
 msgstr "(записей: %d)"
@@ -971,11 +971,11 @@ msgstr "%s: внимание: излишняя опция: \"%s\" -- проигнорирована\n"
 msgid "%s: Warning: The -u option is deprecated. Use -U.\n"
 msgstr "%s: Внимание: Опция -u устарела. Используйте -U.\n"
 
-#: startup.c:629
+#: startup.c:630
 msgid "contains support for command-line editing"
 msgstr "поддерживает редактирование командной строки"
 
-#: startup.c:652
+#: startup.c:653
 #, c-format
 msgid ""
 "SSL connection (cipher: %s, bits: %i)\n"
@@ -985,29 +985,29 @@ msgstr ""
 "\n"
 
 #: describe.c:82
-#: describe.c:176
-#: describe.c:246
-#: describe.c:319
-#: describe.c:414
-#: describe.c:468
-#: describe.c:1473
-#: describe.c:1579
-#: describe.c:1627
+#: describe.c:177
+#: describe.c:247
+#: describe.c:320
+#: describe.c:415
+#: describe.c:469
+#: describe.c:1476
+#: describe.c:1585
+#: describe.c:1633
 msgid "Schema"
 msgstr "Схема"
 
 #: describe.c:82
-#: describe.c:127
-#: describe.c:176
-#: describe.c:246
-#: describe.c:319
-#: describe.c:361
-#: describe.c:414
-#: describe.c:468
-#: describe.c:1473
-#: describe.c:1580
-#: describe.c:1628
-#: describe.c:1721
+#: describe.c:128
+#: describe.c:177
+#: describe.c:247
+#: describe.c:320
+#: describe.c:362
+#: describe.c:415
+#: describe.c:469
+#: describe.c:1476
+#: describe.c:1586
+#: describe.c:1634
+#: describe.c:1727
 msgid "Name"
 msgstr "Имя"
 
@@ -1023,237 +1023,237 @@ msgstr "Тип данных"
 msgid "List of aggregate functions"
 msgstr "Список агрегатных функций"
 
-#: describe.c:116
+#: describe.c:117
 #, c-format
 msgid "This server version (%d) does not support tablespaces.\n"
 msgstr "Данная версия сервера (%d) не поддерживает tablespaces.\n"
 
-#: describe.c:127
-#: describe.c:185
-#: describe.c:361
-#: describe.c:1475
-#: describe.c:1721
+#: describe.c:128
+#: describe.c:186
+#: describe.c:362
+#: describe.c:1478
+#: describe.c:1727
 msgid "Owner"
 msgstr "Владелец"
 
-#: describe.c:127
+#: describe.c:128
 msgid "Location"
 msgstr "Расположение"
 
-#: describe.c:132
-#: describe.c:414
-#: describe.c:1727
+#: describe.c:133
+#: describe.c:415
+#: describe.c:1733
 msgid "Access privileges"
 msgstr "Привилегии доступа"
 
-#: describe.c:149
+#: describe.c:150
 msgid "List of tablespaces"
 msgstr "Список tablespaces"
 
-#: describe.c:176
+#: describe.c:177
 msgid "Result data type"
 msgstr "Тип данных результата"
 
-#: describe.c:177
+#: describe.c:178
 msgid "Argument data types"
 msgstr "Типы данных аргументов"
 
-#: describe.c:185
+#: describe.c:186
 msgid "Language"
 msgstr "Язык"
 
-#: describe.c:186
+#: describe.c:187
 msgid "Source code"
 msgstr "Исходный текст"
 
-#: describe.c:220
+#: describe.c:221
 msgid "List of functions"
 msgstr "Список функций"
 
-#: describe.c:256
+#: describe.c:257
 msgid "Internal name"
 msgstr "Внутреннее имя"
 
-#: describe.c:256
+#: describe.c:257
 msgid "Size"
 msgstr "Размер"
 
-#: describe.c:288
+#: describe.c:289
 msgid "List of data types"
 msgstr "Список типов данных"
 
-#: describe.c:320
+#: describe.c:321
 msgid "Left arg type"
 msgstr "Тип левого аргумента"
 
-#: describe.c:320
+#: describe.c:321
 msgid "Right arg type"
 msgstr "Тип правого аргумента"
 
-#: describe.c:321
+#: describe.c:322
 msgid "Result type"
 msgstr "Результирующий тип"
 
-#: describe.c:335
+#: describe.c:336
 msgid "List of operators"
 msgstr "Список операторов"
 
-#: describe.c:364
+#: describe.c:365
 msgid "Encoding"
 msgstr "Кодировка"
 
-#: describe.c:380
+#: describe.c:381
 msgid "List of databases"
 msgstr "Список баз данных"
 
-#: describe.c:414
-#: describe.c:542
-#: describe.c:1474
+#: describe.c:415
+#: describe.c:543
+#: describe.c:1477
 msgid "table"
 msgstr "таблица"
 
-#: describe.c:414
-#: describe.c:542
-#: describe.c:1474
+#: describe.c:415
+#: describe.c:543
+#: describe.c:1477
 msgid "view"
 msgstr "вид"
 
-#: describe.c:414
-#: describe.c:542
-#: describe.c:1474
+#: describe.c:415
+#: describe.c:543
+#: describe.c:1477
 msgid "sequence"
 msgstr "последовательность"
 
-#: describe.c:414
-#: describe.c:744
-#: describe.c:1475
-#: describe.c:1581
+#: describe.c:415
+#: describe.c:745
+#: describe.c:1478
+#: describe.c:1587
 msgid "Type"
 msgstr "Тип"
 
-#: describe.c:436
+#: describe.c:437
 #, c-format
 msgid "Access privileges for database \"%s\""
 msgstr "Привилегии доступа для базы данных \"%s\""
 
-#: describe.c:468
+#: describe.c:469
 msgid "Object"
 msgstr "Объект"
 
-#: describe.c:479
+#: describe.c:480
 msgid "aggregate"
 msgstr "агрегат"
 
-#: describe.c:497
+#: describe.c:498
 msgid "function"
 msgstr "функция"
 
-#: describe.c:511
+#: describe.c:512
 msgid "operator"
 msgstr "оператор"
 
-#: describe.c:525
+#: describe.c:526
 msgid "data type"
 msgstr "тип данных"
 
-#: describe.c:542
-#: describe.c:1474
+#: describe.c:543
+#: describe.c:1477
 msgid "index"
 msgstr "индекс"
 
-#: describe.c:558
+#: describe.c:559
 msgid "rule"
 msgstr "правило"
 
-#: describe.c:574
+#: describe.c:575
 msgid "trigger"
 msgstr "триггер"
 
-#: describe.c:592
+#: describe.c:593
 msgid "Object descriptions"
 msgstr "Описание объекта"
 
-#: describe.c:640
+#: describe.c:641
 #, c-format
 msgid "Did not find any relation named \"%s\".\n"
 msgstr "Связи с именем \"%s\" не найдено.\n"
 
-#: describe.c:727
+#: describe.c:728
 #, c-format
 msgid "Did not find any relation with OID %s.\n"
 msgstr "Связи с OID %s не найдено.\n"
 
-#: describe.c:743
+#: describe.c:744
 msgid "Column"
 msgstr "Колонка"
 
-#: describe.c:751
+#: describe.c:752
 msgid "Modifiers"
 msgstr "Модификаторы"
 
-#: describe.c:858
+#: describe.c:859
 #, c-format
 msgid "Table \"%s.%s\""
 msgstr "Таблица \"%s.%s\""
 
-#: describe.c:862
+#: describe.c:863
 #, c-format
 msgid "View \"%s.%s\""
 msgstr "Вид \"%s.%s\""
 
-#: describe.c:866
+#: describe.c:867
 #, c-format
 msgid "Sequence \"%s.%s\""
 msgstr "Последовательность \"%s.%s\""
 
-#: describe.c:870
+#: describe.c:871
 #, c-format
 msgid "Index \"%s.%s\""
 msgstr "Индекс \"%s.%s\""
 
-#: describe.c:874
+#: describe.c:875
 #, c-format
 msgid "Special relation \"%s.%s\""
 msgstr "Специальная связь \"%s.%s\""
 
-#: describe.c:878
+#: describe.c:879
 #, c-format
 msgid "TOAST table \"%s.%s\""
 msgstr "TOAST-таблица \"%s.%s\""
 
-#: describe.c:882
+#: describe.c:883
 #, c-format
 msgid "Composite type \"%s.%s\""
 msgstr "Сложный тип \"%s.%s\""
 
-#: describe.c:886
+#: describe.c:887
 #, c-format
 msgid "?%c? \"%s.%s\""
 msgstr "?%c? \"%s.%s\""
 
-#: describe.c:924
+#: describe.c:925
 msgid "PRIMARY KEY, "
 msgstr "PRIMARY KEY, "
 
-#: describe.c:926
+#: describe.c:927
 msgid "UNIQUE, "
 msgstr "UNIQUE, "
 
-#: describe.c:932
+#: describe.c:933
 #, c-format
 msgid "for table \"%s.%s\""
 msgstr "для таблицы \"%s.%s\""
 
-#: describe.c:936
+#: describe.c:937
 #, c-format
 msgid ", predicate (%s)"
 msgstr ", предикат (%s)"
 
-#: describe.c:939
+#: describe.c:940
 msgid ", CLUSTER"
 msgstr ", CLUSTER"
 
-#: describe.c:976
+#: describe.c:977
 #, c-format
 msgid ""
 "View definition:\n"
@@ -1262,193 +1262,193 @@ msgstr ""
 "Определение вида:\n"
 "%s"
 
-#: describe.c:982
-#: describe.c:1203
+#: describe.c:983
+#: describe.c:1204
 msgid "Rules:"
 msgstr "Правила:"
 
-#: describe.c:1137
+#: describe.c:1138
 msgid "Indexes:"
 msgstr "Индексы:"
 
-#: describe.c:1145
+#: describe.c:1146
 #, c-format
 msgid "    \"%s\""
 msgstr "    \"%s\""
 
-#: describe.c:1151
+#: describe.c:1152
 msgid " PRIMARY KEY,"
 msgstr " PRIMARY KEY,"
 
-#: describe.c:1153
+#: describe.c:1154
 msgid " UNIQUE,"
 msgstr " UNIQUE,"
 
-#: describe.c:1164
+#: describe.c:1165
 msgid " CLUSTER"
 msgstr " CLUSTER"
 
-#: describe.c:1173
+#: describe.c:1174
 msgid "Check constraints:"
 msgstr "CHECK-констрэйнты:"
 
-#: describe.c:1177
-#: describe.c:1192
+#: describe.c:1178
+#: describe.c:1193
 #, c-format
 msgid "    \"%s\" %s"
 msgstr "    \"%s\" %s"
 
 # TO REWVIEW
-#: describe.c:1188
+#: describe.c:1189
 msgid "Foreign-key constraints:"
 msgstr "Ограничения по вторичному ключу:"
 
-#: describe.c:1222
+#: describe.c:1223
 msgid "Triggers:"
 msgstr "Триггеры:"
 
-#: describe.c:1244
+#: describe.c:1245
 msgid "Inherits"
 msgstr "Наследует"
 
-#: describe.c:1258
+#: describe.c:1259
 msgid "Contains OIDs"
 msgstr "Содержит OIDs"
 
-#: describe.c:1260
-#: describe.c:1631
-#: describe.c:1688
+#: describe.c:1262
+#: describe.c:1637
+#: describe.c:1694
 msgid "yes"
 msgstr "да"
 
-#: describe.c:1260
-#: describe.c:1632
-#: describe.c:1686
+#: describe.c:1262
+#: describe.c:1638
+#: describe.c:1692
 msgid "no"
 msgstr "нет"
 
-#: describe.c:1339
+#: describe.c:1342
 #, c-format
 msgid "Tablespace: \"%s\""
 msgstr "Tablespace: \"%s\""
 
-#: describe.c:1372
+#: describe.c:1375
 msgid "User name"
 msgstr "Имя пользователя"
 
-#: describe.c:1372
+#: describe.c:1375
 msgid "User ID"
 msgstr "ID пользователя"
 
-#: describe.c:1373
+#: describe.c:1376
 msgid "superuser, create database"
 msgstr "superuser: создание базы данных"
 
-#: describe.c:1374
+#: describe.c:1377
 msgid "superuser"
 msgstr "superuser"
 
-#: describe.c:1374
+#: describe.c:1377
 msgid "create database"
 msgstr "создание базы данных"
 
-#: describe.c:1375
+#: describe.c:1378
 msgid "Attributes"
 msgstr "Атрибуты"
 
-#: describe.c:1375
+#: describe.c:1378
 msgid "Groups"
 msgstr "Группы"
 
-#: describe.c:1388
+#: describe.c:1391
 msgid "List of database users"
 msgstr "Список пользователей базы данных"
 
-#: describe.c:1415
+#: describe.c:1418
 msgid "Group name"
 msgstr "Имя группы"
 
-#: describe.c:1415
+#: describe.c:1418
 msgid "Group ID"
 msgstr "ID Группы"
 
-#: describe.c:1428
+#: describe.c:1431
 msgid "List of database groups"
 msgstr "Список групп базы"
 
-#: describe.c:1475
+#: describe.c:1478
 msgid "special"
 msgstr "особенный"
 
-#: describe.c:1490
+#: describe.c:1483
 msgid "Table"
 msgstr "Таблица"
 
-#: describe.c:1536
+#: describe.c:1542
 msgid "No matching relations found.\n"
 msgstr "Подходящих связей не найдено.\n"
 
-#: describe.c:1538
+#: describe.c:1544
 msgid "No relations found.\n"
 msgstr "Связи не найдены.\n"
 
-#: describe.c:1543
+#: describe.c:1549
 msgid "List of relations"
 msgstr "Список связей"
 
-#: describe.c:1582
+#: describe.c:1588
 msgid "Modifier"
 msgstr "Модификаторы"
 
-#: describe.c:1596
+#: describe.c:1602
 msgid "List of domains"
 msgstr "Список доменов"
 
-#: describe.c:1629
+#: describe.c:1635
 msgid "Source"
 msgstr "Источник"
 
-#: describe.c:1630
+#: describe.c:1636
 msgid "Destination"
 msgstr "Назначение"
 
-#: describe.c:1633
+#: describe.c:1639
 msgid "Default?"
 msgstr "По умолчанию?"
 
-#: describe.c:1647
+#: describe.c:1653
 msgid "List of conversions"
 msgstr "Список конверсий"
 
-#: describe.c:1682
+#: describe.c:1688
 msgid "Source type"
 msgstr "Исходный тип"
 
-#: describe.c:1683
+#: describe.c:1689
 msgid "Target type"
 msgstr "Тип назначения"
 
-#: describe.c:1684
+#: describe.c:1690
 msgid "(binary compatible)"
 msgstr "(двоично-совместимый)"
 
-#: describe.c:1685
+#: describe.c:1691
 msgid "Function"
 msgstr "Функция"
 
-#: describe.c:1687
+#: describe.c:1693
 msgid "in assignment"
 msgstr "в присвоении"
 
-#: describe.c:1689
+#: describe.c:1695
 msgid "Implicit?"
 msgstr "Подразумевается?"
 
-#: describe.c:1697
+#: describe.c:1703
 msgid "List of casts"
 msgstr "Список конверсий типов"
 
-#: describe.c:1747
+#: describe.c:1753
 msgid "List of schemas"
 msgstr "Список схем"
 
@@ -2985,8 +2985,8 @@ msgstr ""
 "SET [ SESSION | LOCAL ] TIME ZONE { временная_зона | LOCAL | DEFAULT }"
 
 #: sql_help.h:397
-msgid "set the constraint mode of the current transaction"
-msgstr "установить режим ограничений текущей транзанции"
+msgid "set constraint checking modes for the current transaction"
+msgstr "установить режимы проверки ограничений для текущей транзанции"
 
 #: sql_help.h:398
 msgid "SET CONSTRAINTS { ALL | name [, ...] } { DEFERRED | IMMEDIATE }"
