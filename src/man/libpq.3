@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/libpq.3,v 1.6 1997/10/16 04:14:19 momjian Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/libpq.3,v 1.7 1997/10/17 02:11:49 momjian Exp $
 .TH LIBPQ INTRO 03/12/94 PostgreSQL PostgreSQL
 .SH DESCRIPTION
 Libpq is the programmer's interface to Postgres.  Libpq is a set of
@@ -201,11 +201,18 @@ be used to retrieve the tuples returned by the query.
 .IP
 
 .B PQntuples
-returns the number of tuples (instances) in the query result, or the
-number of rows affected for queries that do not return any tuples.
+returns the number of tuples (instances) in the query result.
 
 .nf
 int PQntuples(PGresult *res);
+.fi
+
+.B PQcmdTuples
+returns the number of tuples (instances) affected by INSERT, UPDATE, and
+DELETE queries.
+
+.nf
+char *PQcmdTuples(PGresult *res);
 .fi
 
 .B PQnfields

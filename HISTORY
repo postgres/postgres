@@ -15,6 +15,7 @@ Allow strings to span lines, like ANSI(Thomas)
 Fix for backward ORDER BY(Vadim)
 Fix avg(cash) computation(Thomas)
 Fix for specifying a column twice in ORDER BY(Vadim)
+Documented new libpq function to return affected rows, PQcmdTuples(Vadim)
 
 
 PostgreSQL 6.2               Thu Oct 02 12:53:46 EDT 1997
