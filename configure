@@ -860,7 +860,7 @@ Optional Packages:
   --without-tk            do not build Tk interfaces if Tcl is enabled
   --with-tclconfig=DIR    tclConfig.sh and tkConfig.sh are in DIR
   --with-tkconfig=DIR     tkConfig.sh is in DIR
-  --with-perl             build Perl interface and PL/Perl
+  --with-perl             build PL/Perl
   --with-python           build Python interface module
   --with-java             build JDBC interface and Java tools
   --with-krb4[=DIR]       build with Kerberos 4 support [/usr/athena]
