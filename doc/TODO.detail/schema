@@ -1,0 +1,102 @@
+From ronz@ravensfield.com Tue May 22 17:35:37 2001
+Return-path: <ronz@ravensfield.com>
+Received: from carp.ravensfield.com ([209.41.227.126])
+	by candle.pha.pa.us (8.10.1/8.10.1) with ESMTP id f4MLZaQ17913
+	for <pgman@candle.pha.pa.us>; Tue, 22 May 2001 17:35:37 -0400 (EDT)
+Received: from coho.ravensfield.com (coho [209.41.227.117])
+	by carp.ravensfield.com (Postfix) with SMTP
+	id 5C2A9800D; Tue, 22 May 2001 16:46:38 -0500 (EST)
+Content-Type: text/plain;
+  charset="iso-8859-1"
+From: Andrew Rawnsley <ronz@ravensfield.com>
+Organization: Ravensfield Geographic
+To: Bruce Momjian <pgman@candle.pha.pa.us>
+Subject: Re: [GENERAL] Queries across multiple databases (was: SELECT from a table in another database).
+Date: Tue, 22 May 2001 17:37:25 -0400
+X-Mailer: KMail [version 1.2]
+cc: Tom Lane <tgl@sss.pgh.pa.us>
+References: <200105220437.f4M4bUA00539@candle.pha.pa.us>
+In-Reply-To: <200105220437.f4M4bUA00539@candle.pha.pa.us>
+MIME-Version: 1.0
+Message-ID: <01052217372504.01367@coho.ravensfield.com>
+Content-Transfer-Encoding: 8bit
+Status: ORr
+
+On Tuesday 22 May 2001 12:37am, Bruce Momjian wrote:
+> Can you send me a little sample of SCHEMA use?   
+
+Pardon if this is more long-winded or tangental than you are looking for...
+
+What may beconfusing many people (not excluding myself from time to time) is 
+that cross-schema queries may have nothing to do with cross-database queries, 
+which is an entirely different kettle of trout.... SCHEMAs as used by at 
+least by Oracle and Sybase are nothing more than users/object owners (I have 
+no experience with DB2 or Informix, or anything more exotic than that).
+
+Just off the top of my head, what would satisfy most people would be to be 
+able to refer to objects as OWNER.OBJECT, with owner being 'within' the 
+database (i.e. DATABASE.OWNER.OBJECT, which is how Sybase does it. Oracle has 
+no 'database' parallel like that).  Whether you do it Oracle-fashion and use 
+the term SCHEMA for owner pretty universally or Sybase fashion and just pay 
+lip service to the word doesn't really matter (unless there is a standards 
+compliance issue). 
+
+As to creating schemas...In Oracle you have to execute the CREATE SCHEMA 
+AUTHORIZATION <user> while logged in as that user before you can add objects 
+under that user's ownership. While it seems trivial, if you have a situation 
+where you do not want to grant a user session rights, you have to grant them 
+session rights, log in as them, execute CREATE SCHEMA..., then revoke the 
+session rights. Bah. A table created by user X in schema Y is also owned by 
+user Y, and its user Y that has to have many of the object rights to create 
+that table.
+
+In Sybase, its essentially the same except the only real use for the CREATE 
+SCHEMA command is for compliance and to group some DDL commands together. 
+Other than that, Sybase always refers to schemas as owners. You don't have to 
+execute CREATE SCHEMA... to create objects - you just need the rights. I've 
+never used it at least - the only thing I see in it is eliminating the need 
+to type 'go' after every DDL command.
+
+As for examples from Oracle space -
+
+Here is a foreign key reference with delete triggers from a table in 
+schema/user PROJECT to tables in schemas/users SERVICES and WEBCAL:
+
+CREATE TABLE PROJECT.tasks_users (
+   event_id INTEGER REFERENCES WEBCAL.tasks(event_id) ON DELETE CASCADE,
+   user_id VARCHAR2(25) REFERENCES SERVICES.users(user_id) ON DELETE CASCADE,
+   confirmed CHAR(1),
+   PRIMARY KEY (event_id,user_id)
+);
+
+A join between tables in  would be 
+SELECT   A.SAMPLE_ID, 
+                 A.CONCENTRATION, 
+                 A.CASNO, 
+                 B.PARAMETER,
+                 C.DESCRIPTION AS STYPE 
+         FROM HAI.RESULTS A, SAMPLETRACK.PARAMETERS B, 
+SAMPLETRACK.SAMPLE_TYPE C
+                 WHERE A.CASNO = B.CASNO AND A.SAMPLE_TYPE = B.SAMPLE_TYPE
+
+In both Oracle and Sybase, all the objects are in the same 'database' 
+(instance in Oracle), as I assume they would be in Postgres.  There is I 
+assume a name space issue - one should be able to create a FOO.BAR and a 
+BAR.BAR in the same database.
+
+> I may be adding it to
+> 7.2 inside the same code that maps temp table names to real tables.
+>
+
+Excellent!  I see light at the end of the tunnel (I will say the Postgres 
+maintainers are among the most solidly competent around - one never has any 
+real doubts about the system's progress).
+
+-- 
+Regards,
+
+Andrew Rawnsley
+Ravensfield Digital Resource Group, Ltd.
+(740) 587-0114
+www.ravensfield.com
+
