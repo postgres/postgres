@@ -773,7 +773,7 @@ Maximum number of indexes on a table?    unlimited
    45-57.
    
    You can also find this paper in Stonebraker's "Readings in Database
-   Systems"
+   Systems".
    
    Built-in R-trees can handle polygons and boxes. In theory, R-trees can
    be extended to handle higher number of dimensions. In practice,
