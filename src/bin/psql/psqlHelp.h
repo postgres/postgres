@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: psqlHelp.h,v 1.27 1997/10/01 19:24:21 momjian Exp $
+ * $Id: psqlHelp.h,v 1.28 1997/10/01 19:30:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -77,7 +77,7 @@ static struct _helpStruct QL_HELP[] = {
 	"create sequence <sequence_name>\n\t[increment <NUMBER>]\n\t[start <NUMBER>]\n\t[minvalue <NUMBER>]\n\t[maxvalue <NUMBER>]\n\t[cache <NUMBER>]\n\t[cycle];"},
 	{"create table",
 		"create a new table",
-	"create table <class_name> ( <attr1> <type1> [not null] [default <value>],...)\n\t[inherits (<class_name1>,...<class_nameN>)\n\t[constraint <name> check (<test>) [,check (<test>)] ]\n\tarchive=<archive_mode>\n\tstore=<smgr_name>\n\tarch_store=<smgr_name>];"},
+	"create table <class_name> ( <attr1> <type1> [not null] [default <value>],...)\n\t[inherits (<class_name1>,...<class_nameN>)\n\t[constraint <name> check (<test>) [,check (<test>)]\n\tarchive=<archive_mode>\n\tstore=<smgr_name>\n\tarch_store=<smgr_name>];"},
 	{"create type",
 		"create a new user-defined base data type",
 	"create type <typename> (\n\tinternallength = (<number> | variable),\n\t[externallength = (<number>|variable),]\n\tinput=<input_function>, output = <output_function>\n\t[,element = <typename>][,delimiter=<character>][,default=\'<string>\']\n\t[,send = <send_function>][,receive = <receive_function>][,passedbyvalue]);"},
