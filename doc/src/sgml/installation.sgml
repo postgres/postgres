@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.103.2.17 2002/11/18 19:30:33 momjian Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.103.2.18 2002/11/19 16:40:49 momjian Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -1643,10 +1643,10 @@ gunzip -c user.ps.gz \
        <row>
 	<entry><systemitem class="osname">NetBSD</></entry>
 	<entry><systemitem>arm32</></entry>
-	<entry>7.1</entry>
-	<entry>2001-03-21,
-	 Patrick Welche (<email>prlw1@cam.ac.uk</email>)</entry>
-	<entry>1.5E</entry>
+	<entry>7.3</entry>
+	<entry>2002-11-19,
+	 Patrick Welche (<email>prlw1@newn.cam.ac.uk</email>)</entry>
+	<entry>1.6</entry>
        </row>
        <row>
 	<entry><systemitem class="osname">NetBSD</></entry>
