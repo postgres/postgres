@@ -1,24 +1,25 @@
 # Postgres documentation makefile
-# $Header: /cvsroot/pgsql/doc/src/Makefile,v 1.12 2000/09/05 18:45:38 petere Exp $
+# $Header: /cvsroot/pgsql/doc/src/Makefile,v 1.13 2000/09/12 03:47:36 thomas Exp $
 
 subdir = doc/src
 top_builddir = ../..
 -include $(top_builddir)/src/Makefile.global
 
 TAR= tar
-GZIP= gzip
+ZIP= gzip
+ZIPSUFFIX= gz
 TAREXCLUDE= --exclude=Makefile --exclude='*.sgml' --exclude=ref
 
 SRC= admin postgres programmer tutorial user
 
-TARGETS= $(SRC:%=%.tar.gz)
+TARGETS= $(SRC:%=%.tar.$(ZIPSUFFIX))
 
 .PRECIOUS:
 .PHONY: install all sources clean distclean
 
 install:
 	$(MAKE) all
-	(mv -f *.gz ..)
+	(mv -f *.$(ZIPSUFFIX) ..)
 
 clean:
 	$(MAKE) -C sgml clean
@@ -29,7 +30,7 @@ distclean:
 all: $(TARGETS)
 
 sources:
-	$(MAKE) sources.tar.gz
+	$(MAKE) sources.tar.$(ZIPSUFFIX)
 
 sources.tar:
 	($(TAR) -cf $@ sgml graphics)
@@ -72,5 +73,6 @@ man.tar:
 
 # Compressed file
 
-%.gz:	%
-	$(GZIP) -f $<
+%.$(ZIPSUFFIX):	%
+	$(ZIP) -f $<
+
