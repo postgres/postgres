@@ -9,7 +9,7 @@
 #define CSTRINGTYPE ECPGt_char
 #define CDATETYPE	ECPGt_date
 #define CMONEYTYPE	111
-#define CDTIMETYPE	112
+#define CDTIMETYPE	ECPGt_timestamp
 #define CLOCATORTYPE	113
 #define CVCHARTYPE	ECPGt_varchar
 #define CINVTYPE	115
