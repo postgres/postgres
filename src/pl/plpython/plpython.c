@@ -29,7 +29,7 @@
  * MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	$Header: /cvsroot/pgsql/src/pl/plpython/plpython.c,v 1.32 2003/05/27 17:49:47 momjian Exp $
+ *	$Header: /cvsroot/pgsql/src/pl/plpython/plpython.c,v 1.33 2003/06/11 18:33:39 tgl Exp $
  *
  *********************************************************************
  */
@@ -244,8 +244,8 @@ static void PLy_typeinfo_init(PLyTypeInfo *);
 static void PLy_typeinfo_dealloc(PLyTypeInfo *);
 static void PLy_output_datum_func(PLyTypeInfo *, Form_pg_type);
 static void PLy_output_datum_func2(PLyObToDatum *, Form_pg_type);
-static void PLy_input_datum_func(PLyTypeInfo *, Form_pg_type);
-static void PLy_input_datum_func2(PLyDatumToOb *, Form_pg_type);
+static void PLy_input_datum_func(PLyTypeInfo *, Oid, Form_pg_type);
+static void PLy_input_datum_func2(PLyDatumToOb *, Oid, Form_pg_type);
 static void PLy_output_tuple_funcs(PLyTypeInfo *, TupleDesc);
 static void PLy_input_tuple_funcs(PLyTypeInfo *, TupleDesc);
 
@@ -1152,7 +1152,9 @@ PLy_procedure_create(FunctionCallInfo fcinfo, bool is_trigger,
 		argTypeStruct = (Form_pg_type) GETSTRUCT(argTypeTup);
 
 		if (argTypeStruct->typrelid == InvalidOid)
-			PLy_input_datum_func(&(proc->args[i]), argTypeStruct);
+			PLy_input_datum_func(&(proc->args[i]),
+								 procStruct->proargtypes[i],
+								 argTypeStruct);
 		else
 		{
 			TupleTableSlot *slot = (TupleTableSlot *) fcinfo->arg[i];
@@ -1373,7 +1375,9 @@ PLy_input_tuple_funcs(PLyTypeInfo * arg, TupleDesc desc)
 
 		typeStruct = (Form_pg_type) GETSTRUCT(typeTup);
 
-		PLy_input_datum_func2(&(arg->in.r.atts[i]), typeStruct);
+		PLy_input_datum_func2(&(arg->in.r.atts[i]),
+							  desc->attrs[i]->atttypid,
+							  typeStruct);
 
 		ReleaseSysCache(typeTup);
 	}
@@ -1439,85 +1443,46 @@ PLy_output_datum_func2(PLyObToDatum * arg, Form_pg_type typeStruct)
 }
 
 void
-PLy_input_datum_func(PLyTypeInfo * arg, Form_pg_type typeStruct)
+PLy_input_datum_func(PLyTypeInfo * arg, Oid typeOid, Form_pg_type typeStruct)
 {
 	enter();
 
 	if (arg->is_rel == 1)
 		elog(FATAL, "plpython: PLyTypeInfo struct is initialized for Tuple");
 	arg->is_rel = 0;
-	PLy_input_datum_func2(&(arg->in.d), typeStruct);
+	PLy_input_datum_func2(&(arg->in.d), typeOid, typeStruct);
 }
 
 void
-PLy_input_datum_func2(PLyDatumToOb * arg, Form_pg_type typeStruct)
+PLy_input_datum_func2(PLyDatumToOb * arg, Oid typeOid, Form_pg_type typeStruct)
 {
-	char	   *type;
-
+	/* Get the type's conversion information */
 	perm_fmgr_info(typeStruct->typoutput, &arg->typfunc);
 	arg->typelem = typeStruct->typelem;
 	arg->typbyval = typeStruct->typbyval;
 
-	/*
-	 * hmmm, wierd.  means this arg will always be converted to a python
-	 * None
-	 */
-	if (!OidIsValid(typeStruct->typoutput))
+	/* Determine which kind of Python object we will convert to */
+	switch (typeOid)
 	{
-		elog(ERROR, "plpython: (FIXME) typeStruct->typoutput is invalid");
-
-		arg->func = NULL;
-		return;
-	}
-
-	type = NameStr(typeStruct->typname);
-	switch (type[0])
-	{
-		case 'b':
-			{
-				if (strcasecmp("bool", type))
-				{
-					arg->func = PLyBool_FromString;
-					return;
-				}
-				break;
-			}
-		case 'f':
-			{
-				if ((strncasecmp("float", type, 5) == 0) &&
-					((type[5] == '8') || (type[5] == '4')))
-				{
-					arg->func = PLyFloat_FromString;
-					return;
-				}
-				break;
-			}
-		case 'i':
-			{
-				if ((strncasecmp("int", type, 3) == 0) &&
-					((type[3] == '4') || (type[3] == '2')) &&
-					(type[4] == '\0'))
-				{
-					arg->func = PLyInt_FromString;
-					return;
-				}
-				else if (strcasecmp("int8", type) == 0)
-					arg->func = PLyLong_FromString;
-				break;
-			}
-		case 'n':
-			{
-				if (strcasecmp("numeric", type) == 0)
-				{
-					arg->func = PLyFloat_FromString;
-					return;
-				}
-				break;
-			}
+		case BOOLOID:
+			arg->func = PLyBool_FromString;
+			break;
+		case FLOAT4OID:
+		case FLOAT8OID:
+		case NUMERICOID:
+			arg->func = PLyFloat_FromString;
+			break;
+		case INT2OID:
+		case INT4OID:
+			arg->func = PLyInt_FromString;
+			break;
+		case INT8OID:
+			arg->func = PLyLong_FromString;
+			break;
 		default:
+			arg->func = PLyString_FromString;
 			break;
 	}
-	arg->func = PLyString_FromString;
 }
 
 void
