@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: builtins.h,v 1.153 2001/06/13 21:08:59 momjian Exp $
+ * $Id: builtins.h,v 1.154 2001/06/14 01:09:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,6 +22,15 @@
 /*
  *		Defined in adt/
  */
+
+/* acl.c */
+extern Datum has_table_privilege_name_name(PG_FUNCTION_ARGS);
+extern Datum has_table_privilege_name_id(PG_FUNCTION_ARGS);
+extern Datum has_table_privilege_id_name(PG_FUNCTION_ARGS);
+extern Datum has_table_privilege_id_id(PG_FUNCTION_ARGS);
+extern Datum has_table_privilege_name(PG_FUNCTION_ARGS);
+extern Datum has_table_privilege_id(PG_FUNCTION_ARGS);
+
 /* bool.c */
 extern Datum boolin(PG_FUNCTION_ARGS);
 extern Datum boolout(PG_FUNCTION_ARGS);

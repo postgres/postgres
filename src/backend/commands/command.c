@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.133 2001/06/12 05:55:49 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.134 2001/06/14 01:09:22 tgl Exp $
  *
  * NOTES
  *	  The PerformAddAttribute() code, like most of the relation
@@ -19,40 +19,36 @@
  */
 #include "postgres.h"
 
+#include "access/genam.h"
 #include "access/tuptoaster.h"
 #include "catalog/catalog.h"
 #include "catalog/catname.h"
+#include "catalog/heap.h"
 #include "catalog/index.h"
 #include "catalog/indexing.h"
 #include "catalog/pg_attrdef.h"
-#include "catalog/pg_opclass.h"
-#include "catalog/pg_rewrite.h"
-#include "commands/command.h"
-#include "executor/spi.h"
-#include "catalog/heap.h"
-#include "miscadmin.h"
-#include "optimizer/prep.h"
-#include "utils/acl.h"
-#include "utils/fmgroids.h"
-#include "commands/trigger.h"
-
-#include "parser/parse_expr.h"
-#include "parser/parse_clause.h"
-#include "parser/parse_relation.h"
-#include "parser/parse_oper.h"
-#include "nodes/makefuncs.h"
-#include "optimizer/planmain.h"
-#include "optimizer/clauses.h"
-#include "rewrite/rewriteSupport.h"
-#include "commands/view.h"
-#include "utils/temprel.h"
-#include "executor/spi_priv.h"
 #include "catalog/pg_index.h"
-#include "catalog/pg_shadow.h"
-#include "utils/relcache.h"
-
+#include "catalog/pg_opclass.h"
+#include "catalog/pg_type.h"
+#include "commands/command.h"
+#include "commands/trigger.h"
+#include "executor/execdefs.h"
+#include "executor/executor.h"
+#include "miscadmin.h"
+#include "optimizer/clauses.h"
+#include "optimizer/planmain.h"
+#include "optimizer/prep.h"
 #include "parser/parse.h"
-#include "access/genam.h"
+#include "parser/parse_expr.h"
+#include "parser/parse_oper.h"
+#include "parser/parse_relation.h"
+#include "utils/acl.h"
+#include "utils/builtins.h"
+#include "utils/fmgroids.h"
+#include "utils/lsyscache.h"
+#include "utils/syscache.h"
+#include "utils/relcache.h"
+#include "utils/temprel.h"
 
 
 static void drop_default(Oid relid, int16 attnum);
@@ -1689,13 +1685,7 @@ AlterTableOwner(const char *relationName, const char *newOwnerName)
 	/*
 	 * look up the new owner in pg_shadow and get the sysid
 	 */
-	tuple = SearchSysCache(SHADOWNAME,
-						   PointerGetDatum(newOwnerName),
-						   0, 0, 0);
-	if (!HeapTupleIsValid(tuple))
-		elog(ERROR, "ALTER TABLE: user \"%s\" not found", newOwnerName);
-	newOwnerSysid = ((Form_pg_shadow) GETSTRUCT(tuple))->usesysid;
-	ReleaseSysCache(tuple);
+	newOwnerSysid = get_usesysid(newOwnerName);
 
 	/*
 	 * find the table's entry in pg_class and make a modifiable copy

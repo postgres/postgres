@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/miscinit.c,v 1.70 2001/06/13 19:52:33 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/miscinit.c,v 1.71 2001/06/14 01:09:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,6 +30,7 @@
 #include "catalog/pg_shadow.h"
 #include "miscadmin.h"
 #include "utils/builtins.h"
+#include "utils/lsyscache.h"
 #include "utils/syscache.h"
 
 
@@ -442,24 +443,20 @@ InitializeSessionUserId(const char *username)
 }
 
 
-
+/*
+ * Change session auth ID while running
+ */
 void SetSessionAuthorization(const char * username)
 {
-	HeapTuple	userTup;
+	int32		userid;
 
 	if (!AuthenticatedUserIsSuperuser)
 		elog(ERROR, "permission denied");
 
-	userTup = SearchSysCache(SHADOWNAME,
-							 PointerGetDatum(username),
-							 0, 0, 0);
-	if (!HeapTupleIsValid(userTup))
-		elog(ERROR, "user \"%s\" does not exist", username);
+	userid = get_usesysid(username);
 
-	SetSessionUserId(((Form_pg_shadow) GETSTRUCT(userTup))->usesysid);
-	SetUserId(((Form_pg_shadow) GETSTRUCT(userTup))->usesysid);
-
-	ReleaseSysCache(userTup);
+	SetSessionUserId(userid);
+	SetUserId(userid);
 }
 
 

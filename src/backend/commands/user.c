@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/commands/user.c,v 1.76 2001/06/12 05:55:49 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/commands/user.c,v 1.77 2001/06/14 01:09:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,6 +29,7 @@
 #include "utils/array.h"
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
+#include "utils/lsyscache.h"
 #include "utils/syscache.h"
 
 
@@ -728,16 +729,9 @@ CreateGroup(CreateGroupStmt *stmt)
 		const char *groupuser = strVal(lfirst(item));
 		Value	   *v;
 
-		tuple = SearchSysCache(SHADOWNAME,
-							   PointerGetDatum(groupuser),
-							   0, 0, 0);
-		if (!HeapTupleIsValid(tuple))
-			elog(ERROR, "CREATE GROUP: user \"%s\" does not exist", groupuser);
-
-		v = makeInteger(((Form_pg_shadow) GETSTRUCT(tuple))->usesysid);
+		v = makeInteger(get_usesysid(groupuser));
 		if (!member(v, newlist))
 			newlist = lcons(v, newlist);
-		ReleaseSysCache(tuple);
 	}
 
 	/* build an array to insert */
@@ -879,18 +873,10 @@ AlterGroup(AlterGroupStmt *stmt, const char *tag)
 			if (strcmp(tag, "ALTER GROUP") == 0)
 			{
 				/* Get the uid of the proposed user to add. */
-				tuple = SearchSysCache(SHADOWNAME,
-								   PointerGetDatum(strVal(lfirst(item))),
-									   0, 0, 0);
-				if (!HeapTupleIsValid(tuple))
-					elog(ERROR, "%s: user \"%s\" does not exist",
-						 tag, strVal(lfirst(item)));
-				v = makeInteger(((Form_pg_shadow) GETSTRUCT(tuple))->usesysid);
-				ReleaseSysCache(tuple);
+				v = makeInteger(get_usesysid(strVal(lfirst(item))));
 			}
 			else if (strcmp(tag, "CREATE USER") == 0)
 			{
-
 				/*
 				 * in this case we already know the uid and it wouldn't be
 				 * in the cache anyway yet
@@ -906,12 +892,12 @@ AlterGroup(AlterGroupStmt *stmt, const char *tag)
 			if (!member(v, newlist))
 				newlist = lcons(v, newlist);
 			else
-
 				/*
 				 * we silently assume here that this error will only come
 				 * up in a ALTER GROUP statement
 				 */
-				elog(NOTICE, "%s: user \"%s\" is already in group \"%s\"", tag, strVal(lfirst(item)), stmt->name);
+				elog(NOTICE, "%s: user \"%s\" is already in group \"%s\"",
+					 tag, strVal(lfirst(item)), stmt->name);
 		}
 
 		newarray = palloc(ARR_OVERHEAD(1) + length(newlist) * sizeof(int32));
@@ -1001,13 +987,7 @@ AlterGroup(AlterGroupStmt *stmt, const char *tag)
 				if (!is_dropuser)
 				{
 					/* Get the uid of the proposed user to drop. */
-					tuple = SearchSysCache(SHADOWNAME,
-								   PointerGetDatum(strVal(lfirst(item))),
-										   0, 0, 0);
-					if (!HeapTupleIsValid(tuple))
-						elog(ERROR, "ALTER GROUP: user \"%s\" does not exist", strVal(lfirst(item)));
-					v = makeInteger(((Form_pg_shadow) GETSTRUCT(tuple))->usesysid);
-					ReleaseSysCache(tuple);
+					v = makeInteger(get_usesysid(strVal(lfirst(item))));
 				}
 				else
 				{

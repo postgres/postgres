@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/lsyscache.c,v 1.55 2001/05/09 23:13:35 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/lsyscache.c,v 1.56 2001/06/14 01:09:22 tgl Exp $
  *
  * NOTES
  *	  Eventually, the index information should go through here, too.
@@ -18,12 +18,14 @@
 #include "access/tupmacs.h"
 #include "catalog/pg_operator.h"
 #include "catalog/pg_proc.h"
+#include "catalog/pg_shadow.h"
 #include "catalog/pg_statistic.h"
 #include "catalog/pg_type.h"
 #include "utils/array.h"
 #include "utils/builtins.h"
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
+
 
 /*				---------- AMOP CACHES ----------						 */
 
@@ -537,7 +539,7 @@ get_relnatts(Oid relid)
  *
  *		Returns the name of a given relation.
  *
- * Note: returns a palloc'd copy of the string, or NULL if no such operator.
+ * Note: returns a palloc'd copy of the string, or NULL if no such relation.
  */
 char *
 get_rel_name(Oid relid)
@@ -1038,4 +1040,36 @@ free_attstatsslot(Oid atttype,
 	}
 	if (numbers)
 		pfree(numbers);
+}
+
+/*				---------- PG_SHADOW CACHE ----------					 */
+
+/*
+ * get_usesysid
+ *
+ *	  Given a user name, look up the user's sysid.
+ *	  Raises an error if no such user (rather than returning zero,
+ *	  which might possibly be a valid usesysid).
+ *
+ * Note: the type of usesysid is currently int4, but may change to Oid
+ * someday.  It'd be reasonable to return zero on failure if we were
+ * using Oid ...
+ */
+int32
+get_usesysid(const char *username)
+{
+	int32		result;
+	HeapTuple	userTup;
+
+	userTup = SearchSysCache(SHADOWNAME,
+							 PointerGetDatum(username),
+							 0, 0, 0);
+	if (!HeapTupleIsValid(userTup))
+		elog(ERROR, "user \"%s\" does not exist", username);
+
+	result = ((Form_pg_shadow) GETSTRUCT(userTup))->usesysid;
+
+	ReleaseSysCache(userTup);
+
+	return result;
 }
