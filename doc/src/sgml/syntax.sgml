@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/syntax.sgml,v 1.95 2004/09/20 22:48:25 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/syntax.sgml,v 1.96 2004/10/26 22:16:12 tgl Exp $
 -->
 
 <chapter id="sql-syntax">
@@ -1421,6 +1421,10 @@ SELECT name, (SELECT max(pop) FROM cities WHERE cities.state = states.name)
     <secondary>constructor</secondary>
    </indexterm>
 
+   <indexterm>
+    <primary>ARRAY</primary>
+   </indexterm>
+
    <para>
     An array constructor is an expression that builds an
     array value from values for its member elements.  A simple array
@@ -1521,13 +1525,17 @@ SELECT ARRAY(SELECT oid FROM pg_proc WHERE proname LIKE 'bytea%');
     <secondary>constructor</secondary>
    </indexterm>
 
+   <indexterm>
+    <primary>ROW</primary>
+   </indexterm>
+
    <para>
     A row constructor is an expression that builds a row value (also
     called a composite value) from values
     for its member fields.  A row constructor consists of the key word
-    <literal>ROW</literal>, a left parenthesis <literal>(</>, zero or more
+    <literal>ROW</literal>, a left parenthesis, zero or more
     expressions (separated by commas) for the row field values, and finally
-    a right parenthesis <literal>)</>.  For example,
+    a right parenthesis.  For example,
 <programlisting>
 SELECT ROW(1,2.5,'this is a test');
 </programlisting>

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.220 2004/10/04 08:15:41 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.221 2004/10/26 22:16:11 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -283,6 +283,18 @@ PostgreSQL documentation
    </para>
 
    <para>
+    <indexterm>
+     <primary>IS NULL</primary>
+    </indexterm>
+    <indexterm>
+     <primary>IS NOT NULL</primary>
+    </indexterm>
+    <indexterm>
+     <primary>ISNULL</primary>
+    </indexterm>
+    <indexterm>
+     <primary>NOTNULL</primary>
+    </indexterm>
     To check whether a value is or is not null, use the constructs
 <synopsis>
 <replaceable>expression</replaceable> IS NULL
@@ -305,6 +317,7 @@ PostgreSQL documentation
     behavior conforms to the SQL standard.
    </para>
 
+  <tip>
    <para>
     Some applications may expect that
     <literal><replaceable>expression</replaceable> = NULL</literal>
@@ -318,8 +331,43 @@ PostgreSQL documentation
     the default behavior in <productname>PostgreSQL</productname>
     releases 6.5 through 7.1.
    </para>
+  </tip>
 
    <para>
+    <indexterm>
+     <primary>IS DISTINCT FROM</primary>
+    </indexterm>
+    The ordinary comparison operators yield null (signifying <quote>unknown</>)
+    when either input is null.  Another way to do comparisons is with the
+    <literal>IS DISTINCT FROM</literal> construct:
+<synopsis>
+<replaceable>expression</replaceable> IS DISTINCT FROM <replaceable>expression</replaceable>
+</synopsis>
+    For non-null inputs this is the same as the <literal>&lt;&gt;</> operator.
+    However, when both inputs are null it will return false, and when just
+    one input is null it will return true.  Thus it effectively acts as though
+    null were a normal data value, rather than <quote>unknown</>.
+   </para>
+
+   <para>
+    <indexterm>
+     <primary>IS TRUE</primary>
+    </indexterm>
+    <indexterm>
+     <primary>IS NOT TRUE</primary>
+    </indexterm>
+    <indexterm>
+     <primary>IS FALSE</primary>
+    </indexterm>
+    <indexterm>
+     <primary>IS NOT FALSE</primary>
+    </indexterm>
+    <indexterm>
+     <primary>IS UNKNOWN</primary>
+    </indexterm>
+    <indexterm>
+     <primary>IS NOT UNKNOWN</primary>
+    </indexterm>
     Boolean values can also be tested using the constructs
 <synopsis>
 <replaceable>expression</replaceable> IS TRUE
@@ -329,9 +377,13 @@ PostgreSQL documentation
 <replaceable>expression</replaceable> IS UNKNOWN
 <replaceable>expression</replaceable> IS NOT UNKNOWN
 </synopsis>
-    These are similar to <literal>IS NULL</literal> in that they will
-    always return true or false, never a null value, even when the operand is null.
+    These will always return true or false, never a null value, even when the
+    operand is null.
     A null input is treated as the logical value <quote>unknown</>.
+    Notice that <literal>IS UNKNOWN</> and <literal>IS NOT UNKNOWN</> are
+    effectively the same as <literal>IS NULL</literal> and
+    <literal>IS NOT NULL</literal>, respectively, except that the input
+    expression must be of Boolean type.
    </para>
   </sect1>
 
@@ -7344,7 +7396,7 @@ SELECT col1 FROM tab1
   </sect2>
 
   <sect2>
-   <title><literal>NOT IN </literal></title>
+   <title><literal>NOT IN</literal></title>
 
 <synopsis>
 <replaceable>expression</replaceable> NOT IN (<replaceable>subquery</replaceable>)
@@ -7538,9 +7590,9 @@ SELECT col1 FROM tab1
   <sect2>
    <title>Row-wise Comparison</title>
 
-   <indexterm>
+   <indexterm zone="functions-subquery">
     <primary>comparison</primary>
-    <secondary>of rows</secondary>
+    <secondary>subquery result row</secondary>
    </indexterm>
 
 <synopsis>
@@ -7592,6 +7644,23 @@ SELECT col1 FROM tab1
 
   <indexterm>
    <primary>SOME</primary>
+  </indexterm>
+
+  <indexterm>
+   <primary>comparison</primary>
+   <secondary>row-wise</secondary>
+  </indexterm>
+
+  <indexterm>
+   <primary>IS DISTINCT FROM</primary>
+  </indexterm>
+
+  <indexterm>
+   <primary>IS NULL</primary>
+  </indexterm>
+
+  <indexterm>
+   <primary>IS NOT NULL</primary>
   </indexterm>
 
   <para>
