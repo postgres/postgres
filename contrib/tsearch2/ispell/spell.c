@@ -647,6 +647,7 @@ CheckAffix(const char *word, size_t len, AFFIX * Affix, char flagflags, char *ne
 		wmasklen = pg_mb2wchar_with_len( Affix->mask, mask, masklen);
 		
 		err = pg_regcomp(&(Affix->reg), mask, wmasklen, REG_EXTENDED | REG_ICASE | REG_NOSUB);
+		pfree(mask);
 		if (err)
 		{
 			/* regerror(err, &(Affix->reg), regerrstr, ERRSTRSIZE); */
