@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/s_lock.c,v 1.5 2001/11/05 17:46:28 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/s_lock.c,v 1.5.2.1 2002/09/30 20:24:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -115,6 +115,9 @@ _success:						\n\
 /* used in darwin. */
 /* We key off __APPLE__ here because this function differs from
  * the LinuxPPC implementation only in compiler syntax.
+ *
+ * NOTE: per the Enhanced PowerPC Architecture manual, v1.0 dated 7-May-2002,
+ * an isync is a sufficient synchronization barrier after a lwarx/stwcx loop.
  */
 static void
 tas_dummy()
@@ -134,6 +137,7 @@ tas:							\n\
 fail:		li 		r3,1		\n\
 			blr 				\n\
 success:						\n\
+			isync				\n\
 			li 		r3,0		\n\
 			blr					\n\
 ");
@@ -158,6 +162,7 @@ tas:							\n\
 fail:		li		3,1 		\n\
 			blr 				\n\
 success:						\n\
+			isync				\n\
 			li 		3,0			\n\
 			blr					\n\
 ");
