@@ -1711,7 +1711,7 @@ copy_statement_with_parameters(StatementClass *stmt)
 }
 
 
-char *
+static char *
 mapFunction(const char *func)
 {
 	int			i;
@@ -2020,7 +2020,7 @@ convert_pgbinary_to_char(const char *value, char *rgbValue, int cbValueMax)
 }
 
 
-unsigned int
+static unsigned int
 conv_from_octal(const unsigned char *s)
 {
 	int			i,
@@ -2034,7 +2034,7 @@ conv_from_octal(const unsigned char *s)
 }
 
 
-unsigned int
+static unsigned int
 conv_from_hex(const unsigned char *s)
 {
 	int			i,
@@ -2092,7 +2092,7 @@ convert_from_pgbinary(const unsigned char *value, unsigned char *rgbValue, int c
 }
 
 
-char *
+static char *
 conv_to_octal(unsigned char val)
 {
 	int			i;
