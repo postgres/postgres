@@ -7,7 +7,7 @@
  *
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  *
- *	  $PostgreSQL: pgsql/src/include/utils/guc_tables.h,v 1.10 2004/04/05 03:02:11 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/include/utils/guc_tables.h,v 1.11 2004/05/26 15:07:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -51,7 +51,8 @@ enum config_group
 	COMPAT_OPTIONS_PREVIOUS,
 	COMPAT_OPTIONS_CLIENT,
 	DEVELOPER_OPTIONS,
-	COMPILE_OPTIONS
+	COMPILE_OPTIONS,
+	CUSTOM_OPTIONS
 };
 
 /*
@@ -98,6 +99,7 @@ struct config_generic
 #define GUC_REPORT				0x0010	/* auto-report changes to client */
 #define GUC_NOT_IN_SAMPLE		0x0020	/* not in postgresql.conf.sample */
 #define GUC_DISALLOW_IN_FILE	0x0040	/* can't set in postgresql.conf */
+#define GUC_CUSTOM_PLACEHOLDER	0x0080	/* placeholder for a custom variable */
 
 /* bit values in status field */
 #define GUC_HAVE_TENTATIVE	0x0001		/* tentative value is defined */
@@ -113,8 +115,8 @@ struct config_bool
 	/* (all but reset_val are constants) */
 	bool	   *variable;
 	bool		reset_val;
-	bool		(*assign_hook) (bool newval, bool doit, GucSource source);
-	const char *(*show_hook) (void);
+	GucBoolAssignHook assign_hook;
+	GucShowHook show_hook;
 	/* variable fields, initialized at runtime: */
 	bool		session_val;
 	bool		tentative_val;
@@ -129,8 +131,8 @@ struct config_int
 	int			reset_val;
 	int			min;
 	int			max;
-	bool		(*assign_hook) (int newval, bool doit, GucSource source);
-	const char *(*show_hook) (void);
+	GucIntAssignHook assign_hook;
+	GucShowHook show_hook;
 	/* variable fields, initialized at runtime: */
 	int			session_val;
 	int			tentative_val;
@@ -145,8 +147,8 @@ struct config_real
 	double		reset_val;
 	double		min;
 	double		max;
-	bool		(*assign_hook) (double newval, bool doit, GucSource source);
-	const char *(*show_hook) (void);
+	GucRealAssignHook assign_hook;
+	GucShowHook show_hook;
 	/* variable fields, initialized at runtime: */
 	double		session_val;
 	double		tentative_val;
@@ -159,8 +161,8 @@ struct config_string
 	/* (all are constants) */
 	char	  **variable;
 	const char *boot_val;
-	const char *(*assign_hook) (const char *newval, bool doit, GucSource source);
-	const char *(*show_hook) (void);
+	GucStringAssignHook assign_hook;
+	GucShowHook show_hook;
 	/* variable fields, initialized at runtime: */
 	char	   *reset_val;
 	char	   *session_val;
@@ -173,9 +175,8 @@ extern const char *const config_type_names[];
 extern const char *const GucContext_Names[];
 extern const char *const GucSource_Names[];
 
-/* the current set of variables */
-extern struct config_generic **guc_variables;
-extern int	num_guc_variables;
+/* get the current set of variables */
+extern struct config_generic **get_guc_variables(void);
 
 extern void build_guc_variables(void);
 

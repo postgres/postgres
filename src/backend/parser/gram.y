@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.456 2004/05/26 13:56:51 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.457 2004/05/26 15:07:37 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -310,7 +310,7 @@ static void doNegateFloat(Value *v);
 %type <str>		Sconst comment_text
 %type <str>		UserId opt_boolean ColId_or_Sconst
 %type <list>	var_list var_list_or_default
-%type <str>		ColId ColLabel type_name param_name
+%type <str>		ColId ColLabel var_name type_name param_name
 %type <node>	var_value zone_value
 
 %type <keyword> unreserved_keyword func_name_keyword
@@ -859,14 +859,14 @@ VariableSetStmt:
 				}
 		;
 
-set_rest:  ColId TO var_list_or_default
+set_rest:  var_name TO var_list_or_default
 				{
 					VariableSetStmt *n = makeNode(VariableSetStmt);
 					n->name = $1;
 					n->args = $3;
 					$$ = n;
 				}
-			| ColId '=' var_list_or_default
+			| var_name '=' var_list_or_default
 				{
 					VariableSetStmt *n = makeNode(VariableSetStmt);
 					n->name = $1;
@@ -916,6 +916,19 @@ set_rest:  ColId TO var_list_or_default
 					n->name = "session_authorization";
 					n->args = NIL;
 					$$ = n;
+				}
+		;
+
+var_name:
+			ColId								{ $$ = $1; }
+			| var_name '.' ColId
+				{
+					int qLen = strlen($1);
+					char* qualName = palloc(qLen + strlen($3) + 2);
+					strcpy(qualName, $1);
+					qualName[qLen] = '.';
+					strcpy(qualName + qLen + 1, $3);
+					$$ = qualName;
 				}
 		;
 

@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/help_config.c,v 1.9 2003/11/29 19:52:04 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/help_config.c,v 1.10 2004/05/26 15:07:39 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,13 +47,15 @@ int
 GucInfoMain(void)
 {
 	int			i;
+	struct config_generic **guc_vars = get_guc_variables();
+	int numOpts = GetNumConfigOptions();
 
 	/* Initialize the guc_variables[] array */
 	build_guc_variables();
 
-	for (i = 0; i < num_guc_variables; i++)
+	for (i = 0; i < numOpts; i++)
 	{
-		mixedStruct *var = (mixedStruct *) guc_variables[i];
+		mixedStruct *var = (mixedStruct *) guc_vars[i];
 
 		if (displayStruct(var))
 			printMixedStruct(var);

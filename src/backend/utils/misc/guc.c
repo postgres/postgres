@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.207 2004/05/26 04:41:43 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.208 2004/05/26 15:07:39 momjian Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -20,6 +20,7 @@
 #include <float.h>
 #include <limits.h>
 #include <unistd.h>
+#include <ctype.h>
 
 #include "utils/guc.h"
 #include "utils/guc_tables.h"
@@ -103,6 +104,8 @@ static const char *assign_log_statement(const char *newval, bool doit,
 static const char *assign_log_stmtlvl(int *var, const char *newval,
 						   bool doit, GucSource source);
 static bool assign_phony_autocommit(bool newval, bool doit, GucSource source);
+static const char *assign_custom_variable_classes(const char *newval, bool doit,
+						   GucSource source);
 static bool assign_stage_log_stats(bool newval, bool doit, GucSource source);
 static bool assign_log_stats(bool newval, bool doit, GucSource source);
 
@@ -167,6 +170,7 @@ static char *server_version_string;
 static char *session_authorization_string;
 static char *timezone_string;
 static char *XactIsoLevel_string;
+static char *custom_variable_classes;
 static int	max_function_args;
 static int	max_index_keys;
 static int	max_identifier_length;
@@ -1728,6 +1732,16 @@ static struct config_string ConfigureNamesString[] =
 		XLOG_sync_method_default, assign_xlog_sync_method, NULL
 	},
 
+	{
+		{"custom_variable_classes", PGC_POSTMASTER, RESOURCES_KERNEL,
+			gettext_noop("Sets the list of known custom variable classes"),
+			NULL,
+			GUC_LIST_INPUT | GUC_LIST_QUOTE
+		},
+		&custom_variable_classes,
+		NULL, assign_custom_variable_classes, NULL
+	},
+
 	/* End-of-list marker */
 	{
 		{NULL, 0, 0, NULL, NULL}, NULL, NULL, NULL, NULL
@@ -1753,8 +1767,15 @@ static const char * const map_old_guc_names[] = {
 /*
  * Actual lookup of variables is done through this single, sorted array.
  */
-struct config_generic **guc_variables;
-int			num_guc_variables;
+static struct config_generic **guc_variables;
+
+/* Current number of variables contained in the vector
+ */
+static int num_guc_variables;
+
+/* Vector capacity
+ */
+static int size_guc_variables;
 
 static bool guc_dirty;			/* TRUE if need to do commit/abort work */
 
@@ -1768,6 +1789,10 @@ static int	guc_name_compare(const char *namea, const char *nameb);
 static void ReportGUCOption(struct config_generic * record);
 static char *_ShowOption(struct config_generic * record);
 
+struct config_generic** get_guc_variables()
+{
+	return guc_variables;
+}
 
 /*
  * Build the sorted array.	This is split out so that it could be
@@ -1777,6 +1802,7 @@ static char *_ShowOption(struct config_generic * record);
 void
 build_guc_variables(void)
 {
+	int         size_vars;
 	int			num_vars = 0;
 	struct config_generic **guc_vars;
 	int			i;
@@ -1814,8 +1840,12 @@ build_guc_variables(void)
 		num_vars++;
 	}
 
+	/* Create table with 20% slack
+	 */
+	size_vars = num_vars + num_vars / 4;
+
 	guc_vars = (struct config_generic **)
-		malloc(num_vars * sizeof(struct config_generic *));
+		malloc(size_vars * sizeof(struct config_generic *));
 	if (!guc_vars)
 		ereport(FATAL,
 				(errcode(ERRCODE_OUT_OF_MEMORY),
@@ -1835,15 +1865,107 @@ build_guc_variables(void)
 	for (i = 0; ConfigureNamesString[i].gen.name; i++)
 		guc_vars[num_vars++] = &ConfigureNamesString[i].gen;
 
-	qsort((void *) guc_vars, num_vars, sizeof(struct config_generic *),
-		  guc_var_compare);
-
 	if (guc_variables)
 		free(guc_variables);
 	guc_variables = guc_vars;
 	num_guc_variables = num_vars;
+	size_guc_variables = size_vars;
+	qsort((void*) guc_variables, num_guc_variables,
+		sizeof(struct config_generic*), guc_var_compare);
 }
 
+static bool
+is_custom_class(const char *name, int dotPos)
+{
+	/* The assign_custom_variable_classes has made sure no empty
+	 * identifiers or whitespace exists in the variable
+	 */
+	bool result = false;
+	const char *ccs = GetConfigOption("custom_variable_classes");
+	if(ccs != NULL)
+	{
+		const char *start = ccs;
+		for(;; ++ccs)
+		{
+			int c = *ccs;
+			if(c == 0 || c == ',')
+			{
+				if(dotPos == ccs - start && strncmp(start, name, dotPos) == 0)
+				{
+					result = true;
+					break;
+				}
+				if(c == 0)
+					break;
+				start = ccs + 1;
+			}
+		}
+	}
+	return result;
+}
+
+/*
+ * Add a new GUC variable to the list of known variables. The
+ * list is expanded if needed.
+ */
+static void
+add_guc_variable(struct config_generic *var)
+{
+	if(num_guc_variables + 1 >= size_guc_variables)
+	{
+		/* Increase the vector with 20%
+		 */
+		int size_vars = size_guc_variables + size_guc_variables / 4;
+		struct config_generic** guc_vars;
+
+		if(size_vars == 0)
+			size_vars = 100;
+
+		guc_vars = (struct config_generic**)
+					malloc(size_vars * sizeof(struct config_generic*));
+
+		if (guc_variables != NULL)
+		{
+			memcpy(guc_vars, guc_variables,
+					num_guc_variables * sizeof(struct config_generic*));
+			free(guc_variables);
+		}
+
+		guc_variables = guc_vars;
+		size_guc_variables = size_vars;
+	}
+	guc_variables[num_guc_variables++] = var;
+	qsort((void*) guc_variables, num_guc_variables,
+		sizeof(struct config_generic*), guc_var_compare);
+}
+
+/*
+ * Create and add a placeholder variable. Its presumed to belong
+ * to a valid custom variable class at this point.
+ */
+static struct config_string*
+add_placeholder_variable(const char *name)
+{
+	size_t sz = sizeof(struct config_string) + sizeof(char*);
+	struct config_string*  var = (struct config_string*)malloc(sz);
+	struct config_generic* gen = &var->gen;
+
+	memset(var, 0, sz);
+
+	gen->name       = strdup(name);
+	gen->context    = PGC_USERSET;
+	gen->group      = CUSTOM_OPTIONS;
+	gen->short_desc = "GUC placeholder variable";
+	gen->flags      = GUC_NO_SHOW_ALL | GUC_NOT_IN_SAMPLE | GUC_CUSTOM_PLACEHOLDER;
+	gen->vartype    = PGC_STRING;
+
+	/* The char* is allocated at the end of the struct since we have
+	 * no 'static' place to point to.
+	 */	
+	var->variable = (char**)(var + 1);
+	add_guc_variable((struct config_generic*)var);
+	return var;
+}
 
 /*
  * Look up option NAME. If it exists, return a pointer to its record,
@@ -1852,6 +1974,7 @@ build_guc_variables(void)
 static struct config_generic *
 find_option(const char *name)
 {
+	const char *dot;
 	const char **key = &name;
 	struct config_generic **res;
 	int			i;
@@ -1880,6 +2003,16 @@ find_option(const char *name)
 		if (guc_name_compare(name, map_old_guc_names[i]) == 0)
 			return find_option(map_old_guc_names[i+1]);
 	}
+
+	/* Check if the name is qualified, and if so, check if the qualifier
+	 * maps to a custom variable class.
+	 */
+	dot = strchr(name, GUC_QUALIFIER_SEPARATOR);
+	if(dot != NULL && is_custom_class(name, dot - name))
+		/*
+		 * Add a placeholder variable for this name
+		 */
+		return (struct config_generic*)add_placeholder_variable(name);
 
 	/* Unknown name */
 	return NULL;
@@ -3455,6 +3588,196 @@ set_config_by_name(PG_FUNCTION_ARGS)
 	PG_RETURN_TEXT_P(result_text);
 }
 
+static void
+define_custom_variable(struct config_generic* variable)
+{
+	const char* name = variable->name;
+	const char** nameAddr = &name;
+	const char* value;
+	struct config_string*   pHolder;
+	struct config_generic** res = (struct config_generic**)bsearch(
+											(void*)&nameAddr,
+											(void*)guc_variables,
+											num_guc_variables,
+											sizeof(struct config_generic*),
+											guc_var_compare);
+
+	if(res == NULL)
+	{
+		add_guc_variable(variable);
+		return;
+	}
+
+	/* This better be a placeholder
+	 */
+	if(((*res)->flags & GUC_CUSTOM_PLACEHOLDER) == 0)
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_INTERNAL_ERROR),
+				 errmsg("attempt to redefine parameter \"%s\"", name)));
+	}
+	pHolder = (struct config_string*)*res;
+	
+	/* We have the same name, no sorting is necessary.
+	 */
+	*res = variable;
+
+	value = *pHolder->variable;
+
+	/* Assign the variable stored in the placeholder to the real
+	 * variable.
+	 */
+	set_config_option(name, value,
+				  pHolder->gen.context, pHolder->gen.source,
+				  false, true);
+
+	/* Free up stuff occupied by the placeholder variable
+	 */
+	if(value != NULL)
+		free((void*)value);
+
+	if(pHolder->reset_val != NULL && pHolder->reset_val != value)
+		free(pHolder->reset_val);
+
+	if(pHolder->session_val != NULL
+	&& pHolder->session_val != value
+	&& pHolder->session_val != pHolder->reset_val)
+		free(pHolder->session_val);
+
+	if(pHolder->tentative_val != NULL
+	&& pHolder->tentative_val != value
+	&& pHolder->tentative_val != pHolder->reset_val
+	&& pHolder->tentative_val != pHolder->session_val)
+		free(pHolder->tentative_val);
+
+	free(pHolder);
+}
+
+static void init_custom_variable(
+	struct config_generic* gen,
+	const char* name,
+	const char* short_desc,
+	const char* long_desc,
+	GucContext  context,
+	enum config_type type)
+{
+	gen->name       = strdup(name);
+	gen->context    = context;
+	gen->group      = CUSTOM_OPTIONS;
+	gen->short_desc = short_desc;
+	gen->long_desc  = long_desc;
+	gen->vartype    = type;
+}
+
+void DefineCustomBoolVariable(
+	const char* name,
+	const char* short_desc,
+	const char* long_desc,
+	bool*       valueAddr,
+	GucContext  context,
+	GucBoolAssignHook assign_hook,
+	GucShowHook show_hook)
+{
+	size_t sz = sizeof(struct config_bool);
+	struct config_bool*  var = (struct config_bool*)malloc(sz);
+
+	memset(var, 0, sz);
+	init_custom_variable(&var->gen, name, short_desc, long_desc, context, PGC_BOOL);
+
+	var->variable    = valueAddr;
+	var->reset_val   = *valueAddr;
+	var->assign_hook = assign_hook;
+	var->show_hook   = show_hook;
+	define_custom_variable(&var->gen);
+}
+
+void DefineCustomIntVariable(
+	const char* name,
+	const char* short_desc,
+	const char* long_desc,
+	int*        valueAddr,
+	GucContext  context,
+	GucIntAssignHook assign_hook,
+	GucShowHook show_hook)
+{
+	size_t sz = sizeof(struct config_int);
+	struct config_int*  var = (struct config_int*)malloc(sz);
+
+	memset(var, 0, sz);
+	init_custom_variable(&var->gen, name, short_desc, long_desc, context, PGC_INT);
+
+	var->variable    = valueAddr;
+	var->reset_val   = *valueAddr;
+	var->assign_hook = assign_hook;
+	var->show_hook   = show_hook;
+	define_custom_variable(&var->gen);
+}
+
+void DefineCustomRealVariable(
+	const char* name,
+	const char* short_desc,
+	const char* long_desc,
+	double*     valueAddr,
+	GucContext  context,
+	GucRealAssignHook assign_hook,
+	GucShowHook show_hook)
+{
+	size_t sz = sizeof(struct config_real);
+	struct config_real*  var = (struct config_real*)malloc(sz);
+
+	memset(var, 0, sz);
+	init_custom_variable(&var->gen, name, short_desc, long_desc, context, PGC_REAL);
+
+	var->variable    = valueAddr;
+	var->reset_val   = *valueAddr;
+	var->assign_hook = assign_hook;
+	var->show_hook   = show_hook;
+	define_custom_variable(&var->gen);
+}
+
+void DefineCustomStringVariable(
+	const char* name,
+	const char* short_desc,
+	const char* long_desc,
+	char**      valueAddr,
+	GucContext  context,
+	GucStringAssignHook assign_hook,
+	GucShowHook show_hook)
+{
+	size_t sz = sizeof(struct config_string);
+	struct config_string*  var = (struct config_string*)malloc(sz);
+
+	memset(var, 0, sz);
+	init_custom_variable(&var->gen, name, short_desc, long_desc, context, PGC_STRING);
+
+	var->variable    = valueAddr;
+	var->reset_val   = *valueAddr;
+	var->assign_hook = assign_hook;
+	var->show_hook   = show_hook;
+	define_custom_variable(&var->gen);
+}
+
+extern void EmittWarningsOnPlaceholders(const char* className)
+{
+	struct config_generic** vars = guc_variables;
+	struct config_generic** last = vars + num_guc_variables;
+
+	int nameLen = strlen(className);
+	while(vars < last)
+	{
+		struct config_generic* var = *vars++;
+		if((var->flags & GUC_CUSTOM_PLACEHOLDER) != 0 &&
+		   strncmp(className, var->name, nameLen) == 0 &&
+		   var->name[nameLen] == GUC_QUALIFIER_SEPARATOR)
+		{
+			ereport(INFO,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("unrecognized configuration parameter \"%s\"", var->name)));
+		}
+	}
+}
+
+
 /*
  * SHOW command
  */
@@ -4706,6 +5029,68 @@ assign_phony_autocommit(bool newval, bool doit, GucSource source)
 	return true;
 }
 
+static const char *
+assign_custom_variable_classes(const char *newval, bool doit, GucSource source)
+{
+	/* Check syntax. newval must be a comma separated list of identifiers.
+	 * Whitespace is allowed but skipped.
+	 */
+	bool hasSpaceAfterToken = false;
+	const char *cp = newval;
+	int symLen = 0;
+	int c;
+	StringInfoData buf;
+
+	initStringInfo(&buf);
+	while((c = *cp++) != 0)
+	{
+		if(isspace(c))
+		{
+			if(symLen > 0)
+				hasSpaceAfterToken = true;
+			continue;
+		}
+
+		if(c == ',')
+		{
+			hasSpaceAfterToken = false;
+			if(symLen > 0)
+			{
+				symLen = 0;
+				appendStringInfoChar(&buf, ',');
+			}
+			continue;
+		}
+
+		if(hasSpaceAfterToken || !isalnum(c))
+		{
+			/* Syntax error due to token following space after
+			 * token or non alpha numeric character
+			 */
+			pfree(buf.data);
+			ereport(WARNING,
+					(errcode(ERRCODE_SYNTAX_ERROR),
+					 errmsg("illegal syntax for custom_variable_classes \"%s\"", newval)));
+			return NULL;
+		}
+		symLen++;
+		appendStringInfoChar(&buf, (char)c);
+	}
+
+	if(symLen == 0 && buf.len > 0)
+		/*
+		 * Remove stray ',' at end
+		 */
+		buf.data[--buf.len] = 0;
+
+	if(buf.len == 0)
+		newval = NULL;
+	else if(doit)
+		newval = strdup(buf.data);
+
+	pfree(buf.data);
+	return newval;
+}
 
 static bool
 assign_stage_log_stats(bool newval, bool doit, GucSource source)

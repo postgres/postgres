@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.263 2004/04/29 04:37:09 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.264 2004/05/26 15:07:33 momjian Exp $
 -->
 
 <Chapter Id="runtime">
@@ -2923,6 +2923,60 @@ dynamic_library_path = '/usr/local/lib/postgresql:/home/my_project/lib:$libdir'
 
     </variablelist>
    </sect2>
+
+   <sect2 id="runtime-config-custom">
+    <title>Customized Options</title>
+
+    <para>
+     The following was designed to allow options not normally known to
+     <productname>PostgreSQL</productname> to be declared in the posgresql.conf
+     file and/or manipulated using the <command>SET</command> in a controlled
+     manner so that add-on modules to the postgres proper (such as lanugage
+     mappings for triggers and functions) can be configured in a unified way.
+    </para>
+
+    <variablelist>
+
+     <varlistentry id="guc-custom-variable-classes" xreflabel="custom-variable-classes">
+      <term><varname>custom_variable_classes</varname> (<type>string</type>)</term>
+      <indexterm><primary>custom_variable_classes</></>
+      <listitem>
+       <para>
+        This variable specifies one or several classes to be used for custom
+        variables. A custom variable is a variable not normally known to
+        the <productname>PostgreSQL</productname> proper but used by some add
+        on module.
+       </para>
+
+       <para>
+        Aribtrary variables can be defined for each class specified here. Those
+        variables will be treated as placeholders and have no meaning until the
+        module that defines them is loaded. When a module for a specific class is
+        loaded, it will add the proper variable definitions for the class
+        associated with it, convert any placeholder values according to those
+        definitions, and issue warnings for any placeholders that then remains.
+       </para>
+       
+       <para>
+        Here is an example what custom variables might look like:
+
+<programlisting>
+custom_variable_class = 'plr,pljava'
+plr.foo = '/usr/lib/R'
+pljava.baz = 1
+plruby.var = true        <== this one would generate an error
+</programlisting>
+       </para>
+
+       <para>
+        This option can only be set at server start or in the
+        <filename>postgresql.conf</filename> configuration file.
+       </para>
+
+      </listitem>
+     </varlistentry>
+    </variablelist>
+	</sect2>
 
    <sect2 id="runtime-config-developer">
     <title>Developer Options</title>
