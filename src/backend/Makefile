@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/backend/Makefile,v 1.78 2002/05/05 00:03:28 tgl Exp $
+# $Header: /cvsroot/pgsql/src/backend/Makefile,v 1.79 2002/05/22 21:46:40 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -45,9 +45,9 @@ else # win
 # commands into variables?
 postgres: $(OBJS) $(top_builddir)/src/utils/dllinit.o postgres.def libpostgres.a
 	dlltool --dllname $@$(X) --output-exp $@.exp --def postgres.def
-	gcc -g -o $@$(X) -Wl,--base-file,$@.base $@.exp $(OBJS) $(DLLLIBS)
+	gcc $(LDFLAGS) -g -o $@$(X) -Wl,--base-file,$@.base $@.exp $(OBJS) $(DLLLIBS)
 	dlltool --dllname $@$(X) --base-file $@.base --output-exp $@.exp --def postgres.def
-	gcc -g -o $@$(X) $@.exp $(OBJS) $(DLLLIBS)
+	gcc $(LDFLAGS) -g -o $@$(X) $@.exp $(OBJS) $(DLLLIBS)
 	rm $@.exp $@.base
 
 endif # win
