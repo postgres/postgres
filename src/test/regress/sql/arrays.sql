@@ -192,3 +192,28 @@ select 'foo' not like any (array['%a', '%b']); -- t
 select 'foo' not like all (array['%a', '%o']); -- f
 select 'foo' ilike any (array['%A', '%O']); -- t
 select 'foo' ilike all (array['F%', '%O']); -- t
+
+--
+-- General array parser tests
+--
+
+-- none of the following should be accepted
+select '{{1,{2}},{2,3}}'::text[];
+select '{{},{}}'::text[];
+select '{{1,2},\\{2,3}}'::text[];
+select '{{"1 2" x},{3}}'::text[];
+select '{}}'::text[];
+select '{ }}'::text[];
+-- none of the above should be accepted
+
+-- all of the following should be accepted
+select '{}'::text[];
+select '{{{1,2,3,4},{2,3,4,5}},{{3,4,5,6},{4,5,6,7}}}'::text[];
+select '{0 second  ,0 second}'::interval[];
+select '{ { "," } , { 3 } }'::text[];
+select '  {   {  "  0 second  "   ,  0 second  }   }'::text[];
+select '{
+           0 second,
+           @ 1 hour @ 42 minutes @ 20 seconds
+         }'::interval[];
+-- all of the above should be accepted

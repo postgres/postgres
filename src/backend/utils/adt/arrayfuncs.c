@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.107 2004/08/08 05:01:55 joe Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.108 2004/08/28 19:31:28 joe Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -183,9 +183,7 @@ array_in(PG_FUNCTION_ARGS)
 	typioparam = my_extra->typioparam;
 
 	/* Make a modifiable copy of the input */
-	/* XXX why are we allocating an extra 2 bytes here? */
-	string_save = (char *) palloc(strlen(string) + 3);
-	strcpy(string_save, string);
+	string_save = pstrdup(string);
 
 	/*
 	 * If the input string starts with dimension info, read and use that.
@@ -375,6 +373,7 @@ ArrayCount(char *str, int *dim, char typdelim)
 					nelems_last[MAXDIM];
 	bool			scanning_string = false;
 	bool			eoArray = false;
+	bool			empty_array = true;
 	char		   *ptr;
 	ArrayParseState	parse_state = ARRAY_NO_LEVEL;
 
@@ -385,7 +384,7 @@ ArrayCount(char *str, int *dim, char typdelim)
 	}
 
 	/* special case for an empty array */
-	if (strncmp(str, "{}", 2) == 0)
+	if (strcmp(str, "{}") == 0)
 		return 0;
 
 	ptr = str;
@@ -395,6 +394,10 @@ ArrayCount(char *str, int *dim, char typdelim)
 
 		while (!itemdone)
 		{
+			if (parse_state == ARRAY_ELEM_STARTED ||
+				parse_state == ARRAY_QUOTED_ELEM_STARTED)
+				empty_array = false;
+			
 			switch (*ptr)
 			{
 				case '\0':
@@ -481,7 +484,8 @@ ArrayCount(char *str, int *dim, char typdelim)
 						if (parse_state != ARRAY_ELEM_STARTED &&
 							parse_state != ARRAY_ELEM_COMPLETED &&
 							parse_state != ARRAY_QUOTED_ELEM_COMPLETED &&
-							parse_state != ARRAY_LEVEL_COMPLETED)
+							parse_state != ARRAY_LEVEL_COMPLETED &&
+							!(nest_level == 1 &&  parse_state == ARRAY_LEVEL_STARTED))
 							ereport(ERROR,
 								(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 								errmsg("malformed array literal: \"%s\"", str)));
@@ -562,6 +566,20 @@ ArrayCount(char *str, int *dim, char typdelim)
 		temp[ndim - 1]++;
 		ptr++;
 	}
+	
+	/* only whitespace is allowed after the closing brace */
+	while (*ptr)
+	{
+		if (!isspace(*ptr++))
+			ereport(ERROR,
+				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
+				errmsg("malformed array literal: \"%s\"", str)));
+	}
+	
+	/* special case for an empty array */
+	if (empty_array)
+		return 0;
+		
 	for (i = 0; i < ndim; ++i)
 		dim[i] = temp[i];
 

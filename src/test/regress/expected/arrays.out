@@ -425,3 +425,61 @@ select 'foo' ilike all (array['F%', '%O']); -- t
  t
 (1 row)
 
+--
+-- General array parser tests
+--
+-- none of the following should be accepted
+select '{{1,{2}},{2,3}}'::text[];
+ERROR:  malformed array literal: "{{1,{2}},{2,3}}"
+select '{{},{}}'::text[];
+ERROR:  malformed array literal: "{{},{}}"
+select '{{1,2},\\{2,3}}'::text[];
+ERROR:  malformed array literal: "{{1,2},\{2,3}}"
+select '{{"1 2" x},{3}}'::text[];
+ERROR:  malformed array literal: "{{"1 2" x},{3}}"
+select '{}}'::text[];
+ERROR:  malformed array literal: "{}}"
+select '{ }}'::text[];
+ERROR:  malformed array literal: "{ }}"
+-- none of the above should be accepted
+-- all of the following should be accepted
+select '{}'::text[];
+ text 
+------
+ {}
+(1 row)
+
+select '{{{1,2,3,4},{2,3,4,5}},{{3,4,5,6},{4,5,6,7}}}'::text[];
+                     text                      
+-----------------------------------------------
+ {{{1,2,3,4},{2,3,4,5}},{{3,4,5,6},{4,5,6,7}}}
+(1 row)
+
+select '{0 second  ,0 second}'::interval[];
+   interval    
+---------------
+ {"@ 0","@ 0"}
+(1 row)
+
+select '{ { "," } , { 3 } }'::text[];
+    text     
+-------------
+ {{","},{3}}
+(1 row)
+
+select '  {   {  "  0 second  "   ,  0 second  }   }'::text[];
+             text              
+-------------------------------
+ {{"  0 second  ","0 second"}}
+(1 row)
+
+select '{
+           0 second,
+           @ 1 hour @ 42 minutes @ 20 seconds
+         }'::interval[];
+              interval              
+------------------------------------
+ {"@ 0","@ 1 hour 42 mins 20 secs"}
+(1 row)
+
+-- all of the above should be accepted
