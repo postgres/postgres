@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/buffer/bufmgr.c,v 1.186 2005/03/04 20:21:06 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/buffer/bufmgr.c,v 1.187 2005/03/18 05:25:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -551,6 +551,9 @@ retry:
 	{
 		UnlockBufHdr_NoHoldoff(buf);
 		LWLockRelease(BufMappingLock);
+		/* safety check: should definitely not be our *own* pin */
+		if (PrivateRefCount[buf->buf_id] != 0)
+			elog(ERROR, "buffer is pinned in InvalidateBuffer");
 		WaitIO(buf);
 		goto retry;
 	}
