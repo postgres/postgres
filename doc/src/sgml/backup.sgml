@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.51 2004/11/15 06:32:13 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.52 2004/11/17 18:29:02 tgl Exp $
 -->
 <chapter id="backup">
  <title>Backup and Restore</title>
@@ -615,8 +615,10 @@ archive_command = 'test ! -f .../%f &amp;&amp; cp %p .../%f'
     Note that although WAL archiving will allow you to restore any
     modifications made to the data in your <productname>PostgreSQL</> database
     it will not restore changes made to configuration files (that is,
-	 <filename>postgresql.conf</>, <filename>pg_hba.conf</> and
+    <filename>postgresql.conf</>, <filename>pg_hba.conf</> and
     <filename>pg_ident.conf</>) after the initial base backup.
+    You may wish to keep the configuration files in a location that will
+    be backed up by your regular filesystem backup procedures.
    </para>
   </sect2>
 
@@ -638,11 +640,11 @@ archive_command = 'test ! -f .../%f &amp;&amp; cp %p .../%f'
 SELECT pg_start_backup('label');
 </programlisting>
      where <literal>label</> is any string you want to use to uniquely
-     identify this backup operation. <function>pg_start_backup</> creates
-     a <firstterm>backup label</> file, called <filename>backup_label</>,
-     in the cluster directory with information about your backup. 
-     One good practice is to use the full path where you intend to put the 
-     backup dump file as.
+     identify this backup operation.  (One good practice is to use the
+     full path where you intend to put the backup dump file.)
+     <function>pg_start_backup</> creates a <firstterm>backup label</> file,
+     called <filename>backup_label</>, in the cluster directory with
+     information about your backup.
     </para>
 
     <para>
@@ -762,19 +764,25 @@ SELECT pg_stop_backup();
   <orderedlist>
    <listitem>
     <para>
-     Stop the postmaster, if it's running. If you have the space to do so,
-     copy the cluster data directory and any tablespaces to a temporary 
-     location so that you can reference them later. Note that this will
+     Stop the postmaster, if it's running.
+    </para>
+   </listitem>
+   <listitem>
+    <para>
+     If you have the space to do so,
+     copy the whole cluster data directory and any tablespaces to a temporary 
+     location in case you need them later. Note that this precaution will
      require that you have enough free space on your system to hold two
      copies of your existing database. If you do not have enough space, 
-     you need at the least to backup the <filename>pg_xlog</> directory in
-     the cluster data directory as it may contain logs which were not archived
-     before the system went down.
+     you need at the least to copy the contents of the <filename>pg_xlog</>
+     subdirectory of the cluster data directory, as it may contain logs which
+     were not archived before the system went down.
     </para>
-
+   </listitem>
+   <listitem>
     <para>
-     Next, clean out all existing files under the cluster data directory and 
-     under the root directories of any tablespaces you are using.
+     Clean out all existing files and subdirectories under the cluster data
+     directory and under the root directories of any tablespaces you are using.
     </para>
    </listitem>
    <listitem>
@@ -797,7 +805,7 @@ SELECT pg_stop_backup();
    </listitem>
    <listitem>
     <para>
-     If you had unarchived WAL segment files that you saved in step 1,
+     If you had unarchived WAL segment files that you saved in step 2,
      copy them into <filename>pg_xlog/</>.  (It is best to copy them,
      not move them, so that you still have the unmodified files if a
      problem occurs and you have to start over.)
