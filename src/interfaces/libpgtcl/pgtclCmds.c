@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtclCmds.c,v 1.1.1.1 1996/07/09 06:22:16 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtclCmds.c,v 1.2 1996/07/23 03:38:44 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -194,6 +194,8 @@ Pg_exec(AlientData cData, Tcl_Interp *interp, int argc, char* argv[])
  the connection that produced the result
  -assign arrayName
  assign the results to an array
+ -assignbyidx arrayName
+ assign the results to an array using the first field as a key
  -numTuples
  the number of tuples in the query
  -attributes
@@ -211,6 +213,7 @@ Pg_result(ClientData cData, Tcl_Interp *interp, int argc, char* argv[])
     char *opt;
     int i;
     int tupno;
+    char prearrayInd[MAX_MESSAGE_LEN];
     char arrayInd[MAX_MESSAGE_LEN];
     char *arrVar;
 
@@ -268,6 +271,27 @@ Pg_result(ClientData cData, Tcl_Interp *interp, int argc, char* argv[])
 	Tcl_AppendResult(interp, arrVar, 0);
 	return TCL_OK;
     }
+    else if (strcmp(opt, "-assignbyidx") == 0) {
+      if (argc != 4) {
+          Tcl_AppendResult(interp, "-assignbyidx option must be followed by a variable name",0);
+          return TCL_ERROR;
+      }
+      arrVar = argv[3];
+      /* this assignment assigns the table of result tuples into a giant
+         array with the name given in the argument,
+         the indices of the array or (tupno,attrName)*/
+      for (tupno = 0; tupno<PQntuples(result); tupno++) {
+          sprintf(prearrayInd,"%s",PQgetvalue(result,tupno,0));
+          for (i=1;i<PQnfields(result);i++) {
+              sprintf(arrayInd, "%s,%s", prearrayInd, PQfname(result,i));
+              Tcl_SetVar2(interp, arrVar, arrayInd,
+                          PQgetvalue(result,tupno,i),
+                          TCL_LEAVE_ERR_MSG);
+          }
+      }
+      Tcl_AppendResult(interp, arrVar, 0);
+      return TCL_OK;
+    }
     else if (strcmp(opt, "-getTuple") == 0) {
 	if (argc != 4) {
 	    Tcl_AppendResult(interp, "-getTuple option must be followed by a tuple number",0);
@@ -307,6 +331,7 @@ Pg_result(ClientData cData, Tcl_Interp *interp, int argc, char* argv[])
 		     "\t-status\n",
 		     "\t-conn\n",
 		     "\t-assign arrayVarName\n",
+		     "\t-assignbyidx arrayVarName\n",
 		     "\t-numTuples\n",
 		     "\t-attributes\n"
 		     "\t-getTuple tupleNumber\n",

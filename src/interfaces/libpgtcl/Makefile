@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/Makefile,v 1.1.1.1 1996/07/09 06:22:16 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/Makefile,v 1.2 1996/07/23 03:38:42 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -20,7 +20,8 @@ CFLAGS+= -I$(HEADERDIR) \
 	 -I$(srcdir)/backend/include \
 	 -I$(srcdir)/backend \
 	 -I$(CURDIR) \
-	 -I$(TCL_INCDIR)
+	 -I$(TCL_INCDIR) \
+	 -I$(srcdir)/libpq
 
 ifdef KRBVERS
 CFLAGS+= $(KRBFLAGS)
