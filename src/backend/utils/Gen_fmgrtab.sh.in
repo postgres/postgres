@@ -9,7 +9,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/utils/Attic/Gen_fmgrtab.sh.in,v 1.22 2000/05/28 17:56:05 tgl Exp $
+#    $Header: /cvsroot/pgsql/src/backend/utils/Attic/Gen_fmgrtab.sh.in,v 1.23 2000/05/29 20:18:30 tgl Exp $
 #
 # NOTES
 #    Passes any -D options on to cpp prior to generating the list
@@ -41,7 +41,7 @@ TABLEFILE=fmgrtab.c
 
 #
 # Generate the file containing raw pg_proc tuple data
-# (but only for "internal" language procedures...).
+# (but only for "internal" and "newinternal" language procedures...).
 #
 # Unlike genbki.sh, which can run through cpp last, we have to
 # deal with preprocessor statements first (before we sort the
@@ -82,7 +82,7 @@ cat > $OIDSFILE <<FuNkYfMgRsTuFf
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: Gen_fmgrtab.sh.in,v 1.22 2000/05/28 17:56:05 tgl Exp $
+ * $Id: Gen_fmgrtab.sh.in,v 1.23 2000/05/29 20:18:30 tgl Exp $
  *
  * NOTES
  *	******************************
@@ -99,16 +99,21 @@ cat > $OIDSFILE <<FuNkYfMgRsTuFf
 
 /*
  *	Constant macros for the OIDs of entries in pg_proc.
- *	NOTE: if the same "proname" is used for more than one
- *	internal-function entry in pg_proc, the equivalent macro
- *	will be defined with the lowest OID among those entries.
+ *
+ *	NOTE: macros are named after the prosrc value, ie the actual C name
+ *	of the implementing function, not the proname which may be overloaded.
+ *	For example, we want to be able to assign different macro names to both
+ *	char_text() and int4_text() even though these both appear with proname
+ *	'text'.  If the same C function appears in more than one pg_proc entry,
+ *	its equivalent macro will be defined with the OID of the entry appearing
+ *	first in pg_proc.h.
  */
 FuNkYfMgRsTuFf
 
 tr 'abcdefghijklmnopqrstuvwxyz' 'ABCDEFGHIJKLMNOPQRSTUVWXYZ' < $RAWFILE | \
 awk '
 BEGIN	{ OFS = ""; }
-	{ if (seenit[$2]++ == 0) print "#define F_", $2, " ", $1; }' >> $OIDSFILE
+	{ if (seenit[$(NF-1)]++ == 0) print "#define F_", $(NF-1), " ", $1; }' >> $OIDSFILE
 
 cat >> $OIDSFILE <<FuNkYfMgRsTuFf
 
@@ -134,7 +139,7 @@ cat > $TABLEFILE <<FuNkYfMgRtAbStUfF
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/Attic/Gen_fmgrtab.sh.in,v 1.22 2000/05/28 17:56:05 tgl Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/Attic/Gen_fmgrtab.sh.in,v 1.23 2000/05/29 20:18:30 tgl Exp $
  *
  * NOTES
  *
