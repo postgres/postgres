@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/pgtclsh/Attic/Makefile,v 1.9 1997/09/27 19:28:40 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/bin/pgtclsh/Attic/Makefile,v 1.10 1998/01/25 04:14:23 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -15,6 +15,11 @@ SRCDIR= ../..
 include ../../Makefile.global
 
 CFLAGS+=  -I$(TCL_INCDIR) -I$(TK_INCDIR) -I$(X11_INCDIR) -I$(SRCDIR)/interfaces/libpgtcl
+
+ifdef KRBVERS
+LDFLAGS+= $(KRBLIBS)
+CFLAGS+= $(KRBFLAGS)
+endif
 
 # try to find libpgtcl.a in either directory
 LIBPGTCL= -L$(SRCDIR)/interfaces/libpgtcl -L$(LIBDIR) -lpgtcl
