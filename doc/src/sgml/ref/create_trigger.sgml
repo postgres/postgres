@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_trigger.sgml,v 1.30 2002/11/23 03:59:06 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_trigger.sgml,v 1.31 2002/12/17 17:41:30 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -21,9 +21,8 @@ PostgreSQL documentation
    <date>2000-03-25</date>
   </refsynopsisdivinfo>
   <synopsis>
-CREATE TRIGGER <replaceable class="PARAMETER">name</replaceable> {
-    BEFORE | AFTER } { <replaceable class="PARAMETER">event</replaceable> [ OR ... ] }
-    ON <replaceable class="PARAMETER">table</replaceable> [ FOR EACH { ROW | STATEMENT } ]
+CREATE TRIGGER <replaceable class="PARAMETER">name</replaceable> { BEFORE | AFTER } { <replaceable class="PARAMETER">event</replaceable> [ OR ... ] }
+    ON <replaceable class="PARAMETER">table</replaceable> [ FOR [ EACH ] { ROW | STATEMENT } ]
     EXECUTE PROCEDURE <replaceable class="PARAMETER">func</replaceable> ( <replaceable class="PARAMETER">arguments</replaceable> )
   </synopsis>
   
@@ -186,7 +185,9 @@ CREATE TRIGGER
    deleted tuple. In contrast, a trigger that executes <literal>FOR
    EACH STATEMENT</literal> of the specified operation only executes
    once for any given operation, regardless of how many rows it
-   modifies.
+   modifies (in particular, an operation that modifies zero rows will
+   still result in the execution of any applicable <literal>FOR EACH
+   STATEMENT</literal> triggers).
   </para>
 
   <para>
@@ -329,6 +330,12 @@ CREATE TABLE distributors (
       SQL99 specifies that multiple triggers should be fired in
       time-of-creation order.  <productname>PostgreSQL</productname>
       uses name order, which was judged more convenient to work with.
+     </para>
+
+     <para>
+      The ability to specify multiple actions for a single trigger
+      using <literal>OR</literal> is a <productname>PostgreSQL</>
+      extension of the SQL standard.
      </para>
     </listitem>
    </varlistentry>

@@ -1,6 +1,6 @@
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
- $Header: /cvsroot/pgsql/doc/src/sgml/catalogs.sgml,v 2.63 2002/10/14 04:29:23 momjian Exp $
+ $Header: /cvsroot/pgsql/doc/src/sgml/catalogs.sgml,v 2.64 2002/12/17 17:41:30 momjian Exp $
  -->
 
 <chapter id="catalogs">
@@ -1068,9 +1068,12 @@
       <entry>relhasindex</entry>
       <entry><type>bool</type></entry>
       <entry></entry>
-      <entry>True if this is a table and it has (or recently had) any indexes.
-       This is set by CREATE INDEX, but not cleared immediately by DROP INDEX.
-       VACUUM clears relhasindex if it finds the table has no indexes.
+      <entry>
+       True if this is a table and it has (or recently had) any
+       indexes. This is set by <command>CREATE INDEX</command>, but
+       not cleared immediately by <command>DROP INDEX</command>.
+       <command>VACUUM</command> clears relhasindex if it finds the
+       table has no indexes.
       </entry>
      </row>
 
@@ -2049,11 +2052,11 @@
       <entry><type>bool</type></entry>
       <entry></entry>
       <entry>
-       This is false for internal languages (such as SQL) and true for
-       user-defined languages.  Currently,
-       <application>pg_dump</application> still uses this to determine
-       which languages need to be dumped, but this may be replaced by
-       a different mechanism sometime.
+       This is false for internal languages (such as
+       <acronym>SQL</acronym>) and true for user-defined languages.
+       Currently, <application>pg_dump</application> still uses this
+       to determine which languages need to be dumped, but this may be
+       replaced by a different mechanism sometime.
       </entry>
      </row>
 
