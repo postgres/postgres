@@ -3,7 +3,7 @@
  *	is for IP V4 CIDR notation, but prepared for V6: just
  *	add the necessary bits where the comments indicate.
  *
- *	$Header: /cvsroot/pgsql/src/backend/utils/adt/network.c,v 1.29 2001/03/22 03:59:52 momjian Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/utils/adt/network.c,v 1.30 2001/06/09 22:16:18 tgl Exp $
  *
  *	Jon Postel RIP 16 Oct 1998
  */
@@ -16,6 +16,7 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
+#include "catalog/pg_type.h"
 #include "utils/builtins.h"
 #include "utils/inet.h"
 
@@ -563,6 +564,55 @@ network_netmask(PG_FUNCTION_ARGS)
 
 	PG_RETURN_INET_P(dst);
 }
+
+
+/*
+ * Convert a value of a network datatype to an approximate scalar value.
+ * This is used for estimating selectivities of inequality operators
+ * involving network types.
+ *
+ * Currently, inet/cidr values are simply converted to the IPv4 address;
+ * this will need more thought when IPv6 is supported too.  MAC addresses
+ * are converted to their numeric equivalent as well (OK since we have a
+ * double to play in).
+ */
+double
+convert_network_to_scalar(Datum value, Oid typid)
+{
+	switch (typid)
+	{
+		case INETOID:
+		case CIDROID:
+		{
+			inet	   *ip = DatumGetInetP(value);
+
+			if (ip_family(ip) == AF_INET)
+				return (double) ip_v4addr(ip);
+			else
+				/* Go for an IPV6 address here, before faulting out: */
+				elog(ERROR, "unknown address family (%d)", ip_family(ip));
+			break;
+		}
+		case MACADDROID:
+		{
+			macaddr    *mac = DatumGetMacaddrP(value);
+			double		res;
+
+			res = (mac->a << 16) | (mac->b << 8) | (mac->c);
+			res *= 256*256*256;
+			res += (mac->d << 16) | (mac->e << 8) | (mac->f);
+			return res;
+		}
+	}
+
+	/*
+	 * Can't get here unless someone tries to use scalarltsel/scalargtsel
+	 * on an operator with one network and one non-network operand.
+	 */
+	elog(ERROR, "convert_network_to_scalar: unsupported type %u", typid);
+	return 0;
+}
+
 
 /*
  *	Bitwise comparison for V4 addresses.  Add V6 implementation!

@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.92 2001/06/05 05:26:04 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.93 2001/06/09 22:16:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1326,6 +1326,9 @@ icnlikejoinsel(PG_FUNCTION_ARGS)
  *	  scale needed by scalarltsel()/scalargtsel().
  *	  Returns "true" if successful.
  *
+ * XXX this routine is a hack: ideally we should look up the conversion
+ * subroutines in pg_type.
+ *
  * All numeric datatypes are simply converted to their equivalent
  * "double" values.  XXX what about NUMERIC values that are outside
  * the range of "double"?
@@ -1398,9 +1401,21 @@ convert_to_scalar(Datum value, Oid valuetypid, double *scaledvalue,
 		case RELTIMEOID:
 		case TINTERVALOID:
 		case TIMEOID:
+		case TIMETZOID:
 			*scaledvalue = convert_timevalue_to_scalar(value, valuetypid);
 			*scaledlobound = convert_timevalue_to_scalar(lobound, boundstypid);
 			*scaledhibound = convert_timevalue_to_scalar(hibound, boundstypid);
+			return true;
+
+		/*
+		 * Built-in network types
+		 */
+		case INETOID:
+		case CIDROID:
+		case MACADDROID:
+			*scaledvalue = convert_network_to_scalar(value, valuetypid);
+			*scaledlobound = convert_network_to_scalar(lobound, boundstypid);
+			*scaledhibound = convert_network_to_scalar(hibound, boundstypid);
 			return true;
 	}
 	/* Don't know how to convert */
@@ -1694,6 +1709,13 @@ convert_timevalue_to_scalar(Datum value, Oid typid)
 			}
 		case TIMEOID:
 			return DatumGetTimeADT(value);
+		case TIMETZOID:
+			{
+				TimeTzADT  *timetz = DatumGetTimeTzADTP(value);
+
+				/* use GMT-equivalent time */
+				return (double) (timetz->time + timetz->zone);
+			}
 	}
 
 	/*
