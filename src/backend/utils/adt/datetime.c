@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.16 1997/09/08 21:48:22 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.17 1997/10/25 05:16:09 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -110,12 +110,12 @@ date_in(char *str)
 	date = (date2j(tm->tm_year, tm->tm_mon, tm->tm_mday) - date2j(2000, 1, 1));
 
 	return (date);
-}								/* date_in() */
+} /* date_in() */
 
 /* date_out()
  * Given internal format date, convert to text string.
  */
-char	   *
+char *
 date_out(DateADT date)
 {
 	char	   *result;
@@ -123,31 +123,17 @@ date_out(DateADT date)
 			   *tm = &tt;
 	char		buf[MAXDATELEN + 1];
 
-#if FALSE
-	int			year,
-				month,
-				day;
-
-#endif
-
 	j2date((date + date2j(2000, 1, 1)),
 		   &(tm->tm_year), &(tm->tm_mon), &(tm->tm_mday));
 
 	EncodeDateOnly(tm, DateStyle, buf);
-
-#if FALSE
-	if (EuroDates == 1)			/* Output European-format dates */
-		sprintf(buf, "%02d-%02d-%04d", day, month, year);
-	else
-		sprintf(buf, "%02d-%02d-%04d", month, day, year);
-#endif
 
 	result = PALLOC(strlen(buf) + 1);
 
 	strcpy(result, buf);
 
 	return (result);
-}								/* date_out() */
+} /* date_out() */
 
 bool
 date_eq(DateADT dateVal1, DateADT dateVal2)
@@ -165,25 +151,25 @@ bool
 date_lt(DateADT dateVal1, DateADT dateVal2)
 {
 	return (dateVal1 < dateVal2);
-}								/* date_lt() */
+} /* date_lt() */
 
 bool
 date_le(DateADT dateVal1, DateADT dateVal2)
 {
 	return (dateVal1 <= dateVal2);
-}								/* date_le() */
+} /* date_le() */
 
 bool
 date_gt(DateADT dateVal1, DateADT dateVal2)
 {
 	return (dateVal1 > dateVal2);
-}								/* date_gt() */
+} /* date_gt() */
 
 bool
 date_ge(DateADT dateVal1, DateADT dateVal2)
 {
 	return (dateVal1 >= dateVal2);
-}								/* date_ge() */
+} /* date_ge() */
 
 int
 date_cmp(DateADT dateVal1, DateADT dateVal2)
@@ -197,47 +183,50 @@ date_cmp(DateADT dateVal1, DateADT dateVal2)
 		return 1;
 	}
 	return 0;
-}								/* date_cmp() */
+} /* date_cmp() */
 
 DateADT
 date_larger(DateADT dateVal1, DateADT dateVal2)
 {
 	return (date_gt(dateVal1, dateVal2) ? dateVal1 : dateVal2);
-}								/* date_larger() */
+} /* date_larger() */
 
 DateADT
 date_smaller(DateADT dateVal1, DateADT dateVal2)
 {
 	return (date_lt(dateVal1, dateVal2) ? dateVal1 : dateVal2);
-}								/* date_smaller() */
+} /* date_smaller() */
 
-/* Compute difference between two dates in days.  */
+/* Compute difference between two dates in days.
+ */
 int4
 date_mi(DateADT dateVal1, DateADT dateVal2)
 {
 	return (dateVal1 - dateVal2);
-}								/* date_mi() */
+} /* date_mi() */
 
 /* Add a number of days to a date, giving a new date.
-   Must handle both positive and negative numbers of days.	*/
+ * Must handle both positive and negative numbers of days.
+ */
 DateADT
 date_pli(DateADT dateVal, int4 days)
 {
 	return (dateVal + days);
-}								/* date_pli() */
+} /* date_pli() */
 
-/* Subtract a number of days from a date, giving a new date.  */
+/* Subtract a number of days from a date, giving a new date.
+ */
 DateADT
 date_mii(DateADT dateVal, int4 days)
 {
 	return (date_pli(dateVal, -days));
-}								/* date_mii() */
+} /* date_mii() */
 
 
 /* date_datetime()
  * Convert date to datetime data type.
  */
-DateTime   *
+DateTime *
 date_datetime(DateADT dateVal)
 {
 	DateTime   *result;
@@ -261,7 +250,7 @@ date_datetime(DateADT dateVal)
 		elog(WARN, "Datetime out of range", NULL);
 
 	return (result);
-}								/* date_datetime() */
+} /* date_datetime() */
 
 
 /* datetime_date()
@@ -302,7 +291,7 @@ datetime_date(DateTime *datetime)
 	result = (date2j(tm->tm_year, tm->tm_mon, tm->tm_mday) - date2j(2000, 1, 1));
 
 	return (result);
-}								/* datetime_date() */
+} /* datetime_date() */
 
 
 /* abstime_date()
@@ -344,7 +333,7 @@ abstime_date(AbsoluteTime abstime)
 	}
 
 	return (result);
-}								/* abstime_date() */
+} /* abstime_date() */
 
 
 /* date2tm()
@@ -388,11 +377,6 @@ date2tm(DateADT dateVal, int *tzp, struct tm * tm, double *fsec, char **tzn)
 		tm->tm_year = tx->tm_year + 1900;
 		tm->tm_mon = tx->tm_mon + 1;
 		tm->tm_mday = tx->tm_mday;
-#if FALSE
-		tm->tm_hour = tx->tm_hour;
-		tm->tm_min = tx->tm_min;
-		tm->tm_sec = tx->tm_sec;
-#endif
 		tm->tm_isdst = tx->tm_isdst;
 
 #ifdef HAVE_INT_TIMEZONE
@@ -420,13 +404,6 @@ date2tm(DateADT dateVal, int *tzp, struct tm * tm, double *fsec, char **tzn)
 	}
 	else
 	{
-#if FALSE
-		j2date((dateVal + date2j(2000, 1, 1)), &(tm->tm_year), &(tm->tm_mon), &(tm->tm_mday));
-		tm->tm_hour = 0;
-		tm->tm_min = 0;
-		tm->tm_sec = 0;
-#endif
-
 #ifdef DATEDEBUG
 		printf("date2tm- convert %d-%d-%d %d:%d%d to datetime\n",
 			   tm->tm_year, tm->tm_mon, tm->tm_mday, tm->tm_hour, tm->tm_min, tm->tm_sec);
@@ -439,7 +416,7 @@ date2tm(DateADT dateVal, int *tzp, struct tm * tm, double *fsec, char **tzn)
 	}
 
 	return 0;
-}								/* date2tm() */
+} /* date2tm() */
 
 
 /*****************************************************************************
@@ -447,7 +424,7 @@ date2tm(DateADT dateVal, int *tzp, struct tm * tm, double *fsec, char **tzn)
  *****************************************************************************/
 
 
-TimeADT    *
+TimeADT *
 time_in(char *str)
 {
 	TimeADT    *time;
@@ -481,22 +458,16 @@ time_in(char *str)
 	*time = ((((tm->tm_hour * 60) + tm->tm_min) * 60) + tm->tm_sec + fsec);
 
 	return (time);
-}								/* time_in() */
+} /* time_in() */
 
 
-char	   *
+char *
 time_out(TimeADT *time)
 {
 	char	   *result;
 	struct tm	tt,
 			   *tm = &tt;
 
-#if FALSE
-	int			hour,
-				min,
-				sec;
-
-#endif
 	double		fsec;
 	char		buf[MAXDATELEN + 1];
 
@@ -511,31 +482,12 @@ time_out(TimeADT *time)
 
 	EncodeTimeOnly(tm, fsec, DateStyle, buf);
 
-#if FALSE
-	if (sec == 0.0)
-	{
-		sprintf(buf, "%02d:%02d", hour, min);
-
-	}
-	else
-	{
-		if (fsec == 0)
-		{
-			sprintf(buf, "%02d:%02d:%02d", hour, min, sec);
-		}
-		else
-		{
-			sprintf(buf, "%02d:%02d:%05.2f", hour, min, (sec + fsec));
-		}
-	}
-#endif
-
 	result = PALLOC(strlen(buf) + 1);
 
 	strcpy(result, buf);
 
 	return (result);
-}								/* time_out() */
+} /* time_out() */
 
 
 bool
@@ -545,7 +497,7 @@ time_eq(TimeADT *time1, TimeADT *time2)
 		return (FALSE);
 
 	return (*time1 == *time2);
-}								/* time_eq() */
+} /* time_eq() */
 
 bool
 time_ne(TimeADT *time1, TimeADT *time2)
@@ -554,7 +506,7 @@ time_ne(TimeADT *time1, TimeADT *time2)
 		return (FALSE);
 
 	return (*time1 != *time2);
-}								/* time_eq() */
+} /* time_eq() */
 
 bool
 time_lt(TimeADT *time1, TimeADT *time2)
@@ -563,7 +515,7 @@ time_lt(TimeADT *time1, TimeADT *time2)
 		return (FALSE);
 
 	return (*time1 < *time2);
-}								/* time_eq() */
+} /* time_eq() */
 
 bool
 time_le(TimeADT *time1, TimeADT *time2)
@@ -572,7 +524,7 @@ time_le(TimeADT *time1, TimeADT *time2)
 		return (FALSE);
 
 	return (*time1 <= *time2);
-}								/* time_eq() */
+} /* time_eq() */
 
 bool
 time_gt(TimeADT *time1, TimeADT *time2)
@@ -581,7 +533,7 @@ time_gt(TimeADT *time1, TimeADT *time2)
 		return (FALSE);
 
 	return (*time1 > *time2);
-}								/* time_eq() */
+} /* time_eq() */
 
 bool
 time_ge(TimeADT *time1, TimeADT *time2)
@@ -590,20 +542,65 @@ time_ge(TimeADT *time1, TimeADT *time2)
 		return (FALSE);
 
 	return (*time1 >= *time2);
-}								/* time_eq() */
+} /* time_eq() */
 
 int
 time_cmp(TimeADT *time1, TimeADT *time2)
 {
 	return ((*time1 < *time2) ? -1 : (((*time1 > *time2) ? 1 : 0)));
-}								/* time_cmp() */
+} /* time_cmp() */
 
 
-/* datetime_datetime()
- * Convert date and time to datetime data type.
+/* datetime_time()
+ * Convert datetime to time data type.
  */
-DateTime   *
-datetime_datetime(DateADT date, TimeADT *time)
+TimeADT *
+datetime_time(DateTime *datetime)
+{
+	TimeADT		*result;
+	struct tm	tt,
+			   *tm = &tt;
+	int			tz;
+	double		fsec;
+	char	   *tzn;
+
+	if (!PointerIsValid(datetime))
+		elog(WARN, "Unable to convert null datetime to date", NULL);
+
+	if (DATETIME_NOT_FINITE(*datetime))
+		elog(WARN, "Unable to convert datetime to date", NULL);
+
+	if (DATETIME_IS_EPOCH(*datetime))
+	{
+		datetime2tm(SetDateTime(*datetime), NULL, tm, &fsec, NULL);
+
+	}
+	else if (DATETIME_IS_CURRENT(*datetime))
+	{
+		datetime2tm(SetDateTime(*datetime), &tz, tm, &fsec, &tzn);
+
+	}
+	else
+	{
+		if (datetime2tm(*datetime, &tz, tm, &fsec, &tzn) != 0)
+			elog(WARN, "Unable to convert datetime to date", NULL);
+	}
+
+	result = PALLOCTYPE(TimeADT);
+
+	*result = ((((tm->tm_hour * 60) + tm->tm_min) * 60) + tm->tm_sec + fsec);
+
+	return (result);
+} /* datetime_time() */
+
+
+/* datet_datetime()
+ * Convert date and time to datetime data type.
+ * Should be called datetime_datetime()
+ *  but need <= 16 characters for function names.
+ */
+DateTime *
+datet_datetime(DateADT date, TimeADT *time)
 {
 	DateTime   *result;
 
@@ -611,16 +608,13 @@ datetime_datetime(DateADT date, TimeADT *time)
 	{
 		result = PALLOCTYPE(DateTime);
 		DATETIME_INVALID(*result);
-
-	}
-	else
-	{
+	} else {
 		result = date_datetime(date);
 		*result += *time;
 	}
 
 	return (result);
-}								/* datetime_datetime() */
+} /* datet_datetime() */
 
 
 int32							/* RelativeTime */
