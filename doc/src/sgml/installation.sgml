@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.170 2003/10/26 13:26:41 momjian Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.171 2003/10/26 13:28:46 momjian Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -1746,18 +1746,18 @@ gunzip -c postgres.ps.gz \
 	 Peter Eisentraut (<email>peter_e@gmx.net</email>)</entry>
         <entry>see <filename>doc/FAQ_MSWIN</filename></entry>
        </row>
-      <row>
-       <entry><systemitem class="osname">Windows</></entry>
-       <entry><systemitem>x86</></entry>
-       <entry>7.3</entry>
-       <entry>2002-11-05,
-	Dave Page (<email>dpage@vale-housing.co.uk</email>)</entry>
-       <entry>
-	native is client-side only;
+       <row>
+        <entry><systemitem class="osname">Windows</></entry>
+        <entry><systemitem>x86</></entry>
+        <entry>7.3</entry>
+        <entry>2002-11-05, 
+         Dave Page (<email>dpage@vale-housing.co.uk</email>)</entry>
+        <entry>
+         native is client-side only;
 <![%standalone-include[see documentation]]>
 <![%standalone-ignore[see <xref linkend="install-win32">]]>
-       </entry>
-      </row>
+        </entry>
+       </row>
       </tbody>
      </tgroup>
     </informaltable>
