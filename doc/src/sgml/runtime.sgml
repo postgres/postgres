@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.105 2002/03/02 21:39:15 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.106 2002/03/06 06:44:32 momjian Exp $
 -->
 
 <Chapter Id="runtime">
@@ -139,13 +139,13 @@ postgres$ <userinput>initdb -D /usr/local/pgsql/data</userinput>
    One surprise you might encounter while running <command>initdb</command> is
    a notice similar to this one:
 <screen>
-NOTICE:  Initializing database with en_US collation order.
+WARNING:  Initializing database with en_US collation order.
         This locale setting will prevent use of index optimization for
         LIKE and regexp searches.  If you are concerned about speed of
         such queries, you may wish to set LC_COLLATE to "C" and
         re-initdb.  For more information see the Administrator's Guide.
 </screen>
-   This notice is intended to warn you that the currently selected locale
+   This is intended to warn you that the currently selected locale
    will cause indexes to be sorted in an order that prevents them from
    being used for LIKE and regular-expression searches.  If you need
    good performance of such searches, you should set your current locale
@@ -821,10 +821,10 @@ env PGOPTIONS='-c geqo=off' psql
         default is <literal>NOTICE</>. Valid values are <literal>DEBUG5</>,
         <literal>DEBUG4</>, <literal>DEBUG3</>, <literal>DEBUG2</>,
         <literal>DEBUG1</>, <literal>INFO</>, <literal>NOTICE</>,
-        <literal>ERROR</>, <literal>LOG</>, <literal>FATAL</>,
-        <literal>PANIC</>. Later values send less detail to the logs.
-        <literal>LOG</> has a different precedence here than in
-        <literal>CLIENT_MIN_MESSAGES</>.
+        <literal>WARNING</>, <literal>ERROR</>, <literal>LOG</>, 
+	<literal>FATAL</>, and <literal>PANIC</>. Later values send less 
+	detail to the logs. <literal>LOG</> has a different precedence 
+	here than in <literal>CLIENT_MIN_MESSAGES</>.
        </para>
       </listitem>
      </varlistentry>
@@ -834,13 +834,13 @@ env PGOPTIONS='-c geqo=off' psql
       <listitem>
        <para>
         This controls how much detail is written to the client. The
-        default is <literal>INFO</>. Valid values are
+        default is <literal>NOTICE</>. Valid values are
         <literal>DEBUG5</>, <literal>DEBUG4</>, <literal>DEBUG3</>,
         <literal>DEBUG2</>, <literal>DEBUG1</>, <literal>LOG</>,
-        <literal>INFO</>, <literal>NOTICE</>, <literal>ERROR</>,
-        <literal>FATAL</>, <literal>PANIC</>. Later values send less
-        information to the user. literal>LOG</> has a different
-        precedence here than in <literal>SERVER_MIN_MESSAGES</>.
+        <literal>NOTICE</>, <literal>WARNING</>, and <literal>ERROR</>. 
+	Later values send less information to the user. <literal>LOG</> 
+	has a different precedence here than in 
+	<literal>SERVER_MIN_MESSAGES</>.
        </para>
       </listitem>
      </varlistentry>

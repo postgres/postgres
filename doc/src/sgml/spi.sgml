@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/spi.sgml,v 1.20 2001/11/21 06:09:45 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/spi.sgml,v 1.21 2002/03/06 06:44:33 momjian Exp $
 -->
 
 <Chapter id="spi">
@@ -3801,7 +3801,7 @@ execq(text *sql, int cnt)
     proc = SPI_processed;
     /*
      * If this is SELECT and some tuple(s) fetched -
-     * returns tuples to the caller via elog (NOTICE).
+     * returns tuples to the caller via elog (INFO).
      */
     if ( ret == SPI_OK_SELECT && SPI_processed > 0 )
     {
@@ -3818,7 +3818,7 @@ execq(text *sql, int cnt)
                 sprintf(buf + strlen (buf), " %s%s",
                         SPI_getvalue(tuple, tupdesc, i),
                         (i == tupdesc->natts) ? " " : " |");
-            elog (NOTICE, "EXECQ: %s", buf);
+            elog (INFO, "EXECQ: %s", buf);
         }
     }
 
@@ -3850,9 +3850,9 @@ execq
 vac=> INSERT INTO a VALUES (execq('INSERT INTO a VALUES (0)',0));
 INSERT 167631 1
 vac=> SELECT execq('SELECT * FROM a',0);
-NOTICE:EXECQ:  0 <<< inserted by execq
+INFO:  EXECQ:  0 <<< inserted by execq
 
-NOTICE:EXECQ:  1 <<< value returned by execq and inserted by upper INSERT
+INFO:  EXECQ:  1 <<< value returned by execq and inserted by upper INSERT
 
 execq
 -----
@@ -3866,11 +3866,11 @@ execq
 (1 row)
 
 vac=> SELECT execq('SELECT * FROM a', 10);
-NOTICE:EXECQ:  0 
+INFO:  EXECQ:  0 
 
-NOTICE:EXECQ:  1 
+INFO:  EXECQ:  1 
 
-NOTICE:EXECQ:  2 <<< 0 + 2, only one tuple inserted - as specified
+INFO:  EXECQ:  2 <<< 0 + 2, only one tuple inserted - as specified
 
 execq
 -----
@@ -3888,7 +3888,7 @@ x
 (1 row)
 
 vac=> INSERT INTO a VALUES (execq('SELECT * FROM a', 0) + 1);
-NOTICE:EXECQ:  0 
+INFO:  EXECQ:  0 
 INSERT 167713 1
 vac=> SELECT * FROM a;
 x
@@ -3900,11 +3900,11 @@ x
 --   This demonstrates data changes visibility rule:
 
 vac=> INSERT INTO a SELECT execq('SELECT * FROM a', 0) * x FROM a;
-NOTICE:EXECQ:  1 
-NOTICE:EXECQ:  2 
-NOTICE:EXECQ:  1 
-NOTICE:EXECQ:  2 
-NOTICE:EXECQ:  2 
+INFO:  EXECQ:  1 
+INFO:  EXECQ:  2 
+INFO:  EXECQ:  1 
+INFO:  EXECQ:  2 
+INFO:  EXECQ:  2 
 INSERT 0 2
 vac=> SELECT * FROM a;
 x

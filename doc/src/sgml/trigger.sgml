@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/trigger.sgml,v 1.19 2001/12/04 02:07:11 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/trigger.sgml,v 1.20 2002/03/06 06:44:33 momjian Exp $
 -->
 
  <chapter id="triggers">
@@ -487,7 +487,7 @@ trigf(PG_FUNCTION_ARGS)
 	
 	/* Connect to SPI manager */
 	if ((ret = SPI_connect()) < 0)
-		elog(NOTICE, "trigf (fired %s): SPI_connect returned %d", when, ret);
+		elog(INFO, "trigf (fired %s): SPI_connect returned %d", when, ret);
 	
 	/* Get number of tuples in relation */
 	ret = SPI_exec("SELECT count(*) FROM ttest", 0);
@@ -535,7 +535,7 @@ vac=> CREATE TRIGGER tafter AFTER INSERT OR UPDATE OR DELETE ON ttest
 FOR EACH ROW EXECUTE PROCEDURE trigf();
 CREATE
 vac=> INSERT INTO ttest VALUES (NULL);
-NOTICE:trigf (fired before): there are 0 tuples in ttest
+WARNING:  trigf (fired before): there are 0 tuples in ttest
 INSERT 0 0
 
 -- Insertion skipped and AFTER trigger is not fired
@@ -546,8 +546,8 @@ x
 (0 rows)
 
 vac=> INSERT INTO ttest VALUES (1);
-NOTICE:trigf (fired before): there are 0 tuples in ttest
-NOTICE:trigf (fired after ): there are 1 tuples in ttest
+INFO:  trigf (fired before): there are 0 tuples in ttest
+INFO:  trigf (fired after ): there are 1 tuples in ttest
                                        ^^^^^^^^
                              remember what we said about visibility.
 INSERT 167793 1
@@ -558,8 +558,8 @@ x
 (1 row)
 
 vac=> INSERT INTO ttest SELECT x * 2 FROM ttest;
-NOTICE:trigf (fired before): there are 1 tuples in ttest
-NOTICE:trigf (fired after ): there are 2 tuples in ttest
+INFO:  trigf (fired before): there are 1 tuples in ttest
+INFO:  trigf (fired after ): there are 2 tuples in ttest
                                        ^^^^^^^^
                              remember what we said about visibility.
 INSERT 167794 1
@@ -571,11 +571,11 @@ x
 (2 rows)
 
 vac=> UPDATE ttest SET x = null WHERE x = 2;
-NOTICE:trigf (fired before): there are 2 tuples in ttest
+INFO:  trigf (fired before): there are 2 tuples in ttest
 UPDATE 0
 vac=> UPDATE ttest SET x = 4 WHERE x = 2;
-NOTICE:trigf (fired before): there are 2 tuples in ttest
-NOTICE:trigf (fired after ): there are 2 tuples in ttest
+INFO:  trigf (fired before): there are 2 tuples in ttest
+INFO:  trigf (fired after ): there are 2 tuples in ttest
 UPDATE 1
 vac=> SELECT * FROM ttest;
 x
@@ -585,10 +585,10 @@ x
 (2 rows)
 
 vac=> DELETE FROM ttest;
-NOTICE:trigf (fired before): there are 2 tuples in ttest
-NOTICE:trigf (fired after ): there are 1 tuples in ttest
-NOTICE:trigf (fired before): there are 1 tuples in ttest
-NOTICE:trigf (fired after ): there are 0 tuples in ttest
+INFO:  trigf (fired before): there are 2 tuples in ttest
+INFO:  trigf (fired after ): there are 1 tuples in ttest
+INFO:  trigf (fired before): there are 1 tuples in ttest
+INFO:  trigf (fired after ): there are 0 tuples in ttest
                                        ^^^^^^^^
                              remember what we said about visibility.
 DELETE 2
