@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Mon Aug 26 18:01:45 EDT 2002
+Last updated:		Mon Aug 26 18:02:13 EDT 2002
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -255,7 +255,6 @@ Commands
 	o -Fix PL/PgSQL to handle quoted mixed-case identifiers
 	o Change PL/PgSQL to use palloc() instead of malloc()
 	o Add untrusted version of plpython
-	o Add plsh server-side shell language (Peter E)
 	o Allow Java server-side programming, http://pljava.sourceforge.net
 	  [java]
 	o Fix problems with complex temporary table creation/destruction
