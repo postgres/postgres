@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.66 2001/08/15 07:10:12 ishii Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.67 2001/08/31 07:30:05 ishii Exp $ -->
 
 <chapter id="functions">
  <title>Functions and Operators</title>
@@ -508,7 +508,7 @@
       <entry><type>dp</type></entry>
       <entry>cube root</entry>
       <entry>cbrt(27.0)</entry>
-      <entry>3.0</entry>
+      <entry>3</entry>
      </row>
 
      <row>
@@ -556,7 +556,7 @@
       <entry><type>dp</type></entry>
       <entry>base 10 logarithm</entry>
       <entry>log(100.0)</entry>
-      <entry>2.0</entry>
+      <entry>2</entry>
      </row>
 
      <row>
@@ -565,7 +565,7 @@
       <entry><type>numeric</type></entry>
       <entry>logarithm to base <parameter>b</parameter></entry>
       <entry>log(2.0, 64.0)</entry>
-      <entry>6.0</entry>
+      <entry>6.0000000000</entry>
      </row>
 
      <row>
@@ -590,7 +590,7 @@
       <entry><type>dp</type></entry>
       <entry>raise a number to exponent <parameter>e</parameter></entry>
       <entry>pow(9.0, 3.0)</entry>
-      <entry>729.0</entry>
+      <entry>729</entry>
      </row>
 
      <row>
@@ -652,7 +652,7 @@
       <entry>trunc(<type>numeric</type>, <parameter>s</parameter> <type>integer</type>)</entry>
       <entry><type>numeric</type></entry>
       <entry>truncate to <parameter>s</parameter> decimal places</entry>
-      <entry>round(42.4382, 2)</entry>
+      <entry>trunc(42.4382, 2)</entry>
       <entry>42.43</entry>
      </row>
 
