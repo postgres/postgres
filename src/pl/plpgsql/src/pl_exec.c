@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.20 2000/04/12 17:17:19 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.21 2000/04/28 00:12:44 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -1587,6 +1587,8 @@ exec_stmt_raise(PLpgSQL_execstate * estate, PLpgSQL_stmt_raise * stmt)
 						if (fno == SPI_ERROR_NOATTRIBUTE)
 							elog(ERROR, "record %s has no field %s", rec->refname, recfield->fieldname);
 						extval = SPI_getvalue(rec->tup, rec->tupdesc, fno);
+						if (extval == NULL)
+							extval = "<NULL>";
 					}
 					plpgsql_dstring_append(&ds, extval);
 					break;
