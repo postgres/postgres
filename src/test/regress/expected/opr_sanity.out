@@ -1,0 +1,110 @@
+QUERY: SELECT p1.oid, p1.* FROM pg_operator AS p1
+WHERE p1.oprleft != 0 AND NOT EXISTS(SELECT * FROM pg_type AS t1 WHERE t1.oid = p1.oprleft);
+oid|oprname|oprowner|oprprec|oprkind|oprisleft|oprcanhash|oprleft|oprright|oprresult|oprcom|oprnegate|oprlsortop|oprrsortop|oprcode|oprrest|oprjoin
+---+-------+--------+-------+-------+---------+----------+-------+--------+---------+------+---------+----------+----------+-------+-------+-------
+(0 rows)
+
+QUERY: SELECT p1.oid, p1.* FROM pg_operator AS p1
+WHERE p1.oprright != 0 AND NOT EXISTS(SELECT * FROM pg_type AS t1 WHERE t1.oid = p1.oprright);
+oid|oprname|oprowner|oprprec|oprkind|oprisleft|oprcanhash|oprleft|oprright|oprresult|oprcom|oprnegate|oprlsortop|oprrsortop|oprcode|oprrest|oprjoin
+---+-------+--------+-------+-------+---------+----------+-------+--------+---------+------+---------+----------+----------+-------+-------+-------
+(0 rows)
+
+QUERY: SELECT p1.oid, p1.* FROM pg_operator AS p1
+WHERE p1.oprresult != 0 AND NOT EXISTS(SELECT * FROM pg_type AS t1 WHERE t1.oid = p1.oprresult);
+oid|oprname|oprowner|oprprec|oprkind|oprisleft|oprcanhash|oprleft|oprright|oprresult|oprcom|oprnegate|oprlsortop|oprrsortop|oprcode|oprrest|oprjoin
+---+-------+--------+-------+-------+---------+----------+-------+--------+---------+------+---------+----------+----------+-------+-------+-------
+(0 rows)
+
+QUERY: SELECT p1.oid, p1.* FROM pg_operator AS p1
+WHERE p1.oprcom != 0 AND NOT
+      EXISTS(SELECT * FROM pg_operator AS p2 WHERE p2.oid = p1.oprcom);
+oid|oprname|oprowner|oprprec|oprkind|oprisleft|oprcanhash|oprleft|oprright|oprresult|oprcom|oprnegate|oprlsortop|oprrsortop|oprcode|oprrest|oprjoin
+---+-------+--------+-------+-------+---------+----------+-------+--------+---------+------+---------+----------+----------+-------+-------+-------
+(0 rows)
+
+QUERY: SELECT p1.oid, p1.* FROM pg_operator AS p1
+WHERE p1.oprnegate != 0 AND NOT
+      EXISTS(SELECT * FROM pg_operator AS p2 WHERE p2.oid = p1.oprnegate);
+oid|oprname|oprowner|oprprec|oprkind|oprisleft|oprcanhash|oprleft|oprright|oprresult|oprcom|oprnegate|oprlsortop|oprrsortop|oprcode|oprrest|oprjoin
+---+-------+--------+-------+-------+---------+----------+-------+--------+---------+------+---------+----------+----------+-------+-------+-------
+(0 rows)
+
+QUERY: SELECT p1.oid, p1.* FROM pg_operator AS p1
+WHERE p1.oprlsortop != 0 AND NOT
+      EXISTS(SELECT * FROM pg_operator AS p2 WHERE p2.oid = p1.oprlsortop);
+oid|oprname|oprowner|oprprec|oprkind|oprisleft|oprcanhash|oprleft|oprright|oprresult|oprcom|oprnegate|oprlsortop|oprrsortop|oprcode|oprrest|oprjoin
+---+-------+--------+-------+-------+---------+----------+-------+--------+---------+------+---------+----------+----------+-------+-------+-------
+(0 rows)
+
+QUERY: SELECT p1.oid, p1.* FROM pg_operator AS p1
+WHERE p1.oprrsortop != 0 AND NOT
+      EXISTS(SELECT * FROM pg_operator AS p2 WHERE p2.oid = p1.oprrsortop);
+oid|oprname|oprowner|oprprec|oprkind|oprisleft|oprcanhash|oprleft|oprright|oprresult|oprcom|oprnegate|oprlsortop|oprrsortop|oprcode|oprrest|oprjoin
+---+-------+--------+-------+-------+---------+----------+-------+--------+---------+------+---------+----------+----------+-------+-------+-------
+(0 rows)
+
+QUERY: SELECT p1.oid, p1.oprcode, p2.oid, p2.oprcode
+FROM pg_operator AS p1, pg_operator AS p2
+WHERE p1.oid != p2.oid AND
+    p1.oprname = p2.oprname AND
+    p1.oprkind = p2.oprkind AND
+    p1.oprleft = p2.oprleft AND
+    p1.oprright = p2.oprright;
+oid|oprcode|oid|oprcode       
+---+-------+---+-------
+(0 rows)
+
+QUERY: SELECT p1.oid, p1.oprcode, p2.oid, p2.oprcode
+FROM pg_operator AS p1, pg_operator AS p2
+WHERE p1.oprcom = p2.oid AND
+    (p1.oprkind != 'b' OR
+     p1.oprleft != p2.oprright OR
+     p1.oprright != p2.oprleft OR
+     p1.oprresult != p2.oprresult OR
+     p1.oid != p2.oprcom);
+oid|oprcode|oid|oprcode
+---+-------+---+-------
+(0 rows)
+
+QUERY: SELECT p1.oid, p1.oprcode, p2.oid, p2.oprcode
+FROM pg_operator AS p1, pg_operator AS p2
+WHERE p1.oprnegate = p2.oid AND
+    (p1.oprkind != p2.oprkind OR
+     p1.oprleft != p2.oprleft OR
+     p1.oprright != p2.oprright OR
+     p1.oprresult != 16 OR
+     p2.oprresult != 16 OR
+     p1.oid != p2.oprnegate);
+oid|oprcode|oid|oprcode
+---+-------+---+-------
+(0 rows)
+
+QUERY: SELECT p1.oid, p1.oprcode, p2.oid, p2.oprcode
+FROM pg_operator AS p1, pg_operator AS p2
+WHERE p1.oprlsortop = p2.oid AND
+    (p1.oprname != '=' OR
+     p1.oprkind != 'b' OR p2.oprkind != 'b' OR
+     p1.oprleft != p2.oprleft OR
+     p1.oprright != p2.oprright OR
+     p1.oprresult != 16 OR
+     p2.oprresult != 16 OR
+     p1.oprrsortop = 0);
+oid|oprcode|oid|oprcode
+---+-------+---+-------
+(0 rows)
+
+QUERY: SELECT p1.oid, p1.oprcode, p2.oid, p2.oprcode
+FROM pg_operator AS p1, pg_operator AS p2
+WHERE p1.oprrsortop = p2.oid AND
+    (p1.oprname != '=' OR
+     p1.oprkind != 'b' OR p2.oprkind != 'b' OR
+     p1.oprleft != p2.oprleft OR
+     p1.oprright != p2.oprright OR
+     p1.oprresult != 16 OR
+     p2.oprresult != 16 OR
+     p1.oprlsortop = 0);
+oid|oprcode|oid|oprcode
+---+-------+---+-------
+(0 rows)
+
