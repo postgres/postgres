@@ -1,8 +1,8 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ref/checkpoint.sgml,v 1.1 2001/01/13 03:11:12 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ref/checkpoint.sgml,v 1.2 2001/01/24 21:56:23 petere Exp $ -->
 
 <refentry id="sql-checkpoint">
  <docinfo>
-  <date>2001-01-13</date>
+  <date>2001-01-24</date>
  </docinfo>
 
  <refmeta>
@@ -12,7 +12,7 @@
 
  <refnamediv>
   <refname>CHECKPOINT</refname>
-  <refpurpose>Force transaction log to disk</refpurpose>
+  <refpurpose>Force transaction log checkpoint</refpurpose>
  </refnamediv>
 
  <refsynopsisdiv>
@@ -25,7 +25,20 @@ CHECKPOINT
   <title>Description</title>
 
   <para>
-   This documentation needs to be written.
+   Write-Ahead Logging (WAL) puts a checkpoint in the transaction log
+   every 300 seconds by default.  (This may be changed by the run-time
+   configuration option <parameter>CHECKPOINT_TIMEOUT</parameter>.)
+   The <command>CHECKPOINT</command> command forces a checkpoint at
+   the point at which the command is issued.  The next automatic
+   checkpoint will still happen after the original cycle expires.
+  </para>
+
+  <para>
+   A checkpoint is a point in the transaction log sequence at which
+   all data files have been updated to reflect the information in the
+   log.  All data files will be flushed to disk.  Refer to the
+   <citetitle>PostgreSQL Administrator's Guide</citetitle> for more
+   information about the WAL system.
   </para>
  </refsect1>
 
