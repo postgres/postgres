@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.241 2003/11/15 01:16:37 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.242 2003/11/15 20:01:11 tgl Exp $
 -->
 
 <appendix id="release">
@@ -113,7 +113,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.241 2003/11/15 01:16:37 pe
        <para>
         Simple SQL functions can now be inlined by including their SQL
         in the main query.  This improves performance by eliminating
-        per-call overhead.  That means, simple SQL functions now
+        per-call overhead.  That means simple SQL functions now
         behave like macros.
        </para>
       </listitem>
@@ -149,7 +149,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.241 2003/11/15 01:16:37 pe
 
      <varlistentry>
       <term>
-       Make free space map to efficiently reuse empty index pages,
+       Make free space map efficiently reuse empty index pages,
        and other free space management improvements
       </term>
 
@@ -157,7 +157,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.241 2003/11/15 01:16:37 pe
        <para>
         In previous releases, B-tree index pages that were left empty
         because of deleted rows could only be reused by rows with
-        index values similar to the original rows indexed on that
+        index values similar to the rows originally indexed on that
         page. In 7.4, <command>VACUUM</command> records empty index
         pages and allows them to be reused for any future index rows.
        </para>
@@ -180,7 +180,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.241 2003/11/15 01:16:37 pe
 
      <varlistentry>
       <term>
-       Cursors conform more closely with the SQL standard
+       Cursors conform more closely to the SQL standard
       </term>
 
       <listitem>
@@ -199,7 +199,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.241 2003/11/15 01:16:37 pe
 
       <listitem>
        <para>
-        These cursors are also called holdable cursors
+        These cursors are also called holdable cursors.
        </para>
       </listitem>
      </varlistentry>
@@ -315,7 +315,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.241 2003/11/15 01:16:37 pe
        release.  Significant effort was invested to make the messages
        more consistent and user-oriented.  If your applications try to
        detect different error conditions by parsing the error message,
-       you are strongly encourage to use the new error code facility.
+       you are strongly encouraged to use the new error code facility instead.
       </para>
      </listitem>
 
@@ -568,8 +568,8 @@ $Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.241 2003/11/15 01:16:37 pe
     <listitem>
      <para>Improve GEQO optimizer performance (Tom)</para>
      <para>
-      There were several inefficiencies in the way the GEQO optimizer
-      managed potential query paths.  This release fixes this.
+      This release fixes several inefficiencies in the way the GEQO optimizer
+      manages potential query paths.
      </para>
     </listitem>
 
