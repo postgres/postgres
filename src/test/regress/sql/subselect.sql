@@ -75,3 +75,21 @@ SELECT '' AS eight, ss.f1 AS "Correlated Field", ss.f3 AS "Second Field"
 
 select q1, float8(count(*)) / (select count(*) from int8_tbl)
 from int8_tbl group by q1 order by q1;
+
+--
+-- Test cases to catch unpleasant interactions between IN-join processing
+-- and subquery pullup.
+--
+
+select count(*) from
+  (select 1 from tenk1 a
+   where unique1 IN (select hundred from tenk1 b)) ss;
+select count(distinct ss.ten) from
+  (select ten from tenk1 a
+   where unique1 IN (select hundred from tenk1 b)) ss;
+select count(*) from
+  (select 1 from tenk1 a
+   where unique1 IN (select distinct hundred from tenk1 b)) ss;
+select count(distinct ss.ten) from
+  (select ten from tenk1 a
+   where unique1 IN (select distinct hundred from tenk1 b)) ss;

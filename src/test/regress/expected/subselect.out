@@ -165,3 +165,39 @@ from int8_tbl group by q1 order by q1;
  4567890123456789 |      0.6
 (2 rows)
 
+--
+-- Test cases to catch unpleasant interactions between IN-join processing
+-- and subquery pullup.
+--
+select count(*) from
+  (select 1 from tenk1 a
+   where unique1 IN (select hundred from tenk1 b)) ss;
+ count 
+-------
+   100
+(1 row)
+
+select count(distinct ss.ten) from
+  (select ten from tenk1 a
+   where unique1 IN (select hundred from tenk1 b)) ss;
+ count 
+-------
+    10
+(1 row)
+
+select count(*) from
+  (select 1 from tenk1 a
+   where unique1 IN (select distinct hundred from tenk1 b)) ss;
+ count 
+-------
+   100
+(1 row)
+
+select count(distinct ss.ten) from
+  (select ten from tenk1 a
+   where unique1 IN (select distinct hundred from tenk1 b)) ss;
+ count 
+-------
+    10
+(1 row)
+

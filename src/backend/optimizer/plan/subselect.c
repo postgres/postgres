@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/subselect.c,v 1.82 2003/08/08 21:41:51 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/subselect.c,v 1.83 2003/10/18 16:52:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -493,8 +493,8 @@ make_subplan(SubLink *slink, List *lefthand, bool isTopQual)
  * If rtindex is 0, we build Params to represent the sub-select outputs.
  * The paramids of the Params created are returned in the *righthandIds list.
  *
- * If rtindex is not 0, we build Vars using that rtindex as varno.	The
- * Vars themselves are returned in *righthandIds (this is a bit of a type
+ * If rtindex is not 0, we build Vars using that rtindex as varno.	Copies
+ * of the Var nodes are returned in *righthandIds (this is a bit of a type
  * cheat, but we can get away with it).
  */
 static List *
@@ -525,8 +525,11 @@ convert_sublink_opers(List *lefthand, List *operOids,
 									   te->resdom->restype,
 									   te->resdom->restypmod,
 									   0);
-			/* Record it for caller */
-			*righthandIds = lappend(*righthandIds, rightop);
+			/*
+			 * Copy it for caller.  NB: we need a copy to avoid having
+			 * doubly-linked substructure in the modified parse tree.
+			 */
+			*righthandIds = lappend(*righthandIds, copyObject(rightop));
 		}
 		else
 		{
@@ -735,7 +738,7 @@ convert_IN_to_join(Query *parse, SubLink *sublink)
 
 	/*
 	 * Build the result qual expressions.  As a side effect,
-	 * ininfo->sub_targetlist is filled with a list of the Vars
+	 * ininfo->sub_targetlist is filled with a list of Vars
 	 * representing the subselect outputs.
 	 */
 	exprs = convert_sublink_opers(sublink->lefthand,
