@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_table_as.sgml,v 1.24 2004/09/23 03:43:57 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_table_as.sgml,v 1.25 2004/11/27 21:27:07 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -166,9 +166,9 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } ] TABLE <replaceable>table_name
   <title>Compatibility</title>
 
   <para>
-   <command>CREATE TABLE AS</command> is specified by the SQL2003
+   <command>CREATE TABLE AS</command> is specified by the SQL:2003
    standard. There are some small differences between the definition
-   of the command in SQL2003 and its implementation in
+   of the command in SQL:2003 and its implementation in
    <productname>PostgreSQL</>:
 
    <itemizedlist spacing="compact">

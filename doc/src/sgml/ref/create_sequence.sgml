@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_sequence.sgml,v 1.41 2004/07/12 05:36:56 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_sequence.sgml,v 1.42 2004/11/27 21:27:07 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -297,10 +297,12 @@ END;
   <title>Compatibility</title>
 
   <para>
-   <command>CREATE SEQUENCE</command> is a
-   <productname>PostgreSQL</productname> language extension.  There is
-   no <command>CREATE SEQUENCE</command> statement in the SQL
-   standard.
+   <command>CREATE SEQUENCE</command> is is specified in <acronym>SQL:2003</acronym>.
+   <productname>PostgreSQL</productname> conforms with the standard, with the following exceptions:
+   <itemizedlist>
+    <listitem><para>The standard's <literal>AS &lt;data type&gt;</literal> expression is not supported.</para></listitem>
+    <listitem><para>Obtaining the next value is done using the <function>nextval()</> function instead of the standard's <command>NEXT VALUE FOR</command> expression.</para></listitem>
+   </itemizedlist>
   </para>
  </refsect1>
 </refentry>

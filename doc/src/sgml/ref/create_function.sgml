@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_function.sgml,v 1.62 2004/10/01 02:00:44 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_function.sgml,v 1.63 2004/11/27 21:27:07 petere Exp $
 -->
 
 <refentry id="SQL-CREATEFUNCTION">
@@ -419,7 +419,7 @@ CREATE OR REPLACE FUNCTION increment(i integer) RETURNS integer AS '
   <title>Compatibility</title>
 
   <para>
-   A <command>CREATE FUNCTION</command> command is defined in SQL99.
+   A <command>CREATE FUNCTION</command> command is defined in SQL:1999 and later.
    The <productname>PostgreSQL</productname> version is similar but
    not fully compatible.  The attributes are not portable, neither are the
    different available languages.

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/rollback_to.sgml,v 1.4 2004/09/20 00:04:19 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/rollback_to.sgml,v 1.5 2004/11/27 21:27:07 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -128,15 +128,14 @@ COMMIT;
   <title>Compatibility</title>
 
   <para>
-   The SQL2003 standard specifies that the keyword
-   <literal>SAVEPOINT</> is mandatory.  <productname>PostgreSQL</> and
-   <productname>Oracle</> allow the <literal>SAVEPOINT</literal>
-   keyword to be omitted.  SQL2003 allows only <literal>WORK</>, not
-   <literal>TRANSACTION</>, as a noise word after
-   <literal>ROLLBACK</>.  Also, SQL2003 has an optional clause
+   The SQL:2003 standard specifies that the key word
+   <literal>SAVEPOINT</> is mandatory, but <productname>PostgreSQL</>
+   and <productname>Oracle</> allow it to be omitted.  SQL:2003 allows
+   only <literal>WORK</>, not <literal>TRANSACTION</>, as a noise word
+   after <literal>ROLLBACK</>.  Also, SQL:2003 has an optional clause
    <literal>AND [ NO ] CHAIN</> which is not currently supported by
-   <productname>PostgreSQL</>.  Otherwise, this command is fully
-   conforming.
+   <productname>PostgreSQL</>.  Otherwise, this command conforms to
+   the SQL standard.
   </para>
  </refsect1>
 

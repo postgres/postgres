@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_table.sgml,v 1.86 2004/11/05 19:15:51 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_table.sgml,v 1.87 2004/11/27 21:27:07 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -865,8 +865,8 @@ CREATE TABLE cinemas (
   <title id="SQL-CREATETABLE-compatibility-title">Compatibility</title>
 
   <para>
-   The <command>CREATE TABLE</command> command conforms to SQL92
-   and to a subset of SQL99, with exceptions listed below.
+   The <command>CREATE TABLE</command> command conforms to SQL-92 and
+   to a subset of SQL:1999, with exceptions listed below.
   </para>
 
   <refsect2>
@@ -943,10 +943,11 @@ CREATE TABLE cinemas (
 
    <para>
     Multiple inheritance via the <literal>INHERITS</literal> clause is
-    a <productname>PostgreSQL</productname> language extension.  SQL99
-    (but not SQL92) defines single inheritance using a different
-    syntax and different semantics.  SQL99-style inheritance is not
-    yet supported by <productname>PostgreSQL</productname>.
+    a <productname>PostgreSQL</productname> language extension.
+    SQL:1999 (but not SQL-92) defines single inheritance using a
+    different syntax and different semantics.  SQL:1999-style
+    inheritance is not yet supported by
+    <productname>PostgreSQL</productname>.
    </para>
   </refsect2>
 

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/intro.sgml,v 1.25 2004/08/08 01:52:14 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/intro.sgml,v 1.26 2004/11/27 21:27:06 petere Exp $
 -->
 
 <preface id="preface">
@@ -98,8 +98,8 @@ $PostgreSQL: pgsql/doc/src/sgml/intro.sgml,v 1.25 2004/08/08 01:52:14 momjian Ex
 
   <para>
    <productname>PostgreSQL</productname> is an open-source descendant
-   of this original Berkeley code.  It supports SQL92, SQL99 and
-   SQL2003 and offers many modern features:
+   of this original Berkeley code.  It supports a large part of the SQL:2003
+   standard and offers many modern features:
 
    <itemizedlist spacing="compact">
     <listitem>

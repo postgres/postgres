@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/keywords.sgml,v 2.14 2004/10/18 17:09:03 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/keywords.sgml,v 2.15 2004/11/27 21:27:06 petere Exp $ -->
 
 <appendix id="sql-keywords-appendix">
  <title><acronym>SQL</acronym> Key Words</title>
@@ -86,9 +86,9 @@
    <row>
     <entry>Key Word</entry>
     <entry><productname>PostgreSQL</productname></entry>
-    <entry><acronym>SQL</acronym> 2003</entry>
-    <entry><acronym>SQL</acronym> 1999</entry>
-    <entry><acronym>SQL</acronym> 1992</entry>
+    <entry>SQL:2003</entry>
+    <entry>SQL:1999</entry>
+    <entry>SQL-92</entry>
    </row>
   </thead>
 

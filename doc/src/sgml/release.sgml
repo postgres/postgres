@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.312 2004/11/22 07:30:22 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.313 2004/11/27 21:27:06 petere Exp $
 -->
 
 <appendix id="release">
@@ -1514,13 +1514,13 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.312 2004/11/22 07:30:22 neilc E
       Change <function>ln()</>, <function>log()</>,
       <function>power()</>, and <function>sqrt()</> to emit the correct
       <literal>SQLSTATE</> error codes for certain error conditions, as
-      specified by SQL2003 (Neil)
+      specified by SQL:2003 (Neil)
      </para>
     </listitem>
 
     <listitem>
      <para>
-      Add <function>width_bucket()</> function as defined by SQL2003 (Neil)
+      Add <function>width_bucket()</> function as defined by SQL:2003 (Neil)
      </para>
     </listitem>
 
@@ -3706,7 +3706,7 @@ DROP SCHEMA information_schema CASCADE;
 
    <itemizedlist>
     <listitem>
-     <para>Make <command>CREATE SEQUENCE</command> grammar more conforming to SQL 2003 (Neil)</para>
+     <para>Make <command>CREATE SEQUENCE</command> grammar more conforming to SQL:2003 (Neil)</para>
     </listitem>
 
     <listitem>
@@ -3781,7 +3781,7 @@ DROP SCHEMA information_schema CASCADE;
     <listitem>
      <para>
       Allow copying table schema using <literal>LIKE
-      <replaceable>subtable</replaceable></literal>, also SQL 2003
+      <replaceable>subtable</replaceable></literal>, also SQL:2003
       feature <literal>INCLUDING DEFAULTS</literal> (Rod)
      </para>
     </listitem>

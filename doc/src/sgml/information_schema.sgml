@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/information_schema.sgml,v 1.18 2004/11/15 06:32:13 neilc Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/information_schema.sgml,v 1.19 2004/11/27 21:27:06 petere Exp $ -->
 
 <chapter id="information-schema">
  <title>The Information Schema</title>
@@ -3267,7 +3267,7 @@ ORDER BY c.ordinal_position;
       <entry>
        The year the standard referenced in
        <literal>sql_language_source</literal> was approved; currently
-       <literal>1999</>
+       <literal>2003</>
       </entry>
      </row>
 
@@ -3276,7 +3276,7 @@ ORDER BY c.ordinal_position;
       <entry><type>character_data</type></entry>
       <entry>
        The standard conformance level for the language binding.  For
-       ISO 9075:1999 this is always <literal>CORE</literal>.
+       ISO 9075:2003 this is always <literal>CORE</literal>.
       </entry>
      </row>
 

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/alter_sequence.sgml,v 1.8 2004/08/24 00:06:51 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/alter_sequence.sgml,v 1.9 2004/11/27 21:27:07 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -190,22 +190,11 @@ ALTER SEQUENCE serial RESTART WITH 105;
 
 
  <refsect1>
-  <title>
-   Compatibility
-  </title>
+  <title>Compatibility</title>
 
-  <refsect2>
-   <title>
-    SQL99
-   </title>
-
-   <para>
-    <command>ALTER SEQUENCE</command> is a <productname>PostgreSQL</productname>
-    language extension.
-    There is no <command>ALTER SEQUENCE</command> statement
-    in <acronym>SQL99</acronym>.
-   </para>
-  </refsect2>
+  <para>
+   <command>ALTER SEQUENCE</command> conforms with <acronym>SQL:2003</acronym>.
+  </para>
  </refsect1>
 </refentry>
 

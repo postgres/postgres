@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.223 2004/11/15 06:32:13 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.224 2004/11/27 21:27:06 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -2479,16 +2479,15 @@ cast(-44 as bit(12))           <lineannotation>111111010100</lineannotation>
   </indexterm>
 
    <para>
-    There are three separate approaches to pattern matching provided by
-    <productname>PostgreSQL</productname>:  the traditional
-    <acronym>SQL</acronym> 
-    <function>LIKE</function> operator, the more recent
-    <acronym>SQL99</acronym> 
-    <function>SIMILAR TO</function> operator, and
-    <acronym>POSIX</acronym>-style regular expressions.
+    There are three separate approaches to pattern matching provided
+    by <productname>PostgreSQL</productname>: the traditional
+    <acronym>SQL</acronym> <function>LIKE</function> operator, the
+    more recent <literal>>SIMILAR TO</literal> operator (since
+    SQL:1999), and <acronym>POSIX</acronym>-style regular expressions.
     Additionally, a pattern matching function,
     <function>substring</function>, is available, using either
-    <acronym>SQL99</acronym>-style or POSIX-style regular expressions.
+    <literal>SIMILAR TO</literal>-style or POSIX-style regular
+    expressions.
    </para>
 
    <tip>
@@ -2595,11 +2594,10 @@ cast(-44 as bit(12))           <lineannotation>111111010100</lineannotation>
   </sect2>
 
 
-  <sect2 id="functions-sql99-regexp">
-   <title><function>SIMILAR TO</function> and <acronym>SQL99</acronym>
-     Regular Expressions</title>
+  <sect2 id="functions-similarto-regexp">
+   <title><function>SIMILAR TO</function> Regular Expressions</title>
 
-   <indexterm zone="functions-sql99-regexp">
+   <indexterm zone="functions-similarto-regexp">
     <primary>regular expression</primary>
     <!-- <seealso>pattern matching</seealso> breaks index build -->
    </indexterm>
@@ -2618,14 +2616,13 @@ cast(-44 as bit(12))           <lineannotation>111111010100</lineannotation>
 </synopsis>
 
     <para>
-     The <function>SIMILAR TO</function> operator returns true or false
-     depending on whether its pattern matches the given string.  It is
-     much like <function>LIKE</function>, except that it interprets the
-     pattern using <acronym>SQL99</acronym>'s definition of a regular
-     expression.
-     <acronym>SQL99</acronym>'s regular expressions are a curious cross
-     between <function>LIKE</function> notation and common regular expression
-     notation.
+     The <function>SIMILAR TO</function> operator returns true or
+     false depending on whether its pattern matches the given string.
+     It is much like <function>LIKE</function>, except that it
+     interprets the pattern using the SQL standard's definition of a
+     regular expression.  SQL regular expressions are a curious cross
+     between <function>LIKE</function> notation and common regular
+     expression notation.
     </para>
 
     <para>
@@ -2704,7 +2701,7 @@ cast(-44 as bit(12))           <lineannotation>111111010100</lineannotation>
      <function>substring(<parameter>string</parameter> from
      <replaceable>pattern</replaceable> for
      <replaceable>escape-character</replaceable>)</function>, provides
-     extraction of a substring that matches a <acronym>SQL99</acronym>
+     extraction of a substring that matches an SQL
      regular expression pattern.  As with <literal>SIMILAR TO</>, the
      specified pattern must match to the entire data string, else the
      function fails and returns null.  To indicate the part of the

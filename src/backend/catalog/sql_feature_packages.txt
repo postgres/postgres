@@ -53,21 +53,16 @@ F701	Enhanced integrity management
 F812	Core
 S011	Core
 S023	Basic object support
-S023	SQL/MM support
 S024	Enhanced object support
-S024	SQL/MM support
 S041	Basic object support
 S043	Enhanced object support
 S051	Basic object support
 S071	Enhanced object support
 S081	Enhanced object support
-S091	SQL/MM support
-S092	SQL/MM support
 S111	Enhanced object support
 S151	Basic object support
 S161	Enhanced object support
 S211	Enhanced object support
-S211	SQL/MM support
 S231	Enhanced object support
 S241	Enhanced object support
 T041	Basic object support
@@ -78,5 +73,4 @@ T211	Active database
 T212	Enhanced integrity management
 T321	Core
 T322	PSM
-T322	SQL/MM support
 T431	OLAP facilities
