@@ -27,16 +27,19 @@ tuple 1: got
  *
  */
 #include <stdio.h>
+#include <string.h>
+#include "postgres.h"		/* -> "c.h" -> int16, in access/attnum.h */
 #include "libpq-fe.h"
-#include "utils/geo-decls.h"	/* for the POLYGON type */
+#include "utils/geo_decls.h"	/* for the POLYGON type */
 
-void
+static void
 exit_nicely(PGconn *conn)
 {
 	PQfinish(conn);
 	exit(1);
 }
 
+int
 main()
 {
 	char	   *pghost,
@@ -44,9 +47,11 @@ main()
 			   *pgoptions,
 			   *pgtty;
 	char	   *dbName;
-	int			nFields;
-	int			i,
-				j;
+	/* int			nFields;
+	 * int			i,
+	 *			j;
+	 */
+	int			i;
 	int			i_fnum,
 				d_fnum,
 				p_fnum;
@@ -157,10 +162,10 @@ main()
 		printf(" p = (%d bytes) %d points \tboundbox = (hi=%f/%f, lo = %f,%f)\n",
 			   PQgetlength(res, i, d_fnum),
 			   pval->npts,
-			   pval->boundbox.xh,
-			   pval->boundbox.yh,
-			   pval->boundbox.xl,
-			   pval->boundbox.yl);
+			   pval->boundbox.high.x,
+			   pval->boundbox.high.y,
+			   pval->boundbox.low.x,
+			   pval->boundbox.low.y);
 	}
 
 	PQclear(res);
@@ -175,5 +180,5 @@ main()
 
 	/* close the connection to the database and cleanup */
 	PQfinish(conn);
-
+	return 0;			/* Though PQfinish(conn1) has called exit(1) */
 }

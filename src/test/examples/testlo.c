@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/test/examples/testlo.c,v 1.6 1997/09/08 21:55:56 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/test/examples/testlo.c,v 1.7 1997/09/25 16:35:50 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,6 +17,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <unistd.h>
 
 #include "libpq-fe.h"
 #include "libpq/libpq-fs.h"
@@ -28,7 +29,7 @@
  *	  import file "in_filename" into database as large object "lobjOid"
  *
  */
-Oid
+static Oid
 importFile(PGconn *conn, char *filename)
 {
 	Oid			lobjId;
@@ -76,7 +77,7 @@ importFile(PGconn *conn, char *filename)
 	return lobjId;
 }
 
-void
+static void
 pickout(PGconn *conn, Oid lobjId, int start, int len)
 {
 	int			lobj_fd;
@@ -106,7 +107,7 @@ pickout(PGconn *conn, Oid lobjId, int start, int len)
 	lo_close(conn, lobj_fd);
 }
 
-void
+static void
 overwrite(PGconn *conn, Oid lobjId, int start, int len)
 {
 	int			lobj_fd;
@@ -145,7 +146,7 @@ overwrite(PGconn *conn, Oid lobjId, int start, int len)
  *	  export large object "lobjOid" to file "out_filename"
  *
  */
-void
+static void
 exportFile(PGconn *conn, Oid lobjId, char *filename)
 {
 	int			lobj_fd;
@@ -193,7 +194,7 @@ exportFile(PGconn *conn, Oid lobjId, char *filename)
 	return;
 }
 
-void
+static void
 exit_nicely(PGconn *conn)
 {
 	PQfinish(conn);

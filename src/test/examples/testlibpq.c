@@ -7,13 +7,14 @@
 #include <stdio.h>
 #include "libpq-fe.h"
 
-void
+static void
 exit_nicely(PGconn *conn)
 {
 	PQfinish(conn);
 	exit(1);
 }
 
+int
 main()
 {
 	char	   *pghost,

@@ -19,15 +19,17 @@ INSERT INTO TBL1 values (10);
  *
  */
 #include <stdio.h>
+#include <stdlib.h>
 #include "libpq-fe.h"
 
-void
+static void
 exit_nicely(PGconn *conn)
 {
 	PQfinish(conn);
 	exit(1);
 }
 
+int
 main()
 {
 	char	   *pghost,
@@ -35,9 +37,10 @@ main()
 			   *pgoptions,
 			   *pgtty;
 	char	   *dbName;
-	int			nFields;
-	int			i,
-				j;
+	/* int			nFields;
+	 * int			i,
+	 *			j;
+	 */
 
 	PGconn	   *conn;
 	PGresult   *res;
@@ -103,5 +106,5 @@ main()
 
 	/* close the connection to the database and cleanup */
 	PQfinish(conn);
-
+	return 0;			/* Though PQfinish(conn1) has called exit(1) */
 }
