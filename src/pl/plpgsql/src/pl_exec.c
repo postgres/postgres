@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.112 2004/08/01 17:32:21 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.113 2004/08/02 01:30:49 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -3582,7 +3582,7 @@ exec_eval_simple_expr(PLpgSQL_execstate * estate,
 	 * need to have more than one active param list.
 	 */
 	paramLI = (ParamListInfo)
-		MemoryContextAlloc(econtext->ecxt_per_tuple_memory,
+		MemoryContextAllocZero(econtext->ecxt_per_tuple_memory,
 						(expr->nparams + 1) * sizeof(ParamListInfoData));
 
 	/*
@@ -3591,12 +3591,11 @@ exec_eval_simple_expr(PLpgSQL_execstate * estate,
 	for (i = 0; i < expr->nparams; i++)
 	{
 		PLpgSQL_datum *datum = estate->datums[expr->params[i]];
-		Oid			paramtypeid;
 
 		paramLI[i].kind = PARAM_NUM;
 		paramLI[i].id = i + 1;
 		exec_eval_datum(estate, datum, expr->plan_argtypes[i],
-						&paramtypeid,
+						&paramLI[i].ptype,
 						&paramLI[i].value, &paramLI[i].isnull);
 	}
 	paramLI[i].kind = PARAM_INVALID;

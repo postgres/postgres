@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/schemacmds.c,v 1.21 2004/08/01 20:30:48 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/schemacmds.c,v 1.22 2004/08/02 01:30:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -168,7 +168,7 @@ CreateSchemaCommand(CreateSchemaStmt *stmt)
 			/* schemas should contain only utility stmts */
 			Assert(querytree->commandType == CMD_UTILITY);
 			/* do this step */
-			ProcessUtility(querytree->utilityStmt, None_Receiver, NULL);
+			ProcessUtility(querytree->utilityStmt, NULL, None_Receiver, NULL);
 			/* make sure later steps can see the object created here */
 			CommandCounterIncrement();
 		}

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execQual.c,v 1.164 2004/06/09 19:08:14 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execQual.c,v 1.165 2004/08/02 01:30:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -589,56 +589,18 @@ ExecEvalParam(ExprState *exprstate, ExprContext *econtext,
 	else
 	{
 		/*
-		 * All other parameter types must be sought in
-		 * ecxt_param_list_info. NOTE: The last entry in the param array
-		 * is always an entry with kind == PARAM_INVALID.
+		 * All other parameter types must be sought in ecxt_param_list_info.
 		 */
-		ParamListInfo paramList = econtext->ecxt_param_list_info;
-		char	   *thisParamName = expression->paramname;
-		bool		matchFound = false;
+		ParamListInfo paramInfo;
 
-		if (paramList != NULL)
-		{
-			while (paramList->kind != PARAM_INVALID && !matchFound)
-			{
-				if (thisParamKind == paramList->kind)
-				{
-					switch (thisParamKind)
-					{
-						case PARAM_NAMED:
-							if (strcmp(paramList->name, thisParamName) == 0)
-								matchFound = true;
-							break;
-						case PARAM_NUM:
-							if (paramList->id == thisParamId)
-								matchFound = true;
-							break;
-						default:
-							elog(ERROR, "unrecognized paramkind: %d",
-								 thisParamKind);
-					}
-				}
-				if (!matchFound)
-					paramList++;
-			}					/* while */
-		}						/* if */
-
-		if (!matchFound)
-		{
-			if (thisParamKind == PARAM_NAMED)
-				ereport(ERROR,
-						(errcode(ERRCODE_UNDEFINED_OBJECT),
-						 errmsg("no value found for parameter \"%s\"",
-								thisParamName)));
-			else
-				ereport(ERROR,
-						(errcode(ERRCODE_UNDEFINED_OBJECT),
-						 errmsg("no value found for parameter %d",
-								thisParamId)));
-		}
-
-		*isNull = paramList->isnull;
-		return paramList->value;
+		paramInfo = lookupParam(econtext->ecxt_param_list_info,
+								thisParamKind,
+								expression->paramname,
+								thisParamId,
+								false);
+		Assert(paramInfo->ptype == expression->paramtype);
+		*isNull = paramInfo->isnull;
+		return paramInfo->value;
 	}
 }
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/spi.c,v 1.122 2004/07/31 20:55:41 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/spi.c,v 1.123 2004/08/02 01:30:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -820,6 +820,7 @@ SPI_cursor_open(const char *name, void *plan, Datum *Values, const char *Nulls)
 		{
 			paramLI[k].kind = PARAM_NUM;
 			paramLI[k].id = k + 1;
+			paramLI[k].ptype = spiplan->argtypes[k];
 			paramLI[k].isnull = (Nulls && Nulls[k] == 'n');
 			if (paramLI[k].isnull)
 			{
@@ -1251,7 +1252,7 @@ _SPI_execute(const char *src, int tcount, _SPI_plan *plan)
 				res = SPI_OK_UTILITY;
 				if (plan == NULL)
 				{
-					ProcessUtility(queryTree->utilityStmt, dest, NULL);
+					ProcessUtility(queryTree->utilityStmt, NULL, dest, NULL);
 					CommandCounterIncrement();
 				}
 			}
@@ -1319,6 +1320,7 @@ _SPI_execute_plan(_SPI_plan *plan, Datum *Values, const char *Nulls,
 		{
 			paramLI[k].kind = PARAM_NUM;
 			paramLI[k].id = k + 1;
+			paramLI[k].ptype = plan->argtypes[k];
 			paramLI[k].isnull = (Nulls && Nulls[k] == 'n');
 			paramLI[k].value = Values[k];
 		}
@@ -1366,7 +1368,7 @@ _SPI_execute_plan(_SPI_plan *plan, Datum *Values, const char *Nulls,
 			dest = CreateDestReceiver(queryTree->canSetTag ? SPI : None, NULL);
 			if (queryTree->commandType == CMD_UTILITY)
 			{
-				ProcessUtility(queryTree->utilityStmt, dest, NULL);
+				ProcessUtility(queryTree->utilityStmt, paramLI, dest, NULL);
 				res = SPI_OK_UTILITY;
 				CommandCounterIncrement();
 			}

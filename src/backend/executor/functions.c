@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/functions.c,v 1.83 2004/07/15 13:51:38 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/functions.c,v 1.84 2004/08/02 01:30:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -58,6 +58,7 @@ typedef struct local_es
  */
 typedef struct
 {
+	Oid        *argtypes;       /* resolved types of arguments */
 	Oid			rettype;		/* actual return type */
 	int			typlen;			/* length of the return type */
 	bool		typbyval;		/* true if return type is pass by value */
@@ -223,6 +224,7 @@ init_sql_fcache(FmgrInfo *finfo)
 	}
 	else
 		argOidVect = NULL;
+	fcache->argtypes = argOidVect;
 
 	tmp = SysCacheGetAttr(PROCOID,
 						  procedureTuple,
@@ -283,7 +285,8 @@ postquel_getnext(execution_state *es)
 
 	if (es->qd->operation == CMD_UTILITY)
 	{
-		ProcessUtility(es->qd->parsetree->utilityStmt, es->qd->dest, NULL);
+		ProcessUtility(es->qd->parsetree->utilityStmt, es->qd->params,
+					   es->qd->dest, NULL);
 		return NULL;
 	}
 
@@ -332,6 +335,7 @@ postquel_sub_params(SQLFunctionCachePtr fcache,
 		{
 			paramLI[i].kind = PARAM_NUM;
 			paramLI[i].id = i + 1;
+			paramLI[i].ptype = fcache->argtypes[i];
 			paramLI[i].value = fcinfo->arg[i];
 			paramLI[i].isnull = fcinfo->argnull[i];
 		}

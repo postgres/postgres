@@ -10,7 +10,7 @@
  * Copyright (c) 2002-2003, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/prepare.c,v 1.28 2004/06/11 01:08:38 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/prepare.c,v 1.29 2004/08/02 01:30:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -200,7 +200,7 @@ ExecuteQuery(ExecuteStmt *stmt, DestReceiver *dest, char *completionTag)
 
 /*
  * Evaluates a list of parameters, using the given executor state. It
- * requires a list of the parameter values themselves, and a list of
+ * requires a list of the parameter expressions themselves, and a list of
  * their types. It returns a filled-in ParamListInfo -- this can later
  * be passed to CreateQueryDesc(), which allows the executor to make use
  * of the parameters during query execution.
@@ -211,7 +211,7 @@ EvaluateParams(EState *estate, List *params, List *argtypes)
 	int			nargs = list_length(argtypes);
 	ParamListInfo paramLI;
 	List	   *exprstates;
-	ListCell   *l;
+	ListCell   *le, *la;
 	int			i = 0;
 
 	/* Parser should have caught this error, but check for safety */
@@ -223,9 +223,9 @@ EvaluateParams(EState *estate, List *params, List *argtypes)
 	paramLI = (ParamListInfo)
 		palloc0((nargs + 1) * sizeof(ParamListInfoData));
 
-	foreach(l, exprstates)
+	forboth(le, exprstates, la, argtypes)
 	{
-		ExprState  *n = lfirst(l);
+		ExprState  *n = lfirst(le);
 		bool		isNull;
 
 		paramLI[i].value = ExecEvalExprSwitchContext(n,
@@ -234,6 +234,7 @@ EvaluateParams(EState *estate, List *params, List *argtypes)
 													 NULL);
 		paramLI[i].kind = PARAM_NUM;
 		paramLI[i].id = i + 1;
+		paramLI[i].ptype = lfirst_oid(la);
 		paramLI[i].isnull = isNull;
 
 		i++;

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.176 2004/06/11 01:08:54 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.177 2004/08/02 01:30:43 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -1120,39 +1120,20 @@ eval_const_expressions_mutator(Node *node,
 	if (IsA(node, Param))
 	{
 		Param	   *param = (Param *) node;
-		int			thisParamKind = param->paramkind;
 
 		/* OK to try to substitute value? */
-		if (context->estimate && thisParamKind != PARAM_EXEC &&
+		if (context->estimate && param->paramkind != PARAM_EXEC &&
 			PlannerBoundParamList != NULL)
 		{
-			ParamListInfo paramList = PlannerBoundParamList;
-			bool		matchFound = false;
+			ParamListInfo paramInfo;
 
 			/* Search to see if we've been given a value for this Param */
-			while (paramList->kind != PARAM_INVALID && !matchFound)
-			{
-				if (thisParamKind == paramList->kind)
-				{
-					switch (thisParamKind)
-					{
-						case PARAM_NAMED:
-							if (strcmp(paramList->name, param->paramname) == 0)
-								matchFound = true;
-							break;
-						case PARAM_NUM:
-							if (paramList->id == param->paramid)
-								matchFound = true;
-							break;
-						default:
-							elog(ERROR, "unrecognized paramkind: %d",
-								 thisParamKind);
-					}
-				}
-				if (!matchFound)
-					paramList++;
-			}
-			if (matchFound)
+			paramInfo = lookupParam(PlannerBoundParamList,
+									param->paramkind,
+									param->paramname,
+									param->paramid,
+									true);
+			if (paramInfo)
 			{
 				/*
 				 * Found it, so return a Const representing the param value.
@@ -1164,11 +1145,12 @@ eval_const_expressions_mutator(Node *node,
 				int16		typLen;
 				bool		typByVal;
 
+				Assert(paramInfo->ptype == param->paramtype);
 				get_typlenbyval(param->paramtype, &typLen, &typByVal);
 				return (Node *) makeConst(param->paramtype,
 										  (int) typLen,
-										  paramList->value,
-										  paramList->isnull,
+										  paramInfo->value,
+										  paramInfo->isnull,
 										  typByVal);
 			}
 		}

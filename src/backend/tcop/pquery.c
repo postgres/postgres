@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/pquery.c,v 1.82 2004/07/31 00:45:36 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/pquery.c,v 1.83 2004/08/02 01:30:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -833,14 +833,14 @@ PortalRunUtility(Portal portal, Query *query,
 	if (query->canSetTag)
 	{
 		/* utility statement can override default tag string */
-		ProcessUtility(utilityStmt, dest, completionTag);
+		ProcessUtility(utilityStmt, portal->portalParams, dest, completionTag);
 		if (completionTag && completionTag[0] == '\0' && portal->commandTag)
 			strcpy(completionTag, portal->commandTag);	/* use the default */
 	}
 	else
 	{
 		/* utility added by rewrite cannot set tag */
-		ProcessUtility(utilityStmt, dest, NULL);
+		ProcessUtility(utilityStmt, portal->portalParams, dest, NULL);
 	}
 
 	/* Some utility statements may change context on us */

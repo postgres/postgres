@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/utility.c,v 1.222 2004/08/01 17:32:18 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/utility.c,v 1.223 2004/08/02 01:30:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -294,6 +294,7 @@ check_xact_readonly(Node *parsetree)
  *		general utility function invoker
  *
  *	parsetree: the parse tree for the utility statement
+ *	params: parameters to use during execution (currently only used by DECLARE)
  *	dest: where to send results
  *	completionTag: points to a buffer of size COMPLETION_TAG_BUFSIZE
  *		in which to store a command completion status string.
@@ -305,6 +306,7 @@ check_xact_readonly(Node *parsetree)
  */
 void
 ProcessUtility(Node *parsetree,
+			   ParamListInfo params,
 			   DestReceiver *dest,
 			   char *completionTag)
 {
@@ -406,7 +408,7 @@ ProcessUtility(Node *parsetree,
 			 * Portal (cursor) manipulation
 			 */
 		case T_DeclareCursorStmt:
-			PerformCursorOpen((DeclareCursorStmt *) parsetree);
+			PerformCursorOpen((DeclareCursorStmt *) parsetree, params);
 			break;
 
 		case T_ClosePortalStmt:

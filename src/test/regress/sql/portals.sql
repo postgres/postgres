@@ -218,3 +218,20 @@ ROLLBACK;
 
 -- should fail
 FETCH FROM foo26;
+
+--
+-- Parameterized DECLARE needs to insert param values into the cursor portal
+--
+
+BEGIN;
+
+CREATE FUNCTION declares_cursor(text)
+   RETURNS void
+   AS 'DECLARE c CURSOR FOR SELECT stringu1 FROM tenk1 WHERE stringu1 LIKE $1;'
+   LANGUAGE 'sql';
+
+SELECT declares_cursor('AB%');
+
+FETCH ALL FROM c;
+
+ROLLBACK;

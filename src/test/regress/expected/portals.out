@@ -738,3 +738,38 @@ ROLLBACK;
 -- should fail
 FETCH FROM foo26;
 ERROR:  cursor "foo26" does not exist
+--
+-- Parameterized DECLARE needs to insert param values into the cursor portal
+--
+BEGIN;
+CREATE FUNCTION declares_cursor(text)
+   RETURNS void
+   AS 'DECLARE c CURSOR FOR SELECT stringu1 FROM tenk1 WHERE stringu1 LIKE $1;'
+   LANGUAGE 'sql';
+SELECT declares_cursor('AB%');
+ declares_cursor 
+-----------------
+ 
+(1 row)
+
+FETCH ALL FROM c;
+ stringu1 
+----------
+ ABAAAA
+ ABAAAA
+ ABAAAA
+ ABAAAA
+ ABAAAA
+ ABAAAA
+ ABAAAA
+ ABAAAA
+ ABAAAA
+ ABAAAA
+ ABAAAA
+ ABAAAA
+ ABAAAA
+ ABAAAA
+ ABAAAA
+(15 rows)
+
+ROLLBACK;

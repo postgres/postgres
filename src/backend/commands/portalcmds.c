@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/portalcmds.c,v 1.30 2004/07/31 00:45:31 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/portalcmds.c,v 1.31 2004/08/02 01:30:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,7 +36,7 @@
  *		Execute SQL DECLARE CURSOR command.
  */
 void
-PerformCursorOpen(DeclareCursorStmt *stmt)
+PerformCursorOpen(DeclareCursorStmt *stmt, ParamListInfo params)
 {
 	List	   *rewritten;
 	Query	   *query;
@@ -104,6 +104,17 @@ PerformCursorOpen(DeclareCursorStmt *stmt)
 					  list_make1(plan),
 					  PortalGetHeapMemory(portal));
 
+	/*
+	 * Also copy the outer portal's parameter list into the inner portal's
+	 * memory context.  We want to pass down the parameter values in case
+	 * we had a command like
+	 *			DECLARE c CURSOR FOR SELECT ... WHERE foo = $1
+	 * This will have been parsed using the outer parameter set and the
+	 * parameter value needs to be preserved for use when the cursor is
+	 * executed.
+	 */
+	params = copyParamList(params);
+
 	MemoryContextSwitchTo(oldContext);
 
 	/*
@@ -123,9 +134,9 @@ PerformCursorOpen(DeclareCursorStmt *stmt)
 	}
 
 	/*
-	 * Start execution --- never any params for a cursor.
+	 * Start execution, inserting parameters if any.
 	 */
-	PortalStart(portal, NULL);
+	PortalStart(portal, params);
 
 	Assert(portal->strategy == PORTAL_ONE_SELECT);
 
