@@ -15,24 +15,23 @@ Preparation
   'expected.out' file.  The localization replaces macros in the source
   files with absolute pathnames and user names.
 
-The 'expected.input' file and the 'sample.regress.out' file
+Directory Layout
 
-  The 'expected.input' file was created on a SPARC Solaris 2.4 system
-  using the 'postgres5-1.02a5.tar.gz' source tree. It has been compared
-  with a file created on an I386 Solaris 2.4 system and the differences
-  are only in the floating point polygons in the 3rd digit to the right
-  of the decimal point. (see below)
+  input/ .... .source files that are converted using 'make all' into
+              .sql files in the 'sql' subdirectory
 
-  The 'sample.regress.out' file is from the postgres-1.01 release
-  constructed by Jolly Chen and is included here for reference. It may
-  have been created on a DEC ALPHA machine as the 'Makefile.global'
-  in the postgres-1.01 release has PORTNAME=alpha.
+  output/ ... .source files that are converted using 'make all' into
+              .out files in the 'expected' subdirectory
+
+  sql/ ...... .sql files used to perform the regression tests
+
+  expected/ . .out files that represent what we *expect* the results to
+              look like
+
+  results/ .. .out files that represent what the results *actually* look
+              like
 
 Running the regression test
-
-  Change directory to the regression test directory:
-
-        cd ...../src/test/regress
 
   If you have prevously invoked the regression test, clean up the
   working directory with:
@@ -43,9 +42,9 @@ Running the regression test
 
         make all runtest
 
-  Normally, the regression test should be run as the 'postgres' user as the
+  Normally, the regression test should be run as the pg_superuser as the
   'src/test/regress' directory and sub-directories are owned by the
-  'postgres' user. If you run the regression test as another user the
+  pg_superuser. If you run the regression test as another user the
   'src/test/regress' directory should be writeable to that user.
 
 Comparing expected/actual output
@@ -118,4 +117,18 @@ DATE/TIME differences
   entries that use the time -infinity display with year 1970 plus/minus the
   number of hours you are different from GMT.
 
+--------[ old stuff that needs to be rewritten ]-----
+
+The 'expected.input' file and the 'sample.regress.out' file
+
+  The 'expected.input' file was created on a SPARC Solaris 2.4 system
+  using the 'postgres5-1.02a5.tar.gz' source tree. It has been compared
+  with a file created on an I386 Solaris 2.4 system and the differences
+  are only in the floating point polygons in the 3rd digit to the right
+  of the decimal point. (see below)
+
+  The 'sample.regress.out' file is from the postgres-1.01 release
+  constructed by Jolly Chen and is included here for reference. It may
+  have been created on a DEC ALPHA machine as the 'Makefile.global'
+  in the postgres-1.01 release has PORTNAME=alpha.
 
