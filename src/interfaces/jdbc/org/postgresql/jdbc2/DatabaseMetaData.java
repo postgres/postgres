@@ -8,6 +8,7 @@ package org.postgresql.jdbc2;
 import java.sql.*;
 import java.util.*;
 import org.postgresql.Field;
+import org.postgresql.util.PSQLException;
 
 /**
  * This class provides information about the database as a whole.
@@ -2069,6 +2070,8 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
    * Get a description of the access rights for each table available
    * in a catalog.
    *
+   * This method is currently unimplemented.
+   *
    * <P>Only privileges matching the schema and table name
    * criteria are returned.  They are ordered by TABLE_SCHEM,
    * TABLE_NAME, and PRIVILEGE.
@@ -2096,13 +2099,14 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
    */
   public java.sql.ResultSet getTablePrivileges(String catalog, String schemaPattern, String tableNamePattern) throws SQLException
   {
-    // XXX-Not Implemented
-    return null;
+    throw org.postgresql.Driver.notImplemented();
   }
 
   /**
    * Get a description of a table's optimal set of columns that
    * uniquely identifies a row. They are ordered by SCOPE.
+   *
+   * This method is currently not implemented.
    *
    * <P>Each column description has the following columns:
    *  <OL>
@@ -2159,6 +2163,8 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
    * updated when any value in a row is updated.  They are
    * unordered.
    *
+   * This method is currently unimplemented.
+   *
    * <P>Each column description has the following columns:
    *  <OL>
    *	<LI><B>SCOPE</B> short => is not used
@@ -2184,8 +2190,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
    */
  public java.sql.ResultSet getVersionColumns(String catalog, String schema, String table) throws SQLException
   {
-    // XXX-Not Implemented
-    return null;
+    throw org.postgresql.Driver.notImplemented();
   }
 
   /**
@@ -2398,6 +2403,8 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
    * table).  They are ordered by FKTABLE_CAT, FKTABLE_SCHEM,
    * FKTABLE_NAME, and KEY_SEQ.
    *
+   * This method is currently unimplemented.
+   *
    * <P>Each foreign key column description has the following columns:
    *  <OL>
    *	<LI><B>PKTABLE_CAT</B> String => primary key table catalog (may be null)
@@ -2445,8 +2452,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
    */
   public java.sql.ResultSet getExportedKeys(String catalog, String schema, String table) throws SQLException
   {
-    // XXX-Not Implemented
-    return null;
+    throw org.postgresql.Driver.notImplemented();
   }
 
   /**
@@ -2457,6 +2463,8 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
    * (most tables only import a foreign key from a table once.)  They
    * are ordered by FKTABLE_CAT, FKTABLE_SCHEM, FKTABLE_NAME, and
    * KEY_SEQ.
+   *
+   * This method is currently unimplemented.
    *
    * <P>Each foreign key column description has the following columns:
    *  <OL>
@@ -2505,8 +2513,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
    */
   public java.sql.ResultSet getCrossReference(String primaryCatalog, String primarySchema, String primaryTable, String foreignCatalog, String foreignSchema, String foreignTable) throws SQLException
   {
-    // XXX-Not Implemented
-    return null;
+    throw org.postgresql.Driver.notImplemented();
   }
 
   /**
@@ -2611,7 +2618,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
       return new ResultSet(connection, f, v, "OK", 1);
     }
 
-    return null;
+    throw new PSQLException("postgresql.metadata.unavailable");
   }
 
   /**
