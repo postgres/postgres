@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Thu Jun  8 11:47:25 EDT 2000
+Last updated:		Thu Jun  8 12:19:00 EDT 2000
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -96,6 +96,7 @@ TYPES
 * Add hash for int8
 * SELECT col FROM tab WHERE numeric_col = 10.1 fails
 * Allow arrays to hold NULL elements
+* Get BIT type working
 
 VIEWS
 
