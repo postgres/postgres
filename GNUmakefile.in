@@ -1,7 +1,7 @@
 #
 # PostgreSQL top level makefile
 #
-# $Header: /cvsroot/pgsql/GNUmakefile.in,v 1.28 2002/09/05 02:05:30 scrappy Exp $
+# $Header: /cvsroot/pgsql/GNUmakefile.in,v 1.29 2002/09/06 21:57:11 petere Exp $
 #
 
 subdir =
@@ -69,11 +69,11 @@ dist:
 $(distdir).tar: distdir
 	$(TAR) chf $@ $(distdir)
 
-opt_files := src/backend/utils/mb contrib/retep/build.xml \
+opt_files := contrib/retep \
 	src/tools src/corba src/data src/tutorial \
-	$(addprefix src/bin/, pgtclsh pg_encoding) \
+	src/bin/pgtclsh \
 	$(addprefix src/interfaces/, libpgtcl python jdbc) \
-	$(addprefix src/pl/, plperl tcl)
+	$(addprefix src/pl/, plperl plpython tcl)
 
 docs_files := doc/postgres.tar.gz doc/src doc/TODO.detail
 
