@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.397 2004/12/31 22:03:08 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.398 2005/01/04 22:27:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -7157,8 +7157,12 @@ setMaxOid(Archive *fout)
 	Oid			max_oid;
 	char		sql[1024];
 
-	do_sql_command(g_conn,
-				   "CREATE TEMPORARY TABLE pgdump_oid (dummy integer)");
+	if (fout->remoteVersion >= 70200)
+		do_sql_command(g_conn,
+					   "CREATE TEMPORARY TABLE pgdump_oid (dummy integer) WITH OIDS");
+	else
+		do_sql_command(g_conn,
+					   "CREATE TEMPORARY TABLE pgdump_oid (dummy integer)");
 	res = PQexec(g_conn, "INSERT INTO pgdump_oid VALUES (0)");
 	check_sql_result(res, g_conn, "INSERT INTO pgdump_oid VALUES (0)",
 					 PGRES_COMMAND_OK);
@@ -7173,7 +7177,7 @@ setMaxOid(Archive *fout)
 	if (g_verbose)
 		write_msg(NULL, "maximum system OID is %u\n", max_oid);
 	snprintf(sql, sizeof(sql),
-			 "CREATE TEMPORARY TABLE pgdump_oid (dummy integer);\n"
+			 "CREATE TEMPORARY TABLE pgdump_oid (dummy integer) WITH OIDS;\n"
 			 "COPY pgdump_oid WITH OIDS FROM stdin;\n"
 			 "%u\t0\n"
 			 "\\.\n"
