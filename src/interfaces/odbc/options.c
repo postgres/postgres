@@ -474,7 +474,6 @@ RETCODE SQL_API SQLSetStmtOption(
 {
 static char *func="SQLSetStmtOption";
 StatementClass *stmt = (StatementClass *) hstmt;
-char changed = FALSE;
 
 	mylog("%s: entering...\n", func);
 

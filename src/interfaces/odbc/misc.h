@@ -45,7 +45,7 @@
   #else
     #define MYLOGDIR	"c:"
   #endif
-  void mylog();	/* prototype */
+  extern void mylog(char * fmt, ...);
 #else
   #ifndef WIN32
     #define mylog(args...)	/* GNU convention for variable arguments */
@@ -61,7 +61,7 @@
   #else
     #define QLOGDIR		"c:"
   #endif
-  void qlog();	/* prototype */
+  extern void qlog(char * fmt, ...);
 #else
   #ifndef WIN32
     #define qlog(args...)	/* GNU convention for variable arguments */

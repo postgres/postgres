@@ -2,7 +2,7 @@
 /* -----------------------------------------------------------------------
  * pg_locale.h
  *
- * $Header: /cvsroot/pgsql/src/include/utils/pg_locale.h,v 1.2 2000/02/08 15:57:01 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/include/utils/pg_locale.h,v 1.3 2000/03/18 18:57:15 tgl Exp $
  *
  *
  *   Portions Copyright (c) 1999-2000, PostgreSQL, Inc
@@ -43,7 +43,7 @@ extern PG_LocaleCategories *PGLC_setlocale( PG_LocaleCategories *lc );
  * on current locale catogories setting - in contrast to standard localeconv().
  *------
  */
-extern struct lconv *PGLC_localeconv();
+extern struct lconv *PGLC_localeconv(void);
 
  
 #endif /* USE_LOCALE */

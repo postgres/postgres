@@ -1372,10 +1372,9 @@ int
 convert_lo(StatementClass *stmt, void *value, Int2 fCType, PTR rgbValue, 
 		   SDWORD cbValueMax, SDWORD *pcbValue)
 {
-Oid oid;
-int retval, result, left = -1;
-int bind_row = stmt->bind_row;
-BindInfoClass *bindInfo = NULL;
+	Oid oid;
+	int retval, result, left = -1;
+	BindInfoClass *bindInfo = NULL;
 
 
 /*	If using SQLGetData, then current_col will be set */

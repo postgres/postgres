@@ -13,7 +13,7 @@
  */
 
 #include <stdio.h>
-#include <varargs.h>
+#include <stdarg.h>
 #include <string.h>
 
 #include "psqlodbc.h"
@@ -57,17 +57,14 @@ generate_filename(char* dirname,char* prefix,char* filename)
 #ifdef MY_LOG
 
 void
-mylog(va_alist)
-va_dcl
+mylog(char * fmt, ...)
 {
-char *fmt;
-va_list args;
-char filebuf[80];
+	va_list args;
+	char filebuf[80];
 	FILE* LOGFP = globals.mylogFP;
 
 	if ( globals.debug) {
-		va_start(args);
-		fmt = va_arg(args, char *);
+		va_start(args, fmt);
 
 		if (! LOGFP) {
 			generate_filename(MYLOGDIR,MYLOGFILE,filebuf);
@@ -91,18 +88,15 @@ char filebuf[80];
 
 #ifdef Q_LOG
 
-void qlog(va_alist)
-va_dcl
+void
+qlog(char * fmt, ...)
 {
-char *fmt;
-va_list args;
-char filebuf[80];
-FILE* LOGFP = globals.qlogFP;
+	va_list args;
+	char filebuf[80];
+	FILE* LOGFP = globals.qlogFP;
 
 	if ( globals.commlog) {
-		va_start(args);
-		fmt = va_arg(args, char *);
-
+		va_start(args, fmt);
 
 		if (! LOGFP) {
 			generate_filename(QLOGDIR,QLOGFILE,filebuf);

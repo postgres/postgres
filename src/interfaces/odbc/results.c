@@ -608,7 +608,7 @@ QResultClass *res;
 StatementClass *stmt = (StatementClass *) hstmt;
 int num_cols, num_rows;
 Int4 field_type;
-void *value;
+void *value = NULL;
 int result;
 char get_bookmark = FALSE;
 

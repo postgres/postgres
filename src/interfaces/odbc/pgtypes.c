@@ -177,6 +177,7 @@ Int4 pgType;
 		break;
 
 	default:
+	  	pgType = 0;	/* ??? */
 		break;
 	}
 
@@ -310,7 +311,7 @@ char *pgtype_to_name(StatementClass *stmt, Int4 type)
 	}    
 }
 
-Int2
+static Int2
 getNumericScale(StatementClass *stmt, Int4 type, int col)
 {
 Int4 atttypmod;
@@ -342,7 +343,7 @@ mylog("getNumericScale: type=%d, col=%d, unknown = %d\n", type,col);
 			PG_NUMERIC_MAX_SCALE);
 }
 
-Int4
+static Int4
 getNumericPrecision(StatementClass *stmt, Int4 type, int col)
 {
 Int4 atttypmod;
