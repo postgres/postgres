@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Sat Dec 15 11:10:53 EST 2001
+Last updated:		Sat Dec 15 12:28:47 EST 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -78,6 +78,7 @@ DATA TYPES
 * ARRAYS
 	o Allow nulls in arrays
 	o Allow arrays to be ORDER'ed
+	o Ensure we have array-eq operators for every built-in array type
 * BINARY DATA
 	o -Add non-large-object binary field (already exists -- bytea)
 	o -Make binary interface for TOAST columns (base64)
