@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/xfunc.sgml,v 1.30 2001/01/22 16:11:17 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/xfunc.sgml,v 1.31 2001/02/15 19:03:35 tgl Exp $
 -->
 
  <chapter id="xfunc">
@@ -434,10 +434,9 @@ SELECT clean_EMP();
      functions that will be loaded into Postgres.  The "Defined In"
      column gives the actual header file (in the
      <filename>.../src/backend/</filename>
-     directory) that the equivalent C type is defined.  However, if you
-     include <filename>utils/builtins.h</filename>,
-     these files will automatically be
-     included.
+     directory) that the equivalent C type is defined.  Note that you should
+     always include <filename>postgres.h</filename> first, and that in turn
+     includes <filename>c.h</filename>.
 
      <table tocentry="1">
       <title>Equivalent C Types
@@ -619,9 +618,8 @@ SELECT clean_EMP();
 
     <para>
      By-value  types  can  only be 1, 2 or 4 bytes in length
-     (even if your computer supports by-value types of other
-     sizes).   <productname>Postgres</productname>  itself 
-     only passes integer types by value.  You should be careful 
+     (also 8 bytes, if sizeof(Datum) is 8 on your machine).
+     You should be careful 
      to define your types such that  they  will  be  the  same  
      size (in bytes) on all architectures.  For example, the 
      <literal>long</literal> type is dangerous because  it  
@@ -657,7 +655,9 @@ typedef struct
      them in and out of <productname>Postgres</productname> functions.
      To return a value of such a type, allocate the right amount of
      memory with <literal>palloc()</literal>, fill in the allocated memory,
-     and return a pointer to it.
+     and return a pointer to it.  (Alternatively, you can return an input
+     value of the same type by returning its pointer.  <emphasis>Never</>
+     modify the contents of a pass-by-reference input value, however.)
     </para>
 
     <para>
@@ -721,8 +721,8 @@ memmove(destination-&gt;data, buffer, 40);
      Here are some examples:
 
 <programlisting>
-#include &lt;string.h&gt;
 #include "postgres.h"
+#include &lt;string.h&gt;
 
 /* By Value */
          
@@ -780,10 +780,10 @@ concat_text(text *arg1, text *arg2)
     int32 new_text_size = VARSIZE(arg1) + VARSIZE(arg2) - VARHDRSZ;
     text *new_text = (text *) palloc(new_text_size);
 
-    memset((void *) new_text, 0, new_text_size);
     VARATT_SIZEP(new_text) = new_text_size;
-    strncpy(VARDATA(new_text), VARDATA(arg1), VARSIZE(arg1)-VARHDRSZ);
-    strncat(VARDATA(new_text), VARDATA(arg2), VARSIZE(arg2)-VARHDRSZ);
+    memcpy(VARDATA(new_text), VARDATA(arg1), VARSIZE(arg1)-VARHDRSZ);
+    memcpy(VARDATA(new_text) + (VARSIZE(arg1)-VARHDRSZ),
+           VARDATA(arg2), VARSIZE(arg2)-VARHDRSZ);
     return new_text;
 }
 </programlisting>
@@ -882,8 +882,8 @@ PG_FUNCTION_INFO_V1(funcname);
      Here we show the same functions as above, coded in version-1 style:
 
 <programlisting>
-#include &lt;string.h&gt;
 #include "postgres.h"
+#include &lt;string.h&gt;
 #include "fmgr.h"
 
 /* By Value */
@@ -945,7 +945,7 @@ copytext(PG_FUNCTION_ARGS)
      */
     memcpy((void *) VARDATA(new_t), /* destination */
            (void *) VARDATA(t),     /* source */
-           VARSIZE(t)-VARHDRSZ);        /* how many bytes */
+           VARSIZE(t)-VARHDRSZ);    /* how many bytes */
     PG_RETURN_TEXT_P(new_t);
 }
 
@@ -959,10 +959,10 @@ concat_text(PG_FUNCTION_ARGS)
     int32 new_text_size = VARSIZE(arg1) + VARSIZE(arg2) - VARHDRSZ;
     text *new_text = (text *) palloc(new_text_size);
 
-    memset((void *) new_text, 0, new_text_size);
     VARATT_SIZEP(new_text) = new_text_size;
-    strncpy(VARDATA(new_text), VARDATA(arg1), VARSIZE(arg1)-VARHDRSZ);
-    strncat(VARDATA(new_text), VARDATA(arg2), VARSIZE(arg2)-VARHDRSZ);
+    memcpy(VARDATA(new_text), VARDATA(arg1), VARSIZE(arg1)-VARHDRSZ);
+    memcpy(VARDATA(new_text) + (VARSIZE(arg1)-VARHDRSZ),
+           VARDATA(arg2), VARSIZE(arg2)-VARHDRSZ);
     PG_RETURN_TEXT_P(new_text);
 }
 </programlisting>
@@ -991,10 +991,20 @@ concat_text(PG_FUNCTION_ARGS)
     </para>
 
     <para>
-     The version-1 function call conventions also make it possible to
-     test for NULL inputs to a non-strict function, return a NULL
-     result (from either strict or non-strict functions), return
-     <quote>set</quote> results, and implement trigger functions and
+     One big improvement in version-1 functions is better handling of NULL
+     inputs and results.  The macro <function>PG_ARGISNULL(n)</function>
+     allows a function to test whether each input is NULL (of course, doing
+     this is only necessary in functions not declared <quote>strict</>).
+     As with the
+     <function>PG_GETARG_<replaceable>xxx</replaceable>()</function> macros,
+     the input arguments are counted beginning at zero.
+     To return a NULL result, execute <function>PG_RETURN_NULL()</function>;
+     this works in both strict and non-strict functions.
+    </para>
+
+    <para>
+     The version-1 function call conventions make it possible to
+     return <quote>set</quote> results and implement trigger functions and
      procedural-language call handlers.  Version-1 code is also more
      portable than version-0, because it does not break ANSI C restrictions
      on function call protocol.  For more details see
@@ -1167,11 +1177,14 @@ LANGUAGE 'c';
       <listitem>
        <para>
         Most of the internal <productname>Postgres</productname> types
-	are declared in <filename>postgres.h</filename>, the function
+	are declared in <filename>postgres.h</filename>, while the function
 	manager interfaces (<symbol>PG_FUNCTION_ARGS</symbol>, etc.)
 	are in <filename>fmgr.h</filename>, so you will need to
-	include at least these two files.  Including
-	<filename>postgres.h</filename> will also include
+	include at least these two files.  For portability reasons it's best
+	to include <filename>postgres.h</filename> <emphasis>first</>,
+	before any other system or user header files.
+	Including <filename>postgres.h</filename> will also include
+	<filename>c.h</filename>,
 	<filename>elog.h</filename> and <filename>palloc.h</filename>
 	for you.
        </para>
@@ -1210,7 +1223,7 @@ LANGUAGE 'c';
    <title>Function Overloading</title>
 
    <para>
-    More than one function may be defined with the same name, as long as
+    More than one function may be defined with the same name, so long as
     the arguments they take are different.  In other words, function names
     can be <firstterm>overloaded</firstterm>.
     A function may also have the same name as an attribute.  In the case
