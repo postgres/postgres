@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.67 2001/11/28 20:49:10 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.68 2001/12/04 02:21:35 tgl Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -843,9 +843,9 @@ su - postgres
 	 also disables compiler optimization, causing slowdowns. However,
 	 having the symbols available is extremely helpful for dealing
 	 with any problems that may arise.  Currently, this option is
-	 considered of marginal value for production installations, but
-	 you should have it on if you are doing development work or
-	 running a beta version.
+	 recommended for production installations only if you use GCC.
+	 But you should have it on if you are doing development work
+	 or running a beta version.
         </para>
        </listitem>
       </varlistentry>
