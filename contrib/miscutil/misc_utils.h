@@ -3,8 +3,8 @@
 
 int			backend_pid(void);
 int			unlisten(char *relname);
-int			max(int x, int y);
-int			min(int x, int y);
+int			int4max(int x, int y);
+int			int4min(int x, int y);
 int			active_listeners(text *relname);
 
 #endif
