@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.202 2000/10/31 10:22:10 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.203 2000/11/04 21:04:55 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -154,7 +154,7 @@ static void doNegateFloat(Value *v);
 %type <str>		user_valid_clause
 %type <list>	user_list, user_group_clause, users_in_new_group_clause
 
-%type <boolean>	TriggerActionTime, TriggerForSpec, PLangTrusted
+%type <boolean>	TriggerActionTime, TriggerForSpec, PLangTrusted, opt_procedural
 
 %type <str>		OptConstrFromTable
 
@@ -1654,7 +1654,7 @@ IntegerOnly:  Iconst
  *
  *****************************************************************************/
 
-CreatePLangStmt:  CREATE PLangTrusted PROCEDURAL LANGUAGE Sconst 
+CreatePLangStmt:  CREATE PLangTrusted opt_procedural LANGUAGE Sconst 
 			HANDLER def_name LANCOMPILER Sconst
 			{
 				CreatePLangStmt *n = makeNode(CreatePLangStmt);
@@ -1668,8 +1668,9 @@ CreatePLangStmt:  CREATE PLangTrusted PROCEDURAL LANGUAGE Sconst
 
 PLangTrusted:  TRUSTED			{ $$ = TRUE; }
 			| /*EMPTY*/			{ $$ = FALSE; }
+		;
 
-DropPLangStmt:  DROP PROCEDURAL LANGUAGE Sconst
+DropPLangStmt:  DROP opt_procedural LANGUAGE Sconst
 			{
 				DropPLangStmt *n = makeNode(DropPLangStmt);
 				n->plname = $4;
@@ -1677,6 +1678,10 @@ DropPLangStmt:  DROP PROCEDURAL LANGUAGE Sconst
 			}
 		;
 
+opt_procedural: PROCEDURAL		{ $$ = TRUE; }
+			| /*EMPTY*/			{ $$ = TRUE; }
+		;
+		
 /*****************************************************************************
  *
  *		QUERIES :

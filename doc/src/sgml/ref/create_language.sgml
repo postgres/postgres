@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_language.sgml,v 1.12 2000/10/05 19:48:17 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_language.sgml,v 1.13 2000/11/04 21:04:54 momjian Exp $
 Postgres documentation
 -->
 
@@ -23,7 +23,7 @@ Postgres documentation
    <date>1999-07-20</date>
   </refsynopsisdivinfo>
   <synopsis>
-CREATE [ TRUSTED ] PROCEDURAL LANGUAGE '<replaceable class="parameter">langname</replaceable>'
+CREATE [ TRUSTED ] [ PROCEDURAL ] LANGUAGE '<replaceable class="parameter">langname</replaceable>'
     HANDLER <replaceable class="parameter">call_handler</replaceable>
     LANCOMPILER '<replaceable class="parameter">comment</replaceable>'
   </synopsis>

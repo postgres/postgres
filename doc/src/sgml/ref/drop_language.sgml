@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_language.sgml,v 1.7 1999/07/22 15:09:10 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_language.sgml,v 1.8 2000/11/04 21:04:54 momjian Exp $
 Postgres documentation
 -->
 
@@ -23,7 +23,7 @@ Postgres documentation
    <date>1999-07-20</date>
   </refsynopsisdivinfo>
   <synopsis>
-DROP PROCEDURAL LANGUAGE '<replaceable class="PARAMETER">name</replaceable>'
+DROP [ PROCEDURAL ] LANGUAGE '<replaceable class="PARAMETER">name</replaceable>'
   </synopsis>
   
   <refsect2 id="R2-SQL-DROPLANGUAGE-1">
