@@ -10,7 +10,7 @@
   alink="#0000ff">
     <H1>Frequently Asked Questions (FAQ) for PostgreSQL</H1>
 
-    <P>Last updated: Mon May 26 15:25:04 EDT 2003</P>
+    <P>Last updated: Wed May 28 00:35:16 EDT 2003</P>
 
     <P>Current maintainer: Bruce Momjian (<A href=
     "mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</A>)<BR>
@@ -83,7 +83,7 @@
     <A href="#4.1">4.1</A>) What is the difference between binary
     cursors and normal cursors?<BR>
      <A href="#4.2">4.2</A>) How do I <SMALL>SELECT</SMALL> only the
-    first few rows of a query?<BR>
+    first few rows of a query?  A random row?<BR>
      <A href="#4.3">4.3</A>) How do I get a list of tables or other
     things I can see in <I>psql</I>?<BR>
      <A href="#4.4">4.4</A>) How do you remove a column from a
@@ -799,7 +799,7 @@
     description.</P>
 
     <H4><A name="4.2">4.2</A>) How do I <SMALL>SELECT</SMALL> only the
-    first few rows of a query?</H4>
+    first few rows of a query?  A random row?</H4>
 
     <P>See the <SMALL>FETCH</SMALL> manual page, or use
     <SMALL>SELECT</SMALL> ... <SMALL>LIMIT</SMALL>....</P>
@@ -810,6 +810,14 @@
     BY</SMALL>, PostgreSQL may be able to evaluate only the first few
     records requested, or the entire query may have to be evaluated
     until the desired rows have been generated.</P>
+
+    <P>To <SMALL>SELECT</SMALL> a random row, use:
+<PRE>
+    SELECT col
+    FROM tab
+    ORDER BY random()
+    LIMIT 1;
+</PRE>
 
     <H4><A name="4.3">4.3</A>) How do I get a list of tables or other
     things I can see in <I>psql</I>?</H4>
