@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Mon Feb 18 11:47:04 EST 2002
+Last updated:		Tue Feb 19 15:30:51 EST 2002
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -382,7 +382,7 @@ STARTUP TIME
 * Do listen() in postmaster and accept() in pre-forked backend
 * Have pre-forked backend pre-connect to last requested database or pass
   file descriptor to backend pre-forked for matching database
-* Cache system catalog information in per-database files (Tom)
+* -Cache system catalog information in per-database files (Tom)
 
 
 WRITE-AHEAD LOG
