@@ -19,7 +19,11 @@
 # A user always has to specify when he connects what Postgres username he is
 # using.  This file is only used to validate that selection.
 
+# If you just need a one-to-one correspondence between usernames reported
+# by ident and Postgres usernames, you don't need this file.  Instead use
+# the special map name "sameuser" in pg_hba.conf.
+
+#MAP       IDENT    POSTGRES USERNAME
+
 #testmap   robert   bob
 #testmap   lucy     lucy
-
-
