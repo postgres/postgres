@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.119.2.4 2003/04/16 04:38:05 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.119.2.5 2003/07/17 20:52:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2313,9 +2313,6 @@ static unsigned char *
 convert_string_datum(Datum value, Oid typid)
 {
 	char	   *val;
-	char	   *xfrmstr;
-	size_t		xfrmsize;
-	size_t		xfrmlen;
 
 	switch (typid)
 	{
@@ -2355,17 +2352,21 @@ convert_string_datum(Datum value, Oid typid)
 
 	if (!lc_collate_is_c())
 	{
-		/* Guess that transformed string is not much bigger than original */
-		xfrmsize = strlen(val) + 32;	/* arbitrary pad value here... */
-		xfrmstr = (char *) palloc(xfrmsize);
-		xfrmlen = strxfrm(xfrmstr, val, xfrmsize);
-		if (xfrmlen >= xfrmsize)
-		{
-			/* Oops, didn't make it */
-			pfree(xfrmstr);
-			xfrmstr = (char *) palloc(xfrmlen + 1);
-			xfrmlen = strxfrm(xfrmstr, val, xfrmlen + 1);
-		}
+		char	   *xfrmstr;
+		size_t		xfrmlen;
+		size_t		xfrmlen2;
+
+		/*
+		 * Note: originally we guessed at a suitable output buffer size,
+		 * and only needed to call strxfrm twice if our guess was too small.
+		 * However, it seems that some versions of Solaris have buggy
+		 * strxfrm that can write past the specified buffer length in that
+		 * scenario.  So, do it the dumb way for portability.
+		 */
+		xfrmlen = strxfrm(NULL, val, 0);
+		xfrmstr = (char *) palloc(xfrmlen + 1);
+		xfrmlen2 = strxfrm(xfrmstr, val, xfrmlen + 1);
+		Assert(xfrmlen2 == xfrmlen);
 		pfree(val);
 		val = xfrmstr;
 	}
