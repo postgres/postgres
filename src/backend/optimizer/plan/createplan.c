@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.119 2002/09/18 21:35:21 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.119.2.1 2002/11/15 02:37:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -69,6 +69,7 @@ static Node *fix_indxqual_operand(Node *node, int baserelid,
 					 IndexOptInfo *index,
 					 Oid *opclass);
 static List *switch_outer(List *clauses);
+static List *order_qual_clauses(Query *root, List *clauses);
 static void copy_path_costsize(Plan *dest, Path *src);
 static void copy_plan_costsize(Plan *dest, Plan *src);
 static SeqScan *make_seqscan(List *qptlist, List *qpqual, Index scanrelid);
@@ -176,6 +177,9 @@ create_scan_plan(Query *root, Path *best_path)
 	 * the executor must apply all these restrictions during the scan.
 	 */
 	scan_clauses = get_actual_clauses(best_path->parent->baserestrictinfo);
+
+	/* Sort clauses into best execution order */
+	scan_clauses = order_qual_clauses(root, scan_clauses);
 
 	switch (best_path->pathtype)
 	{
@@ -1176,6 +1180,43 @@ switch_outer(List *clauses)
 			t_list = lappend(t_list, clause);
 	}
 	return t_list;
+}
+
+/*
+ * order_qual_clauses
+ *		Given a list of qual clauses that will all be evaluated at the same
+ *		plan node, sort the list into the order we want to check the quals
+ *		in at runtime.
+ *
+ * Ideally the order should be driven by a combination of execution cost and
+ * selectivity, but unfortunately we have so little information about
+ * execution cost of operators that it's really hard to do anything smart.
+ * For now, we just move any quals that contain SubPlan references (but not
+ * InitPlan references) to the end of the list.
+ */
+static List *
+order_qual_clauses(Query *root, List *clauses)
+{
+	List	   *nosubplans;
+	List	   *withsubplans;
+	List	   *l;
+
+	/* No need to work hard if the query is subselect-free */
+	if (!root->hasSubLinks)
+		return clauses;
+
+	nosubplans = withsubplans = NIL;
+	foreach(l, clauses)
+	{
+		Node   *clause = lfirst(l);
+
+		if (contain_subplans(clause))
+			withsubplans = lappend(withsubplans, clause);
+		else
+			nosubplans = lappend(nosubplans, clause);
+	}
+
+	return nconc(nosubplans, withsubplans);
 }
 
 /*
