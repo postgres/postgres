@@ -568,6 +568,6 @@ alter table def_view_test alter column c2 set default 'view_default';
 insert into def_view_test default values;
 select * from def_view_test;
 
-drop rule def_view_test_ins;
+drop rule def_view_test_ins on def_view_test;
 drop view def_view_test;
 drop table def_test;

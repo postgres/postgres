@@ -734,6 +734,6 @@ select * from def_view_test;
  45 | view_default
 (7 rows)
 
-drop rule def_view_test_ins;
+drop rule def_view_test_ins on def_view_test;
 drop view def_view_test;
 drop table def_test;
