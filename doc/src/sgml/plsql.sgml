@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/plsql.sgml,v 2.47 2001/11/15 06:25:22 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/plsql.sgml,v 2.48 2001/11/15 23:32:39 tgl Exp $
 -->
 
 <chapter id="plpgsql"> 
@@ -326,8 +326,14 @@ END;
     <title>Lexical Details</title>
 
     <para>
-     All keywords and identifiers can be used in mixed upper and
-     lower-case.
+     Each statement and declaration within a block is terminated
+     by a semicolon.
+    </para>
+
+    <para>
+     All keywords and identifiers can be written in mixed upper- and
+     lower-case.  Identifiers are implicitly converted to lower-case
+     unless double-quoted.
     </para>
 
     <para>
@@ -391,7 +397,7 @@ url VARCHAR;
      </para>
 
      <para>
-      The default value is evaluated every time the function is called. So,
+      The default value is evaluated every time the block is entered. So,
       for example, assigning '<literal>now</literal>' to a variable of type
       <type>timestamp</type> causes the variable to have the
       time of the current function call, not when the function was
@@ -408,13 +414,21 @@ user_id CONSTANT INTEGER := 10;
      </para>
 
     <sect2 id="plpgsql-declaration-aliases">
-     <title>Aliases for Parameters Passed to Functions</title>
+     <title>Aliases for Function Parameters</title>
+
+    <para>
+<synopsis>
+<replaceable>name</replaceable> ALIAS FOR <replaceable>$n</replaceable>;
+</synopsis>
+    </para>
 
      <para>
       Parameters passed to functions are named with the identifiers
       <literal>$1</literal>, <literal>$2</literal>,
-      etc.  Optionally, aliases can be declared for the <literal>$n</literal>
-      parameter names for increased readability.  Some examples:
+      etc.  Optionally, aliases can be declared for <literal>$n</literal>
+      parameter names for increased readability.  Either the alias or the
+      numeric identifier can then be used to refer to the parameter value.
+      Some examples:
 <programlisting>
 CREATE FUNCTION sales_tax(REAL) RETURNS REAL AS '
 DECLARE
@@ -490,6 +504,12 @@ END;
     to, <emphasis>it has no</> substructure, and any attempt to access a
     field in it will draw a runtime error.
    </para>
+
+   <para>
+    Note that <literal>RECORD</> is not a true datatype, only a placeholder.
+    Thus, for example, one cannot declare a function returning
+    <literal>RECORD</>.
+   </para>
   </sect2>
 
     <sect2 id="plpgsql-declaration-attributes">
@@ -555,7 +575,7 @@ BEGIN
     user_id := users_rec.user_id;
     ...
 
-CREATE FUNCTION cs_refresh_one_mv(INTEGER) RETURNS INTEGER AS '
+CREATE FUNCTION does_view_exist(INTEGER) RETURNS bool AS '
    DECLARE
         key ALIAS FOR $1;
         table_data cs_materialized_views%ROWTYPE;
@@ -564,18 +584,10 @@ CREATE FUNCTION cs_refresh_one_mv(INTEGER) RETURNS INTEGER AS '
                WHERE sort_key=key;
 
         IF NOT FOUND THEN
-           RAISE EXCEPTION ''View % not found'', key;
-           RETURN 0;
+           RETURN false;
         END IF;
-
-        -- The mv_name column of cs_materialized_views stores view
-        -- names.
- 
-        EXECUTE ''TRUNCATE TABLE '' || quote_ident(table_data.mv_name);
-        EXECUTE ''INSERT INTO '' || quote_ident(table_data.mv_name) || '' '' || table_data.mv_query;
-
-        return 1;
-end;
+        RETURN true;
+   END;
 ' LANGUAGE 'plpgsql';
 </programlisting>
        </listitem>
@@ -584,21 +596,21 @@ end;
     </sect2>
 
     <sect2 id="plpgsql-declaration-renaming-vars">
-     <title>
-      RENAME
-     </title>
+     <title>RENAME</title>
 
      <para>
+<synopsis>
+RENAME <replaceable>oldname</replaceable> TO <replaceable>newname</replaceable>;
+</synopsis>
+
       Using the RENAME declaration you can change the name of a variable,
-      record or row. This is useful if NEW or OLD should be referenced
-      by another name inside a trigger procedure.  See also ALIAS.
+      record or row. This is primarily useful if NEW or OLD should be
+      referenced by another name inside a trigger procedure.  See also ALIAS.
      </para>
 
      <para>
-      Syntax and examples:
+      Examples:
 <programlisting>
-RENAME <replaceable>oldname</replaceable> TO <replaceable>newname</replaceable>;
-
 RENAME id TO user_id;
 RENAME this_var TO that_var;
 </programlisting>
@@ -702,18 +714,20 @@ CREATE FUNCTION logfunc2 (TEXT) RETURNS TIMESTAMP AS '
   </sect1>
 
   <sect1 id="plpgsql-statements">
-  <title>Statements</title>
+  <title>Basic Statements</title>
 
    <para>
-    This section describes all the statement types that are explicitly
-    understood by <application>PL/pgSQL</application>.  Anything not
-    recognized as one of these statement types is presumed to be an SQL
-    query, and is sent to the main database engine to execute (after
-    substitution for any <application>PL/pgSQL</application> variables
+    In this section and the following ones, we describe all the statement
+    types that are explicitly understood by
+    <application>PL/pgSQL</application>.
+    Anything not recognized as one of these statement types is presumed
+    to be an SQL query, and is sent to the main database engine to execute
+    (after substitution for any <application>PL/pgSQL</application> variables
     used in the statement).  Thus,
     for example, SQL <command>INSERT</>, <command>UPDATE</>, and
     <command>DELETE</> commands may be considered to be statements of
-    <application>PL/pgSQL</application>.
+    <application>PL/pgSQL</application>.  But they are not specifically
+    listed here.
    </para>
    
    <sect2 id="plpgsql-statements-assignment">
@@ -750,8 +764,8 @@ tax := subtotal * 0.06;
     </para>
    </sect2>
 
-   <sect2 id="plpgsql-query-assignment">
-    <title>Query Assignments</title>
+   <sect2 id="plpgsql-select-into">
+    <title>SELECT INTO</title>
 
     <para>
      The result of a SELECT command yielding multiple columns (but
@@ -768,7 +782,7 @@ SELECT INTO <replaceable>target</replaceable> <replaceable>expressions</replacea
      Postgres' normal interpretation of SELECT INTO, which is that the
      INTO target is a newly created table.  (If you want to create a
      table from a SELECT result inside a <application>PL/pgSQL</application> function, use the
-     equivalent syntax <command>CREATE TABLE AS SELECT</command>.)
+     syntax <command>CREATE TABLE ... AS SELECT</command>.)
     </para>
 
     <para>
@@ -779,7 +793,7 @@ SELECT INTO <replaceable>target</replaceable> <replaceable>expressions</replacea
     </para>
 
     <para>
-     Except for the INTO clause, the SELECT command is the same as a normal
+     Except for the INTO clause, the SELECT statement is the same as a normal
      SQL SELECT query and can use the full power of SELECT.
     </para>
 
@@ -845,7 +859,7 @@ END;
      <application>PL/pgSQL</application>, use the PERFORM statement:
 
 <synopsis>
-PERFORM <replaceable>query</replaceable>
+PERFORM <replaceable>query</replaceable>;
 </synopsis>
 
      This executes a <literal>SELECT</literal>
@@ -886,7 +900,7 @@ PERFORM create_mv(''cs_session_page_requests_mv'',''
      is provided:
 
 <synopsis>
-EXECUTE <replaceable class="command">query-string</replaceable>
+EXECUTE <replaceable class="command">query-string</replaceable>;
 </synopsis>
 
      where <replaceable>query-string</replaceable> is an expression
@@ -995,7 +1009,7 @@ END;
 
     <para>
 <synopsis>
-GET DIAGNOSTICS <replaceable>variable</replaceable> = <replaceable>item</replaceable> <optional> , ... </optional>
+GET DIAGNOSTICS <replaceable>variable</replaceable> = <replaceable>item</replaceable> <optional> , ... </optional> ;
 </synopsis>
 
      This command allows retrieval of system status indicators.  Each
@@ -1010,12 +1024,11 @@ GET DIAGNOSTICS <replaceable>variable</replaceable> = <replaceable>item</replace
      is only useful after an INSERT query.
     </para>
    </sect2>
+  </sect1>
 
-   <!-- **** PL/pgSQL Control Structures **** -->
-
-  <sect2 id="plpgsql-control-structures">
-
+  <sect1 id="plpgsql-control-structures">
    <title>Control Structures</title>
+
    <para>
     Control structures are probably the most useful (and
     important) part of <application>PL/pgSQL</>. With
@@ -1024,13 +1037,14 @@ GET DIAGNOSTICS <replaceable>variable</replaceable> = <replaceable>item</replace
     flexible and powerful way. 
    </para>
    
-   <sect3 id="plpgsql-statements-returning">
+   <sect2 id="plpgsql-statements-returning">
     <title>Returning from a function</title>
 
     <para>
 <synopsis>
-RETURN <replaceable>expression</replaceable>
+RETURN <replaceable>expression</replaceable>;
 </synopsis>
+
      The function terminates and the value of
      <replaceable>expression</replaceable> will be returned to the
      upper executor.
@@ -1044,26 +1058,28 @@ RETURN <replaceable>expression</replaceable>
      the function without hitting a RETURN statement, a runtime error
      will occur.
     </para>
-   </sect3>
+   </sect2>
     
-   <sect3 id="plpgsql-conditionals">
-    <title>Conditional Control: IF statements</title>
+   <sect2 id="plpgsql-conditionals">
+    <title>Conditionals</title>
 
     <para>
-	<function>IF</function> statements let you execute commands based on
+     <function>IF</function> statements let you execute commands based on
       certain conditions.
       <application>PL/pgSQL</> has four forms of IF: IF-THEN, IF-THEN-ELSE,
-      IF-THEN-ELSE IF, IF-THEN-ELSIF-THEN-ELSE.
+      IF-THEN-ELSE IF, and IF-THEN-ELSIF-THEN-ELSE.
     </para>
 
-    <variablelist>
-     <varlistentry>
-      <term>
-       IF-THEN
-      </term>
+    <sect3>
+     <title>IF-THEN</title>
 
-      <listitem>
        <para>
+<synopsis>
+IF <replaceable>boolean-expression</replaceable> THEN
+    <replaceable>statements</replaceable>
+END IF;
+</synopsis>
+
         IF-THEN statements are the simplest form of IF. The
         statements between THEN and END IF will be executed if
         the condition is true. Otherwise, they are skipped.
@@ -1074,19 +1090,23 @@ IF v_user_id &lt;&gt; 0 THEN
 END IF;
 </programlisting>
        </para>
-      </listitem>
-     </varlistentry>
+     </sect3>
 
-     <varlistentry>
-      <term>
-       IF-THEN-ELSE
-      </term>
+     <sect3>
+      <title>IF-THEN-ELSE</title>
 
-      <listitem>
        <para>
+<synopsis>
+IF <replaceable>boolean-expression</replaceable> THEN
+    <replaceable>statements</replaceable>
+ELSE
+    <replaceable>statements</replaceable>
+END IF;
+</synopsis>
+
         IF-THEN-ELSE statements add to IF-THEN by letting you
-        specify a group of statements that should be executed if the
-        condition evaluates to FALSE.
+        specify an alternative set of statements that should be executed if
+	the condition evaluates to FALSE.
 
 <programlisting>
 IF parentid IS NULL or parentid = ''''
@@ -1105,15 +1125,11 @@ ELSE
 END IF;
 </programlisting>
        </para>
-      </listitem>
-     </varlistentry>
+     </sect3>
 
-     <varlistentry>
-      <term>
-       IF-THEN-ELSE IF
-      </term>
+     <sect3>
+      <title>IF-THEN-ELSE IF</title>
 
-      <listitem>
        <para>
         IF statements can be nested, as in the following example:
 <programlisting>
@@ -1135,16 +1151,27 @@ END IF;
         This is workable but grows tedious when there are many
 	alternatives to be checked.
        </para>
-      </listitem>
-     </varlistentry>
+     </sect3>
 
-     <varlistentry>
-      <term>
-       IF-THEN-ELSIF-ELSE
-      </term>
+     <sect3>
+      <title>IF-THEN-ELSIF-ELSE</title>
 
-      <listitem>
        <para>
+<synopsis>
+IF <replaceable>boolean-expression</replaceable> THEN
+    <replaceable>statements</replaceable>
+<optional> ELSIF <replaceable>boolean-expression</replaceable> THEN
+    <replaceable>statements</replaceable>
+<optional> ELSIF <replaceable>boolean-expression</replaceable> THEN
+    <replaceable>statements</replaceable>
+    ...
+</optional>
+</optional>
+<optional> ELSE
+    <replaceable>statements</replaceable> </optional>
+END IF;
+</synopsis>
+
         IF-THEN-ELSIF-ELSE provides a more convenient method of checking
 	many alternatives in one statement.  Formally it is equivalent
 	to nested IF-THEN-ELSE-IF-THEN commands, but only one END IF
@@ -1158,11 +1185,11 @@ END IF;
 IF number = 0 THEN
     result := ''zero'';
 ELSIF number &lt; 0 THEN
-    result := ''negative'';
+    result := ''positive'';
 ELSIF number &gt; 0 THEN 
     result := ''negative'';
 ELSE
-    -- now it seems to be NULL
+    -- hmm, the only other possibility is that number IS NULL
     result := ''NULL'';
 END IF;
 </programlisting>
@@ -1171,29 +1198,22 @@ END IF;
        <para>
         The final ELSE section is optional.
        </para>
-      </listitem>
-     </varlistentry>
 
+     </sect3>
+   </sect2>
 
-    </variablelist>
-   </sect3>
-
-   <sect3 id="plpgsql-control-structures-loops">
-    <title>Iterative Control: LOOP, WHILE, FOR and EXIT</title>
+   <sect2 id="plpgsql-control-structures-loops">
+    <title>Simple Loops</title>
 
     <para>
-     With the LOOP, WHILE, FOR and EXIT statements, you can arrange
+     With the LOOP, EXIT, WHILE and FOR statements, you can arrange
      for your <application>PL/pgSQL</application> function to repeat
      a series of commands.
     </para>
 
-    <variablelist>
-     <varlistentry>
-      <term>
-       LOOP
-      </term>
+     <sect3>
+      <title>LOOP</title>
 
-      <listitem>
        <para>
 <synopsis>
 <optional>&lt;&lt;label&gt;&gt;</optional>
@@ -1201,37 +1221,36 @@ LOOP
     <replaceable>statements</replaceable>
 END LOOP;
 </synopsis>
-        An unconditional loop that must be terminated explicitly
-        by an EXIT statement. The optional label can be used by
-        EXIT statements of nested loops to specify which level of
+
+        LOOP defines an unconditional loop that is repeated indefinitely
+	until terminated by an EXIT or RETURN statement.
+	The optional label can be used by
+        EXIT statements in nested loops to specify which level of
         nesting should be terminated.
        </para>
-      </listitem>
-     </varlistentry>
+     </sect3>
 
-     <varlistentry>
-      <term>
-       EXIT
-      </term>
+     <sect3>
+      <title>EXIT</title>
 
-      <listitem>
        <para>
 <synopsis>
 EXIT <optional> <replaceable>label</replaceable> </optional> <optional> WHEN <replaceable>expression</replaceable> </optional>;
 </synopsis>
+
         If no <replaceable>label</replaceable> is given,
         the innermost loop is terminated and the
         statement following END LOOP is executed next.
         If <replaceable>label</replaceable> is given, it
-        must be the label of the current or an outer level of nested loop
-        blocks. Then the named loop or block is terminated and control
+        must be the label of the current or some outer level of nested loop
+        or block. Then the named loop or block is terminated and control
         continues with the statement after the loop's/block's corresponding
         END.
        </para>
 
        <para>
         If WHEN is present, loop exit occurs only if the specified condition
-	is true.
+	is true, otherwise control passes to the statement after EXIT.
        </para>
 
        <para>
@@ -1257,26 +1276,26 @@ BEGIN
 END;
 </programlisting>
        </para>
-      </listitem>
-     </varlistentry>
+     </sect3>
 
-     <varlistentry>
-      <term>
-       WHILE
-      </term>
+     <sect3>
+      <title>WHILE</title>
 
-      <listitem>
        <para>
-        With the WHILE statement, you can repeat a
-        sequence of statements so long as the condition expression
-	evaluates to true.  The condition is checked just before
-	each entry to the loop body.
 <synopsis>
 <optional>&lt;&lt;label&gt;&gt;</optional>
 WHILE <replaceable>expression</replaceable> LOOP
     <replaceable>statements</replaceable>
 END LOOP;
 </synopsis>
+
+        The WHILE statement repeats a
+        sequence of statements so long as the condition expression
+	evaluates to true.  The condition is checked just before
+	each entry to the loop body.
+       </para>
+
+       <para>
         For example:
 <programlisting>
 WHILE amount_owed > 0 AND gift_certificate_balance > 0 LOOP
@@ -1288,25 +1307,22 @@ WHILE NOT boolean_expression LOOP
 END LOOP;
 </programlisting>
        </para>
-      </listitem>
-     </varlistentry>
+     </sect3>
 
-     <varlistentry>
-      <term>
-       FOR
-      </term>
+     <sect3>
+      <title>FOR (integer for-loop)</title>
 
-      <listitem>
        <para>
-
 <synopsis>
 <optional>&lt;&lt;label&gt;&gt;</optional>
 FOR <replaceable>name</replaceable> IN <optional> REVERSE </optional> <replaceable>expression</replaceable> .. <replaceable>expression</replaceable> LOOP
     <replaceable>statements</replaceable>
 END LOOP;
 </synopsis>
-        A loop that iterates over a range of integer values. The variable
-        <replaceable>name</replaceable> is automatically created as type
+
+        This form of FOR creates a loop that iterates over a range of integer
+	values. The variable 
+        <replaceable>name</replaceable> is automatically defined as type
         integer and exists only inside the loop. The two expressions giving
         the lower and upper bound of the range are evaluated once when entering
         the loop. The iteration step is normally 1, but is -1 when REVERSE is
@@ -1327,18 +1343,16 @@ FOR i IN REVERSE 10..1 LOOP
 END LOOP;
 </programlisting>
        </para>
-      </listitem>
-     </varlistentry>
-    </variablelist>
-   </sect3>
+     </sect3>
+   </sect2>
 
-   <sect3 id="plpgsql-records-iterating">
-    <title>Iterating Through Records</title>
+   <sect2 id="plpgsql-records-iterating">
+    <title>Looping Through Query Results</title>
 
     <para>
      Using a different type of FOR loop, you can iterate through
      the results of a query and manipulate that data
-     accordingly. The syntax is as follows:
+     accordingly. The syntax is:
 <synopsis>
 <optional>&lt;&lt;label&gt;&gt;</optional>
 FOR <replaceable>record | row</replaceable> IN <replaceable>select_query</replaceable> LOOP
@@ -1402,11 +1416,212 @@ END LOOP;
      declared as a record/row variable.  If not, it's presumed to be
      an integer FOR loop.  This can cause rather unintuitive error
      messages when the true problem is, say, that one has
-     misspelled the FOR variable.
+     misspelled the FOR variable name.
     </para>
     </note>
-   </sect3>
   </sect2>
+  </sect1>
+
+  <sect1 id="plpgsql-cursors">
+   <title>Cursors</title>
+
+   <para>
+    Rather than executing a whole query at once, it is possible to
+    set up a <firstterm>cursor</> that encapsulates the query, and
+    then read the query result a few rows at a time.  One reason
+    for doing this is to avoid memory overrun when the result contains
+    a large number of rows.  (However, <application>PL/pgSQL</> users
+    don't normally need to worry about that, since FOR loops automatically
+    use a cursor internally to avoid memory problems.)  A more interesting
+    possibility is that a function can return a reference to a cursor
+    that it has set up, allowing the caller to read the rows.  This
+    provides one way of returning a rowset from a function.
+   </para>
+   
+   <sect2 id="plpgsql-cursor-declarations">
+    <title>Declaring Cursor Variables</title>
+
+    <para>
+     All access to cursors in <application>PL/pgSQL</> goes through
+     cursor variables, which are always of the special datatype
+     <type>refcursor</>.  One way to create a cursor variable
+     is just to declare it as a variable of type <type>refcursor</>.
+     Another way is to use the cursor declaration syntax,
+     which in general is:
+<synopsis>
+<replaceable>name</replaceable> CURSOR <optional> ( <replaceable>arguments</replaceable> ) </optional> FOR <replaceable>select_query</replaceable> ;
+</synopsis>
+     (<literal>FOR</> may be replaced by <literal>IS</> for Oracle
+     compatibility.)  <replaceable>arguments</replaceable>, if any,
+     are a comma-separated list of <replaceable>name</replaceable>
+     <replaceable>datatype</replaceable> pairs that define names to
+     be replaced by parameter values in the given query.  The actual
+     values to substitute for these names will be specified later,
+     when the cursor is opened.
+    </para>
+    <para>
+     Some examples:
+<programlisting>
+DECLARE
+    curs1 refcursor;
+    curs2 CURSOR FOR SELECT * from tenk1;
+    curs3 CURSOR (key int) IS SELECT * from tenk1 where unique1 = key;
+</programlisting>
+     All three of these variables have the datatype <type>refcursor</>,
+     but the first may be used with any query, while the second has
+     a fully specified query already <firstterm>bound</> to it, and the last
+     has a parameterized query bound to it.  (<literal>key</> will be
+     replaced by an integer parameter value when the cursor is opened.)
+     The variable <literal>curs1</>
+     is said to be <firstterm>unbound</> since it is not bound to
+     any particular query.
+    </para>
+   </sect2>
+
+   <sect2 id="plpgsql-cursor-opening">
+    <title>Opening Cursors</title>
+
+    <para>
+     Before a cursor can be used to retrieve rows, it must be
+     <firstterm>opened</>.  (This is the equivalent action to
+     the SQL command <command>DECLARE CURSOR</>.)
+     <application>PL/pgSQL</> has four forms of the OPEN statement,
+     two of which are for use with unbound cursor variables
+     and the other two for use with bound cursor variables.
+    </para>
+
+    <sect3>
+     <title>OPEN FOR SELECT</title>
+
+       <para>
+<synopsis>
+OPEN <replaceable>unbound-cursor</replaceable> FOR SELECT ...;
+</synopsis>
+
+        The cursor variable is opened and given the specified query
+	to execute.  The cursor cannot be open already, and it must
+	have been declared as an unbound cursor (that is, as a simple
+	<type>refcursor</> variable).  The SELECT query is treated
+	in the same way as other SELECTs in <application>PL/pgSQL</>:
+	<application>PL/pgSQL</> variable names are substituted for,
+	and the query plan is cached for possible re-use.
+
+<programlisting>
+OPEN curs1 FOR SELECT * FROM foo WHERE key = mykey;
+</programlisting>
+       </para>
+     </sect3>
+
+    <sect3>
+     <title>OPEN FOR EXECUTE</title>
+
+       <para>
+<synopsis>
+OPEN <replaceable>unbound-cursor</replaceable> FOR EXECUTE <replaceable class="command">query-string</replaceable>;
+</synopsis>
+
+        The cursor variable is opened and given the specified query
+	to execute.  The cursor cannot be open already, and it must
+	have been declared as an unbound cursor (that is, as a simple
+	<type>refcursor</> variable).  The query is specified as a
+	string expression in the same way as for the EXECUTE command.
+	As usual, this gives flexibility for the query to vary
+	from one run to the next.
+
+<programlisting>
+OPEN curs1 FOR EXECUTE ''SELECT * FROM '' || quote_ident($1);
+</programlisting>
+       </para>
+     </sect3>
+
+    <sect3>
+     <title>OPENing a bound cursor</title>
+
+       <para>
+<synopsis>
+OPEN <replaceable>bound-cursor</replaceable> <optional> ( <replaceable>argument_values</replaceable> ) </optional>;
+</synopsis>
+
+        This form of OPEN is used to open a cursor variable whose query
+	was bound to it when it was declared.
+	The cursor cannot be open already.  A list of actual argument
+	value expressions must appear if and only if the cursor was
+	declared to take arguments.  These values will be substituted
+	into the query.
+	The query plan for a bound cursor is always considered
+	cacheable --- there is no equivalent of EXECUTE in this case.
+
+<programlisting>
+OPEN curs2;
+OPEN curs3(42);
+</programlisting>
+       </para>
+     </sect3>
+   </sect2>
+
+   <sect2 id="plpgsql-cursor-using">
+    <title>Using Cursors</title>
+
+    <para>
+     Once a cursor has been opened, it can be manipulated with the
+     statements described here.
+    </para>
+
+    <para>
+     These manipulations need not occur in the same function that
+     opened the cursor to begin with.  You can return a <type>refcursor</>
+     value out of a function and let the caller operate on the cursor.
+     (Internally, a <type>refcursor</> value is simply the string name
+     of a Portal containing the active query for the cursor.  This name
+     can be passed around, assigned to other <type>refcursor</> variables,
+     and so on, without disturbing the Portal.)
+    </para>
+
+    <para>
+     All Portals are implicitly closed at end of transaction.  Therefore
+     a <type>refcursor</> value is useful to reference an open cursor
+     only until the end of the transaction.
+    </para>
+
+    <sect3>
+     <title>FETCH</title>
+
+       <para>
+<synopsis>
+FETCH <replaceable>cursor</replaceable> INTO <replaceable>target</replaceable>;
+</synopsis>
+
+        FETCH retrieves the next row from the cursor into a target,
+	which may be a row variable, a record variable, or a comma-separated
+	list of simple variables, just as for SELECT INTO.  As with
+	SELECT INTO, the special variable FOUND may be checked to see
+	whether a row was obtained or not.
+
+<programlisting>
+FETCH curs1 INTO rowvar;
+FETCH curs2 INTO foo,bar,baz;
+</programlisting>
+       </para>
+     </sect3>
+
+    <sect3>
+     <title>CLOSE</title>
+
+       <para>
+<synopsis>
+CLOSE <replaceable>cursor</replaceable>;
+</synopsis>
+
+        CLOSE closes the Portal underlying an open cursor.
+	This can be used to release resources earlier than end of
+	transaction, or to free up the cursor variable to be opened again.
+
+<programlisting>
+CLOSE curs1;
+</programlisting>
+       </para>
+     </sect3>
+   </sect2>
   </sect1>
 
   <sect1 id="plpgsql-errors-and-messages">
