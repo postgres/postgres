@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/miscinit.c,v 1.41 2000/01/18 13:46:10 ishii Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/miscinit.c,v 1.42 2000/01/19 14:01:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,6 +18,7 @@
 #include <signal.h>
 #include <sys/stat.h>
 #include <sys/file.h>
+#include <fcntl.h>
 #include <unistd.h>
 #include <grp.h>
 #include <pwd.h>
