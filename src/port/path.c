@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/path.c,v 1.44 2004/11/06 21:39:45 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/port/path.c,v 1.45 2004/11/07 02:12:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -203,21 +203,22 @@ join_path_components(char *ret_path,
  *		o  make Win32 path use Unix slashes
  *		o  remove trailing quote on Win32
  *		o  remove trailing slash
+ *		o  remove duplicate adjacent separators
  *		o  remove trailing '.'
  *		o  process trailing '..' ourselves
  */
 void
 canonicalize_path(char *path)
 {
-#ifdef WIN32
+	char	   *p, *to_p;
+	bool		was_sep = false;
 
+#ifdef WIN32
 	/*
 	 * The Windows command processor will accept suitably quoted paths
 	 * with forward slashes, but barfs badly with mixed forward and back
 	 * slashes.
 	 */
-	char	   *p;
-
 	for (p = path; *p; p++)
 	{
 		if (*p == '\\')
@@ -226,7 +227,7 @@ canonicalize_path(char *path)
 
 	/*
 	 * In Win32, if you do: prog.exe "a b" "\c\d\" the system will pass
-	 * \c\d" as argv[2].
+	 * \c\d" as argv[2], so trim off trailing quote.
 	 */
 	if (p > path && *(p - 1) == '"')
 		*(p - 1) = '/';
@@ -240,6 +241,27 @@ canonicalize_path(char *path)
 	trim_trailing_separator(path);
 
 	/*
+	 *	Remove duplicate adjacent separators
+	 */
+	p = path;
+#ifdef WIN32
+	/* Don't remove leading double-slash on Win32 */
+	if (*p)
+		p++;
+#endif
+	to_p = p;
+	for (; *p; p++, to_p++)
+	{
+		/* Handle many adjacent slashes, like "/a///b" */
+		while (*p == '/' && was_sep)
+			p++;
+		if (to_p != p)
+			*to_p = *p;
+		was_sep = (*p == '/');
+	}
+	*to_p = '\0';
+
+	/*
 	 * Remove any trailing uses of "." and process ".." ourselves
 	 */
 	for (;;)
@@ -247,9 +269,7 @@ canonicalize_path(char *path)
 		int			len = strlen(path);
 
 		if (len > 2 && strcmp(path + len - 2, "/.") == 0)
-		{
 			trim_directory(path);
-		}
 		else if (len > 3 && strcmp(path + len - 3, "/..") == 0)
 		{
 			trim_directory(path);
