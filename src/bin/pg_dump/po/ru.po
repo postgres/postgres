@@ -4,10 +4,10 @@
 # Copyright (c) 2001-2004 Serguei A. Mokhov, mokhov@cs.concordia.ca
 # Distributed under the same licensing terms as PostgreSQL itself.
 #
-# $PostgreSQL: pgsql/src/bin/pg_dump/po/ru.po,v 1.17 2004/12/06 22:10:41 petere Exp $
+# $PostgreSQL: pgsql/src/bin/pg_dump/po/ru.po,v 1.18 2004/12/11 20:10:09 petere Exp $
 #
 # ChangeLog:
-#   - April 6 - November 24, 2004: Updates for 8.0; <mokhov@cs.concordia.ca>
+#   - April 6 - December 10, 2004: Updates for 8.0; <mokhov@cs.concordia.ca>
 #   - July 24 - October 5, 2003: Updates for 7.4.x; <mokhov@cs.concordia.ca>
 #   - October 12, 2002: Post-7.3 beta 2, Fixes, Serguei A. Mokhov <mokhov@cs.concordia.ca>
 #   - September 14, 2002: Post-7.3 beta 1, Take II, Serguei A. Mokhov <mokhov@cs.concordia.ca>
@@ -17,10 +17,10 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 8.0\n"
-"POT-Creation-Date: 2004-11-28 07:11+0000\n"
-"PO-Revision-Date: 2004-11-28 20:50-0500\n"
+"POT-Creation-Date: 2004-12-10 19:08+0000\n"
+"PO-Revision-Date: 2004-12-10 21:52-0500\n"
 "Last-Translator: Serguei A. Mokhov <mokhov@cs.concordia.ca>\n"
-"Language-Team: pgsql-rus <pgsql-rus@yahoogroups.com>\n"
+"Language-Team: pgsql-ru-general <pgsql-ru-general@postgresql.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=koi8-r\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -233,10 +233,10 @@ msgstr "  -o, --oids               включить OIDs в выгрузку\n"
 
 #: pg_dump.c:685
 msgid ""
-"  -O, --no-owner           do not output commands to set object ownership\n"
+"  -O, --no-owner           skip restoration of object ownership\n"
 "                           in plain text format\n"
 msgstr ""
-"  -O, --no-owner           не выводить команды по установке привилегий на объекты\n"
+"  -O, --no-owner           пропустить восстановление привилегий на объекты\n"
 "                           в формате \"просто текст\"\n"
 
 #: pg_dump.c:687
@@ -1453,76 +1453,76 @@ msgstr "восстановление большого объекта с OID %u\n"
 msgid "could not write null block at end of tar archive\n"
 msgstr "не получилось записать нулевой блок в конце tar-архива\n"
 
-#: pg_backup_tar.c:1023
+#: pg_backup_tar.c:1027
 msgid "archive member too large for tar format\n"
 msgstr "компонент архива слишком велик для формата tar\n"
 
-#: pg_backup_tar.c:1033
+#: pg_backup_tar.c:1037
 #, c-format
 msgid "write error appending to tar archive (wrote %lu, attempted %lu)\n"
 msgstr "ошибка записи при добавлении к tar-архиву (записано: %lu, надо: %lu)\n"
 
-#: pg_backup_tar.c:1039
+#: pg_backup_tar.c:1043
 #, c-format
 msgid "could not close tar member: %s\n"
 msgstr "не получилось закрыть tar-компонент: %s\n"
 
-#: pg_backup_tar.c:1048
+#: pg_backup_tar.c:1052
 #, c-format
 msgid "actual file length (%s) does not match expected (%s)\n"
 msgstr "настоящая длина файла (%s) не соответствует ожидавшейся (%s)\n"
 
-#: pg_backup_tar.c:1056
+#: pg_backup_tar.c:1060
 msgid "could not output padding at end of tar member\n"
 msgstr "не получилось вывести \"набивку\" в конце tar-компонета\n"
 
-#: pg_backup_tar.c:1085
+#: pg_backup_tar.c:1089
 #, c-format
 msgid "moving from position %s to next member at file position %s\n"
 msgstr "переход от позиции %s к следующему компоненту в позиции файла %s\n"
 
-#: pg_backup_tar.c:1096
+#: pg_backup_tar.c:1100
 #, c-format
 msgid "now at file position %s\n"
 msgstr "теперь в позиции файла %s\n"
 
-#: pg_backup_tar.c:1105
-#: pg_backup_tar.c:1132
+#: pg_backup_tar.c:1109
+#: pg_backup_tar.c:1136
 #, c-format
 msgid "could not find header for file %s in tar archive\n"
 msgstr "не найден заголовок для файла %s в tar-архиве\n"
 
-#: pg_backup_tar.c:1116
+#: pg_backup_tar.c:1120
 #, c-format
 msgid "skipping tar member %s\n"
 msgstr "пропускается tar-компонент %s\n"
 
-#: pg_backup_tar.c:1120
+#: pg_backup_tar.c:1124
 #, c-format
 msgid "dumping data out of order is not supported in this archive format: %s is required, but comes before %s in the archive file.\n"
 msgstr "выгрузка данных не по порядку не поддерживается для данного формата архива: %s необходим, но идёи до %s в файле архива.\n"
 
-#: pg_backup_tar.c:1168
+#: pg_backup_tar.c:1172
 #, c-format
 msgid "mismatch in actual vs. predicted file position (%s vs. %s)\n"
 msgstr "не совпадение реальной и предсказанной позиций в файле (%s vs. %s)\n"
 
-#: pg_backup_tar.c:1183
+#: pg_backup_tar.c:1187
 #, c-format
 msgid "incomplete tar header found (%lu bytes)\n"
 msgstr "найден неполный tar-заголовок (размер, байт: %lu)\n"
 
-#: pg_backup_tar.c:1218
+#: pg_backup_tar.c:1222
 #, c-format
 msgid "TOC Entry %s at %s (length %lu, checksum %d)\n"
 msgstr "Запись оглавления %s в %s (длинна: %lu, checksum: %d)\n"
 
-#: pg_backup_tar.c:1228
+#: pg_backup_tar.c:1232
 #, c-format
 msgid "corrupt tar header found in %s (expected %d, computed %d) file position %s\n"
 msgstr "найден повреждённый tar-заголовок в %s (ожидалось: %d, сосчитано: %d), позиция в файле: %s\n"
 
-#: pg_backup_tar.c:1321
+#: pg_backup_tar.c:1325
 msgid "could not write tar header\n"
 msgstr "не получилось записать заголовок tar-архива\n"
 
@@ -1594,9 +1594,10 @@ msgstr ""
 "  -L, --use-list=ИМЯФАЙЛА  использовать указанное оглавление для упорядочивания\n"
 "                           вывод из этого файла\n"
 
+#: pg_dumpall.c:352
 #: pg_restore.c:379
-msgid "  -O, --no-owner           do not issue commands to set object ownership\n"
-msgstr "  -O, --no-owner           не отправлять команды по установке привилегий на объекты\n"
+msgid "  -O, --no-owner           skip restoration of object ownership\n"
+msgstr "  -O, --no-owner           пропустить восстановление привилегий на объекты\n"
 
 #: pg_restore.c:380
 msgid ""
@@ -1695,10 +1696,6 @@ msgstr "  -c, --clean              очистить (сбросить) базы данных перед создани
 #: pg_dumpall.c:350
 msgid "  -g, --globals-only       dump only global objects, no databases\n"
 msgstr "  -g, --globals-only       выгрузить только глобальные объекты, без баз данных\n"
-
-#: pg_dumpall.c:352
-msgid "  -O, --no-owner           do not output commands to set object ownership\n"
-msgstr "  -O, --no-owner           не выводить команды по установке привилегий на объекты\n"
 
 #: pg_dumpall.c:354
 msgid "  -S, --superuser=NAME     specify the superuser user name to use in the dump\n"
