@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/syntax.sgml,v 1.61 2002/06/01 20:56:55 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/syntax.sgml,v 1.62 2002/06/15 21:28:55 tgl Exp $
 -->
 
 <chapter id="sql-syntax">
@@ -1435,14 +1435,13 @@ FROM states;
 
    <para>
     The order of evaluation of subexpressions is not defined.  In
-    particular, subexpressions are not necessarily evaluated
-    left-to-right, right-to-left, or according to the lexical
-    precedence rules.
+    particular, the inputs of an operator or function are not necessarily
+    evaluated left-to-right or in any other fixed order.
    </para>
 
    <para>
     Furthermore, if the result of an expression can be determined by
-    evaluating only some parts of it, then some subexpressions
+    evaluating only some parts of it, then other subexpressions
     might not be evaluated at all.  For instance, if one wrote
 <programlisting>
 SELECT true OR somefunc();
@@ -1459,7 +1458,27 @@ SELECT somefunc() OR true;
 
    <para>
     As a consequence, it is unwise to use functions with side effects
-    as part of complex expressions.
+    as part of complex expressions.  It is particularly dangerous to
+    rely on side effects or evaluation order in WHERE and HAVING clauses,
+    since those clauses are extensively reprocessed as part of
+    developing an execution plan.  Boolean
+    expressions (AND/OR/NOT combinations) in those clauses may be reorganized
+    in any manner allowed by the laws of Boolean algebra.
+   </para>
+
+   <para>
+    When it is essential to force evaluation order, a CASE construct may
+    be used.  For example, this is an untrustworthy way of trying to
+    avoid division by zero in a WHERE clause:
+<programlisting>
+SELECT ... WHERE x <> 0 AND y/x > 1.5;
+</programlisting>
+    but this is safe:
+<programlisting>
+SELECT ... WHERE CASE WHEN x <> 0 THEN y/x > 1.5 ELSE false END;
+</programlisting>
+    A CASE construct used in this fashion will defeat optimization attempts,
+    so it should only be done when necessary.
    </para>
   </sect2>
  </sect1>
