@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtsearch.c,v 1.75 2003/07/21 20:29:39 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtsearch.c,v 1.76 2003/07/28 00:09:14 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1015,7 +1015,7 @@ _bt_walk_left(Relation rel, Buffer buf)
 			 * if there's anything wrong.
 			 */
 			if (opaque->btpo_prev == lblkno)
-				elog(ERROR, "cannot find left sibling in \"%s\"",
+				elog(ERROR, "could not find left sibling in \"%s\"",
 					 RelationGetRelationName(rel));
 			/* Okay to try again with new lblkno value */
 		}

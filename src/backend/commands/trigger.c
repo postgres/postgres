@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/trigger.c,v 1.151 2003/07/20 21:56:32 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/trigger.c,v 1.152 2003/07/28 00:09:14 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -133,7 +133,7 @@ CreateTrigger(CreateTrigStmt *stmt, bool forConstraint)
 		if (needconstrrelid && constrrelid == InvalidOid)
 			ereport(NOTICE,
 					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-					 errmsg("unable to determine referenced table for constraint \"%s\"",
+					 errmsg("could not determine referenced table for constraint \"%s\"",
 							stmt->trigname)));
 	}
 
@@ -233,7 +233,7 @@ CreateTrigger(CreateTrigStmt *stmt, bool forConstraint)
 				TRIGGER_SETT_UPDATE(tgtype);
 				break;
 			default:
-				elog(ERROR, "unknown trigger event: %d",
+				elog(ERROR, "unrecognized trigger event: %d",
 					 (int) stmt->actions[i]);
 				break;
 		}
@@ -477,7 +477,7 @@ DropTrigger(Oid relid, const char *trigname, DropBehavior behavior)
 	if (!HeapTupleIsValid(tup))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("trigger \"%s\" on relation \"%s\" does not exist",
+				 errmsg("trigger \"%s\" for relation \"%s\" does not exist",
 						trigname, get_rel_name(relid))));
 
 	if (!pg_class_ownercheck(relid, GetUserId()))
@@ -1574,7 +1574,7 @@ ltrmark:;
 				if (XactIsoLevel == XACT_SERIALIZABLE)
 					ereport(ERROR,
 							(errcode(ERRCODE_T_R_SERIALIZATION_FAILURE),
-							 errmsg("cannot serialize access due to concurrent update")));
+							 errmsg("could not serialize access due to concurrent update")));
 				else if (!(ItemPointerEquals(&(tuple.t_self), tid)))
 				{
 					TupleTableSlot *epqslot = EvalPlanQual(estate,
@@ -1597,7 +1597,7 @@ ltrmark:;
 
 			default:
 				ReleaseBuffer(buffer);
-				elog(ERROR, "unrecognized status %u from heap_mark4update",
+				elog(ERROR, "unrecognized heap_mark4update status: %u",
 					 test);
 				return NULL;	/* keep compiler quiet */
 		}

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.101 2003/07/21 20:29:39 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.102 2003/07/28 00:09:14 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1064,7 +1064,7 @@ _bt_findsplitloc(Relation rel,
 	 * just in case ...
 	 */
 	if (!state.have_split)
-		elog(ERROR, "cannot find a feasible split point for \"%s\"",
+		elog(ERROR, "could not find a feasible split point for \"%s\"",
 			 RelationGetRelationName(rel));
 
 	*newitemonleft = state.newitemonleft;

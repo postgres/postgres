@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/dependency.c,v 1.27 2003/07/21 01:59:07 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/dependency.c,v 1.28 2003/07/28 00:09:14 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1725,7 +1725,7 @@ getObjectDescription(const ObjectAddress *object)
 			}
 
 		default:
-			appendStringInfo(&buffer, "unknown object %u %u %d",
+			appendStringInfo(&buffer, "unrecognized object %u %u %d",
 							 object->classId,
 							 object->objectId,
 							 object->objectSubId);

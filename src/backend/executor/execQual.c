@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.135 2003/07/21 17:05:08 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.136 2003/07/28 00:09:14 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -533,7 +533,7 @@ GetAttributeByNum(TupleTableSlot *slot,
 	Datum		retval;
 
 	if (!AttributeNumberIsValid(attrno))
-		elog(ERROR, "invalid attribute number: %d", attrno);
+		elog(ERROR, "invalid attribute number %d", attrno);
 
 	if (isNull == (bool *) NULL)
 		elog(ERROR, "a NULL isNull pointer was passed");
@@ -616,7 +616,7 @@ init_fcache(Oid foid, FuncExprState *fcache, MemoryContext fcacheCxt)
 
 	/* Safety check (should never fail, as parser should check sooner) */
 	if (length(fcache->args) > FUNC_MAX_ARGS)
-		elog(ERROR, "too many arguments to function");
+		elog(ERROR, "too many arguments");
 
 	/* Set up the primary fmgr lookup information */
 	fmgr_info_cxt(foid, &(fcache->func), fcacheCxt);

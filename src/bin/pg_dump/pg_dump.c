@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.339 2003/07/27 03:47:22 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.340 2003/07/28 00:09:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -4382,7 +4382,7 @@ convertOperatorReference(const char *opr,
 
 	name = findOprByOid(g_oprinfo, numOperators, opr);
 	if (name == NULL)
-		write_msg(NULL, "WARNING: cannot find operator with OID %s\n",
+		write_msg(NULL, "WARNING: could not find operator with OID %s\n",
 				  opr);
 	return name;
 }

@@ -13,7 +13,7 @@
  *
  *	Copyright (c) 2001-2003, PostgreSQL Global Development Group
  *
- *	$Header: /cvsroot/pgsql/src/backend/postmaster/pgstat.c,v 1.40 2003/07/23 23:30:40 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/postmaster/pgstat.c,v 1.41 2003/07/28 00:09:15 tgl Exp $
  * ----------
  */
 #include "postgres.h"
@@ -2022,7 +2022,7 @@ pgstat_write_statsfile(void)
 	{
 		ereport(LOG,
 				(errcode_for_file_access(),
-				 errmsg("cannot write temp statistics file \"%s\": %m",
+				 errmsg("could not write temp statistics file \"%s\": %m",
 						pgStat_tmpfname)));
 		return;
 	}

@@ -18,7 +18,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.203 2003/07/22 23:30:37 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.204 2003/07/28 00:09:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -189,7 +189,7 @@ _equalParam(Param *a, Param *b)
 			COMPARE_SCALAR_FIELD(paramid);
 			break;
 		default:
-			elog(ERROR, "unrecognized paramkind value: %d",
+			elog(ERROR, "unrecognized paramkind: %d",
 				 a->paramkind);
 	}
 

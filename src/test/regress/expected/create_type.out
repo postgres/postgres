@@ -19,7 +19,7 @@ CREATE FUNCTION int42_in(cstring)
    RETURNS int42
    AS 'int4in'
    LANGUAGE 'internal' WITH (isStrict);
-NOTICE:  type int42 is not yet defined
+NOTICE:  type "int42" is not yet defined
 DETAIL:  Creating a shell type definition.
 CREATE FUNCTION int42_out(int42)
    RETURNS cstring
@@ -30,7 +30,7 @@ CREATE FUNCTION text_w_default_in(cstring)
    RETURNS text_w_default
    AS 'textin'
    LANGUAGE 'internal' WITH (isStrict);
-NOTICE:  type text_w_default is not yet defined
+NOTICE:  type "text_w_default" is not yet defined
 DETAIL:  Creating a shell type definition.
 CREATE FUNCTION text_w_default_out(text_w_default)
    RETURNS cstring

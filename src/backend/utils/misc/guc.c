@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.140 2003/07/27 04:35:53 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.141 2003/07/28 00:09:16 tgl Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -910,7 +910,7 @@ static struct config_int ConfigureNamesInt[] =
 
 	{
 		{"superuser_reserved_connections", PGC_POSTMASTER, CONN_AUTH_SETTINGS,
-			gettext_noop("Number of 'connection slots' reserved for superusers"),
+			gettext_noop("Number of connection \"slots\" reserved for superusers"),
 			NULL
 		},
 		&ReservedBackends,
@@ -940,7 +940,7 @@ static struct config_int ConfigureNamesInt[] =
 			gettext_noop("Sets the access permissions of the Unix domain socket"),
 			gettext_noop("Unix domain sockets use the usual Unix file system "
 						 "permission set. The option value is expected to be an numeric mode "
-						 "specification in the form accepted by the chmod and umask  system "
+						 "specification in the form accepted by the chmod and umask system "
 						 "calls. (To use the customary octal format the number must start with "
 						 "a 0 (zero).)")
 		},
@@ -1085,7 +1085,7 @@ static struct config_int ConfigureNamesInt[] =
 
 	{
 		{"checkpoint_warning", PGC_SIGHUP, WAL_CHECKPOINTS,
-			gettext_noop("Log if filling of checkpoint segments happens more"
+			gettext_noop("Log if filling of checkpoint segments happens more "
 						 "frequently than this (sec)"),
 			gettext_noop("Send a message to the server logs if checkpoints "
 						 "caused by the filling of checkpoint segment files happens more "
@@ -1312,7 +1312,7 @@ static struct config_string ConfigureNamesString[] =
 		{"default_transaction_isolation", PGC_USERSET, CLIENT_CONN_STATEMENT,
 			gettext_noop("The default isolation level of each new transaction"),
 			gettext_noop("Each SQL transaction has an isolation level, which "
-					 "can be either 'read committed' or 'serializable'.")
+					 "can be either \"read committed\" or \"serializable\".")
 		},
 		&default_iso_level_string,
 		"read committed", assign_defaultxactisolevel, NULL
@@ -1418,7 +1418,7 @@ static struct config_string ConfigureNamesString[] =
 
 	{
 		{"regex_flavor", PGC_USERSET, COMPAT_OPTIONS_PREVIOUS,
-			gettext_noop("Regular expression 'flavor'"),
+			gettext_noop("Regular expression \"flavor\""),
 			gettext_noop("This can be set to advanced, extended, or basic")
 		},
 		&regex_flavor_string,
@@ -1471,7 +1471,7 @@ static struct config_string ConfigureNamesString[] =
 #ifdef HAVE_SYSLOG
 	{
 		{"syslog_facility", PGC_POSTMASTER, LOGGING_SYSLOG,
-			gettext_noop("Which syslog 'facility' to be used when syslog enabled"),
+			gettext_noop("syslog \"facility\" to be used when syslog enabled"),
 			gettext_noop("You may choose from LOCAL0, LOCAL1, LOCAL2, LOCAL3, "
 						 "LOCAL4, LOCAL5, LOCAL6, LOCAL7")
 		},
@@ -3983,7 +3983,7 @@ ProcessGUCArray(ArrayType *array, GucSource source)
 		{
 			ereport(WARNING,
 					(errcode(ERRCODE_SYNTAX_ERROR),
-					 errmsg("cannot parse setting for \"%s\"", name)));
+					 errmsg("could not parse setting for \"%s\"", name)));
 			free(name);
 			continue;
 		}

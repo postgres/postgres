@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.210 2003/07/21 17:05:08 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.211 2003/07/28 00:09:14 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1117,7 +1117,7 @@ lnext:	;
 							if (XactIsoLevel == XACT_SERIALIZABLE)
 								ereport(ERROR,
 										(errcode(ERRCODE_T_R_SERIALIZATION_FAILURE),
-										 errmsg("cannot serialize access due to concurrent update")));
+										 errmsg("could not serialize access due to concurrent update")));
 							if (!(ItemPointerEquals(&(tuple.t_self),
 								  (ItemPointer) DatumGetPointer(datum))))
 							{
@@ -1416,7 +1416,7 @@ ldelete:;
 			if (XactIsoLevel == XACT_SERIALIZABLE)
 				ereport(ERROR,
 						(errcode(ERRCODE_T_R_SERIALIZATION_FAILURE),
-						 errmsg("cannot serialize access due to concurrent update")));
+						 errmsg("could not serialize access due to concurrent update")));
 			else if (!(ItemPointerEquals(tupleid, &ctid)))
 			{
 				TupleTableSlot *epqslot = EvalPlanQual(estate,
@@ -1550,7 +1550,7 @@ lreplace:;
 			if (XactIsoLevel == XACT_SERIALIZABLE)
 				ereport(ERROR,
 						(errcode(ERRCODE_T_R_SERIALIZATION_FAILURE),
-						 errmsg("cannot serialize access due to concurrent update")));
+						 errmsg("could not serialize access due to concurrent update")));
 			else if (!(ItemPointerEquals(tupleid, &ctid)))
 			{
 				TupleTableSlot *epqslot = EvalPlanQual(estate,
@@ -1737,7 +1737,7 @@ EvalPlanQual(EState *estate, Index rti, ItemPointer tid)
 			}
 		}
 		if (relation == NULL)
-			elog(ERROR, "cannot find RowMark for RT index %u", rti);
+			elog(ERROR, "could not find RowMark for RT index %u", rti);
 	}
 
 	/*

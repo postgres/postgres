@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/portalcmds.c,v 1.17 2003/07/20 21:56:32 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/portalcmds.c,v 1.18 2003/07/28 00:09:14 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -365,7 +365,7 @@ PersistHoldablePortal(Portal portal)
 		if (portal->posOverflow)		/* oops, cannot trust portalPos */
 			ereport(ERROR,
 					(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-					 errmsg("unable to reposition held cursor")));
+					 errmsg("could not reposition held cursor")));
 
 		tuplestore_rescan(portal->holdStore);
 

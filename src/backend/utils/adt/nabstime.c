@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/nabstime.c,v 1.110 2003/07/27 04:53:07 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/nabstime.c,v 1.111 2003/07/28 00:09:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -727,7 +727,7 @@ abstime_timestamptz(PG_FUNCTION_ARGS)
 		case INVALID_ABSTIME:
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("cannot convert \"invalid\" abstime to timestamptz")));
+					 errmsg("cannot convert \"invalid\" abstime to timestamp")));
 			TIMESTAMP_NOBEGIN(result);
 			break;
 

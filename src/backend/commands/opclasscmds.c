@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/opclasscmds.c,v 1.13 2003/07/20 21:56:32 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/opclasscmds.c,v 1.14 2003/07/28 00:09:14 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -278,10 +278,10 @@ DefineOpClass(CreateOpClassStmt *stmt)
 			if (opclass->opcintype == typeoid && opclass->opcdefault)
 				ereport(ERROR,
 						(errcode(ERRCODE_DUPLICATE_OBJECT),
-						 errmsg("cannot make class \"%s\" be default for type %s",
+						 errmsg("could not make class \"%s\" be default for type %s",
 								opcname,
 								TypeNameToString(stmt->datatype)),
-						 errdetail("class \"%s\" already is the default",
+						 errdetail("Class \"%s\" already is the default.",
 								   NameStr(opclass->opcname))));
 		}
 

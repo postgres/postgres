@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/catcache.c,v 1.105 2003/07/25 20:17:52 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/catcache.c,v 1.106 2003/07/28 00:09:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -766,7 +766,7 @@ CatalogCacheFlushRelation(Oid relId)
 #ifdef CACHEDEBUG
 #define InitCatCache_DEBUG2 \
 do { \
-	elog(DEBUG2, "InitCatCache: rel=%s id=%d nkeys=%d size=%d\n", \
+	elog(DEBUG2, "InitCatCache: rel=%s id=%d nkeys=%d size=%d", \
 		cp->cc_relname, cp->id, cp->cc_nkeys, cp->cc_nbuckets); \
 } while(0)
 

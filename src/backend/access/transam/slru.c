@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/access/transam/slru.c,v 1.2 2003/07/19 21:37:37 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/access/transam/slru.c,v 1.3 2003/07/28 00:09:14 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -811,7 +811,7 @@ restart:;
 	{
 		LWLockRelease(ctl->locks->ControlLock);
 		ereport(LOG,
-				(errmsg("unable to truncate \"%s\": apparent wraparound",
+				(errmsg("could not truncate \"%s\": apparent wraparound",
 						ctl->Dir)));
 		return;
 	}

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.157 2003/07/19 20:20:52 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.158 2003/07/28 00:09:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -785,7 +785,7 @@ transformExpr(ParseState *pstate, Node *expr)
 					if (!OidIsValid(element_type))
 						ereport(ERROR,
 								(errcode(ERRCODE_UNDEFINED_OBJECT),
-								 errmsg("cannot find array type for datatype %s",
+								 errmsg("could not find array type for datatype %s",
 										format_type_be(array_type))));
 
 					/*
@@ -1252,7 +1252,7 @@ exprType(Node *expr)
 						if (!OidIsValid(type))
 							ereport(ERROR,
 									(errcode(ERRCODE_UNDEFINED_OBJECT),
-									 errmsg("cannot find array type for datatype %s",
+									 errmsg("could not find array type for datatype %s",
 											format_type_be(tent->resdom->restype))));
 					}
 				}
@@ -1289,7 +1289,7 @@ exprType(Node *expr)
 						if (!OidIsValid(type))
 							ereport(ERROR,
 									(errcode(ERRCODE_UNDEFINED_OBJECT),
-									 errmsg("cannot find array type for datatype %s",
+									 errmsg("could not find array type for datatype %s",
 											format_type_be(tent->resdom->restype))));
 					}
 				}

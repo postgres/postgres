@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/miscinit.c,v 1.107 2003/07/27 21:49:54 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/miscinit.c,v 1.108 2003/07/28 00:09:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -396,7 +396,7 @@ GetCharSetByHost(char *TableName, int host, const char *DataDir)
 			else if (strcasecmp(buf, "RecodeTable") == 0)
 				key = KEY_TABLE;
 			else
-				elog(LOG, "unknown tag %s in file %s",
+				elog(LOG, "unrecognized tag %s in file %s",
 					 buf, CHARSET_FILE);
 
 			switch (key)
@@ -452,7 +452,7 @@ GetCharSetByHost(char *TableName, int host, const char *DataDir)
 			while (!feof(file) && buf[0])
 			{
 				next_token(file, buf, sizeof(buf));
-				elog(LOG, "unknown tag %s in file %s",
+				elog(LOG, "unrecognized tag %s in file %s",
 					 buf, CHARSET_FILE);
 			}
 		}

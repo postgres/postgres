@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/regproc.c,v 1.78 2003/07/27 04:53:09 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/regproc.c,v 1.79 2003/07/28 00:09:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1273,7 +1273,7 @@ parseNameAndArgTypes(const char *string, const char *caller,
 		if (*nargs >= FUNC_MAX_ARGS)
 			ereport(ERROR,
 					(errcode(ERRCODE_TOO_MANY_ARGUMENTS),
-					 errmsg("too many argument datatypes")));
+					 errmsg("too many arguments")));
 
 		argtypes[*nargs] = typeid;
 		(*nargs)++;

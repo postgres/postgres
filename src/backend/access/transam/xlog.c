@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/access/transam/xlog.c,v 1.119 2003/07/21 20:29:39 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/access/transam/xlog.c,v 1.120 2003/07/28 00:09:14 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2642,7 +2642,7 @@ StartupXLOG(void)
 		}
 		else
 			ereport(PANIC,
-					(errmsg("unable to locate a valid checkpoint record")));
+					(errmsg("could not locate a valid checkpoint record")));
 	}
 	LastRec = RecPtr = checkPointLoc;
 	memcpy(&checkPoint, XLogRecGetData(record), sizeof(CheckPoint));

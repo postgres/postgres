@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/initsplan.c,v 1.87 2003/07/25 00:01:07 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/initsplan.c,v 1.88 2003/07/28 00:09:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -752,7 +752,7 @@ process_implied_equality(Query *root,
 		 */
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_FUNCTION),
-				 errmsg("unable to identify an equality operator for types %s and %s",
+				 errmsg("could not identify an equality operator for types %s and %s",
 						format_type_be(ltype), format_type_be(rtype))));
 	}
 	pgopform = (Form_pg_operator) GETSTRUCT(eq_operator);

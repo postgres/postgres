@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/be-fsstubs.c,v 1.65 2003/07/22 19:00:10 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/be-fsstubs.c,v 1.66 2003/07/28 00:09:15 tgl Exp $
  *
  * NOTES
  *	  This should be moved to a more appropriate place.  It is here
@@ -99,7 +99,7 @@ lo_open(PG_FUNCTION_ARGS)
 	{							/* lookup failed */
 		MemoryContextSwitchTo(currentContext);
 #if FSDB
-		elog(DEBUG4, "cannot open large object %u", lobjId);
+		elog(DEBUG4, "could not open large object %u", lobjId);
 #endif
 		PG_RETURN_INT32(-1);
 	}

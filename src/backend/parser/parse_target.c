@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_target.c,v 1.107 2003/07/19 20:20:52 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_target.c,v 1.108 2003/07/28 00:09:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -496,7 +496,7 @@ checkInsertTargets(ParseState *pstate, List *cols, List **attrnos)
 			if (intMember(attrno, *attrnos))
 				ereport(ERROR,
 						(errcode(ERRCODE_DUPLICATE_COLUMN),
-						 errmsg("attribute \"%s\" specified more than once in INSERT list",
+						 errmsg("attribute \"%s\" specified more than once",
 								name)));
 			*attrnos = lappendi(*attrnos, attrno);
 		}

@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/commands/user.c,v 1.120 2003/07/20 21:56:34 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/commands/user.c,v 1.121 2003/07/28 00:09:14 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -146,7 +146,7 @@ write_group_file(Relation grel)
 	if (fp == NULL)
 		ereport(ERROR,
 				(errcode_for_file_access(),
-				 errmsg("unable to write temp file \"%s\": %m", tempname)));
+				 errmsg("could not write temp file \"%s\": %m", tempname)));
 
 	/*
 	 * Read pg_group and write the file.  Note we use SnapshotSelf to ensure
@@ -245,7 +245,7 @@ write_group_file(Relation grel)
 	if (ferror(fp))
 		ereport(ERROR,
 				(errcode_for_file_access(),
-				 errmsg("unable to write temp file \"%s\": %m", tempname)));
+				 errmsg("could not write temp file \"%s\": %m", tempname)));
 	FreeFile(fp);
 
 	/*
@@ -294,7 +294,7 @@ write_user_file(Relation urel)
 	if (fp == NULL)
 		ereport(ERROR,
 				(errcode_for_file_access(),
-				 errmsg("unable to write temp file \"%s\": %m", tempname)));
+				 errmsg("could not write temp file \"%s\": %m", tempname)));
 
 	/*
 	 * Read pg_shadow and write the file.  Note we use SnapshotSelf to ensure
@@ -376,7 +376,7 @@ write_user_file(Relation urel)
 	if (ferror(fp))
 		ereport(ERROR,
 				(errcode_for_file_access(),
-				 errmsg("unable to write temp file \"%s\": %m", tempname)));
+				 errmsg("could not write temp file \"%s\": %m", tempname)));
 	FreeFile(fp);
 
 	/*

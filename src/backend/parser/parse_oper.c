@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_oper.c,v 1.70 2003/07/18 23:20:32 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_oper.c,v 1.71 2003/07/28 00:09:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -184,7 +184,7 @@ equality_oper(Oid argtype, bool noError)
 	if (!noError)
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_FUNCTION),
-				 errmsg("unable to identify an equality operator for type %s",
+				 errmsg("could not identify an equality operator for type %s",
 						format_type_be(argtype))));
 	return NULL;
 }
@@ -247,7 +247,7 @@ ordering_oper(Oid argtype, bool noError)
 	if (!noError)
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_FUNCTION),
-				 errmsg("unable to identify an ordering operator for type %s",
+				 errmsg("could not identify an ordering operator for type %s",
 						format_type_be(argtype)),
 				 errhint("Use an explicit ordering operator or modify the query.")));
 	return NULL;
@@ -689,7 +689,7 @@ op_error(List *op, char oprkind, Oid arg1, Oid arg2, FuncDetailCode fdresult)
 				(errcode(ERRCODE_AMBIGUOUS_FUNCTION),
 				 errmsg("operator is not unique: %s",
 						op_signature_string(op, oprkind, arg1, arg2)),
-				 errhint("Unable to choose a best candidate operator. "
+				 errhint("Could not choose a best candidate operator. "
 						 "You may need to add explicit typecasts.")));
 	else
 		ereport(ERROR,
@@ -828,7 +828,7 @@ make_scalar_array_op(ParseState *pstate, List *opname,
 	if (!OidIsValid(res_atypeId))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("unable to find datatype for array of %s",
+				 errmsg("could not find datatype for array of %s",
 						format_type_be(declared_arg_types[1]))));
 	actual_arg_types[1] = atypeId;
 	declared_arg_types[1] = res_atypeId;

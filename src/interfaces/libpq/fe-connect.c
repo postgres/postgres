@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.255 2003/07/27 03:32:26 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.256 2003/07/28 00:09:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -448,7 +448,7 @@ connectOptions2(PGconn *conn)
 		{
 			conn->status = CONNECTION_BAD;
 			printfPQExpBuffer(&conn->errorMessage,
-							  libpq_gettext("unknown sslmode \"%s\" requested\n"),
+							  libpq_gettext("unrecognized sslmode: \"%s\"\n"),
 							  conn->sslmode);
 			return false;
 		}

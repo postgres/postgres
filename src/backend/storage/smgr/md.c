@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/md.c,v 1.95 2003/07/24 22:04:15 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/md.c,v 1.96 2003/07/28 00:09:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -608,7 +608,7 @@ mdnblocks(Relation reln)
 			 */
 			v->mdfd_chain = _mdfd_openseg(reln, segno, O_CREAT);
 			if (v->mdfd_chain == (MdfdVec *) NULL)
-				elog(ERROR, "could not count blocks for \"%s\": %m",
+				elog(ERROR, "could not count blocks of \"%s\": %m",
 					 RelationGetRelationName(reln));
 		}
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.156 2003/07/20 21:56:34 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.157 2003/07/28 00:09:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -311,7 +311,7 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 					 errmsg("function %s is not unique",
 							func_signature_string(funcname, nargs,
 												  actual_arg_types)),
-					 errhint("Unable to choose a best candidate function. "
+					 errhint("Could not choose a best candidate function. "
 							 "You may need to add explicit typecasts.")));
 		else
 			ereport(ERROR,

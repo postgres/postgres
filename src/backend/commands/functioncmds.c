@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/functioncmds.c,v 1.29 2003/07/20 21:56:32 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/functioncmds.c,v 1.30 2003/07/28 00:09:14 tgl Exp $
  *
  * DESCRIPTION
  *	  These routines take the parse tree and pick out the
@@ -106,12 +106,12 @@ compute_return_type(TypeName *returnType, Oid languageOid,
 			languageOid != ClanguageId)
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_OBJECT),
-					 errmsg("type %s does not exist", typnam)));
+					 errmsg("type \"%s\" does not exist", typnam)));
 
 		/* Otherwise, go ahead and make a shell type */
 		ereport(NOTICE,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("type %s is not yet defined", typnam),
+				 errmsg("type \"%s\" is not yet defined", typnam),
 				 errdetail("Creating a shell type definition.")));
 		namespaceId = QualifiedNameGetCreationNamespace(returnType->names,
 														&typname);
@@ -862,7 +862,7 @@ CreateCast(CreateCastStmt *stmt)
 		if (procstruct->pronargs != 1)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-					 errmsg("cast function must take 1 argument")));
+					 errmsg("cast function must take one argument")));
 		if (procstruct->proargtypes[0] != sourcetypeid)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
@@ -962,7 +962,7 @@ CreateCast(CreateCastStmt *stmt)
 	if (HeapTupleIsValid(tuple))
 		ereport(ERROR,
 				(errcode(ERRCODE_DUPLICATE_OBJECT),
-				 errmsg("cast from data type %s to data type %s already exists",
+				 errmsg("cast from type %s to type %s already exists",
 						TypeNameToString(stmt->sourcetype),
 						TypeNameToString(stmt->targettype))));
 

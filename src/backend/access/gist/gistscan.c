@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/gist/gistscan.c,v 1.44 2003/03/23 23:01:02 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/gist/gistscan.c,v 1.45 2003/07/28 00:09:14 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -243,7 +243,8 @@ gistdropscan(IndexScanDesc s)
 		prev = l;
 
 	if (l == (GISTScanList) NULL)
-		elog(ERROR, "GiST scan list corrupted -- cannot find 0x%p", (void *) s);
+		elog(ERROR, "GiST scan list corrupted -- could not find 0x%p",
+			 (void *) s);
 
 	if (prev == (GISTScanList) NULL)
 		GISTScans = l->gsl_next;

@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_funcs.c,v 1.27 2003/07/25 23:37:29 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_funcs.c,v 1.28 2003/07/28 00:09:16 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -593,7 +593,7 @@ dump_stmt(PLpgSQL_stmt * stmt)
 			dump_perform((PLpgSQL_stmt_perform *) stmt);
 			break;
 		default:
-			elog(ERROR, "unknown cmd_type: %d", stmt->cmd_type);
+			elog(ERROR, "unrecognized cmd_type: %d", stmt->cmd_type);
 			break;
 	}
 }

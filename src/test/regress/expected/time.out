@@ -70,4 +70,4 @@ SELECT f1 AS "Eight" FROM TIME_TBL WHERE f1 >= '00:00';
 -- where we do mixed-type arithmetic. - thomas 2000-12-02
 SELECT f1 + time '00:01' AS "Illegal" FROM TIME_TBL;
 ERROR:  operator is not unique: time without time zone + time without time zone
-HINT:  Unable to choose a best candidate operator. You may need to add explicit typecasts.
+HINT:  Could not choose a best candidate operator. You may need to add explicit typecasts.

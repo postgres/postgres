@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtutils.c,v 1.52 2003/07/21 20:29:39 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtutils.c,v 1.53 2003/07/28 00:09:14 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -461,7 +461,7 @@ _bt_getstrategynumber(RegProcedure sk_procedure, StrategyMap map)
 		if (sk_procedure == map->entry[j].sk_procedure)
 			return j;
 	}
-	elog(ERROR, "unable to identify operator %u", sk_procedure);
+	elog(ERROR, "could not identify operator %u", sk_procedure);
 	return -1;					/* keep compiler quiet */
 }
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_coerce.c,v 2.105 2003/07/19 20:20:52 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_coerce.c,v 2.106 2003/07/28 00:09:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -726,7 +726,7 @@ coerce_to_common_type(ParseState *pstate, Node *node,
 		ereport(ERROR,
 				(errcode(ERRCODE_CANNOT_COERCE),
 				 /* translator: first %s is name of a SQL construct, eg CASE */
-				 errmsg("%s unable to convert type %s to %s",
+				 errmsg("%s could not convert type %s to %s",
 						context,
 						format_type_be(inputTypeId),
 						format_type_be(targetTypeId))));
@@ -945,7 +945,7 @@ enforce_generic_type_consistency(Oid *actual_arg_types,
 		/* Only way to get here is if all the generic args are UNKNOWN */
 		ereport(ERROR,
 				(errcode(ERRCODE_DATATYPE_MISMATCH),
-				 errmsg("cannot determine ANYARRAY/ANYELEMENT type because input is UNKNOWN")));
+				 errmsg("could not determine ANYARRAY/ANYELEMENT type because input is UNKNOWN")));
 	}
 
 	/*
@@ -972,7 +972,7 @@ enforce_generic_type_consistency(Oid *actual_arg_types,
 					if (!OidIsValid(array_typeid))
 						ereport(ERROR,
 								(errcode(ERRCODE_UNDEFINED_OBJECT),
-								 errmsg("cannot find array type for datatype %s",
+								 errmsg("could not find array type for datatype %s",
 										format_type_be(elem_typeid))));
 				}
 				declared_arg_types[j] = array_typeid;
@@ -989,7 +989,7 @@ enforce_generic_type_consistency(Oid *actual_arg_types,
 			if (!OidIsValid(array_typeid))
 				ereport(ERROR,
 						(errcode(ERRCODE_UNDEFINED_OBJECT),
-						 errmsg("cannot find array type for datatype %s",
+						 errmsg("could not find array type for datatype %s",
 								format_type_be(elem_typeid))));
 		}
 		return array_typeid;
@@ -1043,7 +1043,7 @@ resolve_generic_type(Oid declared_type,
 			if (!OidIsValid(array_typeid))
 				ereport(ERROR,
 						(errcode(ERRCODE_UNDEFINED_OBJECT),
-						 errmsg("cannot find array type for datatype %s",
+						 errmsg("could not find array type for datatype %s",
 								format_type_be(context_actual_type))));
 			return array_typeid;
 		}
@@ -1075,7 +1075,7 @@ resolve_generic_type(Oid declared_type,
 	}
 	/* If we get here, declared_type is polymorphic and context isn't */
 	/* NB: this is a calling-code logic error, not a user error */
-	elog(ERROR, "cannot determine ANYARRAY/ANYELEMENT type because context isn't polymorphic");
+	elog(ERROR, "could not determine ANYARRAY/ANYELEMENT type because context isn't polymorphic");
 	return InvalidOid;			/* keep compiler quiet */
 }
 

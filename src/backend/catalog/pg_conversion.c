@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_conversion.c,v 1.11 2003/07/21 01:59:10 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_conversion.c,v 1.12 2003/07/28 00:09:14 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -76,7 +76,7 @@ ConversionCreate(const char *conname, Oid connamespace,
 								  contoencoding))
 			ereport(ERROR,
 					(errcode(ERRCODE_DUPLICATE_OBJECT),
-					 errmsg("default conversion for \"%s\" to \"%s\" already exists",
+					 errmsg("default conversion for %s to %s already exists",
 							pg_encoding_to_char(conforencoding),
 							pg_encoding_to_char(contoencoding))));
 	}

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/schemacmds.c,v 1.12 2003/07/18 23:20:32 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/schemacmds.c,v 1.13 2003/07/28 00:09:14 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -97,7 +97,7 @@ CreateSchemaCommand(CreateSchemaStmt *stmt)
 		ereport(ERROR,
 				(errcode(ERRCODE_RESERVED_NAME),
 				 errmsg("unacceptable schema name \"%s\"", schemaName),
-				 errdetail("The prefix pg_ is reserved for system schemas.")));
+				 errdetail("The prefix \"pg_\" is reserved for system schemas.")));
 
 	/* Create the schema's namespace */
 	namespaceId = NamespaceCreate(schemaName, owner_userid);
@@ -214,7 +214,7 @@ RemoveSchemaById(Oid schemaOid)
 						 ObjectIdGetDatum(schemaOid),
 						 0, 0, 0);
 	if (!HeapTupleIsValid(tup))	/* should not happen */
-		elog(ERROR, "cache lookup failed for schema %u", schemaOid);
+		elog(ERROR, "cache lookup failed for namespace %u", schemaOid);
 
 	simple_heap_delete(relation, &tup->t_self);
 
@@ -266,7 +266,7 @@ RenameSchema(const char *oldname, const char *newname)
 		ereport(ERROR,
 				(errcode(ERRCODE_RESERVED_NAME),
 				 errmsg("unacceptable schema name \"%s\"", newname),
-				 errdetail("The prefix pg_ is reserved for system schemas.")));
+				 errdetail("The prefix \"pg_\" is reserved for system schemas.")));
 
 	/* rename */
 	namestrcpy(&(((Form_pg_namespace) GETSTRUCT(tup))->nspname), newname);

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/tupdesc.c,v 1.96 2003/07/21 20:29:38 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/tupdesc.c,v 1.97 2003/07/28 00:09:13 tgl Exp $
  *
  * NOTES
  *	  some of the executor utility code such as "ExecTypeFromTL" should be
@@ -703,7 +703,7 @@ TypeGetTupleDesc(Oid typeoid, List *colaliases)
 	else if (functyptype == 'p' && typeoid == RECORDOID)
 		ereport(ERROR,
 				(errcode(ERRCODE_DATATYPE_MISMATCH),
-				 errmsg("unable to determine tuple description for function returning record")));
+				 errmsg("could not determine tuple description for function returning record")));
 	else
 	{
 		/* crummy error message, but parser should have caught this */

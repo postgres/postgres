@@ -16,7 +16,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/pseudotypes.c,v 1.8 2003/07/27 04:53:08 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/pseudotypes.c,v 1.9 2003/07/28 00:09:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,7 +35,7 @@ record_in(PG_FUNCTION_ARGS)
 {
 	ereport(ERROR,
 			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-			 errmsg("cannot accept a constant of type record")));
+			 errmsg("cannot accept a value of type record")));
 
 	PG_RETURN_VOID();			/* keep compiler quiet */
 }
@@ -144,7 +144,7 @@ any_in(PG_FUNCTION_ARGS)
 {
 	ereport(ERROR,
 			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-			 errmsg("cannot accept a constant of type any")));
+			 errmsg("cannot accept a value of type any")));
 
 	PG_RETURN_VOID();			/* keep compiler quiet */
 }
@@ -171,7 +171,7 @@ anyarray_in(PG_FUNCTION_ARGS)
 {
 	ereport(ERROR,
 			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-			 errmsg("cannot accept a constant of type anyarray")));
+			 errmsg("cannot accept a value of type anyarray")));
 
 	PG_RETURN_VOID();			/* keep compiler quiet */
 }
@@ -249,7 +249,7 @@ trigger_in(PG_FUNCTION_ARGS)
 {
 	ereport(ERROR,
 			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-			 errmsg("cannot accept a constant of type trigger")));
+			 errmsg("cannot accept a value of type trigger")));
 
 	PG_RETURN_VOID();			/* keep compiler quiet */
 }
@@ -276,7 +276,7 @@ language_handler_in(PG_FUNCTION_ARGS)
 {
 	ereport(ERROR,
 			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-			 errmsg("cannot accept a constant of type language_handler")));
+			 errmsg("cannot accept a value of type language_handler")));
 
 	PG_RETURN_VOID();			/* keep compiler quiet */
 }
@@ -303,7 +303,7 @@ internal_in(PG_FUNCTION_ARGS)
 {
 	ereport(ERROR,
 			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-			 errmsg("cannot accept a constant of type internal")));
+			 errmsg("cannot accept a value of type internal")));
 
 	PG_RETURN_VOID();			/* keep compiler quiet */
 }
@@ -330,7 +330,7 @@ opaque_in(PG_FUNCTION_ARGS)
 {
 	ereport(ERROR,
 			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-			 errmsg("cannot accept a constant of type opaque")));
+			 errmsg("cannot accept a value of type opaque")));
 
 	PG_RETURN_VOID();			/* keep compiler quiet */
 }
@@ -357,7 +357,7 @@ anyelement_in(PG_FUNCTION_ARGS)
 {
 	ereport(ERROR,
 			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-			 errmsg("cannot accept a constant of type anyelement")));
+			 errmsg("cannot accept a value of type anyelement")));
 
 	PG_RETURN_VOID();			/* keep compiler quiet */
 }

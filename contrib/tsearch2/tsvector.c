@@ -762,7 +762,8 @@ tsearch2(PG_FUNCTION_ARGS)
 	if (numidxattr == SPI_ERROR_NOATTRIBUTE)
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_COLUMN),
-				 errmsg("cannot find tsvector_field")));
+				 errmsg("tsvector column \"%s\" does not exist",
+						trigger->tgargs[0])));
 
 	prs.lenwords = 32;
 	prs.curwords = 0;
@@ -785,7 +786,7 @@ tsearch2(PG_FUNCTION_ARGS)
 			if ( funcoid==InvalidOid )
 				ereport(ERROR,
 						(errcode(ERRCODE_UNDEFINED_COLUMN),
-						 errmsg("cannot find function or field \"%s\"",
+						 errmsg("could not find function or field \"%s\"",
 								trigger->tgargs[i])));
 
 			continue;

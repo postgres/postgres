@@ -1,4 +1,4 @@
-/* $Id: strerror.c,v 1.1 2002/07/18 04:13:59 momjian Exp $ */
+/* $Id: strerror.c,v 1.2 2003/07/28 00:09:16 tgl Exp $ */
 
 /*
  * strerror - map error number to descriptive string
@@ -23,7 +23,7 @@ strerror(int errnum)
 
 	if (errnum < 0 || errnum > sys_nerr)
 	{
-		sprintf(buf, "unknown error %d", errnum);
+		sprintf(buf, "unrecognized error %d", errnum);
 		return buf;
 	}
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.213 2003/07/22 23:30:37 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.214 2003/07/28 00:09:15 tgl Exp $
  *
  * NOTES
  *	  Every node type that can appear in stored rules' parsetrees *must*
@@ -1322,7 +1322,7 @@ _outRangeTblEntry(StringInfo str, RangeTblEntry *node)
 			WRITE_NODE_FIELD(joinaliasvars);
 			break;
 		default:
-			elog(ERROR, "unrecognized rte kind: %d", (int) node->rtekind);
+			elog(ERROR, "unrecognized RTE kind: %d", (int) node->rtekind);
 			break;
 	}
 

@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepunion.c,v 1.100 2003/07/25 00:01:08 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepunion.c,v 1.101 2003/07/28 00:09:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -312,7 +312,7 @@ generate_nonunion_plan(SetOperationStmt *op, Query *parse,
 			cmd = op->all ? SETOPCMD_EXCEPT_ALL : SETOPCMD_EXCEPT;
 			break;
 		default:
-			elog(ERROR, "unrecognized set operation code: %d",
+			elog(ERROR, "unrecognized set op: %d",
 				 (int) op->op);
 			cmd = SETOPCMD_INTERSECT;	/* keep compiler quiet */
 			break;

@@ -21,7 +21,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSetOp.c,v 1.10 2003/07/21 17:05:10 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSetOp.c,v 1.11 2003/07/28 00:09:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -170,7 +170,7 @@ ExecSetOp(SetOpState *node)
 						0 : (node->numLeft - node->numRight);
 					break;
 				default:
-					elog(ERROR, "unrecognized setop code: %d",
+					elog(ERROR, "unrecognized set op: %d",
 						 (int) plannode->cmd);
 					break;
 			}

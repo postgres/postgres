@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/lsyscache.c,v 1.102 2003/07/25 20:17:52 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/lsyscache.c,v 1.103 2003/07/28 00:09:16 tgl Exp $
  *
  * NOTES
  *	  Eventually, the index information should go through here, too.
@@ -312,8 +312,8 @@ get_atttypetypmod(Oid relid, AttrNumber attnum,
 						Int16GetDatum(attnum),
 						0, 0);
 	if (!HeapTupleIsValid(tp))
-		elog(ERROR, "cache lookup failed for relation %u attribute %d",
-			 relid, attnum);
+		elog(ERROR, "cache lookup failed for attribute %d of relation %u",
+			 attnum, relid);
 	att_tup = (Form_pg_attribute) GETSTRUCT(tp);
 
 	*typid = att_tup->atttypid;
