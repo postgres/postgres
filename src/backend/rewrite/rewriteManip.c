@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteManip.c,v 1.1.1.1 1996/07/09 06:21:52 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteManip.c,v 1.2 1996/07/23 02:23:54 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -319,7 +319,7 @@ nodeHandleRIRAttributeRule(Node **nodePtr,
 	    if (name_to_look_for.data[0]) {
 		Node *n;
 		
-		n = FindMatchingTLEntry(targetlist, &name_to_look_for);
+		n = FindMatchingTLEntry(targetlist, (char *)&name_to_look_for);
 		if (n == NULL) {
 		    *nodePtr = make_null(((Var*) node)->vartype);
 		} else {

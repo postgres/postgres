@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 1.1.1.1 1996/07/09 06:21:40 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 1.2 1996/07/23 02:23:33 scrappy Exp $
  *
  * HISTORY
  *    AUTHOR		DATE		MAJOR EVENT
@@ -515,7 +515,7 @@ fetch_how_many:  Iconst
 	       { $$ = $1;
 		 if ($1 <= 0) elog(WARN,"Please specify nonnegative count for fetch"); }
 	|  ALL				{ $$ = 0; /* 0 means fetch all tuples*/}
-	|  /*EMPTY*/			{ $$ = 0; /*default*/ }
+	|  /*EMPTY*/			{ $$ = 1; /*default*/ }
 	;
 
 /*****************************************************************************

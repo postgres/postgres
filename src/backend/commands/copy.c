@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.1.1.1 1996/07/09 06:21:19 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.2 1996/07/23 02:23:15 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -650,6 +650,10 @@ GetIndexRelations(Oid main_relation_oid,
     heap_endscan(scandesc);
     heap_close(pg_index_rel);
     
+    /* We cannot trust to relhasindex of the main_relation now, so... */
+    if ( *n_indices == 0 )
+      return;
+
     *index_rels = (Relation *) palloc(*n_indices * sizeof(Relation));
     
     for (i = 0, scan = head; i < *n_indices; i++, scan = scan->next) {
@@ -726,6 +730,67 @@ CopyReadAttribute(int attno, FILE *fp, bool *isnull, char *delim)
 	    }
 	}else if (c == '\\') {
 	    c = getc(fp);
+#ifdef ESCAPE_PATCH
+#define ISOCTAL(c)    (((c) >= '0') && ((c) <= '7'))
+#define       VALUE(c)        ((c) - '0')
+            if (feof(fp)) {
+                *isnull = (bool) false;
+                return(NULL);
+            }
+            switch (c) {
+              case '0':
+              case '1':
+              case '2':
+              case '3':
+              case '4':
+              case '5':
+              case '6':
+              case '7': {
+                int val;
+                val = VALUE(c);
+                c = getc(fp);
+                if (ISOCTAL(c)) {
+                    val = (val<<3) + VALUE(c);
+                    c = getc(fp);
+                    if (ISOCTAL(c)) {
+                        val = (val<<3) + VALUE(c);
+                    } else {
+                        if (feof(fp)) {
+                            *isnull = (bool) false;
+                            return(NULL);
+                        }
+                        ungetc(c, fp);
+                    }
+                } else {
+                    if (feof(fp)) {
+                        *isnull = (bool) false;
+                        return(NULL);
+                    }
+                    ungetc(c, fp);
+                }
+                c = val & 0377;
+            }
+                break;
+              case 'b':
+                c = '\b';
+                break;
+              case 'f':
+                c = '\f';
+                break;
+              case 'n':
+                c = '\n';
+                break;
+              case 'r':
+                c = '\r';
+                break;
+              case 't':
+                c = '\t';
+                break;
+              case 'v':
+                c = '\v';
+                break;
+            }
+#endif
 	}else if (inString(c,delim) || c == '\n') {
 	    done = 1;
 	}
@@ -743,6 +808,39 @@ CopyReadAttribute(int attno, FILE *fp, bool *isnull, char *delim)
     }
 }
 
+#ifdef ESCAPE_PATCH
+static void
+CopyAttributeOut(FILE *fp, char *string, char *delim)
+{
+    char c;
+    int is_array = false;
+    int len = strlen(string);
+
+    /* XXX - This is a kludge, we should check the data type */
+    if (len && (string[0] == '{') && (string[len-1] == '}')) {
+      is_array = true;
+    }
+
+    for ( ; c = *string; string++) {
+      if ((c == delim[0]) || (c == '\n')) {
+          fputc('\\', fp);
+      } else if ((c == '\\') && is_array) {
+          if (*(string+1) == '\\') {
+              /* translate \\ to \\\\ */
+              fputc('\\', fp);
+              fputc('\\', fp);
+              fputc('\\', fp);
+              string++;
+          } else if (*(string+1) == '"') {
+              /* translate \" to \\\" */
+              fputc('\\', fp);
+              fputc('\\', fp);
+          }
+      }
+      fputc(*string, fp);
+    }
+}
+#else
 static void
 CopyAttributeOut(FILE *fp, char *string, char *delim)
 {
@@ -756,6 +854,7 @@ CopyAttributeOut(FILE *fp, char *string, char *delim)
 	fputc(string[i], fp);
     }
 }
+#endif
 
 /*
  * Returns the number of tuples in a relation.  Unfortunately, currently

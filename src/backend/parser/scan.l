@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/parser/scan.l,v 1.1.1.1 1996/07/09 06:21:41 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/parser/scan.l,v 1.2 1996/07/23 02:23:34 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,6 +29,7 @@
 #include "nodes/parsenodes.h"
 #include "parser/keywords.h"
 #include "parser/scansup.h"
+#include "parser/sysfunc.h"
 #include "parse.h"
 #include "utils/elog.h"
 #include "utils/palloc.h"
@@ -61,6 +62,8 @@ digit		[0-9]
 letter		[_A-Za-z]
 letter_or_digit	[_A-Za-z0-9]
 
+sysfunc		SYS_{letter}{letter_or_digit}*
+
 identifier	{letter}{letter_or_digit}*
 
 self		[,()\[\].;$\:\+\-\*\/\<\>\=\|]
@@ -83,6 +86,11 @@ space		[ \t\n\f]
 other		.
 
 %%
+{sysfunc}	{
+			yylval.str = pstrdup(SystemFunctionHandler((char *)yytext));
+                	return (SCONST);
+		}
+
 {comment}	{ /* ignore */	}
 
 "::"		{ return TYPECAST;	}

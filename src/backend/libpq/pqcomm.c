@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/libpq/pqcomm.c,v 1.1.1.1 1996/07/09 06:21:31 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/libpq/pqcomm.c,v 1.2 1996/07/23 02:23:25 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -551,6 +551,7 @@ StreamServerPort(char *hostName, short portName, int *fdP)
 {
     struct sockaddr_in	sin;
     int			fd;
+    int                 one = 1;
     
 #ifdef WIN32
     /* This is necessary to make it possible for a backend to use
@@ -575,7 +576,17 @@ StreamServerPort(char *hostName, short portName, int *fdP)
 	pqdebug("%s", PQerrormsg);
 	return(STATUS_ERROR);
     }
-    
+
+    if((setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, (char *)&one,
+                                                    sizeof(one))) == -1) {
+        (void) sprintf(PQerrormsg,
+            "FATAL: StreamServerPort: setsockopt (SO_REUSEADDR) failed: errno=%d\n",
+            errno);
+	fputs(PQerrormsg, stderr);
+	pqdebug("%s", PQerrormsg);
+	return(STATUS_ERROR);
+    }
+
     sin.sin_family = AF_INET;
     sin.sin_port = htons(portName);
     
