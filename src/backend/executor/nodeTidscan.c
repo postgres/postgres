@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeTidscan.c,v 1.4 2000/01/26 05:56:24 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeTidscan.c,v 1.5 2000/04/07 00:30:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -109,8 +109,10 @@ TidNext(TidScan *node)
 		if (estate->es_evTupleNull[node->scan.scanrelid - 1])
 			return slot;		/* return empty slot */
 		
+		/* probably ought to use ExecStoreTuple here... */
 		slot->val = estate->es_evTuple[node->scan.scanrelid - 1];
 		slot->ttc_shouldFree = false;
+
 		/* Flag for the next call that no more tuples */
 		estate->es_evTupleNull[node->scan.scanrelid - 1] = true;
 		return (slot);
@@ -255,7 +257,6 @@ ExecTidReScan(TidScan *node, ExprContext *exprCtxt, Plan *parent)
 {
 	EState		*estate;
 	TidScanState	*tidstate;
-	Plan		*outerPlan;
 	ItemPointer	*tidList;
 
 	tidstate = node->tidstate;
@@ -263,30 +264,22 @@ ExecTidReScan(TidScan *node, ExprContext *exprCtxt, Plan *parent)
 	tidstate->tss_TidPtr = -1;
 	tidList = tidstate->tss_TidList;
 
-	if ((outerPlan = outerPlan((Plan *) node)) != NULL)
-	{
-		/* we are scanning a subplan */
-		outerPlan = outerPlan((Plan *) node);
-		ExecReScan(outerPlan, exprCtxt, parent);
-	}
-	else
-	/* otherwise, we are scanning a relation */
-	{
-		/* If this is re-scanning of PlanQual ... */
-		if (estate->es_evTuple != NULL &&
-			estate->es_evTuple[node->scan.scanrelid - 1] != NULL)
-		{
-			estate->es_evTupleNull[node->scan.scanrelid - 1] = false;
-			return;
-		}
+	/* If we are being passed an outer tuple, save it for runtime key calc */
+	if (exprCtxt != NULL)
+		node->scan.scanstate->cstate.cs_ExprContext->ecxt_outertuple =
+			exprCtxt->ecxt_outertuple;
 
-		/* it's possible in subselects */
-		if (exprCtxt == NULL)
-			exprCtxt = node->scan.scanstate->cstate.cs_ExprContext;
-
-		node->scan.scanstate->cstate.cs_ExprContext->ecxt_outertuple = exprCtxt->ecxt_outertuple;
-		tidstate->tss_NumTids = TidListCreate(node->tideval, exprCtxt, tidList);
+	/* If this is re-scanning of PlanQual ... */
+	if (estate->es_evTuple != NULL &&
+		estate->es_evTuple[node->scan.scanrelid - 1] != NULL)
+	{
+		estate->es_evTupleNull[node->scan.scanrelid - 1] = false;
+		return;
 	}
+
+	tidstate->tss_NumTids = TidListCreate(node->tideval,
+									node->scan.scanstate->cstate.cs_ExprContext,
+										  tidList);
 
 	/* ----------------
 	 *	perhaps return something meaningful

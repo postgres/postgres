@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeIndexscan.c,v 1.47 2000/02/18 09:29:57 inoue Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeIndexscan.c,v 1.48 2000/04/07 00:30:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -338,6 +338,11 @@ ExecIndexReScan(IndexScan *node, ExprContext *exprCtxt, Plan *parent)
 	if (ScanDirectionIsBackward(node->indxorderdir))
 		indexstate->iss_IndexPtr = numIndices;
 
+	/* If we are being passed an outer tuple, save it for runtime key calc */
+	if (exprCtxt != NULL)
+		node->scan.scanstate->cstate.cs_ExprContext->ecxt_outertuple =
+			exprCtxt->ecxt_outertuple;
+
 	/* If this is re-scanning of PlanQual ... */
 	if (estate->es_evTuple != NULL &&
 		estate->es_evTuple[node->scan.scanrelid - 1] != NULL)
@@ -345,12 +350,6 @@ ExecIndexReScan(IndexScan *node, ExprContext *exprCtxt, Plan *parent)
 		estate->es_evTupleNull[node->scan.scanrelid - 1] = false;
 		return;
 	}
-
-	/* it's possible in subselects */
-	if (exprCtxt == NULL)
-		exprCtxt = node->scan.scanstate->cstate.cs_ExprContext;
-
-	node->scan.scanstate->cstate.cs_ExprContext->ecxt_outertuple = exprCtxt->ecxt_outertuple;
 
 	/*
 	 * get the index qualifications and recalculate the appropriate values
@@ -379,14 +378,16 @@ ExecIndexReScan(IndexScan *node, ExprContext *exprCtxt, Plan *parent)
 				{
 					clause = nth(j, qual);
 					scanexpr = (run_keys[j] == RIGHT_OP) ?
-						(Node *) get_rightop(clause) : (Node *) get_leftop(clause);
-
+						(Node *) get_rightop(clause) :
+						(Node *) get_leftop(clause);
 					/*
 					 * pass in isDone but ignore it.  We don't iterate in
 					 * quals
 					 */
 					scanvalue = (Datum)
-						ExecEvalExpr(scanexpr, exprCtxt, &isNull, &isDone);
+						ExecEvalExpr(scanexpr,
+								node->scan.scanstate->cstate.cs_ExprContext,
+									 &isNull, &isDone);
 					scan_keys[j].sk_argument = scanvalue;
 					if (isNull)
 						scan_keys[j].sk_flags |= SK_ISNULL;
