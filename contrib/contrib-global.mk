@@ -1,4 +1,4 @@
-# $Header: /cvsroot/pgsql/contrib/contrib-global.mk,v 1.3 2002/09/05 18:28:45 petere Exp $
+# $Header: /cvsroot/pgsql/contrib/contrib-global.mk,v 1.4 2002/11/01 23:45:37 tgl Exp $
 
 # This file contains generic rules to build many kinds of simple
 # contrib modules.  You only need to set a few variables and include
@@ -24,6 +24,8 @@
 #     which need to be built first
 #   DOCS -- random files to install under $PREFIX/doc/contrib
 #   SCRIPTS -- script files (not binaries) to install into $PREFIX/bin
+#   SCRIPTS_built -- script files (not binaries) to install into $PREFIX/bin,
+#     which need to be built first
 #   REGRESS -- list of regression test cases (without suffix)
 #
 # or at most one of these two:
@@ -52,7 +54,7 @@ ifdef PG_CPPFLAGS
 override CPPFLAGS := $(PG_CPPFLAGS) $(CPPFLAGS)
 endif
 
-all: $(PROGRAM) $(DATA_built) $(addsuffix $(DLSUFFIX), $(MODULES))
+all: $(PROGRAM) $(DATA_built) $(SCRIPTS_built) $(addsuffix $(DLSUFFIX), $(MODULES))
 
 ifdef MODULE_big
 # shared library parameters
@@ -100,6 +102,12 @@ ifdef SCRIPTS
 	  $(INSTALL_SCRIPT) $$file $(DESTDIR)$(bindir); \
 	done
 endif # SCRIPTS
+ifdef SCRIPTS_built
+	@for file in $(SCRIPTS_built); do \
+	  echo "$(INSTALL_SCRIPT) $$file $(DESTDIR)$(bindir)"; \
+	  $(INSTALL_SCRIPT) $$file $(DESTDIR)$(bindir); \
+	done
+endif # SCRIPTS_built
 
 
 installdirs:
@@ -112,7 +120,7 @@ endif
 ifdef DOCS
 	$(mkinstalldirs) $(DESTDIR)$(docdir)/contrib
 endif
-ifneq (,$(PROGRAM)$(SCRIPTS))
+ifneq (,$(PROGRAM)$(SCRIPTS)$(SCRIPTS_built))
 	$(mkinstalldirs) $(DESTDIR)$(bindir)
 endif
 
@@ -136,6 +144,9 @@ endif
 ifdef SCRIPTS
 	rm -f $(addprefix $(DESTDIR)$(bindir)/, $(SCRIPTS))
 endif
+ifdef SCRIPTS_built
+	rm -f $(addprefix $(DESTDIR)$(bindir)/, $(SCRIPTS_built))
+endif
 
 
 clean:
@@ -144,6 +155,9 @@ ifdef MODULES
 endif
 ifdef DATA_built
 	rm -f $(DATA_built)
+endif
+ifdef SCRIPTS_built
+	rm -f $(SCRIPTS_built)
 endif
 ifdef PROGRAM
 	rm -f $(PROGRAM)$(X)

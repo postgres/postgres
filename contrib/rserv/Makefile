@@ -11,24 +11,17 @@ DATA	= RServ.pm
 DATA_built	= master.sql slave.sql
 SQLS	= $(DATA_built)
 DOCS	= README.rserv
-SCRIPTS	= RservTest
-SCRIPTS	+= MasterInit MasterAddTable Replicate MasterSync CleanLog
-SCRIPTS	+= SlaveInit SlaveAddTable GetSyncID
-SCRIPTS	+= PrepareSnapshot ApplySnapshot
-SCRIPTS	+= InitRservTest
-EXTRA_CLEAN	= $(SCRIPTS)
+SCRIPTS_built	= RservTest
+SCRIPTS_built	+= MasterInit MasterAddTable Replicate MasterSync CleanLog
+SCRIPTS_built	+= SlaveInit SlaveAddTable GetSyncID
+SCRIPTS_built	+= PrepareSnapshot ApplySnapshot
+SCRIPTS_built	+= InitRservTest
 
-override CPPFLAGS := -I$(srcdir) $(CPPFLAGS)
-override CFLAGS += $(CFLAGS_SL)
-SHLIB_LINK = $(BE_DLLLIBS)
-
-
-all: $(SCRIPTS) $(SQLS) $(addsuffix $(DLSUFFIX), $(MODULES))
 
 $(SQLS): %.sql: %.sql.in
 	sed 's,@MODULE_FILENAME@,$$libdir/$(NAME),g' $< >$@
 
-$(SCRIPTS): %: %.in
+$(SCRIPTS_built): %: %.in
 	sed -e 's,@MODULE_FILENAME@,$$libdir/$(NAME),g' \
 	    -e 's:@SQLDIR@:$(datadir)/contrib:g' \
 	    -e 's:@BINDIR@:$(bindir):g' \
