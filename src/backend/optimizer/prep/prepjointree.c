@@ -16,7 +16,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepjointree.c,v 1.5 2003/02/09 23:57:19 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepjointree.c,v 1.6 2003/02/10 17:08:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -694,23 +694,45 @@ reduce_outer_joins_pass2(Node *jtnode,
 		/* Only recurse if there's more to do below here */
 		if (left_state->contains_outer || right_state->contains_outer)
 		{
+			Relids		local_nonnullable;
 			Relids		pass_nonnullable;
 
 			/*
-			 * Scan join quals to see if we can add any nonnullability
-			 * constraints.  (Okay to do this even if join is still outer.)
+			 * If this join is (now) inner, we can add any nonnullability
+			 * constraints its quals provide to those we got from above.
+			 * But if it is outer, we can only pass down the local constraints
+			 * into the nullable side, because an outer join never eliminates
+			 * any rows from its non-nullable side.  If it's a FULL join then
+			 * it doesn't eliminate anything from either side.
 			 */
-			pass_nonnullable = find_nonnullable_rels(j->quals, true);
-			pass_nonnullable = bms_add_members(pass_nonnullable,
-											   nonnullable_rels);
-			/* And recurse as needed */
+			if (jointype != JOIN_FULL)
+			{
+				local_nonnullable = find_nonnullable_rels(j->quals, true);
+				local_nonnullable = bms_add_members(local_nonnullable,
+													nonnullable_rels);
+			}
+			else
+				local_nonnullable = NULL; /* no use in calculating it */
+
 			if (left_state->contains_outer)
+			{
+				if (jointype == JOIN_INNER || jointype == JOIN_RIGHT)
+					pass_nonnullable = local_nonnullable;
+				else
+					pass_nonnullable = nonnullable_rels;
 				reduce_outer_joins_pass2(j->larg, left_state, parse,
 										 pass_nonnullable);
+			}
 			if (right_state->contains_outer)
+			{
+				if (jointype == JOIN_INNER || jointype == JOIN_LEFT)
+					pass_nonnullable = local_nonnullable;
+				else
+					pass_nonnullable = nonnullable_rels;
 				reduce_outer_joins_pass2(j->rarg, right_state, parse,
 										 pass_nonnullable);
-			bms_free(pass_nonnullable);
+			}
+			bms_free(local_nonnullable);
 		}
 	}
 	else

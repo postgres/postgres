@@ -292,6 +292,45 @@ NATURAL FULL JOIN
     (SELECT name, n as s3_n FROM t3) as s3
   ) ss2;
 
+
+-- Test for propagation of nullability constraints into sub-joins
+
+create temp table x (x1 int, x2 int);
+insert into x values (1,11);
+insert into x values (2,22);
+insert into x values (3,null);
+insert into x values (4,44);
+insert into x values (5,null);
+
+create temp table y (y1 int, y2 int);
+insert into y values (1,111);
+insert into y values (2,222);
+insert into y values (3,333);
+insert into y values (4,null);
+
+select * from x;
+select * from y;
+
+select * from x left join y on (x1 = y1 and x2 is not null);
+select * from x left join y on (x1 = y1 and y2 is not null);
+
+select * from (x left join y on (x1 = y1)) left join x xx(xx1,xx2)
+on (x1 = xx1);
+select * from (x left join y on (x1 = y1)) left join x xx(xx1,xx2)
+on (x1 = xx1 and x2 is not null);
+select * from (x left join y on (x1 = y1)) left join x xx(xx1,xx2)
+on (x1 = xx1 and y2 is not null);
+select * from (x left join y on (x1 = y1)) left join x xx(xx1,xx2)
+on (x1 = xx1 and xx2 is not null);
+-- these should NOT give the same answers as above
+select * from (x left join y on (x1 = y1)) left join x xx(xx1,xx2)
+on (x1 = xx1) where (x2 is not null);
+select * from (x left join y on (x1 = y1)) left join x xx(xx1,xx2)
+on (x1 = xx1) where (y2 is not null);
+select * from (x left join y on (x1 = y1)) left join x xx(xx1,xx2)
+on (x1 = xx1) where (xx2 is not null);
+
+
 --
 -- Clean up
 --

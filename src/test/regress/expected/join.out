@@ -2004,6 +2004,129 @@ NATURAL FULL JOIN
  dd   |      |   42 |    2 |     
 (4 rows)
 
+-- Test for propagation of nullability constraints into sub-joins
+create temp table x (x1 int, x2 int);
+insert into x values (1,11);
+insert into x values (2,22);
+insert into x values (3,null);
+insert into x values (4,44);
+insert into x values (5,null);
+create temp table y (y1 int, y2 int);
+insert into y values (1,111);
+insert into y values (2,222);
+insert into y values (3,333);
+insert into y values (4,null);
+select * from x;
+ x1 | x2 
+----+----
+  1 | 11
+  2 | 22
+  3 |   
+  4 | 44
+  5 |   
+(5 rows)
+
+select * from y;
+ y1 | y2  
+----+-----
+  1 | 111
+  2 | 222
+  3 | 333
+  4 |    
+(4 rows)
+
+select * from x left join y on (x1 = y1 and x2 is not null);
+ x1 | x2 | y1 | y2  
+----+----+----+-----
+  1 | 11 |  1 | 111
+  2 | 22 |  2 | 222
+  3 |    |    |    
+  4 | 44 |  4 |    
+  5 |    |    |    
+(5 rows)
+
+select * from x left join y on (x1 = y1 and y2 is not null);
+ x1 | x2 | y1 | y2  
+----+----+----+-----
+  1 | 11 |  1 | 111
+  2 | 22 |  2 | 222
+  3 |    |  3 | 333
+  4 | 44 |    |    
+  5 |    |    |    
+(5 rows)
+
+select * from (x left join y on (x1 = y1)) left join x xx(xx1,xx2)
+on (x1 = xx1);
+ x1 | x2 | y1 | y2  | xx1 | xx2 
+----+----+----+-----+-----+-----
+  1 | 11 |  1 | 111 |   1 |  11
+  2 | 22 |  2 | 222 |   2 |  22
+  3 |    |  3 | 333 |   3 |    
+  4 | 44 |  4 |     |   4 |  44
+  5 |    |    |     |   5 |    
+(5 rows)
+
+select * from (x left join y on (x1 = y1)) left join x xx(xx1,xx2)
+on (x1 = xx1 and x2 is not null);
+ x1 | x2 | y1 | y2  | xx1 | xx2 
+----+----+----+-----+-----+-----
+  1 | 11 |  1 | 111 |   1 |  11
+  2 | 22 |  2 | 222 |   2 |  22
+  3 |    |  3 | 333 |     |    
+  4 | 44 |  4 |     |   4 |  44
+  5 |    |    |     |     |    
+(5 rows)
+
+select * from (x left join y on (x1 = y1)) left join x xx(xx1,xx2)
+on (x1 = xx1 and y2 is not null);
+ x1 | x2 | y1 | y2  | xx1 | xx2 
+----+----+----+-----+-----+-----
+  1 | 11 |  1 | 111 |   1 |  11
+  2 | 22 |  2 | 222 |   2 |  22
+  3 |    |  3 | 333 |   3 |    
+  4 | 44 |  4 |     |     |    
+  5 |    |    |     |     |    
+(5 rows)
+
+select * from (x left join y on (x1 = y1)) left join x xx(xx1,xx2)
+on (x1 = xx1 and xx2 is not null);
+ x1 | x2 | y1 | y2  | xx1 | xx2 
+----+----+----+-----+-----+-----
+  1 | 11 |  1 | 111 |   1 |  11
+  2 | 22 |  2 | 222 |   2 |  22
+  3 |    |  3 | 333 |     |    
+  4 | 44 |  4 |     |   4 |  44
+  5 |    |    |     |     |    
+(5 rows)
+
+-- these should NOT give the same answers as above
+select * from (x left join y on (x1 = y1)) left join x xx(xx1,xx2)
+on (x1 = xx1) where (x2 is not null);
+ x1 | x2 | y1 | y2  | xx1 | xx2 
+----+----+----+-----+-----+-----
+  1 | 11 |  1 | 111 |   1 |  11
+  2 | 22 |  2 | 222 |   2 |  22
+  4 | 44 |  4 |     |   4 |  44
+(3 rows)
+
+select * from (x left join y on (x1 = y1)) left join x xx(xx1,xx2)
+on (x1 = xx1) where (y2 is not null);
+ x1 | x2 | y1 | y2  | xx1 | xx2 
+----+----+----+-----+-----+-----
+  1 | 11 |  1 | 111 |   1 |  11
+  2 | 22 |  2 | 222 |   2 |  22
+  3 |    |  3 | 333 |   3 |    
+(3 rows)
+
+select * from (x left join y on (x1 = y1)) left join x xx(xx1,xx2)
+on (x1 = xx1) where (xx2 is not null);
+ x1 | x2 | y1 | y2  | xx1 | xx2 
+----+----+----+-----+-----+-----
+  1 | 11 |  1 | 111 |   1 |  11
+  2 | 22 |  2 | 222 |   2 |  22
+  4 | 44 |  4 |     |   4 |  44
+(3 rows)
+
 --
 -- Clean up
 --
