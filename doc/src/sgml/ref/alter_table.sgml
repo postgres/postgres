@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_table.sgml,v 1.50 2002/09/21 18:32:54 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_table.sgml,v 1.51 2002/10/19 22:51:45 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -38,9 +38,9 @@ ALTER TABLE [ ONLY ] <replaceable class="PARAMETER">table</replaceable> [ * ]
     class="PARAMETER">new_column</replaceable>
 ALTER TABLE <replaceable class="PARAMETER">table</replaceable>
     RENAME TO <replaceable class="PARAMETER">new_table</replaceable>
-ALTER TABLE <replaceable class="PARAMETER">table</replaceable>
-    ADD <replaceable class="PARAMETER">table_constraint_definition</replaceable>
-ALTER TABLE [ ONLY ] <replaceable class="PARAMETER">table</replaceable> 
+ALTER TABLE [ ONLY ] <replaceable class="PARAMETER">table</replaceable> [ * ]
+    ADD <replaceable class="PARAMETER">table_constraint</replaceable>
+ALTER TABLE [ ONLY ] <replaceable class="PARAMETER">table</replaceable> [ * ]
 	DROP CONSTRAINT <replaceable class="PARAMETER">constraint_name</replaceable> [ RESTRICT | CASCADE ]
 ALTER TABLE <replaceable class="PARAMETER">table</replaceable>
 	OWNER TO <replaceable class="PARAMETER">new_owner</replaceable> 
@@ -110,7 +110,7 @@ ALTER TABLE <replaceable class="PARAMETER">table</replaceable>
      </varlistentry>
 
      <varlistentry>
-      <term><replaceable class="PARAMETER"> table_constraint_definition </replaceable></term>
+      <term><replaceable class="PARAMETER"> table_constraint </replaceable></term>
       <listitem>
        <para>
 	New table constraint for the table.
@@ -298,7 +298,7 @@ ALTER TABLE <replaceable class="PARAMETER">table</replaceable>
    </varlistentry>
 
    <varlistentry>
-    <term>ADD <replaceable class="PARAMETER">table_constraint_definition</replaceable></term>
+    <term>ADD <replaceable class="PARAMETER">table_constraint</replaceable></term>
     <listitem>
      <para>
       This form adds a new constraint to a table using the same syntax as
@@ -311,7 +311,7 @@ ALTER TABLE <replaceable class="PARAMETER">table</replaceable>
     <term>DROP CONSTRAINT</term>
     <listitem>
      <para>
-      This form drops constraints on a table (and its children).
+      This form drops constraints on a table.
       Currently, constraints on tables are not required to have unique
       names, so there may be more than one constraint matching the specified
       name.  All such constraints will be dropped.
@@ -374,6 +374,22 @@ ALTER TABLE <replaceable class="PARAMETER">table</replaceable>
 UPDATE table SET col = col;
 VACUUM FULL table;
     </programlisting>
+   </para>
+
+   <para>
+    If a table has any descendant tables, it is not permitted to ADD or
+    RENAME a column in the parent table without doing the same to the
+    descendants --- that is, ALTER TABLE ONLY will be rejected.  This
+    ensures that the descendants always have columns matching the parent.
+   </para>
+
+   <para>
+    A recursive DROP COLUMN operation will remove a descendant table's column
+    only if the descendant does not inherit that column from any other
+    parents and never had an independent definition of the column.
+    A nonrecursive DROP COLUMN (i.e., ALTER TABLE ONLY ... DROP COLUMN)
+    never removes any descendant columns, but instead marks them as
+    independently defined rather than inherited.
    </para>
 
    <para>
