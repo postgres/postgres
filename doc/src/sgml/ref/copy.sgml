@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/copy.sgml,v 1.19 2001/01/03 20:04:09 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/copy.sgml,v 1.20 2001/01/13 23:58:55 petere Exp $
 Postgres documentation
 -->
 
@@ -590,9 +590,9 @@ ZW      ZIMBABWE
    The following is the same data, output in binary format on a Linux/i586
    machine. The data is shown after filtering through
    the Unix utility <command>od -c</command>. The table has
-   three fields; the first is <classname>char(2)</classname>,
-   the second is <classname>text</classname>, and the third is
-   <classname>int4</classname>. All the
+   three fields; the first is <type>char(2)</type>,
+   the second is <type>text</type>, and the third is
+   <type>integer</type>. All the
    rows have a null value in the third field.
   </para>
   <programlisting>

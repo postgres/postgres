@@ -35,7 +35,7 @@
      <para>
       For a <firstterm>functional index</firstterm>, an index is defined
       on the result of a function applied
-      to one or more attributes of a single class.
+      to one or more columns of a single table.
       This is a single-column index (namely, the function result)
       even if the function uses more than one input field.
       Functional indices can be used to obtain fast access to data

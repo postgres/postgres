@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/select.sgml,v 1.36 2001/01/08 21:30:37 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/select.sgml,v 1.37 2001/01/13 23:58:55 petere Exp $
 Postgres documentation
 -->
 
@@ -31,7 +31,7 @@ SELECT [ ALL | DISTINCT [ ON ( <replaceable class="PARAMETER">expression</replac
     [ HAVING <replaceable class="PARAMETER">condition</replaceable> [, ...] ]
     [ { UNION | INTERSECT | EXCEPT [ ALL ] } <replaceable class="PARAMETER">select</replaceable> ]
     [ ORDER BY <replaceable class="PARAMETER">expression</replaceable> [ ASC | DESC | USING <replaceable class="PARAMETER">operator</replaceable> ] [, ...] ]
-    [ FOR UPDATE [ OF <replaceable class="PARAMETER">class_name</replaceable> [, ...] ] ]
+    [ FOR UPDATE [ OF <replaceable class="PARAMETER">tablename</replaceable> [, ...] ] ]
     [ LIMIT { <replaceable class="PARAMETER">count</replaceable> | ALL } [ { OFFSET | , } <replaceable class="PARAMETER">start</replaceable> ]]
 
 where <replaceable class="PARAMETER">from_item</replaceable> can be:
@@ -397,11 +397,11 @@ where <replaceable class="PARAMETER">from_item</replaceable> can be:
 
    <para>
     When a FROM item is a simple table name, it implicitly includes rows
-    from subclasses (inheritance children) of the table.
+    from sub-tables (inheritance children) of the table.
     <command>ONLY</command> will
-    suppress rows from subclasses of the table.  Before
+    suppress rows from sub-tables of the table.  Before
     <Productname>Postgres</Productname> 7.1,
-    this was the default result, and adding subclasses was done
+    this was the default result, and adding sub-tables was done
     by appending <command>*</command> to the table name.
     This old behaviour is available via the command 
     <command>SET SQL_Inheritance TO OFF;</command>

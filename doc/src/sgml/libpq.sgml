@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/libpq.sgml,v 1.54 2000/12/28 00:16:11 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/libpq.sgml,v 1.55 2001/01/13 23:58:55 petere Exp $
 -->
 
  <chapter id="libpq-chapter">
@@ -810,7 +810,7 @@ when you want to know the status from the latest operation on the connection.
 <listitem>
 <para>
 <function>PQntuples</function>
-          Returns the number of tuples (instances)
+          Returns the number of tuples (rows)
           in the query result.
 <synopsis>
 int PQntuples(const PGresult *res);
@@ -2042,7 +2042,7 @@ main()
     PQclear(res);
 
     /*
-     * fetch instances from the pg_database, the system catalog of
+     * fetch rows from the pg_database, the system catalog of
      * databases
      */
     res = PQexec(conn, "DECLARE mycursor CURSOR FOR select * from pg_database");
@@ -2067,7 +2067,7 @@ main()
         printf("%-15s", PQfname(res, i));
     printf("\n\n");
 
-    /* next, print out the instances */
+    /* next, print out the rows */
     for (i = 0; i &lt; PQntuples(res); i++)
     {
         for (j = 0; j &lt; nFields; j++)
@@ -2315,7 +2315,7 @@ main()
     PQclear(res);
 
     /*
-     * fetch instances from the pg_database, the system catalog of
+     * fetch rows from the pg_database, the system catalog of
      * databases
      */
     res = PQexec(conn, "DECLARE mycursor BINARY CURSOR FOR select * from test1");

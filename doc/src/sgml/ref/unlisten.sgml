@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/unlisten.sgml,v 1.13 2000/12/25 23:15:26 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/unlisten.sgml,v 1.14 2001/01/13 23:58:55 petere Exp $
 Postgres documentation
 -->
 
@@ -114,7 +114,7 @@ UNLISTEN { <replaceable class="PARAMETER">notifyname</replaceable> | * }
     Notes
    </title>
    <para>
-    <replaceable class="PARAMETER">classname</replaceable>
+    <replaceable class="PARAMETER">notifyname</replaceable>
     need not be a valid class name but can be any string valid
     as a name up to 32 characters long.
    </para>
@@ -123,13 +123,6 @@ UNLISTEN { <replaceable class="PARAMETER">notifyname</replaceable> | * }
     listening for.
     Each backend will automatically execute <command>UNLISTEN *</command> when
     exiting.
-   </para>
-   <para>
-    A restriction in some previous releases of
-    <productname>Postgres</productname> that a
-    <replaceable class="PARAMETER">classname</replaceable>
-    which does not correspond to an actual table must be enclosed in double-quotes
-    is no longer present.
    </para>
   </refsect2>
  </refsect1>

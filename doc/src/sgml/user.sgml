@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/user.sgml,v 1.23 2001/01/06 11:58:56 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/user.sgml,v 1.24 2001/01/13 23:58:55 petere Exp $
 -->
 
 <book id="user">
@@ -35,7 +35,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/user.sgml,v 1.23 2001/01/06 11:58:56 
    developed originally in the UC Berkeley Computer Science Department,
    pioneered many of the object-relational concepts
    now becoming available in some commercial databases.
-   It provides SQL92/SQL3 language support,
+   It provides SQL92/SQL99 language support,
    transaction integrity, and type extensibility.
    <productname>PostgreSQL</productname> is an open-source descendant
    of this original Berkeley code.

@@ -10,7 +10,7 @@ A description of the database file default page format.
 
 <para>
 This section provides an overview of the page format used by <productname>Postgres</productname>
-classes.  User-defined access methods need not use this page format.
+tables.  User-defined access methods need not use this page format.
 </para>
 
 <para>
@@ -18,13 +18,13 @@ In the following explanation, a
 <firstterm>byte</firstterm>
 is assumed to contain 8 bits.  In addition, the term
 <firstterm>item</firstterm>
-refers to data that is stored in <productname>Postgres</productname> classes.
+refers to data that is stored in <productname>Postgres</productname> tables.
 </para>
 
 <para>
-The following table shows how pages in both normal <productname>Postgres</productname> classes
- and <productname>Postgres</productname> index
-classes (e.g., a B-tree index) are structured.
+The following table shows how pages in both normal <productname>Postgres</productname> tables
+ and <productname>Postgres</productname> indices
+(e.g., a B-tree index) are structured.
 
 <table tocentry="1">
 <title>Sample Page Layout</title>
@@ -141,7 +141,7 @@ access method.  The last 2 bytes of the page header,
 encode the page size and information on the internal fragmentation of
 the page.  Page size is stored in each page because frames in the
 buffer pool may be subdivided into equal sized pages on a frame by
-frame basis within a class.  The internal fragmentation information is
+frame basis within a table.  The internal fragmentation information is
 used to aid in determining when page reorganization should occur.
 </para>
 

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/libpq++.sgml,v 1.22 2000/12/26 00:10:37 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/libpq++.sgml,v 1.23 2001/01/13 23:58:55 petere Exp $
 -->
 
  <chapter id="libpqplusplus">
@@ -353,7 +353,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/libpq++.sgml,v 1.22 2000/12/26 00:10:
      <listitem>
       <para>
        <function>Tuples</function>
-       Returns the number of tuples (instances) in the query result. 
+       Returns the number of tuples (rows) in the query result. 
        <synopsis>
 	int PgDatabase::Tuples()
        </synopsis>

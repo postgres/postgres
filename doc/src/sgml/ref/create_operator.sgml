@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_operator.sgml,v 1.17 2000/10/10 04:42:43 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_operator.sgml,v 1.18 2001/01/13 23:58:55 petere Exp $
 Postgres documentation
 -->
 
@@ -350,7 +350,7 @@ MYBOXES.description &lt;&lt;&lt; box '((0,0), (1,1))'
    instance  variables, the query optimizer must estimate the
    size of the resulting join.  The function  join_proc  will
    return  another floating point number which will be multiplied
-   by the cardinalities of the two classes involved  to
+   by the cardinalities of the two tables involved  to
    compute the expected result size.
   </para>
   <para>

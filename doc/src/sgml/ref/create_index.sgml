@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_index.sgml,v 1.17 2000/12/25 23:15:26 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_index.sgml,v 1.18 2001/01/13 23:58:55 petere Exp $
 Postgres documentation
 -->
 
@@ -208,7 +208,7 @@ ERROR: Cannot create index: 'index_name' already exists.
    In the second syntax shown above, an index is defined
    on the result of a user-specified function
    <replaceable class="parameter">func_name</replaceable> applied
-   to one or more attributes of a single class.
+   to one or more columns of a single table.
    These <firstterm>functional indices</firstterm>
    can be used to obtain fast access to data
    based on operators that would normally require some

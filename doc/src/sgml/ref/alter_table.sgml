@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_table.sgml,v 1.18 2001/01/05 06:34:16 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_table.sgml,v 1.19 2001/01/13 23:58:55 petere Exp $
 Postgres documentation
 -->
 
@@ -209,7 +209,7 @@ ALTER TABLE <replaceable class="PARAMETER">table</replaceable>
    </para>
 
    <para>
-    You must own the class in order to change its schema.
+    You must own the table in order to change it.
     Renaming any  part  of  the schema of a system
     catalog is not permitted.
     The <citetitle>PostgreSQL User's Guide</citetitle> has further

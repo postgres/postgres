@@ -3,7 +3,7 @@
   <para>
    As previously mentioned, there are two kinds  of  types
    in  <productname>Postgres</productname>: base types (defined in a programming language) 
-   and composite types (instances).
+   and composite types.
    Examples in this section up to interfacing indices  can
    be  found in <filename>complex.sql</filename> and <filename>complex.c</filename>.  Composite examples 
    are in <filename>funcs.sql</filename>.

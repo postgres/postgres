@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/update.sgml,v 1.13 2000/12/25 23:15:26 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/update.sgml,v 1.14 2001/01/13 23:58:55 petere Exp $
 Postgres documentation
 -->
 
@@ -143,7 +143,7 @@ UPDATE <replaceable class="parameter">#</replaceable>
 
   <para>
   By default UPDATE will update tuples in the table specified 
-  and all its sub-classes. If you wish to only update the
+  and all its sub-tables. If you wish to only update the
   specific table mentioned, you should use the ONLY clause.
   </para>
  </refsect1>

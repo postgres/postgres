@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_view.sgml,v 1.9 2000/03/27 17:14:42 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_view.sgml,v 1.10 2001/01/13 23:58:55 petere Exp $
 Postgres documentation
 -->
 
@@ -123,8 +123,8 @@ CREATE VIEW vista AS SELECT text 'Hello World'
    Description
   </title>
   <para>
-   <command>CREATE VIEW</command> will define a view of a table or
-   class. This view is not physically materialized. Specifically, a query
+   <command>CREATE VIEW</command> will define a view of a table.
+   This view is not physically materialized. Specifically, a query
    rewrite retrieve rule is automatically generated to support
    retrieve operations on views.
   </para>

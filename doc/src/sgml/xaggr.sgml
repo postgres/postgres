@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/xaggr.sgml,v 1.9 2000/10/23 00:46:06 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/xaggr.sgml,v 1.10 2001/01/13 23:58:55 petere Exp $
 -->
 
  <chapter id="xaggr">
@@ -31,9 +31,9 @@ $Header: /cvsroot/pgsql/doc/src/sgml/xaggr.sgml,v 1.9 2000/10/23 00:46:06 tgl Ex
   <para>
    If we define an aggregate that does not use a final function,
    we have an aggregate that computes a running function of
-   the attribute values from each instance.  "Sum"  is  an
+   the column values from each row.  "Sum"  is  an
    example  of  this  kind  of aggregate.  "Sum" starts at
-   zero and always adds the current  instance's  value  to
+   zero and always adds the current  row's  value  to
    its  running  total.  For example, if we want to make a Sum
    aggregate to work on a datatype for complex numbers,
    we only need the addition function for that datatype.

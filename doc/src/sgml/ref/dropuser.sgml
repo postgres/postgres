@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/dropuser.sgml,v 1.10 2000/12/25 23:15:26 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/dropuser.sgml,v 1.11 2001/01/13 23:58:55 petere Exp $
 Postgres documentation
 -->
 
@@ -148,7 +148,7 @@ Postgres documentation
    <productname>Postgres</productname> user
    <emphasis>and</emphasis> the databases which that user owned.
    Only users with <literal>usesuper</literal> set in
-   the <literal>pg_shadow</literal> class can destroy 
+   the <literal>pg_shadow</literal> table can destroy 
    <productname>Postgres</productname> users.
   </para>
 

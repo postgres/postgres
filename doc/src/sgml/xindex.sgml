@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/xindex.sgml,v 1.12 2000/12/26 00:10:37 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/xindex.sgml,v 1.13 2001/01/13 23:58:55 petere Exp $
 Postgres documentation
 -->
 
@@ -27,7 +27,7 @@ Postgres documentation
   </para>
 
   <para>
-   The <filename>pg_am</filename> class contains one instance for every user
+   The <filename>pg_am</filename> table contains one row for every user
    defined access method.  Support for the heap access method is built into
    <productname>Postgres</productname>, but every other access method is
    described here.  The schema is
@@ -38,7 +38,7 @@ Postgres documentation
     <tgroup cols="2">
      <thead>
       <row>
-       <entry>Attribute</entry>
+       <entry>Column</entry>
        <entry>Description</entry>
       </row>
      </thead>
@@ -49,7 +49,7 @@ Postgres documentation
       </row>
       <row>
        <entry>amowner</entry>
-       <entry>object id of the owner's instance in pg_user</entry>
+       <entry>user id of the owner</entry>
       </row>
       <row>
        <entry>amstrategies</entry>
@@ -74,7 +74,7 @@ Postgres documentation
        <entry>...</entry>
        <entry>procedure  identifiers  for  interface routines to the access
 	method.  For example, regproc ids for opening,  closing,  and
-	getting instances from the access method appear here.</entry>
+	getting rows from the access method appear here.</entry>
       </row>
      </tbody>
     </tgroup>
@@ -82,11 +82,11 @@ Postgres documentation
   </para>
 
   <para>
-   The <acronym>object ID</acronym> of the instance in
-   <filename>pg_am</filename> is used as a foreign key in lots of other
-   classes.  You  don't  need to  add a new instance to this class; all
-   you're interested in is the <acronym>object ID</acronym> of the access
-   method instance you want to extend:
+   The <acronym>object ID</acronym> of the row in
+   <filename>pg_am</filename> is used as a foreign key in a lot of other
+   tables.  You  do not  need to  add a new rows to this table; all that
+   you are interested in is the <acronym>object ID</acronym> of the access
+   method row you want to extend:
 
    <programlisting>
 SELECT oid FROM pg_am WHERE amname = 'btree';
@@ -102,7 +102,7 @@ SELECT oid FROM pg_am WHERE amname = 'btree';
   </para>
 
   <para>
-   The <filename>amstrategies</filename> attribute exists to standardize
+   The <filename>amstrategies</filename> column exists to standardize
    comparisons across data types.  For example, <acronym>B-tree</acronym>s
    impose a strict ordering on keys, lesser to greater.  Since
    <productname>Postgres</productname> allows the user to define operators,
@@ -125,7 +125,7 @@ SELECT oid FROM pg_am WHERE amname = 'btree';
    Defining a new set of strategies is beyond the scope of this discussion,
    but we'll explain how <acronym>B-tree</acronym> strategies work because
    you'll need to know that to add a new operator class. In the
-   <filename>pg_am</filename> class, the amstrategies attribute is the
+   <filename>pg_am</filename> table, the amstrategies column is the
    number of strategies defined for this access method. For
    <acronym>B-tree</acronym>s, this number is 5.  These strategies
    correspond to
@@ -193,8 +193,8 @@ SELECT oid FROM pg_am WHERE amname = 'btree';
   <para>
    In order to manage diverse support routines consistently across all
    <productname>Postgres</productname> access methods,
-   <filename>pg_am</filename> includes an attribute called
-   <filename>amsupport</filename>.  This attribute records the number of
+   <filename>pg_am</filename> includes a column called
+   <filename>amsupport</filename>.  This column records the number of
    support routines used by an access method.  For <acronym>B-tree</acronym>s,
    this number is one -- the routine to take two keys and return -1, 0, or
    +1, depending on whether the first key is less than, equal
@@ -228,14 +228,14 @@ SELECT oid FROM pg_am WHERE amname = 'btree';
   </para>
 
   <para>
-   The next class of interest is <filename>pg_opclass</filename>.  This class
+   The next table of interest is <filename>pg_opclass</filename>.  This table
    exists only to associate an operator class name and perhaps a default type
    with an operator class oid. Some existing opclasses are <filename>int2_ops,
-   int4_ops,</filename> and <filename>oid_ops</filename>.  You need to add an
-   instance with your opclass name (for example,
+   int4_ops,</filename> and <filename>oid_ops</filename>.  You need to add a
+   row with your opclass name (for example,
    <filename>complex_abs_ops</filename>) to
    <filename>pg_opclass</filename>.  The <filename>oid</filename> of
-   this instance will be a foreign key in other classes, notably
+   this row will be a foreign key in other tables, notably
    <filename>pg_amop</filename>.
 
    <programlisting>
@@ -252,7 +252,7 @@ SELECT oid, opcname, opcdeftype
 (1 row)
    </programlisting>
 
-   Note that the oid for your <filename>pg_opclass</filename> instance will
+   Note that the oid for your <filename>pg_opclass</filename> row will
    be different!  Don't worry about this though.  We'll get this number
    from the system later just like we got the oid of the type here.
   </para>
@@ -357,7 +357,7 @@ CREATE FUNCTION complex_abs_eq(complex, complex)
    hand, the support function returns whatever the particular access method
    expects -- in this case, a signed integer.) The final routine in the
    file is the "support routine" mentioned when we discussed the amsupport
-   attribute of the <filename>pg_am</filename> class.  We will use this
+   column of the <filename>pg_am</filename> table.  We will use this
    later on.  For now, ignore it.
   </para>
 
@@ -416,10 +416,10 @@ CREATE OPERATOR = (
   </para>
 
   <para>
-   Now we're ready to update <filename>pg_amop</filename> with our new
+   Now we are ready to update <filename>pg_amop</filename> with our new
    operator class.  The most important thing in this entire discussion
    is that the operators are ordered, from less than through greater
-   than, in <filename>pg_amop</filename>.  We add the instances we need:
+   than, in <filename>pg_amop</filename>.  We add the rows we need:
 
    <programlisting>
     INSERT INTO pg_amop (amopid, amopclaid, amopopr, amopstrategy)
@@ -440,7 +440,7 @@ CREATE OPERATOR = (
    The next step is registration of the "support routine" previously
    described in our discussion of <filename>pg_am</filename>.  The
    <filename>oid</filename> of this support routine is stored in the
-   <filename>pg_amproc</filename> class, keyed by the access method
+   <filename>pg_amproc</filename> table, keyed by the access method
    <filename>oid</filename> and the operator class <filename>oid</filename>.
    First, we need to register the function in
    <productname>Postgres</productname> (recall that we put the
@@ -463,7 +463,7 @@ CREATE OPERATOR = (
    </programlisting>
 
    (Again, your <filename>oid</filename> number will probably be different.)
-   We can add the new instance as follows:
+   We can add the new row as follows:
 
    <programlisting>
     INSERT INTO pg_amproc (amid, amopclaid, amproc, amprocnum)

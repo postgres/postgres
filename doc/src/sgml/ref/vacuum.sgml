@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/vacuum.sgml,v 1.12 2000/10/05 19:57:23 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/vacuum.sgml,v 1.13 2001/01/13 23:58:55 petere Exp $
 Postgres documentation
 -->
 
@@ -150,10 +150,10 @@ NOTICE:  Index <replaceable class="PARAMETER">index</replaceable>: Pages 28;
   </para>
 
   <para>
-   <command>VACUUM</command> opens every class in the database,
+   <command>VACUUM</command> opens every table in the database,
    cleans out records from rolled back transactions, and updates statistics in the
    system catalogs.  The statistics maintained include the number of
-   tuples and number of pages stored in all classes.
+   tuples and number of pages stored in all tables.
   </para>
 
 
@@ -181,7 +181,7 @@ NOTICE:  Index <replaceable class="PARAMETER">index</replaceable>: Pages 28;
    <para>
     We recommend that active production databases be
     <command>VACUUM</command>-ed nightly, in order to remove
-    expired rows. After copying a large class into
+    expired rows. After copying a large table into
     <productname>Postgres</productname> or after deleting a large number
     of records, it may be a good idea to issue a <command>VACUUM
     ANALYZE</command> query. This will update the system catalogs with

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/query.sgml,v 1.16 2000/12/22 19:31:56 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/query.sgml,v 1.17 2001/01/13 23:58:55 petere Exp $
 -->
 
  <chapter id="query">
@@ -7,8 +7,8 @@ $Header: /cvsroot/pgsql/doc/src/sgml/query.sgml,v 1.16 2000/12/22 19:31:56 peter
 
   <para>
    The  <productname>Postgres</productname>  query language is a variant of
-   the <acronym>SQL3</acronym> draft next-generation standard. It
-   has many extensions to <acronym>SQL92</acronym> such as an
+   the <acronym>SQL</acronym> standard. It
+   has many extensions to <acronym>SQL</acronym> such as an
    extensible type  system,
    inheritance,  functions and production rules. These are
    features carried over from the original
@@ -24,7 +24,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/query.sgml,v 1.16 2000/12/22 19:31:56 peter
    <xref linkend="MELT93" endterm="MELT93"> and
    <xref linkend="DATE97" endterm="DATE97">.
    You should be  aware  that  some language features 
-   are extensions to the <acronym>ANSI</acronym> standard.
+   are extensions to the standard.
   </para>
 
   <sect1 id="query-psql">
@@ -34,14 +34,15 @@ $Header: /cvsroot/pgsql/doc/src/sgml/query.sgml,v 1.16 2000/12/22 19:31:56 peter
     In the examples that follow, we assume  that  you  have
     created  the mydb database as described in the previous
     subsection and have started <application>psql</application>.
-    Examples  in  this  manual  can  also   be   found   in
-    <filename>/usr/local/pgsql/src/tutorial/</filename>.    Refer   to   the
+    Examples  in  this  manual  can  also   be   found   in source distribution
+    in the directory <filename>src/tutorial/</filename>.    Refer   to   the
     <filename>README</filename> file in that directory for how to use them.   To
     start the tutorial, do the following:
 
-    <programlisting>
-% cd /usr/local/pgsql/src/tutorial
-% psql -s mydb
+<screen>
+<prompt>$</prompt> <userinput>cd <replaceable>...</replaceable>/src/tutorial</userinput>
+<prompt>$</prompt> <userinput>psql -s mydb</userinput>
+<computeroutput>
 Welcome to the POSTGRESQL interactive sql monitor:
   Please read the file COPYRIGHT for copyright terms of POSTGRESQL
 
@@ -49,9 +50,10 @@ Welcome to the POSTGRESQL interactive sql monitor:
    type \q to quit
    type \g or terminate with semicolon to execute query
  You are currently connected to the database: postgres
+</computeroutput>
 
-mydb=> \i basics.sql
-    </programlisting>
+<prompt>mydb=&gt;</prompt> <userinput>\i basics.sql</userinput>
+</screen>
    </para>
 
    <para>
@@ -73,34 +75,33 @@ mydb=> \i basics.sql
    <title>Concepts</title>
 
    <para>
-    The fundamental notion in <productname>Postgres</productname> is that of a  class,
-    which  is a named collection of object instances.  Each
-    instance has the same collection of  named  attributes,
-    and each attribute is of a specific type.  Furthermore,
-    each instance has a permanent <firstterm>object identifier</firstterm>
-    (<acronym>OID</acronym>)
-    that  is  unique  throughout the installation.  Because
-    <acronym>SQL</acronym> syntax refers to tables,  we  will use  the  terms
-    <firstterm>table</firstterm> and <firstterm>class</firstterm> interchangeably.
-    Likewise, an <acronym>SQL</acronym> <firstterm>row</firstterm> is an
-    <firstterm>instance</firstterm> and <acronym>SQL</acronym>
-    <firstterm>columns</firstterm>
-    are <firstterm>attributes</firstterm>.
-    As  previously  discussed,  classes  are  grouped  into
-    databases,  and  a collection of databases managed by a
-    single <application>postmaster</application> process constitutes  a
-    database cluster.
+    The fundamental notion in <productname>Postgres</productname> is
+    that of a <firstterm>table</firstterm>, which is a named
+    collection of <firstterm>rows</firstterm>.  Each row has the same
+    set of named <firstterm>columns</firstterm>, and each column is of
+    a specific type.  Furthermore, each row has a permanent
+    <firstterm>object identifier</firstterm> (<acronym>OID</acronym>)
+    that is unique throughout the database cluster.  Historially,
+    tables have been called classes in
+    <productname>Postgres</productname>, rows are object instances,
+    and columns are attributes.  This makes sense if you consider the
+    object-relational aspects of the database system, but in this
+    manual we will use the customary <acronym>SQL</acronym>
+    terminology.  As previously discussed,
+    tables are grouped into databases, and a collection of databases
+    managed by a single <application>postmaster</application> process
+    constitutes a database cluster.
    </para>
   </sect1>
 
   <sect1 id="query-table">
-   <title>Creating a New Class</title>
+   <title>Creating a New Table</title>
 
    <para>
-    You  can  create  a  new  class by specifying the class
-    name, along with all attribute names and their types:
+    You  can  create  a  new  table by specifying the table
+    name, along with all column names and their types:
 
-    <programlisting>
+<programlisting>
 CREATE TABLE weather (
     city            varchar(80),
     temp_lo         int,           -- low temperature
@@ -108,7 +109,7 @@ CREATE TABLE weather (
     prcp            real,          -- precipitation
     date            date
 );
-    </programlisting>
+</programlisting>
    </para>
 
    <para>
@@ -135,22 +136,21 @@ CREATE TABLE weather (
     looks exactly  like
     the  command  used  to  create a table in a traditional
     relational system.  However, we will presently see that
-    classes  have  properties  that  are  extensions of the
+    tables  have  properties  that  are  extensions of the
     relational model.
    </para>
   </sect1>
 
   <sect1 id="query-populate">
-   <title>Populating a Class with Instances</title>
+   <title>Populating a Table with Rows</title>
 
    <para>
-    The <command>INSERT</command> statement is used to populate a  class  with
-    instances:
+    The <command>INSERT</command> statement is used to populate a table  with
+    rows:
 
-    <programlisting>
-INSERT INTO weather
-    VALUES ('San Francisco', 46, 50, 0.25, '11/27/1994');
-    </programlisting>
+<programlisting>
+INSERT INTO weather VALUES ('San Francisco', 46, 50, 0.25, '1994-11-27');
+</programlisting>
    </para>
 
    <para>
@@ -160,10 +160,9 @@ INSERT INTO weather
     single atomic
     transaction directly to or from the target table. An example would be:
 
-    <programlisting>
-COPY weather FROM '/home/user/weather.txt'
-    USING DELIMITERS '|';
-    </programlisting>
+<programlisting>
+COPY weather FROM '/home/user/weather.txt' USING DELIMITERS '|';
+</programlisting>
 
     where the path name for the source file must be available to the
     backend server
@@ -172,38 +171,38 @@ COPY weather FROM '/home/user/weather.txt'
   </sect1>
 
   <sect1 id="query-query">
-   <title>Querying a Class</title>
+   <title>Querying a Table</title>
 
    <para>
-    The weather class can be queried with normal relational
+    The <classname>weather</classname> table can be queried with normal relational
     selection  and projection queries.  A <acronym>SQL</acronym>
     <command>SELECT</command> 
     statement is used to do this.  The statement is divided into
-    a target list (the part that lists the attributes to be
+    a target list (the part that lists the columns to be
     returned) and a qualification (the part that  specifies
     any  restrictions).   For  example, to retrieve all the
     rows of weather, type:
-    <programlisting>
+<programlisting>
 SELECT * FROM weather;
-    </programlisting>
+</programlisting>
 
     and the output should be:
-    <programlisting>
+<programlisting>
 +--------------+---------+---------+------+------------+
 |city          | temp_lo | temp_hi | prcp | date       |
 +--------------+---------+---------+------+------------+
-|San Francisco | 46      | 50      | 0.25 | 11-27-1994 |
+|San Francisco | 46      | 50      | 0.25 | 1994-11-27 |
 +--------------+---------+---------+------+------------+
-|San Francisco | 43      | 57      | 0    | 11-29-1994 |
+|San Francisco | 43      | 57      | 0    | 1994-11-29 |
 +--------------+---------+---------+------+------------+
-|Hayward       | 37      | 54      |      | 11-29-1994 |
+|Hayward       | 37      | 54      |      | 1994-11-29 |
 +--------------+---------+---------+------+------------+
-    </programlisting>
+</programlisting>
     You may specify any arbitrary expressions in the  target list. For 
     example, you can do:
-    <programlisting>
+<programlisting>
 SELECT city, (temp_hi+temp_lo)/2 AS temp_avg, date FROM weather;
-    </programlisting>
+</programlisting>
    </para>
 
    <para>
@@ -212,31 +211,31 @@ SELECT city, (temp_hi+temp_lo)/2 AS temp_avg, date FROM weather;
     <command>NOT</command>) are
     allowed in the qualification of any query.   For  example,
 
-    <programlisting>
+<programlisting>
 SELECT * FROM weather
     WHERE city = 'San Francisco'
     AND prcp > 0.0;
-    </programlisting>
+</programlisting>
 results in:
-    <programlisting>
+<programlisting>
 +--------------+---------+---------+------+------------+
 |city          | temp_lo | temp_hi | prcp | date       |
 +--------------+---------+---------+------+------------+
-|San Francisco | 46      | 50      | 0.25 | 11-27-1994 |
+|San Francisco | 46      | 50      | 0.25 | 1994-11-27 |
 +--------------+---------+---------+------+------------+
-    </programlisting>
+</programlisting>
    </para>
 
    <para>
     As  a final note, you can specify that the results of a
     select can be returned in a <firstterm>sorted order</firstterm>
-    or with <firstterm>duplicate instances</firstterm> removed.
+    or with duplicate rows removed.
 
-    <programlisting>
+<programlisting>
 SELECT DISTINCT city
     FROM weather
     ORDER BY city;
-    </programlisting>
+</programlisting>
    </para>
   </sect1>
 
@@ -244,37 +243,37 @@ SELECT DISTINCT city
    <title>Redirecting SELECT Queries</title>
 
    <para>
-    Any <command>SELECT</command> query can be redirected to a new class
-    <programlisting>
+    Any <command>SELECT</command> query can be redirected to a new table
+<programlisting>
 SELECT * INTO TABLE temp FROM weather;
-    </programlisting>
+</programlisting>
    </para>
 
    <para>
     This forms an implicit <command>CREATE</command> command, creating a new
-    class temp with the attribute names and types specified
+    table temp with the column names and types specified
     in  the target list of the <command>SELECT INTO</command> command.  We can
     then, of course, perform any operations on the  resulting 
-    class that we can perform on other classes.
+    table that we can perform on other tables.
    </para>
   </sect1>
 
   <sect1 id="query-join">
-   <title>Joins Between Classes</title>
+   <title>Joins Between Tables</title>
 
    <para>
-    Thus far, our queries have only accessed one class at a
-    time.  Queries can access multiple classes at once,  or
-    access  the  same  class  in  such  a way that multiple
-    instances of the class are being processed at the  same
-    time.   A query that accesses multiple instances of the
-    same or different classes at one time is called a  join
+    Thus far, our queries have only accessed one table at a
+    time.  Queries can access multiple tables at once,  or
+    access  the  same  table  in  such  a way that multiple
+    rows of the table are being processed at the  same
+    time.   A query that accesses multiple rows of the
+    same or different tables at one time is called a  join
     query.
     As an example, say we wish to find all the records that
     are in the  temperature  range  of  other  records.  In
     effect,  we  need  to  compare  the temp_lo and temp_hi
-    attributes of each WEATHER  instance  to  the  temp_lo  and
-    temp_hi  attributes of all other WEATHER instances.
+    columns of each WEATHER  row  to  the  temp_lo  and
+    temp_hi  columns of all other WEATHER columns.
     <note>
      <para>
       This  is only a conceptual model.  The actual join may
@@ -285,7 +284,7 @@ SELECT * INTO TABLE temp FROM weather;
 
     We can do this with the following query:
 
-    <programlisting>
+<programlisting>
 SELECT W1.city, W1.temp_lo AS low, W1.temp_hi AS high,
     W2.city, W2.temp_lo AS low, W2.temp_hi AS high
     FROM weather W1, weather W2
@@ -299,14 +298,14 @@ SELECT W1.city, W1.temp_lo AS low, W1.temp_hi AS high,
 +--------------+-----+------+---------------+-----+------+
 |San Francisco | 37  | 54   | San Francisco | 46  | 50   |
 +--------------+-----+------+---------------+-----+------+
-    </programlisting>     
+</programlisting>     
 
     <note>
      <para>
       The semantics of such a join are 
       that the qualification
       is a truth expression defined for the Cartesian  product  of
-      the  classes indicated in the query.  For those instances in
+      the tables indicated in the query.  For those rows in
       the Cartesian product for which the qualification  is  true,
       <productname>Postgres</productname>  computes  and  returns the
       values specified in the target list.  
@@ -324,13 +323,13 @@ SELECT W1.city, W1.temp_lo AS low, W1.temp_hi AS high,
 
    <para>
     In this case, both <literal>W1</literal> and
-    <literal>W2</literal>  are  surrogates for  an
-    instance  of the class weather, and both range over all
-    instances of the class.  (In the  terminology  of  most
+    <literal>W2</literal>  are  surrogates for  a
+    row of the table weather, and both range over all
+    rows of the table.  (In the  terminology  of  most
     database  systems, <literal>W1</literal> and <literal>W2</literal> 
     are known as <firstterm>range variables</firstterm>.)  
     A query can contain an  arbitrary  number  of
-    class names and surrogates.
+    table names and surrogates.
    </para>
   </sect1>
 
@@ -338,17 +337,17 @@ SELECT W1.city, W1.temp_lo AS low, W1.temp_hi AS high,
    <title>Updates</title>
 
    <para>
-    You can update existing instances using the
+    You can update existing rows using the
     <command>UPDATE</command> command. 
     Suppose you discover the temperature readings are
     all  off  by 2 degrees as of Nov 28, you may update the
     data as follow:
 
-    <programlisting>
+<programlisting>
 UPDATE weather
     SET temp_hi = temp_hi - 2,  temp_lo = temp_lo - 2
-    WHERE date > '11/28/1994';
-    </programlisting>
+    WHERE date > '1994-11-28';
+</programlisting>
    </para>
   </sect1>
 
@@ -357,18 +356,18 @@ UPDATE weather
 
    <para>
     Deletions are performed using the <command>DELETE</command> command:
-    <programlisting>
+<programlisting>
 DELETE FROM weather WHERE city = 'Hayward';
-    </programlisting>
+</programlisting>
 
-    All weather recording belongs to Hayward is removed.
+    All weather recording belonging to Hayward are removed.
     One should be wary of queries of the form
-    <programlisting>
-DELETE FROM classname;
-    </programlisting>
+<programlisting>
+DELETE FROM <replaceable>tablename</replaceable>;
+</programlisting>
 
     Without a qualification, <command>DELETE</command> will simply
-    remove  all  instances  of  the given class, leaving it
+    remove  all  rows from the given table, leaving it
     empty.  The system will not request confirmation before
     doing this.
    </para>
@@ -385,7 +384,7 @@ DELETE FROM classname;
     For example, there are aggregates to compute the
     <function>count</function>, <function>sum</function>,
     <function>avg</function> (average), <function>max</function> (maximum) and
-    <function>min</function> (minimum) over a set of instances.
+    <function>min</function> (minimum) over a set of rows.
    </para>
 
    <para>

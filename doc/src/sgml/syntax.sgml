@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/syntax.sgml,v 1.34 2001/01/13 18:34:51 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/syntax.sgml,v 1.35 2001/01/13 23:58:55 petere Exp $
 -->
 
 <chapter id="sql-syntax">
@@ -553,15 +553,12 @@ CAST ( '<replaceable>string</replaceable>' AS <replaceable>type</replaceable> )
 
 
   <sect1 id="sql-syntax-columns">
-   <title>Fields and Columns</title>
-
-   <sect2>
-    <title>Fields</title>
+   <title>Columns</title>
 
     <para>
-     A <firstterm>field</firstterm>
-     is either a user-defined attribute of a given class or one of the
-     following system-defined attributes:
+     A <firstterm>column</firstterm>
+     is either a user-defined column of a given table or one of the
+     following system-defined columns:
 
      <variablelist>
       <varlistentry>
@@ -653,40 +650,29 @@ CAST ( '<replaceable>string</replaceable>' AS <replaceable>type</replaceable> )
      <xref linkend="STON87a" endterm="STON87a">.
      Transaction and command identifiers are 32 bit quantities.
     </para>
-   </sect2>
-
-   <sect2>
-    <title>Columns</title>
 
     <para>
-     A <firstterm>column</firstterm> is a construct of the form:
+     A column can be referenced in the form:
 
-     <synopsis>
-<replaceable>instance</replaceable>{.<replaceable>composite_field</replaceable>}.<replaceable>field</replaceable> `['<replaceable>subscript</replaceable>`]'
-     </synopsis>
+<synopsis>
+<replaceable>corelation</replaceable>.<replaceable>columnname</replaceable> `['<replaceable>subscript</replaceable>`]'
+</synopsis>
 
-     <replaceable>instance</replaceable>
-     identifies a particular class and can be thought of as standing for
-     the instances of that class.  An instance variable is either a class
-     name, an alias for a class defined by means of a FROM clause,
-     or the keyword NEW or OLD.
-     (NEW and OLD can only appear in the action portion of a rule, while
-     other instance variables can be used in any SQL statement.)  The
-     instance name can be omitted if the first field name is unique
-     across all the classes being used in the current query.
-     <replaceable>composite_field</replaceable>
-     is a field of of one of the Postgres composite types,
-     while successive composite fields select attributes in the
-     class(s) to which the composite field evaluates.  Lastly,
-     <replaceable>field</replaceable>
-     is a normal (base type) field in the class(s) last addressed.  If
-     <replaceable>field</replaceable>
-     is of an array type,
-     then the optional <replaceable>subscript</replaceable>
-     selects a specific element in the array.  If no subscript is
-     provided, then the whole array is selected.
+     <replaceable>corelation</replaceable> is either the name of a
+     table, an alias for a table defined by means of a FROM clause, or
+     the keyword <literal>NEW</literal> or <literal>OLD</literal>.
+     (NEW and OLD can only appear in the action portion of a rule,
+     while other corelation names can be used in any SQL statement.)
+     The corelation name can be omitted if the column name is unique
+     across all the tables being used in the current query.  If
+     <replaceable>column</replaceable> is of an array type, then the
+     optional <replaceable>subscript</replaceable> selects a specific
+     element in the array.  If no subscript is provided, then the
+     whole array is selected.  Refer to the description of the
+     particular commands in the <citetitle>PostgreSQL Reference
+     Manual</citetitle> for the allowed syntax in each case.
     </para>
-   </sect2>
+
   </sect1>
 
   <sect1 id="sql-expressions">
@@ -861,10 +847,10 @@ sqrt(emp.salary)
      The simplest possibility for a from-expression is:
 
      <synopsis>
-<replaceable>class_reference</replaceable> [ [ AS ] <replaceable class="PARAMETER">alias</replaceable> ]
+<replaceable>table_reference</replaceable> [ [ AS ] <replaceable class="PARAMETER">alias</replaceable> ]
      </synopsis>
 
-     where <replaceable>class_reference</replaceable> is of the form
+     where <replaceable>table_reference</replaceable> is of the form
 
      <synopsis>
 [ ONLY ] <replaceable class="PARAMETER">table_name</replaceable> [ * ]

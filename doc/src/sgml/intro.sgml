@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/intro.sgml,v 1.12 2000/09/29 20:21:34 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/intro.sgml,v 1.13 2001/01/13 23:58:55 petere Exp $
 -->
 
  <chapter id="intro">
@@ -44,7 +44,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/intro.sgml,v 1.12 2000/09/29 20:21:34 peter
     extend the system:
 
     <simplelist>
-     <member>classes</member>
+     <member>tables</member>
      <member>inheritance</member>
      <member>types</member>
      <member>functions</member>

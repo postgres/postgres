@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/array.sgml,v 1.8 2000/12/18 23:39:37 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/array.sgml,v 1.9 2001/01/13 23:58:55 petere Exp $
 -->
 
 <Chapter Id="arrays">
@@ -14,10 +14,10 @@ This must become a chapter on array behavior. Volunteers? - thomas 1998-01-12
 </Para>
 
 <Para>
-     <ProductName>Postgres</ProductName> allows attributes of a class
+     <ProductName>Postgres</ProductName> allows columns of a table
      to be defined as variable-length multi-dimensional
      arrays. Arrays of any built-in type  or  user-defined  type
-     can  be created.  To illustrate their use, we create this class:
+     can  be created.  To illustrate their use, we create this table:
      
 <ProgramListing>
 CREATE TABLE sal_emp (
@@ -29,7 +29,7 @@ CREATE TABLE sal_emp (
 </Para>
 
 <Para>
-     The above query will create a class named <FirstTerm>sal_emp</FirstTerm>  with
+     The above query will create a table named <FirstTerm>sal_emp</FirstTerm>  with
      a  <FirstTerm>text</FirstTerm>  string (name), a one-dimensional array of <FirstTerm>int4</FirstTerm>
      (pay_by_quarter),  which  represents   the   employee's
      salary by quarter, and a two-dimensional array of <FirstTerm>text</FirstTerm>

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/plsql.sgml,v 2.13 2001/01/09 15:26:16 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/plsql.sgml,v 2.14 2001/01/13 23:58:55 petere Exp $
 -->
 
  <chapter id="plsql">
@@ -181,12 +181,12 @@ END;
 
      <varlistentry>
       <term>
-<replaceable>name</replaceable> <replaceable>class</replaceable>%ROWTYPE;
+<replaceable>name</replaceable> <replaceable>table</replaceable>%ROWTYPE;
       </term>
       <listitem>
        <para>
-	Declares a row with the structure of the given class. Class must be
-	an existing table- or view name of the database. The fields of the row
+	Declares a row with the structure of the given table. <replaceable>table</replaceable> must be
+	an existing table or view name of the database. The fields of the row
 	are accessed in the dot notation. Parameters to a function can
 	be composite types (complete table rows). In that case, the
 	corresponding identifier $n will be a rowtype, but it
@@ -281,7 +281,7 @@ RENAME <replaceable>oldname</replaceable> TO <replaceable>newname</replaceable>;
       </listitem>
       <listitem>
        <para>
-	<replaceable>class.field</replaceable>%TYPE
+	<replaceable>table.field</replaceable>%TYPE
        </para>
       </listitem>
      </itemizedlist>
@@ -292,12 +292,12 @@ RENAME <replaceable>oldname</replaceable> TO <replaceable>newname</replaceable>;
      same function, that is visible at this point.
     </para>
     <para>
-     <replaceable>class</replaceable> is the name of an existing table
+     <replaceable>table</replaceable> is the name of an existing table
      or view where <replaceable>field</replaceable> is the name of
      an attribute.
     </para>
     <para>
-     Using the <replaceable>class.field</replaceable>%TYPE
+     Using the <replaceable>table.field</replaceable>%TYPE
      causes PL/pgSQL to look up the attributes definitions at the
      first call to the function during the lifetime of a backend.
      Have a table with a char(20) attribute and some PL/pgSQL functions
@@ -307,7 +307,7 @@ RENAME <replaceable>oldname</replaceable> TO <replaceable>newname</replaceable>;
      char(40) and restores the data. Ha - he forgot about the
      functions. The computations inside them will truncate the values
      to 20 characters. But if they are defined using the
-     <replaceable>class.field</replaceable>%TYPE
+     <replaceable>table.field</replaceable>%TYPE
      declarations, they will automagically handle the size change or
      if the new table schema defines the attribute as text type.
     </para>

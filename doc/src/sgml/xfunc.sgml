@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/xfunc.sgml,v 1.27 2001/01/12 22:15:32 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/xfunc.sgml,v 1.28 2001/01/13 23:58:55 petere Exp $
 -->
 
  <chapter id="xfunc">
@@ -202,7 +202,7 @@ SELECT name, double_salary(EMP) AS dream
      return  composite  types,  we  must first introduce the
      function notation for projecting attributes.  The  simple  way 
      to explain this is that we can usually use the
-     notations attribute(class)  and  class.attribute  interchangably:
+     notations attribute(table)  and  table.attribute  interchangably:
 
      <programlisting>
 --
@@ -223,10 +223,10 @@ SELECT name(EMP) AS youngster
     <para>
      As  we shall see, however, this is not always the case.
      This function notation is important when we want to use
-     a  function that returns a single instance.  We do this
-     by assembling the entire instance within the  function,
+     a  function that returns a single row.  We do this
+     by assembling the entire row within the  function,
      attribute  by attribute.  This is an example of a function 
-     that returns a single EMP instance:
+     that returns a single EMP row:
 
      <programlisting>
 CREATE FUNCTION new_emp() 
@@ -266,10 +266,10 @@ ERROR:  function declared to return emp returns varchar instead of text at colum
       </listitem>
       <listitem>
        <para>
-	When calling a function that returns an instance, we
-        cannot retrieve the entire instance.  We must either
-        project an attribute out of the instance or pass the
-        entire instance into another function.
+	When calling a function that returns a row, we
+        cannot retrieve the entire row.  We must either
+        project an attribute out of the row or pass the
+        entire row into another function.
 
 	<programlisting>
 SELECT name(new_emp()) AS nobody;
@@ -1012,7 +1012,7 @@ concat_text(PG_FUNCTION_ARGS)
      Therefore,  <productname>Postgres</productname>  provides  
      a  procedural interface for accessing fields of composite types  
      from C.  As <productname>Postgres</productname> processes 
-     a set of instances, each instance will be passed into your 
+     a set of rows, each row will be passed into your 
      function as an  opaque  structure of type <literal>TUPLE</literal>.
      Suppose we want to write a function to answer the query
 
@@ -1029,7 +1029,7 @@ WHERE name = 'Bill' OR name = 'Sam';
 #include "executor/executor.h"  /* for GetAttributeByName() */
 
 bool
-c_overpaid(TupleTableSlot *t, /* the current instance of EMP */
+c_overpaid(TupleTableSlot *t, /* the current row of EMP */
            int32 limit)
 {
     bool isnull;
@@ -1066,7 +1066,7 @@ c_overpaid(PG_FUNCTION_ARGS)
     <para>
      <function>GetAttributeByName</function> is the 
      <productname>Postgres</productname> system function that
-     returns attributes out of the current instance.  It has
+     returns attributes out of the current row.  It has
      three arguments: the argument of type <type>TupleTableSlot*</type> passed into
      the  function, the name of the desired attribute, and a
      return parameter that tells whether  the  attribute
@@ -1088,8 +1088,8 @@ LANGUAGE 'c';
     </para>
 
     <para>
-     While there are ways to construct new instances or modify  
-     existing instances from within a C function, these
+     While there are ways to construct new rows or modify  
+     existing rows from within a C function, these
      are far too complex to discuss in this manual.
     </para>
    </sect2>

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/extend.sgml,v 1.8 2000/12/26 00:10:37 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/extend.sgml,v 1.9 2001/01/13 23:58:55 petere Exp $
 -->
 
  <chapter id="extend">
@@ -44,15 +44,15 @@ $Header: /cvsroot/pgsql/doc/src/sgml/extend.sgml,v 1.8 2000/12/26 00:10:37 peter
     about  databases,  tables,  columns,  etc., in what are
     commonly known as system catalogs.  (Some systems  call
     this  the data dictionary).  The catalogs appear to the
-    user as classes, like any other, but  the  <acronym>DBMS</acronym>  stores
+    user as tables like any other, but  the  <acronym>DBMS</acronym>  stores
     its  internal  bookkeeping in them.  One key difference
     between <productname>Postgres</productname> and  standard  relational  systems  is
     that <productname>Postgres</productname> stores much more information in its 
     catalogs -- not only information about tables and  columns,
     but also information about its types, functions, access
-    methods, and so on.  These classes can be  modified  by
+    methods, and so on.  These tables can be  modified  by
     the  user, and since <productname>Postgres</productname> bases its internal operation 
-    on these classes, this means that <productname>Postgres</productname> can  be
+    on these tables, this means that <productname>Postgres</productname> can  be
     extended   by   users.    By  comparison,  conventional
     database systems can only be extended by changing hardcoded  
     procedures within the <acronym>DBMS</acronym> or by loading modules
@@ -87,13 +87,13 @@ $Header: /cvsroot/pgsql/doc/src/sgml/extend.sgml,v 1.8 2000/12/26 00:10:37 peter
     by  the  user and only understands the behavior of such
     types to the extent that the user describes them.  
     Composite  types  are  created whenever the user creates a
-    class.  EMP is an example of a composite  type.   
+    table.  EMP is an example of a composite  type.   
    </para>
 
    <para>
     <productname>Postgres</productname>  stores  these  types
     in only one way (within the
-    file that stores all instances of the  class)  but  the
+    file that stores all rows of a table)  but  the
     user can "look inside" at the attributes of these types
     from the query language and optimize their retrieval by
     (for example) defining indices on the attributes.
@@ -119,7 +119,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/extend.sgml,v 1.8 2000/12/26 00:10:37 peter
     reference.
     All system catalogs have names  that  begin  with
     <firstterm>pg_</firstterm>.
-    The  following  classes contain information that may be
+    The  following  tables contain information that may be
     useful to the end user.  (There are many  other  system
     catalogs,  but there should rarely be a reason to query
     them directly.)
@@ -141,11 +141,11 @@ $Header: /cvsroot/pgsql/doc/src/sgml/extend.sgml,v 1.8 2000/12/26 00:10:37 peter
        </row>
        <row>
 	<entry>pg_class</entry>
-	<entry> classes</entry>
+	<entry> tables</entry>
        </row>
        <row>
 	<entry>pg_attribute</entry>
-	<entry> class attributes</entry>
+	<entry> table columns</entry>
        </row>
        <row>
 	<entry>pg_index</entry>
@@ -195,10 +195,10 @@ $Header: /cvsroot/pgsql/doc/src/sgml/extend.sgml,v 1.8 2000/12/26 00:10:37 peter
     </figure>
 
     The Reference Manual gives a more detailed  explanation
-    of  these catalogs and their attributes.  However,
+    of  these catalogs and their columns.  However,
     <xref linkend="EXTEND-CATALOGS">
     shows the major entities and their  relationships
-    in  the system catalogs.  (Attributes that do not refer
+    in  the system catalogs.  (Columns that do not refer
     to other entities are not shown unless they are part of
     a primary key.)
     This diagram is more or less incomprehensible until you
@@ -216,13 +216,13 @@ $Header: /cvsroot/pgsql/doc/src/sgml/extend.sgml,v 1.8 2000/12/26 00:10:37 peter
        some  of  these  join  queries  (which are often
        three- or four-way joins)  more  understandable,
        because  you  will  be  able  to  see  that  the
-       attributes used in the queries form foreign keys
-       in other classes.
+       columns used in the queries form foreign keys
+       in other tables.
       </para>
      </listitem>
      <listitem>
       <para>
-       Many  different  features  (classes, attributes,
+       Many  different  features  (tables, columns,
        functions,  types,  access  methods,  etc.)  are
        tightly  integrated  in  this  schema.  A simple
        create command may modify many  of  these  catalogs.
@@ -241,15 +241,15 @@ $Header: /cvsroot/pgsql/doc/src/sgml/extend.sgml,v 1.8 2000/12/26 00:10:37 peter
        </note>
 
        Nearly  every catalog contains some reference to
-       instances in one or both of these classes.   For
+       rows in one or both of these tables.   For
        example,  <productname>Postgres</productname>  frequently  uses type 
        signatures (e.g.,  of  functions  and  operators)  to
-       identify unique instances of other catalogs.
+       identify unique rows of other catalogs.
       </para>
      </listitem>
      <listitem>
       <para>
-       There are many attributes and relationships that
+       There are many columns and relationships that
        have obvious meanings, but there are many  
        (particularly  those  that  have  to  do with access
        methods) that do not.  The relationships between

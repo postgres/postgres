@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_rule.sgml,v 1.21 2001/01/06 04:14:35 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_rule.sgml,v 1.22 2001/01/13 23:58:55 petere Exp $
 Postgres documentation
 -->
 
@@ -213,7 +213,7 @@ CREATE
    </para>
 
    <para>
-    You must have rule definition access to a class in order
+    You must have rule definition access to a table in order
     to define a rule on it. Use <command>GRANT</command>
     and <command>REVOKE</command> to change permissions.
    </para>

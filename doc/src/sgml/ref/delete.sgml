@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/delete.sgml,v 1.11 2000/06/09 01:44:00 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/delete.sgml,v 1.12 2001/01/13 23:58:55 petere Exp $
 Postgres documentation
 -->
 
@@ -120,7 +120,7 @@ DELETE <replaceable class="parameter">count</replaceable>
 
   <para>
   By default DELETE will delete tuples in the table specified 
-  and all its sub-classes. If you wish to only update the
+  and all its sub-tables. If you wish to only update the
   specific table mentioned, you should use the ONLY clause.
   </para>
 

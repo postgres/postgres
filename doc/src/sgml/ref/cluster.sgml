@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/cluster.sgml,v 1.9 2000/07/22 04:30:26 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/cluster.sgml,v 1.10 2001/01/13 23:58:55 petere Exp $
 Postgres documentation
 -->
 
@@ -23,7 +23,7 @@ Postgres documentation
    <date>1999-07-20</date>
   </refsynopsisdivinfo>
   <synopsis>
-CLUSTER <replaceable class="PARAMETER">indexname</replaceable> ON <replaceable class="PARAMETER">table</replaceable>
+CLUSTER <replaceable class="PARAMETER">indexname</replaceable> ON <replaceable class="PARAMETER">tablename</replaceable>
   </synopsis>
 
   <refsect2 id="R2-SQL-CLUSTER-1">
@@ -115,18 +115,18 @@ ERROR: Relation <replaceable class="PARAMETER">table</replaceable> does not exis
   </title>
   <para>
    <command>CLUSTER</command> instructs <productname>Postgres</productname> 
-   to cluster the class specified
+   to cluster the table specified
    by <replaceable class="parameter">table</replaceable> approximately
    based on the index specified by
    <replaceable class="parameter">indexname</replaceable>. The index must
    already have been defined on 
-   <replaceable class="parameter">classname</replaceable>.
+   <replaceable class="parameter">tablename</replaceable>.
   </para>
 
   <para>
-   When a class is clustered, it is physically reordered
+   When a table is clustered, it is physically reordered
    based on the index information. The clustering is static.
-   In other words, as the class is updated, the changes are
+   In other words, as the table is updated, the changes are
    not clustered. No attempt is made to keep new instances or
    updated tuples clustered.  If one wishes, one can
    re-cluster manually by issuing the command again.
