@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.88 2001/12/23 20:22:49 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.89 2001/12/27 21:36:57 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -2643,7 +2643,7 @@ PostgreSQL documentation
        <row>
 	<entry><function>current_timestamp</function></entry>
 	<entry><type>timestamp</type></entry>
-	<entry>date and time; see also <link
+	<entry>Date and time; see <link
 	 linkend="functions-datetime-current">below</link>
 	</entry>
 	<entry></entry>
@@ -2722,7 +2722,7 @@ PostgreSQL documentation
 	<entry><function>now</function>()</entry>
 	<entry><type>timestamp</type></entry>
 	<entry>Current date and time (equivalent to
-	 <function>current_timestamp</function>); see also <link
+	 <function>current_timestamp</function>); see <link
 	 linkend="functions-datetime-current">below</link>
 	</entry>
 	<entry></entry>
@@ -4397,6 +4397,66 @@ SELECT NULLIF(value, '(none)') ...
     reconstruction, not the verbatim text of the command.)
     <function>pg_get_userbyid()</> extracts a user's name given a
     <structfield>usesysid</> value.
+   </para>
+
+   <table>
+    <title>Comment Information Functions</>
+    <tgroup cols="3">
+     <thead>
+      <row><entry>Name</> <entry>Return Type</> <entry>Description</></row>
+     </thead>
+
+     <tbody>
+      <row>
+       <entry><function>obj_description</>(<parameter>objectOID</parameter>, <parameter>tablename</>)</entry>
+       <entry><type>text</></entry>
+       <entry>Get comment for a database object</>
+      </row>
+      <row>
+       <entry><function>obj_description</>(<parameter>objectOID</parameter>)</entry>
+       <entry><type>text</></entry>
+       <entry>Get comment for a database object (<emphasis>deprecated</>)</entry>
+      </row>
+      <row>
+       <entry><function>col_description</>(<parameter>tableOID</parameter>, <parameter>columnnumber</>)</entry>
+       <entry><type>text</></entry>
+       <entry>Get comment for a table column</>
+      </row>
+     </tbody>
+    </tgroup>
+   </table>
+
+   <indexterm zone="functions-misc">
+    <primary>obj_description</primary>
+   </indexterm>
+
+   <indexterm zone="functions-misc">
+    <primary>col_description</primary>
+   </indexterm>
+
+   <para>
+    These functions extract comments previously stored with the
+    <command>COMMENT</> command.  <literal>NULL</> is returned if
+    no comment can be found matching the specified parameters.
+   </para>
+
+   <para>
+    The two-parameter form of <function>obj_description()</> returns the
+    comment for a database object specified by its OID and the name of the
+    containing system catalog.  For example,
+    <literal>obj_description(123456,'pg_class')</>
+    would retrieve the comment for a table with OID 123456.
+    The one-parameter form of <function>obj_description()</> requires only
+    the object OID.  It is now deprecated since there is no guarantee that
+    OIDs are unique across different system catalogs; therefore, the wrong
+    comment could be returned.
+   </para>
+
+   <para>
+    <function>col_description()</> returns the comment for a table column,
+    which is specified by the OID of its table and its column number.
+    <function>obj_description()</> cannot be used for table columns since
+    columns do not have OIDs of their own.
    </para>
 
   </sect1>

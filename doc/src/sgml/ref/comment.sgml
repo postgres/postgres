@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/comment.sgml,v 1.11 2001/12/08 03:24:34 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/comment.sgml,v 1.12 2001/12/27 21:36:57 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -98,11 +98,29 @@ COMMENT
    Description
   </title>
   <para>
-   <command>COMMENT</command> adds a comment to an object that can be 
+   <command>COMMENT</command> stores a comment about a database object.
+    Comments can be 
     easily retrieved with <command>psql</command>'s
-    <command>\dd</command>, <command>\d+</command>, or <command>\l+</command> commands.
-    To remove a comment, write <literal>NULL</literal>.
+    <command>\dd</command>, <command>\d+</command>, or <command>\l+</command>
+    commands.  Other user interfaces to retrieve comments can be built atop
+    the same built-in functions that <command>psql</command> uses, namely
+    <function>obj_description()</> and <function>col_description()</>.
+  </para>
+
+  <para>
+    To modify a comment, issue a new <command>COMMENT</> command for the
+    same object.  Only one comment string is stored for each object.
+    To remove a comment, write <literal>NULL</literal> in place of the text
+    string.
     Comments are automatically dropped when the object is dropped.
+  </para>
+
+  <para>
+    It should be noted that there is presently no security mechanism
+    for comments: any user connected to a database can see all the comments
+    for objects in that database (although only superusers can change
+    comments for objects that they don't own).  Therefore, don't put
+    security-critical information in comments.
   </para>
  </refsect1>
 
