@@ -5,10 +5,11 @@ TODO list for PostgreSQL
 Bracketed items "[]" have more detail.
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Sat Jul 31 02:13:51 EDT 2004
+Last updated:		Sun Aug  1 01:15:12 EDT 2004
 
 The most recent version of this document can be viewed at the PostgreSQL web site, http://www.PostgreSQL.org.
 
+Remove items before beta?
 
 Urgent
 ======
@@ -20,7 +21,7 @@ Urgent
 Administration
 ==============
 
-* Incremental backups
+* -Incremental backups
 * Remove behavior of postmaster -o after making postmaster/postgres
   flags unique
 * -Allow configuration files to be specified in a different directory
@@ -31,34 +32,73 @@ Administration
 * -Allow logging of only data definition(DDL), or DDL and modification statements
 * -Allow log lines to include session-level information, like database and user
 * Allow server log information to be output as INSERT statements
+
+  This would allow server log information to be easily loaded into
+  a database for analysis.
+
 * Prevent default re-use of sysids for dropped users and groups
+
+  Currently, if a user is removed while he still owns objects, a new
+  user given might be given their user id and inherit the
+  previous users objects.
+
 * Prevent dropping user that still owns objects, or auto-drop the objects
-* Allow pooled connections to query prepared queries
-* Allow pooled connections to close all open WITH HOLD cursors
+* Allow pooled connections to list all prepared queries
+
+  This would allow an application inheriting a pooled connection to know
+  the queries prepared in the current session.
+
 * Allow major upgrades without dump/reload, perhaps using pg_upgrade
-* Have SHOW ALL and pg_settings show descriptions for server-side variables(Joe)
-* Allow external interfaces to extend the GUC variable set
-* Allow GRANT/REVOKE permissions to be given to all schema objects with one command
+* Have SHOW ALL and pg_settings show descriptions for server-side variables
+* -Allow external interfaces to extend the GUC variable set
+* Allow GRANT/REVOKE permissions to be given to all schema objects with one 
+  command
 * Remove unreferenced table files created by transactions that were
   in-progress when the server terminated abruptly
 * Allow reporting of which objects are in which tablespaces
+
+  This item is difficult because a tablespace can contain objects from
+  multiple databases. There is a server-side function that returns the
+  databases which use a specific tablespace, so this requires a tool
+  that will call that function and connect to each database to find the
+  objects in each database for that tablespace.
+
 * Allow database recovery where tablespaces can't be created
-* Add include functionality to postgresql.conf
-* Allow changing of already-created database and schema tablespaces
-* Allow moving system tables to other tablespaces, where possible
+
+  When a pg_dump is restored, all tablespaces will attempt to be created
+  in their original locations. If this fails, the user must be able to 
+  adjust the restore process.
+
+* Add "include file" functionality in postgresql.conf
 * Add session start time and last statement time to pg_stat_activity
-* Allow server logs to be read using SQL commands
-* Allow server configuration parameters to be modified remotetly
+* Allow server logs to be remotely read using SQL commands
+* Allow server configuration parameters to be remotely modified
 * Allow administrators to safely terminate individual sessions
-* Allow point-in-time recovery to archive partially filled logs
+
+  Right now, SIGTERM will terminate a session, but it is treated as
+  though the postmaster has paniced and shared memory might not be
+  cleaned up properly.  A new signal is needed for safe termination.
+
+* Allow point-in-time recovery to archive partially filled write-ahead 
+  logs
+
+  Currently only full WAL files are archived. This means that the most
+  recent transactions aren't available for recovery in case of a disk
+  failure.
 
 * Improve replication solutions
 	o Automatic failover
+
+	The proper solution to this will probably the use of a master/slave
+	replication solution like Sloney and a connection pooling tool like
+	pgpool.
+
 	o Load balancing
-	o Master/slave replication
-	o Multi-master replication
-	o Partition data across servers
-	o Queries across databases or servers (two-phase commit)
+
+	You can use any of the master/slave replication servers to use a
+	standby server for data warehousing. To allow read/write queries to
+	multiple servers, you need multi-master replication like pgcluster.
+
 	o Allow replication over unreliable or non-persistent links
 
 
@@ -68,24 +108,29 @@ Data Types
 * Remove Money type, add money formatting for decimal type
 * -Change factorial to return a numeric (Gavin)
 * Change NUMERIC to enforce the maximum precision, and increase it
-* Add function to return compressed length of TOAST data values (Tom)
-* Allow INET subnet tests using non-constants to be indexed
+* Add function to return compressed length of TOAST data values
+* Allow INET subnet tests with non-constants to be indexed
 * Add transaction_timestamp(), statement_timestamp(), clock_timestamp() functionality
-* Have sequence dependency track use of DEFAULT sequences, seqname.nextval
-* Disallow changing default expression of a SERIAL column
+
+  Current CURRENT_TIMESTAMP returns the start time of the current
+  transaction, and gettimeofday() returns the wallclock time. This will
+  make time reporting more consistent and will allow reporting of
+  the statement start time.
+
+* Have sequence dependency track use of DEFAULT sequences,
+  seqname.nextval (?)
+* Disallow changing default expression of a SERIAL column (?)
 * Allow infinite dates just like infinite timestamps
 * -Allow pg_dump to dump sequences using NO_MAXVALUE and NO_MINVALUE
-* Allow backend to output result sets in XML
 * -Prevent whole-row references from leaking memory, e.g. SELECT COUNT(tab.*)
 * Have initdb set DateStyle based on locale?
 * Add pg_get_acldef(), pg_get_typedefault(), and pg_get_attrdef()
-* Add ALTER DOMAIN, AGGREGATE, CONVERSION, SEQUENCE ... OWNER TO
-* Allow to_char to print localized month names (Karel)
+* Allow to_char to print localized month names
 * Allow functions to have a search path specified at creation time
 * -Make LENGTH() of CHAR() not count trailing spaces
 * Allow substring/replace() to get/set bit values
 * Add GUC variable to allow output of interval values in ISO8601 format
-* Support composite types as table columns
+* -Support composite types as table columns
 * Fix data types where equality comparison isn't intuitive, e.g. box
 
 
@@ -93,17 +138,23 @@ Data Types
 	o Allow nulls in arrays
 	o Allow MIN()/MAX() on arrays
 	o Delay resolution of array expression type so assignment coercion 
-	  can be performed on empty array expressions (Joe)
+	  can be performed on empty array expressions
 	o Modify array literal representation to handle array index lower bound
 	  of other than one
 
 
 * BINARY DATA
-	o Improve vacuum of large objects, like /contrib/vacuumlo
+	o Improve vacuum of large objects, like /contrib/vacuumlo (?)
 	o Add security checking for large objects
-	o Make file in/out interface for TOAST columns, similar to large object
-	  interface (force out-of-line storage and no compression)
+
+	Currently large objects entries do not have owners. Permissions can
+	only be set at the pg_largeobject table level.
+
 	o Auto-delete large objects when referencing row is deleted
+
+	o Allow read/write into TOAST values like large objects
+
+	This requires the TOAST column to be stored EXTERNAL.
 
 
 Multi-Language Support
@@ -111,13 +162,19 @@ Multi-Language Support
 
 * Add NCHAR (as distinguished from ordinary varchar),
 * Allow locale to be set at database creation
-* Allow locale on a per-column basis, default to ASCII
-* Optimize locale to have minimal performance impact when not used (Peter E)
+
+  Currently locale can only be set during initdb.
+
+* Allow encoding on a per-column basis
+
+  Right now only one encoding is allowed per database.
+
+* Optimize locale to have minimal performance impact when not used
 * Support multiple simultaneous character sets, per SQL92
-* Improve Unicode combined character handling
-* Add octet_length_server() and octet_length_client() (Thomas, Tatsuo)
-* Make octet_length_client the same as octet_length() (?)
-* Prevent mismatch of frontend/backend encodings from converting bytea
+* Improve Unicode combined character handling (?)
+* Add octet_length_server() and octet_length_client()
+* Make octet_length_client() the same as octet_length()?
+* -Prevent mismatch of frontend/backend encodings from converting bytea
   data from being interpreted as encoded strings
 * -Fix upper()/lower() to work for multibyte encodings
 
@@ -136,69 +193,131 @@ Views / Rules
 Indexes
 =======
 
-* -Order duplicate index entries on creation by tid for faster heap lookups
+* -Order duplicate index entries on creation by ctid for faster heap lookups
 * Allow inherited tables to inherit index, UNIQUE constraint, and primary
   key, foreign key  [inheritance]
-* UNIQUE INDEX on base column not honored on inserts from inherited table
-  INSERT INTO inherit_table (unique_index_col) VALUES (dup) should fail
-  [inheritance]
+* UNIQUE INDEX on base column not honored on inserts/updates from
+  inherited table:  INSERT INTO inherit_table (unique_index_col) VALUES
+  (dup) should fail [inheritance]
+
+  The main difficulty with this item is the problem of creating an index
+  that can spam more than one table.
+
 * Add UNIQUE capability to non-btree indexes
 * Add rtree index support for line, lseg, path, point
-* Use indexes for min() and max() or convert to SELECT col FROM tab ORDER
-  BY col DESC LIMIT 1 if appropriate index exists and WHERE clause acceptible
+* Use indexes for MIN() and MAX()
+
+  MIN/MAX queries can already be rewritten as SELECT col FROM tab ORDER
+  BY col {DESC} LIMIT 1. Completing this item involves making this
+  transformation automatically.
+
 * Use index to restrict rows returned by multi-key index when used with
-  non-consecutive keys or OR clauses, so fewer heap accesses
-* Be smarter about insertion of already-ordered data into btree index
+  non-consecutive keys to reduce heap accesses
+
+  For an index on col1,col2,col3, and a WHERE clause of col1 = 5 and
+  col3 = 9, spin though the index checking for col1 and col3 matches,
+  rather than just col1
+
+* -Be smarter about insertion of already-ordered data into btree index
 * Prevent index uniqueness checks when UPDATE does not modify the column
-* Use bitmaps to fetch heap pages in sequential order [performance]
+
+  Uniqueness (index) checks are done when updating a column even if the
+  column is not modified by the UPDATE.
+
+* Fetch heap pages matching index entries in sequential order [performance]
+
+  Rather than randomly accessing heap pages based on index entries, mark
+  heap pages needing access in a bitmap and do the lookups in sequential
+  order. Another method would be to sort heap ctids matching the index
+  before accessing the heap rows.
+
 * Use bitmaps to combine existing indexes [performance]
+
+  Bitmap indexes allow single indexed columns to be combined to
+  dynamically create a composite index to match a specific query. Each
+  index is a bitmap, and the bitmaps are AND'ed or OR'ed to be combined.
+
 * Allow use of indexes to search for NULLs
+
+  One solution is to create a partial index on an IS NULL expression.
+
 * -Allow SELECT * FROM tab WHERE int2col = 4 to use int2col index, int8,
   float4, numeric/decimal too
-* Add FILLFACTOR to btree index creation
 * Add concurrency to GIST
-* Allow a single index to index multiple tables (for inheritance and subtables)
 * Pack hash index buckets onto disk pages more efficiently
+
+  Currently no only one hash bucket can be stored on a page. Ideally
+  several hash buckets could be stored on a single page and greater
+  granularity used for the hash algorithm.
 
 
 Commands
 ========
 
-* Add BETWEEN ASYMMETRIC/SYMMETRIC (Christopher)
+* Add BETWEEN ASYMMETRIC/SYMMETRIC
 * Change LIMIT/OFFSET to use int8
 * CREATE TABLE AS can not determine column lengths from expressions [atttypmod]
-* Allow UPDATE to handle complex aggregates [update]
-* Allow command blocks to ignore certain types of errors
+* Allow UPDATE to handle complex aggregates [update] (?)
+* -Allow command blocks to ignore certain types of errors
 * Allow backslash handling in quoted strings to be disabled for portability
-* Allow UPDATE, DELETE to handle table aliases for self-joins [delete]
+
+  The use of C-style backslashes (.e.g. \n, \r) in quoted strings is not
+  SQL-spec compliant, so allow such handling to be disabled.
+
+* Allow DELETE to handle table aliases for self-joins [delete]
+
+  There is no way to specify use a table alias for the deleted table in
+  the DELETE WHERE clause because there is no FROM clause. Various
+  syntax extensions to add a FROM clause have been discussed. UPDATE
+  already has such an optional FROM clause.
+
 * Add CORRESPONDING BY to UNION/INTERSECT/EXCEPT
-* Allow REINDEX to rebuild all indexes, remove /contrib/reindex
+* Allow REINDEX to rebuild all database indexes, remove /contrib/reindex
 * Add ROLLUP, CUBE, GROUPING SETS options to GROUP BY
-* Add schema option to createlang
-* Allow savepoints / nested transactions [transactions] (Alvaro)
-* Use nested transactions to prevent syntax errors from aborting a transaction
+* Add a schema option to createlang
+* -Allow savepoints / nested transactions [transactions] (Alvaro)
+* -Use nested transactions to prevent syntax errors from aborting a transaction
 * Allow UPDATE tab SET ROW (col, ...) = (...) for updating multiple columns
-* Allow SET CONSTRAINTS to be qualified by schema/table
-* Prevent COMMENT ON DATABASE from using a database name
+* Allow SET CONSTRAINTS to be qualified by schema/table name
+* -Prevent COMMENT ON DATABASE from using a database name
 * -Add NO WAIT LOCKs
 * Allow TRUNCATE ... CASCADE/RESTRICT
 * Allow PREPARE of cursors
-* Allow LISTEN/NOTIFY to store info in memory rather than tables
+* Allow PREPARE to automatically determine parameter types based on the SQL 
+  statement
+* Allow LISTEN/NOTIFY to store info in memory rather than tables?
+
+  Currently LISTEN/NOTIFY information is stored in pg_listener. Storing
+  such information in memory would improve performance.
+
 * -COMMENT ON [ CAST | CONVERSION | OPERATOR CLASS | LARGE OBJECT | LANGUAGE ] 
   (Christopher) 
 * Dump large object comments in custom dump format
 * Add optional textual message to NOTIFY
+
+  This would allow an informational message to be added to the notify
+  message, perhaps indicating the row modified or other custom
+  information.
+
 * -Allow more ISOLATION LEVELS to be accepted
 * Allow CREATE TABLE foo (f1 INT CHECK (f1 > 0) CHECK (f1 < 10)) to work
-  by searching for non-conflicting constraint names, and prefix with table name
-* Use more reliable method for CREATE DATABASE to get a consistent copy of db
+  by searching for non-conflicting constraint names, and prefix with
+  table name?
+* Use more reliable method for CREATE DATABASE to get a consistent copy
+  of db?
+
+  Currently the system uses the operating system COPY command to create
+  new database.
+
+* Add C code to copy directories for use in creating new databases
 * -Have psql \dn show only visible temp schemas using current_schemas()
 * -Have psql '\i ~/<tab><tab>' actually load files it displays from home dir
-* Ignore temporary tables from other session when processing inheritance
+* Ignore temporary tables from other sessions when processing
+  inheritance?
 * -Add GUC setting to make created tables default to WITHOUT OIDS
-* Have pg_ctl look at PGHOST in case it is a socket directory
-* Allow column-level privileges
-* Add a session mode to warn about non-standard SQL usage
+* Have pg_ctl look at PGHOST in case it is a socket directory?
+* Allow column-level GRANT/REVOKE privileges
+* Add a session mode to warn about non-standard SQL usage in queries
 * Add MERGE command that does UPDATE/DELETE, or on failure, INSERT (rules, triggers?)
 * Add ON COMMIT capability to CREATE TABLE AS SELECT
 * Add NOVICE output level for helpful messages like automatic sequence/index creation
@@ -209,61 +328,106 @@ Commands
 	  rows with DEFAULT value
 	o -ALTER TABLE ADD COLUMN column SERIAL doesn't create sequence because
           of the item above
-	o Have ALTER TABLE rename SERIAL sequences
+	o Have ALTER TABLE RENAME rename SERIAL sequence names
 	o -Allow ALTER TABLE to modify column lengths and change to binary
 	  compatible types
-	o Add ALTER DATABASE ... OWNER TO newowner
+	o -Add ALTER DATABASE ... OWNER TO newowner
 	o Add ALTER DOMAIN TYPE
 	o Allow ALTER TABLE ... ALTER CONSTRAINT ... RENAME
 	o Allow ALTER TABLE to change constraint deferrability and actions
 	o Disallow dropping of an inherited constraint
-	o Allow the schema of objects to be changed
-	o Add ALTER TABLESPACE to change location, name, owner
-	o Allow objects to be moved between tablespaces
+	o Allow objects to be moved to different schemas
+	o Allow ALTER TABLESPACE to move to different directories
+	o Allow databases, schemas, and indexes to be moved to different 
+	  tablespaces
+	o Allow moving system tables to other tablespaces, where possible
+
+	Currently non-global system tables must be in the default database
+	schema. Global system tables can never be moved.
+
+	o -Add ALTER DOMAIN, AGGREGATE, CONVERSION ... OWNER TO
+	o -Add ALTER SEQUENCE ... OWNER TO
 
 * CLUSTER
 	o Automatically maintain clustering on a table
-	o Add ALTER TABLE table SET WITHOUT CLUSTER (Christopher)
+
+	This would require some background daemon to restore clustering
+	during periods of low usage. It might also require tables to be only
+	paritally filled for easier reorganization.
+
+	o -Add ALTER TABLE table SET WITHOUT CLUSTER (Christopher)
 	o Add default clustering to system tables
+
+	To do this, determine the ideal cluster index for each system
+	table and set the cluster setting during initdb.
 
 * COPY
 	o -Allow dump/load of CSV format
-	o Allow COPY to report error lines and continue;  optionally
-	  allow error codes to be specified; requires savepoints or can
-	  not be run in a multi-statement transaction
-	o Allow COPY to understand \x as hex
-	o Have COPY return number of rows loaded/unloaded
+	o Allow COPY to report error lines and continue
+	
+	This requires the use of a savepoint before each COPY line is
+	processed, with ROLLBACK on COPY failure.
+
+	o Allow COPY to understand \x as a hex byte
+	o Have COPY return the number of rows loaded/unloaded (?)
 
 * CURSOR
-	o Allow UPDATE/DELETE WHERE CURRENT OF cursor using per-cursor tid
-	  stored in the backend (Gavin)
-	o Prevent DROP of table being referenced by our own open cursor
+	o Allow UPDATE/DELETE WHERE CURRENT OF cursor
+	
+	This requires using the row ctid to map cursor rows back to the
+	original heap row. This become more complicated if WITH HOLD cursors
+	are to be supported because WITH HOLD cursors have a copy of the row
+	and no FOR UPDATE lock.
+
+	o Prevent DROP TABLE from dropping a row referenced by its own open
+	  cursor (?)
+
+	o Allow pooled connections to list all open WITH HOLD cursors
+
+	Because WITH HOLD cursors exist outside transactions, this allows
+	them to be listed so they can be closed.
 
 * INSERT
-	o Allow INSERT/UPDATE of system-generated oid value for a row
+	o Allow INSERT/UPDATE of the system-generated oid value for a row
 	o Allow INSERT INTO tab (col1, ..) VALUES (val1, ..), (val2, ..)
-	o Allow INSERT/UPDATE ... RETURNING new.col or old.col; handle
-	  RULE cases (Philip)
+	o Allow INSERT/UPDATE ... RETURNING new.col or old.col
+	
+	This is useful for returning the auto-generated key for an INSERT.
+	One complication is how to handle rules that run as part of
+	the insert.
 
 * SHOW/SET
 	o Add SET PERFORMANCE_TIPS option to suggest INDEX, VACUUM, VACUUM
 	  ANALYZE, and CLUSTER
-	o Add SET PATH for schemas
-	o Enforce rules for setting combinations
+	o Add SET PATH for schemas (?)
+
+	This is basically the same as SET search_path.
+	 
+	o Prevent conflicting SET options from being set
+
+	This requires a checking function to be called after the server
+	configuration file is read.
 
 * SERVER-SIDE LANGUAGES
-	o Allow PL/PgSQL's RAISE function to take expressions
+	o Allow PL/PgSQL's RAISE function to take expressions (?)
+
+	Currently only constants are supported.
+
 	o Change PL/PgSQL to use palloc() instead of malloc()
 	o -Allow Java server-side programming
-	o Fix problems with complex temporary table creation/destruction
-	  without using PL/PgSQL EXECUTE, needs cache prevention/invalidation
-        o Fix PL/pgSQL RENAME to work on variables other than OLD/NEW
-	o Improve PL/PgSQL exception handling
+	o Handle references to temporary tables that are created, destroyed, 
+	  then recreated during a session, and EXECUTE is not used
+	  
+	This requires the cached PL/PgSQL byte code to be invalidated when
+	an object referenced in the function is changed.
+
+    o Fix PL/pgSQL RENAME to work on variables other than OLD/NEW
+	o Improve PL/PgSQL exception handling using savepoints
 	o -Allow PL/pgSQL parameters to be specified by name and type during definition
 	o Allow function parameters to be passed by name,
 	  get_employee_salary(emp_id => 12345, tax_year => 2001)
-	o Add PL/PgSQL packages
-	o Add table function support to pltcl, plperl, plpython
+	o Add Oracle-style packages
+	o Add table function support to pltcl, plperl, plpython (?)
 	o Allow PL/pgSQL to name columns by ordinal position, e.g. rec.(3)
 	o Allow PL/pgSQL EXECUTE query_var INTO record_var;
 	o Add capability to create and call PROCEDURES
@@ -273,28 +437,42 @@ Commands
 Clients
 =======
 
-* Add XML capability to pg_dump and COPY, when backend XML capability
+* Add XML output to pg_dump and COPY
+
+  We already allow XML to be stored in the database, and XPath queries
+  can be used on that data using /contrib/xml2. It also supports XSLT
+  transformations.
+    
 * -Allow psql \du to show users, and add \dg for groups
-* Allow clients to query a list of WITH HOLD cursors and prepared statements
 * Add a libpq function to support Parse/DescribeStatement capability
-* Prevent libpq's PQfnumber() from lowercasing the column name
+* Prevent libpq's PQfnumber() from lowercasing the column name (?)
 * -Allow pg_dump to dump CREATE CONVERSION (Christopher)
-* Allow libpq to return information about prepared queries
 * -Make pg_restore continue after errors, so it acts more like pg_dump scripts
 * Have psql show current values for a sequence
 * Allow pg_dumpall to use non-text output formats
 * Have pg_dump use multi-statement transactions for INSERT dumps
 * Move psql backslash database information into the backend, use mnemonic
   commands? [psql]
-* Allow pg_dump to use multiple -t and -n switches
-* Fix oid2name and dbsize for tablespaces
-* Consistenly display privilege information for all objects in psql
 
-* ECPG
+  This would allow non-psql clients to pull the same information out of
+  the database as psql.
+
+* Allow pg_dump to use multiple -t and -n switches
+
+  This should be done by allowing a '-t schema.table' syntax.
+
+* Fix oid2name and dbsize for tablespaces
+* Consistently display privilege information for all objects in psql
+
+* ECPG (?)
 	o Docs
-	o Implement set descriptor, using descriptor
-	o Solve cardinality > 1 for input descriptors / variables
-	o Improve error handling
+
+	Document differences between ecpg and the SQL standard and
+	information about the Informix-compatibility module.
+
+	o -Implement SET DESCRIPTOR
+	o Solve cardinality > 1 for input descriptors / variables (?)
+	o Improve error handling (?)
 	o Add a semantic check level, e.g. check if a table really exists
 	o fix handling of DB attributes that are arrays
 	o Use backend PREPARE/EXECUTE facility for ecpg where possible
@@ -305,34 +483,55 @@ Clients
 	o Allow multidimensional arrays
 
 
-
 Referential Integrity
 =====================
 
 * Add MATCH PARTIAL referential integrity
-* Add deferred trigger queue file (Jan)
-* Implement dirty reads or shared row locks and use them in RI triggers
+* Add deferred trigger queue file
+
+  Right now all deferred trigger information is stored in backend
+  memory.  This could exhaust memory for very large trigger queues.
+  This item involves dumping large queues into files.
+
+* Implement dirty reads or shared row locks and use them in RI triggers (?)
 * Enforce referential integrity for system tables
 * Change foreign key constraint for array -> element to mean element
-  in array
-* Allow DEFERRABLE UNIQUE constraints
+  in array (?)
+* Allow DEFERRABLE UNIQUE constraints (?)
 * Allow triggers to be disabled [trigger]
+
+  Currently the only way to disable triggers is to modify the system
+  tables.
+
 * With disabled triggers, allow pg_dump to use ALTER TABLE ADD FOREIGN KEY
+
+  If the dump is known to be valid, allow foreign keys to be added
+  without revalidating the data.
+
 * Allow statement-level triggers to access modified rows
-* Support triggers on columns (Neil)
+* Support triggers on columns
 * Have AFTER triggers execute after the appropriate SQL statement in a 
   function, not at the end of the function
 * -Print table names with constraint names in error messages, or make constraint
   names unique within a schema
 * -Issue NOTICE if foreign key data requires costly test to match primary key
 * Remove CREATE CONSTRAINT TRIGGER
+
+  This was used in older releases to dump referential integrity
+  constraints.
+
 * Allow AFTER triggers on system tables
+
+  System tables are modified in many places in the backend without going
+  through the executor and therefore not causing triggers to fire. To
+  complete this item, the functions that modify system tables will have
+  to fire triggers.
 
 
 Dependency Checking
 ===================
 
-* Flush cached query plans when their underlying catalog data changes
+* Flush cached query plans when the dependent objects change
 * -Use dependency information to dump data in proper order
 * -Have pg_dump -c clear the database using dependency information
 
@@ -340,15 +539,29 @@ Dependency Checking
 Exotic Features
 ===============
 
-* Add SQL99 WITH clause to SELECT (Tom, Fernando)
-* Add SQL99 WITH RECURSIVE to SELECT (Tom, Fernando)
-* Add pre-parsing phase that converts non-ANSI features to supported features
+* Add SQL99 WITH clause to SELECT
+* Add SQL99 WITH RECURSIVE to SELECT
+* Add pre-parsing phase that converts non-ANSI syntax to supported
+  syntax
+
+  This could allow SQL written for other databases to run without
+  modification.
+
 * Allow plug-in modules to emulate features from other databases
 * SQL*Net listener that makes PostgreSQL appear as an Oracle database
   to clients
-* Add two-phase commit to all distributed transactions with 
-  offline/readonly server status or administrator notification for failure
-* Allow cross-db queries with transaction semantics
+* Allow queries across databases or servers with transaction
+  semantics
+	
+  Right now contrib/dblink can be used to issue such queries except it
+  does not have locking or transaction semantics. Two-phase commit is
+  needed to enable transaction semantics.
+
+* Add two-phase commit
+
+  This will involve adding a way to respond to commit failure by either
+  taking the server into offline/readonly mode or notifying the
+  administrator
 
 
 PERFORMANCE
@@ -358,45 +571,80 @@ PERFORMANCE
 Fsync
 =====
 
-* Delay fsync() when other backends are about to commit too
-	o Determine optimal commit_delay value
+* Improve commit_delay handling to reduce fsync()
 * Determine optimal fdatasync/fsync, O_SYNC/O_DSYNC options
-	o Allow multiple blocks to be written to WAL with one write()
-*  Add an option to sync() before fsync()'ing checkpoint files
+* Allow multiple blocks to be written to WAL with one write()
+* Add an option to sync() before fsync()'ing checkpoint files
 
 
 Cache
 =====
-* Shared catalog cache, reduce lseek()'s by caching table size in shared area
 * Add free-behind capability for large sequential scans [fadvise]
 * Consider use of open/fcntl(O_DIRECT) to minimize OS caching
-* Cache last known per-tuple offsets to speed long tuple access, adjusting
-  for NULLs and TOAST values
-* Use a fixed row count and a +/- count with MVCC visibility rules 
-  to allow fast COUNT(*) queries with no WHERE clause(?) [count]
+* Cache last known per-tuple offsets to speed long tuple access
+
+  While column offsets are already cached, the cache can not be used if
+  the tuple has NULLs or TOAST columns because these values change the
+  typical column offsets. Caching of such offsets could be accomplished
+  by remembering the previous offsets and use them again if the row has
+  the same pattern.
+
+* Speed up COUNT(*)
+
+  We could use a fixed row count and a +/- count to follow MVCC
+  visibility rules, or a single cached value could be used and
+  invalidated if anyone modifies the table. [count]
 
 
 Vacuum
 ======
 
-* Improve speed with indexes (perhaps recreate index instead)
+* Improve speed with indexes
+
+  For large table adjustements during vacuum, it is faster to reindex
+  rather than update the index.
+
 * Reduce lock time by moving tuples with read lock, then write
   lock and truncate table
-* Provide automatic running of vacuum in the background in backend
+
+  Moved tuples are invisible to other backends so they don't require a
+  write lock. However, the read lock promotion to write lock could lead
+  to deadlock situations.
+
+* -Provide automatic running of vacuum in the background in backend
   rather than in /contrib (Matthew)
 * Allow free space map to be auto-sized or warn when it is too small
-* Maintain a map of recently-expired of pages so vacuum can reclaim
-  free space without a sequential scan
-* Have VACUUM FULL use REINDEX rather than index vacuum
+
+  The free space map is in shared memory so resizing is difficult.
+
+* Maintain a map of recently-expired rows
+
+  This allows vacuum to reclaim free space without requiring
+  a sequential scan
 
 
 Locking
 =======
 
 * Make locking of shared data structures more fine-grained
+
+  This requires that more locks be acquired but this would reduce lock
+  contention, improving concurrency.
+
 * Add code to detect an SMP machine and handle spinlocks accordingly
   from distributted.net, http://www1.distributed.net/source, 
   in client/common/cpucheck.cpp
+
+  On SMP machines, it is possible that locks might be released shortly,
+  while on non-SMP machines, the backend should sleep so the process
+  holding the lock can complete and release it.
+
+* Improve SMP performance on i386 machines
+
+  i386-based SMP machines can generate excessive context switching
+  caused by lock failure in high concurrency situations. This may be
+  caused by CPU cache line invalidation inefficiencies.
+
 * Research use of sched_yield() for spinlock acquisition failure
 
 
@@ -404,59 +652,90 @@ Startup Time
 ============
 
 * Experiment with multi-threaded backend [thread]
+
+  This would prevent the overhead associated with process creation. Most
+  operating systems have trivial process creation time compared to
+  database startup overhead, but a few operating systems (WIn32,
+  Solaris) might benefit from threading.
+
 * Add connection pooling [pool]
-* Allow persistent backends [pool]
-* Create a transaction processor to aid in persistent connections and
-  connection pooling [pool]
-* Do listen() in postmaster and accept() in pre-forked backend
-* Have pre-forked backend pre-connect to last requested database or pass
-  file descriptor to backend pre-forked for matching database
+
+  It is unclear if this should be done inside the backend code or done
+  by something external like pgpool. The passing of file descriptors to
+  existing backends is one of the difficulties with a backend approach.
 
 
 Write-Ahead Log
 ===============
 
-* Have after-change WAL write()'s write only modified data to kernel
-* Reduce number of after-change WAL writes; they exist only to gaurd against
-  partial page writes [wal]
-* Turn off after-change writes if fsync is disabled (?)
+* Eliminate need to write full pages to WAL before page modification [wal]
+
+  Currently, to protect against partial disk page writes, we write the
+  full page images to WAL before they are modified so we can correct any
+  partial page writes during recovery.
+
+* Reduce WAL traffic so only modified values are written rather than
+  entire rows (?)
+* Turn off after-change writes if fsync is disabled
+
+  If fsync is off, there is no purpose in writing full pages to WAL
+
 * Add WAL index reliability improvement to non-btree indexes
-* Find proper defaults for postgresql.conf WAL entries
-* Allow xlog directory location to be specified during initdb, perhaps
-  using symlinks
+* Allow the pg_xlog directory location to be specified during initdb
+  with a symlink back to the /data location
+
 * Allow WAL information to recover corrupted pg_controldata
 * Find a way to reduce rotational delay when repeatedly writing
   last WAL page
+  
+  Currently fsync of WAL requires the disk platter to perform a full
+  rotation to fsync again. One idea is to write the WAL to different
+  offsets that might reduce the rotational delay.
 
 
 Optimizer / Executor
 ====================
 
-* Missing optimizer selectivities for date, r-tree, etc
-* Allow ORDER BY ... LIMIT to select top values without sort or index
-  using a sequential scan for highest/lowest values (Oleg)
-* Precompile SQL functions to avoid overhead (Neil)
+* Add missing optimizer selectivities for date, r-tree, etc
+* Allow ORDER BY ... LIMIT 1 to select high/low value without sort or
+  index using a sequential scan for highest/lowest values
+
+  If only one value is needed, there is no need to sort the entire
+  table. Instead a sequential scan could get the matching value.
+
+* Precompile SQL functions to avoid overhead
 * Add utility to compute accurate random_page_cost value
 * Improve ability to display optimizer analysis using OPTIMIZER_DEBUG
-* Use CHECK constraints to improve optimizer decisions
-* Check GUC geqo_threshold to see if it is still accurate
 * Allow sorting, temp files, temp tables to use multiple work directories
-* Improve the planner to use CHECK constraints to prune the plan (for subtables)
+
+  This allows the I/O load to be spread across multiple disk drives.
 * Have EXPLAIN ANALYZE highlight poor optimizer estimates
+* Use CHECK constraints to influence optimizer decisions
+
+  CHECK constraints contain information about the distribution of values
+  within the table. This is also useful for implementing subtables where
+  a tables content is distributed across several subtables.
 
 
 Miscellaneous
 =============
 
 * Do async I/O for faster random read-ahead of data
+
+  Async I/O allows multiple I/O requests to be sent to the disk with
+  results coming back asynchronously.
+    
 * Use mmap() rather than SYSV shared memory or to write WAL files (?) [mmap]
-* Improve caching of attribute offsets when NULLs exist in the row
+
+  This would remove the requirement for SYSV SHM but would introduce
+  portability issues. Anonymous mmap is required to prevent I/O
+  overhead.
+
 * Add a script to ask system configuration questions and tune postgresql.conf
-* Allow partitioning of table into multiple subtables
 * -Use background process to write dirty shared buffers to disk
-* Investigate SMP context switching issues
 * Use a phantom command counter for nested subtransactions to reduce
   tuple overhead
+
 
 Source Code
 ===========
@@ -467,34 +746,30 @@ Source Code
 * Remove warnings created by -Wcast-align
 * Move platform-specific ps status display info from ps_status.c to ports
 * Improve access-permissions check on data directory in Cygwin (Tom)
-* Add documentation for perl, including mention of DBI/DBD perl location
-* Create improved PostgreSQL introductory documentation for the PHP
-  manuals
 * Add optional CRC checksum to heap and index pages
 * -Change representation of whole-tuple parameters to functions
 * Clarify use of 'application' and 'command' tags in SGML docs
 * Better document ability to build only certain interfaces (Marc)
 * Remove or relicense modules that are not under the BSD license, if possible
-* Remove memory/file descriptor freeing before ereport(ERROR)  (Bruce)
+* Remove memory/file descriptor freeing before ereport(ERROR)
 * Acquire lock on a relation before building a relcache entry for it
 * Research interaction of setitimer() and sleep() used by statement_timeout
 * -Add checks for fclose() failure (Tom)
 * -Change CVS ID to PostgreSQL
 * -Exit postmaster if postgresql.conf can not be opened
 * Rename /scripts directory because they are all C programs now
-* Allow creation of a libpq-only tarball
 * Promote debug_query_string into a server-side function current_query()
 * Allow the identifier length to be increased via a configure option
-* Improve CREATE SCHEMA regression test
 * Allow binaries to be statically linked so they are more easily relocated
 
 
 * Wire Protocol Changes
-	o Dynamic character set handling
+	o Allow dynamic character set handling
 	o Add decoded type, length, precision
-	o Compression?
+	o Use compression?
 	o Update clients to use data types, typmod, schema.table.column names of
 	  result sets using new query protocol
+
 
 ---------------------------------------------------------------------------
 
@@ -502,34 +777,32 @@ Source Code
 Developers who have claimed items are:
 --------------------------------------
 * Alvaro is Alvaro Herrera <alvherre@dcc.uchile.cl>
-* Barry is Barry Lind <barry@xythos.com>
-* Billy is Billy G. Allie <Bill.Allie@mug.org>
+* Andrew is Andrew Dunstan 
 * Bruce is Bruce Momjian <pgman@candle.pha.pa.us> of Software Research Assoc.
 * Christopher is Christopher Kings-Lynne <chriskl@familyhealth.com.au> of
     Family Health Network
+* Claudio is ?
 * D'Arcy is D'Arcy J.M. Cain <darcy@druid.net> of The Cain Gang Ltd.
-* Dave is Dave Cramer <dave@fastcrypt.com>
-* Edmund is Edmund Mergl <E.Mergl@bawue.de>
-* Fernando is Fernando Nasser <fnasser@redhat.com> of Red Hat
+* Fabien is Fabien Coelho
 * Gavin is Gavin Sherry <swm@linuxworld.com.au> of Alcove Systems Engineering
 * Greg is Greg Sabino Mullane <greg@turnstep.com>
 * Hiroshi is Hiroshi Inoue <Inoue@tpf.co.jp>
-* Karel is Karel Zak <zakkr@zf.jcu.cz>
 * Jan is Jan Wieck <JanWieck@Yahoo.com> of Afilias, Inc.
 * Joe is Joe Conway <mail@joeconway.com>
-* Liam is Liam Stewart <liams@redhat.com> of Red Hat
+* Karel is Karel Zak <zakkr@zf.jcu.cz>
+* Kris is Kris Jurka 
+* Magnus is Magnus Haglander (?)
+* Manfred is Manfred Koizar <
 * Marc is Marc Fournier <scrappy@hub.org> of PostgreSQL, Inc.
-* Mark is Mark Hollomon <mhh@mindspring.com>
 * Matthew T. O'Connor <matthew@zeut.net>
 * Michael is Michael Meskes <meskes@postgresql.org> of Credativ
 * Neil is Neil Conway <neilc@samurai.com>
 * Oleg is Oleg Bartunov <oleg@sai.msu.su>
-* Peter M is Peter T Mount <peter@retep.org.uk> of Retep Software
-* Peter E is Peter Eisentraut <peter_e@gmx.net>
+* Peter is Peter Eisentraut <peter_e@gmx.net>
 * Philip is Philip Warner <pjw@rhyme.com.au> of Albatross Consulting Pty. Ltd.
 * Rod is Rod Taylor <pg@rbt.ca>
-* Ross is Ross J. Reedstrom <reedstrm@wallace.ece.rice.edu>
+* Simon is Simon Riggs
 * Stephan is Stephan Szabo <sszabo@megazone23.bigpanda.com>
 * Tatsuo is Tatsuo Ishii <t-ishii@sra.co.jp> of Software Research Assoc.
-* Thomas is Thomas Lockhart <lockhart@fourpalms.org> of Jet Propulsion Labratory
+* Teodor is 
 * Tom is Tom Lane <tgl@sss.pgh.pa.us> of Red Hat
