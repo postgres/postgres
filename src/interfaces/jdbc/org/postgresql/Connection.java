@@ -11,7 +11,7 @@ import org.postgresql.util.*;
 import org.postgresql.core.Encoding;
 
 /**
- * $Id: Connection.java,v 1.21 2001/07/30 14:51:19 momjian Exp $
+ * $Id: Connection.java,v 1.22 2001/08/04 19:32:04 momjian Exp $
  *
  * This abstract class is used by org.postgresql.Driver to open either the JDBC1 or
  * JDBC2 versions of the Connection class.
@@ -36,6 +36,9 @@ public abstract class Connection
    *  The encoding to use for this connection.
    */
   private Encoding encoding = Encoding.defaultEncoding();
+
+  private String dbVersionLong;
+  private String dbVersionNumber;
 
   public boolean CONNECTION_OK = true;
   public boolean CONNECTION_BAD = false;
@@ -262,18 +265,19 @@ public abstract class Connection
       // used, so we denote this with 'UNKNOWN'.
 
       final String encodingQuery =
-	  "select case when pg_encoding_to_char(1) = 'SQL_ASCII' then 'UNKNOWN' else getdatabaseencoding() end";
+	  "case when pg_encoding_to_char(1) = 'SQL_ASCII' then 'UNKNOWN' else getdatabaseencoding() end";
 
       // Set datestyle and fetch db encoding in a single call, to avoid making
       // more than one round trip to the backend during connection startup.
 
       java.sql.ResultSet resultSet =
-	  ExecSQL("set datestyle to 'ISO'; " + encodingQuery);
+	  ExecSQL("set datestyle to 'ISO'; select version(), " + encodingQuery + ";");
 
       if (! resultSet.next()) {
 	  throw new PSQLException("postgresql.con.failed", "failed getting backend encoding");
       }
-      dbEncoding = resultSet.getString(1);
+      dbVersionLong = resultSet.getString(1);
+      dbEncoding = resultSet.getString(2);
       encoding = Encoding.getEncoding(dbEncoding, info.getProperty("charSet"));
 
       // Initialise object handling
@@ -904,8 +908,7 @@ public abstract class Connection
 	if (autoCommit)
 	    ExecSQL("end");
 	else {
-	    ExecSQL("begin");
-	    doIsolationLevel();
+	    ExecSQL("begin; " + getIsolationLevelSQL());
 	}
 	this.autoCommit = autoCommit;
     }
@@ -934,11 +937,7 @@ public abstract class Connection
     public void commit() throws SQLException {
 	if (autoCommit)
 	    return;
-	ExecSQL("commit");
-	autoCommit = true;
-	ExecSQL("begin");
-	doIsolationLevel();
-	autoCommit = false;
+	ExecSQL("commit; begin; " + getIsolationLevelSQL());
     }
 
     /**
@@ -952,11 +951,7 @@ public abstract class Connection
     public void rollback() throws SQLException {
 	if (autoCommit)
 	    return;
-	ExecSQL("rollback");
-	autoCommit = true;
-	ExecSQL("begin");
-	doIsolationLevel();
-	autoCommit = false;
+	ExecSQL("rollback; begin; " + getIsolationLevelSQL());
     }
 
     /**
@@ -988,7 +983,7 @@ public abstract class Connection
     /**
      * You can call this method to try to change the transaction
      * isolation level using one of the TRANSACTION_* values.
-     *
+     * 
      * <B>Note:</B> setTransactionIsolation cannot be called while
      * in the middle of a transaction
      *
@@ -999,29 +994,67 @@ public abstract class Connection
      * @see java.sql.DatabaseMetaData#supportsTransactionIsolationLevel
      */
     public void setTransactionIsolation(int level) throws SQLException {
-	isolationLevel = level;
-	doIsolationLevel();
-    }
-
-    /**
-     * Helper method used by setTransactionIsolation(), commit(), rollback()
-     * and setAutoCommit(). This sets the current isolation level.
-     */
-    protected void doIsolationLevel() throws SQLException {
-	String q = "SET TRANSACTION ISOLATION LEVEL";
-
+	//In 7.1 and later versions of the server it is possible using
+        //the "set session" command to set this once for all future txns
+        //however in 7.0 and prior versions it is necessary to set it in 
+        //each transaction, thus adding complexity below.
+        //When we decide to drop support for servers older than 7.1
+        //this can be simplified
+        isolationLevel = level;
+        String isolationLevelSQL;
 	switch(isolationLevel) {
 	    case java.sql.Connection.TRANSACTION_READ_COMMITTED:
-		ExecSQL(q + " READ COMMITTED");
-		return;
+		if (haveMinimumServerVersion("7.1")) {
+		  isolationLevelSQL = "SET SESSION CHARACTERISTICS AS TRANSACTION ISOLATION LEVEL READ COMMITTED";
+		} else {
+                  isolationLevelSQL = getIsolationLevelSQL();
+                }
+                break;
 
 	    case java.sql.Connection.TRANSACTION_SERIALIZABLE:
-		ExecSQL(q + " SERIALIZABLE");
-		return;
+		if (haveMinimumServerVersion("7.1")) {
+		  isolationLevelSQL = "SET SESSION CHARACTERISTICS AS TRANSACTION ISOLATION LEVEL SERIALIZABLE";
+		} else {
+                  isolationLevelSQL = getIsolationLevelSQL();
+                }
+                break;
 
 	    default:
 		throw new PSQLException("postgresql.con.isolevel",new Integer(isolationLevel));
 	}
+	ExecSQL(isolationLevelSQL);
+    }
+
+    /**
+     * Helper method used by setTransactionIsolation(), commit(), rollback()
+     * and setAutoCommit(). This returns the SQL string needed to
+     * set the isolation level for a transaction.  In 7.1 and later it
+     * is possible to set a default isolation level that applies to all
+     * future transactions, this method is only necesary for 7.0 and older
+     * servers, and should be removed when support for these older
+     * servers are dropped
+     */
+    protected String getIsolationLevelSQL() throws SQLException {
+	//7.1 and higher servers have a default specified so 
+	//no additional SQL is required to set the isolation level
+	if (haveMinimumServerVersion("7.1")) {
+          return "";
+        }
+	String q = "SET TRANSACTION ISOLATION LEVEL";
+
+	switch(isolationLevel) {
+	    case java.sql.Connection.TRANSACTION_READ_COMMITTED:
+		q = q + " READ COMMITTED";
+                break;
+
+	    case java.sql.Connection.TRANSACTION_SERIALIZABLE:
+		q = q + " SERIALIZABLE";
+                break;
+
+	    default:
+		throw new PSQLException("postgresql.con.isolevel",new Integer(isolationLevel));
+	}
+        return q;
     }
 
     /**
@@ -1033,13 +1066,7 @@ public abstract class Connection
      */
     public void setCatalog(String catalog) throws SQLException
     {
-	if(catalog!=null && !catalog.equals(PG_DATABASE)) {
-	    close();
-	    Properties info=new Properties();
-	    info.setProperty("user", PG_USER);
-	    info.setProperty("password", PG_PASSWORD);
-	    openConnection(PG_HOST, PG_PORT, info, catalog, this_url, this_driver);
-	}
+      //no-op
     }
 
     /**
@@ -1095,4 +1122,31 @@ public abstract class Connection
       return sql;
     }
 
+  /**
+   * What is the version of the server
+   *
+   * @return the database version
+   * @exception SQLException if a database access error occurs
+   */
+  public String getDBVersionNumber() throws SQLException
+  {
+    if(dbVersionNumber == null) {
+      StringTokenizer versionParts = new StringTokenizer(dbVersionLong);
+      versionParts.nextToken(); /* "PostgreSQL" */
+      dbVersionNumber = versionParts.nextToken(); /* "X.Y.Z" */
+    }
+    return dbVersionNumber;
+  }
+
+  public boolean haveMinimumServerVersion(String ver) throws SQLException
+  {
+      if (getDBVersionNumber().compareTo(ver)>=0)
+	  return true;
+      else
+	  return false;
+  }
+
+
+
 }
+   

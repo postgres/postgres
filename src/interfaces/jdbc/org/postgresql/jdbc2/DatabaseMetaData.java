@@ -47,15 +47,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
   private static final byte defaultRemarks[]="no remarks".getBytes();
 
 
-  private boolean haveMinimumServerVersion(String ver) throws SQLException
-  {
-      if (getDatabaseProductVersion().compareTo(ver)>=0)
-	  return true;
-      else
-	  return false;
-  }
-
-
   public DatabaseMetaData(Connection conn)
   {
     this.connection = conn;
@@ -126,7 +117,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
    */
   public boolean nullsAreSortedHigh() throws SQLException
   {
-      return haveMinimumServerVersion("7.2");
+      return connection.haveMinimumServerVersion("7.2");
   }
 
   /**
@@ -159,7 +150,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
    */
   public boolean nullsAreSortedAtEnd() throws SQLException
   {
-      return ! haveMinimumServerVersion("7.2");
+      return ! connection.haveMinimumServerVersion("7.2");
   }
 
   /**
@@ -182,14 +173,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
    */
   public String getDatabaseProductVersion() throws SQLException
   {
-	java.sql.ResultSet resultSet = connection.ExecSQL("select version()");
-	resultSet.next();
-
-	StringTokenizer versionParts = new StringTokenizer(resultSet.getString(1));
-	versionParts.nextToken(); /* "PostgreSQL" */
-	String versionNumber = versionParts.nextToken(); /* "X.Y.Z" */
-
-	return versionNumber;
+    return connection.getDBVersionNumber();
   }
 
   /**
@@ -558,7 +542,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
    */
   public boolean supportsOrderByUnrelated() throws SQLException
   {
-      return haveMinimumServerVersion("6.4");
+      return connection.haveMinimumServerVersion("6.4");
   }
 
   /**
@@ -581,7 +565,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
    */
   public boolean supportsGroupByUnrelated() throws SQLException
   {
-      return haveMinimumServerVersion("6.4");
+      return connection.haveMinimumServerVersion("6.4");
   }
 
   /**
@@ -608,7 +592,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
    */
   public boolean supportsLikeEscapeClause() throws SQLException
   {
-    return haveMinimumServerVersion("7.1");
+    return connection.haveMinimumServerVersion("7.1");
   }
 
   /**
@@ -749,7 +733,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
    */
   public boolean supportsOuterJoins() throws SQLException
   {
-      return haveMinimumServerVersion("7.1");
+      return connection.haveMinimumServerVersion("7.1");
   }
 
   /**
@@ -761,7 +745,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
    */
   public boolean supportsFullOuterJoins() throws SQLException
   {
-      return haveMinimumServerVersion("7.1");
+      return connection.haveMinimumServerVersion("7.1");
   }
 
   /**
@@ -976,7 +960,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
    */
   public boolean supportsSelectForUpdate() throws SQLException
   {
-      return haveMinimumServerVersion("6.5");
+      return connection.haveMinimumServerVersion("6.5");
   }
 
   /**
@@ -1053,7 +1037,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
    */
   public boolean supportsCorrelatedSubqueries() throws SQLException
   {
-      return haveMinimumServerVersion("7.1");
+      return connection.haveMinimumServerVersion("7.1");
   }
 
   /**
@@ -1075,7 +1059,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
    */
   public boolean supportsUnionAll() throws SQLException
   {
-      return haveMinimumServerVersion("7.1");
+      return connection.haveMinimumServerVersion("7.1");
   }
 
   /**
@@ -1303,7 +1287,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
    */
   public int getMaxRowSize() throws SQLException
   {
-      if (haveMinimumServerVersion("7.1"))
+      if (connection.haveMinimumServerVersion("7.1"))
 	  return 1073741824;	// 1 GB
       else
 	  return 8192;		// XXX could be altered
@@ -1329,7 +1313,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
    */
   public int getMaxStatementLength() throws SQLException
   {
-      if (haveMinimumServerVersion("7.0"))
+      if (connection.haveMinimumServerVersion("7.0"))
 	  return 0;		// actually whatever fits in size_t
       else
 	  return 16384;
