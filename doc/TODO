@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Mon Nov 26 01:35:56 EST 2001
+Last updated:		Mon Nov 26 14:33:20 EST 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -398,6 +398,7 @@ SOURCE CODE
 * Compile in syslog functionaility by default (?)
 * Modify regression tests to prevent failures do to minor numeric rounding
 * Remove USING clause from pg_get_indexdef() if index is btree (Bruce)
+* Use our own getopt() for FreeBSD/OpenBSD to allow --xxx flags (Bruce)
 
 ---------------------------------------------------------------------------
 
