@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Mon Oct 28 22:22:27 EST 2002
+Last updated:		Fri Nov  1 17:52:40 EST 2002
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -70,6 +70,7 @@ Administration
 * -Add GUC parameter to print queries that generate errors
 * Add start time to pg_stat_activity
 * Allow limits on per-db/user connections
+* Have standalone backend read postgresql.conf
 
 
 Data Types
