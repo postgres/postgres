@@ -8,14 +8,50 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/pg_ctl/Attic/pg_ctl.sh,v 1.13 2000/10/24 19:11:15 petere Exp $
+#    $Header: /cvsroot/pgsql/src/bin/pg_ctl/Attic/pg_ctl.sh,v 1.14 2000/11/25 17:17:30 petere Exp $
 #
 #-------------------------------------------------------------------------
+
 CMDNAME=`basename $0`
+
+help="\
+$CMDNAME is a utility to start, stop, restart, and report the status
+of a PostgreSQL server.
+
+Usage:
+  $CMDNAME start   [-w] [-D DATADIR] [-p PATH-TO-POSTMASTER] [-o \"OPTIONS\"]
+  $CMDNAME stop    [-w] [-D DATADIR] [-m SHUTDOWN-MODE]
+  $CMDNAME restart [-w] [-D DATADIR] [-m SHUTDOWN-MODE] [-o \"OPTIONS\"]
+  $CMDNAME status  [-D DATADIR]
+
+Options:
+  -D DATADIR            Location of the database storage area
+  -m SHUTDOWN-MODE      May be 'smart', 'fast', or 'immediate'
+  -o OPTIONS            Command line options to pass to the postmaster
+                        (PostgreSQL server executable)
+  -p PATH-TO-POSTMASTER Normally not necessary
+  -w                    Wait until operation completes
+
+If the -D option is omitted, the environment variable PGDATA is used.
+
+Shutdown modes are:
+  smart                 Quit after all clients have disconnected
+  fast                  Quit directly, with proper shutdown
+  immediate             Quit without complete shutdown; will lead
+                        to recovery run on restart
+
+Report bugs to <pgsql-bugs@postgresql.org>."
+
+advice="\
+Try '$CMDNAME --help' for more information."
+
+
+# Placed here during build
+bindir='@bindir@'
+VERSION='@VERSION@'
 
 # Check for echo -n vs echo \c
 
-ECHO=echo
 if echo '\c' | grep -s c >/dev/null 2>&1
 then
     ECHO_N="echo -n"
@@ -28,38 +64,35 @@ fi
 #
 # Find out where we're located
 #
-if $ECHO "$0" | grep '/' > /dev/null 2>&1 
+if echo "$0" | grep '/' > /dev/null 2>&1 
 then
         # explicit dir name given
-        PGPATH=`$ECHO $0 | sed 's,/[^/]*$,,'`       # (dirname command is not portable)
+        self_path=`echo $0 | sed 's,/[^/]*$,,'`       # (dirname command is not portable)
 else
         # look for it in PATH ('which' command is not portable)
-        for dir in `$ECHO "$PATH" | sed 's/:/ /g'`
+        for dir in `echo "$PATH" | sed 's/:/ /g'`
 	do
                 # empty entry in path means current dir
                 [ -z "$dir" ] && dir='.'
                 if [ -f "$dir/$CMDNAME" ]
 		then
-                        PGPATH="$dir"
+                        self_path="$dir"
                         break
                 fi
         done
 fi
 
 # Check if needed programs actually exist in path
-for prog in postmaster psql
-do
-        if [ ! -x "$PGPATH/$prog" ]
-	then
-                $ECHO "The program $prog needed by $CMDNAME could not be found. It was"
-                $ECHO "expected at:"
-                $ECHO "    $PGPATH/$prog"
-                $ECHO "If this is not the correct directory, please start $CMDNAME"
-                $ECHO "with a full search path. Otherwise make sure that the program"
-                $ECHO "was installed successfully."
-                exit 1
-        fi
-done
+if [ -x "$self_path/postmaster" ] && [ -x "$self_path/psql" ]; then
+    PGPATH=$self_path
+elif [ -x "$bindir/postmaster" ] && [ -x "$bindir/psql" ]; then
+    PGPATH=$bindir
+else
+    echo "The programs 'postmaster' and 'psql' are needed by $CMDNAME but" 1>&2
+    echo "were not found in the directory '$bindir'." 1>&2
+    echo "Check your installation." 1>&2
+    exit 1
+fi
 
 po_path=$PGPATH/postmaster
 
@@ -69,14 +102,17 @@ sig="-TERM"
 while [ "$#" -gt 0 ]
 do
     case $1 in
-	-h|--help)
-	usage=1
-	break
-	;;
+	-h|--help|-\?)
+	    echo "$help"
+	    exit 0
+	    ;;
+        -V|--version)
+	    echo "pg_ctl (PostgreSQL) $VERSION"
+	    exit 0
+	    ;;
 	-D)
 	    shift
 	    PGDATA="$1"
-	    export PGDATA
 	    ;;
 	-p)
 	    shift
@@ -94,8 +130,9 @@ do
 		    sig="-QUIT"
 		    ;;
 	    *)
-		$ECHO "$CMDNAME: Wrong shutdown mode $sigopt"
-		usage=1
+		echo "$CMDNAME: wrong shutdown mode: $1" 1>&2
+		echo "$advice" 1>&2
+		exit 1
 		;;
 	    esac
 	    ;;
@@ -105,6 +142,11 @@ do
 	-o)
 	    shift
 	    POSTOPTS="$1"
+	    ;;
+	-*)
+	    echo "$CMDNAME: invalid option: $1" 1>&2
+	    echo "$advice" 1>&2
+	    exit 1
 	    ;;
 	start)
 	    op="start"
@@ -119,23 +161,23 @@ do
 	    op="status"
 	    ;;
 	*)
-	    usage=1
-	    break
+	    echo "$CMDNAME: invalid operation mode: $1" 1>&2
+	    echo "$advice" 1>&2
+	    exit 1
 	    ;;
     esac
     shift
 done
 
-if [ "$usage" = 1 -o "$op" = "" ];then
-    $ECHO "Usage: $CMDNAME [-w][-D database_dir][-p path_to_postmaster][-o \"postmaster_opts\"] start"
-    $ECHO "       $CMDNAME [-w][-D database_dir][-m s[mart]|f[ast]|i[mmediate]] stop"
-    $ECHO "       $CMDNAME [-w][-D database_dir][-m s[mart]|f[ast]|i[mmediate]][-o \"postmaster_opts\"] restart"
-    $ECHO "       $CMDNAME [-D database_dir] status"
+if [ x"$op" = x"" ];then
+    echo "$CMDNAME: no operation mode specified" 1>&2
+    echo "$advice" 1>&2
     exit 1
 fi
 
 if [ -z "$PGDATA" ];then
-    $ECHO "$CMDNAME: No database directory or environment variable \$PGDATA is specified"
+    echo "$CMDNAME: no database directory or environment variable \$PGDATA is specified" 1>&2
+    echo "$advice" 1>&2
     exit 1
 fi
 
@@ -148,15 +190,15 @@ if [ $op = "status" ];then
 	PID=`cat $PIDFILE`
 	if [ $PID -lt 0 ];then
 	    PID=`expr 0 - $PID`
-	    $ECHO "$CMDNAME: postgres is running (pid: $PID)"
+	    echo "$CMDNAME: postgres is running (pid: $PID)"
 	else
-	    $ECHO "$CMDNAME: postmaster is running (pid: $PID)"
-	    $ECHO "options are:"
-	    $ECHO "`cat $POSTOPTSFILE`"
+	    echo "$CMDNAME: postmaster is running (pid: $PID)"
+	    echo "Command line was:"
+	    echo "`cat $POSTOPTSFILE`"
 	fi
 	exit 0
     else
-	$ECHO "$CMDNAME: postmaster or postgres is not running"
+	echo "$CMDNAME: postmaster or postgres is not running"
 	exit 1
     fi
 fi
@@ -166,8 +208,8 @@ if [ $op = "stop" -o $op = "restart" ];then
 	PID=`cat $PIDFILE`
 	if [ $PID -lt 0 ];then
 	    PID=`expr 0 - $PID`
-	    $ECHO "$CMDNAME: Cannot restart postmaster. postgres is running (pid: $PID)"
-	    $ECHO "Please terminate postgres and try again"
+	    echo "$CMDNAME: Cannot restart postmaster. postgres is running (pid: $PID)"
+	    echo "Please terminate postgres and try again"
 	    exit 1
 	fi
 
@@ -176,7 +218,7 @@ if [ $op = "stop" -o $op = "restart" ];then
 	# wait for postmaster shutting down
 	if [ "$wait" = 1 -o $op = "restart" ];then
 	    cnt=0
-	    $ECHO_N "Waiting for postmaster shutting down.."$ECHO_C
+	    $ECHO_N "Waiting for postmaster to shut down.."$ECHO_C
 
 	    while :
 	    do
@@ -184,7 +226,7 @@ if [ $op = "stop" -o $op = "restart" ];then
 		    $ECHO_N "."$ECHO_C
 		    cnt=`expr $cnt + 1`
 		    if [ $cnt -gt 60 ];then
-			$ECHO "$CMDNAME: postmaster does not shut down"
+			echo "$CMDNAME: postmaster does not shut down"
 			exit 1
 		    fi
 		else
@@ -192,16 +234,16 @@ if [ $op = "stop" -o $op = "restart" ];then
 		fi
 		sleep 1
 	    done
-	    $ECHO "done."
+	    echo "done"
 	fi
 
-	$ECHO "postmaster successfully shut down."
+	echo "postmaster successfully shut down"
 
     else
-	$ECHO "$CMDNAME: Can't find $PIDFILE."
-	$ECHO "Is postmaster running?"
+	echo "$CMDNAME: cannot find $PIDFILE"
+	echo "Is postmaster running?"
 	if [ $op = "restart" ];then
-	    $ECHO "Anyway, I'm going to start up postmaster..."
+	    echo "starting postmaster anyway..."
 	else
 	    exit 1
 	fi
@@ -210,7 +252,7 @@ fi
 
 if [ $op = "start" -o $op = "restart" ];then
     if [ -f $PIDFILE ];then
-	$ECHO "$CMDNAME: It seems another postmaster is running. Try to start postmaster anyway."
+	echo "$CMDNAME: It seems another postmaster is running. Trying to start postmaster anyway."
 	pid=`cat $PIDFILE`
     fi
 
@@ -219,21 +261,22 @@ if [ $op = "start" -o $op = "restart" ];then
 	if [ $op = "start" ];then
 	    # if we are in start mode, then look for postmaster.opts.default
 	    if [ -f $DEFPOSTOPTS ];then
-		eval "$po_path `cat $DEFPOSTOPTS`" &
+		$po_path -D $PGDATA `cat $DEFPOSTOPTS` &
 	    else
-		$po_path &
+		$po_path -D $PGDATA &
 	    fi
 	else
 	    # if we are in restart mode, then look postmaster.opts
-	    eval `cat $POSTOPTSFILE` &
+	    `cat $POSTOPTSFILE` &
 	fi
     else
-	eval "$po_path $POSTOPTS " &
+    # -o given
+	$po_path -D $PGDATA $POSTOPTS &
     fi
 
     if [ -f $PIDFILE ];then
 	if [ "`cat $PIDFILE`" = "$pid" ];then
-	    $ECHO "$CMDNAME: Cannot start postmaster. Is another postmaster is running?"
+	    echo "$CMDNAME: Cannot start postmaster. Is another postmaster is running?"
 	    exit 1
         fi
     fi
@@ -241,7 +284,7 @@ if [ $op = "start" -o $op = "restart" ];then
     # wait for postmaster starting up
     if [ "$wait" = 1 ];then
 	cnt=0
-	$ECHO_N "Waiting for postmaster starting up.."$ECHO_C
+	$ECHO_N "Waiting for postmaster to start up.."$ECHO_C
 	while :
 	do
 	    if psql -l >/dev/null 2>&1
@@ -251,16 +294,16 @@ if [ $op = "start" -o $op = "restart" ];then
 		$ECHO_N "."$ECHO_C
 		cnt=`expr $cnt + 1`
 		if [ $cnt -gt 60 ];then
-		    $ECHO "$CMDNAME: postmaster does not start up"
+		    echo "$CMDNAME: postmaster does not start up"
 		    exit 1
 		fi
 		sleep 1
 	    fi
 	done
-	$ECHO "done."
+	echo "done"
     fi
 
-    $ECHO "postmaster successfully started up."
+    echo "postmaster successfully started up"
 fi
 
 exit 0
