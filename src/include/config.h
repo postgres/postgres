@@ -4,7 +4,8 @@
    eventual use of autoconf to build the server 
 */
 
-#if defined(WIN32)
+#if defined(win32)
+#  define WIN32
 #  define NO_UNISTD_H
 #  define USES_WINSOCK 
 #endif /* WIN32 */
@@ -28,4 +29,32 @@
 #if defined(irix5)
 #  define NO_VFORK
 #endif
+
+
+/*  Debug and various "defines" that should be documented */
+
+/* found in function aclparse() in src/backend/utils/adt/acl.c */
+/* #define ACLDEBUG */
+
+/* found in src/backend/utils/adt/arrayfuncs.c */
+/* #define LOARRAY */
+#define ESCAPE_PATCH
+#define ARRAY_PATCH
+
+
+/* found in src/backend/utils/adt/date.c */
+/* #define DATEDEBUG */
+
+/* found in src/backend/utils/adt/datetimes.c */
+/* #define USE_SHORT_YEAR */
+/* #define AMERICAN_STYLE */
+
+/*----------------------------------------*/
+/* found in src/backend/utils/adt/float.c */
+/*------------------------------------------------------*/
+/* defining unsafe floats's will make float4 and float8 */
+/* ops faster at the cost of safety, of course!         */
+/*------------------------------------------------------*/
+/* #define UNSAFE_FLOATS */
+
 
