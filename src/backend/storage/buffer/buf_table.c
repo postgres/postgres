@@ -1,11 +1,11 @@
 /*-------------------------------------------------------------------------
  *
  * buf_table.c
- *	  routines for finding buffers in the buffer pool.
+ *	  routines for mapping BufferTags to buffer indexes.
  *
- * NOTE: these days, what this table actually provides is a mapping from
- * BufferTags to CDB indexes, not directly to buffers.	The function names
- * are thus slight misnomers.
+ * NOTE: this module is called only by freelist.c, and the "buffer IDs"
+ * it deals with are whatever freelist.c needs them to be; they may not be
+ * directly equivalent to Buffer numbers.
  *
  * Note: all routines in this file assume that the BufMgrLock is held
  * by the caller, so no synchronization is needed.
@@ -16,7 +16,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/buffer/buf_table.c,v 1.38 2004/12/31 22:00:49 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/buffer/buf_table.c,v 1.39 2005/02/03 23:29:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,12 +26,29 @@
 #include "storage/bufmgr.h"
 
 
+/* entry for buffer lookup hashtable */
+typedef struct
+{
+	BufferTag	key;			/* Tag of a disk page */
+	int			id;				/* Associated buffer ID */
+} BufferLookupEnt;
+
 static HTAB *SharedBufHash;
 
 
 /*
+ * Estimate space needed for mapping hashtable
+ *		size is the desired hash table size (possibly more than NBuffers)
+ */
+int
+BufTableShmemSize(int size)
+{
+	return hash_estimate_size(size, sizeof(BufferLookupEnt));
+}
+
+/*
  * Initialize shmem hash table for mapping buffers
- *		size is the desired hash table size (2*NBuffers for ARC algorithm)
+ *		size is the desired hash table size (possibly more than NBuffers)
  */
 void
 InitBufTable(int size)
@@ -56,7 +73,7 @@ InitBufTable(int size)
 
 /*
  * BufTableLookup
- *		Lookup the given BufferTag; return CDB index, or -1 if not found
+ *		Lookup the given BufferTag; return buffer ID, or -1 if not found
  */
 int
 BufTableLookup(BufferTag *tagPtr)
@@ -76,10 +93,10 @@ BufTableLookup(BufferTag *tagPtr)
 
 /*
  * BufTableInsert
- *		Insert a hashtable entry for given tag and CDB index
+ *		Insert a hashtable entry for given tag and buffer ID
  */
 void
-BufTableInsert(BufferTag *tagPtr, int cdb_id)
+BufTableInsert(BufferTag *tagPtr, int buf_id)
 {
 	BufferLookupEnt *result;
 	bool		found;
@@ -92,15 +109,15 @@ BufTableInsert(BufferTag *tagPtr, int cdb_id)
 				(errcode(ERRCODE_OUT_OF_MEMORY),
 				 errmsg("out of shared memory")));
 
-	if (found)					/* found something else in the table? */
+	if (found)					/* found something already in the table? */
 		elog(ERROR, "shared buffer hash table corrupted");
 
-	result->id = cdb_id;
+	result->id = buf_id;
 }
 
 /*
  * BufTableDelete
- *		Delete the hashtable entry for given tag
+ *		Delete the hashtable entry for given tag (which must exist)
  */
 void
 BufTableDelete(BufferTag *tagPtr)

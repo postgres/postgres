@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/buf_internals.h,v 1.75 2004/12/31 22:03:42 pgsql Exp $
+ * $PostgreSQL: pgsql/src/include/storage/buf_internals.h,v 1.76 2005/02/03 23:29:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,8 +17,9 @@
 
 #include "storage/backendid.h"
 #include "storage/buf.h"
-#include "storage/lmgr.h"
 #include "storage/lwlock.h"
+#include "storage/shmem.h"
+#include "utils/rel.h"
 
 
 /*
@@ -40,10 +41,10 @@ typedef bits16 BufFlags;
  * Buffer tag identifies which disk block the buffer contains.
  *
  * Note: the BufferTag data must be sufficient to determine where to write the
- * block, even during a "blind write" with no relcache entry.  It's possible
- * that the backend flushing the buffer doesn't even believe the relation is
- * visible yet (its xact may have started before the xact that created the
- * rel).  The storage manager must be able to cope anyway.
+ * block, without reference to pg_class or pg_tablespace entries.  It's
+ * possible that the backend flushing the buffer doesn't even believe the
+ * relation is visible yet (its xact may have started before the xact that
+ * created the rel).  The storage manager must be able to cope anyway.
  *
  * Note: if there's any pad bytes in the struct, INIT_BUFFERTAG will have
  * to be fixed to zero them, since this struct is used as a hash key.
@@ -107,58 +108,12 @@ typedef struct sbufdesc
 
 #define BufferDescriptorGetBuffer(bdesc) ((bdesc)->buf_id + 1)
 
-/* entry for buffer lookup hashtable */
-typedef struct
-{
-	BufferTag	key;			/* Tag of a disk page */
-	int			id;				/* CDB id of associated CDB */
-} BufferLookupEnt;
 
-/*
- * Definitions for the buffer replacement strategy
- */
-#define STRAT_LIST_UNUSED	(-1)
-#define STRAT_LIST_B1		0
-#define STRAT_LIST_T1		1
-#define STRAT_LIST_T2		2
-#define STRAT_LIST_B2		3
-#define STRAT_NUM_LISTS		4
+/* in bufmgr.c */
+extern BufferDesc *BufferDescriptors;
 
-/*
- * The Cache Directory Block (CDB) of the Adaptive Replacement Cache (ARC)
- */
-typedef struct
-{
-	int			prev;			/* list links */
-	int			next;
-	short		list;			/* ID of list it is currently in */
-	bool		t1_vacuum;		/* t => present only because of VACUUM */
-	TransactionId t1_xid;		/* the xid this entry went onto T1 */
-	BufferTag	buf_tag;		/* page identifier */
-	int			buf_id;			/* currently assigned data buffer, or -1 */
-} BufferStrategyCDB;
-
-/*
- * The shared ARC control information.
- */
-typedef struct
-{
-	int			target_T1_size; /* What T1 size are we aiming for */
-	int			listUnusedCDB;	/* All unused StrategyCDB */
-	int			listHead[STRAT_NUM_LISTS];		/* ARC lists B1, T1, T2
-												 * and B2 */
-	int			listTail[STRAT_NUM_LISTS];
-	int			listSize[STRAT_NUM_LISTS];
-	Buffer		listFreeBuffers;	/* List of unused buffers */
-
-	long		num_lookup;		/* Some hit statistics */
-	long		num_hit[STRAT_NUM_LISTS];
-	time_t		stat_report;
-
-	/* Array of CDB's starts here */
-	BufferStrategyCDB cdb[1];	/* VARIABLE SIZE ARRAY */
-} BufferStrategyControl;
-
+/* in localbuf.c */
+extern BufferDesc *LocalBufferDescriptors;
 
 /* counters in buf_init.c */
 extern long int ReadBufferCount;
@@ -170,10 +125,8 @@ extern long int LocalBufferFlushCount;
 
 
 /*
- * Bufmgr Interface:
+ * Internal routines: only called by bufmgr
  */
-
-/* Internal routines: only called by bufmgr */
 
 /* freelist.c */
 extern BufferDesc *StrategyBufferLookup(BufferTag *tagPtr, bool recheck,
@@ -185,20 +138,17 @@ extern void StrategyInvalidateBuffer(BufferDesc *buf);
 extern void StrategyHintVacuum(bool vacuum_active);
 extern int StrategyDirtyBufferList(BufferDesc **buffers, BufferTag *buftags,
 						int max_buffers);
+extern int	StrategyShmemSize(void);
 extern void StrategyInitialize(bool init);
 
 /* buf_table.c */
+extern int	BufTableShmemSize(int size);
 extern void InitBufTable(int size);
 extern int	BufTableLookup(BufferTag *tagPtr);
-extern void BufTableInsert(BufferTag *tagPtr, int cdb_id);
+extern void BufTableInsert(BufferTag *tagPtr, int buf_id);
 extern void BufTableDelete(BufferTag *tagPtr);
 
-/* bufmgr.c */
-extern BufferDesc *BufferDescriptors;
-
 /* localbuf.c */
-extern BufferDesc *LocalBufferDescriptors;
-
 extern BufferDesc *LocalBufferAlloc(Relation reln, BlockNumber blockNum,
 				 bool *foundPtr);
 extern void WriteLocalBuffer(Buffer buffer, bool release);

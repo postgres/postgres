@@ -3,6 +3,11 @@
  * freelist.c
  *	  routines for manipulating the buffer pool's replacement strategy.
  *
+ * The name "freelist.c" is now a bit of a misnomer, since this module
+ * controls not only the list of free buffers per se, but the entire
+ * mechanism for looking up existing shared buffers and the strategy
+ * for choosing replacement victims when needed.
+ *
  * Note: all routines in this file assume that the BufMgrLock is held
  * by the caller, so no synchronization is needed.
  *
@@ -12,7 +17,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/buffer/freelist.c,v 1.49 2004/12/31 22:00:49 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/buffer/freelist.c,v 1.50 2005/02/03 23:29:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,6 +29,51 @@
 #include "storage/buf_internals.h"
 #include "storage/bufmgr.h"
 
+
+/*
+ * Definitions for the buffer replacement strategy
+ */
+#define STRAT_LIST_UNUSED	(-1)
+#define STRAT_LIST_B1		0
+#define STRAT_LIST_T1		1
+#define STRAT_LIST_T2		2
+#define STRAT_LIST_B2		3
+#define STRAT_NUM_LISTS		4
+
+/*
+ * The Cache Directory Block (CDB) of the Adaptive Replacement Cache (ARC)
+ */
+typedef struct
+{
+	int			prev;			/* list links */
+	int			next;
+	short		list;			/* ID of list it is currently in */
+	bool		t1_vacuum;		/* t => present only because of VACUUM */
+	TransactionId t1_xid;		/* the xid this entry went onto T1 */
+	BufferTag	buf_tag;		/* page identifier */
+	int			buf_id;			/* currently assigned data buffer, or -1 */
+} BufferStrategyCDB;
+
+/*
+ * The shared ARC control information.
+ */
+typedef struct
+{
+	int			target_T1_size; /* What T1 size are we aiming for */
+	int			listUnusedCDB;	/* All unused StrategyCDB */
+	int			listHead[STRAT_NUM_LISTS];		/* ARC lists B1, T1, T2
+												 * and B2 */
+	int			listTail[STRAT_NUM_LISTS];
+	int			listSize[STRAT_NUM_LISTS];
+	Buffer		listFreeBuffers;	/* List of unused buffers */
+
+	long		num_lookup;		/* Some hit statistics */
+	long		num_hit[STRAT_NUM_LISTS];
+	time_t		stat_report;
+
+	/* Array of CDB's starts here */
+	BufferStrategyCDB cdb[1];	/* VARIABLE SIZE ARRAY */
+} BufferStrategyControl;
 
 /* GUC variable: time in seconds between statistics reports */
 int			DebugSharedBuffers = 0;
@@ -811,6 +861,28 @@ StrategyDirtyBufferList(BufferDesc **buffers, BufferTag *buftags,
 	return num_buffer_dirty;
 }
 
+
+/*
+ * StrategyShmemSize
+ *
+ * estimate the size of shared memory used by the freelist-related structures.
+ */
+int
+StrategyShmemSize(void)
+{
+	int			size = 0;
+
+	/* size of CDB lookup hash table */
+	size += BufTableShmemSize(NBuffers * 2);
+
+	/* size of the shared replacement strategy control block */
+	size += MAXALIGN(sizeof(BufferStrategyControl));
+
+	/* size of the ARC directory blocks */
+	size += MAXALIGN(NBuffers * 2 * sizeof(BufferStrategyCDB));
+
+	return size;
+}
 
 /*
  * StrategyInitialize -- initialize the buffer cache replacement

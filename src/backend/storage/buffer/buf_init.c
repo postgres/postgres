@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/buffer/buf_init.c,v 1.70 2004/12/31 22:00:49 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/buffer/buf_init.c,v 1.71 2005/02/03 23:29:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -73,7 +73,6 @@ long int	LocalBufferFlushCount;
  *		aborts, it should only unpin the buffers exactly the number of times it
  *		has pinned them, so that it will not blow away buffers of another
  *		backend.
- *
  */
 
 
@@ -120,14 +119,17 @@ InitBufferPool(void)
 		block = BufferBlocks;
 
 		/*
-		 * link the buffers into a single linked list. This will become
-		 * the LIFO list of unused buffers returned by
-		 * StrategyGetBuffer().
+		 * Initialize all the buffer headers.
 		 */
 		for (i = 0; i < NBuffers; block += BLCKSZ, buf++, i++)
 		{
 			Assert(ShmemIsValid((unsigned long) block));
 
+			/*
+			 * The bufNext fields link together all totally-unused buffers.
+			 * Subsequent management of this list is done by
+			 * StrategyGetBuffer().
+			 */
 			buf->bufNext = i + 1;
 
 			CLEAR_BUFFERTAG(buf->tag);
@@ -142,7 +144,7 @@ InitBufferPool(void)
 			buf->wait_backend_id = 0;
 		}
 
-		/* Correct last entry */
+		/* Correct last entry of linked list */
 		BufferDescriptors[NBuffers - 1].bufNext = -1;
 
 		LWLockRelease(BufMgrLock);
@@ -178,7 +180,8 @@ InitBufferPoolAccess(void)
 
 	/*
 	 * Convert shmem offsets into addresses as seen by this process. This
-	 * is just to speed up the BufferGetBlock() macro.
+	 * is just to speed up the BufferGetBlock() macro.  It is OK to do this
+	 * without any lock since the data pointers never change.
 	 */
 	for (i = 0; i < NBuffers; i++)
 		BufferBlockPointers[i] = (Block) MAKE_PTR(BufferDescriptors[i].data);
@@ -201,14 +204,8 @@ BufferShmemSize(void)
 	/* size of data pages */
 	size += NBuffers * MAXALIGN(BLCKSZ);
 
-	/* size of buffer hash table */
-	size += hash_estimate_size(NBuffers * 2, sizeof(BufferLookupEnt));
-
-	/* size of the shared replacement strategy control block */
-	size += MAXALIGN(sizeof(BufferStrategyControl));
-
-	/* size of the ARC directory blocks */
-	size += MAXALIGN(NBuffers * 2 * sizeof(BufferStrategyCDB));
+	/* size of stuff controlled by freelist.c */
+	size += StrategyShmemSize();
 
 	return size;
 }
