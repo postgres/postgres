@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipc.c,v 1.41 1999/11/06 17:01:28 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipc.c,v 1.42 1999/11/06 19:46:57 momjian Exp $
  *
  * NOTES
  *
@@ -118,18 +118,19 @@ proc_exit(int code)
 	 * If proc_exit is called too many times something bad is happening, so
 	 * exit immediately.  This is crafted in two if's for a reason.
 	 */
-	if (proc_exit_inprogress == 9)
+
+	if (++proc_exit_inprogress == 9)
 		elog(ERROR, "infinite recursion in proc_exit");
 	if (proc_exit_inprogress >= 9)
 		goto exit;
 
 	/* ----------------
-	 *	if proc_exit_inprocess is true, then it means that we
+	 *	if proc_exit_inprocess > 1, then it means that we
 	 *	are being invoked from within an on_exit() handler
 	 *	and so we return immediately to avoid recursion.
 	 * ----------------
 	 */
-	if (proc_exit_inprogress++)
+	if (proc_exit_inprogress > 1)
 		return;
 
 	/* do our shared memory exits first */
