@@ -43,7 +43,7 @@ From owner-pgsql-hackers@hub.org Fri Dec 24 10:01:18 1999
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id LAA11295
 	for <pgman@candle.pha.pa.us>; Fri, 24 Dec 1999 11:01:17 -0500 (EST)
-Received: from hub.org (hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.7 $) with ESMTP id KAA20310 for <pgman@candle.pha.pa.us>; Fri, 24 Dec 1999 10:39:18 -0500 (EST)
+Received: from hub.org (hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.8 $) with ESMTP id KAA20310 for <pgman@candle.pha.pa.us>; Fri, 24 Dec 1999 10:39:18 -0500 (EST)
 Received: from localhost (majordom@localhost)
 	by hub.org (8.9.3/8.9.3) with SMTP id KAA61760;
 	Fri, 24 Dec 1999 10:31:13 -0500 (EST)
@@ -129,7 +129,7 @@ From owner-pgsql-hackers@hub.org Fri Dec 24 18:31:03 1999
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id TAA26244
 	for <pgman@candle.pha.pa.us>; Fri, 24 Dec 1999 19:31:02 -0500 (EST)
-Received: from hub.org (hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.7 $) with ESMTP id TAA12730 for <pgman@candle.pha.pa.us>; Fri, 24 Dec 1999 19:30:05 -0500 (EST)
+Received: from hub.org (hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.8 $) with ESMTP id TAA12730 for <pgman@candle.pha.pa.us>; Fri, 24 Dec 1999 19:30:05 -0500 (EST)
 Received: from localhost (majordom@localhost)
 	by hub.org (8.9.3/8.9.3) with SMTP id TAA57851;
 	Fri, 24 Dec 1999 19:23:31 -0500 (EST)
@@ -212,7 +212,7 @@ From owner-pgsql-hackers@hub.org Fri Dec 24 21:31:10 1999
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id WAA02578
 	for <pgman@candle.pha.pa.us>; Fri, 24 Dec 1999 22:31:09 -0500 (EST)
-Received: from hub.org (hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.7 $) with ESMTP id WAA16641 for <pgman@candle.pha.pa.us>; Fri, 24 Dec 1999 22:18:56 -0500 (EST)
+Received: from hub.org (hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.8 $) with ESMTP id WAA16641 for <pgman@candle.pha.pa.us>; Fri, 24 Dec 1999 22:18:56 -0500 (EST)
 Received: from localhost (majordom@localhost)
 	by hub.org (8.9.3/8.9.3) with SMTP id WAA89135;
 	Fri, 24 Dec 1999 22:11:12 -0500 (EST)
@@ -486,7 +486,7 @@ From owner-pgsql-hackers@hub.org Sun Dec 26 08:31:09 1999
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id JAA17976
 	for <pgman@candle.pha.pa.us>; Sun, 26 Dec 1999 09:31:07 -0500 (EST)
-Received: from hub.org (hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.7 $) with ESMTP id JAA23337 for <pgman@candle.pha.pa.us>; Sun, 26 Dec 1999 09:28:36 -0500 (EST)
+Received: from hub.org (hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.8 $) with ESMTP id JAA23337 for <pgman@candle.pha.pa.us>; Sun, 26 Dec 1999 09:28:36 -0500 (EST)
 Received: from localhost (majordom@localhost)
 	by hub.org (8.9.3/8.9.3) with SMTP id JAA90738;
 	Sun, 26 Dec 1999 09:21:58 -0500 (EST)
@@ -909,7 +909,7 @@ From owner-pgsql-hackers@hub.org Thu Dec 30 08:01:09 1999
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id JAA10317
 	for <pgman@candle.pha.pa.us>; Thu, 30 Dec 1999 09:01:08 -0500 (EST)
-Received: from hub.org (hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.7 $) with ESMTP id IAA02365 for <pgman@candle.pha.pa.us>; Thu, 30 Dec 1999 08:37:10 -0500 (EST)
+Received: from hub.org (hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.8 $) with ESMTP id IAA02365 for <pgman@candle.pha.pa.us>; Thu, 30 Dec 1999 08:37:10 -0500 (EST)
 Received: from localhost (majordom@localhost)
 	by hub.org (8.9.3/8.9.3) with SMTP id IAA87902;
 	Thu, 30 Dec 1999 08:34:22 -0500 (EST)
@@ -1006,7 +1006,7 @@ From owner-pgsql-patches@hub.org Sun Jan  2 23:01:38 2000
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id AAA16274
 	for <pgman@candle.pha.pa.us>; Mon, 3 Jan 2000 00:01:28 -0500 (EST)
-Received: from hub.org (hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.7 $) with ESMTP id XAA02655 for <pgman@candle.pha.pa.us>; Sun, 2 Jan 2000 23:45:55 -0500 (EST)
+Received: from hub.org (hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.8 $) with ESMTP id XAA02655 for <pgman@candle.pha.pa.us>; Sun, 2 Jan 2000 23:45:55 -0500 (EST)
 Received: from hub.org (hub.org [216.126.84.1])
 	by hub.org (8.9.3/8.9.3) with ESMTP id XAA13828;
 	Sun, 2 Jan 2000 23:40:47 -0500 (EST)
@@ -1424,7 +1424,7 @@ From owner-pgsql-hackers@hub.org Tue Jan  4 10:31:01 2000
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id LAA17522
 	for <pgman@candle.pha.pa.us>; Tue, 4 Jan 2000 11:31:00 -0500 (EST)
-Received: from hub.org (hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.7 $) with ESMTP id LAA01541 for <pgman@candle.pha.pa.us>; Tue, 4 Jan 2000 11:27:30 -0500 (EST)
+Received: from hub.org (hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.8 $) with ESMTP id LAA01541 for <pgman@candle.pha.pa.us>; Tue, 4 Jan 2000 11:27:30 -0500 (EST)
 Received: from localhost (majordom@localhost)
 	by hub.org (8.9.3/8.9.3) with SMTP id LAA09992;
 	Tue, 4 Jan 2000 11:18:07 -0500 (EST)
@@ -3624,4 +3624,1266 @@ sub GetTableCols {
 
 ------=_NextPart_000_0062_01C0541E.125CAF30--
 
+
+From pgsql-hackers-owner+M9917@postgresql.org Mon Jun 11 15:53:25 2001
+Return-path: <pgsql-hackers-owner+M9917@postgresql.org>
+Received: from postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by candle.pha.pa.us (8.10.1/8.10.1) with ESMTP id f5BJrPL01206
+	for <pgman@candle.pha.pa.us>; Mon, 11 Jun 2001 15:53:25 -0400 (EDT)
+Received: from postgresql.org.org (webmail.postgresql.org [216.126.85.28])
+	by postgresql.org (8.11.3/8.11.1) with SMTP id f5BJrPE67753;
+	Mon, 11 Jun 2001 15:53:25 -0400 (EDT)
+	(envelope-from pgsql-hackers-owner+M9917@postgresql.org)
+Received: from mail.greatbridge.com (mail.greatbridge.com [65.196.68.36])
+	by postgresql.org (8.11.3/8.11.1) with ESMTP id f5BJmLE65620
+	for <pgsql-hackers@postgresql.org>; Mon, 11 Jun 2001 15:48:21 -0400 (EDT)
+	(envelope-from djohnson@greatbridge.com)
+Received: from j2.us.greatbridge.com (djohnsonpc.us.greatbridge.com [65.196.69.70])
+	by mail.greatbridge.com (8.11.2/8.11.2) with SMTP id f5BJm2Q28847
+	for <pgsql-hackers@postgresql.org>; Mon, 11 Jun 2001 15:48:02 -0400
+From: Darren Johnson <djohnson@greatbridge.com>
+Date: Mon, 11 Jun 2001 19:46:44 GMT
+Message-ID: <20010611.19464400@j2.us.greatbridge.com>
+Subject: [HACKERS] Postgres Replication
+To: pgsql-hackers@postgresql.org
+Reply-To: Darren Johnson <djohnson@greatbridge.com>
+X-Mailer: Mozilla/3.0 (compatible; StarOffice/5.2;Linux)
+X-Priority: 3 (Normal)
+MIME-Version: 1.0
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 8bit
+X-MIME-Autoconverted: from quoted-printable to 8bit by postgresql.org id f5BJmLE65621
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+We have been researching replication for several months now, and
+I have some opinions to share to the community for feedback,
+discussion, and/or participation. Our goal is to get a replication
+solution for PostgreSQL that will meet most needs of users
+and applications alike (mission impossible theme here :). 
+
+My research work along with others contributors has been collected
+and presented here http://www.greatbridge.org/genpage?replication_top
+If there is something missing, especially PostgreSQL related
+work, I would like to know about it, and my apologies to any
+one who got left off the list. This work is ongoing and doesn't
+draw a conclusion, which IMHO should be left up to the user,
+but I'm offering my opinions to spur discussion and/or feed back
+from this list, and try not to offend any one.
+
+Here's my opinion: of the approaches we've surveyed, the most
+promising one is the Postgres-R project from the Information and
+Communication Systems Group, ETH  in Zurich, Switzerland, originally 
+produced by Bettina Kemme, Gustavo Alonso, and others.  Although 
+Postgres-R is a synchronous approach, I believe it is the closest to 
+the goal mentioned above. Here is an abstract of the advantages.
+
+1) Postgres-R is built on the PostgreSQL-6.4.2 code base.  The 
+replication 
+functionality is an optional parameter, so there will be insignificant 
+overhead for non replication situations. The replication and 
+communication
+managers are the two new modules added to the PostgreSQL code base.
+
+2) The replication manager's main function is controlling the
+replication protocol via a message handling process. It receives
+messages from the local and remote backends and forwards write
+sets and decision messages via the communication manager to the
+other servers. The replication manager controls all the transactions 
+running on the local server by keeping track of the states, including 
+which protocol phase (read, send, lock, or write) the transaction is
+in. The replication manager maintains a two way channel
+implemented as buffered sockets to each backend.
+
+3) The main task of the communication manager is to provide simple
+socket based interface between the replication manager and the
+group communication system (currently Ensemble). The
+communication system is a cluster of servers connected via
+the communication manager.  The replication manager also maintains
+three one-way channels to the communication system: a broadcast
+channel to send messages, a total-order channel to receive
+totally orders write sets, and a no-order channel to listen for
+decision messages from the communication system. Decision
+messages can be received at any time where the reception of
+totally ordered write sets can be blocked in certain phases.
+
+4) Based on a two phase locking approach, all dead lock situations
+are local and detectable by Postgres-R code base, and aborted.
+
+5) The write set messages used to send database changes to other
+servers, can use either the SQL statements or the actual tuples
+changed. This is a parameter based on number of tuples changed
+by a transaction. While sending the tuple changes reduces
+overhead in query parse, plan and execution, there is a negative
+effect in sending a large write set across the network.
+
+6) Postgres-R uses a synchronous approach that keeps the data on 
+all sites consistent and provides serializability. The user does not 
+have to bother with conflict resolution, and receives the same 
+correctness and consistency of a centralized system.
+
+7) Postgres-R could be part of a good fault-resilient and load 
+distribution 
+solution.  It is peer-to-peer based and incurs low overhead propagating 
+updates to the other cluster members.  All replicated databases locally 
+process queries.
+
+8) Compared to other synchronous replication strategies (e.g., standard 
+distributed 2-phase-locking + 2-phase-commit), Postgres-R has much 
+better performance using 2-phase-locking.
+
+
+There are some issues that are not currently addressed by
+Postgres-R, but some enhancements made to PostgreSQL since the
+6.4.2 tree are very favorable to addressing these short comings.
+
+1) The addition of WAL in 7.1 has the information for recovering 
+failed/off-line servers, currently all the servers would have to be 
+stopped, and a copy would be used to get all the servers synchronized
+before starting again. 
+
+2)Being synchronous, Postgres-R would not be a good solution 
+for off line/WAN scenarios where asynchronous replication is 
+required.  There are some theories on this issue which involve servers
+connecting and disconnecting from the cluster.
+
+3)As in any serialized synchronous approach there is  change in the 
+flow of execution of a transaction; while most of these changes can 
+be solved by calling newly developed functions at certain time points, 
+synchronous replica control is tightly coupled with the concurrency 
+control.
+Hence, especially in PostgreSQL 7.2 some parts of the concurrency control
+(MVCC) might have to be adjusted. This can lead to a slightly more 
+complicated maintenance than a system that does not change the backend.
+
+4)Partial replication is not addressed. 
+
+
+Any feedback on this post will be appreciated.
+
+Thanks,
+
+Darren 
+
+---------------------------(end of broadcast)---------------------------
+TIP 2: you can get off all lists at once with the unregister command
+    (send "unregister YourEmailAddressHere" to majordomo@postgresql.org)
+
+From pgsql-hackers-owner+M9923@postgresql.org Mon Jun 11 18:14:23 2001
+Return-path: <pgsql-hackers-owner+M9923@postgresql.org>
+Received: from postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by candle.pha.pa.us (8.10.1/8.10.1) with ESMTP id f5BMENL18644
+	for <pgman@candle.pha.pa.us>; Mon, 11 Jun 2001 18:14:23 -0400 (EDT)
+Received: from postgresql.org.org (webmail.postgresql.org [216.126.85.28])
+	by postgresql.org (8.11.3/8.11.1) with SMTP id f5BMEQE14877;
+	Mon, 11 Jun 2001 18:14:26 -0400 (EDT)
+	(envelope-from pgsql-hackers-owner+M9923@postgresql.org)
+Received: from spoetnik.xs4all.nl (spoetnik.xs4all.nl [194.109.249.226])
+	by postgresql.org (8.11.3/8.11.1) with ESMTP id f5BM6ME12270
+	for <pgsql-hackers@postgresql.org>; Mon, 11 Jun 2001 18:06:23 -0400 (EDT)
+	(envelope-from reinoud@xs4all.nl)
+Received: from KAYAK (kayak [192.168.1.20])
+	by spoetnik.xs4all.nl (Postfix) with SMTP id 865A33E1B
+	for <pgsql-hackers@postgresql.org>; Tue, 12 Jun 2001 00:06:16 +0200 (CEST)
+From: reinoud@xs4all.nl (Reinoud van Leeuwen)
+To: pgsql-hackers@postgresql.org
+Subject: Re: [HACKERS] Postgres Replication
+Date: Mon, 11 Jun 2001 22:06:07 GMT
+Organization: Not organized in any way
+Reply-To: reinoud@xs4all.nl
+Message-ID: <3b403d96.562404297@192.168.1.10>
+References: <20010611.19464400@j2.us.greatbridge.com>
+In-Reply-To: <20010611.19464400@j2.us.greatbridge.com>
+X-Mailer: Forte Agent 1.5/32.451
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 8bit
+X-MIME-Autoconverted: from quoted-printable to 8bit by postgresql.org id f5BM6PE12276
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+On Mon, 11 Jun 2001 19:46:44 GMT, you wrote:
+
+>We have been researching replication for several months now, and
+>I have some opinions to share to the community for feedback,
+>discussion, and/or participation. Our goal is to get a replication
+>solution for PostgreSQL that will meet most needs of users
+>and applications alike (mission impossible theme here :). 
+>
+>My research work along with others contributors has been collected
+>and presented here http://www.greatbridge.org/genpage?replication_top
+>If there is something missing, especially PostgreSQL related
+>work, I would like to know about it, and my apologies to any
+>one who got left off the list. This work is ongoing and doesn't
+>draw a conclusion, which IMHO should be left up to the user,
+>but I'm offering my opinions to spur discussion and/or feed back
+>from this list, and try not to offend any one.
+>
+>Here's my opinion: of the approaches we've surveyed, the most
+>promising one is the Postgres-R project from the Information and
+>Communication Systems Group, ETH  in Zurich, Switzerland, originally 
+>produced by Bettina Kemme, Gustavo Alonso, and others.  Although 
+>Postgres-R is a synchronous approach, I believe it is the closest to 
+>the goal mentioned above. Here is an abstract of the advantages.
+>
+>1) Postgres-R is built on the PostgreSQL-6.4.2 code base.  The 
+>replication 
+>functionality is an optional parameter, so there will be insignificant 
+>overhead for non replication situations. The replication and 
+>communication
+>managers are the two new modules added to the PostgreSQL code base.
+>
+>2) The replication manager's main function is controlling the
+>replication protocol via a message handling process. It receives
+>messages from the local and remote backends and forwards write
+>sets and decision messages via the communication manager to the
+>other servers. The replication manager controls all the transactions 
+>running on the local server by keeping track of the states, including 
+>which protocol phase (read, send, lock, or write) the transaction is
+>in. The replication manager maintains a two way channel
+>implemented as buffered sockets to each backend.
+
+what does "manager controls all the transactions" mean? I hope it does
+*not* mean that a bug in the manager would cause transactions not to
+commit...
+
+>
+>3) The main task of the communication manager is to provide simple
+>socket based interface between the replication manager and the
+>group communication system (currently Ensemble). The
+>communication system is a cluster of servers connected via
+>the communication manager.  The replication manager also maintains
+>three one-way channels to the communication system: a broadcast
+>channel to send messages, a total-order channel to receive
+>totally orders write sets, and a no-order channel to listen for
+>decision messages from the communication system. Decision
+>messages can be received at any time where the reception of
+>totally ordered write sets can be blocked in certain phases.
+>
+>4) Based on a two phase locking approach, all dead lock situations
+>are local and detectable by Postgres-R code base, and aborted.
+
+Does this imply locking over different servers? That would mean a
+grinding halt when a network outage occurs...
+
+>5) The write set messages used to send database changes to other
+>servers, can use either the SQL statements or the actual tuples
+>changed. This is a parameter based on number of tuples changed
+>by a transaction. While sending the tuple changes reduces
+>overhead in query parse, plan and execution, there is a negative
+>effect in sending a large write set across the network.
+>
+>6) Postgres-R uses a synchronous approach that keeps the data on 
+>all sites consistent and provides serializability. The user does not 
+>have to bother with conflict resolution, and receives the same 
+>correctness and consistency of a centralized system.
+>
+>7) Postgres-R could be part of a good fault-resilient and load 
+>distribution 
+>solution.  It is peer-to-peer based and incurs low overhead propagating 
+>updates to the other cluster members.  All replicated databases locally 
+>process queries.
+>
+>8) Compared to other synchronous replication strategies (e.g., standard 
+>distributed 2-phase-locking + 2-phase-commit), Postgres-R has much 
+>better performance using 2-phase-locking.
+
+Coming from a Sybase background I have some experience with
+replication. The way it works in Sybase Replication server is as
+follows:
+- for each replicated database, there is a "log reader" process that
+reads the WAL and captures only *committed transactions* to the
+replication server. (it does not make much sense to replicate other
+things IMHO :-).
+- the replication server stores incoming data in a que ("stable
+device"), until it is sure it has reached its final destination
+
+- a replication server can send data to another replication server in
+a compact (read: WAN friendly) way. A chain of replication servers can
+be made, depending on network architecture)
+
+- the final replication server makes a almost standard client
+connection to the target database and translates the compact
+transactions back to SQL statements. By using masks, extra
+functionality can be built in. 
+
+This kind of architecture has several advantages:
+- only committed transactions are replicated which saves overhead
+- it does not have very much impact on performance of the source
+server (apart from reading the WAL)
+- since every replication server has a stable device, data is stored
+when the network is down and nothing gets lost (nor stops performing)
+- because only the log reader and the connection from the final
+replication server are RDBMS specific, it is possible to replicate
+from MS to Oracle using a Sybase replication server (or different
+versions etc).
+
+I do not know how much of this is patented or copyrighted, but the
+architecture seems elegant and robust to me. I have done
+implementations of bi-directional replication too. It *is* possible
+but does require some funky setup and maintenance. (but it is better
+that letting offices on different continents working on the same
+database :-)
+
+just my 2 EURO cts  :-)
+
+
+-- 
+__________________________________________________
+"Nothing is as subjective as reality"
+Reinoud van Leeuwen       reinoud@xs4all.nl
+http://www.xs4all.nl/~reinoud
+__________________________________________________
+
+---------------------------(end of broadcast)---------------------------
+TIP 1: subscribe and unsubscribe commands go to majordomo@postgresql.org
+
+From pgsql-hackers-owner+M9924@postgresql.org Mon Jun 11 18:41:51 2001
+Return-path: <pgsql-hackers-owner+M9924@postgresql.org>
+Received: from postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by candle.pha.pa.us (8.10.1/8.10.1) with ESMTP id f5BMfpL28917
+	for <pgman@candle.pha.pa.us>; Mon, 11 Jun 2001 18:41:51 -0400 (EDT)
+Received: from postgresql.org.org (webmail.postgresql.org [216.126.85.28])
+	by postgresql.org (8.11.3/8.11.1) with SMTP id f5BMfsE25092;
+	Mon, 11 Jun 2001 18:41:54 -0400 (EDT)
+	(envelope-from pgsql-hackers-owner+M9924@postgresql.org)
+Received: from spider.pilosoft.com (p55-222.acedsl.com [160.79.55.222])
+	by postgresql.org (8.11.3/8.11.1) with ESMTP id f5BMalE23024
+	for <pgsql-hackers@postgresql.org>; Mon, 11 Jun 2001 18:36:47 -0400 (EDT)
+	(envelope-from alex@pilosoft.com)
+Received: from localhost (alexmail@localhost)
+	by spider.pilosoft.com (8.9.3/8.9.3) with ESMTP id SAA06092;
+	Mon, 11 Jun 2001 18:46:05 -0400 (EDT)
+Date: Mon, 11 Jun 2001 18:46:05 -0400 (EDT)
+From: Alex Pilosov <alex@pilosoft.com>
+To: Reinoud van Leeuwen <reinoud@xs4all.nl>
+cc: pgsql-hackers@postgresql.org
+Subject: Re: [HACKERS] Postgres Replication
+In-Reply-To: <3b403d96.562404297@192.168.1.10>
+Message-ID: <Pine.BSO.4.10.10106111828450.9902-100000@spider.pilosoft.com>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+On Mon, 11 Jun 2001, Reinoud van Leeuwen wrote:
+
+> On Mon, 11 Jun 2001 19:46:44 GMT, you wrote:
+
+> what does "manager controls all the transactions" mean? I hope it does
+> *not* mean that a bug in the manager would cause transactions not to
+> commit...
+Well yeah it does. Bugs are a fact of life. :)
+
+> >4) Based on a two phase locking approach, all dead lock situations
+> >are local and detectable by Postgres-R code base, and aborted.
+> 
+> Does this imply locking over different servers? That would mean a
+> grinding halt when a network outage occurs...
+Don't know, but see below.
+
+> Coming from a Sybase background I have some experience with
+> replication. The way it works in Sybase Replication server is as
+> follows:
+> - for each replicated database, there is a "log reader" process that
+> reads the WAL and captures only *committed transactions* to the
+> replication server. (it does not make much sense to replicate other
+> things IMHO :-).
+> - the replication server stores incoming data in a que ("stable
+> device"), until it is sure it has reached its final destination
+> 
+> - a replication server can send data to another replication server in
+> a compact (read: WAN friendly) way. A chain of replication servers can
+> be made, depending on network architecture)
+> 
+> - the final replication server makes a almost standard client
+> connection to the target database and translates the compact
+> transactions back to SQL statements. By using masks, extra
+> functionality can be built in. 
+> 
+> This kind of architecture has several advantages:
+> - only committed transactions are replicated which saves overhead
+> - it does not have very much impact on performance of the source
+> server (apart from reading the WAL)
+> - since every replication server has a stable device, data is stored
+> when the network is down and nothing gets lost (nor stops performing)
+> - because only the log reader and the connection from the final
+> replication server are RDBMS specific, it is possible to replicate
+> from MS to Oracle using a Sybase replication server (or different
+> versions etc).
+> 
+> I do not know how much of this is patented or copyrighted, but the
+> architecture seems elegant and robust to me. I have done
+> implementations of bi-directional replication too. It *is* possible
+> but does require some funky setup and maintenance. (but it is better
+> that letting offices on different continents working on the same
+> database :-)
+Yes, the above architecture is what almost every vendor of replication
+software uses. And I'm sure if you worked much with Sybase, you hate the
+garbage that their repserver is :). 
+
+The architecture of postgres-r and repserver are fundamentally different
+for a good reason: repserver only wants to replicate committed
+transactions, while postgres-r is more of a 'clustering' solution (albeit
+they don't say this word), and is capable to do much more than simple rep
+server. 
+
+I.E. you can safely put half of your clients to second server in a
+replicated postgres-r cluster without being worried that a conflict (or a
+wierd locking situation) may occur.
+
+Try that with sybase, it is fundamentally designed for one-way
+replication, and the fact that you can do one-way replication in both
+directions doesn't mean its safe to do that!
+
+I'm not sure how postgres-r handles network problems. To be useful, a good
+replication solution must have an option of "no network->no updates" as
+well as "no network->queue updates and send them later". However, it is
+far easier to add queuing to a correct 'eager locking' database than it is
+to add proper locking to a queue-based replicator.
+
+-alex
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 3: if posting/reading through Usenet, please send an appropriate
+subscribe-nomail command to majordomo@postgresql.org so that your
+message can get through to the mailing list cleanly
+
+From pgsql-hackers-owner+M9932@postgresql.org Mon Jun 11 22:17:54 2001
+Return-path: <pgsql-hackers-owner+M9932@postgresql.org>
+Received: from postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by candle.pha.pa.us (8.10.1/8.10.1) with ESMTP id f5C2HsL15803
+	for <pgman@candle.pha.pa.us>; Mon, 11 Jun 2001 22:17:54 -0400 (EDT)
+Received: from postgresql.org.org (webmail.postgresql.org [216.126.85.28])
+	by postgresql.org (8.11.3/8.11.1) with SMTP id f5C2HtE86836;
+	Mon, 11 Jun 2001 22:17:55 -0400 (EDT)
+	(envelope-from pgsql-hackers-owner+M9932@postgresql.org)
+Received: from femail15.sdc1.sfba.home.com (femail15.sdc1.sfba.home.com [24.0.95.142])
+	by postgresql.org (8.11.3/8.11.1) with ESMTP id f5C2BXE85020
+	for <pgsql-hackers@postgresql.org>; Mon, 11 Jun 2001 22:11:33 -0400 (EDT)
+	(envelope-from djohnson@greatbridge.com)
+Received: from greatbridge.com ([65.2.95.27])
+          by femail15.sdc1.sfba.home.com
+          (InterMail vM.4.01.03.20 201-229-121-120-20010223) with ESMTP
+          id <20010612021124.OZRG17243.femail15.sdc1.sfba.home.com@greatbridge.com>;
+          Mon, 11 Jun 2001 19:11:24 -0700
+Message-ID: <3B257969.6050405@greatbridge.com>
+Date: Mon, 11 Jun 2001 22:07:37 -0400
+From: Darren Johnson <djohnson@greatbridge.com>
+User-Agent: Mozilla/5.0 (Windows; U; WinNT4.0; en-US; m18) Gecko/20001108 Netscape6/6.0
+X-Accept-Language: en
+MIME-Version: 1.0
+To: Alex Pilosov <alex@pilosoft.com>, Reinoud van Leeuwen <reinoud@xs4all.nl>
+cc: pgsql-hackers@postgresql.org
+Subject: Re: [HACKERS] Postgres Replication
+References: <Pine.BSO.4.10.10106111828450.9902-100000@spider.pilosoft.com>
+Content-Type: text/plain; charset=us-ascii; format=flowed
+Content-Transfer-Encoding: 7bit
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+
+Thanks for the feedback.  I'll try to address both your issues here.
+
+>> what does "manager controls all the transactions" mean? 
+> 
+The replication manager controls the transactions by serializing the 
+write set messages. 
+This ensures all transactions are committed in the same order on each 
+server, so bugs
+here are not allowed  ;-)
+
+>> I hope it does
+>> *not* mean that a bug in the manager would cause transactions not to
+>> commit...
+> 
+> Well yeah it does. Bugs are a fact of life. :
+
+> 
+>>> 4) Based on a two phase locking approach, all dead lock situations
+>>> are local and detectable by Postgres-R code base, and aborted.
+>> 
+>> Does this imply locking over different servers? That would mean a
+>> grinding halt when a network outage occurs...
+> 
+> Don't know, but see below.
+
+There is a branch of the Postgres-R code that has some failure detection 
+implemented,
+so we will have to merge this functionality with the version of 
+Postgres-R we have, and
+test this issue.  I'll let you the results.
+
+>> 
+>> - the replication server stores incoming data in a que ("stable
+>> device"), until it is sure it has reached its final destination
+> 
+I like this idea for recovering servers that have been down a short 
+period of time, using WAL
+to recover transactions missed during the outage.
+
+>> 
+>> This kind of architecture has several advantages:
+>> - only committed transactions are replicated which saves overhead
+>> - it does not have very much impact on performance of the source
+>> server (apart from reading the WAL)
+>> - since every replication server has a stable device, data is stored
+>> when the network is down and nothing gets lost (nor stops performing)
+>> - because only the log reader and the connection from the final
+>> replication server are RDBMS specific, it is possible to replicate
+>> from MS to Oracle using a Sybase replication server (or different
+>> versions etc).
+> 
+There are some issues with the "log reader" approach:
+1) The databases are not synchronized until the log reader completes its 
+processing.
+2) I'm not sure about Sybase, but the log reader sends SQL statements to 
+the other servers
+which are then parsed, planned and executed.  This over head could be 
+avoided if only
+the tuple changes are replicated.
+3) Works fine for read only situations, but peer-to-peer applications 
+using this approach
+must be designed with a conflict resolution scheme. 
+
+Don't get me wrong, I believe we can learn from the replication 
+techniques used by commercial
+databases like Sybase, and try to implement the good ones into 
+PostgreSQL.  Postgres-R is
+a synchronous approach which out performs the traditional approaches to 
+synchronous replication.
+Being based on PostgreSQL-6.4.2, getting this approach in the 7.2 tree 
+might be better than
+reinventing the wheel.
+
+Thanks again,
+
+Darren
+
+
+Thanks again,
+
+Darren
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 6: Have you searched our list archives?
+
+http://www.postgresql.org/search.mpl
+
+From pgsql-hackers-owner+M9936@postgresql.org Tue Jun 12 03:22:51 2001
+Return-path: <pgsql-hackers-owner+M9936@postgresql.org>
+Received: from postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by candle.pha.pa.us (8.10.1/8.10.1) with ESMTP id f5C7MoL11061
+	for <pgman@candle.pha.pa.us>; Tue, 12 Jun 2001 03:22:50 -0400 (EDT)
+Received: from postgresql.org.org (webmail.postgresql.org [216.126.85.28])
+	by postgresql.org (8.11.3/8.11.1) with SMTP id f5C7MPE35441;
+	Tue, 12 Jun 2001 03:22:25 -0400 (EDT)
+	(envelope-from pgsql-hackers-owner+M9936@postgresql.org)
+Received: from reorxrsm.server.lan.at (zep3.it-austria.net [213.150.1.73])
+	by postgresql.org (8.11.3/8.11.1) with ESMTP id f5C72ZE25009
+	for <pgsql-hackers@postgresql.org>; Tue, 12 Jun 2001 03:02:36 -0400 (EDT)
+	(envelope-from ZeugswetterA@wien.spardat.at)
+Received: from gz0153.gc.spardat.at (gz0153.gc.spardat.at [172.20.10.149])
+	by reorxrsm.server.lan.at (8.11.2/8.11.2) with ESMTP id f5C72Qu27966
+	for <pgsql-hackers@postgresql.org>; Tue, 12 Jun 2001 09:02:26 +0200
+Received: by sdexcgtw01.f000.d0188.sd.spardat.at with Internet Mail Service (5.5.2650.21)
+	id <M3L15341>; Tue, 12 Jun 2001 09:02:21 +0200
+Message-ID: <11C1E6749A55D411A9670001FA68796336831B@sdexcsrv1.f000.d0188.sd.spardat.at>
+From: Zeugswetter Andreas SB  <ZeugswetterA@wien.spardat.at>
+To: "'Darren Johnson'" <djohnson@greatbridge.com>,
+   pgsql-hackers@postgresql.org
+Subject: AW: [HACKERS] Postgres Replication
+Date: Tue, 12 Jun 2001 09:02:20 +0200
+MIME-Version: 1.0
+X-Mailer: Internet Mail Service (5.5.2650.21)
+Content-Type: text/plain;
+	charset="iso-8859-1"
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+
+> Although 
+> Postgres-R is a synchronous approach, I believe it is the closest to 
+> the goal mentioned above. Here is an abstract of the advantages.
+
+If you only want synchronous replication, why not simply use triggers ?
+All you would then need is remote query access and two phase commit,
+and maybe a little script that helps create the appropriate triggers.
+
+Doing a replicate all or nothing approach that only works synchronous
+is imho not flexible enough.
+
+Andreas
+
+---------------------------(end of broadcast)---------------------------
+TIP 6: Have you searched our list archives?
+
+http://www.postgresql.org/search.mpl
+
+From pgsql-hackers-owner+M9945@postgresql.org Tue Jun 12 10:18:29 2001
+Return-path: <pgsql-hackers-owner+M9945@postgresql.org>
+Received: from postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by candle.pha.pa.us (8.10.1/8.10.1) with ESMTP id f5CEISL06372
+	for <pgman@candle.pha.pa.us>; Tue, 12 Jun 2001 10:18:28 -0400 (EDT)
+Received: from postgresql.org.org (webmail.postgresql.org [216.126.85.28])
+	by postgresql.org (8.11.3/8.11.1) with SMTP id f5CEIQE77517;
+	Tue, 12 Jun 2001 10:18:26 -0400 (EDT)
+	(envelope-from pgsql-hackers-owner+M9945@postgresql.org)
+Received: from krypton.netropolis.org ([208.222.215.99])
+	by postgresql.org (8.11.3/8.11.1) with ESMTP id f5CEDuE75514
+	for <pgsql-hackers@postgresql.org>; Tue, 12 Jun 2001 10:13:56 -0400 (EDT)
+	(envelope-from root@generalogic.com)
+Received: from [132.216.183.103] (helo=localhost)
+	by krypton.netropolis.org with esmtp (Exim 3.12 #1 (Debian))
+	id 159ouq-0003MU-00
+	for <pgsql-hackers@postgresql.org>; Tue, 12 Jun 2001 10:13:08 -0400
+To: pgsql-hackers@postgresql.org
+Subject: Re: AW: [HACKERS] Postgres Replication
+In-Reply-To: <20010612.13321600@j2.us.greatbridge.com>
+References: <Pine.BSF.4.33.0106120605130.411-100000@mobile.hub.org>
+	<20010612.13321600@j2.us.greatbridge.com>
+X-Mailer: Mew version 1.94.2 on Emacs 20.7 / Mule 4.0 (HANANOEN)
+MIME-Version: 1.0
+Content-Type: Text/Plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Message-ID: <20010612123623O.root@generalogic.com>
+Date: Tue, 12 Jun 2001 12:36:23 +0530
+From: root <root@generalogic.com>
+X-Dispatcher: imput version 20000414(IM141)
+Lines: 47
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+
+Hello
+
+I have hacked up a replication layer for Perl code accessing a
+database throught the DBI interface. It works pretty well with MySQL
+(I can run pre-bender slashcode replicated, haven't tried the more
+recent releases).
+
+Potentially this hack should also work with Pg but I haven't tried
+yet. If someone would like to test it out with a complex Pg app and
+let me know how it went that would be cool.
+
+The replication layer is based on Eric Newton's Recall replication
+library (www.fault-tolerant.org/recall), and requires that all
+database accesses be through the DBI interface.
+
+The replicas are live, in that every operation affects all the
+replicas in real time. Replica outages are invisible to the user, so
+long as a majority of the replicas are functioning. Disconnected
+replicas can be used for read-only access.
+
+The only code modification that should be required to use the
+replication layer is to change the DSN in connect():
+
+  my $replicas = '192.168.1.1:7000,192.168.1.2:7000,192.168.1.3:7000';
+  my $dbh = DBI->connect("DBI:Recall:database=$replicas");
+
+You should be able to install the replication modules with:
+
+perl -MCPAN -eshell
+cpan> install Replication::Recall::DBServer
+
+and then install DBD::Recall (which doesn't seem to be accessible from
+the CPAN shell yet, for some reason), by:
+
+wget http://www.cpan.org/authors/id/AGUL/DBD-Recall-1.10.tar.gz
+tar xzvf DBD-Recall-1.10.tar.gz
+cd DBD-Recall-1.10
+perl Makefile.PL
+make install
+
+I would be very interested in hearing about your experiences with
+this...
+
+Thanks
+
+#!
+
+---------------------------(end of broadcast)---------------------------
+TIP 3: if posting/reading through Usenet, please send an appropriate
+subscribe-nomail command to majordomo@postgresql.org so that your
+message can get through to the mailing list cleanly
+
+From pgsql-hackers-owner+M9938@postgresql.org Tue Jun 12 05:12:54 2001
+Return-path: <pgsql-hackers-owner+M9938@postgresql.org>
+Received: from postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by candle.pha.pa.us (8.10.1/8.10.1) with ESMTP id f5C9CrL15228
+	for <pgman@candle.pha.pa.us>; Tue, 12 Jun 2001 05:12:53 -0400 (EDT)
+Received: from postgresql.org.org (webmail.postgresql.org [216.126.85.28])
+	by postgresql.org (8.11.3/8.11.1) with SMTP id f5C9CnE91297;
+	Tue, 12 Jun 2001 05:12:49 -0400 (EDT)
+	(envelope-from pgsql-hackers-owner+M9938@postgresql.org)
+Received: from mobile.hub.org (SHW39-29.accesscable.net [24.138.39.29])
+	by postgresql.org (8.11.3/8.11.1) with ESMTP id f5C98DE89175
+	for <pgsql-hackers@postgresql.org>; Tue, 12 Jun 2001 05:08:13 -0400 (EDT)
+	(envelope-from scrappy@hub.org)
+Received: from localhost (scrappy@localhost)
+	by mobile.hub.org (8.11.3/8.11.1) with ESMTP id f5C97f361630;
+	Tue, 12 Jun 2001 06:07:46 -0300 (ADT)
+	(envelope-from scrappy@hub.org)
+X-Authentication-Warning: mobile.hub.org: scrappy owned process doing -bs
+Date: Tue, 12 Jun 2001 06:07:41 -0300 (ADT)
+From: The Hermit Hacker <scrappy@hub.org>
+To: Zeugswetter Andreas SB <ZeugswetterA@wien.spardat.at>
+cc: "'Darren Johnson'" <djohnson@greatbridge.com>,
+   <pgsql-hackers@postgresql.org>
+Subject: Re: AW: [HACKERS] Postgres Replication
+In-Reply-To: <11C1E6749A55D411A9670001FA68796336831B@sdexcsrv1.f000.d0188.sd.spardat.at>
+Message-ID: <Pine.BSF.4.33.0106120605130.411-100000@mobile.hub.org>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+
+which I believe is what the rserv implementation in contrib currently does
+... no?
+
+its funny ... what is in contrib right now was developed in a weekend by
+Vadim, put in contrib, yet nobody has either used it *or* seen fit to
+submit patches to improve it ... ?
+
+On Tue, 12 Jun 2001, Zeugswetter Andreas SB wrote:
+
+>
+> > Although
+> > Postgres-R is a synchronous approach, I believe it is the closest to
+> > the goal mentioned above. Here is an abstract of the advantages.
+>
+> If you only want synchronous replication, why not simply use triggers ?
+> All you would then need is remote query access and two phase commit,
+> and maybe a little script that helps create the appropriate triggers.
+>
+> Doing a replicate all or nothing approach that only works synchronous
+> is imho not flexible enough.
+>
+> Andreas
+>
+> ---------------------------(end of broadcast)---------------------------
+> TIP 6: Have you searched our list archives?
+>
+> http://www.postgresql.org/search.mpl
+>
+
+Marc G. Fournier                   ICQ#7615664               IRC Nick: Scrappy
+Systems Administrator @ hub.org
+primary: scrappy@hub.org           secondary: scrappy@{freebsd|postgresql}.org
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 1: subscribe and unsubscribe commands go to majordomo@postgresql.org
+
+From pgsql-hackers-owner+M9940@postgresql.org Tue Jun 12 09:39:08 2001
+Return-path: <pgsql-hackers-owner+M9940@postgresql.org>
+Received: from postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by candle.pha.pa.us (8.10.1/8.10.1) with ESMTP id f5CDd8L03200
+	for <pgman@candle.pha.pa.us>; Tue, 12 Jun 2001 09:39:08 -0400 (EDT)
+Received: from postgresql.org.org (webmail.postgresql.org [216.126.85.28])
+	by postgresql.org (8.11.3/8.11.1) with SMTP id f5CDcmE58175;
+	Tue, 12 Jun 2001 09:38:48 -0400 (EDT)
+	(envelope-from pgsql-hackers-owner+M9940@postgresql.org)
+Received: from mail.greatbridge.com (mail.greatbridge.com [65.196.68.36])
+	by postgresql.org (8.11.3/8.11.1) with ESMTP id f5CDYAE56164
+	for <pgsql-hackers@postgresql.org>; Tue, 12 Jun 2001 09:34:10 -0400 (EDT)
+	(envelope-from djohnson@greatbridge.com)
+Received: from j2.us.greatbridge.com (djohnsonpc.us.greatbridge.com [65.196.69.70])
+	by mail.greatbridge.com (8.11.2/8.11.2) with SMTP id f5CDXeQ03585;
+	Tue, 12 Jun 2001 09:33:40 -0400
+From: Darren Johnson <djohnson@greatbridge.com>
+Date: Tue, 12 Jun 2001 13:32:16 GMT
+Message-ID: <20010612.13321600@j2.us.greatbridge.com>
+Subject: Re: AW: [HACKERS] Postgres Replication
+To: The Hermit Hacker <scrappy@hub.org>
+cc: Zeugswetter Andreas SB <ZeugswetterA@wien.spardat.at>,
+   <pgsql-hackers@postgresql.org>
+Reply-To: Darren Johnson <djohnson@greatbridge.com>
+In-Reply-To: <Pine.BSF.4.33.0106120605130.411-100000@mobile.hub.org>
+References: <Pine.BSF.4.33.0106120605130.411-100000@mobile.hub.org>
+X-Mailer: Mozilla/3.0 (compatible; StarOffice/5.2;Linux)
+X-Priority: 3 (Normal)
+MIME-Version: 1.0
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 8bit
+X-MIME-Autoconverted: from quoted-printable to 8bit by postgresql.org id f5CDYAE56166
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+
+> which I believe is what the rserv implementation in contrib currently 
+does
+> ... no?
+
+We tried rserv, PG Link (Joseph Conway), and PosrgreSQL Replicator.  All
+these projects are trigger based asynchronous replication.  They all have
+some advantages over the current functionality of Postgres-R some of 
+which I believe can be addressed:
+
+1) Partial replication - being able to replicate just one or part of a
+table(s)
+2) They make no changes to the PostgreSQL code base. (Postgres-R can't 
+address this one ;)
+3) PostgreSQL Replicator has some very nice conflict resolution schemes.
+
+
+Here are some disadvantages to using a "trigger based" approach:
+
+1) Triggers simply transfer individual data items when they are modified,
+they do not keep track of transactions.
+2) The execution of triggers within a database imposes a performance 
+overhead to that database.
+3) Triggers require careful management by database administrators.  
+Someone needs to keep track of all the "alarms" going off.
+4) The activation of triggers in a database cannot be easily 
+rolled back or undone.
+
+
+
+> On Tue, 12 Jun 2001, Zeugswetter Andreas SB wrote:
+
+> > Doing a replicate all or nothing approach that only works synchronous
+> > is imho not flexible enough.
+> >
+
+
+I agree.  Partial and asynchronous replication need to be addressed, 
+and some of the common functionality of Postgres-R could possibly 
+be used to meet those needs. 
+ 
+
+Thanks for your feedback,
+
+Darren
+
+---------------------------(end of broadcast)---------------------------
+TIP 5: Have you checked our extensive FAQ?
+
+http://www.postgresql.org/users-lounge/docs/faq.html
+
+From pgsql-hackers-owner+M9969@postgresql.org Tue Jun 12 16:53:45 2001
+Return-path: <pgsql-hackers-owner+M9969@postgresql.org>
+Received: from postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by candle.pha.pa.us (8.10.1/8.10.1) with ESMTP id f5CKriL23104
+	for <pgman@candle.pha.pa.us>; Tue, 12 Jun 2001 16:53:44 -0400 (EDT)
+Received: from postgresql.org.org (webmail.postgresql.org [216.126.85.28])
+	by postgresql.org (8.11.3/8.11.1) with SMTP id f5CKrlE87423;
+	Tue, 12 Jun 2001 16:53:47 -0400 (EDT)
+	(envelope-from pgsql-hackers-owner+M9969@postgresql.org)
+Received: from sectorbase2.sectorbase.com (sectorbase2.sectorbase.com [63.88.121.62] (may be forged))
+	by postgresql.org (8.11.3/8.11.1) with SMTP id f5CHWkE69562
+	for <pgsql-hackers@postgresql.org>; Tue, 12 Jun 2001 13:32:46 -0400 (EDT)
+	(envelope-from vmikheev@SECTORBASE.COM)
+Received: by sectorbase2.sectorbase.com with Internet Mail Service (5.5.2653.19)
+	id <MX6MWMV8>; Tue, 12 Jun 2001 10:30:29 -0700
+Message-ID: <3705826352029646A3E91C53F7189E32016670@sectorbase2.sectorbase.com>
+From: "Mikheev, Vadim" <vmikheev@SECTORBASE.COM>
+To: "'Darren Johnson'" <djohnson@greatbridge.com>,
+   The Hermit Hacker
+  <scrappy@hub.org>
+cc: Zeugswetter Andreas SB <ZeugswetterA@wien.spardat.at>,
+   pgsql-hackers@postgresql.org
+Subject: RE: AW: [HACKERS] Postgres Replication
+Date: Tue, 12 Jun 2001 10:30:27 -0700
+MIME-Version: 1.0
+X-Mailer: Internet Mail Service (5.5.2653.19)
+Content-Type: text/plain;
+	charset="iso-8859-1"
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+> Here are some disadvantages to using a "trigger based" approach:
+> 
+> 1) Triggers simply transfer individual data items when they 
+> are modified, they do not keep track of transactions.
+
+I don't know about other *async* replication engines but Rserv
+keeps track of transactions (if I understood you corectly).
+Rserv transfers not individual modified data items but
+*consistent* snapshot of changes to move slave database from
+one *consistent* state (when all RI constraints satisfied)
+to another *consistent* state.
+
+> 4) The activation of triggers in a database cannot be easily
+> rolled back or undone.
+
+What do you mean?
+
+Vadim
+
+---------------------------(end of broadcast)---------------------------
+TIP 2: you can get off all lists at once with the unregister command
+    (send "unregister YourEmailAddressHere" to majordomo@postgresql.org)
+
+From pgsql-hackers-owner+M9967@postgresql.org Tue Jun 12 16:42:11 2001
+Return-path: <pgsql-hackers-owner+M9967@postgresql.org>
+Received: from postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by candle.pha.pa.us (8.10.1/8.10.1) with ESMTP id f5CKgBL17982
+	for <pgman@candle.pha.pa.us>; Tue, 12 Jun 2001 16:42:11 -0400 (EDT)
+Received: from postgresql.org.org (webmail.postgresql.org [216.126.85.28])
+	by postgresql.org (8.11.3/8.11.1) with SMTP id f5CKgDE80566;
+	Tue, 12 Jun 2001 16:42:13 -0400 (EDT)
+	(envelope-from pgsql-hackers-owner+M9967@postgresql.org)
+Received: from mail.greatbridge.com (mail.greatbridge.com [65.196.68.36])
+	by postgresql.org (8.11.3/8.11.1) with ESMTP id f5CIVdE07561
+	for <pgsql-hackers@postgresql.org>; Tue, 12 Jun 2001 14:31:39 -0400 (EDT)
+	(envelope-from djohnson@greatbridge.com)
+Received: from j2.us.greatbridge.com (djohnsonpc.us.greatbridge.com [65.196.69.70])
+	by mail.greatbridge.com (8.11.2/8.11.2) with SMTP id f5CIUfQ10080;
+	Tue, 12 Jun 2001 14:30:41 -0400
+From: Darren Johnson <djohnson@greatbridge.com>
+Date: Tue, 12 Jun 2001 18:29:20 GMT
+Message-ID: <20010612.18292000@j2.us.greatbridge.com>
+Subject: RE: AW: [HACKERS] Postgres Replication
+To: "Mikheev, Vadim" <vmikheev@SECTORBASE.COM>
+cc: The Hermit Hacker <scrappy@hub.org>,
+   Zeugswetter Andreas SB
+	<ZeugswetterA@wien.spardat.at>,
+   pgsql-hackers@postgresql.org
+Reply-To: Darren Johnson <djohnson@greatbridge.com>
+	<3705826352029646A3E91C53F7189E32016670@sectorbase2.sectorbase.com>
+References: <3705826352029646A3E91C53F7189E32016670@sectorbase2.sectorbase.com>
+X-Mailer: Mozilla/3.0 (compatible; StarOffice/5.2;Linux)
+X-Priority: 3 (Normal)
+MIME-Version: 1.0
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 8bit
+X-MIME-Autoconverted: from quoted-printable to 8bit by postgresql.org id f5CIVdE07562
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+
+
+> > Here are some disadvantages to using a "trigger based" approach:
+> >
+> > 1) Triggers simply transfer individual data items when they
+> > are modified, they do not keep track of transactions.
+
+> I don't know about other *async* replication engines but Rserv
+> keeps track of transactions (if I understood you corectly).
+> Rserv transfers not individual modified data items but
+> *consistent* snapshot of changes to move slave database from
+> one *consistent* state (when all RI constraints satisfied)
+> to another *consistent* state.
+
+I thought Andreas did a good job of correcting me here. Transaction-
+based replication with triggers do not apply to points 1 and 4.  I
+should have made a distinction between non-transaction and 
+transaction based replication with triggers.  I was not trying to
+single out rserv or any other project, and I can see how my wording 
+implies this misinterpretation (my apologies).
+ 
+
+> > 4) The activation of triggers in a database cannot be easily
+> > rolled back or undone.
+
+> What do you mean?
+
+Once the trigger fires, it is not an easy task  to abort that 
+execution via rollback or undo.  Again this is not an issue 
+with a transaction-based trigger approach.
+
+
+Sincerely,
+
+Darren
+
+---------------------------(end of broadcast)---------------------------
+TIP 2: you can get off all lists at once with the unregister command
+    (send "unregister YourEmailAddressHere" to majordomo@postgresql.org)
+
+From pgsql-hackers-owner+M9943@postgresql.org Tue Jun 12 10:03:02 2001
+Return-path: <pgsql-hackers-owner+M9943@postgresql.org>
+Received: from postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by candle.pha.pa.us (8.10.1/8.10.1) with ESMTP id f5CE32L04619
+	for <pgman@candle.pha.pa.us>; Tue, 12 Jun 2001 10:03:02 -0400 (EDT)
+Received: from postgresql.org.org (webmail.postgresql.org [216.126.85.28])
+	by postgresql.org (8.11.3/8.11.1) with SMTP id f5CE31E70430;
+	Tue, 12 Jun 2001 10:03:01 -0400 (EDT)
+	(envelope-from pgsql-hackers-owner+M9943@postgresql.org)
+Received: from fizbanrsm.server.lan.at (zep4.it-austria.net [213.150.1.74])
+	by postgresql.org (8.11.3/8.11.1) with ESMTP id f5CDoQE64062
+	for <pgsql-hackers@postgresql.org>; Tue, 12 Jun 2001 09:50:26 -0400 (EDT)
+	(envelope-from ZeugswetterA@wien.spardat.at)
+Received: from gz0153.gc.spardat.at (gz0153.gc.spardat.at [172.20.10.149])
+	by fizbanrsm.server.lan.at (8.11.2/8.11.2) with ESMTP id f5CDoJe11224
+	for <pgsql-hackers@postgresql.org>; Tue, 12 Jun 2001 15:50:19 +0200
+Received: by sdexcgtw01.f000.d0188.sd.spardat.at with Internet Mail Service (5.5.2650.21)
+	id <M3L15S4T>; Tue, 12 Jun 2001 15:50:15 +0200
+Message-ID: <11C1E6749A55D411A9670001FA68796336831F@sdexcsrv1.f000.d0188.sd.spardat.at>
+From: Zeugswetter Andreas SB  <ZeugswetterA@wien.spardat.at>
+To: "'Darren Johnson'" <djohnson@greatbridge.com>,
+   The Hermit Hacker
+  <scrappy@hub.org>
+cc: pgsql-hackers@postgresql.org
+Subject: AW: AW: [HACKERS] Postgres Replication
+Date: Tue, 12 Jun 2001 15:50:09 +0200
+MIME-Version: 1.0
+X-Mailer: Internet Mail Service (5.5.2650.21)
+Content-Type: text/plain;
+	charset="iso-8859-1"
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+
+> Here are some disadvantages to using a "trigger based" approach:
+> 
+> 1) Triggers simply transfer individual data items when they 
+> are modified, they do not keep track of transactions.
+> 2) The execution of triggers within a database imposes a performance 
+> overhead to that database.
+> 3) Triggers require careful management by database administrators.  
+> Someone needs to keep track of all the "alarms" going off.
+> 4) The activation of triggers in a database cannot be easily 
+> rolled back or undone.
+
+Yes, points 2 and 3 are a given, although point 2 buys you the functionality
+of transparent locking across all involved db servers.
+Points 1 and 4 are only the case for a trigger mechanism that does 
+not use remote connection and 2-phase commit. 
+
+Imho an implementation that opens a separate client connection to the 
+replication target is only suited for async replication, and for that a WAL 
+based solution would probably impose less overhead.
+
+Andreas
+
+---------------------------(end of broadcast)---------------------------
+TIP 2: you can get off all lists at once with the unregister command
+    (send "unregister YourEmailAddressHere" to majordomo@postgresql.org)
+
+From pgsql-hackers-owner+M9946@postgresql.org Tue Jun 12 10:47:09 2001
+Return-path: <pgsql-hackers-owner+M9946@postgresql.org>
+Received: from postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by candle.pha.pa.us (8.10.1/8.10.1) with ESMTP id f5CEl9L08144
+	for <pgman@candle.pha.pa.us>; Tue, 12 Jun 2001 10:47:09 -0400 (EDT)
+Received: from postgresql.org.org (webmail.postgresql.org [216.126.85.28])
+	by postgresql.org (8.11.3/8.11.1) with SMTP id f5CEihE88714;
+	Tue, 12 Jun 2001 10:44:43 -0400 (EDT)
+	(envelope-from pgsql-hackers-owner+M9946@postgresql.org)
+Received: from mail.greatbridge.com (mail.greatbridge.com [65.196.68.36])
+	by postgresql.org (8.11.3/8.11.1) with ESMTP id f5CEd6E85859
+	for <pgsql-hackers@postgresql.org>; Tue, 12 Jun 2001 10:39:06 -0400 (EDT)
+	(envelope-from djohnson@greatbridge.com)
+Received: from j2.us.greatbridge.com (djohnsonpc.us.greatbridge.com [65.196.69.70])
+	by mail.greatbridge.com (8.11.2/8.11.2) with SMTP id f5CEcgQ04905;
+	Tue, 12 Jun 2001 10:38:42 -0400
+From: Darren Johnson <djohnson@greatbridge.com>
+Date: Tue, 12 Jun 2001 14:37:18 GMT
+Message-ID: <20010612.14371800@j2.us.greatbridge.com>
+Subject: Re: AW: AW: [HACKERS] Postgres Replication
+To: Zeugswetter Andreas SB <ZeugswetterA@wien.spardat.at>
+cc: pgsql-hackers@postgresql.org
+Reply-To: Darren Johnson <djohnson@greatbridge.com>
+	<11C1E6749A55D411A9670001FA68796336831F@sdexcsrv1.f000.d0188.sd.spardat.at>
+References: <11C1E6749A55D411A9670001FA68796336831F@sdexcsrv1.f000.d0188.sd.spardat.at>
+X-Mailer: Mozilla/3.0 (compatible; StarOffice/5.2;Linux)
+X-Priority: 3 (Normal)
+MIME-Version: 1.0
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 8bit
+X-MIME-Autoconverted: from quoted-printable to 8bit by postgresql.org id f5CEd6E85860
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+
+
+> Imho an implementation that opens a separate client connection to the
+> replication target is only suited for async replication, and for that a 
+WAL
+> based solution would probably impose less overhead.
+
+
+Yes there is significant overhead with opening a connection to a 
+client, so Postgres-R creates a pool of backends at start up, 
+coupled with the group communication system (Ensemble) that
+significantly reduces this issue.
+
+
+Very good points,
+
+Darren
+
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 6: Have you searched our list archives?
+
+http://www.postgresql.org/search.mpl
+
+From pgsql-hackers-owner+M9982@postgresql.org Tue Jun 12 19:04:06 2001
+Return-path: <pgsql-hackers-owner+M9982@postgresql.org>
+Received: from postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by candle.pha.pa.us (8.10.1/8.10.1) with ESMTP id f5CN46E10043
+	for <pgman@candle.pha.pa.us>; Tue, 12 Jun 2001 19:04:06 -0400 (EDT)
+Received: from postgresql.org.org (webmail.postgresql.org [216.126.85.28])
+	by postgresql.org (8.11.3/8.11.1) with SMTP id f5CN4AE62160;
+	Tue, 12 Jun 2001 19:04:10 -0400 (EDT)
+	(envelope-from pgsql-hackers-owner+M9982@postgresql.org)
+Received: from spoetnik.xs4all.nl (spoetnik.xs4all.nl [194.109.249.226])
+	by postgresql.org (8.11.3/8.11.1) with ESMTP id f5CMxaE60194
+	for <pgsql-hackers@postgresql.org>; Tue, 12 Jun 2001 18:59:36 -0400 (EDT)
+	(envelope-from reinoud@xs4all.nl)
+Received: from KAYAK (kayak [192.168.1.20])
+	by spoetnik.xs4all.nl (Postfix) with SMTP id 435353E1B
+	for <pgsql-hackers@postgresql.org>; Wed, 13 Jun 2001 00:59:28 +0200 (CEST)
+From: reinoud@xs4all.nl (Reinoud van Leeuwen)
+To: pgsql-hackers@postgresql.org
+Subject: Re: AW: AW: [HACKERS] Postgres Replication
+Date: Tue, 12 Jun 2001 22:59:23 GMT
+Organization: Not organized in any way
+Reply-To: reinoud@xs4all.nl
+Message-ID: <3b499c5b.652202125@192.168.1.10>
+References: <11C1E6749A55D411A9670001FA68796336831F@sdexcsrv1.f000.d0188.sd.spardat.at>
+In-Reply-To: <11C1E6749A55D411A9670001FA68796336831F@sdexcsrv1.f000.d0188.sd.spardat.at>
+X-Mailer: Forte Agent 1.5/32.451
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 8bit
+X-MIME-Autoconverted: from quoted-printable to 8bit by postgresql.org id f5CMxcE60196
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+On Tue, 12 Jun 2001 15:50:09 +0200, you wrote:
+
+>
+>> Here are some disadvantages to using a "trigger based" approach:
+>> 
+>> 1) Triggers simply transfer individual data items when they 
+>> are modified, they do not keep track of transactions.
+>> 2) The execution of triggers within a database imposes a performance 
+>> overhead to that database.
+>> 3) Triggers require careful management by database administrators.  
+>> Someone needs to keep track of all the "alarms" going off.
+>> 4) The activation of triggers in a database cannot be easily 
+>> rolled back or undone.
+>
+>Yes, points 2 and 3 are a given, although point 2 buys you the functionality
+>of transparent locking across all involved db servers.
+>Points 1 and 4 are only the case for a trigger mechanism that does 
+>not use remote connection and 2-phase commit. 
+>
+>Imho an implementation that opens a separate client connection to the 
+>replication target is only suited for async replication, and for that a WAL 
+>based solution would probably impose less overhead.
+
+Well as I read back the thread I see 2 different approaches to
+replication:
+
+1: tight integrated replication. 
+pro:
+- bi-directional (or multidirectional): updates are possible
+everywhere
+- A cluster of servers allways has the same state. 
+- it does not matter to which server you connect
+con:
+- network between servers will be a bottleneck, especially if it is a
+WAN connection
+- only full replication possible
+- what happens if one server is down? (or the network between) are
+commits still possible
+
+2: async replication
+pro:
+- long distance possible
+- no problems with network outages
+- only changes are replicated, selects do not have impact 
+- no locking issues accross servers
+- partial replication possible (many->one (datawarehouse), or one-many
+(queries possible everywhere, updates only central) 
+- goof for failover situations (backup server is standing by)
+con:
+- bidirectional replication hard to set up (you'll have to implement
+conflict resolution according to your business rules)
+- different servers are not guaranteed to be in the same state.
+
+I can think of some scenarios where I would definitely want to
+*choose* one of the options. A load-balanced web environment would
+likely want the first option, but synchronizing offices in different
+continents might not work with 2-phase commit over the network....
+
+And we have not even started talking about *managing* replicated
+environments. A lot of fail-over scenarios stop planning after the
+backup host has take control. But how to get back? 
+-- 
+__________________________________________________
+"Nothing is as subjective as reality"
+Reinoud van Leeuwen       reinoud@xs4all.nl
+http://www.xs4all.nl/~reinoud
+__________________________________________________
+
+---------------------------(end of broadcast)---------------------------
+TIP 1: subscribe and unsubscribe commands go to majordomo@postgresql.org
+
+From pgsql-hackers-owner+M9986@postgresql.org Tue Jun 12 19:48:48 2001
+Return-path: <pgsql-hackers-owner+M9986@postgresql.org>
+Received: from postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by candle.pha.pa.us (8.10.1/8.10.1) with ESMTP id f5CNmmE13125
+	for <pgman@candle.pha.pa.us>; Tue, 12 Jun 2001 19:48:48 -0400 (EDT)
+Received: from postgresql.org.org (webmail.postgresql.org [216.126.85.28])
+	by postgresql.org (8.11.3/8.11.1) with SMTP id f5CNmqE76673;
+	Tue, 12 Jun 2001 19:48:52 -0400 (EDT)
+	(envelope-from pgsql-hackers-owner+M9986@postgresql.org)
+Received: from sss.pgh.pa.us ([192.204.191.242])
+	by postgresql.org (8.11.3/8.11.1) with ESMTP id f5CNdQE73923
+	for <pgsql-hackers@postgresql.org>; Tue, 12 Jun 2001 19:39:26 -0400 (EDT)
+	(envelope-from tgl@sss.pgh.pa.us)
+Received: from sss2.sss.pgh.pa.us (tgl@localhost [127.0.0.1])
+	by sss.pgh.pa.us (8.11.3/8.11.3) with ESMTP id f5CNdI016442;
+	Tue, 12 Jun 2001 19:39:18 -0400 (EDT)
+To: reinoud@xs4all.nl
+cc: pgsql-hackers@postgresql.org
+Subject: Re: AW: AW: [HACKERS] Postgres Replication 
+In-Reply-To: <3b499c5b.652202125@192.168.1.10> 
+References: <11C1E6749A55D411A9670001FA68796336831F@sdexcsrv1.f000.d0188.sd.spardat.at> <3b499c5b.652202125@192.168.1.10>
+Comments: In-reply-to reinoud@xs4all.nl (Reinoud van Leeuwen)
+	message dated "Tue, 12 Jun 2001 22:59:23 +0000"
+Date: Tue, 12 Jun 2001 19:39:18 -0400
+Message-ID: <16439.992389158@sss.pgh.pa.us>
+From: Tom Lane <tgl@sss.pgh.pa.us>
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+reinoud@xs4all.nl (Reinoud van Leeuwen) writes:
+> Well as I read back the thread I see 2 different approaches to
+> replication:
+> ...
+> I can think of some scenarios where I would definitely want to
+> *choose* one of the options.
+
+Yes.  IIRC, it looks to be possible to support a form of async
+replication using the Postgres-R approach: you allow the cluster
+to break apart when communications fail, and then rejoin when
+your link comes back to life.  (This can work in principle, how
+close it is to reality is another question; but the rejoin operation
+is the same as crash recovery, so you have to have it anyway.)
+
+So this seems to me to allow getting most of the benefits of the async
+approach.  OTOH it is difficult to see how to go the other way: getting
+the benefits of a synchronous solution atop a basically-async
+implementation doesn't seem like it can work.
+
+			regards, tom lane
+
+---------------------------(end of broadcast)---------------------------
+TIP 6: Have you searched our list archives?
+
+http://www.postgresql.org/search.mpl
 
