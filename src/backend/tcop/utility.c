@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.15 1997/04/23 03:17:09 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.16 1997/04/23 06:09:33 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -610,7 +610,9 @@ ProcessUtility(Node *parsetree,
 	commandTag = "VACUUM";
 	CHECK_IF_ABORTED();
 	vacuum( ((VacuumStmt *) parsetree)->vacrel,
-		((VacuumStmt *) parsetree)->verbose);
+		((VacuumStmt *) parsetree)->verbose,
+		((VacuumStmt *) parsetree)->analyze,
+		((VacuumStmt *) parsetree)->va_spec);
 	break;
 
     case T_ExplainStmt:
@@ -649,7 +651,7 @@ ProcessUtility(Node *parsetree,
       
     case T_VariableShowStmt:
 	{
-	    VariableSetStmt *n = (VariableSetStmt *) parsetree;
+	    VariableShowStmt *n = (VariableShowStmt *) parsetree;
 	    GetPGVariable(n->name);
 	    commandTag = "SHOW VARIABLE";
 	}
@@ -657,7 +659,7 @@ ProcessUtility(Node *parsetree,
       
     case T_VariableResetStmt:
 	{
-	    VariableSetStmt *n = (VariableSetStmt *) parsetree;
+	    VariableResetStmt *n = (VariableResetStmt *) parsetree;
 	    ResetPGVariable(n->name);
 	    commandTag = "RESET VARIABLE";
 	}
