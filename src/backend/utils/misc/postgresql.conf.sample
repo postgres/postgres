@@ -111,7 +111,7 @@
 #	Message display
 #
 
-#server_min_messages = log	# Values, in order of decreasing detail:
+#server_min_messages = notice	# Values, in order of decreasing detail:
 				#   debug5, debug4, debug3, debug2, debug1,
 				#   info, notice, error, log, fatal, panic
 #client_min_messages = info	# Values, in order of decreasing detail:
