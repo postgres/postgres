@@ -607,21 +607,16 @@ typedef struct nameData
    
    2001-06-22
    
-   > If someone was interested in joining the development team, where
-   would
-   > they...
-   > - Find a description of the open source development process used by
-   the
-   > PostgreSQL team.
-   
+  What open source development process is used by the PostgreSQL team?
+  
    Read HACKERS for six months (or a full release cycle, whichever is
    longer). Really. HACKERS _is_the process. The process is not well
    documented (AFAIK -- it may be somewhere that I am not aware of) --
    and it changes continually.
    
-   > - Find the development environment (OS, system, compilers, etc)
-   > required to develop code.
-   
+  What development environment (OS, system, compilers, etc) is required to
+  develop code?
+  
    Developers Corner on the website has links to this information. The
    distribution tarball itself includes all the extra tools and documents
    that go beyond a good Unix-like development environment. In general, a
@@ -629,8 +624,8 @@ typedef struct nameData
    particular version), and good working knowledge of those tools are
    required.
    
-   > - Find an area or two that needs some support.
-   
+  What area or two needs some support?
+  
    The TODO list.
    
    You've made the first step, by finding and subscribing to HACKERS.
