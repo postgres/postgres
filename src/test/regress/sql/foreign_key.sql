@@ -425,3 +425,159 @@ CREATE TABLE FKTABLE_FAIL1 (ftest1 int REFERENCES pktable(ptest1));
 
 DROP TABLE FKTABLE_FAIL1;
 DROP TABLE PKTABLE;
+
+--
+-- Tests for mismatched types
+--
+-- Basic one column, two table setup 
+CREATE TABLE PKTABLE (ptest1 int PRIMARY KEY);
+-- This next should fail, because text=int does not exist
+CREATE TABLE FKTABLE (ftest1 text REFERENCES pktable);
+-- This should also fail for the same reason, but here we
+-- give the column name
+CREATE TABLE FKTABLE (ftest1 text REFERENCES pktable(ptest1));
+-- This should succeed, even though they are different types
+-- because varchar=int does exist
+CREATE TABLE FKTABLE (ftest1 varchar REFERENCES pktable);
+DROP TABLE FKTABLE;
+-- As should this
+CREATE TABLE FKTABLE (ftest1 varchar REFERENCES pktable(ptest1));
+DROP TABLE FKTABLE;
+DROP TABLE PKTABLE;
+
+-- Two columns, two tables
+CREATE TABLE PKTABLE (ptest1 int, ptest2 text, PRIMARY KEY(ptest1, ptest2));
+-- This should fail, because we just chose really odd types
+CREATE TABLE FKTABLE (ftest1 cidr, ftest2 datetime, FOREIGN KEY(ftest1, ftest2) REFERENCES pktable);
+-- Again, so should this...
+CREATE TABLE FKTABLE (ftest1 cidr, ftest2 datetime, FOREIGN KEY(ftest1, ftest2) REFERENCES pktable(ptest1, ptest2));
+-- This fails because we mixed up the column ordering
+CREATE TABLE FKTABLE (ftest1 int, ftest2 text, FOREIGN KEY(ftest2, ftest1) REFERENCES pktable);
+-- As does this...
+CREATE TABLE FKTABLE (ftest1 int, ftest2 text, FOREIGN KEY(ftest2, ftest1) REFERENCES pktable(ptest1, ptest2));
+-- And again..
+CREATE TABLE FKTABLE (ftest1 int, ftest2 text, FOREIGN KEY(ftest1, ftest2) REFERENCES pktable(ptest2, ptest1));
+-- This works...
+CREATE TABLE FKTABLE (ftest1 int, ftest2 text, FOREIGN KEY(ftest2, ftest1) REFERENCES pktable(ptest2, ptest1));
+DROP TABLE FKTABLE;
+-- As does this
+CREATE TABLE FKTABLE (ftest1 int, ftest2 text, FOREIGN KEY(ftest1, ftest2) REFERENCES pktable(ptest1, ptest2));
+DROP TABLE FKTABLE;
+DROP TABLE PKTABLE;
+
+-- Two columns, same table
+-- Make sure this still works...
+CREATE TABLE PKTABLE (ptest1 int, ptest2 text, ptest3 int, ptest4 text, PRIMARY KEY(ptest1, ptest2), FOREIGN KEY(ptest3,
+ptest4) REFERENCES pktable(ptest1, ptest2));
+DROP TABLE PKTABLE;
+-- And this, 
+CREATE TABLE PKTABLE (ptest1 int, ptest2 text, ptest3 int, ptest4 text, PRIMARY KEY(ptest1, ptest2), FOREIGN KEY(ptest3,
+ptest4) REFERENCES pktable);
+DROP TABLE PKTABLE;
+-- This shouldn't (mixed up columns)
+CREATE TABLE PKTABLE (ptest1 int, ptest2 text, ptest3 int, ptest4 text, PRIMARY KEY(ptest1, ptest2), FOREIGN KEY(ptest3,
+ptest4) REFERENCES pktable(ptest2, ptest1));
+-- Nor should this... (same reason, we have 4,3 referencing 1,2 which mismatches types
+CREATE TABLE PKTABLE (ptest1 int, ptest2 text, ptest3 int, ptest4 text, PRIMARY KEY(ptest1, ptest2), FOREIGN KEY(ptest4,
+ptest3) REFERENCES pktable(ptest1, ptest2));
+-- Not this one either... Same as the last one except we didn't defined the columns being referenced.
+CREATE TABLE PKTABLE (ptest1 int, ptest2 text, ptest3 int, ptest4 text, PRIMARY KEY(ptest1, ptest2), FOREIGN KEY(ptest4,
+ptest3) REFERENCES pktable);
+
+--
+-- Now some cases with inheritance
+-- Basic 2 table case: 1 column of matching types.
+create table pktable_base (base1 int not null);
+create table pktable (ptest1 int, primary key(base1), unique(base1, ptest1)) inherits (pktable_base);
+create table fktable (ftest1 int references pktable(base1));
+-- now some ins, upd, del
+insert into pktable(base1) values (1);
+insert into pktable(base1) values (2);
+--  let's insert a non-existant fktable value
+insert into fktable(ftest1) values (3);
+--  let's make a valid row for that
+insert into pktable(base1) values (3);
+insert into fktable(ftest1) values (3);
+-- let's try removing a row that should fail from pktable
+delete from pktable where base1>2;
+-- okay, let's try updating all of the base1 values to *4
+-- which should fail.
+update pktable set base1=base1*4;
+-- okay, let's try an update that should work.
+update pktable set base1=base1*4 where base1<3;
+-- and a delete that should work
+delete from pktable where base1>3;
+-- cleanup
+drop table fktable;
+delete from pktable;
+
+-- Now 2 columns 2 tables, matching types
+create table fktable (ftest1 int, ftest2 int, foreign key(ftest1, ftest2) references pktable(base1, ptest1));
+-- now some ins, upd, del
+insert into pktable(base1, ptest1) values (1, 1);
+insert into pktable(base1, ptest1) values (2, 2);
+--  let's insert a non-existant fktable value
+insert into fktable(ftest1, ftest2) values (3, 1);
+--  let's make a valid row for that
+insert into pktable(base1,ptest1) values (3, 1);
+insert into fktable(ftest1, ftest2) values (3, 1);
+-- let's try removing a row that should fail from pktable
+delete from pktable where base1>2;
+-- okay, let's try updating all of the base1 values to *4
+-- which should fail.
+update pktable set base1=base1*4;
+-- okay, let's try an update that should work.
+update pktable set base1=base1*4 where base1<3;
+-- and a delete that should work
+delete from pktable where base1>3;
+-- cleanup
+drop table fktable;
+drop table pktable;
+drop table pktable_base;
+
+-- Now we'll do one all in 1 table with 2 columns of matching types
+create table pktable_base(base1 int not null, base2 int);
+create table pktable(ptest1 int, ptest2 int, primary key(base1, ptest1), foreign key(base2, ptest2) references
+                                             pktable(base1, ptest1)) inherits (pktable_base);
+insert into pktable (base1, ptest1, base2, ptest2) values (1, 1, 1, 1);
+insert into pktable (base1, ptest1, base2, ptest2) values (2, 1, 1, 1);
+insert into pktable (base1, ptest1, base2, ptest2) values (2, 2, 2, 1);
+insert into pktable (base1, ptest1, base2, ptest2) values (1, 3, 2, 2);
+-- fails (3,2) isn't in base1, ptest1
+insert into pktable (base1, ptest1, base2, ptest2) values (2, 3, 3, 2);
+-- fails (2,2) is being referenced
+delete from pktable where base1=2;
+-- fails (1,1) is being referenced (twice)
+update pktable set base1=3 where base1=1;
+-- this sequence of two deletes will work, since after the first there will be no (2,*) references
+delete from pktable where base2=2;
+delete from pktable where base1=2;
+drop table pktable;
+drop table pktable_base;
+
+-- 2 columns (2 tables), mismatched types
+create table pktable_base(base1 int not null);
+create table pktable(ptest1 text, primary key(base1, ptest1)) inherits (pktable_base);
+-- just generally bad types (with and without column references on the referenced table)
+create table fktable(ftest1 cidr, ftest2 int[], foreign key (ftest1, ftest2) references pktable);
+create table fktable(ftest1 cidr, ftest2 int[], foreign key (ftest1, ftest2) references pktable(base1, ptest1));
+-- let's mix up which columns reference which
+create table fktable(ftest1 int, ftest2 text, foreign key(ftest2, ftest1) references pktable);
+create table fktable(ftest1 int, ftest2 text, foreign key(ftest2, ftest1) references pktable(base1, ptest1));
+create table fktable(ftest1 int, ftest2 text, foreign key(ftest1, ftest2) references pktable(ptest1, base1));
+drop table pktable;
+drop table pktable_base;
+
+-- 2 columns (1 table), mismatched types
+create table pktable_base(base1 int not null, base2 int);
+create table pktable(ptest1 text, ptest2 text[], primary key(base1, ptest1), foreign key(base2, ptest2) references
+                                             pktable(base1, ptest1)) inherits (pktable_base);
+create table pktable(ptest1 text, ptest2 text, primary key(base1, ptest1), foreign key(base2, ptest2) references
+                                             pktable(ptest1, base1)) inherits (pktable_base);
+create table pktable(ptest1 text, ptest2 text, primary key(base1, ptest1), foreign key(ptest2, base2) references
+                                             pktable(base1, ptest1)) inherits (pktable_base);
+create table pktable(ptest1 text, ptest2 text, primary key(base1, ptest1), foreign key(ptest2, base2) references
+                                             pktable(base1, ptest1)) inherits (pktable_base);
+drop table pktable;
+drop table pktable_base;
+

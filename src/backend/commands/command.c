@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.126 2001/05/07 00:43:17 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.127 2001/05/09 21:10:38 momjian Exp $
  *
  * NOTES
  *	  The PerformAddAttribute() code, like most of the relation
@@ -39,6 +39,7 @@
 #include "parser/parse_expr.h"
 #include "parser/parse_clause.h"
 #include "parser/parse_relation.h"
+#include "parser/parse_oper.h"
 #include "nodes/makefuncs.h"
 #include "optimizer/planmain.h"
 #include "optimizer/clauses.h"
@@ -1342,6 +1343,13 @@ AlterTableAddConstraint(char *relationName,
 				int			i;
 				bool		found = false;
 
+				Oid     fktypoid[INDEX_MAX_KEYS];
+				Oid     pktypoid[INDEX_MAX_KEYS];
+				int     attloc;
+ 
+				for (i=0; i<INDEX_MAX_KEYS; i++) 
+					fktypoid[i]=pktypoid[i]=0;
+
 				if (is_temp_rel_name(fkconstraint->pktable_name) &&
 					!is_temp_rel_name(relationName))
 					elog(ERROR, "ALTER TABLE / ADD CONSTRAINT: Unable to reference temporary table from permanent table constraint.");
@@ -1403,6 +1411,7 @@ AlterTableAddConstraint(char *relationName,
 							found = false;
 						else
 						{
+							attloc=0;
 							/* go through the fkconstraint->pk_attrs list */
 							foreach(attrl, fkconstraint->pk_attrs)
 							{
@@ -1419,6 +1428,11 @@ AlterTableAddConstraint(char *relationName,
 
 										if (strcmp(name, attr->name) == 0)
 										{
+											/* We get the type of this attribute here and
+											 * store it so we can use it later for making
+											 * sure the types are comparable.
+											 */
+											pktypoid[attloc++]=rel_attrs[pkattno-1]->atttypid;
 											found = true;
 											break;
 										}
@@ -1448,6 +1462,7 @@ AlterTableAddConstraint(char *relationName,
 					Ident	   *fkattr;
 
 					found = false;
+					attloc = 0;
 					foreach(fkattrs, fkconstraint->fk_attrs)
 					{
 						int			count;
@@ -1460,6 +1475,11 @@ AlterTableAddConstraint(char *relationName,
 
 							if (strcmp(name, fkattr->name) == 0)
 							{
+								/*
+								 * Here once again we get the types, this
+								 * time for the fk table's attributes
+								 */
+								fktypoid[attloc++]=rel->rd_att->attrs[count]->atttypid;
 								found = true;
 								break;
 							}
@@ -1469,6 +1489,17 @@ AlterTableAddConstraint(char *relationName,
 					}
 					if (!found)
 						elog(ERROR, "columns referenced in foreign key constraint not found.");
+				}
+
+				for (i=0; i < INDEX_MAX_KEYS && fktypoid[i] !=0; i++) {
+					/*
+					 * fktypoid[i] is the foreign key table's i'th element's type oid
+					 * pktypoid[i] is the primary key table's i'th element's type oid
+					 * We let oper() do our work for us, including elog(ERROR) if the
+					 * types can't compare with =
+					 */
+					Operator o=oper("=", fktypoid[i], pktypoid[i], false);
+					ReleaseSysCache(o);
 				}
 
 				trig.tgoid = 0;

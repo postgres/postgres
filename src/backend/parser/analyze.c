@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.184 2001/05/07 00:43:22 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.185 2001/05/09 21:10:39 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,6 +24,8 @@
 #include "parser/parse_agg.h"
 #include "parser/parse_clause.h"
 #include "parser/parse_coerce.h"
+#include "parser/parse_expr.h"
+#include "parser/parse_oper.h"
 #include "parser/parse_relation.h"
 #include "parser/parse_target.h"
 #include "parser/parse_type.h"
@@ -52,10 +54,10 @@ static Query *transformAlterTableStmt(ParseState *pstate, AlterTableStmt *stmt);
 
 static List *getSetColTypes(ParseState *pstate, Node *node);
 static void transformForUpdate(Query *qry, List *forUpdate);
-static void transformFkeyGetPrimaryKey(FkConstraint *fkconstraint);
+static void transformFkeyGetPrimaryKey(FkConstraint *fkconstraint, Oid *pktypoid);
 static void transformConstraintAttrs(List *constraintList);
 static void transformColumnType(ParseState *pstate, ColumnDef *column);
-static void transformFkeyCheckAttrs(FkConstraint *fkconstraint);
+static void transformFkeyCheckAttrs(FkConstraint *fkconstraint, Oid *pktypoid);
 
 static void release_pstate_resources(ParseState *pstate);
 static FromExpr *makeFromExpr(List *fromlist, Node *quals);
@@ -1139,7 +1141,13 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 		List	   *fk_attr;
 		List	   *pk_attr;
 		Ident	   *id;
+		Oid	   pktypoid[INDEX_MAX_KEYS];
+		Oid	   fktypoid[INDEX_MAX_KEYS];
+		int	   i;
 
+		for (i=0; i<INDEX_MAX_KEYS; i++) {
+			pktypoid[i]=fktypoid[i]=0;
+		}
 		elog(NOTICE, "CREATE TABLE will create implicit trigger(s) for FOREIGN KEY check(s)");
 
 		foreach(fkclist, fkconstraints)
@@ -1160,6 +1168,7 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 			if (fkconstraint->fk_attrs != NIL)
 			{
 				int			found = 0;
+				int	   attnum=0;
 				List	   *cols;
 				List	   *fkattrs;
 				Ident	   *fkattr = NULL;
@@ -1174,46 +1183,50 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 						col = lfirst(cols);
 						if (strcmp(col->colname, fkattr->name) == 0)
 						{
+							char *buff=TypeNameToInternalName(col->typename);
+							Oid type=typenameTypeId(buff);
+							if (!OidIsValid(type)) {
+								elog(ERROR, "Unable to lookup type %s", col->typename->name);
+							}
+							fktypoid[attnum++]=type;
 							found = 1;
 							break;
 						}
 					}
-					if (!found)
+					if (!found) {
+						List	   *inher;
+						List	   *inhRelnames = stmt->inhRelnames;
+						Relation	rel;
+
+						foreach(inher, inhRelnames)
+						{
+							Value	   *inh = lfirst(inher);
+							int			count;
+
+							Assert(IsA(inh, String));
+							rel = heap_openr(strVal(inh), AccessShareLock);
+							if (rel->rd_rel->relkind != RELKIND_RELATION)
+								elog(ERROR, "inherited table \"%s\" is not a relation",
+									 strVal(inh));
+							for (count = 0; count < rel->rd_att->natts; count++)
+							{
+								char	   *name = NameStr(rel->rd_att->attrs[count]->attname);
+
+								if (strcmp(fkattr->name, name) == 0)
+								{
+									fktypoid[attnum++]=rel->rd_att->attrs[count]->atttypid;
+									found = 1;
+									break;
+								}
+							}
+							heap_close(rel, NoLock);
+							if (found)
+								break;
+						}
+					}
+					if (!found) 
 						break;
 				}
-				if (!found)
-				{				/* try inherited tables */
-					List	   *inher;
-					List	   *inhRelnames = stmt->inhRelnames;
-					Relation	rel;
-
-					foreach(inher, inhRelnames)
-					{
-						Value	   *inh = lfirst(inher);
-						int			count;
-
-						Assert(IsA(inh, String));
-						rel = heap_openr(strVal(inh), AccessShareLock);
-						if (rel->rd_rel->relkind != RELKIND_RELATION)
-							elog(ERROR, "inherited table \"%s\" is not a relation",
-								 strVal(inh));
-						for (count = 0; count < rel->rd_att->natts; count++)
-						{
-							char	   *name = NameStr(rel->rd_att->attrs[count]->attname);
-
-							if (strcmp(fkattr->name, name) == 0)
-							{
-								found = 1;
-								break;
-							}
-						}
-						heap_close(rel, NoLock);
-						if (found)
-							break;
-					}
-				}
-				else
-					found = 1;
 				if (!found)
 					elog(ERROR, "columns referenced in foreign key constraint not found.");
 			}
@@ -1228,13 +1241,16 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 			if (fkconstraint->fk_attrs != NIL && fkconstraint->pk_attrs == NIL)
 			{
 				if (strcmp(fkconstraint->pktable_name, stmt->relname) != 0)
-					transformFkeyGetPrimaryKey(fkconstraint);
+					transformFkeyGetPrimaryKey(fkconstraint, pktypoid);
 				else if (pkey != NULL)
 				{
 					List	   *pkey_attr = pkey->indexParams;
 					List	   *attr;
+					List       *findattr;
 					IndexElem  *ielem;
 					Ident	   *pkattr;
+					int	   attnum=0;
+					ColumnDef  *col;
 
 					foreach(attr, pkey_attr)
 					{
@@ -1244,6 +1260,18 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 						pkattr->indirection = NIL;
 						pkattr->isRel = false;
 						fkconstraint->pk_attrs = lappend(fkconstraint->pk_attrs, pkattr);
+						foreach (findattr, stmt->tableElts) {
+	                                                col=lfirst(findattr);
+        	                                        if (strcmp(col->colname, ielem->name)==0) {
+								char *buff=TypeNameToInternalName(col->typename);
+								Oid type=typenameTypeId(buff);
+                                                        	if (!OidIsValid(type)) {
+                                                                	elog(ERROR, "Unable to lookup type %s", col->typename->name);
+	                                                        }
+        	                                                pktypoid[attnum++]=type; /* need to convert typename */
+                        	                                break;
+                                	                }
+						}
 					}
 				}
 				else
@@ -1255,7 +1283,7 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 			else
 			{
 				if (strcmp(fkconstraint->pktable_name, stmt->relname) != 0)
-					transformFkeyCheckAttrs(fkconstraint);
+					transformFkeyCheckAttrs(fkconstraint, pktypoid);
 				else
 				{
 					/* Get a unique/pk constraint from above */
@@ -1268,11 +1296,14 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 						IndexElem  *indparm;
 						List	   *indparms;
 						List	   *pkattrs;
+						List	   *findattr;
+						ColumnDef  *col;
 						Ident	   *pkattr;
 
 						if (ind->unique)
 						{
 							int			count = 0;
+							int attnum=0;
 
 							foreach(indparms, ind->indexParams)
 								count++;
@@ -1289,7 +1320,43 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 										indparm = lfirst(indparms);
 										if (strcmp(indparm->name, pkattr->name) == 0)
 										{
-											found = 1;
+											foreach (findattr, stmt->tableElts) {
+												col=lfirst(findattr);
+												if (strcmp(col->colname, indparm->name)==0) {
+													char *buff=TypeNameToInternalName(col->typename);
+													Oid type=typenameTypeId(buff);
+													if (!OidIsValid(type)) {
+														elog(ERROR, "Unable to lookup type %s", col->typename->name);
+													}
+													pktypoid[attnum++]=type;
+													found=1;
+													break;
+												}
+											}
+											if (!found) {
+												List *inher;
+												List *inhRelnames=stmt->inhRelnames;
+												Relation rel;
+												foreach (inher, inhRelnames) {
+													Value *inh=lfirst(inher);
+													int count;
+													Assert(IsA(inh, String));
+													rel=heap_openr(strVal(inh), AccessShareLock);
+													if (rel->rd_rel->relkind!=RELKIND_RELATION)
+														elog(ERROR, "inherited table \"%s\" is not a relation", strVal(inh));
+													for (count=0; count<rel->rd_att->natts; count++) {
+														char *name=NameStr(rel->rd_att->attrs[count]->attname);
+														if (strcmp(pkattr->name, name)==0) {
+															pktypoid[attnum++]=rel->rd_att->attrs[count]->atttypid;
+															found=1;
+															break;
+														}
+													}
+													heap_close(rel, NoLock);
+													if (found)
+														break;
+												}
+											}
 											break;
 										}
 									}
@@ -1307,6 +1374,16 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 				}
 			}
 
+			for (i = 0; i < INDEX_MAX_KEYS && fktypoid[i] != 0; i++) {
+				/*
+				 * fktypoid[i] is the foreign key table's i'th element's type oid
+				 * pktypoid[i] is the primary key table's i'th element's type oid
+				 * We let oper() do our work for us, including elog(ERROR) if the
+				 * types don't compare with =
+				 */
+				Operator o=oper("=", fktypoid[i], pktypoid[i], false);
+				ReleaseSysCache(o);
+			}
 			/*
 			 * Build a CREATE CONSTRAINT TRIGGER statement for the CHECK
 			 * action.
@@ -2399,8 +2476,10 @@ transformAlterTableStmt(ParseState *pstate, AlterTableStmt *stmt)
 				 * omitted, lookup for the definition of the primary key
 				 *
 				 */
-				if (fkconstraint->fk_attrs != NIL && fkconstraint->pk_attrs == NIL)
-					transformFkeyGetPrimaryKey(fkconstraint);
+				if (fkconstraint->fk_attrs != NIL && fkconstraint->pk_attrs == NIL) {
+					Oid pktypoid[INDEX_MAX_KEYS];
+					transformFkeyGetPrimaryKey(fkconstraint, pktypoid);
+				}
 
 				/*
 				 * Build a CREATE CONSTRAINT TRIGGER statement for the
@@ -2702,7 +2781,7 @@ transformForUpdate(Query *qry, List *forUpdate)
  *
  */
 static void
-transformFkeyCheckAttrs(FkConstraint *fkconstraint)
+transformFkeyCheckAttrs(FkConstraint *fkconstraint, Oid *pktypoid)
 {
 	Relation	pkrel;
 	Form_pg_attribute *pkrel_attrs;
@@ -2744,6 +2823,7 @@ transformFkeyCheckAttrs(FkConstraint *fkconstraint)
 		if (indexStruct->indisunique)
 		{
 			List	   *attrl;
+			int	   attnum=0;
 
 			for (i = 0; i < INDEX_MAX_KEYS && indexStruct->indkey[i] != 0; i++);
 			if (i != length(fkconstraint->pk_attrs))
@@ -2766,6 +2846,7 @@ transformFkeyCheckAttrs(FkConstraint *fkconstraint)
 
 							if (strcmp(name, attr->name) == 0)
 							{
+								pktypoid[attnum++]=pkrel_attrs[pkattno-1]->atttypid;
 								found = true;
 								break;
 							}
@@ -2797,7 +2878,7 @@ transformFkeyCheckAttrs(FkConstraint *fkconstraint)
  *
  */
 static void
-transformFkeyGetPrimaryKey(FkConstraint *fkconstraint)
+transformFkeyGetPrimaryKey(FkConstraint *fkconstraint, Oid *pktypoid)
 {
 	Relation	pkrel;
 	Form_pg_attribute *pkrel_attrs;
@@ -2806,6 +2887,7 @@ transformFkeyGetPrimaryKey(FkConstraint *fkconstraint)
 	HeapTuple	indexTuple = NULL;
 	Form_pg_index indexStruct = NULL;
 	int			i;
+	int		attnum=0;
 
 	/*
 	 * Open the referenced table and get the attributes list
@@ -2862,6 +2944,7 @@ transformFkeyGetPrimaryKey(FkConstraint *fkconstraint)
 					NameGetDatum(&(pkrel_attrs[pkattno - 1]->attname))));
 		pkattr->indirection = NIL;
 		pkattr->isRel = false;
+		pktypoid[attnum++]=pkrel_attrs[pkattno-1]->atttypid;
 
 		fkconstraint->pk_attrs = lappend(fkconstraint->pk_attrs, pkattr);
 	}
