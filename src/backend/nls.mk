@@ -1,6 +1,6 @@
-# $PostgreSQL: pgsql/src/backend/nls.mk,v 1.11 2003/11/29 19:51:39 pgsql Exp $
+# $PostgreSQL: pgsql/src/backend/nls.mk,v 1.12 2004/06/10 17:10:24 petere Exp $
 CATALOG_NAME	:= postgres
-AVAIL_LANGUAGES	:= cs de es hr hu it nb pt_BR ru sv tr zh_CN zh_TW
+AVAIL_LANGUAGES	:= af cs de es hr hu it nb pt_BR ru sv tr zh_CN zh_TW
 GETTEXT_FILES	:= + gettext-files
 # you can add "elog:2" and "errmsg_internal" to this list if you want to
 # include internal messages in the translation list.
