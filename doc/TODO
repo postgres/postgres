@@ -5,7 +5,7 @@ TODO list for PostgreSQL
 Bracketed items "[]" have more detail.
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Mon Aug 23 17:56:39 EDT 2004
+Last updated:		Tue Aug 24 07:09:37 EDT 2004
 
 The most recent version of this document can be viewed at the PostgreSQL web site, http://www.PostgreSQL.org.
 
@@ -557,7 +557,14 @@ Referential Integrity
   memory.  This could exhaust memory for very large trigger queues.
   This item involves dumping large queues into files.
 
-* Implement dirty reads or shared row locks and use them in RI triggers (?)
+* Implement dirty reads or shared row locks and use them in RI triggers
+
+  Adding shared locks requires recording the table/rows numbers in a 
+  shared area, and this could potentially be a large amount of data.
+  One idea is to store the table/row numbers in a separate table and set
+  a bit on the row indicating looking in this new table is required to
+  find any shared row locks.
+
 * Enforce referential integrity for system tables
 * Change foreign key constraint for array -> element to mean element
   in array (?)
