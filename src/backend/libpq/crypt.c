@@ -17,6 +17,7 @@
 #endif
 
 #include "postgres.h"
+#include "miscadmin.h"
 #include "libpq/crypt.h"
 #include "utils/nabstime.h"
 #include "utils/palloc.h"
@@ -129,7 +130,7 @@ MsgType crypt_salt(const char* user) {
 
   crypt_getloginfo(user, &passwd, &valuntil);
 
-  if (passwd == NULL || *passwd == '\0') {
+  if (passwd == NULL || *passwd == '\0' || !strcmp(passwd, "\\N")) {
     if (passwd) pfree((void*)passwd);
     if (valuntil) pfree((void*)valuntil);
     return STARTUP_UNSALT_MSG;

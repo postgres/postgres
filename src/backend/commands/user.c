@@ -152,10 +152,13 @@ void DefineUser(CreateUserStmt *stmt) {
   /* Add the stuff here for groups.
    */
 
+  UpdatePgPwdFile(sql);
+
+  /* This goes after the UpdatePgPwdFile to be certain that two backends to not
+   * attempt to write to the pg_pwd file at the same time.
+   */
   RelationUnsetLockForWrite(pg_user_rel);
   heap_close(pg_user_rel);
-
-  UpdatePgPwdFile(sql);
 
   if (IsTransactionBlock() && !inblock)
     EndTransactionBlock();
@@ -195,6 +198,10 @@ extern void AlterUser(AlterUserStmt *stmt) {
    */
   pg_user_rel = heap_openr(UserRelationName);
   pg_user_dsc = RelationGetTupleDescriptor(pg_user_rel);
+  /* Secure a write lock on pg_user so we can be sure that when the dump of
+   * the pg_pwd file is done, there is not another backend doing the same.
+   */
+  RelationSetLockForWrite(pg_user_rel);
 
   scan = heap_beginscan(pg_user_rel, false, false, 0, NULL);
   while (HeapTupleIsValid(tuple = heap_getnext(scan, 0, &buffer))) {
@@ -207,9 +214,10 @@ extern void AlterUser(AlterUserStmt *stmt) {
     }
   }
   heap_endscan(scan);
-  heap_close(pg_user_rel);
 
   if (!exists) {
+    RelationUnsetLockForWrite(pg_user_rel);
+    heap_close(pg_user_rel);
     UserAbortTransactionBlock();
     elog(WARN, "alterUser: user \"%s\" does not exist", stmt->user);
     return;
@@ -257,6 +265,9 @@ extern void AlterUser(AlterUserStmt *stmt) {
 
   UpdatePgPwdFile(sql);
 
+  RelationUnsetLockForWrite(pg_user_rel);
+  heap_close(pg_user_rel);
+
   if (IsTransactionBlock() && !inblock)
     EndTransactionBlock();
 }
@@ -265,7 +276,8 @@ extern void AlterUser(AlterUserStmt *stmt) {
 extern void RemoveUser(char* user) {
 
   char*            pg_user;
-  Relation         pg_rel;
+  Relation         pg_user_rel,
+                   pg_rel;
   TupleDesc        pg_dsc;
   HeapScanDesc     scan;
   HeapTuple        tuple;
@@ -295,10 +307,14 @@ extern void RemoveUser(char* user) {
   /* Perform a scan of the pg_user relation to find the usesysid of the user to
    * be deleted.  If it is not found, then return a warning message.
    */
-  pg_rel = heap_openr(UserRelationName);
-  pg_dsc = RelationGetTupleDescriptor(pg_rel);
+  pg_user_rel = heap_openr(UserRelationName);
+  pg_dsc = RelationGetTupleDescriptor(pg_user_rel);
+  /* Secure a write lock on pg_user so we can be sure that when the dump of
+   * the pg_pwd file is done, there is not another backend doing the same.
+   */
+  RelationSetLockForWrite(pg_user_rel);
 
-  scan = heap_beginscan(pg_rel, false, false, 0, NULL);
+  scan = heap_beginscan(pg_user_rel, false, false, 0, NULL);
   while (HeapTupleIsValid(tuple = heap_getnext(scan, 0, &buffer))) {
     datum = heap_getattr(tuple, buffer, Anum_pg_user_usename, pg_dsc, &n);
 
@@ -310,9 +326,10 @@ extern void RemoveUser(char* user) {
     ReleaseBuffer(buffer);
   }
   heap_endscan(scan);
-  heap_close(pg_rel);
 
   if (usesysid == -1) {
+    RelationUnsetLockForWrite(pg_user_rel);
+    heap_close(pg_user_rel);
     UserAbortTransactionBlock();
     elog(WARN, "removeUser: user \"%s\" does not exist", user);
     return;
@@ -372,6 +389,9 @@ extern void RemoveUser(char* user) {
   pg_exec_query(sql, (char**)NULL, (Oid*)NULL, 0);
 
   UpdatePgPwdFile(sql);
+
+  RelationUnsetLockForWrite(pg_user_rel);
+  heap_close(pg_user_rel);
 
   if (IsTransactionBlock() && !inblock)
     EndTransactionBlock();
