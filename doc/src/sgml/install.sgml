@@ -388,7 +388,7 @@ $ exit
 <para>
 There are two places in this installation procedure where you will have an opportunity
 to specify installation locations for programs, libraries, documentation, and other files.
-Usually it is sufficient to specify these at the <command>make install</command> stage
+Usually it is sufficient to specify these at the <command>gmake install</command> stage
 of installation.
 </para>
 </note>
@@ -551,6 +551,8 @@ $ tail -f make.log
 <programlisting>
 All of PostgreSQL is successfully made. Ready to install.
 </programlisting>
+Remember, <Quote>gmake</Quote> may be called <Quote>make</Quote> on
+your system.
 
   At this point, or earlier
      if you wish, type control-C to get out of tail.  (If you have
@@ -572,7 +574,7 @@ the <application>flex</application> command
   Next,
      change directory back to this directory, type 
 <programlisting>
-$ make clean
+$ gmake clean
 </programlisting>
 then recompile again.
 </Para>
@@ -606,6 +608,8 @@ gmake[1]: Leaving directory `/usr/src/pgsql/src/man'
 </programlisting>
 At this point, or earlier if you wish,
      type control-C to get out of tail.
+Remember, <Quote>gmake</Quote> may be called <Quote>make</Quote> on
+your system.
 </Para>
 </Step>
 
