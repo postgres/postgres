@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Tue Mar 20 17:04:41 EST 2001
+Last updated:		Tue Mar 20 23:30:04 EST 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -312,7 +312,7 @@ MISCELLANEOUS
 * Do async I/O to do better read-ahead of data
 * Get faster regex() code from Henry Spencer <henry@zoo.utoronto.ca>
   when it is available
-* Use mmap() rather than SYSV shared memory(?)
+* Use mmap() rather than SYSV shared memory(?) [mmap]
 * -Make oid use oidin/oidout not int4in/int4out in pg_type.h (Tom)
 * Improve Subplan list handling
 * Allow Subplans to use efficient joins(hash, merge) with upper variable
