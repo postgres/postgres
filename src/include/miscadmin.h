@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/miscadmin.h,v 1.148 2004/01/26 22:59:53 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/miscadmin.h,v 1.149 2004/01/30 15:57:04 momjian Exp $
  *
  * NOTES
  *	  some of the information in this file should be moved to
@@ -109,7 +109,7 @@ do { \
 #else
 #define PG_USLEEP(_usec) \
 do { \
-	Sleep((_usec) < 500 ? 1 : ((_usec)+500)/ 1000); \
+	SleepEx(((_usec) < 500 ? 1 : ((_usec) + 500) / 1000), TRUE); \
 } while(0)
 #endif
 
