@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_table.sgml,v 1.65 2003/04/14 15:40:02 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_table.sgml,v 1.66 2003/04/14 18:08:58 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -828,14 +828,14 @@ CREATE TABLE distributors (
    <para>
     Although the syntax of <literal>CREATE TEMPORARY TABLE</literal>
     resembles that of SQL92, the effect is not the same.  In the standard,
-    temporary tables are associated with modules; a temporary table is created
-    just once and automatically exists (starting with empty contents) in every
-    session that uses the module.
-    <productname>PostgreSQL</productname> does not have modules, and
+    temporary tables are defined just once and automatically exist (starting
+    with empty contents) in every session that needs them.
+    <productname>PostgreSQL</productname> instead
     requires each session to issue its own <literal>CREATE TEMPORARY
-    TABLE</literal> command for each temporary table to be used.
-    The notion of <literal>GLOBAL</literal> temporary tables found in SQL92
-    is not in <productname>PostgreSQL</productname> at all.
+    TABLE</literal> command for each temporary table to be used.  This allows
+    different sessions to use the same temporary table name for different
+    purposes, whereas the spec's approach constrains all instances of a
+    given temporary table name to have the same table structure.
    </para>
 
    <note>
@@ -847,13 +847,20 @@ CREATE TABLE distributors (
    </note>
 
    <para>
+    SQL92's distinction between global and local temporary tables
+    is not in <productname>PostgreSQL</productname>, since that distinction
+    depends on the concept of modules, which
+    <productname>PostgreSQL</productname> does not have.
+   </para>
+
+   <para>
     The <literal>ON COMMIT</literal> clause for temporary tables
     also resembles SQL92, but has some differences.
     If the <literal>ON COMMIT</> clause is omitted, SQL92 specifies that the
     default behavior is <literal>ON COMMIT DELETE ROWS</>.  However, the
     default behavior in <productname>PostgreSQL</productname> is
     <literal>ON COMMIT PRESERVE ROWS</literal>.  The <literal>ON COMMIT
-    DROP</literal> option does not exist in SQL92 at all.
+    DROP</literal> option does not exist in SQL92.
    </para>
   </refsect2>
 
