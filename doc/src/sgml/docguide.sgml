@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/docguide.sgml,v 1.21 1999/10/05 18:55:45 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/docguide.sgml,v 1.22 1999/10/09 02:29:15 thomas Exp $
 Documentation Guide
 Thomas Lockhart
 
@@ -1278,170 +1278,226 @@ $ make man
    </procedure>
 
   </sect2>
-</sect1>
+ </sect1>
 
-<sect1>
-<title>Toolsets</title>
+ <sect1>
+  <title>Toolsets</title>
 
-<para>
-We have documented experience with two installation methods for the
-various tools that are needed to process the documentation.  One is
-installation from <acronym>RPM</acronym>s on
-<productname>Linux</productname>, the other is a general installation
-from original distributions of the individual tools.  Both will be
-described below.</para>
+  <para>
+   We have documented experience with two installation methods for the
+   various tools that are needed to process the documentation.  One is
+   installation from <acronym>RPM</acronym>s on
+   <productname>Linux</productname>, the other is a general installation
+   from original distributions of the individual tools.  Both will be
+   described below.
+  </para>
 
-<para>
-We understand that there are some other packaged distributions for
-these tools.  <productname>FreeBSD</productname> seems to have them
-available.  Please report package status to the docs mailing list and
-we will include that information here.
-</para>
+  <para>
+   We understand that there are some other packaged distributions for
+   these tools.  <productname>FreeBSD</productname> seems to have them
+   available.  Please report package status to the docs mailing list and
+   we will include that information here.
+  </para>
 
-<sect2>
-<title><acronym>RPM</acronym> installation on
-<productname>Linux</productname></title>
+  <sect2>
+   <title><acronym>RPM</acronym> installation on
+    <productname>Linux</productname></title>
 
-<para>
-Install <ulink url="ftp://ftp.cygnus.com/pub/home/rosalia/">
-<acronym>RPM</acronym>s</ulink> for <productname>Jade</productname>
-and related packages.
-</para>
-</sect2>
+   <para>
+    Install <ulink url="ftp://ftp.cygnus.com/pub/home/rosalia/">
+     <acronym>RPM</acronym>s</ulink> for <productname>Jade</productname>
+    and related packages.
+   </para>
+  </sect2>
 
-<sect2>
-<title>Manual installation of tools</title>
+  <sect2>
+   <title>Manual installation of tools</title>
 
-<para>
-This is a brief run-through of the process of obtaining and
-installing the software you'll need to edit DocBook source with Emacs
-and process it with Norman Walsh's DSSSL style sheets to create <acronym>HTML</acronym>
-and <acronym>RTF</acronym>.
-</para>
+   <para>
+    This is a brief run-through of the process of obtaining and
+    installing the software you'll need to edit DocBook source with Emacs
+    and process it with Norman Walsh's DSSSL style sheets to create
+    <acronym>HTML</acronym> and <acronym>RTF</acronym>.
+   </para>
 
-<para> 
-The easiest way is to fetch the SGML and DocBook tools is to get
-<application>sgmltools</application> from <ulink
-url="http://www.sgmltools.org/"><productname>sgmltools</productname></u
-link>. <productname>sgmltools</productname> requires the GNU version of
-<productname>m4</productname>. <programlisting>gnum4
---version</programlisting> will show you if your m4 is the GNU version. 
-If you install GNU m4, install it with the name gnum4 and
-<productname>sgmltools</productname> will it.  After the install, you will
-have <productname>sgmltools</productname>,
-<productname>jade</productname>, and <productname>DocBook</productname>
-style sheets. The instructions below are for installing these tools
-separately. </para>
+   <para>
+    The easiest way to obtain the SGML and DocBook tools may be to get
+    <application>sgmltools</application> from
+    <ulink url="http://www.sgmltools.org/"><productname>sgmltools</productname></ulink>.
+    <productname>sgmltools</productname> requires the GNU version of
+    <productname>m4</productname>. To confirm that you have the
+    correct version of m4 available, try
 
-<sect3><title>Prerequisites</title>
+    <programlisting>
+gnum4 --version
+    </programlisting>
+   </para>
 
-<para>What you need:
+   <para>
+    If you install GNU m4, install it with the name gnum4 and
+    <productname>sgmltools</productname> will find it.
+    After the install, you will
+    have <productname>sgmltools</productname>,
+    <productname>jade</productname>,
+    and Norm Walsh's <productname>DocBook</productname>
+    style sheets. The instructions below are for installing these tools
+    separately.
+   </para>
 
-<itemizedlist>
-<listitem><para>A working installation of GCC 2.7.2</para></listitem>
-<listitem><para>A working installation of Emacs 19.19 or later</para></listitem>
-<listitem><para>An unzip program for Unix to unpack things</para></listitem>
-</itemizedlist>
+   <sect3>
+    <title>Prerequisites</title>
 
-</para>
+    <para>
+     What you need:
 
-<para>What you must fetch:
+     <itemizedlist>
+      <listitem>
+       <para>
+	A working installation of GCC 2.7.2
+       </para>
+      </listitem>
+      <listitem>
+       <para>
+	A working installation of Emacs 19.19 or later
+       </para>
+      </listitem>
+      <listitem>
+       <para>
+	An unzip program for Unix to unpack things
+       </para>
+      </listitem>
+     </itemizedlist>
+    </para>
 
-<itemizedlist>
-<listitem>
-<para><ulink url="ftp://ftp.jclark.com/pub/jade/">
-James Clark's <productname>Jade</productname></ulink>
-(version 1.1 in file <filename>jade1_1.zip</filename> was current at the time of writing)
-</para></listitem>
-<listitem>
-<para><ulink url="http://www.ora.com/davenport/docbook/current/docbk30.zip">
-<productname>DocBook</productname> version 3.0</ulink>
-</para></listitem>
-<listitem>
-<para><ulink url="http://nwalsh.com/docbook/dsssl/">
-Norman Walsh's <productname>Modular Stylesheets</productname></ulink>
-(version 1.19 was used to produce these documents)
-</para></listitem>
-<listitem>
-<para><ulink url="ftp://ftp.lysator.liu.se/pub/sgml/">
-Lennart Staflin's <productname>PSGML</productname></ulink>
-(version 1.0.1 in <filename>psgml-1.0.1.tar.gz</filename> was available at the time of writing)
-</para></listitem>
-</itemizedlist>
+    <para>
+     What you must fetch:
 
-</para>
+     <itemizedlist>
+      <listitem>
+       <para>
+	<ulink url="ftp://ftp.jclark.com/pub/jade/">James Clark's <productname>Jade</productname></ulink>
+	(version 1.1 in file <filename>jade1_1.zip</filename> was
+	current at the time of writing)
+       </para>
+      </listitem>
+      <listitem>
+       <para>
+	<ulink url="http://www.ora.com/davenport/docbook/current/docbk30.zip">
+	 <productname>DocBook</productname> version 3.0</ulink>
+       </para>
+      </listitem>
+      <listitem>
+       <para>
+	<ulink url="http://nwalsh.com/docbook/dsssl/">Norman Walsh's <productname>Modular Stylesheets</productname></ulink>
+	(version 1.19 was originally used to produce these documents)
+       </para>
+      </listitem>
+      <listitem>
+       <para>
+	<ulink url="ftp://ftp.lysator.liu.se/pub/sgml/">Lennart Staflin's <productname>PSGML</productname></ulink>
+	(version 1.0.1 in <filename>psgml-1.0.1.tar.gz</filename> was
+	available at the time of writing)
+       </para>
+      </listitem>
+     </itemizedlist>
+    </para>
 
-<para>Important URLs:
+    <para>
+     Important URLs:
 
-<itemizedlist>
-<listitem><para><ulink url="http://www.jclark.com/jade/">
-The <productname>Jade</productname> web page</ulink></para></listitem>
-<listitem><para><ulink url="http://www.ora.com/davenport/">
-The <productname>DocBook</productname> web page</ulink></para></listitem>
-<listitem><para><ulink url="http://nwalsh.com/docbook/dsssl/">
-The <productname>Modular Stylesheets</productname> web page</ulink>
-</para></listitem>
-<listitem><para>
-<ulink url="http://www.lysator.liu.se/projects/about_psgml.html">
-The <productname>PSGML</productname> web page</ulink></para></listitem>
-<listitem><para><ulink url="http://www.infotek.no/sgmltool/guide.htm">
-Steve Pepper's Whirlwind Guide</ulink></para></listitem>
-<listitem><para><ulink url="http://www.sil.org/sgml/publicSW.html">
-Robin Cover's database of <acronym>SGML</acronym> software</ulink></para></listitem>
-</itemizedlist>
-</para>
+     <itemizedlist>
+      <listitem>
+       <para>
+	<ulink url="http://www.jclark.com/jade/">The <productname>Jade</productname> web page</ulink>
+       </para>
+      </listitem>
+      <listitem>
+       <para>
+	<ulink url="http://www.ora.com/davenport/">The <productname>DocBook</productname> web page</ulink>
+       </para>
+      </listitem>
+      <listitem>
+       <para>
+	<ulink url="http://nwalsh.com/docbook/dsssl/">The <productname>Modular Stylesheets</productname> web page</ulink>
+       </para>
+      </listitem>
+      <listitem>
+       <para>
+	<ulink url="http://www.lysator.liu.se/projects/about_psgml.html">The <productname>PSGML</productname> web page</ulink>
+       </para>
+      </listitem>
+      <listitem>
+       <para>
+	<ulink url="http://www.infotek.no/sgmltool/guide.htm">Steve
+	 Pepper's Whirlwind Guide</ulink>
+       </para>
+      </listitem>
+      <listitem>
+       <para>
+	<ulink url="http://www.sil.org/sgml/publicSW.html">
+	 Robin Cover's database of <acronym>SGML</acronym>
+	 software</ulink>
+       </para>
+      </listitem>
+     </itemizedlist>
+    </para>
+   </sect3>
 
-</sect3>
+   <sect3>
+    <title>Installing Jade</title>
 
-<sect3>
-<title>Installing Jade</title>
+    <procedure>
+     <title>Installing Jade</title>
 
-<procedure>
-<title>Installing Jade</title>
+     <step performance="required">
+      <para>
+       Read the installation instructions at the above listed
+       URL.
+      </para>
+     </step>
 
-<step performance="required">
-<para>
-Read the installation instructions at the above listed
-URL.
-</para>
-</step>
-
-<step performance="required">
-<para>
-Unzip the distribution kit in a suitable place.  The command to do
-this will be something like
-<programlisting>
+     <step performance="required">
+      <para>
+       Unzip the distribution kit in a suitable place.  The command to do
+       this will be something like
+       <programlisting>
 unzip -aU jade1_1.zip
-</programlisting>
-</para>
-</step>
+       </programlisting>
+      </para>
+     </step>
 
-<step performance="required">
-<para><productname>Jade</productname> is not built using
-<productname>GNU Autoconf</productname>, so you'll need to edit a
-<filename>Makefile</filename> yourself.  Since James Clark has been
-good enough to prepare his kit for it, it is a good idea to make a
-build directory (named for your machine architecture, perhaps) under
-the main directory of the <productname>Jade</productname>
-distribution, copy the file <filename>Makefile</filename> from the
-main directory into it, edit it there, and then run
-<command>make</command> there.</para>
+     <step performance="required">
+      <para>
+       <productname>Jade</productname> is not built using
+       <productname>GNU autoconf</productname>, so you'll need to edit a
+       <filename>Makefile</filename> yourself.  Since James Clark has been
+       good enough to prepare his kit for it, it is a good idea to make a
+       build directory (named for your machine architecture, perhaps) under
+       the main directory of the <productname>Jade</productname>
+       distribution, copy the file <filename>Makefile</filename> from the
+       main directory into it, edit it there, and then run
+       <command>make</command> there.
+      </para>
 
-<para>However, the <filename>Makefile</filename> does need to be
-edited.  There is a file called <filename>Makefile.jade</filename> in
-the main directory, which is intended to be used with <command>make -f
-Makefile.jade</command> when building <productname>Jade</productname>
-(as opposed to just <productname>SP</productname>, the <acronym>SGML</acronym> parser kit
-that <productname>Jade</productname> is built upon). We suggest that
-you don't do that, though, since there is more that you need to change
-than what is in <filename>Makefile.jade</filename>, so you'd have to
-edit one of them anyway.</para>
+      <para>
+       However, the <filename>Makefile</filename> does need to be
+       edited.  There is a file called <filename>Makefile.jade</filename> in
+       the main directory, which is intended to be used with <command>make -f
+	Makefile.jade</command> when building <productname>Jade</productname>
+       (as opposed to just <productname>SP</productname>,
+       the <acronym>SGML</acronym> parser kit
+       that <productname>Jade</productname> is built upon). We suggest that
+       you don't do that, though, since there is more that you need to change
+       than what is in <filename>Makefile.jade</filename>, so you'd have to
+       edit one of them anyway.
+      </para>
 
-<para>Go through the <filename>Makefile</filename>, reading James'
-instructions and editing as needed.  There are various variables that
-need to be set.  Here is a collected summary of the most important
-ones, with typical values:
-<programlisting>
+      <para>
+       Go through the <filename>Makefile</filename>, reading James'
+       instructions and editing as needed.  There are various variables that
+       need to be set.  Here is a collected summary of the most important
+       ones, with typical values:
+       <programlisting>
 prefix = /usr/local
 XDEFINES = -DSGML_CATALOG_FILES_DEFAULT=\"/usr/local/share/sgml/catalog\"
 XLIBS = -lm
@@ -1449,332 +1505,358 @@ RANLIB = ranlib
 srcdir = ..
 XLIBDIRS = grove spgrove style
 XPROGDIRS = jade
-</programlisting>
-Note the specification of where to find the default catalog of
-<acronym>SGML</acronym> support files -- you may want to change that
-to something more suitable for your own installation.  If your system
-doesn't need the above settings for the math library and the
-<command>ranlib</command> command, leave them as they are in the
-<filename>Makefile</filename>.
-</para>
-</step>
+       </programlisting>
+       Note the specification of where to find the default catalog of
+       <acronym>SGML</acronym> support files -- you may want to change that
+       to something more suitable for your own installation.  If your system
+       doesn't need the above settings for the math library and the
+       <command>ranlib</command> command, leave them as they are in the
+       <filename>Makefile</filename>.
+      </para>
+     </step>
 
-<step performance="required">
-<para>Type <command>make</command> to build Jade and the various
-<productname>SP</productname> tools.</para>
-</step>
+     <step performance="required">
+      <para>
+       Type <command>make</command> to build Jade and the various
+       <productname>SP</productname> tools.</para>
+     </step>
 
-<step performance="required">
-<para>Once the software is built, <command>make install</command> will
-do the obvious.</para>
-</step>
-</procedure>
-</sect3>
+     <step performance="required">
+      <para>
+       Once the software is built, <command>make install</command> will
+       do the obvious.
+      </para>
+     </step>
+    </procedure>
+   </sect3>
 
-<sect3>
-<title>Installing the <productname>DocBook</productname> <acronym>DTD</acronym> Kit</title>
+   <sect3>
+    <title>Installing the <productname>DocBook</productname> <acronym>DTD</acronym> Kit</title>
 
-<procedure>
-<title>Installing the <productname>DocBook</productname> <acronym>DTD</acronym> Kit</title>
+    <procedure>
+     <title>Installing the <productname>DocBook</productname> <acronym>DTD</acronym> Kit</title>
 
-<step performance="required">
-<para>You'll want to place the files that make up the
-<productname>DocBook</productname> <acronym>DTD</acronym> kit in the
-directory you built <productname>Jade</productname> to expect them in,
-which, if you followed our suggestion above, is
-<filename>/usr/local/share/sgml/</filename>.  In addition to the
-actual <productname>DocBook</productname> files, you'll need to have a
-<filename>catalog</filename> file in place, for the mapping of
-document type specifications and external entity references to actual
-files in that directory.  You'll also want the <acronym>ISO</acronym>
-character set mappings, and probably one or more versions of
-<acronym>HTML</acronym>.</para>
+     <step performance="required">
+      <para>
+       You'll want to place the files that make up the
+       <productname>DocBook</productname> <acronym>DTD</acronym> kit in the
+       directory you built <productname>Jade</productname> to expect them in,
+       which, if you followed our suggestion above, is
+       <filename>/usr/local/share/sgml/</filename>.  In addition to the
+       actual <productname>DocBook</productname> files, you'll need to have a
+       <filename>catalog</filename> file in place, for the mapping of
+       document type specifications and external entity references to actual
+       files in that directory.  You'll also want the <acronym>ISO</acronym>
+       character set mappings, and probably one or more versions of
+       <acronym>HTML</acronym>.
+      </para>
 
-<para>One way to install the various <acronym>DTD</acronym> and
-support files and set up the <filename>catalog</filename> file, is to
-collect them all into the above mentioned directory, use a single file
-named <filename>CATALOG</filename> to describe them all, and then
-create the file <filename>catalog</filename> as a catalog pointer to
-the former, by giving it the single line of content:
-<programlisting>
+      <para>
+       One way to install the various <acronym>DTD</acronym> and
+       support files and set up the <filename>catalog</filename> file, is to
+       collect them all into the above mentioned directory, use a single file
+       named <filename>CATALOG</filename> to describe them all, and then
+       create the file <filename>catalog</filename> as a catalog pointer to
+       the former, by giving it the single line of content:
+       <programlisting>
 CATALOG /usr/local/share/sgml/CATALOG
-</programlisting>
-</para>
-</step>
+       </programlisting>
+      </para>
+     </step>
 
-<step performance="required">
-<para>
-The <filename>CATALOG</filename> file should then contain three types
-of lines.  The first is the (optional) <acronym>SGML</acronym>
-declaration, thus:
-<programlisting>
+     <step performance="required">
+      <para>
+       The <filename>CATALOG</filename> file should then contain three types
+       of lines.  The first is the (optional) <acronym>SGML</acronym>
+       declaration, thus:
+       <programlisting>
 SGMLDECL docbook.dcl
-</programlisting>
-Next, the various references to <acronym>DTD</acronym> and entity
-files must be resolved.  For the <productname>DocBook</productname>
-files, these lines look like this:
-<programlisting>
+       </programlisting>
+       Next, the various references to <acronym>DTD</acronym> and entity
+       files must be resolved.  For the <productname>DocBook</productname>
+       files, these lines look like this:
+       <programlisting>
 PUBLIC "-//Davenport//DTD DocBook V3.0//EN" docbook.dtd
 PUBLIC "-//USA-DOD//DTD Table Model 951010//EN" cals-tbl.dtd
 PUBLIC "-//Davenport//ELEMENTS DocBook Information Pool V3.0//EN" dbpool.mod
 PUBLIC "-//Davenport//ELEMENTS DocBook Document Hierarchy V3.0//EN" dbhier.mod
 PUBLIC "-//Davenport//ENTITIES DocBook Additional General Entities V3.0//EN" dbgenent.mod
-</programlisting>
-</para>
-</step>
+       </programlisting>
+      </para>
+     </step>
 
-<step performance="required">
-<para>
-Of course, a file containing these comes with the
-<productname>DocBook</productname> kit.  Note that the last item on
-each of these lines is a file name, given here without a path.  You
-can put the files in subdirectories of your main
-<acronym>SGML</acronym> directory if you like, of course, and modify
-the reference in the <filename>CATALOG</filename> file.
-<productname>DocBook</productname> also references the
-<acronym>ISO</acronym> character set entities, so you need to fetch
-and install these (they are available from several sources, and are
-easily found by way of the URLs listed above), along with catalog
-entries for all of them, such as:
-<programlisting>
+     <step performance="required">
+      <para>
+       Of course, a file containing these comes with the
+       <productname>DocBook</productname> kit.  Note that the last item on
+       each of these lines is a file name, given here without a path.  You
+       can put the files in subdirectories of your main
+       <acronym>SGML</acronym> directory if you like, of course, and modify
+       the reference in the <filename>CATALOG</filename> file.
+       <productname>DocBook</productname> also references the
+       <acronym>ISO</acronym> character set entities, so you need to fetch
+       and install these (they are available from several sources, and are
+       easily found by way of the URLs listed above), along with catalog
+       entries for all of them, such as:
+       <programlisting>
 PUBLIC "ISO 8879-1986//ENTITIES Added Latin 1//EN" ISO/ISOlat1
-</programlisting>
-Note how the file name here contains a directory name, showing that
-we've placed the <acronym>ISO</acronym> entity files in a subdirectory
-named <filename>ISO</filename>.  Again, proper catalog entries should
-accompany the entity kit you fetch.
-</para>
-</step>
+       </programlisting>
+       Note how the file name here contains a directory name, showing that
+       we've placed the <acronym>ISO</acronym> entity files in a subdirectory
+       named <filename>ISO</filename>.  Again, proper catalog entries should
+       accompany the entity kit you fetch.
+      </para>
+     </step>
 
-</procedure>
-</sect3>
+    </procedure>
+   </sect3>
 
-<sect3>
-<title>Installing Norman Walsh's <acronym>DSSSL</acronym> Style Sheets</title>
+   <sect3>
+    <title>Installing Norman Walsh's <acronym>DSSSL</acronym> Style Sheets</title>
 
-<procedure>
-<title>Installing Norman Walsh's <acronym>DSSSL</acronym> Style Sheets</title>
+    <procedure>
+     <title>Installing Norman Walsh's <acronym>DSSSL</acronym> Style Sheets</title>
 
-<step performance="required">
-<para>Read the installation instructions at the above listed
-URL.</para>
-</step>
+     <step performance="required">
+      <para>
+       Read the installation instructions at the above listed
+       URL.
+      </para>
+     </step>
 
-<step performance="required">
-<para>To install Norman's style sheets, simply unzip the distribution
-kit in a suitable place.  A good place to dot this would be
-<filename>/usr/local/share</filename>, which places the kit in a
-directory tree under <filename>/usr/local/share/docbook</filename>.
-The command will be something like
-<programlisting>
+     <step performance="required">
+      <para>
+       To install Norman's style sheets, simply unzip the distribution
+       kit in a suitable place.  A good place to dot this would be
+       <filename>/usr/local/share</filename>, which places the kit in a
+       directory tree under <filename>/usr/local/share/docbook</filename>.
+       The command will be something like
+       <programlisting>
 unzip -aU db119.zip
-</programlisting>
-</para>
-</step>
+       </programlisting>
+      </para>
+     </step>
 
-<step performance="required">
-<para>One way to test the installation is to build the
-<acronym>HTML</acronym> and <acronym>RTF</acronym> forms of the
-<citetitle><productname>PostgreSQL</productname> User's Guide</citetitle>.
-</para>
+     <step performance="required">
+      <para>
+       One way to test the installation is to build the
+       <acronym>HTML</acronym> and <acronym>RTF</acronym> forms of the
+       <citetitle><productname>PostgreSQL</productname> User's Guide</citetitle>.
+      </para>
 
-<substeps>
+      <substeps>
 
-<step performance="required">
-<para>
-To build the <acronym>HTML</acronym> files,
- go to the <acronym>SGML</acronym> source
-directory, <filename>doc/src/sgml</filename>, and say
-<programlisting>
+       <step performance="required">
+	<para>
+	 To build the <acronym>HTML</acronym> files,
+	 go to the <acronym>SGML</acronym> source
+	 directory, <filename>doc/src/sgml</filename>, and say
+	 <programlisting>
 jade -t sgml -d /usr/local/share/docbook/html/docbook.dsl -D ../graphics postgres.sgml
-</programlisting>
-</para>
+	 </programlisting>
+	</para>
 
-<para>
-<filename>book1.htm</filename> is the top level node of the output..
-</para>
-</step>
+	<para>
+	 <filename>book1.htm</filename> is the top level node of the output..
+	</para>
+       </step>
 
-<step performance="required">
-<para>
-To generate the <acronym>RTF</acronym> output, ready for importing
-into your favorite word processing system and printing, type:
-<programlisting>
+       <step performance="required">
+	<para>
+	 To generate the <acronym>RTF</acronym> output, ready for importing
+	 into your favorite word processing system and printing, type:
+	 <programlisting>
 jade -t rtf -d /usr/local/share/docbook/print/docbook.dsl -D ../graphics postgres.sgml
-</programlisting>
-</para>
-</step>
+	 </programlisting>
+	</para>
+       </step>
 
-</substeps>
-</step>
+      </substeps>
+     </step>
 
-</procedure>
-</sect3>
+    </procedure>
+   </sect3>
 
-<sect3>
-<title>Installing <productname>PSGML</productname></title>
+   <sect3>
+    <title>Installing <productname>PSGML</productname></title>
 
-<procedure>
-<title>Installing <productname>PSGML</productname></title>
+    <procedure>
+     <title>Installing <productname>PSGML</productname></title>
 
-<step performance="required">
-<para>Read the installation instructions at the above listed
-URL.</para>
-</step>
+     <step performance="required">
+      <para>
+       Read the installation instructions at the above listed
+       URL.
+      </para>
+     </step>
 
-<step performance="required">
-<para>Unpack the distribution file, run configure, make and make
-install to put the byte-compiled files and info library in place.
-</para>
-</step>
+     <step performance="required">
+      <para>
+       Unpack the distribution file, run configure, make and make
+       install to put the byte-compiled files and info library in place.
+      </para>
+     </step>
 
-<step performance="required" id="psgml-setup">
-<para>
-Then add the following lines to your
-<filename>/usr/local/share/emacs/site-lisp/site-start.el</filename>
-file to make <productname>Emacs</productname> properly load
-<productname>PSGML</productname> when needed:
-<programlisting>
+     <step performance="required" id="psgml-setup">
+      <para>
+       Then add the following lines to your
+       <filename>/usr/local/share/emacs/site-lisp/site-start.el</filename>
+       file to make <productname>Emacs</productname> properly load
+       <productname>PSGML</productname> when needed:
+       <programlisting>
 (setq load-path
       (cons "/usr/local/share/emacs/site-lisp/psgml" load-path))
 (autoload 'sgml-mode "psgml" "Major mode to edit SGML files." t)
-</programlisting>
-</para>
-</step>
+       </programlisting>
+      </para>
+     </step>
 
-<step performance="optional">
-<para>
-If you want to use <productname>PSGML</productname> when editing
-<acronym>HTML</acronym> too, also add this:
-<programlisting>
+     <step performance="optional">
+      <para>
+       If you want to use <productname>PSGML</productname> when editing
+       <acronym>HTML</acronym> too, also add this:
+       <programlisting>
 (setq auto-mode-alist
       (cons '("\\.s?html?\\'" . sgml-mode) auto-mode-alist))
-</programlisting>
-</para>
-</step>
+       </programlisting>
+      </para>
+     </step>
 
-<step performance="optional">
-<para>There is one important thing to note with
-<productname>PSGML</productname>: its author assumed that your main
-<acronym>SGML</acronym> <acronym>DTD</acronym> directory would be
-<filename>/usr/local/lib/sgml</filename>.  If, as in the examples in
-this chapter, you use <filename>/usr/local/share/sgml</filename>, you
-have to compensate for this.
-</para>
+     <step performance="optional">
+      <para>
+       There is one important thing to note with
+       <productname>PSGML</productname>: its author assumed that your main
+       <acronym>SGML</acronym> <acronym>DTD</acronym> directory would be
+       <filename>/usr/local/lib/sgml</filename>.  If, as in the examples in
+       this chapter, you use <filename>/usr/local/share/sgml</filename>, you
+       have to compensate for this.
+      </para>
 
-<substeps>
-<step performance="optional">
-<para>
-You can set the
-<filename>SGML_CATALOG_FILES</filename> environment variable.
-</para>
-</step>
+      <substeps>
+       <step performance="optional">
+	<para>
+	 You can set the
+	 <filename>SGML_CATALOG_FILES</filename> environment variable.
+	</para>
+       </step>
 
-<step performance="optional">
-<para>
-You can
-customize your <productname>PSGML</productname> installation (its
-manual tells you how).
-</para>
-</step>
+       <step performance="optional">
+	<para>
+	 You can
+	 customize your <productname>PSGML</productname> installation (its
+	 manual tells you how).
+	</para>
+       </step>
 
-<step performance="optional">
-<para>
-You can even edit the source file
-<filename>psgml.el</filename> before compiling and installing
-<productname>PSGML</productname>, changing the hard-coded paths to
-match your own default.</para>
-</step>
+       <step performance="optional">
+	<para>
+	 You can even edit the source file
+	 <filename>psgml.el</filename> before compiling and installing
+	 <productname>PSGML</productname>, changing the hard-coded paths to
+	 match your own default.
+	</para>
+       </step>
 
-</substeps>
-</step>
+      </substeps>
+     </step>
 
-</procedure>
-</sect3>
+    </procedure>
+   </sect3>
 
-<sect3><title>Installing <productname>JadeTeX</productname></title>
+   <sect3>
+    <title>Installing <productname>JadeTeX</productname></title>
 
-<para>If you want to, you can also install
-<productname>JadeTeX</productname> to use
-<productname>TeX</productname> as a formatting backend for
-<productname>Jade</productname>.  Note that this is still quite
-unpolished software, and will generate printed output that is inferior
-to what you get from the <acronym>RTF</acronym> backend.  Still, it
-works all right, especially for simpler documents that don't use
-tables, and as both <productname>JadeTeX</productname> and the style
-sheets are under continuous improvement, it will certainly get better
-over time.</para>
+    <para>
+     If you want to, you can also install
+     <productname>JadeTeX</productname> to use
+     <productname>TeX</productname> as a formatting backend for
+     <productname>Jade</productname>.  Note that this is still quite
+     unpolished software, and will generate printed output that is inferior
+     to what you get from the <acronym>RTF</acronym> backend.  Still, it
+     works all right, especially for simpler documents that don't use
+     tables, and as both <productname>JadeTeX</productname> and the style
+     sheets are under continuous improvement, it will certainly get better
+     over time.
+    </para>
 
-<para>To install and use <productname>JadeTeX</productname>, you will
-need a working installation of <productname>TeX</productname> and
-<productname>LaTeX2e</productname>, including the supported
-<productname>tools</productname> and
-<productname>graphics</productname> packages,
-<productname>Babel</productname>, <productname><acronym>AMS</acronym>
-fonts</productname> and <productname>AMS-LaTeX</productname>, the
-<productname><acronym>PSNFSS</acronym></productname> extension and
-companion kit of "the 35 fonts", the <productname>dvips</productname>
-program for generating <productname>PostScript</productname>, the
-macro packages <productname>fancyhdr</productname>,
-<productname>hyperref</productname>,
-<productname>minitoc</productname>, <productname>url</productname> and
-<productname>ot2enc</productname>, and of course
-<productname>JadeTeX</productname> itself.  All of these can be found
-on your friendly neighborhood <acronym>CTAN</acronym> site.</para>
+    <para>
+     To install and use <productname>JadeTeX</productname>, you will
+     need a working installation of <productname>TeX</productname> and
+     <productname>LaTeX2e</productname>, including the supported
+     <productname>tools</productname> and
+     <productname>graphics</productname> packages,
+     <productname>Babel</productname>, <productname><acronym>AMS</acronym>
+      fonts</productname> and <productname>AMS-LaTeX</productname>, the
+     <productname><acronym>PSNFSS</acronym></productname> extension and
+     companion kit of "the 35 fonts", the <productname>dvips</productname>
+     program for generating <productname>PostScript</productname>, the
+     macro packages <productname>fancyhdr</productname>,
+     <productname>hyperref</productname>,
+     <productname>minitoc</productname>, <productname>url</productname> and
+     <productname>ot2enc</productname>, and of course
+     <productname>JadeTeX</productname> itself.  All of these can be found
+     on your friendly neighborhood <acronym>CTAN</acronym> site.
+    </para>
 
-<para><productname>JadeTeX</productname> does not at the time of
-writing come with much of an installation guide, but there is a
-<filename>makefile</filename> which shows what is needed.  It also
-includes a directory <filename>cooked</filename>, wherein you'll find
-some of the macro packages it needs, but not all, and not complete --
-at least last we looked.</para>
+    <para>
+     <productname>JadeTeX</productname> does not at the time of
+     writing come with much of an installation guide, but there is a
+     <filename>makefile</filename> which shows what is needed.  It also
+     includes a directory <filename>cooked</filename>, wherein you'll find
+     some of the macro packages it needs, but not all, and not complete --
+     at least last we looked.
+    </para>
 
-<para>Before building the <filename>jadetex.fmt</filename> format
-file, you'll probably want to edit the
-<filename>jadetex.ltx</filename> file, to change the configuration of
-<productname>Babel</productname> to suit your locality.  The line to
-change looks something like
-<programlisting>
+    <para>
+     Before building the <filename>jadetex.fmt</filename> format
+     file, you'll probably want to edit the
+     <filename>jadetex.ltx</filename> file, to change the configuration of
+     <productname>Babel</productname> to suit your locality.  The line to
+     change looks something like
+     <programlisting>
 \RequirePackage[german,french,english]{babel}[1997/01/23]
-</programlisting>
-and you should obviously list only the languages you actually need,
-and have configured <productname>Babel</productname> for.</para>
+     </programlisting>
+     and you should obviously list only the languages you actually need,
+     and have configured <productname>Babel</productname> for.
+    </para>
 
-<para>With <productname>JadeTeX</productname> working, you should be
-able to generate and format <productname>TeX</productname> output for
-the <productname>PostgreSQL</productname> manuals by giving the
-commands (as above, in the <filename>doc/src/sgml</filename>
-directory)
-<programlisting>
+    <para>
+     With <productname>JadeTeX</productname> working, you should be
+     able to generate and format <productname>TeX</productname> output for
+     the <productname>PostgreSQL</productname> manuals by giving the
+     commands (as above, in the <filename>doc/src/sgml</filename>
+     directory)
+     <programlisting>
 jade -t tex -d /usr/local/share/docbook/print/docbook.dsl -D ../graphics postgres.sgml
 jadetex postgres.tex
 jadetex postgres.tex
 dvips postgres.dvi
-</programlisting>
-Of course, when you do this, <productname>TeX</productname> will stop
-during the second run, and tell you that its capacity has been
-exceeded.  This is, as far as we can tell, because of the way
-<productname>JadeTeX</productname> generates cross referencing
-information.  <productname>TeX</productname> can, of course, be
-compiled with larger data structure sizes.  The details of this will
-vary according to your installation.
-</para>
+     </programlisting>
 
-</sect3>
+     Of course, when you do this, <productname>TeX</productname> will stop
+     during the second run, and tell you that its capacity has been
+     exceeded.  This is, as far as we can tell, because of the way
+     <productname>JadeTeX</productname> generates cross referencing
+     information.  <productname>TeX</productname> can, of course, be
+     compiled with larger data structure sizes.  The details of this will
+     vary according to your installation.
+    </para>
 
-</sect2>
-</sect1>
+   </sect3>
 
-<sect1>
-<title>Alternate Toolsets</title>
+  </sect2>
+ </sect1>
 
-<para>
-<productname>sgml-tools</productname> v2.x
-now supports <application>jade</application>
-and <productname>DocBook</productname>. It may be the preferred toolset
-for working with <acronym>SGML</acronym> but we have not had a chance to
-evaluate the new package.
-</para>
+ <sect1>
+  <title>Alternate Toolsets</title>
+
+  <para>
+   <productname>sgml-tools</productname> v2.x
+   now supports <application>jade</application>
+   and <productname>DocBook</productname>. It may be the preferred toolset
+   for working with <acronym>SGML</acronym> but we have not had a chance to
+   evaluate the new package.
+  </para>
 
 <!--
 
