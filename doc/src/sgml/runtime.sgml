@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.291 2004/11/05 19:15:49 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.292 2004/11/14 19:35:28 tgl Exp $
 -->
 
 <Chapter Id="runtime">
@@ -2150,7 +2150,7 @@ archive_command = 'copy "%p" /mnt/server/archivedir/"%f"'  # Win32
         to the log.  The default is <literal>NOTICE</>.  Note that
         <literal>LOG</> has a different rank here than in
         <varname>client_min_messages</>.
-        Only superusers can increase this option.
+        Only superusers can change this setting.
        </para>
       </listitem>
      </varlistentry>
@@ -2186,7 +2186,7 @@ archive_command = 'copy "%p" /mnt/server/archivedir/"%f"'  # Win32
         SQL statements causing errors, fatal errors, or panics will be
         logged. Enabling this option can be helpful in tracking down
         the source of any errors that appear in the server log.
-        Only superusers can increase this option.
+        Only superusers can change this setting.
        </para>
       </listitem>
      </varlistentry>
@@ -2204,8 +2204,7 @@ archive_command = 'copy "%p" /mnt/server/archivedir/"%f"'  # Win32
          <literal>250</literal> then all SQL statements that run 250ms 
          or longer will be logged.  Enabling this option can be
          useful in tracking down unoptimized queries in your applications.
-         Only superusers can increase this or set it to minus-one if this 
-         option is set by the administrator.
+         Only superusers can change this setting.
         </para>
        </listitem>
       </varlistentry>
@@ -2332,7 +2331,7 @@ archive_command = 'copy "%p" /mnt/server/archivedir/"%f"'  # Win32
         these displays to produce a more readable but much longer
         output format.  <varname>client_min_messages</varname> or
         <varname>log_min_messages</varname> must be
-        <literal>DEBUG1</literal> or lower to send output to the
+        <literal>DEBUG1</literal> or lower to send the output to the
         client or server logs. These options are off by default.
        </para>
       </listitem>
@@ -2372,10 +2371,9 @@ archive_command = 'copy "%p" /mnt/server/archivedir/"%f"'  # Win32
         <varname>log_statement</> to be logged.  When using this option, 
         if you are not using <application>syslog</>, it is recommended 
         that you log the PID or session ID using <varname>log_line_prefix</> 
-        or log the session ID so that you can link the statement to the 
+        so that you can link the statement to the 
         duration using the process ID or session ID. The default is off.  
-        Only superusers can turn off this option if it is enabled by the 
-        administrator.
+        Only superusers can change this setting.
        </para>
       </listitem>
      </varlistentry>
@@ -2487,35 +2485,35 @@ archive_command = 'copy "%p" /mnt/server/archivedir/"%f"'  # Win32
       <listitem>
        <para>
         Controls which SQL statements are logged. Valid values are
-        <literal>all</>, <literal>ddl</>, <literal>mod</>, and
-        <literal>none</>. <literal>ddl</> logs all data definition
+        <literal>none</>, <literal>ddl</>, <literal>mod</>, and
+        <literal>all</>. <literal>ddl</> logs all data definition
         commands like <literal>CREATE</>, <literal>ALTER</>, and
         <literal>DROP</> commands. <literal>mod</> logs all
         <literal>ddl</> statements, plus <literal>INSERT</>,
         <literal>UPDATE</>, <literal>DELETE</>, <literal>TRUNCATE</>,
         and <literal>COPY FROM</>. <literal>PREPARE</> and
-        <literal>EXPLAIN ANALYZE</> statements are also considered for
-        appropriate commands. 
+        <literal>EXPLAIN ANALYZE</> statements are also logged if their
+        contained command is of an appropriate type.
        </para>
        <para>
-        The default is <literal>none</>. Only superusers can reduce 
-        the detail of this option if it has been set by an administrator.
+        The default is <literal>none</>. Only superusers can change this
+        setting.
        </para>
 
        <note>
         <para>
-         The <command>EXECUTE</command> statement not considered a
+         The <command>EXECUTE</command> statement is not considered a
          <literal>ddl</> or <literal>mod</> statement.  When it is logged, 
          only the name of the prepared statement is reported, not the
          actual prepared statement.
         </para>
 
         <para>
-         When a function is defined in a server-side language like
-         <application>PL/pgSQL</application>, any queries executed by
-         the function will only be logged the first time that the
+         When a function is defined in the
+         <application>PL/pgSQL</application>server-side language, any queries
+         executed by the function will only be logged the first time that the
          function is invoked in a particular session. This is because
-         the <application>PL/pgSQL</application> keeps a cache of the
+         <application>PL/pgSQL</application> keeps a cache of the
          query plans produced for the SQL statements in the function.
         </para>
        </note>
@@ -2556,11 +2554,10 @@ archive_command = 'copy "%p" /mnt/server/archivedir/"%f"'  # Win32
         For each query, write performance statistics of the respective
         module to the server log. This is a crude profiling
         instrument.  <varname>log_statement_stats</varname> reports total
-        statement statistics, while the others report per-state statistics.
-        <varname>log_statement_stats</varname> can not be enabled with 
-        the other options.  All of these options are disabled by default.  
-        Only superusers can turn off any of these options if they have
-        been enabled by the administrator.
+        statement statistics, while the others report per-module statistics.
+        <varname>log_statement_stats</varname> cannot be enabled together with
+        any of the per-module options.  All of these options are disabled by
+        default.   Only superusers can change these settings.
        </para>
       </listitem>
      </varlistentry>

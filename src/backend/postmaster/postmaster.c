@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.437 2004/11/09 13:01:26 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.438 2004/11/14 19:35:30 tgl Exp $
  *
  * NOTES
  *
@@ -223,8 +223,6 @@ bool		ClientAuthInProgress = false;		/* T during new-client
  */
 static unsigned int random_seed = 0;
 
-static int	debug_flag = 0;
-
 extern char *optarg;
 extern int	optind,
 			opterr;
@@ -401,17 +399,8 @@ PostmasterMain(int argc, char *argv[])
 				userDoption = optarg;
 				break;
 			case 'd':
-				{
-					/* Turn on debugging for the postmaster. */
-					char	   *debugstr = palloc(strlen("debug") + strlen(optarg) + 1);
-
-					sprintf(debugstr, "debug%s", optarg);
-					SetConfigOption("log_min_messages", debugstr,
-									PGC_POSTMASTER, PGC_S_ARGV);
-					pfree(debugstr);
-					debug_flag = atoi(optarg);
-					break;
-				}
+				set_debug_options(atoi(optarg), PGC_POSTMASTER, PGC_S_ARGV);
+				break;
 			case 'F':
 				SetConfigOption("fsync", "false", PGC_POSTMASTER, PGC_S_ARGV);
 				break;
@@ -2511,7 +2500,6 @@ BackendRun(Port *port)
 	char	  **av;
 	int			maxac;
 	int			ac;
-	char		debugbuf[32];
 	char		protobuf[32];
 	int			i;
 
@@ -2706,15 +2694,6 @@ BackendRun(Port *port)
 	ac = 0;
 
 	av[ac++] = "postgres";
-
-	/*
-	 * Pass the requested debugging level along to the backend.
-	 */
-	if (debug_flag > 0)
-	{
-		snprintf(debugbuf, sizeof(debugbuf), "-d%d", debug_flag);
-		av[ac++] = debugbuf;
-	}
 
 	/*
 	 * Pass any backend switches specified with -o in the postmaster's own
@@ -3404,7 +3383,6 @@ write_backend_variables(char *filename, Port *port)
 	write_var(ProcStructLock, fp);
 	write_var(pgStatSock, fp);
 
-	write_var(debug_flag, fp);
 	write_var(PostmasterPid, fp);
 #ifdef WIN32
 	write_var(PostmasterHandle, fp);
@@ -3478,7 +3456,6 @@ read_backend_variables(char *filename, Port *port)
 	read_var(ProcStructLock, fp);
 	read_var(pgStatSock, fp);
 
-	read_var(debug_flag, fp);
 	read_var(PostmasterPid, fp);
 #ifdef WIN32
 	read_var(PostmasterHandle, fp);

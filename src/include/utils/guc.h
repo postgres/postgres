@@ -7,7 +7,7 @@
  * Copyright (c) 2000-2004, PostgreSQL Global Development Group
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
- * $PostgreSQL: pgsql/src/include/utils/guc.h,v 1.55 2004/11/05 19:16:41 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/utils/guc.h,v 1.56 2004/11/14 19:35:35 tgl Exp $
  *--------------------------------------------------------------------
  */
 #ifndef GUC_H
@@ -48,9 +48,6 @@
  * be set in the connection startup packet, because when it is processed
  * we don't yet know if the user is a superuser.
  *
- * USERLIMIT options can only be manipulated in certain ways by
- * non-superusers.
- *
  * USERSET options can be set by anyone any time.
  */
 typedef enum
@@ -60,7 +57,6 @@ typedef enum
 	PGC_SIGHUP,
 	PGC_BACKEND,
 	PGC_SUSET,
-	PGC_USERLIMIT,
 	PGC_USERSET
 } GucContext;
 
@@ -74,9 +70,7 @@ typedef enum
  * as the current value.  Note that source == PGC_S_OVERRIDE should be
  * used when setting a PGC_INTERNAL option.
  *
- * PGC_S_UNPRIVILEGED isn't actually a source value, but the dividing line
- * between privileged and unprivileged sources for USERLIMIT purposes.
- * Similarly, PGC_S_INTERACTIVE isn't a real source value, but is the
+ * PGC_S_INTERACTIVE isn't actually a source value, but is the
  * dividing line between "interactive" and "non-interactive" sources for
  * error reporting purposes.
  *
@@ -92,7 +86,6 @@ typedef enum
 	PGC_S_ENV_VAR,				/* postmaster environment variable */
 	PGC_S_FILE,					/* postgresql.conf */
 	PGC_S_ARGV,					/* postmaster command line */
-	PGC_S_UNPRIVILEGED,			/* dividing line for USERLIMIT */
 	PGC_S_DATABASE,				/* per-database setting */
 	PGC_S_USER,					/* per-user setting */
 	PGC_S_CLIENT,				/* from client connection request */

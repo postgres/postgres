@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.436 2004/10/15 16:50:31 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.437 2004/11/14 19:35:31 tgl Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -2151,6 +2151,41 @@ usage(const char *progname)
 }
 
 
+/*
+ * set_debug_options --- apply "-d N" command line option
+ *
+ * -d is not quite the same as setting log_min_messages because it enables
+ * other output options.
+ */
+void
+set_debug_options(int debug_flag, GucContext context, GucSource source)
+{
+	if (debug_flag > 0)
+	{
+		char		debugstr[64];
+
+		sprintf(debugstr, "debug%d", debug_flag);
+		SetConfigOption("log_min_messages", debugstr, context, source);
+	}
+	else
+		SetConfigOption("log_min_messages", "notice", context, source);
+
+	if (debug_flag >= 1 && context == PGC_POSTMASTER)
+	{
+		SetConfigOption("log_connections", "true", context, source);
+		SetConfigOption("log_disconnections", "true", context, source);
+	}
+	if (debug_flag >= 2)
+		SetConfigOption("log_statement", "all", context, source);
+	if (debug_flag >= 3)
+		SetConfigOption("debug_print_parse", "true", context, source);
+	if (debug_flag >= 4)
+		SetConfigOption("debug_print_plan", "true", context, source);
+	if (debug_flag >= 5)
+		SetConfigOption("debug_print_rewritten", "true", context, source);
+}
+
+
 /* ----------------------------------------------------------------
  * PostgresMain
  *	   postgres main loop -- all backends, interactive or otherwise start here
@@ -2169,16 +2204,22 @@ PostgresMain(int argc, char *argv[], const char *username)
 	char	   *userDoption = NULL;
 	bool		secure;
 	int			errs = 0;
-	int			debug_flag = 0;
-	GucContext	ctx,
-				debug_context;
+	int			debug_flag = -1;		/* -1 means not given */
+	List	   *guc_names = NIL;		/* for possibly-SUSET options */
+	List	   *guc_values = NIL;
+	GucContext	ctx;
 	GucSource	gucsource;
+	bool		am_superuser;
 	char	   *tmp;
 	int			firstchar;
 	char		stack_base;
 	StringInfoData input_message;
 	sigjmp_buf	local_sigjmp_buf;
 	volatile bool send_rfq = true;
+
+#define PendingConfigOption(name,val) \
+	(guc_names = lappend(guc_names, pstrdup(name)), \
+	 guc_values = lappend(guc_values, pstrdup(val)))
 
 	/*
 	 * Catch standard options before doing much else.  This even works on
@@ -2257,10 +2298,11 @@ PostgresMain(int argc, char *argv[], const char *username)
 
 	/* all options are allowed until '-p' */
 	secure = true;
-	ctx = debug_context = PGC_POSTMASTER;
+	ctx = PGC_POSTMASTER;
 	gucsource = PGC_S_ARGV;		/* initial switches came from command line */
 
 	while ((flag = getopt(argc, argv, "A:B:c:D:d:Eef:FiNOPo:p:S:st:v:W:-:")) != -1)
+	{
 		switch (flag)
 		{
 			case 'A':
@@ -2287,40 +2329,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 				break;
 
 			case 'd':			/* debug level */
-				{
-					/*
-					 * Client option can't decrease debug level. We have
-					 * to do the test here because we group priv and
-					 * client set GUC calls below, after we know the final
-					 * debug value.
-					 */
-					if (ctx != PGC_BACKEND || atoi(optarg) > debug_flag)
-					{
-						debug_flag = atoi(optarg);
-						debug_context = ctx;	/* save context for use
-												 * below */
-						/* Set server debugging level. */
-						if (debug_flag != 0)
-						{
-							char	   *debugstr = palloc(strlen("debug") + strlen(optarg) + 1);
-
-							sprintf(debugstr, "debug%s", optarg);
-							SetConfigOption("log_min_messages", debugstr, ctx, gucsource);
-							pfree(debugstr);
-
-						}
-						else
-
-							/*
-							 * -d0 allows user to prevent postmaster debug
-							 * from propagating to backend.  It would be
-							 * nice to set it to the postgresql.conf value
-							 * here.
-							 */
-							SetConfigOption("log_min_messages", "notice",
-											ctx, gucsource);
-					}
-				}
+				debug_flag = atoi(optarg);
 				break;
 
 			case 'E':
@@ -2448,7 +2457,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 				/*
 				 * s - report usage statistics (timings) after each query
 				 */
-				SetConfigOption("log_statement_stats", "true", ctx, gucsource);
+				PendingConfigOption("log_statement_stats", "true");
 				break;
 
 			case 't':
@@ -2481,7 +2490,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 						break;
 				}
 				if (tmp)
-					SetConfigOption(tmp, "true", ctx, gucsource);
+					PendingConfigOption(tmp, "true");
 				break;
 
 			case 'v':
@@ -2518,7 +2527,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 											optarg)));
 					}
 
-					SetConfigOption(name, value, ctx, gucsource);
+					PendingConfigOption(name, value);
 					free(name);
 					if (value)
 						free(value);
@@ -2529,53 +2538,6 @@ PostgresMain(int argc, char *argv[], const char *username)
 				errs++;
 				break;
 		}
-
-
-	/*
-	 * -d is not the same as setting log_min_messages because it enables
-	 * other output options.
-	 */
-	if (debug_flag >= 1)
-	{
-		SetConfigOption("log_connections", "true", debug_context, gucsource);
-		SetConfigOption("log_disconnections", "true", debug_context, gucsource);
-	}
-	if (debug_flag >= 2)
-		SetConfigOption("log_statement", "all", debug_context, gucsource);
-	if (debug_flag >= 3)
-		SetConfigOption("debug_print_parse", "true", debug_context, gucsource);
-	if (debug_flag >= 4)
-		SetConfigOption("debug_print_plan", "true", debug_context, gucsource);
-	if (debug_flag >= 5)
-		SetConfigOption("debug_print_rewritten", "true", debug_context, gucsource);
-
-	/*
-	 * Process any additional GUC variable settings passed in startup
-	 * packet.
-	 */
-	if (MyProcPort != NULL)
-	{
-		ListCell   *gucopts = list_head(MyProcPort->guc_options);
-
-		while (gucopts)
-		{
-			char	   *name;
-			char	   *value;
-
-			name = lfirst(gucopts);
-			gucopts = lnext(gucopts);
-
-			value = lfirst(gucopts);
-			gucopts = lnext(gucopts);
-
-			SetConfigOption(name, value, PGC_BACKEND, PGC_S_CLIENT);
-		}
-
-		/*
-		 * set up handler to log session end.
-		 */
-		if (IsUnderPostmaster && Log_disconnections)
-			on_proc_exit(log_disconnections, 0);
 	}
 
 	/* Acquire configuration parameters, unless inherited from postmaster */
@@ -2710,9 +2672,71 @@ PostgresMain(int argc, char *argv[], const char *username)
 	 */
 	ereport(DEBUG3,
 			(errmsg_internal("InitPostgres")));
-	InitPostgres(dbname, username);
+	am_superuser = InitPostgres(dbname, username);
 
 	SetProcessingMode(NormalProcessing);
+
+	/*
+	 * Now that we know if client is a superuser, we can apply GUC options
+	 * that came from the client.  (For option switches that are definitely
+	 * not SUSET, we just went ahead and applied them above, but anything
+	 * that is or might be SUSET has to be postponed to here.)
+	 */
+	ctx = am_superuser ? PGC_SUSET : PGC_USERSET;
+
+	if (debug_flag >= 0)
+		set_debug_options(debug_flag, ctx, PGC_S_CLIENT);
+
+	if (guc_names != NIL)
+	{
+		ListCell   *namcell,
+				   *valcell;
+
+		forboth(namcell, guc_names, valcell, guc_values)
+		{
+			char	   *name = (char *) lfirst(namcell);
+			char	   *value = (char *) lfirst(valcell);
+
+			SetConfigOption(name, value, ctx, PGC_S_CLIENT);
+			pfree(name);
+			pfree(value);
+		}
+	}
+
+	/*
+	 * Process any additional GUC variable settings passed in startup
+	 * packet.
+	 */
+	if (MyProcPort != NULL)
+	{
+		ListCell   *gucopts = list_head(MyProcPort->guc_options);
+
+		while (gucopts)
+		{
+			char	   *name;
+			char	   *value;
+
+			name = lfirst(gucopts);
+			gucopts = lnext(gucopts);
+
+			value = lfirst(gucopts);
+			gucopts = lnext(gucopts);
+
+			SetConfigOption(name, value, ctx, PGC_S_CLIENT);
+		}
+
+		/*
+		 * set up handler to log session end.
+		 */
+		if (IsUnderPostmaster && Log_disconnections)
+			on_proc_exit(log_disconnections, 0);
+	}
+
+	/*
+	 * Now all GUC states are fully set up.  Report them to client if
+	 * appropriate.
+	 */
+	BeginReportingGUCOptions();
 
 	/*
 	 * Send this backend's cancellation info to the frontend.

@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.248 2004/11/05 19:16:16 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.249 2004/11/14 19:35:33 tgl Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -105,8 +105,6 @@ static const char *assign_log_error_verbosity(const char *newval, bool doit,
 						   GucSource source);
 static const char *assign_log_statement(const char *newval, bool doit,
 					 GucSource source);
-static const char *assign_log_stmtlvl(int *var, const char *newval,
-				   bool doit, GucSource source);
 static bool assign_phony_autocommit(bool newval, bool doit, GucSource source);
 static const char *assign_custom_variable_classes(const char *newval, bool doit,
 							   GucSource source);
@@ -204,7 +202,6 @@ const char *const GucContext_Names[] =
 	 /* PGC_SIGHUP */ "sighup",
 	 /* PGC_BACKEND */ "backend",
 	 /* PGC_SUSET */ "superuser",
-	 /* PGC_USERLIMIT */ "userlimit",
 	 /* PGC_USERSET */ "user"
 };
 
@@ -219,7 +216,6 @@ const char *const GucSource_Names[] =
 	 /* PGC_S_ENV_VAR */ "environment variable",
 	 /* PGC_S_FILE */ "configuration file",
 	 /* PGC_S_ARGV */ "command line",
-	 /* PGC_S_UNPRIVILEGED */ "unprivileged",
 	 /* PGC_S_DATABASE */ "database",
 	 /* PGC_S_USER */ "user",
 	 /* PGC_S_CLIENT */ "client",
@@ -520,8 +516,8 @@ static struct config_bool ConfigureNamesBool[] =
 		false, NULL, NULL
 	},
 	{
-		{"log_duration", PGC_USERLIMIT, LOGGING_WHAT,
-			gettext_noop("Logs the duration each completed SQL statement."),
+		{"log_duration", PGC_SUSET, LOGGING_WHAT,
+			gettext_noop("Logs the duration of each completed SQL statement."),
 			NULL
 		},
 		&log_duration,
@@ -560,7 +556,7 @@ static struct config_bool ConfigureNamesBool[] =
 		false, NULL, NULL
 	},
 	{
-		{"log_parser_stats", PGC_USERLIMIT, STATS_MONITORING,
+		{"log_parser_stats", PGC_SUSET, STATS_MONITORING,
 			gettext_noop("Writes parser performance statistics to the server log."),
 			NULL
 		},
@@ -568,7 +564,7 @@ static struct config_bool ConfigureNamesBool[] =
 		false, assign_stage_log_stats, NULL
 	},
 	{
-		{"log_planner_stats", PGC_USERLIMIT, STATS_MONITORING,
+		{"log_planner_stats", PGC_SUSET, STATS_MONITORING,
 			gettext_noop("Writes planner performance statistics to the server log."),
 			NULL
 		},
@@ -576,7 +572,7 @@ static struct config_bool ConfigureNamesBool[] =
 		false, assign_stage_log_stats, NULL
 	},
 	{
-		{"log_executor_stats", PGC_USERLIMIT, STATS_MONITORING,
+		{"log_executor_stats", PGC_SUSET, STATS_MONITORING,
 			gettext_noop("Writes executor performance statistics to the server log."),
 			NULL
 		},
@@ -584,7 +580,7 @@ static struct config_bool ConfigureNamesBool[] =
 		false, assign_stage_log_stats, NULL
 	},
 	{
-		{"log_statement_stats", PGC_USERLIMIT, STATS_MONITORING,
+		{"log_statement_stats", PGC_SUSET, STATS_MONITORING,
 			gettext_noop("Writes cumulative performance statistics to the server log."),
 			NULL
 		},
@@ -1225,7 +1221,7 @@ static struct config_int ConfigureNamesInt[] =
 	},
 
 	{
-		{"log_min_duration_statement", PGC_USERLIMIT, LOGGING_WHEN,
+		{"log_min_duration_statement", PGC_SUSET, LOGGING_WHEN,
 			gettext_noop("Sets the minimum execution time in milliseconds above which statements will "
 						 "be logged."),
 			gettext_noop("Zero prints all queries. The default is -1 (turning this feature off).")
@@ -1449,7 +1445,7 @@ static struct config_string ConfigureNamesString[] =
 	},
 
 	{
-		{"log_min_messages", PGC_USERLIMIT, LOGGING_WHEN,
+		{"log_min_messages", PGC_SUSET, LOGGING_WHEN,
 			gettext_noop("Sets the message levels that are logged."),
 			gettext_noop("Valid values are DEBUG5, DEBUG4, DEBUG3, DEBUG2, DEBUG1, "
 						 "INFO, NOTICE, WARNING, ERROR, LOG, FATAL, and PANIC. Each level "
@@ -1468,16 +1464,16 @@ static struct config_string ConfigureNamesString[] =
 		"default", assign_log_error_verbosity, NULL
 	},
 	{
-		{"log_statement", PGC_USERLIMIT, LOGGING_WHAT,
+		{"log_statement", PGC_SUSET, LOGGING_WHAT,
 			gettext_noop("Sets the type of statements logged."),
-			gettext_noop("Valid values are \"none\", \"mod\", \"ddl\", and \"all\".")
+			gettext_noop("Valid values are \"none\", \"ddl\", \"mod\", and \"all\".")
 		},
 		&log_statement_str,
 		"none", assign_log_statement, NULL
 	},
 
 	{
-		{"log_min_error_statement", PGC_USERLIMIT, LOGGING_WHEN,
+		{"log_min_error_statement", PGC_SUSET, LOGGING_WHEN,
 			gettext_noop("Causes all statements generating error at or above this level to be logged."),
 			gettext_noop("All SQL statements that cause an error of the "
 						 "specified level or a higher level are logged.")
@@ -1896,10 +1892,6 @@ static void ReportGUCOption(struct config_generic * record);
 static void ShowGUCConfigOption(const char *name, DestReceiver *dest);
 static void ShowAllGUCConfig(DestReceiver *dest);
 static char *_ShowOption(struct config_generic * record);
-static bool check_userlimit_privilege(struct config_generic *record,
-									  GucSource source, int elevel);
-static bool check_userlimit_override(struct config_generic *record,
-									 GucSource source);
 
 
 /*
@@ -2345,13 +2337,6 @@ InitializeGUCOptions(void)
 
 					Assert(conf->reset_val >= conf->min);
 					Assert(conf->reset_val <= conf->max);
-
-					/*
-					 * Check to make sure we only have valid
-					 * PGC_USERLIMITs
-					 */
-					Assert(conf->gen.context != PGC_USERLIMIT ||
-						   strcmp(conf->gen.name, "log_min_duration_statement") == 0);
 					if (conf->assign_hook)
 						if (!(*conf->assign_hook) (conf->reset_val, true,
 												   PGC_S_DEFAULT))
@@ -2366,7 +2351,6 @@ InitializeGUCOptions(void)
 
 					Assert(conf->reset_val >= conf->min);
 					Assert(conf->reset_val <= conf->max);
-					Assert(conf->gen.context != PGC_USERLIMIT);
 					if (conf->assign_hook)
 						if (!(*conf->assign_hook) (conf->reset_val, true,
 												   PGC_S_DEFAULT))
@@ -2380,14 +2364,6 @@ InitializeGUCOptions(void)
 					struct config_string *conf = (struct config_string *) gconf;
 					char	   *str;
 
-					/*
-					 * Check to make sure we only have valid
-					 * PGC_USERLIMITs
-					 */
-					Assert(conf->gen.context != PGC_USERLIMIT ||
-						   conf->assign_hook == assign_log_min_messages ||
-					   conf->assign_hook == assign_min_error_statement ||
-						   conf->assign_hook == assign_log_statement);
 					*conf->variable = NULL;
 					conf->reset_val = NULL;
 					conf->tentative_val = NULL;
@@ -2628,7 +2604,6 @@ ResetAllOptions(void)
 
 		/* Don't reset non-SET-able values */
 		if (gconf->context != PGC_SUSET &&
-			gconf->context != PGC_USERLIMIT &&
 			gconf->context != PGC_USERSET)
 			continue;
 		/* Don't reset if special exclusion from RESET ALL */
@@ -3276,8 +3251,7 @@ set_config_option(const char *name, const char *value,
 {
 	struct config_generic *record;
 	int			elevel;
-	bool		makeDefault,
-				changeValOrig = changeVal;
+	bool		makeDefault;
 
 	if (context == PGC_SIGHUP || source == PGC_S_DEFAULT)
 	{
@@ -3383,9 +3357,6 @@ set_config_option(const char *name, const char *value,
 				return false;
 			}
 			break;
-		case PGC_USERLIMIT:
-			/* USERLIMIT permissions checked below */
-			break;
 		case PGC_USERSET:
 			/* always okay */
 			break;
@@ -3413,14 +3384,11 @@ set_config_option(const char *name, const char *value,
 				 name);
 			return true;
 		}
-		changeVal = false;		/* this might be reset in USERLIMIT */
+		changeVal = false;
 	}
 
 	/*
-	 * Evaluate value and set variable. USERLIMIT checks two things:  1)
-	 * is the user making a change that is blocked by an administrator
-	 * setting.  2) is the administrator changing a setting and doing a
-	 * SIGHUP that requires us to override a user setting.
+	 * Evaluate value and set variable.
 	 */
 	switch (record->vartype)
 	{
@@ -3438,22 +3406,6 @@ set_config_option(const char *name, const char *value,
 								 errmsg("parameter \"%s\" requires a Boolean value",
 										name)));
 						return false;
-					}
-					if (record->context == PGC_USERLIMIT)
-					{
-						if (newval < conf->reset_val)
-						{
-							/* Limit non-superuser changes */
-							if (!check_userlimit_privilege(record, source,
-														   elevel))
-								return false;
-						}
-						if (newval > *conf->variable)
-						{
-							/* Allow change if admin should override */
-							if (check_userlimit_override(record, source))
-								changeVal = changeValOrig;
-						}
 					}
 				}
 				else
@@ -3539,30 +3491,6 @@ set_config_option(const char *name, const char *value,
 								   newval, name, conf->min, conf->max)));
 						return false;
 					}
-					if (record->context == PGC_USERLIMIT)
-					{
-						/*
-						 * handle log_min_duration_statement: if it's enabled
-						 * then either turning it off or increasing it
-						 * requires privileges.
-						 */
-						if (conf->reset_val != -1 &&
-							(newval == -1 || newval > conf->reset_val))
-						{
-							/* Limit non-superuser changes */
-							if (!check_userlimit_privilege(record, source,
-														   elevel))
-								return false;
-						}
-						/* Admin override includes turning on or decreasing */
-						if (newval != -1 &&
-							(*conf->variable == -1 || newval < *conf->variable))
-						{
-							/* Allow change if admin should override */
-							if (check_userlimit_override(record, source))
-								changeVal = changeValOrig;
-						}
-					}
 				}
 				else
 				{
@@ -3647,23 +3575,6 @@ set_config_option(const char *name, const char *value,
 								   newval, name, conf->min, conf->max)));
 						return false;
 					}
-					if (record->context == PGC_USERLIMIT)
-					{
-						/* No REAL PGC_USERLIMIT at present */
-						if (newval < conf->reset_val)
-						{
-							/* Limit non-superuser changes */
-							if (!check_userlimit_privilege(record, source,
-														   elevel))
-								return false;
-						}
-						if (newval > *conf->variable)
-						{
-							/* Allow change if admin should override */
-							if (check_userlimit_override(record, source))
-								changeVal = changeValOrig;
-						}
-					}
 				}
 				else
 				{
@@ -3735,40 +3646,6 @@ set_config_option(const char *name, const char *value,
 					newval = guc_strdup(elevel, value);
 					if (newval == NULL)
 						return false;
-
-					if (record->context == PGC_USERLIMIT)
-					{
-						int			var_value,
-									reset_value,
-									new_value;
-						const char *(*var_hook) (int *var, const char *newval,
-											bool doit, GucSource source);
-
-						if (conf->assign_hook == assign_log_statement)
-							var_hook = assign_log_stmtlvl;
-						else
-							var_hook = assign_msglvl;
-
-						(*var_hook) (&new_value, newval, true, source);
-						(*var_hook) (&reset_value, conf->reset_val, true,
-									 source);
-						(*var_hook) (&var_value, *conf->variable, true,
-									 source);
-
-						if (new_value > reset_value)
-						{
-							/* Limit non-superuser changes */
-							if (!check_userlimit_privilege(record, source,
-														   elevel))
-								return false;
-						}
-						if (new_value < var_value)
-						{
-							/* Allow change if admin should override */
-							if (check_userlimit_override(record, source))
-								changeVal = changeValOrig;
-						}
-					}
 				}
 				else if (conf->reset_val)
 				{
@@ -3885,72 +3762,6 @@ set_config_option(const char *name, const char *value,
 	if (changeVal && (record->flags & GUC_REPORT))
 		ReportGUCOption(record);
 
-	return true;
-}
-
-/*
- * Check whether we should allow a USERLIMIT parameter to be set
- *
- * This is invoked only when the desired new setting is "less" than the
- * old and so appropriate privileges are needed.  If the setting should
- * be disallowed, either throw an error (in interactive case) or return false.
- */
-static bool
-check_userlimit_privilege(struct config_generic *record, GucSource source,
-						  int elevel)
-{
-	/* Allow if trusted source (e.g., config file) */
-	if (source < PGC_S_UNPRIVILEGED)
-		return true;
-	/*
-	 * Allow if superuser.  We can only check this inside a transaction,
-	 * though, so assume not-superuser otherwise.  (In practice this means
-	 * that settings coming from PGOPTIONS will be treated as non-superuser)
-	 */
-	if (IsTransactionState() && superuser())
-		return true;
-
-	ereport(elevel,
-			(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-			 errmsg("permission denied to set parameter \"%s\"",
-					record->name),
-			 (record->vartype == PGC_BOOL) ?
-			 errhint("Must be superuser to change this value to false.")
-			 : ((record->vartype == PGC_INT) ?
-				errhint("Must be superuser to increase this value or turn it off.")
-				: errhint("Must be superuser to increase this value."))));
-	return false;
-}
-
-/*
- * Check whether we should allow a USERLIMIT parameter to be overridden
- *
- * This is invoked when the desired new setting is "greater" than the
- * old; if the old setting was unprivileged and the new one is privileged,
- * we should apply it, even though the normal rule would be not to.
- */
-static bool
-check_userlimit_override(struct config_generic *record, GucSource source)
-{
-	/* Unprivileged source never gets to override this way */
-	if (source > PGC_S_UNPRIVILEGED)
-		return false;
-	/* If existing setting is from privileged source, keep it */
-	if (record->source < PGC_S_UNPRIVILEGED)
-		return false;
-	/*
-	 * If user is a superuser, he gets to keep his setting.  We can't check
-	 * this unless inside a transaction, though.  XXX in practice that
-	 * restriction means this code is essentially worthless, because the
-	 * result will depend on whether we happen to be inside a transaction
-	 * block when SIGHUP arrives.  Dike out until we can think of something
-	 * that actually works.
-	 */
-#ifdef NOT_USED
-	if (IsTransactionState() && superuser())
-		return false;
-#endif
-	/* Otherwise override */
 	return true;
 }
 
@@ -5636,31 +5447,25 @@ assign_log_error_verbosity(const char *newval, bool doit, GucSource source)
 static const char *
 assign_log_statement(const char *newval, bool doit, GucSource source)
 {
-	return (assign_log_stmtlvl((int *) &log_statement, newval, doit, source));
-}
-
-static const char *
-assign_log_stmtlvl(int *var, const char *newval, bool doit, GucSource source)
-{
 	if (pg_strcasecmp(newval, "none") == 0)
 	{
 		if (doit)
-			(*var) = LOGSTMT_NONE;
-	}
-	else if (pg_strcasecmp(newval, "mod") == 0)
-	{
-		if (doit)
-			(*var) = LOGSTMT_MOD;
+			log_statement = LOGSTMT_NONE;
 	}
 	else if (pg_strcasecmp(newval, "ddl") == 0)
 	{
 		if (doit)
-			(*var) = LOGSTMT_DDL;
+			log_statement = LOGSTMT_DDL;
+	}
+	else if (pg_strcasecmp(newval, "mod") == 0)
+	{
+		if (doit)
+			log_statement = LOGSTMT_MOD;
 	}
 	else if (pg_strcasecmp(newval, "all") == 0)
 	{
 		if (doit)
-			(*var) = LOGSTMT_ALL;
+			log_statement = LOGSTMT_ALL;
 	}
 	else
 		return NULL;			/* fail */

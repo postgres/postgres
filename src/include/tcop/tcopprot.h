@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/tcop/tcopprot.h,v 1.71 2004/08/29 05:06:58 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/tcop/tcopprot.h,v 1.72 2004/11/14 19:35:35 tgl Exp $
  *
  * OLD COMMENTS
  *	  This file was created so that other c files could get the two
@@ -33,11 +33,10 @@ extern int	max_stack_depth;
 
 typedef enum
 {
-	/* Reverse order so GUC USERLIMIT is easier */
-	LOGSTMT_ALL,				/* log all statements */
+	LOGSTMT_NONE,				/* log no statements */
 	LOGSTMT_DDL,				/* log data definition statements */
 	LOGSTMT_MOD,				/* log modification statements, plus DDL */
-	LOGSTMT_NONE				/* log no statements */
+	LOGSTMT_ALL					/* log all statements */
 } LogStmtLevel;
 
 extern LogStmtLevel log_statement;
@@ -63,5 +62,7 @@ extern void authdie(SIGNAL_ARGS);
 extern int	PostgresMain(int argc, char *argv[], const char *username);
 extern void ResetUsage(void);
 extern void ShowUsage(const char *title);
+extern void set_debug_options(int debug_flag,
+							  GucContext context, GucSource source);
 
 #endif   /* TCOPPROT_H */
