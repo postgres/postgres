@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.103.2.21 2002/11/23 03:50:39 tgl Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.103.2.22 2002/12/11 22:27:34 momjian Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -1714,6 +1714,13 @@ gunzip -c user.ps.gz \
         <entry></entry>
        </row>
        <row>
+        <entry><systemitem class="osname">SCO OpenServer 5</></entry>
+        <entry><systemitem>x86</></entry>
+        <entry>7.3.1</entry>
+        <entry>2002-12-11, Shibashish Satpathy (<email>shib@postmark.net</>)</entry>
+        <entry>5.0.4, gcc;  see also <filename>doc/FAQ_SCO</filename></entry>
+       </row>
+       <row>
 	<entry><systemitem class="osname">Solaris</></entry>
 	<entry><systemitem>Sparc</></entry>
 	<entry>7.3</entry>
@@ -1848,13 +1855,6 @@ gunzip -c user.ps.gz \
       <entry>7.2</entry>
       <entry>2001-11-20, Igor Kovalenko (<email>Igor.Kovalenko@motorola.com</email>)</entry>
       <entry>patches available in archives, but too late for 7.2</entry>
-     </row>
-     <row>
-      <entry><systemitem class="osname">SCO OpenServer 5</></entry>
-      <entry><systemitem>x86</></entry>
-      <entry>6.5</entry>
-      <entry>1999-05-25, Andrew Merrill (<email>andrew@compclass.com</>)</entry>
-      <entry>7.2 should work, but no reports; see also <filename>doc/FAQ_SCO</filename></entry>
      </row>
      <row>
       <entry><systemitem class="osname">System V R4</></entry>

@@ -2,5 +2,6 @@ if test "$GCC" = yes; then
   CFLAGS=-O2
 else
   CFLAGS=-O
-  CC="$CC -b elf"
 fi
+CC="$CC -b elf"
+
