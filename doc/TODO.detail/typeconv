@@ -122,7 +122,7 @@ From tgl@sss.pgh.pa.us Sun May 14 17:30:56 2000
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id RAA05808
 	for <pgman@candle.pha.pa.us>; Sun, 14 May 2000 17:30:52 -0400 (EDT)
-Received: from sss2.sss.pgh.pa.us (sss.pgh.pa.us [209.114.166.2]) by renoir.op.net (o1/$Revision: 1.2 $) with ESMTP id RAA16657 for <pgman@candle.pha.pa.us>; Sun, 14 May 2000 17:29:52 -0400 (EDT)
+Received: from sss2.sss.pgh.pa.us (sss.pgh.pa.us [209.114.166.2]) by renoir.op.net (o1/$Revision: 1.3 $) with ESMTP id RAA16657 for <pgman@candle.pha.pa.us>; Sun, 14 May 2000 17:29:52 -0400 (EDT)
 Received: from sss2.sss.pgh.pa.us (tgl@localhost [127.0.0.1])
 	by sss2.sss.pgh.pa.us (8.9.3/8.9.3) with ESMTP id RAA20914;
 	Sun, 14 May 2000 17:29:30 -0400 (EDT)
@@ -630,6 +630,130 @@ instead of text, allowing the normal promotion rules to replace char(n)
 with text if necessary.  Not sure if that would make things more or less
 confusing for operations that intermix fixed- and variable-width char
 types.)
+
+			regards, tom lane
+
+From pgsql-hackers-owner+M1936@postgresql.org Sun Dec 10 13:17:54 2000
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id NAA20676
+	for <pgman@candle.pha.pa.us>; Sun, 10 Dec 2000 13:17:54 -0500 (EST)
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by mail.postgresql.org (8.11.1/8.11.1) with SMTP id eBAIGvZ40566;
+	Sun, 10 Dec 2000 13:16:57 -0500 (EST)
+	(envelope-from pgsql-hackers-owner+M1936@postgresql.org)
+Received: from sss.pgh.pa.us (sss.pgh.pa.us [209.114.132.154])
+	by mail.postgresql.org (8.11.1/8.11.1) with ESMTP id eBAI8HZ39820
+	for <pgsql-hackers@postgreSQL.org>; Sun, 10 Dec 2000 13:08:17 -0500 (EST)
+	(envelope-from tgl@sss.pgh.pa.us)
+Received: from sss2.sss.pgh.pa.us (tgl@localhost [127.0.0.1])
+	by sss.pgh.pa.us (8.11.1/8.11.1) with ESMTP id eBAI82o28682;
+	Sun, 10 Dec 2000 13:08:02 -0500 (EST)
+To: Thomas Lockhart <lockhart@alumni.caltech.edu>
+cc: pgsql-hackers@postgresql.org
+Subject: [HACKERS] Unknown-type resolution rules, redux
+Date: Sun, 10 Dec 2000 13:08:02 -0500
+Message-ID: <28679.976471682@sss.pgh.pa.us>
+From: Tom Lane <tgl@sss.pgh.pa.us>
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+parse_coerce.c contains the following conversation --- I believe the
+first XXX comment is from me and the second from you:
+
+    /*
+     * Still too many candidates? Try assigning types for the unknown
+     * columns.
+     *
+     * We do this by examining each unknown argument position to see if all
+     * the candidates agree on the type category of that slot.  If so, and
+     * if some candidates accept the preferred type in that category,
+     * eliminate the candidates with other input types.  If we are down to
+     * one candidate at the end, we win.
+     *
+     * XXX It's kinda bogus to do this left-to-right, isn't it?  If we
+     * eliminate some candidates because they are non-preferred at the
+     * first slot, we won't notice that they didn't have the same type
+     * category for a later slot.
+     * XXX Hmm. How else would you do this? These candidates are here because
+     * they all have the same number of matches on arguments with explicit
+     * types, so from here on left-to-right resolution is as good as any.
+     * Need a counterexample to see otherwise...
+     */
+
+The comment is out of date anyway because it fails to mention the new
+rule about preferring STRING category.  But to answer your request for
+a counterexample: consider
+
+	SELECT foo('bar', 'baz')
+
+First, suppose the available candidates are
+
+	foo(float8, int4)
+	foo(float8, point)
+
+In this case, we examine the first argument position, see that all the
+candidates agree on NUMERIC category, so we consider resolving the first
+unknown input to float8.  That eliminates neither candidate so we move
+on to the second argument position.  Here there is a conflict of
+categories so we can't eliminate anything, and we decide the call is
+ambiguous.  That's correct (or at least Operating As Designed ;-)).
+
+But now suppose we have
+
+	foo(float8, int4)
+	foo(float4, point)
+
+Here, at the first position we will still see that all candidates agree
+on NUMERIC category, and then we will eliminate candidate 2 because it
+isn't the preferred type in that category.  Now when we come to the
+second argument position, there's only one candidate left so there's
+no category conflict.  Result: this call is considered non-ambiguous.
+
+This means there is a left-to-right bias in the algorithm.  For example,
+the exact same call *would* be considered ambiguous if the candidates'
+argument orders were reversed:
+
+	foo(int4, float8)
+	foo(point, float4)
+
+I do not like that.  You could maybe argue that earlier arguments are
+more important than later ones for functions, but it's harder to make
+that case for binary operators --- and in any case this behavior is
+extremely difficult to explain in prose.
+
+To fix this, I think we need to split the loop into two passes.
+The first pass does *not* remove any candidates.  What it does is to
+look separately at each UNKNOWN-argument position and attempt to deduce
+a probable category for it, using the following rules:
+
+* If any candidate has an input type of STRING category, use STRING
+category; else if all candidates agree on the category, use that
+category; else fail because no resolution can be made.
+
+* The first pass must also remember whether any candidates are of a
+preferred type within the selected category.
+
+The probable categories and exists-preferred-type booleans are saved in
+local arrays.  (Note this has to be done this way because
+IsPreferredType currently allows more than one type to be considered
+preferred in a category ... so the first pass cannot try to determine a
+unique type, only a category.)
+
+If we find a category for every UNKNOWN arg, then we enter a second loop
+in which we discard candidates.  In this pass we discard a candidate if
+(a) it is of the wrong category, or (b) it is of the right category but
+is not of preferred type in that category, *and* we found candidate(s)
+of preferred type at this slot.
+
+If we end with exactly one candidate then we win.
+
+It is clear in this algorithm that there is no order dependency: the
+conditions for keeping or discarding a candidate are fixed before we
+start the second pass, and do not vary depending on which other
+candidates were discarded before it.
+
+Comments?
 
 			regards, tom lane
 
