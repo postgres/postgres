@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/Attic/dbcommands.c,v 1.12 1997/11/20 23:22:16 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.1 1997/11/24 05:20:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
