@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/error/elog.c,v 1.144 2004/07/31 00:45:38 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/error/elog.c,v 1.145 2004/08/04 20:58:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1158,7 +1158,7 @@ write_syslog(int level, const char *line)
 			syslog_fac = LOG_LOCAL6;
 		if (pg_strcasecmp(Syslog_facility, "LOCAL7") == 0)
 			syslog_fac = LOG_LOCAL7;
-		openlog(Syslog_ident, LOG_PID | LOG_NDELAY, syslog_fac);
+		openlog(Syslog_ident, LOG_PID | LOG_NDELAY | LOG_NOWAIT, syslog_fac);
 		openlog_done = true;
 	}
 
