@@ -66,17 +66,21 @@ public class PSQLException extends SQLException
 	    try {
 		bundle = ResourceBundle.getBundle("org.postgresql.errors");
 	    } catch(MissingResourceException e) {
+                // translation files have not been installed.
+                message = id;
 	    }
 	}
 	
+        if (bundle != null) {
 	// Now look up a localized message. If one is not found, then use
 	// the supplied message instead.
-	message = null;
-	try {
-	    message = bundle.getString(id);
-	} catch(MissingResourceException e) {
-	    message = id;
-	}
+	    message = null;
+	    try {
+	        message = bundle.getString(id);
+	    } catch(MissingResourceException e) {
+	        message = id;
+	    }
+        }
 	
 	// Expand any arguments
 	if(args!=null)
