@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.68 2000/11/16 22:30:18 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.69 2000/11/18 03:36:48 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -154,7 +154,10 @@ createdb(const char *dbname, const char *dbpath,
 	/* ... otherwise we'd be open to shell exploits below */
 
 #ifdef XLOG
-	/* Try to force any dirty buffers out to disk */
+	/* Force dirty buffers out to disk, to ensure source database is
+	 * up-to-date for the copy.  (We really only need to flush buffers
+	 * for the source database...)
+	 */
 	BufferSync();
 #endif
 
@@ -251,6 +254,14 @@ createdb(const char *dbname, const char *dbpath,
 
 	/* Close pg_database, but keep lock till commit */
 	heap_close(pg_database_rel, NoLock);
+
+#ifdef XLOG
+	/* Force dirty buffers out to disk, so that newly-connecting backends
+	 * will see the new database in pg_database right away.  (They'll see
+	 * an uncommitted tuple, but they don't care; see GetRawDatabaseInfo.)
+	 */
+	BufferSync();
+#endif
 }
 
 
