@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.26 1997/04/27 19:16:44 thomas Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.27 1997/04/29 04:32:26 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1552,7 +1552,8 @@ transformGroupClause(ParseState *pstate, List *grouplist, List *targetlist)
 	if (restarget == NULL)
 	    elog(WARN,"The field being grouped by must appear in the target list");
 
-	grpcl->resdom = resdom = restarget->resdom;
+	grpcl->entry = restarget;
+	resdom = restarget->resdom;
  	grpcl->grpOpoid = oprid(oper("<",
 				   resdom->restype,
 				   resdom->restype,false));
@@ -2360,6 +2361,39 @@ contain_agg_clause(Node *clause)
 }
 
 /*
+ * exprIsAggOrGroupCol -
+ *    returns true if the expression does not contain non-group columns.
+ */
+static bool
+exprIsAggOrGroupCol(Node *expr, List *groupClause)
+{
+    List *gl;
+    
+    if ( expr == NULL || IsA (expr, Const) || IsA (expr, Aggreg) )
+	return TRUE;
+
+    foreach (gl, groupClause)
+    {
+	GroupClause *grpcl = lfirst(gl);
+	
+	if ( equal (expr, grpcl->entry->expr) )
+		return TRUE;
+    }
+
+    if ( IsA (expr, Expr) )
+    {
+	List *temp;
+
+	foreach (temp, ((Expr*)expr)->args)
+	    if (!exprIsAggOrGroupCol(lfirst(temp),groupClause))
+		return FALSE;
+	return TRUE;
+    }
+
+    return FALSE;
+}
+
+/*
  * tleIsAggOrGroupCol -
  *    returns true if the TargetEntry is Agg or GroupCol.
  */
@@ -2376,9 +2410,9 @@ tleIsAggOrGroupCol(TargetEntry *tle, List *groupClause)
     {
 	GroupClause *grpcl = lfirst(gl);
 	
-    	if ( tle->resdom->resno == grpcl->resdom->resno )
+    	if ( tle->resdom->resno == grpcl->entry->resdom->resno )
     	{
-    	    if ( IsA (expr, Aggreg) )
+    	    if ( contain_agg_clause ((Node*) expr) )
     	    	elog (WARN, "parser: aggregates not allowed in GROUP BY clause");
 	    return TRUE;
 	}
@@ -2387,39 +2421,8 @@ tleIsAggOrGroupCol(TargetEntry *tle, List *groupClause)
     if ( IsA (expr, Aggreg) )
 	return TRUE;
 
-    return FALSE;
-}
-
-#if 0	/* Now GroupBy contains resdom to enable Group By func_results */
-/*
- * exprIsAggOrGroupCol -
- *    returns true if the expression does not contain non-group columns.
- */
-static bool
-exprIsAggOrGroupCol(Node *expr, List *groupClause)
-{
-    if (expr==NULL)
-	return TRUE;
-    else if (IsA(expr,Const))
-	return TRUE;
-    else if (IsA(expr,Var)) {
-	List *gl;
-	Var *var = (Var*)expr;
-	/*
-	 * only group columns are legal
-	 */
-	foreach (gl, groupClause) {
-	    GroupClause *grpcl = lfirst(gl);
-	    if ((grpcl->grpAttr->varno == var->varno) &&
-		(grpcl->grpAttr->varattno == var->varattno))
-		return TRUE;
-	}
-	return FALSE;
-    } else if (IsA(expr,Aggreg))
-	/* aggregates can take group column or non-group column as argument,
-	   no further check necessary. */
-	return TRUE;
-    else if (IsA(expr,Expr)) {
+    if ( IsA (expr, Expr) )
+    {
 	List *temp;
 
 	foreach (temp, ((Expr*)expr)->args)
@@ -2430,7 +2433,6 @@ exprIsAggOrGroupCol(Node *expr, List *groupClause)
 
     return FALSE;
 }
-#endif
 
 /*
  * parseCheckAggregates -

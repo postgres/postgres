@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planmain.c,v 1.3 1997/04/05 06:37:37 vadim Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planmain.c,v 1.4 1997/04/29 04:32:50 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -359,8 +359,9 @@ make_groupPlan(List **tlist,
     List *sort_tlist;
     List *sl, *gl;
     List *glc = listCopy (groupClause);
-    List *aggvals = NIL;		/* list of vars of aggregates */
-    int aggvcnt;
+    List *otles = NIL;		/* list of removed non-GroupBy entries */
+    List *otlvars = NIL;	/* list of var in them */
+    int otlvcnt;
     Sort *sortplan;
     Group *grpplan;
     int numCols;
@@ -375,7 +376,8 @@ make_groupPlan(List **tlist,
 
     /*
      * Make template TL for subplan, Sort & Group:
-     * 1. Take away Aggregates and re-set resno-s accordantly.
+     * 1. If there are aggregates (tuplePerGroup is true) then take 
+     *    away non-GroupBy entries and re-set resno-s accordantly.
      * 2. Make grpColIdx
      *
      * Note: we assume that TLEs in *tlist are ordered in accordance
@@ -390,7 +392,7 @@ make_groupPlan(List **tlist,
     	{
 	    GroupClause *grpcl = (GroupClause*)lfirst(gl);
 	    
-	    if ( grpcl->resdom->resno == te->resdom->resno )
+	    if ( grpcl->entry->resdom->resno == te->resdom->resno )
 	    {
     		
 		resdom = te->resdom;
@@ -403,15 +405,20 @@ make_groupPlan(List **tlist,
 		break;
 	    }
 	}
-	if ( resdom == NULL )		/* Not GroupBy-ed entry: remove */
-	{				/* aggregate(s) from Group/Sort TL */
-	    if ( IsA (te->expr, Aggreg) )
-	    {				/* save Aggregate' Vars */
-	    	aggvals = nconc (aggvals, pull_var_clause (te->expr));
-	    	sort_tlist = lremove (lfirst (sl), sort_tlist);
+	/* 
+	 * Non-GroupBy entry: remove it from Group/Sort TL if there are 
+	 * aggregates in query - it will be evaluated by Aggregate plan
+	 */
+	if ( resdom == NULL )
+	{
+	    if ( tuplePerGroup )
+	    {
+	    	otlvars = nconc (otlvars, pull_var_clause (te->expr));
+	    	otles = lcons (te, otles);
+	    	sort_tlist = lremove (te, sort_tlist);
 	    }
 	    else
-	    	resdom->resno = last_resno++;		/* re-set */
+	    	te->resdom->resno = last_resno++;
 	}
     }
 
@@ -421,12 +428,12 @@ make_groupPlan(List **tlist,
     }
     
     /*
-     * Aggregates were removed from TL - we are to add Vars for them
-     * to the end of TL if there are no such Vars in TL already.
+     * If non-GroupBy entries were removed from TL - we are to add Vars for 
+     * them to the end of TL if there are no such Vars in TL already.
      */
 
-    aggvcnt = length (aggvals);
-    foreach (gl, aggvals)
+    otlvcnt = length (otlvars);
+    foreach (gl, otlvars)
     {
     	Var *v = (Var*)lfirst (gl);
     	
@@ -437,9 +444,9 @@ make_groupPlan(List **tlist,
 	    last_resno++;
 	}
 	else		/* already in TL */
-	    aggvcnt--;
+	    otlvcnt--;
     }
-    /* Now aggvcnt is number of Vars added in TL for Aggregates */
+    /* Now otlvcnt is number of Vars added in TL for non-GroupBy entries */
     
     /* Make TL for subplan: substitute Vars from subplan TL into new TL */
     sl = flatten_tlist_vars (sort_tlist, subplan->targetlist);
@@ -489,17 +496,28 @@ make_groupPlan(List **tlist,
     						grpColIdx, sortplan);
 
     /* 
-     * Make TL for parent: "restore" Aggregates and
-     * resno-s of others accordantly.
+     * Make TL for parent: "restore" non-GroupBy entries (if they
+     * were removed) and set resno-s of others accordantly.
      */
     sl = sort_tlist;
     sort_tlist = NIL;			/* to be new parent TL */
     foreach (gl, *tlist)
     {
+    	List *temp = NIL;
     	TargetEntry *te = (TargetEntry *) lfirst (gl);
-
-	if ( !IsA (te->expr, Aggreg) )	/* It's "our" TLE - we're to return */
-	{				/* it from Sort/Group plans */
+    	
+    	foreach (temp, otles)	/* Is it removed non-GroupBy entry ? */
+    	{
+    	    TargetEntry *ote = (TargetEntry *) lfirst (temp);
+    	    
+    	    if ( ote->resdom->resno == te->resdom->resno )
+    	    {
+	    	otles = lremove (ote, otles);
+    	    	break;
+    	    }
+    	}
+	if ( temp == NIL )	/* It's "our" TLE - we're to return */
+	{			/* it from Sort/Group plans */
     	    TargetEntry *my = (TargetEntry *) lfirst (sl);	/* get it */
     	    
 	    sl = sl->next;		/* prepare for the next "our" */
@@ -508,15 +526,16 @@ make_groupPlan(List **tlist,
 	    sort_tlist = lappend (sort_tlist, my);
 	    continue;
 	}
-	/* TLE of an aggregate */
+	/* else - it's TLE of an non-GroupBy entry */
 	sort_tlist = lappend (sort_tlist, copyObject(te));
     }
     /* 
-     * Pure aggregates Vars were at the end of Group' TL.
+     * Pure non-GroupBy entries Vars were at the end of Group' TL.
      * They shouldn't appear in parent TL, all others shouldn't
      * disappear.
      */
-    Assert ( aggvcnt == length (sl) );
+    Assert ( otlvcnt == length (sl) );
+    Assert ( length (otles) == 0 );
 
     *tlist = sort_tlist;
     
