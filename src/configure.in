@@ -784,6 +784,7 @@ then
 		AC_MSG_WARN(tcl support disabled; tcl.h missing)
 		USE_TCL=
 	fi
+	AC_SUBST(TCL_INCDIR)
 fi
 
 dnl Check for Tcl archive
