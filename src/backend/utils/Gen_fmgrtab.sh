@@ -9,7 +9,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/utils/Attic/Gen_fmgrtab.sh,v 1.19 2001/01/24 19:43:12 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/backend/utils/Attic/Gen_fmgrtab.sh,v 1.20 2001/05/22 12:06:51 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -108,7 +108,7 @@ if [ $? -ne 0 ]; then
 fi
 
 $CPP $BKIOPTS $CPPTMPFILE | \
-egrep '^[0-9]' | \
+egrep '^[ ]*[0-9]' | \
 sort -n > $RAWFILE
 
 if [ $? -ne 0 ]; then
