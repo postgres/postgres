@@ -11,13 +11,15 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	$Header: /cvsroot/pgsql/src/backend/utils/adt/like.c,v 1.40 2000/08/09 14:13:03 thomas Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/utils/adt/like.c,v 1.41 2000/08/22 06:33:57 ishii Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 #include <ctype.h>
+#ifdef MULTIBYTE
 #include "mb/pg_wchar.h"
+#endif
 #include "utils/builtins.h"
 
 
@@ -26,8 +28,8 @@
 #define LIKE_ABORT						(-1)
 
 
-static int MatchText(pg_wchar * t, int tlen, pg_wchar * p, int plen, char *e);
-static int MatchTextLower(pg_wchar * t, int tlen, pg_wchar * p, int plen, char *e);
+static int MatchText(unsigned char * t, int tlen, unsigned char * p, int plen, char *e);
+static int MatchTextLower(unsigned char * t, int tlen, unsigned char * p, int plen, char *e);
 
 
 /*
@@ -40,34 +42,15 @@ namelike(PG_FUNCTION_ARGS)
 	bool		result;
 	Name		str = PG_GETARG_NAME(0);
 	text	   *pat = PG_GETARG_TEXT_P(1);
-	pg_wchar   *s, *p;
+	unsigned char   *s, *p;
 	int			slen, plen;
 
-#ifdef MULTIBYTE
-	pg_wchar   *ss, *pp;
-
-	slen = strlen(NameStr(*str));
-	s = (pg_wchar *) palloc((slen+1) * sizeof(pg_wchar));
-	(void) pg_mb2wchar_with_len((unsigned char *) NameStr(*str), s, slen);
-	for (ss = s, slen = 0; *ss != 0; ss++) slen++;
-
-	plen = (VARSIZE(pat)-VARHDRSZ);
-	p = (pg_wchar *) palloc((plen+1) * sizeof(pg_wchar));
-	(void) pg_mb2wchar_with_len((unsigned char *) VARDATA(pat), p, plen);
-	for (pp = p, plen = 0; *pp != 0; pp++) plen++;
-#else
 	s = NameStr(*str);
 	slen = strlen(s);
 	p = VARDATA(pat);
 	plen = (VARSIZE(pat)-VARHDRSZ);
-#endif
 
 	result = (MatchText(s, slen, p, plen, "\\") == LIKE_TRUE);
-
-#ifdef MULTIBYTE
-	pfree(s);
-	pfree(p);
-#endif
 
 	PG_RETURN_BOOL(result);
 }
@@ -78,34 +61,15 @@ namenlike(PG_FUNCTION_ARGS)
 	bool		result;
 	Name		str = PG_GETARG_NAME(0);
 	text	   *pat = PG_GETARG_TEXT_P(1);
-	pg_wchar   *s, *p;
+	unsigned char   *s, *p;
 	int			slen, plen;
 
-#ifdef MULTIBYTE
-	pg_wchar   *ss, *pp;
-
-	slen = strlen(NameStr(*str));
-	s = (pg_wchar *) palloc((slen+1) * sizeof(pg_wchar));
-	(void) pg_mb2wchar_with_len((unsigned char *) NameStr(*str), s, slen);
-	for (ss = s, slen = 0; *ss != 0; ss++) slen++;
-
-	plen = (VARSIZE(pat)-VARHDRSZ);
-	p = (pg_wchar *) palloc((plen+1) * sizeof(pg_wchar));
-	(void) pg_mb2wchar_with_len((unsigned char *) VARDATA(pat), p, plen);
-	for (pp = p, plen = 0; *pp != 0; pp++) plen++;
-#else
 	s = NameStr(*str);
 	slen = strlen(s);
 	p = VARDATA(pat);
 	plen = (VARSIZE(pat)-VARHDRSZ);
-#endif
 
 	result = (MatchText(s, slen, p, plen, "\\") != LIKE_TRUE);
-
-#ifdef MULTIBYTE
-	pfree(s);
-	pfree(p);
-#endif
 
 	PG_RETURN_BOOL(result);
 }
@@ -117,37 +81,17 @@ namelike_escape(PG_FUNCTION_ARGS)
 	Name		str = PG_GETARG_NAME(0);
 	text	   *pat = PG_GETARG_TEXT_P(1);
 	text	   *esc = PG_GETARG_TEXT_P(2);
-	pg_wchar   *s, *p;
+	unsigned char   *s, *p;
 	int			slen, plen;
 	char	   *e;
 
-#ifdef MULTIBYTE
-	pg_wchar   *ss, *pp;
-
-	slen = strlen(NameStr(*str));
-	s = (pg_wchar *) palloc((slen+1) * sizeof(pg_wchar));
-	(void) pg_mb2wchar_with_len((unsigned char *) NameStr(*str), s, slen);
-	for (ss = s, slen = 0; *ss != 0; ss++) slen++;
-
-	plen = (VARSIZE(pat)-VARHDRSZ);
-	p = (pg_wchar *) palloc((plen+1) * sizeof(pg_wchar));
-	(void) pg_mb2wchar_with_len((unsigned char *) VARDATA(pat), p, plen);
-	for (pp = p, plen = 0; *pp != 0; pp++) plen++;
-#else
 	s = NameStr(*str);
 	slen = strlen(s);
 	p = VARDATA(pat);
 	plen = (VARSIZE(pat)-VARHDRSZ);
-#endif
-
 	e = ((VARSIZE(esc)-VARHDRSZ) > 0? VARDATA(esc): NULL);
 
 	result = (MatchText(s, slen, p, plen, e) == LIKE_TRUE);
-
-#ifdef MULTIBYTE
-	pfree(s);
-	pfree(p);
-#endif
 
 	PG_RETURN_BOOL(result);
 }
@@ -159,37 +103,17 @@ namenlike_escape(PG_FUNCTION_ARGS)
 	Name		str = PG_GETARG_NAME(0);
 	text	   *pat = PG_GETARG_TEXT_P(1);
 	text	   *esc = PG_GETARG_TEXT_P(2);
-	pg_wchar   *s, *p;
+	unsigned char   *s, *p;
 	int			slen, plen;
 	char	   *e;
 
-#ifdef MULTIBYTE
-	pg_wchar   *ss, *pp;
-
-	slen = strlen(NameStr(*str));
-	s = (pg_wchar *) palloc((slen+1) * sizeof(pg_wchar));
-	(void) pg_mb2wchar_with_len((unsigned char *) NameStr(*str), s, slen);
-	for (ss = s, slen = 0; *ss != 0; ss++) slen++;
-
-	plen = (VARSIZE(pat)-VARHDRSZ);
-	p = (pg_wchar *) palloc((plen+1) * sizeof(pg_wchar));
-	(void) pg_mb2wchar_with_len((unsigned char *) VARDATA(pat), p, plen);
-	for (pp = p, plen = 0; *pp != 0; pp++) plen++;
-#else
 	s = NameStr(*str);
 	slen = strlen(s);
 	p = VARDATA(pat);
 	plen = (VARSIZE(pat)-VARHDRSZ);
-#endif
-
 	e = ((VARSIZE(esc)-VARHDRSZ) > 0? VARDATA(esc): NULL);
 
 	result = (MatchText(s, slen, p, plen, e) != LIKE_TRUE);
-
-#ifdef MULTIBYTE
-	pfree(s);
-	pfree(p);
-#endif
 
 	PG_RETURN_BOOL(result);
 }
@@ -200,34 +124,15 @@ textlike(PG_FUNCTION_ARGS)
 	bool		result;
 	text	   *str = PG_GETARG_TEXT_P(0);
 	text	   *pat = PG_GETARG_TEXT_P(1);
-	pg_wchar   *s, *p;
+	unsigned char   *s, *p;
 	int			slen, plen;
 
-#ifdef MULTIBYTE
-	pg_wchar   *ss, *pp;
-
-	slen = (VARSIZE(str)-VARHDRSZ);
-	s = (pg_wchar *) palloc((slen+1) * sizeof(pg_wchar));
-	(void) pg_mb2wchar_with_len((unsigned char *) VARDATA(str), s, slen);
-	for (ss = s, slen = 0; *ss != 0; ss++) slen++;
-
-	plen = (VARSIZE(pat)-VARHDRSZ);
-	p = (pg_wchar *) palloc((plen+1) * sizeof(pg_wchar));
-	(void) pg_mb2wchar_with_len((unsigned char *) VARDATA(pat), p, plen);
-	for (pp = p, plen = 0; *pp != 0; pp++) plen++;
-#else
 	s = VARDATA(str);
 	slen = (VARSIZE(str)-VARHDRSZ);
 	p = VARDATA(pat);
 	plen = (VARSIZE(pat)-VARHDRSZ);
-#endif
 
 	result = (MatchText(s, slen, p, plen, NULL) == LIKE_TRUE);
-
-#ifdef MULTIBYTE
-	pfree(s);
-	pfree(p);
-#endif
 
 	PG_RETURN_BOOL(result);
 }
@@ -238,34 +143,15 @@ textnlike(PG_FUNCTION_ARGS)
 	bool		result;
 	text	   *str = PG_GETARG_TEXT_P(0);
 	text	   *pat = PG_GETARG_TEXT_P(1);
-	pg_wchar   *s, *p;
+	unsigned char   *s, *p;
 	int			slen, plen;
 
-#ifdef MULTIBYTE
-	pg_wchar   *ss, *pp;
-
-	slen = (VARSIZE(str)-VARHDRSZ);
-	s = (pg_wchar *) palloc((slen+1) * sizeof(pg_wchar));
-	(void) pg_mb2wchar_with_len((unsigned char *) VARDATA(str), s, slen);
-	for (ss = s, slen = 0; *ss != 0; ss++) slen++;
-
-	plen = (VARSIZE(pat)-VARHDRSZ);
-	p = (pg_wchar *) palloc((plen+1) * sizeof(pg_wchar));
-	(void) pg_mb2wchar_with_len((unsigned char *) VARDATA(pat), p, plen);
-	for (pp = p, plen = 0; *pp != 0; pp++) plen++;
-#else
 	s = VARDATA(str);
 	slen = (VARSIZE(str)-VARHDRSZ);
 	p = VARDATA(pat);
 	plen = (VARSIZE(pat)-VARHDRSZ);
-#endif
 
 	result = (MatchText(s, slen, p, plen, "\\") != LIKE_TRUE);
-
-#ifdef MULTIBYTE
-	pfree(s);
-	pfree(p);
-#endif
 
 	PG_RETURN_BOOL(result);
 }
@@ -277,37 +163,17 @@ textlike_escape(PG_FUNCTION_ARGS)
 	text	   *str = PG_GETARG_TEXT_P(0);
 	text	   *pat = PG_GETARG_TEXT_P(1);
 	text	   *esc = PG_GETARG_TEXT_P(2);
-	pg_wchar   *s, *p;
+	unsigned char   *s, *p;
 	int			slen, plen;
 	char	   *e;
 
-#ifdef MULTIBYTE
-	pg_wchar   *ss, *pp;
-
-	slen = (VARSIZE(str)-VARHDRSZ);
-	s = (pg_wchar *) palloc((slen+1) * sizeof(pg_wchar));
-	(void) pg_mb2wchar_with_len((unsigned char *) VARDATA(str), s, slen);
-	for (ss = s, slen = 0; *ss != 0; ss++) slen++;
-
-	plen = (VARSIZE(pat)-VARHDRSZ);
-	p = (pg_wchar *) palloc((plen+1) * sizeof(pg_wchar));
-	(void) pg_mb2wchar_with_len((unsigned char *) VARDATA(pat), p, plen);
-	for (pp = p, plen = 0; *pp != 0; pp++) plen++;
-#else
 	s = VARDATA(str);
 	slen = (VARSIZE(str)-VARHDRSZ);
 	p = VARDATA(pat);
 	plen = (VARSIZE(pat)-VARHDRSZ);
-#endif
-
 	e = ((VARSIZE(esc)-VARHDRSZ) > 0? VARDATA(esc): NULL);
 
 	result = (MatchText(s, slen, p, plen, e) == LIKE_TRUE);
-
-#ifdef MULTIBYTE
-	pfree(s);
-	pfree(p);
-#endif
 
 	PG_RETURN_BOOL(result);
 }
@@ -319,37 +185,17 @@ textnlike_escape(PG_FUNCTION_ARGS)
 	text	   *str = PG_GETARG_TEXT_P(0);
 	text	   *pat = PG_GETARG_TEXT_P(1);
 	text	   *esc = PG_GETARG_TEXT_P(2);
-	pg_wchar   *s, *p;
+	unsigned char   *s, *p;
 	int			slen, plen;
 	char	   *e;
 
-#ifdef MULTIBYTE
-	pg_wchar   *ss, *pp;
-
-	slen = (VARSIZE(str)-VARHDRSZ);
-	s = (pg_wchar *) palloc((slen+1) * sizeof(pg_wchar));
-	(void) pg_mb2wchar_with_len((unsigned char *) VARDATA(str), s, slen);
-	for (ss = s, slen = 0; *ss != 0; ss++) slen++;
-
-	plen = (VARSIZE(pat)-VARHDRSZ);
-	p = (pg_wchar *) palloc((plen+1) * sizeof(pg_wchar));
-	(void) pg_mb2wchar_with_len((unsigned char *) VARDATA(pat), p, plen);
-	for (pp = p, plen = 0; *pp != 0; pp++) plen++;
-#else
 	s = VARDATA(str);
 	slen = (VARSIZE(str)-VARHDRSZ);
 	p = VARDATA(pat);
 	plen = (VARSIZE(pat)-VARHDRSZ);
-#endif
-
 	e = ((VARSIZE(esc)-VARHDRSZ) > 0? VARDATA(esc): NULL);
 
 	result = (MatchText(s, slen, p, plen, e) != LIKE_TRUE);
-
-#ifdef MULTIBYTE
-	pfree(s);
-	pfree(p);
-#endif
 
 	PG_RETURN_BOOL(result);
 }
@@ -362,21 +208,15 @@ Datum
 inamelike(PG_FUNCTION_ARGS)
 {
 	bool		result;
-#ifndef MULTIBYTE
 	Name		str = PG_GETARG_NAME(0);
 	text	   *pat = PG_GETARG_TEXT_P(1);
-#endif
-	pg_wchar   *s, *p;
+	unsigned char   *s, *p;
 	int			slen, plen;
 
-#ifdef MULTIBYTE
-	elog(ERROR, "Case-insensitive multi-byte comparisons are not yet supported");
-#else
 	s = NameStr(*str);
 	slen = strlen(s);
 	p = VARDATA(pat);
 	plen = (VARSIZE(pat)-VARHDRSZ);
-#endif
 
 	result = (MatchTextLower(s, slen, p, plen, "\\") == LIKE_TRUE);
 
@@ -387,21 +227,15 @@ Datum
 inamenlike(PG_FUNCTION_ARGS)
 {
 	bool		result;
-#ifndef MULTIBYTE
 	Name		str = PG_GETARG_NAME(0);
 	text	   *pat = PG_GETARG_TEXT_P(1);
-#endif
-	pg_wchar   *s, *p;
+	unsigned char   *s, *p;
 	int			slen, plen;
 
-#ifdef MULTIBYTE
-	elog(ERROR, "Case-insensitive multi-byte comparisons are not yet supported");
-#else
 	s = NameStr(*str);
 	slen = strlen(s);
 	p = VARDATA(pat);
 	plen = (VARSIZE(pat)-VARHDRSZ);
-#endif
 
 	result = (MatchTextLower(s, slen, p, plen, "\\") != LIKE_TRUE);
 
@@ -412,24 +246,17 @@ Datum
 inamelike_escape(PG_FUNCTION_ARGS)
 {
 	bool		result;
-#ifndef MULTIBYTE
 	Name		str = PG_GETARG_NAME(0);
 	text	   *pat = PG_GETARG_TEXT_P(1);
-#endif
 	text	   *esc = PG_GETARG_TEXT_P(2);
-	pg_wchar   *s, *p;
+	unsigned char   *s, *p;
 	int			slen, plen;
 	char	   *e;
 
-#ifdef MULTIBYTE
-	elog(ERROR, "Case-insensitive multi-byte comparisons are not yet supported");
-#else
 	s = NameStr(*str);
 	slen = strlen(s);
 	p = VARDATA(pat);
 	plen = (VARSIZE(pat)-VARHDRSZ);
-#endif
-
 	e = ((VARSIZE(esc)-VARHDRSZ) > 0? VARDATA(esc): NULL);
 
 	result = (MatchTextLower(s, slen, p, plen, e) == LIKE_TRUE);
@@ -441,24 +268,17 @@ Datum
 inamenlike_escape(PG_FUNCTION_ARGS)
 {
 	bool		result;
-#ifndef MULTIBYTE
 	Name		str = PG_GETARG_NAME(0);
 	text	   *pat = PG_GETARG_TEXT_P(1);
-#endif
 	text	   *esc = PG_GETARG_TEXT_P(2);
-	pg_wchar   *s, *p;
+	unsigned char   *s, *p;
 	int			slen, plen;
 	char	   *e;
 
-#ifdef MULTIBYTE
-	elog(ERROR, "Case-insensitive multi-byte comparisons are not yet supported");
-#else
 	s = NameStr(*str);
 	slen = strlen(s);
 	p = VARDATA(pat);
 	plen = (VARSIZE(pat)-VARHDRSZ);
-#endif
-
 	e = ((VARSIZE(esc)-VARHDRSZ) > 0? VARDATA(esc): NULL);
 
 	result = (MatchTextLower(s, slen, p, plen, e) != LIKE_TRUE);
@@ -470,21 +290,15 @@ Datum
 itextlike(PG_FUNCTION_ARGS)
 {
 	bool		result;
-#ifndef MULTIBYTE
 	text	   *str = PG_GETARG_TEXT_P(0);
 	text	   *pat = PG_GETARG_TEXT_P(1);
-#endif
-	pg_wchar   *s, *p;
+	unsigned char   *s, *p;
 	int			slen, plen;
 
-#ifdef MULTIBYTE
-	elog(ERROR, "Case-insensitive multi-byte comparisons are not yet supported");
-#else
 	s = VARDATA(str);
 	slen = (VARSIZE(str)-VARHDRSZ);
 	p = VARDATA(pat);
 	plen = (VARSIZE(pat)-VARHDRSZ);
-#endif
 
 	result = (MatchTextLower(s, slen, p, plen, "\\") == LIKE_TRUE);
 
@@ -495,21 +309,15 @@ Datum
 itextnlike(PG_FUNCTION_ARGS)
 {
 	bool		result;
-#ifndef MULTIBYTE
 	text	   *str = PG_GETARG_TEXT_P(0);
 	text	   *pat = PG_GETARG_TEXT_P(1);
-#endif
-	pg_wchar   *s, *p;
+	unsigned char   *s, *p;
 	int			slen, plen;
 
-#ifdef MULTIBYTE
-	elog(ERROR, "Case-insensitive multi-byte comparisons are not yet supported");
-#else
 	s = VARDATA(str);
 	slen = (VARSIZE(str)-VARHDRSZ);
 	p = VARDATA(pat);
 	plen = (VARSIZE(pat)-VARHDRSZ);
-#endif
 
 	result = (MatchTextLower(s, slen, p, plen, "\\") != LIKE_TRUE);
 
@@ -520,24 +328,17 @@ Datum
 itextlike_escape(PG_FUNCTION_ARGS)
 {
 	bool		result;
-#ifndef MULTIBYTE
 	text	   *str = PG_GETARG_TEXT_P(0);
 	text	   *pat = PG_GETARG_TEXT_P(1);
-#endif
 	text	   *esc = PG_GETARG_TEXT_P(2);
-	pg_wchar   *s, *p;
+	unsigned char   *s, *p;
 	int			slen, plen;
 	char	   *e;
 
-#ifdef MULTIBYTE
-	elog(ERROR, "Case-insensitive multi-byte comparisons are not yet supported");
-#else
 	s = VARDATA(str);
 	slen = (VARSIZE(str)-VARHDRSZ);
 	p = VARDATA(pat);
 	plen = (VARSIZE(pat)-VARHDRSZ);
-#endif
-
 	e = ((VARSIZE(esc)-VARHDRSZ) > 0? VARDATA(esc): NULL);
 
 	result = (MatchTextLower(s, slen, p, plen, e) == LIKE_TRUE);
@@ -549,24 +350,17 @@ Datum
 itextnlike_escape(PG_FUNCTION_ARGS)
 {
 	bool		result;
-#ifndef MULTIBYTE
 	text	   *str = PG_GETARG_TEXT_P(0);
 	text	   *pat = PG_GETARG_TEXT_P(1);
-#endif
 	text	   *esc = PG_GETARG_TEXT_P(2);
-	pg_wchar   *s, *p;
+	unsigned char   *s, *p;
 	int			slen, plen;
 	char	   *e;
 
-#ifdef MULTIBYTE
-	elog(ERROR, "Case-insensitive multi-byte comparisons are not yet supported");
-#else
 	s = VARDATA(str);
 	slen = (VARSIZE(str)-VARHDRSZ);
 	p = VARDATA(pat);
 	plen = (VARSIZE(pat)-VARHDRSZ);
-#endif
-
 	e = ((VARSIZE(esc)-VARHDRSZ) > 0? VARDATA(esc): NULL);
 
 	result = (MatchTextLower(s, slen, p, plen, e) != LIKE_TRUE);
@@ -619,10 +413,77 @@ itextnlike_escape(PG_FUNCTION_ARGS)
  *--------------------
  */
 
+#ifdef MULTIBYTE
+/*--------------------
+ * Support routine for MatchText. Compares given multibyte streams
+ * as wide characters. If they match, returns 1 otherwise returns 0.
+ *--------------------
+ */
+static int wchareq(unsigned char *p1, unsigned char *p2)
+{
+	int l;
+
+	l = pg_mblen(p1);
+	if (pg_mblen(p2) != l) {
+		return(0);
+	}
+	while (l--) {
+		if (*p1++ != *p2++)
+			return(0);
+	}
+	return(1);
+}
+
+/*--------------------
+ * Support routine for MatchTextLower. Compares given multibyte streams
+ * as wide characters ignoring case.
+ * If they match, returns 1 otherwise returns 0.
+ *--------------------
+ */
+#define UCHARMAX 0xff
+
+static int iwchareq(unsigned char *p1, unsigned char *p2)
+{
+	int c1, c2;
+	int l;
+
+	/* short cut. if *p1 and *p2 is lower than UCHARMAX, then
+	   we assume they are ASCII */
+	if (*p1 < UCHARMAX && *p2 < UCHARMAX)
+		return(tolower(*p1) == tolower(*p2));
+
+	if (*p1 < UCHARMAX)
+		c1 = tolower(*p1);
+	else
+	{
+		l = pg_mblen(p1);
+		(void)pg_mb2wchar_with_len(p1, (pg_wchar *)&c1, l);
+		c1 = tolower(c1);
+	}
+	if (*p2 < UCHARMAX)
+		c2 = tolower(*p2);
+	else
+	{
+		l = pg_mblen(p2);
+		(void)pg_mb2wchar_with_len(p2, (pg_wchar *)&c2, l);
+		c2 = tolower(c2);
+	}
+	return(c1 == c2);
+}
+#endif
+
+#ifdef MULTIBYTE
+#define CHAREQ(p1, p2) wchareq(p1, p2)
+#define ICHAREQ(p1, p2) iwchareq(p1, p2)
+#define NextChar(p, plen) {int __l = pg_mblen(p); (p) +=__l; (plen) -=__l;}
+#else
+#define CHAREQ(p1, p2) (*(p1) == *(p2))
+#define ICHAREQ(p1, p2) (tolower(*(p1)) == tolower(*(p2)))
 #define NextChar(p, plen) (p)++, (plen)--
+#endif
 
 static int
-MatchText(pg_wchar * t, int tlen, pg_wchar * p, int plen, char *e)
+MatchText(unsigned char * t, int tlen, unsigned char * p, int plen, char *e)
 {
 	/* Fast path for match-everything pattern
 	 * Include weird case of escape character as a percent sign or underscore,
@@ -637,10 +498,10 @@ MatchText(pg_wchar * t, int tlen, pg_wchar * p, int plen, char *e)
 		/* If an escape character was specified and we find it here in the pattern,
 		 * then we'd better have an exact match for the next character.
 		 */
-		if ((e != NULL) && (*p == *e))
+		if ((e != NULL) && CHAREQ(p,e))
 		{
 			NextChar(p, plen);
-			if ((plen <= 0) || (*t != *p))
+			if ((plen <= 0) || !CHAREQ(t,p))
 				return LIKE_FALSE;
 		}
 		else if (*p == '%')
@@ -664,8 +525,8 @@ MatchText(pg_wchar * t, int tlen, pg_wchar * p, int plen, char *e)
 				 * recurse unless first pattern char might match this
 				 * text char.
 				 */
-				if ((*t == *p) || (*p == '_')
-					|| ((e != NULL) && (*p == *e)))
+				if (CHAREQ(t,p) || (*p == '_')
+					|| ((e != NULL) && CHAREQ(p,e)))
 				{
 					int matched = MatchText(t, tlen, p, plen, e);
 
@@ -682,7 +543,7 @@ MatchText(pg_wchar * t, int tlen, pg_wchar * p, int plen, char *e)
 			 */
 			return LIKE_ABORT;
 		}
-		else if ((*p != '_') && (*t != *p))
+		else if ((*p != '_') && !CHAREQ(t,p))
 		{
 			/* Not the single-character wildcard and no explicit match?
 			 * Then time to quit...
@@ -711,7 +572,7 @@ MatchText(pg_wchar * t, int tlen, pg_wchar * p, int plen, char *e)
 } /* MatchText() */
 
 static int
-MatchTextLower(pg_wchar * t, int tlen, pg_wchar * p, int plen, char *e)
+MatchTextLower(unsigned char * t, int tlen, unsigned char * p, int plen, char *e)
 {
 	/* Fast path for match-everything pattern
 	 * Include weird case of escape character as a percent sign or underscore,
@@ -726,10 +587,10 @@ MatchTextLower(pg_wchar * t, int tlen, pg_wchar * p, int plen, char *e)
 		/* If an escape character was specified and we find it here in the pattern,
 		 * then we'd better have an exact match for the next character.
 		 */
-		if ((e != NULL) && (tolower(*p) == tolower(*e)))
+		if ((e != NULL) && ICHAREQ(p,e))
 		{
 			NextChar(p, plen);
-			if ((plen <= 0) || (tolower(*t) != tolower(*p)))
+			if ((plen <= 0) || !ICHAREQ(t,p))
 				return LIKE_FALSE;
 		}
 		else if (*p == '%')
@@ -753,8 +614,8 @@ MatchTextLower(pg_wchar * t, int tlen, pg_wchar * p, int plen, char *e)
 				 * recurse unless first pattern char might match this
 				 * text char.
 				 */
-				if ((tolower(*t) == tolower(*p)) || (*p == '_')
-					|| ((e != NULL) && (tolower(*p) == tolower(*e))))
+				if (ICHAREQ(t,p) || (*p == '_')
+					|| ((e != NULL) && ICHAREQ(p,e)))
 				{
 					int matched = MatchText(t, tlen, p, plen, e);
 
@@ -771,7 +632,7 @@ MatchTextLower(pg_wchar * t, int tlen, pg_wchar * p, int plen, char *e)
 			 */
 			return LIKE_ABORT;
 		}
-		else if ((*p != '_') && (tolower(*t) != tolower(*p)))
+		else if ((*p != '_') && !ICHAREQ(t,p))
 		{
 			return LIKE_FALSE;
 		}
