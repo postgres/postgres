@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.63 2001/05/04 23:11:37 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.64 2001/05/07 15:55:27 momjian Exp $
 -->
 
 <Chapter Id="runtime">
@@ -254,11 +254,14 @@ fi
 
     <listitem>
      <para>
-      On <productname>Solaris</productname>, edit the file
-      <filename>rc2.d</filename> to contain the following single line:
+      On <productname>Solaris</productname>, create a file called
+      <filename>/etc/init.d/postgresql</filename> to contain the following 
+      single line:
 <programlisting>
 su - postgres -c "/usr/local/pgsql/bin/pg_ctl start -l logfile -D /usr/local/pgsql/data"
 </programlisting>
+      Then, create a symlink to it in <filename>/etc/rc3.d</> as
+      <literal>S99postgresql</>.
      </para>
     </listitem>
    </itemizedlist>
