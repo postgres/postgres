@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/interfaces/jdbc/Attic/Makefile,v 1.31 2001/05/25 14:28:58 momjian Exp $
+# $Header: /cvsroot/pgsql/src/interfaces/jdbc/Attic/Makefile,v 1.32 2001/06/07 20:24:54 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -37,3 +37,5 @@ uninstall:
 
 clean distclean maintainer-clean:
 	$(ANT) -buildfile $(top_srcdir)/build.xml clean
+	# ANT 1.3 has a bug that prevents directory deletion
+	rm -rf build jars
