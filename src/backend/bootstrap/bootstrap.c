@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.160 2003/05/28 18:19:09 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.161 2003/07/15 00:11:13 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -187,15 +187,16 @@ err_out(void)
 }
 
 /* usage:
-   usage help for the bootstrap backen
-*/
+ *		usage help for the bootstrap backend
+ */
 static void
 usage(void)
 {
 	fprintf(stderr,
 			gettext("Usage:\n"
-					"  postgres -boot [-d level] [-D datadir] [-F] [-o file] [-x num] dbname\n"
-					"  -d 1-5           debug mode\n"
+					"  postgres -boot [OPTION]... DBNAME\n"
+					"  -c NAME=VALUE    set run-time parameter\n"
+					"  -d 1-5           debug level\n"
 					"  -D datadir       data directory\n"
 					"  -F               turn off fsync\n"
 					"  -o file          send debug output to file\n"
@@ -253,7 +254,7 @@ BootstrapMain(int argc, char *argv[])
 												 * variable */
 	}
 
-	while ((flag = getopt(argc, argv, "B:d:D:Fo:p:x:")) != -1)
+	while ((flag = getopt(argc, argv, "B:c:d:D:Fo:p:x:-:")) != -1)
 	{
 		switch (flag)
 		{
@@ -303,6 +304,27 @@ BootstrapMain(int argc, char *argv[])
 			case 'B':
 				SetConfigOption("shared_buffers", optarg, PGC_POSTMASTER, PGC_S_ARGV);
 				break;
+			case 'c':
+			case '-':
+				{
+					char	   *name,
+							   *value;
+
+					ParseLongOption(optarg, &name, &value);
+					if (!value)
+					{
+						if (flag == '-')
+							elog(ERROR, "--%s requires argument", optarg);
+						else
+							elog(ERROR, "-c %s requires argument", optarg);
+					}
+
+					SetConfigOption(name, value, PGC_POSTMASTER, PGC_S_ARGV);
+					free(name);
+					if (value)
+						free(value);
+					break;
+				}
 			default:
 				usage();
 				break;
@@ -408,7 +430,6 @@ BootstrapMain(int argc, char *argv[])
 	switch (xlogop)
 	{
 		case BS_XLOG_NOP:
-			StartupXLOG();
 			break;
 
 		case BS_XLOG_BOOTSTRAP:
@@ -445,6 +466,15 @@ BootstrapMain(int argc, char *argv[])
 	 */
 	InitPostgres(dbname, NULL);
 
+	/*
+	 * In NOP mode, all we really want to do is create shared memory and
+	 * semaphores (just to prove we can do it with the current GUC settings).
+	 * So, quit now.
+	 */
+	if (xlogop == BS_XLOG_NOP)
+		proc_exit(0);
+
+	/* Initialize stuff for bootstrap-file processing */
 	for (i = 0; i < MAXATTR; i++)
 	{
 		attrtypes[i] = (Form_pg_attribute) NULL;
@@ -456,7 +486,7 @@ BootstrapMain(int argc, char *argv[])
 		hashtable[i] = NULL;
 
 	/*
-	 * abort processing resumes here
+	 * abort processing resumes here (this is probably dead code?)
 	 */
 	if (sigsetjmp(Warn_restart, 1) != 0)
 	{
@@ -465,20 +495,19 @@ BootstrapMain(int argc, char *argv[])
 	}
 
 	/*
-	 * process input.
-	 */
-
-	/*
+	 * Process bootstrap input.
+	 *
 	 * the sed script boot.sed renamed yyparse to Int_yyparse for the
 	 * bootstrap parser to avoid conflicts with the normal SQL parser
 	 */
 	Int_yyparse();
 
+	/* Perform a checkpoint to ensure everything's down to disk */
 	SetProcessingMode(NormalProcessing);
 	CreateCheckPoint(true, true);
 	SetProcessingMode(BootstrapProcessing);
 
-	/* clean up processing */
+	/* Clean up and exit */
 	StartTransactionCommand();
 	cleanup();
 

@@ -27,7 +27,7 @@
 # Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.194 2003/07/14 20:00:23 tgl Exp $
+# $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.195 2003/07/15 00:11:14 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -536,52 +536,18 @@ else
     fi
 fi
 
-
-##########################################################################
-#
-# RUN BKI SCRIPT IN BOOTSTRAP MODE TO CREATE TEMPLATE1
-
-# common backend options
-PGSQL_OPT="-F -D$PGDATA"
-
-if [ "$debug" = yes ]
-then
-    BOOTSTRAP_TALK_ARG="-d 5"
-fi
-
-
-$ECHO_N "creating template1 database in $PGDATA/base/1... "$ECHO_C
-
-rm -rf "$PGDATA"/base/1 || exit_nicely
-mkdir "$PGDATA"/base/1 || exit_nicely
-
 # Top level PG_VERSION is checked by bootstrapper, so make it first
-echo "$short_version" > "$PGDATA/PG_VERSION" || exit_nicely
+echo "$short_version" > "$PGDATA/PG_VERSION"         || exit_nicely
 
-cat "$POSTGRES_BKI" \
-| sed -e "s/POSTGRES/$POSTGRES_SUPERUSERNAME/g" \
-      -e "s/ENCODING/$ENCODINGID/g" \
-| 
-(
-  LC_COLLATE=`pg_getlocale COLLATE`
-  LC_CTYPE=`pg_getlocale CTYPE`
-  export LC_COLLATE
-  export LC_CTYPE
-  unset LC_ALL
-  "$PGPATH"/postgres -boot -x1 $PGSQL_OPT $BOOTSTRAP_TALK_ARG template1
-) \
-|| exit_nicely
-
-# Make the per-database PGVERSION for template1 only after init'ing it
-echo "$short_version" > "$PGDATA/base/1/PG_VERSION" || exit_nicely
-
-echo "ok"
 
 ##########################################################################
 #
 # DETERMINE PLATFORM-SPECIFIC CONFIG SETTINGS
 #
 # Use reasonable values if kernel will let us, else scale back
+
+# common backend options
+PGSQL_OPT="-F -D$PGDATA"
 
 cp /dev/null "$PGDATA"/postgresql.conf               || exit_nicely
 
@@ -590,7 +556,7 @@ $ECHO_N "selecting default shared_buffers... "$ECHO_C
 for nbuffers in 1000 900 800 700 600 500 400 300 200 100 50
 do
     TEST_OPT="$PGSQL_OPT -c shared_buffers=$nbuffers -c max_connections=5"
-    if "$PGPATH"/postgres $TEST_OPT template1 </dev/null >/dev/null 2>&1
+    if "$PGPATH"/postgres -boot -x0 $TEST_OPT template1 </dev/null >/dev/null 2>&1
     then
 	break
     fi
@@ -603,7 +569,7 @@ $ECHO_N "selecting default max_connections... "$ECHO_C
 for nconns in 100 50 40 30 20 10
 do
     TEST_OPT="$PGSQL_OPT -c shared_buffers=$nbuffers -c max_connections=$nconns"
-    if "$PGPATH"/postgres $TEST_OPT template1 </dev/null >/dev/null 2>&1
+    if "$PGPATH"/postgres -boot -x0 $TEST_OPT template1 </dev/null >/dev/null 2>&1
     then
 	break
     fi
@@ -629,6 +595,39 @@ sed -e "s/^#shared_buffers = 64/shared_buffers = $nbuffers/" \
 
 chmod 0600 "$PGDATA"/pg_hba.conf "$PGDATA"/pg_ident.conf \
 	"$PGDATA"/postgresql.conf
+
+echo "ok"
+
+##########################################################################
+#
+# RUN BKI SCRIPT IN BOOTSTRAP MODE TO CREATE TEMPLATE1
+
+if [ "$debug" = yes ]
+then
+    BOOTSTRAP_TALK_ARG="-d 5"
+fi
+
+$ECHO_N "creating template1 database in $PGDATA/base/1... "$ECHO_C
+
+rm -rf "$PGDATA"/base/1 || exit_nicely
+mkdir "$PGDATA"/base/1 || exit_nicely
+
+cat "$POSTGRES_BKI" \
+| sed -e "s/POSTGRES/$POSTGRES_SUPERUSERNAME/g" \
+      -e "s/ENCODING/$ENCODINGID/g" \
+| 
+(
+  LC_COLLATE=`pg_getlocale COLLATE`
+  LC_CTYPE=`pg_getlocale CTYPE`
+  export LC_COLLATE
+  export LC_CTYPE
+  unset LC_ALL
+  "$PGPATH"/postgres -boot -x1 $PGSQL_OPT $BOOTSTRAP_TALK_ARG template1
+) \
+|| exit_nicely
+
+# Make the per-database PGVERSION for template1 only after init'ing it
+echo "$short_version" > "$PGDATA/base/1/PG_VERSION" || exit_nicely
 
 echo "ok"
 
