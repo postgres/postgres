@@ -1,36 +1,42 @@
 /*
- * This is a place holder until someone supplies a dynamic loader
- * interface for this platform.
+ * These routines were taken from the Apache source, but were made
+ * available with a PostgreSQL-compatible license.  Kudos Wilfredo
+ * Sánchez <wsanchez@apple.com>.
  *
- * $Header: /cvsroot/pgsql/src/backend/port/dynloader/darwin.c,v 1.1 2000/10/31 19:55:19 petere Exp $
+ * $Header: /cvsroot/pgsql/src/backend/port/dynloader/darwin.c,v 1.2 2000/11/09 19:00:50 petere Exp $
  */
 
-#include "postgres.h"
-#include "fmgr.h"
-#include "utils/dynamic_loader.h"
+#include <mach-o/dyld.h>
 #include "dynloader.h"
 
-void *
-pg_dlopen(char *filename)
+void *pg_dlopen(const char *filename)
 {
-	return (void *) NULL;
+	NSObjectFileImage image;
+
+	if (NSCreateObjectFileImageFromFile(filename, &image) !=
+		NSObjectFileImageSuccess)
+		return NULL;
+	return NSLinkModule(image, filename, TRUE);
 }
 
-PGFunction
-pg_dlsym(void *handle, char *funcname)
+void pg_dlclose(void *handle)
 {
-	return NULL;
+	NSUnLinkModule(handle,FALSE);
+	return;
 }
 
-void
-pg_dlclose(void *handle)
+PGFunction *pg_dlsym(void *handle, const char *funcname)
 {
+	NSSymbol symbol;
+	char *symname = (char*)malloc(strlen(funcname)+2);
+
+	sprintf(symname, "_%s", funcname);
+	symbol = NSLookupAndBindSymbol(symname);
+	free(symname);
+	return (PGFunction *) NSAddressOfSymbol(symbol);
 }
 
-char *
-pg_dlerror()
+const char *pg_dlerror(void)
 {
-	static char errmsg[] = "the dynamic loader for darwin doesn't exist yet";
-
-	return errmsg;
+	return "no error message available";
 }
