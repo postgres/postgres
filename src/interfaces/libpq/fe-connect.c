@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.174 2001/08/17 02:59:20 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.175 2001/08/17 15:11:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -191,7 +191,7 @@ static int parseServiceInfo(PQconninfoOption *options,
 				 PQExpBuffer errorMessage);
 
 
-/* ----------------
+/* 
  *		Connecting to a Database
  *
  * There are now four different ways a user of this API can connect to the
@@ -208,11 +208,9 @@ static int parseServiceInfo(PQconninfoOption *options,
  *
  * Internally, the static functions connectDBStart, connectDBComplete
  * are part of the connection procedure.
- *
- * ----------------
  */
 
-/* ----------------
+/*
  *		PQconnectdb
  *
  * establishes a connection to a postgres backend through the postmaster
@@ -233,8 +231,6 @@ static int parseServiceInfo(PQconninfoOption *options,
  *
  * You should call PQfinish (if conn is not NULL) regardless of whether this
  * call succeeded.
- *
- * ----------------
  */
 PGconn *
 PQconnectdb(const char *conninfo)
@@ -247,7 +243,7 @@ PQconnectdb(const char *conninfo)
 	return conn;
 }
 
-/* ----------------
+/*
  *		PQconnectStart
  *
  * Begins the establishment of a connection to a postgres backend through the
@@ -265,8 +261,6 @@ PQconnectdb(const char *conninfo)
  * this is necessary.
  *
  * See PQconnectPoll for more info.
- *
- * ----------------
  */
 PGconn *
 PQconnectStart(const char *conninfo)
@@ -346,7 +340,7 @@ PQconnectStart(const char *conninfo)
 	return conn;
 }
 
-/* ----------------
+/*
  *		PQconndefaults
  *
  * Parse an empty string like PQconnectdb() would do and return the
@@ -360,7 +354,6 @@ PQconnectStart(const char *conninfo)
  * versions, the returned array was static, but that's not thread-safe.)
  * Pre-7.0 applications that use this function will see a small memory leak
  * until they are updated to call PQconninfoFree.
- * ----------------
  */
 PQconninfoOption *
 PQconndefaults(void)
@@ -411,7 +404,6 @@ PQconndefaults(void)
  * the database name to lower case if it is not surrounded by double quotes.
  * Otherwise, strip the double quotes but leave the reset of the string intact.
  * - thomas 1997-11-08
- *
  * ----------------
  */
 PGconn *
@@ -1044,13 +1036,12 @@ connect_errReturn:
 }
 
 
-/* ----------------
+/*
  *		connectDBComplete
  *
  * Block and complete a connection.
  *
  * Returns 1 on success, 0 on failure.
- * ----------------
  */
 static int
 connectDBComplete(PGconn *conn)
@@ -1520,13 +1511,11 @@ error_return:
 }
 
 
-/* ----------------
+/*
  *		PQsetenvStart
  *
  * Starts the process of passing the values of a standard set of environment
  * variables to the backend.
- *
- * ----------------
  */
 static bool
 PQsetenvStart(PGconn *conn)
@@ -1547,13 +1536,11 @@ PQsetenvStart(PGconn *conn)
 	return true;
 }
 
-/* ----------------
+/*
  *		PQsetenvPoll
  *
  * Polls the process of passing the values of a standard set of environment
  * variables to the backend.
- *
- * ----------------
  */
 static PostgresPollingStatusType
 PQsetenvPoll(PGconn *conn)
@@ -1784,7 +1771,7 @@ error_return:
 
 #ifdef NOT_USED
 
-/* ----------------
+/*
  *		PQsetenv
  *
  * Passes the values of a standard set of environment variables to the
@@ -1795,7 +1782,6 @@ error_return:
  * This function used to be exported for no particularly good reason.
  * Since it's no longer used by libpq itself, let's try #ifdef'ing it out
  * and see if anyone complains.
- * ----------------
  */
 static bool
 PQsetenv(PGconn *conn)
@@ -2365,13 +2351,12 @@ parseServiceInfo(PQconninfoOption *options, PQExpBuffer errorMessage)
 }
 
 
-/* ----------------
+/*
  * Conninfo parser routine
  *
  * If successful, a malloc'd PQconninfoOption array is returned.
  * If not successful, NULL is returned and an error message is
  * left in errorMessage.
- * ----------------
  */
 static PQconninfoOption *
 conninfo_parse(const char *conninfo, PQExpBuffer errorMessage)

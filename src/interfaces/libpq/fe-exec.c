@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.106 2001/08/15 18:42:15 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.107 2001/08/17 15:11:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -73,6 +73,7 @@ static int	getNotice(PGconn *conn);
  * combine it with the first allocation block, but that would waste space
  * for the common case that no extra storage is actually needed (that is,
  * the SQL command did not return tuples).
+ *
  * We also malloc the top-level array of tuple pointers separately, because
  * we need to be able to enlarge it via realloc, and our trivial space
  * allocator doesn't handle that effectively.  (Too bad the FE/BE protocol
@@ -84,6 +85,7 @@ static int	getNotice(PGconn *conn);
  * A query returning a small amount of data will thus require three malloc
  * calls: one for the PGresult, one for the tuples pointer array, and one
  * PGresult_data block.
+ *
  * Only the most recently allocated PGresult_data block is a candidate to
  * have more stuff added to it --- any extra space left over in older blocks
  * is wasted.  We could be smarter and search the whole chain, but the point

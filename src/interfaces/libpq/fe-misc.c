@@ -25,7 +25,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-misc.c,v 1.52 2001/07/20 17:45:06 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-misc.c,v 1.53 2001/08/17 15:11:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -62,14 +62,14 @@
 static int pqPutBytes(const char *s, size_t nbytes, PGconn *conn);
 
 
-/* --------------------------------------------------------------------- */
-/* pqGetc:
-   get a character from the connection
-
-   All these routines return 0 on success, EOF on error.
-   Note that for the Get routines, EOF only means there is not enough
-   data in the buffer, not that there is necessarily a hard error.
-*/
+/*
+ * pqGetc:
+ *  get a character from the connection
+ *
+ *  All these routines return 0 on success, EOF on error.
+ *  Note that for the Get routines, EOF only means there is not enough
+ *  data in the buffer, not that there is necessarily a hard error.
+ */
 int
 pqGetc(char *result, PGconn *conn)
 {
@@ -101,9 +101,9 @@ pqPutc(char c, PGconn *conn)
 }
 
 
-/* --------------------------------------------------------------------- */
-/* pqPutBytes: local routine to write N bytes to the connection,
-   with buffering
+/*
+ * pqPutBytes: local routine to write N bytes to the connection,
+ * with buffering
  */
 static int
 pqPutBytes(const char *s, size_t nbytes, PGconn *conn)
@@ -160,13 +160,13 @@ pqPutBytes(const char *s, size_t nbytes, PGconn *conn)
 	return 0;
 }
 
-/* --------------------------------------------------------------------- */
-/* pqGets:
-   get a null-terminated string from the connection,
-   and store it in an expansible PQExpBuffer.
-   If we run out of memory, all of the string is still read,
-   but the excess characters are silently discarded.
-*/
+/*
+ * pqGets:
+ * get a null-terminated string from the connection,
+ * and store it in an expansible PQExpBuffer.
+ * If we run out of memory, all of the string is still read,
+ * but the excess characters are silently discarded.
+ */
 int
 pqGets(PQExpBuffer buf, PGconn *conn)
 {
@@ -196,7 +196,7 @@ pqGets(PQExpBuffer buf, PGconn *conn)
 	return 0;
 }
 
-/* --------------------------------------------------------------------- */
+
 int
 pqPuts(const char *s, PGconn *conn)
 {
@@ -209,10 +209,10 @@ pqPuts(const char *s, PGconn *conn)
 	return 0;
 }
 
-/* --------------------------------------------------------------------- */
-/* pqGetnchar:
-   get a string of exactly len bytes in buffer s, no null termination
-*/
+/*
+ * pqGetnchar:
+ *  get a string of exactly len bytes in buffer s, no null termination
+ */
 int
 pqGetnchar(char *s, size_t len, PGconn *conn)
 {
@@ -230,10 +230,10 @@ pqGetnchar(char *s, size_t len, PGconn *conn)
 	return 0;
 }
 
-/* --------------------------------------------------------------------- */
-/* pqPutnchar:
-   send a string of exactly len bytes, no null termination needed
-*/
+/*
+ * pqPutnchar:
+ *  send a string of exactly len bytes, no null termination needed
+ */
 int
 pqPutnchar(const char *s, size_t len, PGconn *conn)
 {
@@ -246,11 +246,11 @@ pqPutnchar(const char *s, size_t len, PGconn *conn)
 	return 0;
 }
 
-/* --------------------------------------------------------------------- */
-/* pgGetInt
-   read a 2 or 4 byte integer and convert from network byte order
-   to local byte order
-*/
+/*
+ * pgGetInt
+ *  read a 2 or 4 byte integer and convert from network byte order
+ *  to local byte order
+ */
 int
 pqGetInt(int *result, size_t bytes, PGconn *conn)
 {
@@ -288,11 +288,11 @@ pqGetInt(int *result, size_t bytes, PGconn *conn)
 	return 0;
 }
 
-/* --------------------------------------------------------------------- */
-/* pgPutInt
-   send an integer of 2 or 4 bytes, converting from host byte order
-   to network byte order.
-*/
+/*
+ * pgPutInt
+ * send an integer of 2 or 4 bytes, converting from host byte order
+ * to network byte order.
+ */
 int
 pqPutInt(int value, size_t bytes, PGconn *conn)
 {
@@ -326,8 +326,8 @@ pqPutInt(int value, size_t bytes, PGconn *conn)
 	return 0;
 }
 
-/* --------------------------------------------------------------------- */
-/* pqReadReady: is select() saying the file is ready to read?
+/*
+ * pqReadReady: is select() saying the file is ready to read?
  * Returns -1 on failure, 0 if not ready, 1 if ready.
  */
 int
@@ -360,8 +360,8 @@ retry:
 	return FD_ISSET(conn->sock, &input_mask) ? 1 : 0;
 }
 
-/* --------------------------------------------------------------------- */
-/* pqWriteReady: is select() saying the file is ready to write?
+/*
+ * pqWriteReady: is select() saying the file is ready to write?
  * Returns -1 on failure, 0 if not ready, 1 if ready.
  */
 int
@@ -393,8 +393,8 @@ retry:
 	return FD_ISSET(conn->sock, &input_mask) ? 1 : 0;
 }
 
-/* --------------------------------------------------------------------- */
-/* pqReadData: read more data, if any is available
+/* ----------
+ * pqReadData: read more data, if any is available
  * Possible return values:
  *	 1: successfully loaded at least one more byte
  *	 0: no data is presently available, but no error detected
@@ -402,6 +402,7 @@ retry:
  *		conn->errorMessage set
  * NOTE: callers must not assume that pointers or indexes into conn->inBuffer
  * remain valid across this call!
+ * ----------
  */
 int
 pqReadData(PGconn *conn)
@@ -600,8 +601,8 @@ definitelyFailed:
 	return -1;
 }
 
-/* --------------------------------------------------------------------- */
-/* pqFlush: send any data waiting in the output buffer
+/*
+ * pqFlush: send any data waiting in the output buffer
  */
 int
 pqFlush(PGconn *conn)
@@ -736,8 +737,8 @@ pqFlush(PGconn *conn)
 	return 0;
 }
 
-/* --------------------------------------------------------------------- */
-/* pqWait: wait until we can read or write the connection socket
+/*
+ * pqWait: wait until we can read or write the connection socket
  *
  * We also stop waiting and return if the kernel flags an exception condition
  * on the socket.  The actual error condition will be detected and reported

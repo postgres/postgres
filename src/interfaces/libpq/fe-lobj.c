@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-lobj.c,v 1.36 2001/08/03 22:11:39 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-lobj.c,v 1.37 2001/08/17 15:11:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -507,13 +507,12 @@ lo_export(PGconn *conn, Oid lobjId, const char *filename)
 }
 
 
-/* ----------------
+/*
  * lo_initialize
  *
  * Initialize the large object interface for an existing connection.
  * We ask the backend about the functions OID's in pg_proc for all
  * functions that are required for large object operations.
- * ----------------
  */
 static int
 lo_initialize(PGconn *conn)

@@ -17,7 +17,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/interfaces/libpq/pqexpbuffer.c,v 1.10 2001/03/22 06:16:20 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/interfaces/libpq/pqexpbuffer.c,v 1.11 2001/08/17 15:11:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -70,8 +70,9 @@ initPQExpBuffer(PQExpBuffer str)
 	}
 }
 
-/*------------------------
+/*
  * destroyPQExpBuffer(str);
+ *
  *		free()s both the data buffer and the PQExpBufferData.
  *		This is the inverse of createPQExpBuffer().
  */
@@ -85,7 +86,7 @@ destroyPQExpBuffer(PQExpBuffer str)
 	}
 }
 
-/*------------------------
+/*
  * termPQExpBuffer(str)
  *		free()s the data buffer but not the PQExpBufferData itself.
  *		This is the inverse of initPQExpBuffer().
@@ -103,7 +104,7 @@ termPQExpBuffer(PQExpBuffer str)
 	str->len = 0;
 }
 
-/*------------------------
+/*
  * resetPQExpBuffer
  *		Reset a PQExpBuffer to empty
  */
@@ -118,7 +119,7 @@ resetPQExpBuffer(PQExpBuffer str)
 	}
 }
 
-/*------------------------
+/*
  * enlargePQExpBuffer
  * Make sure there is enough space for 'needed' more bytes in the buffer
  * ('needed' does not include the terminating null).
@@ -155,7 +156,7 @@ enlargePQExpBuffer(PQExpBuffer str, size_t needed)
 	return 0;
 }
 
-/*------------------------
+/*
  * printfPQExpBuffer
  * Format text data under the control of fmt (an sprintf-like format string)
  * and insert it into str.	More space is allocated to str if necessary.
@@ -205,7 +206,7 @@ printfPQExpBuffer(PQExpBuffer str, const char *fmt,...)
 	}
 }
 
-/*------------------------
+/*
  * appendPQExpBuffer
  *
  * Format text data under the control of fmt (an sprintf-like format string)
@@ -254,7 +255,7 @@ appendPQExpBuffer(PQExpBuffer str, const char *fmt,...)
 	}
 }
 
-/*------------------------
+/*
  * appendPQExpBufferStr
  * Append the given string to a PQExpBuffer, allocating more space
  * if necessary.
@@ -265,7 +266,7 @@ appendPQExpBufferStr(PQExpBuffer str, const char *data)
 	appendBinaryPQExpBuffer(str, data, strlen(data));
 }
 
-/*------------------------
+/*
  * appendPQExpBufferChar
  * Append a single byte to str.
  * Like appendPQExpBuffer(str, "%c", ch) but much faster.

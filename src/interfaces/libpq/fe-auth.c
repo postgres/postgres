@@ -10,7 +10,7 @@
  * exceed INITIAL_EXPBUFFER_SIZE (currently 256 bytes).
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-auth.c,v 1.53 2001/08/17 15:02:18 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-auth.c,v 1.54 2001/08/17 15:11:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -52,9 +52,8 @@
 #endif
 
 
-/*----------------------------------------------------------------
+/*
  * common definitions for generic fe/be routines
- *----------------------------------------------------------------
  */
 
 struct authsvc
@@ -98,9 +97,8 @@ static const struct authsvc authsvcs[] = {
 static const int n_authsvcs = sizeof(authsvcs) / sizeof(struct authsvc);
 
 #ifdef KRB4
-/*----------------------------------------------------------------
+/*
  * MIT Kerberos authentication system - protocol version 4
- *----------------------------------------------------------------
  */
 
 #include "krb.h"
@@ -230,9 +228,8 @@ pg_krb4_sendauth(char *PQerrormsg, int sock,
 #endif	 /* KRB4 */
 
 #ifdef KRB5
-/*----------------------------------------------------------------
+/*
  * MIT Kerberos authentication system - protocol version 5
- *----------------------------------------------------------------
  */
 
 #include <krb5.h>
