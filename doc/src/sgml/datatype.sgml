@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.79 2001/12/21 03:54:02 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.80 2001/12/23 20:21:37 tgl Exp $
 -->
 
  <chapter id="datatype">
@@ -1290,7 +1290,7 @@ SELECT b, char_length(b) FROM test2;
         <entry>1 microsecond / 14 digits</entry>
        </row>
        <row>
-        <entry><type>interval</type></entry>
+        <entry><type>interval [ (<replaceable>p</replaceable>) ]</type></entry>
         <entry>for time intervals</entry>
         <entry>12 bytes</entry>
         <entry>-178000000 years</entry>
@@ -1327,14 +1327,19 @@ SELECT b, char_length(b) FROM test2;
    </para>
 
    <para>
-    <type>time</type> and <type>timestamp</type> both accept an
-    optional precision field <replaceable>p</replaceable> which
-    determines the number of digits retained beyond the seconds
-    decimal point. By default, there is no explicit bound on precision
-    and the actual precision is determined by the underlying double
-    precision floating point number used to store values in seconds
+    <type>time</type>, <type>timestamp</type>, and <type>interval</type>
+    accept an
+    optional precision value <replaceable>p</replaceable> which
+    specifies the number of fractional digits retained in the seconds
+    field. By default, there is no explicit bound on precision.  The
+    effective limit of precision is determined by the underlying double
+    precision floating point number used to store values (in seconds
     for <type>interval</type> and
-    in seconds since 2000-01-01 for <type>timestamp</type>.
+    in seconds since 2000-01-01 for <type>timestamp</type>).  The
+    useful range of <replaceable>p</replaceable> is from 0 to about
+    6 for <type>timestamp</type>, but may be more for <type>interval</type>.
+    The system will accept <replaceable>p</replaceable> ranging from
+    0 to 13.
    </para>
 
    <para>
@@ -1846,7 +1851,7 @@ January 8 04:05:06 1999 PST
     </sect3>
 
     <sect3>
-     <title><type>interval</type></title>
+     <title><type>interval [ ( <replaceable>precision</replaceable> ) ]</type></title>
 
      <indexterm>
       <primary>interval</primary>
@@ -1860,7 +1865,7 @@ January 8 04:05:06 1999 PST
 @ Quantity Unit [Quantity Unit...] [Direction]
 </programlisting>
 
-      where: <literal>Quantity</literal> is an integer (possibly signed);
+      where: <literal>Quantity</literal> is a number (possibly signed),
       <literal>Unit</literal> is <literal>second</literal>,
       <literal>minute</literal>, <literal>hour</literal>, <literal>day</literal>,
       <literal>week</literal>, <literal>month</literal>, <literal>year</literal>,
@@ -1876,6 +1881,12 @@ January 8 04:05:06 1999 PST
       Quantities of days, hours, minutes, and seconds can be specified without
       explicit unit markings.  For example, <literal>'1 12:59:10'</> is read
       the same as <literal>'1 day 12 hours 59 min 10 sec'</>.
+     </para>
+
+     <para>
+      The optional precision
+      <replaceable>p</replaceable> should be between 0 and 13, and
+      defaults to the precision of the input literal.
      </para>
     </sect3>
 
