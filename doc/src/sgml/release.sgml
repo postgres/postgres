@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.271 2004/07/26 01:47:59 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.272 2004/07/28 14:28:57 momjian Exp $
 -->
 
 <appendix id="release">
@@ -171,7 +171,7 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.271 2004/07/26 01:47:59 momjian
       <para>
        Server configuration parameters SortMem and VacuumMem have been
        renamed to work_mem and maintenance_work_mem to better reflect
-       their use. The original names still supported.
+       their use. The original names are still supported.
       </para>
      </listitem>
 
@@ -775,7 +775,7 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.271 2004/07/26 01:47:59 momjian
 
     <listitem>
      <para>
-      Allowing composite types as table columns (Tom)
+      Allow composite types as table columns (Tom)
      </para>
     </listitem>
 
@@ -812,7 +812,7 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.271 2004/07/26 01:47:59 momjian
       Allow ALTER DATABASE ... OWNER (Euler Taveira de Oliveira)
      </para>
      <para>
-      Previously this required modifying the system tables.
+      Previously, this required modifying the system tables.
      </para>
     </listitem>
 
@@ -857,7 +857,7 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.271 2004/07/26 01:47:59 momjian
     <listitem>
      <para>
       Add pg_get_serial_sequence() to return the serial columns
-      sequence name(Christopher Kings-Lynne)
+      sequence name (Christopher Kings-Lynne)
      </para>
      <para>
       This allows automated scripts to reliabily find the serial
@@ -875,7 +875,7 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.271 2004/07/26 01:47:59 momjian
 
     <listitem>
      <para>
-      Warn of primary/foreign key mismatch requires costly lookup
+      Warn that primary/foreign key mismatch requires costly lookup.
    </itemizedlist>
   </sect3>
 
@@ -1011,7 +1011,7 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.271 2004/07/26 01:47:59 momjian
 
     <listitem>
      <para>
-      Warn of empty string being passes to oid/float4/float8 data types; 7.6
+      Warn of empty string being passed to oid/float4/float8 data types; 7.6
       will throw an error instead (Neil)
      </para>
     </listitem>
