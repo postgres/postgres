@@ -1,10 +1,10 @@
-# $Header: /cvsroot/pgsql/src/bin/psql/Attic/de.po,v 1.1 2001/06/02 18:25:18 petere Exp $
+# $Header: /cvsroot/pgsql/src/bin/psql/Attic/de.po,v 1.2 2001/06/08 23:53:48 petere Exp $
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 7.2\n"
-"POT-Creation-Date: 2001-06-02 18:26+0200\n"
-"PO-Revision-Date: 2001-06-02 15:52+0200\n"
+"POT-Creation-Date: 2001-06-09 01:33+0200\n"
+"PO-Revision-Date: 2001-06-09 01:34+0200\n"
 "Last-Translator: Peter Eisentraut <peter_e@gmx.net>\n"
 "Language-Team: German <de@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -12,18 +12,18 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 
 #: command.c:152
-msgid "Warning: this syntax is deprecated\n"
+msgid "Warning: This syntax is deprecated.\n"
 msgstr "Warnung: Dieser Syntax is veraltet.\n"
 
 #: command.c:159
 #, c-format
 msgid "Invalid command \\%s. Try \\? for help.\n"
-msgstr "Ungültiges Kommando \\%s.  Versuchen Sie \\? für Hilfe.\n"
+msgstr "Ungültige Anweisung \\%s.  Versuchen Sie \\? für Hilfe.\n"
 
 #: command.c:161
 #, c-format
 msgid "invalid command \\%s\n"
-msgstr "ungültiges Kommando \\%s\n"
+msgstr "ungültige Anweisung \\%s\n"
 
 #: command.c:278
 #, c-format
@@ -33,7 +33,7 @@ msgstr "konnte Home-Verzeichnis nicht ermitteln: %s\n"
 #: command.c:292
 #, c-format
 msgid "\\%s: could not change directory to '%s': %s\n"
-msgstr "\\%s: konnte nicht in Verzeichnis »%s« wechseln: %s\n"
+msgstr "\\%s: konnte nicht in das Verzeichnis »%s« wechseln: %s\n"
 
 #: command.c:380 command.c:726
 msgid "no query buffer\n"
@@ -42,12 +42,12 @@ msgstr "kein Abfragepuffer\n"
 #: command.c:436
 #, c-format
 msgid "%s: invalid encoding name\n"
-msgstr ""
+msgstr "%s: ungültiger Kodierungsname\n"
 
 #: command.c:445
 #, c-format
-msgid "\\%s: multi-byte support is not enabled\n"
-msgstr ""
+msgid "\\%s: multibyte support is not enabled\n"
+msgstr "\\%s: Multibyte-Unterstützung ist nicht eingeschaltet\n"
 
 #: command.c:499 command.c:530 command.c:541 command.c:555 command.c:597
 #: command.c:706 command.c:735
@@ -138,8 +138,8 @@ msgstr "konnte /bin/sh nicht starten\n"
 
 #: command.c:1486
 #, c-format
-msgid "couldn't open temp file %s: %s\n"
-msgstr ""
+msgid "could not open temporary file %s: %s\n"
+msgstr "konnte temporäre Datei %s nicht öffnen: %s\n"
 
 #: command.c:1670
 msgid "\\pset: allowed formats are unaligned, aligned, html, latex\n"
@@ -171,24 +171,24 @@ msgstr "Null-Anzeige ist »%s«.\n"
 #: command.c:1719
 #, c-format
 msgid "Field separator is '%s'.\n"
-msgstr ""
+msgstr "Feldtrennzeichen ist »%s«.\n"
 
 #: command.c:1733
 msgid "Record separator is <newline>."
-msgstr ""
+msgstr "Satztrennzeichen ist <newline>."
 
 #: command.c:1735
 #, c-format
 msgid "Record separator is '%s'.\n"
-msgstr ""
+msgstr "Satztrennzeichen ist »%s«.\n"
 
 #: command.c:1746
 msgid "Showing only tuples."
-msgstr ""
+msgstr "Zeige nur Datenzeilen."
 
 #: command.c:1748
 msgid "Tuples only is off."
-msgstr ""
+msgstr "Nur Datenzeilen ist aus."
 
 #: command.c:1764
 #, c-format
@@ -236,7 +236,7 @@ msgstr "\\!: fehlgeschlagen\n"
 #: common.c:50
 #, c-format
 msgid "%s: xstrdup: cannot duplicate null pointer (internal error)\n"
-msgstr ""
+msgstr "%s: xstrdup: Versuch NULL-Zeiger zu kopieren (interner Fehler)\n"
 
 #: common.c:299 common.c:385
 msgid "You are currently not connected to a database.\n"
@@ -278,11 +278,13 @@ msgid ""
 "Enter data to be copied followed by a newline.\n"
 "End with a backslash and a period on a line by itself."
 msgstr ""
+"Geben Sie die zu kopierenden Daten ein, gefolgt von einem Zeilenende.\n"
+"Beenden Sie mit einem Backslash und einem Punkt alleine auf einer Zeile."
 
 #: common.c:531
 #, c-format
-msgid "Asynchronous NOTIFY '%s' from backend with pid '%d' received.\n"
-msgstr ""
+msgid "Asynchronous NOTIFY '%s' from backend with pid %d received.\n"
+msgstr "Aynchrones NOTIFY »%s« von Backend mit PID %d empfangen.\n"
 
 #: copy.c:81
 msgid "\\copy: arguments required\n"
@@ -291,7 +293,7 @@ msgstr "\\copy: benötigt Argumente\n"
 #: copy.c:211
 #, c-format
 msgid "\\copy: parse error at '%s'\n"
-msgstr "\\copy: Parse-Fehler bei '%s'\n"
+msgstr "\\copy: Parse-Fehler bei »%s«\n"
 
 #: copy.c:213
 msgid "\\copy: parse error at end of line\n"
@@ -343,40 +345,43 @@ msgstr "  -a              Gib Skript-Inhalt wieder"
 #: help.c:84
 msgid "  -A              Unaligned table output mode (-P format=unaligned)"
 msgstr ""
+"  -A              Unausgerichteter Tabellenausgabemodus (-P format=unaligned)"
 
 #: help.c:85
-msgid "  -c <query>      Run only single query (or slash command) and exit"
-msgstr "  -c <Kommando>   Führe einzelnes Kommando aus und beende"
+msgid "  -c COMMAND      Run only single command (SQL or interal) and exit"
+msgstr "  -c ANWEISUNG    Führe einzelne Anweisung aus und beende"
 
 #: help.c:91
 #, c-format
-msgid "  -d <dbname>     Specify database name to connect to (default: %s)\n"
+msgid "  -d DBNAME       Specify database name to connect to (default: %s)\n"
 msgstr ""
-"  -d <Dbname>     Datenbank, zu der verbunden werden soll (Standard: %s)\n"
+"  -d DBNAME       Datenbank, zu der verbunden werden soll (Standard: %s)\n"
 
 #: help.c:93
-msgid "  -e              Echo queries sent to backend"
-msgstr "  -e              Zeige Abfragen an den Server"
+msgid "  -e              Echo commands sent to server"
+msgstr ""
+"  -e              Zeige Anweisungen, die an den Server geschickt werden"
 
 #: help.c:94
 msgid "  -E              Display queries that internal commands generate"
 msgstr ""
-"  -E              Zeige Abfragen, die von internen Kommandos erzeugt werden"
+"  -E              Zeige Abfragen, die von internen Anweisungen erzeugt werden"
 
 #: help.c:95
-msgid "  -f <filename>   Execute queries from file, then exit"
-msgstr "  -f <Dateiname>  Führe Abfragen von Datei aus und beende danach"
+msgid "  -f FILENAME     Execute commands from file, then exit"
+msgstr "  -f DATEINAME    Führe Anweisungen aus Datei aus und beende danach"
 
 #: help.c:96
 #, c-format
 msgid ""
-"  -F <string>     Set field separator (default: \"%s\") (-P fieldsep=)\n"
+"  -F STRING       Set field separator (default: \"%s\") (-P fieldsep=)\n"
 msgstr ""
+"  -F ZEICHEN      Setze Feldtrennzeichen (Standard: »%s«) (-P fieldsep=)\n"
 
 #: help.c:101
 #, c-format
-msgid "  -h <host>       Specify database server host (default: %s)\n"
-msgstr "  -h <Host>       Hostname des Datenbankservers (Standard: %s)\n"
+msgid "  -h HOSTNAME     Specify database server host (default: %s)\n"
+msgstr "  -h HOSTNAME     Hostname des Datenbankservers (Standard: %s)\n"
 
 #: help.c:102
 msgid "local socket"
@@ -384,64 +389,72 @@ msgstr "lokales Socket"
 
 #: help.c:104
 msgid "  -H              HTML table output mode (-P format=html)"
-msgstr ""
+msgstr "  -H              HTML-Tabellenausgabemodus (-P format=html)"
 
 #: help.c:105
 msgid "  -l              List available databases, then exit"
 msgstr "  -l              Zeige verfügbare Datenbanken und beende"
 
 #: help.c:106
-msgid "  -n              Disable readline"
-msgstr "  -n              Schalte Readline aus"
+msgid "  -n              Disable enhanced command line editing (readline)"
+msgstr "  -n              Schalte erweiterte Zeilenbearbeitung (Readline) aus"
 
 #: help.c:107
-msgid "  -o <filename>   Send query output to filename (or |pipe)"
-msgstr ""
+msgid "  -o FILENAME     Send query results to file (or |pipe)"
+msgstr "  -o DATEINAME    Sende Abfrageergebnisse in Datei (oder |Pipe)"
 
 #: help.c:111
 #, c-format
-msgid "  -p <port>       Specify database server port (default: %s)\n"
-msgstr ""
+msgid "  -p PORT         Specify database server port (default: %s)\n"
+msgstr "  -p PORT         Port des Datenbankservers (Standard: %s)\n"
 
 #: help.c:114
 msgid ""
-"  -P var[=arg]    Set printing option 'var' to 'arg' (see \\pset command)"
+"  -P VAR[=ARG]    Set printing option 'VAR' to 'ARG' (see \\pset command)"
 msgstr ""
+"  -P VAR[=ARG]    Setze Ausgabeoption »VAR« auf »ARG« (siehe \\pset-"
+"Anweisung)"
 
 #: help.c:115
 msgid "  -q              Run quietly (no messages, only query output)"
 msgstr ""
+"  -q              Stille Ausführung (keine Mitteilungen, nur "
+"Abfrageergebnisse)"
 
 #: help.c:116
 msgid ""
-"  -R <string>     Set record separator (default: newline) (-P recordsep=)"
+"  -R STRING       Set record separator (default: newline) (-P recordsep=)"
 msgstr ""
+"  -R ZEICHEN      Setze Satztrennzeichen (Standard: newline) (-P recordsep=)"
 
 #: help.c:117
 msgid "  -s              Single step mode (confirm each query)"
-msgstr ""
+msgstr "  -s              Einzelschrittmodus (bestätige jede Abfrage)"
 
 #: help.c:118
-msgid "  -S              Single line mode (newline terminates query)"
-msgstr ""
+msgid "  -S              Single line mode (end of line terminates SQL command)"
+msgstr "  -S              Einzelzeilenmodus (Zeilenende beendet SQL-Anweisung)"
 
 #: help.c:119
 msgid "  -t              Print rows only (-P tuples_only)"
-msgstr ""
+msgstr "  -t              Gebe nur Datenzeilen aus (-P tuples_only)"
 
 #: help.c:120
 msgid ""
-"  -T text         Set HTML table tag options (width, border) (-P tableattr=)"
+"  -T TEXT         Set HTML table tag attributes (width, border) (-P "
+"tableattr=)"
 msgstr ""
+"  -T TEXT         Setze HTML »table«-Tag-Attribute (z.B. width) (-P "
+"tableattr=)"
 
 #: help.c:126
 #, c-format
-msgid "  -U <username>   Specify database username (default: %s)\n"
-msgstr "  -U <Benutzer>   Datenbank-Benutzername (Standard: %s)\n"
+msgid "  -U NAME         Specify database user name (default: %s)\n"
+msgstr "  -U NAME         Datenbank-Benutzername (Standard: %s)\n"
 
 #: help.c:128
-msgid "  -v name=val     Set psql variable 'name' to 'value'"
-msgstr "  -v Name=Wert    Setze psql-Variable »Name« auf »Wert«"
+msgid "  -v NAME=VALUE   Set psql variable 'NAME' to 'VALUE'"
+msgstr "  -v NAME=WERT    Setze psql-Variable »NAME« auf »WERT«"
 
 #: help.c:129
 msgid "  -V              Show version information and exit"
@@ -459,200 +472,218 @@ msgstr "  -x              Schalte erweiterte Tabellenausgabe ein (-P expanded)"
 msgid "  -X              Do not read startup file (~/.psqlrc)"
 msgstr "  -X              Lese die Startdatei nicht (~/.psqlrc)"
 
-# XXX Da fehlt noch was.
 #: help.c:135
 msgid ""
 "\n"
 "For more information, type \"\\?\" (for internal commands) or \"\\help\"\n"
 "(for SQL commands) from within psql, or consult the psql section in\n"
-"the PostgreSQL manual, which accompanies the distribution and is also\n"
-"available at <http://www.postgresql.org>.\n"
+"the PostgreSQL documentation.\n"
 "\n"
 "Report bugs to <pgsql-bugs@postgresql.org>."
 msgstr ""
 "\n"
-"Für mehr Informationen, geben Sie »\\?« (für interne Kommandos) oder\n"
-"»\\help« (für SQL-Kommandos) in psql ein oder schauen Sie in den psql-\n"
+"Für mehr Informationen, geben Sie »\\?« (für interne Anweisungen) oder\n"
+"»\\help« (für SQL-Anweisungen) in psql ein oder schauen Sie in den psql-\n"
 "Abschnitt der PostgreSQL-Dokumentation.\n"
 "\n"
 "Berichten Sie Fehler an <pgsql-bugs@postgresql.org>."
 
-#: help.c:195
-msgid " \\a             toggle between unaligned and aligned mode\n"
+#: help.c:194
+msgid " \\a             toggle between unaligned and aligned output mode\n"
 msgstr ""
+" \\a             schalte zwischen unausgerichtetem und ausgerichtetem\n"
+"                Ausgabemodus um\n"
 
-#: help.c:196
+#: help.c:195
 #, c-format
 msgid ""
-" \\c[onnect] [dbname|- [user]]\n"
-"                connect to new database (currently '%s')\n"
+" \\c[onnect] [DBNAME|- [USER]]\n"
+"                connect to new database (currently \"%s\")\n"
 msgstr ""
+" \\c[onnect] [DBNAME|- [BENUTZER]]\n"
+"                Verbinde mit neuer Datenbank (aktuell »%s«)\n"
+
+#: help.c:198
+msgid " \\C TITLE       set table title\n"
+msgstr " \\C TITEL       Tabellentitel\n"
 
 #: help.c:199
-msgid " \\C <title>     table title\n"
-msgstr ""
+msgid " \\cd [DIRNAME]  change the current working directory\n"
+msgstr " \\cd [VERZ]     Wechsle Arbeitsverzeichnis\n"
 
 #: help.c:200
-msgid " \\cd [<dir>]    change the current working directory\n"
-msgstr ""
+msgid " \\copy ...      perform SQL COPY with data stream to the client host\n"
+msgstr " \\copy ...      führe SQL COPY mit Datenstrom auf Clienthost aus\n"
 
 #: help.c:201
-msgid ""
-" \\copy ...      perform SQL COPY with data stream to the client machine\n"
-msgstr ""
+msgid " \\copyright     show PostgreSQL usage and distribution terms\n"
+msgstr " \\copyright     zeige PostgreSQL-Urheberrechtsinformationen\n"
 
 #: help.c:202
-msgid " \\copyright     show PostgreSQL usage and distribution terms\n"
-msgstr ""
+msgid " \\d TABLE       describe table (or view, index, sequence)\n"
+msgstr " \\d TABELLE     beschreibe Tabelle (oder Sicht, Index, Sequenz)\n"
 
 #: help.c:203
-msgid " \\d <table>     describe table (or view, index, sequence)\n"
-msgstr ""
+msgid " \\d{t|i|s|v}... list tables/indices/sequences/views\n"
+msgstr " \\d{t|i|s|v}... liste Tabellen/Indizes/Sequenzen/Sichten auf\n"
 
 #: help.c:204
-msgid " \\d{t|i|s|v}    list tables/indices/sequences/views\n"
+msgid ""
+" \\d{p|S|l}      list access privileges, system tables, or large objects\n"
 msgstr ""
+" \\d{p|S|l}      liste Zugriffsrechte, Systemtabellen oder Large Objects "
+"auf\n"
 
 #: help.c:205
-msgid " \\d{p|S|l}      list permissions/system tables/lobjects\n"
-msgstr ""
+msgid " \\da            list aggregate functions\n"
+msgstr " \\da            liste Aggregatfunktionen auf\n"
 
 #: help.c:206
-msgid " \\da            list aggregates\n"
+msgid " \\dd NAME       show comment for table, type, function, or operator\n"
 msgstr ""
+" \\dd NAME       zeige Kommentare für Tabelle, Datentyp, Funktion oder "
+"Operator\n"
 
 #: help.c:207
-msgid " \\dd [object]   list comment for table, type, function, or operator\n"
-msgstr ""
+msgid " \\df            list functions\n"
+msgstr " \\df            liste Funktionen auf\n"
 
 #: help.c:208
-msgid " \\df            list functions\n"
-msgstr ""
+msgid " \\do            list operators\n"
+msgstr " \\do            liste Operatoren auf\n"
 
 #: help.c:209
-msgid " \\do            list operators\n"
-msgstr ""
+msgid " \\dT            list data types\n"
+msgstr " \\dT            liste Datentypen auf\n"
 
 #: help.c:210
-msgid " \\dT            list data types\n"
+msgid ""
+" \\e FILENAME    edit the current query buffer or file with external editor\n"
 msgstr ""
+" \\e DATEINAME   bearbeite Abfragepuffer (oder Datei) mit externem Editor\n"
 
 #: help.c:211
-msgid ""
-" \\e [file]      edit the current query buffer or [file] with external "
-"editor\n"
-msgstr ""
+msgid " \\echo TEXT     write text to standard output\n"
+msgstr " \\echo TEXT     schreibe Text auf Standardausgabe\n"
 
 #: help.c:212
-msgid " \\echo <text>   write text to stdout\n"
-msgstr ""
+msgid " \\encoding ENCODING  set client encoding\n"
+msgstr " \\encoding KODIERUNG  setze Client-Kodierung\n"
 
 #: help.c:213
-msgid " \\encoding <encoding>  set client encoding\n"
-msgstr ""
+msgid " \\f STRING      set field separator\n"
+msgstr " \\f ZEICHEN     setze Feldtrennzeichen\n"
 
 #: help.c:214
-msgid " \\f <sep>       change field separator\n"
+msgid ""
+" \\g FILENAME    send SQL command to server (and write results to file or |"
+"pipe)\n"
 msgstr ""
+" \\g DATEINAME   führe SQL-Anweisung aus (und schreibe Ergebnis in Datei\n"
+"                oder |Pipe)\n"
 
 #: help.c:215
-msgid ""
-" \\g [file]      send query to backend (and results in [file] or |pipe)\n"
+msgid " \\h NAME        help on syntax of SQL commands, * for all commands\n"
 msgstr ""
+" \\h NAME        Syntaxhilfe über SQL-Anweisung, oder * für alle "
+"Anweisungen\n"
 
 #: help.c:216
-msgid " \\h [cmd]       help on syntax of sql commands, * for all commands\n"
-msgstr ""
-
-#: help.c:217
 #, c-format
-msgid " \\H             toggle HTML mode (currently %s)\n"
-msgstr ""
+msgid " \\H             toggle HTML output mode (currently %s)\n"
+msgstr " \\H             schlalte HTML-Ausgabemodus um (gegenwärtig %s)\n"
+
+#: help.c:218
+msgid " \\i FILENAME    execute commands from file\n"
+msgstr " \\i DATEINAME   führe Anweisungen aus Datei aus\n"
 
 #: help.c:219
-msgid " \\i <file>      read and execute queries from <file>\n"
-msgstr ""
+msgid " \\l             list all databases\n"
+msgstr " \\l             liste alle Datenbanken auf\n"
 
 #: help.c:220
-msgid " \\l             list all databases\n"
-msgstr ""
-
-#: help.c:221
 msgid ""
 " \\lo_export, \\lo_import, \\lo_list, \\lo_unlink\n"
 "                large object operations\n"
 msgstr ""
+" \\lo_export, \\lo_import, \\lo_list, \\lo_unlink\n"
+"                Large-Object-Operationen\n"
+
+#: help.c:222
+msgid " \\o FILENAME    send all query results to file or |pipe\n"
+msgstr " \\o DATEINAME   schreibe alle Abfrageergebnisse in Datei oder |Pipe\n"
 
 #: help.c:223
-msgid " \\o [file]      send all query results to [file], or |pipe\n"
-msgstr ""
+msgid " \\p             show the content of the current query buffer\n"
+msgstr " \\p             zeige aktuellen Inhalt der Abfragepuffers\n"
 
 #: help.c:224
-msgid " \\p             show the content of the current query buffer\n"
-msgstr ""
-
-#: help.c:225
 msgid ""
-" \\pset <opt>    set table output  <opt> = {format|border|expanded|"
-"fieldsep|\n"
-"                null|recordsep|tuples_only|title|tableattr|pager}\n"
+" \\pset VAR      set table output option (VAR := {format|border|expanded|\n"
+"                fieldsep|null|recordsep|tuples_only|title|tableattr|pager})\n"
 msgstr ""
+" \\pset VAR      setze Tabellenausgabeoption (VAR := {format|border|"
+"expanded|\n"
+"                fieldsep|null|recordsep|tuples_only|title|tableattr|pager})\n"
+
+#: help.c:226
+msgid " \\q             quit psql\n"
+msgstr " \\q             beende psql\n"
 
 #: help.c:227
-msgid " \\q             quit psql\n"
+msgid " \\qecho TEXT    write text to query output stream (see \\o)\n"
 msgstr ""
+" \\qecho TEXT    schreibe Text auf Ausgabestrom für Abfrageergebnisse (siehe "
+"\\o)\n"
 
 #: help.c:228
-msgid " \\qecho <text>  write text to query output stream (see \\o)\n"
-msgstr ""
+msgid " \\r             reset (clear) the query buffer\n"
+msgstr " \\r             lösche Abfragepuffer\n"
 
 #: help.c:229
-msgid " \\r             reset (clear) the query buffer\n"
-msgstr ""
+msgid " \\s FILENAME    print history or save it to file\n"
+msgstr " \\s FILENAME    gib History aus oder schreibe sie in Datei\n"
 
 #: help.c:230
-msgid " \\s [file]      print history or save it in [file]\n"
-msgstr ""
+msgid " \\set NAME VALUE  set internal variable\n"
+msgstr " \\set NAME WERT  setze interne Variable\n"
 
 #: help.c:231
-msgid " \\set <var> <value>  set internal variable\n"
-msgstr ""
-
-#: help.c:232
 #, c-format
 msgid " \\t             show only rows (currently %s)\n"
-msgstr ""
+msgstr " \\t             zeige nur Datenzeilen (gegenwärtig %s)\n"
+
+#: help.c:233
+msgid " \\T TEXT        set HTML table tag attributes\n"
+msgstr " \\T TEXT        setze HTML »table«-Tag Attribute\n"
 
 #: help.c:234
-msgid " \\T <tags>      HTML table tags\n"
-msgstr ""
+msgid " \\unset NAME    unset (delete) internal variable\n"
+msgstr " \\unset NAME    lösche interne Variable\n"
 
 #: help.c:235
-msgid " \\unset <var>   unset (delete) internal variable\n"
-msgstr ""
+msgid " \\w FILENAME    write current query buffer to file\n"
+msgstr " \\w DATEINAME   schreibe aktuellen Abfragepuffer in eine Datei\n"
 
 #: help.c:236
-msgid " \\w <file>      write current query buffer to a <file>\n"
-msgstr ""
-
-#: help.c:237
 #, c-format
 msgid " \\x             toggle expanded output (currently %s)\n"
-msgstr ""
+msgstr " \\x             schalte erweiterte Ausgabe um (gegenwärtig %s)\n"
+
+#: help.c:238
+msgid " \\z             list table access privileges\n"
+msgstr " \\z             zeige Tabellenzugriffsrechte\n"
 
 #: help.c:239
-msgid " \\z             list table access permissions\n"
+msgid " \\! [COMMAND]   execute command in shell or start interactive shell\n"
 msgstr ""
+" \\! [KOMMANDO]  führe Kommando in Shell aus oder starte interaktive Shell\n"
 
-#: help.c:240
-msgid " \\! [cmd]       shell escape or command\n"
-msgstr ""
-
-#: help.c:267
+#: help.c:266
 msgid "Available help:"
 msgstr "Verfügbare Hilfe:"
 
-#: help.c:298
+#: help.c:297
 #, c-format
 msgid ""
 "Command:     %s\n"
@@ -661,14 +692,19 @@ msgid ""
 "%s\n"
 "\n"
 msgstr ""
+"Anweisung:    %s\n"
+"Beschreibung: %s\n"
+"Syntax:\n"
+"%s\n"
+"\n"
 
-#: help.c:309
+#: help.c:308
 #, c-format
 msgid ""
 "No help available for '%-.*s'.\n"
 "Try \\h with no arguments to see available help.\n"
 msgstr ""
-"Keine Hilfe verfügbar für  »%-.*s«.\n"
+"Keine Hilfe verfügbar für »%-.*s«.\n"
 "Versuchen Sie \\h ohne Argumente, um die verfügbare Hilfe zu sehen.\n"
 
 #: input.c:171
@@ -702,7 +738,7 @@ msgstr "Beschreibung"
 
 #: large_obj.c:336
 msgid "Large objects"
-msgstr ""
+msgstr "Large Objects"
 
 #: mainloop.c:242
 #, c-format
@@ -746,8 +782,8 @@ msgstr ""
 "Willkommen bei %s, dem interaktiven PostgreSQL-Terminal.\n"
 "\n"
 "Geben Sie ein:  \\copyright für Urheberrechtsinformationen\n"
-"                \\h für Hilfe über SQL-Kommandos\n"
-"                \\? für Hilfe über interne Kommandos\n"
+"                \\h für Hilfe über SQL-Anweisungen\n"
+"                \\? für Hilfe über interne Anweisungen\n"
 "                \\g oder Semikolon, um eine Abfrage auszuführen\n"
 "                \\q um zu beenden\n"
 "\n"
@@ -778,6 +814,8 @@ msgid ""
 "%s was compiled without support for long options.\n"
 "Use --help for help on invocation options.\n"
 msgstr ""
+"%s wurde ohne Unterstützung für lange Optionen kompiliert.\n"
+"Verwenden Sie --help für Hilfe.\n"
 
 #: startup.c:581
 #, c-format
@@ -814,7 +852,7 @@ msgid ""
 msgstr ""
 "Teile Copyright (c) 1996-2001, PostgreSQL Global Development Group\n"
 "Teile Copyright (c) 1996, Regents of the University of California\n"
-"Lesen Sie die Datei COPYRIGHT oder verwenden Sie das Kommando \\copyright\n"
+"Lesen Sie die Datei COPYRIGHT oder verwenden Sie das Anweisung \\copyright\n"
 "um Urheberrechtsinformationen zu sehen."
 
 #: startup.c:699

@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/help.c,v 1.39 2001/06/02 18:25:18 petere Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/help.c,v 1.40 2001/06/08 23:53:48 petere Exp $
  */
 #include "postgres_fe.h"
 #include "help.h"
@@ -82,50 +82,50 @@ usage(void)
 	puts(_("Options:"));
 	puts(_("  -a              Echo all input from script"));
 	puts(_("  -A              Unaligned table output mode (-P format=unaligned)"));
-	puts(_("  -c <query>      Run only single query (or slash command) and exit"));
+	puts(_("  -c COMMAND      Run only single command (SQL or interal) and exit"));
 
 	/* Display default database */
 	env = getenv("PGDATABASE");
 	if (!env)
 		env = user;
-	printf(_("  -d <dbname>     Specify database name to connect to (default: %s)\n"), env);
+	printf(_("  -d DBNAME       Specify database name to connect to (default: %s)\n"), env);
 
-	puts(_("  -e              Echo queries sent to backend"));
+	puts(_("  -e              Echo commands sent to server"));
 	puts(_("  -E              Display queries that internal commands generate"));
-	puts(_("  -f <filename>   Execute queries from file, then exit"));
-	printf(_("  -F <string>     Set field separator (default: \"%s\") (-P fieldsep=)\n"),
+	puts(_("  -f FILENAME     Execute commands from file, then exit"));
+	printf(_("  -F STRING       Set field separator (default: \"%s\") (-P fieldsep=)\n"),
 		   DEFAULT_FIELD_SEP);
 
 	/* Display default host */
 	env = getenv("PGHOST");
-	printf(_("  -h <host>       Specify database server host (default: %s)\n"),
+	printf(_("  -h HOSTNAME     Specify database server host (default: %s)\n"),
 		   env ? env : _("local socket"));
 
 	puts(_("  -H              HTML table output mode (-P format=html)"));
 	puts(_("  -l              List available databases, then exit"));
-	puts(_("  -n              Disable readline"));
-	puts(_("  -o <filename>   Send query output to filename (or |pipe)"));
+	puts(_("  -n              Disable enhanced command line editing (readline)"));
+	puts(_("  -o FILENAME     Send query results to file (or |pipe)"));
 
 	/* Display default port */
 	env = getenv("PGPORT");
-	printf(_("  -p <port>       Specify database server port (default: %s)\n"),
+	printf(_("  -p PORT         Specify database server port (default: %s)\n"),
 		   env ? env : DEF_PGPORT_STR);
 
-	puts(_("  -P var[=arg]    Set printing option 'var' to 'arg' (see \\pset command)"));
+	puts(_("  -P VAR[=ARG]    Set printing option 'VAR' to 'ARG' (see \\pset command)"));
 	puts(_("  -q              Run quietly (no messages, only query output)"));
-	puts(_("  -R <string>     Set record separator (default: newline) (-P recordsep=)"));
+	puts(_("  -R STRING       Set record separator (default: newline) (-P recordsep=)"));
 	puts(_("  -s              Single step mode (confirm each query)"));
-	puts(_("  -S              Single line mode (newline terminates query)"));
+	puts(_("  -S              Single line mode (end of line terminates SQL command)"));
 	puts(_("  -t              Print rows only (-P tuples_only)"));
-	puts(_("  -T text         Set HTML table tag options (width, border) (-P tableattr=)"));
+	puts(_("  -T TEXT         Set HTML table tag attributes (width, border) (-P tableattr=)"));
 
 	/* Display default user */
 	env = getenv("PGUSER");
 	if (!env)
 		env = user;
-	printf(_("  -U <username>   Specify database username (default: %s)\n"), env);
+	printf(_("  -U NAME         Specify database user name (default: %s)\n"), env);
 
-	puts(_("  -v name=val     Set psql variable 'name' to 'value'"));
+	puts(_("  -v NAME=VALUE   Set psql variable 'NAME' to 'VALUE'"));
 	puts(_("  -V              Show version information and exit"));
 	puts(_("  -W              Prompt for password (should happen automatically)"));
 	puts(_("  -x              Turn on expanded table output (-P expanded)"));
@@ -134,8 +134,7 @@ usage(void)
 	puts(_(
 		"\nFor more information, type \"\\?\" (for internal commands) or \"\\help\"\n"
 		"(for SQL commands) from within psql, or consult the psql section in\n"
-		"the PostgreSQL manual, which accompanies the distribution and is also\n"
-		"available at <http://www.postgresql.org>.\n\n"
+		"the PostgreSQL documentation.\n\n"
 		"Report bugs to <pgsql-bugs@postgresql.org>."));
 }
 
@@ -192,52 +191,52 @@ slashUsage(void)
 		fout = stdout;
 
 	/* if you add/remove a line here, change the row test above */
-	fprintf(fout, _(" \\a             toggle between unaligned and aligned mode\n"));
-	fprintf(fout, _(" \\c[onnect] [dbname|- [user]]\n"
-					"                connect to new database (currently '%s')\n"),
+	fprintf(fout, _(" \\a             toggle between unaligned and aligned output mode\n"));
+	fprintf(fout, _(" \\c[onnect] [DBNAME|- [USER]]\n"
+					"                connect to new database (currently \"%s\")\n"),
 			PQdb(pset.db));
-	fprintf(fout, _(" \\C <title>     table title\n"));
-	fprintf(fout, _(" \\cd [<dir>]    change the current working directory\n"));
-	fprintf(fout, _(" \\copy ...      perform SQL COPY with data stream to the client machine\n"));
+	fprintf(fout, _(" \\C TITLE       set table title\n"));
+	fprintf(fout, _(" \\cd [DIRNAME]  change the current working directory\n"));
+	fprintf(fout, _(" \\copy ...      perform SQL COPY with data stream to the client host\n"));
 	fprintf(fout, _(" \\copyright     show PostgreSQL usage and distribution terms\n"));
-	fprintf(fout, _(" \\d <table>     describe table (or view, index, sequence)\n"));
-	fprintf(fout, _(" \\d{t|i|s|v}    list tables/indices/sequences/views\n"));
-	fprintf(fout, _(" \\d{p|S|l}      list permissions/system tables/lobjects\n"));
-	fprintf(fout, _(" \\da            list aggregates\n"));
-	fprintf(fout, _(" \\dd [object]   list comment for table, type, function, or operator\n"));
+	fprintf(fout, _(" \\d TABLE       describe table (or view, index, sequence)\n"));
+	fprintf(fout, _(" \\d{t|i|s|v}... list tables/indices/sequences/views\n"));
+	fprintf(fout, _(" \\d{p|S|l}      list access privileges, system tables, or large objects\n"));
+	fprintf(fout, _(" \\da            list aggregate functions\n"));
+	fprintf(fout, _(" \\dd NAME       show comment for table, type, function, or operator\n"));
 	fprintf(fout, _(" \\df            list functions\n"));
 	fprintf(fout, _(" \\do            list operators\n"));
 	fprintf(fout, _(" \\dT            list data types\n"));
-	fprintf(fout, _(" \\e [file]      edit the current query buffer or [file] with external editor\n"));
-	fprintf(fout, _(" \\echo <text>   write text to stdout\n"));
-	fprintf(fout, _(" \\encoding <encoding>  set client encoding\n"));
-	fprintf(fout, _(" \\f <sep>       change field separator\n"));
-	fprintf(fout, _(" \\g [file]      send query to backend (and results in [file] or |pipe)\n"));
-	fprintf(fout, _(" \\h [cmd]       help on syntax of sql commands, * for all commands\n"));
-	fprintf(fout, _(" \\H             toggle HTML mode (currently %s)\n"),
+	fprintf(fout, _(" \\e FILENAME    edit the current query buffer or file with external editor\n"));
+	fprintf(fout, _(" \\echo TEXT     write text to standard output\n"));
+	fprintf(fout, _(" \\encoding ENCODING  set client encoding\n"));
+	fprintf(fout, _(" \\f STRING      set field separator\n"));
+	fprintf(fout, _(" \\g FILENAME    send SQL command to server (and write results to file or |pipe)\n"));
+	fprintf(fout, _(" \\h NAME        help on syntax of SQL commands, * for all commands\n"));
+	fprintf(fout, _(" \\H             toggle HTML output mode (currently %s)\n"),
 			ON(pset.popt.topt.format == PRINT_HTML));
-	fprintf(fout, _(" \\i <file>      read and execute queries from <file>\n"));
+	fprintf(fout, _(" \\i FILENAME    execute commands from file\n"));
 	fprintf(fout, _(" \\l             list all databases\n"));
 	fprintf(fout, _(" \\lo_export, \\lo_import, \\lo_list, \\lo_unlink\n"
 					"                large object operations\n"));
-	fprintf(fout, _(" \\o [file]      send all query results to [file], or |pipe\n"));
+	fprintf(fout, _(" \\o FILENAME    send all query results to file or |pipe\n"));
 	fprintf(fout, _(" \\p             show the content of the current query buffer\n"));
-	fprintf(fout, _(" \\pset <opt>    set table output  <opt> = {format|border|expanded|fieldsep|\n"
-					"                null|recordsep|tuples_only|title|tableattr|pager}\n"));
+	fprintf(fout, _(" \\pset VAR      set table output option (VAR := {format|border|expanded|\n"
+					"                fieldsep|null|recordsep|tuples_only|title|tableattr|pager})\n"));
 	fprintf(fout, _(" \\q             quit psql\n"));
-	fprintf(fout, _(" \\qecho <text>  write text to query output stream (see \\o)\n"));
+	fprintf(fout, _(" \\qecho TEXT    write text to query output stream (see \\o)\n"));
 	fprintf(fout, _(" \\r             reset (clear) the query buffer\n"));
-	fprintf(fout, _(" \\s [file]      print history or save it in [file]\n"));
-	fprintf(fout, _(" \\set <var> <value>  set internal variable\n"));
+	fprintf(fout, _(" \\s FILENAME    print history or save it to file\n"));
+	fprintf(fout, _(" \\set NAME VALUE  set internal variable\n"));
 	fprintf(fout, _(" \\t             show only rows (currently %s)\n"),
 			ON(pset.popt.topt.tuples_only));
-	fprintf(fout, _(" \\T <tags>      HTML table tags\n"));
-	fprintf(fout, _(" \\unset <var>   unset (delete) internal variable\n"));
-	fprintf(fout, _(" \\w <file>      write current query buffer to a <file>\n"));
+	fprintf(fout, _(" \\T TEXT        set HTML table tag attributes\n"));
+	fprintf(fout, _(" \\unset NAME    unset (delete) internal variable\n"));
+	fprintf(fout, _(" \\w FILENAME    write current query buffer to file\n"));
 	fprintf(fout, _(" \\x             toggle expanded output (currently %s)\n"),
 			ON(pset.popt.topt.expanded));
-	fprintf(fout, _(" \\z             list table access permissions\n"));
-	fprintf(fout, _(" \\! [cmd]       shell escape or command\n"));
+	fprintf(fout, _(" \\z             list table access privileges\n"));
+	fprintf(fout, _(" \\! [COMMAND]   execute command in shell or start interactive shell\n"));
 
 	if (usePipe)
 	{

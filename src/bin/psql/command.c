@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/command.c,v 1.55 2001/06/02 18:25:17 petere Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/command.c,v 1.56 2001/06/08 23:53:48 petere Exp $
  */
 #include "postgres_fe.h"
 #include "command.h"
@@ -149,7 +149,7 @@ HandleSlashCmds(const char *line,
 
 #if 0							/* turned out to be too annoying */
 		if (status != CMD_UNKNOWN && isalpha((unsigned char) new_cmd[0]))
-			psql_error("Warning: this syntax is deprecated\n");
+			psql_error("Warning: This syntax is deprecated.\n");
 #endif
 	}
 
@@ -442,7 +442,7 @@ exec_command(const char *cmd,
 				SetVariable(pset.vars, "ENCODING", pg_encoding_to_char(pset.encoding));
 			}
 #else
-			psql_error("\\%s: multi-byte support is not enabled\n", cmd);
+			psql_error("\\%s: multibyte support is not enabled\n", cmd);
 #endif
 			free(encoding);
 		}
@@ -1483,7 +1483,7 @@ do_edit(const char *filename_arg, PQExpBuffer query_buf)
 
 		if (fd == -1 || !stream)
 		{
-			psql_error("couldn't open temp file %s: %s\n", fname, strerror(errno));
+			psql_error("could not open temporary file %s: %s\n", fname, strerror(errno));
 			error = true;
 		}
 		else

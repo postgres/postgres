@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/common.c,v 1.33 2001/06/02 18:25:18 petere Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/common.c,v 1.34 2001/06/08 23:53:48 petere Exp $
  */
 #include "postgres_fe.h"
 
@@ -528,7 +528,7 @@ SendQuery(const char *query)
 		/* check for asynchronous notification returns */
 		while ((notify = PQnotifies(pset.db)) != NULL)
 		{
-			fprintf(pset.queryFout, gettext("Asynchronous NOTIFY '%s' from backend with pid '%d' received.\n"),
+			fprintf(pset.queryFout, gettext("Asynchronous NOTIFY '%s' from backend with pid %d received.\n"),
 					notify->relname, notify->be_pid);
 			free(notify);
 			fflush(pset.queryFout);
