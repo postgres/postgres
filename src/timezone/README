@@ -1,0 +1,17 @@
+This is a PostgreSQL adapted version of the timezone library
+from:
+ftp://elsie.nci.nih.gov/pub/tz*.tar.gz
+
+
+The interface is used when USE_PGTZ is defined at the top level. This
+will cause the following functions to be redefined:
+  localtime		pg_localtime
+  gmtime		pg_gmtime
+  asctime		pg_asctime
+  ctime			pg_ctime
+  difftime		pg_difftime
+  mktime		pg_mktime
+  tzset			pg_tzset
+
+and the TIMEZONE_GLOBAL define in c.h is redefined to pg_timezone.
+
