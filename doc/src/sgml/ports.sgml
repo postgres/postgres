@@ -92,9 +92,9 @@
        <row>
 	<entry>Linux 2.0.x</entry>
 	<entry>Alpha</entry>
-	<entry>v6.5.3</entry>
-	<entry>1999-11-05</entry>
-	<entry>
+	<entry>v7.0</entry>
+	<entry>2000-04-05</entry>
+	<entry> With patches
 	 (<ulink url="mailto:pgsql@rkirkpat.net">Ryan Kirkpatrick</ulink>)</entry>
        </row>
        <row>
@@ -198,9 +198,9 @@
        <row>
 	<entry>QNX 4.25</entry>
 	<entry>x86</entry>
-	<entry>v6.5.2</entry>
-	<entry>1999-11-08</entry>
-	<entry>minor patches required
+	<entry>v7.0</entry>
+	<entry>2000-04-01</entry>
+	<entry>
 	 (<ulink url="mailto:kardos@repas-aeg.de">Dr. Andreas Kardos</ulink>)</entry>
        </row>
        <row>

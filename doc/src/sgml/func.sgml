@@ -231,30 +231,15 @@
 	<entry>cos(0.4)</entry>
        </row>
        <row>
-	<entry>cos(float8)</entry>
+	<entry>tan(float8)</entry>
 	<entry>float8</entry>
-	<entry>cosine</entry>
-	<entry>cos(0.4)</entry>
+	<entry>tangent</entry>
+	<entry>tan(0.4)</entry>
        </row>
-       <row>
-	<entry>cos(float8)</entry>
-	<entry>float8</entry>
-	<entry>cosine</entry>
-	<entry>cos(0.4)</entry>
-       </row>
-       <row>
-	<entry>cos(float8)</entry>
-	<entry>float8</entry>
-	<entry>cosine</entry>
-	<entry>cos(0.4)</entry>
-       </row>
-       <row>
-	<entry>cos(float8)</entry>
-	<entry>float8</entry>
-	<entry>cosine</entry>
-	<entry>cos(0.4)</entry>
-       </row>
-
+      </tbody>
+     </tgroup>
+    </table>
+   </para>
 
   </sect1>
 
