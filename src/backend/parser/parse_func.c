@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.28 1998/09/01 04:30:31 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.29 1998/09/25 13:36:04 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -672,34 +672,22 @@ func_select_candidate(int nargs,
 		if ((nmatch + nident) == nargs)
 			return current_candidate->args;
 
-#ifdef PARSEDEBUG
-		printf("func_select_candidate- candidate has %d matches\n", nmatch);
-#endif
 		if ((nmatch > nbestMatch) || (last_candidate == NULL))
 		{
 			nbestMatch = nmatch;
 			candidates = current_candidate;
 			last_candidate = current_candidate;
 			ncandidates = 1;
-#ifdef PARSEDEBUG
-			printf("func_select_candidate- choose candidate as best match\n");
-#endif
 		}
 		else if (nmatch == nbestMatch)
 		{
 			last_candidate->next = current_candidate;
 			last_candidate = current_candidate;
 			ncandidates++;
-#ifdef PARSEDEBUG
-			printf("func_select_candidate- choose candidate as possible match\n");
-#endif
 		}
 		else
 		{
 			last_candidate->next = NULL;
-#ifdef PARSEDEBUG
-			printf("func_select_candidate- reject candidate as possible match\n");
-#endif
 		}
 	}
 
@@ -727,17 +715,10 @@ func_select_candidate(int nargs,
 					{
 						slot_category = current_category;
 						slot_type = current_type;
-#ifdef PARSEDEBUG
-						printf("func_select_candidate- assign column #%d first candidate slot type %s\n",
-							   i, typeidTypeName(current_type));
-#endif
 					}
 					else if ((current_category != slot_category)
 							 && IS_BUILTIN_TYPE(current_type))
 					{
-#ifdef PARSEDEBUG
-						printf("func_select_candidate- multiple possible types for column #%d; unable to choose candidate\n", i);
-#endif
 						return NULL;
 					}
 					else if (current_type != slot_type)
@@ -746,17 +727,9 @@ func_select_candidate(int nargs,
 						{
 							slot_type = current_type;
 							candidates = current_candidate;
-#ifdef PARSEDEBUG
-							printf("func_select_candidate- column #%d found preferred candidate type %s\n",
-								   i, typeidTypeName(slot_type));
-#endif
 						}
 						else
 						{
-#ifdef PARSEDEBUG
-							printf("func_select_candidate- column #%d found possible candidate type %s\n",
-								   i, typeidTypeName(current_type));
-#endif
 						}
 					}
 				}
@@ -764,18 +737,10 @@ func_select_candidate(int nargs,
 				if (slot_type != InvalidOid)
 				{
 					input_typeids[i] = slot_type;
-#ifdef PARSEDEBUG
-					printf("func_select_candidate- assign column #%d slot type %s\n",
-						   i, typeidTypeName(input_typeids[i]));
-#endif
 				}
 			}
 			else
 			{
-#ifdef PARSEDEBUG
-				printf("func_select_candidate- column #%d input type is %s\n",
-					   i, typeidTypeName(input_typeids[i]));
-#endif
 			}
 		}
 

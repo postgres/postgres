@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_target.c,v 1.28 1998/09/02 23:05:27 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_target.c,v 1.29 1998/09/25 13:36:08 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,6 +19,7 @@
 #include "catalog/pg_type.h"
 #include "nodes/makefuncs.h"
 #include "nodes/primnodes.h"
+#include "nodes/print.h"
 #include "parser/parse_expr.h"
 #include "parser/parse_func.h"
 #include "parser/parse_node.h"
@@ -116,10 +117,6 @@ MakeTargetEntryIdent(ParseState *pstate,
 		attrtype_target = attnumTypeId(pstate->p_target_relation, resdomno_target);
 		attrtypmod_target = get_atttypmod(pstate->p_target_relation->rd_id, resdomno_target);
 
-#ifdef PARSEDEBUG
-		printf("MakeTargetEntryIdent- transform type %d to %d\n",
-			   attrtype_id, attrtype_target);
-#endif
 		if ((attrtype_id != attrtype_target)
 			|| ((attrtypmod_target >= 0) && (attrtypmod_target != attrtypmod)))
 		{
@@ -155,9 +152,6 @@ MakeTargetEntryIdent(ParseState *pstate,
 
 		name = ((*resname != NULL) ? *resname : colname);
 
-#ifdef PARSEDEBUG
-		printf("MakeTargetEntryIdent- call transformIdent()\n");
-#endif
 #if FALSE
 		expr = transformIdent(pstate, (Node *) ident, EXPR_COLUMN_FIRST);
 #else
@@ -169,10 +163,6 @@ MakeTargetEntryIdent(ParseState *pstate,
 			type_mod = ((Var *) expr)->vartypmod;
 		else
 			type_mod = -1;
-
-#ifdef PARSEDEBUG
-		printf("MakeTargetEntryIdent- attrtype_target = %d; type_mod = %d\n", attrtype_target, type_mod);
-#endif
 
 		tent->resdom = makeResdom((AttrNumber) pstate->p_last_resno++,
 								  (Oid) attrtype_target,
@@ -269,10 +259,6 @@ MakeTargetEntryExpr(ParseState *pstate,
 						 typeidTypeName(type_id));
 			}
 
-#ifdef PARSEDEBUG
-			printf("MakeTargetEntryExpr: attrtypmod is %d\n", (int4) attrtypmod);
-#endif
-
 			/*
 			 * Apparently going to a fixed-length string? Then explicitly
 			 * size for storage...
@@ -338,18 +324,14 @@ MakeTargetEntryExpr(ParseState *pstate,
 }	/* MakeTargetEntryExpr() */
 
 /*
- *	MakeTargetlistComplex()
- *	pMake a TargetEntry from an complex node.
+ *	MakeTargetEntryComplex()
+ *	Make a TargetEntry from a complex node.
  */
 static TargetEntry *
 MakeTargetEntryComplex(ParseState *pstate,
 					   ResTarget *res)
 {
 	Node	   *expr = transformExpr(pstate, (Node *) res->val, EXPR_COLUMN_FIRST);
-
-#ifdef PARSEDEBUG
-	printf("transformTargetList: decode T_Expr\n");
-#endif
 
 	handleTargetColname(pstate, &res->name, NULL, NULL);
 	/* note indirection has not been transformed */
@@ -450,8 +432,8 @@ MakeTargetEntryComplex(ParseState *pstate,
 }
 
 /*
- *	MakeTargetlistComplex()
- *	pMake a TargetEntry from an complex node.
+ *	MakeTargetEntryAttr()
+ *	Make a TargetEntry from a complex node.
  */
 static TargetEntry *
 MakeTargetEntryAttr(ParseState *pstate,
@@ -473,9 +455,6 @@ MakeTargetEntryAttr(ParseState *pstate,
 	/*
 	 * Target item is fully specified: ie. relation.attribute
 	 */
-#ifdef PARSEDEBUG
-	printf("transformTargetList: decode T_Attr\n");
-#endif
 	result = ParseNestedFuncOrColumn(pstate, att, &pstate->p_last_resno, EXPR_COLUMN_FIRST);
 	handleTargetColname(pstate, &res->name, att->relname, attrname);
 	if (att->indirection != NIL)
@@ -549,9 +528,6 @@ transformTargetList(ParseState *pstate, List *targetlist)
 				{
 					char	   *identname;
 
-#ifdef PARSEDEBUG
-					printf("transformTargetList: decode T_Ident\n");
-#endif
 					identname = ((Ident *) res->val)->name;
 					tent = MakeTargetEntryIdent(pstate, (Node *) res->val, &res->name, NULL, identname, FALSE);
 					break;
@@ -654,10 +630,6 @@ CoerceTargetExpr(ParseState *pstate,
 {
 	if (can_coerce_type(1, &type_id, &attrtype))
 	{
-#ifdef PARSEDEBUG
-		printf("CoerceTargetExpr: coerce type from %s to %s\n",
-			   typeidTypeName(type_id), typeidTypeName(attrtype));
-#endif
 		expr = coerce_type(pstate, expr, type_id, attrtype);
 	}
 
@@ -671,10 +643,6 @@ CoerceTargetExpr(ParseState *pstate,
 	{
 		Oid			text_id = TEXTOID;
 
-#ifdef PARSEDEBUG
-		printf("CoerceTargetExpr: try coercing from %s to %s via text\n",
-			   typeidTypeName(type_id), typeidTypeName(attrtype));
-#endif
 		if (type_id == TEXTOID)
 		{
 		}
@@ -710,19 +678,11 @@ SizeTargetExpr(ParseState *pstate,
 	FuncCall   *func;
 	A_Const    *cons;
 
-#ifdef PARSEDEBUG
-	printf("SizeTargetExpr: ensure target fits storage\n");
-#endif
 	funcname = typeidTypeName(attrtype);
 	oid_array[0] = attrtype;
 	oid_array[1] = INT4OID;
 	for (i = 2; i < 8; i++)
 		oid_array[i] = InvalidOid;
-
-#ifdef PARSEDEBUG
-	printf("SizeTargetExpr: look for conversion function %s(%s,%s)\n",
-		   funcname, typeidTypeName(attrtype), typeidTypeName(INT4OID));
-#endif
 
 	/* attempt to find with arguments exactly as specified... */
 	ftup = SearchSysCacheTuple(PRONAME,
@@ -733,9 +693,6 @@ SizeTargetExpr(ParseState *pstate,
 
 	if (HeapTupleIsValid(ftup))
 	{
-#ifdef PARSEDEBUG
-		printf("SizeTargetExpr: found conversion function for sizing\n");
-#endif
 		func = makeNode(FuncCall);
 		func->funcname = funcname;
 
@@ -746,10 +703,6 @@ SizeTargetExpr(ParseState *pstate,
 
 		expr = transformExpr(pstate, (Node *) func, EXPR_COLUMN_FIRST);
 	}
-#ifdef PARSEDEBUG
-	else
-		printf("SizeTargetExpr: no conversion function for sizing\n");
-#endif
 
 	return expr;
 }	/* SizeTargetExpr() */

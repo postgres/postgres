@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.87 1998/09/16 14:25:37 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.88 1998/09/25 13:36:00 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,9 +30,6 @@
 #include "parser/parse_target.h"
 #include "utils/builtins.h"
 #include "utils/mcxt.h"
-#ifdef PARSEDEBUG
-#include "nodes/print.h"
-#endif
 
 static Query *transformStmt(ParseState *pstate, Node *stmt);
 static Query *transformDeleteStmt(ParseState *pstate, DeleteStmt *stmt);
@@ -68,10 +65,6 @@ parse_analyze(List *pl, ParseState *parentParseState)
 
 	while (pl != NIL)
 	{
-#ifdef PARSEDEBUG
-		elog(DEBUG, "parse tree from yacc:\n---\n%s\n---\n", nodeToString(lfirst(pl)));
-#endif
-
 		pstate = make_parsestate(parentParseState);
 		result->qtrees[i++] = transformStmt(pstate, lfirst(pl));
 		if (pstate->p_target_relation != NULL)
@@ -517,12 +510,15 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 
 				if (column->is_sequence)
 				{
-					char	   *cstring;
+					char		  *sname;
+					char		  *cstring;
 					CreateSeqStmt *sequence;
+
+					sname = makeTableName(stmt->relname, column->colname, "seq", NULL);
 
 					constraint = makeNode(Constraint);
 					constraint->contype = CONSTR_DEFAULT;
-					constraint->name = makeTableName(stmt->relname, column->colname, "seq", NULL);
+					constraint->name = sname;
 					cstring = palloc(9 + strlen(constraint->name) + 2 + 1);
 					strcpy(cstring, "nextval('");
 					strcat(cstring, constraint->name);
@@ -551,7 +547,7 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 					}
 
 					sequence = makeNode(CreateSeqStmt);
-					sequence->seqname = pstrdup(constraint->name);
+					sequence->seqname = pstrdup(sname);
 					sequence->options = NIL;
 
 					elog(NOTICE, "CREATE TABLE will create implicit sequence %s for SERIAL column %s.%s",

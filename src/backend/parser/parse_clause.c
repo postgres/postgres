@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.25 1998/09/01 04:30:27 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.26 1998/09/25 13:36:03 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -389,10 +389,6 @@ transformSortClause(ParseState *pstate,
 {
 	List	   *s = NIL;
 
-#ifdef PARSEDEBUG
-	printf("transformSortClause: entering\n");
-#endif
-
 	while (orderlist != NIL)
 	{
 		SortGroupBy *sortby = lfirst(orderlist);
@@ -401,11 +397,6 @@ transformSortClause(ParseState *pstate,
 		Resdom	   *resdom;
 
 		restarget = findTargetlistEntry(pstate, sortby->node, targetlist, ORDER_CLAUSE);
-
-#ifdef PARSEDEBUG
-		printf("transformSortClause: find sorting operator for type %d\n",
-			   restarget->resdom->restype);
-#endif
 
 		sortcl->resdom = resdom = restarget->resdom;
 
@@ -478,11 +469,6 @@ transformSortClause(ParseState *pstate,
 					/* not a member of the sortclauses yet */
 					SortClause *sortcl = makeNode(SortClause);
 
-#ifdef PARSEDEBUG
-					printf("transformSortClause: (2) find sorting operator for type %d\n",
-						   tlelt->resdom->restype);
-#endif
-
 					if (tlelt->resdom->restype == InvalidOid)
 						tlelt->resdom->restype = INT4OID;
 
@@ -519,11 +505,6 @@ transformSortClause(ParseState *pstate,
 			{
 				/* not a member of the sortclauses yet */
 				SortClause *sortcl = makeNode(SortClause);
-
-#ifdef PARSEDEBUG
-				printf("transformSortClause: try sorting type %d\n",
-					   tlelt->resdom->restype);
-#endif
 
 				sortcl->resdom = tlelt->resdom;
 				sortcl->opoid = any_ordering_op(tlelt->resdom->restype);
@@ -575,10 +556,6 @@ transformUnionClause(List *unionClause, List *targetlist)
 
 				otype = ((TargetEntry *) lfirst(prev_target))->resdom->restype;
 				itype = ((TargetEntry *) lfirst(next_target))->resdom->restype;
-
-#ifdef PARSEDEBUG
-				printf("transformUnionClause: types are %d -> %d\n", itype, otype);
-#endif
 
 				/* one or both is a NULL column? then don't convert... */
 				if (otype == InvalidOid)

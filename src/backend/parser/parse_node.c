@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_node.c,v 1.21 1998/09/01 04:30:33 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_node.c,v 1.22 1998/09/25 13:36:05 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -67,10 +67,6 @@ make_operand(char *opname,
 	Node	   *result;
 	Type		true_type;
 
-#ifdef PARSEDEBUG
-	printf("make_operand: constructing operand for '%s' %s->%s\n",
-	   opname, typeidTypeName(orig_typeId), typeidTypeName(true_typeId));
-#endif
 	if (tree != NULL)
 	{
 		result = tree;
@@ -80,10 +76,6 @@ make_operand(char *opname,
 		/* must coerce? */
 		if (true_typeId != orig_typeId)
 		{
-#ifdef PARSEDEBUG
-			printf("make_operand: try to convert node from %s to %s\n",
-			   typeidTypeName(orig_typeId), typeidTypeName(true_typeId));
-#endif
 			result = coerce_type(NULL, tree, orig_typeId, true_typeId);
 		}
 	}
@@ -155,13 +147,7 @@ make_op(char *opname, Node *ltree, Node *rtree)
 	{
 		rtypeId = (rtree == NULL) ? UNKNOWNOID : exprType(rtree);
 		tup = left_oper(opname, rtypeId);
-#ifdef PARSEDEBUG
-		printf("make_op: returned from left_oper() with structure at %p\n", (void *) tup);
-#endif
 		opform = (Form_pg_operator) GETSTRUCT(tup);
-#ifdef PARSEDEBUG
-		printf("make_op: calling make_operand()\n");
-#endif
 		right = make_operand(opname, rtree, rtypeId, opform->oprright);
 		left = NULL;
 

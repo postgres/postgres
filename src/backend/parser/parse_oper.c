@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_oper.c,v 1.18 1998/09/16 14:22:22 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_oper.c,v 1.19 1998/09/25 13:36:07 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -209,34 +209,22 @@ oper_select_candidate(int nargs,
 				nmatch++;
 		}
 
-#ifdef PARSEDEBUG
-		printf("oper_select_candidate- candidate has %d matches\n", nmatch);
-#endif
 		if ((nmatch > nbestMatch) || (last_candidate == NULL))
 		{
 			nbestMatch = nmatch;
 			candidates = current_candidate;
 			last_candidate = current_candidate;
 			ncandidates = 1;
-#ifdef PARSEDEBUG
-			printf("oper_select_candidate- choose candidate as best match\n");
-#endif
 		}
 		else if (nmatch == nbestMatch)
 		{
 			last_candidate->next = current_candidate;
 			last_candidate = current_candidate;
 			ncandidates++;
-#ifdef PARSEDEBUG
-			printf("oper_select_candidate- choose candidate as possible match\n");
-#endif
 		}
 		else
 		{
 			last_candidate->next = NULL;
-#ifdef PARSEDEBUG
-			printf("oper_select_candidate- reject candidate as possible match\n");
-#endif
 		}
 	}
 
@@ -275,34 +263,22 @@ oper_select_candidate(int nargs,
 			}
 		}
 
-#ifdef PARSEDEBUG
-		printf("oper_select_candidate- candidate has %d matches\n", nmatch);
-#endif
 		if ((nmatch > nbestMatch) || (last_candidate == NULL))
 		{
 			nbestMatch = nmatch;
 			candidates = current_candidate;
 			last_candidate = current_candidate;
 			ncandidates = 1;
-#ifdef PARSEDEBUG
-			printf("oper_select_candidate- choose candidate as best match\n");
-#endif
 		}
 		else if (nmatch == nbestMatch)
 		{
 			last_candidate->next = current_candidate;
 			last_candidate = current_candidate;
 			ncandidates++;
-#ifdef PARSEDEBUG
-			printf("oper_select_candidate- choose candidate as possible match\n");
-#endif
 		}
 		else
 		{
 			last_candidate->next = NULL;
-#ifdef PARSEDEBUG
-			printf("oper_select_candidate- reject candidate as possible match\n");
-#endif
 		}
 	}
 
@@ -312,9 +288,6 @@ oper_select_candidate(int nargs,
 		 || ((nargs > 1) && !can_coerce_type(1, &input_typeids[1], &candidates->args[1])))
 		{
 			ncandidates = 0;
-#ifdef PARSEDEBUG
-			printf("oper_select_candidate- unable to coerce preferred candidate\n");
-#endif
 		}
 		return (ncandidates == 1) ? candidates->args : NULL;
 	}
@@ -370,16 +343,9 @@ oper_select_candidate(int nargs,
 				{
 					slot_category = current_category;
 					slot_type = current_type;
-#ifdef PARSEDEBUG
-					printf("oper_select_candidate- assign column #%d first candidate slot type %s\n",
-						   i, typeidTypeName(current_type));
-#endif
 				}
 				else if (current_category != slot_category)
 				{
-#ifdef PARSEDEBUG
-					printf("oper_select_candidate- multiple possible types for column #%d; unable to choose candidate\n", i);
-#endif
 					return NULL;
 				}
 				else if (current_type != slot_type)
@@ -388,17 +354,9 @@ oper_select_candidate(int nargs,
 					{
 						slot_type = current_type;
 						candidates = current_candidate;
-#ifdef PARSEDEBUG
-						printf("oper_select_candidate- column #%d found preferred candidate type %s\n",
-							   i, typeidTypeName(slot_type));
-#endif
 					}
 					else
 					{
-#ifdef PARSEDEBUG
-						printf("oper_select_candidate- column #%d found possible candidate type %s\n",
-							   i, typeidTypeName(current_type));
-#endif
 					}
 				}
 			}
@@ -406,18 +364,10 @@ oper_select_candidate(int nargs,
 			if (slot_type != InvalidOid)
 			{
 				input_typeids[i] = slot_type;
-#ifdef PARSEDEBUG
-				printf("oper_select_candidate- assign column #%d slot type %s\n",
-					   i, typeidTypeName(input_typeids[i]));
-#endif
 			}
 		}
 		else
 		{
-#ifdef PARSEDEBUG
-			printf("oper_select_candidate- column #%d input type is %s\n",
-				   i, typeidTypeName(input_typeids[i]));
-#endif
 		}
 	}
 
@@ -474,15 +424,9 @@ oper_exact(char *op, Oid arg1, Oid arg2, Node **ltree, Node **rtree, bool noWarn
 		{
 			Form_pg_operator opform;
 
-#if PARSEDEBUG
-			printf("oper_exact: found possible commutative operator candidate\n");
-#endif
 			opform = (Form_pg_operator) GETSTRUCT(tup);
 			if (opform->oprcom == tup->t_oid)
 			{
-#if PARSEDEBUG
-				printf("oper_exact: commutative operator found\n");
-#endif
 				if ((ltree != NULL) && (rtree != NULL))
 				{
 					tree = *ltree;
@@ -541,11 +485,6 @@ oper_inexact(char *op, Oid arg1, Oid arg2, Node **ltree, Node **rtree, bool noWa
 								  ObjectIdGetDatum(candidates->args[1]),
 								  CharGetDatum('b'));
 		Assert(HeapTupleIsValid(tup));
-
-#if PARSEDEBUG
-		printf("oper_inexact: found single candidate\n");
-#endif
-
 	}
 
 	/* Otherwise, multiple operators of the desired types found... */
@@ -556,9 +495,6 @@ oper_inexact(char *op, Oid arg1, Oid arg2, Node **ltree, Node **rtree, bool noWa
 		targetOids = oper_select_candidate(2, inputOids, candidates);
 		if (targetOids != NULL)
 		{
-#if PARSEDEBUG
-			printf("oper_inexact: found candidate\n");
-#endif
 			tup = SearchSysCacheTuple(OPRNAME,
 									  PointerGetDatum(op),
 									  ObjectIdGetDatum(targetOids[0]),
@@ -641,9 +577,6 @@ unary_oper_get_candidates(char *op,
 	fmgr_info(F_CHAREQ, (FmgrInfo *) &opKey[1].sk_func);
 	opKey[1].sk_argument = CharGetDatum(rightleft);
 
-#ifdef PARSEDEBUG
-	printf("unary_oper_get_candidates: start scan for '%s'\n", op);
-#endif
 	pg_operator_desc = heap_openr(OperatorRelationName);
 	pg_operator_scan = heap_beginscan(pg_operator_desc,
 									  0,
@@ -663,19 +596,12 @@ unary_oper_get_candidates(char *op,
 			current_candidate->args[0] = oper->oprright;
 		current_candidate->next = *candidates;
 		*candidates = current_candidate;
-#ifdef PARSEDEBUG
-		printf("unary_oper_get_candidates: found candidate '%s' for type %s\n",
-			   op, typeidTypeName(current_candidate->args[0]));
-#endif
 		ncandidates++;
 	}
 
 	heap_endscan(pg_operator_scan);
 	heap_close(pg_operator_desc);
 
-#ifdef PARSEDEBUG
-	printf("unary_oper_get_candidates: found %d candidates\n", ncandidates);
-#endif
 	return ncandidates;
 }	/* unary_oper_get_candidates() */
 
@@ -774,10 +700,6 @@ left_oper(char *op, Oid arg)
 								   ObjectIdGetDatum(candidates->args[0]),
 									  CharGetDatum('l'));
 			Assert(HeapTupleIsValid(tup));
-#ifdef PARSEDEBUG
-			printf("left_oper: searched cache for single left oper candidate '%s %s'\n",
-				   op, typeidTypeName((Oid) candidates->args[0]));
-#endif
 		}
 		else
 		{
@@ -801,10 +723,6 @@ left_oper(char *op, Oid arg)
 					 op, typeidTypeName(arg));
 				return NULL;
 			}
-#ifdef PARSEDEBUG
-			printf("left_oper: searched cache for best left oper candidate '%s %s'\n",
-				   op, typeidTypeName(*targetOid));
-#endif
 		}
 	}
 	return (Operator) tup;
