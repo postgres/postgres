@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/init/miscinit.c,v 1.118 2004/01/07 23:03:06 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/init/miscinit.c,v 1.119 2004/01/08 06:01:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,7 +23,6 @@
 #include <unistd.h>
 #include <grp.h>
 #include <pwd.h>
-#include <errno.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #ifdef HAVE_UTIME_H
