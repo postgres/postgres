@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Sun Nov 16 21:05:26 EST 2003
+Last updated:		Wed Nov 19 12:33:55 EST 2003
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -32,12 +32,7 @@ Urgent
 Reporting
 =========
 
-* -Allow elog() to return error codes, module name, file name, line
-  number, not just messages (Tom)
-* -Add error codes (Tom)
-* -Make error messages more consistent
 * Show location of syntax error in query [yacc]
-* -Add GUC log_statement_and_duration to print statement and >= min duration
 
 
 Administration
@@ -48,15 +43,11 @@ Administration
   or postmaster startup (Bruce)
 * Remove behavior of postmaster -o after making postmaster/postgres
   flags unique
-* -Allow easy display of usernames in a group
 * Allow configuration files to be specified in a different directory
-* -Add start time to pg_stat_activity
 * Allow limits on per-db/user connections
-* -Have standalone backend read postgresql.conf (Tom)
 * Add group object ownership, so groups can rename/drop/grant on objects,
   so we can implement roles
 * Add the concept of dataspaces/tablespaces [tablespaces]
-* -Allow CIDR format to be used in pg_hba.conf
 * Allow logging of only data definition(DDL), or DDL and modification statements
 * Allow log lines to include session-level information, like database and user
 * Allow server log information to be output as INSERT statements
@@ -71,15 +62,12 @@ Administration
 Data Types
 ==========
 
-* -Add IPv6 capability to INET/CIDR types
 * Remove Money type, add money formatting for decimal type
 * Change factorial to return a numeric
-* -Change NUMERIC data type to use base 10,000 internally
 * Change NUMERIC to enforce the maximum precision, and increase it
 * Add function to return compressed length of TOAST data values (Tom)
 * Allow INET subnet tests using non-constants to be indexed
 * Add transaction_timestamp(), statement_timestamp(), clock_timestamp() functionality
-* -Add GUC variables to control floating number output digits (Pedro Ferreira)
 * Have sequence dependency track use of DEFAULT sequences, seqname.nextval
 * Disallow changing default expression of a SERIAL column
 * Allow infinite dates just like infinite timestamps
@@ -87,9 +75,6 @@ Data Types
 * Allow better handling of numeric constants, type conversion [typeconv]
 * Allow backend to output result sets in XML
 * Prevent whole-row references from leaking memory, e.g. SELECT COUNT(tab.*)
-* -Allow current datestyle to restrict dates;  prevent month/day swapping
-  from making invalid dates valid
-* -Prevent month/day swapping of ISO dates to make invalid dates valid
 * Have initdb set DateStyle based on locale?
 * Add pg_get_acldef(), pg_get_typedefault(), and pg_get_attrdef()
 * Add ALTER DOMAIN, AGGREGATE, CONVERSION, SEQUENCE ... OWNER TO
@@ -99,9 +84,7 @@ Data Types
 
 * ARRAYS
 	o Allow nulls in arrays
-	o -Allow arrays to be ORDER'ed
 	o Allow MIN()/MAX() on arrays
-	o -Support construction of array result values in expressions (Joe)
 	o Delay resolution of array expression type so assignment coercion 
 	  can be performed on empty array expressions (Joe)
 
@@ -125,7 +108,6 @@ Multi-Language Support
 * Make octet_length_client the same as octet_length() (?)
 * Prevent mismatch of frontend/backend encodings from converting bytea
   data from being interpreted as encoded strings
-* -Remove Cyrillic recode support
 * Fix upper()/lower() to work for multibyte encodings
 
 
@@ -143,8 +125,6 @@ Views / Rules
 Indexes
 =======
 
-* -Allow CREATE INDEX zman_index ON test (date_trunc( 'day', zman ) datetime_ops)
-  fails index can't store constant parameters
 * Order duplicate index entries by tid for faster heap lookups
 * Allow inherited tables to inherit index, UNIQUE constraint, and primary
   key, foreign key  [inheritance]
@@ -152,13 +132,10 @@ Indexes
   INSERT INTO inherit_table (unique_index_col) VALUES (dup) should fail
   [inheritance]
 * Add UNIQUE capability to non-btree indexes
-* -Add btree index support for reltime, tinterval, regproc (Tom)
 * Add rtree index support for line, lseg, path, point
-* -Certain indexes will not shrink, e.g. indexes on ever-increasing
   columns and indexes with many duplicate keys
 * Use indexes for min() and max() or convert to SELECT col FROM tab ORDER
   BY col DESC LIMIT 1 if appropriate index exists and WHERE clause acceptible
-* -Allow LIKE indexing optimization for non-ASCII locales using special index
 * Use index to restrict rows returned by multi-key index when used with
   non-consecutive keys or OR clauses, so fewer heap accesses
 * Be smarter about insertion of already-ordered data into btree index
@@ -170,7 +147,6 @@ Indexes
   float4, numeric/decimal too [optimizer]
 * Add FILLFACTOR to btree index creation
 * Add concurrency to GIST
-* -Improve concurrency of hash indexes (Tom)
 * Allow a single index to index multiple tables (for inheritance and subtables)
 
 
@@ -178,25 +154,19 @@ Commands
 ========
 
 * Add BETWEEN ASYMMETRIC/SYMMETRIC (Christopher)
-* -Allow LIMIT/OFFSET to use expressions (Tom)
 * Change LIMIT/OFFSET to use int8
 * CREATE TABLE AS can not determine column lengths from expressions [atttypmod]
 * Allow UPDATE to handle complex aggregates [update]
 * Allow command blocks to ignore certain types of errors
 * Allow backslash handling in quoted strings to be disabled for portability
-* -Return proper effected tuple count from complex commands [return]
 * Allow UPDATE, DELETE to handle table aliases for self-joins [delete]
 * Add CORRESPONDING BY to UNION/INTERSECT/EXCEPT
 * Allow REINDEX to rebuild all indexes, remove /contrib/reindex
-* -Make a transaction-safe TRUNCATE (Rod)
 * Add ROLLUP, CUBE, GROUPING SETS options to GROUP BY
 * Add schema option to createlang
 * Allow savepoints / nested transactions [transactions] (Bruce)
 * Allow UPDATE tab SET ROW (col, ...) = (...) for updating multiple columns
-* -Allow UPDATE to use SET col = DEFAULT
-* -Add config variable to prevent auto-adding missing FROM-clause tables
 * Allow SET CONSTRAINTS to be qualified by schema/table
-* -Have SELECT '13 minutes'::interval display zero seconds in ISO datestyle
 * Prevent COMMENT ON DATABASE from using a database name
 * Add GUC variable to prevent waiting on locks
 * Allow TRUNCATE ... CASCADE/RESTRICT
@@ -221,8 +191,6 @@ Commands
 	  rows with DEFAULT value
 	o ALTER TABLE ADD COLUMN column SERIAL doesn't create sequence because
           of the item above
-	o -Add ALTER TABLE tab SET WITHOUT OIDS (Rod)
-	o -Add ALTER SEQUENCE to modify min/max/increment/cache/cycle values
 	o Have ALTER TABLE rename SERIAL sequences
 	o Allow columns to be reordered using ALTER ... POSITION i col1 [,col2];
 	  have SELECT * and INSERT honor such ordering
@@ -234,7 +202,6 @@ Commands
 
 * CLUSTER
 	o Automatically maintain clustering on a table
-	o -Allow CLUSTER to cluster all tables (Alvaro Herrera)
 
 * COPY
 	o Allow dump/load of CSV format
@@ -245,11 +212,9 @@ Commands
 	o Have COPY return number of rows loaded/unloaded
 
 * CURSOR
-	o -MOVE 0 should not move to end of cursor (Bruce)
 	o Allow UPDATE/DELETE WHERE CURRENT OF cursor using per-cursor tid
 	  stored in the backend (Gavin)
 	o Prevent DROP of table being referenced by our own open cursor
-	o -Allow cursors outside transactions
 
 * INSERT
 	o Allow INSERT/UPDATE of system-generated oid value for a row
@@ -261,8 +226,6 @@ Commands
 	o Add SET PERFORMANCE_TIPS option to suggest INDEX, VACUUM, VACUUM
 	  ANALYZE, and CLUSTER
 	o Add SET PATH for schemas
-	o -Allow EXPLAIN EXECUTE to see prepared plans
- 	o -Allow SHOW of some non-modifiable variables, like pg_controldata
 
 * SERVER-SIDE LANGUAGES
 	o Allow PL/PgSQL's RAISE function to take expressions
@@ -277,10 +240,7 @@ Commands
 	o Allow function parameters to be passed by name,
 	  get_employee_salary(emp_id => 12345, tax_year => 2001)
 	o Add PL/PgSQL packages
-	o -Allow array declarations and other data types in PL/PgSQL DECLARE
 	o Add table function support to pltcl, plperl, plpython
-	o -Make PL/PgSQL %TYPE schema-aware
-	o -Allow PL/PgSQL to support array element assignment (Joe)
 	o Add PL/PHP (Joe, Jan)
 	o Allow PL/pgSQL to name columns by ordinal position, e.g. rec.(3)
 	o Allow PL/pgSQL EXECUTE query_var INTO record_var;
@@ -291,15 +251,7 @@ Commands
 Clients
 =======
 
-* -Allow psql to show transaction status if backend protocol changes made
-* -Add schema, cast, and conversion backslash commands to psql (Christopher)
-* -Allow pg_dump to dump a specific schema (Neil Conway)
-* -Allow psql to do table completion for SELECT * FROM schema_part and
-  table completion for SELECT * FROM schema_name.
 * Add XML capability to pg_dump and COPY, when backend XML capability
-* -Allow SSL-enabled clients to turn off SSL transfers
-* -Modify pg_get_triggerdef() to take a boolean to pretty-print,
-  and use that as part of pg_dump along with psql
 * Allow psql \du to show groups, and add \dg for groups
 * Allow clients to query WITH HOLD cursors and prepared statements
 * Prevent unneeded quoting in psql \d output using fmtId()
@@ -324,16 +276,11 @@ Clients
 	o Solve cardinality > 1 for input descriptors / variables
 	o Improve error handling
 	o Add a semantic check level, e.g. check if a table really exists
-	o -Add SQLSTATE
 	o fix handling of DB attributes that are arrays
 	o Use backend prepare/execute facility for ecpg where possible
-	o -Make casts work in variable initializations
 	o Implement SQLDA
 	o Fix nested C comments
 	o sqlwarn[6] should be 'W' if the PRECISION or SCALE value specified
-	o -Allow multi-threaded use of SQLCA
-	o -Understand structure definitions outside a declare section
-	o -Allow :var[:index] or :var[<integer>] as cvariable for an array var
 
 * Python
 	o Allow users to register their own types with pg_
@@ -353,7 +300,6 @@ Referential Integrity
 * Allow DEFERRABLE UNIQUE constraints
 * Allow triggers to be disabled [trigger]
 * With disabled triggers, allow pg_dump to use ALTER TABLE ADD FOREIGN KEY
-* -Support statement-level triggers (Neil)
 * Allow statement-level triggers to access modified rows
 * Support triggers on columns (Neil)
 * Have AFTER triggers execute after the appropriate SQL statement in a 
@@ -457,8 +403,6 @@ Write-Ahead Log
 * Turn off after-change writes if fsync is disabled (?)
 * Add WAL index reliability improvement to non-btree indexes
 * Find proper defaults for postgresql.conf WAL entries
-* -Add checkpoint_min_warning postgresql.conf option to warn about checkpoints
-  that are too frequent (Bruce)
 * Allow xlog directory location to be specified during initdb, perhaps
   using symlinks
 * Allow WAL information to recover corrupted pg_controldata
@@ -469,15 +413,9 @@ Write-Ahead Log
 Optimizer / Executor
 ====================
 
-* -Improve Subplan list handling
-* -Allow Subplans to use efficient joins(hash, merge) with upper variable
-* -Add hash for evaluating GROUP BY aggregates (Tom)
-* -Allow merge and hash joins on expressions not just simple variables (Tom)
-* -Make IN/NOT IN have similar performance to EXISTS/NOT EXISTS (Tom)
 * Missing optimizer selectivities for date, r-tree, etc. [optimizer]
 * Allow ORDER BY ... LIMIT to select top values without sort or index
   using a sequential scan for highest/lowest values (Oleg)
-* -Inline simple SQL functions to avoid overhead (Tom)
 * Precompile SQL functions to avoid overhead (Neil)
 * Add utility to compute accurate random_page_cost value
 * Improve ability to display optimizer analysis using OPTIMIZER_DEBUG
@@ -492,7 +430,6 @@ Miscellaneous
 =============
 
 * Do async I/O for faster random read-ahead of data
-* -Get faster regex() code from Henry Spencer <henry@zoo.utoronto.ca>
 * Use mmap() rather than SYSV shared memory or to write WAL files (?) [mmap]
 * Improve caching of attribute offsets when NULLs exist in the row
 * Add a script to ask system configuration questions and tune postgresql.conf
@@ -508,8 +445,6 @@ Source Code
 * Move some things from /contrib into main tree
 * Remove warnings created by -Wcast-align
 * Move platform-specific ps status display info from ps_status.c to ports
-* -Modify regression tests to prevent failures do to minor numeric rounding
-* -Add OpenBSD's getpeereid() call for local socket authentication
 * Improve access-permissions check on data directory in Cygwin (Tom)
 * Add documentation for perl, including mention of DBI/DBD perl location
 * Create improved PostgreSQL introductory documentation for the PHP
@@ -523,7 +458,7 @@ Source Code
 * Acquire lock on a relation before building a relcache entry for it
 * Research interaction of setitimer() and sleep() used by statement_timeout
 * Add checks for fclose() failure
-* Change CVS $Id: TODO,v 1.1169 2003/11/17 02:05:26 momjian Exp $ to $PostgreSQL: pgsql/doc/TODO,v 1.1169 2003/11/17 02:05:26 momjian Exp $
+* Change CVS $Id: TODO,v 1.1170 2003/11/19 17:34:01 momjian Exp $ to $PostgreSQL: pgsql/doc/TODO,v 1.1170 2003/11/19 17:34:01 momjian Exp $
 * Exit postmaster if postgresql.conf can not be opened
 * Rename /scripts directory because they are all C programs now
 * Allow the regression tests to start postmaster with -i so the tests
@@ -534,17 +469,9 @@ Source Code
 
 
 * Wire Protocol Changes
-	o -Show transaction status in psql
-	o -Allow binding of query parameters, support for prepared queries
-	o -Remove hard-coded limits on user/db/password names
-	o -Remove unused elements of startup packet (unused, tty, passlength)
-	o -Fix COPY/fastpath protocol
-	o -Error codes
 	o Dynamic character set handling
-	o -Special passing of binary values in platform-neutral format (bytea?)
 	o Add decoded type, length, precision
 	o Compression?
-	o -Report server version number, database encoding, client encoding
 	o Update clients to use data types, typmod, schema.table.column names of
 	  result sets using new query protocol
 
