@@ -1,0 +1,66 @@
+Bruce Momjian <maillist@candle.pha.pa.us>
+
+Here are some of the scripts I use to make development easier.
+
+First, I use 'cpdir' on every file I am about to change.  This makes a
+copy with the extension .orig.  If an .orig already exists, I am warned.
+
+	:
+	# cporig
+	for FILE
+	do
+		if [ ! -f "$FILE.orig" ]
+		then	cp $FILE $FILE.orig
+		else	echo "$FILE.orig exists" 1>&2
+		fi
+	done
+
+I can get really fancy with this.  I can do 'cporig *' and make a .orig
+for every file in the current directory.  I can:
+
+	cporig `grep -l HeapTuple *`
+
+If I use mkid (from ftp.postgreSQL.org), I can do:
+	
+	cporig `lid -kn 'fsyncOff'`
+
+and get a copy of every file containing that word.  I can then do:
+
+	vi `find . -name '*.orig'`
+
+or even better (using mkid):
+
+	eid fsyncOff
+
+to edit all those files.
+
+When I am ready to generate a patch, I run this command from the top of
+the source tree:
+	
+	:
+	#difforig
+	if [ "$#" -eq 0 ]
+	then	APATH="."
+	else	APATH="$1"
+	fi
+	find $APATH -name '*.orig' -print | sort | while read FILE
+	do
+		NEW="`dirname $FILE`/`basename $FILE .orig`"
+		echo "$NEW" 1>&2
+		diff -c $FILE $NEW
+	done
+
+I pipe the output of this to a file to hold my patch, and the file names
+it processes appear on my screen.  It creates a nice patch for me of all
+the files I used with cporig.
+
+Finally, I remove my old copies with:
+
+	:
+	# rmorig
+	if [ "$#" -eq 0 ]
+	then	APATH="."
+	else	APATH="$1"
+	fi
+	find $APATH -name '*.orig' -exec rm {} \;
+
