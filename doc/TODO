@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Wed Feb 28 13:32:12 EST 2001
+Last updated:		Wed Feb 28 21:17:22 EST 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -349,6 +349,7 @@ SOURCE CODE
 * Make sure all block numbers are unsigned to increase maximum table size
 * Merge LockMethodCtl and LockMethodTable into one shared structure (Bruce)
 * HOLDER/HOLDERTAB reanme to PROCLOCKLINK/PROCLOCKLINKTAG (Tom)
+* Correct CRC WAL code to be normal CRC32 algorithm
 
 ---------------------------------------------------------------------------
 
