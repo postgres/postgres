@@ -5,7 +5,7 @@ TODO list for PostgreSQL
 Bracketed items "[]" have more detail.
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Thu Nov  4 11:53:38 EST 2004
+Last updated:		Thu Nov  4 12:09:41 EST 2004
 
 The most recent version of this document can be viewed at the PostgreSQL web
 site, http://www.PostgreSQL.org.
@@ -276,6 +276,8 @@ Indexes
 
 * Allow accurate statistics to be collected on indexes with more than
   one column
+
+* Add fillfactor to control reserved free space during index creation
 
 Commands
 ========
