@@ -1,0 +1,1129 @@
+# Czech message translation file for psql
+# Karel Zak <zakkr@zf.jcu.cz>, August 2001.
+#
+# $Header: /cvsroot/pgsql/src/bin/psql/Attic/cs.po,v 1.1 2001/08/07 11:28:18 petere Exp $
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PostgreSQL 7.2\n"
+"POT-Creation-Date: 2001-07-16 14:57+0200\n"
+"PO-Revision-Date: 2001-07-16 15:01+0200\n"
+"Last-Translator: Karel Zak <zakkr@zf.jcu.cz>\n"
+"Language-Team: Karel Zak <zakkr@zf.jcu.cz>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=ISO-8859-2\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: command.c:152
+msgid "Warning: This syntax is deprecated.\n"
+msgstr "Varování: tato syntaxe je neplatná.\n"
+
+#: command.c:159
+#, c-format
+msgid "Invalid command \\%s. Try \\? for help.\n"
+msgstr "Neplatný pøíkaz \\%s. Pou¾íjte \\? pro nápovìdu.\n"
+
+#: command.c:161
+#, c-format
+msgid "invalid command \\%s\n"
+msgstr "neplatný pøíkaz \\%s\n"
+
+#: command.c:278
+#, c-format
+msgid "could not get home directory: %s\n"
+msgstr "nelze získat domácí adresáø: %s\n"
+
+#: command.c:292
+#, c-format
+msgid "\\%s: could not change directory to '%s': %s\n"
+msgstr "\\%s: nelze zmìnit adresáø na '%s': %s\n"
+
+#: command.c:380 command.c:726
+msgid "no query buffer\n"
+msgstr "v pamìti není ¾ádný dotaz\n"
+
+#: command.c:436
+#, c-format
+msgid "%s: invalid encoding name\n"
+msgstr "%s: neplatné jméno kódování\n"
+
+#: command.c:445
+#, c-format
+msgid "\\%s: multibyte support is not enabled\n"
+msgstr "\\%s: podpora multibyte není dostupná\n"
+
+#: command.c:499 command.c:530 command.c:541 command.c:555 command.c:597
+#: command.c:706 command.c:735
+#, c-format
+msgid "\\%s: missing required argument\n"
+msgstr "\\%s: chybí po¾adovaný argument\n"
+
+#: command.c:585
+msgid "Query buffer is empty."
+msgstr "Buffer dotazù je prázdný."
+
+#: command.c:616
+msgid "Query buffer reset (cleared)."
+msgstr "Buffer dotazù vyprázdnìn."
+
+#: command.c:627
+#, c-format
+msgid "Wrote history to %s.\n"
+msgstr "Historie zapsána do: %s.\n"
+
+#: command.c:668 command.c:900 command.c:1114 command.c:1160 command.c:1844
+#: common.c:57 copy.c:87 describe.c:441 mainloop.c:80 mainloop.c:384
+msgid "out of memory\n"
+msgstr "pamì» vyèerpána\n"
+
+#: command.c:677 command.c:711
+#, c-format
+msgid "\\%s: error\n"
+msgstr "\\%s: chyba\n"
+
+#: command.c:750 command.c:770 command.c:1005 command.c:1018 command.c:1028
+#: command.c:1501 command.c:1514 command.c:1526 command.c:1539 command.c:1553
+#: command.c:1567 command.c:1597 common.c:106 copy.c:290
+#, c-format
+msgid "%s: %s\n"
+msgstr ""
+
+#: command.c:835
+#, c-format
+msgid "\\%s: extra argument '%s' ignored\n"
+msgstr "\\%s: vedlej¹í argument '%s' ignorován\n"
+
+#: command.c:892 command.c:966 command.c:994
+msgid "parse error at end of line\n"
+msgstr "chyba na konci souboru\n"
+
+#: command.c:1275 command.c:1299 startup.c:183 startup.c:201
+msgid "Password: "
+msgstr "Heslo: "
+
+#: command.c:1313 common.c:155 common.c:331 common.c:496
+#, c-format
+msgid "%s"
+msgstr ""
+
+#: command.c:1317
+msgid "Previous connection kept\n"
+msgstr "Pøedchozí spojení zachováno\n"
+
+#: command.c:1330
+#, c-format
+msgid "\\connect: %s"
+msgstr ""
+
+#: command.c:1342
+#, c-format
+msgid "You are now connected to database %s.\n"
+msgstr "Pøipojení je nyní do databáze %s.\n"
+
+#: command.c:1344
+#, c-format
+msgid "You are now connected as new user %s.\n"
+msgstr "Pøipojení nyní jako u¾ivatel %s.\n"
+
+#: command.c:1347
+#, c-format
+msgid "You are now connected to database %s as user %s.\n"
+msgstr "Nynìj¹í pøipojení je do databáze %s jako u¾ivatel %s.\n"
+
+#: command.c:1438
+#, c-format
+msgid "could not start editor %s\n"
+msgstr "nelze spustit editor %s\n"
+
+#: command.c:1440
+msgid "could not start /bin/sh\n"
+msgstr "nelze spustit /bin/sh\n"
+
+#: command.c:1486
+#, c-format
+msgid "could not open temporary file %s: %s\n"
+msgstr "nelze otevøít doèasný soubor %s: %s\n"
+
+#: command.c:1670
+msgid "\\pset: allowed formats are unaligned, aligned, html, latex\n"
+msgstr "\\pset: dovolené formáty jsou: unaligned, aligned, html, latex\n"
+
+#: command.c:1675
+#, c-format
+msgid "Output format is %s.\n"
+msgstr "Výstupní formát je %s.\n"
+
+#: command.c:1685
+#, c-format
+msgid "Border style is %d.\n"
+msgstr "Styl rámeèkù je %d.\n"
+
+#: command.c:1694
+msgid "Expanded display is on.\n"
+msgstr "Roz¹íøené zobrazení zapnuto.\n"
+
+#: command.c:1695
+msgid "Expanded display is off.\n"
+msgstr "Roz¹íøené zobrazení vypnuto.\n"
+
+#: command.c:1707
+#, c-format
+msgid "Null display is '%s'.\n"
+msgstr "Null je zobrazován jako '%s'.\n"
+
+#: command.c:1719
+#, c-format
+msgid "Field separator is '%s'.\n"
+msgstr "Oddìlovaè polí je '%s'.\n"
+
+#: command.c:1733
+msgid "Record separator is <newline>."
+msgstr "Oddìlovaè záznamù je <newline>."
+
+#: command.c:1735
+#, c-format
+msgid "Record separator is '%s'.\n"
+msgstr "Oddìlovaè záznamù je '%s'.\n"
+
+#: command.c:1746
+msgid "Showing only tuples."
+msgstr "Zobrazovány pouze záznamy."
+
+#: command.c:1748
+msgid "Tuples only is off."
+msgstr "Zobrazování pouze záznamù je vypnuto."
+
+#: command.c:1764
+#, c-format
+msgid "Title is \"%s\".\n"
+msgstr "Nadpis je \"%s\".\n"
+
+#: command.c:1766
+msgid "Title is unset.\n"
+msgstr "Nadpis není nastaven.\n"
+
+#: command.c:1782
+#, c-format
+msgid "Table attribute is \"%s\".\n"
+msgstr "Atribut tabulky je \"%s\".\n"
+
+#: command.c:1784
+msgid "Table attributes unset.\n"
+msgstr "Atributy tabulky nejsou nastaveny.\n"
+
+#: command.c:1795
+msgid "Using pager is on."
+msgstr "Pou¾ití stránkování je zapnuto."
+
+#: command.c:1797
+msgid "Using pager is off."
+msgstr "Pou¾ítí stránkování je vypnuto."
+
+#: command.c:1808
+msgid "Default footer is on."
+msgstr "Implicitní záhlaví je zapnuto."
+
+#: command.c:1810
+msgid "Default footer is off."
+msgstr "Implicitní záhlaví je vypnuto."
+
+#: command.c:1816
+#, c-format
+msgid "\\pset: unknown option: %s\n"
+msgstr "\\pset: neznámá volba: %s\n"
+
+#: command.c:1859
+msgid "\\!: failed\n"
+msgstr "\\!: selhal\n"
+
+#: common.c:50
+#, c-format
+msgid "%s: xstrdup: cannot duplicate null pointer (internal error)\n"
+msgstr "%s: xstrdup: nelze duplikovat nulový ukazatel (interní chyba)\n"
+
+#: common.c:299 common.c:385
+msgid "You are currently not connected to a database.\n"
+msgstr "Neexistuje spojeni s databází.\n"
+
+#: common.c:338 common.c:506
+msgid "connection to server was lost\n"
+msgstr "spojení na server bylo ztraceno\n"
+
+#: common.c:341 common.c:509
+msgid "The connection to the server was lost. Attempting reset: "
+msgstr "Spojení na server bylo ztraceno. Zkou¹en restart: " 
+
+#: common.c:345 common.c:513
+msgid "Failed.\n"
+msgstr "Nepodaøilo se.\n"
+
+#: common.c:355 common.c:525
+msgid "Succeeded.\n"
+msgstr "Podaøilo se.\n"
+
+#: common.c:393
+#, c-format
+msgid ""
+"***(Single step mode: Verify query)"
+"*********************************************\n"
+"%s\n"
+"***(press return to proceed or enter x and return to cancel)"
+"********************\n"
+msgstr ""
+"***(Krokovací mód: potvrïte dotaz)"
+"*********************************************\n"
+"%s\n"
+"***(stiskòete return pro zpracování nebo x pro zru¹ení)"
+"********************\n"
+
+#: common.c:485 (TODO)
+msgid ""
+"Enter data to be copied followed by a newline.\n"
+"End with a backslash and a period on a line by itself."
+msgstr ""
+
+#: common.c:531
+#, c-format
+msgid "Asynchronous NOTIFY '%s' from backend with pid %d received.\n"
+msgstr "Pøijato asynchronní NOTIFY '%s' ze serveru s PIDem %d.\n"
+
+#: copy.c:81
+msgid "\\copy: arguments required\n"
+msgstr "\\copy: argumenty jsou povinné\n"
+
+#: copy.c:211
+#, c-format
+msgid "\\copy: parse error at '%s'\n"
+msgstr "\\copy: chyba na '%s'\n"
+
+#: copy.c:213
+msgid "\\copy: parse error at end of line\n"
+msgstr "\\copy: chyba na konci øádku\n"
+
+#: copy.c:310
+#, c-format
+msgid "\\copy: %s"
+msgstr ""
+
+#: copy.c:314
+#, c-format
+msgid "\\copy: unexpected response (%d)\n"
+msgstr "\\copy: neoèekávaná odezva (%d)\n"
+
+#: help.c:47
+msgid "on"
+msgstr "zapnuto"
+
+#: help.c:47
+msgid "off"
+msgstr "vypnuto"
+
+#: help.c:70
+#, c-format
+msgid "could not get current user name: %s\n"
+msgstr "nelze získat u¾ivatelské jméno: %s\n"
+
+#: help.c:79
+msgid "This is psql, the PostgreSQL interactive terminal.\n"
+msgstr "Toto je psql, PostgreSQL interaktivní terminál.\n"
+
+#: help.c:80
+msgid "Usage:"
+msgstr "Pou¾ití:"
+
+#: help.c:81
+msgid "  psql [options] [dbname [username]]\n"
+msgstr "  psql [pøepínaèe] [databáze [u¾ivatelské_jméno]]\n"
+
+#: help.c:82
+msgid "Options:"
+msgstr "Pøepínaèe:"
+
+#: help.c:83
+msgid "  -a              Echo all input from script"
+msgstr "  -a              Uká¾e v¹echny vstupy ze skriptu"
+
+#: help.c:84
+msgid "  -A              Unaligned table output mode (-P format=unaligned)"
+msgstr "  -A              Mód nezarovnaného formátu tabulky (-P format=unaligned)"
+
+#: help.c:85
+msgid "  -c COMMAND      Run only single command (SQL or internal) and exit"
+msgstr "  -c PØÍKAZ       Provede pouze jeden pøíkaz (SQL nebo interní) a skonèí"
+
+#: help.c:91
+#, c-format
+msgid "  -d DBNAME       Specify database name to connect to (default: %s)\n"
+msgstr "  -d DATABÁZE     Jméno databáze pro spojení (implicitnì: %s)\n"
+
+#: help.c:93
+msgid "  -e              Echo commands sent to server"
+msgstr "  -e              Uká¾e v¹echny pøíkazy poslané na server"
+
+#: help.c:94
+msgid "  -E              Display queries that internal commands generate"
+msgstr "  -E              Uká¾e dotazy které generují interní pøíkazy"
+
+#: help.c:95
+msgid "  -f FILENAME     Execute commands from file, then exit"
+msgstr "  -f SOUBOR       Provede pøíkazy ze souboru a skonèí"
+
+#: help.c:96
+#, c-format
+msgid ""
+"  -F STRING       Set field separator (default: \"%s\") (-P fieldsep=)\n"
+msgstr ""
+"  -F ØETÌZEC      Oddìlovaè polí (implicitnì: \"%s\") (-P fieldsep=)\n"
+
+#: help.c:101
+#, c-format
+msgid "  -h HOSTNAME     Specify database server host (default: %s)\n"
+msgstr "  -h HOSTNAME     Jméno databázového serveru (implicitnì: %s)\n"
+
+#: help.c:102
+msgid "local socket"
+msgstr "lokální socket"
+
+#: help.c:104
+msgid "  -H              HTML table output mode (-P format=html)"
+msgstr "  -H              Mód HTML formátu tabulky (-P format=html)"
+
+#: help.c:105
+msgid "  -l              List available databases, then exit"
+msgstr " -l               Vypí¹e seznam dostupných databází a skonèí"
+
+#: help.c:106
+msgid "  -n              Disable enhanced command line editing (readline)"
+msgstr "  -n              Vypne editaèní mo¾nosti pøíkazové øádky (readline)"
+
+#: help.c:107
+msgid "  -o FILENAME     Send query results to file (or |pipe)"
+msgstr "  -o SOUBOR       Zapí¹e výsledek dotazu do souboru (nebo |roury)"
+
+#: help.c:111
+#, c-format
+msgid "  -p PORT         Specify database server port (default: %s)\n"
+msgstr "  -p PORT         Specifikuje port databázového serveru (implicitnì: %s)\n"
+
+#: help.c:114
+msgid ""
+"  -P VAR[=ARG]    Set printing option 'VAR' to 'ARG' (see \\pset command)"
+msgstr ""
+"  -P VAR[=ARG]    Zobrazovací parametr 'VAR' nastavit na 'ARG' (viz. pøíkaz \\pset)" 
+
+#: help.c:115
+msgid "  -q              Run quietly (no messages, only query output)"
+msgstr "  -q              Tichý chod (bez hlá¹ek, pouze výstupy dotazù)"
+
+#: help.c:116
+msgid ""
+"  -R STRING       Set record separator (default: newline) (-P recordsep=)"
+msgstr ""
+"  -R ØETÌZEC      Oddìlovaè záznamù (implicitnì: newline) (-P recordsep=)"
+
+#: help.c:117
+msgid "  -s              Single step mode (confirm each query)"
+msgstr "  -s              Krokovací mód (nutné potvrzení ka¾dého dotazu)"
+
+#: help.c:118
+msgid "  -S              Single line mode (end of line terminates SQL command)"
+msgstr "  -S              Jednoøádkový mód (konec øádky ukonèuje SQL pøíkaz)"
+
+#: help.c:119
+msgid "  -t              Print rows only (-P tuples_only)"
+msgstr "  -t              Tiskne pouze øádky (-P tuples_only)"
+
+#: help.c:120
+msgid ""
+"  -T TEXT         Set HTML table tag attributes (width, border) (-P "
+"tableattr=)"
+msgstr ""
+"  -T TEXT         Nastavení atributù HTML tabulky (width, border) (-P "
+"tableattr=)"
+
+#: help.c:126
+#, c-format
+msgid "  -U NAME         Specify database user name (default: %s)\n"
+msgstr "  -U JMÉNO        Specifikuje databázové u¾ivatelské jméno (implicitnì: %s)\n"
+
+#: help.c:128
+msgid "  -v NAME=VALUE   Set psql variable 'NAME' to 'VALUE'"
+msgstr "  -v JMÉNO=HODNOTA Nastavit psql promìnnou 'JMÉNO' na 'HODNOTA'"
+
+#: help.c:129
+msgid "  -V              Show version information and exit"
+msgstr "  -V              Uká¾e verzi a skonèí"
+
+#: help.c:130
+msgid "  -W              Prompt for password (should happen automatically)"
+msgstr "  -W              Prompt pro heslo"
+
+#: help.c:131
+msgid "  -x              Turn on expanded table output (-P expanded)"
+msgstr "  -x              Výstupu v roz¹íøené tabulce (-P expanded)"
+
+#: help.c:132
+msgid "  -X              Do not read startup file (~/.psqlrc)"
+msgstr "  -X              Neèíst inicializaèní soubor (~/.psqlrc)"
+
+#: help.c:135
+msgid ""
+"\n"
+"For more information, type \"\\?\" (for internal commands) or \"\\help\"\n"
+"(for SQL commands) from within psql, or consult the psql section in\n"
+"the PostgreSQL documentation.\n"
+"\n"
+"Report bugs to <pgsql-bugs@postgresql.org>."
+msgstr ""
+"\n"
+"Pro více informací pou¾íte \"\\?\" (pro interní pøíkazy) nebo \"\\help\"\n"
+"(pro SQL pøíkazy), nebo se podívejte do dokumentace PostgreSQL a\n"
+"èásti vìnovane psql.\n"
+"\n"
+"Chyby posílejte na <pgsql-bugs@postgresql.org>."
+
+#: help.c:194
+msgid " \\a             toggle between unaligned and aligned output mode\n"
+msgstr " \\a             pøepíná mezi 'unaligned' a 'aligned' modem výstupu\n"
+
+#: help.c:195
+#, c-format
+msgid ""
+" \\c[onnect] [DBNAME|- [USER]]\n"
+"                connect to new database (currently \"%s\")\n"
+msgstr ""
+" \\c[onnect] [JMÉNO_DB |- [JMÉNO_U®IVATELE]]\n"
+"                vytvoøí spojení do nové databáze (souèasná \"%s\")\n"
+
+#: help.c:198
+msgid " \\C TITLE       set table title\n"
+msgstr " \\C NADPIS      nastaví nadpisu tabulky\n"
+
+#: help.c:199
+msgid " \\cd [DIRNAME]  change the current working directory\n"
+msgstr " \\cd [ADRESÁØ]  zmìna aktuální pracovní adresáø\n"
+
+#: help.c:200
+msgid " \\copy ...      perform SQL COPY with data stream to the client host\n"
+msgstr " \\copy ...      provede SQL COPY s tokem dat na klienta\n"
+
+#: help.c:201
+msgid " \\copyright     show PostgreSQL usage and distribution terms\n"
+msgstr " \\copyright     podmínky pou¾ití a distribuce PostgreSQL\n"
+
+#: help.c:202
+msgid " \\d TABLE       describe table (or view, index, sequence)\n"
+msgstr " \\d TABULKA     popis tabulky (nebo view, index, sequence)\n"
+
+#: help.c:203
+msgid " \\d{t|i|s|v}... list tables/indexes/sequences/views\n"
+msgstr " \\d{t|i|s|v}... seznam tabulek/indexù/sequencí/náhledù\n"
+
+#: help.c:204
+msgid ""
+" \\d{p|S|l}      list access privileges, system tables, or large objects\n"
+msgstr ""
+" \\d{p|S|l}      seznam pøístupových práv, systémových tabulek, nebo \"large objects\"\n"
+
+#: help.c:205
+msgid " \\da            list aggregate functions\n"
+msgstr " \\da            seznam agregátních funkcí\n"
+
+#: help.c:206
+msgid " \\dd NAME       show comment for table, type, function, or operator\n"
+msgstr " \\dd JMÉNO      komentáø pro tabulku, datový typ, funkce, nebo operátor\n"
+
+#: help.c:207
+msgid " \\df            list functions\n"
+msgstr " \\df            seznam funkcí\n"
+
+#: help.c:208
+msgid " \\do            list operators\n"
+msgstr " \\do            seznam operátorù\n"
+
+#: help.c:209
+msgid " \\dT            list data types\n"
+msgstr " \\dT            seznam datových typù\n"
+
+#: help.c:210
+msgid ""
+" \\e FILENAME    edit the current query buffer or file with external editor\n"
+msgstr ""
+" \\e SOUBOR      editace aktuálního dotazu nebo souboru v externím editoru\n"
+
+#: help.c:211
+msgid " \\echo TEXT     write text to standard output\n"
+msgstr " \\echo TEXT     zapsat text na standardní výstup\n"
+
+#: help.c:212
+msgid " \\encoding ENCODING  set client encoding\n"
+msgstr " \\encoding KÓDOVÁNÍ  nastavení kódování klienta\n"
+
+#: help.c:213
+msgid " \\f STRING      set field separator\n"
+msgstr " \\f ØETÌZEC     nastavení oddìlovaèe polí\n"
+
+#: help.c:214
+msgid ""
+" \\g FILENAME    send SQL command to server (and write results to file or |"
+"pipe)\n"
+msgstr ""
+" \\g SOUBOR      po¹le SQL dotaz na server (a zapí¹e výsledek do souboru to nebo |"
+"roury)\n"
+
+#: help.c:215
+msgid " \\h NAME        help on syntax of SQL commands, * for all commands\n"
+msgstr " \\n JMÉNO       nápovìda syntaxe SQL pøíkazù, * pro v¹echny pøíkazy\n"
+
+#: help.c:216
+#, c-format
+msgid " \\H             toggle HTML output mode (currently %s)\n"
+msgstr " \\H             zapne HTML mód výstupu (nyní %s)\n"
+
+#: help.c:218
+msgid " \\i FILENAME    execute commands from file\n"
+msgstr " \\i SOUBOR      provedení pøíkazù ze souboru\n"
+
+#: help.c:219
+msgid " \\l             list all databases\n"
+msgstr " \\l             seznam v¹ech databází\n"
+
+#: help.c:220
+msgid ""
+" \\lo_export, \\lo_import, \\lo_list, \\lo_unlink\n"
+"                large object operations\n"
+msgstr ""
+" \\lo_export, \\lo_import, \\lo_list, \\lo_unlink\n"
+"                operace s \"large objects\"\n"
+
+#: help.c:222
+msgid " \\o FILENAME    send all query results to file or |pipe\n"
+msgstr " \\o SOUBOR      pøesmìrování výsledkù dotazu do souboru nebo |roury\n"
+
+#: help.c:223
+msgid " \\p             show the content of the current query buffer\n"
+msgstr " \\p             ukázat souèasný obsah dotazového bufferu\n"
+
+#: help.c:224
+msgid ""
+" \\pset VAR      set table output option (VAR := {format|border|expanded|\n"
+"                fieldsep|null|recordsep|tuples_only|title|tableattr|pager})\n"
+msgstr ""
+" \\pset VAR      nastavení parametrù výstupu (VAR := {format|border|expanded|\n"
+"                fieldsep|null|recordsep|tuples_only|title|tableattr|pager})\n"
+
+#: help.c:226
+msgid " \\q             quit psql\n"
+msgstr " \\q             ukonèení psql\n"
+
+#: help.c:227
+msgid " \\qecho TEXT    write text to query output stream (see \\o)\n"
+msgstr " \\qecho TEXT    zapsání text na výstup dotazù (viz. \\o)\n"
+
+#: help.c:228
+msgid " \\r             reset (clear) the query buffer\n"
+msgstr " \\r             vyprázdnìní bufferu s dotazy\n"
+
+#: help.c:229
+msgid " \\s FILENAME    print history or save it to file\n"
+msgstr " \\s SOUBOR      vytisknutí historie nebo ji ulo¾í do souboru\n"
+
+#: help.c:230
+msgid " \\set NAME VALUE  set internal variable\n"
+msgstr " \\set JMÉNO HODNOTA nastavení interní promìnné\n"
+
+#: help.c:231
+#, c-format
+msgid " \\t             show only rows (currently %s)\n"
+msgstr " \\t             ukazovat pouze øádky (nyní %s)\n"
+
+#: help.c:233
+msgid " \\T TEXT        set HTML table tag attributes\n"
+msgstr " \\T TEXT        nastavení atributù HTML tagu table\n"
+
+#: help.c:234
+msgid " \\unset NAME    unset (delete) internal variable\n"
+msgstr " \\unset JMÉNO   zru¹ení interní promìnné\n"
+
+#: help.c:235
+msgid " \\w FILENAME    write current query buffer to file\n"
+msgstr " \\w SOUBOR      zapsání souèasného bufferu s dotazem do souboru\n"
+
+#: help.c:236
+#, c-format
+msgid " \\x             toggle expanded output (currently %s)\n"
+msgstr ""
+
+#: help.c:238
+msgid " \\z             list table access privileges\n"
+msgstr " \\z             seznam tabulek a pøístupových práv\n"
+
+#: help.c:239
+msgid " \\! [COMMAND]   execute command in shell or start interactive shell\n"
+msgstr " \\! [PØÍKAZ]    provedení pøíkazu v shellu nebo nastartuje interaktivní shell\n"
+
+#: help.c:266
+msgid "Available help:"
+msgstr "Dostupná nápovìda:"
+
+#: help.c:297
+#, c-format
+msgid ""
+"Command:     %s\n"
+"Description: %s\n"
+"Syntax:\n"
+"%s\n"
+"\n"
+msgstr ""
+"Pøíkaz:     %s\n"
+"Popis:      %s\n"
+"Syntaxe:\n"
+"%s\n"
+"\n"
+
+#: help.c:308
+#, c-format
+msgid ""
+"No help available for '%-.*s'.\n"
+"Try \\h with no arguments to see available help.\n"
+msgstr ""
+"Nápovìda pro '%-.*s' je nedostupná.\n"
+"Pomocí \\h bez parametrù lze získat seznam dostupných nápovìd.\n"
+
+#: input.c:171
+#, c-format
+msgid "could not save history to %s: %s\n"
+msgstr "nelze ulo¾it historii do souboru %s: %s\n"
+
+#: large_obj.c:66
+msgid "Warning: Your transaction in progress has been committed."
+msgstr "Varování: Va¹e transakce byla úspì¹nì ukonèena (commit)."
+
+#: large_obj.c:68
+msgid "Warning: Your transaction in progress has been rolled back."
+msgstr "Varování: Va¹e transakce byla neúspì¹nì ukonèena (rollback)."
+
+#: large_obj.c:95
+msgid "\\lo_export: not connected to a database\n"
+msgstr "\\lo_export: není spojení s databází\n"
+
+#: large_obj.c:162
+msgid "\\lo_import: not connected to a database\n"
+msgstr "\\lo_import: není spojení s databází\n"
+
+#: large_obj.c:253
+msgid "\\lo_unlink: not connected to a database\n"
+msgstr "\\lo_unlink: není spojení s databází\n"
+
+#: describe.c:57 describe.c:110 describe.c:169 describe.c:221 describe.c:269
+#: describe.c:393 describe.c:522 describe.c:1010 large_obj.c:328
+msgid "Description"
+msgstr "Popis"
+
+#: large_obj.c:336
+msgid "Large objects"
+msgstr "Velké objekty (LO)"
+
+#: mainloop.c:242
+#, c-format
+msgid "Use \"\\q\" to leave %s.\n"
+msgstr "Pou¾ijte \"\\q\" pro odchod z %s.\n"
+
+#: print.c:367
+msgid "(No rows)\n"
+msgstr "(®ádné øádky)\n"
+
+#: print.c:1072
+msgid "(1 row)"
+msgstr "(1 øádka)"
+
+#: print.c:1074
+#, c-format
+msgid "(%d rows)"
+msgstr "(%d øádek)"
+
+#: startup.c:141 startup.c:615
+#, c-format
+msgid "%s: out of memory\n"
+msgstr "%s: do¹la pamì»\n"
+
+#: startup.c:177
+msgid "User name: "
+msgstr "U¾ivatelské jméno: "
+
+#: startup.c:286
+#, c-format
+msgid ""
+"Welcome to %s, the PostgreSQL interactive terminal.\n"
+"\n"
+"Type:  \\copyright for distribution terms\n"
+"       \\h for help with SQL commands\n"
+"       \\? for help on internal slash commands\n"
+"       \\g or terminate with semicolon to execute query\n"
+"       \\q to quit\n"
+"\n"
+msgstr ""
+"Vítejte do %s, interaktivního terminálu PostgreSQL.\n"
+"\n"
+"Pi¹te: \\copyright pro podmínky distribuce\n"
+"       \\h pro nápovìdu k SQL pøíkazùm\n"
+"       \\? pro nápovìdu k interním pøíkazùm\n"
+"       \\g nebo støedník pro ukonèení SQL pøíkazù\n"
+"       \\q pro ukonèení programu\n"
+"\n"
+
+#: startup.c:461
+#, c-format
+msgid "%s: couldn't set printing parameter %s\n"
+msgstr "%s: nelze nastavit tiskový parametr %s\n"
+
+#: startup.c:507
+#, c-format
+msgid "%s: could not delete variable %s\n"
+msgstr "%s: nelze smazat promìnná %s\n"
+
+#: startup.c:517
+#, c-format
+msgid "%s: could not set variable %s\n"
+msgstr "%s: nelze nastavit promìnná %s\n"
+
+#: startup.c:548 startup.c:563
+#, c-format
+msgid "Try '%s --help' for more information.\n"
+msgstr "Zkuste '%s --help' pro více informací.\n"
+
+#: startup.c:556
+#, c-format
+msgid ""
+"%s was compiled without support for long options.\n"
+"Use --help for help on invocation options.\n"
+msgstr ""
+"%s byl kompilován bez podpory pro dlouhé parametry.\n"
+"Zkuste --help pro napovìdu.\n"
+
+#: startup.c:581
+#, c-format
+msgid "%s: warning: extra option %s ignored\n"
+msgstr "%s: Varování: zvlá¹tní parametr %s ignorován\n"
+
+#: startup.c:588
+#, c-format
+msgid "%s: Warning: The -u option is deprecated. Use -U.\n"
+msgstr "%s: Varování: parametr -u je ji¾ neplatný. Pou¾íte -U.\n"
+
+#: startup.c:644
+msgid "contains support for: "
+msgstr "obsahuje podporu pro: "
+
+#: startup.c:647
+msgid "readline"
+msgstr ""
+
+#: startup.c:657
+msgid "history"
+msgstr ""
+
+#: startup.c:666
+msgid "multibyte"
+msgstr ""
+
+#: startup.c:674
+msgid ""
+"Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group\n"
+"Portions Copyright (c) 1996, Regents of the University of California\n"
+"Read the file COPYRIGHT or use the command \\copyright to see the\n"
+"usage and distribution terms."
+msgstr ""
+"Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group\n"
+"Portions Copyright (c) 1996, Regents of the University of California\n"
+"Ètìte soubor COPYRIGHT nebo pou¾íte pøíkaz \\copyright pro podmínky\n"
+"pou¾ítí a distribuce."
+
+#: startup.c:699
+#, c-format
+msgid ""
+"SSL connection (cipher: %s, bits: %i)\n"
+"\n"
+msgstr ""
+"SSL spojení (¹ifra: %s, bitù: %i)\n"
+"\n"
+
+#: describe.c:56 describe.c:100 describe.c:158 describe.c:220 describe.c:260
+#: describe.c:393 describe.c:1004
+msgid "Name"
+msgstr "Jméno"
+
+#: describe.c:56
+msgid "(all types)"
+msgstr "(v¹echny typy)"
+
+#: describe.c:57
+msgid "Data type"
+msgstr "Datový typ"
+
+#: describe.c:73
+msgid "List of aggregate functions"
+msgstr "Seznam aggregátních funkcí"
+
+#: describe.c:100
+msgid "Result data type"
+msgstr "Datový typ výsledku"
+
+#: describe.c:101
+msgid "Argument data types"
+msgstr "Datový typ parametru"
+
+#: describe.c:109 describe.c:260 describe.c:1005
+msgid "Owner"
+msgstr "Vlastník"
+
+#: describe.c:109
+msgid "Language"
+msgstr "Jazyk"
+
+#: describe.c:110
+msgid "Source code"
+msgstr "Zdrojový kód"
+
+#: describe.c:135
+msgid "List of functions"
+msgstr "Seznam funkcí"
+
+#: describe.c:166
+msgid "Internal name"
+msgstr "Interní jméno"
+
+#: describe.c:166
+msgid "Size"
+msgstr "Velikost"
+
+#: describe.c:193
+msgid "List of data types"
+msgstr "Seznam datových typù"
+
+#: describe.c:220
+msgid "Left arg type"
+msgstr "Typ levého arg."
+
+#: describe.c:220
+msgid "Right arg type"
+msgstr "Typ pravého arg."
+
+#: describe.c:221
+msgid "Result type"
+msgstr "Typ výsledku"
+
+#: describe.c:236
+msgid "List of operators"
+msgstr "Seznam operátorù"
+
+#: describe.c:264
+msgid "Encoding"
+msgstr "Kódování"
+
+#: describe.c:279
+msgid "List of databases"
+msgstr "Seznam databází"
+
+#: describe.c:306
+msgid "Table"
+msgstr "Tabulka"
+
+#: describe.c:306
+msgid "Access privileges"
+msgstr "Pøístupová práva"
+
+#: describe.c:320
+#, c-format
+msgid "Access privileges for database \"%s\""
+msgstr "Pøístupová práva pro databázi \"%s\""
+
+#: describe.c:393
+msgid "Object"
+msgstr "Objekt"
+
+#: describe.c:394
+msgid "aggregate"
+msgstr ""
+
+#: describe.c:394
+msgid "function"
+msgstr "funkce"
+
+#: describe.c:394
+msgid "operator"
+msgstr "operátor"
+
+#: describe.c:395
+msgid "data type"
+msgstr "datový typ"
+
+#: describe.c:395 describe.c:1004
+msgid "table"
+msgstr "tabulka"
+
+#: describe.c:395 describe.c:1004
+msgid "view"
+msgstr "náhled"
+
+#: describe.c:396 describe.c:1004
+msgid "index"
+msgstr ""
+
+#: describe.c:396 describe.c:1004
+msgid "sequence"
+msgstr ""
+
+#: describe.c:396
+msgid "rule"
+msgstr ""
+
+#: describe.c:397
+msgid "trigger"
+msgstr ""
+
+#: describe.c:414
+msgid "Object descriptions"
+msgstr "Popis objektu"
+
+#: describe.c:495
+#, c-format
+msgid "Did not find any relation named \"%s\".\n"
+msgstr "Nelze nalézt relaci se jménem \"%s\".\n"
+
+#: describe.c:509
+msgid "Column"
+msgstr "Sloupec"
+
+#: describe.c:510 describe.c:1005
+msgid "Type"
+msgstr "Typ"
+
+#: describe.c:516
+msgid "Modifiers"
+msgstr "Modifikátory"
+
+#: describe.c:620
+#, c-format
+msgid "Table \"%s\""
+msgstr "Tabulka \"%s\""
+
+#: describe.c:623
+#, c-format
+msgid "View \"%s\""
+msgstr "Náhled \"%s\""
+
+#: describe.c:626
+#, c-format
+msgid "Sequence \"%s\""
+msgstr ""
+
+#: describe.c:629
+#, c-format
+msgid "Index \"%s\""
+msgstr ""
+
+#: describe.c:632
+#, c-format
+msgid "Special relation \"%s\""
+msgstr "Speciální relace \"%s\""
+
+#: describe.c:635
+#, c-format
+msgid "?%c? \"%s\""
+msgstr ""
+
+#: describe.c:659
+msgid "unique "
+msgstr "unikátní "
+
+#: describe.c:661
+msgid " (lossy)"
+msgstr " (ztrátový)"
+
+#: describe.c:666
+msgid " (primary key)"
+msgstr " (primární klíè)"
+
+#: describe.c:676
+#, c-format
+msgid "View definition: %s"
+msgstr "Definice náhledu: %s"
+
+#: describe.c:793
+msgid "Indexes"
+msgstr "Indexy"
+
+#: describe.c:808
+msgid "Primary key"
+msgstr "Primární klíè"
+
+#: describe.c:823
+msgid "Unique keys"
+msgstr "Unikátní klíè"
+
+#: describe.c:838
+msgid "Check constraints"
+msgstr "Kontrolní pravidla"
+
+#: describe.c:841
+#, c-format
+msgid "%s: \"%s\" %s"
+msgstr ""
+
+#: describe.c:844
+#, c-format
+msgid "%*s  \"%s\" %s"
+msgstr ""
+
+#: describe.c:852
+msgid "Rules"
+msgstr ""
+
+#: describe.c:867
+msgid "Triggers"
+msgstr ""
+
+#: describe.c:938
+msgid "User name"
+msgstr "U¾ivatelské jméno"
+
+#: describe.c:938
+msgid "User ID"
+msgstr "ID u¾ivatele"
+
+#: describe.c:939
+msgid "superuser, create database"
+msgstr "super-u¾ivatel, create database"
+
+#: describe.c:940
+msgid "superuser"
+msgstr "super-u¾ivatel"
+
+#: describe.c:940
+msgid "create database"
+msgstr ""
+
+#: describe.c:941
+msgid "Attributes"
+msgstr "Atributy"
+
+#: describe.c:955
+msgid "List of database users"
+msgstr "Seznam u¾ivatelù databáze"
+
+#: describe.c:1005
+msgid "special"
+msgstr "speciální"
+
+#: describe.c:1048
+msgid "No matching relations found.\n"
+msgstr "Srovnatelná relace nebyla nalezena.\n"
+
+#: describe.c:1050
+msgid "No relations found.\n"
+msgstr "Relace nebyla nalezena.\n"
+
+#: describe.c:1055
+msgid "List of relations"
+msgstr "Seznam relací"
