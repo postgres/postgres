@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Wed Apr  7 14:34:42 EDT 2004
+Last updated:		Wed Apr  7 15:14:17 EDT 2004
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -99,16 +99,16 @@ Multi-Language Support
 ======================
 
 * Add NCHAR (as distinguished from ordinary varchar),
-* Allow LOCALE on a per-column basis, default to ASCII
+* Allow locale to be set at database creation
+* Allow locale on a per-column basis, default to ASCII
+* Optimize locale to have minimal performance impact when not used (Peter E)
 * Support multiple simultaneous character sets, per SQL92
 * Improve Unicode combined character handling
-* Optimize locale to have minimal performance impact when not used (Peter E)
 * Add octet_length_server() and octet_length_client() (Thomas, Tatsuo)
 * Make octet_length_client the same as octet_length() (?)
 * Prevent mismatch of frontend/backend encodings from converting bytea
   data from being interpreted as encoded strings
 * Fix upper()/lower() to work for multibyte encodings
-* Allow locale to be set at database creation
 
 
 Views / Rules
