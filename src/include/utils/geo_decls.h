@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geo_decls.h,v 1.2 1997/04/22 17:32:41 scrappy Exp $
+ * $Id: geo_decls.h,v 1.3 1997/04/25 18:40:50 scrappy Exp $
  *
  * NOTE
  *    These routines do *not* use the float types from adt/.
@@ -321,6 +321,7 @@ extern double *circle_area(CIRCLE *circle);
 extern double *circle_diameter(CIRCLE *circle);
 extern double *circle_radius(CIRCLE *circle);
 extern double *circle_distance(CIRCLE *circle1, CIRCLE *circle2);
+extern double *dist_pc(Point *point, CIRCLE *circle);
 extern Point *circle_center(CIRCLE *circle);
 extern CIRCLE *circle(Point *center, float8 *radius);
 extern CIRCLE *poly_circle(POLYGON *poly);

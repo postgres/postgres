@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/nabstime.c,v 1.24 1997/04/22 17:36:57 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/nabstime.c,v 1.25 1997/04/25 18:40:33 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -41,39 +41,43 @@
  *
  * Returns the number of seconds since epoch (January 1 1970 GMT)
  */
-
 AbsoluteTime
 GetCurrentAbsoluteTime(void)
 {
     time_t now;
 
 #ifdef USE_POSIX_TIME
+    struct tm *tm;
+
     now = time(NULL);
 #else /* ! USE_POSIX_TIME */
-    struct timeb tbnow;		/* the old V7-ism */
+    struct timeb tb;		/* the old V7-ism */
 
-    (void) ftime(&tbnow);
-    now = tbnow.time;
+    (void) ftime(&tb);
+    now = tb.time;
 #endif
 
     if (! HasCTZSet) {
 #ifdef USE_POSIX_TIME
 #if defined(HAVE_TZSET) && defined(HAVE_INT_TIMEZONE)
-	tzset();
-	CTimeZone = timezone;
-	CDayLight = daylight;
-	strcpy( CTZName, tzname[0]);
-#else /* !HAVE_TZSET */
-	struct tm *tmnow = localtime(&now);
+	tm = localtime(&now);
 
-	CTimeZone = - tmnow->tm_gmtoff;	/* tm_gmtoff is Sun/DEC-ism */
-	CDayLight = (tmnow->tm_isdst > 0);
-	/* XXX is there a better way to get local timezone string in V7? - tgl 97/03/18 */
-	strftime( CTZName, MAXTZLEN, "%Z", localtime(&now));
+	CDayLight = tm->tm_isdst;
+	CTimeZone = (tm->tm_isdst? (timezone - 3600): timezone);
+	strcpy( CTZName, tzname[tm->tm_isdst]);
+#else /* !HAVE_TZSET */
+	tm = localtime(&now);
+
+	CTimeZone = - tm->tm_gmtoff;	/* tm_gmtoff is Sun/DEC-ism */
+	CDayLight = (tm->tm_isdst > 0);
+	/* XXX is there a better way to get local timezone string w/o tzname? - tgl 97/03/18 */
+	strftime( CTZName, MAXTZLEN, "%Z", tm);
+	/* XXX FreeBSD man pages indicate that this should work - tgl 97/04/23 */
+	strcpy(CTZName, tm->tm_zone);
 #endif
 #else /* ! USE_POSIX_TIME */
-	CTimeZone = tbnow.timezone * 60;
-	CDayLight = (tbnow.dstflag != 0);
+	CTimeZone = tb.timezone * 60;
+	CDayLight = (tb.dstflag != 0);
 	/* XXX does this work to get the local timezone string in V7? - tgl 97/03/18 */
 	strftime( CTZName, MAXTZLEN, "%Z", localtime(&now));
 #endif 
@@ -91,7 +95,9 @@ printf( "GetCurrentAbsoluteTime- timezone is %s -> %d seconds from UTC\n",
 void
 GetCurrentTime(struct tm *tm)
 {
-    abstime2tm( GetCurrentTransactionStartTime(), &CTimeZone, tm);
+    int tz;
+
+    abstime2tm( GetCurrentTransactionStartTime(), &tz, tm);
 
     return;
 } /* GetCurrentTime() */
@@ -157,12 +163,14 @@ tm2abstime( struct tm *tm, int tz)
       (day == MIN_DAYNUM && sec > 0))
 	return(INVALID_ABSTIME);
 
+#if FALSE
     /* daylight correction */
     if (tm->tm_isdst < 0) {		/* unknown; find out */
 	tm->tm_isdst = (CDayLight > 0);
     };
     if (tm->tm_isdst > 0)
 	sec -= 60*60;
+#endif
 
     /* check for reserved values (e.g. "current" on edge of usual range */
     if (!AbsoluteTimeIsReal(sec))
@@ -511,10 +519,10 @@ datetime_abstime(DateTime *datetime)
 
     } else {
 	if (DATETIME_IS_RELATIVE(*datetime)) {
-	    datetime2tm( SetDateTime(*datetime), &CTimeZone, tm, &fsec);
+	    datetime2tm( SetDateTime(*datetime), NULL, tm, &fsec);
 	    result = tm2abstime( tm, 0);
 
-	} else if (datetime2tm( *datetime, &CTimeZone, tm, &fsec) == 0) {
+	} else if (datetime2tm( *datetime, NULL, tm, &fsec) == 0) {
 	    result = tm2abstime( tm, 0);
 
 	} else {
