@@ -26,7 +26,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.10 1996/10/05 03:24:47 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.11 1996/10/05 21:34:33 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -97,7 +97,7 @@ do
 	*)
 		echo "Unrecognized option '$1'.  Syntax is:"
 		echo "initdb [-t | --template] [-d | --debug] [-n | --noclean]" \
-		     "[-u SUPSERUSER | --username=SUPERUSER] [-r DATADIR | --pgdata=DATADIR]"
+		     "[-u SUPERUSER | --username=SUPERUSER] [-r DATADIR | --pgdata=DATADIR]"
 		exit 100
 	esac
 	shift
