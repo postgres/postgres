@@ -14,7 +14,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_amproc.h,v 1.36 2003/05/15 15:50:19 petere Exp $
+ * $Id: pg_amproc.h,v 1.37 2003/05/26 00:11:27 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -103,10 +103,10 @@ DATA(insert (	1996 1 1107 ));
 DATA(insert (	1998 1 1314 ));
 DATA(insert (	2000 1 1358 ));
 DATA(insert (	2002 1 1672 ));
-DATA(insert (	2003 1 1079 ));
-DATA(insert (	2039 1 1314 ));
+DATA(insert (	2003 1  360 ));
+DATA(insert (	2039 1 2045 ));
 DATA(insert (	2095 1 2166 ));
-DATA(insert (	2096 1 2173 ));
+DATA(insert (	2096 1 2166 ));
 DATA(insert (	2097 1 2180 ));
 DATA(insert (	2098 1 2187 ));
 

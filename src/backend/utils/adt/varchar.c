@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varchar.c,v 1.96 2003/05/12 23:08:50 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varchar.c,v 1.97 2003/05/26 00:11:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -343,7 +343,10 @@ name_bpchar(PG_FUNCTION_ARGS)
 
 
 /*****************************************************************************
- *	 varchar - varchar()													 *
+ *	 varchar - varchar(n)
+ *
+ * Note: varchar piggybacks on type text for most operations, and so has no
+ * C-coded functions except for I/O and typmod checking.
  *****************************************************************************/
 
 /*
@@ -700,7 +703,7 @@ bpcharcmp(PG_FUNCTION_ARGS)
 
 /*
  * bpchar needs a specialized hash function because we want to ignore
- * trailing blanks in comparisons.	(varchar can use plain hashvarlena.)
+ * trailing blanks in comparisons.
  */
 Datum
 hashbpchar(PG_FUNCTION_ARGS)
@@ -719,188 +722,4 @@ hashbpchar(PG_FUNCTION_ARGS)
 	PG_FREE_IF_COPY(key, 0);
 
 	return result;
-}
-
-
-/*****************************************************************************
- *	Functions used for varchar
- *****************************************************************************/
-
-Datum
-varcharlen(PG_FUNCTION_ARGS)
-{
-	VarChar    *arg = PG_GETARG_VARCHAR_P(0);
-
-	/* optimization for single byte encoding */
-	if (pg_database_encoding_max_length() <= 1)
-		PG_RETURN_INT32(VARSIZE(arg) - VARHDRSZ);
-
-	PG_RETURN_INT32(
-			  pg_mbstrlen_with_len(VARDATA(arg), VARSIZE(arg) - VARHDRSZ)
-		);
-}
-
-Datum
-varcharoctetlen(PG_FUNCTION_ARGS)
-{
-	VarChar    *arg = PG_GETARG_VARCHAR_P(0);
-
-	PG_RETURN_INT32(VARSIZE(arg) - VARHDRSZ);
-}
-
-
-/*****************************************************************************
- *	Comparison Functions used for varchar
- *
- * Note: btree indexes need these routines not to leak memory; therefore,
- * be careful to free working copies of toasted datums.  Most places don't
- * need to be so careful.
- *****************************************************************************/
-
-Datum
-varchareq(PG_FUNCTION_ARGS)
-{
-	VarChar    *arg1 = PG_GETARG_VARCHAR_P(0);
-	VarChar    *arg2 = PG_GETARG_VARCHAR_P(1);
-	int			len1,
-				len2;
-	bool		result;
-
-	len1 = VARSIZE(arg1) - VARHDRSZ;
-	len2 = VARSIZE(arg2) - VARHDRSZ;
-
-	/* fast path for different-length inputs */
-	if (len1 != len2)
-		result = false;
-	else
-		result = (varstr_cmp(VARDATA(arg1), len1, VARDATA(arg2), len2) == 0);
-
-	PG_FREE_IF_COPY(arg1, 0);
-	PG_FREE_IF_COPY(arg2, 1);
-
-	PG_RETURN_BOOL(result);
-}
-
-Datum
-varcharne(PG_FUNCTION_ARGS)
-{
-	VarChar    *arg1 = PG_GETARG_VARCHAR_P(0);
-	VarChar    *arg2 = PG_GETARG_VARCHAR_P(1);
-	int			len1,
-				len2;
-	bool		result;
-
-	len1 = VARSIZE(arg1) - VARHDRSZ;
-	len2 = VARSIZE(arg2) - VARHDRSZ;
-
-	/* fast path for different-length inputs */
-	if (len1 != len2)
-		result = true;
-	else
-		result = (varstr_cmp(VARDATA(arg1), len1, VARDATA(arg2), len2) != 0);
-
-	PG_FREE_IF_COPY(arg1, 0);
-	PG_FREE_IF_COPY(arg2, 1);
-
-	PG_RETURN_BOOL(result);
-}
-
-Datum
-varcharlt(PG_FUNCTION_ARGS)
-{
-	VarChar    *arg1 = PG_GETARG_VARCHAR_P(0);
-	VarChar    *arg2 = PG_GETARG_VARCHAR_P(1);
-	int			len1,
-				len2;
-	int			cmp;
-
-	len1 = VARSIZE(arg1) - VARHDRSZ;
-	len2 = VARSIZE(arg2) - VARHDRSZ;
-
-	cmp = varstr_cmp(VARDATA(arg1), len1, VARDATA(arg2), len2);
-
-	PG_FREE_IF_COPY(arg1, 0);
-	PG_FREE_IF_COPY(arg2, 1);
-
-	PG_RETURN_BOOL(cmp < 0);
-}
-
-Datum
-varcharle(PG_FUNCTION_ARGS)
-{
-	VarChar    *arg1 = PG_GETARG_VARCHAR_P(0);
-	VarChar    *arg2 = PG_GETARG_VARCHAR_P(1);
-	int			len1,
-				len2;
-	int			cmp;
-
-	len1 = VARSIZE(arg1) - VARHDRSZ;
-	len2 = VARSIZE(arg2) - VARHDRSZ;
-
-	cmp = varstr_cmp(VARDATA(arg1), len1, VARDATA(arg2), len2);
-
-	PG_FREE_IF_COPY(arg1, 0);
-	PG_FREE_IF_COPY(arg2, 1);
-
-	PG_RETURN_BOOL(cmp <= 0);
-}
-
-Datum
-varchargt(PG_FUNCTION_ARGS)
-{
-	VarChar    *arg1 = PG_GETARG_VARCHAR_P(0);
-	VarChar    *arg2 = PG_GETARG_VARCHAR_P(1);
-	int			len1,
-				len2;
-	int			cmp;
-
-	len1 = VARSIZE(arg1) - VARHDRSZ;
-	len2 = VARSIZE(arg2) - VARHDRSZ;
-
-	cmp = varstr_cmp(VARDATA(arg1), len1, VARDATA(arg2), len2);
-
-	PG_FREE_IF_COPY(arg1, 0);
-	PG_FREE_IF_COPY(arg2, 1);
-
-	PG_RETURN_BOOL(cmp > 0);
-}
-
-Datum
-varcharge(PG_FUNCTION_ARGS)
-{
-	VarChar    *arg1 = PG_GETARG_VARCHAR_P(0);
-	VarChar    *arg2 = PG_GETARG_VARCHAR_P(1);
-	int			len1,
-				len2;
-	int			cmp;
-
-	len1 = VARSIZE(arg1) - VARHDRSZ;
-	len2 = VARSIZE(arg2) - VARHDRSZ;
-
-	cmp = varstr_cmp(VARDATA(arg1), len1, VARDATA(arg2), len2);
-
-	PG_FREE_IF_COPY(arg1, 0);
-	PG_FREE_IF_COPY(arg2, 1);
-
-	PG_RETURN_BOOL(cmp >= 0);
-}
-
-Datum
-varcharcmp(PG_FUNCTION_ARGS)
-{
-	VarChar    *arg1 = PG_GETARG_VARCHAR_P(0);
-	VarChar    *arg2 = PG_GETARG_VARCHAR_P(1);
-	int			len1,
-				len2;
-	int			cmp;
-
-	len1 = VARSIZE(arg1) - VARHDRSZ;
-	len2 = VARSIZE(arg2) - VARHDRSZ;
-
-	cmp = varstr_cmp(VARDATA(arg1), len1, VARDATA(arg2), len2);
-
-	PG_FREE_IF_COPY(arg1, 0);
-	PG_FREE_IF_COPY(arg2, 1);
-
-	PG_RETURN_INT32(cmp);
 }

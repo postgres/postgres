@@ -16,7 +16,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_amop.h,v 1.48 2003/05/15 15:50:19 petere Exp $
+ * $Id: pg_amop.h,v 1.49 2003/05/26 00:11:27 tgl Exp $
  *
  * NOTES
  *	 the genbki.sh script reads this file and generates .bki
@@ -219,14 +219,14 @@ DATA(insert (	 426 4 f 1061 ));
 DATA(insert (	 426 5 f 1060 ));
 
 /*
- *	btree varchar_ops
+ *	btree varchar_ops (same operators as text_ops)
  */
 
-DATA(insert (	2003 1 f 1066 ));
-DATA(insert (	2003 2 f 1067 ));
-DATA(insert (	2003 3 f 1062 ));
-DATA(insert (	2003 4 f 1069 ));
-DATA(insert (	2003 5 f 1068 ));
+DATA(insert (	2003 1 f 664 ));
+DATA(insert (	2003 2 f 665 ));
+DATA(insert (	2003 3 f  98 ));
+DATA(insert (	2003 4 f 667 ));
+DATA(insert (	2003 5 f 666 ));
 
 /*
  *	btree bytea_ops
@@ -389,14 +389,14 @@ DATA(insert (	2095 4 f 2317 ));
 DATA(insert (	2095 5 f 2318 ));
 
 /*
- *	btree varchar pattern
+ *	btree varchar pattern (same operators as text)
  */
 
-DATA(insert (	2096 1 f 2320 ));
-DATA(insert (	2096 2 f 2321 ));
-DATA(insert (	2096 3 f 2322 ));
-DATA(insert (	2096 4 f 2323 ));
-DATA(insert (	2096 5 f 2324 ));
+DATA(insert (	2096 1 f 2314 ));
+DATA(insert (	2096 2 f 2315 ));
+DATA(insert (	2096 3 f 2316 ));
+DATA(insert (	2096 4 f 2317 ));
+DATA(insert (	2096 5 f 2318 ));
 
 /*
  *	btree bpchar pattern
@@ -462,7 +462,7 @@ DATA(insert (	1999 1 f 1320 ));
 /* timetz_ops */
 DATA(insert (	2001 1 f 1550 ));
 /* varchar_ops */
-DATA(insert (	2004 1 f 1062 ));
+DATA(insert (	2004 1 f   98 ));
 /* timestamp_ops */
 DATA(insert (	2040 1 f 2060 ));
 

@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: paths.h,v 1.66 2003/02/15 20:12:41 tgl Exp $
+ * $Id: paths.h,v 1.67 2003/05/26 00:11:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -41,7 +41,8 @@ extern Path *best_inner_indexscan(Query *root, RelOptInfo *rel,
 extern List *extract_or_indexqual_conditions(RelOptInfo *rel,
 								IndexOptInfo *index,
 								Expr *orsubclause);
-extern List *expand_indexqual_conditions(List *indexquals);
+extern List *expand_indexqual_conditions(IndexOptInfo *index,
+										 List *clausegroups);
 
 /*
  * orindxpath.c

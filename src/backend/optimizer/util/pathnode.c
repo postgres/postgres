@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/pathnode.c,v 1.88 2003/02/15 20:12:40 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/pathnode.c,v 1.89 2003/05/26 00:11:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -328,7 +328,7 @@ create_seqscan_path(Query *root, RelOptInfo *rel)
  *
  * 'rel' is the parent rel
  * 'index' is an index on 'rel'
- * 'restriction_clauses' is a list of RestrictInfo nodes
+ * 'restriction_clauses' is a list of lists of RestrictInfo nodes
  *			to be used as index qual conditions in the scan.
  * 'pathkeys' describes the ordering of the path.
  * 'indexscandir' is ForwardScanDirection or BackwardScanDirection
@@ -352,9 +352,8 @@ create_index_path(Query *root,
 	pathnode->path.parent = rel;
 	pathnode->path.pathkeys = pathkeys;
 
-	indexquals = get_actual_clauses(restriction_clauses);
-	/* expand special operators to indexquals the executor can handle */
-	indexquals = expand_indexqual_conditions(indexquals);
+	/* Convert RestrictInfo nodes to indexquals the executor can handle */
+	indexquals = expand_indexqual_conditions(index, restriction_clauses);
 
 	/*
 	 * We are making a pathnode for a single-scan indexscan; therefore,

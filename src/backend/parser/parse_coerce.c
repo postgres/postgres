@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_coerce.c,v 2.96 2003/04/29 22:13:10 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_coerce.c,v 2.97 2003/05/26 00:11:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,7 +32,6 @@
 static Node *coerce_type_typmod(Node *node,
 								Oid targetTypeId, int32 targetTypMod,
 								CoercionForm cformat, bool isExplicit);
-static Oid	PreferredType(CATEGORY category, Oid type);
 static Node *build_func_call(Oid funcid, Oid rettype, List *args,
 							 CoercionForm fformat);
 
@@ -66,28 +65,43 @@ coerce_to_target_type(ParseState *pstate, Node *expr, Oid exprtype,
 	if (can_coerce_type(1, &exprtype, &targettype, ccontext))
 		expr = coerce_type(pstate, expr, exprtype, targettype,
 						   ccontext, cformat);
-	/*
-	 * String hacks to get transparent conversions for char and varchar:
-	 * if a coercion to text is available, use it for forced coercions to
-	 * char(n) or varchar(n).
-	 *
-	 * This is pretty grotty, but seems easier to maintain than providing
-	 * entries in pg_cast that parallel all the ones for text.
-	 */
-	else if (ccontext >= COERCION_ASSIGNMENT &&
-			 (targettype == BPCHAROID || targettype == VARCHAROID))
+	else if (ccontext >= COERCION_ASSIGNMENT)
 	{
-		Oid			text_id = TEXTOID;
+		/*
+		 * String hacks to get transparent conversions for char and varchar:
+		 * if a coercion to text is available, use it for forced coercions to
+		 * char(n) or varchar(n) or domains thereof.
+		 *
+		 * This is pretty grotty, but seems easier to maintain than providing
+		 * entries in pg_cast that parallel all the ones for text.
+		 */
+		Oid		targetbasetype = getBaseType(targettype);
 
-		if (can_coerce_type(1, &exprtype, &text_id, ccontext))
+		if (targetbasetype == BPCHAROID || targetbasetype == VARCHAROID)
 		{
-			expr = coerce_type(pstate, expr, exprtype, text_id,
-							   ccontext, cformat);
-			/* Need a RelabelType if no typmod coercion is performed */
-			if (targettypmod < 0)
-				expr = (Node *) makeRelabelType((Expr *) expr,
-												targettype, -1,
-												cformat);
+			Oid			text_id = TEXTOID;
+
+			if (can_coerce_type(1, &exprtype, &text_id, ccontext))
+			{
+				expr = coerce_type(pstate, expr, exprtype, text_id,
+								   ccontext, cformat);
+				if (targetbasetype != targettype)
+				{
+					/* need to coerce to domain over char or varchar */
+					expr = coerce_to_domain(expr, targetbasetype, targettype,
+											cformat);
+				}
+				else
+				{
+					/* need a RelabelType if no typmod coercion will be performed */
+					if (targettypmod < 0)
+						expr = (Node *) makeRelabelType((Expr *) expr,
+														targettype, -1,
+														cformat);
+				}
+			}
+			else
+				expr = NULL;
 		}
 		else
 			expr = NULL;
@@ -923,7 +937,10 @@ enforce_generic_type_consistency(Oid *actual_arg_types,
 
 
 /* TypeCategory()
- * Assign a category to the specified OID.
+ *		Assign a category to the specified type OID.
+ *
+ * NB: this must not return INVALID_TYPE.
+ *
  * XXX This should be moved to system catalog lookups
  * to allow for better type extensibility.
  * - thomas 2001-09-30
@@ -1026,7 +1043,11 @@ TypeCategory(Oid inType)
 
 
 /* IsPreferredType()
- * Check if this type is a preferred type.
+ *		Check if this type is a preferred type for the given category.
+ *
+ * If category is INVALID_TYPE, then we'll return TRUE for preferred types
+ * of any category; otherwise, only for preferred types of that category.
+ *
  * XXX This should be moved to system catalog lookups
  * to allow for better type extensibility.
  * - thomas 2001-09-30
@@ -1034,39 +1055,34 @@ TypeCategory(Oid inType)
 bool
 IsPreferredType(CATEGORY category, Oid type)
 {
-	return (type == PreferredType(category, type));
-}	/* IsPreferredType() */
+	Oid			preftype;
 
+	if (category == INVALID_TYPE)
+		category = TypeCategory(type);
+	else if (category != TypeCategory(type))
+		return false;
 
-/* PreferredType()
- * Return the preferred type OID for the specified category.
- * XXX This should be moved to system catalog lookups
- * to allow for better type extensibility.
- * - thomas 2001-09-30
- */
-static Oid
-PreferredType(CATEGORY category, Oid type)
-{
-	Oid			result;
-
+	/*
+	 * This switch should agree with TypeCategory(), above.  Note that
+	 * at this point, category certainly matches the type.
+	 */
 	switch (category)
 	{
-		case (INVALID_TYPE):
 		case (UNKNOWN_TYPE):
 		case (GENERIC_TYPE):
-			result = UNKNOWNOID;
+			preftype = UNKNOWNOID;
 			break;
 
 		case (BOOLEAN_TYPE):
-			result = BOOLOID;
+			preftype = BOOLOID;
 			break;
 
 		case (STRING_TYPE):
-			result = TEXTOID;
+			preftype = TEXTOID;
 			break;
 
 		case (BITSTRING_TYPE):
-			result = VARBITOID;
+			preftype = VARBITOID;
 			break;
 
 		case (NUMERIC_TYPE):
@@ -1077,52 +1093,59 @@ PreferredType(CATEGORY category, Oid type)
 				type == REGOPERATOROID ||
 				type == REGCLASSOID ||
 				type == REGTYPEOID)
-				result = OIDOID;
+				preftype = OIDOID;
 			else
-				result = FLOAT8OID;
+				preftype = FLOAT8OID;
 			break;
 
 		case (DATETIME_TYPE):
 			if (type == DATEOID)
-				result = TIMESTAMPOID;
+				preftype = TIMESTAMPOID;
 			else
-				result = TIMESTAMPTZOID;
+				preftype = TIMESTAMPTZOID;
 			break;
 
 		case (TIMESPAN_TYPE):
-			result = INTERVALOID;
+			preftype = INTERVALOID;
 			break;
 
 		case (GEOMETRIC_TYPE):
-			result = type;
+			preftype = type;
 			break;
 
 		case (NETWORK_TYPE):
-			result = INETOID;
+			preftype = INETOID;
 			break;
 
 		case (USER_TYPE):
-			result = type;
+			preftype = type;
 			break;
 
 		default:
-			elog(ERROR, "PreferredType: unknown category");
-			result = UNKNOWNOID;
+			elog(ERROR, "IsPreferredType: unknown category");
+			preftype = UNKNOWNOID;
 			break;
 	}
-	return result;
-}	/* PreferredType() */
+
+	return (type == preftype);
+}	/* IsPreferredType() */
 
 
 /* IsBinaryCoercible()
  *		Check if srctype is binary-coercible to targettype.
  *
  * This notion allows us to cheat and directly exchange values without
- * going through the trouble of calling a conversion function.
+ * going through the trouble of calling a conversion function.  Note that
+ * in general, this should only be an implementation shortcut.  Before 7.4,
+ * this was also used as a heuristic for resolving overloaded functions and
+ * operators, but that's basically a bad idea.
  *
  * As of 7.3, binary coercibility isn't hardwired into the code anymore.
  * We consider two types binary-coercible if there is an implicitly
- * invokable, no-function-needed pg_cast entry.
+ * invokable, no-function-needed pg_cast entry.  Also, a domain is always
+ * binary-coercible to its base type, though *not* vice versa (in the other
+ * direction, one must apply domain constraint checks before accepting the
+ * value as legitimate).
  *
  * This function replaces IsBinaryCompatible(), which was an inherently
  * symmetric test.  Since the pg_cast entries aren't necessarily symmetric,
@@ -1139,13 +1162,11 @@ IsBinaryCoercible(Oid srctype, Oid targettype)
 	if (srctype == targettype)
 		return true;
 
-	/* Perhaps the types are domains; if so, look at their base types */
+	/* If srctype is a domain, reduce to its base type */
 	if (OidIsValid(srctype))
 		srctype = getBaseType(srctype);
-	if (OidIsValid(targettype))
-		targettype = getBaseType(targettype);
 
-	/* Somewhat-fast path if same base type */
+	/* Somewhat-fast path for domain -> base type case */
 	if (srctype == targettype)
 		return true;
 
@@ -1174,8 +1195,13 @@ IsBinaryCoercible(Oid srctype, Oid targettype)
  * ccontext determines the set of available casts.
  *
  * If we find a suitable entry in pg_cast, return TRUE, and set *funcid
- * to the castfunc value (which may be InvalidOid for a binary-compatible
- * coercion).
+ * to the castfunc value, which may be InvalidOid for a binary-compatible
+ * coercion.
+ *
+ * NOTE: *funcid == InvalidOid does not necessarily mean that no work is
+ * needed to do the coercion; if the target is a domain then we may need to
+ * apply domain constraint checking.  If you want to check for a zero-effort
+ * conversion then use IsBinaryCoercible().
  */
 bool
 find_coercion_pathway(Oid targetTypeId, Oid sourceTypeId,
@@ -1193,7 +1219,7 @@ find_coercion_pathway(Oid targetTypeId, Oid sourceTypeId,
 	if (OidIsValid(targetTypeId))
 		targetTypeId = getBaseType(targetTypeId);
 
-	/* Domains are automatically binary-compatible with their base type */
+	/* Domains are always coercible to and from their base type */
 	if (sourceTypeId == targetTypeId)
 		return true;
 

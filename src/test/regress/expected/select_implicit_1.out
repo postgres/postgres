@@ -248,12 +248,12 @@ SELECT count(b) FROM test_missing_target GROUP BY b/2 ORDER BY b/2;
 --   w/ existing GROUP BY target using a relation name in target
 SELECT lower(test_missing_target.c), count(c)
   FROM test_missing_target GROUP BY lower(c) ORDER BY lower(c);
-  lower   | count 
-----------+-------
- aaaa     |     2
- bbbb     |     3
- cccc     |     4
- xxxx     |     1
+ lower | count 
+-------+-------
+ aaaa  |     2
+ bbbb  |     3
+ cccc  |     4
+ xxxx  |     1
 (4 rows)
 
 --   w/o existing GROUP BY target

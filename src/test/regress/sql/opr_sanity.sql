@@ -15,6 +15,27 @@
 -- NB: run this test earlier than the create_operator test, because
 -- that test creates some bogus operators...
 
+
+-- Helper functions to deal with cases where binary-coercible matches are
+-- allowed.
+
+-- This should match IsBinaryCoercible() in parse_coerce.c.
+create function binary_coercible(oid, oid) returns bool as
+'SELECT ($1 = $2) OR
+ EXISTS(select 1 from pg_cast where
+        castsource = $1 and casttarget = $2 and
+        castfunc = 0 and castcontext = ''i'')'
+language sql;
+
+-- This one ignores castcontext, so it considers only physical equivalence
+-- and not whether the coercion can be invoked implicitly.
+create function physically_coercible(oid, oid) returns bool as
+'SELECT ($1 = $2) OR
+ EXISTS(select 1 from pg_cast where
+        castsource = $1 and casttarget = $2 and
+        castfunc = 0)'
+language sql;
+
 -- **************** pg_proc ****************
 
 -- Look for illegal values in pg_proc fields.
@@ -180,20 +201,15 @@ SELECT c.*
 FROM pg_cast c, pg_proc p
 WHERE c.castfunc = p.oid AND
     (p.pronargs <> 1
-     OR NOT (c.castsource = p.proargtypes[0] OR
-             EXISTS (SELECT 1 FROM pg_cast k
-                     WHERE k.castfunc = 0 AND
-                       k.castsource = c.castsource AND
-                       k.casttarget = p.proargtypes[0]))
-     OR NOT (p.prorettype = c.casttarget OR
-             EXISTS (SELECT 1 FROM pg_cast k
-                     WHERE k.castfunc = 0 AND
-                       k.castsource = p.prorettype AND
-                       k.casttarget = c.casttarget)));
+     OR NOT binary_coercible(c.castsource, p.proargtypes[0])
+     OR NOT binary_coercible(p.prorettype, c.casttarget));
 
 -- Look for binary compatible casts that do not have the reverse
 -- direction registered as well, or where the reverse direction is not
--- also binary compatible.  This is legal, but probably not intended.
+-- also binary compatible.  This is legal, but usually not intended.
+
+-- As of 7.4, this finds the casts from text and varchar to bpchar, because
+-- those are binary-compatible while the reverse way goes through rtrim().
 
 SELECT *
 FROM pg_cast c
@@ -347,15 +363,17 @@ WHERE p1.oprlsortop != p1.oprrsortop AND
 -- Hashing only works on simple equality operators "type = sametype",
 -- since the hash itself depends on the bitwise representation of the type.
 -- Check that allegedly hashable operators look like they might be "=".
--- NOTE: in 7.3, this search finds xideqint4.
--- Until we have some cleaner way of dealing with binary-equivalent types,
--- just leave that tuple in the expected output.
+
+-- NOTE: as of 7.3, this search finds xideqint4.  Since we do not mark
+-- xid and int4 as binary-equivalent in pg_cast, there's no easy way to
+-- recognize that case as OK; just leave that tuple in the expected output.
 
 SELECT p1.oid, p1.oprname
 FROM pg_operator AS p1
 WHERE p1.oprcanhash AND NOT
     (p1.oprkind = 'b' AND p1.oprresult = 'bool'::regtype AND
-     p1.oprleft = p1.oprright AND p1.oprname IN ('=', '~=~') AND p1.oprcom = p1.oid);
+     p1.oprleft = p1.oprright AND p1.oprname IN ('=', '~=~') AND
+     p1.oprcom = p1.oid);
 
 -- In 6.5 we accepted hashable array equality operators when the array element
 -- type is hashable.  However, what we actually need to make hashjoin work on
@@ -382,41 +400,33 @@ WHERE p1.oprcanhash AND p1.oprcode = p2.oid AND p2.proname = 'array_eq';
 
 -- Check that each operator defined in pg_operator matches its oprcode entry
 -- in pg_proc.  Easiest to do this separately for each oprkind.
--- FIXME: want to check that argument/result types match, but how to do that
--- in the face of binary-compatible types?
 
 SELECT p1.oid, p1.oprname, p2.oid, p2.proname
 FROM pg_operator AS p1, pg_proc AS p2
 WHERE p1.oprcode = p2.oid AND
     p1.oprkind = 'b' AND
     (p2.pronargs != 2
--- diked out until we find a way of marking binary-compatible types
--- OR
---     p1.oprresult != p2.prorettype OR
---     (p1.oprleft != p2.proargtypes[0] AND p2.proargtypes[0] != 0) OR
---     (p1.oprright != p2.proargtypes[1] AND p2.proargtypes[1] != 0)
-);
-
--- These two selects can be left as-is because there are no binary-compatible
--- cases that they trip over, at least in 6.5:
+     OR NOT binary_coercible(p2.prorettype, p1.oprresult)
+     OR NOT binary_coercible(p1.oprleft, p2.proargtypes[0])
+     OR NOT binary_coercible(p1.oprright, p2.proargtypes[1]));
 
 SELECT p1.oid, p1.oprname, p2.oid, p2.proname
 FROM pg_operator AS p1, pg_proc AS p2
 WHERE p1.oprcode = p2.oid AND
     p1.oprkind = 'l' AND
-    (p2.pronargs != 1 OR
-     p1.oprresult != p2.prorettype OR
-     (p1.oprright != p2.proargtypes[0] AND p2.proargtypes[0] != 0) OR
-     p1.oprleft != 0);
+    (p2.pronargs != 1
+     OR NOT binary_coercible(p2.prorettype, p1.oprresult)
+     OR NOT binary_coercible(p1.oprright, p2.proargtypes[0])
+     OR p1.oprleft != 0);
 
 SELECT p1.oid, p1.oprname, p2.oid, p2.proname
 FROM pg_operator AS p1, pg_proc AS p2
 WHERE p1.oprcode = p2.oid AND
     p1.oprkind = 'r' AND
-    (p2.pronargs != 1 OR
-     p1.oprresult != p2.prorettype OR
-     (p1.oprleft != p2.proargtypes[0] AND p2.proargtypes[0] != 0) OR
-     p1.oprright != 0);
+    (p2.pronargs != 1
+     OR NOT binary_coercible(p2.prorettype, p1.oprresult)
+     OR NOT binary_coercible(p1.oprleft, p2.proargtypes[0])
+     OR p1.oprright != 0);
 
 -- If the operator is mergejoinable or hashjoinable, its underlying function
 -- should not be volatile.
@@ -489,42 +499,42 @@ WHERE a.aggfnoid = p.oid AND
     a.aggfinalfn = 0 AND p.prorettype != a.aggtranstype;
 
 -- Cross-check transfn against its entry in pg_proc.
--- FIXME: what about binary-compatible types?
--- NOTE: in 7.1, this search finds max and min on abstime, which are
--- implemented using int4larger/int4smaller.  Until we have
--- some cleaner way of dealing with binary-equivalent types, just leave
--- those two tuples in the expected output.
-SELECT a.aggfnoid::oid, p.proname, p2.oid, p2.proname
-FROM pg_aggregate AS a, pg_proc AS p, pg_proc AS p2
+-- NOTE: use physically_coercible here, not binary_coercible, because
+-- max and min on abstime are implemented using int4larger/int4smaller.
+SELECT a.aggfnoid::oid, p.proname, ptr.oid, ptr.proname
+FROM pg_aggregate AS a, pg_proc AS p, pg_proc AS ptr
 WHERE a.aggfnoid = p.oid AND
-    a.aggtransfn = p2.oid AND
-    (p2.proretset OR
-     a.aggtranstype != p2.prorettype OR
-     a.aggtranstype != p2.proargtypes[0] OR
-     NOT ((p2.pronargs = 2 AND p.proargtypes[0] = p2.proargtypes[1]) OR
-          (p2.pronargs = 1 AND p.proargtypes[0] = '"any"'::regtype)))
-ORDER BY 1;
+    a.aggtransfn = ptr.oid AND
+    (ptr.proretset
+     OR NOT physically_coercible(ptr.prorettype, a.aggtranstype)
+     OR NOT physically_coercible(a.aggtranstype, ptr.proargtypes[0])
+     OR NOT ((ptr.pronargs = 2 AND
+              physically_coercible(p.proargtypes[0], ptr.proargtypes[1]))
+             OR
+             (ptr.pronargs = 1 AND
+              p.proargtypes[0] = '"any"'::regtype)));
 
 -- Cross-check finalfn (if present) against its entry in pg_proc.
--- FIXME: what about binary-compatible types?
 
-SELECT a.aggfnoid::oid, p.proname, p2.oid, p2.proname
-FROM pg_aggregate AS a, pg_proc AS p, pg_proc AS p2
+SELECT a.aggfnoid::oid, p.proname, pfn.oid, pfn.proname
+FROM pg_aggregate AS a, pg_proc AS p, pg_proc AS pfn
 WHERE a.aggfnoid = p.oid AND
-    a.aggfinalfn = p2.oid AND
-    (p2.proretset OR p.prorettype != p2.prorettype OR
-     p2.pronargs != 1 OR
-     a.aggtranstype != p2.proargtypes[0]);
+    a.aggfinalfn = pfn.oid AND
+    (pfn.proretset
+     OR NOT binary_coercible(pfn.prorettype, p.prorettype)
+     OR pfn.pronargs != 1
+     OR NOT binary_coercible(a.aggtranstype, pfn.proargtypes[0]));
 
 -- If transfn is strict then either initval should be non-NULL, or
--- input type should equal transtype so that the first non-null input
+-- input type should match transtype so that the first non-null input
 -- can be assigned as the state value.
 
-SELECT a.aggfnoid::oid, p.proname, p2.oid, p2.proname
-FROM pg_aggregate AS a, pg_proc AS p, pg_proc AS p2
+SELECT a.aggfnoid::oid, p.proname, ptr.oid, ptr.proname
+FROM pg_aggregate AS a, pg_proc AS p, pg_proc AS ptr
 WHERE a.aggfnoid = p.oid AND
-    a.aggtransfn = p2.oid AND p2.proisstrict AND
-    a.agginitval IS NULL AND p.proargtypes[0] != a.aggtranstype;
+    a.aggtransfn = ptr.oid AND ptr.proisstrict AND
+    a.agginitval IS NULL AND
+    NOT binary_coercible(p.proargtypes[0], a.aggtranstype);
 
 -- **************** pg_opclass ****************
 
@@ -592,7 +602,8 @@ WHERE p1.amopopr = p2.oid AND
 SELECT p1.amopclaid, p1.amopopr, p2.oid, p2.oprname, p3.opcname
 FROM pg_amop AS p1, pg_operator AS p2, pg_opclass AS p3
 WHERE p1.amopopr = p2.oid AND p1.amopclaid = p3.oid AND
-    (p3.opcintype != p2.oprleft OR p3.opcintype != p2.oprright);
+    (NOT binary_coercible(p3.opcintype, p2.oprleft) OR
+     p2.oprleft != p2.oprright);
 
 -- **************** pg_amproc ****************
 
@@ -622,7 +633,8 @@ WHERE p2.opcamid = p1.oid AND
 -- signature of the function may be different for different support routines
 -- or different base data types.
 -- We can check that all the referenced instances of the same support
--- routine number take the same number of parameters, but that's about it...
+-- routine number take the same number of parameters, but that's about it
+-- for a general check...
 
 SELECT p1.amopclaid, p1.amprocnum,
 	p2.oid, p2.proname,
@@ -636,3 +648,20 @@ WHERE p1.amopclaid = p3.oid AND p4.amopclaid = p6.oid AND
     p3.opcamid = p6.opcamid AND p1.amprocnum = p4.amprocnum AND
     p1.amproc = p2.oid AND p4.amproc = p5.oid AND
     (p2.proretset OR p5.proretset OR p2.pronargs != p5.pronargs);
+
+-- For btree, though, we can do better since we know the support routines
+-- must be of the form cmp(input, input) returns int4.
+
+SELECT p1.amopclaid, p1.amprocnum,
+	p2.oid, p2.proname,
+	p3.opcname
+FROM pg_amproc AS p1, pg_proc AS p2, pg_opclass AS p3
+WHERE p3.opcamid = (SELECT oid FROM pg_am WHERE amname = 'btree')
+    AND p1.amopclaid = p3.oid AND p1.amproc = p2.oid AND
+    (opckeytype != 0
+     OR amprocnum != 1
+     OR proretset
+     OR prorettype != 23
+     OR pronargs != 2
+     OR NOT binary_coercible(opcintype, proargtypes[0])
+     OR proargtypes[0] != proargtypes[1]);

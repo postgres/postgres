@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.147 2003/04/29 22:13:10 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.148 2003/05/26 00:11:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,7 +16,6 @@
 
 #include "access/heapam.h"
 #include "catalog/catname.h"
-#include "catalog/namespace.h"
 #include "catalog/pg_inherits.h"
 #include "catalog/pg_proc.h"
 #include "lib/stringinfo.h"
@@ -37,13 +36,7 @@ static Oid **argtype_inherit(int nargs, Oid *argtypes);
 
 static int	find_inheritors(Oid relid, Oid **supervec);
 static Oid **gen_cross_product(InhPaths *arginh, int nargs);
-static int match_argtypes(int nargs,
-			   Oid *input_typeids,
-			   FuncCandidateList function_typeids,
-			   FuncCandidateList *candidates);
 static FieldSelect *setup_field_select(Node *input, char *attname, Oid relid);
-static FuncCandidateList func_select_candidate(int nargs, Oid *input_typeids,
-					  FuncCandidateList candidates);
 static void unknown_attribute(const char *schemaname, const char *relname,
 				  const char *attname);
 
@@ -355,21 +348,24 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 }
 
 
-/* match_argtypes()
+/* func_match_argtypes()
  *
- * Given a list of possible typeid arrays to a function and an array of
- * input typeids, produce a shortlist of those function typeid arrays
- * that match the input typeids (either exactly or by coercion), and
- * return the number of such arrays.
+ * Given a list of candidate functions (having the right name and number
+ * of arguments) and an array of input datatype OIDs, produce a shortlist of
+ * those candidates that actually accept the input datatypes (either exactly
+ * or by coercion), and return the number of such candidates.
+ *
+ * Note that can_coerce_type will assume that UNKNOWN inputs are coercible to
+ * anything, so candidates will not be eliminated on that basis.
  *
  * NB: okay to modify input list structure, as long as we find at least
- * one match.
+ * one match.  If no match at all, the list must remain unmodified.
  */
-static int
-match_argtypes(int nargs,
-			   Oid *input_typeids,
-			   FuncCandidateList function_typeids,
-			   FuncCandidateList *candidates)	/* return value */
+int
+func_match_argtypes(int nargs,
+					Oid *input_typeids,
+					FuncCandidateList raw_candidates,
+					FuncCandidateList *candidates)	/* return value */
 {
 	FuncCandidateList current_candidate;
 	FuncCandidateList next_candidate;
@@ -377,7 +373,7 @@ match_argtypes(int nargs,
 
 	*candidates = NULL;
 
-	for (current_candidate = function_typeids;
+	for (current_candidate = raw_candidates;
 		 current_candidate != NULL;
 		 current_candidate = next_candidate)
 	{
@@ -392,21 +388,65 @@ match_argtypes(int nargs,
 	}
 
 	return ncandidates;
-}	/* match_argtypes() */
+}	/* func_match_argtypes() */
 
 
 /* func_select_candidate()
- * Given the input argtype array and more than one candidate
- * for the function, attempt to resolve the conflict.
+ *		Given the input argtype array and more than one candidate
+ *		for the function, attempt to resolve the conflict.
+ *
  * Returns the selected candidate if the conflict can be resolved,
  * otherwise returns NULL.
  *
- * By design, this is pretty similar to oper_select_candidate in parse_oper.c.
- * However, the calling convention is a little different: we assume the caller
- * already pruned away "candidates" that aren't actually coercion-compatible
- * with the input types, whereas oper_select_candidate must do that itself.
+ * Note that the caller has already determined that there is no candidate
+ * exactly matching the input argtypes, and has pruned away any "candidates"
+ * that aren't actually coercion-compatible with the input types.
+ *
+ * This is also used for resolving ambiguous operator references.  Formerly
+ * parse_oper.c had its own, essentially duplicate code for the purpose.
+ * The following comments (formerly in parse_oper.c) are kept to record some
+ * of the history of these heuristics.
+ *
+ * OLD COMMENTS:
+ *
+ * This routine is new code, replacing binary_oper_select_candidate()
+ * which dates from v4.2/v1.0.x days. It tries very hard to match up
+ * operators with types, including allowing type coercions if necessary.
+ * The important thing is that the code do as much as possible,
+ * while _never_ doing the wrong thing, where "the wrong thing" would
+ * be returning an operator when other better choices are available,
+ * or returning an operator which is a non-intuitive possibility.
+ * - thomas 1998-05-21
+ *
+ * The comments below came from binary_oper_select_candidate(), and
+ * illustrate the issues and choices which are possible:
+ * - thomas 1998-05-20
+ *
+ * current wisdom holds that the default operator should be one in which
+ * both operands have the same type (there will only be one such
+ * operator)
+ *
+ * 7.27.93 - I have decided not to do this; it's too hard to justify, and
+ * it's easy enough to typecast explicitly - avi
+ * [the rest of this routine was commented out since then - ay]
+ *
+ * 6/23/95 - I don't complete agree with avi. In particular, casting
+ * floats is a pain for users. Whatever the rationale behind not doing
+ * this is, I need the following special case to work.
+ *
+ * In the WHERE clause of a query, if a float is specified without
+ * quotes, we treat it as float8. I added the float48* operators so
+ * that we can operate on float4 and float8. But now we have more than
+ * one matching operator if the right arg is unknown (eg. float
+ * specified with quotes). This break some stuff in the regression
+ * test where there are floats in quotes not properly casted. Below is
+ * the solution. In addition to requiring the operator operates on the
+ * same type for both operands [as in the code Avi originally
+ * commented out], we also require that the operators be equivalent in
+ * some sense. (see equivalentOpersAfterPromotion for details.)
+ * - ay 6/95
  */
-static FuncCandidateList
+FuncCandidateList
 func_select_candidate(int nargs,
 					  Oid *input_typeids,
 					  FuncCandidateList candidates)
@@ -419,10 +459,24 @@ func_select_candidate(int nargs,
 	int			ncandidates;
 	int			nbestMatch,
 				nmatch;
+	Oid			input_base_typeids[FUNC_MAX_ARGS];
 	CATEGORY	slot_category[FUNC_MAX_ARGS],
 				current_category;
 	bool		slot_has_preferred_type[FUNC_MAX_ARGS];
 	bool		resolved_unknowns;
+
+	/*
+	 * If any input types are domains, reduce them to their base types.
+	 * This ensures that we will consider functions on the base type to be
+	 * "exact matches" in the exact-match heuristic; it also makes it possible
+	 * to do something useful with the type-category heuristics.  Note that
+	 * this makes it difficult, but not impossible, to use functions declared
+	 * to take a domain as an input datatype.  Such a function will be
+	 * selected over the base-type function only if it is an exact match at
+	 * all argument positions, and so was already chosen by our caller.
+	 */
+	for (i = 0; i < nargs; i++)
+		input_base_typeids[i] = getBaseType(input_typeids[i]);
 
 	/*
 	 * Run through all candidates and keep those with the most matches on
@@ -439,8 +493,8 @@ func_select_candidate(int nargs,
 		nmatch = 0;
 		for (i = 0; i < nargs; i++)
 		{
-			if (input_typeids[i] != UNKNOWNOID &&
-				current_typeids[i] == input_typeids[i])
+			if (input_base_typeids[i] != UNKNOWNOID &&
+				current_typeids[i] == input_base_typeids[i])
 				nmatch++;
 		}
 
@@ -469,10 +523,14 @@ func_select_candidate(int nargs,
 		return candidates;
 
 	/*
-	 * Still too many candidates? Run through all candidates and keep
-	 * those with the most matches on exact types + binary-compatible
-	 * types. Keep all candidates if none match.
+	 * Still too many candidates? Now look for candidates which have either
+	 * exact matches or preferred types at the args that will require coercion.
+	 * (Restriction added in 7.4: preferred type must be of same category as
+	 * input type; give no preference to cross-category conversions to
+	 * preferred types.)  Keep all candidates if none match.
 	 */
+	for (i = 0; i < nargs; i++)			/* avoid multiple lookups */
+		slot_category[i] = TypeCategory(input_base_typeids[i]);
 	ncandidates = 0;
 	nbestMatch = 0;
 	last_candidate = NULL;
@@ -484,58 +542,10 @@ func_select_candidate(int nargs,
 		nmatch = 0;
 		for (i = 0; i < nargs; i++)
 		{
-			if (input_typeids[i] != UNKNOWNOID)
+			if (input_base_typeids[i] != UNKNOWNOID)
 			{
-				if (IsBinaryCoercible(input_typeids[i], current_typeids[i]))
-					nmatch++;
-			}
-		}
-
-		/* take this one as the best choice so far? */
-		if ((nmatch > nbestMatch) || (last_candidate == NULL))
-		{
-			nbestMatch = nmatch;
-			candidates = current_candidate;
-			last_candidate = current_candidate;
-			ncandidates = 1;
-		}
-		/* no worse than the last choice, so keep this one too? */
-		else if (nmatch == nbestMatch)
-		{
-			last_candidate->next = current_candidate;
-			last_candidate = current_candidate;
-			ncandidates++;
-		}
-		/* otherwise, don't bother keeping this one... */
-	}
-
-	if (last_candidate)			/* terminate rebuilt list */
-		last_candidate->next = NULL;
-
-	if (ncandidates == 1)
-		return candidates;
-
-	/*
-	 * Still too many candidates? Now look for candidates which are
-	 * preferred types at the args that will require coercion. Keep all
-	 * candidates if none match.
-	 */
-	ncandidates = 0;
-	nbestMatch = 0;
-	last_candidate = NULL;
-	for (current_candidate = candidates;
-		 current_candidate != NULL;
-		 current_candidate = current_candidate->next)
-	{
-		current_typeids = current_candidate->args;
-		nmatch = 0;
-		for (i = 0; i < nargs; i++)
-		{
-			if (input_typeids[i] != UNKNOWNOID)
-			{
-				current_category = TypeCategory(current_typeids[i]);
-				if (current_typeids[i] == input_typeids[i] ||
-					IsPreferredType(current_category, current_typeids[i]))
+				if (current_typeids[i] == input_base_typeids[i] ||
+					IsPreferredType(slot_category[i], current_typeids[i]))
 					nmatch++;
 			}
 		}
@@ -565,6 +575,11 @@ func_select_candidate(int nargs,
 	 * Still too many candidates? Try assigning types for the unknown
 	 * columns.
 	 *
+	 * NOTE: for a binary operator with one unknown and one non-unknown input,
+	 * we already tried the heuristic of looking for a candidate with the
+	 * known input type on both sides (see binary_oper_exact()).  That's
+	 * essentially a special case of the general algorithm we try next.
+	 *
 	 * We do this by examining each unknown argument position to see if we
 	 * can determine a "type category" for it.	If any candidate has an
 	 * input datatype of STRING category, use STRING category (this bias
@@ -588,7 +603,7 @@ func_select_candidate(int nargs,
 	{
 		bool		have_conflict;
 
-		if (input_typeids[i] != UNKNOWNOID)
+		if (input_base_typeids[i] != UNKNOWNOID)
 			continue;
 		resolved_unknowns = true;		/* assume we can do it */
 		slot_category[i] = INVALID_TYPE;
@@ -656,7 +671,7 @@ func_select_candidate(int nargs,
 			current_typeids = current_candidate->args;
 			for (i = 0; i < nargs; i++)
 			{
-				if (input_typeids[i] != UNKNOWNOID)
+				if (input_base_typeids[i] != UNKNOWNOID)
 					continue;
 				current_type = current_typeids[i];
 				current_category = TypeCategory(current_type);
@@ -694,7 +709,7 @@ func_select_candidate(int nargs,
 	if (ncandidates == 1)
 		return candidates;
 
-	return NULL;				/* failed to determine a unique candidate */
+	return NULL;				/* failed to select a best candidate */
 }	/* func_select_candidate() */
 
 
@@ -734,16 +749,17 @@ func_get_detail(List *funcname,
 				bool *retset,	/* return value */
 				Oid **true_typeids)		/* return value */
 {
-	FuncCandidateList function_typeids;
+	FuncCandidateList raw_candidates;
 	FuncCandidateList best_candidate;
 
 	/* Get list of possible candidates from namespace search */
-	function_typeids = FuncnameGetCandidates(funcname, nargs);
+	raw_candidates = FuncnameGetCandidates(funcname, nargs);
 
 	/*
-	 * See if there is an exact match
+	 * Quickly check if there is an exact match to the input datatypes
+	 * (there can be only one)
 	 */
-	for (best_candidate = function_typeids;
+	for (best_candidate = raw_candidates;
 		 best_candidate != NULL;
 		 best_candidate = best_candidate->next)
 	{
@@ -815,7 +831,7 @@ func_get_detail(List *funcname,
 		 * didn't find an exact match, so now try to match up
 		 * candidates...
 		 */
-		if (function_typeids != NULL)
+		if (raw_candidates != NULL)
 		{
 			Oid		  **input_typeid_vector = NULL;
 			Oid		   *current_input_typeids;
@@ -829,17 +845,18 @@ func_get_detail(List *funcname,
 
 			do
 			{
-				FuncCandidateList current_function_typeids;
+				FuncCandidateList current_candidates;
 				int			ncandidates;
 
-				ncandidates = match_argtypes(nargs, current_input_typeids,
-											 function_typeids,
-											 &current_function_typeids);
+				ncandidates = func_match_argtypes(nargs,
+												  current_input_typeids,
+												  raw_candidates,
+												  &current_candidates);
 
 				/* one match only? then run with it... */
 				if (ncandidates == 1)
 				{
-					best_candidate = current_function_typeids;
+					best_candidate = current_candidates;
 					break;
 				}
 
@@ -851,7 +868,7 @@ func_get_detail(List *funcname,
 				{
 					best_candidate = func_select_candidate(nargs,
 												   current_input_typeids,
-											   current_function_typeids);
+											   current_candidates);
 
 					/*
 					 * If we were able to choose a best candidate, we're

@@ -146,43 +146,6 @@ array_all_textregexeq(ArrayType *array, void *value)
 }
 
 /*
- * Iterator functions for type _varchar. Note that the regexp
- * operators take the second argument of type text.
- */
-
-int32
-array_varchareq(ArrayType *array, void *value)
-{
-	return array_iterator(F_VARCHAREQ,
-						  0,	/* logical or */
-						  array, (Datum) value);
-}
-
-int32
-array_all_varchareq(ArrayType *array, void *value)
-{
-	return array_iterator(F_VARCHAREQ,
-						  1,	/* logical and */
-						  array, (Datum) value);
-}
-
-int32
-array_varcharregexeq(ArrayType *array, void *value)
-{
-	return array_iterator(F_TEXTREGEXEQ,
-						  0,	/* logical or */
-						  array, (Datum) value);
-}
-
-int32
-array_all_varcharregexeq(ArrayType *array, void *value)
-{
-	return array_iterator(F_TEXTREGEXEQ,
-						  1,	/* logical and */
-						  array, (Datum) value);
-}
-
-/*
  * Iterator functions for type _bpchar. Note that the regexp
  * operators take the second argument of type text.
  */

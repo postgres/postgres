@@ -199,7 +199,7 @@ SELECT 'unknown' || ' and unknown' AS "Concat unknown types";
 
 SELECT text 'text' || ' and unknown' AS "Concat text to unknown type";
 
-SELECT char(20) 'characters' || 'and text' AS "Concat char to unknown type";
+SELECT char(20) 'characters' || ' and text' AS "Concat char to unknown type";
 
 SELECT text 'text' || char(20) ' and characters' AS "Concat text to char";
 

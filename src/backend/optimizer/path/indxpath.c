@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.139 2003/05/15 19:34:46 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.140 2003/05/26 00:11:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,6 +20,7 @@
 #include "access/nbtree.h"
 #include "catalog/pg_amop.h"
 #include "catalog/pg_namespace.h"
+#include "catalog/pg_opclass.h"
 #include "catalog/pg_operator.h"
 #include "catalog/pg_type.h"
 #include "executor/executor.h"
@@ -30,6 +31,7 @@
 #include "optimizer/paths.h"
 #include "optimizer/restrictinfo.h"
 #include "optimizer/var.h"
+#include "parser/parse_expr.h"
 #include "rewrite/rewriteManip.h"
 #include "utils/builtins.h"
 #include "utils/catcache.h"
@@ -80,17 +82,18 @@ static bool pred_test_simple_clause(Expr *predicate, Node *clause);
 static Relids indexable_outerrelids(RelOptInfo *rel, IndexOptInfo *index);
 static Path *make_innerjoin_index_path(Query *root,
 									   RelOptInfo *rel, IndexOptInfo *index,
-									   List *clausegroup);
+									   List *clausegroups);
 static bool match_index_to_operand(int indexkey, Node *operand,
 					   RelOptInfo *rel, IndexOptInfo *index);
 static bool function_index_operand(Expr *funcOpnd, RelOptInfo *rel,
 					   IndexOptInfo *index);
 static bool match_special_index_operator(Expr *clause, Oid opclass,
 							 bool indexkey_on_left);
-static List *prefix_quals(Node *leftop, Oid expr_op,
+static List *expand_indexqual_condition(Expr *clause, Oid opclass);
+static List *prefix_quals(Node *leftop, Oid opclass,
 			 Const *prefix, Pattern_Prefix_Status pstatus);
-static List *network_prefix_quals(Node *leftop, Oid expr_op, Datum rightop);
-static Oid	find_operator(const char *opname, Oid datatype);
+static List *network_prefix_quals(Node *leftop, Oid expr_op, Oid opclass,
+								  Datum rightop);
 static Datum string_to_datum(const char *str, Oid datatype);
 static Const *string_to_const(const char *str, Oid datatype);
 
@@ -411,7 +414,7 @@ match_or_subclause_to_indexkey(RelOptInfo *rel,
  * Currently we'll end up rechecking both the OR clause and the transferred
  * restriction clause as qpquals.  FIXME someday.)
  *
- * Also, we apply expand_indexqual_conditions() to convert any special
+ * Also, we apply expand_indexqual_condition() to convert any special
  * matching opclauses to indexable operators.
  *
  * The passed-in clause is not changed.
@@ -430,7 +433,7 @@ extract_or_indexqual_conditions(RelOptInfo *rel,
 	 * Extract relevant indexclauses in indexkey order.  This is
 	 * essentially just like group_clauses_by_indexkey() except that the
 	 * input and output are lists of bare clauses, not of RestrictInfo
-	 * nodes.
+	 * nodes, and that we expand special operators immediately.
 	 */
 	do
 	{
@@ -448,13 +451,15 @@ extract_or_indexqual_conditions(RelOptInfo *rel,
 				if (match_clause_to_indexkey(rel, index,
 											 curIndxKey, curClass,
 											 subsubclause))
-					clausegroup = lappend(clausegroup, subsubclause);
+					clausegroup = nconc(clausegroup,
+										expand_indexqual_condition(subsubclause,
+																   curClass));
 			}
 		}
 		else if (match_clause_to_indexkey(rel, index,
 										  curIndxKey, curClass,
 										  orsubclause))
-			clausegroup = makeList1(orsubclause);
+			clausegroup = expand_indexqual_condition(orsubclause, curClass);
 
 		/*
 		 * If we found no clauses for this indexkey in the OR subclause
@@ -469,7 +474,9 @@ extract_or_indexqual_conditions(RelOptInfo *rel,
 				if (match_clause_to_indexkey(rel, index,
 											 curIndxKey, curClass,
 											 rinfo->clause))
-					clausegroup = lappend(clausegroup, rinfo->clause);
+					clausegroup = nconc(clausegroup,
+										expand_indexqual_condition(rinfo->clause,
+																   curClass));
 			}
 		}
 
@@ -490,7 +497,7 @@ extract_or_indexqual_conditions(RelOptInfo *rel,
 	if (quals == NIL)
 		elog(ERROR, "extract_or_indexqual_conditions: no matching clause");
 
-	return expand_indexqual_conditions(quals);
+	return quals;
 }
 
 
@@ -501,26 +508,23 @@ extract_or_indexqual_conditions(RelOptInfo *rel,
 
 /*
  * group_clauses_by_indexkey
- *	  Generates a list of restriction clauses that can be used with an index.
+ *	  Find restriction clauses that can be used with an index.
  *
  * 'rel' is the node of the relation itself.
  * 'index' is a index on 'rel'.
  *
- * Returns a list of all the RestrictInfo nodes for clauses that can be
- * used with this index.
- *
- * The list is ordered by index key.  (This is not depended on by any part
- * of the planner, so far as I can tell; but some parts of the executor
- * do assume that the indxqual list ultimately delivered to the executor
- * is so ordered.  One such place is _bt_orderkeys() in the btree support.
- * Perhaps that ought to be fixed someday --- tgl 7/00)
+ * Returns a list of sublists of RestrictInfo nodes for clauses that can be
+ * used with this index.  Each sublist contains clauses that can be used
+ * with one index key (in no particular order); the top list is ordered by
+ * index key.  (This is depended on by expand_indexqual_conditions().)
  *
  * Note that in a multi-key index, we stop if we find a key that cannot be
  * used with any clause.  For example, given an index on (A,B,C), we might
- * return (C1 C2 C3 C4) if we find that clauses C1 and C2 use column A,
+ * return ((C1 C2) (C3 C4)) if we find that clauses C1 and C2 use column A,
  * clauses C3 and C4 use column B, and no clauses use column C.  But if
- * no clauses match B we will return (C1 C2), whether or not there are
+ * no clauses match B we will return ((C1 C2)), whether or not there are
  * clauses matching column C, because the executor couldn't use them anyway.
+ * Therefore, there are no empty sublists in the result.
  */
 static List *
 group_clauses_by_indexkey(RelOptInfo *rel, IndexOptInfo *index)
@@ -559,20 +563,19 @@ group_clauses_by_indexkey(RelOptInfo *rel, IndexOptInfo *index)
 		if (clausegroup == NIL)
 			break;
 
-		clausegroup_list = nconc(clausegroup_list, clausegroup);
+		clausegroup_list = lappend(clausegroup_list, clausegroup);
 
 		indexkeys++;
 		classes++;
 
 	} while (!DoneMatchingIndexKeys(indexkeys, classes));
 
-	/* clausegroup_list holds all matched clauses ordered by indexkeys */
 	return clausegroup_list;
 }
 
 /*
  * group_clauses_by_indexkey_for_join
- *	  Generates a list of clauses that can be used with an index
+ *	  Generate a list of sublists of clauses that can be used with an index
  *	  to scan the inner side of a nestloop join.
  *
  * This is much like group_clauses_by_indexkey(), but we consider both
@@ -652,23 +655,20 @@ group_clauses_by_indexkey_for_join(RelOptInfo *rel, IndexOptInfo *index,
 		if (clausegroup == NIL)
 			break;
 
-		clausegroup_list = nconc(clausegroup_list, clausegroup);
+		clausegroup_list = lappend(clausegroup_list, clausegroup);
 
 		indexkeys++;
 		classes++;
 
 	} while (!DoneMatchingIndexKeys(indexkeys, classes));
 
-	/*
-	 * if no join clause was matched then forget it, per comments above.
-	 */
+	/* if no join clause was matched then forget it, per comments above */
 	if (!jfound)
 	{
 		freeList(clausegroup_list);
 		return NIL;
 	}
 
-	/* clausegroup_list holds all matched clauses ordered by indexkeys */
 	return clausegroup_list;
 }
 
@@ -1124,8 +1124,6 @@ pred_test_simple_clause(Expr *predicate, Node *clause)
 	ExprState  *test_exprstate;
 	Datum		test_result;
 	bool		isNull;
-	HeapTuple	test_tuple;
-	Form_pg_amop test_form;
 	CatCList   *catlist;
 	int			i;
 	EState	   *estate;
@@ -1241,22 +1239,13 @@ pred_test_simple_clause(Expr *predicate, Node *clause)
 	/*
 	 * 3. From the same opclass, find the operator for the test strategy
 	 */
-	test_tuple = SearchSysCache(AMOPSTRATEGY,
-								ObjectIdGetDatum(opclass_id),
-								Int16GetDatum(test_strategy),
-								0, 0);
-	if (!HeapTupleIsValid(test_tuple))
+	test_op = get_opclass_member(opclass_id, test_strategy);
+	if (!OidIsValid(test_op))
 	{
 		/* This should not fail, else pg_amop entry is missing */
 		elog(ERROR, "Missing pg_amop entry for opclass %u strategy %d",
 			 opclass_id, test_strategy);
 	}
-	test_form = (Form_pg_amop) GETSTRUCT(test_tuple);
-
-	/* Get the test operator */
-	test_op = test_form->amopopr;
-
-	ReleaseSysCache(test_tuple);
 
 	/*
 	 * 4. Evaluate the test.  For this we need an EState.
@@ -1488,22 +1477,18 @@ best_inner_indexscan(Query *root, RelOptInfo *rel,
 
 		if (jlist == NIL)		/* failed to find a match? */
 		{
-			List	   *clausegroup;
+			List	   *clausegroups;
 
 			/* find useful clauses for this index and outerjoin set */
-			clausegroup = group_clauses_by_indexkey_for_join(rel,
-															 index,
-															 index_outer_relids,
-															 isouterjoin);
-			if (clausegroup)
+			clausegroups = group_clauses_by_indexkey_for_join(rel,
+															  index,
+															  index_outer_relids,
+															  isouterjoin);
+			if (clausegroups)
 			{
-				/* remove duplicate and redundant clauses */
-				clausegroup = remove_redundant_join_clauses(root,
-															clausegroup,
-															jointype);
 				/* make the path */
 				path = make_innerjoin_index_path(root, rel, index,
-												 clausegroup);
+												 clausegroups);
 			}
 
 			/* Cache the result --- whether positive or negative */
@@ -1542,15 +1527,17 @@ best_inner_indexscan(Query *root, RelOptInfo *rel,
  *	  relation in a nestloop join.
  *
  * 'rel' is the relation for which 'index' is defined
- * 'clausegroup' is a list of restrictinfo nodes that can use 'index'
+ * 'clausegroups' is a list of lists of RestrictInfos that can use 'index'
  */
 static Path *
 make_innerjoin_index_path(Query *root,
 						  RelOptInfo *rel, IndexOptInfo *index,
-						  List *clausegroup)
+						  List *clausegroups)
 {
 	IndexPath  *pathnode = makeNode(IndexPath);
-	List	   *indexquals;
+	List	   *indexquals,
+			   *allclauses,
+			   *l;
 
 	/* XXX this code ought to be merged with create_index_path? */
 
@@ -1564,11 +1551,8 @@ make_innerjoin_index_path(Query *root,
 	 */
 	pathnode->path.pathkeys = NIL;
 
-	/* Extract bare indexqual clauses from restrictinfos */
-	indexquals = get_actual_clauses(clausegroup);
-
-	/* expand special operators to indexquals the executor can handle */
-	indexquals = expand_indexqual_conditions(indexquals);
+	/* Convert RestrictInfo nodes to indexquals the executor can handle */
+	indexquals = expand_indexqual_conditions(index, clausegroups);
 
 	/*
 	 * Note that we are making a pathnode for a single-scan indexscan;
@@ -1583,24 +1567,31 @@ make_innerjoin_index_path(Query *root,
 	/*
 	 * We must compute the estimated number of output rows for the
 	 * indexscan.  This is less than rel->rows because of the
-	 * additional selectivity of the join clauses.	Since clausegroup
+	 * additional selectivity of the join clauses.	Since clausegroups
 	 * may contain both restriction and join clauses, we have to do a
 	 * set union to get the full set of clauses that must be
-	 * considered to compute the correct selectivity.  (We can't just
-	 * nconc the two lists; then we might have some restriction
-	 * clauses appearing twice, which'd mislead
-	 * restrictlist_selectivity into double-counting their
+	 * considered to compute the correct selectivity.  (Without the union
+	 * operation, we might have some restriction clauses appearing twice,
+	 * which'd mislead restrictlist_selectivity into double-counting their
 	 * selectivity.  However, since RestrictInfo nodes aren't copied when
 	 * linking them into different lists, it should be sufficient to use
 	 * pointer comparison to remove duplicates.)
 	 *
+	 * We assume we can destructively modify the input sublists.
+	 *
 	 * Always assume the join type is JOIN_INNER; even if some of the
 	 * join clauses come from other contexts, that's not our problem.
 	 */
+	allclauses = NIL;
+	foreach(l, clausegroups)
+	{
+		/* nconc okay here since same clause couldn't be in two sublists */
+		allclauses = nconc(allclauses, (List *) lfirst(l));
+	}
+	allclauses = set_ptrUnion(rel->baserestrictinfo, allclauses);
 	pathnode->rows = rel->tuples *
 		restrictlist_selectivity(root,
-								 set_ptrUnion(rel->baserestrictinfo,
-											  clausegroup),
+								 allclauses,
 								 rel->relid,
 								 JOIN_INNER);
 	/* Like costsize.c, force estimate to be at least one row */
@@ -1741,10 +1732,10 @@ function_index_operand(Expr *funcOpnd, RelOptInfo *rel, IndexOptInfo *index)
  * the latter fails to recognize a restriction opclause's operator
  * as a member of an index's opclass, it asks match_special_index_operator()
  * whether the clause should be considered an indexqual anyway.
- * expand_indexqual_conditions() converts a list of "raw" indexqual
- * conditions (with implicit AND semantics across list elements) into
- * a list that the executor can actually handle.  For operators that
- * are members of the index's opclass this transformation is a no-op,
+ * expand_indexqual_conditions() converts a list of lists of RestrictInfo
+ * nodes (with implicit AND semantics across list elements) into
+ * a list of clauses that the executor can actually handle.  For operators
+ * that are members of the index's opclass this transformation is a no-op,
  * but operators recognized by match_special_index_operator() must be
  * converted into one or more "regular" indexqual conditions.
  *----------
@@ -1765,10 +1756,9 @@ match_special_index_operator(Expr *clause, Oid opclass,
 							 bool indexkey_on_left)
 {
 	bool		isIndexable = false;
-	Node	   *leftop,
-			   *rightop;
+	Node	   *rightop;
 	Oid			expr_op;
-	Const	   *patt = NULL;
+	Const	   *patt;
 	Const	   *prefix = NULL;
 	Const	   *rest = NULL;
 
@@ -1781,7 +1771,6 @@ match_special_index_operator(Expr *clause, Oid opclass,
 		return false;
 
 	/* we know these will succeed */
-	leftop = get_leftop(clause);
 	rightop = get_rightop(clause);
 	expr_op = ((OpExpr *) clause)->opno;
 
@@ -1795,7 +1784,6 @@ match_special_index_operator(Expr *clause, Oid opclass,
 	{
 		case OID_TEXT_LIKE_OP:
 		case OID_BPCHAR_LIKE_OP:
-		case OID_VARCHAR_LIKE_OP:
 		case OID_NAME_LIKE_OP:
 			/* the right-hand const is type text for all of these */
 			isIndexable = pattern_fixed_prefix(patt, Pattern_Type_Like,
@@ -1809,7 +1797,6 @@ match_special_index_operator(Expr *clause, Oid opclass,
 
 		case OID_TEXT_ICLIKE_OP:
 		case OID_BPCHAR_ICLIKE_OP:
-		case OID_VARCHAR_ICLIKE_OP:
 		case OID_NAME_ICLIKE_OP:
 			/* the right-hand const is type text for all of these */
 			isIndexable = pattern_fixed_prefix(patt, Pattern_Type_Like_IC,
@@ -1818,7 +1805,6 @@ match_special_index_operator(Expr *clause, Oid opclass,
 
 		case OID_TEXT_REGEXEQ_OP:
 		case OID_BPCHAR_REGEXEQ_OP:
-		case OID_VARCHAR_REGEXEQ_OP:
 		case OID_NAME_REGEXEQ_OP:
 			/* the right-hand const is type text for all of these */
 			isIndexable = pattern_fixed_prefix(patt, Pattern_Type_Regex,
@@ -1827,7 +1813,6 @@ match_special_index_operator(Expr *clause, Oid opclass,
 
 		case OID_TEXT_ICREGEXEQ_OP:
 		case OID_BPCHAR_ICREGEXEQ_OP:
-		case OID_VARCHAR_ICREGEXEQ_OP:
 		case OID_NAME_ICREGEXEQ_OP:
 			/* the right-hand const is type text for all of these */
 			isIndexable = pattern_fixed_prefix(patt, Pattern_Type_Regex_IC,
@@ -1855,8 +1840,11 @@ match_special_index_operator(Expr *clause, Oid opclass,
 	/*
 	 * Must also check that index's opclass supports the operators we will
 	 * want to apply.  (A hash index, for example, will not support ">=".)
-	 * We cheat a little by not checking for availability of "=" ... any
-	 * index type should support "=", methinks.
+	 * Currently, only btree supports the operators we need.
+	 *
+	 * We insist on the opclass being the specific one we expect,
+	 * else we'd do the wrong thing if someone were to make a reverse-sort
+	 * opclass with the same operators.
 	 */
 	switch (expr_op)
 	{
@@ -1864,69 +1852,44 @@ match_special_index_operator(Expr *clause, Oid opclass,
 		case OID_TEXT_ICLIKE_OP:
 		case OID_TEXT_REGEXEQ_OP:
 		case OID_TEXT_ICREGEXEQ_OP:
-			if (lc_collate_is_c())
-				isIndexable = (op_in_opclass(find_operator(">=", TEXTOID), opclass)
-							   && op_in_opclass(find_operator("<", TEXTOID), opclass));
-			else
-				isIndexable = (op_in_opclass(find_operator("~>=~", TEXTOID), opclass)
-							   && op_in_opclass(find_operator("~<~", TEXTOID), opclass));
-			break;
-
-		case OID_BYTEA_LIKE_OP:
-			isIndexable = (op_in_opclass(find_operator(">=", BYTEAOID), opclass)
-						   && op_in_opclass(find_operator("<", BYTEAOID), opclass));
+			/* text operators will be used for varchar inputs, too */
+			isIndexable =
+				(opclass == TEXT_PATTERN_BTREE_OPS_OID) ||
+				(opclass == TEXT_BTREE_OPS_OID && lc_collate_is_c()) ||
+				(opclass == VARCHAR_PATTERN_BTREE_OPS_OID) ||
+				(opclass == VARCHAR_BTREE_OPS_OID && lc_collate_is_c());
 			break;
 
 		case OID_BPCHAR_LIKE_OP:
 		case OID_BPCHAR_ICLIKE_OP:
 		case OID_BPCHAR_REGEXEQ_OP:
 		case OID_BPCHAR_ICREGEXEQ_OP:
-			if (lc_collate_is_c())
-				isIndexable = (op_in_opclass(find_operator(">=", BPCHAROID), opclass)
-							   && op_in_opclass(find_operator("<", BPCHAROID), opclass));
-			else
-				isIndexable = (op_in_opclass(find_operator("~>=~", BPCHAROID), opclass)
-							   && op_in_opclass(find_operator("~<~", BPCHAROID), opclass));
-			break;
-
-		case OID_VARCHAR_LIKE_OP:
-		case OID_VARCHAR_ICLIKE_OP:
-		case OID_VARCHAR_REGEXEQ_OP:
-		case OID_VARCHAR_ICREGEXEQ_OP:
-			if (lc_collate_is_c())
-				isIndexable = (op_in_opclass(find_operator(">=", VARCHAROID), opclass)
-							   && op_in_opclass(find_operator("<", VARCHAROID), opclass));
-			else
-				isIndexable = (op_in_opclass(find_operator("~>=~", VARCHAROID), opclass)
-							   && op_in_opclass(find_operator("~<~", VARCHAROID), opclass));
+			isIndexable =
+				(opclass == BPCHAR_PATTERN_BTREE_OPS_OID) ||
+				(opclass == BPCHAR_BTREE_OPS_OID && lc_collate_is_c());
 			break;
 
 		case OID_NAME_LIKE_OP:
 		case OID_NAME_ICLIKE_OP:
 		case OID_NAME_REGEXEQ_OP:
 		case OID_NAME_ICREGEXEQ_OP:
-			if (lc_collate_is_c())
-				isIndexable = (op_in_opclass(find_operator(">=", NAMEOID), opclass)
-							   && op_in_opclass(find_operator("<", NAMEOID), opclass));
-			else
-				isIndexable = (op_in_opclass(find_operator("~>=~", NAMEOID), opclass)
-							   && op_in_opclass(find_operator("~<~", NAMEOID), opclass));
+			isIndexable =
+				(opclass == NAME_PATTERN_BTREE_OPS_OID) ||
+				(opclass == NAME_BTREE_OPS_OID && lc_collate_is_c());
+			break;
+
+		case OID_BYTEA_LIKE_OP:
+			isIndexable = (opclass == BYTEA_BTREE_OPS_OID);
 			break;
 
 		case OID_INET_SUB_OP:
 		case OID_INET_SUBEQ_OP:
-			/* for SUB we actually need ">" not ">=", but this should do */
-			if (!op_in_opclass(find_operator(">=", INETOID), opclass) ||
-				!op_in_opclass(find_operator("<=", INETOID), opclass))
-				isIndexable = false;
+			isIndexable = (opclass == INET_BTREE_OPS_OID);
 			break;
 
 		case OID_CIDR_SUB_OP:
 		case OID_CIDR_SUBEQ_OP:
-			/* for SUB we actually need ">" not ">=", but this should do */
-			if (!op_in_opclass(find_operator(">=", CIDROID), opclass) ||
-				!op_in_opclass(find_operator("<=", CIDROID), opclass))
-				isIndexable = false;
+			isIndexable = (opclass == CIDR_BTREE_OPS_OID);
 			break;
 	}
 
@@ -1935,185 +1898,217 @@ match_special_index_operator(Expr *clause, Oid opclass,
 
 /*
  * expand_indexqual_conditions
- *	  Given a list of (implicitly ANDed) indexqual clauses,
- *	  expand any "special" index operators into clauses that the indexscan
- *	  machinery will know what to do with.	Clauses that were not
- *	  recognized by match_special_index_operator() must be passed through
- *	  unchanged.
+ *	  Given a list of sublists of RestrictInfo nodes, produce a flat list
+ *	  of index qual clauses.  Standard qual clauses (those in the index's
+ *	  opclass) are passed through unchanged.  "Special" index operators
+ *	  are expanded into clauses that the indexscan machinery will know
+ *	  what to do with.
+ *
+ * The input list is ordered by index key, and so the output list is too.
+ * (The latter is not depended on by any part of the planner, so far as I can
+ * tell; but some parts of the executor do assume that the indxqual list
+ * ultimately delivered to the executor is so ordered.  One such place is
+ * _bt_orderkeys() in the btree support.  Perhaps that ought to be fixed
+ * someday --- tgl 7/00)
  */
 List *
-expand_indexqual_conditions(List *indexquals)
+expand_indexqual_conditions(IndexOptInfo *index, List *clausegroups)
 {
 	List	   *resultquals = NIL;
-	List	   *q;
+	int		   *indexkeys = index->indexkeys;
+	Oid		   *classes = index->classlist;
 
-	foreach(q, indexquals)
+	if (clausegroups == NIL)
+		return NIL;
+
+	do
 	{
-		Expr	   *clause = (Expr *) lfirst(q);
+		Oid			curClass = classes[0];
+		List	   *i;
 
-		/* we know these will succeed */
-		Node	   *leftop = get_leftop(clause);
-		Node	   *rightop = get_rightop(clause);
-		Oid			expr_op = ((OpExpr *) clause)->opno;
-		Const	   *patt = (Const *) rightop;
-		Const	   *prefix = NULL;
-		Const	   *rest = NULL;
-		Pattern_Prefix_Status pstatus;
-
-		switch (expr_op)
+		foreach(i, (List *) lfirst(clausegroups))
 		{
-				/*
-				 * LIKE and regex operators are not members of any index
-				 * opclass, so if we find one in an indexqual list we can
-				 * assume that it was accepted by
-				 * match_special_index_operator().
-				 */
-			case OID_TEXT_LIKE_OP:
-			case OID_BPCHAR_LIKE_OP:
-			case OID_VARCHAR_LIKE_OP:
-			case OID_NAME_LIKE_OP:
-			case OID_BYTEA_LIKE_OP:
-				pstatus = pattern_fixed_prefix(patt, Pattern_Type_Like,
-											   &prefix, &rest);
-				resultquals = nconc(resultquals,
-									prefix_quals(leftop, expr_op,
-												 prefix, pstatus));
-				break;
+			RestrictInfo *rinfo = (RestrictInfo *) lfirst(i);
 
-			case OID_TEXT_ICLIKE_OP:
-			case OID_BPCHAR_ICLIKE_OP:
-			case OID_VARCHAR_ICLIKE_OP:
-			case OID_NAME_ICLIKE_OP:
-				/* the right-hand const is type text for all of these */
-				pstatus = pattern_fixed_prefix(patt, Pattern_Type_Like_IC,
-											   &prefix, &rest);
-				resultquals = nconc(resultquals,
-									prefix_quals(leftop, expr_op,
-												 prefix, pstatus));
-				break;
-
-			case OID_TEXT_REGEXEQ_OP:
-			case OID_BPCHAR_REGEXEQ_OP:
-			case OID_VARCHAR_REGEXEQ_OP:
-			case OID_NAME_REGEXEQ_OP:
-				/* the right-hand const is type text for all of these */
-				pstatus = pattern_fixed_prefix(patt, Pattern_Type_Regex,
-											   &prefix, &rest);
-				resultquals = nconc(resultquals,
-									prefix_quals(leftop, expr_op,
-												 prefix, pstatus));
-				break;
-
-			case OID_TEXT_ICREGEXEQ_OP:
-			case OID_BPCHAR_ICREGEXEQ_OP:
-			case OID_VARCHAR_ICREGEXEQ_OP:
-			case OID_NAME_ICREGEXEQ_OP:
-				/* the right-hand const is type text for all of these */
-				pstatus = pattern_fixed_prefix(patt, Pattern_Type_Regex_IC,
-											   &prefix, &rest);
-				resultquals = nconc(resultquals,
-									prefix_quals(leftop, expr_op,
-												 prefix, pstatus));
-				break;
-
-			case OID_INET_SUB_OP:
-			case OID_INET_SUBEQ_OP:
-			case OID_CIDR_SUB_OP:
-			case OID_CIDR_SUBEQ_OP:
-				resultquals = nconc(resultquals,
-									network_prefix_quals(leftop, expr_op,
-													  patt->constvalue));
-				break;
-
-			default:
-				resultquals = lappend(resultquals, clause);
-				break;
+			resultquals = nconc(resultquals,
+								expand_indexqual_condition(rinfo->clause,
+														   curClass));
 		}
-	}
+
+		clausegroups = lnext(clausegroups);
+
+		indexkeys++;
+		classes++;
+
+	} while (clausegroups != NIL &&
+			 !DoneMatchingIndexKeys(indexkeys, classes));
+
+	Assert(clausegroups == NIL); /* else more groups than indexkeys... */
 
 	return resultquals;
 }
 
 /*
+ * expand_indexqual_condition --- expand a single indexqual condition
+ */
+static List *
+expand_indexqual_condition(Expr *clause, Oid opclass)
+{
+	/* we know these will succeed */
+	Node	   *leftop = get_leftop(clause);
+	Node	   *rightop = get_rightop(clause);
+	Oid			expr_op = ((OpExpr *) clause)->opno;
+	Const	   *patt = (Const *) rightop;
+	Const	   *prefix = NULL;
+	Const	   *rest = NULL;
+	Pattern_Prefix_Status pstatus;
+	List	   *result;
+
+	switch (expr_op)
+	{
+		/*
+		 * LIKE and regex operators are not members of any index
+		 * opclass, so if we find one in an indexqual list we can
+		 * assume that it was accepted by match_special_index_operator().
+		 */
+		case OID_TEXT_LIKE_OP:
+		case OID_BPCHAR_LIKE_OP:
+		case OID_NAME_LIKE_OP:
+		case OID_BYTEA_LIKE_OP:
+			pstatus = pattern_fixed_prefix(patt, Pattern_Type_Like,
+										   &prefix, &rest);
+			result = prefix_quals(leftop, opclass, prefix, pstatus);
+			break;
+
+		case OID_TEXT_ICLIKE_OP:
+		case OID_BPCHAR_ICLIKE_OP:
+		case OID_NAME_ICLIKE_OP:
+			/* the right-hand const is type text for all of these */
+			pstatus = pattern_fixed_prefix(patt, Pattern_Type_Like_IC,
+										   &prefix, &rest);
+			result = prefix_quals(leftop, opclass, prefix, pstatus);
+			break;
+
+		case OID_TEXT_REGEXEQ_OP:
+		case OID_BPCHAR_REGEXEQ_OP:
+		case OID_NAME_REGEXEQ_OP:
+			/* the right-hand const is type text for all of these */
+			pstatus = pattern_fixed_prefix(patt, Pattern_Type_Regex,
+										   &prefix, &rest);
+			result = prefix_quals(leftop, opclass, prefix, pstatus);
+			break;
+
+		case OID_TEXT_ICREGEXEQ_OP:
+		case OID_BPCHAR_ICREGEXEQ_OP:
+		case OID_NAME_ICREGEXEQ_OP:
+			/* the right-hand const is type text for all of these */
+			pstatus = pattern_fixed_prefix(patt, Pattern_Type_Regex_IC,
+										   &prefix, &rest);
+			result = prefix_quals(leftop, opclass, prefix, pstatus);
+			break;
+
+		case OID_INET_SUB_OP:
+		case OID_INET_SUBEQ_OP:
+		case OID_CIDR_SUB_OP:
+		case OID_CIDR_SUBEQ_OP:
+			result = network_prefix_quals(leftop, expr_op, opclass,
+										  patt->constvalue);
+			break;
+
+		default:
+			result = makeList1(clause);
+			break;
+	}
+
+	return result;
+}
+
+/*
  * Given a fixed prefix that all the "leftop" values must have,
- * generate suitable indexqual condition(s).  expr_op is the original
- * LIKE or regex operator; we use it to deduce the appropriate comparison
+ * generate suitable indexqual condition(s).  opclass is the index
+ * operator class; we use it to deduce the appropriate comparison
  * operators and operand datatypes.
  */
 static List *
-prefix_quals(Node *leftop, Oid expr_op,
+prefix_quals(Node *leftop, Oid opclass,
 			 Const *prefix_const, Pattern_Prefix_Status pstatus)
 {
 	List	   *result;
 	Oid			datatype;
 	Oid			oproid;
-	const char *oprname;
-	char	   *prefix;
-	Const	   *con;
 	Expr	   *expr;
-	Const	   *greaterstr = NULL;
+	Const	   *greaterstr;
 
 	Assert(pstatus != Pattern_Prefix_None);
 
-	switch (expr_op)
+	switch (opclass)
 	{
-		case OID_TEXT_LIKE_OP:
-		case OID_TEXT_ICLIKE_OP:
-		case OID_TEXT_REGEXEQ_OP:
-		case OID_TEXT_ICREGEXEQ_OP:
+		case TEXT_BTREE_OPS_OID:
+		case TEXT_PATTERN_BTREE_OPS_OID:
 			datatype = TEXTOID;
 			break;
 
-		case OID_BYTEA_LIKE_OP:
-			datatype = BYTEAOID;
-			break;
-
-		case OID_BPCHAR_LIKE_OP:
-		case OID_BPCHAR_ICLIKE_OP:
-		case OID_BPCHAR_REGEXEQ_OP:
-		case OID_BPCHAR_ICREGEXEQ_OP:
-			datatype = BPCHAROID;
-			break;
-
-		case OID_VARCHAR_LIKE_OP:
-		case OID_VARCHAR_ICLIKE_OP:
-		case OID_VARCHAR_REGEXEQ_OP:
-		case OID_VARCHAR_ICREGEXEQ_OP:
+		case VARCHAR_BTREE_OPS_OID:
+		case VARCHAR_PATTERN_BTREE_OPS_OID:
 			datatype = VARCHAROID;
 			break;
 
-		case OID_NAME_LIKE_OP:
-		case OID_NAME_ICLIKE_OP:
-		case OID_NAME_REGEXEQ_OP:
-		case OID_NAME_ICREGEXEQ_OP:
+		case BPCHAR_BTREE_OPS_OID:
+		case BPCHAR_PATTERN_BTREE_OPS_OID:
+			datatype = BPCHAROID;
+			break;
+
+		case NAME_BTREE_OPS_OID:
+		case NAME_PATTERN_BTREE_OPS_OID:
 			datatype = NAMEOID;
 			break;
 
+		case BYTEA_BTREE_OPS_OID:
+			datatype = BYTEAOID;
+			break;
+
 		default:
-			elog(ERROR, "prefix_quals: unexpected operator %u", expr_op);
+			elog(ERROR, "prefix_quals: unexpected opclass %u", opclass);
 			return NIL;
 	}
 
-	/* Prefix constant is text for all except BYTEA_LIKE */
-	if (datatype != BYTEAOID)
-		prefix = DatumGetCString(DirectFunctionCall1(textout,
-													 prefix_const->constvalue));
-	else
-		prefix = DatumGetCString(DirectFunctionCall1(byteaout,
-													 prefix_const->constvalue));
+	/*
+	 * If necessary, coerce the prefix constant to the right type.
+	 * The given prefix constant is either text or bytea type.
+	 */
+	if (prefix_const->consttype != datatype)
+	{
+		char   *prefix;
+
+		switch (prefix_const->consttype)
+		{
+			case TEXTOID:
+				prefix = DatumGetCString(DirectFunctionCall1(textout,
+															 prefix_const->constvalue));
+				break;
+			case BYTEAOID:
+				prefix = DatumGetCString(DirectFunctionCall1(byteaout,
+															 prefix_const->constvalue));
+				break;
+			default:
+				elog(ERROR, "prefix_quals: unexpected consttype %u",
+					 prefix_const->consttype);
+				return NIL;
+		}
+		prefix_const = string_to_const(prefix, datatype);
+		pfree(prefix);
+	}
 
 	/*
 	 * If we found an exact-match pattern, generate an "=" indexqual.
 	 */
 	if (pstatus == Pattern_Prefix_Exact)
 	{
-		oprname = (datatype == BYTEAOID || lc_collate_is_c() ? "=" : "~=~");
-		oproid = find_operator(oprname, datatype);
+		oproid = get_opclass_member(opclass, BTEqualStrategyNumber);
 		if (oproid == InvalidOid)
-			elog(ERROR, "prefix_quals: no operator %s for type %u", oprname, datatype);
-		con = string_to_const(prefix, datatype);
+			elog(ERROR, "prefix_quals: no operator = for opclass %u", opclass);
 		expr = make_opclause(oproid, BOOLOID, false,
-							 (Expr *) leftop, (Expr *) con);
+							 (Expr *) leftop, (Expr *) prefix_const);
 		result = makeList1(expr);
 		return result;
 	}
@@ -2123,13 +2118,11 @@ prefix_quals(Node *leftop, Oid expr_op,
 	 *
 	 * We can always say "x >= prefix".
 	 */
-	oprname = (datatype == BYTEAOID || lc_collate_is_c() ? ">=" : "~>=~");
-	oproid = find_operator(oprname, datatype);
+	oproid = get_opclass_member(opclass, BTGreaterEqualStrategyNumber);
 	if (oproid == InvalidOid)
-		elog(ERROR, "prefix_quals: no operator %s for type %u", oprname, datatype);
-	con = string_to_const(prefix, datatype);
+		elog(ERROR, "prefix_quals: no operator >= for opclass %u", opclass);
 	expr = make_opclause(oproid, BOOLOID, false,
-						 (Expr *) leftop, (Expr *) con);
+						 (Expr *) leftop, (Expr *) prefix_const);
 	result = makeList1(expr);
 
 	/*-------
@@ -2137,13 +2130,12 @@ prefix_quals(Node *leftop, Oid expr_op,
 	 * "x < greaterstr".
 	 *-------
 	 */
-	greaterstr = make_greater_string(con);
+	greaterstr = make_greater_string(prefix_const);
 	if (greaterstr)
 	{
-		oprname = (datatype == BYTEAOID || lc_collate_is_c() ? "<" : "~<~");
-		oproid = find_operator(oprname, datatype);
+		oproid = get_opclass_member(opclass, BTLessStrategyNumber);
 		if (oproid == InvalidOid)
-			elog(ERROR, "prefix_quals: no operator %s for type %u", oprname, datatype);
+			elog(ERROR, "prefix_quals: no operator < for opclass %u", opclass);
 		expr = make_opclause(oproid, BOOLOID, false,
 							 (Expr *) leftop, (Expr *) greaterstr);
 		result = lappend(result, expr);
@@ -2155,19 +2147,18 @@ prefix_quals(Node *leftop, Oid expr_op,
 /*
  * Given a leftop and a rightop, and a inet-class sup/sub operator,
  * generate suitable indexqual condition(s).  expr_op is the original
- * operator.
+ * operator, and opclass is the index opclass.
  */
 static List *
-network_prefix_quals(Node *leftop, Oid expr_op, Datum rightop)
+network_prefix_quals(Node *leftop, Oid expr_op, Oid opclass, Datum rightop)
 {
 	bool		is_eq;
-	char	   *opr1name;
-	Datum		opr1right;
-	Datum		opr2right;
+	Oid			datatype;
 	Oid			opr1oid;
 	Oid			opr2oid;
+	Datum		opr1right;
+	Datum		opr2right;
 	List	   *result;
-	Oid			datatype;
 	Expr	   *expr;
 
 	switch (expr_op)
@@ -2198,12 +2189,20 @@ network_prefix_quals(Node *leftop, Oid expr_op, Datum rightop)
 	 * create clause "key >= network_scan_first( rightop )", or ">" if the
 	 * operator disallows equality.
 	 */
-
-	opr1name = is_eq ? ">=" : ">";
-	opr1oid = find_operator(opr1name, datatype);
-	if (opr1oid == InvalidOid)
-		elog(ERROR, "network_prefix_quals: no %s operator for type %u",
-			 opr1name, datatype);
+	if (is_eq)
+	{
+		opr1oid = get_opclass_member(opclass, BTGreaterEqualStrategyNumber);
+		if (opr1oid == InvalidOid)
+			elog(ERROR, "network_prefix_quals: no >= operator for opclass %u",
+				 opclass);
+	}
+	else
+	{
+		opr1oid = get_opclass_member(opclass, BTGreaterStrategyNumber);
+		if (opr1oid == InvalidOid)
+			elog(ERROR, "network_prefix_quals: no > operator for opclass %u",
+				 opclass);
+	}
 
 	opr1right = network_scan_first(rightop);
 
@@ -2215,10 +2214,10 @@ network_prefix_quals(Node *leftop, Oid expr_op, Datum rightop)
 
 	/* create clause "key <= network_scan_last( rightop )" */
 
-	opr2oid = find_operator("<=", datatype);
+	opr2oid = get_opclass_member(opclass, BTLessEqualStrategyNumber);
 	if (opr2oid == InvalidOid)
-		elog(ERROR, "network_prefix_quals: no <= operator for type %u",
-			 datatype);
+		elog(ERROR, "network_prefix_quals: no <= operator for opclass %u",
+			 opclass);
 
 	opr2right = network_scan_last(rightop);
 
@@ -2234,18 +2233,6 @@ network_prefix_quals(Node *leftop, Oid expr_op, Datum rightop)
 /*
  * Handy subroutines for match_special_index_operator() and friends.
  */
-
-/* See if there is a binary op of the given name for the given datatype */
-/* NB: we assume that only built-in system operators are searched for */
-static Oid
-find_operator(const char *opname, Oid datatype)
-{
-	return GetSysCacheOid(OPERNAMENSP,
-						  PointerGetDatum(opname),
-						  ObjectIdGetDatum(datatype),
-						  ObjectIdGetDatum(datatype),
-						  ObjectIdGetDatum(PG_CATALOG_NAMESPACE));
-}
 
 /*
  * Generate a Datum of the appropriate type from a C string.

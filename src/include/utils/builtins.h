@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: builtins.h,v 1.218 2003/05/23 22:33:23 tgl Exp $
+ * $Id: builtins.h,v 1.219 2003/05/26 00:11:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -496,15 +496,6 @@ extern Datum varcharout(PG_FUNCTION_ARGS);
 extern Datum varcharrecv(PG_FUNCTION_ARGS);
 extern Datum varcharsend(PG_FUNCTION_ARGS);
 extern Datum varchar(PG_FUNCTION_ARGS);
-extern Datum varchareq(PG_FUNCTION_ARGS);
-extern Datum varcharne(PG_FUNCTION_ARGS);
-extern Datum varcharlt(PG_FUNCTION_ARGS);
-extern Datum varcharle(PG_FUNCTION_ARGS);
-extern Datum varchargt(PG_FUNCTION_ARGS);
-extern Datum varcharge(PG_FUNCTION_ARGS);
-extern Datum varcharcmp(PG_FUNCTION_ARGS);
-extern Datum varcharlen(PG_FUNCTION_ARGS);
-extern Datum varcharoctetlen(PG_FUNCTION_ARGS);
 
 /* varlena.c */
 extern Datum textin(PG_FUNCTION_ARGS);

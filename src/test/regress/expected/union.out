@@ -203,21 +203,19 @@ SELECT f1 FROM INT4_TBL
                 123456
 (5 rows)
 
-SELECT f1 AS five FROM VARCHAR_TBL
+SELECT CAST(f1 AS char(4)) AS three FROM VARCHAR_TBL
 UNION
 SELECT f1 FROM CHAR_TBL;
- five 
-------
- a
+ three 
+-------
  a   
- ab
  ab  
  abcd
-(5 rows)
+(3 rows)
 
 SELECT f1 AS three FROM VARCHAR_TBL
 UNION
-SELECT TRIM(TRAILING FROM f1) FROM CHAR_TBL;
+SELECT CAST(f1 AS varchar) FROM CHAR_TBL;
  three 
 -------
  a
@@ -234,8 +232,8 @@ SELECT f1 FROM CHAR_TBL;
  ab
  abcd
  abcd
- a   
- ab  
+ a
+ ab
  abcd
  abcd
 (8 rows)

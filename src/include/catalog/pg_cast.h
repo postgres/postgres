@@ -7,7 +7,7 @@
  *
  * Copyright (c) 2002, PostgreSQL Global Development Group
  *
- * $Id: pg_cast.h,v 1.6 2003/05/14 18:08:15 tgl Exp $
+ * $Id: pg_cast.h,v 1.7 2003/05/26 00:11:27 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -161,8 +161,8 @@ DATA(insert ( 2206	 23    0 a ));
  */
 DATA(insert (	25 1042    0 i ));
 DATA(insert (	25 1043    0 i ));
-DATA(insert ( 1042	 25    0 i ));
-DATA(insert ( 1042 1043    0 i ));
+DATA(insert ( 1042	 25  401 i ));
+DATA(insert ( 1042 1043  401 i ));
 DATA(insert ( 1043	 25    0 i ));
 DATA(insert ( 1043 1042    0 i ));
 DATA(insert (	18	 25  946 i ));

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/typeconv.sgml,v 1.30 2003/03/25 16:15:38 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/typeconv.sgml,v 1.31 2003/05/26 00:11:27 tgl Exp $
 -->
 
 <chapter Id="typeconv">
@@ -45,7 +45,7 @@ mixed-type expressions to be meaningful even with user-defined types.
 <para>
 The <productname>PostgreSQL</productname> scanner/parser decodes lexical
 elements into only five fundamental categories: integers, floating-point numbers, strings,
-names, and key words.  Most extended types are first classified as
+names, and key words.  Constants of most non-numeric types are first classified as
 strings. The <acronym>SQL</acronym> language definition allows specifying type
 names with strings, and this mechanism can be used in
 <productname>PostgreSQL</productname> to start the parser down the correct
@@ -134,8 +134,8 @@ The system catalogs store information about which conversions, called
 perform those conversions.  Additional casts can be added by the user
 with the <command>CREATE CAST</command> command.  (This is usually
 done in conjunction with defining new data types.  The set of casts
-between the built-in types has been carefully crafted and should not
-be altered.)
+between the built-in types has been carefully crafted and is best not
+altered.)
 </para>
 
 <para>
@@ -144,8 +144,8 @@ at proper behavior for <acronym>SQL</acronym> standard types. There are
 several basic <firstterm>type categories</firstterm> defined: <type>boolean</type>,
 <type>numeric</type>, <type>string</type>, <type>bitstring</type>, <type>datetime</type>, <type>timespan</type>, <type>geometric</type>, <type>network</type>,
 and user-defined. Each category, with the exception of user-defined, has
-a <firstterm>preferred type</firstterm> which is preferentially selected
-when there is ambiguity.
+one or more <firstterm>preferred types</firstterm> which are preferentially
+selected when there is ambiguity.
 In the user-defined category, each type is its own preferred type.
 Ambiguous expressions (those with multiple candidate parsing solutions)
 can therefore often be resolved when there are multiple possible built-in types, but
@@ -175,7 +175,8 @@ be converted to a user-defined type (of course, only if conversion is necessary)
 <para>
 User-defined types are not related. Currently, <productname>PostgreSQL</productname>
 does not have information available to it on relationships between types, other than
-hardcoded heuristics for built-in types and implicit relationships based on available functions.
+hardcoded heuristics for built-in types and implicit relationships based on
+available functions and casts.
 </para>
 </listitem>
 
@@ -203,14 +204,15 @@ should use this new function and will no longer do the implicit conversion using
 <title>Operators</title>
 
   <para>
-   The operand types of an operator invocation are resolved following
+   The specific operator to be used in an operator invocation is determined
+   by following
    the procedure below.  Note that this procedure is indirectly affected
    by the precedence of the involved operators.  See <xref
    linkend="sql-precedence"> for more information.
   </para>
 
 <procedure>
-<title>Operand Type Resolution</title>
+<title>Operator Type Resolution</title>
 
 <step performance="required">
 <para>
@@ -271,22 +273,16 @@ candidate remains, use it; else continue to the next step.
 <step performance="required">
 <para>
 Run through all candidates and keep those with the most exact matches
-on input types.  Keep all candidates if none have any exact matches.
+on input types.  (Domain types are considered the same as their base type
+for this purpose.)  Keep all candidates if none have any exact matches.
 If only one candidate remains, use it; else continue to the next step.
 </para>
 </step>
 <step performance="required">
 <para>
-Run through all candidates and keep those with the most exact or
-binary-compatible matches on input types.  Keep all candidates if none have
-any exact or binary-compatible matches.
-If only one candidate remains, use it; else continue to the next step.
-</para>
-</step>
-<step performance="required">
-<para>
-Run through all candidates and keep those that accept preferred types at
-the most positions where type conversion will be required.
+Run through all candidates and keep those that accept preferred types (of the
+input datatype's type category) at the most positions where type conversion
+will be required.
 Keep all candidates if none accept preferred types.
 If only one candidate remains, use it; else continue to the next step.
 </para>
@@ -295,12 +291,13 @@ If only one candidate remains, use it; else continue to the next step.
 <para>
 If any input arguments are <type>unknown</type>, check the type
 categories accepted at those argument positions by the remaining
-candidates.  At each position, select the <literal>string</literal> category if any
+candidates.  At each position, select the <type>string</type> category
+if any
 candidate accepts that category.  (This bias towards string is appropriate
 since an unknown-type literal does look like a string.) Otherwise, if
 all the remaining candidates accept the same type category, select that
 category; otherwise fail because the correct choice cannot be deduced
-without more clues.  Now discard operator
+without more clues.  Now discard
 candidates that do not accept the selected type category.  Furthermore,
 if any candidate accepts a preferred type at a given argument position,
 discard candidates that accept non-preferred types for that argument.
@@ -455,12 +452,12 @@ SELECT CAST('20' AS int8) ! AS "factorial";
 <title>Functions</title>
 
   <para>
-   The argument types of function calls are resolved according to the
-   following steps.
+   The specific function to be used in a function invocation is determined
+   according to the following steps.
   </para>
 
 <procedure>
-<title>Function Argument Type Resolution</title>
+<title>Function Type Resolution</title>
 
 <step performance="required">
 <para>
@@ -523,29 +520,24 @@ candidate remains, use it; else continue to the next step.
 <step performance="required">
 <para>
 Run through all candidates and keep those with the most exact matches
-on input types.  Keep all candidates if none have any exact matches.
+on input types.  (Domain types are considered the same as their base type
+for this purpose.)  Keep all candidates if none have any exact matches.
 If only one candidate remains, use it; else continue to the next step.
 </para>
 </step>
 <step performance="required">
 <para>
-Run through all candidates and keep those with the most exact or
-binary-compatible matches on input types.  Keep all candidates if none have
-any exact or binary-compatible matches.
-If only one candidate remains, use it; else continue to the next step.
-</para>
-</step>
-<step performance="required">
-<para>
-Run through all candidates and keep those that accept preferred types at
-the most positions where type conversion will be required.
+Run through all candidates and keep those that accept preferred types (of the
+input datatype's type category) at the most positions where type conversion
+will be required.
 Keep all candidates if none accept preferred types.
 If only one candidate remains, use it; else continue to the next step.
 </para>
 </step>
 <step performance="required">
 <para>
-If any input arguments are <type>unknown</type>, check the type categories accepted
+If any input arguments are <type>unknown</type>, check the type categories
+accepted 
 at those argument positions by the remaining candidates.  At each position,
 select the <type>string</type> category if any candidate accepts that category.
 (This bias towards string
@@ -553,8 +545,8 @@ is appropriate since an unknown-type literal does look like a string.)
 Otherwise, if all the remaining candidates accept the same type category,
 select that category; otherwise fail because
 the correct choice cannot be deduced without more clues.
-Now discard candidates that do not accept the selected type category;
-furthermore, if any candidate accepts a preferred type at a given argument
+Now discard candidates that do not accept the selected type category.
+Furthermore, if any candidate accepts a preferred type at a given argument
 position, discard candidates that accept non-preferred types for that
 argument.
 </para>
@@ -571,6 +563,8 @@ then fail.
 </procedure>
 
 <para>
+Note that the <quote>best match</> rules are identical for operator and
+function type resolution.
 Some examples follow.
 </para>
 
@@ -649,7 +643,8 @@ SELECT substr(CAST (varchar '1234' AS text), 3);
 <para>
 <note>
 <para>
-The parser is aware that <type>text</type> and <type>varchar</type>
+The parser learns from the <structname>pg_cast</> catalog that
+<type>text</type> and <type>varchar</type>
 are binary-compatible, meaning that one can be passed to a function that
 accepts the other without doing any physical conversion.  Therefore, no
 explicit type conversion call is really inserted in this case.

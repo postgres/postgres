@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/lsyscache.c,v 1.94 2003/05/13 04:38:58 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/lsyscache.c,v 1.95 2003/05/26 00:11:27 tgl Exp $
  *
  * NOTES
  *	  Eventually, the index information should go through here, too.
@@ -79,6 +79,33 @@ op_requires_recheck(Oid opno, Oid opclass)
 	ReleaseSysCache(tp);
 	return result;
 }
+
+/*
+ * get_opclass_member
+ *		Get the OID of the operator that implements the specified strategy
+ *		for the specified opclass.
+ *
+ * Returns InvalidOid if there is no pg_amop entry for the given keys.
+ */
+Oid
+get_opclass_member(Oid opclass, int16 strategy)
+{
+	HeapTuple	tp;
+	Form_pg_amop amop_tup;
+	Oid			result;
+
+	tp = SearchSysCache(AMOPSTRATEGY,
+						ObjectIdGetDatum(opclass),
+						Int16GetDatum(strategy),
+						0, 0);
+	if (!HeapTupleIsValid(tp))
+		return InvalidOid;
+	amop_tup = (Form_pg_amop) GETSTRUCT(tp);
+	result = amop_tup->amopopr;
+	ReleaseSysCache(tp);
+	return result;
+}
+
 
 /*				---------- ATTRIBUTE CACHES ----------					 */
 

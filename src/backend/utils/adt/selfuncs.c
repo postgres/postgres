@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.137 2003/05/15 15:50:18 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.138 2003/05/26 00:11:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -77,9 +77,11 @@
 #include <math.h>
 
 #include "access/heapam.h"
+#include "access/nbtree.h"
 #include "access/tuptoaster.h"
 #include "catalog/catname.h"
 #include "catalog/pg_namespace.h"
+#include "catalog/pg_opclass.h"
 #include "catalog/pg_operator.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_statistic.h"
@@ -177,10 +179,9 @@ static bool get_restriction_var(List *args, int varRelid,
 					Var **var, Node **other,
 					bool *varonleft);
 static void get_join_vars(List *args, Var **var1, Var **var2);
-static Selectivity prefix_selectivity(Query *root, Var *var, Oid vartype,
-									  Const *prefix);
+static Selectivity prefix_selectivity(Query *root, Var *var,
+									  Oid opclass, Const *prefix);
 static Selectivity pattern_selectivity(Const *patt, Pattern_Type ptype);
-static Oid	find_operator(const char *opname, Oid datatype);
 static Datum string_to_datum(const char *str, Oid datatype);
 static Const *string_to_const(const char *str, Oid datatype);
 
@@ -837,6 +838,7 @@ patternsel(PG_FUNCTION_ARGS, Pattern_Type ptype)
 	Datum		constval;
 	Oid			consttype;
 	Oid			vartype;
+	Oid			opclass;
 	Pattern_Prefix_Status pstatus;
 	Const	   *patt = NULL;
 	Const	   *prefix = NULL;
@@ -884,21 +886,77 @@ patternsel(PG_FUNCTION_ARGS, Pattern_Type ptype)
 	if (vartype != consttype)
 		vartype = getBaseType(vartype);
 
+	/*
+	 * We should now be able to recognize the var's datatype.  Choose the
+	 * index opclass from which we must draw the comparison operators.
+	 *
+	 * NOTE: It would be more correct to use the PATTERN opclasses than
+	 * the simple ones, but at the moment ANALYZE will not generate statistics
+	 * for the PATTERN operators.  But our results are so approximate anyway
+	 * that it probably hardly matters.
+	 */
+	switch (vartype)
+	{
+		case TEXTOID:
+			opclass = TEXT_BTREE_OPS_OID;
+			break;
+		case VARCHAROID:
+			opclass = VARCHAR_BTREE_OPS_OID;
+			break;
+		case BPCHAROID:
+			opclass = BPCHAR_BTREE_OPS_OID;
+			break;
+		case NAMEOID:
+			opclass = NAME_BTREE_OPS_OID;
+			break;
+		case BYTEAOID:
+			opclass = BYTEA_BTREE_OPS_OID;
+			break;
+		default:
+			return DEFAULT_MATCH_SEL;
+	}
+
 	/* divide pattern into fixed prefix and remainder */
 	patt = (Const *) other;
 	pstatus = pattern_fixed_prefix(patt, ptype, &prefix, &rest);
+
+	/*
+	 * If necessary, coerce the prefix constant to the right type.
+	 * (The "rest" constant need not be changed.)
+	 */
+	if (prefix && prefix->consttype != vartype)
+	{
+		char   *prefixstr;
+
+		switch (prefix->consttype)
+		{
+			case TEXTOID:
+				prefixstr = DatumGetCString(DirectFunctionCall1(textout,
+															 prefix->constvalue));
+				break;
+			case BYTEAOID:
+				prefixstr = DatumGetCString(DirectFunctionCall1(byteaout,
+															 prefix->constvalue));
+				break;
+			default:
+				elog(ERROR, "patternsel: unexpected consttype %u",
+					 prefix->consttype);
+				return DEFAULT_MATCH_SEL;
+		}
+		prefix = string_to_const(prefixstr, vartype);
+		pfree(prefixstr);
+	}
 
 	if (pstatus == Pattern_Prefix_Exact)
 	{
 		/*
 		 * Pattern specifies an exact match, so pretend operator is '='
 		 */
-		Oid			eqopr = find_operator("=", vartype);
+		Oid			eqopr = get_opclass_member(opclass, BTEqualStrategyNumber);
 		List	   *eqargs;
 
 		if (eqopr == InvalidOid)
-			elog(ERROR, "patternsel: no = operator for type %u",
-				 vartype);
+			elog(ERROR, "patternsel: no = operator for opclass %u", opclass);
 		eqargs = makeList2(var, prefix);
 		result = DatumGetFloat8(DirectFunctionCall4(eqsel,
 													PointerGetDatum(root),
@@ -918,7 +976,7 @@ patternsel(PG_FUNCTION_ARGS, Pattern_Type ptype)
 		Selectivity selec;
 
 		if (pstatus == Pattern_Prefix_Partial)
-			prefixsel = prefix_selectivity(root, var, vartype, prefix);
+			prefixsel = prefix_selectivity(root, var, opclass, prefix);
 		else
 			prefixsel = 1.0;
 		restsel = pattern_selectivity(rest, ptype);
@@ -3020,10 +3078,13 @@ get_join_vars(List *args, Var **var1, Var **var2)
 
 /*
  * Extract the fixed prefix, if any, for a pattern.
- * *prefix is set to a palloc'd prefix string,
- * or to NULL if no fixed prefix exists for the pattern.
- * *rest is set to point to the remainder of the pattern after the
- * portion describing the fixed prefix.
+ *
+ * *prefix is set to a palloc'd prefix string (in the form of a Const node),
+ *	or to NULL if no fixed prefix exists for the pattern.
+ * *rest is set to a palloc'd Const representing the remainder of the pattern
+ *	after the portion describing the fixed prefix.
+ * Each of these has the same type (TEXT or BYTEA) as the given pattern Const.
+ *
  * The return value distinguishes no fixed prefix, a partial prefix,
  * or an exact-match-only pattern.
  */
@@ -3035,7 +3096,6 @@ like_fixed_prefix(Const *patt_const, bool case_insensitive,
 	char	   *match;
 	char	   *patt;
 	int			pattlen;
-	char	   *prefix;
 	char	   *rest;
 	Oid			typeid = patt_const->consttype;
 	int			pos,
@@ -3058,7 +3118,7 @@ like_fixed_prefix(Const *patt_const, bool case_insensitive,
 		pattlen = toast_raw_datum_size(patt_const->constvalue) - VARHDRSZ;
 	}
 
-	prefix = match = palloc(pattlen + 1);
+	match = palloc(pattlen + 1);
 	match_pos = 0;
 
 	for (pos = 0; pos < pattlen; pos++)
@@ -3093,12 +3153,11 @@ like_fixed_prefix(Const *patt_const, bool case_insensitive,
 	match[match_pos] = '\0';
 	rest = &patt[pos];
 
-	*prefix_const = string_to_const(prefix, typeid);
+	*prefix_const = string_to_const(match, typeid);
 	*rest_const = string_to_const(rest, typeid);
 
 	pfree(patt);
 	pfree(match);
-	prefix = NULL;
 
 	/* in LIKE, an empty pattern is an exact match! */
 	if (pos == pattlen)
@@ -3120,7 +3179,6 @@ regex_fixed_prefix(Const *patt_const, bool case_insensitive,
 				match_pos,
 				paren_depth;
 	char	   *patt;
-	char	   *prefix;
 	char	   *rest;
 	Oid			typeid = patt_const->consttype;
 
@@ -3176,7 +3234,7 @@ regex_fixed_prefix(Const *patt_const, bool case_insensitive,
 	}
 
 	/* OK, allocate space for pattern */
-	prefix = match = palloc(strlen(patt) + 1);
+	match = palloc(strlen(patt) + 1);
 	match_pos = 0;
 
 	/* note start at pos 1 to skip leading ^ */
@@ -3231,18 +3289,20 @@ regex_fixed_prefix(Const *patt_const, bool case_insensitive,
 	{
 		rest = &patt[pos + 1];
 
-		*prefix_const = string_to_const(prefix, typeid);
+		*prefix_const = string_to_const(match, typeid);
 		*rest_const = string_to_const(rest, typeid);
+
+		pfree(patt);
+		pfree(match);
 
 		return Pattern_Prefix_Exact;	/* pattern specifies exact match */
 	}
 
-	*prefix_const = string_to_const(prefix, typeid);
+	*prefix_const = string_to_const(match, typeid);
 	*rest_const = string_to_const(rest, typeid);
 
 	pfree(patt);
 	pfree(match);
-	prefix = NULL;
 
 	if (match_pos > 0)
 		return Pattern_Prefix_Partial;
@@ -3284,10 +3344,8 @@ pattern_fixed_prefix(Const *patt, Pattern_Type ptype,
  * A fixed prefix "foo" is estimated as the selectivity of the expression
  * "var >= 'foo' AND var < 'fop'" (see also indxqual.c).
  *
- * Because of constant-folding, we can assume that the prefixcon constant's
- * type exactly matches the operator's declared input type; but it's not
- * safe to make the same assumption for the Var, so the type to use for the
- * Var must be passed in separately.
+ * We use the >= and < operators from the specified btree opclass to do the
+ * estimation.  The given Var and Const must be of the associated datatype.
  *
  * XXX Note: we make use of the upper bound to estimate operator selectivity
  * even if the locale is such that we cannot rely on the upper-bound string.
@@ -3295,27 +3353,17 @@ pattern_fixed_prefix(Const *patt, Pattern_Type ptype,
  * more useful to use the upper-bound code than not.
  */
 static Selectivity
-prefix_selectivity(Query *root, Var *var, Oid vartype, Const *prefixcon)
+prefix_selectivity(Query *root, Var *var, Oid opclass, Const *prefixcon)
 {
 	Selectivity prefixsel;
 	Oid			cmpopr;
-	char	   *prefix;
 	List	   *cmpargs;
 	Const	   *greaterstrcon;
 
-	cmpopr = find_operator(">=", vartype);
+	cmpopr = get_opclass_member(opclass, BTGreaterEqualStrategyNumber);
 	if (cmpopr == InvalidOid)
-		elog(ERROR, "prefix_selectivity: no >= operator for type %u",
-			 vartype);
-	if (prefixcon->consttype != BYTEAOID)
-		prefix = DatumGetCString(DirectFunctionCall1(textout, prefixcon->constvalue));
-	else
-		prefix = DatumGetCString(DirectFunctionCall1(byteaout, prefixcon->constvalue));
-
-	/* If var is type NAME, must adjust type of comparison constant */
-	if (vartype == NAMEOID)
-		prefixcon = string_to_const(prefix, NAMEOID);
-
+		elog(ERROR, "prefix_selectivity: no >= operator for opclass %u",
+			 opclass);
 	cmpargs = makeList2(var, prefixcon);
 	/* Assume scalargtsel is appropriate for all supported types */
 	prefixsel = DatumGetFloat8(DirectFunctionCall4(scalargtsel,
@@ -3334,10 +3382,10 @@ prefix_selectivity(Query *root, Var *var, Oid vartype, Const *prefixcon)
 	{
 		Selectivity topsel;
 
-		cmpopr = find_operator("<", vartype);
+		cmpopr = get_opclass_member(opclass, BTLessStrategyNumber);
 		if (cmpopr == InvalidOid)
-			elog(ERROR, "prefix_selectivity: no < operator for type %u",
-				 vartype);
+			elog(ERROR, "prefix_selectivity: no < operator for opclass %u",
+				 opclass);
 		cmpargs = makeList2(var, greaterstrcon);
 		/* Assume scalarltsel is appropriate for all supported types */
 		topsel = DatumGetFloat8(DirectFunctionCall4(scalarltsel,
@@ -3700,18 +3748,6 @@ make_greater_string(const Const *str_const)
 	pfree(workstr);
 
 	return (Const *) NULL;
-}
-
-/* See if there is a binary op of the given name for the given datatype */
-/* NB: we assume that only built-in system operators are searched for */
-static Oid
-find_operator(const char *opname, Oid datatype)
-{
-	return GetSysCacheOid(OPERNAMENSP,
-						  PointerGetDatum(opname),
-						  ObjectIdGetDatum(datatype),
-						  ObjectIdGetDatum(datatype),
-						  ObjectIdGetDatum(PG_CATALOG_NAMESPACE));
 }
 
 /*

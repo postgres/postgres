@@ -33,11 +33,11 @@ SELECT b, c FROM test_having
 SELECT lower(c), count(c) FROM test_having
 	GROUP BY lower(c) HAVING count(*) > 2 OR min(a) = max(a)
 	ORDER BY lower(c);
-  lower   | count 
-----------+-------
- bbbb     |     3
- cccc     |     4
- xxxx     |     1
+ lower | count 
+-------+-------
+ bbbb  |     3
+ cccc  |     4
+ xxxx  |     1
 (3 rows)
 
 SELECT c, max(a) FROM test_having
