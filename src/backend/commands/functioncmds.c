@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/functioncmds.c,v 1.24 2002/11/01 19:19:58 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/functioncmds.c,v 1.25 2003/02/01 22:09:26 tgl Exp $
  *
  * DESCRIPTION
  *	  These routines take the parse tree and pick out the
@@ -745,8 +745,15 @@ CreateCast(CreateCastStmt *stmt)
 			elog(ERROR, "argument of cast function must match source data type");
 		if (procstruct->prorettype != targettypeid)
 			elog(ERROR, "return data type of cast function must match target data type");
+		/*
+		 * Restricting the volatility of a cast function may or may not be
+		 * a good idea in the abstract, but it definitely breaks many old
+		 * user-defined types.  Disable this check --- tgl 2/1/03
+		 */
+#ifdef NOT_USED
 		if (procstruct->provolatile == PROVOLATILE_VOLATILE)
 			elog(ERROR, "cast function must not be volatile");
+#endif
 		if (procstruct->proisagg)
 			elog(ERROR, "cast function must not be an aggregate function");
 		if (procstruct->proretset)

@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ref/create_cast.sgml,v 1.8 2003/01/19 00:13:29 momjian Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ref/create_cast.sgml,v 1.9 2003/02/01 22:09:25 tgl Exp $ -->
 
 <refentry id="SQL-CREATECAST">
  <refmeta>
@@ -143,7 +143,7 @@ SELECT 'The time is ' || CAST(now() AS text);
        be schema-qualified.  If it is not, the function will be looked
        up in the path.  The argument type must be identical to the
        source type, the result data type must match the target type of
-       the cast.  Cast functions must be marked immutable or stable.
+       the cast.
       </para>
      </listitem>
     </varlistentry>
