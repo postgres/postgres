@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/tablecmds.c,v 1.50 2002/10/21 22:06:19 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/tablecmds.c,v 1.51 2002/11/02 22:02:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1649,6 +1649,7 @@ AlterTableAddColumn(Oid myrelid,
 				   *children;
 		ColumnDef  *colDefChild = copyObject(colDef);
 
+		/* Child should see column as singly inherited */
 		colDefChild->inhcount = 1;
 		colDefChild->is_local = false;
 
@@ -1665,37 +1666,53 @@ AlterTableAddColumn(Oid myrelid,
 			if (childrelid == myrelid)
 				continue;
 
+			childrel = heap_open(childrelid, AccessExclusiveLock);
+
+			/* Does child already have a column by this name? */
 			attrdesc = heap_openr(AttributeRelationName, RowExclusiveLock);
 			tuple = SearchSysCacheCopyAttName(childrelid, colDef->colname);
 			if (!HeapTupleIsValid(tuple))
 			{
+				/* No, recurse to add it normally */
 				heap_close(attrdesc, RowExclusiveLock);
+				heap_close(childrel, NoLock);
 				AlterTableAddColumn(childrelid, true, colDefChild);
 				continue;
 			}
 			childatt = (Form_pg_attribute) GETSTRUCT(tuple);
 
-			typeTuple = typenameType(colDef->typename);
+			/* Okay if child matches by type */
+			if (typenameTypeId(colDef->typename) != childatt->atttypid ||
+				colDef->typename->typmod != childatt->atttypmod)
+				elog(ERROR, "ALTER TABLE: child table \"%s\" has different type for column \"%s\"",
+					 get_rel_name(childrelid), colDef->colname);
 
-			if (HeapTupleGetOid(typeTuple) != childatt->atttypid ||
-					colDef->typename->typmod != childatt->atttypmod)
-				elog(ERROR, "ALTER TABLE: child table %u has different "
-						"type for column \"%s\"",
-						childrelid, colDef->colname);
+			/*
+			 * XXX if we supported NOT NULL or defaults, would need to do
+			 * more work here to verify child matches
+			 */
 
+			elog(NOTICE, "ALTER TABLE: merging definition of column \"%s\" for child %s",
+				 colDef->colname, get_rel_name(childrelid));
+
+			/* Bump the existing child att's inhcount */
 			childatt->attinhcount++;
 			simple_heap_update(attrdesc, &tuple->t_self, tuple);
 			CatalogUpdateIndexes(attrdesc, tuple);
-			
-			childrel = RelationIdGetRelation(childrelid);
-			elog(NOTICE, "ALTER TABLE: merging definition of column "
-					"\"%s\" for child %s", colDef->colname,
-					RelationGetRelationName(childrel));
-			RelationClose(childrel);
 
-			heap_close(attrdesc, RowExclusiveLock);
+			/*
+			 * Propagate any new CHECK constraints into the child table
+			 * and its descendants
+			 */
+			if (colDef->constraints != NIL)
+			{
+				CommandCounterIncrement();
+				AlterTableAddConstraint(childrelid, true, colDef->constraints);
+			}
+
 			heap_freetuple(tuple);
-			ReleaseSysCache(typeTuple);
+			heap_close(attrdesc, RowExclusiveLock);
+			heap_close(childrel, NoLock);
 		}
 	}
 	else
