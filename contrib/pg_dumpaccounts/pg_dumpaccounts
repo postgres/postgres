@@ -1,0 +1,65 @@
+#!/bin/sh
+#
+# pg_dumpaccounts
+# dumps the pg_shadow and pg_group tables, which belong to the
+# whole installation rather than any one individual database.
+#
+# $Header: /cvsroot/pgsql/contrib/pg_dumpaccounts/Attic/pg_dumpaccounts,v 1.1.2.1 2000/11/02 18:09:49 wieck Exp $
+#
+# to adapt to System V vs. BSD 'echo'
+if echo '\\' | grep '\\\\' >/dev/null 2>&1
+then	
+	BS='\'			# BSD
+else
+	BS='\\'			# System V
+fi
+#
+# Dump everyone but the postgres user
+# initdb creates him
+#
+# get the postgres user id
+#
+POSTGRES_SUPER_USER_ID="`echo \" \
+			select datdba \
+			from pg_database \
+			where datname = 'template1'; \" | \
+			psql -A -q -t template1`"
+echo "${BS}connect template1"
+#
+# delete all users in case they run this twice
+#
+# we don't use POSTGRES_SUPER_USER_ID because the postgres super user id
+# could be different on the two installations
+#
+echo "select datdba into table tmp_pg_shadow \
+      from pg_database where datname = 'template1';"
+echo "delete from pg_shadow where usesysid <> tmp_pg_shadow.datdba;"
+echo "drop table tmp_pg_shadow;"
+#
+# load all the non-postgres users
+# XXX this breaks badly if the layout of pg_shadow ever changes.
+# It'd be better to convert the data into CREATE USER commands.
+#
+echo "copy pg_shadow from stdin;"
+psql -q template1 <<END
+select pg_shadow.* 
+into table tmp_pg_shadow
+from pg_shadow
+where usesysid <> $POSTGRES_SUPER_USER_ID;
+copy tmp_pg_shadow to stdout;
+drop table tmp_pg_shadow;
+END
+echo "${BS}."
+#
+# copy the pg_group table too
+# XXX this breaks badly if the layout of pg_group ever changes.
+# It'd be better to convert the data into CREATE GROUP commands.
+#
+echo "delete from pg_group;"
+echo "copy pg_group from stdin;"
+psql -q template1 <<END
+copy pg_group to stdout;
+END
+echo "${BS}."
+
+exit 0
