@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/copy.c,v 1.219 2004/04/06 13:21:33 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/copy.c,v 1.220 2004/04/15 22:36:03 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1258,6 +1258,7 @@ CopyFrom(Relation rel, List *attnumlist, bool binary, bool oids,
 	ExprState **constraintexprs;
 	bool		hasConstraints = false;
 	int			i;
+	int			attnum;
 	List	   *cur;
 	Oid			in_func_oid;
 	Datum	   *values;
@@ -1317,39 +1318,39 @@ CopyFrom(Relation rel, List *attnumlist, bool binary, bool oids,
 	defexprs = (ExprState **) palloc((num_phys_attrs + 1) * sizeof(ExprState *));
 	constraintexprs = (ExprState **) palloc0((num_phys_attrs + 1) * sizeof(ExprState *));
 
-	for (i = 0; i < num_phys_attrs; i++)
+	for (attnum = 1; attnum <= num_phys_attrs; attnum++)
 	{
 		/* We don't need info for dropped attributes */
-		if (attr[i]->attisdropped)
+		if (attr[attnum - 1]->attisdropped)
 			continue;
 
 		/* Fetch the input function and typelem info */
 		if (binary)
-			getTypeBinaryInputInfo(attr[i]->atttypid,
-								   &in_func_oid, &elements[i]);
+			getTypeBinaryInputInfo(attr[attnum - 1]->atttypid,
+								   &in_func_oid, &elements[attnum - 1]);
 		else
-			getTypeInputInfo(attr[i]->atttypid,
-							 &in_func_oid, &elements[i]);
-		fmgr_info(in_func_oid, &in_functions[i]);
+			getTypeInputInfo(attr[attnum - 1]->atttypid,
+							 &in_func_oid, &elements[attnum - 1]);
+		fmgr_info(in_func_oid, &in_functions[attnum - 1]);
 
 		/* Get default info if needed */
-		if (!intMember(i + 1, attnumlist))
+		if (!intMember(attnum, attnumlist))
 		{
 			/* attribute is NOT to be copied from input */
 			/* use default value if one exists */
-			Node	   *defexpr = build_column_default(rel, i + 1);
+			Node	   *defexpr = build_column_default(rel, attnum);
 
 			if (defexpr != NULL)
 			{
 				defexprs[num_defaults] = ExecPrepareExpr((Expr *) defexpr,
 														 estate);
-				defmap[num_defaults] = i;
+				defmap[num_defaults] = attnum - 1;
 				num_defaults++;
 			}
 		}
 
 		/* If it's a domain type, set up to check domain constraints */
-		if (get_typtype(attr[i]->atttypid) == 'd')
+		if (get_typtype(attr[attnum - 1]->atttypid) == 'd')
 		{
 			Param	   *prm;
 			Node	   *node;
@@ -1365,14 +1366,14 @@ CopyFrom(Relation rel, List *attnumlist, bool binary, bool oids,
 			prm = makeNode(Param);
 			prm->paramkind = PARAM_EXEC;
 			prm->paramid = 0;
-			prm->paramtype = getBaseType(attr[i]->atttypid);
+			prm->paramtype = getBaseType(attr[attnum - 1]->atttypid);
 
 			node = coerce_to_domain((Node *) prm,
 									prm->paramtype,
-									attr[i]->atttypid,
+									attr[attnum - 1]->atttypid,
 									COERCE_IMPLICIT_CAST);
 
-			constraintexprs[i] = ExecPrepareExpr((Expr *) node,
+			constraintexprs[attnum - 1] = ExecPrepareExpr((Expr *) node,
 												 estate);
 			hasConstraints = true;
 		}
