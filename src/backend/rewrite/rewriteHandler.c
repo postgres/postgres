@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.56 1999/09/18 19:07:19 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.57 1999/09/19 17:20:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2441,16 +2441,9 @@ RewriteQuery(Query *parsetree, bool *instead_flag, List **qual_products)
 		return NIL;
 
 	/*
-	 * only for a delete may the targetlist be NULL
-	 */
-	if (event != CMD_DELETE)
-		Assert(parsetree->targetList != NULL);
-
-	result_relation = parsetree->resultRelation;
-
-	/*
 	 * the statement is an update, insert or delete - fire rules on it.
 	 */
+	result_relation = parsetree->resultRelation;
 	rt_entry = rt_fetch(result_relation, parsetree->rtable);
 	rt_entry_relation = heap_openr(rt_entry->relname, AccessShareLock);
 	rt_entry_locks = rt_entry_relation->rd_rules;
