@@ -7,7 +7,7 @@
  * Copyright (c) 2003, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/util/Attic/PSQLException.java,v 1.13 2003/09/08 17:30:22 barry Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/util/Attic/PSQLException.java,v 1.13.2.1 2003/12/12 18:39:01 davec Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -224,6 +224,8 @@ public class PSQLException extends SQLException
 	
 	public String getSQLState()
 	{
+		if (state == null)
+			return PSQLState.UNKNOWN_STATE.getState();
 		return state.getState();
 	}
 }

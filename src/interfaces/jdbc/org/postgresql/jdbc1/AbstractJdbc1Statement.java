@@ -26,7 +26,7 @@ import java.sql.Timestamp;
 import java.sql.Types;
 import java.util.Vector;
 
-/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/AbstractJdbc1Statement.java,v 1.41.2.1 2003/12/12 00:27:41 davec Exp $
+/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/AbstractJdbc1Statement.java,v 1.41.2.2 2003/12/12 18:39:00 davec Exp $
  * This class defines methods of the jdbc1 specification.  This class is
  * extended by org.postgresql.jdbc2.AbstractJdbc2Statement which adds the jdbc2
  * methods.  The real Statement class (for jdbc1) is org.postgresql.jdbc1.Jdbc1Statement
@@ -526,7 +526,7 @@ public abstract class AbstractJdbc1Statement implements BaseStatement
 			callResult = result.getObject(1);
 			int columnType = result.getMetaData().getColumnType(1);
 			if (columnType != functionReturnType)
-				throw new PSQLException ("postgresql.call.wrongrtntype",
+				throw new PSQLException ("postgresql.call.wrongrtntype", PSQLState.DATA_TYPE_MISMATCH,
 										 new Object[]{
 											 "java.sql.Types=" + columnType, "java.sql.Types=" + functionReturnType });
 			result.close ();
