@@ -1,6 +1,7 @@
 * Version numbers
     configure.in and configure
     bump interface version numbers
+      o src/interfaces/*/Makefile
       o src/interfaces/libpq/libpq.rc
       o src/include/pg_config.h.win32
 
@@ -14,6 +15,7 @@
 
 * Ports
     update ports list in doc/src/sgml/installation.sgml 
+    update INSTALL
     platform-specific FAQ's, if needed
 
 * Miscellaneous files
@@ -22,3 +24,78 @@
 * Update pg_upgrade to handle new version, or disable
 
 * Update copyright year?
+
+
+---------------------------------------------------------------------------
+
+Major Version
+=============
+
+The major version number should be updated whenever the source of the
+library changes to make it binary incompatible. Such changes include,
+but are not limited to:
+
+1. Removing a public function or structure (or typedef, enum, ...)
+
+2. Modifying a public functions arguments.
+
+3. Removing a field from a public structure.
+
+3. Adding a field to a public structure, unless steps have been
+previously taken to shield users from such a change, for example by
+such structures only ever being allocated/instantiated by a library
+function which would give the new field a suitable default value.
+
+Adding a new function would NOT force an increase in the major version
+number. When the major version is increased all applications which
+link to the library MUST be recompiled - this is not desirable. When
+the major version is updated the minor version gets reset.
+
+Minor Version
+=============
+
+The minor version number should be updated whenever the functionality
+of the library has changed, typically and change in source code
+between releases would mean an increase in the minor version number so
+long as it does not require a major version increase.
+
+Minimizing Changes
+==================
+
+When modifying public functions arguments, steps should be taken to
+maintain binary compatibility across minor PostgreSQL releases (e.g. the
+7.2 series, the 7.3 series, the 7.4/8.0 series). Consider the following
+function:
+
+	void print_stuff(int arg1, int arg2)
+	{
+	    printf("stuff: %d %d\n", arg1, arg2);
+	}
+
+If we wanted to add a third argument:
+	
+	void print_stuff(int arg1, int arg2, int arg3)
+	{
+	    printf("stuff: %d %d %d\n", arg1, arg2, arg3);
+	}
+
+Then doing it like this:
+
+	void print_stuff2(int arg1, int arg2, int arg3)
+	{
+	    printf("stuff: %d %d %d\n", arg1, arg2, arg3);
+	}
+
+	void print_stuff(int arg1, int arg2)
+	{
+	    print_stuff(arg1, arg2, 0);
+	}
+
+would maintain binary compatibility. Obviously this would add a fair
+bit of cruft if used extensively, but considering the changes between
+minor versions would probably be worthwhile to avoid bumping library
+major version. Naturally in the next major version print_stuff() would
+assume the functionality and arguments of print_stuff2().
+
+
+Lee Kindness
