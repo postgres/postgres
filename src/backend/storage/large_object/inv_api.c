@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/large_object/inv_api.c,v 1.79 2000/10/24 01:38:29 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/large_object/inv_api.c,v 1.80 2000/11/02 23:52:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -186,7 +186,6 @@ inv_getsize(LargeObjectDesc *obj_desc)
 {
 	bool			found = false;
 	uint32			lastbyte = 0;
-	uint32			thislastbyte;
 	ScanKeyData		skey[1];
 	IndexScanDesc	sd;
 	RetrieveIndexResult	indexRes;
@@ -209,7 +208,13 @@ inv_getsize(LargeObjectDesc *obj_desc)
 	tuple.t_datamcxt = CurrentMemoryContext;
 	tuple.t_data = NULL;
 
-	while ((indexRes = index_getnext(sd, ForwardScanDirection)))
+	/*
+	 * Because the pg_largeobject index is on both loid and pageno,
+	 * but we constrain only loid, a backwards scan should visit all
+	 * pages of the large object in reverse pageno order.  So, it's
+	 * sufficient to examine the first valid tuple (== last valid page).
+	 */
+	while ((indexRes = index_getnext(sd, BackwardScanDirection)))
 	{
 		tuple.t_self = indexRes->heap_iptr;
 		heap_fetch(obj_desc->heap_r, SnapshotNow, &tuple, &buffer);
@@ -226,12 +231,11 @@ inv_getsize(LargeObjectDesc *obj_desc)
 				heap_tuple_untoast_attr((varattrib *) datafield);
 			pfreeit = true;
 		}
-		thislastbyte = data->pageno * LOBLKSIZE + getbytealen(datafield);
-		if (thislastbyte > lastbyte)
-			lastbyte = thislastbyte;
+		lastbyte = data->pageno * LOBLKSIZE + getbytealen(datafield);
 		if (pfreeit)
 			pfree(datafield);
 		ReleaseBuffer(buffer);
+		break;
 	}
 	
 	index_endscan(sd);
@@ -254,16 +258,17 @@ inv_seek(LargeObjectDesc *obj_desc, int offset, int whence)
 			obj_desc->offset = offset;
 			break;
 		case SEEK_CUR:
-			if ((obj_desc->offset + offset) < 0)
+			if (offset < 0 && obj_desc->offset < ((uint32) (- offset)))
 				elog(ERROR, "inv_seek: invalid offset: %d", offset);
 			obj_desc->offset += offset;
 			break;
 		case SEEK_END:
 			{
-				uint32 size = inv_getsize(obj_desc);
-				if (offset < 0 || ((uint32) offset) > size)
-					elog(ERROR, "inv_seek: invalid offset");
-				obj_desc->offset = size - offset;
+				uint32	size = inv_getsize(obj_desc);
+
+				if (offset < 0 && size < ((uint32) (- offset)))
+					elog(ERROR, "inv_seek: invalid offset: %d", offset);
+				obj_desc->offset = size + offset;
 			}
 			break;
 		default:
