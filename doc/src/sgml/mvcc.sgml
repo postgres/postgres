@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/mvcc.sgml,v 2.11 2000/12/22 21:51:58 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/mvcc.sgml,v 2.12 2001/03/28 20:46:34 tgl Exp $
 -->
 
  <chapter id="mvcc">
@@ -95,7 +95,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/mvcc.sgml,v 2.11 2000/12/22 21:51:58 petere
     The four isolation levels and the corresponding behaviors are described below.
 
     <table tocentry="1">
-     <title><productname>Postgres</productname> Isolation Levels</title>
+     <title><acronym>ANSI</acronym>/<acronym>ISO</acronym> <acronym>SQL</acronym> Isolation Levels</title>
      <titleabbrev>Isolation Levels</titleabbrev>
      <tgroup cols="4">
       <thead>
@@ -192,10 +192,13 @@ $Header: /cvsroot/pgsql/doc/src/sgml/mvcc.sgml,v 2.11 2000/12/22 21:51:58 petere
     is the default isolation level in <productname>Postgres</productname>. 
     When a transaction runs on this isolation level,
     a <command>SELECT</command> query sees only data committed before the
-    transaction began and never sees either dirty data or concurrent
-    transaction changes committed during transaction execution.  (However, the
+    query began and never sees either uncommitted data or changes committed
+    during query execution by concurrent transactions.  (However, the
     <command>SELECT</command> does see the effects of previous updates
-    executed within this same transaction.)
+    executed within this same transaction, even though they are not yet
+    committed.)  Notice that two successive <command>SELECT</command>s can see different data,
+    even though they are within a single transaction, when other transactions
+    commit changes during execution of the first <command>SELECT</command>.
    </para>
 
    <para>
@@ -241,11 +244,15 @@ $Header: /cvsroot/pgsql/doc/src/sgml/mvcc.sgml,v 2.11 2000/12/22 21:51:58 petere
    <para>
     When a transaction is on the serializable level,
     a <command>SELECT</command> query sees only data committed before the
-    transaction began and never sees either dirty data or concurrent
-    transaction changes committed during transaction execution.  (However, the
+    transaction began and never sees either uncommitted data or changes
+    committed
+    during transaction execution by concurrent transactions.  (However, the
     <command>SELECT</command> does see the effects of previous updates
-    executed within this same transaction.)  This is the same behavior as
-    for Read Committed level.
+    executed within this same transaction, even though they are not yet
+    committed.)  This is different from Read Committed in that the
+    <command>SELECT</command>
+    sees a snapshot as of the start of the transaction, not as of the start
+    of the current query within the transaction.
    </para>
 
    <para>
@@ -286,7 +293,7 @@ ERROR:  Can't serialize access due to concurrent update
     updates make it impossible to sustain the illusion of serial execution,
     and the cost of redoing complex transactions may be significant.  So
     this level is recommended only when update queries contain logic
-    sufficiently complex that it may give wrong answers in Read Committed
+    sufficiently complex that they may give wrong answers in Read Committed
     level.
    </para>
   </sect1>
