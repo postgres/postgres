@@ -345,7 +345,7 @@ From owner-pgsql-hackers@hub.org Tue Oct 19 10:31:10 1999
 Received: from renoir.op.net (root@renoir.op.net [209.152.193.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id KAA29087
 	for <maillist@candle.pha.pa.us>; Tue, 19 Oct 1999 10:31:08 -0400 (EDT)
-Received: from hub.org (hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.3 $) with ESMTP id KAA27535 for <maillist@candle.pha.pa.us>; Tue, 19 Oct 1999 10:19:47 -0400 (EDT)
+Received: from hub.org (hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.4 $) with ESMTP id KAA27535 for <maillist@candle.pha.pa.us>; Tue, 19 Oct 1999 10:19:47 -0400 (EDT)
 Received: from localhost (majordom@localhost)
 	by hub.org (8.9.3/8.9.3) with SMTP id KAA30328;
 	Tue, 19 Oct 1999 10:12:10 -0400 (EDT)
@@ -454,7 +454,7 @@ From owner-pgsql-hackers@hub.org Tue Oct 19 21:25:30 1999
 Received: from renoir.op.net (root@renoir.op.net [209.152.193.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id VAA28130
 	for <maillist@candle.pha.pa.us>; Tue, 19 Oct 1999 21:25:26 -0400 (EDT)
-Received: from hub.org (hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.3 $) with ESMTP id VAA10512 for <maillist@candle.pha.pa.us>; Tue, 19 Oct 1999 21:15:28 -0400 (EDT)
+Received: from hub.org (hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.4 $) with ESMTP id VAA10512 for <maillist@candle.pha.pa.us>; Tue, 19 Oct 1999 21:15:28 -0400 (EDT)
 Received: from localhost (majordom@localhost)
 	by hub.org (8.9.3/8.9.3) with SMTP id VAA50745;
 	Tue, 19 Oct 1999 21:07:23 -0400 (EDT)
@@ -694,4 +694,48 @@ LRU-2 idea and am not pursuing it.
 
 			regards, tom lane
 
+
+From pgsql-hackers-owner+M3455@postgresql.org Fri Jan 19 13:18:12 2001
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id NAA02092
+	for <pgman@candle.pha.pa.us>; Fri, 19 Jan 2001 13:18:12 -0500 (EST)
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by mail.postgresql.org (8.11.1/8.11.1) with SMTP id f0JIFJ037872;
+	Fri, 19 Jan 2001 13:15:19 -0500 (EST)
+	(envelope-from pgsql-hackers-owner+M3455@postgresql.org)
+Received: from sectorbase2.sectorbase.com ([208.48.122.131])
+	by mail.postgresql.org (8.11.1/8.11.1) with ESMTP id f0JI7V036780
+	for <pgsql-hackers@postgreSQL.org>; Fri, 19 Jan 2001 13:07:31 -0500 (EST)
+	(envelope-from vmikheev@SECTORBASE.COM)
+Received: by sectorbase2.sectorbase.com with Internet Mail Service (5.5.2653.19)
+	id <DG1W4LRZ>; Fri, 19 Jan 2001 09:46:14 -0800
+Message-ID: <8F4C99C66D04D4118F580090272A7A234D329F@sectorbase1.sectorbase.com>
+From: "Mikheev, Vadim" <vmikheev@SECTORBASE.COM>
+To: "'Tom Lane'" <tgl@sss.pgh.pa.us>, Bruce Momjian <pgman@candle.pha.pa.us>
+Cc: pgsql-hackers@postgresql.org
+Subject: RE: [HACKERS] Possible performance improvement: buffer replacemen
+	t policy 
+Date: Fri, 19 Jan 2001 10:07:27 -0800
+MIME-Version: 1.0
+X-Mailer: Internet Mail Service (5.5.2653.19)
+Content-Type: text/plain;
+	charset="iso-8859-1"
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+> > Tom, did we ever test this?  I think we did and found that 
+> > it was the same or worse, right?
+> 
+> I tried it and didn't see any noticeable improvement on the particular
+> test case I was using, so I got discouraged and didn't pursue the idea
+> further.  I'd like to come back to it someday, though.
+
+I don't know how much useful could be LRU-2 but with WAL we should try
+to reuse undirty free buffers first, not dirty ones, just to postpone
+writes as long as we can. (BTW, this is what Oracle does.)
+So, we probably should put new free dirty buffer just before first
+undirty one in LRU.
+
+Vadim
 
