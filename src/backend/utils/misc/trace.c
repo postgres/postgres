@@ -29,7 +29,7 @@
  * but it's probably not worth the trouble.  Instead limit trace message
  * length to this.
  */
-#define TRACEMSG_MAXLEN		1024
+#define TRACEMSG_MAXLEN		4096
 
 #ifdef USE_SYSLOG
 /*
