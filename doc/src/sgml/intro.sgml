@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/intro.sgml,v 1.17 2001/11/21 05:53:41 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/intro.sgml,v 1.18 2001/11/23 22:06:20 tgl Exp $
 -->
 
  <preface id="preface">
@@ -42,7 +42,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/intro.sgml,v 1.17 2001/11/21 05:53:41 thoma
     processing applications.
     The relational  model  successfully  replaced  previous
     models  in  part  because  of its <quote>Spartan simplicity</quote>.
-    However, as mentioned, this simplicity often makes  the
+    However, this simplicity makes  the
     implementation  of  certain applications very difficult.
     <productname>PostgreSQL</productname> offers  substantial additional
     power  by  incorporating  the following additional
@@ -86,7 +86,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/intro.sgml,v 1.17 2001/11/21 05:53:41 thoma
     category of databases referred to as
     <firstterm>object-relational</firstterm>. Note that this is distinct
     from those referred to as <firstterm>object-oriented</firstterm>,
-    which in general are not as well suited to supporting the
+    which in general are not as well suited to supporting
     traditional relational database languages.
     So, although <productname>PostgreSQL</productname> has some
     object-oriented features, it is firmly in the relational database

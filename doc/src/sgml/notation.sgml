@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/notation.sgml,v 1.18 2001/11/21 05:53:41 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/notation.sgml,v 1.19 2001/11/23 22:06:20 tgl Exp $
 -->
 
 <sect1 id="notation">
@@ -33,7 +33,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/notation.sgml,v 1.18 2001/11/21 05:53:41 th
   Anything in braces
   (<literal>{</literal> and <literal>}</literal>) and containing vertical bars
   (<literal>|</literal>)
-  indicates that you must choose one.
+  indicates that you must choose one alternative.
  </para>
 
  <para>
