@@ -343,7 +343,7 @@ pgsource_dealloc(pgsourceobject * self)
 		PQclear(self->last_result);
 
 	Py_XDECREF(self->pgcnx);
-	PyMem_DEL(self);
+	PyObject_DEL(self);
 }
 
 /* closes object */
@@ -990,7 +990,7 @@ pglarge_dealloc(pglargeobject * self)
 		lo_close(self->pgcnx->cnx, self->lo_fd);
 
 	Py_XDECREF(self->pgcnx);
-	PyMem_DEL(self);
+	PyObject_DEL(self);
 }
 
 /* opens large object */
@@ -1546,7 +1546,7 @@ pg_dealloc(pgobject * self)
 	if (self->cnx)
 		PQfinish(self->cnx);
 
-	PyMem_DEL(self);
+	PyObject_DEL(self);
 }
 
 /* close without deleting */
@@ -1579,7 +1579,7 @@ pgquery_dealloc(pgqueryobject * self)
 	if (self->last_result)
 		PQclear(self->last_result);
 
-	PyMem_DEL(self);
+	PyObject_DEL(self);
 }
 
 /* resets connection */
