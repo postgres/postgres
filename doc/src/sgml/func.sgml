@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.151 2003/03/28 00:23:29 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.152 2003/03/30 21:48:37 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -4412,11 +4412,9 @@ substring('foobar' from 'o(.)b')   <lineannotation>o</lineannotation>
         <entry><literal>'148.5'</literal></entry>
        </row>
        <row>
-       <row>
         <entry><literal>to_char(148.5, 'FM999.990')</literal></entry>
         <entry><literal>'148.500'</literal></entry>
        </row>
-       <row>
        <row>
         <entry><literal>to_char(148.5, '999D999')</literal></entry>
         <entry><literal>'&nbsp;148,500'</literal></entry>	 
