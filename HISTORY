@@ -1,10 +1,10 @@
-PostgreSQL 6.3p1             Sun Mar 22 00:19:35 EST 1998
+PostgreSQL 6.3.1             Mon Mar 23 10:21:52 EST 1998
 -------------------------------------------------------------
 
-A dump/restore is NOT required for those running 6.3.  A 'make clean',
-'make', and 'make install' is all that is required.  This last step
-should be performed while the postmaster is not running.  You should
-re-link any custom applications that use PostgreSQL libraries.
+A dump/restore is NOT required for those running 6.3.  A 
+'make distclean', 'make', and 'make install' is all that is required.
+This last step should be performed while the postmaster is not running.
+You should re-link any custom applications that use PostgreSQL libraries.
 
 Changes
 -------
