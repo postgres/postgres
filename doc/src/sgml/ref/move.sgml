@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/move.sgml,v 1.14 2002/11/13 00:44:08 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/move.sgml,v 1.15 2002/12/30 15:31:47 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -35,8 +35,8 @@ MOVE [ <replaceable class="PARAMETER">direction</replaceable> ]
    Description
   </title>
   <para>
-   <command>MOVE</command> allows a user to move cursor position a specified
-   number of rows.
+   <command>MOVE</command> allows a user to move the cursor position a 
+   specified number of rows.
    <command>MOVE</command> works like the <command>FETCH</command> command,
    but only positions the cursor and does not return rows.
    <replaceable class="PARAMETER">LAST</replaceable> moves to the end

@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.185 2002/12/06 05:00:31 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.186 2002/12/30 15:31:48 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -257,7 +257,7 @@ ProcessUtility(Node *parsetree,
 				FetchStmt  *stmt = (FetchStmt *) parsetree;
 				char	   *portalName = stmt->portalname;
 				bool		forward;
-				int			count;
+				long		count;
 
 				forward = (bool) (stmt->direction == FORWARD);
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/portalcmds.c,v 1.6 2002/12/15 16:17:42 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/portalcmds.c,v 1.7 2002/12/30 15:31:47 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -65,7 +65,7 @@ PortalCleanup(Portal portal)
 void
 PerformPortalFetch(char *name,
 				   bool forward,
-				   int count,
+				   long count,
 				   CommandDest dest,
 				   char *completionTag)
 {
@@ -100,14 +100,48 @@ PerformPortalFetch(char *name,
 		return;
 	}
 
-	/* If zero count, we are done */
+	/* If zero count, handle specially */
 	if (count == 0)
-		return;
+	{
+		bool on_row = false;
+
+		/* Are we sitting on a row? */
+		oldcontext = MemoryContextSwitchTo(PortalGetHeapMemory(portal));
+		queryDesc = PortalGetQueryDesc(portal);
+		estate = queryDesc->estate;
+		if (portal->atStart == false && portal->atEnd == false)
+			on_row = true;
+		MemoryContextSwitchTo(oldcontext);
+
+		if (dest == None)
+		{
+			/* MOVE 0 returns 0/1 based on if FETCH 0 would return a row */
+			if (completionTag && on_row)
+				strcpy(completionTag, "MOVE 1");
+			return;
+		}
+		else
+		{
+			/* If we are not on a row, FETCH 0 returns nothing */
+			if (!on_row)
+				return;
+
+			/* Since we are sitting on a row, return the row */
+			/* Back up so we can reread the row */
+			PerformPortalFetch(name, false /* backward */, 1,
+							   None, /* throw away output */
+							   NULL /* do not modify the command tag */);
+
+			/* Set up to fetch one row */
+			count = 1;
+			forward = true;
+		}
+	}
 
 	/* Internally, zero count processes all portal rows */
-	if (count == INT_MAX)
+	if (count == LONG_MAX)
 		count = 0;
-		
+
 	/*
 	 * switch into the portal context
 	 */

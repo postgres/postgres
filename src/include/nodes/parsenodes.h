@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsenodes.h,v 1.223 2002/12/12 20:35:16 tgl Exp $
+ * $Id: parsenodes.h,v 1.224 2002/12/30 15:31:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1198,7 +1198,7 @@ typedef struct FetchStmt
 {
 	NodeTag		type;
 	int			direction;		/* FORWARD or BACKWARD */
-	int			howMany;		/* amount to fetch */
+	long		howMany;		/* amount to fetch */
 	char	   *portalname;		/* name of portal (cursor) */
 	bool		ismove;			/* TRUE if MOVE */
 } FetchStmt;

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/fetch.sgml,v 1.21 2002/04/21 19:02:39 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/fetch.sgml,v 1.22 2002/12/30 15:31:47 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -89,7 +89,7 @@ FETCH [ FORWARD | BACKWARD | RELATIVE ] [ <replaceable class="PARAMETER">#</repl
 	   <para>
 	    A signed integer that specifies how many rows to fetch.
 	    Note that a negative integer is equivalent to changing the sense of
-	    FORWARD and BACKWARD.
+	    FORWARD and BACKWARD. Zero re-fetches the current row.
 	   </para>
 	  </listitem>
 	 </varlistentry>
@@ -176,30 +176,6 @@ WARNING:  FETCH/ABSOLUTE not supported, using RELATIVE
        <para>
 	<productname>PostgreSQL</productname> does not support absolute
 	positioning of cursors.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><computeroutput>
-ERROR:  FETCH/RELATIVE at current position is not supported
-       </computeroutput></term>
-      <listitem>
-       <para>
-	<acronym>SQL92</acronym> allows one to repetitively retrieve the cursor
-	at its <quote>current position</quote> using the syntax
-	<synopsis>
-FETCH RELATIVE 0 FROM <replaceable class="PARAMETER">cursor</replaceable>.
-	</synopsis>
-       </para>
-
-       <para>
-	<productname>PostgreSQL</productname> does not currently support
-	this notion; in fact the value zero is reserved to indicate that
-	all rows should be retrieved and is equivalent to specifying the ALL keyword.
-	If the RELATIVE keyword has been used, <productname>PostgreSQL</productname> 
-	assumes that the user intended <acronym>SQL92</acronym> behavior
-	and returns this error message.
        </para>
       </listitem>
      </varlistentry>

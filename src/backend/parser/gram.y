@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.388 2002/12/12 20:35:13 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.389 2002/12/30 15:31:47 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -2591,13 +2591,6 @@ comment_text:
 FetchStmt:	FETCH direction fetch_how_many from_in name
 				{
 					FetchStmt *n = makeNode(FetchStmt);
-					if ($2 == RELATIVE)
-					{
-						if ($3 == 0)
-							elog(ERROR,
-					"FETCH / RELATIVE at current position is not supported");
-						$2 = FORWARD;
-					}
 					if ($3 < 0)
 					{
 						$3 = -$3;
@@ -2629,10 +2622,6 @@ FetchStmt:	FETCH direction fetch_how_many from_in name
 			| FETCH direction from_in name
 				{
 					FetchStmt *n = makeNode(FetchStmt);
-					if ($2 == RELATIVE)
-					{
-						$2 = FORWARD;
-					}
 					n->direction = $2;
 					n->howMany = 1;
 					n->portalname = $4;
@@ -2719,20 +2708,20 @@ FetchStmt:	FETCH direction fetch_how_many from_in name
 
 direction:	FORWARD									{ $$ = FORWARD; }
 			| BACKWARD								{ $$ = BACKWARD; }
-			| RELATIVE								{ $$ = RELATIVE; }
+			| RELATIVE								{ $$ = FORWARD; }
 			| ABSOLUTE
 				{
 					elog(NOTICE,
 					"FETCH / ABSOLUTE not supported, using RELATIVE");
-					$$ = RELATIVE;
+					$$ = FORWARD;
 				}
 		;
 
 fetch_how_many:
 			Iconst									{ $$ = $1; }
 			| '-' Iconst							{ $$ = - $2; }
-			| ALL									{ $$ = INT_MAX; }
-			| LAST									{ $$ = INT_MAX; }
+			| ALL									{ $$ = LONG_MAX; }
+			| LAST									{ $$ = LONG_MAX; }
 			| NEXT									{ $$ = 1; }
 			| PRIOR									{ $$ = -1; }
 		;
