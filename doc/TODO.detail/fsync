@@ -1,0 +1,129 @@
+From pgsql-hackers-owner+M908@postgresql.org Sun Nov 19 14:27:43 2000
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id OAA10885
+	for <pgman@candle.pha.pa.us>; Sun, 19 Nov 2000 14:27:42 -0500 (EST)
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by mail.postgresql.org (8.11.1/8.11.1) with SMTP id eAJJSMs83653;
+	Sun, 19 Nov 2000 14:28:22 -0500 (EST)
+	(envelope-from pgsql-hackers-owner+M908@postgresql.org)
+Received: from candle.pha.pa.us (candle.navpoint.com [162.33.245.46] (may be forged))
+	by mail.postgresql.org (8.11.1/8.11.1) with ESMTP id eAJJQns83565
+	for <pgsql-hackers@postgreSQL.org>; Sun, 19 Nov 2000 14:26:49 -0500 (EST)
+	(envelope-from pgman@candle.pha.pa.us)
+Received: (from pgman@localhost)
+	by candle.pha.pa.us (8.9.0/8.9.0) id OAA06790;
+	Sun, 19 Nov 2000 14:23:06 -0500 (EST)
+From: Bruce Momjian <pgman@candle.pha.pa.us>
+Message-Id: <200011191923.OAA06790@candle.pha.pa.us>
+Subject: Re: [HACKERS] WAL fsync scheduling
+In-Reply-To: <002101c0525e$2d964480$b97a30d0@sectorbase.com> "from Vadim Mikheev
+	at Nov 19, 2000 11:23:19 am"
+To: Vadim Mikheev <vmikheev@sectorbase.com>
+Date: Sun, 19 Nov 2000 14:23:06 -0500 (EST)
+CC: Tom Samplonius <tom@sdf.com>, Alfred@candle.pha.pa.us,
+        Perlstein <bright@wintelcom.net>, Larry@candle.pha.pa.us,
+        Rosenman <ler@lerctr.org>,
+        PostgreSQL-development <pgsql-hackers@postgresql.org>
+X-Mailer: ELM [version 2.4ME+ PL77 (25)]
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=US-ASCII
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+[ Charset ISO-8859-1 unsupported, converting... ]
+> > There are two parts to transaction commit.  The first is writing all
+> > dirty buffers or log changes to the kernel, and second is fsync of the
+>    ^^^^^^^^^^^^
+> Backend doesn't write any dirty buffer to the kernel at commit time.
+
+Yes, I suspected that.
+
+> 
+> > log file.
+> 
+> The first part is writing commit record into WAL buffers in shmem.
+> This is what XLogInsert does.  After that XLogFlush is called to ensure
+> that  entire commit record is on disk. XLogFlush does *both* write() and
+> fsync() (single slock is used for both writing and fsyncing) if it needs to
+> do it at all.
+
+Yes, I realize there are new steps in WAL.
+
+> 
+> > I suggest having a per-backend shared memory byte that has the following
+> > values:
+> > 
+> > START_LOG_WRITE
+> > WAIT_ON_FSYNC
+> > NOT_IN_COMMIT
+> > backend_number_doing_fsync
+> > 
+> > I suggest that when each backend starts a commit, it sets its byte to
+> > START_LOG_WRITE. 
+>   ^^^^^^^^^^^^^^^^^^^^^^^
+> Isn't START_COMMIT more meaningful?
+
+Yes.
+
+> 
+> > When it gets ready to fsync, it checks all backends. 
+>    ^^^^^^^^^^^^^^^^^^^^^^^^^^
+> What do you mean by this? The moment just after XLogInsert?
+
+Just before it calls fsync().
+
+> 
+> > If all are NOT_IN_COMMIT, it does fsync and continues.
+> 
+> 1st edition:
+> > If one or more are in START_LOG_WRITE, it waits until no one is in
+> > START_LOG_WRITE.  It then checks all WAIT_ON_FSYNC, and if it is the
+> > lowest backend in WAIT_ON_FSYNC, marks all others with its backend
+> > number, and does fsync.  It then clears all backends with its number to
+> > NOT_IN_COMMIT.  Other backend will see they are not the lowest
+> > WAIT_ON_FSYNC and will wait for their byte to be set to NOT_IN_COMMIT
+> > so they can then continue, knowing their data was synced.
+> 
+> 2nd edition:
+> > I have another idea.  If a backend gets to the point that it needs
+> > fsync, and there is another backend in START_LOG_WRITE, it can go to an
+> > interuptable sleep, knowing another backend will perform the fsync and
+> > wake it up.  Therefore, there is no busy-wait or timed sleep.
+> > 
+> > Of course, a backend must set its status to WAIT_ON_FSYNC to avoid a
+> > race condition.
+> 
+> The 2nd edition is much better. But I'm not sure do we really need in
+> these per-backend bytes in shmem. Why not just have some counters?
+> We can use a semaphore to wake-up all waiters at once.
+
+Yes, that is much better and clearer.  My idea was just to say, "if no
+one is entering commit phase, do the commit.  If someone else is coming,
+sleep and wait for them to do the fsync and wake me up with a singal."  
+
+> 
+> > This allows a single backend not to sleep, and allows multiple backends
+> > to bunch up only when they are all about to commit.
+> > 
+> > The reason backend numbers are written is so other backends entering the
+> > commit code will not interfere with the backends performing fsync.
+> 
+> Being waked-up backend can check what's written/fsynced by calling XLogFlush.
+
+Seems that may not be needed anymore with a counter.  The only issue is
+that other backends may enter commit while fsync() is happening.  The
+process that did the fsync must be sure to wake up only the backends
+that were waiting for it, and not other backends that may be also be
+doing fsync as a group while the first fsync was happening.  I leave
+those details to people more experienced.  :-)
+
+I am just glad people liked my idea.
+
+-- 
+  Bruce Momjian                        |  http://candle.pha.pa.us
+  pgman@candle.pha.pa.us               |  (610) 853-3000
+  +  If your life is a hard drive,     |  830 Blythe Avenue
+  +  Christ can be your backup.        |  Drexel Hill, Pennsylvania 19026
+
