@@ -68,12 +68,12 @@ tm2timestamp(struct tm * tm, fsec_t fsec, int *tzp, timestamp *result)
 	dDate = date2j(tm->tm_year, tm->tm_mon, tm->tm_mday) - date2j(2000, 1, 1);
 	time = time2t(tm->tm_hour, tm->tm_min, tm->tm_sec, fsec);
 #ifdef HAVE_INT64_TIMESTAMP
-	*result = (date * INT64CONST(86400000000)) + time;
+	*result = (dDate * INT64CONST(86400000000)) + time;
 	/* check for major overflow */
-	if ((*result - time) / INT64CONST(86400000000) != date)
+	if ((*result - time) / INT64CONST(86400000000) != dDate)
 		return -1;
 	/* check for just-barely overflow (okay except time-of-day wraps) */
-	if ((*result < 0) ? (date >= 0) : (date < 0))
+	if ((*result < 0) ? (dDate >= 0) : (dDate < 0))
 		return -1;
 #else
 	*result = ((dDate * 86400) + time);
