@@ -544,7 +544,8 @@ if {$PgAcVar(mw,$wn,row_edited)==$PgAcVar(mw,$wn,last_rownum)} {
 		set PgAcVar(mw,$wn,newrec_values) [lreplace $PgAcVar(mw,$wn,newrec_values) $sfp $sfp]
 	}			
 	lappend PgAcVar(mw,$wn,newrec_fields) "\"$fld\""
-	lappend PgAcVar(mw,$wn,newrec_values) '$fldval'
+	regsub -all {'} $fldval '' fldvalfixed
+	lappend PgAcVar(mw,$wn,newrec_values) '$fldvalfixed'
 	# Remove the untouched tag from the object
 	$wn.c dtag $PgAcVar(mw,$wn,id_edited) unt
 		$wn.c itemconfigure $PgAcVar(mw,$wn,id_edited) -fill red
@@ -2175,7 +2176,7 @@ proc vTclWindow.pgaw:Permissions {base} {
 #
 # This file contains Tcl procedures used to input Japanese text.
 #
-# $Header: /cvsroot/pgsql/src/bin/pgaccess/lib/Attic/tables.tcl,v 1.11 2002/02/18 04:01:27 ishii Exp $
+# $Header: /cvsroot/pgsql/src/bin/pgaccess/lib/Attic/tables.tcl,v 1.12 2002/04/04 06:27:45 momjian Exp $
 #
 # Copyright (c) 1993  Software Research Associates, Inc.
 #
