@@ -38,10 +38,10 @@ test: copy
 # ----------
 # The third group of parallel test
 # ----------
-test: constraints triggers create_misc create_aggregate create_operator create_index inherit vacuum
+test: constraints triggers create_misc create_aggregate create_operator inherit vacuum
 
 # Depends on the above
-test: create_view
+test: create_index create_view
 
 # ----------
 # sanity_check does a vacuum, affecting the sort order of SELECT *
