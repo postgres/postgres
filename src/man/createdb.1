@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/createdb.1,v 1.3 1997/08/26 17:29:54 momjian Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/createdb.1,v 1.4 1997/11/07 06:33:57 thomas Exp $
 .TH CREATEDB UNIX 11/05/95 PostgreSQL PostgreSQL
 .SH NAME
 createdb \(em create a database
@@ -15,9 +15,12 @@ host]
 [\c
 .BR -p
 port]
+[\c
+.BR -D
+location]
 [dbname]
 .SH DESCRIPTION
-.IR Createdb
+.BR createdb
 creates a new database.  The person who executes this command becomes
 the database administrator, or DBA, for this database and is the only
 person, other than the Postgres super-user, who can destroy it.
@@ -42,12 +45,12 @@ The optional argument
 .IR dbname
 specifies the name of the database to be created.  The name must be
 unique among all Postgres databases.
-.IR Dbname
+.IR dbname
 defaults to the value of the
 .SM USER
 environment variable.
 .PP
-.IR Createdb
+.IR createdb
 understands the following command-line options:
 .TP 5n
 .BR "-a" " system"
@@ -58,6 +61,9 @@ Specifies an authentication system
 to use in connecting to the 
 .IR postmaster
 process.  The default is site-specific.
+.TP
+.BR "-D" " dbpath"
+Specifies the alternate database location for this database.
 .TP
 .BR "-h" " host"
 Specifies the hostname of the machine on which the 
