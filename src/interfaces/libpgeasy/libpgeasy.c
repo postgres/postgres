@@ -1,7 +1,7 @@
 /*
  * pgeasy.c
  *
-*/
+ */
 
 #include <stdio.h>
 #include <string.h>
@@ -39,10 +39,10 @@ static int	was_get_unset_result = FALSE;
 static int	tuple;
 
 /*
-**
-**		connectdb - returns PGconn structure
-**
-*/
+ *
+ *	connectdb - returns PGconn structure
+ *
+ */
 PGconn *
 connectdb(char *options)
 {
@@ -55,10 +55,10 @@ connectdb(char *options)
 }
 
 /*
-**
-**		disconnectdb
-**
-*/
+ *
+ *		disconnectdb
+ *
+ */
 void
 disconnectdb()
 {
@@ -71,10 +71,10 @@ disconnectdb()
 }
 
 /*
-**
-**		doquery - returns PGresult structure
-**
-*/
+ *
+ *	doquery - returns PGresult structure
+ *
+ */
 PGresult *
 doquery(char *query)
 {
@@ -104,11 +104,11 @@ doquery(char *query)
 }
 
 /*
-**
-**		fetch - returns tuple number (starts at 0), or the value END_OF_TUPLES
-**						NULL pointers are skipped
-**
-*/
+ *
+ *	fetch - returns tuple number (starts at 0), or the value END_OF_TUPLES
+ *			NULL pointers are skipped
+ *
+ */
 int
 fetch(void *param,...)
 {
@@ -141,12 +141,12 @@ fetch(void *param,...)
 }
 
 /*
-**
-**		fetchwithnulls - returns tuple number (starts at 0),
-**																						or the value END_OF_TUPLES
-**								Returns TRUE or FALSE into null indicator variables
-**								NULL pointers are skipped
-*/
+ *
+ *		fetchwithnulls - returns tuple number (starts at 0),
+ *																						or the value END_OF_TUPLES
+ *		Returns TRUE or FALSE into null indicator variables
+ *		NULL pointers are skipped
+ */
 int
 fetchwithnulls(void *param,...)
 {
@@ -184,10 +184,10 @@ fetchwithnulls(void *param,...)
 }
 
 /*
-**
-**		on_error_stop
-**
-*/
+ *
+ *	on_error_stop
+ *
+ */
 void
 on_error_stop()
 {
@@ -195,10 +195,10 @@ on_error_stop()
 }
 
 /*
-**
-**		on_error_continue
-**
-*/
+ *
+ *	on_error_continue
+ *
+ */
 void
 on_error_continue()
 {
@@ -207,10 +207,10 @@ on_error_continue()
 
 
 /*
-**
-**		get_result
-**
-*/
+ *
+ *	get_result
+ *
+ */
 PGresult *
 get_result()
 {
@@ -227,10 +227,10 @@ get_result()
 }
 
 /*
-**
-**		set_result
-**
-*/
+ *
+ *	set_result
+ *
+ */
 void
 set_result(PGresult *newres)
 {
@@ -263,10 +263,10 @@ set_result(PGresult *newres)
 
 
 /*
-**
-**		unset_result
-**
-*/
+ *
+ *	unset_result
+ *
+ */
 void
 unset_result(PGresult *oldres)
 {
@@ -287,10 +287,10 @@ unset_result(PGresult *oldres)
 }
 
 /*
-**
-**		reset_fetch
-**
-*/
+ *
+ *	reset_fetch
+ *
+ */
 void
 reset_fetch()
 {
