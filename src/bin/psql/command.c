@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2003, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/command.c,v 1.109 2004/01/09 21:12:20 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/command.c,v 1.110 2004/01/24 19:38:49 neilc Exp $
  */
 #include "postgres_fe.h"
 #include "command.h"
@@ -1156,13 +1156,7 @@ scan_option(char **string, enum option_type type, char *quote, bool semicolon)
 				/* Copy the option */
 				token_len = cp - &options_string[pos];
 
-				return_val = malloc(token_len + 1);
-				if (!return_val)
-				{
-					psql_error("out of memory\n");
-					exit(EXIT_FAILURE);
-				}
-
+				return_val = xmalloc(token_len + 1);
 				memcpy(return_val, &options_string[pos], token_len);
 				return_val[token_len] = '\0';
 
@@ -1235,7 +1229,7 @@ scan_option(char **string, enum option_type type, char *quote, bool semicolon)
  *
  * Replaces \n, \t, and the like.
  *
- * The return value is malloc()'ed.
+ * The return value is malloc'ed.
  */
 static char *
 unescape(const unsigned char *source, size_t len)
@@ -1251,12 +1245,7 @@ unescape(const unsigned char *source, size_t len)
 
 	length = Min(len, strlen(source)) + 1;
 
-	tmp = destination = malloc(length);
-	if (!tmp)
-	{
-		psql_error("out of memory\n");
-		exit(EXIT_FAILURE);
-	}
+	tmp = destination = xmalloc(length);
 
 	for (p = source; p - source < (int) len && *p; p += PQmblen(p, pset.encoding))
 	{
@@ -1537,9 +1526,7 @@ editFile(const char *fname)
 	if (!editorName)
 		editorName = DEFAULT_EDITOR;
 
-	sys = malloc(strlen(editorName) + strlen(fname) + 10 + 1);
-	if (!sys)
-		return false;
+	sys = xmalloc(strlen(editorName) + strlen(fname) + 10 + 1);
 	sprintf(sys,
 #ifndef WIN32
 			"exec "
@@ -1959,15 +1946,7 @@ do_shell(const char *command)
 		if (shellName == NULL)
 			shellName = DEFAULT_SHELL;
 
-		sys = malloc(strlen(shellName) + 16);
-		if (!sys)
-		{
-			psql_error("out of memory\n");
-			if (pset.cur_cmd_interactive)
-				return false;
-			else
-				exit(EXIT_FAILURE);
-		}
+		sys = xmalloc(strlen(shellName) + 16);
 		sprintf(sys,
 #ifndef WIN32
 				"exec "

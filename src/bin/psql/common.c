@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2003, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/common.c,v 1.80 2004/01/20 23:48:56 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/common.c,v 1.81 2004/01/24 19:38:49 neilc Exp $
  */
 #include "postgres_fe.h"
 #include "common.h"
@@ -89,6 +89,43 @@ xstrdup(const char *string)
 	return tmp;
 }
 
+void *
+xmalloc(size_t size)
+{
+	void	   *tmp;
+
+	tmp = malloc(size);
+	if (!tmp)
+	{
+		psql_error("out of memory\n");
+		exit(EXIT_FAILURE);
+	}
+	return tmp;
+}
+
+void *
+xmalloc_zero(size_t size)
+{
+	void	   *tmp;
+
+	tmp = xmalloc(size);
+	memset(tmp, 0, size);
+	return tmp;
+}
+
+void *
+xcalloc(size_t nmemb, size_t size)
+{
+	void	   *tmp;
+
+	tmp = calloc(nmemb, size);
+	if (!tmp)
+	{
+		psql_error("out of memory");
+		exit(EXIT_FAILURE);
+	}
+	return tmp;
+}
 
 
 /*
@@ -854,12 +891,7 @@ expand_tilde(char **filename)
 		{
 			char	   *newfn;
 
-			newfn = malloc(strlen(home) + strlen(p) + 1);
-			if (!newfn)
-			{
-				psql_error("out of memory\n");
-				exit(EXIT_FAILURE);
-			}
+			newfn = xmalloc(strlen(home) + strlen(p) + 1);
 			strcpy(newfn, home);
 			strcat(newfn, p);
 

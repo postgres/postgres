@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2003, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/copy.c,v 1.37 2004/01/20 23:48:56 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/copy.c,v 1.38 2004/01/24 19:38:49 neilc Exp $
  */
 #include "postgres_fe.h"
 #include "copy.h"
@@ -83,12 +83,7 @@ xstrcat(char **var, const char *more)
 {
 	char	   *newvar;
 
-	newvar = (char *) malloc(strlen(*var) + strlen(more) + 1);
-	if (!newvar)
-	{
-		psql_error("out of memory\n");
-		exit(EXIT_FAILURE);
-	}
+	newvar = xmalloc(strlen(*var) + strlen(more) + 1);
 	strcpy(newvar, *var);
 	strcat(newvar, more);
 	free(*var);
@@ -112,11 +107,7 @@ parse_slash_copy(const char *args)
 		return NULL;
 	}
 
-	if (!(result = calloc(1, sizeof(struct copy_options))))
-	{
-		psql_error("out of memory\n");
-		exit(EXIT_FAILURE);
-	}
+	result = xcalloc(1, sizeof(struct copy_options));
 
 	token = strtokx(line, whitespace, ".,()", "\"",
 					0, false, pset.encoding);

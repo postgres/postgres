@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2003, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.92 2004/01/11 19:10:49 dennis Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.93 2004/01/24 19:38:49 neilc Exp $
  */
 #include "postgres_fe.h"
 #include "describe.h"
@@ -38,21 +38,6 @@ static void processNamePattern(PQExpBuffer buf, const char *pattern,
 				   bool have_where, bool force_escape,
 				   const char *schemavar, const char *namevar,
 				   const char *altnamevar, const char *visibilityrule);
-
-
-static void *
-xmalloc(size_t size)
-{
-	void	   *tmp;
-
-	tmp = malloc(size);
-	if (!tmp)
-	{
-		psql_error("out of memory\n");
-		exit(EXIT_FAILURE);
-	}
-	return tmp;
-}
 
 static void *
 xmalloczero(size_t size)

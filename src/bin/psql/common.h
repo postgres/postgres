@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2003, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/common.h,v 1.32 2004/01/09 21:12:20 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/common.h,v 1.33 2004/01/24 19:38:49 neilc Exp $
  */
 #ifndef COMMON_H
 #define COMMON_H
@@ -20,7 +20,15 @@
 #define psql_assert(p)
 #endif
 
+/*
+ * Safer versions of some standard C library functions. If an
+ * out-of-memory condition occurs, these functions will bail out
+ * safely; therefore, their return value is guaranteed to be non-NULL.
+ */
 extern char *xstrdup(const char *string);
+extern void *xmalloc(size_t size);
+extern void *xmalloc_zero(size_t size);
+extern void *xcalloc(size_t nmemb, size_t size);
 
 extern bool setQFout(const char *fname);
 

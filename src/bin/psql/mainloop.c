@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2003, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/mainloop.c,v 1.59 2004/01/21 22:05:44 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/mainloop.c,v 1.60 2004/01/24 19:38:49 neilc Exp $
  */
 #include "postgres_fe.h"
 #include "mainloop.h"
@@ -332,13 +332,7 @@ MainLoop(FILE *source)
 					/* It is a variable, perform substitution */
 					out_length = strlen(value);
 
-					new = malloc(len + out_length - in_length + 1);
-					if (!new)
-					{
-						psql_error("out of memory\n");
-						exit(EXIT_FAILURE);
-					}
-
+					new = xmalloc(len + out_length - in_length + 1);
 					sprintf(new, "%.*s%s%s", i, line, value,
 							&line[i + thislen + in_length]);
 

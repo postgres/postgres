@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2003, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/tab-complete.c,v 1.98 2004/01/10 02:21:08 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/tab-complete.c,v 1.99 2004/01/24 19:38:49 neilc Exp $
  */
 
 /*----------------------------------------------------------------------
@@ -1485,9 +1485,7 @@ _complete_from_query(int is_schema_query, const char *text, int state)
 		/* Set up suitably-escaped copies of textual inputs */
 		if (text)
 		{
-			e_text = (char *) malloc(strlen(text) * 2 + 1);
-			if (!e_text)
-				return NULL;
+			e_text = xmalloc(strlen(text) * 2 + 1);
 			PQescapeString(e_text, text, strlen(text));
 		}
 		else
@@ -1495,16 +1493,12 @@ _complete_from_query(int is_schema_query, const char *text, int state)
 
 		if (completion_info_charp)
 		{
-			e_info_charp = (char *)
-				malloc(strlen(completion_info_charp) * 2 + 1);
-			if (!e_info_charp)
-			{
-				if (e_text)
-					free(e_text);
-				return NULL;
-			}
+			size_t charp_len;
+
+			charp_len = strlen(completion_info_charp);
+			e_info_charp = xmalloc(charp_len * 2 + 1);
 			PQescapeString(e_info_charp, completion_info_charp,
-						   strlen(completion_info_charp));
+						   charp_len);
 		}
 		else
 			e_info_charp = NULL;
@@ -1794,15 +1788,7 @@ previous_word(int point, int skip)
 	}
 
 	/* make a copy */
-	s = (char *) malloc(end - start + 2);
-	if (!s)
-	{
-		psql_error("out of memory\n");
-		if (!pset.cur_cmd_interactive)
-			exit(EXIT_FAILURE);
-		else
-			return NULL;
-	}
+	s = xmalloc(end - start + 2);
 
 	strncpy(s, &rl_line_buffer[start], end - start + 1);
 	s[end - start + 1] = '\0';
@@ -1828,7 +1814,7 @@ quote_file_name(char *text, int match_type, char *quote_pointer)
 	(void) quote_pointer;		/* not used */
 
 	length = strlen(text) +(match_type == SINGLE_MATCH ? 3 : 2);
-	s = malloc(length);
+	s = xmalloc(length);
 	s[0] = '\'';
 	strcpy(s + 1, text);
 	if (match_type == SINGLE_MATCH)
@@ -1849,7 +1835,7 @@ dequote_file_name(char *text, char quote_char)
 		return xstrdup(text);
 
 	length = strlen(text);
-	s = malloc(length - 2 + 1);
+	s = xmalloc(length - 2 + 1);
 	strncpy(s, text +1, length - 2);
 	s[length] = '\0';
 
