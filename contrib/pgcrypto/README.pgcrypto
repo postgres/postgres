@@ -1,0 +1,40 @@
+
+DESCRIPTION
+
+  Here is a implementation of crypto hashes for PostgreSQL.
+  It exports 2 functions to SQL level:
+
+    digest(data::text, hash_name::text)
+	which returns hexadecimal coded hash over data by
+	specified algorithm. eg
+
+	> select digest('blah', 'sha1');
+	5bf1fd927dfb8679496a2e6cf00cbe50c1c87145
+
+    digest_exists(hash_name::text)::bool
+	which reports if particular hash type exists.
+
+  If any of arguments are NULL they return NULL.
+
+HASHES
+
+  For choosing library you must edit Makefile.
+
+  standalone (default):
+	MD5, SHA1
+
+	(the code is from KAME project.  Actually I hate code
+	duplication, but I also want to quarantee that MD5 and
+	SHA1 exist)
+
+  mhash (0.8.1):
+	MD5, SHA1, CRC32, CRC32B, GOST, TIGER, RIPEMD160,
+	HAVAL(256,224,192,160,128)
+
+  openssl:
+	MD5, SHA1, RIPEMD160, MD2
+
+  kerberos5 (heimdal):
+	MD5, SHA1
+
+

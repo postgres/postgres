@@ -1,0 +1,12 @@
+
+-- drop function digest(text, text);
+-- drop function digest_exists(text);
+
+CREATE FUNCTION digest(text, text) RETURNS text
+  AS '@MODULE_FILENAME@',
+  'digest' LANGUAGE 'newC';
+
+CREATE FUNCTION digest_exists(text) RETURNS bool
+  AS '@MODULE_FILENAME@',
+  'digest_exists' LANGUAGE 'newC';
+

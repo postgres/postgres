@@ -1,4 +1,4 @@
-# $Header: /cvsroot/pgsql/contrib/Makefile,v 1.8 2000/09/18 20:11:34 petere Exp $
+# $Header: /cvsroot/pgsql/contrib/Makefile,v 1.9 2000/10/31 13:11:28 petere Exp $
 
 subdir = contrib
 top_builddir = ..
@@ -17,6 +17,7 @@ WANTED_DIRS =	array		\
 		noupdate	\
 		pg_dumplo	\
 		pgbench		\
+		pgcrypto	\
 		soundex		\
 		spi		\
 		string		\
