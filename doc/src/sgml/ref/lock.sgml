@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/lock.sgml,v 1.23 2000/12/25 23:15:26 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/lock.sgml,v 1.24 2001/07/09 22:18:33 tgl Exp $
 Postgres documentation
 -->
 
@@ -20,19 +20,22 @@ Postgres documentation
  </refnamediv>
  <refsynopsisdiv>
   <refsynopsisdivinfo>
-   <date>1999-07-20</date>
+   <date>2001-07-09</date>
   </refsynopsisdivinfo>
   <synopsis>
 LOCK [ TABLE ] <replaceable class="PARAMETER">name</replaceable>
-LOCK [ TABLE ] <replaceable class="PARAMETER">name</replaceable> IN [ ROW | ACCESS ] { SHARE | EXCLUSIVE } MODE
-LOCK [ TABLE ] <replaceable class="PARAMETER">name</replaceable> IN SHARE ROW EXCLUSIVE MODE
+LOCK [ TABLE ] <replaceable class="PARAMETER">name</replaceable> IN <replaceable class="PARAMETER">lockmode</replaceable> MODE
+
+where <replaceable class="PARAMETER">lockmode</replaceable> is one of:
+
+	ACCESS SHARE | ROW SHARE | ROW EXCLUSIVE | SHARE UPDATE EXCLUSIVE |
+	SHARE | SHARE ROW EXCLUSIVE | EXCLUSIVE | ACCESS EXCLUSIVE
   </synopsis>
 
   <refsect2 id="R2-SQL-LOCK-1">
    <refsect2info>
     <date>1999-06-09</date>
    </refsect2info>
-
 
    <title>
     Inputs
@@ -62,7 +65,7 @@ LOCK [ TABLE ] <replaceable class="PARAMETER">name</replaceable> IN SHARE ROW EX
 	This is the least restrictive lock mode.  It conflicts only with
 	ACCESS EXCLUSIVE mode. It is used to protect a table from being
 	modified by concurrent <command>ALTER TABLE</command>, 
-	<command>DROP TABLE</command> and <command>VACUUM</command> 
+	<command>DROP TABLE</command> and <command>VACUUM FULL</command>
 	commands.
        </para>
       </listitem>
@@ -103,6 +106,25 @@ LOCK [ TABLE ] <replaceable class="PARAMETER">name</replaceable> IN SHARE ROW EX
      </varlistentry>
 
      <varlistentry>
+      <term>SHARE UPDATE EXCLUSIVE MODE</term>
+      <listitem>
+       <note>
+       <para>
+	 Automatically acquired by <command>VACUUM</command> (without
+	 <option>FULL</option>).
+       </para>
+       </note>
+
+       <para>
+	Conflicts with SHARE UPDATE EXCLUSIVE, SHARE, SHARE ROW EXCLUSIVE,
+	EXCLUSIVE and
+	ACCESS EXCLUSIVE modes. This mode protects a table against
+	concurrent schema changes and VACUUMs.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term>SHARE MODE</term>
       <listitem>
        <note>
@@ -113,9 +135,10 @@ LOCK [ TABLE ] <replaceable class="PARAMETER">name</replaceable> IN SHARE ROW EX
        </note>
 
        <para>
-	Conflicts with ROW EXCLUSIVE, SHARE ROW EXCLUSIVE, EXCLUSIVE and
+	Conflicts with ROW EXCLUSIVE, SHARE UPDATE EXCLUSIVE,
+	SHARE ROW EXCLUSIVE, EXCLUSIVE and
 	ACCESS EXCLUSIVE modes. This mode protects a table against
-	concurrent updates.
+	concurrent data updates.
        </para>
       </listitem>
      </varlistentry>
@@ -125,14 +148,14 @@ LOCK [ TABLE ] <replaceable class="PARAMETER">name</replaceable> IN SHARE ROW EX
       <listitem>
        <note>
        <para>
-	This is like EXCLUSIVE MODE, but allows SHARE ROW locks
+	This is like EXCLUSIVE MODE, but allows ROW SHARE locks
         by others.
        </para>
        </note>
 
        <para>
-        Conflicts with ROW EXCLUSIVE, SHARE, SHARE ROW EXCLUSIVE,
-	EXCLUSIVE and ACCESS EXCLUSIVE modes.
+        Conflicts with ROW EXCLUSIVE, SHARE UPDATE EXCLUSIVE, SHARE,
+	SHARE ROW EXCLUSIVE, EXCLUSIVE and ACCESS EXCLUSIVE modes.
        </para>
       </listitem>
      </varlistentry>
@@ -149,7 +172,8 @@ LOCK [ TABLE ] <replaceable class="PARAMETER">name</replaceable> IN SHARE ROW EX
        </note>
 
        <para>
-	Conflicts with ROW SHARE, ROW EXCLUSIVE, SHARE, SHARE ROW EXCLUSIVE,
+	Conflicts with ROW SHARE, ROW EXCLUSIVE, SHARE UPDATE EXCLUSIVE,
+	SHARE, SHARE ROW EXCLUSIVE,
 	EXCLUSIVE and ACCESS EXCLUSIVE modes.
        </para>
       </listitem>
@@ -161,9 +185,10 @@ LOCK [ TABLE ] <replaceable class="PARAMETER">name</replaceable> IN SHARE ROW EX
        <note>
 	<para>
 	 Automatically acquired by <command>ALTER TABLE</command>,
-	 <command>DROP TABLE</command>, <command>VACUUM</command> statements.
-	 This is the most restrictive lock mode which conflicts with all other
-	 lock modes and protects a locked table from any concurrent operations.
+	 <command>DROP TABLE</command>, <command>VACUUM FULL</command>
+	 statements.
+	 This is the most restrictive lock mode which
+	 protects a locked table from any concurrent operations.
 	</para>
        </note>
 
@@ -174,6 +199,10 @@ LOCK [ TABLE ] <replaceable class="PARAMETER">name</replaceable> IN SHARE ROW EX
 	 lock mode option).
 	</para>
        </note>
+
+       <para>
+	Conflicts with all lock modes.
+       </para>
       </listitem>
      </varlistentry>
     </variablelist>
@@ -241,7 +270,11 @@ ERROR <replaceable class="PARAMETER">name</replaceable>: Table does not exist.
      <term>EXCLUSIVE</term>
      <listitem>
       <para>
-       Exclusive lock that prevents other locks from being granted.
+       An exclusive lock prevents other locks of the same type from being
+       granted.  (Note: ROW EXCLUSIVE mode does not follow this naming
+       convention perfectly, since it is shared at the level of the table;
+       it is exclusive only with respect to specific rows that are being
+       updated.)
       </para>
      </listitem>
     </varlistentry>
@@ -250,7 +283,8 @@ ERROR <replaceable class="PARAMETER">name</replaceable>: Table does not exist.
      <term>SHARE</term>
      <listitem>
       <para>
-       Allows others to share lock.  Prevents EXCLUSIVE locks.
+      A shared lock allows others to also hold the same type of lock,
+      but prevents the corresponding EXCLUSIVE lock from being granted.
       </para>
      </listitem>
     </varlistentry>
@@ -273,13 +307,6 @@ ERROR <replaceable class="PARAMETER">name</replaceable>: Table does not exist.
      </listitem>
     </varlistentry>
    </variablelist>
-
-   <note>
-    <para>
-     If EXCLUSIVE or SHARE are not specified, EXCLUSIVE is assumed.
-     Locks exist for the duration of the transaction.
-    </para>
-   </note>
   </para>
 
   <para>
@@ -370,8 +397,8 @@ ERROR <replaceable class="PARAMETER">name</replaceable>: Table does not exist.
    </para>
 
    <para>
-    Except for ACCESS SHARE/EXCLUSIVE lock modes, all other
-    <productname>Postgres</productname> lock modes and the
+    Except for ACCESS SHARE, ACCESS EXCLUSIVE, and SHARE UPDATE EXCLUSIVE lock
+    modes, the <productname>Postgres</productname> lock modes and the
     <command>LOCK TABLE</command> syntax are compatible with those
     present in <productname>Oracle</productname>.
    </para>

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.90 2001/06/27 23:31:39 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.91 2001/07/09 22:18:33 tgl Exp $
  *
  * NOTES
  *	  Outside modules can create a lock table and acquire/release
@@ -58,6 +58,7 @@ static char *lock_mode_names[] =
 	"AccessShareLock",
 	"RowShareLock",
 	"RowExclusiveLock",
+	"ShareUpdateExclusiveLock",
 	"ShareLock",
 	"ShareRowExclusiveLock",
 	"ExclusiveLock",

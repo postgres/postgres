@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/mvcc.sgml,v 2.15 2001/05/17 21:50:16 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/mvcc.sgml,v 2.16 2001/07/09 22:18:33 tgl Exp $
 -->
 
  <chapter id="mvcc">
@@ -443,6 +443,25 @@ ERROR:  Can't serialize access due to concurrent update
 
       <varlistentry>
        <term>
+	ShareUpdateExclusiveLock
+       </term>
+       <listitem>
+	<para>
+	 Acquired by <command>VACUUM</command> (without <option>FULL</option>)
+	 and <command>LOCK TABLE</command> table
+	 for <option>IN SHARE UPDATE EXCLUSIVE MODE</option>
+	 statements.
+	</para>
+
+	<para>
+	 Conflicts with ShareUpdateExclusiveLock, ShareLock,
+	 ShareRowExclusiveLock, ExclusiveLock and AccessExclusiveLock modes.
+	</para>
+       </listitem>
+      </varlistentry>
+
+      <varlistentry>
+       <term>
 	ShareLock
        </term>
        <listitem>
@@ -454,7 +473,8 @@ ERROR:  Can't serialize access due to concurrent update
 	</para>
 
 	<para>
-	 Conflicts with RowExclusiveLock, ShareRowExclusiveLock,
+	 Conflicts with RowExclusiveLock, ShareUpdateExclusiveLock,
+	 ShareRowExclusiveLock,
 	 ExclusiveLock and AccessExclusiveLock modes.
 	</para>
        </listitem>
@@ -471,7 +491,8 @@ ERROR:  Can't serialize access due to concurrent update
 	</para>
 
 	<para>
-	 Conflicts with RowExclusiveLock, ShareLock, ShareRowExclusiveLock,
+	 Conflicts with RowExclusiveLock, ShareUpdateExclusiveLock,
+	 ShareLock, ShareRowExclusiveLock,
 	 ExclusiveLock and AccessExclusiveLock modes.
 	</para>
        </listitem>
@@ -488,7 +509,8 @@ ERROR:  Can't serialize access due to concurrent update
 	</para>
 
 	<para>
-	 Conflicts with RowShareLock, RowExclusiveLock, ShareLock,
+	 Conflicts with RowShareLock, RowExclusiveLock,
+	 ShareUpdateExclusiveLock, ShareLock,
 	 ShareRowExclusiveLock, ExclusiveLock and AccessExclusiveLock
 	 modes.
 	</para>
@@ -503,13 +525,13 @@ ERROR:  Can't serialize access due to concurrent update
 	<para>
 	 Acquired by <command>ALTER TABLE</command>,
 	 <command>DROP TABLE</command>,
-	 <command>VACUUM</command> and <command>LOCK TABLE</command>
+	 <command>VACUUM FULL</command> and <command>LOCK TABLE</command>
 	 statements.
 	</para>
 
 	<para>
 	 Conflicts with all modes (AccessShareLock, RowShareLock,
-	 RowExclusiveLock, ShareLock,
+	 RowExclusiveLock, ShareUpdateExclusiveLock, ShareLock,
 	 ShareRowExclusiveLock, ExclusiveLock and AccessExclusiveLock).
 	</para>
        </listitem>

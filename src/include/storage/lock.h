@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: lock.h,v 1.50 2001/06/27 23:31:39 tgl Exp $
+ * $Id: lock.h,v 1.51 2001/07/09 22:18:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -49,7 +49,7 @@ typedef int LOCKMODE;
 typedef int LOCKMETHOD;
 
 /* MAX_LOCKMODES cannot be larger than the # of bits in LOCKMASK */
-#define MAX_LOCKMODES		8
+#define MAX_LOCKMODES		10
 
 /*
  * MAX_LOCK_METHODS corresponds to the number of spin locks allocated in
@@ -91,7 +91,7 @@ typedef int LOCKMETHOD;
  *
  * prio -- each lockmode has a priority, so, for example, waiting
  *		writers can be given priority over readers (to avoid
- *		starvation).
+ *		starvation).  XXX this field is not actually used at present!
  *
  * masterlock -- synchronizes access to the table
  */

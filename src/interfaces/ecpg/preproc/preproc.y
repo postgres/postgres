@@ -326,7 +326,7 @@ make_name(void)
 %type  <str>	createdb_opt_list opt_encoding OptInherit Geometric
 %type  <str>    DropdbStmt ClusterStmt grantee RevokeStmt Bit bit
 %type  <str>	GrantStmt privileges operation_commalist operation PosAllConst
-%type  <str>	opt_cursor opt_lmode ConstraintsSetStmt comment_tg AllConst
+%type  <str>	opt_cursor ConstraintsSetStmt comment_tg AllConst
 %type  <str>	case_expr when_clause_list case_default case_arg when_clause
 %type  <str>    select_clause opt_select_limit select_limit_value ConstraintTimeSpec
 %type  <str>    select_offset_value ReindexStmt join_type opt_boolean
@@ -2440,15 +2440,15 @@ opt_lock:  IN lock_type MODE            { $$ = cat_str(3, make_str("in"), $2, ma
                 | /*EMPTY*/             { $$ = EMPTY;}
                 ;
 
-lock_type:  SHARE ROW EXCLUSIVE 	{ $$ = make_str("share row exclusive"); }
-                | ROW opt_lmode         { $$ = cat2_str(make_str("row"), $2);}
-                | ACCESS opt_lmode      { $$ = cat2_str(make_str("access"), $2);}
-                | opt_lmode             { $$ = $1; }
-                ;
-
-opt_lmode:      SHARE                           { $$ = make_str("share"); }
-                | EXCLUSIVE                     { $$ = make_str("exclusive"); }
-                ;
+lock_type:  ACCESS SHARE		{ $$ = make_str("access share"); }
+		| ROW SHARE				{ $$ = make_str("access share"); }
+		| ROW EXCLUSIVE			{ $$ = make_str("row exclusive"); }
+		| SHARE UPDATE EXCLUSIVE { $$ = make_str("share update exclusive"); }
+		| SHARE					{ $$ = make_str("share"); }
+		| SHARE ROW EXCLUSIVE	{ $$ = make_str("share row exclusive"); }
+		| EXCLUSIVE				{ $$ = make_str("exclusive"); }
+		| ACCESS EXCLUSIVE		{ $$ = make_str("access exclusive"); }
+		;
 
 /*****************************************************************************
  *

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: lmgr.h,v 1.31 2001/06/22 00:04:59 tgl Exp $
+ * $Id: lmgr.h,v 1.32 2001/07/09 22:18:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,13 +25,14 @@
 #define AccessShareLock			1		/* SELECT */
 #define RowShareLock			2		/* SELECT FOR UPDATE */
 #define RowExclusiveLock		3		/* INSERT, UPDATE, DELETE */
-#define ShareLock				4		/* CREATE INDEX */
-#define ShareRowExclusiveLock	5		/* like EXCLUSIVE MODE, allows
-										 * SHARE ROW */
-#define ExclusiveLock			6		/* blocks ROW SHARE/SELECT...FOR
+#define ShareUpdateExclusiveLock 4		/* VACUUM (non-FULL) */
+#define ShareLock				5		/* CREATE INDEX */
+#define ShareRowExclusiveLock	6		/* like EXCLUSIVE MODE, but allows
+										 * ROW SHARE */
+#define ExclusiveLock			7		/* blocks ROW SHARE/SELECT...FOR
 										 * UPDATE */
-#define AccessExclusiveLock		7		/* ALTER TABLE, DROP TABLE,
-										 * VACUUM, and unqualified LOCK
+#define AccessExclusiveLock		8		/* ALTER TABLE, DROP TABLE,
+										 * VACUUM FULL, and unqualified LOCK
 										 * TABLE */
 
 /*

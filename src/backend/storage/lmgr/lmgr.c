@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lmgr.c,v 1.48 2001/06/22 00:04:59 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lmgr.c,v 1.49 2001/07/09 22:18:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,25 +33,35 @@ static LOCKMASK LockConflicts[] = {
 	(1 << ExclusiveLock) | (1 << AccessExclusiveLock),
 
 	/* RowExclusiveLock */
-	(1 << ExclusiveLock) | (1 << ShareRowExclusiveLock) | (1 << ShareLock) |
-	(1 << AccessExclusiveLock),
+	(1 << ShareLock) | (1 << ShareRowExclusiveLock) |
+	(1 << ExclusiveLock) | (1 << AccessExclusiveLock),
+
+	/* ShareUpdateExclusiveLock */
+	(1 << ShareUpdateExclusiveLock) |
+	(1 << ShareLock) | (1 << ShareRowExclusiveLock) |
+	(1 << ExclusiveLock) | (1 << AccessExclusiveLock),
 
 	/* ShareLock */
-	(1 << ExclusiveLock) | (1 << ShareRowExclusiveLock) |
-	(1 << RowExclusiveLock) | (1 << AccessExclusiveLock),
+	(1 << RowExclusiveLock) | (1 << ShareUpdateExclusiveLock) |
+	(1 << ShareRowExclusiveLock) |
+	(1 << ExclusiveLock) | (1 << AccessExclusiveLock),
 
 	/* ShareRowExclusiveLock */
-	(1 << ExclusiveLock) | (1 << ShareRowExclusiveLock) |
-	(1 << ShareLock) | (1 << RowExclusiveLock) | (1 << AccessExclusiveLock),
+	(1 << RowExclusiveLock) | (1 << ShareUpdateExclusiveLock) |
+	(1 << ShareLock) | (1 << ShareRowExclusiveLock) |
+	(1 << ExclusiveLock) | (1 << AccessExclusiveLock),
 
 	/* ExclusiveLock */
-	(1 << ExclusiveLock) | (1 << ShareRowExclusiveLock) | (1 << ShareLock) |
-	(1 << RowExclusiveLock) | (1 << RowShareLock) | (1 << AccessExclusiveLock),
+	(1 << RowShareLock) |
+	(1 << RowExclusiveLock) | (1 << ShareUpdateExclusiveLock) |
+	(1 << ShareLock) | (1 << ShareRowExclusiveLock) |
+	(1 << ExclusiveLock) | (1 << AccessExclusiveLock),
 
 	/* AccessExclusiveLock */
-	(1 << ExclusiveLock) | (1 << ShareRowExclusiveLock) | (1 << ShareLock) |
-	(1 << RowExclusiveLock) | (1 << RowShareLock) |
-	(1 << AccessExclusiveLock) | (1 << AccessShareLock)
+	(1 << AccessShareLock) | (1 << RowShareLock) |
+	(1 << RowExclusiveLock) | (1 << ShareUpdateExclusiveLock) |
+	(1 << ShareLock) | (1 << ShareRowExclusiveLock) |
+	(1 << ExclusiveLock) | (1 << AccessExclusiveLock)
 
 };
 
@@ -63,14 +73,16 @@ static int	LockPrios[] = {
 	2,
 	/* RowExclusiveLock */
 	3,
-	/* ShareLock */
+	/* ShareUpdateExclusiveLock */
 	4,
-	/* ShareRowExclusiveLock */
+	/* ShareLock */
 	5,
-	/* ExclusiveLock */
+	/* ShareRowExclusiveLock */
 	6,
+	/* ExclusiveLock */
+	7,
 	/* AccessExclusiveLock */
-	7
+	8
 };
 
 LOCKMETHOD	LockTableId = (LOCKMETHOD) NULL;
