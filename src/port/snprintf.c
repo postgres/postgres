@@ -65,7 +65,7 @@
  * causing nasty effects.
  **************************************************************/
 
-/*static char _id[] = "$PostgreSQL: pgsql/src/port/snprintf.c,v 1.14 2005/03/02 15:07:09 momjian Exp $";*/
+/*static char _id[] = "$PostgreSQL: pgsql/src/port/snprintf.c,v 1.15 2005/03/02 15:32:39 momjian Exp $";*/
 
 int			snprintf(char *str, size_t count, const char *fmt,...);
 int			vsnprintf(char *str, size_t count, const char *fmt, va_list args);
@@ -269,7 +269,7 @@ dopr(char *buffer, const char *format, va_list args, char *end)
 						longflag = 1;
 						goto nextch;
 					case 'I':
-						if (*(format+1) == '6' && *(format+2) == '4')
+						if (*format == '6' && *(format+1) == '4')
 						{
 							format += 2;
 							longlongflag = 1;
