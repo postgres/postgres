@@ -10,6 +10,7 @@ case $host in
 esac
 
 # tools/thread/thread_test must be run
+# -D_POSIX_PTHREAD_SEMANTICS enables 5-arg getpwuid_r, among other things
 if test "$GCC" = yes 
 then	THREAD_CPPFLAGS="-D_POSIX_PTHREAD_SEMANTICS"
 	THREAD_LIBS="-pthread"
