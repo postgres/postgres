@@ -7,6 +7,9 @@ SELECT '1'::ltree;
 SELECT '1.2'::ltree;
 SELECT '1.2._3'::ltree;
 
+SELECT ltree2text('1.2.3.34.sdf');
+SELECT text2ltree('1.2.3.34.sdf');
+
 SELECT subltree('Top.Child1.Child2',1,2);
 SELECT subpath('Top.Child1.Child2',1,2);
 SELECT subpath('Top.Child1.Child2',-1,1);
@@ -16,6 +19,27 @@ SELECT subpath('Top.Child1.Child2',0,0);
 SELECT subpath('Top.Child1.Child2',1,0);
 SELECT subpath('Top.Child1.Child2',0);
 SELECT subpath('Top.Child1.Child2',1);
+
+
+SELECT index('1.2.3.4.5.6','1.2');
+SELECT index('a.1.2.3.4.5.6','1.2');
+SELECT index('a.1.2.3.4.5.6','1.2.3');
+SELECT index('a.1.2.3.4.5.6','1.2.3.j');
+SELECT index('a.1.2.3.4.5.6','1.2.3.j.4.5.5.5.5.5.5');
+SELECT index('a.1.2.3.4.5.6','1.2.3');
+SELECT index('a.1.2.3.4.5.6','6');
+SELECT index('a.1.2.3.4.5.6','6.1');
+SELECT index('a.1.2.3.4.5.6','5.6');
+SELECT index('0.1.2.3.5.4.5.6','5.6');
+SELECT index('0.1.2.3.5.4.5.6.8.5.6.8','5.6',3);
+SELECT index('0.1.2.3.5.4.5.6.8.5.6.8','5.6',6);
+SELECT index('0.1.2.3.5.4.5.6.8.5.6.8','5.6',7);
+SELECT index('0.1.2.3.5.4.5.6.8.5.6.8','5.6',-7);
+SELECT index('0.1.2.3.5.4.5.6.8.5.6.8','5.6',-4);
+SELECT index('0.1.2.3.5.4.5.6.8.5.6.8','5.6',-3);
+SELECT index('0.1.2.3.5.4.5.6.8.5.6.8','5.6',-2);
+SELECT index('0.1.2.3.5.4.5.6.8.5.6.8','5.6',-20000);
+
 
 SELECT 'Top.Child1.Child2'::ltree || 'Child3'::text;
 SELECT 'Top.Child1.Child2'::ltree || 'Child3'::ltree;

@@ -137,8 +137,28 @@ RETURNS ltree
 AS 'MODULE_PATHNAME'
 LANGUAGE 'C' WITH (isstrict,iscachable);
 
+CREATE FUNCTION index(ltree,ltree)
+RETURNS int4
+AS 'MODULE_PATHNAME', 'ltree_index'
+LANGUAGE 'C' WITH (isstrict,iscachable);
+
+CREATE FUNCTION index(ltree,ltree,int4)
+RETURNS int4
+AS 'MODULE_PATHNAME', 'ltree_index'
+LANGUAGE 'C' WITH (isstrict,iscachable);
+
 CREATE FUNCTION nlevel(ltree)
 RETURNS int4
+AS 'MODULE_PATHNAME'
+LANGUAGE 'C' WITH (isstrict,iscachable);
+
+CREATE FUNCTION ltree2text(ltree)
+RETURNS text
+AS 'MODULE_PATHNAME'
+LANGUAGE 'C' WITH (isstrict,iscachable);
+
+CREATE FUNCTION text2ltree(text)
+RETURNS ltree
 AS 'MODULE_PATHNAME'
 LANGUAGE 'C' WITH (isstrict,iscachable);
 
