@@ -11,14 +11,13 @@ compliant, but with each release it gets closer.
 PostgreSQL, formerly called Postgres95, is a derivative of Postgres 4.2
 (the last release of the UC Berkeley research project).  For copyright
 terms for PostgreSQL, please see the file named COPYRIGHT.  This version
-was developed by a team of developers on the postgres developers mailing
-list.  Version 1 (through 1.01) was developed by Jolly Chen and Andrew
-Yu.
+was developed by a team of developers on the Postgres developers mailing
+list.  Version 1 (through 1.01) was developed by Jolly Chen and Andrew Yu.
 
 The installation notes below assume the following (except where noted):
   - Commands are Unix-compatible. See note below.
   - Defaults are used except where noted.
-  - User postgres is the postgres superuser.
+  - User postgres is the Postgres superuser.
   - The source path is /usr/src/pgsql (other paths are possible).
   - The runtime path is /usr/local/pgsql (other paths are possible).
 
@@ -111,8 +110,8 @@ PostgreSQL:
 
       To check for disk space, use command "df -k".
 
-  4) Ftp file ftp://ftp.postgresql.org/pub/postgresql-v6.2.tar.gz from the
-     internet.  Store it in your home directory.
+  4) Ftp file ftp://ftp.postgresql.org/pub/postgresql-v6.2.1.tar.gz from the
+     Internet.  Store it in your home directory.
 
   5) Some platforms use flex.  If your system uses flex then make sure
      you have a good version.  Type
@@ -146,14 +145,15 @@ PostgreSQL:
      /usr/bin/flex++ which points to flex.
 
   6) If you are upgrading an existing system then back up your database.
-     The database format is liable to change every few weeks with no
-     notice besides a quick comment in the HACKERS mailing list.  It is
-     therefore a bad idea to skip this step.  Also, do not use the
-     pg_dumpall script from v6.0 or everything will be owned by the
-     postgres super user.  Type (with the gunzip line and the following
-     line typed as one line):
+     For alpha- and beta-level releases, the database format is liable
+     to change often every few weeks with no notice besides a quick comment
+     in the HACKERS mailing list.  Full releases always require a dump/reload
+     from previous releases.  It is therefore a bad idea to skip this
+     step.  Also, do not use the pg_dumpall script from v6.0 or everything
+     will be owned by the Postgres super user.  Type (with the gunzip line
+     and the following line typed as one line):
         cd
-        gunzip -c postgresql-v6.2.tar.gz |
+        gunzip -c postgresql-v6.2.1.tar.gz |
             tar xvf - src/bin/pg_dump/pg_dumpall
         chmod a+x src/bin/pg_dump/pg_dumpall
         src/bin/pg_dump/pg_dumpall > db.out
@@ -218,7 +218,7 @@ PostgreSQL:
 
  10) Unzip and untar the new source file.  Type
         cd /usr/src/pgsql
-        gunzip -c ~/postgresql-v6.2.tar.gz | tar xvf -
+        gunzip -c ~/postgresql-v6.2.1.tar.gz | tar xvf -
 
  11) Configure the source code for your system.  It is this step at which
      you can specify your actual source path and installation paths for
@@ -378,7 +378,7 @@ PostgreSQL:
         cd
         nohup postmaster > regress.log 2>&1 &
 
-     Run postmaster from your postgres super user account (typically
+     Run postmaster from your Postgres super user account (typically
      account postgres).  DO NOT RUN POSTMASTER FROM THE ROOT ACCOUNT.
 
  19) Run the regression tests.  Type
@@ -404,12 +404,11 @@ PostgreSQL:
      platform, etc.  "Failures" of this type do not indicate a problem with
      PostgreSQL.
 
-     Here is an example from a i686/Linux-ELF platform (this is the platform
-     on which most of the regression tests were generated). No tests failed
-     since this is the v6.2 regression reference platform.
+     For a i686/Linux-ELF platform, no tests failed since this is the
+     v6.2.1 regression testing reference platform.
 
-     Here is an example from the SPARC/Linux-ELF platform.  Using the
-     970525 beta version of PostgreSQL v6.2 the following tests "failed".
+     For the SPARC/Linux-ELF platform, using the 970525 beta version of
+     PostgreSQL v6.2 the following tests "failed":
      float8 and geometry "failed" due to minor precision differences in
      floating point numbers.  select_views produces massively different output,
      but the differences are due to minor floating point differences.
@@ -418,7 +417,7 @@ PostgreSQL:
      the differences and then decide if those differences will affect your
      intended use of PostgreSQL.  However, keep in mind that this is likely
      to be the most solid release of PostgreSQL to date, incorporating many
-     bug fixes from v6.0, and that previous versions of PostgreSQL have been
+     bug fixes from v6.1, and that previous versions of PostgreSQL have been
      in use successfully for some time now.
 
      After running the tests, type
@@ -434,7 +433,7 @@ PostgreSQL:
  21) Start the postmaster daemon running.  Type
         cd
         nohup postmaster > server.log 2>&1 &
-     Run postmaster from your postgres super user account (typically
+     Run postmaster from your Postgres super user account (typically
      account postgres).  DO NOT RUN POSTMASTER FROM THE ROOT ACCOUNT.
 
  22) If you haven't already done so, this would be a good time to modify
@@ -444,7 +443,7 @@ PostgreSQL:
      Here are some suggestions on how to do this, contributed by various
      users.
 
-     Whatever you do, postmaster must be run by user postgres, AND NOT BY
+     Whatever you do, postmaster must be run by user postgres AND NOT BY
      ROOT.  This is why all of the examples below start by switching user
      (su) to postgres.  These commands also take into account the fact
      that environment variables like PATH and PGDATA may not be set properly.
@@ -456,16 +455,7 @@ PostgreSQL:
              su postgres -c "/usr/local/pgsql/bin/postmaster -S -D
                      /usr/local/pgsql/data"
 
-       b) In RedHat v4.0 Linux edit file /etc/inittab to contain the
-          following single line:
-             pg:2345:respawn:/bin/su - postgres -c
-                     "/usr/local/pgsql/bin/postmaster -D/usr/local/pgsql/data
-                     >> /usr/local/pgsql/server.log 2>&1" /dev/null
-          (The author of this example says this example will revive the
-          postmaster if it dies, but he doesn't know if there are other side
-          effects.)
-
-       c) In FreeBSD 2.2-RELEASE edit /usr/local/etc/rc.d/pgsql.sh to
+       b) In FreeBSD 2.2-RELEASE edit /usr/local/etc/rc.d/pgsql.sh to
           contain the following lines and make it chmod 755 and chown
           root:bin.
              #!/bin/sh
@@ -478,19 +468,20 @@ PostgreSQL:
           You may put the line breaks as shown above.  The shell is smart
           enough to keep parsing beyond end-of-line if there is an
           expression unfinished.  The exec saves one layer of shell under
-          the postmaster process so the parent is init.  Note:  Unlike the
+          the postmaster process so the parent is init.  Note:  Unlike most
           other examples, this one has been tested.
 
-       d) In RedHat v4.0 Linux create file /etc/rc.d/init.d/postgres.init to
-          contain the following single line:
-             su -c "cd ~postgres; nohup /usr/local/pgsql/bin/postmaster
-                     -D /usr/local/pgsql/data  > server.log 2>&1 &" postgres
-          Next, type the following:
-             cd /etc/rc3.d
-             ln -s ../init.d/postgres.init S1000postgres
-          Change "1000" to a number of your choice to indicate the
-          loading order of the various programs pointed to in directory
-          /etc/rc3.d.  (Note that this example has not been tested yet.)
+       c) In RedHat v4.0 Linux edit file /etc/inittab to contain the
+          following single line:
+             pg:2345:respawn:/bin/su - postgres -c
+                     "/usr/local/pgsql/bin/postmaster -D/usr/local/pgsql/data
+                     >> /usr/local/pgsql/server.log 2>&1" /dev/null
+          (The author of this example says this example will revive the
+          postmaster if it dies, but he doesn't know if there are other side
+          effects.)
+
+       d) The contrib/linux area of the PostgreSQL distribution has an example
+          init.d script compatible with and tested using recent RedHat packages.
 
  22a) If you haven't already done so, this would be a good time to modify
       your computer to do regular maintainence.  The following should be
@@ -512,7 +503,7 @@ PostgreSQL:
         cd
         psql -e template1 < db.out
 
-     If your old database uses either path or polygon geometric data types,
+     If your pre-v6.2 database uses either path or polygon geometric data types,
      then you will need to upgrade any columns containing those types. To
      do so, type (from within psql)
         update YourTable set PathCol = UpgradePath(PathCol);
@@ -526,7 +517,7 @@ PostgreSQL:
      syntax, but RevertPoly() is provided to reverse the effects of a
      mis-applied upgrade.
 
- 24) If you are a new user, you may wish to play with postgres as described
+ 24) If you are a new user, you may wish to play with Postgres as described
      below.
 
  25) Clean up after yourself.  Type
@@ -648,6 +639,8 @@ Ultrix4.x:
            s2k-ftp.CS.Berkeley.EDU:pub/personal/andrew/libdl-1.1.tar.Z
 
 Linux:
+        A linux-2.0.30/libc-5.3.12/RedHat-4.2 running on a dual processor
+        i686 is the regression testing reference machine.
         The linux-elf port installs cleanly. If you are using an
         i486 processor or higher, you can edit template/linux-elf
         to include "-m486" as a compiler option. configure does not
@@ -656,10 +649,10 @@ Linux:
         make to include "#define HAVE_SIGSETJMP 1". Note that I have
         not seen any difference in PostgreSQL behavior either way.
                                 (Thomas G. Lockhart
-                                <Thomas.Lockhart@jpl.nasa.gov> 97/05/17)
+                                <lockhart@alumni.caltech.edu> 97/10/14)
 
         For non-ELF Linux, the dld library MUST be obtained and installed on
-        the system. It enables dynamic link loading capability to the postgres
+        the system. It enables dynamic link loading capability to the Postgres
         port. The dld library can be obtained from the sunsite linux
         distributions. The current name is dld-3.2.5.
                                 (Jalon Q. Zimmerman
