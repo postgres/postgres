@@ -7,11 +7,12 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/bool.c,v 1.8 1997/10/17 05:38:32 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/bool.c,v 1.9 1997/10/25 05:09:58 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
 
+#include <string.h>
 #include "postgres.h"
 
 #include "utils/builtins.h"		/* where the declarations go */
@@ -26,10 +27,6 @@
  *
  * Check explicitly for "true/false" and TRUE/FALSE, 1/0, YES/NO.
  * Reject other values. - thomas 1997-10-05
- * For now, allow old behavior of everything FALSE if not TRUE.
- * After v6.2.1 release, then enable code to reject goofy values.
- * Also, start checking the entire string rather than just the first character.
- * - thomas 1997-10-16
  *
  * In the switch statement, check the most-used possibilities first.
  */
@@ -39,33 +36,43 @@ boolin(char *b)
 	switch(*b) {
 		case 't':
 		case 'T':
-			return (TRUE);
+			if (strncasecmp(b, "true", strlen(b)) == 0)
+				return (TRUE);
 			break;
 
 		case 'f':
 		case 'F':
-			return (FALSE);
+			if (strncasecmp(b, "false", strlen(b)) == 0)
+				return (FALSE);
 			break;
 
 		case 'y':
 		case 'Y':
+			if (strncasecmp(b, "yes", strlen(b)) == 0)
+				return (TRUE);
+			break;
+
 		case '1':
-			return (TRUE);
+			if (strncasecmp(b, "1", strlen(b)) == 0)
+				return (TRUE);
 			break;
 
 		case 'n':
 		case 'N':
+			if (strncasecmp(b, "no", strlen(b)) == 0)
+				return (FALSE);
+			break;
+
 		case '0':
-			return (FALSE);
+			if (strncasecmp(b, "0", strlen(b)) == 0)
+				return (FALSE);
 			break;
 
 		default:
-#if FALSE
-			elog(WARN,"Invalid input string '%s'\n", b);
-#endif
 			break;
 	}
 
+	elog(WARN,"Invalid input string '%s'\n", b);
 	return (FALSE);
 } /* boolin() */
 
