@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.251 2003/12/21 18:06:15 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.252 2004/01/05 20:39:23 neilc Exp $
 -->
 
 <appendix id="release">
@@ -4293,20 +4293,6 @@ ecpg changes (Michael)
        </para>
       </listitem>
      </varlistentry>
-
-<!--
-     <varlistentry>
-      <term>
-       Upcoming Features
-      </term>
-      <listitem>
-       <para>
-        In 7.1 or 7.2, we plan to have outer joins, storage for very long rows, and a
-        write-ahead logging system.
-       </para>
-      </listitem>
-     </varlistentry>
--->
     </variablelist>
    </para>
 
