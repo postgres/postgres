@@ -25,4 +25,3 @@ sed 's/^\([^:]*\).*$/\1/' |
 grep -v ' ' | # some typedefs have spaces, remove them
 sort |
 uniq
-
