@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/ip.c,v 1.4 2003/04/02 00:49:28 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/ip.c,v 1.5 2003/04/02 20:00:21 tgl Exp $
  *
  * This file and the IPV6 implementation were initially provided by
  * Nigel Kukard <nkukard@lbsd.net>, Linux Based Systems Design
@@ -328,18 +328,13 @@ rangeSockAddrAF_INET6(const SockAddr *addr, const SockAddr *netaddr,
 static void
 convSockAddr6to4(const SockAddr *src, SockAddr *dst)
 {
-	char		addr_str[INET6_ADDRSTRLEN];
-
+	MemSet(dst, 0, sizeof(*dst));
 	dst->in.sin_family = AF_INET;
+	/* both src and dst are assumed to be in network byte order */
 	dst->in.sin_port = src->in6.sin6_port;
-
-	dst->in.sin_addr.s_addr =
-		(src->in6.sin6_addr.s6_addr[15])
-		+ (src->in6.sin6_addr.s6_addr[14] << 8)
-		+ (src->in6.sin6_addr.s6_addr[13] << 16)
-		+ (src->in6.sin6_addr.s6_addr[12] << 24);
-
-	SockAddr_ntop(src, addr_str, INET6_ADDRSTRLEN, 0);
+	memcpy(&dst->in.sin_addr.s_addr,
+		   ((char *) (&src->in6.sin6_addr.s6_addr)) + 12,
+		   sizeof(struct in_addr));
 }
 
 #endif /* HAVE_IPV6 */
