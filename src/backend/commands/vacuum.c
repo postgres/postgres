@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.201 2001/07/02 20:50:46 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.202 2001/07/11 18:38:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,12 +34,15 @@
 #include "catalog/catalog.h"
 #include "catalog/catname.h"
 #include "catalog/index.h"
+#include "catalog/pg_index.h"
 #include "commands/vacuum.h"
+#include "executor/executor.h"
 #include "miscadmin.h"
 #include "nodes/execnodes.h"
 #include "storage/freespace.h"
 #include "storage/sinval.h"
 #include "storage/smgr.h"
+#include "tcop/pquery.h"
 #include "tcop/tcopprot.h"
 #include "utils/acl.h"
 #include "utils/builtins.h"
@@ -153,8 +156,7 @@ static VacPage copy_vac_page(VacPage vacpage);
 static void vpage_insert(VacPageList vacpagelist, VacPage vpnew);
 static void get_indices(Relation relation, int *nindices, Relation **Irel);
 static void close_indices(int nindices, Relation *Irel);
-static IndexInfo **get_index_desc(Relation onerel, int nindices,
-			   Relation *Irel);
+static bool is_partial_index(Relation indrel);
 static void *vac_bsearch(const void *key, const void *base,
 						 size_t nelem, size_t size,
 						 int (*compar) (const void *, const void *));
@@ -504,7 +506,7 @@ vacuum_rel(Oid relid)
 		IsSystemRelationName(RelationGetRelationName(onerel)))
 		reindex = true;
 
-	/* Now open indices */
+	/* Now open all indices of the relation */
 	nindices = 0;
 	Irel = (Relation *) NULL;
 	get_indices(onerel, &nindices, &Irel);
@@ -524,8 +526,7 @@ vacuum_rel(Oid relid)
 	 */
 	if (reindex)
 	{
-		for (i = 0; i < nindices; i++)
-			index_close(Irel[i]);
+		close_indices(nindices, Irel);
 		Irel = (Relation *) NULL;
 		activate_indexes_of_a_table(relid, false);
 	}
@@ -553,11 +554,11 @@ vacuum_rel(Oid relid)
 		/* Try to shrink heap */
 		repair_frag(vacrelstats, onerel, &vacuum_pages, &fraged_pages,
 					nindices, Irel);
+		close_indices(nindices, Irel);
 	}
 	else
 	{
-		if (Irel != (Relation *) NULL)
-			close_indices(nindices, Irel);
+		close_indices(nindices, Irel);
 		if (vacuum_pages.num_pages > 0)
 		{
 			/* Clean pages from vacuum_pages list */
@@ -1089,10 +1090,10 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 	HeapTupleData tuple,
 				newtup;
 	TupleDesc	tupdesc;
-	IndexInfo **indexInfo = NULL;
-	Datum		idatum[INDEX_MAX_KEYS];
-	char		inulls[INDEX_MAX_KEYS];
-	InsertIndexResult iresult;
+	ResultRelInfo *resultRelInfo;
+	EState	   *estate;
+	TupleTable	tupleTable;
+	TupleTableSlot *slot;
 	VacPageListData Nvacpagelist;
 	VacPage		cur_page = NULL,
 				last_vacuum_page,
@@ -1119,8 +1120,26 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 
 	tupdesc = RelationGetDescr(onerel);
 
-	if (Irel != (Relation *) NULL)		/* preparation for index' inserts */
-		indexInfo = get_index_desc(onerel, nindices, Irel);
+	/*
+	 * We need a ResultRelInfo and an EState so we can use the regular
+	 * executor's index-entry-making machinery.
+	 */
+	resultRelInfo = makeNode(ResultRelInfo);
+	resultRelInfo->ri_RangeTableIndex = 1;		/* dummy */
+	resultRelInfo->ri_RelationDesc = onerel;
+	resultRelInfo->ri_TrigDesc = NULL;			/* we don't fire triggers */
+
+	ExecOpenIndices(resultRelInfo);
+
+	estate = CreateExecutorState();
+	estate->es_result_relations = resultRelInfo;
+	estate->es_num_result_relations = 1;
+	estate->es_result_relation_info = resultRelInfo;
+
+	/* Set up a dummy tuple table too */
+	tupleTable = ExecCreateTupleTable(1);
+	slot = ExecAllocTableSlot(tupleTable);
+	ExecSetSlotDescriptor(slot, tupdesc, false);
 
 	Nvacpagelist.num_pages = 0;
 	num_fraged_pages = fraged_pages->num_pages;
@@ -1645,35 +1664,14 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 					if (cur_buffer != Cbuf)
 						LockBuffer(Cbuf, BUFFER_LOCK_UNLOCK);
 
-					if (Irel != (Relation *) NULL)
+					/* Create index entries for the moved tuple */
+					if (resultRelInfo->ri_NumIndices > 0)
 					{
-
-						/*
-						 * XXX using CurrentMemoryContext here means
-						 * intra-vacuum memory leak for functional
-						 * indexes. Should fix someday.
-						 *
-						 * XXX This code fails to handle partial indexes!
-						 * Probably should change it to use
-						 * ExecOpenIndices.
-						 */
-						for (i = 0; i < nindices; i++)
-						{
-							FormIndexDatum(indexInfo[i],
-										   &newtup,
-										   tupdesc,
-										   CurrentMemoryContext,
-										   idatum,
-										   inulls);
-							iresult = index_insert(Irel[i],
-												   idatum,
-												   inulls,
-												   &newtup.t_self,
-												   onerel);
-							if (iresult)
-								pfree(iresult);
-						}
+						ExecStoreTuple(&newtup, slot, InvalidBuffer, false);
+						ExecInsertIndexTuples(slot, &(newtup.t_self),
+											  estate, true);
 					}
+
 					WriteBuffer(cur_buffer);
 					WriteBuffer(Cbuf);
 				}
@@ -1780,34 +1778,11 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 			LockBuffer(buf, BUFFER_LOCK_UNLOCK);
 
 			/* insert index' tuples if needed */
-			if (Irel != (Relation *) NULL)
+			if (resultRelInfo->ri_NumIndices > 0)
 			{
-
-				/*
-				 * XXX using CurrentMemoryContext here means intra-vacuum
-				 * memory leak for functional indexes. Should fix someday.
-				 *
-				 * XXX This code fails to handle partial indexes! Probably
-				 * should change it to use ExecOpenIndices.
-				 */
-				for (i = 0; i < nindices; i++)
-				{
-					FormIndexDatum(indexInfo[i],
-								   &newtup,
-								   tupdesc,
-								   CurrentMemoryContext,
-								   idatum,
-								   inulls);
-					iresult = index_insert(Irel[i],
-										   idatum,
-										   inulls,
-										   &newtup.t_self,
-										   onerel);
-					if (iresult)
-						pfree(iresult);
-				}
+				ExecStoreTuple(&newtup, slot, InvalidBuffer, false);
+				ExecInsertIndexTuples(slot, &(newtup.t_self), estate, true);
 			}
-
 		}						/* walk along page */
 
 		if (offnum < maxoff && keep_tuples > 0)
@@ -2095,15 +2070,14 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 		vacrelstats->rel_pages = blkno; /* set new number of blocks */
 	}
 
-	if (Irel != (Relation *) NULL)		/* pfree index' allocations */
-	{
-		close_indices(nindices, Irel);
-		pfree(indexInfo);
-	}
-
+	/* clean up */
 	pfree(vacpage);
 	if (vacrelstats->vtlinks != NULL)
 		pfree(vacrelstats->vtlinks);
+
+	ExecDropTupleTable(tupleTable, true);
+
+	ExecCloseIndices(resultRelInfo);
 }
 
 /*
@@ -2200,8 +2174,7 @@ vacuum_page(Relation onerel, Buffer buffer, VacPage vacpage)
 }
 
 /*
- *	_scan_index() -- scan one index relation to update statistic.
- *
+ *	scan_index() -- scan one index relation to update statistic.
  */
 static void
 scan_index(Relation indrel, double num_tuples)
@@ -2235,11 +2208,18 @@ scan_index(Relation indrel, double num_tuples)
 		 RelationGetRelationName(indrel), nipages, nitups,
 		 show_rusage(&ru0));
 
+	/*
+	 * Check for tuple count mismatch.  If the index is partial, then
+	 * it's OK for it to have fewer tuples than the heap; else we got trouble.
+	 */
 	if (nitups != num_tuples)
-		elog(NOTICE, "Index %s: NUMBER OF INDEX' TUPLES (%.0f) IS NOT THE SAME AS HEAP' (%.0f).\
+	{
+		if (nitups > num_tuples ||
+			! is_partial_index(indrel))
+			elog(NOTICE, "Index %s: NUMBER OF INDEX' TUPLES (%.0f) IS NOT THE SAME AS HEAP' (%.0f).\
 \n\tRecreate the index.",
-			 RelationGetRelationName(indrel), nitups, num_tuples);
-
+				 RelationGetRelationName(indrel), nitups, num_tuples);
+	}
 }
 
 /*
@@ -2315,11 +2295,18 @@ vacuum_index(VacPageList vacpagelist, Relation indrel,
 		 num_index_tuples - keep_tuples, tups_vacuumed,
 		 show_rusage(&ru0));
 
+	/*
+	 * Check for tuple count mismatch.  If the index is partial, then
+	 * it's OK for it to have fewer tuples than the heap; else we got trouble.
+	 */
 	if (num_index_tuples != num_tuples + keep_tuples)
-		elog(NOTICE, "Index %s: NUMBER OF INDEX' TUPLES (%.0f) IS NOT THE SAME AS HEAP' (%.0f).\
+	{
+		if (num_index_tuples > num_tuples + keep_tuples ||
+			! is_partial_index(indrel))
+			elog(NOTICE, "Index %s: NUMBER OF INDEX' TUPLES (%.0f) IS NOT THE SAME AS HEAP' (%.0f).\
 \n\tRecreate the index.",
-		  RelationGetRelationName(indrel), num_index_tuples, num_tuples);
-
+				 RelationGetRelationName(indrel), num_index_tuples, num_tuples);
+	}
 }
 
 /*
@@ -2640,42 +2627,34 @@ get_indices(Relation relation, int *nindices, Relation **Irel)
 static void
 close_indices(int nindices, Relation *Irel)
 {
-
 	if (Irel == (Relation *) NULL)
 		return;
 
 	while (nindices--)
 		index_close(Irel[nindices]);
 	pfree(Irel);
-
 }
 
 
-/*
- * Obtain IndexInfo data for each index on the rel
- */
-static IndexInfo **
-get_index_desc(Relation onerel, int nindices, Relation *Irel)
+static bool
+is_partial_index(Relation indrel)
 {
-	IndexInfo **indexInfo;
-	int			i;
+	bool		result;
 	HeapTuple	cachetuple;
+	Form_pg_index indexStruct;
 
-	indexInfo = (IndexInfo **) palloc(nindices * sizeof(IndexInfo *));
+	cachetuple = SearchSysCache(INDEXRELID,
+								ObjectIdGetDatum(RelationGetRelid(indrel)),
+								0, 0, 0);
+	if (!HeapTupleIsValid(cachetuple))
+		elog(ERROR, "is_partial_index: index %u not found",
+			 RelationGetRelid(indrel));
+	indexStruct = (Form_pg_index) GETSTRUCT(cachetuple);
 
-	for (i = 0; i < nindices; i++)
-	{
-		cachetuple = SearchSysCache(INDEXRELID,
-							 ObjectIdGetDatum(RelationGetRelid(Irel[i])),
-									0, 0, 0);
-		if (!HeapTupleIsValid(cachetuple))
-			elog(ERROR, "get_index_desc: index %u not found",
-				 RelationGetRelid(Irel[i]));
-		indexInfo[i] = BuildIndexInfo(cachetuple);
-		ReleaseSysCache(cachetuple);
-	}
+	result = (VARSIZE(&indexStruct->indpred) != 0);
 
-	return indexInfo;
+	ReleaseSysCache(cachetuple);
+	return result;
 }
 
 
