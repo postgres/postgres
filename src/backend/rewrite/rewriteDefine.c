@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteDefine.c,v 1.62 2001/05/03 21:16:48 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteDefine.c,v 1.63 2001/08/12 21:35:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,6 +28,7 @@
 #include "rewrite/rewriteSupport.h"
 #include "storage/smgr.h"
 #include "utils/builtins.h"
+#include "utils/syscache.h"
 
 
 static void setRuleCheckAsUser(Query *qry, Oid userid);
@@ -477,4 +478,52 @@ setRuleCheckAsUser_walker(Node *node, Oid *context)
 	}
 	return expression_tree_walker(node, setRuleCheckAsUser_walker,
 								  (void *) context);
+}
+
+
+/*
+ * Rename an existing rewrite rule.
+ *
+ * There is not currently a user command to invoke this directly
+ * (perhaps there should be).  But we need it anyway to rename the
+ * ON SELECT rule associated with a view, when the view is renamed.
+ */
+void
+RenameRewriteRule(char *oldname, char *newname)
+{
+	Relation	pg_rewrite_desc;
+	HeapTuple	ruletup;
+
+	pg_rewrite_desc = heap_openr(RewriteRelationName, RowExclusiveLock);
+
+	ruletup = SearchSysCacheCopy(RULENAME,
+								 PointerGetDatum(oldname),
+								 0, 0, 0);
+	if (!HeapTupleIsValid(ruletup))
+		elog(ERROR, "RenameRewriteRule: rule \"%s\" does not exist", oldname);
+
+	/* should not already exist */
+	if (IsDefinedRewriteRule(newname))
+		elog(ERROR, "Attempt to rename rule \"%s\" failed: \"%s\" already exists",
+			 oldname, newname);
+
+	StrNCpy(NameStr(((Form_pg_rewrite) GETSTRUCT(ruletup))->rulename),
+			newname, NAMEDATALEN);
+
+	simple_heap_update(pg_rewrite_desc, &ruletup->t_self, ruletup);
+
+	/* keep system catalog indices current */
+	if (RelationGetForm(pg_rewrite_desc)->relhasindex)
+	{
+		Relation	idescs[Num_pg_rewrite_indices];
+
+		CatalogOpenIndices(Num_pg_rewrite_indices, Name_pg_rewrite_indices,
+						   idescs);
+		CatalogIndexInsert(idescs, Num_pg_rewrite_indices, pg_rewrite_desc,
+						   ruletup);
+		CatalogCloseIndices(Num_pg_rewrite_indices, idescs);
+	}
+
+	heap_freetuple(ruletup);
+	heap_close(pg_rewrite_desc, RowExclusiveLock);
 }

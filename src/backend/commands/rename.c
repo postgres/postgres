@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/rename.c,v 1.56 2001/03/22 03:59:23 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/rename.c,v 1.57 2001/08/12 21:35:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,6 +26,8 @@
 #include "miscadmin.h"
 #include "storage/smgr.h"
 #include "optimizer/prep.h"
+#include "rewrite/rewriteDefine.h"
+#include "rewrite/rewriteSupport.h"
 #include "utils/acl.h"
 #include "utils/relcache.h"
 #include "utils/syscache.h"
@@ -265,4 +267,17 @@ renamerel(const char *oldrelname, const char *newrelname)
 	 */
 	if (relkind != RELKIND_INDEX)
 		TypeRename(oldrelname, newrelname);
+
+	/*
+	 * If it's a view, must also rename the associated ON SELECT rule.
+	 */
+	if (relkind == RELKIND_VIEW)
+	{
+		char   *oldrulename,
+			   *newrulename;
+
+		oldrulename = MakeRetrieveViewRuleName(oldrelname);
+		newrulename = MakeRetrieveViewRuleName(newrelname);
+		RenameRewriteRule(oldrulename, newrulename);
+	}
 }

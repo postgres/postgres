@@ -3,7 +3,7 @@
  *				back to source text
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.81 2001/07/31 17:56:31 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.82 2001/08/12 21:35:19 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -44,7 +44,6 @@
 #include "catalog/pg_index.h"
 #include "catalog/pg_operator.h"
 #include "catalog/pg_shadow.h"
-#include "commands/view.h"
 #include "executor/spi.h"
 #include "lib/stringinfo.h"
 #include "optimizer/clauses.h"
@@ -53,6 +52,7 @@
 #include "parser/parse_expr.h"
 #include "parser/parsetree.h"
 #include "rewrite/rewriteManip.h"
+#include "rewrite/rewriteSupport.h"
 #include "utils/lsyscache.h"
 
 
