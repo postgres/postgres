@@ -75,7 +75,7 @@ endif
 all: lib$(NAME).a $(shlib)
 
 $(shlib): ecpglib.sho.o typename.sho.o
-	$(LD) $(LDFLAGS_SL) -o $@ ecpglib.sho typename.sho.o
+	$(LD) $(LDFLAGS_SL) -o $@ ecpglib.sho.o typename.sho.o
 
 clean:
 	rm -f *.o *.sho *.a core a.out *~ $(shlib) lib$(NAME)$(DLSUFFIX)
