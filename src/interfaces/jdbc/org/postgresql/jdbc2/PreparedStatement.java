@@ -412,11 +412,21 @@ public class PreparedStatement extends Statement implements java.sql.PreparedSta
 				tl_tsdf.set(df);
 			}
 
+			// Make decimal from nanos.
+			StringBuffer decimal = new StringBuffer("000000000");	// max nanos length
+			String nanos = String.valueOf(x.getNanos());
+                        decimal.setLength(decimal.length() - nanos.length());
+			decimal.append(nanos);
+			if (! connection.haveMinimumServerVersion("7.2")) {
+				// Because 7.1 include bug that "hh:mm:59.999" becomes "hh:mm:60.00".
+				decimal.setLength(2);
+			}
+
 			// Use the shared StringBuffer
 			synchronized (sbuf)
 			{
 				sbuf.setLength(0);
-				sbuf.append("'").append(df.format(x)).append('.').append(x.getNanos() / 10000000).append("+00'");
+				sbuf.append("'").append(df.format(x)).append('.').append(decimal).append("+00'");
 				set(parameterIndex, sbuf.toString());
 			}
 
