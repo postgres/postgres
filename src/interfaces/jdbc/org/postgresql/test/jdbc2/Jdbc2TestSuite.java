@@ -61,6 +61,7 @@ public class Jdbc2TestSuite extends TestSuite
 		suite.addTestSuite(UpdateableResultTest.class );
 
 		suite.addTestSuite(CallableStmtTest.class );
+		suite.addTestSuite(CursorFetchTest.class);
 
 		// That's all folks
 		return suite;

@@ -229,4 +229,37 @@ public class ServerPreparedStmtTest extends TestCase
 			TestUtil.dropTable(con, "testsps_bytea");
 		}
 	}
+
+	// Check statements are not transformed when they shouldn't be.
+	public void TODO_FAILS_testCreateTable() throws Exception {
+		// CREATE TABLE isn't supported by PREPARE; the driver should realize this and
+		// still complete without error.
+		PreparedStatement pstmt = con.prepareStatement("CREATE TABLE testsps_bad(data int)");
+		((PGStatement)pstmt).setUseServerPrepare(true);
+		pstmt.executeUpdate();
+		TestUtil.dropTable(con, "testsps_bad");
+	}
+
+	public void TODO_FAILS_testMultistatement() throws Exception {
+		// Shouldn't try to PREPARE this one, if we do we get:
+		//   PREPARE x(int,int) AS INSERT .... $1 ; INSERT ... $2    -- syntax error
+		try {
+			TestUtil.createTable(con, "testsps_multiple", "data int");
+			PreparedStatement pstmt = con.prepareStatement("INSERT INTO testsps_multiple(data) VALUES (?); INSERT INTO testsps_multiple(data) VALUES (?)");
+			((PGStatement)pstmt).setUseServerPrepare(true);			
+			pstmt.setInt(1, 1);
+			pstmt.setInt(2, 2);
+			pstmt.executeUpdate(); // Two inserts.
+
+			pstmt.setInt(1, 3);
+			pstmt.setInt(2, 4);
+			pstmt.executeUpdate(); // Two more inserts.
+			
+			ResultSet check = con.createStatement().executeQuery("SELECT COUNT(*) FROM testsps_multiple");
+			assertTrue(check.next());
+			assertEquals(4, check.getInt(1));
+		} finally {
+			TestUtil.dropTable(con, "testsps_multiple");
+		}
+	}
 }
