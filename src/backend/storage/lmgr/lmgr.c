@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lmgr.c,v 1.17 1998/08/19 02:02:40 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lmgr.c,v 1.18 1998/08/24 01:13:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -41,11 +41,7 @@
 
 #include "catalog/catname.h"
 #include "catalog/catalog.h"
-#ifdef MULTIBYTE
-#include "catalog/pg_class_mb.h"
-#else
 #include "catalog/pg_class.h"
-#endif
 
 #include "nodes/memnodes.h"
 #include "storage/bufmgr.h"

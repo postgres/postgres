@@ -2,7 +2,7 @@
  * conversion between client encoding and server internal encoding
  * (currently mule internal code (mic) is used)
  * Tatsuo Ishii
- * $Id: conv.c,v 1.1 1998/07/24 03:31:56 scrappy Exp $
+ * $Id: conv.c,v 1.2 1998/08/24 01:13:59 momjian Exp $
  */
 #include <stdio.h>
 #include <string.h>
@@ -369,7 +369,38 @@ static void mic2latin5(unsigned char *mic, unsigned char *p, int len)
   mic2latin(mic, p, len, LC_ISO8859_5);
 }
 
+/*
+ * ASCII ---> MIC
+ */
+static void ascii2mic(unsigned char *l, unsigned char *p, int len)
+{
+  int c1;
+
+  while (len-- > 0 && (c1 = *l++)) {
+    *p++ = (c1 & 0x7f);
+  }
+  *p = '\0';
+}
+
+/*
+ * MIC ---> ASCII
+ */
+static void mic2ascii(unsigned char *mic, unsigned char *p, int len)
+{
+  int c1;
+
+  while (len > 0 && (c1 = *mic)) {
+    if (c1 > 0x7f) {
+      printBogusChar(&mic, &p);
+    } else {      /* should be ASCII */
+      *p++ = c1;
+    }
+  }
+  *p = '\0';
+}
+
 pg_encoding_conv_tbl pg_conv_tbl[] = {
+  {SQL_ASCII, "SQL_ASCII", 0, ascii2mic, mic2ascii},	/* SQL/ACII */
   {EUC_JP, "EUC_JP", 0, euc_jp2mic, mic2euc_jp},	/* EUC_JP */
   {EUC_CN, "EUC_CN", 0, euc_cn2mic, mic2euc_cn},	/* EUC_CN */
   {EUC_KR, "EUC_KR", 0, euc_kr2mic, mic2euc_kr},	/* EUC_KR */

@@ -48,7 +48,7 @@ drop table tmp_pg_shadow;
 END
 echo "${BS}."
 psql -l -A -q -t| tr '|' ' ' | grep -v '^template1 ' | \
-while read DATABASE DBUSERID DATAPATH
+while read DATABASE DBUSERID ENCODING DATAPATH
 do
 	POSTGRES_USER="`echo \" \
 		select usename \
@@ -56,7 +56,14 @@ do
 		where usesysid = $DBUSERID; \" | \
 		psql -A -q -t template1`"
 	echo "${BS}connect template1 $POSTGRES_USER"
-	echo "create database $DATABASE;"
+
+	if createdb -help|grep encoding >/dev/null
+	then
+		echo "create database with encoding='`pg_encoding $ENCODING`' $DATABASE;"
+	else
+		echo "create database $DATABASE;"
+	fi
+
 	echo "${BS}connect $DATABASE $POSTGRES_USER"
 	pg_dump ${1+"$@"} $DATABASE
 	if [ "$?" -ne 0 ]

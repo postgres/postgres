@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootparse.y,v 1.20 1998/08/19 02:01:23 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootparse.y,v 1.21 1998/08/24 01:13:36 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,13 +31,8 @@
 #include "bootstrap/bootstrap.h"
 #include "catalog/heap.h"
 #include "catalog/pg_am.h"
-#ifdef MULTIBYTE
-#include "catalog/pg_attribute_mb.h"
-#include "catalog/pg_class_mb.h"
-#else
 #include "catalog/pg_attribute.h"
 #include "catalog/pg_class.h"
-#endif
 #include "commands/defrem.h"
 #include "nodes/nodes.h"
 #include "nodes/parsenodes.h"

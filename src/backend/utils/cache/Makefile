@@ -4,7 +4,7 @@
 #    Makefile for utils/cache
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/utils/cache/Makefile,v 1.8 1998/07/26 04:30:54 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/backend/utils/cache/Makefile,v 1.9 1998/08/24 01:13:52 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -12,9 +12,6 @@ SRCDIR = ../../..
 include ../../../Makefile.global
 
 CFLAGS += -I../..
-ifdef MULTIBYTE
-CFLAGS+= $(MBFLAGS)
-endif
 
 OBJS = catcache.o inval.o rel.o relcache.o syscache.o lsyscache.o fcache.o
 

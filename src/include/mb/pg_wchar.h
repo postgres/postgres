@@ -1,4 +1,4 @@
-/* $Id: pg_wchar.h,v 1.2 1998/07/26 04:31:26 scrappy Exp $ */
+/* $Id: pg_wchar.h,v 1.3 1998/08/24 01:14:22 momjian Exp $ */
 
 #ifndef PG_WCHAR_H
 #define PG_WCHAR_H
@@ -7,21 +7,22 @@
 #include "postgres.h"
 #include "miscadmin.h"	/* for getdatabaseencoding() */
 
-#define EUC_JP 0	/* EUC for Japanese */
-#define EUC_CN 1	/* EUC for Chinese */
-#define EUC_KR 2	/* EUC for Korean */
+#define SQL_ASCII 0	/* SQL/ASCII */
+#define EUC_JP 1	/* EUC for Japanese */
+#define EUC_CN 2	/* EUC for Chinese */
+#define EUC_KR 3	/* EUC for Korean */
 #define EUC_TW 3	/* EUC for Taiwan */
-#define UNICODE 4	/* Unicode UTF-8 */
-#define MULE_INTERNAL 5	/* Mule internal code */
-#define LATIN1 6	/* ISO-8859 Latin 1 */
-#define LATIN2 7	/* ISO-8859 Latin 2 */
-#define LATIN3 8	/* ISO-8859 Latin 3 */
-#define LATIN4 9	/* ISO-8859 Latin 4 */
-#define LATIN5 10	/* ISO-8859 Latin 5 */
-#define LATIN6 11	/* ISO-8859 Latin 6 */
-#define LATIN7 12	/* ISO-8859 Latin 7 */
-#define LATIN8 13	/* ISO-8859 Latin 8 */
-#define LATIN9 14	/* ISO-8859 Latin 9 */
+#define UNICODE 5	/* Unicode UTF-8 */
+#define MULE_INTERNAL 6	/* Mule internal code */
+#define LATIN1 7	/* ISO-8859 Latin 1 */
+#define LATIN2 8	/* ISO-8859 Latin 2 */
+#define LATIN3 9	/* ISO-8859 Latin 3 */
+#define LATIN4 10	/* ISO-8859 Latin 4 */
+#define LATIN5 11	/* ISO-8859 Latin 5 */
+#define LATIN6 12	/* ISO-8859 Latin 6 */
+#define LATIN7 13	/* ISO-8859 Latin 7 */
+#define LATIN8 14	/* ISO-8859 Latin 8 */
+#define LATIN9 15	/* ISO-8859 Latin 9 */
 /* followings are for client encoding only */
 #define SJIS 32		/* Shift JIS */
 

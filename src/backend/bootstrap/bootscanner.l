@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootscanner.l,v 1.10 1998/07/26 04:30:19 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootscanner.l,v 1.11 1998/08/24 01:13:38 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,11 +20,7 @@
 #include "storage/block.h"
 #include "storage/off.h"
 #include "storage/itemptr.h"
-#ifdef MULTIBYTE
-#include "catalog/pg_attribute_mb.h"
-#else
 #include "catalog/pg_attribute.h"
-#endif
 #include "access/attnum.h"
 #include "nodes/pg_list.h"
 #include "access/tupdesc.h"
@@ -32,11 +28,7 @@
 #include "access/funcindex.h"
 #include "storage/fd.h"
 #include "catalog/pg_am.h"
-#ifdef MULTIBYTE
-#include "catalog/pg_class_mb.h"
-#else
 #include "catalog/pg_class.h"
-#endif
 #include "nodes/nodes.h"
 #include "rewrite/prs2lock.h"
 #include "access/skey.h"

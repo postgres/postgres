@@ -1,7 +1,7 @@
 /*
  * conversion functions between pg_wchar and multi-byte streams.
  * Tatsuo Ishii
- * $Id: wchar.c,v 1.1 1998/07/24 03:31:57 scrappy Exp $
+ * $Id: wchar.c,v 1.2 1998/08/24 01:14:01 momjian Exp $
  */
 
 #include "mb/pg_wchar.h"
@@ -316,6 +316,7 @@ static int pg_sjis_mblen(const unsigned char *s)
 }
 
 pg_wchar_tbl pg_wchar_table[] = {
+  {0, 0},
   {pg_eucjp2wchar_with_len, pg_eucjp_mblen},
   {pg_euccn2wchar_with_len, pg_euccn_mblen},
   {pg_euckr2wchar_with_len, pg_euckr_mblen},
@@ -327,7 +328,6 @@ pg_wchar_tbl pg_wchar_table[] = {
   {pg_latin12wchar_with_len, pg_latin1_mblen},
   {pg_latin12wchar_with_len, pg_latin1_mblen},
   {pg_latin12wchar_with_len, pg_latin1_mblen},
-  {0, 0},
   {0, 0},
   {0, 0},
   {0, 0},

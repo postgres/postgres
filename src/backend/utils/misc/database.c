@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/Attic/database.c,v 1.16 1998/08/19 02:03:24 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/Attic/database.c,v 1.17 1998/08/24 01:14:02 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,7 +30,11 @@
 #include "utils/builtins.h"
 #include "utils/syscache.h"
 
+#ifdef MULTIBYTE
+#include "mb/pg_wchar.h"
+#endif
 
+#ifdef 0
 /* GetDatabaseInfo()
  * Pull database information from pg_database.
  */
@@ -102,6 +106,7 @@ GetDatabaseInfo(char *name, int4 *owner, char *path)
 
 	return FALSE;
 }	/* GetDatabaseInfo() */
+#endif
 
 char *
 ExpandDatabasePath(char *dbpath)
@@ -175,7 +180,7 @@ ExpandDatabasePath(char *dbpath)
  * --------------------------------
  */
 void
-GetRawDatabaseInfo(char *name, int4 *owner, Oid *db_id, char *path)
+GetRawDatabaseInfo(char *name, int4 *owner, Oid *db_id, char *path, int *encoding)
 {
 	int			dbfd;
 	int			fileflags;
@@ -262,13 +267,25 @@ GetRawDatabaseInfo(char *name, int4 *owner, Oid *db_id, char *path)
 			 * means of getting at sys cat attrs.
 			 */
 			tup_db = (Form_pg_database) GETSTRUCT(tup);
-
+#ifdef MULTIBYTE
+			/* get encoding from template database.
+			   This is the "default for default" for
+			   create database command.
+			   */
+			if (strcmp("template1",tup_db->datname.data) == 0)
+			{
+				SetTemplateEncoding(tup_db->encoding);
+			}
+#endif
 			if (strcmp(name, tup_db->datname.data) == 0)
 			{
 				*db_id = tup->t_oid;
 				strncpy(path, VARDATA(&(tup_db->datpath)),
 						(VARSIZE(&(tup_db->datpath)) - VARHDRSZ));
 				*(path + VARSIZE(&(tup_db->datpath)) - VARHDRSZ) = '\0';
+#ifdef MULTIBYTE
+				*encoding = tup_db->encoding;
+#endif
 
 				goto done;
 			}

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/Attic/fcache.c,v 1.15 1998/08/19 02:03:09 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/Attic/fcache.c,v 1.16 1998/08/24 01:13:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,11 +22,7 @@
 #include "catalog/pg_type.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_language.h"
-#ifdef MULTIBYTE
-#include "catalog/pg_class_mb.h"
-#else
 #include "catalog/pg_class.h"
-#endif
 #include "parser/parsetree.h"	/* for getrelname() */
 #include "utils/builtins.h"
 #include "utils/fcache.h"

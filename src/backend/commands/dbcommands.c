@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.20 1998/08/19 02:01:46 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.21 1998/08/24 01:13:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -43,7 +43,7 @@ static HeapTuple get_pg_dbtup(char *command, char *dbname, Relation dbrel);
 static void stop_vacuum(char *dbpath, char *dbname);
 
 void
-createdb(char *dbname, char *dbpath)
+createdb(char *dbname, char *dbpath, int encoding)
 {
 	Oid			db_id,
 				user_id;
@@ -90,8 +90,9 @@ createdb(char *dbname, char *dbpath)
 			dbname, user_id, dbname);
 #endif
 
-	sprintf(buf, "insert into pg_database (datname, datdba, datpath)"
-			" values (\'%s\', \'%d\', \'%s\');", dbname, user_id, loc);
+	sprintf(buf, "insert into pg_database (datname, datdba, encoding, datpath)"
+			" values (\'%s\', \'%d\', \'%d\', \'%s\');", dbname, user_id, encoding, loc);
+
 
 	pg_exec_query(buf);
 }

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.45 1998/08/06 05:12:48 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.46 1998/08/24 01:13:50 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -558,11 +558,7 @@ ProcessUtility(Node *parsetree,
 
 				*ps_status = commandTag = "CREATEDB";
 				CHECK_IF_ABORTED();
-#ifdef MULTIBYTE
 				createdb(stmt->dbname, stmt->dbpath, stmt->encoding);
-#else
-				createdb(stmt->dbname, stmt->dbpath);
-#endif
 			}
 			break;
 

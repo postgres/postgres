@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsenodes.h,v 1.54 1998/08/10 02:26:37 momjian Exp $
+ * $Id: parsenodes.h,v 1.55 1998/08/24 01:14:24 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -480,10 +480,8 @@ typedef struct CreatedbStmt
 	NodeTag		type;
 	char	   *dbname;			/* database to create */
 	char	   *dbpath;			/* location of database */
-#ifdef MULTIBYTE
 	int	   encoding;			/* default encoding
 						   (see regex/pg_wchar.h) */
-#endif
 } CreatedbStmt;
 
 /* ----------------------

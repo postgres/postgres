@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.53 1998/08/19 02:01:44 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.54 1998/08/24 01:13:39 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,6 +37,10 @@
 #include "commands/trigger.h"
 #include <storage/fd.h>
 
+#ifdef MULTIBYTE
+#include "mb/pg_wchar.h"
+#endif
+
 #define ISOCTAL(c) (((c) >= '0') && ((c) <= '7'))
 #define VALUE(c) ((c) - '0')
 
@@ -61,7 +65,7 @@ static char *CopyReadAttribute(FILE *fp, bool *isnull, char *delim, int *newline
 static char *CopyReadAttribute(FILE *fp, bool *isnull, char *delim);
 
 #endif
-static void CopyAttributeOut(FILE *fp, char *string, char *delim, int is_array);
+static void CopyAttributeOut(FILE *fp, unsigned char *string, char *delim, int is_array);
 static int	CountTuples(Relation relation);
 
 extern FILE *Pfout,
@@ -1006,6 +1010,17 @@ CopyReadAttribute(FILE *fp, bool *isnull, char *delim)
 	char		c;
 	int			done = 0;
 	int			i = 0;
+#ifdef MULTIBYTE
+	int	mblen;
+	int	encoding;
+	unsigned char	s[2];
+	int	j;
+#endif
+
+#ifdef MULTIBYTE
+	encoding = pg_get_client_encoding();
+	s[1] = 0;
+#endif
 
 #ifdef COPY_PATCH
 	/* if last delimiter was a newline return a NULL attribute */
@@ -1108,19 +1123,53 @@ CopyReadAttribute(FILE *fp, bool *isnull, char *delim)
 		}
 		if (!done)
 			attribute[i++] = c;
+#ifdef MULTIBYTE
+			s[0] = c;
+			mblen = pg_encoding_mblen(encoding, s);
+			mblen--;
+			for(j=0;j<mblen;j++) {
+			  c = getc(fp);
+			  if (feof(fp))
+			    return (NULL);
+			  attribute[i++] = c;
+			}
+#endif
 		if (i == EXT_ATTLEN - 1)
 			elog(ERROR, "CopyReadAttribute - attribute length too long. line: %d", lineno);
 	}
 	attribute[i] = '\0';
+#ifdef MULTIBYTE
+	return(pg_client_to_server((unsigned char*)attribute, strlen(attribute)));
+#else
 	return (&attribute[0]);
+#endif
 }
 
 static void
-CopyAttributeOut(FILE *fp, char *string, char *delim, int is_array)
+CopyAttributeOut(FILE *fp, unsigned char *server_string, char *delim, int is_array)
 {
+        unsigned char           *string;
 	char		c;
 
+#ifdef MULTIBYTE
+	int	mblen;
+	int	encoding;
+	int	i;
+#endif
+
+#ifdef MULTIBYTE
+	string = pg_server_to_client(server_string, strlen(server_string));
+	encoding = pg_get_client_encoding();
+#else
+	string = server_string;
+#endif
+
+#ifdef MULTIBYTE
+	for (; (mblen = pg_encoding_mblen(encoding, string)) &&
+	       ((c = *string) != '\0'); string += mblen)
+#else
 	for (; (c = *string) != '\0'; string++)
+#endif
 	{
 		if (c == delim[0] || c == '\n' ||
 			(c == '\\' && !is_array))
@@ -1142,7 +1191,13 @@ CopyAttributeOut(FILE *fp, char *string, char *delim, int is_array)
 				fputc('\\', fp);
 			}
 		}
+#ifdef MULTIBYTE
+		for (i=0;i<mblen;i++) {
+			fputc(*(string+i), fp);
+		}
+#else
 		fputc(*string, fp);
+#endif
 	}
 }
 
