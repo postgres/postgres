@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: view.c,v 1.43 2000/06/12 19:40:40 momjian Exp $
+ *	$Id: view.c,v 1.44 2000/06/30 07:06:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -109,7 +109,6 @@ DefineVirtualRelation(char *relname, List *tlist)
  *
  * Given a view name, returns the name for the 'on retrieve to "view"'
  * rule.
- * This routine is called when defining/removing a view.
  *------------------------------------------------------------------
  */
 char *
@@ -293,22 +292,9 @@ DefineView(char *viewName, Query *viewParse)
 void
 RemoveView(char *viewName)
 {
-	char	   *rname;
-
 	/*
-	 * first remove all the "view" rules... Currently we only have one!
-	 */
-	rname = MakeRetrieveViewRuleName(viewName);
-	RemoveRewriteRule(rname);
-
-	/*
-	 * we don't really need that, but just in case...
-	 */
-	CommandCounterIncrement();
-
-	/*
-	 * now remove the relation.
+	 * We just have to drop the relation; the associated rules will
+	 * be cleaned up automatically.
 	 */
 	heap_drop_with_catalog(viewName);
-	pfree(rname);
 }
