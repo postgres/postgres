@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/optimizer/plan/initsplan.c,v 1.2 1996/10/31 10:59:13 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/optimizer/plan/initsplan.c,v 1.3 1997/02/20 02:53:26 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -250,10 +250,19 @@ add_join_clause_info_to_rels(Query *root, CInfo *clauseinfo, List *join_relids)
     List *join_relid;
 
     foreach (join_relid, join_relids) {
-	JInfo *joininfo = 
+	JInfo *joininfo;
+    	List *other_rels = NIL;
+    	List *rel;
+    	
+    	foreach (rel, join_relids)
+    	{
+    	    if ( (int)lfirst(rel) != (int)lfirst(join_relid) )
+    	    	other_rels = lappendi (other_rels, lfirst(rel));
+    	}
+    	
+	joininfo = 
 	    find_joininfo_node(get_base_rel(root, lfirsti(join_relid)),
-			       intLispRemove((int)lfirst(join_relid),
-					     join_relids));
+				other_rels);
 	joininfo->jinfoclauseinfo =
 	    lcons(clauseinfo, joininfo->jinfoclauseinfo);	
 

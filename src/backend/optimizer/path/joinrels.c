@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinrels.c,v 1.1.1.1 1996/07/09 06:21:36 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinrels.c,v 1.2 1997/02/20 02:54:09 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -297,10 +297,18 @@ new_joininfo_list(List *joininfo_list, List *join_relids)
     List *xjoininfo = NIL;
     
     foreach (xjoininfo, joininfo_list) {
+	List *or;
 	JInfo *joininfo = (JInfo*)lfirst(xjoininfo);
 
 	new_otherrels = joininfo->otherrels;
-	if (nonoverlap_sets(new_otherrels,join_relids)) {
+	foreach (or, new_otherrels)
+	{
+	    if ( intMember (lfirsti(or), join_relids) )
+	    	new_otherrels = lremove ((void*)lfirst(or), new_otherrels);
+	}
+	joininfo->otherrels = new_otherrels;
+	if ( new_otherrels != NIL )
+	{
 	    other_joininfo = joininfo_member(new_otherrels,
 					     current_joininfo_list);
 	    if(other_joininfo) {
