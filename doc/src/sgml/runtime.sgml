@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.236 2004/02/03 17:34:02 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.237 2004/02/13 12:25:09 wieck Exp $
 -->
 
 <Chapter Id="runtime">
@@ -984,6 +984,87 @@ SET ENABLE_SEQSCAN TO OFF;
         library is first used.  However, the time to start each new
         server process may increase, even if that process never
         uses the library.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     </variablelist>
+    </sect3>
+
+    <sect3 id="runtime-config-resource-vacuum-cost">
+     <title>Cost Based Vacuum Delay</title>
+
+     <variablelist>
+     <varlistentry>
+      <term><varname>vacuum_cost_page_hit</varname> (<type>integer</type>)</term>
+      <listitem>
+       <para>
+		During a default <command>VACUUM</command> (not
+		<command>FULL</command>) the system maintains and internal counter
+		accumulating the cost of various operations performed. When the
+		accumulated cost reaches a limit, the backend performing the
+		<command>VACUUM</command> will sleep for a while, reset the
+		accumulator and continue. The intention is to lower the IO impact
+		of <command>VACUUM</command>.
+	   </para>
+
+	   <para>
+		The variable <varname>vacuum_cost_page_hit</varname> is the cost
+		for vacuuming a buffer found inside the shared buffer cache. 
+		It represents the cost to lock the buffer pool, lookup the 
+		shared hash table and to actually scan the block content.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><varname>vacuum_cost_page_miss</varname> (<type>integer</type>)</term>
+      <listitem>
+       <para>
+		The cost for vacuuming a buffer that has to be read from disk.
+		This represents the effort to lock the buffer pool, lookup the
+		cache directory, reading the block from disk and scanning the
+		content.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><varname>vacuum_cost_page_dirty</varname> (<type>integer</type>)</term>
+      <listitem>
+       <para>
+		This extra cost is added when vacuum modifies a block that was
+		clean before. It represents the extra IO required to flush the
+		dirty block out to disk again.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><varname>vacuum_cost_limit</varname> (<type>integer</type>)</term>
+      <listitem>
+       <para>
+	    This is the cost limit that must be reached or exceeded before
+		the <command>VACUUM</command> will nap.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><varname>vacuum_cost_naptime</varname> (<type>integer</type>)</term>
+      <listitem>
+       <para>
+		The time im milliseconds the <command>VACUUM</command> will
+		nap when the cost limit has been reached or exceeded.
+		There are certain bulk operations that hold critical
+		locks and should therefore perform
+		as quickly as possible. Because of that it is possible that the
+		cost actually accumulates far higher than this limit. To compensate
+		for this, the final naptime is calculated as
+		<varname>vacuum_cost_naptime</varname> * 
+		<varname>accumulated_balance</varname> /
+		<varname>vacuum_cost_limit</varname> with a maximum of
+		<varname>vacuum_cost_naptime</varname> * 4.
        </para>
       </listitem>
      </varlistentry>
