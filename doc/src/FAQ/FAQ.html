@@ -143,6 +143,7 @@
     from a function?<BR>
      <A href="#4.26">4.26</A>) Why can't I reliably create/drop
     temporary tables in PL/PgSQL functions?<BR>
+     <A href="#4.27">4.27</A>) What replication options are available?<BR>
      
 
     <H2 align="center">Extending PostgreSQL</H2>
@@ -1346,12 +1347,14 @@ BYTEA           bytea           variable-length byte array (null-byte safe)
     <H4><A name="4.24">4.24</A>) How do I perform queries using
     multiple databases?</H4>
 
-    <P>There is no way to query any database except the current one.
+    <P>There is no way to query a database other than the current one.
     Because PostgreSQL loads database-specific system catalogs, it is
     uncertain how a cross-database query should even behave.</P>
 
-    <P>Of course, a client can make simultaneous connections to
-    different databases and merge the information that way.</P>
+    <P><I>/contrib/dblink</I> allows cross-database queries using
+    function calls. Of course, a client can make simultaneous
+    connections to different databases and merge the results on the
+    client side.</P>
 
     <H4><A name="4.25">4.25</A>) How do I return multiple rows or
     columns from a function?</H4>
@@ -1364,13 +1367,19 @@ BYTEA           bytea           variable-length byte array (null-byte safe)
 
     <H4><A name="4.26">4.26</A>) Why can't I reliably create/drop
     temporary tables in PL/PgSQL functions?</H4>
-    PL/PgSQL caches function contents, and an unfortunate side effect
+    <P>PL/PgSQL caches function contents, and an unfortunate side effect
     is that if a PL/PgSQL function accesses a temporary table, and that
     table is later dropped and recreated, and the function called
     again, the function will fail because the cached function contents
     still point to the old temporary table. The solution is to use
     <SMALL>EXECUTE</SMALL> for temporary table access in PL/PgSQL. This
-    will cause the query to be reparsed every time. 
+    will cause the query to be reparsed every time.</P>
+
+    <H4><A name="4.27">4.27</A>) What replication options are available?
+    </H4>
+    <P>There are several master/slave replication solutions available.
+    These allow only one server to make database changes and the slave 
+    merely allow database reading.
 
     <HR>
 

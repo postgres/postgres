@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.206 2002/10/03 17:09:42 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.207 2002/10/11 04:12:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1131,7 +1131,10 @@ connectDBComplete(PGconn *conn)
 				return 0;
 			}
 
-			remains.tv_sec = finish_time - current_time;
+			if (finish_time > current_time)
+				remains.tv_sec = finish_time - current_time;
+			else
+				remains.tv_sec = 0;
 			remains.tv_usec = 0;
 		}
 	}
