@@ -345,7 +345,7 @@ From owner-pgsql-hackers@hub.org Tue Oct 19 10:31:10 1999
 Received: from renoir.op.net (root@renoir.op.net [209.152.193.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id KAA29087
 	for <maillist@candle.pha.pa.us>; Tue, 19 Oct 1999 10:31:08 -0400 (EDT)
-Received: from hub.org (hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.2 $) with ESMTP id KAA27535 for <maillist@candle.pha.pa.us>; Tue, 19 Oct 1999 10:19:47 -0400 (EDT)
+Received: from hub.org (hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.3 $) with ESMTP id KAA27535 for <maillist@candle.pha.pa.us>; Tue, 19 Oct 1999 10:19:47 -0400 (EDT)
 Received: from localhost (majordom@localhost)
 	by hub.org (8.9.3/8.9.3) with SMTP id KAA30328;
 	Tue, 19 Oct 1999 10:12:10 -0400 (EDT)
@@ -454,7 +454,7 @@ From owner-pgsql-hackers@hub.org Tue Oct 19 21:25:30 1999
 Received: from renoir.op.net (root@renoir.op.net [209.152.193.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id VAA28130
 	for <maillist@candle.pha.pa.us>; Tue, 19 Oct 1999 21:25:26 -0400 (EDT)
-Received: from hub.org (hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.2 $) with ESMTP id VAA10512 for <maillist@candle.pha.pa.us>; Tue, 19 Oct 1999 21:15:28 -0400 (EDT)
+Received: from hub.org (hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.3 $) with ESMTP id VAA10512 for <maillist@candle.pha.pa.us>; Tue, 19 Oct 1999 21:15:28 -0400 (EDT)
 Received: from localhost (majordom@localhost)
 	by hub.org (8.9.3/8.9.3) with SMTP id VAA50745;
 	Tue, 19 Oct 1999 21:07:23 -0400 (EDT)
@@ -551,4 +551,147 @@ Hiroshi Inoue
 Inoue@tpf.co.jp
 
 ************
+
+From pgsql-hackers-owner+M6267@hub.org Sun Aug 27 21:46:37 2000
+Received: from hub.org (root@hub.org [216.126.84.1])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id UAA07972
+	for <pgman@candle.pha.pa.us>; Sun, 27 Aug 2000 20:46:36 -0400 (EDT)
+Received: from hub.org (majordom@localhost [127.0.0.1])
+	by hub.org (8.10.1/8.10.1) with SMTP id e7S0kaL27996;
+	Sun, 27 Aug 2000 20:46:36 -0400 (EDT)
+Received: from sss2.sss.pgh.pa.us (sss.pgh.pa.us [209.114.166.2])
+	by hub.org (8.10.1/8.10.1) with ESMTP id e7S05aL24107
+	for <pgsql-hackers@postgreSQL.org>; Sun, 27 Aug 2000 20:05:36 -0400 (EDT)
+Received: from sss2.sss.pgh.pa.us (tgl@localhost [127.0.0.1])
+	by sss2.sss.pgh.pa.us (8.9.3/8.9.3) with ESMTP id UAA01604
+	for <pgsql-hackers@postgreSQL.org>; Sun, 27 Aug 2000 20:05:29 -0400 (EDT)
+To: pgsql-hackers@postgreSQL.org
+Subject: [HACKERS] Possible performance improvement: buffer replacement policy
+Date: Sun, 27 Aug 2000 20:05:29 -0400
+Message-ID: <1601.967421129@sss.pgh.pa.us>
+From: Tom Lane <tgl@sss.pgh.pa.us>
+X-Mailing-List: pgsql-hackers@postgresql.org
+Precedence: bulk
+Sender: pgsql-hackers-owner@hub.org
+Status: ORr
+
+Those of you with long memories may recall a benchmark that Edmund Mergl
+drew our attention to back in May '99.  That test showed extremely slow
+performance for updating a table with many indexes (about 20).  At the
+time, it seemed the problem was due to bad performance of btree with
+many equal keys, so I thought I'd go back and retry the benchmark after
+this latest round of btree hackery.
+
+The good news is that btree itself seems to be pretty well fixed; the
+bad news is that the benchmark is still slow for large numbers of rows.
+The problem is I/O: the CPU mostly sits idle waiting for the disk.
+As best I can tell, the difficulty is that the working set of pages
+needed to update this many indexes is too large compared to the number
+of disk buffers Postgres is using.  (I was running with -B 1000 and
+looking at behavior for a 100000-row test table.  This gave me a table
+size of 3876 pages, plus 11526 pages in 20 indexes.)
+
+Of course, there's only so much we can do when the number of buffers
+is too small, but I still started to wonder if we are using the buffers
+as effectively as we can.  Some tracing showed that most of the pages
+of the indexes were being read and written multiple times within a
+single UPDATE query, while most of the pages of the table proper were
+fetched and written only once.  That says we're not using the buffers
+as well as we could; the index pages are not being kept in memory when
+they should be.  In a query like this, we should displace main-table
+pages sooner to allow keeping more index pages in cache --- but with
+the simple LRU replacement method we use, once a page has been loaded
+it will stay in cache for at least the next NBuffers (-B) page
+references, no matter what.  With a large NBuffers that's a long time.
+
+I've come across an interesting article:
+	The LRU-K Page Replacement Algorithm For Database Disk Buffering
+	Elizabeth J. O'Neil, Patrick E. O'Neil, Gerhard Weikum
+	Proceedings of the 1993 ACM SIGMOD international conference
+	on Management of Data, May 1993
+(If you subscribe to the ACM digital library, you can get a PDF of this
+from there.)  This article argues that standard LRU buffer management is
+inherently not great for database caches, and that it's much better to
+replace pages on the basis of time since the K'th most recent reference,
+not just time since the most recent one.  K=2 is enough to get most of
+the benefit.  The big win is that you are measuring an actual page
+interreference time (between the last two references) and not just
+dealing with a lower-bound guess on the interreference time.  Frequently
+used pages are thus much more likely to stay in cache.
+
+It looks like it wouldn't take too much work to replace shared buffers
+on the basis of LRU-2 instead of LRU, so I'm thinking about trying it.
+
+Has anyone looked into this area?  Is there a better method to try?
+
+			regards, tom lane
+
+From prlw1@newn.cam.ac.uk Fri Jan 19 12:54:45 2001
+Received: from henry.newn.cam.ac.uk (henry.newn.cam.ac.uk [131.111.204.130])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id MAA29822
+	for <pgman@candle.pha.pa.us>; Fri, 19 Jan 2001 12:54:44 -0500 (EST)
+Received: from [131.111.204.180] (helo=quartz.newn.cam.ac.uk)
+	by henry.newn.cam.ac.uk with esmtp (Exim 3.13 #1)
+	id 14JfkU-0001WA-00; Fri, 19 Jan 2001 17:54:54 +0000
+Received: from prlw1 by quartz.newn.cam.ac.uk with local (Exim 3.13 #1)
+	id 14Jfj6-0001cq-00; Fri, 19 Jan 2001 17:53:28 +0000
+Date: Fri, 19 Jan 2001 17:53:28 +0000
+From: Patrick Welche <prlw1@newn.cam.ac.uk>
+To: Bruce Momjian <pgman@candle.pha.pa.us>
+Cc: Tom Lane <tgl@sss.pgh.pa.us>, pgsql-hackers@postgreSQL.org
+Subject: Re: [HACKERS] Possible performance improvement: buffer replacement policy
+Message-ID: <20010119175328.A6223@quartz.newn.cam.ac.uk>
+Reply-To: prlw1@cam.ac.uk
+References: <1601.967421129@sss.pgh.pa.us> <200101191703.MAA25873@candle.pha.pa.us>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+User-Agent: Mutt/1.2i
+In-Reply-To: <200101191703.MAA25873@candle.pha.pa.us>; from pgman@candle.pha.pa.us on Fri, Jan 19, 2001 at 12:03:58PM -0500
+Status: OR
+
+On Fri, Jan 19, 2001 at 12:03:58PM -0500, Bruce Momjian wrote:
+> 
+> Tom, did we ever test this?  I think we did and found that it was the
+> same or worse, right?
+
+(Funnily enough, I just read that message:)
+
+To: Bruce Momjian <pgman@candle.pha.pa.us>
+cc: pgsql-hackers@postgreSQL.org
+Subject: Re: [HACKERS] Possible performance improvement: buffer replacement policy 
+In-reply-to: <200010161541.LAA06653@candle.pha.pa.us> 
+References: <200010161541.LAA06653@candle.pha.pa.us>
+Comments: In-reply-to Bruce Momjian <pgman@candle.pha.pa.us>
+	message dated "Mon, 16 Oct 2000 11:41:41 -0400"
+Date: Mon, 16 Oct 2000 11:49:52 -0400
+Message-ID: <26100.971711392@sss.pgh.pa.us>
+From: Tom Lane <tgl@sss.pgh.pa.us>
+X-Mailing-List: pgsql-hackers@postgresql.org
+Precedence: bulk
+Sender: pgsql-hackers-owner@hub.org
+Status: RO
+Content-Length: 947
+Lines: 19
+
+Bruce Momjian <pgman@candle.pha.pa.us> writes:
+>> It looks like it wouldn't take too much work to replace shared buffers
+>> on the basis of LRU-2 instead of LRU, so I'm thinking about trying it.
+>> 
+>> Has anyone looked into this area?  Is there a better method to try?
+
+> Sounds like a perfect idea.  Good luck.  :-)
+
+Actually, the idea went down in flames :-(, but I neglected to report
+back to pghackers about it.  I did do some code to manage buffers as
+LRU-2.  I didn't have any good performance test cases to try it with,
+but Richard Brosnahan was kind enough to re-run the TPC tests previously
+published by Great Bridge with that code in place.  Wasn't any faster,
+in fact possibly a little slower, likely due to the extra CPU time spent
+on buffer freelist management.  It's possible that other scenarios might
+show a better result, but right now I feel pretty discouraged about the
+LRU-2 idea and am not pursuing it.
+
+			regards, tom lane
+
 
