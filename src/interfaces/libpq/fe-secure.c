@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-secure.c,v 1.66 2005/01/08 22:51:15 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-secure.c,v 1.67 2005/01/10 00:37:12 tgl Exp $
  *
  * NOTES
  *	  [ Most of these notes are wrong/obsolete, but perhaps not all ]
@@ -768,8 +768,10 @@ static int
 client_cert_cb(SSL *ssl, X509 **x509, EVP_PKEY **pkey)
 {
 	char		homedir[MAXPGPATH];
-	struct stat buf,
-				buf2;
+	struct stat buf;
+#ifndef WIN32
+	struct stat buf2;
+#endif
 	char		fnbuf[MAXPGPATH];
 	FILE	   *fp;
 	PGconn	   *conn = (PGconn *) SSL_get_app_data(ssl);
@@ -831,6 +833,7 @@ client_cert_cb(SSL *ssl, X509 **x509, EVP_PKEY **pkey)
 						  fnbuf, pqStrerror(errno, sebuf, sizeof(sebuf)));
 		return 0;
 	}
+#ifndef WIN32
 	if (fstat(fileno(fp), &buf2) == -1 ||
 		buf.st_dev != buf2.st_dev || buf.st_ino != buf2.st_ino)
 	{
@@ -838,6 +841,7 @@ client_cert_cb(SSL *ssl, X509 **x509, EVP_PKEY **pkey)
 						  libpq_gettext("private key file \"%s\" changed during execution\n"), fnbuf);
 		return 0;
 	}
+#endif
 	if (PEM_read_PrivateKey(fp, pkey, cb, NULL) == NULL)
 	{
 		char	   *err = SSLerrmessage();
