@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.54 1999/05/07 01:23:04 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.55 1999/05/13 15:55:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,7 +46,7 @@
  *		This is so that we can support more backends. (system-wide semaphore
  *		sets run out pretty fast.)				  -ay 4/95
  *
- * $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.54 1999/05/07 01:23:04 vadim Exp $
+ * $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.55 1999/05/13 15:55:44 momjian Exp $
  */
 #include <sys/time.h>
 #include <unistd.h>
@@ -78,7 +78,6 @@
 #include "utils/trace.h"
 
 static void HandleDeadLock(int sig);
-static PROC *ProcWakeup(PROC *proc, int errType);
 static void ProcFreeAllSemaphores(void);
 
 #define DeadlockCheckTimer pg_options[OPT_DEADLOCKTIMEOUT]
@@ -640,7 +639,7 @@ rt:;
  *	 remove the process from the wait queue and set its links invalid.
  *	 RETURN: the next process in the wait queue.
  */
-static PROC *
+PROC *
 ProcWakeup(PROC *proc, int errType)
 {
 	PROC	   *retProc;
@@ -806,10 +805,10 @@ HandleDeadLock(int sig)
 	DumpAllLocks();
 #endif
 
-	if (!DeadLockCheck(&(MyProc->lockQueue), MyProc->waitLock, true))
+	MyProc->errType = STATUS_NOT_FOUND;
+	if (!DeadLockCheck(MyProc, MyProc->waitLock))
 	{
 		UnlockLockTable();
-		MyProc->errType = STATUS_NOT_FOUND;
 		return;
 	}
 

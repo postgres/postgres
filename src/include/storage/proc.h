@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: proc.h,v 1.21 1999/05/07 01:23:07 vadim Exp $
+ * $Id: proc.h,v 1.22 1999/05/13 15:55:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -119,6 +119,7 @@ extern bool ProcRemove(int pid);
 extern void ProcQueueInit(PROC_QUEUE *queue);
 extern int ProcSleep(PROC_QUEUE *queue, LOCKMETHODCTL *lockctl, int token, 
 					LOCK *lock);
+extern PROC *ProcWakeup(PROC *proc, int errType);
 extern int ProcLockWakeup(PROC_QUEUE *queue, LOCKMETHOD lockmethod,
 			   LOCK *lock);
 extern void ProcAddLock(SHM_QUEUE *elem);

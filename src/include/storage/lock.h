@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: lock.h,v 1.25 1999/05/07 01:23:07 vadim Exp $
+ * $Id: lock.h,v 1.26 1999/05/13 15:55:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -249,8 +249,7 @@ extern void GrantLock(LOCK *lock, LOCKMODE lockmode);
 extern bool LockReleaseAll(LOCKMETHOD lockmethod, SHM_QUEUE *lockQueue);
 extern int	LockShmemSize(int maxBackends);
 extern bool LockingDisabled(void);
-extern bool DeadLockCheck(SHM_QUEUE *lockQueue, LOCK *findlock,
-			  bool skip_check);
+extern bool DeadLockCheck(void *proc, LOCK *findlock);
 
 #ifdef DEADLOCK_DEBUG
 extern void DumpLocks(void);
