@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.96 2000/11/12 00:36:58 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.97 2000/12/06 23:55:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,6 +25,7 @@
 #include "optimizer/subselect.h"
 #include "optimizer/tlist.h"
 #include "optimizer/var.h"
+#include "parser/analyze.h"
 #include "parser/parsetree.h"
 #include "parser/parse_expr.h"
 #include "rewrite/rewriteManip.h"
@@ -255,6 +256,7 @@ pull_up_subqueries(Query *parse, Node *jtnode)
 			int		rtoffset;
 			Node   *subjointree;
 			List   *subtlist;
+			List   *l;
 
 			/*
 			 * First, recursively pull up the subquery's subqueries,
@@ -290,9 +292,21 @@ pull_up_subqueries(Query *parse, Node *jtnode)
 				ResolveNew(parse->havingQual,
 						   varno, 0, subtlist, CMD_SELECT, 0);
 			/*
+			 * Pull up any FOR UPDATE markers, too.
+			 */
+			foreach(l, subquery->rowMarks)
+			{
+				int		submark = lfirsti(l);
+
+				parse->rowMarks = lappendi(parse->rowMarks,
+										   submark + rtoffset);
+			}
+			/*
 			 * Miscellaneous housekeeping.
 			 */
 			parse->hasSubLinks |= subquery->hasSubLinks;
+			/* subquery won't be pulled up if it hasAggs, so no work there */
+
 			/*
 			 * Return the adjusted subquery jointree to replace the
 			 * RangeTblRef entry in my jointree.
@@ -340,11 +354,6 @@ is_simple_subquery(Query *subquery)
 		subquery->into != NULL ||
 		subquery->isPortal)
 		elog(ERROR, "is_simple_subquery: subquery is bogus");
-	/*
-	 * Also check for currently-unsupported features.
-	 */
-	if (subquery->rowMarks)
-		elog(ERROR, "FOR UPDATE is not supported in subselects");
 	/*
 	 * Can't currently pull up a query with setops.
 	 * Maybe after querytree redesign...
@@ -708,6 +717,13 @@ grouping_planner(Query *parse, double tuple_fraction)
 		tlist = postprocess_setop_tlist(result_plan->targetlist, tlist);
 
 		/*
+		 * Can't handle FOR UPDATE here (parser should have checked already,
+		 * but let's make sure).
+		 */
+		if (parse->rowMarks)
+			elog(ERROR, "SELECT FOR UPDATE is not allowed with UNION/INTERSECT/EXCEPT");
+
+		/*
 		 * We set current_pathkeys NIL indicating we do not know sort
 		 * order.  This is correct when the top set operation is UNION ALL,
 		 * since the appended-together results are unsorted even if the
@@ -743,6 +759,18 @@ grouping_planner(Query *parse, double tuple_fraction)
 		if (parse->rowMarks)
 		{
 			List	   *l;
+
+			/*
+			 * We've got trouble if the FOR UPDATE appears inside grouping,
+			 * since grouping renders a reference to individual tuple CTIDs
+			 * invalid.  This is also checked at parse time, but that's
+			 * insufficient because of rule substitution, query pullup, etc.
+			 */
+			CheckSelectForUpdate(parse);
+
+			/* Currently the executor only supports FOR UPDATE at top level */
+			if (PlannerQueryLevel > 1)
+				elog(ERROR, "SELECT FOR UPDATE is not allowed in subselects");
 
 			foreach(l, parse->rowMarks)
 			{

@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: analyze.h,v 1.12 2000/10/07 00:58:21 tgl Exp $
+ * $Id: analyze.h,v 1.13 2000/12/06 23:55:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,5 +16,7 @@
 #include "parser/parse_node.h"
 
 extern List *parse_analyze(Node *parseTree, ParseState *parentParseState);
+
+extern void CheckSelectForUpdate(Query *qry);
 
 #endif	 /* ANALYZE_H */

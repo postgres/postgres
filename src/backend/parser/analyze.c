@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: analyze.c,v 1.170 2000/12/05 19:57:55 tgl Exp $
+ *	$Id: analyze.c,v 1.171 2000/12/06 23:55:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,8 +36,6 @@
 #ifdef MULTIBYTE
 #include "mb/pg_wchar.h"
 #endif
-
-void		CheckSelectForUpdate(Query *qry);	/* no points for style... */
 
 static Query *transformStmt(ParseState *pstate, Node *stmt);
 static Query *transformDeleteStmt(ParseState *pstate, DeleteStmt *stmt);

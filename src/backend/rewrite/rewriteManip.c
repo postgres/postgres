@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteManip.c,v 1.52 2000/12/05 19:15:09 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteManip.c,v 1.53 2000/12/06 23:55:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -169,8 +169,29 @@ OffsetVarNodes(Node *node, int offset, int sublevels_up)
 	 * sublevels_up doesn't get incremented prematurely.
 	 */
 	if (node && IsA(node, Query))
-		query_tree_walker((Query *) node, OffsetVarNodes_walker,
+	{
+		Query  *qry = (Query *) node;
+		List   *l;
+
+		/*
+		 * If we are starting at a Query, and sublevels_up is zero, then we
+		 * must also fix rangetable indexes in the Query itself --- namely
+		 * resultRelation and rowMarks entries.  sublevels_up cannot be zero
+		 * when recursing into a subquery, so there's no need to have the
+		 * same logic inside OffsetVarNodes_walker.
+		 */
+		if (sublevels_up == 0)
+		{
+			if (qry->resultRelation)
+				qry->resultRelation += offset;
+			foreach(l, qry->rowMarks)
+			{
+				lfirsti(l) += offset;
+			}
+		}
+		query_tree_walker(qry, OffsetVarNodes_walker,
 						  (void *) &context, true);
+	}
 	else
 		OffsetVarNodes_walker(node, &context);
 }
@@ -252,8 +273,30 @@ ChangeVarNodes(Node *node, int rt_index, int new_index, int sublevels_up)
 	 * sublevels_up doesn't get incremented prematurely.
 	 */
 	if (node && IsA(node, Query))
-		query_tree_walker((Query *) node, ChangeVarNodes_walker,
+	{
+		Query  *qry = (Query *) node;
+		List   *l;
+
+		/*
+		 * If we are starting at a Query, and sublevels_up is zero, then we
+		 * must also fix rangetable indexes in the Query itself --- namely
+		 * resultRelation and rowMarks entries.  sublevels_up cannot be zero
+		 * when recursing into a subquery, so there's no need to have the
+		 * same logic inside ChangeVarNodes_walker.
+		 */
+		if (sublevels_up == 0)
+		{
+			if (qry->resultRelation == rt_index)
+				qry->resultRelation = new_index;
+			foreach(l, qry->rowMarks)
+			{
+				if (lfirsti(l) == rt_index)
+					lfirsti(l) = new_index;
+			}
+		}
+		query_tree_walker(qry, ChangeVarNodes_walker,
 						  (void *) &context, true);
+	}
 	else
 		ChangeVarNodes_walker(node, &context);
 }
