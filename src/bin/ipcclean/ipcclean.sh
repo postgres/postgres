@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $Header: /cvsroot/pgsql/src/bin/ipcclean/Attic/ipcclean.sh,v 1.8 2001/02/10 05:55:17 momjian Exp $
+# $Header: /cvsroot/pgsql/src/bin/ipcclean/Attic/ipcclean.sh,v 1.9 2001/02/10 06:12:15 momjian Exp $
 #
 
 CMDNAME=`basename $0`
@@ -39,7 +39,6 @@ EffectiveUser=`id -n -u 2>/dev/null || whoami 2>/dev/null`
 #
 if [ `uname` = 'Linux' ]; then
     ipcs_id=
-    ipcs_cpid=
     ipcs_lpid=
     did_anything=
 
@@ -49,7 +48,8 @@ if [ `uname` = 'Linux' ]; then
     fi
 
     # shared memory
-    for val in `ipcs -m -p | grep '^[0-9]' | awk '{printf "%s %s\n", $1, $3, $4}'`; do
+    for val in `ipcs -m -p | grep '^[0-9]' | awk '{printf "%s %s\n", $1, $3, $4}'`
+    do
         if [ -z "$ipcs_id" ]; then
             ipcs_id=$val
             # Note: We can do -n here, because we know the platform.
@@ -75,7 +75,6 @@ if [ `uname` = 'Linux' ]; then
             fi
         fi
         ipcs_id=
-        ipcs_cpid=
         ipcs_lpid=
     done
 
