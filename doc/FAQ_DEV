@@ -1,7 +1,7 @@
 
           Developer's Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Thu Jan 3 03:20:49 EST 2002
+   Last updated: Fri Feb 1 15:22:54 EST 2002
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -572,7 +572,7 @@ typedef struct nameData
           loop through list, assigning each list element to i. It is
           important to note that i is a List *, not the data in the List
           element. You need to use lfirst(i) to get at the data. Here is
-          a typical code snipped that loops through a List containing Var
+          a typical code snippet that loops through a List containing Var
           *'s and processes each one:
           
 List *i, *list;
