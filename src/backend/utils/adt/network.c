@@ -3,7 +3,7 @@
  *	is for IP V4 CIDR notation, but prepared for V6: just
  *	add the necessary bits where the comments indicate.
  *
- *	$Id: network.c,v 1.9 1999/05/25 16:12:11 momjian Exp $
+ *	$Id: network.c,v 1.10 1999/06/02 03:37:15 momjian Exp $
  *	Jon Postel RIP 16 Oct 1998
  */
 
@@ -306,8 +306,16 @@ network_cmp(inet *a1, inet *a2)
 {
 	if (ntohl(ip_v4addr(a1)) < ntohl(ip_v4addr(a2)))
 		return (-1);
-	else if (ntohl(ip_v4addr(a1)) > ntohl(ip_v4addr(a2)))
+
+	if (ntohl(ip_v4addr(a1)) > ntohl(ip_v4addr(a2)))
 		return (1);
+
+	if (ip_bits(a1) < ip_bits(a2))
+		return (-1);
+
+	if (ip_bits(a1) > ip_bits(a2))
+		return (1);
+
 	return 0;
 }
 
