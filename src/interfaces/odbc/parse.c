@@ -605,9 +605,9 @@ parse_statement(StatementClass *stmt)
 				if (delim == ',')
 				{
 					mylog("in_dot: got comma\n");
-					in_dot = FALSE;
 					in_field = FALSE;
 				}
+				in_dot = FALSE;
 				continue;
 			}
 
