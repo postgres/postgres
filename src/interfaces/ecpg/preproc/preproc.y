@@ -329,8 +329,8 @@ make_name(void)
 %type  <str>	DropTrigStmt TriggerOneEvent TriggerEvents RuleActionStmt
 %type  <str>    TriggerActionTime CreateTrigStmt DropPLangStmt PLangTrusted
 %type  <str>    CreatePLangStmt TriggerFuncArgs TriggerFuncArg simple_select
-%type  <str>    ViewStmt LoadStmt CreatedbStmt createdb_opt_encoding
-%type  <str>	createdb_opt_location opt_encoding OptInherit Geometric
+%type  <str>    ViewStmt LoadStmt CreatedbStmt createdb_opt_item
+%type  <str>	createdb_opt_list opt_encoding OptInherit Geometric
 %type  <str>    DropdbStmt ClusterStmt grantee RevokeStmt Bit bit
 %type  <str>	GrantStmt privileges operation_commalist operation PosAllConst
 %type  <str>	opt_cursor opt_lmode ConstraintsSetStmt comment_tg AllConst
@@ -2253,7 +2253,7 @@ LoadStmt:  LOAD file_name
 
 CreatedbStmt:  CREATE DATABASE database_name WITH createdb_opt_list
 			{
-				$$ = cat_str(5, make_str("create database"), $3, make_str("with"), $5, $6);
+				$$ = cat_str(4, make_str("create database"), $3, make_str("with"), $5);
 			}
 		| CREATE DATABASE database_name
        			{
@@ -2390,7 +2390,7 @@ OptimizableStmt:  SelectStmt
 
 /* This rule used 'opt_column_list' between 'relation_name' and 'insert_rest'
  * originally. When the second rule of 'insert_rest' was changed to use
- * the new 'SelectStmt' rule (for INTERSECT and EXCEPT) it produced a shift/red uce
+ * the new 'SelectStmt' rule (for INTERSECT and EXCEPT) it produced a shift/reduce
  * conflict. So I just changed the rules 'InsertStmt' and 'insert_rest' to accept
  * the same statements without any shift/reduce conflicts */
 InsertStmt:  INSERT INTO relation_name insert_rest
@@ -3550,7 +3550,7 @@ c_expr:  attr
 				{	$$ = cat_str(3, make_str("trim(trailing"), $4, make_str(")")); }
 		| TRIM '(' trim_list ')'
 				{	$$ = cat_str(3, make_str("trim("), $3, make_str(")")); }
-		| '(' SelectStmt ')'
+		| '(' select_no_parens ')'
 				{	$$ = cat_str(3, make_str("("), $2, make_str(")")); }
 		| EXISTS '(' SelectStmt ')'
 				{	$$ = cat_str(3, make_str("exists("), $3, make_str(")")); }
