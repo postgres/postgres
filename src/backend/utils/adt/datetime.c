@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.99 2003/01/29 01:08:42 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.100 2003/02/19 03:48:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -587,66 +587,77 @@ static datetkn    *deltacache[MAXDATEFIELDS] = {NULL};
  *	since it is numerically accurate and computationally simple.
  * The algorithms here will accurately convert between Julian day
  *	and calendar date for all non-negative Julian days
- *	(i.e. from Nov 23, -4713 on).
- *
- * Ref: Explanatory Supplement to the Astronomical Almanac, 1992.
- *	University Science Books, 20 Edgehill Rd. Mill Valley CA 94941.
- *
- * Use the algorithm by Henry Fliegel, a former NASA/JPL colleague
- *	now at Aerospace Corp. (hi, Henry!)
+ *	(i.e. from Nov 24, -4713 on).
  *
  * These routines will be used by other date/time packages
  * - thomas 97/02/25
+ *
+ * Rewritten to eliminate overflow problems. This now allows the
+ * routines to work correctly for all Julian day counts from
+ * 0 to 2147483647  (Nov 24, -4713 to Jun 3, 5874898) assuming
+ * a 32-bit integer. Longer types should also work to the limits
+ * of their precision.
  */
 
 int
 date2j(int y, int m, int d)
 {
-	int			m12 = (m - 14) / 12;
+	int			julian;
+	int			century;
 
-	return ((1461 * (y + 4800 + m12)) / 4
-			+ (367 * (m - 2 - 12 * (m12))) / 12
-			- (3 * ((y + 4900 + m12) / 100)) / 4
-			+ d - 32075);
+	if (m > 2) {
+		m += 1;
+		y += 4800;
+	} else {
+		m += 13;
+		y += 4799;
+	}
+
+	century = y/100;
+	julian  = y*365 - 32167;
+	julian += y/4 - century + century/4;
+	julian += 7834*m/256 + d;
+
+	return julian;
 }	/* date2j() */
 
 void
 j2date(int jd, int *year, int *month, int *day)
 {
-	int			j,
-				y,
-				m,
-				d;
+	unsigned int		julian;
+	unsigned int		quad;
+	unsigned int		extra;
+	int			y;
 
-	int			i,
-				l,
-				n;
+	julian = jd;
+	julian += 32044;
+	quad = julian/146097;
+	extra = (julian - quad*146097)*4 + 3;
+	julian += 60 + quad*3 + extra/146097;
+	quad = julian/1461;
+	julian -= quad*1461;
+	y = julian * 4 / 1461;
+	julian = ((y != 0) ? ((julian + 305) % 365) : ((julian + 306) % 366))
+		+ 123;
+	y += quad*4;
+	*year = y - 4800;
+	quad = julian * 2141 / 65536;
+	*day = julian - 7834*quad/256;
+	*month = (quad + 10) % 12 + 1;
 
-	l = jd + 68569;
-	n = (4 * l) / 146097;
-	l -= (146097 * n + 3) / 4;
-	i = (4000 * (l + 1)) / 1461001;
-	l += 31 - (1461 * i) / 4;
-	j = (80 * l) / 2447;
-	d = l - (2447 * j) / 80;
-	l = j / 11;
-	m = (j + 2) - (12 * l);
-	y = 100 * (n - 49) + i + l;
-
-	*year = y;
-	*month = m;
-	*day = d;
 	return;
 }	/* j2date() */
 
 int
 j2day(int date)
 {
-	int			day;
+	unsigned int day;
 
-	day = (date + 1) % 7;
+	day = date;
+	day += 1;
+	day %= 7;
 
-	return day;
+	return (int) day;
 }	/* j2day() */
 
 

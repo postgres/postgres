@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: datetime.h,v 1.34 2003/01/16 00:26:49 tgl Exp $
+ * $Id: datetime.h,v 1.35 2003/02/19 03:48:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -239,7 +239,7 @@ extern int	day_tab[2][13];
 
 #define JULIAN_MINYEAR (-4713)
 #define JULIAN_MINMONTH (11)
-#define JULIAN_MINDAY (23)
+#define JULIAN_MINDAY (24)
 
 #define IS_VALID_JULIAN(y,m,d) (((y) > JULIAN_MINYEAR) \
  || (((y) == JULIAN_MINYEAR) && (((m) > JULIAN_MINMONTH) \

@@ -76,6 +76,10 @@ SELECT timestamp without time zone '1996-03-01' - interval '1 second' AS "Feb 29
 SELECT timestamp without time zone '1999-03-01' - interval '1 second' AS "Feb 28";
 SELECT timestamp without time zone '2000-03-01' - interval '1 second' AS "Feb 29";
 SELECT timestamp without time zone '1999-12-01' + interval '1 month - 1 second' AS "Dec 31";
+SELECT timestamp without time zone 'Nov 24, 4714 BC' + interval '1000000000 days' AS "Nov 27, 2733194";
+SELECT timestamp without time zone 'Nov 24, 4714 BC' + interval '2000000000 days' AS "Nov 30, 5471101";
+SELECT timestamp without time zone 'Nov 25, 4714 BC' + interval '2147483492 days' AS "Dec 31, 5874897";
+SELECT timestamp without time zone '12/31/5874897' - timestamp without time zone 'Nov 24, 4714 BC' AS "2147483493 Days";
 
 -- Shorthand values
 -- Not directly usable for regression testing since these are not constants.

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.113 2003/01/31 01:08:07 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.114 2003/02/19 03:48:10 momjian Exp $
 -->
 
  <chapter id="datatype">
@@ -1243,7 +1243,7 @@ SELECT b, char_length(b) FROM test2;
         <entry>both date and time</entry>
         <entry>8 bytes</entry>
         <entry>4713 BC</entry>
-        <entry>AD 1465001</entry>
+        <entry>AD 5874897</entry>
         <entry>1 microsecond / 14 digits</entry>
        </row>
        <row>
@@ -1251,7 +1251,7 @@ SELECT b, char_length(b) FROM test2;
         <entry>both date and time</entry>
         <entry>8 bytes</entry>
         <entry>4713 BC</entry>
-        <entry>AD 1465001</entry>
+        <entry>AD 5874897</entry>
         <entry>1 microsecond / 14 digits</entry>
        </row>
        <row>
@@ -1309,7 +1309,8 @@ SELECT b, char_length(b) FROM test2;
     a few years of 2000-01-01, but the precision degrades for dates further
     away.  When timestamps are stored as eight-byte integers (a compile-time
     option), microsecond precision is available over the full range of
-    values.
+    values. However eight-byte integer timestamps have a reduced range of
+    dates from 4713 BC up to 294276 AD.
    </para>
    </note>
 
