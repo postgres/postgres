@@ -48,6 +48,9 @@ public class Jdbc2TestSuite extends TestSuite
 
 		// PreparedStatement
 
+        // ServerSide Prepared Statements
+        suite.addTestSuite(ServerPreparedStmtTest.class);
+
 		// BatchExecute
 		suite.addTestSuite(BatchExecuteTest.class);
 
@@ -60,9 +63,9 @@ public class Jdbc2TestSuite extends TestSuite
 
 		// Fastpath/LargeObject
 		suite.addTestSuite(BlobTest.class);
-		suite.addTestSuite( UpdateableResultTest.class );
+		suite.addTestSuite(UpdateableResultTest.class );
 
-		suite.addTestSuite( CallableStmtTest.class );
+		suite.addTestSuite(CallableStmtTest.class );
 
 		// That's all folks
 		return suite;

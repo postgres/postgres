@@ -8,7 +8,7 @@ import java.util.Vector;
 import org.postgresql.largeobject.*;
 import org.postgresql.util.*;
 
-/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/AbstractJdbc1Statement.java,v 1.9 2002/09/11 05:38:44 barry Exp $
+/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/AbstractJdbc1Statement.java,v 1.10 2002/09/14 03:52:56 barry Exp $
  * This class defines methods of the jdbc1 specification.  This class is
  * extended by org.postgresql.jdbc2.AbstractJdbc2Statement which adds the jdbc2
  * methods.  The real Statement class (for jdbc1) is org.postgresql.jdbc1.Jdbc1Statement
@@ -129,6 +129,7 @@ public abstract class AbstractJdbc1Statement implements org.postgresql.PGStateme
 	{
 		String l_sql = replaceProcessing(p_sql);
 		m_sqlFragments = new String[] {l_sql};
+		m_binds = new Object[0];
 		//If we have already created a server prepared statement, we need
 		//to deallocate the existing one
 		if (m_statementName != null) {
