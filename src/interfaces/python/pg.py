@@ -1,8 +1,9 @@
-# pgutil.py
+# pg.py
 # Written by D'Arcy J.M. Cain
 
-# This library implements some basic database management stuff
-# It includes the pg module and builds on it
+# This library implements some basic database management stuff.  It
+# includes the pg module and builds on it.  This is known as the
+# "Classic" interface.  For DB-API compliance use the pgdb module.
 
 from _pg import *
 import string, re, sys
