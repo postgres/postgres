@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/protocol.sgml,v 1.40 2003/08/13 18:56:21 tgl Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/protocol.sgml,v 1.41 2003/08/14 20:09:31 tgl Exp $ -->
 
 <chapter id="protocol">
  <title>Frontend/Backend Protocol</title>
@@ -1151,10 +1151,10 @@
    <para>
     To initiate an SSL-encrypted connection, the frontend initially sends
     an SSLRequest message rather than a StartupMessage.  The server then
-    responds with a single byte containing <literal>Y</> or <literal>N</>,
+    responds with a single byte containing <literal>S</> or <literal>N</>,
     indicating that it is willing or unwilling to perform SSL, respectively.
     The frontend may close the connection at this point if it is dissatisfied
-    with the response.  To continue after <literal>Y</>, perform an SSL
+    with the response.  To continue after <literal>S</>, perform an SSL
     startup handshake (not described here, part of the SSL specification)
     with the server.  If this is successful, continue with
     sending the usual StartupMessage.  In this case the StartupMessage and
