@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Wed May  9 19:11:18 EDT 2001
+Last updated:		Thu May 10 13:19:40 EDT 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -19,7 +19,7 @@ RELIABILITY
 PARSER
 
 * SELECT pg_class FROM pg_class generates strange error
-* Alter TABLE ADD COLUMN does not honor DEFAULT, add CONSTRAINT
+* Alter TABLE ADD COLUMN does not honor DEFAULT or add CONSTRAINT
 * Unique index on base column not honored on inserts from inherited table
   INSERT INTO inherit_table (unique_index_col) VALUES (dup) should fail
   [inheritance] 
@@ -27,7 +27,6 @@ PARSER
 MISC
 
 * Plpgsql does not handle quoted mixed-case identifiers
-* Permission to DELETE table allows UPDATE also
 * SELECT cash_out(1) causes crash
 
 ENHANCEMENTS
@@ -50,11 +49,13 @@ ADMIN
 
 * More access control over who can create tables and use locks (Karel)
 * Allow better control over user privileges [privileges]
+* Permission to DELETE table allows UPDATE also
 * Allow elog() to return error codes, module name, file name, line
   number, not just messages [elog]
 * Allow international error message support and add error codes [elog]
 * Remove unused files during database vacuum or postmaster startup
 * Add table name mapping for numeric file names
+* Overhaul pg_hba.conf host-based authentication
 
 TYPES
 
@@ -176,6 +177,7 @@ REFERENTIAL INTEGRITY
   switch to pg_shadow.oid as user id
 * Add unique indexes on pg_database
 * Check all system tables and add unique indexes as needed
+* Make constraints clearer in dump file
 
 EXOTIC FEATURES
 
