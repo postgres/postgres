@@ -21,7 +21,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.89 1998/10/06 03:08:59 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.90 1998/10/06 05:35:42 thomas Exp $
  *
  * Modifications - 6/10/96 - dave@bensoft.com - version 1.13.dhb
  *
@@ -547,6 +547,7 @@ main(int argc, char **argv)
 	int			use_password = 0;
 
 	g_verbose = false;
+	g_force_quotes = true;
 
 	strcpy(g_comment_start, "-- ");
 	g_comment_end[0] = '\0';
