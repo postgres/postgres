@@ -26,7 +26,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.87 2000/03/25 14:32:50 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.88 2000/03/25 18:46:17 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -282,7 +282,8 @@ fi
 # The data path must be absolute, because the backend doesn't like
 # '.' and '..' stuff. (Should perhaps be fixed there.)
 
-if ! echo "$PGDATA" | grep '^/' > /dev/null 2>&1
+echo "$PGDATA" | grep '^/' > /dev/null 2>&1
+if [ "$?" -ne 0 ]
 then
     echo "$CMDNAME: data path must be specified as an absolute path"
     exit 1
