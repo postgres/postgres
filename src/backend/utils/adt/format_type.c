@@ -1,18 +1,32 @@
-/* $Header: /cvsroot/pgsql/src/backend/utils/adt/format_type.c,v 1.2 2000/07/09 21:30:12 petere Exp $ */
+/*-------------------------------------------------------------------------
+ *
+ * format_type.c
+ *	  Display type names "nicely".
+ *
+ *
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
+ *
+ * IDENTIFICATION
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/format_type.c,v 1.3 2000/08/21 18:23:18 tgl Exp $
+ *
+ *-------------------------------------------------------------------------
+ */
 
 #include "postgres.h"
 
 #include <ctype.h>
-#include <stdarg.h>
 
 #include "fmgr.h"
 #include "catalog/pg_type.h"
 #include "utils/builtins.h"
 #include "utils/syscache.h"
 
-#define streq(a, b) (strcmp((a), (b))==0)
 #define MAX_INT32_LEN 11
 #define _textin(str) DirectFunctionCall1(textin, CStringGetDatum(str))
+
+
+static char *format_type_internal(Oid type_oid, int32 typemod);
 
 
 static char *
@@ -29,11 +43,6 @@ psnprintf(size_t len, const char * fmt, ...)
 
 	return buf;
 }
-
-
-static char *
-format_type_internal(Oid type_oid, int32 typemod, bool with_typemod);
-
 
 
 /*
@@ -55,29 +64,29 @@ Datum
 format_type(PG_FUNCTION_ARGS)
 {
 	Oid			type_oid;
-	bool		with_typemod;
-	int32		typemod = 0;
+	int32		typemod;
 	char	   *result;
 
 	if (PG_ARGISNULL(0))
 		PG_RETURN_NULL();
 
-	type_oid = DatumGetObjectId(PG_GETARG_DATUM(0));
+	type_oid = PG_GETARG_OID(0);
 
-	with_typemod = !PG_ARGISNULL(1);
-	if (with_typemod)
+	if (!PG_ARGISNULL(1))
 		typemod = PG_GETARG_INT32(1);
+	else
+		typemod = -1;			/* default typmod */
 
-	result = format_type_internal(type_oid, typemod, with_typemod);
+	result = format_type_internal(type_oid, typemod);
 
-	PG_RETURN_TEXT_P(_textin(result));
+	PG_RETURN_DATUM(_textin(result));
 }
 
 
-
 static char *
-format_type_internal(Oid type_oid, int32 typemod, bool with_typemod)
+format_type_internal(Oid type_oid, int32 typemod)
 {
+	bool		with_typemod = (typemod >= 0);
 	HeapTuple	tuple;
 	Oid			array_base_type;
 	int16		typlen;
@@ -86,13 +95,13 @@ format_type_internal(Oid type_oid, int32 typemod, bool with_typemod)
 	char	   *buf;
 
 	if (type_oid == InvalidOid)
-		return "-";
+		return pstrdup("-");
 
 	tuple = SearchSysCacheTuple(TYPEOID, ObjectIdGetDatum(type_oid),
 								0, 0, 0);
 
 	if (!HeapTupleIsValid(tuple))
-		return "???";
+		return pstrdup("???");
 
 	array_base_type = ((Form_pg_type) GETSTRUCT(tuple))->typelem;
 	typlen = ((Form_pg_type) GETSTRUCT(tuple))->typlen;
@@ -102,97 +111,104 @@ format_type_internal(Oid type_oid, int32 typemod, bool with_typemod)
 									ObjectIdGetDatum(array_base_type),
 									0, 0, 0);
 		if (!HeapTupleIsValid(tuple))
-			return "???[]";
+			return pstrdup("???[]");
 		is_array = true;
+		type_oid = array_base_type;
 	}
 	else
 		is_array = false;
-	
-	name =  NameStr(((Form_pg_type) GETSTRUCT(tuple))->typname);
 
-
-	if (streq(name, "bit"))
+	switch (type_oid)
 	{
-		if (with_typemod)
-			buf = psnprintf(5 + MAX_INT32_LEN + 1, "bit(%d)", (int) typemod - 4);
-		else
-			buf = pstrdup("bit");
-	}
+		case BOOLOID:
+			buf = pstrdup("boolean");
+			break;
 
-	else if (streq(name, "bool"))
-		buf = pstrdup("boolean");
+		case BPCHAROID:
+			if (with_typemod)
+				buf = psnprintf(11 + MAX_INT32_LEN + 1, "character(%d)",
+								(int) (typemod - VARHDRSZ));
+			else
+				buf = pstrdup("character");
+			break;
 
-	else if (streq(name, "bpchar"))
-	{
-		if (with_typemod)
-			buf = psnprintf(11 + MAX_INT32_LEN + 1, "character(%d)", (int) typemod - 4);
-		else
-			buf = pstrdup("character");
-	}
+		case CHAROID:
+			/* This char type is the single-byte version. You have to
+			 * double-quote it to get at it in the parser.
+			 */
+			buf = pstrdup("\"char\"");
+			break;
 
-	/* This char type is the single-byte version. You have to
-	 * double-quote it to get at it in the parser. */
-	else if (streq(name, "char"))
-		buf = pstrdup("\"char\"");
+		case FLOAT4OID:
+			buf = pstrdup("real");
+			break;
 
-	else if (streq(name, "float4"))
-		buf = pstrdup("real");
+		case FLOAT8OID:
+			buf = pstrdup("double precision");
+			break;
 
-	else if (streq(name, "float8"))
-		buf = pstrdup("double precision");
+		case INT2OID:
+			buf = pstrdup("smallint");
+			break;
 
-	else if (streq(name, "int2"))
-		buf = pstrdup("smallint");
+		case INT4OID:
+			buf = pstrdup("integer");
+			break;
 
-	else if (streq(name, "int4"))
-		buf = pstrdup("integer");
+		case INT8OID:
+			buf = pstrdup("bigint");
+			break;
 
-	else if (streq(name, "int8"))
-		buf = pstrdup("bigint");
+		case NUMERICOID:
+			if (with_typemod)
+				buf = psnprintf(10 + 2 * MAX_INT32_LEN + 1, "numeric(%d,%d)",
+								((typemod - VARHDRSZ) >> 16) & 0xffff,
+								(typemod - VARHDRSZ) & 0xffff);
+			else
+				buf = pstrdup("numeric");
+			break;
 
-	else if (streq(name, "numeric"))
-	{
-		if (with_typemod)
-			buf = psnprintf(10 + 2 * MAX_INT32_LEN + 1, "numeric(%d,%d)",
-							((typemod - VARHDRSZ) >> 16) & 0xffff,
-							(typemod - VARHDRSZ) & 0xffff);
-		else
-			buf = pstrdup("numeric");
-	}
+		case TIMETZOID:
+			buf = pstrdup("time with time zone");
+			break;
 
-	else if (streq(name, "timetz"))
-		buf = pstrdup("time with time zone");
+		case VARBITOID:
+			if (with_typemod)
+				buf = psnprintf(13 + MAX_INT32_LEN + 1, "bit varying(%d)",
+								(int) typemod);
+			else
+				buf = pstrdup("bit varying");
+			break;
 
-	else if (streq(name, "varbit"))
-	{
-		if (with_typemod)
-			buf = psnprintf(13 + MAX_INT32_LEN + 1, "bit varying(%d)", (int) typemod - 4);
-		else
-			buf = pstrdup("bit varying");
-	}
+		case VARCHAROID:
+			if (with_typemod)
+				buf = psnprintf(19 + MAX_INT32_LEN + 1,
+								"character varying(%d)",
+								(int) (typemod - VARHDRSZ));
+			else
+				buf = pstrdup("character varying");
+			break;
 
-	else if (streq(name, "varchar"))
-	{
-		if (with_typemod)
-			buf = psnprintf(19 + MAX_INT32_LEN + 1, "character varying(%d)", (int) typemod - 4);
-		else
-			buf = pstrdup("character varying");
-	}
+		case ZPBITOID:
+			if (with_typemod)
+				buf = psnprintf(5 + MAX_INT32_LEN + 1, "bit(%d)",
+								(int) typemod);
+			else
+				buf = pstrdup("bit");
+			break;
 
-	else
-	{
-		if (strspn(name, "abcdefghijklmnopqrstuvwxyz0123456789_") != strlen(name)
-			|| isdigit((int) name[0]))
-			buf = psnprintf(strlen(name) + 3, "\"%s\"", name);
-		else
-			buf = name;
+		default:
+			name = NameStr(((Form_pg_type) GETSTRUCT(tuple))->typname);
+			if (strspn(name, "abcdefghijklmnopqrstuvwxyz0123456789_") != strlen(name)
+				|| isdigit((int) name[0]))
+				buf = psnprintf(strlen(name) + 3, "\"%s\"", name);
+			else
+				buf = pstrdup(name);
+			break;
 	}
 
 	if (is_array)
-	{
-		char * buf2 = psnprintf(strlen(buf) + 3, "%s[]", buf);
-		buf = buf2;
-	}
+		buf = psnprintf(strlen(buf) + 3, "%s[]", buf);
 
 	return buf;
 }
@@ -209,10 +225,10 @@ format_type_internal(Oid type_oid, int32 typemod, bool with_typemod)
 Datum
 oidvectortypes(PG_FUNCTION_ARGS)
 {
-	int			numargs;
-	int			num;
 	Oid		   *oidArray = (Oid *) PG_GETARG_POINTER(0);
 	char	   *result;
+	int			numargs;
+	int			num;
 	size_t		total;
 	size_t		left;
 
@@ -231,7 +247,7 @@ oidvectortypes(PG_FUNCTION_ARGS)
 					
 	for (num = 0; num < numargs; num++)
 	{
-		char * typename = format_type_internal(oidArray[num], 0, false);
+		char * typename = format_type_internal(oidArray[num], -1);
 
 		if (left < strlen(typename) + 2)
 		{
@@ -249,5 +265,5 @@ oidvectortypes(PG_FUNCTION_ARGS)
 		left -= strlen(typename);
 	}
 
-	PG_RETURN_TEXT_P(_textin(result));
+	PG_RETURN_DATUM(_textin(result));
 }
