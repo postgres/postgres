@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/droplang.sgml,v 1.16 2002/01/03 06:09:01 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/droplang.sgml,v 1.17 2002/01/06 03:33:26 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -54,7 +54,7 @@ PostgreSQL documentation
       <listitem>
        <para>
 	Specifies from which database the language should be removed.
-        The default is to create a database with the same name as the
+        The default is to use the database with the same name as the
         current system user.
        </para>
       </listitem>
