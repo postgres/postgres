@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/setrefs.c,v 1.62 2000/04/12 17:15:22 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/setrefs.c,v 1.62.2.1 2000/09/23 23:41:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,12 +17,10 @@
 
 #include "postgres.h"
 
-#include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
 #include "optimizer/clauses.h"
 #include "optimizer/planmain.h"
 #include "optimizer/tlist.h"
-#include "optimizer/var.h"
 
 typedef struct
 {
@@ -37,6 +35,7 @@ typedef struct
 	List	   *subplanTargetList;
 } replace_vars_with_subplan_refs_context;
 
+static void fix_expr_references(Plan *plan, Node *node);
 static void set_join_references(Join *join);
 static void set_uppernode_references(Plan *plan, Index subvarno);
 static Node *join_references_mutator(Node *node,
@@ -88,34 +87,39 @@ set_plan_references(Plan *plan)
 	switch (nodeTag(plan))
 	{
 		case T_SeqScan:
-			/* nothing special */
+			fix_expr_references(plan, (Node *) plan->targetlist);
+			fix_expr_references(plan, (Node *) plan->qual);
 			break;
 		case T_IndexScan:
-			fix_opids((Node *) ((IndexScan *) plan)->indxqual);
-			fix_opids((Node *) ((IndexScan *) plan)->indxqualorig);
-			plan->subPlan =
-				nconc(plan->subPlan,
-				 pull_subplans((Node *) ((IndexScan *) plan)->indxqual));
-			plan->subPlan =
-				nconc(plan->subPlan,
-			 pull_subplans((Node *) ((IndexScan *) plan)->indxqualorig));
+			fix_expr_references(plan, (Node *) plan->targetlist);
+			fix_expr_references(plan, (Node *) plan->qual);
+			fix_expr_references(plan,
+								(Node *) ((IndexScan *) plan)->indxqual);
+			fix_expr_references(plan,
+								(Node *) ((IndexScan *) plan)->indxqualorig);
+			break;
+		case T_TidScan:
+			fix_expr_references(plan, (Node *) plan->targetlist);
+			fix_expr_references(plan, (Node *) plan->qual);
 			break;
 		case T_NestLoop:
 			set_join_references((Join *) plan);
+			fix_expr_references(plan, (Node *) plan->targetlist);
+			fix_expr_references(plan, (Node *) plan->qual);
 			break;
 		case T_MergeJoin:
 			set_join_references((Join *) plan);
-			fix_opids((Node *) ((MergeJoin *) plan)->mergeclauses);
-			plan->subPlan =
-				nconc(plan->subPlan,
-			 pull_subplans((Node *) ((MergeJoin *) plan)->mergeclauses));
+			fix_expr_references(plan, (Node *) plan->targetlist);
+			fix_expr_references(plan, (Node *) plan->qual);
+			fix_expr_references(plan,
+								(Node *) ((MergeJoin *) plan)->mergeclauses);
 			break;
 		case T_HashJoin:
 			set_join_references((Join *) plan);
-			fix_opids((Node *) ((HashJoin *) plan)->hashclauses);
-			plan->subPlan =
-				nconc(plan->subPlan,
-			   pull_subplans((Node *) ((HashJoin *) plan)->hashclauses));
+			fix_expr_references(plan, (Node *) plan->targetlist);
+			fix_expr_references(plan, (Node *) plan->qual);
+			fix_expr_references(plan,
+								(Node *) ((HashJoin *) plan)->hashclauses);
 			break;
 		case T_Material:
 		case T_Sort:
@@ -127,12 +131,17 @@ set_plan_references(Plan *plan)
 			 * targetlists or quals (because they just return their
 			 * unmodified input tuples).  The optimizer is lazy about
 			 * creating really valid targetlists for them.	Best to just
-			 * leave the targetlist alone.
+			 * leave the targetlist alone.  In particular, we do not want
+			 * to pull a subplan list for them, since we will likely end
+			 * up with duplicate list entries for subplans that also appear
+			 * in lower levels of the plan tree!
 			 */
 			break;
 		case T_Agg:
 		case T_Group:
 			set_uppernode_references(plan, (Index) 0);
+			fix_expr_references(plan, (Node *) plan->targetlist);
+			fix_expr_references(plan, (Node *) plan->qual);
 			break;
 		case T_Result:
 
@@ -144,36 +153,24 @@ set_plan_references(Plan *plan)
 			 */
 			if (plan->lefttree != NULL)
 				set_uppernode_references(plan, (Index) OUTER);
-			fix_opids(((Result *) plan)->resconstantqual);
-			plan->subPlan =
-				nconc(plan->subPlan,
-					  pull_subplans(((Result *) plan)->resconstantqual));
+			fix_expr_references(plan, (Node *) plan->targetlist);
+			fix_expr_references(plan, (Node *) plan->qual);
+			fix_expr_references(plan, ((Result *) plan)->resconstantqual);
 			break;
 		case T_Append:
+			/*
+			 * Append, like Sort et al, doesn't actually evaluate its
+			 * targetlist or quals, and we haven't bothered to give it
+			 * its own tlist copy.  So, don't fix targetlist/qual.
+			 */
 			foreach(pl, ((Append *) plan)->appendplans)
 				set_plan_references((Plan *) lfirst(pl));
-			break;
-		case T_TidScan:
-			/* nothing special */
 			break;
 		default:
 			elog(ERROR, "set_plan_references: unknown plan type %d",
 				 nodeTag(plan));
 			break;
 	}
-
-	/*
-	 * For all plan types, fix operators in targetlist and qual
-	 * expressions, and find subplans therein.
-	 */
-	fix_opids((Node *) plan->targetlist);
-	fix_opids((Node *) plan->qual);
-	plan->subPlan =
-		nconc(plan->subPlan,
-			  pull_subplans((Node *) plan->targetlist));
-	plan->subPlan =
-		nconc(plan->subPlan,
-			  pull_subplans((Node *) plan->qual));
 
 	/*
 	 * Now recurse into subplans, if any
@@ -200,6 +197,20 @@ set_plan_references(Plan *plan)
 		Assert(IsA(sp, SubPlan));
 		set_plan_references(sp->plan);
 	}
+}
+
+/*
+ * fix_expr_references
+ *	  Do final cleanup on expressions (targetlists or quals).
+ *
+ * This consists of looking up operator opcode info for Oper nodes
+ * and adding subplans to the Plan node's list of contained subplans.
+ */
+static void
+fix_expr_references(Plan *plan, Node *node)
+{
+	fix_opids(node);
+	plan->subPlan = nconc(plan->subPlan, pull_subplans(node));
 }
 
 /*
