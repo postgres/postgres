@@ -750,12 +750,12 @@ QueryInfo qi;
 		starting a transaction first.
 
 		A transaction should be begun if and only if
-		we use declare/fetch and the statement is SELECT.
+		we use declare/fetch and the statement is SELECT
+		or we are not in autocommit state
 		We assume that the Postgres backend has an autocommit
 		feature as default. (Zoltan Kovacs, 04/26/2000)
 	*/
-	// if ( ! self->internal && ! CC_is_in_trans(conn) && (globals.use_declarefetch || STMT_UPDATE(self))) {
-	if ( ! self->internal && ! CC_is_in_trans(conn) && globals.use_declarefetch && self->statement_type == STMT_TYPE_SELECT) {
+	if ( ! self->internal && ! CC_is_in_trans(conn) && ((globals.use_declarefetch && self->statement_type == STMT_TYPE_SELECT) || ! CC_is_in_autocommit(conn))) {
 
 		mylog("   about to begin a transaction on statement = %u\n", self);
 		res = CC_send_query(conn, "BEGIN", NULL);
@@ -831,16 +831,9 @@ QueryInfo qi;
 		mylog("      it's NOT a select statement: stmt=%u\n", self);
 		self->result = CC_send_query(conn, self->stmt_with_params, NULL);
 
-		/*	If we are in autocommit, we must send the commit. */
-		/*	No, we shouldn't. Postgres backend does the
+		/*	We shouldn't send COMMIT. Postgres backend does the
 			autocommit if neccessary. (Zoltan, 04/26/2000)
 		*/
-/*		if ( ! self->internal && CC_is_in_autocommit(conn) && STMT_UPDATE(self)) {
-	    res = CC_send_query(conn, "COMMIT", NULL);
-	    QR_Destructor(res);
-	    CC_set_no_trans(conn);
-		}*/		
-
 	}
 
 	conn->status = oldstatus;

@@ -314,32 +314,18 @@ int i;
 
 	case SQL_AUTOCOMMIT:
 
-		/*  Since we are almost always in a transaction, this is now ok.
-			Even if we were, the logic will handle it by sending a commit
-			after the statement.
-		
 		if (CC_is_in_trans(conn)) {
-			conn->errormsg = "Cannot switch commit mode while a transaction is in progres";
+			conn->errormsg = "Cannot switch commit mode while a transaction is in progress";
 			conn->errornumber = CONN_TRANSACT_IN_PROGRES;
 			CC_log_error(func, "", conn);
 			return SQL_ERROR;
 		}
-		*/
 
 		mylog("SQLSetConnectOption: AUTOCOMMIT: transact_status=%d, vparam=%d\n", conn->transact_status, vParam);
 
 		switch(vParam) {
 		case SQL_AUTOCOMMIT_OFF:
 			CC_set_autocommit_off(conn);
-		/* The following two lines are new.
-		   With this modification the SELECT statements
-		   are also included in the transactions.
-		   Error handling should be written, 
-		   this is missing yet, see
-		   SC_execute in statement.c for details. Zoltan
-		*/    
-			CC_send_query(conn,"BEGIN",NULL);
-			CC_set_in_trans(conn);
 			break;
 
 		case SQL_AUTOCOMMIT_ON:
