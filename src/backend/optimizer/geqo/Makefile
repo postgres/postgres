@@ -5,7 +5,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $Id: Makefile,v 1.6 1997/04/15 17:24:17 scrappy Exp $
+# $Id: Makefile,v 1.7 1997/04/21 04:26:47 vadim Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -18,7 +18,7 @@ INCLUDE_OPT = -I../.. \
 
 CFLAGS+=$(INCLUDE_OPT)
 
-ifeq ($CC), gcc)
+ifeq ($(CC), gcc)
 CFLAGS+= -Wno-error
 endif
 
