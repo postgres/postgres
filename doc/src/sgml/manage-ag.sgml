@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/manage-ag.sgml,v 2.17 2001/11/12 19:19:39 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/manage-ag.sgml,v 2.18 2001/11/18 00:38:00 tgl Exp $
 -->
 
 <chapter id="managing-databases">
@@ -9,9 +9,13 @@ $Header: /cvsroot/pgsql/doc/src/sgml/manage-ag.sgml,v 2.17 2001/11/12 19:19:39 p
 
  <para>
   A database is a named collection of SQL objects (<quote>database
-  objects</quote>); every database object (tables, function, etc.)
-  belongs to one and only one database. An application that connects
-  to the database server specifies with its connection request the
+  objects</quote>).  Generally, every database object (tables, functions,
+  etc.) belongs to one and only one database.  (But there are a few system
+  catalogs, for example <literal>pg_database</>, that belong to a whole
+  installation and are accessible from each database within the
+  installation.)
+  An application that connects
+  to the database server specifies in its connection request the
   name of the database it wants to connect to. It is not possible to
   access more than one database per connection. (But an application
   is not restricted in the number of connections it opens to the same
@@ -40,7 +44,8 @@ $Header: /cvsroot/pgsql/doc/src/sgml/manage-ag.sgml,v 2.17 2001/11/12 19:19:39 p
 <synopsis>
 CREATE DATABASE <replaceable>name</>
 </synopsis>
-   where <replaceable>name</> can be chosen freely. (Depending on the
+   where <replaceable>name</> follows the usual rules for SQL identifiers.
+   (Depending on the
    current implementation, certain characters that are special to the
    underlying operating system might be prohibited. There will be
    run-time checks for that.) The current user automatically becomes
@@ -51,7 +56,7 @@ CREATE DATABASE <replaceable>name</>
 
   <para>
    The creation of databases is a restricted operation. See <xref
-   linkend="user-attributes"> how to grant permission.
+   linkend="user-attributes"> for how to grant permission.
   </para>
 
   <formalpara>
@@ -62,8 +67,8 @@ CREATE DATABASE <replaceable>name</>
     question remains how the <emphasis>first</> database at any given
     site can be created. The first database is always created by the
     <command>initdb</> command when the data storage area is
-    initialized. (See <xref linkend="creating-cluster">.) This
-    database is called <literal>template1</> and cannot be deleted. So
+    initialized. (See <xref linkend="creating-cluster">.) By convention
+    this database is called <literal>template1</>. So
     to create the first <quote>real</> database you can connect to
     <literal>template1</>.
    </para>
@@ -75,7 +80,8 @@ CREATE DATABASE <replaceable>name</>
    This means that any changes you make in <literal>template1</> are
    propagated to all subsequently created databases. This implies that
    you should not use the template database for real work, but when
-   used judiciously this feature can be convenient.
+   used judiciously this feature can be convenient.  More details appear
+   below.
   </para>
 
   <para>
@@ -88,29 +94,130 @@ createdb <replaceable class="parameter">dbname</replaceable>
 </synopsis>
 
    <command>createdb</> does no magic. It connects to the template1
-   database and executes the <command>CREATE DATABASE</> command,
-   exactly as described above. It uses <application>psql</> program
+   database and issues the <command>CREATE DATABASE</> command,
+   exactly as described above. It uses the <application>psql</> program
    internally. The reference page on <command>createdb</> contains the invocation
-   details. In particular, <command>createdb</> without any arguments will create
+   details. Note that <command>createdb</> without any arguments will create
    a database with the current user name, which may or may not be what
    you want.
   </para>
 
-  <sect2>
+  <sect2 id="manage-ag-templatedbs">
+   <title>Template Databases</title>
+
+  <para>
+   <command>CREATE DATABASE</> actually works by copying an existing
+   database.  By default, it copies the standard system database named
+   <literal>template1</>.  Thus that database is the <quote>template</>
+   from which new databases are made.  If you add objects to
+   <literal>template1</>, these objects 
+   will be copied into subsequently created user databases.  This
+   behavior allows site-local modifications to the standard set of
+   objects in databases.  For example, if you install the procedural
+   language <literal>plpgsql</> in <literal>template1</>, it will
+   automatically be available in user databases without any extra action
+   being taken when those databases are made.
+  </para>
+
+  <para>
+   There is a second standard system database named <literal>template0</>.
+   This database contains the same data as the initial contents of
+   <literal>template1</>, that is, only the standard objects predefined by
+   your version of Postgres.  <literal>template0</> should never be changed
+   after <literal>initdb</>.  By instructing <command>CREATE DATABASE</> to
+   copy <literal>template0</> instead of <literal>template1</>, you can
+   create a <quote>virgin</> user database that contains none of the
+   site-local additions in <literal>template1</>.  This is particularly
+   handy when restoring a <literal>pg_dump</> dump: the dump script should
+   be restored in a virgin database to ensure that one recreates the
+   correct contents of the dumped database, without any conflicts with
+   additions that may now be present in <literal>template1</>.
+  </para>
+
+  <para>
+   It is possible to create additional template databases, and indeed
+   one might copy any database in an installation by specifying its name
+   as the template for <command>CREATE DATABASE</>.  It is important to
+   understand, however, that this is not (yet) intended as
+   a general-purpose COPY DATABASE facility.  In particular, it is
+   essential that the source database be idle (no data-altering transactions
+   in progress)
+   for the duration of the copying operation.  <command>CREATE DATABASE</>
+   will check
+   that no backend processes (other than itself) are connected to
+   the source database at the start of the operation, but this does not
+   guarantee that changes cannot be made while the copy proceeds, which
+   would result in an inconsistent copied database.  Therefore,
+   we recommend that databases used as templates be treated as read-only.
+  </para>
+
+  <para>
+   Two useful flags exist in <literal>pg_database</literal> for each
+   database: <literal>datistemplate</literal> and
+   <literal>datallowconn</literal>.  <literal>datistemplate</literal>
+   may be set to indicate that a database is intended as a template for
+   <command>CREATE DATABASE</>.  If this flag is set, the database may be
+   cloned by 
+   any user with CREATEDB privileges; if it is not set, only superusers
+   and the owner of the database may clone it.
+   If <literal>datallowconn</literal> is false, then no new connections
+   to that database will be allowed (but existing sessions are not killed
+   simply by setting the flag false).  The <literal>template0</literal>
+   database is normally marked <literal>datallowconn</literal> =
+   <literal>false</> to prevent modification of it.
+   Both <literal>template0</literal> and <literal>template1</literal>
+   should always be marked with <literal>datistemplate</literal> =
+   <literal>true</>.
+  </para>
+
+  <para>
+   After preparing a template database, or making any changes to one,
+   it is a good idea to perform
+   <command>VACUUM FREEZE</> or <command>VACUUM FULL FREEZE</> in that
+   database.  If this is done when there are no other open transactions
+   in the same database, then it is guaranteed that all tuples in the
+   database are <quote>frozen</> and will not be subject to transaction
+   ID wraparound problems.  This is particularly important for a database
+   that will have <literal>datallowconn</literal> set to false, since it
+   will be impossible to do routine maintenance <command>VACUUM</>s on
+   such a database.
+   See <xref linkend="vacuum-for-wraparound"> for more information.
+  </para>
+
+  <note>
+   <para>
+    <literal>template1</> and <literal>template0</> do not have any special
+    status beyond the fact that the name <literal>template1</> is the default
+    source database name for <command>CREATE DATABASE</> and the default
+    database-to-connect-to for various scripts such as <literal>createdb</>.
+    For example, one could drop <literal>template1</> and recreate it from
+    <literal>template0</> without any ill effects.  This course of action
+    might be advisable if one has carelessly added a bunch of junk in
+    <literal>template1</>.
+   </para>
+  </note>
+
+  </sect2>
+
+  <sect2 id="manage-ag-alternate-locs">
    <title>Alternative Locations</title>
 
    <para>
     It is possible to create a database in a location other than the
-    default. Remember that all database access occurs through the
-    database server backend, so that any location specified must be
-    accessible by the backend.
+    default location for the installation. Remember that all database access
+    occurs through the 
+    database server, so any location specified must be
+    accessible by the server.
    </para>
 
    <para>
     Alternative database locations are referenced by an environment
     variable which gives the absolute path to the intended storage
-    location. This environment variable must have been defined before
-    the backend was started. Any valid environment variable name may
+    location. This environment variable must be present in the server's
+    environment, so it must have been defined before the server
+    was started.  (Thus, the set of available alternative locations is
+    under the site administrator's control; ordinary users can't
+    change it.)  Any valid environment variable name may
     be used to reference an alternative location, although using
     variable names with a prefix of <literal>PGDATA</> is recommended
     to avoid confusion and conflict with other variables.
@@ -144,7 +251,8 @@ setenv PGDATA2 /home/postgres/data
    <para>
     <indexterm><primary>initlocation</></>
     To create a data storage area in <envar>PGDATA2</>, ensure that
-    <filename>/home/postgres</filename> already exists and is writable
+    the containing directory (here, <filename>/home/postgres</filename>)
+    already exists and is writable
     by the user account that runs the server (see <xref
     linkend="postgres-user">). Then from the command line, type
     <informalexample>
@@ -156,7 +264,7 @@ initlocation PGDATA2
    </para>
 
    <para>
-    To create a database at the new location, use the command
+    To create a database within the new location, use the command
 <synopsis>
 CREATE DATABASE <replaceable>name</> WITH LOCATION = '<replaceable>location</>'
 </synopsis>
@@ -166,7 +274,7 @@ CREATE DATABASE <replaceable>name</> WITH LOCATION = '<replaceable>location</>'
    </para>
 
    <para>
-    Database created at alternative locations using this method can be
+    Databases created in alternative locations can be
     accessed and dropped like any other database.
    </para>
 
@@ -188,107 +296,6 @@ gmake CPPFLAGS=-DALLOW_ABSOLUTE_DBPATHS all
   </sect2>
  </sect1>
 
- <sect1 id="manage-ag-accessdb">
-  <title>Accessing a Database</title>
-
-  <para>
-   Once you have constructed a database, you can access it by:
-
-   <itemizedlist spacing="compact" mark="bullet">
-    <listitem>
-     <para>
-      running the <productname>Postgres</productname>  terminal  monitor  program 
-      (<application>psql</application>) which allows you to interactively
-      enter, edit, and execute <acronym>SQL</acronym> commands.
-     </para>
-    </listitem>
-
-    <listitem>
-     <para>
-      writing a  C  program  using  the  <literal>libpq</literal>  subroutine
-      library.   This  allows  you  to submit <acronym>SQL</acronym> commands
-      from C and get answers and status messages  back  to
-      your  program.   This interface is discussed further
-      in the <citetitle>PostgreSQL Programmer's Guide</citetitle>.
-     </para>
-    </listitem>
-   </itemizedlist>
-
-   You might want to start up <application>psql</application>, 
-   to try out  the  examples  in  this manual. It can be activated for the
-   <replaceable class="parameter">dbname</replaceable> database by typing the command:
-
-<programlisting>
-psql <replaceable class="parameter">dbname</replaceable>
-</programlisting>
-
-   You will be greeted with the following message:
-
-<programlisting>
-Welcome to psql, the PostgreSQL interactive terminal.
-
-Type:  \copyright for distribution terms
-       \h for help with SQL commands
-       \? for help on internal slash commands
-       \g or terminate with semicolon to execute query
-       \q to quit
-
-<replaceable>dbname</replaceable>=&gt;
-</programlisting>
-   </para>
-
-   <para>
-    This prompt indicates that the terminal monitor is listening  
-    to you and that you can type <acronym>SQL</acronym> queries into a
-    workspace maintained by the terminal monitor.
-    The <application>psql</application> program responds to escape
-    codes  that  begin
-    with  the  backslash  character, <literal>\</literal>.  For example, you
-    can get help on the syntax of various 
-    <productname>Postgres</productname> <acronym>SQL</acronym> commands by typing:
-
-    <programlisting>
-<replaceable>dbname</replaceable>=> \h
-    </programlisting>
-
-    Once  you  have finished entering your queries into the
-    workspace, you can pass the contents of  the  workspace
-    to the <productname>Postgres</productname> server by typing:
-
-    <programlisting>
-<replaceable>dbname</replaceable>=> \g
-    </programlisting>
-
-    This  tells  the  server  to process the query.  If you
-    terminate your query with a semicolon, the  backslash-g is  not
-    necessary.   <application>psql</application> will automatically 
-    process semicolon terminated queries.
-    To read queries from a file,  instead  of
-    entering them interactively, type:
-
-    <programlisting>
-<replaceable>dbname</replaceable>=> \i <replaceable class="parameter">filename</replaceable>
-    </programlisting>
-
-    To get out of <application>psql</application> and return to Unix, type
-
-    <programlisting>
-<replaceable>dbname</replaceable>=&gt; \q
-    </programlisting>
-
-    and  <application>psql</application>  will  quit  and  return  
-    you to your command shell. (For more escape codes, type
-    backslash-h at  the  monitor prompt.)
-    White  space  (i.e.,  spaces, tabs and newlines) may be
-    used freely in <acronym>SQL</acronym> queries.  
-    Single-line comments  are  denoted  by two dashes
-    ("<literal>--</literal>").   Everything  after the dashes up to the end of the
-    line is ignored. Multiple-line comments, and comments within a line,
-    are denoted by <literal>/* ... */</literal>, a convention borrowed
-    from <productname>Ingres</productname>.
-   </para>
- </sect1>
-     
  <sect1 id="manage-ag-dropdb">
   <title>Destroying a Database</title>
 
@@ -297,8 +304,9 @@ Type:  \copyright for distribution terms
 <synopsis>
 DROP DATABASE <replaceable>name</>
 </synopsis>
-   Only the owner of the database (i.e., the user that created it) can
-   drop databases. Dropping a databases removes all objects that were
+   Only the owner of the database (i.e., the user that created it), or
+   a superuser, can drop a database. Dropping a database removes all objects
+   that were 
    contained within the database. The destruction of a database cannot
    be undone.
   </para>
@@ -306,8 +314,9 @@ DROP DATABASE <replaceable>name</>
   <para>
    You cannot execute the <command>DROP DATABASE</command> command
    while connected to the victim database. You can, however, be
-   connected to any other database, including the template1 database,
-   which would be the only option for dropping the last database of a
+   connected to any other database, including the <literal>template1</>
+   database, 
+   which would be the only option for dropping the last user database of a
    given cluster.
   </para>
 

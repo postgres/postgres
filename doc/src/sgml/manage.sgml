@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/manage.sgml,v 1.17 2001/09/28 08:15:35 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/manage.sgml,v 1.18 2001/11/18 00:38:00 tgl Exp $
 -->
 
  <Chapter Id="manage">
@@ -18,22 +18,25 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/manage.sgml,v 1.17 2001/09/28 08:15:3
    designated the <FirstTerm>database administrator</FirstTerm>.
    This assignment of responsibilities occurs when a database is created. 
    A user may be assigned explicit privileges to create databases and/or to create new users. 
-   A user assigned both privileges can perform most administrative task 
+   A user assigned both privileges can perform most administrative tasks
    within <ProductName>Postgres</ProductName>, but will
    not by default have the same operating system privileges as the site administrator.
   </Para>
 
   <Para>
-   The Database Administrator's Guide covers these topics in more detail.
+   The <citetitle>Administrator's Guide</> covers these topics in
+   more detail.
   </Para>
 
   <Sect1 id="db-creation">
    <Title>Database Creation</Title>
 
    <Para>
-    Databases are created by the <Command>CREATE DATABASE</Command> issued from
-    within <ProductName>Postgres</ProductName>. <Application>createdb</Application> is a command-line
-    utility provided to give the same functionality from outside <ProductName>Postgres</ProductName>.
+    Databases are created by the <Command>CREATE DATABASE</Command>
+    command issued from within
+    <ProductName>Postgres</ProductName>. <Application>createdb</Application>
+    is a shell script provided to give the same functionality from the
+    Unix command line.
    </Para>
 
    <Para>
@@ -64,111 +67,19 @@ ERROR:  CREATE DATABASE: Permission denied.
    </Para>
 
    <Para>
-    <ProductName>Postgres</ProductName>  allows  you to create any number of databases
-    at a  given  site  and  you  automatically  become  the
+    You  automatically  become  the
     database  administrator  of  the database you just created.  
     Database names must  have  an  alphabetic  first
-    character and are limited to 32 characters in length.
+    character and are limited to 31 characters in length.
+    <ProductName>Postgres</ProductName>  allows  you to create any number of
+    databases at a  given  site.  
    </Para>
 
-  </Sect1>
-
-  <Sect1 id="altern-locations">
-   <Title>Alternate Database Locations</Title>
-
-   <Para>
-    It is possible to create a database in a location other than the default
-    location for the installation. Remember that all database access actually
-    occurs through the database backend, so that any location specified must
-    be accessible by the backend.
-   </Para>
-
-   <Para>
-    Alternate database locations are created and referenced by an environment variable 
-    which gives the absolute path to the intended storage location.  
-    This environment variable must have been defined before the postmaster was started 
-    and the location it points to must be writable by the administrator account.
-    Consult with the site administrator
-    regarding preconfigured alternative database locations.  
-    Any valid environment variable name may be used to reference an alternate location, 
-    although using variable names with a prefix of <envar>PGDATA</envar> is recommended 
-    to avoid confusion 
-    and conflict with other variables.
-   </Para>
-
-   <Note>
-    <Para>
-     In previous versions of <ProductName>Postgres</ProductName>, 
-     it was also permissible to use an absolute path name to specify 
-     an alternate storage location.  
-     Although the environment variable style of specification
-     is to be preferred since it allows the site administrator more flexibility in
-     managing disk storage, it is also possible to use an absolute path 
-     to specify an alternate location.  
-     The administrator's guide discusses how to enable this feature.
-    </Para>
-   </Note>
-
-   <Para>
-    For security and integrity reasons,
-    any path or environment variable specified has some
-    additional path fields appended.
-    Alternate database locations must be prepared by running 
-    <Application>initlocation</Application>.
-   </Para>
-
-   <Para>
-    To create a data storage area using the environment variable 
-    <envar>PGDATA2</envar> (for this example set to <filename>/alt/postgres</filename>), 
-    ensure that <FileName>/alt/postgres</FileName> already exists and is writable by 
-    the Postgres administrator account.
-    Then, from the command line, type
-<ProgramListing>
-% initlocation PGDATA2
-The location will be initialized with username "postgres".
-This user will own all the files and must also own the server process.
-
-Creating directory /alt/postgres/data
-Creating directory /alt/postgres/data/base
-
-initlocation is complete.
-You can now create a database using
-   CREATE DATABASE &lt;name&gt; WITH LOCATION = 'PGDATA2'
-in SQL, or
-   createdb &lt;name&gt; -D 'PGDATA2'
-from the shell.
-</ProgramListing>
-   </Para>
-
-   <Para>
-    To create a database in the alternate storage area <envar>PGDATA2</envar>
-    from the command line, use the following command: 
-<ProgramListing>
-% createdb -D PGDATA2 mydb
-</ProgramListing>
-
-    and to do the same from within <Application>psql</Application> type
-<ProgramListing>
-=> CREATE DATABASE mydb WITH LOCATION = 'PGDATA2';
-</ProgramListing>
-   </Para>
-
-   <Para>
-    If you do not have the privileges required to create a database, you will see
-    the following:
-<ProgramListing>
-ERROR:  CREATE DATABASE: permission denied
-</ProgramListing>
-   </Para>
-
-   <Para>
-    If the specified location does not exist or the database backend does not have
-    permission to access it or to write to directories under it, you will see
-    the following:
-<ProgramListing>
-ERROR:  The database path '/no/where' is invalid. This may be due to a character that is not allowed or because the chosen path isn't permitted for databases. 
-</ProgramListing>
-   </Para>
+  <Para>
+   The <citetitle>Administrator's Guide</> discusses database creation
+   in more detail, including advanced options of the <command>CREATE
+   DATABASE</> command.
+  </Para>
 
   </Sect1>
 
@@ -189,11 +100,17 @@ enter, edit, and execute <Acronym>SQL</Acronym> commands.
 </ListItem>
 <ListItem>
 <Para>
-      writing a  C  program  using  the  <application>LIBPQ</application> subroutine
-        library.   This  allows  you  to submit <Acronym>SQL</Acronym> commands
-        from C and get answers and status messages  back  to
-        your  program.   This interface is discussed further
-        in <citetitle>The PostgreSQL Programmer's Guide</citetitle>.
+writing a  C  program  using  the  <application>LIBPQ</application> subroutine
+library.   This  allows  you  to submit <Acronym>SQL</Acronym> commands
+from C and get answers and status messages  back  to
+your  program.   This interface is discussed further
+in <citetitle>The PostgreSQL Programmer's Guide</citetitle>.
+</Para>
+</ListItem>
+<ListItem>
+<Para>
+writing a program in other languages for which there are available interface
+libraries.
 </Para>
 </ListItem>
 </ItemizedList>
@@ -224,7 +141,8 @@ mydb=>
 This prompt indicates that <command>psql</command> is listening
   to you and that you can type <Acronym>SQL</Acronym> queries into a
      workspace maintained by the terminal monitor.
-     The <Application>psql</Application> program responds to escape  codes  that  begin
+The <Application>psql</Application> program itself responds to special
+commands  that  begin
      with  the  backslash  character, <literal>\</literal>.  For example, you
      can get help on the syntax of various
  <ProductName>PostgreSQL</ProductName> <Acronym>SQL</Acronym> commands by typing:
@@ -271,7 +189,11 @@ mydb=> \q
 
 <Para>
      If you are the owner of the  database
-     <Database>mydb</Database>,  you can destroy it using the following Unix command:
+     <Database>mydb</Database>,  you can destroy it using the SQL command
+<ProgramListing>
+=> DROP DATABASE mydb;
+</ProgramListing>
+     or the Unix shell script
 <ProgramListing>
 % dropdb mydb
 </ProgramListing>

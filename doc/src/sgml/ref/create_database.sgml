@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_database.sgml,v 1.20 2001/09/13 15:55:24 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_database.sgml,v 1.21 2001/11/18 00:38:00 tgl Exp $
 Postgres documentation
 -->
 
@@ -202,7 +202,8 @@ CREATE DATABASE <replaceable class="PARAMETER">name</replaceable>
    by writing <literal>TEMPLATE = template0</>, you can create a virgin
    database containing only the standard objects predefined by your
    version of Postgres.  This is useful if you wish to avoid copying
-   any installation-local objects that may have been added to template1.
+   any installation-local objects that may have been added to
+   <literal>template1</>. 
   </para>
 
   <para>
@@ -259,44 +260,11 @@ comment from Olly; response from Thomas...
 -->
 
   <para>
-   Although it is possible to copy a database other than template1 by
-   specifying its name as the template, this is not (yet) intended as
-   a general-purpose COPY DATABASE facility.  In particular, it is
-   essential that the source database be idle (no data-altering transactions
-   in progress)
-   for the duration of the copying operation.  CREATE DATABASE will check
-   that no backend processes (other than itself) are connected to
-   the source database at the start of the operation, but this does not
-   guarantee that changes cannot be made while the copy proceeds.  Therefore,
-   we recommend that databases used as templates be treated as read-only.
-  </para>
-
-  <para>
-   Two useful flags exist in <literal>pg_database</literal> for each
-   database: <literal>datistemplate</literal> and
-   <literal>datallowconn</literal>.  <literal>datistemplate</literal>
-   may be set to indicate that a database is intended as a template for
-   CREATE DATABASE.  If this flag is set, the database may be cloned by
-   any user with CREATEDB privileges; if it is not set, only superusers
-   and the owner of the database may clone it.
-   If <literal>datallowconn</literal> is false, then no new connections
-   to that database will be allowed (but existing sessions are not killed
-   simply by setting the flag false).  The <literal>template0</literal>
-   database is normally marked this way to prevent modification of it.
-  </para>
-
-  <para>
-   After preparing a template database, or making any changes to one,
-   it is a good idea to perform
-   <command>VACUUM FREEZE</> or <command>VACUUM FULL FREEZE</> in that
-   database.  If this is done when there are no other open transactions
-   in the same database, then it is guaranteed that all tuples in the
-   database are <quote>frozen</> and will not be subject to transaction
-   ID wraparound problems.  This is particularly important for a database
-   that will have <literal>datallowconn</literal> set to false, since it
-   will be impossible to do routine maintenance <command>VACUUM</>s on
-   such a database.
-    See the Administrator's Guide for more information.
+   Although it is possible to copy a database other than <literal>template1</>
+   by specifying its name as the template, this is not (yet) intended as
+   a general-purpose COPY DATABASE facility.
+   We recommend that databases used as templates be treated as read-only.
+   See the <citetitle>Administrator's Guide</> for more information.
   </para>
   </refsect2>
  </refsect1>

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_database.sgml,v 1.12 2001/09/03 12:57:49 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_database.sgml,v 1.13 2001/11/18 00:38:00 tgl Exp $
 Postgres documentation
 -->
 
@@ -68,71 +68,21 @@ DROP DATABASE <replaceable class="PARAMETER">name</replaceable>
      </varlistentry>
 
      <varlistentry>
-      <term><computeroutput>ERROR:  user '<replaceable class="parameter">username</replaceable>' is not allowed to create/drop databases</computeroutput></term>
+      <term><computeroutput>DROP DATABASE: cannot be executed on the currently open database</computeroutput></term>
       <listitem>
        <para>
-        You must have the special CREATEDB privilege to drop databases.
-        See <xref linkend="SQL-CREATEUSER" endterm="SQL-CREATEUSER-title">.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><computeroutput>ERROR:  dropdb: cannot be executed on the template database</computeroutput></term>
-      <listitem>
-       <para>
-        The <literal>template1</literal> database cannot be removed. It's not in
-        your interest.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><computeroutput>ERROR:  dropdb: cannot be executed on an open database</computeroutput></term>
-      <listitem>
-       <para>
-        You cannot be connected to the database your are about to remove.
-        Instead, you could connect to <literal>template1</literal> or any other
+        You cannot be connected to the database you are about to remove.
+        Instead, connect to <literal>template1</literal> or any other
         database and run this command again.
        </para>
       </listitem>
      </varlistentry>
 
      <varlistentry>
-      <term><computeroutput>ERROR:  dropdb: database '<replaceable class="parameter">name</replaceable>' does not exist</computeroutput></term>
-      <listitem>
-       <para>
-	This message occurs if the specified database does not exist.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><computeroutput>ERROR:  dropdb: database '<replaceable class="parameter">name</replaceable>' is not owned by you</computeroutput></term>
-      <listitem>
-       <para>
-        You must be the owner of the database. Being the owner usually means that
-        you created it as well.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><computeroutput>ERROR:  dropdb: May not be called in a transaction block.</computeroutput></term>
+      <term><computeroutput>DROP DATABASE: may not be called in a transaction block</computeroutput></term>
       <listitem>
        <para>
         You must finish the transaction in progress before you can call this command.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><computeroutput>NOTICE:  The database directory 'xxx' could not be removed.</computeroutput></term>
-      <listitem>
-       <para>
-        The database was dropped (unless other error messages came up), but the
-        directory where the data is stored could not be removed. You must delete
-        it manually.
        </para>
       </listitem>
      </varlistentry>
@@ -154,6 +104,10 @@ DROP DATABASE <replaceable class="PARAMETER">name</replaceable>
    database and deletes the directory containing the data.
    It can only be executed by the database owner (usually the user that created
    it).
+  </para>
+
+  <para>
+   <command>DROP DATABASE</command> cannot be undone.  Use it with care!
   </para>
 
   <refsect2 id="R2-SQL-DROPDATABASE-3">
