@@ -37,9 +37,12 @@
 #define TABLE_STATS_QUERY	"select a.oid,a.relname,a.relnamespace,a.relpages,a.relisshared,a.reltuples,b.schemaname,b.n_tup_ins,b.n_tup_upd,b.n_tup_del from pg_class a, pg_stat_all_tables b where a.oid=b.relid and a.relkind = 'r'"
 
 #define FRONTEND
-#define PAGES_QUERY "select oid,reltuples,relpages from pg_class where oid=%i"
+#define PAGES_QUERY "select oid,reltuples,relpages from pg_class where oid=%u"
 #define FROZENOID_QUERY "select oid,age(datfrozenxid) from pg_database where datname = 'template1'"
 #define FROZENOID_QUERY2 "select oid,datname,age(datfrozenxid) from pg_database where datname!='template0'"
+
+/* define atooid */
+#define atooid(x)  ((Oid) strtoul((x), NULL, 10))
 
 /* define cmd_args stucture */
 struct cmdargs
@@ -67,9 +70,9 @@ cmd_args   *args;
 	I think we need to guarantee this happens approx every 1Million TX's  */
 struct dbinfo
 {
-	int			oid,
-				age;
-	int			analyze_threshold,
+	Oid			oid;
+	long		age;
+	long		analyze_threshold,
 				vacuum_threshold;		/* Use these as defaults for table
 										 * thresholds */
 	PGconn	   *conn;
@@ -84,9 +87,9 @@ struct tableinfo
 {
 	char	   *schema_name,
 			   *table_name;
-	int			relid,
-				reltuples,
-				relisshared,
+	float		reltuples;
+	int			relisshared;
+	Oid			relid,
 				relpages;
 	long		analyze_threshold,
 				vacuum_threshold;
@@ -111,7 +114,7 @@ static void usage(void);
 
 /* Functions for managing database lists */
 static Dllist *init_db_list(void);
-static db_info *init_dbinfo(char *dbname, int oid, int age);
+static db_info *init_dbinfo(char *dbname, Oid oid, long age);
 static void update_db_list(Dllist *db_list);
 static void remove_db_from_list(Dlelem *db_to_remove);
 static void print_db_info(db_info * dbi, int print_table_list);

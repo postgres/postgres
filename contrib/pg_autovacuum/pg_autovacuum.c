@@ -117,9 +117,9 @@ init_table_info(PGresult *res, int row, db_info * dbi)
 		 atol(PQgetvalue(res, row, PQfnumber(res, "n_tup_upd"))));
 	new_tbl->curr_vacuum_count = new_tbl->CountAtLastVacuum;
 
-	new_tbl->relid = atoi(PQgetvalue(res, row, PQfnumber(res, "oid")));
-	new_tbl->reltuples = atoi(PQgetvalue(res, row, PQfnumber(res, "reltuples")));
-	new_tbl->relpages = atoi(PQgetvalue(res, row, PQfnumber(res, "relpages")));
+	new_tbl->relid = atooid(PQgetvalue(res, row, PQfnumber(res, "oid")));
+	new_tbl->reltuples = atof(PQgetvalue(res, row, PQfnumber(res, "reltuples")));
+	new_tbl->relpages = atooid(PQgetvalue(res, row, PQfnumber(res, "relpages")));
 
 	if (strcmp("t", PQgetvalue(res, row, PQfnumber(res, "relisshared"))))
 		new_tbl->relisshared = 0;
@@ -159,8 +159,8 @@ update_table_thresholds(db_info * dbi, tbl_info * tbl, int vacuum_type)
 		if (res != NULL)
 		{
 			tbl->reltuples =
-				atoi(PQgetvalue(res, 0, PQfnumber(res, "reltuples")));
-			tbl->relpages = atoi(PQgetvalue(res, 0, PQfnumber(res, "relpages")));
+				atof(PQgetvalue(res, 0, PQfnumber(res, "reltuples")));
+			tbl->relpages = atooid(PQgetvalue(res, 0, PQfnumber(res, "relpages")));
 
 			/*
 			 * update vacuum thresholds only of we just did a vacuum
@@ -237,7 +237,7 @@ update_table_list(db_info * dbi)
 			for (i = 0; i < t; i++)
 			{					/* loop through result set looking for a
 								 * match */
-				if (tbl->relid == atoi(PQgetvalue(res, i, PQfnumber(res, "oid"))))
+				if (tbl->relid == atooid(PQgetvalue(res, i, PQfnumber(res, "oid"))))
 				{
 					found_match = 1;
 					break;
@@ -267,7 +267,7 @@ update_table_list(db_info * dbi)
 			while (tbl_elem != NULL)
 			{
 				tbl = ((tbl_info *) DLE_VAL(tbl_elem));
-				if (tbl->relid == atoi(PQgetvalue(res, i, PQfnumber(res, "oid"))))
+				if (tbl->relid == atooid(PQgetvalue(res, i, PQfnumber(res, "oid"))))
 				{
 					found_match = 1;
 					break;
@@ -361,9 +361,9 @@ print_table_info(tbl_info * tbl)
 {
 	sprintf(logbuffer, "  table name:     %s.%s", tbl->dbi->dbname, tbl->table_name);
 	log_entry(logbuffer);
-	sprintf(logbuffer, "     relid: %i;   relisshared: %i", tbl->relid, tbl->relisshared);
+	sprintf(logbuffer, "     relid: %u;   relisshared: %i", tbl->relid, tbl->relisshared);
 	log_entry(logbuffer);
-	sprintf(logbuffer, "     reltuples: %i;  relpages: %i", tbl->reltuples, tbl->relpages);
+	sprintf(logbuffer, "     reltuples: %f;  relpages: %u", tbl->reltuples, tbl->relpages);
 	log_entry(logbuffer);
 	sprintf(logbuffer, "     curr_analyze_count:  %li; cur_delete_count:   %li",
 			tbl->curr_analyze_count, tbl->curr_vacuum_count);
@@ -407,8 +407,8 @@ init_db_list()
 	if (dbs->conn != NULL)
 	{
 		res = send_query(FROZENOID_QUERY, dbs);
-		dbs->oid = atoi(PQgetvalue(res, 0, PQfnumber(res, "oid")));
-		dbs->age = atoi(PQgetvalue(res, 0, PQfnumber(res, "age")));
+		dbs->oid = atooid(PQgetvalue(res, 0, PQfnumber(res, "oid")));
+		dbs->age = atol(PQgetvalue(res, 0, PQfnumber(res, "age")));
 		if (res)
 			PQclear(res);
 
@@ -421,7 +421,7 @@ init_db_list()
 /* Simple function to create an instance of the dbinfo struct
 	Initalizes all the pointers and connects to the database  */
 db_info *
-init_dbinfo(char *dbname, int oid, int age)
+init_dbinfo(char *dbname, Oid oid, long age)
 {
 	db_info    *newdbinfo = (db_info *) malloc(sizeof(db_info));
 
@@ -500,7 +500,7 @@ update_db_list(Dllist *db_list)
 			for (i = 0; i < t; i++)
 			{					/* loop through result set looking for a
 								 * match */
-				if (dbi->oid == atoi(PQgetvalue(res, i, PQfnumber(res, "oid"))))
+				if (dbi->oid == atooid(PQgetvalue(res, i, PQfnumber(res, "oid"))))
 				{
 					found_match = 1;
 
@@ -508,7 +508,7 @@ update_db_list(Dllist *db_list)
 					 * update the dbi->age so that we ensure
 					 * xid_wraparound won't happen
 					 */
-					dbi->age = atoi(PQgetvalue(res, i, PQfnumber(res, "age")));
+					dbi->age = atol(PQgetvalue(res, i, PQfnumber(res, "age")));
 					break;
 				}
 			}
@@ -536,7 +536,7 @@ update_db_list(Dllist *db_list)
 			while (db_elem != NULL)
 			{
 				dbi = ((db_info *) DLE_VAL(db_elem));
-				if (dbi->oid == atoi(PQgetvalue(res, i, PQfnumber(res, "oid"))))
+				if (dbi->oid == atooid(PQgetvalue(res, i, PQfnumber(res, "oid"))))
 				{
 					found_match = 1;
 					break;
@@ -548,8 +548,8 @@ update_db_list(Dllist *db_list)
 			{
 				DLAddTail(db_list, DLNewElem(init_dbinfo
 						  (PQgetvalue(res, i, PQfnumber(res, "datname")),
-						 atoi(PQgetvalue(res, i, PQfnumber(res, "oid"))),
-					  atoi(PQgetvalue(res, i, PQfnumber(res, "age"))))));
+						 atooid(PQgetvalue(res, i, PQfnumber(res, "oid"))),
+					  atol(PQgetvalue(res, i, PQfnumber(res, "age"))))));
 				if (args->debug >= 1)
 				{
 					sprintf(logbuffer, "added database: %s", ((db_info *) DLE_VAL(DLGetTail(db_list)))->dbname);
@@ -681,7 +681,7 @@ print_db_info(db_info * dbi, int print_tbl_list)
 	sprintf(logbuffer, "dbname: %s Username %s Passwd %s", dbi->dbname,
 			dbi->username, dbi->password);
 	log_entry(logbuffer);
-	sprintf(logbuffer, " oid %i InsertThresh: %i  DeleteThresh: %i", dbi->oid,
+	sprintf(logbuffer, " oid %u InsertThresh: %li  DeleteThresh: %li", dbi->oid,
 			dbi->analyze_threshold, dbi->vacuum_threshold);
 	log_entry(logbuffer);
 	if (dbi->conn != NULL)
@@ -1072,7 +1072,7 @@ main(int argc, char *argv[])
 						{		/* Loop through tables in list */
 							tbl = ((tbl_info *) DLE_VAL(tbl_elem));		/* set tbl_info =
 																		 * current_table */
-							if (tbl->relid == atoi(PQgetvalue(res, j, PQfnumber(res, "oid"))))
+							if (tbl->relid == atooid(PQgetvalue(res, j, PQfnumber(res, "oid"))))
 							{
 								tbl->curr_analyze_count =
 									(atol(PQgetvalue(res, j, PQfnumber(res, "n_tup_ins"))) +
