@@ -39,7 +39,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  * Portions taken from FreeBSD.
  *
- * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.39 2004/06/21 01:04:44 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.40 2004/06/24 19:26:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -84,6 +84,7 @@ char	   *lc_time = "";
 char	   *lc_messages = "";
 char	   *username = "";
 bool		pwprompt = false;
+char       *pwfilename = NULL;
 bool		debug = false;
 bool		noclean = false;
 bool		show_setting = false;
@@ -1076,15 +1077,55 @@ get_set_pwd(void)
 	char		pwdpath[MAXPGPATH];
 	struct stat statbuf;
 
-	pwd1 = simple_prompt("Enter new superuser password: ", 100, false);
-	pwd2 = simple_prompt("Enter it again: ", 100, false);
-	if (strcmp(pwd1, pwd2) != 0)
+	if (pwprompt)
 	{
-		fprintf(stderr, _("Passwords didn't match.\n"));
-		exit_nicely();
+		/*
+		 * Read password from terminal
+		 */
+		pwd1 = simple_prompt("Enter new superuser password: ", 100, false);
+		pwd2 = simple_prompt("Enter it again: ", 100, false);
+		if (strcmp(pwd1, pwd2) != 0)
+		{
+			fprintf(stderr, _("Passwords didn't match.\n"));
+			exit_nicely();
+		}
+		free(pwd2);
 	}
-	free(pwd2);
+	else
+	{
+		/*
+		 * Read password from file
+		 *
+		 * Ideally this should insist that the file not be world-readable.
+		 * However, this option is mainly intended for use on Windows where
+		 * file permissions may not exist at all, so we'll skip the paranoia
+		 * for now.
+		 */
+		FILE *pwf = fopen(pwfilename,"r");
+		char pwdbuf[MAXPGPATH];
+		int  i;
 
+		if (!pwf)
+		{
+			fprintf(stderr, _("%s: could not open file \"%s\" for reading: %s\n"),
+					progname, pwfilename, strerror(errno));
+			exit_nicely();
+		}
+		if (!fgets(pwdbuf, sizeof(pwdbuf), pwf))
+		{
+			fprintf(stderr, _("%s: could not read password from file \"%s\": %s\n"),
+					progname, pwfilename, strerror(errno));
+			exit_nicely();
+		}
+		fclose(pwf);
+
+		i = strlen(pwdbuf);
+		while (i > 0 && (pwdbuf[i-1] == '\r' || pwdbuf[i-1] == '\n'))
+			pwdbuf[--i] = '\0';
+		
+		pwd1 = xstrdup(pwdbuf);
+		
+	}
 	printf(_("setting password ... "));
 	fflush(stdout);
 
@@ -1737,6 +1778,7 @@ usage(const char *progname)
 	printf(_("  --no-locale               equivalent to --locale=C\n"));
 	printf(_("  -U, --username=NAME       database superuser name\n"));
 	printf(_("  -W, --pwprompt            prompt for a password for the new superuser\n"));
+	printf(_("  --pwfile=filename         read password for the new superuser from file\n"));
 	printf(_("  -?, --help                show this help, then exit\n"));
 	printf(_("  -V, --version             output version information, then exit\n"));
 	printf(_("\nLess commonly used options:\n"));
@@ -1768,6 +1810,7 @@ main(int argc, char *argv[])
 		{"lc-messages", required_argument, NULL, 7},
 		{"no-locale", no_argument, NULL, 8},
 		{"pwprompt", no_argument, NULL, 'W'},
+		{"pwfile", required_argument, NULL, 9},
 		{"username", required_argument, NULL, 'U'},
 		{"help", no_argument, NULL, '?'},
 		{"version", no_argument, NULL, 'V'},
@@ -1857,6 +1900,9 @@ main(int argc, char *argv[])
 			case 8:
 				locale = "C";
 				break;
+			case 9:
+				pwfilename = xstrdup(optarg);
+				break;
 			case 's':
 				show_setting = true;
 				break;
@@ -1880,6 +1926,12 @@ main(int argc, char *argv[])
 						  progname, argv[optind + 1]);
 		fprintf(stderr, _("Try \"%s --help\" for more information.\n"),
 				progname);
+	}
+
+	if (pwprompt && pwfilename)
+	{
+		fprintf(stderr, _("%s: you cannot specify both password prompt and password file\n"), progname);
+		exit(1);
 	}
 
 	if (strlen(pg_data) == 0)
@@ -2147,7 +2199,7 @@ main(int argc, char *argv[])
 	/* Create the stuff we don't need to use bootstrap mode for */
 
 	setup_shadow();
-	if (pwprompt)
+	if (pwprompt || pwfilename)
 		get_set_pwd();
 
 	unlimit_systables();

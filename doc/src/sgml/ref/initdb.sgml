@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/initdb.sgml,v 1.29 2004/03/23 02:47:35 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/initdb.sgml,v 1.30 2004/06/24 19:26:54 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -182,6 +182,16 @@ PostgreSQL documentation
         authentication, this is not important.  Otherwise you won't be
         able to use password authentication until you have a password
         set up.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>--pwfile=<replaceable>filename</></option></term>
+      <listitem>
+       <para>
+        Makes <command>initdb</command> read the database superuser's password
+        from a file.  The first line of the file is taken as the password.
        </para>
       </listitem>
      </varlistentry>

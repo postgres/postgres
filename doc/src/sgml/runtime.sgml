@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.266 2004/06/10 22:26:17 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.267 2004/06/24 19:26:55 tgl Exp $
 -->
 
 <Chapter Id="runtime">
@@ -121,9 +121,9 @@ postgres$ <userinput>initdb -D /usr/local/pgsql/data</userinput>
    However, while the directory contents are secure, the default
    client authentication setup allows any local user to connect to the
    database and even become the database superuser. If you do not
-   trust other local users, we recommend you use
-   <command>initdb</command>'s <option>-W</option> or
-   <option>--pwprompt</option> option to assign a password to the
+   trust other local users, we recommend you use one of
+   <command>initdb</command>'s <option>-W</option>, <option>--pwprompt</option>
+   or <option>--pwfile</option> option to assign a password to the
    database superuser.<indexterm><primary>password</><secondary>of the
    superuser</></indexterm> After <command>initdb</command>, modify
    the <filename>pg_hba.conf</filename> file to use <literal>md5</> or
