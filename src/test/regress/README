@@ -31,7 +31,7 @@ user-defined trigger functions, and then run the test driver
 script. At the end you should see something like
 
 ======================
- All 75 tests passed.
+ All 76 tests passed.
 ======================
 
 or otherwise a note about what tests failed. See the section called
@@ -42,7 +42,7 @@ Test Evaluation below for more.
      root). If you already did the build as root, you do not have to
      start all over. Instead, make the regression test directory
      writable by some other user, log in as that user, and restart the
-     tests.
+     tests. For example,
 
      root# chmod -R a+w src/test/regress
      root# su - joeuser
@@ -67,21 +67,23 @@ the server, then type
 
 $ gmake installcheck
 
-The server is expected to be running on the local host with the
-default port number.
+The tests will expect to contact the server at the local host and the
+default port number, unless directed otherwise by PGHOST and PGPORT
+environment variables.
 
 Test Evaluation
 
 Some properly installed and fully functional PostgreSQL installations
-can "fail" some of these regression tests due to artifacts of floating
-point representation and time zone support. The tests are currently
-evaluated using a simple diff comparison against the outputs generated
-on a reference system, so the results are sensitive to small system
-differences. When a test is reported as "failed", always examine the
-differences between expected and actual results; you may well find
-that the differences are not significant. Nonetheless, we still strive
-to maintain accurate reference files across all supported platforms,
-so it can be expected that all tests pass.
+can "fail" some of these regression tests due to platform-specific
+artifacts such as varying floating point representation and time zone
+support. The tests are currently evaluated using a simple diff
+comparison against the outputs generated on a reference system, so the
+results are sensitive to small system differences. When a test is
+reported as "failed", always examine the differences between expected
+and actual results; you may well find that the differences are not
+significant. Nonetheless, we still strive to maintain accurate reference
+files across all supported platforms, so it can be expected that all
+tests pass.
 
 The actual outputs of the regression tests are in files in the
 src/test/regress/results directory. The test script uses diff to
@@ -98,6 +100,23 @@ from the host platform system routines. In the latter case, the
 messages may vary between platforms, but should reflect similar
 information. These differences in messages will result in a "failed"
 regression test which can be validated by inspection.
+
+Locale differences
+
+The tests expect to run in plain "C" locale.  This should not cause any
+problems when you run the tests against a temporary installation, since
+the regression test driver takes care to start the server in C locale.
+However, if you run the tests against an already-installed server that
+is using non-C locale settings, you may see differences caused by
+varying rules for string sort order, formatting of numeric and monetary
+values, and so forth.
+
+In some locales the resulting differences are small and easily checked by
+inspection.  However, in a locale that changes the rules for formatting
+of numeric values (typically by swapping the usage of commas and
+decimal points), entry of some data values will fail, resulting in
+extensive differences later in the tests where the missing data values
+are supposed to be used.
 
 Date and time differences
 
@@ -177,11 +196,12 @@ according to the letter of the SQL spec.  In practice, since we are
 looking at the same queries being executed on the same data by the same
 software, we usually get the same result ordering on all platforms, and
 so the lack of ORDER BY isn't a problem.  Some queries do exhibit
-cross-platform ordering differences, however.
+cross-platform ordering differences, however.  (Ordering differences
+can also be triggered by non-C locale settings.)
 
 Therefore, if you see an ordering difference, it's not something to
-worry about (unless the query does have an ORDER BY that your result
-is violating).  But please report it anyway, so that we can add an
+worry about, unless the query does have an ORDER BY that your result
+is violating.  But please report it anyway, so that we can add an
 ORDER BY to that particular query and thereby eliminate the bogus
 "failure" in future releases.
 
