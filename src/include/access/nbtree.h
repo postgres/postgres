@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nbtree.h,v 1.25 1999/05/25 16:13:32 momjian Exp $
+ * $Id: nbtree.h,v 1.26 1999/05/25 18:31:28 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,7 +19,7 @@
 #include <storage/page.h>
 #include <access/funcindex.h>
 #include <access/itup.h>
-#include <storage/buf.h>
+#include <storage/bufmgr.h>	/* don't remove, required by BT_READ/BT_WRITE */
 #include <storage/itemptr.h>
 
 /*
@@ -107,26 +107,17 @@ typedef BTScanOpaqueData *BTScanOpaque;
 
 typedef struct BTItemData
 {
-#ifndef BTREE_VERSION_1
-	Oid			bti_oid;
-	int32		bti_dummy;		/* padding to make bti_itup align at
-								 * 8-byte boundary */
-#endif
 	IndexTupleData bti_itup;
 } BTItemData;
 
 typedef BTItemData *BTItem;
 
-#ifdef BTREE_VERSION_1
 #define BTItemSame(i1, i2)	  ( i1->bti_itup.t_tid.ip_blkid.bi_hi == \
 								i2->bti_itup.t_tid.ip_blkid.bi_hi && \
 								i1->bti_itup.t_tid.ip_blkid.bi_lo == \
 								i2->bti_itup.t_tid.ip_blkid.bi_lo && \
 								i1->bti_itup.t_tid.ip_posid == \
 								i2->bti_itup.t_tid.ip_posid )
-#else
-#define BTItemSame(i1, i2)	  ( i1->bti_oid == i2->bti_oid )
-#endif
 
 /*
  *	BTStackData -- As we descend a tree, we push the (key, pointer)
@@ -165,8 +156,8 @@ typedef struct BTPageState
  *	requests for pages, in order to do locking correctly.
  */
 
-#define BT_READ			0
-#define BT_WRITE		1
+#define BT_READ			BUFFER_LOCK_SHARE
+#define BT_WRITE		BUFFER_LOCK_EXCLUSIVE
 
 /*
  *	Similarly, the difference between insertion and non-insertion binary

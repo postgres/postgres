@@ -506,15 +506,6 @@ extern void srandom(unsigned int seed);
  */
 #define FASTBUILD /* access/nbtree/nbtsort.c */
 
-/* 
- * BTREE_VERSION_1: we must guarantee that all tuples in A LEVEL
- * are unique, not in ALL INDEX. So, we can use bti_itup->t_tid                
- * as unique identifier for a given index tuple (logical position
- * within a level) and take off bti_oid & bti_dummy (8 bytes total)
- * from btree items.
- */
-#define BTREE_VERSION_1
-
 /*
  * TBL_FREE_CMD_MEMORY: free memory allocated for an user query inside
  * transaction block after this query is done. 
