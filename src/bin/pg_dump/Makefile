@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/pg_dump/Makefile,v 1.7 1996/11/11 13:40:46 bryanh Exp $
+#    $Header: /cvsroot/pgsql/src/bin/pg_dump/Makefile,v 1.8 1996/11/12 06:10:37 bryanh Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -26,7 +26,7 @@ pg_dump: $(OBJS) $(LIBPQDIR)/libpq.a
 submake:
 	$(MAKE) -C $(LIBPQDIR) libpq.a
 
-install:
+install: pg_dump
 	$(INSTALL) $(INSTL_EXE_OPTS) pg_dump $(DESTDIR)$(BINDIR)/pg_dump
 
 depend dep:

@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/psql/Makefile,v 1.11 1996/11/11 13:41:36 bryanh Exp $
+#    $Header: /cvsroot/pgsql/src/bin/psql/Makefile,v 1.12 1996/11/12 06:11:52 bryanh Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -72,7 +72,7 @@ psql: $(OBJS) $(LIBPQDIR)/libpq.a
 submake:
 	$(MAKE) -C $(LIBPQDIR) libpq.a
 
-install:
+install: psql
 	$(INSTALL) $(INSTL_EXE_OPTS) psql $(DESTDIR)$(BINDIR)/psql
 
 depend dep:
