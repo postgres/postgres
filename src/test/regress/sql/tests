@@ -49,6 +49,7 @@ select_implicit
 select_having
 subselect
 union
+case
 aggregates
 transactions
 random

@@ -1,0 +1,94 @@
+QUERY: SELECT '' AS "One",
+  CASE
+    WHEN 1 < 2 THEN 3
+  END AS "One only = 3";
+One|One only = 3
+---+------------
+   |           3
+(1 row)
+
+QUERY: SELECT '' AS "One",
+  CASE
+    WHEN 1 > 2 THEN 3
+  END AS "One only = Null";
+One|One only = Null
+---+---------------
+   |               
+(1 row)
+
+QUERY: SELECT '' AS "One",
+  CASE
+    WHEN 1 < 2 THEN 3
+    ELSE 4
+  END AS "One with default = 3";
+One|One with default = 3
+---+--------------------
+   |                   3
+(1 row)
+
+QUERY: SELECT '' AS "One",
+  CASE
+    WHEN 1 > 2 THEN 3
+    ELSE 4
+  END AS "One with default = 4";
+One|One with default = 4
+---+--------------------
+   |                   4
+(1 row)
+
+QUERY: SELECT '' AS "One",
+  CASE
+    WHEN 1 > 2 THEN 3
+    WHEN 4 < 5 THEN 6
+    ELSE 7
+  END AS "Two with default = 6";
+One|Two with default = 6
+---+--------------------
+   |                   6
+(1 row)
+
+QUERY: SELECT '' AS "Five",
+  CASE
+    WHEN f1 >= 0 THEN f1
+  END AS ">= 0 or Null"
+  FROM INT4_TBL;
+Five|>= 0 or Null
+----+------------
+    |           0
+    |      123456
+    |            
+    |  2147483647
+    |            
+(5 rows)
+
+QUERY: SELECT '' AS "Five",
+  CASE WHEN f1 >= 0 THEN (f1 - f1)
+       ELSE f1
+  END AS "Simplest Math"
+  FROM INT4_TBL;
+Five|Simplest Math
+----+-------------
+    |            0
+    |            0
+    |      -123456
+    |            0
+    |  -2147483647
+(5 rows)
+
+QUERY: SELECT '' AS "Five", f1 AS "Value",
+  CASE WHEN (f1 < 0) THEN 'small'
+       WHEN (f1 = 0) THEN 'zero'
+       WHEN (f1 = 1) THEN 'one'
+       WHEN (f1 = 2) THEN 'two'
+       ELSE 'big'
+  END AS "Category"
+  FROM INT4_TBL;
+Five|      Value|Category
+----+-----------+--------
+    |          0|zero    
+    |     123456|big     
+    |    -123456|small   
+    | 2147483647|big     
+    |-2147483647|small   
+(5 rows)
+
