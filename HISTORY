@@ -1,6 +1,42 @@
   ------------------------------------------------------------------------
                                 Release Notes
   ------------------------------------------------------------------------
+
+Release 7.0.1
+
+This is basically a cleanup release for 7.0.1
+
+Migration to v7.0.1
+
+A dump/restore is not required for those running 7.0.
+
+Changes
+-------
+Fix many CLUSTER failures (Tom)
+Allow ALTER TABLE RENAME works on indexes (Tom)
+Fix plpgsql to handle datetime->timestamp and timespan->interval (Bruce)
+New configure --with-setproctitle switch to use setproctitle() (Marc, Bruce)
+Fix the off by one errors in ResultSet from 6.5.3, and more.
+jdbc ResultSet fixes (Joseph Shraibman)
+optimizer tunings (Tom)
+Fix create user for pgaccess
+Fix for UNLISTEN failure
+IRIX fixes (David Kaelbling)
+QNX fixes (Andreas Kardos)
+Reduce COPY IN lock level (Tom)
+Change libpqeasy to use PQconnectdb() style parameters (Bruce)
+Fix pg_dump to handle OID indexes (Tom)
+Fix small memory leak (Tom)
+Solaris fix for createdb/dropdb
+Fix for non-blocking connections (Alfred Perlstein)
+Fix improper recovery after RENAME TABLE failures (Tom)
+Copy pg_ident.conf.sample into /lib directory in install (Bruce)
+
+
+  ------------------------------------------------------------------------
+                                                               Release 7.0
+                                Release Notes
+  ------------------------------------------------------------------------
           
 Release 7.0
 
@@ -35,7 +71,7 @@ Migration to v7.0
    data from any previous release. For those upgrading from 6.5.*, you
    can use pg_upgrade to upgrade to this release.
    
-Detailed Change List
+
 Bug Fixes
 ---------
 Prevent function calls with more than maximum number of arguments (Tom)
@@ -362,6 +398,10 @@ Fixes for Alpha compiles
 New multibyte encodings
 
 
+  ------------------------------------------------------------------------
+                                                               Release 6.5.3
+                                Release Notes
+  ------------------------------------------------------------------------
 
 Release 6.5.3
 
@@ -372,10 +412,11 @@ Migration to v6.5.3
 
 A dump/restore is not required for those running 6.5.*.
 
-Detailed Change List
-
+Changes
+-------
 Updated version of pgaccess 0.98
 NT-specific patch
+
 
   ------------------------------------------------------------------------
                                                                Release 6.5.2
@@ -391,8 +432,8 @@ Migration to v6.5.2
 
 A dump/restore is not required for those running 6.5.*.
 
-Detailed Change List
-
+Changes
+-------
 subselect+CASE fixes(Tom)
 Add SHLIB_LINK setting for solaris_i386 and solaris_sparc ports(Daren Sefcik)
 Fixes for CASE in WHERE join clauses(Tom)
@@ -418,6 +459,7 @@ Repair logic error in LIKE: should not return LIKE_ABORT
 Repair incorrect cleanup of heap memory allocation during transaction abort(Tom)
 Updated version of pgaccess 0.98
 
+
   ------------------------------------------------------------------------
 Release Notes                                                  Release 6.5.1
                                 Release Notes
@@ -432,8 +474,8 @@ Migration to v6.5.1
 
 A dump/restore is not required for those running 6.5.
 
-Detailed Change List
-
+Changes
+-------
 Add NT README file
 Portability fixes for linux_ppc, Irix, linux_alpha, OpenBSD, alpha
 Remove QUERY_LIMIT, use SELECT...LIMIT
@@ -457,6 +499,7 @@ Shared library dependencies fixed (Tom)
 Fixed glitches affecting GROUP BY in subselects(Tom)
 Fix some compiler warnings (Tomoaki Nishiyama)
 Add Win1250 (Czech) support (Pavel Behal)
+
 
   ------------------------------------------------------------------------
 Release 6.5.2                                                    Release 6.5
@@ -576,7 +619,6 @@ These inconveniences will disappear in the future when the ability to read
 dirty (uncommitted) data (regardless of isolation level) and true
 referential integrity will be implemented.
 
-Detailed Change List
 
 Bug Fixes
 ---------
@@ -755,9 +797,10 @@ Migration to v6.4.2
 
 A dump/restore is not required for those running 6.4.*.
 
-Detailed Change List
-
+Changes
+-------
 Fix for datetime constant problem on some platforms(Thomas)
+
 
   ------------------------------------------------------------------------
 Release 6.5                                                    Release 6.4.1
@@ -773,8 +816,8 @@ Migration to v6.4.1
 
 A dump/restore is not required for those running 6.4.
 
-Detailed Change List
-
+Changes
+-------
 Add pg_dump -N flag to force double quotes around identifiers.  This is
         the default(Thomas)
 Fix for NOT in where clause causing crash(Bruce)
@@ -805,6 +848,7 @@ Use implicit type coersion for matching DEFAULT values(Thomas)
 Add routines to help with single-byte (internal) character type(Thomas)
 Compilation of libpq for Win32 fixes(Magnus)
 Upgrade to PyGreSQL 2.2(D'Arcy)
+
 
   ------------------------------------------------------------------------
 Release 6.4.2                                                    Release 6.4
@@ -856,7 +900,6 @@ Migration to v6.4
 A dump/restore using pg_dump or pg_dumpall is required for those wishing to
 migrate data from any previous release of Postgres.
 
-Detailed Change List
 
 Bug Fixes
 ---------
@@ -1051,6 +1094,7 @@ smarter perl configuration(Brook)
 configure uses supplied install-sh if no install script found(Tom)
 new Makefile.shlib for shared library configuration(Tom)
 
+
   ------------------------------------------------------------------------
 Release 6.4.1                                                  Release 6.3.2
                                 Release Notes
@@ -1077,7 +1121,6 @@ re-link any custom applications that use Postgres libraries.
 For upgrades from pre-v6.3 installations, refer to the installation and
 migration instructions for v6.3.
 
-Detailed Change List
 
 Changes
 -------
@@ -1099,6 +1142,7 @@ libreadline cleanup(Erwan MAS)
 Remove DISTDIR(Bruce)
 Makefile dependency cleanup(Jeroen van Vianen)
 ASSERT fixes(Bruce)
+
 
   ------------------------------------------------------------------------
 Release 6.4                                                    Release 6.3.1
@@ -1125,7 +1169,6 @@ applications that use Postgres libraries.
 For upgrades from pre-v6.3 installations, refer to the installation and
 migration instructions for v6.3.
 
-Detailed Change List
 
 Changes
 -------
@@ -1156,6 +1199,7 @@ Fix Alpha port(Dwayne Bailey)
 Fix for text arrays containing quotes(Doug Gibson)
 Solaris compile fix(Albert Chin-A-Young)
 Better identify tcl and tk libs and includes(Bruce)
+
 
   ------------------------------------------------------------------------
 Release 6.3.2                                                    Release 6.3
@@ -1245,7 +1289,6 @@ Migration to v6.3
 A dump/restore using pg_dump or pg_dumpall is required for those wishing to
 migrate data from any previous release of Postgres.
 
-Detailed Change List
 
 Bug Fixes
 ---------
@@ -1412,6 +1455,7 @@ Add string functions to regression suite(Thomas)
 Expand a few function names formerly truncated to 16 characters(Thomas)
 Remove un-needed malloc() calls and replace with palloc()(Bruce)
 
+
   ------------------------------------------------------------------------
 Release 6.3.1                                                  Release 6.2.1
                                 Release Notes
@@ -1449,10 +1493,9 @@ psql to update the existing system table:
 
 This will need to be done to every existing database, including template1.
 
-Detailed Change List
 
-Changes in this release
------------------------
+Changes
+-------
 Allow TIME and TYPE column names(Thomas)
 Allow larger range of true/false as boolean values(Thomas)
 Support output of "now" and "current"(Thomas)
@@ -1464,6 +1507,7 @@ Fix avg(cash) computation(Thomas)
 Fix for specifying a column twice in ORDER/GROUP BY(Vadim)
 Documented new libpq function to return affected rows, PQcmdTuples(Bruce)
 Trigger function for inserting user names for INSERT/UPDATE(Brook Milligan)
+
 
   ------------------------------------------------------------------------
 Release 6.3                                                      Release 6.2
@@ -1488,7 +1532,6 @@ Migration from v1.x to v6.2
 Those migrating from earlier 1.* releases should first upgrade to 1.09
 because the COPY output format was improved from the 1.02 release.
 
-Detailed Change List
 
 Bug Fixes
 ---------
@@ -1599,6 +1642,7 @@ Massive commit to run PGINDENT on all *.c and *.h files(Bruce)
 Files moved to /src/tools directory(Bruce)
 SPI and Trigger programming guides (Vadim & D'Arcy)
 
+
   ------------------------------------------------------------------------
 Release 6.2.1                                                  Release 6.1.1
                                 Release Notes
@@ -1612,10 +1656,9 @@ This is a minor bug-fix release. A dump/reload is not required from v6.1,
 but is required from any release prior to v6.1. Refer to the release notes
 for v6.1 for more details.
 
-Detailed Change List
 
-Changes in this release
------------------------
+Changes
+-------
 fix for SET with options (Thomas)
 allow pg_dump/pg_dumpall to preserve ownership of all tables/objects(Bruce)
 new psql \connect option allows changing usernames without changing databases
@@ -1634,8 +1677,9 @@ Fix for Solaris assembler and include files(Yoshihiko Ichikawa)
 allow underscores in usernames(Bruce)
 pg_dumpall now returns proper status, portability fix(Bruce)
 
+
   ------------------------------------------------------------------------
-Release 6.2                                                      Release 6.1
+                                                                 Release 6.1
                                 Release Notes
   ------------------------------------------------------------------------
 
@@ -1682,7 +1726,6 @@ the database in 6.1.
 Those migrating from earlier 1.* releases should first upgrade to 1.09
 because the COPY output format was improved from the 1.02 release.
 
-Detailed Change List
 
 Bug Fixes
 ---------
@@ -1779,8 +1822,9 @@ c++ include file cleanup(Bruce)
 warn about buggy flex(Bruce)
 DG-UX, Ultrix, Irix, AIX portability fixes
 
+
   ------------------------------------------------------------------------
-Release 6.1.1                                                   Release v6.0
+                                                                Release v6.0
                                 Release Notes
   ------------------------------------------------------------------------
 
@@ -1799,7 +1843,6 @@ Migration from pre-v1.09 to v6.0
 Those migrating from earlier 1.* releases should first upgrade to 1.09
 because the COPY output format was improved from the 1.02 release.
 
-Detailed Change List
 
 Bug Fixes
 ---------
@@ -1905,8 +1948,9 @@ Restructured object file generation/location(Bryan, Marc)
 Restructured port-specific file locations(Bryan, Marc)
 Unused/uninialized variables corrected
 
+
   ------------------------------------------------------------------------
-Release 6.1                                                    Release v1.09
+                                                                Release v1.09
                                 Release Notes
   ------------------------------------------------------------------------
 
@@ -2001,8 +2045,9 @@ New Ports
  * added BSDI 2.1 port
  * added DGUX port
 
+
   ------------------------------------------------------------------------
-Release v1.09                                                  Release v1.01
+                                                                 Release v1.01
                                 Release Notes
   ------------------------------------------------------------------------
 
@@ -2138,8 +2183,9 @@ Bug fixes:
  * psql now returns non-zero status on errors when using -c
  * applied public patches 1-14
 
+
   ------------------------------------------------------------------------
-Release v1.02                                                   Release v1.0
+                                                                 Release v1.0
                                 Release Notes
   ------------------------------------------------------------------------
 
@@ -2187,8 +2233,9 @@ Bug fixes:
  *  btrees with multiple index never worked, now we tell you they don't
    work when you try to use them
 
+
   ------------------------------------------------------------------------
-Release v1.01                                           Postgres95 Beta 0.03
+                                                           Postgres95 Beta 0.03
                                 Release Notes
   ------------------------------------------------------------------------
 
@@ -2302,8 +2349,9 @@ New utilities:
 New documentation:
  * the user manual has been revised and libpq documentation added.
 
+
   ------------------------------------------------------------------------
-Release v1.0                                            Postgres95 Beta 0.02
+                                                          Postgres95 Beta 0.02
                                 Release Notes
   ------------------------------------------------------------------------
 
@@ -2346,7 +2394,7 @@ The following bugs have been fixed in postgres95-beta-0.02:
  * wrong result using more than 1 aggregate in a SELECT
 
   ------------------------------------------------------------------------
-Postgres95 Beta 0.03                                    Postgres95 Beta 0.01
+                                                          Postgres95 Beta 0.01
                                 Release Notes
   ------------------------------------------------------------------------
 
@@ -2354,8 +2402,9 @@ Postgres95 Beta 0.01
 
 Initial release.
 
+
   ------------------------------------------------------------------------
-Postgres95 Beta 0.02                                          Timing Results
+                                                                Timing Results
                                 Release Notes
 Prev
   ------------------------------------------------------------------------
@@ -2421,7 +2470,3 @@ v6.1
   06:12  Pentium Pro 180, 32MB, EIDE, Linux 2.0.30, gcc 2.7.2 -O2 -m486
   12:06  P-100, 48MB, Linux 2.0.29, gcc
   39:58  Sparc IPC 32MB, Solaris 2.5, gcc 2.7.2.1 -O -g
-
-  ------------------------------------------------------------------------
-Prev                                Home
-Postgres95 Beta 0.01

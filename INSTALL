@@ -1,11 +1,11 @@
-     Installation instructions for PostgreSQL 7.0.
+     Installation instructions for PostgreSQL 7.0.1.
 
 If you haven't gotten the PostgreSQL distribution, get it from
 ftp.postgresql.org, then unpack it:
 
-> gunzip postgresql-7.0.tar.gz
-> tar -xf postgresql-7.0.tar
-> mv postgresql-7.0 /usr/src
+> gunzip postgresql-7.0.1.tar.gz
+> tar -xf postgresql-7.0.1.tar
+> mv postgresql-7.0.1 /usr/src
 
 
 Before you start
@@ -151,7 +151,7 @@ For a fresh install or upgrading from previous releases of PostgreSQL:
      this (such as using OIDs as keys in tables), don't do it.
 
      Make sure to use the pg_dumpall command from the version you are
-     currently running. 7.0's pg_dumpall will not work on older databases.
+     currently running. 7.0.1's pg_dumpall will not work on pre-7.0 databases.
      However, if you are still using 6.0, do not use the pg_dumpall script
      from 6.0 or everything will be owned by the PostgreSQL superuser after
      you reload. In that case you should grab pg_dumpall from a later 6.x.x
@@ -164,6 +164,7 @@ For a fresh install or upgrading from previous releases of PostgreSQL:
       backup. If necessary, bring down postmaster, edit the permissions in file
       /usr/local/pgsql/data/pg_hba.conf to allow only you on, then bring
       postmaster back up.
+
   6. If you are upgrading an existing system then kill the database server
      now. Type
 
@@ -200,7 +201,8 @@ For a fresh install or upgrading from previous releases of PostgreSQL:
 
           works.
 
-     Also move the old directories out of the way. Type the following:
+     If you used pg_dumpall, move the old directories out of the
+     way.  Type the following:
 
      > mv /usr/local/pgsql /usr/local/pgsql.old
 
@@ -284,8 +286,7 @@ For a fresh install or upgrading from previous releases of PostgreSQL:
          </dev/null >>server.log 2>>1 &
 
 
- 11. If you are upgrading from an existing installation, dump your data back
-     in:
+ 11. If you did a pg_dumpall, reload your data back in:
 
      > /usr/local/pgsql/bin/psql -d template1 -f db.out
 
@@ -312,7 +313,7 @@ suggestions.
 
    * You probably want to install the man and HTML documentation. Type
 
-     > cd /usr/src/pgsql/postgresql-7.0/doc
+     > cd /usr/src/pgsql/postgresql-7.0.1/doc
      > gmake install
 
 
