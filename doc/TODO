@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Tue Oct 23 21:01:10 EDT 2001
+Last updated:		Thu Oct 25 15:43:47 EDT 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -357,6 +357,7 @@ SOURCE CODE
 * Allow ps status display to work on Solaris/SVr4-based systems
 * -Decide on spelling of indexes/indices (Peter E)
 * -Add mention of VACUUM, log rotation to Administrator's Guide (Tom, Bruce)
+* Make one version of simple_prompt() in code (Bruce, Tom)
 
 ---------------------------------------------------------------------------
 
