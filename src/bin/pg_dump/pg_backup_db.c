@@ -5,7 +5,7 @@
  *	Implements the basic DB functions used by the archiver.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_db.c,v 1.41 2002/09/07 16:14:33 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_db.c,v 1.42 2002/10/16 05:46:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -61,16 +61,26 @@ _check_database_version(ArchiveHandle *AH, bool ignoreVersion)
 
 	myversion = _parse_version(AH, PG_VERSION);
 
-	res = PQexec(conn, "SELECT version();");
+	/*
+	 *	Autocommit could be off.  We turn it off later but we have to check
+	 *	the database version first.
+	 */
+	
+	res = PQexec(conn, "BEGIN;SELECT version();");
 	if (!res ||
 		PQresultStatus(res) != PGRES_TUPLES_OK ||
 		PQntuples(res) != 1)
-
 		die_horribly(AH, modulename, "could not get version from server: %s", PQerrorMessage(conn));
 
 	remoteversion_str = PQgetvalue(res, 0, 0);
 	remoteversion = _parse_version(AH, remoteversion_str + 11);
 
+	PQclear(res);
+
+	res = PQexec(conn, "COMMIT;");
+	if (!res ||
+		PQresultStatus(res) != PGRES_COMMAND_OK)
+		die_horribly(AH, modulename, "could not get version from server: %s", PQerrorMessage(conn));
 	PQclear(res);
 
 	AH->public.remoteVersion = remoteversion;
@@ -276,6 +286,18 @@ ConnectDatabase(Archive *AHX,
 
 	/* check for version mismatch */
 	_check_database_version(AH, ignoreVersion);
+
+	/* Turn autocommit on */
+	if (AH->public.remoteVersion >= 70300)
+	{
+		PGresult   *res;
+
+		res = PQexec(AH->connection, "SET autocommit TO 'on'");
+		if (!res || PQresultStatus(res) != PGRES_COMMAND_OK)
+			die_horribly(AH, NULL, "SET autocommit TO 'on' failed: %s",
+						  PQerrorMessage(AH->connection));
+		PQclear(res);
+	}
 
 	PQsetNoticeProcessor(AH->connection, notice_processor, NULL);
 

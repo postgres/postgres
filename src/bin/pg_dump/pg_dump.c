@@ -22,7 +22,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.302 2002/10/09 16:20:25 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.303 2002/10/16 05:46:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -549,22 +549,21 @@ main(int argc, char **argv)
 	g_conn = ConnectDatabase(g_fout, dbname, pghost, pgport, username, force_password, ignore_version);
 
 	/*
-	 * Start serializable transaction to dump consistent data
+	 * Start serializable transaction to dump consistent data.
 	 */
 	{
 		PGresult   *res;
 
-		res = PQexec(g_conn, "begin");
+		res = PQexec(g_conn, "BEGIN");
 		if (!res || PQresultStatus(res) != PGRES_COMMAND_OK)
 			exit_horribly(g_fout, NULL, "BEGIN command failed: %s",
 						  PQerrorMessage(g_conn));
-
 		PQclear(res);
-		res = PQexec(g_conn, "set transaction isolation level serializable");
+
+		res = PQexec(g_conn, "SET TRANSACTION ISOLATION LEVEL SERIALIZABLE");
 		if (!res || PQresultStatus(res) != PGRES_COMMAND_OK)
 			exit_horribly(g_fout, NULL, "could not set transaction isolation level to serializable: %s",
 						  PQerrorMessage(g_conn));
-
 		PQclear(res);
 	}
 

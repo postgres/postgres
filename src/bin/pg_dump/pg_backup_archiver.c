@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.57 2002/09/04 20:31:34 momjian Exp $
+ *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.58 2002/10/16 05:46:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -280,7 +280,7 @@ RestoreArchive(Archive *AHX, RestoreOptions *ropt)
 				/*
 				 * If we can output the data, then restore it.
 				 */
-				if (AH->PrintTocDataPtr !=NULL && (reqs & REQ_DATA) != 0)
+				if (AH->PrintTocDataPtr != NULL && (reqs & REQ_DATA) != 0)
 				{
 #ifndef HAVE_LIBZ
 					if (AH->compression != 0)
@@ -304,11 +304,9 @@ RestoreArchive(Archive *AHX, RestoreOptions *ropt)
 						 */
 						if (!AH->CustomOutPtr)
 							write_msg(modulename, "WARNING: skipping large object restoration\n");
-
 					}
 					else
 					{
-
 						_disableTriggersIfNecessary(AH, te, ropt);
 
 						/*
@@ -362,11 +360,9 @@ RestoreArchive(Archive *AHX, RestoreOptions *ropt)
 		te = AH->toc->next;
 		while (te != AH->toc)
 		{
-
 			/* Is it table data? */
 			if (strcmp(te->desc, "TABLE DATA") == 0)
 			{
-
 				ahlog(AH, 2, "checking whether we loaded %s\n", te->tag);
 
 				reqs = _tocEntryRequired(te, ropt);
