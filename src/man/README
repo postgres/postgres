@@ -1,0 +1,3 @@
+
+The page.5 source should be run through pic when generating troff
+output.  nroff doesn't handle pic.

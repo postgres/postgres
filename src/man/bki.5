@@ -1,0 +1,219 @@
+.\" This is -*-nroff-*-
+.\" $Header: /cvsroot/pgsql/src/man/Attic/bki.5,v 1.1 1996/11/14 10:15:12 scrappy Exp $
+.TH BKI 5 11/04/96 Postgres Postgres
+.SH NAME
+*.bki
+.SH DESCRIPTION
+Backend Interface (BKI) files are scripts that are input to the postgres
+backend running in the special "bootstrap" mode that allows it to perform
+database functions without a database system already existing.  BKI files
+can therefore be used to create the database system in the first place.
+.PP
+.IR Initdb
+uses BKI files to do just that -- create a database system.  However,
+.IR initdb's
+BKI files are generated internally.  It generates them using the files
+global1.bki.source and local1.template1.bki.source, which it finds in the
+Postgres "library" directory.  They get installed there as part of installing
+Postgres.  These .source files get build as part of the Postgres build
+process, by a build program called 
+.IR genbki.  Genbki
+takes as input Postgres source files that double as
+.IR genbki
+input that builds tables and C header files that describe those
+tables.
+.PP
+The Postgres backend interprets BKI files as described below.  This
+description will be easier to understand if the global1.bki.source file is
+at hand as an example.  (As explained above, this .source file isn't quite
+a BKI file, but you'll be able to guess what the resulting BKI file would be
+anyway).
+.PP
+Commands are composed of a command name followed by space separated
+arguments.  Arguments to a command which begin with a \*(lq$\*(rq are
+treated specially.  If \*(lq$$\*(rq are the first two characters, then
+the first \*(lq$\*(rq is ignored and the argument is then processed
+normally.  If the \*(lq$\*(rq is followed by space, then it is treated
+as a
+.SM NULL
+value.  Otherwise, the characters following the \*(lq$\*(rq are
+interpreted as the name of a macro causing the argument to be replaced
+with the macro's value.  It is an error for this macro to be
+undefined.
+.PP
+Macros are defined using
+.nf
+define macro macro_name = macro_value
+.fi
+and are undefined using 
+.nf
+undefine macro macro_name
+.fi
+and redefined using the same syntax as define.
+.PP
+Lists of general commands and macro commands
+follow.
+.SH "GENERAL COMMANDS"
+.TP 5n
+.BR "open" " classname"
+Open the class called
+.IR classname
+for further manipulation.
+.TP
+.BR "close" " [classname]"
+Close the open class called
+.IR classname.
+It is an error if 
+.IR classname
+is not already opened.   If no
+.IR classname
+is given, then the currently open class is closed.
+.TP
+.BR print
+Print the currently open class.
+.TP
+.BR "insert" " [oid=oid_value] " "(" " value1 value2 ... " ")"
+Insert a new instance to the open class using
+.IR value1 ,
+.IR value2 ,
+etc., for its attribute values and 
+.IR oid_value
+for its OID.  If
+.IR oid_value
+is not \*(lq0\*(rq, then this value will be used as the instance's
+object identifier.  Otherwise, it is an error.
+.TP
+.BR "insert (" " value1 value2 ... " ")"
+As above, but the system generates a unique object identifier.
+.TP
+.BR "create" " classname " "(" " name1 = type1, name2 = type2, ... " ")"
+Create a class named
+.IR classname
+with the attributes given in parentheses.
+.TP
+.BR "open (" " name1 = type1, name2 = type2,... " ") as" " classname"
+Open a class named
+.IR classname
+for writing but do not record its existence in the system catalogs.
+(This is primarily to aid in bootstrapping.)
+.TP
+.BR "destroy" " classname"
+Destroy the class named
+.IR classname .
+.TP
+.BR "define index" " index-name " "on" " class-name " "using" " amname "
+( opclass attr | function({attr}) )
+.br
+Create an index named
+.IR index_name
+on the class named
+.IR classname
+using the
+.IR amname
+access method.  The fields to index are called
+.IR name1 ,
+.IR name2 ,
+etc., and the operator collections to use are
+.IR collection_1 ,
+.IR collection_2 ,
+etc., respectively.
+.SH "MACRO COMMANDS"
+.TP
+.BR "define function" " macro_name " "as" " rettype function_name ( args )"
+Define a function prototype for a function named
+.IR macro_name
+which has its value of type
+.IR rettype
+computed from the execution
+.IR function_name
+with the arguments
+.IR args 
+declared in a C-like manner.
+.TP
+.BR "define macro" " macro_name " "from file" " filename"
+Define a macro named
+.IR macname
+which has its value 
+read from the file called
+.IR filename .
+.\" .uh "DEBUGGING COMMANDS"
+.\" .sp
+.\" .in .5i
+.\" r
+.\" .br
+.\" Randomly print the open class.
+.\" .sp
+.\" m	-1
+.\" .br
+.\" Toggle display of time information.
+.\" .sp
+.\" m	0
+.\" .br
+.\" Set retrievals to now.
+.\" .sp
+.\" m	1 Jan 1 01:00:00 1988
+.\" .br
+.\" Set retrievals to snapshots of the specfied time.
+.\" .sp
+.\" m	2 Jan 1 01:00:00 1988, Feb 1 01:00:00 1988
+.\" .br
+.\" Set retrievals to ranges of the specified times.
+.\" Either time may be replaced with space
+.\" if an unbounded time range is desired.
+.\" .sp
+.\" \&.A	classname natts name1 type1 name2 type2 ...
+.\" .br
+.\" Add attributes named
+.\" .ul
+.\" name1,
+.\" .ul
+.\" name2,
+.\" etc. of
+.\" types
+.\" .ul
+.\" type1,
+.\" .ul
+.\" type2,
+.\" etc. to the
+.\" .ul
+.\" class
+.\" classname.
+.\" .sp
+.\" \&.RR	oldclassname newclassname
+.\" .br
+.\" Rename the
+.\" .ul
+.\" oldclassname
+.\" class to
+.\" .ul
+.\" newclassname.
+.\" .sp
+.\" \&.RA	classname oldattname newattname
+.\" .br
+.\" Rename the
+.\" .ul
+.\" oldattname
+.\" attribute in the class named
+.\" .ul
+.\" classname
+.\" to
+.\" .ul
+.\" newattname.
+.SH EXAMPLE
+The following set of commands will create the \*(lqpg_opclass\*(rq
+class containing the
+.IR int_ops
+collection as object
+.IR 421,
+print out the class, and then close it.
+.nf
+create pg_opclass (opcname=char16)
+open pg_opclass
+insert oid=421 (int_ops)
+print
+close pg_opclass
+.fi
+.SH "SEE ALSO"
+initdb(1),
+createdb(1),
+create_database(l).

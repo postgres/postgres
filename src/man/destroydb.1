@@ -1,0 +1,134 @@
+.\" This is -*-nroff-*-
+.\" XXX standard disclaimer belongs here....
+.\" $Header: /cvsroot/pgsql/src/man/Attic/destroydb.1,v 1.1 1996/11/14 10:16:32 scrappy Exp $
+.TH DESTROYDB UNIX 11/05/95 Postgres95 Postgres95
+.SH NAME
+destroydb \(em destroy an existing database
+.SH SYNOPSIS
+.BR destroydb
+[\c
+.BR -a
+system]
+[\c
+.BR -h
+host]
+[\c
+.BR -p
+port]
+[dbname]
+.SH DESCRIPTION
+.IR Destroydb
+destroys an existing database.  To execute this command, the user must
+be the database administrator, or DBA, for this database.
+The program runs silently; no confirmation message will be displayed.
+After the database is destroyed, a Unix shell prompt will reappear.
+.PP
+.IR Destroydb
+is a shell script that invokes
+.IR psql .
+Hence, a
+.IR postmaster
+process must be running on the database server host before
+.IR destroydb 
+is executed.  In addition, the 
+.SM PGOPTION
+and
+.SM PGREALM
+environment
+variables will be passed on to
+.IR psql
+and processed as described in 
+.IR psql (1).
+.PP
+The optional argument
+.IR dbname
+specifies the name of the database to be destroyed.  All references to
+the database are removed, including the directory containing this
+database and its associated files.
+.IR Dbname
+defaults to the value of the
+.SM USER
+environment variable.
+.PP
+.IR Destroydb
+understands the following command-line options:
+.TP 5n
+.BR "-a" " system"
+Specifies an authentication system
+.IR "system"
+(see 
+.IR introduction (1))
+to use in connecting to the 
+.IR postmaster
+process.  The default is site-specific.
+.TP
+.BR "-h" " host"
+Specifies the hostname of the machine on which the 
+.IR postmaster
+is running.  Defaults to the name of the local host, or the value of
+the
+.SM PGHOST
+environment variable (if set).
+.TP
+.BR "-p" " port"
+Specifies the Internet TCP port on which the
+.IR postmaster
+is listening for connections.  Defaults to 5432, or the value of the
+.SM PGPORT
+environment variable (if set).
+.SH EXAMPLES
+.nf
+# destroy the demo database
+destroydb demo
+.fi
+.nf
+# destroy 5432 demo database using the postmaster on host eden,
+# port using the Kerberos authentication system.
+destroydb -a kerberos -p 5432 -h eden demo
+.fi
+.SH FILES
+.TP 5n
+\&$PGDATA/base/\fIdbname\fP
+The location of the files corresponding to the database 
+.IR dbname .
+.SH "SEE ALSO"
+destroydb(l),
+createdb(1),
+initdb(1),
+psql(1).
+postmaster(1).
+.SH DIAGNOSTICS
+.TP 5n
+.BI "Error: Failed to connect to backend (host=" "xxx" ", port=" "xxx" ")"
+.IR Destroydb
+could not attach to the 
+.IR postmaster 
+process on the specified host and port.  If you see this message,
+ensure that the
+.IR postmaster
+is running on the proper host and that you have specified the proper
+port.  If your site uses an authentication system, ensure that you
+have obtained the required authentication credentials.
+.TP
+.BI "user \*(lq" "username" "\*(rq is not in \*(lqpg_user\*(rq"
+You do not have a valid entry in the relation \*(lqpg_user\*(rq and
+cannot do anything with Postgres at all; contact your Postgres site
+administrator.
+.TP
+.BI "user \*(lq" "username" "\*(rq is not allowed to create/destroy databases"
+You do not have permission to destroy databases; contact your Postgres
+site administrator.
+.TP
+.BR "database \*(lqdbname\*(rq does not exist"
+The database to be removed does not have an entry in the
+\*(lqpg_database\*(rq class.
+.TP
+.BI "database \*(lq" "dbname" "\*(rq is not owned by you"
+You are not DBA for the specified database.
+.TP
+.BI "database destroy failed on" " dbname"
+An internal error occurred in 
+.IR psql
+or the backend server.  Contact your Postgres site administrator to
+ensure that ensure that the files and database entries associated with
+the database are completely removed.

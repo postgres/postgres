@@ -1,0 +1,119 @@
+.\" This is -*-nroff-*-
+.\" XXX standard disclaimer belongs here....
+.\" $Header: /cvsroot/pgsql/src/man/Attic/destroyuser.1,v 1.1 1996/11/14 10:16:39 scrappy Exp $
+.TH DESTROYUSER UNIX 11/05/95 Postgres95 Postgres95
+.SH NAME
+destroyuser \(em destroy a Postgres user and associated databases
+.SH SYNOPSIS
+.BR destroyuser
+[\c
+.BR -a
+system]
+[\c
+.BR -h
+host]
+[\c
+.BR -p
+port]
+[username]
+.SH DESCRIPTION
+.PP
+.IR Destroyuser
+destroys an existing Postgres user and the databases for which that user
+is database administrator.  Only users with \*(lqusesuper\*(rq set in
+the \*(lqpg_user\*(rq class can destroy new Postgres users.  As shipped,
+the user \*(lqpostgres\*(rq can destroy users.
+.PP
+.IR Destroyuser
+is a shell script that invokes
+.IR psql .
+Hence, a
+.IR postmaster
+process must be running on the database server host before
+.IR destroyuser
+is executed.  In addition, the
+.SM PGOPTION
+and
+.SM PGREALM
+environment variables will be passed on to
+.IR psql
+and processed as described in 
+.IR psql (1).
+.PP
+The optional argument
+.IR username
+specifies the name of the Postgres user to be destroyed.  (The invoker will
+be prompted for a name if none is specified on the command line.)
+.PP
+.IR Destroyuser
+understands the following command-line options:
+.TP 5n
+.BR "-a" " system"
+Specifies an authentication system
+.IR "system"
+(see 
+.IR introduction (1))
+to use in connecting to the 
+.IR postmaster
+process.  The default is site-specific.
+.TP
+.BR "-h" " host"
+Specifies the hostname of the machine on which the 
+.IR postmaster
+is running.  Defaults to the name of the local host, or the value of
+the
+.SM PGHOST
+environment variable (if set).
+.TP
+.BR "-p" " port"
+Specifies the Internet TCP port on which the
+.IR postmaster
+is listening for connections.  Defaults to 5432, or the value of the
+.SM PGPORT
+environment variable (if set).
+.SH "INTERACTIVE QUESTIONS"
+.PP
+Once invoked with the above options,
+.IR destroyuser
+will warn you about the databases that will be destroyed in the
+process and permit you to abort the removal of the user if desired.
+.SH "SEE ALSO"
+createuser(1),
+psql(1),
+postmaster(1).
+.SH DIAGNOSTICS
+.TP 5n
+.BI "Error: Failed to connect to backend (host=" "xxx" ", port=" "xxx" ")"
+.IR Destroyuser
+could not attach to the 
+.IR postmaster 
+process on the specified host and port.  If you see this message,
+ensure that the
+.IR postmaster
+is running on the proper host and that you have specified the proper
+port.  If your site uses an authentication system, ensure that you
+have obtained the required authentication credentials.
+.TP
+.BI "user \*(lq" "username" "\*(rq is not in \*(lqpg_user\*(rq"
+You do not have a valid entry in the relation \*(lqpg_user\*(rq and
+cannot do anything with Postgres at all; contact your Postgres site
+administrator.
+.TP
+.IB "username" " cannot delete users."
+You do not have permission to delete users; contact your Postgres site
+administrator.
+.TP
+.BI "user \*(lq" "username" "\*(rq does not exist"
+The user to be removed does not have an entry in the \*(lqpg_user\*(rq
+class.
+.TP
+.BR "database access failed"
+.TP
+.BI "destroydb on" " dbname" " failed - exiting"
+.TP
+.BI "delete of user" " username" " was UNSUCCESSFUL"
+An internal error occurred in 
+.IR psql
+or the backend server.  Contact your Postgres site administrator to
+ensure that the files and database entries associated with the user
+and his/her associated databases are completely removed.

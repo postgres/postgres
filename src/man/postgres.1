@@ -1,0 +1,171 @@
+.\" This is -*-nroff-*-
+.\" XXX standard disclaimer belongs here....
+.\" $Header: /cvsroot/pgsql/src/man/Attic/postgres.1,v 1.1 1996/11/14 10:17:46 scrappy Exp $
+.TH POSTGRES95 UNIX 11/05/95 Postgres95 Postgres95
+.SH NAME
+postgres \(em the Postgres backend server
+.SH SYNOPSIS
+.BR "postgres"
+[\c
+.BR "-B"
+n_buffers]
+[\c
+.BR "-E"
+]
+[\c
+.BR "-F"
+]
+[\c
+.BR "-P"
+filedes]
+[\c
+.BR "-Q"
+]
+.br
+.in +5n
+[\c
+.BR "-d"
+debug_level]
+[\c
+.BR "-o"
+output_file]
+[\c
+.BR "-s"
+]
+[dbname]
+.in -5n
+.SH DESCRIPTION
+The Postgres backend server can be executed directly from the user shell.
+This should be done only while debugging by the DBA, and should not be
+done while other Postgres backends are being managed by a
+.IR postmaster
+on this set of databases.
+.PP
+The optional argument
+.IR dbname
+specifies the name of the database to be accessed.
+.IR Dbname
+defaults to the value of the
+.SM USER
+environment variable.
+.PP
+The 
+.IR postgres
+server understands the following command-line options:
+.TP 5n
+.BR "-B" " n_buffers"
+If the backend is running under the 
+.IR postmaster ,
+.IR "n_buffers"
+is the number of shared-memory buffers that the
+.IR "postmaster"
+has allocated for the backend server processes that it starts.  If the
+backend is running standalone, this specifies the number of buffers to
+allocate.  This value defaults to 64.
+.TP
+.BR "-E"
+Echo all queries.
+.TP
+.BR "-F"
+Disbable automatic fsync() call after each transaction.
+This option improves performance, but an operating system crash
+while a transaction is in progress will probably cause data loss.
+.TP
+.BR "-P" " filedes"
+.IR "filedes"
+specifies the file descriptor that corresponds to the socket (port) on
+which to communicate to the frontend process.  This option is 
+.BR not
+useful for interactive use.
+.TP
+.BR "-Q"
+Specifies \*(lqquiet\*(rq mode.
+.TP
+.BR "-d" " debug_level"
+Turns on debugging at the numeric level
+.IR "debug_level" .
+Turning on debugging will cause query parse trees and query plans to
+be displayed.
+.TP
+.BR "-o" " output_file"
+Sends all debugging and error output to 
+.IR output_file .
+If the backend is running under the 
+.IR postmaster ,
+error messages are still sent to the frontend process as well as to
+.IR output_file ,
+but debugging output is sent to the controlling tty of the
+.IR postmaster
+(since only one file descriptor can be sent to an actual file).
+.TP
+.BR "-s"
+Print time information and other statistics at the end of each query.
+This is useful for benchmarking or for use in tuning the number of
+buffers.
+.SH "DEPRECATED COMMAND OPTIONS"
+There are several other options that may be specified, used mainly
+for debugging purposes.  These are listed here only for the use by
+Postgres system developers.
+.BR "Use of any of these options is highly discouraged" .
+Furthermore, any of these options may disappear or change at any time.
+.TP
+.BR "-A" "n|r|b|Q\fIn\fP|X\fIn\fP"
+.IP
+This option generates a tremendous amount of output.
+.TP
+.BR "-L"
+Turns off the locking system.
+.TP
+.BR "-N"
+Disables use of newline as a query delimiter.
+.TP
+.BR "-S"
+Indicates that the transaction system can run with the assumption of
+stable main memory, thereby avoiding the necessary flushing of data
+and log pages to disk at the end of each transaction system.  This is
+only used for performance comparisons for stable vs. non-stable
+storage.  Do not use this in other cases, as recovery after a system
+crash may be impossible when this option is specified in the absence
+of stable main memory.
+.TP
+.BR "-b"
+Enables generation of bushy query plan trees (as opposed to left-deep
+query plans trees).  These query plans are not intended for actual
+execution; in addition, this flag often causes Postgres to run out of
+memory.
+.TP
+.BR "-f"
+Forbids the use of particular scan and join methods:
+.IR s " and " i
+disable sequential and index scans respectively, while
+.IR n ", " m " and " h
+disable nested-loop, merge and hash joins respectively.
+This is another feature that may not necessarily produce executable
+plans.
+.TP
+.BR "-p"
+Indicates to the backend server that it has been started by a 
+.IR postmaster
+and make different assumptions about buffer pool management, file
+descriptors, etc.
+.TP
+.BR "-t" "pa[rser]|pl[anner]|e[xecutor]"
+Print timing statistics for each query relating to each of the major
+system modules.  This option cannot be used with
+.BR "-s" .
+.SH "SEE ALSO"
+ipcclean(1),
+psql(1), 
+postmaster(1).
+.SH "DIAGNOSTICS"
+Of the nigh-infinite number of error messages you may see when you
+execute the backend server directly, the most common will probably be:
+.TP
+.BR "semget: No space left on device"
+If you see this message, you should run the
+.IR ipcclean
+command.  After doing this, try starting
+.IR postgres
+again.  If this still doesn't work, you probably need to configure
+your kernel for shared memory and semaphores as described in the
+installation notes.

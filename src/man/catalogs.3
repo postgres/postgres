@@ -1,0 +1,446 @@
+.\" This is -*-nroff-*-
+.\" XXX standard disclaimer belongs here....
+.\" $Header: /cvsroot/pgsql/src/man/Attic/catalogs.3,v 1.1 1996/11/14 10:15:20 scrappy Exp $
+.TH "SYSTEM CATALOGS" INTRO 03/13/94 Postgres95 Postgres95
+.SH "Section 7 \(em System Catalogs"
+.de LS
+.PP
+.if n .ta 5 +13 +13
+.if t .ta 0.5i +1.3i +1.3i
+.in 0
+.nf
+..
+.de LE
+.fi
+.in
+..
+.SH "DESCRIPTION"
+In this
+section we list each of the attributes of the system catalogs and
+define their meanings.
+.SH "CLASS/TYPE SYSTEM CATALOGS"
+These catalogs form the core of the extensibility system:
+.LS
+	\fBname\fP	\fBshared/local\fP	\fBdescription\fP
+	pg_aggregate	local	aggregate functions
+	pg_am	local	access methods
+	pg_amop	local	operators usable with specific access methods
+	pg_amproc	local	procedures used with specific access methods
+	pg_attribute	local	class attributes
+	pg_class	local	classes
+	pg_index	local	secondary indices
+	pg_inherits	local	class inheritance hierarchy
+	pg_language	local	procedure implementation languages
+	pg_opclass	local	operator classes
+	pg_operator	local	query language operators
+	pg_proc	local	procedures (functions)
+	pg_type	local	data types
+.LE
+.SH "ENTITIES"
+These catalogs deal with identification of entities known throughout
+the site:
+.LS
+	\fBname\fP	\fBshared/local\fP	\fBdescription\fP
+	pg_database	shared	current databases
+	pg_group	shared	user groups
+	pg_user	shared	valid users
+.LE
+.SH "RULE SYSTEM CATALOGS"
+.LS
+	\fBname\fP	\fBshared/local\fP	\fBdescription\fP
+	pg_listener	local	processes waiting on alerters
+	pg_prs2plans	local	instance system procedures
+	pg_prs2rule	local	instance system rules
+	pg_prs2stub	local	instance system ``stubs''
+	pg_rewrite	local	rewrite system information
+.LE
+.SH "LARGE OBJECT CATALOGS"
+.PP
+These catalogs are specific to the Inversion file system and large
+objects in general:
+.LS
+	\fBname\fP	\fBshared/local\fP	\fBdescription\fP
+	pg_lobj	local	description of a large object
+	pg_naming	local	Inversion name space mapping
+	pg_platter	local	jukebox platter inventory
+	pg_plmap	local	jukebox platter extent map
+.LE
+.SH "INTERNAL CATALOGS"
+.PP
+These catalogs are internal classes that are not stored as normal
+heaps and cannot be accessed through normal means (attempting to do so
+causes an error).
+.LS
+	\fBname\fP	\fBshared/local\fP	\fBdescription\fP
+	pg_log	shared	transaction commit/abort log
+	pg_magic	shared	magic constant
+	pg_time	shared	commit/abort times
+	pg_variable	shared	special variable values
+.LE
+.PP
+There are several other classes defined with \*(lqpg_\*(rq names.
+Aside from those that end in \*(lqind\*(rq (secondary indices), these
+are all obsolete or otherwise deprecated.
+.SH "CLASS/TYPE SYSTEM CATALOGS"
+.PP
+The following catalogs relate to the class/type system.
+.nf M
+/*
+ * aggregates
+ *
+ * see DEFINE AGGREGATE for an explanation of transition functions
+ */
+pg_aggregate
+    NameData      aggname	/* aggregate name (e.g., "count") */
+    oid         aggowner	/* usesysid of creator */
+    regproc     aggtransfn1	/* first transition function */
+    regproc     aggtransfn2	/* second transition function */
+    regproc     aggfinalfn	/* final function */
+    oid         aggbasetype	/* type of data on which aggregate
+				   operates */
+    oid         aggtranstype1	/* type returned by aggtransfn1 */
+    oid         aggtranstype2	/* type returned by aggtransfn2 */
+    oid         aggfinaltype	/* type returned by aggfinalfn */
+    text        agginitval1	/* external format of initial
+				   (starting) value of aggtransfn1 */
+    text        agginitval2	/* external format of initial
+				   (starting) value of aggtransfn2 */
+.fi
+.nf M
+pg_am
+    NameData      amname		/* access method name */
+    oid         amowner	/* usesysid of creator */
+    char        amkind		/* - deprecated */
+				/* originally:
+				   h=hashed
+				   o=ordered
+				   s=special */
+    int2        amstrategies	/* total NUMBER of strategies by which
+				   we can traverse/search this AM */
+    int2        amsupport	/* total NUMBER of support functions
+				   that this AM uses */
+    regproc     amgettuple	/* "next valid tuple" function */
+    regproc     aminsert	/* "insert this tuple" function */
+    regproc     amdelete	/* "delete this tuple" function */
+    regproc     amgetattr	/* - deprecated */
+    regproc     amsetlock	/* - deprecated */
+    regproc     amsettid	/* - deprecated */
+    regproc     amfreetuple	/* - deprecated */
+    regproc     ambeginscan	/* "start new scan" function */
+    regproc     amrescan	/* "restart this scan" function */
+    regproc     amendscan	/* "end this scan" function */
+    regproc     ammarkpos	/* "mark current scan position"
+				   function */
+    regproc     amrestrpos	/* "restore marked scan position"
+				   function */
+    regproc     amopen		/* - deprecated */
+    regproc     amclose	/* - deprecated */
+    regproc     ambuild	/* "build new index" function */
+    regproc     amcreate 	/* - deprecated */
+    regproc     amdestroy	/* - deprecated */
+.fi
+.nf M
+pg_amop
+    oid         amopid		/* access method with which this 
+				   operator be used */
+    oid         amopclaid	/* operator class with which this
+				   operator can be used */
+    oid         amopopr	/* the operator */
+    int2        amopstrategy	/* traversal/search strategy number
+				   to which this operator applies */
+    regproc     amopselect	/* function to calculate the operator
+				   selectivity */
+    regproc     amopnpages	/* function to calculate the number of
+				   pages that will be examined */
+.fi
+.nf M
+pg_amproc
+    oid         amid		/* access method with which this
+				   procedure is associated */
+    oid         amopclaid	/* operator class with which this
+				   operator can be used */
+    oid         amproc		/* the procedure */
+    int2        amprocnum	/* support function number to which
+				   this operator applies */
+.fi
+.nf M
+pg_class
+     NameData     relname	/* class name */
+     oid        relowner	/* usesysid of owner */
+     oid        relam	/* access method */
+     int4       relpages	/* # of 8KB pages */
+     int4       reltuples	/* # of instances */
+     abstime    relexpires	/* time after which instances are
+				   deleted from non-archival storage */
+     reltime    relpreserved	/* timespan after which instances are
+				   deleted from non-archival storage */
+     bool       relhasindex	/* does the class have a secondary
+				   index? */
+     bool       relisshared	/* is the class shared or local? */
+     char       relkind		/* type of relation:
+				   i=index
+				   r=relation (heap)
+				   s=special
+				   u=uncatalogued (temporary) */
+     char       relarch	/* archive mode:
+			   h=heavy
+			   l=light
+			   n=none */
+     int2       relnatts	/* current # of non-system
+				   attributes */
+     int2       relsmgr	/* storage manager:
+			   0=magnetic disk
+			   1=sony WORM jukebox
+			   2=main memory */
+     int28      relkey	/* - unused */
+     oid8       relkeyop	/* - unused */
+     aclitem    relacl[1]	/* access control lists */
+.fi
+.nf M
+pg_attribute
+    oid         attrelid	/* class containing this attribute */
+    NameData      attname	/* attribute name */
+    oid         atttypid	/* attribute type */
+    oid         attdefrel	/* - deprecated */
+    int4        attnvals	/* - deprecated */
+    oid         atttyparg	/* - deprecated */
+    int2        attlen	/* attribute length, in bytes
+			   -1=variable */
+    int2        attnum	/* attribute number
+			   >0=user attribute
+			   <0=system attribute */
+    int2        attbound	/* - deprecated */
+    bool        attbyval	/* type passed by value? */
+    bool        attcanindex	/* - deprecated */
+    oid         attproc	/* - deprecated */
+    int4        attnelems	/* # of array dimensions */
+    int4        attcacheoff	/* cached offset into tuple */
+    bool        attisset	/* is attribute set-valued? */
+.fi
+.nf M
+pg_inherits
+    oid         inhrel	/* child class */
+    oid         inhparent	/* parent class */
+    int4        inhseqno	/* - deprecated */
+.fi
+.nf M
+    oid         indexrelid	/* oid of secondary index class */
+    oid         indrelid	/* oid of indexed heap class */
+    oid         indproc	/* function to compute index key from
+				   attribute(s) in heap
+				   0=not a functional index */
+    int28       indkey	/* attribute numbers of key 
+			   attribute(s) */
+    oid8        indclass	/* opclass of each key */
+    bool        indisclustered	/* is the index clustered?
+				   - unused */
+    bool        indisarchived	/* is the index archival?
+				   - unused */
+    text        indpred	/* query plan for partial index 
+			   predicate */
+.fi
+.nf M
+pg_type
+    NameData      typname	/* type name */
+    oid         typowner	/* usesysid of owner */
+    int2        typlen	/* length in internal form
+			   -1=variable-length */
+    int2        typprtlen	/* length in external form */
+    bool        typbyval	/* type passed by value? */
+    char        typtype	/* kind of type:
+			   c=catalog (composite)
+			   b=base */
+    bool        typisdefined	/* defined or still a shell? */
+    char        typdelim	/* delimiter for array external form */
+    oid         typrelid	/* class (if composite) */
+    oid         typelem	/* type of each array element */
+    regproc     typinput	/* external-internal conversion
+				   function */ 
+    regproc     typoutput	/* internal-external conversion
+				   function */
+    regproc     typreceive	/* client-server conversion function */
+    regproc     typsend	/* server-client conversion function */
+    text        typdefault	/* default value */
+.fi
+.nf M
+pg_operator
+    NameData      oprname	/* operator name */
+    oid         oprowner	/* usesysid of owner */
+    int2        oprprec	/* - deprecated */
+    char        oprkind	/* kind of operator:
+			   b=binary
+			   l=left unary
+			   r=right unary */
+    bool        oprisleft	/* is operator left/right associative? */
+    bool        oprcanhash	/* is operator usable for hashjoin? */
+    oid         oprleft	/* left operand type */
+    oid         oprright	/* right operand type */
+    oid         oprresult	/* result type */
+    oid         oprcom	/* commutator operator */
+    oid         oprnegate	/* negator operator */
+    oid         oprlsortop	/* sort operator for left operand */
+    oid         oprrsortop	/* sort operator for right operand */
+    regproc     oprcode	/* function implementing this operator */
+    regproc     oprrest	/* function to calculate operator
+			   restriction selectivity */
+    regproc     oprjoin	/* function to calculate operator 
+			   join selectivity */
+.fi
+.nf M
+pg_opclass
+    NameData      opcname	/* operator class name */
+.fi
+.nf M
+pg_proc
+    NameData      proname	/* function name */
+    oid         proowner	/* usesysid of owner */
+    oid         prolang	/* function implementation language */
+    bool        proisinh	/* - deprecated */
+    bool        proistrusted	/* run in server or untrusted function
+				   process? */
+    bool        proiscachable	/* can the function return values be
+				   cached? */
+    int2        pronargs	/* # of arguments */
+    bool        proretset	/* does the function return a set?
+				   - unused */
+    oid         prorettype	/* return type */
+    oid8        proargtypes	/* argument types */
+    int4        probyte_pct	/* % of argument size (in bytes) that
+				   needs to be examined in order to
+				   compute the function */ 
+    int4        properbyte_cpu	/* sensitivity of the function's
+				   running time to the size of its
+				   inputs */
+    int4        propercall_cpu	/* overhead of the function's
+				   invocation (regardless of input
+				   size) */
+    int4        prooutin_ratio	/* size of the function's output as a
+				   percentage of the size of the input */
+    text        prosrc	/* function definition (postquel only) */
+    bytea       probin	/* path to object file (C only) */
+.fi
+.nf M
+pg_language
+    NameData      lanname	/* language name */
+    text        lancompiler	/* - deprecated */
+.fi
+.SH "ENTITIES"
+.nf M
+pg_database
+    NameData      datname		/* database name */
+    oid         datdba		/* usesysid of database administrator */
+    text        datpath		/* directory of database under
+				   $PGDATA */ 
+.fi
+.nf M
+pg_group
+    NameData      groname	/* group name */
+    int2        grosysid	/* group's UNIX group id */
+    int2        grolist[1]	/* list of usesysids of group members */
+.fi
+.nf M
+pg_user
+    NameData      usename		/* user's name */
+    int2        usesysid	/* user's UNIX user id */
+    bool        usecreatedb	/* can user create databases? */
+    bool        usetrace	/* can user set trace flags? */
+    bool        usesuper	/* can user be POSTGRES superuser? */
+    bool        usecatupd	/* can user update catalogs? */
+.fi
+.SH "RULE SYSTEM CATALOGS"
+.nf M
+pg_listener
+    NameData      relname	/* class for which asynchronous 
+			   notification is desired */
+    int4        listenerpid	/* process id of server corresponding
+				   to a frontend program waiting for
+				   asynchronous notification */
+    int4        notification	/* whether an event notification for
+				   this process id still pending */
+
+.fi
+.nf M
+pg_prs2rule
+    NameData      prs2name	/* rule name */
+    char        prs2eventtype	/* rule event type:
+				   R=retrieve
+				   U=update (replace)
+				   A=append
+				   D=delete */
+    oid         prs2eventrel	/* class to which event applies */
+    int2        prs2eventattr	/* attribute to which event applies */
+    float8      necessary	/* - deprecated */
+    float8      sufficient	/* - deprecated */
+    text        prs2text	/* text of original rule definition */
+.fi
+.nf M
+pg_prs2plans
+    oid         prs2ruleid	/* prs2rule instance for which this
+				   plan is used */
+    int2        prs2planno	/* plan number (one rule may invoke
+				   multiple plans) */
+    text        prs2code	/* external representation of the plan */
+.fi
+.nf M
+pg_prs2stub
+    oid         prs2relid	/* class to which this rule applies */
+    bool        prs2islast	/* is this the last stub fragment? */
+    int4        prs2no		/* stub fragment number */
+    stub        prs2stub	/* stub fragment */
+.fi
+.nf M
+pg_rewrite
+    NameData      rulename	/* rule name */
+    char        ev_type	/* event type:
+			   RETRIEVE, REPLACE, APPEND, DELETE
+			   codes are parser-dependent (!?) */
+    oid         ev_class	/* class to which this rule applies */
+    int2        ev_attr	/* attribute to which this rule applies */
+    bool        is_instead	/* is this an "instead" rule? */
+    text        ev_qual	/* qualification with which to modify
+			   (rewrite) the plan that triggered this
+			   rule */
+    text        action	/* parse tree of action */
+.fi
+.SH "LARGE OBJECT CATALOGS"
+.nf M
+pg_lobj
+    oid         ourid		/* 'ourid' from pg_naming that
+				   identifies this object in the
+				   Inversion file system namespace */
+    int4        objtype		/* storage type code:
+				   0=Inversion
+				   1=Unix
+				   2=External
+				   3=Jaquith */
+    bytea       object_descripto/* opaque object-handle structure */
+.fi
+.nf M
+pg_naming
+    NameData      filename	/* filename component */
+    oid         ourid		/* random oid used to identify this
+				   instance in other instances (can't
+				   use the actual oid for obscure
+				   reasons */
+    oid         parentid	/* pg_naming instance of parent
+				   Inversion file system directory */
+.fi
+.nf M
+pg_platter
+     NameData     plname		/* platter name */
+     int4       plstart		/* the highest OCCUPIED extent */
+.fi
+.nf M
+pg_plmap
+     oid        plid		/* platter (in pg_platter) on which
+				   this extent (of blocks) resides */
+     oid        pldbid		/* database of the class to which this
+				   extent (of blocks) belongs */
+     oid        plrelid		/* class to which this extend (of
+				   blocks) belongs */
+     int4       plblkno		/* starting block number within the
+				   class */ 
+     int4       ploffset	/* offset within the platter at which
+				   this extent begins */
+     int4       plextentsz	/* length of this extent */
+.fi
