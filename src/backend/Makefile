@@ -34,7 +34,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/Makefile,v 1.26 1997/09/20 16:08:24 thomas Exp $
+#    $Header: /cvsroot/pgsql/src/backend/Makefile,v 1.27 1997/11/13 03:22:10 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -51,7 +51,8 @@ endif
 
 OBJS = $(DIRS:%=%/SUBSYS.o)
 
-all: postgres $(POSTGRES_IMP) global1.bki.source local1_template1.bki.source
+all: postgres $(POSTGRES_IMP) global1.bki.source local1_template1.bki.source \
+				global1.description local1_template1.description
 
 postgres: $(OBJS) ../utils/version.o
 	$(CC) -o postgres $(OBJS) ../utils/version.o $(LDFLAGS)
@@ -64,10 +65,12 @@ $(DIRS:%=%.dir):
 ../utils/version.o:
 	$(MAKE) -C ../utils version.o        
 
-global1.bki.source local1_template1.bki.source: catalog/$@
+global1.bki.source local1_template1.bki.source \
+global1.description local1_template1.description: catalog/$@
 	cp catalog/$@ .
 
-catalog/global1.bki.source catalog/local1_template1.bki.source:
+catalog/global1.bki.source catalog/local1_template1.bki.source \
+catalog/global1.description catalog/local1_template1.description:
 	$(MAKE) -C catalog $@
 
 # The postgres.o target is needed by the rule in Makefile.global that
@@ -91,7 +94,8 @@ fmgr.h:
 #############################################################################
 clean:
 	rm -f postgres $(POSTGRES_IMP) fmgr.h parse.h \
-	    global1.bki.source local1_template1.bki.source
+	    global1.bki.source local1_template1.bki.source \
+	    global1.description local1_template1.description
 	for i in $(DIRS); do $(MAKE) -C $$i clean PORTNAME=$(PORTNAME); done
 
 .DEFAULT:
@@ -115,6 +119,7 @@ clean:
 
 install: $(LIBDIR) $(BINDIR) $(HEADERDIR) postgres $(POSTGRES_IMP) fmgr.h\
          global1.bki.source local1_template1.bki.source \
+         global1.description local1_template1.description \
          libpq/pg_hba.conf.sample optimizer/geqo/pg_geqo.sample
 	
 	$(INSTALL) $(INSTL_EXE_OPTS) postgres $(BINDIR)/postgres
@@ -126,8 +131,12 @@ endif
 	$(INSTALL) $(INSTLOPTS) fmgr.h $(HEADERDIR)/fmgr.h
 	$(INSTALL) $(INSTLOPTS) global1.bki.source \
 	  $(LIBDIR)/global1.bki.source
+	$(INSTALL) $(INSTLOPTS) global1.description \
+	  $(LIBDIR)/global1.description
 	$(INSTALL) $(INSTLOPTS) local1_template1.bki.source \
 	  $(LIBDIR)/local1_template1.bki.source
+	$(INSTALL) $(INSTLOPTS) local1_template1.description \
+	  $(LIBDIR)/local1_template1.description
 	$(INSTALL) $(INSTLOPTS) libpq/pg_hba.conf.sample \
 	  $(LIBDIR)/pg_hba.conf.sample
 	$(INSTALL) $(INSTLOPTS) optimizer/geqo/pg_geqo.sample \

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.101 1997/11/07 06:27:52 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.102 1997/11/13 03:22:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -116,6 +116,7 @@ handleCopyIn(PGresult *res, const bool mustprompt,
 			 FILE *copystream);
 static int	tableList(PsqlSettings *pset, bool deep_tablelist, char info_type);
 static int	tableDesc(PsqlSettings *pset, char *table, FILE *fout);
+static int	objectDescription(PsqlSettings *pset, char *object, FILE *fout);
 static int	rightsList(PsqlSettings *pset);
 static void prompt_for_password(char *username, char *password);
 static char *
@@ -224,6 +225,7 @@ slashUsage(PsqlSettings *pset)
 	fprintf(fout, " \\connect <dbname|-> <user> -- connect to new database (currently '%s')\n", PQdb(pset->db));
 	fprintf(fout, " \\copy table {from | to} <fname>\n");
 	fprintf(fout, " \\d [<table>] -- list tables and indices in database or columns in <table>, * for all\n");
+	fprintf(fout, " \\dc [<object>]- list comment for table, field, type, function, or operator.\n");
 	fprintf(fout, " \\di          -- list only indices in database\n");
 	fprintf(fout, " \\ds          -- list only sequences in database\n");
 	fprintf(fout, " \\dt          -- list only tables in database\n");
@@ -331,8 +333,8 @@ tableList(PsqlSettings *pset, bool deep_tablelist, char info_type)
 #endif
 	
 	listbuf[0] = '\0';
-	strcat(listbuf, "SELECT usename, relname, relkind, relhasrules");
-	strcat(listbuf, "  FROM pg_class, pg_user ");
+	strcat(listbuf, "SELECT usename, relname, relkind, relhasrules ");
+	strcat(listbuf, "FROM pg_class, pg_user ");
 	switch (info_type)
 	{
 		case 't':
@@ -356,8 +358,8 @@ tableList(PsqlSettings *pset, bool deep_tablelist, char info_type)
 	 * the usesysid = relowner won't work on stock 1.0 dbs, need to add in
 	 * the int4oideq function
 	 */
-	strcat(listbuf, "  and usesysid = relowner");
-	strcat(listbuf, "  ORDER BY relname ");
+	strcat(listbuf, " and usesysid = relowner");
+	strcat(listbuf, " ORDER BY relname ");
 	if (!(res = PSQLexec(pset, listbuf)))
 		return -1;
 	/* first, print out the attribute names */
@@ -472,8 +474,8 @@ rightsList(PsqlSettings *pset)
 	PGresult   *res;
 
 	listbuf[0] = '\0';
-	strcat(listbuf, "SELECT relname, relacl");
-	strcat(listbuf, "  FROM pg_class, pg_user ");
+	strcat(listbuf, "SELECT relname, relacl ");
+	strcat(listbuf, "FROM pg_class, pg_user ");
 	strcat(listbuf, "WHERE ( relkind = 'r' OR relkind = 'i') ");
 	strcat(listbuf, "  and relname !~ '^pg_'");
 	strcat(listbuf, "  and relname !~ '^xin[vx][0-9]+'");
@@ -560,9 +562,9 @@ tableDesc(PsqlSettings *pset, char *table, FILE *fout)
 	}
 
 	descbuf[0] = '\0';
-	strcat(descbuf, "SELECT a.attnum, a.attname, t.typname, a.attlen, a.attnotnull");
-	strcat(descbuf, "  FROM pg_class c, pg_attribute a, pg_type t ");
-	strcat(descbuf, "    WHERE c.relname = '");
+	strcat(descbuf, "SELECT a.attnum, a.attname, t.typname, a.attlen, a.attnotnull ");
+	strcat(descbuf, "FROM pg_class c, pg_attribute a, pg_type t ");
+	strcat(descbuf, "WHERE c.relname = '");
 	strcat(descbuf, table);
 	strcat(descbuf, "'");
 	strcat(descbuf, "    and a.attnum > 0 ");
@@ -655,6 +657,197 @@ tableDesc(PsqlSettings *pset, char *table, FILE *fout)
 	else
 	{
 		fprintf(stderr, "Couldn't find table %s!\n", table);
+		return (-1);
+	}
+}
+
+/*
+ * Get object comments
+ *
+ * Describe the columns in a database table. returns 0 if all went well
+ *
+ *
+ */
+int
+objectDescription(PsqlSettings *pset, char *object, FILE *fout)
+{
+	char		descbuf[256];
+	int			nDescriptions;
+	int			i;
+	PGresult   *res;
+	int			usePipe = 0;
+	char	   *pagerenv;
+
+#ifdef TIOCGWINSZ
+	if (fout == NULL &&
+		pset->notty == 0 &&
+		(ioctl(fileno(stdout), TIOCGWINSZ, &screen_size) == -1 ||
+		 screen_size.ws_col == 0 ||
+		 screen_size.ws_row == 0))
+	{
+#endif
+		screen_size.ws_row = 24;
+		screen_size.ws_col = 80;
+#ifdef TIOCGWINSZ
+	}
+#endif
+	
+	/* Build the query */
+
+	while (isspace(*object))
+		object++;
+		
+	/* if the object name is surrounded by double-quotes, then don't convert case */
+	if (*object == '"')
+	{
+		object++;
+		if (*(object+strlen(object)-1) == '"')
+			*(object+strlen(object)-1) = '\0';
+	}
+	else
+	{
+		for (i = strlen(object); i >= 0; i--)
+			if (isupper(object[i]))
+				object[i] = tolower(object[i]);
+	}
+
+	descbuf[0] = '\0';
+	if (strchr(object,'.') != NULL)
+	{
+		char	table[NAMEDATALEN],column[NAMEDATALEN];
+
+		StrNCpy(table,object,
+			((strchr(object,'.')-object+1) < NAMEDATALEN) ?
+				(strchr(object,'.')-object+1) : NAMEDATALEN);
+		StrNCpy(column,strchr(object,'.')+1,NAMEDATALEN);
+		strcat(descbuf, "SELECT DISTINCT description ");
+		strcat(descbuf, "FROM pg_class, pg_attribute, pg_description ");
+		strcat(descbuf, "WHERE pg_class.relname = '");
+		strcat(descbuf, table);
+		strcat(descbuf, "' and ");
+		strcat(descbuf, "pg_class.oid = pg_attribute.attrelid and ");
+		strcat(descbuf, "pg_attribute.attname = '");
+		strcat(descbuf, column);
+		strcat(descbuf, "' and ");
+		strcat(descbuf, " pg_attribute.oid = pg_description.rowoid " );
+		if (!(res = PSQLexec(pset, descbuf)))
+			return -1;
+	}
+	else
+	{		
+		strcat(descbuf, "SELECT DISTINCT description ");
+		strcat(descbuf, "FROM pg_class, pg_description ");
+		strcat(descbuf, "WHERE pg_class.relname = '");
+		strcat(descbuf, object);
+		strcat(descbuf, "'" );
+		strcat(descbuf, " and pg_class.oid = pg_description.rowoid " );
+		if (!(res = PSQLexec(pset, descbuf)))
+			return -1;
+		else if (PQntuples(res) <= 0)
+		{
+			PQclear(res);
+			descbuf[0] = '\0';
+			strcat(descbuf, "SELECT DISTINCT description ");
+			strcat(descbuf, "FROM pg_type, pg_description ");
+			strcat(descbuf, "WHERE pg_type.typname = '");
+			strcat(descbuf, object);
+			strcat(descbuf, "'" );
+			strcat(descbuf, " and pg_type.oid = pg_description.rowoid " );
+			if (!(res = PSQLexec(pset, descbuf)))
+				return -1;
+			else if (PQntuples(res) <= 0)
+			{
+				PQclear(res);
+				descbuf[0] = '\0';
+				strcat(descbuf, "SELECT DISTINCT description ");
+				strcat(descbuf, "FROM pg_type, pg_description ");
+				strcat(descbuf, "WHERE pg_type.typname = '");
+				strcat(descbuf, object);
+				strcat(descbuf, "'" );
+				strcat(descbuf, " and pg_type.oid = pg_description.rowoid " );
+				if (!(res = PSQLexec(pset, descbuf)))
+					return -1;
+				else if (PQntuples(res) <= 0)
+				{
+					PQclear(res);
+					descbuf[0] = '\0';
+					strcat(descbuf, "SELECT DISTINCT description ");
+					strcat(descbuf, "FROM pg_proc, pg_description ");
+					strcat(descbuf, "WHERE pg_proc.proname = '");
+					strcat(descbuf, object);
+					strcat(descbuf, "'" );
+					strcat(descbuf, " and pg_proc.oid = pg_description.rowoid " );
+					if (!(res = PSQLexec(pset, descbuf)))
+						return -1;
+					else if (PQntuples(res) <= 0)
+					{
+						PQclear(res);
+						descbuf[0] = '\0';
+						strcat(descbuf, "SELECT DISTINCT description ");
+						strcat(descbuf, "FROM pg_operator, pg_description ");
+						strcat(descbuf, "WHERE pg_operator.oprname = '");
+						strcat(descbuf, object);
+						strcat(descbuf, "'" );
+						strcat(descbuf, " and pg_operator.oid = pg_description.rowoid " );
+						if (!(res = PSQLexec(pset, descbuf)))
+							return -1;
+						else if (PQntuples(res) <= 0)
+						{
+							PQclear(res);
+							descbuf[0] = '\0';
+							strcat(descbuf, "SELECT DISTINCT description ");
+							strcat(descbuf, "FROM pg_aggregate, pg_description ");
+							strcat(descbuf, "WHERE pg_aggregate.aggname = '");
+							strcat(descbuf, object);
+							strcat(descbuf, "'" );
+							strcat(descbuf, " and pg_aggregate.oid = pg_description.rowoid " );
+							if (!(res = PSQLexec(pset, descbuf)))
+								return -1;
+						}
+					}
+				}
+			}
+		}
+	}
+	nDescriptions = PQntuples(res);
+	if (nDescriptions > 0)
+	{
+		if (fout == NULL)
+		{
+			if (pset->notty == 0 &&
+				(pagerenv = getenv("PAGER")) &&
+				pagerenv[0] != '\0' &&
+				screen_size.ws_row <= nDescriptions + 1 &&
+				(fout = popen(pagerenv, "w")))
+			{
+				usePipe = 1;
+				pqsignal(SIGPIPE, SIG_IGN);
+			}
+			else
+				fout = stdout;
+		}
+		/*
+		 * * Display the information
+		 */
+
+		fprintf(fout,"\nObject    = %s\n", object);
+
+		/* next, print out the instances */
+		for (i = 0; i < PQntuples(res); i++)
+			fprintf(fout,"%s\n",PQgetvalue(res, i, 0));
+
+		PQclear(res);
+		if (usePipe)
+		{
+			pclose(fout);
+			pqsignal(SIGPIPE, SIG_DFL);
+		}
+		return (0);
+
+	}
+	else
+	{
+		fprintf(stderr, "Couldn't find comments for object %s!\n", object);
 		return (-1);
 	}
 }
@@ -1505,31 +1698,29 @@ HandleSlashCmds(PsqlSettings *pset,
 			break;
 		case 'd':				/* \d describe tables or columns in a
 								 * table */
-			if (strncmp(cmd, "dt", 2) == 0)
-			{					/* only tables */
-				tableList(pset, false, 't');
-			}
+			if (strncmp(cmd, "dc", 2) == 0)
+								/* descriptions */
+				objectDescription(pset, optarg+1, NULL);
 			else if (strncmp(cmd, "di", 2) == 0)
-			{					/* only indices */
+								/* only indices */
 				tableList(pset, false, 'i');
-			}
 			else if (strncmp(cmd, "ds", 2) == 0)
-			{					/* only sequences */
+								/* only sequences */
 				tableList(pset, false, 'S');
-			}
+			else if (strncmp(cmd, "dt", 2) == 0)
+								/* only tables */
+				tableList(pset, false, 't');
 			else if (!optarg)
-			{					/* show tables, sequences and indices */
+								/* show tables, sequences and indices */
 				tableList(pset, false, 'b');
-			}
 			else if (strcmp(optarg, "*") == 0)
 			{					/* show everything */
 				if (tableList(pset, false, 'b') == 0)
 					tableList(pset, true, 'b');
 			}
 			else
-			{					/* describe the specified table */
+								/* describe the specified table */
 				tableDesc(pset, optarg, NULL);
-			}
 			break;
 		case 'e':				/* edit */
 			{

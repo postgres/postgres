@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_opclass.h,v 1.5 1997/09/08 02:35:19 momjian Exp $
+ * $Id: pg_opclass.h,v 1.6 1997/11/13 03:23:03 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -63,33 +63,61 @@ typedef FormData_pg_opclass *Form_pg_opclass;
  * in, which are invalid OID's anyway.  --djm
  */
 DATA(insert OID =  406 (	char2_ops		409   ));
+DESCR("");
 DATA(insert OID =  407 (	char4_ops		410   ));
+DESCR("");
 DATA(insert OID =  408 (	char8_ops		411   ));
+DESCR("");
 DATA(insert OID = 1181 (	name_ops		 19   ));
+DESCR("");
 DATA(insert OID =  421 (	int2_ops		 21   ));
+DESCR("");
 DATA(insert OID =  422 (	box_ops			603   ));
+DESCR("");
 DATA(insert OID =  423 (	float8_ops		701   ));
+DESCR("");
 DATA(insert OID =  424 (	int24_ops		  0   ));
+DESCR("");
 DATA(insert OID =  425 (	int42_ops		  0   ));
+DESCR("");
 DATA(insert OID =  426 (	int4_ops		 23   ));
+DESCR("");
 #define INT4_OPS_OID 426
 DATA(insert OID =  427 (	oid_ops			 26   ));
+DESCR("");
 DATA(insert OID =  428 (	float4_ops		700   ));
+DESCR("");
 DATA(insert OID =  429 (	char_ops		 18   ));
+DESCR("");
 DATA(insert OID =  430 (	char16_ops		 20   ));
+DESCR("");
 DATA(insert OID =  431 (	text_ops		 25   ));
+DESCR("");
 DATA(insert OID =  432 (	abstime_ops		702   ));
+DESCR("");
 DATA(insert OID =  433 (	bigbox_ops		  0   ));
+DESCR("");
 DATA(insert OID =  434 (	poly_ops		604   ));
+DESCR("");
 DATA(insert OID =  435 (	oidint4_ops		910   ));
+DESCR("");
 DATA(insert OID =  436 (	oidname_ops		911   ));
+DESCR("");
 DATA(insert OID =  437 (	oidint2_ops		810   ));
+DESCR("");
 DATA(insert OID =  714 (	circle_ops		718   ));
+DESCR("");
 DATA(insert OID = 1076 (	bpchar_ops	   1042   ));
+DESCR("");
 DATA(insert OID = 1077 (	varchar_ops    1043   ));
+DESCR("");
 DATA(insert OID = 1114 (	date_ops	   1082   ));
+DESCR("");
 DATA(insert OID = 1115 (	time_ops	   1083   ));
+DESCR("");
 DATA(insert OID = 1312 (	datetime_ops   1184   ));
+DESCR("");
 DATA(insert OID = 1313 (	timespan_ops   1186   ));
+DESCR("");
 
 #endif							/* PG_OPCLASS_H */

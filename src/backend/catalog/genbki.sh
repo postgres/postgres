@@ -10,7 +10,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/catalog/Attic/genbki.sh,v 1.8 1997/09/06 18:27:11 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/backend/catalog/Attic/genbki.sh,v 1.9 1997/11/13 03:22:20 momjian Exp $
 #
 # NOTES
 #    non-essential whitespace is removed from the generated file.
@@ -18,6 +18,10 @@
 #    end can be changed into another awk script or something smarter..
 #
 #-------------------------------------------------------------------------
+trap "rm -f /tmp/genbki.tmp" 0 1 2 3 15
+
+# make sure it is empty
+>/tmp/genbki.tmp
 
 PATH=$PATH:/lib:/usr/ccs/lib		# to find cpp
 BKIOPTS=''
@@ -118,6 +122,27 @@ raw == 1 	{ print; next; }
 /^DATA\(/ {
 	data = substr($0, 6, length($0) - 6);
 	print data;
+	nf = 1;
+	oid = 0;
+	while (nf <= NF-3)
+	{
+		if ($nf == "OID" && $(nf+1) == "=")
+		{
+			oid = $(nf+2);
+			break;
+		}
+		nf++;
+	}
+	next;
+}
+
+/^DESCR\(/ {
+	if (oid != 0)
+	{
+		data = substr($0, 8, length($0) - 9);
+		if (data != "")
+			printf "%d	%s\n", oid, data >> "/tmp/genbki.tmp";
+	}
 	next;
 }
 
@@ -234,6 +259,9 @@ END {
 cpp $BKIOPTS | \
 sed -e '/^[ 	]*$/d' \
     -e 's/[ 	][ 	]*/ /g'
+
+# send pg_description file contents to standard error
+cat /tmp/genbki.tmp 1>&2
 
 # ----------------
 #	all done

@@ -4,7 +4,7 @@
 #    Makefile for catalog
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/catalog/Makefile,v 1.3 1997/11/02 15:24:52 vadim Exp $
+#    $Header: /cvsroot/pgsql/src/backend/catalog/Makefile,v 1.4 1997/11/13 03:22:18 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -20,7 +20,8 @@ CFLAGS+=$(INCLUDE_OPT)
 OBJS = catalog.o heap.o index.o indexing.o \
        pg_aggregate.o pg_operator.o pg_proc.o pg_type.o
 
-all: SUBSYS.o global1.bki.source local1_template1.bki.source
+all: SUBSYS.o global1.bki.source local1_template1.bki.source \
+		global1.description local1_template1.description
 
 SUBSYS.o: $(OBJS)
 	$(LD) -r -o SUBSYS.o $(OBJS)
@@ -39,21 +40,21 @@ LOCALBKI_SRCS= $(addprefix ../../include/catalog/, \
                  pg_operator.h pg_opclass.h pg_am.h pg_amop.h pg_amproc.h \
                  pg_language.h pg_parg.h \
                  pg_aggregate.h pg_ipl.h pg_inheritproc.h \
-                 pg_rewrite.h pg_listener.h indexing.h \
+                 pg_rewrite.h pg_listener.h pg_description.h indexing.h \
                 )
 
 global1.bki.source: $(GENBKI) $(GLOBALBKI_SRCS)
-	sh $(SHOPTS) $(GENBKI) $(BKIOPTS) $(GLOBALBKI_SRCS) > $@
+	sh $(SHOPTS) $(GENBKI) $(BKIOPTS) $(GLOBALBKI_SRCS) > $@ 2>global1.description
 
 local1_template1.bki.source: $(GENBKI) $(LOCALBKI_SRCS)
-	sh $(SHOPTS) $(GENBKI) $(BKIOPTS) $(LOCALBKI_SRCS) > $@
+	sh $(SHOPTS) $(GENBKI) $(BKIOPTS) $(LOCALBKI_SRCS) > $@ 2>local1_template1.description
 
 depend dep:
 	$(CC) -MM $(INCLUDE_OPT) *.c >depend
 
 clean: 
-	rm -f SUBSYS.o $(OBJS) global1.bki.source local1_template1.bki.source
-
+	rm -f SUBSYS.o $(OBJS) global1.bki.source local1_template1.bki.source \
+				global1.description local1_template1.description
 
 ifeq (depend,$(wildcard depend))
 include depend

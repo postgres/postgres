@@ -26,7 +26,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.24 1997/02/19 13:11:58 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.25 1997/11/13 03:22:34 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -152,6 +152,8 @@ fi
 
 TEMPLATE=$PGLIB/local1_template1.bki.source
 GLOBAL=$PGLIB/global1.bki.source
+TEMPLATE_DESCR=$PGLIB/local1_template1.description
+GLOBAL_DESCR=$PGLIB/global1.description
 PG_HBA_SAMPLE=$PGLIB/pg_hba.conf.sample
 PG_GEQO_SAMPLE=$PGLIB/pg_geqo.sample
 
@@ -344,8 +346,11 @@ fi
 
 echo
 
-if [ $debug -eq 0 ]; then
-    echo "vacuuming template1"
-    echo "vacuum" | postgres -F -Q -D$PGDATA template1 2>&1 > /dev/null |\
-	 grep -v "^DEBUG:"
-fi
+echo "vacuuming template1"
+echo "vacuum" | postgres -F -Q -D$PGDATA template1 2>&1 > /dev/null |\
+	grep -v "^DEBUG:"
+
+echo "loading pg_description"
+echo "copy pg_description from '$TEMPLATE_DESCR'" | postgres -F -Q -D$PGDATA template1 > /dev/null
+echo "copy pg_description from '$GLOBAL_DESCR'" | postgres -F -Q -D$PGDATA template1 > /dev/null
+
