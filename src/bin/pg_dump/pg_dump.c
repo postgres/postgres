@@ -22,7 +22,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.228 2001/09/06 02:07:42 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.229 2001/09/07 01:11:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -726,7 +726,7 @@ main(int argc, char **argv)
 	else
 		progname = strrchr(argv[0], '/') + 1;
 
-	/* Set defaulty options based on progname */
+	/* Set default options based on progname */
 	if (strcmp(progname, "pg_backup") == 0)
 	{
 		format = "c";
@@ -1449,8 +1449,6 @@ getTypes(int *numTypes)
  * OprInfo* structure
  *
  *	numOprs is set to the number of operators read in
- *
- *
  */
 OprInfo    *
 getOperators(int *numOprs)
@@ -1821,8 +1819,6 @@ clearAggInfo(AggInfo *agginfo, int numArgs)
  * return them in the AggInfo* structure
  *
  * numAggs is set to the number of aggregates read in
- *
- *
  */
 AggInfo    *
 getAggregates(int *numAggs)
@@ -2040,8 +2036,6 @@ getFuncs(int *numFuncs)
  * in the system catalogs return them in the TableInfo* structure
  *
  * numTables is set to the number of tables read in
- *
- *
  */
 TableInfo  *
 getTables(int *numTables, FuncInfo *finfo, int numFuncs)
@@ -2297,7 +2291,7 @@ getTables(int *numTables, FuncInfo *finfo, int numFuncs)
 
 			resetPQExpBuffer(query);
 			appendPQExpBuffer(query,
-							  "SELECT indexrelid FROM pg_index i WHERE i.indisprimary AND i.indrelid = %s ",
+							  "SELECT indexrelid FROM pg_index i WHERE i.indisprimary AND i.indrelid = '%s'::oid ",
 							  tblinfo[i].oid);
 			res2 = PQexec(g_conn, query->data);
 			if (!res2 || PQresultStatus(res2) != PGRES_TUPLES_OK)
@@ -2335,7 +2329,7 @@ getTables(int *numTables, FuncInfo *finfo, int numFuncs)
 			resetPQExpBuffer(query);
 			appendPQExpBuffer(query,
 							  "SELECT relname FROM pg_class "
-							  "WHERE oid = %s",
+							  "WHERE oid = '%s'::oid",
 							  tblinfo[i].pkIndexOid);
 
 			res2 = PQexec(g_conn, query->data);
@@ -2656,8 +2650,6 @@ getTables(int *numTables, FuncInfo *finfo, int numFuncs)
  * from the system catalogs return them in the InhInfo* structure
  *
  * numInherits is set to the number of tables read in
- *
- *
  */
 InhInfo    *
 getInherits(int *numInherits)
@@ -3013,7 +3005,7 @@ dumpComment(Archive *fout, const char *target, const char *oid,
 	if (fout->remoteVersion >= 70200)
 	{
 		appendPQExpBuffer(query, "SELECT description FROM pg_description "
-						  "WHERE objoid = %s and classoid = "
+						  "WHERE objoid = '%s'::oid and classoid = "
 						  "(SELECT oid FROM pg_class where relname = '%s') "
 						  "and objsubid = %d",
 						  oid, classname, subid);
@@ -3021,7 +3013,7 @@ dumpComment(Archive *fout, const char *target, const char *oid,
 	else
 	{
 		/* Note: this will fail to find attribute comments in pre-7.2... */
-		appendPQExpBuffer(query, "SELECT description FROM pg_description WHERE objoid = %s", oid);
+		appendPQExpBuffer(query, "SELECT description FROM pg_description WHERE objoid = '%s'::oid", oid);
 	}
 
 	/*** Execute query ***/
@@ -3396,7 +3388,7 @@ dumpOneFunc(Archive *fout, FuncInfo *finfo, int i,
 
 	/* becomeUser(fout, finfo[i].usename); */
 
-	sprintf(query, "SELECT lanname FROM pg_language WHERE oid = %u",
+	sprintf(query, "SELECT lanname FROM pg_language WHERE oid = '%u'::oid",
 			finfo[i].lang);
 	res = PQexec(g_conn, query);
 	if (!res ||
@@ -4556,7 +4548,7 @@ dumpIndexes(Archive *fout, IndInfo *indinfo, int numIndexes,
 				int numRows;
 				PQExpBuffer pred = createPQExpBuffer();
 				
-				appendPQExpBuffer(pred, "SELECT pg_get_expr(indpred,indrelid) as pred FROM pg_index WHERE indexrelid = %s",
+				appendPQExpBuffer(pred, "SELECT pg_get_expr(indpred,indrelid) as pred FROM pg_index WHERE indexrelid = '%s'::oid",
 								  indinfo[i].indexreloid);
 				res = PQexec(g_conn, pred->data);
 				if (!res || PQresultStatus(res) != PGRES_TUPLES_OK)
