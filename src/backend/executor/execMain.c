@@ -27,7 +27,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.180 2002/10/14 16:51:30 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.180.2.1 2003/01/23 05:10:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -450,6 +450,7 @@ InitPlan(CmdType operation, Query *parseTree, Plan *plan, EState *estate)
 {
 	List	   *rangeTable;
 	Relation	intoRelationDesc;
+	bool		do_select_into;
 	TupleDesc	tupType;
 
 	/*
@@ -525,6 +526,26 @@ InitPlan(CmdType operation, Query *parseTree, Plan *plan, EState *estate)
 		estate->es_result_relations = NULL;
 		estate->es_num_result_relations = 0;
 		estate->es_result_relation_info = NULL;
+	}
+
+	/*
+	 * Detect whether we're doing SELECT INTO.  If so, set the force_oids
+	 * flag appropriately so that the plan tree will be initialized with
+	 * the correct tuple descriptors.
+	 */
+	do_select_into = false;
+
+	if (operation == CMD_SELECT &&
+		!parseTree->isPortal &&
+		parseTree->into != NULL)
+	{
+		do_select_into = true;
+		/*
+		 * For now, always create OIDs in SELECT INTO; this is for backwards
+		 * compatibility with pre-7.3 behavior.  Eventually we might want
+		 * to allow the user to choose.
+		 */
+		estate->es_force_oids = true;
 	}
 
 	/*
@@ -686,15 +707,8 @@ InitPlan(CmdType operation, Query *parseTree, Plan *plan, EState *estate)
 	 */
 	intoRelationDesc = (Relation) NULL;
 
-	if (operation == CMD_SELECT)
+	if (do_select_into)
 	{
-		if (!parseTree->isPortal)
-		{
-			/*
-			 * a select into table --- need to create the "into" table
-			 */
-			if (parseTree->into != NULL)
-			{
 				char	   *intoName;
 				Oid			namespaceId;
 				AclResult	aclresult;
@@ -717,14 +731,6 @@ InitPlan(CmdType operation, Query *parseTree, Plan *plan, EState *estate)
 				 * have to copy tupType to get rid of constraints
 				 */
 				tupdesc = CreateTupleDescCopy(tupType);
-
-				/*
-				 * Formerly we forced the output table to have OIDs, but
-				 * as of 7.3 it will not have OIDs, because it's too late
-				 * here to change the tupdescs of the already-initialized
-				 * plan tree.  (Perhaps we could recurse and change them
-				 * all, but it's not really worth the trouble IMHO...)
-				 */
 
 				intoRelationId =
 					heap_create_with_catalog(intoName,
@@ -752,8 +758,6 @@ InitPlan(CmdType operation, Query *parseTree, Plan *plan, EState *estate)
 
 				intoRelationDesc = heap_open(intoRelationId,
 											 AccessExclusiveLock);
-			}
-		}
 	}
 
 	estate->es_into_relation_descriptor = intoRelationDesc;
@@ -1852,6 +1856,7 @@ EvalPlanQual(EState *estate, Index rti, ItemPointer tid)
 	if (estate->es_origPlan->nParamExec > 0)
 		memset(epqstate->es_param_exec_vals, 0,
 			   estate->es_origPlan->nParamExec * sizeof(ParamExecData));
+	epqstate->es_force_oids = estate->es_force_oids;
 	memset(epqstate->es_evTupleNull, false, rtsize * sizeof(bool));
 	epqstate->es_useEvalPlan = false;
 	Assert(epqstate->es_tupleTable == NULL);

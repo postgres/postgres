@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: execnodes.h,v 1.75 2002/09/04 20:31:42 momjian Exp $
+ * $Id: execnodes.h,v 1.75.2.1 2003/01/23 05:10:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -306,6 +306,8 @@ typedef struct EState
 	uint32		es_processed;	/* # of tuples processed */
 	Oid			es_lastoid;		/* last oid processed (by INSERT) */
 	List	   *es_rowMark;		/* not good place, but there is no other */
+	bool		es_force_oids;	/* true forces result tuples to have (space
+								 * for) OIDs --- used for SELECT INTO */
 	MemoryContext es_query_cxt; /* per-query context in which EState lives */
 
 	/*

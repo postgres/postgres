@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execUtils.c,v 1.90 2002/09/04 20:31:18 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execUtils.c,v 1.90.2.1 2003/01/23 05:10:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -310,14 +310,23 @@ ExecAssignResultTypeFromTL(Plan *node, CommonState *commonstate)
 	 * have to make the decision on a per-relation basis as we initialize
 	 * each of the child plans of the topmost Append plan.	So, this is
 	 * ugly but it works, for now ...
+	 *
+	 * SELECT INTO is also pretty grotty, because we don't yet have the
+	 * INTO relation's descriptor at this point; we have to look aside
+	 * at a flag set by InitPlan().
 	 */
-	ri = node->state->es_result_relation_info;
-	if (ri != NULL)
+	if (node->state->es_force_oids)
+		hasoid = true;
+	else
 	{
-		Relation	rel = ri->ri_RelationDesc;
+		ri = node->state->es_result_relation_info;
+		if (ri != NULL)
+		{
+			Relation	rel = ri->ri_RelationDesc;
 
-		if (rel != NULL)
-			hasoid = rel->rd_rel->relhasoids;
+			if (rel != NULL)
+				hasoid = rel->rd_rel->relhasoids;
+		}
 	}
 
 	tupDesc = ExecTypeFromTL(node->targetlist, hasoid);
