@@ -1,4 +1,4 @@
-postgresql 6.5 multi-byte (MB) support README	  Jan 26 1999
+postgresql 6.5 multi-byte (MB) support README	  Mar 23 1999
 
 						Tatsuo Ishii
 						t-ishii@sra.co.jp
@@ -9,11 +9,12 @@ postgresql 6.5 multi-byte (MB) support README	  Jan 26 1999
 The MB support is intended for allowing PostgreSQL to handle
 multi-byte character sets such as EUC(Extended Unix Code), Unicode and
 Mule internal code. With the MB enabled you can use multi-byte
-character sets in regexp ,LIKE and some functions. The encoding system
-chosen is determined when initializing your PostgreSQL installation
-using initdb(1). Note that this can be overridden when creating a
-database using createdb(1) or create database SQL command. So you
-could have multiple databases with different encoding system.
+character sets in regexp ,LIKE and some functions. The default
+encoding system chosen is determined while initializing your
+PostgreSQL installation using initdb(1). Note that this can be
+overridden when you create a database using createdb(1) or create
+database SQL command. So you could have multiple databases with
+different encoding systems.
 
 MB also fixes some problems concerning with 8-bit single byte
 character sets including ISO8859. (I would not say all of problems
@@ -41,6 +42,9 @@ where encoding_system is one of:
 	LATIN3			ISO 8859-3 English and some European languages
 	LATIN4			ISO 8859-4 English and some European languages
 	LATIN5			ISO 8859-5 English and some European languages
+	KOI8			KOI8-R
+	WIN			CP1251
+	ALT			CP866
 
 Example:
 
@@ -113,17 +117,20 @@ Supported encodings for PGCLIENTENCODING are:
 	EUC_CN			Chinese EUC
 	EUC_KR			Korean EUC
 	EUC_TW			Taiwan EUC
-	BIG5			Traditional chinese
+	BIG5			Traditional Chinese
 	MULE_INTERNAL		Mule internal
 	LATIN1			ISO 8859-1 English and some European languages
 	LATIN2			ISO 8859-2 English and some European languages
 	LATIN3			ISO 8859-3 English and some European languages
 	LATIN4			ISO 8859-4 English and some European languages
 	LATIN5			ISO 8859-5 English and some European languages
+	KOI8			KOI8-R
+	WIN			CP1251
+	ALT			CP866
 
 Note that UNICODE is not supported(yet). Also note that the
 translation is not always possible. Suppose you choose EUC_JP for the
-backend, LATIN1 for the frotend, then some Japanese characters cannot
+backend, LATIN1 for the frontend, then some Japanese characters cannot
 be translated into latin. In this case, a letter cannot be represented
 in the Latin character set, would be transformed as:
 
@@ -151,7 +158,7 @@ To return to the default encoding:
 	RESET CLIENT_ENCODING;
 
 This would reset the frontend encoding to same as the backend
-encoding, thus no endoing translation would be performed.
+encoding, thus no encoding translation would be performed.
 
 4. References
 
@@ -170,8 +177,13 @@ Unicode: http://www.unicode.org/
 
 5. History
 
+Mar 23, 1999
+	* Add support for KOI8(KOI8-R), WIN(CP1251), ALT(CP866)
+	  (thanks Oleg Broytmann for testing)
+	* Fix problem with MB and locale
+
 Jan 26, 1999
-	* Add support Big5 for fronend encoding
+	* Add support for Big5 for fronend encoding
 	  (you need to create a database with EUC_TW to use Big5)
 	* Add regression test case for EUC_TW
 	  (contributed by Jonah Kuo <jonahkuo@mail.ttn.com.tw>)
