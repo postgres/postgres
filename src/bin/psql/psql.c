@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.121 1997/12/22 20:03:53 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.122 1997/12/23 21:38:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -110,7 +110,7 @@ struct winsize
 /* declarations for functions in this file */
 static void usage(char *progname);
 static void slashUsage();
-static void handleCopyOut(PGresult *res, bool quiet, FILE *copystream);
+static void handleCopyOut(PGresult *res, FILE *copystream);
 static void
 handleCopyIn(PGresult *res, const bool mustprompt,
 			 FILE *copystream);
@@ -994,13 +994,13 @@ SendQuery(bool *success_p, PsqlSettings *pset, const char *query,
 			case PGRES_COPY_OUT:
 				*success_p = true;
 				if (copy_out)
-					handleCopyOut(results, pset->quiet, copystream);
+					handleCopyOut(results, copystream);
 				else
 				{
 					if (!pset->quiet)
 						printf("Copy command returns...\n");
 
-					handleCopyOut(results, pset->quiet, stdout);
+					handleCopyOut(results, stdout);
 				}
 				break;
 			case PGRES_COPY_IN:
@@ -1008,7 +1008,7 @@ SendQuery(bool *success_p, PsqlSettings *pset, const char *query,
 				if (copy_in)
 					handleCopyIn(results, false, copystream);
 				else
-					handleCopyIn(results, !pset->quiet, stdin);
+					handleCopyIn(results, !pset->quiet && !pset->notty, stdin);
 				break;
 			case PGRES_NONFATAL_ERROR:
 			case PGRES_FATAL_ERROR:
@@ -2548,7 +2548,7 @@ main(int argc, char **argv)
 #define COPYBUFSIZ	8192
 
 static void
-handleCopyOut(PGresult *res, bool quiet, FILE *copystream)
+handleCopyOut(PGresult *res, FILE *copystream)
 {
 	bool		copydone;
 	char		copybuf[COPYBUFSIZ];

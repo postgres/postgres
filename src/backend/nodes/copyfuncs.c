@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.23 1997/12/23 19:53:30 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.24 1997/12/23 21:38:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -507,6 +507,21 @@ _copyAgg(Agg *from)
 	Node_Copy(from, newnode, aggstate);
 
 	return newnode;
+}
+
+/* ---------------
+ *	_copyGroupClause
+ * --------------
+ */
+static GroupClause *
+_copyGroupClause(GroupClause *from)
+{
+		GroupClause		   *newnode = makeNode(GroupClause);
+
+		newnode->grpOpoid = from->grpOpoid;
+		newnode->entry = copyObject(from->entry);
+
+		return newnode;
 }
 
 
@@ -1664,6 +1679,9 @@ copyObject(void *from)
 			break;
 		case T_Agg:
 			retval = _copyAgg(from);
+			break;
+		case T_GroupClause:
+			retval = _copyGroupClause(from);
 			break;
 		case T_Unique:
 			retval = _copyUnique(from);

@@ -1,5 +1,6 @@
 #!/bin/sh
 trap "/bin/rm -f /tmp/$$.*" 0 1 2 3 15
+cd /tmp
 /bin/cat >$$.c <<EOF
 extern int foo;
 EOF
