@@ -309,7 +309,7 @@ SQLDescribeCol(
 		{
 			result = SQL_SUCCESS_WITH_INFO;
 			stmt->errornumber = STMT_TRUNCATED;
-			stmt->errormsg = "The buffer was too small for the result.";
+			stmt->errormsg = "The buffer was too small for the colName.";
 		}
 	}
 
@@ -619,7 +619,7 @@ SQLColAttributes(
 			{
 				result = SQL_SUCCESS_WITH_INFO;
 				stmt->errornumber = STMT_TRUNCATED;
-				stmt->errormsg = "The buffer was too small for the result.";
+				stmt->errormsg = "The buffer was too small for the rgbDesc.";
 			}
 		}
 
@@ -799,7 +799,7 @@ SQLGetData(
 
 		case COPY_RESULT_TRUNCATED:
 			stmt->errornumber = STMT_TRUNCATED;
-			stmt->errormsg = "The buffer was too small for the result.";
+			stmt->errormsg = "The buffer was too small for the GetData.";
 			return SQL_SUCCESS_WITH_INFO;
 
 		case COPY_GENERAL_ERROR:		/* error msg already filled in */
@@ -1352,7 +1352,7 @@ SQLGetCursorName(
 		{
 			result = SQL_SUCCESS_WITH_INFO;
 			stmt->errornumber = STMT_TRUNCATED;
-			stmt->errormsg = "The buffer was too small for the result.";
+			stmt->errormsg = "The buffer was too small for the GetCursorName.";
 		}
 	}
 

@@ -677,7 +677,7 @@ SQLGetInfo(
 			{
 				result = SQL_SUCCESS_WITH_INFO;
 				conn->errornumber = STMT_TRUNCATED;
-				conn->errormsg = "The buffer was too small for the result.";
+				conn->errormsg = "The buffer was too small for tthe InfoValue.";
 			}
 		}
 	}
@@ -2441,6 +2441,7 @@ SQLPrimaryKeys(
 {
 	static char *func = "SQLPrimaryKeys";
 	StatementClass *stmt = (StatementClass *) hstmt;
+	ConnectionClass *conn;
 	TupleNode  *row;
 	RETCODE		result;
 	int			seq = 0;
@@ -2451,6 +2452,7 @@ SQLPrimaryKeys(
 	SDWORD		attname_len;
 	char		pktab[MAX_TABLE_LEN + 1];
 	Int2		result_cols;
+	int		qno, qstart, qend;
 
 	mylog("%s: entering...stmt=%u\n", func, stmt);
 
@@ -2511,37 +2513,6 @@ SQLPrimaryKeys(
 		return SQL_ERROR;
 	}
 
-#if 0
-	sprintf(tables_query, "select distinct on (attnum) a2.attname, a2.attnum from pg_attribute a1, pg_attribute a2, pg_class c, pg_index i where c.relname = '%s_pkey' AND c.oid = i.indexrelid AND a1.attrelid = c.oid AND a2.attrelid = c.oid AND (i.indkey[0] = a1.attnum OR i.indkey[1] = a1.attnum OR i.indkey[2] = a1.attnum OR i.indkey[3] = a1.attnum OR i.indkey[4] = a1.attnum OR i.indkey[5] = a1.attnum OR i.indkey[6] = a1.attnum OR i.indkey[7] = a1.attnum) order by a2.attnum", pktab);
-#else
-
-	/*
-	 * Simplified query to remove assumptions about number of possible
-	 * index columns. Courtesy of Tom Lane - thomas 2000-03-21
-	 */
-	sprintf(tables_query, "select ta.attname, ia.attnum"
-		 " from pg_attribute ta, pg_attribute ia, pg_class c, pg_index i"
-			" where c.relname = '%s_pkey'"
-			" AND c.oid = i.indexrelid"
-			" AND ia.attrelid = i.indexrelid"
-			" AND ta.attrelid = i.indrelid"
-			" AND ta.attnum = i.indkey[ia.attnum-1]"
-			" order by ia.attnum", pktab);
-#endif
-
-
-	mylog("SQLPrimaryKeys: tables_query='%s'\n", tables_query);
-
-	result = SQLExecDirect(htbl_stmt, tables_query, strlen(tables_query));
-	if ((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO))
-	{
-		stmt->errormsg = SC_create_errormsg(htbl_stmt);
-		stmt->errornumber = tbl_stmt->errornumber;
-		SC_log_error(func, "", stmt);
-		SQLFreeStmt(htbl_stmt, SQL_DROP);
-		return SQL_ERROR;
-	}
-
 	result = SQLBindCol(htbl_stmt, 1, SQL_C_CHAR,
 						attname, MAX_INFO_STRING, &attname_len);
 	if ((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO))
@@ -2553,7 +2524,61 @@ SQLPrimaryKeys(
 		return SQL_ERROR;
 	}
 
-	result = SQLFetch(htbl_stmt);
+	conn = (ConnectionClass *) (stmt->hdbc);
+	if (PG_VERSION_LE(conn, 6.4))
+		qstart = 2;
+	else
+		qstart = 1;
+	qend = 2;
+	for (qno = qstart; qno <= qend; qno++)
+	{
+		switch (qno)
+		{
+			case 1:
+				/*
+	 			 * Simplified query to remove assumptions about number of possible
+	 			 * index columns. Courtesy of Tom Lane - thomas 2000-03-21
+	 			 */
+				sprintf(tables_query, "select ta.attname, ia.attnum"
+		 		" from pg_attribute ta, pg_attribute ia, pg_class c, pg_index i"
+				" where c.relname = '%s'"
+				" AND c.oid = i.indrelid"
+				" AND i.indisprimary = 't'"
+				" AND ia.attrelid = i.indexrelid"
+				" AND ta.attrelid = i.indrelid"
+				" AND ta.attnum = i.indkey[ia.attnum-1]"
+				" order by ia.attnum", pktab);
+				break;
+			case 2:
+				/*
+	 	 		 * Simplified query to search old fashoned primary key
+	 	 		 */
+				sprintf(tables_query, "select ta.attname, ia.attnum"
+		 		" from pg_attribute ta, pg_attribute ia, pg_class c, pg_index i"
+				" where c.relname = '%s_pkey'"
+				" AND c.oid = i.indexrelid"
+				" AND ia.attrelid = i.indexrelid"
+				" AND ta.attrelid = i.indrelid"
+				" AND ta.attnum = i.indkey[ia.attnum-1]"
+				" order by ia.attnum", pktab);
+				break;
+		}
+		mylog("SQLPrimaryKeys: tables_query='%s'\n", tables_query);
+
+		result = SQLExecDirect(htbl_stmt, tables_query, strlen(tables_query));
+		if ((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO))
+		{
+			stmt->errormsg = SC_create_errormsg(htbl_stmt);
+			stmt->errornumber = tbl_stmt->errornumber;
+			SC_log_error(func, "", stmt);
+			SQLFreeStmt(htbl_stmt, SQL_DROP);
+			return SQL_ERROR;
+		}
+
+		result = SQLFetch(htbl_stmt);
+		if (result != SQL_NO_DATA_FOUND)
+			break;
+	}
 
 	while ((result == SQL_SUCCESS) || (result == SQL_SUCCESS_WITH_INFO))
 	{

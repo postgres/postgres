@@ -59,6 +59,7 @@ SQLBindParameter(
 		SC_log_error(func, "", NULL);
 		return SQL_INVALID_HANDLE;
 	}
+	SC_clear_error(stmt);
 
 	if (stmt->parameters_allocated < ipar)
 	{
@@ -292,6 +293,7 @@ SQLDescribeParam(
 		SC_log_error(func, "", NULL);
 		return SQL_INVALID_HANDLE;
 	}
+	SC_clear_error(stmt);
 
 	if ((ipar < 1) || (ipar > stmt->parameters_allocated))
 	{
@@ -366,6 +368,7 @@ SQLNumParams(
 		SC_log_error(func, "", NULL);
 		return SQL_INVALID_HANDLE;
 	}
+	SC_clear_error(stmt);
 
 	if (pcpar)
 		*pcpar = 0;

@@ -153,6 +153,7 @@ SQLFreeStmt(HSTMT hstmt,
 		SC_log_error(func, "", NULL);
 		return SQL_INVALID_HANDLE;
 	}
+	SC_clear_error(stmt);
 
 	if (fOption == SQL_DROP)
 	{
@@ -299,6 +300,7 @@ char
 SC_Destructor(StatementClass *self)
 {
 	mylog("SC_Destructor: self=%u, self->result=%u, self->hdbc=%u\n", self, self->result, self->hdbc);
+	SC_clear_error(self);
 	if (STMT_EXECUTING == self->status)
 	{
 		self->errornumber = STMT_SEQUENCE_ERROR;
@@ -438,6 +440,7 @@ SC_recycle_statement(StatementClass *self)
 
 	mylog("recycle statement: self= %u\n", self);
 
+	SC_clear_error(self);
 	/* This would not happen */
 	if (self->status == STMT_EXECUTING)
 	{
@@ -445,10 +448,6 @@ SC_recycle_statement(StatementClass *self)
 		self->errormsg = "Statement is currently executing a transaction.";
 		return FALSE;
 	}
-
-	self->errormsg = NULL;
-	self->errornumber = 0;
-	self->errormsg_created = FALSE;
 
 	switch (self->status)
 	{
@@ -836,7 +835,10 @@ SC_fetch(StatementClass *self)
 
 				case COPY_RESULT_TRUNCATED:
 					self->errornumber = STMT_TRUNCATED;
-					self->errormsg = "The buffer was too small for the result.";
+					self->errormsg = "Fetched item was truncated.";
+					qlog("The %dth item was truncated\n", lf + 1);   
+					qlog("The buffer size = %d", self->bindings[lf].buflen);
+					qlog(" and the value is '%s'\n", value);
 					result = SQL_SUCCESS_WITH_INFO;
 					break;
 

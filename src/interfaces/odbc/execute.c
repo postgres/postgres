@@ -545,7 +545,7 @@ SQLNativeSql(
 		{
 			result = SQL_SUCCESS_WITH_INFO;
 			conn->errornumber = STMT_TRUNCATED;
-			conn->errormsg = "The buffer was too small for the result.";
+			conn->errormsg = "The buffer was too small for the NativeSQL.";
 		}
 	}
 

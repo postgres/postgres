@@ -233,7 +233,7 @@ dialog:
 		{
 			result = SQL_SUCCESS_WITH_INFO;
 			conn->errornumber = CONN_TRUNCATED;
-			conn->errormsg = "The buffer was too small for the result.";
+			conn->errormsg = "The buffer was too small for the ConnStrOut.";
 		}
 	}
 
