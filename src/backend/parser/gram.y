@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 1.2.2.1 1996/08/24 20:54:06 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 1.2.2.2 1996/10/11 03:28:08 scrappy Exp $
  *
  * HISTORY
  *    AUTHOR		DATE		MAJOR EVENT
@@ -173,7 +173,7 @@ static Node *makeA_Expr(int op, char *opname, Node *lexpr, Node *rexpr);
 	CURSOR, DATABASE, DECLARE, DELETE, DELIMITERS, DESC, DISTINCT, DO,
 	DROP, END_TRANS,
 	EXTEND, FETCH, FOR, FORWARD, FROM, FUNCTION, GRANT, GROUP, 
-	HAVING, HEAVY, IN, INDEX, INHERITS, INSERT, INSTEAD, INTO, 
+	HAVING, HEAVY, IN, INDEX, INHERITS, INSERT, INSTEAD, INTO, IS,
 	ISNULL, LANGUAGE, LIGHT, LISTEN, LOAD, MERGE, MOVE, NEW, 
 	NONE, NOT, NOTHING, NOTIFY, NOTNULL, 
         OIDS, ON, OPERATOR, OPTION, OR, ORDER, 
@@ -201,6 +201,7 @@ static Node *makeA_Expr(int op, char *opname, Node *lexpr, Node *rexpr);
 %nonassoc Op
 %nonassoc NOTNULL
 %nonassoc ISNULL
+%nonassoc IS
 %left  	'+' '-'
 %left  	'*' '/'
 %left	'|'		/* this is the relation union op, not logical or */
@@ -1810,7 +1811,11 @@ a_expr:  attr opt_indirection
 		}
 	| a_expr ISNULL
 		{   $$ = makeA_Expr(ISNULL, NULL, $1, NULL); }
+	| a_expr IS PNULL
+		{   $$ = makeA_Expr(ISNULL, NULL, $1, NULL); }
 	| a_expr NOTNULL
+		{   $$ = makeA_Expr(NOTNULL, NULL, $1, NULL); }
+	| a_expr IS NOT PNULL
 		{   $$ = makeA_Expr(NOTNULL, NULL, $1, NULL); }
 	| a_expr AND a_expr
 		{   $$ = makeA_Expr(AND, NULL, $1, $3); }
