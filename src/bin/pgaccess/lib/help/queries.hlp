@@ -1,8 +1,0 @@
-.pgaw:Help.f.t insert end \
-"Queries" {title} \
-"\n\n" {} \
-"  The following topics are available:\n" {} \
-"	creating a new query\n" {link new_query} \
-"	opening a query for viewing\n" {link open_query} \
-"	visual query designer\n" {link visual_designer}
-

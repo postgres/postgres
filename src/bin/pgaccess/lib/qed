@@ -1,7 +1,0 @@
-#!/bin/bash
-for fisier in *.tcl ; do
-	echo $fisier ;
-	sed -e "s/show_error/showError/g" <$fisier >temp
-	mv temp $fisier
-done
-
