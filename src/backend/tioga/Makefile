@@ -4,7 +4,7 @@
 #    Makefile for tioga
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/tioga/Attic/Makefile,v 1.9 2000/10/20 21:03:50 petere Exp $
+#    $Header: /cvsroot/pgsql/src/backend/tioga/Attic/Makefile,v 1.10 2001/02/20 19:20:28 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -13,7 +13,7 @@ top_builddir = ../../..
 include $(top_builddir)/src/Makefile.global
 
 OBJS = tgRecipe.o Varray.o
-override CPPFLAGS += -I$(srcdir)
+override CPPFLAGS := -I$(srcdir) $(CPPFLAGS)
 
 all: SUBSYS.o
 

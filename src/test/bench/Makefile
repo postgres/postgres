@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/test/bench/Attic/Makefile,v 1.8 2000/10/20 21:04:19 petere Exp $
+#    $Header: /cvsroot/pgsql/src/test/bench/Attic/Makefile,v 1.9 2001/02/20 19:20:29 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -18,7 +18,7 @@ include $(top_builddir)/src/Makefile.global
 CREATEFILES= create.sql bench.sql
 OUTFILES= bench.out bench.out.perquery
 
-override CPPFLAGS += -I$(libpq_srcdir)
+override CPPFLAGS := -I$(libpq_srcdir) $(CPPFLAGS)
 override CFLAGS += $(CFLAGS_SL)
 
 

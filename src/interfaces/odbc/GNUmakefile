@@ -2,7 +2,7 @@
 #
 # GNUMakefile for psqlodbc (Postgres ODBC driver)
 #
-# $Header: /cvsroot/pgsql/src/interfaces/odbc/Attic/GNUmakefile,v 1.13 2001/02/14 05:45:38 momjian Exp $
+# $Header: /cvsroot/pgsql/src/interfaces/odbc/Attic/GNUmakefile,v 1.14 2001/02/20 19:20:29 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -15,7 +15,7 @@ NAME = psqlodbc
 SO_MAJOR_VERSION = 0
 SO_MINOR_VERSION = 26
 
-override CPPFLAGS += -I$(srcdir) -DHAVE_CONFIG_H -DODBCINSTDIR='"$(odbcinst_ini_dir)"'
+override CPPFLAGS := -I$(srcdir) $(CPPFLAGS) -DHAVE_CONFIG_H -DODBCINSTDIR='"$(odbcinst_ini_dir)"'
 
 
 OBJS = info.o bind.o columninfo.o connection.o convert.o drvconn.o \

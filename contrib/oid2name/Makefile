@@ -1,18 +1,17 @@
-#
-#
+# $Header: /cvsroot/pgsql/contrib/oid2name/Makefile,v 1.3 2001/02/20 19:20:27 petere Exp $
 
 subdir = contrib/oid2name
 top_builddir = ../..
 include $(top_builddir)/src/Makefile.global
 
-override CPPFLAGS += -I$(libpq_srcdir)
+override CPPFLAGS := -I$(libpq_srcdir) $(CPPFLAGS)
 
 OBJS	= oid2name.o
 
 all: oid2name
 
 oid2name: $(OBJS) $(libpq_builddir)/libpq.a
-	$(CC) $(CFLAGS) $(LDFLAGS) $(OBJS) $(libpq) $(LIBS) -o $@ -g
+	$(CC) $(CFLAGS) $(OBJS) $(libpq) $(LDFLAGS) $(LIBS) -o $@ -g
 
 install: all installdirs
 	$(INSTALL_PROGRAM) oid2name$(X) $(bindir)

@@ -1,5 +1,5 @@
 #
-# $Header: /cvsroot/pgsql/contrib/cube/Makefile,v 1.2 2001/02/10 22:31:42 petere Exp $
+# $Header: /cvsroot/pgsql/contrib/cube/Makefile,v 1.3 2001/02/20 19:20:27 petere Exp $
 #
 
 subdir = contrib/cube
@@ -14,7 +14,7 @@ NAME= cube
 SO_MAJOR_VERSION= 1
 SO_MINOR_VERSION= 0
 
-override CPPFLAGS += -I$(srcdir)
+override CPPFLAGS := -I$(srcdir) $(CPPFLAGS)
 
 OBJS= cube.o cubeparse.o cubescan.o buffer.o
 

@@ -1,5 +1,5 @@
 #
-# $Header: /cvsroot/pgsql/contrib/spi/Makefile,v 1.18 2000/10/20 21:03:31 petere Exp $
+# $Header: /cvsroot/pgsql/contrib/spi/Makefile,v 1.19 2001/02/20 19:20:28 petere Exp $
 #
 
 subdir = contrib/spi
@@ -12,7 +12,7 @@ SQLS	= $(OBJS:.o=.sql)
 EXAMPLES= $(OBJS:.o=.example)
 MODS	= $(OBJS:.o=$(DLSUFFIX))
 
-override CPPFLAGS += -I$(srcdir)
+override CPPFLAGS := -I$(srcdir) $(CPPFLAGS)
 override CFLAGS += $(CFLAGS_SL)
 
 ifdef REFINT_VERBOSE

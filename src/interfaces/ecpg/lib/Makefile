@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/Makefile,v 1.10 2000/10/20 21:04:05 petere Exp $
+# $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/Makefile,v 1.11 2001/02/20 19:20:29 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -16,7 +16,7 @@ NAME= ecpg
 SO_MAJOR_VERSION= 3
 SO_MINOR_VERSION= 2.0
 
-override CPPFLAGS += -I$(top_srcdir)/src/interfaces/ecpg/include -I$(libpq_srcdir)
+override CPPFLAGS := -I$(top_srcdir)/src/interfaces/ecpg/include -I$(libpq_srcdir) $(CPPFLAGS)
 
 
 OBJS= execute.o typename.o descriptor.o data.o error.o prepare.o memory.o \

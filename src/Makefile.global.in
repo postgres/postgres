@@ -1,5 +1,5 @@
 # -*-makefile-*-
-# $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.118 2001/02/07 20:13:27 tgl Exp $
+# $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.119 2001/02/20 19:20:28 petere Exp $
 
 #------------------------------------------------------------------------------
 # All PostgreSQL makefiles include this file and use the variables it sets,
@@ -137,7 +137,7 @@ DOCBOOKSTYLE	= @DOCBOOKSTYLE@
 
 CPP = @CPP@
 CPPFLAGS = @CPPFLAGS@
-override CPPFLAGS += $(sort -I$(top_srcdir)/src/include -I$(top_builddir)/src/include)
+override CPPFLAGS := $(sort -I$(top_srcdir)/src/include -I$(top_builddir)/src/include) $(CPPFLAGS)
 
 CC = @CC@
 GCC = @GCC@
@@ -239,10 +239,6 @@ endif
 libpq_srcdir = $(top_srcdir)/src/interfaces/libpq
 libpq_builddir = $(top_builddir)/src/interfaces/libpq
 libpq = -L$(libpq_builddir) -lpq
-
-libpgeasy_srcdir = $(top_srcdir)/src/interfaces/libpgeasy
-libpgeasy_builddir = $(top_builddir)/src/interfaces/libpgeasy
-libpgeasy = -L$(libpgeasy_builddir) -lpgeasy
 
 
 ##########################################################################

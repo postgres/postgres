@@ -6,7 +6,7 @@
 # Copyright (c) 1998, Regents of the University of California
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Makefile.shlib,v 1.44 2001/02/10 18:46:34 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/Makefile.shlib,v 1.45 2001/02/20 19:20:28 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -230,9 +230,6 @@ ifeq ($(PORTNAME), beos)
   SHLIB_LINK		+= -ltermcap -lstdc++.r4 -lbind -lsocket -L/boot/develop/lib/x86
 endif
 
-# Pull in any extra -L options that the user might have specified.
-SHLIB_LINK := $(filter -L%, $(LDFLAGS)) $(SHLIB_LINK)
-
 ifeq ($(enable_rpath), yes)
 SHLIB_LINK += $(rpath)
 endif
@@ -298,7 +295,7 @@ else # PORTNAME == win
 # WIN case
 $(shlib) lib$(NAME).a: $(OBJS) $(top_builddir)/src/utils/dllinit.o
 	$(DLLTOOL) --export-all --output-def $(NAME).def $(OBJS)
-	$(DLLWRAP) -o $(shlib) --dllname $(shlib) --def $(NAME).def $(OBJS) $(top_builddir)/src/utils/dllinit.o $(DLLINIT) $(SHLIB_LINK)
+	$(DLLWRAP) -o $(shlib) --dllname $(shlib) --def $(NAME).def $(OBJS) $(top_builddir)/src/utils/dllinit.o $(DLLINIT) $(DLLLIBS) $(SHLIB_LINK)
 	$(DLLTOOL) --dllname $(shlib) --def $(NAME).def --output-lib lib$(NAME).a
 
 $(top_builddir)/src/utils/dllinit.o: $(top_srcdir)/src/utils/dllinit.c

@@ -5,7 +5,7 @@
 # Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/bin/pg_dump/Makefile,v 1.28 2001/02/18 18:33:59 momjian Exp $
+# $Header: /cvsroot/pgsql/src/bin/pg_dump/Makefile,v 1.29 2001/02/20 19:20:28 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -16,15 +16,15 @@ include $(top_builddir)/src/Makefile.global
 OBJS= pg_backup_archiver.o pg_backup_db.o pg_backup_custom.o pg_backup_files.o \
        pg_backup_null.o pg_backup_tar.o $(STRDUP)
 
-override CPPFLAGS+= -I$(libpq_srcdir)
+override CPPFLAGS := -I$(libpq_srcdir) $(CPPFLAGS)
 
 all: submake pg_dump pg_restore pg_dumpall
 
 pg_dump: pg_dump.o common.o $(OBJS) $(libpq_builddir)/libpq.a 
-	$(CC) $(CFLAGS) $(LDFLAGS) pg_dump.o common.o $(OBJS) $(libpq) $(LIBS) -o $@
+	$(CC) $(CFLAGS) pg_dump.o common.o $(OBJS) $(libpq) $(LDFLAGS) $(LIBS) -o $@
 
 pg_restore: pg_restore.o $(OBJS) $(libpq_builddir)/libpq.a
-	$(CC) $(CFLAGS) $(LDFLAGS) pg_restore.o $(OBJS) $(libpq) $(LIBS) -o $@
+	$(CC) $(CFLAGS) pg_restore.o $(OBJS) $(libpq) $(LDFLAGS) $(LIBS) -o $@
 
 ../../utils/strdup.o:
 	$(MAKE) -C ../../utils strdup.o

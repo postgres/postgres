@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/interfaces/libpq++/Attic/Makefile,v 1.27 2000/10/23 21:43:57 petere Exp $
+# $Header: /cvsroot/pgsql/src/interfaces/libpq++/Attic/Makefile,v 1.28 2001/02/20 19:20:29 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -16,7 +16,7 @@ NAME= pq++
 SO_MAJOR_VERSION= 3
 SO_MINOR_VERSION= 1
 
-override CPPFLAGS += -I$(libpq_srcdir)
+override CPPFLAGS := -I$(libpq_srcdir) $(CPPFLAGS)
 
 OBJS = pgconnection.o pgdatabase.o pgtransdb.o pgcursordb.o pglobject.o 
 

@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/interfaces/libpq/Makefile,v 1.50 2001/02/11 01:52:11 ishii Exp $
+# $Header: /cvsroot/pgsql/src/interfaces/libpq/Makefile,v 1.51 2001/02/20 19:20:29 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -17,7 +17,7 @@ NAME= pq
 SO_MAJOR_VERSION= 2
 SO_MINOR_VERSION= 1
 
-override CPPFLAGS += -DFRONTEND -I$(srcdir) -DSYSCONFDIR='"$(sysconfdir)"'
+override CPPFLAGS := -I$(srcdir) $(CPPFLAGS) -DFRONTEND -DSYSCONFDIR='"$(sysconfdir)"'
 
 OBJS= fe-auth.o fe-connect.o fe-exec.o fe-misc.o fe-print.o fe-lobj.o \
       pqexpbuffer.o dllist.o pqsignal.o \
@@ -30,7 +30,7 @@ endif
 # Add libraries that libpq depends (or might depend) on into the
 # shared library link.  (The order in which you list them here doesn't
 # matter.)
-SHLIB_LINK += $(filter -lcrypt -ldes -lkrb -lcom_err -lcrypto -lk5crypto -lkrb5 -lssl -lsocket -lnsl -lresolv, $(LIBS))
+SHLIB_LINK += $(filter -L%, $(LDFLAGS)) $(filter -lcrypt -ldes -lkrb -lcom_err -lcrypto -lk5crypto -lkrb5 -lssl -lsocket -lnsl -lresolv, $(LIBS))
 
 
 all: all-lib

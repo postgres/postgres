@@ -1,5 +1,5 @@
 #
-# $Header: /cvsroot/pgsql/contrib/userlock/Attic/Makefile,v 1.13 2000/10/20 21:03:34 petere Exp $
+# $Header: /cvsroot/pgsql/contrib/userlock/Attic/Makefile,v 1.14 2001/02/20 19:20:28 petere Exp $
 #
 
 subdir = contrib/userlock
@@ -9,7 +9,7 @@ include $(top_builddir)/src/Makefile.global
 NAME	:= user_locks
 SONAME	:= $(NAME)$(DLSUFFIX)
 
-override CPPFLAGS += -I$(srcdir)
+override CPPFLAGS := -I$(srcdir) $(CPPFLAGS)
 override CFLAGS += $(CFLAGS_SL)
 
 all: $(SONAME) $(NAME).sql

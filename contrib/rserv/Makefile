@@ -14,7 +14,7 @@ PERLS	+= SlaveInit SlaveAddTable GetSyncID
 PERLS	+= PrepareSnapshot ApplySnapshot
 SCRIPTS	= InitRservTest
 
-override CPPFLAGS += -I$(srcdir)
+override CPPFLAGS := -I$(srcdir) $(CPPFLAGS)
 override CFLAGS += $(CFLAGS_SL)
 
 

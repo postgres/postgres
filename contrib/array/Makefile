@@ -1,5 +1,5 @@
 #
-# $Header: /cvsroot/pgsql/contrib/array/Attic/Makefile,v 1.13 2000/10/20 21:03:03 petere Exp $
+# $Header: /cvsroot/pgsql/contrib/array/Attic/Makefile,v 1.14 2001/02/20 19:20:26 petere Exp $
 #
 
 subdir = contrib/array
@@ -9,7 +9,7 @@ include $(top_builddir)/src/Makefile.global
 NAME	:= array_iterator
 SONAME	:= $(NAME)$(DLSUFFIX)
 
-override CPPFLAGS += -I$(srcdir)
+override CPPFLAGS := -I$(srcdir) $(CPPFLAGS)
 override CFLAGS += $(CFLAGS_SL)
 
 all: $(SONAME) $(NAME).sql

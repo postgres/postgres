@@ -6,7 +6,7 @@
 # Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/bin/pgtclsh/Attic/Makefile,v 1.36 2001/02/18 18:34:01 momjian Exp $
+# $Header: /cvsroot/pgsql/src/bin/pgtclsh/Attic/Makefile,v 1.37 2001/02/20 19:20:29 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -26,7 +26,7 @@ libpgtcl_srcdir = $(top_srcdir)/src/interfaces/libpgtcl
 libpgtcl_builddir = $(top_builddir)/src/interfaces/libpgtcl
 libpgtcl = -L$(libpgtcl_builddir) -lpgtcl
 
-override CPPFLAGS += -I$(libpgtcl_srcdir) $(TK_XINCLUDES)
+override CPPFLAGS := -I$(libpgtcl_srcdir) $(CPPFLAGS) $(TK_XINCLUDES)
 
 
 # If we are here then Tcl is available
@@ -40,10 +40,10 @@ endif
 all: submake $(PROGRAMS)
 
 pgtclsh: pgtclAppInit.o
-	$(CC) $(CFLAGS) $(LDFLAGS) $^ $(libpgtcl) $(libpq) $(TCL_LIB_SPEC) $(TCL_LIBS) $(LIBS) -o $@
+	$(CC) $(CFLAGS) $^ $(libpgtcl) $(libpq) $(TCL_LIB_SPEC) $(TCL_LIBS) $(LDFLAGS) $(LIBS) -o $@
 
 pgtksh: pgtkAppInit.o
-	$(CC) $(CFLAGS) $(LDFLAGS) $^ $(libpgtcl) $(libpq) $(TK_LIB_SPEC) $(TK_LIBS) $(TCL_LIB_SPEC) $(LIBS) -o $@
+	$(CC) $(CFLAGS) $^ $(libpgtcl) $(libpq) $(TK_LIB_SPEC) $(TK_LIBS) $(TCL_LIB_SPEC) $(LDFLAGS) $(LIBS) -o $@
 
 .PHONY: submake
 submake:

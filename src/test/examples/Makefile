@@ -6,7 +6,7 @@ subdir = src/test/examples
 top_builddir = ../../..
 include $(top_builddir)/src/Makefile.global
 
-override CPPFLAGS+= -I$(libpq_srcdir)
+override CPPFLAGS := -I$(libpq_srcdir) $(CPPFLAGS)
 LIBS += $(libpq)
 
 
