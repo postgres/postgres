@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteDefine.c,v 1.93 2004/02/10 01:55:25 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteDefine.c,v 1.94 2004/05/18 22:49:51 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,7 +33,8 @@
 #include "utils/syscache.h"
 
 
-static void setRuleCheckAsUser(Query *qry, AclId userid);
+static void setRuleCheckAsUser_Query(Query *qry, AclId userid);
+static void setRuleCheckAsUser_Expr(Node *node, AclId userid);
 static bool setRuleCheckAsUser_walker(Node *node, AclId *context);
 
 
@@ -440,13 +441,15 @@ DefineQueryRewrite(RuleStmt *stmt)
 	 * We want the rule's table references to be checked as though by the
 	 * rule owner, not the user referencing the rule.  Therefore, scan
 	 * through the rule's rtables and set the checkAsUser field on all
-	 * rtable entries.
+	 * rtable entries.  We have to look at event_qual as well, in case
+	 * it contains sublinks.
 	 */
 	foreach(l, action)
 	{
 		query = (Query *) lfirst(l);
-		setRuleCheckAsUser(query, GetUserId());
+		setRuleCheckAsUser_Query(query, GetUserId());
 	}
+	setRuleCheckAsUser_Expr(event_qual, GetUserId());
 
 	/* discard rule if it's null action and not INSTEAD; it's a no-op */
 	if (action != NIL || is_instead)
@@ -492,7 +495,7 @@ DefineQueryRewrite(RuleStmt *stmt)
 }
 
 /*
- * setRuleCheckAsUser
+ * setRuleCheckAsUser_Query
  *		Recursively scan a query and set the checkAsUser field to the
  *		given userid in all rtable entries.
  *
@@ -504,7 +507,7 @@ DefineQueryRewrite(RuleStmt *stmt)
  * them always.
  */
 static void
-setRuleCheckAsUser(Query *qry, AclId userid)
+setRuleCheckAsUser_Query(Query *qry, AclId userid)
 {
 	List	   *l;
 
@@ -516,7 +519,7 @@ setRuleCheckAsUser(Query *qry, AclId userid)
 		if (rte->rtekind == RTE_SUBQUERY)
 		{
 			/* Recurse into subquery in FROM */
-			setRuleCheckAsUser(rte->subquery, userid);
+			setRuleCheckAsUser_Query(rte->subquery, userid);
 		}
 		else
 			rte->checkAsUser = userid;
@@ -532,6 +535,12 @@ setRuleCheckAsUser(Query *qry, AclId userid)
 /*
  * Expression-tree walker to find sublink queries
  */
+static void
+setRuleCheckAsUser_Expr(Node *node, AclId userid)
+{
+	(void) setRuleCheckAsUser_walker(node, &userid);
+}
+
 static bool
 setRuleCheckAsUser_walker(Node *node, AclId *context)
 {
@@ -541,7 +550,7 @@ setRuleCheckAsUser_walker(Node *node, AclId *context)
 	{
 		Query	   *qry = (Query *) node;
 
-		setRuleCheckAsUser(qry, *context);
+		setRuleCheckAsUser_Query(qry, *context);
 		return false;
 	}
 	return expression_tree_walker(node, setRuleCheckAsUser_walker,
