@@ -1,4 +1,4 @@
-$PostgreSQL: pgsql/src/backend/utils/misc/README,v 1.3 2003/11/29 19:52:03 pgsql Exp $
+$PostgreSQL: pgsql/src/backend/utils/misc/README,v 1.4 2004/01/19 19:04:40 tgl Exp $
 
 
 GUC IMPLEMENTATION NOTES
@@ -19,29 +19,30 @@ to change when a GUC variable is set.  Show hooks are used to modify
 the default SHOW display for a variable.
 
 If an assign_hook is provided, it points to a function of the signature
-	bool assign_hook(newvalue, bool doit, bool interactive)
-where the type of 'newvalue' matches the kind of variable.  This function
+	bool assign_hook(newvalue, bool doit, GucSource source)
+where the type of "newvalue" matches the kind of variable.  This function
 is called immediately before actually setting the variable's value (so it
 can look at the actual variable to determine the old value).  If the
 function returns "true" then the assignment is completed; if it returns
 "false" then newvalue is considered invalid and the assignment is not
 performed.  If "doit" is false then the function should simply check
-validity of newvalue and not change any derived state.  "interactive" is
-true when we are performing a SET command; in this case it is okay for the
-assign_hook to raise an error via elog().  If the function returns false
-for an interactive assignment then guc.c will report a generic "invalid
-value" error message.  (An internal elog() in an assign_hook is only
-needed if you want to generate a specialized error message.)  But when
-"interactive" is false we are reading a non-interactive option source,
-such as postgresql.conf.  In this case the assign_hook should *not* elog
-but should just return false if it doesn't like the newvalue.  (An
-elog(LOG) call would be acceptable if you feel a need for a custom
-complaint in this situation.)
+validity of newvalue and not change any derived state.  The "source" parameter
+indicates where the new value came from.  If it is >= PGC_S_INTERACTIVE,
+then we are performing an interactive assignment (e.g., a SET command).
+In such cases it is okay for the assign_hook to raise an error via ereport().
+If the function returns false for an interactive assignment then guc.c will
+report a generic "invalid value" error message.  (An internal ereport() in
+an assign_hook is only needed if you want to generate a specialized error
+message.)  But when source < PGC_S_INTERACTIVE, we are reading a
+non-interactive option source, such as postgresql.conf.  In this case the
+assign_hook should *not* ereport but should just return false if it doesn't
+like the newvalue.  (An ereport(LOG) call would be acceptable if you feel a
+need for a custom complaint in this situation.)
 
 For string variables, the signature for assign hooks is a bit different:
 	const char *assign_hook(const char *newvalue,
 				bool doit,
-				bool interactive)
+				GucSource source)
 The meanings of the parameters are the same as for the other types of GUC
 variables, but the return value is handled differently:
 	NULL --- assignment fails (like returning false for other datatypes)

@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.176 2004/01/06 17:26:23 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.177 2004/01/19 19:04:40 tgl Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -24,7 +24,6 @@
 #include "utils/guc.h"
 #include "utils/guc_tables.h"
 
-#include "access/xlog.h"
 #include "catalog/namespace.h"
 #include "catalog/pg_type.h"
 #include "commands/async.h"
@@ -52,7 +51,6 @@
 #include "tcop/tcopprot.h"
 #include "utils/array.h"
 #include "utils/builtins.h"
-#include "utils/datetime.h"
 #include "utils/pg_locale.h"
 #include "pgstat.h"
 
@@ -81,22 +79,22 @@ extern char *Syslog_facility;
 extern char *Syslog_ident;
 
 static const char *assign_facility(const char *facility,
-				bool doit, bool interactive);
+				bool doit, GucSource source);
 #endif
 
 static const char *assign_defaultxactisolevel(const char *newval,
-						   bool doit, bool interactive);
+						   bool doit, GucSource source);
 static const char *assign_log_min_messages(const char *newval,
-						bool doit, bool interactive);
+						bool doit, GucSource source);
 static const char *assign_client_min_messages(const char *newval,
-						   bool doit, bool interactive);
+						   bool doit, GucSource source);
 static const char *assign_min_error_statement(const char *newval, bool doit,
-						   bool interactive);
+						   GucSource source);
 static const char *assign_msglvl(int *var, const char *newval,
-			  bool doit, bool interactive);
+			  bool doit, GucSource source);
 static const char *assign_log_error_verbosity(const char *newval, bool doit,
-						   bool interactive);
-static bool assign_phony_autocommit(bool newval, bool doit, bool interactive);
+						   GucSource source);
+static bool assign_phony_autocommit(bool newval, bool doit, GucSource source);
 
 
 /*
@@ -227,16 +225,18 @@ const char *const GucContext_Names[] =
  */
 const char *const GucSource_Names[] =
 {
-	 /* PGC_S_DEFAULT */ "default",
-	 /* PGC_S_ENV_VAR */ "environment variable",
-	 /* PGC_S_FILE */ "configuration file",
-	 /* PGC_S_ARGV */ "command line",
-	 /* PGC_S_UNPRIVILEGED */ "unprivileged",
-	 /* PGC_S_DATABASE */ "database",
-	 /* PGC_S_USER */ "user",
-	 /* PGC_S_CLIENT */ "client",
-	 /* PGC_S_OVERRIDE */ "override",
-	 /* PGC_S_SESSION */ "session"
+	/* PGC_S_DEFAULT */ "default",
+	/* PGC_S_ENV_VAR */ "environment variable",
+	/* PGC_S_FILE */ "configuration file",
+	/* PGC_S_ARGV */ "command line",
+	/* PGC_S_UNPRIVILEGED */ "unprivileged",
+	/* PGC_S_DATABASE */ "database",
+	/* PGC_S_USER */ "user",
+	/* PGC_S_CLIENT */ "client",
+	/* PGC_S_OVERRIDE */ "override",
+	/* PGC_S_INTERACTIVE */ "interactive",
+	/* PGC_S_TEST */ "test",
+	/* PGC_S_SESSION */ "session"
 };
 
 /*
@@ -1893,7 +1893,8 @@ InitializeGUCOptions(void)
 					struct config_bool *conf = (struct config_bool *) gconf;
 
 					if (conf->assign_hook)
-						if (!(*conf->assign_hook) (conf->reset_val, true, false))
+						if (!(*conf->assign_hook) (conf->reset_val, true,
+												   PGC_S_DEFAULT))
 							elog(FATAL, "failed to initialize %s to %d",
 								 conf->gen.name, (int) conf->reset_val);
 					*conf->variable = conf->reset_val;
@@ -1914,7 +1915,8 @@ InitializeGUCOptions(void)
 					Assert(conf->gen.context != PGC_USERLIMIT ||
 						   strcmp(conf->gen.name, "log_min_duration_statement") == 0);
 					if (conf->assign_hook)
-						if (!(*conf->assign_hook) (conf->reset_val, true, false))
+						if (!(*conf->assign_hook) (conf->reset_val, true,
+												   PGC_S_DEFAULT))
 							elog(FATAL, "failed to initialize %s to %d",
 								 conf->gen.name, conf->reset_val);
 					*conf->variable = conf->reset_val;
@@ -1929,7 +1931,8 @@ InitializeGUCOptions(void)
 					Assert(conf->reset_val <= conf->max);
 					Assert(conf->gen.context != PGC_USERLIMIT);
 					if (conf->assign_hook)
-						if (!(*conf->assign_hook) (conf->reset_val, true, false))
+						if (!(*conf->assign_hook) (conf->reset_val, true,
+												   PGC_S_DEFAULT))
 							elog(FATAL, "failed to initialize %s to %g",
 								 conf->gen.name, conf->reset_val);
 					*conf->variable = conf->reset_val;
@@ -1971,7 +1974,8 @@ InitializeGUCOptions(void)
 					{
 						const char *newstr;
 
-						newstr = (*conf->assign_hook) (str, true, false);
+						newstr = (*conf->assign_hook) (str, true,
+													   PGC_S_DEFAULT);
 						if (newstr == NULL)
 						{
 							elog(FATAL, "failed to initialize %s to \"%s\"",
@@ -2065,7 +2069,8 @@ ResetAllOptions(void)
 					struct config_bool *conf = (struct config_bool *) gconf;
 
 					if (conf->assign_hook)
-						if (!(*conf->assign_hook) (conf->reset_val, true, true))
+						if (!(*conf->assign_hook) (conf->reset_val, true,
+												   PGC_S_SESSION))
 							elog(ERROR, "failed to reset %s", conf->gen.name);
 					*conf->variable = conf->reset_val;
 					conf->tentative_val = conf->reset_val;
@@ -2080,7 +2085,8 @@ ResetAllOptions(void)
 					struct config_int *conf = (struct config_int *) gconf;
 
 					if (conf->assign_hook)
-						if (!(*conf->assign_hook) (conf->reset_val, true, true))
+						if (!(*conf->assign_hook) (conf->reset_val, true,
+												   PGC_S_SESSION))
 							elog(ERROR, "failed to reset %s", conf->gen.name);
 					*conf->variable = conf->reset_val;
 					conf->tentative_val = conf->reset_val;
@@ -2095,7 +2101,8 @@ ResetAllOptions(void)
 					struct config_real *conf = (struct config_real *) gconf;
 
 					if (conf->assign_hook)
-						if (!(*conf->assign_hook) (conf->reset_val, true, true))
+						if (!(*conf->assign_hook) (conf->reset_val, true,
+												   PGC_S_SESSION))
 							elog(ERROR, "failed to reset %s", conf->gen.name);
 					*conf->variable = conf->reset_val;
 					conf->tentative_val = conf->reset_val;
@@ -2123,7 +2130,8 @@ ResetAllOptions(void)
 					{
 						const char *newstr;
 
-						newstr = (*conf->assign_hook) (str, true, true);
+						newstr = (*conf->assign_hook) (str, true,
+													   PGC_S_SESSION);
 						if (newstr == NULL)
 							elog(ERROR, "failed to reset %s", conf->gen.name);
 						else if (newstr != str)
@@ -2198,7 +2206,7 @@ AtEOXact_GUC(bool isCommit)
 					{
 						if (conf->assign_hook)
 							if (!(*conf->assign_hook) (conf->session_val,
-													   true, false))
+													   true, PGC_S_OVERRIDE))
 								elog(LOG, "failed to commit %s",
 									 conf->gen.name);
 						*conf->variable = conf->session_val;
@@ -2222,7 +2230,7 @@ AtEOXact_GUC(bool isCommit)
 					{
 						if (conf->assign_hook)
 							if (!(*conf->assign_hook) (conf->session_val,
-													   true, false))
+													   true, PGC_S_OVERRIDE))
 								elog(LOG, "failed to commit %s",
 									 conf->gen.name);
 						*conf->variable = conf->session_val;
@@ -2246,7 +2254,7 @@ AtEOXact_GUC(bool isCommit)
 					{
 						if (conf->assign_hook)
 							if (!(*conf->assign_hook) (conf->session_val,
-													   true, false))
+													   true, PGC_S_OVERRIDE))
 								elog(LOG, "failed to commit %s",
 									 conf->gen.name);
 						*conf->variable = conf->session_val;
@@ -2277,7 +2285,8 @@ AtEOXact_GUC(bool isCommit)
 						{
 							const char *newstr;
 
-							newstr = (*conf->assign_hook) (str, true, false);
+							newstr = (*conf->assign_hook) (str, true,
+														   PGC_S_OVERRIDE);
 							if (newstr == NULL)
 								elog(LOG, "failed to commit %s",
 									 conf->gen.name);
@@ -2500,7 +2509,6 @@ set_config_option(const char *name, const char *value,
 {
 	struct config_generic *record;
 	int			elevel;
-	bool		interactive;
 	bool		makeDefault;
 	bool		changeVal_orig;
 
@@ -2610,9 +2618,6 @@ set_config_option(const char *name, const char *value,
 			break;
 	}
 
-	/* Should we report errors interactively? */
-	interactive = (source >= PGC_S_SESSION);
-
 	/*
 	 * Should we set reset/session values?	(If so, the behavior is not
 	 * transactional.)
@@ -2687,7 +2692,7 @@ set_config_option(const char *name, const char *value,
 				}
 
 				if (conf->assign_hook)
-					if (!(*conf->assign_hook) (newval, changeVal, interactive))
+					if (!(*conf->assign_hook) (newval, changeVal, source))
 					{
 						ereport(elevel,
 								(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
@@ -2784,7 +2789,7 @@ set_config_option(const char *name, const char *value,
 				}
 
 				if (conf->assign_hook)
-					if (!(*conf->assign_hook) (newval, changeVal, interactive))
+					if (!(*conf->assign_hook) (newval, changeVal, source))
 					{
 						ereport(elevel,
 								(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
@@ -2880,7 +2885,7 @@ set_config_option(const char *name, const char *value,
 				}
 
 				if (conf->assign_hook)
-					if (!(*conf->assign_hook) (newval, changeVal, interactive))
+					if (!(*conf->assign_hook) (newval, changeVal, source))
 					{
 						ereport(elevel,
 								(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
@@ -2949,9 +2954,9 @@ set_config_option(const char *name, const char *value,
 
 						/* all USERLIMIT strings are message levels */
 						assign_msglvl(&old_int_value, conf->reset_val,
-									  true, interactive);
+									  true, source);
 						assign_msglvl(&new_int_value, newval,
-									  true, interactive);
+									  true, source);
 						/* Limit non-superuser changes */
 						if (source > PGC_S_UNPRIVILEGED &&
 							new_int_value > old_int_value &&
@@ -3008,7 +3013,7 @@ set_config_option(const char *name, const char *value,
 					const char *hookresult;
 
 					hookresult = (*conf->assign_hook) (newval,
-													   changeVal, interactive);
+													   changeVal, source);
 					guc_string_workspace = NULL;
 					if (hookresult == NULL)
 					{
@@ -4189,7 +4194,7 @@ GUCArrayAdd(ArrayType *array, const char *name, const char *value)
 	/* test if the option is valid */
 	set_config_option(name, value,
 					  superuser() ? PGC_SUSET : PGC_USERSET,
-					  PGC_S_SESSION, false, false);
+					  PGC_S_TEST, false, false);
 
 	/* convert name to canonical spelling, so we can use plain strcmp */
 	(void) GetConfigOptionByName(name, &varname);
@@ -4268,7 +4273,7 @@ GUCArrayDelete(ArrayType *array, const char *name)
 	/* test if the option is valid */
 	set_config_option(name, NULL,
 					  superuser() ? PGC_SUSET : PGC_USERSET,
-					  PGC_S_SESSION, false, false);
+					  PGC_S_TEST, false, false);
 
 	/* convert name to canonical spelling, so we can use plain strcmp */
 	(void) GetConfigOptionByName(name, &varname);
@@ -4333,7 +4338,7 @@ GUCArrayDelete(ArrayType *array, const char *name)
 #ifdef HAVE_SYSLOG
 
 static const char *
-assign_facility(const char *facility, bool doit, bool interactive)
+assign_facility(const char *facility, bool doit, GucSource source)
 {
 	if (strcasecmp(facility, "LOCAL0") == 0)
 		return facility;
@@ -4357,7 +4362,7 @@ assign_facility(const char *facility, bool doit, bool interactive)
 
 
 static const char *
-assign_defaultxactisolevel(const char *newval, bool doit, bool interactive)
+assign_defaultxactisolevel(const char *newval, bool doit, GucSource source)
 {
 	if (strcasecmp(newval, "serializable") == 0)
 	{
@@ -4386,26 +4391,26 @@ assign_defaultxactisolevel(const char *newval, bool doit, bool interactive)
 
 static const char *
 assign_log_min_messages(const char *newval,
-						bool doit, bool interactive)
+						bool doit, GucSource source)
 {
-	return (assign_msglvl(&log_min_messages, newval, doit, interactive));
+	return (assign_msglvl(&log_min_messages, newval, doit, source));
 }
 
 static const char *
 assign_client_min_messages(const char *newval,
-						   bool doit, bool interactive)
+						   bool doit, GucSource source)
 {
-	return (assign_msglvl(&client_min_messages, newval, doit, interactive));
+	return (assign_msglvl(&client_min_messages, newval, doit, source));
 }
 
 static const char *
-assign_min_error_statement(const char *newval, bool doit, bool interactive)
+assign_min_error_statement(const char *newval, bool doit, GucSource source)
 {
-	return (assign_msglvl(&log_min_error_statement, newval, doit, interactive));
+	return (assign_msglvl(&log_min_error_statement, newval, doit, source));
 }
 
 static const char *
-assign_msglvl(int *var, const char *newval, bool doit, bool interactive)
+assign_msglvl(int *var, const char *newval, bool doit, GucSource source)
 {
 	if (strcasecmp(newval, "debug") == 0)
 	{
@@ -4479,7 +4484,7 @@ assign_msglvl(int *var, const char *newval, bool doit, bool interactive)
 }
 
 static const char *
-assign_log_error_verbosity(const char *newval, bool doit, bool interactive)
+assign_log_error_verbosity(const char *newval, bool doit, GucSource source)
 {
 	if (strcasecmp(newval, "terse") == 0)
 	{
@@ -4502,11 +4507,11 @@ assign_log_error_verbosity(const char *newval, bool doit, bool interactive)
 }
 
 static bool
-assign_phony_autocommit(bool newval, bool doit, bool interactive)
+assign_phony_autocommit(bool newval, bool doit, GucSource source)
 {
 	if (!newval)
 	{
-		if (doit && interactive)
+		if (doit && source >= PGC_S_INTERACTIVE)
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				errmsg("SET AUTOCOMMIT TO OFF is no longer supported")));

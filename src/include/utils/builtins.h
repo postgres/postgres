@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/builtins.h,v 1.232 2003/12/01 23:12:16 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/utils/builtins.h,v 1.233 2004/01/19 19:04:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,7 +16,6 @@
 
 #include "fmgr.h"
 #include "nodes/parsenodes.h"
-#include "storage/itemptr.h"	/* for setLastTid() */
 
 /*
  *		Defined in adt/
@@ -415,8 +414,6 @@ extern Datum texticregexeq(PG_FUNCTION_ARGS);
 extern Datum texticregexne(PG_FUNCTION_ARGS);
 extern Datum textregexsubstr(PG_FUNCTION_ARGS);
 extern Datum similar_escape(PG_FUNCTION_ARGS);
-extern const char *assign_regex_flavor(const char *value,
-					bool doit, bool interactive);
 
 /* regproc.c */
 extern Datum regprocin(PG_FUNCTION_ARGS);
@@ -483,7 +480,6 @@ extern Datum tidsend(PG_FUNCTION_ARGS);
 extern Datum tideq(PG_FUNCTION_ARGS);
 extern Datum currtid_byreloid(PG_FUNCTION_ARGS);
 extern Datum currtid_byrelname(PG_FUNCTION_ARGS);
-extern void setLastTid(const ItemPointer tid);
 
 /* varchar.c */
 extern Datum bpcharin(PG_FUNCTION_ARGS);

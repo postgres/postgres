@@ -7,7 +7,7 @@
  *
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  *
- *	  $PostgreSQL: pgsql/src/include/utils/guc_tables.h,v 1.8 2003/12/03 18:52:00 joe Exp $
+ *	  $PostgreSQL: pgsql/src/include/utils/guc_tables.h,v 1.9 2004/01/19 19:04:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -113,7 +113,7 @@ struct config_bool
 	/* (all but reset_val are constants) */
 	bool	   *variable;
 	bool		reset_val;
-	bool		(*assign_hook) (bool newval, bool doit, bool interactive);
+	bool		(*assign_hook) (bool newval, bool doit, GucSource source);
 	const char *(*show_hook) (void);
 	/* variable fields, initialized at runtime: */
 	bool		session_val;
@@ -129,7 +129,7 @@ struct config_int
 	int			reset_val;
 	int			min;
 	int			max;
-	bool		(*assign_hook) (int newval, bool doit, bool interactive);
+	bool		(*assign_hook) (int newval, bool doit, GucSource source);
 	const char *(*show_hook) (void);
 	/* variable fields, initialized at runtime: */
 	int			session_val;
@@ -145,7 +145,7 @@ struct config_real
 	double		reset_val;
 	double		min;
 	double		max;
-	bool		(*assign_hook) (double newval, bool doit, bool interactive);
+	bool		(*assign_hook) (double newval, bool doit, GucSource source);
 	const char *(*show_hook) (void);
 	/* variable fields, initialized at runtime: */
 	double		session_val;
@@ -159,7 +159,7 @@ struct config_string
 	/* (all are constants) */
 	char	  **variable;
 	const char *boot_val;
-	const char *(*assign_hook) (const char *newval, bool doit, bool interactive);
+	const char *(*assign_hook) (const char *newval, bool doit, GucSource source);
 	const char *(*show_hook) (void);
 	/* variable fields, initialized at runtime: */
 	char	   *reset_val;

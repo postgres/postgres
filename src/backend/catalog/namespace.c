@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/namespace.c,v 1.61 2003/12/29 21:33:09 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/namespace.c,v 1.62 2004/01/19 19:04:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,6 +39,7 @@
 #include "utils/acl.h"
 #include "utils/builtins.h"
 #include "utils/catcache.h"
+#include "utils/guc.h"
 #include "utils/inval.h"
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
@@ -1773,7 +1774,7 @@ RemoveTempRelationsCallback(int code, Datum arg)
 
 /* assign_hook: validate new search_path, do extra actions as needed */
 const char *
-assign_search_path(const char *newval, bool doit, bool interactive)
+assign_search_path(const char *newval, bool doit, GucSource source)
 {
 	char	   *rawname;
 	List	   *namelist;
@@ -1795,13 +1796,19 @@ assign_search_path(const char *newval, bool doit, bool interactive)
 	 * If we aren't inside a transaction, we cannot do database access so
 	 * cannot verify the individual names.	Must accept the list on faith.
 	 */
-	if (interactive && IsTransactionState())
+	if (source >= PGC_S_INTERACTIVE && IsTransactionState())
 	{
 		/*
 		 * Verify that all the names are either valid namespace names or
 		 * "$user".  We do not require $user to correspond to a valid
 		 * namespace.  We do not check for USAGE rights, either; should
 		 * we?
+		 *
+		 * When source == PGC_S_TEST, we are checking the argument of an
+		 * ALTER DATABASE SET or ALTER USER SET command.  It could be that
+		 * the intended use of the search path is for some other database,
+		 * so we should not error out if it mentions schemas not present
+		 * in the current database.  We reduce the message to NOTICE instead.
 		 */
 		foreach(l, namelist)
 		{
@@ -1812,7 +1819,7 @@ assign_search_path(const char *newval, bool doit, bool interactive)
 			if (!SearchSysCacheExists(NAMESPACENAME,
 									  CStringGetDatum(curname),
 									  0, 0, 0))
-				ereport(ERROR,
+				ereport((source == PGC_S_TEST) ? NOTICE : ERROR,
 						(errcode(ERRCODE_UNDEFINED_SCHEMA),
 					   errmsg("schema \"%s\" does not exist", curname)));
 		}

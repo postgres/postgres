@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/datetime.h,v 1.46 2003/11/29 22:41:15 pgsql Exp $
+ * $PostgreSQL: pgsql/src/include/utils/datetime.h,v 1.47 2004/01/19 19:04:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -318,7 +318,6 @@ extern int	EncodeInterval(struct tm * tm, fsec_t fsec, int style, char *str);
 
 extern int	DecodeSpecial(int field, char *lowtoken, int *val);
 extern int	DecodeUnits(int field, char *lowtoken, int *val);
-extern bool ClearDateCache(bool newval, bool doit, bool interactive);
 
 extern int	j2day(int jd);
 

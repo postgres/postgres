@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.131 2004/01/06 22:22:37 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.132 2004/01/19 19:04:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3523,7 +3523,7 @@ xlog_outrec(char *buf, XLogRecord *record)
  * GUC support
  */
 const char *
-assign_xlog_sync_method(const char *method, bool doit, bool interactive)
+assign_xlog_sync_method(const char *method, bool doit, GucSource source)
 {
 	int			new_sync_method;
 	int			new_sync_bit;

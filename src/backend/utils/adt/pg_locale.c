@@ -4,7 +4,7 @@
  *
  * Portions Copyright (c) 2002-2003, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/pg_locale.c,v 1.24 2003/11/29 19:51:59 pgsql Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/pg_locale.c,v 1.25 2004/01/19 19:04:40 tgl Exp $
  *
  *-----------------------------------------------------------------------
  */
@@ -73,7 +73,7 @@ char	   *locale_time;
  * valid.  (See explanation at the top of this file.)
  */
 static const char *
-locale_xxx_assign(int category, const char *value, bool doit, bool interactive)
+locale_xxx_assign(int category, const char *value, bool doit, GucSource source)
 {
 	char	   *save;
 
@@ -99,21 +99,21 @@ locale_xxx_assign(int category, const char *value, bool doit, bool interactive)
 
 
 const char *
-locale_monetary_assign(const char *value, bool doit, bool interactive)
+locale_monetary_assign(const char *value, bool doit, GucSource source)
 {
-	return locale_xxx_assign(LC_MONETARY, value, doit, interactive);
+	return locale_xxx_assign(LC_MONETARY, value, doit, source);
 }
 
 const char *
-locale_numeric_assign(const char *value, bool doit, bool interactive)
+locale_numeric_assign(const char *value, bool doit, GucSource source)
 {
-	return locale_xxx_assign(LC_NUMERIC, value, doit, interactive);
+	return locale_xxx_assign(LC_NUMERIC, value, doit, source);
 }
 
 const char *
-locale_time_assign(const char *value, bool doit, bool interactive)
+locale_time_assign(const char *value, bool doit, GucSource source)
 {
-	return locale_xxx_assign(LC_TIME, value, doit, interactive);
+	return locale_xxx_assign(LC_TIME, value, doit, source);
 }
 
 
@@ -121,7 +121,7 @@ locale_time_assign(const char *value, bool doit, bool interactive)
  * We allow LC_MESSAGES to actually be set globally.
  */
 const char *
-locale_messages_assign(const char *value, bool doit, bool interactive)
+locale_messages_assign(const char *value, bool doit, GucSource source)
 {
 	/*
 	 * LC_MESSAGES category does not exist everywhere, but accept it
@@ -134,7 +134,7 @@ locale_messages_assign(const char *value, bool doit, bool interactive)
 			return NULL;
 	}
 	else
-		value = locale_xxx_assign(LC_MESSAGES, value, false, interactive);
+		value = locale_xxx_assign(LC_MESSAGES, value, false, source);
 #endif
 	return value;
 }

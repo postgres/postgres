@@ -7,7 +7,7 @@
  * Copyright (c) 2000-2003, PostgreSQL Global Development Group
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
- * $PostgreSQL: pgsql/src/include/utils/guc.h,v 1.43 2003/12/01 22:08:02 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/utils/guc.h,v 1.44 2004/01/19 19:04:40 tgl Exp $
  *--------------------------------------------------------------------
  */
 #ifndef GUC_H
@@ -76,6 +76,15 @@ typedef enum
  *
  * PGC_S_UNPRIVILEGED isn't actually a source value, but the dividing line
  * between privileged and unprivileged sources for USERLIMIT purposes.
+ * Similarly, PGC_S_INTERACTIVE isn't a real source value, but is the
+ * dividing line between "interactive" and "non-interactive" sources for
+ * error reporting purposes.
+ *
+ * PGC_S_TEST is used when testing values to be stored as per-database or
+ * per-user defaults ("doit" will always be false, so this never gets stored
+ * as the actual source of any value).  This is an interactive case, but
+ * it needs its own source value because some assign hooks need to make
+ * different validity checks in this case.
  */
 typedef enum
 {
@@ -88,6 +97,8 @@ typedef enum
 	PGC_S_USER,					/* per-user setting */
 	PGC_S_CLIENT,				/* from client connection request */
 	PGC_S_OVERRIDE,				/* special case to forcibly set default */
+	PGC_S_INTERACTIVE,			/* dividing line for error reporting */
+	PGC_S_TEST,					/* test per-database or per-user setting */
 	PGC_S_SESSION				/* SET command */
 } GucSource;
 
@@ -151,5 +162,23 @@ extern ArrayType *GUCArrayDelete(ArrayType *array, const char *name);
 void		write_nondefault_variables(GucContext context);
 void		read_nondefault_variables(void);
 #endif
+
+/*
+ * The following functions are not in guc.c, but are declared here to avoid
+ * having to include guc.h in some widely used headers that it really doesn't
+ * belong in.
+ */
+
+/* in utils/adt/datetime.c */
+extern bool ClearDateCache(bool newval, bool doit, GucSource source);
+/* in utils/adt/regexp.c */
+extern const char *assign_regex_flavor(const char *value,
+					bool doit, GucSource source);
+/* in catalog/namespace.c */
+extern const char *assign_search_path(const char *newval,
+				   bool doit, GucSource source);
+/* in access/transam/xlog.c */
+extern const char *assign_xlog_sync_method(const char *method,
+						bool doit, GucSource source);
 
 #endif   /* GUC_H */

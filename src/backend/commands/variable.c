@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/variable.c,v 1.92 2003/12/21 04:34:35 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/variable.c,v 1.93 2004/01/19 19:04:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -48,7 +48,7 @@ extern char *tzname[];
  * assign_datestyle: GUC assign_hook for datestyle
  */
 const char *
-assign_datestyle(const char *value, bool doit, bool interactive)
+assign_datestyle(const char *value, bool doit, GucSource source)
 {
 	int			newDateStyle = DateStyle;
 	int			newDateOrder = DateOrder;
@@ -69,7 +69,7 @@ assign_datestyle(const char *value, bool doit, bool interactive)
 		/* syntax error in list */
 		pfree(rawstring);
 		freeList(elemlist);
-		if (interactive)
+		if (source >= PGC_S_INTERACTIVE)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 					 errmsg("invalid list syntax for parameter \"datestyle\"")));
@@ -137,7 +137,7 @@ assign_datestyle(const char *value, bool doit, bool interactive)
 			const char *subval;
 
 			subval = assign_datestyle(GetConfigOptionResetString("datestyle"),
-									  true, interactive);
+									  true, source);
 			if (scnt == 0)
 				newDateStyle = DateStyle;
 			if (ocnt == 0)
@@ -155,7 +155,7 @@ assign_datestyle(const char *value, bool doit, bool interactive)
 		}
 		else
 		{
-			if (interactive)
+			if (source >= PGC_S_INTERACTIVE)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 						 errmsg("unrecognized \"datestyle\" key word: \"%s\"",
@@ -173,7 +173,7 @@ assign_datestyle(const char *value, bool doit, bool interactive)
 
 	if (!ok)
 	{
-		if (interactive)
+		if (source >= PGC_S_INTERACTIVE)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 					 errmsg("conflicting \"datestyle\" specifications")));
@@ -386,7 +386,7 @@ tz_acceptable(void)
  * assign_timezone: GUC assign_hook for timezone
  */
 const char *
-assign_timezone(const char *value, bool doit, bool interactive)
+assign_timezone(const char *value, bool doit, GucSource source)
 {
 	char	   *result;
 	char	   *endptr;
@@ -444,7 +444,7 @@ assign_timezone(const char *value, bool doit, bool interactive)
 		pfree(val);
 		if (interval->month != 0)
 		{
-			if (interactive)
+			if (source >= PGC_S_INTERACTIVE)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 						 errmsg("invalid interval value for time zone: month not allowed")));
@@ -552,7 +552,7 @@ assign_timezone(const char *value, bool doit, bool interactive)
 				/* Complain if it was bad */
 				if (!known)
 				{
-					ereport(interactive ? ERROR : LOG,
+					ereport((source >= PGC_S_INTERACTIVE) ? ERROR : LOG,
 							(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 							 errmsg("unrecognized time zone name: \"%s\"",
 									value)));
@@ -560,7 +560,7 @@ assign_timezone(const char *value, bool doit, bool interactive)
 				}
 				if (!acceptable)
 				{
-					ereport(interactive ? ERROR : LOG,
+					ereport((source >= PGC_S_INTERACTIVE) ? ERROR : LOG,
 							(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 					errmsg("time zone \"%s\" appears to use leap seconds",
 						   value),
@@ -628,9 +628,9 @@ show_timezone(void)
  */
 
 const char *
-assign_XactIsoLevel(const char *value, bool doit, bool interactive)
+assign_XactIsoLevel(const char *value, bool doit, GucSource source)
 {
-	if (doit && interactive && SerializableSnapshot != NULL)
+	if (doit && source >= PGC_S_INTERACTIVE && SerializableSnapshot != NULL)
 		ereport(ERROR,
 				(errcode(ERRCODE_ACTIVE_SQL_TRANSACTION),
 				 errmsg("SET TRANSACTION ISOLATION LEVEL must be called before any query")));
@@ -690,10 +690,10 @@ show_XactIsoLevel(void)
  */
 
 bool
-assign_random_seed(double value, bool doit, bool interactive)
+assign_random_seed(double value, bool doit, GucSource source)
 {
 	/* Can't really roll back on error, so ignore non-interactive setting */
-	if (doit && interactive)
+	if (doit && source >= PGC_S_INTERACTIVE)
 		DirectFunctionCall1(setseed, Float8GetDatum(value));
 	return true;
 }
@@ -710,7 +710,7 @@ show_random_seed(void)
  */
 
 const char *
-assign_client_encoding(const char *value, bool doit, bool interactive)
+assign_client_encoding(const char *value, bool doit, GucSource source)
 {
 	int			encoding;
 
@@ -726,7 +726,7 @@ assign_client_encoding(const char *value, bool doit, bool interactive)
 	 */
 	if (SetClientEncoding(encoding, doit) < 0)
 	{
-		if (interactive)
+		if (source >= PGC_S_INTERACTIVE)
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				  errmsg("conversion between %s and %s is not supported",
@@ -748,7 +748,7 @@ assign_client_encoding(const char *value, bool doit, bool interactive)
  * because of the NAMEDATALEN limit on names.
  */
 const char *
-assign_session_authorization(const char *value, bool doit, bool interactive)
+assign_session_authorization(const char *value, bool doit, GucSource source)
 {
 	AclId		usesysid = 0;
 	bool		is_superuser = false;
@@ -791,7 +791,7 @@ assign_session_authorization(const char *value, bool doit, bool interactive)
 								 0, 0, 0);
 		if (!HeapTupleIsValid(userTup))
 		{
-			if (interactive)
+			if (source >= PGC_S_INTERACTIVE)
 				ereport(ERROR,
 						(errcode(ERRCODE_UNDEFINED_OBJECT),
 						 errmsg("user \"%s\" does not exist", value)));
