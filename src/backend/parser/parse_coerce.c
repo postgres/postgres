@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_coerce.c,v 2.108 2003/08/04 02:40:01 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_coerce.c,v 2.109 2003/09/23 17:12:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -762,6 +762,12 @@ coerce_to_common_type(ParseState *pstate, Node *node,
  * If we have UNKNOWN input (ie, an untyped literal) for any ANYELEMENT
  * or ANYARRAY argument, assume it is okay.
  *
+ * If an input is of type ANYARRAY (ie, we know it's an array, but not
+ * what element type), we will accept it as a match to an argument declared
+ * ANYARRAY, so long as we don't have to determine an element type ---
+ * that is, so long as there is no use of ANYELEMENT.  This is mostly for
+ * backwards compatibility with the pre-7.4 behavior of ANYARRAY.
+ *
  * We do not ereport here, but just return FALSE if a rule is violated.
  */
 bool
@@ -773,6 +779,7 @@ check_generic_type_consistency(Oid *actual_arg_types,
 	Oid			elem_typeid = InvalidOid;
 	Oid			array_typeid = InvalidOid;
 	Oid			array_typelem;
+	bool		have_anyelement = false;
 
 	/*
 	 * Loop through the arguments to see if we have any that are ANYARRAY
@@ -785,6 +792,7 @@ check_generic_type_consistency(Oid *actual_arg_types,
 
 		if (declared_arg_types[j] == ANYELEMENTOID)
 		{
+			have_anyelement = true;
 			if (actual_type == UNKNOWNOID)
 				continue;
 			if (OidIsValid(elem_typeid) && actual_type != elem_typeid)
@@ -804,6 +812,14 @@ check_generic_type_consistency(Oid *actual_arg_types,
 	/* Get the element type based on the array type, if we have one */
 	if (OidIsValid(array_typeid))
 	{
+		if (array_typeid == ANYARRAYOID)
+		{
+			/* Special case for ANYARRAY input: okay iff no ANYELEMENT */
+			if (have_anyelement)
+				return false;
+			return true;
+		}
+
 		array_typelem = get_element_type(array_typeid);
 		if (!OidIsValid(array_typelem))
 			return false;		/* should be an array, but isn't */
@@ -875,7 +891,8 @@ enforce_generic_type_consistency(Oid *actual_arg_types,
 	bool		have_unknowns = false;
 	Oid			elem_typeid = InvalidOid;
 	Oid			array_typeid = InvalidOid;
-	Oid			array_typelem = InvalidOid;
+	Oid			array_typelem;
+	bool		have_anyelement = (rettype == ANYELEMENTOID);
 
 	/*
 	 * Loop through the arguments to see if we have any that are ANYARRAY
@@ -888,7 +905,7 @@ enforce_generic_type_consistency(Oid *actual_arg_types,
 
 		if (declared_arg_types[j] == ANYELEMENTOID)
 		{
-			have_generics = true;
+			have_generics = have_anyelement = true;
 			if (actual_type == UNKNOWNOID)
 			{
 				have_unknowns = true;
@@ -932,12 +949,20 @@ enforce_generic_type_consistency(Oid *actual_arg_types,
 	/* Get the element type based on the array type, if we have one */
 	if (OidIsValid(array_typeid))
 	{
-		array_typelem = get_element_type(array_typeid);
-		if (!OidIsValid(array_typelem))
-			ereport(ERROR,
-					(errcode(ERRCODE_DATATYPE_MISMATCH),
-			  errmsg("argument declared ANYARRAY is not an array but %s",
-					 format_type_be(array_typeid))));
+		if (array_typeid == ANYARRAYOID && !have_anyelement)
+		{
+			/* Special case for ANYARRAY input: okay iff no ANYELEMENT */
+			array_typelem = InvalidOid;
+		}
+		else
+		{
+			array_typelem = get_element_type(array_typeid);
+			if (!OidIsValid(array_typelem))
+				ereport(ERROR,
+						(errcode(ERRCODE_DATATYPE_MISMATCH),
+						 errmsg("argument declared ANYARRAY is not an array but %s",
+								format_type_be(array_typeid))));
+		}
 
 		if (!OidIsValid(elem_typeid))
 		{
