@@ -5,8 +5,8 @@
    
    Deutsche Übersetzung von Ian Barwick (barwick@gmx.net).
    
-   Letzte Aktualisierung der deutschen Übersetzung: Fr., den 02.01.2004,
-   07:30 CET
+   Letzte Aktualisierung der deutschen Übersetzung: Fr., den 05.03.2004,
+   23:30 CET
    
    Die aktuellste Version dieses Dokuments liegt auf der PostgreSQL
    Website:
@@ -134,7 +134,8 @@
                                       
     1.1) Was ist PostgreSQL? Wie wird es ausgesprochen?
     
-   Die (englische) Aussprache ist "Post-Gres-Q-L".
+   Die (englische) Aussprache ist "Post-Gres-Q-L". Im allgemeinen
+   Sprachgebrauch hat sich auch "Postgres" durchgesetzt.
    
    PostgreSQL ist eine Weiterentwicklung des POSTGRES-Datenbank-Systems,
    eines zukunftsweisenden DBMS-Forschungsprototyps. Während PostgreSQL
@@ -148,7 +149,10 @@
    PostgreSQL-Entwicklungs-Mailingliste sind. Der aktuelle Koordinator
    ist Marc G. Fournier (scrappy@PostgreSQL.org) (Anmeldemöglichkeit:
    siehe unten). Dieses Team ist für die Gesamtentwicklung von PostgreSQL
-   verantwortlich.
+   verantwortlich. Es handelt sich um ein Gemeinschaftsprojekt, das nicht
+   von einer bestimmten Firma kontrolliert wird. Lesen Sie die
+   Entwickler-FAQ: http://www.PostgreSQL.org/docs/faqs/FAQ_DEV.html wenn
+   Sie an einer Mitarbeit interessiert sind.
    
    Die Autoren von PostgreSQL 1.01 waren Andrew Yu und Jolly Chen. Viele
    andere haben zur Portierung, zum Testen, zur Fehlersuche und zur
@@ -292,7 +296,7 @@
    
     1.7) Was ist die neueste Version von PostgreSQL?
     
-   Die neueste Version von PostgreSQL ist 7.4.1 .
+   Die neueste Version von PostgreSQL ist 7.4.2 .
    
    Die Freigabe einer neuen Version erfolgt im Schnitt ca. dreimal pro
    Jahr.
@@ -399,7 +403,11 @@
           wird selbstredend ständig an Performanz-Verbesserungen
           gearbeitet. Ein interessanter Vergleich zwischen PostgreSQL und
           MySQL befindet sich unter dieser URL:
-          http://openacs.org/philosophy/why-not-mysql.html
+          http://openacs.org/philosophy/why-not-mysql.html Zu beachten
+          ist außerdem, daß die MySQL-Hersteller zwar ihre Produkte als
+          Open-Source vertreiben, beim kommerziellen Einsatz müssen
+          jedoch gemäß den Nutzungsbedingungen Lizenzgebühren entrichtet
+          werden.
           
    Zuverlässigkeit
           Wir stellen fest, dass ein DBMS wertlos ist, wenn es nicht
@@ -849,8 +857,8 @@
    Indizes beanspruchen nicht so viel Platz. Da sie jedoch die Daten
    beinhalten, die sie indizieren, können auch sie sehr groß werden.
    
-   NULL-Werte werden in Bitmaps gespeichert, wodurch sie sehr wenig Platz
-   in Anspruch nehmen.
+   NULL-Werte werden als Bitmaps gespeichert, wodurch sie sehr wenig
+   Platz in Anspruch nehmen.
    
     4.7) Wie finde ich heraus, welche Indizes oder Operationen in der Datenbank
     definiert sind?
