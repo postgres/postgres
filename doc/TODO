@@ -196,6 +196,7 @@ MISC
 * Use IPC_EXCL when creating shared memory and semaphores
 * have pg_upgrade use pg_ctl to stop/start postmaster
 * Encrpyt passwords in pg_shadow table using MD5
+* Use flock() to prevent multiple postmasters on the same port [flock]
 
 PERFORMANCE
 -----------
