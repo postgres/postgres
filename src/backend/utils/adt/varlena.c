@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varlena.c,v 1.92 2002/09/04 20:31:29 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varlena.c,v 1.93 2002/11/17 23:01:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -736,36 +736,47 @@ int
 varstr_cmp(char *arg1, int len1, char *arg2, int len2)
 {
 	int			result;
-	char	   *a1p,
-			   *a2p;
 
 	/*
 	 * Unfortunately, there is no strncoll(), so in the non-C locale case
 	 * we have to do some memory copying.  This turns out to be
 	 * significantly slower, so we optimize the case where LC_COLLATE is
-	 * C.
+	 * C.  We also try to optimize relatively-short strings by avoiding
+	 * palloc/pfree overhead.
 	 */
+#define STACKBUFLEN		1024
+
 	if (!lc_collate_is_c())
 	{
-		a1p = (char *) palloc(len1 + 1);
-		a2p = (char *) palloc(len2 + 1);
+		char	a1buf[STACKBUFLEN];
+		char	a2buf[STACKBUFLEN];
+		char   *a1p,
+			   *a2p;
+
+		if (len1 >= STACKBUFLEN)
+			a1p = (char *) palloc(len1 + 1);
+		else
+			a1p = a1buf;
+		if (len2 >= STACKBUFLEN)
+			a2p = (char *) palloc(len2 + 1);
+		else
+			a2p = a2buf;
 
 		memcpy(a1p, arg1, len1);
-		*(a1p + len1) = '\0';
+		a1p[len1] = '\0';
 		memcpy(a2p, arg2, len2);
-		*(a2p + len2) = '\0';
+		a2p[len2] = '\0';
 
 		result = strcoll(a1p, a2p);
 
-		pfree(a1p);
-		pfree(a2p);
+		if (len1 >= STACKBUFLEN)
+			pfree(a1p);
+		if (len2 >= STACKBUFLEN)
+			pfree(a2p);
 	}
 	else
 	{
-		a1p = arg1;
-		a2p = arg2;
-
-		result = strncmp(a1p, a2p, Min(len1, len2));
+		result = strncmp(arg1, arg2, Min(len1, len2));
 		if ((result == 0) && (len1 != len2))
 			result = (len1 < len2) ? -1 : 1;
 	}
