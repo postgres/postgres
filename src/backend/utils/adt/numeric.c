@@ -5,7 +5,7 @@
  *
  *	1998 Jan Wieck
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/numeric.c,v 1.23 2000/01/18 03:44:41 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/numeric.c,v 1.24 2000/01/20 02:21:44 tgl Exp $
  *
  * ----------
  */
@@ -2932,7 +2932,7 @@ ceil_var(NumericVar *var, NumericVar *result)
 	set_var_from_var(var, &tmp);
 
 	tmp.rscale = 0;
-	tmp.ndigits = MAX(0, tmp.weight + 1);
+	tmp.ndigits = MIN(tmp.ndigits, MAX(0, tmp.weight + 1));
 	if (tmp.sign == NUMERIC_POS && cmp_var(var, &tmp) != 0)
 		add_var(&tmp, &const_one, &tmp);
 
@@ -2957,7 +2957,7 @@ floor_var(NumericVar *var, NumericVar *result)
 	set_var_from_var(var, &tmp);
 
 	tmp.rscale = 0;
-	tmp.ndigits = MAX(0, tmp.weight + 1);
+	tmp.ndigits = MIN(tmp.ndigits, MAX(0, tmp.weight + 1));
 	if (tmp.sign == NUMERIC_NEG && cmp_var(var, &tmp) != 0)
 		sub_var(&tmp, &const_one, &tmp);
 
