@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Sun Feb 17 20:16:14 EST 2002
+Last updated:		Sun Feb 17 21:00:07 EST 2002
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -243,6 +243,7 @@ CLIENTS
 * Allow psql \d to show temporary table structure
 * Add XML interface:  psql, pg_dump, COPY, separate server (?)
 * Add config file check for $ODBCINI, $HOME/.odbc.ini, installpath/etc/odbc.ini
+* Have pg_dump use ADD PRIMARY KEY after COPY, for performance
 
 * JDBC
 	o Comprehensive test suite. This may be available already.
