@@ -11,7 +11,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/mk/Attic/postgres.shell.mk,v 1.1.1.1 1996/07/09 06:22:19 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/mk/Attic/postgres.shell.mk,v 1.1.1.1.2.1 1996/10/04 20:25:31 scrappy Exp $
 #
 # NOTES
 #    the shell script you write might include the following strings which
@@ -20,6 +20,7 @@
 #	_fUnKy_BINDIR_sTuFf_	  -  location of installed binaries
 #	_fUnKy_DATADIR_sTuFf_	  -  location of the data directory
 #	_fUnKy_POSTGRESDIR_sTuFf_ -  location of the postgres "home" directory
+#	_fUnKy_POSTPORT_sTuFf_    -  port to run the postmaster on
 #	_fUnKy_IPCCLEANPATH_sTuFf_ - location of the ipcs and ipcrm programs
 #	_fUnKy_DASH_N_sTuFf_	  -  -n flag used in echo
 #	_fUnKy_BACKSLASH_C_sTuFf_ -  continuation (echo)
@@ -32,7 +33,8 @@
 SEDSCRIPT= -e "s^_fUnKy_BINDIR_sTuFf_^$(BINDIR)^g" \
 	-e "s^_fUnKy_DATADIR_sTuFf_^$(DATADIR)^g" \
 	-e "s^_fUnKy_IPCCLEANPATH_sTuFf_^$(IPCSDIR)^g" \
-	-e "s^_fUnKy_POSTGRESDIR_sTuFf_^$(POSTGRESDIR)^g"
+	-e "s^_fUnKy_POSTGRESDIR_sTuFf_^$(POSTGRESDIR)^g" \
+	-e "s^_fUnKy_POSTPORT_sTuFf_^$(POSTPORT)^g"
 
 #
 # We also need to fix up the scripts to deal with the lack of installed
