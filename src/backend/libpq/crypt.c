@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/libpq/crypt.c,v 1.61 2004/12/31 21:59:50 pgsql Exp $
+ * $PostgreSQL: pgsql/src/backend/libpq/crypt.c,v 1.62 2005/02/20 04:45:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,14 +42,18 @@ md5_crypt_verify(const Port *port, const char *user, char *client_pass)
 	if ((line = get_user_line(user)) == NULL)
 		return STATUS_ERROR;
 
-	/* Skip over username */
-	token = lnext(list_head(*line));
+	/* Skip over username and usesysid */
+	token = list_head(*line);
+	if (token)
+		token = lnext(token);
+	if (token)
+		token = lnext(token);
 	if (token)
 	{
-		shadow_pass = lfirst(token);
+		shadow_pass = (char *) lfirst(token);
 		token = lnext(token);
 		if (token)
-			valuntil = lfirst(token);
+			valuntil = (char *) lfirst(token);
 	}
 
 	if (shadow_pass == NULL || *shadow_pass == '\0')
@@ -142,16 +146,14 @@ md5_crypt_verify(const Port *port, const char *user, char *client_pass)
 		/*
 		 * Password OK, now check to be sure we are not past valuntil
 		 */
-		AbsoluteTime vuntil,
-					current;
+		AbsoluteTime vuntil;
 
-		if (!valuntil)
+		if (valuntil == NULL || *valuntil == '\0')
 			vuntil = INVALID_ABSTIME;
 		else
 			vuntil = DatumGetAbsoluteTime(DirectFunctionCall1(abstimein,
 											 CStringGetDatum(valuntil)));
-		current = GetCurrentAbsoluteTime();
-		if (vuntil != INVALID_ABSTIME && vuntil < current)
+		if (vuntil != INVALID_ABSTIME && vuntil < GetCurrentAbsoluteTime())
 			retval = STATUS_ERROR;
 		else
 			retval = STATUS_OK;

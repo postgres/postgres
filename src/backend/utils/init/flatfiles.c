@@ -22,7 +22,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/utils/init/flatfiles.c,v 1.1 2005/02/20 02:22:00 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/init/flatfiles.c,v 1.2 2005/02/20 04:45:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -278,7 +278,7 @@ write_database_file(Relation drel)
 		}
 
 		/*
-		 * File format is: "dbname" oid frozenxid
+		 * The file format is: "dbname" oid frozenxid
 		 *
 		 * The xid is not needed for backend startup, but may be of use
 		 * for forensic purposes.
@@ -317,13 +317,6 @@ write_database_file(Relation drel)
 
 /*
  * write_group_file: update the flat group file
- *
- * XXX this will never be able to work during system bootstrap: we don't
- * have either TOAST support or SysCache support.  Need to redefine both
- * the catalog and file contents to fix this completely.  In the short term
- * we can handle everything except an out-of-line-toasted grolist, if we
- * change the flat file definition to store numeric sysids instead of
- * user names.
  */
 static void
 write_group_file(Relation grel)
@@ -335,7 +328,6 @@ write_group_file(Relation grel)
 	mode_t		oumask;
 	HeapScanDesc scan;
 	HeapTuple	tuple;
-	TupleDesc	dsc = RelationGetDescr(grel);
 
 	/*
 	 * Create a temporary filename to be renamed later.  This prevents the
@@ -364,22 +356,19 @@ write_group_file(Relation grel)
 	scan = heap_beginscan(grel, SnapshotSelf, 0, NULL);
 	while ((tuple = heap_getnext(scan, ForwardScanDirection)) != NULL)
 	{
-		Datum		datum,
-					grolist_datum;
-		bool		isnull;
+		Form_pg_group grpform = (Form_pg_group) GETSTRUCT(tuple);
+		HeapTupleHeader tup = tuple->t_data;
+		char	   *tp;				/* ptr to tuple data */
+		long		off;			/* offset in tuple data */
+		bits8	   *bp = tup->t_bits;	/* ptr to null bitmask in tuple */
+		Datum		datum;
 		char	   *groname;
 		IdList	   *grolist_p;
 		AclId	   *aidp;
 		int			i,
 					num;
-		char	   *usename;
-		bool		first_user = true;
 
-		datum = heap_getattr(tuple, Anum_pg_group_groname, dsc, &isnull);
-		/* ignore NULL groupnames --- shouldn't happen */
-		if (isnull)
-			continue;
-		groname = NameStr(*DatumGetName(datum));
+		groname = NameStr(grpform->groname);
 
 		/*
 		 * Check for illegal characters in the group name.
@@ -391,57 +380,58 @@ write_group_file(Relation grel)
 			continue;
 		}
 
-		grolist_datum = heap_getattr(tuple, Anum_pg_group_grolist, dsc, &isnull);
-		/* Ignore NULL group lists */
-		if (isnull)
+		/*
+		 * We can't use heap_getattr() here because during startup we will
+		 * not have any tupdesc for pg_group.  Fortunately it's not too
+		 * hard to work around this.  grolist is the first possibly-null
+		 * field so we can compute its offset directly.
+		 */
+		tp = (char *) tup + tup->t_hoff;
+		off = offsetof(FormData_pg_group, grolist);
+
+		if (HeapTupleHasNulls(tuple) &&
+			att_isnull(Anum_pg_group_grolist - 1, bp))
+		{
+			/* grolist is null, so we can ignore this group */
+			continue;
+		}
+
+		/* assume grolist is pass-by-ref */
+		datum = PointerGetDatum(tp + off);
+
+		/*
+		 * We can't currently support out-of-line toasted group lists in
+		 * startup mode (the tuptoaster won't work).  This sucks, but it
+		 * should be something of a corner case.  Live with it until we
+		 * can redesign pg_group.
+		 *
+		 * Detect startup mode by noting whether we got a tupdesc.
+		 */
+		if (VARATT_IS_EXTERNAL(DatumGetPointer(datum)) &&
+			RelationGetDescr(grel) == NULL)
 			continue;
 
 		/* be sure the IdList is not toasted */
-		grolist_p = DatumGetIdListP(grolist_datum);
+		grolist_p = DatumGetIdListP(datum);
 
-		/* scan grolist */
-		num = IDLIST_NUM(grolist_p);
+		/*
+		 * The file format is: "groupname"    usesysid1 usesysid2 ...
+		 *
+		 * We ignore groups that have no members.
+		 */
 		aidp = IDLIST_DAT(grolist_p);
-		for (i = 0; i < num; ++i)
+		num = IDLIST_NUM(grolist_p);
+		if (num > 0)
 		{
-			tuple = SearchSysCache(SHADOWSYSID,
-								   PointerGetDatum(aidp[i]),
-								   0, 0, 0);
-			if (HeapTupleIsValid(tuple))
-			{
-				usename = NameStr(((Form_pg_shadow) GETSTRUCT(tuple))->usename);
-
-				/*
-				 * Check for illegal characters in the user name.
-				 */
-				if (!name_okay(usename))
-				{
-					ereport(LOG,
-						  (errmsg("invalid user name \"%s\"", usename)));
-					continue;
-				}
-
-				/*
-				 * File format is: "groupname"    "user1" "user2" "user3"
-				 */
-				if (first_user)
-				{
-					fputs_quote(groname, fp);
-					fputs("\t", fp);
-					first_user = false;
-				}
-				else
-					fputs(" ", fp);
-
-				fputs_quote(usename, fp);
-
-				ReleaseSysCache(tuple);
-			}
-		}
-		if (!first_user)
+			fputs_quote(groname, fp);
+			fprintf(fp, "\t%u", aidp[0]);
+			for (i = 1; i < num; ++i)
+				fprintf(fp, " %u", aidp[i]);
 			fputs("\n", fp);
+		}
+
 		/* if IdList was toasted, free detoasted copy */
-		if ((Pointer) grolist_p != DatumGetPointer(grolist_datum))
+		if ((Pointer) grolist_p != DatumGetPointer(datum))
 			pfree(grolist_p);
 	}
 	heap_endscan(scan);
@@ -517,8 +507,10 @@ write_user_file(Relation urel)
 		char	   *usename,
 				   *passwd,
 				   *valuntil;
+		AclId		usesysid;
 
 		usename = NameStr(pwform->usename);
+		usesysid = pwform->usesysid;
 
 		/*
 		 * We can't use heap_getattr() here because during startup we will
@@ -532,30 +524,26 @@ write_user_file(Relation urel)
 		if (HeapTupleHasNulls(tuple) &&
 			att_isnull(Anum_pg_shadow_passwd - 1, bp))
 		{
-			/*
-			 * It can be argued that people having a null password shouldn't
-			 * be allowed to connect under password authentication, because
-			 * they need to have a password set up first. If you think
-			 * assuming an empty password in that case is better, change this
-			 * logic to look something like the code for valuntil.
-			 */
-			continue;
+			/* passwd is null, emit as an empty string */
+			passwd = pstrdup("");
 		}
+		else
+		{
+			/* assume passwd is pass-by-ref */
+			datum = PointerGetDatum(tp + off);
 
-		/* assume passwd is pass-by-ref */
-		datum = PointerGetDatum(tp + off);
+			/*
+			 * The password probably shouldn't ever be out-of-line toasted;
+			 * if it is, ignore it, since we can't handle that in startup mode.
+			 */
+			if (VARATT_IS_EXTERNAL(DatumGetPointer(datum)))
+				passwd = pstrdup("");
+			else
+				passwd = DatumGetCString(DirectFunctionCall1(textout, datum));
 
-		/*
-		 * The password probably shouldn't ever be out-of-line toasted;
-		 * if it is, ignore it, since we can't handle that in startup mode.
-		 */
-		if (VARATT_IS_EXTERNAL(DatumGetPointer(datum)))
-			continue;
-
-		passwd = DatumGetCString(DirectFunctionCall1(textout, datum));
-
-		/* assume passwd has attlen -1 */
-		off = att_addlength(off, -1, tp + off);
+			/* assume passwd has attlen -1 */
+			off = att_addlength(off, -1, tp + off);
+		}
 
 		if (HeapTupleHasNulls(tuple) &&
 			att_isnull(Anum_pg_shadow_valuntil - 1, bp))
@@ -588,8 +576,11 @@ write_user_file(Relation urel)
 			continue;
 		}
 
+		/*
+		 * The file format is: "usename" usesysid "passwd" "valuntil"
+		 */
 		fputs_quote(usename, fp);
-		fputs(" ", fp);
+		fprintf(fp, " %u ", usesysid);
 		fputs_quote(passwd, fp);
 		fputs(" ", fp);
 		fputs_quote(valuntil, fp);
@@ -664,9 +655,6 @@ BuildFlatFiles(bool database_only)
 
 	if (!database_only)
 	{
-#ifdef NOT_YET
-		/* XXX doesn't work yet for reasons stated above */
-
 		/* hard-wired path to pg_group */
 		rnode.spcNode = GLOBALTABLESPACE_OID;
 		rnode.dbNode = 0;
@@ -674,7 +662,6 @@ BuildFlatFiles(bool database_only)
 
 		rel = XLogOpenRelation(true, 0, rnode);
 		write_group_file(rel);
-#endif
 
 		/* hard-wired path to pg_shadow */
 		rnode.spcNode = GLOBALTABLESPACE_OID;

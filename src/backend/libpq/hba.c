@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/hba.c,v 1.138 2005/02/20 02:21:40 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/hba.c,v 1.139 2005/02/20 04:45:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -498,23 +498,28 @@ get_user_line(const char *user)
 
 
 /*
- * Check group for a specific user.
+ * Does user belong to group?
  */
 static bool
 check_group(char *group, char *user)
 {
 	List	  **line;
+	ListCell   *line_item;
+	char	   *usesysid;
 
-	if ((line = get_group_line(group)) != NULL)
+	if ((line = get_user_line(user)) == NULL)
+		return false;			/* if user not exist, say "no" */
+	/* Skip over username to get usesysid */
+	usesysid = (char *) lsecond(*line);
+
+	if ((line = get_group_line(group)) == NULL)
+		return false;			/* if group not exist, say "no" */
+
+	/* skip over the group name, examine all the member usesysid's */
+	for_each_cell(line_item, lnext(list_head(*line)))
 	{
-		ListCell   *line_item;
-
-		/* skip over the group name */
-		for_each_cell(line_item, lnext(list_head(*line)))
-		{
-			if (strcmp(lfirst(line_item), user) == 0)
-				return true;
-		}
+		if (strcmp((char *) lfirst(line_item), usesysid) == 0)
+			return true;
 	}
 
 	return false;
