@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/client-auth.sgml,v 1.23 2001/11/02 18:39:57 tgl Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/client-auth.sgml,v 1.24 2001/11/08 23:36:18 petere Exp $ -->
 
 <chapter id="client-authentication">
  <title>Client Authentication</title>
@@ -43,10 +43,10 @@
   user names.
  </para>
 
- <sect1 id="pg-hba.conf">
+ <sect1 id="pg-hba-conf">
   <title>The <filename>pg_hba.conf</filename> file</title>
 
-  <indexterm zone="pg-hba.conf">
+  <indexterm zone="pg-hba-conf">
    <primary>pg_hba.conf</primary>
   </indexterm>
 
