@@ -32,6 +32,9 @@
 /* Set to 1 if you have <history.h> */
 #undef HAVE_HISTORY
 
+/* Set to 1 if you have <dld.h> */
+#undef HAVE_DLD_H
+
 /* Set to 1 if you have isinf() */
 #undef HAVE_ISINF
 
@@ -162,9 +165,11 @@
 */
 #  define JMP_BUF
 #  define USE_POSIX_TIME
-#  define NEED_I386_TAS_ASM
-#  define HAS_TEST_AND_SET
-   typedef unsigned char slock_t;
+#  if !defined(PPC)
+#    define NEED_I386_TAS_ASM
+#    define HAS_TEST_AND_SET
+     typedef unsigned char slock_t;
+#  endif
 #endif
 
 #if defined(nextstep)

@@ -10,12 +10,14 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/port/linux/Attic/dynloader.c,v 1.1.1.1 1996/07/09 06:21:44 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/port/linux/Attic/dynloader.c,v 1.2 1997/02/06 08:39:40 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include <stdio.h>
+#ifdef HAVE_DLD_H
 #include <dld.h>
+#endif
 #include "postgres.h"
 #include "port-protos.h"
 #include "utils/elog.h"
@@ -26,6 +28,10 @@ extern char pg_pathname[];
 void *
 pg_dlopen(char *filename)
 {
+#ifndef HAVE_DLD_H
+  elog(WARN, "dynamic load not supported");
+  return(NULL);
+#else
     static int dl_initialized= 0;
 
     /*
@@ -84,10 +90,15 @@ pg_dlopen(char *filename)
     }
 
     return (void *) strdup(filename);
+#endif
 }
 
 char *
 pg_dlerror()
 {
+#ifndef HAVE_DLD_H
+   return("dynaloader unspported");
+#else
     return dld_strerror(dld_errno);
+#endif
 }

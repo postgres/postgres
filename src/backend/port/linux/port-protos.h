@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: port-protos.h,v 1.1.1.1 1996/07/09 06:21:44 scrappy Exp $
+ * $Id: port-protos.h,v 1.2 1997/02/06 08:39:53 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,8 +22,13 @@
 /* dynloader.c */
 
 #ifndef LINUX_ELF
+# ifndef HAVE_DLD_H
+#define pg_dlsym(handle, funcname)	(NULL)
+# define pg_dlclose(handle)		({})
+# else
 #define pg_dlsym(handle, funcname)	((func_ptr) dld_get_func((funcname)))
-#define pg_dlclose(handle)		({ dld_unlink_by_file(handle, 1); free(handle); })
+# define pg_dlclose(handle)		({ dld_unlink_by_file(handle, 1); free(handle); })
+# endif
 #else
 /* #define	pg_dlopen(f)	dlopen(f, 1) */
 #define	pg_dlopen(f)	dlopen(f, 2)
