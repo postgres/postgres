@@ -11,7 +11,7 @@ ifneq ($(GCC), yes)
   ifeq ($(host_os), aix3.2.5)
     LDFLAGS_SL = -e _nostart
   endif
-  ifeq ($(host_os), aix4.1)
+  ifneq (,$(findstring aix4.1, $(host_os)))
     LDFLAGS_SL = -bnoentry
   endif
 endif
@@ -29,7 +29,7 @@ $(POSTGRES_IMP):
 ifeq ($(host_os), aix3.2.5)
 	$(MKLDEXPORT) postgres $(bindir) > $@
 else
-  ifeq ($(host_os), aix4.1)
+  ifneq (,$(findstring aix4.1, $(host_os)))
 	$(MKLDEXPORT) postgres $(bindir) > $@
   else
 	$(MKLDEXPORT) postgres . > $@
