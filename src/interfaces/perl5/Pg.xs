@@ -1,6 +1,6 @@
 /*-------------------------------------------------------
  *
- * $Id: Pg.xs,v 1.9 1998/09/27 19:12:23 mergl Exp $
+ * $Id: Pg.xs,v 1.10 1998/12/13 02:50:20 momjian Exp $
  *
  * Copyright (c) 1997, 1998  Edmund Mergl
  *
@@ -215,7 +215,8 @@ PQconnectdb(conninfo)
 				}
 			} else {
 				while (*ptr && *ptr != ' ' && *ptr != '\t') {
-					*ptr++ = tolower(*ptr);
+				      *ptr = tolower(*ptr);
+				      ptr++;
 				}
 			}
 		}
@@ -732,7 +733,8 @@ connectdb(conninfo)
 				}
 			} else {
 				while (*ptr && *ptr != ' ' && *ptr != '\t') {
-					*ptr++ = tolower(*ptr);
+					*ptr = tolower(*ptr);
+					ptr++;
 				}
 			}
 		}
