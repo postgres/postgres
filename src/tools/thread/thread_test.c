@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$PostgreSQL: pgsql/src/tools/thread/thread_test.c,v 1.9 2004/03/28 02:37:31 momjian Exp $
+ *	$PostgreSQL: pgsql/src/tools/thread/thread_test.c,v 1.10 2004/04/04 17:23:54 momjian Exp $
  *
  *	This program tests to see if your standard libc functions use
  *	pthread_setspecific()/pthread_getspecific() to be thread-safe.
@@ -105,7 +105,7 @@ void func_call_1(void) {
 	/* wait for other thread to set errno */
 	errno1_set = 1;
 	while (errno2_set == 0)
-		/* loop */;
+		getpid();	/* force system call */
 	if (errno != EEXIST)
 	{
 			fprintf(stderr, "errno not thread-safe; exiting\n");
@@ -128,8 +128,8 @@ void func_call_1(void) {
 		passwd_p1 = NULL;	/* force thread-safe failure report */
 	}
 
-	hostent_p1 = gethostbyname("yahoo.com");
-	p = gethostbyname("slashdot.org");
+	hostent_p1 = gethostbyname("www.yahoo.com");
+	p = gethostbyname("www.weather.com");
 	if (hostent_p1 != p)
 	{
 		printf("Your gethostbyname() changes the static memory area between calls\n");
@@ -151,7 +151,7 @@ void func_call_2(void) {
 	/* wait for other thread to set errno */
 	errno2_set = 1;
 	while (errno1_set == 0)
-		/* loop */;
+		getpid();	/* force system call */
 	if (errno != ENOENT)
 	{
 			fprintf(stderr, "errno not thread-safe; exiting\n");
@@ -174,8 +174,8 @@ void func_call_2(void) {
 		passwd_p2 = NULL;	/* force thread-safe failure report */
 	}
 
-	hostent_p2 = gethostbyname("google.com");
-	p = gethostbyname("postgresql.org");
+	hostent_p2 = gethostbyname("www.google.com");
+	p = gethostbyname("www.postgresql.org");
 	if (hostent_p2 != p)
 	{
 		printf("Your gethostbyname() changes the static memory area between calls\n");
