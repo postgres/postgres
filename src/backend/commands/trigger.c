@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/trigger.c,v 1.61 2000/02/18 09:29:37 inoue Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/trigger.c,v 1.62 2000/02/29 12:28:24 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1643,10 +1643,14 @@ DeferredTriggerSetState(ConstraintsSetStmt *stmt)
 
 			/* ----------
 			 * If we found some, check that they fit the deferrability
+			 * but skip ON <event> RESTRICT ones, since they are silently
+			 * never deferrable.
 			 * ----------
 			 */
 			pg_trigger = (Form_pg_trigger) GETSTRUCT(htup);
-			if (stmt->deferred & !pg_trigger->tgdeferrable)
+			if (stmt->deferred && !pg_trigger->tgdeferrable &&
+					pg_trigger->tgfoid != F_RI_FKEY_RESTRICT_UPD &&
+					pg_trigger->tgfoid != F_RI_FKEY_RESTRICT_DEL)
 				elog(ERROR, "Constraint '%s' is not deferrable",
 									(char *)lfirst(l));
 

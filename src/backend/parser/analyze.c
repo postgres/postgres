@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: analyze.c,v 1.137 2000/02/15 03:37:47 thomas Exp $
+ *	$Id: analyze.c,v 1.138 2000/02/29 12:28:25 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1061,6 +1061,18 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 			fk_trigger = (CreateTrigStmt *)makeNode(CreateTrigStmt);
 			fk_trigger->trigname		= fkconstraint->constr_name;
 			fk_trigger->relname			= fkconstraint->pktable_name;
+			fk_trigger->before			= false;
+			fk_trigger->row				= true;
+			fk_trigger->actions[0]		= 'd';
+			fk_trigger->actions[1]		= '\0';
+			fk_trigger->lang			= NULL;
+			fk_trigger->text			= NULL;
+			fk_trigger->attr			= NIL;
+			fk_trigger->when			= NULL;
+			fk_trigger->isconstraint	= true;
+			fk_trigger->deferrable		= fkconstraint->deferrable;
+			fk_trigger->initdeferred	= fkconstraint->initdeferred;
+			fk_trigger->constrrelname	= stmt->relname;
 			switch ((fkconstraint->actions & FKCONSTR_ON_DELETE_MASK)
 							>> FKCONSTR_ON_DELETE_SHIFT)
 			{
@@ -1068,7 +1080,9 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 					fk_trigger->funcname = "RI_FKey_noaction_del";
 					break;
 				case FKCONSTR_ON_KEY_RESTRICT:
-					fk_trigger->funcname = "RI_FKey_restrict_del";
+					fk_trigger->deferrable		= false;
+					fk_trigger->initdeferred	= false;
+					fk_trigger->funcname		= "RI_FKey_restrict_del";
 					break;
 				case FKCONSTR_ON_KEY_CASCADE:
 					fk_trigger->funcname = "RI_FKey_cascade_del";
@@ -1083,18 +1097,6 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 					elog(ERROR, "Only one ON DELETE action can be specified for FOREIGN KEY constraint");
 					break;
 			}
-			fk_trigger->before			= false;
-			fk_trigger->row				= true;
-			fk_trigger->actions[0]		= 'd';
-			fk_trigger->actions[1]		= '\0';
-			fk_trigger->lang			= NULL;
-			fk_trigger->text			= NULL;
-			fk_trigger->attr			= NIL;
-			fk_trigger->when			= NULL;
-			fk_trigger->isconstraint	= true;
-			fk_trigger->deferrable		= fkconstraint->deferrable;
-			fk_trigger->initdeferred	= fkconstraint->initdeferred;
-			fk_trigger->constrrelname	= stmt->relname;
 
 			fk_trigger->args		= NIL;
 			fk_trigger->args = lappend(fk_trigger->args,
@@ -1129,6 +1131,18 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 			fk_trigger = (CreateTrigStmt *)makeNode(CreateTrigStmt);
 			fk_trigger->trigname		= fkconstraint->constr_name;
 			fk_trigger->relname			= fkconstraint->pktable_name;
+			fk_trigger->before			= false;
+			fk_trigger->row				= true;
+			fk_trigger->actions[0]		= 'u';
+			fk_trigger->actions[1]		= '\0';
+			fk_trigger->lang			= NULL;
+			fk_trigger->text			= NULL;
+			fk_trigger->attr			= NIL;
+			fk_trigger->when			= NULL;
+			fk_trigger->isconstraint	= true;
+			fk_trigger->deferrable		= fkconstraint->deferrable;
+			fk_trigger->initdeferred	= fkconstraint->initdeferred;
+			fk_trigger->constrrelname	= stmt->relname;
 			switch ((fkconstraint->actions & FKCONSTR_ON_UPDATE_MASK)
 							>> FKCONSTR_ON_UPDATE_SHIFT)
 			{
@@ -1136,7 +1150,9 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 					fk_trigger->funcname = "RI_FKey_noaction_upd";
 					break;
 				case FKCONSTR_ON_KEY_RESTRICT:
-					fk_trigger->funcname = "RI_FKey_restrict_upd";
+					fk_trigger->deferrable		= false;
+					fk_trigger->initdeferred	= false;
+					fk_trigger->funcname		= "RI_FKey_restrict_upd";
 					break;
 				case FKCONSTR_ON_KEY_CASCADE:
 					fk_trigger->funcname = "RI_FKey_cascade_upd";
@@ -1151,18 +1167,6 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 					elog(ERROR, "Only one ON UPDATE action can be specified for FOREIGN KEY constraint");
 					break;
 			}
-			fk_trigger->before			= false;
-			fk_trigger->row				= true;
-			fk_trigger->actions[0]		= 'u';
-			fk_trigger->actions[1]		= '\0';
-			fk_trigger->lang			= NULL;
-			fk_trigger->text			= NULL;
-			fk_trigger->attr			= NIL;
-			fk_trigger->when			= NULL;
-			fk_trigger->isconstraint	= true;
-			fk_trigger->deferrable		= fkconstraint->deferrable;
-			fk_trigger->initdeferred	= fkconstraint->initdeferred;
-			fk_trigger->constrrelname	= stmt->relname;
 
 			fk_trigger->args		= NIL;
 			fk_trigger->args = lappend(fk_trigger->args,
