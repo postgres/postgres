@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Sat May 24 11:33:42 EDT 2003
+Last updated:		Sat May 24 14:25:18 EDT 2003
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -76,6 +76,7 @@ Data Types
 * Allow infinite dates just like infinite timestamps
 * Allow pg_dump to dump sequences using NO_MAXVALUE and NO_MINVALUE
 * Allow better handling of numeric constants, type conversion [typeconv]
+* Allow backend to output result sets in XML
 
 * ARRAYS
 	o Allow nulls in arrays
@@ -236,11 +237,11 @@ Clients
 =======
 
 * Allow psql to show transaction status if backend protocol changes made
-* Add XML interface:  psql, pg_dump, COPY, separate server (?)
 * -Add schema, cast, and conversion backslash commands to psql (Christopher)
 * -Allow pg_dump to dump a specific schema (Neil Conway)
 * Allow psql to do table completion for SELECT * FROM schema_part and
   table completion for SELECT * FROM schema_name.
+* Add XML capability to pg_dump and COPY, when backend XML capability
 
 * JDBC
 	o Comprehensive test suite. This may be available already.
