@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.227 2005/01/13 21:13:33 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.228 2005/01/17 02:29:23 petere Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -1613,6 +1613,13 @@ kill `cat /usr/local/pgsql/data/postmaster.pid`
         <entry>8.0.0</entry>
         <entry>Build farm <systemitem class="systemname">cockatoo</systemitem>, snapshot 2004-12-06 14:10:01 (4.10);
          Marc Fournier (<email>scrappy@postgresql.org</email>), 2004-12-07 (5.3)</entry>
+        <entry></entry>
+       </row>
+       <row>
+        <entry><systemitem class="osname">Gentoo Linux</></entry>
+        <entry><systemitem>AMD64</></entry>
+        <entry>8.0.0</entry>
+        <entry>Jani Averbach (<email>jaa@jaa.iki.fi</email>), 2005-01-13</entry>
         <entry></entry>
        </row>
        <row>
