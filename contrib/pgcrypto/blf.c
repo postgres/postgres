@@ -45,13 +45,6 @@
 
 #include "blf.h"
 
-#undef inline
-#ifdef __GNUC__
-#define inline __inline
-#else							/* !__GNUC__ */
-#define inline
-#endif   /* !__GNUC__ */
-
 /* Function for Feistel Networks */
 
 #define F(s, x) ((((s)[		   (((x)>>24)&0xFF)]  \
