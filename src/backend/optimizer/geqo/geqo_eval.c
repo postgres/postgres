@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geqo_eval.c,v 1.33 1999/02/16 00:40:59 momjian Exp $
+ * $Id: geqo_eval.c,v 1.34 1999/02/18 04:55:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -86,12 +86,12 @@ geqo_eval(Query *root, Gene *tour, int num_gene)
  * gimme_tree 
  *	  this program presumes that only LEFT-SIDED TREES are considered!
  *
- * 'outer_rel' is the preceeding join
+ * 'old_rel' is the preceeding join
  *
  * Returns a new join relation incorporating all joins in a left-sided tree.
  */
 RelOptInfo *
-gimme_tree(Query *root, Gene *tour, int rel_count, int num_gene, RelOptInfo *outer_rel)
+gimme_tree(Query *root, Gene *tour, int rel_count, int num_gene, RelOptInfo *old_rel)
 {
 	RelOptInfo *inner_rel;		/* current relation */
 	int			base_rel_index;
@@ -115,16 +115,16 @@ gimme_tree(Query *root, Gene *tour, int rel_count, int num_gene, RelOptInfo *out
 		}
 		else
 		{						/* tree main part */
-			if (!(new_rels = make_rels_by_clause_joins(root, outer_rel,
+			if (!(new_rels = make_rels_by_clause_joins(root, old_rel,
 													   inner_rel->joininfo,
 													   inner_rel->relids)))
 			{
 				if (!BushyPlanFlag)
-					new_rels = make_rels_by_clauseless_joins(outer_rel,
+					new_rels = make_rels_by_clauseless_joins(old_rel,
 												 	lcons(inner_rel,NIL));
 				else
-					new_rels = make_rels_by_clauseless_joins(outer_rel,
-													 lcons(outer_rel,NIL));
+					new_rels = make_rels_by_clauseless_joins(old_rel,
+													 lcons(old_rel,NIL));
 			}
 
 			/* process new_rel->pathlist */
@@ -168,7 +168,7 @@ gimme_tree(Query *root, Gene *tour, int rel_count, int num_gene, RelOptInfo *out
 
 	}
 
-	return outer_rel;			/* tree finished ... */
+	return old_rel;			/* tree finished ... */
 }
 
 static RelOptInfo *

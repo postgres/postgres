@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geqo_main.c,v 1.13 1999/02/13 23:16:08 momjian Exp $
+ * $Id: geqo_main.c,v 1.14 1999/02/18 04:55:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -253,7 +253,8 @@ geqo(Query *root)
 	best_tour = (Gene *) pool->data[0].string;
 
 /* root->join_relation_list_ will be modified during this ! */
-	best_rel = (RelOptInfo *) gimme_tree(root, best_tour, 0, pool->string_length, NULL);
+	best_rel = (RelOptInfo *) gimme_tree(root, best_tour, 0,
+										 pool->string_length, NULL);
 
 /* DBG: show the query plan
 print_plan(best_plan, root);
