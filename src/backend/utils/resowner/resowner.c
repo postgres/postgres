@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/resowner/resowner.c,v 1.11 2005/03/25 18:30:27 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/resowner/resowner.c,v 1.12 2005/04/06 04:34:22 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -158,7 +158,9 @@ ResourceOwnerRelease(ResourceOwner owner,
 
 	save = CurrentResourceOwner;
 	PG_TRY();
-	ResourceOwnerReleaseInternal(owner, phase, isCommit, isTopLevel);
+	{
+		ResourceOwnerReleaseInternal(owner, phase, isCommit, isTopLevel);
+	}
 	PG_CATCH();
 	{
 		CurrentResourceOwner = save;
