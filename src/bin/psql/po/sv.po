@@ -2,7 +2,7 @@
 # Peter Eisentraut <peter_e@gmx.net>, 2001.
 # Dennis Björklund <db@zigo.dhs.org>, 2002, 2003, 2004.
 #
-# $PostgreSQL: pgsql/src/bin/psql/po/sv.po,v 1.18 2004/02/28 10:52:06 dennis Exp $
+# $PostgreSQL: pgsql/src/bin/psql/po/sv.po,v 1.19 2004/03/11 15:46:59 dennis Exp $
 #
 # Use these quotes: "%s"
 #
@@ -10,8 +10,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 7.5\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2004-02-28 11:48+0100\n"
-"PO-Revision-Date: 2004-02-28 11:51+0100\n"
+"POT-Creation-Date: 2004-03-11 16:42+0100\n"
+"PO-Revision-Date: 2004-03-11 16:43+0100\n"
 "Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
 "Language-Team: Swedish <sv@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -1994,11 +1994,11 @@ msgstr "definiera en ny omskrivningsregel"
 msgid ""
 "CREATE [ OR REPLACE ] RULE name AS ON event\n"
 "    TO table [ WHERE condition ]\n"
-"    DO [ INSTEAD ] { NOTHING | command | ( command ; command ... ) }"
+"    DO [ ALSO | INSTEAD ] { NOTHING | command | ( command ; command ... ) }"
 msgstr ""
 "CREATE [ OR REPLACE ] RULE namn AS ON händelse\n"
 "    TO tabell [ WHERE villkor ]\n"
-"    DO [ INSTEAD ] { NOTHING | kommando | ( kommando ; kommando ... ) }"
+"    DO [ ALSO | INSTEAD ] { NOTHING | kommando | ( kommando ; kommando ... ) }"
 
 #: sql_help.h:165
 msgid "define a new schema"
