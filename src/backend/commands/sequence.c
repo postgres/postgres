@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/sequence.c,v 1.95 2003/03/21 03:55:21 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/sequence.c,v 1.96 2003/06/12 07:49:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -344,6 +344,11 @@ AlterSequence(AlterSeqStmt *stmt)
 		seq->is_called = false;
 		seq->log_cnt = 1;
 	}
+
+	/* save info in local cache */
+	elm->last = new.last_value;		/* last returned number */
+	elm->cached = new.last_value;	/* last cached number (forget cached
+									 * values) */
 
 	START_CRIT_SECTION();
 

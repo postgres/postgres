@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/keywords.sgml,v 2.8 2002/11/11 20:14:03 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/keywords.sgml,v 2.9 2003/06/12 07:49:43 momjian Exp $ -->
 
 <appendix id="sql-keywords-appendix">
  <title><acronym>SQL</acronym> Key Words</title>
@@ -873,6 +873,12 @@
     <entry>reserved</entry>
    </row>
    <row>
+    <entry><token>DEFAULTS</token></entry>
+    <entry>non-reserved</entry>
+    <entry></entry>
+    <entry></entry>
+   </row>
+   <row>
     <entry><token>DEFERRABLE</token></entry>
     <entry>reserved</entry>
     <entry>reserved</entry>
@@ -1099,6 +1105,12 @@
     <entry></entry>
     <entry>reserved</entry>
     <entry>reserved</entry>
+   </row>
+   <row>
+    <entry><token>EXCLUDING</token></entry>
+    <entry>non-reserved</entry>
+    <entry></entry>
+    <entry></entry>
    </row>
    <row>
     <entry><token>EXCLUSIVE</token></entry>
@@ -1393,6 +1405,12 @@
     <entry>reserved (can be function)</entry>
     <entry>reserved</entry>
     <entry>reserved</entry>
+   </row>
+   <row>
+    <entry><token>INCLUDING</token></entry>
+    <entry>non-reserved</entry>
+    <entry></entry>
+    <entry></entry>
    </row>
    <row>
     <entry><token>INCREMENT</token></entry>

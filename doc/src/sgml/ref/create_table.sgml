@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_table.sgml,v 1.68 2003/05/04 00:03:55 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_table.sgml,v 1.69 2003/06/12 07:49:43 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -18,7 +18,8 @@ PostgreSQL documentation
 <synopsis>
 CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } ] TABLE <replaceable class="PARAMETER">table_name</replaceable> (
     { <replaceable class="PARAMETER">column_name</replaceable> <replaceable class="PARAMETER">data_type</replaceable> [ DEFAULT <replaceable>default_expr</> ] [ <replaceable class="PARAMETER">column_constraint</replaceable> [, ... ] ]
-    | <replaceable>table_constraint</replaceable> }  [, ... ]
+    | <replaceable>table_constraint</replaceable>
+    | LIKE <replaceable>parent_table</replaceable> [ { INCLUDING | EXCLUDING } DEFAULTS ] }  [, ... ]
 )
 [ INHERITS ( <replaceable>parent_table</replaceable> [, ... ] ) ]
 [ WITH OIDS | WITHOUT OIDS ]
@@ -169,6 +170,26 @@ and <replaceable class="PARAMETER">table_constraint</replaceable> is:
       does not specify a value for the column.  If there is no default
       for a column, then the default is null.
      </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>LIKE <replaceable>parent_table</replaceable> [ { INCLUDING | EXCLUDING } DEFAULTS ]</literal></term>
+    <listitem>
+     <para>
+      The <literal>LIKE</literal> clause specifies a table from which
+      the new table automatically inherits all column names, their datatypes, and
+      <literal>NOT NULL</literal> constraints.
+     </para>
+     <para>
+      Unlike <literal>INHERITS</literal>, the new table and inherited table
+      are complete decoupled after creation has been completed.  Data inserted
+      into the new table will not be reflected into the parent table.
+     </para>
+     <para>
+      Default expressions for the inherited column definitions will only be included if
+      <literal>INCLUDING DEFAULTS</literal> is specified.  The default is to exclude
+      default expressions.
     </listitem>
    </varlistentry>
 
