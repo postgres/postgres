@@ -6,7 +6,7 @@
 # Copyright (c) 1998, Regents of the University of California
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Makefile.shlib,v 1.68 2003/09/10 03:56:33 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/Makefile.shlib,v 1.69 2003/09/14 13:33:08 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -191,7 +191,7 @@ ifeq ($(PORTNAME), unixware)
   else
     LINK.shared		= $(CC) -G
   endif
-  LINK.shared		+= -Wl,-z,text -Wl,-h,$(libdir)/$(soname) 
+  LINK.shared		+= -Wl,-z,text -Wl,-h,$(soname) 
 endif
 
 ifeq ($(PORTNAME), cygwin)
