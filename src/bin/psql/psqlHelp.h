@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: psqlHelp.h,v 1.14 1997/05/22 18:55:40 momjian Exp $
+ * $Id: psqlHelp.h,v 1.15 1997/06/01 04:32:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -94,7 +94,7 @@ static struct _helpStruct QL_HELP[] = {
       "\tdrop aggregate\n\tdrop database\n\tdrop function\n\tdrop index\n\tdrop operator\n\tdrop rule\n\tdrop sequence\n\tdrop table\n\tdrop type\n\tdrop view"},
   { "drop aggregate",
       "remove an aggregate function",
-      "drop aggregate <agg_name>;"},
+      "drop aggregate <agg_name> <agg_type>|*;"},
   { "drop database",
      "remove a database",
      "drop database <dbname>"},
