@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.94 1999/03/29 01:30:37 tgl Exp $
+ * $Id: pg_proc.h,v 1.95 1999/04/13 17:28:35 momjian Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -996,7 +996,7 @@ DATA(insert OID = 748 (  array_set		   PGUID 11 f t f 8 f 23 "0 23 0 0 23 23 23 
 DESCR("array");
 DATA(insert OID = 749 (  array_ref		   PGUID 11 f t f 7 f 23 "0 23 0 23 23 23 0" 100 0 0 100 array_ref -));
 DESCR("array");
-DATA(insert OID = 750 (  array_in		   PGUID 11 f t f 2 f 23 "0 0" 100 0 0 100	array_in - ));
+DATA(insert OID = 750 (  array_in		   PGUID 11 f t f 3 f 23 "0 0 23" 100 0 0 100	array_in - ));
 DESCR("array");
 DATA(insert OID = 751 (  array_out		   PGUID 11 f t f 2 f 23 "0 0" 100 0 0 100	array_out - ));
 DESCR("array");
