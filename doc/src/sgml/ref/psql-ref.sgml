@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.54 2001/05/27 09:59:28 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.55 2001/05/28 04:27:17 momjian Exp $
 Postgres documentation
 -->
 
@@ -348,7 +348,8 @@ testdb=>
 	(which could be a table, view, index, or sequence),
 	their types, and any special attributes such as <literal>NOT NULL</literal>
 	or defaults, if any.
-	If the relation is, in fact, a table, any defined indexes are also listed.
+	If the relation is, in fact, a table, any defined indices, primary keys, unique 
+	constraints and check constraints are also listed.
 	If the relation is a view, the view definition is also shown.
 	</para>
 
