@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.61 1999/12/16 22:19:41 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.62 1999/12/20 10:40:41 wieck Exp $
  *
  * NOTES
  *	  The PortalExecutorHeapMemory crap needs to be eliminated
@@ -455,6 +455,7 @@ PerformAddAttribute(char *relationName,
 		attribute->attbyval = tform->typbyval;
 		attribute->attnelems = attnelems;
 		attribute->attisset = (bool) (tform->typtype == 'c');
+		attribute->attstorage = 'p';
 		attribute->attalign = tform->typalign;
 		attribute->attnotnull = false;
 		attribute->atthasdef = (colDef->raw_default != NULL ||

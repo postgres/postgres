@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.100 1999/12/16 22:19:39 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.101 1999/12/20 10:40:40 wieck Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -99,12 +99,12 @@ static Oid IndexGetRelation(Oid indexId);
  * ----------------------------------------------------------------
  */
 static FormData_pg_attribute sysatts[] = {
-	{0, {"ctid"}, TIDOID, 0, 6, -1, 0, -1, -1, '\0', '\0', 'i', '\0', '\0'},
-	{0, {"oid"}, OIDOID, 0, 4, -2, 0, -1, -1, '\001', '\0', 'i', '\0', '\0'},
-	{0, {"xmin"}, XIDOID, 0, 4, -3, 0, -1, -1, '\001', '\0', 'i', '\0', '\0'},
-	{0, {"cmin"}, CIDOID, 0, 4, -4, 0, -1, -1, '\001', '\0', 'i', '\0', '\0'},
-	{0, {"xmax"}, XIDOID, 0, 4, -5, 0, -1, -1, '\001', '\0', 'i', '\0', '\0'},
-	{0, {"cmax"}, CIDOID, 0, 4, -6, 0, -1, -1, '\001', '\0', 'i', '\0', '\0'},
+	{0, {"ctid"}, TIDOID, 0, 6, -1, 0, -1, -1, '\0', 'p', '\0', 'i', '\0', '\0'},
+	{0, {"oid"}, OIDOID, 0, 4, -2, 0, -1, -1, '\001', 'p', '\0', 'i', '\0', '\0'},
+	{0, {"xmin"}, XIDOID, 0, 4, -3, 0, -1, -1, '\001', 'p', '\0', 'i', '\0', '\0'},
+	{0, {"cmin"}, CIDOID, 0, 4, -4, 0, -1, -1, '\001', 'p', '\0', 'i', '\0', '\0'},
+	{0, {"xmax"}, XIDOID, 0, 4, -5, 0, -1, -1, '\001', 'p', '\0', 'i', '\0', '\0'},
+	{0, {"cmax"}, CIDOID, 0, 4, -6, 0, -1, -1, '\001', 'p', '\0', 'i', '\0', '\0'},
 };
 
 /* ----------------------------------------------------------------
@@ -186,6 +186,7 @@ BuildFuncTupleDesc(FuncIndexInfo *funcInfo)
 	funcTupDesc->attrs[0]->attbyval = ((Form_pg_type) GETSTRUCT(tuple))->typbyval;
 	funcTupDesc->attrs[0]->attcacheoff = -1;
 	funcTupDesc->attrs[0]->atttypmod = -1;
+	funcTupDesc->attrs[0]->attstorage = 'p';
 	funcTupDesc->attrs[0]->attalign = ((Form_pg_type) GETSTRUCT(tuple))->typalign;
 
 	/*
@@ -328,6 +329,7 @@ ConstructTupleDescriptor(Oid heapoid,
 				((Form_pg_type) GETSTRUCT(tup))->typbyval;
 			((Form_pg_attribute) to)->attlen =
 				((Form_pg_type) GETSTRUCT(tup))->typlen;
+			((Form_pg_attribute) to)->attstorage = 'p';
 			((Form_pg_attribute) to)->attalign =
 				((Form_pg_type) GETSTRUCT(tup))->typalign;
 			((Form_pg_attribute) to)->atttypmod = IndexKeyType->typmod;

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/tupdesc.c,v 1.57 1999/11/22 17:55:52 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/tupdesc.c,v 1.58 1999/12/20 10:40:38 wieck Exp $
  *
  * NOTES
  *	  some of the executor utility code such as "ExecTypeFromTL" should be
@@ -322,6 +322,7 @@ TupleDescInitEntry(TupleDesc desc,
 		att->atttypid = InvalidOid;
 		att->attlen = (int16) 0;
 		att->attbyval = (bool) 0;
+		att->attstorage = 'p';
 		att->attalign = 'i';
 		return false;
 	}
@@ -366,11 +367,22 @@ TupleDescInitEntry(TupleDesc desc,
 
 		att->attlen = typeLen(t);
 		att->attbyval = typeByVal(t);
+		att->attstorage = 'p';
 	}
 	else
 	{
 		att->attlen = typeForm->typlen;
 		att->attbyval = typeForm->typbyval;
+/*
+ * This will enable ALL variable size attributes of user
+ * relations for automatic move off into "secondary" relation.
+ * Jan
+ */
+#ifdef LONG_ATTRIBUTES_NOW_IMPLEMENTED_FOR_ALL_VARLENA_DATA_TYPES
+		att->attcanlong = (att->attlen == -1) ? 'e' : 'p';
+#else
+		att->attstorage = 'p';
+#endif
 	}
 
 
@@ -401,6 +413,7 @@ TupleDescMakeSelfReference(TupleDesc desc,
 	att->atttypid = TypeShellMake(relname);
 	att->attlen = typeLen(t);
 	att->attbyval = typeByVal(t);
+	att->attstorage = 'p';
 	att->attnelems = 0;
 }
 
