@@ -22,10 +22,13 @@ static char     *actual_startline[STRUCT_DEPTH];
 /* temporarily store struct members while creating the data structure */
 struct ECPGstruct_member *struct_member_list[STRUCT_DEPTH] = { NULL };
 
-struct ECPGtype ecpg_no_indicator = {ECPGt_NO_INDICATOR, 0L, {NULL}};
+/* also store struct type so we can do a sizeof() later */
+static char *ECPGstruct_sizeof = NULL;
+
+struct ECPGtype ecpg_no_indicator = {ECPGt_NO_INDICATOR, 0L, NULL, {NULL}};
 struct variable no_indicator = {"no_indicator", &ecpg_no_indicator, 0, NULL};
 
-struct ECPGtype ecpg_query = {ECPGt_char_variable, 0L, {NULL}};
+struct ECPGtype ecpg_query = {ECPGt_char_variable, 0L, NULL, {NULL}};
 
 /*
  * Handle parsing errors and warnings
@@ -3914,14 +3917,14 @@ connection_target: database_name opt_server opt_port
 			$$ = $1;
 		  else if (strcmp($1, "?") == 0) /* variable */
                   {
-                        enum ECPGttype typ = argsinsert->variable->type->typ;
+                        enum ECPGttype type = argsinsert->variable->type->type;
  
                         /* if array see what's inside */
-                        if (typ == ECPGt_array)
-                                typ = argsinsert->variable->type->u.element->typ;
+                        if (type == ECPGt_array)
+                                type = argsinsert->variable->type->u.element->type;
  
                         /* handle varchars */
-                        if (typ == ECPGt_varchar)
+                        if (type == ECPGt_varchar)
                                 $$ = make2_str(mm_strdup(argsinsert->variable->name), make_str(".arr"));
                         else
                                 $$ = mm_strdup(argsinsert->variable->name);
@@ -4002,14 +4005,14 @@ user_name: UserId       {
 				$$ = $1;
 			  else if (strcmp($1, "?") == 0) /* variable */
         	          {
-                	        enum ECPGttype typ = argsinsert->variable->type->typ;
+                	        enum ECPGttype type = argsinsert->variable->type->type;
  
                         	/* if array see what's inside */
-	                        if (typ == ECPGt_array)
-        	                        typ = argsinsert->variable->type->u.element->typ;
+	                        if (type == ECPGt_array)
+        	                        type = argsinsert->variable->type->u.element->type;
  
                 	        /* handle varchars */
-                        	if (typ == ECPGt_varchar)
+                        	if (type == ECPGt_varchar)
                                 	$$ = make2_str(mm_strdup(argsinsert->variable->name), make_str(".arr"));
 	                        else
         	                        $$ = mm_strdup(argsinsert->variable->name);
@@ -4021,13 +4024,13 @@ user_name: UserId       {
 char_variable: cvariable
 		{ /* check if we have a char variable */
 			struct variable *p = find_variable($1);
-			enum ECPGttype typ = p->type->typ;
+			enum ECPGttype type = p->type->type;
 
 			/* if array see what's inside */
-			if (typ == ECPGt_array)
-				typ = p->type->u.element->typ;
+			if (type == ECPGt_array)
+				type = p->type->u.element->type;
 
-                        switch (typ)
+                        switch (type)
                         {
                             case ECPGt_char:
                             case ECPGt_unsigned_char:
@@ -4267,10 +4270,10 @@ union_type: s_union '{' variable_declarations '}'
 s_struct: SQL_STRUCT opt_symbol
         {
             struct_member_list[struct_level++] = NULL;
+	    $$ = cat2_str(make_str("struct"), $2);
+	    ECPGstruct_sizeof = cat_str(3, make_str("sizeof("), strdup($$), make_str(")"));
             if (struct_level >= STRUCT_DEPTH)
                  mmerror(PARSE_ERROR, ET_ERROR, "Too many levels in nested structure definition");
-
-	    $$ = cat2_str(make_str("struct"), $2);
 	};
 
 s_union: UNION opt_symbol
@@ -4360,9 +4363,9 @@ variable: opt_pointer ECPGColLabel opt_array_bounds opt_initializer
 			   case ECPGt_struct:
 			   case ECPGt_union:
                                if (dimension < 0)
-                                   type = ECPGmake_struct_type(struct_member_list[struct_level], actual_type[struct_level].type_enum);
+                                   type = ECPGmake_struct_type(struct_member_list[struct_level], actual_type[struct_level].type_enum, ECPGstruct_sizeof);
                                else
-                                   type = ECPGmake_array_type(ECPGmake_struct_type(struct_member_list[struct_level], actual_type[struct_level].type_enum), dimension); 
+                                   type = ECPGmake_array_type(ECPGmake_struct_type(struct_member_list[struct_level], actual_type[struct_level].type_enum, ECPGstruct_sizeof), dimension); 
 
                                $$ = cat_str(4, $1, mm_strdup($2), $3.str, $4);
                                break;
@@ -4783,9 +4786,9 @@ ECPGVar: SQL_VAR
 			   case ECPGt_struct:
 			   case ECPGt_union:
         	                if (dimension < 0)
-                	            type = ECPGmake_struct_type(struct_member_list[struct_level], $5.type_enum);
+                	            type = ECPGmake_struct_type(struct_member_list[struct_level], $5.type_enum, ECPGstruct_sizeof);
                         	else
-	                            type = ECPGmake_array_type(ECPGmake_struct_type(struct_member_list[struct_level], $5.type_enum), dimension); 
+	                            type = ECPGmake_array_type(ECPGmake_struct_type(struct_member_list[struct_level], $5.type_enum, ECPGstruct_sizeof), dimension); 
         	                break;
                 	   case ECPGt_varchar:
                         	if (dimension == -1)
@@ -5337,7 +5340,7 @@ coutputvariable: cvariable indicator
 
 civarind: cvariable indicator
 	{
-		if ($2 != NULL && (find_variable($2))->type->typ == ECPGt_array)
+		if ($2 != NULL && (find_variable($2))->type->type == ECPGt_array)
 			mmerror(PARSE_ERROR, ET_ERROR, "arrays of indicators are not allowed on input");
 
 		add_variable(&argsinsert, find_variable($1), ($2 == NULL) ? &no_indicator : find_variable($2)); 

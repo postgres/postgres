@@ -38,15 +38,15 @@ find_struct_member(char *name, char *str, struct ECPGstruct_member * members)
 			if (c == '\0')
 			{
 				/* found the end */
-				switch (members->typ->typ)
+				switch (members->type->type)
 				{
 					case ECPGt_array:
-						return (new_variable(name, ECPGmake_array_type(members->typ->u.element, members->typ->size)));
+						return (new_variable(name, ECPGmake_array_type(members->type->u.element, members->type->size)));
 					case ECPGt_struct:
 					case ECPGt_union:
-						return (new_variable(name, ECPGmake_struct_type(members->typ->u.members, members->typ->typ)));
+						return (new_variable(name, ECPGmake_struct_type(members->type->u.members, members->type->type, members->type->struct_sizeof)));
 					default:
-						return (new_variable(name, ECPGmake_simple_type(members->typ->typ, members->typ->size)));
+						return (new_variable(name, ECPGmake_simple_type(members->type->type, members->type->size)));
 				}
 			}
 			else
@@ -55,10 +55,10 @@ find_struct_member(char *name, char *str, struct ECPGstruct_member * members)
 				if (c == '-')
 				{
 					next++;
-					return (find_struct_member(name, next, members->typ->u.element->u.members));
+					return (find_struct_member(name, next, members->type->u.element->u.members));
 				}
 				else
-					return (find_struct_member(name, next, members->typ->u.members));
+					return (find_struct_member(name, next, members->type->u.members));
 			}
 		}
 	}
@@ -78,13 +78,13 @@ find_struct(char *name, char *next)
 
 	if (c == '-')
 	{
-		if (p->type->typ != ECPGt_array)
+		if (p->type->type != ECPGt_array)
 		{
 			sprintf(errortext, "variable %s is not a pointer", name);
 			mmerror(PARSE_ERROR, ET_FATAL, errortext);
 		}
 
-		if (p->type->u.element->typ != ECPGt_struct && p->type->u.element->typ != ECPGt_union)
+		if (p->type->u.element->type != ECPGt_struct && p->type->u.element->type != ECPGt_union)
 		{
 			sprintf(errortext, "variable %s is not a pointer to a structure or a union", name);
 			mmerror(PARSE_ERROR, ET_FATAL, errortext);
@@ -98,7 +98,7 @@ find_struct(char *name, char *next)
 	}
 	else
 	{
-		if (p->type->typ != ECPGt_struct && p->type->typ != ECPGt_union)
+		if (p->type->type != ECPGt_struct && p->type->type != ECPGt_union)
 		{
 			sprintf(errortext, "variable %s is neither a structure nor a union", name);
 			mmerror(PARSE_ERROR, ET_FATAL, errortext);
@@ -242,7 +242,7 @@ dump_variables(struct arguments * list, int mode)
 
 	/* Then the current element and its indicator */
 	ECPGdump_a_type(yyout, list->variable->name, list->variable->type,
-			   list->indicator->name, list->indicator->type, NULL, NULL);
+			   list->indicator->name, list->indicator->type, NULL, NULL, 0, NULL, NULL);
 
 	/* Then release the list element. */
 	if (mode != 0)
@@ -253,7 +253,7 @@ void
 check_indicator(struct ECPGtype * var)
 {
 	/* make sure this is a valid indicator variable */
-	switch (var->typ)
+	switch (var->type)
 	{
 			struct ECPGstruct_member *p;
 
@@ -270,7 +270,7 @@ check_indicator(struct ECPGtype * var)
 		case ECPGt_struct:
 		case ECPGt_union:
 			for (p = var->u.members; p; p = p->next)
-				check_indicator(p->typ);
+				check_indicator(p->type);
 			break;
 
 		case ECPGt_array:

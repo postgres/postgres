@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/prepare.c,v 1.11 2001/11/14 11:11:49 meskes Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/prepare.c,v 1.12 2001/12/23 12:17:41 meskes Exp $ */
 
 #include "postgres_fe.h"
 
@@ -76,7 +76,7 @@ ECPGprepare(int lineno, char *name, char *variable)
 	stmt = (struct statement *) ECPGalloc(sizeof(struct statement), lineno);
 	if (!stmt)
 	{
-		free(this);
+		ECPGfree(this);
 		return false;
 	}
 
@@ -114,15 +114,15 @@ ECPGdeallocate(int lineno, char *name)
 	if (this)
 	{
 		/* okay, free all the resources */
-		free(this->name);
-		free(this->stmt->command);
-		free(this->stmt);
+		ECPGfree(this->name);
+		ECPGfree(this->stmt->command);
+		ECPGfree(this->stmt);
 		if (prev != NULL)
 			prev->next = this->next;
 		else
 			prep_stmts = this->next;
 
-		free(this);
+		ECPGfree(this);
 		return true;
 	}
 	ECPGraise(lineno, ECPG_INVALID_STMT, name);

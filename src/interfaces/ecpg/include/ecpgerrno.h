@@ -25,6 +25,7 @@
 #define ECPG_MISSING_INDICATOR		-209
 #define ECPG_NO_ARRAY			-210
 #define ECPG_DATA_NOT_ARRAY		-211
+#define ECPG_ARRAY_INSERT		-212
 
 #define ECPG_NO_CONN			-220
 #define ECPG_NOT_CONN			-221

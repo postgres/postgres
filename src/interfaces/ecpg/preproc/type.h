@@ -4,16 +4,17 @@ struct ECPGtype;
 struct ECPGstruct_member
 {
 	char	   *name;
-	struct ECPGtype *typ;
+	struct ECPGtype *type;
 	struct ECPGstruct_member *next;
 };
 
 struct ECPGtype
 {
-	enum ECPGttype typ;
+	enum ECPGttype type;
 	long		size;			/* For array it is the number of elements.
 								 * For varchar it is the maxsize of the
 								 * area. */
+	char		*struct_sizeof;		/* For a struct this is the sizeof() type as string */
 	union
 	{
 		struct ECPGtype *element;		/* For an array this is the type
@@ -29,7 +30,7 @@ void		ECPGmake_struct_member(char *, struct ECPGtype *, struct ECPGstruct_member
 struct ECPGtype *ECPGmake_simple_type(enum ECPGttype, long);
 struct ECPGtype *ECPGmake_varchar_type(enum ECPGttype, long);
 struct ECPGtype *ECPGmake_array_type(struct ECPGtype *, long);
-struct ECPGtype *ECPGmake_struct_type(struct ECPGstruct_member *, enum ECPGttype type);
+struct ECPGtype *ECPGmake_struct_type(struct ECPGstruct_member *, enum ECPGttype, char *);
 struct ECPGstruct_member *ECPGstruct_member_dup(struct ECPGstruct_member *);
 
 /* Frees a type. */
@@ -46,16 +47,16 @@ void		ECPGfree_type(struct ECPGtype *);
    size is the maxsize in case it is a varchar. Otherwise it is the size of
 	   the variable (required to do array fetches of structs).
  */
-void		ECPGdump_a_type(FILE *, const char *, struct ECPGtype *, const char *, struct ECPGtype *, const char *, const char *);
+void		ECPGdump_a_type(FILE *, const char *, struct ECPGtype *, const char *, struct ECPGtype *, const char *, const char *, const long, const char *, const char *);
 
 /* A simple struct to keep a variable and its type. */
 struct ECPGtemp_type
 {
-	struct ECPGtype *typ;
+	struct ECPGtype *type;
 	const char *name;
 };
 
-extern const char *ECPGtype_name(enum ECPGttype typ);
+extern const char *ECPGtype_name(enum ECPGttype type);
 
 /* some stuff for whenever statements */
 enum WHEN_TYPE

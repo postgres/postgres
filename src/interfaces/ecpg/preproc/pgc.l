@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/pgc.l,v 1.82 2001/12/09 15:27:49 meskes Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/pgc.l,v 1.83 2001/12/23 12:17:41 meskes Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -219,9 +219,7 @@ param			\${integer}
 
 ccomment		"//".*\n
 
-space			[ \t\r\f]
-space_or_nl		[ \t\r\f\n]
-line_end                {space}*\n
+space			[ \t\n\r\f]
 horiz_space		[ \t\f]
 newline                 [\n\r]
 non_newline		[^\n\r]
@@ -254,12 +252,12 @@ else	[eE][lL][sS][eE]
 elif	[eE][lL][iI][fF]
 endif	[eE][nN][dD][iI][fF]
 
-exec_sql		{exec}{space_or_nl}*{sql}{space_or_nl}*
+exec_sql		{exec}{space}*{sql}{space}*
 ipdigit			({digit}|{digit}{digit}|{digit}{digit}{digit})
 ip			{ipdigit}\.{ipdigit}\.{ipdigit}\.{ipdigit}
 
 /* Take care of cpp continuation lines */
-cppline			{space}*#(.*\\{line_end})*.*
+cppline			{space}*#(.*\\{space})*.*
 
 /* DO NOT PUT ANY COMMENTS IN THE FOLLOWING SECTION.
  * AT&T lex does not properly handle C-style comments in this second lex block.
@@ -655,7 +653,7 @@ cppline			{space}*#(.*\\{line_end})*.*
 <C>"-"	      	        { return('-'); }
 <C>"("	      	        { return('('); }
 <C>")"	      	        { return(')'); }
-<C>{space_or_nl}	{ ECHO; }
+<C>{space}	{ ECHO; }
 <C>\{			{ return('{'); }
 <C>\}			{ return('}'); }
 <C>\[			{ return('['); }
@@ -679,13 +677,13 @@ cppline			{space}*#(.*\\{line_end})*.*
 <C>".*"			{ return(S_DOTPOINT); } 
 <C>{other}		{ return S_ANYTHING; }
 
-<C>{exec_sql}{define}{space_or_nl}*	{ BEGIN(def_ident); }
-<C>{exec_sql}{include}{space_or_nl}*	{ BEGIN(incl); }
+<C>{exec_sql}{define}{space}*	{ BEGIN(def_ident); }
+<C>{exec_sql}{include}{space}*	{ BEGIN(incl); }
 
-<C,xskip>{exec_sql}{ifdef}{space_or_nl}* 	{ ifcond = TRUE; BEGIN(xcond); }
-<C,xskip>{exec_sql}{ifndef}{space_or_nl}*	{ ifcond = FALSE; BEGIN(xcond); }
+<C,xskip>{exec_sql}{ifdef}{space}* 	{ ifcond = TRUE; BEGIN(xcond); }
+<C,xskip>{exec_sql}{ifndef}{space}*	{ ifcond = FALSE; BEGIN(xcond); }
 
-<C,xskip>{exec_sql}{elif}{space_or_nl}*	{	/* pop stack */
+<C,xskip>{exec_sql}{elif}{space}*	{	/* pop stack */
 						if ( preproc_tos == 0 ) {
 						    mmerror(PARSE_ERROR, ET_FATAL, "Missing matching 'EXEC SQL IFDEF / EXEC SQL IFNDEF'");
 						}
@@ -699,7 +697,7 @@ cppline			{space}*#(.*\\{line_end})*.*
 						ifcond = TRUE; BEGIN(xcond);
 					}
 
-<C,xskip>{exec_sql}{else}{space_or_nl}*";" {	/* only exec sql endif pops the stack, so take care of duplicated 'else' */
+<C,xskip>{exec_sql}{else}{space}*";" {	/* only exec sql endif pops the stack, so take care of duplicated 'else' */
 						if ( stacked_if_value[preproc_tos].else_branch ) {
 						    mmerror(PARSE_ERROR, ET_FATAL, "Duplicated 'EXEC SQL ELSE;'");
 						}
@@ -717,7 +715,7 @@ cppline			{space}*#(.*\\{line_end})*.*
 						    }
 						}
 					}
-<C,xskip>{exec_sql}{endif}{space_or_nl}*";" { 
+<C,xskip>{exec_sql}{endif}{space}*";" { 
 						if ( preproc_tos == 0 ) {
 						    mmerror(PARSE_ERROR, ET_FATAL, "Unmatched 'EXEC SQL ENDIF;'");
 						}
@@ -735,7 +733,7 @@ cppline			{space}*#(.*\\{line_end})*.*
 
 <xskip>{other}			{ /* ignore */ }
 
-<xcond>{identifier}{space_or_nl}*";" {
+<xcond>{identifier}{space}*";" {
 					if ( preproc_tos >= MAX_NESTED_IF-1 ) {
 					    mmerror(PARSE_ERROR, ET_FATAL, "Too many nested 'EXEC SQL IFDEF' conditions");
 					}
@@ -773,7 +771,7 @@ cppline			{space}*#(.*\\{line_end})*.*
 				BEGIN(def);
 				startlit();
 			}
-<def>{space_or_nl}*";"	{
+<def>{space}*";"	{
 				struct _defines *ptr, *this;
         
                                 for (ptr = defines; ptr != NULL; ptr = ptr->next)

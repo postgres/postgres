@@ -1,4 +1,4 @@
-#include <stdlib.h>
+
 #include <string.h>
 
 exec sql include sqlca;
@@ -34,6 +34,18 @@ exec sql begin declare section;
 	int increment=100;
         char name[AMOUNT][8];
 	char letter[AMOUNT][1];
+	struct name_letter_struct
+	{
+		char name[8];
+		int amount;
+		char letter;
+	} name_letter[AMOUNT];
+        struct ind_struct
+        {
+                short a;
+                short b;
+                short c;
+        } ind[AMOUNT];
 	char command[128];
 	char *connection="pm";
 exec sql end declare section;
@@ -113,16 +125,28 @@ exec sql end declare section;
 	    exec sql at pm insert into "Test" (name, amount, letter) values (:n, :a, :l);	     
 	}
 
+	strcpy(msg, "commit");
+	exec sql at pm commit;
+
         strcpy(msg, "select");
         exec sql at :connection select name, amount, letter into :name, :amount, :letter from "Test";
 
-	printf("Database: pm\n");
+	printf("Database: %s\n", connection);
         for (i=0, j=sqlca.sqlerrd[2]; i<j; i++)
             printf("name[%d]=%8.8s\tamount[%d]=%d\tletter[%d]=%c\n", i, name[i], i, amount[i],i, letter[i][0]);
-        
+
+        strcpy(msg, "select");
+        exec sql at pm select name, amount, letter into :name_letter from "Test";
+
 	strcpy(msg, "commit");
 	exec sql commit;
-	exec sql at pm commit;
+
+        strcpy(msg, "select");
+        exec sql at pm select name, amount, letter into :name_letter:ind from "Test";
+
+	printf("Database: pm\n");
+        for (i=0, j=sqlca.sqlerrd[2]; i<j; i++)
+            printf("name[%d]=%8.8s\tamount[%d]=%d\tletter[%d]=%c\n", i, name_letter[i].name, i, name_letter[i].amount,i, name_letter[i].letter);
 
 	/* Start automatic transactioning for connection main. */
 	exec sql set autocommit to on;

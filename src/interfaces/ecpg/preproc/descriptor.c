@@ -45,7 +45,7 @@ ECPGnumeric_lvalue(FILE *f, char *name)
 {
 	const struct variable *v = find_variable(name);
 
-	switch (v->type->typ)
+	switch (v->type->type)
 	{
 		case ECPGt_short:
 		case ECPGt_int:
@@ -192,7 +192,7 @@ output_get_descr(char *desc_name, char *index)
 				break;
 		}
 		fprintf(yyout, "%s,", get_dtype(results->value));
-		ECPGdump_a_type(yyout, v->name, v->type, NULL, NULL, NULL, NULL);
+		ECPGdump_a_type(yyout, v->name, v->type, NULL, NULL, NULL, NULL, 0L, NULL, NULL);
 	}
 	drop_assignments();
 	fputs("ECPGd_EODT);\n", yyout);

@@ -69,9 +69,9 @@ exec sql end declare section;
 		strcpy(msg, "fetch");
 		exec sql fetch cur into :p:i, :married:ind_married, :children.integer:ind_children.smallint;
 		printf("%8.8s", personal.name.arr);
-		if (ind_personal.ind_birth.born >= 0)
+		if (i->ind_birth.born >= 0)
 			printf(", born %ld", personal.birth.born);
-		if (ind_personal.ind_birth.age >= 0)
+		if (i->ind_birth.age >= 0)
 			printf(", age = %d", personal.birth.age);
 		if ((long)ind_married >= 0)
 			printf(", married %s", married);

@@ -1,8 +1,10 @@
-# $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/Makefile,v 1.78 2001/11/16 16:32:33 petere Exp $
+# $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/Makefile,v 1.79 2001/12/23 12:17:41 meskes Exp $
 
 subdir = src/interfaces/ecpg/preproc
 top_builddir = ../../../..
 include $(top_builddir)/src/Makefile.global
+
+CFLAGS+=-g
 
 MAJOR_VERSION=2
 MINOR_VERSION=9

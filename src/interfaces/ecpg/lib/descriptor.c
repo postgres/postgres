@@ -1,6 +1,6 @@
 /* dynamic SQL support routines
  *
- * $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/descriptor.c,v 1.19 2001/11/14 11:11:49 meskes Exp $
+ * $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/descriptor.c,v 1.20 2001/12/23 12:17:41 meskes Exp $
  */
 
 #include "postgres_fe.h"
@@ -374,9 +374,9 @@ ECPGdeallocate_desc(int line, const char *name)
 		if (!strcmp(name, i->name))
 		{
 			*lastptr = i->next;
-			free(i->name);
+			ECPGfree(i->name);
 			PQclear(i->result);
-			free(i);
+			ECPGfree(i);
 			return true;
 		}
 	}

@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/connect.c,v 1.16 2001/12/05 15:32:06 meskes Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/connect.c,v 1.17 2001/12/23 12:17:41 meskes Exp $ */
 
 #include "postgres_fe.h"
 
@@ -52,9 +52,9 @@ ecpg_finish(struct connection * act)
 		if (actual_connection == act)
 			actual_connection = all_connections;
 
-		for (cache = act->cache_head; cache; ptr = cache, cache = cache->next, free(ptr));
-		free(act->name);
-		free(act);
+		for (cache = act->cache_head; cache; ptr = cache, cache = cache->next, ECPGfree(ptr));
+		ECPGfree(act->name);
+		ECPGfree(act);
 	}
 	else
 		ECPGlog("ecpg_finish: called an extra time.\n");
@@ -348,15 +348,15 @@ ECPGconnect(int lineno, const char *name, const char *user, const char *passwd, 
 						ECPGlog("connect: socketname %s given for TCP connection in line %d\n", host, lineno);
 						ECPGraise(lineno, ECPG_CONNECT, realname ? realname : "<DEFAULT>");
 						if (host)
-							free(host);
+							ECPGfree(host);
 						if (port)
-							free(port);
+							ECPGfree(port);
 						if (options)
-							free(options);
+							ECPGfree(options);
 						if (realname)
-							free(realname);
+							ECPGfree(realname);
 						if (dbname)
-							free(dbname);
+							ECPGfree(dbname);
 						return false;
 					}
 				}
@@ -371,15 +371,15 @@ ECPGconnect(int lineno, const char *name, const char *user, const char *passwd, 
 					ECPGlog("connect: non-localhost access via sockets in line %d\n", lineno);
 					ECPGraise(lineno, ECPG_CONNECT, realname ? realname : "<DEFAULT>");
 					if (host)
-						free(host);
+						ECPGfree(host);
 					if (port)
-						free(port);
+						ECPGfree(port);
 					if (options)
-						free(options);
+						ECPGfree(options);
 					if (realname)
-						free(realname);
+						ECPGfree(realname);
 					if (dbname)
-						free(dbname);
+						ECPGfree(dbname);
 					return false;
 				}
 			}
@@ -431,28 +431,28 @@ ECPGconnect(int lineno, const char *name, const char *user, const char *passwd, 
 				lineno);
 		ECPGraise(lineno, ECPG_CONNECT, realname ? realname : "<DEFAULT>");
 		if (host)
-			free(host);
+			ECPGfree(host);
 		if (port)
-			free(port);
+			ECPGfree(port);
 		if (options)
-			free(options);
+			ECPGfree(options);
 		if (realname)
-			free(realname);
+			ECPGfree(realname);
 		if (dbname)
-			free(dbname);
+			ECPGfree(dbname);
 		return false;
 	}
 
 	if (host)
-		free(host);
+		ECPGfree(host);
 	if (port)
-		free(port);
+		ECPGfree(port);
 	if (options)
-		free(options);
+		ECPGfree(options);
 	if (realname)
-		free(realname);
+		ECPGfree(realname);
 	if (dbname)
-		free(dbname);
+		ECPGfree(dbname);
 
 	this->committed = true;
 	this->autocommit = autocommit;

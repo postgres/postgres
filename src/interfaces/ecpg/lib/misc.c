@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/misc.c,v 1.10 2001/11/14 11:11:49 meskes Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/misc.c,v 1.11 2001/12/23 12:17:41 meskes Exp $ */
 
 #include "postgres_fe.h"
 
@@ -137,6 +137,6 @@ ECPGlog(const char *format,...)
 		vfprintf(debugstream, f, ap);
 		va_end(ap);
 
-		free(f);
+		ECPGfree(f);
 	}
 }

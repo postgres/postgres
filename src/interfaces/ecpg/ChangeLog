@@ -1175,5 +1175,14 @@ Sun Dec  9 16:21:30 CET 2001
 
 	- Fixed several bugs concerning indicators and added error messages
 	  instead of segfaults.
+
+Thu Dec 20 14:15:56 CET 2001
+
+	- Removed space_or_nl and line_end from pgc.l.
+
+Sun Dec 23 13:08:36 CET 2001
+
+	- Fixed several bugs concerning arrays of structs including a memory
+	  allocation bug.
 	- Set ecpg version to 2.9.0.
         - Set library version to 3.3.0.

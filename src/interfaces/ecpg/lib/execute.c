@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/execute.c,v 1.33 2001/11/21 22:57:01 tgl Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/execute.c,v 1.34 2001/12/23 12:17:41 meskes Exp $ */
 
 /*
  * The aim is to get a simpler inteface to the database routines.
@@ -54,40 +54,6 @@ struct sqlca sqlca =
 		0, 0, 0, 0, 0, 0, 0, 0
 	}
 };
-
-/* keep a list of memory we allocated for the user */
-static struct auto_mem
-{
-	void	   *pointer;
-	struct auto_mem *next;
-}	*auto_allocs = NULL;
-
-void
-ECPGadd_mem(void *ptr, int lineno)
-{
-	struct auto_mem *am = (struct auto_mem *) ECPGalloc(sizeof(struct auto_mem), lineno);
-	am->pointer = ptr;
-	am->next = auto_allocs;
-	auto_allocs = am;
-}
-
-void
-ECPGfree_auto_mem(void)
-{
-	struct auto_mem *am;
-
-	/* free all memory we have allocated for the user */
-	for (am = auto_allocs; am;)
-	{
-		struct auto_mem *act = am;
-
-		am = am->next;
-		free(act->pointer);
-		free(act);
-	}
-
-	auto_allocs = NULL;
-}
 
 /* This function returns a newly malloced string that has the  \
    in the argument quoted with \ and the ' quote with ' as SQL92 says.
@@ -182,7 +148,7 @@ create_statement(int lineno, struct connection * connection, struct statement **
 			if (var->pointer == NULL)
 			{
 				ECPGraise(lineno, ECPG_INVALID_STMT, NULL);
-				free(var);
+				ECPGfree(var);
 				return false;
 			}
 
@@ -202,7 +168,7 @@ create_statement(int lineno, struct connection * connection, struct statement **
 			var->ind_offset = va_arg(ap, long);
 			var->next = NULL;
 
-			if (var->ind_type!=ECPGt_NO_INDICATOR
+			if (var->ind_type != ECPGt_NO_INDICATOR
 					&& (var->ind_arrsize == 0 || var->ind_varcharsize == 0))
 				var->ind_value = *((void **) (var->ind_pointer));
 			else
@@ -230,13 +196,13 @@ free_variable(struct variable * var)
 	if (var == (struct variable *) NULL)
 		return;
 	var_next = var->next;
-	free(var);
+	ECPGfree(var);
 
 	while (var_next)
 	{
 		var = var_next;
 		var_next = var->next;
-		free(var);
+		ECPGfree(var);
 	}
 }
 
@@ -247,7 +213,7 @@ free_statement(struct statement * stmt)
 		return;
 	free_variable(stmt->inlist);
 	free_variable(stmt->outlist);
-	free(stmt);
+	ECPGfree(stmt);
 }
 
 static char *
@@ -354,7 +320,7 @@ ECPGis_type_an_array(int type, const struct statement * stmt, const struct varia
 	array_query = (char *) ECPGalloc(strlen("select typelem from pg_type where oid=") + 11, stmt->lineno);
 	sprintf(array_query, "select typelem from pg_type where oid=%d", type);
 	query = PQexec(stmt->connection->connection, array_query);
-	free(array_query);
+	ECPGfree(array_query);
 	if (PQresultStatus(query) == PGRES_TUPLES_OK)
 	{
 		isarray = atol((char *) PQgetvalue(query, 0, 0));
@@ -460,6 +426,7 @@ ECPGstore_result(const PGresult *results, int act_field,
 		*((void **) var->pointer) = var->value;
 		ECPGadd_mem(var->value, stmt->lineno);
 	}
+
 	/* allocate indicator variable if needed */
 	if ((var->ind_arrsize == 0 || var->ind_varcharsize == 0) && var->ind_value == NULL && var->ind_pointer!=NULL)
 	{
@@ -470,7 +437,6 @@ ECPGstore_result(const PGresult *results, int act_field,
 	}
 	
 	/* fill the variable with the tuple(s) */
-
 	if (!var->varcharsize && !var->arrsize && 
 				(var->type==ECPGt_char || var->type==ECPGt_unsigned_char))
 	{
@@ -486,7 +452,7 @@ ECPGstore_result(const PGresult *results, int act_field,
 			int len = strlen(PQgetvalue(results, act_tuple, act_field)) + 1;
 			if (!ECPGget_data(results, act_tuple, act_field, stmt->lineno,
 						  var->type, var->ind_type, current_data_location,
-					 var->ind_value, len, 0, isarray))
+					 var->ind_value, len, 0, 0, isarray))
 				status = false;
 			else
 			{
@@ -505,7 +471,7 @@ ECPGstore_result(const PGresult *results, int act_field,
 		{
 			if (!ECPGget_data(results, act_tuple, act_field, stmt->lineno,
 						  var->type, var->ind_type, var->value,
-					 var->ind_value, var->varcharsize, var->offset, isarray))
+					 var->ind_value, var->varcharsize, var->offset, var->ind_offset, isarray))
 				status = false;
 		}
 	}
@@ -519,6 +485,16 @@ ECPGstore_input(const struct statement * stmt, const struct variable * var,
 	char	   *mallocedval = NULL;
 	char	   *newcopy = NULL;
 
+	/* 
+	 * arrays are not possible 
+	 */
+	 
+	 if (var->arrsize > 1)
+	 {
+		ECPGraise(stmt->lineno, ECPG_ARRAY_INSERT, NULL);
+		return false;
+	 }
+	 
 	/*
 	 * Some special treatment is needed for records since we want their
 	 * contents to arrive in a comma-separated list on insert (I think).
@@ -816,7 +792,7 @@ ECPGstore_input(const struct statement * stmt, const struct variable * var,
 					if (!mallocedval)
 						return false;
 
-					free(newcopy);
+					ECPGfree(newcopy);
 
 					*tobeinserted_p = mallocedval;
 					*malloced_p = true;
@@ -851,7 +827,7 @@ ECPGstore_input(const struct statement * stmt, const struct variable * var,
 					if (!mallocedval)
 						return false;
 
-					free(newcopy);
+					ECPGfree(newcopy);
 
 					*tobeinserted_p = mallocedval;
 					*malloced_p = true;
@@ -936,11 +912,11 @@ ECPGexecute(struct statement * stmt)
 		 */
 		if (malloced)
 		{
-			free((char *) tobeinserted);
+			ECPGfree((char *) tobeinserted);
 			tobeinserted = NULL;
 		}
 
-		free(copiedquery);
+		ECPGfree(copiedquery);
 		copiedquery = newcopy;
 
 		var = var->next;
@@ -968,7 +944,7 @@ ECPGexecute(struct statement * stmt)
 
 	ECPGlog("ECPGexecute line %d: QUERY: %s on connection %s\n", stmt->lineno, copiedquery, stmt->connection->name);
 	results = PQexec(stmt->connection->connection, copiedquery);
-	free(copiedquery);
+	ECPGfree(copiedquery);
 
 	if (results == NULL)
 	{
@@ -1091,7 +1067,7 @@ ECPGexecute(struct statement * stmt)
 	{
 		ECPGlog("ECPGexecute line %d: ASYNC NOTIFY of '%s' from backend pid '%d' received\n",
 				stmt->lineno, notify->relname, notify->be_pid);
-		free(notify);
+		ECPGfree(notify);
 	}
 
 	return status;
@@ -1114,15 +1090,16 @@ ECPGdo(int lineno, const char *connection_name, char *query,...)
 	if (!ECPGinit(con, connection_name, lineno))
 	{
 		setlocale(LC_NUMERIC, oldlocale);
-		free(oldlocale);
+		ECPGfree(oldlocale);
 		return (false);
 	}
 
+	/* construct statement in our own structure */
 	va_start(args, query);
 	if (create_statement(lineno, con, &stmt, query, args) == false)
 	{
 		setlocale(LC_NUMERIC, oldlocale);
-		free(oldlocale);
+		ECPGfree(oldlocale);
 		return (false);
 	}
 	va_end(args);
@@ -1133,16 +1110,19 @@ ECPGdo(int lineno, const char *connection_name, char *query,...)
 		free_statement(stmt);
 		ECPGraise(lineno, ECPG_NOT_CONN, (con) ? con->name : "<empty>");
 		setlocale(LC_NUMERIC, oldlocale);
-		free(oldlocale);
+		ECPGfree(oldlocale);
 		return false;
 	}
 
+	/* initialize auto_mem struct */
+	ECPGclear_auto_mem();
+	
 	status = ECPGexecute(stmt);
 	free_statement(stmt);
 
 	/* and reset locale value so our application is not affected */
 	setlocale(LC_NUMERIC, oldlocale);
-	free(oldlocale);
+	ECPGfree(oldlocale);
 
 	return (status);
 }

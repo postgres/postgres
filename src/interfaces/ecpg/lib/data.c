@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/data.c,v 1.20 2001/12/05 15:32:06 meskes Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/data.c,v 1.21 2001/12/23 12:17:41 meskes Exp $ */
 
 #include "postgres_fe.h"
 
@@ -15,11 +15,11 @@ bool
 ECPGget_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 		 enum ECPGttype type, enum ECPGttype ind_type,
 		 void *var, void *ind, long varcharsize, long offset,
-		 bool isarray)
+		 long ind_offset, bool isarray)
 {
 	char	   *pval = (char *) PQgetvalue(results, act_tuple, act_field);
 
-	ECPGlog("ECPGget_data line %d: RESULT: %s\n", lineno, pval ? pval : "");
+	ECPGlog("ECPGget_data line %d: RESULT: %s offset: %ld\n", lineno, pval ? pval : "", offset);
 
 	/* pval is a pointer to the value */
 	/* let's check is it really is an array if it should be one */
@@ -53,23 +53,28 @@ ECPGget_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 	{
 		case ECPGt_short:
 		case ECPGt_unsigned_short:
-			((short *) ind)[act_tuple] = -PQgetisnull(results, act_tuple, act_field);
+/*			((short *) ind)[act_tuple] = -PQgetisnull(results, act_tuple, act_field);*/
+			*((short *) (ind + ind_offset*act_tuple)) = -PQgetisnull(results, act_tuple, act_field);
 			break;
 		case ECPGt_int:
 		case ECPGt_unsigned_int:
-			((int *) ind)[act_tuple] = -PQgetisnull(results, act_tuple, act_field);
+/*			((int *) ind)[act_tuple] = -PQgetisnull(results, act_tuple, act_field);*/
+			*((int *) (ind + ind_offset*act_tuple)) = -PQgetisnull(results, act_tuple, act_field);
 			break;
 		case ECPGt_long:
 		case ECPGt_unsigned_long:
-			((long *) ind)[act_tuple] = -PQgetisnull(results, act_tuple, act_field);
+/*			((long *) ind)[act_tuple] = -PQgetisnull(results, act_tuple, act_field);*/
+			*((long *) (ind + ind_offset*act_tuple)) = -PQgetisnull(results, act_tuple, act_field);
 			break;
 #ifdef HAVE_LONG_LONG_INT_64
 		case ECPGt_long_long:
-			((long long int *) ind)[act_tuple] = -PQgetisnull(results, act_tuple, act_field);
-			break;
 		case ECPGt_unsigned_long_long:
-			((unsigned long long int *) ind)[act_tuple] = -PQgetisnull(results, act_tuple, act_field);
+/*			((long long int *) ind)[act_tuple] = -PQgetisnull(results, act_tuple, act_field);*/
+			*((long long int *) (ind + ind_offset*act_tuple)) = -PQgetisnull(results, act_tuple, act_field);
 			break;
+/*		case ECPGt_unsigned_long_long:
+			((unsigned long long int *) ind)[act_tuple] = -PQgetisnull(results, act_tuple, act_field);
+			break;*/
 #endif   /* HAVE_LONG_LONG_INT_64 */
 		case ECPGt_NO_INDICATOR:
 			if (PQgetisnull(results, act_tuple, act_field))
@@ -112,13 +117,16 @@ ECPGget_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 				switch (type)
 				{
 					case ECPGt_short:
-						((short *) var)[act_tuple] = (short) res;
+/*						((short *) var)[act_tuple] = (short) res;*/
+						*((short *) (var + offset*act_tuple)) = (short) res;
 						break;
 					case ECPGt_int:
-						((int *) var)[act_tuple] = (int) res;
+/*						((int *) var)[act_tuple] = (int) res;*/
+						*((int *) (var + offset*act_tuple)) = (int) res;
 						break;
 					case ECPGt_long:
-						((long *) var)[act_tuple] = res;
+/*						((long *) var)[act_tuple] = res;*/
+						*((long *) (var + offset*act_tuple)) = (long) res;
 						break;
 					default:
 						/* Cannot happen */
@@ -145,13 +153,16 @@ ECPGget_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 				switch (type)
 				{
 					case ECPGt_unsigned_short:
-						((unsigned short *) var)[act_tuple] = (unsigned short) ures;
+/*						((unsigned short *) var)[act_tuple] = (unsigned short) ures;*/
+						*((unsigned short *) (var + offset*act_tuple)) = (unsigned short) res;
 						break;
 					case ECPGt_unsigned_int:
-						((unsigned int *) var)[act_tuple] = (unsigned int) ures;
+/*						((unsigned int *) var)[act_tuple] = (unsigned int) ures;*/
+						*((unsigned int *) (var + offset*act_tuple)) = (unsigned int) res;
 						break;
 					case ECPGt_unsigned_long:
-						((unsigned long *) var)[act_tuple] = ures;
+/*						((unsigned long *) var)[act_tuple] = ures;*/
+						*((unsigned long *) (var + offset*act_tuple)) = (unsigned long) res;
 						break;
 					default:
 						/* Cannot happen */
@@ -164,7 +175,8 @@ ECPGget_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 			case ECPGt_long_long:
 				if (pval)
 				{
-					((long long int *) var)[act_tuple] = strtoll(pval, &scan_length, 10);
+/*					((long long int *) var)[act_tuple] = strtoll(pval, &scan_length, 10);*/
+					*((long long int *) (var + offset*act_tuple)) = strtoll(pval, &scan_length, 10);
 					if ((isarray && *scan_length != ',' && *scan_length != '}')
 						|| (!isarray && *scan_length != '\0'))	/* Garbage left */
 					{
@@ -173,7 +185,8 @@ ECPGget_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 					}
 				}
 				else
-					((long long int *) var)[act_tuple] = (long long) 0;
+/*					((long long int *) var)[act_tuple] = (long long) 0;*/
+					*((long long int *) (var + offset*act_tuple)) = (long long) 0;
 
 				break;
 #endif   /* HAVE_STRTOLL */
@@ -181,7 +194,8 @@ ECPGget_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 			case ECPGt_unsigned_long_long:
 				if (pval)
 				{
-					((unsigned long long int *) var)[act_tuple] = strtoull(pval, &scan_length, 10);
+/*					((unsigned long long int *) var)[act_tuple] = strtoull(pval, &scan_length, 10);*/
+					*((unsigned long long int *) (var + offset*act_tuple)) =  strtoull(pval, &scan_length, 10);
 					if ((isarray && *scan_length != ',' && *scan_length != '}')
 						|| (!isarray && *scan_length != '\0'))	/* Garbage left */
 					{
@@ -190,7 +204,8 @@ ECPGget_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 					}
 				}
 				else
-					((unsigned long long int *) var)[act_tuple] = (long long) 0;
+/*					((unsigned long long int *) var)[act_tuple] = (long long) 0;*/
+					*((unsigned long long int *) (var + offset*act_tuple)) = (long long) 0;
 
 				break;
 #endif   /* HAVE_STRTOULL */
@@ -221,10 +236,12 @@ ECPGget_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 				switch (type)
 				{
 					case ECPGt_float:
-						((float *) var)[act_tuple] = dres;
+/*						((float *) var)[act_tuple] = dres;*/
+						*((float *) (var + offset*act_tuple)) =  dres;
 						break;
 					case ECPGt_double:
-						((double *) var)[act_tuple] = dres;
+/*						((double *) var)[act_tuple] = dres;*/
+						*((double *) (var + offset*act_tuple)) =  dres;
 						break;
 					default:
 						/* Cannot happen */
@@ -238,9 +255,11 @@ ECPGget_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 					if (pval[0] == 'f' && pval[1] == '\0')
 					{
 						if (offset == sizeof(char))
-							((char *) var)[act_tuple] = false;
+/*							((char *) var)[act_tuple] = false;*/
+							*((char *) (var + offset*act_tuple)) =  false;
 						else if (offset == sizeof(int))
-							((int *) var)[act_tuple] = false;
+/*							((int *) var)[act_tuple] = false;*/
+							*((int *) (var + offset*act_tuple)) =  false;
 						else
 							ECPGraise(lineno, ECPG_CONVERT_BOOL, "different size");
 						break;
@@ -248,9 +267,11 @@ ECPGget_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 					else if (pval[0] == 't' && pval[1] == '\0')
 					{
 						if (offset == sizeof(char))
-							((char *) var)[act_tuple] = true;
+/*							((char *) var)[act_tuple] = true;*/
+							*((char *) (var + offset*act_tuple)) =  true;
 						else if (offset == sizeof(int))
-							((int *) var)[act_tuple] = true;
+/*							((int *) var)[act_tuple] = true;*/
+							*((int *) (var + offset*act_tuple)) =  true;
 						else
 							ECPGraise(lineno, ECPG_CONVERT_BOOL, "different size");
 						break;
@@ -277,16 +298,25 @@ ECPGget_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 						{
 							case ECPGt_short:
 							case ECPGt_unsigned_short:
-								((short *) ind)[act_tuple] = strlen(pval);
+/*								((short *) ind)[act_tuple] = strlen(pval);*/
+								*((short *) (ind + ind_offset*act_tuple)) = strlen(pval);
 								break;
 							case ECPGt_int:
 							case ECPGt_unsigned_int:
-								((int *) ind)[act_tuple] = strlen(pval);
+/*								((int *) ind)[act_tuple] = strlen(pval);*/
+								*((int *) (ind + ind_offset*act_tuple)) = strlen(pval);
 								break;
 							case ECPGt_long:
 							case ECPGt_unsigned_long:
-								((long *) ind)[act_tuple] = strlen(pval);
+/*								((long *) ind)[act_tuple] = strlen(pval);*/
+								*((long *) (ind + ind_offset*act_tuple)) = strlen(pval);
 								break;
+#ifdef HAVE_LONG_LONG_INT_64
+							case ECPGt_long_long:
+							case ECPGt_unsigned_long_long:
+								*((long long int *) (ind + ind_offset*act_tuple)) = strlen(pval);
+								break;
+#endif   /* HAVE_LONG_LONG_INT_64 */
 							default:
 								break;
 						}
@@ -313,16 +343,25 @@ ECPGget_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 						{
 							case ECPGt_short:
 							case ECPGt_unsigned_short:
-								((short *) ind)[act_tuple] = variable->len;
+/*								((short *) ind)[act_tuple] = variable->len;*/
+								*((short *) (ind + offset*act_tuple)) = variable->len;
 								break;
 							case ECPGt_int:
 							case ECPGt_unsigned_int:
-								((int *) ind)[act_tuple] = variable->len;
+/*								((int *) ind)[act_tuple] = variable->len;*/
+								*((int *) (ind + offset*act_tuple)) = variable->len;
 								break;
 							case ECPGt_long:
 							case ECPGt_unsigned_long:
-								((long *) ind)[act_tuple] = variable->len;
+/*								((long *) ind)[act_tuple] = variable->len;*/
+								*((long *) (ind + offset*act_tuple)) = variable->len;
 								break;
+#ifdef HAVE_LONG_LONG_INT_64
+							case ECPGt_long_long:
+							case ECPGt_unsigned_long_long:
+								*((long long int *) (ind + ind_offset*act_tuple)) = variable->len;
+								break;
+#endif   /* HAVE_LONG_LONG_INT_64 */
 							default:
 								break;
 						}

@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/error.c,v 1.13 2001/11/14 11:11:49 meskes Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/error.c,v 1.14 2001/12/23 12:17:41 meskes Exp $ */
 
 #include "postgres_fe.h"
 
@@ -80,6 +80,11 @@ ECPGraise(int line, int code, const char *str)
 		case ECPG_DATA_NOT_ARRAY:
 			snprintf(sqlca.sqlerrm.sqlerrmc, sizeof(sqlca.sqlerrm.sqlerrmc),
 			 "Data read from backend is not an array in line %d.", line);
+			break;
+
+		case ECPG_ARRAY_INSERT:
+			snprintf(sqlca.sqlerrm.sqlerrmc, sizeof(sqlca.sqlerrm.sqlerrmc),
+					 "Trying to insert an array of variables in line %d.", line);
 			break;
 
 		case ECPG_NO_CONN:
