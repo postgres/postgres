@@ -811,4 +811,4 @@ then
 	LDFLAGS="$ice_save_LDFLAGS"
 fi
 
-AC_OUTPUT(GNUmakefile Makefile.global backend/port/Makefile bin/pg_version/Makefile bin/psql/Makefile bin/pg_dump/Makefile backend/utils/Gen_fmgrtab.sh interfaces/libpq/Makefile interfaces/libpgtcl/Makefile interfaces/ecpg/lib/Makefile include/version.h)
+AC_OUTPUT(GNUmakefile Makefile.global backend/port/Makefile bin/pg_version/Makefile bin/psql/Makefile bin/pg_dump/Makefile backend/utils/Gen_fmgrtab.sh interfaces/libpq/Makefile interfaces/libpq++/Makefile interfaces/libpgtcl/Makefile interfaces/ecpg/lib/Makefile include/version.h)

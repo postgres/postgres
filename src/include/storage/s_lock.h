@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/include/storage/s_lock.h,v 1.45 1998/09/01 04:38:32 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/include/storage/s_lock.h,v 1.46 1998/09/11 16:56:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -198,13 +198,14 @@ tas(volatile slock_t *lock)
 asm int
 tas(slock_t *s_lock)
 {
-	%mem s_lock
-	pushl % ebx
+/* UNIVEL wants %mem in column 1, so we don't pg_indent this file */
+%mem s_lock
+	pushl %ebx
 	movl s_lock, %ebx
 	movl $255, %eax
 	lock
-	xchgb % al, (%ebx)
-	popl % ebx
+	xchgb %al, (%ebx)
+	popl %ebx
 }
 
 #endif	 /* USE_UNIVEL_CC */
