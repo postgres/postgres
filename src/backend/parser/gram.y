@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.70 1999/04/19 16:00:15 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.71 1999/04/27 13:33:43 wieck Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -3335,7 +3335,7 @@ Numeric:  FLOAT opt_float
 				{
 					$$ = makeNode(TypeName);
 					$$->name = xlateSqlType("numeric");
-					$$->typmod = -1;
+					$$->typmod = $2;
 				}
 		| NUMERIC opt_numeric
 				{
