@@ -19111,3 +19111,49 @@ if test "$no_create" != yes; then
   $ac_cs_success || { (exit 1); exit 1; }
 fi
 
+
+#
+# We have to run the thread test here because it is an external program
+# that has to be runable separately for cross-compiling.
+#
+if test "$enable_thread_safety" = yes; then
+if test cross_compiling != yes; then
+echo "$as_me:$LINENO: checking thread safety of required library functions." >&5
+echo $ECHO_N "checking thread safety of required library functions.... $ECHO_C" >&6
+#
+# Clean, compile, run, and clean thread test directory.
+# If test fails for any reason, remove Makefile.global so the user can't
+# compile (to simulate a configure failure).
+#
+gmake -C $srcdir/src/tools/thread clean >&5 ||
+	( rm -f src/Makefile.global
+	  { { echo "$as_me:$LINENO: error: Can not clean thread test directory." >&5
+echo "$as_me: error: Can not clean thread test directory." >&2;}
+   { (exit 1); exit 1; }; })
+gmake -C $srcdir/src/tools/thread >&5 ||
+	( rm -f src/Makefile.global
+	  { { echo "$as_me:$LINENO: error: Can not build thread test proram." >&5
+echo "$as_me: error: Can not build thread test proram." >&2;}
+   { (exit 1); exit 1; }; })
+$srcdir/src/tools/thread/thread_test >&5 ||
+	( rm -f src/Makefile.global
+	  { { echo "$as_me:$LINENO: error: Thread test program failed." >&5
+echo "$as_me: error: Thread test program failed." >&2;}
+   { (exit 1); exit 1; }; })
+gmake -C $srcdir/src/tools/thread clean >&5 ||
+	( rm -f src/Makefile.global
+	  { { echo "$as_me:$LINENO: error: Can not clean thread test directory." >&5
+echo "$as_me: error: Can not clean thread test directory." >&2;}
+   { (exit 1); exit 1; }; })
+echo "yes"
+else
+{ echo "$as_me:$LINENO: WARNING:
+*** Skipping thread test program because of cross-compile build.
+*** Run the program in $srcdir/src/tools/thread on the target matchine.
+" >&5
+echo "$as_me: WARNING:
+*** Skipping thread test program because of cross-compile build.
+*** Run the program in $srcdir/src/tools/thread on the target matchine.
+" >&2;}
+fi
+fi
