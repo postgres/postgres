@@ -1,7 +1,7 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/indices.sgml,v 1.17 2001/05/17 21:50:16 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/indices.sgml,v 1.18 2001/05/22 16:00:00 petere Exp $ -->
 
 <chapter id="indexes">
- <title id="indexes-title">Indices</title>
+ <title id="indexes-title">Indexes</title>
 
  <indexterm zone="indexes">
   <primary>indexes</primary>

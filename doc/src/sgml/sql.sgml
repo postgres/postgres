@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/sql.sgml,v 1.20 2001/03/24 23:03:26 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/sql.sgml,v 1.21 2001/05/22 16:00:00 petere Exp $
 -->
 
  <chapter id="sql">
@@ -1769,7 +1769,7 @@ CREATE TABLE SELLS
      <title>Create Index</title>
 
      <para>
-      Indices are used to speed up access to a relation. If a relation <classname>R</classname>
+      Indexes are used to speed up access to a relation. If a relation <classname>R</classname>
       has an index on attribute <classname>A</classname> then we can
       retrieve all tuples <replaceable>t</replaceable>
       having
