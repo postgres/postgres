@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: int8.h,v 1.7 1998/09/11 16:43:26 momjian Exp $
+ * $Id: int8.h,v 1.8 1998/09/11 17:16:11 momjian Exp $
  *
  * NOTES
  * These data types are supported on all 64-bit architectures, and may
@@ -29,7 +29,7 @@ typedef long int int64;
 
 #define INT64_FORMAT "%ld"
 #else
-#ifdef HAVE_LONG_LONG_INT_64_lld
+#ifdef HAVE_LONG_LONG_INT_64
 /* We have working support for "long long int", use that */
 typedef long long int int64;
 
