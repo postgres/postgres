@@ -6463,6 +6463,7 @@ trap 'rm -fr `echo "GNUmakefile
 	interfaces/odbc/GNUmakefile
 	interfaces/odbc/Makefile.global
 	pl/plpgsql/src/Makefile
+	pl/plpgsql/src/mklang.sql
 	pl/tcl/mkMakefile.tcldefs.sh
  include/config.h" | sed "s/:[^ ]*//g"` conftest*; exit 1' 1 2 15
 EOF
@@ -6621,6 +6622,7 @@ CONFIG_FILES=\${CONFIG_FILES-"GNUmakefile
 	interfaces/odbc/GNUmakefile
 	interfaces/odbc/Makefile.global
 	pl/plpgsql/src/Makefile
+	pl/plpgsql/src/mklang.sql
 	pl/tcl/mkMakefile.tcldefs.sh
 "}
 EOF
