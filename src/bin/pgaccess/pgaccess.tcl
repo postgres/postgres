@@ -1,46 +1,74 @@
 #!/usr/bin/wish
-#############################################################################
-# Visual Tcl v1.11 Project
-#
 
-#################################
-# GLOBAL VARIABLES
-#
-global activetab; 
-global dbc; 
-global username;
-global password;
-global dbname; 
-global host; 
-global mw; 
-global newdbname; 
-global newhost; 
-global newpport; 
-global newusername;
-global newpassword;
-global pport; 
-global pref; 
-global qlvar; 
-global sdbname; 
-global tablist; 
 global widget;
 
-#################################
-# USER DEFINED PROCEDURES
-#
-proc init {argc argv} {
-global dbc host pport tablist mw fldval activetab qlvar
-foreach wid {Label Text Button Listbox Checkbutton Radiobutton} {
-	option add *$wid.font  -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-*
+image create bitmap dnarw -data  {
+#define down_arrow_width 15
+#define down_arrow_height 15
+static char down_arrow_bits[] = {
+	0x00,0x80,0x00,0x80,0x00,0x80,0x00,0x80,
+	0x00,0x80,0xf8,0x8f,0xf0,0x87,0xe0,0x83,
+	0xc0,0x81,0x80,0x80,0x00,0x80,0x00,0x80,
+	0x00,0x80,0x00,0x80,0x00,0x80
+	}
 }
+
+proc {set_default_fonts} {} {
+global pref tcl_platform
+if {[string toupper $tcl_platform(platform)]=="WINDOWS"} {
+	set pref(font_normal) {"MS Sans Serif" 8}
+	set pref(font_bold) {"MS Sans Serif" 8 bold}
+	set pref(font_fix) {Terminal 8}
+	set pref(font_italic) {"MS Sans Serif" 8 italic}
+} else {
+	set pref(font_normal) -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-*
+	set pref(font_bold) -Adobe-Helvetica-Bold-R-Normal-*-*-120-*-*-*-*-*
+	set pref(font_italic) -Adobe-Helvetica-Medium-O-Normal-*-*-120-*-*-*-*-*
+	set pref(font_fix) -*-Clean-Medium-R-Normal-*-*-130-*-*-*-*-*
+}
+}
+
+proc {set_gui_pref} {} {
+global pref
+foreach wid {Label Text Button Listbox Checkbutton Radiobutton} {
+	option add *$wid.font $pref(font_normal)
+}
+option add *Entry.background #fefefe
+option add *Entry.foreground #000000
+}
+
+proc {load_pref} {} {
+global pref
+set_default_fonts
+set_gui_pref
+set retval [catch {set fid [open "~/.pgaccessrc" r]}]
+if {$retval} {
+	set pref(rows) 200
+	set pref(tvfont) clean
+	set pref(autoload) 1
+	set pref(lastdb) {}
+	set pref(lasthost) localhost
+	set pref(lastport) 5432
+	set pref(username) {}
+	set pref(password) {}
+} else {
+	while {![eof $fid]} {
+		set pair [gets $fid]
+		set pref([lindex $pair 0]) [lindex $pair 1]
+	}
+	close $fid
+	set_gui_pref
+}
+}
+
+proc init {argc argv} {
+global dbc host pport tablist mw fldval activetab qlvar mwcount pref
+load_pref
 set host localhost
 set pport 5432
 set dbc {}
-set tablist [list Tables Queries Views Sequences Functions Reports Forms Scripts]
+set tablist [list Tables Queries Views Sequences Functions Reports Forms Scripts Users]
 set activetab {}
-set mw(dirtyrec) 0
-set mw(id_edited) {}
-catch {unset qlvar}
 set qlvar(yoffs) 360
 set qlvar(xoffs) 50
 set qlvar(reswidth) 150
@@ -52,6 +80,7 @@ set qlvar(critedit) 0
 set qlvar(links) {}
 set qlvar(ntables) 0
 set qlvar(newtablename) {}
+set mwcount 0
 }
 
 init $argc $argv
@@ -68,6 +97,9 @@ proc {sqlw_display} {msg} {
 
 proc {wpg_exec} {db cmd} {
 global pgsql
+	set pgsql(cmd) "never executed"
+	set pgsql(status) "no status yet"
+	set pgsql(errmsg) "no error message yet"
 	if {[catch {
 		sqlw_display $cmd
 		set pgsql(cmd) $cmd
@@ -84,6 +116,27 @@ global pgsql
 proc {wpg_select} {args} {
 	sqlw_display "[lindex $args 1]"
 	uplevel pg_select $args
+}
+
+proc {anfw:add} {} {
+global anfw pgsql tiw
+	if {$anfw(name)==""} {
+		show_error "Empty field name ?"
+		focus .anfw.e1
+		return
+	}		
+	if {$anfw(type)==""} {
+		show_error "No field type ?"
+		focus .anfw.e2
+		return
+	}
+	if {![sql_exec quiet "alter table \"$tiw(tablename)\" add column \"$anfw(name)\" $anfw(type)"]} {
+		show_error "Cannot add column\n\nPostgreSQL error: $pgsql(errmsg)"
+		return
+	}
+	Window destroy .anfw
+	sql_exec quiet "update pga_layout set colnames=colnames || ' {$anfw(name)}', colwidth=colwidth || ' 150',nrcols=nrcols+1 where tablename='$tiw(tablename)'"
+	show_table_information $tiw(tablename)
 }
 
 proc {add_new_field} {} {
@@ -110,7 +163,7 @@ set inspos end
 for {set i 0} {$i<[.nt.lb size]} {incr i} {
 	set linie [.nt.lb get $i]
 	if {$ntw(fldname)==[string trim [string range $linie 2 33]]} {
-		if {[tk_messageBox -title Warning -message "There is another field with the same name: \"$ntw(fldname)\"!\n\nReplace it ?" -type yesno -default yes]=="no"} return
+		if {[tk_messageBox -title Warning -parent .nt -message "There is another field with the same name: \"$ntw(fldname)\"!\n\nReplace it ?" -type yesno -default yes]=="no"} return
 		.nt.lb delete $i
 		set inspos $i
 		break
@@ -167,54 +220,60 @@ if {$objtodelete==""} return;
 set temp {}
 switch $activetab {
 	Tables {
-		if {[tk_messageBox -title "FINAL WARNING" -message "You are going to delete table:\n\n$objtodelete\n\nProceed ?" -type yesno -default no]=="yes"} {
+		if {[tk_messageBox -title "FINAL WARNING" -parent .dw -message "You are going to delete table:\n\n$objtodelete\n\nProceed ?" -type yesno -default no]=="yes"} {
 			sql_exec noquiet "drop table \"$objtodelete\""
 			sql_exec quiet "delete from pga_layout where tablename='$objtodelete'"
 			cmd_Tables
 		}
 	}
 	Views {
-		if {[tk_messageBox -title "FINAL WARNING" -message "You are going to delete view:\n\n$objtodelete\n\nProceed ?" -type yesno -default no]=="yes"} {
-			sql_exec noquiet "drop view $objtodelete"
+		if {[tk_messageBox -title "FINAL WARNING" -parent .dw -message "You are going to delete view:\n\n$objtodelete\n\nProceed ?" -type yesno -default no]=="yes"} {
+			sql_exec noquiet "drop view \"$objtodelete\""
 			sql_exec quiet "delete from pga_layout where tablename='$objtodelete'"
 			cmd_Views
 		}
 	}
 	Queries {
-		if {[tk_messageBox -title "FINAL WARNING" -message "You are going to delete query:\n\n$objtodelete\n\nProceed ?" -type yesno -default no]=="yes"} {
+		if {[tk_messageBox -title "FINAL WARNING" -parent .dw -message "You are going to delete query:\n\n$objtodelete\n\nProceed ?" -type yesno -default no]=="yes"} {
 			sql_exec quiet "delete from pga_queries where queryname='$objtodelete'"
 			sql_exec quiet "delete from pga_layout where tablename='$objtodelete'"
 			cmd_Queries
 		}
 	}
 	Scripts {
-		if {[tk_messageBox -title "FINAL WARNING" -message "You are going to delete script:\n\n$objtodelete\n\nProceed ?" -type yesno -default no]=="yes"} {
+		if {[tk_messageBox -title "FINAL WARNING" -parent .dw -message "You are going to delete script:\n\n$objtodelete\n\nProceed ?" -type yesno -default no]=="yes"} {
 			sql_exec quiet "delete from pga_scripts where scriptname='$objtodelete'"
 			cmd_Scripts
 		}
 	}
 	Forms {
-		if {[tk_messageBox -title "FINAL WARNING" -message "You are going to delete form:\n\n$objtodelete\n\nProceed ?" -type yesno -default no]=="yes"} {
+		if {[tk_messageBox -title "FINAL WARNING" -parent .dw -message "You are going to delete form:\n\n$objtodelete\n\nProceed ?" -type yesno -default no]=="yes"} {
 			sql_exec quiet "delete from pga_forms where formname='$objtodelete'"
 			cmd_Forms
 		}
 	}
 	Sequences {
-		if {[tk_messageBox -title "FINAL WARNING" -message "You are going to delete sequence:\n\n$objtodelete\n\nProceed ?" -type yesno -default no]=="yes"} {
-			sql_exec quiet "drop sequence $objtodelete"
+		if {[tk_messageBox -title "FINAL WARNING" -parent .dw -message "You are going to delete sequence:\n\n$objtodelete\n\nProceed ?" -type yesno -default no]=="yes"} {
+			sql_exec quiet "drop sequence \"$objtodelete\""
 			cmd_Sequences
 		}
 	}
 	Functions {
-		if {[tk_messageBox -title "FINAL WARNING" -message "You are going to delete function:\n\n$objtodelete\n\nProceed ?" -type yesno -default no]=="yes"} {
+		if {[tk_messageBox -title "FINAL WARNING" -parent .dw -message "You are going to delete function:\n\n$objtodelete\n\nProceed ?" -type yesno -default no]=="yes"} {
 			delete_function $objtodelete
 			cmd_Functions
 		}
 	}
 	Reports {
-		if {[tk_messageBox -title "FINAL WARNING" -message "You are going to delete report:\n\n$objtodelete\n\nProceed ?" -type yesno -default no]=="yes"} {
+		if {[tk_messageBox -title "FINAL WARNING" -parent .dw -message "You are going to delete report:\n\n$objtodelete\n\nProceed ?" -type yesno -default no]=="yes"} {
 			sql_exec noquiet "delete from pga_reports where reportname='$objtodelete'"
 			cmd_Reports
+		}
+	}
+	Users {
+		if {[tk_messageBox -title "FINAL WARNING" -parent .dw -message "You are going to delete user:\n\n$objtodelete\n\nProceed ?" -type yesno -default no]=="yes"} {
+			sql_exec noquiet "drop user \"$objtodelete\""
+			cmd_Users
 		}
 	}
 }
@@ -222,7 +281,7 @@ if {$temp==""} return;
 }
 
 proc {cmd_Design} {} {
-global dbc activetab tablename rbvar
+global dbc activetab rbvar uw
 if {$dbc==""} return;
 if {[.dw.lb curselection]==""} return;
 set objname [.dw.lb get [.dw.lb curselection]]
@@ -232,12 +291,40 @@ switch $activetab {
 	Scripts {design_script $objname}
 	Forms {fd_load_form $objname design}
 	Reports {
-	Window show .rb
-	tkwait visibility .rb
-	rb_init
-	set rbvar(reportname) $objname
-	rb_load_report
-	set rbvar(justpreview) 0
+		Window show .rb
+		tkwait visibility .rb
+		rb_init
+		set rbvar(reportname) $objname
+		rb_load_report
+		set rbvar(justpreview) 0
+	}
+	Users {
+		Window show .uw
+		tkwait visibility .uw
+		wm transient .uw .dw
+		wm title .uw "Design user"
+		set uw(username) $objname
+		set uw(password) {} ; set uw(verify) {}
+		pg_select $dbc "select *,date(valuntil) as valdata from pg_user where usename='$objname'" tup {
+			if {$tup(usesuper)=="t"} {
+				set uw(createuser) CREATEUSER
+			} else {
+				set uw(createuser) NOCREATEUSER
+			}
+			if {$tup(usecreatedb)=="t"} {
+				set uw(createdb) CREATEDB
+			} else {
+				set uw(createdb) NOCREATEDB
+			}
+			if {$tup(valuntil)!=""} {
+				set uw(valid) $tup(valdata)
+			} else {
+				set uw(valid) {}
+			}
+		}
+		.uw.e1 configure -state disabled
+		.uw.b1 configure -text Alter
+		focus .uw.e2
 	}
 }
 }
@@ -299,19 +386,30 @@ show_table_information [get_dwlb_Selection]
 }
 
 proc {cmd_New} {} {
-global dbc activetab queryname queryoid cbv funcpar funcname funcret rbvar
+global dbc activetab queryname queryoid cbv funcpar funcname funcret rbvar uw
 if {$dbc==""} return;
 switch $activetab {
 	Tables {
-	Window show .nt
-	focus .nt.etabn
+		Window show .nt
+		focus .nt.etabn
 	}
 	Queries {
-	Window show .qb
-	set queryoid 0
-	set queryname {}
-		set cbv 0
-	.qb.cbv configure -state normal
+		Window show .qb
+		set queryoid 0
+		set queryname {}
+			set cbv 0
+		.qb.cbv configure -state normal
+	}
+	Users {
+		Window show .uw
+		wm transient .uw .dw
+		set uw(username) {}
+		set uw(password) {}
+		set uw(createdb) NOCREATEDB
+		set uw(createuser) NOCREATEUSER
+		set uw(verify) {}
+		set uw(valid) {}
+		focus .uw.e1
 	}
 	Views {
 	set queryoid 0
@@ -336,7 +434,7 @@ switch $activetab {
 		fd_init
 	}
 	Scripts {
-	design_script {}
+		design_script {}
 	}
 	Functions {
 	Window show .fw
@@ -377,9 +475,39 @@ proc {cmd_Queries} {} {
 global dbc
 .dw.lb delete 0 end
 catch {
-	wpg_select $dbc "select * from pga_queries order by queryname" rec {
+	wpg_select $dbc "select queryname from pga_queries order by queryname" rec {
 		.dw.lb insert end $rec(queryname)
 	}
+}
+}
+
+proc {uw:create_user} {} {
+global dbc uw
+set uw(username) [string trim $uw(username)]
+set uw(password) [string trim $uw(password)]
+set uw(verify) [string trim $uw(verify)]
+if {$uw(username)==""} {
+	show_error "User without name!"
+	focus .uw.e1
+	return
+}
+if {$uw(password)!=$uw(verify)} {
+	show_error "Passwords do not match!"
+	set uw(password) {} ; set uw(verify) {}
+	focus .uw.e2
+	return
+}
+set cmd "[.uw.b1 cget -text] user \"$uw(username)\""
+if {$uw(password)!=""} {
+	set cmd "$cmd WITH PASSWORD \"$uw(password)\" "
+}
+set cmd "$cmd $uw(createdb) $uw(createuser)"
+if {$uw(valid)!=""} {
+	set cmd "$cmd VALID UNTIL '$uw(valid)'"
+}
+if {[sql_exec noquiet $cmd]} {
+	Window destroy .uw
+	cmd_Users
 }
 }
 
@@ -389,9 +517,10 @@ if {$dbc==""} return;
 if {$activetab=="Views"} return;
 if {$activetab=="Sequences"} return;
 if {$activetab=="Functions"} return;
+if {$activetab=="Users"} return;
 set temp [get_dwlb_Selection]
 if {$temp==""} {
-	tk_messageBox -title Warning -message "Please select an object first !"
+	tk_messageBox -title Warning -parent .dw -message "Please select an object first !"
 	return;
 }
 set oldobjname $temp
@@ -402,8 +531,20 @@ proc {cmd_Reports} {} {
 global dbc
 cursor_clock
 catch {
-	wpg_select $dbc "select * from pga_reports order by reportname" rec {
+	wpg_select $dbc "select reportname from pga_reports order by reportname" rec {
 	.dw.lb insert end "$rec(reportname)"
+	}
+}
+cursor_normal
+}
+
+proc {cmd_Users} {} {
+global dbc
+cursor_clock
+.dw.lb delete 0 end
+catch {
+	wpg_select $dbc "select * from pg_user order by usename" rec {
+		.dw.lb insert end $rec(usename)
 	}
 }
 cursor_normal
@@ -414,7 +555,7 @@ global dbc
 cursor_clock
 .dw.lb delete 0 end
 catch {
-	wpg_select $dbc "select * from pga_scripts order by scriptname" rec {
+	wpg_select $dbc "select scriptname from pga_scripts order by scriptname" rec {
 	.dw.lb insert end $rec(scriptname)
 	}
 }
@@ -427,7 +568,7 @@ global dbc
 cursor_clock
 .dw.lb delete 0 end
 catch {
-	wpg_select $dbc "select * from pg_class where (relname not like 'pg_%') and (relkind='S') order by relname" rec {
+	wpg_select $dbc "select relname from pg_class where (relname not like 'pg_%') and (relkind='S') order by relname" rec {
 		.dw.lb insert end $rec(relname)
 	}
 }
@@ -448,7 +589,7 @@ global dbc
 cursor_clock
 .dw.lb delete 0 end
 catch {
-	wpg_select $dbc "select * from pg_class where (relname !~ '^pg_') and (relkind='r') and (relhasrules) order by relname" rec {
+	wpg_select $dbc "select relname from pg_class where (relname !~ '^pg_') and (relkind='r') and (relhasrules) order by relname" rec {
 		.dw.lb insert end $rec(relname)
 	}
 }
@@ -456,11 +597,12 @@ cursor_normal
 }
 
 proc {create_drop_down} {base x y w} {
+global pref
 if {[winfo exists $base.ddf]} {
     return
 }
 frame $base.ddf -borderwidth 1 -height 75 -relief raised -width 55
-listbox $base.ddf.lb -background #fefefe -borderwidth 1  -font -*-Clean-medium-R-Normal--*-130-*-*-*-*-*-*  -highlightthickness 0 -selectborderwidth 0 -yscrollcommand [subst {$base.ddf.sb set}]
+listbox $base.ddf.lb -background #fefefe -borderwidth 1  -font $pref(font_normal)  -highlightthickness 0 -selectborderwidth 0 -yscrollcommand [subst {$base.ddf.sb set}]
 scrollbar $base.ddf.sb -borderwidth 1 -command [subst {$base.ddf.lb yview}] -highlightthickness 0 -orient vert
 place $base.ddf -x $x -y $y -width $w -height 185 -anchor nw -bordermode ignore
 place $base.ddf.lb -x 1 -y 1 -width [expr $w-18] -height 182 -anchor nw -bordermode ignore
@@ -469,7 +611,7 @@ place $base.ddf.sb -x [expr $w-15] -y 1 -width 14 -height 183 -anchor nw -border
 
 proc {cursor_normal} {} {
 	foreach wn [winfo children .] {
-		catch {$wn configure -cursor top_left_arrow}
+		catch {$wn configure -cursor left_ptr}
 	}
 	update ; update idletasks 
 }
@@ -483,7 +625,7 @@ proc {cursor_clock} {} {
 
 proc {delete_function} {objname} {
 global dbc
-wpg_select $dbc "select * from pg_proc where proname='$objname'" rec {
+wpg_select $dbc "select proargtypes,pronargs from pg_proc where proname='$objname'" rec {
 	set funcpar $rec(proargtypes)
 	set nrpar $rec(pronargs)
 }
@@ -519,46 +661,46 @@ global draglocation
 	}
 }
 
-proc {drag_start} {w x y} {
+proc {drag_start} {wn w x y} {
 global draglocation
 catch {unset draglocation}
 set object [$w find closest $x $y]
-if {[lsearch [.mw.c gettags $object] movable]==-1} return;
-.mw.c bind movable <Leave> {}
+if {[lsearch [$wn.c gettags $object] movable]==-1} return;
+$wn.c bind movable <Leave> {}
 set draglocation(obj) $object
 set draglocation(x) $x
 set draglocation(y) $y
 set draglocation(start) $x
 }
 
-proc {drag_stop} {w x y} {
+proc {drag_stop} {wn w x y} {
 global draglocation mw dbc
 	set dlo ""
 	catch { set dlo $draglocation(obj) }
 	if {$dlo != ""} {
-		.mw.c bind movable <Leave> {.mw configure -cursor top_left_arrow}
-		.mw configure -cursor top_left_arrow
-		set ctr [get_tag_info $draglocation(obj) v]
+		$wn.c bind movable <Leave> "$wn configure -cursor left_ptr"
+		$wn configure -cursor left_ptr
+		set ctr [get_tag_info $wn $draglocation(obj) v]
 		set diff [expr $x-$draglocation(start)]
 		if {$diff==0} return;
 		set newcw {}
-		for {set i 0} {$i<$mw(colcount)} {incr i} {
+		for {set i 0} {$i<$mw($wn,colcount)} {incr i} {
 			if {$i==$ctr} {
-				lappend newcw [expr [lindex $mw(colwidth) $i]+$diff]
+				lappend newcw [expr [lindex $mw($wn,colwidth) $i]+$diff]
 			} else {
-				lappend newcw [lindex $mw(colwidth) $i]
+				lappend newcw [lindex $mw($wn,colwidth) $i]
 			}
 		}
-		set mw(colwidth) $newcw
-		.mw.c itemconfigure c$ctr -width [expr [lindex $mw(colwidth) $ctr]-5]
-		mw_draw_headers
-		mw_draw_hgrid
-		if {$mw(crtrow)!=""} {mw_show_record $mw(crtrow)}
-		for {set i [expr $ctr+1]} {$i<$mw(colcount)} {incr i} {
-			.mw.c move c$i $diff 0
+		set mw($wn,colwidth) $newcw
+		$wn.c itemconfigure c$ctr -width [expr [lindex $mw($wn,colwidth) $ctr]-5]
+		mw_draw_headers $wn
+		mw_draw_hgrid $wn
+		if {$mw($wn,crtrow)!=""} {mw_show_record $wn $mw($wn,crtrow)}
+		for {set i [expr $ctr+1]} {$i<$mw($wn,colcount)} {incr i} {
+			$wn.c move c$i $diff 0
 		}
 		cursor_clock
-		sql_exec quiet "update pga_layout set colwidth='$mw(colwidth)' where tablename='$mw(layout_name)'"
+		sql_exec quiet "update pga_layout set colwidth='$mw($wn,colwidth)' where tablename='$mw($wn,layout_name)'"
 		cursor_normal
 	}
 }
@@ -567,7 +709,7 @@ proc {draw_tabs} {} {
 global tablist activetab
 set ypos 85
 foreach tab $tablist {
-	label .dw.tab$tab -borderwidth 1  -anchor w -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-*  -relief raised -text $tab
+	label .dw.tab$tab -borderwidth 1  -anchor w -relief raised -text $tab
 	place .dw.tab$tab -x 10 -y $ypos -height 25 -width 82 -anchor nw -bordermode ignore
 	lower .dw.tab$tab
 	bind .dw.tab$tab <Button-1> {tab_click %W}
@@ -622,32 +764,32 @@ fd_draw_hook $x2 $y2
 }
 
 proc {fd_draw_object} {i} {
-global fdvar fdobj
+global fdvar fdobj pref
 set c $fdobj($i,c)
 foreach {x1 y1 x2 y2} $c {}
 .fd.c delete o$i
 switch $fdobj($i,t) {
 	button {
 		fd_draw_rectangle $x1 $y1 $x2 $y2 raised #a0a0a0 o$i
-		.fd.c create text [expr ($x1+$x2)/2] [expr ($y1+$y2)/2] -text $fdobj($i,l) -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* -tags o$i
+		.fd.c create text [expr ($x1+$x2)/2] [expr ($y1+$y2)/2] -text $fdobj($i,l) -font $pref(font_normal) -tags o$i
 	}
 	entry {
 		fd_draw_rectangle $x1 $y1 $x2 $y2 sunken white o$i
 	}
 	label {
-		.fd.c create text $x1 $y1 -text $fdobj($i,l) -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* -anchor nw -tags o$i
+		.fd.c create text $x1 $y1 -text $fdobj($i,l) -font $pref(font_normal) -anchor nw -tags o$i
 	}
 	checkbox {
 		fd_draw_rectangle [expr $x1+2] [expr $y1+5] [expr $x1+12] [expr $y1+15] raised #a0a0a0 o$i
-		.fd.c create text [expr $x1+20] [expr $y1+3] -text $fdobj($i,l) -anchor nw -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* -tags o$i
+		.fd.c create text [expr $x1+20] [expr $y1+3] -text $fdobj($i,l) -anchor nw -font $pref(font_normal) -tags o$i
 	}
 	radio {
 		.fd.c create oval [expr $x1+4] [expr $y1+5] [expr $x1+14] [expr $y1+15] -fill white -tags o$i
-		.fd.c create text [expr $x1+24] [expr $y1+3] -text $fdobj($i,l) -anchor nw -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* -tags o$i
+		.fd.c create text [expr $x1+24] [expr $y1+3] -text $fdobj($i,l) -anchor nw -font $pref(font_normal) -tags o$i
 	}
 	query {
 		.fd.c create oval $x1 $y1 [expr $x1+20] [expr $y1+20] -fill white -tags o$i
-		.fd.c create text [expr $x1+5] [expr $y1+4] -text Q  -anchor nw -font -Adobe-Helvetica-Bold-R-Normal-*-*-120-*-*-*-*-* -tags o$i
+		.fd.c create text [expr $x1+5] [expr $y1+4] -text Q  -anchor nw -font $pref(font_normal) -tags o$i
 	}
 	listbox {
 		fd_draw_rectangle $x1 $y1 [expr $x2-12] $y2 sunken white o$i
@@ -889,7 +1031,7 @@ catch {set fdvar(c_text) $fdobj($i,l)}
 }
 
 proc {fd_test} {} {
-global fdvar fdobj dbc datasets
+global fdvar fdobj dbc datasets pref
 set basewp $fdvar(forminame)
 set base .$fdvar(forminame)
 if {[winfo exists $base]} {
@@ -913,10 +1055,10 @@ switch $fdobj($item,t) {
 	button {
 		set cmd {}
 		catch {set cmd $fdobj($item,x)}
-		button $base.$name  -borderwidth 1 -padx 0 -pady 0 -text "$fdobj($item,l)" -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* -command [subst {$cmd}]
+		button $base.$name  -borderwidth 1 -padx 0 -pady 0 -text "$fdobj($item,l)" -font $pref(font_normal) -command [subst {$cmd}]
 	}
 	checkbox {
-		checkbutton  $base.$name -onvalue t -offvalue f -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* -text "$fdobj($item,l)" -variable "$fdobj($item,v)" -borderwidth 1
+		checkbutton  $base.$name -onvalue t -offvalue f -font $pref(font_normal) -text "$fdobj($item,l)" -variable "$fdobj($item,v)" -borderwidth 1
 		set wh {}
 	}
 	query {
@@ -991,7 +1133,7 @@ switch $fdobj($item,t) {
 		}"
 	}
 	radio {
-		radiobutton  $base.$name -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* -text "$fdobj($item,l)" -variable "$fdobj($item,v)" -value "$name" -borderwidth 1
+		radiobutton  $base.$name -font $pref(font_normal) -text "$fdobj($item,l)" -variable "$fdobj($item,v)" -value "$name" -borderwidth 1
 		set wh {}
 	}
 	entry {
@@ -1001,12 +1143,12 @@ switch $fdobj($item,t) {
 	}
 	label {
 		set wh {}
-		label $base.$name -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* -anchor nw -padx 0 -pady 0 -text $fdobj($item,l)
+		label $base.$name -font $pref(font_normal) -anchor nw -padx 0 -pady 0 -text $fdobj($item,l)
 	set var {} ; catch {set var $fdobj($item,v)}
 	if {$var!=""} {$base.$name configure -textvar $var}
 	}
 	listbox {
-		listbox $base.$name -borderwidth 1 -background white  -highlightthickness 0 -selectborderwidth 0 -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* -yscrollcommand [subst {$base.sb$name set}]
+		listbox $base.$name -borderwidth 1 -background white  -highlightthickness 0 -selectborderwidth 0 -font $pref(font_normal) -yscrollcommand [subst {$base.sb$name set}]
 	scrollbar $base.sb$name -borderwidth 1 -command [subst {$base.$name yview}] -orient vert  -highlightthickness 0
 	eval [subst "place $base.sb$name -x [expr [lindex $coord 2]-14] -y [expr [lindex $coord 1]-1] -width 16 -height [expr 3+[lindex $coord 3]-[lindex $coord 1]] -anchor nw -bordermode ignore"]
 	}
@@ -1036,248 +1178,224 @@ proc {get_tables} {} {
 global dbc
 set tbl {}
 catch {
-	wpg_select $dbc "select * from pg_class where (relname !~ '^pg_') and (relkind='r') and (not relhasrules) order by relname" rec {
+	wpg_select $dbc "select * from pg_class where (relname !~ '^pg_') and (relkind='r') order by relname" rec {
 		if {![regexp "^pga_" $rec(relname)]} then {lappend tbl $rec(relname)}
 	}
 }
 return $tbl
 }
 
-proc {get_tag_info} {itemid prefix} {
-set taglist [.mw.c itemcget $itemid -tags]
+proc {get_tag_info} {wn itemid prefix} {
+set taglist [$wn.c itemcget $itemid -tags]
 set i [lsearch -glob $taglist $prefix*]
 set thetag [lindex $taglist $i]
 return [string range $thetag 1 end]
 }
 
-proc {load_pref} {} {
-global pref
-set retval [catch {set fid [open "~/.pgaccessrc" r]}]
-if {$retval} {
-	set pref(rows) 200
-	set pref(tvfont) clean
-	set pref(autoload) 1
-	set pref(lastdb) {}
-	set pref(lasthost) localhost
-	set pref(lastport) 5432
-	set pref(username) {}
-	set pref(password) {}
-} else {
-	while {![eof $fid]} {
-		set pair [gets $fid]
-		set pref([lindex $pair 0]) [lindex $pair 1]
-	}
-	close $fid
-}
-}
-
-
-
-
-proc {mw_canvas_click} {x y} {
-global mw msg
-if {![mw_exit_edit]} return
+proc {mw_canvas_click} {wn x y} {
+global mw
+if {![mw_exit_edit $wn]} return
 # Determining row
-for {set row 0} {$row<$mw(nrecs)} {incr row} {
-	if {[lindex $mw(rowy) $row]>$y} break
+for {set row 0} {$row<$mw($wn,nrecs)} {incr row} {
+	if {[lindex $mw($wn,rowy) $row]>$y} break
 }
 incr row -1
-if {$y>[lindex $mw(rowy) $mw(last_rownum)]} {set row $mw(last_rownum)}
+if {$y>[lindex $mw($wn,rowy) $mw($wn,last_rownum)]} {set row $mw($wn,last_rownum)}
 if {$row<0} return
-set mw(row_edited) $row
-set mw(crtrow) $row
-mw_show_record $row
-if {$mw(errorsavingnew)} return
+set mw($wn,row_edited) $row
+set mw($wn,crtrow) $row
+mw_show_record $wn $row
+if {$mw($wn,errorsavingnew)} return
 # Determining column
-set posx [expr -$mw(leftoffset)]
+set posx [expr -$mw($wn,leftoffset)]
 set col 0
-foreach cw $mw(colwidth) {
+foreach cw $mw($wn,colwidth) {
 	incr posx [expr $cw+2]
 	if {$x<$posx} break
 	incr col
 }
-set itlist [.mw.c find withtag r$row]
+set itlist [$wn.c find withtag r$row]
 foreach item $itlist {
-	if {[get_tag_info $item c]==$col} {
-		mw_start_edit $item $x $y
+	if {[get_tag_info $wn $item c]==$col} {
+		mw_start_edit $wn $item $x $y
 		break
 	}
 }
 }
 
-proc {mw_delete_record} {} {
-global dbc mw tablename
-if {!$mw(updatable)} return;
-if {![mw_exit_edit]} return;
-set taglist [.mw.c gettags hili]
+proc {mw_delete_record} {wn} {
+global dbc mw
+if {!$mw($wn,updatable)} return;
+if {![mw_exit_edit $wn]} return;
+set taglist [$wn.c gettags hili]
 if {[llength $taglist]==0} return;
 set rowtag [lindex $taglist [lsearch -regexp $taglist "^r"]]
 set row [string range $rowtag 1 end]
-set oid [lindex $mw(keylist) $row]
-if {[tk_messageBox -title "FINAL WARNING" -icon question -message "Delete current record ?" -type yesno -default no]=="no"} return
-if {[sql_exec noquiet "delete from $tablename where oid=$oid"]} {
-	.mw.c delete hili
+set oid [lindex $mw($wn,keylist) $row]
+if {[tk_messageBox -title "FINAL WARNING" -icon question -parent $wn -message "Delete current record ?" -type yesno -default no]=="no"} return
+if {[sql_exec noquiet "delete from \"$mw($wn,tablename)\" where oid=$oid"]} {
+	$wn.c delete hili
 }
 }
 
-proc {mw_draw_headers} {} {
-global mw
-.mw.c delete header
-set posx [expr 5-$mw(leftoffset)]
-for {set i 0} {$i<$mw(colcount)} {incr i} {
-	set xf [expr $posx+[lindex $mw(colwidth) $i]]
-	.mw.c create rectangle $posx 1 $xf 22 -fill #CCCCCC -outline "" -width 0 -tags header
-	.mw.c create text [expr $posx+[lindex $mw(colwidth) $i]*1.0/2] 14 -text [lindex $mw(colnames) $i] -tags header -fill navy -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-*
-	.mw.c create line $posx 22 [expr $xf-1] 22 -fill #AAAAAA -tags header
-	.mw.c create line [expr $xf-1] 5 [expr $xf-1] 22 -fill #AAAAAA -tags header
-	.mw.c create line [expr $xf+1] 5 [expr $xf+1] 22 -fill white -tags header
-	.mw.c create line $xf -15000 $xf 15000 -fill #CCCCCC -tags [subst {header movable v$i}]
+proc {mw_draw_headers} {wn} {
+global mw pref
+$wn.c delete header
+set posx [expr 5-$mw($wn,leftoffset)]
+for {set i 0} {$i<$mw($wn,colcount)} {incr i} {
+	set xf [expr $posx+[lindex $mw($wn,colwidth) $i]]
+	$wn.c create rectangle $posx 1 $xf 22 -fill #CCCCCC -outline "" -width 0 -tags header
+	$wn.c create text [expr $posx+[lindex $mw($wn,colwidth) $i]*1.0/2] 14 -text [lindex $mw($wn,colnames) $i] -tags header -fill navy -font $pref(font_normal)
+	$wn.c create line $posx 22 [expr $xf-1] 22 -fill #AAAAAA -tags header
+	$wn.c create line [expr $xf-1] 5 [expr $xf-1] 22 -fill #AAAAAA -tags header
+	$wn.c create line [expr $xf+1] 5 [expr $xf+1] 22 -fill white -tags header
+	$wn.c create line $xf -15000 $xf 15000 -fill #CCCCCC -tags [subst {header movable v$i}]
 	set posx [expr $xf+2]
 }
-set mw(r_edge) $posx
-.mw.c bind movable <Button-1> {drag_start %W %x %y}
-.mw.c bind movable <B1-Motion> {drag_it %W %x %y}
-.mw.c bind movable <ButtonRelease-1> {drag_stop %W %x %y}
-.mw.c bind movable <Enter> {.mw configure -cursor left_side}
-.mw.c bind movable <Leave> {.mw configure -cursor top_left_arrow}
+set mw($wn,r_edge) $posx
+$wn.c bind movable <Button-1> "drag_start $wn %W %x %y"
+$wn.c bind movable <B1-Motion> {drag_it %W %x %y}
+$wn.c bind movable <ButtonRelease-1> "drag_stop $wn %W %x %y"
+$wn.c bind movable <Enter> "$wn configure -cursor left_side"
+$wn.c bind movable <Leave> "$wn configure -cursor left_ptr"
 }
 
-proc {mw_draw_hgrid} {} {
+proc {mw_draw_hgrid} {wn} {
 global mw
-.mw.c delete hgrid
+$wn.c delete hgrid
 set posx 10
-for {set j 0} {$j<$mw(colcount)} {incr j} {
+for {set j 0} {$j<$mw($wn,colcount)} {incr j} {
 	set ledge($j) $posx
-	incr posx [expr [lindex $mw(colwidth) $j]+2]
-	set textwidth($j) [expr [lindex $mw(colwidth) $j]-5]
+	incr posx [expr [lindex $mw($wn,colwidth) $j]+2]
+	set textwidth($j) [expr [lindex $mw($wn,colwidth) $j]-5]
 }
 incr posx -6
-for {set i 0} {$i<$mw(nrecs)} {incr i} {
-	.mw.c create line [expr -$mw(leftoffset)] [lindex $mw(rowy) [expr $i+1]] [expr $posx-$mw(leftoffset)] [lindex $mw(rowy) [expr $i+1]] -fill gray -tags [subst {hgrid g$i}]
+for {set i 0} {$i<$mw($wn,nrecs)} {incr i} {
+	$wn.c create line [expr -$mw($wn,leftoffset)] [lindex $mw($wn,rowy) [expr $i+1]] [expr $posx-$mw($wn,leftoffset)] [lindex $mw($wn,rowy) [expr $i+1]] -fill gray -tags [subst {hgrid g$i}]
 }
-if {$mw(updatable)} {
-	set i $mw(nrecs)
-	set posy [expr 14+[lindex $mw(rowy) $mw(nrecs)]]
-	.mw.c create line [expr -$mw(leftoffset)] $posy [expr $posx-$mw(leftoffset)] $posy -fill gray -tags [subst {hgrid g$i}]
+if {$mw($wn,updatable)} {
+	set i $mw($wn,nrecs)
+	set posy [expr 14+[lindex $mw($wn,rowy) $mw($wn,nrecs)]]
+	$wn.c create line [expr -$mw($wn,leftoffset)] $posy [expr $posx-$mw($wn,leftoffset)] $posy -fill gray -tags [subst {hgrid g$i}]
 }
 }
 
-proc {mw_draw_new_record} {} {
-global mw pref msg
-set posx 10
-set posy [lindex $mw(rowy) $mw(last_rownum)]
+proc {mw_draw_new_record} {wn} {
+global mw pref
+set posx [expr 10-$mw($wn,leftoffset)]
+set posy [lindex $mw($wn,rowy) $mw($wn,last_rownum)]
 if {$pref(tvfont)=="helv"} {
-	set tvfont -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-*
+	set tvfont $pref(font_normal)
 } else {
-	set tvfont -*-Clean-Medium-R-Normal-*-*-130-*-*-*-*-*
+	set tvfont $pref(font_fix)
 }
-if {$mw(updatable)} {
-  for {set j 0} {$j<$mw(colcount)} {incr j} {
-	.mw.c create text $posx $posy -text * -tags [subst {r$mw(nrecs) c$j q new unt}]  -anchor nw -font $tvfont -width [expr [lindex $mw(colwidth) $j]-5]
-	incr posx [expr [lindex $mw(colwidth) $j]+2]
+if {$mw($wn,updatable)} {
+  for {set j 0} {$j<$mw($wn,colcount)} {incr j} {
+	$wn.c create text $posx $posy -text * -tags [subst {r$mw($wn,nrecs) c$j q new unt}]  -anchor nw -font $tvfont -width [expr [lindex $mw($wn,colwidth) $j]-5]
+	incr posx [expr [lindex $mw($wn,colwidth) $j]+2]
   }
   incr posy 14
-  .mw.c create line [expr -$mw(leftoffset)] $posy [expr $mw(r_edge)-$mw(leftoffset)] $posy -fill gray -tags [subst {hgrid g$mw(nrecs)}]
+  $wn.c create line [expr -$mw($wn,leftoffset)] $posy [expr $mw($wn,r_edge)-$mw($wn,leftoffset)] $posy -fill gray -tags [subst {hgrid g$mw($wn,nrecs)}]
 }
 }
 
-proc {mw_edit_text} {c k} {
-global mw msg
-set bbin [.mw.c bbox r$mw(row_edited)]
+proc {mw_edit_text} {wn c k} {
+global mw
+set bbin [$wn.c bbox r$mw($wn,row_edited)]
 switch $k {
-	BackSpace { set dp [expr [.mw.c index $mw(id_edited) insert]-1];if {$dp>=0} {.mw.c dchars $mw(id_edited) $dp $dp; set mw(dirtyrec) 1}}
-	Home {.mw.c icursor $mw(id_edited) 0}
-	End {.mw.c icursor $mw(id_edited) end}
-	Left {.mw.c icursor $mw(id_edited) [expr [.mw.c index $mw(id_edited) insert]-1]}
+	BackSpace { set dp [expr [$wn.c index $mw($wn,id_edited) insert]-1];if {$dp>=0} {$wn.c dchars $mw($wn,id_edited) $dp $dp; set mw($wn,dirtyrec) 1}}
+	Home {$wn.c icursor $mw($wn,id_edited) 0}
+	End {$wn.c icursor $mw($wn,id_edited) end}
+	Left {$wn.c icursor $mw($wn,id_edited) [expr [$wn.c index $mw($wn,id_edited) insert]-1]}
 	Delete {}
-	Right {.mw.c icursor $mw(id_edited) [expr [.mw.c index $mw(id_edited) insert]+1]}
-	Return {if {[mw_exit_edit]} {.mw.c focus {}}}
-	Escape {set mw(dirtyrec) 0; .mw.c itemconfigure $mw(id_edited) -text $mw(text_initial_value); .mw.c focus {}}
-	default {if {[string compare $c " "]>-1} {.mw.c insert $mw(id_edited) insert $c;set mw(dirtyrec) 1}}
+	Right {$wn.c icursor $mw($wn,id_edited) [expr [$wn.c index $mw($wn,id_edited) insert]+1]}
+	Return {if {[mw_exit_edit $wn]} {$wn.c focus {}}}
+	Escape {set mw($wn,dirtyrec) 0; $wn.c itemconfigure $mw($wn,id_edited) -text $mw($wn,text_initial_value); $wn.c focus {}}
+	default {if {[string compare $c " "]>-1} {$wn.c insert $mw($wn,id_edited) insert $c;set mw($wn,dirtyrec) 1}}
 }
-set bbout [.mw.c bbox r$mw(row_edited)]
+set bbout [$wn.c bbox r$mw($wn,row_edited)]
 set dy [expr [lindex $bbout 3]-[lindex $bbin 3]]
 if {$dy==0} return
-set re $mw(row_edited)
-.mw.c move g$re 0 $dy
-for {set i [expr 1+$re]} {$i<=$mw(nrecs)} {incr i} {
-	.mw.c move r$i 0 $dy
-	.mw.c move g$i 0 $dy
-	set rh [lindex $mw(rowy) $i]
+set re $mw($wn,row_edited)
+$wn.c move g$re 0 $dy
+for {set i [expr 1+$re]} {$i<=$mw($wn,nrecs)} {incr i} {
+	$wn.c move r$i 0 $dy
+	$wn.c move g$i 0 $dy
+	set rh [lindex $mw($wn,rowy) $i]
 	incr rh $dy
-	set mw(rowy) [lreplace $mw(rowy) $i $i $rh]
+	set mw($wn,rowy) [lreplace $mw($wn,rowy) $i $i $rh]
 }
-mw_show_record $mw(row_edited)
+mw_show_record $wn $mw($wn,row_edited)
 # Delete is trapped by window interpreted as record delete
-#    Delete {.mw.c dchars $mw(id_edited) insert insert; set mw(dirtyrec) 1}
+#    Delete {$wn.c dchars $mw($wn,id_edited) insert insert; set mw($wn,dirtyrec) 1}
 }
 
-proc {mw_exit_edit} {} {
-global mw dbc msg tablename
+proc {mw_exit_edit} {wn} {
+global mw dbc
 # User has edited the text ?
-if {!$mw(dirtyrec)} {
+if {!$mw($wn,dirtyrec)} {
 	# No, unfocus text
-	.mw.c focus {}
+	$wn.c focus {}
 	# For restoring * to the new record position
-	if {$mw(id_edited)!=""} {
-		if {[lsearch [.mw.c gettags $mw(id_edited)] new]!=-1} {
-			.mw.c itemconfigure $mw(id_edited) -text $mw(text_initial_value)
+	if {$mw($wn,id_edited)!=""} {
+		if {[lsearch [$wn.c gettags $mw($wn,id_edited)] new]!=-1} {
+			$wn.c itemconfigure $mw($wn,id_edited) -text $mw($wn,text_initial_value)
 		}
 	}
-	set mw(id_edited) {};set mw(text_initial_value) {}
+	set mw($wn,id_edited) {};set mw($wn,text_initial_value) {}
 	return 1
 }
 # Trimming the spaces
-set fldval [string trim [.mw.c itemcget $mw(id_edited) -text]]
-.mw.c itemconfigure $mw(id_edited) -text $fldval
-if {[string compare $mw(text_initial_value) $fldval]==0} {
-	set mw(dirtyrec) 0
-	.mw.c focus {}
-	set mw(id_edited) {};set mw(text_initial_value) {}
+set fldval [string trim [$wn.c itemcget $mw($wn,id_edited) -text]]
+$wn.c itemconfigure $mw($wn,id_edited) -text $fldval
+if {[string compare $mw($wn,text_initial_value) $fldval]==0} {
+	set mw($wn,dirtyrec) 0
+	$wn.c focus {}
+	set mw($wn,id_edited) {};set mw($wn,text_initial_value) {}
 	return 1
 }
 cursor_clock
-set oid [lindex $mw(keylist) $mw(row_edited)]
-set fld [lindex $mw(colnames) [get_tag_info $mw(id_edited) c]]
+set oid [lindex $mw($wn,keylist) $mw($wn,row_edited)]
+set fld [lindex $mw($wn,colnames) [get_tag_info $wn $mw($wn,id_edited) c]]
 set fillcolor black
-if {$mw(row_edited)==$mw(last_rownum)} {
+if {$mw($wn,row_edited)==$mw($wn,last_rownum)} {
 	set fillcolor red
-	set sfp [lsearch $mw(newrec_fields) "\"$fld\""]
+	set sfp [lsearch $mw($wn,newrec_fields) "\"$fld\""]
 	if {$sfp>-1} {
-		set mw(newrec_fields) [lreplace $mw(newrec_fields) $sfp $sfp]
-		set mw(newrec_values) [lreplace $mw(newrec_values) $sfp $sfp]
+		set mw($wn,newrec_fields) [lreplace $mw($wn,newrec_fields) $sfp $sfp]
+		set mw($wn,newrec_values) [lreplace $mw($wn,newrec_values) $sfp $sfp]
 	}			
-	lappend mw(newrec_fields) "\"$fld\""
-	lappend mw(newrec_values) '$fldval'
+	lappend mw($wn,newrec_fields) "\"$fld\""
+	lappend mw($wn,newrec_values) '$fldval'
 	# Remove the untouched tag from the object
-	.mw.c dtag $mw(id_edited) unt
-		.mw.c itemconfigure $mw(id_edited) -fill red
+	$wn.c dtag $mw($wn,id_edited) unt
+		$wn.c itemconfigure $mw($wn,id_edited) -fill red
 	set retval 1
 } else {
-	set msg "Updating record ..."
-	after 1000 {set msg ""}
+	set mw($wn,msg) "Updating record ..."
+	after 1000 "set mw($wn,msg) {}"
 	regsub -all ' $fldval  \\' sqlfldval
-	set retval [sql_exec noquiet "update \"$tablename\" set \"$fld\"='$sqlfldval' where oid=$oid"]
+	set retval [sql_exec noquiet "update \"$mw($wn,tablename)\" set \"$fld\"='$sqlfldval' where oid=$oid"]
 }
 cursor_normal
 if {!$retval} {
-	set msg ""
-	focus .mw.c
+	set mw($wn,msg) ""
+	focus $wn.c
 	return 0
 }
-set mw(dirtyrec) 0
-.mw.c focus {}
-set mw(id_edited) {};set mw(text_initial_value) {}
+set mw($wn,dirtyrec) 0
+$wn.c focus {}
+set mw($wn,id_edited) {};set mw($wn,text_initial_value) {}
 return 1
 }
 
-proc {mw_load_layout} {tablename} {
-global dbc msg mw
+proc {mw_load_layout} {wn layoutname} {
+global dbc mw
 cursor_clock
-set mw(layout_name) $tablename
-catch {unset mw(colcount) mw(colnames) mw(colwidth)}
-set mw(layout_found) 0
-set pgres [wpg_exec $dbc "select *,oid from pga_layout where tablename='$tablename' order by oid desc"]
+set mw($wn,layout_name) $layoutname
+catch {unset mw($wn,colcount) mw($wn,colnames) mw($wn,colwidth)}
+set mw($wn,layout_found) 0
+set pgres [wpg_exec $dbc "select *,oid from pga_layout where tablename='$layoutname' order by oid desc"]
 set pgs [pg_result $pgres -status]
 if {$pgs!="PGRES_TUPLES_OK"} {
 	# Probably table pga_layout isn't yet defined
@@ -1287,119 +1405,120 @@ if {$pgs!="PGRES_TUPLES_OK"} {
 	set nrlay [pg_result $pgres -numTuples]
 	if {$nrlay>=1} {
 		set layoutinfo [pg_result $pgres -getTuple 0]
-		set mw(colcount) [lindex $layoutinfo 1]
-		set mw(colnames)  [lindex $layoutinfo 2]
-		set mw(colwidth) [lindex $layoutinfo 3]
+		set mw($wn,colcount) [lindex $layoutinfo 1]
+		set mw($wn,colnames)  [lindex $layoutinfo 2]
+		set mw($wn,colwidth) [lindex $layoutinfo 3]
 		set goodoid [lindex $layoutinfo 4]
-		set mw(layout_found) 1
+		set mw($wn,layout_found) 1
 	}
 	if {$nrlay>1} {
 		show_error "Multiple ($nrlay) layout info found\n\nPlease report the bug!"
-		sql_exec quiet "delete from pga_layout where (tablename='$tablename') and (oid<>$goodoid)"
+		sql_exec quiet "delete from pga_layout where (tablename='$mw($wn,tablename)') and (oid<>$goodoid)"
 	}
 }
 pg_result $pgres -clear
 }
 
-proc {mw_pan_left} {} {
+proc {mw_pan_left} {wn } {
 global mw
-if {![mw_exit_edit]} return;
-if {$mw(leftcol)==[expr $mw(colcount)-1]} return;
-set diff [expr 2+[lindex $mw(colwidth) $mw(leftcol)]]
-incr mw(leftcol)
-incr mw(leftoffset) $diff
-.mw.c move header -$diff 0
-.mw.c move q -$diff 0
-.mw.c move hgrid -$diff 0
+if {![mw_exit_edit $wn]} return;
+if {$mw($wn,leftcol)==[expr $mw($wn,colcount)-1]} return;
+set diff [expr 2+[lindex $mw($wn,colwidth) $mw($wn,leftcol)]]
+incr mw($wn,leftcol)
+incr mw($wn,leftoffset) $diff
+$wn.c move header -$diff 0
+$wn.c move q -$diff 0
+$wn.c move hgrid -$diff 0
 }
 
-proc {mw_pan_right} {} {
+proc {mw_pan_right} {wn} {
 global mw
-if {![mw_exit_edit]} return;
-if {$mw(leftcol)==0} return;
-incr mw(leftcol) -1
-set diff [expr 2+[lindex $mw(colwidth) $mw(leftcol)]]
-incr mw(leftoffset) -$diff
-.mw.c move header $diff 0
-.mw.c move q $diff 0
-.mw.c move hgrid $diff 0
+if {![mw_exit_edit $wn]} return;
+if {$mw($wn,leftcol)==0} return;
+incr mw($wn,leftcol) -1
+set diff [expr 2+[lindex $mw($wn,colwidth) $mw($wn,leftcol)]]
+incr mw($wn,leftoffset) -$diff
+$wn.c move header $diff 0
+$wn.c move q $diff 0
+$wn.c move hgrid $diff 0
 }
 
-proc {mw_save_new_record} {} {
-global dbc mw tablename msg
-if {![mw_exit_edit]} {return 0}
-if {$mw(newrec_fields)==""} {return 1}
-set msg "Saving new record ..."
-after 1000 {set msg ""}
-set pgres [wpg_exec $dbc "insert into \"$tablename\" ([join $mw(newrec_fields) ,]) values ([join $mw(newrec_values) ,])" ]
+proc {mw_save_new_record} {wn} {
+global dbc mw
+if {![mw_exit_edit $wn]} {return 0}
+if {$mw($wn,newrec_fields)==""} {return 1}
+set mw($wn,msg) "Saving new record ..."
+after 1000 "set mw($wn,msg) {}"
+set pgres [wpg_exec $dbc "insert into \"$mw($wn,tablename)\" ([join $mw($wn,newrec_fields) ,]) values ([join $mw($wn,newrec_values) ,])" ]
 if {[pg_result $pgres -status]!="PGRES_COMMAND_OK"} {
 	set errmsg [pg_result $pgres -error]
 	show_error "Error inserting new record\n\n$errmsg"
 	return 0
 }
 set oid [pg_result $pgres -oid]
-lappend mw(keylist) $oid
+lappend mw($wn,keylist) $oid
 pg_result $pgres -clear
 # Get bounds of the last record
-set lrbb [.mw.c bbox new]
-lappend mw(rowy) [lindex $lrbb 3]
-.mw.c itemconfigure new -fill black
-.mw.c dtag q new
+set lrbb [$wn.c bbox new]
+lappend mw($wn,rowy) [lindex $lrbb 3]
+$wn.c itemconfigure new -fill black
+$wn.c dtag q new
 # Replace * from untouched new row elements with "  "
-foreach item [.mw.c find withtag unt] {
-	.mw.c itemconfigure $item -text "  "
+foreach item [$wn.c find withtag unt] {
+	$wn.c itemconfigure $item -text "  "
 }
-.mw.c dtag q unt
-incr mw(last_rownum)
-incr mw(nrecs)
-mw_draw_new_record
-set mw(newrec_fields) {}
-set mw(newrec_values) {}
+$wn.c dtag q unt
+incr mw($wn,last_rownum)
+incr mw($wn,nrecs)
+mw_draw_new_record $wn
+set mw($wn,newrec_fields) {}
+set mw($wn,newrec_values) {}
 return 1
 }
 
-proc {mw_scroll_window} {par1 par2 args} {
+proc {mw_scroll_window} {wn par1 args} {
 global mw
-if {![mw_exit_edit]} return;
+if {![mw_exit_edit $wn]} return;
 if {$par1=="scroll"} {
-	set newtop $mw(toprec)
-	if {[lindex $args 0]=="units"} {
-		incr newtop $par2
+	set newtop $mw($wn,toprec)
+	if {[lindex $args 1]=="units"} {
+		incr newtop [lindex $args 0]
 	} else {
-		incr newtop [expr $par2*25]
+		incr newtop [expr [lindex $args 0]*25]
 		if {$newtop<0} {set newtop 0}
-		if {$newtop>=[expr $mw(nrecs)-1]} {set newtop [expr $mw(nrecs)-1]}
+		if {$newtop>=[expr $mw($wn,nrecs)-1]} {set newtop [expr $mw($wn,nrecs)-1]}
 	}
+} elseif {$par1=="moveto"} {
+	set newtop [expr int([lindex $args 0]*$mw($wn,nrecs))]
 } else {
-	set newtop [expr int($par2*$mw(nrecs))]
+	return
 }
 if {$newtop<0} return;
-if {$newtop>=[expr $mw(nrecs)-1]} return;
-set dy [expr [lindex $mw(rowy) $mw(toprec)]-[lindex $mw(rowy) $newtop]]
-.mw.c move q 0 $dy
-.mw.c move hgrid 0 $dy
+if {$newtop>=[expr $mw($wn,nrecs)-1]} return;
+set dy [expr [lindex $mw($wn,rowy) $mw($wn,toprec)]-[lindex $mw($wn,rowy) $newtop]]
+$wn.c move q 0 $dy
+$wn.c move hgrid 0 $dy
 set newrowy {}
-foreach y $mw(rowy) {lappend newrowy [expr $y+$dy]}
-set mw(rowy) $newrowy
-set mw(toprec) $newtop
-mw_set_scrollbar
+foreach y $mw($wn,rowy) {lappend newrowy [expr $y+$dy]}
+set mw($wn,rowy) $newrowy
+set mw($wn,toprec) $newtop
+mw_set_scrollbar $wn
 }
 
-proc {mw_select_records} {sql} {
-global dbc field mw pgsql
-global tablename msg pref
-set mw(newrec_fields) {}
-set mw(newrec_values) {}
-if {![mw_exit_edit]} return;
-.mw.c delete q
-.mw.c delete header
-.mw.c delete hgrid
-.mw.c delete new
-set mw(leftcol) 0
-set mw(leftoffset) 0
-set mw(crtrow) {}
-set msg {}
-set msg "Accessing data. Please wait ..."
+proc {mw_select_records} {wn sql} {
+global dbc field mw pgsql pref
+set mw($wn,newrec_fields) {}
+set mw($wn,newrec_values) {}
+if {![mw_exit_edit $wn]} return;
+$wn.c delete q
+$wn.c delete header
+$wn.c delete hgrid
+$wn.c delete new
+set mw($wn,leftcol) 0
+set mw($wn,leftoffset) 0
+set mw($wn,crtrow) {}
+set mw($wn,msg) "Accessing data. Please wait ..."
+$wn.f1.b1 configure -state disabled
 cursor_clock
 set is_error 1
 if {[sql_exec noquiet "BEGIN"]} {
@@ -1412,145 +1531,167 @@ if {[sql_exec noquiet "BEGIN"]} {
 }
 if {$is_error} {
 	sql_exec quiet "END"
-	set msg {}
+	set mw($wn,msg) {}
+	$wn.f1.b1 configure -state normal
 	cursor_normal
-	set msg "Error executing : $sql"
+	set mw($wn,msg) "Error executing : $sql"
 	return
 }
-if {$mw(updatable)} then {set shift 1} else {set shift 0}
+if {$mw($wn,updatable)} then {set shift 1} else {set shift 0}
 #
 # checking at least the numer of fields
 set attrlist [pg_result $pgres -lAttributes]
-if {$mw(layout_found)} then {
-	if {  ($mw(colcount) != [expr [llength $attrlist]-$shift]) ||
-		  ($mw(colcount) != [llength $mw(colnames)]) ||
-		  ($mw(colcount) != [llength $mw(colwidth)]) } then {
+if {$mw($wn,layout_found)} then {
+	if {  ($mw($wn,colcount) != [expr [llength $attrlist]-$shift]) ||
+		  ($mw($wn,colcount) != [llength $mw($wn,colnames)]) ||
+		  ($mw($wn,colcount) != [llength $mw($wn,colwidth)]) } then {
 		# No. of columns don't match, something is wrong
 		# tk_messageBox -title Information -message "Layout info changed !\nRescanning..."
-		set mw(layout_found) 0
-		sql_exec quiet "delete from pga_layout where tablename='$mw(layout_name)'"
+		set mw($wn,layout_found) 0
+		sql_exec quiet "delete from pga_layout where tablename='$mw($wn,layout_name)'"
 	}
 }
 # Always take the col. names from the result
-set mw(colcount) [llength $attrlist]
-if {$mw(updatable)} then {incr mw(colcount) -1}
-set mw(colnames) {}
-# In defmw(colwidth) prepare mw(colwidth) (in case that not layout_found)
-set defmw(colwidth) {}
-for {set i 0} {$i<$mw(colcount)} {incr i} {
-	lappend mw(colnames) [lindex [lindex $attrlist [expr $i+$shift]] 0]
-	lappend defmw(colwidth) 150
+set mw($wn,colcount) [llength $attrlist]
+if {$mw($wn,updatable)} then {incr mw($wn,colcount) -1}
+set mw($wn,colnames) {}
+# In defmw($wn,colwidth) prepare mw($wn,colwidth) (in case that not layout_found)
+set defmw($wn,colwidth) {}
+for {set i 0} {$i<$mw($wn,colcount)} {incr i} {
+	lappend mw($wn,colnames) [lindex [lindex $attrlist [expr {$i+$shift}]] 0]
+	lappend defmw($wn,colwidth) 150
 }
-if {!$mw(layout_found)} {
-	set mw(colwidth) $defmw(colwidth)
-	sql_exec quiet "insert into pga_layout values ('$mw(layout_name)',$mw(colcount),'$mw(colnames)','$mw(colwidth)')"
-	set mw(layout_found) 1
+if {!$mw($wn,layout_found)} {
+	set mw($wn,colwidth) $defmw($wn,colwidth)
+	sql_exec quiet "insert into pga_layout values ('$mw($wn,layout_name)',$mw($wn,colcount),'$mw($wn,colnames)','$mw($wn,colwidth)')"
+	set mw($wn,layout_found) 1
 }
-set mw(nrecs) [pg_result $pgres -numTuples]
-if {$mw(nrecs)>$pref(rows)} {
-	set msg "Only first $pref(rows) records from $mw(nrecs) have been loaded"
-	set mw(nrecs) $pref(rows)
+set mw($wn,nrecs) [pg_result $pgres -numTuples]
+if {$mw($wn,nrecs)>$pref(rows)} {
+	set mw($wn,msg) "Only first $pref(rows) records from $mw($wn,nrecs) have been loaded"
+	set mw($wn,nrecs) $pref(rows)
 }
 set tagoid {}
 if {$pref(tvfont)=="helv"} {
-	set tvfont -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-*
+	set tvfont $pref(font_normal)
 } else {
-	set tvfont -*-Clean-Medium-R-Normal-*-*-130-*-*-*-*-*
+	set tvfont $pref(font_fix)
 }
 # Computing column's left edge
 set posx 10
-for {set j 0} {$j<$mw(colcount)} {incr j} {
+for {set j 0} {$j<$mw($wn,colcount)} {incr j} {
 	set ledge($j) $posx
-	incr posx [expr [lindex $mw(colwidth) $j]+2]
-	set textwidth($j) [expr [lindex $mw(colwidth) $j]-5]
+	incr posx [expr {[lindex $mw($wn,colwidth) $j]+2}]
+	set textwidth($j) [expr {[lindex $mw($wn,colwidth) $j]-5}]
 }
 incr posx -6
 set posy 24
-mw_draw_headers
-set mw(updatekey) oid
-set mw(keylist) {}
-set mw(rowy) {24}
-set msg "Loading maximum $pref(rows) records ..."
-for {set i 0} {$i<$mw(nrecs)} {incr i} {
+mw_draw_headers $wn
+set mw($wn,updatekey) oid
+set mw($wn,keylist) {}
+set mw($wn,rowy) {24}
+set mw($wn,msg) "Loading maximum $pref(rows) records ..."
+set wupdatable $mw($wn,updatable)
+for {set i 0} {$i<$mw($wn,nrecs)} {incr i} {
 	set curtup [pg_result $pgres -getTuple $i]
-	if {$mw(updatable)} then {lappend mw(keylist) [lindex $curtup 0]}
-	for {set j 0} {$j<$mw(colcount)} {incr j} {
-		.mw.c create text $ledge($j) $posy -text [lindex $curtup [expr $j+$shift]] -tags [subst {r$i c$j q}] -anchor nw -font $tvfont -width $textwidth($j) -fill black
+	if {$wupdatable} then {lappend mw($wn,keylist) [lindex $curtup 0]}
+	for {set j 0} {$j<$mw($wn,colcount)} {incr j} {
+		$wn.c create text $ledge($j) $posy -text [lindex $curtup [expr {$j+$shift}]] -tags [subst {r$i c$j q}] -anchor nw -font $tvfont -width $textwidth($j) -fill black
 	}
-	set bb [.mw.c bbox r$i]
-	incr posy [expr [lindex $bb 3]-[lindex $bb 1]]
-	lappend mw(rowy) $posy
-	.mw.c create line 0 [lindex $bb 3] $posx [lindex $bb 3] -fill gray -tags [subst {hgrid g$i}]
+	set bb [$wn.c bbox r$i]
+	incr posy [expr {[lindex $bb 3]-[lindex $bb 1]}]
+	lappend mw($wn,rowy) $posy
+	$wn.c create line 0 [lindex $bb 3] $posx [lindex $bb 3] -fill gray -tags [subst {hgrid g$i}]
 	if {$i==25} {update; update idletasks}
 }
-after 3000 {set msg {} }
-set mw(last_rownum) $i
+after 3000 "set mw($wn,msg) {}"
+set mw($wn,last_rownum) $i
 # Defining position for input data
-mw_draw_new_record
+mw_draw_new_record $wn
 pg_result $pgres -clear
 sql_exec quiet "END"
-set mw(toprec) 0
-mw_set_scrollbar
-if {$mw(updatable)} then {
-	.mw.c bind q <Key> {mw_edit_text %A %K}
+set mw($wn,toprec) 0
+mw_set_scrollbar $wn
+if {$mw($wn,updatable)} then {
+	$wn.c bind q <Key> "mw_edit_text $wn %A %K"
 } else {
-	.mw.c bind q <Key> {}
+	$wn.c bind q <Key> {}
 }
-set mw(dirtyrec) 0
-#mw_draw_headers
-.mw.c raise header
+set mw($wn,dirtyrec) 0
+$wn.c raise header
+$wn.f1.b1 configure -state normal
 cursor_normal
 }
 
-proc {mw_set_scrollbar} {} {
+proc {mw_set_scrollbar} {wn} {
 global mw
-if {$mw(nrecs)==0} return;
-.mw.sb set [expr $mw(toprec)*1.0/$mw(nrecs)] [expr ($mw(toprec)+27.0)/$mw(nrecs)]
+if {$mw($wn,nrecs)==0} return;
+$wn.sb set [expr $mw($wn,toprec)*1.0/$mw($wn,nrecs)] [expr ($mw($wn,toprec)+27.0)/$mw($wn,nrecs)]
 }
 
-proc {mw_show_record} {row} {
-global mw msg
-set mw(errorsavingnew) 0
-if {$mw(newrec_fields)!=""} {
-	if {$row!=$mw(last_rownum)} {
-		if {![mw_save_new_record]} {
-					set mw(errorsavingnew) 1
+proc {mw_reload} {wn} {
+global mw
+set nq $mw($wn,query)
+if {($mw($wn,isaquery)) && ("$mw($wn,filter)$mw($wn,sortfield)"!="")} {
+	show_error "Sorting and filtering not (yet) available from queries!\n\nPlease enter them in the query definition!"
+	set mw($wn,sortfield) {}
+	set mw($wn,filter) {}
+} else {
+	if {$mw($wn,filter)!=""} {
+		set nq "$mw($wn,query) where ($mw($wn,filter))"
+	} else {
+		set nq $mw($wn,query)
+	}
+	if {$mw($wn,sortfield)!=""} {
+		set nq "$nq order by $mw($wn,sortfield)"
+	}
+}
+if {[mw_save_new_record $wn]} {mw_select_records $wn $nq}
+}
+
+proc {mw_show_record} {wn row} {
+global mw
+set mw($wn,errorsavingnew) 0
+if {$mw($wn,newrec_fields)!=""} {
+	if {$row!=$mw($wn,last_rownum)} {
+		if {![mw_save_new_record $wn]} {
+					set mw($wn,errorsavingnew) 1
 					return
 				}
 	}
 }
-set y1 [lindex $mw(rowy) $row]
-set y2 [lindex $mw(rowy) [expr $row+1]]
+set y1 [lindex $mw($wn,rowy) $row]
+set y2 [lindex $mw($wn,rowy) [expr $row+1]]
 if {$y2==""} {set y2 [expr $y1+14]}
-.mw.c dtag hili hili
-.mw.c addtag hili withtag r$row
+$wn.c dtag hili hili
+$wn.c addtag hili withtag r$row
 # Making a rectangle arround the record
 set x 3
-foreach wi $mw(colwidth) {incr x [expr $wi+2]}
-.mw.c delete crtrec
-.mw.c create rectangle [expr -1-$mw(leftoffset)] $y1 [expr $x-$mw(leftoffset)] $y2 -fill #EEEEEE -outline {} -tags {q crtrec}
-.mw.c lower crtrec
+foreach wi $mw($wn,colwidth) {incr x [expr $wi+2]}
+$wn.c delete crtrec
+$wn.c create rectangle [expr -1-$mw($wn,leftoffset)] $y1 [expr $x-$mw($wn,leftoffset)] $y2 -fill #EEEEEE -outline {} -tags {q crtrec}
+$wn.c lower crtrec
 }
 
-proc {mw_start_edit} {id x y} {
-global mw msg
-if {!$mw(updatable)} return
-set mw(id_edited) $id
-set mw(dirtyrec) 0
-set mw(text_initial_value) [.mw.c itemcget $id -text]
-focus .mw.c
-.mw.c focus $id
-.mw.c icursor $id @$x,$y
-if {$mw(row_edited)==$mw(nrecs)} {
-	if {[.mw.c itemcget $id -text]=="*"} {
-		.mw.c itemconfigure $id -text ""
-		.mw.c icursor $id 0
+proc {mw_start_edit} {wn id x y} {
+global mw
+if {!$mw($wn,updatable)} return
+set mw($wn,id_edited) $id
+set mw($wn,dirtyrec) 0
+set mw($wn,text_initial_value) [$wn.c itemcget $id -text]
+focus $wn.c
+$wn.c focus $id
+$wn.c icursor $id @$x,$y
+if {$mw($wn,row_edited)==$mw($wn,nrecs)} {
+	if {[$wn.c itemcget $id -text]=="*"} {
+		$wn.c itemconfigure $id -text ""
+		$wn.c icursor $id 0
 	}
 }
 }
 
 proc {open_database} {} {
-global dbc host pport dbname username password newusername newpassword sdbname newdbname newhost newpport pref
+global dbc host pport dbname username password newusername newpassword sdbname newdbname newhost newpport pref pgsql
 cursor_clock
 if {$newusername!=""} {
 	set connres [catch {set newdbc [pg_connect -conninfo "host=$newhost port=$newpport dbname=$newdbname user=$newusername password=$newpassword"]} msg]
@@ -1559,7 +1700,8 @@ if {$newusername!=""} {
 }
 if {$connres} {
 	cursor_normal
-	show_error "Error connecting database\n$msg"
+	show_error "Error trying to connect to database \"$newdbname\" on host $newhost\n\nPostgreSQL error message: $msg"
+	return $msg
 } else {
 	catch {pg_disconnect $dbc}
 	set dbc $newdbc
@@ -1578,18 +1720,23 @@ if {$connres} {
 	tab_click .dw.tabTables
 	# Check for pga_ tables
 	foreach {table structure} { pga_queries {queryname varchar(64),querytype char(1),querycommand text} pga_forms {formname varchar(64),formsource text} pga_scripts {scriptname varchar(64),scriptsource text} pga_reports {reportname varchar(64),reportsource text,reportbody text,reportprocs text,reportoptions text}} {
-	set pgres [wpg_exec $dbc "select relname from pg_class where relname='$table'"]
-		if {[pg_result $pgres -numTuples]==0} {
+		set pgres [wpg_exec $dbc "select relname from pg_class where relname='$table'"]
+		if {$pgsql(status)!="PGRES_TUPLES_OK"} {
+			show_error "FATAL ERROR searching for PgAccess system tables : $pgsql(errmsg)\nStatus:$pgsql(status)"
+			catch {pg_disconnect $dbc}
+			exit
+		} elseif {[pg_result $pgres -numTuples]==0} {
 			pg_result $pgres -clear
 			sql_exec quiet "create table $table ($structure)"
-		sql_exec quiet "grant ALL on $table to PUBLIC"
+			sql_exec quiet "grant ALL on $table to PUBLIC"
 		}
-		catch { pg_result $pgres -clear }
+		catch {pg_result $pgres -clear}
 	}
 	# searching for autoexec script
 	wpg_select $dbc "select * from pga_scripts where scriptname ~* '^autoexec$'" recd {
 		eval $recd(scriptsource)
-	}    
+	}
+	return ""
 }
 }
 
@@ -1633,7 +1780,7 @@ rb_preview
 }
 
 proc {open_query} {how} {
-global dbc queryname mw queryoid sortfield filter
+global dbc queryname mw queryoid
 
 if {[.dw.lb curselection]==""} return;
 set queryname [.dw.lb get [.dw.lb curselection]]
@@ -1657,13 +1804,14 @@ if {$how=="design"} {
 	.qb.text1 insert end $qcmd
 } else {
 	if {$qtype=="S"} then {
-		set mw(query) [subst $qcmd]
-		set mw(updatable) 0
-		set mw(isaquery) 1
-		Window show .mw
-		wm title .mw "Query result: $queryname"
-		mw_load_layout $queryname
-		mw_select_records $mw(query)
+		set wn [mw_get_new_name]
+		set mw($wn,query) [subst $qcmd]
+		set mw($wn,updatable) 0
+		set mw($wn,isaquery) 1
+		mw_create_window
+		wm title $wn "Query result: $queryname"
+		mw_load_layout $wn $queryname
+		mw_select_records $wn $mw($wn,query)
 	} else {
 		set answ [tk_messageBox -title Warning -type yesno -message "This query is an action query!\n\n[string range $qcmd 0 30] ...\n\nDo you want to execute it?"]
 		if {$answ} {
@@ -1675,11 +1823,29 @@ if {$how=="design"} {
 }
 }
 
+proc {mw_free_variables} {wn} {
+global mw
+	foreach varname [array names mw $wn,*] {
+		unset mw($varname)
+	}
+}
+
+proc {mw_get_new_name} {} {
+global mw mwcount
+incr mwcount
+set wn .mw$mwcount
+set mw($wn,dirtyrec) 0
+set mw($wn,id_edited) {}
+set mw($wn,filter) {}
+set mw($wn,sortfield) {}
+return .mw$mwcount
+}
+
 proc {open_sequence} {objname} {
 global dbc seq_name seq_inc seq_start seq_minval seq_maxval
 Window show .sqf
 set flag 1
-wpg_select $dbc "select * from $objname" rec {
+wpg_select $dbc "select * from \"$objname\"" rec {
 	set flag 0
 	set seq_name $objname
 	set seq_inc $rec(increment_by)
@@ -1701,29 +1867,57 @@ if {$flag} {
 }
 
 proc {open_table} {objname} {
-global mw sortfield filter tablename
+global mw sortfield filter
 set sortfield {}
 set filter {}
-Window show .mw
-set tablename $objname
-mw_load_layout $objname
-set mw(query) "select oid,\"$tablename\".* from \"$objname\""
-set mw(updatable) 1
-set mw(isaquery) 0
-mw_select_records $mw(query)
-wm title .mw "Table viewer : $objname"
+set wn [mw_get_new_name]
+mw_create_window
+set mw($wn,tablename) $objname
+mw_load_layout $wn $objname
+set mw($wn,query) "select oid,\"$objname\".* from \"$objname\""
+set mw($wn,updatable) 1
+set mw($wn,isaquery) 0
+mw_select_records $wn $mw($wn,query)
+catch {wm title $wn "Table viewer : $objname"}
 }
 
 proc {open_view} {} {
 global mw
 set vn [get_dwlb_Selection]
 if {$vn==""} return;
-Window show .mw
-set mw(query) "select * from $vn"
-set mw(isaquery) 0
-set mw(updatable) 0
-mw_load_layout $vn
-mw_select_records $mw(query)
+set wn [mw_get_new_name]
+mw_create_window
+set mw($wn,query) "select * from \"$vn\""
+set mw($wn,isaquery) 0
+set mw($wn,updatable) 0
+mw_load_layout $wn $vn
+mw_select_records $wn $mw($wn,query)
+}
+
+proc {rename_column} {} {
+global dbc tiw
+	if {[string length [string trim $tiw(new_cn)]]==0} {
+		show_error "Field name not entered!"
+		return
+	}
+	set old_name [string trim [string range $tiw(old_cn) 0 31]]
+	set tiw(new_cn) [string trim $tiw(new_cn)]
+	if {$old_name == $tiw(new_cn)} {
+		show_error "New name is the same as the old one !"
+		return
+	}
+	foreach line [.tiw.lb get 0 end] {
+		if {[string trim [string range $line 0 31]]==$tiw(new_cn)} {
+			show_error "Colum name \"$tiw(new_cn)\" already exists in this table!"
+			return
+		}
+	}
+	if {[sql_exec noquiet "alter table \"$tiw(tablename)\" rename column \"$old_name\" to \"$tiw(new_cn)\""]} {
+		set temp $tiw(col_id)
+		.tiw.lb delete $temp $temp
+		.tiw.lb insert $temp "[format %-32.32s $tiw(new_cn)] [string range $tiw(old_cn) 33 end]"
+		Window destroy .rcw
+	}
 }
 
 proc {parameter} {msg} {
@@ -1824,7 +2018,7 @@ set obj [.ql.c find withtag hili]
 if {$obj==""} return
 # Is object a link ?
 if {[ql_get_tag_info $obj link]=="s"} {
-	if {[tk_messageBox -title WARNING -icon question -message "Remove link ?" -type yesno -default no]=="no"} return
+	if {[tk_messageBox -title WARNING -icon question -parent .ql -message "Remove link ?" -type yesno -default no]=="no"} return
 	set linkid [ql_get_tag_info $obj lkid]
 	set qlvar(links) [lreplace $qlvar(links) $linkid $linkid]
 	.ql.c delete links
@@ -1835,7 +2029,7 @@ if {[ql_get_tag_info $obj link]=="s"} {
 if {[ql_get_tag_info $obj res]=="f"} {
 	set col [ql_get_tag_info $obj col]
 	if {$col==""} return
-	if {[tk_messageBox -title WARNING -icon question -message "Remove field from result ?" -type yesno -default no]=="no"} return
+	if {[tk_messageBox -title WARNING -icon question -parent .ql -message "Remove field from result ?" -type yesno -default no]=="no"} return
 	set qlvar(resfields) [lreplace $qlvar(resfields) $col $col]
 	set qlvar(restables) [lreplace $qlvar(restables) $col $col]
 	set qlvar(rescriteria) [lreplace $qlvar(rescriteria) $col $col]
@@ -1846,7 +2040,7 @@ if {[ql_get_tag_info $obj res]=="f"} {
 set tablealias [ql_get_tag_info $obj tab]
 set tablename $qlvar(ali_$tablealias)
 if {"$tablename"==""} return
-if {[tk_messageBox -title WARNING -icon question -message "Remove table $tablename from query ?" -type yesno -default no]=="no"} return
+if {[tk_messageBox -title WARNING -icon question -parent .ql -message "Remove table $tablename from query ?" -type yesno -default no]=="no"} return
 for {set i [expr [llength $qlvar(restables)]-1]} {$i>=0} {incr i -1} {
 	if {"$tablename"==[lindex $qlvar(restables) $i]} {
 	   set qlvar(resfields) [lreplace $qlvar(resfields) $i $i]
@@ -1926,7 +2120,7 @@ proc {ql_dragstop} {x y} {
 global draginfo qlvar
 # when click Close, ql window is destroyed but event ButtonRelease-1 is fired
 if {![winfo exists .ql]} return;
-.ql configure -cursor top_left_arrow
+.ql configure -cursor left_ptr
 set este {}
 catch {set este $draginfo(obj)}
 if {$este==""} return
@@ -2026,7 +2220,7 @@ foreach link $qlvar(links) {
 }
 
 proc {ql_draw_lizzard} {} {
-global qlvar
+global qlvar pref
 .ql.c delete all
 set posx 20
 for {set it 0} {$it<$qlvar(ntables)} {incr it} {
@@ -2044,10 +2238,10 @@ for {set i $qlvar(xoffs)} {$i<10000} {incr i $qlvar(reswidth)} {
 # Make a marker for result panel offset calculations (due to panning)
 .ql.c create line $qlvar(xoffs) $qlvar(yoffs) $qlvar(xoffs) 500 -tags {resmarker resgrid}
 .ql.c create rectangle 0 $qlvar(yoffs) $qlvar(xoffs) 5000 -fill #EEEEEE -tags {reshdr}
-.ql.c create text 5 [expr 1+$qlvar(yoffs)] -text Field: -anchor nw -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* -tags {reshdr}
-.ql.c create text 5 [expr 16+$qlvar(yoffs)] -text Table: -anchor nw -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* -tags {reshdr}
-.ql.c create text 5 [expr 31+$qlvar(yoffs)] -text Sort: -anchor nw -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* -tags {reshdr}
-.ql.c create text 5 [expr 46+$qlvar(yoffs)] -text Criteria: -anchor nw -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* -tags {reshdr}
+.ql.c create text 5 [expr 1+$qlvar(yoffs)] -text Field: -anchor nw -font $pref(font_normal) -tags {reshdr}
+.ql.c create text 5 [expr 16+$qlvar(yoffs)] -text Table: -anchor nw -font $pref(font_normal) -tags {reshdr}
+.ql.c create text 5 [expr 31+$qlvar(yoffs)] -text Sort: -anchor nw -font $pref(font_normal) -tags {reshdr}
+.ql.c create text 5 [expr 46+$qlvar(yoffs)] -text Criteria: -anchor nw -font $pref(font_normal) -tags {reshdr}
 .ql.c bind mov <Button-1> {ql_dragstart %W %x %y}
 .ql.c bind mov <B1-Motion> {ql_dragit %W %x %y}
 bind .ql <ButtonRelease-1> {ql_dragstop %x %y}
@@ -2057,16 +2251,16 @@ bind .ql <Key-Delete> {ql_delete_object}
 }
 
 proc {ql_draw_res_panel} {} {
-global qlvar
+global qlvar pref
 # Compute the offset of the result panel due to panning
 set resoffset [expr [lindex [.ql.c bbox resmarker] 0]-$qlvar(xoffs)]
 .ql.c delete resp
 for {set i 0} {$i<[llength $qlvar(resfields)]} {incr i} {
-	.ql.c create text [expr $resoffset+4+$qlvar(xoffs)+$i*$qlvar(reswidth)] [expr 1+$qlvar(yoffs)] -text [lindex $qlvar(resfields) $i] -anchor nw -tags [subst {resf resp col$i}] -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-*
-	.ql.c create text [expr $resoffset+4+$qlvar(xoffs)+$i*$qlvar(reswidth)] [expr 16+$qlvar(yoffs)] -text $qlvar(ali_[lindex $qlvar(restables) $i]) -anchor nw -tags {resp rest} -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-*
-	.ql.c create text [expr $resoffset+4+$qlvar(xoffs)+$i*$qlvar(reswidth)] [expr 31+$qlvar(yoffs)] -text [lindex $qlvar(ressort) $i] -anchor nw -tags {resp sort} -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-*
+	.ql.c create text [expr $resoffset+4+$qlvar(xoffs)+$i*$qlvar(reswidth)] [expr 1+$qlvar(yoffs)] -text [lindex $qlvar(resfields) $i] -anchor nw -tags [subst {resf resp col$i}] -font $pref(font_normal)
+	.ql.c create text [expr $resoffset+4+$qlvar(xoffs)+$i*$qlvar(reswidth)] [expr 16+$qlvar(yoffs)] -text $qlvar(ali_[lindex $qlvar(restables) $i]) -anchor nw -tags {resp rest} -font $pref(font_normal)
+	.ql.c create text [expr $resoffset+4+$qlvar(xoffs)+$i*$qlvar(reswidth)] [expr 31+$qlvar(yoffs)] -text [lindex $qlvar(ressort) $i] -anchor nw -tags {resp sort} -font $pref(font_normal)
 	if {[lindex $qlvar(rescriteria) $i]!=""} {
-		.ql.c create text [expr $resoffset+4+$qlvar(xoffs)+$i*$qlvar(reswidth)]  [expr $qlvar(yoffs)+46+15*0] -anchor nw -text [lindex $qlvar(rescriteria) $i]  -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-*  -tags [subst {resp cr-c$i-r0}]
+		.ql.c create text [expr $resoffset+4+$qlvar(xoffs)+$i*$qlvar(reswidth)]  [expr $qlvar(yoffs)+46+15*0] -anchor nw -text [lindex $qlvar(rescriteria) $i]  -font $pref(font_normal) -tags [subst {resp cr-c$i-r0}]
 	}
 }
 .ql.c raise reshdr
@@ -2075,17 +2269,17 @@ for {set i 0} {$i<[llength $qlvar(resfields)]} {incr i} {
 }
 
 proc {ql_draw_table} {it} {
-global qlvar
+global qlvar pref
 
 set posy 10
 set allbox [.ql.c bbox rect]
 if {$allbox==""} {set posx 10} else {set posx [expr 20+[lindex $allbox 2]]}
 set tablename $qlvar(tablename$it)
 set tablealias $qlvar(tablealias$it)
-.ql.c create text $posx $posy -text "$tablename" -anchor nw -tags [subst {tab$tablealias f-oid mov tableheader}] -font -Adobe-Helvetica-Bold-R-Normal-*-*-120-*-*-*-*-*
+.ql.c create text $posx $posy -text "$tablename" -anchor nw -tags [subst {tab$tablealias f-oid mov tableheader}] -font $pref(font_bold)
 incr posy 16
 foreach fld $qlvar(tablestruct$it) {
-   .ql.c create text $posx $posy -text $fld -fill #010101 -anchor nw -tags [subst {f-$fld tab$tablealias mov}] -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-*
+   .ql.c create text $posx $posy -text $fld -fill #010101 -anchor nw -tags [subst {f-$fld tab$tablealias mov}] -font $pref(font_normal)
    incr posy 14
 }
 set reg [.ql.c bbox tab$tablealias]
@@ -2162,12 +2356,12 @@ if {[ql_get_tag_info $obj res]!="f"} return
 }
 
 proc {ql_show_sql} {} {
-global qlvar
+global qlvar pref
 
 set sqlcmd [ql_compute_sql]
 .ql.c delete sqlpage
 .ql.c create rectangle 0 0 2000 [expr $qlvar(yoffs)-1] -fill #ffffff -tags {sqlpage}
-.ql.c create text 10 10 -text $sqlcmd -anchor nw -width 550 -tags {sqlpage} -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-*
+.ql.c create text 10 10 -text $sqlcmd -anchor nw -width 550 -tags {sqlpage} -font $pref(font_normal)
 .ql.c bind sqlpage <Button-1> {.ql.c delete sqlpage}
 }
 
@@ -2190,7 +2384,7 @@ set qlvar(ressort) [lreplace $qlvar(ressort) $col $col $cum]
 }
 
 proc {qlc_click} {x y w} {
-global qlvar
+global qlvar pref
 set qlvar(panstarted) 0
 if {$w==".ql.c"} {
 	set canpan 1
@@ -2214,7 +2408,7 @@ set resoffset [expr [lindex [.ql.c bbox resmarker] 0]-$qlvar(xoffs)]
 if {$isedit} {
 	set qlvar(rescriteria) [lreplace $qlvar(rescriteria) $qlvar(critcol) $qlvar(critcol) $qlvar(critval)]
 	.ql.c delete cr-c$qlvar(critcol)-r$qlvar(critrow)
-	.ql.c create text [expr $resoffset+4+$qlvar(xoffs)+$qlvar(critcol)*$qlvar(reswidth)] [expr $qlvar(yoffs)+46+15*$qlvar(critrow)] -anchor nw -text $qlvar(critval) -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* -tags [subst {resp cr-c$qlvar(critcol)-r$qlvar(critrow)}]
+	.ql.c create text [expr $resoffset+4+$qlvar(xoffs)+$qlvar(critcol)*$qlvar(reswidth)] [expr $qlvar(yoffs)+46+15*$qlvar(critrow)] -anchor nw -text $qlvar(critval) -font $pref(font_normal) -tags [subst {resp cr-c$qlvar(critcol)-r$qlvar(critrow)}]
 	set qlvar(critedit) 0
 }
 catch {destroy .ql.entc}
@@ -2226,7 +2420,7 @@ set nx [expr $col*$qlvar(reswidth)+8+$qlvar(xoffs)+$resoffset]
 set ny [expr $qlvar(yoffs)+76]
 # Get the old criteria value
 set qlvar(critval) [lindex $qlvar(rescriteria) $col]
-entry .ql.entc -textvar qlvar(critval) -borderwidth 0 -background #FFFFFF -highlightthickness 0 -selectborderwidth 0  -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-*
+entry .ql.entc -textvar qlvar(critval) -borderwidth 0 -background #FFFFFF -highlightthickness 0 -selectborderwidth 0  -font $pref(font_normal)
 place .ql.entc -x $nx -y $ny -height 14
 focus .ql.entc
 bind .ql.entc <Button-1> {set qlvar(panstarted) 0}
@@ -2236,18 +2430,18 @@ set qlvar(critedit) 1
 }
 
 proc {rb_add_field} {} {
-global rbvar
+global rbvar pref
 set fldname [.rb.lb get [.rb.lb curselection]]
-set newid [.rb.c create text $rbvar(xf_auto) [expr $rbvar(y_rpthdr)+5] -text $fldname -tags [subst {t_l mov ro}] -anchor nw -font -Adobe-Helvetica-Bold-R-Normal--*-120-*-*-*-*-*-*]
-.rb.c create text $rbvar(xf_auto) [expr $rbvar(y_pghdr)+5] -text $fldname -tags [subst {f-$fldname t_f rg_detail mov ro}] -anchor nw -font -Adobe-Helvetica-Medium-R-Normal--*-120-*-*-*-*-*-*
+set newid [.rb.c create text $rbvar(xf_auto) [expr $rbvar(y_rpthdr)+5] -text $fldname -tags [subst {t_l mov ro}] -anchor nw -font $pref(font_normal)]
+.rb.c create text $rbvar(xf_auto) [expr $rbvar(y_pghdr)+5] -text $fldname -tags [subst {f-$fldname t_f rg_detail mov ro}] -anchor nw -font $pref(font_normal)
 set bb [.rb.c bbox $newid]
 incr rbvar(xf_auto) [expr 5+[lindex $bb 2]-[lindex $bb 0]]
 }
 
 proc {rb_add_label} {} {
-global rbvar
+global rbvar pref
 set fldname $rbvar(labeltext)
-set newid [.rb.c create text $rbvar(xl_auto) [expr $rbvar(y_rpthdr)+5] -text $fldname -tags [subst {t_l mov ro}] -anchor nw -font -Adobe-Helvetica-Medium-R-Normal--*-120-*-*-*-*-*-*]
+set newid [.rb.c create text $rbvar(xl_auto) [expr $rbvar(y_rpthdr)+5] -text $fldname -tags [subst {t_l mov ro}] -anchor nw -font $pref(font_normal)]
 set bb [.rb.c bbox $newid]
 incr rbvar(xl_auto) [expr 5+[lindex $bb 2]-[lindex $bb 0]]
 }
@@ -2258,7 +2452,7 @@ global rbvar
 }
 
 proc {rb_delete_object} {} {
-if {[tk_messageBox -title Warning -message "Delete current report object?" -type yesno -default no]=="no"} return;
+if {[tk_messageBox -title Warning -parent .rb -message "Delete current report object?" -type yesno -default no]=="no"} return;
 .rb.c delete hili
 }
 
@@ -2331,7 +2525,7 @@ proc {rb_dragstop} {x y} {
 global draginfo rbvar
 # when click Close, ql window is destroyed but event ButtonRelease-1 is fired
 if {![winfo exists .rb]} return;
-.rb configure -cursor top_left_arrow
+.rb configure -cursor left_ptr
 set este {}
 catch {set este $draginfo(obj)}
 if {$este==""} return
@@ -2478,7 +2672,7 @@ wpg_select $dbc "select * from \"$rbvar(tablename)\"" rec {
 proc {rb_print_report} {} {
 set bb [.rpv.fr.c bbox all]
 .rpv.fr.c postscript -file "pgaccess-report.ps" -width [expr 10+[lindex $bb 2]-[lindex $bb 0]] -height [expr 10+[lindex $bb 3]-[lindex $bb 1]]
-tk_messageBox -title Information -message "The printed image in Postscript is in the file pgaccess-report.ps"
+tk_messageBox -title Information -parent .rb -message "The printed image in Postscript is in the file pgaccess-report.ps"
 }
 
 proc {rb_save_report} {} {
@@ -2502,13 +2696,13 @@ proc {save_pref} {} {
 global pref
 catch {
 	set fid [open "~/.pgaccessrc" w]
-	foreach {opt val} [array get pref] { puts $fid "$opt $val" }
+	foreach {opt val} [array get pref] { puts $fid "$opt {$val}" }
 	close $fid
 }
 }
 
 proc {show_error} {emsg} {
-   tk_messageBox -title Error -icon error -message $emsg
+   bell ; tk_messageBox -title Error -icon error -message $emsg
 }
 
 proc {show_table_information} {tblname} {
@@ -2563,21 +2757,21 @@ return 0
 }
 
 proc {tab_click} {w} {
-global dbc tablist activetab
+global dbc tablist activetab pref
 if {$dbc==""} return;
 set curtab [$w cget -text]
 #if {$activetab==$curtab} return;
 .dw.btndesign configure -state disabled
 if {$activetab!=""} {
 	place .dw.tab$activetab -x 10
-	.dw.tab$activetab configure -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-*
+	.dw.tab$activetab configure -font $pref(font_normal)
 }
-$w configure -font -Adobe-Helvetica-Bold-R-Normal-*-*-120-*-*-*-*-*
+$w configure -font $pref(font_bold)
 place $w -x 7
 place .dw.lmask -x 80 -y [expr 86+25*[lsearch -exact $tablist $curtab]]
 set activetab $curtab
 # Tabs where button Design is enabled
-if {[lsearch {Scripts Queries Reports Forms} $activetab]!=-1} {
+if {[lsearch {Scripts Queries Reports Forms Users} $activetab]!=-1} {
 	.dw.btndesign configure -state normal
 }
 .dw.lb delete 0 end
@@ -2626,10 +2820,13 @@ set sdbname $dbname
 }
 
 proc {main} {argc argv} {
-global pref newdbname newpport newhost newusername newpassword dbc
-load libpgtcl.so
+global pref newdbname newpport newhost newusername newpassword dbc tcl_platform
+if {[string toupper $tcl_platform(platform)]=="WINDOWS"} {
+	load libpgtcl.dll
+} else {
+	load libpgtcl.so
+}
 catch {draw_tabs}
-load_pref
 set newusername {}
 set newpassword {}
 if {$argc>0} {
@@ -2642,7 +2839,14 @@ if {$argc>0} {
 	set newhost $pref(lasthost)
 	set newpport $pref(lastport)
 	catch {set newusername $pref(lastusername)}
-	open_database
+	if {[set openmsg [open_database]]!=""} {
+		if {[regexp "no password supplied" $openmsg]} {
+			Window show .dbod
+			focus .dbod.epassword
+			wm transient .dbod .dw
+		}
+	}
+	
 }
 wm protocol .dw WM_DELETE_WINDOW {
 	catch {pg_disconnect $dbc}
@@ -2679,17 +2883,10 @@ global vTcl
 	}
 }
 
-#################################
-# VTCL GENERATED GUI PROCEDURES
-#
-
 proc vTclWindow. {base} {
 	if {$base == ""} {
 		set base .
 	}
-	###################
-	# CREATING WIDGETS
-	###################
 	wm focusmodel $base passive
 	wm geometry $base 1x1+0+0
 	wm maxsize $base 1009 738
@@ -2698,9 +2895,6 @@ proc vTclWindow. {base} {
 	wm resizable $base 1 1
 	wm withdraw $base
 	wm title $base "vt.tcl"
-	###################
-	# SETTING GEOMETRY
-	###################
 }
 
 proc vTclWindow.about {base} {
@@ -2710,9 +2904,6 @@ proc vTclWindow.about {base} {
 	if {[winfo exists $base]} {
 		wm deiconify $base; return
 	}
-	###################
-	# CREATING WIDGETS
-	###################
 	toplevel $base -class Toplevel
 	wm focusmodel $base passive
 	wm geometry $base 471x177+168+243
@@ -2722,18 +2913,15 @@ proc vTclWindow.about {base} {
 	wm resizable $base 1 1
 	wm title $base "About"
 	label $base.l1  -borderwidth 3 -font -Adobe-Helvetica-Bold-R-Normal-*-*-180-*-*-*-*-*  -relief ridge -text PgAccess 
-	label $base.l2  -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-*  -relief groove  -text {A Tcl/Tk interface to
+	label $base.l2  -relief groove  -text {A Tcl/Tk interface to
 PostgreSQL
 by Constantin Teodorescu} 
-	label $base.l3  -borderwidth 0  -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-*  -relief sunken -text {vers 0.91}
-	label $base.l4  -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-*  -relief groove  -text {You will always get the latest version at:
+	label $base.l3  -borderwidth 0 -relief sunken -text {v 0.93}
+	label $base.l4  -relief groove  -text {You will always get the latest version at:
 http://www.flex.ro/pgaccess
 
 Suggestions : teo@flex.ro} 
-	button $base.b1  -borderwidth 1 -command {Window destroy .about}  -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* -padx 9  -pady 3 -text Ok 
-	###################
-	# SETTING GEOMETRY
-	###################
+	button $base.b1  -borderwidth 1 -command {Window destroy .about} -text Ok 
 	place $base.l1  -x 10 -y 10 -width 196 -height 103 -anchor nw -bordermode ignore 
 	place $base.l2  -x 10 -y 115 -width 198 -height 55 -anchor nw -bordermode ignore 
 	place $base.l3  -x 145 -y 80 -anchor nw -bordermode ignore 
@@ -2748,11 +2936,8 @@ proc vTclWindow.dbod {base} {
 	if {[winfo exists $base]} {
 		wm deiconify $base; return
 	}
-	###################
-	# CREATING WIDGETS
-	###################
 	toplevel $base -class Toplevel \
-		-cursor top_left_arrow 
+		-cursor left_ptr
 	wm focusmodel $base passive
 	wm geometry $base 282x180+358+333
 	wm maxsize $base 1009 738
@@ -2762,7 +2947,7 @@ proc vTclWindow.dbod {base} {
 	wm deiconify $base
 	wm title $base "Open database"
 	label $base.lhost \
-		-borderwidth 0 -relief raised -text Host 
+		-borderwidth 0 -text Host 
 	entry $base.ehost \
 		-background #fefefe -borderwidth 1 -highlightthickness 1 \
 		-selectborderwidth 0 -textvariable newhost 
@@ -2770,7 +2955,7 @@ proc vTclWindow.dbod {base} {
 		focus .dbod.epport
 	}
 	label $base.lport \
-		-borderwidth 0 -relief raised -text Port 
+		-borderwidth 0 -text Port 
 	entry $base.epport \
 		-background #fefefe -borderwidth 1 -highlightthickness 1 \
 		-selectborderwidth 0 -textvariable newpport 
@@ -2778,7 +2963,7 @@ proc vTclWindow.dbod {base} {
 		focus .dbod.edbname
 	}
 	label $base.ldbname \
-		-borderwidth 0 -relief raised -text Database 
+		-borderwidth 0 -text Database 
 	entry $base.edbname \
 		-background #fefefe -borderwidth 1 -highlightthickness 1 \
 		-selectborderwidth 0 -textvariable newdbname 
@@ -2787,7 +2972,7 @@ proc vTclWindow.dbod {base} {
 	.dbod.eusername selection range 0 end
 	}
 	label $base.lusername \
-		-borderwidth 0 -relief raised -text Username 
+		-borderwidth 0 -text Username 
 	entry $base.eusername \
 		-background #fefefe -borderwidth 1 -highlightthickness 1 \
 		-selectborderwidth 0 -textvariable newusername 
@@ -2795,7 +2980,7 @@ proc vTclWindow.dbod {base} {
 		focus .dbod.epassword
 	}
 	label $base.lpassword \
-		-borderwidth 0 -relief raised -text Password 
+		-borderwidth 0 -text Password 
 	entry $base.epassword \
 		-background #fefefe -borderwidth 1 -highlightthickness 1 \
 		-selectborderwidth 0 -textvariable newpassword -show "*"
@@ -2803,16 +2988,12 @@ proc vTclWindow.dbod {base} {
 		focus .dbod.opbtu
 	}
 	button $base.opbtu \
-		-borderwidth 1 -command open_database -padx 9 -pady 3 -text Open 
+		-borderwidth 1 -command open_database -text Open 
 	bind $base.opbtu <Key-Return> {
 		open_database
 	}
 	button $base.canbut \
-		-borderwidth 1 -command {Window hide .dbod} -padx 9 -pady 3 \
-		-text Cancel 
-	###################
-	# SETTING GEOMETRY
-	###################
+		-borderwidth 1 -command {Window hide .dbod} -text Cancel 
 	place $base.lhost \
 		-x 35 -y 7 -anchor nw -bordermode ignore 
 	place $base.ehost \
@@ -2840,17 +3021,15 @@ proc vTclWindow.dbod {base} {
 }
 
 proc vTclWindow.dw {base} {
+global pref
 	if {$base == ""} {
 		set base .dw
 	}
 	if {[winfo exists $base]} {
 		wm deiconify $base; return
 	}
-	###################
-	# CREATING WIDGETS
-	###################
 	toplevel $base -class Toplevel \
-		-background #efefef -cursor top_left_arrow 
+		-background #efefef -cursor left_ptr
 	wm focusmodel $base passive
 	wm geometry $base 322x355+96+172
 	wm maxsize $base 1009 738
@@ -2860,43 +3039,32 @@ proc vTclWindow.dw {base} {
 	wm deiconify $base
 	wm title $base "PostgreSQL access"
 	label $base.labframe \
-		-font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* \
 		-relief raised 
 	listbox $base.lb \
 		-background #fefefe \
-		-font -Adobe-Helvetica-Medium-R-Normal--*-120-*-*-*-*-*-* \
 		-foreground black -highlightthickness 0 -selectborderwidth 0 \
 		-yscrollcommand {.dw.sb set} 
 	bind $base.lb <Double-Button-1> {
 		cmd_Open
 	}
 	button $base.btnnew \
-		-borderwidth 1 -command cmd_New \
-		-font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* -padx 9 \
-		-pady 3 -text New 
+		-borderwidth 1 -command cmd_New -text New 
 	button $base.btnopen \
-		-borderwidth 1 -command cmd_Open \
-		-font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* -padx 9 \
-		-pady 3 -text Open 
+		-borderwidth 1 -command cmd_Open -text Open 
 	button $base.btndesign \
-		-borderwidth 1 -command cmd_Design \
-		-font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* -padx 9 \
-		-pady 3 -text Design 
+		-borderwidth 1 -command cmd_Design -text Design 
 	label $base.lmask \
 		-borderwidth 0 \
-		-font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* \
-		-relief raised -text {  } 
+		-text {  } 
 	label $base.label22 \
 		-borderwidth 1 \
-		-font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* \
 		-relief raised 
 	menubutton $base.menubutton23 \
-		-borderwidth 1 \
-		-font -Adobe-Helvetica-Medium-R-Normal--*-120-*-*-*-*-*-* \
+		-borderwidth 1 -font $pref(font_normal) \
 		-menu .dw.menubutton23.01 -padx 4 -pady 3 -text Database 
 	menu $base.menubutton23.01 \
-		-borderwidth 1 -cursor {} \
-		-font -Adobe-Helvetica-Medium-R-Normal--*-120-*-*-*-*-*-* -tearoff 0 
+		-borderwidth 1 -font $pref(font_normal) \
+		-tearoff 0 
 	$base.menubutton23.01 add command \
 		\
 		-command {
@@ -2905,7 +3073,7 @@ set newhost $host
 set newpport $pport
 focus .dbod.edbname
 .dbod.edbname selection range 0 end} \
-		-label Open 
+		-label Open -font $pref(font_normal)
 	$base.menubutton23.01 add command \
 		\
 		-command {.dw.lb delete 0 end
@@ -2931,22 +3099,20 @@ set sdbname {}} \
 save_pref
 exit} -label Exit 
 	label $base.lshost \
-		-font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* \
 		-relief groove -text localhost -textvariable host 
 	label $base.lsdbname \
-		-anchor w -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* \
+		-anchor w \
 		-relief groove -textvariable sdbname 
 	scrollbar $base.sb \
 		-borderwidth 1 -command {.dw.lb yview} -orient vert 
 	menubutton $base.mnob \
 		-borderwidth 1 \
-		-font -Adobe-Helvetica-Medium-R-Normal--*-120-*-*-*-*-*-* \
-		-menu .dw.mnob.m -padx 4 -pady 3 -text Object 
+		-menu .dw.mnob.m -font $pref(font_normal) -text Object 
 	menu $base.mnob.m \
-		-borderwidth 1 -cursor {} \
-		-font -Adobe-Helvetica-Medium-R-Normal--*-120-*-*-*-*-*-* -tearoff 0 
+		-borderwidth 1 -font $pref(font_normal) \
+		-tearoff 0 
 	$base.mnob.m add command \
-		-command cmd_New -label New 
+		-command cmd_New -font $pref(font_normal) -label New 
 	$base.mnob.m add command \
 		-command {cmd_Delete } -label Delete 
 	$base.mnob.m add command \
@@ -2955,11 +3121,10 @@ exit} -label Exit
 		-command cmd_Information -label Information 
 	menubutton $base.mhelp \
 		-borderwidth 1 \
-		-font -Adobe-Helvetica-Medium-R-Normal--*-120-*-*-*-*-*-* \
-		-menu .dw.mhelp.m -padx 4 -pady 3 -text Help 
+		-menu .dw.mhelp.m -font $pref(font_normal) -text Help 
 	menu $base.mhelp.m \
-		-borderwidth 1 -cursor {} \
-		-font -Adobe-Helvetica-Medium-R-Normal--*-120-*-*-*-*-*-* -tearoff 0 
+		-borderwidth 1 -font $pref(font_normal) \
+		-tearoff 0 
 	$base.mhelp.m add command \
 		-label Contents 
 	$base.mhelp.m add command \
@@ -2967,13 +3132,10 @@ exit} -label Exit
 	$base.mhelp.m add separator
 	$base.mhelp.m add command \
 		-command {Window show .about} -label About 
-	###################
-	# SETTING GEOMETRY
-	###################
 	place $base.labframe \
 		-x 80 -y 30 -width 236 -height 300 -anchor nw -bordermode ignore 
 	place $base.lb \
-		-x 90 -y 75 -width 205 -height 248 -anchor nw -bordermode ignore 
+		-x 90 -y 75 -width 205 -height 243 -anchor nw -bordermode ignore 
 	place $base.btnnew \
 		-x 90 -y 40 -width 60 -height 25 -anchor nw -bordermode ignore 
 	place $base.btnopen \
@@ -2991,7 +3153,7 @@ exit} -label Exit
 	place $base.lsdbname \
 		-x 95 -y 335 -width 223 -height 20 -anchor nw -bordermode ignore 
 	place $base.sb \
-		-x 295 -y 73 -width 18 -height 252 -anchor nw -bordermode ignore 
+		-x 295 -y 74 -width 18 -height 245 -anchor nw -bordermode ignore 
 	place $base.mnob \
 		-x 70 -y 2 -width 44 -height 19 -anchor nw -bordermode ignore 
 	place $base.mhelp \
@@ -3005,9 +3167,6 @@ proc vTclWindow.fw {base} {
 	if {[winfo exists $base]} {
 		wm deiconify $base; return
 	}
-	###################
-	# CREATING WIDGETS
-	###################
 	toplevel $base -class Toplevel
 	wm focusmodel $base passive
 	wm geometry $base 306x288+233+130
@@ -3016,11 +3175,11 @@ proc vTclWindow.fw {base} {
 	wm overrideredirect $base 0
 	wm resizable $base 0 0
 	wm title $base "Function"
-	label $base.l1  -borderwidth 0  -relief raised -text Name 
+	label $base.l1  -borderwidth 0 -text Name 
 	entry $base.e1  -background #fefefe -borderwidth 1 -highlightthickness 1  -selectborderwidth 0 -textvariable funcname 
-	label $base.l2  -borderwidth 0  -relief raised -text Parameters 
+	label $base.l2  -borderwidth 0 -text Parameters 
 	entry $base.e2  -background #fefefe -borderwidth 1 -highlightthickness 1  -selectborderwidth 0 -textvariable funcpar 
-	label $base.l3  -borderwidth 0  -relief raised -text Returns 
+	label $base.l3  -borderwidth 0 -text Returns 
 	entry $base.e3  -background #fefefe -borderwidth 1 -highlightthickness 1  -selectborderwidth 0 -textvariable funcret 
 	text $base.text1  -background #fefefe -borderwidth 1  -highlightthickness 1 -selectborderwidth 0 -wrap word 
 	button $base.okbtn  -borderwidth 1  -command {
@@ -3038,11 +3197,8 @@ proc vTclWindow.fw {base} {
 				}
 								
 			}
-		}  -padx 9  -pady 3 -state disabled -text Define 
-	button $base.cancelbtn  -borderwidth 1 -command {Window destroy .fw}  -padx 9  -pady 3 -text Close 
-	###################
-	# SETTING GEOMETRY
-	###################
+		}  -state disabled -text Define 
+	button $base.cancelbtn  -borderwidth 1 -command {Window destroy .fw} -text Close 
 	place $base.l1  -x 15 -y 18 -anchor nw -bordermode ignore 
 	place $base.e1  -x 95 -y 15 -width 198 -height 22 -anchor nw -bordermode ignore 
 	place $base.l2  -x 15 -y 48 -anchor nw -bordermode ignore 
@@ -3061,9 +3217,6 @@ proc vTclWindow.iew {base} {
 	if {[winfo exists $base]} {
 		wm deiconify $base; return
 	}
-	###################
-	# CREATING WIDGETS
-	###################
 	toplevel $base -class Toplevel
 	wm focusmodel $base passive
 	wm geometry $base 287x151+259+304
@@ -3072,11 +3225,11 @@ proc vTclWindow.iew {base} {
 	wm overrideredirect $base 0
 	wm resizable $base 0 0
 	wm title $base "Import-Export table"
-	label $base.l1  -borderwidth 0  -relief raised -text {Table name} 
+	label $base.l1  -borderwidth 0 -text {Table name} 
 	entry $base.e1  -background #fefefe -borderwidth 1 -textvariable ie_tablename 
-	label $base.l2  -borderwidth 0  -relief raised -text {File name} 
+	label $base.l2  -borderwidth 0 -text {File name} 
 	entry $base.e2  -background #fefefe -borderwidth 1 -textvariable ie_filename 
-	label $base.l3  -borderwidth 0  -relief raised -text {Field delimiter} 
+	label $base.l3  -borderwidth 0 -text {Field delimiter} 
 	entry $base.e3  -background #fefefe -borderwidth 1 -textvariable ie_delimiter 
 	button $base.expbtn  -borderwidth 1  -command {if {$ie_tablename==""} {
 	show_error "You have to supply a table name!"
@@ -3101,132 +3254,101 @@ proc vTclWindow.iew {base} {
 	set sqlcmd "COPY $ie_tablename $sup2 $oper '$ie_filename'$sup"
 	cursor_clock
 	if {[sql_exec noquiet $sqlcmd]} {
-		tk_messageBox -title Information -message "Operation completed!"
+		tk_messageBox -title Information -parent .iew -message "Operation completed!"
 		Window destroy .iew
 	}
 	cursor_normal
-}}  -padx 9  -pady 3 -text Export 
-	button $base.cancelbtn  -borderwidth 1 -command {Window destroy .iew}  -padx 9  -pady 3 -text Cancel 
+}}  -text Export 
+	button $base.cancelbtn  -borderwidth 1 -command {Window destroy .iew} -text Cancel 
 	checkbutton $base.oicb  -borderwidth 1  -text {with OIDs} -variable oicb 
-	###################
-	# SETTING GEOMETRY
-	###################
 	place $base.l1  -x 25 -y 15 -anchor nw -bordermode ignore 
-	place $base.e1  -x 115 -y 10 -anchor nw -bordermode ignore 
+	place $base.e1  -x 115 -y 10 -height 22 -anchor nw -bordermode ignore 
 	place $base.l2  -x 25 -y 45 -anchor nw -bordermode ignore 
-	place $base.e2  -x 115 -y 40 -anchor nw -bordermode ignore 
+	place $base.e2  -x 115 -y 40 -height 22 -anchor nw -bordermode ignore 
 	place $base.l3  -x 25 -y 75 -height 18 -anchor nw -bordermode ignore 
 	place $base.e3  -x 115 -y 74 -width 33 -height 22 -anchor nw -bordermode ignore 
-	place $base.expbtn  -x 60 -y 110 -anchor nw -bordermode ignore 
-	place $base.cancelbtn  -x 155 -y 110 -anchor nw -bordermode ignore 
+	place $base.expbtn  -x 60 -y 110 -height 25 -width 75 -anchor nw -bordermode ignore 
+	place $base.cancelbtn  -x 155 -y 110 -height 25 -width 75 -anchor nw -bordermode ignore 
 	place $base.oicb  -x 170 -y 75 -anchor nw -bordermode ignore
 }
 
-proc {mw_canvas_paste} {x y} {
+proc {mw_canvas_paste} {wn x y} {
 	   global mw
-	   .mw.c insert $mw(id_edited) insert [selection get]
-	   set mw(dirtyrec) 1
+	   $wn.c insert $mw($wn,id_edited) insert [selection get]
+	   set mw($wn,dirtyrec) 1
 }
 
-proc vTclWindow.mw {base} {
-	if {$base == ""} {
-		set base .mw
-	}
+proc {mw_create_window} {} {
+global mwcount
+	set base .mw$mwcount
+	set wn .mw$mwcount
 	if {[winfo exists $base]} {
 		wm deiconify $base; return
 	}
-	###################
-	# CREATING WIDGETS
-	###################
 	toplevel $base -class Toplevel
 	wm focusmodel $base passive
-	wm geometry $base 550x400+5+5
+	wm geometry $base 550x400
 	wm maxsize $base 1009 738
 	wm minsize $base 550 400
 	wm overrideredirect $base 0
 	wm resizable $base 1 1
 	wm deiconify $base
 	wm title $base "Table browser"
-	bind $base <Key-Delete> {
-		mw_delete_record
-	}
+	bind $base <Key-Delete> "mw_delete_record $wn"
 	frame $base.f1  -borderwidth 2 -height 75 -relief groove -width 125 
-	label $base.f1.l1  -borderwidth 0  -font -Adobe-Helvetica-Medium-R-Normal--*-120-*-*-*-*-*-*  -relief raised -text {Sort field} 
-	entry $base.f1.e1  -background #fefefe -borderwidth 1 -width 14  -highlightthickness 1 -textvariable sortfield
-	label $base.f1.lb1  -borderwidth 0 -relief raised -text {     } 
-	label $base.f1.l2  -background #dfdfdf -borderwidth 0  -font -Adobe-Helvetica-Medium-R-Normal--*-120-*-*-*-*-*-*  -relief raised -text {Filter conditions} 
-	entry $base.f1.e2  -background #fefefe -borderwidth 1  -highlightthickness 1 -textvariable filter
-	button $base.f1.b1  -borderwidth 1  -font -Adobe-Helvetica-Medium-R-Normal--*-120-*-*-*-*-*-* -padx 9  -pady 3 -text Close -command {
-if {[mw_save_new_record]} {
-	.mw.c delete rows
-	.mw.c delete header
+	label $base.f1.l1  -borderwidth 0 -text {Sort field} 
+	entry $base.f1.e1  -background #fefefe -borderwidth 1 -width 14  -highlightthickness 1 -textvariable mw($wn,sortfield)
+	bind $base.f1.e1 <Key-Return> "mw_reload $wn"	
+	bind $base.f1.e1 <Key-KP_Enter> "mw_reload $wn"	
+	label $base.f1.lb1  -borderwidth 0 -text {     } 
+	label $base.f1.l2  -borderwidth 0 -text {Filter conditions} 
+	entry $base.f1.e2  -background #fefefe -borderwidth 1  -highlightthickness 1 -textvariable mw($wn,filter)
+	bind $base.f1.e2 <Key-Return> "mw_reload $wn"	
+	bind $base.f1.e2 <Key-KP_Enter> "mw_reload $wn"	
+	button $base.f1.b1  -borderwidth 1 -text Close -command "
+if {\[mw_save_new_record $wn\]} {
+	$wn.c delete rows
+	$wn.c delete header
 	set sortfield {}
 	set filter {}
-	Window destroy .mw
+	Window destroy $wn
+	mw_free_variables $wn
 }
-	}
-	button $base.f1.b2  -borderwidth 1  -font -Adobe-Helvetica-Medium-R-Normal--*-120-*-*-*-*-*-* -padx 9  -pady 3 -text Reload -command {
-set nq $mw(query)
-if {($mw(isaquery)) && ("$filter$sortfield"!="")} {
-	show_error "Sorting and filtering not (yet) available from queries!\n\nPlease enter them in the query definition!"
-	set sortfield {}
-	set filter {}
-} else {
-	if {$filter!=""} {
-		set nq "$mw(query) where ($filter)"
-	} else {
-		set nq $mw(query)
-	}
-	if {$sortfield!=""} {
-		set nq "$nq order by $sortfield"
-	}
-}
-if {[mw_save_new_record]} {mw_select_records $nq}
-	}
+	"
+	button $base.f1.b2  -borderwidth 1 -text Reload -command "mw_reload $wn"
 	frame $base.frame20  -borderwidth 2 -height 75 -relief groove -width 125 
-	button $base.frame20.01  -borderwidth 1 -padx 9 -pady 3 -text < -command {mw_pan_right}
-	label $base.frame20.02  -anchor w -borderwidth 1  -font -Adobe-Helvetica-Medium-R-Normal--*-120-*-*-*-*-*-* -height 1  -relief sunken -text {} -textvariable msg 
-	button $base.frame20.03  -borderwidth 1 -padx 9 -pady 3 -text > -command {mw_pan_left}
+	button $base.frame20.01  -borderwidth 1 -text < -command "mw_pan_right $wn"
+	label $base.frame20.02  -anchor w -borderwidth 1 -height 1  -relief sunken -text {} -textvariable mw($wn,msg) 
+	button $base.frame20.03  -borderwidth 1 -text > -command "mw_pan_left $wn"
 	canvas $base.c  -background #fefefe -borderwidth 2 -height 207 -highlightthickness 0  -relief ridge -selectborderwidth 0 -takefocus 1 -width 295 
-	scrollbar $base.sb  -borderwidth 1 -orient vert -width 12  -command mw_scroll_window
-	bind $base.c <Button-1> {
-		mw_canvas_click %x %y
-	}
-	bind $base.c <Button-2> {
-		mw_canvas_paste %x %y
-	}
-	bind $base.c <Button-3> {
-		if {[mw_exit_edit]} {mw_save_new_record}
-	}
-	###################
-	# SETTING GEOMETRY
-	###################
-	pack $base.f1  -in .mw -anchor center -expand 0 -fill x -side top 
-	pack $base.f1.l1  -in .mw.f1 -anchor center -expand 0 -fill none -side left 
-	pack $base.f1.e1  -in .mw.f1 -anchor center -expand 0 -fill none -side left 
-	pack $base.f1.lb1  -in .mw.f1 -anchor center -expand 0 -fill none -side left 
-	pack $base.f1.l2  -in .mw.f1 -anchor center -expand 0 -fill none -side left 
-	pack $base.f1.e2  -in .mw.f1 -anchor center -expand 0 -fill none -side left 
-	pack $base.f1.b1  -in .mw.f1 -anchor center -expand 0 -fill none -side right 
-	pack $base.f1.b2  -in .mw.f1 -anchor center -expand 0 -fill none -side right 
-	pack $base.frame20  -in .mw -anchor s -expand 0 -fill x -side bottom 
-	pack $base.frame20.01  -in .mw.frame20 -anchor center -expand 0 -fill none -side left 
-	pack $base.frame20.02  -in .mw.frame20 -anchor center -expand 1 -fill x -side left 
-	pack $base.frame20.03  -in .mw.frame20 -anchor center -expand 0 -fill none -side right 
-	pack $base.c  -in .mw -anchor w -expand 1 -fill both -side left 
-	pack $base.sb  -in .mw -anchor e -expand 0 -fill y -side right
+	scrollbar $base.sb  -borderwidth 1 -orient vert -width 12  -command "mw_scroll_window $wn"
+	bind $base.c <Button-1> "mw_canvas_click $wn %x %y"
+	bind $base.c <Button-2> "mw_canvas_paste $wn %x %y"
+	bind $base.c <Button-3> "if {[mw_exit_edit $wn]} \"mw_save_new_record $wn\""
+	pack $base.f1  -in $wn -anchor center -expand 0 -fill x -side top 
+	pack $base.f1.l1  -in $wn.f1 -anchor center -expand 0 -fill none -side left 
+	pack $base.f1.e1  -in $wn.f1 -anchor center -expand 0 -fill none -side left 
+	pack $base.f1.lb1  -in $wn.f1 -anchor center -expand 0 -fill none -side left 
+	pack $base.f1.l2  -in $wn.f1 -anchor center -expand 0 -fill none -side left 
+	pack $base.f1.e2  -in $wn.f1 -anchor center -expand 0 -fill none -side left 
+	pack $base.f1.b1  -in $wn.f1 -anchor center -expand 0 -fill none -side right 
+	pack $base.f1.b2  -in $wn.f1 -anchor center -expand 0 -fill none -side right 
+	pack $base.frame20  -in $wn -anchor s -expand 0 -fill x -side bottom 
+	pack $base.frame20.01  -in $wn.frame20 -anchor center -expand 0 -fill none -side left 
+	pack $base.frame20.02  -in $wn.frame20 -anchor center -expand 1 -fill x -side left 
+	pack $base.frame20.03  -in $wn.frame20 -anchor center -expand 0 -fill none -side right 
+	pack $base.c -in $wn -anchor w -expand 1 -fill both -side left 
+	pack $base.sb -in $wn -anchor e -expand 0 -fill y -side right
 }
 
 proc vTclWindow.nt {base} {
+global pref
     if {$base == ""} {
         set base .nt
     }
     if {[winfo exists $base]} {
         wm deiconify $base; return
     }
-    ###################
-    # CREATING WIDGETS
-    ###################
     toplevel $base -class Toplevel
     wm focusmodel $base passive
     wm geometry $base 614x392+78+181
@@ -3243,9 +3365,7 @@ proc vTclWindow.nt {base} {
         focus .nt.einh
     }
     label $base.li \
-        -anchor w -borderwidth 0 \
-        -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* \
-        -relief raised -text Inherits 
+        -anchor w -borderwidth 0 -text Inherits 
     entry $base.einh \
         -background #fefefe -borderwidth 1 -selectborderwidth 0 \
         -textvariable ntw(fathername) 
@@ -3257,7 +3377,7 @@ proc vTclWindow.nt {base} {
         -command {if {[winfo exists .nt.ddf]} {
 	destroy .nt.ddf
 } else {
-	create_drop_down .nt 378 25 220
+	create_drop_down .nt 386 23 220
 	focus .nt.ddf.sb
 	foreach tbl [get_tables] {.nt.ddf.lb insert end $tbl}
 	bind .nt.ddf.lb <ButtonRelease-1> {
@@ -3274,8 +3394,7 @@ proc vTclWindow.nt {base} {
 		break
 	}
 }} \
-        -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* \
-        -highlightthickness 0 -padx 9 -pady 3 -takefocus 0 -text v 
+        -highlightthickness 0 -takefocus 0 -image dnarw
     entry $base.e2 \
         -background #fefefe -borderwidth 1 -selectborderwidth 0 \
         -textvariable ntw(fldname) 
@@ -3302,44 +3421,31 @@ proc vTclWindow.nt {base} {
     }
     checkbutton $base.cb1 \
         -borderwidth 1 \
-        -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* \
         -offvalue { } -onvalue { NOT NULL} -text {field cannot be null} \
         -variable ntw(notnull) 
     label $base.lab1 \
-        -borderwidth 0 \
-        -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* \
-        -relief raised -text type 
+        -borderwidth 0 -text type 
     label $base.lab2 \
-        -borderwidth 0 \
-        -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* \
-        -relief raised -text {Field name} 
+        -borderwidth 0 -anchor w -text {Field name} 
     label $base.lab3 \
-        -borderwidth 0 \
-        -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* \
-        -relief raised -text size 
+        -borderwidth 0 -text size 
     label $base.lab4 \
-        -borderwidth 0 \
-        -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* \
-        -relief raised -text {Default value} 
+        -borderwidth 0 -anchor w -text {Default value} 
     button $base.addfld \
         -borderwidth 1 -command add_new_field \
-        -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* -padx 9 \
-        -pady 3 -text {Add field} 
+        -text {Add field} 
     button $base.delfld \
         -borderwidth 1 -command {catch {.nt.lb delete [.nt.lb curselection]}} \
-        -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* -padx 9 \
-        -pady 3 -text {Delete field} 
+        -text {Delete field} 
     button $base.emptb \
         -borderwidth 1 -command {.nt.lb delete 0 [.nt.lb size]} \
-        -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* -padx 9 \
-        -pady 3 -text {Delete all} 
+        -text {Delete all} 
     button $base.maketbl \
         -borderwidth 1 -command create_table \
-        -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* -padx 9 \
-        -pady 3 -text Create 
+        -text Create 
     listbox $base.lb \
         -background #fefefe -borderwidth 1 \
-        -font -*-Clean-Medium-R-Normal--*-130-*-*-*-*-*-* \
+        -font $pref(font_fix) \
         -selectborderwidth 0 -yscrollcommand {.nt.sb set} 
     bind $base.lb <ButtonRelease-1> {
         if {[.nt.lb curselection]!=""} {
@@ -3348,26 +3454,20 @@ proc vTclWindow.nt {base} {
     }
     button $base.exitbtn \
         -borderwidth 1 -command {Window destroy .nt} \
-        -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* -padx 9 \
-        -pady 3 -text Cancel 
+        -text Cancel 
     label $base.l1 \
         -anchor w -borderwidth 1 \
-        -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* \
         -relief raised -text {       field name} 
     label $base.l2 \
         -borderwidth 1 \
-        -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* \
         -relief raised -text type 
     label $base.l3 \
         -borderwidth 1 \
-        -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* \
         -relief raised -text options 
     scrollbar $base.sb \
         -borderwidth 1 -command {.nt.lb yview} -orient vert 
     label $base.l93 \
-        -anchor w -borderwidth 0 \
-        -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* \
-        -relief raised -text {Table name} 
+        -anchor w -borderwidth 0 -text {Table name} 
     button $base.mvup \
         -borderwidth 1 \
         -command {if {[.nt.lb size]>1} {
@@ -3378,8 +3478,7 @@ proc vTclWindow.nt {base} {
 		.nt.lb selection set [expr $i-1]
 	}
 }} \
-        -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* -padx 9 \
-        -pady 3 -text {Move up} 
+        -text {Move up} 
     button $base.mvdn \
         -borderwidth 1 \
         -command {if {[.nt.lb size]>1} {
@@ -3390,8 +3489,7 @@ proc vTclWindow.nt {base} {
 		.nt.lb selection set [expr $i+1]
 	}
 }} \
-        -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* -padx 9 \
-        -pady 3 -text {Move down} 
+        -text {Move down} 
     button $base.button17 \
         -borderwidth 1 \
         -command {
@@ -3409,47 +3507,36 @@ if {[winfo exists .nt.ddf]} {
 		break
 	}
 }} \
-        -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* \
-        -highlightthickness 0 -padx 9 -pady 3 -takefocus 0 -text v 
+        -highlightthickness 0 -takefocus 0 -image dnarw 
     label $base.lco \
-        -borderwidth 0 \
-        -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* \
-        -relief raised -text Constraint 
+        -borderwidth 0 -anchor w -text Constraint 
     entry $base.eco \
         -background #fefefe -borderwidth 1 -textvariable ntw(constraint) 
     label $base.lch \
-        -borderwidth 0 \
-        -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* \
-        -relief raised -text check 
+        -borderwidth 0 -text check 
     entry $base.ech \
         -background #fefefe -borderwidth 1 -textvariable ntw(check) 
     label $base.ll \
         -borderwidth 1 \
-        -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* \
         -relief raised 
     checkbutton $base.pk \
         -borderwidth 1 \
-        -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* \
         -offvalue { } -onvalue * -text {primary key} -variable ntw(pk) 
     label $base.lpk \
         -borderwidth 1 \
-        -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* \
         -relief raised -text K 
-    ###################
-    # SETTING GEOMETRY
-    ###################
     place $base.etabn \
         -x 85 -y 5 -width 156 -height 20 -anchor nw -bordermode ignore 
     place $base.li \
         -x 245 -y 7 -width 42 -height 16 -anchor nw -bordermode ignore 
     place $base.einh \
-        -x 290 -y 5 -width 292 -height 20 -anchor nw -bordermode ignore 
+        -x 290 -y 5 -width 318 -height 20 -anchor nw -bordermode ignore 
     place $base.binh \
-        -x 582 -y 6 -width 16 -height 19 -anchor nw -bordermode ignore 
+        -x 590 -y 7 -width 16 -height 16 -anchor nw -bordermode ignore 
     place $base.e2 \
         -x 85 -y 60 -width 156 -height 20 -anchor nw -bordermode ignore 
     place $base.e1 \
-        -x 291 -y 60 -width 81 -height 20 -anchor nw -bordermode ignore 
+        -x 291 -y 60 -width 98 -height 20 -anchor nw -bordermode ignore 
     place $base.e3 \
         -x 445 -y 60 -width 46 -height 20 -anchor nw -bordermode ignore 
     place $base.e5 \
@@ -3491,7 +3578,7 @@ if {[winfo exists .nt.ddf]} {
     place $base.mvdn \
         -x 534 -y 150 -width 75 -height 26 -anchor nw -bordermode ignore 
     place $base.button17 \
-        -x 372 -y 61 -width 16 -height 19 -anchor nw -bordermode ignore 
+        -x 371 -y 62 -width 16 -height 16 -anchor nw -bordermode ignore 
     place $base.lco \
         -x 5 -y 28 -width 58 -height 16 -anchor nw -bordermode ignore 
     place $base.eco \
@@ -3499,9 +3586,9 @@ if {[winfo exists .nt.ddf]} {
     place $base.lch \
         -x 245 -y 30 -anchor nw -bordermode ignore 
     place $base.ech \
-        -x 290 -y 27 -width 308 -height 22 -anchor nw -bordermode ignore 
+        -x 290 -y 27 -width 318 -height 22 -anchor nw -bordermode ignore 
     place $base.ll \
-        -x 5 -y 53 -width 591 -height 2 -anchor nw -bordermode ignore 
+        -x 5 -y 53 -width 603 -height 2 -anchor nw -bordermode ignore 
     place $base.pk \
         -x 407 -y 83 -width 93 -height 20 -anchor nw -bordermode ignore 
     place $base.lpk \
@@ -3509,59 +3596,71 @@ if {[winfo exists .nt.ddf]} {
 }
 
 proc vTclWindow.pw {base} {
+global pref
 	if {$base == ""} {
 		set base .pw
 	}
 	if {[winfo exists $base]} {
 		wm deiconify $base; return
 	}
-	###################
-	# CREATING WIDGETS
-	###################
 	toplevel $base -class Toplevel
 	wm focusmodel $base passive
-	wm geometry $base 322x167+210+219
+	wm geometry $base 322x227+210+219
 	wm maxsize $base 1009 738
 	wm minsize $base 1 1
 	wm overrideredirect $base 0
-	wm resizable $base 1 1
+	wm resizable $base 0 0
 	wm title $base "Preferences"
-	label $base.l1  -borderwidth 0 -relief raised -text {Max rows displayed in table/query view} 
+	label $base.l1  -borderwidth 0 -text {Max rows displayed in table/query view} 
 	entry $base.e1  -background #fefefe -borderwidth 1 -highlightthickness 1  -selectborderwidth 0 -textvariable pref(rows) 
-	label $base.l2  -borderwidth 0 -relief raised -text Font 
-	radiobutton $base.tvf  -borderwidth 1 -text {fixed (clean)} -value clean -variable pref(tvfont) 
-	radiobutton $base.tvfv  -borderwidth 1 -text {proportional (helvetica)} -value helv -variable pref(tvfont) 
+	label $base.l2  -borderwidth 0 -text "Table viewer font"
+	radiobutton $base.tvf  -borderwidth 1 -text {fixed width} -value clean -variable pref(tvfont)
+	radiobutton $base.tvfv  -borderwidth 1 -text proportional -value helv -variable pref(tvfont)
+	label $base.lfn -borderwidth 0 -anchor w -text "Font normal"
+	label $base.lfb -borderwidth 0 -anchor w -text "Font bold"
+	label $base.lfi -borderwidth 0 -anchor w -text "Font italic"
+	label $base.lff -borderwidth 0 -anchor w -text "Font fixed"
+	entry $base.efn -borderwidth 1 -highlightthickness 1  -selectborderwidth 0 -textvariable pref(font_normal)
+	entry $base.efb -borderwidth 1 -highlightthickness 1  -selectborderwidth 0 -textvariable pref(font_bold)
+	entry $base.efi -borderwidth 1 -highlightthickness 1  -selectborderwidth 0 -textvariable pref(font_italic)
+	entry $base.eff -borderwidth 1 -highlightthickness 1  -selectborderwidth 0 -textvariable pref(font_fix)
 	label $base.ll  -borderwidth 1 -relief sunken 
 	checkbutton $base.alcb  -borderwidth 1 -text {Auto-load the last opened database at startup}  -variable pref(autoload) 
-	button $base.okbtn  -borderwidth 1  -command {if {$pref(rows)>200} {
-tk_messageBox -title Warning -message "A big number of rows displayed in table view will take a lot of memory!"
+	button $base.okbtn  -borderwidth 1  -command {
+if {$pref(rows)>200} {
+	tk_messageBox -title Warning -parent .pw -message "A big number of rows displayed in table view will take a lot of memory!"
 }
 save_pref
-Window destroy .pw} -padx 9  -pady 3 -text Ok 
-	###################
-	# SETTING GEOMETRY
-	###################
-	place $base.l1  -x 10 -y 20 -anchor nw -bordermode ignore 
-	place $base.e1  -x 245 -y 17 -width 65 -height 24 -anchor nw -bordermode ignore 
-	place $base.l2  -x 10 -y 53 -anchor nw -bordermode ignore 
-	place $base.tvf  -x 50 -y 50 -anchor nw -bordermode ignore 
-	place $base.tvfv  -x 155 -y 50 -anchor nw -bordermode ignore 
-	place $base.ll  -x 10 -y 85 -width 301 -height 2 -anchor nw -bordermode ignore 
-	place $base.alcb  -x 10 -y 95 -anchor nw -bordermode ignore 
-	place $base.okbtn  -x 125 -y 135 -width 80 -height 26 -anchor nw -bordermode ignore
+Window destroy .pw
+tk_messageBox -title Warning -message "Changed fonts may appear in the next working session!"
+} -text Ok 
+	place $base.l1  -x 10 -y 10 -anchor nw -bordermode ignore 
+	place $base.e1  -x 240 -y 8 -width 65 -height 20 -anchor nw -bordermode ignore 
+	place $base.l2  -x 10 -y 38 -anchor nw -bordermode ignore 
+	place $base.tvf  -x 115 -y 34 -anchor nw -bordermode ignore 
+	place $base.tvfv  -x 205 -y 34 -anchor nw -bordermode ignore 
+	place $base.lfn -x 10 -y 65 -anchor nw
+	place $base.lfb -x 10 -y 86 -anchor nw
+	place $base.lfi -x 10 -y 107 -anchor nw
+	place $base.lff -x 10 -y 128 -anchor nw
+	place $base.efn -x 80 -y 63 -width 230 -height 20
+	place $base.efb -x 80 -y 84 -width 230 -height 20
+	place $base.efi -x 80 -y 105 -width 230 -height 20
+	place $base.eff -x 80 -y 126 -width 230 -height 20
+	place $base.ll  -x 10 -y 150 -width 301 -height 2 -anchor nw -bordermode ignore 
+	place $base.alcb  -x 10 -y 155 -anchor nw -bordermode ignore 
+	place $base.okbtn  -x 125 -y 195 -width 80 -height 26 -anchor nw -bordermode ignore
 }
 
 proc vTclWindow.qb {base} {
+global pref
 	if {$base == ""} {
 		set base .qb
 	}
 	if {[winfo exists $base]} {
 		wm deiconify $base; return
 	}
-	###################
-	# CREATING WIDGETS
-	###################
-	toplevel $base -class Toplevel  -cursor top_left_arrow 
+	toplevel $base -class Toplevel
 	wm focusmodel $base passive
 	wm geometry $base 442x344+150+150
 	wm maxsize $base 1009 738
@@ -3570,7 +3669,7 @@ proc vTclWindow.qb {base} {
 	wm resizable $base 0 0
 	wm deiconify $base
 	wm title $base "Query builder"
-	label $base.lqn  -borderwidth 0  -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-*  -relief raised -text {Query name} 
+	label $base.lqn  -borderwidth 0 -text {Query name} 
 	entry $base.eqn  -background #fefefe -borderwidth 1 -foreground #000000  -highlightthickness 1 -selectborderwidth 0 -textvariable queryname 
 	button $base.savebtn  -borderwidth 1  -command {if {$queryname==""} then {
 	show_error "You have to supply a name for this query!"
@@ -3587,7 +3686,7 @@ proc vTclWindow.qb {base} {
 			set qtype A
 		}
 		if {$cbv} {
-			set pgres [wpg_exec $dbc "create view $queryname as $qcmd"]
+			set pgres [wpg_exec $dbc "create view \"$queryname\" as $qcmd"]
 			if {$pgsql(status)!="PGRES_COMMAND_OK"} {
 				show_error "Error defining view\n\n$pgsql(errmsg)"
 			} else {
@@ -3607,64 +3706,59 @@ proc vTclWindow.qb {base} {
 			if {$pgsql(status)!="PGRES_COMMAND_OK"} then {
 				show_error "Error executing query\n$pgres(errmsg)"
 			} else {
-				cmd_Queries
+				tab_click .dw.tabQueries
 				if {$queryoid==0} {set queryoid [pg_result $pgres -oid]}
 			}
 		}
 		catch {pg_result $pgres -clear}
 	}
-}}  -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* -padx 9  -pady 3 -text {Save query definition} 
+}}  -text {Save query definition} 
 	button $base.execbtn  -borderwidth 1  -command {
 set qcmd [.qb.text1 get 0.0 end]
 regsub -all "\n" [string trim $qcmd] " " qcmd
 if {[lindex [split [string toupper $qcmd]] 0]!="SELECT"} {
-	if {[tk_messageBox -title Warning -message "This is an action query!\n\nExecute it?" -type yesno -default no]=="yes"} {
+	if {[tk_messageBox -title Warning -parent .qb -message "This is an action query!\n\nExecute it?" -type yesno -default no]=="yes"} {
 		sql_exec noquiet $qcmd
 	}
 } else {
-	set mw(query) [subst $qcmd]
-	set mw(updatable) 0
-	set mw(isaquery) 1
-	Window show .mw
-	set mw(layout_name) $queryname
-	mw_load_layout $queryname
-	mw_select_records $mw(query)
+	set wn [mw_get_new_name]
+	set mw($wn,query) [subst $qcmd]
+	set mw($wn,updatable) 0
+	set mw($wn,isaquery) 1
+	mw_create_window
+	mw_load_layout $wn $queryname
+	mw_select_records $wn $mw($wn,query)
 }
-}  -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* -padx 9  -pady 3 -text {Execute query} 
+} -text {Execute query} 
 	button $base.termbtn  -borderwidth 1  -command {.qb.cbv configure -state normal
 set cbv 0
 set queryname {}
 .qb.text1 delete 1.0 end
-Window destroy .qb}  -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* -padx 9  -pady 3 -text Close 
-	text $base.text1  -background #fefefe -borderwidth 1  -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-*  -foreground #000000 -highlightthickness 1 -wrap word 
-	checkbutton $base.cbv  -borderwidth 1  -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-*  -text {Save this query as a view} -variable cbv 
+Window destroy .qb} -text Close 
+	text $base.text1  -background #fefefe -borderwidth 1  -font $pref(font_normal) -foreground #000000 -highlightthickness 1 -wrap word 
+	checkbutton $base.cbv  -borderwidth 1  -text {Save this query as a view} -variable cbv 
 	button $base.qlshow  -borderwidth 1  -command {Window show .ql
 ql_draw_lizzard
-focus .ql.entt}  -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* -padx 9  -pady 3 -text {Visual designer} 
-	###################
-	# SETTING GEOMETRY
-	###################
+focus .ql.entt} -text {Visual designer} 
 	place $base.lqn  -x 5 -y 5 -anchor nw -bordermode ignore 
 	place $base.eqn  -x 80 -y 1 -width 355 -height 24 -anchor nw -bordermode ignore 
-	place $base.savebtn  -x 5 -y 60 -anchor nw -bordermode ignore 
-	place $base.execbtn  -x 150 -y 60 -anchor nw -bordermode ignore 
-	place $base.termbtn  -x 375 -y 60 -anchor nw -bordermode ignore 
+	place $base.savebtn  -x 5 -y 60 -height 25 -anchor nw -bordermode ignore 
+	place $base.execbtn  -x 150 -y 60 -height 25 -anchor nw -bordermode ignore 
+	place $base.termbtn  -x 375 -y 60 -width 50 -height 25 -anchor nw -bordermode ignore 
 	place $base.text1  -x 5 -y 90 -width 430 -height 246 -anchor nw -bordermode ignore 
-	place $base.cbv  -x 5 -y 30 -anchor nw -bordermode ignore 
-	place $base.qlshow  -x 255 -y 60 -anchor nw -bordermode ignore
+	place $base.cbv  -x 5 -y 30 -height 25 -anchor nw -bordermode ignore 
+	place $base.qlshow  -x 255 -y 60 -height 25 -anchor nw -bordermode ignore
 }
 
 proc vTclWindow.ql {base} {
+global pref
 	if {$base == ""} {
 		set base .ql
 	}
 	if {[winfo exists $base]} {
 		wm deiconify $base; return
 	}
-	###################
-	# CREATING WIDGETS
-	###################
-	toplevel $base -class Toplevel  -cursor top_left_arrow 
+	toplevel $base -class Toplevel
 	wm focusmodel $base passive
 	wm geometry $base 759x530+10+13
 	wm maxsize $base 1009 738
@@ -3688,26 +3782,26 @@ proc vTclWindow.ql {base} {
 	canvas $base.c  -background #fefefe -borderwidth 2 -height 207 -relief ridge  -takefocus 0 -width 295 
 	button $base.exitbtn  -borderwidth 1 -command {
 ql_init
-Window destroy .ql}  -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* -padx 9  -pady 3 -text Close 
-	button $base.showbtn  -borderwidth 1 -command ql_show_sql  -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* -padx 9  -pady 3 -text {Show SQL} 
-	label $base.l12  -borderwidth 0  -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-*  -relief raised -text {Add table} 
+Window destroy .ql} -text Close 
+	button $base.showbtn  -borderwidth 1 -command ql_show_sql -text {Show SQL} 
+	label $base.l12  -borderwidth 0 -text {Add table} 
 	entry $base.entt  -background #fefefe -borderwidth 1 -highlightthickness 1  -selectborderwidth 0 -textvariable qlvar(newtablename) 
 	bind $base.entt <Key-Return> {
 		ql_add_new_table
 	}
 	button $base.execbtn  -borderwidth 1  -command {
 set qcmd [ql_compute_sql]
-set mw(layout_name) nolayoutneeded
-set mw(query) [subst $qcmd]
-set mw(updatable) 0
-set mw(isaquery) 1
-Window show .mw
-mw_load_layout $mw(layout_name)
-mw_select_records $mw(query)}  -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* -padx 9  -pady 3 -text {Execute SQL} 
+set wn [mw_get_new_name]
+set mw($wn,query) [subst $qcmd]
+set mw($wn,updatable) 0
+set mw($wn,isaquery) 1
+mw_create_window
+mw_load_layout $wn nolayoutneeded
+mw_select_records $wn $mw($wn,query)} -text {Execute SQL} 
 	button $base.stoqb  -borderwidth 1  -command {Window show .qb
 .qb.text1 delete 1.0 end
 .qb.text1 insert end [ql_compute_sql]
-focus .qb}  -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* -padx 9  -pady 3 -text {Save to query builder} 
+focus .qb} -text {Save to query builder} 
 	button $base.bdd  -borderwidth 1  -command {if {[winfo exists .ql.ddf]} {
 	destroy .ql.ddf
 } else {
@@ -3723,17 +3817,14 @@ focus .qb}  -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* -padx 9  -p
 		destroy .ql.ddf
 		break
 	}
-}}  -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-*  -highlightthickness 0 -padx 9 -pady 3 -text v 
-	###################
-	# SETTING GEOMETRY
-	###################
+}}  -image dnarw 
 	place $base.c  -x 5 -y 30 -width 748 -height 500 -anchor nw -bordermode ignore 
-	place $base.exitbtn  -x 695 -y 5 -height 26 -anchor nw -bordermode ignore 
-	place $base.showbtn  -x 367 -y 5 -height 26 -anchor nw -bordermode ignore 
+	place $base.exitbtn  -x 695 -y 5 -height 25 -anchor nw -bordermode ignore 
+	place $base.showbtn  -x 367 -y 5 -height 25 -anchor nw -bordermode ignore 
 	place $base.l12  -x 10 -y 8 -width 53 -height 16 -anchor nw -bordermode ignore 
 	place $base.entt  -x 70 -y 7 -width 126 -height 20 -anchor nw -bordermode ignore 
-	place $base.execbtn  -x 452 -y 5 -height 26 -anchor nw -bordermode ignore 
-	place $base.stoqb  -x 550 -y 5 -height 26 -anchor nw -bordermode ignore 
+	place $base.execbtn  -x 452 -y 5 -height 25 -anchor nw -bordermode ignore 
+	place $base.stoqb  -x 550 -y 5 -height 25 -anchor nw -bordermode ignore 
 	place $base.bdd  -x 200 -y 7 -width 17 -height 20 -anchor nw -bordermode ignore
 }
 
@@ -3745,9 +3836,6 @@ proc vTclWindow.rf {base} {
 	if {[winfo exists $base]} {
 		wm deiconify $base; return
 	}
-	###################
-	# CREATING WIDGETS
-	###################
 	toplevel $base -class Toplevel
 	wm focusmodel $base passive
 	wm geometry $base 272x105+294+262
@@ -3756,7 +3844,7 @@ proc vTclWindow.rf {base} {
 	wm overrideredirect $base 0
 	wm resizable $base 0 0
 	wm title $base "Rename"
-	label $base.l1  -borderwidth 0 -relief raised -text {New name} 
+	label $base.l1  -borderwidth 0 -text {New name} 
 	entry $base.e1  -background #fefefe -borderwidth 1 -textvariable newobjname 
 	button $base.b1  -borderwidth 1  -command {
 			if {$newobjname==""} {
@@ -3782,11 +3870,8 @@ proc vTclWindow.rf {base} {
 				}
 				catch {pg_result $pgres -clear}
 			}
-	   } -padx 9  -pady 3 -text Rename 
-	button $base.b2  -borderwidth 1 -command {Window destroy .rf} -padx 9  -pady 3 -text Cancel 
-	###################
-	# SETTING GEOMETRY
-	###################
+	   } -text Rename 
+	button $base.b2  -borderwidth 1 -command {Window destroy .rf} -text Cancel 
 	place $base.l1  -x 15 -y 28 -anchor nw -bordermode ignore 
 	place $base.e1  -x 100 -y 25 -anchor nw -bordermode ignore 
 	place $base.b1  -x 65 -y 65 -width 70 -anchor nw -bordermode ignore 
@@ -3794,15 +3879,13 @@ proc vTclWindow.rf {base} {
 }
 
 proc vTclWindow.rb {base} {
+global pref
 	if {$base == ""} {
 		set base .rb
 	}
 	if {[winfo exists $base]} {
 		wm deiconify $base; return
 	}
-	###################
-	# CREATING WIDGETS
-	###################
 	toplevel $base -class Toplevel
 	wm focusmodel $base passive
 	wm geometry $base 652x426+96+120
@@ -3814,11 +3897,9 @@ proc vTclWindow.rb {base} {
 	wm title $base "Report builder"
 	label $base.l1 \
 		-borderwidth 1 \
-		-font -Adobe-Helvetica-Medium-R-Normal--*-120-*-*-*-*-*-* \
 		-relief raised -text {Report fields} 
 	listbox $base.lb \
 		-background #fefefe -borderwidth 1 \
-		-font -Adobe-Helvetica-Medium-R-Normal--*-120-*-*-*-*-*-* \
 		-highlightthickness 1 -selectborderwidth 0 \
 		-yscrollcommand {.rb.sb set} 
 	bind $base.lb <ButtonRelease-1> {
@@ -3841,25 +3922,22 @@ proc vTclWindow.rb {base} {
 	}
 	button $base.bt2 \
 		-borderwidth 1 \
-		-command {if {[tk_messageBox -title Warning -message "All report information will be deleted.\n\nProceed ?" -type yesno -default no]=="yes"} then {
+		-command {if {[tk_messageBox -title Warning -parent .rb -message "All report information will be deleted.\n\nProceed ?" -type yesno -default no]=="yes"} then {
 .rb.c delete all
 rb_init
 rb_draw_regions
 }} \
-		-font -Adobe-Helvetica-Medium-R-Normal--*-120-*-*-*-*-*-* -padx 9 \
-		-pady 3 -text {Clear all} 
+		-text {Clear all} 
 	button $base.bt4 \
 		-borderwidth 1 -command rb_preview \
-		-font -Adobe-Helvetica-Medium-R-Normal--*-120-*-*-*-*-*-* -padx 9 \
-		-pady 3 -text Preview 
+		-text Preview 
 	button $base.bt5 \
 		-borderwidth 1 -command {Window destroy .rb} \
-		-font -Adobe-Helvetica-Medium-R-Normal--*-120-*-*-*-*-*-* -padx 9 \
-		-pady 3 -text Quit 
+		-text Quit 
 	scrollbar $base.sb \
 		-borderwidth 1 -command {.rb.lb yview} -orient vert 
 	label $base.lmsg \
-		-anchor w -font -Adobe-Helvetica-Medium-R-Normal--*-120-*-*-*-*-*-* \
+		-anchor w \
 		-relief groove -text {Report header} -textvariable rbvar(msg) 
 	entry $base.e2 \
 		-background #fefefe -borderwidth 1 -highlightthickness 0 \
@@ -3872,8 +3950,7 @@ rb_draw_regions
 		-textvariable rbvar(labeltext) 
 	button $base.badl \
 		-borderwidth 1 -command rb_add_label \
-		-font -Adobe-Helvetica-Medium-R-Normal--*-120-*-*-*-*-*-* -padx 9 \
-		-pady 3 -text {Add label} 
+		-text {Add label} 
 	label $base.lbold \
 		-borderwidth 1 -relief raised -text B 
 	bind $base.lbold <Button-1> {
@@ -3886,7 +3963,7 @@ rb_change_object_font
 	}
 	label $base.lita \
 		-borderwidth 1 \
-		-font -Adobe-Helvetica-Medium-O-Normal--*-120-*-*-*-*-*-* \
+		-font $pref(font_italic) \
 		-relief raised -text i 
 	bind $base.lita <Button-1> {
 		if {[rb_get_italic]=="O"} {
@@ -3903,24 +3980,18 @@ rb_change_object_font
 		rb_change_object_font
 	}
 	label $base.linfo \
-		-anchor w -font -Adobe-Helvetica-Medium-R-Normal--*-120-*-*-*-*-*-* \
+		-anchor w  \
 		-relief groove -text {Database field} -textvariable rbvar(info) 
 	label $base.llal \
-		-borderwidth 0 \
-		-font -Adobe-Helvetica-Medium-R-Normal--*-120-*-*-*-*-*-* \
-		-relief raised -text Align 
+		-borderwidth 0 -text Align 
 	button $base.balign \
 		-borderwidth 0 -command rb_flip_align \
-		-font -Adobe-Helvetica-Medium-R-Normal--*-120-*-*-*-*-*-* -padx 9 \
-		-pady 3 -relief groove -text right 
+		-relief groove -text right 
 	button $base.savebtn \
 		-borderwidth 1 -command rb_save_report \
-		-font -Adobe-Helvetica-Medium-R-Normal--*-120-*-*-*-*-*-* -padx 9 \
-		-pady 3 -text Save 
+		-text Save 
 	label $base.lfn \
-		-borderwidth 0 \
-		-font -Adobe-Helvetica-Medium-R-Normal--*-120-*-*-*-*-*-* \
-		-relief raised -text Font 
+		-borderwidth 0 -text Font 
 	button $base.bfont \
 		-borderwidth 0 \
 		-command {set temp [.rb.bfont cget -text]
@@ -3930,8 +4001,7 @@ if {$temp=="Courier"} then {
   .rb.bfont configure -text Courier
 }
 rb_change_object_font} \
-		-font -Adobe-Helvetica-Medium-R-Normal--*-120-*-*-*-*-*-* -padx 9 \
-		-pady 3 -relief groove -text Courier 
+		-relief groove -text Courier 
 	button $base.bdd \
 		-borderwidth 1 \
 		-command {if {[winfo exists .rb.ddf]} {
@@ -3948,12 +4018,9 @@ rb_change_object_font} \
 		break
 	}
 }} \
-		-font -Adobe-Helvetica-Medium-R-Normal--*-120-*-*-*-*-*-* \
-		-highlightthickness 0 -padx 9 -pady 2 -text v 
+		-highlightthickness 0 -image dnarw 
 	label $base.lrn \
-		-borderwidth 0 \
-		-font -Adobe-Helvetica-medium-R-Normal--*-120-*-*-*-*-*-* \
-		-relief raised -text {Report name} 
+		-borderwidth 0 -text {Report name} 
 	entry $base.ern \
 		-background #fefefe -borderwidth 1 -highlightthickness 0 \
 		-textvariable rbvar(reportname) 
@@ -3961,9 +4028,7 @@ rb_change_object_font} \
 		rb_load_report
 	}
 	label $base.lrs \
-		-borderwidth 0 \
-		-font -Adobe-Helvetica-Medium-R-Normal--*-120-*-*-*-*-*-* \
-		-relief raised -text {Report source} 
+		-borderwidth 0 -text {Report source} 
 	label $base.ls \
 		-borderwidth 1 -relief raised 
 	entry $base.ef \
@@ -3971,11 +4036,7 @@ rb_change_object_font} \
 		-textvariable rbvar(formula) 
 	button $base.baf \
 		-borderwidth 1 \
-		-font -Adobe-Helvetica-Medium-R-Normal--*-120-*-*-*-*-*-* -padx 9 \
-		-pady 3 -text {Add formula} 
-	###################
-	# SETTING GEOMETRY
-	###################
+		-text {Add formula} 
 	place $base.l1 \
 		-x 5 -y 55 -width 131 -height 18 -anchor nw -bordermode ignore 
 	place $base.lb \
@@ -4039,9 +4100,6 @@ proc vTclWindow.rpv {base} {
 	if {[winfo exists $base]} {
 		wm deiconify $base; return
 	}
-	###################
-	# CREATING WIDGETS
-	###################
 	toplevel $base -class Toplevel
 	wm focusmodel $base passive
 	wm geometry $base 495x500+230+50
@@ -4063,15 +4121,10 @@ proc vTclWindow.rpv {base} {
 		-borderwidth 2 -height 75 -width 125 
 	button $base.f1.button18 \
 		-borderwidth 1 -command {if {$rbvar(justpreview)} then {Window destroy .rb} ; Window destroy .rpv} \
-		-font -Adobe-Helvetica-Medium-R-Normal--*-120-*-*-*-*-*-* -padx 9 \
-		-pady 3 -text Close 
+		-text Close 
 	button $base.f1.button17 \
 		-borderwidth 1 -command rb_print_report \
-		-font -Adobe-Helvetica-Medium-R-Normal--*-120-*-*-*-*-*-* -padx 9 \
-		-pady 3 -text Print 
-	###################
-	# SETTING GEOMETRY
-	###################
+		-text Print 
 	pack $base.fr \
 		-in .rpv -anchor center -expand 1 -fill both -side top 
 	pack $base.fr.c \
@@ -4093,9 +4146,6 @@ proc vTclWindow.sqf {base} {
 	if {[winfo exists $base]} {
 		wm deiconify $base; return
 	}
-	###################
-	# CREATING WIDGETS
-	###################
 	toplevel $base -class Toplevel
 	wm focusmodel $base passive
 	wm geometry $base 310x223+245+158
@@ -4104,15 +4154,15 @@ proc vTclWindow.sqf {base} {
 	wm overrideredirect $base 0
 	wm resizable $base 0 0
 	wm title $base "Sequence"
-	label $base.l1  -anchor w -borderwidth 0 -relief raised -text {Sequence name} 
+	label $base.l1  -anchor w -borderwidth 0 -text {Sequence name} 
 	entry $base.e1  -borderwidth 1 -highlightthickness 1 -textvariable seq_name 
-	label $base.l2  -borderwidth 0 -relief raised -text Increment 
+	label $base.l2  -borderwidth 0 -text Increment 
 	entry $base.e2  -borderwidth 1 -highlightthickness 1 -selectborderwidth 0  -textvariable seq_inc 
-	label $base.l3  -borderwidth 0 -relief raised -text {Start value} 
+	label $base.l3  -borderwidth 0 -text {Start value} 
 	entry $base.e3  -borderwidth 1 -highlightthickness 1 -selectborderwidth 0  -textvariable seq_start 
-	label $base.l4  -borderwidth 0 -relief raised -text Minvalue 
+	label $base.l4  -borderwidth 0 -text Minvalue 
 	entry $base.e4  -borderwidth 1 -highlightthickness 1 -selectborderwidth 0  -textvariable seq_minval 
-	label $base.l5  -borderwidth 0 -relief raised -text Maxvalue 
+	label $base.l5  -borderwidth 0 -text Maxvalue 
 	entry $base.e5  -borderwidth 1 -highlightthickness 1 -selectborderwidth 0  -textvariable seq_maxval 
 	button $base.defbtn  -borderwidth 1  -command {
 		if {$seq_name==""} {
@@ -4123,13 +4173,13 @@ proc vTclWindow.sqf {base} {
 			if {$seq_start!=""} {set s2 "start $seq_start"};
 			if {$seq_minval!=""} {set s3 "minvalue $seq_minval"};
 			if {$seq_maxval!=""} {set s4 "maxvalue $seq_maxval"};
-			set sqlcmd "create sequence $seq_name $s1 $s2 $s3 $s4"
+			set sqlcmd "create sequence \"$seq_name\" $s1 $s2 $s3 $s4"
 			if {[sql_exec noquiet $sqlcmd]} {
 				cmd_Sequences
-				tk_messageBox -title Information -message "Sequence created!"
+				tk_messageBox -title Information -parent .sqf -message "Sequence created!"
 			}
 		}
-	}  -padx 9  -pady 3 -text {Define sequence} 
+	} -text {Define sequence} 
 	button $base.closebtn  -borderwidth 1  -command {for {set i 1} {$i<6} {incr i} {
 	.sqf.e$i configure -state normal
 	.sqf.e$i delete 0 end
@@ -4138,10 +4188,7 @@ proc vTclWindow.sqf {base} {
 }
 place .sqf.defbtn -x 40 -y 175
 Window destroy .sqf
-} -padx 9  -pady 3 -text Close 
-	###################
-	# SETTING GEOMETRY
-	###################
+} -text Close 
 	place $base.l1  -x 20 -y 20 -width 111 -height 18 -anchor nw -bordermode ignore 
 	place $base.e1  -x 135 -y 19 -anchor nw -bordermode ignore 
 	place $base.l2  -x 20 -y 50 -anchor nw -bordermode ignore 
@@ -4157,15 +4204,13 @@ Window destroy .sqf
 }
 
 proc vTclWindow.sw {base} {
+global pref
 	if {$base == ""} {
 		set base .sw
 	}
 	if {[winfo exists $base]} {
 		wm deiconify $base; return
 	}
-	###################
-	# CREATING WIDGETS
-	###################
 	toplevel $base -class Toplevel
 	wm focusmodel $base passive
 	wm geometry $base 594x416+192+152
@@ -4175,23 +4220,20 @@ proc vTclWindow.sw {base} {
 	wm resizable $base 1 1
 	wm title $base "Design script"
 	frame $base.f1  -height 55 -relief groove -width 125 
-	label $base.f1.l1  -borderwidth 0  -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-*  -relief raised -text {Script name} 
+	label $base.f1.l1  -borderwidth 0 -text {Script name} 
 	entry $base.f1.e1  -background #fefefe -borderwidth 1 -highlightthickness 0  -textvariable scriptname -width 32 
-	text $base.src  -background #fefefe  -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* -height 2  -highlightthickness 1 -selectborderwidth 0 -width 2 
+	text $base.src  -background #fefefe  -font $pref(font_normal) -height 2  -highlightthickness 1 -selectborderwidth 0 -width 2 
 	frame $base.f2  -height 75 -relief groove -width 125 
-	button $base.f2.b1  -borderwidth 1 -command {Window destroy .sw}  -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* -padx 9  -pady 3 -text Cancel 
+	button $base.f2.b1  -borderwidth 1 -command {Window destroy .sw} -text Cancel 
 	button $base.f2.b2  -borderwidth 1  -command {if {$scriptname==""} {
-	tk_messageBox -title Warning -message "The script must have a name!"
+	tk_messageBox -title Warning -parent .sw -message "The script must have a name!"
 } else {
    sql_exec noquiet "delete from pga_scripts where scriptname='$scriptname'"
    regsub -all {\\} [.sw.src get 1.0 end] {\\\\} scriptsource
    regsub -all ' $scriptsource  \\' scriptsource
    sql_exec noquiet "insert into pga_scripts values ('$scriptname','$scriptsource')"
    cmd_Scripts
-}}  -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* -padx 9  -pady 3 -text Save -width 6 
-	###################
-	# SETTING GEOMETRY
-	###################
+}}  -text Save -width 6 
 	pack $base.f1  -in .sw -anchor center -expand 0 -fill x -pady 2 -side top 
 	pack $base.f1.l1  -in .sw.f1 -anchor center -expand 0 -fill none -ipadx 2 -side left 
 	pack $base.f1.e1  -in .sw.f1 -anchor center -expand 0 -fill none -side left 
@@ -4202,65 +4244,65 @@ proc vTclWindow.sw {base} {
 }
 
 proc vTclWindow.tiw {base} {
+global pref
 	if {$base == ""} {
 		set base .tiw
 	}
 	if {[winfo exists $base]} {
 		wm deiconify $base; return
 	}
-	###################
-	# CREATING WIDGETS
-	###################
 	toplevel $base -class Toplevel
 	wm focusmodel $base passive
 	wm geometry $base 390x460+243+20
 	wm maxsize $base 1009 738
 	wm minsize $base 1 1
 	wm overrideredirect $base 0
-	wm resizable $base 1 1
+	wm resizable $base 0 0
 	wm title $base "Table information"
-	label $base.l1  -borderwidth 0  -relief raised -text {Table name} 
-	label $base.l2  -anchor w -borderwidth 0  -relief raised -text conturi -textvariable tiw(tablename) 
-	label $base.l3  -borderwidth 0  -relief raised -text Owner 
+	label $base.l1  -borderwidth 0 -text {Table name} 
+	label $base.l2  -anchor w -borderwidth 0 -text conturi -textvariable tiw(tablename) 
+	label $base.l3  -borderwidth 0 -text Owner 
 	label $base.l4  -anchor w -borderwidth 1  -textvariable tiw(owner) 
-	listbox $base.lb  -background #fefefe -borderwidth 1  -font -*-Clean-Medium-R-Normal--*-130-*-*-*-*-*-*  -highlightthickness 1 -selectborderwidth 0  -yscrollcommand {.tiw.sb set} 
+	listbox $base.lb  -background #fefefe -borderwidth 1  -font $pref(font_fix)  -highlightthickness 1 -selectborderwidth 0  -yscrollcommand {.tiw.sb set} 
 	scrollbar $base.sb  -activebackground #d9d9d9 -activerelief sunken -borderwidth 1  -command {.tiw.lb yview} -orient vert 
-	button $base.closebtn  -borderwidth 1 -command {Window destroy .tiw}  -pady 3 -text Close 
-	label $base.l10  -borderwidth 1  -relief raised -text {field name} 
-	label $base.l11  -borderwidth 1  -relief raised -text {field type} 
-	label $base.l12  -borderwidth 1  -relief raised -text size 
-	label $base.lfi  -borderwidth 0  -relief raised -text {Field information} 
-	label $base.lii  -borderwidth 1  -relief raised -text {Indexes defined} 
+	button $base.closebtn  -borderwidth 1 -command {Window destroy .tiw}  -pady 3 -text Close
+	button $base.renbtn -borderwidth 1 -command {
+	if {[set tiw(col_id) [.tiw.lb curselection]]==""} then {bell} else {set tiw(old_cn) [.tiw.lb get [.tiw.lb curselection]] ; set tiw(new_cn) {} ; Window show .rcw ; tkwait visibility .rcw ; wm transient .rcw .tiw ; focus .rcw.e1}} -text {Rename field}
+	button $base.addbtn -borderwidth 1 -command "Window show .anfw ; set anfw(name) {} ; set anfw(type) {} ; wm transient .anfw .tiw ; focus .anfw.e1" -text "Add new field"
+	label $base.l10  -borderwidth 1  -relief raised -text {field name}
+	label $base.l11  -borderwidth 1  -relief raised -text {field type}
+	label $base.l12  -borderwidth 1  -relief raised -text size
+	label $base.lfi  -borderwidth 0 -text {Field information}
+	label $base.lii  -borderwidth 1  -relief raised -text {Indexes defined}
 	listbox $base.ilb  -background #fefefe -borderwidth 1  -highlightthickness 1 -selectborderwidth 0 
 	bind $base.ilb <ButtonRelease-1> {
 		tiw_show_index
 	}
-	label $base.lip  -borderwidth 1  -relief raised -text {index properties} 
-	frame $base.fr11  -borderwidth 1 -height 75 -relief sunken -width 125 
-	label $base.fr11.l9  -borderwidth 0  -relief raised -text {Is clustered ?} 
-	label $base.fr11.l2  -borderwidth 0  -relief raised -text {Is unique ?} 
-	label $base.fr11.liu  -anchor nw -borderwidth 0  -relief raised -text Yes -textvariable tiw(isunique) 
-	label $base.fr11.lic  -anchor nw -borderwidth 0  -relief raised -text No -textvariable tiw(isclustered) 
-	label $base.fr11.l5  -borderwidth 0  -relief raised -text {Fields :} 
+	label $base.lip  -borderwidth 1  -relief raised -text {index properties}
+	frame $base.fr11  -borderwidth 1 -height 75 -relief sunken -width 125
+	label $base.fr11.l9  -borderwidth 0 -text {Is clustered ?} 
+	label $base.fr11.l2  -borderwidth 0 -text {Is unique ?} 
+	label $base.fr11.liu  -anchor nw -borderwidth 0 -text Yes -textvariable tiw(isunique) 
+	label $base.fr11.lic  -anchor nw -borderwidth 0 -text No -textvariable tiw(isclustered) 
+	label $base.fr11.l5  -borderwidth 0 -text {Fields :} 
 	label $base.fr11.lif  -anchor nw -borderwidth 1  -justify left -relief sunken -text cont  -textvariable tiw(indexfields) -wraplength 170 
-	###################
-	# SETTING GEOMETRY
-	###################
 	place $base.l1  -x 20 -y 15 -anchor nw -bordermode ignore 
 	place $base.l2  -x 100 -y 14 -width 161 -height 18 -anchor nw -bordermode ignore 
 	place $base.l3  -x 20 -y 35 -anchor nw -bordermode ignore 
 	place $base.l4  -x 100 -y 34 -width 226 -height 18 -anchor nw -bordermode ignore 
 	place $base.lb  -x 20 -y 91 -width 338 -height 171 -anchor nw -bordermode ignore 
+	place $base.renbtn -x 20 -y 263 -height 25
+	place $base.addbtn -x 120 -y 263 -height 25
 	place $base.sb  -x 355 -y 90 -width 18 -height 173 -anchor nw -bordermode ignore 
-	place $base.closebtn  -x 325 -y 5 -anchor nw -bordermode ignore 
+	place $base.closebtn  -x 325 -y 5 -height 25 -anchor nw -bordermode ignore 
 	place $base.l10  -x 21 -y 75 -width 204 -height 18 -anchor nw -bordermode ignore 
 	place $base.l11  -x 225 -y 75 -width 90 -height 18 -anchor nw -bordermode ignore 
 	place $base.l12  -x 315 -y 75 -width 41 -height 18 -anchor nw -bordermode ignore 
 	place $base.lfi  -x 20 -y 55 -anchor nw -bordermode ignore 
-	place $base.lii  -x 20 -y 280 -width 151 -height 18 -anchor nw -bordermode ignore 
-	place $base.ilb  -x 20 -y 296 -width 150 -height 148 -anchor nw -bordermode ignore 
-	place $base.lip  -x 171 -y 280 -width 198 -height 18 -anchor nw -bordermode ignore 
-	place $base.fr11  -x 170 -y 297 -width 199 -height 147 -anchor nw -bordermode ignore 
+	place $base.lii  -x 20 -y 290 -width 151 -height 18 -anchor nw -bordermode ignore 
+	place $base.ilb  -x 20 -y 306 -width 150 -height 148 -anchor nw -bordermode ignore 
+	place $base.lip  -x 171 -y 290 -width 198 -height 18 -anchor nw -bordermode ignore 
+	place $base.fr11  -x 170 -y 307 -width 199 -height 147 -anchor nw -bordermode ignore 
 	place $base.fr11.l9  -x 10 -y 30 -anchor nw -bordermode ignore 
 	place $base.fr11.l2  -x 10 -y 10 -anchor nw -bordermode ignore 
 	place $base.fr11.liu  -x 95 -y 10 -width 27 -height 16 -anchor nw -bordermode ignore 
@@ -4276,9 +4318,6 @@ proc vTclWindow.fd {base} {
 	if {[winfo exists $base]} {
 		wm deiconify $base; return
 	}
-	###################
-	# CREATING WIDGETS
-	###################
 	toplevel $base -class Toplevel
 	wm focusmodel $base passive
 	wm geometry $base 377x315+103+101
@@ -4303,9 +4342,6 @@ proc vTclWindow.fd {base} {
 	bind $base.c <Motion> {
 		fd_mouse_move %x %y
 	}
-	###################
-	# SETTING GEOMETRY
-	###################
 	pack $base.c \
 		-in .fd -anchor center -expand 1 -fill both -side top 
 }
@@ -4317,9 +4353,6 @@ proc vTclWindow.fda {base} {
 	if {[winfo exists $base]} {
 		wm deiconify $base; return
 	}
-	###################
-	# CREATING WIDGETS
-	###################
 	toplevel $base -class Toplevel
 	wm focusmodel $base passive
 	wm geometry $base 225x197+561+0
@@ -4331,7 +4364,6 @@ proc vTclWindow.fda {base} {
 	wm title $base "Attributes"
 	label $base.l1 \
 		-anchor nw -borderwidth 0 \
-		-font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* \
 		-justify left -text Name -width 8 
 	entry $base.e1 \
 		-background #fefefe -borderwidth 1 -highlightthickness 0 \
@@ -4341,7 +4373,6 @@ proc vTclWindow.fda {base} {
 	}
 	label $base.l2 \
 		-anchor nw -borderwidth 0 \
-		-font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* \
 		-justify left -text Top -width 8 
 	entry $base.e2 \
 		-background #fefefe -borderwidth 1 -highlightthickness 0 \
@@ -4351,8 +4382,7 @@ proc vTclWindow.fda {base} {
 	}
 	label $base.l3 \
 		-anchor w -borderwidth 0 \
-		-font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* -text Left \
-		-width 8 
+		-text Left -width 8 
 	entry $base.e3 \
 		-background #fefefe -borderwidth 1 -highlightthickness 0 \
 		-selectborderwidth 0 -textvariable fdvar(c_left) 
@@ -4361,7 +4391,7 @@ proc vTclWindow.fda {base} {
 	}
 	label $base.l4 \
 		-anchor w -borderwidth 0 \
-		-font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* -text Width \
+		-text Width \
 		-width 8 
 	entry $base.e4 \
 		-background #fefefe -borderwidth 1 -highlightthickness 0 \
@@ -4370,9 +4400,7 @@ proc vTclWindow.fda {base} {
 		fd_change_coord
 	}
 	label $base.l5 \
-		-anchor w -borderwidth 0 \
-		-font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* -padx 0 \
-		-text Height -width 8 
+		-anchor w -borderwidth 0 -padx 0 -text Height -width 8 
 	entry $base.e5 \
 		-background #fefefe -borderwidth 1 -highlightthickness 0 \
 		-selectborderwidth 0 -textvariable fdvar(c_height) 
@@ -4380,9 +4408,7 @@ proc vTclWindow.fda {base} {
 		fd_change_coord
 	}
 	label $base.l6 \
-		-borderwidth 0 \
-		-font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* -padx 0 \
-		-text Command 
+		-borderwidth 0 -text Command 
 	entry $base.e6 \
 		-background #fefefe -borderwidth 1 -highlightthickness 0 \
 		-selectborderwidth 0 -textvariable fdvar(c_cmd) 
@@ -4394,11 +4420,9 @@ proc vTclWindow.fda {base} {
 		-command {Window show .fdcmd
 .fdcmd.f.txt delete 1.0 end
 .fdcmd.f.txt insert end $fdvar(c_cmd)} \
-		-font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* -padx 3 \
-		-pady 3 -text ... -width 1 
+		-text ... -width 1 
 	label $base.l7 \
 		-anchor w -borderwidth 0 \
-		-font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* \
 		-text Variable -width 8 
 	entry $base.e7 \
 		-background #fefefe -borderwidth 1 -highlightthickness 0 \
@@ -4408,8 +4432,7 @@ proc vTclWindow.fda {base} {
 	}
 	label $base.l8 \
 		-anchor w -borderwidth 0 \
-		-font -Adobe-Helvetica-Medium-R-Normal--*-120-*-*-*-*-*-* -text Text \
-		-width 8 
+		-text Text -width 8 
 	entry $base.e8 \
 		-background #fefefe -borderwidth 1 -highlightthickness 0 \
 		-selectborderwidth 0 -textvariable fdvar(c_text) 
@@ -4419,9 +4442,6 @@ proc vTclWindow.fda {base} {
 	label $base.l0 \
 		-borderwidth 1 -relief raised -text {checkbox .udf0.checkbox17} \
 		-textvariable fdvar(c_info) -width 28 
-	###################
-	# SETTING GEOMETRY
-	###################
 	grid $base.l1 \
 		-in .fda -column 0 -row 1 -columnspan 1 -rowspan 1 
 	grid $base.e1 \
@@ -4461,15 +4481,13 @@ proc vTclWindow.fda {base} {
 }
 
 proc vTclWindow.fdcmd {base} {
+global pref
 	if {$base == ""} {
 		set base .fdcmd
 	}
 	if {[winfo exists $base]} {
 		wm deiconify $base; return
 	}
-	###################
-	# CREATING WIDGETS
-	###################
 	toplevel $base -class Toplevel
 	wm focusmodel $base passive
 	wm geometry $base 282x274+504+229
@@ -4483,7 +4501,7 @@ proc vTclWindow.fdcmd {base} {
 	scrollbar $base.f.sb \
 		-borderwidth 1 -command {.fdcmd.f.txt yview} -orient vert -width 12 
 	text $base.f.txt \
-		-font -*-Clean-Medium-R-Normal--*-130-*-*-*-*-*-* -height 1 \
+		-font $pref(font_fix) -height 1 \
 		-width 115 -yscrollcommand {.fdcmd.f.sb set} 
 	frame $base.fb \
 		-height 75 -width 125 
@@ -4492,15 +4510,10 @@ proc vTclWindow.fdcmd {base} {
 		-command {set fdvar(c_cmd) [.fdcmd.f.txt get 1.0 "end - 1 chars"]
 Window hide .fdcmd
 fd_set_command} \
-		-font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* -padx 9 \
-		-pady 3 -text Ok -width 5 
+		-text Ok -width 5 
 	button $base.fb.b2 \
 		-borderwidth 1 -command {Window hide .fdcmd} \
-		-font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* -padx 9 \
-		-pady 3 -text Cancel 
-	###################
-	# SETTING GEOMETRY
-	###################
+		-text Cancel 
 	pack $base.f \
 		-in .fdcmd -anchor center -expand 1 -fill both -side top 
 	pack $base.f.sb \
@@ -4522,9 +4535,6 @@ proc vTclWindow.fdmenu {base} {
 	if {[winfo exists $base]} {
 		wm deiconify $base; return
 	}
-	###################
-	# CREATING WIDGETS
-	###################
 	toplevel $base -class Toplevel
 	wm focusmodel $base passive
 	wm geometry $base 288x70+103+0
@@ -4538,16 +4548,13 @@ proc vTclWindow.fdmenu {base} {
 		-borderwidth 1 \
 		-command {if {[tk_messageBox -title Warning -message "Delete all objects ?" -type yesno -default no]=="no"} return
 fd_init} \
-		-font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* -padx 9 \
-		-pady 3 -text {Delete all} 
+		-text {Delete all} 
 	button $base.but18 \
 		-borderwidth 1 -command {set fdvar(geometry) [wm geometry .fd] ; fd_test } \
-		-font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* -padx 9 \
-		-pady 3 -text {Test form} 
+		-text {Test form} 
 	button $base.but19 \
 		-borderwidth 1 -command {destroy .$fdvar(forminame)} \
-		-font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* -padx 9 \
-		-pady 3 -text {Close test form} 
+		-text {Close test form} 
 	button $base.bex \
 		-borderwidth 1 \
 		-command {if {[fd_save_form $fdvar(formname)]==1} {
@@ -4558,33 +4565,24 @@ catch {Window destroy .fda}
 catch {Window destroy .fdcmd}
 catch {Window destroy .$fdvar(forminame)}
 }} \
-		-font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* -padx 9 \
-		-pady 3 -text Close 
+		-text Close 
 	button $base.bload \
 		-borderwidth 1 -command {fd_load_form nimic design} \
-		-font -Adobe-Helvetica-Medium-R-Normal--*-120-*-*-*-*-*-* -padx 9 \
-		-pady 3 -text {Load from database} 
+		-text {Load from database} 
 	button $base.button17 \
 		-borderwidth 1 -command {fd_save_form nimic} \
-		-font -Adobe-Helvetica-Medium-R-Normal--*-120-*-*-*-*-*-* -padx 9 \
-		-pady 3 -text Save 
+		-text Save 
 	label $base.l1 \
-		-borderwidth 0 \
-		-font -Adobe-Helvetica-Medium-R-Normal--*-120-*-*-*-*-*-* \
-		-text {Form name} 
+		-borderwidth 0 -text {Form name} 
 	entry $base.e1 \
 		-background #fefefe -borderwidth 1 -highlightthickness 0 \
 		-selectborderwidth 0 -textvariable fdvar(formname) 
 	label $base.l2 \
 		-borderwidth 0 \
-		-font -Adobe-Helvetica-Medium-R-Normal--*-120-*-*-*-*-*-* \
 		-text {Form's window internal name} 
 	entry $base.e2 \
 		-background #fefefe -borderwidth 1 -highlightthickness 0 \
 		-selectborderwidth 0 -textvariable fdvar(forminame) 
-	###################
-	# SETTING GEOMETRY
-	###################
 	place $base.but17 \
 		-x 5 -y 80 -width 62 -height 24 -anchor nw -bordermode ignore 
 	place $base.but18 \
@@ -4614,9 +4612,6 @@ proc vTclWindow.gpw {base} {
 	if {[winfo exists $base]} {
 		wm deiconify $base; return
 	}
-	###################
-	# CREATING WIDGETS
-	###################
 	toplevel $base -class Toplevel
 	wm focusmodel $base passive
 	set sw [winfo screenwidth .]
@@ -4632,7 +4627,6 @@ proc vTclWindow.gpw {base} {
 	wm title $base "Input parameter"
 	label $base.l1 \
 		-anchor nw -borderwidth 1 \
-		-font -Adobe-Helvetica-Medium-R-Normal--*-120-*-*-*-*-*-* \
 		-justify left -relief sunken -textvariable gpw(msg) -wraplength 200 
 	entry $base.e1 \
 		-background #fefefe -borderwidth 1 -highlightthickness 0 \
@@ -4647,15 +4641,10 @@ destroy .gpw
 	}
 	button $base.bok \
 		-borderwidth 1 -command {set gpw(result) 1
-destroy .gpw} -padx 9 \
-		-pady 3 -text Ok 
+destroy .gpw} -text Ok 
 	button $base.bcanc \
 		-borderwidth 1 -command {set gpw(result) 0
-destroy .gpw} -padx 9 \
-		-pady 3 -text Cancel 
-	###################
-	# SETTING GEOMETRY
-	###################
+destroy .gpw} -text Cancel 
 	place $base.l1 \
 		-x 10 -y 5 -width 201 -height 53 -anchor nw -bordermode ignore 
 	place $base.e1 \
@@ -4673,9 +4662,6 @@ proc vTclWindow.fdtb {base} {
 	if {[winfo exists $base]} {
 		wm deiconify $base; return
 	}
-	###################
-	# CREATING WIDGETS
-	###################
 	toplevel $base -class Toplevel
 	wm focusmodel $base passive
 	wm geometry $base 90x152+0+0
@@ -4687,47 +4673,36 @@ proc vTclWindow.fdtb {base} {
 	wm title $base "Toolbar"
 	radiobutton $base.rb1 \
 		-anchor w -borderwidth 1 \
-		-font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* \
 		-highlightthickness 0 -text Point -value point -variable fdvar(tool) \
 		-width 9 
 	radiobutton $base.rb2 \
 		-anchor w -borderwidth 1 \
-		-font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* \
-		-foreground #000000 -highlightthickness 0 -selectcolor #0000ee \
+		-foreground #000000 -highlightthickness 0 \
 		-text Label -value label -variable fdvar(tool) -width 9 
 	radiobutton $base.rb3 \
 		-anchor w -borderwidth 1 \
-		-font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* \
 		-highlightthickness 0 -text Entry -value entry -variable fdvar(tool) \
 		-width 9 
 	radiobutton $base.rb4 \
 		-anchor w -borderwidth 1 \
-		-font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* \
 		-highlightthickness 0 -text Button -value button \
 		-variable fdvar(tool) -width 9 
 	radiobutton $base.rb5 \
 		-anchor w -borderwidth 1 \
-		-font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* \
 		-highlightthickness 0 -text {List box} -value listbox \
 		-variable fdvar(tool) -width 9 
 	radiobutton $base.rb6 \
 		-anchor w -borderwidth 1 \
-		-font -Adobe-Helvetica-Medium-R-Normal--*-120-*-*-*-*-*-* \
 		-highlightthickness 0 -text {Check box} -value checkbox \
 		-variable fdvar(tool) -width 9 
 	radiobutton $base.rb7 \
 		-anchor w -borderwidth 1 \
-		-font -Adobe-Helvetica-Medium-R-Normal--*-120-*-*-*-*-*-* \
 		-highlightthickness 0 -text {Radio btn} -value radio \
 		-variable fdvar(tool) -width 9 
 	radiobutton $base.rb8 \
 		-anchor w -borderwidth 1 \
-		-font -Adobe-Helvetica-Medium-R-Normal--*-120-*-*-*-*-*-* \
 		-highlightthickness 0 -text Query -value query -variable fdvar(tool) \
 		-width 9 
-	###################
-	# SETTING GEOMETRY
-	###################
 	grid $base.rb1 \
 		-in .fdtb -column 0 -row 0 -columnspan 1 -rowspan 1 
 	grid $base.rb2 \
@@ -4753,9 +4728,6 @@ proc vTclWindow.sqlw {base} {
 	if {[winfo exists $base]} {
 		wm deiconify $base; return
 	}
-	###################
-	# CREATING WIDGETS
-	###################
 	toplevel $base -class Toplevel
 	wm focusmodel $base passive
 	wm geometry $base 551x408+192+169
@@ -4774,18 +4746,13 @@ proc vTclWindow.sqlw {base} {
 		-borderwidth 1 -command {.sqlw.f.t yview} -orient vert -width 10 
 	text $base.f.t \
 		-borderwidth 1 \
-		-font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-*-* \
 		-height 200 -width 200 -wrap word \
 		-xscrollcommand {.sqlw.f.01 set} \
 		-yscrollcommand {.sqlw.f.02 set} 
 	button $base.b1 \
-		-borderwidth 1 -command {.sqlw.f.t delete 1.0 end} -padx 9 \
-		-pady 3 -text Clean 
+		-borderwidth 1 -command {.sqlw.f.t delete 1.0 end} -text Clean 
 	button $base.b2 \
-		-borderwidth 1 -command {destroy .sqlw} -padx 9 -pady 3 -text Close 
-	###################
-	# SETTING GEOMETRY
-	###################
+		-borderwidth 1 -command {destroy .sqlw} -text Close 
 	grid columnconf $base 0 -weight 1
 	grid columnconf $base 1 -weight 1
 	grid rowconf $base 0 -weight 1
@@ -4806,6 +4773,180 @@ proc vTclWindow.sqlw {base} {
 		-in .sqlw -column 1 -row 1 -columnspan 1 -rowspan 1 
 }
 
+proc vTclWindow.rcw {base} {
+    if {$base == ""} {
+        set base .rcw
+    }
+    if {[winfo exists $base]} {
+        wm deiconify $base; return
+    }
+    toplevel $base -class Toplevel
+    wm focusmodel $base passive
+    wm geometry $base 215x75+258+213
+    wm maxsize $base 1009 738
+    wm minsize $base 1 1
+    wm overrideredirect $base 0
+    wm resizable $base 0 0
+    wm deiconify $base
+    wm title $base "Rename field"
+    label $base.l1 \
+        -borderwidth 0 -text {New name} 
+    entry $base.e1 \
+        -background #fefefe -borderwidth 1 -textvariable tiw(new_cn)
+	bind $base.e1 <Key-KP_Enter> "rename_column"
+	bind $base.e1 <Key-Return> "rename_column"
+    frame $base.f \
+        -height 75 -relief groove -width 147 
+    button $base.f.b1 \
+        -borderwidth 1 -command rename_column -text Rename 
+    button $base.f.b2 \
+        -borderwidth 1 -command {Window destroy .rcw} -text Cancel 
+    label $base.l2 -borderwidth 0 
+    grid $base.l1 \
+        -in .rcw -column 0 -row 0 -columnspan 1 -rowspan 1 
+    grid $base.e1 \
+        -in .rcw -column 1 -row 0 -columnspan 1 -rowspan 1 
+    grid $base.f \
+        -in .rcw -column 0 -row 4 -columnspan 2 -rowspan 1 
+    grid $base.f.b1 \
+        -in .rcw.f -column 0 -row 0 -columnspan 1 -rowspan 1 
+    grid $base.f.b2 \
+        -in .rcw.f -column 1 -row 0 -columnspan 1 -rowspan 1 
+    grid $base.l2 \
+        -in .rcw -column 0 -row 3 -columnspan 1 -rowspan 1 
+}
+
+proc vTclWindow.anfw {base} {
+    if {$base == ""} {
+        set base .anfw
+    }
+    if {[winfo exists $base]} {
+        wm deiconify $base; return
+    }
+    toplevel $base -class Toplevel
+    wm focusmodel $base passive
+    wm geometry $base 302x114+195+175
+    wm maxsize $base 1009 738
+    wm minsize $base 1 1
+    wm overrideredirect $base 0
+    wm resizable $base 0 0
+    wm deiconify $base
+    wm title $base "Add new field"
+    label $base.l1 \
+        -borderwidth 0 \
+        -text {Field name} 
+    entry $base.e1 \
+        -background #fefefe -borderwidth 1 -textvariable anfw(name) 
+    bind $base.e1 <Key-KP_Enter> {
+        focus .anfw.e2
+    }
+    bind $base.e1 <Key-Return> {
+        focus .anfw.e2
+    }
+    label $base.l2 \
+        -borderwidth 0 \
+        -text {Field type} 
+    entry $base.e2 \
+        -background #fefefe -borderwidth 1 -textvariable anfw(type) 
+    bind $base.e2 <Key-KP_Enter> {
+        anfw:add
+    }
+    bind $base.e2 <Key-Return> {
+        anfw:add
+    }
+    button $base.b1 \
+        -borderwidth 1 -command anfw:add -text {Add field} 
+    button $base.b2 \
+        -borderwidth 1 -command {Window destroy .anfw} -text Cancel 
+    place $base.l1 \
+        -x 25 -y 10 -anchor nw -bordermode ignore 
+    place $base.e1 \
+        -x 98 -y 7 -width 178 -height 22 -anchor nw -bordermode ignore 
+    place $base.l2 \
+        -x 25 -y 40 -anchor nw -bordermode ignore 
+    place $base.e2 \
+        -x 98 -y 37 -width 178 -height 22 -anchor nw -bordermode ignore 
+    place $base.b1 \
+        -x 70 -y 75 -anchor nw -bordermode ignore 
+    place $base.b2 \
+        -x 160 -y 75 -anchor nw -bordermode ignore 
+}
+
+proc vTclWindow.uw {base} {
+    if {$base == ""} {
+        set base .uw
+    }
+    if {[winfo exists $base]} {
+        wm deiconify $base; return
+    }
+    toplevel $base -class Toplevel
+    wm focusmodel $base passive
+    wm geometry $base 263x220+233+165
+    wm maxsize $base 1009 738
+    wm minsize $base 1 1
+    wm overrideredirect $base 0
+    wm resizable $base 0 0
+    wm deiconify $base
+    wm title $base "Define new user"
+    label $base.l1 \
+        -borderwidth 0 -anchor w -text "User name"
+    entry $base.e1 \
+        -background #fefefe -borderwidth 1 -textvariable uw(username) 
+	bind $base.e1 <Key-Return> "focus .uw.e2"
+	bind $base.e1 <Key-KP_Enter> "focus .uw.e2"
+    label $base.l2 \
+        -borderwidth 0 -text Password 
+    entry $base.e2 \
+        -background #fefefe -borderwidth 1 -show * -textvariable uw(password) 
+	bind $base.e2 <Key-Return> "focus .uw.e3"
+	bind $base.e2 <Key-KP_Enter> "focus .uw.e3"
+    label $base.l3 \
+        -borderwidth 0 -text {verify password} 
+    entry $base.e3 \
+        -background #fefefe -borderwidth 1 -show * -textvariable uw(verify) 
+	bind $base.e3 <Key-Return> "focus .uw.cb1"
+	bind $base.e3 <Key-KP_Enter> "focus .uw.cb1"
+    checkbutton $base.cb1 \
+        -borderwidth 1 -offvalue NOCREATEDB -onvalue CREATEDB \
+        -text {Alow user to create databases } -variable uw(createdb) 
+    checkbutton $base.cb2 \
+        -borderwidth 1 -offvalue NOCREATEUSER -onvalue CREATEUSER \
+        -text {Allow users to create other users} -variable uw(createuser) 
+    label $base.l4 \
+        -borderwidth 0 -anchor w -text {Valid until (date)} 
+    entry $base.e4 \
+        -background #fefefe -borderwidth 1 -textvariable uw(valid)
+	bind $base.e4 <Key-Return> "focus .uw.b1"
+	bind $base.e4 <Key-KP_Enter> "focus .uw.b1"
+    button $base.b1 \
+        -borderwidth 1 -command uw:create_user -text Create 
+    button $base.b2 \
+        -borderwidth 1 -command {Window destroy .uw} -text Cancel 
+    place $base.l1 \
+        -x 5 -y 7 -width 62 -height 16 -anchor nw -bordermode ignore 
+    place $base.e1 \
+        -x 109 -y 5 -width 146 -height 20 -anchor nw -bordermode ignore 
+    place $base.l2 \
+        -x 5 -y 35 -anchor nw -bordermode ignore 
+    place $base.e2 \
+        -x 109 -y 32 -width 146 -height 20 -anchor nw -bordermode ignore 
+    place $base.l3 \
+        -x 5 -y 60 -anchor nw -bordermode ignore 
+    place $base.e3 \
+        -x 109 -y 58 -width 146 -height 20 -anchor nw -bordermode ignore 
+    place $base.cb1 \
+        -x 5 -y 90 -anchor nw -bordermode ignore 
+    place $base.cb2 \
+        -x 5 -y 115 -anchor nw -bordermode ignore 
+    place $base.l4 \
+        -x 5 -y 145 -width 100 -height 16 -anchor nw -bordermode ignore 
+    place $base.e4 \
+        -x 110 -y 143 -width 146 -height 20 -anchor nw -bordermode ignore 
+    place $base.b1 \
+        -x 45 -y 185 -anchor nw -width 70 -height 25 -bordermode ignore 
+    place $base.b2 \
+        -x 140 -y 185 -anchor nw -width 70 -height 25 -bordermode ignore 
+}
 
 Window show .
 Window show .dw
