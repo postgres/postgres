@@ -1,5 +1,5 @@
 # -*-makefile-*-
-# $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.125 2001/05/09 19:57:33 momjian Exp $
+# $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.126 2001/05/09 20:19:30 momjian Exp $
 
 #------------------------------------------------------------------------------
 # All PostgreSQL makefiles include this file and use the variables it sets,
@@ -125,6 +125,7 @@ krb_srvtab = @krb_srvtab@
 
 TCL_CONFIG_SH = @TCL_CONFIG_SH@
 TK_CONFIG_SH = @TK_CONFIG_SH@
+TCLSH		= @TCLSH@
 
 have_docbook	= @have_docbook@
 DOCBOOKSTYLE	= @DOCBOOKSTYLE@

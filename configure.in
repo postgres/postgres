@@ -1175,9 +1175,6 @@ AC_OUTPUT(
   src/GNUmakefile
   src/Makefile.global
   src/backend/port/Makefile
-  src/pl/tcl/modules/pltcl_listmod
-  src/pl/tcl/modules/pltcl_loadmod
-  src/pl/tcl/modules/pltcl_delmod
 ],
 [
 # Update timestamp for config.h (see Makefile.global)

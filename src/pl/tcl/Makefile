@@ -2,7 +2,7 @@
 #
 # Makefile for the pltcl shared object
 #
-# $Header: /cvsroot/pgsql/src/pl/tcl/Makefile,v 1.28 2001/05/09 20:08:08 momjian Exp $
+# $Header: /cvsroot/pgsql/src/pl/tcl/Makefile,v 1.29 2001/05/09 20:19:30 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -93,7 +93,18 @@ endif
 
 ifeq ($(TCL_SHARED_BUILD), 1)
 
-all: $(INFILES)
+all: $(INFILES) tcl_unknown
+
+tcl_unknown: $(top_builddir)/src/Makefile.global \
+	modules/pltcl_loadmod.in \
+	modules/pltcl_delmod.in \
+	modules/pltcl_listmod.in
+ifeq ($(enable_pltcl_unknown), yes)
+	sed -e 's/@TCLSH@/$(TCLSH)/g' modules/pltcl_loadmod.in > modules/pltcl_loadmod
+	sed -e 's/@TCLSH@/$(TCLSH)/g' modules/pltcl_delmod.in > modules/pltcl_delmod
+	sed -e 's/@TCLSH@/$(TCLSH)/g' modules/pltcl_listmod.in > modules/pltcl_listmod
+	chmod a+x modules/pltcl_loadmod modules/pltcl_delmod modules/pltcl_listmod
+endif
 
 pltcl$(DLSUFFIX): pltcl.o
 
