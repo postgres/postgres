@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Fri Jan 12 00:22:50 EST 2001
+Last updated:		Fri Jan 12 00:32:20 EST 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -153,7 +153,7 @@ COMMANDS
 * Automatically drop constraints/functions when object is dropped
 * CLUSTER
 	* cluster all tables at once
-	* prent lose of constraints, indexes, permissions, inheritance
+	* prent lose of indexes, permissions, inheritance
 	* Automatically keep clustering on a table
 	* Keep statistics about clustering, perhaps during VACUUM ANALYZE
 	  [optimizer]
