@@ -117,21 +117,21 @@
 # The above allows any user on the local system to connect to any database
 # under any username.
  
-#host         template1   192.168.0.0   255.255.255.0     ident     sameuser
+#host         template1   192.168.93.0   255.255.255.0    ident     sameuser
  
-# The above allows any user from any host with IP address 192.168.0.x to
+# The above allows any user from any host with IP address 192.168.93.x to
 # connect to database template1 as the same username that ident on that host
 # identifies him as (typically his Unix username).  
 
-#host         all        192.168.0.1   255.255.255.255   reject
+#host         all        192.168.54.1  255.255.255.255   reject
 #host         all        0.0.0.0       0.0.0.0           trust
 
-# The above would allow anyone anywhere except from 192.168.0.1 to connect to
+# The above would allow anyone anywhere except from 192.168.54.1 to connect to
 # any database under any username.
 
-#host         all        192.168.0.0  255.255.255.0      ident     omicron
+#host         all        192.168.77.0  255.255.255.0      ident     omicron
 #
-# The above would allow users from 192.168.0.x hosts to connect to any
+# The above would allow users from 192.168.77.x hosts to connect to any
 # database, but if Ident says the user is "bryanh" and he requests to
 # connect as PostgreSQL user "guest1", the connection is only allowed if
 # there is an entry for map "omicron" in pg_ident.conf that says "bryanh" is 
