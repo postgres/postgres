@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/oid.c,v 1.45 2001/03/22 03:59:52 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/oid.c,v 1.46 2001/08/14 22:21:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -229,6 +229,24 @@ oidgt(PG_FUNCTION_ARGS)
 	Oid			arg2 = PG_GETARG_OID(1);
 
 	PG_RETURN_BOOL(arg1 > arg2);
+}
+
+Datum
+oidlarger(PG_FUNCTION_ARGS)
+{
+	Oid			arg1 = PG_GETARG_OID(0);
+	Oid			arg2 = PG_GETARG_OID(1);
+
+	PG_RETURN_OID((arg1 > arg2) ? arg1 : arg2);
+}
+
+Datum
+oidsmaller(PG_FUNCTION_ARGS)
+{
+	Oid			arg1 = PG_GETARG_OID(0);
+	Oid			arg2 = PG_GETARG_OID(1);
+
+	PG_RETURN_OID((arg1 < arg2) ? arg1 : arg2);
 }
 
 Datum

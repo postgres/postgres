@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: builtins.h,v 1.160 2001/08/13 18:45:36 tgl Exp $
+ * $Id: builtins.h,v 1.161 2001/08/14 22:21:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -303,6 +303,8 @@ extern Datum oidlt(PG_FUNCTION_ARGS);
 extern Datum oidle(PG_FUNCTION_ARGS);
 extern Datum oidge(PG_FUNCTION_ARGS);
 extern Datum oidgt(PG_FUNCTION_ARGS);
+extern Datum oidlarger(PG_FUNCTION_ARGS);
+extern Datum oidsmaller(PG_FUNCTION_ARGS);
 extern Datum oid_text(PG_FUNCTION_ARGS);
 extern Datum text_oid(PG_FUNCTION_ARGS);
 extern Datum oidvectorin(PG_FUNCTION_ARGS);
@@ -555,6 +557,9 @@ extern Datum numeric_stddev(PG_FUNCTION_ARGS);
 extern Datum int2_sum(PG_FUNCTION_ARGS);
 extern Datum int4_sum(PG_FUNCTION_ARGS);
 extern Datum int8_sum(PG_FUNCTION_ARGS);
+extern Datum int2_avg_accum(PG_FUNCTION_ARGS);
+extern Datum int4_avg_accum(PG_FUNCTION_ARGS);
+extern Datum int8_avg(PG_FUNCTION_ARGS);
 
 /* ri_triggers.c */
 extern Datum RI_FKey_check_ins(PG_FUNCTION_ARGS);

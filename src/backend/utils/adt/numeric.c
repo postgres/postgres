@@ -5,7 +5,7 @@
  *
  *	1998 Jan Wieck
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/numeric.c,v 1.42 2001/06/07 00:09:29 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/numeric.c,v 1.43 2001/08/14 22:21:58 tgl Exp $
  *
  * ----------
  */
@@ -1772,7 +1772,11 @@ numeric_accum(PG_FUNCTION_ARGS)
 
 /*
  * Integer data types all use Numeric accumulators to share code and
- * avoid risk of overflow.
+ * avoid risk of overflow.  For int2 and int4 inputs, Numeric accumulation
+ * is overkill for the N and sum(X) values, but definitely not overkill
+ * for the sum(X*X) value.  Hence, we use int2_accum and int4_accum only
+ * for stddev/variance --- there are faster special-purpose accumulator
+ * routines for SUM and AVG of these datatypes.
  */
 
 Datum
@@ -1979,20 +1983,25 @@ numeric_stddev(PG_FUNCTION_ARGS)
 /*
  * SUM transition functions for integer datatypes.
  *
- * We use a Numeric accumulator to avoid overflow.	Because SQL92 defines
- * the SUM() of no values to be NULL, not zero, the initial condition of
- * the transition data value needs to be NULL.	This means we can't rely
- * on ExecAgg to automatically insert the first non-null data value into
- * the transition data: it doesn't know how to do the type conversion.
- * The upshot is that these routines have to be marked non-strict and
- * handle substitution of the first non-null input themselves.
+ * To avoid overflow, we use accumulators wider than the input datatype.
+ * A Numeric accumulator is needed for int8 input; for int4 and int2
+ * inputs, we use int8 accumulators which should be sufficient for practical
+ * purposes.  (The latter two therefore don't really belong in this file,
+ * but we keep them here anyway.)
+ *
+ * Because SQL92 defines the SUM() of no values to be NULL, not zero,
+ * the initial condition of the transition data value needs to be NULL. This
+ * means we can't rely on ExecAgg to automatically insert the first non-null
+ * data value into the transition data: it doesn't know how to do the type
+ * conversion.  The upshot is that these routines have to be marked non-strict
+ * and handle substitution of the first non-null input themselves.
  */
 
 Datum
 int2_sum(PG_FUNCTION_ARGS)
 {
-	Numeric		oldsum;
-	Datum		newval;
+	int64		oldsum;
+	int64		newval;
 
 	if (PG_ARGISNULL(0))
 	{
@@ -2000,28 +2009,27 @@ int2_sum(PG_FUNCTION_ARGS)
 		if (PG_ARGISNULL(1))
 			PG_RETURN_NULL();	/* still no non-null */
 		/* This is the first non-null input. */
-		newval = DirectFunctionCall1(int2_numeric, PG_GETARG_DATUM(1));
-		PG_RETURN_DATUM(newval);
+		newval = (int64) PG_GETARG_INT16(1);
+		PG_RETURN_INT64(newval);
 	}
 
-	oldsum = PG_GETARG_NUMERIC(0);
+	oldsum = PG_GETARG_INT64(0);
 
 	/* Leave sum unchanged if new input is null. */
 	if (PG_ARGISNULL(1))
-		PG_RETURN_NUMERIC(oldsum);
+		PG_RETURN_INT64(oldsum);
 
 	/* OK to do the addition. */
-	newval = DirectFunctionCall1(int2_numeric, PG_GETARG_DATUM(1));
+	newval = oldsum + (int64) PG_GETARG_INT16(1);
 
-	PG_RETURN_DATUM(DirectFunctionCall2(numeric_add,
-										NumericGetDatum(oldsum), newval));
+	PG_RETURN_INT64(newval);
 }
 
 Datum
 int4_sum(PG_FUNCTION_ARGS)
 {
-	Numeric		oldsum;
-	Datum		newval;
+	int64		oldsum;
+	int64		newval;
 
 	if (PG_ARGISNULL(0))
 	{
@@ -2029,21 +2037,20 @@ int4_sum(PG_FUNCTION_ARGS)
 		if (PG_ARGISNULL(1))
 			PG_RETURN_NULL();	/* still no non-null */
 		/* This is the first non-null input. */
-		newval = DirectFunctionCall1(int4_numeric, PG_GETARG_DATUM(1));
-		PG_RETURN_DATUM(newval);
+		newval = (int64) PG_GETARG_INT32(1);
+		PG_RETURN_INT64(newval);
 	}
 
-	oldsum = PG_GETARG_NUMERIC(0);
+	oldsum = PG_GETARG_INT64(0);
 
 	/* Leave sum unchanged if new input is null. */
 	if (PG_ARGISNULL(1))
-		PG_RETURN_NUMERIC(oldsum);
+		PG_RETURN_INT64(oldsum);
 
 	/* OK to do the addition. */
-	newval = DirectFunctionCall1(int4_numeric, PG_GETARG_DATUM(1));
+	newval = oldsum + (int64) PG_GETARG_INT32(1);
 
-	PG_RETURN_DATUM(DirectFunctionCall2(numeric_add,
-										NumericGetDatum(oldsum), newval));
+	PG_RETURN_INT64(newval);
 }
 
 Datum
@@ -2073,6 +2080,90 @@ int8_sum(PG_FUNCTION_ARGS)
 
 	PG_RETURN_DATUM(DirectFunctionCall2(numeric_add,
 										NumericGetDatum(oldsum), newval));
+}
+
+
+/*
+ * Routines for avg(int2) and avg(int4).  The transition datatype
+ * is a two-element int8 array, holding count and sum.
+ */
+
+typedef struct Int8TransTypeData
+{
+#ifndef INT64_IS_BUSTED
+	int64		count;
+	int64		sum;
+#else
+	/* "int64" isn't really 64 bits, so fake up properly-aligned fields */
+	int32		count;
+	int32		pad1;
+	int32		sum;
+	int32		pad2;
+#endif
+} Int8TransTypeData;
+
+Datum
+int2_avg_accum(PG_FUNCTION_ARGS)
+{
+	ArrayType  *transarray = PG_GETARG_ARRAYTYPE_P_COPY(0);
+	int16		newval = PG_GETARG_INT16(1);
+	Int8TransTypeData *transdata;
+
+	/*
+	 * We copied the input array, so it's okay to scribble on it directly.
+	 */
+	if (ARR_SIZE(transarray) != ARR_OVERHEAD(1) + sizeof(Int8TransTypeData))
+		elog(ERROR, "int2_avg_accum: expected 2-element int8 array");
+	transdata = (Int8TransTypeData *) ARR_DATA_PTR(transarray);
+
+	transdata->count++;
+	transdata->sum += newval;
+
+	PG_RETURN_ARRAYTYPE_P(transarray);
+}
+
+Datum
+int4_avg_accum(PG_FUNCTION_ARGS)
+{
+	ArrayType  *transarray = PG_GETARG_ARRAYTYPE_P_COPY(0);
+	int32		newval = PG_GETARG_INT32(1);
+	Int8TransTypeData *transdata;
+
+	/*
+	 * We copied the input array, so it's okay to scribble on it directly.
+	 */
+	if (ARR_SIZE(transarray) != ARR_OVERHEAD(1) + sizeof(Int8TransTypeData))
+		elog(ERROR, "int4_avg_accum: expected 2-element int8 array");
+	transdata = (Int8TransTypeData *) ARR_DATA_PTR(transarray);
+
+	transdata->count++;
+	transdata->sum += newval;
+
+	PG_RETURN_ARRAYTYPE_P(transarray);
+}
+
+Datum
+int8_avg(PG_FUNCTION_ARGS)
+{
+	ArrayType  *transarray = PG_GETARG_ARRAYTYPE_P(0);
+	Int8TransTypeData *transdata;
+	Datum		countd,
+				sumd;
+
+	if (ARR_SIZE(transarray) != ARR_OVERHEAD(1) + sizeof(Int8TransTypeData))
+		elog(ERROR, "int8_avg: expected 2-element int8 array");
+	transdata = (Int8TransTypeData *) ARR_DATA_PTR(transarray);
+
+	/* SQL92 defines AVG of no values to be NULL */
+	if (transdata->count == 0)
+		PG_RETURN_NULL();
+
+	countd = DirectFunctionCall1(int8_numeric,
+								 Int64GetDatumFast(transdata->count));
+	sumd = DirectFunctionCall1(int8_numeric,
+							   Int64GetDatumFast(transdata->sum));
+
+	PG_RETURN_DATUM(DirectFunctionCall2(numeric_div, sumd, countd));
 }
 
 

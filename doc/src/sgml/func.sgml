@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.64 2001/07/11 22:14:01 momjian Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.65 2001/08/14 22:21:58 tgl Exp $ -->
 
 <chapter id="functions">
  <title>Functions and Operators</title>
@@ -3768,7 +3768,7 @@ SELECT NULLIF(value, '(none)') ...
      <row>
       <entry>COUNT(*)</entry>
       <entry>number of input values</entry>
-      <entry>The return value is of type <type>integer</type>.</entry>
+      <entry>The return value is of type <type>bigint</type>.</entry>
      </row>
 
      <row>
@@ -3777,7 +3777,7 @@ SELECT NULLIF(value, '(none)') ...
        Counts the input values for which the value of <replaceable
        class="parameter">expression</replaceable> is not NULL.
       </entry>
-      <entry></entry>
+      <entry>The return value is of type <type>bigint</type>.</entry>
      </row>
 
      <row>
@@ -3822,7 +3822,9 @@ SELECT NULLIF(value, '(none)') ...
        <type>smallint</type>, <type>integer</type>,
        <type>bigint</type>, <type>real</type>, <type>double
        precision</type>, <type>numeric</type>, <type>interval</type>.
-       The result is of type <type>numeric</type> for any integer type
+       The result is of type <type>bigint</type> for <type>smallint</type>
+       or <type>integer</type> input, <type>numeric</type> for
+       <type>bigint</type> 
        input, <type>double precision</type> for floating point input,
        otherwise the same as the input data type.
       </entry>
@@ -3836,7 +3838,8 @@ SELECT NULLIF(value, '(none)') ...
         <primary>variance</primary>
        </indexterm>
        The variance is the square of the standard deviation.  The
-       supported data types are the same.
+       supported data types and result types are the same as for
+       standard deviation.
       </entry>
      </row>
 
@@ -3848,7 +3851,8 @@ SELECT NULLIF(value, '(none)') ...
    It should be noted that except for <function>COUNT</function>,
    these functions return NULL when no rows are selected.  In
    particular, <function>SUM</function> of no rows returns NULL, not
-   zero as one might expect.
+   zero as one might expect.  <function>COALESCE</function> may be
+   used to substitute zero for NULL when necessary.
   </para>
 
  </sect1>

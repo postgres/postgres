@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.203 2001/08/13 18:45:36 tgl Exp $
+ * $Id: pg_proc.h,v 1.204 2001/08/14 22:21:58 tgl Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -1491,6 +1491,8 @@ DESCR("truncate timestamp to specified units");
 DATA(insert OID = 1218 (  date_trunc	   PGUID 12 f t f t 2 f 1186 "25 1186" 100 0 0 100	interval_trunc - ));
 DESCR("truncate interval to specified units");
 
+DATA(insert OID = 1219 (  int8inc		   PGUID 12 f t t t 1 f 20 "20" 100 0 0 100  int8inc - ));
+DESCR("increment");
 DATA(insert OID = 1230 (  int8abs		   PGUID 12 f t t t 1 f 20 "20" 100 0 0 100  int8abs - ));
 DESCR("absolute value");
 
@@ -2544,9 +2546,9 @@ DATA(insert OID = 1838 (  numeric_variance PGUID 12 f t t t 1 f 1700 "1231" 100 
 DESCR("VARIANCE aggregate final function");
 DATA(insert OID = 1839 (  numeric_stddev   PGUID 12 f t t t 1 f 1700 "1231" 100 0 0 100  numeric_stddev - ));
 DESCR("STDDEV aggregate final function");
-DATA(insert OID = 1840 (  int2_sum		   PGUID 12 f t t f 2 f 1700 "1700 21" 100 0 0 100	int2_sum - ));
+DATA(insert OID = 1840 (  int2_sum		   PGUID 12 f t t f 2 f 20 "20 21" 100 0 0 100	int2_sum - ));
 DESCR("SUM(int2) transition function");
-DATA(insert OID = 1841 (  int4_sum		   PGUID 12 f t t f 2 f 1700 "1700 23" 100 0 0 100	int4_sum - ));
+DATA(insert OID = 1841 (  int4_sum		   PGUID 12 f t t f 2 f 20 "20 23" 100 0 0 100	int4_sum - ));
 DESCR("SUM(int4) transition function");
 DATA(insert OID = 1842 (  int8_sum		   PGUID 12 f t t f 2 f 1700 "1700 20" 100 0 0 100	int8_sum - ));
 DESCR("SUM(int8) transition function");
@@ -2554,6 +2556,12 @@ DATA(insert OID = 1843 (  interval_accum   PGUID 12 f t t t 2 f 1187 "1187 1186"
 DESCR("aggregate transition function");
 DATA(insert OID = 1844 (  interval_avg	   PGUID 12 f t t t 1 f 1186 "1187" 100 0 0 100  interval_avg - ));
 DESCR("AVG aggregate final function");
+DATA(insert OID = 1962 (  int2_avg_accum   PGUID 12 f t t t 2 f 1016 "1016 21" 100 0 0 100	int2_avg_accum - ));
+DESCR("AVG(int2) transition function");
+DATA(insert OID = 1963 (  int4_avg_accum   PGUID 12 f t t t 2 f 1016 "1016 23" 100 0 0 100	int4_avg_accum - ));
+DESCR("AVG(int4) transition function");
+DATA(insert OID = 1964 (  int8_avg		   PGUID 12 f t t t 1 f 1700 "1016" 100 0 0 100  int8_avg - ));
+DESCR("AVG(int) aggregate final function");
 
 /* To ASCII conversion */
 DATA(insert OID = 1845 ( to_ascii	PGUID 12 f t t t 1 f	25 "25" 100 0 0 100  to_ascii_default - ));
@@ -2714,6 +2722,11 @@ DATA(insert OID = 1953 (  byteane		   PGUID 12 f t t t 2 f 16 "17 17" 100 0 0 10
 DESCR("not equal");
 DATA(insert OID = 1954 (  byteacmp		   PGUID 12 f t t t 2 f 23 "17 17" 100 0 0 100	byteacmp - ));
 DESCR("less-equal-greater");
+
+DATA(insert OID = 1965 (  oidlarger		   PGUID 12 f t t t 2 f 26 "26 26" 100 0 0 100	oidlarger - ));
+DESCR("larger of two");
+DATA(insert OID = 1966 (  oidsmaller	   PGUID 12 f t t t 2 f 26 "26 26" 100 0 0 100	oidsmaller - ));
+DESCR("smaller of two");
 
  
 /*

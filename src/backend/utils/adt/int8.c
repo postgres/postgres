@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/int8.c,v 1.30 2001/06/07 00:09:29 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/int8.c,v 1.31 2001/08/14 22:21:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -501,6 +501,14 @@ int8fac(PG_FUNCTION_ARGS)
 			result *= i;
 
 	PG_RETURN_INT64(result);
+}
+
+Datum
+int8inc(PG_FUNCTION_ARGS)
+{
+	int64		arg = PG_GETARG_INT64(0);
+
+	PG_RETURN_INT64(arg + 1);
 }
 
 Datum
