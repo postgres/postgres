@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/query.sgml,v 1.31 2003/06/24 23:26:46 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/query.sgml,v 1.32 2003/06/24 23:27:24 momjian Exp $
 -->
 
  <chapter id="tutorial-sql">
@@ -61,8 +61,8 @@ $Header: /cvsroot/pgsql/doc/src/sgml/query.sgml,v 1.31 2003/06/24 23:26:46 momji
     <indexterm><primary>relation</primary></indexterm>
     <indexterm><primary>table</primary></indexterm>
 
-    <productname>PostgreSQL</productname> is a <firstterm>object relational
-    database management system</firstterm> (<acronym>ORDBMS</acronym>).
+    <productname>PostgreSQL</productname> is a <firstterm>relational
+    database management system</firstterm> (<acronym>RDBMS</acronym>).
     That means it is a system for managing data stored in
     <firstterm>relations</firstterm>.  Relation is essentially a
     mathematical term for <firstterm>table</firstterm>.  The notion of
