@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.85 2001/03/23 04:49:53 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.86 2001/04/19 04:29:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -333,21 +333,32 @@ ExecEvalVar(Var *variable, ExprContext *econtext, bool *isNull)
 
 	/*
 	 * If the attribute number is invalid, then we are supposed to return
-	 * the entire tuple, we give back a whole slot so that callers know
-	 * what the tuple looks like.  XXX why copy?  Couldn't we just give
-	 * back the existing slot?
+	 * the entire tuple; we give back a whole slot so that callers know
+	 * what the tuple looks like.
+	 *
+	 * XXX this is a horrid crock: since the pointer to the slot might
+	 * live longer than the current evaluation context, we are forced to
+	 * copy the tuple and slot into a long-lived context --- we use
+	 * TransactionCommandContext which should be safe enough.  This
+	 * represents a serious memory leak if many such tuples are processed
+	 * in one command, however.  We ought to redesign the representation
+	 * of whole-tuple datums so that this is not necessary.
+	 *
+	 * We assume it's OK to point to the existing tupleDescriptor, rather
+	 * than copy that too.
 	 */
 	if (attnum == InvalidAttrNumber)
 	{
-		TupleTableSlot *tempSlot = MakeTupleTableSlot();
-		TupleDesc	td;
+		MemoryContext oldContext;
+		TupleTableSlot *tempSlot;
 		HeapTuple	tup;
 
+		oldContext = MemoryContextSwitchTo(TransactionCommandContext);
+		tempSlot = MakeTupleTableSlot();
 		tup = heap_copytuple(heapTuple);
-		td = CreateTupleDescCopy(tuple_type);
-
-		ExecSetSlotDescriptor(tempSlot, td, true);
 		ExecStoreTuple(tup, tempSlot, InvalidBuffer, true);
+		ExecSetSlotDescriptor(tempSlot, tuple_type, false);
+		MemoryContextSwitchTo(oldContext);
 		return PointerGetDatum(tempSlot);
 	}
 
