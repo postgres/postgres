@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2003, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/help.c,v 1.84 2003/12/01 22:34:48 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/help.c,v 1.85 2004/01/09 21:15:51 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "common.h"
@@ -195,7 +195,7 @@ slashUsage(unsigned short int pager)
 	fprintf(output, _("  \\p             show the contents of the query buffer\n"));
 	fprintf(output, _("  \\r             reset (clear) the query buffer\n"));
 	fprintf(output, _("  \\s [FILE]      display history or save it to file\n"));
-	fprintf(output, _("  \\w [FILE]      write query buffer to file\n"));
+	fprintf(output, _("  \\w FILE        write query buffer to file\n"));
 	fprintf(output, "\n");
 
 	fprintf(output, _("Input/Output\n"));
