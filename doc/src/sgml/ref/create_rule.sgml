@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_rule.sgml,v 1.15 2000/04/12 20:07:13 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_rule.sgml,v 1.16 2000/05/20 11:38:25 momjian Exp $
 Postgres documentation
 -->
 
@@ -320,7 +320,8 @@ CREATE RULE example_4 AS
 CREATE RULE example_5 AS
     ON INERT TO emp WHERE new.salary > 5000
     DO 
-	UPDATE NEWSET SET salary = 5000;
+	UPDATE emp SET salary = 5000
+	WHERE emp.oid = new.oid;
    </programlisting>
   </para>
  </refsect1>
