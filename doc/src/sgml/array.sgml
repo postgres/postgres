@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/array.sgml,v 1.37 2004/08/08 05:01:51 joe Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/array.sgml,v 1.38 2004/08/08 05:55:55 joe Exp $ -->
 
 <sect1 id="arrays">
  <title>Arrays</title>
@@ -585,10 +585,10 @@ SELECT f1[1][-2][3] AS e1, f1[1][-1][5] AS e2
    quotes around any individual array element. You <emphasis>must</> do so
    if the element value would otherwise confuse the array-value parser.
    For example, elements containing curly braces, commas (or whatever the
-   delimiter character is), double quotes, backslashes, or leading white
-   space must be double-quoted.  To put a double quote or backslash in a
-   quoted array element value, precede it with a backslash. Alternatively,
-   you can use backslash-escaping to protect all data characters that would
+   delimiter character is), double quotes, backslashes, or leading or trailing
+   whitespace must be double-quoted.  To put a double quote or backslash in a
+   quoted array element value, precede it with a backslash. Alternatively, you
+   can use backslash-escaping to protect all data characters that would
    otherwise be taken as array syntax.
   </para>
 
