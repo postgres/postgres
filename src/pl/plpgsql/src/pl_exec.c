@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.105 2004/06/05 19:48:09 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.106 2004/06/06 00:41:28 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -171,7 +171,7 @@ static char *convert_value_to_string(Datum value, Oid valtype);
 static Datum exec_cast_value(Datum value, Oid valtype,
 				Oid reqtype,
 				FmgrInfo *reqinput,
-				Oid reqtypelem,
+				Oid reqtypioparam,
 				int32 reqtypmod,
 				bool *isnull);
 static Datum exec_simple_cast_value(Datum value, Oid valtype,
@@ -393,7 +393,7 @@ plpgsql_exec_function(PLpgSQL_function * func, FunctionCallInfo fcinfo)
 			estate.retval = exec_cast_value(estate.retval, estate.rettype,
 											func->fn_rettype,
 											&(func->fn_retinput),
-											func->fn_rettypelem,
+											func->fn_rettypioparam,
 											-1,
 											&fcinfo->isnull);
 
@@ -1268,7 +1268,7 @@ exec_stmt_fori(PLpgSQL_execstate * estate, PLpgSQL_stmt_fori * stmt)
 	value = exec_eval_expr(estate, stmt->lower, &isnull, &valtype);
 	value = exec_cast_value(value, valtype, var->datatype->typoid,
 							&(var->datatype->typinput),
-							var->datatype->typelem,
+							var->datatype->typioparam,
 							var->datatype->atttypmod, &isnull);
 	if (isnull)
 		ereport(ERROR,
@@ -1284,7 +1284,7 @@ exec_stmt_fori(PLpgSQL_execstate * estate, PLpgSQL_stmt_fori * stmt)
 	value = exec_eval_expr(estate, stmt->upper, &isnull, &valtype);
 	value = exec_cast_value(value, valtype, var->datatype->typoid,
 							&(var->datatype->typinput),
-							var->datatype->typelem,
+							var->datatype->typioparam,
 							var->datatype->atttypmod, &isnull);
 	if (isnull)
 		ereport(ERROR,
@@ -2674,7 +2674,7 @@ exec_assign_value(PLpgSQL_execstate * estate,
 
 			newvalue = exec_cast_value(value, valtype, var->datatype->typoid,
 									   &(var->datatype->typinput),
-									   var->datatype->typelem,
+									   var->datatype->typioparam,
 									   var->datatype->atttypmod,
 									   isNull);
 
@@ -2917,8 +2917,7 @@ exec_assign_value(PLpgSQL_execstate * estate,
 			bool		havenullsubscript,
 						oldarrayisnull;
 			Oid			arraytypeid,
-						arrayelemtypeid,
-						arrayInputFn;
+						arrayelemtypeid;
 			int16		elemtyplen;
 			bool		elemtypbyval;
 			char		elemtypalign;
@@ -2954,7 +2953,7 @@ exec_assign_value(PLpgSQL_execstate * estate,
 			exec_eval_datum(estate, target, InvalidOid,
 							&arraytypeid, &oldarrayval, &oldarrayisnull);
 
-			getTypeInputInfo(arraytypeid, &arrayInputFn, &arrayelemtypeid);
+			arrayelemtypeid = get_element_type(arraytypeid);
 			if (!OidIsValid(arrayelemtypeid))
 				ereport(ERROR,
 						(errcode(ERRCODE_DATATYPE_MISMATCH),
@@ -3672,19 +3671,16 @@ make_tuple_from_row(PLpgSQL_execstate * estate,
 static char *
 convert_value_to_string(Datum value, Oid valtype)
 {
-	Oid			typOutput;
-	Oid			typElem;
+	Oid			typoutput;
+	Oid			typioparam;
 	bool		typIsVarlena;
-	FmgrInfo	finfo_output;
 
-	getTypeOutputInfo(valtype, &typOutput, &typElem, &typIsVarlena);
+	getTypeOutputInfo(valtype, &typoutput, &typioparam, &typIsVarlena);
 
-	fmgr_info(typOutput, &finfo_output);
-
-	return DatumGetCString(FunctionCall3(&finfo_output,
-										 value,
-										 ObjectIdGetDatum(typElem),
-										 Int32GetDatum(-1)));
+	return DatumGetCString(OidFunctionCall3(typoutput,
+											value,
+											ObjectIdGetDatum(typioparam),
+											Int32GetDatum(-1)));
 }
 
 /* ----------
@@ -3695,7 +3691,7 @@ static Datum
 exec_cast_value(Datum value, Oid valtype,
 				Oid reqtype,
 				FmgrInfo *reqinput,
-				Oid reqtypelem,
+				Oid reqtypioparam,
 				int32 reqtypmod,
 				bool *isnull)
 {
@@ -3712,7 +3708,7 @@ exec_cast_value(Datum value, Oid valtype,
 			extval = convert_value_to_string(value, valtype);
 			value = FunctionCall3(reqinput,
 								  CStringGetDatum(extval),
-								  ObjectIdGetDatum(reqtypelem),
+								  ObjectIdGetDatum(reqtypioparam),
 								  Int32GetDatum(reqtypmod));
 			pfree(extval);
 		}
@@ -3738,19 +3734,19 @@ exec_simple_cast_value(Datum value, Oid valtype,
 	{
 		if (valtype != reqtype || reqtypmod != -1)
 		{
-			Oid			typInput;
-			Oid			typElem;
+			Oid			typinput;
+			Oid			typioparam;
 			FmgrInfo	finfo_input;
 
-			getTypeInputInfo(reqtype, &typInput, &typElem);
+			getTypeInputInfo(reqtype, &typinput, &typioparam);
 
-			fmgr_info(typInput, &finfo_input);
+			fmgr_info(typinput, &finfo_input);
 
 			value = exec_cast_value(value,
 									valtype,
 									reqtype,
 									&finfo_input,
-									typElem,
+									typioparam,
 									reqtypmod,
 									isnull);
 		}

@@ -9,7 +9,7 @@
  *
  * Copyright (c) 2002-2003, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/funcapi.h,v 1.11 2004/04/01 21:28:46 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/funcapi.h,v 1.12 2004/06/06 00:41:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,8 +40,8 @@ typedef struct AttInMetadata
 	/* array of attribute type input function finfo */
 	FmgrInfo   *attinfuncs;
 
-	/* array of attribute type typelem */
-	Oid		   *attelems;
+	/* array of attribute type i/o parameter OIDs */
+	Oid		   *attioparams;
 
 	/* array of attribute typmod */
 	int32	   *atttypmods;

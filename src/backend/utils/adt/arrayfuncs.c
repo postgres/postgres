@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.102 2004/01/07 18:56:28 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.103 2004/06/06 00:41:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -75,12 +75,12 @@
 
 static int	ArrayCount(char *str, int *dim, char typdelim);
 static Datum *ReadArrayStr(char *arrayStr, int nitems, int ndim, int *dim,
-			 FmgrInfo *inputproc, Oid typelem, int32 typmod,
+			 FmgrInfo *inputproc, Oid typioparam, int32 typmod,
 			 char typdelim,
 			 int typlen, bool typbyval, char typalign,
 			 int *nbytes);
 static Datum *ReadArrayBinary(StringInfo buf, int nitems,
-				FmgrInfo *receiveproc, Oid typelem,
+				FmgrInfo *receiveproc, Oid typioparam,
 				int typlen, bool typbyval, char typalign,
 				int *nbytes);
 static void CopyArrayEls(char *p, Datum *values, int nitems,
@@ -130,7 +130,7 @@ array_in(PG_FUNCTION_ARGS)
 	bool		typbyval;
 	char		typalign;
 	char		typdelim;
-	Oid			typelem;
+	Oid			typioparam;
 	char	   *string_save,
 			   *p;
 	int			i,
@@ -166,7 +166,7 @@ array_in(PG_FUNCTION_ARGS)
 		get_type_io_data(element_type, IOFunc_input,
 						 &my_extra->typlen, &my_extra->typbyval,
 						 &my_extra->typalign, &my_extra->typdelim,
-						 &my_extra->typelem, &my_extra->typiofunc);
+						 &my_extra->typioparam, &my_extra->typiofunc);
 		fmgr_info_cxt(my_extra->typiofunc, &my_extra->proc,
 					  fcinfo->flinfo->fn_mcxt);
 		my_extra->element_type = element_type;
@@ -175,7 +175,7 @@ array_in(PG_FUNCTION_ARGS)
 	typbyval = my_extra->typbyval;
 	typalign = my_extra->typalign;
 	typdelim = my_extra->typdelim;
-	typelem = my_extra->typelem;
+	typioparam = my_extra->typioparam;
 
 	/* Make a modifiable copy of the input */
 	/* XXX why are we allocating an extra 2 bytes here? */
@@ -299,7 +299,7 @@ array_in(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 				 errmsg("missing left brace")));
 
-	dataPtr = ReadArrayStr(p, nitems, ndim, dim, &my_extra->proc, typelem,
+	dataPtr = ReadArrayStr(p, nitems, ndim, dim, &my_extra->proc, typioparam,
 						   typmod, typdelim, typlen, typbyval, typalign,
 						   &nbytes);
 	nbytes += ARR_OVERHEAD(ndim);
@@ -439,7 +439,7 @@ ReadArrayStr(char *arrayStr,
 			 int ndim,
 			 int *dim,
 			 FmgrInfo *inputproc,
-			 Oid typelem,
+			 Oid typioparam,
 			 int32 typmod,
 			 char typdelim,
 			 int typlen,
@@ -571,7 +571,7 @@ ReadArrayStr(char *arrayStr,
 
 		values[i] = FunctionCall3(inputproc,
 								  CStringGetDatum(itemstart),
-								  ObjectIdGetDatum(typelem),
+								  ObjectIdGetDatum(typioparam),
 								  Int32GetDatum(typmod));
 	}
 
@@ -675,7 +675,7 @@ array_out(PG_FUNCTION_ARGS)
 	bool		typbyval;
 	char		typalign;
 	char		typdelim;
-	Oid			typelem;
+	Oid			typioparam;
 	char	   *p,
 			   *tmp,
 			   *retval,
@@ -716,7 +716,7 @@ array_out(PG_FUNCTION_ARGS)
 		get_type_io_data(element_type, IOFunc_output,
 						 &my_extra->typlen, &my_extra->typbyval,
 						 &my_extra->typalign, &my_extra->typdelim,
-						 &my_extra->typelem, &my_extra->typiofunc);
+						 &my_extra->typioparam, &my_extra->typiofunc);
 		fmgr_info_cxt(my_extra->typiofunc, &my_extra->proc,
 					  fcinfo->flinfo->fn_mcxt);
 		my_extra->element_type = element_type;
@@ -725,7 +725,7 @@ array_out(PG_FUNCTION_ARGS)
 	typbyval = my_extra->typbyval;
 	typalign = my_extra->typalign;
 	typdelim = my_extra->typdelim;
-	typelem = my_extra->typelem;
+	typioparam = my_extra->typioparam;
 
 	ndim = ARR_NDIM(v);
 	dim = ARR_DIMS(v);
@@ -754,7 +754,7 @@ array_out(PG_FUNCTION_ARGS)
 		itemvalue = fetch_att(p, typbyval, typlen);
 		values[i] = DatumGetCString(FunctionCall3(&my_extra->proc,
 												  itemvalue,
-											   ObjectIdGetDatum(typelem),
+											   ObjectIdGetDatum(typioparam),
 												  Int32GetDatum(-1)));
 		p = att_addlength(p, typlen, PointerGetDatum(p));
 		p = (char *) att_align(p, typalign);
@@ -871,7 +871,7 @@ array_recv(PG_FUNCTION_ARGS)
 	int			typlen;
 	bool		typbyval;
 	char		typalign;
-	Oid			typelem;
+	Oid			typioparam;
 	int			i,
 				nitems;
 	int32		nbytes;
@@ -946,7 +946,7 @@ array_recv(PG_FUNCTION_ARGS)
 		get_type_io_data(element_type, IOFunc_receive,
 						 &my_extra->typlen, &my_extra->typbyval,
 						 &my_extra->typalign, &my_extra->typdelim,
-						 &my_extra->typelem, &my_extra->typiofunc);
+						 &my_extra->typioparam, &my_extra->typiofunc);
 		if (!OidIsValid(my_extra->typiofunc))
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_FUNCTION),
@@ -959,9 +959,9 @@ array_recv(PG_FUNCTION_ARGS)
 	typlen = my_extra->typlen;
 	typbyval = my_extra->typbyval;
 	typalign = my_extra->typalign;
-	typelem = my_extra->typelem;
+	typioparam = my_extra->typioparam;
 
-	dataPtr = ReadArrayBinary(buf, nitems, &my_extra->proc, typelem,
+	dataPtr = ReadArrayBinary(buf, nitems, &my_extra->proc, typioparam,
 							  typlen, typbyval, typalign,
 							  &nbytes);
 	nbytes += ARR_OVERHEAD(ndim);
@@ -994,7 +994,7 @@ static Datum *
 ReadArrayBinary(StringInfo buf,
 				int nitems,
 				FmgrInfo *receiveproc,
-				Oid typelem,
+				Oid typioparam,
 				int typlen,
 				bool typbyval,
 				char typalign,
@@ -1037,7 +1037,7 @@ ReadArrayBinary(StringInfo buf,
 		/* Now call the element's receiveproc */
 		values[i] = FunctionCall2(receiveproc,
 								  PointerGetDatum(&elem_buf),
-								  ObjectIdGetDatum(typelem));
+								  ObjectIdGetDatum(typioparam));
 
 		/* Trouble if it didn't eat the whole buffer */
 		if (elem_buf.cursor != itemlen)
@@ -1086,7 +1086,7 @@ array_send(PG_FUNCTION_ARGS)
 	int			typlen;
 	bool		typbyval;
 	char		typalign;
-	Oid			typelem;
+	Oid			typioparam;
 	char	   *p;
 	int			nitems,
 				i;
@@ -1118,7 +1118,7 @@ array_send(PG_FUNCTION_ARGS)
 		get_type_io_data(element_type, IOFunc_send,
 						 &my_extra->typlen, &my_extra->typbyval,
 						 &my_extra->typalign, &my_extra->typdelim,
-						 &my_extra->typelem, &my_extra->typiofunc);
+						 &my_extra->typioparam, &my_extra->typiofunc);
 		if (!OidIsValid(my_extra->typiofunc))
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_FUNCTION),
@@ -1131,7 +1131,7 @@ array_send(PG_FUNCTION_ARGS)
 	typlen = my_extra->typlen;
 	typbyval = my_extra->typbyval;
 	typalign = my_extra->typalign;
-	typelem = my_extra->typelem;
+	typioparam = my_extra->typioparam;
 
 	ndim = ARR_NDIM(v);
 	dim = ARR_DIMS(v);
@@ -1160,7 +1160,7 @@ array_send(PG_FUNCTION_ARGS)
 
 		outputbytes = DatumGetByteaP(FunctionCall2(&my_extra->proc,
 												   itemvalue,
-											 ObjectIdGetDatum(typelem)));
+											 ObjectIdGetDatum(typioparam)));
 		/* We assume the result will not have been toasted */
 		pq_sendint(&buf, VARSIZE(outputbytes) - VARHDRSZ, 4);
 		pq_sendbytes(&buf, VARDATA(outputbytes),

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/varlena.c,v 1.114 2004/05/30 23:40:36 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/varlena.c,v 1.115 2004/06/06 00:41:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2172,7 +2172,7 @@ array_to_text(PG_FUNCTION_ARGS)
 	int			typlen;
 	bool		typbyval;
 	char		typalign;
-	Oid			typelem;
+	Oid			typioparam;
 	StringInfo	result_str = makeStringInfo();
 	int			i;
 	ArrayMetaState *my_extra;
@@ -2211,7 +2211,7 @@ array_to_text(PG_FUNCTION_ARGS)
 		get_type_io_data(element_type, IOFunc_output,
 						 &my_extra->typlen, &my_extra->typbyval,
 						 &my_extra->typalign, &my_extra->typdelim,
-						 &my_extra->typelem, &my_extra->typiofunc);
+						 &my_extra->typioparam, &my_extra->typiofunc);
 		fmgr_info_cxt(my_extra->typiofunc, &my_extra->proc,
 					  fcinfo->flinfo->fn_mcxt);
 		my_extra->element_type = element_type;
@@ -2219,7 +2219,7 @@ array_to_text(PG_FUNCTION_ARGS)
 	typlen = my_extra->typlen;
 	typbyval = my_extra->typbyval;
 	typalign = my_extra->typalign;
-	typelem = my_extra->typelem;
+	typioparam = my_extra->typioparam;
 
 	for (i = 0; i < nitems; i++)
 	{
@@ -2230,7 +2230,7 @@ array_to_text(PG_FUNCTION_ARGS)
 
 		value = DatumGetCString(FunctionCall3(&my_extra->proc,
 											  itemvalue,
-											  ObjectIdGetDatum(typelem),
+											  ObjectIdGetDatum(typioparam),
 											  Int32GetDatum(-1)));
 
 		if (i > 0)

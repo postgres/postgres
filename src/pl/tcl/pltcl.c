@@ -31,7 +31,7 @@
  *	  ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/tcl/pltcl.c,v 1.85 2004/05/30 23:40:41 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/pl/tcl/pltcl.c,v 1.86 2004/06/06 00:41:28 tgl Exp $
  *
  **********************************************************************/
 
@@ -51,7 +51,6 @@
 #include "access/heapam.h"
 #include "catalog/pg_language.h"
 #include "catalog/pg_proc.h"
-#include "catalog/pg_type.h"
 #include "commands/trigger.h"
 #include "executor/spi.h"
 #include "fmgr.h"
@@ -59,6 +58,7 @@
 #include "parser/parse_type.h"
 #include "tcop/tcopprot.h"
 #include "utils/builtins.h"
+#include "utils/lsyscache.h"
 #include "utils/syscache.h"
 #include "utils/typcache.h"
 
@@ -105,10 +105,10 @@ typedef struct pltcl_proc_desc
 	CommandId	fn_cmin;
 	bool		lanpltrusted;
 	FmgrInfo	result_in_func;
-	Oid			result_in_elem;
+	Oid			result_typioparam;
 	int			nargs;
 	FmgrInfo	arg_out_func[FUNC_MAX_ARGS];
-	Oid			arg_out_elem[FUNC_MAX_ARGS];
+	Oid			arg_typioparam[FUNC_MAX_ARGS];
 	bool		arg_is_rowtype[FUNC_MAX_ARGS];
 }	pltcl_proc_desc;
 
@@ -123,7 +123,7 @@ typedef struct pltcl_query_desc
 	int			nargs;
 	Oid		   *argtypes;
 	FmgrInfo   *arginfuncs;
-	Oid		   *argtypelems;
+	Oid		   *argtypioparams;
 }	pltcl_query_desc;
 
 
@@ -543,7 +543,7 @@ pltcl_func_handler(PG_FUNCTION_ARGS)
 
 				tmp = DatumGetCString(FunctionCall3(&prodesc->arg_out_func[i],
 													fcinfo->arg[i],
-							  ObjectIdGetDatum(prodesc->arg_out_elem[i]),
+							  ObjectIdGetDatum(prodesc->arg_typioparam[i]),
 													Int32GetDatum(-1)));
 				UTF_BEGIN;
 				Tcl_DStringAppendElement(&tcl_cmd, UTF_E2U(tmp));
@@ -622,7 +622,7 @@ pltcl_func_handler(PG_FUNCTION_ARGS)
 		UTF_BEGIN;
 		retval = FunctionCall3(&prodesc->result_in_func,
 							   PointerGetDatum(UTF_U2E(interp->result)),
-							   ObjectIdGetDatum(prodesc->result_in_elem),
+							   ObjectIdGetDatum(prodesc->result_typioparam),
 							   Int32GetDatum(-1));
 		UTF_END;
 	}
@@ -908,7 +908,7 @@ pltcl_trigger_handler(PG_FUNCTION_ARGS)
 		int			attnum;
 		HeapTuple	typeTup;
 		Oid			typinput;
-		Oid			typelem;
+		Oid			typioparam;
 		FmgrInfo	finfo;
 
 		/************************************************************
@@ -943,7 +943,7 @@ pltcl_trigger_handler(PG_FUNCTION_ARGS)
 			elog(ERROR, "cache lookup failed for type %u",
 				 tupdesc->attrs[attnum - 1]->atttypid);
 		typinput = ((Form_pg_type) GETSTRUCT(typeTup))->typinput;
-		typelem = ((Form_pg_type) GETSTRUCT(typeTup))->typelem;
+		typioparam = getTypeIOParam(typeTup);
 		ReleaseSysCache(typeTup);
 
 		/************************************************************
@@ -955,7 +955,7 @@ pltcl_trigger_handler(PG_FUNCTION_ARGS)
 		modvalues[attnum - 1] =
 			FunctionCall3(&finfo,
 						  CStringGetDatum(UTF_U2E(ret_value)),
-						  ObjectIdGetDatum(typelem),
+						  ObjectIdGetDatum(typioparam),
 				   Int32GetDatum(tupdesc->attrs[attnum - 1]->atttypmod));
 		UTF_END;
 	}
@@ -1150,7 +1150,7 @@ compile_pltcl_function(Oid fn_oid, Oid tgreloid)
 			}
 
 			perm_fmgr_info(typeStruct->typinput, &(prodesc->result_in_func));
-			prodesc->result_in_elem = typeStruct->typelem;
+			prodesc->result_typioparam = getTypeIOParam(typeTup);
 
 			ReleaseSysCache(typeTup);
 		}
@@ -1198,7 +1198,7 @@ compile_pltcl_function(Oid fn_oid, Oid tgreloid)
 					prodesc->arg_is_rowtype[i] = false;
 					perm_fmgr_info(typeStruct->typoutput,
 								   &(prodesc->arg_out_func[i]));
-					prodesc->arg_out_elem[i] = typeStruct->typelem;
+					prodesc->arg_typioparam[i] = getTypeIOParam(typeTup);
 					snprintf(buf, sizeof(buf), "%d", i + 1);
 				}
 
@@ -1820,7 +1820,7 @@ pltcl_SPI_prepare(ClientData cdata, Tcl_Interp *interp,
 	qdesc->nargs = nargs;
 	qdesc->argtypes = (Oid *) malloc(nargs * sizeof(Oid));
 	qdesc->arginfuncs = (FmgrInfo *) malloc(nargs * sizeof(FmgrInfo));
-	qdesc->argtypelems = (Oid *) malloc(nargs * sizeof(Oid));
+	qdesc->argtypioparams = (Oid *) malloc(nargs * sizeof(Oid));
 
 	/************************************************************
 	 * Prepare to start a controlled return through all
@@ -1833,7 +1833,7 @@ pltcl_SPI_prepare(ClientData cdata, Tcl_Interp *interp,
 		pltcl_restart_in_progress = 1;
 		free(qdesc->argtypes);
 		free(qdesc->arginfuncs);
-		free(qdesc->argtypelems);
+		free(qdesc->argtypioparams);
 		free(qdesc);
 		ckfree((char *) args);
 		return TCL_ERROR;
@@ -1865,7 +1865,7 @@ pltcl_SPI_prepare(ClientData cdata, Tcl_Interp *interp,
 		qdesc->argtypes[i] = HeapTupleGetOid(typeTup);
 		perm_fmgr_info(((Form_pg_type) GETSTRUCT(typeTup))->typinput,
 					   &(qdesc->arginfuncs[i]));
-		qdesc->argtypelems[i] = ((Form_pg_type) GETSTRUCT(typeTup))->typelem;
+		qdesc->argtypioparams[i] = getTypeIOParam(typeTup);
 		ReleaseSysCache(typeTup);
 
 		list_free(typename->names);
@@ -2117,7 +2117,7 @@ pltcl_SPI_execp(ClientData cdata, Tcl_Interp *interp,
 				argvalues[j] =
 					FunctionCall3(&qdesc->arginfuncs[j],
 								  CStringGetDatum(UTF_U2E(callargs[j])),
-								  ObjectIdGetDatum(qdesc->argtypelems[j]),
+								  ObjectIdGetDatum(qdesc->argtypioparams[j]),
 								  Int32GetDatum(-1));
 				UTF_END;
 			}
@@ -2339,7 +2339,7 @@ pltcl_set_tuple_values(Tcl_Interp *interp, CONST84 char *arrayname,
 	CONST84 char *attname;
 	HeapTuple	typeTup;
 	Oid			typoutput;
-	Oid			typelem;
+	Oid			typioparam;
 
 	CONST84 char **arrptr;
 	CONST84 char **nameptr;
@@ -2390,7 +2390,7 @@ pltcl_set_tuple_values(Tcl_Interp *interp, CONST84 char *arrayname,
 				 tupdesc->attrs[i]->atttypid);
 
 		typoutput = ((Form_pg_type) GETSTRUCT(typeTup))->typoutput;
-		typelem = ((Form_pg_type) GETSTRUCT(typeTup))->typelem;
+		typioparam = getTypeIOParam(typeTup);
 		ReleaseSysCache(typeTup);
 
 		/************************************************************
@@ -2405,7 +2405,7 @@ pltcl_set_tuple_values(Tcl_Interp *interp, CONST84 char *arrayname,
 		{
 			outputstr = DatumGetCString(OidFunctionCall3(typoutput,
 														 attr,
-											   ObjectIdGetDatum(typelem),
+											   ObjectIdGetDatum(typioparam),
 						   Int32GetDatum(tupdesc->attrs[i]->atttypmod)));
 			UTF_BEGIN;
 			Tcl_SetVar2(interp, *arrptr, *nameptr, UTF_E2U(outputstr), 0);
@@ -2434,7 +2434,7 @@ pltcl_build_tuple_argument(HeapTuple tuple, TupleDesc tupdesc,
 	char	   *attname;
 	HeapTuple	typeTup;
 	Oid			typoutput;
-	Oid			typelem;
+	Oid			typioparam;
 
 	for (i = 0; i < tupdesc->natts; i++)
 	{
@@ -2464,7 +2464,7 @@ pltcl_build_tuple_argument(HeapTuple tuple, TupleDesc tupdesc,
 				 tupdesc->attrs[i]->atttypid);
 
 		typoutput = ((Form_pg_type) GETSTRUCT(typeTup))->typoutput;
-		typelem = ((Form_pg_type) GETSTRUCT(typeTup))->typelem;
+		typioparam = getTypeIOParam(typeTup);
 		ReleaseSysCache(typeTup);
 
 		/************************************************************
@@ -2479,7 +2479,7 @@ pltcl_build_tuple_argument(HeapTuple tuple, TupleDesc tupdesc,
 		{
 			outputstr = DatumGetCString(OidFunctionCall3(typoutput,
 														 attr,
-											   ObjectIdGetDatum(typelem),
+											   ObjectIdGetDatum(typioparam),
 						   Int32GetDatum(tupdesc->attrs[i]->atttypmod)));
 			Tcl_DStringAppendElement(retval, attname);
 			UTF_BEGIN;

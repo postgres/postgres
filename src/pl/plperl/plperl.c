@@ -33,7 +33,7 @@
  *	  ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.43 2004/04/01 21:28:46 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.44 2004/06/06 00:41:28 tgl Exp $
  *
  **********************************************************************/
 
@@ -79,10 +79,10 @@ typedef struct plperl_proc_desc
 	CommandId	fn_cmin;
 	bool		lanpltrusted;
 	FmgrInfo	result_in_func;
-	Oid			result_in_elem;
+	Oid			result_typioparam;
 	int			nargs;
 	FmgrInfo	arg_out_func[FUNC_MAX_ARGS];
-	Oid			arg_out_elem[FUNC_MAX_ARGS];
+	Oid			arg_typioparam[FUNC_MAX_ARGS];
 	bool		arg_is_rowtype[FUNC_MAX_ARGS];
 	SV		   *reference;
 }	plperl_proc_desc;
@@ -428,7 +428,7 @@ plperl_call_perl_func(plperl_proc_desc * desc, FunctionCallInfo fcinfo)
 
 				tmp = DatumGetCString(FunctionCall3(&(desc->arg_out_func[i]),
 													fcinfo->arg[i],
-								 ObjectIdGetDatum(desc->arg_out_elem[i]),
+								 ObjectIdGetDatum(desc->arg_typioparam[i]),
 													Int32GetDatum(-1)));
 				XPUSHs(sv_2mortal(newSVpv(tmp, 0)));
 				pfree(tmp);
@@ -506,7 +506,7 @@ plperl_func_handler(PG_FUNCTION_ARGS)
 	{
 		retval = FunctionCall3(&prodesc->result_in_func,
 							   PointerGetDatum(SvPV(perlret, PL_na)),
-							   ObjectIdGetDatum(prodesc->result_in_elem),
+							   ObjectIdGetDatum(prodesc->result_typioparam),
 							   Int32GetDatum(-1));
 	}
 
@@ -671,7 +671,7 @@ compile_plperl_function(Oid fn_oid, bool is_trigger)
 			}
 
 			perm_fmgr_info(typeStruct->typinput, &(prodesc->result_in_func));
-			prodesc->result_in_elem = typeStruct->typelem;
+			prodesc->result_typioparam = getTypeIOParam(typeTup);
 
 			ReleaseSysCache(typeTup);
 		}
@@ -715,7 +715,7 @@ compile_plperl_function(Oid fn_oid, bool is_trigger)
 					prodesc->arg_is_rowtype[i] = false;
 					perm_fmgr_info(typeStruct->typoutput,
 								   &(prodesc->arg_out_func[i]));
-					prodesc->arg_out_elem[i] = typeStruct->typelem;
+					prodesc->arg_typioparam[i] = getTypeIOParam(typeTup);
 				}
 
 				ReleaseSysCache(typeTup);
@@ -776,7 +776,7 @@ plperl_build_tuple_argument(HeapTuple tuple, TupleDesc tupdesc)
 	char	   *outputstr;
 	HeapTuple	typeTup;
 	Oid			typoutput;
-	Oid			typelem;
+	Oid			typioparam;
 
 	output = sv_2mortal(newSVpv("{", 0));
 
@@ -817,7 +817,7 @@ plperl_build_tuple_argument(HeapTuple tuple, TupleDesc tupdesc)
 				 tupdesc->attrs[i]->atttypid);
 
 		typoutput = ((Form_pg_type) GETSTRUCT(typeTup))->typoutput;
-		typelem = ((Form_pg_type) GETSTRUCT(typeTup))->typelem;
+		typioparam = getTypeIOParam(typeTup);
 		ReleaseSysCache(typeTup);
 
 		/************************************************************
@@ -825,7 +825,7 @@ plperl_build_tuple_argument(HeapTuple tuple, TupleDesc tupdesc)
 		 ************************************************************/
 		outputstr = DatumGetCString(OidFunctionCall3(typoutput,
 													 attr,
-											   ObjectIdGetDatum(typelem),
+											   ObjectIdGetDatum(typioparam),
 						   Int32GetDatum(tupdesc->attrs[i]->atttypmod)));
 		sv_catpvf(output, "'%s' => '%s',", attname, outputstr);
 		pfree(outputstr);

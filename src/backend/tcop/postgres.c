@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.418 2004/06/03 02:08:03 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.419 2004/06/06 00:41:27 tgl Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -1432,11 +1432,11 @@ exec_bind_message(StringInfo input_message)
 
 					if (pformat == 0)
 					{
-						Oid			typInput;
-						Oid			typElem;
+						Oid			typinput;
+						Oid			typioparam;
 						char	   *pstring;
 
-						getTypeInputInfo(ptype, &typInput, &typElem);
+						getTypeInputInfo(ptype, &typinput, &typioparam);
 
 						/*
 						 * We have to do encoding conversion before
@@ -1446,9 +1446,9 @@ exec_bind_message(StringInfo input_message)
 							pg_client_to_server((unsigned char *) pbuf.data,
 												plength);
 						params[i].value =
-							OidFunctionCall3(typInput,
+							OidFunctionCall3(typinput,
 											 CStringGetDatum(pstring),
-											 ObjectIdGetDatum(typElem),
+											 ObjectIdGetDatum(typioparam),
 											 Int32GetDatum(-1));
 						/* Free result of encoding conversion, if any */
 						if (pstring != pbuf.data)
@@ -1456,19 +1456,19 @@ exec_bind_message(StringInfo input_message)
 					}
 					else if (pformat == 1)
 					{
-						Oid			typReceive;
-						Oid			typElem;
+						Oid			typreceive;
+						Oid			typioparam;
 
 						/*
 						 * Call the parameter type's binary input
 						 * converter
 						 */
-						getTypeBinaryInputInfo(ptype, &typReceive, &typElem);
+						getTypeBinaryInputInfo(ptype, &typreceive, &typioparam);
 
 						params[i].value =
-							OidFunctionCall2(typReceive,
+							OidFunctionCall2(typreceive,
 											 PointerGetDatum(&pbuf),
-											 ObjectIdGetDatum(typElem));
+											 ObjectIdGetDatum(typioparam));
 
 						/* Trouble if it didn't eat the whole buffer */
 						if (pbuf.cursor != pbuf.len)

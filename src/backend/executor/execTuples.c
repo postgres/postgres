@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execTuples.c,v 1.79 2004/05/30 23:40:26 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execTuples.c,v 1.80 2004/06/06 00:41:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -685,7 +685,7 @@ TupleDescGetAttInMetadata(TupleDesc tupdesc)
 	Oid			atttypeid;
 	Oid			attinfuncid;
 	FmgrInfo   *attinfuncinfo;
-	Oid		   *attelems;
+	Oid		   *attioparams;
 	int32	   *atttypmods;
 	AttInMetadata *attinmeta;
 
@@ -699,7 +699,7 @@ TupleDescGetAttInMetadata(TupleDesc tupdesc)
 	 * attribute
 	 */
 	attinfuncinfo = (FmgrInfo *) palloc0(natts * sizeof(FmgrInfo));
-	attelems = (Oid *) palloc0(natts * sizeof(Oid));
+	attioparams = (Oid *) palloc0(natts * sizeof(Oid));
 	atttypmods = (int32 *) palloc0(natts * sizeof(int32));
 
 	for (i = 0; i < natts; i++)
@@ -708,13 +708,13 @@ TupleDescGetAttInMetadata(TupleDesc tupdesc)
 		if (!tupdesc->attrs[i]->attisdropped)
 		{
 			atttypeid = tupdesc->attrs[i]->atttypid;
-			getTypeInputInfo(atttypeid, &attinfuncid, &attelems[i]);
+			getTypeInputInfo(atttypeid, &attinfuncid, &attioparams[i]);
 			fmgr_info(attinfuncid, &attinfuncinfo[i]);
 			atttypmods[i] = tupdesc->attrs[i]->atttypmod;
 		}
 	}
 	attinmeta->attinfuncs = attinfuncinfo;
-	attinmeta->attelems = attelems;
+	attinmeta->attioparams = attioparams;
 	attinmeta->atttypmods = atttypmods;
 
 	return attinmeta;
@@ -732,7 +732,7 @@ BuildTupleFromCStrings(AttInMetadata *attinmeta, char **values)
 	Datum	   *dvalues;
 	char	   *nulls;
 	int			i;
-	Oid			attelem;
+	Oid			attioparam;
 	int32		atttypmod;
 	HeapTuple	tuple;
 
@@ -747,12 +747,12 @@ BuildTupleFromCStrings(AttInMetadata *attinmeta, char **values)
 			/* Non-dropped attributes */
 			if (values[i] != NULL)
 			{
-				attelem = attinmeta->attelems[i];
+				attioparam = attinmeta->attioparams[i];
 				atttypmod = attinmeta->atttypmods[i];
 
 				dvalues[i] = FunctionCall3(&attinmeta->attinfuncs[i],
 										   CStringGetDatum(values[i]),
-										   ObjectIdGetDatum(attelem),
+										   ObjectIdGetDatum(attioparam),
 										   Int32GetDatum(atttypmod));
 				nulls[i] = ' ';
 			}

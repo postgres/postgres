@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/bootstrap/bootstrap.c,v 1.183 2004/06/03 02:08:02 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/bootstrap/bootstrap.c,v 1.184 2004/06/06 00:41:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -803,9 +803,11 @@ InsertOneTuple(Oid objectid)
 void
 InsertOneValue(char *value, int i)
 {
-	int			typeindex;
+	Oid			typoid;
+	Oid			typioparam;
+	Oid			typinput;
+	Oid			typoutput;
 	char	   *prt;
-	struct typmap **app;
 
 	AssertArg(i >= 0 || i < MAXATTR);
 
@@ -813,51 +815,59 @@ InsertOneValue(char *value, int i)
 
 	if (Typ != NULL)
 	{
+		struct typmap **app;
 		struct typmap *ap;
 
-		elog(DEBUG4, "Typ != NULL");
+		elog(DEBUG5, "Typ != NULL");
+		typoid = boot_reldesc->rd_att->attrs[i]->atttypid;
 		app = Typ;
-		while (*app && (*app)->am_oid != boot_reldesc->rd_att->attrs[i]->atttypid)
+		while (*app && (*app)->am_oid != typoid)
 			++app;
 		ap = *app;
 		if (ap == NULL)
-		{
-			elog(FATAL, "could not find atttypid %u in Typ list",
-				 boot_reldesc->rd_att->attrs[i]->atttypid);
-		}
-		values[i] = OidFunctionCall3(ap->am_typ.typinput,
-									 CStringGetDatum(value),
-									 ObjectIdGetDatum(ap->am_typ.typelem),
-									 Int32GetDatum(-1));
-		prt = DatumGetCString(OidFunctionCall3(ap->am_typ.typoutput,
-											   values[i],
-									ObjectIdGetDatum(ap->am_typ.typelem),
-											   Int32GetDatum(-1)));
-		elog(DEBUG4, " -> %s", prt);
-		pfree(prt);
+			elog(ERROR, "could not find atttypid %u in Typ list", typoid);
+
+		/* XXX this should match getTypeIOParam() */
+		if (ap->am_typ.typtype == 'c')
+			typioparam = typoid;
+		else
+			typioparam = ap->am_typ.typelem;
+
+		typinput = ap->am_typ.typinput;
+		typoutput = ap->am_typ.typoutput;
 	}
 	else
 	{
+		int			typeindex;
+
+		/* XXX why is typoid determined differently in this path? */
+		typoid = attrtypes[i]->atttypid;
 		for (typeindex = 0; typeindex < n_types; typeindex++)
 		{
-			if (TypInfo[typeindex].oid == attrtypes[i]->atttypid)
+			if (TypInfo[typeindex].oid == typoid)
 				break;
 		}
 		if (typeindex >= n_types)
-			elog(ERROR, "type oid %u not found", attrtypes[i]->atttypid);
-		elog(DEBUG4, "Typ == NULL, typeindex = %u", typeindex);
-		values[i] = OidFunctionCall3(TypInfo[typeindex].inproc,
-									 CStringGetDatum(value),
-								ObjectIdGetDatum(TypInfo[typeindex].elem),
-									 Int32GetDatum(-1));
-		prt = DatumGetCString(OidFunctionCall3(TypInfo[typeindex].outproc,
-											   values[i],
-								ObjectIdGetDatum(TypInfo[typeindex].elem),
-											   Int32GetDatum(-1)));
-		elog(DEBUG4, " -> %s", prt);
-		pfree(prt);
+			elog(ERROR, "type oid %u not found", typoid);
+		elog(DEBUG5, "Typ == NULL, typeindex = %u", typeindex);
+
+		/* XXX there are no composite types in TypInfo */
+		typioparam = TypInfo[typeindex].elem;
+
+		typinput = TypInfo[typeindex].inproc;
+		typoutput = TypInfo[typeindex].outproc;
 	}
-	elog(DEBUG4, "inserted");
+
+	values[i] = OidFunctionCall3(typinput,
+								 CStringGetDatum(value),
+								 ObjectIdGetDatum(typioparam),
+								 Int32GetDatum(-1));
+	prt = DatumGetCString(OidFunctionCall3(typoutput,
+										   values[i],
+										   ObjectIdGetDatum(typioparam),
+										   Int32GetDatum(-1)));
+	elog(DEBUG4, "inserted -> %s", prt);
+	pfree(prt);
 }
 
 /* ----------------

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/spi.c,v 1.116 2004/06/04 20:35:21 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/spi.c,v 1.117 2004/06/06 00:41:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -538,7 +538,7 @@ SPI_getvalue(HeapTuple tuple, TupleDesc tupdesc, int fnumber)
 	bool		isnull;
 	Oid			typoid,
 				foutoid,
-				typelem;
+				typioparam;
 	int32		typmod;
 	bool		typisvarlena;
 
@@ -566,7 +566,7 @@ SPI_getvalue(HeapTuple tuple, TupleDesc tupdesc, int fnumber)
 		typmod = -1;
 	}
 
-	getTypeOutputInfo(typoid, &foutoid, &typelem, &typisvarlena);
+	getTypeOutputInfo(typoid, &foutoid, &typioparam, &typisvarlena);
 
 	/*
 	 * If we have a toasted datum, forcibly detoast it here to avoid
@@ -579,7 +579,7 @@ SPI_getvalue(HeapTuple tuple, TupleDesc tupdesc, int fnumber)
 
 	result = OidFunctionCall3(foutoid,
 							  val,
-							  ObjectIdGetDatum(typelem),
+							  ObjectIdGetDatum(typioparam),
 							  Int32GetDatum(typmod));
 
 	/* Clean up detoasted copy, if any */

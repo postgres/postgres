@@ -45,7 +45,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeAgg.c,v 1.121 2004/05/30 23:40:26 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeAgg.c,v 1.122 2004/06/06 00:41:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1357,29 +1357,17 @@ ExecInitAgg(Agg *node, EState *estate)
 static Datum
 GetAggInitVal(Datum textInitVal, Oid transtype)
 {
-	char	   *strInitVal;
-	HeapTuple	tup;
 	Oid			typinput,
-				typelem;
+				typioparam;
+	char	   *strInitVal;
 	Datum		initVal;
 
+	getTypeInputInfo(transtype, &typinput, &typioparam);
 	strInitVal = DatumGetCString(DirectFunctionCall1(textout, textInitVal));
-
-	tup = SearchSysCache(TYPEOID,
-						 ObjectIdGetDatum(transtype),
-						 0, 0, 0);
-	if (!HeapTupleIsValid(tup))
-		elog(ERROR, "cache lookup failed for type %u", transtype);
-
-	typinput = ((Form_pg_type) GETSTRUCT(tup))->typinput;
-	typelem = ((Form_pg_type) GETSTRUCT(tup))->typelem;
-	ReleaseSysCache(tup);
-
 	initVal = OidFunctionCall3(typinput,
 							   CStringGetDatum(strInitVal),
-							   ObjectIdGetDatum(typelem),
+							   ObjectIdGetDatum(typioparam),
 							   Int32GetDatum(-1));
-
 	pfree(strInitVal);
 	return initVal;
 }

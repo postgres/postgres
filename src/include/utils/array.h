@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/array.h,v 1.46 2003/11/29 22:41:15 pgsql Exp $
+ * $PostgreSQL: pgsql/src/include/utils/array.h,v 1.47 2004/06/06 00:41:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -59,7 +59,7 @@ typedef struct ArrayMetaState
 	bool		typbyval;
 	char		typalign;
 	char		typdelim;
-	Oid			typelem;
+	Oid			typioparam;
 	Oid			typiofunc;
 	FmgrInfo	proc;
 } ArrayMetaState;

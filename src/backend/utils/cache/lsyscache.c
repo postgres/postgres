@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/lsyscache.c,v 1.112 2003/12/03 17:45:09 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/lsyscache.c,v 1.113 2004/06/06 00:41:27 tgl Exp $
  *
  * NOTES
  *	  Eventually, the index information should go through here, too.
@@ -1175,10 +1175,36 @@ get_typlenbyvalalign(Oid typid, int16 *typlen, bool *typbyval,
 }
 
 /*
+ * getTypeIOParam
+ *		Given a pg_type row, select the type OID to pass to I/O functions
+ *
+ * Formerly, all I/O functions were passed pg_type.typelem as their second
+ * parameter, but we now have a more complex rule about what to pass.
+ * This knowledge is intended to be centralized here --- direct references
+ * to typelem elsewhere in the code are wrong, if they are associated with
+ * I/O calls and not with actual subscripting operations!  (But see
+ * bootstrap.c, which can't conveniently use this routine.)
+ */
+Oid
+getTypeIOParam(HeapTuple typeTuple)
+{
+	Form_pg_type typeStruct = (Form_pg_type) GETSTRUCT(typeTuple);
+
+	/*
+	 * Composite types get their own OID as parameter; array types get
+	 * their typelem as parameter; everybody else gets zero.
+	 */
+	if (typeStruct->typtype == 'c')
+		return HeapTupleGetOid(typeTuple);
+	else
+		return typeStruct->typelem;
+}
+
+/*
  * get_type_io_data
  *
  *		A six-fer:	given the type OID, return typlen, typbyval, typalign,
- *					typdelim, typelem, and IO function OID. The IO function
+ *					typdelim, typioparam, and IO function OID. The IO function
  *					returned is controlled by IOFuncSelector
  */
 void
@@ -1188,7 +1214,7 @@ get_type_io_data(Oid typid,
 				 bool *typbyval,
 				 char *typalign,
 				 char *typdelim,
-				 Oid *typelem,
+				 Oid *typioparam,
 				 Oid *func)
 {
 	HeapTuple	typeTuple;
@@ -1205,7 +1231,7 @@ get_type_io_data(Oid typid,
 	*typbyval = typeStruct->typbyval;
 	*typalign = typeStruct->typalign;
 	*typdelim = typeStruct->typdelim;
-	*typelem = typeStruct->typelem;
+	*typioparam = getTypeIOParam(typeTuple);
 	switch (which_func)
 	{
 		case IOFunc_input:
@@ -1355,7 +1381,7 @@ get_typdefault(Oid typid)
 			/* Convert C string to a value of the given type */
 			datum = OidFunctionCall3(type->typinput,
 									 CStringGetDatum(strDefaultVal),
-									 ObjectIdGetDatum(type->typelem),
+									 ObjectIdGetDatum(getTypeIOParam(typeTuple)),
 									 Int32GetDatum(-1));
 			/* Build a Const node containing the value */
 			expr = (Node *) makeConst(typid,
@@ -1607,7 +1633,7 @@ get_array_type(Oid typid)
  *		Get info needed for converting values of a type to internal form
  */
 void
-getTypeInputInfo(Oid type, Oid *typInput, Oid *typElem)
+getTypeInputInfo(Oid type, Oid *typInput, Oid *typIOParam)
 {
 	HeapTuple	typeTuple;
 	Form_pg_type pt;
@@ -1631,7 +1657,7 @@ getTypeInputInfo(Oid type, Oid *typInput, Oid *typElem)
 						format_type_be(type))));
 
 	*typInput = pt->typinput;
-	*typElem = pt->typelem;
+	*typIOParam = getTypeIOParam(typeTuple);
 
 	ReleaseSysCache(typeTuple);
 }
@@ -1642,7 +1668,7 @@ getTypeInputInfo(Oid type, Oid *typInput, Oid *typElem)
  *		Get info needed for printing values of a type
  */
 void
-getTypeOutputInfo(Oid type, Oid *typOutput, Oid *typElem,
+getTypeOutputInfo(Oid type, Oid *typOutput, Oid *typIOParam,
 				  bool *typIsVarlena)
 {
 	HeapTuple	typeTuple;
@@ -1667,7 +1693,7 @@ getTypeOutputInfo(Oid type, Oid *typOutput, Oid *typElem,
 						format_type_be(type))));
 
 	*typOutput = pt->typoutput;
-	*typElem = pt->typelem;
+	*typIOParam = getTypeIOParam(typeTuple);
 	*typIsVarlena = (!pt->typbyval) && (pt->typlen == -1);
 
 	ReleaseSysCache(typeTuple);
@@ -1679,7 +1705,7 @@ getTypeOutputInfo(Oid type, Oid *typOutput, Oid *typElem,
  *		Get info needed for binary input of values of a type
  */
 void
-getTypeBinaryInputInfo(Oid type, Oid *typReceive, Oid *typElem)
+getTypeBinaryInputInfo(Oid type, Oid *typReceive, Oid *typIOParam)
 {
 	HeapTuple	typeTuple;
 	Form_pg_type pt;
@@ -1703,7 +1729,7 @@ getTypeBinaryInputInfo(Oid type, Oid *typReceive, Oid *typElem)
 						format_type_be(type))));
 
 	*typReceive = pt->typreceive;
-	*typElem = pt->typelem;
+	*typIOParam = getTypeIOParam(typeTuple);
 
 	ReleaseSysCache(typeTuple);
 }
@@ -1714,7 +1740,7 @@ getTypeBinaryInputInfo(Oid type, Oid *typReceive, Oid *typElem)
  *		Get info needed for binary output of values of a type
  */
 void
-getTypeBinaryOutputInfo(Oid type, Oid *typSend, Oid *typElem,
+getTypeBinaryOutputInfo(Oid type, Oid *typSend, Oid *typIOParam,
 						bool *typIsVarlena)
 {
 	HeapTuple	typeTuple;
@@ -1739,7 +1765,7 @@ getTypeBinaryOutputInfo(Oid type, Oid *typSend, Oid *typElem,
 						format_type_be(type))));
 
 	*typSend = pt->typsend;
-	*typElem = pt->typelem;
+	*typIOParam = getTypeIOParam(typeTuple);
 	*typIsVarlena = (!pt->typbyval) && (pt->typlen == -1);
 
 	ReleaseSysCache(typeTuple);

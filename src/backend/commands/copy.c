@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/copy.c,v 1.225 2004/06/05 19:48:07 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/copy.c,v 1.226 2004/06/06 00:41:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -143,7 +143,7 @@ static char *CopyReadAttributeCSV(const char *delim, const char *null_print,
 							   char *quote, char *escape,
 							   CopyReadResult *result, bool *isnull);
 static Datum CopyReadBinaryAttribute(int column_no, FmgrInfo *flinfo,
-						Oid typelem, bool *isnull);
+						Oid typioparam, bool *isnull);
 static void CopyAttributeOut(char *string, char *delim);
 static void CopyAttributeOutCSV(char *string, char *delim, char *quote,
 								char *escape, bool force_quote);
@@ -1143,7 +1143,7 @@ CopyTo(Relation rel, List *attnumlist, bool binary, bool oids,
 	Form_pg_attribute *attr;
 	FmgrInfo   *out_functions;
 	bool	   *force_quote;
-	Oid		   *elements;
+	Oid		   *typioparams;
 	bool	   *isvarlena;
 	char	   *string;
 	Snapshot	mySnapshot;
@@ -1160,7 +1160,7 @@ CopyTo(Relation rel, List *attnumlist, bool binary, bool oids,
 	 * Get info about the columns we need to process.
 	 */
 	out_functions = (FmgrInfo *) palloc(num_phys_attrs * sizeof(FmgrInfo));
-	elements = (Oid *) palloc(num_phys_attrs * sizeof(Oid));
+	typioparams = (Oid *) palloc(num_phys_attrs * sizeof(Oid));
 	isvarlena = (bool *) palloc(num_phys_attrs * sizeof(bool));
 	force_quote = (bool *) palloc(num_phys_attrs * sizeof(bool));
 	foreach(cur, attnumlist)
@@ -1170,11 +1170,11 @@ CopyTo(Relation rel, List *attnumlist, bool binary, bool oids,
 		
 		if (binary)
 			getTypeBinaryOutputInfo(attr[attnum - 1]->atttypid,
-									&out_func_oid, &elements[attnum - 1],
+									&out_func_oid, &typioparams[attnum - 1],
 									&isvarlena[attnum - 1]);
 		else
 			getTypeOutputInfo(attr[attnum - 1]->atttypid,
-							  &out_func_oid, &elements[attnum - 1],
+							  &out_func_oid, &typioparams[attnum - 1],
 							  &isvarlena[attnum - 1]);
 		fmgr_info(out_func_oid, &out_functions[attnum - 1]);
 
@@ -1290,7 +1290,7 @@ CopyTo(Relation rel, List *attnumlist, bool binary, bool oids,
 				{
 					string = DatumGetCString(FunctionCall3(&out_functions[attnum - 1],
 														   value,
-								  ObjectIdGetDatum(elements[attnum - 1]),
+								  ObjectIdGetDatum(typioparams[attnum - 1]),
 							Int32GetDatum(attr[attnum - 1]->atttypmod)));
 					if (csv_mode)
 					{
@@ -1308,7 +1308,7 @@ CopyTo(Relation rel, List *attnumlist, bool binary, bool oids,
 
 					outputbytes = DatumGetByteaP(FunctionCall2(&out_functions[attnum - 1],
 															   value,
-								ObjectIdGetDatum(elements[attnum - 1])));
+								ObjectIdGetDatum(typioparams[attnum - 1])));
 					/* We assume the result will not have been toasted */
 					CopySendInt32(VARSIZE(outputbytes) - VARHDRSZ);
 					CopySendData(VARDATA(outputbytes),
@@ -1333,7 +1333,7 @@ CopyTo(Relation rel, List *attnumlist, bool binary, bool oids,
 	MemoryContextDelete(mycontext);
 
 	pfree(out_functions);
-	pfree(elements);
+	pfree(typioparams);
 	pfree(isvarlena);
 	pfree(force_quote);
 }
@@ -1442,8 +1442,8 @@ CopyFrom(Relation rel, List *attnumlist, bool binary, bool oids,
 				num_defaults;
 	FmgrInfo   *in_functions;
 	FmgrInfo	oid_in_function;
-	Oid		   *elements;
-	Oid			oid_in_element;
+	Oid		   *typioparams;
+	Oid			oid_typioparam;
 	ExprState **constraintexprs;
 	bool	   *force_notnull;
 	bool		hasConstraints = false;
@@ -1501,7 +1501,7 @@ CopyFrom(Relation rel, List *attnumlist, bool binary, bool oids,
 	 * (Which input function we use depends on text/binary format choice.)
 	 */
 	in_functions = (FmgrInfo *) palloc(num_phys_attrs * sizeof(FmgrInfo));
-	elements = (Oid *) palloc(num_phys_attrs * sizeof(Oid));
+	typioparams = (Oid *) palloc(num_phys_attrs * sizeof(Oid));
 	defmap = (int *) palloc(num_phys_attrs * sizeof(int));
 	defexprs = (ExprState **) palloc(num_phys_attrs * sizeof(ExprState *));
 	constraintexprs = (ExprState **) palloc0(num_phys_attrs * sizeof(ExprState *));
@@ -1513,13 +1513,13 @@ CopyFrom(Relation rel, List *attnumlist, bool binary, bool oids,
 		if (attr[attnum - 1]->attisdropped)
 			continue;
 
-		/* Fetch the input function and typelem info */
+		/* Fetch the input function and typioparam info */
 		if (binary)
 			getTypeBinaryInputInfo(attr[attnum - 1]->atttypid,
-								   &in_func_oid, &elements[attnum - 1]);
+								   &in_func_oid, &typioparams[attnum - 1]);
 		else
 			getTypeInputInfo(attr[attnum - 1]->atttypid,
-							 &in_func_oid, &elements[attnum - 1]);
+							 &in_func_oid, &typioparams[attnum - 1]);
 		fmgr_info(in_func_oid, &in_functions[attnum - 1]);
 
 		if (list_member_int(force_notnull_atts, attnum))
@@ -1628,7 +1628,7 @@ CopyFrom(Relation rel, List *attnumlist, bool binary, bool oids,
 	if (file_has_oids && binary)
 	{
 		getTypeBinaryInputInfo(OIDOID,
-							   &in_func_oid, &oid_in_element);
+							   &in_func_oid, &oid_typioparam);
 		fmgr_info(in_func_oid, &oid_in_function);
 	}
 
@@ -1757,7 +1757,7 @@ CopyFrom(Relation rel, List *attnumlist, bool binary, bool oids,
 					copy_attname = NameStr(attr[m]->attname);
 					values[m] = FunctionCall3(&in_functions[m],
 											  CStringGetDatum(string),
-										   ObjectIdGetDatum(elements[m]),
+										   ObjectIdGetDatum(typioparams[m]),
 									  Int32GetDatum(attr[m]->atttypmod));
 					nulls[m] = ' ';
 					copy_attname = NULL;
@@ -1800,8 +1800,8 @@ CopyFrom(Relation rel, List *attnumlist, bool binary, bool oids,
 				copy_attname = "oid";
 				loaded_oid =
 					DatumGetObjectId(CopyReadBinaryAttribute(0,
-														&oid_in_function,
-														  oid_in_element,
+															 &oid_in_function,
+															 oid_typioparam,
 															 &isnull));
 				if (isnull || loaded_oid == InvalidOid)
 					ereport(ERROR,
@@ -1820,7 +1820,7 @@ CopyFrom(Relation rel, List *attnumlist, bool binary, bool oids,
 				i++;
 				values[m] = CopyReadBinaryAttribute(i,
 													&in_functions[m],
-													elements[m],
+													typioparams[m],
 													&isnull);
 				nulls[m] = isnull ? 'n' : ' ';
 				copy_attname = NULL;
@@ -1941,7 +1941,7 @@ CopyFrom(Relation rel, List *attnumlist, bool binary, bool oids,
 	pfree(nulls);
 
 	pfree(in_functions);
-	pfree(elements);
+	pfree(typioparams);
 	pfree(defmap);
 	pfree(defexprs);
 	pfree(constraintexprs);
@@ -2429,7 +2429,7 @@ CopyReadAttributeCSV(const char *delim, const char *null_print, char *quote,
  * Read a binary attribute
  */
 static Datum
-CopyReadBinaryAttribute(int column_no, FmgrInfo *flinfo, Oid typelem,
+CopyReadBinaryAttribute(int column_no, FmgrInfo *flinfo, Oid typioparam,
 						bool *isnull)
 {
 	int32		fld_size;
@@ -2469,7 +2469,7 @@ CopyReadBinaryAttribute(int column_no, FmgrInfo *flinfo, Oid typelem,
 	/* Call the column type's binary input converter */
 	result = FunctionCall2(flinfo,
 						   PointerGetDatum(&attribute_buf),
-						   ObjectIdGetDatum(typelem));
+						   ObjectIdGetDatum(typioparam));
 
 	/* Trouble if it didn't eat the whole buffer */
 	if (attribute_buf.cursor != attribute_buf.len)

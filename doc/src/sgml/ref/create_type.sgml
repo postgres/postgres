@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_type.sgml,v 1.50 2004/05/16 23:22:07 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_type.sgml,v 1.51 2004/06/06 00:41:25 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -102,13 +102,15 @@ CREATE TYPE <replaceable class="parameter">name</replaceable> (
    or as taking three arguments of types
    <type>cstring</type>, <type>oid</type>, <type>integer</type>.
    The first argument is the input text as a C string, the second
-   argument is the element type in case this is an array type,
+   argument is the element type's OID in case this is an array type
+   (or the type's own OID for a composite type),
    and the third is the <literal>typmod</> of the destination column, if known.
    The input function should return a value of the data type itself.
    The output function may be
    declared as taking one argument of the new data type,  or as taking
    two arguments of which the second is type <type>oid</type>.
-   The second argument is again the array element type for array types.
+   The second argument is again the array element type OID for array types
+   or the type OID for composite types.
    The output function should return type <type>cstring</type>.
   </para>
 
@@ -128,14 +130,16 @@ CREATE TYPE <replaceable class="parameter">name</replaceable> (
    and <type>oid</type>.  It must return a value of the data type itself.
    (The first argument is a pointer to a <type>StringInfo</type> buffer
    holding the received byte string; the optional second argument is the
-   element type in case this is an array type.)  Similarly, the optional
+   element type OID in case this is an array type, or the type's own OID for a
+   composite type.)  Similarly, the optional
    <replaceable class="parameter">send_function</replaceable> converts
    from the internal representation to the external binary representation.
    If this function is not supplied, the type cannot participate in binary
    output.  The send function may be
    declared as taking one argument of the new data type,  or as taking
    two arguments of which the second is type <type>oid</type>.
-   The second argument is again the array element type for array types.
+   The second argument is again the array element type OID for array types
+   or the type OID for composite types.
    The send function must return type <type>bytea</type>.
   </para>
 

@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/common/printtup.c,v 1.82 2004/06/04 20:35:21 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/common/printtup.c,v 1.83 2004/06/06 00:41:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -51,7 +51,7 @@ typedef struct
 {								/* Per-attribute information */
 	Oid			typoutput;		/* Oid for the type's text output fn */
 	Oid			typsend;		/* Oid for the type's binary output fn */
-	Oid			typelem;		/* typelem value to pass to the output fn */
+	Oid			typioparam;		/* param to pass to the output fn */
 	bool		typisvarlena;	/* is it varlena (ie possibly toastable)? */
 	int16		format;			/* format code for this column */
 	FmgrInfo	finfo;			/* Precomputed call info for output fn */
@@ -278,7 +278,7 @@ printtup_prepare_info(DR_printtup *myState, TupleDesc typeinfo, int numAttrs)
 		{
 			getTypeOutputInfo(typeinfo->attrs[i]->atttypid,
 							  &thisState->typoutput,
-							  &thisState->typelem,
+							  &thisState->typioparam,
 							  &thisState->typisvarlena);
 			fmgr_info(thisState->typoutput, &thisState->finfo);
 		}
@@ -286,7 +286,7 @@ printtup_prepare_info(DR_printtup *myState, TupleDesc typeinfo, int numAttrs)
 		{
 			getTypeBinaryOutputInfo(typeinfo->attrs[i]->atttypid,
 									&thisState->typsend,
-									&thisState->typelem,
+									&thisState->typioparam,
 									&thisState->typisvarlena);
 			fmgr_info(thisState->typsend, &thisState->finfo);
 		}
@@ -356,7 +356,7 @@ printtup(HeapTuple tuple, TupleDesc typeinfo, DestReceiver *self)
 
 			outputstr = DatumGetCString(FunctionCall3(&thisState->finfo,
 													  attr,
-									ObjectIdGetDatum(thisState->typelem),
+									ObjectIdGetDatum(thisState->typioparam),
 						  Int32GetDatum(typeinfo->attrs[i]->atttypmod)));
 			pq_sendcountedtext(&buf, outputstr, strlen(outputstr), false);
 			pfree(outputstr);
@@ -368,7 +368,7 @@ printtup(HeapTuple tuple, TupleDesc typeinfo, DestReceiver *self)
 
 			outputbytes = DatumGetByteaP(FunctionCall2(&thisState->finfo,
 													   attr,
-								  ObjectIdGetDatum(thisState->typelem)));
+								  ObjectIdGetDatum(thisState->typioparam)));
 			/* We assume the result will not have been toasted */
 			pq_sendint(&buf, VARSIZE(outputbytes) - VARHDRSZ, 4);
 			pq_sendbytes(&buf, VARDATA(outputbytes),
@@ -458,7 +458,7 @@ printtup_20(HeapTuple tuple, TupleDesc typeinfo, DestReceiver *self)
 
 		outputstr = DatumGetCString(FunctionCall3(&thisState->finfo,
 												  attr,
-									ObjectIdGetDatum(thisState->typelem),
+									ObjectIdGetDatum(thisState->typioparam),
 						  Int32GetDatum(typeinfo->attrs[i]->atttypmod)));
 		pq_sendcountedtext(&buf, outputstr, strlen(outputstr), true);
 		pfree(outputstr);
@@ -557,7 +557,7 @@ debugtup(HeapTuple tuple, TupleDesc typeinfo, DestReceiver *self)
 	char	   *value;
 	bool		isnull;
 	Oid			typoutput,
-				typelem;
+				typioparam;
 	bool		typisvarlena;
 
 	for (i = 0; i < natts; ++i)
@@ -566,7 +566,7 @@ debugtup(HeapTuple tuple, TupleDesc typeinfo, DestReceiver *self)
 		if (isnull)
 			continue;
 		getTypeOutputInfo(typeinfo->attrs[i]->atttypid,
-						  &typoutput, &typelem, &typisvarlena);
+						  &typoutput, &typioparam, &typisvarlena);
 
 		/*
 		 * If we have a toasted datum, forcibly detoast it here to avoid
@@ -579,7 +579,7 @@ debugtup(HeapTuple tuple, TupleDesc typeinfo, DestReceiver *self)
 
 		value = DatumGetCString(OidFunctionCall3(typoutput,
 												 attr,
-											   ObjectIdGetDatum(typelem),
+											   ObjectIdGetDatum(typioparam),
 						  Int32GetDatum(typeinfo->attrs[i]->atttypmod)));
 
 		printatt((unsigned) i + 1, typeinfo->attrs[i], value);
@@ -672,7 +672,7 @@ printtup_internal_20(HeapTuple tuple, TupleDesc typeinfo, DestReceiver *self)
 
 		outputbytes = DatumGetByteaP(FunctionCall2(&thisState->finfo,
 												   attr,
-								  ObjectIdGetDatum(thisState->typelem)));
+								  ObjectIdGetDatum(thisState->typioparam)));
 		/* We assume the result will not have been toasted */
 		pq_sendint(&buf, VARSIZE(outputbytes) - VARHDRSZ, 4);
 		pq_sendbytes(&buf, VARDATA(outputbytes),

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/print.c,v 1.68 2004/05/30 23:40:27 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/print.c,v 1.69 2004/06/06 00:41:26 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -20,7 +20,6 @@
 #include "postgres.h"
 
 #include "access/printtup.h"
-#include "catalog/pg_type.h"
 #include "lib/stringinfo.h"
 #include "nodes/print.h"
 #include "optimizer/clauses.h"
@@ -345,9 +344,9 @@ print_expr(Node *expr, List *rtable)
 	else if (IsA(expr, Const))
 	{
 		Const	   *c = (Const *) expr;
-		HeapTuple	typeTup;
 		Oid			typoutput;
-		Oid			typelem;
+		Oid			typioparam;
+		bool		typIsVarlena;
 		char	   *outputstr;
 
 		if (c->constisnull)
@@ -356,18 +355,12 @@ print_expr(Node *expr, List *rtable)
 			return;
 		}
 
-		typeTup = SearchSysCache(TYPEOID,
-								 ObjectIdGetDatum(c->consttype),
-								 0, 0, 0);
-		if (!HeapTupleIsValid(typeTup))
-			elog(ERROR, "cache lookup failed for type %u", c->consttype);
-		typoutput = ((Form_pg_type) GETSTRUCT(typeTup))->typoutput;
-		typelem = ((Form_pg_type) GETSTRUCT(typeTup))->typelem;
-		ReleaseSysCache(typeTup);
+		getTypeOutputInfo(c->consttype,
+						  &typoutput, &typioparam, &typIsVarlena);
 
 		outputstr = DatumGetCString(OidFunctionCall3(typoutput,
 													 c->constvalue,
-											   ObjectIdGetDatum(typelem),
+											   ObjectIdGetDatum(typioparam),
 													 Int32GetDatum(-1)));
 		printf("%s", outputstr);
 		pfree(outputstr);

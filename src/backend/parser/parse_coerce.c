@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_coerce.c,v 2.117 2004/05/30 23:40:35 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_coerce.c,v 2.118 2004/06/06 00:41:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -356,14 +356,10 @@ can_coerce_type(int nargs, Oid *input_typeids, Oid *target_typeids,
 
 		/*
 		 * If input is an untyped string constant, assume we can convert
-		 * it to anything except a class type.
+		 * it to anything.
 		 */
 		if (inputTypeId == UNKNOWNOID)
-		{
-			if (ISCOMPLEX(targetTypeId))
-				return false;
 			continue;
-		}
 
 		/*
 		 * If pg_cast shows that we can coerce, accept.  This test now

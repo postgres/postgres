@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/fastpath.c,v 1.72 2004/04/19 17:22:31 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/fastpath.c,v 1.73 2004/06/06 00:41:27 tgl Exp $
  *
  * NOTES
  *	  This cruft is the server side of PQfn.
@@ -150,14 +150,14 @@ SendFunctionResult(Datum retval, bool isnull, Oid rettype, int16 format)
 		if (format == 0)
 		{
 			Oid			typoutput,
-						typelem;
+						typioparam;
 			bool		typisvarlena;
 			char	   *outputstr;
 
-			getTypeOutputInfo(rettype, &typoutput, &typelem, &typisvarlena);
+			getTypeOutputInfo(rettype, &typoutput, &typioparam, &typisvarlena);
 			outputstr = DatumGetCString(OidFunctionCall3(typoutput,
 														 retval,
-											   ObjectIdGetDatum(typelem),
+											   ObjectIdGetDatum(typioparam),
 													 Int32GetDatum(-1)));
 			pq_sendcountedtext(&buf, outputstr, strlen(outputstr), false);
 			pfree(outputstr);
@@ -165,15 +165,15 @@ SendFunctionResult(Datum retval, bool isnull, Oid rettype, int16 format)
 		else if (format == 1)
 		{
 			Oid			typsend,
-						typelem;
+						typioparam;
 			bool		typisvarlena;
 			bytea	   *outputbytes;
 
 			getTypeBinaryOutputInfo(rettype,
-									&typsend, &typelem, &typisvarlena);
+									&typsend, &typioparam, &typisvarlena);
 			outputbytes = DatumGetByteaP(OidFunctionCall2(typsend,
 														  retval,
-											 ObjectIdGetDatum(typelem)));
+											 ObjectIdGetDatum(typioparam)));
 			/* We assume the result will not have been toasted */
 			pq_sendint(&buf, VARSIZE(outputbytes) - VARHDRSZ, 4);
 			pq_sendbytes(&buf, VARDATA(outputbytes),
@@ -467,11 +467,11 @@ parse_fcall_arguments(StringInfo msgBuf, struct fp_info * fip,
 
 		if (aformat == 0)
 		{
-			Oid			typInput;
-			Oid			typElem;
+			Oid			typinput;
+			Oid			typioparam;
 			char	   *pstring;
 
-			getTypeInputInfo(fip->argtypes[i], &typInput, &typElem);
+			getTypeInputInfo(fip->argtypes[i], &typinput, &typioparam);
 
 			/*
 			 * Since stringinfo.c keeps a trailing null in place even for
@@ -483,9 +483,9 @@ parse_fcall_arguments(StringInfo msgBuf, struct fp_info * fip,
 				pg_client_to_server((unsigned char *) abuf.data,
 									argsize);
 			fcinfo->arg[i] =
-				OidFunctionCall3(typInput,
+				OidFunctionCall3(typinput,
 								 CStringGetDatum(pstring),
-								 ObjectIdGetDatum(typElem),
+								 ObjectIdGetDatum(typioparam),
 								 Int32GetDatum(-1));
 			/* Free result of encoding conversion, if any */
 			if (pstring != abuf.data)
@@ -493,15 +493,15 @@ parse_fcall_arguments(StringInfo msgBuf, struct fp_info * fip,
 		}
 		else if (aformat == 1)
 		{
-			Oid			typReceive;
-			Oid			typElem;
+			Oid			typreceive;
+			Oid			typioparam;
 
 			/* Call the argument type's binary input converter */
-			getTypeBinaryInputInfo(fip->argtypes[i], &typReceive, &typElem);
+			getTypeBinaryInputInfo(fip->argtypes[i], &typreceive, &typioparam);
 
-			fcinfo->arg[i] = OidFunctionCall2(typReceive,
+			fcinfo->arg[i] = OidFunctionCall2(typreceive,
 											  PointerGetDatum(&abuf),
-											  ObjectIdGetDatum(typElem));
+											  ObjectIdGetDatum(typioparam));
 
 			/* Trouble if it didn't eat the whole buffer */
 			if (abuf.cursor != abuf.len)
@@ -557,8 +557,8 @@ parse_fcall_arguments_20(StringInfo msgBuf, struct fp_info * fip,
 	for (i = 0; i < nargs; ++i)
 	{
 		int			argsize;
-		Oid			typReceive;
-		Oid			typElem;
+		Oid			typreceive;
+		Oid			typioparam;
 
 		argsize = pq_getmsgint(msgBuf, 4);
 		if (argsize == -1)
@@ -582,11 +582,11 @@ parse_fcall_arguments_20(StringInfo msgBuf, struct fp_info * fip,
 							   argsize);
 
 		/* Call the argument type's binary input converter */
-		getTypeBinaryInputInfo(fip->argtypes[i], &typReceive, &typElem);
+		getTypeBinaryInputInfo(fip->argtypes[i], &typreceive, &typioparam);
 
-		fcinfo->arg[i] = OidFunctionCall2(typReceive,
+		fcinfo->arg[i] = OidFunctionCall2(typreceive,
 										  PointerGetDatum(&abuf),
-										  ObjectIdGetDatum(typElem));
+										  ObjectIdGetDatum(typioparam));
 
 		/* Trouble if it didn't eat the whole buffer */
 		if (abuf.cursor != abuf.len)

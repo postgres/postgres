@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/plpgsql.h,v 1.46 2004/06/03 22:56:43 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/plpgsql.h,v 1.47 2004/06/06 00:41:28 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -160,7 +160,7 @@ typedef struct
 	int16		typlen;			/* stuff copied from its pg_type entry */
 	bool		typbyval;
 	Oid			typrelid;
-	Oid			typelem;
+	Oid			typioparam;
 	FmgrInfo	typinput;		/* lookup info for typinput function */
 	int32		atttypmod;		/* typmod (taken from someplace else) */
 }	PLpgSQL_type;
@@ -557,7 +557,7 @@ typedef struct PLpgSQL_function
 	int			fn_rettyplen;
 	bool		fn_retbyval;
 	FmgrInfo	fn_retinput;
-	Oid			fn_rettypelem;
+	Oid			fn_rettypioparam;
 	bool		fn_retistuple;
 	bool		fn_retset;
 

@@ -29,7 +29,7 @@
  * MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	$PostgreSQL: pgsql/src/pl/plpython/plpython.c,v 1.48 2004/06/05 19:48:09 tgl Exp $
+ *	$PostgreSQL: pgsql/src/pl/plpython/plpython.c,v 1.49 2004/06/06 00:41:28 tgl Exp $
  *
  *********************************************************************
  */
@@ -51,6 +51,7 @@
 #include "nodes/makefuncs.h"
 #include "parser/parse_type.h"
 #include "tcop/tcopprot.h"
+#include "utils/lsyscache.h"
 #include "utils/syscache.h"
 #include "utils/typcache.h"
 
@@ -70,7 +71,7 @@ typedef struct PLyDatumToOb
 {
 	PLyDatumToObFunc func;
 	FmgrInfo	typfunc;
-	Oid			typelem;
+	Oid			typioparam;
 	bool		typbyval;
 }	PLyDatumToOb;
 
@@ -92,7 +93,7 @@ typedef union PLyTypeInput
 typedef struct PLyObToDatum
 {
 	FmgrInfo	typfunc;
-	Oid			typelem;
+	Oid			typioparam;
 	bool		typbyval;
 }	PLyObToDatum;
 
@@ -238,10 +239,10 @@ static void PLy_procedure_delete(PLyProcedure *);
 
 static void PLy_typeinfo_init(PLyTypeInfo *);
 static void PLy_typeinfo_dealloc(PLyTypeInfo *);
-static void PLy_output_datum_func(PLyTypeInfo *, Form_pg_type);
-static void PLy_output_datum_func2(PLyObToDatum *, Form_pg_type);
-static void PLy_input_datum_func(PLyTypeInfo *, Oid, Form_pg_type);
-static void PLy_input_datum_func2(PLyDatumToOb *, Oid, Form_pg_type);
+static void PLy_output_datum_func(PLyTypeInfo *, HeapTuple);
+static void PLy_output_datum_func2(PLyObToDatum *, HeapTuple);
+static void PLy_input_datum_func(PLyTypeInfo *, Oid, HeapTuple);
+static void PLy_input_datum_func2(PLyDatumToOb *, Oid, HeapTuple);
 static void PLy_output_tuple_funcs(PLyTypeInfo *, TupleDesc);
 static void PLy_input_tuple_funcs(PLyTypeInfo *, TupleDesc);
 
@@ -565,7 +566,7 @@ PLy_modify_tuple(PLyProcedure * proc, PyObject * pltd, TriggerData *tdata,
 
 			modvalues[i] = FunctionCall3(&proc->result.out.r.atts[atti].typfunc,
 										 CStringGetDatum(src),
-				 ObjectIdGetDatum(proc->result.out.r.atts[atti].typelem),
+				 ObjectIdGetDatum(proc->result.out.r.atts[atti].typioparam),
 						 Int32GetDatum(tupdesc->attrs[atti]->atttypmod));
 			modnulls[i] = ' ';
 
@@ -850,7 +851,7 @@ PLy_function_handler(FunctionCallInfo fcinfo, PLyProcedure * proc)
 		plrv_sc = PyString_AsString(plrv_so);
 		rv = FunctionCall3(&proc->result.out.d.typfunc,
 						   PointerGetDatum(plrv_sc),
-						   ObjectIdGetDatum(proc->result.out.d.typelem),
+						   ObjectIdGetDatum(proc->result.out.d.typioparam),
 						   Int32GetDatum(-1));
 	}
 
@@ -956,7 +957,7 @@ PLy_function_build_args(FunctionCallInfo fcinfo, PLyProcedure * proc)
 
 				dt = FunctionCall3(&(proc->args[i].in.d.typfunc),
 								   fcinfo->arg[i],
-							ObjectIdGetDatum(proc->args[i].in.d.typelem),
+							ObjectIdGetDatum(proc->args[i].in.d.typioparam),
 								   Int32GetDatum(-1));
 				ct = DatumGetCString(dt);
 				arg = (proc->args[i].in.d.func) (ct);
@@ -1119,7 +1120,7 @@ PLy_procedure_create(FunctionCallInfo fcinfo, Oid tgreloid,
 
 		rvTypeStruct = (Form_pg_type) GETSTRUCT(rvTypeTup);
 		if (rvTypeStruct->typtype != 'c')
-			PLy_output_datum_func(&proc->result, rvTypeStruct);
+			PLy_output_datum_func(&proc->result, rvTypeTup);
 		else
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
@@ -1160,7 +1161,7 @@ PLy_procedure_create(FunctionCallInfo fcinfo, Oid tgreloid,
 		if (argTypeStruct->typtype != 'c')
 			PLy_input_datum_func(&(proc->args[i]),
 								 procStruct->proargtypes[i],
-								 argTypeStruct);
+								 argTypeTup);
 		else
 			proc->args[i].is_rowtype = 2; /* still need to set I/O funcs */
 
@@ -1327,7 +1328,6 @@ PLy_input_tuple_funcs(PLyTypeInfo * arg, TupleDesc desc)
 	for (i = 0; i < desc->natts; i++)
 	{
 		HeapTuple	typeTup;
-		Form_pg_type typeStruct;
 
 		if (desc->attrs[i]->attisdropped)
 			continue;
@@ -1338,11 +1338,10 @@ PLy_input_tuple_funcs(PLyTypeInfo * arg, TupleDesc desc)
 		if (!HeapTupleIsValid(typeTup))
 			elog(ERROR, "cache lookup failed for type %u",
 				 desc->attrs[i]->atttypid);
-		typeStruct = (Form_pg_type) GETSTRUCT(typeTup);
 
 		PLy_input_datum_func2(&(arg->in.r.atts[i]),
 							  desc->attrs[i]->atttypid,
-							  typeStruct);
+							  typeTup);
 
 		ReleaseSysCache(typeTup);
 	}
@@ -1365,7 +1364,6 @@ PLy_output_tuple_funcs(PLyTypeInfo * arg, TupleDesc desc)
 	for (i = 0; i < desc->natts; i++)
 	{
 		HeapTuple	typeTup;
-		Form_pg_type typeStruct;
 
 		if (desc->attrs[i]->attisdropped)
 			continue;
@@ -1376,52 +1374,55 @@ PLy_output_tuple_funcs(PLyTypeInfo * arg, TupleDesc desc)
 		if (!HeapTupleIsValid(typeTup))
 			elog(ERROR, "cache lookup failed for type %u",
 				 desc->attrs[i]->atttypid);
-		typeStruct = (Form_pg_type) GETSTRUCT(typeTup);
 
-		PLy_output_datum_func2(&(arg->out.r.atts[i]), typeStruct);
+		PLy_output_datum_func2(&(arg->out.r.atts[i]), typeTup);
 
 		ReleaseSysCache(typeTup);
 	}
 }
 
 void
-PLy_output_datum_func(PLyTypeInfo * arg, Form_pg_type typeStruct)
+PLy_output_datum_func(PLyTypeInfo * arg, HeapTuple typeTup)
 {
 	enter();
 
 	if (arg->is_rowtype > 0)
 		elog(ERROR, "PLyTypeInfo struct is initialized for a Tuple");
 	arg->is_rowtype = 0;
-	PLy_output_datum_func2(&(arg->out.d), typeStruct);
+	PLy_output_datum_func2(&(arg->out.d), typeTup);
 }
 
 void
-PLy_output_datum_func2(PLyObToDatum * arg, Form_pg_type typeStruct)
+PLy_output_datum_func2(PLyObToDatum * arg, HeapTuple typeTup)
 {
+	Form_pg_type typeStruct = (Form_pg_type) GETSTRUCT(typeTup);
+
 	enter();
 
 	perm_fmgr_info(typeStruct->typinput, &arg->typfunc);
-	arg->typelem = typeStruct->typelem;
+	arg->typioparam = getTypeIOParam(typeTup);
 	arg->typbyval = typeStruct->typbyval;
 }
 
 void
-PLy_input_datum_func(PLyTypeInfo * arg, Oid typeOid, Form_pg_type typeStruct)
+PLy_input_datum_func(PLyTypeInfo * arg, Oid typeOid, HeapTuple typeTup)
 {
 	enter();
 
 	if (arg->is_rowtype > 0)
 		elog(ERROR, "PLyTypeInfo struct is initialized for Tuple");
 	arg->is_rowtype = 0;
-	PLy_input_datum_func2(&(arg->in.d), typeOid, typeStruct);
+	PLy_input_datum_func2(&(arg->in.d), typeOid, typeTup);
 }
 
 void
-PLy_input_datum_func2(PLyDatumToOb * arg, Oid typeOid, Form_pg_type typeStruct)
+PLy_input_datum_func2(PLyDatumToOb * arg, Oid typeOid, HeapTuple typeTup)
 {
+	Form_pg_type typeStruct = (Form_pg_type) GETSTRUCT(typeTup);
+
 	/* Get the type's conversion information */
 	perm_fmgr_info(typeStruct->typoutput, &arg->typfunc);
-	arg->typelem = typeStruct->typelem;
+	arg->typioparam = getTypeIOParam(typeTup);
 	arg->typbyval = typeStruct->typbyval;
 
 	/* Determine which kind of Python object we will convert to */
@@ -1569,7 +1570,7 @@ PLyDict_FromTuple(PLyTypeInfo * info, HeapTuple tuple, TupleDesc desc)
 		{
 			vdat = FunctionCall3(&info->in.r.atts[i].typfunc,
 								 vattr,
-							ObjectIdGetDatum(info->in.r.atts[i].typelem),
+							ObjectIdGetDatum(info->in.r.atts[i].typioparam),
 							   Int32GetDatum(desc->attrs[i]->atttypmod));
 			vsrc = DatumGetCString(vdat);
 
@@ -2027,7 +2028,7 @@ PLy_spi_prepare(PyObject * self, PyObject * args)
 				plan->types[i] = HeapTupleGetOid(typeTup);
 				typeStruct = (Form_pg_type) GETSTRUCT(typeTup);
 				if (typeStruct->typtype != 'c')
-					PLy_output_datum_func(&plan->args[i], typeStruct);
+					PLy_output_datum_func(&plan->args[i], typeTup);
 				else
 				{
 					PyErr_SetString(PLy_exc_spi_error,
@@ -2193,7 +2194,7 @@ PLy_spi_execute_plan(PyObject * ob, PyObject * list, int limit)
 			plan->values[i] =
 				FunctionCall3(&(plan->args[i].out.d.typfunc),
 							  CStringGetDatum(sv),
-							  ObjectIdGetDatum(plan->args[i].out.d.typelem),
+							  ObjectIdGetDatum(plan->args[i].out.d.typioparam),
 							  Int32GetDatum(-1));
 
 			Py_DECREF(so);

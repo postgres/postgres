@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_type.c,v 1.68 2004/06/03 19:41:46 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_type.c,v 1.69 2004/06/06 00:41:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -323,82 +323,23 @@ typeTypeRelid(Type typ)
 	return typtup->typrelid;
 }
 
-#ifdef NOT_USED
-Oid
-typeTypElem(Type typ)
-{
-	Form_pg_type typtup;
-
-	typtup = (Form_pg_type) GETSTRUCT(typ);
-
-	return typtup->typelem;
-}
-#endif
-
-#ifdef NOT_USED
-/* Given a type structure, return the in-conversion function of the type */
-Oid
-typeInfunc(Type typ)
-{
-	Form_pg_type typtup;
-
-	typtup = (Form_pg_type) GETSTRUCT(typ);
-
-	return typtup->typinput;
-}
-#endif
-
-#ifdef NOT_USED
-/* Given a type structure, return the out-conversion function of the type */
-Oid
-typeOutfunc(Type typ)
-{
-	Form_pg_type typtup;
-
-	typtup = (Form_pg_type) GETSTRUCT(typ);
-
-	return typtup->typoutput;
-}
-#endif
-
-/* Given a type structure and a string, returns the internal form of
-   that string */
+/*
+ * Given a type structure and a string, returns the internal representation
+ * of that string
+ */
 Datum
 stringTypeDatum(Type tp, char *string, int32 atttypmod)
 {
-	Oid			op;
-	Oid			typelem;
+	Oid			typinput;
+	Oid			typioparam;
 
-	op = ((Form_pg_type) GETSTRUCT(tp))->typinput;
-	typelem = ((Form_pg_type) GETSTRUCT(tp))->typelem;	/* XXX - used for
-														 * array_in */
-	return OidFunctionCall3(op,
+	typinput = ((Form_pg_type) GETSTRUCT(tp))->typinput;
+	typioparam = getTypeIOParam(tp);
+	return OidFunctionCall3(typinput,
 							CStringGetDatum(string),
-							ObjectIdGetDatum(typelem),
+							ObjectIdGetDatum(typioparam),
 							Int32GetDatum(atttypmod));
 }
-
-/* Given a type id, returns the out-conversion function of the type */
-#ifdef NOT_USED
-Oid
-typeidOutfunc(Oid type_id)
-{
-	HeapTuple	typeTuple;
-	Form_pg_type type;
-	Oid			outfunc;
-
-	typeTuple = SearchSysCache(TYPEOID,
-							   ObjectIdGetDatum(type_id),
-							   0, 0, 0);
-	if (!HeapTupleIsValid(typeTuple))
-		elog(ERROR, "cache lookup failed for type %u", type_id);
-
-	type = (Form_pg_type) GETSTRUCT(typeTuple);
-	outfunc = type->typoutput;
-	ReleaseSysCache(typeTuple);
-	return outfunc;
-}
-#endif
 
 /* given a typeid, return the type's typrelid (associated relation, if any) */
 Oid

@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.76 2004/06/03 22:56:43 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.77 2004/06/06 00:41:28 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -383,7 +383,7 @@ do_compile(FunctionCallInfo fcinfo,
 			{
 				function->fn_retbyval = typeStruct->typbyval;
 				function->fn_rettyplen = typeStruct->typlen;
-				function->fn_rettypelem = typeStruct->typelem;
+				function->fn_rettypioparam = getTypeIOParam(typeTup);
 				perm_fmgr_info(typeStruct->typinput, &(function->fn_retinput));
 
 				/*
@@ -1704,7 +1704,7 @@ build_datatype(HeapTuple typeTup, int32 typmod)
 	typ->typlen = typeStruct->typlen;
 	typ->typbyval = typeStruct->typbyval;
 	typ->typrelid = typeStruct->typrelid;
-	typ->typelem = typeStruct->typelem;
+	typ->typioparam = getTypeIOParam(typeTup);
 	perm_fmgr_info(typeStruct->typinput, &(typ->typinput));
 	typ->atttypmod = typmod;
 
