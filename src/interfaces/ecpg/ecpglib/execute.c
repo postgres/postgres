@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/execute.c,v 1.34 2004/06/27 12:28:40 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/execute.c,v 1.35 2004/06/30 15:01:56 meskes Exp $ */
 
 /*
  * The aim is to get a simpler inteface to the database routines.
@@ -1026,6 +1026,9 @@ ECPGstore_input(const struct statement * stmt, const struct variable * var,
 					free(str);
 				}
 				break;
+				
+			case ECPGt_descriptor:
+				break;
 
 			default:
 				/* Not implemented yet */
@@ -1046,6 +1049,7 @@ ECPGexecute(struct statement * stmt)
 	PGresult   *results;
 	PGnotify   *notify;
 	struct variable *var;
+	int	   desc_counter = 0;
 
 	copiedquery = ECPGstrdup(stmt->command, stmt->lineno);
 
@@ -1056,64 +1060,116 @@ ECPGexecute(struct statement * stmt)
 	 * so on.
 	 */
 	var = stmt->inlist;
+
 	while (var)
 	{
 		char	   *newcopy = NULL;
-		const char *tobeinserted = NULL;
+		const char *tobeinserted; 
 		char	   *p;
-		bool		malloced = FALSE;
-		int			hostvarl = 0;
+		bool	   malloced = FALSE;
+		int	   hostvarl = 0;
 
-		if (!ECPGstore_input(stmt, var, &tobeinserted, &malloced))
-			return false;
-
-		/*
-		 * Now tobeinserted points to an area that is to be inserted at
-		 * the first %s
-		 */
-		if (!(newcopy = (char *) ECPGalloc(strlen(copiedquery) + strlen(tobeinserted) + 1, stmt->lineno)))
-			return false;
-
-		strcpy(newcopy, copiedquery);
-		if ((p = next_insert(newcopy + hostvarl)) == NULL)
+		tobeinserted = NULL;
+		/* A descriptor is a special case since it contains many variables but is listed only once. */
+		if (var->type == ECPGt_descriptor)
 		{
-			/*
-			 * We have an argument but we dont have the matched up string
-			 * in the string
-			 */
-			ECPGraise(stmt->lineno, ECPG_TOO_MANY_ARGUMENTS, ECPG_SQLSTATE_USING_CLAUSE_DOES_NOT_MATCH_PARAMETERS, NULL);
-			return false;
+			/* We create an additional variable list here, so the same logic applies. */
+			struct variable desc_inlist;
+			struct descriptor *desc;
+			struct descriptor_item *desc_item;
+			for (desc = all_descriptors; desc; desc = desc->next)
+			{
+				if (strcmp(var->pointer, desc->name) == 0)
+					break;
+			}
+			
+			if (desc == NULL)
+			{
+				ECPGraise(stmt->lineno, ECPG_UNKNOWN_DESCRIPTOR, ECPG_SQLSTATE_INVALID_SQL_DESCRIPTOR_NAME, var->pointer);
+				return false;
+			}
+			
+			desc_counter++;
+			for (desc_item = desc->items; desc_item; desc_item = desc_item->next)
+			{
+				if (desc_item->num == desc_counter)
+				{
+					desc_inlist.type = ECPGt_char;
+					desc_inlist.value = desc_item->data;
+					desc_inlist.pointer = &(desc_item->data);
+					desc_inlist.varcharsize = strlen(desc_item->data);
+					desc_inlist.arrsize = 1;
+					desc_inlist.offset = 0;
+					desc_inlist.ind_type = ECPGt_NO_INDICATOR;
+					desc_inlist.ind_value = desc_inlist.ind_pointer = NULL;
+					desc_inlist.ind_varcharsize = desc_inlist.ind_arrsize = desc_inlist.ind_offset = 0;
+
+					if (!ECPGstore_input(stmt, &desc_inlist, &tobeinserted, &malloced))
+						return false;
+					
+					break;
+				}
+			}
+
+			if (!desc_item) /* no more entries found in descriptor */
+				desc_counter = 0;
 		}
 		else
 		{
-			strcpy(p, tobeinserted);
-			hostvarl = strlen(newcopy);
+			if (!ECPGstore_input(stmt, var, &tobeinserted, &malloced))
+				return false;
+		}
+		if (tobeinserted)
+		{
+			/*
+			 * Now tobeinserted points to an area that is to be inserted at
+			 * the first %s
+			 */
+			if (!(newcopy = (char *) ECPGalloc(strlen(copiedquery) + strlen(tobeinserted) + 1, stmt->lineno)))
+				return false;
+
+			strcpy(newcopy, copiedquery);
+			if ((p = next_insert(newcopy + hostvarl)) == NULL)
+			{
+				/*
+				 * We have an argument but we dont have the matched up string
+				 * in the string
+				 */
+				ECPGraise(stmt->lineno, ECPG_TOO_MANY_ARGUMENTS, ECPG_SQLSTATE_USING_CLAUSE_DOES_NOT_MATCH_PARAMETERS, NULL);
+				return false;
+			}
+			else
+			{
+				strcpy(p, tobeinserted);
+				hostvarl = strlen(newcopy);
+
+				/*
+				 * The strange thing in the second argument is the rest of the
+				 * string from the old string
+				 */
+				strcat(newcopy,
+					   copiedquery
+					   + (p - newcopy)
+					   + sizeof("?") - 1 /* don't count the '\0' */ );
+			}
 
 			/*
-			 * The strange thing in the second argument is the rest of the
-			 * string from the old string
+			 * Now everything is safely copied to the newcopy. Lets free the
+			 * oldcopy and let the copiedquery get the var->value from the
+			 * newcopy.
 			 */
-			strcat(newcopy,
-				   copiedquery
-				   + (p - newcopy)
-				   + sizeof("?") - 1 /* don't count the '\0' */ );
+			if (malloced)
+			{
+				ECPGfree((char *) tobeinserted);
+				tobeinserted = NULL;
+			}
+
+			ECPGfree(copiedquery);
+			copiedquery = newcopy;
 		}
-
-		/*
-		 * Now everything is safely copied to the newcopy. Lets free the
-		 * oldcopy and let the copiedquery get the var->value from the
-		 * newcopy.
-		 */
-		if (malloced)
-		{
-			ECPGfree((char *) tobeinserted);
-			tobeinserted = NULL;
-		}
-
-		ECPGfree(copiedquery);
-		copiedquery = newcopy;
-
-		var = var->next;
+		
+		if (desc_counter == 0)
+	 		var = var->next;
 	}
 
 	/* Check if there are unmatched things left. */

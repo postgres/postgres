@@ -195,8 +195,7 @@ get_type(enum ECPGttype type)
 			return ("ECPGt_timestamp");
 			break;
 		default:
-			sprintf(errortext, "illegal variable type %d\n", type);
-			yyerror(errortext);
+			mmerror(PARSE_ERROR, ET_ERROR, "illegal variable type %d\n", type);
 	}
 
 	return NULL;
@@ -538,8 +537,7 @@ ECPGfree_type(struct ECPGtype * type)
 				ECPGfree_struct_member(type->u.members);
 				break;
 			default:
-				sprintf(errortext, "illegal variable type %d\n", type->type);
-				yyerror(errortext);
+				mmerror(PARSE_ERROR, ET_ERROR, "illegal variable type %d\n", type->type);
 				break;
 		}
 	}
@@ -598,8 +596,7 @@ get_dtype(enum ECPGdtype type)
 		case ECPGd_cardinality:
 			return ("ECPGd_cardinality");
 		default:
-			sprintf(errortext, "illegal descriptor item %d\n", type);
-			yyerror(errortext);
+			mmerror(PARSE_ERROR, ET_ERROR, "illegal descriptor item %d\n", type);
 	}
 
 	return NULL;

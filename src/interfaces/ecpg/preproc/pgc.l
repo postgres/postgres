@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/pgc.l,v 1.128 2004/05/05 15:03:04 meskes Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/pgc.l,v 1.129 2004/06/30 15:01:57 meskes Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1164,10 +1164,7 @@ parse_include(void)
 		}
 	}
 	if (!yyin)
-	{
-		snprintf(errortext, sizeof(errortext), "Cannot open include file %s in line %d\n", yytext, yylineno);
-		mmerror(NO_INCLUDE_FILE, ET_FATAL, errortext);
-  	}
+		mmerror(NO_INCLUDE_FILE, ET_FATAL, "Cannot open include file %s in line %d\n", yytext, yylineno);
 
 	input_filename = mm_strdup(inc_file);
 	yy_switch_to_buffer(yy_create_buffer(yyin,YY_BUF_SIZE ));

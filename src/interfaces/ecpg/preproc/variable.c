@@ -84,10 +84,7 @@ find_struct_member(char *name, char *str, struct ECPGstruct_member * members, in
 					case '\0':	/* found the end, but this time it has to
 								 * be an array element */
 						if (members->type->type != ECPGt_array)
-						{
-							snprintf(errortext, sizeof(errortext), "incorrectly formed variable %s", name);
-							mmerror(PARSE_ERROR, ET_FATAL, errortext);
-						}
+							mmerror(PARSE_ERROR, ET_FATAL, "incorrectly formed variable %s", name);
 
 						switch (members->type->u.element->type)
 						{
@@ -110,8 +107,7 @@ find_struct_member(char *name, char *str, struct ECPGstruct_member * members, in
 							return (find_struct_member(name, end, members->type->u.members, brace_level));
 						break;
 					default:
-						snprintf(errortext, sizeof(errortext), "incorrectly formed variable %s", name);
-						mmerror(PARSE_ERROR, ET_FATAL, errortext);
+						mmerror(PARSE_ERROR, ET_FATAL, "incorrectly formed variable %s", name);
 						break;
 				}
 			}
@@ -134,16 +130,10 @@ find_struct(char *name, char *next, char *end)
 	if (c == '-')
 	{
 		if (p->type->type != ECPGt_array)
-		{
-			snprintf(errortext, sizeof(errortext), "variable %s is not a pointer", name);
-			mmerror(PARSE_ERROR, ET_FATAL, errortext);
-		}
+			mmerror(PARSE_ERROR, ET_FATAL, "variable %s is not a pointer", name);
 
 		if (p->type->u.element->type != ECPGt_struct && p->type->u.element->type != ECPGt_union)
-		{
-			snprintf(errortext, sizeof(errortext), "variable %s is not a pointer to a structure or a union", name);
-			mmerror(PARSE_ERROR, ET_FATAL, errortext);
-		}
+			mmerror(PARSE_ERROR, ET_FATAL, "variable %s is not a pointer to a structure or a union", name);
 
 		/* restore the name, we will need it later */
 		*next = c;
@@ -155,10 +145,7 @@ find_struct(char *name, char *next, char *end)
 		if (next == end)
 		{
 			if (p->type->type != ECPGt_struct && p->type->type != ECPGt_union)
-			{
-				snprintf(errortext, sizeof(errortext), "variable %s is neither a structure nor a union", name);
-				mmerror(PARSE_ERROR, ET_FATAL, errortext);
-			}
+				mmerror(PARSE_ERROR, ET_FATAL, "variable %s is neither a structure nor a union", name);
 
 			/* restore the name, we will need it later */
 			*next = c;
@@ -168,16 +155,10 @@ find_struct(char *name, char *next, char *end)
 		else
 		{
 			if (p->type->type != ECPGt_array)
-			{
-				snprintf(errortext, sizeof(errortext), "variable %s is not an array", name);
-				mmerror(PARSE_ERROR, ET_FATAL, errortext);
-			}
+				mmerror(PARSE_ERROR, ET_FATAL, "variable %s is not an array", name);
 
 			if (p->type->u.element->type != ECPGt_struct && p->type->u.element->type != ECPGt_union)
-			{
-				snprintf(errortext, sizeof(errortext), "variable %s is not a pointer to a structure or a union", name);
-				mmerror(PARSE_ERROR, ET_FATAL, errortext);
-			}
+				mmerror(PARSE_ERROR, ET_FATAL, "variable %s is not a pointer to a structure or a union", name);
 
 			/* restore the name, we will need it later */
 			*next = c;
@@ -243,10 +224,8 @@ find_variable(char *name)
 				*next = '\0';
 				p = find_simple(name);
 				if (p == NULL)
-				{
-					snprintf(errortext, sizeof(errortext), "The variable %s is not declared", name);
-					mmerror(PARSE_ERROR, ET_FATAL, errortext);
-				}			   
+					mmerror(PARSE_ERROR, ET_FATAL, "The variable %s is not declared", name);
+
 				*next = c;
 				switch (p->type->u.element->type)
 				{
@@ -267,10 +246,7 @@ find_variable(char *name)
 		p = find_simple(name);
 
 	if (p == NULL)
-	{
-		snprintf(errortext, sizeof(errortext), "The variable %s is not declared", name);
-		mmerror(PARSE_ERROR, ET_FATAL, errortext);
-	}
+		mmerror(PARSE_ERROR, ET_FATAL, "The variable %s is not declared", name);
 
 	return (p);
 }
@@ -490,10 +466,7 @@ get_typedef(char *name)
 
 	for (this = types; this && strcmp(this->name, name); this = this->next);
 	if (!this)
-	{
-		snprintf(errortext, sizeof(errortext), "invalid datatype '%s'", name);
-		mmerror(PARSE_ERROR, ET_FATAL, errortext);
-	}
+		mmerror(PARSE_ERROR, ET_FATAL, "invalid datatype '%s'", name);
 
 	return (this);
 }
@@ -521,10 +494,7 @@ adjust_array(enum ECPGttype type_enum, char **dimension, char **length, char *ty
 	}
 
 	if (pointer_len > 2)
-	{
-		snprintf(errortext, sizeof(errortext), "No multilevel (more than 2) pointer supported %d", pointer_len);
-		mmerror(PARSE_ERROR, ET_FATAL, errortext);
-	}
+		mmerror(PARSE_ERROR, ET_FATAL, "No multilevel (more than 2) pointer supported %d", pointer_len);
 
 	if (pointer_len > 1 && type_enum != ECPGt_char && type_enum != ECPGt_unsigned_char)
 		mmerror(PARSE_ERROR, ET_FATAL, "No pointer to pointer supported for this type");

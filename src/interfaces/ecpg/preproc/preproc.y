@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.289 2004/06/27 12:28:42 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.290 2004/06/30 15:01:57 meskes Exp $ */
 
 /* Copyright comment */
 %{
@@ -12,7 +12,6 @@
 int struct_level = 0;
 int braces_open; /* brace level counter */
 int ecpg_informix_var = 0;
-char	errortext[128];
 char	*connection = NULL;
 char	*input_filename = NULL;
 
@@ -52,19 +51,37 @@ static struct inf_compat_val
  * Handle parsing errors and warnings
  */
 void
-mmerror(int error_code, enum errortype type, char * error)
+mmerror(int error_code, enum errortype type, char * error, ...)
 {
+	va_list ap;
+	
+	fprintf(stderr, "%s:%d: ", input_filename, yylineno);
+	
 	switch(type)
 	{
 		case ET_WARNING:
-			fprintf(stderr, "%s:%d: WARNING: %s\n", input_filename, yylineno, error);
+			fprintf(stderr, "WARNING: ");
 			break;
 		case ET_ERROR:
-			fprintf(stderr, "%s:%d: ERROR: %s\n", input_filename, yylineno, error);
+		case ET_FATAL:
+			fprintf(stderr, "ERROR: ");
+			break;
+	}
+
+	va_start(ap, error);
+	vfprintf(stderr, error, ap);
+	va_end(ap);
+	
+	fprintf(stderr, "\n");
+	
+	switch(type)
+	{
+		case ET_WARNING:
+			break;
+		case ET_ERROR:
 			ret_value = error_code;
 			break;
 		case ET_FATAL:
-			fprintf(stderr, "%s:%d: ERROR: %s\n", input_filename, yylineno, error);
 			exit(error_code);
 	}
 }
@@ -261,8 +278,7 @@ add_additional_variables(char *name, bool insert)
 
 	if (ptr == NULL)
 	{
-		snprintf(errortext, sizeof(errortext), "trying to access an undeclared cursor %s\n", name);
-		mmerror(PARSE_ERROR, ET_ERROR, errortext);
+		mmerror(PARSE_ERROR, ET_ERROR, "trying to access an undeclared cursor %s\n", name);
 		return NULL;
 	}
 	if (insert)
@@ -540,14 +556,14 @@ add_additional_variables(char *name, bool insert)
 %type  <str>	col_name_keyword func_name_keyword precision opt_scale
 %type  <str>	ECPGTypeName using_list ECPGColLabelCommon UsingConst
 %type  <str>	inf_val_list inf_col_list using_descriptor into_descriptor 
-%type  <str>	ecpg_into_using prepared_name struct_union_type_with_symbol
+%type  <str>	prepared_name struct_union_type_with_symbol
 %type  <str>	ECPGunreserved ECPGunreserved_interval cvariable
 %type  <str>	AlterOwnerStmt OptTableSpaceOwner CreateTableSpaceStmt
-%type  <str>	DropTableSpaceStmt indirection indirection_el
+%type  <str>	DropTableSpaceStmt indirection indirection_el ECPGSetDescriptorHeader
 
 %type  <struct_union> s_struct_union_symbol
 
-%type  <descriptor> ECPGGetDescriptor 
+%type  <descriptor> ECPGGetDescriptor ECPGSetDescriptor
 
 %type  <type_enum> simple_type signed_type unsigned_type
 
@@ -809,6 +825,19 @@ stmt:  AlterDatabaseSetStmt		{ output_statement($1, 0, connection); }
 
 			fprintf(yyout, "{ ECPGsetconn(__LINE__, %s);", $1);
 			whenever_action(2);
+			free($1);
+		}
+		| ECPGSetDescriptor
+		{
+			lookup_descriptor($1.name, connection);
+			output_set_descr($1.name, $1.str);
+			free($1.name);
+			free($1.str);
+		}
+		| ECPGSetDescriptorHeader
+		{
+			lookup_descriptor($1, connection);
+			output_set_descr_header($1);
 			free($1);
 		}
 		| ECPGTypedef
@@ -1925,22 +1954,22 @@ TruncateStmt:  TRUNCATE opt_table qualified_name
  * embedded SQL implementations. So we accept their syntax as well and 
  * translate it to the PGSQL syntax. */
  
-FetchStmt: FETCH fetch_direction from_in name ecpg_into_using
+FetchStmt: FETCH fetch_direction from_in name ecpg_into
 			{
 				add_additional_variables($4, false);
 				$$ = cat_str(4, make_str("fetch"), $2, $3, $4);
 			}
-		| FETCH fetch_direction name ecpg_into_using
+		| FETCH fetch_direction name ecpg_into
 			{
 				add_additional_variables($3, false);
 				$$ = cat_str(4, make_str("fetch"), $2, make_str("from"), $3);
 			}
-		| FETCH from_in name ecpg_into_using
+		| FETCH from_in name ecpg_into
 			{
 			        add_additional_variables($3, false);
 				$$ = cat_str(3, make_str("fetch"), $2, $3);
 			}
-		| FETCH name ecpg_into_using
+		| FETCH name ecpg_into
 			{
 			        add_additional_variables($2, false);
 				$$ = cat2_str(make_str("fetch"), $2);
@@ -2895,11 +2924,8 @@ DeclareCursorStmt:  DECLARE name cursor_options CURSOR opt_hold FOR SelectStmt
 			for (ptr = cur; ptr != NULL; ptr = ptr->next)
 			{
 				if (strcmp($2, ptr->name) == 0)
-				{
-						/* re-definition is a bug */
-					snprintf(errortext, sizeof(errortext), "cursor %s already defined", $2);
-					mmerror(PARSE_ERROR, ET_ERROR, errortext);
-				}
+					/* re-definition is a bug */
+					mmerror(PARSE_ERROR, ET_ERROR, "cursor %s already defined", $2);
 			}
 
 			this = (struct cursor *) mm_alloc(sizeof(struct cursor));
@@ -2987,7 +3013,7 @@ into_clause:  INTO OptTempTableName
 			FoundInto = 1;
 			$$= cat2_str(make_str("into"), $2);
 		}
-		| ecpg_into_using		{ $$ = EMPTY; }
+		| ecpg_into			{ $$ = EMPTY; }
 		| /*EMPTY*/			{ $$ = EMPTY; }
 		;
 
@@ -4246,11 +4272,7 @@ connection_target: database_name opt_server opt_port
 		{
 			/* old style: dbname[@server][:port] */
 			if (strlen($2) > 0 && *($2) != '@')
-			{
-				snprintf(errortext, sizeof(errortext),
-						 "Expected '@', found '%s'", $2);
-				mmerror(PARSE_ERROR, ET_ERROR, errortext);
-			}
+				mmerror(PARSE_ERROR, ET_ERROR, "Expected '@', found '%s'", $2);
 
 			$$ = make3_str(make_str("\""), make3_str($1, $2, $3), make_str("\""));
 		}
@@ -4258,24 +4280,15 @@ connection_target: database_name opt_server opt_port
 		{
 			/* new style: <tcp|unix>:postgresql://server[:port][/dbname] */
 			if (strncmp($1, "unix:postgresql", strlen("unix:postgresql")) != 0 && strncmp($1, "tcp:postgresql", strlen("tcp:postgresql")) != 0)
-			{
-				snprintf(errortext, sizeof(errortext), "only protocols 'tcp' and 'unix' and database type 'postgresql' are supported");
-				mmerror(PARSE_ERROR, ET_ERROR, errortext);
-			}
+				mmerror(PARSE_ERROR, ET_ERROR, "only protocols 'tcp' and 'unix' and database type 'postgresql' are supported");
 
 			if (strncmp($3, "//", strlen("//")) != 0)
-			{
-				snprintf(errortext, sizeof(errortext), "Expected '://', found '%s'", $3);
-				mmerror(PARSE_ERROR, ET_ERROR, errortext);
-			}
+				mmerror(PARSE_ERROR, ET_ERROR, "Expected '://', found '%s'", $3);
 
 			if (strncmp($1, "unix", strlen("unix")) == 0 &&
 				strncmp($3 + strlen("//"), "localhost", strlen("localhost")) != 0 &&
 				strncmp($3 + strlen("//"), "127.0.0.1", strlen("127.0.0.1")) != 0)
-			{
-				snprintf(errortext, sizeof(errortext), "unix domain sockets only work on 'localhost' but not on '%9.9s'", $3 + strlen("//"));
-				mmerror(PARSE_ERROR, ET_ERROR, errortext);
-			}
+				mmerror(PARSE_ERROR, ET_ERROR, "unix domain sockets only work on 'localhost' but not on '%9.9s'", $3 + strlen("//"));
 
 			$$ = make3_str(make3_str(make_str("\""), $1, make_str(":")), $3, make3_str(make3_str($4, make_str("/"), $6),	$7, make_str("\"")));
 		}
@@ -4295,16 +4308,10 @@ connection_target: database_name opt_server opt_port
 db_prefix: ident cvariable
 		{
 			if (strcmp($2, "postgresql") != 0 && strcmp($2, "postgres") != 0)
-			{
-				snprintf(errortext, sizeof(errortext), "Expected 'postgresql', found '%s'", $2);
-				mmerror(PARSE_ERROR, ET_ERROR, errortext);
-			}
+				mmerror(PARSE_ERROR, ET_ERROR, "Expected 'postgresql', found '%s'", $2);
 
 			if (strcmp($1, "tcp") != 0 && strcmp($1, "unix") != 0)
-			{
-				snprintf(errortext, sizeof(errortext), "Illegal connection type %s", $1);
-				mmerror(PARSE_ERROR, ET_ERROR, errortext);
-			}
+				mmerror(PARSE_ERROR, ET_ERROR, "Illegal connection type %s", $1);
 
 			$$ = make3_str($1, make_str(":"), $2);
 		}
@@ -4313,10 +4320,7 @@ db_prefix: ident cvariable
 server: Op server_name
 		{
 			if (strcmp($1, "@") != 0 && strcmp($1, "//") != 0)
-			{
-				snprintf(errortext, sizeof(errortext), "Expected '@' or '://', found '%s'", $1);
-				mmerror(PARSE_ERROR, ET_ERROR, errortext);
-			}
+				mmerror(PARSE_ERROR, ET_ERROR, "Expected '@' or '://', found '%s'", $1);
 
 			$$ = make2_str($1, $2);
 		}
@@ -4421,10 +4425,7 @@ opt_options: Op ColId
 				mmerror(PARSE_ERROR, ET_ERROR, "incomplete statement");
 
 			if (strcmp($1, "?") != 0)
-			{
-				snprintf(errortext, sizeof(errortext), "unrecognised token '%s'", $1);
-				mmerror(PARSE_ERROR, ET_ERROR, errortext);
-			}
+				mmerror(PARSE_ERROR, ET_ERROR, "unrecognised token '%s'", $1);
 
 			$$ = make2_str(make_str("?"), $2);
 		}
@@ -4443,11 +4444,8 @@ ECPGCursorStmt:  DECLARE name cursor_options CURSOR opt_hold FOR prepared_name
 			for (ptr = cur; ptr != NULL; ptr = ptr->next)
 			{
 				if (strcmp($2, ptr->name) == 0)
-				{
-						/* re-definition is a bug */
-					snprintf(errortext, sizeof(errortext), "cursor %s already defined", $2);
-					mmerror(PARSE_ERROR, ET_ERROR, errortext);
-				}
+					/* re-definition is a bug */
+					mmerror(PARSE_ERROR, ET_ERROR, "cursor %s already defined", $2);
 			}
 
 			this = (struct cursor *) mm_alloc(sizeof(struct cursor));
@@ -4595,11 +4593,8 @@ type_declaration: S_TYPEDEF
 			for (ptr = types; ptr != NULL; ptr = ptr->next)
 			{
 				if (strcmp($5, ptr->name) == 0)
-				{
 			        	/* re-definition is a bug */
-					snprintf(errortext, sizeof(errortext), "Type %s already defined", $5);
-					mmerror(PARSE_ERROR, ET_ERROR, errortext);
-				}
+					mmerror(PARSE_ERROR, ET_ERROR, "Type %s already defined", $5);
 			}
 			adjust_array($3.type_enum, &dimension, &length, $3.type_dimension, $3.type_index, *$4?1:0, true);
 
@@ -4912,11 +4907,8 @@ struct_union_type_with_symbol: s_struct_union_symbol
 			for (ptr = types; ptr != NULL; ptr = ptr->next)
                         {
                                 if (strcmp(su_type.type_str, ptr->name) == 0)
-                                {
                                         /* re-definition is a bug */
-                                        snprintf(errortext, sizeof(errortext), "Type %s already defined", su_type.type_str);
-                                        mmerror(PARSE_ERROR, ET_ERROR, errortext);
-                                }
+                                        mmerror(PARSE_ERROR, ET_ERROR, "Type %s already defined", su_type.type_str);
                         }
 
                         this = (struct typedefs *) mm_alloc(sizeof(struct typedefs));
@@ -5215,27 +5207,24 @@ opt_ecpg_using: /*EMPTY*/		{ $$ = EMPTY; }
 		;
 
 ecpg_using:	USING using_list 	{ $$ = EMPTY; }
+		| using_descriptor      { $$ = $1; }
 		;
 
 using_descriptor: USING opt_sql SQL_DESCRIPTOR quoted_ident_stringvar
 		{
-			add_variable_to_head(&argsresult, descriptor_variable($4,0), &no_indicator);
+			add_variable_to_head(&argsinsert, descriptor_variable($4,0), &no_indicator);
 			$$ = EMPTY;
 		}
 		;
 
 into_descriptor: INTO opt_sql SQL_DESCRIPTOR quoted_ident_stringvar
 		{
-			add_variable_to_head(&argsresult, descriptor_variable($4,0), &no_indicator);
+			add_variable_to_head(&argsresult, descriptor_variable($4,1), &no_indicator);
 			$$ = EMPTY;
 		}
 		;
 		
 opt_sql: /*EMPTY*/ | SQL_SQL;
-
-ecpg_into_using: ecpg_into		{ $$ = EMPTY; }
-		| using_descriptor	{ $$ = $1; }
-		;
 
 ecpg_into: INTO into_list		{ $$ = EMPTY; }
 		| into_descriptor	{ $$ = $1; }
@@ -5295,8 +5284,19 @@ opt_output:	SQL_OUTPUT	{ $$ = make_str("output"); }
 /*
  * dynamic SQL: descriptor based access
  *	written by Christof Petig <christof.petig@wtal.de>
+ *		and Peter Eisentraut <peter.eisentraut@credativ.de>
  */
 
+/*
+ * allocate a descriptor
+ */
+ECPGAllocateDescr:     SQL_ALLOCATE SQL_DESCRIPTOR quoted_ident_stringvar
+               {
+                       add_descriptor($3,connection);
+                       $$ = $3;
+               };
+
+ 
 /*
  * deallocate a descriptor
  */
@@ -5308,62 +5308,84 @@ ECPGDeallocateDescr:	DEALLOCATE SQL_DESCRIPTOR quoted_ident_stringvar
 		;
 
 /*
- * allocate a descriptor
- */
-ECPGAllocateDescr:	SQL_ALLOCATE SQL_DESCRIPTOR quoted_ident_stringvar
-		{
-			add_descriptor($3,connection);
-			$$ = $3;
-		};
-
-/*
- * read from descriptor
+ * manipulate a descriptor header
  */
 
-ECPGGetDescHeaderItem: cvariable '=' desc_header_item
-			{ push_assignment($1, $3); }
-		;
-
-desc_header_item:	SQL_COUNT			{ $$ = ECPGd_count; }
-		;
-
-ECPGGetDescItem: cvariable '=' descriptor_item	{ push_assignment($1, $3); };
-
-descriptor_item:	SQL_CARDINALITY		{ $$ = ECPGd_cardinality; }
-		| SQL_DATA						{ $$ = ECPGd_data; }
-		| SQL_DATETIME_INTERVAL_CODE	{ $$ = ECPGd_di_code; }
-		| SQL_DATETIME_INTERVAL_PRECISION { $$ = ECPGd_di_precision; }
-		| SQL_INDICATOR					{ $$ = ECPGd_indicator; }
-		| SQL_KEY_MEMBER				{ $$ = ECPGd_key_member; }
-		| SQL_LENGTH					{ $$ = ECPGd_length; }
-		| SQL_NAME						{ $$ = ECPGd_name; }
-		| SQL_NULLABLE					{ $$ = ECPGd_nullable; }
-		| SQL_OCTET_LENGTH				{ $$ = ECPGd_octet; }
-		| PRECISION						{ $$ = ECPGd_precision; }
-		| SQL_RETURNED_LENGTH			{ $$ = ECPGd_length; }
-		| SQL_RETURNED_OCTET_LENGTH		{ $$ = ECPGd_ret_octet; }
-		| SQL_SCALE						{ $$ = ECPGd_scale; }
-		| TYPE_P						{ $$ = ECPGd_type; }
+ECPGGetDescriptorHeader: GET SQL_DESCRIPTOR quoted_ident_stringvar ECPGGetDescHeaderItems
+			{  $$ = $3; }
 		;
 
 ECPGGetDescHeaderItems: ECPGGetDescHeaderItem
 		| ECPGGetDescHeaderItems ',' ECPGGetDescHeaderItem
 		;
 
-ECPGGetDescItems: ECPGGetDescItem
-		| ECPGGetDescItems ',' ECPGGetDescItem
+ECPGGetDescHeaderItem: CVARIABLE '=' desc_header_item
+			{ push_assignment($1, $3); }
 		;
 
-ECPGGetDescriptorHeader:	GET SQL_DESCRIPTOR quoted_ident_stringvar
-								ECPGGetDescHeaderItems
-			{  $$ = $3; }
+
+ECPGSetDescriptorHeader: SET SQL_DESCRIPTOR quoted_ident_stringvar ECPGSetDescHeaderItems
+			{ $$ = $3; }
+
+ECPGSetDescHeaderItems: ECPGSetDescHeaderItem
+		| ECPGSetDescHeaderItems ',' ECPGSetDescHeaderItem
 		;
 
-ECPGGetDescriptor:	GET SQL_DESCRIPTOR quoted_ident_stringvar SQL_VALUE cvariable ECPGGetDescItems
+ECPGSetDescHeaderItem: desc_header_item '=' CVARIABLE
+			{ push_assignment($3, $1); }
+		;
+
+
+desc_header_item:	SQL_COUNT			{ $$ = ECPGd_count; }
+		;
+
+/*
+ * manipulate a descriptor
+ */
+
+ECPGGetDescriptor:	GET SQL_DESCRIPTOR quoted_ident_stringvar SQL_VALUE CVARIABLE ECPGGetDescItems
 			{  $$.str = $5; $$.name = $3; }
 		|	GET SQL_DESCRIPTOR quoted_ident_stringvar SQL_VALUE Iconst ECPGGetDescItems
 			{  $$.str = $5; $$.name = $3; }
 		;
+
+ECPGGetDescItems: ECPGGetDescItem
+		| ECPGGetDescItems ',' ECPGGetDescItem
+		;
+
+ECPGGetDescItem: CVARIABLE '=' descriptor_item	{ push_assignment($1, $3); };
+
+
+ECPGSetDescriptor:	SET SQL_DESCRIPTOR quoted_ident_stringvar SQL_VALUE CVARIABLE ECPGSetDescItems
+			{  $$.str = $5; $$.name = $3; }
+		|	SET SQL_DESCRIPTOR quoted_ident_stringvar SQL_VALUE Iconst ECPGSetDescItems
+			{  $$.str = $5; $$.name = $3; }
+		;
+
+ECPGSetDescItems: ECPGSetDescItem
+		| ECPGSetDescItems ',' ECPGSetDescItem
+		;
+
+ECPGSetDescItem: descriptor_item '=' CVARIABLE		{ push_assignment($3, $1); };
+
+
+descriptor_item:	SQL_CARDINALITY			{ $$ = ECPGd_cardinality; }
+		| SQL_DATA				{ $$ = ECPGd_data; }
+		| SQL_DATETIME_INTERVAL_CODE		{ $$ = ECPGd_di_code; }
+		| SQL_DATETIME_INTERVAL_PRECISION 	{ $$ = ECPGd_di_precision; }
+		| SQL_INDICATOR				{ $$ = ECPGd_indicator; }
+		| SQL_KEY_MEMBER			{ $$ = ECPGd_key_member; }
+		| SQL_LENGTH				{ $$ = ECPGd_length; }
+		| SQL_NAME				{ $$ = ECPGd_name; }
+		| SQL_NULLABLE				{ $$ = ECPGd_nullable; }
+		| SQL_OCTET_LENGTH			{ $$ = ECPGd_octet; }
+		| PRECISION				{ $$ = ECPGd_precision; }
+		| SQL_RETURNED_LENGTH			{ $$ = ECPGd_length; }
+		| SQL_RETURNED_OCTET_LENGTH		{ $$ = ECPGd_ret_octet; }
+		| SQL_SCALE				{ $$ = ECPGd_scale; }
+		| TYPE_P				{ $$ = ECPGd_type; }
+		;
+
 
 /*
  * for compatibility with ORACLE we will also allow the keyword RELEASE
@@ -5431,11 +5453,8 @@ ECPGTypedef: TYPE_P
 				for (ptr = types; ptr != NULL; ptr = ptr->next)
 				{
 					if (strcmp($3, ptr->name) == 0)
-					{
 						/* re-definition is a bug */
-						snprintf(errortext, sizeof(errortext), "Type %s already defined", $3);
-						mmerror(PARSE_ERROR, ET_ERROR, errortext);
-					}
+						mmerror(PARSE_ERROR, ET_ERROR, "Type %s already defined", $3);
 				}
 
 				adjust_array($5.type_enum, &dimension, &length, $5.type_dimension, $5.type_index, *$7?1:0, false);

@@ -1,6 +1,6 @@
 /* dynamic SQL support routines
  *
- * $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/descriptor.c,v 1.7 2003/11/29 19:52:08 pgsql Exp $
+ * $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/descriptor.c,v 1.8 2004/06/30 15:01:56 meskes Exp $
  */
 
 #define POSTGRES_ECPG_INTERNAL
@@ -108,6 +108,51 @@ get_int_item(int lineno, void *var, enum ECPGttype vartype, int value)
 	}
 
 	return (true);
+}
+
+static bool
+set_int_item(int lineno, int *target, const void *var, enum ECPGttype vartype)
+{
+	switch (vartype)
+	{
+		case ECPGt_short:
+			*target = *(short *) var;
+			break;
+		case ECPGt_int:
+			*target = *(int *) var;
+			break;
+		case ECPGt_long:
+			*target = *(long *) var;
+			break;
+		case ECPGt_unsigned_short:
+			*target = *(unsigned short *) var;
+			break;
+		case ECPGt_unsigned_int:
+			*target = *(unsigned int *) var;
+			break;
+		case ECPGt_unsigned_long:
+			*target = *(unsigned long *) var;
+			break;
+#ifdef HAVE_LONG_LONG_INT_64
+		case ECPGt_long_long:
+			*target = *(long long int *) var;
+			break;
+		case ECPGt_unsigned_long_long:
+			*target = *(unsigned long long int *) var;
+			break;
+#endif   /* HAVE_LONG_LONG_INT_64 */
+		case ECPGt_float:
+			*target = *(float *) var;
+			break;
+		case ECPGt_double:
+			*target = *(double *) var;
+			break;
+		default:
+			ECPGraise(lineno, ECPG_VAR_NOT_NUMERIC, ECPG_SQLSTATE_RESTRICTED_DATA_TYPE_ATTRIBUTE_VIOLATION, NULL);
+			return (false);
+	}
+
+	return true;
 }
 
 static bool
@@ -386,6 +431,124 @@ ECPGget_desc(int lineno, char *desc_name, int index,...)
 }
 
 bool
+ECPGset_desc(int lineno, char *desc_name, int index,...)
+{
+	va_list		args;
+	struct descriptor *desc;
+	struct descriptor_item *desc_item, *last_di;
+
+	for (desc = all_descriptors; desc; desc = desc->next)
+	{
+		if (strcmp(desc_name, desc->name)==0)
+			break;
+	}
+
+	if (desc == NULL)
+	{
+		ECPGraise(lineno, ECPG_UNKNOWN_DESCRIPTOR, ECPG_SQLSTATE_INVALID_SQL_DESCRIPTOR_NAME, desc_name);
+		return false;
+	}
+
+	for (desc_item = desc->items; desc_item; desc_item = desc_item->next)
+	{
+		if (desc_item->num == index)
+			break;
+	}
+
+	if (desc_item == NULL)
+	{
+		desc_item = ECPGalloc(sizeof(*desc_item), lineno);
+		desc_item->num = index;
+		desc_item->next = desc->items;
+		desc->items = desc_item;
+	}
+
+	va_start(args, index);
+
+	do
+	{
+		enum ECPGdtype itemtype;
+		long		varcharsize;
+		long		offset;
+		long		arrsize;
+		enum ECPGttype vartype;
+		void	   *var;
+
+		itemtype = va_arg(args, enum ECPGdtype);
+
+		if (itemtype == ECPGd_EODT)
+			break;
+
+		vartype = va_arg(args, enum ECPGttype);
+		var = va_arg(args, void *);
+		varcharsize = va_arg(args, long);
+		arrsize = va_arg(args, long);
+		offset = va_arg(args, long);
+
+		switch (itemtype)
+		{
+			case ECPGd_data:
+			{
+				// FIXME: how to do this in general?
+				switch (vartype)
+				{
+					case ECPGt_char:
+						desc_item->data = strdup((char *)var);
+						break;
+					case ECPGt_int:
+					{
+						char buf[20];
+						snprintf(buf, 20, "%d", *(int *)var);
+						desc_item->data = strdup(buf);
+						break;
+					}
+					default:
+						abort();
+				}
+				break;
+			}
+
+			case ECPGd_indicator:
+				set_int_item(lineno, &desc_item->indicator, var, vartype);
+				break;
+
+			case ECPGd_length:
+				set_int_item(lineno, &desc_item->length, var, vartype);
+				break;
+
+			case ECPGd_precision:
+				set_int_item(lineno, &desc_item->precision, var, vartype);
+				break;
+
+			case ECPGd_scale:
+				set_int_item(lineno, &desc_item->scale, var, vartype);
+				break;
+
+			case ECPGd_type:
+				set_int_item(lineno, &desc_item->type, var, vartype);
+				break;
+
+			default:
+			{
+				char	type_str[20];
+				snprintf(type_str, sizeof(type_str), "%d", itemtype);
+				ECPGraise(lineno, ECPG_UNKNOWN_DESCRIPTOR_ITEM, ECPG_SQLSTATE_ECPG_INTERNAL_ERROR, type_str);
+				return false;
+			}
+		}
+
+		/*if (itemtype == ECPGd_data)
+		{
+			free(desc_item->data);
+			desc_item->data = NULL;
+		}*/
+	}
+	while (true);
+
+	return true;
+}
+
+bool
 ECPGdeallocate_desc(int line, const char *name)
 {
 	struct descriptor *i;
@@ -425,6 +588,7 @@ ECPGallocate_desc(int line, const char *name)
 		ECPGfree(new);
 		return false;
 	}
+	new->items = NULL;
 	new->result = PQmakeEmptyPGresult(NULL, 0);
 	if (!new->result)
 	{

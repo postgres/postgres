@@ -76,6 +76,8 @@ void		ECPGraise(int line, int code, const char *sqlstate, const char *str);
 void		ECPGraise_backend(int line, PGresult *result, PGconn *conn, int compat);
 bool		ECPGget_desc_header(int, char *, int *);
 bool		ECPGget_desc(int, char *, int,...);
+bool		ECPGset_desc_header(int, char *, int *);
+bool		ECPGset_desc(int, char *, int,...);
 
 void		ECPGset_noind_null(enum ECPGttype, void *);
 bool		ECPGis_noind_null(enum ECPGttype, void *);

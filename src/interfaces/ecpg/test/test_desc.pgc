@@ -1,0 +1,69 @@
+EXEC SQL WHENEVER SQLERROR SQLPRINT;
+
+int
+main()
+{
+	EXEC SQL BEGIN DECLARE SECTION;
+	char *stmt1 = "INSERT INTO test1 VALUES (?, ?)";
+	char *stmt2 = "SELECT * from test1 where a = ? and b = ?";
+
+	int val1 = 1;
+	char val2[] = "one", val2output[] = "AAA";
+	int val1output = 2, val2i = 0;
+	int val2null = 1;
+	EXEC SQL END DECLARE SECTION;
+	FILE *dbgs;
+
+        if ((dbgs = fopen("log", "w")) != NULL)
+                ECPGdebug(1, dbgs);
+
+	EXEC SQL ALLOCATE DESCRIPTOR indesc;
+	EXEC SQL ALLOCATE DESCRIPTOR outdesc;
+
+	EXEC SQL SET DESCRIPTOR indesc VALUE 1 DATA = :val1;
+	EXEC SQL SET DESCRIPTOR indesc VALUE 2 INDICATOR = :val2i, DATA = :val2;
+
+	EXEC SQL CONNECT TO mm;
+
+	EXEC SQL CREATE TABLE test1 (a int, b text);
+	EXEC SQL PREPARE foo1 FROM :stmt1;
+	EXEC SQL PREPARE foo2 FROM :stmt2;
+
+	EXEC SQL EXECUTE foo1 USING DESCRIPTOR indesc;
+
+	//EXEC SQL SET DESCRIPTOR indesc VALUE 1 DATA = 2;
+	EXEC SQL SET DESCRIPTOR indesc VALUE 1 DATA = :val1output;
+	EXEC SQL SET DESCRIPTOR indesc VALUE 2 INDICATOR = :val2null, DATA = :val2;
+	
+	EXEC SQL EXECUTE foo1 USING DESCRIPTOR indesc;
+
+	EXEC SQL SET DESCRIPTOR indesc VALUE 1 DATA = :val1;
+	EXEC SQL SET DESCRIPTOR indesc VALUE 2 INDICATOR = :val2i, DATA = :val2;
+
+	EXEC SQL EXECUTE foo2 USING DESCRIPTOR indesc INTO DESCRIPTOR outdesc;
+	
+	EXEC SQL GET DESCRIPTOR outdesc VALUE 1 :val2output = DATA;
+	printf("output = %s\n", val2output);
+	
+	EXEC SQL DECLARE c CURSOR FOR foo2;
+	EXEC SQL OPEN c USING DESCRIPTOR indesc;
+
+	EXEC SQL FETCH next FROM c INTO :val1output, :val2output;
+	printf("val1=%d val2=%s\n", val1output, val2output);
+
+	EXEC SQL CLOSE c;
+	
+	EXEC SQL SELECT * INTO :val1output, :val2output FROM test1 where a = 2;
+	printf("val1=%d val2=%s\n", val1output, val2output);
+	
+	EXEC SQL DROP TABLE test1;
+	EXEC SQL DISCONNECT;
+
+	EXEC SQL DEALLOCATE DESCRIPTOR indesc;
+	EXEC SQL DEALLOCATE DESCRIPTOR outdesc;
+
+	if (dbgs != NULL)
+		fclose(dbgs);
+			
+	return 0;
+}

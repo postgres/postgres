@@ -25,8 +25,7 @@ extern char *descriptor_name;
 extern char *connection;
 extern char *input_filename;
 extern char *yytext,
-		   *token_start,
-			errortext[128];
+		   *token_start;
 
 #ifdef YYDEBUG
 extern int	yydebug;
@@ -63,11 +62,13 @@ extern int	yylex(void);
 extern void yyerror(char *);
 extern void *mm_alloc(size_t), *mm_realloc(void *, size_t);
 extern char *mm_strdup(const char *);
-extern void mmerror(int, enum errortype, char *);
+extern void mmerror(int, enum errortype, char *, ...);
 extern ScanKeyword *ScanECPGKeywordLookup(char *);
 extern ScanKeyword *ScanCKeywordLookup(char *);
 extern void output_get_descr_header(char *);
 extern void output_get_descr(char *, char *);
+extern void output_set_descr_header(char *);
+extern void output_set_descr(char *, char *);
 extern void push_assignment(char *, enum ECPGdtype);
 extern struct variable *find_variable(char *);
 extern void whenever_action(int);
