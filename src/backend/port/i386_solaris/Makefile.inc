@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/port/i386_solaris/Attic/Makefile.inc,v 1.3 1996/07/25 07:27:08 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/backend/port/i386_solaris/Attic/Makefile.inc,v 1.4 1996/07/25 19:48:24 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -15,6 +15,6 @@ CFLAGS+= -DUSE_POSIX_TIME -DNEED_ISINF -DNEED_RUSAGE -DNO_EMPTY_STMTS
 
 LDADD+= -ll -ldl
 
-SUBSRCS+= port.c 
+SUBSRCS+= port.c tas.s
 
 HEADERS+= machine.h port-protos.h rusagestub.h
