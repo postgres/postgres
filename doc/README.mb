@@ -196,6 +196,11 @@ Unicode: http://www.unicode.org/
 
 5. History
 
+May 20, 2000
+	* SJIS UDC (NEC selection IBM kanji) support contributed
+	  by Eiji Tokuya
+	* Changes above will appear in 7.0.1
+
 Mar 22, 2000
 	* Add new libpq functions PQsetClientEncoding, PQclientEncoding
 	* ./configure --with-mb=EUC_JP
