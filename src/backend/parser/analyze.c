@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.47 1997/10/25 01:09:35 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.48 1997/10/30 16:34:22 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -900,7 +900,7 @@ transformIdent(ParseState *pstate, Node *expr, int precedence)
 	}
 
 	if (result == NULL)
-		elog(WARN, "attribute \"%s\" not found", ident->name);
+		elog(WARN, "attribute '%s' not found", ident->name);
 
 	return result;
 }
@@ -1028,8 +1028,8 @@ exprType(Node *expr)
 
 /*
  * expandAllTables -
- *	  turns '*' (in the target list) into a list of attributes (of all
- *	  relations in the range table)
+ *	  turns '*' (in the target list) into a list of attributes
+ *	   (of all relations in the range table)
  */
 static List *
 expandAllTables(ParseState *pstate)
@@ -1173,7 +1173,7 @@ makeTargetNames(ParseState *pstate, List *cols)
 			varattno(pstate->p_target_relation, name);
 			foreach(nxt, lnext(tl))
 				if (!strcmp(name, ((Ident *) lfirst(nxt))->name))
-					elog (WARN, "Attribute %s should be specified only once", name);
+					elog (WARN, "Attribute '%s' should be specified only once", name);
 		}
 	}
 	
@@ -1209,15 +1209,9 @@ transformTargetList(ParseState *pstate, List *targetlist)
 					handleTargetColname(pstate, &res->name, NULL, identname);
 
 					/*
-					 * here we want to look for column names only, not
-					 * relation
+					 * here we want to look for column names only, not relation
+					 * names (even though they can be stored in Ident nodes, too)
 					 */
-
-					/*
-					 * names (even though they can be stored in Ident
-					 * nodes,
-					 */
-					/* too)														*/
 					expr = transformIdent(pstate, (Node *) res->val, EXPR_COLUMN_FIRST);
 					type_id = exprType(expr);
 					type_len = tlen(get_id_type(type_id));
@@ -1755,7 +1749,7 @@ find_targetlist_entry(ParseState *pstate, SortGroupBy *sortgroupby, List *tlist)
 					if (real_rtable_pos == test_rtable_pos)
 					{
 						if (target_result != NULL)
-							elog(WARN, "Order/Group By %s is ambiguous", sortgroupby->name);
+							elog(WARN, "Order/Group By '%s' is ambiguous", sortgroupby->name);
 						else
 							target_result = target;
 					}
@@ -1763,7 +1757,7 @@ find_targetlist_entry(ParseState *pstate, SortGroupBy *sortgroupby, List *tlist)
 				else
 				{
 					if (target_result != NULL)
-						elog(WARN, "Order/Group By %s is ambiguous", sortgroupby->name);
+						elog(WARN, "Order/Group By '%s' is ambiguous", sortgroupby->name);
 					else
 						target_result = target;
 				}
@@ -2069,7 +2063,7 @@ setup_tlist(char *attname, Oid relid)
 
 	attno = get_attnum(relid, attname);
 	if (attno < 0)
-		elog(WARN, "cannot reference attribute %s of tuple params/return values for functions", attname);
+		elog(WARN, "cannot reference attribute '%s' of tuple params/return values for functions", attname);
 
 	typeid = find_atttype(relid, attname);
 	resnode = makeResdom(1,
@@ -2171,7 +2165,7 @@ ParseComplexProjection(ParseState *pstate,
 					else
 					{
 						elog(WARN,
-							 "Function %s has bad returntype %d",
+							 "Function '%s' has bad returntype %d",
 							 funcname, argtype);
 					}
 				}
@@ -2240,7 +2234,7 @@ ParseComplexProjection(ParseState *pstate,
 
 				}
 
-				elog(WARN, "Function %s has bad returntype %d",
+				elog(WARN, "Function '%s' has bad returntype %d",
 					 funcname, argtype);
 				break;
 			}
@@ -2304,7 +2298,7 @@ ParseFunc(ParseState *pstate, char *funcname, List *fargs, int *curr_resno)
 	{
 		first_arg = lfirst(fargs);
 		if (first_arg == NULL)
-			elog(WARN, "function %s does not allow NULL input", funcname);
+			elog(WARN, "function '%s' does not allow NULL input", funcname);
 	}
 
 	/*
@@ -2375,7 +2369,7 @@ ParseFunc(ParseState *pstate, char *funcname, List *fargs, int *curr_resno)
 				}
 				else
 					elog(WARN,
-						 "Type %s is not a relation type",
+						 "Type '%s' is not a relation type",
 						 tname(get_id_type(toid)));
 				argrelid = typeid_get_relid(toid);
 
@@ -2477,7 +2471,7 @@ ParseFunc(ParseState *pstate, char *funcname, List *fargs, int *curr_resno)
 			if (exprType(pair) == UNKNOWNOID &&
 				!IsA(pair, Const))
 			{
-				elog(WARN, "ParseFunc: no function named %s that takes in an unknown type as argument #%d", funcname, nargs);
+				elog(WARN, "ParseFunc: no function named '%s' that takes in an unknown type as argument #%d", funcname, nargs);
 			}
 			else
 				toid = exprType(pair);
@@ -2520,7 +2514,7 @@ ParseFunc(ParseState *pstate, char *funcname, List *fargs, int *curr_resno)
 	}
 
 	if (!exists)
-		elog(WARN, "no such attribute or function %s", funcname);
+		elog(WARN, "no such attribute or function '%s'", funcname);
 
 	/* got it */
 	funcnode = makeNode(Func);
