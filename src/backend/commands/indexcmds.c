@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.97 2003/01/23 15:18:40 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.98 2003/05/02 20:54:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -720,11 +720,11 @@ ReindexDatabase(const char *dbname, bool force, bool all)
 
 	/*
 	 * Create a memory context that will survive forced transaction
-	 * commits we do below.  Since it is a child of QueryContext, it will
+	 * commits we do below.  Since it is a child of PortalContext, it will
 	 * go away eventually even if we suffer an error; there's no need for
 	 * special abort cleanup logic.
 	 */
-	private_context = AllocSetContextCreate(QueryContext,
+	private_context = AllocSetContextCreate(PortalContext,
 											"ReindexDatabase",
 											ALLOCSET_DEFAULT_MINSIZE,
 											ALLOCSET_DEFAULT_INITSIZE,

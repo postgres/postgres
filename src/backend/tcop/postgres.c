@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.326 2003/04/29 22:13:11 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.327 2003/05/02 20:54:35 tgl Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -74,8 +74,6 @@ const char *debug_query_string; /* for pgmonitor and
 /* Note: whereToSendOutput is initialized for the bootstrap/standalone case */
 CommandDest whereToSendOutput = Debug;
 
-static bool dontExecute = false;
-
 /* note: these declarations had better match tcopprot.h */
 sigjmp_buf	Warn_restart;
 
@@ -122,7 +120,6 @@ static void start_xact_command(void);
 static void finish_xact_command(bool forceCommit);
 static void SigHupHandler(SIGNAL_ARGS);
 static void FloatExceptionHandler(SIGNAL_ARGS);
-static const char *CreateCommandTag(Node *parsetree);
 
 
 /* ----------------------------------------------------------------
@@ -310,9 +307,9 @@ SocketBackend(StringInfo inBuf)
 
 /* ----------------
  *		ReadCommand reads a command from either the frontend or
- *		standard input, places it in inBuf, and returns a char
- *		representing whether the string is a 'Q'uery or a 'F'astpath
- *		call.  EOF is returned if end of file.
+ *		standard input, places it in inBuf, and returns the
+ *		message type code (first byte of the message).
+ *		EOF is returned if end of file.
  * ----------------
  */
 static int
@@ -487,7 +484,7 @@ pg_analyze_and_rewrite(Node *parsetree, Oid *paramTypes, int numParams)
 }
 
 
-/* Generate a plan for a single query. */
+/* Generate a plan for a single already-rewritten query. */
 Plan *
 pg_plan_query(Query *querytree)
 {
@@ -534,41 +531,58 @@ pg_plan_query(Query *querytree)
 	return plan;
 }
 
+/*
+ * Generate plans for a list of already-rewritten queries.
+ *
+ * If needSnapshot is TRUE, we haven't yet set a snapshot for the current
+ * query.  A snapshot must be set before invoking the planner, since it
+ * might try to evaluate user-defined functions.  But we must not set a
+ * snapshot if the list contains only utility statements, because some
+ * utility statements depend on not having frozen the snapshot yet.
+ * (We assume that such statements cannot appear together with plannable
+ * statements in the rewriter's output.)
+ */
+List *
+pg_plan_queries(List *querytrees, bool needSnapshot)
+{
+	List	   *plan_list = NIL;
+	List	   *query_list;
 
-/* ----------------------------------------------------------------
- *		pg_exec_query_string()
+	foreach(query_list, querytrees)
+	{
+		Query	   *query = (Query *) lfirst(query_list);
+		Plan	   *plan;
+
+		if (query->commandType == CMD_UTILITY)
+		{
+			/* Utility commands have no plans. */
+			plan = NULL;
+		}
+		else
+		{
+			if (needSnapshot)
+			{
+				SetQuerySnapshot();
+				needSnapshot = false;
+			}
+			plan = pg_plan_query(query);
+		}
+
+		plan_list = lappend(plan_list, plan);
+	}
+
+	return plan_list;
+}
+
+
+/*
+ * exec_simple_query()
  *
- *		Takes a querystring, runs the parser/utilities or
- *		parser/planner/executor over it as necessary.
- *
- * Assumptions:
- *
- * At call, we are not inside a transaction command.
- *
- * The CurrentMemoryContext after starting a transaction command must be
- * appropriate for execution of individual queries (typically this will be
- * TransactionCommandContext).	Note that this routine resets that context
- * after each individual query, so don't store anything there that
- * must outlive the call!
- *
- * parse_context references a context suitable for holding the
- * parse/rewrite trees (typically this will be QueryContext).
- * This context *must* be longer-lived than the transaction context!
- * In fact, if the query string might contain BEGIN/COMMIT commands,
- * parse_context had better outlive TopTransactionContext!
- *
- * We could have hard-wired knowledge about QueryContext and
- * TransactionCommandContext into this routine, but it seems better
- * not to, in case callers from outside this module need to use some
- * other contexts.
- *
- * ----------------------------------------------------------------
+ * Execute a "simple Query" protocol message.
  */
 static void
-pg_exec_query_string(const char *query_string,	/* string to execute */
-					 CommandDest dest,	/* where results should go */
-					 MemoryContext parse_context)		/* context for
-														 * parsetrees */
+exec_simple_query(const char *query_string,	/* string to execute */
+				  CommandDest dest)			/* where results should go */
 {
 	bool		xact_started;
 	MemoryContext oldcontext;
@@ -577,39 +591,40 @@ pg_exec_query_string(const char *query_string,	/* string to execute */
 	struct timeval start_t,
 				stop_t;
 	bool		save_log_duration = log_duration;
+	bool		save_log_statement_stats = log_statement_stats;
 
+	/*
+	 * Report query to various monitoring facilities.
+	 */
 	debug_query_string = query_string;
+
+	pgstat_report_activity(query_string);
 
 	/*
 	 * We use save_log_duration so "SET log_duration = true" doesn't
 	 * report incorrect time because gettimeofday() wasn't called.
+	 * Similarly, log_statement_stats has to be captured once.
 	 */
 	if (save_log_duration)
 		gettimeofday(&start_t, NULL);
+
+	if (save_log_statement_stats)
+		ResetUsage();
 
 	/*
 	 * Start up a transaction command.	All queries generated by the
 	 * query_string will be in this same command block, *unless* we find a
 	 * BEGIN/COMMIT/ABORT statement; we have to force a new xact command
 	 * after one of those, else bad things will happen in xact.c. (Note
-	 * that this will possibly change current memory context.)
+	 * that this will normally change current memory context.)
 	 */
 	start_xact_command();
 	xact_started = true;
 
 	/*
-	 * parse_context *must* be different from the execution memory
-	 * context, else the context reset at the bottom of the loop will
-	 * destroy the parsetree list.	(We really ought to check that
-	 * parse_context isn't a child of CurrentMemoryContext either, but
-	 * that would take more cycles than it's likely to be worth.)
-	 */
-	Assert(parse_context != CurrentMemoryContext);
-
-	/*
 	 * Switch to appropriate context for constructing parsetrees.
 	 */
-	oldcontext = MemoryContextSwitchTo(parse_context);
+	oldcontext = MemoryContextSwitchTo(MessageContext);
 
 	/*
 	 * Do basic parsing of the query or queries (this should be safe even
@@ -618,57 +633,36 @@ pg_exec_query_string(const char *query_string,	/* string to execute */
 	parsetree_list = pg_parse_query(query_string);
 
 	/*
-	 * Switch back to execution context to enter the loop.
+	 * Switch back to transaction context to enter the loop.
 	 */
 	MemoryContextSwitchTo(oldcontext);
 
 	/*
-	 * Run through the parsetree(s) and process each one.
+	 * Run through the raw parsetree(s) and process each one.
 	 */
 	foreach(parsetree_item, parsetree_list)
 	{
 		Node	   *parsetree = (Node *) lfirst(parsetree_item);
 		const char *commandTag;
 		char		completionTag[COMPLETION_TAG_BUFSIZE];
-		CmdType		origCmdType;
-		bool		foundOriginalQuery = false;
 		List	   *querytree_list,
-				   *querytree_item;
+				   *plantree_list;
+		Portal		portal;
 
 		/*
-		 * First we set the command-completion tag to the main query (as
-		 * opposed to each of the others that may be generated by analyze
-		 * and rewrite).  Also set ps_status and do any special
-		 * start-of-SQL-command processing needed by the destination.
+		 * Get the command name for use in status display (it also becomes the
+		 * default completion tag, down inside PortalRun).  Set ps_status and
+		 * do any special start-of-SQL-command processing needed by the
+		 * destination.
 		 */
 		commandTag = CreateCommandTag(parsetree);
-
-		switch (nodeTag(parsetree))
-		{
-			case T_InsertStmt:
-				origCmdType = CMD_INSERT;
-				break;
-			case T_DeleteStmt:
-				origCmdType = CMD_DELETE;
-				break;
-			case T_UpdateStmt:
-				origCmdType = CMD_UPDATE;
-				break;
-			case T_SelectStmt:
-				origCmdType = CMD_SELECT;
-				break;
-			default:
-				/* Otherwise, never match commandType */
-				origCmdType = CMD_UNKNOWN;
-				break;
-		}
 
 		set_ps_display(commandTag);
 
 		BeginCommand(commandTag, dest);
 
 		/*
-		 * If we are in an aborted transaction, ignore all commands except
+		 * If we are in an aborted transaction, reject all commands except
 		 * COMMIT/ABORT.  It is important that this test occur before we
 		 * try to do parse analysis, rewrite, or planning, since all those
 		 * phases try to do database accesses, which may fail in abort
@@ -704,202 +698,60 @@ pg_exec_query_string(const char *query_string,	/* string to execute */
 		CHECK_FOR_INTERRUPTS();
 
 		/*
-		 * OK to analyze and rewrite this query.
+		 * OK to analyze, rewrite, and plan this query.
 		 *
 		 * Switch to appropriate context for constructing querytrees (again,
 		 * these must outlive the execution context).
 		 */
-		oldcontext = MemoryContextSwitchTo(parse_context);
+		oldcontext = MemoryContextSwitchTo(MessageContext);
 
 		querytree_list = pg_analyze_and_rewrite(parsetree, NULL, 0);
 
+		plantree_list = pg_plan_queries(querytree_list, true);
+
+		/* If we got a cancel signal in analysis or planning, quit */
+		CHECK_FOR_INTERRUPTS();
+
 		/*
-		 * Switch back to execution context for planning and execution.
+		 * Switch back to transaction context for execution.
 		 */
 		MemoryContextSwitchTo(oldcontext);
 
 		/*
-		 * Inner loop handles the individual queries generated from a
-		 * single parsetree by analysis and rewrite.
+		 * Create unnamed portal to run the query or queries in.
+		 * If there already is one, silently drop it.
 		 */
-		foreach(querytree_item, querytree_list)
+		portal = CreatePortal("", true, true);
+
+		PortalDefineQuery(portal,
+						  query_string,
+						  commandTag,
+						  querytree_list,
+						  plantree_list,
+						  MessageContext);
+
+		/*
+		 * Run the portal to completion, and then drop it.
+		 */
+		PortalStart(portal, NULL);
+
+		(void) PortalRun(portal, FETCH_ALL, dest, dest, completionTag);
+
+		PortalDrop(portal, false);
+
+		/*
+		 * If this was a transaction control statement or a variable
+		 * set/show/reset statement, commit it and arrange to start a
+		 * new xact command for the next command (if any).
+		 */
+		if (IsA(parsetree, TransactionStmt) ||
+			IsA(parsetree, VariableSetStmt) ||
+			IsA(parsetree, VariableShowStmt) ||
+			IsA(parsetree, VariableResetStmt))
 		{
-			Query	   *querytree = (Query *) lfirst(querytree_item);
-			bool		endTransactionBlock = false;
-			bool		canSetTag;
-
-			/* Make sure we are in a transaction command */
-			if (!xact_started)
-			{
-				start_xact_command();
-				xact_started = true;
-			}
-
-			/*
-			 * If we got a cancel signal in analysis or prior command,
-			 * quit
-			 */
-			CHECK_FOR_INTERRUPTS();
-
-			/*
-			 * This query can set the completion tag if it is the original
-			 * query, or if it is an INSTEAD query of the same kind as the
-			 * original and we haven't yet seen the original query.
-			 */
-			if (querytree->querySource == QSRC_ORIGINAL)
-			{
-				canSetTag = true;
-				foundOriginalQuery = true;
-			}
-			else if (!foundOriginalQuery &&
-					 querytree->commandType == origCmdType &&
-					 (querytree->querySource == QSRC_INSTEAD_RULE ||
-					  querytree->querySource == QSRC_QUAL_INSTEAD_RULE))
-				canSetTag = true;
-			else
-				canSetTag = false;
-
-			if (querytree->commandType == CMD_UTILITY)
-			{
-				/*
-				 * process utility functions (create, destroy, etc..)
-				 */
-				Node   *utilityStmt = querytree->utilityStmt;
-
-				elog(DEBUG2, "ProcessUtility");
-
-				/*
-				 * Set snapshot if utility stmt needs one.  Most reliable
-				 * way to do this seems to be to enumerate those that do not
-				 * need one; this is a short list.  Transaction control,
-				 * LOCK, and SET must *not* set a snapshot since they need
-				 * to be executable at the start of a serializable transaction
-				 * without freezing a snapshot.  By extension we allow SHOW
-				 * not to set a snapshot.  The other stmts listed are just
-				 * efficiency hacks.  Beware of listing anything that can
-				 * modify the database --- if, say, it has to update a
-				 * functional index, then it had better have a snapshot.
-				 */
-				if (! (IsA(utilityStmt, TransactionStmt) ||
-					   IsA(utilityStmt, LockStmt) ||
-					   IsA(utilityStmt, VariableSetStmt) ||
-					   IsA(utilityStmt, VariableShowStmt) ||
-					   IsA(utilityStmt, VariableResetStmt) ||
-					   IsA(utilityStmt, ConstraintsSetStmt) ||
-					   /* efficiency hacks from here down */
-					   IsA(utilityStmt, FetchStmt) ||
-					   IsA(utilityStmt, ListenStmt) ||
-					   IsA(utilityStmt, NotifyStmt) ||
-					   IsA(utilityStmt, UnlistenStmt) ||
-					   IsA(utilityStmt, CheckPointStmt)))
-					SetQuerySnapshot();
-
-				/* end transaction block if transaction or variable stmt */
-				if (IsA(utilityStmt, TransactionStmt) ||
-					IsA(utilityStmt, VariableSetStmt) ||
-					IsA(utilityStmt, VariableShowStmt) ||
-					IsA(utilityStmt, VariableResetStmt))
-					endTransactionBlock = true;
-
-				if (canSetTag)
-				{
-					/* utility statement can override default tag string */
-					ProcessUtility(utilityStmt, dest, completionTag);
-					if (completionTag[0])
-						commandTag = completionTag;
-				}
-				else
-				{
-					/* utility added by rewrite cannot override tag */
-					ProcessUtility(utilityStmt, dest, NULL);
-				}
-			}
-			else
-			{
-				/*
-				 * process a plannable query.
-				 */
-				Plan	   *plan;
-
-				/*
-				 * Initialize snapshot state for query.  This has to
-				 * be done before running the planner, because it might
-				 * try to evaluate immutable or stable functions, which
-				 * in turn might run queries.
-				 */
-				SetQuerySnapshot();
-
-				/* Make the plan */
-				plan = pg_plan_query(querytree);
-
-				/* if we got a cancel signal whilst planning, quit */
-				CHECK_FOR_INTERRUPTS();
-
-				/*
-				 * execute the plan
-				 */
-				if (log_executor_stats)
-					ResetUsage();
-
-				if (dontExecute)
-				{
-					/* don't execute it, just show the query plan */
-					print_plan(plan, querytree);
-				}
-				else
-				{
-					elog(DEBUG2, "ProcessQuery");
-
-					if (canSetTag)
-					{
-						/* statement can override default tag string */
-						ProcessQuery(querytree, plan, dest, completionTag);
-						commandTag = completionTag;
-					}
-					else
-					{
-						/* stmt added by rewrite cannot override tag */
-						ProcessQuery(querytree, plan, dest, NULL);
-					}
-				}
-
-				if (log_executor_stats)
-					ShowUsage("EXECUTOR STATISTICS");
-			}
-
-			/*
-			 * In a query block, we want to increment the command counter
-			 * between queries so that the effects of early queries are
-			 * visible to subsequent ones.	In particular we'd better do
-			 * so before checking constraints.
-			 */
-			if (!endTransactionBlock)
-				CommandCounterIncrement();
-
-			/*
-			 * Clear the execution context to recover temporary memory
-			 * used by the query.  NOTE: if query string contains
-			 * BEGIN/COMMIT transaction commands, execution context may
-			 * now be different from what we were originally passed; so be
-			 * careful to clear current context not "oldcontext".
-			 */
-			Assert(parse_context != CurrentMemoryContext);
-
-			MemoryContextResetAndDeleteChildren(CurrentMemoryContext);
-
-			/*
-			 * If this was a transaction control statement or a variable
-			 * set/show/reset statement, commit it and arrange to start a
-			 * new xact command for the next command (if any).
-			 */
-			if (endTransactionBlock)
-			{
-				finish_xact_command(true);
-				xact_started = false;
-			}
-		}						/* end loop over queries generated from a
-								 * parsetree */
-
+			finish_xact_command(true);
+			xact_started = false;
+		}
 		/*
 		 * If this is the last parsetree of the query string, close down
 		 * transaction statement before reporting command-complete.  This
@@ -910,28 +762,18 @@ pg_exec_query_string(const char *query_string,	/* string to execute */
 		 * historical Postgres behavior, we do not force a transaction
 		 * boundary between queries appearing in a single query string.
 		 */
-		if ((lnext(parsetree_item) == NIL || !autocommit) && xact_started)
+		else if (lnext(parsetree_item) == NIL || !autocommit)
 		{
 			finish_xact_command(false);
 			xact_started = false;
 		}
-
-		/*
-		 * It is possible that the original query was removed due to a DO
-		 * INSTEAD rewrite rule.  If so, and if we found no INSTEAD query
-		 * matching the command type, we will still have the default
-		 * completion tag.  This is fine for most purposes, but it
-		 * may confuse clients if it's INSERT/UPDATE/DELETE. Clients
-		 * expect those tags to have counts after them (cf. ProcessQuery).
-		 */
-		if (!foundOriginalQuery)
+		else
 		{
-			if (strcmp(commandTag, "INSERT") == 0)
-				commandTag = "INSERT 0 0";
-			else if (strcmp(commandTag, "UPDATE") == 0)
-				commandTag = "UPDATE 0";
-			else if (strcmp(commandTag, "DELETE") == 0)
-				commandTag = "DELETE 0";
+			/*
+			 * We need a CommandCounterIncrement after every query,
+			 * except those that start or end a transaction block.
+			 */
+			CommandCounterIncrement();
 		}
 
 		/*
@@ -941,20 +783,24 @@ pg_exec_query_string(const char *query_string,	/* string to execute */
 		 * (But a command aborted by error will not send an EndCommand
 		 * report at all.)
 		 */
-		EndCommand(commandTag, dest);
+		EndCommand(completionTag, dest);
 	}							/* end loop over parsetrees */
 
-	/* No parsetree - return empty result */
+	/*
+	 * If there were no parsetrees, return EmptyQueryResponse message.
+	 */
 	if (!parsetree_list)
 		NullCommand(dest);
 
 	/*
-	 * Close down transaction statement, if one is open. (Note that this
-	 * will only happen if the querystring was empty.)
+	 * Close down transaction statement, if one is open.
 	 */
 	if (xact_started)
 		finish_xact_command(false);
 
+	/*
+	 * Finish up monitoring.
+	 */
 	if (save_log_duration)
 	{
 		gettimeofday(&stop_t, NULL);
@@ -967,6 +813,9 @@ pg_exec_query_string(const char *query_string,	/* string to execute */
 			 (long) (stop_t.tv_sec - start_t.tv_sec),
 			 (long) (stop_t.tv_usec - start_t.tv_usec));
 	}
+
+	if (save_log_statement_stats)
+		ShowUsage("QUERY STATISTICS");
 
 	debug_query_string = NULL;
 }
@@ -1431,10 +1280,6 @@ PostgresMain(int argc, char *argv[], const char *username)
 					SetConfigOption(tmp, "false", ctx, gucsource);
 				break;
 
-			case 'i':
-				dontExecute = true;
-				break;
-
 			case 'N':
 
 				/*
@@ -1827,22 +1672,20 @@ PostgresMain(int argc, char *argv[], const char *username)
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.326 $ $Date: 2003/04/29 22:13:11 $\n");
+		puts("$Revision: 1.327 $ $Date: 2003/05/02 20:54:35 $\n");
 	}
 
 	/*
 	 * Create the memory context we will use in the main loop.
 	 *
-	 * QueryContext is reset once per iteration of the main loop, ie, upon
-	 * completion of processing of each supplied query string. It can
-	 * therefore be used for any data that should live just as long as the
-	 * query string --- parse trees, for example.
+	 * MessageContext is reset once per iteration of the main loop, ie, upon
+	 * completion of processing of each command message from the client.
 	 */
-	QueryContext = AllocSetContextCreate(TopMemoryContext,
-										 "QueryContext",
-										 ALLOCSET_DEFAULT_MINSIZE,
-										 ALLOCSET_DEFAULT_INITSIZE,
-										 ALLOCSET_DEFAULT_MAXSIZE);
+	MessageContext = AllocSetContextCreate(TopMemoryContext,
+										   "MessageContext",
+										   ALLOCSET_DEFAULT_MINSIZE,
+										   ALLOCSET_DEFAULT_INITSIZE,
+										   ALLOCSET_DEFAULT_MAXSIZE);
 
 	/* ----------
 	 * Tell the statistics collector that we're alive and
@@ -1897,6 +1740,9 @@ PostgresMain(int argc, char *argv[], const char *username)
 		 */
 		MemoryContextSwitchTo(TopMemoryContext);
 		MemoryContextResetAndDeleteChildren(ErrorContext);
+		CurrentPortal = NULL;
+		PortalContext = NULL;
+		QueryContext = NULL;
 
 		/*
 		 * Clear flag to indicate that we got out of error recovery mode
@@ -1924,10 +1770,10 @@ PostgresMain(int argc, char *argv[], const char *username)
 	{
 		/*
 		 * Release storage left over from prior query cycle, and create a
-		 * new query input buffer in the cleared QueryContext.
+		 * new query input buffer in the cleared MessageContext.
 		 */
-		MemoryContextSwitchTo(QueryContext);
-		MemoryContextResetAndDeleteChildren(QueryContext);
+		MemoryContextSwitchTo(MessageContext);
+		MemoryContextResetAndDeleteChildren(MessageContext);
 
 		input_message = makeStringInfo();
 
@@ -2006,25 +1852,9 @@ PostgresMain(int argc, char *argv[], const char *username)
 		{
 			case 'Q':			/* simple query */
 				{
-					/*
-					 * Process the query string.
-					 *
-					 * Note: transaction command start/end is now done within
-					 * pg_exec_query_string(), not here.
-					 */
 					const char *query_string = pq_getmsgstring(input_message);
 
-					if (log_statement_stats)
-						ResetUsage();
-
-					pgstat_report_activity(query_string);
-
-					pg_exec_query_string(query_string,
-										 whereToSendOutput,
-										 QueryContext);
-
-					if (log_statement_stats)
-						ShowUsage("QUERY STATISTICS");
+					exec_simple_query(query_string, whereToSendOutput);
 
 					send_rfq = true;
 				}
@@ -2224,382 +2054,4 @@ ShowUsage(const char *title)
 	elog(LOG, "%s\n%s", title, str.data);
 
 	pfree(str.data);
-}
-
-/* ----------------------------------------------------------------
- *		CreateCommandTag
- *
- *		utility to get a string representation of the
- *		command operation.
- * ----------------------------------------------------------------
- */
-static const char *
-CreateCommandTag(Node *parsetree)
-{
-	const char *tag;
-
-	switch (nodeTag(parsetree))
-	{
-		case T_InsertStmt:
-			tag = "INSERT";
-			break;
-
-		case T_DeleteStmt:
-			tag = "DELETE";
-			break;
-
-		case T_UpdateStmt:
-			tag = "UPDATE";
-			break;
-
-		case T_SelectStmt:
-			tag = "SELECT";
-			break;
-
-		case T_TransactionStmt:
-			{
-				TransactionStmt *stmt = (TransactionStmt *) parsetree;
-
-				switch (stmt->kind)
-				{
-					case TRANS_STMT_BEGIN:
-						tag = "BEGIN";
-						break;
-
-					case TRANS_STMT_START:
-						tag = "START TRANSACTION";
-						break;
-
-					case TRANS_STMT_COMMIT:
-						tag = "COMMIT";
-						break;
-
-					case TRANS_STMT_ROLLBACK:
-						tag = "ROLLBACK";
-						break;
-
-					default:
-						tag = "???";
-						break;
-				}
-			}
-			break;
-
-		case T_DeclareCursorStmt:
-			tag = "DECLARE CURSOR";
-			break;
-
-		case T_ClosePortalStmt:
-			tag = "CLOSE CURSOR";
-			break;
-
-		case T_FetchStmt:
-			{
-				FetchStmt  *stmt = (FetchStmt *) parsetree;
-
-				tag = (stmt->ismove) ? "MOVE" : "FETCH";
-			}
-			break;
-
-		case T_CreateDomainStmt:
-			tag = "CREATE DOMAIN";
-			break;
-
-		case T_CreateSchemaStmt:
-			tag = "CREATE SCHEMA";
-			break;
-
-		case T_CreateStmt:
-			tag = "CREATE TABLE";
-			break;
-
-		case T_DropStmt:
-			switch (((DropStmt *) parsetree)->removeType)
-			{
-				case DROP_TABLE:
-					tag = "DROP TABLE";
-					break;
-				case DROP_SEQUENCE:
-					tag = "DROP SEQUENCE";
-					break;
-				case DROP_VIEW:
-					tag = "DROP VIEW";
-					break;
-				case DROP_INDEX:
-					tag = "DROP INDEX";
-					break;
-				case DROP_TYPE:
-					tag = "DROP TYPE";
-					break;
-				case DROP_DOMAIN:
-					tag = "DROP DOMAIN";
-					break;
-				case DROP_CONVERSION:
-					tag = "DROP CONVERSION";
-					break;
-				case DROP_SCHEMA:
-					tag = "DROP SCHEMA";
-					break;
-				default:
-					tag = "???";
-			}
-			break;
-
-		case T_TruncateStmt:
-			tag = "TRUNCATE TABLE";
-			break;
-
-		case T_CommentStmt:
-			tag = "COMMENT";
-			break;
-
-		case T_CopyStmt:
-			tag = "COPY";
-			break;
-
-		case T_RenameStmt:
-			if (((RenameStmt *) parsetree)->renameType == RENAME_TRIGGER)
-				tag = "ALTER TRIGGER";
-			else
-				tag = "ALTER TABLE";
-			break;
-
-		case T_AlterTableStmt:
-			tag = "ALTER TABLE";
-			break;
-
-		case T_AlterDomainStmt:
-			tag = "ALTER DOMAIN";
-			break;
-
-		case T_GrantStmt:
-			{
-				GrantStmt  *stmt = (GrantStmt *) parsetree;
-
-				tag = (stmt->is_grant) ? "GRANT" : "REVOKE";
-			}
-			break;
-
-		case T_DefineStmt:
-			switch (((DefineStmt *) parsetree)->kind)
-			{
-				case DEFINE_STMT_AGGREGATE:
-					tag = "CREATE AGGREGATE";
-					break;
-				case DEFINE_STMT_OPERATOR:
-					tag = "CREATE OPERATOR";
-					break;
-				case DEFINE_STMT_TYPE:
-					tag = "CREATE TYPE";
-					break;
-				default:
-					tag = "???";
-			}
-			break;
-
-		case T_CompositeTypeStmt:
-			tag = "CREATE TYPE";
-			break;
-
-		case T_ViewStmt:
-			tag = "CREATE VIEW";
-			break;
-
-		case T_CreateFunctionStmt:
-			tag = "CREATE FUNCTION";
-			break;
-
-		case T_IndexStmt:
-			tag = "CREATE INDEX";
-			break;
-
-		case T_RuleStmt:
-			tag = "CREATE RULE";
-			break;
-
-		case T_CreateSeqStmt:
-			tag = "CREATE SEQUENCE";
-			break;
-
-		case T_AlterSeqStmt:
-			tag = "ALTER SEQUENCE";
-			break;
-
-		case T_RemoveAggrStmt:
-			tag = "DROP AGGREGATE";
-			break;
-
-		case T_RemoveFuncStmt:
-			tag = "DROP FUNCTION";
-			break;
-
-		case T_RemoveOperStmt:
-			tag = "DROP OPERATOR";
-			break;
-
-		case T_CreatedbStmt:
-			tag = "CREATE DATABASE";
-			break;
-
-		case T_AlterDatabaseSetStmt:
-			tag = "ALTER DATABASE";
-			break;
-
-		case T_DropdbStmt:
-			tag = "DROP DATABASE";
-			break;
-
-		case T_NotifyStmt:
-			tag = "NOTIFY";
-			break;
-
-		case T_ListenStmt:
-			tag = "LISTEN";
-			break;
-
-		case T_UnlistenStmt:
-			tag = "UNLISTEN";
-			break;
-
-		case T_LoadStmt:
-			tag = "LOAD";
-			break;
-
-		case T_ClusterStmt:
-			tag = "CLUSTER";
-			break;
-
-		case T_VacuumStmt:
-			if (((VacuumStmt *) parsetree)->vacuum)
-				tag = "VACUUM";
-			else
-				tag = "ANALYZE";
-			break;
-
-		case T_ExplainStmt:
-			tag = "EXPLAIN";
-			break;
-
-		case T_VariableSetStmt:
-			tag = "SET";
-			break;
-
-		case T_VariableShowStmt:
-			tag = "SHOW";
-			break;
-
-		case T_VariableResetStmt:
-			tag = "RESET";
-			break;
-
-		case T_CreateTrigStmt:
-			tag = "CREATE TRIGGER";
-			break;
-
-		case T_DropPropertyStmt:
-			switch (((DropPropertyStmt *) parsetree)->removeType)
-			{
-				case DROP_TRIGGER:
-					tag = "DROP TRIGGER";
-					break;
-				case DROP_RULE:
-					tag = "DROP RULE";
-					break;
-				default:
-					tag = "???";
-			}
-			break;
-
-		case T_CreatePLangStmt:
-			tag = "CREATE LANGUAGE";
-			break;
-
-		case T_DropPLangStmt:
-			tag = "DROP LANGUAGE";
-			break;
-
-		case T_CreateUserStmt:
-			tag = "CREATE USER";
-			break;
-
-		case T_AlterUserStmt:
-			tag = "ALTER USER";
-			break;
-
-		case T_AlterUserSetStmt:
-			tag = "ALTER USER";
-			break;
-
-		case T_DropUserStmt:
-			tag = "DROP USER";
-			break;
-
-		case T_LockStmt:
-			tag = "LOCK TABLE";
-			break;
-
-		case T_ConstraintsSetStmt:
-			tag = "SET CONSTRAINTS";
-			break;
-
-		case T_CreateGroupStmt:
-			tag = "CREATE GROUP";
-			break;
-
-		case T_AlterGroupStmt:
-			tag = "ALTER GROUP";
-			break;
-
-		case T_DropGroupStmt:
-			tag = "DROP GROUP";
-			break;
-
-		case T_CheckPointStmt:
-			tag = "CHECKPOINT";
-			break;
-
-		case T_ReindexStmt:
-			tag = "REINDEX";
-			break;
-
-		case T_CreateConversionStmt:
-			tag = "CREATE CONVERSION";
-			break;
-
-		case T_CreateCastStmt:
-			tag = "CREATE CAST";
-			break;
-
-		case T_DropCastStmt:
-			tag = "DROP CAST";
-			break;
-
-		case T_CreateOpClassStmt:
-			tag = "CREATE OPERATOR CLASS";
-			break;
-
-		case T_RemoveOpClassStmt:
-			tag = "DROP OPERATOR CLASS";
-			break;
-
-		case T_PrepareStmt:
-			tag = "PREPARE";
-			break;
-
-		case T_ExecuteStmt:
-			tag = "EXECUTE";
-			break;
-
-		case T_DeallocateStmt:
-			tag = "DEALLOCATE";
-			break;
-
-		default:
-			elog(LOG, "CreateCommandTag: unknown parse node type %d",
-				 nodeTag(parsetree));
-			tag = "???";
-			break;
-	}
-
-	return tag;
 }

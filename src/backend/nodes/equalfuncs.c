@@ -18,7 +18,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.191 2003/04/08 23:20:01 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.192 2003/05/02 20:54:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -566,6 +566,7 @@ _equalQuery(Query *a, Query *b)
 {
 	COMPARE_SCALAR_FIELD(commandType);
 	COMPARE_SCALAR_FIELD(querySource);
+	COMPARE_SCALAR_FIELD(canSetTag);
 	COMPARE_NODE_FIELD(utilityStmt);
 	COMPARE_SCALAR_FIELD(resultRelation);
 	COMPARE_NODE_FIELD(into);

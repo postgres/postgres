@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.197 2003/03/20 18:52:48 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.198 2003/05/02 20:54:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1026,4 +1026,387 @@ ProcessUtility(Node *parsetree,
 				 nodeTag(parsetree));
 			break;
 	}
+}
+
+
+/*
+ * CreateCommandTag
+ *		utility to get a string representation of the
+ *		command operation, given a raw (un-analyzed) parsetree.
+ *
+ * This must handle all raw command types, but since the vast majority
+ * of 'em are utility commands, it seems sensible to keep it here.
+ *
+ * NB: all result strings must be shorter than COMPLETION_TAG_BUFSIZE.
+ * Also, the result must point at a true constant (permanent storage).
+ */
+const char *
+CreateCommandTag(Node *parsetree)
+{
+	const char *tag;
+
+	switch (nodeTag(parsetree))
+	{
+		case T_InsertStmt:
+			tag = "INSERT";
+			break;
+
+		case T_DeleteStmt:
+			tag = "DELETE";
+			break;
+
+		case T_UpdateStmt:
+			tag = "UPDATE";
+			break;
+
+		case T_SelectStmt:
+			tag = "SELECT";
+			break;
+
+		case T_TransactionStmt:
+			{
+				TransactionStmt *stmt = (TransactionStmt *) parsetree;
+
+				switch (stmt->kind)
+				{
+					case TRANS_STMT_BEGIN:
+						tag = "BEGIN";
+						break;
+
+					case TRANS_STMT_START:
+						tag = "START TRANSACTION";
+						break;
+
+					case TRANS_STMT_COMMIT:
+						tag = "COMMIT";
+						break;
+
+					case TRANS_STMT_ROLLBACK:
+						tag = "ROLLBACK";
+						break;
+
+					default:
+						tag = "???";
+						break;
+				}
+			}
+			break;
+
+		case T_DeclareCursorStmt:
+			tag = "DECLARE CURSOR";
+			break;
+
+		case T_ClosePortalStmt:
+			tag = "CLOSE CURSOR";
+			break;
+
+		case T_FetchStmt:
+			{
+				FetchStmt  *stmt = (FetchStmt *) parsetree;
+
+				tag = (stmt->ismove) ? "MOVE" : "FETCH";
+			}
+			break;
+
+		case T_CreateDomainStmt:
+			tag = "CREATE DOMAIN";
+			break;
+
+		case T_CreateSchemaStmt:
+			tag = "CREATE SCHEMA";
+			break;
+
+		case T_CreateStmt:
+			tag = "CREATE TABLE";
+			break;
+
+		case T_DropStmt:
+			switch (((DropStmt *) parsetree)->removeType)
+			{
+				case DROP_TABLE:
+					tag = "DROP TABLE";
+					break;
+				case DROP_SEQUENCE:
+					tag = "DROP SEQUENCE";
+					break;
+				case DROP_VIEW:
+					tag = "DROP VIEW";
+					break;
+				case DROP_INDEX:
+					tag = "DROP INDEX";
+					break;
+				case DROP_TYPE:
+					tag = "DROP TYPE";
+					break;
+				case DROP_DOMAIN:
+					tag = "DROP DOMAIN";
+					break;
+				case DROP_CONVERSION:
+					tag = "DROP CONVERSION";
+					break;
+				case DROP_SCHEMA:
+					tag = "DROP SCHEMA";
+					break;
+				default:
+					tag = "???";
+			}
+			break;
+
+		case T_TruncateStmt:
+			tag = "TRUNCATE TABLE";
+			break;
+
+		case T_CommentStmt:
+			tag = "COMMENT";
+			break;
+
+		case T_CopyStmt:
+			tag = "COPY";
+			break;
+
+		case T_RenameStmt:
+			if (((RenameStmt *) parsetree)->renameType == RENAME_TRIGGER)
+				tag = "ALTER TRIGGER";
+			else
+				tag = "ALTER TABLE";
+			break;
+
+		case T_AlterTableStmt:
+			tag = "ALTER TABLE";
+			break;
+
+		case T_AlterDomainStmt:
+			tag = "ALTER DOMAIN";
+			break;
+
+		case T_GrantStmt:
+			{
+				GrantStmt  *stmt = (GrantStmt *) parsetree;
+
+				tag = (stmt->is_grant) ? "GRANT" : "REVOKE";
+			}
+			break;
+
+		case T_DefineStmt:
+			switch (((DefineStmt *) parsetree)->kind)
+			{
+				case DEFINE_STMT_AGGREGATE:
+					tag = "CREATE AGGREGATE";
+					break;
+				case DEFINE_STMT_OPERATOR:
+					tag = "CREATE OPERATOR";
+					break;
+				case DEFINE_STMT_TYPE:
+					tag = "CREATE TYPE";
+					break;
+				default:
+					tag = "???";
+			}
+			break;
+
+		case T_CompositeTypeStmt:
+			tag = "CREATE TYPE";
+			break;
+
+		case T_ViewStmt:
+			tag = "CREATE VIEW";
+			break;
+
+		case T_CreateFunctionStmt:
+			tag = "CREATE FUNCTION";
+			break;
+
+		case T_IndexStmt:
+			tag = "CREATE INDEX";
+			break;
+
+		case T_RuleStmt:
+			tag = "CREATE RULE";
+			break;
+
+		case T_CreateSeqStmt:
+			tag = "CREATE SEQUENCE";
+			break;
+
+		case T_AlterSeqStmt:
+			tag = "ALTER SEQUENCE";
+			break;
+
+		case T_RemoveAggrStmt:
+			tag = "DROP AGGREGATE";
+			break;
+
+		case T_RemoveFuncStmt:
+			tag = "DROP FUNCTION";
+			break;
+
+		case T_RemoveOperStmt:
+			tag = "DROP OPERATOR";
+			break;
+
+		case T_CreatedbStmt:
+			tag = "CREATE DATABASE";
+			break;
+
+		case T_AlterDatabaseSetStmt:
+			tag = "ALTER DATABASE";
+			break;
+
+		case T_DropdbStmt:
+			tag = "DROP DATABASE";
+			break;
+
+		case T_NotifyStmt:
+			tag = "NOTIFY";
+			break;
+
+		case T_ListenStmt:
+			tag = "LISTEN";
+			break;
+
+		case T_UnlistenStmt:
+			tag = "UNLISTEN";
+			break;
+
+		case T_LoadStmt:
+			tag = "LOAD";
+			break;
+
+		case T_ClusterStmt:
+			tag = "CLUSTER";
+			break;
+
+		case T_VacuumStmt:
+			if (((VacuumStmt *) parsetree)->vacuum)
+				tag = "VACUUM";
+			else
+				tag = "ANALYZE";
+			break;
+
+		case T_ExplainStmt:
+			tag = "EXPLAIN";
+			break;
+
+		case T_VariableSetStmt:
+			tag = "SET";
+			break;
+
+		case T_VariableShowStmt:
+			tag = "SHOW";
+			break;
+
+		case T_VariableResetStmt:
+			tag = "RESET";
+			break;
+
+		case T_CreateTrigStmt:
+			tag = "CREATE TRIGGER";
+			break;
+
+		case T_DropPropertyStmt:
+			switch (((DropPropertyStmt *) parsetree)->removeType)
+			{
+				case DROP_TRIGGER:
+					tag = "DROP TRIGGER";
+					break;
+				case DROP_RULE:
+					tag = "DROP RULE";
+					break;
+				default:
+					tag = "???";
+			}
+			break;
+
+		case T_CreatePLangStmt:
+			tag = "CREATE LANGUAGE";
+			break;
+
+		case T_DropPLangStmt:
+			tag = "DROP LANGUAGE";
+			break;
+
+		case T_CreateUserStmt:
+			tag = "CREATE USER";
+			break;
+
+		case T_AlterUserStmt:
+			tag = "ALTER USER";
+			break;
+
+		case T_AlterUserSetStmt:
+			tag = "ALTER USER";
+			break;
+
+		case T_DropUserStmt:
+			tag = "DROP USER";
+			break;
+
+		case T_LockStmt:
+			tag = "LOCK TABLE";
+			break;
+
+		case T_ConstraintsSetStmt:
+			tag = "SET CONSTRAINTS";
+			break;
+
+		case T_CreateGroupStmt:
+			tag = "CREATE GROUP";
+			break;
+
+		case T_AlterGroupStmt:
+			tag = "ALTER GROUP";
+			break;
+
+		case T_DropGroupStmt:
+			tag = "DROP GROUP";
+			break;
+
+		case T_CheckPointStmt:
+			tag = "CHECKPOINT";
+			break;
+
+		case T_ReindexStmt:
+			tag = "REINDEX";
+			break;
+
+		case T_CreateConversionStmt:
+			tag = "CREATE CONVERSION";
+			break;
+
+		case T_CreateCastStmt:
+			tag = "CREATE CAST";
+			break;
+
+		case T_DropCastStmt:
+			tag = "DROP CAST";
+			break;
+
+		case T_CreateOpClassStmt:
+			tag = "CREATE OPERATOR CLASS";
+			break;
+
+		case T_RemoveOpClassStmt:
+			tag = "DROP OPERATOR CLASS";
+			break;
+
+		case T_PrepareStmt:
+			tag = "PREPARE";
+			break;
+
+		case T_ExecuteStmt:
+			tag = "EXECUTE";
+			break;
+
+		case T_DeallocateStmt:
+			tag = "DEALLOCATE";
+			break;
+
+		default:
+			elog(LOG, "CreateCommandTag: unknown parse node type %d",
+				 nodeTag(parsetree));
+			tag = "???";
+			break;
+	}
+
+	return tag;
 }

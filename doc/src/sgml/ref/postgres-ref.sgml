@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/postgres-ref.sgml,v 1.32 2003/03/25 16:15:43 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/postgres-ref.sgml,v 1.33 2003/05/02 20:54:33 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -28,7 +28,6 @@ PostgreSQL documentation
    <arg>-E</arg>
    <arg>-f<group choice="plain"><arg>s</arg><arg>i</arg><arg>t</arg><arg>n</arg><arg>m</arg><arg>h</arg></group></arg>
    <arg>-F</arg>
-   <arg>-i</arg>
    <arg>-N</arg>
    <arg>-o <replaceable>filename</replaceable></arg>
    <arg>-O</arg>
@@ -52,7 +51,6 @@ PostgreSQL documentation
    <arg>-e</arg>
    <arg>-f<group choice="plain"><arg>s</arg><arg>i</arg><arg>t</arg><arg>n</arg><arg>m</arg><arg>h</arg></group></arg>
    <arg>-F</arg>
-   <arg>-i</arg>
    <arg>-o <replaceable>filename</replaceable></arg>
    <arg>-O</arg>
    <arg>-p <replaceable>database</replaceable></arg>
@@ -278,15 +276,6 @@ PostgreSQL documentation
 	  plan types if it has any other alternative.
 	 </para>
 	</note>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><option>-i</option></term>
-      <listitem>
-       <para>
-	Prevents query execution, but shows the plan tree.
-       </para>
       </listitem>
      </varlistentry>
 

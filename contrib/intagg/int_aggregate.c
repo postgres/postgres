@@ -77,7 +77,9 @@ PG_FUNCTION_INFO_V1(int_enum);
 
 /*
  * Manage the aggregation state of the array
- * You need to specify the correct memory context, or it will vanish!
+ *
+ * Need to specify a suitably long-lived memory context, or it will vanish!
+ * PortalContext isn't really right, but it's close enough.
  */
 static PGARRAY *
 GetPGArray(int4 state, int fAdd)
@@ -89,14 +91,7 @@ GetPGArray(int4 state, int fAdd)
 		/* New array */
 		int			cb = PGARRAY_SIZE(START_NUM);
 
-		p = (PGARRAY *) MemoryContextAlloc(TopTransactionContext, cb);
-
-		if (!p)
-		{
-			elog(ERROR, "Integer aggregator, cant allocate TopTransactionContext memory");
-			return 0;
-		}
-
+		p = (PGARRAY *) MemoryContextAlloc(PortalContext, cb);
 		p->a.size = cb;
 		p->a.ndim = 0;
 		p->a.flags = 0;
@@ -115,18 +110,6 @@ GetPGArray(int4 state, int fAdd)
 			int			cbNew = PGARRAY_SIZE(n);
 
 			pn = (PGARRAY *) repalloc(p, cbNew);
-
-			if (!pn)
-			{					/* Realloc failed! Reallocate new block. */
-				pn = (PGARRAY *) MemoryContextAlloc(TopTransactionContext, cbNew);
-				if (!pn)
-				{
-					elog(ERROR, "Integer aggregator, REALLY REALLY can't alloc memory");
-					return (PGARRAY *) NULL;
-				}
-				memcpy(pn, p, p->a.size);
-				pfree(p);
-			}
 			pn->a.size = cbNew;
 			pn->lower = n;
 			return pn;
@@ -149,24 +132,19 @@ ShrinkPGArray(PGARRAY * p)
 
 		/* use current transaction context */
 		pnew = palloc(cb);
-
-		if (pnew)
-		{
-			/*
-			 * Fix up the fields in the new structure, so Postgres
-			 * understands
-			 */
-			memcpy(pnew, p, cb);
-			pnew->a.size = cb;
-			pnew->a.ndim = 1;
-			pnew->a.flags = 0;
+		/*
+		 * Fix up the fields in the new structure, so Postgres
+		 * understands
+		 */
+		memcpy(pnew, p, cb);
+		pnew->a.size = cb;
+		pnew->a.ndim = 1;
+		pnew->a.flags = 0;
 #ifndef PG_7_2
-			pnew->a.elemtype = INT4OID;
+		pnew->a.elemtype = INT4OID;
 #endif
-			pnew->lower = 0;
-		}
-		else
-			elog(ERROR, "Integer aggregator, can't allocate memory");
+		pnew->lower = 0;
+
 		pfree(p);
 	}
 	return pnew;

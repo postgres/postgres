@@ -1,36 +1,21 @@
 /*-------------------------------------------------------------------------
  *
  * portalmem.c
- *	  backend portal memory context management stuff
+ *	  backend portal memory management
+ *
+ * Portals are objects representing the execution state of a query.
+ * This module provides memory management services for portals, but it
+ * doesn't actually run the executor for them.
+ *
  *
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/portalmem.c,v 1.55 2003/04/29 03:21:29 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/portalmem.c,v 1.56 2003/05/02 20:54:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
-/*
- * NOTES
- *		A "Portal" is a structure used to keep track of cursor queries.
- *
- *		When the backend sees a "declare cursor" query, it allocates a
- *		"PortalData" structure, plans the query and then stores the query
- *		in the portal without executing it.  Later, when the backend
- *		sees a
- *				fetch 1 from foo
- *		the system looks up the portal named "foo" in the portal table,
- *		gets the planned query and then calls the executor with a count
- *		of 1.  The executor then runs the query and returns a single
- *		tuple.	The problem is that we have to hold onto the state of the
- *		portal query until we see a "close".  This means we have to be
- *		careful about memory management.
- *
- *		I hope this makes things clearer to whoever reads this -cim 2/22/91
- */
-
 #include "postgres.h"
 
 #include "commands/portalcmds.h"
@@ -51,6 +36,9 @@
  * ----------------
  */
 
+Portal	CurrentPortal = NULL;	/* globally visible pointer */
+
+
 #define MAX_PORTALNAME_LEN		NAMEDATALEN
 
 typedef struct portalhashent
@@ -66,7 +54,7 @@ do { \
 	PortalHashEnt *hentry; char key[MAX_PORTALNAME_LEN]; \
 	\
 	MemSet(key, 0, MAX_PORTALNAME_LEN); \
-	snprintf(key, MAX_PORTALNAME_LEN - 1, "%s", NAME); \
+	StrNCpy(key, NAME, MAX_PORTALNAME_LEN); \
 	hentry = (PortalHashEnt*)hash_search(PortalHashTable, \
 										 key, HASH_FIND, NULL); \
 	if (hentry) \
@@ -75,12 +63,12 @@ do { \
 		PORTAL = NULL; \
 } while(0)
 
-#define PortalHashTableInsert(PORTAL) \
+#define PortalHashTableInsert(PORTAL, NAME) \
 do { \
 	PortalHashEnt *hentry; bool found; char key[MAX_PORTALNAME_LEN]; \
 	\
 	MemSet(key, 0, MAX_PORTALNAME_LEN); \
-	snprintf(key, MAX_PORTALNAME_LEN - 1, "%s", PORTAL->name); \
+	StrNCpy(key, NAME, MAX_PORTALNAME_LEN); \
 	hentry = (PortalHashEnt*)hash_search(PortalHashTable, \
 										 key, HASH_ENTER, &found); \
 	if (hentry == NULL) \
@@ -88,6 +76,8 @@ do { \
 	if (found) \
 		elog(WARNING, "trying to insert a portal name that exists."); \
 	hentry->portal = PORTAL; \
+	/* To avoid duplicate storage, make PORTAL->name point to htab entry */ \
+	PORTAL->name = hentry->portalname; \
 } while(0)
 
 #define PortalHashTableDelete(PORTAL) \
@@ -95,7 +85,7 @@ do { \
 	PortalHashEnt *hentry; char key[MAX_PORTALNAME_LEN]; \
 	\
 	MemSet(key, 0, MAX_PORTALNAME_LEN); \
-	snprintf(key, MAX_PORTALNAME_LEN - 1, "%s", PORTAL->name); \
+	StrNCpy(key, PORTAL->name, MAX_PORTALNAME_LEN); \
 	hentry = (PortalHashEnt*)hash_search(PortalHashTable, \
 										 key, HASH_REMOVE, NULL); \
 	if (hentry == NULL) \
@@ -156,49 +146,16 @@ GetPortalByName(const char *name)
 }
 
 /*
- * PortalSetQuery
- *		Attaches a QueryDesc to the specified portal.  This should be
- *		called only after successfully doing ExecutorStart for the query.
- *
- * Note that in the case of DECLARE CURSOR, some Portal options have
- * already been set in portalcmds.c's PreparePortal().  This is grotty.
- */
-void
-PortalSetQuery(Portal portal, QueryDesc *queryDesc)
-{
-	AssertArg(PortalIsValid(portal));
-
-	/*
-	 * If the user didn't specify a SCROLL type, allow or disallow
-	 * scrolling based on whether it would require any additional
-	 * runtime overhead to do so.
-	 */
-	if (portal->scrollType == DEFAULT_SCROLL)
-	{
-		if (ExecSupportsBackwardScan(queryDesc->plantree))
-			portal->scrollType = ENABLE_SCROLL;
-		else
-			portal->scrollType = DISABLE_SCROLL;
-	}
-
-	portal->queryDesc = queryDesc;
-	portal->executorRunning = true;	/* now need to shut down executor */
-
-	portal->atStart = true;
-	portal->atEnd = false;		/* allow fetches */
-	portal->portalPos = 0;
-	portal->posOverflow = false;
-}
-
-/*
  * CreatePortal
  *		Returns a new portal given a name.
  *
- *		An elog(WARNING) is emitted if portal name is in use (existing
- *		portal is returned!)
+ * allowDup: if true, automatically drop any pre-existing portal of the
+ * same name (if false, an error is raised).
+ *
+ * dupSilent: if true, don't even emit a WARNING.
  */
 Portal
-CreatePortal(const char *name)
+CreatePortal(const char *name, bool allowDup, bool dupSilent)
 {
 	Portal		portal;
 
@@ -207,41 +164,88 @@ CreatePortal(const char *name)
 	portal = GetPortalByName(name);
 	if (PortalIsValid(portal))
 	{
-		elog(WARNING, "CreatePortal: portal \"%s\" already exists", name);
-		return portal;
+		if (!allowDup)
+			elog(ERROR, "Portal \"%s\" already exists", name);
+		if (!dupSilent)
+			elog(WARNING, "Closing pre-existing portal \"%s\"", name);
+		PortalDrop(portal, false);
 	}
 
 	/* make new portal structure */
-	portal = (Portal) MemoryContextAlloc(PortalMemory, sizeof *portal);
+	portal = (Portal) MemoryContextAllocZero(PortalMemory, sizeof *portal);
 
-	/* initialize portal name */
-	portal->name = MemoryContextStrdup(PortalMemory, name);
-
-	/* initialize portal heap context */
+	/* initialize portal heap context; typically it won't store much */
 	portal->heap = AllocSetContextCreate(PortalMemory,
 										 "PortalHeapMemory",
-										 ALLOCSET_DEFAULT_MINSIZE,
-										 ALLOCSET_DEFAULT_INITSIZE,
-										 ALLOCSET_DEFAULT_MAXSIZE);
+										 ALLOCSET_SMALL_MINSIZE,
+										 ALLOCSET_SMALL_INITSIZE,
+										 ALLOCSET_SMALL_MAXSIZE);
 
-	/* initialize portal query */
-	portal->queryDesc = NULL;
+	/* initialize portal fields that don't start off zero */
 	portal->cleanup = PortalCleanup;
-	portal->scrollType = DEFAULT_SCROLL;
-	portal->executorRunning = false;
-	portal->holdOpen = false;
 	portal->createXact = GetCurrentTransactionId();
-	portal->holdStore = NULL;
-	portal->holdContext = NULL;
+	portal->strategy = PORTAL_MULTI_QUERY;
+	portal->cursorOptions = CURSOR_OPT_NO_SCROLL;
 	portal->atStart = true;
 	portal->atEnd = true;		/* disallow fetches until query is set */
-	portal->portalPos = 0;
-	portal->posOverflow = false;
 
-	/* put portal in table */
-	PortalHashTableInsert(portal);
+	/* put portal in table (sets portal->name) */
+	PortalHashTableInsert(portal, name);
 
 	return portal;
+}
+
+/*
+ * CreateNewPortal
+ *		Create a new portal, assigning it a random nonconflicting name.
+ */
+Portal
+CreateNewPortal(void)
+{
+	static unsigned int unnamed_portal_count = 0;
+
+	char		portalname[MAX_PORTALNAME_LEN];
+
+	/* Select a nonconflicting name */
+	for (;;)
+	{
+		unnamed_portal_count++;
+		sprintf(portalname, "<unnamed portal %u>", unnamed_portal_count);
+		if (GetPortalByName(portalname) == NULL)
+			break;
+	}
+
+	return CreatePortal(portalname, false, false);
+}
+
+/*
+ * PortalDefineQuery
+ *		A simple subroutine to establish a portal's query.
+ *
+ * Notes: the passed commandTag must be a pointer to a constant string,
+ * since it is not copied.  The caller is responsible for ensuring that
+ * the passed sourceText (if any), parse and plan trees have adequate
+ * lifetime.  Also, queryContext must accurately describe the location
+ * of the parse and plan trees.
+ */
+void
+PortalDefineQuery(Portal portal,
+				  const char *sourceText,
+				  const char *commandTag,
+				  List *parseTrees,
+				  List *planTrees,
+				  MemoryContext queryContext)
+{
+	AssertArg(PortalIsValid(portal));
+	AssertState(portal->queryContext == NULL); /* else defined already */
+
+	Assert(length(parseTrees) == length(planTrees));
+
+	portal->sourceText = sourceText;
+	portal->commandTag = commandTag;
+	portal->parseTrees = parseTrees;
+	portal->planTrees = planTrees;
+	portal->queryContext = queryContext;
 }
 
 /*
@@ -255,6 +259,10 @@ void
 PortalDrop(Portal portal, bool isError)
 {
 	AssertArg(PortalIsValid(portal));
+
+	/* Not sure if this case can validly happen or not... */
+	if (portal->portalActive)
+		elog(ERROR, "PortalDrop: can't drop active portal");
 
 	/*
 	 * Remove portal from hash table.  Because we do this first, we will
@@ -273,21 +281,43 @@ PortalDrop(Portal portal, bool isError)
 		MemoryContextDelete(portal->holdContext);
 
 	/* release subsidiary storage */
-	if (PortalGetHeapMemory(portal))
-		MemoryContextDelete(PortalGetHeapMemory(portal));
+	MemoryContextDelete(PortalGetHeapMemory(portal));
 
-	/* release name and portal data (both are in PortalMemory) */
-	pfree(portal->name);
+	/* release portal struct (it's in PortalMemory) */
 	pfree(portal);
 }
 
 /*
- * Cleanup the portals created in the current transaction. If the
- * transaction was aborted, all the portals created in this transaction
- * should be removed. If the transaction was successfully committed, any
- * holdable cursors created in this transaction need to be kept
- * open. In any case, portals remaining from prior transactions should
- * be left untouched.
+ * DropDependentPortals
+ *		Drop any portals using the specified context as queryContext.
+ *
+ * This is normally used to make sure we can safely drop a prepared statement.
+ */
+void
+DropDependentPortals(MemoryContext queryContext)
+{
+	HASH_SEQ_STATUS status;
+	PortalHashEnt *hentry;
+
+	hash_seq_init(&status, PortalHashTable);
+
+	while ((hentry = (PortalHashEnt *) hash_seq_search(&status)) != NULL)
+	{
+		Portal portal = hentry->portal;
+
+		if (portal->queryContext == queryContext)
+			PortalDrop(portal, false);
+	}
+}
+
+
+/*
+ * Pre-commit processing for portals.
+ *
+ * Any holdable cursors created in this transaction need to be converted to
+ * materialized form, since we are going to close down the executor and
+ * release locks.  Remove all other portals created in this transaction.
+ * Portals remaining from prior transactions should be left untouched.
  *
  * XXX This assumes that portals can be deleted in a random order, ie,
  * no portal has a reference to any other (at least not one that will be
@@ -296,7 +326,7 @@ PortalDrop(Portal portal, bool isError)
  * references...
  */
 void
-AtEOXact_portals(bool isCommit)
+AtCommit_Portals(void)
 {
 	HASH_SEQ_STATUS status;
 	PortalHashEnt *hentry;
@@ -308,11 +338,21 @@ AtEOXact_portals(bool isCommit)
 	{
 		Portal portal = hentry->portal;
 
-		if (portal->createXact != xact)
+		/*
+		 * Do not touch active portals --- this can only happen in the case of
+		 * a multi-transaction utility command, such as VACUUM.
+		 */
+		if (portal->portalActive)
 			continue;
 
-		if (portal->holdOpen && isCommit)
+		if (portal->cursorOptions & CURSOR_OPT_HOLD)
 		{
+			/*
+			 * Do nothing to cursors held over from a previous transaction.
+			 */
+			if (portal->createXact != xact)
+				continue;
+
 			/*
 			 * We are exiting the transaction that created a holdable
 			 * cursor.  Instead of dropping the portal, prepare it for
@@ -321,7 +361,8 @@ AtEOXact_portals(bool isCommit)
 
 			/*
 			 * Create the memory context that is used for storage of
-			 * the held cursor's tuple set.
+			 * the held cursor's tuple set.  Note this is NOT a child
+			 * of the portal's heap memory.
 			 */
 			portal->holdContext =
 				AllocSetContextCreate(PortalMemory,
@@ -341,7 +382,91 @@ AtEOXact_portals(bool isCommit)
 		}
 		else
 		{
-			PortalDrop(portal, !isCommit);
+			/* Zap all non-holdable portals */
+			PortalDrop(portal, false);
 		}
+	}
+}
+
+/*
+ * Abort processing for portals.
+ *
+ * At this point we reset the "active" flags and run the cleanup hook if
+ * present, but we can't release memory until the cleanup call.
+ *
+ * The reason we need to reset active is so that we can replace the unnamed
+ * portal, else we'll fail to execute ROLLBACK when it arrives.  Also, we
+ * want to run the cleanup hook now to be certain it knows that we had an
+ * error abort and not successful conclusion.
+ */
+void
+AtAbort_Portals(void)
+{
+	HASH_SEQ_STATUS status;
+	PortalHashEnt *hentry;
+	TransactionId xact = GetCurrentTransactionId();
+
+	hash_seq_init(&status, PortalHashTable);
+
+	while ((hentry = (PortalHashEnt *) hash_seq_search(&status)) != NULL)
+	{
+		Portal portal = hentry->portal;
+
+		portal->portalActive = false;
+
+		/*
+		 * Do nothing else to cursors held over from a previous transaction.
+		 * (This test must include checking CURSOR_OPT_HOLD, else we will
+		 * fail to clean up a VACUUM portal if it fails after its first
+		 * sub-transaction.)
+		 */
+		if (portal->createXact != xact &&
+			(portal->cursorOptions & CURSOR_OPT_HOLD))
+			continue;
+
+		/* let portalcmds.c clean up the state it knows about */
+		if (PointerIsValid(portal->cleanup))
+		{
+			(*portal->cleanup) (portal, true);
+			portal->cleanup = NULL;
+		}
+	}
+}
+
+/*
+ * Post-abort cleanup for portals.
+ *
+ * Delete all portals not held over from prior transactions.
+ */
+void
+AtCleanup_Portals(void)
+{
+	HASH_SEQ_STATUS status;
+	PortalHashEnt *hentry;
+	TransactionId xact = GetCurrentTransactionId();
+
+	hash_seq_init(&status, PortalHashTable);
+
+	while ((hentry = (PortalHashEnt *) hash_seq_search(&status)) != NULL)
+	{
+		Portal portal = hentry->portal;
+
+		/*
+		 * Let's just make sure no one's active...
+		 */
+		portal->portalActive = false;
+
+		/*
+		 * Do nothing else to cursors held over from a previous transaction.
+		 * (This test must include checking CURSOR_OPT_HOLD, else we will
+		 * fail to clean up a VACUUM portal if it fails after its first
+		 * sub-transaction.)
+		 */
+		if (portal->createXact != xact &&
+			(portal->cursorOptions & CURSOR_OPT_HOLD))
+			continue;
+
+		/* Else zap it with prejudice. */
+		PortalDrop(portal, true);
 	}
 }

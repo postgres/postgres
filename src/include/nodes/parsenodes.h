@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsenodes.h,v 1.236 2003/03/27 16:51:29 momjian Exp $
+ * $Id: parsenodes.h,v 1.237 2003/05/02 20:54:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,6 +46,8 @@ typedef struct Query
 	CmdType		commandType;	/* select|insert|update|delete|utility */
 
 	QuerySource	querySource;	/* where did I come from? */
+
+	bool		canSetTag;		/* do I set the command result tag? */
 
 	Node	   *utilityStmt;	/* non-null if this is a non-optimizable
 								 * statement */

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.146 2003/04/26 20:22:59 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.147 2003/05/02 20:54:33 tgl Exp $
  *
  * NOTES
  *		Transaction aborts can now occur two ways:
@@ -49,7 +49,7 @@
  *		* CleanupTransaction() executes when we finally see a user COMMIT
  *		  or ROLLBACK command; it cleans things up and gets us out of
  *		  the transaction internally.  In particular, we mustn't destroy
- *		  TransactionCommandContext until this point.
+ *		  TopTransactionContext until this point.
  *
  *	 NOTES
  *		The essential aspects of the transaction system are:
@@ -456,13 +456,12 @@ static void
 AtStart_Memory(void)
 {
 	/*
-	 * We shouldn't have any transaction contexts already.
+	 * We shouldn't have a transaction context already.
 	 */
 	Assert(TopTransactionContext == NULL);
-	Assert(TransactionCommandContext == NULL);
 
 	/*
-	 * Create a toplevel context for the transaction.
+	 * Create a toplevel context for the transaction, and make it active.
 	 */
 	TopTransactionContext =
 		AllocSetContextCreate(TopMemoryContext,
@@ -471,16 +470,7 @@ AtStart_Memory(void)
 							  ALLOCSET_DEFAULT_INITSIZE,
 							  ALLOCSET_DEFAULT_MAXSIZE);
 
-	/*
-	 * Create a statement-level context and make it active.
-	 */
-	TransactionCommandContext =
-		AllocSetContextCreate(TopTransactionContext,
-							  "TransactionCommandContext",
-							  ALLOCSET_DEFAULT_MINSIZE,
-							  ALLOCSET_DEFAULT_INITSIZE,
-							  ALLOCSET_DEFAULT_MAXSIZE);
-	MemoryContextSwitchTo(TransactionCommandContext);
+	MemoryContextSwitchTo(TopTransactionContext);
 }
 
 
@@ -659,7 +649,6 @@ AtCommit_Memory(void)
 	Assert(TopTransactionContext != NULL);
 	MemoryContextDelete(TopTransactionContext);
 	TopTransactionContext = NULL;
-	TransactionCommandContext = NULL;
 }
 
 /* ----------------------------------------------------------------
@@ -769,19 +758,18 @@ AtAbort_Memory(void)
 {
 	/*
 	 * Make sure we are in a valid context (not a child of
-	 * TransactionCommandContext...).  Note that it is possible for this
+	 * TopTransactionContext...).  Note that it is possible for this
 	 * code to be called when we aren't in a transaction at all; go
 	 * directly to TopMemoryContext in that case.
 	 */
-	if (TransactionCommandContext != NULL)
+	if (TopTransactionContext != NULL)
 	{
-		MemoryContextSwitchTo(TransactionCommandContext);
+		MemoryContextSwitchTo(TopTransactionContext);
 
 		/*
-		 * We do not want to destroy transaction contexts yet, but it
-		 * should be OK to delete any command-local memory.
+		 * We do not want to destroy the transaction's global state yet,
+		 * so we can't free any memory here.
 		 */
-		MemoryContextResetAndDeleteChildren(TransactionCommandContext);
 	}
 	else
 		MemoryContextSwitchTo(TopMemoryContext);
@@ -812,7 +800,6 @@ AtCleanup_Memory(void)
 	if (TopTransactionContext != NULL)
 		MemoryContextDelete(TopTransactionContext);
 	TopTransactionContext = NULL;
-	TransactionCommandContext = NULL;
 }
 
 
@@ -926,7 +913,7 @@ CommitTransaction(void)
 	 * access, and in fact could still cause an error...)
 	 */
 
-	AtEOXact_portals(true);
+	AtCommit_Portals();
 
 	/* handle commit for large objects [ PA, 7/17/98 ] */
 	/* XXX probably this does not belong here */
@@ -1057,7 +1044,7 @@ AbortTransaction(void)
 	 * do abort processing
 	 */
 	DeferredTriggerAbortXact();
-	AtEOXact_portals(false);
+	AtAbort_Portals();
 	lo_commit(false);			/* 'false' means it's abort */
 	AtAbort_Notify();
 	AtEOXact_UpdatePasswordFile(false);
@@ -1126,7 +1113,8 @@ CleanupTransaction(void)
 	/*
 	 * do abort cleanup processing
 	 */
-	AtCleanup_Memory();
+	AtCleanup_Portals();		/* now safe to release portal memory */
+	AtCleanup_Memory();			/* and transaction memory */
 
 	/*
 	 * done with abort processing, set current transaction state back to
@@ -1220,11 +1208,11 @@ StartTransactionCommand(bool preventChain)
 	}
 
 	/*
-	 * We must switch to TransactionCommandContext before returning. This
+	 * We must switch to TopTransactionContext before returning. This
 	 * is already done if we called StartTransaction, otherwise not.
 	 */
-	Assert(TransactionCommandContext != NULL);
-	MemoryContextSwitchTo(TransactionCommandContext);
+	Assert(TopTransactionContext != NULL);
+	MemoryContextSwitchTo(TopTransactionContext);
 }
 
 /*
@@ -1266,7 +1254,6 @@ CommitTransactionCommand(bool forceCommit)
 				Assert(s->blockState == TBLOCK_INPROGRESS);
 				/* This code must match the TBLOCK_INPROGRESS case below: */
 				CommandCounterIncrement();
-				MemoryContextResetAndDeleteChildren(TransactionCommandContext);
 			}
 			break;
 
@@ -1283,15 +1270,10 @@ CommitTransactionCommand(bool forceCommit)
 			/*
 			 * This is the case when we have finished executing a command
 			 * someplace within a transaction block.  We increment the
-			 * command counter and return.	Someday we may free resources
-			 * local to the command.
-			 *
-			 * That someday is today, at least for memory allocated in
-			 * TransactionCommandContext. - vadim 03/25/97
+			 * command counter and return.
 			 */
 		case TBLOCK_INPROGRESS:
 			CommandCounterIncrement();
-			MemoryContextResetAndDeleteChildren(TransactionCommandContext);
 			break;
 
 			/*

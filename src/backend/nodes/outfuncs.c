@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.203 2003/04/24 21:16:43 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.204 2003/05/02 20:54:34 tgl Exp $
  *
  * NOTES
  *	  Every node type that can appear in stored rules' parsetrees *must*
@@ -1177,6 +1177,7 @@ _outQuery(StringInfo str, Query *node)
 
 	WRITE_ENUM_FIELD(commandType, CmdType);
 	WRITE_ENUM_FIELD(querySource, QuerySource);
+	WRITE_BOOL_FIELD(canSetTag);
 
 	/*
 	 * Hack to work around missing outfuncs routines for a lot of the

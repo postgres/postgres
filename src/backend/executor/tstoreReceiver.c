@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/tstoreReceiver.c,v 1.2 2003/04/29 03:21:29 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/tstoreReceiver.c,v 1.3 2003/05/02 20:54:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -43,18 +43,18 @@ tstoreSetupReceiver(DestReceiver *self, int operation,
 					const char *portalname, TupleDesc typeinfo)
 {
 	TStoreState *myState = (TStoreState *) self;
-	Portal portal;
 
-	if (operation != CMD_SELECT)
-		elog(ERROR, "Unexpected operation type: %d", operation);
+	/* Should only be called within a suitably-prepped portal */
+	if (CurrentPortal == NULL ||
+		CurrentPortal->holdStore == NULL)
+		elog(ERROR, "Tuplestore destination used in wrong context");
 
-	portal = GetPortalByName(portalname);
+	/* Debug check: make sure portal's result tuple desc is correct */
+	Assert(CurrentPortal->tupDesc != NULL);
+	Assert(equalTupleDescs(CurrentPortal->tupDesc, typeinfo));
 
-	if (portal == NULL)
-		elog(ERROR, "Specified portal does not exist: %s", portalname);
-
-	myState->tstore = portal->holdStore;
-	myState->cxt = portal->holdContext;
+	myState->tstore = CurrentPortal->holdStore;
+	myState->cxt = CurrentPortal->holdContext;
 }
 
 /*

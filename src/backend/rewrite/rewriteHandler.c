@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.119 2003/04/29 22:13:10 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.120 2003/05/02 20:54:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1016,6 +1016,7 @@ fireRules(Query *parsetree,
 											event_qual, rt_index, event);
 
 			rule_action->querySource = qsrc;
+			rule_action->canSetTag = false;		/* might change later */
 
 			results = lappend(results, rule_action);
 		}
@@ -1181,6 +1182,9 @@ QueryRewrite(Query *parsetree)
 	List	   *querylist;
 	List	   *results = NIL;
 	List	   *l;
+	CmdType		origCmdType;
+	bool		foundOriginalQuery;
+	Query	   *lastInstead;
 
 	/*
 	 * Step 1
@@ -1234,6 +1238,52 @@ QueryRewrite(Query *parsetree)
 
 		results = lappend(results, query);
 	}
+
+	/*
+	 * Step 3
+	 *
+	 * Determine which, if any, of the resulting queries is supposed to set
+	 * the command-result tag; and update the canSetTag fields accordingly.
+	 *
+	 * If the original query is still in the list, it sets the command tag.
+	 * Otherwise, the last INSTEAD query of the same kind as the original
+	 * is allowed to set the tag.  (Note these rules can leave us with no
+	 * query setting the tag.  The tcop code has to cope with this by
+	 * setting up a default tag based on the original un-rewritten query.)
+	 *
+	 * The Asserts verify that at most one query in the result list is marked
+	 * canSetTag.  If we aren't checking asserts, we can fall out of the loop
+	 * as soon as we find the original query.
+	 */
+	origCmdType = parsetree->commandType;
+	foundOriginalQuery = false;
+	lastInstead = NULL;
+
+	foreach(l, results)
+	{
+		Query	   *query = (Query *) lfirst(l);
+
+		if (query->querySource == QSRC_ORIGINAL)
+		{
+			Assert(query->canSetTag);
+			Assert(!foundOriginalQuery);
+			foundOriginalQuery = true;
+#ifndef USE_ASSERT_CHECKING
+			break;
+#endif
+		}
+		else
+		{
+			Assert(!query->canSetTag);
+			if (query->commandType == origCmdType &&
+				(query->querySource == QSRC_INSTEAD_RULE ||
+				 query->querySource == QSRC_QUAL_INSTEAD_RULE))
+				lastInstead = query;
+		}
+	}
+
+	if (!foundOriginalQuery && lastInstead != NULL)
+		lastInstead->canSetTag = true;
 
 	return results;
 }

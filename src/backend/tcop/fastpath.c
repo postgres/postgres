@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/fastpath.c,v 1.59 2003/04/22 00:08:07 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/fastpath.c,v 1.60 2003/05/02 20:54:35 tgl Exp $
  *
  * NOTES
  *	  This cruft is the server side of PQfn.
@@ -255,7 +255,7 @@ fetch_fp_info(Oid func_id, struct fp_info * fip)
  *
  * Note: palloc()s done here and in the called function do not need to be
  * cleaned up explicitly.  We are called from PostgresMain() in the
- * QueryContext memory context, which will be automatically reset when
+ * MessageContext memory context, which will be automatically reset when
  * control returns to PostgresMain.
  */
 int

@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.268 2003/04/29 22:13:09 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.269 2003/05/02 20:54:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -237,13 +237,23 @@ do_parse_analyze(Node *parseTree, ParseState *pstate)
 	/*
 	 * Make sure that only the original query is marked original. We have
 	 * to do this explicitly since recursive calls of do_parse_analyze will
-	 * have marked some of the added-on queries as "original".
+	 * have marked some of the added-on queries as "original".  Also mark
+	 * only the original query as allowed to set the command-result tag.
 	 */
 	foreach(listscan, result)
 	{
 		Query	   *q = lfirst(listscan);
 
-		q->querySource = (q == query ? QSRC_ORIGINAL : QSRC_PARSER);
+		if (q == query)
+		{
+			q->querySource = QSRC_ORIGINAL;
+			q->canSetTag = true;
+		}
+		else
+		{
+			q->querySource = QSRC_PARSER;
+			q->canSetTag = false;
+		}
 	}
 
 	return result;
@@ -399,6 +409,11 @@ transformStmt(ParseState *pstate, Node *parseTree,
 			result->utilityStmt = (Node *) parseTree;
 			break;
 	}
+
+	/* Mark as original query until we learn differently */
+	result->querySource = QSRC_ORIGINAL;
+	result->canSetTag = true;
+
 	return result;
 }
 

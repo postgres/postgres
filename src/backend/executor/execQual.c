@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.128 2003/04/08 23:20:00 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.129 2003/05/02 20:54:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -377,7 +377,7 @@ ExecEvalVar(Var *variable, ExprContext *econtext, bool *isNull)
 	 * XXX this is a horrid crock: since the pointer to the slot might live
 	 * longer than the current evaluation context, we are forced to copy
 	 * the tuple and slot into a long-lived context --- we use
-	 * TransactionCommandContext which should be safe enough.  This
+	 * the econtext's per-query memory which should be safe enough.  This
 	 * represents a serious memory leak if many such tuples are processed
 	 * in one command, however.  We ought to redesign the representation
 	 * of whole-tuple datums so that this is not necessary.
@@ -391,7 +391,7 @@ ExecEvalVar(Var *variable, ExprContext *econtext, bool *isNull)
 		TupleTableSlot *tempSlot;
 		HeapTuple	tup;
 
-		oldContext = MemoryContextSwitchTo(TransactionCommandContext);
+		oldContext = MemoryContextSwitchTo(econtext->ecxt_per_query_memory);
 		tempSlot = MakeTupleTableSlot();
 		tup = heap_copytuple(heapTuple);
 		ExecStoreTuple(tup, tempSlot, InvalidBuffer, true);

@@ -6,7 +6,7 @@
  * Copyright (c) 2002, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/prepare.c,v 1.13 2003/02/02 23:46:38 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/prepare.c,v 1.14 2003/05/02 20:54:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -59,9 +59,8 @@ static ParamListInfo EvaluateParams(EState *estate,
 void
 PrepareQuery(PrepareStmt *stmt)
 {
-	List	   *plan_list = NIL;
 	List	   *query_list,
-			   *query_list_item;
+			   *plan_list;
 
 	if (!stmt->name)
 		elog(ERROR, "No statement name given");
@@ -69,19 +68,18 @@ PrepareQuery(PrepareStmt *stmt)
 	if (stmt->query->commandType == CMD_UTILITY)
 		elog(ERROR, "Utility statements cannot be prepared");
 
+	/*
+	 * Parse analysis is already done, but we must still rewrite and plan
+	 * the query.
+	 */
+
 	/* Rewrite the query. The result could be 0, 1, or many queries. */
 	query_list = QueryRewrite(stmt->query);
 
-	foreach(query_list_item, query_list)
-	{
-		Query	   *query = (Query *) lfirst(query_list_item);
-		Plan	   *plan;
+	/* Generate plans for queries.  Snapshot is already set. */
+	plan_list = pg_plan_queries(query_list, false);
 
-		plan = pg_plan_query(query);
-
-		plan_list = lappend(plan_list, plan);
-	}
-
+	/* Save the results. */
 	StoreQuery(stmt->name, query_list, plan_list, stmt->argtype_oids);
 }
 
@@ -92,17 +90,19 @@ void
 ExecuteQuery(ExecuteStmt *stmt, CommandDest outputDest)
 {
 	QueryHashEntry *entry;
-	List	   *l,
-			   *query_list,
+	List	   *query_list,
 			   *plan_list;
+	MemoryContext qcontext;
 	ParamListInfo paramLI = NULL;
 	EState	   *estate = NULL;
+	Portal		portal;
 
 	/* Look it up in the hash table */
 	entry = FetchQuery(stmt->name);
 
 	query_list = entry->query_list;
 	plan_list = entry->plan_list;
+	qcontext = entry->context;
 
 	Assert(length(query_list) == length(plan_list));
 
@@ -117,57 +117,53 @@ ExecuteQuery(ExecuteStmt *stmt, CommandDest outputDest)
 		paramLI = EvaluateParams(estate, stmt->params, entry->argtype_list);
 	}
 
-	/* Execute each query */
-	foreach(l, query_list)
+	/*
+	 * Create a new portal to run the query in
+	 */
+	portal = CreateNewPortal();
+
+	/*
+	 * For EXECUTE INTO, make a copy of the stored query so that we can
+	 * modify its destination (yech, but INTO has always been ugly).
+	 * For regular EXECUTE we can just use the stored query where it sits,
+	 * since the executor is read-only.
+	 */
+	if (stmt->into)
 	{
-		Query	  *query = (Query *) lfirst(l);
-		Plan	  *plan = (Plan *) lfirst(plan_list);
-		bool		is_last_query;
+		MemoryContext oldContext;
+		Query  *query;
 
-		plan_list = lnext(plan_list);
-		is_last_query = (plan_list == NIL);
+		oldContext = MemoryContextSwitchTo(PortalGetHeapMemory(portal));
 
-		if (query->commandType == CMD_UTILITY)
-			ProcessUtility(query->utilityStmt, outputDest, NULL);
-		else
-		{
-			QueryDesc  *qdesc;
+		query_list = copyObject(query_list);
+		plan_list = copyObject(plan_list);
+		qcontext = PortalGetHeapMemory(portal);
 
-			if (log_executor_stats)
-				ResetUsage();
+		if (length(query_list) != 1)
+			elog(ERROR, "INTO clause specified for non-SELECT query");
+		query = (Query *) lfirst(query_list);
+		if (query->commandType != CMD_SELECT)
+			elog(ERROR, "INTO clause specified for non-SELECT query");
+		query->into = copyObject(stmt->into);
 
-			qdesc = CreateQueryDesc(query, plan, outputDest, NULL,
-									paramLI, false);
-
-			if (stmt->into)
-			{
-				if (qdesc->operation != CMD_SELECT)
-					elog(ERROR, "INTO clause specified for non-SELECT query");
-
-				query->into = stmt->into;
-				qdesc->dest = None;
-			}
-
-			ExecutorStart(qdesc);
-
-			ExecutorRun(qdesc, ForwardScanDirection, 0L);
-
-			ExecutorEnd(qdesc);
-
-			FreeQueryDesc(qdesc);
-
-			if (log_executor_stats)
-				ShowUsage("EXECUTOR STATISTICS");
-		}
-
-		/*
-		 * If we're processing multiple queries, we need to increment the
-		 * command counter between them. For the last query, there's no
-		 * need to do this, it's done automatically.
-		 */
-		if (!is_last_query)
-			CommandCounterIncrement();
+		MemoryContextSwitchTo(oldContext);
 	}
+
+	PortalDefineQuery(portal,
+					  NULL,		/* XXX fixme: can we save query text? */
+					  NULL,		/* no command tag known either */
+					  query_list,
+					  plan_list,
+					  qcontext);
+
+	/*
+	 * Run the portal to completion.
+	 */
+	PortalStart(portal, paramLI);
+
+	(void) PortalRun(portal, FETCH_ALL, outputDest, outputDest, NULL);
+
+	PortalDrop(portal, false);
 
 	if (estate)
 		FreeExecutorState(estate);
@@ -377,8 +373,11 @@ DeallocateQuery(DeallocateStmt *stmt)
 	/* Find the query's hash table entry */
 	entry = FetchQuery(stmt->name);
 
-	/* Flush the context holding the subsidiary data */
+	/* Drop any open portals that depend on this prepared statement */
 	Assert(MemoryContextIsValid(entry->context));
+	DropDependentPortals(entry->context);
+
+	/* Flush the context holding the subsidiary data */
 	MemoryContextDelete(entry->context);
 
 	/* Now we can remove the hash table entry */

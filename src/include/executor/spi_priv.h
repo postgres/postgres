@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: spi_priv.h,v 1.13 2002/10/14 23:49:20 tgl Exp $
+ * $Id: spi_priv.h,v 1.14 2003/05/02 20:54:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,8 +36,6 @@ typedef struct
 	/* Argument types, if a prepared plan */
 	int			nargs;
 	Oid		   *argtypes;
-	/* Command type of last original parsetree */
-	CmdType		origCmdType;
 } _SPI_plan;
 
 

@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.248 2003/04/08 23:20:01 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.249 2003/05/02 20:54:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1476,6 +1476,7 @@ _copyQuery(Query *from)
 
 	COPY_SCALAR_FIELD(commandType);
 	COPY_SCALAR_FIELD(querySource);
+	COPY_SCALAR_FIELD(canSetTag);
 	COPY_NODE_FIELD(utilityStmt);
 	COPY_SCALAR_FIELD(resultRelation);
 	COPY_NODE_FIELD(into);

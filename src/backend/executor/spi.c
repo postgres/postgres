@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/spi.c,v 1.93 2003/04/29 22:13:09 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/spi.c,v 1.94 2003/05/02 20:54:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,7 +16,6 @@
 
 #include "access/printtup.h"
 #include "catalog/heap.h"
-#include "commands/portalcmds.h"
 #include "executor/spi_priv.h"
 #include "tcop/tcopprot.h"
 #include "utils/lsyscache.h"
@@ -91,7 +90,13 @@ SPI_connect(void)
 	_SPI_current->processed = 0;
 	_SPI_current->tuptable = NULL;
 
-	/* Create memory contexts for this procedure */
+	/*
+	 * Create memory contexts for this procedure
+	 *
+	 * XXX it would be better to use PortalContext as the parent context,
+	 * but we may not be inside a portal (consider deferred-trigger
+	 * execution).
+	 */
 	_SPI_current->procCxt = AllocSetContextCreate(TopTransactionContext,
 												  "SPI Proc",
 												ALLOCSET_DEFAULT_MINSIZE,
@@ -703,18 +708,14 @@ SPI_freetuptable(SPITupleTable *tuptable)
 Portal
 SPI_cursor_open(const char *name, void *plan, Datum *Values, const char *Nulls)
 {
-	static int	unnamed_portal_count = 0;
-
 	_SPI_plan  *spiplan = (_SPI_plan *) plan;
 	List	   *qtlist = spiplan->qtlist;
 	List	   *ptlist = spiplan->ptlist;
 	Query	   *queryTree;
 	Plan	   *planTree;
 	ParamListInfo paramLI;
-	QueryDesc  *queryDesc;
 	MemoryContext oldcontext;
 	Portal		portal;
-	char		portalname[64];
 	int			k;
 
 	/* Ensure that the plan contains only one regular SELECT query */
@@ -737,31 +738,17 @@ SPI_cursor_open(const char *name, void *plan, Datum *Values, const char *Nulls)
 	_SPI_current->processed = 0;
 	_SPI_current->tuptable = NULL;
 
-	if (name == NULL)
+	/* Create the portal */
+	if (name == NULL || name[0] == '\0')
 	{
-		/* Make up a portal name if none given */
-		for (;;)
-		{
-			unnamed_portal_count++;
-			if (unnamed_portal_count < 0)
-				unnamed_portal_count = 0;
-			sprintf(portalname, "<unnamed cursor %d>", unnamed_portal_count);
-			if (GetPortalByName(portalname) == NULL)
-				break;
-		}
-
-		name = portalname;
+		/* Use a random nonconflicting name */
+		portal = CreateNewPortal();
 	}
 	else
 	{
-		/* Ensure the portal doesn't exist already */
-		portal = GetPortalByName(name);
-		if (portal != NULL)
-			elog(ERROR, "cursor \"%s\" already in use", name);
+		/* In this path, error if portal of same name already exists */
+		portal = CreatePortal(name, false, false);
 	}
-
-	/* Create the portal */
-	portal = CreatePortal(name);
 
 	/* Switch to portals memory and copy the parsetree and plan to there */
 	oldcontext = MemoryContextSwitchTo(PortalGetHeapMemory(portal));
@@ -801,18 +788,33 @@ SPI_cursor_open(const char *name, void *plan, Datum *Values, const char *Nulls)
 	else
 		paramLI = NULL;
 
-	/* Create the QueryDesc object */
-	queryDesc = CreateQueryDesc(queryTree, planTree, SPI, pstrdup(name),
-								paramLI, false);
+	/*
+	 * Set up the portal.
+	 */
+	PortalDefineQuery(portal,
+					  NULL,		/* unfortunately don't have sourceText */
+					  "SELECT",	/* cursor's query is always a SELECT */
+					  makeList1(queryTree),
+					  makeList1(planTree),
+					  PortalGetHeapMemory(portal));
 
-	/* Start the executor */
-	ExecutorStart(queryDesc);
-
-	/* Arrange to shut down the executor if portal is dropped */
-	PortalSetQuery(portal, queryDesc);
-
-	/* Switch back to the callers memory context */
 	MemoryContextSwitchTo(oldcontext);
+
+	/*
+	 * Set up options for portal.
+	 */
+	portal->cursorOptions &= ~(CURSOR_OPT_SCROLL | CURSOR_OPT_NO_SCROLL);
+	if (ExecSupportsBackwardScan(plan))
+		portal->cursorOptions |= CURSOR_OPT_SCROLL;
+	else
+		portal->cursorOptions |= CURSOR_OPT_NO_SCROLL;
+
+	/*
+	 * Start portal execution.
+	 */
+	PortalStart(portal, paramLI);
+
+	Assert(portal->strategy == PORTAL_ONE_SELECT);
 
 	/* Return the created portal */
 	return portal;
@@ -1008,39 +1010,15 @@ _SPI_execute(const char *src, int tcount, _SPI_plan *plan)
 	foreach(list_item, raw_parsetree_list)
 	{
 		Node	   *parsetree = (Node *) lfirst(list_item);
-		CmdType		origCmdType;
-		bool		foundOriginalQuery = false;
 		List	   *query_list;
 		List	   *query_list_item;
-
-		switch (nodeTag(parsetree))
-		{
-			case T_InsertStmt:
-				origCmdType = CMD_INSERT;
-				break;
-			case T_DeleteStmt:
-				origCmdType = CMD_DELETE;
-				break;
-			case T_UpdateStmt:
-				origCmdType = CMD_UPDATE;
-				break;
-			case T_SelectStmt:
-				origCmdType = CMD_SELECT;
-				break;
-			default:
-				/* Otherwise, never match commandType */
-				origCmdType = CMD_UNKNOWN;
-				break;
-		}
-
-		if (plan)
-			plan->origCmdType = origCmdType;
 
 		query_list = pg_analyze_and_rewrite(parsetree, argtypes, nargs);
 
 		query_list_list = lappend(query_list_list, query_list);
 
 		/* Reset state for each original parsetree */
+		/* (at most one of its querytrees will be marked canSetTag) */
 		SPI_processed = 0;
 		SPI_lastoid = InvalidOid;
 		SPI_tuptable = NULL;
@@ -1050,38 +1028,10 @@ _SPI_execute(const char *src, int tcount, _SPI_plan *plan)
 		{
 			Query	   *queryTree = (Query *) lfirst(query_list_item);
 			Plan	   *planTree;
-			bool		canSetResult;
 			QueryDesc  *qdesc;
 
 			planTree = pg_plan_query(queryTree);
 			plan_list = lappend(plan_list, planTree);
-
-			/*
-			 * This query can set the SPI result if it is the original
-			 * query, or if it is an INSTEAD query of the same kind as the
-			 * original and we haven't yet seen the original query.
-			 */
-			if (queryTree->querySource == QSRC_ORIGINAL)
-			{
-				canSetResult = true;
-				foundOriginalQuery = true;
-			}
-			else if (!foundOriginalQuery &&
-					 queryTree->commandType == origCmdType &&
-					 (queryTree->querySource == QSRC_INSTEAD_RULE ||
-					  queryTree->querySource == QSRC_QUAL_INSTEAD_RULE))
-				canSetResult = true;
-			else
-				canSetResult = false;
-
-			/* Reset state if can set result */
-			if (canSetResult)
-			{
-				SPI_processed = 0;
-				SPI_lastoid = InvalidOid;
-				SPI_tuptable = NULL;
-				_SPI_current->tuptable = NULL;
-			}
 
 			if (queryTree->commandType == CMD_UTILITY)
 			{
@@ -1108,9 +1058,10 @@ _SPI_execute(const char *src, int tcount, _SPI_plan *plan)
 			else if (plan == NULL)
 			{
 				qdesc = CreateQueryDesc(queryTree, planTree,
-										canSetResult ? SPI : None,
+										queryTree->canSetTag ? SPI : None,
 										NULL, NULL, false);
-				res = _SPI_pquery(qdesc, true, canSetResult ? tcount : 0);
+				res = _SPI_pquery(qdesc, true,
+								  queryTree->canSetTag ? tcount : 0);
 				if (res < 0)
 					return res;
 				CommandCounterIncrement();
@@ -1118,7 +1069,7 @@ _SPI_execute(const char *src, int tcount, _SPI_plan *plan)
 			else
 			{
 				qdesc = CreateQueryDesc(queryTree, planTree,
-										canSetResult ? SPI : None,
+										queryTree->canSetTag ? SPI : None,
 										NULL, NULL, false);
 				res = _SPI_pquery(qdesc, false, 0);
 				if (res < 0)
@@ -1145,9 +1096,30 @@ _SPI_execute_plan(_SPI_plan *plan, Datum *Values, const char *Nulls,
 	List	   *query_list_list_item;
 	int			nargs = plan->nargs;
 	int			res = 0;
+	ParamListInfo paramLI;
 
 	/* Increment CommandCounter to see changes made by now */
 	CommandCounterIncrement();
+
+	/* Convert parameters to form wanted by executor */
+	if (nargs > 0)
+	{
+		int			k;
+
+		paramLI = (ParamListInfo)
+			palloc0((nargs + 1) * sizeof(ParamListInfoData));
+
+		for (k = 0; k < nargs; k++)
+		{
+			paramLI[k].kind = PARAM_NUM;
+			paramLI[k].id = k + 1;
+			paramLI[k].isnull = (Nulls && Nulls[k] == 'n');
+			paramLI[k].value = Values[k];
+		}
+		paramLI[k].kind = PARAM_INVALID;
+	}
+	else
+		paramLI = NULL;
 
 	/* Reset state (only needed in case string is empty) */
 	SPI_processed = 0;
@@ -1159,9 +1131,9 @@ _SPI_execute_plan(_SPI_plan *plan, Datum *Values, const char *Nulls,
 	{
 		List   *query_list = lfirst(query_list_list_item);
 		List   *query_list_item;
-		bool	foundOriginalQuery = false;
 
 		/* Reset state for each original parsetree */
+		/* (at most one of its querytrees will be marked canSetTag) */
 		SPI_processed = 0;
 		SPI_lastoid = InvalidOid;
 		SPI_tuptable = NULL;
@@ -1171,72 +1143,24 @@ _SPI_execute_plan(_SPI_plan *plan, Datum *Values, const char *Nulls,
 		{
 			Query  *queryTree = (Query *) lfirst(query_list_item);
 			Plan	   *planTree;
-			bool		canSetResult;
 			QueryDesc  *qdesc;
 
 			planTree = lfirst(plan_list);
 			plan_list = lnext(plan_list);
 
-			/*
-			 * This query can set the SPI result if it is the original
-			 * query, or if it is an INSTEAD query of the same kind as the
-			 * original and we haven't yet seen the original query.
-			 */
-			if (queryTree->querySource == QSRC_ORIGINAL)
-			{
-				canSetResult = true;
-				foundOriginalQuery = true;
-			}
-			else if (!foundOriginalQuery &&
-					 queryTree->commandType == plan->origCmdType &&
-					 (queryTree->querySource == QSRC_INSTEAD_RULE ||
-					  queryTree->querySource == QSRC_QUAL_INSTEAD_RULE))
-				canSetResult = true;
-			else
-				canSetResult = false;
-
-			/* Reset state if can set result */
-			if (canSetResult)
-			{
-				SPI_processed = 0;
-				SPI_lastoid = InvalidOid;
-				SPI_tuptable = NULL;
-				_SPI_current->tuptable = NULL;
-			}
-
 			if (queryTree->commandType == CMD_UTILITY)
 			{
-				res = SPI_OK_UTILITY;
 				ProcessUtility(queryTree->utilityStmt, None, NULL);
+				res = SPI_OK_UTILITY;
 				CommandCounterIncrement();
 			}
 			else
 			{
-				ParamListInfo paramLI;
-
-				if (nargs > 0)
-				{
-					int			k;
-
-					paramLI = (ParamListInfo)
-						palloc0((nargs + 1) * sizeof(ParamListInfoData));
-
-					for (k = 0; k < plan->nargs; k++)
-					{
-						paramLI[k].kind = PARAM_NUM;
-						paramLI[k].id = k + 1;
-						paramLI[k].isnull = (Nulls && Nulls[k] == 'n');
-						paramLI[k].value = Values[k];
-					}
-					paramLI[k].kind = PARAM_INVALID;
-				}
-				else
-					paramLI = NULL;
-
 				qdesc = CreateQueryDesc(queryTree, planTree,
-										canSetResult ? SPI : None,
+										queryTree->canSetTag ? SPI : None,
 										NULL, paramLI, false);
-				res = _SPI_pquery(qdesc, true, canSetResult ? tcount : 0);
+				res = _SPI_pquery(qdesc, true,
+								  queryTree->canSetTag ? tcount : 0);
 				if (res < 0)
 					return res;
 				CommandCounterIncrement();
@@ -1346,10 +1270,10 @@ _SPI_cursor_operation(Portal portal, bool forward, int count,
 
 	/* Run the cursor */
 	_SPI_current->processed =
-		DoPortalFetch(portal,
-					  forward ? FETCH_FORWARD : FETCH_BACKWARD,
-					  (long) count,
-					  dest);
+		PortalRunFetch(portal,
+					   forward ? FETCH_FORWARD : FETCH_BACKWARD,
+					   (long) count,
+					   dest);
 
 	if (dest == SPI && _SPI_checktuples())
 		elog(FATAL, "SPI_fetch: # of processed tuples check failed");
@@ -1467,7 +1391,6 @@ _SPI_copy_plan(_SPI_plan *plan, int location)
 	}
 	else
 		newplan->argtypes = NULL;
-	newplan->origCmdType = plan->origCmdType;
 
 	MemoryContextSwitchTo(oldcxt);
 
