@@ -5,12 +5,13 @@ case "$host_os" in
 solaris*)
   case "$host_cpu" in
     sparc) PORTNAME='sparc_solaris' ;;
-    i386) PORTNAME='i386_solaris' ;;
+     i386) PORTNAME='i386_solaris' ;;
   esac ;;
-linux*) PORTNAME='linux' ;;
-bsdi*) PORTNAME='bsdi' ;;
+  linux*) PORTNAME='linux' ;;
+   bsdi*) PORTNAME='bsdi' ;;
 freebsd*) PORTNAME='BSD44_derived' ;;
-dgux*) PORTNAME='dgux';;
+   dgux*) PORTNAME='dgux';;
+    aix*) PORTNAME='aix';;
 *) echo ""
    echo "*************************************************************"
    echo "configure does not currently recognize your operating system,"
