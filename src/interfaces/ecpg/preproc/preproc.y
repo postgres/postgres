@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.296 2004/09/06 11:23:07 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.297 2004/09/27 09:59:17 meskes Exp $ */
 
 /* Copyright comment */
 %{
@@ -326,7 +326,7 @@ add_additional_variables(char *name, bool insert)
 		SQL_FREE SQL_GO SQL_GOTO SQL_IDENTIFIED
 		SQL_INDICATOR SQL_KEY_MEMBER SQL_LENGTH
 		SQL_LONG SQL_NAME SQL_NULLABLE SQL_OCTET_LENGTH
-		SQL_OPEN SQL_OUTPUT SQL_RELEASE SQL_REFERENCE
+		SQL_OPEN SQL_OUTPUT SQL_REFERENCE
 		SQL_RETURNED_LENGTH SQL_RETURNED_OCTET_LENGTH SQL_SCALE
 		SQL_SECTION SQL_SHORT SQL_SIGNED SQL_SQL SQL_SQLERROR
 		SQL_SQLPRINT SQL_SQLWARNING SQL_START SQL_STOP
@@ -395,10 +395,11 @@ add_additional_variables(char *name, bool insert)
 
 	QUOTE
 
-	READ REAL RECHECK REFERENCES REINDEX RELATIVE_P RENAME REPEATABLE REPLACE
-	RESET RESTART RESTRICT RETURNS REVOKE RIGHT ROLLBACK ROW ROWS RULE
+	READ REAL RECHECK REFERENCES REINDEX RELATIVE_P RELEASE RENAME
+	REPEATABLE REPLACE RESET RESTART RESTRICT RETURNS REVOKE RIGHT
+	ROLLBACK ROW ROWS RULE
 
-	SCHEMA SCROLL SECOND_P SECURITY SELECT SEQUENCE SERIALIZABLE
+	SAVEPOINT SCHEMA SCROLL SECOND_P SECURITY SELECT SEQUENCE SERIALIZABLE
         SESSION SESSION_USER SET SETOF SHARE SHOW SIMILAR SIMPLE SMALLINT SOME
         STABLE START STATEMENT STATISTICS STDIN STDOUT STORAGE STRICT_P
         SUBSTRING SYSID
@@ -472,7 +473,7 @@ add_additional_variables(char *name, bool insert)
 %type  <str>	Typename SimpleTypename Numeric opt_float opt_numeric
 %type  <str>	opt_decimal Character character opt_varying opt_charset
 %type  <str>	opt_timezone opt_interval table_ref fetch_direction
-%type  <str>	ConstDatetime AlterDomainStmt AlterSeqStmt
+%type  <str>	ConstDatetime AlterDomainStmt AlterSeqStmt alter_rel_cmds
 %type  <str>	SelectStmt into_clause OptTemp ConstraintAttributeSpec
 %type  <str>	opt_table opt_all sort_clause sortby_list ConstraintAttr
 %type  <str>	sortby qualified_name_list name_list ColId_or_Sconst
@@ -529,7 +530,7 @@ add_additional_variables(char *name, bool insert)
 %type  <str>	handler_name any_name_list any_name opt_as insert_column_list
 %type  <str>	columnref function_name insert_target_el AllConstVar
 %type  <str>	insert_target_list insert_column_item DropRuleStmt
-%type  <str>	createfunc_opt_item set_rest var_list_or_default
+%type  <str>	createfunc_opt_item set_rest var_list_or_default alter_rel_cmd
 %type  <str>	CreateFunctionStmt createfunc_opt_list func_table
 %type  <str>	DropUserStmt copy_from copy_opt_list copy_opt_item
 %type  <str>	opt_oids TableLikeClause key_action opt_definition
@@ -538,13 +539,13 @@ add_additional_variables(char *name, bool insert)
 %type  <str>	iso_level type_list CharacterWithLength ConstCharacter
 %type  <str>	CharacterWithoutLength BitWithLength BitWithoutLength
 %type  <str>	ConstBit GenericType TableFuncElementList opt_analyze
-%type  <str>	opt_sort_clause transaction_access_mode subquery_Op
+%type  <str>	opt_sort_clause subquery_Op transaction_mode_item
 %type  <str>	ECPGWhenever ECPGConnect connection_target ECPGOpen
 %type  <str>	indicator ECPGExecute ECPGPrepare ecpg_using ecpg_into 
 %type  <str>	storage_declaration storage_clause opt_initializer c_anything
 %type  <str>	variable_list variable c_thing c_term ECPGKeywords_vanames
 %type  <str>	opt_pointer ECPGDisconnect dis_name storage_modifier
-%type  <str>	ECPGRelease execstring server_name ECPGVarDeclaration
+%type  <str>	execstring server_name ECPGVarDeclaration
 %type  <str>	connection_object opt_server opt_port c_stuff c_stuff_item
 %type  <str>	user_name opt_user char_variable ora_user ident opt_reference
 %type  <str>	var_type_declarations quoted_ident_stringvar ECPGKeywords_rest
@@ -561,7 +562,7 @@ add_additional_variables(char *name, bool insert)
 %type  <str>	col_name_keyword func_name_keyword precision opt_scale
 %type  <str>	ECPGTypeName using_list ECPGColLabelCommon UsingConst
 %type  <str>	inf_val_list inf_col_list using_descriptor into_descriptor 
-%type  <str>	prepared_name struct_union_type_with_symbol
+%type  <str>	prepared_name struct_union_type_with_symbol OptConsTableSpace
 %type  <str>	ECPGunreserved ECPGunreserved_interval cvariable
 %type  <str>	AlterOwnerStmt OptTableSpaceOwner CreateTableSpaceStmt
 %type  <str>	DropTableSpaceStmt indirection indirection_el ECPGSetDescriptorHeader
@@ -816,7 +817,7 @@ stmt:  AlterDatabaseSetStmt		{ output_statement($1, 0, connection); }
 			whenever_action(2);
 			free($1);
 		}
-		| ECPGRelease		{ /* output already done */ }
+		/* | ECPGRelease		{ / * output already done * / } */
 		| ECPGSetAutocommit
 		{
 			fprintf(yyout, "{ ECPGsetcommit(__LINE__, \"%s\", %s);", $1, connection ? connection : "NULL");
@@ -1177,15 +1178,18 @@ CheckPointStmt: CHECKPOINT	   { $$= make_str("checkpoint"); }
 
 /*****************************************************************************
  *
- *	ALTER TABLE variations
+ *	ALTER [ TABLE | INDEX ] variations
  *
  *****************************************************************************/
 
 AlterTableStmt:
 		ALTER TABLE relation_expr alter_table_cmds
 			{ $$ = cat_str(3, make_str("alter table"), $3, $4); }
+		|       ALTER INDEX relation_expr alter_rel_cmds
+			{ $$ = cat_str(3, make_str("alter table"), $3, $4); }
 		;
 
+/* Subcommands that are for ALTER TABLE only */
 alter_table_cmds:
 		alter_table_cmd 			{ $$ = $1; }
 		| alter_table_cmds ',' alter_table_cmd	{ $$ = cat_str(3, $1, make_str(","), $3); }
@@ -1228,16 +1232,24 @@ alter_table_cmd:
  /* ALTER TABLE <name> CREATE TOAST TABLE */
 		| CREATE TOAST TABLE
 			{ $$ = make_str("create toast table"); }
-/* ALTER TABLE <name> OWNER TO UserId */
-		| OWNER TO UserId
-			{ $$ = cat_str(2, make_str("owner to"), $3); }
 /* ALTER TABLE <name> CLUSTER ON <indexname> */
 		| CLUSTER ON name
 			{ $$ = cat_str(2, make_str("cluster on"), $3); }
 /* ALTER TABLE <name> SET WITHOUT CLUSTER */
 		| SET WITHOUT CLUSTER
 			{ $$ = make_str("set without cluster"); }
-		/* ALTER TABLE <name> SET TABLESPACE <tablespacename> */
+		;
+
+alter_rel_cmds: alter_rel_cmd  				{ $$ = $1; }
+		| alter_rel_cmds ',' alter_rel_cmd	{ $$ = cat_str(3, $1, make_str(","), $3); }
+		;
+
+/* Subcommands that are for ALTER TABLE or ALTER INDEX */
+alter_rel_cmd:
+		/* ALTER [TABLE|INDEX] <name> OWNER TO UserId */
+		OWNER TO UserId
+			{ $$ = cat_str(2, make_str("owner to"), $3); }
+		/* ALTER [TABLE|INDEX] <name> SET TABLESPACE <tablespacename> */
 		| SET TABLESPACE name
 			{ $$ = cat_str(2, make_str("set tablespace"), $3); }
 		;
@@ -1417,10 +1429,10 @@ ColConstraintElem:	NOT NULL_P
 			{ $$ = make_str("not null"); }
 		| NULL_P
 			{ $$ = make_str("null"); }
-		| UNIQUE
-			{ $$ = make_str("unique"); }
-		| PRIMARY KEY
-			{ $$ = make_str("primary key"); }
+		| UNIQUE OptConsTableSpace
+			{ $$ = cat2_str(make_str("unique"), $2); }
+		| PRIMARY KEY OptConsTableSpace
+			{ $$ = cat2_str(make_str("primary key"), $3); }
 		| CHECK '(' a_expr ')'
 			{ $$ = cat_str(3, make_str("check ("), $3, make_str(")")); }
 		| DEFAULT b_expr
@@ -1470,10 +1482,10 @@ TableConstraint:  CONSTRAINT name ConstraintElem
 
 ConstraintElem:  CHECK '(' a_expr ')'
 			{ $$ = cat_str(3, make_str("check("), $3, make_str(")")); }
-		| UNIQUE '(' columnList ')'
-			{ $$ = cat_str(3, make_str("unique("), $3, make_str(")")); }
-		| PRIMARY KEY '(' columnList ')'
-			{ $$ = cat_str(3, make_str("primary key("), $4, make_str(")")); }
+		| UNIQUE '(' columnList ')' OptConsTableSpace
+			{ $$ = cat_str(4, make_str("unique("), $3, make_str(")"), $5); }
+		| PRIMARY KEY '(' columnList ')' OptConsTableSpace
+			{ $$ = cat_str(4, make_str("primary key("), $4, make_str(")"), $6); }
 		| FOREIGN KEY '(' columnList ')' REFERENCES qualified_name opt_column_list
 			key_match key_actions ConstraintAttributeSpec
 			{ $$ = cat_str(8, make_str("foreign key("), $4, make_str(") references"), $7, $8, $9, $10, $11); }
@@ -1546,6 +1558,10 @@ OptTableSpace:  TABLESPACE name	{ $$ = cat2_str(make_str("tablespace"), $2); }
 		| /*EMPTY*/	{ $$ = EMPTY; }
 		;
 
+OptConsTableSpace: USING INDEX TABLESPACE name	{ $$ = cat2_str(make_str("using index tablespace"), $4); }
+			| /*EMPTY*/		{ $$ = EMPTY; }
+			;
+			
 /*
  * Note: CREATE TABLE ... AS SELECT ... is just another spelling for
  * SELECT ... INTO.
@@ -2192,7 +2208,7 @@ index_params:  index_elem			{ $$ = $1; }
 		| index_params ',' index_elem	{ $$ = cat_str(3, $1, make_str(","), $3); }
 		;
 
-index_elem:  attr_name opt_class
+index_elem:  ColId opt_class
 		{ $$ = cat2_str($1, $2); }
 	| func_name '(' expr_list ')' opt_class
 		{ $$ = cat_str(5, $1, make_str("("), $3, ")", $5); }
@@ -2416,6 +2432,8 @@ RenameStmt:  ALTER AGGREGATE func_name '(' aggr_argtype ')' RENAME TO name
 			{ $$ = cat_str(4, make_str("alter schema"), $3, make_str("rename to"), $6); }
 	| ALTER TABLE relation_expr RENAME TO name
 			{ $$ = cat_str(4, make_str("alter table"), $3, make_str("rename to"), $6); }
+	| ALTER INDEX relation_expr RENAME TO name
+			{ $$ = cat_str(4, make_str("alter index"), $3, make_str("rename to"), $6); }
 	| ALTER TABLE relation_expr RENAME opt_column name TO name
 			{ $$ = cat_str(7, make_str("alter table"), $3, make_str("rename"), $5, $6, make_str("to"), $8); }
 	| ALTER TRIGGER name ON relation_expr RENAME TO name
@@ -2545,12 +2563,18 @@ UnlistenStmt:  UNLISTEN qualified_name
  *		(also older versions END / ABORT)
  *
  *****************************************************************************/
-TransactionStmt:  ABORT_P opt_transaction		{ $$ = make_str("rollback"); }
+TransactionStmt:  ABORT_P opt_transaction				 { $$ = make_str("rollback"); }
 		| BEGIN_P opt_transaction transaction_mode_list_or_empty { $$ = cat2_str(make_str("begin transaction"), $3); }
 		| START TRANSACTION transaction_mode_list_or_empty	 { $$ = cat2_str(make_str("start transaction"), $3); }
-		| COMMIT opt_transaction		{ $$ = make_str("commit"); }
-		| END_P opt_transaction		{ $$ = make_str("commit"); }
-		| ROLLBACK opt_transaction		{ $$ = make_str("rollback"); }
+		| COMMIT opt_transaction				 { $$ = make_str("commit"); }
+		| END_P opt_transaction					 { $$ = make_str("commit"); }
+		| ROLLBACK opt_transaction				 { $$ = make_str("rollback"); }
+		| SAVEPOINT ColId					 { $$ = cat2_str(make_str("savepoint"), $2); }
+		| RELEASE SAVEPOINT ColId				 { $$ = cat2_str(make_str("release savepoint"), $3); }
+		| RELEASE ColId						 { $$ = cat2_str(make_str("release"), $2); }
+		| ROLLBACK opt_transaction TO SAVEPOINT ColId		 { $$ = cat_str(4, make_str("rollback"), $2, make_str("to savepoint"), $5); }
+		| ROLLBACK opt_transaction TO ColId			 { $$ = cat_str(4, make_str("rollback"), $2, make_str("to"), $4); }
+
 		;
 
 opt_transaction: WORK			{ $$ = EMPTY; }
@@ -2558,15 +2582,17 @@ opt_transaction: WORK			{ $$ = EMPTY; }
 		| /*EMPTY*/		{ $$ = EMPTY; }
 		;
 
-transaction_mode_list:
+transaction_mode_item:
 	ISOLATION LEVEL iso_level
 	{ $$ = cat2_str(make_str("isolation level"), $3); }
-	| transaction_access_mode
-	{ $$ = $1; }
-	| ISOLATION LEVEL iso_level transaction_access_mode
-	{ $$ = cat_str(3, make_str("isolation level"), $3, $4); }
-	| transaction_access_mode ISOLATION LEVEL iso_level
-	{ $$ = cat_str(3, $1, make_str("isolation level"), $4); }
+	| READ ONLY	{ $$ = make_str("read only"); }
+	| READ WRITE 	{ $$ = make_str("read write"); }
+	;
+	
+transaction_mode_list:
+	transaction_mode_item	 				{ $$ = $1; }
+	| transaction_mode_list ',' transaction_mode_item	{ $$ = cat_str(3, $1, make_str(","), $3); }
+	| transaction_mode_list transaction_mode_item		{ $$ = cat_str(3, $1, make_str(" "), $2); }
 	;
 	 
 transaction_mode_list_or_empty:
@@ -2574,11 +2600,6 @@ transaction_mode_list_or_empty:
 	| /* EMPTY */		{ $$ = EMPTY; }
 	;
 
-transaction_access_mode:
-	READ ONLY	{ $$ = make_str("read only"); }
-	| READ WRITE 	{ $$ = make_str("read write"); }
-	;
-	
 /*****************************************************************************
  *
  *		QUERY:
@@ -4156,7 +4177,7 @@ name_list:  name
 name:				ColId			{ $$ = $1; };
 database_name:			ColId			{ $$ = $1; };
 access_method:			ColId			{ $$ = $1; };
-attr_name:				ColId			{ $$ = $1; };
+attr_name:				ColLabel		{ $$ = $1; };
 index_name:				ColId			{ $$ = $1; };
 
 file_name:				StringConst		{ $$ = $1; };
@@ -5453,7 +5474,8 @@ descriptor_item:	SQL_CARDINALITY			{ $$ = ECPGd_cardinality; }
  * after a transaction statement to disconnect from the database.
  */
 
-ECPGRelease: TransactionStmt SQL_RELEASE
+/* We cannot do that anymore since it causes shift/reduce conflicts. 2004-09-27 Michael Meskes
+ECPGRelease: TransactionStmt RELEASE
 		{
 			if (strcmp($1, "begin") == 0)
 							mmerror(PARSE_ERROR, ET_ERROR, "RELEASE does not make sense when beginning a transaction");
@@ -5467,6 +5489,7 @@ ECPGRelease: TransactionStmt SQL_RELEASE
 			free($1);
 		}
 		;
+*/
 
 /*
  * set/reset the automatic transaction mode, this needs a differnet handling
@@ -5728,7 +5751,6 @@ ECPGKeywords_vanames:  SQL_BREAK		{ $$ = make_str("break"); }
 		| SQL_NAME			{ $$ = make_str("name"); }
 		| SQL_NULLABLE			{ $$ = make_str("nullable"); }
 		| SQL_OCTET_LENGTH		{ $$ = make_str("octet_length"); }
-		| SQL_RELEASE			{ $$ = make_str("release"); }
 		| SQL_RETURNED_LENGTH		{ $$ = make_str("returned_length"); }
 		| SQL_RETURNED_OCTET_LENGTH	{ $$ = make_str("returned_octet_length"); }
 		| SQL_SCALE			{ $$ = make_str("scale"); }
@@ -5978,6 +6000,7 @@ ECPGunreserved:	  ABORT_P			{ $$ = make_str("abort"); }
 		| RECHECK			{ $$ = make_str("recheck"); }
 		| REINDEX			{ $$ = make_str("reindex"); }
 		| RELATIVE_P			{ $$ = make_str("relative"); }
+		| RELEASE			{ $$ = make_str("release"); }
 		| RENAME			{ $$ = make_str("rename"); }
 		| REPEATABLE			{ $$ = make_str("repeatable"); }
 		| REPLACE			{ $$ = make_str("replace"); }
@@ -5989,6 +6012,7 @@ ECPGunreserved:	  ABORT_P			{ $$ = make_str("abort"); }
 		| ROLLBACK			{ $$ = make_str("rollback"); }
 		| ROWS				{ $$ = make_str("rows"); }
 		| RULE				{ $$ = make_str("rule"); }
+		| SAVEPOINT			{ $$ = make_str("savepoint"); }
 		| SCHEMA			{ $$ = make_str("schema"); }
 		| SCROLL			{ $$ = make_str("scroll"); }
 /*		| SECOND_P			{ $$ = make_str("second"); }*/

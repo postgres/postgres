@@ -4,7 +4,7 @@
  *	  lexical token lookup for reserved words in postgres embedded SQL
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg_keywords.c,v 1.29 2003/11/29 19:52:08 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg_keywords.c,v 1.30 2004/09/27 09:59:17 meskes Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -57,7 +57,6 @@ static ScanKeyword ScanKeywords[] = {
 	{"open", SQL_OPEN},
 	{"output", SQL_OUTPUT},
 	{"reference", SQL_REFERENCE},
-	{"release", SQL_RELEASE},
 	{"returned_length", SQL_RETURNED_LENGTH},
 	{"returned_octet_length", SQL_RETURNED_OCTET_LENGTH},
 	{"scale", SQL_SCALE},

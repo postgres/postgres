@@ -1859,6 +1859,11 @@ Mon Sep  6 13:17:46 CEST 2004
 
 	- Fixed bug in Informix mode that caused a segfault.
 	- Set pgtypes library version to 1.2.
+	
+Mon Sep 27 11:05:49 CEST 2004
+
+	- Synced parser.
+	- Removed Oracle transaction syntax to fix shift/reduce error.
 	- Set ecpg version to 3.2.0.
 	- Set compat library version to 1.2.
 	- Set ecpg library version to 4.2.
