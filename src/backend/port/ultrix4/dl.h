@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: dl.h,v 1.1.1.1 1996/07/09 06:21:45 scrappy Exp $
+ * $Id: dl.h,v 1.2 1996/11/14 20:08:57 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -114,4 +114,4 @@ extern char **dl_undefinedSymbols(/* int *count */);
 extern void dl_printAllSymbols(/* void *handle */);
 extern void dl_setLibraries(/* char *libs */);
 
-#endif  _DL_HEADER_
+#endif /* _DL_HEADER_ */

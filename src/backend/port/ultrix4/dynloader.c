@@ -9,11 +9,12 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/port/ultrix4/Attic/dynloader.c,v 1.1.1.1 1996/07/09 06:21:45 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/port/ultrix4/Attic/dynloader.c,v 1.2 1996/11/14 20:08:58 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include <stdio.h>
+#include <postgres.h>
 #include "dl.h"
 #include "c.h"
 #include "fmgr.h"
