@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Mon Feb 19 11:54:59 EST 2001
+Last updated:		Mon Feb 19 14:06:37 EST 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -319,6 +319,8 @@ MISC
   ANALYZE, and CLUSTER
 * Delay fsync() when other backends are about to commit too [fsync]
 * Prevent pg_attribute from having duplicate oids for indexes (Tom)
+* Force transactions that commit at near the same time use a single fsync()
+* Make blind writes go through the file descriptor cache
 
 SOURCE CODE
 -----------
