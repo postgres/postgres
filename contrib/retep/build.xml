@@ -2,7 +2,7 @@
 
   build file to build the donated retep tools packages
 
-  $Id: build.xml,v 1.1 2001/01/18 14:50:14 peter Exp $
+  $Id: build.xml,v 1.2 2001/01/23 10:22:18 peter Exp $
 
 -->
 
@@ -44,7 +44,7 @@
   <!-- Builds the various jar files -->
   <target name="jar" depends="xml">
     <jar jarfile="${jars}/retepTools.jar" basedir="${dest}">
-      <include name="${package}/xml/parser/**" if="xml" />
+      <include name="${package}/xml/**" if="xml" />
     </jar>
   </target>
 

@@ -1,0 +1,16 @@
+<!ELEMENT album (track*)+>
+<!ATTLIST album
+title CDATA #IMPLIED
+ aid CDATA #IMPLIED
+>
+<!ELEMENT catalogue (group)>
+<!ELEMENT group (album*)>
+<!ATTLIST group
+ name CDATA #IMPLIED
+>
+<!ELEMENT track (#PCDATA)>
+<!ATTLIST track
+ tid CDATA #IMPLIED
+ id CDATA #IMPLIED
+>
+
