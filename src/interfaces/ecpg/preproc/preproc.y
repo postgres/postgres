@@ -3354,8 +3354,8 @@ Character:  character '(' Iconst ')'
 						sprintf(errortext, "length for '%s' type must be at least 1",$1);
 						yyerror(errortext);
 					}
-					else if (atol($3) > MaxTupleSize) {
-						sprintf(errortext, "length for type '%s' cannot exceed %d",$1,MaxTupleSize);
+					else if (atol($3) > MaxAttrSize) {
+						sprintf(errortext, "length for type '%s' cannot exceed %d",$1,MaxAttrSize);
 						yyerror(errortext);
 					}
 

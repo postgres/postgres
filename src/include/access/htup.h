@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: htup.h,v 1.18 1999/07/03 01:57:53 momjian Exp $
+ * $Id: htup.h,v 1.19 1999/07/04 04:56:01 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -56,7 +56,9 @@ typedef HeapTupleHeaderData *HeapTupleHeader;
 #define MinTupleSize	(DOUBLEALIGN(sizeof (PageHeaderData) + \
 						 sizeof(HeapTupleHeaderData) + sizeof(int4)))
 
-#define MaxTupleSize	(BLCKSZ/2 - MinTupleSize)
+#define MaxTupleSize	(BLCKSZ - MinTupleSize)
+
+#define MaxAttrSize		(MaxTupleSize - sizeof(HeapTupleHeaderData))
 
 #define SelfItemPointerAttributeNumber			(-1)
 #define ObjectIdAttributeNumber					(-2)

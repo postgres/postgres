@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varchar.c,v 1.47 1999/07/03 00:32:50 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varchar.c,v 1.48 1999/07/04 04:56:00 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -82,9 +82,9 @@ bpcharin(char *s, int dummy, int32 atttypmod)
 	else
 		len = atttypmod - VARHDRSZ;
 
-	if (len > MaxTupleSize)
+	if (len > MaxAttrSize)
 		elog(ERROR, "bpcharin: length of char() must be less than %d",
-				MaxTupleSize);
+				MaxAttrSize);
 
 	result = (char *) palloc(atttypmod);
 	VARSIZE(result) = atttypmod;
@@ -153,9 +153,9 @@ bpchar(char *s, int32 len)
 
 	rlen = len - VARHDRSZ;
 
-	if (rlen > MaxTupleSize)
+	if (rlen > MaxAttrSize)
 		elog(ERROR, "bpchar: length of char() must be less than %d",
-			MaxTupleSize);
+			MaxAttrSize);
 
 #ifdef STRINGDEBUG
 	printf("bpchar- convert string length %d (%d) ->%d (%d)\n",
@@ -335,9 +335,9 @@ varcharin(char *s, int dummy, int32 atttypmod)
 	if (atttypmod != -1 && len > atttypmod)
 		len = atttypmod;		/* clip the string at max length */
 
-	if (len > MaxTupleSize)
+	if (len > MaxAttrSize)
 		elog(ERROR, "varcharin: length of char() must be less than %d",
-				MaxTupleSize);
+				MaxAttrSize);
 
 	result = (char *) palloc(len);
 	VARSIZE(result) = len;
@@ -407,9 +407,9 @@ varchar(char *s, int32 slen)
 	len = slen - VARHDRSZ;
 #endif
 
-	if (len > MaxTupleSize)
+	if (len > MaxAttrSize)
 		elog(ERROR, "varchar: length of varchar() must be less than %d",
-			MaxTupleSize);
+			MaxAttrSize);
 
 	result = (char *) palloc(slen);
 	VARSIZE(result) = slen;
