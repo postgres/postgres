@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.40 1998/04/27 04:04:55 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.41 1998/05/09 23:42:59 thomas Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -295,7 +295,7 @@ BuildFuncTupleDesc(FuncIndexInfo *funcInfo)
 								0);
 
 	if (!HeapTupleIsValid(tuple))
-		func_error("BuildFuncTupleDesc", funcname, nargs, argtypes);
+		func_error("BuildFuncTupleDesc", funcname, nargs, argtypes, NULL);
 
 	retType = ((Form_pg_proc) GETSTRUCT(tuple))->prorettype;
 
@@ -1159,8 +1159,7 @@ index_create(char *heapRelationName,
 		if (!HeapTupleIsValid(proc_tup))
 		{
 			func_error("index_create", FIgetname(funcInfo),
-					   FIgetnArgs(funcInfo),
-					   FIgetArglist(funcInfo));
+					   FIgetnArgs(funcInfo), FIgetArglist(funcInfo), NULL);
 		}
 		FIgetProcOid(funcInfo) = proc_tup->t_oid;
 	}

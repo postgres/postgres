@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/remove.c,v 1.23 1998/04/27 04:05:19 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/remove.c,v 1.24 1998/05/09 23:43:45 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -375,7 +375,7 @@ RemoveFunction(char *functionName,		/* function name to be removed */
 							  Int32GetDatum(nargs),
 							  PointerGetDatum(argList), 0);
 	if (!HeapTupleIsValid(tup))
-		func_error("RemoveFunction", functionName, nargs, argList);
+		func_error("RemoveFunction", functionName, nargs, argList, NULL);
 
 #ifndef NO_SECURITY
 	userName = GetPgUserName();
@@ -416,7 +416,7 @@ RemoveFunction(char *functionName,		/* function name to be removed */
 	{
 		heap_endscan(scan);
 		heap_close(relation);
-		func_error("RemoveFunction", functionName, nargs, argList);
+		func_error("RemoveFunction", functionName, nargs, argList, NULL);
 	}
 
 	/* ok, function has been found */
