@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Sun Aug 25 16:30:25 EDT 2002
+Last updated:		Sun Aug 25 20:52:36 EDT 2002
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -182,7 +182,7 @@ Commands
 * Add BETWEEN ASYMMETRIC/SYMMETRIC (Christopher)
 * -Remove LIMIT #,# and force use LIMIT and OFFSET clauses in 7.3 (Bruce)
 * Allow LIMIT/OFFSET to use expressions
-* Disallow TRUNCATE on tables that are involved in referential constraints
+* -Disallow TRUNCATE on tables that are involved in referential constraints
 * Add OR REPLACE clauses to non-FUNCTION object creation
 * CREATE TABLE AS can not determine column lengths from expressions [atttypmod]
 * Allow UPDATE to handle complex aggregates [update]
