@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.113 2003/08/08 21:42:05 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.114 2003/08/25 22:47:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -243,7 +243,7 @@ static datetkn datetktbl[] = {
 	ghst
 #endif
 	{"gilt", TZ, POS(48)},		/* Gilbert Islands Time */
-	{"gmt", TZ, POS(0)},		/* Greenwish Mean Time */
+	{"gmt", TZ, POS(0)},		/* Greenwich Mean Time */
 	{"gst", TZ, POS(40)},		/* Guam Std Time, USSR Zone 9 */
 	{"gyt", TZ, NEG(16)},		/* Guyana Time */
 	{"h", UNITS, DTK_HOUR},		/* "hour" */
@@ -1989,7 +1989,8 @@ DecodeTimeOnly(char **field, int *ftype, int nf,
 							 * Set the type field to allow decoding other
 							 * fields later. Example: 20011223 or 040506
 							 */
-							if ((ftype[i] = DecodeNumberField(flen, field[i], fmask,
+							if ((ftype[i] = DecodeNumberField(flen, field[i],
+															  (fmask | DTK_DATE_M),
 									  &tmask, tm, fsec, &is2digits)) < 0)
 								return -1;
 						}
@@ -1998,12 +1999,14 @@ DecodeTimeOnly(char **field, int *ftype, int nf,
 					}
 					else if (flen > 4)
 					{
-						if ((ftype[i] = DecodeNumberField(flen, field[i], fmask,
+						if ((ftype[i] = DecodeNumberField(flen, field[i],
+														  (fmask | DTK_DATE_M),
 									  &tmask, tm, fsec, &is2digits)) < 0)
 							return -1;
 					}
 					/* otherwise it is a single date/time field... */
-					else if (DecodeNumber(flen, field[i], fmask,
+					else if (DecodeNumber(flen, field[i],
+										  (fmask | DTK_DATE_M),
 									  &tmask, tm, fsec, &is2digits) != 0)
 						return -1;
 				}
@@ -2422,8 +2425,12 @@ DecodeNumber(int flen, char *str, int fmask,
 		 * or a run-together time: 2001.360 20011225 040506.789
 		 */
 		if ((cp - str) > 2)
-			return DecodeNumberField(flen, str, (fmask | DTK_DATE_M),
-									 tmask, tm, fsec, is2digits);
+		{
+			if (DecodeNumberField(flen, str, (fmask | DTK_DATE_M),
+								  tmask, tm, fsec, is2digits) < 0)
+				return -1;
+			return 0;
+		}
 
 		frac = strtod(cp, &cp);
 		if (*cp != '\0')
@@ -2506,6 +2513,13 @@ DecodeNumber(int flen, char *str, int fmask,
 			*tmask = DTK_M(DAY);
 			tm->tm_mday = val;
 			break;
+
+		case (DTK_M(YEAR) | DTK_M(MONTH) | DTK_M(DAY)):
+			/* we have all the date, so it must be a time field */
+			if (DecodeNumberField(flen, str, fmask,
+								  tmask, tm, fsec, is2digits) < 0)
+				return -1;
+			return 0;
 
 		default:
 			/* Anything else is bogus input */
