@@ -290,3 +290,38 @@ ROLLBACK;
 DROP TABLE foo;
 DROP TABLE baz;
 DROP TABLE barbaz;
+
+-- verify that cursors created during an aborted subtransaction are
+-- closed, but that we do not rollback the effect of any FETCHs
+-- performed in the aborted subtransaction
+begin;
+
+savepoint x;
+create table abc (a int);
+insert into abc values (5);
+insert into abc values (10);
+declare foo cursor for select * from abc;
+fetch from foo;
+rollback to x;
+
+-- should fail
+fetch from foo;
+commit;
+
+begin;
+
+create table abc (a int);
+insert into abc values (5);
+insert into abc values (10);
+insert into abc values (15);
+declare foo cursor for select * from abc;
+
+fetch from foo;
+
+savepoint x;
+fetch from foo;
+rollback to x;
+
+fetch from foo;
+
+abort;
