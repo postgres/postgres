@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.62 1999/09/18 19:07:38 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.63 1999/11/28 01:56:48 tgl Exp $
  *
  * NOTES
  *	  Outside modules can create a lock table and acquire/release
@@ -595,6 +595,7 @@ LockAcquire(LOCKMETHOD lockmethod, LOCKTAG *locktag, LOCKMODE lockmode)
 										  HASH_ENTER, &found);
 	if (!result)
 	{
+		SpinRelease(masterLock);
 		elog(NOTICE, "LockAcquire: xid table corrupted");
 		return FALSE;
 	}
@@ -738,6 +739,7 @@ LockAcquire(LOCKMETHOD lockmethod, LOCKTAG *locktag, LOCKMODE lockmode)
 			XID_PRINT_AUX("LockAcquire: INCONSISTENT ", result);
 			LOCK_PRINT_AUX("LockAcquire: INCONSISTENT ", lock, lockmode);
 			/* Should we retry ? */
+			SpinRelease(masterLock);
 			return FALSE;
 		}
 		XID_PRINT("LockAcquire: granted", result);
@@ -2000,8 +2002,6 @@ DumpLocks()
 	XIDLookupEnt *xidLook = NULL;
 	XIDLookupEnt *tmp = NULL;
 	SHMEM_OFFSET end;
-	SPINLOCK	masterLock;
-	int			numLockModes;
 	LOCK	   *lock;
 	int			count = 0;
 	int			lockmethod = DEFAULT_LOCKMETHOD;
@@ -2019,9 +2019,6 @@ DumpLocks()
 	lockMethodTable = LockMethodTable[lockmethod];
 	if (!lockMethodTable)
 		return;
-
-	numLockModes = lockMethodTable->ctl->numLockModes;
-	masterLock = lockMethodTable->ctl->masterLock;
 
 	if (SHMQueueEmpty(lockQueue))
 		return;
