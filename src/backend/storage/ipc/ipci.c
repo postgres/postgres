@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipci.c,v 1.36 2000/11/30 01:39:07 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipci.c,v 1.37 2000/12/03 17:18:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,11 +33,11 @@
  * It is NEVER called by a backend forked from the postmaster;
  * for such a backend, the shared memory is already ready-to-go.
  *
- * If "private" is true then we only need private memory, not shared
+ * If "makePrivate" is true then we only need private memory, not shared
  * memory.  This is true for a standalone backend, false for a postmaster.
  */
 void
-CreateSharedMemoryAndSemaphores(bool private, int maxBackends)
+CreateSharedMemoryAndSemaphores(bool makePrivate, int maxBackends)
 {
 	int			size;
 	PGShmemHeader *seghdr;
@@ -62,7 +62,7 @@ CreateSharedMemoryAndSemaphores(bool private, int maxBackends)
 	/*
 	 * Create the shmem segment
 	 */
-	seghdr = IpcMemoryCreate(size, private, IPCProtection);
+	seghdr = IpcMemoryCreate(size, makePrivate, IPCProtection);
 
 	/*
 	 * First initialize spinlocks --- needed by InitShmemAllocation()
