@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.347 2003/09/26 15:27:35 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.348 2003/11/11 01:09:42 momjian Exp $
  *
  * NOTES
  *
@@ -215,7 +215,7 @@ char	   *rendezvous_name;
 
 /* For FNCTL_NONBLOCK */
 #if defined(WIN32) || defined(__BEOS__)
-long		ioctlsocket_ret;
+long		ioctlsocket_ret=1;
 #endif
 
 /* list of library:init-function to be preloaded */
