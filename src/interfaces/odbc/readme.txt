@@ -1,17 +1,18 @@
 
-Readme for psqlodbc.dll                         4/15/98
--------------------------------------------------------------------------------
-Latest binary and source updates available at http://www.insightdist.com/psqlodbc
+Readme for psqlodbc.dll                                                  04/04/2001
+-----------------------------------------------------------------------------------
+Precompiled binaries for Win32 are available from ftp://ftp.postgresql.org/pub/odbc
 
 
 I.  Building the Driver from the source code
 
 This section describes how to build the PostgreSQL ODBC Driver (psqlodbc.dll).
-Microsoft Visual C++ version 4.0 or higher is required.  There is no manually 
-constructed Makefile.  The visual C++ environment automatically generates one
-during the build process. Thus, the project binary files (".ncb", ".mdp", ".aps") 
-nor the makefile are really distributed as part of the source code release
-(although they are probably in there anyway).
+Microsoft Visual C++ version 4.0 or higher is required. Other compilers may work 
+but have not been formally tested. The psqlodbc.dll may be built either in the 
+VC++ IDE or from the command line:
+
+IDE Method
+----------
 
 1.  Create a new project workspace with the type DLL.  For the name, type in the
     name "psqlodbc".
@@ -40,6 +41,17 @@ nor the makefile are really distributed as part of the source code release
 7.  When complete, the "psqlodbc.dll" file is under the "Release" subdirectory.
     (i.e., "\msdev\projects\psqlodbc\release\psqlodbc.dll")
 
+Command Line Method
+-------------------
+
+1.  From a command prompt, CD to the directory containing the source code.
+
+2.  Use NMAKE to build the dll eg:
+
+    C:\psqlodbc\> nmake /f win32.mak CFG=Release ALL
+
+    Possible configurations are Release, Debug, MultiByteRelease or MultiByteDebug
+    Possible build types are ALL or CLEAN
 
 
 II.  Using Large Objects for handling LongVarBinary (OLE Objects in Access)
@@ -69,27 +81,4 @@ objects.  Hopefully in the future, a real large object data type will be availab
 But for now, it sure is fun to stick a Word document, Visio document, or avi of a dancing
 baby into a database column, even if you will fill up your server's hard disk after a while!
 
-
-
-III.  Using Row Versioning feature and creating the missing equals operator
-
-In order to use row versioning, you must overload the int4eq function for use
-with the xid type.  Also, you need to create an operator to compare xid to int4.
-You must do this for each database you want to use this feature on.
-Here are the details:
-
-create function int4eq(xid,int4)
-  returns bool
-  as ''
-  language 'internal';
-
-create operator = (
-        leftarg=xid,
-        rightarg=int4,
-        procedure=int4eq,
-        commutator='=',
-        negator='<>',
-        restrict=eqsel,
-        join=eqjoinsel
-        );
 
