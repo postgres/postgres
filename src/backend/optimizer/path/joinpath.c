@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinpath.c,v 1.32 1999/02/22 05:26:20 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinpath.c,v 1.33 1999/04/03 00:18:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -97,11 +97,11 @@ update_rels_pathlist_for_joins(Query *root, List *joinrels)
 
 		if (_enable_mergejoin_)
 			mergeinfo_list = group_clauses_by_order(joinrel->restrictinfo,
-									   lfirsti(innerrel->relids));
+													innerrel->relids);
 
 		if (_enable_hashjoin_)
 			hashinfo_list = group_clauses_by_hashop(joinrel->restrictinfo,
-										lfirsti(innerrel->relids));
+													innerrel->relids);
 
 		/* need to flatten the relids list */
 		joinrel->relids = nconc(listCopy(outerrelids),
@@ -173,12 +173,10 @@ best_innerjoin(List *join_paths, Relids outer_relids)
 	{
 		Path	   *path = (Path *) lfirst(join_path);
 
-		if (intMember(lfirsti(path->joinid), outer_relids)
-			&& ((cheapest == NULL ||
-				 path_is_cheaper((Path *) lfirst(join_path), cheapest))))
-		{
-			cheapest = (Path *) lfirst(join_path);
-		}
+		if (intMember(lfirsti(path->joinid), outer_relids) &&
+			(cheapest == NULL ||
+			 path_is_cheaper(path, cheapest)))
+			cheapest = path;
 	}
 	return cheapest;
 }

@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: paths.h,v 1.26 1999/02/22 05:26:52 momjian Exp $
+ * $Id: paths.h,v 1.27 1999/04/03 00:18:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -48,7 +48,7 @@ extern List *create_or_index_paths(Query *root, RelOptInfo *rel, List *clauses);
  *	  routines to deal with hash keys and clauses
  */
 extern List *group_clauses_by_hashop(List *restrictinfo_list,
-						int inner_relid);
+									 Relids inner_relids);
 
 /*
  * joinutils.h
@@ -70,9 +70,9 @@ extern List *new_join_pathkeys(List *outer_pathkeys,
  *	  routines to deal with merge keys and clauses
  */
 extern List *group_clauses_by_order(List *restrictinfo_list,
-					   int inner_relid);
+									Relids inner_relids);
 extern MergeInfo *match_order_mergeinfo(PathOrder *ordering,
-					  List *mergeinfo_list);
+										List *mergeinfo_list);
 
 /*
  * joinrels.h

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/mergeutils.c,v 1.20 1999/03/01 00:10:32 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/mergeutils.c,v 1.21 1999/04/03 00:18:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,14 +36,15 @@
  * Something to fix next time...
  *
  * 'restrictinfo_list' is the list of restrictinfo nodes
- * 'inner_relid' is the relid of the inner join relation
+ * 'inner_relids' is the list of relids in the inner join relation
+ *   (used to determine whether a join var is inner or outer)
  *
  * Returns the new list of mergeinfo nodes.
  *
  */
 List *
 group_clauses_by_order(List *restrictinfo_list,
-					   int inner_relid)
+					   Relids inner_relids)
 {
 	List	   *mergeinfo_list = NIL;
 	List	   *xrestrictinfo;
@@ -59,26 +60,25 @@ group_clauses_by_order(List *restrictinfo_list,
 			 * Create a new mergeinfo node and add it to 'mergeinfo_list'
 			 * if one does not yet exist for this merge ordering.
 			 */
-			PathOrder	*pathorder;
-			MergeInfo	*xmergeinfo;
 			Expr	   *clause = restrictinfo->clause;
 			Var		   *leftop = get_leftop(clause);
 			Var		   *rightop = get_rightop(clause);
+			PathOrder	*pathorder;
+			MergeInfo	*xmergeinfo;
 			JoinKey    *jmkeys;
 
 			pathorder = makeNode(PathOrder);
 			pathorder->ordtype = MERGE_ORDER;
 			pathorder->ord.merge = merge_ordering;
 			xmergeinfo = match_order_mergeinfo(pathorder, mergeinfo_list);
-			if (inner_relid == leftop->varno)
+			jmkeys = makeNode(JoinKey);
+			if (intMember(leftop->varno, inner_relids))
 			{
-				jmkeys = makeNode(JoinKey);
 				jmkeys->outer = rightop;
 				jmkeys->inner = leftop;
 			}
 			else
 			{
-				jmkeys = makeNode(JoinKey);
 				jmkeys->outer = leftop;
 				jmkeys->inner = rightop;
 			}
@@ -86,10 +86,8 @@ group_clauses_by_order(List *restrictinfo_list,
 			if (xmergeinfo == NULL)
 			{
 				xmergeinfo = makeNode(MergeInfo);
-
 				xmergeinfo->m_ordering = merge_ordering;
-				mergeinfo_list = lcons(xmergeinfo,
-									   mergeinfo_list);
+				mergeinfo_list = lcons(xmergeinfo, mergeinfo_list);
 			}
 
 			xmergeinfo->jmethod.clauses = lcons(clause,
