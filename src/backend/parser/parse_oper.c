@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_oper.c,v 1.49 2001/04/23 04:32:30 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_oper.c,v 1.50 2001/08/09 18:28:18 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,6 +22,7 @@
 #include "parser/parse_func.h"
 #include "parser/parse_oper.h"
 #include "parser/parse_type.h"
+#include "utils/builtins.h"
 #include "utils/fmgroids.h"
 #include "utils/syscache.h"
 
@@ -48,7 +49,7 @@ any_ordering_op(Oid argtype)
 	if (!OidIsValid(order_opid))
 		elog(ERROR, "Unable to identify an ordering operator '%s' for type '%s'"
 			 "\n\tUse an explicit ordering operator or modify the query",
-			 "<", typeidTypeName(argtype));
+			 "<", format_type_be(argtype));
 	return order_opid;
 }
 
@@ -931,7 +932,7 @@ op_error(char *op, Oid arg1, Oid arg2)
 
 	elog(ERROR, "Unable to identify an operator '%s' for types '%s' and '%s'"
 		 "\n\tYou will have to retype this query using an explicit cast",
-		 op, typeidTypeName(arg1), typeidTypeName(arg2));
+		 op, format_type_be(arg1), format_type_be(arg2));
 }
 
 /* unary_op_error()
@@ -942,13 +943,25 @@ static void
 unary_op_error(char *op, Oid arg, bool is_left_op)
 {
 	if (!typeidIsValid(arg))
-		elog(ERROR, "Argument of %s operator '%s' has an unknown type"
-			 "\n\tProbably a bad attribute name",
-			 (is_left_op ? "left" : "right"),
-			 op);
-
-	elog(ERROR, "Unable to identify a %s operator '%s' for type '%s'"
-		 "\n\tYou may need to add parentheses or an explicit cast",
-		 (is_left_op ? "left" : "right"),
-		 op, typeidTypeName(arg));
+	{
+		if (is_left_op)
+			elog(ERROR, "operand of prefix operator '%s' has an unknown type"
+				 "\n\t(probably an invalid column reference)",
+				 op);
+		else
+			elog(ERROR, "operand of postfix operator '%s' has an unknown type"
+				 "\n\t(probably an invalid column reference)",
+				 op);
+	}
+	else
+	{
+		if (is_left_op)
+			elog(ERROR, "Unable to identify a prefix operator '%s' for type '%s'"
+				 "\n\tYou may need to add parentheses or an explicit cast",
+				 op, format_type_be(arg));
+		else
+			elog(ERROR, "Unable to identify a postfix operator '%s' for type '%s'"
+				 "\n\tYou may need to add parentheses or an explicit cast",
+				 op, format_type_be(arg));
+	}
 }

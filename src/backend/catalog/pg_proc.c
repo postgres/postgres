@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_proc.c,v 1.55 2001/03/22 06:16:10 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_proc.c,v 1.56 2001/08/09 18:28:17 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -343,7 +343,7 @@ checkretval(Oid rettype, List *queryTreeList)
 	{
 		if (rettype != InvalidOid)
 			elog(ERROR, "function declared to return %s, but no SELECT provided",
-				 typeidTypeName(rettype));
+				 format_type_be(rettype));
 		return;
 	}
 
@@ -360,14 +360,14 @@ checkretval(Oid rettype, List *queryTreeList)
 	if (rettype == InvalidOid)
 	{
 		if (cmd == CMD_SELECT)
-			elog(ERROR, "function declared with no return type, but final query is a SELECT");
+			elog(ERROR, "function declared with no return type, but final statement is a SELECT");
 		return;
 	}
 
 	/* by here, the function is declared to return some type */
 	if (cmd != CMD_SELECT)
-		elog(ERROR, "function declared to return %s, but final query is not a SELECT",
-			 typeidTypeName(rettype));
+		elog(ERROR, "function declared to return %s, but final statement is not a SELECT",
+			 format_type_be(rettype));
 
 	/*
 	 * Count the non-junk entries in the result targetlist.
@@ -383,12 +383,12 @@ checkretval(Oid rettype, List *queryTreeList)
 	{
 		if (tlistlen != 1)
 			elog(ERROR, "function declared to return %s returns multiple columns in final SELECT",
-				 typeidTypeName(rettype));
+				 format_type_be(rettype));
 
 		resnode = (Resdom *) ((TargetEntry *) lfirst(tlist))->resdom;
 		if (resnode->restype != rettype)
 			elog(ERROR, "return type mismatch in function: declared to return %s, returns %s",
-			  typeidTypeName(rettype), typeidTypeName(resnode->restype));
+			  format_type_be(rettype), format_type_be(resnode->restype));
 
 		return;
 	}
@@ -419,7 +419,7 @@ checkretval(Oid rettype, List *queryTreeList)
 
 	if (tlistlen != relnatts)
 		elog(ERROR, "function declared to return %s does not SELECT the right number of columns (%d)",
-			 typeidTypeName(rettype), relnatts);
+			 format_type_be(rettype), relnatts);
 
 	/* expect attributes 1 .. n in order */
 	i = 0;
@@ -433,9 +433,9 @@ checkretval(Oid rettype, List *queryTreeList)
 		tletype = exprType(tle->expr);
 		if (tletype != reln->rd_att->attrs[i]->atttypid)
 			elog(ERROR, "function declared to return %s returns %s instead of %s at column %d",
-				 typeidTypeName(rettype),
-				 typeidTypeName(tletype),
-				 typeidTypeName(reln->rd_att->attrs[i]->atttypid),
+				 format_type_be(rettype),
+				 format_type_be(tletype),
+				 format_type_be(reln->rd_att->attrs[i]->atttypid),
 				 i + 1);
 		i++;
 	}
@@ -443,7 +443,7 @@ checkretval(Oid rettype, List *queryTreeList)
 	/* this shouldn't happen, but let's just check... */
 	if (i != relnatts)
 		elog(ERROR, "function declared to return %s does not SELECT the right number of columns (%d)",
-			 typeidTypeName(rettype), relnatts);
+			 format_type_be(rettype), relnatts);
 
 	heap_close(reln, AccessShareLock);
 }

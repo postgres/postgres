@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.109 2001/06/22 19:16:22 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.110 2001/08/09 18:28:18 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,6 +29,7 @@
 #include "parser/parse_func.h"
 #include "parser/parse_relation.h"
 #include "parser/parse_type.h"
+#include "utils/builtins.h"
 #include "utils/fmgroids.h"
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
@@ -288,7 +289,7 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 			{
 				/* Multiple possible matches --- give up */
 				elog(ERROR, "Unable to select an aggregate function %s(%s)",
-					 funcname, typeidTypeName(basetype));
+					 funcname, format_type_be(basetype));
 			}
 		}
 
@@ -300,7 +301,7 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 			 * function could not have been meant.
 			 */
 			elog(ERROR, "There is no aggregate function %s(%s)",
-				 funcname, typeidTypeName(basetype));
+				 funcname, format_type_be(basetype));
 		}
 	}
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.171 2001/07/15 22:48:17 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.172 2001/08/09 18:28:16 petere Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1668,12 +1668,12 @@ AddRelationRawConstraints(Relation rel,
 			{
 				if (CoerceTargetExpr(NULL, expr, type_id,
 								  atp->atttypid, atp->atttypmod) == NULL)
-					elog(ERROR, "Attribute '%s' is of type '%s'"
-						 " but default expression is of type '%s'"
+					elog(ERROR, "Column \"%s\" is of type %s"
+						 " but default expression is of type %s"
 					"\n\tYou will need to rewrite or cast the expression",
 						 NameStr(atp->attname),
-						 typeidTypeName(atp->atttypid),
-						 typeidTypeName(type_id));
+						 format_type_be(atp->atttypid),
+						 format_type_be(type_id));
 			}
 		}
 

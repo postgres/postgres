@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.54 2001/08/06 18:09:45 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.55 2001/08/09 18:28:17 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -403,8 +403,10 @@ GetAttrOpClass(IndexElem *attribute, Oid attrType,
 		/* no operator class specified, so find the default */
 		attribute->class = GetDefaultOpClass(attrType);
 		if (attribute->class == NULL)
-			elog(ERROR, "DefineIndex: type %s has no default operator class",
-				 typeidTypeName(attrType));
+			elog(ERROR, "data type %s has no default operator class"
+				 "\n\tYou must specify an operator class for the index or define a"
+				 "\n\tdefault operator class for the data type",
+				 format_type_be(attrType));
 		/* assume we need not check type compatibility */
 		doTypeCheck = false;
 	}
@@ -468,8 +470,8 @@ GetAttrOpClass(IndexElem *attribute, Oid attrType,
 
 			if (attrType != opInputType &&
 				!IS_BINARY_COMPATIBLE(attrType, opInputType))
-				elog(ERROR, "DefineIndex: opclass \"%s\" does not accept datatype \"%s\"",
-					 attribute->class, typeidTypeName(attrType));
+				elog(ERROR, "operator class \"%s\" does not accept data type %s",
+					 attribute->class, format_type_be(attrType));
 			ReleaseSysCache(tuple);
 		}
 	}

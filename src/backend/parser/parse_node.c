@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_node.c,v 1.54 2001/05/22 16:37:16 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_node.c,v 1.55 2001/08/09 18:28:18 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -373,8 +373,8 @@ transformArraySubscripts(ParseState *pstate,
 					elog(ERROR, "Array assignment requires type '%s'"
 						 " but expression is of type '%s'"
 					"\n\tYou will need to rewrite or cast the expression",
-						 typeidTypeName(typeneeded),
-						 typeidTypeName(typesource));
+						 format_type_be(typeneeded),
+						 format_type_be(typesource));
 			}
 		}
 	}

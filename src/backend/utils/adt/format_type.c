@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/format_type.c,v 1.13 2001/05/22 16:37:16 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/format_type.c,v 1.14 2001/08/09 18:28:18 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,7 +27,7 @@
 #define _textin(str) DirectFunctionCall1(textin, CStringGetDatum(str))
 
 
-static char *format_type_internal(Oid type_oid, int32 typemod);
+static char *format_type_internal(Oid type_oid, int32 typemod, bool allow_invalid);
 
 
 static char *
@@ -78,14 +78,27 @@ format_type(PG_FUNCTION_ARGS)
 	else
 		typemod = -1;			/* default typmod */
 
-	result = format_type_internal(type_oid, typemod);
+	result = format_type_internal(type_oid, typemod, true);
 
 	PG_RETURN_DATUM(_textin(result));
 }
 
 
+
+/*
+ * This version is for use within the backend in error messages, etc.
+ * One difference is that it will fail for an invalid type.
+ */
+char *
+format_type_be(Oid type_oid)
+{
+	return format_type_internal(type_oid, -1, false);
+}
+
+
+
 static char *
-format_type_internal(Oid type_oid, int32 typemod)
+format_type_internal(Oid type_oid, int32 typemod, bool allow_invalid)
 {
 	bool		with_typemod = (typemod >= 0);
 	HeapTuple	tuple;
@@ -95,14 +108,19 @@ format_type_internal(Oid type_oid, int32 typemod)
 	char	   *name;
 	char	   *buf;
 
-	if (type_oid == InvalidOid)
+	if (type_oid == InvalidOid && allow_invalid)
 		return pstrdup("-");
 
 	tuple = SearchSysCache(TYPEOID,
 						   ObjectIdGetDatum(type_oid),
 						   0, 0, 0);
 	if (!HeapTupleIsValid(tuple))
-		return pstrdup("???");
+	{
+		if (allow_invalid)
+			return pstrdup("???");
+		else
+			elog(ERROR, "could not locate data type with oid %u in catalog", type_oid);
+	}
 
 	array_base_type = ((Form_pg_type) GETSTRUCT(tuple))->typelem;
 	typlen = ((Form_pg_type) GETSTRUCT(tuple))->typlen;
@@ -114,7 +132,12 @@ format_type_internal(Oid type_oid, int32 typemod)
 							   ObjectIdGetDatum(array_base_type),
 							   0, 0, 0);
 		if (!HeapTupleIsValid(tuple))
-			return pstrdup("???[]");
+		{
+			if (allow_invalid)
+				return pstrdup("???[]");
+			else
+				elog(ERROR, "could not locate data type with oid %u in catalog", type_oid);
+		}
 		is_array = true;
 		type_oid = array_base_type;
 	}
@@ -305,7 +328,7 @@ oidvectortypes(PG_FUNCTION_ARGS)
 
 	for (num = 0; num < numargs; num++)
 	{
-		char	   *typename = format_type_internal(oidArray[num], -1);
+		char	   *typename = format_type_internal(oidArray[num], -1, true);
 
 		if (left < strlen(typename) + 2)
 		{

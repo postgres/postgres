@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.98 2001/06/19 22:39:11 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.99 2001/08/09 18:28:17 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -179,13 +179,13 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 
 							if (! coerce_to_boolean(pstate, &lexpr))
 								elog(ERROR, "left-hand side of AND is type '%s', not '%s'",
-									 typeidTypeName(exprType(lexpr)),
-									 typeidTypeName(BOOLOID));
+									 format_type_be(exprType(lexpr)),
+									 format_type_be(BOOLOID));
 
 							if (! coerce_to_boolean(pstate, &rexpr))
 								elog(ERROR, "right-hand side of AND is type '%s', not '%s'",
-									 typeidTypeName(exprType(rexpr)),
-									 typeidTypeName(BOOLOID));
+									 format_type_be(exprType(rexpr)),
+									 format_type_be(BOOLOID));
 
 							expr->typeOid = BOOLOID;
 							expr->opType = AND_EXPR;
@@ -205,13 +205,13 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 
 							if (! coerce_to_boolean(pstate, &lexpr))
 								elog(ERROR, "left-hand side of OR is type '%s', not '%s'",
-									 typeidTypeName(exprType(lexpr)),
-									 typeidTypeName(BOOLOID));
+									 format_type_be(exprType(lexpr)),
+									 format_type_be(BOOLOID));
 
 							if (! coerce_to_boolean(pstate, &rexpr))
 								elog(ERROR, "right-hand side of OR is type '%s', not '%s'",
-									 typeidTypeName(exprType(rexpr)),
-									 typeidTypeName(BOOLOID));
+									 format_type_be(exprType(rexpr)),
+									 format_type_be(BOOLOID));
 
 							expr->typeOid = BOOLOID;
 							expr->opType = OR_EXPR;
@@ -228,8 +228,8 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 
 							if (! coerce_to_boolean(pstate, &rexpr))
 								elog(ERROR, "argument to NOT is type '%s', not '%s'",
-									 typeidTypeName(exprType(rexpr)),
-									 typeidTypeName(BOOLOID));
+									 format_type_be(exprType(rexpr)),
+									 format_type_be(BOOLOID));
 
 							expr->typeOid = BOOLOID;
 							expr->opType = NOT_EXPR;
@@ -962,8 +962,8 @@ parser_typecast_expression(ParseState *pstate,
 								targetType, typename->typmod);
 		if (expr == NULL)
 			elog(ERROR, "Cannot cast type '%s' to '%s'",
-				 typeidTypeName(inputType),
-				 typeidTypeName(targetType));
+				 format_type_be(inputType),
+				 format_type_be(targetType));
 	}
 
 	/*

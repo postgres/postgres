@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.81 2001/06/19 22:39:11 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.82 2001/08/09 18:28:17 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,6 +29,7 @@
 #include "parser/parse_relation.h"
 #include "parser/parse_target.h"
 #include "parser/parse_type.h"
+#include "utils/builtins.h"
 #include "utils/guc.h"
 
 
@@ -292,8 +293,8 @@ transformJoinUsingClause(ParseState *pstate, List *leftVars, List *rightVars)
 	 * "=" operator that doesn't return bool is wrong anyway.
 	 */
 	if (exprType(result) != BOOLOID)
-		elog(ERROR, "JOIN/USING clause must return type bool, not type %s",
-			 typeidTypeName(exprType(result)));
+		elog(ERROR, "JOIN/USING clause must return type boolean, not type %s",
+			 format_type_be(exprType(result)));
 
 	return result;
 }	/* transformJoinUsingClause() */
@@ -328,8 +329,8 @@ transformJoinOnClause(ParseState *pstate, JoinExpr *j,
 	result = transformExpr(pstate, j->quals, EXPR_COLUMN_FIRST);
 
 	if (! coerce_to_boolean(pstate, &result))
-		elog(ERROR, "JOIN/ON clause must return type bool, not type %s",
-			 typeidTypeName(exprType(result)));
+		elog(ERROR, "JOIN/ON clause must return type boolean, not type %s",
+			 format_type_be(exprType(result)));
 
 	pstate->p_namespace = save_namespace;
 
@@ -775,8 +776,8 @@ transformWhereClause(ParseState *pstate, Node *clause)
 	qual = transformExpr(pstate, clause, EXPR_COLUMN_FIRST);
 
 	if (! coerce_to_boolean(pstate, &qual))
-		elog(ERROR, "WHERE clause must return type bool, not type %s",
-			 typeidTypeName(exprType(qual)));
+		elog(ERROR, "WHERE clause must return type boolean, not type %s",
+			 format_type_be(exprType(qual)));
 
 	return qual;
 }

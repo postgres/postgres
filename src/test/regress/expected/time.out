@@ -71,5 +71,5 @@ SELECT f1 + time '00:01' AS "Illegal" FROM TIME_TBL;
 ERROR:  Unable to identify an operator '+' for types 'time' and 'time'
 	You will have to retype this query using an explicit cast
 SELECT f2 + time with time zone '00:01' AS "Illegal" FROM TIME_TBL;
-ERROR:  Unable to identify an operator '+' for types 'timetz' and 'timetz'
+ERROR:  Unable to identify an operator '+' for types 'time with time zone' and 'time with time zone'
 	You will have to retype this query using an explicit cast
