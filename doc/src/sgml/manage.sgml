@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/manage.sgml,v 1.14 2001/09/09 17:21:59 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/manage.sgml,v 1.15 2001/09/10 05:20:23 ishii Exp $
 -->
 
  <Chapter Id="manage">
@@ -125,8 +125,18 @@ ERROR:  CREATE DATABASE: Permission denied.
     Then, from the command line, type
 <ProgramListing>
 % initlocation PGDATA2
-Creating Postgres database system directory /alt/postgres/data
-Creating Postgres database system directory /alt/postgres/data/base
+The location will be initialized with username "postgres".
+This user will own all the files and must also own the server process.
+
+Creating directory /alt/postgres/data
+Creating directory /alt/postgres/data/base
+
+initlocation is complete.
+You can now create a database using
+   CREATE DATABASE &lt;name&gt; WITH LOCATION = 'PGDATA2'
+in SQL, or
+   createdb &lt;name&gt; -D 'PGDATA2'
+from the shell.
 </ProgramListing>
    </Para>
 
