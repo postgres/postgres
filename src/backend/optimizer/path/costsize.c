@@ -42,7 +42,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/costsize.c,v 1.90 2002/09/04 20:31:20 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/costsize.c,v 1.90.2.1 2003/01/22 20:17:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -645,8 +645,22 @@ cost_mergejoin(Path *path, Query *root,
 		innerscansel = firstclause->left_mergescansel;
 	}
 
-	outer_rows = outer_path->parent->rows * outerscansel;
-	inner_rows = inner_path->parent->rows * innerscansel;
+	/* convert selectivity to row count; must scan at least one row */
+
+	outer_rows = ceil(outer_path->parent->rows * outerscansel);
+	if (outer_rows < 1)
+		outer_rows = 1;
+	inner_rows = ceil(inner_path->parent->rows * innerscansel);
+	if (inner_rows < 1)
+		inner_rows = 1;
+
+	/*
+	 * Readjust scan selectivities to account for above rounding.  This is
+	 * normally an insignificant effect, but when there are only a few rows
+	 * in the inputs, failing to do this makes for a large percentage error.
+	 */
+	outerscansel = outer_rows / outer_path->parent->rows;
+	innerscansel = inner_rows / inner_path->parent->rows;
 
 	/* cost of source data */
 

@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.119 2002/10/19 02:56:16 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.119.2.1 2003/01/22 20:17:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1740,7 +1740,9 @@ mergejoinscansel(Query *root, Node *clause,
 				rsortop,
 				ltop,
 				gtop,
-				revltop;
+				leop,
+				revgtop,
+				revleop;
 	Datum		leftmax,
 				rightmax;
 	double		selec;
@@ -1779,35 +1781,49 @@ mergejoinscansel(Query *root, Node *clause,
 	/* Look up the "left < right" and "left > right" operators */
 	op_mergejoin_crossops(opno, &ltop, &gtop, NULL, NULL);
 
-	/* Look up the "right < left" operator */
-	revltop = get_commutator(gtop);
-	if (!OidIsValid(revltop))
-		return;					/* shouldn't happen */
+	/* Look up the "left <= right" operator */
+	leop = get_negator(gtop);
+	if (!OidIsValid(leop))
+		return;					/* insufficient info in catalogs */
+
+	/* Look up the "right > left" operator */
+	revgtop = get_commutator(ltop);
+	if (!OidIsValid(revgtop))
+		return;					/* insufficient info in catalogs */
+
+	/* Look up the "right <= left" operator */
+	revleop = get_negator(revgtop);
+	if (!OidIsValid(revleop))
+		return;					/* insufficient info in catalogs */
 
 	/*
 	 * Now, the fraction of the left variable that will be scanned is the
 	 * fraction that's <= the right-side maximum value.  But only believe
 	 * non-default estimates, else stick with our 1.0.
 	 */
-	selec = scalarineqsel(root, ltop, false, left,
+	selec = scalarineqsel(root, leop, false, left,
 						  rightmax, right->vartype);
 	if (selec != DEFAULT_INEQ_SEL)
 		*leftscan = selec;
 
 	/* And similarly for the right variable. */
-	selec = scalarineqsel(root, revltop, false, right,
+	selec = scalarineqsel(root, revleop, false, right,
 						  leftmax, left->vartype);
 	if (selec != DEFAULT_INEQ_SEL)
 		*rightscan = selec;
 
 	/*
 	 * Only one of the two fractions can really be less than 1.0; believe
-	 * the smaller estimate and reset the other one to exactly 1.0.
+	 * the smaller estimate and reset the other one to exactly 1.0.  If we
+	 * get exactly equal estimates (as can easily happen with self-joins),
+	 * believe neither.
 	 */
 	if (*leftscan > *rightscan)
 		*leftscan = 1.0;
-	else
+	else if (*leftscan < *rightscan)
 		*rightscan = 1.0;
+	else
+		*leftscan = *rightscan = 1.0;
 }
 
 /*
