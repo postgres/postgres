@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/include/storage/s_lock.h,v 1.78 2001/01/18 23:40:26 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/include/storage/s_lock.h,v 1.79 2001/01/19 02:58:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,7 +35,7 @@
  *
  *	int TAS(slock_t *lock)
  *		Atomic test-and-set instruction.  Attempt to acquire the lock,
- *		but do *not* wait.  Returns 0 if successful, nonzero if unable
+ *		but do *not* wait.	Returns 0 if successful, nonzero if unable
  *		to acquire the lock.
  *
  *	TAS() is a lower-level part of the API, but is used directly in a
@@ -48,9 +48,7 @@
  *		unsigned	spins = 0;
  *
  *		while (TAS(lock))
- *		{
  *			S_LOCK_SLEEP(lock, spins++);
- *		}
  *	}
  *
  *	where S_LOCK_SLEEP() checks for timeout and sleeps for a short
@@ -87,10 +85,10 @@
 
 /* Platform-independent out-of-line support routines */
 extern void s_lock(volatile slock_t *lock,
-				   const char *file, const int line);
+	   const char *file, const int line);
 extern void s_lock_sleep(unsigned spins, int microsec,
-						 volatile slock_t *lock,
-						 const char *file, const int line);
+			 volatile slock_t *lock,
+			 const char *file, const int line);
 
 
 #if defined(HAS_TEST_AND_SET)
@@ -99,6 +97,18 @@ extern void s_lock_sleep(unsigned spins, int microsec,
 #if defined(__GNUC__)
 /*************************************************************************
  * All the gcc inlines
+ */
+
+/*
+ * Standard __asm__ format:
+ *
+ *	__asm__(
+ *			"command;"
+ *			"command;"
+ *			"command;"
+ *		:	"=r"(_res)			return value, in register
+ *		:	"r"(lock)			argument, 'lock pointer', in register
+ *		:	"r0");				inline code uses this register
  */
 
 
@@ -110,7 +120,11 @@ tas(volatile slock_t *lock)
 {
 	register slock_t _res = 1;
 
-__asm__("lock; xchgb %0,%1": "=q"(_res), "=m"(*lock):"0"(_res));
+	__asm__(
+			"lock;"
+			"xchgb %0,%1;"
+:			"=q"(_res), "=m"(*lock)
+:			"0"(_res));
 	return (int) _res;
 }
 
@@ -121,19 +135,20 @@ __asm__("lock; xchgb %0,%1": "=q"(_res), "=m"(*lock):"0"(_res));
 #define TAS(lock) tas(lock)
 
 static __inline__ int
-tas (volatile slock_t *lock)
+tas(volatile slock_t *lock)
 {
-  long int ret;
+	long int	ret;
 
-  __asm__ __volatile__(
-       "xchg4 %0=%1,%2"
-       : "=r"(ret), "=m"(*lock)
-       : "r"(1), "1"(*lock)
-       : "memory");
+	__asm__		__volatile__(
+										 "xchg4 %0=%1,%2;"
+							 :			 "=r"(ret), "=m"(*lock)
+							 :			 "r"(1), "1"(*lock)
+							 :			 "memory");
 
-  return (int) ret;
+	return (int) ret;
 }
-#endif /* __ia64__ */
+
+#endif	 /* __ia64__ */
 
 
 #if defined(__arm__) || defined(__arm__)
@@ -142,37 +157,42 @@ tas (volatile slock_t *lock)
 static __inline__ int
 tas(volatile slock_t *lock)
 {
-        register slock_t _res = 1;
+	register slock_t _res = 1;
 
-__asm__("swpb %0, %0, [%3]": "=r"(_res), "=m"(*lock):"0"(_res), "r" (lock));
-        return (int) _res;
+	__asm__(
+			"swpb %0, %0, [%3];"
+:			"=r"(_res), "=m"(*lock)
+:			"0"(_res), "r"(lock));
+	return (int) _res;
 }
 
-#endif   /* __arm__ */
+#endif	 /* __arm__ */
 
 #if defined(__s390__)
 /*
  * S/390 Linux
  */
-#define TAS(lock)      tas(lock)
+#define TAS(lock)	   tas(lock)
 
 static inline int
 tas(volatile slock_t *lock)
 {
- int _res;
+	int			_res;
 
-        __asm__ __volatile("    la    1,1\n"
-                           "    l     2,%2\n"
-                           "    slr   0,0\n"
-                           "    cs    0,1,0(2)\n"
-                           "    lr    %1,0"
-                           : "=m" (lock), "=d" (_res)
-                           : "m" (lock)
-                           : "0", "1", "2");
+	__asm__		__volatile(
+									   "la 1,1;"
+									   "l 2,%2;"
+									   "slr 0,0;"
+									   "cs 0,1,0(2);"
+									   "lr %1,0;"
+						   :		   "=m"(lock), "=d"(_res)
+						   :		   "m"(lock)
+						   :		   "0", "1", "2");
 
-       return (_res);
+	return (_res);
 }
-#endif  /* __s390__ */
+
+#endif	 /* __s390__ */
 
 
 #if defined(__sparc__)
@@ -183,8 +203,9 @@ tas(volatile slock_t *lock)
 {
 	register slock_t _res = 1;
 
-	__asm__("ldstub [%2], %0" \
-:			"=r"(_res), "=m"(*lock) \
+	__asm__(
+			"ldstub [%2], %0;"
+:			"=r"(_res), "=m"(*lock)
 :			"r"(lock));
 	return (int) _res;
 }
@@ -199,16 +220,18 @@ static __inline__ int
 tas(volatile slock_t *lock)
 {
 	register int rv;
-	
-	__asm__ __volatile__ (
-		"tas %1; sne %0"
-		: "=d" (rv), "=m"(*lock)
-		: "1" (*lock)
-		: "cc" );
+
+	__asm__		__volatile__(
+										 "tas %1;"
+										 "sne %0;"
+							 :			 "=d"(rv), "=m"(*lock)
+							 :			 "1"(*lock)
+							 :			 "cc");
+
 	return rv;
 }
 
-#endif /* defined(__mc68000__) && defined(__linux__) */
+#endif	 /* defined(__mc68000__) && defined(__linux__) */
 
 
 #if defined(NEED_VAX_TAS_ASM)
@@ -225,13 +248,14 @@ tas(volatile slock_t *lock)
 {
 	register	_res;
 
-	__asm__("	movl $1, r0 \
-			bbssi $0, (%1), 1f \
-			clrl r0 \
-1:			movl r0, %0 "
-:			"=r"(_res)			/* return value, in register */
-:			"r"(lock)			/* argument, 'lock pointer', in register */
-:			"r0");				/* inline code uses this register */
+	__asm__(
+			"movl $1, r0;"
+			"bbssi $0, (%1), 1f;"
+			"clrl r0;"
+			"1: movl r0, %0;"
+:			"=r"(_res)
+:			"r"(lock)
+:			"r0");
 	return (int) _res;
 }
 
@@ -244,14 +268,16 @@ tas(volatile slock_t *lock)
 static __inline__ int
 tas(volatile slock_t *lock)
 {
-  register _res;
-  __asm__("sbitb 0, %0 \n\
-	sfsd %1"
-	: "=m"(*lock), "=r"(_res));
-  return (int) _res; 
+	register	_res;
+
+	__asm__(
+			"sbitb 0, %0;"
+			"sfsd %1;"
+:			"=m"(*lock), "=r"(_res));
+	return (int) _res;
 }
 
-#endif  /* NEED_NS32K_TAS_ASM */
+#endif	 /* NEED_NS32K_TAS_ASM */
 
 
 
@@ -268,7 +294,7 @@ asm int
 tas(volatile slock_t *s_lock)
 {
 /* UNIVEL wants %mem in column 1, so we don't pg_indent this file */
-%mem s_lock
+	%mem s_lock
 	pushl %ebx
 	movl s_lock, %ebx
 	movl $255, %eax
@@ -277,7 +303,7 @@ tas(volatile slock_t *s_lock)
 	popl %ebx
 }
 
-#endif /* defined(NEED_I386_TAS_ASM) && defined(USE_UNIVEL_CC) */
+#endif	 /* defined(NEED_I386_TAS_ASM) && defined(USE_UNIVEL_CC) */
 
 #endif	 /* defined(__GNUC__) */
 
@@ -300,30 +326,33 @@ tas(volatile slock_t *s_lock)
 #if defined(__GNUC__)
 
 #define TAS(lock)  tas(lock)
-#define S_UNLOCK(lock)  do { __asm__ volatile ("mb"); *(lock) = 0; } while (0)
+#define S_UNLOCK(lock)	do { __asm__ volatile ("mb"); *(lock) = 0; } while (0)
 
 static __inline__ int
 tas(volatile slock_t *lock)
 {
 	register slock_t _res;
 
-	__asm__ volatile
-("		ldq   $0, %0		\n\
-		bne   $0, 2f		\n\
-		ldq_l %1, %0		\n\
-		bne   %1, 2f		\n\
-		mov   1, $0			\n\
-		stq_c $0, %0		\n\
-		beq   $0, 2f		\n\
-		mb					\n\
-		br    3f			\n\
-	 2: mov   1, %1			\n\
-	 3:       \n" : "=m"(*lock), "=r"(_res) : : "0");
+	__asm__		volatile(
+									 "ldq   $0, %0;"
+									 "bne   $0, 2f;"
+									 "ldq_l %1, %0;"
+									 "bne   %1, 2f;"
+									 "mov   1, $0;"
+									 "stq_c $0, %0;"
+									 "beq   $0, 2f;"
+									 "mb;"
+									 "br 3f;"
+									 "2: mov   1, %1;"
+									 "3:"
+						 :			 "=m"(*lock), "=r"(_res)
+						 :
+						 :			 "0");
 
 	return (int) _res;
 }
 
-#else /* !defined(__GNUC__) */
+#else							/* !defined(__GNUC__) */
 
 /*
  * The Tru64 compiler doesn't support gcc-style inline asm, but it does
@@ -337,12 +366,12 @@ tas(volatile slock_t *lock)
 #include <alpha/builtins.h>
 
 #define S_INIT_LOCK(lock)  (*(lock) = 0)
-#define TAS(lock)          (__LOCK_LONG_RETRY((lock), 1) == 0)
-#define S_UNLOCK(lock)     __UNLOCK_LONG(lock)
+#define TAS(lock)		   (__LOCK_LONG_RETRY((lock), 1) == 0)
+#define S_UNLOCK(lock)	   __UNLOCK_LONG(lock)
 
-#endif /* defined(__GNUC__) */
+#endif	 /* defined(__GNUC__) */
 
-#endif /* __alpha */
+#endif	 /* __alpha */
 
 
 #if defined(__hpux)
@@ -373,18 +402,18 @@ do { \
  *
  * Note that slock_t under QNX is sem_t instead of char
  */
-#define TAS(lock)       (sem_trywait((lock)) < 0)
-#define S_UNLOCK(lock)  sem_post((lock))
-#define S_INIT_LOCK(lock)       sem_init((lock), 1, 1)
-#define S_LOCK_FREE(lock)       ((lock)->value)
-#endif   /* __QNX__ */
+#define TAS(lock)		(sem_trywait((lock)) < 0)
+#define S_UNLOCK(lock)	sem_post((lock))
+#define S_INIT_LOCK(lock)		sem_init((lock), 1, 1)
+#define S_LOCK_FREE(lock)		((lock)->value)
+#endif	 /* __QNX__ */
 
 
 #if defined(__sgi)
 /*
  * SGI IRIX 5
  * slock_t is defined as a unsigned long. We use the standard SGI
- * mutex API. 
+ * mutex API.
  *
  * The following comment is left for historical reasons, but is probably
  * not a good idea since the mutex ABI is supported.
@@ -402,7 +431,7 @@ do { \
 
 #if defined(sinix)
 /*
- * SINIX / Reliant UNIX 
+ * SINIX / Reliant UNIX
  * slock_t is defined as a struct abilock_t, which has a single unsigned long
  * member. (Basically same as SGI)
  *
@@ -412,7 +441,7 @@ do { \
 #define S_INIT_LOCK(lock)	init_lock(lock)
 #define S_LOCK_FREE(lock)	(stat_lock(lock) == UNLOCKED)
 #endif	 /* sinix */
- 
+
 
 #if defined(_AIX)
 /*
@@ -440,7 +469,7 @@ do { \
 
 
 
-#else	 /* !HAS_TEST_AND_SET */
+#else							/* !HAS_TEST_AND_SET */
 
 /*
  * Fake spinlock implementation using SysV semaphores --- slow and prone
@@ -451,19 +480,19 @@ do { \
 typedef struct
 {
 	/* reference to semaphore used to implement this spinlock */
-	IpcSemaphoreId	semId;
-	int				sem;
+	IpcSemaphoreId semId;
+	int			sem;
 } slock_t;
 
 extern bool s_lock_free_sema(volatile slock_t *lock);
 extern void s_unlock_sema(volatile slock_t *lock);
 extern void s_init_lock_sema(volatile slock_t *lock);
-extern int tas_sema(volatile slock_t *lock);
+extern int	tas_sema(volatile slock_t *lock);
 
-#define S_LOCK_FREE(lock)   s_lock_free_sema(lock)
-#define S_UNLOCK(lock)   s_unlock_sema(lock)
-#define S_INIT_LOCK(lock)   s_init_lock_sema(lock)
-#define TAS(lock)   tas_sema(lock)
+#define S_LOCK_FREE(lock)	s_lock_free_sema(lock)
+#define S_UNLOCK(lock)	 s_unlock_sema(lock)
+#define S_INIT_LOCK(lock)	s_init_lock_sema(lock)
+#define TAS(lock)	tas_sema(lock)
 
 #endif	 /* HAS_TEST_AND_SET */
 
