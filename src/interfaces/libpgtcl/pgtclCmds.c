@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtclCmds.c,v 1.59 2001/11/05 17:46:37 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtclCmds.c,v 1.60 2001/12/03 14:49:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1109,11 +1109,11 @@ Pg_lo_open(ClientData cData, Tcl_Interp *interp, int argc, char *argv[])
 			break;
 		case 'r':
 		case 'R':
-			mode = mode & INV_READ;
+			mode |= INV_READ;
 			break;
 		case 'w':
 		case 'W':
-			mode = mode & INV_WRITE;
+			mode |= INV_WRITE;
 			break;
 		default:
 			Tcl_AppendResult(interp, "mode argument must be 'r', 'w', or 'rw'", 0);
