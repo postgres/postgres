@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/set.sgml,v 1.42 2000/04/18 15:23:34 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/set.sgml,v 1.43 2000/05/18 14:24:33 momjian Exp $
 Postgres documentation
 -->
 
@@ -919,7 +919,7 @@ SET VARIABLE
      
      <varlistentry>
       <term><computeroutput>
-WARN:  Bad value for <replaceable class="parameter">variable</replaceable> (<replaceable class="parameter">value</replaceable>)
+NOTICE:  Bad value for <replaceable class="parameter">variable</replaceable> (<replaceable class="parameter">value</replaceable>)
        </computeroutput></term>
       <listitem>
        <para>

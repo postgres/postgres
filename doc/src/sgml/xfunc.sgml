@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/xfunc.sgml,v 1.14 2000/05/02 20:01:53 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/xfunc.sgml,v 1.15 2000/05/18 14:24:32 momjian Exp $
 -->
 
  <chapter id="xfunc">
@@ -253,7 +253,7 @@ CREATE FUNCTION new_emp() RETURNS EMP
 
 	<programlisting>
 	 <computeroutput>
-WARN::function declared to return type EMP does not retrieve (EMP.*)
+NOTICE::function declared to return type EMP does not retrieve (EMP.*)
 	 </computeroutput>
 	</programlisting>
        </para>
@@ -286,7 +286,7 @@ SELECT name(new_emp()) AS nobody;
 
 	<programlisting>
 SELECT new_emp().name AS nobody;
-WARN:parser: syntax error at or near "."
+NOTICE:parser: syntax error at or near "."
 	</programlisting>
        </para>
       </listitem>

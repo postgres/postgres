@@ -55,7 +55,7 @@ complex_in(char *str)
     double x, y;
     Complex *result;
     if (sscanf(str, " ( %lf , %lf )", &amp;x, &amp;y) != 2) {
-        elog(WARN, "complex_in: error in parsing
+        elog(NOTICE, "complex_in: error in parsing
         return NULL;
     }
     result = (Complex *)palloc(sizeof(Complex));

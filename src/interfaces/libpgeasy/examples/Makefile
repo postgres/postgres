@@ -4,12 +4,13 @@
 #    Makefile for pgeasy examples
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/interfaces/libpgeasy/examples/Attic/Makefile,v 1.1 1999/10/11 18:03:01 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/interfaces/libpgeasy/examples/Attic/Makefile,v 1.2 2000/05/18 14:24:37 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
+CFLAGS=-I/usr/local/pgsql/include
 TARGET = pginsert pgwordcount pgnulltest
-LDFLAGS = -lpgeasy
+LDFLAGS = -L/usr/local/pgsql/lib -lpgeasy
 
 all : $(TARGET)
 

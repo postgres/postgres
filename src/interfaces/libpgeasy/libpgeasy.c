@@ -44,16 +44,12 @@ static int	tuple;
 **
 */
 PGconn *
-connectdb(char *pghost,
-		  char *pgport,
-		  char *pgoptions,
-		  char *pgtty,
-		  char *dbName)
+connectdb(char *options)
 {
 	/* make a connection to the database */
-	conn = PQsetdb(pghost, pgport, pgoptions, pgtty, dbName);
+	conn = PQconnectdb(options);
 	if (PQstatus(conn) == CONNECTION_BAD)
-		halt("Connection to database '%s' failed.\n%s\n", dbName,
+		halt("Connection to database using '%s' failed.\n%s\n", options,
 			 PQerrorMessage(conn));
 	return conn;
 }

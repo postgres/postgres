@@ -423,7 +423,7 @@ trigf()
 	int		ret, i;
 
 	if (!CurrentTriggerData)
-		elog(WARN, "trigf: triggers are not initialized");
+		elog(NOTICE, "trigf: triggers are not initialized");
 	
 	/* tuple to return to Executor */
 	if (TRIGGER_FIRED_BY_UPDATE(CurrentTriggerData->tg_event))
@@ -446,13 +446,13 @@ trigf()
 	
 	/* Connect to SPI manager */
 	if ((ret = SPI_connect()) < 0)
-		elog(WARN, "trigf (fired %s): SPI_connect returned %d", when, ret);
+		elog(NOTICE, "trigf (fired %s): SPI_connect returned %d", when, ret);
 	
 	/* Get number of tuples in relation */
 	ret = SPI_exec("select count(*) from ttest", 0);
 	
 	if (ret < 0)
-		elog(WARN, "trigf (fired %s): SPI_exec returned %d", when, ret);
+		elog(NOTICE, "trigf (fired %s): SPI_exec returned %d", when, ret);
 	
 	i = SPI_getbinval(SPI_tuptable->vals[0], SPI_tuptable->tupdesc, 1, &amp;isnull);
 	

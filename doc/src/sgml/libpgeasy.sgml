@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/libpgeasy.sgml,v 2.2 2000/04/27 18:45:43 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/libpgeasy.sgml,v 2.3 2000/05/18 14:24:31 momjian Exp $
 -->
 
  <chapter id="pgeasy-chapter">
@@ -35,7 +35,7 @@ PGresult   *doquery(char *query);
 
     <listitem>
      <para>
-PGconn     *connectdb();
+PGconn     *connectdb(char *options);
      </para>
     </listitem>
 
@@ -108,7 +108,7 @@ void        unset_result(PGresult *oldres);
   </para>
 
   <para>
-   For <literal>select</literal> queries, <function>fetch</function>
+   For <literal>SELECT</literal> queries, <function>fetch</function>
    allows you to pass pointers as parameters, and on return the variables
    are filled with data from the binary cursor you opened.  These binary
    cursors can not be used if you are running the

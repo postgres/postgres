@@ -15,11 +15,14 @@ main(int argc, char **argv)
 	int			row = 0;
 	int			count;
 	char		line[4000];
+	char	    optstr[256];
 
 	if (argc != 2)
 		halt("Usage:  %s database\n", argv[0]);
 
-	connectdb(NULL, NULL, NULL, NULL, argv[1]);
+	snprintf(optstr, 256, "dbname=%s", argv[1]);
+	connectdb(optstr);
+
 	on_error_continue();
 	doquery("DROP TABLE words");
 	on_error_stop();

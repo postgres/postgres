@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_aggregate.sgml,v 1.6 1999/07/22 15:09:10 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_aggregate.sgml,v 1.7 2000/05/18 14:24:32 momjian Exp $
 Postgres documentation
 -->
 
@@ -80,7 +80,7 @@ DROP
      </varlistentry>
      <varlistentry>
       <term><computeroutput>
-WARN RemoveAggregate: aggregate '<replaceable class="parameter">agg</replaceable>' for '<replaceable class="parameter">type</replaceable>' does not exist
+NOTICE RemoveAggregate: aggregate '<replaceable class="parameter">agg</replaceable>' for '<replaceable class="parameter">type</replaceable>' does not exist
        </computeroutput></term>
       <listitem>
        <para>

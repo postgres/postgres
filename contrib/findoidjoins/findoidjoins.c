@@ -22,11 +22,14 @@ main(int argc, char **argv)
 	char		attname[256];
 	char		typname[256];
 	int			count;
+	char	    optstr[256];
 
 	if (argc != 2)
 		halt("Usage:  %s database\n", argv[0]);
 
-	connectdb(NULL, NULL, NULL, NULL, argv[1]);
+	snprintf(optstr, 256, "dbname=%s", argv[1]);
+	connectdb(optstr);
+
 	on_error_continue();
 	on_error_stop();
 

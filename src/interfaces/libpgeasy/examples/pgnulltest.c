@@ -34,11 +34,13 @@ main(int argc, char **argv)
 				avarchar_null,
 				atext_null,
 				aabstime_null;
+	char	    optstr[256];
 
 	if (argc != 2)
 		halt("Usage:  %s database\n", argv[0]);
 
-	connectdb(NULL, NULL, NULL, NULL, argv[1]);
+	snprintf(optstr, 256, "dbname=%s", argv[1]);
+	connectdb(optstr);
 
 	on_error_continue();
 	doquery("DROP TABLE testfetch");

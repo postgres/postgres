@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/pltcl.sgml,v 2.3 2000/03/31 06:17:21 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/pltcl.sgml,v 2.4 2000/05/18 14:24:32 momjian Exp $
 -->
 
  <chapter>
@@ -303,7 +303,7 @@ CREATE TRIGGER trig_mytab_modcount BEFORE INSERT OR UPDATE ON mytab
       <term>elog <replaceable>level</replaceable> <replaceable>msg</replaceable></term>
       <listitem>
        <para>
-	Fire a log message. Possible levels are NOTICE, WARN, ERROR,
+	Fire a log message. Possible levels are NOTICE, ERROR,
 	FATAL, DEBUG and NOIND
 	like for the <function>elog</function> C function.
        </para>

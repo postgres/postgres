@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_function.sgml,v 1.7 1999/07/22 15:09:10 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_function.sgml,v 1.8 2000/05/18 14:24:33 momjian Exp $
 Postgres documentation
 -->
 
@@ -77,7 +77,7 @@ DROP
      </varlistentry>
      <varlistentry>
       <term><computeroutput>
-WARN RemoveFunction: Function "<replaceable class="parameter">name</replaceable>" ("<replaceable class="parameter">types</replaceable>") does not exist
+NOTICE RemoveFunction: Function "<replaceable class="parameter">name</replaceable>" ("<replaceable class="parameter">types</replaceable>") does not exist
        </computeroutput></term>
       <listitem>
        <para>
