@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.118.2.3 2004/06/13 17:17:48 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.118.2.4 2005/01/11 18:33:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3907,7 +3907,7 @@ EncodeInterval(struct tm * tm, fsec_t fsec, int style, char *str)
 		cp += strlen(cp);
 	}
 
-	if (is_before && (style == USE_POSTGRES_DATES))
+	if (is_before && (style != USE_ISO_DATES))
 	{
 		strcat(cp, " ago");
 		cp += strlen(cp);
