@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/heapam.h,v 1.96 2005/03/16 21:38:09 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/access/heapam.h,v 1.97 2005/03/20 23:40:29 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -153,11 +153,11 @@ extern ItemPointer heap_get_latest_tid(Relation relation, Snapshot snapshot,
 extern void setLastTid(const ItemPointer tid);
 
 extern Oid	heap_insert(Relation relation, HeapTuple tup, CommandId cid);
-extern int heap_delete(Relation relation, ItemPointer tid, ItemPointer ctid,
+extern HTSU_Result heap_delete(Relation relation, ItemPointer tid, ItemPointer ctid,
 			CommandId cid, Snapshot crosscheck, bool wait);
-extern int heap_update(Relation relation, ItemPointer otid, HeapTuple tup,
+extern HTSU_Result heap_update(Relation relation, ItemPointer otid, HeapTuple tup,
 		ItemPointer ctid, CommandId cid, Snapshot crosscheck, bool wait);
-extern int heap_mark4update(Relation relation, HeapTuple tup,
+extern HTSU_Result heap_mark4update(Relation relation, HeapTuple tup,
 				 Buffer *userbuf, CommandId cid);
 
 extern Oid	simple_heap_insert(Relation relation, HeapTuple tup);

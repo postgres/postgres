@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/heap/heapam.c,v 1.183 2005/02/20 21:46:47 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/heap/heapam.c,v 1.184 2005/03/20 23:40:23 neilc Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1265,7 +1265,7 @@ simple_heap_insert(Relation relation, HeapTuple tup)
  * *ctid is set to the ctid link of the target tuple (possibly a later
  * version of the row).
  */
-int
+HTSU_Result
 heap_delete(Relation relation, ItemPointer tid,
 			ItemPointer ctid, CommandId cid,
 			Snapshot crosscheck, bool wait)
@@ -1275,7 +1275,7 @@ heap_delete(Relation relation, ItemPointer tid,
 	HeapTupleData tp;
 	PageHeader	dp;
 	Buffer		buffer;
-	int			result;
+	HTSU_Result	result;
 
 	Assert(ItemPointerIsValid(tid));
 
@@ -1430,7 +1430,7 @@ void
 simple_heap_delete(Relation relation, ItemPointer tid)
 {
 	ItemPointerData ctid;
-	int			result;
+	HTSU_Result		result;
 
 	result = heap_delete(relation, tid,
 						 &ctid,
@@ -1480,7 +1480,7 @@ simple_heap_delete(Relation relation, ItemPointer tid)
  * On success, newtup->t_self is set to the TID where the new tuple
  * was inserted.
  */
-int
+HTSU_Result
 heap_update(Relation relation, ItemPointer otid, HeapTuple newtup,
 			ItemPointer ctid, CommandId cid,
 			Snapshot crosscheck, bool wait)
@@ -1495,7 +1495,7 @@ heap_update(Relation relation, ItemPointer otid, HeapTuple newtup,
 				already_marked;
 	Size		newtupsize,
 				pagefree;
-	int			result;
+	HTSU_Result	result;
 
 	Assert(ItemPointerIsValid(otid));
 
@@ -1792,7 +1792,7 @@ void
 simple_heap_update(Relation relation, ItemPointer otid, HeapTuple tup)
 {
 	ItemPointerData ctid;
-	int			result;
+	HTSU_Result		result;
 
 	result = heap_update(relation, otid, tup,
 						 &ctid,
@@ -1822,7 +1822,7 @@ simple_heap_update(Relation relation, ItemPointer otid, HeapTuple tup)
 /*
  *	heap_mark4update		- mark a tuple for update
  */
-int
+HTSU_Result
 heap_mark4update(Relation relation, HeapTuple tuple, Buffer *buffer,
 				 CommandId cid)
 {
@@ -1830,7 +1830,7 @@ heap_mark4update(Relation relation, HeapTuple tuple, Buffer *buffer,
 	ItemPointer tid = &(tuple->t_self);
 	ItemId		lp;
 	PageHeader	dp;
-	int			result;
+	HTSU_Result	result;
 
 	*buffer = ReadBuffer(relation, ItemPointerGetBlockNumber(tid));
 	LockBuffer(*buffer, BUFFER_LOCK_EXCLUSIVE);

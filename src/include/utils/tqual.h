@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/tqual.h,v 1.55 2004/12/31 22:03:46 pgsql Exp $
+ * $PostgreSQL: pgsql/src/include/utils/tqual.h,v 1.56 2005/03/20 23:40:34 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -97,11 +97,14 @@ extern TransactionId RecentGlobalXmin;
 )
 
 /* Result codes for HeapTupleSatisfiesUpdate */
-#define HeapTupleMayBeUpdated		0
-#define HeapTupleInvisible			1
-#define HeapTupleSelfUpdated		2
-#define HeapTupleUpdated			3
-#define HeapTupleBeingUpdated		4
+typedef enum
+{
+	HeapTupleMayBeUpdated,
+	HeapTupleInvisible,
+	HeapTupleSelfUpdated,
+	HeapTupleUpdated,
+	HeapTupleBeingUpdated
+} HTSU_Result;
 
 /* Result codes for HeapTupleSatisfiesVacuum */
 typedef enum
@@ -119,7 +122,7 @@ extern bool HeapTupleSatisfiesDirty(HeapTupleHeader tuple, Buffer buffer);
 extern bool HeapTupleSatisfiesToast(HeapTupleHeader tuple, Buffer buffer);
 extern bool HeapTupleSatisfiesSnapshot(HeapTupleHeader tuple,
 						   Snapshot snapshot, Buffer buffer);
-extern int HeapTupleSatisfiesUpdate(HeapTupleHeader tuple,
+extern HTSU_Result HeapTupleSatisfiesUpdate(HeapTupleHeader tuple,
 						 CommandId curcid, Buffer buffer);
 extern HTSV_Result HeapTupleSatisfiesVacuum(HeapTupleHeader tuple,
 						 TransactionId OldestXmin, Buffer buffer);

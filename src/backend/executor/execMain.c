@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execMain.c,v 1.242 2005/03/16 21:38:06 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execMain.c,v 1.243 2005/03/20 23:40:25 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1116,7 +1116,7 @@ lnext:	;
 					Buffer		buffer;
 					HeapTupleData tuple;
 					TupleTableSlot *newSlot;
-					int			test;
+					HTSU_Result		test;
 
 					if (!ExecGetJunkAttribute(junkfilter,
 											  slot,
@@ -1396,7 +1396,7 @@ ExecDelete(TupleTableSlot *slot,
 	ResultRelInfo *resultRelInfo;
 	Relation	resultRelationDesc;
 	ItemPointerData ctid;
-	int			result;
+	HTSU_Result	result;
 
 	/*
 	 * get information on the (current) result relation
@@ -1500,7 +1500,7 @@ ExecUpdate(TupleTableSlot *slot,
 	ResultRelInfo *resultRelInfo;
 	Relation	resultRelationDesc;
 	ItemPointerData ctid;
-	int			result;
+	HTSU_Result	result;
 	int			numIndices;
 
 	/*

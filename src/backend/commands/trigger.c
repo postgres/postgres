@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/trigger.c,v 1.177 2004/12/31 21:59:41 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/trigger.c,v 1.178 2005/03/20 23:40:24 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1566,7 +1566,7 @@ GetTupleForTrigger(EState *estate, ResultRelInfo *relinfo,
 
 	if (newSlot != NULL)
 	{
-		int			test;
+		HTSU_Result	test;
 
 		/*
 		 * mark tuple for update
