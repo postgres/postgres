@@ -1,4 +1,4 @@
-$Header: /cvsroot/pgsql/src/backend/catalog/README,v 1.2 2002/01/04 17:06:51 tgl Exp $
+$Header: /cvsroot/pgsql/src/backend/catalog/README,v 1.3 2002/03/19 01:14:41 momjian Exp $
 
 This directory contains .c files that manipulate the system catalogs
 as well as .h files that define the structure of the system catalogs.
@@ -35,14 +35,22 @@ to a given tuple, then the OID may be set to the wildcard value 0
 If you need to find a valid OID for a set of tuples that refer to each
 other, use the unused_oids script.  It generates inclusive ranges of
 *unused* OIDs (i.e., the line "45-900" means OIDs 45 through 900 have
-not been allocated yet).  However, you should not rely 100% on this
-script, since it only looks at the .h files in the catalog/ directory.
-Do a pg_grepsrc (recursive grep) of the source tree to insure that
-there aren't any hidden crocks (i.e., explicit use of a numeric OID)
-anywhere in the code.  (tgl 1/2002: that advice is obsolete; there are
-no hardcoded uses of OIDs in the C files anymore.  All OIDs that are known
-directly to C code should be referenced via #defines in the catalog .h files.
-So unused_oids is sufficient for assigning new OIDs.)
+not been allocated yet).  All OIDs that are known directly to C code 
+should be referenced via #defines in the catalog .h files. So 
+unused_oids is sufficient for assigning new OIDs.).  The unused_oids
+script simply 'discovers' those which are free.
+
+- BOOTSTRAP tables must be at the start of the Makefile POSTGRES_BKI_SRCS
+variable, as these will not be created through standard function means, but
+will be written directly to disk.  Thats how pg_class is created without
+depending on functions which depend on the existance of pg_class.  The
+list of files this currently includes is:
+	pg_proc.h pg_type.h pg_attribute.h pg_class.h
+
+Don't forget to add the entry to heap.c to function heap_create() which
+sets the OID of the relation when it's a bootstrapped system table.  It's
+near the top of the function with the comment beginning in 'Real ugly stuff'
+
 
 -----------------------------------------------------------------
 
