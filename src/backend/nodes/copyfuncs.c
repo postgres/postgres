@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.256 2003/06/25 21:30:29 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.257 2003/06/27 14:45:28 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1881,7 +1881,9 @@ _copyRenameStmt(RenameStmt *from)
 	RenameStmt *newnode = makeNode(RenameStmt);
 
 	COPY_NODE_FIELD(relation);
-	COPY_STRING_FIELD(oldname);
+	COPY_NODE_FIELD(object);
+	COPY_NODE_FIELD(objarg);
+	COPY_STRING_FIELD(subname);
 	COPY_STRING_FIELD(newname);
 	COPY_SCALAR_FIELD(renameType);
 

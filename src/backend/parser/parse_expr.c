@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.151 2003/06/27 00:33:25 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.152 2003/06/27 14:45:29 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1077,7 +1077,7 @@ transformColumnRef(ParseState *pstate, ColumnRef *cref)
 				/*
 				 * We check the catalog name and then ignore it.
 				 */
-				if (strcmp(name1, DatabaseName) != 0)
+				if (strcmp(name1, get_database_name(MyDatabaseId)) != 0)
 					elog(ERROR, "Cross-database references are not implemented");
 
 				/* Whole-row reference? */

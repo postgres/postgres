@@ -14,5 +14,6 @@
 extern void CreateProceduralLanguage(CreatePLangStmt *stmt);
 extern void DropProceduralLanguage(DropPLangStmt *stmt);
 extern void DropProceduralLanguageById(Oid langOid);
+extern void RenameLanguage(const char *oldname, const char *newname);
 
 #endif   /* PROCLANG_H */

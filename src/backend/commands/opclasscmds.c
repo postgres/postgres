@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/opclasscmds.c,v 1.9 2002/11/13 00:39:46 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/opclasscmds.c,v 1.10 2003/06/27 14:45:27 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -550,7 +550,7 @@ RemoveOpClassById(Oid opclassOid)
 						 ObjectIdGetDatum(opclassOid),
 						 0, 0, 0);
 	if (!HeapTupleIsValid(tup)) /* should not happen */
-		elog(ERROR, "RemoveOpClassById: couldn't find pg_class entry %u",
+		elog(ERROR, "RemoveOpClassById: couldn't find pg_opclass entry %u",
 			 opclassOid);
 
 	simple_heap_delete(rel, &tup->t_self);
@@ -594,4 +594,95 @@ RemoveOpClassById(Oid opclassOid)
 
 	systable_endscan(scan);
 	heap_close(rel, RowExclusiveLock);
+}
+
+
+/*
+ * Rename opclass
+ */
+void
+RenameOpClass(List *name, const char *access_method, const char *newname)
+{
+	Oid			opcOid;
+	Oid			amOid;
+	Oid			namespaceOid;
+	char	   *schemaname;
+	char	   *opcname;
+	HeapTuple	tup;
+	Relation	rel;
+	AclResult	aclresult;
+
+	amOid = GetSysCacheOid(AMNAME,
+						   CStringGetDatum(access_method),
+						   0, 0, 0);
+	if (!OidIsValid(amOid))
+		elog(ERROR, "access method \"%s\" not found", access_method);
+
+	rel = heap_openr(OperatorClassRelationName, RowExclusiveLock);
+
+	/*
+	 * Look up the opclass
+	 */
+	DeconstructQualifiedName(name, &schemaname, &opcname);
+
+	if (schemaname)
+	{
+		namespaceOid = LookupExplicitNamespace(schemaname);
+
+		tup = SearchSysCacheCopy(CLAAMNAMENSP,
+								 ObjectIdGetDatum(amOid),
+								 PointerGetDatum(opcname),
+								 ObjectIdGetDatum(namespaceOid),
+								 0);
+		if (!HeapTupleIsValid(tup))
+			elog(ERROR, "operator class \"%s\" for access method \"%s\" does not exist",
+				 opcname, access_method);
+
+		opcOid = HeapTupleGetOid(tup);
+	}
+	else
+	{
+		opcOid = OpclassnameGetOpcid(amOid, opcname);
+		if (!OidIsValid(opcOid))
+			elog(ERROR, "operator class \"%s\" for access method \"%s\" does not exist",
+				 opcname, access_method);
+
+		tup = SearchSysCacheCopy(CLAOID,
+								 ObjectIdGetDatum(opcOid),
+								 0, 0, 0);
+		if (!HeapTupleIsValid(tup)) /* should not happen */
+			elog(ERROR, "couldn't find pg_opclass tuple for %u", opcOid);
+
+		namespaceOid = ((Form_pg_opclass) GETSTRUCT(tup))->opcnamespace;
+	}
+
+	/* make sure the new name doesn't exist */
+	if (SearchSysCacheExists(CLAAMNAMENSP,
+							 ObjectIdGetDatum(amOid),
+							 CStringGetDatum(newname),
+							 ObjectIdGetDatum(namespaceOid),
+							 0))
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR_OR_ACCESS_RULE_VIOLATION),
+				 errmsg("operator class \"%s\" for access method \"%s\" already exists in schema \"%s\"",
+						newname, access_method, get_namespace_name(namespaceOid))));
+	}
+
+	/* must be owner */
+	if (!pg_opclass_ownercheck(opcOid, GetUserId()))
+		aclcheck_error(ACLCHECK_NOT_OWNER, NameListToString(name));
+
+	/* must have CREATE privilege on namespace */
+	aclresult = pg_namespace_aclcheck(namespaceOid, GetUserId(), ACL_CREATE);
+	if (aclresult != ACLCHECK_OK)
+		aclcheck_error(aclresult, get_namespace_name(namespaceOid));
+
+	/* rename */
+	namestrcpy(&(((Form_pg_opclass) GETSTRUCT(tup))->opcname), newname);
+	simple_heap_update(rel, &tup->t_self, tup);
+	CatalogUpdateIndexes(rel, tup);
+
+	heap_close(rel, NoLock);
+	heap_freetuple(tup);
 }

@@ -18,7 +18,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.199 2003/06/25 21:30:29 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.200 2003/06/27 14:45:28 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -909,7 +909,9 @@ static bool
 _equalRenameStmt(RenameStmt *a, RenameStmt *b)
 {
 	COMPARE_NODE_FIELD(relation);
-	COMPARE_STRING_FIELD(oldname);
+	COMPARE_NODE_FIELD(object);
+	COMPARE_NODE_FIELD(objarg);
+	COMPARE_STRING_FIELD(subname);
 	COMPARE_STRING_FIELD(newname);
 	COMPARE_SCALAR_FIELD(renameType);
 

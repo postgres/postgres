@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_schema.sgml,v 1.5 2003/04/22 10:08:08 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_schema.sgml,v 1.6 2003/06/27 14:45:26 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -123,10 +123,6 @@ CREATE SCHEMA AUTHORIZATION <replaceable class="parameter">username</replaceable
    privilege for the current database.  (Of course, superusers bypass
    this check.)
   </para>
-
-  <para>
-   Use <command>DROP SCHEMA</command> to remove a schema.
-  </para>
  </refsect1>
 
  <refsect1>
@@ -196,6 +192,16 @@ CREATE VIEW hollywood.winners AS
    <literal>CREATE</> privilege on his schema to someone else.
   </para>
  </refsect1>
+
+ <refsect1>
+  <title>See Also</title>
+
+  <simplelist type="inline">
+   <member><xref linkend="sql-alterschema" endterm="sql-alterschema-title"></member>
+   <member><xref linkend="sql-dropschema" endterm="sql-dropschema-title"></member>
+  </simplelist>
+ </refsect1>
+
 </refentry>
 
 <!-- Keep this comment at the end of the file

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_aggregate.sgml,v 1.25 2003/04/22 10:08:08 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_aggregate.sgml,v 1.26 2003/06/27 14:45:26 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -231,14 +231,6 @@ CREATE AGGREGATE <replaceable class="PARAMETER">name</replaceable> (
  </refsect1>
   
  <refsect1>
- <title>Notes</title>
-
-  <para>
-   Use <command>DROP AGGREGATE</command> to drop aggregate functions.
-  </para>
- </refsect1>
-
- <refsect1>
   <title>Examples</title>
 
   <para>
@@ -254,6 +246,15 @@ CREATE AGGREGATE <replaceable class="PARAMETER">name</replaceable> (
    <productname>PostgreSQL</productname> language extension.  The SQL
    standard does not provide for user-defined aggregate function.
   </para>
+ </refsect1>
+
+ <refsect1>
+  <title>See Also</title>
+
+  <simplelist type="inline">
+   <member><xref linkend="sql-alteraggregate" endterm="sql-alteraggregate-title"></member>
+   <member><xref linkend="sql-dropaggregate" endterm="sql-dropaggregate-title"></member>
+  </simplelist>
  </refsect1>
 </refentry>
 

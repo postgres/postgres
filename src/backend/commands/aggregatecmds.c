@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/aggregatecmds.c,v 1.7 2003/06/25 21:30:26 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/aggregatecmds.c,v 1.8 2003/06/27 14:45:27 petere Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -25,6 +25,7 @@
 #include "access/heapam.h"
 #include "catalog/catname.h"
 #include "catalog/dependency.h"
+#include "catalog/indexing.h"
 #include "catalog/namespace.h"
 #include "catalog/pg_aggregate.h"
 #include "catalog/pg_proc.h"
@@ -192,4 +193,76 @@ RemoveAggregate(RemoveAggrStmt *stmt)
 	object.objectSubId = 0;
 
 	performDeletion(&object, stmt->behavior);
+}
+
+
+void
+RenameAggregate(List *name, TypeName *basetype, const char *newname)
+{
+	Oid			basetypeOid;
+	Oid			procOid;
+	Oid			namespaceOid;
+	Oid			oid_array[FUNC_MAX_ARGS];
+	HeapTuple	tup;
+	Relation	rel;
+	AclResult	aclresult;
+
+	/*
+	 * if a basetype is passed in, then attempt to find an aggregate for
+	 * that specific type.
+	 *
+	 * else attempt to find an aggregate with a basetype of ANYOID. This
+	 * means that the aggregate is to apply to all basetypes (eg, COUNT).
+	 */
+	if (basetype)
+		basetypeOid = typenameTypeId(basetype);
+	else
+		basetypeOid = ANYOID;
+
+	rel = heap_openr(ProcedureRelationName, RowExclusiveLock);
+
+	procOid = find_aggregate_func("RenameAggregate", name, basetypeOid);
+
+	tup = SearchSysCacheCopy(PROCOID,
+							 ObjectIdGetDatum(procOid),
+							 0, 0, 0);
+	if (!HeapTupleIsValid(tup)) /* should not happen */
+		elog(ERROR, "RenameAggregate: couldn't find pg_proc tuple for %s",
+			 NameListToString(name));
+
+	namespaceOid = ((Form_pg_proc) GETSTRUCT(tup))->pronamespace;
+
+	/* make sure the new name doesn't exist */
+	MemSet(oid_array, 0, sizeof(oid_array));
+	oid_array[0] = basetypeOid;
+	if (SearchSysCacheExists(PROCNAMENSP,
+							 CStringGetDatum(newname),
+							 Int16GetDatum(1),
+							 PointerGetDatum(oid_array),
+							 ObjectIdGetDatum(namespaceOid)))
+	{
+		if (basetypeOid == ANYOID)
+			elog(ERROR, "function %s(*) already exists in schema %s",
+				 newname, get_namespace_name(namespaceOid));
+		else
+			elog(ERROR, "function %s(%s) already exists in schema %s",
+				 newname, format_type_be(basetypeOid), get_namespace_name(namespaceOid));
+	}
+
+	/* must be owner */
+	if (!pg_proc_ownercheck(procOid, GetUserId()))
+		aclcheck_error(ACLCHECK_NOT_OWNER, NameListToString(name));
+
+	/* must have CREATE privilege on namespace */
+	aclresult = pg_namespace_aclcheck(namespaceOid, GetUserId(), ACL_CREATE);
+	if (aclresult != ACLCHECK_OK)
+		aclcheck_error(aclresult, get_namespace_name(namespaceOid));
+
+	/* rename */
+	namestrcpy(&(((Form_pg_proc) GETSTRUCT(tup))->proname), newname);
+	simple_heap_update(rel, &tup->t_self, tup);
+	CatalogUpdateIndexes(rel, tup);
+
+	heap_close(rel, NoLock);
+	heap_freetuple(tup);
 }

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/misc.c,v 1.28 2003/02/13 05:24:02 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/misc.c,v 1.29 2003/06/27 14:45:30 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -54,7 +54,6 @@ current_database(PG_FUNCTION_ARGS)
 
 	db = (Name) palloc(NAMEDATALEN);
 
-	namestrcpy(db, DatabaseName);
-
+	namestrcpy(db, get_database_name(MyDatabaseId));
 	PG_RETURN_NAME(db);
 }

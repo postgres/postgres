@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.255 2003/05/28 16:03:56 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.256 2003/06/27 14:45:27 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -771,7 +771,7 @@ vacuum_rel(Oid relid, VacuumStmt *vacstmt, char expected_relkind)
 	onerel = relation_open(relid, lmode);
 
 	if (!(pg_class_ownercheck(RelationGetRelid(onerel), GetUserId()) ||
-		  (is_dbadmin(MyDatabaseId) && !onerel->rd_rel->relisshared)))
+		  (pg_database_ownercheck(MyDatabaseId, GetUserId()) && !onerel->rd_rel->relisshared)))
 	{
 		elog(WARNING, "Skipping \"%s\" --- only table or database owner can VACUUM it",
 			 RelationGetRelationName(onerel));

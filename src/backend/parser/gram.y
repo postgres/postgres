@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.421 2003/06/25 21:30:30 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.422 2003/06/27 14:45:28 petere Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -111,6 +111,7 @@ static void doNegateFloat(Value *v);
 	Node				*node;
 	Value				*value;
 	ColumnRef			*columnref;
+	ObjectType			objtype;
 
 	TypeName			*typnam;
 	DefElem				*defelt;
@@ -250,8 +251,8 @@ static void doNegateFloat(Value *v);
 
 %type <boolean> copy_from opt_hold
 
-%type <ival>	reindex_type drop_type fetch_count
-				opt_column event comment_type cursor_options
+%type <ival>	fetch_count	opt_column event cursor_options
+%type <objtype>	reindex_type drop_type comment_type
 
 %type <node>	fetch_direction select_limit_value select_offset_value
 
@@ -2227,7 +2228,7 @@ DropTrigStmt:
 					n->relation = $5;
 					n->property = $3;
 					n->behavior = $6;
-					n->removeType = DROP_TRIGGER;
+					n->removeType = OBJECT_TRIGGER;
 					$$ = (Node *) n;
 				}
 		;
@@ -2265,7 +2266,7 @@ DropAssertStmt:
 					n->relation = NULL;
 					n->property = $3;
 					n->behavior = $4;
-					n->removeType = DROP_TRIGGER; /* XXX */
+					n->removeType = OBJECT_TRIGGER; /* XXX */
 					elog(ERROR, "DROP ASSERTION is not yet supported");
 					$$ = (Node *) n;
 				}
@@ -2283,7 +2284,7 @@ DefineStmt:
 			CREATE AGGREGATE func_name definition
 				{
 					DefineStmt *n = makeNode(DefineStmt);
-					n->kind = DEFINE_STMT_AGGREGATE;
+					n->kind = OBJECT_AGGREGATE;
 					n->defnames = $3;
 					n->definition = $4;
 					$$ = (Node *)n;
@@ -2291,7 +2292,7 @@ DefineStmt:
 			| CREATE OPERATOR any_operator definition
 				{
 					DefineStmt *n = makeNode(DefineStmt);
-					n->kind = DEFINE_STMT_OPERATOR;
+					n->kind = OBJECT_OPERATOR;
 					n->defnames = $3;
 					n->definition = $4;
 					$$ = (Node *)n;
@@ -2299,7 +2300,7 @@ DefineStmt:
 			| CREATE TYPE_P any_name definition
 				{
 					DefineStmt *n = makeNode(DefineStmt);
-					n->kind = DEFINE_STMT_TYPE;
+					n->kind = OBJECT_TYPE;
 					n->defnames = $3;
 					n->definition = $4;
 					$$ = (Node *)n;
@@ -2469,14 +2470,14 @@ DropStmt:	DROP drop_type any_name_list opt_drop_behavior
 				}
 		;
 
-drop_type:	TABLE									{ $$ = DROP_TABLE; }
-			| SEQUENCE								{ $$ = DROP_SEQUENCE; }
-			| VIEW									{ $$ = DROP_VIEW; }
-			| INDEX									{ $$ = DROP_INDEX; }
-			| TYPE_P								{ $$ = DROP_TYPE; }
-			| DOMAIN_P								{ $$ = DROP_DOMAIN; }
-			| CONVERSION_P							{ $$ = DROP_CONVERSION; }
-			| SCHEMA								{ $$ = DROP_SCHEMA; }
+drop_type:	TABLE									{ $$ = OBJECT_TABLE; }
+			| SEQUENCE								{ $$ = OBJECT_SEQUENCE; }
+			| VIEW									{ $$ = OBJECT_VIEW; }
+			| INDEX									{ $$ = OBJECT_INDEX; }
+			| TYPE_P								{ $$ = OBJECT_TYPE; }
+			| DOMAIN_P								{ $$ = OBJECT_DOMAIN; }
+			| CONVERSION_P							{ $$ = OBJECT_CONVERSION; }
+			| SCHEMA								{ $$ = OBJECT_SCHEMA; }
 		;
 
 any_name_list:
@@ -2531,7 +2532,7 @@ CommentStmt:
 			IS comment_text
 				{
 					CommentStmt *n = makeNode(CommentStmt);
-					n->objtype = COMMENT_ON_AGGREGATE;
+					n->objtype = OBJECT_AGGREGATE;
 					n->objname = $4;
 					n->objargs = makeList1($6);
 					n->comment = $9;
@@ -2540,7 +2541,7 @@ CommentStmt:
 			| COMMENT ON FUNCTION func_name func_args IS comment_text
 				{
 					CommentStmt *n = makeNode(CommentStmt);
-					n->objtype = COMMENT_ON_FUNCTION;
+					n->objtype = OBJECT_FUNCTION;
 					n->objname = $4;
 					n->objargs = $5;
 					n->comment = $7;
@@ -2550,7 +2551,7 @@ CommentStmt:
 			IS comment_text
 				{
 					CommentStmt *n = makeNode(CommentStmt);
-					n->objtype = COMMENT_ON_OPERATOR;
+					n->objtype = OBJECT_OPERATOR;
 					n->objname = $4;
 					n->objargs = $6;
 					n->comment = $9;
@@ -2559,7 +2560,7 @@ CommentStmt:
 			| COMMENT ON CONSTRAINT name ON any_name IS comment_text
 				{
 					CommentStmt *n = makeNode(CommentStmt);
-					n->objtype = COMMENT_ON_CONSTRAINT;
+					n->objtype = OBJECT_CONSTRAINT;
 					n->objname = lappend($6, makeString($4));
 					n->objargs = NIL;
 					n->comment = $8;
@@ -2568,7 +2569,7 @@ CommentStmt:
 			| COMMENT ON RULE name ON any_name IS comment_text
 				{
 					CommentStmt *n = makeNode(CommentStmt);
-					n->objtype = COMMENT_ON_RULE;
+					n->objtype = OBJECT_RULE;
 					n->objname = lappend($6, makeString($4));
 					n->objargs = NIL;
 					n->comment = $8;
@@ -2578,7 +2579,7 @@ CommentStmt:
 				{
 					/* Obsolete syntax supported for awhile for compatibility */
 					CommentStmt *n = makeNode(CommentStmt);
-					n->objtype = COMMENT_ON_RULE;
+					n->objtype = OBJECT_RULE;
 					n->objname = makeList1(makeString($4));
 					n->objargs = NIL;
 					n->comment = $6;
@@ -2587,7 +2588,7 @@ CommentStmt:
 			| COMMENT ON TRIGGER name ON any_name IS comment_text
 				{
 					CommentStmt *n = makeNode(CommentStmt);
-					n->objtype = COMMENT_ON_TRIGGER;
+					n->objtype = OBJECT_TRIGGER;
 					n->objname = lappend($6, makeString($4));
 					n->objargs = NIL;
 					n->comment = $8;
@@ -2596,15 +2597,15 @@ CommentStmt:
 		;
 
 comment_type:
-			COLUMN								{ $$ = COMMENT_ON_COLUMN; }
-			| DATABASE							{ $$ = COMMENT_ON_DATABASE; }
-			| SCHEMA							{ $$ = COMMENT_ON_SCHEMA; }
-			| INDEX								{ $$ = COMMENT_ON_INDEX; }
-			| SEQUENCE							{ $$ = COMMENT_ON_SEQUENCE; }
-			| TABLE								{ $$ = COMMENT_ON_TABLE; }
-			| DOMAIN_P							{ $$ = COMMENT_ON_TYPE; }
-			| TYPE_P							{ $$ = COMMENT_ON_TYPE; }
-			| VIEW								{ $$ = COMMENT_ON_VIEW; }
+			COLUMN								{ $$ = OBJECT_COLUMN; }
+			| DATABASE							{ $$ = OBJECT_DATABASE; }
+			| SCHEMA							{ $$ = OBJECT_SCHEMA; }
+			| INDEX								{ $$ = OBJECT_INDEX; }
+			| SEQUENCE							{ $$ = OBJECT_SEQUENCE; }
+			| TABLE								{ $$ = OBJECT_TABLE; }
+			| DOMAIN_P							{ $$ = OBJECT_TYPE; }
+			| TYPE_P							{ $$ = OBJECT_TYPE; }
+			| VIEW								{ $$ = OBJECT_VIEW; }
 		;
 
 comment_text:
@@ -3317,7 +3318,7 @@ ReindexStmt:
 			| REINDEX DATABASE name opt_force
 				{
 					ReindexStmt *n = makeNode(ReindexStmt);
-					n->kind = REINDEX_DATABASE;
+					n->kind = OBJECT_DATABASE;
 					n->name = $3;
 					n->relation = NULL;
 					n->force = $4;
@@ -3326,8 +3327,8 @@ ReindexStmt:
 		;
 
 reindex_type:
-			INDEX									{ $$ = REINDEX_INDEX; }
-			| TABLE									{ $$ = REINDEX_TABLE; }
+			INDEX									{ $$ = OBJECT_INDEX; }
+			| TABLE									{ $$ = OBJECT_TABLE; }
 		;
 
 opt_force:	FORCE									{  $$ = TRUE; }
@@ -3337,31 +3338,104 @@ opt_force:	FORCE									{  $$ = TRUE; }
 
 /*****************************************************************************
  *
- *		QUERY:
- *				rename <attrname1> in <relname> [*] to <attrname2>
- *				rename <relname1> to <relname2>
+ * ALTER THING name RENAME TO newname
  *
  *****************************************************************************/
 
-RenameStmt: ALTER TABLE relation_expr RENAME opt_column opt_name TO name
+RenameStmt: ALTER AGGREGATE func_name '(' aggr_argtype ')' RENAME TO name
+				{
+					RenameStmt *n = makeNode(RenameStmt);
+					n->renameType = OBJECT_AGGREGATE;
+					n->object = $3;
+					n->objarg = makeList1($5);
+					n->newname = $9;
+					$$ = (Node *)n;
+				}
+			| ALTER CONVERSION_P any_name RENAME TO name
+				{
+					RenameStmt *n = makeNode(RenameStmt);
+					n->renameType = OBJECT_CONVERSION;
+					n->object = $3;
+					n->newname = $6;
+					$$ = (Node *)n;
+				}
+			| ALTER DATABASE database_name RENAME TO database_name
+				{
+					RenameStmt *n = makeNode(RenameStmt);
+					n->renameType = OBJECT_DATABASE;
+					n->subname = $3;
+					n->newname = $6;
+					$$ = (Node *)n;
+				}
+			| ALTER FUNCTION func_name func_args RENAME TO name
+				{
+					RenameStmt *n = makeNode(RenameStmt);
+					n->renameType = OBJECT_FUNCTION;
+					n->object = $3;
+					n->objarg = $4;
+					n->newname = $7;
+					$$ = (Node *)n;
+				}
+			| ALTER GROUP_P UserId RENAME TO UserId
+				{
+					RenameStmt *n = makeNode(RenameStmt);
+					n->renameType = OBJECT_GROUP;
+					n->subname = $3;
+					n->newname = $6;
+					$$ = (Node *)n;
+				}
+			| ALTER LANGUAGE name RENAME TO name
+				{
+					RenameStmt *n = makeNode(RenameStmt);
+					n->renameType = OBJECT_LANGUAGE;
+					n->subname = $3;
+					n->newname = $6;
+					$$ = (Node *)n;
+				}
+			| ALTER OPERATOR CLASS any_name USING access_method RENAME TO name
+				{
+					RenameStmt *n = makeNode(RenameStmt);
+					n->renameType = OBJECT_OPCLASS;
+					n->object = $4;
+					n->subname = $6;
+					n->newname = $9;
+					$$ = (Node *)n;
+				}
+			| ALTER SCHEMA name RENAME TO name
+				{
+					RenameStmt *n = makeNode(RenameStmt);
+					n->renameType = OBJECT_SCHEMA;
+					n->subname = $3;
+					n->newname = $6;
+					$$ = (Node *)n;
+				}
+			| ALTER TABLE relation_expr RENAME opt_column opt_name TO name
 				{
 					RenameStmt *n = makeNode(RenameStmt);
 					n->relation = $3;
-					n->oldname = $6;
+					n->subname = $6;
 					n->newname = $8;
 					if ($6 == NULL)
-						n->renameType = RENAME_TABLE;
+						n->renameType = OBJECT_TABLE;
 					else
-						n->renameType = RENAME_COLUMN;
+						n->renameType = OBJECT_COLUMN;
 					$$ = (Node *)n;
 				}
 			| ALTER TRIGGER name ON relation_expr RENAME TO name
 				{
 					RenameStmt *n = makeNode(RenameStmt);
 					n->relation = $5;
-					n->oldname = $3;
+					n->subname = $3;
 					n->newname = $8;
-					n->renameType = RENAME_TRIGGER;
+					n->renameType = OBJECT_TRIGGER;
+					$$ = (Node *)n;
+				}
+			| ALTER USER UserId RENAME TO UserId
+				{
+					RenameStmt *n = makeNode(RenameStmt);
+					n->renameType = OBJECT_USER;
+					n->subname = $3;
+					n->newname = $6;
 					$$ = (Node *)n;
 				}
 		;
@@ -3454,7 +3528,7 @@ DropRuleStmt:
 					n->relation = $5;
 					n->property = $3;
 					n->behavior = $6;
-					n->removeType = DROP_RULE;
+					n->removeType = OBJECT_RULE;
 					$$ = (Node *) n;
 				}
 		;

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.121 2003/05/14 03:26:02 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.122 2003/06/27 14:45:30 petere Exp $
  *
  *
  *-------------------------------------------------------------------------
@@ -228,13 +228,11 @@ InitPostgres(const char *dbname, const char *username)
 	bool		bootstrap = IsBootstrapProcessingMode();
 
 	/*
-	 * Set up the global variables holding database name, id, and path.
+	 * Set up the global variables holding database id and path.
 	 *
 	 * We take a shortcut in the bootstrap case, otherwise we have to look up
 	 * the db name in pg_database.
 	 */
-	SetDatabaseName(dbname);
-
 	if (bootstrap)
 	{
 		MyDatabaseId = TemplateDbOid;

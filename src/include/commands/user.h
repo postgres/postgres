@@ -4,7 +4,7 @@
  *	  Commands for manipulating users and groups.
  *
  *
- * $Id: user.h,v 1.20 2002/10/21 19:46:45 tgl Exp $
+ * $Id: user.h,v 1.21 2003/06/27 14:45:31 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,10 +22,12 @@ extern void CreateUser(CreateUserStmt *stmt);
 extern void AlterUser(AlterUserStmt *stmt);
 extern void AlterUserSet(AlterUserSetStmt *stmt);
 extern void DropUser(DropUserStmt *stmt);
+extern void RenameUser(const char *oldname, const char *newname);
 
 extern void CreateGroup(CreateGroupStmt *stmt);
 extern void AlterGroup(AlterGroupStmt *stmt, const char *tag);
 extern void DropGroup(DropGroupStmt *stmt);
+extern void RenameGroup(const char *oldname, const char *newname);
 
 extern Datum update_pg_pwd_and_pg_group(PG_FUNCTION_ARGS);
 

@@ -1,0 +1,107 @@
+<!--
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_language.sgml,v 1.1 2003/06/27 14:45:25 petere Exp $
+PostgreSQL documentation
+-->
+
+<refentry id="SQL-ALTERLANGUAGE">
+ <refmeta>
+  <refentrytitle id="SQL-ALTERLANGUAGE-title">ALTER LANGUAGE</refentrytitle>
+  <refmiscinfo>SQL - Language Statements</refmiscinfo>
+ </refmeta>
+
+ <refnamediv>
+  <refname>ALTER LANGUAGE</refname>
+  <refpurpose>change the definition of a procedural language</refpurpose>
+ </refnamediv>
+
+ <refsynopsisdiv>
+<synopsis>
+ALTER LANGUAGE <replaceable>name</replaceable> RENAME TO <replaceable>newname</replaceable>
+</synopsis>
+ </refsynopsisdiv>
+
+ <refsect1>
+  <title>Description</title>
+
+  <para>
+   <command>ALTER LANGUAGE</command> changes the definition of a
+   language.  The only functionality is to rename the language.  Only
+   a superuser can rename languages.
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>Parameter</title>
+
+  <variablelist>
+   <varlistentry>
+    <term><replaceable>name</replaceable></term>
+    <listitem>
+     <para>
+      Name of a language
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable>newname</replaceable></term>
+    <listitem>
+     <para>
+      The new name of the language
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+ </refsect1>
+
+ <refsect1>
+  <title>Diagnostics</title>
+
+  <variablelist>
+   <varlistentry>
+    <term><computeroutput>ALTER LANGUAGE</computeroutput></term>
+    <listitem>
+     <para>
+      Message returned if the alteration was successful.
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+ </refsect1>
+
+ <refsect1>
+  <title>Compatibility</title>
+    
+  <para>
+   There is no <command>ALTER LANGUAGE</command> statement in the SQL
+   standard.
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>See Also</title>
+
+  <simplelist type="inline">
+   <member><xref linkend="sql-createlanguage" endterm="sql-createlanguage-title"></member>
+   <member><xref linkend="sql-droplanguage" endterm="sql-droplanguage-title"></member>
+  </simplelist>
+ </refsect1>
+
+</refentry>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-omittag:nil
+sgml-shorttag:t
+sgml-minimize-attributes:nil
+sgml-always-quote-attributes:t
+sgml-indent-step:1
+sgml-indent-data:t
+sgml-parent-document:nil
+sgml-default-dtd-file:"../reference.ced"
+sgml-exposed-tags:nil
+sgml-local-catalogs:"/usr/lib/sgml/catalog"
+sgml-local-ecat-files:nil
+End:
+-->

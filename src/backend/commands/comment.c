@@ -7,7 +7,7 @@
  * Copyright (c) 1996-2001, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/comment.c,v 1.62 2003/03/10 22:28:18 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/comment.c,v 1.63 2003/06/27 14:45:27 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -71,40 +71,40 @@ CommentObject(CommentStmt *stmt)
 {
 	switch (stmt->objtype)
 	{
-		case COMMENT_ON_INDEX:
-		case COMMENT_ON_SEQUENCE:
-		case COMMENT_ON_TABLE:
-		case COMMENT_ON_VIEW:
+		case OBJECT_INDEX:
+		case OBJECT_SEQUENCE:
+		case OBJECT_TABLE:
+		case OBJECT_VIEW:
 			CommentRelation(stmt->objtype, stmt->objname, stmt->comment);
 			break;
-		case COMMENT_ON_COLUMN:
+		case OBJECT_COLUMN:
 			CommentAttribute(stmt->objname, stmt->comment);
 			break;
-		case COMMENT_ON_DATABASE:
+		case OBJECT_DATABASE:
 			CommentDatabase(stmt->objname, stmt->comment);
 			break;
-		case COMMENT_ON_RULE:
+		case OBJECT_RULE:
 			CommentRule(stmt->objname, stmt->comment);
 			break;
-		case COMMENT_ON_TYPE:
+		case OBJECT_TYPE:
 			CommentType(stmt->objname, stmt->comment);
 			break;
-		case COMMENT_ON_AGGREGATE:
+		case OBJECT_AGGREGATE:
 			CommentAggregate(stmt->objname, stmt->objargs, stmt->comment);
 			break;
-		case COMMENT_ON_FUNCTION:
+		case OBJECT_FUNCTION:
 			CommentProc(stmt->objname, stmt->objargs, stmt->comment);
 			break;
-		case COMMENT_ON_OPERATOR:
+		case OBJECT_OPERATOR:
 			CommentOperator(stmt->objname, stmt->objargs, stmt->comment);
 			break;
-		case COMMENT_ON_TRIGGER:
+		case OBJECT_TRIGGER:
 			CommentTrigger(stmt->objname, stmt->comment);
 			break;
-		case COMMENT_ON_SCHEMA:
+		case OBJECT_SCHEMA:
 			CommentNamespace(stmt->objname, stmt->comment);
 			break;
-		case COMMENT_ON_CONSTRAINT:
+		case OBJECT_CONSTRAINT:
 			CommentConstraint(stmt->objname, stmt->comment);
 			break;
 		default:
@@ -301,22 +301,22 @@ CommentRelation(int objtype, List *relname, char *comment)
 
 	switch (objtype)
 	{
-		case COMMENT_ON_INDEX:
+		case OBJECT_INDEX:
 			if (relation->rd_rel->relkind != RELKIND_INDEX)
 				elog(ERROR, "relation \"%s\" is not an index",
 					 RelationGetRelationName(relation));
 			break;
-		case COMMENT_ON_SEQUENCE:
+		case OBJECT_SEQUENCE:
 			if (relation->rd_rel->relkind != RELKIND_SEQUENCE)
 				elog(ERROR, "relation \"%s\" is not a sequence",
 					 RelationGetRelationName(relation));
 			break;
-		case COMMENT_ON_TABLE:
+		case OBJECT_TABLE:
 			if (relation->rd_rel->relkind != RELKIND_RELATION)
 				elog(ERROR, "relation \"%s\" is not a table",
 					 RelationGetRelationName(relation));
 			break;
-		case COMMENT_ON_VIEW:
+		case OBJECT_VIEW:
 			if (relation->rd_rel->relkind != RELKIND_VIEW)
 				elog(ERROR, "relation \"%s\" is not a view",
 					 RelationGetRelationName(relation));
@@ -410,7 +410,7 @@ CommentDatabase(List *qualname, char *comment)
 
 	/* Allow if the user matches the database dba or is a superuser */
 
-	if (!(superuser() || is_dbadmin(oid)))
+	if (!pg_database_ownercheck(oid, GetUserId()))
 		elog(ERROR, "you are not permitted to comment on database \"%s\"",
 			 database);
 

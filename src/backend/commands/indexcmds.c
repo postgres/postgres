@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.100 2003/05/28 16:03:56 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.101 2003/06/27 14:45:27 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,6 +24,7 @@
 #include "catalog/namespace.h"
 #include "catalog/pg_opclass.h"
 #include "catalog/pg_proc.h"
+#include "commands/dbcommands.h"
 #include "commands/defrem.h"
 #include "commands/tablecmds.h"
 #include "executor/executor.h"
@@ -644,10 +645,10 @@ ReindexDatabase(const char *dbname, bool force, bool all)
 
 	AssertArg(dbname);
 
-	if (strcmp(dbname, DatabaseName) != 0)
+	if (strcmp(dbname, get_database_name(MyDatabaseId)) != 0)
 		elog(ERROR, "REINDEX DATABASE: Can be executed only on the currently open database.");
 
-	if (!(superuser() || is_dbadmin(MyDatabaseId)))
+	if (!pg_database_ownercheck(MyDatabaseId, GetUserId()))
 		elog(ERROR, "REINDEX DATABASE: Permission denied.");
 
 	if (!allowSystemTableMods)

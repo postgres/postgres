@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.200 2003/05/06 21:51:41 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.201 2003/06/27 14:45:30 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,6 +20,7 @@
 #include "catalog/catalog.h"
 #include "catalog/namespace.h"
 #include "catalog/pg_shadow.h"
+#include "commands/alter.h"
 #include "commands/async.h"
 #include "commands/cluster.h"
 #include "commands/comment.h"
@@ -362,56 +363,51 @@ ProcessUtility(Node *parsetree,
 
 					switch (stmt->removeType)
 					{
-						case DROP_TABLE:
+						case OBJECT_TABLE:
 							rel = makeRangeVarFromNameList(names);
 							CheckDropPermissions(rel, RELKIND_RELATION);
 							RemoveRelation(rel, stmt->behavior);
 							break;
 
-						case DROP_SEQUENCE:
+						case OBJECT_SEQUENCE:
 							rel = makeRangeVarFromNameList(names);
 							CheckDropPermissions(rel, RELKIND_SEQUENCE);
 							RemoveRelation(rel, stmt->behavior);
 							break;
 
-						case DROP_VIEW:
+						case OBJECT_VIEW:
 							rel = makeRangeVarFromNameList(names);
 							CheckDropPermissions(rel, RELKIND_VIEW);
 							RemoveView(rel, stmt->behavior);
 							break;
 
-						case DROP_INDEX:
+						case OBJECT_INDEX:
 							rel = makeRangeVarFromNameList(names);
 							CheckDropPermissions(rel, RELKIND_INDEX);
 							RemoveIndex(rel, stmt->behavior);
 							break;
 
-						case DROP_TYPE:
+						case OBJECT_TYPE:
 							/* RemoveType does its own permissions checks */
 							RemoveType(names, stmt->behavior);
 							break;
 
-						case DROP_DOMAIN:
-
-							/*
-							 * RemoveDomain does its own permissions
-							 * checks
-							 */
+						case OBJECT_DOMAIN:
+							/* RemoveDomain does its own permissions checks */
 							RemoveDomain(names, stmt->behavior);
 							break;
 
-						case DROP_CONVERSION:
+						case OBJECT_CONVERSION:
 							DropConversionCommand(names, stmt->behavior);
 							break;
 
-						case DROP_SCHEMA:
-
-							/*
-							 * RemoveSchema does its own permissions
-							 * checks
-							 */
+						case OBJECT_SCHEMA:
+							/* RemoveSchema does its own permissions checks */
 							RemoveSchema(names, stmt->behavior);
 							break;
+
+						default:
+							elog(ERROR, "invalid object type for DropStmt: %d", stmt->removeType);
 					}
 
 					/*
@@ -454,57 +450,7 @@ ProcessUtility(Node *parsetree,
 			 * schema
 			 */
 		case T_RenameStmt:
-			{
-				RenameStmt *stmt = (RenameStmt *) parsetree;
-				Oid			relid;
-
-				CheckOwnership(stmt->relation, true);
-
-				relid = RangeVarGetRelid(stmt->relation, false);
-
-				switch (stmt->renameType)
-				{
-					case RENAME_TABLE:
-						{
-							/*
-							 * RENAME TABLE requires that we (still) hold
-							 * CREATE rights on the containing namespace,
-							 * as well as ownership of the table.
-							 */
-							Oid			namespaceId = get_rel_namespace(relid);
-							AclResult	aclresult;
-
-							aclresult = pg_namespace_aclcheck(namespaceId,
-															  GetUserId(),
-															  ACL_CREATE);
-							if (aclresult != ACLCHECK_OK)
-								aclcheck_error(aclresult,
-										get_namespace_name(namespaceId));
-
-							renamerel(relid, stmt->newname);
-							break;
-						}
-					case RENAME_COLUMN:
-						renameatt(relid,
-								  stmt->oldname,		/* old att name */
-								  stmt->newname,		/* new att name */
-							  interpretInhOption(stmt->relation->inhOpt),		/* recursive? */
-								  false);		/* recursing already? */
-						break;
-					case RENAME_TRIGGER:
-						renametrig(relid,
-								   stmt->oldname,		/* old att name */
-								   stmt->newname);		/* new att name */
-						break;
-					case RENAME_RULE:
-						elog(ERROR, "ProcessUtility: Invalid type for RENAME: %d",
-							 stmt->renameType);
-						break;
-					default:
-						elog(ERROR, "ProcessUtility: Invalid type for RENAME: %d",
-							 stmt->renameType);
-				}
-			}
+			ExecRenameStmt((RenameStmt *) parsetree);
 			break;
 
 			/* various Alter Table forms */
@@ -694,15 +640,17 @@ ProcessUtility(Node *parsetree,
 
 				switch (stmt->kind)
 				{
-					case DEFINE_STMT_AGGREGATE:
+					case OBJECT_AGGREGATE:
 						DefineAggregate(stmt->defnames, stmt->definition);
 						break;
-					case DEFINE_STMT_OPERATOR:
+					case OBJECT_OPERATOR:
 						DefineOperator(stmt->defnames, stmt->definition);
 						break;
-					case DEFINE_STMT_TYPE:
+					case OBJECT_TYPE:
 						DefineType(stmt->defnames, stmt->definition);
 						break;
+					default:
+						elog(ERROR, "invalid object type for DefineStmt: %d", stmt->kind);
 				}
 			}
 			break;
@@ -906,16 +854,18 @@ ProcessUtility(Node *parsetree,
 
 				switch (stmt->removeType)
 				{
-					case DROP_RULE:
+					case OBJECT_RULE:
 						/* RemoveRewriteRule checks permissions */
 						RemoveRewriteRule(relId, stmt->property,
 										  stmt->behavior);
 						break;
-					case DROP_TRIGGER:
+					case OBJECT_TRIGGER:
 						/* DropTrigger checks permissions */
 						DropTrigger(relId, stmt->property,
 									stmt->behavior);
 						break;
+					default:
+						elog(ERROR, "invalid object type for DropPropertyStmt: %d", stmt->removeType);
 				}
 			}
 			break;
@@ -986,17 +936,19 @@ ProcessUtility(Node *parsetree,
 
 				switch (stmt->kind)
 				{
-					case REINDEX_INDEX:
+					case OBJECT_INDEX:
 						CheckOwnership(stmt->relation, false);
 						ReindexIndex(stmt->relation, stmt->force);
 						break;
-					case REINDEX_TABLE:
+					case OBJECT_TABLE:
 						CheckOwnership(stmt->relation, false);
 						ReindexTable(stmt->relation, stmt->force);
 						break;
-					case REINDEX_DATABASE:
+					case OBJECT_DATABASE:
 						ReindexDatabase(stmt->name, stmt->force, false);
 						break;
+					default:
+						elog(ERROR, "invalid object type for ReindexStmt: %d", stmt->kind);
 				}
 				break;
 			}
@@ -1238,28 +1190,28 @@ CreateCommandTag(Node *parsetree)
 		case T_DropStmt:
 			switch (((DropStmt *) parsetree)->removeType)
 			{
-				case DROP_TABLE:
+				case OBJECT_TABLE:
 					tag = "DROP TABLE";
 					break;
-				case DROP_SEQUENCE:
+				case OBJECT_SEQUENCE:
 					tag = "DROP SEQUENCE";
 					break;
-				case DROP_VIEW:
+				case OBJECT_VIEW:
 					tag = "DROP VIEW";
 					break;
-				case DROP_INDEX:
+				case OBJECT_INDEX:
 					tag = "DROP INDEX";
 					break;
-				case DROP_TYPE:
+				case OBJECT_TYPE:
 					tag = "DROP TYPE";
 					break;
-				case DROP_DOMAIN:
+				case OBJECT_DOMAIN:
 					tag = "DROP DOMAIN";
 					break;
-				case DROP_CONVERSION:
+				case OBJECT_CONVERSION:
 					tag = "DROP CONVERSION";
 					break;
-				case DROP_SCHEMA:
+				case OBJECT_SCHEMA:
 					tag = "DROP SCHEMA";
 					break;
 				default:
@@ -1280,10 +1232,41 @@ CreateCommandTag(Node *parsetree)
 			break;
 
 		case T_RenameStmt:
-			if (((RenameStmt *) parsetree)->renameType == RENAME_TRIGGER)
-				tag = "ALTER TRIGGER";
-			else
-				tag = "ALTER TABLE";
+			switch (((RenameStmt *) parsetree)->renameType)
+			{
+				case OBJECT_AGGREGATE:
+					tag = "ALTER AGGREGATE";
+					break;
+				case OBJECT_CONVERSION:
+					tag = "ALTER CONVERSION";
+					break;
+				case OBJECT_DATABASE:
+					tag = "ALTER DATABASE";
+					break;
+				case OBJECT_FUNCTION:
+					tag = "ALTER FUNCTION";
+					break;
+				case OBJECT_GROUP:
+					tag = "ALTER GROUP";
+					break;
+				case OBJECT_LANGUAGE:
+					tag = "ALTER LANGUAGE";
+					break;
+				case OBJECT_OPCLASS:
+					tag = "ALTER OPERATOR CLASS";
+					break;
+				case OBJECT_SCHEMA:
+					tag = "ALTER SCHEMA";
+					break;
+				case OBJECT_TRIGGER:
+					tag = "ALTER TRIGGER";
+					break;
+				case OBJECT_USER:
+					tag = "ALTER USER";
+					break;
+				default:
+					tag = "ALTER TABLE";
+			}
 			break;
 
 		case T_AlterTableStmt:
@@ -1305,13 +1288,13 @@ CreateCommandTag(Node *parsetree)
 		case T_DefineStmt:
 			switch (((DefineStmt *) parsetree)->kind)
 			{
-				case DEFINE_STMT_AGGREGATE:
+				case OBJECT_AGGREGATE:
 					tag = "CREATE AGGREGATE";
 					break;
-				case DEFINE_STMT_OPERATOR:
+				case OBJECT_OPERATOR:
 					tag = "CREATE OPERATOR";
 					break;
-				case DEFINE_STMT_TYPE:
+				case OBJECT_TYPE:
 					tag = "CREATE TYPE";
 					break;
 				default:
@@ -1421,10 +1404,10 @@ CreateCommandTag(Node *parsetree)
 		case T_DropPropertyStmt:
 			switch (((DropPropertyStmt *) parsetree)->removeType)
 			{
-				case DROP_TRIGGER:
+				case OBJECT_TRIGGER:
 					tag = "DROP TRIGGER";
 					break;
-				case DROP_RULE:
+				case OBJECT_RULE:
 					tag = "DROP RULE";
 					break;
 				default:

@@ -1,45 +1,20 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/allfiles.sgml,v 1.53 2003/03/20 07:02:07 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/allfiles.sgml,v 1.54 2003/06/27 14:45:25 petere Exp $
 PostgreSQL documentation
 Complete list of usable sgml source files in this directory.
 -->
 
-<!-- these will go into the "operators" reference chapter -->
-<!entity all                system "all.sgml">
-<!entity any                system "any.sgml">
-<!entity between            system "between.sgml">
-<!entity in                 system "in.sgml">
-<!entity like               system "like.sgml">
-
-<!-- these will go into the "functions" reference chapter -->
-<!entity avg                system "avg.sgml">
-<!entity cast               system "cast.sgml">
-<!entity charLength         system "char_length.sgml">
-<!entity count              system "count.sgml">
-<!entity currentDate        system "current_date.sgml">
-<!entity currentTime        system "current_time.sgml">
-<!entity currentTimestamp   system "current_timestamp.sgml">
-<!entity currentUser        system "current_user.sgml">
-<!entity exists             system "exists.sgml">
-<!entity extract            system "extract.sgml">
-<!entity initcap            system "initcap.sgml">
-<!entity lower              system "lower.sgml">
-<!entity lpad               system "lpad.sgml">
-<!entity max                system "max.sgml">
-<!entity min                system "min.sgml">
-<!entity position           system "position.sgml">
-<!entity rpad               system "rpad.sgml">
-<!entity substring          system "substring.sgml">
-<!entity sum                system "sum.sgml">
-<!entity translate          system "translate.sgml">
-<!entity trim               system "trim.sgml">
-<!entity upper              system "upper.sgml">
-
 <!-- SQL commands -->
 <!entity abort              system "abort.sgml">
+<!entity alterAggregate     system "alter_aggregate.sgml">
+<!entity alterConversion    system "alter_conversion.sgml">
 <!entity alterDatabase      system "alter_database.sgml">
 <!entity alterDomain        system "alter_domain.sgml">
+<!entity alterFunction      system "alter_function.sgml">
 <!entity alterGroup         system "alter_group.sgml">
+<!entity alterLanguage      system "alter_language.sgml">
+<!entity alterOperatorClass system "alter_opclass.sgml">
+<!entity alterSchema        system "alter_schema.sgml">
 <!entity alterSequence      system "alter_sequence.sgml">
 <!entity alterTable         system "alter_table.sgml">
 <!entity alterTrigger       system "alter_trigger.sgml">

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_schema.sgml,v 1.2 2003/05/04 02:23:16 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_schema.sgml,v 1.3 2003/06/27 14:45:26 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -120,6 +120,7 @@ DROP SCHEMA mystuff CASCADE;
   <title>See Also</title>
 
   <simplelist type="inline">
+   <member><xref linkend="sql-alterschema" endterm="sql-alterschema-title"></member>
    <member><xref linkend="sql-createschema" endterm="sql-createschema-title"></member>
   </simplelist>
  </refsect1>

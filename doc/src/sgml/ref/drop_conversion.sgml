@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_conversion.sgml,v 1.4 2003/05/04 02:23:16 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_conversion.sgml,v 1.5 2003/06/27 14:45:26 petere Exp $ -->
 
 <refentry id="SQL-DROPCONVERSION">
  <refmeta>
@@ -79,6 +79,7 @@ DROP CONVERSION myname;
   <title>See Also</title>
 
   <simplelist type="inline">
+   <member><xref linkend="sql-alterconversion" endterm="sql-alterconversion-title"></member>
    <member><xref linkend="sql-createconversion" endterm="sql-createconversion-title"></member>
   </simplelist>
  </refsect1>

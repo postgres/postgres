@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_database.sgml,v 1.6 2003/04/15 13:25:08 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_database.sgml,v 1.7 2003/06/27 14:45:25 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -18,6 +18,8 @@ PostgreSQL documentation
 <synopsis>
 ALTER DATABASE <replaceable class="PARAMETER">name</replaceable> SET <replaceable>variable</replaceable> { TO | = } { <replaceable>value</replaceable> | DEFAULT }
 ALTER DATABASE <replaceable class="PARAMETER">name</replaceable> RESET <replaceable>variable</replaceable>
+
+ALTER DATABASE <replaceable class="PARAMETER">name</replaceable> RENAME TO <replaceable>newname</replaceable>
 </synopsis>
  </refsynopsisdiv>
 
@@ -25,19 +27,28 @@ ALTER DATABASE <replaceable class="PARAMETER">name</replaceable> RESET <replacea
   <title>Description</title>
 
   <para>
-   <command>ALTER DATABASE</command> is used to change the session
-   default of a run-time configuration variable for a
-   <productname>PostgreSQL</productname> database. Whenever a new
-   session is subsequently started in that database, the specified
-   value becomes the session default value.
-   The database-specific default
-   overrides whatever setting is present in <filename>postgresql.conf</>
-   or has been received from the <command>postmaster</command> command line.
+   <command>ALTER DATABASE</command> is used to change the attributes
+   of a database.
   </para>
 
   <para>
-   Only the database owner or a superuser can change the session defaults for a
+   The first two forms change the session default of a run-time
+   configuration variable for a <productname>PostgreSQL</productname>
+   database. Whenever a new session is subsequently started in that
+   database, the specified value becomes the session default value.
+   The database-specific default overrides whatever setting is present
+   in <filename>postgresql.conf</> or has been received from the
+   <command>postmaster</command> command line.  Only the database
+   owner or a superuser can change the session defaults for a
    database.
+  </para>
+
+  <para>
+   The third form changes the name of the database.  Only the database
+   owner can rename a database, and only if he has the
+   <literal>CREATEDB</literal> privilege.  The current database cannot
+   be renamed.  (Connect to a different database if you need to do
+   that.)
   </para>
  </refsect1>
 
@@ -76,7 +87,16 @@ ALTER DATABASE <replaceable class="PARAMETER">name</replaceable> RESET <replacea
        </para>
       </listitem>
      </varlistentry>
-    </variablelist>
+
+   <varlistentry>
+    <term><replaceable>newname</replaceable></term>
+    <listitem>
+     <para>
+      The new name of the database.
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
  </refsect1>
 
  <refsect1>

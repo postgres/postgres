@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/miscinit.c,v 1.102 2003/04/04 20:42:12 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/miscinit.c,v 1.103 2003/06/27 14:45:30 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -102,22 +102,6 @@ SetDatabasePath(const char *path)
 	{
 		DatabasePath = strdup(path);
 		AssertState(DatabasePath);
-	}
-}
-
-void
-SetDatabaseName(const char *name)
-{
-	if (DatabaseName)
-	{
-		free(DatabaseName);
-		DatabaseName = NULL;
-	}
-	/* use strdup since this is done before memory contexts are set up */
-	if (name)
-	{
-		DatabaseName = strdup(name);
-		AssertState(DatabaseName);
 	}
 }
 

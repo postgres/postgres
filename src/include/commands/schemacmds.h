@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: schemacmds.h,v 1.3 2002/09/04 20:31:42 momjian Exp $
+ * $Id: schemacmds.h,v 1.4 2003/06/27 14:45:31 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,5 +21,7 @@ extern void CreateSchemaCommand(CreateSchemaStmt *parsetree);
 
 extern void RemoveSchema(List *names, DropBehavior behavior);
 extern void RemoveSchemaById(Oid schemaOid);
+
+extern void RenameSchema(const char *oldname, const char *newname);
 
 #endif   /* SCHEMACMDS_H */

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/globals.c,v 1.71 2003/05/28 18:19:09 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/globals.c,v 1.72 2003/06/27 14:45:30 petere Exp $
  *
  * NOTES
  *	  Globals used all over the place should be declared here and not
@@ -52,9 +52,7 @@ char		pg_pathname[MAXPGPATH];		/* full path to postgres
 
 BackendId	MyBackendId;
 
-char	   *DatabaseName = NULL;
 char	   *DatabasePath = NULL;
-
 Oid			MyDatabaseId = InvalidOid;
 
 /* these are initialized for the bootstrap/standalone case: */

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_opclass.sgml,v 1.3 2003/05/04 02:23:16 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_opclass.sgml,v 1.4 2003/06/27 14:45:26 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -116,6 +116,7 @@ DROP OPERATOR CLASS widget_ops USING btree;
   <title>See Also</title>
 
   <simplelist type="inline">
+   <member><xref linkend="sql-alteropclass" endterm="sql-alteropclass-title"></member>
    <member><xref linkend="sql-createopclass" endterm="sql-createopclass-title"></member>
   </simplelist>
  </refsect1>

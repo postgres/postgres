@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: defrem.h,v 1.50 2002/12/10 16:12:52 tgl Exp $
+ * $Id: defrem.h,v 1.51 2003/06/27 14:45:31 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,6 +38,7 @@ extern void RemoveFunction(RemoveFuncStmt *stmt);
 extern void RemoveFunctionById(Oid funcOid);
 extern void SetFunctionReturnType(Oid funcOid, Oid newRetType);
 extern void SetFunctionArgType(Oid funcOid, int argIndex, Oid newArgType);
+extern void RenameFunction(List *name, List *argtypes, const char *newname);
 extern void CreateCast(CreateCastStmt *stmt);
 extern void DropCast(DropCastStmt *stmt);
 extern void DropCastById(Oid castOid);
@@ -50,12 +51,13 @@ extern void RemoveOperatorById(Oid operOid);
 /* commands/aggregatecmds.c */
 extern void DefineAggregate(List *names, List *parameters);
 extern void RemoveAggregate(RemoveAggrStmt *stmt);
+extern void RenameAggregate(List *name, TypeName *basetype, const char *newname);
 
 /* commands/opclasscmds.c */
 extern void DefineOpClass(CreateOpClassStmt *stmt);
 extern void RemoveOpClass(RemoveOpClassStmt *stmt);
 extern void RemoveOpClassById(Oid opclassOid);
-
+extern void RenameOpClass(List *name, const char *access_method, const char *newname);
 
 /* support routines in commands/define.c */
 

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: dbcommands.h,v 1.26 2002/09/05 00:43:07 tgl Exp $
+ * $Id: dbcommands.h,v 1.27 2003/06/27 14:45:31 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,9 +18,10 @@
 
 extern void createdb(const CreatedbStmt *stmt);
 extern void dropdb(const char *dbname);
+extern void RenameDatabase(const char *oldname, const char *newname);
 extern void AlterDatabaseSet(AlterDatabaseSetStmt *stmt);
 
-extern Oid	get_database_oid(const char *dbname);
-extern Oid	get_database_owner(Oid dbid);
+extern Oid get_database_oid(const char *dbname);
+extern char * get_database_name(Oid dbid);
 
 #endif   /* DBCOMMANDS_H */

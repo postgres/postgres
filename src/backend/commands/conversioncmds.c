@@ -8,14 +8,17 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/conversioncmds.c,v 1.5 2002/11/02 02:33:03 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/conversioncmds.c,v 1.6 2003/06/27 14:45:27 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
 #include "catalog/pg_conversion.h"
+#include "access/heapam.h"
 #include "catalog/catalog.h"
+#include "catalog/catname.h"
+#include "catalog/indexing.h"
 #include "catalog/namespace.h"
 #include "catalog/pg_type.h"
 #include "mb/pg_wchar.h"
@@ -23,7 +26,9 @@
 #include "miscadmin.h"
 #include "parser/parse_func.h"
 #include "utils/acl.h"
+#include "utils/builtins.h"
 #include "utils/lsyscache.h"
+#include "utils/syscache.h"
 
 
 /*
@@ -97,4 +102,59 @@ DropConversionCommand(List *name, DropBehavior behavior)
 		elog(ERROR, "conversion %s not found", NameListToString(name));
 
 	ConversionDrop(conversionOid, behavior);
+}
+
+/*
+ * Rename conversion
+ */
+void
+RenameConversion(List *name, const char *newname)
+{
+	Oid			conversionOid;
+	Oid			namespaceOid;
+	HeapTuple	tup;
+	Relation	rel;
+	AclResult	aclresult;
+
+	rel = heap_openr(ConversionRelationName, RowExclusiveLock);
+
+	conversionOid = FindConversionByName(name);
+	if (!OidIsValid(conversionOid))
+		elog(ERROR, "conversion %s not found", NameListToString(name));
+
+	tup = SearchSysCacheCopy(CONOID,
+							 ObjectIdGetDatum(conversionOid),
+							 0, 0, 0);
+	if (!HeapTupleIsValid(tup)) /* should not happen */
+		elog(ERROR, "couldn't find pg_conversion tuple for %s",
+			 NameListToString(name));
+
+	namespaceOid = ((Form_pg_conversion) GETSTRUCT(tup))->connamespace;
+
+	/* make sure the new name doesn't exist */
+	if (SearchSysCacheExists(CONNAMENSP,
+							 CStringGetDatum(newname),
+							 ObjectIdGetDatum(namespaceOid),
+							 0, 0))
+	{
+		elog(ERROR, "conversion %s already exists in schema %s",
+			 newname, get_namespace_name(namespaceOid));
+	}
+
+	/* must be owner */
+    if (!superuser() && ((Form_pg_conversion) GETSTRUCT(tup))->conowner != GetUserId())
+		aclcheck_error(ACLCHECK_NOT_OWNER, NameListToString(name));
+
+	/* must have CREATE privilege on namespace */
+	aclresult = pg_namespace_aclcheck(namespaceOid, GetUserId(), ACL_CREATE);
+	if (aclresult != ACLCHECK_OK)
+		aclcheck_error(aclresult, get_namespace_name(namespaceOid));
+
+	/* rename */
+	namestrcpy(&(((Form_pg_conversion) GETSTRUCT(tup))->conname), newname);
+	simple_heap_update(rel, &tup->t_self, tup);
+	CatalogUpdateIndexes(rel, tup);
+
+	heap_close(rel, NoLock);
+	heap_freetuple(tup);
 }

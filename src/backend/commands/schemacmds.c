@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/schemacmds.c,v 1.9 2003/05/06 20:26:26 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/schemacmds.c,v 1.10 2003/06/27 14:45:27 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,8 +18,10 @@
 #include "catalog/catalog.h"
 #include "catalog/catname.h"
 #include "catalog/dependency.h"
+#include "catalog/indexing.h"
 #include "catalog/namespace.h"
 #include "catalog/pg_namespace.h"
+#include "commands/dbcommands.h"
 #include "commands/schemacmds.h"
 #include "miscadmin.h"
 #include "parser/analyze.h"
@@ -86,7 +88,7 @@ CreateSchemaCommand(CreateSchemaStmt *stmt)
 	 */
 	aclresult = pg_database_aclcheck(MyDatabaseId, saved_userid, ACL_CREATE);
 	if (aclresult != ACLCHECK_OK)
-		aclcheck_error(aclresult, DatabaseName);
+		aclcheck_error(aclresult, get_database_name(MyDatabaseId));
 
 	if (!allowSystemTableMods && IsReservedName(schemaName))
 		elog(ERROR, "CREATE SCHEMA: Illegal schema name: \"%s\" -- pg_ is reserved for system schemas",
@@ -211,4 +213,58 @@ RemoveSchemaById(Oid schemaOid)
 	ReleaseSysCache(tup);
 
 	heap_close(relation, RowExclusiveLock);
+}
+
+
+/*
+ * Rename schema
+ */
+void
+RenameSchema(const char *oldname, const char *newname)
+{
+	HeapTuple	tup;
+	Relation	rel;
+	AclResult	aclresult;
+
+	rel = heap_openr(NamespaceRelationName, RowExclusiveLock);
+
+	tup = SearchSysCacheCopy(NAMESPACENAME,
+							 CStringGetDatum(oldname),
+							 0, 0, 0);
+	if (!HeapTupleIsValid(tup))
+		ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR_OR_ACCESS_RULE_VIOLATION),
+				 errmsg("schema \"%s\" does not exist", oldname)));
+
+	/* make sure the new name doesn't exist */
+	if (HeapTupleIsValid(
+			SearchSysCache(NAMESPACENAME,
+						   CStringGetDatum(newname),
+						   0, 0, 0)))
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR_OR_ACCESS_RULE_VIOLATION),
+				 errmsg("schema \"%s\" already exists", newname)));
+	}
+
+	/* must be owner */
+	if (!pg_namespace_ownercheck(HeapTupleGetOid(tup), GetUserId()))
+		aclcheck_error(ACLCHECK_NOT_OWNER, oldname);
+
+	/* must have CREATE privilege on database */
+	aclresult = pg_database_aclcheck(MyDatabaseId, GetUserId(), ACL_CREATE);
+	if (aclresult != ACLCHECK_OK)
+		aclcheck_error(aclresult, get_database_name(MyDatabaseId));
+
+	if (!allowSystemTableMods && IsReservedName(newname))
+		elog(ERROR, "illegal schema name: \"%s\" -- pg_ is reserved for system schemas",
+			 newname);
+
+	/* rename */
+	namestrcpy(&(((Form_pg_namespace) GETSTRUCT(tup))->nspname), newname);
+	simple_heap_update(rel, &tup->t_self, tup);
+	CatalogUpdateIndexes(rel, tup);
+
+	heap_close(rel, NoLock);
+	heap_freetuple(tup);
 }

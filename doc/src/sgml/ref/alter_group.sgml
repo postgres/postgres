@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_group.sgml,v 1.9 2003/04/15 13:25:08 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_group.sgml,v 1.10 2003/06/27 14:45:25 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -11,13 +11,15 @@ PostgreSQL documentation
 
  <refnamediv>
   <refname>ALTER GROUP</refname>
-  <refpurpose>add users to a group or remove users from a group</refpurpose>
+  <refpurpose>change a user group</refpurpose>
  </refnamediv>
 
  <refsynopsisdiv>
 <synopsis>
 ALTER GROUP <replaceable class="PARAMETER">groupname</replaceable> ADD USER <replaceable class="PARAMETER">username</replaceable> [, ... ]
 ALTER GROUP <replaceable class="PARAMETER">groupname</replaceable> DROP USER <replaceable class="PARAMETER">username</replaceable> [, ... ]
+
+ALTER GROUP <replaceable class="PARAMETER">groupname</replaceable> RENAME TO <replaceable>newname</replaceable>
 </synopsis>
  </refsynopsisdiv>
 
@@ -25,16 +27,16 @@ ALTER GROUP <replaceable class="PARAMETER">groupname</replaceable> DROP USER <re
   <title>Description</title>
 
   <para>
-   <command>ALTER GROUP</command> is used to add or remove users from a
-   group. Only database superusers can use this command.
-   Adding a user to a group does not create the user. Similarly, removing
-   a user from a group does not drop the user itself.
+   <command>ALTER GROUP</command> is used to change a user group.  The
+   first two variants add or remove users from a group. Only database
+   superusers can use this command.  Adding a user to a group does not
+   create the user. Similarly, removing a user from a group does not
+   drop the user itself.
   </para>
 
   <para>
-   Use <xref linkend="SQL-CREATEGROUP" endterm="SQL-CREATEGROUP-title">
-   to create a new group and <xref linkend="SQL-DROPGROUP"
-   endterm="SQL-DROPGROUP-title"> to remove a group.
+   The third variant changes the name of the group.  Only a database
+   superuser can rename groups.
   </para>
  </refsect1>
 
@@ -57,6 +59,15 @@ ALTER GROUP <replaceable class="PARAMETER">groupname</replaceable> DROP USER <re
      <para>
       Users which are to be added or removed from the group. The users
       must exist.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable>newname</replaceable></term>
+    <listitem>
+     <para>
+      The new name of the group.
      </para>
     </listitem>
    </varlistentry>
@@ -104,6 +115,16 @@ ALTER GROUP workers DROP USER beth;
    standard. The concept of roles is similar.
   </para>
  </refsect1>
+
+ <refsect1>
+  <title>See Also</title>
+
+  <simplelist type="inline">
+   <member><xref linkend="sql-creategroup" endterm="sql-creategroup-title"></member>
+   <member><xref linkend="sql-dropgroup" endterm="sql-dropgroup-title"></member>
+  </simplelist>
+ </refsect1>
+
 </refentry>
 
 <!-- Keep this comment at the end of the file

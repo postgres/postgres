@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/proclang.c,v 1.43 2002/09/21 18:39:25 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/proclang.c,v 1.44 2003/06/27 14:45:27 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -230,4 +230,48 @@ DropProceduralLanguageById(Oid langOid)
 	ReleaseSysCache(langTup);
 
 	heap_close(rel, RowExclusiveLock);
+}
+
+/*
+ * Rename language
+ */
+void
+RenameLanguage(const char *oldname, const char *newname)
+{
+	HeapTuple	tup;
+	Relation	rel;
+
+	rel = heap_openr(ShadowRelationName, RowExclusiveLock);
+
+	tup = SearchSysCacheCopy(LANGNAME,
+							 CStringGetDatum(oldname),
+							 0, 0, 0);
+	if (!HeapTupleIsValid(tup))
+		ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR_OR_ACCESS_RULE_VIOLATION),
+				 errmsg("language \"%s\" does not exist", oldname)));
+
+	/* make sure the new name doesn't exist */
+	if (SearchSysCacheExists(LANGNAME,
+							 CStringGetDatum(newname),
+							 0, 0, 0))
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR_OR_ACCESS_RULE_VIOLATION),
+				 errmsg("language \"%s\" already exists", newname)));
+	}
+
+	/* must be superuser */
+	if (!superuser())
+		ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR_OR_ACCESS_RULE_VIOLATION),
+				 errmsg("permission denied")));
+
+	/* rename */
+	namestrcpy(&(((Form_pg_language) GETSTRUCT(tup))->lanname), newname);
+	simple_heap_update(rel, &tup->t_self, tup);
+	CatalogUpdateIndexes(rel, tup);
+
+	heap_close(rel, NoLock);
+	heap_freetuple(tup);
 }

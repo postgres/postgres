@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_function.sgml,v 1.47 2003/04/22 10:08:08 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_function.sgml,v 1.48 2003/06/27 14:45:26 petere Exp $
 -->
 
 <refentry id="SQL-CREATEFUNCTION">
@@ -404,6 +404,7 @@ CREATE FUNCTION add(integer, integer) RETURNS integer
   <title>See Also</title>
 
   <para>
+   <xref linkend="sql-alterfunction" endterm="sql-alterfunction-title">,
    <xref linkend="sql-dropfunction" endterm="sql-dropfunction-title">,
    <xref linkend="sql-grant" endterm="sql-grant-title">,
    <xref linkend="sql-load" endterm="sql-load-title">,

@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/superuser.c,v 1.25 2002/12/05 04:04:47 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/superuser.c,v 1.26 2003/06/27 14:45:31 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -57,19 +57,4 @@ superuser_arg(AclId userid)
 		ReleaseSysCache(utup);
 	}
 	return result;
-}
-
-
-/*
- * The Postgres user running this command is the owner of the specified
- * database.
- */
-bool
-is_dbadmin(Oid dbid)
-{
-	AclId		dba;
-
-	dba = get_database_owner(dbid);
-
-	return (GetUserId() == dba);
 }

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.115 2003/05/15 17:59:17 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.116 2003/06/27 14:45:27 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,6 +20,7 @@
 #include <unistd.h>
 #include <sys/stat.h>
 
+#include "access/genam.h"
 #include "access/heapam.h"
 #include "catalog/catname.h"
 #include "catalog/catalog.h"
@@ -31,6 +32,7 @@
 #include "miscadmin.h"
 #include "storage/freespace.h"
 #include "storage/sinval.h"
+#include "utils/acl.h"
 #include "utils/array.h"
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
@@ -402,13 +404,13 @@ dropdb(const char *dbname)
 	char	   *nominal_loc;
 	char		dbpath[MAXPGPATH];
 	Relation	pgdbrel;
-	HeapScanDesc pgdbscan;
+	SysScanDesc	pgdbscan;
 	ScanKeyData key;
 	HeapTuple	tup;
 
 	AssertArg(dbname);
 
-	if (strcmp(dbname, DatabaseName) == 0)
+	if (strcmp(dbname, get_database_name(MyDatabaseId)) == 0)
 		elog(ERROR, "DROP DATABASE: cannot be executed on the currently open database");
 
 	PreventTransactionChain((void *) dbname, "DROP DATABASE");
@@ -454,9 +456,9 @@ dropdb(const char *dbname)
 	ScanKeyEntryInitialize(&key, 0, ObjectIdAttributeNumber,
 						   F_OIDEQ, ObjectIdGetDatum(db_id));
 
-	pgdbscan = heap_beginscan(pgdbrel, SnapshotNow, 1, &key);
+	pgdbscan = systable_beginscan(pgdbrel, DatabaseOidIndex, true, SnapshotNow, 1, &key);
 
-	tup = heap_getnext(pgdbscan, ForwardScanDirection);
+	tup = systable_getnext(pgdbscan);
 	if (!HeapTupleIsValid(tup))
 	{
 		/*
@@ -470,7 +472,7 @@ dropdb(const char *dbname)
 	/* Remove the database's tuple from pg_database */
 	simple_heap_delete(pgdbrel, &tup->t_self);
 
-	heap_endscan(pgdbscan);
+	systable_endscan(pgdbscan);
 
 	/*
 	 * Delete any comments associated with the database
@@ -513,6 +515,94 @@ dropdb(const char *dbname)
 }
 
 
+/*
+ * Rename database
+ */
+void
+RenameDatabase(const char *oldname, const char *newname)
+{
+	HeapTuple	tup, newtup;
+	Relation	rel;
+	SysScanDesc	scan, scan2;
+	ScanKeyData	key, key2;
+
+	/*
+	 * Obtain AccessExclusiveLock so that no new session gets started
+	 * while the rename is in progress.
+	 */
+	rel = heap_openr(DatabaseRelationName, AccessExclusiveLock);
+
+	ScanKeyEntryInitialize(&key, 0, Anum_pg_database_datname,
+						   F_NAMEEQ, NameGetDatum(oldname));
+	scan = systable_beginscan(rel, DatabaseNameIndex, true, SnapshotNow, 1, &key);
+
+	tup = systable_getnext(scan);
+	if (!HeapTupleIsValid(tup))
+		ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR_OR_ACCESS_RULE_VIOLATION),
+				 errmsg("database \"%s\" does not exist", oldname)));
+
+	/*
+	 * XXX Client applications probably store the current database
+	 * somewhere, so renaming it could cause confusion.  On the other
+	 * hand, there may not be an actual problem besides a little
+	 * confusion, so think about this and decide.
+	 */
+	if (HeapTupleGetOid(tup) == MyDatabaseId)
+		ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR_OR_ACCESS_RULE_VIOLATION),
+				 errmsg("current database may not be renamed")));
+
+	/*
+	 * Make sure the database does not have active sessions.  Might
+	 * not be necessary, but it's consistent with other database
+	 * operations.
+	 */
+	if (DatabaseHasActiveBackends(HeapTupleGetOid(tup), false))
+		elog(ERROR, "database \"%s\" is being accessed by other users", oldname);
+
+	/* make sure the new name doesn't exist */
+	ScanKeyEntryInitialize(&key2, 0, Anum_pg_database_datname,
+						   F_NAMEEQ, NameGetDatum(newname));
+	scan2 = systable_beginscan(rel, DatabaseNameIndex, true, SnapshotNow, 1, &key2);
+	if (HeapTupleIsValid(systable_getnext(scan2)))
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR_OR_ACCESS_RULE_VIOLATION),
+				 errmsg("database \"%s\" already exists", newname)));
+	}
+	systable_endscan(scan2);
+
+	/* must be owner */
+	if (!pg_database_ownercheck(HeapTupleGetOid(tup), GetUserId()))
+		aclcheck_error(ACLCHECK_NOT_OWNER, oldname);
+
+	/* must have createdb */
+	if (!have_createdb_privilege())
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR_OR_ACCESS_RULE_VIOLATION),
+				 errmsg("permission denied")));
+	}
+
+	/* rename */
+	newtup = heap_copytuple(tup);
+	namestrcpy(&(((Form_pg_database) GETSTRUCT(newtup))->datname), newname);
+	simple_heap_update(rel, &tup->t_self, newtup);
+	CatalogUpdateIndexes(rel, newtup);
+
+	systable_endscan(scan);
+	heap_close(rel, NoLock);
+
+	/*
+	 * Force dirty buffers out to disk, so that newly-connecting
+	 * backends will see the renamed database in pg_database right
+	 * away.  (They'll see an uncommitted tuple, but they don't care;
+	 * see GetRawDatabaseInfo.)
+	 */
+	BufferSync();
+}
+
 
 /*
  * ALTER DATABASE name SET ...
@@ -525,7 +615,7 @@ AlterDatabaseSet(AlterDatabaseSetStmt *stmt)
 				newtuple;
 	Relation	rel;
 	ScanKeyData scankey;
-	HeapScanDesc scan;
+	SysScanDesc	scan;
 	Datum		repl_val[Natts_pg_database];
 	char		repl_null[Natts_pg_database];
 	char		repl_repl[Natts_pg_database];
@@ -535,8 +625,8 @@ AlterDatabaseSet(AlterDatabaseSetStmt *stmt)
 	rel = heap_openr(DatabaseRelationName, RowExclusiveLock);
 	ScanKeyEntryInitialize(&scankey, 0, Anum_pg_database_datname,
 						   F_NAMEEQ, NameGetDatum(stmt->dbname));
-	scan = heap_beginscan(rel, SnapshotNow, 1, &scankey);
-	tuple = heap_getnext(scan, ForwardScanDirection);
+	scan = systable_beginscan(rel, DatabaseNameIndex, true, SnapshotNow, 1, &scankey);
+	tuple = systable_getnext(scan);
 	if (!HeapTupleIsValid(tuple))
 		elog(ERROR, "database \"%s\" does not exist", stmt->dbname);
 
@@ -583,7 +673,7 @@ AlterDatabaseSet(AlterDatabaseSetStmt *stmt)
 	/* Update indexes */
 	CatalogUpdateIndexes(rel, newtuple);
 
-	heap_endscan(scan);
+	systable_endscan(scan);
 	heap_close(rel, RowExclusiveLock);
 }
 
@@ -601,7 +691,7 @@ get_db_info(const char *name, Oid *dbIdP, int4 *ownerIdP,
 {
 	Relation	relation;
 	ScanKeyData scanKey;
-	HeapScanDesc scan;
+	SysScanDesc	scan;
 	HeapTuple	tuple;
 	bool		gottuple;
 
@@ -613,9 +703,9 @@ get_db_info(const char *name, Oid *dbIdP, int4 *ownerIdP,
 	ScanKeyEntryInitialize(&scanKey, 0, Anum_pg_database_datname,
 						   F_NAMEEQ, NameGetDatum(name));
 
-	scan = heap_beginscan(relation, SnapshotNow, 1, &scanKey);
+	scan = systable_beginscan(relation, DatabaseNameIndex, true, SnapshotNow, 1, &scanKey);
 
-	tuple = heap_getnext(scan, ForwardScanDirection);
+	tuple = systable_getnext(scan);
 
 	gottuple = HeapTupleIsValid(tuple);
 	if (gottuple)
@@ -667,7 +757,7 @@ get_db_info(const char *name, Oid *dbIdP, int4 *ownerIdP,
 		}
 	}
 
-	heap_endscan(scan);
+	systable_endscan(scan);
 	heap_close(relation, AccessShareLock);
 
 	return gottuple;
@@ -790,7 +880,7 @@ get_database_oid(const char *dbname)
 {
 	Relation	pg_database;
 	ScanKeyData entry[1];
-	HeapScanDesc scan;
+	SysScanDesc	scan;
 	HeapTuple	dbtuple;
 	Oid			oid;
 
@@ -799,9 +889,9 @@ get_database_oid(const char *dbname)
 	ScanKeyEntryInitialize(&entry[0], 0x0,
 						   Anum_pg_database_datname, F_NAMEEQ,
 						   CStringGetDatum(dbname));
-	scan = heap_beginscan(pg_database, SnapshotNow, 1, entry);
+	scan = systable_beginscan(pg_database, DatabaseNameIndex, true, SnapshotNow, 1, entry);
 
-	dbtuple = heap_getnext(scan, ForwardScanDirection);
+	dbtuple = systable_getnext(scan);
 
 	/* We assume that there can be at most one matching tuple */
 	if (HeapTupleIsValid(dbtuple))
@@ -809,45 +899,46 @@ get_database_oid(const char *dbname)
 	else
 		oid = InvalidOid;
 
-	heap_endscan(scan);
+	systable_endscan(scan);
 	heap_close(pg_database, AccessShareLock);
 
 	return oid;
 }
 
+
 /*
- * get_database_owner - given a database OID, fetch the owner's usesysid.
+ * get_database_name - given a database OID, look up the name
  *
- * Errors out if database not found.
+ * Returns InvalidOid if database name not found.
  *
  * This is not actually used in this file, but is exported for use elsewhere.
  */
-Oid
-get_database_owner(Oid dbid)
+char *
+get_database_name(Oid dbid)
 {
 	Relation	pg_database;
 	ScanKeyData entry[1];
-	HeapScanDesc scan;
+	SysScanDesc	scan;
 	HeapTuple	dbtuple;
-	int32		dba;
+	char	   *result;
 
 	/* There's no syscache for pg_database, so must look the hard way */
 	pg_database = heap_openr(DatabaseRelationName, AccessShareLock);
 	ScanKeyEntryInitialize(&entry[0], 0x0,
 						   ObjectIdAttributeNumber, F_OIDEQ,
 						   ObjectIdGetDatum(dbid));
-	scan = heap_beginscan(pg_database, SnapshotNow, 1, entry);
+	scan = systable_beginscan(pg_database, DatabaseOidIndex, true, SnapshotNow, 1, entry);
 
-	dbtuple = heap_getnext(scan, ForwardScanDirection);
+	dbtuple = systable_getnext(scan);
 
-	if (!HeapTupleIsValid(dbtuple))
-		elog(ERROR, "database %u does not exist", dbid);
+	/* We assume that there can be at most one matching tuple */
+	if (HeapTupleIsValid(dbtuple))
+		result = pstrdup(NameStr(((Form_pg_database) GETSTRUCT(dbtuple))->datname));
+	else
+		result = NULL;
 
-	dba = ((Form_pg_database) GETSTRUCT(dbtuple))->datdba;
-
-	heap_endscan(scan);
+	systable_endscan(scan);
 	heap_close(pg_database, AccessShareLock);
 
-	/* XXX some confusion about whether userids are OID or int4 ... */
-	return (Oid) dba;
+	return result;
 }

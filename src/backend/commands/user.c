@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/commands/user.c,v 1.117 2003/05/12 23:08:50 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/commands/user.c,v 1.118 2003/06/27 14:45:27 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1091,6 +1091,64 @@ DropUser(DropUserStmt *stmt)
 }
 
 
+/*
+ * Rename user
+ */
+void
+RenameUser(const char *oldname, const char *newname)
+{
+	HeapTuple	tup;
+	Relation	rel;
+
+	/* ExclusiveLock because we need to update the password file */
+	rel = heap_openr(ShadowRelationName, ExclusiveLock);
+
+	tup = SearchSysCacheCopy(SHADOWNAME,
+							 CStringGetDatum(oldname),
+							 0, 0, 0);
+	if (!HeapTupleIsValid(tup))
+		ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR_OR_ACCESS_RULE_VIOLATION),
+				 errmsg("user \"%s\" does not exist", oldname)));
+
+	/*
+	 * XXX Client applications probably store the session user
+	 * somewhere, so renaming it could cause confusion.  On the other
+	 * hand, there may not be an actual problem besides a little
+	 * confusion, so think about this and decide.
+	 */
+	if (((Form_pg_shadow) GETSTRUCT(tup))->usesysid == GetSessionUserId())
+		ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR_OR_ACCESS_RULE_VIOLATION),
+				 errmsg("session user may not be renamed")));
+
+	/* make sure the new name doesn't exist */
+	if (SearchSysCacheExists(SHADOWNAME,
+							 CStringGetDatum(newname),
+							 0, 0, 0))
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR_OR_ACCESS_RULE_VIOLATION),
+				 errmsg("user \"%s\" already exists", newname)));
+	}
+
+	/* must be superuser */
+	if (!superuser())
+		ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR_OR_ACCESS_RULE_VIOLATION),
+				 errmsg("permission denied")));
+
+	/* rename */
+	namestrcpy(&(((Form_pg_shadow) GETSTRUCT(tup))->usename), newname);
+	simple_heap_update(rel, &tup->t_self, tup);
+	CatalogUpdateIndexes(rel, tup);
+
+	heap_close(rel, NoLock);
+	heap_freetuple(tup);
+
+	user_file_update_needed = true;
+}
+
 
 /*
  * CheckPgUserAclNotNull
@@ -1564,5 +1622,53 @@ DropGroup(DropGroupStmt *stmt)
 	/*
 	 * Set flag to update flat group file at commit.
 	 */
+	group_file_update_needed = true;
+}
+
+
+/*
+ * Rename group
+ */
+void
+RenameGroup(const char *oldname, const char *newname)
+{
+	HeapTuple	tup;
+	Relation	rel;
+
+	/* ExclusiveLock because we need to update the flat group file */
+	rel = heap_openr(GroupRelationName, ExclusiveLock);
+
+	tup = SearchSysCacheCopy(GRONAME,
+							 CStringGetDatum(oldname),
+							 0, 0, 0);
+	if (!HeapTupleIsValid(tup))
+		ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR_OR_ACCESS_RULE_VIOLATION),
+				 errmsg("group \"%s\" does not exist", oldname)));
+
+	/* make sure the new name doesn't exist */
+	if (SearchSysCacheExists(GRONAME,
+							 CStringGetDatum(newname),
+							 0, 0, 0))
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR_OR_ACCESS_RULE_VIOLATION),
+				 errmsg("a group \"%s\" already exists", newname)));
+	}
+
+	/* must be superuser */
+	if (!superuser())
+		ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR_OR_ACCESS_RULE_VIOLATION),
+				 errmsg("permission denied")));
+
+	/* rename */
+	namestrcpy(&(((Form_pg_group) GETSTRUCT(tup))->groname), newname);
+	simple_heap_update(rel, &tup->t_self, tup);
+	CatalogUpdateIndexes(rel, tup);
+
+	heap_close(rel, NoLock);
+	heap_freetuple(tup);
+
 	group_file_update_needed = true;
 }

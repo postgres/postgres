@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_user.sgml,v 1.27 2003/04/15 13:25:08 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_user.sgml,v 1.28 2003/06/27 14:45:26 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -25,6 +25,8 @@ where <replaceable class="PARAMETER">option</replaceable> can be:
     | CREATEUSER | NOCREATEUSER 
     | VALID UNTIL '<replaceable class="PARAMETER">abstime</replaceable>'
 
+ALTER USER <replaceable class="PARAMETER">username</replaceable> RENAME TO <replaceable>newname</replaceable>
+
 ALTER USER <replaceable class="PARAMETER">username</replaceable> SET <replaceable>variable</replaceable> { TO | = } { <replaceable>value</replaceable> | DEFAULT }
 ALTER USER <replaceable class="PARAMETER">username</replaceable> RESET <replaceable>variable</replaceable>
 </synopsis>
@@ -48,7 +50,13 @@ ALTER USER <replaceable class="PARAMETER">username</replaceable> RESET <replacea
   </para>
 
   <para>
-   The second and the third variant change a user's session default for
+   The second variant changes the name of the user.  Only a database
+   superuser can rename user accounts.  The session user cannot be
+   renamed.  (Connect as a different user if you need to do that.)
+  </para>
+
+  <para>
+   The third and the fourth variant change a user's session default for
    a specified configuration variable.  Whenever the user subsequently
    starts a new session, the specified value becomes the session default,
    overriding whatever setting is present in <filename>postgresql.conf</>
@@ -126,6 +134,15 @@ ALTER USER <replaceable class="PARAMETER">username</replaceable> RESET <replacea
 	The date (and, optionally, the time)
 	at which this user's password is to expire.  To set the password
 	never to expire, use <literal>'infinity'</>.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><replaceable>newname</replaceable></term>
+      <listitem>
+       <para>
+	The new name of the user.
        </para>
       </listitem>
      </varlistentry>

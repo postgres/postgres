@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsenodes.h,v 1.240 2003/06/25 04:19:24 momjian Exp $
+ * $Id: parsenodes.h,v 1.241 2003/06/27 14:45:31 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -668,6 +668,36 @@ typedef struct SetOperationStmt
  *		field in Query.
  *****************************************************************************/
 
+/*
+ * When a command can act on several kinds of objects with only one
+ * parse structure required, use these constants to designate the
+ * object type.
+ */
+
+typedef enum ObjectType {
+	OBJECT_AGGREGATE,
+	OBJECT_CAST,
+	OBJECT_COLUMN,
+	OBJECT_CONSTRAINT,
+	OBJECT_CONVERSION,
+	OBJECT_DATABASE,
+	OBJECT_DOMAIN,
+	OBJECT_FUNCTION,
+	OBJECT_GROUP,
+	OBJECT_INDEX,
+	OBJECT_LANGUAGE,
+	OBJECT_OPCLASS,
+	OBJECT_OPERATOR,
+	OBJECT_RULE,
+	OBJECT_SCHEMA,
+	OBJECT_SEQUENCE,
+	OBJECT_TABLE,
+	OBJECT_TRIGGER,
+	OBJECT_TYPE,
+	OBJECT_USER,
+	OBJECT_VIEW
+} ObjectType;
+
 /* ----------------------
  *		Create Schema Statement
  *
@@ -1076,17 +1106,10 @@ typedef struct AlterSeqStmt
  *		Create {Aggregate|Operator|Type} Statement
  * ----------------------
  */
-typedef enum DefineStmtKind
-{
-	DEFINE_STMT_AGGREGATE,
-	DEFINE_STMT_OPERATOR,
-	DEFINE_STMT_TYPE
-} DefineStmtKind;
-
 typedef struct DefineStmt
 {
 	NodeTag		type;
-	DefineStmtKind kind;		/* see above */
+	ObjectType	kind;			/* aggregate, operator, type */
 	List	   *defnames;		/* qualified name (list of Value strings) */
 	List	   *definition;		/* a list of DefElem */
 } DefineStmt;
@@ -1139,20 +1162,11 @@ typedef struct CreateOpClassItem
  * ----------------------
  */
 
-#define DROP_TABLE	  1
-#define DROP_SEQUENCE 2
-#define DROP_VIEW	  3
-#define DROP_INDEX	  4
-#define DROP_TYPE	  5
-#define DROP_DOMAIN   6
-#define DROP_CONVERSION   7
-#define DROP_SCHEMA   8
-
 typedef struct DropStmt
 {
 	NodeTag		type;
 	List	   *objects;		/* list of sublists of names (as Values) */
-	int			removeType;		/* see #defines above */
+	ObjectType	removeType;		/* object type */
 	DropBehavior behavior;		/* RESTRICT or CASCADE behavior */
 } DropStmt;
 
@@ -1164,15 +1178,12 @@ typedef struct DropStmt
  * ----------------------
  */
 
-#define DROP_RULE	  100
-#define DROP_TRIGGER  101
-
 typedef struct DropPropertyStmt
 {
 	NodeTag		type;
 	RangeVar   *relation;		/* owning relation */
 	char	   *property;		/* name of rule, trigger, etc */
-	int			removeType;		/* see #defines above */
+	ObjectType	removeType;		/* OBJECT_RULE or OBJECT_TRIGGER */
 	DropBehavior behavior;		/* RESTRICT or CASCADE behavior */
 } DropPropertyStmt;
 
@@ -1190,25 +1201,10 @@ typedef struct TruncateStmt
  *				Comment On Statement
  * ----------------------
  */
-#define COMMENT_ON_AGGREGATE	100
-#define COMMENT_ON_COLUMN		101
-#define COMMENT_ON_CONSTRAINT	102
-#define COMMENT_ON_DATABASE		103
-#define COMMENT_ON_FUNCTION		104
-#define COMMENT_ON_INDEX		105
-#define COMMENT_ON_OPERATOR		106
-#define COMMENT_ON_RULE			107
-#define COMMENT_ON_SCHEMA		108
-#define COMMENT_ON_SEQUENCE		109
-#define COMMENT_ON_TABLE		110
-#define COMMENT_ON_TRIGGER		111
-#define COMMENT_ON_TYPE			112
-#define COMMENT_ON_VIEW			113
-
 typedef struct CommentStmt
 {
 	NodeTag		type;
-	int			objtype;		/* Object's type, see codes above */
+	ObjectType	objtype;		/* Object's type */
 	List	   *objname;		/* Qualified name of the object */
 	List	   *objargs;		/* Arguments if needed (eg, for functions) */
 	char	   *comment;		/* Comment to insert, or NULL to remove */
@@ -1352,21 +1348,16 @@ typedef struct RemoveOpClassStmt
 /* ----------------------
  *		Alter Object Rename Statement
  * ----------------------
- * Currently supports renaming tables, table columns, and triggers.
- * If renaming a table, oldname is ignored.
  */
-#define RENAME_TABLE	110
-#define RENAME_COLUMN	111
-#define RENAME_TRIGGER	112
-#define RENAME_RULE		113
-
 typedef struct RenameStmt
 {
 	NodeTag		type;
-	RangeVar   *relation;		/* owning relation */
-	char	   *oldname;		/* name of rule, trigger, etc */
+	RangeVar   *relation;		/* in case it's a table */
+	List	   *object;			/* in case it's some other object */
+	List	   *objarg;			/* argument types, if applicable */
+	char	   *subname;		/* name of contained object (column, rule, trigger, etc) */
 	char	   *newname;		/* the new name */
-	int			renameType;		/* RENAME_TABLE, RENAME_COLUMN, etc */
+	ObjectType	renameType;		/* OBJECT_TABLE, OBJECT_COLUMN, etc */
 } RenameStmt;
 
 /* ----------------------
@@ -1614,17 +1605,10 @@ typedef struct ConstraintsSetStmt
  *		REINDEX Statement
  * ----------------------
  */
-typedef enum ReindexStmtKind
-{
-	REINDEX_INDEX,
-	REINDEX_TABLE,
-	REINDEX_DATABASE
-} ReindexStmtKind;
-
 typedef struct ReindexStmt
 {
 	NodeTag		type;
-	ReindexStmtKind kind;		/* see above */
+	ObjectType	kind;			/* OBJECT_INDEX, OBJECT_TABLE, OBJECT_DATABASE */
 	RangeVar   *relation;		/* Table or index to reindex */
 	const char *name;			/* name of database to reindex */
 	bool		force;

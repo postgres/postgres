@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ref/create_conversion.sgml,v 1.9 2003/06/24 23:29:25 momjian Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ref/create_conversion.sgml,v 1.10 2003/06/27 14:45:26 petere Exp $ -->
 
 <refentry id="SQL-CREATECONVERSION">
  <refmeta>
@@ -171,10 +171,11 @@ CREATE CONVERSION myconv FOR 'UNICODE' TO 'LATIN1' FROM myfunc;
  <refsect1 id="sql-createconversion-seealso">
   <title>See Also</title>
 
-  <para>
-   <xref linkend="sql-createfunction" endterm="sql-createfunction-title">,
-   <xref linkend="sql-dropconversion" endterm="sql-dropconversion-title">
-  </para>
+  <simplelist type="inline">
+   <member><xref linkend="sql-alterconversion" endterm="sql-alterconversion-title"></member>
+   <member><xref linkend="sql-createfunction" endterm="sql-createfunction-title"></member>
+   <member><xref linkend="sql-dropconversion" endterm="sql-dropconversion-title"></member>
+  </simplelist>
  </refsect1>
 
 </refentry>

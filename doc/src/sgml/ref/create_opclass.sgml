@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_opclass.sgml,v 1.7 2003/04/22 10:08:08 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_opclass.sgml,v 1.8 2003/06/27 14:45:26 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -217,16 +217,6 @@ CREATE OPERATOR CLASS <replaceable class="parameter">name</replaceable> [ DEFAUL
  </refsect1>
   
  <refsect1>
-  <title>Notes</title>
-
-  <para>
-   Refer to
-   <xref linkend="sql-dropopclass" endterm="sql-dropopclass-title">
-   to delete user-defined operator classes from a database.
-  </para>
- </refsect1>
-  
- <refsect1>
   <title>Examples</title>
 
   <para>
@@ -262,6 +252,15 @@ CREATE OPERATOR CLASS gist__int_ops
    <command>CREATE OPERATOR CLASS</command> statement in the SQL
    standard.
   </para>
+ </refsect1>
+
+ <refsect1>
+  <title>See Also</title>
+
+  <simplelist type="inline">
+   <member><xref linkend="sql-alteropclass" endterm="sql-alteropclass-title"></member>
+   <member><xref linkend="sql-dropopclass" endterm="sql-dropopclass-title"></member>
+  </simplelist>
  </refsect1>
 </refentry>
 

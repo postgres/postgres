@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_language.sgml,v 1.16 2003/05/04 02:23:16 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_language.sgml,v 1.17 2003/06/27 14:45:26 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -118,7 +118,9 @@ DROP LANGUAGE plsample;
   <title>See Also</title>
 
   <simplelist type="inline">
+   <member><xref linkend="sql-alterlanguage" endterm="sql-alterlanguage-title"></member>
    <member><xref linkend="sql-createlanguage" endterm="sql-createlanguage-title"></member>
+   <member><xref linkend="app-droplang"></member>
   </simplelist>
  </refsect1>
 
