@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$PostgreSQL: pgsql/src/tools/thread/thread_test.c,v 1.16 2004/04/06 13:55:17 momjian Exp $
+ *	$PostgreSQL: pgsql/src/tools/thread/thread_test.c,v 1.17 2004/04/21 20:51:54 momjian Exp $
  *
  *	This program tests to see if your standard libc functions use
  *	pthread_setspecific()/pthread_getspecific() to be thread-safe.
@@ -32,6 +32,8 @@
 #include <fcntl.h>
 #include <errno.h>
 
+#include "postgres.h"
+
 void func_call_1(void);
 void func_call_2(void);
 
@@ -51,6 +53,11 @@ struct passwd *passwd_p2;
 
 struct hostent *hostent_p1;
 struct hostent *hostent_p2;
+
+bool gethostbyname_threadsafe;
+bool getpwuid_threadsafe;
+bool strerror_threadsafe;
+bool platform_is_threadsafe = true;
 
 pthread_mutex_t init_mutex = PTHREAD_MUTEX_INITIALIZER;
 
@@ -90,26 +97,93 @@ defines to your template/$port file before compiling this program.\n\n"
 	printf("Add this to your template/$port file:\n\n");
 
 	if (strerror_p1 != strerror_p2)
+	{
 		printf("STRERROR_THREADSAFE=yes\n");
+		strerror_threadsafe = true;
+	}
 	else
+	{
 		printf("STRERROR_THREADSAFE=no\n");
+		strerror_threadsafe = false;
+	}
 
 	if (passwd_p1 != passwd_p2)
+	{
 		printf("GETPWUID_THREADSAFE=yes\n");
+		getpwuid_threadsafe = true;
+	}
 	else
+	{
 		printf("GETPWUID_THREADSAFE=no\n");
+		getpwuid_threadsafe = false;
+	}
 
 	if (hostent_p1 != hostent_p2)
+	{
 		printf("GETHOSTBYNAME_THREADSAFE=yes\n");
+		gethostbyname_threadsafe = true;
+	}
 	else
+	{
 		printf("GETHOSTBYNAME_THREADSAFE=no\n");
+		gethostbyname_threadsafe = false;
+	}
 
 	pthread_mutex_unlock(&init_mutex);	/* let children exit  */
 	
 	pthread_join(thread1, NULL);	/* clean up children */
 	pthread_join(thread2, NULL);
 
-	return 0;
+	printf("\n");
+
+#ifdef HAVE_STRERROR_R
+	printf("Your system has sterror_r(), so it doesn't use strerror().\n");
+#else
+	printf("Your system uses strerror().\n");
+	if (!strerror_threadsafe)
+	{
+		platform_is_threadsafe = false;
+		printf("That function is not thread-safe\n");
+	}
+#endif
+
+#ifdef HAVE_GETPWUID_R
+	printf("Your system has getpwuid_r(), so it doesn't use getpwuid().\n");
+#else
+	printf("Your system uses getpwuid().\n");
+	if (!getpwuid_threadsafe)
+	{
+		platform_is_threadsafe = false;
+		printf("That function is not thread-safe\n");
+	}
+#endif
+
+#ifdef HAVE_GETADDRINFO
+	printf("Your system has getaddrinfo(), so it doesn't use gethostbyname()\n"
+			"or gethostbyname_r().\n");
+#else
+#ifdef HAVE_GETHOSTBYNAME_R
+	printf("Your system has gethostbyname_r(), so it doesn't use gethostbyname().\n");
+#else
+	printf("Your system uses gethostbyname().\n");
+	if (!gethostbyname_threadsafe)
+	{
+		platform_is_threadsafe = false;
+		printf("That function is not thread-safe\n");
+	}
+#endif
+#endif
+
+	if (!platform_is_threadsafe)
+	{
+		printf("\n** YOUR PLATFORM IS NOT THREADSAFE **\n");
+		return 1;
+	}
+	else
+	{
+		printf("\nYOUR PLATFORM IS THREADSAFE\n");
+		return 0;
+	}
 }
 
 void func_call_1(void) {
