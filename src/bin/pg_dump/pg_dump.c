@@ -22,7 +22,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.173 2000/10/22 18:13:09 pjw Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.174 2000/10/22 23:16:55 pjw Exp $
  *
  * Modifications - 6/10/96 - dave@bensoft.com - version 1.13.dhb
  *
@@ -3883,9 +3883,8 @@ setMaxOid(Archive *fout)
 /*
  * findLastBuiltInOid -
  * find the last built in oid
- * we do this by looking up the oid of 'template1' in pg_database,
- * this is probably not foolproof but comes close
-*/
+ * we do this by retrieving datlastsysoid from the pg_database entry for this database,
+ */
 
 static int
 findLastBuiltinOid(const char* dbname)
@@ -3902,21 +3901,21 @@ findLastBuiltinOid(const char* dbname)
 	if (res == NULL ||
 		PQresultStatus(res) != PGRES_TUPLES_OK)
 	{
-		fprintf(stderr, "pg_dump error in finding the template1 database.");
+		fprintf(stderr, "pg_dump: error in finding the last system OID");
 		fprintf(stderr, "Explanation from backend: '%s'.\n", PQerrorMessage(g_conn));
 		exit_nicely(g_conn);
 	}
 	ntups = PQntuples(res);
 	if (ntups < 1)
 	{
-		fprintf(stderr, "pg_dump: couldn't find the template1 database.\n");
-		fprintf(stderr, "There is no 'template1' entry in the 'pg_database' table.\n");
+		fprintf(stderr, "pg_dump: couldn't find the pg_database entry.\n");
+		fprintf(stderr, "There is no entry in the 'pg_database' table for this database.\n");
 		exit_nicely(g_conn);
 	}
 	if (ntups > 1)
 	{
-		fprintf(stderr, "pg_dump: found more than one template1 database.\n");
-		fprintf(stderr, "There is more than one 'template1' entry in the 'pg_database' table\n");
+		fprintf(stderr, "pg_dump: found more than one matching database.\n");
+		fprintf(stderr, "There is more than one entry for this database in the 'pg_database' table\n");
 		exit_nicely(g_conn);
 	}
 	last_oid = atoi(PQgetvalue(res, 0, PQfnumber(res, "datlastsysoid")));
