@@ -1,4 +1,4 @@
-# $Header: /cvsroot/pgsql/contrib/Makefile,v 1.24 2001/08/22 18:27:53 tgl Exp $
+# $Header: /cvsroot/pgsql/contrib/Makefile,v 1.25 2001/08/23 16:54:25 tgl Exp $
 
 subdir = contrib
 top_builddir = ..
@@ -7,6 +7,7 @@ include $(top_builddir)/src/Makefile.global
 WANTED_DIRS = \
 		array		\
 		btree_gist	\
+		chkpass		\
 		cube		\
 		dbase		\
 		dblink		\
