@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.21 1998/08/01 22:44:53 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.22 1998/08/02 07:10:38 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -307,13 +307,18 @@ match_index_orclause(RelOptInfo *rel,
 					 List *other_matching_indices)
 {
 	Node	   *clause = NULL;
-	List	   *matched_indices = other_matching_indices;
+	List	   *matched_indices;
 	List	   *index_list = NIL;
 	List	   *clist;
 
 	foreach(clist, or_clauses)
 	{
 		clause = lfirst(clist);
+		if (other_matching_indices)
+			matched_indices = lfirst(other_matching_indices);
+		else
+			matched_indices = NIL;
+			
 		if (is_opclause(clause) &&
 			op_class(((Oper *) ((Expr *) clause)->oper)->opno,
 					 xclass, index->relam) &&
@@ -330,11 +335,12 @@ match_index_orclause(RelOptInfo *rel,
 		{
 			matched_indices = lcons(index, matched_indices);
 		}
-		index_list = lappend(index_list, matched_indices);
 
 		/* for the first index, we are creating the indexids list */
-		if (matched_indices)
-			matched_indices = lnext(matched_indices);
+		index_list = lappend(index_list, matched_indices);
+
+		if (other_matching_indices)
+			other_matching_indices = lnext(other_matching_indices);
 	}
 	return (index_list);
 
