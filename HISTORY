@@ -15,38 +15,43 @@ Valid as of 2003-09-28.  Update release.sgml later.
    Major changes in this release:
    
    IPv6
-         Full support for IPv6 connections and IPv6 data types.
+         Full support for IPv6 connections and IPv6 address data types
 
    SSL
-         Major SSL improvements in performance and security.
+         Major improvements in SSL performance and security
 
    Index Growth Prevention
          Allow free space map to efficiently reused empty index pages,
-         and other free space improvements.
+         and other free space management improvements.
+
+   Standards Compliance
+         Implement information schema
+         Support for read-only transactions
+         Make cursors comply more closely with the SQL standard
 
    New Client/Server Communication Protocol
-          New protocol improves connection speed/reliability, and adds 
-          error codes, status information, a binary protocol, error
-          reporting verbosity, and cleaner startup packets.
+         New protocol improves connection speed/reliability, and adds 
+         error codes, status information, a binary protocol, error
+         reporting verbosity, and cleaner startup packets.
 
    Performance
-          IN/NOT IN subqueries now perform as efficiently as joins
-          Improved GROUP BY procesing by using hack buckets
-          Hash indexes now have better concurrency/reliability/performance
-          New multi-key hash join capability
-          ANSI joins are now fully optimized
-          Faster regular expression code
+         IN/NOT IN subqueries now perform as efficiently as joins
+         Improved GROUP BY processing by using hash buckets
+         New multi-key hash join capability
+         ANSI joins are now fully optimized
+         Faster regular expression code
+         Function-inlining for simple SQL functions
           
-   Cursors
-          Allow cursors to exist outside transactions
+   Holdable Cursors
+         Allow cursors to exist outside transactions
 
    Threads
-          libpq and ecpg are now fully thread-safe with --enable-thread-safety
+         libpq and ecpg are now fully thread-safe with --enable-thread-safety
 
    Contrib
-          New version of full text indexing (tsearch2)
-          New autovacuum tool
-          Array handling has been improved and moved into the main server
+         New version of full text indexing (tsearch2)
+         New autovacuum tool
+         Array handling has been improved and moved into the main server
 
      _________________________________________________________________
    
@@ -58,18 +63,21 @@ Valid as of 2003-09-28.  Update release.sgml later.
    Observe the following incompatibilities:
      * The server-side autocommit setting was removed an reimplemented
        in client applications and languages.
-     * Error message wording has changed dramtically in this release,
+     * Error message wording has changed dramatically in this release,
        and error codes have been added.
      * ANSI joins may behave differently because they are now fully optimized
      * A number of server variables have been renamed for clarity
      * MOVE/FETCH 0 now does nothing; return value of MOVE/FETCH 1/0
        varies based on the current offset in the cursor
-     * COPY now can process carriage-return/line-feed and carraige-return
+     * COPY now can process carriage-return/line-feed and carriage-return
        terminated files.  Literal carriage-returns and line-feeds are no
        longer accepted as data values;  use \r and \n instead.
-     * Auto-trim spaces when converting from CHAR() to VARCHAR()/TEXT
+     * Trailing spaces are now trimmed when converting from CHAR(n) to
+       VARCHAR(n)/TEXT
      * FLOAT(p) now measures 'p' in bits, not digits
      * Date values now must match the ordering specified by DateStyle
+     * The oidrand(), oidsrand(), and userfntest() functions have been
+       removed.
 
      _________________________________________________________________
    
@@ -177,14 +185,14 @@ Change EXECUTE INTO to CREATE TABLE AS EXECUTE (Peter)
 Object Manipulation
 
 Make CREATE SEQUENCE grammar more SQL1999 standards compliant (Neil)
-Add FOR EACH STATEMENT statement-level triggers (Neil Conway)
+Add FOR EACH STATEMENT statement-level triggers (Neil)
 Add DOMAIN CHECK constraints (Rod)
 Add ALTER DOMAIN .. SET / DROP NOT NULL, SET / DROP DEFAULT, ADD / DROP
   CONSTRAINT (Rod)
 Fix several zero-column table bugs (Tom)
 Have ALTER TABLE ... ADD PRIMARY KEY add NOT NULL constraint (Rod)
 Add ALTER DOMAIN OWNER (Rod)
-Add ALTER TABLE ... WITHOUT OIDS? (Rod)
+Add ALTER TABLE ... WITHOUT OIDS (Rod)
 Add ALTER SEQUENCE to modify min/max/increment/cache/cycle values (Rod)
 Add ALTER TABLE ... CLUSTER ON (Alvaro Herrera)
 Improve DOMAIN automatic type casting (Rod, Tom)
@@ -225,7 +233,7 @@ Have pg_dumpall use GRANT/REVOKE to dump database-level permissions (Tom)
 Allow pg_dumpall to support the -a, -s, -x options of pg_dump (Tom)
 Prevent pg_dump from lowercasing identifiers specified on the command line (Tom)
 Allow PREPARE/bind of utility commands like FETCH and EXPLAIN (Tom)
-Allow EXPLAIN EXECUTE (Neil)
+Add EXPLAIN EXECUTE (Neil)
 Allow pg_get_constraintdef() to support UNIQUE, PRIMARY KEY and
   CHECK constraints (Christopher)
 Improve VACUUM performance on indexes by reducing WAL traffic (Tom)
@@ -235,7 +243,7 @@ Syntax errors now reported as 'syntax error' rather than 'parse error' (Tom)
 Have SHOW TRANSACTION_ISOLATION match input to SET TRANSACTION_ISOLATION (Tom)
 Have COMMENT ON DATABASE on non-local database generate a warning (Rod)
 Improve reliability of LISTEN/NOTIFY (Tom)
-Allow REINDEX to reliabily reindex all indexes, except global ones (Tom)
+Allow REINDEX to reliably reindex non-shared system catalog indexes (Tom)
 pg_dump --use-set-session-authorization and --no-reconnect now do nothing,
   all dumps use SET SESSION AUTHORIZATION
 
@@ -289,7 +297,7 @@ Add new DateStyle values MDY, DMY, and YMD, honor US and European for
 'now' will no longer work as a column default, use now() (change required for 
   prepared statements) (Tom)
 Assume NaN value to be larger than any other value in MIN()/MAX() (Tom)
-Prevent interval from supressing ':00' seconds display
+Prevent interval from suppressing ':00' seconds display
 New pg_get_triggerdef(prettyprint) and pg_constraint_is_visible() functions
 Allow time to be specified as '040506' or '0405' (Tom)
 
