@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.291 2004/08/26 16:54:36 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.292 2004/08/27 02:09:18 momjian Exp $
 -->
 
 <appendix id="release">
@@ -39,10 +39,11 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.291 2004/08/26 16:54:36 momjian
         http://pgfoundry.org/projects/pginstaller</ulink>.
        </para>
        <para>
-        Because Win32 is significantly different from the Unix platforms
-        supported in previous releases, there is much new Win32-specific
-        code that has not been tested extensively. Please test it 
-        thoroughly before using it in production.
+        Although tested throughout our release cycle, the Windows port
+        does not have the benefit of years of use in production 
+        environments that PostgreSQL has on Unix platforms and 
+        therefore should be treated with the same level of caution as 
+        you would a new product.
        </para>
        <para>
         Previous releases required the Unix emulation toolkit Cygwin for
