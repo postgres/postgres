@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varlena.c,v 1.24 1997/12/08 04:42:48 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varlena.c,v 1.25 1997/12/16 15:59:11 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -210,20 +210,14 @@ textout(struct varlena * vlena)
  *	  returns the actual length of a text* (which may be less than
  *	  the VARSIZE of the text*)
  */
-#ifdef NOT_USED
 int
 textlen(text *t)
 {
-	int			i = 0;
-	int			max = VARSIZE(t) - VARHDRSZ;
-	char	   *ptr = VARDATA(t);
+	if (!PointerIsValid(t))
+		elog(WARN,"Null input to textlen");
 
-	while (i < max && *ptr++)
-		i++;
-	return i;
-}
-
-#endif
+	return (VARSIZE(t) - VARHDRSZ);
+} /* textlen() */
 
 /*
  * textcat -

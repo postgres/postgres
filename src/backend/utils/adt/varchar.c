@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varchar.c,v 1.12 1997/12/06 22:57:14 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varchar.c,v 1.13 1997/12/16 15:59:09 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -121,7 +121,7 @@ bpcharout(char *s)
  *	  len is the length specified in () plus VARHDRSZ bytes. (XXX dummy is here
  *	  because we pass typelem as the second argument for array_in.)
  */
-char	   *
+char *
 varcharin(char *s, int dummy, int typlen)
 {
 	char	   *result;
@@ -190,6 +190,15 @@ bcTruelen(char *arg)
 	}
 	return (i + 1);
 }
+
+int32
+bpcharlen(char *arg)
+{
+	if (!PointerIsValid(arg))
+		elog(WARN, "Bad (null) char() external representation", NULL);
+
+	return(bcTruelen(arg));
+} /* bpcharlen() */
 
 bool
 bpchareq(char *arg1, char *arg2)
@@ -337,6 +346,15 @@ vcTruelen(char *arg)
 	}
 	return i;
 }
+
+int32
+varcharlen(char *arg)
+{
+	if (!PointerIsValid(arg))
+		elog(WARN, "Bad (null) varchar() external representation", NULL);
+
+	return(vcTruelen(arg));
+} /* vclen() */
 
 bool
 varchareq(char *arg1, char *arg2)
