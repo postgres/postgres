@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/Makefile,v 1.33 2003/10/28 21:55:58 tgl Exp $
+# $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/Makefile,v 1.33.2.1 2004/02/10 07:26:48 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -21,7 +21,7 @@ override CPPFLAGS := -I$(libpq_srcdir) $(CPPFLAGS) $(TCL_INCLUDE_SPEC)
 OBJS= pgtcl.o pgtclCmds.o pgtclId.o
 
 SHLIB_LINK = $(libpq) $(TCL_LIB_SPEC) $(TCL_LIBS) \
-	$(filter -lssl -lcrypto -lkrb5 -lcrypt, $(LIBS)) $(THREAD_LIBS)
+	$(filter -lintl -lssl -lcrypto -lkrb5 -lcrypt, $(LIBS)) $(THREAD_LIBS)
 
 all: submake-libpq all-lib
 
