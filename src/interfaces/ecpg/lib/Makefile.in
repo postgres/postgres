@@ -16,6 +16,7 @@ endif
 # Shared library stuff
 shlib := 
 install-shlib-dep :=
+
 ifeq ($(PORTNAME), linux)
   LINUX_ELF=@LINUX_ELF@
   ifdef LINUX_ELF
@@ -24,6 +25,7 @@ ifeq ($(PORTNAME), linux)
     LDFLAGS_SL = -shared -soname libecpg.so.$(SO_MAJOR_VERSION)
   endif
 endif
+
 ifeq ($(PORTNAME), bsd)
   ifdef BSD_SHLIB
     install-shlib-dep := install-shlib
@@ -32,19 +34,36 @@ ifeq ($(PORTNAME), bsd)
     CFLAGS += $(CFLAGS_SL)
   endif
 endif
+
 ifeq ($(PORTNAME), solaris_sparc)
   install-shlib-dep := install-shlib
   shlib := libecpg.so.$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION).$(SO_PATCHLEVEL)
   LDFLAGS_SL = -G -z text
   CFLAGS += $(CFLAGS_SL)
 endif
+
 ifeq ($(PORTNAME), solaris_i386)
   install-shlib-dep := install-shlib
   shlib := libecpg.so.$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION).$(SO_PATCHLEVEL)
   LDFLAGS_SL = -G
   CFLAGS += $(CFLAGS_SL)
 endif
+
+ifeq ($(PORTNAME), svr4)
+  install-shlib-dep := install-shlib
+  shlib := libecpg.so.$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION).$(SO_PATCHLEVEL)
+  LDFLAGS_SL = -G
+  CFLAGS += $(CFLAGS_SL)
+endif
+
 ifeq ($(PORTNAME), univel)
+  install-shlib-dep := install-shlib
+  shlib := libecpg.so.1
+  LDFLAGS_SL = -G -z text
+  CFLAGS += $(CFLAGS_SL)
+endif
+
+ifeq ($(PORTNAME), unixware)
   install-shlib-dep := install-shlib
   shlib := libecpg.so.1
   LDFLAGS_SL = -G -z text
