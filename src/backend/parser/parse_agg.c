@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_agg.c,v 1.51 2003/01/17 03:25:04 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_agg.c,v 1.52 2003/04/03 18:04:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,6 +16,7 @@
 
 #include "optimizer/clauses.h"
 #include "optimizer/tlist.h"
+#include "optimizer/var.h"
 #include "parser/parse_agg.h"
 #include "parser/parsetree.h"
 
@@ -179,7 +180,9 @@ parseCheckAggregates(ParseState *pstate, Query *qry)
 {
 	List	   *groupClauses = NIL;
 	bool		have_non_var_grouping = false;
-	List	   *tl;
+	List	   *lst;
+	bool		hasJoinRTEs;
+	Node	   *clause;
 
 	/* This should only be called if we found aggregates, GROUP, or HAVING */
 	Assert(pstate->p_hasAggs || qry->groupClause || qry->havingQual);
@@ -205,9 +208,9 @@ parseCheckAggregates(ParseState *pstate, Query *qry)
 	 * repeated scans of the targetlist within the recursive routine...).
 	 * And detect whether any of the expressions aren't simple Vars.
 	 */
-	foreach(tl, qry->groupClause)
+	foreach(lst, qry->groupClause)
 	{
-		GroupClause *grpcl = lfirst(tl);
+		GroupClause *grpcl = (GroupClause *) lfirst(lst);
 		Node	   *expr;
 
 		expr = get_sortgroupclause_expr(grpcl, qry->targetList);
@@ -221,13 +224,39 @@ parseCheckAggregates(ParseState *pstate, Query *qry)
 	}
 
 	/*
+	 * If there are join alias vars involved, we have to flatten them
+	 * to the underlying vars, so that aliased and unaliased vars will be
+	 * correctly taken as equal.  We can skip the expense of doing this
+	 * if no rangetable entries are RTE_JOIN kind.
+	 */
+	hasJoinRTEs = false;
+	foreach(lst, pstate->p_rtable)
+	{
+		RangeTblEntry *rte = (RangeTblEntry *) lfirst(lst);
+
+		if (rte->rtekind == RTE_JOIN)
+		{
+			hasJoinRTEs = true;
+			break;
+		}
+	}
+
+	if (hasJoinRTEs)
+		groupClauses = (List *) flatten_join_alias_vars(qry,
+														(Node *) groupClauses);
+
+	/*
 	 * Check the targetlist and HAVING clause for ungrouped variables.
 	 */
-	check_ungrouped_columns((Node *) qry->targetList, pstate,
-							groupClauses, have_non_var_grouping);
-	check_ungrouped_columns((Node *) qry->havingQual, pstate,
+	clause = (Node *) qry->targetList;
+	if (hasJoinRTEs)
+		clause = flatten_join_alias_vars(qry, clause);
+	check_ungrouped_columns(clause, pstate,
 							groupClauses, have_non_var_grouping);
 
-	/* Release the list storage (but not the pointed-to expressions!) */
-	freeList(groupClauses);
+	clause = (Node *) qry->havingQual;
+	if (hasJoinRTEs)
+		clause = flatten_join_alias_vars(qry, clause);
+	check_ungrouped_columns(clause, pstate,
+							groupClauses, have_non_var_grouping);
 }
