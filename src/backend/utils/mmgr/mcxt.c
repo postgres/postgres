@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/mmgr/mcxt.c,v 1.46 2004/07/01 00:51:29 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/mmgr/mcxt.c,v 1.47 2004/08/08 06:44:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -629,3 +629,38 @@ MemoryContextStrdup(MemoryContext context, const char *string)
 
 	return nstr;
 }
+
+
+#ifdef WIN32
+/*
+ *	Memory support routines for libpgport on Win32
+ *
+ *	Win32 can't load a library that DLLIMPORTs a variable
+ *	if the link object files also DLLIMPORT the same variable.
+ *	For this reason, libpgport can't reference CurrentMemoryContext
+ *	in the palloc macro calls.
+ *
+ *	To fix this, we create several functions here that allow us to
+ *	manage memory without doing the inline in libpgport.
+ */
+void *
+pgport_palloc(Size sz)
+{
+	return palloc(sz);
+}
+
+char *
+pgport_pstrdup(const char *str)
+{
+	return pstrdup(str);
+}
+
+
+/* Doesn't reference a DLLIMPORT variable, but here for completeness. */
+void
+pgport_pfree(void *pointer)
+{
+	pfree(pointer);
+	return;
+}
+#endif

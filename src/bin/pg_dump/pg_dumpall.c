@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
- * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.46 2004/08/04 21:34:12 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.47 2004/08/08 06:44:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -840,21 +840,39 @@ runPgDump(const char *dbname)
 	const char *p;
 	int			ret;
 
+	/*
+	 *	Win32 has to use double-quotes for args, rather than single quotes.
+	 *	Strangely enough, this is the only place we pass a database name
+	 *	on the command line, except template1 that doesn't need quoting.
+	 */	
+#ifndef WIN32
 	appendPQExpBuffer(cmd, "%s\"%s\" %s -Fp '", SYSTEMQUOTE, pg_dump_bin,
+#else
+	appendPQExpBuffer(cmd, "%s\"%s\" %s -Fp \"", SYSTEMQUOTE, pg_dump_bin,
+#endif
 					  pgdumpopts->data);
 
 	/* Shell quoting is not quite like SQL quoting, so can't use fmtId */
 	for (p = dbname; *p; p++)
 	{
+#ifndef WIN32
 		if (*p == '\'')
 			appendPQExpBuffer(cmd, "'\"'\"'");
 		else
+#endif
+		/* not needed on Win32 */
 			appendPQExpBufferChar(cmd, *p);
 	}
 
+#ifndef WIN32
 	appendPQExpBufferChar(cmd, '\'');
-	appendStringLiteral(cmd, SYSTEMQUOTE, false);
+#else
+	appendPQExpBufferChar(cmd, '"');
+#endif
 
+	if (strlen(SYSTEMQUOTE) > 0)
+		appendPQExpBuffer(cmd, SYSTEMQUOTE);
+	
 	if (verbose)
 		fprintf(stderr, _("%s: running \"%s\"\n"), progname, cmd->data);
 

@@ -10,7 +10,7 @@
  *	Win32 (NT, Win2k, XP).	replace() doesn't work on Win95/98/Me.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/dirmod.c,v 1.17 2004/08/08 05:04:41 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/port/dirmod.c,v 1.18 2004/08/08 06:44:36 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,6 +37,13 @@
 
 #undef rename
 #undef unlink
+
+#ifndef FRONTEND
+#define palloc(sz)		pgport_palloc(sz)
+#define pstrdup(str)	pgport_pstrdup(str)
+#define pfree(pointer)	pgport_pfree(pointer)
+#endif
+
 
 /*
  *	pgrename

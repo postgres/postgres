@@ -21,7 +21,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/palloc.h,v 1.27 2003/11/29 22:41:15 pgsql Exp $
+ * $PostgreSQL: pgsql/src/include/utils/palloc.h,v 1.28 2004/08/08 06:44:35 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -79,5 +79,10 @@ extern MemoryContext MemoryContextSwitchTo(MemoryContext context);
 extern char *MemoryContextStrdup(MemoryContext context, const char *string);
 
 #define pstrdup(str)  MemoryContextStrdup(CurrentMemoryContext, (str))
+
+/* Used for Win32 */
+void *pgport_palloc(Size sz);
+char *pgport_pstrdup(const char *str);
+void pgport_pfree(void *pointer);
 
 #endif   /* PALLOC_H */
