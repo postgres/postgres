@@ -1,947 +1,974 @@
 
-               Ответы на часто задаваемые вопросы по PostgreSQL
+               Otvety na chasto zadavaemye voprosy po PostgreSQL
                                        
-   Дата последнего обновления: Среда 9 Октября 23:14:53 EDT 2002
+   Data poslednego obnovleniya: Voskresen'e 20 Oktyabrya 20:47:14 EDT
+   2002
    
-   Английский вариант сопровождает: Брюс Момьян (Bruce Momjian)
+   Anglijskij variant soprovozhdaet: Bryus Mom'yan (Bruce Momjian)
    (pgman@candle.pha.pa.us)
    
-   Перевел на русский: Виктор Вислобоков (victor_v@permonline.ru)
+   Perevel na russkij: Viktor Vislobokov (victor_v@permonline.ru)
    
-   Самую свежую английскую версию документа можно найти на
+   Samuyu svezhuyu anglijskuyu versiyu dokumenta mozhno najti na
    http://www.PostgreSQL.org/docs/faq-english.html.
    
-   Ответы на вопросы специфичные для конкретных платформ можно найти на
-   http://www.PostgreSQL.org/users-lounge/docs/faq.html.
+   Otvety na voprosy specifichnye dlya konkretnyh platform mozhno najti
+   na http://www.PostgreSQL.org/users-lounge/docs/faq.html.
      _________________________________________________________________
    
-                               Общие вопросы
+                              Obschie voprosy
                                       
-   1.1) Что такое PostgreSQL? Как произносится это название?
-   1.2) Каковы авторские права на PostgreSQL?
-   1.3) На каких Unix платформах работает PostgreSQL?
-   1.4) Существуют ли версии портированные не на Unix системы?
-   1.5) Где можно взять PostgreSQL?
-   1.6) Где получить поддержку?
-   1.7) Какая последняя версия?
-   1.8) Какая документация имеется в наличии?
-   1.9) Как найти информацию об известных ошибках или отсутствующих
-   возможностях?
-   1.10) Как научиться SQL?
-   1.11) Решена ли в PostgreSQL проблема 2000-го года (Y2K)?
-   1.12) Как присоединится к команде разработчиков?
-   1.13) Как отравить сообщение об ошибке?
-   1.14) Как сравнивать PostgreSQL с другими СУБД?
-   1.15) Как оказать финансовую помощь PostgreSQL?
+   1.1) CHto takoe PostgreSQL? Kak proiznositsya `eto nazvanie?
+   1.2) Kakovy avtorskie prava na PostgreSQL?
+   1.3) Na kakih Unix platformah rabotaet PostgreSQL?
+   1.4) Suschestvuyut li versii portirovannye ne na Unix sistemy?
+   1.5) Gde mozhno vzyat' PostgreSQL?
+   1.6) Gde poluchit' podderzhku?
+   1.7) Kakaya poslednyaya versiya?
+   1.8) Kakaya dokumentaciya imeetsya v nalichii?
+   1.9) Kak najti informaciyu ob izvestnyh oshibkah ili otsutstvuyuschih
+   vozmozhnostyah?
+   1.10) Kak nauchit'sya SQL?
+   1.11) Reshena li v PostgreSQL problema 2000-go goda (Y2K)?
+   1.12) Kak prisoedinitsya k komande razrabotchikov?
+   1.13) Kak otravit' soobschenie ob oshibke?
+   1.14) Kak sravnivat' PostgreSQL s drugimi SUBD?
+   1.15) Kak okazat' finansovuyu pomosch' PostgreSQL?
    
-                 Вопросы пользователей по клиентской части
+                 Voprosy pol'zovatelej po klientskoj chasti
                                       
-   2.1) Существуют ли ODBC драйвера для PostgreSQL?
-   2.2) Какие инструменты существуют для использования PostgreSQL через
-   Web?
-   2.3) Есть ли у PostgreSQL графический интерфейс пользователя?
-   Генератор отчетов? Встроенный интерфейс для языка запросов?
-   2.4) Какие языки могут взаимодействовать с PostgreSQL?
+   2.1) Suschestvuyut li ODBC drajvera dlya PostgreSQL?
+   2.2) Kakie instrumenty suschestvuyut dlya ispol'zovaniya PostgreSQL
+   cherez Web?
+   2.3) Est' li u PostgreSQL graficheskij interfejs pol'zovatelya?
+   Generator otchetov? Vstroennyj interfejs dlya yazyka zaprosov?
+   2.4) Kakie yazyki mogut vzaimodejstvovat' s PostgreSQL?
    
-                         Вопросы администрирования
+                         Voprosy administrirovaniya
                                       
-   3.1) Как мне установить PostgreSQL в место отличное от
+   3.1) Kak mne ustanovit' PostgreSQL v mesto otlichnoe ot
    /usr/local/pgsql?
-   3.2) Когда я запускаю postmaster, я получаю сообщение Bad System Call
-   или сообщение core dumped. Почему?
-   3.3) Когда я пытаюсь запустить postmaster, я получаю ошибки
-   IpcMemoryCreate. Почему?
-   3.4) Когда я пытаюсь запустить postmaster, я получаю ошибки
-   IpcSemaphoreCreate. Почему?
-   3.5) Как мне управлять соединениями с других компьютеров?
-   3.6) Какие настройки мне нужно сделать для улучшения
-   производительности?
-   3.7) Какие возможности для отладки есть в наличии?
-   3.8) Почему я получаю сообщение "Sorry, too many clients" когда
-   пытаюсь подключиться к базе?
-   3.9) Что это за файлы pg_sorttempNNN.NN в моем каталоге с базой
-   данных?
-   3.10) Почему необходимо делать dump и restore при обновлении выпусков
+   3.2) Kogda ya zapuskayu postmaster, ya poluchayu soobschenie Bad
+   System Call ili soobschenie core dumped. Pochemu?
+   3.3) Kogda ya pytayus' zapustit' postmaster, ya poluchayu oshibki
+   IpcMemoryCreate. Pochemu?
+   3.4) Kogda ya pytayus' zapustit' postmaster, ya poluchayu oshibki
+   IpcSemaphoreCreate. Pochemu?
+   3.5) Kak mne upravlyat' soedineniyami s drugih komp'yuterov?
+   3.6) Kakie nastrojki mne nuzhno sdelat' dlya uluchsheniya
+   proizvoditel'nosti?
+   3.7) Kakie vozmozhnosti dlya otladki est' v nalichii?
+   3.8) Pochemu ya poluchayu soobschenie "Sorry, too many clients" kogda
+   pytayus' podklyuchit'sya k baze?
+   3.9) CHto nahoditsya v kataloge pgsql_tmp?
+   3.10) Pochemu neobhodimo delat' dump i restore pri obnovlenii vypuskov
    PostgreSQL?
    
-                            Вопросы эксплуатации
+                           Voprosy `ekspluatacii
                                       
-   4.1) В чем отличие между бинарным и нормальным курсором?
-   4.2) Как выполнить SELECT только для нескольких первых строчек
-   запроса?
-   4.3) Как получить список таблиц или других компонентов в psql?
-   4.4) Как удалить колонку из таблицы?
-   4.5) Каковы максимальные размеры для записей, таблиц и базы данных?
-   4.6) Как много дискового пространства в базе данных нужно для
-   сохранения данных из обычного текстового файла?
-   4.7) Как мне убедиться, что существуют нужные мне таблицы, индексы,
-   базы данных и пользователи?
-   4.8) У меня медленно работают запросы или не происходит использования
-   индексов. Почему?
-   4.9) Как посмотреть на то, как оптимизатор выполняет мой запрос?
-   4.10) Что такое R-tree индекс?
-   4.11) Что такое Genetic Query Optimizer?
-   4.12) Как мне выполнить поиск регулярного выражения и поиск
-   независимый от регистра букв поиск регулярного выражения? Как мне
-   использовать индекс для поиска независимого от регистра букв?
-   4.13) Как я могу определить, что значение поля равно NULL в каком-либо
-   запросе?
-   4.14) Каковы отличия между разными символьными типами?
-   4.15.1) Как мне создать поле serial/с-авто-увеличением?
-   4.15.2) Как мне получить значение при вставке SERIAL?
-   4.15.3) Не может ли получиться так, что использование currval() и
-   nextval() приведет к зациклированию с другими пользователями?
-   4.15.4) Почему числа из моей последовательности не используются снова
-   при отмене транзакции? Почему создаются разрывы при нумерации в
-   колонке, где я использую последовательность/SERIAL?
-   4.16) Что такое OID? Что такое TID?
-   4.17) Что означают некоторые термины используемые в PostgreSQL?
-   4.18) Почему я получаю ошибку "ERROR: Memory exhausted in
+   4.1) V chem otlichie mezhdu binarnym i normal'nym kursorom?
+   4.2) Kak vypolnit' SELECT tol'ko dlya neskol'kih pervyh strochek
+   zaprosa?
+   4.3) Kak poluchit' spisok tablic ili drugih komponentov v psql?
+   4.4) Kak udalit' kolonku iz tablicy?
+   4.5) Kakovy maksimal'nye razmery dlya zapisej, tablic i bazy dannyh?
+   4.6) Kak mnogo diskovogo prostranstva v baze dannyh nuzhno dlya
+   sohraneniya dannyh iz obychnogo tekstovogo fajla?
+   4.7) Kak mne ubedit'sya, chto suschestvuyut nuzhnye mne tablicy,
+   indeksy, bazy dannyh i pol'zovateli?
+   4.8) U menya medlenno rabotayut zaprosy ili ne proishodit
+   ispol'zovaniya indeksov. Pochemu?
+   4.9) Kak posmotret' na to, kak optimizator vypolnyaet moj zapros?
+   4.10) CHto takoe R-tree indeks?
+   4.11) CHto takoe Genetic Query Optimizer?
+   4.12) Kak mne vypolnit' poisk regulyarnogo vyrazheniya i poisk
+   nezavisimyj ot registra bukv poisk regulyarnogo vyrazheniya? Kak mne
+   ispol'zovat' indeks dlya poiska nezavisimogo ot registra bukv?
+   4.13) Kak ya mogu opredelit', chto znachenie polya ravno NULL v
+   kakom-libo zaprose?
+   4.14) Kakovy otlichiya mezhdu raznymi simvol'nymi tipami?
+   4.15.1) Kak mne sozdat' pole serial/s-avto-uvelicheniem?
+   4.15.2) Kak mne poluchit' znachenie pri vstavke SERIAL?
+   4.15.3) Ne mozhet li poluchit'sya tak, chto ispol'zovanie currval() i
+   nextval() privedet k zaciklirovaniyu s drugimi pol'zovatelyami?
+   4.15.4) Pochemu chisla iz moej posledovatel'nosti ne ispol'zuyutsya
+   snova pri otmene tranzakcii? Pochemu sozdayutsya razryvy pri numeracii
+   v kolonke, gde ya ispol'zuyu posledovatel'nost'/SERIAL?
+   4.16) CHto takoe OID? CHto takoe TID?
+   4.17) CHto oznachayut nekotorye terminy ispol'zuemye v PostgreSQL?
+   4.18) Pochemu ya poluchayu oshibku "ERROR: Memory exhausted in
    AllocSetAlloc()"?
-   4.19) Как мне узнать, какая версия PostgreSQL запущена?
-   4.20) Почему при работе с моим большим объектом я получаю ошибку
+   4.19) Kak mne uznat', kakaya versiya PostgreSQL zapuschena?
+   4.20) Pochemu pri rabote s moim bol'shim ob"ektom ya poluchayu oshibku
    "invalid large obj descriptor"?
-   4.21) Как мне создать колонку которая по умолчанию будет содержать
-   текущее время?
-   4.22) Почему мои подзапросы, использующие IN так медленно работаеют?
-   4.23) Как выполнить внешнее связывание?
-   4.24) Как выполнять запросы, использующие несколько баз данных?
-   4.25) Как мне вернуть из функции несколько записей?
-   4.26) Почему я не могу надежно создавать/удалять временные таблицы в
-   функциях PL/PgSQL?
-   4.27) Какие опции репликации существуют?
+   4.21) Kak mne sozdat' kolonku kotoraya po umolchaniyu budet soderzhat'
+   tekuschee vremya?
+   4.22) Pochemu moi podzaprosy, ispol'zuyuschie IN tak medlenno
+   rabotaeyut?
+   4.23) Kak vypolnit' vneshnee svyazyvanie?
+   4.24) Kak vypolnyat' zaprosy, ispol'zuyuschie neskol'ko baz dannyh?
+   4.25) Kak mne vernut' iz funkcii neskol'ko zapisej?
+   4.26) Pochemu ya ne mogu nadezhno sozdavat'/udalyat' vremennye tablicy
+   v funkciyah PL/PgSQL?
+   4.27) Kakie opcii replikacii suschestvuyut?
+   4.28) Kakie opcii shifrovaniya suschestvuyut?
    
-                           Расширения PostgreSQL
+                          Rasshireniya PostgreSQL
                                       
-   5.1) Я написал функцию определяемую пользователем. Когда я запускаю ее
-   в psql, почему я получаю dump core?
-   5.2) Как я могу внести некоторые классные новые типы и функции в
+   5.1) YA napisal funkciyu opredelyaemuyu pol'zovatelem. Kogda ya
+   zapuskayu ee v psql, pochemu ya poluchayu dump core?
+   5.2) Kak ya mogu vnesti nekotorye klassnye novye tipy i funkcii v
    PostgreSQL?
-   5.3) Как мне написать C функцию, возвращающую запись?
-   5.4) Я изменил исходный файл. Почему после перекомпиляции я не вижу
-   изменений?
+   5.3) Kak mne napisat' C funkciyu, vozvraschayuschuyu zapis'?
+   5.4) YA izmenil ishodnyj fajl. Pochemu posle perekompilyacii ya ne
+   vizhu izmenenij?
      _________________________________________________________________
    
-                               Общие вопросы
+                              Obschie voprosy
                                       
-    1.1) Что такое PostgreSQL?
+    1.1) CHto takoe PostgreSQL? Kak proiznositsya `eto nazvanie?
     
-   PostgreSQL произносится Post-Gres-Q-L (Пост-Грес-Кью-Эл).
+   PostgreSQL proiznositsya Post-Gres-Q-L (Post-Gres-K'yu-`El).
    
-   PostgreSQL - это расширение СУБД POSTGRES, исследовательский прототип
-   нового поколения СУБД. PostgreSQL одновременно сохраняет мощную модель
-   данных и общирное количество типов POSTGRES, и замещает язык запросов
-   PostQuel на расширенное подмножество SQL. PostgreSQL - это свободное и
-   полностью открытое программное обеспечение.
+   PostgreSQL - `eto rasshirenie SUBD POSTGRES, issledovatel'skij
+   prototip novogo pokoleniya SUBD. PostgreSQL odnovremenno sohranyaet
+   moschnuyu model' dannyh i obschirnoe kolichestvo tipov POSTGRES, i
+   zameschaet yazyk zaprosov PostQuel na rasshirennoe podmnozhestvo SQL.
+   PostgreSQL - `eto svobodnoe i polnost'yu otkrytoe programmnoe
+   obespechenie.
    
-   Разработку PostgreSQL выполняет команда, связанная через Internet, все
-   участники которой подписаны на список рассылки разработчиков. В
-   настоящее время, их координатором является Марк Форнай (Marc G.
-   Fournier) (scrappy@PostgreSQL.org). (См. ниже о том, как подключиться
-   к разработке). Эта команда теперь отвечает за всю разработку
-   PostgreSQL.
+   Razrabotku PostgreSQL vypolnyaet komanda razrabotchikov, vse
+   uchastniki kotoroj podpisany na spisok rassylki razrabotchikov. V
+   nastoyaschee vremya, ih koordinatorom yavlyaetsya Mark Fornaj (Marc G.
+   Fournier) (scrappy@PostgreSQL.org). (Sm. sekciyu 1.6 o tom, kak
+   podklyuchit'sya k razrabotke). `Eta komanda teper' otvechaet za vsyu
+   razrabotku PostgreSQL.
    
-   Авторами PostgreSQL 1.01 являются Эндрю Ю (Andrew Yu) и Джоли Чен
-   (Jolly Chen). Многие другие внесли свой вклад в перенос на другие
-   платформы, тестирование, отладку и расширение этого кода.
-   Первоначальный код Postgres, из которого появился PostgreSQL, был
-   итогом усилий многих академических студентов, неакадемических
-   студентов и множества разных программистов, работавших под
-   руководством профессора Майкла Стоунбрейкера (Michael Stonebraker) в
-   Калифорнийском университете, Беркли.
+   Avtorami PostgreSQL 1.01 yavlyayutsya `Endryu YU (Andrew Yu) i Dzholi
+   CHen (Jolly Chen). Mnogie drugie vnesli svoj vklad v perenos na drugie
+   platformy, testirovanie, otladku i rasshirenie `etogo koda.
+   Pervonachal'nyj kod Postgres, iz kotorogo poyavilsya PostgreSQL, byl
+   itogom usilij mnogih akademicheskih studentov, neakademicheskih
+   studentov i mnozhestva raznyh programmistov, rabotavshih pod
+   rukovodstvom professora Majkla Stounbrejkera (Michael Stonebraker) v
+   Kalifornijskom universitete, Berkli.
    
-   Первоначальное имя, данное в Беркли, было Postgres. Когда в 1995 году
-   была добавлена функциональность SQL, это имя было изменено на
-   Postgres95. Но и это имя было изменено в конце 1996 на PostgreSQL.
+   Pervonachal'noe imya, dannoe v Berkli, bylo Postgres. Kogda v 1995
+   godu byla dobavlena funkcional'nost' SQL, `eto imya bylo izmeneno na
+   Postgres95. No i `eto imya bylo izmeneno v konce 1996 na PostgreSQL.
    
-    1.2) Каковы авторские права на PostgreSQL?
+    1.2) Kakovy avtorskie prava na PostgreSQL?
     
-   PostgreSQL попадает под действие следующего COPYRIGHT:
+   PostgreSQL popadaet pod dejstvie sleduyuschego COPYRIGHT:
    
-   Система Управления Базами Данных PostgreSQL
+   Sistema Upravleniya Bazami Dannyh PostgreSQL
    
    Portion copyright (c) 1996-2002, PostgreSQL Global Development Group
    Portions Copyright (c) 1994-6 Regents of the University of California
    
-   Предоставляются права на использование, копирование, изменение и
-   распространение данного программного обеспечения и его документации
-   для любых целей, бесплатно и без подписания какого-либо соглашения,
-   при условии что для каждой копии будут предоставлены данное выше
-   замечание об авторских правах, текущий параграф и два следующих
-   параграфа.
+   Predostavlyayutsya prava na ispol'zovanie, kopirovanie, izmenenie i
+   rasprostranenie dannogo programmnogo obespecheniya i ego dokumentacii
+   dlya lyubyh celej, besplatno i bez podpisaniya kakogo-libo
+   soglasheniya, pri uslovii chto dlya kazhdoj kopii budut predostavleny
+   dannoe vyshe zamechanie ob avtorskih pravah, tekuschij paragraf i dva
+   sleduyuschih paragrafa.
    
-   КАЛИФОРНИЙСКИЙ УНИВЕРСИТЕТ НЕ НЕСЕТ НИКАКОЙ ОТВЕТСТВЕННОСТИ ЗА ЛЮБЫЕ
-   ПОВРЕЖДЕНИЯ, ВКЛЮЧАЯ ПОТЕРЮ ДОХОДА, НАНЕСЕННЫЕ ПРЯМЫМ ИЛИ НЕПРЯМЫМ,
-   СПЕЦИАЛЬНЫМ ИЛИ СЛУЧАЙНЫМ ИСПОЛЬЗОВАНИЕМ ДАННОГО ПРОГРАММНОГО
-   ОБЕСПЕЧЕНИЯ ИЛИ ЕГО ДОКУМЕНТАЦИИ, ДАЖЕ ЕСЛИ КАЛИФОРНИЙСКИЙ УНИВЕРСИТЕТ
-   БЫЛ ИЗВЕЩЕН О ВОЗМОЖНОСТИ ТАКИХ ПОВРЕЖДЕНИЙ.
+   KALIFORNIJSKIJ UNIVERSITET NE NESET NIKAKOJ OTVETSTVENNOSTI ZA LYUBYE
+   POVREZHDENIYA, VKLYUCHAYA POTERYU DOHODA, NANESENNYE PRYAMYM ILI
+   NEPRYAMYM, SPECIAL'NYM ILI SLUCHAJNYM ISPOL'ZOVANIEM DANNOGO
+   PROGRAMMNOGO OBESPECHENIYA ILI EGO DOKUMENTACII, DAZHE ESLI
+   KALIFORNIJSKIJ UNIVERSITET BYL IZVESCHEN O VOZMOZHNOSTI TAKIH
+   POVREZHDENIJ.
    
-   КАЛИФОРНИЙСКИЙ УНИВЕРСИТЕТ СПЕЦИАЛЬНО ОТКАЗЫВАЗЫВАЕТСЯ ПРЕДОСТАВЛЯТЬ
-   ЛЮБЫЕ ГАРАНТИИ, ВКЛЮЧАЯ, НО НЕ ОГРАНИЧИВАЯСЬ ТОЛЬКО ЭТИМИ ГАРАНТИЯМИ:
-   НЕЯВНЫЕ ГАРАНТИИ ПРИГОДНОСТИ ТОВАРА ИЛИ ПРИГОДНОСТИ ДЛЯ ОТДЕЛЬНОЙ
-   ЦЕЛИ. ДАННОЕ ПРОГРАММНОЕ ОБЕСПЕЧЕНИЕ ПРЕДОСТАВЛЯЕТСЯ НА ОСНОВЕ ПРИЦИПА
-   "КАК ЕСТЬ" И КАЛИФОРНИЙСКИЙ УНИВЕРСИТЕТ НЕ ОБЯЗАН ПРЕДОСТАВЛЯТЬ
-   СОПРОВОЖДЕНИЕ, ПОДДЕРЖКУ, ОБНОВЛЕНИЯ, РАСШИРЕНИЯ ИЛИ ИЗМЕНЕНИЯ.
+   KALIFORNIJSKIJ UNIVERSITET SPECIAL'NO OTKAZYVAZYVAETSYA PREDOSTAVLYAT'
+   LYUBYE GARANTII, VKLYUCHAYA, NO NE OGRANICHIVAYAS' TOL'KO `ETIMI
+   GARANTIYAMI: NEYAVNYE GARANTII PRIGODNOSTI TOVARA ILI PRIGODNOSTI DLYA
+   OTDEL'NOJ CELI. DANNOE PROGRAMMNOE OBESPECHENIE PREDOSTAVLYAETSYA NA
+   OSNOVE PRICIPA "KAK EST'" I KALIFORNIJSKIJ UNIVERSITET NE OBYAZAN
+   PREDOSTAVLYAT' SOPROVOZHDENIE, PODDERZHKU, OBNOVLENIYA, RASSHIRENIYA
+   ILI IZMENENIYA.
    
-   Вышеизложенное является BSD лицензией, классической лицензией
-   программного обеспечения с открытым кодом. Эта лицензия не накладывает
-   ограничений на использование исходного кода. Нам нравится эта лицензия
-   и мы не собираемся её менять.
+   Vysheizlozhennoe yavlyaetsya BSD licenziej, klassicheskoj licenziej
+   programmnogo obespecheniya s otkrytym kodom. `Eta licenziya ne
+   nakladyvaet ogranichenij na ispol'zovanie ishodnogo koda. Nam
+   nravitsya `eta licenziya i my ne sobiraemsya eio menyat'.
    
-    1.3) На каких Unix платформах работает PostgreSQL?
+    1.3) Na kakih Unix platformah rabotaet PostgreSQL?
     
-   Обычно, PostgreSQL может работать на любой современной платформе
-   совместимой с Unix. В инструкции по установке, вы найдете список тех
-   платформ, на которых были проведены тестовые запуски PostgreSQL к
-   моменту выхода данной версии.
+   Obychno, PostgreSQL mozhet rabotat' na lyuboj sovremennoj platforme
+   sovmestimoj s Unix. V instrukcii po ustanovke, vy najdete spisok teh
+   platform, na kotoryh byli provedeny testovye zapuski PostgreSQL k
+   momentu vyhoda dannoj versii.
    
-    1.4) Существуют ли версии перенесенные не на Unix системы?
+    1.4) Suschestvuyut li versii perenesennye ne na Unix sistemy?
     
-   Клиент
+   Klient
    
-   Для запуска на платформах MS Windows возможна компиляция C библиотеки
-   libpq, psql и других интерфесов и бинарных файлов. В этом случае,
-   клиент запускается на MS Windows и связывается по TCP/IP с сервером,
-   запущенным на одной из поддерживаемых Unix платформ. В дистрибутив
-   включается файл win31.mak для того, чтобы можно было провести сборку
-   библиотеки libpq и psql для Win32. PostgreSQL также работает через
-   ODBC.
+   Dlya zapuska na platformah MS Windows vozmozhna kompilyaciya C
+   biblioteki libpq, psql, drugih interfesov i klientskih prilozhenij. V
+   `etom sluchae, klient zapuskaetsya na MS Windows i svyazyvaetsya po
+   TCP/IP s serverom, zapuschennym na odnoj iz podderzhivaemyh Unix
+   platform. V distributiv vklyuchaetsya fajl win32.mak dlya togo, chtoby
+   mozhno bylo provesti sborku biblioteki libpq i psql dlya Win32.
+   PostgreSQL takzhe rabotaet cherez ODBC.
    
-   Сервер
+   Server
    
-   Сервер БД может быть запущен на Windows NT и Win2k, используя
-   библиотеку Cygwin, разработанную для переноса программного обеспечения
-   Unix в NT. Смотрите pgsql/doc/FAQ_MSWIN в дистрибутиве или MS Windows
-   FAQ на нашем сайте. Мы не планируем специально переносить PostgreSQL
-   на какую-либо платформу Microsoft.
+   Server BD mozhet byt' zapuschen na Windows NT i Win2k, ispol'zuya
+   biblioteku Cygwin, razrabotannuyu dlya perenosa programmnogo
+   obespecheniya Unix v NT. Smotrite pgsql/doc/FAQ_MSWIN v distributive
+   ili MS Windows FAQ na http://www.PostgreSQL.org/docs/faq-mswin.html.
    
-    1.5) Где можно взять PostgreSQL?
+   PostgreSQL, sportirovannyj special'no dlya MS Win NT/2000/XP v
+   nastoyaschij moment nachal rabotat'.
+   
+    1.5) Gde mozhno vzyat' PostgreSQL?
     
-   Например, воспользовавшись анонимным доступом на ftp сайт PostgreSQL
-   ftp://ftp.PostgreSQL.org/pub. Список зеркал вы найдете на нашем
-   основном сайте.
+   Naprimer, vospol'zovavshis' anonimnym dostupom na ftp sajt PostgreSQL
+   ftp://ftp.PostgreSQL.org/pub. Spisok zerkal vy najdete na nashem
+   osnovnom sajte.
    
-    1.6) Где получить поддержку?
+    1.6) Gde poluchit' podderzhku?
     
-   Основной список рассылки: pgsql-general@PostgreSQL.org. В нем можно
-   обсуждать любые темы, касающиеся PostgreSQL. Чтобы подписаться,
-   отправьте письмо по электронной почте, в котором в теле письма (не в
-   теме) напишите следующие строки:
+   Osnovnoj spisok rassylki: pgsql-general@PostgreSQL.org. V nem mozhno
+   obsuzhdat' lyubye temy, kasayuschiesya PostgreSQL. CHtoby
+   podpisat'sya, otprav'te pis'mo po `elektronnoj pochte, v kotorom v
+   tele pis'ma (ne v teme) napishite sleduyuschie stroki:
     subscribe
     end
 
-   на адрес pgsql-general-request@PostgreSQL.org.
+   na adres pgsql-general-request@PostgreSQL.org.
    
-   Существует дайжест список. Чтобы подписаться на него, отправьте письмо
-   по электронной почте на адрес:
-   pgsql-general-digest-request@PostgreSQL.org и в теле письма напишите
-   строчки строчки:
+   Suschestvuet dajzhest spisok. CHtoby podpisat'sya na nego, otprav'te
+   pis'mo po `elektronnoj pochte na adres:
+   pgsql-general-digest-request@PostgreSQL.org i v tele pis'ma napishite
+   strochki strochki:
     subscribe
     end
 
-   Дайжесты отправляются подписчикам, когда в основном списке рассылки
-   накопится около 30 килобайт сообщений.
+   Dajzhesty otpravlyayutsya podpischikam, kogda v osnovnom spiske
+   rassylki nakopitsya okolo 30 kilobajt soobschenij.
    
-   Доступен и список рассылки сообщений об ошибках. Чтобы подписаться на
-   этот список, отправьте по электронной почте письмо на адрес
-   pgsql-bugs-request@PostgreSQL.org и в теле письма напишите строчки
-   строчки:
+   Dostupen i spisok rassylki soobschenij ob oshibkah. CHtoby
+   podpisat'sya na `etot spisok, otprav'te po `elektronnoj pochte pis'mo
+   na adres pgsql-bugs-request@PostgreSQL.org i v tele pis'ma napishite
+   strochki strochki:
     subscribe
     end
 
-   Также имеется список рассылки с дискуссиями разработчиков. Чтобы
-   подписаться на этот список, отправьте по электронной почте письмо на
-   адрес pgsql-hackers-request@PostgreSQL.org и в теле письма напишите
-   строчки строчки:
+   Takzhe imeetsya spisok rassylki s diskussiyami razrabotchikov. CHtoby
+   podpisat'sya na `etot spisok, otprav'te po `elektronnoj pochte pis'mo
+   na adres pgsql-hackers-request@PostgreSQL.org i v tele pis'ma
+   napishite strochki strochki:
     subscribe
     end
 
-   Дополнительные списки рассылки и инфомацию о PostgreSQL можно найти на
-   домашней страничке PostgreSQL по адресу:
+   Dopolnitel'nye spiski rassylki i infomaciyu o PostgreSQL mozhno najti
+   na domashnej stranichke PostgreSQL po adresu:
    
      http://www.PostgreSQL.org
      
-   Еще существует IRC канал на EFNet, с названием #PostgreSQL. Я
-   использую для подключения к этому каналу команду Unix irc -c
+   Esche suschestvuet IRC kanal na EFNet, s nazvaniem #PostgreSQL. YA
+   ispol'zuyu dlya podklyucheniya k `etomu kanalu komandu Unix irc -c
    '#PostgreSQL' "$USER" irc.phoenix.net.
    
-   Список коммерческой поддержки компаний доступен на
-   http://www.postgresql.org/users-lounge/commercial-support.html.
+   Spisok kommercheskoj podderzhki kompanij dostupen na
+   http://www.PostgreSQL.org/users-lounge/commercial-support.html.
    
-    1.7) Какая последняя версия?
+    1.7) Kakaya poslednyaya versiya?
     
-   Последний выпуск PostgreSQL - это версия 7.2.3.
+   Poslednij vypusk PostgreSQL - `eto versiya 7.2.3.
    
-   Мы планируем выпускать новые версии каждые четыре месяца.
+   My planiruem vypuskat' novye versii kazhdye chetyre mesyaca.
    
-    1.8) Какая документация имеется в наличии?
+    1.8) Kakaya dokumentaciya imeetsya v nalichii?
     
-   В дистрибутив включаются различные руководства, страницы электронного
-   руководства man и некоторые маленькие тестовые примеры. Смотрите в
-   каталог /doc. Вы также можете просматривать документацию в Интернет по
-   адресу http://www.PostgreSQL.org/users-lounge/docs/.
+   V distributiv vklyuchayutsya razlichnye rukovodstva, stranicy
+   `elektronnogo rukovodstva man i nekotorye malen'kie testovye primery.
+   Smotrite v katalog /doc. Vy takzhe mozhete prosmatrivat' dokumentaciyu
+   v Internet po adresu http://www.PostgreSQL.org/users-lounge/docs/.
    
-   Существует две книги по PostgreSQL доступные по адресам
-   http://www.PostgreSQL.org/docs/awbook.html и
-   http://www.commandprompt.com/ppbook/. Список книг по PostgreSQL,
-   которые можно купить доступен по адресу
-   http://www.postgresql.org/books/. Кроме того, по адресу
-   http://techdocs.postgresql.org/ вы можете найти коллекцию технических
-   статей посвященных PostgreSQL.
+   Suschestvuet dve knigi po PostgreSQL dostupnye po adresam
+   http://www.PostgreSQL.org/docs/awbook.html i
+   http://www.commandprompt.com/ppbook/. Spisok knig po PostgreSQL,
+   kotorye mozhno kupit' dostupen po adresu
+   http://www.ca.PostgreSQL.org/books/. Krome togo, po adresu
+   http://techdocs.PostgreSQL.org/ vy mozhete najti kollekciyu
+   tehnicheskih statej posvyaschennyh PostgreSQL.
    
-   psql имеет несколько прекрасных команд \d для отображения информации
-   по типам, операторам, функциям, агрегатам и т.д.
+   psql imeet neskol'ko prekrasnyh komand \d dlya otobrazheniya
+   informacii po tipam, operatoram, funkciyam, agregatam i t.d.
    
-   Наш сайт содержит еще больше информации.
+   Nash sajt soderzhit esche bol'she informacii.
    
-    1.9) Как найти информацию об известных ошибках или отсутствующих
-    возможностях?
+    1.9) Kak najti informaciyu ob izvestnyh oshibkah ili otsutstvuyuschih
+    vozmozhnostyah?
     
-   PostgreSQL поддерживает расширенный подкласс SQL-92. Смотрите наш
-   список TODO на предмет известных ошибок, отсутствующих особенностях и
-   будущих планов.
+   PostgreSQL podderzhivaet rasshirennyj podklass SQL-92. Smotrite nash
+   spisok TODO na predmet izvestnyh oshibok, otsutstvuyuschih
+   osobennostyah i buduschih planov.
    
-    1.10) Как мне научиться SQL?
+    1.10) Kak mne nauchit'sya SQL?
     
-   Книга по PostgreSQL на http://www.PostgreSQL.org/docs/awbook.html
-   научит SQL. Существует другая книга по PostgreSQL на
-   http://www.commandprompt.com/ppbook. Есть прекрасный учебник на
-   http://www.intermedia.net/support/sql/sqltut.shtm, на
+   Kniga po PostgreSQL na http://www.PostgreSQL.org/docs/awbook.html
+   nauchit SQL. Suschestvuet drugaya kniga po PostgreSQL na
+   http://www.commandprompt.com/ppbook. Est' prekrasnyj uchebnik na
+   http://www.intermedia.net/support/sql/sqltut.shtm, na
    http://ourworld.compuserve.com/homepages/graeme_birchall/HTM_COOK.HTM,
-   и на http://sqlcourse.com.
+   i na http://sqlcourse.com.
    
-   Еще один учебник - это книга "Teach Yourself SQL in 21 Days, Second
-   Edition" (Освой самостоятельно SQL за 21 день, Вторая редакция) на
-   http://members.tripod.com/er4ebus/sql/index.htm
+   Esche odin uchebnik - `eto kniga "Teach Yourself SQL in 21 Days,
+   Second Edition" (Osvoj samostoyatel'no SQL za 21 den', Vtoraya
+   redakciya) na http://members.tripod.com/er4ebus/sql/index.htm
    
-   Многим из наших пользователей нравится книга The Practical SQL
-   Handbook, Bowman, Judith S., et al., Addison-Wesley. Другим нравится
+   Mnogim iz nashih pol'zovatelej nravitsya kniga The Practical SQL
+   Handbook, Bowman, Judith S., et al., Addison-Wesley. Drugim nravitsya
    The Complete Reference SQL, Groff et al., McGraw-Hill.
    
-    1.11) Решена ли в PostgreSQL проблема 2000-го года (Y2K)?
+    1.11) Reshena li v PostgreSQL problema 2000-go goda (Y2K)?
     
-   Да, мы легко манипулируем датами после 2000 года и перед 2000 годом.
+   Da, my legko manipuliruem datami posle 2000 goda i pered 2000 godom.
    
-    1.12) Как присоединится к команде разработчиков?
+    1.12) Kak prisoedinitsya k komande razrabotchikov?
     
-   Для начала, скачайте последнюю версию исходных текстов и прочтите
-   документацию разработчиков PostgreSQL на нашем сайте или в
-   дистрибутиве. Затем, подпишитесь на списки рассылки pgsql-hackers и
-   pgsql-patches. Далее, отправляйте исправления (patches) высокого
-   качества в список pgsql-patches.
+   Dlya nachala, skachajte poslednyuyu versiyu ishodnyh tekstov i
+   prochtite dokumentaciyu razrabotchikov PostgreSQL na nashem sajte ili
+   v distributive. Zatem, podpishites' na spiski rassylki pgsql-hackers i
+   pgsql-patches. Dalee, otpravlyajte ispravleniya (patches) vysokogo
+   kachestva v spisok pgsql-patches.
    
-   Существует ограниченный список людей, который имеют привелегию вносить
-   изменения в CVS архив PostgreSQL. Каждый из этих людей в свое время
-   отправил так много высококачественных исправлений, что их было
-   невозможно оставить без внимания и они были удостоены превилегии
-   вносить изменения, и мы уверены, что те исправления, которые они
-   внесут будут высокого качества.
+   Suschestvuet ogranichennyj spisok lyudej, kotoryj imeyut privelegiyu
+   vnosit' izmeneniya v CVS arhiv PostgreSQL. Kazhdyj iz `etih lyudej v
+   svoe vremya otpravil tak mnogo vysokokachestvennyh ispravlenij, chto
+   ih bylo nevozmozhno ostavit' bez vnimaniya i oni byli udostoeny
+   previlegii vnosit' izmeneniya, i my uvereny, chto te ispravleniya,
+   kotorye oni vnesut budut vysokogo kachestva.
    
-    1.13) Как отравить сообщение об ошибке??
+    1.13) Kak otravit' soobschenie ob oshibke??
     
-   Пожалуйста посетите страничку PostgreSQL BugTool, на которой
-   предоставлены детальные инструкции о том как отправить сообщение об
-   ошибке.
+   Pozhalujsta posetite stranichku PostgreSQL BugTool na
+   http://www.PostgreSQL.org/bugs/bugs.php, na kotoroj predostavleny
+   detal'nye instrukcii o tom kak otpravit' soobschenie ob oshibke.
    
-   Также не забудьте посмотреть на ftp://ftp.PostgreSQL.org/pub на
-   предмет более свежих версий PostgreSQL или заплат.
+   Takzhe ne zabud'te posmotret' na ftp://ftp.PostgreSQL.org/pub na
+   predmet bolee svezhih versij PostgreSQL ili zaplat.
    
-    1.14) Как сравнивать PostgreSQL с другими СУБД?
+    1.14) Kak sravnivat' PostgreSQL s drugimi SUBD?
     
-   Существует несколько методов сравнения программного обеспечения:
-   возможности, производительность, надежность, поддержка и цена.
+   Suschestvuet neskol'ko metodov sravneniya programmnogo obespecheniya:
+   vozmozhnosti, proizvoditel'nost', nadezhnost', podderzhka i cena.
    
-   Возможности
-          PostgreSQL имеет большинство возможностей представленных в
-          больших коммерческих СУБД, такие как: транзакции, подзапросы,
-          триггеры, обзоры (views), внешний ключ ссылочной целостности и
-          разные блокировки. У нас есть некоторые возможности, которых
-          нет у них: типы, определяемые пользователем, механизм
-          наследования, правила и конкуретное многоверсионное управление
-          для работы с содержимым блокировок.
+   Vozmozhnosti
+          PostgreSQL imeet bol'shinstvo vozmozhnostej predstavlennyh v
+          bol'shih kommercheskih SUBD, takie kak: tranzakcii, podzaprosy,
+          triggery, obzory (views), vneshnij klyuch ssylochnoj
+          celostnosti i raznye blokirovki. U nas est' nekotorye
+          vozmozhnosti, kotoryh net u nih: tipy, opredelyaemye
+          pol'zovatelem, mehanizm nasledovaniya, pravila i konkuretnoe
+          mnogoversionnoe upravlenie dlya raboty s soderzhimym
+          blokirovok.
           
-   Производительность
-          PostgreSQL имеет производительность схожую с другими
-          коммерческими СУБД и с СУБД с открытым исходным кодом, в
-          каких-то аспектах работая быстрее чем они, в каких-то медленее.
-          В сравнении с MySQL или линейными СУБД, мы медленее при
-          операциях вставки/обновления, потому что управляем
-          транзакциями. И разумеется, MySQL не имеет каких-либо
-          возможностей из перечисленых выше, в секции Возможности. Мы
-          делаем упор на надежность и расширенные возможности, но мы
-          также продолжаем увеличивать производительность с каждым
-          выпуском. Существует интересная страничка в Интернет,
-          сравнивающая PostgreSQL и MySQL на
-          http://openacs.org/why-not-mysql.html
+   Proizvoditel'nost'
+          PostgreSQL imeet proizvoditel'nost' shozhuyu s drugimi
+          kommercheskimi SUBD i s SUBD s otkrytym ishodnym kodom, v
+          kakih-to aspektah rabotaya bystree chem oni, v kakih-to
+          medlenee. V sravnenii s MySQL ili linejnymi SUBD, my medlenee
+          pri operaciyah vstavki/obnovleniya, potomu chto upravlyaem
+          tranzakciyami. I razumeetsya, MySQL ne imeet kakih-libo
+          vozmozhnostej iz perechislenyh vyshe, v sekcii Vozmozhnosti. My
+          delaem upor na nadezhnost' i rasshirennye vozmozhnosti, no my
+          takzhe prodolzhaem uvelichivat' proizvoditel'nost' s kazhdym
+          vypuskom. Suschestvuet interesnaya stranichka v Internet,
+          sravnivayuschaya PostgreSQL i MySQL na
+          http://openacs.org/philosophy/why-not-mysql.html
           
-   Надежность
-          Мы понимали, что наша СУБД должна быть надежной или она ничего
-          не будет стоить. Мы стараемся выпускать хорошо проверенный,
-          стабильный код, который содержит минимум ошибок. Каждый выпуск
-          проходит стадию бета-тестирования по крайней мере в течении
-          одного месяца и наша история выпусков показывает что мы можем
-          предоставлять стабильные, монолитные выпуски, которые готовы к
-          продуктивному использованию. Мы верим, что мы производим
-          проверку не хуже, чем у других СУБД.
+   Nadezhnost'
+          My ponimali, chto nasha SUBD dolzhna byt' nadezhnoj ili ona
+          nichego ne budet stoit'. My staraemsya vypuskat' horosho
+          proverennyj, stabil'nyj kod, kotoryj soderzhit minimum oshibok.
+          Kazhdyj vypusk prohodit stadiyu beta-testirovaniya po krajnej
+          mere v techenii odnogo mesyaca i nasha istoriya vypuskov
+          pokazyvaet chto my mozhem predostavlyat' stabil'nye, monolitnye
+          vypuski, kotorye gotovy k produktivnomu ispol'zovaniyu. My
+          verim, chto my proizvodim proverku ne huzhe, chem u drugih
+          SUBD.
           
-   Поддержка
-          Наш список рассылки представлен большой группой разработчиков и
-          пользователей, которые могут помочь решить любые возникшие
-          проблемы. В то же время, мы не гарантируем какие-либо
-          исправления, но и разработчики коммерческих СУБД не всегда
-          делают исправления. Прямой доступ к разработчикам, сообществу
-          пользователей, руководствам и исходным текстам часто делают
-          поддержку PostgreSQL превосходящей другие СУБД. Существует
-          коммерческая поддержка по результам возникших инцидентов,
-          которая доступна для тех кому она нужна. (Смотрите Как получить
-          поддержку?.)
+   Podderzhka
+          Nash spisok rassylki predostavlyaet vozmozhmozhnost' obscheniya
+          s bol'shoj gruppoj razrabotchikov i pol'zovatelej, kotorye
+          mogut pomoch' reshit' lyubye voznikshie problemy. V to zhe
+          vremya, my ne garantiruem kakie-libo ispravleniya, no i
+          razrabotchiki kommercheskih SUBD ne vsegda delayut
+          ispravleniya. Pryamoj dostup k razrabotchikam, soobschestvu
+          pol'zovatelej, rukovodstvam i ishodnym tekstam chasto delayut
+          podderzhku PostgreSQL prevoshodyaschej drugie SUBD.
+          Suschestvuet kommercheskaya podderzhka po rezul'tam voznikshih
+          incidentov, kotoraya dostupna dlya teh komu ona nuzhna.
+          (Smotrite Sekciyu 1.6.)
           
-   Цена
-          Наш продукт бесплатен как для коммерческого так, и не для
-          коммерческого использования. Вы можете добавлять свой код в наш
-          продукт без ограничений, за исключением тех, что описываются в
-          нашей лицензии стиля BSD, которая приведена выше.
+   Cena
+          Nash produkt besplaten kak dlya kommercheskogo tak, i ne dlya
+          kommercheskogo ispol'zovaniya. Vy mozhete dobavlyat' svoj kod v
+          nash produkt bez ogranichenij, za isklyucheniem teh, chto
+          opisyvayutsya v nashej licenzii stilya BSD, kotoraya privedena
+          vyshe.
           
-    1.15) Как оказать финансовую помощь PostgreSQL?
+    1.15) Kak okazat' finansovuyu pomosch' PostgreSQL?
     
-   PostgreSQL имеет одноранговую инфраструктуру с того самого времени как
-   мы начали разработку 6 лет назад. Мы должны благодарить за это Марка
-   Фоная (Marc Fournier), который создал эту инфраструктуру и управляет
-   ей на протяжении этих лет.
+   PostgreSQL imeet odnorangovuyu infrastrukturu s togo samogo vremeni
+   kak my nachali razrabotku v 1996 godu. My dolzhny blagodarit' za `eto
+   Marka Fonaya (Marc Fournier), kotoryj sozdal `etu infrastrukturu i
+   upravlyaet ej na protyazhenii `etih let.
    
-   Качественная инфраструктура очень важна для проектов с открытым
-   исходным кодом. Она предотвращает расколы, которые могут сильно
-   задержать поступательное движение проекта.
+   Kachestvennaya infrastruktura ochen' vazhna dlya proektov s otkrytym
+   ishodnym kodom. Ona predotvraschaet raskoly, kotorye mogut sil'no
+   zaderzhat' postupatel'noe dvizhenie proekta.
    
-   Разумеется, эта инфраструктура не является дешевой. Существует
-   некоторое количество ежемесячных и одноразовых расходов, которые
-   требуют денег. Если вы или ваша компания имеет деньги, которые можно
-   передать в помощь нашим усилиям, пожалуйста посетите страничку
-   https://store.pgsql.com/shopping/index.php?id=1 и сделайте свой вклад.
+   Razumeetsya, `eta infrastruktura ne yavlyaetsya deshevoj. Suschestvuet
+   nekotoroe kolichestvo ezhemesyachnyh i odnorazovyh rashodov, kotorye
+   trebuyut deneg. Esli vy ili vasha kompaniya imeet den'gi, kotorye
+   mozhno peredat' v pomosch' nashim usiliyam, pozhalujsta posetite
+   stranichku https://store.pgsql.com/shopping/ i sdelajte svoj vklad.
    
-   Хотя на страничке говорится о PostgreSQL, Inc, пункт "contributions"
-   предназначен исключительно для поддержки проекта PostgreSQL и не
-   передается какой-либо конкретной компании. Если хотите, то можете это
-   проверить, написав письмо на контактный адрес.
+   Hotya na stranichke govoritsya o PostgreSQL, Inc, punkt
+   "contributions" prednaznachen isklyuchitel'no dlya podderzhki proekta
+   PostgreSQL i ne peredaetsya kakoj-libo konkretnoj kompanii. Esli
+   hotite, to mozhete `eto proverit', napisav pis'mo na kontaktnyj adres.
      _________________________________________________________________
    
-                 Вопросы пользователей по клиентской части
+                 Voprosy pol'zovatelej po klientskoj chasti
                                       
-    2.1) Существуют ли ODBC драйвера для PostgreSQL?
+    2.1) Suschestvuyut li ODBC drajvera dlya PostgreSQL?
     
-   Существует два ODBC драйвера, PsqlODBC и OpenLink ODBC.
+   Suschestvuet dva ODBC drajvera, PsqlODBC i OpenLink ODBC.
    
-   PsqlODBC включается в дистрибутив. Больше информации об этом драйвере
-   можно найти на ftp://ftp.PostgreSQL.org/pub/odbc/.
+   PsqlODBC vklyuchaetsya v distributiv. Bol'she informacii ob `etom
+   drajvere mozhno najti na ftp://ftp.PostgreSQL.org/pub/odbc/.
    
-   OpenLink ODBC можно взять на http://www.openlinksw.com. Этот драйвер
-   работает с их стандартным клиентским программным обеспечением,
-   использующим ODBC, и таким образом, ODBC драйверы для PostgreSQL
-   доступны для каждой из поддерживаемых ими платформ (Win, Mac, Unix,
-   VMS).
+   OpenLink ODBC mozhno vzyat' na http://www.openlinksw.com. `Etot
+   drajver rabotaet s ih standartnym klientskim programmnym
+   obespecheniem, ispol'zuyuschim ODBC, i takim obrazom, ODBC drajvery
+   dlya PostgreSQL dostupny dlya kazhdoj iz podderzhivaemyh imi platform
+   (Win, Mac, Unix, VMS).
    
-   Возможно они будут продавать свой продукт тем кому нужна коммерческая
-   поддержка, но бесплатная версия всегда будет доступна. Пожалуйста,
-   направляйте вопросы на адрес postgres95@openlink.co.uk.
+   Vozmozhno oni budut prodavat' svoj produkt tem komu nuzhna
+   kommercheskaya podderzhka, no besplatnaya versiya vsegda budet
+   dostupna. Pozhalujsta, napravlyajte voprosy na adres
+   postgres95@openlink.co.uk.
    
-   Также посмотрите ODBC раздел в руководстве программиста.
+   Takzhe posmotrite ODBC razdel v rukovodstve programmista.
    
-    2.2) Какие инструменты существуют для использования PostgreSQL через Web?
+    2.2) Kakie instrumenty suschestvuyut dlya ispol'zovaniya PostgreSQL cherez
+    Web?
     
-   Прекрасное введение во взаимодействие баз данных и Web можно найти на:
-   http://www.webreview.com
+   Prekrasnoe vvedenie vo vzaimodejstvie baz dannyh i Web mozhno najti
+   na: http://www.webreview.com
    
-   Также загляните на http://www.phone.net/home/mwm/hotlist/.
+   Dlya integracii s Web, odnim iz prevoshodnyh instrumentov yavlyaetsya
+   PHP. Domashnyaya stanichka http://www.php.net.
    
-   Для интеграции с Web, одним из превосходных инструментов является PHP.
-   Домашняя станичка http://www.php.net.
+   Dlya kompleksnyh reshenij, mnogie pol'zuyutsya Perl interfejsom i
+   CGI.pm ili mod_perl.
    
-   Для комплексных решений, многие пользуются Perl интерфейсом и CGI.pm.
-   
-    2.3) Есть ли у PostgreSQL графический интерфейс пользователя? Генератор
-    отчетов? Встроенный интерфейс для языка запросов?
+    2.3) Est' li u PostgreSQL graficheskij interfejs pol'zovatelya? Generator
+    otchetov? Vstroennyj interfejs dlya yazyka zaprosov?
     
-   У нас есть прекрасный горафический интерфейс, называемый pgaccess,
-   который является частью дистрибутива. pgaccess также емеет генератор
-   отчетов. Его страничка http://www.flex.ro/pgaccess
+   U nas est' prekrasnyj goraficheskij interfejs, nazyvaemyj PgAccess,
+   kotoryj takzhe mozhno ispol'zovat' kak generator otchetov. Ego
+   stranichka http://www.pgaccess.org/
    
-   Мы также включаем ecpg, который предоставляет встроенный интерфейс к
-   языку запросов SQL из C.
+   My takzhe vklyuchaem ecpg, kotoryj predostavlyaet vstroennyj interfejs
+   k yazyku zaprosov SQL iz C.
    
-    2.4) Какие языки могут взаимодействовать с PostgreSQL?
+    2.4) Kakie yazyki mogut vzaimodejstvovat' s PostgreSQL?
     
-   Вот эти:
+   Vot `eti:
      * C (libpq)
      * C++ (libpq++)
      * Embedded C (ecpg)
      * Java (jdbc)
-     * Perl (perl5)
+     * Perl (DBD::Pg i perl5)
      * ODBC (odbc)
      * Python (PyGreSQL)
      * TCL (libpgtcl)
      * C Easy API (libpgeasy)
-     * Embedded HTML (PHP from http://www.php.net)
+     * PHP ('pg_' functions, Pear::DB)
        
-   Дополнительные интерфейсы доступны по адресу
-   http://www.postgresql.org/interfaces.html.
+   Dopolnitel'nye interfejsy dostupny po adresu
+   http://www.PostgreSQL.org/interfaces.html. i
+   http://gborg.PostgreSQL.org.
      _________________________________________________________________
    
-                         Вопросы администрирования
+                         Voprosy administrirovaniya
                                       
-    3.1) Как мне установить PostgreSQL в место отличное от /usr/local/pgsql?
+    3.1) Kak mne ustanovit' PostgreSQL v mesto otlichnoe ot /usr/local/pgsql?
     
-   Задайте опцию --prefix когда запускаете configure.
+   Zadajte opciyu --prefix kogda zapuskaete configure.
    
-    3.2) Когда я запускаю postmaster, я получаю сообщение Bad System Call или
-    сообщение core dumped. Почему?
+    3.2) Kogda ya zapuskayu postmaster, ya poluchayu soobschenie Bad System
+    Call ili soobschenie core dumped. Pochemu?
     
-   Это может быть вызвано разными проблемами, но первое, что нужно
-   сделать - это убедиться в том, что в вашем ядре установлено расширение
-   System V. PostgreSQL требует, чтобы ядро поддерживало разделяемую
-   память и семафоры.
+   `Eto mozhet byt' vyzvano raznymi problemami, no pervoe, chto nuzhno
+   sdelat' - `eto ubedit'sya v tom, chto v vashem yadre ustanovleno
+   rasshirenie System V. PostgreSQL trebuet, chtoby yadro podderzhivalo
+   razdelyaemuyu pamyat' i semafory.
    
-    3.3) Когда я пытаюсь запустить postmaster, я получаю ошибки
-    IpcMemoryCreate. Почему?
+    3.3) Kogda ya pytayus' zapustit' postmaster, ya poluchayu oshibki
+    IpcMemoryCreate. Pochemu?
     
-   Либо у вас в ядре неправильные настройки разделяемой памяти, либо
-   вашему ядру нужно большее количество доступной разделяемой памяти. Те
-   конкретные действия, которые вам нужно произвести зависят от
-   архитектуры вашей машины и от того как много буферов и backend
-   процессов вы настроили для postmaster. Для большинства систем, с
-   количеством буферов и процессов по умолчанию, необходимый минимум -
-   это около 1 мегабайта. Подробности о разделяемой памяти и семафорах
-   смотрите в Руководстве администратора PostgreSQL.
+   Libo u vas v yadre nepravil'nye nastrojki razdelyaemoj pamyati, libo
+   vashemu yadru nuzhno bol'shee kolichestvo dostupnoj razdelyaemoj
+   pamyati. Te konkretnye dejstviya, kotorye vam nuzhno proizvesti
+   zavisyat ot arhitektury vashej mashiny i ot togo kak mnogo buferov i
+   backend processov vy nastroili dlya postmaster. Dlya bol'shinstva
+   sistem, s kolichestvom buferov i processov po umolchaniyu, neobhodimyj
+   minimum - `eto okolo 1 megabajta. Podrobnosti o razdelyaemoj pamyati i
+   semaforah smotrite v Rukovodstve administratora PostgreSQL.
    
-    3.4) Когда я пытаюсь запустить postmaster, я получаю ошибки
-    IpcSemaphoreCreate. Почему?
+    3.4) Kogda ya pytayus' zapustit' postmaster, ya poluchayu oshibki
+    IpcSemaphoreCreate. Pochemu?
     
-   Если это сообщение IpcSemaphoreCreate: semget failed (No space left on
-   device) то настройки вашего ядра таковы, что ему не хватает семафоров.
-   Postgres требует один семафор на потенциальный backend процесс.
-   Временным решением является запуск postmaster с настройками на мешьшее
-   количество backend процессов. Используйте -N с значением меньшим чем
-   32, которое принято по умолчанию. Более правильное решение - это
-   увеличить значения SEMMNS и SEMMNI в настрйках ядра.
+   Esli `eto soobschenie IpcSemaphoreCreate: semget failed (No space left
+   on device) to nastrojki vashego yadra takovy, chto emu ne hvataet
+   semaforov. Postgres trebuet odin semafor na potencial'nyj backend
+   process. Vremennym resheniem yavlyaetsya zapusk postmaster s
+   nastrojkami na mesh'shee kolichestvo backend processov. Ispol'zujte -N
+   s znacheniem men'shim chem 32, kotoroe prinyato po umolchaniyu. Bolee
+   pravil'noe reshenie - `eto uvelichit' znacheniya SEMMNS i SEMMNI v
+   nastrjkah yadra.
    
-   Неисправные семафоры также могут привести к падению СУБД во время
-   доступа к базе данных.
+   Neispravnye semafory takzhe mogut privesti k padeniyu SUBD vo vremya
+   dostupa k baze dannyh.
    
-   Если вы получили какое-либо другое сообщение об ошибке, то вполне
-   возможно, что в вашем ядре вообще не настроена поддержка семафоров.
-   Смотрите подробности о разделяемой памяти и семафорах в Руководстве
-   Администратора PostgreSQL.
+   Esli vy poluchili kakoe-libo drugoe soobschenie ob oshibke, to vpolne
+   vozmozhno, chto v vashem yadre voobsche ne nastroena podderzhka
+   semaforov. Smotrite podrobnosti o razdelyaemoj pamyati i semaforah v
+   Rukovodstve Administratora PostgreSQL.
    
-    3.5) Как мне управлять соединениями с других компьютеров?
+    3.5) Kak mne upravlyat' soedineniyami s drugih komp'yuterov?
     
-   По умолчанию, PostgreSQL разрешает только соединения на локальной
-   машине через сокеты домена Unix. Другие машины не смогут подключиться
-   к базе пока для postmaster не будет задан флаг -i и пока не будет
-   разрешена host-авторизация в файле $PGDATA/pg_hba.conf. Эти действия
-   делают возможными TCP/IP соединения.
+   Po umolchaniyu, PostgreSQL razreshaet tol'ko soedineniya na lokal'noj
+   mashine cherez sokety domena Unix. Drugie mashiny ne smogut
+   podklyuchit'sya k baze poka dlya postmaster ne budet zadan flag -i i
+   poka ne budet razreshena host-avtorizaciya v fajle
+   $PGDATA/pg_hba.conf. `Eti dejstviya delayut vozmozhnymi TCP/IP
+   soedineniya.
    
-    3.6) Какие настройки мне нужно сделать для улучшения производительности?
+    3.6) Kakie nastrojki mne nuzhno sdelat' dlya uluchsheniya
+    proizvoditel'nosti?
     
-   Несомненно, индексы могут увеличить скорость выполнения запросов.
-   Команда EXPLAIN позволяет вам посмотреть как PostgreSQL интерпретирует
-   ваш запрос и какие индексы используются.
+   Nesomnenno, indeksy mogut uvelichit' skorost' vypolneniya zaprosov.
+   Komanda EXPLAIN pozvolyaet vam posmotret' kak PostgreSQL
+   interpretiruet vash zapros i kakie indeksy ispol'zuyutsya.
    
-   Если вы выполняете много операторов INSERT, рассмотрите возможность
-   выполнять их в большой пачке, используя команду COPY. Это значительно
-   быстрее, чем отдельные INSERT. Во-вторых, операторы вне блока
-   транзакции BEGIN WORK/COMMIT сами выполняют транзакцию. Подумайте над
-   выполнением нескольких операторов в одном блоке транзакции. Это
-   уменьшит количество транзакций. Также, задумайтесь над удалением и
-   пересозданием индексов, когда вы выполняете большие изменения данных.
+   Esli vy vypolnyaete mnogo operatorov INSERT, rassmotrite vozmozhnost'
+   vypolnyat' ih v bol'shoj pachke, ispol'zuya komandu COPY. `Eto
+   znachitel'no bystree, chem otdel'nye INSERT. Vo-vtoryh, operatory vne
+   bloka tranzakcii BEGIN WORK/COMMIT sami vypolnyayut tranzakciyu.
+   Podumajte nad vypolneniem neskol'kih operatorov v odnom bloke
+   tranzakcii. `Eto umen'shit kolichestvo tranzakcij. Takzhe, zadumajtes'
+   nad udaleniem i peresozdaniem indeksov, kogda vy vypolnyaete bol'shie
+   izmeneniya dannyh.
    
-   Существует несколько опций настройки. Вы можете запретить fsync() при
-   старте postmaster с опцией -o -F. Это предотвратит вызовы fsync(),
-   которые приводят к сбросу данных на диск после каждой транзакции.
+   Suschestvuet neskol'ko opcij nastrojki. Vy mozhete zapretit' fsync()
+   pri starte postmaster s opciej -o -F. `Eto predotvratit vyzovy
+   fsync(), kotorye privodyat k sbrosu dannyh na disk posle kazhdoj
+   tranzakcii.
    
-   Вы можете также использовать для postmaster опцию -B для увеличения
-   количества буферов разделяемой памяти, которая используется backend
-   процессами. Если вы сделаете значение этого параметра слишком большим,
-   то postmaster может не запустится потому что вы исчерпаете ограничение
-   ядра на объем разделяемой памяти. Каждый буфер имеет размер в 8
-   килобайт и по умолчанию выделяется 64 буфера.
+   Vy mozhete takzhe ispol'zovat' dlya postmaster opciyu -B dlya
+   uvelicheniya kolichestva buferov razdelyaemoj pamyati, kotoraya
+   ispol'zuetsya backend processami. Esli vy sdelaete znachenie `etogo
+   parametra slishkom bol'shim, to postmaster mozhet ne zapustitsya
+   potomu chto vy ischerpaete ogranichenie yadra na ob"em razdelyaemoj
+   pamyati. Kazhdyj bufer imeet razmer v 8 kilobajt i po umolchaniyu
+   vydelyaetsya 64 bufera.
    
-   Вы можете также использовать backend опцию -S для увеличения
-   максимального количества памяти, которое используется backend
-   процессом для временных сортировок. Значение для опции -S задается в
-   килобайтах и по умолчанию равно 512 (т.е. 512K).
+   Vy mozhete takzhe ispol'zovat' backend opciyu -S dlya uvelicheniya
+   maksimal'nogo kolichestva pamyati, kotoroe ispol'zuetsya backend
+   processom dlya vremennyh sortirovok. Znachenie dlya opcii -S zadaetsya
+   v kilobajtah i po umolchaniyu ravno 512 (t.e. 512K).
    
-   Вы также можете использовать команду CLUSTER для группировки данных в
-   таблицах на совпадающий индекс. Подробности смотрите на странице
-   руководства по команде CLUSTER.
+   Vy takzhe mozhete ispol'zovat' komandu CLUSTER dlya gruppirovki dannyh
+   v tablicah na sovpadayuschij indeks. Podrobnosti smotrite na stranice
+   rukovodstva po komande CLUSTER.
    
-    3.7) Какие возможности для отладки есть в наличии?
+    3.7) Kakie vozmozhnosti dlya otladki est' v nalichii?
     
-   PostgreSQL имеет несколько возможностей, позволяющие получить
-   информацию о состоянии, которая может быть использована в отладочных
-   целях.
+   PostgreSQL imeet neskol'ko vozmozhnostej, pozvolyayuschie poluchit'
+   informaciyu o sostoyanii, kotoraya mozhet byt' ispol'zovana v
+   otladochnyh celyah.
    
-   Во-первых, при запуске configure с опцией --enable-cassert, многие
-   вызовы assert() позволяют отслеживать работу backend процесса и
-   остановку программы при возникновении каких-либо неожиданностей.
+   Vo-pervyh, pri zapuske configure s opciej --enable-cassert, mnogie
+   vyzovy assert() pozvolyayut otslezhivat' rabotu backend processa i
+   ostanovku programmy pri vozniknovenii kakih-libo neozhidannostej.
    
-   И postmaster, и postgres имеют несколько отладочных опций. Во-первых,
-   при запуске postmaster, убедитесь, что стандартный вывод и вывод
-   ошибок осуществляются в файл журнала:
+   I postmaster, i postgres imeyut neskol'ko otladochnyh opcij.
+   Vo-pervyh, pri zapuske postmaster, ubedites', chto standartnyj vyvod i
+   vyvod oshibok osuschestvlyayutsya v fajl zhurnala:
     cd /usr/local/pgsql
     ./bin/postmaster >server.log 2>&1 &
 
-   Это приведет к появлению файла server.log в главном каталоге
-   PostgreSQL. Этот файл содержит полезную информацию о проблемах или
-   ошибках, возникших на сервере. Postmaster имеет опцию -d, которая
-   позволяет получать при протоколировании более детальную инфрмацию. Для
-   опции -d указывается число, которое задает уровень отладки. Будьте
-   осторожны, так как высокий уровень отладки приводит к генерации файлов
-   журнала большого размера.
+   `Eto privedet k poyavleniyu fajla server.log v glavnom kataloge
+   PostgreSQL. `Etot fajl soderzhit poleznuyu informaciyu o problemah ili
+   oshibkah, voznikshih na servere. Postmaster imeet opciyu -d, kotoraya
+   pozvolyaet poluchat' pri protokolirovanii bolee detal'nuyu infrmaciyu.
+   Dlya opcii -d ukazyvaetsya chislo, kotoroe zadaet uroven' otladki.
+   Bud'te ostorozhny, tak kak vysokij uroven' otladki privodit k
+   generacii fajlov zhurnala bol'shogo razmera.
    
-   Если postmaster не запущен, вы можете запустить postgres backend из
-   командной строки и ввести ваш оператор SQL напрямую. Это рекомендуется
-   только для целей отладки. Заметим, что в этом режиме, запрос
-   завершается символом новой строки, а не точкой с запятой. Если вы
-   производили компиляцию с отладочными символоами, вы можете
-   использовать любой отладчик, чтобы посмотреть, что случилось.
-   Поскольку backend запускается не из postmaster, он не запускается в
-   идентичном окружении и значит проблемы итераций блокировок/backend не
-   могут быть воспроизведены.
+   Esli postmaster ne zapuschen, vy mozhete zapustit' postgres backend iz
+   komandnoj stroki i vvesti vash operator SQL napryamuyu. `Eto
+   rekomenduetsya tol'ko dlya celej otladki. Zametim, chto v `etom
+   rezhime, zapros zavershaetsya simvolom novoj stroki, a ne tochkoj s
+   zapyatoj. Esli vy proizvodili kompilyaciyu s otladochnymi simvoloami,
+   vy mozhete ispol'zovat' lyuboj otladchik, chtoby posmotret', chto
+   sluchilos'. Poskol'ku backend zapuskaetsya ne iz postmaster, on ne
+   zapuskaetsya v identichnom okruzhenii i znachit problemy iteracij
+   blokirovok/backend ne mogut byt' vosproizvedeny.
    
-   Если postmaster запущен, запустите psql в одном окне, затем найдите
-   PID процесса postgres, используемый psql. Используйте отдадчик для
-   подключения к postgres PID. Вы можете установить точки прерывания в
-   отладчике и запустить запрос из psql. Если вы производите отладку
-   запуска postgres, вы можете установить PGOPTIONS="-W n", и затем
-   запустить psql. Эта опция приводит к задержке процесса запуска на n
-   секунд, в течение которых вы можете подключить к процессу отладчик,
-   установить любые точки прерывания и продолжить запуск.
+   Esli postmaster zapuschen, zapustite psql v odnom okne, zatem najdite
+   PID processa postgres, ispol'zuemyj psql. Ispol'zujte otdadchik dlya
+   podklyucheniya k postgres PID. Vy mozhete ustanovit' tochki
+   preryvaniya v otladchike i zapustit' zapros iz psql. Esli vy
+   proizvodite otladku zapuska postgres, vy mozhete ustanovit'
+   PGOPTIONS="-W n", i zatem zapustit' psql. `Eta opciya privodit k
+   zaderzhke processa zapuska na n sekund, v techenie kotoryh vy mozhete
+   podklyuchit' k processu otladchik, ustanovit' lyubye tochki
+   preryvaniya i prodolzhit' zapusk.
    
-   Программа postgres имеет опции -s, -A, и -t которые могут быть очень
-   полезными для отладки и измерения производительности.
+   Programma postgres imeet opcii -s, -A, i -t kotorye mogut byt' ochen'
+   poleznymi dlya otladki i izmereniya proizvoditel'nosti.
    
-   Вы также можете скомпилировать PostgreSQL с профилированием для того,
-   чтобы увидеть какие функции сколько времени выполняются. Файлы
-   профилирования backend'а находятся в каталоге pgsql/data/base/dbname.
-   Файл профилирования клиента будет помещен в текущий каталог клиента. В
-   Linux для выполнения профилирования требуется компиляции с
-   -DLINUX_PROFILE.
+   Vy takzhe mozhete skompilirovat' PostgreSQL s profilirovaniem dlya
+   togo, chtoby uvidet' kakie funkcii skol'ko vremeni vypolnyayutsya.
+   Fajly profilirovaniya backend'a nahodyatsya v kataloge
+   pgsql/data/base/dbname. Fajl profilirovaniya klienta budet pomeschen v
+   tekuschij katalog klienta. V Linux dlya vypolneniya profilirovaniya
+   trebuetsya kompilyacii s -DLINUX_PROFILE.
    
-    3.8) Почему я получаю сообщение "Sorry, too many clients" когда пытаюсь
-    подключиться к базе?
+    3.8) Pochemu ya poluchayu soobschenie "Sorry, too many clients" kogda
+    pytayus' podklyuchit'sya k baze?
     
-   Вам нужно увеличить ограничение на количество конкуретных backend
-   процессов при запуске postmaster.
+   Vam nuzhno uvelichit' ogranichenie na kolichestvo konkuretnyh backend
+   processov pri zapuske postmaster.
    
-   По умолчанию установлен лимит на 32 процесса. Вы можете увеличить этот
-   лимит перезапустив postmaster с нужным значением процессов, которое
-   указывается в опции -N или изменив файл postgresql.conf.
+   Po umolchaniyu ustanovlen limit na 32 processa. Vy mozhete uvelichit'
+   `etot limit perezapustiv postmaster s nuzhnym znacheniem processov,
+   kotoroe ukazyvaetsya v opcii -N ili izmeniv fajl postgresql.conf.
    
-   Заметим, что если вы зададите в опции -N значение больше 32, то вы
-   также должны увеличить значение в опции -B которое по умолчанию
-   установлено в 64; Значение опции -B должно быть по крайней мере вдвое
-   больше значения опции -N, и возможно ещё больше для лучшей
-   производительности. Для большего количества backend процессов, вам
-   также неплохо было бы увеличить некоторые параметры ядра Unix. Это
-   такие параметры, как максимальное количество блоков разделяемой
-   памяти, SHMMAX; максимальное количество семафоров, SEMMNS и SEMMNI;
-   максимальное количество процессов, NPROC; максимальное количество
-   процессов на пользователя, MAXUPRC; и максимальное количество открытых
-   файлов, NFILE и NINODE. Причина создания ограничения на количество
-   backend процессов как раз и состоит в том, чтобы вашей системе хватило
-   ресурсов.
+   Zametim, chto esli vy zadadite v opcii -N znachenie bol'she 32, to vy
+   takzhe dolzhny uvelichit' znachenie v opcii -B kotoroe po umolchaniyu
+   ustanovleno v 64; Znachenie opcii -B dolzhno byt' po krajnej mere
+   vdvoe bol'she znacheniya opcii -N, i vozmozhno eschio bol'she dlya
+   luchshej proizvoditel'nosti. Dlya bol'shego kolichestva backend
+   processov, vam takzhe neploho bylo by uvelichit' nekotorye parametry
+   yadra Unix. `Eto takie parametry, kak maksimal'noe kolichestvo blokov
+   razdelyaemoj pamyati, SHMMAX; maksimal'noe kolichestvo semaforov,
+   SEMMNS i SEMMNI; maksimal'noe kolichestvo processov, NPROC;
+   maksimal'noe kolichestvo processov na pol'zovatelya, MAXUPRC; i
+   maksimal'noe kolichestvo otkrytyh fajlov, NFILE i NINODE. Prichina
+   sozdaniya ogranicheniya na kolichestvo backend processov kak raz i
+   sostoit v tom, chtoby vashej sisteme hvatilo resursov.
    
-   В PostgreSQL до версии 6.5, максимальное количество backend процессов
-   было 64, и изменение этого количества требовало перекомпиляции после
-   установки константы MaxBackendId в include/storage/sinvaladt.h.
+   V PostgreSQL do versii 6.5, maksimal'noe kolichestvo backend processov
+   bylo 64, i izmenenie `etogo kolichestva trebovalo perekompilyacii
+   posle ustanovki konstanty MaxBackendId v include/storage/sinvaladt.h.
    
-    3.9) Что это за файлы pg_sorttempNNN.NN в моем каталоге с базой данных?
+    3.9) CHto nahoditsya v kataloge pgsql_tmp?
     
-   Это временные файлы, генерируемые во время выполнения запроса.
-   Например, если для оператора ORDER BY должна быть выполнена
-   сортировка, которая требует больше места чем выделенно для backend
-   процесса в опции -S, то создается временный файл для хранения
-   дополнительных данных.
+   Dannyj katalog soderzhit vremennye fajly, generiruemye obrabotchikom
+   zaprosa. Naprimer, esli dlya vypolneniya ORDER BY nuzhna sortirovka i
+   `eta sortirovka trebuet pamyati bol'she, chem dopuskaet parametr -S u
+   backend'a, to dlya hraneniya dopolnitel'nyh dannyh sozdayutsya
+   vremennye fajly.
    
-   Временные файлы должны удаляться автоматически, но этого может не
-   происходить, если backend процесс падает во время сортировки. Если у
-   вас не запущено ни одного backend процесса, то вы можете спокойно
-   удалить файлы pg_tempNNN.NN.
-   3.10) Почему необходимо делать dump и restore при обновлении выпусков
-   PostgreSQL?
+   `Eti vremennye fajly dolzhny udalyat'sya avtomaticheski, no `etogo
+   mozhet ne proizojti, esli backend ruhnul vo vremya sortirovki. Ostanov
+   i zapusk servernogo processa obespechit ih udalenie iz kataloga.
    
-   Разработчики PostgreSQL делают только небольшие изменения между
-   подвыпусками. Таким образом обновление с версии 7.2 до 7.2.1 не
-   требует выполнения dump и restore. Однако при выходе очередного
-   выпуска часто меняется внутренний формат системных таблиц и файлов
-   данных. Эти изменения часто носят комплексный характер, так что нет
-   возможности обеспечить обратную совместимость файлов данных. Выполение
-   dump позволяет получить данные в общем формате, который затем может
-   быть загружен при использовании нового внутреннего формата.
+    3.10) Pochemu neobhodimo delat' dump i restore pri obnovlenii vypuskov
+    PostgreSQL?
+    
+   Razrabotchiki PostgreSQL delayut tol'ko nebol'shie izmeneniya mezhdu
+   podvypuskami. Takim obrazom obnovlenie s versii 7.2 do 7.2.1 ne
+   trebuet vypolneniya dump i restore. Odnako pri vyhode ocherednogo
+   vypuska (t.e. pri obnovlenii naprimer, s 7.2 na 7.3) chasto menyaetsya
+   vnutrennij format sistemnyh tablic i fajlov dannyh. `Eti izmeneniya
+   chasto nosyat kompleksnyj harakter, tak chto net vozmozhnosti
+   obespechit' obratnuyu sovmestimost' fajlov dannyh. Vypolenie dump
+   pozvolyaet poluchit' dannye v obschem formate, kotoryj zatem mozhet
+   byt' zagruzhen pri ispol'zovanii novogo vnutrennego formata.
    
-   В тех выпусках, где формат данных на диске не меняется, для проведения
-   обновления может быть использован сценарий pg_upgrade без
-   использования dump/restore. Комментарии к выпуску говорит когда можно
-   использовать pg_upgrade для этого выпуска.
+   V teh vypuskah, gde format dannyh na diske ne menyaetsya, dlya
+   provedeniya obnovleniya mozhet byt' ispol'zovan scenarij pg_upgrade
+   bez ispol'zovaniya dump/restore. Kommentarii k vypusku govorit kogda
+   mozhno ispol'zovat' pg_upgrade dlya `etogo vypuska.
      _________________________________________________________________
    
-                            Вопросы эксплуатации
+                           Voprosy `ekspluatacii
                                       
-    4.1) В чем отличие между бинарным и нормальным курсором?
+    4.1) V chem otlichie mezhdu binarnym i normal'nym kursorom?
     
-   Смотрите описание на страницах руководства посвященным DECLARE.
+   Smotrite opisanie na stranicah rukovodstva posvyaschennym DECLARE.
    
-    4.2) Как выполнить SELECT только для нескольких первых строчек запроса?
+    4.2) Kak vypolnit' SELECT tol'ko dlya neskol'kih pervyh strochek zaprosa?
     
-   Смотрите станицу руководства посвященную FETCH или используйте SELECT
-   ... LIMIT....
+   Smotrite stanicu rukovodstva posvyaschennuyu FETCH ili ispol'zujte
+   SELECT ... LIMIT....
    
-   Даже если вы хотите получить только первые несколько записей, будет
-   выполнен весь запрос. Рассмотрим запрос, который имеет ORDER BY. Если
-   есть какой-либо индекс, который совпадает с ORDER BY, PostgreSQL может
-   выдать только несколько первых запрошенных записей или может выполнять
-   запрос пока не будут выданы желаемые записи.
+   Dazhe esli vy hotite poluchit' tol'ko pervye neskol'ko zapisej, budet
+   vypolnen ves' zapros. Rassmotrim zapros, kotoryj imeet ORDER BY. Esli
+   est' kakoj-libo indeks, kotoryj sovpadaet s ORDER BY, PostgreSQL
+   mozhet vydat' tol'ko neskol'ko pervyh zaproshennyh zapisej ili mozhet
+   vypolnyat' zapros poka ne budut vydany zhelaemye zapisi.
    
-    4.3) Как получить список таблиц или других компонентов в psql?
+    4.3) Kak poluchit' spisok tablic ili drugih komponentov v psql?
     
-   Вы можете посмотреть исходный код psql в файле
-   pgsql/src/bin/psql/describe.c. Он содержит команды SQL которые
-   генерируются при вводе в psql команд, начинающихся с обратной косой
-   черты. Вы также моежете запустить psql с опцией -E так, чтобы эта
-   программа выдавала запросы, которые она использует для выполнения
-   заданных вами команд.
+   Vy mozhete posmotret' ishodnyj kod psql v fajle
+   pgsql/src/bin/psql/describe.c. On soderzhit komandy SQL kotorye
+   generiruyutsya pri vvode v psql komand, nachinayuschihsya s obratnoj
+   kosoj cherty. Vy takzhe moezhete zapustit' psql s opciej -E tak,
+   chtoby `eta programma vydavala zaprosy, kotorye ona ispol'zuet dlya
+   vypolneniya zadannyh vami komand.
    
-    4.4) Как удалить колонку из таблицы?
+    4.4) Kak udalit' kolonku iz tablicy?
     
-   Мы не поддерживаем ALTER TABLE DROP COLUMN, но можно сделать так:
+   `Eta funkcional'nost' byla dobavlena v vypusk 7.3 s operatorom ALTER
+   TABLE DROP COLUMN. V rannih versiyah, mozhno sdelat' tak:
     BEGIN;
     LOCK TABLE old_table;
-    SELECT ...  -- выборка всех колонок за исключением той, которую хотите удал
-ить
+    SELECT ...  -- vyborka vseh kolonok za isklyucheniem toj, kotoruyu hotite u
+dalit'
     INTO TABLE new_table
     FROM old_table;
     DROP TABLE old_table;
     ALTER TABLE new_table RENAME TO old_table;
     COMMIT;
 
-    4.5) Каковы максимальные размеры для записей, таблиц и базы данных?
+    4.5) Kakovy maksimal'nye razmery dlya zapisej, tablic i bazy dannyh?
     
-   Существуют следующие ограничения:
-    Максимальный размер базы?              неограничен (существуют базы на 1 TB
-)
-    Максимальный размер таблицы?           16 TB
-    Максимальный размер записи?            1.6 TB
-    Максимальный размер поля?              1 GB
-    Максимальное количество записей в таблице?      неограничено
-    Максимальное количество колонок в таблице?    250-1600 в зависимости от тип
-а
-    Максимальное количество индексов в таблице?   неограничено
+   Suschestvuyut sleduyuschie ogranicheniya:
+    Maksimal'nyj razmer bazy?              neogranichen (suschestvuyut bazy na
+1 TB)
+    Maksimal'nyj razmer tablicy?           16 TB
+    Maksimal'nyj razmer zapisi?            1.6 TB
+    Maksimal'nyj razmer polya?              1 GB
+    Maksimal'noe kolichestvo zapisej v tablice?      neogranicheno
+    Maksimal'noe kolichestvo kolonok v tablice?    250-1600 v zavisimosti ot ti
+pa
+    Maksimal'noe kolichestvo indeksov v tablice?   neogranicheno
 
-   Разумеется, понятие "неограничено" на самом деле ограничивается
-   доступным дисковым пространиством и размерами памяти/своппинга. Когда
-   значения перечисленные выше неоправдано большие, может пострадать
-   производительность.
+   Razumeetsya, ponyatie "neogranicheno" na samom dele ogranichivaetsya
+   dostupnym diskovym prostranistvom i razmerami pamyati/svoppinga. Kogda
+   znacheniya perechislennye vyshe neopravdano bol'shie, mozhet
+   postradat' proizvoditel'nost'.
    
-   Максимальный размер таблицы в 16 TB не требует чтобы операционная
-   система поддерживала файлы больших размеров. Большие таблицы хранятся
-   как множество файлов размером в 1 GB, так что ограничения, которые
-   накладывает файловая система не важны.
+   Maksimal'nyj razmer tablicy v 16 TB ne trebuet chtoby operacionnaya
+   sistema podderzhivala fajly bol'shih razmerov. Bol'shie tablicy
+   hranyatsya kak mnozhestvo fajlov razmerom v 1 GB, tak chto
+   ogranicheniya, kotorye nakladyvaet fajlovaya sistema ne vazhny.
    
-   Максимальный размер таблицы и максимальное количество колонок могут
-   быть увеличены, если размер блока по умолчанию будет увеличен до 32k.
+   Maksimal'nyj razmer tablicy i maksimal'noe kolichestvo kolonok mogut
+   byt' uvelicheny, esli razmer bloka po umolchaniyu budet uvelichen do
+   32k.
    
-    4.6) Как много дискового пространства в базе данных нужно для сохранения
-    данных из обычного текстового файла?
+    4.6) Kak mnogo diskovogo prostranstva v baze dannyh nuzhno dlya sohraneniya
+    dannyh iz obychnogo tekstovogo fajla?
     
-   СУБД PostgreSQL может потребоваться дискового пространства до 5 раз
-   больше для сохранения данных из простого текстового файла.
+   SUBD PostgreSQL mozhet potrebovat'sya diskovogo prostranstva do 5 raz
+   bol'she dlya sohraneniya dannyh iz prostogo tekstovogo fajla.
    
-   В качестве примера, рассмотрим файл в 100,000 строк в каждой, из
-   которых целое число и текстовое описание. При этом длина текста, в
-   среднем, составляет 20 байт. Размер простого файла составит 2.8 MB.
-   Размер базы PostgreSQL, содержащей эти же данные составит
-   приблизительно 6.4 MB из которых:
-    36 байт: на каждый заголовок записи (приблизительно)
-  + 24 байта: одно поле с целочисленным типом и одно текстовое поле
-   + 4 байта: указатель на странице для всей записи
+   V kachestve primera, rassmotrim fajl v 100,000 strok v kazhdoj, iz
+   kotoryh celoe chislo i tekstovoe opisanie. Pri `etom dlina teksta, v
+   srednem, sostavlyaet 20 bajt. Razmer prostogo fajla sostavit 2.8 MB.
+   Razmer bazy PostgreSQL, soderzhaschej `eti zhe dannye sostavit
+   priblizitel'no 6.4 MB iz kotoryh:
+    36 bajt: na kazhdyj zagolovok zapisi (priblizitel'no)
+  + 24 bajta: odno pole s celochislennym tipom i odno tekstovoe pole
+   + 4 bajta: ukazatel' na stranice dlya vsej zapisi
    ----------------------------------------
-    64 байт на запись
+    64 bajt na zapis'
 
-   Размер страницы данных в PostgreSQL составляет 8192 байт (8 KB), так что:
+   Razmer stranicy dannyh v PostgreSQL sostavlyaet 8192 bajt (8 KB), tak chto:
 
-   8192 байт на страницу
-   -------------------   =  128 записей на страницу БД (с округлением)
-     64 байт на запись
+   8192 bajt na stranicu
+   -------------------   =  128 zapisej na stranicu BD (s okrugleniem)
+     64 bajt na zapis'
 
-   100000 строк данных
-   --------------------  =  782 страницы в БД
-  128 записей на страницу
+   100000 strok dannyh
+   --------------------  =  782 stranicy v BD
+  128 zapisej na stranicu
 
-782 страницы БД * 8192 байт на страницу  =  6,406,144 байт (6.4 MB)
+782 stranicy BD * 8192 bajt na stranicu  =  6,406,144 bajt (6.4 MB)
 
-   Индексы не требуют так много, но поскольку они создаются для большого
-   количества данных, они также могут быть велики.
+   Indeksy ne trebuyut tak mnogo, no poskol'ku oni sozdayutsya dlya
+   bol'shogo kolichestva dannyh, oni takzhe mogut byt' veliki.
    
-   Значения NULL сохраняются в битах и поэтому они занимают очень мало
-   места.
+   Znacheniya NULL sohranyayutsya v bitah i po`etomu oni zanimayut ochen'
+   malo mesta.
    
-    4.7) Как мне убедиться, что существуют нужные мне таблицы, индексы, базы
-    данных и пользователи?
+    4.7) Kak mne ubedit'sya, chto suschestvuyut nuzhnye mne tablicy, indeksy,
+    bazy dannyh i pol'zovateli?
     
-   psql имеет несколько команд, начинающихся с обратной косой черты, для
-   того чтобы просматривать такую информацию. Используйте \? для того,
-   чтобы увидеть эти команды. Также существуют системные таблицы, имя
-   которых начинается на pg_ и в которых также содержится эта информация.
-   Ещё, psql -l покажет список всех баз данных.
+   psql imeet neskol'ko komand, nachinayuschihsya s obratnoj kosoj
+   cherty, dlya togo chtoby prosmatrivat' takuyu informaciyu. Ispol'zujte
+   \? dlya togo, chtoby uvidet' `eti komandy. Takzhe suschestvuyut
+   sistemnye tablicy, imya kotoryh nachinaetsya na pg_ i v kotoryh takzhe
+   soderzhitsya `eta informaciya. Eschio, psql -l pokazhet spisok vseh
+   baz dannyh.
    
-   Также смотрите файл pgsql/src/tutorial/syscat.source. В нем
-   представлены многие операторы SELECT которые нужны для получения
-   информации из системных таблиц базы данных.
+   Takzhe smotrite fajl pgsql/src/tutorial/syscat.source. V nem
+   predstavleny mnogie operatory SELECT kotorye nuzhny dlya polucheniya
+   informacii iz sistemnyh tablic bazy dannyh.
    
-    4.8) У меня медленно работают запросы или не происходит использования
-    индексов. Почему?
+    4.8) U menya medlenno rabotayut zaprosy ili ne proishodit ispol'zovaniya
+    indeksov. Pochemu?
     
-   Индексы не используются для каждого запроса автоматически. Они
-   используются только если таблица больше минимального размера и запрос
-   выбирает только маленький процент записей в таблице. Так устроено,
-   потому что доступ к диску с применением рандомизации при сканировании
-   индексов может быть медленнее, чем простое чтение таблицы или ее
-   последовательное сканирование.
+   Indeksy ne ispol'zuyutsya dlya kazhdogo zaprosa avtomaticheski. Oni
+   ispol'zuyutsya tol'ko esli tablica bol'she minimal'nogo razmera i
+   zapros vybiraet tol'ko malen'kij procent zapisej v tablice. Tak
+   ustroeno, potomu chto dostup k disku s primeneniem randomizacii pri
+   skanirovanii indeksov mozhet byt' medlennee, chem prostoe chtenie
+   tablicy ili ee posledovatel'noe skanirovanie.
    
-   Чтобы определить необходимость использования индекса для какой-либо
-   таблицы, PostgreSQL должен иметь статистику по этой таблице. Эта
-   статистика собирается при использовании VACUUM ANALYZE или просто
-   ANALYZE. Используя статистику, оптимизатор узнает о том как много
-   записей в таблице и если он должен использовать индексы, то он может
-   принимать лучшие решения. Статистика также влияет на определение
-   оптимального порядка связывания и метода связывания. Сбор статистики
-   должен периодически выполнятся при изменении содержимого таблицы.
+   CHtoby opredelit' neobhodimost' ispol'zovaniya indeksa dlya kakoj-libo
+   tablicy, PostgreSQL dolzhen imet' statistiku po `etoj tablice. `Eta
+   statistika sobiraetsya pri ispol'zovanii VACUUM ANALYZE ili prosto
+   ANALYZE. Ispol'zuya statistiku, optimizator uznaet o tom kak mnogo
+   zapisej v tablice i esli on dolzhen ispol'zovat' indeksy, to on mozhet
+   prinimat' luchshie resheniya. Statistika takzhe vliyaet na opredelenie
+   optimal'nogo poryadka svyazyvaniya i metoda svyazyvaniya. Sbor
+   statistiki dolzhen periodicheski vypolnyatsya pri izmenenii
+   soderzhimogo tablicy.
    
-   Обычно индексы не используются для ORDER BY или для выполнения
-   связываний. Последовательный перебор следующий за явной сортировкой
-   обычно быстрее, чем поиск по индексам в большой таблице. Однако, ORDER
-   BY часто комбинируется с LIMIT и в этом случае индекс будет
-   использоваться, поскольку при выполнении будет возвращаться небольшая
-   часть таблицы. Фактически MAX() и MIN() не используют индексы, но
-   индекс используется при построении запросов с ORDER BY и LIMIT:
+   Obychno indeksy ne ispol'zuyutsya dlya ORDER BY ili dlya vypolneniya
+   svyazyvanij. Posledovatel'nyj perebor sleduyuschij za yavnoj
+   sortirovkoj obychno bystree, chem poisk po indeksam v bol'shoj
+   tablice. Odnako, ORDER BY chasto kombiniruetsya s LIMIT i v `etom
+   sluchae indeks budet ispol'zovat'sya, poskol'ku pri vypolnenii budet
+   vozvraschat'sya nebol'shaya chast' tablicy. Fakticheski MAX() i MIN()
+   ne ispol'zuyut indeksy, no indeks ispol'zuetsya pri postroenii
+   zaprosov s ORDER BY i LIMIT:
     SELECT col
     FROM tab
     ORDER BY col [ DESC ]
-    LIMIT 1
+    LIMIT 1;
 
-   Когда используются операции с шаблонами, например LIKE или ~, индексы
-   могут быть использованы в следующих случаях:
-     * Начало строки поиска должно совпадать с началом искомой строки,
-       т.е.:
+   Kogda ispol'zuyutsya operacii s shablonami, naprimer LIKE ili ~,
+   indeksy mogut byt' ispol'zovany v sleduyuschih sluchayah:
+     * Nachalo stroki poiska dolzhno sovpadat' s nachalom iskomoj stroki,
+       t.e.:
+          + LIKE shablony ne dolzhny nachinat'sya s %..
+          + ~ shablony regulyarnyh vyrazhenij dolzhna nachinat'sya na ^.
+     * Stroka poiska ne dolzhna nachinat'sya s simvola klassa, t.e.
+       [a-e].
+     * Poisk nezavisimyj ot registra, takoj kak ILIKE i ~* ne ispol'zuet
+       indeksy. Vmesto nego, ispol'zujte funkcional'nye indeksy, kotorye
+       opisyvayutsya v sekcii 4.12.
+     * Vo vremya initdb dolzhna ispol'zovat'sya lokal' po umolchaniyu C.
        
-     * LIKE шаблоны не должны начинаться с %.
-     *
-     * ~ шаблоны регулярных выражений должна начинаться на ^.
-     *
-       
-     Строка поиска не должна начинаться с символа класса, т.е. [a-e].
-   
-     Не должен использоваться поиск независимый от регистра такой как
-   ILIKE и ~. Вместо него используйте функциональные индексы, которые
-   описаны в этом FAQ ниже.
-   
-     Во время initdb должна использоваться локаль по умолчанию C.
-   
-    4.9) Как посмотреть на то, как оптимизатор выполняет мой запрос?
+    4.9) Kak posmotret' na to, kak optimizator vypolnyaet moj zapros?
     
-   Смотрите страницу руководства посвященную EXPLAIN.
+   Smotrite stranicu rukovodstva posvyaschennuyu EXPLAIN.
    
-    4.10) Что такое R-tree индекс?
+    4.10) CHto takoe R-tree indeks?
     
-   R-tree индекс используется для индексирования пространственных данных.
-   Индекс хэша не может управлять поисками диапазона. B-tree индекс
-   управляет только поисками диапазона в одном измерении. R-tree индекс
-   может управлять многоразмерными данными. Например, если R-tree индекс
-   может быть встроен в атрибут типа point, то система может более
-   эффективно ответить на запрос типа "выбрать все точки внутри заданного
-   четырехугольника."
+   R-tree indeks ispol'zuetsya dlya indeksirovaniya prostranstvennyh
+   dannyh. Indeks h`esha ne mozhet upravlyat' poiskami diapazona. B-tree
+   indeks upravlyaet tol'ko poiskami diapazona v odnom izmerenii. R-tree
+   indeks mozhet upravlyat' mnogorazmernymi dannymi. Naprimer, esli
+   R-tree indeks mozhet byt' vstroen v atribut tipa point, to sistema
+   mozhet bolee `effektivno otvetit' na zapros tipa "vybrat' vse tochki
+   vnutri zadannogo chetyrehugol'nika."
    
-   Канонический источник, описывающий первоначальное создание R-tree это:
+   Kanonicheskij istochnik, opisyvayuschij pervonachal'noe sozdanie
+   R-tree `eto:
    
    Guttman, A. "R-trees: A Dynamic Index Structure for Spatial
    Searching." Proceedings of the 1984 ACM SIGMOD Int'l Conf on Mgmt of
    Data, 45-57.
    
-   Вы можете найти этот документ в книге Stonebraker'а "Readings in
+   Vy mozhete najti `etot dokument v knige Stonebraker'a "Readings in
    Database Systems".
    
-   Встроеннные R-tree могут управлять полигонами и боксами. В теории,
-   R-tree могут быть расширены для управления большим количеством
-   измерений. На практике, расширение R-tree требует некоторых усилий и у
-   нас, в данный момент, нет какой-либо документации о том, как это
-   сделать.
+   Vstroennnye R-tree mogut upravlyat' poligonami i boksami. V teorii,
+   R-tree mogut byt' rasshireny dlya upravleniya bol'shim kolichestvom
+   izmerenij. Na praktike, rasshirenie R-tree trebuet nekotoryh usilij i
+   u nas, v dannyj moment, net kakoj-libo dokumentacii o tom, kak `eto
+   sdelat'.
    
-    4.11) Что такое Genetic Query Optimizer?
+    4.11) CHto takoe Genetic Query Optimizer?
     
-   Модуль GEQO производит быструю оптимизацию запроса, когда происходит
-   связывание многих таблиц через Genetic Algorithm (GA). Это позволяет
-   управлять большими запросами на связывание через неистощающий поиск.
+   Modul' GEQO proizvodit bystruyu optimizaciyu zaprosa, kogda proishodit
+   svyazyvanie mnogih tablic cherez Genetic Algorithm (GA). `Eto
+   pozvolyaet upravlyat' bol'shimi zaprosami na svyazyvanie cherez
+   neistoschayuschij poisk.
    
-    4.12) Как мне выполнить поиск регулярного выражения и поиск независимый от
-    регистра букв поиск регулярного выражения? Как мне использовать индекс для
-    поиска независимого от регистра букв?
+    4.12) Kak mne vypolnit' poisk regulyarnogo vyrazheniya i poisk nezavisimyj
+    ot registra bukv poisk regulyarnogo vyrazheniya? Kak mne ispol'zovat'
+    indeks dlya poiska nezavisimogo ot registra bukv?
     
-   Оператор ~ производит поиск регулярного выражения, а оператор ~*
-   производит независимый от регистра букв поиск регулярного выражения.
-   Независимый от регистра вариант LIKE называется ILIKE.
+   Operator ~ proizvodit poisk regulyarnogo vyrazheniya, a operator ~*
+   proizvodit nezavisimyj ot registra bukv poisk regulyarnogo
+   vyrazheniya. Nezavisimyj ot registra variant LIKE nazyvaetsya ILIKE.
    
-   Независимое от регистра сравнение обычно выражается так:
+   Nezavisimoe ot registra sravnenie obychno vyrazhaetsya tak:
     SELECT *
     FROM tab
-    WHERE lower(col) = 'abc'
+    WHERE lower(col) = 'abc';
 
-   Эта конструкция не будет использовать стандартный индекс. Однако, если
-   вы создадите функциональный индекс, он будет использован:
-    CREATE INDEX tabindex on tab (lower(col));
+   `Eta konstrukciya ne budet ispol'zovat' standartnyj indeks. Odnako,
+   esli vy sozdadite funkcional'nyj indeks, on budet ispol'zovan:
+    CREATE INDEX tabindex ON tab (lower(col));
 
-    4.13) Как я могу определить, что значение поля равно NULL в каком-либо
-    запросе?
+    4.13) Kak ya mogu opredelit', chto znachenie polya ravno NULL v kakom-libo
+    zaprose?
     
-   Вы просто сравниваете значение с IS NULL и IS NOT NULL.
+   Vy prosto sravnivaete znachenie s IS NULL i IS NOT NULL.
    
-    4.14) Каковы отличия между разными символьными типами?
+    4.14) Kakovy otlichiya mezhdu raznymi simvol'nymi tipami?
     
-Тип            Внутреннее имя   Замечания
+Tip            Vnutrennee imya   Zamechaniya
 --------------------------------------------------
-"char"          char            1 символ
-CHAR(#)         bpchar          заполняется пустотой до фиксированной длины
-VARCHAR(#)      varchar         размер задает максимальную длину, нет заполнени
-я
-TEXT            text            нет задаваемого верхнего ограничения или длины
-BYTEA           bytea           массив байт переменной длины (можно использоват
-ь null-байт без опаски)
+"char"          char            1 simvol
+CHAR(n)         bpchar          zapolnyaetsya pustotoj do fiksirovannoj dliny
+VARCHAR(n)      varchar         razmer zadaet maksimal'nuyu dlinu, net zapolnen
+iya
+TEXT            text            net zadavaemogo verhnego ogranicheniya ili dlin
+y
+BYTEA           bytea           massiv bajt peremennoj dliny (mozhno ispol'zova
+t' null-bajt bez opaski)
 
-   Внутреннее имя вы можете увидеть, когда смотрите системные каталоги и
-   в некоторых сообщениях об ошибках.
+   Vnutrennee imya vy mozhete uvidet', kogda smotrite sistemnye katalogi
+   i v nekotoryh soobscheniyah ob oshibkah.
    
-   Последние четыре типа являются "varlena" типами (т.е., первые четыре
-   байта на диске являются длинной, за которой следуют данные). Таким
-   образом, фактически используемое пространство больше, чем обозначенный
-   размер. Однако, эти типы данных также поддаются сжатию или могут быть
-   сохранены не в строком виде через TOAST, так что занимаемое дисковое
-   пространство может также быть и меньше, чем ожидалось.
+   Poslednie chetyre tipa yavlyayutsya "varlena" tipami (t.e., pervye
+   chetyre bajta na diske yavlyayutsya dlinnoj, za kotoroj sleduyut
+   dannye). Takim obrazom, fakticheski ispol'zuemoe prostranstvo bol'she,
+   chem oboznachennyj razmer. Odnako, `eti tipy dannyh takzhe poddayutsya
+   szhatiyu ili mogut byt' sohraneny ne v strokom vide cherez TOAST, tak
+   chto zanimaemoe diskovoe prostranstvo mozhet takzhe byt' i men'she,
+   chem ozhidalos'.
    
-   CHAR() - это лучшее решение для хранения строк, которые обычно имеют
-   одинаковую длину. VARCHAR() - это лучшее решение, когда нужно хранить
-   строки переменной длины, но не превышающие определенного размера. TEXT
-   - это лучшее решение для строк неограниченной длины, с максимально
-   допустимой длиной в 1 гигабайт. BYTEA для хранения бинарных данных,
-   значения которых могут включать NULL байты.
+   CHAR(n) - `eto luchshee reshenie dlya hraneniya strok, kotorye obychno
+   imeyut odinakovuyu dlinu. VARCHAR(n) - `eto luchshee reshenie, kogda
+   nuzhno hranit' stroki peremennoj dliny, no ne prevyshayuschie
+   opredelennogo razmera. TEXT - `eto luchshee reshenie dlya strok
+   neogranichennoj dliny, s maksimal'no dopustimoj dlinoj v 1 gigabajt.
+   BYTEA dlya hraneniya binarnyh dannyh, znacheniya kotoryh mogut
+   vklyuchat' NULL bajty. `Eti tipy imeyut shodnye harakteristiki
+   proizvoditel'nosti.
    
-    4.15.1) Как мне создать поле serial/с-авто-увеличением?
+    4.15.1) Kak mne sozdat' pole serial/s-avto-uvelicheniem?
     
-   PostgreSQL поддерживает тип данных SERIAL. Он автоматически создает
-   последовательность и индекс для колонки. Например:
+   PostgreSQL podderzhivaet tip dannyh SERIAL. On avtomaticheski sozdaet
+   posledovatel'nost' i indeks dlya kolonki. Naprimer:
     CREATE TABLE person (
         id   SERIAL,
         name TEXT
     );
 
-   автоматически транслируется в:
+   avtomaticheski transliruetsya v:
     CREATE SEQUENCE person_id_seq;
     CREATE TABLE person (
         id   INT4 NOT NULL DEFAULT nextval('person_id_seq'),
@@ -949,97 +976,100 @@ BYTEA           bytea           массив байт переменной длины (можно использоват
     );
     CREATE UNIQUE INDEX person_id_key ON person ( id );
 
-   Смотрите подробности о последовательностях на странице руководства
-   посвященной create_sequence. Вы также можете использовать каждое поле
-   OID в записи как уникальное значение. Однако, если вам нужен дамп и
-   перезагрузка базы данных, вам необходимо использовать команду pg_dump
-   с опцией -o или опцию COPY WITH OIDS для сохранения значений поля OID.
+   Smotrite podrobnosti o posledovatel'nostyah na stranice rukovodstva
+   posvyaschennoj create_sequence. Vy takzhe mozhete ispol'zovat' kazhdoe
+   pole OID v zapisi kak unikal'noe znachenie. Odnako, esli vam nuzhen
+   damp i perezagruzka bazy dannyh, vam neobhodimo ispol'zovat' komandu
+   pg_dump s opciej -o ili opciyu COPY WITH OIDS dlya sohraneniya
+   znachenij polya OID.
    
-    4.15.2) Как мне получить значение при вставке SERIAL?
+    4.15.2) Kak mne poluchit' znachenie pri vstavke SERIAL?
     
-   Один из способов состоит в получении следующего значения SERIAL из
-   объекта sequence с помощью функции nextval() перед вставкой и затем
-   вставлять это значение явно. Используйте таблицу-пример в 4.15.1,
-   чтобы увидеть как это делается в Perl:
-    new_id = output of "SELECT nextval('person_id_seq')"
-    INSERT INTO person (id, name) VALUES (new_id, 'Blaise Pascal');
+   Odin iz sposobov sostoit v poluchenii sleduyuschego znacheniya SERIAL
+   iz ob"ekta sequence s pomosch'yu funkcii nextval() pered vstavkoj i
+   zatem vstavlyat' `eto znachenie yavno. Ispol'zujte tablicu-primer v
+   4.15.1, primer v psevdoyazyke pokazhet kak `eto delaetsya:
+    new_id = execute("SELECT nextval('person_id_seq')");
+    execute("INSERT INTO person (id, name) VALUES (new_id, 'Blaise Pascal')");
 
-   Затем вы должны также сохранить новое значение в переменной new_id для
-   его использования в других запросах (например таких как внешний ключ
-   для таблицы person). Заметим, что имя автоматически созданного объекта
-   SEQUENCE будет <table>_<serialcolumn>_seq, где table и serialcolumn
-   являются соответственно именами вашей таблицы и вашей колонки SERIAL.
+   Zatem vy dolzhny takzhe sohranit' novoe znachenie v peremennoj new_id
+   dlya ego ispol'zovaniya v drugih zaprosah (naprimer takih kak vneshnij
+   klyuch dlya tablicy person). Zametim, chto imya avtomaticheski
+   sozdannogo ob"ekta SEQUENCE budet <table>_<serialcolumn>_seq, gde
+   table i serialcolumn yavlyayutsya sootvetstvenno imenami vashej
+   tablicy i vashej kolonki SERIAL.
    
-   В качестве альтернативы, вы можете получить назначенное значение
-   SERIAL с помощью функции currval() после проведения обычной операции
-   вставки, например
-    INSERT INTO person (name) VALUES ('Blaise Pascal');
-    new_id = output of "SELECT currval('person_id_seq')";
+   V kachestve al'ternativy, vy mozhete poluchit' naznachennoe znachenie
+   SERIAL s pomosch'yu funkcii currval() posle provedeniya obychnoj
+   operacii vstavki, naprimer
+    execute("INSERT INTO person (name) VALUES ('Blaise Pascal')");
+    new_id = execute("SELECT currval('person_id_seq')");
 
-   И наконец, вы можете использовать значение OID, возращаемое из
-   опертора INSERT чтобы увидеть значение по умолчанию, что
-   предположительно является наименее переносимым на другие платформы
-   решением. В Perl, используя DBI с модулеи Edmund Mergl'я DBD::Pg,
-   значение oid становится доступным через $sth->{pg_oid_status} после
+   I nakonec, vy mozhete ispol'zovat' znachenie OID, vozraschaemoe iz
+   opertora INSERT chtoby uvidet' znachenie po umolchaniyu, chto
+   predpolozhitel'no yavlyaetsya naimenee perenosimym na drugie platformy
+   resheniem. V Perl, ispol'zuya DBI s modulei Edmund Mergl'ya DBD::Pg,
+   znachenie oid stanovitsya dostupnym cherez $sth->{pg_oid_status} posle
    $sth->execute().
    
-    4.15.3) Не может ли получиться так, что использование currval() и nextval()
-    приведет к зациклированию с другими пользователями?
+    4.15.3) Ne mozhet li poluchit'sya tak, chto ispol'zovanie currval() i
+    nextval() privedet k zaciklirovaniyu s drugimi pol'zovatelyami?
     
-   Нет. Currval() возвращает текущее значение, назначенное вашем
-   backend'ом, а не другими пользователями.
+   Net. currval() vozvraschaet tekuschee znachenie, naznachennoe vashem
+   backend'om, a ne drugimi pol'zovatelyami.
    
-    4.15.4) Почему числа из моей последовательности не используются снова при
-    отмене транзакции? Почему создаются разрывы при нумерации в колонке, где я
-    использую последовательность/SERIAL?
+    4.15.4) Pochemu chisla iz moej posledovatel'nosti ne ispol'zuyutsya snova
+    pri otmene tranzakcii? Pochemu sozdayutsya razryvy pri numeracii v kolonke,
+    gde ya ispol'zuyu posledovatel'nost'/SERIAL?
     
-   Для реализации конкуретности, значения последовательностей, при
-   необходимости выдаются во время запуска транзакций и не блокируются до
-   полного выполнения транзакций. Это может вызывать разрывы в нумерации
-   при отмене транзакций.
+   Dlya realizacii konkuretnosti, znacheniya posledovatel'nostej, pri
+   neobhodimosti vydayutsya vo vremya zapuska tranzakcij i ne
+   blokiruyutsya do polnogo vypolneniya tranzakcij. `Eto mozhet vyzyvat'
+   razryvy v numeracii pri otmene tranzakcij.
    
-    4.16) Что такое OID? Что такое TID?
+    4.16) CHto takoe OID? CHto takoe TID?
     
-   Поля OID служат уникальными идетификаторами записей в PostgreSQL.
-   Каждая запись, которая создаётся в PostgreSQL получает уникальный OID.
-   Все значения OID генерируемые во время initdb имеют значения меньше
-   16384 (из backend/access/transam.h). Все созданные пользователем OID
-   имеют бОльшие значение. По умолчанию, все эти OID являются уникальными
-   не только внутри какой-либо таблицы или базы данных, но и внутри всей
-   СУБД PostgreSQL.
+   Polya OID sluzhat unikal'nymi idetifikatorami zapisej v PostgreSQL.
+   Kazhdaya zapis', kotoraya sozdaiotsya v PostgreSQL poluchaet
+   unikal'nyj OID. Vse znacheniya OID generiruemye vo vremya initdb
+   imeyut znacheniya men'she 16384 (iz include/access/transam.h). Vse
+   sozdannye pol'zovatelem OID imeyut bOl'shie znachenie. Po umolchaniyu,
+   vse `eti OID yavlyayutsya unikal'nymi ne tol'ko vnutri kakoj-libo
+   tablicy ili bazy dannyh, no i vnutri vsej SUBD PostgreSQL.
    
-   PostgreSQL использует OID в своих внутренних системных таблицах для
-   связи записей и таблиц. Значения OID могут быть использованы для
-   идентификации заданных пользователем записей, а также использоваться
-   при связываниях. Рекомендуется использовать тип колонки OID для
-   хранения значений OID Вы можете создать индекс на поле OID для более
-   быстрого доступа.
+   PostgreSQL ispol'zuet OID v svoih vnutrennih sistemnyh tablicah dlya
+   svyazi zapisej i tablic. Znacheniya OID mogut byt' ispol'zovany dlya
+   identifikacii zadannyh pol'zovatelem zapisej, a takzhe ispol'zovat'sya
+   pri svyazyvaniyah. Rekomenduetsya ispol'zovat' tip kolonki OID dlya
+   hraneniya znachenij OID Vy mozhete sozdat' indeks na pole OID dlya
+   bolee bystrogo dostupa.
    
-   Значения OID назначаются для всех новых записей из центральной
-   области, которые используются всеми всеми базами данных. Если вы
-   хотите изменить OID на какое-либо другое значение или если вы хотите
-   создать копию таблицы с такимиже OID, то это можно сделать так:
+   Znacheniya OID naznachayutsya dlya vseh novyh zapisej iz central'noj
+   oblasti, kotorye ispol'zuyutsya vsemi vsemi bazami dannyh. Esli vy
+   hotite izmenit' OID na kakoe-libo drugoe znachenie ili esli vy hotite
+   sozdat' kopiyu tablicy s takimizhe OID, to `eto mozhno sdelat' tak:
         CREATE TABLE new_table(old_oid oid, mycol int);
         SELECT old_oid, mycol INTO new FROM old;
         COPY new TO '/tmp/pgtable';
         DELETE FROM new;
         COPY new WITH OIDS FROM '/tmp/pgtable';
 
-   OID хранится как 4-х байтное целое и не может превышать значение в 4
-   миллиарда. Однако, еще никто не сообщил о том, что такое произошло, но
-   мы планируем до того как это случиться избавится от этого ограничения.
+   OID hranitsya kak 4-h bajtnoe celoe i ne mozhet prevyshat' znachenie v
+   4 milliarda. Odnako, esche nikto ne soobschil o tom, chto takoe
+   proizoshlo, no my planiruem do togo kak `eto sluchit'sya izbavitsya ot
+   `etogo ogranicheniya.
    
-   TID используется для идентификации специальных физических записей с
-   блочными и offset значениями. TID изменяется после того как записи
-   были изменены или перегружены.
+   TID ispol'zuetsya dlya identifikacii special'nyh fizicheskih zapisej s
+   blochnymi i offset znacheniyami. TID izmenyaetsya posle togo kak
+   zapisi byli izmeneny ili peregruzheny.
    
-   TID используется индексными записями в качестве указателя на
-   физические записи.
+   TID ispol'zuetsya indeksnymi zapisyami v kachestve ukazatelya na
+   fizicheskie zapisi.
    
-    4.17) Что означают некоторые термины используемые в PostgreSQL?
+    4.17) CHto oznachayut nekotorye terminy ispol'zuemye v PostgreSQL?
     
-   Некоторый исходный код и старая документация используют
-   общеупотребительные термины. Вот некоторые из них:
+   Nekotoryj ishodnyj kod i staraya dokumentaciya ispol'zuyut
+   obscheupotrebitel'nye terminy. Vot nekotorye iz nih:
      * table, relation, class
      * row, record, tuple
      * column, field, attribute
@@ -1050,94 +1080,99 @@ BYTEA           bytea           массив байт переменной длины (можно использоват
      * portal, cursor
      * range variable, table name, table alias
        
-   Список общих терминов по базам данных можно найти на
-   http://www.comptechnews.com/~reaster/dbdesign.html
+   Spisok obschih terminov po bazam dannyh mozhno najti na
+   http://hea-www.harvard.edu/MST/simul/software/docs/pkgs/pgsql/glossary
+   /glossary.html
    
-    4.18) Почему я получаю ошибку "ERROR: Memory exhausted in AllocSetAlloc()"?
+    4.18) Pochemu ya poluchayu oshibku "ERROR: Memory exhausted in
+    AllocSetAlloc()"?
     
-   Предположительно у вас закончилась виртуальная память или что ваше
-   ядро имеет маленький лимит на определенные ресурсы. Попытайтесь перед
-   запуском postmaster выполнить следующие команды:
+   Predpolozhitel'no u vas zakonchilas' virtual'naya pamyat' ili chto
+   vashe yadro imeet malen'kij limit na opredelennye resursy. Popytajtes'
+   pered zapuskom postmaster vypolnit' sleduyuschie komandy:
     ulimit -d 262144
     limit datasize 256m
 
-   В зависимости от командного интерпретатора shell, только одна из
-   данных команд выполнится успешно, но она позволит вам установить
-   больший сегмент данных процесса и возможно решит проблему. Эта команда
-   изменяет параметры текущего процесса и всех его потомков, созданных
-   после её запуска. Если у вас возникла проблема с SQL клиентом, потому
-   что backend возвращает слишком большой объем данных, попытайтесь
-   выполнить эту команду перед запуском клиента.
+   V zavisimosti ot komandnogo interpretatora shell, tol'ko odna iz
+   dannyh komand vypolnitsya uspeshno, no ona pozvolit vam ustanovit'
+   bol'shij segment dannyh processa i vozmozhno reshit problemu. `Eta
+   komanda izmenyaet parametry tekuschego processa i vseh ego potomkov,
+   sozdannyh posle eio zapuska. Esli u vas voznikla problema s SQL
+   klientom, potomu chto backend vozvraschaet slishkom bol'shoj ob"em
+   dannyh, popytajtes' vypolnit' `etu komandu pered zapuskom klienta.
    
-    4.19) Как мне узнать, какая версия PostgreSQL запущена?
+    4.19) Kak mne uznat', kakaya versiya PostgreSQL zapuschena?
     
-   Из psql, наберите select version();
+   Iz psql, naberite SELECT version();
    
-    4.20) Почему при работе с моим большим объектом я получаю ошибку "invalid
-    large obj descriptor"?
+    4.20) Pochemu pri rabote s moim bol'shim ob"ektom ya poluchayu oshibku
+    "invalid large obj descriptor"?
     
-   Вам нужно при использовании большого объекта поместить в начале BEGIN
-   WORK и в конце COMMIT, а внутри получившегося блока lo_open ...
-   lo_close.
+   Vam nuzhno pri ispol'zovanii bol'shogo ob"ekta pomestit' v nachale
+   BEGIN WORK i v konce COMMIT, a vnutri poluchivshegosya bloka lo_open
+   ... lo_close.
    
-   В настоящий момент PostgreSQL требует, чтобы при закрытии большого
-   объекта происходило выполнение транзакции. Таким образом, первая же
-   попытка сделать что-либо с большим объектом, не соблюдая данного
-   правила приведет к сообщению invalid large obj descriptor, так как код
-   выполняющий работу над большим объектом (по крайней мере в настоящий
-   момент) будет генерировать сообщение об ошибке если вы не используете
-   транзакцию.
+   V nastoyaschij moment PostgreSQL trebuet, chtoby pri zakrytii
+   bol'shogo ob"ekta proishodilo vypolnenie tranzakcii. Takim obrazom,
+   pervaya zhe popytka sdelat' chto-libo s bol'shim ob"ektom, ne
+   soblyudaya dannogo pravila privedet k soobscheniyu invalid large obj
+   descriptor, tak kak kod vypolnyayuschij rabotu nad bol'shim ob"ektom
+   (po krajnej mere v nastoyaschij moment) budet generirovat' soobschenie
+   ob oshibke esli vy ne ispol'zuete tranzakciyu.
    
-   Если вы используете такой интерфейс клиента как ODBC, вам возможно
-   понадобится установить auto-commit off.
+   Esli vy ispol'zuete takoj interfejs klienta kak ODBC, vam vozmozhno
+   ponadobitsya ustanovit' auto-commit off.
    
-    4.21) Как мне создать колонку которая по умолчанию будет содержать текущее
-    время?
+    4.21) Kak mne sozdat' kolonku kotoraya po umolchaniyu budet soderzhat'
+    tekuschee vremya?
     
-   Используйте CURRENT_TIMESTAMP:
+   Ispol'zujte CURRENT_TIMESTAMP:
 CREATE TABLE test (x int, modtime timestamp DEFAULT CURRENT_TIMESTAMP );
 
-    4.22) Почему мои подзапросы, использующие IN так медленно работаеют?
+    4.22) Pochemu moi podzaprosy, ispol'zuyuschie IN tak medlenno rabotaeyut?
     
-   В настоящий момент, мы связываем позапросы для внешних запросов через
-   последовательный перебор результата подзапроса для каждой записи
-   внешнего запроса. Если подзапрос возвращает только несколько записей и
-   внешний запрос возвращает много записей, IN работает наиболее быстро.
-   Чтобы увеличить скорость в других запросах, замените IN на EXISTS:
-SELECT *
+   V nastoyaschij moment, my svyazyvaem pozaprosy dlya vneshnih zaprosov
+   cherez posledovatel'nyj perebor rezul'tata podzaprosa dlya kazhdoj
+   zapisi vneshnego zaprosa. Esli podzapros vozvraschaet tol'ko neskol'ko
+   zapisej i vneshnij zapros vozvraschaet mnogo zapisej, IN rabotaet
+   naibolee bystro. CHtoby uvelichit' skorost' v drugih zaprosah,
+   zamenite IN na EXISTS:
+    SELECT *
     FROM tab
-    WHERE col IN (SELECT subcol FROM subtab)
+    WHERE col IN (SELECT subcol FROM subtab);
 
-   на:
-SELECT *
+   na:
+    SELECT *
     FROM tab
-    WHERE EXISTS (SELECT subcol FROM subtab WHERE subcol = col)
+    WHERE EXISTS (SELECT subcol FROM subtab WHERE subcol = col);
 
-   Чтобы такая конструкция работала быстро, колонка subcol должна быть
-   проиндексирована. Мы надеемся убрать это ограничение в будущем
-   выпуске.
+   CHtoby takaya konstrukciya rabotala bystro, kolonka subcol dolzhna
+   byt' proindeksirovana. My nadeemsya ubrat' `eto ogranichenie v
+   buduschem vypuske.
    
-    4.23) Как мне выполнить внешнее связывание?
+    4.23) Kak mne vypolnit' vneshnee svyazyvanie?
     
-   PostgreSQL поддерживает внешнее связывание, используя стандартный
-   синтаксис SQL. Вот два примера:
+   PostgreSQL podderzhivaet vneshnee svyazyvanie, ispol'zuya standartnyj
+   sintaksis SQL. Vot dva primera:
     SELECT *
     FROM t1 LEFT OUTER JOIN t2 ON (t1.col = t2.col);
 
-   или
+   ili
     SELECT *
     FROM t1 LEFT OUTER JOIN t2 USING (col);
 
-   Это идентичные запросы связывания t1.col и t2.col, также возвращают
-   любые несвязанные записи в t1 (которые не совпадают с t2). RIGHT
-   связывание должно добавить несвязанные записи t2. FULL связывание
-   должно возвратить совпавшие записи плюс все несвязанные записи из t1 и
-   t2. Слово OUTER является необязательным и назначается в LEFT, RIGHT и
-   FULL связываниях. Обычные связывания называются INNER связывания.
+   `Eto identichnye zaprosy svyazyvaniya t1.col i t2.col, takzhe
+   vozvraschayut lyubye nesvyazannye zapisi v t1 (kotorye ne sovpadayut s
+   t2). RIGHT svyazyvanie dolzhno dobavit' nesvyazannye zapisi t2. FULL
+   svyazyvanie dolzhno vozvratit' sovpavshie zapisi plyus vse
+   nesvyazannye zapisi iz t1 i t2. Slovo OUTER yavlyaetsya
+   neobyazatel'nym i naznachaetsya v LEFT, RIGHT i FULL svyazyvaniyah.
+   Obychnye svyazyvaniya nazyvayutsya INNER svyazyvaniya.
    
-   В предыдущих версиях, внешние связывания могли быть эмулированы
-   используя UNION и NOT IN. Например, когда происходит связывание tab1 и
-   tab2, следующий запрос выполняет внешнее связывание двух таблиц:
+   V predyduschih versiyah, vneshnie svyazyvaniya mogli byt' `emulirovany
+   ispol'zuya UNION i NOT IN. Naprimer, kogda proishodit svyazyvanie tab1
+   i tab2, sleduyuschij zapros vypolnyaet vneshnee svyazyvanie dvuh
+   tablic:
     SELECT tab1.col1, tab2.col2
     FROM tab1, tab2
     WHERE tab1.col1 = tab2.col1
@@ -1147,67 +1182,86 @@ SELECT *
     WHERE tab1.col1 NOT IN (SELECT tab2.col1 FROM tab2)
     ORDER BY col1
 
-    4.24) Как выполнять запросы, использующие несколько баз данных?
+    4.24) Kak vypolnyat' zaprosy, ispol'zuyuschie neskol'ko baz dannyh?
     
-   Не существует способа создать запрос к базам данных отличным от
-   текущей. Поскольку PostgreSQL загружает системные каталоги специфичные
-   для базы данных, непонятно даже, как должен себя вести такой
-   межбазовый запрос.
+   Ne suschestvuet sposoba sozdat' zapros k bazam dannyh otlichnym ot
+   tekuschej. Poskol'ku PostgreSQL zagruzhaet sistemnye katalogi
+   specifichnye dlya bazy dannyh, neponyatno dazhe, kak dolzhen sebya
+   vesti takoj mezhbazovyj zapros.
    
-   /contrib/dblink позволяет запросы между базами, используя вызовы
-   функций. Разумеется, клиент может одновременно устанавливать
-   соедиенения с различными базами данных и таких образом объединять
-   информацию из них.
+   contrib/dblink pozvolyaet zaprosy mezhdu bazami, ispol'zuya vyzovy
+   funkcij. Razumeetsya, klient mozhet odnovremenno ustanavlivat'
+   soedieneniya s razlichnymi bazami dannyh i takih obrazom ob"edinyat'
+   informaciyu iz nih.
    
-    4.25) Как мне вернуть из функции несколько записей?
+    4.25) Kak mne vernut' iz funkcii neskol'ko zapisej?
     
-   Вы можете возвращать из функций PL/pgSQL списки результатов, используя
-   refcursors. Смотрите
-   http://developer.postgresql.org/docs/postgres/plpgsql-cursors.html,
-   секцию 23.7.3.3.
+   Vy mozhete vozvraschat' iz funkcij PL/pgSQL spiski rezul'tatov,
+   ispol'zuya refcursors. Smotrite
+   http://www.PostgreSQL.org/idocs/index.php?plpgsql-cursors.html,
+   sekciyu 23.7.3.3.
    
-    4.26) Почему я не могу надежно создавать/удалять временные таблицы в
-    функциях PL/PgSQL?
+    4.26) Pochemu ya ne mogu nadezhno sozdavat'/udalyat' vremennye tablicy v
+    funkciyah PL/PgSQL?
     
-   PL/PgSQL кэширует содержимое функции и один из негативных эффектов
-   этого состоит в том, что если функция PL/PgSQL обращается к временной
-   таблице и эта таблица позднее удаляется и пересоздается, а функция
-   затем вызывается снова, то ее вызов приведет к ошибке, потому что
-   скэшированное содержимое функции содержит указатель на старую
-   временную таблицу. Чтобы решить эту проблему, используйте EXECUTE для
-   доступа к временным таблицам в PL/PgSQL. Использование этого оператора
-   заставит запрос перегенерироваться каждый раз.
+   PL/PgSQL k`eshiruet soderzhimoe funkcii i odin iz negativnyh `effektov
+   `etogo sostoit v tom, chto esli funkciya PL/PgSQL obraschaetsya k
+   vremennoj tablice i `eta tablica pozdnee udalyaetsya i peresozdaetsya,
+   a funkciya zatem vyzyvaetsya snova, to ee vyzov privedet k oshibke,
+   potomu chto sk`eshirovannoe soderzhimoe funkcii soderzhit ukazatel' na
+   staruyu vremennuyu tablicu. CHtoby reshit' `etu problemu, ispol'zujte
+   EXECUTE dlya dostupa k vremennym tablicam v PL/PgSQL. Ispol'zovanie
+   `etogo operatora zastavit zapros peregenerirovat'sya kazhdyj raz.
    
-    4.27) Какие опции репликации существуют?
+    4.27) Kakie opcii replikacii suschestvuyut?
     
-   Есть несколько решений для репликации типа master/slave. Они допускают
-   использование только одного сервера для внесения изменений в базу
-   данных, а slave серверы просто позволяют читать данные из базы.
+   Est' neskol'ko opcij dlya replikacii tipa master/slave. Oni dopuskayut
+   ispol'zovanie tol'ko master servera dlya vneseniya izmenenij v bazu
+   dannyh, a slave servery prosto pozvolyayut chitat' dannye iz bazy. Ob
+   `etom chitajte zdes':
+   http://gborg.PostgreSQL.org/genpage?replication_research. O replikacii
+   s neskol'kimi master serverami chitajte zdes':
+   http://gborg.PostgreSQL.org/project/pgreplication/projdisplay.php.
+   
+    4.28) Kakie opcii shifrovaniya suschestvuyut?
+    
+     * contrib/pgcrypto soderzhit mnogo funkcij shifrovaniya dlya
+       ispol'zovaniya v SQL zaprosah.
+     * Est' tol'ko odin sposob shifrovaniya dannyh, peredavaemyh ot
+       klienta k serveru, cherez ispol'zovanie hostssl v pg_hba.conf.
+     * Paroli pol'zovatelej k baze dannyh avtomaticheski shifruyutsya,
+       pri sohranenii v versii 7.3. V predyduschih versiyah, vy dolzhny
+       razreshit' opciyu PASSWORD_ENCRYPTION v postgresql.conf.
+     * Server mozhno zapustit', ispol'zuya shifrovannuyu fajlovuyu
+       sistemu.
      _________________________________________________________________
    
-                           Расширения PostgreSQL
+                          Rasshireniya PostgreSQL
                                       
-    5.1) Я написал функцию определяемую пользователем. Когда я запускаю ее в
-    psql, почему я получаю dump core?
+    5.1) YA napisal funkciyu opredelyaemuyu pol'zovatelem. Kogda ya zapuskayu
+    ee v psql, pochemu ya poluchayu dump core?
     
-   Проблема может заключаться в нескольких вещах. Попытайтесь сперва
-   протестировать вашу функцию в отдельной самостоятельной программе.
+   Problema mozhet zaklyuchat'sya v neskol'kih veschah. Popytajtes'
+   sperva protestirovat' vashu funkciyu v otdel'noj samostoyatel'noj
+   programme.
    
-    5.2) Как я могу внести некоторые классные новые типы и функции в
+    5.2) Kak ya mogu vnesti nekotorye klassnye novye tipy i funkcii v
     PostgreSQL?
     
-   Отправьте ваши расширения в список рассылки pgsql-hackers и они по
-   возможности будут помещены в подкаталог contrib/.
+   Otprav'te vashi rasshireniya v spisok rassylki pgsql-hackers i oni po
+   vozmozhnosti budut pomescheny v podkatalog contrib/.
    
-    5.3) Как мне написать C функцию, возвращающую запись?
+    5.3) Kak mne napisat' C funkciyu, vozvraschayuschuyu zapis'?
     
-   Это требует некоего шаманства так как авторы никогда не пробовали
-   делать это, хотя в приницпе это возможно.
+   V versiyah PostgreSQL, nachinaya s 7.3, funkcii, vozvraschayuschie
+   tablicy polnost'yu podderzhivayutsya v C, PL/PgSQL i SQL. Podrobnosti
+   smotrite v Rukovodstve Programmista. Primer vozvraschayuschej tablicu
+   funkcii, napisannoj na C, mozhno najti v contrib/tablefunc.
    
-    5.4) Я изменил исходный файл. Почему после перекомпиляции я не вижу
-    изменений?
+    5.4) YA izmenil ishodnyj fajl. Pochemu posle perekompilyacii ya ne vizhu
+    izmenenij?
     
-   Файлы Makefile не имеют правильных зависимостей для include файлов. Вы
-   должны выполнить make clean и затем make. Если вы используете GCC вы
-   можете использовать опцию --enable-depend в configure чтобы поручить
-   компилятору автоматически отслеживать зависимости.
+   Fajly Makefile ne imeyut pravil'nyh zavisimostej dlya include fajlov.
+   Vy dolzhny vypolnit' make clean i zatem make. Esli vy ispol'zuete GCC
+   vy mozhete ispol'zovat' opciyu --enable-depend v configure chtoby
+   poruchit' kompilyatoru avtomaticheski otslezhivat' zavisimosti.
