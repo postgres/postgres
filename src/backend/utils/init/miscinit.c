@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/miscinit.c,v 1.10 1998/02/24 15:20:16 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/miscinit.c,v 1.11 1998/02/25 13:08:09 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,7 +32,7 @@
 #include "miscadmin.h"			/* where the declarations go */
 
 #include "catalog/catname.h"
-#include "catalog/pg_user.h"
+#include "catalog/pg_shadow.h"
 #include "catalog/pg_proc.h"
 #include "utils/syscache.h"
 
@@ -483,6 +483,6 @@ SetUserId()
 	if (!HeapTupleIsValid(userTup))
 		elog(FATAL, "SetUserId: user \"%s\" is not in \"%s\"",
 			 userName,
-			 UserRelationName);
-	UserId = (Oid) ((Form_pg_user) GETSTRUCT(userTup))->usesysid;
+			 ShadowRelationName);
+	UserId = (Oid) ((Form_pg_shadow) GETSTRUCT(userTup))->usesysid;
 }

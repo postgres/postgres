@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_type.h,v 1.33 1998/02/10 16:04:10 momjian Exp $
+ * $Id: pg_type.h,v 1.34 1998/02/25 13:09:27 scrappy Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -212,7 +212,7 @@ DATA(insert OID = 71 (	pg_type		 PGUID 1 1 t b t \054 1247 0 foo bar foo bar c _
 DATA(insert OID = 75 (	pg_attribute PGUID 1 1 t b t \054 1249 0 foo bar foo bar c _null_));
 DATA(insert OID = 81 (	pg_proc		 PGUID 1 1 t b t \054 1255 0 foo bar foo bar c _null_));
 DATA(insert OID = 83 (	pg_class	 PGUID 1 1 t b t \054 1259 0 foo bar foo bar c _null_));
-DATA(insert OID = 86 (	pg_user		 PGUID 1 1 t b t \054 1260 0 foo bar foo bar c _null_));
+DATA(insert OID = 86 (	pg_shadow	 PGUID 1 1 t b t \054 1260 0 foo bar foo bar c _null_));
 DATA(insert OID = 87 (	pg_group	 PGUID 1 1 t b t \054 1261 0 foo bar foo bar c _null_));
 DATA(insert OID = 88 (	pg_database  PGUID 1 1 t b t \054 1262 0 foo bar foo bar c _null_));
 DATA(insert OID = 90 (	pg_variable  PGUID 1 1 t b t \054 1264 0 foo bar foo bar c _null_));

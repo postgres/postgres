@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_attribute.h,v 1.28 1998/02/13 19:46:09 momjian Exp $
+ * $Id: pg_attribute.h,v 1.29 1998/02/25 13:09:24 scrappy Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -275,7 +275,7 @@ DATA(insert OID = 0 ( 1255 xmax				28 0  4  -5 0 -1 -1 f f i f f));
 DATA(insert OID = 0 ( 1255 cmax				29 0  4  -6 0 -1 -1 t f i f f));
 
 /* ----------------
- *		pg_user
+ *		pg_shadow
  * ----------------
  */
 DATA(insert OID = 0 ( 1260 usename		19  0 NAMEDATALEN   1 0 -1 -1 f f i f f));

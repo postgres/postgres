@@ -21,7 +21,7 @@
 #include <miscadmin.h>
 #include <catalog/catname.h>
 #include <catalog/pg_database.h>
-#include <catalog/pg_user.h>
+#include <catalog/pg_shadow.h>
 #include <libpq/crypt.h>
 #include <access/heapam.h>
 #include <access/xact.h>
@@ -38,7 +38,7 @@ static void CheckPgUserAclNotNull(void);
 /*---------------------------------------------------------------------
  * UpdatePgPwdFile
  *
- * copy the modified contents of pg_user to a file used by the postmaster
+ * copy the modified contents of pg_shadow to a file used by the postmaster
  * for user authentication.  The file is stored as $PGDATA/pg_pwd.
  *---------------------------------------------------------------------
  */
@@ -56,11 +56,11 @@ void UpdatePgPwdFile(char* sql) {
   tempname = (char*)malloc(strlen(filename) + 12);
   sprintf(tempname, "%s.%d", filename, MyProcPid);
 
-  /* Copy the contents of pg_user to the pg_pwd ASCII file using a the SEPCHAR
+  /* Copy the contents of pg_shadow to the pg_pwd ASCII file using a the SEPCHAR
    * character as the delimiter between fields.  Then rename the file to its
    * final name.
    */
-  sprintf(sql, "copy %s to '%s' using delimiters %s", UserRelationName, tempname, CRYPT_PWD_FILE_SEPCHAR);
+  sprintf(sql, "copy %s to '%s' using delimiters %s", ShadowRelationName, tempname, CRYPT_PWD_FILE_SEPCHAR);
   pg_exec_query(sql, (char**)NULL, (Oid*)NULL, 0);
   rename(tempname, filename);
   free((void*)tempname);
@@ -76,15 +76,15 @@ void UpdatePgPwdFile(char* sql) {
 /*---------------------------------------------------------------------
  * DefineUser
  *
- * Add the user to the pg_user relation, and if specified make sure the
+ * Add the user to the pg_shadow relation, and if specified make sure the
  * user is specified in the desired groups of defined in pg_group.
  *---------------------------------------------------------------------
  */
 void DefineUser(CreateUserStmt *stmt) {
 
   char*            pg_user;
-  Relation         pg_user_rel;
-  TupleDesc        pg_user_dsc;
+  Relation         pg_shadow_rel;
+  TupleDesc        pg_shadow_dsc;
   HeapScanDesc     scan;
   HeapTuple        tuple;
   Datum            datum;
@@ -101,34 +101,34 @@ void DefineUser(CreateUserStmt *stmt) {
   if (!(inblock = IsTransactionBlock()))
     BeginTransactionBlock();
 
-  /* Make sure the user attempting to create a user can insert into the pg_user
+  /* Make sure the user attempting to create a user can insert into the pg_shadow
    * relation.
    */
   pg_user = GetPgUserName();
-  if (pg_aclcheck(UserRelationName, pg_user, ACL_RD | ACL_WR | ACL_AP) != ACLCHECK_OK) {
+  if (pg_aclcheck(ShadowRelationName, pg_user, ACL_RD | ACL_WR | ACL_AP) != ACLCHECK_OK) {
     UserAbortTransactionBlock();
     elog(ERROR, "defineUser: user \"%s\" does not have SELECT and INSERT privilege for \"%s\"",
-               pg_user, UserRelationName);
+               pg_user, ShadowRelationName);
     return;
   }
 
-  /* Scan the pg_user relation to be certain the user doesn't already exist.
+  /* Scan the pg_shadow relation to be certain the user doesn't already exist.
    */
-  pg_user_rel = heap_openr(UserRelationName);
-  pg_user_dsc = RelationGetTupleDescriptor(pg_user_rel);
-  /* Secure a write lock on pg_user so we can be sure of what the next usesysid
+  pg_shadow_rel = heap_openr(ShadowRelationName);
+  pg_shadow_dsc = RelationGetTupleDescriptor(pg_shadow_rel);
+  /* Secure a write lock on pg_shadow so we can be sure of what the next usesysid
    * should be.
    */
-  RelationSetLockForWrite(pg_user_rel);
+  RelationSetLockForWrite(pg_shadow_rel);
 
-  scan = heap_beginscan(pg_user_rel, false, false, 0, NULL);
+  scan = heap_beginscan(pg_shadow_rel, false, false, 0, NULL);
   while (HeapTupleIsValid(tuple = heap_getnext(scan, 0, &buffer))) {
-    datum = heap_getattr(tuple, Anum_pg_user_usename, pg_user_dsc, &n);
+    datum = heap_getattr(tuple, Anum_pg_shadow_usename, pg_shadow_dsc, &n);
 
     if (!exists && !strncmp((char*)datum, stmt->user, strlen(stmt->user)))
       exists = true;
 
-    datum = heap_getattr(tuple, Anum_pg_user_usesysid, pg_user_dsc, &n);
+    datum = heap_getattr(tuple, Anum_pg_shadow_usesysid, pg_shadow_dsc, &n);
     if ((int)datum > max_id)
       max_id = (int)datum;
 
@@ -137,8 +137,8 @@ void DefineUser(CreateUserStmt *stmt) {
   heap_endscan(scan);
 
   if (exists) {
-    RelationUnsetLockForWrite(pg_user_rel);
-    heap_close(pg_user_rel);
+    RelationUnsetLockForWrite(pg_shadow_rel);
+    heap_close(pg_shadow_rel);
     UserAbortTransactionBlock();
     elog(ERROR, "defineUser: user \"%s\" has already been created", stmt->user);
     return;
@@ -146,7 +146,7 @@ void DefineUser(CreateUserStmt *stmt) {
 
   /* Build the insert statment to be executed.
    */
-  sprintf(sql, "insert into %s(usename,usesysid,usecreatedb,usetrace,usesuper,usecatupd,passwd", UserRelationName);
+  sprintf(sql, "insert into %s(usename,usesysid,usecreatedb,usetrace,usesuper,usecatupd,passwd", ShadowRelationName);
 /*  if (stmt->password)
     strcat(sql, ",passwd"); -- removed so that insert empty string when no password */
   if (stmt->validUntil)
@@ -186,8 +186,8 @@ void DefineUser(CreateUserStmt *stmt) {
   /* This goes after the UpdatePgPwdFile to be certain that two backends to not
    * attempt to write to the pg_pwd file at the same time.
    */
-  RelationUnsetLockForWrite(pg_user_rel);
-  heap_close(pg_user_rel);
+  RelationUnsetLockForWrite(pg_shadow_rel);
+  heap_close(pg_shadow_rel);
 
   if (IsTransactionBlock() && !inblock)
     EndTransactionBlock();
@@ -197,8 +197,8 @@ void DefineUser(CreateUserStmt *stmt) {
 extern void AlterUser(AlterUserStmt *stmt) {
 
   char*            pg_user;
-  Relation         pg_user_rel;
-  TupleDesc        pg_user_dsc;
+  Relation         pg_shadow_rel;
+  TupleDesc        pg_shadow_dsc;
   HeapScanDesc     scan;
   HeapTuple        tuple;
   Datum            datum;
@@ -214,29 +214,29 @@ extern void AlterUser(AlterUserStmt *stmt) {
   if (!(inblock = IsTransactionBlock()))
     BeginTransactionBlock();
 
-  /* Make sure the user attempting to create a user can insert into the pg_user
+  /* Make sure the user attempting to create a user can insert into the pg_shadow
    * relation.
    */
   pg_user = GetPgUserName();
-  if (pg_aclcheck(UserRelationName, pg_user, ACL_RD | ACL_WR) != ACLCHECK_OK) {
+  if (pg_aclcheck(ShadowRelationName, pg_user, ACL_RD | ACL_WR) != ACLCHECK_OK) {
     UserAbortTransactionBlock();
     elog(ERROR, "alterUser: user \"%s\" does not have SELECT and UPDATE privilege for \"%s\"",
-               pg_user, UserRelationName);
+               pg_user, ShadowRelationName);
     return;
   }
 
-  /* Scan the pg_user relation to be certain the user exists.
+  /* Scan the pg_shadow relation to be certain the user exists.
    */
-  pg_user_rel = heap_openr(UserRelationName);
-  pg_user_dsc = RelationGetTupleDescriptor(pg_user_rel);
-  /* Secure a write lock on pg_user so we can be sure that when the dump of
+  pg_shadow_rel = heap_openr(ShadowRelationName);
+  pg_shadow_dsc = RelationGetTupleDescriptor(pg_shadow_rel);
+  /* Secure a write lock on pg_shadow so we can be sure that when the dump of
    * the pg_pwd file is done, there is not another backend doing the same.
    */
-  RelationSetLockForWrite(pg_user_rel);
+  RelationSetLockForWrite(pg_shadow_rel);
 
-  scan = heap_beginscan(pg_user_rel, false, false, 0, NULL);
+  scan = heap_beginscan(pg_shadow_rel, false, false, 0, NULL);
   while (HeapTupleIsValid(tuple = heap_getnext(scan, 0, &buffer))) {
-    datum = heap_getattr(tuple, Anum_pg_user_usename, pg_user_dsc, &n);
+    datum = heap_getattr(tuple, Anum_pg_shadow_usename, pg_shadow_dsc, &n);
 
     if (!strncmp((char*)datum, stmt->user, strlen(stmt->user))) {
       exists = true;
@@ -247,8 +247,8 @@ extern void AlterUser(AlterUserStmt *stmt) {
   heap_endscan(scan);
 
   if (!exists) {
-    RelationUnsetLockForWrite(pg_user_rel);
-    heap_close(pg_user_rel);
+    RelationUnsetLockForWrite(pg_shadow_rel);
+    heap_close(pg_shadow_rel);
     UserAbortTransactionBlock();
     elog(ERROR, "alterUser: user \"%s\" does not exist", stmt->user);
     return;
@@ -256,7 +256,7 @@ extern void AlterUser(AlterUserStmt *stmt) {
 
   /* Create the update statement to modify the user.
    */
-  sprintf(sql, "update %s set", UserRelationName);
+  sprintf(sql, "update %s set", ShadowRelationName);
   sql_end = sql;
   if (stmt->password) {
     sql_end += strlen(sql_end);
@@ -296,8 +296,8 @@ extern void AlterUser(AlterUserStmt *stmt) {
 
   UpdatePgPwdFile(sql);
 
-  RelationUnsetLockForWrite(pg_user_rel);
-  heap_close(pg_user_rel);
+  RelationUnsetLockForWrite(pg_shadow_rel);
+  heap_close(pg_shadow_rel);
 
   if (IsTransactionBlock() && !inblock)
     EndTransactionBlock();
@@ -307,7 +307,7 @@ extern void AlterUser(AlterUserStmt *stmt) {
 extern void RemoveUser(char* user) {
 
   char*            pg_user;
-  Relation         pg_user_rel,
+  Relation         pg_shadow_rel,
                    pg_rel;
   TupleDesc        pg_dsc;
   HeapScanDesc     scan;
@@ -324,33 +324,33 @@ extern void RemoveUser(char* user) {
   if (!(inblock = IsTransactionBlock()))
     BeginTransactionBlock();
 
-  /* Make sure the user attempting to create a user can delete from the pg_user
+  /* Make sure the user attempting to create a user can delete from the pg_shadow
    * relation.
    */
   pg_user = GetPgUserName();
-  if (pg_aclcheck(UserRelationName, pg_user, ACL_RD | ACL_WR) != ACLCHECK_OK) {
+  if (pg_aclcheck(ShadowRelationName, pg_user, ACL_RD | ACL_WR) != ACLCHECK_OK) {
     UserAbortTransactionBlock();
     elog(ERROR, "removeUser: user \"%s\" does not have SELECT and DELETE privilege for \"%s\"",
-               pg_user, UserRelationName);
+               pg_user, ShadowRelationName);
     return;
   }
 
-  /* Perform a scan of the pg_user relation to find the usesysid of the user to
+  /* Perform a scan of the pg_shadow relation to find the usesysid of the user to
    * be deleted.  If it is not found, then return a warning message.
    */
-  pg_user_rel = heap_openr(UserRelationName);
-  pg_dsc = RelationGetTupleDescriptor(pg_user_rel);
-  /* Secure a write lock on pg_user so we can be sure that when the dump of
+  pg_shadow_rel = heap_openr(ShadowRelationName);
+  pg_dsc = RelationGetTupleDescriptor(pg_shadow_rel);
+  /* Secure a write lock on pg_shadow so we can be sure that when the dump of
    * the pg_pwd file is done, there is not another backend doing the same.
    */
-  RelationSetLockForWrite(pg_user_rel);
+  RelationSetLockForWrite(pg_shadow_rel);
 
-  scan = heap_beginscan(pg_user_rel, false, false, 0, NULL);
+  scan = heap_beginscan(pg_shadow_rel, false, false, 0, NULL);
   while (HeapTupleIsValid(tuple = heap_getnext(scan, 0, &buffer))) {
-    datum = heap_getattr(tuple, Anum_pg_user_usename, pg_dsc, &n);
+    datum = heap_getattr(tuple, Anum_pg_shadow_usename, pg_dsc, &n);
 
     if (!strncmp((char*)datum, user, strlen(user))) {
-      usesysid = (int)heap_getattr(tuple, Anum_pg_user_usesysid, pg_dsc, &n);
+      usesysid = (int)heap_getattr(tuple, Anum_pg_shadow_usesysid, pg_dsc, &n);
       ReleaseBuffer(buffer);
       break;
     }
@@ -359,8 +359,8 @@ extern void RemoveUser(char* user) {
   heap_endscan(scan);
 
   if (usesysid == -1) {
-    RelationUnsetLockForWrite(pg_user_rel);
-    heap_close(pg_user_rel);
+    RelationUnsetLockForWrite(pg_shadow_rel);
+    heap_close(pg_shadow_rel);
     UserAbortTransactionBlock();
     elog(ERROR, "removeUser: user \"%s\" does not exist", user);
     return;
@@ -399,8 +399,8 @@ extern void RemoveUser(char* user) {
   if (dbase)
     free((void*)dbase);
 
-  /* Since pg_user is global over all databases, one of two things must be done
-   * to insure complete consistency.  First, pg_user could be made non-global.
+  /* Since pg_shadow is global over all databases, one of two things must be done
+   * to insure complete consistency.  First, pg_shadow could be made non-global.
    * This would elminate the code above for deleting database and would require
    * the addition of code to delete tables, views, etc owned by the user.
    *
@@ -414,15 +414,15 @@ extern void RemoveUser(char* user) {
    *
    */
 
-  /* Remove the user from the pg_user table
+  /* Remove the user from the pg_shadow table
    */
-  sprintf(sql, "delete from %s where usename = '%s'", UserRelationName, user);
+  sprintf(sql, "delete from %s where usename = '%s'", ShadowRelationName, user);
   pg_exec_query(sql, (char**)NULL, (Oid*)NULL, 0);
 
   UpdatePgPwdFile(sql);
 
-  RelationUnsetLockForWrite(pg_user_rel);
-  heap_close(pg_user_rel);
+  RelationUnsetLockForWrite(pg_shadow_rel);
+  heap_close(pg_shadow_rel);
 
   if (IsTransactionBlock() && !inblock)
     EndTransactionBlock();
@@ -431,25 +431,25 @@ extern void RemoveUser(char* user) {
 /*
  * CheckPgUserAclNotNull
  *
- * check to see if there is an ACL on pg_user
+ * check to see if there is an ACL on pg_shadow
  */
 static void CheckPgUserAclNotNull()
 {
 HeapTuple htp;
 
-	htp = SearchSysCacheTuple(RELNAME, PointerGetDatum(UserRelationName),
+	htp = SearchSysCacheTuple(RELNAME, PointerGetDatum(ShadowRelationName),
 							  0, 0, 0);
 	if (!HeapTupleIsValid(htp))
 	{
 		elog(ERROR, "IsPgUserAclNull: class \"%s\" not found",
-			 UserRelationName);
+			 ShadowRelationName);
 	}
 
 	if (heap_attisnull(htp, Anum_pg_class_relacl))
 	{
-		elog(NOTICE, "To use passwords, you have to revoke permissions on pg_user");
+		elog(NOTICE, "To use passwords, you have to revoke permissions on pg_shadow");
 		elog(NOTICE, "so normal users can not read the passwords.");
-		elog(ERROR, "Try 'REVOKE ALL ON pg_user FROM PUBLIC'");
+		elog(ERROR, "Try 'REVOKE ALL ON pg_shadow FROM PUBLIC'");
 	}
 	
 	return;

@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.4 1998/02/18 07:25:57 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.5 1998/02/25 13:07:08 scrappy Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -88,7 +88,7 @@ Oid	param_type(int t); /* used in parse_expr.c */
 	char				chr;
 	char				*str;
 	bool				boolean;
-	bool*				pboolean;	/* for pg_user privileges */
+	bool*				pboolean;	/* for pg_shadow privileges */
 	List				*list;
 	Node				*node;
 	Value				*value;

@@ -4,7 +4,7 @@
 #    Makefile for catalog
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/catalog/Makefile,v 1.8 1998/01/05 18:42:39 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/backend/catalog/Makefile,v 1.9 1998/02/25 13:05:55 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -27,7 +27,7 @@ SUBSYS.o: $(OBJS)
 GENBKI= ./genbki.sh
 
 GLOBALBKI_SRCS= $(addprefix ../../include/catalog/, \
-                  pg_database.h pg_variable.h pg_user.h \
+                  pg_database.h pg_variable.h pg_shadow.h \
                   pg_group.h pg_log.h \
                  )
 

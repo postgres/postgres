@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/globals.c,v 1.19 1998/01/26 01:41:42 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/globals.c,v 1.20 1998/02/25 13:08:00 scrappy Exp $
  *
  * NOTES
  *	  Globals used all over the place should be declared here and not
@@ -110,7 +110,7 @@ char	   *SharedSystemRelationNames[] = {
 	DatabaseRelationName,
 	GroupRelationName,
 	LogRelationName,
-	UserRelationName,
+	ShadowRelationName,
 	VariableRelationName,
 	0
 };

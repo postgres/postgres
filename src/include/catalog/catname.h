@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: catname.h,v 1.8 1997/11/15 20:57:38 momjian Exp $
+ * $Id: catname.h,v 1.9 1998/02/25 13:09:21 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,9 +35,9 @@
 #define  ProcedureRelationName "pg_proc"
 #define  RelationRelationName "pg_class"
 #define  RewriteRelationName "pg_rewrite"
+#define  ShadowRelationName "pg_shadow"
 #define  StatisticRelationName "pg_statistic"
 #define  TypeRelationName "pg_type"
-#define  UserRelationName "pg_user"
 #define  VariableRelationName "pg_variable"
 #define  VersionRelationName "pg_version"
 #define  AttrDefaultRelationName "pg_attrdef"

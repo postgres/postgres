@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: acl.h,v 1.15 1998/02/24 03:31:50 scrappy Exp $
+ * $Id: acl.h,v 1.16 1998/02/25 13:09:49 scrappy Exp $
  *
  * NOTES
  *	  For backward-compatability purposes we have to allow there
@@ -39,7 +39,7 @@ typedef uint32 AclId;
 typedef uint8 AclIdType;
 
 #define ACL_IDTYPE_WORLD		0x00
-#define ACL_IDTYPE_UID			0x01	/* user id - from pg_user */
+#define ACL_IDTYPE_UID			0x01	/* user id - from pg_shadow */
 #define ACL_IDTYPE_GID			0x02	/* group id - from pg_group */
 
 /*

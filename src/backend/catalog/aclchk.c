@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/aclchk.c,v 1.6 1998/02/24 03:31:45 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/aclchk.c,v 1.7 1998/02/25 13:05:57 scrappy Exp $
  *
  * NOTES
  *	  See acl.h.
@@ -32,7 +32,7 @@
 #include "catalog/pg_aggregate.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_type.h"
-#include "catalog/pg_user.h"
+#include "catalog/pg_shadow.h"
 #include "parser/parse_agg.h"
 #include "parser/parse_func.h"
 #include "utils/syscache.h"
@@ -396,14 +396,14 @@ pg_aclcheck(char *relname, char *usename, AclMode mode)
 	if (!HeapTupleIsValid(htp))
 		elog(ERROR, "pg_aclcheck: user \"%s\" not found",
 			 usename);
-	id = (AclId) ((Form_pg_user) GETSTRUCT(htp))->usesysid;
+	id = (AclId) ((Form_pg_shadow) GETSTRUCT(htp))->usesysid;
 
 	/*
 	 * for the 'pg_database' relation, check the usecreatedb field before
 	 * checking normal permissions
 	 */
 	if (strcmp(DatabaseRelationName, relname) == 0 &&
-		(((Form_pg_user) GETSTRUCT(htp))->usecreatedb))
+		(((Form_pg_shadow) GETSTRUCT(htp))->usecreatedb))
 	{
 
 		/*
@@ -417,12 +417,12 @@ pg_aclcheck(char *relname, char *usename, AclMode mode)
 
 	/*
 	 * Deny anyone permission to update a system catalog unless
-	 * pg_user.usecatupd is set.  (This is to let superusers protect
+	 * pg_shadow.usecatupd is set.  (This is to let superusers protect
 	 * themselves from themselves.)
 	 */
 	if (((mode & ACL_WR) || (mode & ACL_AP)) &&
 		IsSystemRelationName(relname) &&
-		!((Form_pg_user) GETSTRUCT(htp))->usecatupd)
+		!((Form_pg_shadow) GETSTRUCT(htp))->usecatupd)
 	{
 		elog(DEBUG, "pg_aclcheck: catalog update to \"%s\": permission denied",
 			 relname);
@@ -432,7 +432,7 @@ pg_aclcheck(char *relname, char *usename, AclMode mode)
 	/*
 	 * Otherwise, superusers bypass all permission-checking.
 	 */
-	if (((Form_pg_user) GETSTRUCT(htp))->usesuper)
+	if (((Form_pg_shadow) GETSTRUCT(htp))->usesuper)
 	{
 #ifdef ACLDEBUG_TRACE
 		elog(DEBUG, "pg_aclcheck: \"%s\" is superuser",
@@ -531,12 +531,12 @@ pg_ownercheck(char *usename,
 	if (!HeapTupleIsValid(htp))
 		elog(ERROR, "pg_ownercheck: user \"%s\" not found",
 			 usename);
-	user_id = (AclId) ((Form_pg_user) GETSTRUCT(htp))->usesysid;
+	user_id = (AclId) ((Form_pg_shadow) GETSTRUCT(htp))->usesysid;
 
 	/*
 	 * Superusers bypass all permission-checking.
 	 */
-	if (((Form_pg_user) GETSTRUCT(htp))->usesuper)
+	if (((Form_pg_shadow) GETSTRUCT(htp))->usesuper)
 	{
 #ifdef ACLDEBUG_TRACE
 		elog(DEBUG, "pg_ownercheck: user \"%s\" is superuser",
@@ -597,12 +597,12 @@ pg_func_ownercheck(char *usename,
 	if (!HeapTupleIsValid(htp))
 		elog(ERROR, "pg_func_ownercheck: user \"%s\" not found",
 			 usename);
-	user_id = (AclId) ((Form_pg_user) GETSTRUCT(htp))->usesysid;
+	user_id = (AclId) ((Form_pg_shadow) GETSTRUCT(htp))->usesysid;
 
 	/*
 	 * Superusers bypass all permission-checking.
 	 */
-	if (((Form_pg_user) GETSTRUCT(htp))->usesuper)
+	if (((Form_pg_shadow) GETSTRUCT(htp))->usesuper)
 	{
 #ifdef ACLDEBUG_TRACE
 		elog(DEBUG, "pg_ownercheck: user \"%s\" is superuser",
@@ -638,12 +638,12 @@ pg_aggr_ownercheck(char *usename,
 	if (!HeapTupleIsValid(htp))
 		elog(ERROR, "pg_aggr_ownercheck: user \"%s\" not found",
 			 usename);
-	user_id = (AclId) ((Form_pg_user) GETSTRUCT(htp))->usesysid;
+	user_id = (AclId) ((Form_pg_shadow) GETSTRUCT(htp))->usesysid;
 
 	/*
 	 * Superusers bypass all permission-checking.
 	 */
-	if (((Form_pg_user) GETSTRUCT(htp))->usesuper)
+	if (((Form_pg_shadow) GETSTRUCT(htp))->usesuper)
 	{
 #ifdef ACLDEBUG_TRACE
 		elog(DEBUG, "pg_aggr_ownercheck: user \"%s\" is superuser",

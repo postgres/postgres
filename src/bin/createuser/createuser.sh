@@ -8,7 +8,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/createuser/Attic/createuser.sh,v 1.8 1997/05/07 02:59:46 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/bin/createuser/Attic/createuser.sh,v 1.9 1998/02/25 13:08:37 scrappy Exp $
 #
 # Note - this should NOT be setuid.
 #
@@ -203,7 +203,7 @@ else
     CANADDUSER=f
 fi
 
-QUERY="insert into pg_user \
+QUERY="insert into pg_shadow \
         (usename, usesysid, usecreatedb, usetrace, usesuper, usecatupd) \
        values \
          ('$NEWUSER', $SYSID, '$CANCREATE', 't', '$CANADDUSER','t')"

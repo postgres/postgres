@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_class.h,v 1.18 1998/01/16 23:20:52 momjian Exp $
+ * $Id: pg_class.h,v 1.19 1998/02/25 13:09:25 scrappy Exp $
  *
  * NOTES
  *	  ``pg_relation'' is being replaced by ``pg_class''.  currently
@@ -125,7 +125,7 @@ DATA(insert OID = 1255 (  pg_proc 81		  PGUID 0 0 0 f f r 16 0 0 f _null_ ));
 DESCR("");
 DATA(insert OID = 1259 (  pg_class 83		  PGUID 0 0 0 f f r 14 0 0 f _null_ ));
 DESCR("");
-DATA(insert OID = 1260 (  pg_user 86		  PGUID 0 0 0 f t r 8  0 0 f _null_ ));
+DATA(insert OID = 1260 (  pg_shadow 86		  PGUID 0 0 0 f t r 8  0 0 f _null_ ));
 DESCR("");
 DATA(insert OID = 1261 (  pg_group 87		  PGUID 0 0 0 f t s 3  0 0 f _null_ ));
 DESCR("");
@@ -146,7 +146,7 @@ DESCR("");
 #define RelOid_pg_attribute		1249
 #define RelOid_pg_proc			1255
 #define RelOid_pg_class			1259
-#define RelOid_pg_user			1260
+#define RelOid_pg_shadow		1260
 #define RelOid_pg_group			1261
 #define RelOid_pg_database		1262
 #define RelOid_pg_variable		1264

@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.12 1998/02/21 06:31:57 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.13 1998/02/25 13:07:18 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,7 +32,7 @@
 
 #include "utils/syscache.h"
 #include "utils/acl.h"
-#include "catalog/pg_user.h"
+#include "catalog/pg_shadow.h"
 
 static void ApplyRetrieveRule(Query *parsetree, RewriteRule *rule,
 				  int rt_index, int relation_level,
@@ -827,7 +827,7 @@ CheckViewPerms(Relation view, List *rtable)
 						view->rd_rel->relowner);
 	}
 	StrNCpy(uname.data,
-			((Form_pg_user) GETSTRUCT(utup))->usename.data,
+			((Form_pg_shadow) GETSTRUCT(utup))->usename.data,
 			NAMEDATALEN);
 
 	/*

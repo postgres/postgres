@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.42 1998/02/13 19:45:38 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.43 1998/02/25 13:06:08 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,7 +32,7 @@
 #include <access/genam.h>
 #include <catalog/pg_type.h>
 #include <catalog/catname.h>
-#include <catalog/pg_user.h>
+#include <catalog/pg_shadow.h>
 #include <commands/copy.h>
 #include "commands/trigger.h"
 #include <storage/fd.h>

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/auth.c,v 1.25 1998/01/31 20:12:06 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/auth.c,v 1.26 1998/02/25 13:06:49 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -605,7 +605,7 @@ static void readPasswordPacket(char *arg, PacketLen len, char *pkt)
 
 /*
  * Use the local flat password file if clear passwords are used and the file is
- * specified.  Otherwise use the password in the pg_user table, encrypted or
+ * specified.  Otherwise use the password in the pg_shadow table, encrypted or
  * not.
  */
 

@@ -11,7 +11,7 @@
 
 #include "access/heapam.h"
 #include "catalog/catname.h"
-#include "catalog/pg_user.h"
+#include "catalog/pg_shadow.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_language.h"
 #include "utils/syscache.h"

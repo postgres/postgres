@@ -1,7 +1,7 @@
 /*-------------------------------------------------------------------------
  *
  * crypt.c--
- *        Look into pg_user and check the encrypted password with the one
+ *        Look into pg_shadow and check the encrypted password with the one
  *        passed in from the frontend.
  *
  * Modification History
@@ -119,7 +119,7 @@ void crypt_loadpwdfile() {
 
   /* We want to delete the flag file before reading the contents of the pg_pwd
    * file.  If result == 0 then the unlink of the reload file was successful.
-   * This means that a backend performed a COPY of the pg_user file to
+   * This means that a backend performed a COPY of the pg_shadow file to
    * pg_pwd.  Therefore we must now do a reload.
    */
   if (!pwd_cache || !result) {

@@ -26,7 +26,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.36 1998/02/23 20:32:40 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.37 1998/02/25 13:09:02 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -351,21 +351,32 @@ echo "vacuuming template1"
 echo "vacuum" | postgres -F -Q -D$PGDATA template1 2>&1 > /dev/null |\
 	grep -v "^DEBUG:"
 
-echo "COPY pg_user TO '$PGDATA/pg_pwd' USING DELIMITERS '\\t'" |\
+echo "COPY pg_shadow TO '$PGDATA/pg_pwd' USING DELIMITERS '\\t'" |\
 	postgres -F -Q -D$PGDATA template1 2>&1 > /dev/null |\
 	grep -v "'DEBUG:"
 
-echo "GRANT SELECT ON pg_class TO PUBLIC" |\
-	 postgres -F -Q -D$PGDATA template1 2>&1 > /dev/null |\
-
-echo "CREATE RULE pg_user_hide_pw as on SELECT to pg_user.passwd DO INSTEAD SELECT '********' as passwd;" | \
+echo "creating public pg_user view"
+echo "CREATE TABLE xpg_user (		\
+	    usename	name,		\
+	    usesysid	int4,		\
+	    usecreatedb	bool,		\
+	    usetrace	bool,		\
+	    usesuper	bool,		\
+	    usecatupd	bool,		\
+	    passwd		text,		\
+	    valuntil	abstime);" |\
 	postgres -F -Q -D$PGDATA template1 2>&1 > /dev/null |\
 	grep -v "'DEBUG:"
-
-echo "create view db_user as select * from pg_user;" |\
+echo "UPDATE pg_class SET relname = 'pg_user' WHERE relname = 'xpg_user';" |\
 	postgres -F -Q -D$PGDATA template1 2>&1 > /dev/null |\
 	grep -v "'DEBUG:"
-echo "grant select on db_user to public" |\
+echo "CREATE RULE _RETpg_user AS ON SELECT TO pg_user DO INSTEAD	\
+	    SELECT usename, usesysid, usecreatedb, usetrace,		\
+	           usesuper, usecatupd, '********'::text as passwd,	\
+		   valuntil FROM pg_shadow;" |\
+	postgres -F -Q -D$PGDATA template1 2>&1 > /dev/null |\
+	grep -v "'DEBUG:"
+echo "REVOKE ALL on pg_shadow FROM public" |\
 	postgres -F -Q -D$PGDATA template1 2>&1 > /dev/null |\
 	grep -v "'DEBUG:"
 

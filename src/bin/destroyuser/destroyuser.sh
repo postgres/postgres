@@ -8,7 +8,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/destroyuser/Attic/destroyuser.sh,v 1.7 1997/05/07 02:59:52 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/bin/destroyuser/Attic/destroyuser.sh,v 1.8 1998/02/25 13:08:55 scrappy Exp $
 #
 # Note - this should NOT be setuid.
 #
@@ -182,7 +182,7 @@ then
     done
 fi
 
-QUERY="delete from pg_user where usename = '$DELUSER'"
+QUERY="delete from pg_shadow where usename = '$DELUSER'"
 
 $PSQL -c "$QUERY" template1
 if [ $? -ne 0 ]

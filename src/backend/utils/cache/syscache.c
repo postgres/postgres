@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/syscache.c,v 1.14 1998/02/11 19:12:49 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/syscache.c,v 1.15 1998/02/25 13:07:50 scrappy Exp $
  *
  * NOTES
  *	  These routines allow the parser/planner/executor to perform
@@ -48,7 +48,7 @@
 #include "catalog/pg_type.h"
 #include "catalog/pg_rewrite.h"
 #include "catalog/pg_aggregate.h"
-#include "catalog/pg_user.h"
+#include "catalog/pg_shadow.h"
 #include "storage/large_object.h"
 #include "catalog/pg_listener.h"
 
@@ -254,22 +254,22 @@ static struct cachedesc cacheinfo[] = {
 		sizeof(FormData_pg_listener),
 		NULL,
 	(ScanFunc) NULL},
-	{UserRelationName,			/* USENAME */
+	{ShadowRelationName,			/* USENAME */
 		1,
-		{Anum_pg_user_usename,
+		{Anum_pg_shadow_usename,
 			0,
 			0,
 		0},
-		sizeof(FormData_pg_user),
+		sizeof(FormData_pg_shadow),
 		NULL,
 	(ScanFunc) NULL},
-	{UserRelationName,			/* USESYSID */
+	{ShadowRelationName,			/* USESYSID */
 		1,
-		{Anum_pg_user_usesysid,
+		{Anum_pg_shadow_usesysid,
 			0,
 			0,
 		0},
-		sizeof(FormData_pg_user),
+		sizeof(FormData_pg_shadow),
 		NULL,
 	(ScanFunc) NULL},
 	{GroupRelationName,			/* GRONAME */
