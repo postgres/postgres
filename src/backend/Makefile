@@ -34,7 +34,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/Makefile,v 1.37 1999/02/23 07:24:02 thomas Exp $
+#    $Header: /cvsroot/pgsql/src/backend/Makefile,v 1.38 1999/03/07 23:05:56 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -143,8 +143,10 @@ endif
 # Installation.
 #
 # Install the backend program (postgres) to the binary directory and 
-# make a link as "postmaster".  Install the bki files templates and sample 
-# files to the library directory.
+# make a link as "postmaster".  Install the bki files, templates, and sample
+# files to the library directory.  Install exported headers to the include
+# directory (these headers are the minimal ones needed to build loadable
+# backend extensions).
 #
 # (History:  Before Release 2, make install generated a bki.source file
 # and then used build parameters to convert it to a bki file, then installed
@@ -154,23 +156,29 @@ endif
 # and (2) the parameters of a database system should be set at initdb time,
 # not at postgres build time.
 
-install: $(LIBDIR) $(BINDIR) $(HEADERDIR) postgres $(POSTGRES_IMP) fmgr.h \
-         global1.bki.source local1_template1.bki.source \
-         global1.description local1_template1.description \
-         libpq/pg_hba.conf.sample optimizer/geqo/pg_geqo.sample
+.PHONY: install install-bin install-lib install-headers
+
+install: $(LIBDIR) $(BINDIR) $(HEADERDIR) postgres $(POSTGRES_IMP) \
+         install-bin install-lib install-headers
+
+install-bin: $(BINDIR) postgres$(X) $(POSTGRES_IMP)
 	$(INSTALL) $(INSTL_EXE_OPTS) postgres$(X) $(BINDIR)/postgres$(X)
+	@rm -f $(BINDIR)/postmaster
+	ln -s postgres$(X) $(BINDIR)/postmaster
 ifeq ($(MAKE_EXPORTS), true)
 	$(INSTALL) $(INSTLOPTS) $(POSTGRES_IMP) $(LIBDIR)/$(POSTGRES_IMP)
 endif
-	@rm -f $(BINDIR)/postmaster
-	ln -s postgres$(X) $(BINDIR)/postmaster
 ifeq ($(PORTNAME), win)
 ifeq ($(MAKE_DLL), true)
 #	$(INSTALL) $(INSTLOPTS) postgres.dll $(BINDIR)/postgres.dll
 	$(INSTALL) $(INSTLOPTS) libpostgres.a $(LIBDIR)/libpostgres.a
 endif
 endif
-	$(INSTALL) $(INSTLOPTS) fmgr.h $(HEADERDIR)/fmgr.h
+
+install-lib: $(LIBDIR) \
+         global1.bki.source local1_template1.bki.source \
+         global1.description local1_template1.description \
+         libpq/pg_hba.conf.sample optimizer/geqo/pg_geqo.sample
 	$(INSTALL) $(INSTLOPTS) global1.bki.source \
 	  $(LIBDIR)/global1.bki.source
 	$(INSTALL) $(INSTLOPTS) global1.description \
@@ -184,8 +192,62 @@ endif
 	$(INSTALL) $(INSTLOPTS) optimizer/geqo/pg_geqo.sample \
 	  $(LIBDIR)/pg_geqo.sample
 
-#$(BINDIR) $(LIBDIR) $(HEADERDIR):
-#	mkdir $@
+install-headers: fmgr.h $(SRCDIR)/include/config.h
+	@if [ ! -d $(HEADERDIR) ]; then mkdir $(HEADERDIR); fi
+	@if [ ! -d $(HEADERDIR)/port ]; then mkdir $(HEADERDIR)/port; fi
+	@if [ ! -d $(HEADERDIR)/port/$(PORTNAME) ]; \
+		then mkdir $(HEADERDIR)/port/$(PORTNAME); fi
+	@if [ ! -d $(HEADERDIR)/lib ]; \
+		then mkdir $(HEADERDIR)/lib; fi
+	@if [ ! -d $(HEADERDIR)/libpq ]; \
+		then mkdir $(HEADERDIR)/libpq; fi
+	@if [ ! -d $(HEADERDIR)/utils ]; \
+		then mkdir $(HEADERDIR)/utils; fi
+	@if [ ! -d $(HEADERDIR)/access ]; \
+		then mkdir $(HEADERDIR)/access; fi
+	@if [ ! -d $(HEADERDIR)/executor ]; \
+		then mkdir $(HEADERDIR)/executor; fi
+	@if [ ! -d $(HEADERDIR)/commands ]; \
+		then mkdir $(HEADERDIR)/commands; fi
+	$(INSTALL) $(INSTLOPTS) fmgr.h \
+          $(HEADERDIR)/fmgr.h
+	$(INSTALL) $(INSTLOPTS) $(SRCDIR)/include/os.h \
+          $(HEADERDIR)/os.h
+	$(INSTALL) $(INSTLOPTS) $(SRCDIR)/include/config.h \
+          $(HEADERDIR)/config.h
+	$(INSTALL) $(INSTLOPTS) $(SRCDIR)/include/c.h \
+          $(HEADERDIR)/c.h
+	$(INSTALL) $(INSTLOPTS) $(SRCDIR)/include/postgres.h \
+          $(HEADERDIR)/postgres.h
+	$(INSTALL) $(INSTLOPTS) $(SRCDIR)/include/postgres_ext.h \
+          $(HEADERDIR)/postgres_ext.h
+	$(INSTALL) $(INSTLOPTS) $(SRCDIR)/include/libpq/pqcomm.h \
+          $(HEADERDIR)/libpq/pqcomm.h
+	$(INSTALL) $(INSTLOPTS) $(SRCDIR)/include/libpq/libpq-fs.h \
+          $(HEADERDIR)/libpq/libpq-fs.h
+	$(INSTALL) $(INSTLOPTS) $(SRCDIR)/include/lib/dllist.h \
+          $(HEADERDIR)/lib/dllist.h
+	$(INSTALL) $(INSTLOPTS) $(SRCDIR)/include/utils/geo_decls.h \
+          $(HEADERDIR)/utils/geo_decls.h
+	$(INSTALL) $(INSTLOPTS) $(SRCDIR)/include/utils/elog.h \
+          $(HEADERDIR)/utils/elog.h
+	$(INSTALL) $(INSTLOPTS) $(SRCDIR)/include/utils/palloc.h \
+          $(HEADERDIR)/utils/palloc.h
+	$(INSTALL) $(INSTLOPTS) $(SRCDIR)/include/utils/mcxt.h \
+          $(HEADERDIR)/utils/mcxt.h
+	$(INSTALL) $(INSTLOPTS) $(SRCDIR)/include/access/attnum.h \
+          $(HEADERDIR)/access/attnum.h
+	$(INSTALL) $(INSTLOPTS) $(SRCDIR)/include/executor/spi.h \
+          $(HEADERDIR)/executor/spi.h
+	$(INSTALL) $(INSTLOPTS) $(SRCDIR)/include/commands/trigger.h \
+          $(HEADERDIR)/commands/trigger.h
+ifeq ($(PORTNAME), hpux)
+# is this still necessary?
+	$(INSTALL) $(INSTLOPTS) $(SRCDIR)/backend/port/hpux/fixade.h \
+          $(HEADERDIR)/port/hpux/fixade.h
+endif
+
+
 $(BINDIR):
 	mkdir $@
 $(LIBDIR):
