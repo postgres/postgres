@@ -49,7 +49,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/costsize.c,v 1.115 2003/10/05 22:44:25 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/costsize.c,v 1.115.2.1 2003/12/03 17:45:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1321,6 +1321,10 @@ estimate_hash_bucketsize(Query *root, Var *var, int nbuckets)
 				avgfreq;
 	float4	   *numbers;
 	int			nnumbers;
+
+	/* Ignore any binary-compatible relabeling */
+	if (var && IsA(var, RelabelType))
+		var = (Var *) ((RelabelType *) var)->arg;
 
 	/*
 	 * Lookup info about var's relation and attribute; if none available,

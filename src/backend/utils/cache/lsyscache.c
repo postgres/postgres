@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/lsyscache.c,v 1.108 2003/10/04 18:22:59 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/lsyscache.c,v 1.108.2.1 2003/12/03 17:45:37 tgl Exp $
  *
  * NOTES
  *	  Eventually, the index information should go through here, too.
@@ -462,6 +462,29 @@ get_opname(Oid opno)
 	}
 	else
 		return NULL;
+}
+
+/*
+ * op_input_types
+ *
+ *		Returns the left and right input datatypes for an operator
+ *		(InvalidOid if not relevant).
+ */
+void
+op_input_types(Oid opno, Oid *lefttype, Oid *righttype)
+{
+	HeapTuple	tp;
+	Form_pg_operator optup;
+
+	tp = SearchSysCache(OPEROID,
+						ObjectIdGetDatum(opno),
+						0, 0, 0);
+	if (!HeapTupleIsValid(tp))	/* shouldn't happen */
+		elog(ERROR, "cache lookup failed for operator %u", opno);
+	optup = (Form_pg_operator) GETSTRUCT(tp);
+	*lefttype = optup->oprleft;
+	*righttype = optup->oprright;
+	ReleaseSysCache(tp);
 }
 
 /*
