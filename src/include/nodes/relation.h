@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/relation.h,v 1.99 2004/08/29 05:06:57 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/relation.h,v 1.100 2004/11/26 21:08:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,6 +17,7 @@
 #include "access/sdir.h"
 #include "nodes/bitmapset.h"
 #include "nodes/parsenodes.h"
+#include "storage/block.h"
 
 
 /*
@@ -201,7 +202,7 @@ typedef struct RelOptInfo
 	Relids	   *attr_needed;	/* array indexed [min_attr .. max_attr] */
 	int32	   *attr_widths;	/* array indexed [min_attr .. max_attr] */
 	List	   *indexlist;
-	long		pages;
+	BlockNumber	pages;
 	double		tuples;
 	struct Plan *subplan;		/* if subquery */
 
