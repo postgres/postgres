@@ -10,6 +10,5 @@
 #
 #-------------------------------------------------------------------------
 
-CFLAGS+=-DUSE_POSIX_TIME -DNEED_CBRT
 LDADD+= -ldld -lipc
 SUBSRCS= dynloader.c

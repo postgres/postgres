@@ -46,9 +46,5 @@ struct sembuf
 #define GETNCNT 5
 #define GETVAL 6
 
-/* for float.c */
-#define NEED_CBRT
-#define NEED_ISINF
-
 #define POSTGRESDIR "d:\\pglite"
 #define PGDATADIR "d:\\pglite\\data"

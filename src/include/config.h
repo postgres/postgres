@@ -8,8 +8,28 @@
 
 #define BLCKSZ	8192
 
+#if defined(sequent) || \
+    defined(PORTNAME_aix) || \
+    defined(PORTNAME_alpha) || \
+    defined(PORTNAME_bsdi) || \
+    defined(PORTNAME_hpux) || \
+    defined(PORTNAME_dgux) || \
+    defined(PORTNAME_i386_solaris) || \
+    defined(PORTNAME_sparc_solaris) || \
+    defined(PORTNAME_ultrix4) || \
+    defined(PORTNAME_svr4)
+#define NEED_UNION_SEMUN 
+#endif
+
+#if defined(linux)
+#  define NEED_CBRT
+#endif
+
 #if defined(hpux)
+#  define USE_POSIX_TIME
 #  define HAVE_TZSET
+#  define NEED_CBRT
+#  define NEED_RINT
 #endif
 
 #if defined(i386_solaris) 
@@ -31,13 +51,16 @@
 #  define NOFILE	100
 #  define NEED_UNION_SEMUN
 #  define HAVE_TZSET
+#  define NEED_CBRT
+#  define NEED_ISINF
 #endif /* WIN32 */
 
-#if defined(__FreeBSD__) || \
-    defined(__NetBSD__) || \
-    defined(bsdi)
+#if defined(BSD44_derived) || \
+    defined(bsdi) || \
+    defined(bsdi_2_1)
 #  define USE_LIMITS_H
 #  define USE_POSIX_TIME
+#  define NEED_CBRT
 #endif
 
 #if defined(aix)
@@ -94,18 +117,6 @@
  * long locks.  For some reason union semun is never defined in the
  * System V header files so we must do it ourselves.
  */
-#if defined(sequent) || \
-    defined(PORTNAME_aix) || \
-    defined(PORTNAME_alpha) || \
-    defined(PORTNAME_bsdi) || \
-    defined(PORTNAME_hpux) || \
-    defined(PORTNAME_dgux) || \
-    defined(PORTNAME_i386_solaris) || \
-    defined(PORTNAME_sparc_solaris) || \
-    defined(PORTNAME_ultrix4) || \
-    defined(PORTNAME_svr4)
-#define NEED_UNION_SEMUN 
-#endif
 
 /*  Debug and various "defines" that should be documented */
 

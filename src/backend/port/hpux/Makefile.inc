@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/port/hpux/Attic/Makefile.inc,v 1.1.1.1 1996/07/09 06:21:43 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/backend/port/hpux/Attic/Makefile.inc,v 1.2 1996/10/18 00:33:22 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -28,15 +28,6 @@ ifeq ($(CC), gcc)
 LDADD+= -ll /usr/lib/libdld.sl
 endif
 endif
-
-CFLAGS+= -DUSE_POSIX_TIME
-
-#
-# cbrt(3m) and rint(3m) are missing from 8.07.
-# cbrt(3m) and rint(3m) are broken in 9.01.
-# cbrt(3m) seems to be missing on 9.00 even though it is documented.
-#
-CFLAGS+= -DNEED_RINT -DNEED_CBRT
 
 #
 # The #pragma trick required on 8.07 no longer works -- the #pragma
