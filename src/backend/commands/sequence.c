@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/sequence.c,v 1.58 2001/06/06 22:03:48 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/sequence.c,v 1.59 2001/06/13 21:07:12 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -569,7 +569,7 @@ get_seq_name(text *seqin)
 #ifdef MULTIBYTE
 		int len;
 
-		len = pg_mbcliplen(seqname, i, NAMEDATALEN-1);
+		len = pg_mbcliplen(seqname, rawlen, NAMEDATALEN-1);
 		seqname[len] = '\0';
 #else
 		seqname[NAMEDATALEN-1] = '\0';
