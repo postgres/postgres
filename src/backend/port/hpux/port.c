@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/port/hpux/Attic/port.c,v 1.1.1.1 1996/07/09 06:21:43 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/port/hpux/Attic/port.c,v 1.2 1997/07/27 18:52:05 momjian Exp $
  *
  * NOTES
  *    For the most part, this file gets around some non-POSIX calls 
@@ -36,7 +36,7 @@ random()
 	return(lrand48());
 }
 
-void srandom(int seed)
+void srandom(unsigned seed)
 {
 	srand48((long int) seed);
 }

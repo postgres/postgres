@@ -1,21 +1,25 @@
 
+#HPUX_VERS:= $(shell uname -r)
+#HPUX_MAJOR= ${HPUX_VERS:R:E}
+#HPUX_MINOR= ${HPUX_VERS:E}
 #ifdef ENFORCE_ALIGNMENT
-#   CFLAGS_BE= -DNOFIXADE
+#   CFLAGS+= -DNOFIXADE
 #else
-#   HPUX_VERS:= $(shell uname -r)
-#   HPUX_MAJOR= ${HPUX_VERS:R:E}
-#   HPUX_MINOR= ${HPUX_VERS:E}
 #   ifeq ($(HPUX_MAJOR), 08)
-#      CFLAGS_BE+= +u -DHP_S500_ALIGN
-#      LDFLAGS_BE+= +u
+#      CFLAGS+= +u -DHP_S500_ALIGN
+#      LDFLAGS+= +u
 #   else
 #   ifeq ($(HPUX_MAJOR), 09)
 #      ifeq ($(CC), cc)
-#         CFLAGS_BE+= +u4 
-#         LDFLAGS_BE+= +u4
+#         CFLAGS+= +u4 
+#         LDFLAGS+= +u4
 #      endif
 #   endif
 #   endif
+#endif
+# HP-UX 10 has a select() in libcurses, so we need to get the libc version first
+#ifeq ($(HPUX_MAJOR), 10)
+#   LDFLAGS:= -lc $(LDFLAGS)
 #endif
 
 %.sl: %.o
