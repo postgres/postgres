@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/preptlist.c,v 1.21 1999/05/25 16:09:46 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/preptlist.c,v 1.22 1999/05/29 01:48:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,6 +23,7 @@
 #include "nodes/makefuncs.h"
 
 #include "utils/builtins.h"
+#include "utils/syscache.h"
 #include "utils/lsyscache.h"
 #include "utils/palloc.h"
 #include "parser/parse_type.h"
@@ -286,80 +287,95 @@ replace_matching_resname(List *new_tlist, List *old_tlist)
 static List *
 new_relation_targetlist(Oid relid, Index rt_index, NodeTag node_type)
 {
-	AttrNumber	attno;
 	List	   *t_list = NIL;
-	char	   *attname;
-	int			typlen;
-	Oid			atttype = 0;
-	bool		attisset = false;
+	int			natts = get_relnatts(relid);
+	AttrNumber	attno;
 
-	for (attno = 1; attno <= get_relnatts(relid); attno++)
+	for (attno = 1; attno <= natts; attno++)
 	{
-		attname = get_attname(relid, attno);
-		atttype = get_atttype(relid, attno);
+		HeapTuple	tp;
+		Form_pg_attribute att_tup;
+		char	   *attname;
+		Oid			atttype;
+		int32		atttypmod;
+		bool		attisset;
 
-		/*
-		 * Since this is an append or replace, the size of any set
-		 * attribute is the size of the OID used to represent it.
-		 */
-		attisset = get_attisset(relid, attname);
-		if (attisset)
-			typlen = typeLen(typeidType(OIDOID));
-		else
-			typlen = get_typlen(atttype);
+		tp = SearchSysCacheTuple(ATTNUM,
+								 ObjectIdGetDatum(relid),
+								 UInt16GetDatum(attno),
+								 0, 0);
+		if (! HeapTupleIsValid(tp))
+		{
+			elog(ERROR, "new_relation_targetlist: no attribute tuple %u %d",
+				 relid, attno);
+		}
+		att_tup = (Form_pg_attribute) GETSTRUCT(tp);
+		attname = pstrdup(att_tup->attname.data);
+		atttype = att_tup->atttypid;
+		atttypmod = att_tup->atttypmod;
+		attisset = att_tup->attisset;
 
 		switch (node_type)
 		{
-			case T_Const:
+			case T_Const:		/* INSERT command */
 				{
 					struct varlena *typedefault = get_typdefault(atttype);
-					int			temp = 0;
-					Const	   *temp2 = (Const *) NULL;
-					TargetEntry *temp3 = (TargetEntry *) NULL;
+					int			typlen;
+					Const	   *temp_const;
+					TargetEntry *temp_tle;
 
 					if (typedefault == NULL)
-						temp = 0;
+						typlen = 0;
 					else
-						temp = typlen;
+					{
+						/*
+						 * Since this is an append or replace, the size of
+						 * any set attribute is the size of the OID used to
+						 * represent it.
+						 */
+						if (attisset)
+							typlen = get_typlen(OIDOID);
+						else
+							typlen = get_typlen(atttype);
+					}
 
-					temp2 = makeConst(atttype,
-									  temp,
-									  (Datum) typedefault,
-								(typedefault == (struct varlena *) NULL),
-					/* XXX ? */
-									  false,
-									  false,	/* not a set */
-									  false);
+					temp_const = makeConst(atttype,
+										   typlen,
+										   (Datum) typedefault,
+										   (typedefault == NULL),
+										   /* XXX ? */
+										   false,
+										   false, /* not a set */
+										   false);
 
-					temp3 = makeTargetEntry(makeResdom(attno,
-													   atttype,
-													   -1,
-													   attname,
-													   0,
-													   (Oid) 0,
-													   false),
-											(Node *) temp2);
-					t_list = lappend(t_list, temp3);
+					temp_tle = makeTargetEntry(makeResdom(attno,
+														  atttype,
+														  -1,
+														  attname,
+														  0,
+														  (Oid) 0,
+														  false),
+											   (Node *) temp_const);
+					t_list = lappend(t_list, temp_tle);
 					break;
 				}
-			case T_Var:
+			case T_Var:			/* UPDATE command */
 				{
-					Var		   *temp_var = (Var *) NULL;
-					TargetEntry *temp_list = NULL;
+					Var		   *temp_var;
+					TargetEntry *temp_tle;
 
-					temp_var = makeVar(rt_index, attno, atttype,
-									   get_atttypmod(relid, attno),
+					temp_var = makeVar(rt_index, attno, atttype, atttypmod,
 									   0, rt_index, attno);
 
-					temp_list = makeTargetEntry(makeResdom(attno,
-														   atttype,
-											 get_atttypmod(relid, attno),
-														   attname,
-														   0,
-														   (Oid) 0,
-														   false),
-												(Node *) temp_var);
-					t_list = lappend(t_list, temp_list);
+					temp_tle = makeTargetEntry(makeResdom(attno,
+														  atttype,
+														  atttypmod,
+														  attname,
+														  0,
+														  (Oid) 0,
+														  false),
+											   (Node *) temp_var);
+					t_list = lappend(t_list, temp_tle);
 					break;
 				}
 			default:			/* do nothing */
