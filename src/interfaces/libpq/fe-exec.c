@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.140 2003/06/23 19:20:24 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.141 2003/06/28 00:06:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1083,13 +1083,48 @@ PQexecStart(PGconn *conn)
 	 */
 	while ((result = PQgetResult(conn)) != NULL)
 	{
-		if (result->resultStatus == PGRES_COPY_IN ||
-			result->resultStatus == PGRES_COPY_OUT)
+		if (result->resultStatus == PGRES_COPY_IN)
 		{
-			PQclear(result);
-			printfPQExpBuffer(&conn->errorMessage,
-				 libpq_gettext("COPY state must be terminated first\n"));
-			return false;
+			if (PG_PROTOCOL_MAJOR(conn->pversion) >= 3)
+			{
+				/* In protocol 3, we can get out of a COPY IN state */
+				if (PQputCopyEnd(conn,
+					libpq_gettext("COPY terminated by new PQexec")) < 0)
+				{
+					PQclear(result);
+					return false;
+				}
+				/* keep waiting to swallow the copy's failure message */
+			}
+			else
+			{
+				/* In older protocols we have to punt */
+				PQclear(result);
+				printfPQExpBuffer(&conn->errorMessage,
+					libpq_gettext("COPY IN state must be terminated first\n"));
+				return false;
+			}
+		}
+		else if (result->resultStatus == PGRES_COPY_OUT)
+		{
+			if (PG_PROTOCOL_MAJOR(conn->pversion) >= 3)
+			{
+				/*
+				 * In protocol 3, we can get out of a COPY OUT state: we
+				 * just switch back to BUSY and allow the remaining COPY
+				 * data to be dropped on the floor.
+				 */
+				conn->asyncStatus = PGASYNC_BUSY;
+				/* keep waiting to swallow the copy's completion message */
+			}
+			else
+			{
+				/* In older protocols we have to punt */
+				PQclear(result);
+				printfPQExpBuffer(&conn->errorMessage,
+					libpq_gettext("COPY OUT state must be terminated first\n"));
+				return false;
+			}
 		}
 		PQclear(result);
 	}
