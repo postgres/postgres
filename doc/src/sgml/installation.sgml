@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.12 2000/07/21 00:44:12 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.13 2000/07/22 14:48:01 petere Exp $ -->
 
 <chapter id="installation">
  <title><![%flattext-install-include[<productname>PostgreSQL</> ]]>Installation Instructions</title>
@@ -204,7 +204,7 @@ su - postgres
 
   <para>
    You can also install the new version in parallel with the old one
-   to decrease the downtime. These topic are discussed at length in
+   to decrease the downtime. These topics are discussed at length in
    <![%flattext-install-include[the <citetitle>Administrator's Guide</>,]]>
    <![%flattext-install-ignore[<xref linkend="migration">,]]>
    which you are encouraged
@@ -222,10 +222,10 @@ su - postgres
   <step id="configure">
    <title>Configuration</>
    <para>
-    The first step of the installation procedure to configure the
+    The first step of the installation procedure is to configure the
     source tree for your system and choose the options you would like.
     This is done by running the <filename>configure</> script. For a
-    default installation, simply type
+    default installation simply type
 <screen>
 <userinput>./configure</userinput>
 </screen>
@@ -907,7 +907,7 @@ nohup /usr/local/pgsql/bin/postmaster -D /usr/local/pgsql/data \
     <para>
      To stop a server running in the background you can type
 <programlisting>
-kill `cat /usr/local/psgql/data/postmaster.pid`
+kill `cat /usr/local/pgsql/data/postmaster.pid`
 </programlisting>
     </para>
 
