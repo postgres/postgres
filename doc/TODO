@@ -8,8 +8,6 @@ current maintainer:	Bruce Momjian (maillist@candle.pha.pa.us)
 The most recent version of this document can be viewed at
 the postgreSQL WWW site, http://www.postgreSQL.org.
 
-Dashed items(-) are being worked on for the 6.1 release.
-
 THE CHANGES FOR 6.1 APPEAR AT THE END OF THIS DOCUMENT
 
 Developers who have claimed items are:
@@ -44,7 +42,6 @@ Fix all NULL features
 	allow psql to print nulls meaningfully
 Fix compile and security of Kerberos/GSSAPI code (Daniel Kalchev?)
 Dropping a table twice causes corruption, drop/create not rollback-able
--SUM aggregate on no rows or null value should return NULL, not zero(Thomas)
 SELECT on two tables where zero or one table in WHERE and target
  	clause returns no rows
 COUNT on VIEW always returns zero (maybe because there is no oid for views?)
@@ -53,9 +50,9 @@ SELECT a[1] FROM test fails, it needs test.a[1]
 INSERT INTO ... SELECT DISTINCT ... generates error on DISTINCT
 pg_database.datdba is oid, should be int4
 can lo_export()/lo_import() read/write anywhere, causing a security problem?
--SELECT ... INTO TABLE ... with varchar()/char() types have zero-length fields
 Fix UPDATE key_table SET keyval=max(reftab.NUM)+1 WHERE tblname='reftab'
 SELECT COUNT(*) FROM TAB1, TAB2 fails
+Tables that start with xinv confused to be large objects
 
 ENHANCEMENTS
 ------------
@@ -82,7 +79,6 @@ Fix the rules system(Jan?,Soo-Ho)
 	making INSTEAD rules work
 	add CONSTRAINT
 Full set of text operations and functions
--	upper/lower()
 	word searches, concat,max() on text, char
 Replace table-level locking with row or page-level locking(Vadim)
 Large objects
@@ -91,10 +87,6 @@ Large objects
 	Fix large object mapping scheme
 	not to stuff everything as files in a single directory
 Better interface for adding to pg_group
--Make multi-field indexes easier to create(Vadim)
-	allow optimizer to effectively use parameters without accessing table
--Add int8 type(Thomas)
--Add MONEY/DECIMAL type(Thomas)
 Make MONEY/DECIMAL have a defined precision
 Add support for tables >2G, or test current version
 Incorporate the PERL PG95 interface library into source tree(Edmund)
@@ -109,44 +101,32 @@ remove time-travel feature(Vadim)
 reduce system column overhead(Vadmin)
 remove pg_time table(Vadim)
 allow row re-use without vacuum, maybe?(Vadim)
--split apart row removal function from statistics function(Vadim)
 can't vacuum large objects
 can't reduce index file size with vacuum
 Remove restriction that ORDER BY field must be in SELECT list(?)
 Allow queries about owner of datbases, tables like:
         SELECT u.usesysid FROM postgres.pg_user u;
--DROP AGGREGATE should take in basetype as an arg(Darren)
 Add word index for text fields, maybe with trigrams, i.e.:
     ' (cat | dog) & ! fox ' meaning text has cat or dog, but not fox
--Add common-sense constant type promotions(Bruce)
 Allow readline-type or editor command editing of multi-line SQL commands
--Allow pg_dump to dump all databases at a site in one command(Bruce)
 Populate backend status area and write program to dump status data
 Add ALTER TABLE DROP COLUMN feature
 Remove stale files upon startup(Vivek)
 Add command to show privileges
 Allow INSERT INTO ... SELECT to convert column types
 Add syslog functionality
--Allow aggregate for all types, like count(Darren)
 Improve optimizer plan choice(Darren)
 Add STDDEV/VARIANCE() function for standard deviation computation/variance
 Add table/column/function discription table indexed by oid
--make all identifiers case-insensitive(Bruce)
 add pg_type attribute to identify types that need length (bpchar, varchar)
 add UNIQUE capability to non-btree indexes
--allow GROUP BY on columns that on functions(Vadim)
--add non-ascii collating strings with strcoll() and setlocale (Oleg)
--new DATE routines (Thomas)
--index NULL fields(Vadim)
--Add SERIAL column type(Vadim)
--Add multi-column indexes(Vadim)
--Add SET VAR TO command
+make pg_dumpall preserve table ownership, not just database ownership
+make large objects have their own reltype
 
 PERFORMANCE
 -----------
 Optimizing disjunctive queries
--Add Genetic Query Optimzation for many tables (Martin)
--Fix bushy-plans (Martin)
+Fix bushy-plans (Martin)
 Other optimizer bugs
 Is fsync use optimized?
 Multi-representational types, a la Illustra. For example, have a
@@ -154,13 +134,11 @@ Multi-representational types, a la Illustra. For example, have a
        objects, when greater than 8K.
 Use indexes in ORDER BY
 Profile engine in INSERT's and other operations
--Speed up hash creation by using btree's fast sort/insert routines(done)
 Cache most recent query plan(s?)
 Allow compression of log and meta data
 Allow LIKE/wildcard matches to use indexes if the wildcard character is not first
 Add FILLFACTOR to index creation
 Allow indexes to be used with OR clauses(Vadim)
--Add column optimization statistics to vacuum(Bruce)
 Change pg_attribute.attnvals name to attdispursion and change type float4
 	update pg_statistic table to remove operator column
 
