@@ -7,24 +7,31 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.1 1997/01/23 22:50:10 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.2 1997/01/23 23:48:08 scrappy Exp $
 #
 # NOTES
-#    Essentially all Postgres make files include this file and use the 
-#    variables it sets.  To 
-#    override the default setting, create a Makefile.custom in this
-#    directory and put your defines there. (Makefile.custom is included
-#    near the end of this file.)
+#    Essentially all Postgres make files include this file and use the
+#    variables it sets.
 #
-#    If you change any of these defines you probably have to 
+#    To override the default setting, create a Makefile.custom in this
+#    directory and put your defines there. (Makefile.custom is included
+#    near the end of this file).  Sometimes, a variable gets set in
+#    Makefile.global after Makefile.custom has been included, so you can't
+#    simply set that variable in Makefile.custom.  In those cases, there is
+#    often another variable (like CUSTOM_COPT) that you can set in
+#    Makefile.custom that influences the later setting of the true variable
+#    of interest (like CFLAGS) by Makefile.global.
+#
+#
+#    If you change any of these defines you probably have to
 #       make clean; make
-#    since no dependencies are created for these. (of course you can 
+#    since no dependencies are created for these. (of course you can
 #    be crafty and check what files really depend on them and just remake
 #    those).
-#        
-#    Before including this file, you must set the SRCDIR variable to the 
-#    path of the top of the Postgres source tree (the directory that 
-#    contains this file).  
+#
+#    Before including this file, you must set the SRCDIR variable to the
+#    path of the top of the Postgres source tree (the directory that
+#    contains this file).
 #
 #-------------------------------------------------------------------------
 
@@ -38,23 +45,21 @@
 # of the port.
 
 #  The name of the port.  Valid choices are:
+#   aix            IBM on AIX 3.2.5
 #   alpha          DEC Alpha AXP on OSF/1 2.0
-#   hpux           HP PA-RISC on HP-UX 9.0
-#   i386_solaris   i386 Solaris
-#   sparc_solaris  SUN SPARC on Solaris 2.4
-#   sparc          SUN SPARC on SunOS 4.1.3
-#   ultrix4        DEC MIPS on Ultrix 4.4
-#   linux          Intel x86 on Linux 1.2 and Linux ELF
-#                  (For non-ELF Linux, see LINUX_ELF below).
 #   BSD44_derived  OSs derived from 4.4-lite BSD (NetBSD, FreeBSD)
 #   bsdi           BSD/OS 2.0, 2.01, 2.1
-#   aix            IBM on AIX 3.2.5
-#   irix5          SGI MIPS on IRIX 5.3
 #   dgux           DG/UX 5.4R3.10
-#  Some hooks are provided for
+#   hpux           HP PA-RISC on HP-UX 9.0
+#   i386_solaris   i386 Solaris
+#   irix5          SGI MIPS on IRIX 5.3
+#   linux          Intel x86 on Linux 1.2 and Linux ELF
+#                  (For non-ELF Linux, see LINUX_ELF below).
+#   nextstep       Motorola MC68K or Intel x86 on NeXTSTEP 3.2 or greater
+#   sparc_solaris  SUN SPARC on Solaris 2.4
+#   sunos4         SUN SPARC on SunOS 4.1.3
 #   svr4           Intel x86 on Intel SVR4
-#   next           Motorola MC68K or Intel x86 on NeXTSTEP 3.2
-#  but these are guaranteed not to work as of yet.
+#   ultrix4        DEC MIPS on Ultrix 4.4
 #
 #  Note that portname is defined here to be UNDEFINED to remind you
 #  to change it in Makefile.custom.
@@ -94,7 +99,6 @@ LIBDIR= $(POSTGRESDIR)/lib
 #
 IPCS=@ipcs@
 IPCRM=@ipcrm@
-#IPCSDIR= /usr/bin
 
 # Where the man pages (suitable for use with "man") get installed.
 POSTMANDIR= $(POSTGRESDIR)/man
@@ -104,9 +108,6 @@ POSTDOCDIR= $(POSTGRESDIR)/doc
 
 # Where the header files necessary to build frontend programs get installed.
 HEADERDIR= $(POSTGRESDIR)/include
-
-# The port to run the postmaster on
-POSTPORT= 5432
 
 # NAMEDATALEN is the max length for system identifiers (e.g. table names,
 # attribute names, function names, etc.)
@@ -133,24 +134,17 @@ OIDNAMELEN= 36
 # (that is, prepend '#', don't set it to "0" or "no").
 
 # Compile libpq++
-# NAT: autoconf can check if we have a cplusplus compiler and will
-# NAT: define HAVE_Cplusplus for us
-#HAVE_Cplusplus= true
 @HAVECXX@
 
 # Commenting out CASSERT will make things go a LOT faster, but you will
 # also loose a lot of useful error-checking.
-# NAT: autoconf doesn't deal with CASSERT: this is a user choice.
 CASSERT= true
 
 # Comment out ENFORCE_ALIGNMENT if you do NOT want unaligned access to
 # multi-byte types to generate a bus error.
-# NAT: autoconf doesn't deal with ENFORCE_ALIGNMENT.  Should it test for
-# NAT: it and only set it if it has to?).
 ENFORCE_ALIGNMENT= true
 
 # Comment out PROFILE to generate a profile version of the binaries
-# NAT: autoconf doesn't deal with PROFILE: this is a user choice.
 #PROFILE= -p -non_shared
 
 # About the use of readline in psql:
@@ -161,12 +155,9 @@ ENFORCE_ALIGNMENT= true
 #    and READLINE_LIBDIR to reflect the location of the readline and history
 #    headers and libraries.
 #
-# NAT: autoconf will check for libreadline and will define USE_READLINE
-# NAT: appropriately, and hopefully take care of the inc and lib too.
 @USE_READLINE@
 
 # directories for the readline and history libraries.
-# [automagically taken care of by autoconf?]
 #READLINE_INC= -I/home/tools/include
 #READLINE_LIB= -L/home/tools/lib -lreadline
 
@@ -174,14 +165,17 @@ ENFORCE_ALIGNMENT= true
 #HISTORY_INC= -I/home/tools/include -I/home/tools/include/readline
 #HISTORY_LIB= -L/home/tools/lib -lhistory
 
+# curses is required by readline.  Ncurses has obsoleted curses, and may
+# in fact be what goes by the name "curses" on this system.
+
+CURSES_LIB= -L/home/tools/lib -lcurses
+
 # If you plan to use Kerberos for authentication...
 #
 # Comment out KRBVERS if you do not use Kerberos.
 # Set KRBVERS to "4" for Kerberos v4, "5" for Kerberos v5.
 # XXX Edit the default Kerberos variables below!
 #
-# NAT: I don't know how to deal with kerberos in autoconf.
-
 #KRBVERS= 5
 
 # Globally pass Kerberos file locations.
@@ -217,7 +211,6 @@ endif
 # USE_TCL= true
 # customize these to your site's needs
 #
-# NAT: I don't know how to deal with TCL in autoconf.
 TCL_INCDIR= /home/tools/include
 TCL_LIBDIR= /home/tools/lib
 TCL_LIB= -ltcl7.5
@@ -292,8 +285,6 @@ endif
 #
 #  AR
 
-# NAT: I am unsure how to write a test for AROPT=cq vs AROPT=crs, because
-# NAT: I don't know what it does ;-)
 ifneq (,$(findstring /$(PORTNAME)/, /BSD44_derived/bsdi/sparc/))
   AROPT = cq
 else
@@ -311,21 +302,16 @@ DLSUFFIX= .so
 #
 # CC
 #
-# NAT: autoconf tests for CC
 CC= @CC@
 
 #
 # LEX
 #
-# NAT: autoconf tests for LEX and LEXLIB.  I've removed the -L and
-# NAT: am unsure how to get it back with autoconf.
 LEX= @LEX@
 LD_ADD_BE = @LEXLIB@
 
 # SHARED LIBRARIES
 #
-# NAT: I am unsure how to write an autoconf test for shared library
-# NAT: flags and rules.
 CFLAGS_SL= -fpic -DPIC
 
 %.so: %.o
@@ -681,6 +667,11 @@ endif
 
 # This goes here so that customization in Makefile.custom is effective
 ##############################################################################
+
+ifneq ($(CUSTOM_INSTALL),)
+INSTALL= $(CUSTOM_INSTALL)
+endif   
+
 #
 # Flags for CC and LD. 
 
@@ -708,14 +699,18 @@ endif
 # Common values for COPT are: -g for debuggable binaries, -m486 if you are
 # using a i486 or better.
 
-ifneq ($(CUSTOM_COPT),)
-COPT= $(CUSTOM_COPT)
-else
-ifeq ($(CC), gcc)
-COPT= -O2 -Werror
-else
-COPT= -O
+ifneq ($(CUSTOM_CC),)
+  CC= $(CUSTOM_CC)
 endif
+
+ifneq ($(CUSTOM_COPT),)
+  COPT= $(CUSTOM_COPT)
+else
+  ifeq ($(CC), gcc)
+    COPT= -O2 -Werror
+  else
+    COPT= -O
+  endif
 endif
 
 
