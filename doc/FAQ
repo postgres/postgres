@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Sun Jan 12 09:58:38 EST 2003
+   Last updated: Sun Jan 12 13:36:11 EST 2003
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -820,10 +820,10 @@
     
 Type            Internal Name   Notes
 --------------------------------------------------
-"char"          char            1 character
-CHAR(n)         bpchar          blank padded to the specified fixed length
 VARCHAR(n)      varchar         size specifies maximum length, no padding
+CHAR(n)         bpchar          blank padded to the specified fixed length
 TEXT            text            no specific upper limit on length
+"char"          char            one character
 BYTEA           bytea           variable-length byte array (null-byte safe)
 
    You will see the internal name when examining system catalogs and in
@@ -834,9 +834,9 @@ BYTEA           bytea           variable-length byte array (null-byte safe)
    space used is slightly greater than the declared size. However, these
    data types are also subject to compression or being stored out-of-line
    by TOAST, so the space on disk might also be less than expected.
-   VARCHAR(n) is best when storing variable-length strings but it limits
+   VARCHAR(n) is best when storing variable-length strings and it limits
    how long a string can be. TEXT is for strings of unlimited length,
-   maximum 1 gigabyte.
+   with a maximum of one gigabyte.
    
    CHAR(n) is for storing strings that are all the same length. CHAR(n)
    pads with blanks to the specified length, while VARCHAR(n) only stores
