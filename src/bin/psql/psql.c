@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.115 1997/11/24 14:05:02 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.116 1997/11/24 14:15:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1725,7 +1725,7 @@ HandleSlashCmds(PsqlSettings *pset,
 					ORDER BY return_type, function;",
 					false, false, 0);
 				SendQuery(&success, pset,"\
-					SELECT	t.typname as rets, \
+					SELECT	t.typname as rtns, \
 							p.proname as function, \
 							oid8types(p.proargtypes) as arguments, \
 							substr(obj_description(p.oid),1,34) \
@@ -1733,7 +1733,7 @@ HandleSlashCmds(PsqlSettings *pset,
 					WHERE p.prorettype = t.oid and \
 							(pronargs = 0 or oid8types(p.proargtypes) != '') and \
 							t.typname = 'bool' \
-					ORDER BY rets, function;",
+					ORDER BY rtns, function;",
 					false, false, 0);
 			}
 			else if (strncmp(cmd, "di", 2) == 0)
