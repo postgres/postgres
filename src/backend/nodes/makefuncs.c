@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/makefuncs.c,v 1.11 1998/07/20 19:53:45 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/makefuncs.c,v 1.12 1998/07/20 20:01:47 momjian Exp $
  *
  * NOTES
  *	  Creator functions in POSTGRES 4.2 are generated automatically. Most of
@@ -21,6 +21,7 @@
 #include "postgres.h"
 #include "nodes/pg_list.h"
 #include "nodes/primnodes.h"
+#include "nodes/parsenodes.h"
 #include "nodes/makefuncs.h"
 
 /*
