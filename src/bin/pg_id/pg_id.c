@@ -6,7 +6,7 @@
  *
  * Copyright (c) 2000-2003, PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/pg_id/Attic/pg_id.c,v 1.21 2003/08/04 23:59:39 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/bin/pg_id/Attic/pg_id.c,v 1.22 2003/08/09 01:25:46 momjian Exp $
  */
 #include "postgres_fe.h"
 
@@ -32,7 +32,6 @@ main(int argc, char *argv[])
 	struct passwd *pw;
 
 	extern int	optind;
-	extern char *optarg;
 
 	while ((c = getopt(argc, argv, "nru")) != -1)
 	{
