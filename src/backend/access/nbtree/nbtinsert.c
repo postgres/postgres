@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.85 2001/08/23 23:06:37 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.86 2001/09/29 23:49:51 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,7 +24,8 @@ typedef struct
 {
 	/* context data for _bt_checksplitloc */
 	Size		newitemsz;		/* size of new item to be inserted */
-	bool		non_leaf;		/* T if splitting an internal node */
+	bool		is_leaf;		/* T if splitting a leaf page */
+	bool		is_rightmost;	/* T if splitting a rightmost page */
 
 	bool		have_split;		/* found a valid split? */
 
@@ -940,6 +941,16 @@ _bt_split(Relation rel, Buffer buf, OffsetNumber firstright,
  * for it, we might find ourselves with too little room on the page that
  * it needs to go into!)
  *
+ * If the page is the rightmost page on its level, we instead try to arrange
+ * for twice as much free space on the right as on the left.  In this way,
+ * when we are inserting successively increasing keys (consider sequences,
+ * timestamps, etc) we will end up with a tree whose pages are about 67% full,
+ * instead of the 50% full result that we'd get without this special case.
+ * (We could bias it even further to make the initially-loaded tree more full.
+ * But since the steady-state load for a btree is about 70%, we'd likely just
+ * be making more page-splitting work for ourselves later on, when we start
+ * seeing updates to existing tuples.)
+ *
  * We are passed the intended insert position of the new tuple, expressed as
  * the offsetnumber of the tuple it must go in front of.  (This could be
  * maxoff+1 if the tuple is to go at the end.)
@@ -972,7 +983,8 @@ _bt_findsplitloc(Relation rel,
 	/* Passed-in newitemsz is MAXALIGNED but does not include line pointer */
 	newitemsz += sizeof(ItemIdData);
 	state.newitemsz = newitemsz;
-	state.non_leaf = !P_ISLEAF(opaque);
+	state.is_leaf = P_ISLEAF(opaque);
+	state.is_rightmost = P_RIGHTMOST(opaque);
 	state.have_split = false;
 
 	/* Total free space available on a btree page, after fixed overhead */
@@ -1076,7 +1088,6 @@ _bt_checksplitloc(FindSplitData *state, OffsetNumber firstright,
 				  int leftfree, int rightfree,
 				  bool newitemonleft, Size firstrightitemsz)
 {
-
 	/*
 	 * Account for the new item on whichever side it is to be put.
 	 */
@@ -1089,7 +1100,7 @@ _bt_checksplitloc(FindSplitData *state, OffsetNumber firstright,
 	 * If we are not on the leaf level, we will be able to discard the key
 	 * data from the first item that winds up on the right page.
 	 */
-	if (state->non_leaf)
+	if (! state->is_leaf)
 		rightfree += (int) firstrightitemsz -
 			(int) (MAXALIGN(sizeof(BTItemData)) + sizeof(ItemIdData));
 
@@ -1098,7 +1109,21 @@ _bt_checksplitloc(FindSplitData *state, OffsetNumber firstright,
 	 */
 	if (leftfree >= 0 && rightfree >= 0)
 	{
-		int			delta = leftfree - rightfree;
+		int			delta;
+
+		if (state->is_rightmost)
+		{
+			/*
+			 * On a rightmost page, try to equalize right free space with
+			 * twice the left free space.  See comments for _bt_findsplitloc.
+			 */
+			delta = (2 * leftfree) - rightfree;
+		}
+		else
+		{
+			/* Otherwise, aim for equal free space on both sides */
+			delta = leftfree - rightfree;
+		}
 
 		if (delta < 0)
 			delta = -delta;
