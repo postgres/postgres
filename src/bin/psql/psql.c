@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.72 1997/06/06 22:05:23 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.73 1997/06/11 01:03:38 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -81,7 +81,7 @@ static void     handleCopyOut(PGresult * res, bool quiet, FILE * copystream);
 static void
 handleCopyIn(PGresult * res, const bool mustprompt,
 	     FILE * copystream);
-static int      tableList(PsqlSettings * ps, bool deep_tablelist, char table_index_both);
+static int      tableList(PsqlSettings * ps, bool deep_tablelist, char info_type);
 static int      tableDesc(PsqlSettings * ps, char *table);
 static int	rightsList(PsqlSettings * ps);
 static void     prompt_for_password(char *username, char *password);
@@ -160,6 +160,7 @@ slashUsage(PsqlSettings * ps)
     fprintf(stderr, " \\copy table {from | to} <fname>\n");
     fprintf(stderr, " \\d [<table>] -- list tables and indicies in database or columns in <table>, * for all\n");
     fprintf(stderr, " \\di          -- list only indicies in database\n");
+    fprintf(stderr, " \\ds          -- list only sequences in database\n");
     fprintf(stderr, " \\dt          -- list only tables in database\n");
     fprintf(stderr, " \\e [<fname>] -- edit the current query buffer or <fname>, \\E execute too\n");
     fprintf(stderr, " \\f [<sep>]   -- change field separater (currently '%s')\n", ps->opt.fieldSep);
@@ -228,7 +229,7 @@ listAllDbs(PsqlSettings * ps)
  * 
  */
 int
-tableList(PsqlSettings * ps, bool deep_tablelist, char table_index_both)
+tableList(PsqlSettings * ps, bool deep_tablelist, char info_type)
 {
     char            listbuf[256];
     int             nColumns;
@@ -241,13 +242,15 @@ tableList(PsqlSettings * ps, bool deep_tablelist, char table_index_both)
     listbuf[0] = '\0';
     strcat(listbuf, "SELECT usename, relname, relkind, relhasrules");
     strcat(listbuf, "  FROM pg_class, pg_user ");
- 	switch (table_index_both) {
+ 	switch (info_type) {
  		case 't':	strcat(listbuf, "WHERE ( relkind = 'r') ");
  		 		break;
  		case 'i':	strcat(listbuf, "WHERE ( relkind = 'i') ");
  		  		break;
+ 		case 'S':	strcat(listbuf, "WHERE ( relkind = 'S') ");
+ 		  		break;
  		case 'b':
- 		default:	strcat(listbuf, "WHERE ( relkind = 'r' OR relkind = 'i') ");
+ 		default:	strcat(listbuf, "WHERE ( relkind = 'r' OR relkind = 'i' OR relkind = 'S') ");
  		 		break;
  	}
 	strcat(listbuf, "  and relname !~ '^pg_'");
@@ -300,7 +303,10 @@ tableList(PsqlSettings * ps, bool deep_tablelist, char table_index_both)
 		if (strcmp(rk, "r") == 0)
 		    printf("%-8.8s |", (rr[0] == 't') ? "view?" : "table");
 		else
+		if (strcmp(rk, "i") == 0)
 		    printf("%-8.8s |", "index");
+		else 
+		    printf("%-8.8s |", "sequence");
 		printf("\n");
 	    }
 	    printf(" +------------------+----------------------------------+----------+\n");
@@ -310,13 +316,15 @@ tableList(PsqlSettings * ps, bool deep_tablelist, char table_index_both)
 
     } else {
         PQclear(res);  /* PURIFY */
- 	switch (table_index_both) {
+ 	switch (info_type) {
  		case 't':	fprintf(stderr, "Couldn't find any tables!\n");
  		 		break;
  		case 'i':	fprintf(stderr, "Couldn't find any indicies!\n");
  		  		break;
+		case 'S':	fprintf(stderr, "Couldn't find any sequences!\n");
+				break;
  		case 'b':
- 		default:	fprintf(stderr, "Couldn't find any tables or indicies!\n");
+ 		default:	fprintf(stderr, "Couldn't find any tables, sequences or indicies!\n");
  		 		break;
  	}
 	return (-1);
@@ -1176,7 +1184,9 @@ HandleSlashCmds(PsqlSettings * settings,
  		tableList(settings, 0, 't');
  	} else if (strncmp(cmd, "di", 2) == 0) {	/* only indicies */
  		tableList(settings, 0, 'i');
- 	} else if (!optarg) {				/* show tables and indicies */
+	} else if (strncmp(cmd, "ds", 2) == 0) {	/* only sequences */
+		tableList(settings, 0, 'S');
+ 	} else if (!optarg) {				/* show tables, sequences and indicies */
  	    tableList(settings, 0, 'b');
  	} else if (strcmp(optarg, "*") == 0) {		/* show everything */
  	    tableList(settings, 0, 'b');
