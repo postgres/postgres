@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/s_lock.c,v 1.5 2001/11/05 17:46:28 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/s_lock.c,v 1.6 2002/04/05 11:38:13 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -173,9 +173,12 @@ tas_dummy()
 .global	tas						\n\
 tas:							\n\
 			.frame	$sp, 0, $31	\n\
+			.set push		\n\
+			.set mips2		\n\n
 			ll		$14, 0($4)	\n\
 			or		$15, $14, 1	\n\
 			sc		$15, 0($4)	\n\
+			.set pop			\n\
 			beq		$15, 0, fail\n\
 			bne		$14, 0, fail\n\
 			li		$2, 0		\n\
