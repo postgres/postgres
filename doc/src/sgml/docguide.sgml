@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/docguide.sgml,v 1.53 2005/02/19 04:39:52 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/docguide.sgml,v 1.54 2005/03/31 03:54:38 momjian Exp $ -->
 
 <appendix id="docguide">
  <title>Documentation</title>
@@ -60,15 +60,17 @@
    structure and content of a technical document without worrying
    about presentation details.  A document style defines how that
    content is rendered into one of several final forms.  DocBook is
-   maintained by the <ulink
-   url="http://www.oasis-open.org">OASIS</ulink> group.  The <ulink
-   url="http://www.oasis-open.org/docbook">official DocBook
-   site</ulink> has good introductory and reference documentation and
+   maintained by the OASIS group, <ulink
+   url="http://www.oasis-open.org"></ulink>.  The official DocBook
+   site, <ulink url="http://www.oasis-open.org/docbook"></ulink>,
+   has good introductory and reference documentation and
    a complete O'Reilly book for your online reading pleasure.  The
+   NewbieDoc Docbook Guide,
    <ulink url="http://newbiedoc.sourceforge.net/metadoc/docbook-guide.html">
-   NewbieDoc Docbook Guide</ulink> is very helpful for beginners.
-   The <ulink url="http://www.freebsd.org/docproj/docproj.html">FreeBSD
-   Documentation Project</ulink> also uses DocBook and has some good
+   </ulink>, is very helpful for beginners.
+   The FreeBSD Documentation Project, 
+   <ulink url="http://www.freebsd.org/docproj/docproj.html"></ulink>,
+   also uses DocBook and has some good
    information, including a number of style guidelines that might be
    worth considering.
   </para>
@@ -84,7 +86,7 @@
 
    <variablelist>
     <varlistentry>
-     <term><ulink url="http://www.oasis-open.org/docbook/sgml/">DocBook DTD</ulink></term>
+     <term>DocBook DTD, <ulink url="http://www.oasis-open.org/docbook/sgml/"></ulink></term>
      <listitem>
       <para>
        This is the definition of DocBook itself.  We currently use
@@ -96,7 +98,7 @@
     </varlistentry>
 
     <varlistentry>
-     <term><ulink url="http://www.oasis-open.org/cover/ISOEnts.zip">ISO 8879 character entities</ulink></term>
+     <term>ISO 8879 character entities, <ulink url="http://www.oasis-open.org/cover/ISOEnts.zip"></ulink></term>
      <listitem>
       <para>
        These are required by DocBook but are distributed separately
@@ -106,7 +108,7 @@
     </varlistentry>
 
     <varlistentry>
-     <term><ulink url="http://openjade.sourceforge.net">OpenJade</ulink></term>
+     <term>OpenJade, <ulink url="http://openjade.sourceforge.net"></ulink></term>
      <listitem>
       <para>
        This is the base package of <acronym>SGML</acronym> processing.
@@ -121,7 +123,7 @@
     </varlistentry>
 
     <varlistentry>
-     <term><ulink url="http://docbook.sourceforge.net/projects/dsssl/index.html">DocBook DSSSL Stylesheets</ulink></term>
+     <term>DocBook DSSSL Stylesheets, <ulink url="http://docbook.sourceforge.net/projects/dsssl/index.html"></ulink></term>
      <listitem>
       <para>
        These contain the processing instructions for converting the
@@ -132,7 +134,7 @@
     </varlistentry>
 
     <varlistentry>
-     <term><ulink url="http://docbook2x.sourceforge.net">DocBook2X tools</ulink></term>
+     <term>DocBook2X tools, <ulink url="http://docbook2x.sourceforge.net"></ulink></term>
      <listitem>
       <para>
        This optional package is used to create man pages.  It has a
@@ -143,7 +145,7 @@
     </varlistentry>
 
     <varlistentry>
-     <term><ulink url="http://jadetex.sourceforge.net">JadeTeX</ulink></term>
+     <term>JadeTeX, <ulink url="http://jadetex.sourceforge.net"></ulink></term>
      <listitem>
       <para>
        If you want to, you can also install
@@ -238,9 +240,8 @@ CATALOG "/usr/local/share/sgml/docbook/4.2/docbook.cat"
 
    <para>
     More information about the FreeBSD documentation tools can be
-    found in the <ulink
-    url="http://www.freebsd.org/doc/en_US.ISO8859-1/books/fdp-primer/tools.html">FreeBSD
-    Documentation Project's instructions</ulink>.
+    found in the FreeBSD Documentation Project's instructions,
+    <ulink url="http://www.freebsd.org/doc/en_US.ISO8859-1/books/fdp-primer/tools.html"></ulink>.
    </para>
   </sect2>
 
@@ -334,9 +335,8 @@ CATALOG "dsssl/catalog"
     <procedure>
      <step>
       <para>
-       Obtain the <ulink
-       url="http://www.docbook.org/sgml/4.2/docbook-4.2.zip">DocBook
-       V4.2</ulink> distribution.
+       Obtain the DocBook V4.2 distribution,<ulink
+       url="http://www.docbook.org/sgml/4.2/docbook-4.2.zip"></ulink>.
       </para>
      </step>
 
@@ -377,9 +377,9 @@ CATALOG "docbook-4.2/docbook.cat"
 
      <step>
       <para>
-       Download the <ulink
-       url="http://www.oasis-open.org/cover/ISOEnts.zip">ISO 8879
-       character entities</ulink> archive, unpack it, and put the
+       Download the ISO 8879
+       character entities archive, <ulink
+       url="http://www.oasis-open.org/cover/ISOEnts.zip"></ulink>, unpack it, and put the
        files in the same directory you put the DocBook files in.
 <screen>
 <prompt>$ </prompt><userinput>cd /usr/local/share/sgml/docbook-4.2</userinput>
@@ -452,8 +452,8 @@ CATALOG "docbook-dsssl-1.<replaceable>xx</>/catalog
      <productname>minitoc</productname>,
      <productname>url</productname> and
      <productname>ot2enc</productname>.  All of these can be found on
-     your friendly neighborhood <ulink
-     url="http://www.ctan.org"><acronym>CTAN</acronym></ulink> site.
+     your friendly neighborhood <acronym>CTAN site</acronym>, <ulink
+     url="http://www.ctan.org"></ulink>.
      The installation of the <application>TeX</application> base
      system is far beyond the scope of this introduction.  Binary
      packages should be available for any system that can run
@@ -931,9 +931,9 @@ gmake man.tar.gz
      When properly configured, it will allow you to use
      <application>Emacs</application> to insert tags and check markup
      consistency.  You could use it for <acronym>HTML</acronym> as
-     well.  Check the <ulink
-     url="http://www.lysator.liu.se/projects/about_psgml.html">PSGML
-     web site</ulink> for downloads, installation instructions, and
+     well.  Check the PSGML web site, <ulink
+     url="http://www.lysator.liu.se/projects/about_psgml.html"></ulink>,
+     for downloads, installation instructions, and
      detailed documentation.
     </para>
 
@@ -1051,10 +1051,9 @@ End:
     </para>
 
     <para>
-     Norm Walsh offers a major <ulink
-     url="http://nwalsh.com/emacs/docbookide/index.html">mode
-     specifically for DocBook</ulink> which also has font-lock and a
-     number of features to reduce typing.
+     Norm Walsh offers a major mode specifically for DocBook,
+     <ulink url="http://nwalsh.com/emacs/docbookide/index.html"></ulink>, 
+     which also has font-lock and a number of features to reduce typing.
     </para>
    </sect2>
 

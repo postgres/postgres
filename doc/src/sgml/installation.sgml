@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.229 2005/01/23 00:30:18 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.230 2005/03/31 03:54:38 momjian Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -248,7 +248,7 @@ su - postgres
       systems have this built-in (e.g., <systemitem
       class="osname">Linux</>, <systemitem class="osname">NetBSD</>,
       <systemitem class="osname">Solaris</>), for other systems you
-      can download an add-on package from here: <ulink
+      can download an add-on package from <ulink
       url="http://developer.postgresql.org/~petere/bsd-gettext/"></ulink>.
       If you are using the <application>Gettext</> implementation in
       the <acronym>GNU</acronym> C library then you will additionally
@@ -1460,8 +1460,9 @@ kill `cat /usr/local/pgsql/data/postmaster.pid`
    platform generally means that <productname>PostgreSQL</> builds and
    installs according to these instructions and that the regression
    tests pass.  <quote>Build farm</quote> entries refer to builds
-   reported by the <ulink url="http://www.pgbuildfarm.org/">PostgreSQL
-   Build Farm</ulink>.  Platform entries that show an older version of
+   reported by the PostgreSQL Build Farm,
+   <ulink url="http://www.pgbuildfarm.org/"></ulink>.  
+   Platform entries that show an older version of
    PostgreSQL are those that did not receive explicit testing at the
    time of release of version &majorversion; but that we still
    expect to work.

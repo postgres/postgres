@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.328 2005/02/10 04:52:31 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.329 2005/03/31 03:54:38 momjian Exp $
 -->
 
 <appendix id="release">
@@ -106,8 +106,7 @@ typedefs (Michael)</para></listitem>
         <productname>PostgreSQL</productname>. A separate installer
         project has been created to ease installation on
         <productname>Windows</> &mdash; see <ulink
-        url="http://www.postgresql.org/ftp/win32/">
-        http://www.postgresql.org/ftp/win32/</ulink>.
+        url="http://www.postgresql.org/ftp/win32/"></ulink>.
        </para>
 
        <para>
@@ -428,7 +427,7 @@ typedefs (Michael)</para></listitem>
       <para>
       The JDBC client interface has been removed from the core
       distribution, and is now hosted at <ulink url=
-      "http://jdbc.postgresql.org">http://jdbc.postgresql.org</ulink>.
+      "http://jdbc.postgresql.org"></ulink>.
       </para>
      </listitem>
 
@@ -436,7 +435,7 @@ typedefs (Michael)</para></listitem>
       <para>
       The Tcl client interface has also been removed. There are several
       Tcl interfaces now hosted at <ulink url=
-      "http://gborg.postgresql.org">http://gborg.postgresql.org</ulink>.
+      "http://gborg.postgresql.org"></ulink>.
       </para>
      </listitem>
 
@@ -5463,8 +5462,7 @@ operations on bytea columns (Joe)</para></listitem>
     application examines the system catalogs, additional changes will
     be required due to the introduction of schemas in 7.3; for more
     information, see: <ulink
-    url="http://developer.postgresql.org/~momjian/upgrade_tips_7.3">
-    http://developer.postgresql.org/~momjian/upgrade_tips_7.3</>.
+    url="http://developer.postgresql.org/~momjian/upgrade_tips_7.3"></>.
    </para>
 
    <para>

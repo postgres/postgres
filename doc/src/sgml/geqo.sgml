@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/geqo.sgml,v 1.29 2005/02/21 02:21:00 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/geqo.sgml,v 1.30 2005/03/31 03:54:38 momjian Exp $
 Genetic Optimizer
 -->
 
@@ -286,16 +286,16 @@ Genetic Optimizer
    <itemizedlist>
     <listitem>
      <para>
-      <ulink url="http://surf.de.uu.net/encore/www/">The Hitch-Hiker's
-      Guide to Evolutionary Computation</ulink> (FAQ for <ulink
-      url="news://comp.ai.genetic">comp.ai.genetic</ulink>)
+      The Hitch-Hiker's Guide to Evolutionary Computation,
+      <ulink url="http://surf.de.uu.net/encore/www/"></ulink>, (FAQ for <ulink
+      url="news://comp.ai.genetic"></ulink>)
      </para>
     </listitem>
    
     <listitem>
      <para>
-      <ulink url="http://www.red3d.com/cwr/evolve.html">Evolutionary
-       Computation and its application to art and design</ulink> by
+      Evolutionary Computation and its application to art and design,
+      <ulink url="http://www.red3d.com/cwr/evolve.html"></ulink>, by
       Craig Reynolds
      </para>
     </listitem>

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/external-projects.sgml,v 1.7 2004/12/29 23:36:46 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/external-projects.sgml,v 1.8 2005/03/31 03:54:38 momjian Exp $
 -->
 
  <appendix id="external-projects">
@@ -21,11 +21,10 @@ $PostgreSQL: pgsql/doc/src/sgml/external-projects.sgml,v 1.7 2004/12/29 23:36:46
 
   <para>
    Many <productname>PostgreSQL</productname>-related projects are
-   hosted at either
-   <productname>GBorg</> at <ulink
-   url="http://gborg.postgresql.org">http://gborg.postgresql.org</ulink>
+   hosted at either <productname>GBorg</> at <ulink
+   url="http://gborg.postgresql.org"></ulink>
    or <productname>pgFoundry</> at <ulink
-   url="http://pgfoundry.org">http://pgfoundry.org</ulink>.
+   url="http://pgfoundry.org"></ulink>.
    There are other
    <productname>PostgreSQL</productname>-related projects that are hosted
    elsewhere, but you will have to do an Internet search to find them.
@@ -150,9 +149,9 @@ $PostgreSQL: pgsql/doc/src/sgml/external-projects.sgml,v 1.7 2004/12/29 23:36:46
 
    All of these can be found at 
    <productname>GBorg</> (<ulink
-   url="http://gborg.postgresql.org">http://gborg.postgresql.org</ulink>)
+   url="http://gborg.postgresql.org"></ulink>)
    or <productname>pgFoundry</> (<ulink
-   url="http://pgfoundry.org">http://pgfoundry.org</ulink>).
+   url="http://pgfoundry.org"></ulink>).
    </para>
 
  </sect1>

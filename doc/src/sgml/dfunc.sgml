@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/dfunc.sgml,v 1.29 2005/01/22 22:56:35 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/dfunc.sgml,v 1.30 2005/03/31 03:54:37 momjian Exp $
 -->
 
 <sect2 id="dfunc">
@@ -276,8 +276,9 @@ gcc -shared -o foo.so foo.o
  <tip>
   <para>
    If this is too complicated for you, you should consider using
-   <ulink url="http://www.gnu.org/software/libtool/"><productname>GNU
-   Libtool</productname></ulink>, which hides the platform differences
+   <productname>GNU Libtool</productname>,
+   <ulink url="http://www.gnu.org/software/libtool/"></ulink>,
+   which hides the platform differences
    behind a uniform interface.
   </para>
  </tip>

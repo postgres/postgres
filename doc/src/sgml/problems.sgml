@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/problems.sgml,v 2.22 2005/03/25 01:01:14 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/problems.sgml,v 2.23 2005/03/31 03:54:38 momjian Exp $
 -->
 
 <sect1 id="bug-reporting">
@@ -266,9 +266,8 @@ $PostgreSQL: pgsql/doc/src/sgml/problems.sgml,v 2.22 2005/03/25 01:01:14 momjian
    It is better to report everything the first time than us having to squeeze the
    facts out of you. On the other hand, if your input files are huge, it is
    fair to ask first whether somebody is interested in looking into it.  Here is
-   an article, <ulink url="http://www.chiark.greenend.org.uk/~sgtatham/bugs.html">
-   http://www.chiark.greenend.org.uk/~sgtatham/bugs.html</ulink>, that outlines
-   some more tips on reporting bugs.
+   an article, <ulink url="http://www.chiark.greenend.org.uk/~sgtatham/bugs.html"></ulink>, 
+   that outlines some more tips on reporting bugs.
   </para>
 
   <para>
@@ -306,8 +305,8 @@ $PostgreSQL: pgsql/doc/src/sgml/problems.sgml,v 2.22 2005/03/25 01:01:14 momjian
 
   <para> 
    Another method is to fill in the bug report web-form available
-   at the project's web site
-   <ulink url="http://www.postgresql.org/">http://www.postgresql.org/</ulink>.
+   at the project's web site,
+   <ulink url="http://www.postgresql.org/"></ulink>.
    Entering a bug report this way causes it to be mailed to the
    <email>pgsql-bugs@postgresql.org</email> mailing list.
   </para>

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/gist.sgml,v 1.15 2005/01/08 22:13:25 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/gist.sgml,v 1.16 2005/03/31 03:54:38 momjian Exp $
 -->
 
 <chapter id="GiST">
@@ -30,12 +30,11 @@ $PostgreSQL: pgsql/doc/src/sgml/gist.sgml,v 1.15 2005/01/08 22:13:25 tgl Exp $
  </para>
 
   <para>
-    Some of the information here is derived from <ulink
-    url="http://gist.cs.berkeley.edu/">the University of California at
-    Berkeley's GiST Indexing Project web site</ulink> and Marcel Kornacker's
-    thesis, 
-    <ulink url="http://citeseer.nj.nec.com/448594.html">Access Methods for
-    Next-Generation Database Systems</ulink>.   The <acronym>GiST</acronym>
+    Some of the information here is derived from the University of California at
+    Berkeley's GiST Indexing Project web site, <ulink
+    url="http://gist.cs.berkeley.edu/"></ulink>, and Marcel Kornacker's
+    thesis, Access Methods for Next-Generation Database Systems,
+    <ulink url="http://citeseer.nj.nec.com/448594.html"></ulink>.   The <acronym>GiST</acronym>
     implementation in <productname>PostgreSQL</productname> is primarily
     maintained by Teodor Sigaev and Oleg Bartunov, and there is more
     information on their website: <ulink

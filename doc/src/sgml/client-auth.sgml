@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/client-auth.sgml,v 1.72 2005/01/28 22:38:37 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/client-auth.sgml,v 1.73 2005/03/31 03:54:37 momjian Exp $
 -->
 
 <chapter id="client-authentication">
@@ -615,10 +615,10 @@ local   db1,db2,@demodbs  all                         md5
     authentication system suitable for distributed computing over a public
     network. A description of the <productname>Kerberos</productname> system
     is far beyond the scope of this document; in full generality it can be
-    quite complex (yet powerful). The <ulink
-    url="http://www.nrl.navy.mil/CCS/people/kenh/kerberos-faq.html">Kerberos
-    <acronym>FAQ</></ulink> or <ulink url="ftp://athena-dist.mit.edu">MIT
-    Project Athena</ulink> can be a good starting point for exploration.
+    quite complex (yet powerful). The Kerberos <acronym>FAQ</>,
+    <ulink url="http://www.nrl.navy.mil/CCS/people/kenh/kerberos-faq.html"></ulink>, or 
+    MIT Project Athena, <ulink url="ftp://athena-dist.mit.edu"></ulink>,
+    can be a good starting point for exploration.
     Several sources for <productname>Kerberos</> distributions exist.
    </para>
 
@@ -690,7 +690,7 @@ local   db1,db2,@demodbs  all                         md5
 
    <para>
     If you use <application>mod_auth_kerb</application> from
-    <ulink url="http://modauthkerb.sf.net">http://modauthkerb.sf.net</ulink>
+    <ulink url="http://modauthkerb.sf.net"></ulink>
     and <application>mod_perl</application> on your
     <productname>Apache</productname> web server, you can use
     <literal>AuthType KerberosV5SaveCredentials</literal> with a
@@ -883,11 +883,10 @@ omicron       bryanh            guest1
     default PAM service name is <literal>postgresql</literal>. You can
     optionally supply your own service name after the <literal>pam</>
     key word in the file <filename>pg_hba.conf</filename>.
-    For more information about PAM, please read the <ulink
-    url="http://www.kernel.org/pub/linux/libs/pam/"><productname>Linux-PAM</>
-    Page</ulink> and the <ulink
-    url="http://www.sun.com/software/solaris/pam/"><systemitem
-    class="osname">Solaris</> PAM Page</ulink>.
+    For more information about PAM, please read the <productname>Linux-PAM</>
+    Page, <ulink url="http://www.kernel.org/pub/linux/libs/pam/"></ulink>,
+    and the <systemitem class="osname">Solaris</> PAM Page, <ulink
+    url="http://www.sun.com/software/solaris/pam/"></ulink>.
    </para>
   </sect2>
  </sect1>

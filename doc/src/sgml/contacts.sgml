@@ -13,23 +13,12 @@ and the mailing lists themselves.
 
 <para>
 Refer to the introduction in this manual or to the
-<ulink url="http://www.postgresql.org"><productname>PostgreSQL</productname> web page</ulink>
- for subscription information to the no-cost mailing lists.
+<productname>PostgreSQL</productname> web page,
+<ulink url="http://www.postgresql.org"></ulink>,
+for subscription information to the no-cost mailing lists.
 </para>
 
 <sect1 id="people">
 <title>People</title>
 -->
-
-<para>
-<itemizedlist mark="bullet" spacing="compact">
-<listitem>
-<para>
-<ulink url="lockhart@fourpalms.org">Thomas Lockhart</ulink>
- works on SQL standards compliance and documentation.
-</para>
-</listitem>
-</itemizedlist>
-</para>
-
 </appendix>

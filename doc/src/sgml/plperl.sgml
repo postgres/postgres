@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/plperl.sgml,v 2.37 2005/01/17 17:29:49 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/plperl.sgml,v 2.38 2005/03/31 03:54:38 momjian Exp $
 -->
 
  <chapter id="plperl">
@@ -15,8 +15,8 @@ $PostgreSQL: pgsql/doc/src/sgml/plperl.sgml,v 2.37 2005/01/17 17:29:49 momjian E
 
   <para>
    PL/Perl is a loadable procedural language that enables you to write
-   <productname>PostgreSQL</productname> functions in the <ulink
-   url="http://www.perl.com">Perl</ulink> programming language.
+   <productname>PostgreSQL</productname> functions in the Perl programming language,
+   <ulink url="http://www.perl.com"></ulink>.
   </para>
 
   <para>
@@ -200,11 +200,10 @@ SELECT * FROM perl_set();
   <para>
    Access to the database itself from your Perl function can be done
    via the function <function>spi_exec_query</function> described
-   below, or via an experimental module <ulink
-   url="http://www.cpan.org/modules/by-module/DBD/APILOS/"><literal>DBD::PgSPI</literal></ulink>
-   (also available at <ulink
-   url="http://www.cpan.org/SITES.html"><acronym>CPAN</> mirror
-   sites</ulink>).  This module makes available a
+   below, or via an experimental module <literal>DBD::PgSPI</literal>, 
+   <ulink url="http://www.cpan.org/modules/by-module/DBD/APILOS/"></ulink>,
+   (also available at <acronym>CPAN mirror sites</>, <ulink
+   url="http://www.cpan.org/SITES.html"></ulink>).  This module makes available a
    <acronym>DBI</>-compliant database-handle named
    <varname>$pg_dbh</varname> that can be used to perform queries with
    normal <acronym>DBI</>

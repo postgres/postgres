@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/cvs.sgml,v 1.31 2005/01/22 22:06:17 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/cvs.sgml,v 1.32 2005/03/31 03:54:37 momjian Exp $
 -->
 
 <appendix id="cvs">
@@ -52,7 +52,7 @@ $PostgreSQL: pgsql/doc/src/sgml/cvs.sgml,v 1.31 2005/01/22 22:06:17 momjian Exp 
     <para>
      You will need a local copy of <productname>CVS</productname>
      (Concurrent Version Control System), which you can get from
-     <ulink url="http://www.cvshome.org/">http://www.cvshome.org/</ulink>
+     <ulink url="http://www.cvshome.org/"></ulink>
      (the official site with the latest version) or any GNU software
      archive site (often somewhat outdated). We recommend version 1.10
      or newer. Many systems have a recent version of
@@ -167,7 +167,7 @@ $ chmod -R go-w pgsql
    For more info consult the manual that comes with
    <productname>CVS</productname>, or see the online
    documentation at
-   <ulink url="http://www.cvshome.org/">http://www.cvshome.org/</ulink>.
+   <ulink url="http://www.cvshome.org/"></ulink>.
   </para>
  </sect1>
 
@@ -299,7 +299,7 @@ cvs commit
    <productname>CVSup</productname> was developed by
    John Polstra (<email>jdp@polstra.com</email>) to
    distribute CVS repositories and other file trees for
-   <ulink url="http://www.freebsd.org">the FreeBSD project</ulink>.
+   the FreeBSD project, <ulink url="http://www.freebsd.org"></ulink>.
   </para>
 
   <para>
@@ -449,7 +449,8 @@ CVSROOT/loginfo*
 
    <para>
     The following is a suggested <productname>CVSup</productname> config file from
-    <ulink url="ftp://ftp.postgresql.org/pub/CVSup/README.cvsup">the <productname>PostgreSQL</> ftp site</ulink>
+    the <productname>PostgreSQL</> ftp site, 
+    <ulink url="ftp://ftp.postgresql.org/pub/CVSup/README.cvsup"></ulink>,
     which will fetch the current snapshot only:
 
     <programlisting>
@@ -498,7 +499,8 @@ pgsql
      You can use pre-built binaries
      if you have a platform for which binaries
      are posted on
-     <ulink url="ftp://ftp.postgresql.org/pub">the <productname>PostgreSQL</productname> ftp site</ulink>,
+     the <productname>PostgreSQL</productname> ftp site,
+     <ulink url="ftp://ftp.postgresql.org/pub"></ulink>,
      or if you are running FreeBSD, for which
      <productname>CVSup</productname> is available as a port.
 
@@ -539,7 +541,8 @@ pgsql
       <step performance="optional">
        <para>
 	If you have another platform, check for and download the appropriate binary from
-	<ulink url="ftp://ftp.postgresql.org/pub">the <productname>PostgreSQL</productname> ftp site</ulink>.
+	the <productname>PostgreSQL</productname> ftp site, 
+        <ulink url="ftp://ftp.postgresql.org/pub"></ulink>.
        </para>
       </step>
      </substeps>
@@ -621,12 +624,12 @@ $ which cvsup
       <step>
        <para>
 	Pick up the <productname>Modula-3</productname>
-	distribution from
-	<ulink url="http://m3.polymtl.ca/m3">Polytechnique Montréal</ulink>,
+	distribution from Polytechnique Montréal,
+        <ulink url="http://m3.polymtl.ca/m3"></ulink>,
 	who are actively maintaining the code base originally developed by
-	<ulink
-	 url="http://www.research.digital.com/SRC/modula-3/html/home.html">the DEC Systems Research Center</ulink>.
-       The <productname>PM3</productname> <productname>RPM</productname> distribution is roughly
+	the DEC Systems Research Center, <ulink
+	url="http://www.research.digital.com/SRC/modula-3/html/home.html"></ulink>.
+        The <productname>PM3</productname> <productname>RPM</productname> distribution is roughly
 	30MB compressed. At the time of writing, the 1.1.10-1 release
 	installed cleanly on RH-5.2, whereas the 1.1.11-1 release is
 	apparently built for another release (RH-6.0?) and does not run on RH-5.2.
@@ -761,8 +764,8 @@ If you are on a T1 or better, you should probably delete the
 As shown, it will get the repository (RCS) files.  If you uncomment
 the line containing "tag=." then it will instead check out the
 latest version of each file.  There's a bunch more information about
-what you can do in
-<ulink url="http://www.freebsd.org/handbook/cvsup.html">the CVSup Handbook</ulink>.
+what you can do in the CVSup Handbook, 
+<ulink url="http://www.freebsd.org/handbook/cvsup.html"></ulink>.
 
 There is one other thing I want to send you, but not tonight.  I
 discovered the hard way that you need a malloc package that is
