@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.56 1998/07/09 03:29:08 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.57 1998/07/13 00:01:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -504,7 +504,7 @@ getRowDescriptions(PGconn *conn)
 		if (pqGets(typName, MAX_MESSAGE_LEN, conn) ||
 			pqGetInt(&adtid, 4, conn) ||
 			pqGetInt(&adtsize, 2, conn) ||
-			pqGetInt(&adtmod, 2, conn))
+			pqGetInt(&adtmod, 4, conn))
 		{
 			PQclear(result);
 			return EOF;
@@ -512,7 +512,7 @@ getRowDescriptions(PGconn *conn)
 		result->attDescs[i].name = strdup(typName);
 		result->attDescs[i].adtid = adtid;
 		result->attDescs[i].adtsize = (short) adtsize;
-		result->attDescs[i].adtmod = (short) adtmod;
+		result->attDescs[i].adtmod = adtmod;
 	}
 
 	/* Success! */
