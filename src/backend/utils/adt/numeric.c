@@ -5,7 +5,7 @@
  *
  *	1998 Jan Wieck
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/numeric.c,v 1.48 2001/11/05 17:46:29 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/numeric.c,v 1.49 2001/12/11 02:02:12 tgl Exp $
  *
  * ----------
  */
@@ -159,6 +159,7 @@ static void add_var(NumericVar *var1, NumericVar *var2, NumericVar *result);
 static void sub_var(NumericVar *var1, NumericVar *var2, NumericVar *result);
 static void mul_var(NumericVar *var1, NumericVar *var2, NumericVar *result);
 static void div_var(NumericVar *var1, NumericVar *var2, NumericVar *result);
+static int select_div_scale(NumericVar *var1, NumericVar *var2);
 static void mod_var(NumericVar *var1, NumericVar *var2, NumericVar *result);
 static void ceil_var(NumericVar *var, NumericVar *result);
 static void floor_var(NumericVar *var, NumericVar *result);
@@ -999,28 +1000,7 @@ numeric_div(PG_FUNCTION_ARGS)
 	set_var_from_num(num1, &arg1);
 	set_var_from_num(num2, &arg2);
 
-	/* ----------
-	 * The result scale of a division isn't specified in any
-	 * SQL standard. For Postgres it is the following (where
-	 * SR, DR are the result- and display-scales of the returned
-	 * value, S1, D1, S2 and D2 are the scales of the two arguments,
-	 * The minimum and maximum scales are compile time options from
-	 * numeric.h):
-	 *
-	 *	DR = MIN(MAX(D1 + D2, MIN_DISPLAY_SCALE), MAX_DISPLAY_SCALE)
-	 *	SR = MIN(MAX(MAX(S1 + S2, MIN_RESULT_SCALE), DR + 4), MAX_RESULT_SCALE)
-	 *
-	 * By default, any result is computed with a minimum of 34 digits
-	 * after the decimal point or at least with 4 digits more than
-	 * displayed.
-	 * ----------
-	 */
-	res_dscale = MAX(arg1.dscale + arg2.dscale, NUMERIC_MIN_DISPLAY_SCALE);
-	res_dscale = MIN(res_dscale, NUMERIC_MAX_DISPLAY_SCALE);
-	global_rscale = MAX(arg1.rscale + arg2.rscale,
-						NUMERIC_MIN_RESULT_SCALE);
-	global_rscale = MAX(global_rscale, res_dscale + 4);
-	global_rscale = MIN(global_rscale, NUMERIC_MAX_RESULT_SCALE);
+	res_dscale = select_div_scale(&arg1, &arg2);
 
 	/*
 	 * Do the divide, set the display scale and return the result
@@ -1884,6 +1864,7 @@ numeric_variance(PG_FUNCTION_ARGS)
 				vsumX,
 				vsumX2,
 				vNminus1;
+	int			div_dscale;
 
 	/* We assume the input is array of numeric */
 	deconstruct_array(transarray,
@@ -1924,10 +1905,21 @@ numeric_variance(PG_FUNCTION_ARGS)
 	mul_var(&vsumX, &vsumX, &vsumX);	/* now vsumX contains sumX * sumX */
 	mul_var(&vN, &vsumX2, &vsumX2);		/* now vsumX2 contains N * sumX2 */
 	sub_var(&vsumX2, &vsumX, &vsumX2);	/* N * sumX2 - sumX * sumX */
-	mul_var(&vN, &vNminus1, &vNminus1); /* N * (N - 1) */
-	div_var(&vsumX2, &vNminus1, &vsumX);		/* variance */
 
-	res = make_result(&vsumX);
+	if (cmp_var(&vsumX2, &const_zero) <= 0)
+	{
+		/* Watch out for roundoff error producing a negative numerator */
+		res = make_result(&const_zero);
+	}
+	else
+	{
+		mul_var(&vN, &vNminus1, &vNminus1);	/* N * (N - 1) */
+		div_dscale = select_div_scale(&vsumX2, &vNminus1);
+		div_var(&vsumX2, &vNminus1, &vsumX);	/* variance */
+		vsumX.dscale = div_dscale;
+
+		res = make_result(&vsumX);
+	}
 
 	free_var(&vN);
 	free_var(&vNminus1);
@@ -1951,6 +1943,7 @@ numeric_stddev(PG_FUNCTION_ARGS)
 				vsumX,
 				vsumX2,
 				vNminus1;
+	int			div_dscale;
 
 	/* We assume the input is array of numeric */
 	deconstruct_array(transarray,
@@ -1991,11 +1984,22 @@ numeric_stddev(PG_FUNCTION_ARGS)
 	mul_var(&vsumX, &vsumX, &vsumX);	/* now vsumX contains sumX * sumX */
 	mul_var(&vN, &vsumX2, &vsumX2);		/* now vsumX2 contains N * sumX2 */
 	sub_var(&vsumX2, &vsumX, &vsumX2);	/* N * sumX2 - sumX * sumX */
-	mul_var(&vN, &vNminus1, &vNminus1); /* N * (N - 1) */
-	div_var(&vsumX2, &vNminus1, &vsumX);		/* variance */
-	sqrt_var(&vsumX, &vsumX);	/* stddev */
 
-	res = make_result(&vsumX);
+	if (cmp_var(&vsumX2, &const_zero) <= 0)
+	{
+		/* Watch out for roundoff error producing a negative numerator */
+		res = make_result(&const_zero);
+	}
+	else
+	{
+		mul_var(&vN, &vNminus1, &vNminus1); /* N * (N - 1) */
+		div_dscale = select_div_scale(&vsumX2, &vNminus1);
+		div_var(&vsumX2, &vNminus1, &vsumX);	/* variance */
+		vsumX.dscale = div_dscale;
+		sqrt_var(&vsumX, &vsumX);		/* stddev */
+
+		res = make_result(&vsumX);
+	}
 
 	free_var(&vN);
 	free_var(&vNminus1);
@@ -3318,6 +3322,50 @@ div_var(NumericVar *var1, NumericVar *var2, NumericVar *result)
 }
 
 
+/*
+ * Default scale selection for division
+ *
+ * Returns the appropriate display scale for the division result,
+ * and sets global_rscale to the result scale to use during div_var.
+ *
+ * Note that this must be called before div_var.
+ */
+static int
+select_div_scale(NumericVar *var1, NumericVar *var2)
+{
+	int			res_dscale;
+	int			res_rscale;
+
+	/* ----------
+	 * The result scale of a division isn't specified in any
+	 * SQL standard. For Postgres it is the following (where
+	 * SR, DR are the result- and display-scales of the returned
+	 * value, S1, D1, S2 and D2 are the scales of the two arguments,
+	 * The minimum and maximum scales are compile time options from
+	 * numeric.h):
+	 *
+	 *	DR = MIN(MAX(D1 + D2, MIN_DISPLAY_SCALE), MAX_DISPLAY_SCALE)
+	 *	SR = MIN(MAX(MAX(S1 + S2, DR + 4), MIN_RESULT_SCALE), MAX_RESULT_SCALE)
+	 *
+	 * By default, any result is computed with a minimum of 34 digits
+	 * after the decimal point or at least with 4 digits more than
+	 * displayed.
+	 * ----------
+	 */
+	res_dscale = var1->dscale + var2->dscale;
+	res_dscale = MAX(res_dscale, NUMERIC_MIN_DISPLAY_SCALE);
+	res_dscale = MIN(res_dscale, NUMERIC_MAX_DISPLAY_SCALE);
+
+	res_rscale = var1->rscale + var2->rscale;
+	res_rscale = MAX(res_rscale, res_dscale + 4);
+	res_rscale = MAX(res_rscale, NUMERIC_MIN_RESULT_SCALE);
+	res_rscale = MIN(res_rscale, NUMERIC_MAX_RESULT_SCALE);
+	global_rscale = res_rscale;
+
+	return res_dscale;
+}
+
+
 /* ----------
  * mod_var() -
  *
@@ -3343,12 +3391,7 @@ mod_var(NumericVar *var1, NumericVar *var2, NumericVar *result)
 	 */
 	save_global_rscale = global_rscale;
 
-	div_dscale = MAX(var1->dscale + var2->dscale, NUMERIC_MIN_DISPLAY_SCALE);
-	div_dscale = MIN(div_dscale, NUMERIC_MAX_DISPLAY_SCALE);
-	global_rscale = MAX(var1->rscale + var2->rscale,
-						NUMERIC_MIN_RESULT_SCALE);
-	global_rscale = MAX(global_rscale, div_dscale + 4);
-	global_rscale = MIN(global_rscale, NUMERIC_MAX_RESULT_SCALE);
+	div_dscale = select_div_scale(var1, var2);
 
 	div_var(var1, var2, &tmp);
 

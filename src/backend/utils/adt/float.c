@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/float.c,v 1.77 2001/11/05 17:46:29 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/float.c,v 1.78 2001/12/11 02:02:12 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1580,7 +1580,8 @@ float8_variance(PG_FUNCTION_ARGS)
 	float8	   *transvalues;
 	float8		N,
 				sumX,
-				sumX2;
+				sumX2,
+				numerator;
 
 	transvalues = check_float8_array(transarray, "float8_variance");
 	N = transvalues[0];
@@ -1594,7 +1595,13 @@ float8_variance(PG_FUNCTION_ARGS)
 	if (N <= 1.0)
 		PG_RETURN_FLOAT8(0.0);
 
-	PG_RETURN_FLOAT8((N * sumX2 - sumX * sumX) / (N * (N - 1.0)));
+	numerator = N * sumX2 - sumX * sumX;
+
+	/* Watch out for roundoff error producing a negative numerator */
+	if (numerator <= 0.0)
+		PG_RETURN_FLOAT8(0.0);
+
+	PG_RETURN_FLOAT8(numerator / (N * (N - 1.0)));
 }
 
 Datum
@@ -1604,7 +1611,8 @@ float8_stddev(PG_FUNCTION_ARGS)
 	float8	   *transvalues;
 	float8		N,
 				sumX,
-				sumX2;
+				sumX2,
+				numerator;
 
 	transvalues = check_float8_array(transarray, "float8_stddev");
 	N = transvalues[0];
@@ -1618,7 +1626,13 @@ float8_stddev(PG_FUNCTION_ARGS)
 	if (N <= 1.0)
 		PG_RETURN_FLOAT8(0.0);
 
-	PG_RETURN_FLOAT8(sqrt((N * sumX2 - sumX * sumX) / (N * (N - 1.0))));
+	numerator = N * sumX2 - sumX * sumX;
+
+	/* Watch out for roundoff error producing a negative numerator */
+	if (numerator <= 0.0)
+		PG_RETURN_FLOAT8(0.0);
+
+	PG_RETURN_FLOAT8(sqrt(numerator / (N * (N - 1.0))));
 }
 
 
