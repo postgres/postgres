@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.124 2003/10/08 03:49:38 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.125 2003/10/17 16:49:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -145,7 +145,7 @@ static const char *useful_strerror(int errnum);
 static const char *error_severity(int elevel);
 static const char *print_timestamp(void);
 static const char *print_pid(void);
-static char *str_prepend_tabs(const char *str);
+static void append_with_tabs(StringInfo buf, const char *str);
 
 
 /*
@@ -1053,9 +1053,9 @@ send_message_to_server_log(ErrorData *edata)
 	}
 
 	if (edata->message)
-		appendStringInfoString(&buf, edata->message);
+		append_with_tabs(&buf, edata->message);
 	else
-		appendStringInfoString(&buf, gettext("missing error text"));
+		append_with_tabs(&buf, gettext("missing error text"));
 
 	if (edata->cursorpos > 0)
 		appendStringInfo(&buf, gettext(" at character %d"), edata->cursorpos);
@@ -1065,13 +1065,26 @@ send_message_to_server_log(ErrorData *edata)
 	if (Log_error_verbosity >= PGERROR_DEFAULT)
 	{
 		if (edata->detail)
-			appendStringInfo(&buf, gettext("DETAIL:  %s\n"), edata->detail);
+		{
+			appendStringInfoString(&buf, gettext("DETAIL:  "));
+			append_with_tabs(&buf, edata->detail);
+			appendStringInfoChar(&buf, '\n');
+		}
 		if (edata->hint)
-			appendStringInfo(&buf, gettext("HINT:  %s\n"), edata->hint);
+		{
+			appendStringInfoString(&buf, gettext("HINT:  "));
+			append_with_tabs(&buf, edata->hint);
+			appendStringInfoChar(&buf, '\n');
+		}
 		if (edata->context)
-			appendStringInfo(&buf, gettext("CONTEXT:  %s\n"), edata->context);
+		{
+			appendStringInfoString(&buf, gettext("CONTEXT:  "));
+			append_with_tabs(&buf, edata->context);
+			appendStringInfoChar(&buf, '\n');
+		}
 		if (Log_error_verbosity >= PGERROR_VERBOSE)
 		{
+			/* assume no newlines in funcname or filename... */
 			if (edata->funcname && edata->filename)
 				appendStringInfo(&buf, gettext("LOCATION:  %s, %s:%d\n"),
 								 edata->funcname, edata->filename,
@@ -1083,14 +1096,14 @@ send_message_to_server_log(ErrorData *edata)
 	}
 
 	/*
-	 * If the user wants the query that generated this error logged, do
-	 * so. We use debug_query_string to get at the query, which is kinda
-	 * useless for queries triggered by extended query protocol; how to
-	 * improve?
+	 * If the user wants the query that generated this error logged, do it.
 	 */
 	if (edata->elevel >= log_min_error_statement && debug_query_string != NULL)
-		appendStringInfo(&buf, gettext("STATEMENT:  %s\n"),
-						 debug_query_string);
+	{
+		appendStringInfoString(&buf, gettext("STATEMENT:  "));
+		append_with_tabs(&buf, debug_query_string);
+		appendStringInfoChar(&buf, '\n');
+	}
 
 
 #ifdef HAVE_SYSLOG
@@ -1136,8 +1149,6 @@ send_message_to_server_log(ErrorData *edata)
 	/* Write to stderr, if enabled */
 	if (Use_syslog <= 1 || whereToSendOutput == Debug)
 	{
-		char *p = str_prepend_tabs(buf.data);
-
 		/*
 		 * Timestamp and PID are only used for stderr output --- we assume
 		 * the syslog daemon will supply them for us in the other case.
@@ -1145,8 +1156,7 @@ send_message_to_server_log(ErrorData *edata)
 		fprintf(stderr, "%s%s%s",
 				Log_timestamp ? print_timestamp() : "",
 				Log_pid ? print_pid() : "",
-				p);
-		pfree(p);
+				buf.data);
 	}
 
 	pfree(buf.data);
@@ -1252,7 +1262,7 @@ send_message_to_frontend(ErrorData *edata)
 			appendStringInfo(&buf, "%s: ", edata->funcname);
 
 		if (edata->message)
-			appendStringInfo(&buf, "%s", edata->message);
+			appendStringInfoString(&buf, edata->message);
 		else
 			appendStringInfoString(&buf, gettext("missing error text"));
 
@@ -1456,22 +1466,20 @@ print_pid(void)
 }
 
 /*
- *	str_prepend_tabs
+ *	append_with_tabs
  *
- *	This string prepends a tab to message continuation lines.
+ *	Append the string to the StringInfo buffer, inserting a tab after any
+ *	newline.
  */
-static char *str_prepend_tabs(const char *str)
+static void
+append_with_tabs(StringInfo buf, const char *str)
 {
-	char *outstr = palloc(strlen(str) * 2 + 1);
-	int	len = strlen(str);
-	int i, outlen = 0;
+	char	ch;
 
-	for (i = 0; i < len; i++)
+	while ((ch = *str++) != '\0')
 	{
-		outstr[outlen++] = str[i];
-		if (str[i] == '\n' && str[i+1] != '\0' )
-			outstr[outlen++] = '\t';
+		appendStringInfoCharMacro(buf, ch);
+		if (ch == '\n')
+			appendStringInfoCharMacro(buf, '\t');
 	}
-	outstr[outlen++]	= '\0';
-	return outstr;
 }
