@@ -686,7 +686,8 @@ SELECT * FROM shoelace ORDER BY sl_name;
 --
 -- Check that ruleutils are working
 --
-SELECT * FROM pg_views ORDER BY viewname;
+SELECT viewname, definition FROM pg_views ORDER BY viewname;
 
-SELECT * FROM pg_rules ORDER BY tablename, rulename;
+SELECT tablename, rulename, definition FROM pg_rules 
+	ORDER BY tablename, rulename;
 
