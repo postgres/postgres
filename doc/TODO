@@ -2,7 +2,7 @@
 TODO list for PostgreSQL
 ========================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Wed Mar 16 23:42:00 EST 2005
+Last updated:		Sat Mar 19 20:57:13 EST 2005
 
 The most recent version of this document can be viewed at the PostgreSQL web
 site, http://www.PostgreSQL.org.
@@ -705,7 +705,7 @@ Cache
 	o Query execute plan
 	o Query results
 
-* Allow the size of the buffer cache used by temporary objects to be
+* -Allow the size of the buffer cache used by temporary objects to be
   specified as a GUC variable
 
   Larger local buffer cache sizes requires more efficient handling of
