@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.37 1999/02/22 05:26:46 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.38 1999/05/09 23:31:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -59,8 +59,6 @@ static void modifyAggrefChangeVarnodes(Node **nodePtr, int rt_index, int new_ind
 static void modifyAggrefDropQual(Node **nodePtr, Node *orignode, Expr *expr);
 static SubLink *modifyAggrefMakeSublink(Expr *origexp, Query *parsetree);
 static void modifyAggrefQual(Node **nodePtr, Query *parsetree);
-
-
 static Query *fireRIRrules(Query *parsetree);
 
 
@@ -2634,12 +2632,12 @@ RewritePreprocessQuery(Query *parsetree)
 
 
 /*
- * QueryRewrite -
+ * BasicQueryRewrite -
  *	  rewrite one query via query rewrite system, possibly returning 0
  *	  or many queries
  */
-List *
-QueryRewrite(Query *parsetree)
+static List *
+BasicQueryRewrite(Query *parsetree)
 {
 	List		*querylist;
 	List		*results = NIL;
@@ -2672,10 +2670,57 @@ QueryRewrite(Query *parsetree)
 	}
 	return results;
 }
-/***S*I***/
-/* This function takes two targetlists as arguments and checks if the targetlists are compatible
- * (i.e. both select for the same number of attributes and the types are compatible 
+
+/*
+ * QueryRewrite -
+ *	  Primary entry point to the query rewriter.
+ *	  Rewrite one query via query rewrite system, possibly returning 0
+ *	  or many queries.
+ *
+ * NOTE: The code in QueryRewrite was formerly in pg_parse_and_plan(), and was
+ * moved here so that it would be invoked during EXPLAIN.  The division of
+ * labor between this routine and BasicQueryRewrite is not obviously correct
+ * ... at least not to me ... tgl 5/99.
  */
+List *
+QueryRewrite(Query *parsetree)
+{
+	List	   *rewritten,
+			   *rewritten_item;
+
+	/***S*I***/
+	/* Rewrite Union, Intersect and Except Queries
+	 * to normal Union Queries using IN and NOT IN subselects */
+	if (parsetree->intersectClause)
+		parsetree = Except_Intersect_Rewrite(parsetree);
+
+	/* Rewrite basic queries (retrieve, append, delete, replace) */
+	rewritten = BasicQueryRewrite(parsetree);
+
+	/*
+	 * Rewrite the UNIONS.
+	 */
+	foreach (rewritten_item, rewritten)
+	{
+		Query	   *qry = (Query *) lfirst(rewritten_item);
+		List	   *union_result = NIL;
+		List	   *union_item;
+
+		foreach (union_item, qry->unionClause)
+		{
+			union_result = nconc(union_result,
+							BasicQueryRewrite((Query *) lfirst(union_item)));
+		}
+		qry->unionClause = union_result;
+	}
+
+	return rewritten;
+}
+
+/***S*I***/
+/* This function takes two targetlists as arguments and checks if the
+ * targetlists are compatible (i.e. both select for the same number of
+ * attributes and the types are compatible */
 void check_targetlists_are_compatible(List *prev_target, List *current_target)
 {
   List *next_target;

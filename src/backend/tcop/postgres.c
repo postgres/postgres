@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.110 1999/05/03 19:09:54 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.111 1999/05/09 23:31:47 tgl Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -399,6 +399,49 @@ pg_parse_and_plan(char *query_string,	/* string to execute */
 	List	   *rewritten = NIL;
 	Query	   *querytree;
 
+	if (DebugPrintQuery)
+	{
+		if (DebugPrintQuery > 3)
+		{			  
+			/* Print the query string as is if query debug level > 3 */
+			TPRINTF(TRACE_QUERY, "query: %s", query_string); 
+		}
+		else
+		{
+			/* Print condensed query string to fit in one log line */
+			char		buff[MAX_QUERY_SIZE + 1];
+			char		c,
+						*s,
+						*d;
+			int			n,
+						is_space = 1;
+
+			for (s = query_string, d = buff, n = 0; (c = *s) && (n < MAX_QUERY_SIZE); s++)
+			{
+				switch (c)
+				{
+					case '\r':
+					case '\n':
+					case '\t':
+						c = ' ';
+						/* fall through */
+					case ' ':
+						if (is_space)
+							continue;
+						is_space = 1;
+						break;
+					default:
+						is_space = 0;
+						break;
+				}
+				*d++ = c;
+				n++;
+			}
+			*d = '\0';
+			TPRINTF(TRACE_QUERY, "query: %s", buff);
+		}
+	}
+
 	/* ----------------
 	 *	(1) parse the request string into a list of parse trees
 	 * ----------------
@@ -421,76 +464,15 @@ pg_parse_and_plan(char *query_string,	/* string to execute */
 
 	/* ----------------
 	 *	(2) rewrite the queries, as necessary
+	 *
+	 *  j counts queries output into new_list; the number of rewritten
+	 *  queries can be different from the original number.
 	 * ----------------
 	 */
-	j = 0;						/* counter for the new_list, new_list can
-								 * be longer than old list as a result of
-								 * rewrites */
+	j = 0;
 	for (i = 0; i < querytree_list->len; i++)
 	{
-		List	   *union_result,
-				   *union_list,
-				   *rewritten_list;
-
 		querytree = querytree_list->qtrees[i];
-
- 		/***S*I***/
- 		/* Rewrite Union, Intersect and Except Queries
- 		 * to normal Union Queries using IN and NOT IN subselects */
- 		if(querytree->intersectClause != NIL) 
- 		  {	  
- 		    querytree = Except_Intersect_Rewrite(querytree);
- 		  }
-
-		if (DebugPrintQuery)
-		{
-			if (DebugPrintQuery > 3)
-			{			  
-			  /* Print the query string as is if query debug level > 3 */
-			  TPRINTF(TRACE_QUERY, "query: %s", query_string); 
-			}
-			else
-			{
-				/* Print condensed query string to fit in one log line */
-				char		buff[MAX_QUERY_SIZE + 1];
-				char		c,
-						   *s,
-						   *d;
-				int			n,
-							is_space = 1;
-
-				for (s = query_string, d = buff, n = 0; (c = *s) && (n < MAX_QUERY_SIZE); s++)
-				{
-					switch (c)
-					{
-						case '\r':
-						case '\n':
-						case '\t':
-							c = ' ';
-							/* fall through */
-						case ' ':
-							if (is_space)
-								continue;
-							is_space = 1;
-							break;
-						default:
-							is_space = 0;
-							break;
-					}
-					*d++ = c;
-					n++;
-				}
-				*d = '\0';
-				TPRINTF(TRACE_QUERY, "query: %s", buff);
-			}
-		}
-
-		/* don't rewrite utilites */
-		if (querytree->commandType == CMD_UTILITY)
-		{
-			new_list->qtrees[j++] = querytree;
-			continue;
-		}
 
 		if (DebugPrintParse)
 		{
@@ -498,26 +480,20 @@ pg_parse_and_plan(char *query_string,	/* string to execute */
 			nodeDisplay(querytree);
 		}
 
-		/* rewrite queries (retrieve, append, delete, replace) */
+		/* don't rewrite utilites, just dump 'em into new_list */
+		if (querytree->commandType == CMD_UTILITY)
+		{
+			new_list->qtrees[j++] = querytree;
+			continue;
+		}
+
+		/* rewrite regular queries */
 		rewritten = QueryRewrite(querytree);
 
 		if (rewritten != NIL)
 		{
 			int			len,
 						k;
-
-			/*
-			 * Rewrite the UNIONS.
-			 */
-			foreach(rewritten_list, rewritten)
-			{
-				Query	   *qry = (Query *) lfirst(rewritten_list);
-
-				union_result = NIL;
-				foreach(union_list, qry->unionClause)
-					union_result = nconc(union_result, QueryRewrite((Query *) lfirst(union_list)));
-				qry->unionClause = union_result;
-			}
 
 			len = length(rewritten);
 			if (len == 1)
@@ -530,19 +506,14 @@ pg_parse_and_plan(char *query_string,	/* string to execute */
 												 * we allocated one space
 												 * for the query */
 				new_list->qtrees = realloc(new_list->qtrees,
-										new_list->len * sizeof(Query *));
+										   new_list->len * sizeof(Query *));
 				for (k = 0; k < len; k++)
 					new_list->qtrees[j++] = (Query *) nth(k, rewritten);
 			}
 		}
 	}
 
-	/* ----------
-	 * Due to rewriting, the new list could also have been
-	 * shrunk (do instead nothing). Forget obsolete queries
-	 * at the end.
-	 * ----------
-	 */
+	/* Update new_list with correct final length */
 	new_list->len = j;
 
 	/* we're done with the original lists, free it */
@@ -657,7 +628,7 @@ pg_parse_and_plan(char *query_string,	/* string to execute */
 	}
 
 	/* ----------
-	 * Check if the rewriting had thrown away anything
+	 * Check if the rewriting had thrown away everything
 	 * ----------
 	 */
 	if (querytree_list->len == 0)
@@ -1539,7 +1510,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.110 $ $Date: 1999/05/03 19:09:54 $\n");
+		puts("$Revision: 1.111 $ $Date: 1999/05/09 23:31:47 $\n");
 	}
 
 	/* ----------------

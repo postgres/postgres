@@ -4,7 +4,7 @@
  *
  * Copyright (c) 1994-5, Regents of the University of California
  *
- *	  $Id: explain.c,v 1.35 1999/04/25 03:19:09 tgl Exp $
+ *	  $Id: explain.c,v 1.36 1999/05/09 23:31:45 tgl Exp $
  *
  */
 #include <stdio.h>
@@ -49,15 +49,18 @@ ExplainQuery(Query *query, bool verbose, CommandDest dest)
 	List	*rewritten;
 	List	*l;
 
+	/* rewriter and planner may not work in aborted state? */
 	if (IsAbortedTransactionBlockState())
 	{
-		char	   *tag = "*ABORT STATE*";
-
-		EndCommand(tag, dest);
-
 		elog(NOTICE, "(transaction aborted): %s",
 			 "queries ignored until END");
+		return;
+	}
 
+	/* rewriter and planner will not cope with utility statements */
+	if (query->commandType == CMD_UTILITY)
+	{
+		elog(NOTICE, "Utility statements have no plan structure");
 		return;
 	}
 
@@ -67,7 +70,7 @@ ExplainQuery(Query *query, bool verbose, CommandDest dest)
 	/* In the case of an INSTEAD NOTHING, tell at least that */
 	if (rewritten == NIL)
 	{
-		elog(NOTICE, "query rewrites to nothing");
+		elog(NOTICE, "Query rewrites to nothing");
 		return;
 	}
 
@@ -88,7 +91,7 @@ ExplainOneQuery(Query *query, bool verbose, CommandDest dest)
 	Plan	   *plan;
 	ExplainState *es;
 
-	/* plan the queries (XXX we've ignored rewrite!!) */
+	/* plan the query */
 	plan = planner(query);
 
 	/* pg_plan could have failed */
@@ -195,7 +198,7 @@ explain_outNode(StringInfo str, Plan *plan, int indent, ExplainState *es)
 			pname = "Hash";
 			break;
 		default:
-			pname = "";
+			pname = "???";
 			break;
 	}
 
