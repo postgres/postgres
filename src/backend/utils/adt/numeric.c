@@ -5,7 +5,7 @@
  *
  *	1998 Jan Wieck
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/numeric.c,v 1.49 2001/12/11 02:02:12 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/numeric.c,v 1.50 2002/02/18 14:25:40 momjian Exp $
  *
  * ----------
  */
@@ -35,13 +35,6 @@
  * Local definitions
  * ----------
  */
-#ifndef MIN
-#define MIN(a,b) (((a)<(b)) ? (a) : (b))
-#endif
-#ifndef MAX
-#define MAX(a,b) (((a)>(b)) ? (a) : (b))
-#endif
-
 #ifndef NAN
 #define NAN		(0.0/0.0)
 #endif
@@ -484,8 +477,8 @@ numeric_round(PG_FUNCTION_ARGS)
 	 * Limit the scale value to avoid possible overflow in calculations
 	 * below.
 	 */
-	scale = MIN(NUMERIC_MAX_RESULT_SCALE,
-				MAX(-NUMERIC_MAX_RESULT_SCALE, scale));
+	scale = Min(NUMERIC_MAX_RESULT_SCALE,
+				Max(-NUMERIC_MAX_RESULT_SCALE, scale));
 
 	/*
 	 * Unpack the argument and round it at the proper digit position
@@ -530,7 +523,7 @@ numeric_round(PG_FUNCTION_ARGS)
 	/*
 	 * Set result's scale to something reasonable.
 	 */
-	scale = MIN(NUMERIC_MAX_DISPLAY_SCALE, MAX(0, scale));
+	scale = Min(NUMERIC_MAX_DISPLAY_SCALE, Max(0, scale));
 	arg.rscale = scale;
 	arg.dscale = scale;
 
@@ -570,8 +563,8 @@ numeric_trunc(PG_FUNCTION_ARGS)
 	 * Limit the scale value to avoid possible overflow in calculations
 	 * below.
 	 */
-	scale = MIN(NUMERIC_MAX_RESULT_SCALE,
-				MAX(-NUMERIC_MAX_RESULT_SCALE, scale));
+	scale = Min(NUMERIC_MAX_RESULT_SCALE,
+				Max(-NUMERIC_MAX_RESULT_SCALE, scale));
 
 	/*
 	 * Unpack the argument and truncate it at the proper digit position
@@ -579,12 +572,12 @@ numeric_trunc(PG_FUNCTION_ARGS)
 	init_var(&arg);
 	set_var_from_num(num, &arg);
 
-	arg.ndigits = MIN(arg.ndigits, MAX(0, arg.weight + scale + 1));
+	arg.ndigits = Min(arg.ndigits, Max(0, arg.weight + scale + 1));
 
 	/*
 	 * Set result's scale to something reasonable.
 	 */
-	scale = MIN(NUMERIC_MAX_DISPLAY_SCALE, MAX(0, scale));
+	scale = Min(NUMERIC_MAX_DISPLAY_SCALE, Max(0, scale));
 	arg.rscale = scale;
 	arg.dscale = scale;
 
@@ -1214,11 +1207,11 @@ numeric_sqrt(PG_FUNCTION_ARGS)
 
 	set_var_from_num(num, &arg);
 
-	res_dscale = MAX(arg.dscale, NUMERIC_MIN_DISPLAY_SCALE);
-	res_dscale = MIN(res_dscale, NUMERIC_MAX_DISPLAY_SCALE);
-	global_rscale = MAX(arg.rscale, NUMERIC_MIN_RESULT_SCALE);
-	global_rscale = MAX(global_rscale, res_dscale + 4);
-	global_rscale = MIN(global_rscale, NUMERIC_MAX_RESULT_SCALE);
+	res_dscale = Max(arg.dscale, NUMERIC_MIN_DISPLAY_SCALE);
+	res_dscale = Min(res_dscale, NUMERIC_MAX_DISPLAY_SCALE);
+	global_rscale = Max(arg.rscale, NUMERIC_MIN_RESULT_SCALE);
+	global_rscale = Max(global_rscale, res_dscale + 4);
+	global_rscale = Min(global_rscale, NUMERIC_MAX_RESULT_SCALE);
 
 	sqrt_var(&arg, &result);
 
@@ -1261,11 +1254,11 @@ numeric_exp(PG_FUNCTION_ARGS)
 	init_var(&result);
 	set_var_from_num(num, &arg);
 
-	res_dscale = MAX(arg.dscale, NUMERIC_MIN_DISPLAY_SCALE);
-	res_dscale = MIN(res_dscale, NUMERIC_MAX_DISPLAY_SCALE);
-	global_rscale = MAX(arg.rscale, NUMERIC_MIN_RESULT_SCALE);
-	global_rscale = MAX(global_rscale, res_dscale + 4);
-	global_rscale = MIN(global_rscale, NUMERIC_MAX_RESULT_SCALE);
+	res_dscale = Max(arg.dscale, NUMERIC_MIN_DISPLAY_SCALE);
+	res_dscale = Min(res_dscale, NUMERIC_MAX_DISPLAY_SCALE);
+	global_rscale = Max(arg.rscale, NUMERIC_MIN_RESULT_SCALE);
+	global_rscale = Max(global_rscale, res_dscale + 4);
+	global_rscale = Min(global_rscale, NUMERIC_MAX_RESULT_SCALE);
 
 	exp_var(&arg, &result);
 
@@ -1308,11 +1301,11 @@ numeric_ln(PG_FUNCTION_ARGS)
 	init_var(&result);
 	set_var_from_num(num, &arg);
 
-	res_dscale = MAX(arg.dscale, NUMERIC_MIN_DISPLAY_SCALE);
-	res_dscale = MIN(res_dscale, NUMERIC_MAX_DISPLAY_SCALE);
-	global_rscale = MAX(arg.rscale, NUMERIC_MIN_RESULT_SCALE);
-	global_rscale = MAX(global_rscale, res_dscale + 4);
-	global_rscale = MIN(global_rscale, NUMERIC_MAX_RESULT_SCALE);
+	res_dscale = Max(arg.dscale, NUMERIC_MIN_DISPLAY_SCALE);
+	res_dscale = Min(res_dscale, NUMERIC_MAX_DISPLAY_SCALE);
+	global_rscale = Max(arg.rscale, NUMERIC_MIN_RESULT_SCALE);
+	global_rscale = Max(global_rscale, res_dscale + 4);
+	global_rscale = Min(global_rscale, NUMERIC_MAX_RESULT_SCALE);
 
 	ln_var(&arg, &result);
 
@@ -1359,11 +1352,11 @@ numeric_log(PG_FUNCTION_ARGS)
 	set_var_from_num(num1, &arg1);
 	set_var_from_num(num2, &arg2);
 
-	res_dscale = MAX(arg1.dscale + arg2.dscale, NUMERIC_MIN_DISPLAY_SCALE);
-	res_dscale = MIN(res_dscale, NUMERIC_MAX_DISPLAY_SCALE);
-	global_rscale = MAX(arg1.rscale + arg2.rscale, NUMERIC_MIN_RESULT_SCALE);
-	global_rscale = MAX(global_rscale, res_dscale + 4);
-	global_rscale = MIN(global_rscale, NUMERIC_MAX_RESULT_SCALE);
+	res_dscale = Max(arg1.dscale + arg2.dscale, NUMERIC_MIN_DISPLAY_SCALE);
+	res_dscale = Min(res_dscale, NUMERIC_MAX_DISPLAY_SCALE);
+	global_rscale = Max(arg1.rscale + arg2.rscale, NUMERIC_MIN_RESULT_SCALE);
+	global_rscale = Max(global_rscale, res_dscale + 4);
+	global_rscale = Min(global_rscale, NUMERIC_MAX_RESULT_SCALE);
 
 	/*
 	 * Call log_var() to compute and return the result
@@ -1414,11 +1407,11 @@ numeric_power(PG_FUNCTION_ARGS)
 	set_var_from_num(num1, &arg1);
 	set_var_from_num(num2, &arg2);
 
-	res_dscale = MAX(arg1.dscale + arg2.dscale, NUMERIC_MIN_DISPLAY_SCALE);
-	res_dscale = MIN(res_dscale, NUMERIC_MAX_DISPLAY_SCALE);
-	global_rscale = MAX(arg1.rscale + arg2.rscale, NUMERIC_MIN_RESULT_SCALE);
-	global_rscale = MAX(global_rscale, res_dscale + 4);
-	global_rscale = MIN(global_rscale, NUMERIC_MAX_RESULT_SCALE);
+	res_dscale = Max(arg1.dscale + arg2.dscale, NUMERIC_MIN_DISPLAY_SCALE);
+	res_dscale = Min(res_dscale, NUMERIC_MAX_DISPLAY_SCALE);
+	global_rscale = Max(arg1.rscale + arg2.rscale, NUMERIC_MIN_RESULT_SCALE);
+	global_rscale = Max(global_rscale, res_dscale + 4);
+	global_rscale = Min(global_rscale, NUMERIC_MAX_RESULT_SCALE);
 
 	/*
 	 * Call log_var() to compute and return the result
@@ -2540,12 +2533,12 @@ get_str_from_var(NumericVar *var, int dscale)
 		}
 	}
 	else
-		var->ndigits = MAX(0, MIN(i, var->ndigits));
+		var->ndigits = Max(0, Min(i, var->ndigits));
 
 	/*
 	 * Allocate space for the result
 	 */
-	str = palloc(MAX(0, dscale) + MAX(0, var->weight) + 4);
+	str = palloc(Max(0, dscale) + Max(0, var->weight) + 4);
 	cp = str;
 
 	/*
@@ -2557,7 +2550,7 @@ get_str_from_var(NumericVar *var, int dscale)
 	/*
 	 * Output all digits before the decimal point
 	 */
-	i = MAX(var->weight, 0);
+	i = Max(var->weight, 0);
 	d = 0;
 
 	while (i >= 0)
@@ -2625,7 +2618,7 @@ make_result(NumericVar *var)
 		return result;
 	}
 
-	n = MAX(0, MIN(var->ndigits, var->weight + var->rscale + 1));
+	n = Max(0, Min(var->ndigits, var->weight + var->rscale + 1));
 
 	/* truncate leading zeroes */
 	while (n > 0 && *digit == 0)
@@ -2717,7 +2710,7 @@ apply_typmod(NumericVar *var, int32 typmod)
 		}
 	}
 	else
-		var->ndigits = MAX(0, MIN(i, var->ndigits));
+		var->ndigits = Max(0, Min(i, var->ndigits));
 
 	/*
 	 * Check for overflow - note we can't do this before rounding, because
@@ -2825,8 +2818,8 @@ add_var(NumericVar *var1, NumericVar *var2, NumericVar *result)
 					 * ----------
 					 */
 					zero_var(result);
-					result->rscale = MAX(var1->rscale, var2->rscale);
-					result->dscale = MAX(var1->dscale, var2->dscale);
+					result->rscale = Max(var1->rscale, var2->rscale);
+					result->dscale = Max(var1->dscale, var2->dscale);
 					break;
 
 				case 1:
@@ -2869,8 +2862,8 @@ add_var(NumericVar *var1, NumericVar *var2, NumericVar *result)
 					 * ----------
 					 */
 					zero_var(result);
-					result->rscale = MAX(var1->rscale, var2->rscale);
-					result->dscale = MAX(var1->dscale, var2->dscale);
+					result->rscale = Max(var1->rscale, var2->rscale);
+					result->dscale = Max(var1->dscale, var2->dscale);
 					break;
 
 				case 1:
@@ -2949,8 +2942,8 @@ sub_var(NumericVar *var1, NumericVar *var2, NumericVar *result)
 					 * ----------
 					 */
 					zero_var(result);
-					result->rscale = MAX(var1->rscale, var2->rscale);
-					result->dscale = MAX(var1->dscale, var2->dscale);
+					result->rscale = Max(var1->rscale, var2->rscale);
+					result->dscale = Max(var1->dscale, var2->dscale);
 					break;
 
 				case 1:
@@ -2993,8 +2986,8 @@ sub_var(NumericVar *var1, NumericVar *var2, NumericVar *result)
 					 * ----------
 					 */
 					zero_var(result);
-					result->rscale = MAX(var1->rscale, var2->rscale);
-					result->dscale = MAX(var1->dscale, var2->dscale);
+					result->rscale = Max(var1->rscale, var2->rscale);
+					result->dscale = Max(var1->dscale, var2->dscale);
 					break;
 
 				case 1:
@@ -3344,8 +3337,8 @@ select_div_scale(NumericVar *var1, NumericVar *var2)
 	 * The minimum and maximum scales are compile time options from
 	 * numeric.h):
 	 *
-	 *	DR = MIN(MAX(D1 + D2, MIN_DISPLAY_SCALE), MAX_DISPLAY_SCALE)
-	 *	SR = MIN(MAX(MAX(S1 + S2, DR + 4), MIN_RESULT_SCALE), MAX_RESULT_SCALE)
+	 *	DR = Min(Max(D1 + D2, MIN_DISPLAY_SCALE), MAX_DISPLAY_SCALE)
+	 *	SR = Min(Max(Max(S1 + S2, DR + 4), MIN_RESULT_SCALE), MAX_RESULT_SCALE)
 	 *
 	 * By default, any result is computed with a minimum of 34 digits
 	 * after the decimal point or at least with 4 digits more than
@@ -3353,13 +3346,13 @@ select_div_scale(NumericVar *var1, NumericVar *var2)
 	 * ----------
 	 */
 	res_dscale = var1->dscale + var2->dscale;
-	res_dscale = MAX(res_dscale, NUMERIC_MIN_DISPLAY_SCALE);
-	res_dscale = MIN(res_dscale, NUMERIC_MAX_DISPLAY_SCALE);
+	res_dscale = Max(res_dscale, NUMERIC_MIN_DISPLAY_SCALE);
+	res_dscale = Min(res_dscale, NUMERIC_MAX_DISPLAY_SCALE);
 
 	res_rscale = var1->rscale + var2->rscale;
-	res_rscale = MAX(res_rscale, res_dscale + 4);
-	res_rscale = MAX(res_rscale, NUMERIC_MIN_RESULT_SCALE);
-	res_rscale = MIN(res_rscale, NUMERIC_MAX_RESULT_SCALE);
+	res_rscale = Max(res_rscale, res_dscale + 4);
+	res_rscale = Max(res_rscale, NUMERIC_MIN_RESULT_SCALE);
+	res_rscale = Min(res_rscale, NUMERIC_MAX_RESULT_SCALE);
 	global_rscale = res_rscale;
 
 	return res_dscale;
@@ -3398,7 +3391,7 @@ mod_var(NumericVar *var1, NumericVar *var2, NumericVar *result)
 	tmp.dscale = div_dscale;
 
 	/* do trunc() by forgetting digits to the right of the decimal point */
-	tmp.ndigits = MAX(0, MIN(tmp.ndigits, tmp.weight + 1));
+	tmp.ndigits = Max(0, Min(tmp.ndigits, tmp.weight + 1));
 
 	global_rscale = var2->rscale + tmp.rscale;
 
@@ -3406,7 +3399,7 @@ mod_var(NumericVar *var1, NumericVar *var2, NumericVar *result)
 
 	sub_var(var1, &tmp, result);
 
-	result->dscale = MAX(var1->dscale, var2->dscale);
+	result->dscale = Max(var1->dscale, var2->dscale);
 
 	global_rscale = save_global_rscale;
 	free_var(&tmp);
@@ -3429,7 +3422,7 @@ ceil_var(NumericVar *var, NumericVar *result)
 	set_var_from_var(var, &tmp);
 
 	tmp.rscale = 0;
-	tmp.ndigits = MIN(tmp.ndigits, MAX(0, tmp.weight + 1));
+	tmp.ndigits = Min(tmp.ndigits, Max(0, tmp.weight + 1));
 	if (tmp.sign == NUMERIC_POS && cmp_var(var, &tmp) != 0)
 		add_var(&tmp, &const_one, &tmp);
 
@@ -3454,7 +3447,7 @@ floor_var(NumericVar *var, NumericVar *result)
 	set_var_from_var(var, &tmp);
 
 	tmp.rscale = 0;
-	tmp.ndigits = MIN(tmp.ndigits, MAX(0, tmp.weight + 1));
+	tmp.ndigits = Min(tmp.ndigits, Max(0, tmp.weight + 1));
 	if (tmp.sign == NUMERIC_NEG && cmp_var(var, &tmp) != 0)
 		sub_var(&tmp, &const_one, &tmp);
 
@@ -3860,9 +3853,9 @@ add_abs(NumericVar *var1, NumericVar *var2, NumericVar *result)
 	NumericDigit *var1digits = var1->digits;
 	NumericDigit *var2digits = var2->digits;
 
-	res_weight = MAX(var1->weight, var2->weight) + 1;
-	res_rscale = MAX(var1->rscale, var2->rscale);
-	res_dscale = MAX(var1->dscale, var2->dscale);
+	res_weight = Max(var1->weight, var2->weight) + 1;
+	res_rscale = Max(var1->rscale, var2->rscale);
+	res_dscale = Max(var1->dscale, var2->dscale);
 	res_ndigits = res_rscale + res_weight + 1;
 	if (res_ndigits <= 0)
 		res_ndigits = 1;
@@ -3948,8 +3941,8 @@ sub_abs(NumericVar *var1, NumericVar *var2, NumericVar *result)
 	NumericDigit *var2digits = var2->digits;
 
 	res_weight = var1->weight;
-	res_rscale = MAX(var1->rscale, var2->rscale);
-	res_dscale = MAX(var1->dscale, var2->dscale);
+	res_rscale = Max(var1->rscale, var2->rscale);
+	res_dscale = Max(var1->dscale, var2->dscale);
 	res_ndigits = res_rscale + res_weight + 1;
 	if (res_ndigits <= 0)
 		res_ndigits = 1;
