@@ -100,6 +100,13 @@ SELECT class, c FROM e_star* x WHERE x.c NOTNULL;
 
 SELECT * FROM f_star* x WHERE x.c ISNULL;
 
+-- grouping and aggregation on inherited sets have been busted in the past...
+
+SELECT sum(a) FROM a_star*;
+
+SELECT class, sum(a) FROM a_star* GROUP BY class;
+
+
 ALTER TABLE f_star RENAME COLUMN f TO ff;
 
 ALTER TABLE e_star* RENAME COLUMN e TO ee;

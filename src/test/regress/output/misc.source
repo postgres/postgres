@@ -178,6 +178,23 @@ f    |  | |   |((11111111,33333333),(22222222,44444444))
 f    |  | |   |                                         
 (8 rows)
 
+QUERY: SELECT sum(a) FROM a_star*;
+sum
+---
+355
+(1 row)
+
+QUERY: SELECT class, sum(a) FROM a_star* GROUP BY class;
+class|sum
+-----+---
+a    |  3
+b    |  7
+c    | 11
+d    | 84
+e    | 66
+f    |184
+(6 rows)
+
 QUERY: ALTER TABLE f_star RENAME COLUMN f TO ff;
 QUERY: ALTER TABLE e_star* RENAME COLUMN e TO ee;
 QUERY: ALTER TABLE d_star* RENAME COLUMN d TO dd;
