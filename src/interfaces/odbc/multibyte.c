@@ -59,6 +59,7 @@ pg_CS CS_Table[] =
 	{ "OTHER", OTHER }
 };
 
+#ifdef NOT_USED
 static int
 pg_ismb(int characterset_code)
 {
@@ -70,6 +71,7 @@ pg_ismb(int characterset_code)
 	}
 	return (MB_CHARACTERSET[i]);
 }
+#endif
 
 int
 pg_CS_code(const unsigned char *characterset_string)
@@ -227,8 +229,8 @@ pg_CS_stat(int stat,unsigned int character,int characterset_code)
 				else if (stat == 4 &&
 					character > 0xa0)
 					stat = 3;
-				else if (stat == 3 ||
-					stat < 2 &&
+				else if ((stat == 3 ||
+					stat < 2) &&
 					character > 0xa0)
 					stat = 2;
 				else if (stat == 2)
