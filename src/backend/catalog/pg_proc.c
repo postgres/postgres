@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_proc.c,v 1.38 2000/01/11 02:30:05 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_proc.c,v 1.39 2000/01/11 05:22:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -80,8 +80,9 @@ ProcedureCreate(char *procedureName,
 	{
 		Value	   *t = lfirst(x);
 
-		if (parameterCount > FUNC_MAX_ARGS)
-			elog(ERROR, "Procedures cannot take more than %d arguments",FUNC_MAX_ARGS);
+		if (parameterCount >= FUNC_MAX_ARGS)
+			elog(ERROR, "Procedures cannot take more than %d arguments",
+				 FUNC_MAX_ARGS);
 
 		if (strcmp(strVal(t), "opaque") == 0)
 		{
@@ -172,7 +173,6 @@ ProcedureCreate(char *procedureName,
 			elog(ERROR, "ProcedureCreate: sql functions cannot return type \"opaque\"");
 		typeObjectId = 0;
 	}
-
 	else
 	{
 		typeObjectId = TypeGet(returnTypeName, &defined);
@@ -192,7 +192,6 @@ ProcedureCreate(char *procedureName,
 					 returnTypeName);
 			}
 		}
-
 		else if (!defined)
 		{
 			elog(NOTICE, "ProcedureCreate: return type '%s' is only a shell",
@@ -247,7 +246,7 @@ ProcedureCreate(char *procedureName,
 			prosrc = procedureName;
 		if (fmgr_lookupByName(prosrc) == (func_ptr) NULL)
 			elog(ERROR,
-			"ProcedureCreate: there is no builtin function named \"%s\"",
+				 "ProcedureCreate: there is no builtin function named \"%s\"",
 				 prosrc);
 	}
 
@@ -266,30 +265,18 @@ ProcedureCreate(char *procedureName,
 	values[i++] = NameGetDatum(&procname);
 	values[i++] = Int32GetDatum(GetUserId());
 	values[i++] = ObjectIdGetDatum(languageObjectId);
-
 	/* XXX isinherited is always false for now */
-
 	values[i++] = Int8GetDatum((bool) 0);
-
-	/* XXX istrusted is always false for now */
-
 	values[i++] = Int8GetDatum(trusted);
 	values[i++] = Int8GetDatum(canCache);
 	values[i++] = UInt16GetDatum(parameterCount);
 	values[i++] = Int8GetDatum(returnsSet);
 	values[i++] = ObjectIdGetDatum(typeObjectId);
-
 	values[i++] = (Datum) typev;
-
-	/*
-	 * The following assignments of constants are made.  The real values
-	 * will have to be extracted from the arglist someday soon.
-	 */
 	values[i++] = Int32GetDatum(byte_pct);		/* probyte_pct */
 	values[i++] = Int32GetDatum(perbyte_cpu);	/* properbyte_cpu */
 	values[i++] = Int32GetDatum(percall_cpu);	/* propercall_cpu */
 	values[i++] = Int32GetDatum(outin_ratio);	/* prooutin_ratio */
-
 	values[i++] = (Datum) fmgr(F_TEXTIN, prosrc);		/* prosrc */
 	values[i++] = (Datum) fmgr(F_TEXTIN, probin);		/* probin */
 
