@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.129.2.1 2002/05/01 01:27:31 inoue Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.129.2.2 2003/01/26 23:09:37 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1231,6 +1231,9 @@ l1:
 	tp.t_data->t_cmax = GetCurrentCommandId();
 	tp.t_data->t_infomask &= ~(HEAP_XMAX_COMMITTED |
 							 HEAP_XMAX_INVALID | HEAP_MARKED_FOR_UPDATE);
+	/* Make sure there is no forward chain link in t_ctid */
+	tp.t_data->t_ctid = tp.t_self;
+
 	/* XLOG stuff */
 	{
 		xl_heap_delete xlrec;
@@ -1724,6 +1727,8 @@ l3:
 	tuple->t_data->t_cmax = GetCurrentCommandId();
 	tuple->t_data->t_infomask &= ~(HEAP_XMAX_COMMITTED | HEAP_XMAX_INVALID);
 	tuple->t_data->t_infomask |= HEAP_MARKED_FOR_UPDATE;
+	/* Make sure there is no forward chain link in t_ctid */
+	tuple->t_data->t_ctid = *tid;
 
 	LockBuffer(*buffer, BUFFER_LOCK_UNLOCK);
 
@@ -1992,6 +1997,9 @@ heap_xlog_clean(bool redo, XLogRecPtr lsn, XLogRecord *record)
 	}
 
 	PageRepairFragmentation(page, NULL);
+
+	PageSetLSN(page, lsn);
+	PageSetSUI(page, ThisStartUpID); /* prev sui */
 	UnlockAndWriteBuffer(buffer);
 }
 
@@ -2048,6 +2056,8 @@ heap_xlog_delete(bool redo, XLogRecPtr lsn, XLogRecord *record)
 		htup->t_cmax = FirstCommandId;
 		htup->t_infomask &= ~(HEAP_XMAX_COMMITTED |
 							  HEAP_XMAX_INVALID | HEAP_MARKED_FOR_UPDATE);
+		/* Make sure there is no forward chain link in t_ctid */
+		htup->t_ctid = xlrec->target.tid;
 		PageSetLSN(page, lsn);
 		PageSetSUI(page, ThisStartUpID);
 		UnlockAndWriteBuffer(buffer);
@@ -2124,6 +2134,7 @@ heap_xlog_insert(bool redo, XLogRecPtr lsn, XLogRecord *record)
 		htup->t_xmax = InvalidTransactionId;
 		htup->t_cmax = FirstCommandId;
 		htup->t_infomask = HEAP_XMAX_INVALID | xlhdr.mask;
+		htup->t_ctid = xlrec->target.tid;
 
 		offnum = PageAddItem(page, (Item) htup, newlen, offnum,
 							 LP_USED | OverwritePageMode);
@@ -2208,6 +2219,8 @@ heap_xlog_update(bool redo, XLogRecPtr lsn, XLogRecord *record, bool move)
 			htup->t_infomask &=
 				~(HEAP_XMIN_COMMITTED | HEAP_XMIN_INVALID | HEAP_MOVED_IN);
 			htup->t_infomask |= HEAP_MOVED_OFF;
+			/* Make sure there is no forward chain link in t_ctid */
+			htup->t_ctid = xlrec->target.tid;
 		}
 		else
 		{
@@ -2215,6 +2228,8 @@ heap_xlog_update(bool redo, XLogRecPtr lsn, XLogRecord *record, bool move)
 			htup->t_cmax = FirstCommandId;
 			htup->t_infomask &= ~(HEAP_XMAX_COMMITTED |
 							 HEAP_XMAX_INVALID | HEAP_MARKED_FOR_UPDATE);
+			/* Set forward chain link in t_ctid */
+			htup->t_ctid = xlrec->newtid;
 		}
 		if (samepage)
 			goto newsame;
@@ -2311,6 +2326,8 @@ newsame:;
 			htup->t_cmax = FirstCommandId;
 			htup->t_infomask = HEAP_XMAX_INVALID | xlhdr.mask;
 		}
+		/* Make sure there is no forward chain link in t_ctid */
+		htup->t_ctid = xlrec->newtid;
 
 		offnum = PageAddItem(page, (Item) htup, newlen, offnum,
 							 LP_USED | OverwritePageMode);
