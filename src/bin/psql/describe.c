@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/describe.c,v 1.35 2001/07/08 14:42:17 petere Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/describe.c,v 1.36 2001/08/05 22:13:46 tgl Exp $
  */
 #include "postgres_fe.h"
 #include "describe.h"
@@ -27,8 +27,8 @@
  */
 
 /* the maximal size of regular expression we'll accept here */
-/* (it is save to just change this here) */
-#define REGEXP_CUTOFF 10 * NAMEDATALEN
+/* (it is safe to just change this here) */
+#define REGEXP_CUTOFF (10 * NAMEDATALEN)
 
 
 /* \da
@@ -637,49 +637,65 @@ describeTableDetails(const char *name, bool desc)
 	}
 
 	/* Make footers */
-	/* Information about the index */
 	if (tableinfo.relkind == 'i')
 	{
+		/* Footer information about an index */
 		PGresult   *result;
 
-		sprintf(buf, "SELECT i.indisunique, i.indisprimary, i.indislossy, a.amname\n"
+		sprintf(buf, "SELECT i.indisunique, i.indisprimary, i.indislossy, a.amname,\n"
+				"       pg_get_expr(i.indpred, i.indrelid) as indpred\n"
 				"FROM pg_index i, pg_class c, pg_am a\n"
 				"WHERE i.indexrelid = c.oid AND c.relname = '%s' AND c.relam = a.oid",
 				name);
 
 		result = PSQLexec(buf);
-		if (!result)
+		if (!result || PQntuples(result) != 1)
 			error = true;
 		else
 		{
+			char   *indisunique = PQgetvalue(result, 0, 0);
+			char   *indisprimary = PQgetvalue(result, 0, 1);
+			char   *indislossy = PQgetvalue(result, 0, 2);
+			char   *indamname = PQgetvalue(result, 0, 3);
+			char   *indpred = PQgetvalue(result, 0, 4);
+
+			footers = xmalloc(3 * sizeof(*footers));
 			/* XXX This construction is poorly internationalized. */
-			footers = xmalloc(2 * sizeof(*footers));
 			footers[0] = xmalloc(NAMEDATALEN + 128);
-			snprintf(footers[0], NAMEDATALEN + 128, "%s%s%s",
-					 strcmp(PQgetvalue(result, 0, 0), "t") == 0 ? _("unique ") : "",
-					 PQgetvalue(result, 0, 3),
-					 strcmp(PQgetvalue(result, 0, 2), "t") == 0 ? _(" (lossy)") : ""
-				);
-			if (strcmp(PQgetvalue(result, 0, 1), "t") == 0)
+			snprintf(footers[0], NAMEDATALEN + 128, "%s%s",
+					 strcmp(indisunique, "t") == 0 ? _("unique ") : "",
+					 indamname);
+			if (strcmp(indisprimary, "t") == 0)
 				snprintf(footers[0] + strlen(footers[0]),
 						 NAMEDATALEN + 128 - strlen(footers[0]),
 						 _(" (primary key)"));
-			footers[1] = NULL;
+			if (strcmp(indislossy, "t") == 0)
+				snprintf(footers[0] + strlen(footers[0]),
+						 NAMEDATALEN + 128 - strlen(footers[0]),
+						 _(" (lossy)"));
+			if (strlen(indpred) > 0)
+			{
+				footers[1] = xmalloc(64 + strlen(indpred));
+				snprintf(footers[1], 64 + strlen(indpred),
+						 _("Index predicate: %s"), indpred);
+				footers[2] = NULL;
+			}
+			else
+				footers[1] = NULL;
 		}
 	}
-	/* Information about the view */
 	else if (view_def)
 	{
+		/* Footer information about a view */
 		footers = xmalloc(2 * sizeof(*footers));
 		footers[0] = xmalloc(64 + strlen(view_def));
 		snprintf(footers[0], 64 + strlen(view_def),
 				 _("View definition: %s"), view_def);
 		footers[1] = NULL;
 	}
-
-	/* Information about the table */
 	else if (tableinfo.relkind == 'r')
 	{
+		/* Footer information about a table */
 		PGresult		*result1 = NULL,
 						*result2 = NULL,
 						*result3 = NULL,
