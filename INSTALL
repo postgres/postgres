@@ -274,8 +274,7 @@ PostgreSQL:
        --with-tcl         Enables programs requiring Tcl/Tk and X11,
                           including pgtclsh and libpgtcl.
 
-       --with-perl        Enables the perl interface.  Note that this
-                          requires an installed version of postgreSQL.
+       --with-perl        Enables the perl interface.
 
        --with-includes=DIRS
                           Include DIRS in list of directories searched
