@@ -39,7 +39,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  * Portions taken from FreeBSD.
  *
- * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.64 2004/10/22 22:30:57 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.65 2004/10/24 15:55:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -407,6 +407,9 @@ readfile(char *path)
 
 /*
  * write an array of lines to a file
+ *
+ * This is only used to write text files.  Use fopen "w" not PG_BINARY_W
+ * so that the resulting configuration files are nicely editable on Windows.
  */
 static void
 writefile(char *path, char **lines)
@@ -414,7 +417,7 @@ writefile(char *path, char **lines)
 	FILE	   *out_file;
 	char	  **line;
 
-	if ((out_file = fopen(path, PG_BINARY_W)) == NULL)
+	if ((out_file = fopen(path, "w")) == NULL)
 	{
 		fprintf(stderr, _("%s: could not open file \"%s\" for writing: %s\n"),
 				progname, path, strerror(errno));
