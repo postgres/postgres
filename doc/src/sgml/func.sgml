@@ -1,17 +1,18 @@
- <Chapter Id="functions">
-  <Title id="functions-title">Functions</Title>
+ <chapter id="functions">
+  <title id="functions-title">Functions</title>
 
-  <Abstract>
-   <Para>
-    Describes the built-in functions available in <ProductName>Postgres</ProductName>.
-   </Para>
-  </Abstract>
+  <abstract>
+   <para>
+    Describes the built-in functions available
+    in <productname>Postgres</productname>.
+   </para>
+  </abstract>
 
-  <Para>
+  <para>
    Many data types have functions available for conversion to other related types.
    In addition, there are some type-specific functions. Some functions are also
    available through operators and may be documented as operators only.
-  </Para>
+  </para>
 
   <sect1>
    <title id="sql-funcs">SQL Functions</title>
@@ -24,37 +25,37 @@
    </para>
 
    <para>
-    <TABLE TOCENTRY="1">
-     <TITLE>SQL Functions</TITLE>
-     <TGROUP COLS="4">
-      <THEAD>
-       <ROW>
-	<ENTRY>Function</ENTRY>
-	<ENTRY>Returns</ENTRY>
-	<ENTRY>Description</ENTRY>
-	<ENTRY>Example</ENTRY>
-       </ROW>
-      </THEAD>
-      <TBODY>
-       <ROW>
-	<ENTRY> COALESCE(<replaceable class="parameter">list</replaceable>) </ENTRY>
-	<ENTRY> non-NULL </ENTRY>
-	<ENTRY> return first non-NULL value in list </ENTRY>
-	<ENTRY> COALESCE(<replaceable class="parameter">c1</replaceable>, <replaceable class="parameter">c2</replaceable> + 5, 0) </ENTRY>
-       </ROW>
-       <ROW>
-	<ENTRY> IFNULL(<replaceable
-	  class="parameter">input</replaceable>,<replaceable> class="parameter">non-NULL substitute</replaceable>) </ENTRY>
-	<ENTRY> non-NULL </ENTRY>
-	<ENTRY> return second argument if first is NULL </ENTRY>
-	<ENTRY> IFNULL(<replaceable class="parameter">c1</replaceable>, 'N/A')</ENTRY>
-       </ROW>
-       <ROW>
-	<ENTRY> CASE(WHEN <replaceable class="parameter">expr</replaceable> THEN <replaceable class="parameter">expr</replaceable> [...] ELSE <replaceable class="parameter">expr</replaceable> ) </ENTRY>
-	<ENTRY> <replaceable class="parameter">expr</replaceable> </ENTRY>
-	<ENTRY> return expression for first true clause </ENTRY>
-	<ENTRY> CASE(WHEN <replaceable class="parameter">c1</replaceable> = 1 THEN 'match' ELSE 'no match') </ENTRY>
-       </ROW>
+    <table tocentry="1">
+     <title>SQL Functions</title>
+     <tgroup cols="4">
+      <thead>
+       <row>
+	<entry>Function</entry>
+	<entry>Returns</entry>
+	<entry>Description</entry>
+	<entry>Example</entry>
+       </row>
+      </thead>
+      <tbody>
+       <row>
+	<entry> COALESCE(<replaceable class="parameter">list</replaceable>) </entry>
+	<entry> non-NULL </entry>
+	<entry> return first non-NULL value in list </entry>
+	<entry> COALESCE(<replaceable class="parameter">r"</replaceable>le>, <replaceable
+	  class="parameter">c2</replaceable> + 5, 0) </entry>
+       </row>
+       <row>
+	<entry> IFNULL(<replaceable class="parameter">input</replaceable>,<replaceable class="parameter">non-NULL substitute</replaceable>) </entry>
+	<entry> non-NULL </entry>
+	<entry> return second argument if first is NULL </entry>
+	<entry> IFNULL(<replaceable class="parameter">c1</replaceable>, 'N/A')</entry>
+       </row>
+       <row>
+	<entry> CASE WHEN <replaceable class="parameter">expr</replaceable> THEN <replaceable class="parameter">expr</replaceable> [...] ELSE <replaceable class="parameter">expr</replaceable> END </entry>
+	<entry> <replaceable class="parameter">expr</replaceable> </entry>
+	<entry> return expression for first true clause </entry>
+	<entry> CASE WHEN <replaceable class="parameter">c1</replaceable> = 1 THEN 'match' ELSE 'no match' END </entry>
+       </row>
       </tbody>
      </tgroup>
     </table>
@@ -64,237 +65,237 @@
   <sect1>
    <title id="math-funcs">Mathematical Functions</title>
 
-   <Para>
-    <TABLE TOCENTRY="1">
-     <TITLE>Mathematical Functions</TITLE>
-     <TGROUP COLS="4">
-      <THEAD>
-       <ROW>
-	<ENTRY>Function</ENTRY>
-	<ENTRY>Returns</ENTRY>
-	<ENTRY>Description</ENTRY>
-	<ENTRY>Example</ENTRY>
-       </ROW>
-      </THEAD>
-      <TBODY>
-       <ROW>
-	<ENTRY> dexp(float8) </ENTRY>
-	<ENTRY> float8 </ENTRY>
-	<ENTRY> raise e to the specified exponent </ENTRY>
-	<ENTRY> dexp(2.0) </ENTRY>
-       </ROW>
-       <ROW>
-	<ENTRY> dpow(float8,float8) </ENTRY>
-	<ENTRY> float8 </ENTRY>
-	<ENTRY> raise a number to the specified exponent </ENTRY>
-	<ENTRY> dpow(2.0, 16.0) </ENTRY>
-       </ROW>
-       <ROW>
-	<ENTRY> float(int) </ENTRY>
-	<ENTRY> float8 </ENTRY>
-	<ENTRY> convert integer to floating point </ENTRY>
-	<ENTRY> float(2) </ENTRY>
-       </ROW>
-       <ROW>
-	<ENTRY> float4(int) </ENTRY>
-	<ENTRY> float4 </ENTRY>
-	<ENTRY> convert integer to floating point </ENTRY>
-	<ENTRY> float4(2) </ENTRY>
-       </ROW>
-       <ROW>
-	<ENTRY> integer(float) </ENTRY>
-	<ENTRY> int </ENTRY>
-	<ENTRY> convert floating point to integer </ENTRY>
-	<ENTRY> integer(2.0) </ENTRY>
-       </ROW>
-      </TBODY>
-     </TGROUP>
-    </TABLE>
-   </Para>
+   <para>
+    <table tocentry="1">
+     <title>Mathematical Functions</title>
+     <tgroup cols="4">
+      <thead>
+       <row>
+	<entry>Function</entry>
+	<entry>Returns</entry>
+	<entry>Description</entry>
+	<entry>Example</entry>
+       </row>
+      </thead>
+      <tbody>
+       <row>
+	<entry> dexp(float8) </entry>
+	<entry> float8 </entry>
+	<entry> raise e to the specified exponent </entry>
+	<entry> dexp(2.0) </entry>
+       </row>
+       <row>
+	<entry> dpow(float8,float8) </entry>
+	<entry> float8 </entry>
+	<entry> raise a number to the specified exponent </entry>
+	<entry> dpow(2.0, 16.0) </entry>
+       </row>
+       <row>
+	<entry> float(int) </entry>
+	<entry> float8 </entry>
+	<entry> convert integer to floating point </entry>
+	<entry> float(2) </entry>
+       </row>
+       <row>
+	<entry> float4(int) </entry>
+	<entry> float4 </entry>
+	<entry> convert integer to floating point </entry>
+	<entry> float4(2) </entry>
+       </row>
+       <row>
+	<entry> integer(float) </entry>
+	<entry> int </entry>
+	<entry> convert floating point to integer </entry>
+	<entry> integer(2.0) </entry>
+       </row>
+      </tbody>
+     </tgroup>
+    </table>
+   </para>
   </sect1>
 
   <sect1>
    <title>String Functions</title>
 
-   <Para>
+   <para>
     SQL92 defines string functions with specific syntax. Some of these
-    are implemented using other <ProductName>Postgres</ProductName> functions.
+    are implemented using other <productname>Postgres</productname> functions.
     The supported string types for <acronym>SQL92</acronym> are
     <type>char</type>, <type>varchar</type>, and <type>text</type>.
-   </Para>
+   </para>
 
-   <Para>
-    <TABLE TOCENTRY="1">
-     <TITLE><Acronym>SQL92</Acronym> String Functions</TITLE>
-     <TGROUP COLS="4">
-      <THEAD>
-       <ROW>
-	<ENTRY>Function</ENTRY>
-	<ENTRY>Returns</ENTRY>
-	<ENTRY>Description</ENTRY>
-	<ENTRY>Example</ENTRY>
-       </ROW>
-      </THEAD>
-      <TBODY>
-       <ROW>
-	<ENTRY> char_length(string) </ENTRY>
-	<ENTRY> int4 </ENTRY>
-	<ENTRY> length of string </ENTRY>
-	<ENTRY> char_length('jose') </ENTRY>
-       </ROW>
-       <ROW>
-	<ENTRY> character_length(string) </ENTRY>
-	<ENTRY> int4 </ENTRY>
-	<ENTRY> length of string </ENTRY>
-	<ENTRY> char_length('jose') </ENTRY>
-       </ROW>
-       <ROW>
-	<ENTRY> lower(string) </ENTRY>
-	<ENTRY> string </ENTRY>
-	<ENTRY> convert string to lower case </ENTRY>
-	<ENTRY> lower('TOM') </ENTRY>
-       </ROW>
-       <ROW>
-	<ENTRY> octet_length(string) </ENTRY>
-	<ENTRY> int4 </ENTRY>
-	<ENTRY> storage length of string </ENTRY>
-	<ENTRY> octet_length('jose') </ENTRY>
-       </ROW>
-       <ROW>
-	<ENTRY> position(string in string) </ENTRY>
-	<ENTRY> int4 </ENTRY>
-	<ENTRY> location of specified substring </ENTRY>
-	<ENTRY> position('o' in 'Tom') </ENTRY>
-       </ROW>
-       <ROW>
-	<ENTRY> substring(string [from int] [for int]) </ENTRY>
-	<ENTRY> string </ENTRY>
-	<ENTRY> extract specified substring </ENTRY>
-	<ENTRY> substring('Tom' from 2 for 2) </ENTRY>
-       </ROW>
-       <ROW>
-	<ENTRY> trim([leading|trailing|both] [string] from string) </ENTRY>
-	<ENTRY> string </ENTRY>
-	<ENTRY> trim characters from string </ENTRY>
-	<ENTRY> trim(both 'x' from 'xTomx') </ENTRY>
-       </ROW>
-       <ROW>
-	<ENTRY> upper(text) </ENTRY>
-	<ENTRY> text </ENTRY>
-	<ENTRY> convert text to upper case </ENTRY>
-	<ENTRY> upper('tom') </ENTRY>
-       </ROW>
-      </TBODY>
-     </TGROUP>
-    </TABLE>
-   </Para>
+   <para>
+    <table tocentry="1">
+     <title><acronym>SQL92</acronym> String Functions</title>
+     <tgroup cols="4">
+      <thead>
+       <row>
+	<entry>Function</entry>
+	<entry>Returns</entry>
+	<entry>Description</entry>
+	<entry>Example</entry>
+       </row>
+      </thead>
+      <tbody>
+       <row>
+	<entry> char_length(string) </entry>
+	<entry> int4 </entry>
+	<entry> length of string </entry>
+	<entry> char_length('jose') </entry>
+       </row>
+       <row>
+	<entry> character_length(string) </entry>
+	<entry> int4 </entry>
+	<entry> length of string </entry>
+	<entry> char_length('jose') </entry>
+       </row>
+       <row>
+	<entry> lower(string) </entry>
+	<entry> string </entry>
+	<entry> convert string to lower case </entry>
+	<entry> lower('TOM') </entry>
+       </row>
+       <row>
+	<entry> octet_length(string) </entry>
+	<entry> int4 </entry>
+	<entry> storage length of string </entry>
+	<entry> octet_length('jose') </entry>
+       </row>
+       <row>
+	<entry> position(string in string) </entry>
+	<entry> int4 </entry>
+	<entry> location of specified substring </entry>
+	<entry> position('o' in 'Tom') </entry>
+       </row>
+       <row>
+	<entry> substring(string [from int] [for int]) </entry>
+	<entry> string </entry>
+	<entry> extract specified substring </entry>
+	<entry> substring('Tom' from 2 for 2) </entry>
+       </row>
+       <row>
+	<entry> trim([leading|trailing|both] [string] from string) </entry>
+	<entry> string </entry>
+	<entry> trim characters from string </entry>
+	<entry> trim(both 'x' from 'xTomx') </entry>
+       </row>
+       <row>
+	<entry> upper(text) </entry>
+	<entry> text </entry>
+	<entry> convert text to upper case </entry>
+	<entry> upper('tom') </entry>
+       </row>
+      </tbody>
+     </tgroup>
+    </table>
+   </para>
 
-   <Para>
+   <para>
     Many additional string functions are available for text, varchar(), and char() types.
     Some are used internally to implement the SQL92 string functions listed above.
-   </Para>
+   </para>
 
-   <Para>
-    <TABLE TOCENTRY="1">
-     <TITLE>String Functions</TITLE>
-     <TGROUP COLS="4">
-      <THEAD>
-       <ROW>
-	<ENTRY>Function</ENTRY>
-	<ENTRY>Returns</ENTRY>
-	<ENTRY>Description</ENTRY>
-	<ENTRY>Example</ENTRY>
-       </ROW>
-      </THEAD>
-      <TBODY>
-       <ROW>
-	<ENTRY> char(text) </ENTRY>
-	<ENTRY> char </ENTRY>
-	<ENTRY> convert text to char type </ENTRY>
-	<ENTRY> char('text string') </ENTRY>
-       </ROW>
-       <ROW>
-	<ENTRY> char(varchar) </ENTRY>
-	<ENTRY> char </ENTRY>
-	<ENTRY> convert varchar to char type </ENTRY>
-	<ENTRY> char(varchar 'varchar string') </ENTRY>
-       </ROW>
-       <ROW>
-	<ENTRY> initcap(text) </ENTRY>
-	<ENTRY> text </ENTRY>
-	<ENTRY> first letter of each word to upper case </ENTRY>
-	<ENTRY> initcap('thomas') </ENTRY>
-       </ROW>
-       <ROW>
-	<ENTRY> lpad(text,int,text) </ENTRY>
-	<ENTRY> text </ENTRY>
-	<ENTRY> left pad string to specified length </ENTRY>
-	<ENTRY> lpad('hi',4,'??') </ENTRY>
-       </ROW>
-       <ROW>
-	<ENTRY> ltrim(text,text) </ENTRY>
-	<ENTRY> text </ENTRY>
-	<ENTRY> left trim characters from text </ENTRY>
-	<ENTRY> ltrim('xxxxtrim','x') </ENTRY>
-       </ROW>
-       <ROW>
-	<ENTRY> textpos(text,text) </ENTRY>
-	<ENTRY> text </ENTRY>
-	<ENTRY> locate specified substring </ENTRY>
-	<ENTRY> position('high','ig') </ENTRY>
-       </ROW>
-       <ROW>
-	<ENTRY> rpad(text,int,text) </ENTRY>
-	<ENTRY> text </ENTRY>
-	<ENTRY> right pad string to specified length </ENTRY>
-	<ENTRY> rpad('hi',4,'x') </ENTRY>
-       </ROW>
-       <ROW>
-	<ENTRY> rtrim(text,text) </ENTRY>
-	<ENTRY> text </ENTRY>
-	<ENTRY> right trim characters from text </ENTRY>
-	<ENTRY> rtrim('trimxxxx','x') </ENTRY>
-       </ROW>
-       <ROW>
-	<ENTRY> substr(text,int[,int]) </ENTRY>
-	<ENTRY> text </ENTRY>
-	<ENTRY> extract specified substring </ENTRY>
-	<ENTRY> substr('hi there',3,5) </ENTRY>
-       </ROW>
-       <ROW>
-	<ENTRY> text(char) </ENTRY>
-	<ENTRY> text </ENTRY>
-	<ENTRY> convert char to text type </ENTRY>
-	<ENTRY> text('char string') </ENTRY>
-       </ROW>
-       <ROW>
-	<ENTRY> text(varchar) </ENTRY>
-	<ENTRY> text </ENTRY>
-	<ENTRY> convert varchar to text type </ENTRY>
-	<ENTRY> text(varchar 'varchar string') </ENTRY>
-       </ROW>
-       <ROW>
-	<ENTRY> translate(text,from,to) </ENTRY>
-	<ENTRY> text </ENTRY>
-	<ENTRY> convert character in string </ENTRY>
-	<ENTRY> translate('12345', '1', 'a') </ENTRY>
-       </ROW>
-       <ROW>
-	<ENTRY> varchar(char) </ENTRY>
-	<ENTRY> varchar </ENTRY>
-	<ENTRY> convert char to varchar type </ENTRY>
-	<ENTRY> varchar('char string') </ENTRY>
-       </ROW>
-       <ROW>
-	<ENTRY> varchar(text) </ENTRY>
-	<ENTRY> varchar </ENTRY>
-	<ENTRY> convert text to varchar type </ENTRY>
-	<ENTRY> varchar('text string') </ENTRY>
-       </ROW>
-      </TBODY>
-     </TGROUP>
-    </TABLE>
-   </Para>
+   <para>
+    <table tocentry="1">
+     <title>String Functions</title>
+     <tgroup cols="4">
+      <thead>
+       <row>
+	<entry>Function</entry>
+	<entry>Returns</entry>
+	<entry>Description</entry>
+	<entry>Example</entry>
+       </row>
+      </thead>
+      <tbody>
+       <row>
+	<entry> char(text) </entry>
+	<entry> char </entry>
+	<entry> convert text to char type </entry>
+	<entry> char('text string') </entry>
+       </row>
+       <row>
+	<entry> char(varchar) </entry>
+	<entry> char </entry>
+	<entry> convert varchar to char type </entry>
+	<entry> char(varchar 'varchar string') </entry>
+       </row>
+       <row>
+	<entry> initcap(text) </entry>
+	<entry> text </entry>
+	<entry> first letter of each word to upper case </entry>
+	<entry> initcap('thomas') </entry>
+       </row>
+       <row>
+	<entry> lpad(text,int,text) </entry>
+	<entry> text </entry>
+	<entry> left pad string to specified length </entry>
+	<entry> lpad('hi',4,'??') </entry>
+       </row>
+       <row>
+	<entry> ltrim(text,text) </entry>
+	<entry> text </entry>
+	<entry> left trim characters from text </entry>
+	<entry> ltrim('xxxxtrim','x') </entry>
+       </row>
+       <row>
+	<entry> textpos(text,text) </entry>
+	<entry> text </entry>
+	<entry> locate specified substring </entry>
+	<entry> position('high','ig') </entry>
+       </row>
+       <row>
+	<entry> rpad(text,int,text) </entry>
+	<entry> text </entry>
+	<entry> right pad string to specified length </entry>
+	<entry> rpad('hi',4,'x') </entry>
+       </row>
+       <row>
+	<entry> rtrim(text,text) </entry>
+	<entry> text </entry>
+	<entry> right trim characters from text </entry>
+	<entry> rtrim('trimxxxx','x') </entry>
+       </row>
+       <row>
+	<entry> substr(text,int[,int]) </entry>
+	<entry> text </entry>
+	<entry> extract specified substring </entry>
+	<entry> substr('hi there',3,5) </entry>
+       </row>
+       <row>
+	<entry> text(char) </entry>
+	<entry> text </entry>
+	<entry> convert char to text type </entry>
+	<entry> text('char string') </entry>
+       </row>
+       <row>
+	<entry> text(varchar) </entry>
+	<entry> text </entry>
+	<entry> convert varchar to text type </entry>
+	<entry> text(varchar 'varchar string') </entry>
+       </row>
+       <row>
+	<entry> translate(text,from,to) </entry>
+	<entry> text </entry>
+	<entry> convert character in string </entry>
+	<entry> translate('12345', '1', 'a') </entry>
+       </row>
+       <row>
+	<entry> varchar(char) </entry>
+	<entry> varchar </entry>
+	<entry> convert char to varchar type </entry>
+	<entry> varchar('char string') </entry>
+       </row>
+       <row>
+	<entry> varchar(text) </entry>
+	<entry> varchar </entry>
+	<entry> convert text to varchar type </entry>
+	<entry> varchar('text string') </entry>
+       </row>
+      </tbody>
+     </tgroup>
+    </table>
+   </para>
 
    <para>
     Most functions explicitly defined for text will work for char() and varchar() arguments.
@@ -309,113 +310,114 @@
     for manipulating various date/time types.
    </para>
 
-   <Para>
-    <TABLE TOCENTRY="1">
-     <TITLE>Date/Time Functions</TITLE>
-     <TGROUP COLS="4">
-      <THEAD>
-       <ROW>
-	<ENTRY>Function</ENTRY>
-	<ENTRY>Returns</ENTRY>
-	<ENTRY>Description</ENTRY>
-	<ENTRY>Example</ENTRY>
-       </ROW>
-      </THEAD>
-      <TBODY>
-       <ROW>
-	<ENTRY> abstime(datetime) </ENTRY>
-	<ENTRY> abstime </ENTRY>
-	<ENTRY> convert to abstime </ENTRY>
-	<ENTRY> abstime('now'::datetime) </ENTRY>
-       </ROW>
-       <ROW>
-	<ENTRY> age(datetime,datetime) </ENTRY>
-	<ENTRY> timespan </ENTRY>
-	<ENTRY> span preserving months and years </ENTRY>
-	<ENTRY> age('now','1957-06-13'::datetime) </ENTRY>
-       </ROW>
-       <ROW>
-	<ENTRY> datetime(abstime) </ENTRY>
-	<ENTRY> datetime </ENTRY>
-	<ENTRY> convert to datetime </ENTRY>
-	<ENTRY> datetime('now'::abstime) </ENTRY>
-       </ROW>
-       <ROW>
-	<ENTRY> datetime(date) </ENTRY>
-	<ENTRY> datetime </ENTRY>
-	<ENTRY> convert to datetime </ENTRY>
-	<ENTRY> datetime('today'::date) </ENTRY>
-       </ROW>
-       <ROW>
-	<ENTRY> datetime(date,time) </ENTRY>
-	<ENTRY> datetime </ENTRY>
-	<ENTRY> convert to datetime </ENTRY>
-	<ENTRY> datetime('1998-02-24'::datetime, '23:07'::time); </ENTRY>
-  </ROW>
-       <ROW>
-	<ENTRY> date_part(text,datetime) </ENTRY>
-	<ENTRY> float8 </ENTRY>
-	<ENTRY> specified portion of date field </ENTRY>
-	<ENTRY> date_part('dow','now'::datetime) </ENTRY>
-       </ROW>
-       <ROW>
-	<ENTRY> date_part(text,timespan) </ENTRY>
-	<ENTRY> float8 </ENTRY>
-	<ENTRY> specified portion of time field </ENTRY>
-	<ENTRY> date_part('hour','4 hrs 3 mins'::timespan) </ENTRY>
-       </ROW>
-       <ROW>
-	<ENTRY> date_trunc(text,datetime) </ENTRY>
-	<ENTRY> datetime </ENTRY>
-	<ENTRY> truncate date at specified units </ENTRY>
-	<ENTRY> date_trunc('month','now'::abstime) </ENTRY>
-       </ROW>
-       <ROW>
-	<ENTRY> isfinite(abstime) </ENTRY>
-	<ENTRY> bool </ENTRY>
-	<ENTRY> TRUE if this is a finite time </ENTRY>
-	<ENTRY> isfinite('now'::abstime) </ENTRY>
-       </ROW>
-       <ROW>
-	<ENTRY> isfinite(datetime) </ENTRY>
-	<ENTRY> bool </ENTRY>
-	<ENTRY> TRUE if this is a finite time </ENTRY>
-	<ENTRY> isfinite('now'::datetime) </ENTRY>
-       </ROW>
-       <ROW>
-	<ENTRY> isfinite(timespan) </ENTRY>
-	<ENTRY> bool </ENTRY>
-	<ENTRY> TRUE if this is a finite time </ENTRY>
-	<ENTRY> isfinite('4 hrs'::timespan) </ENTRY>
-       </ROW>
-       <ROW>
-	<ENTRY> reltime(timespan) </ENTRY>
-	<ENTRY> reltime </ENTRY>
-	<ENTRY> convert to reltime </ENTRY>
-	<ENTRY> reltime('4 hrs'::timespan) </ENTRY>
-       </ROW>
-       <ROW>
-	<ENTRY> timespan(reltime) </ENTRY>
-	<ENTRY> timespan </ENTRY>
-	<ENTRY> convert to timespan </ENTRY>
-	<ENTRY> timespan('4 hours'::reltime) </ENTRY>
-       </ROW>
-      </TBODY>
-     </TGROUP>
-    </TABLE>
-   </Para>
+   <para>
+    <table tocentry="1">
+     <title>Date/Time Functions</title>
+     <tgroup cols="4">
+      <thead>
+       <row>
+	<entry>Function</entry>
+	<entry>Returns</entry>
+	<entry>Description</entry>
+	<entry>Example</entry>
+       </row>
+      </thead>
+      <tbody>
+       <row>
+	<entry> abstime(datetime) </entry>
+	<entry> abstime </entry>
+	<entry> convert to abstime </entry>
+	<entry> abstime('now'::datetime) </entry>
+       </row>
+       <row>
+	<entry> age(datetime,datetime) </entry>
+	<entry> timespan </entry>
+	<entry> preserve months and years </entry>
+	<entry> age('now','1957-06-13'::datetime) </entry>
+       </row>
+       <row>
+	<entry> datetime(abstime) </entry>
+	<entry> datetime </entry>
+	<entry> convert to datetime </entry>
+	<entry> datetime('now'::abstime) </entry>
+       </row>
+       <row>
+	<entry> datetime(date) </entry>
+	<entry> datetime </entry>
+	<entry> convert to datetime </entry>
+	<entry> datetime('today'::date) </entry>
+       </row>
+       <row>
+	<entry> datetime(date,time) </entry>
+	<entry> datetime </entry>
+	<entry> convert to datetime </entry>
+	<entry> datetime('1998-02-24'::datetime, '23:07'::time); </entry>
+  </row>
+       <row>
+	<entry> date_part(text,datetime) </entry>
+	<entry> float8 </entry>
+	<entry> portion of date </entry>
+	<entry> date_part('dow','now'::datetime) </entry>
+       </row>
+       <row>
+	<entry> date_part(text,timespan) </entry>
+	<entry> float8 </entry>
+	<entry> portion of time </entry>
+	<entry> date_part('hour','4 hrs 3 mins'::timespan) </entry>
+       </row>
+       <row>
+	<entry> date_trunc(text,datetime) </entry>
+	<entry> datetime </entry>
+	<entry> truncate date </entry>
+	<entry> date_trunc('month','now'::abstime) </entry>
+       </row>
+       <row>
+	<entry> isfinite(abstime) </entry>
+	<entry> bool </entry>
+	<entry> a finite time? </entry>
+	<entry> isfinite('now'::abstime) </entry>
+       </row>
+       <row>
+	<entry> isfinite(datetime) </entry>
+	<entry> bool </entry>
+	<entry> a finite time? </entry>
+	<entry> isfinite('now'::datetime) </entry>
+       </row>
+       <row>
+	<entry> isfinite(timespan) </entry>
+	<entry> bool </entry>
+	<entry> a finite time? </entry>
+	<entry> isfinite('4 hrs'::timespan) </entry>
+       </row>
+       <row>
+	<entry> reltime(timespan) </entry>
+	<entry> reltime </entry>
+	<entry> convert to reltime </entry>
+	<entry> reltime('4 hrs'::timespan) </entry>
+       </row>
+       <row>
+	<entry> timespan(reltime) </entry>
+	<entry> timespan </entry>
+	<entry> convert to timespan </entry>
+	<entry> timespan('4 hours'::reltime) </entry>
+       </row>
+      </tbody>
+     </tgroup>
+    </table>
+   </para>
 
-   <Para>
+   <para>
     For the
-    <Function>date_part</Function> and <Function>date_trunc</Function>
+    <function>date_part</function> and <function>date_trunc</function>
     functions, arguments can be
     `year', `month', `day', `hour', `minute', and `second',
     as well as the more specialized quantities
     `decade', `century', `millenium', `millisecond', and `microsecond'.
-    <Function>date_part</Function> allows `dow'
-    to return day of week and `epoch' to return seconds since 1970 (for <Type>datetime</Type>)
-    or 'epoch' to return total elapsed seconds (for <Type>timespan</Type>).
-   </Para>
+    <function>date_part</function> allows `dow'
+    to return day of week and `epoch' to return seconds since 1970
+    (for <type>datetime</type>)
+    or 'epoch' to return total elapsed seconds (for <type>timespan</type>).
+   </para>
   </sect1>
 
   <sect1>
@@ -426,335 +428,335 @@
     circle have a large set of native support functions.
    </para>
 
-   <Para>
-    <TABLE TOCENTRY="1">
-     <TITLE>Geometric Functions</TITLE>
-     <TGROUP COLS="4">
-      <THEAD>
-       <ROW>
-	<ENTRY>Function</ENTRY>
-	<ENTRY>Returns</ENTRY>
-	<ENTRY>Description</ENTRY>
-	<ENTRY>Example</ENTRY>
-       </ROW>
-      </THEAD>
-      <TBODY>
-       <ROW>
-	<ENTRY> area(box) </ENTRY>
-	<ENTRY> float8 </ENTRY>
-	<ENTRY> area of box </ENTRY>
-	<ENTRY> area('((0,0),(1,1))'::box) </ENTRY>
-       </ROW>
-       <ROW>
-	<ENTRY> area(circle) </ENTRY>
-	<ENTRY> float8 </ENTRY>
-	<ENTRY> area of circle </ENTRY>
-	<ENTRY> area('((0,0),2.0)'::circle) </ENTRY>
-       </ROW>
-       <ROW>
-	<ENTRY> box(box,box) </ENTRY>
-	<ENTRY> box </ENTRY>
-	<ENTRY> boxes to intersection box </ENTRY>
-	<ENTRY> box('((0,0),(1,1))','((0.5,0.5),(2,2))') </ENTRY>
-       </ROW>
-       <ROW>
-	<ENTRY> center(box) </ENTRY>
-	<ENTRY> point </ENTRY>
-	<ENTRY> center of object </ENTRY>
-	<ENTRY> center('((0,0),(1,2))'::box) </ENTRY>
-       </ROW>
-       <ROW>
-	<ENTRY> center(circle) </ENTRY>
-	<ENTRY> point </ENTRY>
-	<ENTRY> center of object </ENTRY>
-	<ENTRY> center('((0,0),2.0)'::circle) </ENTRY>
-       </ROW>
-       <ROW>
-	<ENTRY> diameter(circle) </ENTRY>
-	<ENTRY> float8 </ENTRY>
-	<ENTRY> diameter of circle </ENTRY>
-	<ENTRY> diameter('((0,0),2.0)'::circle) </ENTRY>
-       </ROW>
-       <ROW>
-	<ENTRY> height(box) </ENTRY>
-	<ENTRY> float8 </ENTRY>
-	<ENTRY> vertical size of box </ENTRY>
-	<ENTRY> height('((0,0),(1,1))'::box) </ENTRY>
-       </ROW>
-       <ROW>
-	<ENTRY> isclosed(path) </ENTRY>
-	<ENTRY> bool </ENTRY>
-	<ENTRY> TRUE if this is a closed path </ENTRY>
-	<ENTRY> isclosed('((0,0),(1,1),(2,0))'::path) </ENTRY>
-       </ROW>
-       <ROW>
-	<ENTRY> isopen(path) </ENTRY>
-	<ENTRY> bool </ENTRY>
-	<ENTRY> TRUE if this is an open path </ENTRY>
-	<ENTRY> isopen('[(0,0),(1,1),(2,0)]'::path) </ENTRY>
-       </ROW>
-       <ROW>
-	<ENTRY> length(lseg) </ENTRY>
-	<ENTRY> float8 </ENTRY>
-	<ENTRY> length of line segment </ENTRY>
-	<ENTRY> length('((-1,0),(1,0))'::lseg) </ENTRY>
-       </ROW>
-       <ROW>
-	<ENTRY> length(path) </ENTRY>
-	<ENTRY> float8 </ENTRY>
-	<ENTRY> length of path </ENTRY>
-	<ENTRY> length('((0,0),(1,1),(2,0))'::path) </ENTRY>
-       </ROW>
-       <ROW>
-	<ENTRY> pclose(path) </ENTRY>
-	<ENTRY> path </ENTRY>
-	<ENTRY> convert path to closed variant </ENTRY>
-	<ENTRY> popen('[(0,0),(1,1),(2,0)]'::path) </ENTRY>
-       </ROW>
-       <ROW>
-	<ENTRY> point(lseg,lseg) </ENTRY>
-	<ENTRY> point </ENTRY>
-	<ENTRY> convert to point (intersection) </ENTRY>
-	<ENTRY> point('((-1,0),(1,0))'::lseg,'((-2,-2),(2,2))'::lseg) </ENTRY>
-       </ROW>
-       <ROW>
-	<ENTRY> points(path) </ENTRY>
-	<ENTRY> int4 </ENTRY>
-	<ENTRY> number of points in path </ENTRY>
-	<ENTRY> points('[(0,0),(1,1),(2,0)]'::path) </ENTRY>
-       </ROW>
-       <ROW>
-	<ENTRY> popen(path) </ENTRY>
-	<ENTRY> path </ENTRY>
-	<ENTRY> convert path to open variant </ENTRY>
-	<ENTRY> popen('((0,0),(1,1),(2,0))'::path) </ENTRY>
-       </ROW>
-       <ROW>
-	<ENTRY> radius(circle) </ENTRY>
-	<ENTRY> float8 </ENTRY>
-	<ENTRY> radius of circle </ENTRY>
-	<ENTRY> radius('((0,0),2.0)'::circle) </ENTRY>
-       </ROW>
-       <ROW>
-	<ENTRY> width(box) </ENTRY>
-	<ENTRY> float8 </ENTRY>
-	<ENTRY> horizontal size of box </ENTRY>
-	<ENTRY> width('((0,0),(1,1))'::box) </ENTRY>
-       </ROW>
-      </TBODY>
-     </TGROUP>
-    </TABLE>
-   </Para>
+   <para>
+    <table tocentry="1">
+     <title>Geometric Functions</title>
+     <tgroup cols="4">
+      <thead>
+       <row>
+	<entry>Function</entry>
+	<entry>Returns</entry>
+	<entry>Description</entry>
+	<entry>Example</entry>
+       </row>
+      </thead>
+      <tbody>
+       <row>
+	<entry> area(box) </entry>
+	<entry> float8 </entry>
+	<entry> area of box </entry>
+	<entry> area('((0,0),(1,1))'::box) </entry>
+       </row>
+       <row>
+	<entry> area(circle) </entry>
+	<entry> float8 </entry>
+	<entry> area of circle </entry>
+	<entry> area('((0,0),2.0)'::circle) </entry>
+       </row>
+       <row>
+	<entry> box(box,box) </entry>
+	<entry> box </entry>
+	<entry> boxes to intersection box </entry>
+	<entry> box('((0,0),(1,1))','((0.5,0.5),(2,2))') </entry>
+       </row>
+       <row>
+	<entry> center(box) </entry>
+	<entry> point </entry>
+	<entry> center of object </entry>
+	<entry> center('((0,0),(1,2))'::box) </entry>
+       </row>
+       <row>
+	<entry> center(circle) </entry>
+	<entry> point </entry>
+	<entry> center of object </entry>
+	<entry> center('((0,0),2.0)'::circle) </entry>
+       </row>
+       <row>
+	<entry> diameter(circle) </entry>
+	<entry> float8 </entry>
+	<entry> diameter of circle </entry>
+	<entry> diameter('((0,0),2.0)'::circle) </entry>
+       </row>
+       <row>
+	<entry> height(box) </entry>
+	<entry> float8 </entry>
+	<entry> vertical size of box </entry>
+	<entry> height('((0,0),(1,1))'::box) </entry>
+       </row>
+       <row>
+	<entry> isclosed(path) </entry>
+	<entry> bool </entry>
+	<entry> a closed path? </entry>
+	<entry> isclosed('((0,0),(1,1),(2,0))'::path) </entry>
+       </row>
+       <row>
+	<entry> isopen(path) </entry>
+	<entry> bool </entry>
+	<entry> an open path? </entry>
+	<entry> isopen('[(0,0),(1,1),(2,0)]'::path) </entry>
+       </row>
+       <row>
+	<entry> length(lseg) </entry>
+	<entry> float8 </entry>
+	<entry> length of line segment </entry>
+	<entry> length('((-1,0),(1,0))'::lseg) </entry>
+       </row>
+       <row>
+	<entry> length(path) </entry>
+	<entry> float8 </entry>
+	<entry> length of path </entry>
+	<entry> length('((0,0),(1,1),(2,0))'::path) </entry>
+       </row>
+       <row>
+	<entry> pclose(path) </entry>
+	<entry> path </entry>
+	<entry> convert path to closed </entry>
+	<entry> popen('[(0,0),(1,1),(2,0)]'::path) </entry>
+       </row>
+       <row>
+	<entry> point(lseg,lseg) </entry>
+	<entry> point </entry>
+	<entry> intersection </entry>
+	<entry> point('((-1,0),(1,0))'::lseg,'((-2,-2),(2,2))'::lseg) </entry>
+       </row>
+       <row>
+	<entry> points(path) </entry>
+	<entry> int4 </entry>
+	<entry> number of points </entry>
+	<entry> points('[(0,0),(1,1),(2,0)]'::path) </entry>
+       </row>
+       <row>
+	<entry> popen(path) </entry>
+	<entry> path </entry>
+	<entry> convert path to open </entry>
+	<entry> popen('((0,0),(1,1),(2,0))'::path) </entry>
+       </row>
+       <row>
+	<entry> radius(circle) </entry>
+	<entry> float8 </entry>
+	<entry> radius of circle </entry>
+	<entry> radius('((0,0),2.0)'::circle) </entry>
+       </row>
+       <row>
+	<entry> width(box) </entry>
+	<entry> float8 </entry>
+	<entry> horizontal size </entry>
+	<entry> width('((0,0),(1,1))'::box) </entry>
+       </row>
+      </tbody>
+     </tgroup>
+    </table>
+   </para>
 
-   <Para>
-    <TABLE TOCENTRY="1">
-     <TITLE>Geometric Type Conversion Functions</TITLE>
-     <TGROUP COLS="4">
-      <THEAD>
-       <ROW>
-	<ENTRY>Function</ENTRY>
-	<ENTRY>Returns</ENTRY>
-	<ENTRY>Description</ENTRY>
-	<ENTRY>Example</ENTRY>
-       </ROW>
-      </THEAD>
-      <TBODY>
-       <ROW>
-	<ENTRY> box(circle) </ENTRY>
-	<ENTRY> box </ENTRY>
-	<ENTRY> convert circle to box </ENTRY>
-	<ENTRY> box('((0,0),2.0)'::circle) </ENTRY>
-       </ROW>
-       <ROW>
-	<ENTRY> box(point,point) </ENTRY>
-	<ENTRY> box </ENTRY>
-	<ENTRY> convert points to box </ENTRY>
-	<ENTRY> box('(0,0)'::point,'(1,1)'::point) </ENTRY>
-       </ROW>
-       <ROW>
-	<ENTRY> box(polygon) </ENTRY>
-	<ENTRY> box </ENTRY>
-	<ENTRY> convert polygon to box </ENTRY>
-	<ENTRY> box('((0,0),(1,1),(2,0))'::polygon) </ENTRY>
-       </ROW>
-       <ROW>
-	<ENTRY> circle(box) </ENTRY>
-	<ENTRY> circle </ENTRY>
-	<ENTRY> convert to circle </ENTRY>
-	<ENTRY> circle('((0,0),(1,1))'::box) </ENTRY>
-       </ROW>
-       <ROW>
-	<ENTRY> circle(point,float8) </ENTRY>
-	<ENTRY> circle </ENTRY>
-	<ENTRY> convert to circle </ENTRY>
-	<ENTRY> circle('(0,0)'::point,2.0) </ENTRY>
-       </ROW>
-       <ROW>
-	<ENTRY> lseg(box) </ENTRY>
-	<ENTRY> lseg </ENTRY>
-	<ENTRY> convert diagonal to lseg </ENTRY>
-	<ENTRY> lseg('((-1,0),(1,0))'::box) </ENTRY>
-       </ROW>
-       <ROW>
-	<ENTRY> lseg(point,point) </ENTRY>
-	<ENTRY> lseg </ENTRY>
-	<ENTRY> convert to lseg </ENTRY>
-	<ENTRY> lseg('(-1,0)'::point,'(1,0)'::point) </ENTRY>
-       </ROW>
-       <ROW>
-	<ENTRY> path(polygon) </ENTRY>
-	<ENTRY> point </ENTRY>
-	<ENTRY> convert to path </ENTRY>
-	<ENTRY> path('((0,0),(1,1),(2,0))'::polygon) </ENTRY>
-       </ROW>
-       <ROW>
-	<ENTRY> point(circle) </ENTRY>
-	<ENTRY> point </ENTRY>
-	<ENTRY> convert to point (center) </ENTRY>
-	<ENTRY> point('((0,0),2.0)'::circle) </ENTRY>
-       </ROW>
-       <ROW>
-	<ENTRY> point(lseg,lseg) </ENTRY>
-	<ENTRY> point </ENTRY>
-	<ENTRY> convert to point (intersection) </ENTRY>
-	<ENTRY> point('((-1,0),(1,0))'::lseg,'((-2,-2),(2,2))'::lseg) </ENTRY>
-       </ROW>
-       <ROW>
-	<ENTRY> point(polygon) </ENTRY>
-	<ENTRY> point </ENTRY>
-	<ENTRY> center of polygon </ENTRY>
-	<ENTRY> point('((0,0),(1,1),(2,0))'::polygon) </ENTRY>
-       </ROW>
-       <ROW>
-	<ENTRY> polygon(box) </ENTRY>
-	<ENTRY> polygon </ENTRY>
-	<ENTRY> convert to polygon with 12 points </ENTRY>
-	<ENTRY> polygon('((0,0),(1,1))'::box) </ENTRY>
-       </ROW>
-       <ROW>
-	<ENTRY> polygon(circle) </ENTRY>
-	<ENTRY> polygon </ENTRY>
-	<ENTRY> convert to polygon with 12 points </ENTRY>
-	<ENTRY> polygon('((0,0),2.0)'::circle) </ENTRY>
-       </ROW>
-       <ROW>
-	<ENTRY> polygon(npts,circle) </ENTRY>
-	<ENTRY> polygon </ENTRY>
-	<ENTRY> convert to polygon with npts points </ENTRY>
-	<ENTRY> polygon(12,'((0,0),2.0)'::circle) </ENTRY>
-       </ROW>
-       <ROW>
-	<ENTRY> polygon(path) </ENTRY>
-	<ENTRY> polygon </ENTRY>
-	<ENTRY> convert to polygon </ENTRY>
-	<ENTRY> polygon('((0,0),(1,1),(2,0))'::path) </ENTRY>
-       </ROW>
-      </TBODY>
-     </TGROUP>
-    </TABLE>
-   </Para>
+   <para>
+    <table tocentry="1">
+     <title>Geometric Type Conversion Functions</title>
+     <tgroup cols="4">
+      <thead>
+       <row>
+	<entry>Function</entry>
+	<entry>Returns</entry>
+	<entry>Description</entry>
+	<entry>Example</entry>
+       </row>
+      </thead>
+      <tbody>
+       <row>
+	<entry> box(circle) </entry>
+	<entry> box </entry>
+	<entry> convert circle to box </entry>
+	<entry> box('((0,0),2.0)'::circle) </entry>
+       </row>
+       <row>
+	<entry> box(point,point) </entry>
+	<entry> box </entry>
+	<entry> convert points to box </entry>
+	<entry> box('(0,0)'::point,'(1,1)'::point) </entry>
+       </row>
+       <row>
+	<entry> box(polygon) </entry>
+	<entry> box </entry>
+	<entry> convert polygon to box </entry>
+	<entry> box('((0,0),(1,1),(2,0))'::polygon) </entry>
+       </row>
+       <row>
+	<entry> circle(box) </entry>
+	<entry> circle </entry>
+	<entry> convert to circle </entry>
+	<entry> circle('((0,0),(1,1))'::box) </entry>
+       </row>
+       <row>
+	<entry> circle(point,float8) </entry>
+	<entry> circle </entry>
+	<entry> convert to circle </entry>
+	<entry> circle('(0,0)'::point,2.0) </entry>
+       </row>
+       <row>
+	<entry> lseg(box) </entry>
+	<entry> lseg </entry>
+	<entry> convert diagonal to lseg </entry>
+	<entry> lseg('((-1,0),(1,0))'::box) </entry>
+       </row>
+       <row>
+	<entry> lseg(point,point) </entry>
+	<entry> lseg </entry>
+	<entry> convert to lseg </entry>
+	<entry> lseg('(-1,0)'::point,'(1,0)'::point) </entry>
+       </row>
+       <row>
+	<entry> path(polygon) </entry>
+	<entry> point </entry>
+	<entry> convert to path </entry>
+	<entry> path('((0,0),(1,1),(2,0))'::polygon) </entry>
+       </row>
+       <row>
+	<entry> point(circle) </entry>
+	<entry> point </entry>
+	<entry> convert to point (center) </entry>
+	<entry> point('((0,0),2.0)'::circle) </entry>
+       </row>
+       <row>
+	<entry> point(lseg,lseg) </entry>
+	<entry> point </entry>
+	<entry> convert to point (intersection) </entry>
+	<entry> point('((-1,0),(1,0))'::lseg, '((-2,-2),(2,2))'::lseg) </entry>
+       </row>
+       <row>
+	<entry> point(polygon) </entry>
+	<entry> point </entry>
+	<entry> center of polygon </entry>
+	<entry> point('((0,0),(1,1),(2,0))'::polygon) </entry>
+       </row>
+       <row>
+	<entry> polygon(box) </entry>
+	<entry> polygon </entry>
+	<entry> convert to polygon with 12 points </entry>
+	<entry> polygon('((0,0),(1,1))'::box) </entry>
+       </row>
+       <row>
+	<entry> polygon(circle) </entry>
+	<entry> polygon </entry>
+	<entry> convert to 12-point polygon </entry>
+	<entry> polygon('((0,0),2.0)'::circle) </entry>
+       </row>
+       <row>
+	<entry> polygon(<replaceable class="parameter">npts</replaceable>,circle) </entry>
+	<entry> polygon </entry>
+	<entry> convert to <replaceable class="parameter">npts</replaceable> polygon </entry>
+	<entry> polygon(12,'((0,0),2.0)'::circle) </entry>
+       </row>
+       <row>
+	<entry> polygon(path) </entry>
+	<entry> polygon </entry>
+	<entry> convert to polygon </entry>
+	<entry> polygon('((0,0),(1,1),(2,0))'::path) </entry>
+       </row>
+      </tbody>
+     </tgroup>
+    </table>
+   </para>
 
-   <Para>
-    <TABLE TOCENTRY="1">
-     <TITLE>Geometric Upgrade Functions</TITLE>
-     <TGROUP COLS="4">
-      <THEAD>
-       <ROW>
-	<ENTRY>Function</ENTRY>
-	<ENTRY>Returns</ENTRY>
-	<ENTRY>Description</ENTRY>
-	<ENTRY>Example</ENTRY>
-       </ROW>
-      </THEAD>
-      <TBODY>
-       <ROW>
-	<ENTRY> isoldpath(path) </ENTRY>
-	<ENTRY> path </ENTRY>
-	<ENTRY> test path for pre-v6.1 form </ENTRY>
-	<ENTRY> isoldpath('(1,3,0,0,1,1,2,0)'::path) </ENTRY>
-       </ROW>
-       <ROW>
-	<ENTRY> revertpoly(polygon) </ENTRY>
-	<ENTRY> polygon </ENTRY>
-	<ENTRY> convert pre-v6.1 polygon </ENTRY>
-	<ENTRY> revertpoly('((0,0),(1,1),(2,0))'::polygon) </ENTRY>
-       </ROW>
-       <ROW>
-	<ENTRY> upgradepath(path) </ENTRY>
-	<ENTRY> path </ENTRY>
-	<ENTRY> convert pre-v6.1 path </ENTRY>
-	<ENTRY> upgradepath('(1,3,0,0,1,1,2,0)'::path) </ENTRY>
-       </ROW>
-       <ROW>
-	<ENTRY> upgradepoly(polygon) </ENTRY>
-	<ENTRY> polygon </ENTRY>
-	<ENTRY> convert pre-v6.1 polygon </ENTRY>
-	<ENTRY> upgradepoly('(0,1,2,0,1,0)'::polygon) </ENTRY>
-       </ROW>
-      </TBODY>
-     </TGROUP>
-    </TABLE>
-   </Para>
+   <para>
+    <table tocentry="1">
+     <title>Geometric Upgrade Functions</title>
+     <tgroup cols="4">
+      <thead>
+       <row>
+	<entry>Function</entry>
+	<entry>Returns</entry>
+	<entry>Description</entry>
+	<entry>Example</entry>
+       </row>
+      </thead>
+      <tbody>
+       <row>
+	<entry> isoldpath(path) </entry>
+	<entry> path </entry>
+	<entry> test path for pre-v6.1 form </entry>
+	<entry> isoldpath('(1,3,0,0,1,1,2,0)'::path) </entry>
+       </row>
+       <row>
+	<entry> revertpoly(polygon) </entry>
+	<entry> polygon </entry>
+	<entry> convert pre-v6.1 polygon </entry>
+	<entry> revertpoly('((0,0),(1,1),(2,0))'::polygon) </entry>
+       </row>
+       <row>
+	<entry> upgradepath(path) </entry>
+	<entry> path </entry>
+	<entry> convert pre-v6.1 path </entry>
+	<entry> upgradepath('(1,3,0,0,1,1,2,0)'::path) </entry>
+       </row>
+       <row>
+	<entry> upgradepoly(polygon) </entry>
+	<entry> polygon </entry>
+	<entry> convert pre-v6.1 polygon </entry>
+	<entry> upgradepoly('(0,1,2,0,1,0)'::polygon) </entry>
+       </row>
+      </tbody>
+     </tgroup>
+    </table>
+   </para>
   </sect1>
 
   <sect1>
    <title id="cidr-funcs">IP V4 Functions</title>
 
-   <Para>
-    <TABLE TOCENTRY="1">
-     <TITLE><ProductName>Postgres</ProductName>IP V4 Functions</TITLE>
-     <TGROUP COLS="4">
-      <THEAD>
-       <ROW>
-	<ENTRY>Function</ENTRY>
-	<ENTRY>Returns</ENTRY>
-	<ENTRY>Description</ENTRY>
-	<ENTRY>Example</ENTRY>
-       </ROW>
-      </THEAD>
-      <TBODY>
-       <ROW>
-	<ENTRY> broadcast(cidr) </ENTRY>
-	<ENTRY> text </ENTRY>
-	<ENTRY> construct broadcast address as text </ENTRY>
-	<ENTRY> broadcast('192.168.1.5/24') ==> '192.168.1.255' </ENTRY>
-       </ROW>
-       <ROW>
-	<ENTRY> broadcast(inet) </ENTRY>
-	<ENTRY> text </ENTRY>
-	<ENTRY> construct broadcast address as text </ENTRY>
-	<ENTRY> broadcast('192.168.1.5/24') ==> '192.168.1.255' </ENTRY>
-       </ROW>
-       <ROW>
-	<ENTRY> host(inet) </ENTRY>
-	<ENTRY> text </ENTRY>
-	<ENTRY> extract host address as text </ENTRY>
-	<ENTRY> host('192.168.1.5/24') ==> '192.168.1.5' </ENTRY>
-       </ROW>
-       <ROW>
-	<ENTRY> masklen(cidr) </ENTRY>
-	<ENTRY> int4 </ENTRY>
-	<ENTRY> calculate netmask length </ENTRY>
-	<ENTRY> masklen('192.168.1.5/24') ==> 24</ENTRY>
-       </ROW>
-       <ROW>
-	<ENTRY> masklen(inet) </ENTRY>
-	<ENTRY> int4 </ENTRY>
-	<ENTRY> calculate netmask length </ENTRY>
-	<ENTRY> masklen('192.168.1.5/24') ==> 24 </ENTRY>
-       </ROW>
-       <ROW>
-	<ENTRY> netmask(inet) </ENTRY>
-	<ENTRY> text </ENTRY>
-	<ENTRY> construct netmask as text </ENTRY>
-	<ENTRY> netmask('192.168.1.5/24') ==> '255.255.255.0' </ENTRY>
-       </ROW>
-      </TBODY>
-     </TGROUP>
-    </TABLE>
-   </Para>
+   <para>
+    <table tocentry="1">
+     <title><productname>Postgres</productname>IP V4 Functions</title>
+     <tgroup cols="4">
+      <thead>
+       <row>
+	<entry>Function</entry>
+	<entry>Returns</entry>
+	<entry>Description</entry>
+	<entry>Example</entry>
+       </row>
+      </thead>
+      <tbody>
+       <row>
+	<entry> broadcast(cidr) </entry>
+	<entry> text </entry>
+	<entry> construct broadcast address as text </entry>
+	<entry> broadcast('192.168.1.5/24') </entry>
+       </row>
+       <row>
+	<entry> broadcast(inet) </entry>
+	<entry> text </entry>
+	<entry> construct broadcast address as text </entry>
+	<entry> broadcast('192.168.1.5/24') </entry>
+       </row>
+       <row>
+	<entry> host(inet) </entry>
+	<entry> text </entry>
+	<entry> extract host address as text </entry>
+	<entry> host('192.168.1.5/24') </entry>
+       </row>
+       <row>
+	<entry> masklen(cidr) </entry>
+	<entry> int4 </entry>
+	<entry> calculate netmask length </entry>
+	<entry> masklen('192.168.1.5/24') </entry>
+       </row>
+       <row>
+	<entry> masklen(inet) </entry>
+	<entry> int4 </entry>
+	<entry> calculate netmask length </entry>
+	<entry> masklen('192.168.1.5/24') </entry>
+       </row>
+       <row>
+	<entry> netmask(inet) </entry>
+	<entry> text </entry>
+	<entry> construct netmask as text </entry>
+	<entry> netmask('192.168.1.5/24') </entry>
+       </row>
+      </tbody>
+     </tgroup>
+    </table>
+   </para>
 
-  </Sect1>
+  </sect1>
 
  </chapter>
 

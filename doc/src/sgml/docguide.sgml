@@ -1,9 +1,12 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/docguide.sgml,v 1.15 1999/05/27 15:49:07 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/docguide.sgml,v 1.16 1999/06/14 07:36:11 thomas Exp $
 Documentation Guide
 Thomas Lockhart
 
 $Log: docguide.sgml,v $
+Revision 1.16  1999/06/14 07:36:11  thomas
+Minor updates for release.
+
 Revision 1.15  1999/05/27 15:49:07  thomas
 Markup fixes.
 Update for v6.5 release.
@@ -175,7 +178,7 @@ Include working list of all documentation sources, with current status
    James Clark's 
    <ulink url="http://www.jclark.com/jade/"> <productname>jade</productname></ulink>
    and Norm Walsh's 
-   <ulink url="http://www.berkshire.net/~norm/docbook/dsssl">Modular DocBook Stylesheets</ulink>.
+   <ulink url="http://www.nwalsh.com/docbook/dsssl/">Modular DocBook Stylesheets</ulink>.
   </para>
 
   <para>

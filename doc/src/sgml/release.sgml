@@ -23,7 +23,7 @@
    </para>
 
    <para>
-    Here is a brief summary of some of the more noticable changes:
+    Here is a brief summary of the more notable changes:
 
     <variablelist>
      <varlistentry>
@@ -188,16 +188,16 @@
      <para>
       Because readers in 6.5 don't lock data, regardless of transaction
       isolation level, data read by one transaction can be overwritten by
-      another. In the other words, if a row is returned by
+      another. In other words, if a row is returned by
       <command>SELECT</command> it doesn't mean that this row really exists
       at the time it is returned (i.e. sometime after the statement or
-      transaction began) nor that the row is protected from deletion or
-      update by concurrent transactions before the current transaction does
+      transaction began) nor that the row is protected from being deleted or
+      updated by concurrent transactions before the current transaction does
       a commit or rollback.
      </para>
 
      <para>
-      To ensure the actual existance of a row and protect it against
+      To ensure the actual existence of a row and protect it against
       concurrent updates one must use <command>SELECT FOR UPDATE</command> or
       an appropriate <command>LOCK TABLE</command> statement. This should be
       taken into account when porting applications from previous releases of
@@ -205,7 +205,8 @@
      </para>
 
      <para>
-      Keep above in mind if you are using contrib/refint.* triggers for
+      Keep the above in mind if you are using
+      <filename>contrib/refint.*</filename> triggers for
       referential integrity. Additional technics are required now. One way is
       to use <command>LOCK parent_table IN SHARE ROW EXCLUSIVE MODE</command>
       command if a transaction is going to update/delete a primary key and
@@ -2634,6 +2635,7 @@ Initial release.
      <programlisting>
   Time   System
   02:00  Dual Pentium Pro 180, 224MB, UW-SCSI, Linux 2.0.36, gcc 2.7.2.3 -O2 -m486
+  04:38  Sparc Ultra 1 143MHz, 64MB, Solaris 2.6
      </programlisting>
     </para>
 
