@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/grant.sgml,v 1.17 2001/12/08 03:24:37 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/grant.sgml,v 1.18 2002/01/18 01:04:53 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -43,14 +43,15 @@ GRANT { { SELECT | INSERT | UPDATE | DELETE | RULE | REFERENCES | TRIGGER } [,..
   </para>
 
   <para>
-   Users other than the creator do not have any access privileges
-   to an object unless the creator grants permissions.
+   Users other than the creator of an object do not have any access privileges
+   to the object unless the creator grants permissions.
    There is no need to grant privileges to the creator of an object,
-   as the creator automatically holds all privileges, and can also
-   drop the object.  (The creator could, however, choose to revoke
+   as the creator automatically holds all privileges.
+   (The creator could, however, choose to revoke
    some of his own privileges for safety.  Note that the ability to
    grant and revoke privileges is inherent in the creator and cannot
-   be lost.)
+   be lost.  The right to drop the object is likewise inherent in the
+   creator, and cannot be granted or revoked.)
   </para>
 
   <para>
@@ -96,7 +97,7 @@ GRANT { { SELECT | INSERT | UPDATE | DELETE | RULE | REFERENCES | TRIGGER } [,..
      <term>DELETE</term>
      <listitem>
       <para>
-       Allows the <xref linkend="sql-delete" endterm="sql-delete-title"> of a row from the
+       Allows <xref linkend="sql-delete" endterm="sql-delete-title"> of a row from the
        specified table.
       </para>
      </listitem>
@@ -107,7 +108,7 @@ GRANT { { SELECT | INSERT | UPDATE | DELETE | RULE | REFERENCES | TRIGGER } [,..
      <listitem>
       <para>
        Allows the creation of a rule on the table/view.  (See <xref
-       linkend="sql-createrule" endterm="sql-createrule-title"> statement).
+       linkend="sql-createrule" endterm="sql-createrule-title"> statement.)
       </para>
      </listitem>
     </varlistentry>
@@ -117,7 +118,7 @@ GRANT { { SELECT | INSERT | UPDATE | DELETE | RULE | REFERENCES | TRIGGER } [,..
      <listitem>
       <para>
        To create a table with a foreign key constraint, it is
-       necessary to have this privilege on the table with the primary
+       necessary to have this privilege on the table with the referenced
        key.
       </para>
      </listitem>
@@ -128,7 +129,7 @@ GRANT { { SELECT | INSERT | UPDATE | DELETE | RULE | REFERENCES | TRIGGER } [,..
      <listitem>
       <para>
        Allows the creation of a trigger on the specified table.  (See
-       <xref linkend="sql-createtrigger" endterm="sql-createtrigger-title"> statement).
+       <xref linkend="sql-createtrigger" endterm="sql-createtrigger-title"> statement.)
       </para>
      </listitem>
     </varlistentry>
@@ -138,7 +139,8 @@ GRANT { { SELECT | INSERT | UPDATE | DELETE | RULE | REFERENCES | TRIGGER } [,..
      <listitem>
       <para>
        Grant all of the above privileges at once.  The
-       <literal>PRIVILEGES</literal> key word is optional, but it is
+       <literal>PRIVILEGES</literal> key word is optional in
+       <productname>PostgreSQL</productname>, though it is
        required by strict SQL.
       </para>
      </listitem>
@@ -153,6 +155,14 @@ GRANT { { SELECT | INSERT | UPDATE | DELETE | RULE | REFERENCES | TRIGGER } [,..
 
  <refsect1 id="SQL-GRANT-notes">
   <title>Notes</title>
+
+   <para>
+    It should be noted that database <firstterm>superusers</> can access
+    all objects regardless of object privilege settings.  This
+    is comparable to the rights of <literal>root</> in a Unix system.
+    As with <literal>root</>, it's unwise to operate as a superuser
+    except when absolutely necessary.
+   </para>
 
    <para>
     Currently, to grant privileges in <productname>PostgreSQL</productname>
