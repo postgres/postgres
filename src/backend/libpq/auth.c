@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/auth.c,v 1.113 2003/11/29 19:51:49 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/auth.c,v 1.114 2003/12/20 18:24:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -471,32 +471,31 @@ ClientAuthentication(Port *port)
 			break;
 
 		case uaIdent:
-#if defined(HAVE_STRUCT_CMSGCRED) || defined(HAVE_STRUCT_FCRED) || \
-	(defined(HAVE_STRUCT_SOCKCRED) && defined(LOCAL_CREDS)) && \
-	!defined(HAVE_GETPEEREID) && !defined(SO_PEERCRED)
-
 			/*
 			 * If we are doing ident on unix-domain sockets, use SCM_CREDS
 			 * only if it is defined and SO_PEERCRED isn't.
 			 */
-#if defined(HAVE_STRUCT_FCRED) || defined(HAVE_STRUCT_SOCKCRED)
-
-			/*
-			 * Receive credentials on next message receipt, BSD/OS,
-			 * NetBSD. We need to set this before the client sends the
-			 * next packet.
-			 */
+#if !defined(HAVE_GETPEEREID) && !defined(SO_PEERCRED) && \
+	(defined(HAVE_STRUCT_CMSGCRED) || defined(HAVE_STRUCT_FCRED) || \
+	 (defined(HAVE_STRUCT_SOCKCRED) && defined(LOCAL_CREDS)))
+			if (port->raddr.addr.ss_family == AF_UNIX)
 			{
+#if defined(HAVE_STRUCT_FCRED) || defined(HAVE_STRUCT_SOCKCRED)
+				/*
+				 * Receive credentials on next message receipt, BSD/OS,
+				 * NetBSD. We need to set this before the client sends the
+				 * next packet.
+				 */
 				int			on = 1;
 
 				if (setsockopt(port->sock, 0, LOCAL_CREDS, &on, sizeof(on)) < 0)
 					ereport(FATAL,
 							(errcode_for_socket_access(),
 					 errmsg("could not enable credential reception: %m")));
-			}
 #endif
-			if (port->raddr.addr.ss_family == AF_UNIX)
+
 				sendAuthRequest(port, AUTH_REQ_SCM_CREDS);
+			}
 #endif
 			status = authident(port);
 			break;
