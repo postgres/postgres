@@ -1,5 +1,5 @@
 #! /bin/sh
-# $Header: /cvsroot/pgsql/src/test/regress/Attic/pg_regress.sh,v 1.3 2000/10/02 06:03:25 tgl Exp $
+# $Header: /cvsroot/pgsql/src/test/regress/Attic/pg_regress.sh,v 1.4 2000/10/02 11:47:30 petere Exp $
 
 me=`basename $0`
 : ${TMPDIR=/tmp}
@@ -81,6 +81,9 @@ unset top_builddir
 unset temp_install
 unset multibyte
 
+export PGHOST
+export PGPORT
+
 dbname=regression
 hostname=`hostname` || hostname=localhost
 
@@ -153,8 +156,6 @@ case $host_platform in
     *)
         unix_sockets=yes;;
 esac
-
-[ "$unix_sockets" = no ] && psql_options="$psql_options -h $PGHOST"
 
 
 # ----------
@@ -257,7 +258,11 @@ then
     libdir=$temp_install/$libdir
     datadir=$temp_install/$datadir
     PGDATA=$temp_install/data
-    PGHOST=$hostname
+    if [ "$unix_sockets" = no ]; then
+        PGHOST=$hostname
+    else
+        unset PGHOST
+    fi
     PGPORT=65432
 
     # ----------
@@ -314,7 +319,7 @@ then
     message "starting postmaster"
     [ "$debug" = yes ] && postmaster_options="$postmaster_options -d 5"
     [ "$unix_sockets" = no ] && postmaster_options="$postmaster_options -i"
-    "$bindir/postmaster" -D "$PGDATA" -p "$PGPORT" -F $postmaster_options >"$LOGDIR/postmaster.log" 2>&1 &
+    "$bindir/postmaster" -D "$PGDATA" -F $postmaster_options >"$LOGDIR/postmaster.log" 2>&1 &
     postmaster_pid=$!
 
     if kill -0 $postmaster_pid >/dev/null 2>&1
@@ -333,13 +338,22 @@ then
 
 else # not temp-install
 
-    if [ -n "$PGHOST" ]; then
-        echo "(using postmaster on $PGHOST at port $PGPORT)"
+    # If Unix sockets are not available, use the local host by default.
+    [ "$unix_sockets" = no ] && ${PGHOST=$hostname}
+
+    if [ -n "$PGPORT" ]; then
+        port_info="port $PGPORT"
     else
-        echo "(using postmaster on Unix socket with port $PGPORT)"
+        port_info="default port"
+    fi
+
+    if [ -n "$PGHOST" ]; then
+        echo "(using postmaster on $PGHOST, $port_info)"
+    else
+        echo "(using postmaster on Unix socket, $port_info)"
     fi
     message "dropping database \"$dbname\""
-    "$bindir/dropdb" -p "$PGPORT" $psql_options "$dbname" >/dev/null 2>&1
+    "$bindir/dropdb" $psql_options "$dbname" >/dev/null 2>&1
     # errors can be ignored
 fi
 
@@ -348,7 +362,7 @@ fi
 # Set up SQL shell for the test.
 # ----------
 
-PSQL="$bindir/psql -a -q -X $psql_options -p $PGPORT"
+PSQL="$bindir/psql -a -q -X $psql_options"
 
 
 # ----------
@@ -377,7 +391,7 @@ fi
 # ----------
 
 message "creating database \"$dbname\""
-"$bindir/createdb" -p "$PGPORT" $encoding_opt $psql_options "$dbname"
+"$bindir/createdb" $encoding_opt $psql_options "$dbname"
 if [ $? -ne 0 ]; then
     echo "$me: createdb failed"
     (exit 2); exit
@@ -392,7 +406,7 @@ case $host_platform in
     *-*-qnx*) : ;;
     *)
         message "installing PL/pgSQL"
-        "$bindir/createlang" -p "$PGPORT" -L "$libdir" $psql_options plpgsql $dbname
+        "$bindir/createlang" -L "$libdir" $psql_options plpgsql $dbname
         if [ $? -ne 0 ] && [ $? -ne 2 ]; then
             echo "$me: createlang failed"
             (exit 2); exit
