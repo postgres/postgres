@@ -1,3 +1,45 @@
+PostgreSQL 6.4.1             Fri Dec 18 00:29:11 EST 1998
+=========================================================
+
+A dump/restore is NOT required for those running 6.4. Those running
+pre-6.4 require a dump/restore, or for 6.3.* users, the use of the
+pg_upgrade utility.
+
+Changes
+-------
+Add pg_dump -N flag to force double quotes around identifiers.  This is
+	the default(Thomas)
+Fix for NOT in where clause causing crash(Bruce)
+EXPLAIN VERBOSE coredump fix(Vadim)
+Fix shared-library problems on Linux
+Fix test for table existance to allow mixed-case and whitespace in
+	the table name(Thomas)
+Fix a couple of pg_dump bugs
+Configure matches template/.similar entries better(Tom)
+Change builtin function names from SPI_* to spi_*
+OR WHERE clause fix(Vadim)
+Fixes for mixed-case table names(Billy)
+contrib/linux/postgres.init.csh/sh fix(Thomas)
+libpq memory overrun fix
+SunOS fixes(Tom)
+Change exp() behavior to generate error on underflow(Thomas)
+pg_dump fixes for memory leak, inheritance constraints, layout change
+update pgaccess to 0.93
+Fix prototype for 64-bit platforms
+Multi-byte fixes(Tatsuo)
+New ecpg man page
+Fix memory overruns(Tatsuo)
+Fix for lo_import() crash(Bruce)
+Better search for install program(Tom)
+Timezone fixes(Tom)
+HPUX fixes(Tom)
+Use implicit type coersion for matching DEFAULT values(Thomas)
+Add routines to help with single-byte (internal) character type(Thomas)
+Compilation of libpq for Win32 fixes(Magnus)
+Upgrade to PyGreSQL 2.2(D'Arcy)
+
+
+
 PostgreSQL 6.4               Mon Oct 26 11:40:42 EST 1998
 =========================================================
 
