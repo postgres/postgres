@@ -663,22 +663,25 @@ AC_SUBST(ELF_SYS)
 dnl
 dnl Optionally build C++ code (i.e., libpq++)
 dnl
-AC_MSG_CHECKING(whether to build C++ modules)
+AC_MSG_CHECKING([whether to build C++ modules])
 AC_ARG_WITH(CXX, [  --with-CXX              build C++ modules (libpq++)],
-[if test "x${withval+set}" = xset; then
-  AC_MSG_RESULT(yes)
-  if test x"$withval" != xyes ; then
+[if test x"$withval" != x"no"; then
+  if test x"$withval" != x"yes" ; then
     CXX=$withval
   fi
+  with_CXX=yes
+fi],
+[with_CXX=no])
+
+AC_MSG_RESULT([$with_CXX])
+AC_SUBST(with_CXX)
+
+if test $with_CXX = yes; then
   AC_PROG_CXX
   AC_PROG_CXXCPP
   PGAC_CLASS_STRING
   PGAC_CXX_NAMESPACE_STD
-else
-  AC_MSG_RESULT(no)
-fi],
-[AC_MSG_RESULT(no)])
-AC_SUBST(with_CXX)
+fi
 
 
 CPPFLAGS="$CPPFLAGS $INCLUDES"
