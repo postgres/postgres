@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.238 2004/08/31 22:43:58 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.239 2004/09/24 19:43:03 tgl Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -5532,7 +5532,8 @@ assign_stage_log_stats(bool newval, bool doit, GucSource source)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 					 errmsg("cannot enable parameter when \"log_statement_stats\" is true")));
-		else
+		/* source == PGC_S_OVERRIDE means do it anyway, eg at xact abort */
+		else if (source != PGC_S_OVERRIDE)
 			return false;
 	}
 	return true;
@@ -5550,7 +5551,8 @@ assign_log_stats(bool newval, bool doit, GucSource source)
 					 errmsg("cannot enable \"log_statement_stats\" when "
 							"\"log_parser_stats\", \"log_planner_stats\", "
 							"or \"log_executor_stats\" is true")));
-		else
+		/* source == PGC_S_OVERRIDE means do it anyway, eg at xact abort */
+		else if (source != PGC_S_OVERRIDE)
 			return false;
 	}
 	return true;
@@ -5566,7 +5568,9 @@ assign_transaction_read_only(bool newval, bool doit, GucSource source)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 					 errmsg("cannot set transaction read-write mode inside a read-only transaction")));
-		return false;
+		/* source == PGC_S_OVERRIDE means do it anyway, eg at xact abort */
+		else if (source != PGC_S_OVERRIDE)
+			return false;
 	}
 	return true;
 }

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/variable.c,v 1.103 2004/08/31 19:28:51 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/variable.c,v 1.104 2004/09/24 19:42:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -481,7 +481,8 @@ assign_XactIsoLevel(const char *value, bool doit, GucSource source)
 			ereport(ERROR,
 					(errcode(ERRCODE_ACTIVE_SQL_TRANSACTION),
 					 errmsg("SET TRANSACTION ISOLATION LEVEL must be called before any query")));
-		else
+		/* source == PGC_S_OVERRIDE means do it anyway, eg at xact abort */
+		else if (source != PGC_S_OVERRIDE)
 			return NULL;
 	}
 	if (IsSubTransaction())
@@ -490,7 +491,8 @@ assign_XactIsoLevel(const char *value, bool doit, GucSource source)
 			ereport(ERROR,
 					(errcode(ERRCODE_ACTIVE_SQL_TRANSACTION),
 					 errmsg("SET TRANSACTION ISOLATION LEVEL must not be called in a subtransaction")));
-		else
+		/* source == PGC_S_OVERRIDE means do it anyway, eg at xact abort */
+		else if (source != PGC_S_OVERRIDE)
 			return NULL;
 	}
 
