@@ -19,8 +19,8 @@ import java.math.*;
  * Parameters are refered to sequentially, by number. The first parameter
  * is 1.
  *
- * {?= call <procedure-name>[<arg1>,<arg2>, ...]}                 
- * {call <procedure-name>[<arg1>,<arg2>, ...]}       
+ * {?= call <procedure-name>[<arg1>,<arg2>, ...]}
+ * {call <procedure-name>[<arg1>,<arg2>, ...]}
  *
  *
  * <p>IN parameter values are set using the set methods inherited from
@@ -32,8 +32,8 @@ import java.math.*;
  * Multiple ResultSets are handled using operations inherited from
  * Statement.
  *
- * <p>For maximum portability, a call's ResultSets and update counts should 
- * be processed prior to getting the values of output parameters.        
+ * <p>For maximum portability, a call's ResultSets and update counts should
+ * be processed prior to getting the values of output parameters.
  *
  * @see Connection#prepareCall
  * @see ResultSet
@@ -48,7 +48,7 @@ public class CallableStatement extends org.postgresql.jdbc2.PreparedStatement im
   {
     super(c,q);
   }
-  
+
   /**
    * Before executing a stored procedure call you must explicitly
    * call registerOutParameter to register the java.sql.Type of each
@@ -66,7 +66,7 @@ public class CallableStatement extends org.postgresql.jdbc2.PreparedStatement im
    */
   public void registerOutParameter(int parameterIndex, int sqlType) throws SQLException {
   }
-  
+
   /**
    * You must also specify the scale for numeric/decimal types:
    *
@@ -84,12 +84,12 @@ public class CallableStatement extends org.postgresql.jdbc2.PreparedStatement im
 				   int scale) throws SQLException
   {
   }
-  
+
   // Old api?
   //public boolean isNull(int parameterIndex) throws SQLException {
   //return true;
   //}
-  
+
   /**
    * An OUT parameter may have the value of SQL NULL; wasNull
    * reports whether the last value read has this special value.
@@ -103,12 +103,12 @@ public class CallableStatement extends org.postgresql.jdbc2.PreparedStatement im
     // check to see if the last access threw an exception
     return false; // fake it for now
   }
-  
+
   // Old api?
   //public String getChar(int parameterIndex) throws SQLException {
   //return null;
   //}
-  
+
   /**
    * Get the value of a CHAR, VARCHAR, or LONGVARCHAR parameter as a
    * Java String.
@@ -123,11 +123,11 @@ public class CallableStatement extends org.postgresql.jdbc2.PreparedStatement im
   //public String getVarChar(int parameterIndex) throws SQLException {
   //   return null;
   //}
-  
+
   //public String getLongVarChar(int parameterIndex) throws SQLException {
   //return null;
   //}
-  
+
   /**
    * Get the value of a BIT parameter as a Java boolean.
    *
@@ -138,7 +138,7 @@ public class CallableStatement extends org.postgresql.jdbc2.PreparedStatement im
   public boolean getBoolean(int parameterIndex) throws SQLException {
     return false;
   }
-  
+
   /**
    * Get the value of a TINYINT parameter as a Java byte.
    *
@@ -149,7 +149,7 @@ public class CallableStatement extends org.postgresql.jdbc2.PreparedStatement im
   public byte getByte(int parameterIndex) throws SQLException {
     return 0;
   }
-  
+
   /**
    * Get the value of a SMALLINT parameter as a Java short.
    *
@@ -160,7 +160,7 @@ public class CallableStatement extends org.postgresql.jdbc2.PreparedStatement im
   public short getShort(int parameterIndex) throws SQLException {
     return 0;
   }
-  
+
   /**
    * Get the value of an INTEGER parameter as a Java int.
    *
@@ -171,7 +171,7 @@ public class CallableStatement extends org.postgresql.jdbc2.PreparedStatement im
 public int getInt(int parameterIndex) throws SQLException {
     return 0;
   }
-  
+
   /**
    * Get the value of a BIGINT parameter as a Java long.
    *
@@ -182,7 +182,7 @@ public int getInt(int parameterIndex) throws SQLException {
   public long getLong(int parameterIndex) throws SQLException {
     return 0;
   }
-  
+
   /**
    * Get the value of a FLOAT parameter as a Java float.
    *
@@ -193,7 +193,7 @@ public int getInt(int parameterIndex) throws SQLException {
   public float getFloat(int parameterIndex) throws SQLException {
     return (float) 0.0;
   }
-  
+
   /**
    * Get the value of a DOUBLE parameter as a Java double.
    *
@@ -204,7 +204,7 @@ public int getInt(int parameterIndex) throws SQLException {
   public double getDouble(int parameterIndex) throws SQLException {
     return 0.0;
   }
-  
+
   /**
    * Get the value of a NUMERIC parameter as a java.math.BigDecimal
    * object.
@@ -214,12 +214,13 @@ public int getInt(int parameterIndex) throws SQLException {
    * desired number of digits to the right of the decimal point
    * @return the parameter value; if the value is SQL NULL, the result is null
    * @exception SQLException if a database-access error occurs.
+   * @deprecated in Java2.0
    */
   public BigDecimal getBigDecimal(int parameterIndex, int scale)
        throws SQLException {
 	 return null;
   }
-  
+
   /**
    * Get the value of a SQL BINARY or VARBINARY parameter as a Java
    * byte[]
@@ -231,12 +232,12 @@ public int getInt(int parameterIndex) throws SQLException {
   public byte[] getBytes(int parameterIndex) throws SQLException {
     return null;
   }
-  
+
   // New API (JPM) (getLongVarBinary)
   //public byte[] getBinaryStream(int parameterIndex) throws SQLException {
   //return null;
   //}
-  
+
   /**
    * Get the value of a SQL DATE parameter as a java.sql.Date object
    *
@@ -247,7 +248,7 @@ public int getInt(int parameterIndex) throws SQLException {
   public java.sql.Date getDate(int parameterIndex) throws SQLException {
     return null;
   }
-  
+
   /**
    * Get the value of a SQL TIME parameter as a java.sql.Time object.
    *
@@ -258,7 +259,7 @@ public int getInt(int parameterIndex) throws SQLException {
   public java.sql.Time getTime(int parameterIndex) throws SQLException {
     return null;
   }
-  
+
   /**
    * Get the value of a SQL TIMESTAMP parameter as a java.sql.Timestamp object.
    *
@@ -270,16 +271,16 @@ public int getInt(int parameterIndex) throws SQLException {
        throws SQLException {
 	 return null;
   }
-  
+
   //----------------------------------------------------------------------
   // Advanced features:
-  
-  // You can obtain a ParameterMetaData object to get information 
+
+  // You can obtain a ParameterMetaData object to get information
   // about the parameters to this CallableStatement.
   //public DatabaseMetaData getMetaData() {
   //return null;
   //}
-  
+
   // getObject returns a Java object for the parameter.
   // See the JDBC spec's "Dynamic Programming" chapter for details.
   /**
@@ -304,58 +305,58 @@ public int getInt(int parameterIndex) throws SQLException {
        throws SQLException {
 	 return null;
   }
-    
+
     // ** JDBC 2 Extensions **
-    
+
     public Array getArray(int i) throws SQLException
     {
 	throw org.postgresql.Driver.notImplemented();
     }
-    
+
     public java.math.BigDecimal getBigDecimal(int i) throws SQLException
     {
 	throw org.postgresql.Driver.notImplemented();
     }
-    
+
     public Blob getBlob(int i) throws SQLException
     {
 	throw org.postgresql.Driver.notImplemented();
     }
-    
+
     public Clob getClob(int i) throws SQLException
     {
 	throw org.postgresql.Driver.notImplemented();
     }
-    
+
     public Object getObject(int i,java.util.Map map) throws SQLException
     {
 	throw org.postgresql.Driver.notImplemented();
     }
-    
+
     public Ref getRef(int i) throws SQLException
     {
 	throw org.postgresql.Driver.notImplemented();
     }
-    
+
     public java.sql.Date getDate(int i,java.util.Calendar cal) throws SQLException
     {
 	throw org.postgresql.Driver.notImplemented();
     }
-    
+
     public Time getTime(int i,java.util.Calendar cal) throws SQLException
     {
 	throw org.postgresql.Driver.notImplemented();
     }
-    
+
     public Timestamp getTimestamp(int i,java.util.Calendar cal) throws SQLException
     {
 	throw org.postgresql.Driver.notImplemented();
     }
-    
+
     public void registerOutParameter(int parameterIndex, int sqlType,String typeName) throws SQLException
     {
 	throw org.postgresql.Driver.notImplemented();
     }
-  
+
 }
 

@@ -35,6 +35,10 @@ public class Driver implements java.sql.Driver
       // my early jdbc work did - and that was based on other examples).
       // Placing it here, means that the driver is registered once only.
       java.sql.DriverManager.registerDriver(new Driver());
+
+      // New in 7.1 - register ourselves with the JVM - JDK1.3+ only
+      @JDK1.3ONLY@org.postgresql.core.ConnectionHook.init();
+
     } catch (SQLException e) {
       e.printStackTrace();
     }
