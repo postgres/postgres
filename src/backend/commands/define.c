@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/commands/define.c,v 1.7 1996/11/08 05:55:49 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/commands/define.c,v 1.8 1996/11/08 06:24:58 bryanh Exp $
  *
  * DESCRIPTION
  *    The "DefineFoo" routines take the parse tree and pick out the
@@ -117,8 +117,6 @@ compute_full_attributes(const List *parameters, int32 *byte_pct_p,
     *outin_ratio_p = OUTIN_RATIO;
 
     foreach(pl, (List *)parameters) {
-        int count;
-        char *ptr;
         ParamString *param = (ParamString*)lfirst(pl);
 
         if (strcasecmp(param->name, "iscachable") == 0) {
@@ -136,14 +134,17 @@ compute_full_attributes(const List *parameters, int32 *byte_pct_p,
             */
             *byte_pct_p = atoi(param->val);
         } else if (strcasecmp(param->name, "perbyte_cpu") == 0) {
-			count = 0;
             if (sscanf(param->val, "%d", perbyte_cpu_p) == 0) {
+                int count;
+                char *ptr;
                 for (ptr = param->val; *ptr != '\0'; ptr++) 
                     if (*ptr == '!') count++;
+                *perbyte_cpu_p = (int) pow(10.0, (double) count);
             }
-            *perbyte_cpu_p = (int) pow(10.0, (double) count);
         } else if (strcasecmp(param->name, "percall_cpu") == 0) {
             if (sscanf(param->val, "%d", percall_cpu_p) == 0) {
+                int count;
+                char *ptr;
                 for (count = 0, ptr = param->val; *ptr != '\0'; ptr++) 
                     if (*ptr == '!') count++;
                 *percall_cpu_p = (int) pow(10.0, (double) count);
