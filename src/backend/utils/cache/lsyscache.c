@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/lsyscache.c,v 1.18 1998/08/11 18:28:18 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/lsyscache.c,v 1.19 1998/08/16 05:38:41 thomas Exp $
  *
  * NOTES
  *	  Eventually, the index information should go through here, too.
@@ -220,7 +220,10 @@ get_opname(Oid opno)
 		return pstrdup(optup.oprname.data);
 	else
 	{
+		/* don't throw an error anymore; we want to continue... */
+#if FALSE
 		elog(ERROR, "can't look up operator %d\n", opno);
+#endif
 		return NULL;
 	}
 }
