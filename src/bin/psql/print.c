@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/print.c,v 1.38 2003/06/12 07:52:51 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/print.c,v 1.39 2003/06/12 08:15:28 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "common.h"
@@ -11,7 +11,10 @@
 
 #include <math.h>
 #include <signal.h>
+
+#if !defined(_MSC_VER) && !defined(__BORLANDC__)
 #include <unistd.h>
+#endif
 
 #ifndef WIN32
 #include <sys/ioctl.h>			/* for ioctl() */

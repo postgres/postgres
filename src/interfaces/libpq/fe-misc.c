@@ -23,7 +23,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-misc.c,v 1.94 2003/06/12 08:11:07 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-misc.c,v 1.95 2003/06/12 08:15:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,8 +33,11 @@
 #include <errno.h>
 #include <signal.h>
 #include <time.h>
+
+#if !defined(_MSC_VER) && !defined(__BORLANDC__)
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#endif
 
 #ifdef WIN32
 #include "win32.h"

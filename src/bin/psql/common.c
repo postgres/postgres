@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/common.c,v 1.63 2003/06/12 07:52:51 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/common.c,v 1.64 2003/06/12 08:15:28 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "common.h"
@@ -48,7 +48,7 @@ typedef struct timeval TimevalStruct;
 #else
 
 typedef struct _timeb TimevalStruct;
-#define GETTIMEOFDAY(T) _ftime(&T)
+#define GETTIMEOFDAY(T) _ftime(T)
 #define DIFF_MSEC(T, U) ((((T)->time - (U)->time) * 1000.0 + (T)->millitm - (U)->millitm))
 
 #endif

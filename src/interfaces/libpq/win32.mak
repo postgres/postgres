@@ -36,9 +36,16 @@ OutDir=.\Release
 ALL : "$(OUTDIR)\libpq.lib" "$(OUTDIR)\libpq.dll" 
 
 CLEAN :
+	-@erase "$(INTDIR)\getaddrinfo.obj"
+	-@erase "$(INTDIR)\inet_aton.obj"
+      -@erase "$(INTDIR)\crypt.obj"
+	-@erase "$(INTDIR)\path.obj"
 	-@erase "$(INTDIR)\dllist.obj"
 	-@erase "$(INTDIR)\md5.obj"
+	-@erase "$(INTDIR)\ip.obj"
 	-@erase "$(INTDIR)\fe-auth.obj"
+	-@erase "$(INTDIR)\fe-protocol2.obj"
+	-@erase "$(INTDIR)\fe-protocol3.obj"
 	-@erase "$(INTDIR)\fe-connect.obj"
 	-@erase "$(INTDIR)\fe-exec.obj"
 	-@erase "$(INTDIR)\fe-lobj.obj"
@@ -72,9 +79,16 @@ LIB32=link.exe -lib
 LIB32_FLAGS=$(LOPT) /nologo /out:"$(OUTDIR)\libpq.lib" 
 LIB32_OBJS= \
 	"$(OUTDIR)\win32.obj" \
+	"$(INTDIR)\getaddrinfo.obj" \
+	"$(INTDIR)\inet_aton.obj" \
+      "$(INTDIR)\crypt.obj" \
+	"$(INTDIR)\path.obj" \
 	"$(INTDIR)\dllist.obj" \
 	"$(INTDIR)\md5.obj" \
+	"$(INTDIR)\ip.obj" \
 	"$(INTDIR)\fe-auth.obj" \
+	"$(INTDIR)\fe-protocol2.obj" \
+	"$(INTDIR)\fe-protocol3.obj" \
 	"$(INTDIR)\fe-connect.obj" \
 	"$(INTDIR)\fe-exec.obj" \
 	"$(INTDIR)\fe-lobj.obj" \
@@ -112,6 +126,25 @@ LINK32_OBJS= \
   $(LINK32_FLAGS) $(LINK32_OBJS)
 <<
 
+"$(OUTDIR)\getaddrinfo.obj" : ..\..\port\getaddrinfo.c
+    $(CPP) @<<
+    $(CPP_PROJ) ..\..\port\getaddrinfo.c
+<<
+
+"$(OUTDIR)\inet_aton.obj" : ..\..\port\inet_aton.c
+    $(CPP) @<<
+    $(CPP_PROJ) ..\..\port\inet_aton.c
+<<
+
+"$(OUTDIR)\crypt.obj" : ..\..\port\crypt.c
+    $(CPP) @<<
+    $(CPP_PROJ) ..\..\port\crypt.c
+<<
+
+"$(OUTDIR)\path.obj" : ..\..\port\path.c
+    $(CPP) @<<
+    $(CPP_PROJ) ..\..\port\path.c
+<<
 
 "$(OUTDIR)\dllist.obj" : ..\..\backend\lib\dllist.c
     $(CPP) @<<
@@ -124,6 +157,10 @@ LINK32_OBJS= \
     $(CPP_PROJ) ..\..\backend\libpq\md5.c
 <<
 
+"$(OUTDIR)\ip.obj" : ..\..\backend\libpq\ip.c
+    $(CPP) @<<
+    $(CPP_PROJ) ..\..\backend\libpq\ip.c
+<<
 
 "$(INTDIR)\wchar.obj" : ..\..\backend\utils\mb\wchar.c
     $(CPP) @<<

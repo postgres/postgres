@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.246 2003/06/12 08:11:07 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.247 2003/06/12 08:15:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -49,6 +49,10 @@
 #include "libpq/ip.h"
 #include "mb/pg_wchar.h"
 
+/* For FNCTL_NONBLOCK */
+#if defined(WIN32) || defined(__BEOS__)
+long ioctlsocket_ret;
+#endif
 
 #define PGPASSFILE ".pgpass"
 

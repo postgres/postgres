@@ -1,6 +1,6 @@
 # Makefile for Borland C++ 5.5
 # Borland C++ base install directory goes here
-BCB=d:\Borland\Bcc55
+# BCB=d:\Borland\Bcc55
 
 !MESSAGE Building PSQL.EXE ...
 !MESSAGE
@@ -36,6 +36,7 @@ NULL=nul
 !ENDIF 
 
 CPP=bcc32.exe
+PERL=perl.exe
 
 !IF "$(CFG)" == "Debug"
 DEBUG=1
@@ -45,13 +46,14 @@ INTDIR=.\Debug
 OUTDIR=.\Release
 INTDIR=.\Release
 !endif
+REFDOCDIR=../../../doc/src/sgml/ref
 
 .path.obj = $(INTDIR)
 
 .c.obj:
 	$(CPP) -o"$(INTDIR)\$&" $(CPP_PROJ) $<
 
-ALL : "$(OUTDIR)\psql.exe"
+ALL : "sql_help.h" "$(OUTDIR)\psql.exe"
 
 CLEAN :
 	-@erase "$(INTDIR)\command.obj"
@@ -70,6 +72,8 @@ CLEAN :
 	-@erase "$(INTDIR)\describe.obj"
 	-@erase "$(INTDIR)\tab-complete.obj"
 	-@erase "$(INTDIR)\getopt.obj"
+	-@erase "$(INTDIR)\getopt_long.obj"
+	-@erase "$(INTDIR)\path.obj"
 	-@erase "$(INTDIR)\mbprint.obj"
 	-@erase "$(INTDIR)\psql.ilc"
 	-@erase "$(INTDIR)\psql.ild"
@@ -84,8 +88,8 @@ CLEAN :
 USERDEFINES = WIN32;_CONSOLE;_MBCS;HAVE_STRDUP
 
 # ---------------------------------------------------------------------------
-CPP_PROJ = -I$(BCB)\include;..\..\include;..\..\interfaces\libpq -c -D$(USERDEFINES) -tWM -tWC \
-		-q -5 -a8 -pc -X -w-use -w-par -w-pia -w-csu -w-aus -w-ccc
+CPP_PROJ = -I$(BCB)\include;..\..\include;..\..\interfaces\libpq -c -D$(USERDEFINES) -DFRONTEND \
+           -tWM -tWC -q -5 -a8 -pc -X -w-use -w-par -w-pia -w-csu -w-aus -w-ccc
 
 !IFDEF DEBUG
 CPP_PROJ  	= $(CPP_PROJ) -Od -r- -k -v -y -vi- -D_DEBUG
@@ -122,6 +126,8 @@ LINK32_OBJS= \
 	describe.obj \
 	tab-complete.obj \
 	getopt.obj \
+      getopt_long.obj \
+      path.obj \
 	mbprint.obj
 	
 
@@ -134,3 +140,8 @@ LINK32_OBJS= \
 !
 
 getopt.obj : "$(OUTDIR)" ..\..\port\getopt.c
+getopt_long.obj : "$(OUTDIR)" ..\..\port\getopt_long.c
+path.obj : "$(OUTDIR)" ..\..\port\path.c
+
+"sql_help.h": create_help.pl 
+       $(PERL) create_help.pl $(REFDOCDIR) $@

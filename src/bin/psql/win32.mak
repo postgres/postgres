@@ -35,8 +35,10 @@ CLEAN :
 	-@erase "$(INTDIR)\describe.obj"
 	-@erase "$(INTDIR)\tab-complete.obj"
 	-@erase "$(INTDIR)\getopt.obj"
+	-@erase "$(INTDIR)\getopt_long.obj"
+	-@erase "$(INTDIR)\path.obj"
 	-@erase "$(INTDIR)\mbprint.obj"
-	-@erase "$(INTDIR)\vc50.idb"
+	-@erase "$(INTDIR)\*psql.pch"
 	-@erase "$(OUTDIR)\psql.exe"
 
 "$(OUTDIR)" :
@@ -44,7 +46,7 @@ CLEAN :
 
 CPP_PROJ=/nologo /MD /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_CONSOLE" /D\
  "_MBCS" /Fp"$(INTDIR)\psql.pch" /YX /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c \
- /I ..\..\include /I ..\..\interfaces\libpq /D "HAVE_STRDUP"
+ /I ..\..\include /I ..\..\interfaces\libpq /D "HAVE_STRDUP" /D "FRONTEND"
 
 CPP_OBJS=.\Release/
 CPP_SBRS=.
@@ -71,6 +73,8 @@ LINK32_OBJS= \
 	"$(INTDIR)\describe.obj" \
 	"$(INTDIR)\tab-complete.obj" \
 	"$(INTDIR)\getopt.obj" \
+	"$(INTDIR)\getopt_long.obj" \
+	"$(INTDIR)\path.obj" \
 	"$(INTDIR)\mbprint.obj" \
 	"..\..\interfaces\libpq\Release\libpqdll.lib"
 
@@ -82,6 +86,16 @@ LINK32_OBJS= \
 "$(OUTDIR)\getopt.obj" : "$(OUTDIR)" ..\..\port\getopt.c
     $(CPP) @<<
     $(CPP_PROJ) ..\..\port\getopt.c
+<<
+
+"$(OUTDIR)\getopt_long.obj" : "$(OUTDIR)" ..\..\port\getopt_long.c
+    $(CPP) @<<
+    $(CPP_PROJ) ..\..\port\getopt_long.c
+<<
+
+"$(OUTDIR)\path.obj" : "$(OUTDIR)" ..\..\port\path.c
+    $(CPP) @<<
+    $(CPP_PROJ) ..\..\port\path.c
 <<
 
 .c{$(CPP_OBJS)}.obj::

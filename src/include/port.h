@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: port.h,v 1.5 2003/06/12 08:11:07 momjian Exp $
+ * $Id: port.h,v 1.6 2003/06/12 08:15:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -76,8 +76,10 @@ extern double rint(double x);
 #endif
 
 #ifndef HAVE_INET_ATON
+#if !defined(_MSC_VER) && !defined(__BORLANDC__)
 # include <netinet/in.h>
 # include <arpa/inet.h>
+#endif
 extern int inet_aton(const char *cp, struct in_addr * addr);
 #endif
 

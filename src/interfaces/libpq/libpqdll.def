@@ -96,5 +96,5 @@ EXPORTS
     pg_encoding_to_char     @ 92
     pg_utf_mblen            @ 93
     PQunescapeBytea         @ 94
-    PQfreeMem               @ 95
+    PQfreemem               @ 95
 

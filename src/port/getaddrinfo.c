@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/port/getaddrinfo.c,v 1.6 2003/06/12 08:11:07 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/port/getaddrinfo.c,v 1.7 2003/06/12 08:15:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,6 +16,7 @@
 /* This is intended to be used in both frontend and backend, so use c.h */
 #include "c.h"
 
+#if !defined(_MSC_VER) && !defined(__BORLANDC__)
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netdb.h>
@@ -23,6 +24,7 @@
 #include <arpa/inet.h>
 #ifdef	HAVE_UNIX_SOCKETS
 #include <sys/un.h>
+#endif
 #endif
 
 #include "getaddrinfo.h"
