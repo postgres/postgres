@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Wed Nov 21 16:25:20 EST 2001
+Last updated:		Wed Nov 21 20:34:04 EST 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -273,6 +273,8 @@ DEPENDENCY CHECKING
   depend_sysrelid, depend_oid, name
 * Auto-destroy sequence on DROP of table with SERIAL; perhaps a separate
   SERIAL type
+* Have SERIAL generate non-colliding sequence names when we have 
+  auto-destruction
 * Prevent column dropping if column is used by foreign key
 * Propagate column or table renaming to foreign key constraints
 * Automatically drop constraints/functions when object is dropped
