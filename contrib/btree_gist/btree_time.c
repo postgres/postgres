@@ -36,7 +36,7 @@ static bool
 gbt_timegt(const void *a, const void *b)
 {
 	return DatumGetBool(
-						DirectFunctionCall2(time_gt, P_TimeADTGetDatum(*((TimeADT *) a)), P_TimeADTGetDatum(*((TimeADT *) b)))
+						DirectFunctionCall2(time_gt, PointerGetDatum(a), PointerGetDatum(b))
 		);
 }
 
@@ -44,7 +44,7 @@ static bool
 gbt_timege(const void *a, const void *b)
 {
 	return DatumGetBool(
-						DirectFunctionCall2(time_ge, P_TimeADTGetDatum(*((TimeADT *) a)), P_TimeADTGetDatum(*((TimeADT *) b)))
+						DirectFunctionCall2(time_ge, PointerGetDatum(a), PointerGetDatum(b))
 		);
 }
 
@@ -52,7 +52,7 @@ static bool
 gbt_timeeq(const void *a, const void *b)
 {
 	return DatumGetBool(
-						DirectFunctionCall2(time_eq, P_TimeADTGetDatum(*((TimeADT *) a)), P_TimeADTGetDatum(*((TimeADT *) b)))
+						DirectFunctionCall2(time_eq, PointerGetDatum(a), PointerGetDatum(b))
 		);
 }
 
@@ -60,7 +60,7 @@ static bool
 gbt_timele(const void *a, const void *b)
 {
 	return DatumGetBool(
-						DirectFunctionCall2(time_le, P_TimeADTGetDatum(*((TimeADT *) a)), P_TimeADTGetDatum(*((TimeADT *) b)))
+						DirectFunctionCall2(time_le, PointerGetDatum(a), PointerGetDatum(b))
 		);
 }
 
@@ -68,7 +68,7 @@ static bool
 gbt_timelt(const void *a, const void *b)
 {
 	return DatumGetBool(
-						DirectFunctionCall2(time_lt, P_TimeADTGetDatum(*((TimeADT *) a)), P_TimeADTGetDatum(*((TimeADT *) b)))
+						DirectFunctionCall2(time_lt, PointerGetDatum(a), PointerGetDatum(b))
 		);
 }
 
