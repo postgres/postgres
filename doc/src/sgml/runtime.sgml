@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.48 2001/01/24 23:15:19 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.49 2001/02/09 20:38:15 petere Exp $
 -->
 
 <Chapter Id="runtime">
@@ -1807,8 +1807,9 @@ default:\
    <para>
     Kernels generally also have an implementation-dependent
     system-wide limit on some resources.
-    <simplelist>
-     <member>
+    <itemizedlist>
+     <listitem>
+      <para>
       On <productname>Linux</productname>
       <filename>/proc/sys/fs/file-max</filename> determines the
       maximum number of files that the kernel will allocate.  It can
@@ -1818,8 +1819,9 @@ default:\
       kernel is compiled; see
       <filename>/usr/src/linux/Documentation/proc.txt</filename> for
       more information.
-     </member>
-    </simplelist>
+      </para>
+     </listitem>
+    </itemizedlist>
    </para>
 
    <para>
